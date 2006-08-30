@@ -11,9 +11,7 @@ BEGIN
  $tom::P=~s|(.*)/.*?\n$|\1|;
  $tom::SCRIPT_NAME=$0;
  $tom::fastcgi=1 if $tom::SCRIPT_NAME=~/(tom|fcgi|fpl)$/; # zistujem ci som fastcgi script
- die "cannot search TOM directory /var/www/TOM/???" unless $TOM::P=`ls -l $tom::SCRIPT_NAME`;
- $TOM::P=~s|.* (.*)/.*?/(.*)\n|\1|;$TOM::SCRIPT_NAME=$2;
- #push @INC,$TOM::P."/.core/.libs"; # na koniec
+ $TOM::P="/www/TOM";
  unshift @INC,$TOM::P."/_mdl"; # na zaciatok
  unshift @INC,$TOM::P."/.core/.libs"; # na zaciatok
  sub _log{return};sub _applog{return};
@@ -32,7 +30,7 @@ require $TOM::P."/.core/_config/TOM.conf";
  # SYSTEM MODULES
  use Mysql;
  use TOM;
- use Database::connect;
+ use TOM::Database::connect;
  use Time::Local; # pre opacnu konverziu casu
  use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
  use Net::HTTP::CGI;
@@ -44,7 +42,6 @@ require $TOM::P."/.core/_config/TOM.conf";
  use TOM::Net::HTTP::CGI;
  use App::540;
  use App::540::file;
- #use Tomahawk::module;
  use enc3;
 
 
@@ -58,7 +55,7 @@ require $TOM::P."/.core/_config/TOM.conf";
 ######################################################################################
 ######################################################################################
 ######################################################################################
-Database::connect::multi('main');
+TOM::Database::connect::multi('main');
 
 
 my $req=FCGI::Request();
@@ -81,7 +78,7 @@ while ($req->Accept() >= 0)
 		# TODO:[drahos] !! Poslat rozumny header
  		print "Status: 404 Not Found\n\n";
  		#print "$FORM{hash}, $FORM{hash2}, $file[0]{filename}\r\n\r\n";
- 		last;
+ 		next;
  	}
 
 	my %user = &Net::HTTP::cookies::GetCookies;
