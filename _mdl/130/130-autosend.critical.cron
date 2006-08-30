@@ -18,8 +18,9 @@ sub execute
 		open(HND_EMAIL,"<".$file);
 		
 		my $old=$main::time_current-(stat($file))[9];
-		if ($old<86400)
+		if ($old>86400)
 		{
+			main::_log("delete too old email '$old'secs");
 			unlink $file;
 			next;
 		}
@@ -66,6 +67,8 @@ sub execute
 			main::_log("can't accept DATAEND",1);
 			next;
 		}
+		
+		main::_log("sended");
 		
 		$smtp->quit;
 		
