@@ -36,6 +36,11 @@ sub execute
 		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
 	}
 
+	if ( !$main::USRM{logged} )
+	{
+		$XSGN{TMP} = $XSGN{TMP_user_not_logged};
+		return 1;
+	}
 	
 	#while((my$k,my$v)=each%env){main::_log("env{$k}=$v");}
 
