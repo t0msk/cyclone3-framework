@@ -52,7 +52,14 @@ sub execute
 					{
 						my $data=$1;
 						my %hash;
-						while ($data=~s|<(.*?)>(.*?)</\1>||){$hash{$1}=$2;$hash{$1}=~s|'|\\'|g;}
+						while ($data=~s|<(.*?)>(.*?)</\1>||)
+						{
+							my $var=$1;
+							my $value=$2;
+							$hash{$var}=$value;
+							$hash{$var}=~s|\\|\\\\|g;
+							$hash{$var}=~s|\'|\\'|g;
+						}
 						
 						main::_log("request '$hash{page_code}'");
 						
