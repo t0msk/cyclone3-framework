@@ -1,0 +1,247 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+#alarm 3;
+sub execute
+{
+	my %env=@_;
+
+	$env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+	$env{db_500}=$TOM::DB_name unless $env{db_500};
+	$env{max}="6" unless $env{max};
+	$env{max_lines}="10" unless $env{max_lines};
+	$env{format}="t" unless $env{format};
+	$env{format_larger}="f" unless $env{format_larger};
+	$env{get_subs}="0" unless $env{get_subs};
+	$env{allow_parents}="0" unless $env{allow_parents};
+
+	$env{a500_cat}="" unless $env{a500_cat};
+	$env{a500_cat_page}=0 unless $env{a500_cat_page};
+	$env{a500_cat_img_page}=0 unless $env{a500_cat_img_page};
+	$env{a500_cat_header_only}=0 unless $env{a500_cat_header_only};
+
+	$env{allow_forum}=0 unless $env{allow_forum};
+
+	$env{xsgn}="default" unless $env{xsgn};
+
+
+	my $db0=$main::DBH->Query("
+		SELECT
+			count(ID)
+		FROM
+			$env{db_500}.a500_category
+		WHERE
+			ID LIKE '$env{a500_cat}%'
+			AND ID!='$env{a500_cat}'
+			AND photos>0
+			AND active='Y'
+		ORDER BY ID
+	");
+
+	main::_log("
+		SELECT
+			count(ID)
+		FROM
+			$env{db_500}.a500_category
+		WHERE
+			ID LIKE '$env{a500_cat}%'
+			AND ID!='$env{a500_cat}'
+			AND photos>0
+			AND active='Y'
+		ORDER BY ID
+	");
+
+	# modul pre zobrazenie (pod)kategorii s obrazkami
+	if (my @db0_line=$db0->FetchRow())
+	{
+		if (($env{a500_cat_img_page}>0)||($db0_line[0] eq 0))
+		{
+			Tomahawk::module(
+				-type		=>	"mdl",
+				-category	=>	"500",
+				-name		=>	"tlist_cats_c500_m1",
+				-global		=>	1,
+				-xsgn_global	=>	$env{xsgn_global},
+				-xsgn		=>	$env{xsgn},
+				-TMP		=>	$env{TMP_500},
+				-cache_id	=>	"default",
+				-version	=>	"0",
+					header_only		=> "1",
+					db_500		=>	$env{db_500},
+					a500_cat		=>	$env{a500_cat},
+					allow_parents		=>	$env{allow_parents},
+					fetch_whole_path		=> "$env{fetch_whole_path}"
+			);
+		}
+		else
+		{
+=head1
+		Tomahawk::module(
+			-type		=>	"mdl",
+			-category	=>	"500",
+			-name		=>	"tlist_cat_subs_c500",
+			-global		=>	1,
+			-xsgn_global	=>	$env{xsgn_global},
+			-TMP		=>	$env{TMP_500},
+			-cache_id	=>	"default",
+			-version	=>	"1",
+			max_cat_subs	=>	$env{max_cat_subs},
+			max_cat		=>	$env{max_cat},
+			max_cut_if_first=>	$env{max_cut_if_first},
+			max_lines		=>	$env{max_lines_cat_subs},
+			db_500		=>	$env{db_500},
+			a500_cat		=>	$env{a500_cat},
+			a500_cat_page	=>	$env{a500_cat_page},
+			a500_cat_img_page	=>	$env{a500_cat_img_page},
+			format_first	=>	$env{format_first_cat_subs},
+			format		=>	$env{format_cat_subs},
+			get_subs		=>	$env{get_subs_cat_subs},
+			get_direct_subs=>	$env{get_direct_subs_cat_subs},
+		);
+=cut
+			Tomahawk::module(
+				-type		=>	"mdl",
+				-category	=>	"500",
+				-name		=>	"tlist_cats_c500_m1",
+				-global		=>	1,
+				-xsgn_global	=>	$env{xsgn_global},
+				-xsgn		=>	$env{xsgn},
+				-TMP		=>	$env{TMP_500},
+				-cache_id	=>	"default",
+				-version	=>	"0",
+					max_cat_subs	=>	$env{max_cat_subs},
+					max_cat		=>	$env{max_cat},
+					max_cut_if_first=>	$env{max_cut_if_first},
+					max_lines		=>	$env{max_lines_cat_subs},
+					db_500		=>	$env{db_500},
+					a500_cat		=>	$env{a500_cat},
+					a500_cat_page	=>	$env{a500_cat_page},
+					a500_cat_img_page	=>	$env{a500_cat_img_page},
+					format_first	=>	$env{format_first_cat_subs},
+					format		=>	$env{format_cat_subs},
+					get_subs		=>	$env{get_subs_cat_subs},
+					get_direct_subs=>	$env{get_direct_subs_cat_subs},
+					allow_parents		=>	$env{allow_parents},
+					header_only		=> "$env{a500_cat_header_only}",
+					fetch_whole_path		=> "$env{fetch_whole_path}"
+			);
+		}
+
+		# listing obrazkov (len) aktualnej kategorie
+		Tomahawk::module(
+			-type		=>	"mdl",
+			-category	=>	"500",
+			-name		=>	"tlist",
+			-global		=>	1,
+			-xsgn_global	=>	$env{xsgn_global},
+			-xsgn		=>	$env{xsgn},
+			-TMP		=>	$env{TMP_500},
+			-cache_id	=>	"default",
+			-version	=>	"5",
+				max		=>	$env{max},
+				max_lines		=>	$env{max_lines},
+				max_lines_paged=>	$env{max_lines_paged},
+				db_500		=>	$env{db_500},
+				a500_cat		=>	$env{a500_cat},
+				a500_cat_page	=>	$env{a500_cat_page},
+				a500_cat_img_page	=>	$env{a500_cat_img_page},
+				#format		=>	$env{format},
+				format_first	=>	$env{format_first},
+				format		=>	$env{format},
+				get_subs		=>	$env{get_subs},
+				get_direct_subs=>	$env{get_direct_subs},
+		);
+
+		#if((($env{allow_forum})&&($main::IAdm))||(($env{allow_forum})&&($main::ITst)))
+		if($env{allow_forum})
+		{
+
+			# fetching forum database table name
+			$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+			$env{db_820}=$TOM::DB_name unless $env{db_820};
+
+			my $db_micro = $main::DB{main}->Query("
+			SELECT
+				xrelated
+			FROM $env{db_500}.a500_category
+			WHERE ID='$env{a500_cat}' LIMIT 1
+			");
+			 if (my %db_micro_line=$db_micro->FetchHash())
+			{
+#=head1
+				if (($db_micro_line{xrelated}=~/<VAR id="a820" value="(.*?)" \/>/)&&($env{TMP_820}))
+				{
+
+					my $var=$1;
+					main::_log("nasiel som forum");
+					my %cache;if (!$main::FORM{submit} && !$main::USRM{logged}){%cache=(-cache_id	=>	"default",);}
+
+					# adding submit form module
+					Tomahawk::module(
+						-type		=>	"mdl",
+						-version		=>	1,
+						-category		=>	"820",
+						-name		=>	"addmsg",
+						-xsgn		=>	$env{a820_xsgn_addmessage},
+						-xsgn_global	=>	$env{a820_xsgn_global},
+						-xlng_global	=>	$env{a820_xsgn_global},
+						-global		=>	1,
+						-TMP		=>	$env{TMP_820},
+							#%cache,
+							ID			=>	$var,
+							db_820		=>	$env{db_820},
+					);
+
+					my $db0=$main::DB{main}->Query("
+						SELECT ID,messages,inserttime
+						FROM $env{db_820}.a820
+						WHERE
+							ID='$var'
+							AND type='F'
+							AND lng='$env{lng}'
+							AND active='Y'
+						LIMIT 1
+					");
+					if (my %db0_line=$db0->FetchHash())
+					{
+						# adding latest forum submittals
+						Tomahawk::module(
+							-type		=>	"mdl",
+							-category		=>	"500",
+							-name		=>	"tview_forum_c820",
+							-global		=>	1,
+							-xsgn		=>	$env{a820_xsgn_tview_forum},
+							-xsgn_global	=>	$env{a820_xsgn_global},
+							-TMP		=>	$env{TMP_820},
+							-cache_id	=>	"default",
+							-cache_master	=>	$env{cache_master},
+							-cache_id_sub	=>	$db0_line{messages}."_".$db0_line{inserttime},
+								ID		=>	$var,
+								db_820		=>	$env{db_820},
+								ID_rel		=>	$env{a500_cat},
+						);
+					}
+					else
+					{
+						#$db_micro_line{xrelated}=~s|<VAR id="a820" value="$var" />||;
+						#$main::DBH->Query("UPDATE $env{db_400} SET xrelated='$article{_a400_xrelated}'
+						#WHERE ID='$article{_a400_ID}'
+						#AND active='Y'
+						#AND (lng='$env{lng}' OR lng='') LIMIT 1");
+					}
+				}
+				else
+				{
+				#Tomahawk::debug::log(5,"nenasiel som forum $article{_a400_xrelated}");
+				}
+			}
+		}
+	}
+	return 1
+}
+
+1;

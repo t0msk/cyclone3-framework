@@ -1,0 +1,284 @@
+sub BaseModul
+{
+my $id=$form{id};
+if ($form{set})
+{
+# $HTML_HEADER{BODY}{extract}="yes";
+ $form{year1}-=1900;
+ $form{mom1}--;
+ my $starttime=timelocal(undef,$form{min1},$form{hour1},$form{day1},$form{mom1},$form{year1},undef,undef,undef);
+
+ if ($id)
+ {
+  $dbh->Query("UPDATE sport_markiza_sk.tabulky SET starttime='$starttime',IDcathegory='$form{IDcathegory}',title='$form{title}',variables='$form{variables}' WHERE ID='$id' LIMIT 1");
+ }
+ else
+ {
+  $dbh->Query("INSERT INTO sport_markiza_sk.tabulky(starttime,IDcathegory,title,variables) VALUES ('$starttime','$form{IDcathegory}','$form{title}','$form{variables}')");
+ }
+ return "\n<script>\nparent.document.frames['frm_base'].location.reload();\n</script>";
+}
+else
+{
+ $HTML_HEADER{BODY}{extract}="yes";
+ $HTML_HEADER{BODY}{onunload}="parent.box_loading.style.display='block';";
+
+ $db_micro = $dbh->Query("SELECT ID,IDcathegory,starttime,title,variables FROM sport_markiza_sk.tabulky WHERE ID='$id' LIMIT 1");
+ if (@db_micro_line=$db_micro->FetchRow())
+ {
+  (undef,$minR1,$hourR1,$mdayR1,$momR1,$yearR1,undef,undef,undef) = localtime($db_micro_line[2]);
+ }
+ else
+ {
+  (undef,$minR1,$hourR1,$mdayR1,$momR1,$yearR1,undef,undef,undef) = localtime($current_time);
+ }
+ 
+ $momR1++;$yearR1=$yearR1+1900;
+ $momR2++;$yearR2=$yearR2+1900;
+ 
+ my $mdl_temp=<<"HEADER";
+<table width=100% cellspacing=0 cellpadding=0 border=0><tr><td drag_here>
+<form name="$form{type}\_$id"
+action="core.pl?type=tabulky_edit2&id=$id&set=yes" target="frm_$current_time" method="POST">
+</td><td width=100% style="FONT:10px Verdana;">
+HEADER
+
+
+ $mdl_temp.="<table width=100% cellspacing=2 cellpadding=0 border=0><tr><td width=50%></td>";
+ 
+ my $width0=30-12;
+ my $width1=50-12;
+ 
+ my $mdl_micro;
+ for (my $i=1;$i<=31;$i++)
+ {
+  $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+ }
+ $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"day1",
+	'value'		=>	$mdayR1,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+ )."</td>";
+ 
+ 
+ my $mdl_micro;
+ @mesiac=("janu�","február","marec","apríl","máj","jún","júl","august","september","október","november","december");
+ for (my $i=1;$i<=12;$i++)
+ {
+  $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i-$mesiac[$i-1]</div>\n";
+ }
+ $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"mom1",
+	'value'		=>	$momR1,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	90,
+	'select'	=>	$mdl_micro
+ )."</td>";
+
+
+
+ my $mdl_micro;
+ for (my $i=2000;$i<=2050;$i++)
+ {
+  $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+ }
+ $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"year1",
+	'value'		=>	$yearR1,
+	'maxlength'	=>	30,
+	'width'		=>	$width1,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+ )."</td>"; 
+ 
+ 
+ $mdl_temp.="<td>&nbsp;</td>";
+ 
+ 
+  my $mdl_micro;
+ for (my $i=0;$i<=23;$i++)
+ {
+  $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+ }
+ $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"hour1",
+	'value'		=>	$hourR1,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+ )."</td>"; 
+ 
+  $mdl_temp.="<td>:</td>";
+ 
+  my $mdl_micro;
+ for (my $i=0;$i<=55;$i=$i+5)
+ {
+  $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+ }
+ $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"min1",
+	'value'		=>	$minR1,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+ )."</td>";  
+ 
+ $mdl_temp.="<td width=50%></td></tr></table><INPUT name=\"title\" class=input0 style=\"width:400px;FONT:12px Verdana;\" value=\"$db_micro_line[3]\">";
+
+
+
+
+
+
+
+
+
+
+
+ my $tree_temp;
+ my $tree_temp_line=<<"HEADER";
+ <table width=100% cellspacing=0 cellpadding=0>
+    <tr>
+     <%OD%>
+     <td><img src=t.gif width=3 height=1 border=0><BR></td>
+     <td nowrap style="FONT:bold 11px Verdana;"></td>
+	 <td>
+	 <td width=100% style="FONT:9px Verdana;"
+	 	onmouseover="this.style.background='blue';this.style.color='white';"
+		onmouseout="this.style.background='';this.style.color='';"
+		<%PLUS%>
+	 ><%NAME%></td>
+ 	</tr>
+ </table>
+HEADER
+my $tree_temp_od="<td <%TBG%> align=middle <%VALIGN%>><%IMG%><img src=t.gif width=11 height=1 border=0><BR></td>";
+my $selected;
+my $selected2;
+my $db_micro1 = $dbh->Query("
+	SELECT ID,fullname,tinyname
+	FROM sport_markiza_sk.tabulky_cathegory
+	ORDER BY ID");
+while (my @db_micro1_line=$db_micro1->FetchRow())
+{
+  if ($db_micro_line[1] eq $db_micro1_line[0]){$selected=$db_micro1_line[1];$selected2=$db_micro1_line[0];}
+  my $tr_uroven=my @tr_cesta=split('',$db_micro1_line[0]);
+  $tree_temp.=$tree_temp_line;
+  $width=$tr_uroven*10+5;
+  $tree_temp =~s|<%NAME%>|$db_micro1_line[2]|g;
+  $tree_temp =~s|<%ID%>|$db_micro1_line[0]|g;
+  
+  my $i0=-1;
+  my $od;
+  while ($i0<($tr_uroven))
+  {
+   $i0++;
+   $od .= $tree_temp_od;
+   $od =~s|<%TBG%>|<%TBG-$i0%>|g;
+   
+   if (($i0+1) == $tr_uroven)
+   {
+    $od=~s|<%IMG%>|<img src=t.gif width=1 height=3 border=0><BR><img src="$tom::H_media/grf/admin/forum_0_3.gif" border=0><BR>|g;
+    $tree_temp =~s|<%TBG-$i0%>|background="$tom::H_media/grf/admin/forum_0_0.gif"|g;
+   }
+      
+   if ($i0 == $tr_uroven)
+   {
+    $od=~s|<%VALIGN%>|valign=middle|g;
+    $od=~s|<%IMG%>|<img src="$tom::H_media/grf/admin/tree_0.gif" border=0><BR>|g;
+    $od =~s|<%TBG-$i0%>||g;
+    $tree_temp =~s|<%TBG-$i0%>||g;
+   }
+   else
+   {
+    $od=~s|<%IMG%>||g;
+   }
+   
+   $od=~s|<%VALIGN%>|valign=top|g;
+  }
+  $tree_temp =~s|<%OD%>|$od|g;
+  $tree_temp =~s|<%BG%>|#96B2C8|g;
+  $tree_temp =~s|<%PLUS%>|onclick="parentElement.parentElement.parentElement.parentElement.parentElement.all['VALUE'].value='$db_micro1_line[1]';parentElement.parentElement.parentElement.parentElement.parentElement.all['VALUE2'].value='$db_micro1_line[0]';"|g;
+}
+ $mdl_temp.=&select_create(
+ 	'name'		=>	"IDcathegory_",
+	'plus'		=>	"<input id=VALUE2 value=\"$selected2\" name=IDcathegory type=hidden>",
+	'value'		=>	$selected,
+	'maxlength'	=>	30,
+	'width'		=>	400-13,
+	'height'	=>	250,
+	'select'	=>	$tree_temp
+ );
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+  
+ $mdl_temp.=<<"HEADER";
+
+ <TEXTAREA
+	name="variables"
+	class=input0
+	style="width:400px;height:70px;FONT:11px Verdana;">$db_micro_line[4]</TEXTAREA><BR> 
+
+<table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit name=submit drag_here value="Test" class=btn0 onclicka="document.frames['frm_$current_time'].location='core.pl?type=tabulky_edit2&data='+$form{type}\_$id.variables.value;"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table>
+
+
+ <iframe style="display:none;" name="frm_$current_time" scrolling=yes onload="document.all['CON_$current_time'].innerHTML= document.frames['frm_$current_time'].document.body.innerHTML;"></iframe>
+ 
+ <div id="CON_$current_time"
+	style="	overflow:scroll;
+			display:block;
+			width: 400px;
+			height: 200px; 
+			clip: rect(0 500 500 0); 
+			border: solid #000000; 
+			border-width: 0px 0px 0px 0px; 
+   scrollbar-face-color: #2B83FF;
+   scrollbar-shadow-color: #0B63F1;
+   scrollbar-highlight-color: #0B63F1;
+   scrollbar-3dlight-color: #0B63F1;
+   scrollbar-darkshadow-color: #0B63F1;
+   scrollbar-track-color: #0B63F1;
+   scrollbar-arrow-color: #000000;
+			background-color: #0B63F1;">
+</div>
+
+ 
+
+<table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit name=submit drag_here value="Ulož!" class=btn0 onclick="box_erase2();"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table>
+	
+HEADER
+ 
+ 
+ $mdl_temp.="</td><td></form></td></tr></table>";
+ 
+ my $box=&box_create2("Editácia/nová tabuľka",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	400,
+	'height'		=>	50,	
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp);
+
+ return $box;
+ 
+ return undef;
+}
+}
+
+
+1;

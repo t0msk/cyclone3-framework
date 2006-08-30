@@ -1,0 +1,100 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ $env{max}=50 unless $env{max};
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+
+ $env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+ $env{db_820}=$TOM::DB_name unless $env{db_820};
+
+ my $db0=$main::DBH->Query("
+select  *
+from $env{db_820}.a820
+where active='Y' and lng='$tom::lng';
+
+");
+my %hash;
+my %hashf;
+ while (my @env0=$db0->fetchrow)
+ {
+$hash{$env0[0]}=$env0[3];
+ };
+my @array;
+my $count=0;
+my $bude;
+my $docas;
+my $mam;
+
+$XSGN{LINE_MAIN}=~/(.{1,1000})/g;
+my $xsgn_linemain=$1;
+$XSGN{LINE_SUB}=~/(.{1,1000})/g;
+my $xsgn_linesub=$1;
+$XSGN{SUB}=~/(.*)/;
+my $xsgn_sub=$1;
+$XSGN{TMP}=~/(.*)/;
+my $xsgn_tmp=$1;
+$XSGN{LINE_MAIN}=~s|<#LINE#>|forum<#LINE#>|;
+$XSGN{TMP}=~s|<#TMP#>|$XSGN{LINE_MAIN} <#TMP#>|;
+foreach ( sort keys %hash)
+{
+if($_=~/(^\d{3}$)/ )
+{
+$bude=$1;
+if($count==0)
+{
+$array[$count]=$bude;$count++;
+$docas=$bude;
+$XSGN{LINE_SUB}=~s|<#LINE#>| $hash{$array[$count-1]} <#LINE#>|;
+$XSGN{TMP}=~s|<#TMP#>|$XSGN{LINE_SUB}<#TMP#>|;
+$XSGN{LINE_SUB}=$xsgn_linesub;
+}
+else
+{
+$array[$count]=$bude;
+if($array[$count]!=$array[$count-1])
+{
+$count++;
+$docas=$bude;
+$XSGN{LINE_SUB}=~s|<#LINE#>| $hash{$array[$count-1]} <#LINE#>|;
+$XSGN{TMP}=~s|<#TMP#>|$XSGN{LINE_SUB}<#TMP#>|;
+$XSGN{LINE_SUB}=$xsgn_linesub;
+}
+}
+}
+if($_=~/(^$docas.{1,}$)/ )
+{
+$mam=$1;
+$XSGN{SUB}=~s|<#LINE#>|&nbsp&nbsp&nbsp $hash{$_} <#LINE#>|;
+$XSGN{SUB}=~s|<#SRC#>|TID=4&where=$_<#SCR#>|;
+$XSGN{TMP}=~s|<#TMP#>| $XSGN{SUB} &nbsp<#TMP#>|;
+$XSGN{SUB}=$xsgn_sub;
+#$XSGN{TMP}=~s|<#TMP#>| $prvy_hash &nbsp<#TMP#>|;
+#$XSGN{SUB}=~s|<#FORUM#>|$hash{$prvy_hash}<#FORUM#>|;
+#$XSGN{SUB}=~s|<#POPIS#>|$hasha{$prvy_hash}<#POPIS#>|;
+#$XSGN{SUB}=~s|<#POUZ#>| $count_name  <#POUZ#>|;
+#$XSGN{SUB}=~s|<#POPR#>| $count_pocet <#POPR#>|;
+#$XSGN{SUB}=~s|<#POPRI#>|$hash3{$array[$#array]}<br>$hour:$min:$sec <br> $mday.$mon.$year <#POPRI#>|;
+#$XSGN{TMP}=~s|<#TMP#>| $XSGN{SUB} &nbsp<#TMP#>|;
+#$XSGN{SUB}=$xsgn_sub;
+
+}
+};
+
+
+
+
+
+
+ return 1}
+
+1;

@@ -1,0 +1,206 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+#alarm 3;
+sub execute
+{
+if($main::FORM{where}==2){
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+
+ $env{db}=$TOM::DB_name unless $env{db};
+ #$env{db_count}=30 unless $env{db_count};
+ $env{format}= "t" unless $env{format};
+ $env{horizontal}=3 unless $env{horizontal};
+ $env{vertical}=2 unless $env{vertical};
+ $env{level}=2 unless $env{level};
+ $env{first_horizontal} = 4 unless $env{first_horizontal};
+ $env{popis}= "1" unless $env{popis};
+ $env{sort}= "1"   unless $env{sort};
+  $env{category} = $main::FORM{went};   #urcuje pohyb v galerke
+
+
+
+$XSGN{ELEMENT}=~/(.{1,10000})/g;
+my $xsgn_element=$1;
+$XSGN{ELEMENT0}=~/(.{1,10000})/g;
+my $xsgn_element0=$1;
+$XSGN{LINE}=~/(.{1,10000})/g;
+my $xsgn_line=$1;
+$XSGN{POS}=~/(.*)/;
+my $xsgn_pos=$1;
+$XSGN{TMP}=~/(.*)/;
+my $xsgn_tmp=$1;
+
+
+
+$XSGN{LINE}=$xsgn_line;
+$XSGN{POS0}=~s|<#POS#>|$main::FORM{previous}<br /><#POS#>|;
+#$XSGN{LINE}=~s|<#LINE#>|$XSGN{POS}<#LINE#>|;
+$XSGN{POS}=$xsgn_pos;
+$XSGN{TMP}=~s|<#TMP#>|$XSGN{POS0}<#TMP#>|;
+
+
+
+ my $Line=$main::DBH->Query("
+
+select
+Z.ID,Z.hash,A.IDcategory,O.name
+from  $env{db}.a500 as Z
+left join $env{db}.a500_attrs as A ON A.ID=Z.ID
+left join  $env{db}.a500_category O ON O.ID=A.IDcategory
+where Z.format='t' AND Z.active='Y'  AND O.active='Y'  AND Z.IDcategory like '$env{category}%' order by O.ID
+");
+
+
+
+
+my %hash1;
+my %hash2;
+my %hash4;
+my %hash5;
+my %hash6;
+my %hash7;
+
+while(my @db_line=$Line->fetchrow)
+{
+$hash1{$db_line[0]}=$db_line[2];
+$hash2{$db_line[2]}=$db_line[3];
+$hash5{$db_line[2]}=$db_line[1];
+$hash6{$db_line[2]}=$db_line[0];
+}
+
+my $count_pole=0;
+my $count=0;
+my $mam;
+my %hash3;
+my $hori=0;
+
+ my $starting=0;
+ my $Line3=$main::DBH->Query("
+
+select
+Z.ID,Z.hash,A.IDcategory,O.name
+from $env{db}.a500 as Z
+left join $env{db}.a500_attrs as A ON Z.ID=A.ID
+left join  $env{db}.a500_category O ON O.ID=A.IDcategory
+where Z.format='t' AND Z.active='Y' AND Z.IDcategory='$env{category}' order by O.ID limit 6
+");
+
+while(my @upole=$Line3->fetchrow)
+{
+
+		if($upole[0]=~// || $upole[1]=~// || $upole[2]=~// || $upole[3]=~//){last;}
+
+		if($starting==0)
+		{
+			$XSGN{LINE}=$xsgn_line;
+			$XSGN{POS}=~s|<#POS#>|$upole[3]<br /><#POS#>|;
+			$XSGN{POS}=~s|<#SRC#>|type=a500_cat&went=$upole[2]&go=jo&style=end<#SRC#>|;
+			$XSGN{LINE}=~s|<#LINE#>|<tr><td colspan="6" class="name-gallery">$XSGN{POS}</td></tr><#LINE#>|;
+
+			$XSGN{POS}=$xsgn_pos;
+			$XSGN{TMP}=~s|<#TMP#>|$XSGN{LINE}<#TMP#>|;
+			$starting++;
+
+			$XSGN{LINE}=$xsgn_line;
+			$upole[0]=~/(.{4})/;
+			my $add=$1;
+			$XSGN{ELEMENT0}=~s|<#ELEMENT0#>|$tom::H_500\/$add\/$upole[1]-t.jpg|;
+			$XSGN{LINE}=~s|<#LINE#>|<tr><td class="image-big" width="90">$XSGN{ELEMENT0}</td><#LINE#>|;
+			$XSGN{ELEMENT0}=$XSGN{ELEMENT0_2};
+		}
+
+		else
+		{
+			$upole[0]=~/(.{4})/;
+			my $add=$1;
+			$XSGN{ELEMENT}=~s|<#ELEMENT#>|$tom::H_500\/$add\/$upole[1]-t.jpg|;
+			$XSGN{LINE}=~s|<#LINE#>|<td class="image-small" style="vertical-align: bottom;">$XSGN{ELEMENT}</td><#LINE#>|;
+			$XSGN{ELEMENT}=$XSGN{ELEMENT_2};
+			$starting++;
+		}
+}
+$XSGN{TMP}=~s|<#TMP#>|$XSGN{LINE}</tr><#TMP#>|;
+
+$XSGN{LINE}=$xsgn_line;
+
+
+
+
+
+foreach  (keys %hash1)
+{
+if($hash1{$_}=~/($env{category}.{2})/)
+{
+$mam=$1;
+$hash3{$1}="";
+}
+
+}
+my $prvax;
+foreach $prvax ( keys %hash3){
+$XSGN{LINE}=$xsgn_line;
+$XSGN{POS}=~s|<#POS#>|$hash2{$prvax}<br /><#POS#>|;
+$XSGN{POS}=~s|<#SRC#>|type=a500_cat&went=$prvax&go=jo<#SRC#>|;
+$XSGN{LINE}=~s|<#LINE#>|<tr><td class="medzera" colspan="6"></td></tr><tr><td colspan="6" class="name-gallery">$XSGN{POS}<#LINE#></td></tr>|;
+
+$XSGN{POS}=$xsgn_pos;
+$XSGN{TMP}=~s|<#TMP#>|$XSGN{LINE}<#TMP#>|;
+$XSGN{LINE}=$xsgn_line;
+
+$hash6{$prvax}=~/(\d{4})/;
+my $addr=$1;
+
+$XSGN{ELEMENT0}=~s|<#ELEMENT0#>|$tom::H_500\/$addr\/$hash5{$prvax}-t.jpg|;
+$XSGN{LINE}=~s|<#LINE#>|<tr><td class="image-big" width="90">$XSGN{ELEMENT0}</td><#LINE#>|;
+$XSGN{ELEMENT0}=$XSGN{ELEMENT0_2};
+
+
+my $Line2=$main::DBH->Query("
+select
+ID,hash
+from $env{db}.a500
+where format='t' AND active='Y' AND IDcategory='$prvax' limit 5
+");
+
+
+
+
+while(my @db_line2=$Line2->fetchrow)
+{
+$db_line2[0]=~/(\d{4})/;
+my $addrs=$1;
+$XSGN{ELEMENT}=~s|<#ELEMENT#>|$tom::H_500\/$addrs\/$db_line2[1]-t.jpg|;
+$XSGN{LINE}=~s|<#LINE#>|<td class="image-small" style="vertical-align: bottom;">$XSGN{ELEMENT}</td><#LINE#>|;
+$XSGN{ELEMENT}=$XSGN{ELEMENT_2};
+}
+
+
+$XSGN{TMP}=~s|<#TMP#>|$XSGN{LINE}</tr> <#TMP#>|;
+$XSGN{LINE}=$xsgn_line;
+undef $hori;
+
+#$XSGN{ELEMENT0}=$XSGN{ELEMENT};
+}
+}#ifko pre whereyCwICKzuOUBystnt
+ return 1}
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+

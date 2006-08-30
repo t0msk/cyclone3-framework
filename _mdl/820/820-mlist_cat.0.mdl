@@ -1,0 +1,146 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ $env{max}=50 unless $env{max};
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+
+ $env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+ $env{db_820}=$TOM::DB_name unless $env{db_820};
+
+my $select;
+
+ if (!$env{ID}) {
+   $env{ID}="";
+ } else {
+	$select="AND (ID LIKE '$env{ID}___' OR ID='$env{ID}')";
+ }
+
+ if (!$env{levels}) {
+	$env{levels}=1;
+ }
+
+ $env{levels}=$env{levels}*3;
+
+ my $level="_"x$env{levels};
+
+ my @struct;
+ my %struct_base;
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_820}.a820 WHERE type='C' $select
+	AND	(lng='$env{lng}' OR lng='')
+		AND active='Y'
+	ORDER BY ID");
+ while (my %env0=$db0->fetchhash)
+ {
+
+	my $db1=$main::DBH->Query("
+	SELECT COUNT(*)
+	FROM $env{db_820}.a820
+	WHERE	ID LIKE '$env0{ID}___'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+		AND type='F'");
+
+  my	$null=$db1->fetchrow();
+
+  my $var=$env0{ID};
+  $var=~s|^$env{from}||;
+  push @struct,$var;
+  push @struct,length($var)/3;
+  $struct_base{$var}{ID}=$env0{ID};
+  $struct_base{$var}{name}=$env0{name};
+  $struct_base{$var}{about}=$env0{about};
+  $struct_base{$var}{forums}=$null;
+ }
+
+ for (my $i=0;$i<@struct;$i=$i+2)
+ {
+  my $tr_uroven=$struct[$i+1];
+  $XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE}<#LINE#>|;
+  $XSGN{TMP}=~s|<#ITEM#>|$XSGN{ITEM_TREE}|;
+  my $width=$tr_uroven*16+5;
+  $XSGN{TMP} =~s|<%NAME%>|$struct_base{$struct[$i]}{name}&nbsp;|g;
+  $XSGN{TMP} =~s|<%ABOUT%>|$struct_base{$struct[$i]}{about}&nbsp;|g;
+  $XSGN{TMP} =~s|<%ID%>|$struct_base{$struct[$i]}{ID}|g;
+  $XSGN{TMP} =~s|<%FORUMS%>|$struct_base{$struct[$i]}{forums}&nbsp;|g;
+  $XSGN{TMP} =~s|<%XRELATED%>|$struct_base{$struct[$i]}{xrelated}&nbsp;|g;
+
+  if ($struct_base{$struct[$i]}{ID} !~ /^00/)
+  {
+  $XSGN{NULL}=$XSGN{ROOM};
+  $XSGN{NULL} =~s|<%ROOM_id%>|$struct_base{$struct[$i]}{ID}|g;
+  my $space="-"x$tr_uroven;
+  $XSGN{NULL} =~s|<%ROOM_name%>|$space$struct_base{$struct[$i]}{name}|g;
+  #$XSGN{NULL} =~s|<%ROOM_name%>|(??{- x $tr_uroven})$struct_base{$struct[$i]}{name}|g;
+  $XSGN{TMP} =~s|<#ROOM#>|$XSGN{NULL}<#ROOM#>|g;
+  }
+
+  my $i0=$env{from_level};
+  $XSGN{TREE}="";
+  $XSGN{TREE2}="";
+  while ($i0<($tr_uroven))
+  {
+   $i0++;
+   $XSGN{TREE} .= $XSGN{OD};
+   $XSGN{TREE} =~s|<%TBG%>|<%TBG-$i0%>|g;
+	$XSGN{TREE2} .= $XSGN{OD};
+   $XSGN{TREE2} =~s|<%TBG%>|<%TBG-$i0%>|g;
+
+   if (($i0+1) == $tr_uroven)
+   {
+    $XSGN{TREE}=~s|<%IMG%>|$XSGN{img_cross}|g;
+    $XSGN{TMP} =~s|<%TBG-$i0%>|$XSGN{bg_line}|g;
+   }
+
+   if ($i0 == $tr_uroven)
+   {
+    $XSGN{TREE}=~s|<%VALIGN%>|valign=top|g;
+    $XSGN{TREE}=~s|<%IMG%>|$XSGN{icon}|g;
+
+    if ($struct[$i+3]>$struct[$i+1])
+    {
+     $XSGN{TREE} =~s|<%TBG-$i0%>|$XSGN{bg_cross}|g;
+    }
+    else {$XSGN{TREE} =~s|<%TBG-$i0%>||g;}
+    $XSGN{TMP} =~s|<%TBG-$i0%>||g;
+   }
+   else
+   {
+    $XSGN{TREE}=~s|<%IMG%>||g;
+   }
+
+   $XSGN{TREE}=~s|<%VALIGN%>|valign=top|g;
+  }
+  $XSGN{TMP} =~s|<#OD#>|$XSGN{TREE}|g;
+  $XSGN{TMP} =~s|<%BG%>|#96B2C8|g;
+
+
+  $XSGN{TMP}=~s|<%STYLE_TR%>|class="list_trA"|g;
+  $XSGN{TMP}=~s|<%STYLE_TD%>|class="list_trA"|g;
+  $XSGN{TMP}=~s|<%ROOM_USERS%>||g;
+  $XSGN{TMP}=~s|<%ROOM_TOPIC%>||g;
+  $XSGN{TMP}=~s|<%ROOM_INFO%>||g;
+
+   my $flag_pic;
+
+   $XSGN{TMP}=~s|<#LINES#>||g;
+	$XSGN{TMP}=~s|<%ROOM_USERS%>||g;
+   $XSGN{TMP}=~s|<%ROOM_TOPIC%>||g;
+   $XSGN{TMP}=~s|<%ROOM_INFO%>||g;
+
+ }
+
+ return 1}
+
+1;

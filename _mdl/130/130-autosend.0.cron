@@ -1,0 +1,126 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+#use halabala;
+use strict;
+use Net::SMTP;
+
+
+sub execute
+{
+ my %env=@_;
+
+# print "version:".($Net::SMTP::VERSION)."\n";
+ 
+ #return 1;
+ 
+ if (!$env{max}){$cron::ERR="not defined max messages";return undef;}
+ if (!$env{host}){$cron::ERR="not defined smtp host";return undef;}
+ #if (!$env{db_130}){$cron::ERR="not defined mail database db_130";return undef;}
+ my $var;$var="AND priority>=$env{min_priority}" if $env{min_priority};
+
+ if ($cron::P eq $CRON::P)
+ {
+  CRON::debug::log(5,"WARN: global/master use, using database $TOM::DB_name_TOM, table a130_send");
+ }
+ else
+ {
+  CRON::debug::log(5,"WARN: local use, using database $TOM::DB_name, table a130_send");
+ }
+
+
+ my $lock=new TOM::lock("a130 - autosend") || return 1;
+
+
+ if (my $db0=$main::DBH->Query("
+	SELECT *
+	FROM TOM.a130_send
+	WHERE sendtime<$cron::time_current AND active='N' AND priority>-120 $var
+	ORDER BY priority DESC, sendtime
+	LIMIT $env{max}"))
+ {
+  while (my %env0=$db0->fetchhash)
+  {
+	
+	if ($env0{from_email} ne $TOM::contact{'from'})
+	{
+		main::_log("DEPRECATED from_email (not from $TOM::contact{'from'}) used in table a130_send, email ID $env0{ID}",1,"pub.warn",1);
+		$env0{'from_email'}=$TOM::contact{'from'};
+	};
+	
+	if ($env0{to_email}=~s|,|;|g)
+	{
+		main::_log(0,"DEPRECATED delimiter , not ; used in table a130_send, email ID   $env0{ID}",1,"pub.warn",1);
+	};
+	
+	$env0{to_email}=~s| ||g;
+	$env0{to_email}=~s|<||g;
+	$env0{to_email}=~s|>||g;
+	
+	$env0{to_email}=~s|^;||g;
+	$env0{to_email}=~s|;$||g;
+	
+	CRON::debug::log(8,"sending email $env0{ID} ($env0{priority}) from $env0{from_email} to $env0{to_email}");
+	
+	my $smtp = Net::SMTP->new($env{host});
+	
+	my @rcpt=split(';',$env0{to_email});
+	
+	if (not $smtp->mail($env0{from_email}))
+	{
+		CRON::debug::log(9,"can't send, not accepted sender ".$smtp->status,1);
+		$main::DBH->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
+		next;
+	}
+	
+	if (not $smtp->recipient(@rcpt))
+	{
+		CRON::debug::log(9,"can't send, not accepted RCPT: $env0{to_email} ".$smtp->status,1);
+		$main::DBH->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
+		next;
+	}
+	
+	if (not $smtp->data())
+	{
+		CRON::debug::log(9,"can't accept DATA",1);
+		$main::DBH->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
+		next;
+	}
+	
+	if (not $smtp->datasend($env0{body}))
+	{
+		CRON::debug::log(9,"can't accept DATASEND",1);
+		$main::DBH->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
+		next;
+	}
+	
+	if (not $smtp->dataend())
+	{
+		CRON::debug::log(9,"can't accept DATAEND",1);
+		$main::DBH->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
+		next;
+	}
+	
+	$smtp->quit;
+	
+	$main::DBH->Query("UPDATE TOM.a130_send SET active='Y' WHERE ID='$env0{ID}' LIMIT 1");
+	
+	next;
+	
+
+	$smtp->dataend();
+	
+	$smtp->quit;
+	
+  }
+ }
+ else
+ {
+  CRON::debug::log(8,"bad request",1);
+ }
+ 
+ $lock->close();
+
+ return 1}
+
+1;

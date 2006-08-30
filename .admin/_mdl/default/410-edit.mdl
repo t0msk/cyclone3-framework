@@ -1,0 +1,369 @@
+sub BaseModul
+{
+	my $ID=$form{ID} if ($form{ID});
+	if ($form{set})
+	{
+		$HTML_HEADER{BODY}{extract}="yes";
+
+		######################################################
+		# creating timestamps                                                               #
+		######################################################
+
+		$form{year1}-=1900;
+		$form{year2}-=1900;
+		$form{mom1}--;
+		$form{mom2}--;
+		my $starttime=Time::Local::timelocal(undef,$form{min1},$form{hour1},$form{day1},$form{mom1},$form{year1},undef,undef,undef);
+		my $endtime=Time::Local::timelocal(undef,$form{min2},$form{hour2},$form{day2},$form{mom2},$form{year2},undef,undef,undef);
+
+		######################################################
+		# requesting id of author                                                           #
+		######################################################
+
+		$db_micro1 = $dbh->Query("SELECT ID FROM $MAIN_db_a120 WHERE nickname='$form{author}' LIMIT 1");
+		if (@db_micro1_line=$db_micro1->FetchRow()){$form{IDauthor}=$db_micro1_line[0];}
+
+		if ($ID>0)
+		{
+			######################################################
+			# updating survey                                                                    #
+			######################################################
+
+			if (exists $form{allow_endtime}) {$endtime=",endtime='$endtime'";} else {$endtime=",endtime='0'";}
+			$dbh->Query("UPDATE $MAIN_db_a410 SET title='$form{title}', IDauthor='$form{IDauthor}',IDeditor='$form{IDeditor}', tiny='$form{tiny}', starttime='$starttime'$endtime WHERE ID='$ID' LIMIT 1");
+		}
+		else
+		{
+			######################################################
+			# creating a new survey                                                            #
+			######################################################
+
+			if (not exists $form{allow_endtime}) {$endtime="0";}
+			$db_microx = $dbh->Query("
+			INSERT INTO $MAIN_db_a410
+			(ID, IDlink, IDcategory, domain, title, tiny, starttime, endtime, IDauthor, IDeditor, votes, xrelated, lng, active)
+			VALUES
+			('', '', '', 'markiza.sk', '$form{title}', '$form{tiny}', '$starttime', '$endtime', '$form{IDauthor}', '$form{IDeditor}', '', '', 'sk', 'N');
+			");
+		}
+
+		return "<script>parent.document.frames['frm_base'].location.reload();</script>";
+	}
+	else
+	{
+		$HTML_HEADER{BODY}{extract}="yes";
+
+		######################################################
+		# creating survey box                                                               #
+		######################################################
+
+		if (defined $ID)
+		{
+			$db_micro = $dbh->Query("SELECT * FROM $MAIN_db_a410 WHERE ID='$ID' LIMIT 1");
+			%db_micro_line=$db_micro->FetchHash();
+
+			(undef,$minR1,$hourR1,$mdayR1,$momR1,$yearR1,undef,undef,undef) = localtime($db_micro_line{starttime});
+			(undef,$minR2,$hourR2,$mdayR2,$momR2,$yearR2,undef,undef,undef) = localtime($db_micro_line{endtime});
+		}
+		else
+		{
+			(undef,$minR1,$hourR1,$mdayR1,$momR1,$yearR1,undef,undef,undef) = localtime($current_time);
+			(undef,$minR2,$hourR2,$mdayR2,$momR2,$yearR2,undef,undef,undef) = localtime($current_time+(3600));
+		}
+
+		$momR1++;$yearR1=$yearR1+1900;
+		$momR2++;$yearR2=$yearR2+1900;
+
+		my $mdl_temp=<<"HEADER";
+		<form name="surveyEdit_$ID" action="core.pl?type=410-edit&id=$ID&set=yes" method="POST" enctype="multipart/x-form-data" target="frm_micro">
+		&nbsp;Názov ankety:<BR>
+		<input type=text name="title" class="long" value="$db_micro_line{title}" maxlength=160 drag_resizeX='0'><BR>
+		<!--<input type=hidden name="IDcategory" value="$db_micro_line{ID_cat}">/-->
+		<table cellspacing=0 cellpadding=0 border=0 width=100%>
+		<tr>
+			<td style="FONT:10px Verdana;COLOR:white;">
+			&nbsp;Autor:<BR>
+			</td>
+			<td style="FONT:10px Verdana;COLOR:white;">
+			&nbsp;Editor:<BR>
+			</td>
+		</tr>
+		<tr>
+			<td>
+HEADER
+
+		my $mdl_micro;
+		$db_micro1 = $dbh->Query("SELECT nickname FROM $MAIN_db_a120 ORDER BY nickname");
+		while (@db_micro1_line=$db_micro1->FetchRow())
+		{
+			#$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$db_micro1_line[0]';\">&nbsp;$db_micro1_line[0]</div>\n";
+			$mdl_micro.=&select_add('value'=>$db_micro1_line[0],'html'=>$db_micro1_line[0]);
+		}
+		$db_micro1 = $dbh->Query("SELECT nickname FROM $MAIN_db_a120 WHERE ID='$db_micro_line{IDauthor}'");
+		if (@db_micro1_line=$db_micro1->FetchRow()) { $db_micro_line{IDauthor}=$db_micro1_line[0]; }
+		$mdl_temp.=&select_create(
+		'name'		=>	"author",
+		'value'		=>	$db_micro_line{IDauthor},
+		'maxlength'	=>	30,
+		'width'		=>	250,
+		'height'	=>	200,
+		'drag_resizeX'	=>	'-150',
+		'select'	=>	$mdl_micro
+		);
+
+		$mdl_temp.="</td><td>";
+
+		$db_micro1 = $dbh->Query("SELECT ID FROM $MAIN_db_a120 WHERE nickname='$ENV{REMOTE_USER}' AND IDtype='1'");
+		if (@db_micro1_line=$db_micro1->FetchRow()) { $db_micro_line{IDeditor}=$db_micro1_line[0]; }
+		else
+		{
+			$db_micro1 = $dbh->Query("
+				INSERT INTO $MAIN_db_a120 (IDtype,nickname,fullname,active)
+				VALUES ('1','$ENV{REMOTE_USER}','$ENV{REMOTE_USER}','Y')");
+			$db_micro1 = $dbh->Query("SELECT ID FROM $MAIN_db_a120 WHERE nickname='$ENV{REMOTE_USER}' AND IDtype='1'");
+			if (@db_micro1_line=$db_micro1->FetchRow()) { $db_micro_line{IDeditor}=$db_micro1_line[0]; }
+		}
+
+		if ($db_micro_line{IDeditor}){$mdl_temp.="<input name=\"IDeditor\" type=text value=\"$db_micro_line{IDeditor}\" readonly class=input0 style=\"width:90%;\" drag_resizeX='0'><br>";}
+		else {$mdl_temp.="<input name=\"IDeditor\" type=text value=\"$form{editor}\" readonly class=input0 style=\"width:90%;\" drag_resizeX='0'><br>";}
+
+		$mdl_temp.="</td></tr></table>";
+
+		my $temp;
+
+
+		######################################################
+		# creating starttime dropdown                                                    #
+		######################################################
+
+		$mdl_temp.="<table cellspacing=2 cellpadding=0 border=0><tr><td width=\"50%\">&nbsp;Zverejniť od:<br></td><td>Do:</td><td width=\"50%\">&nbsp;</td></tr><tr>";
+		$mdl_temp.="<td valign=\"top\"><table cellspacing=2 cellpadding=0 border=0><tr>";
+
+		my $width0=30-12;
+		my $width1=50-12;
+
+		my $mdl_micro;
+		for (my $i=1;$i<=31;$i++)
+		{
+			$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+		}
+		$mdl_temp.="<td>".&select_create(
+			'name'		=>	"day1",
+			'value'		=>	$mdayR1,
+			'maxlength'	=>	30,
+			'width'		=>	$width0,
+			'width1'	=>	50,
+			'select'	=>	$mdl_micro
+		)."</td>";
+
+		my $mdl_micro;
+		@mesiac=("january","february","march","april","may","june","july","august","september","october","november","december");
+		for (my $i=1;$i<=12;$i++)
+		{
+			$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i-$mesiac[$i-1]</div>\n";
+		}
+		$mdl_temp.="<td>".&select_create(
+			'name'		=>	"mom1",
+			'value'		=>	$momR1,
+			'maxlength'	=>	30,
+			'width'		=>	$width0,
+			'width1'	=>	90,
+			'select'	=>	$mdl_micro
+		)."</td>";
+
+		my $mdl_micro;
+		for (my $i=2000;$i<=2050;$i++)
+		{
+			$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+		}
+		$mdl_temp.="<td>".&select_create(
+			'name'		=>	"year1",
+			'value'		=>	$yearR1,
+			'maxlength'	=>	30,
+			'width'		=>	$width1,
+			'width1'	=>	50,
+			'select'	=>	$mdl_micro
+		)."</td>";
+
+		$mdl_temp.="<td>&nbsp;</td>";
+
+		my $mdl_micro;
+		for (my $i=0;$i<=23;$i++)
+		{
+			$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+		}
+		$mdl_temp.="<td>".&select_create(
+			'name'		=>	"hour1",
+			'value'		=>	$hourR1,
+			'maxlength'	=>	30,
+			'width'		=>	$width0,
+			'width1'	=>	50,
+			'select'	=>	$mdl_micro
+		)."</td>";
+
+		$mdl_temp.="<td></td>";
+
+		my $mdl_micro;
+		for (my $i=0;$i<=55;$i=$i+5)
+		{
+			$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+		}
+		$mdl_temp.="<td>".&select_create(
+			'name'		=>	"min1",
+			'value'		=>	$minR1,
+			'maxlength'	=>	30,
+			'width'		=>	$width0,
+			'width1'	=>	50,
+			'select'	=>	$mdl_micro
+		)."</td>";
+
+		if ($form{ID}>0)
+		{
+		if (($db_micro_line{endtime} eq "0") || ($db_micro_line{endtime} eq "")) { $allow_endtime=""; $allow_endtime_show="none"; } else { $allow_endtime="checked"; $allow_endtime_show="normal"; }
+		}
+		else
+		{
+		$allow_endtime=""; $allow_endtime_show="none";
+		}
+
+		$mdl_temp.="</tr></table><td><input type=\"checkbox\" class=\"chkbox\" name=\"allow_endtime\" value=\"1\" onclick=\"if (this.checked) {document.getElementById('allow_endtime_div').style.display='block';} else {document.getElementById('allow_endtime_div').style.display='none'; }\" $allow_endtime></td>";
+		$mdl_temp.="<td valign=\"top\"><div id=\"allow_endtime_div\" style=\"display: $allow_endtime_show\"><table cellspacing=2 cellpadding=0 border=0><tr>";
+=head1
+		$mdl_temp.="</tr></table></td><td style=\"FONT:10px Verdana;COLOR:white;\">";
+		$mdl_temp.=" Do:<br><input type=\"checkbox\" name=\"allow_endtime\" value=\"1\" onclick=\"if (this.checked) {document.getElementById('allow_endtime_div').style.display='block';} else {document.getElementById('allow_endtime_div').style.display='none'; }\" $allow_endtime>";
+  $mdl_temp.="</td><td style=\"FONT:10px Verdana;COLOR:white;\" width=\"50%\" valign=\"bottom\">";
+=cut
+
+		#$mdl_temp.="<td nowrap>-</td>";
+
+		######################################################
+		# creating endtime dropdown                                                    #
+		######################################################
+
+		#$mdl_temp.="<table cellspacing=2 cellpadding=0 border=0><tr><td colspan=16 valign=\"top\"></td></tr><tr>";
+
+		my $mdl_micro;
+		for (my $i=1;$i<=31;$i++)
+		{
+			$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+		}
+		$mdl_temp.="<td>".&select_create(
+			'name'		=>	"day2",
+			'value'		=>	$mdayR2,
+			'maxlength'	=>	30,
+			'width'		=>	$width0,
+			'width1'	=>	50,
+			'select'	=>	$mdl_micro
+		)."</td>";
+
+		my $mdl_micro;
+		@mesiac=("january","february","march","april","may","june","july","august","september","october","november","december");
+		for (my $i=1;$i<=12;$i++)
+		{
+			$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i-$mesiac[$i-1]</div>\n";
+		}
+		$mdl_temp.="<td>".&select_create(
+			'name'		=>	"mom2",
+			'value'		=>	$momR2,
+			'maxlength'	=>	30,
+			'width'		=>	$width0,
+			'width1'	=>	90,
+			'select'	=>	$mdl_micro
+		)."</td>";
+
+		my $mdl_micro;
+		for (my $i=2000;$i<=2050;$i++)
+		{
+			$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+		}
+		$mdl_temp.="<td>".&select_create(
+			'name'		=>	"year2",
+			'value'		=>	$yearR2,
+			'maxlength'	=>	30,
+			'width'		=>	$width1,
+			'width1'	=>	50,
+			'select'	=>	$mdl_micro
+		)."</td>";
+
+		$mdl_temp.="<td>&nbsp;</td>";
+
+		my $mdl_micro;
+		for (my $i=0;$i<=23;$i++)
+		{
+			$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+		}
+		$mdl_temp.="<td>".&select_create(
+			'name'		=>	"hour2",
+			'value'		=>	$hourR2,
+			'maxlength'	=>	30,
+			'width'		=>	$width0,
+			'width1'	=>	50,
+			'select'	=>	$mdl_micro
+	)."</td>";
+
+		$mdl_temp.="<td></td>";
+
+		my $mdl_micro;
+		for (my $i=0;$i<=55;$i=$i+5)
+		{
+			$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+		}
+			$mdl_temp.="<td>".&select_create(
+			'name'		=>	"min2",
+			'value'		=>	$minR2,
+			'maxlength'	=>	30,
+			'width'		=>	$width0,
+			'width1'	=>	50,
+			'select'	=>	$mdl_micro
+		)."</td>";
+
+		$mdl_temp.="</tr></table></div></td></table>";
+
+		$mdl_temp.=<<"HEADER";
+		&nbsp;Popis:<br>
+		<TEXTAREA
+		drag_resizeX='0'
+		name="tiny"
+		class=input0
+		style="width:445px;height:50px;FONT:12px Verdana;">$db_micro_line{tiny}</TEXTAREA><BR>
+HEADER
+
+		if (defined $ID)
+		{
+			$mdl_temp.=<<"HEADER";
+		&nbsp;Odpovede:<br>
+	<iframe style="display:none;" name="ank_frm_$current_time" src="core.pl?type=410-answers&frm=$current_time&idquestion=$db_micro_line{ID}" scrolling=yes onload="document.all['ank_answ_$current_time'].innerHTML= document.frames['ank_frm_$current_time'].document.body.innerHTML;"></iframe>
+	<div id="ank_answ_$current_time"
+		style="	overflow:scroll;
+				display:block;
+				width: 445px;
+				height: 100px;
+				clip: rect(0 500 500 0);
+				border-width: 0px 0px 0px 0px;">
+	</div>
+	<div class="btn-bar" style="background: url($tom::H_media/grf/admin/win_top_0_back.gif);"><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><input type=submit drag_here value="Uložiť!" class="btn" onclick="box_erase2();"><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0></div>
+HEADER
+		}
+		else
+		{
+			$mdl_temp.=<<"HEADER";
+		&nbsp;Ak chcete vložiť odpovede na anketu, kliknite na 'Uložiť' a znovu ju otvorte.<br><br>
+	<div class="btn-bar" style="background: url($tom::H_media/grf/admin/win_top_0_back.gif);"><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><input type=submit drag_here value="Uložiť!" class="btn" onclick="box_erase2();"><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0></div>
+HEADER
+		}
+		$mdl_temp.="</td><td></form>";
+
+		my $box;
+		$box=&article_box_create("Editácia ankety",
+			'color_base0'	=>	"#0B63F1",
+			'width'			=>	200,
+			'height'		=>	50,
+			'close'			=>	"yes",
+			'html'			=>	$mdl_temp
+		);
+		return $box;
+
+		return undef;
+	}
+}
+1;

@@ -1,0 +1,161 @@
+sub BaseModul
+{
+
+ my $id=$form{ID} if ($form{ID});
+ if ($form{set})
+ {
+
+ }
+ else #tu je ten predel!!!------------------------------------------------------------------------------------------------------
+ {
+  $HTML_HEADER{BODY}{extract}="yes";
+
+########for testing purposes .. targeting into the same frame
+  my $mdl_temp=<<"HEADER";
+  <table width=100% cellspacing=0 cellpadding=0 border=0><tr><td>
+  <form action="core.pl?type=021&search=1" method="POST" enctype="multipart/x-form-data" target="frm_base">
+  </td><td width=100% style="FONT:10px Verdana;COLOR:white;">
+  &nbsp;Názov:<br>
+ <input type=text name="name" id="name" value="" class=input0 maxlength=260 style="FONT:9px Verdana;width:255px;" drag_resizeX='0'><BR>
+  &nbsp;Popis:<br>
+ <input type=text name="description" id="description" value="" class=input0 maxlength=260 style="FONT:9px Verdana;width:255px;" drag_resizeX='0'><BR>
+  &nbsp;Rating:<br>
+ <input type=text name="rating" id="rating" value="" class=input0 maxlength=2 size=2 style="FONT:9px Verdana;" drag_resizeX='0'><BR>
+HEADER
+
+
+  $mdl_temp.="<table width=100% cellspacing=0 cellpadding=0 border=0><tr><td style=\"FONT:10px Verdana;COLOR:white;\"  width=\"50%\">&nbsp;Zobraziť od/do:<br>";
+
+  $mdl_temp.="<table cellspacing=2 cellpadding=0 border=0><tr><td colspan=16></td></tr><tr>";
+
+  my $width0=30-12;
+  my $width1=50-12;
+
+  my $mdl_micro;
+  for (my $i=1;$i<=31;$i++)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"day1",
+	'value'		=>	$mdayR1,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+
+  my $mdl_micro;
+  @mesiac=("january","february","march","april","may","june","july","august","september","october","november","december");
+  for (my $i=1;$i<=12;$i++)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i-$mesiac[$i-1]</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"mom1",
+	'value'		=>	$momR1,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	90,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+
+
+  my $mdl_micro;
+  for (my $i=2000;$i<=2050;$i++)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"year1",
+	'value'		=>	$yearR1,
+	'maxlength'	=>	30,
+	'width'		=>	$width1,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+  #$mdl_temp.="</table>";
+
+  $mdl_temp.="</tr></table></td><td style=\"FONT:10px Verdana;COLOR:white;\">";
+  $mdl_temp.="</td><td style=\"FONT:10px Verdana;COLOR:white;\" width=\"50%\" valign=\"bottom\">";
+
+  #$mdl_temp.="<td nowrap>-</td>";
+
+  $mdl_temp.="<table cellspacing=2 cellpadding=0 border=0><tr><td colspan=16 valign=\"top\"></td></tr><tr>";
+
+  my $mdl_micro;
+  for (my $i=1;$i<=31;$i++)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"day2",
+	'value'		=>	$mdayR2,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+  my $mdl_micro;
+  @mesiac=("january","february","march","april","may","june","july","august","september","october","november","december");
+  for (my $i=1;$i<=12;$i++)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i-$mesiac[$i-1]</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"mom2",
+	'value'		=>	$momR2,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	90,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+  my $mdl_micro;
+  for (my $i=2000;$i<=2050;$i++)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"year2",
+	'value'		=>	$yearR2,
+	'maxlength'	=>	30,
+	'width'		=>	$width1,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+  $mdl_temp.="</tr></table></td></table>";
+
+
+$mdl_temp.=<<"HEADER";
+  <input type=checkbox name="only_markiza" id="only_markiza" value="1" style="FONT:9px Verdana;" drag_resizeX='0'> &nbsp;Len TV Markiza:<BR>
+  <table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit drag_here value="Hľadať!!" class=btn0></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table><br>
+HEADER
+
+
+  $mdl_temp.="</td><td></form></td></tr></table>";
+
+
+my $box;
+
+  $box=&box_create2("Vyhľadávanie v programe",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	200,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp);
+
+
+  return $box;
+
+  return undef;
+ }
+}
+
+
+1;

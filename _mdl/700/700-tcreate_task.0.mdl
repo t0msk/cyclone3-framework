@@ -1,0 +1,163 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+sub execute
+{
+ my %env=@_;
+ $env{char}=3 unless $env{char};
+
+ #  <option value="P">Public</option>
+
+ return 1 if $main::USRM{logged} ne "Y";
+
+  $XSGN{TMP}=<<"HEADER";
+
+<div style="background:#02487C;height:2px;"></div>
+<center>
+<table bgcolor="#0368AC" width="100%" cellspacing=0 cellpadding=0 border=0>
+ <tr>
+  <td style="FONT:10px Arial;">
+  asfas
+  </td>
+ </tr>
+</table>
+</center>
+<div style="background:#02487C;height:1px;"></div>
+<div style="background:#0368AC;height:2px;"></div>
+
+
+<center>
+vytvorenie novej ulohy:<BR>
+<form name="create" action="?|?TID=9000&a700_create_task=1" method="POST" enctype="multipart/mixed">
+ <select name="owning">
+  <option value="p" selected>Public domain</option>
+  <option value="D">Defined</option>
+  <option value="S">Secure</option>
+ </select>
+  <select name="ptype">
+  <option value="P">Project</option>
+  <option value="T" selected>Task</option>
+  <option value="t">To-do</option>
+  <option value="E">Event</option>
+  <option value="r">Report</option>
+  <option value="n">Notes</option>
+ </select>
+ <input type="text" name="name" maxlength="250" style="width:400px;"><input type="submit" value="vytvor">
+</form>
+</center>
+
+
+HEADER
+
+
+
+ if (($main::FORM{a700_create_task})&&($main::FORM{name}))
+ {
+  # pokus o vytvorenie
+  my @idx;
+  my $depth=$env{char};$idx[$depth]=-1;
+  my $to=@Utils::vars::WCHAR;
+  my $max=$to**$env{char};
+  for (1..$max)
+  {
+   $idx[$depth]++;
+   while ($idx[$depth]>@Utils::vars::WCHAR-1){$idx[$depth]=0;$depth--;$idx[$depth]++;}$depth=$env{char};
+   my $cat;for (1..$env{char}){$cat.=$Utils::vars::WCHAR[$idx[$_]];}
+   # tuto budem hladat ci uz v databaze existuje zaznam $nieco=$env{cat}.$cat :))
+   my $db0=$main::DBH->Query("SELECT ID FROM TOM.Ca700_task WHERE IDcharindex='$cat' LIMIT 1");
+   if (my @db0_line=$db0->fetchrow)
+   {
+   }
+   else
+   {
+    my @plus;
+    my $owning="D";if ($main::FORM{owning}=~/^[PpDS]$/){$owning=$main::FORM{owning}};
+    my $type="T";if ($main::FORM{ptype}=~/^[PTtErn]$/){$type=$main::FORM{ptype}};
+    if ($owning eq "p")
+    {
+     $owning="P";
+     $plus[0]=",domain";
+     $plus[1]=",'$tom::H_cookie'";
+    }
+
+    #$XSGN{TMP}.="adding type:$type owning:$owning<BR>\n";
+
+    $main::DBH->Query("
+		INSERT INTO TOM.Ca700_task
+		(
+		 IDcharindex,
+		 IDowner,
+		 owning,
+		 createtime,
+		 starttime,
+		 startplantime,
+		 type,
+		 subject,
+		 lng,
+		 active
+		 $plus[0]
+		)
+		VALUES
+		(
+		 '$cat',
+		 '$main::USRM{IDhash}',
+		 '$owning',
+		 '$tom::time_current',
+		 '$tom::time_current',
+		 '$tom::time_current',
+		 '$type',
+		 '$main::FORM{name}',
+		 '$env{lng}',
+		 'Y'
+		 $plus[1]
+		)");
+
+    if ($type=~/^[TE]$/)
+    {
+     my $db0=$main::DBH->Query("
+		UPDATE TOM.Ca700_task_activity
+		SET	endtime='$tom::time_current'
+		WHERE	IDuser='$main::USRM{IDhash}'
+			AND endtime IS NULL");
+     my $db1=$main::DBH->Query("
+    		SELECT ID
+		FROM TOM.Ca700_task
+		WHERE IDcharindex='$cat' LIMIT 1");
+     if (my @db1_line=$db1->fetchrow)
+     {
+      $main::DBH->Query("
+		INSERT INTO TOM.Ca700_task_activity
+		(IDtask,IDuser,starttime,active)
+		VALUES
+		('$db1_line[0]','$main::USRM{IDhash}','$tom::time_current','Y')");
+     }
+     $XSGN{TMP}.="$cat<BR>\n";
+    }
+    last;
+   }
+   #
+  }
+
+ }
+
+
+
+
+
+ return 1}
+1;
+
+
+
+
+
+
+
+
+
+

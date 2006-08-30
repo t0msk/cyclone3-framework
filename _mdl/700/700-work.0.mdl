@@ -1,0 +1,88 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use App::300;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ return 1 if $main::USRM{logged} ne "Y";
+
+ #$XSGN{TMP}.="<a href=\"?|?TID=$main::FORM{TID}&work=0\">stop work!</a><BR>";
+
+ if (exists $main::FORM{work})
+ {
+  #$XSGN{TMP}.="preparing for work...<BR>\n";
+  #my @groups=App::300::GetGroups($main::USRM{IDhash});
+  #my $groups=join(',',@groups);$groups="'0'" unless $groups;
+  #$XSGN{TMP}.="i am in groups $groups<BR>";
+  $main::DBH->Query("
+		UPDATE TOM.Ca700_task_activity
+		SET	endtime='$tom::time_current'
+		WHERE	IDuser='$main::USRM{IDhash}'
+			AND endtime IS NULL");
+
+  if ($main::FORM{work})
+  {
+   my $db0=$main::DBH->Query("
+		SELECT *
+		FROM	TOM.Ca700_task
+		WHERE	ID='$main::FORM{work}'
+			AND active='Y'
+			AND (lng='$env{lng}' OR lng='')
+			AND endtime IS NULL");
+   if (my %db0_line=$db0->fetchhash)
+   {
+    if ($db0_line{type}=~/^[TE]$/) # TASK
+    {
+      $main::DBH->Query("
+	INSERT INTO TOM.Ca700_task_activity(IDtask,IDuser,starttime,active)
+	VALUES ('$main::FORM{work}','$main::USRM{IDhash}','$tom::time_current','Y')");
+    }
+    elsif ($db0_line{type}=~/^[t]$/) # to-do
+    {
+      $main::DBH->Query("
+	INSERT INTO TOM.Ca700_task_activity(IDtask,IDuser,starttime,endtime,active)
+	VALUES ('$main::FORM{work}','$main::USRM{IDhash}','$tom::time_current','$tom::time_current','Y')");
+      if ($db0_line{multiowning} eq "N")
+      {
+       $main::DBH->Query("
+      	UPDATE	TOM.Ca700_task
+	SET	endtime='$tom::time_current'
+	WHERE	ID='$main::FORM{work}'
+		AND active='Y'
+		AND (lng='$env{lng}' OR lng='')
+		AND endtime IS NULL");
+      }
+      else # MULTIOWNING
+      {
+       $main::DBH->Query("
+	INSERT INTO TOM.Ca700_task_status(IDtask,IDuser,endtime)
+	VALUES ('$main::FORM{work}','$main::USRM{IDhash}','$tom::time_current')");
+      }
+    }
+   }
+  }
+
+ }
+
+
+
+ #$XSGN{TMP}.="<BR>\n";
+ return 1}
+1;
+
+
+
+
+
+
+
+
+
+

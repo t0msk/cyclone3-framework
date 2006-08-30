@@ -1,0 +1,116 @@
+sub BaseModul{
+require "_info.m";
+
+my $mdl_temp=<<"HEADER";
+
+<table width=100% cellspacing=4 cellpadding=0 border=0>
+<tr>
+<td>
+
+ <table width=100% cellspacing=0 cellpadding=0>
+    <tr>
+	 <td align=middle><img src="$tom::H_media/grf/admin/tree_0.gif" border=0><BR><img src=t.gif width=11 height=1 border=0><BR></td>
+     <td><img src=t.gif width=3 height=1 border=0><BR></td>
+     <td width=100% style="FONT:bold 11px Verdana;">&nbsp;<a href="core.pl?type=photogallery_cathegory_add" target="frm_micro"><font color=white>add</font></a></td>
+    </tr>
+ </table>
+
+ <%BASE%>
+</td>
+</tr>
+</table>
+
+HEADER
+
+my $mdl_temp_line=<<"HEADER";
+ <table width=100% cellspacing=0 cellpadding=0>
+    <tr>
+     <%OD%>
+     <td><img src=t.gif width=3 height=1 border=0><BR></td>
+     <td width=100% style="FONT:bold 11px Verdana;">&nbsp;<%NAME%> <a href="core.pl?type=photogallery_cathegory_add&id=<%ID%>" target="frm_micro"><font color=white>add</font></a></td>
+    </tr>
+ </table>
+HEADER
+
+
+
+my $mdl_temp_od="<td <%TBG%> align=middle <%VALIGN%>><%IMG%><img src=t.gif width=11 height=1 border=0><BR></td>";
+
+my $info=&info_create(
+'icon'	=>	True,
+'title'	=>	"Image categories",
+);
+
+
+my $db_micro = $dbh->Query("SELECT ID,fullname,tinyname,starttime,IDaspic,about,active FROM photogallery_cathegory ORDER BY ID");
+while (my @db_micro_line=$db_micro->FetchRow())
+{
+  my $tr_uroven=@tr_cesta=split('',$db_micro_line[0]);
+  $mdl_temp=~s|<%BASE%>|$mdl_temp_line<%BASE%>|g;
+#  $mdl_temp .= $mdl_temp_line;
+  $width=$tr_uroven*10+5;
+  $mdl_temp =~s|<%NAME%>|$db_micro_line[2]|g;
+  $mdl_temp =~s|<%ID%>|$db_micro_line[0]|g;
+#  $mdl_temp =~s|<%ID%>|$out[$i+1]|g;
+
+#  if (!$out[$i])
+#  {$mdl_temp =~s|<%TITLE%>|<B>$title</B>|g;}
+#  else {$mdl_temp =~s|<%TITLE%>|$title|g;}
+  
+#  if (!$out[$i+2])
+#  {
+#   $mdl_temp .= "<img src=t.gif width=1 height=4 border=0><BR>";
+#  }
+  
+  $i0=-1;$od="";
+  while ($i0<($tr_uroven))
+  {
+   $i0++;
+   $od .= $mdl_temp_od;
+   $od =~s|<%TBG%>|<%TBG-$i0%>|g;
+   
+   if (($i0+1) == $tr_uroven)
+#   if (($i0+2) == $tr_uroven)
+   {
+    $od=~s|<%IMG%>|<img src="$tom::H_media/grf/admin/forum_0_3.gif" border=0><BR>|g;
+    $mdl_temp =~s|<%TBG-$i0%>|background="$tom::H_media/grf/admin/forum_0_0.gif"|g;   
+   }
+   
+   if ($i0 == $tr_uroven)
+   {
+    $od=~s|<%VALIGN%>|valign=middle|g;
+    $od=~s|<%IMG%>|<img src="$tom::H_media/grf/admin/tree_0.gif" border=0><BR>|g;
+    $od =~s|<%TBG-$i0%>||g;
+    $mdl_temp =~s|<%TBG-$i0%>||g;
+   }
+   else
+   {
+    $od=~s|<%IMG%>||g;
+   }
+   $od=~s|<%VALIGN%>|valign=top|g;
+  }
+  $mdl_temp =~s|<%OD%>|$od|g;
+  
+  $mdl_temp =~s|<%BG%>|#96B2C8|g;
+
+  $i=$i+2;
+
+
+
+}
+
+return $info.$mdl_temp;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

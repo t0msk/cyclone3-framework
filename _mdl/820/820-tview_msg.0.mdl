@@ -1,0 +1,54 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ if (!$env{ID}){$tom::ERR="Missed ID msg!";return undef;}
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+
+ $env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+ $env{db_820}=$TOM::DB_name unless $env{db_820};
+
+ my $db0=$main::DBH->Query("
+ 	SELECT *
+	FROM $env{db_820}.a820
+	LEFT JOIN $env{db_820}.a820_attrs
+		ON (a820.IDattrs AND a820.IDattrs=a820_attrs.IDattrs)
+	WHERE 	a820.ID='$env{IDforum}'
+		AND a820.type='F'
+		AND (a820.lng='$env{lng}' OR a820.lng='')
+		AND a820.active='Y'
+	LIMIT 1
+ ");
+ if (my %env0=$db0->fetchhash)
+ {
+  $XSGN{TMP}=~s|<%FORUMNAME%>|$env0{name}|g;
+#=head1
+  my $db0 = $main::DBH->Query("
+	SELECT *
+	FROM $env{db_820}.a820_msgs
+	WHERE	ID='$env{ID}'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	LIMIT 1");
+  if (my %env1=$db0->fetchhash)
+  {
+	$XSGN{TMP}=~s|<%NAME%>|$env1{from_name}|g;
+	$XSGN{TMP}=~s|<%TEXT%>|$env1{msg}|g;
+	$XSGN{TMP}=~s|<%TITLE%>|$env1{title}|g;
+  }
+#=cut
+ }
+
+
+
+ return 1}
+
+1;

@@ -1,0 +1,289 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 NAME
+fview
+
+=head1 HEAD_VERSION_BUILD
+1.030702
+
+=head1 DESCRIPTION
+fview original photo
+zobrazenie originalu obrazku so vsetkymi
+informaciami
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+
+        <value id="preview" value="1" />
+        <value id="output" value="xsgn" />
+
+	<input id="ID" value="varchar(7)">cislo obrazku</input>
+	<input id="-xsgn" value="varchar(20)">potrebujem design</input>
+	<input id="hash" value="boolean">hashovany original obrazku?</input>
+        <input id="width_max" value="int(1600)"></input>
+	<input id="height_max" value="int(1200)"></input>
+	<input id="500_db" value="varchar(50)">databaza kde su obrazky</input>
+
+        <source type="db.table" value="X.photogallery" />
+
+</DESCRIPTION>
+
+
+=head1 CHANGES
+build 030702 - Aben
+        *) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+        *) nothings
+=cut
+
+sub execute
+{
+ my %env=@_;
+
+ # KDE SU OBRAZKY?
+ $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+ $env{db_400}=$TOM::DB_name unless $env{db_400};
+
+ $env{from}="" unless $env{from};
+ $env{from_level}=-1 unless $env{from_level};
+
+# my $select="ID='$env{from}'  OR ID LIKE '$env{from}__' OR ID LIKE '$env{from}____'";
+# foreach my $var(split(';',$main::FORM{enabled}))
+# {
+#  $select.=" OR ID LIKE '$var\____' ";
+  #my $var0=length($var)+4;
+  #$select.="OR(ID LIKE '$var%' AND length(ID)<=$var0)";
+# }
+
+# $XSGN{TMP}.=$select;
+# WHERE ($select) AND (lng='$env{lng}' OR lng='') AND active='Y'
+
+	my $id_string="";
+	my %cat_names;
+	$env{subs}="%" if($env{allow_subs});
+
+	main::_log("
+		SELECT *
+		FROM $env{db_400}.a400_category
+		WHERE (ID LIKE '$env{IDcategory}$env{subs}') AND (ID!='$env{IDcategory}') AND (lng='$env{lng}' OR lng='') AND active='Y'
+		ORDER BY name ASC");
+
+	if(my $db0=$main::DBH->Query("
+		SELECT *
+		FROM $env{db_400}.a400_category
+		WHERE (ID LIKE '$env{IDcategory}%') AND (ID != '$env{IDcategory}') AND (lng='$env{lng}' OR lng='') AND active='Y'
+		ORDER BY name ASC"))
+	{
+		while (my %db0_line=$db0->fetchhash())
+		{
+			Tomahawk::module(
+				-type			=>	"mdl",
+				-category		=>	"400",
+				-name			=>	"mview_cX",
+				-global			=>	1,
+				-xsgn     		=>	$env{-xsgn},
+				-xsgn_global		=>	$env{-xsgn_global},
+				-TMP			=>	$env{-TMP},
+				IDcategory			=>	$db0_line{ID},
+				show_catname			=>	$env{show_catname},
+			);
+		}
+	}
+
+=head1
+	foreach(sort keys %cat_names)
+	{
+
+		my $db0=$main::DBH->Query("
+			(SELECT ID
+			FROM $env{db_400}.a400
+			WHERE IDcategory LIKE '$cat_names{$_}' AND (lng='$env{lng}' OR lng='') AND active='Y'
+			ORDER BY starttime DESC)
+			UNION ALL
+			(SELECT ID
+			FROM $env{db_400}.a400_arch
+			WHERE IDcategory LIKE '$cat_names{$_}' AND (lng='$env{lng}' OR lng='') AND active='Y'
+			ORDER BY starttime DESC)
+			LIMIT 1
+		");
+		if (my %db0_line=$db0->fetchhash())
+		{
+
+			#main::_log("found category $db0_line{ID}");
+			#$cat_names{$db0_line{name}}=$db0_line{ID};
+			Tomahawk::module(
+			-type			=>	"mdl",
+			-category		=>	"400",
+			-name			=>	"mview_cX",
+			-global			=>	1,
+			-xsgn     		=>	$env{-xsgn},
+			-xsgn_global		=>	$env{-xsgn_global},
+			-TMP			=>	$env{-TMP},
+			IDcategory			=>	$_,
+			IDx			=>	$db0_line{ID},
+			);
+
+		}
+	}
+=cut
+
+=head1
+
+
+	my $var=$db0_line{ID};
+  $var=~s|^$env{from}||;
+  push @struct,$var;
+  push @struct,length($var)/2;
+  $struct_base{$var}{ID}=$db0_line{ID};
+  $struct_base{$var}{name}=$db0_line{name};
+
+
+
+#=head1
+
+my $db1=$main::DBH->Query("
+	SELECT COUNT(*) FROM $env{db_400}.a400
+	WHERE
+		IDcategory LIKE '$env0{ID}%'
+		AND starttime<=$tom::time_current
+		AND (endtime=0 OR endtime>=$tom::time_current)
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'");
+ if (my @db1_line=$db1->fetchrow())
+ {
+  $struct_base{$var}{items}=$db1_line[0];
+ }
+#=cut
+
+ }
+
+$XSGN{TMP}=$id_string; return 1;
+
+# for (my $i;$i<@struct;$i=$i+2)
+# {
+#  $XSGN{TMP}.="$struct[$i] $struct[$i+1] $struct_base{$struct[$i]}{name}<BR>";
+# }
+
+
+ for (my $i=0;$i<@struct;$i=$i+2)
+ {
+  #$XSGN{TMP}.="$struct[$i+1] $struct_base{$struct[$i]}{name}<BR>";
+  #if ($struct[$i+1]<5){$XSGN{TMP}.=" +ok<BR>";}
+
+  my $var;
+  if ($struct[$i+1]<2)
+  {
+   $var=1;
+  }
+  else
+  {
+   foreach (split(';',$main::FORM{a400_enabled}))
+   {
+    if (
+	($struct_base{$struct[$i]}{ID}=~/^$_..$/)||
+	($struct_base{$struct[$i]}{ID} eq $_)
+	)
+    {$var=1;last}
+   }
+  }
+  next unless $var;
+
+
+  my $tr_uroven=$struct[$i+1];
+  $XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE}<#LINE#>|;
+  my $width=$tr_uroven*16+5;
+  $XSGN{TMP} =~s|<%NAME%>|$struct_base{$struct[$i]}{name}|g;
+  $XSGN{TMP} =~s|<%ID%>|$struct_base{$struct[$i]}{ID}|g;
+
+#  if (($struct[$i+1]>$struct[$i+3])&&($struct[$i+3]>0))
+#  {
+#   $XSGN{TMP}=~s|<#LINE#>|</DIV><#LINE#>|g;
+#  }
+
+  my $i0=$env{from_level};
+  $XSGN{NULL}="";
+  while ($i0<($tr_uroven))
+  {
+   $i0++;
+   $XSGN{NULL} .= $XSGN{OD};
+   $XSGN{NULL} =~s|<%TBG%>|<%TBG-$i0%>|g;
+
+   if (($i0+1) == $tr_uroven)
+   {
+    if ($struct[$i+3]>$struct[$i+1])
+    {
+     #$XSGN{NULL}=~s|<%IMG%>|.|g;
+     my $var=$XSGN{img_plus};
+     $var=~s|<%ID%>|a820_fcatview_$struct_base{$struct[$i]}{ID}|g;
+     my $enabled;
+     my $null;
+     foreach (split(';',$main::FORM{a400_enabled}))
+     {
+      if ($_=~/^$struct_base{$struct[$i]}{ID}/){$null=1;next}
+      $enabled.="$_;";
+     }
+     $enabled.=$struct_base{$struct[$i]}{ID} unless $null;
+     $enabled=~s|;$||;
+
+     $var=~s|<%URL%>|a400_enabled=$enabled|g;
+     $var=~s|<%IMG%>|minus| if $null;
+     $var=~s|<%IMG%>|plus| unless $null;
+     $var=~s|||g;
+     $XSGN{NULL}=~s|<%IMG%>|$var|g;
+     $XSGN{TMP}=~s|<#LINE#>|<#LINE#>|g;
+    }
+    else
+    {
+     $XSGN{NULL}=~s|<%IMG%>|$XSGN{img_cross}|g;
+    }
+    $XSGN{TMP} =~s|<%TBG-$i0%>|$XSGN{bg_line}|g;
+   }
+
+   if ($i0 == $tr_uroven)
+   {
+    $XSGN{NULL}=~s|<%VALIGN%>|valign=top|g;
+    $XSGN{NULL}=~s|<%IMG%>|$XSGN{icon}|g;
+
+    if ($struct[$i+3]>$struct[$i+1])
+    {
+     $XSGN{NULL} =~s|<%TBG-$i0%>|$XSGN{bg_cross}|g;
+    }
+    else {$XSGN{NULL} =~s|<%TBG-$i0%>||g;}
+    $XSGN{TMP} =~s|<%TBG-$i0%>||g;
+   }
+   else
+   {
+    $XSGN{NULL}=~s|<%IMG%>||g;
+   }
+
+   $XSGN{NULL}=~s|<%VALIGN%>|valign=top|g;
+  }
+
+  $XSGN{TMP} =~s|<#OD#>|$XSGN{NULL}|g;
+  $XSGN{TMP} =~s|<%BG%>|#96B2C8|g;
+  $XSGN{TMP} =~s|<%ID%>|$struct_base{$struct[$i]}{ID}|g;
+  $XSGN{TMP} =~s|<%ITEMS%>|$struct_base{$struct[$i]}{items}|g;
+ }
+
+=cut
+
+ return 1}
+
+1;
+
+
+
+
+
+
+
+
+
+

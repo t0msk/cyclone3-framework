@@ -1,0 +1,360 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+use strict;
+
+sub execute
+{
+ my %env=@_;
+ if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
+
+ if (!$env{max_months}){$cron::ERR="not defined max_months time to archiving";return undef;}
+
+ $env{max_months}=$env{max_months}*31*24*60*60; # prepocet na sekundy
+ $env{max}=100 unless $env{max};
+ $env{db_400}=$TOM::DB_name;
+
+
+
+
+ my $null=$cron::time_current-$env{max_months};
+ my $db0=$main::DBH->Query("
+	SELECT ID,starttime,lng,active,IDattrs
+	FROM $env{db_400}.a400
+	WHERE starttime<$null
+	ORDER BY starttime
+	LIMIT $env{max}");
+ while (my %article=$db0->fetchhash)
+ {
+  my $var=$cron::time_current-$article{starttime};
+  CRON::debug::log(8,"Article:$article{ID} to archive (".int($var/60/60/24)."days)");
+  if ($main::DBH->Query("
+	REPLACE INTO $env{db_400}.a400_arch SELECT * FROM $env{db_400}.a400
+	WHERE	ID='$article{ID}'
+		AND lng='$article{lng}'
+		AND starttime='$article{starttime}'
+		AND active='$article{active}'
+	LIMIT 1"))
+  {
+   CRON::debug::log(9,"moved");
+   if ($main::DBH->Query("
+	DELETE FROM $env{db_400}.a400
+	WHERE	ID='$article{ID}'
+		AND lng='$article{lng}'
+		AND starttime='$article{starttime}'
+		AND active='$article{active}'
+	LIMIT 1"))
+   {
+    CRON::debug::log(9,"deleted");
+   }
+  }
+ }
+
+
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_400}.a400_arch
+	WHERE arch='N'
+	ORDER BY starttime");
+ while (my %article=$db0->fetchhash)
+ {
+  CRON::debug::log(8,"Article:$article{ID} in archive");
+
+  if ($article{IDattrs})
+  {
+   my $db1=$main::DBH->Query("
+	SELECT IDattrs
+	FROM $env{db_400}.a400_attrs_arch
+	WHERE IDattrs='$article{IDattrs}'
+	LIMIT 1");
+   if (my @db1_line=$db1->fetchrow)
+   {
+    CRON::debug::log(9,"IDattrs exist");
+   }
+   else
+   {
+    CRON::debug::log(9,"IDattrs not exist");
+    my $db1=$main::DBH->Query("
+	SELECT IDattrs
+	FROM $env{db_400}.a400_attrs
+	WHERE IDattrs='$article{IDattrs}'
+	LIMIT 1");
+    if (my @db1_line=$db1->fetchrow)
+    {
+     CRON::debug::log(9,"IDattrs exist in original");
+     $main::DBH->Query("
+	INSERT INTO $env{db_400}.a400_attrs_arch SELECT * FROM $env{db_400}.a400_attrs
+	WHERE	IDattrs='$article{IDattrs}'
+	LIMIT 1");
+     my $db2=$main::DBH->Query("
+	SELECT ID
+	FROM $env{db_400}.a400
+	WHERE IDattrs='$article{IDattrs}'
+	LIMIT 1");
+     if (my @db2_line=$db2->fetchrow)
+     {
+      CRON::debug::log(9,"IDattrs used by another article, only copied");
+     }
+     else
+     {
+      $main::DBH->Query("DELETE FROM $env{db_400}.a400_attrs WHERE IDattrs='$article{IDattrs}' LIMIT 1");
+      CRON::debug::log(9,"IDattrs not used by another article");
+     }
+    }
+    else
+    {
+     CRON::debug::log(9,"IDattrs not exist in original, inserting");
+     $main::DBH->Query("INSERT INTO a400_attrs_arch(IDattrs) VALUES('$article{IDattrs}')");
+    }
+   }
+  }
+
+  if
+  ($main::DBH->Query("
+	UPDATE	$env{db_400}.a400_arch
+	SET	arch='Y'
+	WHERE	ID='$article{ID}'
+		AND lng='$article{lng}'
+		AND starttime='$article{starttime}'
+		AND active='$article{active}'
+	LIMIT 1"))
+  {
+  }
+  else
+  {
+   CRON::debug::log(9,"Duplicate entry in arch!!!",1);
+  }
+ }
+
+
+
+
+
+ return 1;
+
+
+=head1
+ my $null=$cron::time_current-$env{max_months};
+ my $db0=$main::DBH->Query("
+	SELECT ID,starttime,lng,active,IDattrs
+	FROM $env{db_400}.a400
+	WHERE starttime<$null
+	ORDER BY starttime
+	LIMIT $env{max}");
+ while (my %article=$db0->fetchhash)
+ {
+  my $var=$cron::time_current-$article{starttime};
+  CRON::debug::log(8,"Article:$article{ID} to archive (".int($var/60/60/24)."days)");
+
+  my $db1=$main::DBH->Query("
+	SELECT * FROM $env{db_400}.a400_arch
+	WHERE
+		ID='$article{ID}'
+		AND starttime='$article{starttime}'
+		AND lng='$article{lng}'
+		AND active='$article{active}'
+	LIMIT 1");
+  if (my @db1_line=$db1->fetchrow)
+  {
+   CRON::debug::log(9,"$article{ID}: tento clanok je uz predsa v archive!!!",1);
+   #CRON::debug::log(9,"$article{ID}: cannot move into archive! uz je v archive!",1,"cron_err");
+   CRON::debug::log(9,"$article{ID}: copy nevykonane, nasleduje deleting");
+    $main::DBH->Query("
+        DELETE FROM $env{db_400}.a400
+	WHERE
+		ID='$article{ID}'
+		AND starttime='$article{starttime}'
+		AND lng='$article{lng}'
+		AND active='$article{active}'
+	LIMIT 1");
+  }
+  else
+  {
+   if ($main::DBH->Query("
+	INSERT INTO $env{db_400}.a400_arch
+	SELECT * FROM $env{db_400}.a400
+	WHERE
+		ID='$article{ID}'
+		AND starttime='$article{starttime}'
+		AND lng='$article{lng}'
+		AND active='$article{active}'
+	LIMIT 1"))
+   {
+    CRON::debug::log(9,"$article{ID}:copy vykonane, nasleduje deleting");
+    $main::DBH->Query("
+        DELETE FROM $env{db_400}.a400
+	WHERE
+		ID='$article{ID}'
+		AND starttime='$article{starttime}'
+		AND lng='$article{lng}'
+		AND active='$article{active}'
+	LIMIT 1");
+
+   }
+   else
+   {
+    CRON::debug::log(9,"$article{ID}: nepodaril sa presun do archivu!",1);
+    CRON::debug::log(9,"$article{ID}: cannot move into archive!",1,"cron_err");
+   }
+  }
+ }
+#=cut
+
+#=head1
+ my $db0=$main::DBH->Query("
+	SELECT ID,IDattrs
+	FROM $env{db_400}.a400_arch
+	WHERE arch='N'");
+ while (my %article=$db0->fetchhash)
+ {
+  CRON::debug::log(9,"$article{ID}: search IDattrs:$article{IDattrs}");
+  my $db1=$main::DBH->Query("
+	SELECT * FROM $env{db_400}.a400_attrs_arch
+	WHERE IDattrs='$article{IDattrs}'
+	LIMIT 1");
+  if (my @db1_line=$db1->fetchrow)
+  {
+   CRON::debug::log(9,"$article{ID}: ok, in a400_attrs_arch");
+   #CRON::debug::log(9,"UPDATE $env{db_400}.a400_arch SET arch='Y' WHERE IDattrs='$article{IDattrs}' LIMIT 1");
+   $main::DBH->Query("UPDATE $env{db_400}.a400_arch SET arch='Y' WHERE IDattrs='$article{IDattrs}'");
+  }
+  else
+  {
+   CRON::debug::log(9,"$article{ID}: not in a400_attrs_arch");
+   my $db1=$main::DBH->Query("
+	SELECT * FROM $env{db_400}.a400_attrs
+	WHERE IDattrs='$article{IDattrs}'
+	LIMIT 1");
+   if (my @db1_line=$db1->fetchrow)
+   {
+    CRON::debug::log(9,"$article{ID}: ok, in a400_attrs, copying into a400_attrs_arch");
+
+    if ($main::DBH->Query("
+	INSERT INTO $env{db_400}.a400_attrs_arch
+	SELECT * FROM $env{db_400}.a400_attrs
+	WHERE	IDattrs='$article{ID}' LIMIT 1"))
+    {
+     CRON::debug::log(9,"$article{ID}: ok, copied");
+     $main::DBH->Query("UPDATE $env{db_400}.a400_arch SET arch='Y' WHERE IDattrs='$article{IDattrs}' LIMIT 1");
+     # kontrola ci este nejaky clanok tento IDattr nepotrebuje...
+     my $db1=$main::DBH->Query("
+	SELECT * FROM $env{db_400}.a400
+	WHERE IDattrs='$article{IDattrs}'
+	LIMIT 1");
+     if (my @db1_line=$db1->fetchrow)
+     {
+      CRON::debug::log(9,"$article{ID}: another article using this IDattr... not deleted");
+     }
+     else
+     {
+      CRON::debug::log(9,"$article{ID}: deleting");
+      $main::DBH->Query("
+        DELETE FROM $env{db_400}.a400_attrs
+	WHERE IDattrs='$article{IDattrs}' LIMIT 1");
+     }
+    }
+    else
+    {
+     CRON::debug::log(9,"$article{ID}: bad, not copied",1);
+    }
+
+
+   }
+   else
+   {
+    CRON::debug::log(9,"$article{ID}: not in a400_attrs, inserting");
+    $main::DBH->Query("INSERT INTO $env{db_400}.a400_attrs_arch(IDattrs) VALUES('$article{IDattrs}')");
+    $main::DBH->Query("UPDATE $env{db_400}.a400_arch SET arch='Y' WHERE IDattrs='$article{IDattrs}' LIMIT 1");
+   }
+
+  }
+ }
+=cut
+
+ #$main::DBH->Query("UPDATE $env{db_400}.a400_arch SET arch='Y' WHERE arch='N'");
+
+ return 1}
+
+
+
+=head1
+    CRON::debug::log(9,"$article{ID}:deleting ok");
+    if ($article{IDattrs})
+    {
+     CRON::debug::log(9,"$article{ID}:this article has IDattrs $article{IDattrs}");
+     my $db2=$main::DBH->Query("
+	SELECT * FROM $env{db_400}.a400_attrs
+	WHERE IDattrs='$article{IDattrs}'
+	LIMIT 1");
+     if (my @db2_line=$db2->fetchrow)
+     {
+      CRON::debug::log(9,"$article{ID}:ok, IDattrs $article{IDattrs} exists in table");
+      my $db1=$main::DBH->Query("
+	SELECT ID
+	FROM $env{db_400}.a400
+	WHERE IDattrs='$article{IDattrs}'");
+      if (my @db1_line=$db1->fetchhash)
+      {
+       CRON::debug::log(9,"$article{ID}:More articles using IDattrs $article{IDattrs}");
+      }
+      else
+      {
+       CRON::debug::log(9,"$article{ID}:ok, only my IDattrs :) go copy!");
+       if ($main::DBH->Query("
+	INSERT INTO $env{db_400}.a400_attrs_arch
+	SELECT * FROM $env{db_400}.a400_attrs
+	WHERE
+		IDattrs='$article{IDattrs}'
+	LIMIT 1"))
+       {
+        CRON::debug::log(9,"$article{ID}:ok, copied, now deleting IDattrs !");
+        $main::DBH->Query("
+        	DELETE FROM $env{db_400}.a400_attrs
+		WHERE IDattrs='$article{IDattrs}'
+		LIMIT 1");
+       }
+       else
+       {
+        CRON::debug::log(9,"$article{ID}:not copied, uz tu je jedno IDattrs v arch, deleting original!");
+        $main::DBH->Query("
+        	DELETE FROM $env{db_400}.a400_attrs
+		WHERE IDattrs='$article{IDattrs}'
+		LIMIT 1");
+       }
+      }
+     }
+     else
+     {
+      CRON::debug::log(9,"$article{ID}:uuuh! IDattrs $article{IDattrs} not exists in table!!! :-o",1);
+     }
+
+    }
+=cut
+
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

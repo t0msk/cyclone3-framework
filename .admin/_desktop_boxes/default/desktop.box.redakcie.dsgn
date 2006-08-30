@@ -1,0 +1,27 @@
+$microtmp=&box_create_new("VirtuaGroups",
+	'save'=>True,'version'=>"1.0528",
+	'id'			=>	"mn_redakcie",
+	'alpha'			=>	80,
+	'color_base0'	=>	"white",
+	'autoopen'		=>	True,
+	'top'			=>	28,
+	'left'			=>	290,
+	'height'		=>	11,
+	'display'	=>	"none",
+	'display_start'	=>	"none",
+	'height_start'	=>	10,
+	'html'			=>	&menu_create(
+		'color_back1'	=>	"blue",
+		'color_font0'	=>	"black",
+		'color_font1'	=>	"white",
+		'link_base'		=>	"core.pl?",
+		'link'	=>
+		{	'00| Všetky'	=>	"type=400",
+			'10| Správy'	=>	"type=400&wherelike=IDcategory&where=00",
+			'20| Šport'=>	"type=400&wherelike=IDcategory&where=01",
+			'30| Bulvár'=>	"type=400&wherelike=IDcategory&where=03",
+			'40| TV'=>	"type=400&wherelike=IDcategory&where=02",
+		}
+	)
+);
+$HTML_TEMP=~s|<!--BOXES-->|$microtmp<!--BOXES-->|g;

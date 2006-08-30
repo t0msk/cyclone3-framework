@@ -1,0 +1,125 @@
+sub BaseModul
+{
+	my $id=$form{ID} if ($form{ID});
+
+ if ($form{set})
+	{
+		######################################################
+		# box execution                                                                       #
+		######################################################
+
+		$HTML_HEADER{BODY}{extract}="yes";
+		$indexes=&convert_html($form{indexes});
+		my $temp;
+
+		while ($indexes=~s|<INDEX id=(.*?) value=(.*?) description=(.*?) />|<INDEXTO>|i)
+		{
+			$temp.="<INDEX id=\"$1\" value=\"$2\" description=\"$3\" />\n";
+		}
+		$xrelated=$temp;
+		#$indexes=~s|\'|\\'|g;
+		if ($id)
+		{
+			$dbh->Query("UPDATE $MAIN_DB_a400_archiv SET xrelated='$xrelated' WHERE ID='$id' LIMIT 1");
+		}
+		return "\n<script>\nparent.document.frames['frm_base'].location.reload();\n</script>";
+	}
+	else
+	{
+		######################################################
+		# basic box creation                                                                 #
+		######################################################
+
+		$HTML_HEADER{BODY}{extract}="yes";
+		#$HTML_HEADER{BODY}{onunload}="parent.box_loading.style.display='block';";
+
+		$db_micro = $dbh->Query("SELECT title,IDauthor,IDcategory,xrelated,xdata FROM $MAIN_DB_a400 WHERE ID='$id' LIMIT 1");
+		%db_micro_line=$db_micro->FetchHash();
+		#return $db_micro_line{title};
+
+		#action="core.pl?type=$form{type}&id=$id&set=yes&image=$db_micro_line{xrelated}" method="POST">
+
+
+		########for testing purposes .. targeting into the same frame
+		#action="core.pl?type=$form{type}&id=$id&set=yes&image=$db_micro_line{xrelated}" method="POST">
+
+		########for testing purposes .. targeting into the same frame
+		my $mdl_temp=<<"HEADER";
+  <table width=100% cellspacing=0 cellpadding=0 border=0><tr><td>
+  <form name="articleEdit\_$id" action="core.pl?type=$form{type}&id=$id&set=yes" method="POST" enctype="multipart/x-form-data" target="frm_micro" onsubmit="alert($id);">
+  </td><td width=100% style="FONT:10px Verdana;COLOR:white;">
+  &nbsp;Titul:<BR>
+  <span style="FONT:9px Verdana; font-weight: bold;">&nbsp;&nbsp;&nbsp;$db_micro_line{title}</span><BR>
+  <table width=100% cellpadding=0 cellspacing=0 border=0 style="color: #ffffff"><tr><td><span style="FONT:10px Verdana;">&nbsp;Autor</span><BR></td><td><span style="FONT:10px Verdana;">&nbsp;Editor</span><BR></td><tr>
+HEADER
+
+		######################################################
+		# parsing author                                                                      #
+		######################################################
+
+		my $mdl_micro;
+		$db_micro1 = $dbh->Query("SELECT nickname FROM $MAIN_db_a120 WHERE ID='$db_micro_line{IDauthor}' LIMIT 1");
+		if (@db_micro1_line=$db_micro1->FetchRow())
+		{$mdl_temp.="<td><span style=\"FONT:9px Verdana; font-weight: bold;\">&nbsp;&nbsp;&nbsp;$db_micro1_line[0]</span><BR></td>";}
+		else
+		{$mdl_temp.="<td><span style=\"FONT:9px Verdana; font-weight: bold;\">&nbsp;&nbsp;&nbsp;-neznámy-</span><BR></td>";}
+
+		######################################################
+		# parsing editor                                                                       #
+		######################################################
+
+		$db_micro1 = $dbh->Query("SELECT nickname FROM $MAIN_db_a120 WHERE ID='$db_micro_line{IDeditor}' LIMIT 1");
+		if (@db_micro1_line=$db_micro1->FetchRow())
+		{$mdl_temp.="<td><span style=\"FONT:9px Verdana; font-weight: bold;\">&nbsp;&nbsp;&nbsp;$db_micro1_line[0]</span><BR></td>";}
+		else
+		{$mdl_temp.="<td><span style=\"FONT:9px Verdana; font-weight: bold;\">&nbsp;&nbsp;&nbsp;-neznámy-</span><BR></td>";}
+
+		######################################################
+		# parsing category                                                                   #
+		######################################################
+
+		$mdl_temp.="</tr></table>&nbsp;Kategoria:<br>";
+		$db_micro1 = $dbh->Query("SELECT name FROM $MAIN_DB_a400_category WHERE ID='$db_micro_line{IDcategory}' LIMIT 1");
+		if (@db_micro1_line=$db_micro1->FetchRow())
+		{$mdl_temp.="<span style=\"FONT:9px Verdana; font-weight: bold;\">&nbsp;&nbsp;&nbsp;$db_micro1_line[0]</span><BR>";}
+		else
+		{$mdl_temp.="<span style=\"FONT:9px Verdana; font-weight: bold;\">&nbsp;&nbsp;&nbsp;-neznáma-</span><BR>";}
+
+		my $indexes;
+		#return $db_micro_line{xrelated};
+		while ($db_micro_line{xrelated}=~s|<VAR id="a020" value="(.*?)" />||i)
+		{
+			$indexes.="<VAR id=\"a020\" value=\"$1\" />";
+		}
+
+		#$db_micro_line{xrelated}=~s|*||gi;
+
+		$mdl_temp.=<<"HEADER";
+  <br>
+  <TEXTAREA
+	drag_resizeX='0'
+	drag_resizeY='-300'
+	name="indexes"
+	class=input0
+	style="width:445px;height:50px;FONT:12px Verdana;">$indexes</TEXTAREA><BR>
+  <table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit drag_here value="Uložiť!" class=btn0 onclick="box_erase2();"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table>
+HEADER
+#<!-- <input type=hidden name=image value="$image_f"> /-->
+
+		$mdl_temp.="</td><td></form></td></tr></table>";
+		#$mdl_temp.="<script>lastOpenedArticleId=\"$db_micro_line{ID}\"; alert(lastOpenedArticleId);</script>";
+
+		my $box=&box_create2("Indexácia článku s archívom",
+			'color_base0'	=>	"#0B63F1",
+			'width'			=>	200,
+			'height'		=>	50,
+			'close'			=>	"yes",
+			'html'			=>	$mdl_temp);
+
+		return $box;
+
+		return undef;
+	}
+}
+
+1;

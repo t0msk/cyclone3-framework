@@ -1,0 +1,745 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+
+use TOM::Net::HTTP::UserAgent; # detekcia a praca s UserAgentami
+use Utils::datetime;
+use TOM::Utils::datetime;
+use TOM::Net::email;
+
+use strict;
+
+our $authors = "gregor\@webcom.sk";
+
+sub execute
+{
+	alarm(0);
+	my %env=@_;
+
+	Database::connect::multi('stats') || die "cannot connect all databases";
+
+	$env{lng} = 'sk' unless $env{lng};
+	$env{to_email} = $TOM::contact{'stats'}.";".$TOM::contact{'TOM'}.";".$env{'email'};
+	$env{to_email}=TOM::Utils::vars::unique_split($env{to_email});
+	
+	
+	#$env{to_email} = 'gregor@webcom.sk;fordinal@webcom.sk';
+	#$env{to_email} = 'gregor@webcom.sk';
+
+	# musime mat
+	# - obrazky
+	# - texty
+
+	my %images = (
+		'B' =>
+		{
+			'msie' =>
+'R0lGODlhDwAQAOZGACmt70LG9zGc74zO5ylztSGc5yml7zFSc0Kt72PW52vW/zGU70J7rTG1
+91Kc1jGMzpTO7zmc9zml92Ot52O150q17zGt9yGMzkKl7ylCWlK13iFKazGl7ylShELW9yGU
+54ze94zO7zm15ymc3jF7xlK19zmEvTm993u13jm19zmt5yGEtVK99zGc5zGl9ymU7ymM3hhj
+pSmEvTmt90K19zml70KUzimc55TW9yml53PW/2O13ilSa0rO/yGU3lKl3jmU3imU5yl71oy9
+1jl7tTFSa////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAEYALAAAAAAPABAAAAengEaCg4RGAwNDhYVDA4OJ
+hEORGj1ERIKPRpEJCR4NAAAclo+MRiAiKxc5BQY1loIQRgEqPBkHBDdBEq6wAQEyG4IEDy8C
+Aq6xAAU+QcxBCxEYrifJQtXW1pYUDQYfMUXf4OBGKRYGQTAdgwQzCihEEyNFLgLMB7Y0CjiW
+FQxGRS0RFgiQwEJHCCJFjCDo548EEAQldiD4JuiHCUEOEIYrZOOBA0WFAgEAOw=='
+,
+
+			'mozilla' =>
+'R0lGODlhEQARAOZ2APdaMbUxMcY5OYyMjGuUvecxMSEhIXs5OUIpMQAAAHOcxmsYGIwxMd4x
+Kf9jObXO3sZCMVJrjFIYGL1SIWMYGL0xMWOMrVhSa9YhIe9SMZw5MZwpKe9aKWOEnCkYGP97
+WkJaaxgQCB0aK+9SIUprjJxCQoSEhLU5GEJCQu85Mf+1lIyt1lJ7lKW1xnut1u9COXulzv9j
+KedzKfd7MR0aHqWttedCGHshGCEYGE9JXnOUtbUxGGOMtYRCQmuMtXsxMXtaGP9zUmOEpWsp
+KXMxMYSUpUprhHulxjExMf9jQs5zKTlSaz05T1pKSvfGQr1jKf/3pVqEpXOElPfGlIQpKfdz
+MYxCQnOlzvdjMYQ5Of9rSr1KIbUhIf+EWjEpKfdzSr1aKSYiLDlKY2spIb1CIVoYGOdSIf/e
+pa1KMaWtvZTG1nOUva0pKedSMUJacx0UF1RQaoSlzmuUtec5MRgYGP///////wAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAHYALAAAAAARABEAAAf7gHZCERFwhoeHFxc5dist
+dZCRkpFSTHJ1agpym5ybPCxuUTRrdS6aDwg/AAAzREBuBGJ2R3Uwch0ICAFzACVzBwZpCXZx
+dVcPZR5NWFxzbTIFFHQDxAsbVV0ZzmYCAl9UBtPEbEFaBUNeDG0ODkkNFXR0xG0BAfFjAh8c
+aHMY8dRx2gigg0OCAA5tMGSZ08CAgTfV6EgosKpCCgYZXtibArCONQo1HqCAYIWhPToQiykg
+AYKAGxMQ5jiYU+AASmJ1LMBykwAKg5gaDiAZAVFHHSMuQzg5M2eOhh4qYtiAaKGIjyUJlDwB
+M2HCFjIndtyAaEdEGDto06pVGwgAOw=='
+,
+
+			'mozilla firefox' =>
+'R0lGODlhEQARAOZ7AOxpFQN3tPynNgSFuwFnpwAWVv7HOMt3KAFUlfJsIux0GbYJAAmj1Zpn
+KAAKR+Pj46urq/2bNeNbE9hXE9NRDX5TKvy2N/qQLQA0aQAOUru7u9PT0xGIw/7pZgBAeqWl
+q6SkpAKYygA5goCAjBlNmBu35/GDOdvb2wWLw8M2CwWe0RcSLCY0heiIEcNDDNfX58QeBL0S
+AKloJgIGOImJkZ+fovvs4c1KDcrKy7dlTEtLc8NHFNZDDdVUBg10lMQhA8I8CdxjE8uCLlpT
+Y6aQgmhmZy0ZMjwyNyMreg8rTzYpV8LCwv7jU6EoB//6lZiYmjlXZBB/vAAbdLOEV/nSmAA3
+eYpcJ1RbnYIfKfnIKkwoLMplI/CNHReb0/OMR9mGSKwlBoxqO4QpCwEkZ2I6MpQaCQBkmxg1
+hbIUBdd2IZchE91WCwEsdbd0KsozBNQ6ArS0tK0sBp8fBf/4oOBMAAJaouvr6+liDORWBPT0
+9LMAAP///wAAAAAAAAAAAAAAACH5BAEAAHsALAAAAAARABEAAAf+gHuCey8sJHUkZ1d5g4M2
+e0gIASglXRxmMkOMgxNKGBhUUSUcAXUeHQIPgykJJgk7KgyyKgNJTkKbdHh4dyliPiEhKAEE
+Fkwaezl0dHd3AEQDAwEDInUVBmF7WLp3rVDEBFVsCNcNdmi6YHEeCHXuYwUFbRZWdnK6QC5B
+R1teUyIZHEQQYE7NGzw3KFAAoEDClwIOVgiIUMTOBz287kxookVKhhkHLswRACJPngULeAEA
+YCRimgsdIjRYIuiiHhhrGEqQoCCLgQMQ7AjKM0KPUT0L3PRoweVAjQ2N8oAoczTGDx5kIOBo
+NHQDHBo6RjyBoEEV10F57Jw48UAo10AAOw=='
+,
+
+			'konqueror' =>
+'R0lGODlhEgASAPcAAAUFBQUw0AU70BAQGxAlOxBF0BsbJRswUBtQ2yUlJSUlMCVQcCVb2yVl
+2yVl5SVw5TAwOzAwRTBbhTBlxTBl2zBl5TBw2zBw5TB75Ts7RTtwmztw5Tt7uzt72zt75TuF
+8DuQ8EVFW0Vwu0V75UWFxUWF8EWQ20WQ8EWb+1BQUFBQW1BQZVBQcFB721CF5VCQ0FCQ8FCb
+5VCb+1Cl+1tbZVtbcFtlhVt7sFt70FuQ5Vuw+1vF+2VlcGVle2VlhWV7pWWFsGWQxWWQ5WWb
+22Wl8GWw+2W7+3Bwe3BwkHB7pXCFsHCbpXCb5XCb8HCl8HC7+3DF+3t7hXt7kHt7m3uQsHuQ
+u3ubxXuw8Hu78Hu7+3vF+4WFkIWFm4WFpYWw8IXQ+4Xb+5CQm5CQpZCQsJCbsJClxZC78JDF
+8JDQ+5Db+5ubpZubsJu725vF8JvF+5vb+6WlsKWlu6WwxaW70KXF5aXQ+6Xl+7Cwu7CwxbDQ
+8LDb+7u7xbu70LvF0MXF0MXQ28Xw+8X7+9DQ29Dw+9vb29vb5dv7++Xl5eXl8PDw8PDw+/v7
++wEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEB
+AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEB
+AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEB
+AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEB
+AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEB
+AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEB
+AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQAAACwAAAAAEgASAAAI1wAXLfIjsKDBgwX9JFqDsKHA
+OwILCYLTJksWhwL5LErkRw8gQIPeFMGYSM+bQIsMAXqjZUbDPX++GDK0KNAgPS0fHFTj58qg
+QSr12PnyZEYBDgcTfYDyc9AXLUZ0zBCA4qCiCyd2NDUyYwYRqganFELwwIMej0UuWBhBIcZB
+PEQK1AH5k4GeHAJsICxUQA/QlDfdJIFocI8fL35pLgp8SIxBPIoW7RHUIQAFCnWoFCp0aEpB
+PIsECRQjaDPDRXcKESx4WiCeRIjC3lmNcA2iQhgRckG0p2FAADs='
+,
+
+			'opera' =>
+'R0lGODlhEgAOAPcAAP//////zP//mf//Zv//M///AP/M///MzP/Mmf/MZv/MM//MAP+Z//+Z
+zP+Zmf+ZZv+ZM/+ZAP9m//9mzP9mmf9mZv9mM/9mAP8z//8zzP8zmf8zZv8zM/8zAP8A//8A
+zP8Amf8AZv8AM/8AAMz//8z/zMz/mcz/Zsz/M8z/AMzM/8zMzMzMmczMZszMM8zMAMyZ/8yZ
+zMyZmcyZZsyZM8yZAMxm/8xmzMxmmcxmZsxmM8xmAMwz/8wzzMwzmcwzZswzM8wzAMwA/8wA
+zMwAmcwAZswAM8wAAJn//5n/zJn/mZn/Zpn/M5n/AJnM/5nMzJnMmZnMZpnMM5nMAJmZ/5mZ
+zJmZmZmZZpmZM5mZAJlm/5lmzJlmmZlmZplmM5lmAJkz/5kzzJkzmZkzZpkzM5kzAJkA/5kA
+zJkAmZkAZpkAM5kAAGb//2b/zGb/mWb/Zmb/M2b/AGbM/2bMzGbMmWbMZmbMM2bMAGaZ/2aZ
+zGaZmWaZZmaZM2aZAGZm/2ZmzGZmmWZmZmZmM2ZmAGYz/2YzzGYzmWYzZmYzM2YzAGYA/2YA
+zGYAmWYAZmYAM2YAADP//zP/zDP/mTP/ZjP/MzP/ADPM/zPMzDPMmTPMZjPMMzPMADOZ/zOZ
+zDOZmTOZZjOZMzOZADNm/zNmzDNmmTNmZjNmMzNmADMz/zMzzDMzmTMzZjMzMzMzADMA/zMA
+zDMAmTMAZjMAMzMAAAD//wD/zAD/mQD/ZgD/MwD/AADM/wDMzADMmQDMZgDMMwDMAACZ/wCZ
+zACZmQCZZgCZMwCZAABm/wBmzABmmQBmZgBmMwBmAAAz/wAzzAAzmQAzZgAzMwAzAAAA/wAA
+zAAAmQAAZgAAMwAAAL0gIZwgIbUoKc4wMd44OdY4Oc44Od5JSsZBQs5JSudZWu9hY9ZhY/dx
+c/d5e95xc7UQGK0gKb0oMYwYIWMgKXt5e//Hve+mnPe2rd5pWoxBOYQ4McZJQtZpY+9pY++e
+nLUYGK0YGJwYGJQYGOeGhPeWlP+enP///yH5BAEAAP8ALAAAAAASAA4AAAiKAAEIHCiQXTZs
+6NB1I8iwYLqFANjpg9gwoj5vBNnh41YRwL5w4jIqrMiu3z1zIkcyZHfOHcqB7BJShEmP38uC
+Mge228lOGzhu7WCiUzdO4M6C+dABPcqOHrlyRpkm5LizHbt67+xFPbpO5c558PwRrGpV3zad
+8uIVHVtV4tmI9L51bKsvIbq3AgMCADs='
+,
+
+			'netscape' =>
+'R0lGODlhFAAUAKIAAAANKws2RwZmf9Xh4gQLCBsAAB4dHQAAACwAAAAAFAAUAAADYRi63P4wAuAm
+FGMIIITK2dKNQeaR4al6oFoO3Ci/ZsAOtoziZpfqo1StB7wFeZqiL7kkFp0gJpCQORCuB5HOcMhm
+uN1wuGAQgA8GguEsFq/b8Pg7Tu/O63ICnq5e+/+AgAkAOw=='
+,
+
+			'safari' =>
+'R0lGODlhEAASAKUgAAgGAywmIQhAsc0AAxdNlElFQQ5qwCl1s2tqZSmG7CeM1Wp7q0aNxV2DxfJk
+EmSOt619TIeHgT2y7XqczGOv2ImiwJees66tqH/N8K7D4L/J1M7NyOjo4/bo0+X2+vr68v//////
+////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////yH5BAEKACAALAAAAAAQABIAAAbIQJBQ
+uOFwhsgkaKM5KpWfqJHjeW5AkQgiG9lckV6ExVLJVCzby/CyiSwyGQs8M0GrORq3xhyvWxoXCBxt
+ZBUVDx8NFhANDRUIGhcXCwsPDxoUFQ4GDQsNbREdBKMEDAQDEx4NAgIdWaILB3sXBxgMtwIfEZIL
+BAcGFxQZGBQSBgkdCBcRGgYGFAwKHgrFCRlZHAUdtwwS3hIYEgofAFcRBR/F3gkJ3h8BAUMBAB0e
+GOEYHu8ASQUABReibEAQoMCTPAgSZvkiJAgAOw=='
+,
+		},
+	);
+	my %included_images;
+
+	my $groupmark = 'G';
+
+	my %texts = (
+		'sk' => {
+			'header-from' => '"Global (<%HOST%>)" <TOM\@<%HOST%>>',
+			'header-subject' => '[STAT][a110/weblog] last 31days user_agents',
+
+			'main-title' => 'Štatistiky UserAgent-ov',
+			'main-term' => 'pre obdobie <%date-from%> - <%date-to%>',
+			'main-desc' => '',
+
+			'table-B-title' => 'BROWSERY',
+			'table-B-col1' => 'logo',
+			'table-B-col2' => 'názov',
+			'table-B-col3' => 'stránok',
+			'table-B-col4' => 'uživateľov',
+			'table-B-col5' => 'percent',
+			'table-B-col6' => 'graf',
+
+			'table-R-title' => 'ROBOTY',
+			'table-R-col1' => 'n',
+			'table-R-col2' => 'názov',
+			'table-R-col3' => 'stránok',
+			'table-R-col4' => 'percent',
+			'table-R-col5' => 'graf',
+
+			'table-'.$groupmark.'-title' => 'SKUPINY BROWSEROV',
+			'table-'.$groupmark.'-col1' => 'n',
+			'table-'.$groupmark.'-col2' => 'názov',
+			'table-'.$groupmark.'-col3' => 'uživateľov',
+			'table-'.$groupmark.'-col4' => 'percent',
+			'table-'.$groupmark.'-col5' => 'graf',
+
+			'table-m-title' => 'MOBILNÉ BROWSERY',
+			'table-m-col1' => 'n',
+			'table-m-col2' => 'názov',
+			'table-m-col3' => 'stránok',
+			'table-m-col4' => 'uživateľov',
+			'table-m-col5' => 'percent',
+			'table-m-col6' => 'graf',
+
+			'table-d-title' => 'DOWNLOADERY',
+			'table-d-col1' => 'n',
+			'table-d-col2' => 'názov',
+			'table-d-col3' => 'stránok',
+			'table-d-col4' => 'percent',
+			'table-d-col5' => 'graf',
+
+			'table-c-title' => 'CHECKERY',
+			'table-c-col1' => 'n',
+			'table-c-col2' => 'názov',
+			'table-c-col3' => 'stránok',
+			'table-c-col4' => 'percent',
+			'table-c-col5' => 'graf',
+
+			'table-W-title' => 'VANDALIZÉRY',
+			'table-W-col1' => 'n',
+			'table-W-col2' => 'názov',
+			'table-W-col3' => 'stránok',
+			'table-W-col4' => 'percent',
+			'table-W-col5' => 'graf',
+		},
+		'en' => {
+			'header-from' => '"Global (<%HOST%>)" <TOM\@<%HOST%>>',
+			'header-subject' => '[STAT][a110/weblog] last 31days user_agents',
+
+			'main-title' => 'User Agent Stats',
+			'main-term' => 'for term <%date-from%> - <%date-to%>',
+			'main-desc' => '',
+
+			'table-B-title' => 'BROWSERS',
+			'table-B-col1' => 'icon',
+			'table-B-col2' => 'name',
+			'table-B-col3' => 'requests',
+			'table-B-col4' => 'users',
+			'table-B-col5' => 'percent',
+			'table-B-col6' => 'bar',
+
+			'table-R-title' => 'ROBOTS',
+			'table-R-col1' => 'n',
+			'table-R-col2' => 'name',
+			'table-R-col3' => 'requests',
+			'table-R-col4' => 'percent',
+			'table-R-col5' => 'bar',
+
+			'table-'.$groupmark.'-title' => 'BROWSER GROUPS',
+			'table-'.$groupmark.'-col1' => 'n',
+			'table-'.$groupmark.'-col2' => 'name',
+			'table-'.$groupmark.'-col3' => 'users',
+			'table-'.$groupmark.'-col4' => 'percent',
+			'table-'.$groupmark.'-col5' => 'bar',
+
+			'table-m-title' => 'MOBILE BROWSERS',
+			'table-m-col1' => 'icon',
+			'table-m-col2' => 'name',
+			'table-m-col3' => 'requests',
+			'table-m-col4' => 'users',
+			'table-m-col5' => 'percent',
+			'table-m-col6' => 'bar',
+
+			'table-d-title' => 'DOWNLOADERS',
+			'table-d-col1' => 'n',
+			'table-d-col2' => 'name',
+			'table-d-col3' => 'requests',
+			'table-d-col4' => 'percent',
+			'table-d-col5' => 'bar',
+
+			'table-c-title' => 'CHECKERS',
+			'table-c-col1' => 'n',
+			'table-c-col2' => 'name',
+			'table-c-col3' => 'requests',
+			'table-c-col4' => 'percent',
+			'table-c-col5' => 'bar',
+
+			'table-W-title' => 'VANDALISERS',
+			'table-W-col1' => 'n',
+			'table-W-col2' => 'name',
+			'table-W-col3' => 'requests',
+			'table-W-col4' => 'percent',
+			'table-W-col5' => 'bar',
+		},
+	);
+
+	my %records;
+	my %counts;
+
+	my %XSGN;
+	
+	$XSGN{TMP} = <<"XSGN";
+From: <%FROM%>
+To: <%TO%>
+Subject: <%SUBJECT%>
+Date: <%DATE%>
+List-Id: TOM3
+MIME-Version: 1.0
+Content-Type: multipart/related;
+ boundary="<%BOUNDARY%>"
+
+This is a multi-part message in MIME format.
+--<%BOUNDARY%>
+Content-Type: text/html;charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+<#HTML#>
+--<%BOUNDARY%>
+Content-Type: image/gif;
+ name=\"webcom_icon.gif\"
+Content-ID: <part1.webcom.icon\@webcom.sk>
+Content-Transfer-Encoding: base64
+Content-Disposition: inline;
+ filename=\"webcom_icon.gif\"
+
+R0lGODlhlgAcAMQAAL/Awd/g4O0bI/f395iam7i5urCxss/Q0YiKjJCSk+/v8NfY2Ofn6Kip
+q8fIyfaNke84P/zU1v3i4/RxdvebnvV/hKCho4CChP///wAAAAAAAAAAAAAAAAAAAAAAAAAA
+ACH5BAAAAAAALAAAAACWABwAAAX/ICaOZGmeaIpaV6u+cCzPL0MQFuLQfD+yLp9wSBQxEg6A
+I0DYFZ8l4AVKrZ4aAIChYGEgrFApeEy1BACWRgGTIBPF7rjPrDUYMF95D67vwwBYAEcOFn40
+fIaJJQM3Cwo5DIoxiJKSA4QWBQqVMJScnxgWohabJwOiDSmPowMkCgAELS0EmidSCgYJshcE
+AK0qCgWxuxYOvyXBurIJtSdcoiIHDcsGpdENCC0J1SrTLWsnB7ILKAWyqSMO2buyOiZS7LsI
+BygD5vGyhST2+LIFxz9k2cA3D8OjfvRQBGgHcMSwC/oWrbsQYISBfrvABcS4K+G+h/0iigDZ
+j8C7dhwP/0zERw7FQ48jFu6yNkLcrHS7EgAIsKDAypYi4EHMYmAlxY/sEoxSJhKDzRaBvLWA
+GZSdgQM8L8ZrgHWBVm0pnrYp8bXFnRLKLiRUMNEAQEbLSEjhNoJf3BH3ZlUkwcBAU6cQaR6k
+WrUFgr042wEV4WBXJBQTFyvAB3DBXQwALrvaBdSTiMzjREyWRaBhDRERHjyIIAJxFIEnIp9I
+67oEaIgkbksBIFcW75GyCIuQqtGziLTg8iIwHWOCgOcCJqgwLqV24Qu/Tc0coWz5urEYGDAc
+sctAlvPnpUQ0jiGvPikaaTyADv1BCuqyrGP4mv3E17NP8ZZXQv+RwBE+68mSgv9lYOGRnw8Q
+0PccBPcpaMuDJtzWnwmjtdDKLQblg8EA25F3IDsJBnGCTEHsoh8MEkJXoYqvtaCfhi/sJh5U
+G13AwG3omDhVAEQWaSSRj4Vi4QkMXjDWRC++EKGEFK6wZI1HZejbCyxugyEGTRb1pQiyzcCe
+e9fFN8N8EtpnJY292XgCji+kpRkb8YA3glRnycAeciIoxxwMFdBXwXRXxpmlbVu+8JQsToxw
+W3AmPCqcCPZkZ9yke3XIy6AoLNCKBBRQIMGIiyn65qK5NarCACsttwg7eZhgZ6Qj9JWNprI0
+ZNdNFu1CgHULBFkTL64xodaFcPZ4o6sqTNonCWVtOEKGk4YFksMuvJJWQBbYsJPkiCQppQUl
+jxJgB0iE4Senli1Ye4Kn48a0C6iPctTtiYTBdWAJJOFjEparPhuvDFr95ZBZLyxgVFIwCSVw
+vXXl1Q+8/ah5XcFzQqvCjpcCdgFN9RCSlAGpitCTxOpGOYICJhNTQMoGOQASLSTjNUo5o1Ds
+1CjChQAAOw==
+<#INCLUDE#>
+--<%BOUNDARY%>--
+XSGN
+	my $boundary = "--==".Utils::vars::genhash(32)."==--";
+	
+	my $date = TOM::Utils::datetime::mail_current();
+	
+	#my $date=`date -u "+%a,%e %b %Y %H:%M:%S (%Z)"`;chomp($date);
+	
+	$XSGN{TMP} =~ s|<%BOUNDARY%>|$boundary|g;
+
+	$XSGN{TMP} =~ s|<%FROM%>|$texts{$env{lng}}{'header-from'}|g;
+	my $body_email = "<$env{to_email}>"; $body_email =~ s|;|>,<|g;
+	$XSGN{TMP} =~ s|<%TO%>|$body_email|g;
+	$XSGN{TMP} =~ s|<%SUBJECT%>|$texts{$env{lng}}{'header-subject'}|g;
+	$XSGN{TMP} =~ s|<%HOST%>|$TOM::hostname|g;
+	$XSGN{TMP} =~ s|<%DATE%>|$date|g;
+
+	$XSGN{INCLUDE} = <<"XSGN";
+--<%BOUNDARY%>
+Content-Type: image/gif;
+ name=\"<%name%>.gif\"
+Content-ID: <<%cid%>>
+Content-Transfer-Encoding: base64
+Content-Disposition: inline;
+ filename=\"<%name%>.gif\"
+
+<%image%>
+<#INCLUDE#>
+XSGN
+	$XSGN{INCLUDE} =~ s|<%BOUNDARY%>|$boundary|g;
+
+	$XSGN{HTML} = <<"XSGN";
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+	</head>
+	<body>
+		<style>
+			body { font-family: Arial, Verdana; }
+
+			#page { width: 650px; }
+
+			/* Nadpis */
+			h1 { color: #808285; clear: left; }
+			.main-logo { float: left; margin: 0 15px 15px 0; }
+			/*.main-logo { margin: 0 15px 15px 0; } */
+				.main-title { font-size: 0.55em; }
+				.main-term { font-size: 0.4em; font-weight: normal; }
+				.main-desc { color: #808285;
+										 margin: 10px 0 20px 0; font-size: 0.4em; font-weight: normal;
+										 border: 10px solid gray; border-width: 0 0 0 10px;
+										 padding: 0 0 0 10px;
+				}
+
+			/* Obsah */
+			#content { clear: both; }
+				#content table { width: 450px; }
+
+			.tabletitle { text-align: left; }
+
+			.overview {
+				border: 1px dotted gray; border-width: 1px 1px 0 0;
+				font-size: 0.75em;
+				margin-bottom: 20px;
+			}
+			.overview td, .overview th {
+				border: 1px dotted gray; border-width: 0 0 1px 1px;
+				padding: 2px;
+			}
+			.overview th { background: #e5e5e5; color: gray; }
+
+			.bar { height: 10px; background: green; border: 1px solid gray; }
+		</style>
+
+		<div id="page">
+			<h1>
+				<img class="main-logo" src="cid:part1.webcom.icon\@webcom.sk" alt="webcom logo" border="0" />
+				<div class="main-title"><%main-title%></div>
+				<div class="main-term"><%main-term%></div>
+				<div class="main-desc"><%main-desc%></div>
+			</h1>
+
+			<div id="content">
+				<#CONTENT#>
+			</div>
+		</div>
+	</body>
+</html>
+XSGN
+
+	$XSGN{HTML} =~ s|<%main-title%>|$texts{$env{lng}}{'main-title'}|g;
+	$XSGN{HTML} =~ s|<%main-term%>|$texts{$env{lng}}{'main-term'}|g;
+	$XSGN{HTML} =~ s|<%main-desc%>|$texts{$env{lng}}{'main-desc'}|g;
+
+	# a nalejem casove udaje
+	my %t; # temporary time;
+	my %times = (
+		'timestamp' =>
+		{
+			'date-from' => ($main::time_current - 86400*31),
+			'date-to' => ($main::time_current - 86400*1),
+		},
+	);
+
+	my %t;
+	my $month_sk; my $month_en;
+	my $konc_en; my $m_num;
+
+	%t = Utils::datetime::ctodatetime( $times{timestamp}{'date-from'}, format=>1 );
+	$month_sk = $Utils::datetime::MONTHS_L{sk}[$t{mom}-1];
+	$month_en = $Utils::datetime::MONTHS_L{en}[$t{mom}-1];
+	$konc_en; $m_num = $t{mom} % 10;
+	$konc_en = 'th' if $m_num <= 0 || $m_num >= 4;
+	$konc_en = 'st' if $m_num == 1;
+	$konc_en = 'nd' if $m_num == 2;
+	$konc_en = 'rd' if $m_num == 3;
+	
+	$times{sk}{'date-from'} = "$t{mday}. ${month_sk}a $t{year}";
+	$times{en}{'date-from'} = "$t{mday}<sup>$konc_en</sup> $month_en $t{year}";
+	$XSGN{HTML} =~ s|<%date-from%>|$times{$env{lng}}{'date-from'}|g;
+
+	%t = Utils::datetime::ctodatetime( $times{timestamp}{'date-to'}, format=>1 );
+	$month_sk = $Utils::datetime::MONTHS_L{sk}[$t{mom}-1];
+	$month_en = $Utils::datetime::MONTHS_L{en}[$t{mom}-1];
+	$konc_en; $m_num = $t{mom} % 10;
+	$konc_en = 'th' if $m_num <= 0 || $m_num >= 4;
+	$konc_en = 'st' if $m_num == 1;
+	$konc_en = 'nd' if $m_num == 2;
+	$konc_en = 'rd' if $m_num == 3;
+	
+	$times{sk}{'date-to'} = "$t{mday}. ${month_sk}a $t{year}";
+	$times{en}{'date-to'} = "$t{mday}<sup>$konc_en</sup> $month_en $t{year}";
+	$XSGN{HTML} =~ s|<%date-to%>|$times{$env{lng}}{'date-to'}|g;
+
+	$XSGN{CONTENT} = <<"XSGN";
+<#TABLE#>
+XSGN
+
+# ------------ DESIGN DEFAULTNEJ TABULKY A LINE -----------------
+	$XSGN{TABLE} = <<"XSGN";
+				<table cellpadding="0" cellspacing="0" class="overview">
+					<thead>
+						<tr>
+							<th colspan="5" class="tabletitle"><%table-<%table-id%>-title%></th>
+						</tr>
+						<tr>
+							<th><%table-<%table-id%>-col1%></th>
+							<th><%table-<%table-id%>-col2%></th>
+							<th><%table-<%table-id%>-col3%></th>
+							<th><%table-<%table-id%>-col4%></th>
+							<th><%table-<%table-id%>-col5%></th>
+						</tr>
+					</thead>
+					<tbody>
+						<#LINE#>
+					</tbody>
+				</table>
+				<#TABLE#>
+XSGN
+
+	$XSGN{LINE} = <<"XSGN";
+<tr>
+	<td><#IMAGE#></td>
+	<td><%name%></td>
+	<td><%value%></td>
+	<td><%percent%>%</td>
+	<td width="150px"><div class="bar" style="width: <%percent-round%>%;"></div></td>
+</tr>
+<#LINE#>
+XSGN
+
+# ------------ DESIGN TABULKY PRE BROWSERY A LINE -----------------
+	$XSGN{TABLE_B} = <<"XSGN";
+				<table cellpadding="0" cellspacing="0" class="overview">
+					<thead>
+						<tr>
+							<th colspan="6" class="tabletitle"><%table-<%table-id%>-title%></th>
+						</tr>
+						<tr>
+							<th><%table-<%table-id%>-col1%></th>
+							<th><%table-<%table-id%>-col2%></th>
+							<th><%table-<%table-id%>-col3%></th>
+							<th><%table-<%table-id%>-col4%></th>
+							<th><%table-<%table-id%>-col5%></th>
+							<th><%table-<%table-id%>-col6%></th>
+						</tr>
+					</thead>
+					<tbody>
+						<#LINE#>
+					</tbody>
+				</table>
+				<#TABLE#>
+XSGN
+
+	$XSGN{LINE_B} = <<"XSGN";
+<tr>
+	<td><#IMAGE#></td>
+	<td><%name%></td>
+	<td><%requests%></td>
+	<td><%users%></td>
+	<td><%percent-users%>%</td>
+	<td width="150px"><div class="bar" style="width: <%percent-users-round%>%;"></div></td>
+</tr>
+<#LINE#>
+XSGN
+
+# ------------ DESIGN TABULKY PRE MOBILNÉ BROWSERY A LINE -----------------
+	$XSGN{TABLE_m} = $XSGN{TABLE_B};
+	$XSGN{LINE_m} = $XSGN{LINE_B};
+
+
+# ----------- OBRAZOK JE LEN V DEFAULTNEJ FORME ---------------
+	$XSGN{IMAGE} = <<"XSGN";
+<img src="cid:<%img-cid%>" alt="<%img-alt%>" />
+XSGN
+
+	# prehodenie hodnot s klucmi - potom sa da podla jednopismenkovych
+	# klucov (predtym hodnot) zistit dlhy nazov typu prehliadacia
+	# napr. B => browser, v => vandaliser ...
+	# !!! - zatial nepotrebne
+	#my %getReqTypeName;
+	#$getReqTypeName{'X'} = 'unknown';
+	#while ( (my $key, my $val) = each %TOM::Net::HTTP::UserAgent::type )
+	#{ $getReqTypeName{$val} = $key; }
+
+	# SPRACOVANIE
+
+	# statisticky selekt
+	# - ostra tabulka a110_weblog_rqs
+	# - testovacia tabulka a110_weblog_rqs0
+	my $sql = "
+		SELECT
+				reqtype,
+				user_agent_name,
+				COUNT(*) AS requests,
+				COUNT(DISTINCT(IDhash)) AS users
+		FROM
+				TOM.a110_weblog_rqs
+		WHERE
+				active='Y' AND
+				reqtime>".($times{'timestamp'}{'date-from'})."
+		GROUP BY
+				reqtype,user_agent_name
+		ORDER BY
+				reqtype DESC,requests DESC
+	";
+	main::_log( $sql );
+	my $db0 = $main::DB{stats}->Query( $sql );
+
+	# tu len spocitam hodnoty
+	while ( my %db0_line = $db0->fetchhash )
+	{
+		$db0_line{reqtype} = 'X' unless $db0_line{reqtype};
+		my $typ = $db0_line{reqtype}; my $agent = $db0_line{user_agent_name};
+		
+		$records{$typ}{$agent}{users} += $db0_line{users};
+		$records{$typ}{$agent}{requests} += $db0_line{requests};
+		
+		$counts{$typ}{users} += $db0_line{users};
+		$counts{$typ}{requests} += $db0_line{requests};
+
+		if ( $db0_line{reqtype} eq 'B' )
+		{
+			# mam borwser, idem vytvorit k nemu grupu
+			my $agentID = TOM::Net::HTTP::UserAgent::getIDbyName( $agent );
+			my $groupName = $TOM::Net::HTTP::UserAgent::table[$agentID]{agent_group};
+
+			# nastavim si veci
+			$db0_line{reqtype} = $groupmark; $db0_line{user_agent_name} = $groupName;
+			$typ = $db0_line{reqtype}; $agent = $db0_line{user_agent_name};
+
+			$records{$typ}{$agent}{users} += $db0_line{users};
+			$records{$typ}{$agent}{requests} += $db0_line{requests};
+			
+			$counts{$typ}{users} += $db0_line{users};
+			$counts{$typ}{requests} += $db0_line{requests};
+		}
+	}
+
+	# tu to vykreslim
+	my @order = ('B', $groupmark, 'R', 'm', 'd', 'c', 'W'); # poradie v akom to vykreslujem
+	# a tym padom aj obmedzenie, co vykreslujem a co nie
+	foreach my $typ ( @order )
+	{
+		next unless $records{$typ};
+		my %agenti = %{$records{$typ}};
+
+		# TMP design tabulky
+		my $null = $XSGN{TABLE};
+		$null = $XSGN{'TABLE_'.$typ} if defined( $XSGN{'TABLE_'.$typ} );
+
+		$null =~ s|<%table-id%>|$typ|g; # na zaklade $record viem aku tabulku plnim
+		# record typ prehliadaca (jednopismenkove oznacenie) - B, c, v
+
+		# naplnim texty do tabulky
+		while ( (my $k, my $v) = each %{$texts{$env{lng}}} )
+		{
+			next unless $k =~ /^table-$typ/;
+			$null =~ s|<%$k%>|$v|g;
+		}
+
+		# prejdem si vsetky zaznamy pre dany typ
+
+		# podla coho zoradujem
+		my $sortField;
+		if ( $typ =~ /(R|d|c|W)/ ) { $sortField = 'requests'; }
+		else { $sortField = 'users'; }
+		
+		foreach (sort {$agenti{$b}{$sortField} <=> $agenti{$a}{$sortField}} keys %agenti)
+		{
+			my $agent = $_; my %hash = %{$agenti{$agent}};
+			
+			# vypocitam percenta - viem ich az z celkovych sum
+			$hash{percent_users} = sprintf("%.2f", $hash{users}/($counts{$typ}{users}/100));
+			$hash{percent_users_round} = sprintf("%.0f", $hash{percent_users});
+
+			$hash{percent_requests} = sprintf("%.2f", $hash{requests}/($counts{$typ}{requests}/100));
+			$hash{percent_requests_round} = sprintf("%.0f", $hash{percent_requests});
+
+			# tmp line
+			my $line = $XSGN{LINE};
+			$line = $XSGN{'LINE_'.$typ} if defined( $XSGN{'LINE_'.$typ} );
+
+			# vyplnim line
+			$line =~ s|<%name%>|$agent|g if $agent;
+			$line =~ s|<%name%>|unknown|g unless $agent;
+
+			$line =~ s|<%value%>|$hash{$sortField}|g;
+			$line =~ s|<%percent%>|$hash{'percent_'.$sortField}|g;
+			$line =~ s|<%percent-round%>|$hash{'percent_'.$sortField.'_round'}|g;
+			
+			$line =~ s|<%users%>|$hash{users}|g;
+			$line =~ s|<%percent-users%>|$hash{percent_users}|g;
+			$line =~ s|<%percent-users-round%>|$hash{percent_users_round}|g;
+
+			$line =~ s|<%requests%>|$hash{requests}|g;
+			$line =~ s|<%percent-requests%>|$hash{percent_requests}|g;
+			$line =~ s|<%percent-requests-round%>|$hash{percent_requests_round}|g;
+
+			# obrazok
+			# zistim ci mam k tomuto zaznamu obrazok
+			foreach my $img_name ( reverse sort keys %{$images{$typ}} )
+			{
+				if ( $agent =~ /$img_name/i )
+				{
+					# pre tento zaznam som nasiel obrazok
+					# ak taky este nemam, dam mu id
+					if ( !exists( $included_images{$img_name} ) )
+					{
+						# vlozim obrazok ako inline prilohu
+						my $cid = "part".((keys %included_images)+1).".".Utils::vars::genhash(10)."\@webcom.sk";
+						$included_images{$img_name} = $cid;
+						my $include = $XSGN{INCLUDE};
+						my $name = $img_name; $name =~ s|\s+|_|g;
+						$include =~ s|<%cid%>|$cid|g;
+						$include =~ s|<%name%>|$name|g;
+						$include =~ s|<%image%>|$images{$typ}{$img_name}|g;
+						$XSGN{TMP} =~ s|<#INCLUDE#>|$include|;
+					}
+
+					# nalejem ho do designu
+					my $image = $XSGN{IMAGE};
+					$image =~ s|<%img-cid%>|$included_images{$img_name}|g;
+					$image =~ s|<%img-alt%>|$texts{$env{lng}}{'img-alt'}|g;
+					$image =~ s|<%name%>|$img_name|g;
+
+					$line =~ s|<#IMAGE#>|$image|;
+					last;
+				}
+			}
+
+			# ak som nenasiel obrazok, vymazem ho
+			$line =~ s|<#IMAGE#>|&nbsp;|;
+
+			# nalejem line do tabulky
+			$null =~ s|<#LINE#>|$line|g;
+		}
+
+		# a tabulku do contentu
+		$XSGN{CONTENT} =~ s|<#TABLE#>|$null|;
+
+	}
+
+	# zmazem secok bordel co po mne ostal
+	$XSGN{CONTENT} =~ s|<#.*?#>\n+||gs; $XSGN{CONTENT} =~ s|<%.*?%>||g;
+
+	# zostavim vysledny email
+	$XSGN{HTML} =~ s|<#CONTENT#>|$XSGN{CONTENT}|;
+	$XSGN{TMP} =~ s|<#HTML#>|$XSGN{HTML}|;
+
+	# a opat debordelizaz
+	$XSGN{TMP} =~ s|<#.*?#>\n+||gs;
+
+	main::_log( $XSGN{TMP} );
+	
+	TOM::Net::email::send
+	(
+		from => 'dev\@webcom.sk',
+		to => $env{to_email},
+		to_name => '',
+		body => $XSGN{TMP}
+	);
+	
+=head1
+	# Poslem mail
+	my $sql1 = "
+				INSERT INTO TOM.a130_send
+				SET
+					ID_md5='',
+					sendtime=unix_timestamp(),
+					priority='99',
+					from_name='$tom::H',
+					from_email='gregor\@webcom.sk',
+					from_host='$tom::H',
+					from_service='',
+					to_name='',
+					to_email='$env{to_email}',
+					body='$XSGN{TMP}'
+		";
+		
+	#main::_log( $sql1 );
+	my $db1 = $main::DB{main}->Query( $sql1 );
+=cut
+
+	return 1;
+}
+
+1;

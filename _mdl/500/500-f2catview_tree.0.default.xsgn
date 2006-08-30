@@ -1,0 +1,48 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+ <DEFINITION id="TMP">
+
+ <table width=100% cellspacing=6 cellpadding=0 border=0><tr><td><#LINE#></td></tr></table>
+
+ </DEFINITION>
+
+ <DEFINITION id="LINE">
+
+ <table width=100% cellspacing=0 cellpadding=0 class="forum">
+    <tr>
+     <#OD#>
+     <td><img src=t.gif width=3 height=1 border=0><BR></td>
+     <td width=100%>
+	<div style="FONT:bold 11px Verdana;"><%NAME%>-<%ID%></div>
+     </td>
+    </tr>
+ </table>
+
+ </DEFINITION>
+
+ <DEFINITION id="OD">
+<td <%TBG%> align=middle <%VALIGN%>><%IMG%><img src=t.gif width=11 height=1 border=0><BR></td>
+ </DEFINITION>
+
+ <DEFINITION id="icon">
+<img src="<$tom::H_grf>/tree_x2.gif" border=0 width=16 height=16><BR>
+ </DEFINITION>
+
+ <DEFINITION id="bg_cross">
+background="<$tom::H_grf>/list_0_0.gif"
+ </DEFINITION>
+
+ <DEFINITION id="bg_line">
+background="<$tom::H_grf>/list_0_0.gif"
+ </DEFINITION>
+
+ <DEFINITION id="img_cross">
+<img src="<$tom::H_grf>/list_0_3.gif" border=0><BR>
+ </DEFINITION>
+
+ <DEFINITION id="img_plus">
+<img src="<$tom::H_grf>/t.gif" width=11 height=2 border=0><BR><img src="<$tom::H_grf>/ftree_minus_0.gif" border=0 style="cursor:hand;" onclick="if (<%ID%>.style.display=='block'){this.src='<$tom::H_grf>/ftree_plus_0.gif';<%ID%>.style.display='none'}else{this.src='<$tom::H_grf>/ftree_minus_0.gif';<%ID%>.style.display='block'}"><BR>
+ </DEFINITION>
+
+</XML_DESIGN_DEFINITION>
+

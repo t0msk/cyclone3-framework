@@ -1,0 +1,199 @@
+sub BaseModul{
+require "_info.m";
+#require "_table.m";
+
+
+
+
+my $mdl_temp=<<"HEADER";
+
+<table width=100% cellspacing=4 cellpadding=0 border=0>
+<tr>
+<td>
+
+ <table width=100% cellspacing=0 cellpadding=0>
+    <tr>
+	 <td align=middle><img src="$tom::H_media/grf/admin/tree_0.gif" border=0><BR><img src=t.gif width=11 height=1 border=0><BR></td>
+     <td><img src=t.gif width=3 height=1 border=0><BR></td>
+     <td width=100% style="FONT:bold 11px Verdana;">&nbsp;<a href="core.pl?type=photogallery_cathegory_add" target="frm_micro"><font color=white>add</font></a></td>
+    </tr>
+ </table>
+
+ <%BASE%>
+</td>
+</tr>
+</table>
+
+HEADER
+
+my $mdl_temp_line=<<"HEADER";
+ <table width=100% cellspacing=0 cellpadding=0>
+    <tr>
+     <%OD%>
+     <td><img src=t.gif width=3 height=1 border=0><BR></td>
+     <td nowrap style="FONT:bold 11px Verdana;"></td>
+	 <td>
+	 <td width=100%>
+<table width=100% cellspacing=1 cellpadding=0 border=0
+	style="BACKGROUND:#6487DC;"
+	onmouseover="this.style.background='#94B7FC';"
+	onmouseout="this.style.background='';"
+>
+<tr>
+ <td width=100% bgcolor="#6487DC" style="FONT:11px Verdana;">&nbsp;<a href="core.pl?type=photogallery&whereby=IDcathegory&where=<%ID%>" target="frm_base"><B><%NAME%></B></a> [<%ID%>] <i>(<%POPIS%>)</i></td>
+
+ <td bgcolor="#7497EC" style="FONT:bold 10px Verdana;cursor:hand;">&nbsp;<a href="core.pl?type=photogallery_cathegory_top&id=<%ID%>" target="frm_micro"><img src="$tom::H_media/grf/admin/list_<%TOP%>.gif" width=11 height=12 border=0></a>&nbsp;</td>
+ 
+ <td bgcolor="#7497EC" style="FONT:bold 10px Verdana;cursor:hand;">&nbsp;<img src="$tom::H_media/grf/admin/list_<%ACTIVE%>.gif" width=11 height=12 border=0 onclick="this.src='core.pl?type=photogallery_cathegory_active&id=<%ID%>';">&nbsp;</td>
+
+ <td bgcolor="#7497EC" style="FONT:bold 10px Verdana;">&nbsp;<a href="core.pl?type=photogallery_cathegory_edit&id=<%ID%>" target="frm_micro"><font color=white><img src="$tom::H_media/grf/admin/list.gif" border=0></font></a>&nbsp;</td>
+
+ <td bgcolor="#7497EC" style="FONT:bold 10px Verdana;">&nbsp;<a href="core.pl?type=photogallery_cathegory_add&id=<%ID%>" target="frm_micro"><font color=white><img src="$tom::H_media/grf/admin/close4.gif" border=0></font></a>&nbsp;</td>
+
+
+ <td bgcolor="#7497EC" style="FONT:bold 10px Verdana;" nowrap>&nbsp;<%DATE%>&nbsp;</td>
+
+ <td bgcolor="#7497EC" style="FONT:10px Verdana;" nowrap>&nbsp;<B><%PICS%></B> images&nbsp;</td> 
+ 
+
+ <td bgcolor="#7497EC" style="FONT:bold 10px Verdana;" nowrap>&nbsp;<a href="core.pl?type=photogallery_cathegory_move&id=<%ID%>" target="frm_micro"><font color=white><img src="$tom::H_media/grf/admin/close3.gif" border=0></font></a>&nbsp;</td>
+ <td bgcolor="#7497EC" style="FONT:bold 10px Verdana;">&nbsp;<a href="core.pl?type=photogallery_cathegory_del&id=<%ID%>" target="frm_micro"><font color=white><img src="$tom::H_media/grf/admin/close2.gif" border=0></font></a>&nbsp;</td>
+
+</tr>
+</table>
+	 </td>
+    </tr>
+ </table>
+HEADER
+
+
+
+my $mdl_temp_od="<td <%TBG%> align=middle <%VALIGN%>><%IMG%><img src=t.gif width=11 height=1 border=0><BR></td>";
+
+my $info=&info_create(
+'icon'	=>	True,
+'title'	=>	"Image categories",
+);
+
+
+my $db_micro = $dbh->Query("SELECT ID,fullname,tinyname,starttime,IDaspic,about,active,top FROM photogallery_cathegory ORDER BY ID");
+while (my @db_micro_line=$db_micro->FetchRow())
+{
+
+
+  # TOTO BUDE TREBA ZMAZAT!!!!!!!!
+  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#  my $cat_w=$db_micro_line[0]." ";
+#  my $cat_s;
+#  while (($cat_w)&&($cat_w=~s|.?$||))
+#  {$cat_s.=" OR ID='$cat_w'";}
+#  $cat_s=~s|^ OR ||g;$cat_s=~s| OR ID=''$||g;
+#  my @cat_select;
+#  my $cat_limit=length($db_micro_line[0]);
+#  my $db_micro1 = $dbh->Query("
+# 	SELECT ID,tinyname
+#	FROM photogallery_cathegory
+#	WHERE $cat_s LIMIT $cat_limit");
+#  while (my @db_micro1_line=$db_micro1->FetchRow())
+#  {
+#   my $pos=length($db_micro1_line[0]);
+#   $cat_select[$pos-1]=$db_micro1_line[1];
+#  }
+#  $cat_w=join "/",@cat_select;
+#  if ($cat_w ne $db_micro_line[1])
+#  {$dbh->Query("UPDATE photogallery_cathegory SET fullname='$cat_w' WHERE ID='$db_micro_line[0]' LIMIT 1");}
+  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+  my $db_micro1 = $dbh->Query("SELECT ID FROM photogallery WHERE IDcathegory='$db_micro_line[0]'");
+  my $lines=$db_micro1->NumRows();
+  
+  my $tr_uroven=@tr_cesta=split('',$db_micro_line[0]);
+  $mdl_temp=~s|<%BASE%>|$mdl_temp_line<%BASE%>|g;
+  
+   my (undef,$minR,$hourR,$mdayR,$momR,$yearR,undef,undef,undef)=localtime($db_micro_line[3]);
+ $momR++;$yearR=$yearR+1900-2000;
+  if ($minR<"10"){$minR="0$minR"}
+  if ($hourR<"10"){$hourR="0$hourR"}
+  if ($mdayR<"10"){$mdayR="0$mdayR"}
+  if ($momR<"10"){$momR="0$momR"}
+  if ($yearR<"10"){$yearR="0$yearR"}
+  
+  $width=$tr_uroven*10+5;
+  $mdl_temp =~s|<%DATE%>|$mdayR.$momR.$yearR $hourR:$minR|g;
+  if ($db_micro_line[7] eq "Y"){$mdl_temp =~s|<%NAME%>|<font color="#00E050">$db_micro_line[2]</font>|g;}
+  $mdl_temp =~s|<%NAME%>|$db_micro_line[2]|g;
+  if (length($db_micro_line[5])>30)
+  {$db_micro_line[5]=substr($db_micro_line[5],0,30)."...";}
+  $mdl_temp =~s|<%POPIS%>|$db_micro_line[5]|g;
+  $nullid=$lines;
+  if ($nullid<10){$nullid="_$nullid"};
+  if ($nullid<100){$nullid="_$nullid"};
+  if ($nullid<1000){$nullid="_$nullid"};
+  if ($nullid<10000){$nullid="_$nullid"};
+  if ($nullid<100000){$nullid="_$nullid"};
+  if ($nullid<1000000){$nullid="_$nullid"};
+  $mdl_temp =~s|<%PICS%>|$nullid|g;
+  $mdl_temp =~s|<%ID%>|$db_micro_line[0]|g;
+  $id0=pack "A8",$db_micro_line[0];
+  $id0=~s| |_|g;
+  $mdl_temp =~s|<%ID0%>|$id0|g;
+  if ($db_micro_line[6] eq "Y"){$mdl_temp=~s|<%ACTIVE%>|g|;}
+  else {$mdl_temp=~s|<%ACTIVE%>|r|;}
+  
+  if ($db_micro_line[7] eq "Y"){$mdl_temp=~s|<%TOP%>|g|;}
+  else {$mdl_temp=~s|<%TOP%>|y|;}
+
+  
+  $i0=-1;$od="";
+  while ($i0<($tr_uroven))
+  {
+   $i0++;
+   $od .= $mdl_temp_od;
+   $od =~s|<%TBG%>|<%TBG-$i0%>|g;
+   
+   if (($i0+1) == $tr_uroven)
+   {
+    $od=~s|<%IMG%>|<img src=t.gif width=1 height=3 border=0><BR><img src="$tom::H_media/grf/admin/forum_0_3.gif" border=0><BR>|g;
+    $mdl_temp =~s|<%TBG-$i0%>|background="$tom::H_media/grf/admin/forum_0_0.gif"|g;   
+   }
+   
+   if ($i0 == $tr_uroven)
+   {
+    $od=~s|<%VALIGN%>|valign=middle|g;
+    $od=~s|<%IMG%>|<img src="$tom::H_media/grf/admin/tree_0.gif" border=0><BR>|g;
+    $od =~s|<%TBG-$i0%>||g;
+    $mdl_temp =~s|<%TBG-$i0%>||g;
+   }
+   else
+   {
+    $od=~s|<%IMG%>||g;
+   }
+   $od=~s|<%VALIGN%>|valign=top|g;
+  }
+  $mdl_temp =~s|<%OD%>|$od|g;
+  
+  $mdl_temp =~s|<%BG%>|#96B2C8|g;
+
+  $i=$i+2;
+
+
+
+}
+
+return $info.$mdl_temp;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

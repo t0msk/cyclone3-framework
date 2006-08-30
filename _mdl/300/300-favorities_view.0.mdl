@@ -1,0 +1,109 @@
+#!/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+ Tomahawk::XLNGtoXSGN(); # insert XLNG do XSGN
+
+ if ($main::USRM{logged} ne "Y"){$XSGN{TMP}=$XSGN{notlogged};return 1}
+
+ my $data=$main::USRM{favorities};
+ my $data2;
+ while ($data=~s|<VAR (.*?)/>||)
+ {
+  my %env0=CML::VARhash($1);
+
+  if ($XSGN{'a'.$env0{app}}.'_ok')
+  {
+   $XSGN{NULL}=$XSGN{LINE};
+   if ($env0{app} eq "400")
+   {
+    #$XSGN{TMP}.="mam 400";
+    $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+    $env{db_400}=$TOM::DB_name unless $env{db_400};
+    my $db0=$main::DBH->Query("
+    	(SELECT title,changetime
+	FROM $env{db_400}.a400
+	WHERE	ID='$env0{id}'
+		AND starttime<=$tom::time_current
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	ORDER BY changetime DESC LIMIT 1)
+	UNION ALL
+	(SELECT title,changetime
+	FROM $env{db_400}.a400
+	WHERE	ID='$env0{id}'
+		AND starttime<=$tom::time_current
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	ORDER BY changetime DESC LIMIT 1)
+	ORDER BY changetime DESC LIMIT 1");
+    if (my @db0_line=$db0->fetchrow)
+    {
+     $XSGN{NULL}=~s|<#APP#>|$XSGN{'a'.$env0{app}.'_ok'}|g;
+     $XSGN{NULL}=~s|<%NAME%>|$db0_line[0]|g;
+    }
+    else
+    {
+     $XSGN{NULL}=~s|<#APP#>|$XSGN{'a'.$env0{app}.'_bad'}|g;
+     $XSGN{NULL}=~s|<%NAME%>|$XLNG{notfound}|g;
+    }
+   }
+   elsif ($env0{app} eq "820")
+   {
+    $env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+    $env{db_820}=$TOM::DB_name unless $env{db_820};
+    #Tomahawk::debug::log(1,"$env{db_820}");
+    my $db0=$main::DBH->Query("
+    	SELECT name
+	FROM $env{db_820}.a820
+	WHERE	ID='$env0{id}'
+		AND (lng='$env{lng}' OR lng='')
+		AND type='F'
+		AND active='Y'
+	LIMIT 1");
+    if (my @db0_line=$db0->fetchrow)
+    {
+     $XSGN{NULL}=~s|<#APP#>|$XSGN{'a'.$env0{app}.'_ok'}|g;
+     $XSGN{NULL}=~s|<%NAME%>|$db0_line[0]|g;
+    }
+    else
+    {
+     $XSGN{NULL}=~s|<#APP#>|$XSGN{'a'.$env0{app}.'_bad'}|g;
+     $XSGN{NULL}=~s|<%NAME%>|$XLNG{notfound}|g;
+    }
+   }
+
+   $XSGN{NULL}=~s|<%ID%>|$env0{id}|g;
+   $XSGN{NULL}=~s|<%APP%>|$env0{app}|g;
+
+   my %env1=Utils::datetime::ctodatetime($env0{time},format=>1); # zkonvertujem cas do hashu a zformatujem
+   $XSGN{NULL}=~s|<%DATE%>|$env1{mday}.$Utils::datetime::MONTHS{$env{lng}}[$env1{mom}-1].$env1{year}|g;
+   $XSGN{NULL}=~s|<%TIME%>|$env1{hour}:$env1{min}|g;
+
+   $XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}<#LINE#>|;
+   next;
+  }
+
+
+  $XSGN{NULL}=$XSGN{LINE};
+  $XSGN{NULL}=~s|<#APP#>|$XSGN{unknown}|g;
+  $XSGN{NULL}=~s|<%ID%>|$env0{id}|g;
+  $XSGN{NULL}=~s|<%APP%>|$env0{app}|g;
+  $XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}<#LINE#>|;
+
+ }
+
+
+ return 1}
+
+1;

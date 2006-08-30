@@ -1,0 +1,413 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+
+BEGIN {require "/usr/bin/tom3-init";}
+
+use Cyclone::files;
+
+# zaklad prav
+# user cyclone3
+# user apache
+# groupa cyclone3 - zdruzuje vsetkych coderov a ostatnych vyvojarov, + apache usera
+# groupa www - zdruzuje apache usera a cyclone3 usera
+
+
+%form=
+(
+	'-a'	=>	"all directories",
+	'-t'	=>	"this directory",
+	'-r'	=>	"this directory with recursive",
+	'-v'	=>	"verbosity",
+);
+
+if (($FORM{h})||($FORM{help})){&help();}
+if ((!$FORM{a})&&(!$FORM{t})&&(!$FORM{x})&&(!$FORM{r})){&help();}
+
+#open(STDERR,">>/dev/null") || die "Cant redirect STDERR: $!\n";
+
+my %hash;
+
+
+my @regexp_D=@Cyclone::files::setit_D;
+my @regexp_F=@Cyclone::files::setit_F;
+
+
+%rights=
+(
+	'---'	=>	"0",
+	'r--'	=>	"4",
+	'-w-'	=>	"2",
+	'--x'	=>	"1",
+	'-wx'	=>	"3",
+	'r-x'	=>	"5",
+	'rw-'	=>	"6",
+	'rwx'	=>	"7",
+);
+
+
+
+
+sub setit3
+{my @ref=@_;
+#	return 1;
+
+ $setrights{$ref[1]}[0]++;
+
+ return undef if ((!$ref[2])&&(!$ref[3]));
+
+ $checked++;
+ $setrights{$ref[1]}[1]++;
+
+ 
+ my $old=time-(stat "$P/$ref[0]")[8];
+ #print "$P/$ref[0] is $old\n";
+ #
+ #return 1;
+ if ($FORM{v})
+ {
+ 	if ($old>(86400*31*3))
+ 	{
+	 	  print color 'reset bold red';
+	 	  print "[$pcount] $ref[0] is old (".(int($old/86400))." days)!";
+	 	  print "\n";
+	 	  print color 'reset green';
+	 #	print "file $P/$ref[0] is too old\n";
+	 }
+	 elsif ($old>(86400*31*2))
+	 {
+	 	  print color 'reset bold yellow';
+	 	  print "[$pcount] $ref[0] is old (".(int($old/86400))." days)!";
+	 	  print "\n";
+	 	  print color 'reset green';
+	 #	print "file $P/$ref[0] is too old\n";
+	 }
+	 elsif ($old>(86400*31*1))
+	 {
+	 	  print color 'reset yellow';
+	 	  print "[$pcount] $ref[0] is old (".(int($old/86400))." days)!";
+	 	  print "\n";
+	 	  print color 'reset green';
+	 #	print "file $P/$ref[0] is too old\n";
+	 }
+ }
+
+ 
+ my $ddd=$ref[0];
+ #$ddd=~s|[\& ]|\\|g;
+ $ddd=~s/([ \(&\)'])/\\$1/g;
+ my $data=`ls -al $P/$ddd`;
+ if (-d $P."/".$ref[0])
+ {
+   my @ref=`ls -al $P/$ddd`;
+   foreach (@ref)
+   {
+    $_=~/ \.$/ && do {$data=$_;last}
+    #print " my $_";
+   }
+   $data=~s|[\r\n]||g;
+ }
+
+ $data=~/^.(...)(...)(...).*?(\d+).*?([\w-]+).*?([\w-]+)/;
+
+ #print "$P/$ref[0]\n";
+
+ my $chmod=$rights{$1}.$rights{$2}.$rights{$3};
+ my $chown=$5.":".$6;
+
+ my @chmod0;
+ if ($ref[2]=~/\//)
+ {
+  @chmod0=split('/',$ref[2]);$ref[2]=$chmod0[0];
+  if (($chmod0[1])&&($chmod0[1] eq $chmod)){$ref[2]=$chmod0[1];}
+ };
+ my @chown0;
+ if ($ref[3]=~/\//)
+ {
+  @chown0=split('/',$ref[3]);$ref[3]=$chown0[0];
+   if (($chown0[1])&&($chown0[1] eq $chown)){$ref[3]=$chown0[1];}
+ };
+
+ my $ch;
+ if (($ref[2])&&($chmod ne $ref[2])&&(not -l $P."/".$ref[0]))
+ {
+  $ch=1;
+  my $err=system("chmod $ref[2] $P/$ddd");
+  print color 'reset bold yellow';
+  print "[$pcount] $ref[0] [$chmod/$ref[2]] [$ref[1]]";
+  if ($err){print color 'reset bold red';print "...cannot change :-("}
+  print "\n";
+  print color 'reset green';
+ }
+
+ if (($ref[3])&&($chown ne $ref[3]))
+ {
+  $ch=1;
+  print color 'reset bold yellow';
+  my $err=system("chown $ref[3] $P/$ddd");
+  print "[$pcount] $ref[0] [$chown/$ref[3]] [$ref[1]]";
+  if ($err){print color 'reset bold red';print "...cannot change :-("}
+  print "\n";
+  print color 'reset green';
+ }
+
+ if ($ch)
+ {
+  $setrights{$ref[1]}[2]++;
+  $changed++;
+ }
+
+
+}
+
+
+
+
+
+
+
+sub remove
+{
+ #return 1;
+ my @ref=@_;
+ print color 'bold red';
+ print "\t$ref[0] [remove?]\n";
+# my $in=<STDIN>;
+# if ($in=~/[Yy]/)
+# {
+  print "\tremoved\n";
+  system ("rm $P/$ref[0]");
+# }
+ print color 'reset blue';
+}
+
+
+
+#my ($count,$pcount);
+
+#my $start;
+
+my $this=`pwd`;
+print "-$this";
+
+if ($FORM{t} || $FORM{r})
+{
+#	&exit unless $this;
+	&exit unless $this=~/^$P/;
+	#$P=$this;
+	$plus=($this=~/$P\/(.*)/)[0];
+	
+	
+}
+else
+{
+}
+
+
+if ($FORM{x})
+{
+	print "---[ Directories ]--------------------------------------------------------------\n";
+	foreach my $hash (@regexp_D)
+	{
+		print "[ ".sprintf("%-20s",$hash->[1])." ]";
+		print "[ ".sprintf("%-6s",$hash->[2])." ]";
+		print "[ ".sprintf("%-15s",$hash->[3])." ]";
+		print "\n";
+		
+	}
+	print "\n";
+	print "---[ Files ]--------------------------------------------------------------------\n";
+	foreach my $hash (@regexp_F)
+	{
+		print "[ ".sprintf("%-25s",$hash->[1])." ]";
+		print "[ ".sprintf("%-6s",$hash->[2])." ]";
+		print "[ ".sprintf("%-20s",$hash->[3])." ]";
+		print "\n";
+		
+	}
+	&exit;
+}
+
+#print "idem na $plus\n";
+
+#&exit();
+my $cnt;
+if (opendir (DIR,$P."/".$plus))
+{
+ my @files=readdir DIR;
+ foreach my $file(@files)
+ {
+ 	my $Ffile=$file;
+	$Ffile=$plus."/".$file if $plus;
+# 	my $Ffile=$plus."/".$file;
+	
+	#print "[".sprintf("%d8",$cnt)."-".(@files)."] $Ffile \t\t\r";
+	
+	$cnt++;
+	
+	if (not -e "$P/$Ffile")
+	{
+#		print "neexistuje\n";
+#		&exit;
+	}
+	
+	next if -l "$P/$Ffile";
+	
+#	next;
+# 	$file=$plus$file;
+# 	print "control file $file\n";
+#  next;
+ 
+  if (($file ne ".")&&($file ne ".."))
+  {
+   $count++;$pcount=sprintf("%06d",$count);
+   #if ($count/1000 == int($count/1000)){print "[".sprintf("%06d",$checked)."] [$pcount]\n"};
+   my $dir;
+   if (-d $P."/".$Ffile){$dir="-D "}
+   
+   #print "[$pcount] $file\t\r";
+
+   if ($dir)
+   {
+   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #next if $Ffile=~/media/;
+   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#    next if $Ffile=~/^.admin$/;
+#    next if $Ffile=~/!www\/admin/;
+#    next if $Ffile=~/^_trash$/;
+#    next if $Ffile=~/^_temp\/work$/;
+    next if $Ffile=~/^!szlh.sk\/!www\/stats\//;
+    
+	if (opendir (DIR1,$P."/".$Ffile))
+	{
+#		print "push\n";
+		foreach (readdir DIR1)
+		{
+			if 
+				(
+					($_ ne ".")&&($_ ne "..")
+					&&
+					(
+						($FORM{a})||($FORM{r})
+					)
+				)
+			{
+#				print "push $_ ".(@files)."\n";
+				push @files,$file."/".$_;
+			}
+		}
+	}
+
+    my $var;
+    my $check;
+    foreach (@regexp_D)
+    {
+#       	print "check $Ffile $regexp_D[$var][0]\n";
+		if ($Ffile=~/$regexp_D[$var][0]/)
+		{
+			&setit3($Ffile,'D '.$regexp_D[$var][1],$regexp_D[$var][2],$regexp_D[$var][3]);$check=1;
+			last;
+		}
+		$var++;
+    }
+    next if $check;
+
+    #if ($file=~/\/!www$/){&setit($file,"770","apache:coders");next;}
+    #if ($file=~/\/\.(\w+)$/){&setit($file,"770","apache:core");next;}
+    print color 'reset bold red';
+    $unknown++;
+    print "[$pcount] $dir$Ffile unknown\t\n";
+    print color 'reset green';
+    next;
+   }
+
+   #next;
+   
+   my $var;
+   my $check;
+   my $nold=$Ffile;$nold=~s|\.old$||;
+   foreach (@regexp_F)
+   {
+#   	print "check $Ffile $regexp_F[$var][0]\n";
+    if (($nold=~/$regexp_F[$var][0]/)||($Ffile=~/$regexp_F[$var][0]/))
+    {
+     &remove($Ffile) if $regexp_F[$var][4];
+     &setit3($Ffile,'F '.$regexp_F[$var][1],$regexp_F[$var][2],$regexp_F[$var][3]);$check=1;last;
+    }
+    $var++;
+   }
+   next if $check;
+
+
+   print color 'reset bold red';
+   $unknown++;
+   print "[$pcount] $dir$Ffile unknown\n";
+   print color 'reset green';
+
+=head1
+   if ($unknown>100)
+   {
+    print color 'reset bold red';
+    print "Too many unknows. Please check directories/files/configuration \n";
+    &exit();
+   }
+=cut
+
+  }
+ }
+ closedir DIR;
+}
+print "\n";
+
+
+
+print color 'reset cyan';
+
+
+
+#print "korektne ukoncene\n";
+
+
+&exit;
+
+
+
+
+my $var;
+foreach (@regexp_D)
+{
+ if ($setrights{'D '.$regexp_D[$var][1]}[2]){print color 'reset bold cyan'};
+ if (!$setrights{'D '.$regexp_D[$var][1]}[0]){print color 'reset bold red'};
+ print "[ D ".sprintf("%-30s",$regexp_D[$var][1])."] ";
+ print "[".sprintf("%6s",$setrights{'D '.$regexp_D[$var][1]}[0])."] "; # files
+ print "[".sprintf("%6s",$setrights{'D '.$regexp_D[$var][1]}[1])."] "; # checked
+ print "[".sprintf("%6s",$setrights{'D '.$regexp_D[$var][1]}[2])."] "; # changed
+ print color 'reset cyan';
+ print "\n";
+ $var++;
+}
+
+print "\n";
+
+my $var;
+foreach (@regexp_F)
+{
+ if ($setrights{'F '.$regexp_F[$var][1]}[2]){print color 'reset bold cyan'};
+ if (!$setrights{'F '.$regexp_F[$var][1]}[0]){print color 'reset bold red'};
+ print "[ F ".sprintf("%-30s",$regexp_F[$var][1])."] ";
+ print "[".sprintf("%6s",$setrights{'F '.$regexp_F[$var][1]}[0])."] "; # files
+ print "[".sprintf("%6s",$setrights{'F '.$regexp_F[$var][1]}[1])."] "; # checked
+ print "[".sprintf("%6s",$setrights{'F '.$regexp_F[$var][1]}[2])."] "; # changed 
+ print color 'reset cyan';
+ print "\n";
+ $var++;
+}
+
+
+
+
+
+
+
+
+
+&exit();

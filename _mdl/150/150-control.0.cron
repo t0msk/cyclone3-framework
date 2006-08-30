@@ -1,0 +1,207 @@
+#!/bin/perl
+# ÁÉÍÓÚ - USE UTF-8 !!!
+package CRON::module;
+use strict;
+use Utils::datetime;
+
+
+sub execute
+{
+ # STARE! VYPINAM!
+ die "this module is tooo old!";
+
+ return 1;
+ my %env=@_;
+ if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
+
+ CRON::debug::log(5,"loading cache_conf");
+ my $count;
+ my %CACHE;
+ if (my $db0 = $main::DBH->Query("
+	SELECT IDcategory,module,type,cache_time,opt_time,destroy_time
+	FROM $TOM::DB_name._cache_conf
+	WHERE engine='pub'"))
+ {
+  while (my @db0_line=$db0->FetchRow())
+  {
+   $count++;
+   my $var=$db0_line[0]."-".$db0_line[1]."-".$db0_line[2];
+   $CACHE{$var}{-cache_time}=$db0_line[3];
+   $CACHE{$var}{-destroy_time}=$db0_line[5];
+   #CRON::debug::log(6,"$var");
+  }
+  CRON::debug::log(5,"loaded $count cache_confs");
+ }
+ else
+ {
+  $cron::ERR="ERR: select _cache_conf return error!!!";return undef;
+ }
+ 
+#=head1
+ CRON::debug::log(5,"control database");
+ my $db1 = $main::DBH->Query("
+	SELECT *
+	FROM $TOM::DB_name._cache
+	WHERE engine='pub'");
+ while (my %db1_line=$db1->fetchhash())
+ {
+   my $var=$db1_line{name};
+   my $varn=$db1_line{name};
+   my $var0=$db1_line{name};
+     #$var=~s|(.*)-(.*?)-.*?$|\1|;
+   $var=~s|^(.*?)-(.*?)-(.*?)-.*|\1-\2-\3|;
+   $var0=~s|\..*?$||;
+   
+   #CRON::debug::log(7,"$var/$varn/$var0");
+   
+   my $old=($main::time_current-$db1_line{time_from});
+   if ($CACHE{$var}{-cache_time}<$old)
+   {
+     CRON::debug::log(6,"module $db1_line{engine}/$db1_line{name}");
+     CRON::debug::log(7,"old, ".$CACHE{$var}{-cache_time}."<".$old." deleting");
+     $main::DBH->Query("DELETE FROM $TOM::DB_name._cache WHERE engine='pub' AND name='$db1_line{name}' LIMIT 1");
+     if ($db1_line{loads})
+     {
+	CRON::debug::log(7,"debuging count, found ($db1_line{loads}), writing to $var.pub.debug");
+#=head1
+	open HND,">>".$cron::P."/_cache/".$var.".pub.debug" || return undef;
+	my %date=Utils::datetime::ctodatetime(time,format=>1);
+	print HND <<" HEADER";
+<CACHE>
+ <VAR id="time_insert" value="$date{year}-$date{mom}-$date{mday} $date{hour}:$date{min}:$date{sec}" />
+ <VAR id="insert" value="cron" />
+ <VAR id="name_conf" value="$var" />
+ <VAR id="name_full" value="$var0" />
+ <VAR id="cache_time" value="$old" />
+ <VAR id="loads" value="$db1_line{loads}" />
+</CACHE>
+ HEADER
+ close HND;
+#=cut    
+     }
+   }
+   
+ }
+#=cut 
+ 
+ 
+
+ CRON::debug::log(5,"control directory");
+ my $count;
+ if (opendir (DIR,$cron::P."/_cache/"))
+ {
+  #my @files=readdir DIR;
+  foreach my $file(readdir DIR)
+  {
+   if (($file ne ".")&&($file ne ".."))
+   {
+    $count++;
+    if ($file=~/\.pub\.cache$/)
+    {
+     my $var=$file;
+     my $varn=$file;
+     my $var0=$file;
+     #$var=~s|(.*)-(.*?)-.*?$|\1|;
+     $var=~s|^(.*?)-(.*?)-(.*?)-.*|\1-\2-\3|;
+     $var0=~s|\..*?$||;
+     #CRON::debug::log(5,"$var0");
+     if (exists $CACHE{$var})
+     {
+      my $old=($cron::time_current-(stat $cron::P."/_cache/".$file)[9]);
+      #CRON::debug::log(6,"exist config to $CACHE{$var}{-cache_time} secs. this old $old secs.");
+      if ($CACHE{$var}{-cache_time}<$old)
+      {
+       CRON::debug::log(6,"$var0 old, deleting");
+       unlink $cron::P."/_cache/".$file;
+       if (-e $cron::P."/_cache/".$var0.".pub.count")
+       {
+	open (HND,"<".$cron::P."/_cache/".$var0.".pub.count");
+	my $null=<HND>;
+	close HND;
+	unlink $cron::P."/_cache/".$var0.".pub.count";
+	CRON::debug::log(7,"debuging count, found ($null), writing to $var.pub.debug");
+	open HND,">>".$cron::P."/_cache/".$var.".pub.debug" || return undef;
+	my %date=Utils::datetime::ctodatetime(time,format=>1);
+	print HND <<" HEADER";
+<CACHE>
+ <VAR id="time_insert" value="$date{year}-$date{mom}-$date{mday} $date{hour}:$date{min}:$date{sec}" />
+ <VAR id="insert" value="cron" />
+ <VAR id="name_conf" value="$var" />
+ <VAR id="name_full" value="$var0" />
+ <VAR id="cache_time" value="$old" />
+ <VAR id="loads" value="$null" />
+</CACHE>
+ HEADER
+ close HND;
+       }
+      }
+     }
+     else
+     {
+      CRON::debug::log(6,"not exist config to $var, deleting");
+      unlink $cron::P."/_cache/".$file;
+     }
+    }
+    elsif ($file=~/\.pub\.count$/)
+    {
+#=head1
+     # nezmazal som ho uz?
+     if (-e $cron::P."/_cache/".$file)
+     {
+      my $var=$file;
+      my $var0=$file;
+      #$var=~s|(.*)-(.*?)-.*?$|\1|;
+      $var=~s|^(.*?)-(.*?)-(.*?)-.*|\1-\2-\3|;
+      $var0=~s|\..*?$||;
+      if (exists $CACHE{$var})
+      {
+       my $old=($cron::time_current-(stat $cron::P."/_cache/".$file)[9]);
+       #CRON::debug::log(5,"count for $var");
+       # dvojnasobny naskok count pred cache
+       if (($CACHE{$var}{-cache_time}*2)<$old)
+       {
+        CRON::debug::log(6,"count $var old $old $CACHE{$var}{-cache_time}");
+        unlink $cron::P."/_cache/".$file;
+       }
+      }
+      else
+      {
+       CRON::debug::log(5,"count for unknown $var");
+       unlink $cron::P."/_cache/".$file;
+      }
+
+     }
+#=cut
+    }
+    elsif ($file=~/\.pub\.debug$/)
+    {
+    }
+    else
+    {
+     my $old=($cron::time_current-(stat $cron::P."/_cache/".$file)[9]);
+     CRON::debug::log(5,"unknown file $file $old",1);
+     if ($old>604800)
+     {
+      CRON::debug::log(6,"removing",1);
+      unlink $cron::P."/_cache/".$file;
+     }
+    }
+
+   }
+  }
+  closedir DIR;
+ }
+ CRON::debug::log(5,"controlled ".$count." files");
+
+
+=head1
+ $env{old}=$TOM::CACHE_time_max*2 unless $env{old};
+
+
+ my $var=$cron::time_current-$env{old};
+
+=cut
+
+ return 1}
+
+1;

@@ -1,0 +1,142 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use App::300;
+use Secure::form;
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+ Tomahawk::XLNGtoXSGN(); # insert XLNG do XSGN
+
+
+ if ($main::USRM{logged} eq "N")
+ {
+  $XSGN{TMP}=$XSGN{notlogged};
+  return 1;
+ }
+
+
+ $env{db_130}=$TOM::DB_name_TOM;
+ $env{mailtable}="a130_send";# if ($env{db_130} eq $TOM::DB_name_TOM);
+
+ #######################################################################################################
+ #######################################################################################################
+ #######################################################################################################
+ #######################################################################################################
+ #######################################################################################################
+ #######################################################################################################
+
+
+ my $db0=$main::DBH->Query("
+	SELECT email,email_verify
+	FROM TOM.a300_users_attrs
+	WHERE IDhash='$main::USRM{IDhash}' LIMIT 1");
+ if (my @db0_line=$db0->fetchrow)
+ {
+  if ($main::FORM{a300_email_edit})
+  {
+
+   if (($main::FORM{email})&&(not &Secure::form::check_email($main::FORM{email})))
+   {
+    $XSGN{ERR}=~s|<%ERR%>|$XLNG{bademail}|;
+    $XSGN{TMP}=~s|<#ERROR#>|$XSGN{ERR}|g;
+    #$XSGN{TMP}="asdf";
+    return 1;
+   }
+
+   # ZMENA EMAILU
+   if ($main::FORM{email} ne $db0_line[0])
+   {
+    $main::DBH->Query("UPDATE TOM.a300_users_attrs
+			SET email='$main::FORM{email}',email_verify='N'
+			WHERE IDhash='$main::USRM{IDhash}' LIMIT 1");
+    $db0_line[1]="N";
+    $db0_line[0]=$main::FORM{email};
+   }
+
+   # OVERENIE E-MAILU
+   if (($main::FORM{email_verify})&&($db0_line[1] eq "N")&&($main::FORM{email}))
+   {
+    # vytvaram e-mail
+    my $var=Utils::vars::genhash(32);
+    $main::DBH->Query("REPLACE INTO TOM.a300_emailverify(IDhash,hash,inserttime)
+			VALUES ('$main::USRM{IDhash}','$var','$tom::time_current')");
+
+	my $var0="$Utils::datetime::DAYS{en}[$tom::Twday], $tom::Tmday $Utils::datetime::MONTHS{en}[$tom::Tmom-1] $tom::Fyear $tom::Fhour:$tom::Fmin:$tom::Fsec +-200";
+
+	$XSGN{EMAIL}=~s|<%hash%>|$var|g;
+	$XSGN{EMAIL}=~s|<%DATE%>|$var0|g;
+
+	$XSGN{EMAIL}=~s|<%NAME%>|$main::USRM{login}|g;
+	$XSGN{EMAIL}=~s|<%EMAIL%>|$main::FORM{email}|g;
+
+	while ($XSGN{EMAIL}=~s|<code>(.*?)</code>|<!TMP!>|)
+	{my $var=$1;
+	if ($TOM::type_code){$var=enc::enc($var,$tom::type_codes{root});$XSGN{EMAIL}=~s/<!TMP!>/?||$var-root/;}
+	else{$XSGN{EMAIL}=~s/<!TMP!>/?$var/;}}
+
+
+
+	$main::DBH->Query("
+		 INSERT INTO $env{db_130}.$env{mailtable}
+		 (
+		  sendtime,
+		  priority,
+		  from_name,
+		  from_email,
+		  from_host,
+		  from_service,
+		  to_name,
+		  to_email,
+		  body)
+	  	 VALUES	(
+		  '$tom::time_current',
+		  '0',
+		  'TOM3',
+		  'tom\@$tom::H',
+		  '$tom::H',
+		  'a300',
+		  '$main::USRM{login}',
+		  '$main::FORM{email}',
+		  '$XSGN{EMAIL}'
+		 )");
+
+
+
+   }
+
+  }
+#  else
+#  {
+#   $XSGN{TMP}=~s|<%EMAIL%>|$db0_line[0]|g;
+#   $XSGN{TMP}=~s|<%VERIFY%>|checked| if $db0_line[1] eq "Y";
+#  }
+
+  $XSGN{TMP}=~s|<%EMAIL%>|$db0_line[0]|g;
+  $XSGN{TMP}=~s|<%VERIFY%>|checked| if $db0_line[1] eq "Y";
+
+ }
+
+
+return 1}
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+

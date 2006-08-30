@@ -1,0 +1,189 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+require "/usr/bin/tom3-init";
+
+
+%form=
+(
+# '-v'		=>	"verbosity",
+# '-vv, --v'	=>	"verbosity 2, --v=2",
+# '-e'		=>	"execute all modifications",
+# '-s'		=>	"show only all modifications",
+ '-a'	=>	"all directories",
+ '-t'	=>	"this directory",
+ '-r'	=>	"this directory with recursive",
+ '-v'	=>	"verbosity",
+);
+if (($FORM{h})||($FORM{help})){&help();}
+if ((!$FORM{a})&&(!$FORM{t})&&(!$FORM{r})){&help();}
+
+
+open(STDERR,">>/dev/null") || die "Cant redirect STDERR: $!\n";
+
+my %hash;
+
+my @regexp_D=
+(
+	['^![a-zA-Z0-9\.]+$' , "domain"],
+	['/![a-zA-Z0-9\.]+$' , "subdomain"],
+	['_mdl$' , ""],
+	['\.bin$' , ""],
+	['^_mdl/' , ""],
+	['^\.core' , ""],
+#	['phpmyadmin'		,"phpmyadmin"		,"",""],
+);
+
+my @regexp_F=
+(
+	['\.mdl$' , ""],
+	['\.smdl$' , ""],
+	['\.xsgn$' , ""],
+	['\.cron$' , ""],
+	['^\.bin/' , ""],
+	
+	['^\.core/' , ""],
+	['^Changelog$' , ""],
+
+);
+
+
+#TODO: [Aben] dokoncit
+=head1
+Toto treba dost dobre dorobit, lebo je to faaaakt nahovno!
+=cut
+
+
+my $this=`pwd`;
+print "-$this";
+
+if ($FORM{t} || $FORM{r})
+{
+	&exit unless $this=~/^$P/;
+	$plus=($this=~/$P\/(.*)/)[0];
+}
+else
+{
+}
+
+
+
+
+my $cnt;
+if (opendir (DIR,$P."/".$plus))
+{
+	my @files=readdir DIR;
+	foreach my $file(@files)
+	{
+		my $Ffile=$file;
+		$Ffile=$plus."/".$file if $plus;
+		$cnt++;
+		
+		if (not -e "$P/$Ffile")
+		{
+	
+		}
+		
+		next if -l "$P/$Ffile";
+		
+		
+		if (($file ne ".")&&($file ne ".."))
+		{
+			$count++;$pcount=sprintf("%06d",$count);
+		
+			my $dir;
+			if (-d $P."/".$Ffile){$dir="-D "}
+			
+			if ($dir)
+			{
+				next if $Ffile=~/media$/;
+				next if $Ffile=~/^.admin$/;
+				
+				my $var;
+				my $check;
+				foreach (@regexp_D)
+				{
+					#print "$Ffile porovnavam s $regexp_D[$var][0]\n";
+					if ($Ffile=~/$regexp_D[$var][0]/)
+					{
+						#print "$Ffile zodpoveda\n";
+						if (opendir (DIR1,$P."/".$Ffile))
+						{
+							foreach (readdir DIR1)
+							{
+								if 
+									(
+										($_ ne ".")&&($_ ne "..")
+										&&
+										(
+											($FORM{a})||($FORM{r})
+										)
+									)
+								{
+									push @files,$file."/".$_;
+								}
+							}
+						}
+						
+						
+						
+						last;
+					}
+					$var++;
+				}
+				next;
+			}
+			
+			
+			
+			my $var;
+			foreach (@regexp_F)
+			{
+				if ($Ffile=~/$regexp_F[$var][0]/)
+				{
+					
+					if (open(HND,"<$TOM::P/$Ffile"))
+					{
+#						print "control file $Ffile\n";
+						undef $/;
+						my $data=<HND>;
+						if ($data=~/(TODO|FIXME):/)
+						{
+							print color 'reset bold yellow';
+							print  "[$Ffile]\n";
+						}
+						
+						while ($data=~s/(TODO|FIXME):([^\n]*?)\n=head1(.*?)=cut//s)
+						{
+							print color do {($1 eq "FIXME") ? 'reset bold red' : 'reset bold green' };
+							print "\t$1:$2\n";
+#							print "\t$3\n";
+						}
+						
+						while ($data=~s/(TODO|FIXME):(.*?)\n//)
+						{
+							print color do {($1 eq "FIXME") ? 'reset bold red' : 'reset bold green' };
+							print "\t$1:$2\n";
+						}
+						
+					}
+				}
+				$var++;
+			}
+			
+			
+			
+		}
+	}
+	closedir DIR;
+}
+print "\n";
+
+print color 'reset cyan';
+
+
+
+
+
+
+
+&exit();

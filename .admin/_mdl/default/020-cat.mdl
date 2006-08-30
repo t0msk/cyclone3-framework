@@ -1,0 +1,338 @@
+sub BaseModul
+{
+
+ require "_table.m";
+ require "_info.m";
+
+ my $page_limit=20;
+ my $page_from=$page_limit*$form{page};
+ $form{page}="0" unless $form{page};
+
+ my $orderbyShort="short";
+ my $orderbyShortCol="short_A_Z";
+ if ($form{'orderby'}=~/shortD/)
+   { $form{'orderby'}=~s|shortD|short DESC|; }
+ else
+   { if ($form{'orderby'}=~/short/) { $orderbyShort="shortD"; $orderbyShortCol="short_Z_A" } }
+
+my $orderbyName="name";
+ my $orderbyNameCol="name_A_Z";
+ if ($form{'orderby'}=~/nameD/)
+   { $form{'orderby'}=~s|nameD|name DESC|; }
+ else
+   { if ($form{'orderby'}=~/name/) { $orderbyName="nameD"; $orderbyNameCol="name_Z_A" } }
+
+ my $info=&info_create(
+	'icon'	=>	"style=\"cursor:hand;\" onclick=\"load_box('core.pl?type=020-cat_search');\"",
+	'new'	=>	True,
+	'title'	=>	"Zoznam relácii",
+	'next'	=>	$form{page},
+	'prev'	=>	$form{page}
+ );
+ my $select;
+
+ for (my $i=0;$i<=55;$i=$i+5)
+ {
+  $select.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+ }
+ my $select_author=&select_create(
+	'name'		=>	"min2",
+	'value'		=>	$minR2,
+	'maxlength'	=>	30,
+	'width'		=>	1,
+	'width1'	=>	50,
+	'select'	=>	$select
+ );
+
+ #return $db_micro_line2[0]." ".$priority_depth;
+
+ my %plus;
+ my $i;
+
+ my %dayz= (
+     '1' => "Po",
+     '2' => "Ut",
+     '3' => "St",
+     '4' => "Št",
+     '5' => "Pi",
+     '6' => "So",
+     '7' => "Ne",
+	);
+
+ for ($i=1;$i<=7;$i++)
+ {
+  $plus{'8.'.$i}{'id'}=$dayz{$i};
+  $plus{'8.'.$i}{'code'}="<a href=\"core.pl?type=020-rec_live_switch&rec_live_depth=".$i."&ID=<!--ID-->\" target=\"frm_micro\"><img src=\"$tom::H_media/grf/admin/list_<%1%>.gif\" width=11 height=12 border=0></a>";
+  #$plus{'8.'.$i}{'code'}="<img src=\"$tom::H_media/grf/admin/list_<%1%>.gif\" width=11 height=12 border=0>";
+  $plus{'8.'.$i}{'class'}="td_act";
+  $plus{'8.'.$i}{'td_class'}="td_act";
+  $plus{'8.'.$i}{'td_plus'}="nowrap align=\"center\"";
+ }
+
+
+
+ my $table=HP_TABLE->new(
+ 'title'			=>	"taky maly popis",
+ 'cellspacing'	=>	1,
+ 'cellpadding'	=>	1,
+ #'color_active'	=>	"#F0F080",
+ 'color_active'	=>	"#F0F0C0",
+ 'link_core'		=>	"core.pl?type=$form{type}&",
+ 'define'		=>
+ {
+ '1'	=>
+	{
+	'id'		=>	"A",
+	'code'		=>	"<%1%>",
+	#'code'		=>	"<img src=\"$tom::H_media/grf/admin/list_<%1%>.gif\" width=11 height=12 border=0 onclick=\"this.src='core.pl?type=set_active&table=a400&id=<!--ID-->';\">",
+	'select'	=>	"orderby=active,starttime",
+	'class'		=>	"td_act",
+	'td_class'	=>	"td_act"
+	},
+ '1.1'	=>
+	{
+	'id'		=>	"$orderbyNameCol",
+	'code'		=>	"&nbsp;&nbsp;<strong><%1%></strong>&nbsp;",
+	'class'		=>	"td_act",
+	'select'	=>	"orderby=$orderbyName",
+	'td_plus'	=>	"nowrap"
+	},
+ '2'	=>
+	{
+	'id'		=>	"$orderbyShortCol",
+	'code'		=>	"&nbsp;<%1%>&nbsp;",
+	'select'	=>	"orderby=$orderbyShort",
+	'class'		=>	"td_act",
+	'td_plus'	=>	"nowrap align=\"center\""
+	},
+ '3'	=>
+	{
+	'id'		=>	"rec_live",
+	'code'		=>	"&nbsp;<%1%>&nbsp;",
+	'select'	=>	"orderby=rec_live",
+	'class'		=>	"td_act",
+	'td_plus'	=>	"nowrap align=\"center\""
+	},
+%plus,
+ '4'	=>
+	{
+	'id'		=>	"freq",
+	'code'		=>	"&nbsp;<%1%>&nbsp;",
+	#'select'	=>	"orderby=IDcategory,starttime",
+	'class'		=>	"td_act",
+	'td_plus'	=>	"nowrap"
+	},
+ '4.1'	=>
+	{
+	'id'		=>	"article",
+	'code'		=>	"&nbsp;<%1%>&nbsp;",
+ #'select'	=>	"orderby=title,starttime",
+	'class'		=>	"td_act",
+     	'td_class'	=>	"td0",
+	'td_plus'	=>	"nowrap"
+	},
+ '5'	=>
+	{
+	'id'		=>	"description",
+	'code'		=>	"&nbsp;<%1%>&nbsp;",
+	#'select'	=>	"orderby=IDcategory,starttime",
+	'class'		=>	"td_act",
+	'td_plus'	=>	"nowrap"
+	},
+ '6'	=>
+	{
+	'id'		=>	"keywords",
+	'code'		=>	"&nbsp;<%1%>&nbsp;",
+	#'select'	=>	"orderby=title,starttime",
+	'class'		=>	"td_act",
+     	'td_class'	=>	"td0",
+	'td_plus'	=>	"nowrap"
+	},
+ '7'	=>
+	{
+	'id'		=>	"del",
+	'code'		=>	"&nbsp;! <a href=\"core.pl?type=020-cat_del&id=<!--ID-->\" target=\"frm_micro\"><img src=$tom::H_media/grf/admin/red_minus.gif border=0 width=12 height=12></a> !&nbsp;",
+	#'select'	=>	"orderby=title,starttime",
+	'class'		=>	"td_act",
+     	'td_class'	=>	"td0",
+	'td_plus'	=>	"nowrap"
+	},
+ '8'	=>
+	{
+	'id'		=>	"move",
+	'code'		=>	"&nbsp;! <a href=\"core.pl?type=020-cat_move&ID=<!--ID-->\" target=\"frm_micro\"><img src=$tom::H_media/grf/admin/close2.gif border=0 width=12 height=12></a> !&nbsp;",
+	#'select'	=>	"orderby=title,starttime",
+	'class'		=>	"td_act",
+     	'td_class'	=>	"td0",
+	'td_plus'	=>	"nowrap"
+	}
+  }
+ );
+
+ my $where;
+ if ($form{search} eq "1")
+ {
+  if (not $form{'name'} eq "")
+  { if ($where eq "") { $where.="WHERE name LIKE '%$form{name}%' " } else { $where.="AND name LIKE '%$form{name}%' " } }
+
+  if (not $form{'short'} eq "")
+  { if ($where eq "") { $where.="WHERE short LIKE '%$form{short}%' " } else { $where.="AND short LIKE '%$form{short}%' " } }
+
+  if (not $form{'description'} eq "")
+  { if ($where eq "") { $where.="WHERE description LIKE '%$form{description}%' " } else { $where.="AND description LIKE '%$form{description}%' " } }
+
+  if (not $form{'keywords'} eq "")
+  { if ($where eq "") { $where.="WHERE keywords LIKE '%$form{keywords}%' " } else { $where.="AND keywords LIKE '%$form{keywords}%' " } }
+
+  #while ($form{wherestring}=~s|(.*?)=(.*?)&||)
+  #{
+  # $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$sele{$_}';\" style=\"FONT:12px Verdana;\">&nbsp;$_</div>\n";
+  #}
+  #$where="WHERE
+ }
+ else
+ {
+  $where="WHERE $form{whereby}='$form{where}'" if ($form{'whereby'});
+  if ($form{'wherelike'})
+  { $where="WHERE $form{wherelike} LIKE '$form{where}%'" if ($form{'wherelike'} eq "IDcategory"); }
+  else
+  { $where="WHERE $form{wherelike} LIKE '$form{where}%'" if ($form{'wherelike'}); }
+ }
+
+ my $orderby;
+ if ($form{'orderby'}) { $orderby=$form{'orderby'}; } else { $orderby="name ASC"; }
+
+ #my $db_micro = $dbh->Query("SELECT ID, priority, starttime, endtime, updated, title, IDcathegory, typeview, visits_index, visits, absvisits_index, visits_index, votes, vote_full, vote_index, votes, image, data_plus, active  FROM clanky_trash $where $orderby LIMIT $page_from,$page_limit");
+
+ #return "SELECT ID, ID_a400, name, short, keywords, record_live, description, freq FROM markiza_sk.a020_cat $where ORDER BY $orderby DESC LIMIT $page_from,$page_limit";
+
+
+ my $db_micro = $dbh->Query("SELECT ID, ID_a400, name, short, keywords, rec_live, description, freq, active FROM markiza_sk.a020_cat $where ORDER BY $orderby LIMIT $page_from,$page_limit");
+
+ if ($db_micro)
+ {
+
+ while (my %db_micro_line=$db_micro->FetchHash())
+ {
+
+#=head1
+  #active
+  my $cl_active="r";
+  if ($db_micro_line{'active'} eq "Y"){$cl_active="g"}
+  #today, yesterday, older line color
+  my $cl_color="#8FADF9";
+  if ($db_micro_line{starttime}>(time-86400)){$cl_color="#B0CFFF"}
+  if ($db_micro_line{starttime}>time){$cl_color="#E0EFFF"}
+
+  my $cl_class="tr1";
+  my %article_times;
+
+  $article_times{'starttime'}={Utils::datetime::ctodatetime($db_micro_line{'starttime'},format=>1)};
+  $article_times{'endtime'}={Utils::datetime::ctodatetime($db_micro_line{'endtime'},format=>1)};
+  $article_times{'changetime'}={Utils::datetime::ctodatetime($db_micro_line{'changetime'},format=>1)};
+  #my $article_times{'lasttime'}=Tomahawk::utils::datetime::ctodatetime($db_micro_line{'lasttime'},format=>1);
+
+  my $db_micro2=$dbh->Query("SELECT id, nickname FROM markiza_sk.a120 WHERE ID='$db_micro_line{'IDauthor'}' LIMIT 1");
+  my @db_micro_line2=$db_micro2->FetchRow();
+  $db_micro_line{'author_name'}=$db_micro_line2[1];
+
+  my $db_micro2=$dbh->Query("SELECT id, nickname FROM markiza_sk.a120 WHERE ID='$db_micro_line{'IDeditor'}' LIMIT 1");
+  my @db_micro_line2=$db_micro2->FetchRow();
+  $db_micro_line{'editor_name'}=$db_micro_line2[1];
+
+  my $db_micro2=$dbh->Query("SELECT ID, name FROM markiza_sk.a400_category WHERE ID='$db_micro_line{'IDcategory'}' LIMIT 1");
+  my @db_micro_line2=$db_micro2->FetchRow();
+  $db_micro_line{'cat_name'}=$db_micro_line2[1];
+
+  undef @db_micro2;
+  undef @db_micro_line2;
+
+  $db_micro_line{'archive_index_count'}="0";
+
+  while ($db_micro_line{'xrelated'}=~s|<VAR id="a020" value="(.*?)" />||si)
+  {
+   $db_micro_line{'archive_index_count'}++;
+  }
+#=cut
+
+ %plus={};
+ my %rec_live_vals;
+
+ $i=1;
+
+ $mofo=$db_micro_line{rec_live};
+
+  while ($db_micro_line{rec_live}=~s|(.)||)
+ {
+  if ($1 eq "2"){$rec_live_vals{$i}="g";}
+  if ($1 eq "1"){$rec_live_vals{$i}="y";}
+  if ($1 eq "0"){$rec_live_vals{$i}="r";}
+  $i++;
+ }
+
+$db_micro_line{rec_live} = $mofo;
+
+  for (my $i=1;$i<=7;$i++)
+ {
+  if (exists $rec_live_vals{$i}){$plus{$dayz{$i}}{'1'}=$rec_live_vals{$i};}else{$plus{$dayz{$i}}{'1'}='r';}
+ }
+
+  my $listingArchive="";
+
+  if ($db_micro_line{ID_a400}=="0")
+  {$db_micro_line{ID_a400}="";}
+  else
+  {
+ 	my $db_microx = $dbh->Query("
+	(SELECT active FROM markiza_sk.a400 WHERE ID='$db_micro_line{ID_a400}')
+	UNION ALL
+	(SELECT active FROM markiza_sk.a400_arch WHERE ID='$db_micro_line{ID_a400}') LIMIT 1");
+    if (my %db_micro_line=$db_micro->FetchHash())
+    {
+	if ($db_microx_line{active} eq "Y"){$listingArchive="archive=1&";}
+    }
+  }
+
+
+
+  $table->add(
+   'class'		=>	$cl_class,
+   'color'		=>	$cl_color,
+   'define'	=>{
+
+    'A'	=>
+    {	'1'	=> "<img src=\"$tom::H_media/grf/admin/list_".$cl_active.".gif\" width=11 height=12 border=0 onclick=\"this.src='core.pl?type=set_active&table=a020_cat&id=<!--ID-->';\">" },
+
+    $orderbyNameCol	=>
+    {'1'=>"<a href=\"javascript:load_box('core.pl?type=020-cat-edit&ID=".$db_micro_line{ID}."')\">".$db_micro_line{name}."</a>"},
+
+    $orderbyShortCol	=>
+    {'1'=>"$db_micro_line{short}"},
+
+    'rec_live'	=>
+    {'1'=>"$db_micro_line{rec_live}"},
+
+    %plus,
+
+    'freq'	=>
+    {'1'=>"$db_micro_line{freq}"},
+
+    'article'	=>
+    #{'1'=>"$db_micro_line{ID_a400}"},
+    {'1'=>"<a href=\"javascript:load_box('core.pl?type=400-edit&".$listingArchive."id=".$db_micro_line{ID_a400}."')\"><b>".$db_micro_line{ID_a400}."</b></a>"},
+
+    'description'	=>
+    {'1'=>"$db_micro_line{description}"},
+
+    'keywords'	=>
+    {'1'=>"$db_micro_line{keywords}"}
+
+   },'replace'	=>{'ID'	=>	$db_micro_line{ID}}
+  );
+
+ }
+}
+ return $info.$table->HTML;
+}
+
+1;

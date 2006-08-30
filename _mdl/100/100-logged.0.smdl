@@ -1,0 +1,66 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+sub execute
+{
+ my %env=@_;
+
+ if (!$main::FORM{_IAdm_decode})
+ {
+  if (not $main::H->{OUT}{BODY}=~/<!TMP-IAdm!>/){$main::H->{OUT}{BODY}="<!TMP-IAdm!>".$main::H->{OUT}{BODY}}
+  Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"100",
+	-name		=>	"menu",
+	-global		=>	1,
+	-TMP		=>	"IAdm",
+	);
+
+  $main::H->{OUT}{BODY}.="<!TMP-IAdm-log!>" if $main::FORM{__IAdm_log};
+  Tomahawk::designmodule(
+	-type		=>	"dmdl",
+	-category	=>	"100",
+	-name		=>	"log",
+	-global		=>	1,
+	-TMP		=>	"IAdm-log",
+	) if $main::FORM{__IAdm_log};
+
+
+ }
+ else
+ {
+  Tomahawk::designmodule(
+	-type		=>	"dmdl",
+	-category		=>	"100",
+	-name		=>	"decoded",
+	-global		=>	1,
+	-TMP			=>	"IAdm",
+	);
+ }
+
+  # XRELATED
+=head1
+  Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"400",
+	-name		=>	"fview_xrelated",
+	-xsgn		=>	$env{xsgn_xrelated},
+	-xsgn_global	=>	$env{xsgn_global},
+	-global		=>	1,
+	-TMP		=>	$env{TMP_xrelated},
+	-cache_id	=>	"a400_view",
+#	a500_cat	=>	1,
+#	a500		=>	0,
+	xrelated	=>	$article{_a400_xrelated},
+	) if ((exists $env{TMP_xrelated})&&($main::H->{body}=~/<!TMP-$env{TMP_xrelated}!>/));
+=cut
+
+
+ return 1;
+}
+1;

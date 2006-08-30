@@ -1,0 +1,61 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+
+ 
+	main::_log("Query IAdm form",0,"IAdm");
+	
+	# Cistim pred sebou
+	delete $main::FORM{__key};
+	delete $main::FORM{__key_};
+	$ENV{QUERY_STRING}=~s|__key=&__key_=||;
+	$ENV{QUERY_STRING_FULL}=~s|__key=&__key_=||;
+	
+	
+	# vygenerujem key danej session a ulozim ho do liny a do cookies, co budem porovnavat :)
+	$main::COOKIES{key}=Utils::vars::genhash(128);
+	$main::FORM{__key_}=$main::COOKIES{key};
+	
+ 
+	main::_log("generated session key into COOKIES{key} FORM{__key_}",0,"IAdm");
+	main::_log($main::COOKIES{key},0,"IAdm");
+	
+$XSGN{TMP}=<<"HEADER";
+
+<form action="?|?$ENV{QUERY_STRING_FULL}" method="POST" enctype="multipart/form-data">
+	<label for="key">Vlož kľúč</label>
+  <input type="file" id="key" name="__key">
+	<p>
+    <input type="submit" value="Vstúpiť">
+  </p>
+</form>
+
+HEADER
+
+=head1
+foreach (keys %main::FORM)
+{
+ $XSGN{TMP}.="$_=!".$main::FORM{$_}."!<BR>";
+}
+
+$main::FORM{__key}=~s|[\n\r]||g;
+if ($main::FORM{__key}."\n" eq $TOM::IAdm_key)
+{
+ $XSGN{TMP}.="ide too\n";
+}
+=cut
+
+ return 1}
+
+
+
+1;

@@ -1,0 +1,88 @@
+#!/usr/bin/perl
+#use strict;
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+
+sub execute
+{
+
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+ #$XSGN{TMP}="asdf";
+
+ #$XSGN{TMP}=$env{db};
+my @category;
+my $cat=$main::FORM{IDcat};
+$count=0;
+while()
+{
+	if($count==0 && $cat=~/.*/)
+	{
+	$category[$count]=$cat;
+	$count++;
+	next;
+	}
+
+	if($cat=~/(.+)(.{2})$/)
+	{
+	$category[$count]=$1;
+	$cat=~s|$2||;
+	$count++;
+	}
+	else
+	{
+	last;
+	}
+}
+
+my $count_for=0;
+my $where="";
+for(0..@category-1)
+{
+	if($count_for==0)
+	{
+	$where="ID=$category[$_]";
+	$count_for++;
+	next;
+	}
+$where.=" or ID=$category[$_]";
+$count_for++;
+}
+
+
+my $select=" select name from markiza_sk.a400_category where $where";;
+
+$XSGN{TMP}=" $main::FORM{IDcat}  $select  ";
+
+#my $sth=$main::DBH->query("$select");
+#		$count_2=0;
+#	while(%hash_name=$sth->fetchhash)
+#	{
+#	$count_2++;
+#	$XSGN{TMP}=~s|<%CATEGORY%>|/$hash_name{name} <%CATEGORY%>|;
+#	}
+
+#$XSGN{TMP}=~s|<%CATEGORY%>|$count_2:select name from markiza_sk.a400_category where $where|;
+
+
+ 	return 1;
+ }
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

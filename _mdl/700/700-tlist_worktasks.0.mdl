@@ -1,0 +1,288 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+sub execute
+{
+ my %env=@_;
+ $env{char}=3 unless $env{char};
+
+ return 1 if $main::USRM{logged} ne "Y";
+
+
+ my @groups;
+ my $groups;
+ my $db0=$main::DBH->Query("
+	SELECT	IDgroup
+	FROM TOM.Ca300_groups_users
+	WHERE	IDuser='$main::USRM{IDhash}'
+		AND starttime<=$tom::time_current
+		AND (endtime>=$tom::time_current
+		     OR endtime IS NULL)");
+ while (my %db0_line=$db0->fetchhash)
+ {
+  #$XSGN{TMP}.="g: $db0_line{IDgroup}<BR>\n";
+  push @groups,$db0_line{IDgroup};
+ }
+ my $groups=join (",",@groups);#$groups="'".$groups."'";
+ $groups="0" unless $groups;
+ $XSGN{TMP}.="i am in groups: <B>$groups</B><BR><BR>\n";
+
+ $XSGN{TMP}.="<a href=\"?|?stopwork=1\">stop work</a><BR>\n";
+
+ if ($main::FORM{stopwork})
+ {
+    my $db0=$main::DBH->Query("
+    		UPDATE TOM.Ca700_task_worktimes
+		SET	endtime='$tom::time_current'
+		WHERE	IDuser='$main::USRM{IDhash}'
+			AND endtime IS NULL");
+ }
+ elsif ($main::FORM{workon})
+ {
+  $XSGN{TMP}.="work on $main::FORM{workon}<BR>\n";
+  my $db1=$main::DBH->Query("
+		SELECT ID
+		FROM TOM.Ca700_task
+		WHERE ID='$main::FORM{workon}' LIMIT 1");
+  if (my @db1_line=$db1->fetchrow)
+  {
+   my $db2=$main::DBH->Query("
+		SELECT dep.IDdependency, task.*
+		FROM TOM.Ca700_task_dependencies AS dep
+		LEFT JOIN TOM.Ca700_task AS task ON
+			(
+			 task.ID=dep.IDdependency
+			 AND task.endtime IS NULL
+			)
+		WHERE dep.IDtask='$main::FORM{workon}' AND task.endtime IS NULL
+		LIMIT 1");
+   if (my %db2_line=$db2->fetchhash)
+   {
+    $XSGN{TMP}.="tuto ulohu nemozete plnit, este nebola splnena uloha $db2_line{ID} ($db2_line{subject}) <BR>\n";
+   }
+   else
+   {
+    my $db0=$main::DBH->Query("
+    		UPDATE TOM.Ca700_task_worktimes
+		SET	endtime='$tom::time_current'
+		WHERE	IDuser='$main::USRM{IDhash}'
+			AND endtime IS NULL");
+    $main::DBH->Query("
+		INSERT INTO TOM.Ca700_task_worktimes
+		(IDtask,IDuser,starttime,active)
+		VALUES
+		('$main::FORM{workon}','$main::USRM{IDhash}','$tom::time_current','Y')");
+   }
+  }
+ }
+
+
+
+#=head1
+ my $db0=$main::DBH->Query("
+	SELECT	task.*,
+		worktimes_all.active AS status_all,
+		worktimes_all.IDuser AS status_all_IDuser,
+		rights_group.perm_view AS rights_group_view,
+		rights_group.perm_del AS rights_group_del,
+		rights_group.perm_progress AS rights_group_progress,
+		rights_group.perm_work AS rights_group_work,
+		rights_my.perm_view AS rights_my_view,
+		rights_my.perm_del AS rights_my_del,
+		rights_my.perm_progress AS rights_my_progress,
+		rights_my.perm_work AS rights_my_work
+	FROM TOM.Ca700_task AS task
+	LEFT JOIN TOM.Ca700_task_worktimes AS worktimes_all
+		ON (
+			worktimes_all.active='Y'
+			AND worktimes_all.IDtask=task.ID
+			AND worktimes_all.endtime IS NULL
+		   )
+	LEFT JOIN TOM.Ca700_task_users AS rights_my
+		ON (
+			rights_my.IDtask=task.ID
+			AND rights_my.IDuser='$main::USRM{IDhash}'
+			AND rights_my.starttime<=$tom::time_current
+			AND (rights_my.endtime>=$tom::time_current
+			     OR rights_my.endtime IS NULL)
+		   )
+	LEFT JOIN TOM.Ca700_task_groups AS rights_group
+		ON (
+			rights_group.IDtask=task.ID
+			AND rights_group.IDgroup IN ($groups)
+			AND rights_group.starttime<=$tom::time_current
+			AND (rights_group.endtime>=$tom::time_current
+			     OR rights_group.endtime IS NULL)
+		   )
+	WHERE	(
+		 task.IDowner='$main::USRM{IDhash}'
+		 OR task.IDgroup IN ($groups)
+		 OR
+		 (task.owning='P'
+		  AND
+		  (
+		   (
+		    (rights_group.perm_view='Y' OR rights_group.perm_view IS NULL)
+		    AND (rights_my.perm_view='Y' OR rights_my.perm_view IS NULL)
+		   )
+		   OR
+		   (rights_my.perm_view='Y' OR rights_my.perm_view IS NULL)
+		  )
+		 )
+		 OR
+		 (task.owning='D'
+		  AND ((rights_group.perm_view NOT LIKE 'N'
+		       AND rights_my.perm_view='Y')
+		       OR rights_my.perm_view='Y'))
+		)
+		AND (task.type='T' OR task.type='E')
+		AND (task.domain='$tom::H_cookie' OR task.domain IS NULL)
+		AND task.IDlink IS NULL
+		AND task.startplantime<=($tom::time_current+3600)
+		AND task.endtime IS NULL
+		AND (task.lng='sk' OR task.lng='')
+		AND task.active='Y'
+	ORDER BY	priority DESC,
+			task.endplantime,
+			task.starttime DESC
+	");
+
+=head1
+
+		worktimes_my.active AS status_my,
+	LEFT JOIN TOM.Ca700_task_worktimes AS worktimes_my
+		ON (
+			worktimes_my.active='Y'
+			AND worktimes_my.IDtask=task.ID
+			AND worktimes_my.IDuser='$main::USRM{IDhash}'
+			AND worktimes_my.endtime IS NULL
+		   )
+
+
+#		AND (task.type='T' OR task.type='t')
+		  AND (rights_group.perm_view='Y'
+		       OR rights_group.perm_view IS NULL)
+		  AND
+		  (
+		   (rights_group.perm_view NOT LIKE 'N'
+		    AND rights_my.perm_view NOT LIKE 'N')
+		    OR rights_my.perm_view NOT LIKE 'N'
+		  )
+
+
+=cut
+
+ my $lastid;
+ while (my %db0_line=$db0->fetchhash)
+ {
+  #next if $lastid==$db0_line{ID};
+  #foreach (keys %db0_line)
+  #{
+  # $XSGN{TMP}.="$_=$db0_line{$_}\n ";
+  #}
+
+
+#  if ($lastid != $db0_line{ID}){
+
+   if (($db0_line{status_all_IDuser} ne $main::USRM{IDhash})
+     &&($db0_line{type})=~/[TtE]/)
+   {
+    if (($db0_line{rights_my_work} ne "N" || $db0_line{rights_group_work} ne "N")
+       &&($db0_line{owning} eq "D"))
+    {
+     $XSGN{TMP}.="<a href=\"?|?workon=$db0_line{ID}\">\@</a> \n";
+    }
+   }
+   elsif ($db0_line{status_all_IDuser} eq $main::USRM{IDhash})
+   {
+    $XSGN{TMP}.="!!! \n";
+   }
+
+   $XSGN{TMP}.="[$db0_line{type}] $db0_line{ID}($db0_line{owning}-$db0_line{IDcharindex}) $db0_line{subject} $db0_line{status_my} $db0_line{status_all}\n";
+
+   #$XSGN{TMP}.="<BR>\n";
+
+   my $db1=$main::DBH->Query("
+		(SELECT login FROM markiza_sk.a300_users
+		WHERE IDhash='$db0_line{status_all_IDuser}' LIMIT 1)
+		UNION ALL
+		(SELECT login FROM markiza_sk.a300_users_arch
+		WHERE IDhash='$db0_line{status_all_IDuser}' LIMIT 1)");
+   if (my @db1_line=$db1->fetchrow)
+   {
+    $XSGN{TMP}.=" (<B>$db1_line[0]</B>)\n";
+#    $XSGN{TMP}.="<BR>\n";
+   }
+
+   my $db1=$main::DBH->Query("
+		SELECT sum(endtime-starttime)
+		FROM TOM.Ca700_task_worktimes
+		WHERE IDtask='$db0_line{ID}' AND endtime IS NOT NULL");
+   if (my @db1_line=$db1->fetchrow)
+   {
+    $XSGN{TMP}.="time(".int($db1_line[0]/60).")";
+    #$XSGN{TMP}.="<BR>\n";
+   }
+
+
+
+   $XSGN{TMP}.="<BR>\n";
+
+
+#   $XSGN{TMP}.="<BR>\n";
+
+   #$XSGN{TMP}.="$db0_line{ID}($db0_line{owning}-$db0_line{IDcharindex}) $db0_line{subject} $db0_line{status_my} $db0_line{status_all} ($db0_line{status_all_IDuser})\n";
+
+=head1
+  }
+  elsif ($db0_line{status_all_IDuser})
+  {
+   my $db1=$main::DBH->Query("
+		(SELECT login FROM markiza_sk.a300_users
+		WHERE IDhash='$db0_line{status_all_IDuser}' LIMIT 1)
+		UNION ALL
+		(SELECT login FROM markiza_sk.a300_users_arch
+		WHERE IDhash='$db0_line{status_all_IDuser}' LIMIT 1)");
+   if (my @db1_line=$db1->fetchrow)
+   {
+    $XSGN{TMP}.="&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ $db1_line[0]\n";
+    $XSGN{TMP}.="<BR>\n";
+   }
+  }
+=cut
+
+
+#  if (($db0_line{IDowner} eq $main::USRM{IDhash})
+#     ||($db0_line{rights_})
+#     )
+#  {
+#  }
+
+
+  #$XSGN{TMP}.="+ view:$db0_line{rights_my_view} del:$db0_line{rights_my_del} progress:$db0_line{rights_my_progress} work:$db0_line{rights_my_work}<BR>";
+  #$XSGN{TMP}.="+ gview:$db0_line{rights_group_view} gdel:$db0_line{rights_group_del} gprogress:$db0_line{rights_group_progress} gwork:$db0_line{rights_group_work}<BR>";
+#  $XSGN{TMP}.="<BR>\n";
+  $lastid=$db0_line{ID};
+
+ }
+#=cut
+
+ $XSGN{TMP}.="<BR><BR>\n";
+
+ return 1}
+1;
+
+
+
+
+
+
+
+
+
+

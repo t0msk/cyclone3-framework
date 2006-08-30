@@ -1,0 +1,146 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use App::540;
+use App::540::dir;
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+
+	if ($env{xt_xlng})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	my %args;
+	$args{order}="ID_dir, name";
+	$args{order}=$env{db_order_by} if ($env{db_order_by});
+	$args{ID_dir}=$env{db_ID} if ($env{db_ID});
+
+	my @dirs;
+	@dirs = App::540::dir::get(%args);
+
+	if(scalar(@dirs))
+	{
+		main::_log("db returned " . scalar(@dirs) . " rows");
+		for (my $i; $i<scalar(@dirs); $i++)
+		{
+
+			my $lastLevel=1;
+
+			my %db_line = %{$dirs[$i]};
+
+			my $actualLevel=length($db_line{ID_dir})/2;
+
+			main::_log("got category ID " . $db_line{ID_dir} . " at level " . $actualLevel);
+
+			if((exists $env{db_ID}) && ($db_line{ID_dir} eq $env{db_ID}) && (exists $XSGN{'LINE_ID_'.$db_line{ID_dir}.'_'.$actualLevel.'_active'}))
+			{
+				main::_log("adding special xsgn - LINE_ID_".$db_line{ID_dir}."_".$actualLevel."_active");
+				$XSGN{'NULL'}=$XSGN{'LINE_ID_'.$db_line{ID_dir}.'_'.$actualLevel.'_active'};
+			}
+			elsif((exists $env{db_ID}) && ($db_line{ID_dir} eq $env{db_ID}) && (exists $XSGN{'LINE_ID_'.$db_line{ID_dir}.'_active'}))
+			{
+				main::_log("adding special xsgn - LINE_ID_".$db_line{ID_dir}."_active");
+				$XSGN{'NULL'}=$XSGN{'LINE_ID_'.$db_line{ID_dir}.'_active'};
+			}
+			elsif((exists $env{db_ID}) && ($db_line{ID_dir} eq $env{db_ID}) && (exists $XSGN{'LINE_'.$actualLevel.'_active'}))
+			{
+				main::_log("adding special xsgn - LINE_".$actualLevel."_active");
+				$XSGN{'NULL'}=$XSGN{'LINE_'.$actualLevel.'_active'};
+			}
+			elsif((exists $env{db_ID}) && ($db_line{ID_dir} eq $env{db_ID}) && (exists $XSGN{'LINE_active'}))
+			{
+				main::_log("adding special xsgn - LINE_active");
+				$XSGN{'NULL'}=$XSGN{'LINE_active'};
+			}
+			elsif(exists $XSGN{'LINE_'.$actualLevel})
+			{
+				main::_log("adding special xsgn - LINE_".$actualLevel);
+				$XSGN{'NULL'}=$XSGN{'LINE_'.$actualLevel};
+			}
+			elsif ((not $actualLevel % 2) && (exists $XSGN{'LINE_odd'}))
+			{
+				main::_log("adding special xsgn - LINE_odd");
+				$XSGN{'NULL'}=$XSGN{'LINE_odd'};
+			}
+			else
+			{
+				$XSGN{'NULL'}=$XSGN{'LINE'};
+			}
+
+			if ($actualLevel>$lastLevel)
+			{
+				if (exists $XSGN{"LINE_PARENT_ID_$db_line{ID_dir}"})
+				{
+					main::_log("adding special xsgn - LINE_PARENT_ID_" . $db_line{ID_dir});
+					$XSGN{'TMP'} =~ s/<#LINE_PARENT#>/$XSGN{"LINE_PARENT_ID_$db_line{ID_dir}"}/;
+				}
+				elsif (exists $XSGN{'LINE_PARENT_'.$actualLevel.'_active'})
+				{
+					main::_log("adding special xsgn - LINE_PARENT_".$actualLevel."_active");
+					$XSGN{'TMP'} =~ s/<#LINE_PARENT#>/$XSGN{'LINE_PARENT_'.$actualLevel.'_active'}/;
+				}
+				elsif (exists $XSGN{'LINE_PARENT_active'})
+				{
+					main::_log("adding special xsgn - LINE_PARENT_active");
+					$XSGN{'TMP'} =~ s/<#LINE_PARENT#>/$XSGN{'LINE_PARENT_active'}/;
+				}
+				elsif (exists $XSGN{'LINE_PARENT_'.$actualLevel})
+				{
+					main::_log("adding special xsgn - LINE_PARENT_" . $actualLevel);
+					$XSGN{'TMP'} =~ s/<#LINE_PARENT#>/$XSGN{'LINE_PARENT_'.$actualLevel}/;
+				}
+				elsif ((not $actualLevel % 2) && (exists $XSGN{'LINE_PARENT_odd'}))
+				{
+					main::_log("adding special xsgn - LINE_PARENT_odd");
+					$XSGN{'TMP'}=$XSGN{'LINE_PARENT_odd'};
+				}
+				else
+				{
+					$XSGN{'TMP'} =~ s/<#LINE_PARENT#>/$XSGN{'LINE_PARENT'}/;
+				}
+			}
+
+			# ak sa vraciam do nadurovne
+			# - pozatvaram vsetky podurovnevne
+			# - zatvorim aj LINE_PARENT
+			if ($actualLevel<$lastLevel)
+			{
+				for ($actualLevel .. $lastLevel-1)
+				{ $XSGN{'TMP'} =~ s/<#LINE#>//; }
+				$XSGN{'TMP'} =~ s/<#LINE_PARENT#>//;
+			}
+
+			# ak je to len dalsia polozka v rovnakej urovni
+			# - zatvorim LINE_PARENT (poduroven, nechcem ju)
+			if ($actualLevel==$lastLevel)
+			{$XSGN{'TMP'} =~ s/<#LINE_PARENT#>//;}
+
+			foreach (keys %db_line)
+			{
+				$XSGN{'NULL'}=~s|<%$_%>|$db_line{$_}|g;
+			}
+			$XSGN{'NULL'}=~s|<%level%>|$actualLevel|g;
+
+			$XSGN{'TMP'} =~ s|<#LINE#>|$XSGN{'NULL'}|;
+
+			$lastLevel=$actualLevel;
+		}
+	}
+	else
+	{
+		$XSGN{TMP} = $XSGN{TMP_no_data};
+	}
+
+	return 1;
+}
+1;

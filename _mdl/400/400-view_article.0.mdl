@@ -1,0 +1,76 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 HEAD_VERSION
+1.030625
+
+=head1 NAME
+menu
+
+=head1 DESCRIPTION
+zobrazenie jedneho clanku.
+
+nepovinne parametre:
+	db - v pripade ze nie je zadany, nacitavaju sa articles z defaultnej databazy webu
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+ <value id="preview" value="1"/>
+ <value id="output" value="xsgn"/>
+	<source type="db_400" value="varchar">db name (default - web db)</source>
+</DESCRIPTION>
+
+=head1 CHANGES
+build 030627 - Deboot
+	*) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+	*) nothings
+=cut
+
+# takto bude vyzerat designovy modul
+
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+
+ $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+ $env{db_400}=$TOM::DB_name unless $env{db_400};
+
+ #my $time=(times)[0];
+
+ #$XSGN{TMP}=$time;
+ #return 1;
+
+ my $count;
+
+ my $db0=$main::DBH->Query("
+	SELECT ID,title,full
+	FROM $env{db_400}.articles
+	WHERE lng='$env{lng}' AND ID='$env{article_id}'
+	LIMIT 1
+	");
+
+
+ while (my @db0_line=$db0->FetchRow())
+ {
+  $count++;
+  $XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE}<#LINE#>|;
+  $XSGN{TMP}=~s|<%ID%>|$db0_line[0]|g;
+  $XSGN{TMP}=~s|<%TITLE%>|$db0_line[1]|g;
+  $XSGN{TMP}=~s|<%FULL%>|$db0_line[2]|g;
+ }
+
+ if (!$count){undef $XSGN{TMP};return 1}
+
+ return 1}
+
+1;

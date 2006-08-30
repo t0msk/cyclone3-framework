@@ -1,0 +1,85 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+#use halabala;
+use TOM::Utils::vars;
+use strict;
+use Net::SMTP;
+
+
+sub execute
+{
+	my %env=@_;
+	
+	
+	while (my $file=<$TOM::P/_temp/_email-*>)
+	{
+		main::_log("found $file");
+		open(HND_EMAIL,"<".$file);
+		
+		my $old=$main::time_current-(stat($file))[9];
+		if ($old<86400)
+		{
+			unlink $file;
+			next;
+		}
+		
+		my $from=<HND_EMAIL>;chomp($from);
+		my $to=<HND_EMAIL>;chomp($to);
+		$to=TOM::Utils::vars::unique_split($to);
+		my $body;
+		while (my $line=<HND_EMAIL>){$body.=$line};
+		#undef=<HND_EMAIL>;
+		main::_log("from:$from to:$to");
+		#main::_log(6,"to:$to");
+		
+		my $smtp = Net::SMTP->new($env{host});
+		
+		my @rcpt=split(';',$to);
+		
+		if (not $smtp->mail($from))
+		{
+			main::_log("can't send, not accepted sender ".$smtp->status,1);
+			next;
+		}
+		
+		if (not $smtp->recipient(@rcpt))
+		{
+			main::_log("can't send, not accepted RCPT: @rcpt ".$smtp->status,1);
+			next;
+		}
+		
+		if (not $smtp->data())
+		{
+			main::_log("can't accept DATA",1);
+			next;
+		}
+		
+		if (not $smtp->datasend($body))
+		{
+			main::_log("can't accept DATASEND",1);
+			next;
+		}
+		
+		if (not $smtp->dataend())
+		{
+			main::_log("can't accept DATAEND",1);
+			next;
+		}
+		
+		$smtp->quit;
+		
+		unlink $file;
+		
+		next;
+		
+	
+		$smtp->dataend();
+		
+		$smtp->quit;
+			
+	}
+
+return 1;}
+
+1;

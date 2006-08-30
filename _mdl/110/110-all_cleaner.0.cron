@@ -1,0 +1,89 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use Utils::datetime;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+
+  Database::connect::multi('stats') || die "cannot connect all databases";
+
+ #if (!$env{max_days}){$cron::ERR="not defined max_days";return undef;}
+
+	my $long=$main::time_current-((31*86400)*2);
+#	my $var=$main::time_current-((31*86400)*2);
+
+ if ($cron::P eq $CRON::P)
+ {
+  CRON::debug::log(5,"WARN: global use, using database $TOM::DB_name_STAT, ALL DOMAINS!!!");
+  $env{sel}="";
+  $env{tbl}="a110_weblog_rqs";
+ }
+ else
+ {
+  CRON::debug::log(5,"WARN: local(master) use, using database $TOM::DB_name_STAT, domain $tom::H_cookie");
+  $env{sel}="AND domain='$tom::H_cookie'";
+  $env{tbl}="a110_weblog_rqs";
+ }
+
+ #my $var=$cron::time_current-$env{max_days};
+
+=head1
+ my $db0=$main::DBH->Query("
+	SELECT * FROM $TOM::DB_name_STAT.$env{tbl}
+	WHERE reqtime<$var $env{sel}
+	ORDER BY reqtime DESC LIMIT 10
+ ");
+ while (my %db0_line=$db0->fetchhash())
+ {
+  print "$db0_line{reqtime} $var \n";
+ }
+=cut
+
+#=head1
+ my %date=Utils::datetime::ctodatetime(($main::time_current-(86400*8)),format=>1);
+ my $reqdatetime="$date{year}-$date{mom}-$date{mday} 00:00:00";
+
+ $main::DB{stats}->Query("
+	DELETE FROM TOM.a110_weblog_min
+	WHERE reqdatetime<'$reqdatetime'");
+
+$main::DB{stats}->Query("
+	DELETE FROM TOM.a110_load_min
+	WHERE reqtime<".($main::time_current-(86400*7)));
+	
+ my %date=Utils::datetime::ctodatetime(($main::time_current-((86400*31)*12)),format=>1);
+ my $reqdatetime="$date{year}-$date{mom}-$date{mday} 00:00:00";
+ $main::DB{stats}->Query("
+	DELETE FROM TOM.a110_weblog_hour
+	WHERE reqdatetime<'$reqdatetime'");
+	
+# my %date=Utils::datetime::ctodatetime(($main::time_current-(((86400*31)*12)*6)),format=>1);
+# my $reqdatetime="$date{year}-$date{mom}-$date{mday} 00:00:00";
+# $main::DB{stats}->Query("
+#	DELETE FROM TOM.a110_weblog_day
+#	WHERE reqdatetime<'$reqdatetime'");
+	
+ $main::DB{stats}->Query("
+	DELETE FROM TOM.a110_weblog_rqs
+	WHERE reqtime<$long");
+	
+ $main::DB{stats}->Query("
+	DELETE FROM TOM.a110_sitemap
+	WHERE time_use<$long");
+
+# WEBCLICK
+ $main::DB{stats}->Query("
+	DELETE FROM TOM.a110_webclick_log
+	WHERE time_insert<$long");
+	
+ $main::DB{stats}->Query("
+	DELETE FROM TOM.a110_mdl_log
+	WHERE reqtime<$long");
+	
+ return 1}
+
+1;

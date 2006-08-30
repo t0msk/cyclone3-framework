@@ -1,0 +1,380 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 NAME
+fview
+
+=head1 HEAD_VERSION_BUILD
+1.030824
+
+=head1 DESCRIPTION
+full view clanku s obrazkami a inymi mediami
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+
+ <value id="preview" value="1" />
+ <value id="output" value="xsgn" />
+	<input id="visits" value="boolean">increase visits count?</input>
+	<input id="format_500" value="varchar()">format of thumbnails</input>
+	<input id="first_format_500" value="varchar()">format of first thumbnail</input>
+	<input id="shift_first_img" value="boolean">exclude the first image for use in other gateway</input>
+	<input id="-xsgn" value="varchar(20)">design</input>
+	<input id="_a400_*" value="text">smdl sent parameters</input>
+
+</DESCRIPTION>
+
+
+=head1 CHANGES
+build 030826 - Aben
+        *) implementation format_500 && first_format_500
+	*) pre zobrazenie kategorie posielat show_catname
+build 030824 - Deboot
+        *) implementation of loading article category name from a400_category
+build 030709 - Deboot
+        *) ability to position the first image of the article anywhere in the display through an individual gateway
+build 030703 - Aben
+        *) shift_first_img function added
+build 030701 - Aben
+        *) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+        *) a lot of media still missing in the output
+=cut
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+
+ $env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+ $env{db_500}=$TOM::DB_name unless $env{db_500};
+
+ $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+ $env{db_400}=$TOM::DB_name unless $env{db_400};
+
+ $env{db_120}=$env{db_400} if ($env{db_400} ne $TOM::DB_name);
+
+ main::_log("$env{db_400} $TOM::DB_name db_120 = $env{db_120}");
+
+ #Tomahawk::debug::log(0,"format_500 = $env{format_500}");
+ #Tomahawk::debug::log(0,"first_format_500 = $env{first_format_500}");
+
+ # zistujem formaty obrazkov
+ $env{format_500}='t' unless $env{format_500};
+ $env{$env{format_500}.'_hash'}=Tomahawk::Getmdlvar("500",$env{format_500}.'_hash',db=>$env{db_500});
+ $env{first_format_500}='t' unless $env{first_format_500};
+ $env{$env{first_format_500}.'_hash'}=Tomahawk::Getmdlvar("500",$env{first_format_500}.'_hash',db=>$env{db_500});
+ 			              #Tomahawk::Getmdlvar("500",$env{first_format_500}.'_hash',db=>$env{db_500})
+ #Tomahawk::debug::log(0," value=".$env{$env{first_format_500}.'_hash'}." db=".Tomahawk::Getmdlvar("500",$env{first_format_500}.'_hash',db=>$env{db_500}));
+ #Tomahawk::debug::log(0,"first_format_500 = $env{first_format_500}");
+
+ # zistujem ci t je v hash formate;
+ #$env{t_hash}=Tomahawk::Getmdlvar("500","t_hash",db=>$env{db_500});
+
+ $env{_a400_full}=~s|\n|<br />|g;
+#=head1
+
+#=cut
+
+$main::env{a400_IDcategory}=$env{_a400_IDcategory};
+
+ if ($env{show_catname})
+ {
+  my $db0=$main::DBH->Query("
+	SELECT name FROM $env{db_400}.a400_category
+	WHERE ID='$env{_a400_IDcategory}'
+	LIMIT 1");
+  if (my @db0_line=$db0->fetchrow){$XSGN{TMP}=~s|<%CATNAME%>|$db0_line[0]|g;}
+ }
+ elsif (($env{show_catname_full})&&($env{_a400_IDcategory}))
+ {
+  my $var;my $null;
+  foreach($env{_a400_IDcategory}=~/(..)/g){$var.="$_";$null.="OR ID='$var' ";}$null=~s|^OR ||;
+  my $db0=$main::DBH->Query("
+	SELECT name FROM $env{db_400}.a400_category
+	WHERE $null
+	ORDER BY ID");
+  my $var;
+  while (my @db0_line=$db0->fetchrow){$var.="$db0_line[0] / ";}
+  $XSGN{TMP}=~s|<%CATNAME%>|$var|g;
+ }
+
+ $XSGN{TMP}=~s|<%IDCATEGORY%>|$env{_a400_IDcategory}|g;
+
+ # PHOTOS HANDLING
+ # extracting photos
+ my @photos;
+ while ($env{_a400_xrelated}=~s|<VAR id="a500" value="(.*?)" />||)
+ {my $zeroid=sprintf('%07d',$1);push @photos,$zeroid;}
+
+ #Tomahawk::debug::mdllog(5,@photos." photos found in article. Proceeding with extraction.");
+
+
+ #outputting first image to a different gateway
+ if (($env{shift_first_img})&&(@photos))
+ {
+  #Tomahawk::debug::mdllog(6,"shift_first_image true! Extracting the first image for use with other gateway.");
+  my $zeroid=shift @photos;
+  my $null=$zeroid;
+  $zeroid=~/^(....)/i;my $var=$1;
+  $env{_a400_full}=~s|<my_a500 (.*?)>||s;
+  my %env0=CML::VARhash($1);
+
+  # ak vyzadujem nejaky specialny format...
+  if ($env0{format})
+  {
+   $env{first_format_500}=$env0{format};
+   $env{$env{first_format_500}.'_hash'}=Tomahawk::Getmdlvar("500",$env{first_format_500}.'_hash',db=>$env{db_500});
+  }
+
+#Tomahawk::debug::log(0," value=".$env{$env{first_format_500}.'_hash'}." db=".Tomahawk::Getmdlvar("500",$env{first_format_500}.'_hash',db=>$env{db_500}));
+
+
+  if ($env{$env{first_format_500}.'_hash'})
+  {
+   my $db0=$main::DBH->Query("
+   	SELECT hash FROM $env{db_500}.a500
+   	WHERE	ID='$zeroid'
+		AND format='$env{first_format_500}'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	LIMIT 1");
+   if (my @db0_line=$db0->fetchrow)
+   {
+    $zeroid=$db0_line[0];
+    #Tomahawk::debug::mdllog(9,"mam hash obrazku $var/$zeroid-$env{first_format_500}.jpg");
+   }
+   else
+   {
+    #Tomahawk::debug::mdllog(9,"nemam hash obrazku $var/$zeroid-$env{first_format_500}.jpg");
+   }
+  }
+
+  #foreach (keys %env0){Tomahawk::debug::log(0,"$_=$env0{$_}");}
+  #Tomahawk::debug::log(0,"$var/$zeroid-$env{first_format_500}.jpg");
+
+  $XSGN{a500_}=~s|<%IMG%>|$tom::H_500/$var/$zeroid-$env{first_format_500}.jpg|g;
+  $XSGN{a500_}=~s|<%ID%>|$null|g;
+  $XSGN{a500_}=~s|<%ALT%>|$env0{alt}|g;
+  $XSGN{TMP}=~s|<#a500_#>|$XSGN{a500_}| if ($env{page}<1);
+ }
+
+
+ # outputting photos into article body
+ my $count=0;
+ while ($env{_a400_full}=~s|<my_a500 (.*?)/>|<!TMP!>|s)
+ {
+  if (!$photos[$count]){$env{_a400_full}=~s|<!TMP!>||g;last;}
+
+  #Tomahawk::debug::log(6,"extracting photo ".$count);
+  my %env0=CML::VARhash($1);
+
+  $env0{border}=1 unless $env0{border};
+
+  # ZMENA FORMATU
+  #if ($env0{format}){$env{$env0{format}.'_hash'}=Tomahawk::Getmdlvar("500",$env0{format}.'_hash',db=>$env{db_500});}
+  $env0{format}=$env{format_500} unless $env0{format};
+  $env0{format}=$env{format_500_hard} if $env{format_500_hard};
+  $env{$env0{format}.'_hash'}=Tomahawk::Getmdlvar("500",$env0{format}.'_hash',db=>$env{db_500});
+
+  #Tomahawk::debug::log(6,"format=".$env0{format});
+
+  # pokial obrazok nema v <myPHOTO> definovane width a height,
+  # tak ho zistim z _config
+  if ((!$env0{width})&&(!$env0{height})) # len pokial su nezname obdidve velkosti
+  {my $var=Tomahawk::Getmdlvar("500",$env0{format}.'_width_height',db=>$env{db_500});
+   if (not $var=~/-/) # nieje velkost definovana rozsahom XxY-XxY
+   {
+    my @ref=split('x',$var);
+    $env0{width}=$ref[0] if $ref[0];
+    $env0{height}=$ref[1] if $ref[1];
+   }
+  }
+
+  my $var;
+  my $zeroid=$photos[$count];if ($zeroid=~/^(....)/i){$var=$1};
+  #Tomahawk::debug::log(9,"!$zeroid!$var!");
+  if ($env{$env0{format}.'_hash'})
+  {
+   #Tomahawk::debug::log(6,"find hash");
+   my $db0=$main::DBH->Query("
+   	SELECT hash FROM $env{db_500}.a500
+   	WHERE	ID='$zeroid'
+		AND format='$env0{format}'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	LIMIT 1");
+   if (my @db0_line=$db0->fetchrow){$zeroid=$db0_line[0];}
+  }
+  #Tomahawk::debug::log(9,"!$zeroid!$var!");
+  $env0{src}=$tom::H_500."/".$var."/".$zeroid."-".$env0{format}.".jpg";
+  $XSGN{NULL}=$XSGN{a500};
+
+  #foreach (keys %env0){Tomahawk::debug::log(9,"$_=".$env0{$_});}
+
+  $XSGN{NULL}=~s|<%IMG%>|$env0{src}|g;delete $env0{src};
+  $XSGN{NULL}=~s|<%ID%>|$photos[$count]|g;
+  $XSGN{NULL}=~s|<%ALT%>|$env0{alt}|g;delete $env0{alt};
+
+  #foreach (keys %env0){$XSGN{TMP}.="+$_=$env0{$_}<BR>";}
+  $env0{align}="left" unless $env0{align};
+
+  $XSGN{NULL}=~s|<%ALIGN%>|$env0{align}|g;delete $env0{align};
+
+  # tvorba obsahu <img *>
+  my $var;foreach (keys %env0){$var.=" ".$_."=\"".$env0{$_}."\"";}
+  # vlozenie obsahu
+  $XSGN{NULL}=~s|<%VAR%>|$var|;
+  # vlozenie obrazku
+  $env{_a400_full}=~s|<!TMP!>|$XSGN{NULL}|;
+  $count++;
+ }
+
+
+
+
+ # extract link to other articles
+#=head1
+ if ($XSGN{a400}) # len ak mam design na vkladanie do TMP
+ {
+  my $count=0;
+  while ($env{_a400_full}=~s|<my_a400 (.*?)/>|<!TMP!>|s)
+  {
+   #Tomahawk::debug::log(6,"extracting link to article ".$count);
+
+   my %env0=CML::VARhash($1);
+
+   # docasne overovanie linky
+   my $db0=$main::DBH->Query("
+	(SELECT ID FROM $env{db_400}.a400 WHERE	ID='$env0{id}' AND active='Y'LIMIT 1)
+	UNION ALL
+	(SELECT ID FROM $env{db_400}.a400_arch WHERE ID='$env0{id}' AND active='Y' LIMIT 1)");
+   if (my @db0_line=$db0->fetchrow)
+   {
+    $XSGN{NULL}=$XSGN{a400};
+    $XSGN{NULL}=~s|<%ID%>|$env0{id}|g;
+    $XSGN{NULL}=~s|<%VALUE%>|$env0{value}|g;
+    $env{_a400_full}=~s|<!TMP!>|$XSGN{NULL}|;
+   }
+   else
+   {
+    $env{_a400_full}=~s|<!TMP!>|(článok už nieje v systéme)|;
+   }
+   #
+   $count++;
+  }
+ }
+#=cut
+
+
+ # PAGING
+ $env{page}=$main::FORM{page};
+ if ($env{_a400_full}=~/<myNEWPAGE>/)
+ {
+  #Tomahawk::debug::log(8,"mam my newpage");
+ }
+ my @ref=split('<myNEWPAGE>',$env{_a400_full});
+
+
+
+ #if (($XSGN{PAGING})&&(($XSGN{PREV})||($XSGN{NEXT})))
+ #{
+  my $null;
+  if ($env{page})
+  {
+   $null=1;
+   my $var=$env{page}-1;
+   $XSGN{PREV}=~s|<%url%>|page=$var|g;
+   $XSGN{PAGING}=~s|<#PREV#>|$XSGN{PREV}|g;
+   #Tomahawk::debug::log(8,"prev");
+  }
+  if (($env{page}+1)<@ref)
+  {
+   $null=1;
+   my $var=$env{page}+1;
+   $XSGN{NEXT}=~s|<%url%>|page=$var|g;
+   $XSGN{PAGING}=~s|<#NEXT#>|$XSGN{NEXT}|g;
+   #Tomahawk::debug::log(8,"next");
+  }
+  else
+  {
+   $XSGN{TMP}=~s|<#FOOTER#>|$XSGN{FOOTER}|g;
+  }
+  if ($null){$XSGN{TMP}=~s|<#PAGING#>|$XSGN{PAGING}|g;}
+ #}
+
+
+ if ($env{a900_inline})
+ {
+  #Tomahawk::debug::log(8,"vlozenie banneru $env{a900_inline}");
+  $ref[$env{page}]=~s|&nbsp;| |g;
+  if ($ref[$env{page}]=~s|^(.{700,}?)<br />\W{0,10}?<br />|\1<br />$env{a900_inline}<br />|)
+  {
+  }
+  else
+  {
+   $ref[$env{page}].=$env{a900_inline};
+  }
+ }
+
+ $XSGN{TMP}=~s|<%ID%>|$env{_a400_ID}|g;
+ $XSGN{TMP}=~s|<%TITLE%>|$env{_a400_title}|g;
+ $XSGN{TMP}=~s|<%SUBTITLE%>|$env{_a400_subtitle}|g;
+ $XSGN{TMP}=~s|<%TINY%>|$env{_a400_tiny}|g;
+
+
+
+ my $db0=$main::DBH->Query("
+	SELECT ID,IDcategory,fullname,nickname
+	FROM	$env{db_120}.a120
+	WHERE
+		ID='$env{_a400_IDauthor}'
+		AND IDtype='0'
+	LIMIT 1");
+  while (my @db0_line=$db0->FetchRow())
+  {
+   $env{'_a400_author'}=$db0_line[2];
+   $env{'_a400_author_nick'}=$db0_line[3];
+  }
+
+ #$main::env{a400_author_nick}=$env{'_a400_author_nick'};
+ $XSGN{TMP}=~s|<%AUTHOR-NICK%>|$env{_a400_author_nick}|g;
+ $XSGN{TMP}=~s|<%AUTHOR%>|$env{_a400_author}|g;
+
+ $XSGN{TMP}=~s|<%EDITOR-NICK%>|$env{_a400_editor_nick}|g;
+ $XSGN{TMP}=~s|<%EDITOR%>|$env{_a400_editor}|g;
+
+ #highlighting of words - KLIK MANIA
+ #$ref[$env{page}]=~s|!!!(.*?)!!!|<span style="color: red; font-weight: bold">\1</span>|gi;
+
+ # TEXT
+ $XSGN{TMP}=~s|<%FULL%>|$ref[$env{page}]|g;
+
+
+ # DATE & TIME
+ my %env0=Utils::datetime::ctodatetime($env{_a400_starttime},format=>1); # zkonvertujem cas do hashu a zformatujem
+ $XSGN{TMP}=~s|<%START_TIME%>|$env0{mday}.$env0{mom}.$env0{year} $env0{hour}:$env0{min}:$env0{sec}|g;
+ my %env0=Utils::datetime::ctodatetime($env{_a400_changetime},format=>1);
+ $XSGN{TMP}=~s|<%CHANGE_TIME%>|$env0{mday}.$env0{mom}.$env0{year} $env0{hour}:$env0{min}:$env0{sec}|g;
+
+return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+

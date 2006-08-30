@@ -1,0 +1,37 @@
+sub BaseModul
+{ 
+ $HTML_HEADER{BODY}{extract}="yes";
+ my $box=&box_create2("&nbsp;Pages",
+	'color_title0'	=>	"blue",
+	'width'			=>	140,
+	'height'		=>	50,
+#	'close'			=>	"yes",
+	'html'			=>	&menu_create
+		(
+		'color_back1'	=>	"#9FBDF9",
+		'color_font1'	=>	"#000000",
+		'link_base'		=>	"core.pl?",
+		'link'	=>	
+		{	'New page'	=>	"type=clanok_edit",
+			'Page index'=>	"type=clanky",
+			'Older pages'=>	"type=clanky",
+			'Newer pages'=>	"type=clanky"
+		}
+		)
+	);
+ return $box;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

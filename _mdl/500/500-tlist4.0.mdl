@@ -1,0 +1,107 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+#use strict;
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+
+	 $env{db}=$TOM::DB_name unless $env{db};
+
+my $Line=$main::DBH->Query("
+select
+ID,name
+from   $env{db}.a500_category  where lng='sk' and active='Y' limit 100;
+");
+
+#my $gogo=$main::FORM{went};
+my %hash_x;
+while(my @db_line=$Line->fetchrow)
+{
+$hash_x{$db_line[0]}=$db_line[1];
+}
+
+my $wfoo=$main::FORM{went};
+my @wfoo_arr;
+my $count_went=0;
+my $numer_start=2;
+my $got;
+
+while()
+{
+if($wfoo=~/^(.{$numer_start})/)
+{
+$got=$1;
+$wfoo_arr[$count_went]=$got;
+$count_went++;
+$numer_start=$numer_start+2;
+}
+else{last;}
+}
+
+#my @db_line2;
+#my $Line2;
+my %hash_xy;
+for(0..@wfoo_arr)
+{
+
+my $Line2=$main::DBH->Query("
+select
+name
+from   $env{db}.a500_category where ID='$wfoo_arr[$_]' limit 20
+");
+while(my %db_line2=$Line2->fetchhash)
+{
+$main::FORM{previous}.=$db_line2{name}."/";
+
+}
+
+}
+
+#$XSGN{TMP}=~s|<#TMP#>|$main::FORM{previous}<#TMP#>|;
+
+my $new_count_arr=0;
+#our $where;
+#our $name_previous;
+
+foreach(sort keys %hash_x)
+{
+if($_=~/$main::FORM{went}/){$main::FORM{where}=3;}
+#if($_=~/^$wfoo_arr[$new_count_arr]$/)
+#{$new_count_arr++;$main::FORM{name_previous}.="$hash_x{$_}\/";}
+if($_=~/$main::FORM{went}.{2}/){$main::FORM{where}=2;}
+if($_=~/$main::FORM{went}.{3,}/){$main::FORM{where}=1;last;}
+}
+
+
+if(not defined $main::FORM{went})
+{
+ $main::FORM{where}=1;
+}
+
+if(defined $main::FORM{style})
+{
+ $main::FORM{where}=3;
+}
+
+
+ return 1}
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+

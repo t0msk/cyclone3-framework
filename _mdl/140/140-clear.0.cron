@@ -1,0 +1,66 @@
+#!/bin/perl
+# ÁÉÍÓÚ - USE UTF-8 !!!
+package CRON::module;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ if ($cron::P ne $CRON::P){$cron::ERR="WARN: this cron is only for global use!!!";return undef}
+
+ if (!$env{max_days}){$cron::ERR="not defined max_days old logs";return undef;}
+
+
+ $env{max_days}=$env{max_days}*24*60*60;
+ $env{max_days2}=31*24*60*60;
+
+
+ if (opendir (DIR,$CRON::P))
+ {
+	my @files=readdir DIR;
+	foreach my $file(@files)
+	{
+		if (($file ne ".")&&($file ne ".."))
+		{
+			
+			next if $file =~/!media/;
+			next if $file =~/!www/;
+			next if $file =~/_data/;
+			
+			if ((-d $CRON::P."/".$file)&&(($file=~/![\w\.\-]+$/)||($file=~/\/[\w\.\-]+$/)||($file=~/_logs$/)))
+			{
+				main::_log("opening dir $file");
+				if (opendir (DIR1,$CRON::P."/".$file))
+				{foreach (readdir DIR1)
+				{
+					if (($_ ne ".")&&($_ ne "..")){push @files,$file."/".$_;}}
+				}
+			}
+			
+			if ($file=~/\.log$/)
+			{
+				
+				
+				if ($file=~/httpd/)
+				{
+				}
+				else #($file=~/\.(cron|pub|a).*?\.log$/)
+				{
+					my $var=(stat $CRON::P."/".$file)[9];
+					if (($cron::time_current-$var)>$env{max_days})
+					{
+						main::_log("$file old ".($cron::time_current-$var).", removing...");
+						unlink $CRON::P."/".$file;
+					}
+				}
+			}
+		}
+	}
+	closedir DIR;
+ }
+
+
+ return 1}
+
+1;

@@ -1,0 +1,8 @@
+<!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
+
+<#MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="0" />
+	<VAR id="-name" value="test" />
+	<#VAR id="-version" value="2" />
+</MODULE>

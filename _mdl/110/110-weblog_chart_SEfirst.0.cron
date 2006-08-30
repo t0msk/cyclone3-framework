@@ -1,0 +1,217 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+#use App::400;
+#use App::400::SQL::a400;
+
+#use SVGraph;
+use SVGraph::2D::lines;
+use SVGraph::2D::columns;
+use TOM::Net::HTTP;
+use TOM::Net::HTTP::referer;
+#use SVGraph::2D::ring;
+
+#use Net::HTTP::LiteAgent;
+
+use Utils::datetime;
+
+use strict;
+
+sub execute
+{
+ my %env=@_;
+ 
+ Database::connect::multi('stats') || die "cannot connect all databases";
+ 
+ my $graf=SVGraph::2D::lines->new(
+	title		=>	"SEO: New visitors accesses to domain $tom::H",
+#	type		=>	"normal",	# normal/stacked(spojene)/percentage
+#	type		=>	"stacked",	# normal/stacked(spojene)/overlap(prechadzanie)
+	type		=>	"stacked",
+#	reload	=>	600,
+	x		=>	750,
+	y		=>	300,
+
+	show_legend		=>	1, # show legend of Columns
+#	show_legend_reverse	 =>	1, # show legend of Columns
+	show_points		=>	1,
+#	show_points_middle	=>	1,
+#	show_lines			=>	1,
+	show_lines_smooth	=>	1,
+	show_areas		=>	1,
+	show_areas_opacity	=>	0.2,
+#	show_lines_smooth_range	=>	1,
+	show_data			=>	1,
+	show_data_background=>	1,
+
+	grid_y_scale_minimum		=> 0, # zaciname od nuly
+#	grid_y_scale_maximum		=>	15.00, #
+#	grid_y_main_spacing			=>	0.10,
+
+#	grid_y_main_lines			=>	10, # number of lines
+	show_grid_x		=>	1,
+	show_label_textsize	=>	10,
+);
+
+#$columns2{'AVG'}=$graf2->addColumn(title=>"AVG 31 days",color=>"blue",show_area=>1,show_area_opacity=>'0.35');
+#$columns3{'AVG'}=$graf3->addColumn(title=>"AVG 31 days",color=>"blue",show_area=>1,show_area_opacity=>'0.35');
+
+
+=head1
+SELECT
+   substring(reqdatetime,1,10) AS date,
+   user_agent_name AS robot,
+   COUNT(*) AS requests
+FROM
+   a110_weblog_rqs
+WHERE
+   domain_sub='webcom.sk' AND
+   reqtype='R' AND
+   active='Y'
+GROUP BY 
+   substring(reqdatetime,1,10),
+   user_agent_name
+ORDER BY
+   date DESC,
+   robot
+=cut
+
+my %columns;
+
+=head1
+my $db0=$main::DB{stats}->Query("
+	SELECT
+		referer_SE,
+		COUNT(*) AS requests
+	FROM
+		a110_weblog_rqs
+	WHERE
+		domain_sub='$tom::H' AND
+		reqtype='B' AND
+		referer_SE IS NOT NULL AND
+		active='Y'
+	GROUP BY
+		referer_SE
+	ORDER BY
+		requests DESC
+	LIMIT 10
+");
+while (my %db0_line=$db0->fetchhash)
+{
+	main::_log("add SE '$db0_line{'referer_SE'}'");
+	$columns{$db0_line{'referer_SE'}}=$graf->addColumn(title=>$db0_line{'referer_SE'});
+}
+=cut
+
+$columns{'SE'}=$graf->addColumn(title=>"SearchEngine");
+$columns{'domain'}=$graf->addColumn(title=>"Another domain");
+$columns{'direct'}=$graf->addColumn(title=>"Direct");
+
+for my $day(1..30)
+{
+	my $timestamp=$main::time_current-(86400*(31-$day));
+	my %date = Utils::datetime::ctodatetime($timestamp, format=>1 );
+	#print "add label $date{year}-$date{mon}-$date{mday}\n";
+	$graf->addRowLabel("$date{year}-$date{mon}-$date{mday}");
+}
+
+my $db0=$main::DB{stats}->Query("
+	SELECT
+		substring(reqdatetime,1,10) AS date,
+		referer,
+		page_code_referer
+	FROM
+		a110_weblog_rqs
+	WHERE
+		domain_sub='$tom::H' AND
+		reqtype IN ('B','m','w') AND
+		USRM_flag='G' AND
+		page_code_referer='' AND
+		reqtime>".($main::time_current-(86400*32))." AND
+		active='Y'
+");
+while (my %db0_line=$db0->fetchhash)
+{
+#	$graf->addRowLabel($db0_line{'date'});
+	
+#	$columns{$db0_line{'referer_SE'}}->addData($db0_line{'date'},$db0_line{'requests'}) if $columns{$db0_line{'referer_SE'}};
+	
+	my ($domain,$query)=TOM::Net::HTTP::domain_clear($db0_line{referer});
+	
+	
+	print "$domain/$tom::H\n";
+	
+	next if $domain=~/^$tom::H/;
+	
+	#print "$domain/$tom::H_www";
+	
+#	if (!$db0_line{referer})
+	if (!$db0_line{'page_code_referer'} && !$db0_line{referer})
+	{
+		$columns{'direct'}->addData($db0_line{'date'},1);
+		next;
+	}
+	
+	# pokial clovek browsi po stranke a nema refereri (spatne useragnety, alebo falosne boty)
+	if (!$db0_line{referer})
+	{
+		next;
+	}
+	
+	if (my $dom=TOM::Net::HTTP::referer::analyze($domain))
+	{
+		#print "-i know domain $dom + $query\n" if $analyze;
+		if ($TOM::Net::HTTP::referer::table{$dom}{domain_type} eq "search engine")
+		{
+			$columns{'SE'}->addData($db0_line{'date'},1);
+			next;
+		}
+	}
+	
+	$columns{'domain'}->addData($db0_line{'date'},1);
+	
+}
+
+eval
+{
+	alarm(5);
+	open HND,">$cron::P/_data/SEfirst.svg" or die "$!";
+	my $out=$graf->prepare();
+	$out=~s|[\s]+</text>|</text>|g;
+	print HND $out; 
+	alarm(0);
+};
+if ($@)
+{
+	die "error! $@\n";
+}
+
+
+return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,211 @@
+#!/usr/bin/perl
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use Term::ANSIColor;
+#use Curses::UI;
+
+BEGIN
+{
+	require "/usr/bin/tom3-init";
+	use Inline (Config => DIRECTORY => "/www/TOM/.core/.libs/_Inline");
+}
+
+
+use enc2;
+use enc3;
+use Mysql;
+use Database::connect;
+use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
+use CRON;
+use CRON::debug;
+#use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
+use TOM;
+use TOM::Debug::logs;
+
+#package CRON::debug;
+
+sub log{main::_log(@_)}
+
+package main;
+
+$TOM::engine_ready=1;
+
+=head1
+sub _log
+{
+	#print "\n";
+	if ($_[0]=~/^\d+$/)
+	{
+		print "[$_[0]]".(" " x ($_[0]+1)).$_[1]."\n";
+	}
+	else
+	{
+		print "".$_[0]."\n";
+	}
+}
+=cut
+
+%form=
+(
+# '-v'		=>	"verbosity",
+# '-vv, --v'	=>	"verbosity 2, --v=2",
+# '-e'		=>	"execute all modifications",
+# '-s'		=>	"show only all modifications",
+ '-v'			=>	"verbosity",
+ '--domain'	=>	"cron domain",
+ '---global'		=>	"cron global",
+ '---category'	=>	"cron category",
+ '---name'		=>	"cron name",
+);
+if ((!$FORM{-name}) || ($FORM{h})||($FORM{help})){&help();}
+
+print color 'reset bold blue';
+
+require "/www/TOM/.core/_config.sg/TOM.conf";
+require "/www/TOM/.core/_config/TOM.conf";
+require "/www/TOM/.core/_config/cron.conf";
+
+$cron::P=$CRON::P;
+$main::time_current=$cron::time_current=time;
+local (
+	$cron::Tsec,
+	$cron::Tmin,
+	$cron::Thour,
+	$cron::Tmday,
+	$cron::Tmom,
+	$cron::Tyear,
+	$cron::Twday,
+	$cron::Tyday,
+	$cron::Tisdst) = localtime($cron::time_current);
+   # doladenie casu
+   $cron::Tyear+=1900;$cron::Tmom++;
+   # formatujem cas
+   local (
+   	$cron::Fsec,
+	$cron::Fmin,
+	$cron::Fhour,
+	$cron::Fmday,
+	$cron::Fmom,
+	$cron::Fyear,
+	$cron::Fwday,
+	$cron::Fyday,
+	$cron::Fisdst
+	) = (
+	sprintf ('%02d', $cron::Tsec),
+	sprintf ('%02d', $cron::Tmin),
+	sprintf ('%02d', $cron::Thour),
+	sprintf ('%02d', $cron::Tmday),
+	sprintf ('%02d', $cron::Tmom),
+	$cron::Tyear,
+	$cron::Twday,
+	$cron::Tyday,
+	$cron::Tisdst
+	);
+	
+	
+local (
+	$main::Tsec,
+	$main::Tmin,
+	$main::Thour,
+	$main::Tmday,
+	$main::Tmom,
+	$main::Tyear,
+	$main::Twday,
+	$main::Tyday,
+	$main::Tisdst) = localtime($main::time_current);
+   # doladenie casu
+   $main::Tyear+=1900;$main::Tmom++;
+   # formatujem cas
+   local (
+   	$main::Fsec,
+	$main::Fmin,
+	$main::Fhour,
+	$main::Fmday,
+	$main::Fmom,
+	$main::Fyear,
+	$main::Fwday,
+	$main::Fyday,
+	$main::Fisdst
+	) = (
+	sprintf ('%02d', $main::Tsec),
+	sprintf ('%02d', $main::Tmin),
+	sprintf ('%02d', $main::Thour),
+	sprintf ('%02d', $main::Tmday),
+	sprintf ('%02d', $main::Tmom),
+	$main::Tyear,
+	$main::Twday,
+	$main::Tyday,
+	$main::Tisdst
+	);
+	$main::Fyear_sub=$main::Fyear;
+	$main::Fyear_sub=~s/^..//;
+	
+	
+	
+	
+	if ($DBH = Mysql->Connect($TOM::DB{main}{host},$TOM::DB_name_TOM,$TOM::DB{main}{user},$TOM::DB{main}{pass}))
+	#if ($DBH = Mysql->Connect($TOM::DB_host,$TOM::DB_name,$TOM::DB_user,$TOM::DB_pass))
+	{CRON::debug::log(0,"connect ok");}else
+	{
+		CRON::debug::log(0,"cannot connect MySQL (), exiting",1);
+		CRON::debug::log(0,"cannot connect MySQL (), exiting",1,"cron.err");
+		exit(0);
+	}
+	$main::DB{main}=$main::DBH; 
+	
+	$CRON::P="/www/TOM";
+	$cron::P=$CRON::P;
+	
+	if ($FORM{domain})
+	{
+		require $p."/local.conf";
+		$cron::P=$main::p;
+		$tom::P=$main::p;
+		#print "$FORM{-category}\n";
+	}
+	else
+	{
+		
+	}
+	
+	print "";
+	
+	module(%FORM);
+	
+=head1
+	if (-e $FORM{module})
+	{
+		_log(0,"module exist");
+		
+		if (not $FORM{module}=~/^\//)
+		{
+			# relativna cesta, vyrobim absolutnu cestu
+			my $pwd=`pwd`;chomp($pwd);
+			$FORM{module}=$pwd."/".$FORM{module};
+		}
+		
+		$FORM{module}=~s|^.*TOM/||;
+		$FORM{module}=~s|_mdl/(.*)$||;
+		$FORM{module2}=$1;
+		
+		_log(0,"cesta je $FORM{module} $FORM{module2}");
+		
+		_log(0,"loading local.conf...");
+		require "/www/TOM/".$FORM{module}."/local.conf";
+		_log(0,"... loaded");
+		
+		
+		#module(%mdl_env);
+		
+		
+		
+	}
+	else
+	{
+		_log(0,"module not exist");
+	}
+=cut
+	
+
+&exit();

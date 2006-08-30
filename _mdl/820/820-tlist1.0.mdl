@@ -1,0 +1,41 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ $env{max}=50 unless $env{max};
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+
+ $env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+ $env{db_820}=$TOM::DB_name unless $env{db_820};
+
+ my $db0=$main::DBH->Query("
+ 	SELECT *
+	FROM $env{db_820}.a820
+	LEFT JOIN $env{db_820}.a820_attrs
+		ON (a820.IDattrs AND a820.IDattrs=a820_attrs.IDattrs)
+	WHERE	a820.type='F'
+		AND a820.lng='$tom::lng'
+		AND a820.active='Y'
+	LIMIT $env{max}
+ ");
+ while (my %env0=$db0->fetchhash)
+ {
+  $XSGN{NULL}=$XSGN{LINE};
+  $XSGN{NULL}=~s|<%ID%>|$env0{ID}|g;
+  $XSGN{NULL}=~s|<%NAME%>|$env0{name}|g;
+  $XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}<#LINE#>|g;
+ }
+
+
+ return 1}
+
+1;

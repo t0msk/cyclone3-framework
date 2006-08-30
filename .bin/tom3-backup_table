@@ -1,0 +1,289 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+use Curses::UI;
+use Time::HiRes;
+
+BEGIN
+{
+	require "/usr/bin/tom3-init";
+}
+use CVML;
+use Mysql;
+use Database::connect;
+use Utils::datetime;
+
+%form=
+(
+# '-v'		=>	"verbosity",
+# '-vv, --v'	=>	"verbosity 2, --v=2",
+# '-e'		=>	"execute all modifications",
+ '--db'		=>	"database source main/sys/stats",
+ '--table'	=>	"database.table",
+# '-a'	=>	"all directories",
+# '-t'	=>	"this directory",
+# '-r'	=>	"this directory with recursive",
+# '-v'	=>	"verbosity",
+);
+if (($FORM{h})||($FORM{help})){&help();}
+if (!$FORM{table}){&help();}
+
+my $time_current=time;
+
+#$
+
+$main::FORM{db}="main" unless $main::FORM{db};
+
+my $cui = new Curses::UI;
+
+$cui->status("Connecting to database '$main::FORM{db}'...");
+
+Database::connect::all($main::FORM{db});sleep 1;$cui->nostatus();
+
+if ($main::DB{$main::FORM{db}})
+{
+}
+else
+{
+	$cui->status("Can't connect to $main::FORM{db}");sleep 5;$cui->nostatus();exit;
+}
+
+
+$cui->status("Checking source $main::FORM{db}");
+my $db0;
+eval
+{
+	local *STDERR;open(STDERR,">>/dev/null") || die "Cant redirect STDERR: $!\n";  
+	$main::DB{$main::FORM{db}}->Query("SELECT COUNT(*) FROM $main::FORM{table}") || die "can't use this table";
+};
+
+if (!$@)
+{
+	# test pouzitelnosti
+	my $db0=$main::DB{$main::FORM{db}}->Query("SELECT COUNT(*) FROM $main::FORM{table}");
+	my @db0_line=$db0->fetchrow();
+	my $rows=$db0_line[0];
+	
+	$cui->nostatus();	
+	if ($rows)
+	{
+		if (
+#			($main::DB{$main::FORM{db}}->Query("LOCK TABLES $main::FORM{table} READ"))
+#			&& ($main::DB{$main::FORM{db}}->Query("UNLOCK TABLES"))
+			1
+			)
+		{
+#			$cui->status("Source $main::FORM{table} is ok");sleep 20;$cui->nostatus();exit;
+			
+#			$cui->status("Speed test...");
+			# test rychlosti
+			my $limit=1;
+			my $text;
+			my $nasob=2;
+			while (($main::time_duration<2) && ($limit<100000) && (length($text)<1000000) && ($limit < $rows))
+			{
+				$cui->status("Speed test... ($limit)");
+				
+				$main::time_start=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+				
+				
+				my $db0=$main::DB{$main::FORM{db}}->Query("SELECT * FROM $main::FORM{table} LIMIT $limit");
+				while (my %db0_line=$db0->fetchhash){my %hash;%{$hash{$line}}=%db0_line;$text=CVML::structure::serialize(%hash);}
+				
+				
+				
+				$main::time_end=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+				$main::time_duration=$main::time_end-$main::time_start;
+				$main::time_fullduration=int($main::time_duration*($rows/$limit));
+				
+				$cui->nostatus();
+				$cui->status("Speed test...($limit=$main::time_duration)=$main::time_fullduration");#sleep 1;
+				$cui->nostatus();
+				
+				$limit=$limit*$nasob;
+			}
+			$limit=$limit/$nasob;
+			
+			
+			my $yes = $cui->dialog(
+				-message => "Duration: $main::time_fullduration seconds",
+				-buttons   =>
+				[
+					{ 
+						-label => '< Yes >',
+						-value => 1,
+						-shortcut => 'Y'
+					},
+					{ 
+						-label => '< No >',
+						-value => 0,
+						-shortcut => 'N'
+					}
+				],
+				-title   => 'Continue?',
+			);
+			
+			if (!$yes)
+			{
+				exit;
+			}
+			
+#			$cui->status("Source $main::FORM{table} is ok - $main::time_fullduration seconds, ".(length($text))." $limit ");sleep 3;$cui->nostatus();#exit;
+			
+			
+			open (HND,">temp");
+			$cui->progress(-max => $rows,-message => "Archiving table $main::FORM{table}");
+			my $line;
+			
+			$main::time_start=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+			for my $i (0..int($rows/$limit)+2)
+			{
+				my $i0=$i*$limit;
+				
+				$main::time_current=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+				
+				my $este;
+				$este=int(((int($rows/$limit)+1)-$i) * (($main::time_current-$main::time_start)/$i)) if $i;
+				
+#				(int($rows/$limit)+1)
+				
+				my %date=Utils::datetime::splittime($este);
+				$cui->status(-message => "S $i/".(int($rows/$limit)+1)." EST $date{hour}h:$date{min}m:$date{sec}s", -padbottom=>14);
+				
+				my $db0=$main::DB{$main::FORM{db}}->Query("
+					SELECT * FROM $main::FORM{table} LIMIT $i0,$limit
+				");
+				
+#				my %hash=();
+				
+				while (my %db0_line=$db0->fetchhash)
+				{
+					$line++;
+					
+					
+					my %hash;
+					%{$hash{$line}}=%db0_line;
+					
+					my $text=CVML::structure::serialize(%hash);
+					print HND $text;
+					
+					#$cui->status(-message => "S $i/".(int($rows/$limit)+1)." EST:$este sec. LN:$line", -padbottom=>14);
+					
+				}
+				
+				$cui->setprogress($line);
+				
+				#my $text=CVML::structure::serialize(%hash);
+				
+				
+				#$cui->status(-message => "Export (".(length($text)).")", -padbottom=>14);sleep 2;
+				
+				#$cui->nostatus();
+				
+				#print HND $text;
+			}
+			
+			close (HND);
+			
+			
+			
+			
+			
+			
+			
+			
+		}
+		else
+		{
+			$cui->status("Source $main::FORM{table} can't be locked");sleep 5;$cui->nostatus();exit;
+		}
+	}
+	else
+	{
+		$cui->status("Source $main::FORM{table} is empty");sleep 5;$cui->nostatus();exit;
+	}
+}
+else
+{$cui->nostatus();
+	$cui->status("Can't use source $main::FORM{table}");sleep 5;$cui->nostatus();
+}
+
+exit(0);
+
+my %hash;
+$hash{data}=[];
+
+#	$DB{main}=Mysql::connect('localhost','TOM','TOM');
+
+#	$main::DB{main}->usedb('TOM');
+
+	my $source="TOM.test";
+	
+	my $db0=$main::DB{main}->Query("
+		SELECT COUNT(*)
+		FROM $source
+	");
+	my @db0_line=$db0->fetchrow();
+	my $rows=$db0_line[0];
+	
+#	$rows=100;
+	
+	my $delrows=10;
+	
+	$cui->progress(-max => int($rows/$delrows),-message => "Archiving table");
+	
+	my $line;
+	for my $i (0..int($rows/$delrows)+1)
+	{
+		my $i0=$i*$delrows;
+		
+		$cui->setprogress($i);
+		
+		my $db0=$main::DB{main}->Query("
+			SELECT *
+			FROM $source
+			LIMIT $i,10
+		");
+		
+		my %hash;
+		
+		while (my %db0_line=$db0->fetchhash)
+		{
+			$line++;
+			%{$hash{$line}}=%db0_line;
+		}
+		
+		my $text=CVML::structure::serialize(%hash);
+		
+		open (HND,">>temp");
+		print HND  $text;
+#		print "$text\n\n";		
+	}
+	
+
+=head1
+	my $cui = new Curses::UI;
+
+	$cui->progress(-max => $db0->NumRows(),-message => "Create TOM3_release");
+	my $i;
+	while (my %db0_line=$db0->fetchhash())
+	{
+		$i++;
+		$cui->setprogress($i);
+	}
+	
+	$cui->noprogress;
+=cut
+
+chdir $TOM::P;
+#system ("tar -czf tom3_domain.$time_current.tar.gz * --exclude \*.jpg --exclude \*.log --exclude \*.tar --exclude \*.gz --exclude \*.bz2");
+=head1
+system ('tar --exclude ".core/*" --exclude "*.log" --exclude "*.tar" --exclude "*.gz" --exclude "!media/*" --exclude "*.asf" --exclude "*.jpg" --exclude "_trash/*" -cvvzf tom3_domain.'.$time_current.'.tar.gz .');
+=cut
+
+=head1
+print "chown tar...\n";
+system ("chown tom:tom tom3_domain.".$time_current.".tar.gz");
+print "chmod tar...\n";
+system ("chmod 700 tom3_domain.".$time_current.".tar.gz");
+#system ("mv archive.$time_current.tar.gz /home/tom/archive.$time_current.tar.gz");
+=cut

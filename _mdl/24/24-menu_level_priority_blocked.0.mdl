@@ -1,0 +1,163 @@
+#!/bin/perl
+#áéíóú USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 HEAD_VERSION
+1.030723
+
+=head1 NAME
+menu_level_priority_blocked
+
+=head1 DESCRIPTION
+blocked menu generator
+
+data format:
+	<LINKBLOCK id="unique int">
+	<LINK id="string" l="depth level (1-x)" p="priority (0-x)">
+	<URL>url</URL>
+	<TARGET>target frame</TARGET>
+	</LINK>
+	...
+	</LINKBLOCK>
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+ <value id="preview" value="1"/>
+ <value id="output" value="xsgn"/>
+ 	<source type="db.table" value="this._config">db table where the menus are located (not needed when using menu_xml variable)</source>
+	<input id="menu_name" value="varchar">db variable identificator</input>
+	<input id="menu_type" value="hr/vr">orientation of menu (horizontal/vertical)</input>
+	<input id="menu_width" value="int">width of the menu block</input>
+	<input id="menu_width_m" value="%/px">menu width measurement</input>
+	<input id="menu_item_width_m" value="%/px">menu item width measurement</input>
+	<input id="menu_depth" value="int">maximum depth of menu items to display</input>
+	<input id="menu_start_at" value="int">first root (level=1) item to display</input>
+	<input id="menu_end_at" value="int">last root (level=1) item to display</input>
+	<input id="menu_blocks" value="int,int,int, ....">explicitly chosen blocks to display in given order</input>
+	<input id="menu_xml" value="xml">menu blocks data, in case it doesn't have to use db</input>
+
+</DESCRIPTION>
+
+=head1 CHANGES
+build 030723 - Deboot
+	*) menu_xml parameter added
+build 030626 - Deboot
+	*) menu_blocks parameter added
+build 030625 - Deboot
+	*) menu_width, menu_width_m, menu_item_width_m, menu_depth, menu_start_at, menu_end_at parameters added
+build 030624 - Deboot
+	*) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+	*) nothing
+=cut
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # LOADING XML LANGUAGE
+
+ #my $data=Tomahawk::Getvar($env{menu_block});
+
+ my $data;
+
+ if (!$env{menu_xml})
+ {
+  if (not $data=Tomahawk::Getvar($env{menu_name}))
+  {
+   Tomahawk::debug::log(6,"Could not load data from config database! Check if db item \"" . $env{menu_name} ."\" exists!", 1);
+   $tom::ERR = "DB request error!";
+   return undef;
+  }
+ }
+ else
+ {
+  $data=$env{menu_xml};
+ }
+
+ if ($data)
+ {
+  my %menu_counts;
+
+  if (exists($env{menu_blocks}))
+  {
+   my @data_arr;
+   while ($data=~s|<LINKBLOCK id="(.{1,2}?)">(.*?)</LINKBLOCK>||si)
+   {
+    @data_arr[$1]=$2;
+   }
+
+   Tomahawk::debug::log(7,"Could not fetch menu blocks! Check if db item \"" . $env{menu_name} ."\" is in the correct format!", 1) if not @data_arr;
+
+   foreach(split(',', $env{menu_blocks}))
+   {
+    while (@data_arr[$_]=~s|<LINK id="(.{2,150}?)" l="(.{0,2}?)" p="(.{0,2}?)">(.*?)</LINK>||si)
+    {
+     my ($var,$level,$prior,$line,$url)=($1,$2,$3,$4);
+     if ($line=~s/<URL>(.*?)<\/URL>//si){$url=$1}
+
+     $menu_counts{items}++;
+     $menu_counts{roots}++ if ($level==1);
+
+     next if ((defined $env{menu_depth}) && ($env{menu_depth} < $level));
+
+     next if ((defined $env{menu_start_at}) && ($env{menu_start_at} > $menu_counts{items}-1));
+
+     last if ((defined $env{menu_end_at}) && ($env{menu_end_at} < $menu_counts{roots}-1));
+
+     $XSGN{NULL}=$XSGN{LINE};
+     $XSGN{NULL}=~s|<%URL%>|$url|;
+     $XSGN{NULL}=~s|<%LEVEL%>|-level$level| if $level;
+     $XSGN{NULL}=~s|<%PRIOR%>|-prior$prior"| if $prior;
+
+     $XSGN{NULL}=~s|<%NAME%>|$var|;
+     #$XSGN{TMP}.=$XSGN{NULL};
+     $XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}<#LINE#>|;
+    }
+   }
+  }
+  else
+  {
+   while ($data=~s|<LINK id="(.{2,150}?)" l="(.{0,2}?)" p="(.{0,2}?)">(.*?)</LINK>||si)
+   {
+    my ($var,$level,$prior,$line,$url)=($1,$2,$3,$4);
+    if ($line=~s/<URL>(.*?)<\/URL>//si){$url=$1}
+
+    $menu_counts{items}++;
+    $menu_counts{roots}++ if ($level==1);
+
+    next if ((defined $env{menu_depth}) && ($env{menu_depth} < $level));
+
+    next if ((defined $env{menu_start_at}) && ($env{menu_start_at} > $menu_counts{items}-1));
+
+    last if ((defined $env{menu_end_at}) && ($env{menu_end_at} < $menu_counts{roots}-1));
+
+    $XSGN{NULL}=$XSGN{LINE};
+    $XSGN{NULL}=~s|<%URL%>|$url|;
+    $XSGN{NULL}=~s|<%LEVEL%>|-level$level| if $level;
+    $XSGN{NULL}=~s|<%PRIOR%>|-prior$prior"| if $prior;
+
+    $XSGN{NULL}=~s|<%NAME%>|$var|;
+    #$XSGN{TMP}.=$XSGN{NULL};
+    $XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}<#LINE#>|;
+   }
+  }
+ if ($env{menu_type} eq "hr")
+  {
+   my $menu_item_width=$env{menu_width}/$menu_counts{items};
+
+   $XSGN{TMP}=~s|<%MENU-ITEM-WIDTH%>| style="width: $menu_item_width$env{menu_item_width_m};" |g;
+   $XSGN{TMP}=~s|<%MENU-WIDTH%>|$env{menu_width}|;
+   $XSGN{TMP}=~s|<%MENU-WIDTH-M%>|$env{menu_width_m}|;
+  }
+ }
+  #my $time2=(times)[0];
+  #$XSGN{TMP}=$time2.":".$time;
+return 1}
+
+1;

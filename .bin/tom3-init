@@ -1,0 +1,161 @@
+#!/usr/bin/perl
+
+#use warnings;
+use strict;
+use Term::ANSIColor;
+use open ':utf8', ':std';
+#use encoding 'utf8';
+use utf8;
+
+BEGIN
+{
+	$TOM::hostname=`hostname`;chomp($TOM::hostname);
+	$TOM::core_uname_n=$TOM::hostname;
+	$CRON::core_uname_n=$TOM::hostname;
+	
+	print color 'bold blue';
+	print "[TOM3 Control Commands Engine]\n";
+	print color 'reset blue';
+	print "initializing...";
+	$main::p=`pwd`;$main::p=~s|\n||g;
+	print " p:".$main::p;
+	die "Unable to search TOM directory /www/TOM/???" unless $main::P=`ls -l /usr/bin/tom3-init`;
+	$main::P=~s|.* (.*)/.*?/(.*)\n|$1|;#$TOM::SCRIPT_NAME=$2;
+	$TOM::P=$main::P;
+	print " P:".$main::P."\n";
+	unshift @INC,$main::P."/.core/.libs";
+	# unshift @INC,$main::p."/.core/bin/.libs";
+}
+
+#print "$ENV{USER}\n";
+
+if (open (NNL,$main::P."/.core/_config.sg/TOM.conf"))
+{
+	require $main::P."/.core/_config.sg/TOM.conf";
+	require $main::P."/.core/_config/TOM.conf";
+}
+
+use Inline (Config => DIRECTORY => "$TOM::P/.core/.libs/_Inline");
+use TOM::lock;
+#use TOM;
+
+#print "cesty..\n";
+
+print color 'bold green';
+my $filename=$0;
+$filename=~s|.*/||;
+print "[$filename]\n";
+
+print color 'reset green';
+
+
+foreach my $key(@ARGV)
+{
+	$key=~s/--// && do
+	{
+		my @ref=split('=',$key,2);
+		$ref[1]=1 unless exists $ref[1];
+		$main::FORM{$ref[0]}=$ref[1];
+		next;
+	};
+	$key=~s/-// && do
+	{
+		foreach (split('',$key)){$main::FORM{$_}++;}
+	};
+}
+
+$main::time_current=time;
+(
+	$main::Tsec,
+	$main::Tmin,
+	$main::Thour,
+	$main::Tmday,
+	$main::Tmom,
+	$main::Tyear,
+	$main::Twday,
+	$main::Tyday,
+	$main::Tisdst) = localtime($main::time_current);
+   # doladenie casu
+   $main::Tyear+=1900;$main::Tmom++;
+   # formatujem cas
+(
+	$main::Fsec,
+	$main::Fmin,
+	$main::Fhour,
+	$main::Fmday,
+	$main::Fmom,
+	$main::Fyear,
+	$main::Fwday,
+	$main::Fyday,
+	$main::Fisdst
+	) = (
+	sprintf ('%02d', $main::Tsec),
+	sprintf ('%02d', $main::Tmin),
+	sprintf ('%02d', $main::Thour),
+	sprintf ('%02d', $main::Tmday),
+	sprintf ('%02d', $main::Tmom),
+	$main::Tyear,
+	$main::Twday,
+	$main::Tyday,
+	$main::Tisdst
+	);
+	$main::Fyear_sub=$main::Fyear;
+	$main::Fyear_sub=~s/^..//;
+
+
+if ($main::FORM{domain})
+{
+	$main::FORM{domain}=~s|^www\.||i;
+	$main::h=$main::FORM{domain};$main::h=~s|\.|_|g;$main::h=~s|/|__|g;
+
+	my $path=$main::FORM{domain};$path=~s|^(.[^/]*)(.*)||;
+	my $path_dom=$1;my $path_sub=$2;
+	$path_dom=~s|(.*\.\|)(.*?\..*?)$|$1|;
+	$main::p="!$2";$path_dom=~s|\.$||;
+
+	foreach (reverse split('\.',$path_dom)){$main::p.="/!$_";}
+	foreach (split('/',$path_sub)){$main::p.="/$_";}
+
+	$main::p=~s|//|/|g;
+	$main::p=$main::P."/".$main::p;
+	print "p:".$main::p."\n";
+	print "h:".$main::h."\n";
+	
+	$tom::P=$main::p;
+	$TOM::P=$main::P;
+	
+}
+
+my $out=`id`;$ENV{USER}=($out=~/\((.*?)\)/)[0];
+
+#exit(0);
+
+#print "čaute";
+
+sub help
+{
+ print "[using---------------------------------------------------]\n";
+ print "[ -h, --help     this page                               ]\n";
+ foreach (sort keys %main::form)
+ {
+  print "[ ";
+  print sprintf("%-15s",$_);
+  print sprintf("%-40s",$main::form{$_});
+  print "]\n";
+ }
+ print "[--------------------------------------------------------]\n";
+ &exit();
+}
+
+sub _log
+{
+}
+
+sub exit
+{
+ print color 'reset';
+ print "\n";
+ exit();
+}
+
+1;

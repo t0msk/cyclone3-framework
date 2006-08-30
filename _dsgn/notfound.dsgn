@@ -1,0 +1,79 @@
+$HTML_TEMP=<<"HEADER";
+
+<div id="page"><div id="page-i">
+	<div class="right">
+		<img src="/_errorpages/cyclone-160x55.gif" alt="Cyclone" width="160" height="55" />
+	</div>
+
+  <!TMP-BASE!>
+</div></div>
+
+<!TMP-ERROR!>
+
+
+HEADER
+
+%HTML_HEADER=(
+	'head'	=>
+	{
+		'title'	=>	"Stránka nenájdená / Page not found",
+	
+		'style'	=>
+		{
+			'body' => " font:small Arial,Helvetica,sans-serif; text-align:center; margin:0; padding:2em; ",
+			'#page' => "width:550px; margin:0 auto; text-align:left; background:#FAFAFA; border:1px solid #E1E1E1; ",
+			'#page-i' => "padding:10px; ",
+			'a' => "color:red; ",
+			'h1' => "margin-top:0; font-size:120%; color:#7E7F82; ",
+			'.right' => " text-align: right; ",
+		},
+	
+		'meta'	=>
+		{
+						'robots'		=>	"noindex,nofollow",
+		}
+	},
+	
+);
+
+
+$TEMPLATE=<<"HEADER";
+
+<div id="page"><div id="page-i">
+	<div class="right">
+		<img src="/_errorpages/cyclone-160x55.gif" alt="Cyclone" width="160" height="55" />
+	</div>
+
+  <!TMP-BASE!>
+</div></div>
+
+<!TMP-ERROR!>
+
+
+HEADER
+
+%HEADER=(
+	'head'	=>
+	{
+		'title'	=>	"Stránka nenájdená / Page not found",
+	
+		'style'	=>
+		{
+			'body' => " font:small Arial,Helvetica,sans-serif; text-align:center; margin:0; padding:2em; ",
+			'#page' => "width:550px; margin:0 auto; text-align:left; background:#FAFAFA; border:1px solid #E1E1E1; ",
+			'#page-i' => "padding:10px; ",
+			'a' => "color:red; ",
+			'h1' => "margin-top:0; font-size:120%; color:#7E7F82; ",
+			'.right' => " text-align: right; ",
+		},
+	
+		'meta'	=>
+		{
+						'robots'		=>	"noindex,nofollow",
+		}
+	},
+	
+);
+
+
+1;

@@ -1,0 +1,495 @@
+#!/bin/perl
+# A!A©A­A3Ao - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use MIME::Base64;
+use Digest::MD5  qw(md5 md5_hex md5_base64);
+
+use Int::charsets::encode;
+use Net::HTTP::LiteAgent;
+use CVML;
+use Secure::image;
+use TOM::Utils::datetime;
+
+our $authors = "gregor\@webcom.sk";
+
+# filozofia
+# modul NEPRACUJE s formularovymi premennymi
+# 3 krokove spracovanie designu - default, check, send
+
+sub execute
+{
+	my %env=@_;
+
+	if ( $env{xt_design} ne 'none' )
+	{
+		Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	}
+	if ($env{xt_xlng})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	
+	#while((my$k,my$v)=each%env){main::_log("env{$k}=$v");}
+
+	# zamienanie emailovych TMP
+	foreach (keys %env)
+	{
+		next unless $_ =~ /xt_EMAIL(.*)/;
+		my $email_postfix = $1;
+
+		foreach my $email_TMP (split ";", $env{"xt_EMAIL".$email_postfix})
+		{
+			$XSGN{"EMAIL_".$email_TMP} = $XSGN{"EMAIL".$email_postfix};
+		}
+	}
+	# priorita
+	$env{priority} = 0 unless $env{priority};
+	# kodovanie
+	$env{encoding_output} = "UTF-8" unless $env{encoding_output};
+	# emaily
+	$env{from_service} = $env{service} if !$env{from_service} && $env{service};
+	if (!$env{email} && !$env{xt_design_only}) { $tom::ERR="Undefined email"; return undef; } # mail z type
+	$env{email_global} = "forms\@webcom.sk";
+	$env{from_email} = $env{_a130_form_email} unless $env{from_email};
+	$env{from_email} = $env{email} unless $env{from_email};
+	$env{db_from_email} = "forms\@webcom.sk" unless $env{db_from_email};
+	# normalny email
+	$env{allow_EMAIL} = 1; # spracuje zakladny XSGN{EMAIL}
+	$env{send} = 1 unless exists($env{send}); # aj ho posle
+	# globalny email
+	$XSGN{EMAIL_global} = $XSGN{EMAIL} unless exists($XSGN{EMAIL_global});
+	#$env{allow_attachment_global} = $env{allow_attachment};
+	$env{allow_EMAIL_global} = 1; # spracuje zakladny XSGN{EMAIL}
+	$env{send_global} = 1 unless exists($env{send_global}); # aj ho posle
+	# email visitor
+	$env{email_visitor} = $env{_a130_form_email} unless $env{email_visitor};
+
+	# zistim, ci je formular poslany
+	# ak nie je - DEFAULTne TMP
+	unless ($env{action})
+	{
+		main::_log("Formular nebol odoslany");
+
+
+		# vygenerujem bezpecnostny obrazok
+		if ($env{xt_picture_security})
+		{
+			(my $filehash, my $valuehash) = Secure::image::genimagehash_ng(
+					'size' => $env{'xt_picture_numchars'},
+					'width' => $env{'xt_picture_width'},
+					'height' => $env{'xt_picture_height'},
+					'color_bg' => $env{'xt_picture_bgcolor'},
+					'color_font' => $env{'xt_picture_fontcolor'},
+					'color_noise1' => $env{'xt_picture_noise1color'},
+					'color_noise2' => $env{'xt_picture_noise2color'},
+			);
+				$XSGN{TMP} =~ s|<%security-imagehash%>|$filehash|g;
+				$XSGN{TMP} =~ s|<%security-fullpath%>|$tom::H_grf/temp/$filehash.png|g;
+			$XSGN{TMP} =~ s|<%security-value%>|$valuehash|g;
+			main::_log("Vygeneroval sa novy security obrazok s hashom \"$filehash\" a hodnotou \"$valuehash\"");
+		}
+
+		# nahradim premenne v designe
+		foreach (keys %env)
+		{
+			# form premenne
+			if ($_=~/^_a130_form_/)
+			{
+				# a nastavim vsetkym selected a checked premennym xsgn{CHECKED} a xsgn{SELECTED}
+				if ($_=~/^_a130_form_.*_(checked|selected)$/)
+				{
+					$env{$_} = $XSGN{CHECKED} if $1 eq "checked" && exists $XSGN{CHECKED};
+					$env{$_} = $XSGN{SELECTED} if $1 eq "selected" && exists $XSGN{SELECTED};
+				}
+				# premennu replace vyuzival len v tomto cykle
+				my $replace = $_; $replace =~ s|^_a130_form_||;
+				$XSGN{TMP} =~ s|<%$replace%>|$env{$_}|g;
+			}
+		}
+		
+		return 1;
+	}
+
+	# vytvorenie cvml
+	my %cvml;
+	foreach (sort keys %env)
+	{
+		next if
+		(
+			((not $_ =~ /^_a130_form_/) || $_ =~ /(_checked|_selected)$/)
+			||
+			($_=~/^_a130_form_([^_]+)/ && exists ($cvml{$1}))
+		);
+
+			my $cvml_key = $_; $cvml_key =~ s/^_a130_form_//;
+			$cvml{$cvml_key} = $env{$_};
+
+	}
+	my $cvml_output = CVML::structure::serialize(%cvml);
+	$cvml_output =~ s|\'|\\'|g;
+	
+	my $md5_output = md5_hex($main::ENV{'HTTP_REFERER'}.$main::USRM{IDsession}.$main::USRM{IDhash}.$cvml_output);
+
+	# osetrenie refreshov
+	if ($env{xt_ban_refresh})
+	{
+		# za refresh je testovany na 5 min dozadu
+		my $db_refresh = $main::DB{main}->Query("
+		SELECT
+			ID
+		FROM
+			a130_send
+		WHERE
+			ID_md5='$md5_output' AND
+			sendtime>=$tom::time_current-300
+		");
+
+		# ano - je to refresh
+		if ($db_refresh->numrows)
+		{
+			$env{form_ok} = 0; # toto mi pri dalsej kontrole povie, ze formular nebol spravne odoslany
+			$env{repeated} = 1; # a toto, ze mam vypisat hlasku o refreshovani
+		}
+	}
+
+	# formular bol poslany, idem dalej
+	if ($env{action})
+	{
+		main::_log("Formular odoslany");
+
+		# zistim, ci mam spravne data - ci je dobre vyplneny formular
+		# ak nie, tak nahradim premenne do designu, error hlasku a koncim
+		unless ($env{form_ok})
+		{
+			main::_log("Nespravne vyplneny formular");
+
+			# vygenerujem bezpecnostny obrazok
+			if ($env{xt_picture_security})
+			{
+				(my $filehash, my $valuehash) = Secure::image::genimagehash_ng(
+					'size' => $env{'xt_picture_numchars'},
+					'width' => $env{'xt_picture_width'},
+					'height' => $env{'xt_picture_height'},
+					'color_bg' => $env{'xt_picture_bgcolor'},
+					'color_font' => $env{'xt_picture_fontcolor'},
+					'color_noise1' => $env{'xt_picture_noise1color'},
+					'color_noise2' => $env{'xt_picture_noise2color'},
+				);
+				$XSGN{TMP} =~ s|<%security-imagehash%>|$filehash|g;
+				$XSGN{TMP} =~ s|<%security-fullpath%>|$tom::H_grf/temp/$filehash.png|g;
+				$XSGN{TMP} =~ s|<%security-value%>|$valuehash|g;
+				main::_log("Vygeneroval sa novy security obrazok s hashom \"$filehash\" a hodnotou \"$valuehash\"");
+			}
+			
+			# pozriem, ci to nie je refresh
+			$XSGN{TMP} =~ s|<#REPEATED#>|$XSGN{REPEATED}| if $env{repeated};
+			
+			# nahradim premenne v designe
+			foreach (keys %env)
+			{
+				# form premenne
+				if ($_=~/^_a130_form_/)
+				{
+					# a nastavim vsetkym selected a checked premennym xsgn{CHECKED} a xsgn{SELECTED}
+					if ($_=~/^_a130_form_.*_(checked|selected)$/)
+					{
+						$env{$_} = $XSGN{CHECKED} if $1 eq "checked" && exists $XSGN{CHECKED};
+						$env{$_} = $XSGN{SELECTED} if $1 eq "selected" && exists $XSGN{SELECTED};
+					}
+					# premennu replace vyuzival len v tomto cykle
+					my $replace = $_; $replace =~ s|^_a130_form_||;
+					$XSGN{TMP} =~ s|<%$replace%>|$env{$_}|g;
+				}
+			}
+
+			# INCORRECT_DATA - nahradi sa len raz
+			# ak nebudem mat XSGN k tomu, alebo nebude priestor v TMP
+			# vypisem hlasku s dovodmi
+			unless (exists $XSGN{INCORRECT_DATA} && $XSGN{TMP} =~ s|<#INCORRECT_DATA#>|$XSGN{INCORRECT_DATA}|)
+			{
+				main::_log("- chýba XSGN{INCORRECT_DATA}") unless exists $XSGN{INCORRECT_DATA};
+				main::_log("- chýba priestor <#INCORRECT_DATA#> v TMP") unless $XSGN{TMP} =~ /<#INCORRECT_DATA#>/;
+			}
+
+			# koncim s navratovou hodnotou nespravneho vyplnenia - 201
+			return 201;
+		}
+
+		# vsetko zbehlo, idem dalej
+		main::_log("Spravne vyplneny formular");
+		# teraz zistujem, ci pouzit check alebo send design (podla action)
+
+		# Check
+		# TMP_check dam namiesto TMP
+		# neposielam emaily, len nahradim premenne a koncim
+		if ($env{action} eq "check")
+		{
+			main::_log("Check design");
+			# nahradim premenne v check designe
+			foreach (keys %env)
+			{
+				# obycajne formularove premenne
+				if ($_=~/^_a130_form_/)
+				{
+					# a nastavim vsetkym selected a checked premennym xsgn{CHECKED} a xsgn{SELECTED}
+					if ($_=~/^_a130_form_.*_(checked|selected)$/)
+					{
+						$env{$_} = $XSGN{CHECKED} if $1 eq "checked" && exists $XSGN{CHECKED};
+						$env{$_} = $XSGN{SELECTED} if $1 eq "selected" && exists $XSGN{SELECTED};
+					}
+				
+					# premennu replace vyuzival len v tomto cykle
+					my $replace = $_; $replace =~ s|^_a130_form_||;
+					$XSGN{TMP_check} =~ s|<%$replace%>|$env{$_}|g;
+				}
+			}
+
+			$XSGN{TMP} = $XSGN{TMP_check};
+
+			# koncim
+			return 1;
+		}
+
+		# Send
+		# prejdem vsetky emailove xsgn s dodrzanim podmienok a povoleni
+		# a zakazdym vykonam tieto akcie:
+		# - nahradenie premennych v xsgn emailu
+		# - spracovanie priloh
+		# - zaslanie na globalny emaily
+		# - zaslanie na nas emaily
+		# - popripade na uzivatelov
+		if ($env{action} eq "send")
+		{
+			main::_log("Send design");
+
+			my $db_emails_history; # toto je sumar emailov, pre tabulku a130_send_history
+
+			# vygenerovanie hashu
+			my $email_hash = Utils::vars::genhash(32); # sem si davam hash, pre identifikaciu emailu
+
+			# prechadzam emailove xsgn
+			foreach my $email (grep { $_ =~ /^EMAIL/ } (keys %XSGN))
+			{
+				my $email_postfix;
+				if ( $email =~ /(_.*)/ ) { $email_postfix = $1; }
+
+				# zistim, ci tento email vobec pouzijem
+				main::_log("Checkujem $email");
+				# zalogujem si pripadne chyby
+				main::_log("- chýba allow_EMAIL$email_postfix") unless $env{"allow_EMAIL$email_postfix"};
+				main::_log("- chýba send$email_postfix") unless $env{"send$email_postfix"};
+				next if !$env{"allow_EMAIL$email_postfix"} || !$env{"send$email_postfix"};
+
+				# vsetko fajn - spracovanie
+				main::_log("Spracovavam $email");
+
+				# TMP NASTAVENIA
+				# email
+				$env{tmp_email} = $env{"email".$email_postfix};
+#=head1
+				# spracovanie emailovych adries
+				$env{tmp_email} =~ s|,|;|g;
+				$env{tmp_db_email} = $env{tmp_email};
+				
+				my @tmp_emails = split ";", $env{tmp_email};
+				if ( @tmp_emails >= 1 )
+				{
+					$env{tmp_email} = "";
+					foreach my $tmp_email ( @tmp_emails )
+					{
+						$env{tmp_email} .= "," if $env{tmp_email};
+						$env{tmp_email} .= "<$tmp_email>";
+					}
+				}
+#=cut
+
+				$env{to_service} = "";
+				
+				if ($email_postfix eq "_global")
+				{
+					$env{to_service} = "a130-forms";
+					$XSGN{$email} = "VERIFICATION-HASH: $email_hash\nX-DOMAIN: $tom::Hm\nX-DOMAIN-SUB: $tom::H\nX-SERVICE: $env{from_service}\n".$XSGN{$email};
+				}
+				
+				# zamienam message v maili
+				foreach (keys %XSGN)
+				{
+					next unless $_=~/^MSG_SENTTO/;
+					$_ =~ /^MSG_SENTTO(_.*)/; my $SENTpostfix = $1;
+					if ($env{"send$SENTpostfix"})
+					{
+						main::_log("Mesage: MSG_SENTTO".$SENTpostfix);
+						$XSGN{$email} =~ s/<#MSG_SENTTO$SENTpostfix#>/$XSGN{"MSG_SENTTO".$SENTpostfix}/g;
+					}
+					$XSGN{$email} =~ s/<#MSG_SENTTO$SENTpostfix#>//g;
+				}
+		
+				# zamienam <%to%>
+				$XSGN{$email} =~ s|<%to%>|$env{tmp_email}|g;
+				
+				# DATE
+				my $date = TOM::Utils::datetime::mail_current(); chomp($date);
+				$XSGN{$email}=~s|<%date%>|$date|g;
+				
+				#$XSGN{$email}=~s|<%date%>|$Utils::datetime::DAYS{en}[$tom::Twday], $tom::Tmday $Utils::datetime::MONTHS{en}[$tom::Tmom-1] $tom::Fyear $tom::Fhour:$tom::Fmin:$tom::Fsec +-200|g;
+
+=head1
+				$env{body}=~s|<%DATE%>|$Utils:atetime:AYS{en}[$tom::GTwday], $tom::GTmday $Utils:atetime::MONTHS{en}[$tom::GTmom-1] $tom::GFyear $tom::GFhour:$tom::GFmin:$tom::GFsec GMT|g;
+=cut
+		
+				# FROM
+				$XSGN{$email}=~s|<%from%>|$env{from_email}|g;
+
+				# nahradzam premenne
+				foreach (keys %env)
+				{
+					# formularove
+					if ($_=~/^_a130_form_/)
+					{
+						# znovu replace len v tomto cykle
+						my $replace = $_; $replace =~ s|^_a130_form_||;
+						$XSGN{$email} =~ s|<%$replace%>|$env{$_}|g;
+					}
+				}
+
+				# checkovanie priloh
+				main::_log("Checkujem prilohy");
+				main::_log("- nemam povolenie [allow_attachment$email_postfix]") unless $env{"allow_EMAIL$email_postfix"};
+				main::_log("- nie su ziadne prilohy") unless $env{"_a130_attachmentcount"};
+				
+				if ($env{"allow_attachment$email_postfix"} && $env{"_a130_attachmentcount"})
+				{
+					# spracovanie priloh
+					main::_log("Spracovavam prilohy");
+
+					my $boundary = "==webcom_attachment==";
+					my $begin = "This is a multi-part message in MIME format.\n\n";
+
+					$begin .= "--" . $boundary . "\n";
+					$begin .= "Content-Type: text/plain; charset=\"$env{encoding_output}\"\n";
+					$begin .= "Content-Transfer-Encoding: quoted-printable\n\n";
+
+					$XSGN{$email} =~ s|<%ct%>|multipart/mixed; boundary=\"$boundary\"|;
+					$XSGN{$email} =~ s|<%attch_begin%>|$begin|;
+					
+					# prechadzam vsetky
+					foreach (grep {$_=~/^_a130_attach_.*_filename$/} keys %env)
+					{
+						$_ =~ s|_filename$||;
+						my $name_in_form = $_; $name_in_form=~s|_a130_attach_||;
+						my $attach_name = $env{$_."_filename"};
+						my $attach_ct = $env{$_."_ct"};
+						my $attach_content = $env{$_."_content"};
+
+						main::_log("Priloha: pole $name_in_form, meno suboru $attach_name");
+
+						my $attch = encode_base64($attach_content);
+						my $part =  "--" . $boundary . "\n";
+		
+						$part .= "Content-Type: " . $attach_ct . "\n";
+						$part .= "Content-Transfer-Encoding: base64\n";
+						$part .= "Content-Disposition: attachment; filename=\"$attach_name\"\n\n";
+						$part .= $attch . "\n\n";
+						$XSGN{$email} =~ s|<%attch_end%>|$part<%attch_end%>|;
+					}
+		
+					my $end .= "--" . $boundary . "--";
+					$XSGN{$email} =~ s|<%attch_end%>|\n$end|;
+				}
+				
+				else # ak nie je priloha
+				{
+					$XSGN{$email} =~ s|<%ct%>|text/plain;charset=\"$env{encoding_output}\"|;
+					$XSGN{$email} =~ s|<%attch_begin%>||;
+					$XSGN{$email} =~ s|<%attch_end%>||;
+				}
+
+				# vycistenie <%...%> a <#...#> v XSGN
+				$XSGN{$email} =~ s|<%.*?%>||g; $XSGN{$email} =~ s|<#.*?#>||g;
+				# vyescapovanie apostrofov
+				$XSGN{$email} =~ s/\'/\\'/g;
+				
+				# zasielanie emailov
+				main::_log("Zapis do Send tabulky");
+
+				# emaily pre a130_send_history
+				$db_emails_history .= ';' if $db_emails_history;
+				$db_emails_history .= $env{tmp_db_email};
+
+				# poslanie emailu
+				my $sql="
+				INSERT INTO TOM.a130_send
+				SET
+					ID_md5='$md5_output',
+					sendtime='$tom::time_current',
+					priority='$env{priority}',
+					from_name='$tom::H',
+					from_email='$env{db_from_email}',
+					from_host='$tom::H',
+					from_service='$env{from_service}',
+					to_name='$env{to_service}',
+					to_email='$env{tmp_db_email}',
+					body='$XSGN{$email}'
+				";
+				main::_log($sql);
+				# zapis do send tabulky
+				my $result = $main::DBH->Query($sql);
+
+			}
+
+			# zapis do archivacnej tabulky
+			main::_log("Zapis do archivačnej tabulky");
+
+			my $sql_arch = "
+			INSERT INTO TOM.a130_send_history
+			SET
+				hash='$email_hash',
+				domain='$tom::Hm',
+				domain_sub='$tom::H',
+				IP='$ENV{REMOTE_ADDR}',
+				from_email='$env{from_email}',
+				from_service='$env{from_service}',
+				to_email='$db_emails_history',
+				to_service='$env{to_service}',
+				time_create='$tom::time_current',
+				cvml_message='$cvml_output'
+			";
+
+			main::_log( $sql_arch );
+			my $result_arch = $main::DBH->Query( $sql_arch );
+
+			# nahradim za poslany design
+			$XSGN{TMP} = $XSGN{SENT};
+
+			# nahradim premenne z typecka v designe
+			foreach (keys %env)
+			{
+				# form premenne
+				if ($_=~/^_a130_form_/)
+				{
+					# a nastavim vsetkym selected a checked premennym xsgn{CHECKED} a xsgn{SELECTED}
+					if ($_=~/^_a130_form_.*_(checked|selected)$/)
+					{
+						$env{$_} = $XSGN{CHECKED} if $1 eq "checked" && exists $XSGN{CHECKED};
+						$env{$_} = $XSGN{SELECTED} if $1 eq "selected" && exists $XSGN{SELECTED};
+					}
+					# premennu replace vyuzival len v tomto cykle
+					my $replace = $_; $replace =~ s|^_a130_form_||;
+					$XSGN{TMP} =~ s|<%$replace%>|$env{$_}|g;
+				}
+			}
+		}
+	}
+	
+	return 1}
+
+1;
+

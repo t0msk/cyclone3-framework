@@ -1,0 +1,32 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+ <DEFINITION id="notlogged">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-notlogged%><br><br>
+</div>
+
+ </DEFINITION>
+ <DEFINITION id="added">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-added%><br><br>
+</div>
+
+ </DEFINITION>
+ <DEFINITION id="full">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-full%><br><br>
+</div>
+
+ </DEFINITION>
+ <DEFINITION id="nowadded">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-nowadded%><br><br>
+ <%XLNG-favorities%>: <%COUNT%> (<%CAPACITY%>kb)<BR>
+</div>
+
+ </DEFINITION>
+</XML_DESIGN_DEFINITION>

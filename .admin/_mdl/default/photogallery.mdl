@@ -1,0 +1,154 @@
+sub BaseModul{
+require "_table.m";
+require "_info.m";
+
+my $page_limit=20;
+my $page_from=$page_limit*$form{page};
+$form{page}="0" unless $form{page};
+
+my $info=&info_create(
+'icon'	=>	True,
+'new'	=>	True,
+'title'	=>	"Image index $form{where}",
+'next'	=>	$form{page},
+'prev'	=>	$form{page}
+);
+
+
+
+my $table=HP_TABLE->new(
+'title'			=>	"Source",
+'cellspacing'	=>	1,
+'cellpadding'	=>	1,
+'color_active'	=>	"#F0F0C0",
+'link_core'		=>	"core.pl?type=$form{type}&",
+'define'		=>	
+{
+'1'	=>
+	{
+	'id'		=>	"preview",
+	'select'	=>	"orderby=ID DESC",
+	'class'		=>	"td_act",
+	'code'		=>	"&nbsp;<a href=\"core.pl?type=photogallery_edit&id=<!--ID-->\" target=\"frm_micro\"><img src=\"$h_img/<!--NULLID-->-t.jpg\" width=40 height=40 border=1></a>&nbsp;",
+	},
+'2'	=>
+	{
+	'id'		=>	"formats",
+	'code'		=>	"&nbsp;<img src=\"$tom::H_media/grf/admin/list_<%1%>.gif\" width=11 height=12 border=0 align=absmiddle> -<%1-1%><BR>&nbsp;<img src=\"$tom::H_media/grf/admin/list_<%2%>.gif\" width=11 height=12 border=0 align=absmiddle> -<%2-1%><BR>&nbsp;<img src=\"$tom::H_media/grf/admin/list_<%3%>.gif\" width=11 height=12 border=0 align=absmiddle> -<%3-1%><BR>",
+	'td_plus'	=>	"nowrap style=\"FONT:bold 10px Verdana;\"",
+	},
+'3'	=>
+	{
+	'id'		=>	"info",
+	'code'		=>	"&nbsp;ID: <B><!--ID--></B><BR>&nbsp;cathegory: <B><%2%></B><BR>&nbsp;source: <B><%3%></B><BR>&nbsp;description: <B><%1%></B><BR>",
+	'td_plus'	=>	"nowrap style=\"FONT:10px Verdana;\"",
+	},
+'99'	=>
+	{
+	'id'		=>	"X",
+	'code'		=>	"<%1%><BR>",
+	'td_plus'	=>	"align=middle"
+	}
+}
+);
+
+my $orderby="ORDER BY starttime DESC";
+if ($form{'orderby'}){$orderby="ORDER BY $form{'orderby'}";}
+my $where;
+if ($form{'whereby'}){$where="WHERE $form{whereby}='$form{where}'";}
+if ($form{'wherelike'}){$where="WHERE $form{wherelike} LIKE '$form{where}%'";}
+my $select="SELECT ID,IDcathegory,cathegory,visits,visit_index,format_t,format_s,format_o,starttime,about,about2 FROM photogallery $where $orderby LIMIT $page_from,$page_limit";
+my $db_micro = $dbh->Query($select);
+while (my @db_micro_line=$db_micro->FetchRow())
+{ 
+ my $cl_class="tr1";
+ my $cl_color="#8FADF9";
+ my $nullid=$db_micro_line[0];
+ if ($nullid<10){$nullid="0$nullid"};
+ if ($nullid<100){$nullid="0$nullid"};
+ if ($nullid<1000){$nullid="0$nullid"};
+ if ($nullid<10000){$nullid="0$nullid"};
+ if ($nullid<100000){$nullid="0$nullid"};
+ if ($nullid<1000000){$nullid="0$nullid"};   
+ 
+ my $cl_t="r";$cl_t="g" if (-e "../media/img/".$nullid."-t.jpg");
+ my $cl_s="r";$cl_s="g" if (-e "../media/img/".$nullid."-s.jpg");
+ my $cl_o="r";$cl_o="g" if (-e "../media/img/".$nullid."-o.jpg");
+ 
+ my $cl_t_size=int((-s "../media/img/".$nullid."-t.jpg")/1024);
+ my $cl_s_size=int((-s "../media/img/".$nullid."-s.jpg")/1024);
+ my $cl_o_size=int((-s "../media/img/".$nullid."-o.jpg")/1024);
+ 
+
+
+# my $cat_w=$db_micro_line[1]." ";
+# my $cat_s;
+# while (($cat_w)&&($cat_w=~s|.?$||))
+# {$cat_s.=" OR ID='$cat_w'";}
+# $cat_s=~s|^ OR ||g;$cat_s=~s| OR ID=''$||g;
+# my @cat_select;
+# my $cat_limit=length($db_micro_line[1]);
+# my $db_micro1 = $dbh->Query("
+# 	SELECT ID,tinyname
+#	FROM photogallery_cathegory
+#	WHERE $cat_s LIMIT $cat_limit");
+# while (my @db_micro1_line=$db_micro1->FetchRow())
+# {
+#  my $pos=length($db_micro1_line[0]);
+#  $cat_select[$pos-1]=$db_micro1_line[1];
+# }
+# $cat_w=join "/",@cat_select;
+
+ my $cat_w;
+ my $db_micro1 = $dbh->Query("
+ 	SELECT ID,fullname
+	FROM photogallery_cathegory
+	WHERE ID='$db_micro_line[1]' LIMIT 1");
+ if (my @db_micro1_line=$db_micro1->FetchRow())
+ {
+  $cat_w=$db_micro1_line[1];
+ }
+
+ 
+	
+$table->add(
+'class'		=>	$cl_class,
+'color'		=>	$cl_color,
+'define'	=>{
+
+'formats'	=>
+{
+	'1'		=>	$cl_t,
+	'1-1'	=>	$cl_t_size."Kb - 80x80",
+	'2'		=>	$cl_s,
+	'2-1'	=>	$cl_s_size."Kb - ".$db_micro_line[6],
+	'3'		=>	$cl_o,
+	'3-1'	=>	$cl_o_size."Kb - ".$db_micro_line[7],
+},
+
+'X'	=>
+{'1'=>"<a href=\"core.pl?type=photogallery_del&id=<!--ID-->\" target=\"frm_micro\"><img src=$tom::H_media/grf/admin/close1.gif border=0></a>"},
+
+'info'	=>
+{'1'=>$db_micro_line[9],'2'=>$cat_w,'3'=>$db_micro_line[10]},
+
+},'replace'=>{'NULLID'=>$nullid,'ID'=>$db_micro_line[0]});
+
+}
+
+
+return $info.$table->HTML;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

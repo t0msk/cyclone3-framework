@@ -1,0 +1,85 @@
+#!/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use Int::lng;
+#use Tomahawk::addon::DBH;
+#use Tomahawk::Apps;
+#getApps;
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+
+ return undef unless $env{ID};
+ 
+ #$env{URL}="?|?" unless $env{URL};
+
+ $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+ $env{db_400}=$TOM::DB_name unless $env{db_400};
+
+=head1
+	(SELECT lng
+	FROM $env{db_400}.a400
+	WHERE
+		ID='$env{ID}'
+		AND starttime<$tom::time_current
+		AND (endtime>$tom::time_current OR endtime=0)
+		AND active='Y')
+	UNION ALL
+=cut
+ 
+ my $var="
+	(
+	SELECT lng
+	FROM $env{db_400}.a400
+	WHERE
+		ID='$env{ID}'
+		AND starttime<$tom::time_current
+		AND (endtime>$tom::time_current OR endtime=0)
+		AND active='Y')
+	UNION ALL
+	(
+	SELECT lng
+	FROM $env{db_400}.a400_arch
+	WHERE
+		ID='$env{ID}'
+		AND starttime<$tom::time_current
+		AND (endtime>$tom::time_current OR endtime=0)
+		AND active='Y')
+		";
+
+ main::_log("$var");
+	
+ my $db0=$main::DBH->Query($var);
+ main::_log($main::DBH->errstr());
+   
+ my %lngs;
+ while (my %db0_line=$db0->FetchHash())
+ {
+   main::_log("mam language $db0_line{lng}");
+   $lngs{$db0_line{lng}}++;
+ }
+ 
+ my $lng;foreach (keys %lngs){$lng++}
+ if ($lng<2){$XSGN{TMP}=$XSGN{EMPTY};return 1};
+ 
+ 
+ foreach (keys %lngs)
+ {
+  $XSGN{NULL}=$XSGN{LNG};
+  $XSGN{NULL}=~s|<%LNG%>|$_|g;
+  $XSGN{NULL}=~s|<%LNG-NAME%>|$Int::lng::table{$_}|g;
+  $XSGN{TMP}=~s|<#LNG#>|$XSGN{NULL}<#LNG#>|g;
+ }
+
+
+
+ return 1}
+
+1;

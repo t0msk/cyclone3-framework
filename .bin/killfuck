@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+
+foreach (split('\n',`ps aux | grep "core.tom"`))
+{
+	next if $_=~/grep/;
+	#print "$_\n";
+	my $line=$_;
+	$line=~/^.*?(\d+)/;
+	print "$1 - $_\n";
+	system("kill -9 $1");
+}

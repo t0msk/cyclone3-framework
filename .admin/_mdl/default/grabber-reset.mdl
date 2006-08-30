@@ -1,0 +1,68 @@
+sub BaseModul
+{
+# $HTML_HEADER{BODY}{extract}="yes";
+ #my $mdl_temp="$form{table}:$form{id}";
+
+ if ($form{set}eq"yes")
+ {
+  require "grabber_fnc.m";
+
+  my $resetFromTime = time;
+
+   if (&ScheduleGrabs($resetFromTime))
+   {
+    $mdl_temp=<<"HEADER";
+    <table width=100% cellspacing=0 cellpadding=0 border=0><tr><td width=100% style="FONT:10px Verdana;COLOR:white;">
+    <br>&nbsp;Nastavenie grabberu prebehlo v poriadku.<BR><br><br><br><br>
+    </td></tr></table>
+HEADER
+   }
+   else
+   {
+    $mdl_temp=<<"HEADER";
+    <table width=100% cellspacing=0 cellpadding=0 border=0><tr><td width=100% style="FONT:10px Verdana;COLOR:white;">
+      <br>&nbsp;Pri nastavovani grabberu sa vyskytla chyba!!!<BR><br><br><br><br>
+    </td></tr></table>
+HEADER
+   }
+
+  $HTML_HEADER{BODY}{extract}="yes";
+
+  my $box=&article_box_create("Výsledok resetu",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	200,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp,);
+
+  return $box;
+ }
+ else
+ {
+  $HTML_HEADER{BODY}{extract}="yes";
+
+   my $mdl_temp=<<"HEADER";
+<table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit drag_here style="COLOR:#ffacac;" value="RESETOVAŤ GRABBER!!!" class=btn0 onclick="load_box('core.pl?type=$form{type}&set=yes');box_erase();"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table>
+HEADER
+
+   my $box=&box_create2("Potvrdenie resetu",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	150,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp);
+
+   return $box;
+
+  #$temp="SELECT priority FROM markiza_sk.a400 WHERE ID='$id' LIMIT 1";
+ #return $temp;
+ #while (length($temp)<17)
+ #{
+ # $temp.="0";
+ #}
+ }
+}
+
+
+1;
+

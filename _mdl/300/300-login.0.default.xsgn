@@ -1,0 +1,36 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+ <DEFINITION id="logged">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-logged%><br><br>
+ <a href="<%LINK%>" style="FONT:11px Verdana;COLOR:blue;"><u>"<%LINK%>"</u></a>
+</div>
+
+ </DEFINITION>
+ <DEFINITION id="err_missed">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-err%><br><br>
+ <%XLNG-missed%><br><br>
+</div>
+
+ </DEFINITION>
+ <DEFINITION id="err_badpassoruser">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-err%><br><brs>
+ <%XLNG-badpassoruser%><br><br>
+ <%PLUS%>
+</div>
+
+ </DEFINITION>
+ <DEFINITION id="err_logged">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-err%><br><brs>
+ <%XLNG-errlogged%><br><br>
+</div>
+
+ </DEFINITION>
+</XML_DESIGN_DEFINITION>

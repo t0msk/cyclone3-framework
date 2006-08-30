@@ -1,0 +1,213 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 NAME
+fview
+
+=head1 HEAD_VERSION_BUILD
+1.030702
+
+=head1 DESCRIPTION
+fview original photo
+zobrazenie originalu obrazku so vsetkymi
+informaciami
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+
+        <value id="preview" value="1" />
+        <value id="output" value="xsgn" />
+
+	<input id="ID" value="varchar(7)">cislo obrazku</input>
+	<input id="-xsgn" value="varchar(20)">potrebujem design</input>
+	<input id="hash" value="boolean">hashovany original obrazku?</input>
+        <input id="width_max" value="int(1600)"></input>
+	<input id="height_max" value="int(1200)"></input>
+	<input id="500_db" value="varchar(50)">databaza kde su obrazky</input>
+
+        <source type="db.table" value="X.photogallery" />
+
+</DESCRIPTION>
+
+
+=head1 CHANGES
+build 030702 - Aben
+        *) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+        *) nothings
+=cut
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+
+ # KDE SU OBRAZKY?
+ $env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+ $env{db_500}=$TOM::DB_name unless $env{db_500};
+
+ $env{from}="" unless $env{from};
+ $env{from_level}=0 unless $env{from_level};
+ $env{depth}=0 unless $env{depth};
+ $env{subs_cut_at}=0 unless $env{subs_cut_at};
+ $env{root_ignore_cut}=1 unless $env{root_ignore_cut};
+
+
+ my $db_like="(";
+ if ($env{depth}>0)
+ {
+  my $leveller="__";
+  while ($env{depth}>0)
+  {
+   $db_like.="(ID LIKE '$env{from}$leveller') || ";
+   $env{depth}--;
+   $leveller.="__"
+  }
+  $db_like=~s|(....)$|)|;
+ }else{$db_like="ID LIKE '$env{from}%'";}
+
+ my @struct;
+ my %struct_base;
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_500}.a500_category
+	WHERE $db_like AND (lng='$env{lng}' OR lng='') AND active='Y'
+	ORDER BY ID");
+ my $dcheck;
+ while (my %env0=$db0->fetchhash)
+ {
+  my $dcheck=1;
+  my $var=$env0{ID};
+  $var=~s|^$env{from}||;
+  push @struct,$var;
+  push @struct,length($var)/2;
+  $struct_base{$var}{ID}=$env0{ID};
+  $struct_base{$var}{name}=$env0{name};
+ }
+
+ if ($dcheck==1){$XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE_NONE}|;return 1;}
+
+# for (my $i;$i<@struct;$i=$i+2)
+# {
+#  $XSGN{TMP}.="$struct[$i] $struct[$i+1] $struct_base{$struct[$i]}{name}<BR>";
+# }
+
+ my $urn;
+ my $last_lev;
+ my $prev_cat;
+ my @level_cut;
+ my @level_counter;
+ my @last_level_cat;
+
+ for (my $i=0;$i<@struct;$i=$i+2)
+ {
+  my $curr_lev=$struct[$i+1];
+  my $blabla;
+
+  if ($env{subs_cut_at} > 0)
+  {
+	my $temproot=0;
+	$temproot=1 if ($env{root_ignore_cut} eq "1");
+
+	my $templevel;
+
+	$templevel=$last_lev;
+	while($templevel > $curr_lev)
+	{
+		$level_counter[$templevel]="0";
+		$level_cut[$templevel]="0";
+		$templevel--;
+	}
+
+	$level_counter[$curr_lev]++;
+	$last_level_cat[$curr_lev]=$struct_base{$struct[$i]}{ID};
+
+	$templevel=$curr_lev;
+	my $cutted;
+	while($templevel > 0)
+	{
+		if ($level_cut[$templevel] eq "1") {$cutted="1"; last;}
+		$templevel--;
+	}
+	if ($cutted){$last_lev=$curr_lev; next;}
+
+	if (($level_counter[$curr_lev]>$env{subs_cut_at}+1)&&($curr_lev>$temproot))
+	{
+		$last_lev=$curr_lev;
+		next;
+	}
+	elsif (($level_counter[$curr_lev]==$env{subs_cut_at}+1)&&($curr_lev>$temproot))
+	{
+		$XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE_NEXT}<#LINE#>|;
+		$XSGN{TMP} =~s|<%NAME%>|$struct_base{$struct[$i]}{name}|g;
+		$XSGN{TMP} =~s|<%ID_CAT%>|$last_level_cat[$curr_lev-1]|g;
+		$level_cut[$curr_lev]="1";
+	}
+	else
+	{$XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE}<#LINE#>|;}
+  }
+  else
+  {$XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE}<#LINE#>|;}
+
+  my $width=$curr_lev*16+5;
+  $XSGN{TMP} =~s|<%NAME%>|$struct_base{$struct[$i]}{name}|g;
+  $XSGN{TMP} =~s|<%ID_CAT%>|$struct_base{$struct[$i]}{ID}|g;
+
+  my $i0=$env{from_level};
+  $XSGN{NULL}="";
+  while ($i0<($curr_lev))
+  {
+   $i0++;
+   $XSGN{NULL} .= $XSGN{OD};
+   $XSGN{NULL} =~s|<%TBG%>|<%TBG-$i0%>|g;
+
+   if (($i0+1) == $curr_lev)
+   {
+    $XSGN{NULL}=~s|<%IMG%>|$XSGN{img_cross}|g;
+    $XSGN{TMP} =~s|<%TBG-$i0%>|$XSGN{bg_line}|g;
+   }
+
+   if ($i0 == $curr_lev)
+   {
+    $XSGN{NULL}=~s|<%VALIGN%>|valign=top|g;
+    $XSGN{NULL}=~s|<%IMG%>|$XSGN{icon}|g;
+
+    if ($struct[$i+3]>$struct[$i+1])
+    {
+     $XSGN{NULL} =~s|<%TBG-$i0%>|$XSGN{bg_cross}|g;
+    }
+    else {$XSGN{NULL} =~s|<%TBG-$i0%>||g;}
+    $XSGN{TMP} =~s|<%TBG-$i0%>||g;
+   }
+   else
+   {
+    $XSGN{NULL}=~s|<%IMG%>||g;
+   }
+
+   $XSGN{NULL}=~s|<%VALIGN%>|valign=top|g;
+  }
+  $XSGN{TMP} =~s|<#OD#>|$XSGN{NULL}|g;
+  $XSGN{TMP} =~s|<%BG%>|#96B2C8|g;
+
+  $last_lev=$curr_lev;
+ }
+
+ return 1}
+
+1;
+
+
+
+
+
+
+
+
+
+

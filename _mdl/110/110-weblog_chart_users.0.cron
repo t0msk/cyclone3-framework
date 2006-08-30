@@ -1,0 +1,296 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+
+
+use SVGraph::2D::lines;
+use SVGraph::2D::columns;
+use Utils::datetime;
+
+use strict;
+
+sub execute
+{
+ my %env=@_;
+ 
+ Database::connect::multi('stats') || die "cannot connect all databases";
+ 
+ if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
+ #if ($TOM::DB_name_STAT eq $TOM::DB_name_TOM){$env{t}="C";}
+ $env{domain}=$tom::H unless exists $env{domain};
+ 
+ if ($env{hour}){
+ my $graf=SVGraph::2D::columns->new(
+	title		=>	"Users on $tom::Hm/$env{domain} (hourly)",
+#	type		=>	"normal",	# normal/stacked(spojene)/percentage
+#	type		=>	"stacked",	# normal/stacked(spojene)
+	type		=>	"overlap",	# normal/stacked(spojene)	
+	x		=>	750,
+	y		=>	300,
+
+	show_legend		=>	1, # show legend of Columns
+#	show_points		=>	1,
+#	show_points_middle	=>	1,
+#	show_lines			=>	1,
+#	show_lines_smooth	=>	1,
+#	show_areas		=>	1,
+#	show_areas_opacity	=>	0.2,
+#	show_lines_smooth_range	=>	1,
+	show_data			=>	1,
+	show_data_background=>	1,
+
+	grid_y_scale_minimum		=>	000.00, # zaciname od nuly
+#	grid_y_scale_maximum		=>	15.00, #
+#	grid_y_main_spacing			=>	0.10,
+
+	show_grid_x		=>	1,
+ );
+ my %columns;
+ 
+# $columns{visits}=$graf->addColumn(title=>"visits");
+ $columns{IDsessions}=$graf->addColumn(title=>"sessions");
+ $columns{IDhashs}=$graf->addColumn(title=>"users");
+ #$columns{IPs}=$graf->addColumn(title=>"IP");
+
+
+ for my $hour(0..24)
+ {
+  my $from=$main::time_current-86400+(3600*$hour)-3600;
+  my %date=Utils::datetime::ctodatetime($from,format=>1);
+  my $label="$date{mday}.$date{mom}. $date{hour}:00";
+  #CRON::debug::log(8,"create label $label");
+  $graf->addRowLabel($label);
+#  $columns{load_proc}->addData($label,0);
+#  $columns{load_req}->addData($label,0);
+ }
+
+ my $from=$main::time_current-(86400*1)-3600;
+ my %date=Utils::datetime::ctodatetime($from,format=>1);
+ $from="$date{year}-$date{mom}-$date{mday} $date{hour}";
+ #print "=$from\n";
+  
+ CRON::debug::log(5,"read data to hour chart from $from");
+  
+ my $db0=$main::DB{stats}->Query("
+	SELECT *
+	FROM $TOM::DB_name_STAT.$env{t}a110_weblog_hour
+	WHERE domain='$tom::Hm' AND domain_sub='$env{domain}' AND reqdatetime>'$from'
+	ORDER BY reqdatetime ASC");
+
+=head1
+ $graf->addValueMark(0.3,
+	front			=>0,
+	show_label		=>1,
+#	size			=>1.5,
+	color			=>"red",
+	);
+$graf->addValueMark(0.2,
+	front			=>0,
+	show_label		=>1,
+#	size			=>1.5,
+	color			=>"yellow",
+	);
+$graf->addValueMarkArea(0.3,
+	front			=> 0,
+	color			=> "red",
+	);
+=cut
+
+ while (my %db0_line=$db0->fetchhash)
+ {
+  my @date=($db0_line{reqdatetime}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/);  
+  my $label=$date[2].".".$date[1].". ".$date[3].":".$date[4];
+  
+  CRON::debug::log(6,"add label $label");
+  
+  #print "-$label\n";
+  
+  #$graf->addRowLabel($label);
+  
+#  $columns{visits}->addData($label,$db0_line{visits});
+  $columns{IDhashs}->addData($label,$db0_line{IDhashs});
+  $columns{IDsessions}->addData($label,$db0_line{IDsessions});
+  #$columns{IPs}->addData($label,$db0_line{IPs});
+
+
+#=head1
+  if ($db0_line{reqdatetime}=~/00:00:00$/)
+  {
+   $graf->addRowMark($label,
+#	front			=>1,
+	show_label		=>1,
+#	size			=>1.5,
+	);
+  }  
+ }
+
+
+ 
+ eval
+ {
+  alarm(15);
+  $env{hour_file}="users_hour.svg" unless $env{hour_file};
+  open HND,">$cron::P/_data/".$env{hour_file} or die "$!";
+  my $out=$graf->prepare();
+  $out=~s|[\s]+</text>|</text>|g;
+  print HND $out; 
+  alarm(0);
+ };
+ if ($@)
+ {
+  die "error! $@\n";
+ }
+ }
+ 
+# return 1;
+ if ($env{day}){
+ my $graf=SVGraph::2D::lines->new(
+	title		=>	"Users on $tom::Hm/$env{domain} (daily)",
+#	type		=>	"normal",	# normal/stacked(spojene)/percentage
+#	type		=>	"stacked",	# normal/stacked(spojene)
+#	type		=>	"percentage",	# normal/stacked(spojene)	
+	x		=>	750,
+	y		=>	300,
+
+	show_legend		=>	1, # show legend of Columns
+	show_points		=>	1,
+#	show_points_middle	=>	1,
+#	show_lines			=>	1,
+	show_lines_smooth	=>	1,
+	show_areas		=>	1,
+	show_areas_opacity	=>	0.2,
+#	show_lines_smooth_range	=>	1,
+	show_data			=>	1,
+	show_data_background=>	1,
+
+	grid_y_scale_minimum		=>	000.00, # zaciname od nuly
+#	grid_y_scale_maximum		=>	15.00, #
+#	grid_y_main_spacing			=>	0.10,
+
+	show_grid_x		=>	1,
+ );
+ my %columns;
+
+# $columns{visits}=$graf->addColumn(title=>"visits");
+ $columns{IDsessions}=$graf->addColumn(title=>"sessions");
+ $columns{IDhashs}=$graf->addColumn(title=>"users");
+ #$columns{IPs}=$graf->addColumn(title=>"IP");
+  
+ for my $hour(0..31)
+ {
+  my $from=$main::time_current-(86400*32)+(86400*$hour);
+  my %date=Utils::datetime::ctodatetime($from,format=>1);
+  my $label="$date{mday}.$date{mom}.$date{year}";
+  #CRON::debug::log(8,"create label $label");
+  $graf->addRowLabel($label);
+#  $columns{load_proc}->addData($label,0);
+#  $columns{load_req}->addData($label,0);
+ }
+
+ my $from=$main::time_current-(86400*32);
+ my %date=Utils::datetime::ctodatetime($from,format=>1);
+ $from="$date{year}-$date{mom}-$date{mday}";
+ 
+ 
+ 
+# my $from=1*31;
+ my $db0=$main::DB{stats}->Query("
+	SELECT *
+	FROM $TOM::DB_name_STAT.$env{t}a110_weblog_day
+	WHERE domain='$tom::Hm' AND domain_sub='$env{domain}' AND reqdatetime>'$from'
+	ORDER BY reqdatetime DESC");
+
+=head1
+ $graf->addValueMark(0.3,
+	front			=>0,
+	show_label		=>1,
+#	size			=>1.5,
+	color			=>"red",
+	);
+$graf->addValueMark(0.2,
+	front			=>0,
+	show_label		=>1,
+#	size			=>1.5,
+	color			=>"yellow",
+	);
+
+$graf->addValueMarkArea(0.3,
+	front			=> 0,
+	color			=> "red",
+	);
+=cut
+	
+ while (my %db0_line=$db0->fetchhash)
+ {
+  my @date=($db0_line{reqdatetime}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/);  
+  my $label=$date[2].".".$date[1].".".$date[0];  
+  #print "-$label\n";
+  
+#  $graf->addRowLabelBegin($label);
+  
+#  $columns{visits}->addData($label,$db0_line{visits});
+  $columns{IDhashs}->addData($label,$db0_line{IDhashs});
+  $columns{IDsessions}->addData($label,$db0_line{IDsessions});
+  #$columns{IPs}->addData($label,$db0_line{IPs});
+
+#=head1
+  if ($db0_line{reqdatetime}=~/01 00:00:00$/)
+  {
+   $graf->addRowMark($label,
+#	front			=>1,
+	show_label		=>1,
+#	size			=>1.5,
+	);
+  }
+#=cut
+  
+ }
+
+
+ 
+ eval
+ {
+  alarm(15);
+  $env{day_file}="users_day.svg" unless $env{day_file};
+  open HND,">$cron::P/_data/".$env{day_file} or die "$!";
+  my $out=$graf->prepare();
+  $out=~s|[\s]+</text>|</text>|g;
+  print HND $out; 
+  alarm(0);
+ };
+ if ($@)
+ {
+  die "error! $@\n";
+ }
+ }
+ 
+ 
+ 
+ return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

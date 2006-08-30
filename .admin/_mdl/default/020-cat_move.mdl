@@ -1,0 +1,131 @@
+sub BaseModul
+{
+ require "grabber_fnc.m";
+
+ my $id=$form{ID} if ($form{ID});
+ if ($form{set})
+ {
+
+  $HTML_HEADER{BODY}{extract}="yes";
+
+  my $mdl_temp=<<"HEADER";
+  <table width=100% cellspacing=0 cellpadding=0 border=0><tr><td width=100% style="FONT:10px Verdana;COLOR:white;" nowrap>
+HEADER
+
+  my $cat_name;
+  $db_micro1 = $dbh->Query("SELECT ID,name FROM markiza_sk.a020_cat WHERE ID='$id'");
+  if (@db_micro1_line=$db_micro1->FetchRow()) { $mdl_temp.="Relacia<br>
+  &nbsp;<strong>$id - $db_micro1_line[1]</strong><BR>"; }
+
+
+
+  $cat_name;
+  my $newid;
+  $db_micro1 = $dbh->Query("SELECT ID,name FROM markiza_sk.a020_cat WHERE name='$form{new_cat}'");
+  if (@db_micro1_line=$db_micro1->FetchRow()) { $newid=$db_micro1_line[0]; $mdl_temp.="bola prekonvertovana na<br>
+  &nbsp;<strong>$db_micro1_line[0] - $db_micro1_line[1]</strong><BR>"; }
+
+  $db_micro1= $dbh->Query("SELECT ID FROM markiza_sk.a021_program WHERE ID_cat='$id'");
+  while (@db_micro1_line=$db_micro1->FetchRow())
+  {
+    $db_micro2 = $dbh->Query("UPDATE markiza_sk.a021_program SET ID_cat='$newid' WHERE ID='$db_micro1_line[0]' LIMIT 1");
+  }
+
+  $db_micro1 = $dbh->Query("DELETE FROM markiza_sk.a020_cat WHERE ID='$id' LIMIT 1");
+
+  $mdl_temp.="</td></tr><tr><td style=\"FONT:10px Verdana;COLOR:white;\"><br>stare id relacie bolo zmazane z databazy,vsetky polozky programu previazane s predoslym id boli prevedene na nove id relacie, resetnite grabber.</td></tr></table><script>parent.document.frames['frm_base'].location.reload();</script>";
+
+  $box=&box_create2("Konverzia id relacie",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	200,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp);
+
+
+  return $box;
+
+ # return "<script>parent.document.frames['frm_base'].location.reload();</script>";
+ }
+ else #tu je ten predel!!!------------------------------------------------------------------------------------------------------
+ {
+  $HTML_HEADER{BODY}{extract}="yes";
+
+  my $cat_name;
+  $db_micro1 = $dbh->Query("SELECT name FROM markiza_sk.a020_cat WHERE ID='$id'");
+  if (@db_micro1_line=$db_micro1->FetchRow()) { $cat_name=$db_micro1_line[0]; }
+
+########for testing purposes .. targeting into the same frame
+  my $mdl_temp=<<"HEADER";
+  <table width=100% cellspacing=0 cellpadding=0 border=0><tr><td>
+  <form name="indexesEdit_$id" action="core.pl?type=020-cat_move&ID=$id&set=yes" method="POST" enctype="multipart/x-form-data" target="frm_micro">
+  </td><td width=100% style="FONT:10px Verdana;COLOR:white;">
+  &nbsp;Relácia:<span style="FONT:10px Verdana; font-weight: bold; width:245px;">&nbsp;&nbsp;&nbsp;$cat_name</span><BR>
+  <br>
+  &nbsp;Konvertovat na:<br>
+HEADER
+
+
+  my $mdl_micro;
+  $db_micro1 = $dbh->Query("SELECT ID,name FROM markiza_sk.a020_cat ORDER BY name");
+  while (@db_micro1_line=$db_micro1->FetchRow())
+  {
+   #$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$db_micro1_line[0]';\">&nbsp;$db_micro1_line[0]</div>\n";
+   $db_micro1_line[1]=~s|"||g;
+   $db_micro1_line[1]=~s|'||g;
+   $mdl_micro.=&select_add('value'=>$db_micro1_line[1],'html'=>$db_micro1_line[1]." (".$db_micro1_line[0].")");
+  }
+  $mdl_temp.=&select_create(
+ 	'name'		=>	"new_cat",
+	'value'		=>	"vyberte kategoriu",
+	'maxlength'	=>	30,
+	'width'		=>	250,
+	'height'	=>	200,
+	'drag_resizeX'	=>	'-150',
+	'select'	=>	$mdl_micro
+  );
+
+  $mdl_temp.=<<"HEADER";
+  <table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit drag_here value="Uložiť!" class=btn0 onclick="box_erase2();"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table><br>
+HEADER
+
+
+
+=head1
+
+
+
+  <TEXTAREA
+	drag_resizeX='0'
+	drag_resizeY='-300'
+	name="indexes"
+	id="indexes_all"
+	class=input0
+	style="width:445px;height:50px;FONT:12px Verdana;">$indexes</TEXTAREA><BR>
+=cut
+
+
+
+#<!-- <input type=hidden name=image value="$image_f"> /-->
+
+  $mdl_temp.="</td><td></form></td></tr></table>";
+  #$mdl_temp.="<script>lastOpenedArticleId=\"$db_micro_line{ID}\"; alert(lastOpenedArticleId);</script>";
+
+my $box;
+
+  $box=&box_create2("Konverzia id relacie",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	200,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp);
+
+
+  return $box;
+
+  return undef;
+ }
+}
+
+
+1;

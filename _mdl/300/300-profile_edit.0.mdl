@@ -1,0 +1,276 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use App::300;
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+ Tomahawk::XLNGtoXSGN(); # insert XLNG do XSGN
+
+
+ if ($main::USRM{logged} eq "N")
+ {
+  $XSGN{TMP}=$XSGN{notlogged};
+  return 1;
+ }
+
+
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+
+  my $var;
+  my $var0;
+  my $var1;
+  my $db0=$main::DBH->Query("
+	SELECT profile
+	FROM $TOM::DB_name_USRM.a300_users
+	WHERE	IDhash='$main::USRM{IDhash}' LIMIT 1");
+  if (my @db0_line=$db0->fetchrow){$var=$var0=$var1=$db0_line[0];}
+  # rozsekam saved variables
+  my %profile;
+
+  while ($var=~s|<VAR id="(.*?)">(.*?)</VAR>||){$profile{$1}=$2;}
+  # nahradim s premennymi z FORM
+  foreach (keys %main::FORM){$_=~/^P_(.*)/ && do {$profile{$1}=$main::FORM{$_};};}
+
+  my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $TOM::DB_name_USRM.a300_profile_def
+	WHERE	host='$tom::H_cookie'
+		AND active='Y'
+		AND (lng='$env{lng}' OR lng='')
+	ORDER BY variable");
+  while (my %db0_line=$db0->fetchhash)
+  {
+   main::_log("priprava na $db0_line{variable}");
+   next unless $XSGN{TMP}=~/<#P_$db0_line{variable}#>/; # pokial taka neexistuje, tak idem dalej
+   main::_log("spracovavam $db0_line{variable}");
+   my $change;
+   my $changeit;
+
+
+#   App::300::profile_gen(
+#		variable	=>	$db0_line{variable},
+#		profile		=>	\%profile,
+#		type_input	=>	$db0_line{type_input},
+#		type_save	=>	$db0_line{type_save}
+#			);
+
+
+   if ($db0_line{type_input}=~/^datetime\((.*?)\)/)
+   {
+    my $var=$1;
+    my $null;
+    # pokial neboli data poslane uz formularom
+    if (!$profile{$db0_line{variable}.'_year'}){if ($profile{$db0_line{variable}}=~/(\d+)-(\d+)-(\d+)/)
+    {$profile{$db0_line{variable}.'_year'}=$1;
+     $profile{$db0_line{variable}.'_mom'}=$2;
+     $profile{$db0_line{variable}.'_mday'}=$3;}}
+    $XSGN{NULL}="<select name=\"P_$db0_line{variable}_mday\">";
+    $XSGN{NULL}.="<option value=\"\">---</option>\n" unless $profile{$db0_line{variable}.'_mday'};
+    $null=31;for (1..$null){my $var;$var=" selected " if $_ eq $profile{$db0_line{variable}.'_mday'};
+    $XSGN{NULL}.="<option value=\"$_\"$var>".sprintf("%02d",$_)."</option>";}$XSGN{NULL}.="</select>";
+    $XSGN{NULL}.="<select name=\"P_$db0_line{variable}_mom\">";
+    $XSGN{NULL}.="<option value=\"\">---</option>\n" unless $profile{$db0_line{variable}.'_mom'};
+    $null=12;for (1..$null){my $var;$var=" selected " if $_ eq $profile{$db0_line{variable}.'_mom'};
+    $XSGN{NULL}.="<option value=\"$_\"$var>".$Utils::datetime::MONTHS_L{$env{lng}}[$_-1]."</option>";}
+    $XSGN{NULL}.="</select>";
+    $XSGN{NULL}.="<select name=\"P_$db0_line{variable}_year\">";
+    $XSGN{NULL}.="<option value=\"\">---</option>\n" unless $profile{$db0_line{variable}.'_year'};
+    $null=200;if ($var eq "current"){$null=$tom::Fyear-5}
+    for (0..100){my $var;$var=" selected " if ($null-$_) eq $profile{$db0_line{variable}.'_year'};
+    $XSGN{NULL}.="<option value=\"".($null-$_)."\"$var>".($null-$_)."</option>\n";}
+    $XSGN{NULL}.="</select>";
+    $XSGN{TMP}=~s|<#P_$db0_line{variable}#>|$XSGN{NULL}|;
+    if ($main::FORM{'P_'.$db0_line{variable}.'_year'})
+    {
+     $change=$main::FORM{'P_'.$db0_line{variable}.'_year'}."-".
+	$main::FORM{'P_'.$db0_line{variable}.'_mom'}."-".
+	$main::FORM{'P_'.$db0_line{variable}.'_mday'};
+     $changeit=1;
+    }
+   }
+
+   if ($db0_line{type_input}=~/^select\((.*?)\)/)
+   {
+    my $var=$1;
+    my $null;
+    my $ok;
+    if ($var eq "this")
+    {
+     $XSGN{NULL}="<select name=\"P_$db0_line{variable}\">\n";
+
+     if ((!$profile{$db0_line{variable}})||($db0_line{necessary} eq "N"))
+     {$XSGN{NULL}.="<option value=\"\">---</option>\n";}
+     $ok=1 unless $profile{$db0_line{variable}} && $db0_line{necessary} eq "N";
+
+     foreach(split('\n',$db0_line{values}))
+     {
+      my @ref=split(':',$_);
+      $ref[1]=~s|[\n\r]||g;
+      $ref[0]=$ref[1] unless $ref[0];
+      if ($ref[0] eq $profile{$db0_line{variable}}){$ref[2]=" selected ";$ok=1}
+      $XSGN{NULL}.="<option value=\"$ref[0]\"$ref[2]>".$ref[1]."</option>\n";
+     }
+     $XSGN{NULL}.="</select>";
+    }
+    $XSGN{TMP}=~s|<#P_$db0_line{variable}#>|$XSGN{NULL}|;
+    #next;
+
+    $change=$main::FORM{'P_'.$db0_line{variable}} if exists $main::FORM{'P_'.$db0_line{variable}} && $ok;
+    $changeit=1 if exists $main::FORM{'P_'.$db0_line{variable}} && $ok;
+   }
+
+
+   if ($db0_line{type_input}=~/^varchar\((.*?)\)/)
+   {
+    main::_log("varchar");
+    my $var=$1;
+    $XSGN{NULL}="<input name=\"P_$db0_line{variable}\" maxlength=\"$var\" value=\"$profile{$db0_line{variable}}\">\n";
+    $XSGN{TMP}=~s|<#P_$db0_line{variable}#>|$XSGN{NULL}|;
+    #next;
+
+    $change=$main::FORM{'P_'.$db0_line{variable}} if exists $main::FORM{'P_'.$db0_line{variable}};
+    $changeit=1 if exists $main::FORM{'P_'.$db0_line{variable}};
+   }
+
+   if ($db0_line{type_input}=~/^text\((.*?)\)/)
+   {
+    main::_log("text");
+    my @ref=split(',',$1);
+    $XSGN{NULL}="<textarea name=\"P_$db0_line{variable}\" maxlength=\"$ref[0]\" rows=\"$ref[2]\" cols=\"$ref[1]\">$profile{$db0_line{variable}}</textarea>\n";
+    $XSGN{TMP}=~s|<#P_$db0_line{variable}#>|$XSGN{NULL}|;
+    #next;
+    $change=$main::FORM{'P_'.$db0_line{variable}} if exists $main::FORM{'P_'.$db0_line{variable}};
+    $change=~s|<VAR(.*?)>||gi;
+    $change=~s|</VAR>||gi;
+    $changeit=1 if exists $main::FORM{'P_'.$db0_line{variable}};
+   }
+
+
+   #$XSGN{TMP}.="$db0_line{variable}=$profile{$db0_line{variable}}<BR>";
+
+
+   if ($changeit)
+   {
+    #$XSGN{TMP}.="+changing<BR>";
+
+
+    if ((!$change)&&($db0_line{necessary} eq "N"))
+    {
+     $var0=~s|<VAR id="$db0_line{variable}">.*?</VAR>||gs;
+     next;
+    }
+
+
+
+    #$XSGN{TMP}.="changing $db0_line{variable}<BR>";
+    # CHECK TYPE_INPUT/SAVE
+    my $ok=1;
+    if ($db0_line{type_input}=~/^datetime\((.*?)\)/)
+    {
+     my @ref=($profile{$db0_line{variable}.'_mday'},
+	 $profile{$db0_line{variable}.'_mom'}-1,
+	 $profile{$db0_line{variable}.'_year'}-1900);
+     if ($profile{$db0_line{variable}.'_year'}>1952)
+     {
+      eval {my $starttime=Time::Local::timelocal(0,0,12,$ref[0],$ref[1],$ref[2],undef,undef,undef)};
+      if ($@){$ok=0;}else{}
+     }
+    }
+    elsif ($db0_line{type_input}=~/^varchar\((.*?)\)/)
+    {
+    }
+    # CHECK TYPE_CHECK
+    if ($ok){
+    foreach my $var(split(';',$db0_line{type_check}))
+    {
+     # dlzka
+     if ($var=~/^length\((.*?)\)/)
+     {
+      my @ref=split('-',$1);
+      if ((length($change)>=$ref[0])
+      	&&(length($change)<=$ref[1]))
+      {}else{$ok=0;last;}
+      next;
+     }
+     # regexp
+     if ($var=~/^regexp\((.*?)\)/)
+     {
+      my $var0=$1;
+      if ($change=~/$var0/)
+      {
+       $ok=0;
+       last;
+      }else{}
+      next;
+     }
+    }}
+
+    # OZNAMENIE O CHYBE
+    if (!$ok)
+    {
+     $XSGN{NULL}=$XSGN{ERR};
+     $XSGN{NULL}=~s|<%ERR%>|$XLNG{'P_'.$db0_line{variable}}|;
+     $XSGN{TMP}=~s|<#ERROR#>|$XSGN{NULL}<#ERROR#>|g;
+     next;
+    }
+    #$XSGN{TMP}=~s|<#ERROR#>|$XLNG{'P_'.$db0_line{variable}}<#ERROR#>|g unless $ok;
+    #$XSGN{TMP}.="$db0_line{variable} je zle<BR>" unless $ok;
+    #next unless $ok;
+
+    # ZAPIS
+    if ($var0=~s|(<VAR id="$db0_line{variable}">)(.*?)(</VAR>)|\1$change\3|gs)
+    {
+    }
+    else
+    {
+     $var0.="\n<VAR id=\"$db0_line{variable}\">$change</VAR>";
+    }
+   }
+
+
+
+
+  }
+
+
+  #$XSGN{TMP}.="<textarea style=\"width:350px;height:150px;\">$var1</textarea><BR><textarea style=\"width:350px;height:150px;\">$var0</textarea>";
+
+  $var0=~s|.*?(<VAR.*VAR>).*?|\1|gis;
+  if ($var0 ne $var1)
+  {
+   #$XSGN{TMP}.="changing!";
+#   $XSGN{TMP}.="<textarea style=\"width:350px;height:150px;\">$var0</textarea>";
+   my $db0=$main::DBH->Query("
+	UPDATE $TOM::DB_name_USRM.a300_users
+	SET profile='".$var0."'
+	WHERE	IDhash='$main::USRM{IDhash}' LIMIT 1");
+  }
+
+ return 1}
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+

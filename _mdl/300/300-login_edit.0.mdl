@@ -1,0 +1,72 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use App::300;
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+ Tomahawk::XLNGtoXSGN(); # insert XLNG do XSGN
+
+
+ if ($main::USRM{logged} eq "N")
+ {
+  $XSGN{TMP}=$XSGN{notlogged};
+  return 1;
+ }
+
+
+
+ my $db0=$main::DBH->Query("
+	(
+		SELECT autolog
+		FROM TOM.a300_users
+		WHERE	IDhash='$main::USRM{IDhash}'
+	)
+	UNION
+	(
+		SELECT autolog
+		FROM TOM.a300_users_arch
+		WHERE	IDhash='$main::USRM{IDhash}'
+	)");
+ if (my @db0_line=$db0->fetchrow)
+ {
+  if ($main::FORM{a300_login_edit})
+  {
+   if ($main::FORM{autolog})
+   {
+    $main::DBH->Query("UPDATE $TOM::DB_name_USRM.a300_users SET autolog='Y' WHERE IDhash='$main::USRM{IDhash}' LIMIT 1");
+    $db0_line[0]="Y";
+   }
+   else
+   {
+    $main::DBH->Query("UPDATE $TOM::DB_name_USRM.a300_users SET autolog='N' WHERE IDhash='$main::USRM{IDhash}' LIMIT 1");
+    $db0_line[0]="N";
+   }
+  }
+  $XSGN{TMP}=~s|<%autolog%>|checked|g if $db0_line[0] eq "Y";
+ }
+
+
+
+return 1}
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+sub execute
+{
+ return 1;
+
+ my %env=@_;
+
+ # KDE SU FORUMY?
+ $env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+ $env{db_820}=$TOM::DB_name unless $env{db_820};
+
+ my $db0=$main::DBH->Query("
+	SELECT ID,messages,inserttime
+	FROM $env{db_820}.a820
+	WHERE 	ID='$var'
+		AND type='F'
+		AND lng='$env{lng}'
+		AND active='Y'
+	LIMIT 1");
+ if (my @db0_line=$db0->fetchrow)
+ {
+    Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"400",
+	-name		=>	"tview_forum_c820",
+	-global		=>	1,
+	-xsgn_global	=>	$env{xsgn_tview_forum_c820},
+	-xsgn_global	=>	$env{xsgn_global},
+	-TMP		=>	$env{TMP_820},
+	-cache_id	=>	"default",
+	-cache_id_sub	=>	$db0_line[1]."_".$db0_line[2],
+	ID		=>	$var,
+	db_820		=>	$env{db_820},
+	) if $env{TMP_820};
+ }
+
+ return 1;
+}
+1;

@@ -1,0 +1,141 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 HEAD_VERSION
+1.030808
+
+=head1 NAME
+tlist
+
+=head1 DESCRIPTION
+article titles listing
+
+IDcategory format: doublechar1[doublechar2][...][doublechar16]
+hardlink format: http://domain/?|?[additional request parameters]
+order_by format: column_name[ DESC/ASC][, column_name[ DESC/ASC]][...]
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+ <value id="preview" value="1"/>
+ <value id="output" value="xsgn"/>
+	<source type="db_400" value="varchar">articles db name (default - web db_400)</source>
+	<inout id="db_limit" value="int">count of db items to load (default - 10)</source>
+	<input id="db_order_by" value="varchar">sort order (default - starttime DESC)</input>
+	<input id="hardlink" value="varchar">hardlink to the root of web (in case the link is not to the default web)</input>
+	<input id="ID" value="int">id of article to EXCLUDE</input>
+	<input id="IDcategory" value="varchar">category id of article items to load</input>
+	<input id="IDcategory_allow_subs" value="1/0">allow subcategory items (default - false)</input>
+	<input id="IDauthor" value="int">author id of article items to load</input>
+	<input id="IDauthor_allow_null" value="1/0">allow loading of articles with no author (default - true)</input>
+	<input id="IDeditor" value="int">editor id of article items to load</input>
+	<input id="IDeditor_allow_null" value="1/0">allow loading of articles with no editor (default - true)</input>
+	<input id="title" value="varchar">caption for the listing</input>
+	<input id="hardlink" value="varchar">hardlink to web root (if pointing to other server location than default)</input>
+	<input id="return_null" value="1/0">return empty box if no related articles are found</input>
+	<input id="return_string" value="varchar">default content string if no related articles are found</input>
+	<input id="image_format" value="m/t/s/o">size type of image to use (default - t)</input>
+	<input id="cut_after" value="int">cut off text after the word containing the char on given position and add " ..."</input>
+	<input id="cut_what" value="int">what data column to concatenate</input>
+</DESCRIPTION>
+
+=head1 CHANGES
+build 030814 - Deboot
+	*) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+	*) nothing
+=cut
+
+# takto bude vyzerat designovy modul
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	#Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+
+	$env{db_24}=Tomahawk::Getmdlvar("24","db") unless $env{db_24};
+	$env{db_24}=$TOM::DB_name unless $env{db_24};
+
+	my $data;
+
+	if (not exists $env{menu_xml})
+	{
+		if (not $data=Tomahawk::Getmdlvar("24","site_map",db=>$env{db_24}))
+		{
+			Tomahawk::debug::log(6,"Could not load data from config database! Check if \"site_map\" item exists in db \"$env{db_24}\"!", 1);
+			$tom::ERR = "DB request error!";
+			return undef;
+		}
+	}
+	else
+	{
+		$data=$env{menu_xml};
+	}
+
+	if ($data)
+	{
+		if (exists $env{first_item})
+		{
+			$XSGN{NULL}=$XSGN{LINE};
+			$XSGN{NULL}=~s|<%URL%>||;
+			#$XSGN{NULL}=~s|<%LEVEL%>|_level$level| if $level;
+			#$XSGN{NULL}=~s|<%PRIOR%>|_prior$prior"| if $prior;
+
+			$XSGN{NULL}=~s|<%NAME%>|$env{first_item}|;
+			#$XSGN{TMP}.=$XSGN{NULL};
+			$XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}<#LINE#>|;
+		}
+
+		if (exists $env{exclude})
+		{
+			$env{exclude}.=";" unless $env{exclude}=~/;$/;
+			$env{exclude}=";".$env{exclude} unless $env{exclude}=~/^;/;
+		}
+
+		my %menu_counts;
+
+		while ($data=~s|<LINK id="(.{2,150}?)" l="(.{0,2}?)" p="(.{0,2}?)">(.*?)</LINK>||si)
+		{
+			my ($var,$level,$prior,$line,$url)=($1,$2,$3,$4);
+			if ($line=~s/<URL>(.*?)<\/URL>//si){$url=$1}
+
+			$menu_counts{items}++;
+			$menu_counts{roots}++ if ($level==1);
+
+			next if ((defined $env{menu_depth}) && ($env{menu_depth} < $level));
+
+			#next if ((defined $env{menu_start_at}) && ($env{menu_start_at} > $menu_counts{items}-1));
+
+			#last if ((defined $env{menu_end_at}) && ($env{menu_end_at} < $menu_counts{roots}-1));
+
+			$XSGN{NULL}=$XSGN{LINE};
+			$XSGN{NULL}=~s|<%URL%>|$url|;
+			$XSGN{NULL}=~s|<%LEVEL%>|$level| if $level;
+			#$XSGN{NULL}=~s|<%PRIOR%>|_prior$prior"| if $prior;
+
+			$XSGN{NULL}=~s|<%NAME%>|$var|;
+			#$XSGN{TMP}.=$XSGN{NULL};
+			$XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}<#LINE#>|;
+		}
+=head1
+		if ($env{menu_type} eq "hr")
+		{
+			my $menu_item_width=$env{menu_width}/$menu_counts{roots};
+
+			$XSGN{TMP}=~s|<%MENU-ITEM-WIDTH%>| style="width: $menu_item_width$env{menu_item_width_m};" |g;
+			$XSGN{TMP}=~s|<%MENU-WIDTH%>|$env{menu_width}|;
+			$XSGN{TMP}=~s|<%MENU-WIDTH-M%>|$env{menu_width_m}|;
+		}
+=cut
+	}
+	return 1
+}
+
+1;

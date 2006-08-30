@@ -1,0 +1,101 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use strict;
+
+sub execute
+{
+ my %env=@_;
+ #return 1;
+ if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
+
+ $env{db_500}=$TOM::DB_name;
+
+
+#=head1
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_500}.a500
+	ORDER BY ID
+	");
+ while (my %db0_line=$db0->fetchhash)
+ {
+  my $db1=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_500}.a500_attrs
+	WHERE ID=$db0_line{ID}
+	LIMIT 1
+	");
+  if (my %db1_line=$db1->fetchhash)
+  {
+   #$main::DBH->Query("UPDATE $env{db_500}.a500_attrs SET IDcategory='$db0_line{IDcategory}' WHERE ID='$db0_line{ID}' LIMIT 1");
+   #print "$db0_line{ID}\n";
+  }
+  else
+  {
+   print "nemam attrs $db0_line{ID}\n";
+#   $main::DBH->Query("INSERT INTO $env{db_500}.a500_attrs(ID,IDcategory) VALUES('$db0_line{ID}','$db0_line{IDcategory}')");
+  }
+  #$main::DBH->Query("UPDATE $env{db_500}.a500_attrs SET IDattrs=ID LIMIT 1");
+ }
+#=cut
+
+
+
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_500}.a500_attrs
+	ORDER BY ID
+	");
+ while (my %db0_line=$db0->fetchhash)
+ {
+  my $db1=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_500}.a500
+	WHERE ID=$db0_line{ID}
+	LIMIT 1
+	");
+  if (my %db1_line=$db1->fetchhash)
+  {
+   #$main::DBH->Query("UPDATE $env{db_500}.a500_attrs SET IDcategory='$db0_line{IDcategory}' WHERE ID='$db0_line{ID}' LIMIT 1");
+   #print "$db0_line{ID}\n";
+  }
+  else
+  {
+   print "nemam formaty $db0_line{ID}\n";
+#   $main::DBH->Query("DELETE FROM $env{db_500}.a500_attrs WHERE ID='$db0_line{ID}' LIMIT 1");
+  }
+  #$main::DBH->Query("UPDATE $env{db_500}.a500_attrs SET IDattrs=ID LIMIT 1");
+ }
+
+
+
+
+ return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

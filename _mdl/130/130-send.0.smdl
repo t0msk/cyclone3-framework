@@ -1,0 +1,267 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use Secure::form;
+
+our $authors = "gregor\@webcom.sk";
+
+sub execute
+{
+	my %env=@_;
+	my %env_module;
+
+	# NASTAVENIA
+	# spracovanie formularu
+	# priznak odoslania formularu
+	$env_module{action} = $main::FORM{action} if exists $main::FORM{action};
+	# povinne polozky
+	my @required = split ";", $env{required} if $env{required};
+	# povinne volitelne
+	my @required_choice;
+	foreach (grep { $_ =~ /^required_choice/ } %env)
+	{
+		push @required_choice, split (";", $env{$_});
+	}
+
+	# spracovanie informacie, ci sa ma mail poslat aj uzivatelovi
+	$env_module{send_visitor} = $main::FORM{fch_send_visitor} if $main::FORM{fch_send_visitor};
+
+	# spracovanie premennych
+	my %formvars; # sem si ukladam spracovane premenne
+	foreach (sort keys %main::FORM)
+	{
+		next unless $_ =~ /^(ft|fs|fch|fr)/; # spracujem len premenne s tymito prefixami
+
+		# parsovanie nazvu premennej
+		my $fullname = $_;
+		$_ =~ s|^([^_]+)_||; my $prefix = $1; # prefix
+		$_ =~ s|^([^_]+)||; my $varname = $1; # vyparsujem nazov premennej
+		my $postfix = $_; # zostane mi postfix, ak je neprazdny, doplnim ho o "_"
+
+		# hodnota
+		my $varvalue = $main::FORM{$fullname};
+
+		# takto spracujem vsetky premenne (aj checkbox, radio ...)
+		$formvars{$varname.$postfix} = $varvalue;
+
+		# Doplnenie o specificke zalezitosti - checkbox, premenne s postfixami ... su dalej
+
+		# s postfixami
+		if (length($postfix))
+		{
+			$formvars{$varname} .= ", " if $formvars{$varname} && $varvalue;
+			$formvars{$varname} .= $varvalue;
+		}
+
+		# checkboxy (checked informacia)
+		# tieto hodnoty este menim v module na XSGN{CHECKED}
+		# teraz tam ale vlozim defaultnu hodnotu
+		$formvars{$varname.$postfix."_checked"} = "checked" if $prefix eq "fch";
+
+		# radiobuttony (checked informacia)
+		# tieto hodnoty este menim v module na XSGN{CHECKED}
+		# teraz tam ale vlozim defaultnu hodnotu
+		$formvars{$varname.$postfix."_$varvalue"."_checked"} = "checked" if $prefix eq "fr";
+
+		# selecty vratane multiselectov
+		if ($prefix eq "fch")
+		{
+			# obycajny select
+			# tieto hodnoty este menim v module na XSGN{SELECTED}
+			# teraz tam ale vlozim defaultnu hodnotu
+			$formvars{$varname.$postfix."_$varvalue"."_checked"} = "checked" unless (ref($varvalue));
+
+			# multiselect
+			if (ref($varvalue) eq "ARRAY")
+			{
+				my $null; # tu si zozbieram jeho hodnoty
+				foreach (@{$varvalue})
+				{
+					# tieto hodnoty este menim v module na XSGN{SELECTED}
+					# teraz tam ale vlozim defaultnu hodnotu
+					$formvars{$varname.$postfix."_$_"."_checked"} = "checked";
+					$null .= ", " if $null; $null .= $_;
+				}
+				$formvars{$varname.$postfix} = $null; # namiesto nepekneho "ARRAY(0x...)" sa tu bude nachadzat zoznam hodnot
+			}
+		}
+
+		# selecty vratane multiselectov
+		if ($prefix eq "fs")
+		{
+			# obycajny select
+			# tieto hodnoty este menim v module na XSGN{SELECTED}
+			# teraz tam ale vlozim defaultnu hodnotu
+			$formvars{$varname.$postfix."_$varvalue"."_selected"} = "selected" unless (ref($varvalue));
+
+			# multiselect
+			if (ref($varvalue) eq "ARRAY")
+			{
+				my $null; # tu si zozbieram jeho hodnoty
+				foreach (@{$varvalue})
+				{
+					# tieto hodnoty este menim v module na XSGN{SELECTED}
+					# teraz tam ale vlozim defaultnu hodnotu
+					$formvars{$varname.$postfix."_$_"."_selected"} = "selected"; 
+					$null .= ", " if $null; $null .= $_;
+				}
+				$formvars{$varname.$postfix} = $null; # namiesto nepekneho "ARRAY(0x...)" sa tu bude nachadzat zoznam hodnot
+			}
+		}
+	}
+
+	# listing formvars premennych
+	foreach (sort keys %formvars) { main::_log("formvars -> $_: $formvars{$_}"); }
+
+	# Kontrola premennych
+	my $ok = 1;
+
+#=head1
+	if ($env{required_all})
+	{
+		foreach (keys %main::FORM)
+		{
+			next unless $_ =~ /^f(t|r|s|ch|f)_/;
+			$ok = 0 unless $main::FORM{$_};
+		}
+	}
+#=cut
+
+
+	# povinne
+	if (@required)
+	{
+		foreach (@required)
+		{
+			unless ($formvars{$_} || $main::FORM{$_}) { $ok = 0; last; };
+			# kontrola tvaru emailu
+			if
+			(
+				$_ eq "email" &&
+				not Secure::form::check_email( $formvars{email} )
+			)
+			{
+				$ok = 0;
+				last;
+			}
+
+		}
+	}
+
+	# povinne volitelne
+	if ($ok && @required_choice)
+	{
+		$ok = 0;
+		foreach (@required_choice)
+		{
+			# ak mam len jeden required_choice
+			unless (ref($_))
+			{
+				# akonahle najdem jedno spravne vyplnene pole, nic ma nezaujima a koncim
+				if ($formvars{$_} || $main::FORM{$_}) { $ok = 1; last; }
+			}
+
+			# ak mam viac required_choicov
+			# napr: required_choice1 = "meno;priezvisko"
+			#       required_choice2 = "email;fax;telefon"
+			if (ref($_) eq "ARRAY")
+			{
+				# teraz som v x-tom choice, prejdem si polia tohto choicu
+				# v kazdom zacinam hladat nanovo, preto nastavujem $ok na 0
+				$ok = 0;
+				my @null = $_;
+				foreach my $choice_value (@null)
+				{
+					# ak najdem vyplnene pole, koncim s tymto choicom
+					if ($formvars{$choice_value} || $main::FORM{$choice_value}) { $ok = 1; last; }
+				}
+
+				# ak som v tomto choici nenasiel ani jedno dobre pole, koncim, lebo v KAZDOM
+				# choici musi byt aspon jedno pole vyplnene
+				last unless $ok;
+			}
+		}
+	}
+
+	if
+	(
+		$env{xt_picture_security} &&
+		(
+			!$main::FORM{fi_security_hash} ||
+			!$main::FORM{ft_security_hash} ||
+			$main::FORM{fi_security_hash} ne $main::FORM{ft_security_hash}
+		)
+	)
+	{
+		main::_log("Kontrola security hash - nespravny kod");
+		$ok = 0;
+	}
+
+
+	# spracovanie priloh
+	my @file = grep { $_ =~ /^ff_/ && $main::FORM{$_} } (keys %main::FORM);
+	$env_module{_a130_attachmentcount} = scalar @file; # pocet priloh
+	main::_log("Spracuvam prilohy") if $env_module{_a130_attachmentcount};
+	
+	foreach my $subor (@file)
+	{
+		$main::FORM{multipart} =~ /name="$subor"; filename="(.*?)".*?Content-Type: ([^\s]+)/s;
+
+		# ak je priloha vacsia, ako je povolene, nespracujem ju a vyhodim
+		if ($env{attachment_max_length} && length($main::FORM{$subor})>$env{attachment_max_length})
+		{
+			main::_log("X Priloha $subor ($1, ".length($main::FORM{$subor})."/$env{attachment_max_length}) je vacsia ako povolena velkost");
+			next;
+		}
+
+		main::_log("- Priloha $subor ($1, ".length($main::FORM{$subor})."/$env{attachment_max_length}) je ok");
+
+		$env_module{"_a130_attach_${subor}_filename"} = $1;
+		$env_module{"_a130_attach_${subor}_ct"} = $2;
+		$env_module{"_a130_attach_${subor}_content"} = $main::FORM{$subor};
+	}
+
+	# poslem si do modulu informaciu, ci formular zbehol
+	$env_module{form_ok} = $ok;
+
+	# ocistim env_module od nepotrebnych premennych (zacinajucich na pomlcku)
+	foreach (keys %env)
+	{
+		next if $_ =~ /^(-|required|send_TMP|send_xsgn)/;
+		next if $_ =~ /^_a130_form_/ && $env_module{action};
+		$env_module{$_} = $env{$_};
+	}
+
+	#foreach (keys %env_module) { main::_log("env_module -> $_: $env_module{$_}"); }
+
+	# convert formvarsov do $env_module{_a130_form_} formatu
+	foreach (keys %formvars)
+	{
+		$env_module{"_a130_form_$_"} = $formvars{$_};
+	}
+
+	$env{send_global}=1 unless (exists $env{send_global});
+	Tomahawk::module(
+		-type => "mdl",
+		-category => "130",
+		-name => "send",
+		-global => $env{send_global},
+		
+		-xsgn => $env{send_xsgn},
+		-TMP => $env{send_TMP},
+		-xlng_xsgn => $env{send_xlng_xsgn},
+		xt_xlng => $env{send_xt_xlng},
+		xt_design => $env{send_xt_design},
+
+		%env_module
+	);
+
+
+	return 1;
+}
+1;

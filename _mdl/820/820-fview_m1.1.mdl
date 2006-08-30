@@ -1,0 +1,596 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+$authors="fordinal\@webcom.sk;nemsak\@webcom.sk;balint\@webcom.sk";
+use Secure::vulgarisms;
+use Secure::form;
+use strict;
+
+=head1 NAME
+fview_m1
+
+=head1 HEAD_VERSION_BUILD
+1.20050301
+
+=head1 DESCRIPTION
+zobrazenie fora
+=cut
+
+sub execute
+{
+	my %env=@_;
+
+	if (not $env{db_ID})
+	{
+		$tom::ERR="no ID specified! finishing.";
+		return undef;
+	}
+
+	$env{db_paging} = 1 unless $env{db_paging};
+	$env{db_page} = 0 unless $env{db_page};
+	$env{db_limit} = 100 unless $env{db_limit};
+
+	$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+	$env{db_820}=$TOM::DB_name unless $env{db_820};
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+	if($env{xt_xlng})
+	{
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	my $isAdmin=0;
+
+	# TODO: deb00t : implementacia sw_ (switch) do inych app modulov
+	my @administrators=split(";", $env{sw_administrators});
+
+	foreach(@administrators)
+	{
+		if($_ eq $main::USRM{login})
+		{
+			main::_log("you are in administrators group");
+			$isAdmin=1;
+			last;
+		}
+	}
+
+	my %struct;
+	my %struct_base;
+
+	my %db_line;
+
+	my $line_first;
+	my $line_last;
+	my $line_counter;
+
+	$env{db_active}="1" unless (exists $env{db_active});
+	$env{db_active}="Y" if ($env{db_active} eq "1");
+	$env{db_active}="N" if ($env{db_active} eq "0");
+	
+	$env{db_type}="F" unless (exists $env{db_type});
+	
+	$env{db_where}.=" AND a820.ID='$env{db_ID}'" if (exists $env{db_ID});
+	
+	if((exists $env{db_where}) && (!$env{db_where}=~/^ AND /))
+	{ $env{db_where}="AND ".$env{db_where}; }
+
+	main::_applog(5, "
+		SELECT *
+		FROM $env{db_820}.a820
+		LEFT JOIN $env{db_820}.a820_attrs
+			ON (a820.IDattrs AND a820.IDattrs=a820_attrs.IDattrs)
+		WHERE
+			a820.type='$env{db_type}'
+			AND (a820.lng='$env{lng}' OR a820.lng='')
+			AND a820.active='$env{db_active}'
+			$env{db_where}
+		LIMIT 1
+	");
+	my $db=$main::DB{main}->Query("
+		SELECT *
+		FROM $env{db_820}.a820
+		LEFT JOIN $env{db_820}.a820_attrs
+			ON (a820.IDattrs <> 0 AND a820.IDattrs=a820_attrs.IDattrs)
+		WHERE
+			a820.type='$env{db_type}'
+			AND (a820.lng='$env{lng}' OR a820.lng='')
+			AND a820.active='$env{db_active}'
+			$env{db_where}
+		LIMIT 1
+	");
+
+	if (%db_line=$db->fetchhash)
+	{
+		my $db1=$main::DB{main}->Query("
+			UPDATE $env{db_820}.a820
+			SET lasttime='$tom::time_current'
+			WHERE
+				type='$env{db_type}'
+				AND (lng='$env{lng}' OR lng='')
+				AND active='$env{db_active}'
+				$env{db_where}
+			LIMIT 1
+		");
+
+		$env{messages_db_active}="1" unless (exists $env{messages_db_active});
+		$env{messages_db_active}="Y" if ($env{messages_db_active} eq "1");
+		$env{messages_db_active}="N" if ($env{messages_db_active} eq "0");
+		
+		$env{messages_db_active}="%" if ($isAdmin);
+
+      main::_applog(5, "
+			SELECT COUNT(*) AS messages
+			FROM $env{db_820}.a820_msgs
+			WHERE
+				IDforum='$db_line{ID}'
+				AND active LIKE '$env{messages_db_active}'
+				AND active NOT LIKE 'D'
+		");
+		my $db1=$main::DB{main}->Query("
+			SELECT COUNT(*) AS messages
+			FROM $env{db_820}.a820_msgs
+			WHERE
+				IDforum='$db_line{ID}'
+				AND active LIKE '$env{messages_db_active}'
+				AND active NOT LIKE 'D'
+		");
+		$db_line{messages_count} = $db1->fetchrow;
+		main::_applog(5, "request returned " . $db_line{messages_count} . " messages");
+
+		main::_applog(5, "
+			SELECT *
+			FROM $env{db_820}.a820_msgs
+			WHERE
+				IDforum='$db_line{ID}'
+				AND active LIKE '$env{messages_db_active}'
+				$env{messages_db_where}
+				AND active NOT LIKE 'D'
+			ORDER BY ID DESC
+		");
+		my $db1=$main::DB{main}->Query("
+			SELECT *
+			FROM $env{db_820}.a820_msgs
+			WHERE
+				IDforum='$db_line{ID}'
+				AND active LIKE '$env{messages_db_active}'
+				$env{messages_db_where}
+				AND active NOT LIKE 'D'
+			ORDER BY ID DESC
+		");
+		while (my %db1_line=$db1->fetchhash)
+		{
+			$line_counter++;
+
+			$db1_line{ID}=sprintf ('%011d', $db1_line{ID});
+			$db1_line{IDre}=sprintf ('%011d', $db1_line{IDre});
+			$struct{$db1_line{ID}}=$db1_line{IDre};
+
+			foreach (keys %db1_line)
+			{ $struct_base{$db1_line{ID}}{$_}=$db1_line{$_}; }
+		}
+
+		# OSETRENIE PRE PREHLADAVANIE NEUPLNEJ CASTI STROMU - netusim zlaticko o com tocis :) co to robi??
+		foreach (keys %struct){if (not defined $struct{$struct{$_}}){$struct{$_}=0;}}
+
+		# generating the tree structure
+		my @msgArray;
+		foreach my $key(reverse sort keys %struct)
+		{
+			if (($struct{$key}==0)&&(defined $struct{$key}))
+			{
+				push @msgArray,$key,0;
+				delete $struct{$key};
+				my $uroven=1;
+				my @urovne;
+				$urovne[$uroven]=$key;
+
+				while ($uroven>0)
+				{
+					my $nasiel;
+					foreach my $key0(sort keys %struct)
+					{
+						next if $nasiel;
+						if ($urovne[$uroven]==$struct{$key0})
+						{
+							push @msgArray,$key0,$uroven;
+							$nasiel=1;
+							$uroven++;
+							$urovne[$uroven]=$key0;
+							delete $struct{$key0};
+						}
+					}
+					if (!$nasiel){$uroven--;}
+				}
+			}
+		}
+
+		# index prveho zobrazeneho zaznamu (vo fundusi s datami)
+		$line_first = $env{db_page} * ($env{db_limit}*2);
+
+		# index prveho uz nezobrazeneho zaznamu (vo fundusi s datami)
+		$line_last =	($env{db_page}+1) * ($env{db_limit}*2);
+
+		main::_applog(5, 'first line: '.($line_first/2).'; last line: '.($line_last/2));
+
+		if(($line_first>0) && ($msgArray[$line_first+1]>0))
+		{
+			#sme na nejakej stranke, kde prvy item nie je na nulovej urovni
+			#vyhladajme si teda parentov
+			main::_applog(5, "searching for parents from previous pages");
+			my $tmplevel=$msgArray[$line_first+1]-1;
+			for(my $arrayID=$line_first-2; $arrayID>=0; $arrayID=$arrayID-2)
+			{
+				if($msgArray[$arrayID+1] eq $tmplevel)
+				{
+					main::_applog(7, "found a parent at level $tmplevel (title: $struct_base{$msgArray[$arrayID]}{title})");
+
+					my %lastparent=(
+						id	=>	$msgArray[$line_first],
+						level	=> $msgArray[$line_first+1] 
+					);
+
+					$struct_base{$msgArray[$arrayID]}{isPrevpageParent}=1;
+					splice @msgArray, $line_first, 2, $msgArray[$arrayID], $msgArray[$arrayID+1], $lastparent{id}, $lastparent{level};
+					splice @msgArray, $arrayID, 2;
+
+					$tmplevel--;
+					$arrayID+=2;
+					$line_first-=2;
+					if($tmplevel==-1){last;}
+				}
+				else
+				{ next; }
+			}
+		}
+
+		my $lastOffset = 0;
+
+		for(my $arrayID=$line_first; $arrayID<$line_last; $arrayID+=2)
+		{
+			if(! defined $msgArray[$arrayID+1])
+			{ last; }
+
+			$struct_base{$msgArray[$arrayID]}{offset} = ($msgArray[$arrayID+1]);
+
+			if($struct_base{$msgArray[$arrayID]}{offset} == $lastOffset)
+			{
+				#sme na rovnakej alebo nultej urovni, ser na parenting, vloz riadok
+				$XSGN{TMP}=~s|<#LINE_CONTENT#>||;
+				$XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE}|;
+			}
+			elsif($struct_base{$msgArray[$arrayID]}{offset} > $lastOffset)
+			{
+				#sme vacsi ako minuly riadok, vloz parenta
+				$XSGN{TMP}=~s|<#LINE_CONTENT#>|$XSGN{LINE_PARENT}|;
+				$XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE}|;
+			}
+			elsif($struct_base{$msgArray[$arrayID]}{offset} < $lastOffset)
+			{
+				#sme mensi ako minuly riadok, pouzatvaraj lajny
+				$XSGN{TMP}=~s|<#LINE_CONTENT#>||;
+				for(my $i = $struct_base{$msgArray[$arrayID]}{offset}; $i < $lastOffset; $i++)
+				{
+					$XSGN{TMP}=~s|<#LINE#>||;
+				}
+				$XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE}|;
+			}
+
+			#povyplnaj vece
+			
+			if(exists($XSGN{'LINE_CONTENT_level_'.$struct_base{$msgArray[$arrayID]}{offset}}))
+			{
+				$XSGN{NULL}=$XSGN{'LINE_CONTENT_level_'.$struct_base{$msgArray[$arrayID]}{offset}};
+			}
+			else
+			{ $XSGN{NULL}=$XSGN{LINE_CONTENT}; }
+			
+			if(
+				($struct_base{$msgArray[$arrayID]}{offset} < $msgArray[$arrayID+3])
+			)
+			{
+				#ak je tento line parent
+				if(exists($XSGN{'LINE_CONTENT_level_'.$struct_base{$msgArray[$arrayID]}{offset}.'_PARENT'}))
+				{
+					# a existuje iny template pre content parenta pre danu uroven
+					$XSGN{NULL}=$XSGN{'LINE_CONTENT_level_'.$struct_base{$msgArray[$arrayID]}{offset}.'_PARENT'};
+				}
+				elsif(exists($XSGN{'LINE_CONTENT_PARENT'}))
+				{
+					# a existuje iny template pre content parenta
+					$XSGN{NULL}=$XSGN{'LINE_CONTENT_PARENT'};
+				}
+			}
+			if(
+				($struct_base{$msgArray[$arrayID]}{isPrevpageParent}) &&
+				($XSGN{LINE_CONTENT_PARENT_PREVPAGE})
+			)
+			{
+				#ak je tento line parent z predoslych stranok
+				if(exists($XSGN{'LINE_CONTENT_level_'.$struct_base{$msgArray[$arrayID]}{offset}.'_PARENT_PREVPAGE'}))
+				{
+					# a existuje iny template pre content parenta pre danu uroven
+					$XSGN{NULL}=$XSGN{'LINE_CONTENT_level_'.$struct_base{$msgArray[$arrayID]}{offset}.'_PARENT_PREVPAGE'};
+				}
+				elsif(exists($XSGN{'LINE_CONTENT_PARENT_PREVPAGE'}))
+				{
+					# a existuje iny template pre content parenta
+					$XSGN{NULL}=$XSGN{'LINE_CONTENT_PARENT_PREVPAGE'};
+				}
+			}
+			
+			if(($main::USRM{logged} eq "Y")&&($isAdmin))
+			{
+				# ak je uzivatel nalogovany a patri medzi administratorov fora
+				if(exists($XSGN{'REPLY_level_'.$struct_base{$msgArray[$arrayID]}{offset}.'_admin'}))
+				{
+					# a existuje iny template pre reply pre danu uroven
+					$XSGN{'NULL'}=~s|<#REPLY#>|$XSGN{'REPLY_level_'.$struct_base{$msgArray[$arrayID]}{offset}.'_admin'}|g;
+				}
+				elsif(exists($XSGN{'REPLY_admin'}))
+				{
+					# a existuje iny template pre content parenta
+					$XSGN{'NULL'}=~s|<#REPLY#>|$XSGN{'REPLY_admin'}|g;
+				}
+			}
+			elsif(($main::USRM{logged} eq "Y")&&($struct_base{$msgArray[$arrayID]}{IDhash} ne $main::USRM{IDhash}))
+			{
+				$XSGN{'NULL'}=~s|<#REPLY#>|$XSGN{'REPLY'}|g;
+			}
+
+			$XSGN{NULL}=~s|<%line_no%>|($arrayID/2)+1|ge;
+			$XSGN{NULL}=~s|<%line_level%>|$struct_base{$msgArray[$arrayID]}{offset}|;
+
+			if($struct_base{$msgArray[$arrayID]}{from_IP}=~/^([\d]+).([\d]+).([\d]+).([\d]+)$/)
+			{
+				$struct_base{$msgArray[$arrayID]}{from_IP_1}=$1;
+				$struct_base{$msgArray[$arrayID]}{from_IP_2}=$2;
+				$struct_base{$msgArray[$arrayID]}{from_IP_3}=$3;
+				$struct_base{$msgArray[$arrayID]}{from_IP_4}=$4;
+			}
+
+			$struct_base{$msgArray[$arrayID]}{title}=~s|<.*?>||g;
+
+			# cleaning vulgarisms
+			Secure::form::convert_tags($struct_base{$msgArray[$arrayID]}{msg});
+			Secure::vulgarisms::convert($env{lng},$struct_base{$msgArray[$arrayID]}{msg});
+			Secure::vulgarisms::convert($env{lng},$struct_base{$msgArray[$arrayID]}{title});
+
+			$struct_base{$msgArray[$arrayID]}{msg}=~s|\n|<br />|g;
+
+			my %urlhash;
+			
+			if($env{xt_url_relink})
+			{
+				$env{xt_url_cut}=50 unless $env{xt_url_cut};
+				
+				my $urlcounter=0;
+				
+				while(
+					($struct_base{$msgArray[$arrayID]}{msg}=~s|(\bhttp[s]?:\/\/[^ <]+\b)|<#TMP$urlcounter#>|)
+					||
+					($struct_base{$msgArray[$arrayID]}{msg}=~s|(\b[s]?ftp[s]?:\/\/[^ <]+\b)|<#TMP$urlcounter#>|)
+					||
+					($struct_base{$msgArray[$arrayID]}{msg}=~s|(\btorrent:\/\/[^ <]+\b)|<#TMP$urlcounter#>|)
+					||
+					($struct_base{$msgArray[$arrayID]}{msg}=~s|(\bed2k:\/\/[^ <]+\b)|<#TMP$urlcounter#>|)
+				)
+				{
+					$urlhash{$urlcounter}={
+						'url'	=>	$1,
+						'label'	=> $1
+					};
+					if(length($urlhash{$urlcounter}{label})>$env{xt_url_cut})
+					{$urlhash{$urlcounter}{label}=substr($urlhash{$urlcounter}{label},0,$env{xt_url_cut})."&hellip;";}
+					$urlcounter++;
+				}
+				
+				if(($struct_base{$msgArray[$arrayID]}{isPrevpageParent}) && ($env{xt_parent_prevpage_msg_cut}))
+				{
+					#osekavanie msg v parentovi z predoslych stranok
+					$struct_base{$msgArray[$arrayID]}{msg}=~s/^(.{$env{xt_parent_prevpage_msg_cut}}).*$/$1 &hellip;/s;
+				}
+				else
+				{
+					# osekavanie sibnutych prispevkov dlhsich ako 50 znakov
+					#bola by tu medzera ale KRETEN msie to ignoruje a veselo si to nezalamuje dalej :(
+					$struct_base{$msgArray[$arrayID]}{msg}=~s/([\S]{50})/$1- <wbr>/sg;
+				}
+				#skracovanie prispevku na maximalnu dlzku 2000 znakov, ak je dlhsi
+				#a mame uz aj take ze one .. si moze designer nadefinovat, ci tam bude defaultne "...", aebo napriklad "<a href='asdasd'>cely pripsevko</a>" :)
+				if(length($struct_base{$msgArray[$arrayID]}{msg})>2000)
+				{
+					$struct_base{$msgArray[$arrayID]}{msg}=~s/^(.{2000}).*$/$1/s;
+
+					if(exists $XSGN{xt_msg_cut_more})
+					{
+						main::_applog(5, "found a special template for msg cut");
+						$XSGN{NULL} =~s|<%msg%>|<%msg%>$XSGN{xt_msg_cut_more}|g;
+					}
+					else
+					{
+						$XSGN{NULL} =~s|<%msg%>|<%msg%>&hellip;|g;
+					}
+				}
+
+				foreach(keys %urlhash)
+				{
+					$struct_base{$msgArray[$arrayID]}{msg}=~s|<#TMP$_#>|<a href="$urlhash{$_}{url}">$urlhash{$_}{label}</a>|;
+				}
+			}
+			else
+			{
+				if(($struct_base{$msgArray[$arrayID]}{isPrevpageParent}) && ($env{xt_parent_prevpage_msg_cut}))
+				{
+					#osekavanie msg v parentovi z predoslych stranok
+					$struct_base{$msgArray[$arrayID]}{msg}=~s/^(.{$env{xt_parent_prevpage_msg_cut}}).*$/$1 &hellip;/s;
+				}
+				else
+				{
+					# osekavanie sibnutych prispevkov dlhsich ako 50 znakov
+					#bola by tu medzera ale KRETEN msie to ignoruje a veselo si to nezalamuje dalej :(
+					$struct_base{$msgArray[$arrayID]}{msg}=~s/([\S]{50})/$1- <wbr>/sg;
+				}
+				#a mame uz aj take ze one .. si moze designer nadefinovat, ci tam bude defaultne "...", aebo napriklad "<a href='asdasd'>cely pripsevko</a>" :)
+				if(length($struct_base{$msgArray[$arrayID]}{msg})>2000)
+				{
+					$struct_base{$msgArray[$arrayID]}{msg}=~s/^(.{2000}).*$/$1/s;
+
+					if(exists $XSGN{xt_msg_cut_more})
+					{
+						main::_applog(5, "found a special template for msg cut");
+						$XSGN{NULL} =~s|<%msg%>|<%msg%>$XSGN{xt_msg_cut_more}|g;
+					}
+					else
+					{
+						$XSGN{NULL} =~s|<%msg%>|<%msg%>&hellip;|g;
+					}
+				}
+			}
+			
+			#$XSGN{TMP} =~s|<%msg%>|$struct_base{$msgArray[$arrayID]}{msg}|g;
+
+			#nu way o' replacin'
+			foreach (keys %{$struct_base{$msgArray[$arrayID]}})
+			{
+				$XSGN{NULL} =~s|<%$_%>|$struct_base{$msgArray[$arrayID]}{$_}|g;
+			}
+
+			if ($env{datetime_allow})
+			{
+				my %env0=Utils::datetime::ctodatetime($struct_base{$msgArray[$arrayID]}{inserttime},format=>1);
+
+				$XSGN{NULL}=~s|<%day%>|$env0{mday}|g;
+				$XSGN{NULL}=~s|<%month%>|$env0{mom}|g;
+				$XSGN{NULL}=~s|<%year%>|$env0{year}|g;
+				$XSGN{NULL}=~s|<%hour%>|$env0{hour}|g;
+				$XSGN{NULL}=~s|<%minute%>|$env0{min}|g;
+				$XSGN{NULL}=~s|<%second%>|$env0{sec}|g;
+
+				$XSGN{NULL}=~s|<%day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+				$XSGN{NULL}=~s|<%day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+				$XSGN{NULL}=~s|<%month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+				$XSGN{NULL}=~s|<%month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+			}
+			
+			$XSGN{NULL}=~s|<%line_no%>|($arrayID/2)+1|ge;
+			my $tmpLineLevel=$struct_base{$msgArray[$arrayID]}{offset};
+			$XSGN{NULL}=~s|<%line_level%>|$tmpLineLevel|g;
+
+			$XSGN{TMP}=~s|<#LINE_CONTENT#>|$XSGN{NULL}|;
+
+			$lastOffset=$struct_base{$msgArray[$arrayID]}{offset};
+		}
+
+		if($line_counter<1)
+		{
+			if($env{return_null})
+			{
+				main::_applog(5, "no data available. return_null parameter in effect");
+				$XSGN{TMP}="";
+			}
+			else
+			{
+				if(exists $XSGN{TMP_NO_DATA})
+				{
+					main::_applog(5, "no data available. returning TMP_NO_DATA");
+					$XSGN{TMP}=$XSGN{TMP_NO_DATA};
+				}
+				else
+				{
+					$tom::ERR="no data available! query description in log.";
+					return undef;
+				}
+			}
+		}
+	
+		if (($db_line{messages_count}>($line_last/2)) || (($env{db_page}>0)))
+		{
+			main::_applog(5, "yes, mylord. i am paging. actual page is: $env{db_page}");
+			#$XSGN{TMP}=~s|<#PAGING#>|$XSGN{PAGING}|;
+	
+			if ($XSGN{'PAGING_'.$env{db_page}})
+			{
+				$XSGN{PAGING}=$XSGN{'PAGING_'.$env{db_page}};
+				main::_applog(5, "got a different design for paging!");
+			}
+	
+			if($XSGN{TMP}=~/<#PAGING_$env{db_page}#>/)
+			{
+				#not sure about this
+				#$XSGN{TMP}=~s|<#PAGING_$env{db_page}#>|$XSGN{PAGING}|g;
+				$XSGN{TMP}=~s|<#PAGING#>|$XSGN{PAGING}|g;
+			}
+			else
+			{$XSGN{TMP}=~s|<#PAGING#>|$XSGN{PAGING}|g;}
+	
+			$XSGN{TMP}=~s|<%page%>|$env{db_page}|;
+		}
+	
+		# inserting links to all previous pages
+		if(($XSGN{TMP}=~/<#PAGES#>/) && ($XSGN{PAGES}))
+		{
+			my $var=0;
+			while (($var*$env{db_limit})<$db_line{messages_count})
+			{
+				if(($var eq $env{db_page}) && (exists($XSGN{PAGE_ACTUAL})))
+				{$XSGN{PAGES}=~s|<#PAGE#>|$XSGN{PAGE_ACTUAL}|;}
+				else
+				{$XSGN{PAGES}=~s|<#PAGE#>|$XSGN{PAGE}|;}
+				
+				$XSGN{PAGES}=~s|<%page%>|$var|g;
+				$var++;
+				$XSGN{PAGES}=~s|<%page_real%>|$var|g;
+			}
+			$XSGN{TMP}=~s|<#PAGES#>|$XSGN{PAGES}|g;
+		}
+	
+		if ($db_line{messages_count}>($line_last/2))
+		{
+			my $nextpage=$env{db_page}+1;
+			$XSGN{NULL}=$XSGN{PAGING_NEXT};
+	
+			if($XSGN{'PAGING_URL_'.$nextpage})
+			{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{'PAGING_URL_'.$nextpage}|;}
+			else
+			{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{PAGING_URL}|;}
+	
+			$XSGN{NULL}=~s|<%page%>|$nextpage|g;
+			$nextpage++;
+			$XSGN{NULL}=~s|<%page_real%>|$nextpage|g;
+			$XSGN{TMP}=~s|<#PAGING_NEXT#>|$XSGN{NULL}|g;
+		}
+	
+		if ($env{db_page}>0)
+		{
+			my $prevpage=$env{db_page}-1;
+			$XSGN{NULL}=$XSGN{PAGING_PREV};
+	
+			if($XSGN{'PAGING_URL_'.$prevpage})
+			{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{'PAGING_URL_'.$prevpage}|;}
+			else
+			{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{PAGING_URL}|;}
+	
+			$XSGN{NULL}=~s|<%page%>|$prevpage|g;
+			$prevpage++;
+			$XSGN{NULL}=~s|<%page_real%>|$prevpage|g;
+			$XSGN{TMP}=~s|<#PAGING_PREV#>|$XSGN{NULL}|g;
+		}
+
+		foreach (keys %db_line)
+		{
+			$XSGN{TMP} =~s|<%$_%>|$db_line{$_}|g;
+			$XSGN{TMP} =~s|<%forum_$_%>|$db_line{$_}|g;
+			if($_ eq "name")
+			{
+				#deprecated thingy
+				$XSGN{TMP} =~s|<%title%>|$db_line{$_}|g;
+				$XSGN{TMP} =~s|<%forum_title%>|$db_line{$_}|g;
+			}
+		}
+	}
+
+	return 1;
+}
+
+1;

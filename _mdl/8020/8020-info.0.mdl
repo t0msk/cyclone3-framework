@@ -1,0 +1,85 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 NAME
+menu
+=cut
+=head1 HEAD_VERSION_BUILD
+1.030530
+=cut
+=head1 DESCRIPTION
+base menu
+zakladne menu pouzivane pre jednotny design
+a identicku implementaciu viacerych jazykov
+=cut
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+
+        <value id="preview" value="0/1/secure" />
+        <value id="output" value="0/xsgn/shadow" /> # ??? povinna polozka
+
+	<input id="-xsgn" value="varchar(20)">potrebujem design</input>
+	<input id="-xlng" value="varchar(20)">potrebujem language file</input>
+        <input id="max" value="int(maxvalue)">popis input fieldu</input>
+        <input id="what" value="varchar(x)">popis input fieldu</input>
+	<input id="pictures" value="boolean">0 alebo 1</input>
+	<input id="a_*" value="text">lubovolne polozky zacinajuce na a_*</input>
+        <input id="select" value="text">popis input fieldu</input>
+
+	<source type="author" subtype="code" value="Aben" /> # zodpovedny clovek
+	<source type="author" subtype="code" value="Deboot" /> # zodpovedny clovek
+	<source type="author" subtype="database" value="Deboot" /> # zodpovedny clovek za selecty
+	<source type="author" subtype="design" value="andrew" /> # zodpovedny clovek za default design
+
+        <source type="db" value="markiza_sk" /> # zavisla databaza
+        <source type="db.table" value="this.articles" /> # zavisla tabulka
+        <source type="db.table" value="markiza_sk.articles" /> # zavisla tabulka
+	<source type="db.table" value="X.articles" /> # urcita tabulka nedefinovanej databazy
+        <source type="file" value="../_mdl/i.mdl" /> # vzhladom k relativnej ceste root tom
+	<source type="mdl" value="400-fview_cX.0.smdl" /> # vztah ku modulu
+
+        <output id="TMP" value="BASE-LEFT">popis gateway </output>
+        <output id="file" value="out.txt">popis outputu</output> # vzhladom k relativnej ceste root tom
+
+</DESCRIPTION>
+
+=cut
+=head1 CHANGES
+build 030530 - meno codera
+        *) FIRST MAKE
+=cut
+=head1 WARNINGS & BUGS
+        *) nothings
+=cut
+sub execute
+{
+ my %env=@_;
+
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+
+ if ($env{ip_found} eq "1")
+ {
+   $XSGN{TMP} = $XSGN{TMP_1};
+#   $XSGN{TMP}=~s|<%LOGIN-NAME%>|$main::USRM{login}|g;
+ }
+ else
+ {
+   $XSGN{TMP} = $XSGN{TMP_2};
+ }
+
+ #$XSGN{'TMP'}=~s|<%MSG-COUNT%>|$env{ip_found}|g;
+ #$XSGN{'TMP'}=~s|<%USER_REALNAME%>|$main::USRM{login}|g;
+ #$XSGN{'TMP'}=~s|<%USER_EMAIL%>|$main::USRM{login}|g;
+
+ return 1}
+
+1;
+
+
+1;

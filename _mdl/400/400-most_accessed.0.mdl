@@ -1,0 +1,115 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 HEAD_VERSION
+1.030710
+
+=head1 NAME
+most_accessed
+
+=head1 DESCRIPTION
+simple display of most accessed articles
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+ <value id="preview" value="1" />
+ <value id="output" value="xsgn" />
+
+ <input id="-xsgn" value="varchar(20)">design file</input>
+ <input id="-xlng" value="varchar(20)">language file</input>
+	<source type="db_400" value="varchar">articles db name (default - web db_400)</source>
+	<source type="db.table" value="varchar">db table name (default - articles)
+	<input id="db_count" value="int">count of db items to load (default - 10)</input>
+	<input id="IDcategory" value="varchar">category id of article items to load</input>
+	<input id="hardlink" value="varchar">hardlink to the root of web (in case the link is not to the default web)</input>
+	<input id="return_null" value="boolean">return empty box if no related articles are found</input>
+	<input id="return_string" value="varchar">default content string if no related articles are found</input>
+</DESCRIPTION>
+
+=head1 CHANGES
+build 030725 - Deboot
+        *) return_string parameter added
+build 030709 - Deboot
+        *) return_null parameter added
+build 030709 - Deboot
+        *) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+
+	*)
+
+=cut
+
+sub execute
+{
+ my %env=@_;
+
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+
+ #use Utils::datetime; #using library with date/time functions
+
+ $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+ $env{db_table}="a400" unless $env{db_table};
+
+ $env{IDcategory}= " WHERE IDcategory='" . $env{IDcategory} . "' " unless !$env{db_table};
+ $env{IDcategory}= '' unless $env{IDcategory};
+
+ $env{db_count}='10' unless $env{db_count};
+
+ Tomahawk::debug::log(5,"start module");
+
+ if (my $db0=$main::DBH->Query("
+	SELECT
+		ID, title, subtitle, tiny
+	FROM $env{db_400}.$env{db_table}
+	$env{IDcategory}
+	ORDER BY visits DESC
+	LIMIT $env{db_count}
+ "	))
+ {
+  my $count;
+
+  while (my @db0_line=$db0->FetchRow())
+  {
+   $count++;
+   $XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE}<#LINE#>|;
+   $XSGN{TMP}=~s|<%ID%>|$db0_line[0]|g;
+   $XSGN{TMP}=~s|<%TITLE%>|$db0_line[1]|g;
+   $XSGN{TMP}=~s|<%SUBTITLE%>|$db0_line[2]|g;
+   $XSGN{TMP}=~s|<%TINY%>|$db0_line[3]|g;
+  }
+
+  if (!$count)
+  {
+   Tomahawk::debug::log(7,$count." related articles found.");
+   if ($env{return_null}) { undef $XSGN{TMP};return 1; } else { $XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE_NULL}|; }
+  }
+  else { Tomahawk::debug::log(6,$count." most accessed articles found."); }
+ }
+ else
+ {
+  Tomahawk::debug::log(5,"Could not load data from database \"".$env{db_400}."\"! Check the db, or db select!", 1);
+  $tom::ERR = "DB request error!";
+  return undef;
+ }
+
+return 1}
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+

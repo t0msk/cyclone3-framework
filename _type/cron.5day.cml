@@ -1,0 +1,14 @@
+<!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
+
+<#MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="300" />
+	<VAR id="-name" value="clear" />
+</MODULE>
+
+<#MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="300" />
+	<VAR id="-name" value="control" />
+		<VAR id="db_300" value="TOM" />
+</MODULE>

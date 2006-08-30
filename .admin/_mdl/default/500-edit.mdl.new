@@ -1,0 +1,411 @@
+sub BaseModul
+{
+ my $id=$form{id};
+ my %images;
+ my %hashes;
+ my $mf;
+ my $nullid;
+
+ if ($form{set})
+ {
+  if ($id)
+  {
+   &save_log(1,"update obrazku id=$id $form{about}");
+   if ($form{img_t_size}) { $images{img_t_size} = $form{img_t_size}; }
+   if ($form{img_s_size}) { $images{img_s_size} = $form{img_s_size}; }
+   if ($form{img_o_size}) { $images{img_o_size} = $form{img_o_size}; }
+   if ($db_micro = $dbh->Query("SELECT hash,format FROM markiza_sk.a500 WHERE ID='$id' LIMIT 4"))
+   {
+    while (@db_micro_line=$db_micro->FetchRow()) { $hashes{$db_micro_line[1]}=$db_micro_line[0]; }
+   }
+   my $haluzaren;
+   foreach (keys %images)
+   {
+    $haluzaren.=$_."-".$images{$_}."<br>";
+   }
+   foreach (keys %hashes)
+   {
+    $haluzaren.=$_."-".$hashes{$_}."<br>";
+   }
+
+   #$db_micro = $dbh->Query("SELECT ID FROM markiza_sk.a120 WHERE name='$form{author}'");
+   #if (@db_micro_line=$db_micro->FetchRow()) {  }
+   $dbh->Query("UPDATE markiza_sk.a500 SET IDcategory='$form{IDcategory}',changetime='".time."' WHERE ID='$id'");
+   $dbh->Query("UPDATE markiza_sk.a500_attrs SET about='$form{about}',IDauthor='$form{IDauthor}',inserttime='".time."',keywords='$form{keywords}' WHERE IDattrs='$id'");
+   return "\n<script>\nalert(\"$form{IDauthor}\");parent.document.frames['frm_base'].location.reload();\n</script>";
+  }
+  else
+  {
+   $id=1;
+
+   $db_micro = $dbh->Query("SELECT DISTINCT ID FROM markiza_sk.a500 ORDER BY ID DESC");
+   if (@db_micro_line=$db_micro->FetchRow())
+   {
+    $id=$db_micro_line[0];
+    $id++;
+   }
+   $nullid=sprintf ('%07d', $id);
+
+=head1
+   #this finds the first free ID value
+   $db_micro = $dbh->Query("SELECT DISTINCT ID FROM markiza_sk.a500 ORDER BY ID ASC");
+   while (@db_micro_line=$db_micro->FetchRow())
+   {
+     $nullid=sprintf ('%07d', $id);
+	last if ($nullid ne $db_micro_line[0]);
+	$id++;
+   }
+=cut
+#	return $nullid;
+
+
+   if ($form{img_t_size}) { $images{img_t_size} = $form{img_t_size}; }
+   if ($form{img_s_size}) { $images{img_s_size} = $form{img_s_size}; }
+   if ($form{img_o_size}) { $images{img_o_size} = $form{img_o_size}; }
+
+
+   our @WCHAR=qw/0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z/;
+
+   sub genhash
+   {
+    my $var;
+    for (1..$_[0]){$var.=$WCHAR[int(rand(61))];}
+    return $var;
+   }
+
+
+
+   foreach (keys %images)
+   {
+    my $img_format;
+    my $hash = genhash(16);
+    if ($_ eq "img_t_size") { $img_format = "t"; }
+    elsif ($_ eq "img_s_size") { $img_format = "s"; }
+    elsif ($_ eq "img_o_size") { $img_format = "o"; }
+    while ($db_micro = $dbh->Query("SELECT ID FROM markiza_sk.a500 WHERE hash='$hash' AND format='$img_format' LIMIT 1"))
+    {
+	if (@db_micro_line=$db_micro->FetchRow()) { $hash = genhash(16); } else { $hashes{$img_format}=$hash; last; }
+    }
+   }
+
+   if ($form{img_s})
+   {
+    my $img_format;
+    my $hash = genhash(16);
+    while ($db_micro = $dbh->Query("SELECT ID FROM markiza_sk.a500 WHERE hash='$hash' AND format='f' LIMIT 1"))
+    {
+	if (@db_micro_line=$db_micro->FetchRow()) { $hash = genhash(16); } else { $hashes{f}=$hash; last; }
+    }
+   }
+
+   #$db_micro = $dbh->Query("UPDATE markiza_sk.a500 SET hash='$hash' WHERE ID='$id' LIMIT 1");
+   #if (@db_micro_line=$db_micro->FetchRow()){$id=$db_micro_line[0];}
+
+   &save_log(1,"vlozenie obrazku id=$id $form{about}");
+
+
+   my $haluzaren;
+
+   my %hashes_existing_file;
+
+   foreach (keys %hashes)
+   {
+    #if (-e "$tom::H_media/500/$var/$hashes{$_}-$_.jpg"){$f_s=$form{image2_size};}else{$f_s="";}
+    $haluzaren.="$_ - $hashes{$_}<br>";
+   }
+
+   #return $haluzaren;
+
+   #$db_micro = $dbh->Query("SELECT ID,hash,format FROM markiza_sk.a500 WHERE ID='$id' LIMIT 4");
+   #while (@db_micro_line=$db_micro->FetchRow())
+   #{
+   # $images{$db_micro{format}}=$db_micro{hash};
+    #$mf.=$db_micro{hash}.",";
+   #}
+
+	#foreach (keys %form)
+	#{
+	#  $var.=$_."-".$form{$_};
+	#  }
+	#}
+	#return $var;
+
+	#return $form{IDcategory};
+
+   my $id_author="";
+
+   $db_micro1 = $dbh->Query("SELECT ID FROM markiza_sk.a120 WHERE name='$form{author}'");
+   if (@db_micro1_line=$db_micro1->FetchRow()) { $id_author=$db_micro1_line[0]; }
+
+   $nullid=~/^(....)/i;
+   my $var=$1;
+   foreach (keys %hashes)
+   {
+    #$haluzaren.="attempting to write filestream to ../../!media/500/$var/$hashes{$_}-$_.jpg<br>";
+    #write binary into hash from $images{format}
+    #binmode HND;
+    #open (HND,">../../!media/500/$var/$hashes{$_}-$_.jpg");
+    #print HND $form{img_.$_};
+    #close HND;
+    $dbh->Query("INSERT INTO markiza_sk.a500
+    (ID,IDattrs,hash,IDcategory,format,size,lng,active,IDauthor)
+    VALUES
+    ('$nullid','$nullid','$hashes{$_}','$form{IDcategory}','$_','$images{'img_'.$_.'_size'}','sk','Y',$id_author)
+    ");
+
+	 $dbh->Query("INSERT INTO markiza_sk.a500_attrs
+    (IDattrs,about,inserttime,keywords)
+    VALUES   ('$nullid','$form{about}','".time."','$form{keywords}')");
+    #$haluzaren.="done!!!<br>";
+    #$f_t="Y";
+   }
+   foreach (keys %hashes)
+   {
+    $haluzaren.="attempting to write filestream to ../../!media/500/$var/$hashes{$_}-$_.jpg<br>";
+    #write binary into hash from $images{format}
+    binmode HND;
+    open (HND,">../../!media/500/$var/$hashes{$_}-$_.jpg");
+    print HND $form{img_.$_};
+    close HND;
+    #$dbh->Query("INSERT INTO markiza_sk.a500
+    #(ID,IDattrs,hash,IDcategory,format,size,lng,active)
+    #VALUES
+    #('$nullid','$nullid','$hashes{$_}','$form{IDcategory}','$_','$images{'img_'.$_.'_size'}','sk','Y')
+    #");
+
+    #$dbh->Query("INSERT INTO markiza_sk.a500_attrs
+    #(IDattrs,about,inserttime,keywords)
+    #VALUES   ('$nullid','$form{about}','".time."','$form{keywords}')");
+    $haluzaren.="done!!!<br>";
+    #$f_t="Y";
+   }
+   #return $haluzaren;
+   if ($hashes{s})
+   {
+    use Image::Magick;
+
+    $image = Image::Magick->new;
+    $var2="../../!media/500/$var/$hashes{s}-s.jpg";
+    $var3="../../!media/500/$var/$hashes{f}-f.jpg";
+    $x = $image->Read($var2);
+    $newsize=sprintf("%dx%d",160,120);
+    $x = $image->Resize(geometry=>$newsize);
+    $haluzaren.="writing scaled image with hash ../../!media/500/$var/$hashes{f}-f.jpg ....<br>";
+    $x = $image->Write($var3);
+    $haluzaren.="Done!<br>";
+   }
+  }
+
+  #return $haluzaren."the image id is: $nullid";
+
+  #if ($id)
+  #{
+  # $dbh->Query("UPDATE markiza_sk.a500 SET IDcategory='$form{IDcathegory}',cathegory='$form{IDcathegory_}',about='$form{about}',about2='$form{about2}',format_t='$f_t',format_s='$f_s',format_o='$f_o',starttime='$current_time' WHERE ID='$id' LIMIT 1");
+  #}
+  #else
+  #{
+  # $dbh->Query("INSERT INTO photogallery(IDcathegory,cathegory,format_t,format_s,format_o,starttime,about) VALUES ('$form{IDcathegory}','$form{IDcathegory_}','$f_t','$f_s','$f_o','$current_time','$form{about}')");
+  #}
+
+  #return $box;
+
+  return "\n<script>\nparent.document.frames['frm_base'].location.reload();\n</script>";
+ }
+ else #-------------------------------------||||||||||------------------------------------------------||||||||||||||
+ {
+  $HTML_HEADER{BODY}{extract}="yes";
+  $db_micro = $dbh->Query("SELECT a.ID,a.IDattrs,a.IDcategory,a.hash,a.format,b.about,b.keywords FROM markiza_sk.a500 AS a,markiza_sk.a500_attrs AS b WHERE a.ID='$id' AND a.IDattrs=b.IDattrs LIMIT 4");
+  while (%db_micro_line=$db_micro->FetchHash())
+  {
+   $images{$db_micro_line{format}}=$db_micro_line{hash};
+   #return $db_micro_line{format};
+   $images{IDcategory}=$db_micro_line{IDcategory};
+   $images{about}=$db_micro_line{about};
+   $images{keywords}=$db_micro_line{keywords};
+   #$mf.=$db_micro_line{hash}.",";
+  }
+
+   #return $images{o};
+  #return "SELECT ID,hash,format FROM markiza_sk.a500 WHERE ID='$id' LIMIT 4";
+  #return $mf;
+
+  $id=~/^(....)/i;
+  my $var=$1;
+
+  #foreach (keys %images)
+  #{
+   #write binary into hash from $images{format}
+  #}
+
+    #$db_micro = $dbh->Query("SELECT ID,IDcategory,format,starttime FROM markiza_sk.a500 WHERE ID='$id' LIMIT 1");
+  #if (@db_micro_line=$db_micro->FetchRow())
+  #if ($db_micro)
+  #{
+  # &save_log(1,"editacia obrazku id=$id $db_micro_line[6]");
+  #}
+  #else
+  #{
+  # &save_log(1,"editacia noveho obrazku");
+  #}
+
+  my $nullid=sprintf('%07d',$db_micro_line[0]);
+
+  my $mdl_temp=<<"HEADER";
+  <table width=100% cellspacing=0 cellpadding=0 border=0><tr><td drag_here>
+  <form name="$form{type}\_$id"
+  action="core.pl?type=$form{type}&id=$id&set=yes" method="POST" ENCTYPE="multipart/form-data" target="frm_micro">
+  </td><td width=100% style="FONT:10px Verdana;">
+HEADER
+
+=head1
+  my $tree_temp;
+  my $tree_temp_line=<<"HEADER";
+  <table width=100% cellspacing=0 cellpadding=0>
+    <tr>
+     <%OD%>
+     <td><img src=t.gif width=3 height=1 border=0><BR></td>
+     <td nowrap style="FONT:bold 11px Verdana;"></td>
+	 <td>
+	 <td width=100% style="FONT:9px Verdana;"
+	 	onmouseover="this.style.background='blue';this.style.color='white';"
+		onmouseout="this.style.background='';this.style.color='';"
+		<%PLUS%>
+	 ><%NAME%></td>
+ 	</tr>
+  </table>
+HEADER
+
+=cut
+
+  my $tree_temp;
+
+  my $tree_temp_od="-";
+  my $selected;
+  my $selected2;
+  my $db_micro1 = $dbh->Query("
+	SELECT ID,name,xdata
+	FROM markiza_sk.a500_category
+	ORDER BY ID");
+  while (@db_micro1_line=$db_micro1->FetchRow())
+  {
+   $od="";
+   for (my $i=1; $i< length($db_micro1_line[0])/2; $i++)
+   { if ($i+1<length($db_micro1_line[0])/2) {$od.="&nbsp;&nbsp;&nbsp;&nbsp;";} else {$od.="&nbsp;'-";} }
+   $od.="<img src=\"$tom::H_media/grf/admin/tree_0.gif\" border=0>";
+   #$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$db_micro1_line[0]';\">&nbsp;$db_micro1_line[0]</div>\n";
+   #$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE2'].value='$db_micro1_line[0]';this.parentElement.parentElement.all['VALUE'].value='$db_micro1_line[1]';\">&nbsp;$from$db_micro1_line[2]</div>\n";
+   $mdl_micro.=&select_add('value'=>$db_micro1_line[1],'html'=>$od.$db_micro1_line[1],'plus'=>"this.parentElement.parentElement.all['VALUE2'].value='$db_micro1_line[0]';this.parentElement.parentElement.all['VALUE'].value='$db_micro1_line[1]';");
+  }
+  $db_micro1 = $dbh->Query("SELECT name FROM markiza_sk.a500_category WHERE ID='$images{IDcategory}'");
+  if (@db_micro1_line=$db_micro1->FetchRow()) { $images{category_name}=$db_micro1_line[0]; }
+  $mdl_temp.=&select_create(
+ 	'name'		=>	"IDcathegory_",
+	'value'		=>	$images{category_name},
+	'plus'             =>   "<input id=VALUE2 value=\"$images{IDcategory}\" name=IDcategory type=hidden>",
+	'maxlength'	=>	30,
+	'width'		=>	250,
+	'height'	=>	200,
+	'drag_resizeX'	=>	'-150',
+	'select'	=>	$mdl_micro
+  );
+
+
+  #my $mdl_micro;
+  #my $selected;
+  #my $selected2;
+  #$db_micro1 = $dbh->Query("SELECT ID,fullname,tinyname FROM photogallery_cathegory ORDER BY ID");
+  #while (@db_micro1_line=$db_micro1->FetchRow())
+  #{
+  # my $from;
+  # for (my $i=1;$i<length($db_micro1_line[0]);$i++){$from.="&nbsp;&nbsp;";}
+  # if ($db_micro_line[1] eq $db_micro1_line[0])
+  #{$selected=$db_micro1_line[2];$selected2=$db_micro1_line[0];}
+  #$mdl_micro.=&select_add('value'=>$db_micro1_line[2],'html'=>$from.$db_micro1_line[2],'plus'=>"this.parentElement.parentElement.all['VALUE2'].value='$db_micro1_line[0]';");
+  #}
+
+#  $mdl_temp.=&select_create(
+# 	'name'		=>	"IDcathegory_",
+#	'plus'		=>	"<input id=VALUE2 value=\"$selected2\" name=IDcategory type=hidden>",
+#	'value'		=>	$selected,
+#	'maxlength'	=>	100,
+#	'width'		=>	350,
+#	'height'	=>	200,
+#	'select'	=>	$tree_temp
+# );
+
+
+  $mdl_temp.="Autor:<br>";
+
+  my $mdl_micro;
+  $db_micro1 = $dbh->Query("SELECT ID,nickname FROM markiza_sk.a120 ORDER BY nickname");
+  while (@db_micro1_line=$db_micro1->FetchRow())
+  {
+   #$mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$db_micro1_line[0]';\">&nbsp;$db_micro1_line[0]</div>\n";
+   $mdl_micro.=&select_add('value'=>$db_micro1_line[1],'html'=>$db_micro1_line[1],'plus'=>"this.parentElement.parentElement.all['VALUE2'].value='$db_micro1_line[0]';this.parentElement.parentElement.all['VALUE'].value='$db_micro1_line[1]';");
+  }
+  $db_micro1 = $dbh->Query("SELECT nickname FROM markiza_sk.a120 WHERE ID='$db_micro_line{IDauthor}'");
+  if (@db_micro1_line=$db_micro1->FetchRow()) { $db_micro_line{author}=$db_micro1_line[0]; }
+  $mdl_temp.=&select_create(
+ 	'name'		=>	"author",
+	'value'		=>	$db_micro_line{author},
+	'plus'             =>   "<input id=VALUE2 value=\"$images{IDauthor}\" name=IDauthor type=hidden>",
+	'maxlength'	=>	30,
+	'width'		=>	250,
+	'height'	=>	200,
+	'drag_resizeX'	=>	'-150',
+	'select'	=>	$mdl_micro
+  );
+
+  $mdl_temp.=<<"HEADER";
+  Alt:<br>
+  <input type=text name="about" value="$images{about}" maxlength=200 class=input0 style="width:362px;"><BR>
+  Keywords:<br>
+  <input type=text name="keywords" value="$images{keywords}" maxlength=200 class=input0 style="width:362px;"><BR>
+  <table width=100% cellspacing=2 cellpadding=3 border=0>
+  <tr><td valign=top class=input0 width=85><input type=text name="img_t_size" class=input0 style="width:82px;"><BR>
+  <img name="image" src="$tom::H_media/500/$var/$images{t}-t.jpg" border=1 width=40 height=40 onload="parentElement.all['img_t_size'].value=this.width+'x'+this.height;"><BR>
+  <input type=file name="img_t" class=input0 style="width:82px;" drag_here onchange="parentElement.all['image'].src=this.value;"><BR></td>
+  <td class=input0 width=100%><input type=text name="img_s_size" class=input0 style="width:258px;"><BR><div class=input0 style="overflow:scroll;
+			display:block;
+			width: 258px;
+			height: 150px;
+			border: solid #000000;
+			border-width: 1px 1px 1px 1px;">
+  <img name="image" src="$tom::H_media/500/$var/$images{s}-s.jpg" border=1  onload="parentElement.parentElement.all['img_s_size'].value=this.width+'x'+this.height;"><BR></div>
+  <input type=file name="img_s" class=input0 style="width:258px;" drag_here onchange="parentElement.all['image'].src=this.value;"><BR></td>
+  </tr>
+  </table>
+
+
+  <table width=100% cellspacing=2 cellpadding=3 border=0>
+  <tr><td valign=top class=input0><input type=text name="img_o_size" class=input0 style="width:350px;"><BR>
+  <div class=input0 style="overflow:scroll;
+ 			display:block;
+			width: 350px;
+			height: 200px;
+			border: solid #000000;
+			border-width: 1px 1px 1px 1px;">
+  <img name="image" src="$tom::H_media/500/$var/$images{o}-o.jpg" border=0 onload="parentElement.parentElement.all['img_o_size'].value=this.width+'x'+this.height;"><BR></div>
+  <input type=file name="img_o" class=input0 style="width:350px;" drag_here onchange="parentElement.all['image'].src=this.value;"><BR></td></tr>
+  </table>
+
+  <table height=16 width=100% cellspacing=0 cellpadding=0 border=0 baackground="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit drag_here value="Ulož!" class=btn0 onclick="box_erase2();"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table>
+
+HEADER
+
+
+  $mdl_temp.="</td><td></form></td></tr></table>";
+
+  my $box=&box_create2("Úprava/Vloženie fotografie",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	362,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp);
+
+  return $box;
+ }
+}
+
+
+1;

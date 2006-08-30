@@ -1,0 +1,101 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+
+ $env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+ $env{db_500}=$TOM::DB_name unless $env{db_500};
+
+ $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+ $env{db_400}=$TOM::DB_name unless $env{db_400};
+
+ my $var;
+
+ #foreach (keys %XSGN){$_=~/^a/ && do {$var.="$_|";}}$var=~s/\|$//g;
+
+ my %cat_used;
+
+ while ($env{xrelated}=~s|<VAR id="(.*?)" value="(.*?)" />||s)
+ {
+  #Tomahawk::debug::log(0,"mam kluc $1 $2");
+  next unless $XSGN{$1};
+  my $var=$1;
+  my $null=$2;
+  #Tomahawk::debug::mdllog(5,"spracujem '$var'");
+  main::_log("spracujem '$var'");
+  if ($var eq "a500")
+  {
+   $env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+   $env{db_500}=$TOM::DB_name unless $env{db_500};
+   if ($XSGN{a500_cat})
+   {
+    my $db0=$main::DBH->Query("
+    	SELECT	IDcategory
+	FROM	$env{db_500}.a500_attrs
+	WHERE	ID='$null'
+		AND starttime<=$tom::time_current
+		AND (endtime>=$tom::time_current OR endtime=0)
+		AND active='Y'
+		AND (lng='$env{lng}' OR lng='')
+	LIMIT 1");
+    # TUTO DOPLNIT TAHANIE Z INFO Z TEJ KATEGORIE, CI JE OTVORENA
+    # PRE PREZERANIE
+    if (my @db0_line=$db0->fetchrow)
+    {
+     next if $cat_used{a500}{$db0_line[0]}; # serem na to ak som toto uz pisal
+     $cat_used{a500}{$db0_line[0]}++;
+#=head1
+     my $db1=$main::DBH->Query("
+	SELECT	ID
+	FROM	$env{db_500}.a500_category
+	WHERE	ID='$db0_line[0]'
+		AND active='Y'
+		AND (lng='$env{lng}' OR lng='')
+	LIMIT 1");
+     if (my @db1_line=$db1->fetchrow)
+     {
+      $XSGN{NULL}=$XSGN{a500_cat};
+      $XSGN{NULL}=~s|<%ID%>|$db0_line[0]|g;
+      $XSGN{TMP}=~s|<#a500_cat#>|$XSGN{NULL}|;
+      next;
+     }
+     else {next;} # neexistuje kategoria, nieje zapnuta...
+#=cut     
+     next;
+    }
+   }
+  }
+  if ($XSGN{$var})
+  {
+   $XSGN{NULL}=$XSGN{$var};
+   $XSGN{NULL}=~s|<%ID%>|$null|;
+   $XSGN{TMP}=~s|<#$var#>|$XSGN{NULL}|;
+   next;
+  }
+ }
+
+
+
+return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,245 @@
+sub BaseModul{
+require "_info.m";
+#require "_table.m";
+
+
+my $info=&info_create(
+'icon'	=>	True,
+'title'	=>	"Treeindex of organization structure",
+);
+
+
+
+my %struct;
+my %struct_base;
+my @struct0;
+
+my $db0 = $dbh->Query("SELECT ID,IDre,name,typeID,data FROM orgstruct_category ORDER BY ID");
+while (my @db0_line=$db0->FetchRow())
+{
+# $struct{$db0_line[0]}=$db0_line[1];
+# $struct_base{$db0_line[0]}=[$db0_line[1],$db0_line[2],$db0_line[3],$db0_line[4]];
+
+ my $nullid=sprintf ('%04d', $db0_line[0]);
+ $struct{$nullid}=$db0_line[1];
+ $struct_base{$nullid}=[$db0_line[1],$db0_line[2],$db0_line[3],$db0_line[4]];
+}
+
+
+#$mdl_temp.="<BR>";
+
+
+
+#if ($hovinecko){
+# HLADACI STROM :))) STARY
+
+#$mdl_temp.="hladanie nul<BR>";
+foreach my $key(sort keys %struct)
+{
+ if (($struct{$key}==0)&&(defined $struct{$key}))
+ {
+  push @struct0,$key,0;
+  delete $struct{$key};
+#  $mdl_temp.="$key-mam nulu<BR>";
+  my $uroven=1;
+  my @urovne;
+  $urovne[$uroven]=$key;
+
+  while ($uroven>0)
+  {
+   my $nasiel;
+   foreach my $key0(sort keys %struct)
+   {
+    next if $nasiel;
+    if ($urovne[$uroven]==$struct{$key0})
+    {
+     push @struct0,$key0,$uroven;
+#     $mdl_temp.=" $uroven $key0=>$struct{$key0}<BR>";
+     $nasiel=1;
+     $uroven++;
+     $urovne[$uroven]=$key0;
+     delete $struct{$key0};
+    }
+   }
+   if (!$nasiel)
+   {
+    $uroven--;
+   }
+  }
+
+ }
+}
+#}
+
+
+
+
+# KRESLIIIME
+
+my $mdl_temp=<<"HEADER";
+
+<table width=100% cellspacing=0 celpadding=0 border=0>
+<tr>
+ <td valign=top><img src="$h_grf/admin/ftree_icon_0.gif" border=0><BR></td>
+ <td width=100%>
+
+<table width=100% cellspacing=1 cellpadding=0 border=0
+	style="BACKGROUND:#6487DC;">
+<tr>
+ <td bgcolor="#6487DC" style="FONT:bold 11px Verdana;">&nbsp;/</td>
+
+ <td bgcolor="#7497EC" style="FONT:bold 10px Verdana;">&nbsp;<a href="core.pl?type=orgstruct_category_add&id=0" target="frm_micro"><font color=white><img src="$h_grf/admin/close4.gif" border=0></font></a>&nbsp;</td>
+
+ <td width=100%></td>
+</tr>
+</table>
+
+ </td>
+</tr>
+</table>
+
+HEADER
+
+
+my $mdl_td=<<"HEADER";
+
+<td align=middle valign=top style="FONT:9px Verdana;" <%BG-!TD!%>><%IN-!TD!%><img src="$h_grf/t.gif" width=15 height=1 border=0><BR></td>
+
+HEADER
+
+
+my $mdl_line=<<"HEADER";
+
+<table width=100% cellspacing=0 celpadding=0 border=0>
+<tr>
+ <%TD%>
+ <td valign=top><img src="$h_grf/admin/ftree_icon_<%ICON%>.gif" border=0><BR></td>
+ <td width=100%>
+
+<table width=100% cellspacing=1 cellpadding=0 border=0
+	style="BACKGROUND:#6487DC;"
+	onmouseover="this.style.background='#94B7FC';"
+	onmouseout="this.style.background='';"
+>
+<tr>
+ <td width=100% bgcolor="#6487DC" style="FONT:11px Verdana;">&nbsp;<B><%NAME%></B> (#<%ID%>) <%TYPE%></td>
+
+ <td bgcolor="#7497EC" style="FONT:bold 10px Verdana;">&nbsp;<a href="core.pl?type=orgstruct_category_up&id=<%ID%>" target="frm_micro"><font color=white>UP</font></a>&nbsp;</td>
+
+ <td bgcolor="#7497EC" style="FONT:bold 10px Verdana;">&nbsp;<a href="core.pl?type=orgstruct_category_dwn&id=<%ID%>" target="frm_micro"><font color=white>DWN</font></a>&nbsp;</td>
+
+ <td bgcolor="#7497EC" style="FONT:bold 10px Verdana;">&nbsp;<a href="core.pl?type=orgstruct_category_edit&id=<%ID%>" target="frm_micro"><font color=white><img src="$h_grf/admin/list.gif" border=0></font></a>&nbsp;</td>
+
+ <td bgcolor="#7497EC" style="FONT:bold 10px Verdana;">&nbsp;<a href="core.pl?type=orgstruct_category_add&id=<%ID%>" target="frm_micro"><font color=white><img src="$h_grf/admin/close4.gif" border=0></font></a>&nbsp;</td>
+
+ <td bgcolor="#7497EC" style="FONT:bold 10px Verdana;">&nbsp;<a href="core.pl?type=orgstruct_category_del&id=<%ID%>" target="frm_micro"><font color=white><img src="$h_grf/admin/close1.gif" border=0></font></a>&nbsp;</td>
+</tr>
+</table>
+
+ </td>
+</tr>
+</table>
+
+HEADER
+
+
+
+my $lasttd;
+for ($i=0;$i<@struct0;$i=$i+2)
+{
+ $mdl_temp.=$mdl_line;
+ my $ID=$struct0[$i];
+ my $name=$struct_base{$ID}[1];
+ $mdl_temp=~s|<%NAME%>|$name|g;
+ if ($struct_base{$ID}[3])
+ {
+  $mdl_temp=~s|<%ICON%>|1|g;
+ }
+ $mdl_temp=~s|<%ICON%>|0|g;
+
+ my $db0 = $dbh->Query("SELECT type FROM orgstruct_def WHERE ID='$struct_base{$ID}[2]'");
+ if (my @db0_line=$db0->FetchRow()){$mdl_temp=~s|<%TYPE%>|[$db0_line[0]]|g;}
+ else{$mdl_temp=~s|<%TYPE%>||g;}
+
+ $mdl_temp=~s|<%ID%>|$ID|g;
+
+
+ for (0..$struct0[$i+1])
+ {
+  $mdl_temp=~s|<%TD%>|$mdl_td<%TD%>|g;
+
+  if ($_ == $struct0[$i+1]) # POSLEDNE V PORADI
+  {
+
+
+   $mdl_temp=~s|<%BG-$_%>|background="$h_grf/admin/ftree_bg_0.gif"|g;
+   my $plus=$_+1;
+   $mdl_temp=~s|<%BG-$plus%>||g;
+
+   if ($struct0[$i+3]>$struct0[$i+1])
+   {
+    $mdl_temp=~s|<%IN-!TD!%>|<img src="$h_grf/t.gif" width=1 height=2 border=0><BR><img src="$h_grf/admin/ftree_minus_0.gif" border=0 style="cursor:hand;" onclick="if (ftree_$ID.style.display=='block'){ftree_$ID.style.display='none';this.src='$h_grf/admin/ftree_plus_0.gif'}else{ftree_$ID.style.display='block';this.src='$h_grf/admin/ftree_minus_0.gif'}"><BR>|g;
+    # OTVARAM NOVE DIV
+    $mdl_temp.="<div id=\"ftree_$ID\" style=\"display:block;\">";
+   }
+   elsif ($struct0[$i+3]<$struct0[$i+1])
+   {
+    $mdl_temp=~s|<%IN-!TD!%>|<img src="$h_grf/admin/ftree_lom_0.gif" border=0><BR>|g;
+    # UZATVARAM DIVS
+    for my $mindiv($struct0[$i+3]..$struct0[$i+1]-1)
+    {$mdl_temp.="</div>";}
+   }
+   else
+   {
+    if ($struct0[$i+2])
+    {
+     $mdl_temp=~s|<%IN-!TD!%>|<img src="$h_grf/t.gif" width=1 height=5 border=0><BR><img src="$h_grf/admin/ftree_hor_0.gif" border=0><BR>|g;
+     $mdl_temp=~s|<%BG-!TD!%>|background="$h_grf/admin/ftree_bg_0.gif"|g;
+    }
+    else
+    {
+     $mdl_temp=~s|<%IN-!TD!%>|<img src="$h_grf/admin/ftree_lom_0.gif" border=0><BR>|g;
+    }
+   }
+
+   $mdl_temp=~s|<%IN-!TD!%>|<%PLUS%>|g;
+  }
+  else # VSETKY OSTATNE
+  {
+   
+
+  }
+
+  $mdl_temp=~s|!TD!|$_|g;
+ }
+
+
+ $lasttd=$struct0[$i+1];
+
+
+
+
+ $mdl_temp=~s|<%TD%>||g;
+}
+
+
+
+
+
+
+
+return $info.$mdl_temp;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

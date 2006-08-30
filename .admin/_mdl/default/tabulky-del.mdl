@@ -1,0 +1,46 @@
+sub BaseModul
+{
+my $id=$form{id};
+if ($form{set})
+{
+# $HTML_HEADER{BODY}{extract}="yes";
+ $dbh->Query("DELETE FROM sport_markiza_sk.tabulky WHERE ID='$id' LIMIT 1");
+ return "\n<script>\nparent.document.frames['frm_base'].location.reload();\n</script>";
+}
+else
+{
+ $HTML_HEADER{BODY}{extract}="yes";
+
+ $db_micro = $dbh->Query("SELECT ID FROM sport_markiza_sk.tabulky WHERE ID='$id' LIMIT 1");
+ if (@db_micro_line=$db_micro->FetchRow())
+ {
+  my $mdl_temp=<<"HEADER";
+<table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit drag_here style="COLOR:white;" value="ZMAZAŤ!" class=btn0 onclick="load_box('core.pl?type=$form{type}&set=yes&id=$id');box_erase();"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table>
+HEADER
+
+ my $box=&box_create2("Zmaza tabulku",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	150,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp);
+
+ return $box;
+ }
+ return undef;
+}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

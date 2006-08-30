@@ -1,0 +1,681 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+
+use TOM::Net::HTTP::UserAgent; # detekcia a praca s UserAgentami
+use Utils::datetime;
+use TOM::Utils::datetime;
+use TOM::Utils::vars;
+use TOM::Net::email;
+use DateTime;
+
+use strict;
+
+our $authors = "gregor\@webcom.sk;fordinal\@webcom.sk";
+
+=head1
+DESCRIPTION
+	jedna sa o univerzalny cron, kde by boli udaje definovane len v
+	sql selecte, a bola by zobrazovane podla sablony, no nebolo by
+	potrebne dalsie prepocitavanie dat
+
+=head1
+CLAIMS
+	- hlavicka webcomu
+	- nadesignovanie vystupu zo selectu
+		- ziadne preratavanie (tj. ani precenta ani nic)
+		- okrem loga, ani ziadna grafika
+
+=cut
+
+sub execute
+{
+	alarm(0);
+	
+	# last week
+	my $dt = DateTime->new('year' => $main::Fyear,'month' => $main::Fmom,'day' => $main::Fmday);
+	$dt->add('days'=>-7);
+	my ($week_last_year, $week_last_number) = $dt->week;
+	
+	my %env=@_;
+
+	$env{lng} = 'en' unless $env{lng};
+	$env{type} = 'empty' unless $env{type};
+	#$env{to_email} = $TOM::contact{'stats'}.";".$TOM::contact{'TOM'};
+	$env{to_email} = 'fordinal@webcom.sk' unless $env{to_email};
+	#$env{to_email} = 'dev@webcom.sk;web@webcom.sk';
+	$env{to_email}=TOM::Utils::vars::unique_split($env{to_email});
+	#$env{to_email} = 'gregor@webcom.sk';
+	
+		my $days=10;
+		my $from=$main::time_current-(86400*($days+1));
+		my %date=Utils::datetime::ctodatetime($from,format=>1);
+		$from="$date{year}-$date{mom}-$date{mday}";
+	
+	my %types=
+	(
+		'IP-false' =>
+		{
+			'db'=>'stats',
+			'sql'=>
+			"
+				SELECT
+					IP,
+					user_agent,
+					COUNT(*) AS requests,
+					COUNT(DISTINCT(user_agent_name)) AS browsers,
+					COUNT(DISTINCT(IDhash)) AS users,
+					COUNT(DISTINCT(IDsession)) AS sessions,
+					COUNT(*)/COUNT(DISTINCT(IDhash)) AS reqperuser,
+					COUNT(*)/COUNT(DISTINCT(IDsession)) AS reqpersession,
+					COUNT(DISTINCT(IDsession))/COUNT(DISTINCT(IDhash)) AS sessionperuser
+				FROM TOM.a110_weblog_rqs
+				WHERE
+					reqtype IN ('B','m','w') AND
+					reqdatetime>'$from'
+				GROUP BY IP
+				ORDER BY requests DESC
+				LIMIT 0,50;
+			",
+			'title'=>"Most used REMORE_ADDR IP",
+			'description'=>"Most used REMORE_ADDR IP in browsers",
+			'table-title'=>"",
+			'table-description'=>"",
+		},
+		
+		'IP-users' =>
+		{
+			'db'=>'stats',
+			'sql'=>
+			"
+				SELECT
+					IP,
+					COUNT(*) AS requests,
+					COUNT(DISTINCT(IDhash)) AS users,
+					COUNT(DISTINCT(IDsession)) AS sessions,
+					COUNT(*)/COUNT(DISTINCT(IDsession)) AS req_per_session,
+					COUNT(DISTINCT(user_agent_name)) AS user_agents
+				FROM `a110_weblog_rqs`
+				WHERE
+					reqdatetime>'$from'
+				GROUP BY IP
+				ORDER BY users DESC
+				LIMIT 0,100;
+			",
+			'title'=>"Most used IP adresses",
+			'description'=>"Most used IP adresses",
+			'table-title'=>"",
+			'table-description'=>"",
+		},
+		
+		'IP-without_referer' =>
+		{
+			'db'=>'stats',
+			'sql'=>
+			"
+				SELECT
+					IP,
+					COUNT(*) AS requests,
+					COUNT(DISTINCT(IDhash)) AS users,
+					COUNT(DISTINCT(IDsession)) AS sessions,
+					COUNT(*)/COUNT(DISTINCT(IDsession)) AS req_per_session,
+					COUNT(DISTINCT(user_agent_name)) AS user_agents,
+					user_agent_name
+				FROM `a110_weblog_rqs`
+				WHERE
+					referer='' AND
+					reqdatetime>'$from'
+				GROUP BY IP
+				ORDER BY requests DESC
+				LIMIT 0,100;
+			",
+			'title'=>"Most used IP adresses without referer",
+			'description'=>"Most used IP adresses without referer",
+			'table-title'=>"",
+			'table-description'=>"",
+		},
+		
+		'USRM-big_sessions' =>
+		{
+			'db'=>'stats',
+			'sql'=>
+			"
+				SELECT
+					IDhash,
+					COUNT(*) AS requests,
+					COUNT(DISTINCT(IDhash)) AS users,
+					COUNT(DISTINCT(IDsession)) AS sessions,
+					COUNT(*)/COUNT(DISTINCT(IDsession)) AS req_per_session,
+					COUNT(DISTINCT(user_agent_name)) AS user_agents,
+					user_agent_name
+				FROM `a110_weblog_rqs`
+				WHERE
+					IDhash<>'' AND
+					reqdatetime>'$from'
+				GROUP BY IDhash
+				HAVING requests>1000
+				ORDER BY req_per_session DESC
+				LIMIT 0,100;
+			",
+			'title'=>"Too many requests per session",
+			'description'=>"Too many requests per session",
+			'table-title'=>"",
+			'table-description'=>"Ak ma niekto privela requests na session, urcite nejde o normalneho usera, ale o robot/vandaliser",
+		},
+		
+		'agent_unknown' =>
+		{
+			'db'=>'stats',
+			'sql'=>
+			"
+				SELECT user_agent,
+					COUNT(*) AS requests,
+					COUNT(DISTINCT(IDhash)) AS users,
+					COUNT(*)/COUNT(DISTINCT(IDhash)) AS reqperuser
+				FROM a110_weblog_rqs
+				WHERE
+					active='Y' AND
+					user_agent_name IS NULL
+				GROUP BY
+					user_agent
+				HAVING
+					requests>1
+				ORDER BY
+					requests DESC
+				LIMIT
+					0,1000
+			",
+			'title'=>"Unknown user agents",
+			'description'=>"",
+			'table-title'=>"",
+			'table-description'=>"",
+		},
+		
+		'cache_efectivity' =>
+		{
+			'db'=>'sys',
+			'sql'=>
+			"
+				SELECT
+					ID_config,
+					domain_sub,
+					CONCAT(Capp,'-',Cmodule) AS module,
+					Cid AS cache_type,
+					CONCAT(COUNT( * ),'-',COUNT( DISTINCT(Cid_md5) )) AS count,
+					SUM(loads) AS uses,
+					SUM(loads)/COUNT(*) AS effectivity,
+					SUM(LENGTH(body)) AS bytes,
+					time_duration
+				FROM TOM.a150_cache
+				GROUP BY
+					ID_config,domain_sub
+				HAVING effectivity<10
+				ORDER BY bytes DESC
+			",
+			'title'=>"Most ineffective caches",
+			'description'=>"",
+			'table-title'=>"",
+			'table-description'=>"",
+		},
+		
+		
+		'TypeID_effectivity' =>
+		{
+			'db'=>"stats",
+			'sql'=>
+			"
+				SELECT
+					domain_sub,
+					query_TID,
+					SUM(*) requests,
+					AVG(load_req) AS load_req,
+					AVG(load_proc) AS load_proc
+				FROM TOM.a110_weblog_rqs
+				WHERE
+					reqdatetime>'$from'
+				GROUP BY domain_sub, query_TID
+				HAVING requests>1000
+				ORDER BY load_req DESC
+				LIMIT 0,100
+			",
+			'title'=>"Most ineffective TypeID",
+			'description'=>"",
+			'table-title'=>"",
+			'table-description'=>"",
+		},
+		
+		'domain_effectivity' =>
+		{
+			'db'=>"stats",
+			'sql'=>
+			"
+				SELECT
+					domain_sub,
+					COUNT(*) AS requests,
+					AVG(load_req) AS load_req,
+					AVG(load_proc) AS load_proc
+				FROM TOM.a110_weblog_rqs
+				WHERE
+					reqdatetime>'$from'
+				GROUP BY domain_sub
+				ORDER BY load_req DESC
+			",
+			'title'=>"Most ineffective domains",
+			'description'=>"",
+			'table-title'=>"",
+			'table-description'=>"",
+		},
+		
+		'agent_checker' =>
+		{
+			'db'=>"stats",
+			'sql'=>
+			"
+				SELECT
+					domain_sub,
+					user_agent_name,
+					IP,
+					COUNT(*) AS requests
+				FROM a110_weblog_rqs
+				WHERE
+					active='Y' AND
+					reqtype='c' AND
+					reqdatetime>'$from'
+				GROUP BY domain_sub,user_agent_name,IP
+				ORDER BY domain_sub,user_agent_name,IP ASC
+			",
+			'title'=>"List of used checkers (user_agents)",
+			'description'=>"",
+			'table-title'=>"",
+			'table-description'=>"",
+		},
+		
+		
+		'robot_31days' =>
+		{
+			'db'=>"stats",
+			'sql'=>
+			"
+				SELECT
+					substring(reqdatetime,1,10) AS date,
+					domain_sub,
+					user_agent_name as robot,
+					COUNT(*) as visits
+				FROM
+					a110_weblog_rqs
+				WHERE
+					reqtype='R' AND
+					reqdatetime>'$from'
+				GROUP BY
+					substring(reqdatetime,1,10),domain_sub,user_agent_name
+				ORDER BY 
+					date DESC, domain_sub, visits DESC
+			",
+			'title'=>"Sites visited by search engine robots",
+			'description'=>"",
+			'table-title'=>"",
+			'table-description'=>"",
+		},
+		
+		
+		'robot_hours' =>
+		{
+			'db'=>"stats",
+			'sql'=>
+			"
+				SELECT
+					user_agent_name as robot,
+					substring(reqdatetime,12,2) AS date,
+					COUNT(*) as visits
+				FROM
+					a110_weblog_rqs
+				WHERE
+					reqtype='R' AND
+					reqdatetime>'$from'
+				GROUP BY
+					user_agent_name,
+					substring(reqdatetime,12,2)
+				ORDER BY
+					robot,
+					date,
+					visits
+			",
+			'title'=>"Hours visited by robots",
+			'description'=>"",
+			'table-title'=>"",
+			'table-description'=>"",
+		},
+		
+		
+		'domain_errors' =>
+		{
+			'db'=>"stats",
+			'sql'=>
+			"
+				SELECT
+					reqdatetime AS week,
+					domain_sub AS domain,
+					visits_all AS all_pages,
+					visits_failed AS failed_pages,
+					CONCAT((visits_failed/visits_all)*100,'%') AS percent
+				FROM
+					a110_weblog_week
+				WHERE
+					domain_sub<>'' AND
+					visits_failed>1
+				GROUP BY
+					reqdatetime,
+					domain_sub
+				HAVING
+					week LIKE '$week_last_year/$week_last_number'
+				ORDER BY
+					reqdatetime DESC,
+					((visits_failed/visits_all)*100) DESC
+				LIMIT 20
+			",
+			'title'=>"TOP-20 najbugovejsich portalov",
+			'description'=>"Tabulka je zoradena podla percenta chybovosti portalu",
+			'table-title'=>"",
+			'table-description'=>"percent = kolko percent stranok zo vsetkych vygenerovanych stranok bolo chybnych",
+		},
+		
+		
+		'empty' =>
+		{
+			'sql'=>
+			"
+			",
+			'title'=>"",
+			'description'=>"",
+			'table-title'=>"",
+			'table-description'=>"",
+		},
+		
+		
+		
+	);
+	
+	my $db=$types{$env{type}}{db};
+	$db="main" unless $db;
+	Database::connect::multi($db) || die "cannot connect all databases";
+	
+	
+	# STATS SELECT
+	my $sql_stats = $types{$env{type}}{sql};
+	# DEFINICIA TEXTOV
+	my %texts = (
+		'en' => {
+			'header-from' => '"Cyclone3 (<%HOST%>)" <TOM\@<%HOST%>>',
+			'header-subject' => "[STAT][a110+] $types{$env{type}}{title}",
+			'main-title' => $types{$env{type}}{title},
+			'main-desc' => $types{$env{type}}{description},
+			'table-title' => $types{$env{type}}{'table-title'},
+			'table-subtitle' => $types{$env{type}}{'table-description'},
+		},
+	);
+
+	# DESIGN
+
+	my %XSGN;
+	
+	$XSGN{TMP} = <<"XSGN";
+From: <\%FROM%>
+To: <\%TO%>
+Subject: <\%SUBJECT%>
+Date: <\%DATE%>
+List-Id: TOM3
+MIME-Version: 1.0
+Content-Type: multipart/related;
+ boundary="<\%BOUNDARY%>"
+
+This is a multi-part message in MIME format.
+--<\%BOUNDARY%>
+Content-Type: text/html;charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+<#HTML#>
+--<\%BOUNDARY%>
+Content-Type: image/gif;
+ name=\"webcom_icon.gif\"
+Content-ID: <part1.webcom.icon\@webcom.sk>
+Content-Transfer-Encoding: base64
+Content-Disposition: inline;
+ filename=\"webcom_icon.gif\"
+
+R0lGODlhlgAcAMQAAL/Awd/g4O0bI/f395iam7i5urCxss/Q0YiKjJCSk+/v8NfY2Ofn6Kip
+q8fIyfaNke84P/zU1v3i4/RxdvebnvV/hKCho4CChP///wAAAAAAAAAAAAAAAAAAAAAAAAAA
+ACH5BAAAAAAALAAAAACWABwAAAX/ICaOZGmeaIpaV6u+cCzPL0MQFuLQfD+yLp9wSBQxEg6A
+I0DYFZ8l4AVKrZ4aAIChYGEgrFApeEy1BACWRgGTIBPF7rjPrDUYMF95D67vwwBYAEcOFn40
+fIaJJQM3Cwo5DIoxiJKSA4QWBQqVMJScnxgWohabJwOiDSmPowMkCgAELS0EmidSCgYJshcE
+AK0qCgWxuxYOvyXBurIJtSdcoiIHDcsGpdENCC0J1SrTLWsnB7ILKAWyqSMO2buyOiZS7LsI
+BygD5vGyhST2+LIFxz9k2cA3D8OjfvRQBGgHcMSwC/oWrbsQYISBfrvABcS4K+G+h/0iigDZ
+j8C7dhwP/0zERw7FQ48jFu6yNkLcrHS7EgAIsKDAypYi4EHMYmAlxY/sEoxSJhKDzRaBvLWA
+GZSdgQM8L8ZrgHWBVm0pnrYp8bXFnRLKLiRUMNEAQEbLSEjhNoJf3BH3ZlUkwcBAU6cQaR6k
+WrUFgr042wEV4WBXJBQTFyvAB3DBXQwALrvaBdSTiMzjREyWRaBhDRERHjyIIAJxFIEnIp9I
+67oEaIgkbksBIFcW75GyCIuQqtGziLTg8iIwHWOCgOcCJqgwLqV24Qu/Tc0coWz5urEYGDAc
+sctAlvPnpUQ0jiGvPikaaTyADv1BCuqyrGP4mv3E17NP8ZZXQv+RwBE+68mSgv9lYOGRnw8Q
+0PccBPcpaMuDJtzWnwmjtdDKLQblg8EA25F3IDsJBnGCTEHsoh8MEkJXoYqvtaCfhi/sJh5U
+G13AwG3omDhVAEQWaSSRj4Vi4QkMXjDWRC++EKGEFK6wZI1HZejbCyxugyEGTRb1pQiyzcCe
+e9fFN8N8EtpnJY292XgCji+kpRkb8YA3glRnycAeciIoxxwMFdBXwXRXxpmlbVu+8JQsToxw
+W3AmPCqcCPZkZ9yke3XIy6AoLNCKBBRQIMGIiyn65qK5NarCACsttwg7eZhgZ6Qj9JWNprI0
+ZNdNFu1CgHULBFkTL64xodaFcPZ4o6sqTNonCWVtOEKGk4YFksMuvJJWQBbYsJPkiCQppQUl
+jxJgB0iE4Senli1Ye4Kn48a0C6iPctTtiYTBdWAJJOFjEparPhuvDFr95ZBZLyxgVFIwCSVw
+vXXl1Q+8/ah5XcFzQqvCjpcCdgFN9RCSlAGpitCTxOpGOYICJhNTQMoGOQASLSTjNUo5o1Ds
+1CjChQAAOw==
+--<\%BOUNDARY%>--
+XSGN
+
+	# Nalejem do designu
+	my $boundary = "--==".Utils::vars::genhash(32)."==--";
+	my $date = TOM::Utils::datetime::mail_current();
+	
+	$XSGN{TMP} =~ s|<%BOUNDARY%>|$boundary|g;
+
+	$XSGN{TMP} =~ s|<%FROM%>|$texts{$env{lng}}{'header-from'}|g;
+
+	my $body_email = "<$env{to_email}>"; $body_email =~ s|;|>,<|g;
+	$XSGN{TMP} =~ s|<%TO%>|$body_email|g;
+
+	$XSGN{TMP} =~ s|<%SUBJECT%>|$texts{$env{lng}}{'header-subject'}|g;
+	$XSGN{TMP} =~ s|<%HOST%>|$TOM::hostname|g;
+	$XSGN{TMP} =~ s|<%DATE%>|$date|g;
+
+	$XSGN{HTML} = <<"XSGN";
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+	</head>
+	<body>
+		<style>
+			body { font-family: Arial, Verdana; }
+
+			#page { width: 650px; }
+
+			/* Nadpis */
+			h1 { color: #808285; clear: left; }
+			.main-logo { float: left; margin: 0 15px 15px 0; }
+			/*.main-logo { margin: 0 15px 15px 0; } */
+				.main-title { font-size: 0.55em; }
+				.main-desc { font-size: 0.4em; font-weight: normal; }
+				/*.main-desc { color: #808285;
+										 margin: 10px 0 20px 0; font-size: 0.4em; font-weight: normal;
+										 border: 10px solid gray; border-width: 0 0 0 10px;
+										 padding: 0 0 0 10px;
+				}*/
+
+			/* Obsah */
+			#content { clear: both; }
+				#content table { width: 450px; }
+
+			table {
+				border: 1px dotted gray; border-width: 1px 1px 0 0;
+				font-size: 0.8em;
+				margin-bottom: 20px;
+			}
+			table td, table th {
+				border: 1px dotted gray; border-width: 0 0 1px 1px;
+				padding: 2px;
+				text-align: left;
+			}
+			table th { background: #e5e5e5; color: gray; }
+
+		</style>
+
+		<div id="page">
+			<h1>
+				<img class="main-logo" src="cid:part1.webcom.icon\@webcom.sk" alt="webcom logo" border="0" />
+				<div class="main-title"><\%main-title%></div>
+				<div class="main-desc"><\%main-desc%></div>
+			</h1>
+
+			<div id="content">
+				<#CONTENT#>
+			</div>
+		</div>
+	</body>
+</html>
+XSGN
+
+	$XSGN{HTML} =~ s|<%main-title%>|$texts{$env{lng}}{'main-title'}|g;
+	$XSGN{HTML} =~ s|<%main-desc%>|$texts{$env{lng}}{'main-desc'}|g;
+
+	$XSGN{CONTENT} = <<"XSGN";
+<#TABLE#>
+XSGN
+
+	$XSGN{TABLE} = <<"XSGN";
+				<table cellpadding="0" cellspacing="0">
+					<thead>
+						<tr>
+							<th colspan="<\%colscount%>"><\%title%></th>
+						</tr>
+						<tr>
+							<th colspan="<\%colscount%>"><\%subtitle%></th>
+						</tr>
+						<tr>
+							<#LINE_COL_NAME#>
+						</tr>
+					</thead>
+					<tbody>
+						<#LINE#>
+					</tbody>
+				</table>
+XSGN
+
+	$XSGN{LINE} = <<"XSGN";
+<tr>
+	<#LINE_COL_VAL#>
+</tr>
+<#LINE#>
+XSGN
+
+	$XSGN{LINE_COL_NAME} = <<"XSGN";
+<th><\%name%></th>
+<#LINE_COL_NAME#>
+XSGN
+
+	$XSGN{LINE_COL_VAL} = <<"XSGN";
+<td><\%val%></td>
+<#LINE_COL_VAL#>
+XSGN
+
+	# SPRACOVANIE
+
+	# statisticky select je definovany na zaciatku
+	my $db_stats = $main::DB{$db}->Query( $sql_stats );
+
+	my $line_count = $db_stats->numrows;
+	my $col_count = $db_stats->numfields;
+	my @col_names = $db_stats->name;
+
+	my $counter_line = 0; # pouzivam ho na to aby som vedel ci uz som na poslednom riadku
+	my $counter_col = 0; # ci listujem posledny stlpec
+
+	# vykreslim hlavicku
+	$XSGN{TABLE} =~ s|<%title%>|$texts{$env{lng}}{'table-title'}|g;
+	$XSGN{TABLE} =~ s|<%subtitle%>|$texts{$env{lng}}{'table-subtitle'}|g;
+	$XSGN{TABLE} =~ s|<%colscount%>|$col_count|g; # kedze bude tabulka len jedna,
+	                                              # mozem si dovolit pracovat rovno s XSGN{TABLE}
+	# vylistujem nazvy stlpcov
+	foreach my $col_name ( @col_names )
+	{
+		$counter_col++;
+		my $col = $XSGN{LINE_COL_NAME}; # design pre nazov stlpca
+
+		$col =~ s|<%name%>|$col_name|g; # nalejem meno stlpca
+
+		$XSGN{TABLE} =~ s|<#LINE_COL_NAME#>|$col|g; # nalejem do tabulky
+	}
+
+	# vykreslim riadky
+	while ( my %db_stats_line = $db_stats->fetchhash )
+	{
+		$counter_line++;
+		my $line = $XSGN{LINE}; # design riadku
+
+		# idem naliat hodnoty jednotlivych stlpcov
+		$counter_col = 0;
+		
+		foreach my $col_name(@col_names)
+		{
+			$counter_col++;
+			my $col = $XSGN{LINE_COL_VAL}; # design pre hodnotu stlpca
+
+			$db_stats_line{$col_name} = "&nbsp;" unless $db_stats_line{$col_name};
+			# toto robim kvoli tabulke, aby bola pekna aj ked je bunka prazdna
+			
+			main::_log("$col_name='$db_stats_line{$col_name}'");
+			
+			$col =~ s|<%val%>|$db_stats_line{$col_name}|g; # nalejem hodnotu stlpca
+
+			$line =~ s|<#LINE_COL_VAL#>|$col|g; # nalejem do riadku
+		}
+		
+		
+		$XSGN{TABLE} =~ s|<#LINE#>|$line|g; # nalejem do tabulky
+	}
+
+	$XSGN{TABLE} =~ s|<#.*?#>\n+||gs; # odstranim bordel
+
+	# nalejem do CONTENTu
+	$XSGN{CONTENT} =~ s|<#TABLE#>|$XSGN{TABLE}|;
+
+	# nalejem do HTML
+	$XSGN{HTML} =~ s|<#CONTENT#>|$XSGN{CONTENT}|;
+
+	# nalejem do TMP - hlavneho designu emailu
+	$XSGN{TMP} =~ s|<#HTML#>|$XSGN{HTML}|;
+
+
+	TOM::Net::email::send
+	(
+		from => 'dev\@webcom.sk',
+		to => $env{to_email},
+		to_name => '',
+		body => $XSGN{TMP}
+	);
+
+=head1
+	# Poslem mail
+	my $sql_send = "
+				INSERT INTO TOM.a130_send
+				SET
+					ID_md5='',
+					sendtime=unix_timestamp(),
+					priority='5',
+					from_name='$tom::H',
+					from_email='dev\@webcom.sk',
+					from_host='$tom::H',
+					from_service='',
+					to_name='',
+					to_email='$env{to_email}',
+					body='$XSGN{TMP}'
+		";
+	#main::_log( $sql_send );
+	my $db_send = $main::DB{main}->Query( $sql_send );
+=cut
+
+	return 1;
+}
+
+1;

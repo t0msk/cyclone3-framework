@@ -1,0 +1,158 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+#use Digest::MD5  qw(md5 md5_hex md5_base64);
+=head1 NAME
+login
+
+=head1 HEAD_VERSION_BUILD
+1.030722
+
+=head1 DESCRIPTION
+login, user menu a user-setup menu
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+
+<value id="preview" value="1" />
+<value id="output" value="xsgn" />
+
+</DESCRIPTION>
+
+
+=head1 CHANGES
+build 030722 - Deboot
+*) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+
+=cut
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+ Tomahawk::XLNGtoXSGN(); # insert XLNG do XSGN
+
+
+ $env{return}=$tom::H_www unless $env{return};
+
+
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $TOM::DB_name_USRM.a300_online
+	WHERE 	IDhash='$main::USRM{IDhash}'
+		AND IDsession='$main::USRM{IDsession}'
+		AND host='$tom::H_cookie'
+	LIMIT 1");
+ if (my %user=$db0->fetchhash)
+ {
+	
+	if ($user{logged} eq "Y")
+	{
+		#Tomahawk::debug::mdllog(4,"je lognuty");
+		# MAM 2 MOZNOSTI :)
+		# BUD NASTAVIM LEN USERA NA offline, ale potom sa neprenesu statistiky,
+		# alebo to proste spravim sam, ze usera prenesiem :)
+		# ak ho prenesiem sam a zmazem z online a on je autolog, potom
+		# sa automaticky zas logne hned po refreshi :))
+		my %user0;
+		$user0{cookies}="";
+		while ($user{cookies}=~s|<VAR id="(.*?)">(.*?)</VAR>||)
+		{
+			my $var=$1;
+			my $value=$2;
+			if ($var=~/^_/){$user0{cookies}.="<VAR id=\"".$var."\">".$value."</VAR>\n";next}
+		}
+		
+		#Tomahawk::debug::mdllog(9,"cookies = ".$user0{cookies});
+		$main::DB{main}->Query("
+			UPDATE
+				TOM.a300_users
+			SET
+				logtime	= '$user{logtime}',
+				reqtime	= '$user{reqtime}',
+				IPlast	= '$user{IP}',
+				rqs	= rqs+$user{rqs},
+				autolog	= 'N',
+				cookies	= '$user0{cookies}'
+			WHERE
+				IDhash='$user{IDhash}' AND
+				host='$tom::H_cookie'
+			LIMIT 1
+		");
+		
+		#$main::DBH->Query("
+		#DELETE FROM $TOM::DB_name_USRM.a300_online
+		#WHERE host='$tom::H_cookie' AND IDhash='$user{IDhash}' LIMIT 1");
+		
+		$main::DB{main}->Query("
+			UPDATE
+				TOM.a300_online
+			SET
+				logged='N'
+			WHERE
+				host='$tom::H_cookie' AND
+				IDhash='$user{IDhash}'
+			LIMIT 1
+		");
+		
+		# changing session
+		# not changing session, session is the same! I'm continue browsing the page
+		# undef $main::COOKIES{'_IDsession'};
+		
+		# destroy hidden variables of logged user
+		foreach (keys %{$main::USRM{'session'}})
+		{
+			delete $main::USRM{'session'}{$_};
+		}
+		$main::USRM{logged}='N';
+		
+		$XSGN{TMP}=$XSGN{unlogged};
+		
+		$main::H->rh("<!REFRESH!>","0; url=$env{return}");
+		$XSGN{TMP}=~s|<%LINK%>|$env{return}|g;
+		
+  }
+  else
+  {
+   #Tomahawk::debug::mdllog(4,"nieje lognuty");
+   # ako sa chcem odhlasit ked niesom prihlaseny? :-o
+   $XSGN{TMP}=$XSGN{err_notlogged};
+   #$main::H->{header}=~s|<!REFRESH!>|0; url=$tom::H_www|;
+   #$XSGN{TMP}=~s|<%LINK%>|?\|?TID=0|g;
+   
+   $main::H->rh("<!REFRESH!>","0; url=$env{return}");
+   #$main::H->{header}=~s|<!REFRESH!>|0; url=$env{return}|;
+   $XSGN{TMP}=~s|<%LINK%>|$env{return}|g;
+  }
+ }
+ else
+ {
+  #Tomahawk::debug::mdllog(3,"nieje online?",1);
+#  $XSGN{TMP}=$XSGN{err_badpassoruser};
+#  $XSGN{TMP}=~s|<%PLUS%>|$env{pass_md5}|;
+ }
+
+
+ return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+

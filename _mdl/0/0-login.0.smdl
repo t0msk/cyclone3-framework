@@ -1,0 +1,297 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+
+
+sub execute
+{
+ return 1;
+ # TOTO JE TU SCHVALNE!!!!
+ # TENTO MODUL UZ NIEJE AKTIVNY!!! PRE MARKIZU SA POUZIVA MASTER MODUL A NIE GLOBAL!!!!
+
+
+
+
+
+
+
+ # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ #			C I T A J   H O R E ! ! !
+ # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
+
+
+
+ my %env=@_;
+ my %usrm_data;
+ my @users_online;
+ my $count;
+
+ #Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+
+ $env{db_300}=Tomahawk::Getmdlvar("300","db") unless $env{db_300};
+ $env{db_300}=$TOM::DB_name_USRM unless $env{db_300};
+ $env{xsgn_global}="0" unless $env{xsgn_global};
+
+ $env{topmenu_xml}="";
+
+ Tomahawk::debug::log(5,"start module");
+
+
+#  Tomahawk::module(
+#	-type		=>	"mdl",
+#	-category	=>	"300",
+#	-name		=>	"login",
+#	-global		=>	0,
+#	-TMP		=>	$env{TMP_login},
+#	db_300		=>	$env{db_300},
+#	);
+
+ #trying to fetch users online
+ if (my $db0=$main::DBH->Query("
+	SELECT logged
+	FROM $env{db_300}.a300_online
+	"))
+ {
+    my $count2=0;
+
+
+    while(my @db0_line=$db0->FetchRow())
+    {
+     $count++;
+	if ($db0_line[0] eq "Y") { $count2++; }
+    }
+    Tomahawk::debug::log(7,"$count people online.");
+    $usrm_data{online_count}=$count;
+    $usrm_data{online_count_logged}=$count2;
+
+ }
+ else
+ {
+  Tomahawk::debug::log(5,"Online users db request error!", 1);
+  return undef;
+ }
+
+=head1
+ #trying to fetch users online on chat
+ if (my $db0=$main::DBH->Query("
+	SELECT DISTINCT uID
+	FROM chat_markiza_sk.chat_user
+	"))
+ {
+    $count=$db0->NumRows();
+    Tomahawk::debug::log(7,"$count users on chat.");
+    $usrm_data{chat_count}=$count;
+ }
+ else
+ {
+  Tomahawk::debug::log(5,"Online chat users db request error!", 1);
+  return undef;
+ }
+=cut
+
+
+ if ($main::USRM{logged} eq "Y")
+ {
+  my $count;
+
+  Tomahawk::debug::log(6,"User logged in. Trying to fetch user settings.");
+#=head1
+  if (my $attrs=$main::USRM{settings})
+  {
+    Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"300",
+	-name		=>	"login_info",
+	-global		=>	1,
+	-xsgn_global	=>	$env{xsgn_global},
+	-TMP		=>	$env{TMP_login_info},
+	);
+
+   #trying to fetch user-setup portal menu settings
+   if ($attrs=~s|<PORTALMENU>(.*?)</PORTALMENU>||si)
+   {
+    Tomahawk::debug::log(7,"Fetched user menu.");
+
+    Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"24",
+	-name		=>	"menu_level_priority",
+	-global		=>	1,
+	-xsgn		=>	"top_hr",
+	-xsgn_global	=>	$env{xsgn_global},
+	-TMP		=>	$env{TMP_portal_topmenu},
+	menu_xml	=>	$1,
+	menu_width	=>	"100",
+	menu_width_m	=>	"%",
+	menu_item_width_m => 	"%",
+	);
+   }
+   else
+   {
+    Tomahawk::debug::log(6,"No user menu definition found in settings of user \"".$main::USRM{IDhash}."\". Using defaults.");
+    Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"24",
+	-name		=>	"menu_level_priority",
+	-global		=>	1,
+	-xsgn		=>	"top_hr",
+	-xsgn_global	=>	$env{xsgn_global},
+	-TMP		=>	$env{TMP_portal_topmenu},
+	menu_name	=>	"portal_topmenu",
+	menu_width	=>	"100",
+	menu_width_m	=>	"%",
+	menu_item_width_m => 	"%",
+	);
+   }
+
+#=head1
+   #trying to fetch friends online
+   my %data_arr;
+   my $select;
+   $attrs=$main::USRM{friends};
+
+   while ($attrs=~s|<FRIEND idhash="(.*?)" notify="(.*?)" />||si)
+   {
+    Tomahawk::debug::log(8,"Fetched friend with IDhash \"" . $1 . "\".");
+    $data_arr{$1} = $2;
+    if ($select) { $select .= " OR (IDhash=\'" . $1 . "\' AND logged='Y' AND active='Y')" if ($2 eq "1"); } else { $select .= " WHERE (IDhash=\'" . $1 . "\' AND logged='Y' AND active='Y')" if ($2 eq "1"); }
+   }
+   if ($select)
+   {
+    #Tomahawk::debug::log(7,"SELECT IDhash,login,host_sub FROM $env{db_300}.a300_online	$select");
+    if (my $db0=$main::DBH->Query("
+	SELECT IDhash,login,host_sub
+	FROM $env{db_300}.a300_online
+	$select
+	"))
+    {
+     while (my @db0_line=$db0->FetchRow())
+     {
+      $count++;
+      Tomahawk::debug::log(9,"Friend \"". $db0_line[1]."\" is online at location ".$db0_line[2].".");
+
+      #trying to fetch users online on chat
+      if (my $db0=$main::DBH->Query("
+	SELECT DISTINCT COUNT(*)
+	FROM chat_markiza_sk.chat_user
+	WHERE uID='$db0_line[0]'
+	"))
+      {
+        if ($db0->FetchRow()==1)
+	{
+	 $usrm_data{chat_friend_count}++;
+	 Tomahawk::debug::log(9,"$db0_line[1] is currently chatting");
+	}
+      }
+      else
+      {
+       Tomahawk::debug::log(5,"Online chat friend users db request error!", 1);
+       return undef;
+      }
+     }
+     Tomahawk::debug::log(7,"Found $count friends online.");
+    }
+    $usrm_data{friend_count}=$count;
+   }
+   else
+   {
+    Tomahawk::debug::log(7,"No friends found.");
+    $usrm_data{friend_count}=$count;
+   }
+#=cut
+  }
+  else
+#=cut
+  {
+#=cut
+   Tomahawk::debug::log(6,"User does not have any settings in db. Using defaults.");
+  Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"300",
+	-name		=>	"login_info",
+	-global		=>	1,
+	-xsgn_global	=>	$env{xsgn_global},
+	-TMP		=>	$env{TMP_login_info},
+	);
+   Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"24",
+	-name		=>	"menu_level_priority",
+	-global		=>	1,
+	-xsgn		=>	"top_hr",
+	-xsgn_global	=>	$env{xsgn_global},
+	-TMP		=>	$env{TMP_portal_topmenu},
+	menu_name	=>	"portal_topmenu",
+	menu_width	=>	"100",
+	menu_width_m	=>	"%",
+	menu_item_width_m => 	"%",
+	);
+  }
+ }
+ else
+ {
+  Tomahawk::debug::log(6,"User is not logged in. Using default settings.");
+  Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"300",
+	-name		=>	"login_info",
+	-global		=>	1,
+	-xsgn		=>	"unlogged",
+	-xsgn_global	=>	$env{xsgn_global},
+	-TMP		=>	$env{TMP_login_info},
+	);
+  Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"24",
+	-name		=>	"menu_level_priority",
+	-global		=>	1,
+	-xsgn		=>	"top_hr",
+	-xsgn_global	=>	$env{xsgn_global},
+	-TMP		=>	$env{TMP_portal_topmenu},
+	menu_name	=>	"portal_topmenu",
+	menu_width	=>	"100",
+	menu_width_m	=>	"%",
+	menu_item_width_m => 	"%",
+	);
+ }
+
+ #trying to fetch users online
+ #if (my $db0=$main::DBH->Query("
+#	SELECT COUNT(*)
+#	FROM $env{db_300}.a300_online
+#	"))
+ #{
+
+ #}
+
+ # OSETRENIE %hashu
+ foreach (keys %usrm_data) {~/^[^a]_/ && do {$usrm_data{'a_'.$_}=$usrm_data{$_};delete $usrm_data{$_};next;}}
+
+ #off we go with creating the usrm bar
+    Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"0",
+	-name		=>	"usrm_bar",
+	-xsgn_global	=>	$env{xsgn_global},
+	-global		=>	1,
+	-TMP		=>	$env{TMP_usrm_bar},
+	%usrm_data,
+	);
+
+ return 1}
+
+1;

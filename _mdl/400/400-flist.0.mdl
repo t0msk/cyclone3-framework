@@ -1,0 +1,276 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 HEAD_VERSION
+1.030814
+
+=head1 NAME
+tlist
+
+=head1 DESCRIPTION
+article titles listing
+
+IDcategory format: doublechar1[doublechar2][...][doublechar16]
+hardlink format: http://domain/?|?[additional request parameters]
+order_by format: column_name[ DESC/ASC][, column_name[ DESC/ASC]][...]
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+ <value id="preview" value="1"/>
+ <value id="output" value="xsgn"/>
+	<source type="db_400" value="varchar">articles db name (default - web db_400)</source>
+	<inout id="db_limit" value="int">count of db items to load (default - 10)</source>
+	<input id="db_order_by" value="varchar">sort order (default - starttime DESC)</input>
+	<input id="hardlink" value="varchar">hardlink to the root of web (in case the link is not to the default web)</input>
+	<input id="ID" value="int">id of article to EXCLUDE</input>
+	<input id="IDcategory" value="varchar">category id of article items to load</input>
+	<input id="IDcategory_allow_subs" value="1/0">allow subcategory items (default - false)</input>
+	<input id="IDauthor" value="int">author id of article items to load</input>
+	<input id="IDauthor_allow_null" value="1/0">allow loading of articles with no author (default - true)</input>
+	<input id="IDeditor" value="int">editor id of article items to load</input>
+	<input id="IDeditor_allow_null" value="1/0">allow loading of articles with no editor (default - true)</input>
+	<input id="title" value="varchar">caption for the listing</input>
+	<input id="hardlink" value="varchar">hardlink to web root (if pointing to other server location than default)</input>
+	<input id="return_null" value="1/0">return empty box if no related articles are found</input>
+	<input id="return_string" value="varchar">default content string if no related articles are found</input>
+	<input id="tiny_cut_after" value="int">cut off text after the word containing the char on given position and add " ..."</input>
+	<input id="title_cut_after" value="int">cut off text after the word containing the char on given position and add " ..."</input>
+	<input id="full_cut_after" value="int">cut off text after the word containing the char on given position and add " ..."</input>
+</DESCRIPTION>
+
+=head1 CHANGES
+build 030814 - Deboot
+	*) title_cut_after, tiny_cut_after, full_cut_after parameters added
+build 030807 - Deboot
+	*) IDcategory_allow_subs parameter added
+	*) db_order_by parameter added
+build 030729 - Deboot
+	*) IDauthor_allow_null parameter added
+ 	*) IDeditor_allow_null parameter added
+	*) bugfixes
+build 030722 - Deboot
+	*) IDauthor parameter added
+ 	*) IDeditor parameter added
+	*) ID parameter added
+build 030701 - Deboot
+	*) IDcategory parameter added
+	*) hardlink parameter added
+build 030630 - Deboot
+	*) title parameter added
+build 030627 - Deboot
+	*) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+	*) nothing
+=cut
+
+# takto bude vyzerat designovy modul
+
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+
+ $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+ $env{db_400}=$TOM::DB_name unless $env{db_400};
+
+ #$XSGN{TMP}.="pred upravou premennych:<br>*$env{IDauthor}*,*$env{IDauthor_allow_null}*,*$env{IDeditor}*,*$env{IDeditor_allow_null}*";
+
+ $env{IDauthor_allow_null}="1" unless defined $env{IDauthor_allow_null};
+ $env{IDeditor_allow_null}="1" unless defined $env{IDeditor_allow_null};
+
+ delete $env{IDauthor} if ((exists $env{IDauthor})&&(!$env{IDauthor}));
+ delete $env{IDeditor} if ((exists $env{IDeditor})&&(!$env{IDeditor}));
+
+ #$XSGN{TMP}.="<br>po:<br>*$env{IDauthor}*,*$env{IDauthor_allow_null}*,*$env{IDeditor}*,*$env{IDeditor_allow_null}*";
+
+ $env{db_limit}=10 unless $env{db_limit};
+ $env{hardlink}="?|?" unless $env{hardlink};
+ $env{db_string}="";
+
+ if (exists $env{IDauthor}){$env{db_string} .= " AND IDauthor=\'" . $env{IDauthor} . "\' ";}
+ if (exists $env{IDeditor}){$env{db_string} .= " AND IDeditor=\'" . $env{IDeditor} . "\' ";}
+ if (exists $env{ID}){$env{db_string} .= " AND ID <> \'" . $env{ID} . "\' ";}
+
+ my $var;
+ if (exists $env{IDcategory})
+ {
+  if ((exists $env{IDcategory_allow_subs}) and ($env{IDcategory_allow_subs} eq "1")) { $env{IDcategory}=" AND IDcategory LIKE '$env{IDcategory}%'"; } else { $env{IDcategory}=" AND IDcategory='$env{IDcategory}'"; }
+  $var = (length($env{IDcategory})/2)+1;
+  $env{db_order_by}=~s|priority|SUBSTRING(priority, $var, 1)|;
+ }
+
+ if (exists $env{order_by})
+ { $env{db_string_order} .= " ORDER BY $env{order_by}"; } else { $env{db_string_order} .= " ORDER BY starttime DESC"; }
+
+ my $count;
+ my $newest_time; #variable for storing the newest time in listing
+
+  if ((my $db0=$main::DBH->Query("
+	(SELECT ID,title,subtitle,starttime
+	FROM $env{db_400}.a400
+	WHERE lng='$env{lng}'
+	AND starttime<$tom::time_current
+	AND ((endtime>$tom::time_current) OR (endtime='0'))
+	AND active='Y'
+	$env{IDcategory}
+	$env{db_string}
+	$env{db_string_order} LIMIT $env{db_limit})
+	UNION ALL
+	(SELECT ID,title,subtitle,starttime
+	FROM $env{db_400}.a400_arch
+	WHERE lng='$env{lng}'
+	AND starttime<$tom::time_current
+	AND ((endtime>$tom::time_current) OR (endtime='0'))
+	AND active='Y'
+	$env{IDcategory}
+	$env{db_string}
+	$env{db_string_order} LIMIT $env{db_limit})
+	$env{db_string_order} LIMIT $env{db_limit}
+	")))
+  {
+#   $XSGN{TMP}.="<br>query zbehlo<br>
+#	(SELECT ID,title,starttime
+#	FROM $env{db_400}.a400
+#	WHERE lng='$env{lng}'
+#	AND starttime<$tom::time_current
+#	AND ((endtime>$tom::time_current) OR (endtime='0'))
+#	AND active='Y'
+#	$env{IDcategory}
+#	$env{db_string}
+#	$env{db_string_order})
+#	UNION ALL
+#	(SELECT ID,title,starttime
+#	FROM $env{db_400}.a400_arch
+#	WHERE lng='$env{lng}'
+#	AND starttime<$tom::time_current
+#	AND ((endtime>$tom::time_current) OR (endtime='0'))
+#	AND active='Y'
+#	$env{IDcategory}
+#	$env{db_string}
+#	$env{db_string_order})
+#	LIMIT $env{db_limit}
+#	";
+#  return 1;
+   while (my %db0_line=$db0->FetchHash())
+   {
+    $count++;
+    #if (not (($env{IDauthor} eq "0") and ($env{IDauthor_allow_null} eq "0"))) uz neviem naco toto tu bolo :o)
+    #{
+
+     if ((exists $env{title_cut_after}) && (length($db0_line{title})>$env{title_cut_after}))
+     {
+      #$XSGN{TMP}="asdddddddddd";
+      Tomahawk::debug::log(7,"Concatening title to approx. $env{title_cut_after} characters.");
+      $db0_line{title}=substr($db0_line{title}, 0, $env{title_cut_after});
+      $db0_line{title}=~s|(.*) .*?$|$1 ...|;
+     }
+     if ((exists $env{tiny_cut_after}) && (length($db0_line{tiny})>$env{tiny_cut_after}))
+     {
+      #$XSGN{TMP}="asdddddddddd";
+      Tomahawk::debug::log(7,"Concatening title to approx. $env{tiny_cut_after} characters.");
+      $db0_line{tiny}=substr($db0_line{tiny}, 0, $env{tiny_cut_after});
+      $db0_line{tiny}=~s|(.*) .*?$|$1 ...|;
+     }
+     if ((exists $env{full_cut_after}) && (length($db0_line{tiny})>$env{full_cut_after}))
+     {
+      #$XSGN{TMP}="asdddddddddd";
+      Tomahawk::debug::log(7,"Concatening title to approx. $env{full_cut_after} characters.");
+      $db0_line{full}=substr($db0_line{full}, 0, $env{full_cut_after});
+      $db0_line{full}=~s|(.*) .*?$|$1 ...|;
+     }
+
+     $XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE}<#LINE#>|;
+     $XSGN{TMP}=~s|<%HARDLINK%>|$env{hardlink}|g;
+     $XSGN{TMP}=~s|<%ID%>|$db0_line{ID}|g;
+     $XSGN{TMP}=~s|<%TITLE%>|$db0_line{title}|g;
+     $XSGN{TMP}=~s|<%SUBTITLE%>|$db0_line{subtitle}|g;
+     $XSGN{TMP}=~s|<%TINY%>|$db0_line{tiny}|g;
+     $newest_time=$db0_line{starttime} if (($count==1) and ((not defined $env{order_by}) or ($env{order_by} eq "starttime")));
+    #}
+   }
+
+   if ((defined $env{order_by}) and ($env{order_by} eq "starttime"))
+   {
+    if ((my $db0=$main::DBH->Query("
+	(SELECT ID,title,tiny,starttime
+	FROM $env{db_400}.a400
+	WHERE lng='$env{lng}'
+	AND starttime<$tom::time_current
+	AND ((endtime>$tom::time_current) OR (endtime='0'))
+	AND active='Y'
+	$env{IDcategory}
+	$env{db_string}
+	ORDER BY starttime LIMIT 1)
+	UNION ALL
+	(SELECT ID,title,tiny,starttime
+	FROM $env{db_400}.a400_arch
+	WHERE lng='$env{lng}'
+	AND starttime<$tom::time_current
+	AND ((endtime>$tom::time_current) OR (endtime='0'))
+	AND active='Y'
+	$env{IDcategory}
+	$env{db_string}
+	ORDER BY starttime LIMIT 1)
+	ORDER BY starttime LIMIT 1
+	")))
+    {
+     if (my %db0_line=$db0->FetchHash())
+     {
+      $newest_time=$db0_line{title} if ((not defined $env{order_by}) or ($env{order_by} eq "starttime"));
+     }
+     else
+     {
+      Tomahawk::debug::log(6,"Could not find the last added article time!", 1);
+      $newest_time="";
+     }
+    }
+   }
+
+   $XSGN{TMP}=~s|<%BOXTITLE%>|$env{title}|g;
+
+   my %env0=Utils::datetime::ctodatetime($newest_time,format=>1);
+   $XSGN{TMP}=~s|<%LASTUPDATE%>|[$env0{hour}:$env0{min}] $env0{mday}. $Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1], $env0{year}|g;
+
+   if (($count == 0) or (($env{IDauthor} eq "0") and ($env{IDauthor_allow_null} eq "0")))
+   {
+    Tomahawk::debug::log(5,"No data from database.", 1);
+    if ($env{return_null})
+    { Tomahawk::debug::log(6,"return_null set. Returning empty box.", 1); undef $XSGN{TMP}; return 1; }
+    elsif ($env{return_string})
+    { Tomahawk::debug::log(6,"return_string set. Returning box with return_string.", 1); $XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE_NULL}|; $XSGN{TMP}=~s|<%LINE-NULL%>|$env{return_string}|; return 1; }
+    else
+    { $tom::ERR = "DB request returned no data!"; return undef; }
+   }
+  }
+  else
+  {
+   Tomahawk::debug::log(5,"Could not load data from database! Check the db, or db select!", 1);
+   if ($env{return_null})
+   { Tomahawk::debug::log(6,"return_null set. Returning empty box.", 1); undef $XSGN{TMP}; return 1; }
+   elsif ($env{return_string})
+   { Tomahawk::debug::log(6,"return_string set. Returning box with return_string.", 1); $XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE_NULL}|; $XSGN{TMP}=~s|<%LINE-NULL%>|$env{return_string}|; }
+   else
+   { $tom::ERR = "DB request error!"; return undef; }
+  }
+# }
+# else
+# {
+#  Tomahawk::debug::log(5,"No data from database.", 1);
+#  if ($env{return_null})
+#  { Tomahawk::debug::log(6,"return_null set. Returning empty box.", 1); undef $XSGN{TMP}; return 1; }
+#  elsif ($env{return_string})
+#  { Tomahawk::debug::log(6,"return_string set. Returning box with return_string.", 1); $XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE_NULL}|; $XSGN{TMP}=~s|<%LINE-NULL%>|$env{return_string}|; return 1; }
+#  else
+#  { $tom::ERR = "DB request returned no data!"; return undef; }
+# }
+ return 1}
+
+1;

@@ -1,0 +1,662 @@
+sub BaseModul
+{
+	my $LOG;
+
+	require "_libs/".$localizationPath."/_table.m";
+	require "_libs/".$localizationPath."/_info.m";
+
+	my $page_limit=20;
+	my $page_from=$page_limit*$form{page};
+	$form{page}="0" unless $form{page};
+
+	######################################################
+	# creating info panel                                                                #
+	######################################################
+
+	my $info=&info_create(
+		'icon'	=>	"style=\"cursor:hand;\" onclick=\"load_box('core.pl?type=400-search');\"",
+		'new'	=>	True,
+		'title'	=>	"Zoznam článkov",
+		'next'	=>	$form{page},
+		'prev'	=>	$form{page}
+	);
+
+	my $select;
+	for (my $i=0;$i<=55;$i=$i+5)
+	{
+		$select.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+	}
+	my $select_author=&select_create(
+		'name'		=>	"min2",
+		'value'		=>	$minR2,
+		'maxlength'	=>	30,
+		'width'		=>	1,
+		'width1'	=>	50,
+		'select'	=>	$select
+	);
+
+	my $db_micro = $main::DB{main}->Query("SELECT ID FROM a400_category ORDER BY length(ID) DESC LIMIT 1");
+	my @db_micro_line=$db_micro->FetchHash();
+	$priority_depth=length($db_micro_line[ID])/2;
+
+	#return $db_micro_line2[0]." ".$priority_depth;
+
+	######################################################
+	# creating priority changers                                                       #
+	######################################################
+
+	my %plus;
+	my $i;
+	for ($i=0;$i<=($priority_depth/2)+1;$i++)
+	{
+		$plus{'8.'.$i}{'id'}=$i;
+		$plus{'8.'.$i}{'code'}="<a href=\"core.pl?type=priorize&priority_depth=".$i."&ID=<!--ID-->\" target=\"frm_micro\"><img src=\"$tom::H_media/grf/admin/list_<%1%>.gif\" width=11 height=12 border=0></a>";
+		$plus{'8.'.$i}{'class'}="td_inact";
+		$plus{'8.'.$i}{'select'}="orderby=priority DESC,starttime";
+		#$plus{'8.'.$i}{'td_class'}="td_act";
+		#$plus{'8.'.$i}{'td_plus'}="nowrap";
+	}
+	my $listingArchive;
+	if ($form{archive} eq "1")
+	{
+		$listingArchive="archive=1&";
+		#$plus2{'9.4'}{'id'}="forum_index";
+		#$plus2{'9.4'}{'code'}="&nbsp;-<%1%>-&nbsp;";
+		#$plus2{'9.4'}{'class'}="td_act";
+		#$plus2{'9.4'}{'td_plus'}="nowrap align=\"center\"";
+	}
+
+ #-------------------ordering by az/za-----------------------------
+ #my $orderbyShort="short";
+ #my $orderbyShortCol="short_A_Z";
+ #if ($form{'orderby'}=~/shortD/)
+ #  { $form{'orderby'}=~s|shortD|short DESC|; }
+ #else
+ #  { if ($form{'orderby'}=~/short/) { $orderbyShort="shortD"; $orderbyShortCol="short_Z_A" } }
+ #-------------------ordering by az/za-----------------------------
+
+		######################################################
+		# defining table layout                                                              #
+		######################################################
+
+	my $table=HP_TABLE->new(
+		 'title'			=>	"taky maly popis",
+		#'cellspacing'	=>	1,
+		#'cellpadding'	=>	1,
+		#'color_active'	=>	"#F0F080",
+		#'color_active'	=>	"#F0F0C0",
+		'link_core'		=>	"core.pl?type=$form{type}&$listingArchive",
+		'define'		=>
+		{
+			'1'	=>
+			{
+				'id'		=>	"A",
+				'code'		=>	"<%1%>",
+				#'code'		=>	"<img src=\"$tom::H_media/grf/admin/list_<%1%>.gif\" width=11 height=12 border=0 onclick=\"this.src='core.pl?type=set_active&table=a400&ID=<!--ID-->';\">",
+				'select'	=>	"orderby=active,starttime",
+				'class'		=>	"td_act",
+				#'td_class'	=>	"td_act"
+			},
+		 '2'	=>
+			{
+				'id'		=>	"start",
+				'code'		=>	"<%1%>",
+				'select'	=>	"orderby=starttime",
+				'class'		=>	"td_act",
+				'td_plus'	=>	"nowrap"
+			},
+			'2.1'	=>
+			{
+				'id'		=>	"end",
+				'code'		=>	"<%1%>",
+				'select'	=>	"orderby=endtime",
+				'class'		=>	"td_act",
+				'td_plus'	=>	"nowrap"
+			},
+			# '2.1'	=>
+			#	{
+				#	'id'		=>	"updated",
+				#	'code'		=>	"<%1%>",
+				#	'select'	=>	"orderby=starttime DESC",
+				#	'class'		=>	"td_act",
+				#	'td_plus'	=>	"nowrap"
+			#	},
+			'3'	=>
+			{
+				'id'		=>	"parent_cat",
+				'code'		=>	"<%1%>",
+				'class'		=>	"td_act",
+				'td_plus'	=>	"nowrap"
+			},
+			'3.1'	=>
+			{
+				'id'		=>	"cF",
+				'code'		=>	"<%1%>",
+				'select'	=>	"orderby=IDcategory,starttime",
+				'class'		=>	"td_act",
+				'td_plus'	=>	"nowrap"
+			},
+			'3.2'	=>
+			{
+				'id'		=>	"cat",
+				'code'		=>	"<%1%>",
+				'select'	=>	"orderby=IDcategory,starttime",
+				'class'		=>	"td_act",
+				'td_plus'	=>	"nowrap"
+			},
+			'4'	=>
+			{
+				'id'		=>	"title",
+				'code'		=>	"<strong><%1%></strong>",
+				'select'	=>	"orderby=title,starttime",
+				'class'		=>	"td_act",
+				'td_class'	=>	"td0",
+				'td_plus'	=>	"nowrap"
+			},
+			'5'	=>
+			{
+				'id'		=>	"author",
+				#	'id_plus'	=>	$select_author,
+				'code'		=>	"<%1%>",
+				'select'	=>	"orderby=IDauthor,starttime",
+				'plus'		=>	"nowrap",
+				'class'		=>	"td_act",
+				'td_plus'	=>	"nowrap"
+			},
+			'6.1'	=>
+			{
+				'id'		=>	"editor",
+				#	'id_plus'	=>	$select_author,
+				'code'		=>	"<%1%>",
+				'select'	=>	"orderby=IDeditor,starttime",
+				'plus'		=>	"nowrap",
+				'class'		=>	"td_act",
+				'td_plus'	=>	"nowrap"
+			},
+			'6.5'	=>
+			{
+				'id'=>'mut',
+				'code'=>"<a href=\"core.pl?type=400-edit&id=<%1%>&new_mutation=1\" target=\"frm_micro\"><img src=\"$tom::H_media/grf/admin/close4.gif\" border=0></a><%2%>&nbsp;",
+				'class'=>"td_act",
+				'select'=>"orderby=priority DESC,starttime",
+				'td_class'=>"td_act",
+				'td_plus'=>"align=center"
+			},
+			'7'	=>
+			{
+				'id'		=>	"img",
+				'code'		=>	"&nbsp;<%1%>&nbsp;",
+				'class'		=>	"td_inact",
+				'td_plus'	=>	"nowrap"
+			},
+			%plus,
+			'9'	=>
+			{
+				'id'		=>	"Vi",
+				'code'		=>	"&nbsp;<a href=\"core.pl?type=400&<%1%>orderby=visits\" target=\"frm_base\"><%2%></a>&nbsp;",
+				'select'	=>	"orderby=visits",
+				'class'		=>	"td_act",
+				'td_plus'	=>	"nowrap"
+			},
+			'9.1'	=>
+			{
+				'id'		=>	"associate",
+				'code'		=>	"&nbsp;<a href=\"javascript:relate_item('a400','a400','<%ID%>');\">s clankom</a>&nbsp;",
+				#'select'	=>	"orderby=visits",
+				'class'		=>	"td_act",
+				'td_plus'	=>	"nowrap"
+			},
+			#'9.2'	=>
+			#	{
+				#	'id'		=>	"arch_index",
+				#	'code'		=>	"&nbsp;-<%1%>-&nbsp;",
+				#	'class'		=>	"td_act",
+				#	'td_plus'	=>	"nowrap align=\"center\""
+			#	},
+			'9.2'	=>
+			{
+				'id'		=>	"archive",
+				#	'code'		=>	"<img src=\"$tom::H_media/grf/admin/list_<%1%>.gif\" width=11 height=12 border=0 onclick=\"this.src='core.pl?type=set_archive&table=a400&ID=<!--ID-->';\">",
+				'class'		=>	"td_inact",
+				'code'		=>	"<a href=\"core.pl?type=set_archive&ID=<%3%>&archive=<%2%>\" target=\"frm_micro\"><img src=\"$tom::H_media/grf/admin/list_<%1%>.gif\" width=11 height=12 border=0></a>",
+				'td_plus'	=>	"align=center"
+			},
+			'9.3'	=>
+			{
+				'id'		=>	"forum_index",
+				'code'		=>	"&nbsp;-<%1%>-&nbsp;",
+				#'select'	=>	"orderby=visits",
+				'class'		=>	"td_act",
+				'td_plus'	=>	"nowrap align=\"center\""
+			},
+		}
+	);
+
+	######################################################
+	# preparing WHERE clause for sql select                                     #
+	######################################################
+
+	my $where;
+	if ($form{search} eq "1")
+	{
+		if (not $form{'title'} eq "")
+		{ if ($where eq "") { $where.="WHERE title LIKE '%$form{title}%' " } else { $where.="title='%$form{title}%' " } }
+		if ($form{'subtitle'})
+		{ if ($where eq "") { $where.="WHERE title LIKE '%$form{subtitle}%' " } else { $where.="subtitle LIKE '%$form{subtitle}%' " } }
+		if ($form{'IDauthor'})
+		{ if ($where eq "") { $where.="WHERE IDauthor='$form{IDauthor}' " } else { $where.="AND IDauthor='$form{IDauthor}' " } }
+		if ($form{'IDeditor'})
+		{ if ($where eq "") { $where.="WHERE IDeditor='$form{IDeditor}' " } else { $where.="AND IDeditor='$form{IDeditor}' " } }
+		if ($form{'IDcategory'})
+		{
+			my $varr;
+			if ($form{'cat_allow_subs'} eq "1") { $varr="LIKE \'".$form{IDcategory}."%\'"; } else { $varr="=\'".$form{IDcategory}."\'"; }
+			if ($where eq "") { $where.="WHERE IDcategory ".$varr." "; } else { $where.="AND IDcategory ".$varr." "; }
+			undef $varr;
+		}
+		if ($form{'full'})
+		{ if ($where eq "") { $where.="WHERE full LIKE '%$form{full}%'" } else { $where.="AND full LIKE '%$form{full}%' " } }
+		#while ($form{wherestring}=~s|(.*?)=(.*?)&||)
+		#{
+		# $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$sele{$_}';\" style=\"FONT:12px Verdana;\">&nbsp;$_</div>\n";
+		#}
+		#$where="WHERE
+
+		if ($form{'archive'} eq '1') { $where.=" AND arch='Y'"; } else { $where.=" AND arch='N'"; }
+	}
+	else
+	{
+		$where="WHERE $form{whereby}='$form{where}'" if ($form{'whereby'});
+		if ($form{'wherelike'})
+		{ $where="WHERE $form{wherelike} LIKE '$form{where}%'" if ($form{'wherelike'} eq "IDcategory"); }
+		else
+		{ $where="WHERE $form{wherelike} LIKE '$form{where}%'" if ($form{'wherelike'}); }
+		if ($form{'archive'} eq '1')
+		{
+			if (($form{'whereby'}) || ($form{'wherelike'})) { $where.=" AND arch='Y'"; } else { $where.=" WHERE arch='Y'"; }
+		}
+		#else
+		#{ if (($form{'whereby'}) || ($form{'wherelike'})) { $where.=" AND arch='N'"; } else { $where.=" WHERE arch='N'"; } }
+	}
+
+	######################################################
+	# preparing ORDER BY clause for sql select                                 #
+	######################################################
+
+	my $orderby;
+	if ($form{'orderby'}) { $orderby=$form{'orderby'}; } else { $orderby="starttime"; }
+
+	######################################################
+	# list generation                                                                       #
+	######################################################
+
+	my $db0 = $main::DB{main}->Query("
+	(
+		SELECT ID, active, priority, starttime, endtime, changetime, IDcategory, title, subtitle, IDauthor, IDeditor, xrelated, visits, arch, lng, COUNT(ID) AS IDcount
+		FROM a400
+		$where
+		GROUP BY ID
+		ORDER BY $orderby DESC
+	)
+	UNION ALL
+	(
+		SELECT ID, active, priority, starttime, endtime, changetime, IDcategory, title, subtitle, IDauthor, IDeditor, xrelated, visits, arch, lng, COUNT(ID) AS IDcount
+		FROM a400_arch
+		$where
+		GROUP BY ID
+		ORDER BY $orderby DESC
+	)
+	LIMIT $page_from,$page_limit
+	");
+	if ($db0->NumRows())
+	{
+		while (my %db0_line=$db0->FetchHash())
+		{
+			######################################################
+			# creating activeness indicator                                                   #
+			######################################################
+
+			my $cl_active="r";
+			if ($db0_line{'active'} eq "Y"){$cl_active="g"}
+
+			######################################################
+			# diversifying lines according to their timestamps                          #
+			######################################################
+
+			#today, yesterday, older line color
+			#my $cl_color="#8FADF9";
+			my $cl_class="listing-old"; #today
+			(undef,undef,undef,$mdayR1,$momR1,$yearR1,undef,undef,undef) = localtime(time);
+			my $datestamp1=timelocal(0,0,0,$mdayR1,$momR1,$yearR1,0,0,0);
+			my $datestamp2=$datestamp1+86400;
+			if (($db0_line{starttime}>=$datestamp1-86400)&&($db0_line{starttime}<$datestamp1)){$cl_class="listing-yesterday"}
+			if (($db0_line{starttime}>=$datestamp1)&&($db0_line{starttime}<$datestamp2)){$cl_class="listing-today"}
+			if (($db0_line{starttime}>=$datestamp2)&&($db0_line{starttime}<$datestamp2+86400)){$cl_class="listing-tomorrow"}
+			if (($db0_line{starttime}>=$datestamp2+86400)&&($db0_line{starttime}<$datestamp2+(2*86400))){$cl_class="listing-tomotomorrow"}
+			if ($db0_line{starttime}>=$datestamp2+(2*86400)){$cl_class="listing-future"}
+			#if ($db0_line{starttime}>(time-86400)){$cl_color="#B0CFFF"}
+			#if ($db0_line{starttime}>time){$cl_color="#E0EFFF"}
+
+			my %article_times;
+			$article_times{'starttime'}={Utils::datetime::ctodatetime($db0_line{'starttime'},format=>1)};
+			$article_times{'endtime'}={Utils::datetime::ctodatetime($db0_line{'endtime'},format=>1)};
+			$article_times{'changetime'}={Utils::datetime::ctodatetime($db0_line{'changetime'},format=>1)};
+			#my $article_times{'lasttime'}=Tomahawk::utils::datetime::ctodatetime($db0_line{'lasttime'},format=>1);
+
+			######################################################
+			# selecting author and editor                                                     #
+			######################################################
+
+			my $db_micro2=$main::DB{main}->Query("SELECT id, nickname FROM a120 WHERE ID='$db0_line{'IDauthor'}' LIMIT 1");
+			if($db_micro2->NumRows())
+			{
+				my @db0_line2=$db_micro2->FetchRow();
+				$db0_line{'author_name'}=$db0_line2[1];
+			}
+
+			my $db_micro2=$main::DB{main}->Query("SELECT id, nickname FROM a120 WHERE ID='$db0_line{'IDeditor'}' LIMIT 1");
+			if($db_micro2->NumRows())
+			{
+				my @db0_line2=$db_micro2->FetchRow();
+				$db0_line{'editor_name'}=$db0_line2[1];
+			}
+
+			my $parent_cat;
+
+			if (length($db0_line{IDcategory})>2)
+			{
+				######################################################
+				# looking fot parent category                                                     #
+				######################################################
+
+				my $where2="";
+				$parent_cat=$db0_line{IDcategory};
+				$parent_cat=~s|(^.*)..$||;
+				$parent_cat=$1;
+				$where2="OR ID='$parent_cat'";
+
+				#return "SELECT ID, name FROM $MAIN_db_a400_category WHERE ID='$db0_line{IDcategory}' $where2 LIMIT 1";
+				my $db_micro2=$main::DB{main}->Query("SELECT ID, name FROM a400_category WHERE ID='$db0_line{'IDcategory'}' $where2 LIMIT 2");
+				if($db_micro2->NumRows())
+				{
+					while (%db_micro2_line=$db_micro2->FetchHash())
+					{
+						$db0_line{'cat_name'}=$db_micro2_line{name} if ($db_micro2_line{ID} eq $db0_line{'IDcategory'});
+						$db0_line{'parent_cat_name'}=$db_micro2_line{name} if ($db_micro2_line{ID} eq $parent_cat);
+					}
+				}
+			}
+			else
+			{
+				######################################################
+				# looking for category                                                               #
+				######################################################
+
+				my $db_micro2=$main::DB{main}->Query("SELECT ID, name FROM a400_category WHERE ID='$db0_line{'IDcategory'}' LIMIT 2");
+				if($db_micro2->NumRows())
+				{
+#=head1
+					while (%db_micro2_line=$db_micro2->FetchHash())
+					{
+						$db0_line{'cat_name'}=$db_micro2_line{name} if ($db_micro2_line{ID} eq $db0_line{'IDcategory'});
+					}
+#=cut
+				}
+
+			}
+			undef @db_micro2;
+			undef @db0_line2;
+
+			######################################################
+			# parsing out related items                                                        #
+			######################################################
+
+			$db0_line{'photo_count'}="0";
+			$db0_line{'video_count'}="0";
+			$db0_line{'audio_count'}="0";
+			$db0_line{'archive_index_count'}="0";
+			if ($db0_line{'xrelated'}=~s|<VAR id="a820" value="(.*?)" />||si)
+			{$db0_line{'forum_id'}=$1;}
+			else
+			{$db0_line{'forum_id'}="XXX";}
+			while ($db0_line{'xrelated'}=~s|<VAR id="a500" value="(.*?)" />||si)
+			{$db0_line{'photo_count'}++;}
+			while ($db0_line{'xrelated'}=~s|<VAR id="a510" value="(.*?)" />||si)
+			{$db0_line{'video_count'}++;}
+			while ($db0_line{'xrelated'}=~s|<VAR id="a510" value="(.*?)" />||si)
+			{$db0_line{'audio_count'}++;}
+			while ($db0_line{'xrelated'}=~s|<VAR id="a020" value="(.*?)" />||si)
+			{$db0_line{'archive_index_count'}++;}
+
+			######################################################
+			# line column designs                                                               #
+			######################################################
+
+=head1
+			my $actives="";
+			my $starttimes="";
+			my $endtimes="";
+			my $titles="";
+			my $authors="";
+			my $editors="";
+			my $mutations="";
+			my $parent_cats="";
+			my $cat_folders="";
+			my $cats="";
+=cut
+
+			my $actives="&nbsp;<img src=\"$tom::H_media/grf/admin/list_".$cl_active.".gif\" width=11 height=12 border=0 onclick=\"this.src='core.pl?type=set_active&table=a400".$isFromArchive2."&id=<!--ID-->';\">";
+			my $starttimes="$article_times{'starttime'}{mday}/$article_times{'starttime'}{mom}/$article_times{'starttime'}{year} $article_times{'starttime'}{hour}:$article_times{'starttime'}{min}";
+			my $endtimes="$article_times{'endtime'}{mday}/$article_times{'endtime'}{mom}/$article_times{'endtime'}{year} $article_times{'endtime'}{hour}:$article_times{'endtime'}{min}";
+			my $parent_cats.="<a href=\"core.pl?type=400&".$listingArchive."wherelike=IDcategory&where=$parent_cat\" target=\"frm_base\">".$db0_line{'parent_cat_name'}."</a>";
+			my $cat_folders="<a href=\"core.pl?type=400&".$listingArchive."wherelike=IDcategory&where=$db0_line{'IDcategory'}\" target=\"frm_base\"><img src=\"$tom::H_media/grf/admin/tree_0.gif\" border=0></a>";
+			my $cats.="<a href=\"core.pl?type=400&".$listingArchive."whereby=IDcategory&where=$db0_line{'IDcategory'}\" target=\"frm_base\">".$db0_line{'cat_name'}."</a>";
+			my $titles="&nbsp;<a href=\"javascript:load_box('core.pl?type=$form{type}-edit&".$listingArchive."id=".$db0_line{ID}."&lng=$db0_line{lng}')\">".$db0_line{'title'}."</a>";
+			my $authors="&nbsp;<a href=\"core.pl?type=400&".$listingArchive."whereby=IDauthor&where=$db0_line{'IDauthor'}\" target=\"frm_base\">".$db0_line{'author_name'}."</a>&nbsp;";
+			my $editors="&nbsp;<a href=\"core.pl?type=400&".$listingArchive."whereby=IDauthor&where=$db0_line{'IDeditor'}\" target=\"frm_base\">".$db0_line{'editor_name'}."</a>&nbsp;";
+
+			if($db0_line{'IDcount'}>1)
+			{
+				$titles=~s|^&nbsp;|&nbsp;<img src=\"$tom::H_media/grf/admin/lng_$db0_line{lng}_hi.gif\" width=11 height=12 border=0>&nbsp;|;
+				my $db_micro2 = $dbh->Query("
+					(
+						SELECT ID, active, priority, starttime, endtime, changetime, IDcategory, title, subtitle, IDauthor, IDeditor, xrelated, visits, arch, lng
+						FROM a400
+						WHERE ID='$db0_line{ID}'
+						AND lng!='$db0_line{lng}'
+					)
+					UNION ALL
+					(
+						SELECT ID, active, priority, starttime, endtime, changetime, IDcategory, title, subtitle, IDauthor, IDeditor, xrelated, visits, arch, lng
+						FROM a400_arch
+						WHERE ID='$db0_line{ID}'
+						AND lng!='$db0_line{lng}'
+					)
+					ORDER BY lng ASC
+				");
+				while (%db_micro_line2=$db_micro2->FetchHash())
+				{
+					my $cl_active="r";
+					if ($db_micro_line2{'active'} eq "Y"){$cl_active="g"}
+					#today, yesterday, older line color
+					my $cl_color="#8FADF9";
+					if ($db_micro_line2{starttime}>(time-86400)){$cl_color="#B0CFFF"}
+					if ($db_micro_line2{starttime}>time){$cl_color="#E0EFFF"}
+
+					my $cl_class="tr1";
+					my %article_times;
+
+					$article_times{'starttime'}={Utils::datetime::ctodatetime($db_micro_line2{'starttime'},format=>1)};
+					$article_times{'endtime'}={Utils::datetime::ctodatetime($db_micro_line2{'endtime'},format=>1)};
+					$article_times{'changetime'}={Utils::datetime::ctodatetime($db_micro_line2{'changetime'},format=>1)};
+					#my $article_times{'lasttime'}=Tomahawk::utils::datetime::ctodatetime($db_micro_line2{'lasttime'},format=>1);
+
+					my $db_micro2=$dbh->Query("SELECT id, nickname FROM a120 WHERE ID='$db_micro_line2{'IDauthor'}' LIMIT 1");
+					my @db_micro_line3=$db_micro2->FetchRow();
+					$db_micro_line2{'author_name'}=$db_micro_line3[1];
+
+					my $db_micro2=$dbh->Query("SELECT id, nickname FROM a120 WHERE ID='$db_micro_line2{'IDeditor'}' LIMIT 1");
+					my @db_micro_line3=$db_micro2->FetchRow();
+					$db_micro_line2{'editor_name'}=$db_micro_line3[1];
+
+					my $parent_cat;
+
+					if (length($db_micro_line2{IDcategory})>2)
+					{
+						my $where2="";
+						$parent_cat=$db_micro_line2{IDcategory};
+						$parent_cat=~s|(^.*)..$||;
+						$parent_cat=$1;
+						$where2="OR ID='$parent_cat'";
+
+						#return "SELECT ID, name FROM markiza_sk.a400_category WHERE ID='$db_micro_line2{IDcategory}' $where2 LIMIT 1";
+						my $db_micro3=$dbh->Query("SELECT ID, name FROM a400_category WHERE ID='$db_micro_line2{'IDcategory'}' $where2 LIMIT 2");
+						while (@db_micro_line3=$db_micro3->FetchRow())
+						{
+							$db_micro_line2{'cat_name'}=$db_micro_line3[1] if ($db_micro_line3[0] eq $db_micro_line2{'IDcategory'});
+							$db_micro_line2{'parent_cat_name'}=$db_micro_line3[1] if ($db_micro_line3[0] eq $parent_cat);
+						}
+					}
+					else
+					{
+						my $db_micro3=$dbh->Query("SELECT ID, name FROM a400_category WHERE ID='$db_micro_line2{'IDcategory'}' LIMIT 1");
+						if (@db_micro_line3=$db_micro3->FetchRow())
+						{
+							$db_micro_line2{'cat_name'}=$db_micro_line3[1];
+						}
+					}
+
+					######################################################
+					# adding a mutation line                                                           #
+					######################################################
+
+					$actives.="<br />&nbsp;<img src=\"$tom::H_media/grf/admin/list_".$cl_active.".gif\" width=11 height=12 border=0 onclick=\"this.src='core.pl?type=set_active&table=a400".$isFromArchive2."&id=<!--ID-->';\">";
+					$starttimes.="<br />$article_times{'starttime'}{mday}/$article_times{'starttime'}{mom}/$article_times{'starttime'}{year} $article_times{'starttime'}{hour}:$article_times{'starttime'}{min}";
+					$endtimes.="<br />$article_times{'endtime'}{mday}/$article_times{'endtime'}{mom}/$article_times{'endtime'}{year} $article_times{'endtime'}{hour}:$article_times{'endtime'}{min}";
+					$parent_cats.="<br /><a href=\"core.pl?type=400&".$listingArchive."wherelike=IDcategory&where=$parent_cat\" target=\"frm_base\">".$db_micro_line2{'parent_cat_name'}."</a>";
+					$cat_folders.="<br /><a href=\"core.pl?type=400&".$listingArchive."wherelike=IDcategory&where=$db_micro_line2{'IDcategory'}\" target=\"frm_base\"><img src=\"$tom::H_media/grf/admin/tree_0.gif\" border=0></a>";
+					$cats.="<br /><a href=\"core.pl?type=400&".$listingArchive."whereby=IDcategory&where=$db_micro_line2{'IDcategory'}\" target=\"frm_base\">".$db_micro_line2{'cat_name'}."</a>";
+					$titles.="<br />&nbsp;<img src=\"$tom::H_media/grf/admin/lng_".$db_micro_line2{lng}."_hi.gif\" width=11 height=12 border=0>&nbsp;<a href=\"javascript:load_box('core.pl?type=$form{type}-edit&".$listingArchive."id=".$db_micro_line{ID}."&lng=$db_micro_line2{lng}')\">".$db_micro_line2{'title'}."</a>";
+					$authors.="<br />&nbsp;<a href=\"core.pl?type=400&".$listingArchive."whereby=IDauthor&where=$db_micro_line{'IDauthor'}\" target=\"frm_base\">".$db_micro_line{'author_name'}."</a>&nbsp;";
+					$editors.="<br />&nbsp;<a href=\"core.pl?type=400&".$listingArchive."whereby=IDauthor&where=$db_micro_line{'IDeditor'}\" target=\"frm_base\">".$db_micro_line{'editor_name'}."</a>&nbsp;";
+					#$mutations.="&nbsp;<a href=\"javascript:load_box('core.pl?type=$form{type}-edit&".$listingArchive."id=".$db_micro_line{ID}."&lng=".$db_micro_line2{lng}."')\"></a>";
+				}
+			}
+			else
+			{
+
+			}
+
+			######################################################
+			# setting priority indicators                                                        #
+			######################################################
+
+			%plus={};
+			my %priority_vals;
+			$i=0;
+			while ($db0_line{priority}=~s|(.)||)
+			{
+				if ($1 eq "2"){$priority_vals{$i}="g";}
+				if ($1 eq "1"){$priority_vals{$i}="y";}
+				if ($1 eq "0"){$priority_vals{$i}="r";}
+				$i++;
+			}
+			for (my $i=0;$i<=$priority_depth;$i++)
+			{
+				if (exists $priority_vals{$i}){$plus{$i}{'1'}=$priority_vals{$i};}else{$plus{$i}{'1'}='r';}
+			}
+
+			######################################################
+			# setting archive indicators                                                       #
+			######################################################
+
+			my $isFromArchive = "g";
+			if ($db0_line{'arch'} eq "Y") { $isFromArchive = "g"; } else { $isFromArchive = "r"; }
+			my $isFromArchive2 = "";
+			if ($db0_line{'arch'} eq "Y") { $isFromArchive2 = "_arch"; }
+			$listingArchive="";
+			if ($isFromArchive eq "g") {$listingArchive="archive=1&";}
+
+			######################################################
+			# generating lines                                                                    #
+			######################################################
+
+			$table->add(
+				'class'		=>	"\"".$cl_class."\"".($datestamp2+86400)."\" onmouseover=\"this.className='".$cl_class."-hi'\" onmouseout=\"this.className='".$cl_class."'\"",
+				#'class'		=>	"\"".$cl_class."\"".($datestamp2+86400)."\" onmouseover=\"this.style.background='f0f0c0'\" onmouseout=\"this.style.background='';\"",
+				#'color'		=>	$cl_color,
+				'define'	=>{
+					'A'	=>
+					#{	'1'	=> "<img src=\"$tom::H_media/grf/admin/list_".$cl_active.".gif\" width=11 height=12 border=0 onclick=\"this.src='core.pl?type=set_active&table=a400".$isFromArchive2."&id=<!--ID-->';\">" },
+					{	'1'	=> "$actives" },
+
+					'start'	=>
+					{'1'=>"$starttimes"},
+
+					'end'	=>
+					{'1'=>"$endtimes"},
+
+					#'updated'	=>
+					#{'1'=>"$article_times{'changetime'}{mday}/$article_times{'changetime'}{mom}/$article_times{'changetime'}{year} $article_times{'changetime'}{hour}:$article_times{'changetime'}{min}"},
+
+					'parent_cat'	=>
+					{'1'=>"$parent_cats"},
+
+					'cF'	=>
+					{'1'=>"$cat_folders"},
+
+					'cat'	=>
+					{'1'=>"$cats"},
+
+					'title'	=>
+					{'1'=>"$titles"},
+					#{'1'=>"<a href=\"javascript:load_box('core.pl?type=$form{type}-edit&".$listingArchive."id=".$db_micro_line{ID}."')\">".$db_micro_line{'title'}."</a>"},
+
+					#'subtitle'	=>
+					#{'1'=>$db_micro_line{'subtitle'}},
+
+					'author'	=>
+					{'1'=>"$authors"},
+
+					'editor'	=>
+					{'1'=>"$editors"},
+
+					'mut'	=>
+					{
+						'1'=>$db_micro_line{ID},
+						'2'=>"$mutations",
+					},
+					'img'	=>
+					{'1'=>"$db0_line{'photo_count'}"},
+					%plus,
+					'Vi'	=>
+					#{'1'=>"$db0_line{'visits'}"},
+					{
+						'1'=>"$listingArchive",
+						'2'=>"$db0_line{'visits'}"
+					},
+					'associate'	=>
+					{'1'=>"$db0_line{'ID'}"},
+					'archive'	=>
+					{
+						'1'	=>	$isFromArchive,
+						'2'  =>   $db0_line{'arch'},
+						'3'  =>   $db0_line{'ID'}
+					},
+					#'arch_index'	=>
+					#{'1'=>"<a href=\"core.pl?type=400-indexize&ID=$db0_line{'ID'}\" target=\"frm_micro\">".$db0_line{'archive_index_count'}."</a>"},
+					'forum_index'	=>
+					{'1'=>"$db0_line{'forum_id'}"},
+					#'Y'	=>
+					#{'1'=>"<a href=\"core.pl?type=clanok_undele&ID=<!--ID-->\" target=\"frm_micro\"><img src=$tom::H_media/grf/admin/close3.gif border=0 width=12 height=12></a>"},
+					#'X'	=>
+					#{'1'=>"<a href=\"core.pl?type=clanok_trashdel&ID=<!--ID-->\" target=\"frm_micro\"><img src=$tom::H_media/grf/admin/close1.gif border=0 width=12 height=12></a>"},
+				},
+				'replace'	=>{'ID'	=>	$db0_line{ID}}
+			);
+		}
+	}
+	return $info.$table->HTML.$LOG;
+}
+
+1;

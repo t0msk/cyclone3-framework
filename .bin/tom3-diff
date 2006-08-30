@@ -1,0 +1,75 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+require "/usr/bin/tom3-init";
+
+use Digest::MD5  qw(md5 md5_hex md5_base64);
+
+%form=
+(
+# '-v'		=>	"verbosity",
+# '-vv, --v'	=>	"verbosity 2, --v=2",
+ '-s'		=>	"show all duplicated files",
+# '-s'		=>	"show only all modifications",
+# '-a'	=>	"all directories",
+# '-t'	=>	"this directory",
+# '-r'	=>	"this directory with recursive",
+ '-v'	=>	"verbosity",
+);
+if (($FORM{h})||($FORM{help})){&help();}
+if (!$FORM{s}){&help();}
+
+my $time_current=time;
+
+my %md5;
+
+chdir $TOM::P;
+foreach my $file (grep {$_=~/\.(mdl|smdl|dmdl|xsgn|xlng|html|css|htm)$/} split ("\n",`find .`))
+{
+	$file=~s|^\./||;
+#	print "$file\n";
+	
+	open (HND,"<$file");undef $/;my $file_data=<HND>;close(HND);
+	
+	push @{$md5{md5_hex($file_data)}},$file;
+	
+}
+
+my $dupl;
+foreach my $key(sort {${$md5{$a}}[0] cmp ${$md5{$b}}[0]} keys %md5)
+{
+#	print "$key\n";
+	if (@{$md5{$key}}>1)
+	{
+		print color 'reset bold yellow';
+		print "\nduplicate hash: $key\n";
+		print color 'reset green';
+		my $i;
+		foreach (@{$md5{$key}})
+		{
+			do {print color 'reset bold green';} unless $i;
+			$dupl++;
+			print "\t $_\n";
+			do {print color 'reset green';} unless $i;
+			$i++;
+		}
+		$dupl--;
+	
+	
+#		print "same!\n";
+	}
+}
+print color 'reset bold yellow';
+print "\n";
+print "------------------------------------------------\n";
+print "$dupl duplicated files\n";
+
+&exit(0);
+
+# next...
+
+
+
+
+
+
+

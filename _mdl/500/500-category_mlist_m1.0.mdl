@@ -1,0 +1,424 @@
+#!/usr/bin/perl
+# ????? - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+our $authors = "nemsak\@webcom.sk";
+
+sub execute
+{
+	my %env = @_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+	if ($env{xt_xlng})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	$env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+	$env{db_500}=$TOM::DB{main}{name} unless $env{db_500};
+
+	$env{db_select}="a500_category.ID, a500_category.IDname, a500_category.name, a500_category.active" unless $env{db_select};
+
+	#$env{db_where}
+
+	if(exists $env{db_active})
+	{
+		if($env{db_active})
+		{ $env{db_where} .= " AND active='Y' "; }
+		else
+		{ $env{db_where} .= " AND active='N' "; }
+	}
+
+	# start level
+	$env{db_startlevel} = "(length(ID)/2>=$env{db_startlevel})" if $env{db_startlevel};
+
+	# whole tree
+	main::_log("
+		SELECT ID
+		FROM $env{db_500}.a500_category
+		WHERE
+			1
+		ORDER BY
+			ID ASC
+	");
+
+	my $db = $main::DB{main}->Query("
+		SELECT ID
+		FROM $env{db_500}.a500_category
+		WHERE
+			1
+		ORDER BY
+			ID ASC
+	");
+	if($db)
+	{
+		if($db->NumRows())
+		{
+			main::_log("db returned " . $db->NumRows() . " rows");
+
+			my %category_hash;
+
+			while(my %db_line = $db->FetchHash())
+			{
+				$category_hash{$db_line{ID}}=
+				{
+					'ID'	=>	"$db_line{ID}",
+				};
+
+				if($env{xt_reroot})
+				{
+					$category_hash{$db_line{ID}}{level} = (length($db_line{ID})/2) - (length($env{db_ID})/2);
+				}
+				else
+				{
+					$category_hash{$db_line{ID}}{level} = length($db_line{ID})/2;
+				}
+
+				main::_log("got category ID " . $category_hash{$db_line{ID}}{ID} . " at level " . $category_hash{$db_line{ID}}{level});
+			}
+
+			# make the current ID node a root node - display only children
+			$env{xt_reroot}=0 unless $env{xt_reroot};
+			if(($env{xt_reroot}) && ($env{db_ID}))
+			{
+				main::_log("xt_reroot parameter in effect. rerooting!");
+
+				# start level
+				main::_log("
+					SELECT ID
+					FROM $env{db_500}.a500_category
+					WHERE
+						1
+						AND ID='$env{db_ID}'
+					LIMIT 1
+				");
+				my $db = $main::DB{main}->Query("
+					SELECT ID
+					FROM $env{db_500}.a500_category
+					WHERE
+						1
+						AND ID='$env{db_ID}'
+					LIMIT 1
+				");
+				if(my %db_line=$db->fetchHash())
+				{
+					$env{db_where}.=" AND ID LIKE '$db_line{ID}__%'";
+				}
+				else
+				{
+					main::_log("db error: ".$main::DB{main}->errstr());
+				}
+			}
+
+			main::_log("
+				SELECT $env{db_select}
+				FROM $env{db_500}.a500_category
+				WHERE
+					1
+					$env{db_where}
+				ORDER BY
+					ID ASC
+			");
+
+			my $db = $main::DB{main}->Query("
+				SELECT $env{db_select}
+				FROM $env{db_500}.a500_category
+				WHERE
+					1
+					$env{db_where}
+				ORDER BY
+					ID ASC
+			");
+			if($db)
+			{
+				if($db->NumRows())
+				{
+					main::_log("db returned " . $db->NumRows() . " rows");
+
+					my $lastLevel=1;
+
+					while(my %db_line = $db->FetchHash())
+					{
+						main::_log("got category ID " . $category_hash{$db_line{ID}}{ID} . " at level " . $category_hash{$db_line{ID}}{level});
+
+						if((exists $env{db_ID}) && ($category_hash{$db_line{ID}}{ID} eq $env{db_ID}) && (exists $XSGN{'LINE_ID_'.$category_hash{$db_line{ID}}{ID}.'_'.$category_hash{$db_line{ID}}{level}.'_active'}))
+						{
+							main::_log("adding special xsgn - LINE_ID_".$category_hash{$db_line{ID}}{ID}."_".$category_hash{$db_line{ID}}{level}."_active");
+							$XSGN{'NULL'}=$XSGN{'LINE_ID_'.$category_hash{$db_line{ID}}{ID}.'_'.$category_hash{$db_line{ID}}{level}.'_active'};
+						}
+						elsif((exists $env{db_ID}) && ($category_hash{$db_line{ID}}{ID} eq $env{db_ID}) && (exists $XSGN{'LINE_ID_'.$category_hash{$db_line{ID}}{ID}.'_active'}))
+						{
+							main::_log("adding special xsgn - LINE_ID_".$category_hash{$db_line{ID}}{ID}."_active");
+							$XSGN{'NULL'}=$XSGN{'LINE_ID_'.$category_hash{$db_line{ID}}{ID}.'_active'};
+						}
+						elsif((exists $env{db_ID}) && ($category_hash{$db_line{ID}}{ID} eq $env{db_ID}) && (exists $XSGN{'LINE_'.$category_hash{$db_line{ID}}{level}.'_active'}))
+						{
+							main::_log("adding special xsgn - LINE_".$category_hash{$db_line{ID}}{level}."_active");
+							$XSGN{'NULL'}=$XSGN{'LINE_'.$category_hash{$db_line{ID}}{level}.'_active'};
+						}
+						elsif((exists $env{db_ID}) && ($category_hash{$db_line{ID}}{ID} eq $env{db_ID}) && (exists $XSGN{'LINE_active'}))
+						{
+							main::_log("adding special xsgn - LINE_active");
+							$XSGN{'NULL'}=$XSGN{'LINE_active'};
+						}
+						elsif(exists $XSGN{'LINE_'.$category_hash{$db_line{ID}}{level}})
+						{
+							main::_log("adding special xsgn - LINE_".$category_hash{$db_line{ID}}{level});
+							$XSGN{'NULL'}=$XSGN{'LINE_'.$category_hash{$db_line{ID}}{level}};
+						}
+						elsif ((not $category_hash{$db_line{ID}}{level} % 2) && (exists $XSGN{'LINE_odd'}))
+						{
+							main::_log("adding special xsgn - LINE_odd");
+							$XSGN{'NULL'}=$XSGN{'LINE_odd'};
+						}
+						else
+						{
+							$XSGN{'NULL'}=$XSGN{'LINE'};
+						}
+
+						if ($category_hash{$db_line{ID}}{level}>$lastLevel)
+						{
+							if (exists $XSGN{"LINE_PARENT_ID_$category_hash{$db_line{ID}}{ID}"})
+							{
+								main::_log("adding special xsgn - LINE_PARENT_ID_" . $category_hash{$db_line{ID}}{ID});
+								$XSGN{'TMP'} =~ s/<#LINE_PARENT#>/$XSGN{"LINE_PARENT_ID_$category_hash{$db_line{ID}}{ID}"}/;
+							}
+							elsif (exists $XSGN{'LINE_PARENT_'.$category_hash{$db_line{ID}}{level}.'_active'})
+							{
+								main::_log("adding special xsgn - LINE_PARENT_".$category_hash{$db_line{ID}}{level}."_active");
+								$XSGN{'TMP'} =~ s/<#LINE_PARENT#>/$XSGN{'LINE_PARENT_'.$category_hash{$db_line{ID}}{level}.'_active'}/;
+							}
+							elsif (exists $XSGN{'LINE_PARENT_active'})
+							{
+								main::_log("adding special xsgn - LINE_PARENT_active");
+								$XSGN{'TMP'} =~ s/<#LINE_PARENT#>/$XSGN{'LINE_PARENT_active'}/;
+							}
+							elsif (exists $XSGN{'LINE_PARENT_'.$category_hash{$db_line{ID}}{level}})
+							{
+								main::_log("adding special xsgn - LINE_PARENT_" . $category_hash{$db_line{ID}}{level});
+								$XSGN{'TMP'} =~ s/<#LINE_PARENT#>/$XSGN{'LINE_PARENT_'.$category_hash{$db_line{ID}}{level}}/;
+							}
+							elsif ((not $category_hash{$db_line{ID}}{level} % 2) && (exists $XSGN{'LINE_PARENT_odd'}))
+							{
+								main::_log("adding special xsgn - LINE_PARENT_odd");
+								$XSGN{'TMP'}=$XSGN{'LINE_PARENT_odd'};
+							}
+							else
+							{
+								$XSGN{'TMP'} =~ s/<#LINE_PARENT#>/$XSGN{'LINE_PARENT'}/;
+							}
+						}
+
+						$XSGN{'NULL_LINE_IMAGES'}="";
+						if (exists $XSGN{'LINE_IMAGES_'.$category_hash{$db_line{ID}}{ID}})
+						{
+							main::_log("adding special xsgn - LINE_IMAGES_" . $category_hash{$db_line{'ID'}}{'ID'});
+							$XSGN{'NULL_LINE_IMAGES'} = $XSGN{'LINE_IMAGES_'.$category_hash{$db_line{ID}}{ID}};
+						}
+						elsif (exists $XSGN{'LINE_IMAGES_'.$category_hash{$db_line{'ID'}}{'level'}})
+						{
+							main::_log("adding special xsgn - LINE_IMAGES_".$category_hash{$db_line{'ID'}}{'level'});
+							$XSGN{'NULL_LINE_IMAGES'} = $XSGN{'LINE_IMAGES_'.$category_hash{$db_line{'ID'}}{'level'}};
+						}
+						elsif (exists $XSGN{'LINE_IMAGES'})
+						{
+							main::_log("oph aasdu "."LINE_IMAGES_".$category_hash{$db_line{'ID'}}{'level'});
+							$XSGN{'NULL_LINE_IMAGES'} = $XSGN{'LINE_IMAGES'};
+						}
+
+						if($XSGN{'NULL_LINE_IMAGES'} ne "")
+						{
+							main::_log("adding images to line");
+
+							$env{images_db_format}='t' unless $env{images_db_format};
+							foreach(grep {/images_db_format.*?/} keys %env)
+							{
+								$env{$env{$_}.'_hash'}=Tomahawk::Getmdlvar("500",$env{$_}.'_hash',db=>$env{db_500}) unless (exists $env{$env{$_}.'_hash'});
+								if($env{$env{$_}.'_hash'})
+								{main::_log("$env{$_} is a hashed format");}
+								else
+								{main::_log("$env{$_} is not a hashed format");}
+							}
+
+							$env{images_db_limit}=10 unless $env{images_db_limit};
+
+							if($env{images_db_limit}=~/^(.*?),(.*)$/)
+							{
+								$env{images_db_offset}=$1;
+								$env{images_db_count}=$2;
+							}
+							else
+							{
+								$env{images_db_offset}=0;
+								$env{images_db_count}=$env{images_db_limit};
+							}
+
+							#loading only active images by default
+							$env{images_db_active}=1 if (not exists  $env{images_db_active});
+
+							# setting default db_order_by
+							$env{images_db_order_by}="a500.ID DESC" unless $env{images_db_order_by};
+
+							#parsing IDcategory
+							if($env{images_db_where})
+							{ $env{images_db_where}.=" AND " unless ($env{images_db_where}=~/ AND$/i); }
+
+							main::_log("
+								SELECT
+									a500.ID,
+									a500.hash,
+									a500.IDcategory,
+									a500_attrs.about,
+									a500_category.name
+								FROM $env{db_500}.a500 AS a500
+								LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.ID=a500_attrs.ID
+								LEFT JOIN  $env{db_500}.a500_category AS a500_category ON a500.IDcategory=a500_category.ID
+								WHERE
+									$env{images_db_where}
+									a500.format='$env{images_db_format}'
+									AND a500.active='Y'
+									AND a500.IDcategory='$db_line{ID}$env{images_db_IDcategory_suffix}'
+								ORDER BY
+									$env{images_db_order_by}
+								LIMIT
+									$env{images_db_limit}
+							");
+
+							my $list=$main::DBH->Query("
+								SELECT
+									a500.ID,
+									a500.hash,
+									a500.IDcategory,
+									a500_attrs.about,
+									a500_category.name
+								FROM $env{db_500}.a500 AS a500
+								LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.ID=a500_attrs.ID
+								LEFT JOIN  $env{db_500}.a500_category AS a500_category ON a500.IDcategory=a500_category.ID
+								WHERE
+									$env{images_db_where}
+									a500.format='$env{images_db_format}'
+									AND a500.active='Y'
+									AND a500.IDcategory='$db_line{ID}$env{images_db_IDcategory_suffix}'
+								ORDER BY
+									$env{images_db_order_by}
+								LIMIT
+									$env{images_db_limit}
+							");
+
+							my $line_counter;
+
+							if ($list)
+							{
+								main::_log("db returned " . $list->NumRows() . " rows");
+								main::_log("TMP = ".$XSGN{'TMP'});
+								main::_log("NULL = ".$XSGN{'NULL'});
+
+								while (my %db_line=$list->fetchhash())
+								{
+									if(exists $XSGN{'LINE_IMAGES_LINE_'.$line_counter})
+									{
+										main::_log("adding special xsgn - LINE_IMAGES_LINE_".$line_counter);
+										$XSGN{'NULL_LINE_IMAGES_LINE'}=$XSGN{'LINE_IMAGES_LINE_'.$line_counter};
+									}
+									elsif ((not $line_counter % 2) && (exists $XSGN{'LINE_IMAGES_LINE_odd'})) #is this an odd line?
+									{
+										main::_log("adding special xsgn - LINE_IMAGES_LINE_odd");
+										$XSGN{'NULL_LINE_IMAGES_LINE'}=$XSGN{'LINE_IMAGES_LINE_odd'};
+									}
+									else
+									{
+										$XSGN{'NULL_LINE_IMAGES_LINE'}=$XSGN{'LINE_IMAGES_LINE'};
+									}
+
+									main::_log("NULL_LINE_IMAGES = ".$XSGN{'NULL_LINE_IMAGES'});
+									main::_log("NULL_LINE_IMAGES_LINE = ".$XSGN{'NULL_LINE_IMAGES_LINE'});
+
+									my $tmp_ID=sprintf('%07d',$db_line{ID});
+
+									if (exists $env{'images_db_format_'.$line_counter})
+									{
+										main::_log("setting special image format - images_db_format_".$line_counter." to ".$env{'images_db_format_'.$line_counter});
+										$env{'images_db_format_tmp'}=$env{'images_db_format_'.$line_counter};
+									}
+									elsif ((not $line_counter % 2) && (exists $env{'images_db_format_odd'}))
+									{
+										main::_log("setting special image format - images_db_format_odd to ".$env{'images_db_format_odd'});
+										$env{'images_db_format_tmp'}=$env{'images_db_format_odd'};
+									}
+									else
+									{ $env{'images_db_format_tmp'}=$env{'images_db_format'}; }
+
+									my $tmp;
+									if ($tmp_ID=~/^(....)/i){$tmp=$1};
+
+									$db_line{fullpath}="$tom::H_500/$tmp/$db_line{'hash'}-$env{'images_db_format_tmp'}.jpg";
+									$db_line{name}="$db_line{'hash'}-$env{'images_db_format_tmp'}.jpg";
+
+									if (($env{'images_about_cut'})&&(length($db_line{'about'})>$env{'images_about_cut'}))
+									{$db_line{'about'}=substr($db_line{'title'}, 0, $env{'images_about_cut'});$db_line{'about'}=~s|(.*) .*?$|$1&hellip;|;}
+
+									foreach (keys %db_line)
+									{
+										$XSGN{'NULL_LINE_IMAGES_LINE'}=~s|<%$_%>|$db_line{$_}|g;
+									}
+									$XSGN{'NULL_LINE_IMAGES_LINE'}=~s|<%alt%>|$db_line{'about'}|g;
+									$XSGN{'NULL_LINE_IMAGES_LINE'}=~s|<%line_no%>|$line_counter|g;
+
+									if($XSGN{'NULL_LINE_IMAGES'}=~/<#LINE_IMAGES_LINE_$line_counter#>/)
+									{$XSGN{'NULL_LINE_IMAGES'}=~s|<#LINE_IMAGES_LINE_$line_counter#>|$XSGN{'NULL_LINE_IMAGES_LINE'}|;}
+									else
+									{$XSGN{'NULL_LINE_IMAGES'}=~s|<#LINE_IMAGES_LINE#>|$XSGN{'NULL_LINE_IMAGES_LINE'}|;}
+
+									$XSGN{'NULL_LINE_IMAGES'}=~s|<%images_counter%>|$line_counter|g;
+
+									$line_counter++;
+								}
+							}
+							$XSGN{'NULL_LINE_IMAGES'}=~s|<#LINE_IMAGES_LINE#>||sg;
+						}
+						$XSGN{'NULL'} =~ s|<#LINE_IMAGES#>|$XSGN{'NULL_LINE_IMAGES'}|;
+
+						# ak sa vraciam do nadurovne
+						# - pozatvaram vsetky podurovnevne
+						# - zatvorim aj LINE_PARENT
+						if ($category_hash{$db_line{ID}}{level}<$lastLevel)
+						{
+							for ($category_hash{$db_line{ID}}{level} .. $lastLevel-1)
+							{ $XSGN{'TMP'} =~ s/<#LINE#>//; }
+							$XSGN{'TMP'} =~ s/<#LINE_PARENT#>//;
+						}
+
+						# ak je to len dalsia polozka v rovnakej urovni
+						# - zatvorim LINE_PARENT (poduroven, nechcem ju)
+						if ($category_hash{$db_line{ID}}{level}==$lastLevel)
+						{$XSGN{'TMP'} =~ s/<#LINE_PARENT#>//;}
+
+						foreach (keys %db_line)
+						{
+							$XSGN{'NULL'}=~s|<%$_%>|$db_line{$_}|g;
+						}
+						$XSGN{'NULL'}=~s|<%level%>|$category_hash{$db_line{ID}}{level}|g;
+
+						$XSGN{'TMP'} =~ s|<#LINE#>|$XSGN{'NULL'}|;
+
+						$lastLevel=$category_hash{$db_line{ID}}{level};
+					}
+				}
+			}
+		}
+		else
+		{
+			main::_log("db returned zero rows");
+		}
+	}
+
+	return 1;
+}
+
+1;

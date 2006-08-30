@@ -1,0 +1,38 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ if (!$env{ID}){$XSGN{TMP}="";return 1;}
+
+ $env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+ $env{db_820}=$TOM::DB_name unless $env{db_820};
+
+ my $db0=$main::DBH->Query("SELECT IDforum FROM $env{db_820}.a820_msgs WHERE  ID='$env{ID}' LIMIT 1");
+ my @db0_line=$db0->fetchrow();
+
+ if ($main::DBH->Query("
+	UPDATE $env{db_820}.a820_msgs
+	SET	active='N'
+	WHERE  ID='$env{ID}'"))
+ {
+  $main::DBH->Query("UPDATE $env{db_820}.a820 SET inserttime='$tom::time_current' WHERE  ID='$db0_line[0]'");
+  $XSGN{TMP}.="forum $db0_line[0] na $tom::time_current  $env{ID} \n";
+  $XSGN{TMP}.="deactivated";return 1;
+ }
+ else
+ {
+  $XSGN{TMP}="not deactivated";return 1;
+ }
+
+
+ return 1}
+
+1;

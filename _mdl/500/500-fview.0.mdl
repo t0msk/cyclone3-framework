@@ -1,0 +1,221 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 NAME
+fview
+
+=head1 HEAD_VERSION_BUILD
+1.030702
+
+=head1 DESCRIPTION
+fview original photo
+zobrazenie originalu obrazku so vsetkymi
+informaciami
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+
+        <value id="preview" value="1" />
+        <value id="output" value="xsgn" />
+
+	<input id="ID" value="varchar(7)">cislo obrazku</input>
+	<input id="-xsgn" value="varchar(20)">potrebujem design</input>
+	<input id="hash" value="boolean">hashovany original obrazku?</input>
+        <input id="width_max" value="int(1600)"></input>
+	<input id="height_max" value="int(1200)"></input>
+	<input id="500_db" value="varchar(50)">databaza kde su obrazky</input>
+
+        <source type="db.table" value="X.photogallery" />
+
+</DESCRIPTION>
+
+
+=head1 CHANGES
+build 030702 - Aben
+        *) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+        *) nothings
+=cut
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ if (!$env{ID}){$tom::ERR="Not defined ID";return undef}
+
+ # v ktorej databaze su obrazky?
+ $env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+ $env{db_500}=$TOM::DB_name unless $env{db_500};
+
+# preberam hash?
+ $env{hash}=Tomahawk::Getmdlvar("500","o_hash",db=>$env{db_500}) if not defined $env{hash};
+
+=head1
+ $XSGN{TMP}=<<"HEADER";
+<BR>
+<center>
+obrazok:<BR>
+<img src="<%IMG%>" border=1 <%VAR%>><BR>
+<BR>
+<BR>$env{hash}
+</center>
+HEADER
+
+$XSGN{ERR_NOTEXIST}=<<"HEADER";
+
+Obrazok neexistuje <BR>
+
+HEADER
+=cut
+
+ my $db0;
+
+#if($main::IAdm)
+#@{
+ $db0=$main::DBH->Query("
+ 	SELECT
+		a.ID,
+		a.hash,
+		a.IDcategory,
+		a.size,
+		a.IDattrs,
+		b.about
+	FROM $env{db_500}.a500 AS a
+	LEFT JOIN $env{db_500}.a500_attrs AS b ON a.IDattrs=b.ID
+	WHERE	a.ID='$env{ID}'
+		AND a.format='o'
+		AND (a.lng='$env{lng}' OR a.lng='')
+		AND a.active='Y'
+	LIMIT 1");
+=head1
+}
+else
+{
+ $db0=$main::DBH->Query("
+ 	SELECT
+		ID,
+		hash,
+		IDcategory,
+		size,
+		IDattrs
+	FROM $env{db_500}.a500
+	WHERE	ID='$env{ID}'
+		AND format='o'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	LIMIT 1");
+}
+=cut
+ if (my @db0_line=$db0->FetchRow())
+ {
+  $db0_line[0]=~/^(....)/;
+  my $var=$1;
+
+	$XSGN{TMP}=~s|<%ABOUT%>|$db0_line[5]|g;
+
+  # robime updateee :))
+  $main::DBH->Query("
+  	UPDATE $env{db_500}.a500_attrs
+	SET lasttime='$tom::time_current',visits=visits+1
+	WHERE IDattrs='$db0_line[4]'
+	LIMIT 1") if $db0_line[4];
+
+  #$XSGN{TMP}=~s|<%DIR%>|$var|g;
+
+  if ($env{hash})
+  {$XSGN{TMP}=~s|<%IMG%>|$tom::H_500/$var/$db0_line[1]-o.jpg|g}
+  else
+  {$XSGN{TMP}=~s|<%IMG%>|$tom::H_500/$var/$db0_line[0]-o.jpg|g}
+
+  my @ref=split('x',$db0_line[3]);
+  $env{width}=$ref[0];
+  $env{height}=$ref[1];
+
+  # ak som popup, ovladam okno
+  if ($env{popup})
+  {
+   # plus zaklad
+   $env{width}+=$env{width_plus};
+   $env{height}+=$env{height_plus};
+   # plus browser
+
+   # hranice
+   if ($env{width}<$env{width_min}){$env{width}=$env{width_min}};
+   if ($env{height}<$env{height_min}){$env{height}=$env{height_min}};
+   if (($env{width_max})&&($env{width}>$env{width_max})){$env{width}=$env{width_max}};
+   if (($env{height_max})&&($env{height}>$env{height_max})){$env{height}=$env{height_max}};
+
+#   $env{width}=$env{width_min} unless $env{width};
+#   $env{height}=$env{height_min} unless $env{height};
+
+   $XSGN{TMP}=~s|<%WIDTH%>|$env{width}|g;
+   $XSGN{TMP}=~s|<%HEIGHT%>|$env{height}|g;
+  }
+  else # ak niesom popup, ovladam velkost obrazku
+  {
+   if (($env{width_max})&&($env{width}>$env{width_max}))
+   {$env{width}=$env{width_max};delete $env{height};}
+   if (($env{height_max})&&($env{height}>$env{height_max}))
+   {$env{height}=$env{height_max};delete $env{width};}
+
+   if ($env{width}){$XSGN{TMP}=~s|<%VAR%>|width="$env{width}" <%VAR%>|;}
+   if ($env{height}){$XSGN{TMP}=~s|<%VAR%>|height="$env{height}" <%VAR%>|;}
+  }
+
+ }
+ else
+ {
+  # snazim sa aspon o thumbnail
+  $env{hash}=Tomahawk::Getmdlvar("500","t_hash",db=>$env{db_500});
+
+  my $db0=$main::DBH->Query("
+ 	SELECT
+		ID,
+		hash,
+		IDcategory,
+		size
+	FROM $env{db_500}.a500
+	WHERE	ID='$env{ID}'
+		AND format='t'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	LIMIT 1");
+  if (my @db0_line=$db0->FetchRow())
+  {
+   $db0_line[0]=~/^(....)/;
+   my $var=$1;
+
+   if ($env{hash})
+   {$XSGN{TMP}=~s|<%IMG%>|$tom::H_500/$var/$db0_line[1]-t.jpg|g}
+   else
+   {$XSGN{TMP}=~s|<%IMG%>|$tom::H_500/$var/$db0_line[0]-t.jpg|g}
+
+   if ($env{popup})
+   {
+    $XSGN{TMP}=~s|<%WIDTH%>|$env{width_min}|g;
+    $XSGN{TMP}=~s|<%HEIGHT%>|$env{height_min}|g;
+   }
+
+  }
+  else {$XSGN{TMP}=$XSGN{ERR_NOTEXIST};}
+ }
+
+ return 1}
+
+1;
+
+
+
+
+
+
+
+
+
+

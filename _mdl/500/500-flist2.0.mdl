@@ -1,0 +1,94 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #if (!$env{ID}){$tom::ERR="Not defined ID";return undef}
+
+
+
+
+ $env{db}=$TOM::DB_name unless $env{db};
+ #$env{db_count}=30 unless $env{db_count};
+ $env{format}= "t" unless $env{format};
+ $env{horizontal}=3 unless $env{horizontal};  #tyka s a to iba poslednej stranky
+ $env{vertical}=2 unless $env{vertical};       #tyka s a to iba poslednej stranky
+ $env{level}=2 unless $env{level};
+ $env{first_horizontal} = 4 unless $env{first_horizontal};
+ $env{popis}= "1" unless $env{popis};
+ $env{sort}= "1"   unless $env{sort};
+ $env{category} = "00";
+ my $Line=$main::DBH->Query("
+select
+Z.ID,Z.hash,Z.IDcategory,O.name
+from $env{db}.a500 as Z
+left join  $env{db}.a500_category O ON O.ID=Z.IDcategory
+where Z.format='t' AND Z.active='Y' AND Z.IDcategory LIKE '$env{category}%' order by O.ID
+");
+
+my %hash1;
+my %hash2;
+
+
+while(my @db_line=$Line->fetchrow)
+{
+$hash1{$db_line[0]}=$db_line[2];
+$hash2{$db_line[2]}=$db_line[3];
+}
+my @su_tam;
+my $pocitac=0;
+my $prva;
+my %hash3;
+#my $count_papa=0;
+my @mam_pole;
+foreach $_ (sort keys %hash1)
+{
+if($hash1{$_}=~/($env{category}.{2})/)
+{
+$hash3{$1}=" ";
+}
+
+if($hash1{$_}=~/($env{category}.{2})(.*)/)
+{
+$hash3{$1}="$2";
+}
+
+}
+
+
+
+foreach $prva (keys %hash3)
+{
+
+
+#$XSGN{POS}=~s|<#POS#>|$hash4{$mam_pole[$pocitame]}<#POS#>|;
+
+$XSGN{LINE}="lilljhnl";
+$XSGN{POS}=$xsgn_pos;
+$XSGN{TMP}=~s|<#TMP#>|$XSGN{LINE}<#TMP#>|;
+$XSGN{LINE}=$xsgn_line;
+
+}
+ return 1}
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+

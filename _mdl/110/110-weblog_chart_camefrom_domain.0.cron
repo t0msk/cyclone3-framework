@@ -1,0 +1,199 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+
+
+use SVGraph::2D::lines;
+use SVGraph::2D::columns;
+use Utils::datetime;
+use DateTime;
+use TOM::Net::HTTP;
+use TOM::Net::HTTP::referer;
+
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	
+	Database::connect::multi('stats') || die "cannot connect all databases";
+	
+	if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
+	$env{domain}=$tom::H unless exists $env{domain};
+
+		my $graf=SVGraph::2D::columns->new(
+			title		=>	"New visitors came from TOP-20 domains (in last 10 days)",
+		#	type		=>	"normal",	# normal/stacked(spojene)/percentage
+		#	type		=>	"stacked",	# normal/stacked(spojene)
+			type		=>	"stacked",	# normal/stacked(spojene)	
+			x		=>	750,
+			y		=>	300,
+		
+			show_legend		=>	1, # show legend of Columns
+			show_points		=>	1,
+		#	show_points_middle	=>	1,
+		#	show_lines			=>	1,
+		#	show_lines_smooth	=>	1,
+			show_areas		=>	1,
+			show_areas_opacity	=>	1,
+		#	show_lines_smooth_range	=>	1,
+#			show_data			=>	1,
+#			show_data_background=>	1,
+		
+			grid_y_scale_minimum		=>	000.00, # zaciname od nuly
+		#	grid_y_scale_maximum		=>	15.00, #
+		#	grid_y_main_spacing			=>	0.10,
+		
+			show_grid_x		=>	1,
+			show_legend_label=>1,
+		);
+		
+		my %columns;
+		
+		$columns{'SE'}=$graf->addColumn(title=>"SearchEngine");
+		$columns{'domain'}=$graf->addColumn(title=>"Another domain");
+		$columns{'direct'}=$graf->addColumn(title=>"Direct");
+		#$columns{'domain'}=$graf->addColumn(title=>"Another domain");
+		#$columns{'direct'}=$graf->addColumn(title=>"Direct");
+		
+		my $days=10;
+#		for my $day(0..$days)
+#		{
+#			my $from=$main::time_current-(86400*($days+1))+(86400*$day);
+#			my %date=Utils::datetime::ctodatetime($from,format=>1);
+#			my $label="$date{year}-$date{mom}-$date{mday}";
+#			$graf->addRowLabel($label);
+#		}
+		
+		my $from=$main::time_current-(86400*($days+1));
+		my %date=Utils::datetime::ctodatetime($from,format=>1);
+		$from="$date{year}-$date{mom}-$date{mday}";
+		
+		
+		my %domains;
+		my $db0=$main::DB{stats}->Query("
+			SELECT
+				substring(reqdatetime,1,10) AS date,
+				referer,
+				page_code_referer
+			FROM
+				a110_weblog_rqs
+			WHERE
+				domain='$tom::Hm' AND
+				domain_sub='$env{domain}' AND
+				reqtype IN ('B','m','w') AND
+				USRM_flag IN ('G') AND
+				page_code_referer='' AND
+				reqdatetime>'$from' AND
+				active='Y'
+		");
+		while (my %db0_line=$db0->fetchhash)
+		{
+			my ($domain,$query)=TOM::Net::HTTP::domain_clear($db0_line{referer});
+			
+			#print "$domain/$tom::H\n";
+			
+			next if $domain=~/^$tom::H/;
+			
+			#print "$domain/$tom::H_www";
+			
+		#	if (!$db0_line{referer})
+			if (!$db0_line{'page_code_referer'} && !$db0_line{referer})
+			{
+				$domains{'(Direct)'}++;
+				next;
+			}
+			
+			# pokial clovek browsi po stranke a nema refereri (spatne useragnety, alebo falosne boty)
+			if (!$db0_line{referer})
+			{
+				next;
+			}
+			
+#			if (my $dom=TOM::Net::HTTP::referer::analyze($domain))
+#			{
+				$domains{$domain}++;
+#			}
+			
+			
+		}
+		
+		my $i;
+		foreach (sort {$domains{$b} <=> $domains{$a}} keys %domains)
+		{
+			$i++;
+			last if $i==21;
+			
+			#print "$_ $domains{$_}\n";
+			
+			$graf->addRowLabel($_);
+			
+			if ($_ eq "(Direct)")
+			{
+				$columns{'direct'}->addData($_,$domains{$_});
+				next;
+			}
+			
+			if (my $dom=TOM::Net::HTTP::referer::analyze($_))
+			{
+				print "-i know domain $dom\n";
+				if ($TOM::Net::HTTP::referer::table{$dom}{domain_type} eq "search engine")
+				{
+					print "add search engine\n";
+					$columns{'SE'}->addData($_,$domains{$_});
+					next;
+				}
+			}
+			
+			$columns{'domain'}->addData($_,$domains{$_});
+			
+		}
+		
+#		return 1;
+		
+		eval
+		{
+			alarm(15);
+			$env{day_file}="camefrom_domain.svg" unless $env{day_file};
+			
+			print ">$cron::P/_data/".$env{day_file}."!\n";
+		
+			open HND,">$cron::P/_data/".$env{day_file} or die "$!";
+			my $out=$graf->prepare();
+			$out=~s|[\s]+</text>|</text>|g;
+			print HND $out; 
+			alarm(0);
+		};
+		if ($@)
+		{
+			die "error! $@\n";
+		}
+ 
+ return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

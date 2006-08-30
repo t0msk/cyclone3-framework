@@ -1,0 +1,274 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 NAME
+fview_xX
+=cut
+=head1 HEAD_VERSION_BUILD
+3.030731
+=cut
+=head1 DESCRIPTION
+wrapper - loading article from defined category only if loaded in type of a defined category ;o)
+=cut
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+        <value id="preview" value="1" />
+        <value id="output" value="xsgn" />
+
+        <input id="TMP_view" value="varchar(100)">gateway for the article body</input>
+	<input id="novisits" value="boolean">increase the visits</input>
+	<input id="show_catname" value="boolean">show name of category</input>
+	<input id="shift_first_img" value="boolean">exclude the first image for use in other gateway</input>
+	<input id="TMP_info" value="varchar(100)">gateway for the article information</input>
+	<input id="TMP_same_author" value="varchar(100)">gateway for list of articles from the same author</input>
+	<input id="same_author_return_null" value="boolean">return empty box if no articles from the author are found</input>
+	<input id="same_author_return_string" value="varchar">default content string if no articles from the same author are found</input>
+	<input id="TMP_same_editor" value="varchar(100)">gateway for list of articles from the same editor</input>
+	<input id="same_editor_return_null" value="boolean">return empty box if no articles from the editor are found</input>
+	<input id="same_editor_return_string" value="varchar">default content string if no articles from the same editor are found</input>
+
+	<source type="db_400" value="varchar">articles db name (default - web db_400)</source>????????????????????
+	<source type="db_400" value="varchar">articles db name (default - web db_400)</source>????????????????????
+        <source type="db.table" value="this.a400" />????????????????????
+	<source type="db.table" value="this.a400_arch" />????????????????????
+
+	<input id="xsgn_global" value="0/1/2" />
+
+</DESCRIPTION>
+
+=cut
+=head1 CHANGES
+build 030731 - Aben
+        *) pridanie forumov
+build 030730 - Aben
+        *) uprava na MySQL 4.x s UNION SELECTom
+build 030709 - Aben
+        *) db selects fixes
+build 030708 - Aben
+        *) data hash generation
+build 030703 - Aben
+        *) shift_first_img for 400-fview.mdl added
+build 030701 - Aben
+        *) FIRST MAKE
+=cut
+=head1 WARNINGS & BUGS
+        *) ak nenajde clanok vypisuje chybu v SK
+=cut
+
+sub execute
+{
+	#Tomahawk::debug::mdllog(0,"ideme na tooo! :)");
+
+	my %env=@_;
+
+	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
+	$env{db_410}=$TOM::DB_name_TOM unless $env{db_410};
+
+=head1
+	main::_log("
+	SELECT ID
+	FROM $env{db_410}.a410
+	WHERE 	ID='$env{ID}'
+		AND IDcategory='$env{IDcategory}'
+		AND (domain IS NULL OR domain='$tom::Hm')
+		AND starttime<=$tom::time_current
+		AND (endtime IS NULL OR endtime>=$tom::time_current)
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	ORDER BY RAND()
+	LIMIT 1
+	"); return 1;
+=cut
+
+  $env{IDcategory}="AND IDcategory='$env{IDcategory}'" if exists $env{IDcategory};
+	$env{ID}="AND ID='$env{ID}'" if exists $env{ID};
+
+	my $orderby=$env{orderby};
+	$orderby="RAND()" unless $env{orderby};
+
+	#!!! defaultne nastavujem domenu na master domenu, ak nie je definovana z typecka
+	$env{domain}=$tom::Hm unless ($env{domain});
+
+	my $db0=$main::DBH->Query("
+	SELECT ID, votes, xrelated
+	FROM $env{db_410}.a410
+	WHERE
+		(domain IS NULL OR domain='$env{domain}')
+		AND starttime<=$tom::time_current
+		AND (endtime IS NULL OR endtime>=$tom::time_current)
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+		$env{IDcategory}
+		$env{ID}
+	ORDER BY $orderby
+	LIMIT 1
+	");
+	if (my %db0_line=$db0->FetchHash())
+	{
+		#main::_log("wrapper : $env{allow_cat} $env{actual_cat}");
+		Tomahawk::module(
+			-type				=>	"mdl",
+			-category	=>	"410",
+			-name				=>	"fview",
+			-global			=>	1,
+			-xsgn				=>	$env{-xsgn},
+			-xsgn_global	=>	$env{-xsgn_global},
+			-TMP				=>	$env{-TMP},
+			-cache_id	=>	"default",
+			-cache_id_sub		=>	$db0_line{ID}."-".$db0_line{votes},
+			xt_xlng					=>	$env{xt_xlng},
+			domain					=>	$env{domain},
+			ID							=>	$db0_line{ID},
+			stats							=>	$env{stats},
+			stats_max				=>	$env{stats_max},
+			stats_koef				=>	$env{stats_koef},
+			stats_colorize	=>	$env{stats_colorize},
+			return_null			=>	$env{return_null},
+			allow_forum			=>	$env{allow_forum},
+			allow_rounding			=>	$env{allow_rounding},
+			votes_ignore_lng			=>	$env{votes_ignore_lng}
+		);
+
+		if (($db0_line{xrelated}=~/<VAR id="a820" value="(.*?)" \/>/)
+			&&($env{TMP_820}))
+		{
+			my $var=$1;
+			main::_log("$var");
+			main::_log("nasiel som forum");
+			my %cache;if (!$main::FORM{submit} && !$main::USRM{logged}){%cache=(-cache_id	=>	"default",);}
+
+			my $db0=$main::DBH->Query("
+			SELECT ID,messages,inserttime
+			FROM $env{db_820}.a820
+			WHERE 	ID='$var'
+				AND type='F'
+				AND lng='$env{lng}'
+				AND active='Y'
+			LIMIT 1");
+			if (my @db0_line=$db0->fetchrow)
+			{
+#=head1
+				Tomahawk::module(
+					-type		=>	"mdl",
+					-category		=>	"820",
+					-name		=>	"addmsg",
+					-version		=>	"1",
+					-global		=>	1,
+					-xsgn_global	=>	$env{a820_xsgn_global},
+					-xlng_global	=>	$env{a820_xsgn_global},
+					-TMP			=>	$env{TMP_820},
+					-cache_id		=>	"default",
+					#	-cache_master	=>	$env{cache_master},
+					-cache_id_sub	=>	$db0_line[1]."_".$db0_line[2],
+					ID			=>	$var,
+					db_820		=>	$env{db_820},
+					anonymous_emailreport		=>	"info\@lamonde.net;obuchova\@web.markiza.sk"
+				);
+
+				Tomahawk::module(
+					-type		=>	"mdl",
+					-category	=>	"820",
+					-name		=>	"fview",
+					-global		=>	1,
+					-xsgn_global	=>	$env{a820_xsgn_global},
+					-TMP		=>	$env{TMP_820},
+					-cache_id	=>	"default",
+					-cache_id_sub	=>	$db0_line[1]."_".$db0_line[2],
+						ID		=>	$var,
+						db_820		=>	$env{db_820},
+				) if $env{TMP_820};
+
+=head1
+
+
+
+
+ <MODULE>
+	<VAR id="-type" value="mdl" />
+	<#VAR id="-IAdm" value="-1" />
+	<VAR id="-version" value="1" />
+	<VAR id="-category" value="820" />
+	<VAR id="-name" value="addmsg" />
+	<VAR id="-global" value="1" />
+	<#VAR id="-xsgn" value="" />
+	<VAR id="-xsgn_global" value="2" />
+	<VAR id="-xlng_global" value="2" />
+	<VAR id="-TMP" value="FORUM-ADDMSG" />
+		<VAR id="ID" value="<$main::FORM{IDforum}>" />
+		<VAR id="db_820" value="forum_markiza_sk" />
+		<VAR id="anonymous_emailreport" value="info@lamonde.net;obuchova@web.markiza.sk" />
+ </MODULE>
+
+
+
+
+
+ <MODULE>
+	<#VAR id="-IAdm" value="1" />
+	<#VAR id="-ITst" value="1" />
+	<VAR id="-type" value="smdl" />
+	<VAR id="-category" value="820" />
+	<VAR id="-name" value="bridge_fview" />
+	<VAR id="-version" value="1" />
+	<VAR id="-global" value="2" />
+		<VAR id="fview_global" value="1" />
+		<VAR id="fview_xsgn_global" value="2" />
+		<VAR id="fview_TMP" value="FORUM-FVIEW" />
+		<VAR id="fview_400_TMP" value="FORUM-XRELATED-400" />
+		<VAR id="xsgn_400_fview" value="in_forum" />
+		<VAR id="xsgn_400_global" value="2" />
+		<VAR id="ID" value="<$main::FORM{IDforum}>" />
+		<VAR id="db_820" value="forum_markiza_sk" />
+		<VAR id="max" value="150" />
+ </MODULE>
+
+
+
+
+
+
+				Tomahawk::module(
+					-type		=>	"mdl",
+					-category		=>	"400",
+					-name		=>	"tview_forum_c820",
+					-global		=>	1,
+					-xsgn_global	=>	$env{xsgn_tview_forum_c820},
+					-xsgn_global	=>	$env{xsgn_global},
+					-TMP			=>	$env{TMP_820},
+					-cache_id		=>	"default",
+					#	-cache_master	=>	$env{cache_master},
+					-cache_id_sub	=>	$db0_line[1]."_".$db0_line[2],
+					ID			=>	$var,
+					db_820		=>	$env{db_820}
+				);
+=cut
+			}
+		}
+	}
+	else
+	{
+		main::_log("no data available. query follows.");
+		main::_log("
+			SELECT ID, xrelated
+			FROM $env{db_410}.a410
+			WHERE
+				(domain IS NULL OR domain='$env{domain}')
+				AND starttime<=$tom::time_current
+				AND (endtime IS NULL OR endtime>=$tom::time_current)
+				AND (lng='$env{lng}' OR lng='')
+				AND active='Y'
+				$env{IDcategory}
+				$env{ID}
+			ORDER BY $orderby
+			LIMIT 1
+			");
+	}
+
+	return 1;
+}
+1;

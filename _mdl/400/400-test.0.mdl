@@ -1,0 +1,168 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use Digest::MD5  qw(md5 md5_hex md5_base64);
+use App::400;
+
+
+
+
+
+
+sub execute
+{
+ my %env=@_;
+# Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+# Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+# Tomahawk::XLNGtoXSGN(); # insert XLNG do XSGN
+
+ $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+ $env{db_400}=$TOM::DB_name unless $env{db_400};
+
+# my $list=App::400->get_article_lastID(
+ my $list=App::400->get_article(
+ #my $list=App::400::SQL->get_article(
+# my $list=App::400::SQL::a400::get->new(
+
+	db		=>	$env{db_400}, # load articles from database...
+	DBH		=>	$main::DB{main}, # use database object pointer...
+		
+	select			=>	"a400.title",
+#	select_arch		=>		1,	# selectovat len z archivu
+#	select_arch_allow	=>		1,	# plynule prechadzanie do archivu "ORDER BY starttime DESC"
+								# vyuzije sa len ak sa nenacita pozadovany limit z originalu
+#	select_union		=>	1, # cely select ako jeden union, union sa pouzije VZDY!
+#	select_union_allow	=>	1, # union az po tom co nedokazem selectnut vsetko v original tabulke
+
+
+	select_limit		=>	"3",
+#	select_order		=>	"a400.starttime ASC",
+#	NEMALO BY BYT select_where v a400? a dalsie v a400_category?
+#	select_where		=>	"a400.IDattrs IS NULL",
+
+	a400	=> # podmienky na select a400
+	{
+		lng				=>	"sk",
+#		ID				=>	"10;20;52;48",
+#		IDcategory		=>	"00%",
+#		IDcategory_exclude	=>	"010G02%;010G03%;010G04%;010G07%;010G0A%",
+#		active			=>	1,
+#		starttime			=>	0, # actual
+#		endtime			=>	0, # actual						
+	},
+	
+	a400_category_	=>	1, # podmienka ze MUSI byt lefnute
+	a400_category	=> # podmienky na to kedy ma byt left join a400_category
+	{
+		active	=>	"1",
+		lng		=>	"sk",
+	},
+
+#	a400_attrs_	=>	1, # podmienka ze MUSI byt lefnute
+#	a400_attrs		=>	1,# podmienky na to kedy ma byt left join a400_attrs
+#	{
+#		
+#	},
+
+
+#	link_disable	=>	1,	# nebudem nacitavat linky
+#	link	=> # toto znamena ze budem robit replace najdenych linkov podla podmienok...
+#	{
+#		a400=>
+#		{
+#		lng				=>	"sk",
+#		active			=>	1,
+#		starttime			=>	0, # actual time
+#		endtime			=>	0, # actual time
+#		},
+#		a400_attrs		=>	1,# podmienky na to kedy ma byt left join a400_attrs	
+#		a400_category	=> # podmienky na to kedy ma byt left join a400_category
+#		{
+#			active	=>	"1",
+#			lng		=>	"sk",
+#		},
+#	},
+
+);
+
+ #print "count query\n\n ".$list->{Query_count}."\n\n";
+ 
+$list->prepare();
+
+
+#$self->{Query};
+#$self->{Query_orig};
+#$self->{Query_arch};
+#$self->{Query_union};
+
+
+ 
+eval
+{
+ alarm(5);
+ 
+ if ($list->execute())
+ {
+  #print "mam celkom ".$list->rows()." riadkov\n";
+#  CRON::debug::log(8,"rows: ".$list->rows()." duration:".$list->{Query_duration});
+  
+  my $count=0;
+  while ((my %nieco=$list->fetchhash())&&($count<1000))
+  {
+#   CRON::debug::log(9,"[$count] $nieco{ID} {$nieco{IDcategory}/$nieco{name}} $nieco{title} [$nieco{arch}]".$list->{Query_hash}{ID});
+
+=head1   
+   if (my $obj_update=$list->update("a400.lng='sk',a400.visits=visits+1"))
+   {
+#    print "ok\n";
+#    foreach (keys %{$output}){print "=>$_ $output->{$_}\n";}
+#    $output->{a}="b";
+#    print $output->{a}."\n";
+#    print $list->{a}."\n";
+   }
+   else
+   {
+    print "bad\n";
+   }
+=cut
+   
+   $count++;   
+   #print "[$count] $nieco{ID} $nieco{title} [$nieco{arch}]\n";
+  }
+ }
+ else
+ {
+  print "CHYBA ".$list->errstr()."\n";
+ }  
+ alarm(0);
+};
+if ($@)  
+{
+ print "chyba $@\n";
+}
+
+#$self->{Query_log};
+
+
+
+
+
+ return 1}
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+

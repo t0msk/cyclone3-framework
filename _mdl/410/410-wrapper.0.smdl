@@ -1,0 +1,141 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 NAME
+fview_xX
+=cut
+=head1 HEAD_VERSION_BUILD
+3.030731
+=cut
+=head1 DESCRIPTION
+wrapper - loading article from defined category only if loaded in type of a defined category ;o)
+=cut
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+        <value id="preview" value="1" />
+        <value id="output" value="xsgn" />
+
+        <input id="TMP_view" value="varchar(100)">gateway for the article body</input>
+	<input id="novisits" value="boolean">increase the visits</input>
+	<input id="show_catname" value="boolean">show name of category</input>
+	<input id="shift_first_img" value="boolean">exclude the first image for use in other gateway</input>
+	<input id="TMP_info" value="varchar(100)">gateway for the article information</input>
+	<input id="TMP_same_author" value="varchar(100)">gateway for list of articles from the same author</input>
+	<input id="same_author_return_null" value="boolean">return empty box if no articles from the author are found</input>
+	<input id="same_author_return_string" value="varchar">default content string if no articles from the same author are found</input>
+	<input id="TMP_same_editor" value="varchar(100)">gateway for list of articles from the same editor</input>
+	<input id="same_editor_return_null" value="boolean">return empty box if no articles from the editor are found</input>
+	<input id="same_editor_return_string" value="varchar">default content string if no articles from the same editor are found</input>
+
+	<source type="db_400" value="varchar">articles db name (default - web db_400)</source>????????????????????
+	<source type="db_400" value="varchar">articles db name (default - web db_400)</source>????????????????????
+        <source type="db.table" value="this.a400" />????????????????????
+	<source type="db.table" value="this.a400_arch" />????????????????????
+
+	<input id="xsgn_global" value="0/1/2" />
+
+</DESCRIPTION>
+
+=cut
+=head1 CHANGES
+build 030731 - Aben
+        *) pridanie forumov
+build 030730 - Aben
+        *) uprava na MySQL 4.x s UNION SELECTom
+build 030709 - Aben
+        *) db selects fixes
+build 030708 - Aben
+        *) data hash generation
+build 030703 - Aben
+        *) shift_first_img for 400-fview.mdl added
+build 030701 - Aben
+        *) FIRST MAKE
+=cut
+=head1 WARNINGS & BUGS
+        *) ak nenajde clanok vypisuje chybu v SK
+=cut
+
+sub execute
+{
+	#Tomahawk::debug::mdllog(0,"ideme na tooo! :)");
+
+	my %env=@_;
+
+	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
+	$env{db_410}=$TOM::DB_name_TOM unless $env{db_410};
+
+=head1
+	main::_log("
+	SELECT ID
+	FROM $env{db_410}.a410
+	WHERE 	ID='$env{ID}'
+		AND IDcategory='$env{IDcategory}'
+		AND (domain IS NULL OR domain='$tom::Hm')
+		AND starttime<=$tom::time_current
+		AND (endtime IS NULL OR endtime>=$tom::time_current)
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	ORDER BY RAND()
+	LIMIT 1
+	"); return 1;
+=cut
+
+  $env{IDcategory}="AND IDcategory='$env{IDcategory}'" if exists $env{IDcategory};
+	$env{ID}="AND ID='$env{ID}'" if exists $env{ID};
+
+	my $orderby=$env{orderby};
+	$orderby="RAND()" unless $env{orderby};
+
+	my $db0=$main::DBH->Query("
+	SELECT ID, votes, xrelated
+	FROM $env{db_410}.a410
+	WHERE
+		(domain IS NULL OR domain='$tom::Hm')
+		AND starttime<=$tom::time_current
+		AND (endtime IS NULL OR endtime>=$tom::time_current)
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+		$env{IDcategory}
+		$env{ID}
+	ORDER BY $orderby
+	LIMIT 1
+	");
+	if (my %db0_line=$db0->FetchHash())
+	{
+		#main::_log("wrapper : $env{allow_cat} $env{actual_cat}");
+		Tomahawk::module(
+			-type				=>	"mdl",
+			-category	=>	"410",
+			-name				=>	"fview",
+			-global			=>	1,
+			-xsgn				=>	$env{-xsgn},
+			-xsgn_global	=>	$env{-xsgn_global},
+			-TMP				=>	$env{-TMP},
+			-cache_id	=>	"default",
+			-cache_id_sub		=>	$db0_line{ID}."-".$db0_line{votes},
+			xt_xlng					=>	$env{xt_xlng},
+			ID							=>	$db0_line{ID},
+			stats							=>	$env{stats},
+			stats_max				=>	$env{stats_max},
+			stats_colorize	=>	$env{stats_colorize},
+			return_null			=>	$env{return_null},
+			allow_forum			=>	$env{allow_forum},
+			allow_rounding			=>	$env{allow_rounding},
+			votes_ignore_lng			=>	$env{votes_ignore_lng}
+		);
+
+
+	}
+	else
+	{
+		#NYST!
+	}
+
+	return 1;
+}
+1;

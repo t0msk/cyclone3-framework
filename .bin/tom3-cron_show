@@ -1,0 +1,193 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+BEGIN {require "/usr/bin/tom3-init";}
+use Mysql;
+use Utils::datetime;
+
+#print color 'bold green';
+
+%form=
+(
+ '--domain'	=>	"cache domain (eg. localhost.com)",
+ '--type'	=>	"type of cron (eg. 5min, 30min, ...)",
+ '-v'		=>	"verbose all",
+# '--verb'	=>	"verbose number",
+# '--del'	=>	"delete number",
+# '--edit'	=>	"edit number",
+# '-vv, --v'	=>	"verbosity 2, --v=2",
+# '-a'		=>	"analyze",
+# '-s'		=>	"show only all modifications",
+);
+if (($FORM{h})||($FORM{help})){&help();}
+if (!$FORM{domain}){&help();}
+
+=head1
+$FORM{host}=~s|^www\.||i;
+$main::h=$FORM{host};$main::h=~s|\.|_|g;$main::h=~s|/|__|g;
+
+my $path=$FORM{host};$path=~s|^(.[^/]*)(.*)||;
+my $path_dom=$1;my $path_sub=$2;
+$path_dom=~s|(.*\.\|)(.*?\..*?)$|\1|;
+$main::p="!$2";$path_dom=~s|\.$||;
+
+foreach (reverse split('\.',$path_dom)){$main::p.="/!$_";}
+foreach (split('/',$path_sub)){$main::p.="/$_";}
+
+$main::p=~s|//|/|g;
+$main::p=$main::P."/".$main::p;
+print "p:".$main::p."\n";
+print "h:".$main::h."\n";
+=cut
+
+if (not -e $p."/local.conf")
+{
+ print color 'reset bold yellow';
+ print "domain $main::h not exists\n";
+ &exit();
+}
+
+require $p."/local.conf";
+#my $DBH = Mysql->Connect($TOM::DB_host,$h,$TOM::DB_user,$TOM::DB_pass);
+
+print "\n";
+print color 'bold yellow';
+my @crons;
+if (opendir (DIR1,$P."/.core/_config"))
+{
+ foreach (sort readdir DIR1)
+ {
+   next unless $_=~/^cron\.(.*)\.cml$/;
+   print ":\"$1\"";
+   push @crons,$1;
+ }
+}
+
+print "\n";
+foreach my $cron(sort @crons)
+{
+ if ($FORM{type})
+ {
+#  print "asdfasfasdf\n";
+  next if $FORM{type} ne $cron;
+ }
+
+
+ print "\n";
+ print color 'bold yellow';
+ print ":\"$cron\"\n";
+ print color 'reset green';
+# print "$TOM::P\n\n";
+
+ print "  [G][Name                          ][version ]\n";
+ print color 'bold yellow';
+ print "G";
+ print color 'reset green';
+ print " -----------------------------------\n";
+ 
+ 
+ # SUPER GLOBAL
+ my $file_data;
+ open(HND0,"<$TOM::P/_type/cron.".$cron.".cml") || die "cannot open $!";
+ while (my $line=<HND0>){$file_data.=$line} 
+ print color 'reset bold green';
+ cir($file_data);
+ print color 'reset green';
+ 
+ 
+ # GLOBAL
+ my $file_data;
+ open(HND0,"<$TOM::P/.core/_config/cron.".$cron.".cml") || die "cannot open $!";
+ while (my $line=<HND0>){$file_data.=$line} 
+ print color 'reset bold green';
+ cir($file_data);
+ print color 'reset green';
+
+ if (-e "$tom::Pm/cron.m".$cron.".cml")
+ {
+  print color 'bold yellow';
+  print "M";
+  print color 'reset green';
+  print " -----------------------------------\n";
+  my $file_data;
+  open(HND0,"<$tom::Pm/cron.m".$cron.".cml") || die "cannot open $!";
+  while (my $line=<HND0>){$file_data.=$line} 
+  cir($file_data);
+ }
+ 
+ if (-e "$p/cron.".$cron.".cml")
+ {
+  print color 'bold yellow';
+  print "L";
+  print color 'reset green';
+  print " -----------------------------------\n";
+  my $file_data;
+  open(HND0,"<$p/cron.".$cron.".cml") || die "cannot open $!";
+  while (my $line=<HND0>){$file_data.=$line} 
+  cir($file_data);
+ }
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+}
+
+sub cir
+{
+ my $file_data=$_[0];
+ while ($file_data=~s|<MODULE>(.*?)</MODULE>||s)
+ {
+  my $data=$1;
+  my %mdl_env;
+  while ($data=~s|<VAR id="(.*?)" value="(.*?)" />||s)
+  {
+   next unless $1;
+   next if not defined $2;
+   $mdl_env{$1}=$2;
+   $mdl_env{$1}=~s|\"|"|g;
+  }
+  #print "mam\n";
+  print "  [".$mdl_env{-global}."]"."[".sprintf("%-30s",$mdl_env{-category}."-".$mdl_env{-name})."][".sprintf("%-8s",$mdl_env{-version})."]";
+  
+  my $variables;
+  foreach (sort keys %mdl_env)
+  {
+   next if $_=~/^-/;
+   $variables.="$_='$mdl_env{$_}';";
+  }  
+  $variables=~s|;$||;
+  if (length($variables)>80){$variables=substr($variables,0,80)."..."};  
+  print "[$variables]";  
+  print "\n";
+ }
+}
+
+
+#print "vsetko ok\n";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+&exit();

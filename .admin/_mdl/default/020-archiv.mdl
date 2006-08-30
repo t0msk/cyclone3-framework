@@ -1,0 +1,328 @@
+sub BaseModul
+{
+ use Text::Iconv;
+
+ #$converter = Text::Iconv -> new("CP1250","UTF-8");
+
+ require "_table.m";
+ require "_info.m";
+
+ my $page_limit=20;
+ my $page_from=$page_limit*$form{page};
+ $form{page}="0" unless $form{page};
+
+ my $orderbyCat="cat";
+ my $orderbyCatCol="cat_A_Z";
+ if ($form{'orderby'}=~/catD/)
+   { $form{'orderby'}=~s|catD|description DESC|; }
+ else
+   { if ($form{'orderby'}=~/cat/) { $orderbyCat="catD"; $orderbyCatCol="cat_Z_A"; $form{'orderby'}=~s|cat|description|; } }
+
+ my $orderbyDescription="description";
+ my $orderbyDescriptionCol="description_A_Z";
+ if ($form{'orderby'}=~/decriptionD/)
+   { $form{'orderby'}=~s|descriptionD|description DESC|; }
+ else
+   { if ($form{'orderby'}=~/description/) { $orderbyDescription="catD"; $orderbyDescriptionCol="description_Z_A"; $form{'orderby'}=~s|cat|description|; } }
+
+ my $info=&info_create(
+	'icon'	=>	"style=\"cursor:hand;\" onclick=\"load_box('core.pl?type=020-search&onlyarchive=1');\"",
+	'new'	=>	True,
+	'title'	=>	"Zoznam programov v archíve",
+	'next'	=>	$form{page},
+	'prev'	=>	$form{page}
+ );
+ my $select;
+
+ for (my $i=0;$i<=55;$i=$i+5)
+ {
+  $select.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+ }
+ my $select_author=&select_create(
+	'name'		=>	"min2",
+	'value'		=>	$minR2,
+	'maxlength'	=>	30,
+	'width'		=>	1,
+	'width1'	=>	50,
+	'select'	=>	$select
+ );
+
+
+ my $table=HP_TABLE->new(
+ 'title'			=>	"taky maly popis",
+ 'cellspacing'	=>	1,
+ 'cellpadding'	=>	1,
+ #'color_active'	=>	"#F0F080",
+ 'color_active'	=>	"#F0F0C0",
+ 'link_core'		=>	"core.pl?type=020-archiv&",
+ 'define'		=>
+ {
+ '1'	=>
+	{
+	'id'		=>	"A",
+	'code'		=>	"<img src=\"$tom::H_media/grf/admin/list_<%1%>.gif\" width=11 height=12 border=0 onclick=\"this.src='core.pl?type=set_active&table=a020_archiv&id=<!--ID-->';\">",
+	'select'	=>	"orderby=active",
+	'class'		=>	"td_act",
+	'td_class'	=>	"td_act"
+	},
+ '2'	=>
+	{
+	'id'		=>	"$orderbyCatCol",
+	'code'		=>	"&nbsp;<b><%1%></b>",
+	'select'	=>	"orderby=$orderbyCat,time_from",
+	'class'		=>	"td_act",
+	'td_plus'	=>	"nowrap"
+	},
+ '3'	=>
+	{
+	'id'		=>	"start",
+	'code'		=>	"<%1%>",
+	#'select'	=>	"orderby=time_from",
+	#'class'		=>	"td_act",
+	'td_plus'	=>	"nowrap"
+	},
+ '4'	=>
+	{
+	'id'		=>	"end",
+	'code'		=>	"<%1%>",
+	#'select'	=>	"orderby=endtime",
+	#'class'		=>	"td_act",
+	'td_plus'	=>	"nowrap"
+	},
+ '5'	=>
+	{
+	'id'		=>	"video_file",
+	'code'		=>	"<%1%>",
+	'select'	=>	"orderby=video_file,time_from",
+	'class'		=>	"td_act",
+	'td_plus'	=>	"nowrap"
+	},
+ '6'	=>
+	{
+	'id'		=>	"audio_file",
+	'code'		=>	"<%1%>",
+	'select'	=>	"orderby=audio_file,time_from",
+	'class'		=>	"td_act",
+	'td_plus'	=>	"nowrap"
+	},
+ '8'	=>
+	{
+	'id'		=>	"$orderbyDescriptionCol",
+	'code'		=>	"&nbsp;<%1%>",
+	'select'	=>	"orderby=$orderbyDescription,time_from",
+	'class'		=>	"td_act",
+	'td_class'	=>	"td0",
+	'td_plus'	=>	"nowrap"
+	},
+ '9'	=>
+	{
+	'id'		=>	"relate",
+	'code'		=>	"&nbsp;<%1%>",
+	#'select'	=>	"orderby=rating,datestamp",
+	#'class'		=>	"td_act",
+	'td_class'	=>	"td0",
+	'td_plus'	=>	"nowrap"
+	},
+ '9.1'	=>
+	{
+	'id'		=>	"indexes",
+	'code'		=>	"&nbsp;<%1%>",
+	#'select'	=>	"orderby=rating,datestamp",
+	#'class'		=>	"td_act",
+	'td_class'	=>	"td0",
+	'td_plus'	=>	"nowrap align=\"center\""
+	},
+  '99'	=>
+	{
+	'id'		=>	"del",
+	'code'		=>	"<%1%><BR>",
+	'td_plus'	=>	"valign=\"top\" align=middle nowrap"
+	}
+ }
+ );
+
+ my $where;
+ if ($form{search} eq "1")
+ {
+  if ($form{'description'} ne "")
+  { $where.="AND description LIKE '%$form{description}%' "; }
+
+    #if ((exists $form{min2}) && (exists $form{hour2}) && (exists $form{day2}) && (exists $form{mom2}) && (exists $form{year2}))
+    if (($form{day2} ne '') && ($form{mom2} ne '') && ($form{year2} ne ''))
+    {
+     $form{year1}-=1900;
+     $form{mom1}--;
+
+     my $starttime=timelocal(undef,$form{min1},$form{hour1},$form{day1},$form{mom1},$form{year1},undef,undef,undef);
+
+	$form{year2}-=1900;
+     $form{mom2}--;
+
+	my $endtime=timelocal(undef,$form{min2},$form{hour2},$form{day2}+1,$form{mom2},$form{year2},undef,undef,undef);
+	$where.="AND time_from >= $starttime AND time_from <= $endtime ";
+    }
+    #elsif ((exists $form{min2}) && (exists $form{hour2}) && (exists $form{day2}) && (exists $form{mom2}) && (exists $form{year2}))
+    elsif (($form{day1} ne '') && ($form{mom1} ne '') && ($form{year1} ne ''))
+    {
+     $form{year1}-=1900;
+     $form{mom1}--;
+
+     my $starttime=timelocal(undef,$form{min1},$form{hour1},$form{day1},$form{mom1},$form{year1},undef,undef,undef);
+
+	$form{year1}+=1900;
+     $form{mom1}++;
+
+	if ($form{day1}<10) { $form{day1}='0'.$form{day1}; }
+	if ($form{mom1}<10) { $form{mom1}='0'.$form{mom1}; }
+
+	$where.="AND video_file LIKE '%$form{day1}_$form{mom1}_$form{year1}%'";
+    }
+
+  #while ($form{wherestring}=~s|(.*?)=(.*?)&||)
+  #{
+  # $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$sele{$_}';\" style=\"FONT:12px Verdana;\">&nbsp;$_</div>\n";
+  #}
+  #$where="WHERE
+
+
+ }
+ else
+ {
+
+ }
+
+ my $orderby;
+ if ($form{'orderby'}=~/time_from/)
+   { $form{'orderby'}=~s|time_from|time_from DESC|; }
+ if ($form{'orderby'}) { $orderby=$form{'orderby'}; } else { $orderby="time_from DESC"; }
+
+ #my $db_micro = $dbh->Query("SELECT ID, priority, starttime, endtime, updated, title, IDcathegory, typeview, visits_index, visits, absvisits_index, visits_index, votes, vote_full, vote_index, votes, image, data_plus, active  FROM clanky_trash $where $orderby LIMIT $page_from,$page_limit");
+
+ #return "SELECT * FROM markiza_sk.a020_archiv WHERE video_file <> 'live.asf' AND time_to <".time." $where ORDER BY $orderby DESC LIMIT $page_from,$page_limit";
+
+ my $db_micro = $dbh->Query("SELECT * FROM markiza_sk.a020_archiv WHERE video_file <> 'live.asf' AND time_to <".time." $where ORDER BY $orderby LIMIT $page_from,$page_limit");
+
+ #return "SELECT * FROM markiza_sk.a0_program $where ORDER BY $orderby DESC LIMIT $page_from,$page_limit";
+
+ if ($db_micro)
+ {
+
+ while (my %db_micro_line=$db_micro->FetchHash())
+ {
+
+#=head1
+  #active
+  my $cl_active="r";
+  if ($db_micro_line{'active'} eq "Y"){$cl_active="g"}
+  #today, yesterday, older line color
+  my $cl_color="#8FADF9";
+  if ($db_micro_line{starttime}>(time-86400)){$cl_color="#B0CFFF"}
+  if ($db_micro_line{starttime}>time){$cl_color="#E0EFFF"}
+
+  my $cl_class="tr1";
+  my %article_times;
+
+  $article_times{'time_from'}={Utils::datetime::ctodatetime($db_micro_line{'time_from'},format=>1)};
+  $article_times{'time_to'}={Utils::datetime::ctodatetime($db_micro_line{'time_to'},format=>1)};
+
+  #$article_times{'changetime'}={Utils::datetime::ctodatetime($db_micro_line{'changetime'},format=>1)};
+  #my $article_times{'lasttime'}=Tomahawk::utils::datetime::ctodatetime($db_micro_line{'lasttime'},format=>1);
+  #return "SELECT name FROM markiza_sk.a0_tv WHERE ID='$db_micro_line{'ID_tv'}' LIMIT 1";
+  #my $db_micro2=$dbh->Query("SELECT name FROM markiza_sk.a0_tv WHERE ID='$db_micro_line{'ID_tv'}' LIMIT 1");
+  #my @db_micro_line2=$db_micro2->FetchRow();
+  #$db_micro_line{'tv_name'}=$db_micro_line2[0];
+
+  #return "SELECT name FROM markiza_sk.a020_cat WHERE ID='$db_micro_line{'ID_cat'}' LIMIT 1";
+
+  my $db_micro2=$dbh->Query("SELECT name FROM markiza_sk.a020_cat WHERE ID='$db_micro_line{'ID_cat'}' LIMIT 1");
+  my @db_micro_line2=$db_micro2->FetchRow();
+  $db_micro_line{'cat_name'}=$db_micro_line2[0];
+
+  $db_micro_line{'archive_index_count'}='0';
+
+  while ($db_micro_line{'ind'}=~s|<INDEX id="(.*?)" value="(.*?)" description="(.*?)" />||si)
+  {
+   $db_micro_line{'archive_index_count'}++;
+  }
+
+=head1
+  my $db_micro2=$dbh->Query("SELECT id, nickname FROM markiza_sk.a120 WHERE ID='$db_micro_line{'IDeditor'}' LIMIT 1");
+  my @db_micro_line2=$db_micro2->FetchRow();
+  $db_micro_line{'editor_name'}=$db_micro_line2[1];
+
+  undef @db_micro2;
+  undef @db_micro_line2;
+
+  $db_micro_line{'photo_count'}="0";
+  $db_micro_line{'video_count'}="0";
+  $db_micro_line{'audio_count'}="0";
+
+  while ($db_micro_line{'xrelated'}=~s|<VAR id="a500" value="(.*?)" />||si)
+  {
+   $db_micro_line{'photo_count'}++;
+  }
+  #$db_micro_line{'photos_count'}="10";
+  while ($db_micro_line{'xrelated'}=~s|<VAR id="a510" value="(.*?)" />||si)
+  {
+   $db_micro_line{'video_count'}++;
+  }
+  while ($db_micro_line{'xrelated'}=~s|<VAR id="a510" value="(.*?)" />||si)
+  {
+   $db_micro_line{'audio_count'}++;
+  }
+
+ foreach (keys %db_micro_line)
+ {
+  $db_micro_line{$_}=$converter -> convert($db_micro_line{$_});
+ }
+=cut
+
+
+
+  $table->add(
+   'class'		=>	$cl_class,
+   'color'		=>	$cl_color,
+   'define'	=>{
+
+    'A'	=>
+    {	'1'	=>	$cl_active},
+
+    $orderbyCatCol	=>
+    {'1'=>"<a href=\"javascript:load_box('core.pl?type=020-edit&ID=".$db_micro_line{ID}."')\">".$db_micro_line{cat_name}."</a>"},
+
+    'start'	=>
+    {'1'=>"&nbsp;$article_times{'time_from'}{mday}/$article_times{'time_from'}{mom}/$article_times{'time_from'}{year} $article_times{'time_from'}{hour}:$article_times{'time_from'}{min}&nbsp;"},
+
+    'end'	=>
+    {'1'=>"&nbsp;$article_times{'time_to'}{mday}/$article_times{'time_to'}{mom}/$article_times{'time_to'}{year} $article_times{'time_to'}{hour}:$article_times{'time_to'}{min}&nbsp;"},
+
+    'video_file'	=>
+    {'1'=>"&nbsp;<a href=\"http://video.markiza.sk/video/$db_micro_line{'IDcategory'}\" target=\"_blank\">$db_micro_line{video_file}</a>&nbsp;"},
+
+    'audio_file'	=>
+    {'1'=>"&nbsp;<a href=\"core.pl?type=tv-program&wherelike=IDcategory&where=$db_micro_line{'IDcategory'}\" target=\"frm_base\">$db_micro_line{audio_file}</a>&nbsp;"},
+
+    $orderbyDescriptionCol	=>
+    {'1'=>"$db_micro_line{'description'}"},
+
+    'relate'	=>
+    {'1'=>"<a href=\"javascript:relate_item('a020','$db_micro_line{'ID'}');\">GO!!</a>"},
+
+    'indexes'	=>
+    {'1'=>"<a href=\"core.pl?type=020-indexize&ID=$db_micro_line{'ID'}\" target=\"frm_micro\">-".$db_micro_line{'archive_index_count'}."-</a>"},
+
+    'del'	=>
+    {'1'=>"<a href=\"core.pl?type=020-archiv_del&ID=$db_micro_line{'ID'}\" target=\"frm_micro\">! <img src=$tom::H_media/grf/admin/red_minus.gif border=0> !</a>"},
+
+#    'X'	=>
+#    {'1'=>"<a href=\"core.pl?type=clanok_trashdel&id=<!--ID-->\" target=\"frm_micro\"><img src=$tom::H_media/grf/admin/close1.gif border=0 width=12 height=12></a>"},
+
+   },'replace'	=>{'ID'	=>	$db_micro_line{ID}}
+  );
+
+ }
+}
+ return $info.$table->HTML;
+}
+
+1;

@@ -1,0 +1,137 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+
+ my %form=&Net::HTTP::CGI::GetQuery_h2($ENV{'QUERY_STRING_FULL'});
+ my $url;
+ foreach (keys %form)
+ {
+ 	next unless $form{$_};
+ 	next if $_ eq "__key_";
+	next if $_ eq "__ITst_uncache";
+	next if $_ eq "__key";
+ 	$url.="$_=$form{$_}&";
+ }
+ $url=~s|&$||;
+
+ $ENV{QUERY_STRING}=~s/&_rc=1//;
+ $ENV{QUERY_STRING}=~s/&_r=1//;
+ 
+ $XSGN{TMP}=<<"HEADER";
+<script type="text/javascript">
+function IAdmHideBar() {
+  var iadmbar=document.getElementById('iadmbar').style;
+  var iadmbarin=document.getElementById('iadmbar-i').style;
+  if((iadmbarin.display=='inline')||(!iadmbarin.display))
+  {
+    iadmbarin.display='none';
+    iadmbar.width='50px';
+    iadmbar.left=null; iadmbar.right=0;
+    iadmbar.borderLeft='1px solid black';
+  }
+  else 
+  {
+    iadmbar.width='100%';iadmbarin.display='inline';
+  }
+}
+</script>
+
+<div id="iadmbar" style="height:20px;background:white;border-bottom:1px solid black;text-align:left;position:fixed;_position:absolute;top:0;left:0;z-index:10;width:100%;-moz-opacity:.75;filter: alpha(opacity=75); overflow: hidden;">
+	<div style="padding:0.2em 0.5em;color:black;font:bold 11px Arial,Helvetica,sans-serif;">
+		<span style="float: right;">
+			<a style="text-decoration:none;color:blue;" href="#" onclick="IAdmHideBar();" title="hide bar">_</a>&nbsp;
+			<a style="text-decoration:none;color:blue;" href="?|?$ENV{QUERY_STRING_FULL}&__key=&__key_=" title="exit">X</a>
+		</span>
+		<span id="iadmbar-i">
+		<strong style="color:red;">ADMIN MODE</strong>&nbsp;|&nbsp;
+			<span title="request #" style="cursor:help;">r: $tom::count</span>
+			<span title="request_code" style="cursor:help;">h: $main::request_code</span>
+			&nbsp;|&nbsp;
+
+			<span title="process #" style="cursor:help;">p: $$</span>&nbsp;
+			<a style="text-decoration:underline;background:white;color:blue;" href="?|?$ENV{QUERY_STRING_FULL}&_r=1">restart</a>
+			&nbsp;|&nbsp;
+
+			<#CACHE#>
+			&nbsp;
+			<a style="text-decoration:underline;background:white;color:blue;" href="?|?$ENV{QUERY_STRING_FULL}&_rc=1">recache</a>
+			&nbsp;|&nbsp;
+
+			<#LOG#>
+			&nbsp;|&nbsp;
+
+		  <input type="text" size="80" value="$tom::H_www/&#63|&#63$url" style="font-size: 11px; font-weight: normal; border: 1px black solid; background: #eee; padding: 0 3px" />
+			<a style="text-decoration:underline;color:blue;" href="?|?$ENV{QUERY_STRING_FULL}&_IAdm_decode=1"	target="decode" onclick="window.open('','decode','width=810,height=600,scrollbars=1,status=1,resizable=1')">decode</a>
+		</span>
+  </div>
+</div>
+
+
+
+HEADER
+
+#foreach (sort keys %main::FORM)
+#{
+# $XSGN{TMP}.="$_=$main::FORM{$_}<BR>\n";
+#}
+
+if ($main::FORM{_r})
+{
+	delete $main::FORM{_r};
+	$main::DB{main}->Query("UPDATE _config SET value='$main::time_current' WHERE variable='restart' AND type='var' LIMIT 1");
+}
+
+if ($main::FORM{__IAdm_uncache})
+{
+ $XSGN{TMP}=~s|<#CACHE#>|CACHE is <a style="color:red;text-decoration:underline;" href="?\|?$ENV{QUERY_STRING_FULL}&__IAdm_uncache=0" title="enable">OFF</a>|;
+}
+else
+{
+ $XSGN{TMP}=~s|<#CACHE#>|CACHE is <a style="color:green;text-decoration:underline;" href="?\|?$ENV{QUERY_STRING_FULL}&__IAdm_uncache=1" title="disable">ON</a>|;
+}
+
+if (!$main::FORM{__IAdm_log})
+{
+ $XSGN{TMP}=~s|<#LOG#>|LOG is <a style="color:red;text-decoration:underline;" href="?\|?$ENV{QUERY_STRING_FULL}&__IAdm_log=1" title="enable">OFF</a>|;
+}
+else
+{
+ $XSGN{TMP}=~s|<#LOG#>|LOG is <a style="color:green;text-decoration:underline;" href="?\|?$ENV{QUERY_STRING_FULL}&__IAdm_log=0" title="disable">ON</a>|;
+}
+
+
+
+
+=head1
+foreach (keys %main::FORM)
+{
+ $XSGN{TMP}.="$_=!".$main::FORM{$_}."!<BR>";
+}
+
+$main::FORM{__key}=~s|[\n\r]||g;
+if ($main::FORM{__key}."\n" eq $TOM::IAdm_key)
+{
+ $XSGN{TMP}.="ide too\n";
+}
+=cut
+
+ return 1}
+
+
+
+1;
+
+
+
+
+
+

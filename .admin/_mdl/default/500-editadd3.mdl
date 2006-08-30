@@ -1,0 +1,162 @@
+sub BaseModul
+{
+ my $id=$form{id};
+ my $page_limit=10;
+ my $page_from=$page_limit*$form{page};
+ $form{page}="0" unless $form{page};
+ $next=$form{page}+1;
+ $prev=$form{page}-1;
+ $spage=$form{page}+1;
+ my $sel_like1=$form{like};
+ $sel_like1=~s| |:|g;
+ $sel_like1=~s|\+|:|g;
+ my @sel_like0=split(':',$sel_like1);
+ $sel_like1=join " AND b.keywords LIKE '%",@sel_like0;
+ $sel_like1=~s| AND b.keywords LIKE|%' AND b.keywords LIKE|g;
+ $sel_like1=" b.keywords LIKE '%".$sel_like1;
+ $sel_like1.="%' ";
+
+ $sel_like2=$sel_like1;
+ $sel_like2=~s|b.keywords|b.about|g;
+
+ $sel_like=$form{like};
+ $sel_like=~s|\*|%|g;
+ $sel_like=~s|\+|%|g;
+ $sel_like=~s| |%|g;
+ $sel_like="%".$sel_like unless $sel_like=~/^%/;
+ $sel_like.="%" unless $sel_like=~/%$/;
+
+ if ($form{page})
+ {
+  $button=<<"  HEADER";
+ <td style="cursor:hand;" onclick="document.frames['frm_$form{frm}'].location='core.pl?type=500-editadd3&like=$form{like}&frm=$form{frm}&page=$prev';"><img src="$tom::H_media/grf/admin/win_top_0_btn4.gif" border=0><BR></td>
+  HEADER
+ }
+
+ my $mdl_temp=<<" HEADER";
+
+
+
+ <table width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr>
+$button
+<td width=100% style="FONT:bold 10px Verdana;" align=middle>&nbsp;<font color=white>page $spage (<%TIME%>sec)</font>&nbsp;</td>
+<td style="cursor:hand;" onclick="document.frames['frm_$form{frm}'].location='core.pl?type=500-editadd3&frm=$form{frm}&page=$next&like=$form{like}';"><img src="$tom::H_media/grf/admin/win_top_0_btn3.gif" border=0><BR></td>
+</tr>
+</table>
+
+
+ HEADER
+=head1
+ my $mdl_line=<<" HEADER";
+
+<table width=100% cellspacing=2 cellpadding=3 border=0>
+<tr>
+<td bgcolor="#2B83FF"><a href="core.pl?type=photogallery_edit&id=<%NULLID%>" target="frm_micro"><img src="$h_img/<%NULLID%>-t.jpg" width=80 height=80 border=1></a><BR></td>
+<td width=100% bgcolor="#2B83FF" style="FONT:10px Verdana;" valign=top>
+<B>ID:</B> #<%NULLID%><BR>
+<B>ADD:</B> <a href="#" onclick="editor_paste_img2('$h_img/<%NULLID%>','left','<%ALT%>');">left</a> <a href="#" onclick="editor_paste_img2('$h_img/<%NULLID%>','absmiddle','<%ALT%>');">middle</a> <a href="#" onclick="editor_paste_img2('$h_img/<%NULLID%>','right','<%ALT%>');">right</a><BR>
+<B>zdroj:</B> <%SOURCE%><BR>
+<B>alt:</B><br> <%ALT%><BR>
+<B>keywords:</B><br> <%KEYWORDS%><BR>
+<img src=t.gif width=1 height=4 border=0><BR>
+<img src=\"$tom::H_media/grf/admin/list_<%1%>.gif\" width=11 height=12 border=0 align=absmiddle> -<%1-1%><BR>
+<img src=\"$tom::H_media/grf/admin/list_<%2%>.gif\" width=11 height=12 border=0 align=absmiddle> -<%2-1%><BR>
+<img src=\"$tom::H_media/grf/admin/list_<%3%>.gif\" width=11 height=12 border=0 align=absmiddle> -<%3-1%><BR>
+</td>
+</tr>
+</table>
+
+ HEADER
+=cut
+ my $mdl_line=<<" HEADER";
+
+<table width=100% cellspacing=2 cellpadding=3 border=0>
+<tr>
+<td bgcolor="#2B83FF"><img src="$tom::H_500/<%NULLHASH%>-t.jpg" width=40 height=40 border=0><BR></td>
+<td width=100% bgcolor="#2B83FF" style="FONT:10px Verdana;" valign=top>
+<B>ID:</B> #<%NULLID%><BR>
+<B>alt:</B><BR>
+<%ALT%>
+<hr>
+<-LINE>
+</td>
+</tr>
+</table>
+
+ HEADER
+
+=head1
+return "
+     SELECT DISTINCT a.ID,a.IDattrs,a.IDcategory,a.hash,a.format,b.about,b.keywords
+	FROM $MAIN_db_a500 AS a,
+          $MAIN_db_a500_attrs AS b
+	WHERE a.IDattrs=b.IDattrs AND (($sel_like1) OR ($sel_like2))
+	GROUP BY a.ID ORDER BY starttime DESC LIMIT $page_from,$page_limit";
+=cut
+
+ my $tm_start=(times)[0];
+
+ $HTML_HEADER{BODY}{extract}="yes";
+  $db_micro = $dbh->Query("
+     SELECT DISTINCT a.ID,a.IDattrs,a.IDcategory,a.hash,a.format,b.about,b.keywords
+	FROM $MAIN_db_a500 AS a,
+          $MAIN_db_a500_attrs AS b
+	WHERE a.IDattrs=b.IDattrs AND (($sel_like1) OR ($sel_like2))
+	GROUP BY a.ID ORDER BY starttime DESC LIMIT $page_from,$page_limit");
+ while (%db_micro_line=$db_micro->FetchHash())
+ {
+  $nullid=sprintf ('%07d', $db_micro_line{ID});
+
+	$mdl_temp.=$mdl_line;
+
+	my $cl_t="r";$cl_t="g" if (-e "../media/img/".$nullid."-t.jpg");
+	my $cl_s="r";$cl_s="g" if (-e "../media/img/".$nullid."-s.jpg");
+	my $cl_o="r";$cl_o="g" if (-e "../media/img/".$nullid."-o.jpg");
+
+	my $cl_t_size=int((-s "../media/img/".$nullid."-t.jpg")/1024);
+	my $cl_s_size=int((-s "../media/img/".$nullid."-s.jpg")/1024);
+	my $cl_o_size=int((-s "../media/img/".$nullid."-o.jpg")/1024);
+
+	#$mdl_temp=~s|<%1%>|$cl_t|g;
+	#$mdl_temp=~s|<%1-1%>| $cl_t_size Kb - 80x80|g;
+	#$mdl_temp=~s|<%2%>|$cl_s|g;
+	#$mdl_temp=~s|<%2-1%>| $cl_s_size Kb - $db_micro_line[3]|g;
+	#$mdl_temp=~s|<%3%>|$cl_o|g;
+	#$mdl_temp=~s|<%3-1%>| $cl_o_size Kb - $db_micro_line[4]|g;
+     $nullid=~/^(....)/i;
+     my $var=$1;
+
+     $db_micro1 = $dbh->Query("SELECT ID,hash,IDattrs,format FROM $MAIN_db_a500 WHERE ID='$db_micro_line{ID}' ORDER BY ID DESC LIMIT 4");
+     #return "SELECT ID,hash,IDattrs,format FROM $MAIN_db_a500 WHERE ID='$db_micro_line[0]' ORDER BY ID DESC LIMIT 4";
+     while (@db_micro1_line=$db_micro1->FetchRow())
+     {
+      $mdl_temp=~s|<%NULLHASH%>|$var/$db_micro1_line[1]|g if ($db_micro1_line[3] eq "t");
+      $mdl_temp=~s|<-LINE>|<B>ADD $db_micro1_line[3]:</B> <a href="#" onclick="editor_paste_img2('$tom::H_500/$var/$db_micro1_line[1]','$db_micro1_line[3]','left','$db_micro_line{about}');">left</a> <a href="#" onclick="editor_paste_img2('$tom::H_500/$var/$db_micro1_line[1]','$db_micro1_line[3]','absmiddle','$db_micro_line{about}');">middle</a> <a href="#" onclick="editor_paste_img2('$tom::H_500/$var/$db_micro1_line[1]','$db_micro1_line[3]','right','$db_micro_line{about}');">right</a><BR><-LINE>|;
+     }
+     #$mdl_temp=~s|<%NULLID%>|$nullid|g;
+     #$mdl_temp=~s|<%NULLHASH%>|$var/$db_micro_line[1]|g;
+     #$mdl_temp=~s|<%ABOUT2%>|$db_micro_line[5]|g;
+	$mdl_temp=~s|<%NULLID%>|$nullid|g;
+	$mdl_temp=~s|<%ABOUT%>|$db_micro_line[1]|g;
+	$mdl_temp=~s|<%ALT%>|$db_micro_line{about}|g;
+	$mdl_temp=~s|<%KEYWORDS%>|$db_micro_line{keywords}|g;
+     $mdl_temp=~s|<-LINE>||g;
+ }
+ my $tm_end=(times)[0]-$time_start;
+ $mdl_temp=~s|<%TIME%>|$tm_end|g;
+
+ return	$mdl_temp}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

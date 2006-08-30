@@ -1,0 +1,254 @@
+#!/usr/bin/perl
+# ????? - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use CVML;
+
+our $authors = "nemsak\@webcom.sk";
+
+=head1 NAME
+create_m1
+
+=head1 HEAD_VERSION_BUILD
+1.060105
+
+=head1 DESCRIPTION
+vytvorenie fora
+
+=head1 CHANGES
+2006-01-05 - deb00t
+	- first release
+2006-08-21 - deb00t
+	- riadok 145 - zmena $env{lng} na $env{db_lng} (tak by to podla mna malo spravne byt, neviem preco to bolo len lng
+=cut
+
+sub execute
+{
+	my %env = @_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	if ($env{xt_xlng})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
+	if((exists($XSGN{TMP_unlogged})) && ($main::USRM{logged} eq 'N'))
+	{ $XSGN{TMP}=$XSGN{TMP_unlogged};}
+
+=head1
+
+	my %out=TOM::Utils::charindex::get
+	(
+		table=>"a820",
+		IDcharindex=>"",
+		'-first_free_child'=>1, # okay
+		'-first_child'=>1,
+		'-next_free_child'=>1, # okay
+		'-last_child'=>1,
+	);
+	
+	$XSGN{'TMP'}=~s|<%testring%>|$out{next_free_child}|g;
+=cut
+
+	if($env{action} eq 'execute')
+	{
+		if(
+			($env{login_required}) && ($main::USRM{logged} eq 'Y')
+			||
+			(!$env{login_required})
+		)
+		{
+			$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+			$env{db_820}=$TOM::DB{main}{name} unless $env{db_820};
+		
+			$env{db_active}="N" unless $env{db_active};
+			
+			$env{db_lng}="" unless $env{db_lng};
+		
+			$env{IDcharindex_chars}=Tomahawk::Getmdlvar("820","a820-IDcharindex_chars") unless ($env{IDcharindex_chars});
+			$env{IDcharindex_chars}=2 unless ($env{IDcharindex_chars});
+		
+			main::_log("IDcharindex_chars: $env{IDcharindex_chars}");
+		
+			use TOM::Utils::charindex;
+		
+			my $finalID;
+			my $finalIDattrs;
+		
+			my $db0=$main::DB{main}->Query("
+				SELECT
+					ID
+				FROM
+					$env{db_820}.a820
+				ORDER BY
+					ID DESC
+				LIMIT 1
+			");
+			if($db0)
+			{
+				#presumpcia nefunkcnosti :)
+				$XSGN{TMP}=$XSGN{TMP_failed};
+			
+				if(my %db0_line=$db0->FetchHash())
+				{
+					my $object=TOM::Utils::charindex::find->new
+					(
+						from	=>	$db0_line{ID},
+						depth	=>	$env{IDcharindex_chars}
+					);
+					
+					while (my $key=$object->list())
+					{
+						my $db1=$main::DB{main}->Query("
+							SELECT
+								ID
+							FROM
+								$env{db_820}.a820
+							WHERE
+								ID='$key'
+							LIMIT 1
+						");
+						if($db1)
+						{
+							if(my %db1_line=$db1->FetchHash())
+							{
+								next;
+							}
+							else
+							{
+								$finalID=$key;
+								last;
+							}
+						}
+					}
+				}
+				else
+				{
+					$finalID=sprintf("%0$env{IDcharindex_chars}d", $finalID);
+				}
+
+				my $db1=$main::DB{main}->Query("
+					INSERT INTO
+						$env{db_820}.a820
+					SET
+						ID='$finalID',
+						IDattrs='',
+						IDcategory='$env{db_IDcategory}',
+						createtime='".time."',
+						name='$env{db_name}',
+						about='$env{db_about}',
+						type='F',
+						active='N',
+						lng='$env{db_lng}'
+				");
+				if($db1)
+				{
+					main::_log("succesfully inserted forum with ID '$finalID'");
+					
+					$XSGN{TMP}=~s|<%ID_new%>|$finalID|g;
+					
+					my $db2=$main::DB{main}->Query("
+						SELECT
+							IDattrs
+						FROM
+							$env{db_820}.a820_attrs
+						ORDER BY
+							IDattrs DESC
+						LIMIT 1
+					");
+					if($db2)
+					{
+						if (my %db2_line = $db2->FetchHash())
+						{
+							$db2_line{IDattrs}++;
+							$finalIDattrs=$db2_line{IDattrs};
+						}
+						else
+						{
+							$finalIDattrs=1;
+						}
+						#$finalIDattrs
+	
+						my $db3=$main::DB{main}->Query("
+							INSERT INTO
+								$env{db_820}.a820_attrs
+							SET
+								IDattrs='$finalIDattrs'
+						");
+						if($db3)
+						{
+							main::_log("succesfully inserted forum attrs with ID '$finalIDattrs'");
+						
+							my $db4=$main::DB{main}->Query("
+								UPDATE
+									$env{db_820}.a820
+								SET
+									IDattrs='$finalIDattrs',
+									active='$env{db_active}'
+								WHERE
+									ID='$finalID'
+									AND lng='$env{db_lng}'
+									AND IDcategory='$env{db_IDcategory}'
+							");
+							if($db4)
+							{
+								main::_log("succesfully created a forum!");
+								
+								#presumpcia nefunkcnosti nefunguje :)
+								$XSGN{TMP}=$XSGN{TMP_inserted};
+								
+								$XSGN{TMP}=~s|<%ID%>|$finalID|g;
+								$XSGN{TMP}=~s|<%IDattrs%>|$finalIDattrs|g;
+								
+								#ideme ho updatnut o kategoriovca
+							}
+							else
+							{
+								main::_log("could not update forum '$finalID'");
+								main::_log($db4->errstr());
+							}
+						}
+						else
+						{
+							main::_log("could not insert IDattrs '$finalIDattrs'");
+							main::_log($db3->errstr());
+						}
+					}
+					else
+					{
+						main::_log("could not select last IDattrs  '$finalID'");
+						main::_log($db2->errstr());
+					}
+				}
+				else
+				{
+					main::_log("could not insert  '$finalID'");
+					main::_log($db1->errstr());
+				}
+			}
+		}
+		else
+		{
+			if((exists($XSGN{TMP_failed_unlogged})) && ($main::USRM{logged} eq 'N'))
+			{ $XSGN{TMP}=$XSGN{TMP_failed_unlogged};}
+			main::_log("can not insert new forum, the user is unlogged");
+		}
+		$XSGN{TMP}=~s|<%name%>|$env{db_name}|g;
+		$XSGN{TMP}=~s|<%description%>|$env{db_description}|g;
+		$XSGN{TMP}=~s|<%lng%>|$env{db_lng}|g;
+		$XSGN{TMP}=~s|<%status%>|$main::USRM{logged}|g;
+	}
+	else
+	{
+		main::_log("nikto od nas nic neste, nemame action");
+	}
+	
+	return 1;
+}
+
+1;

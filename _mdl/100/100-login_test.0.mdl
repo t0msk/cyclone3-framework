@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+
+ $main::FORM{__key_}=$main::USRM{IDsession};
+ 
+ $XSGN{TMP}=<<"HEADER";
+
+<FORM action="?|?$ENV{QUERY_STRING}" method="POST" enctype="multipart/form-data">
+	<input type=file name="__key" style="FONT:12px Verdana;"><BR>
+	<input type=submit><BR>
+</FORM>
+
+HEADER
+
+=head1
+foreach (keys %main::FORM)
+{
+ $XSGN{TMP}.="$_=!".$main::FORM{$_}."!<BR>";
+}
+
+$main::FORM{__key}=~s|[\n\r]||g;
+if ($main::FORM{__key}."\n" eq $TOM::IAdm_key)
+{
+ $XSGN{TMP}.="ide too\n";
+}
+=cut
+
+ return 1}
+
+
+
+1;
+
+
+
+
+
+

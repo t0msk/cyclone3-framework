@@ -1,0 +1,229 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+	my %env=@_;
+
+	# env{stats}=1
+	# env{stats_koef}=1
+	# env{stats_max}=200
+
+	if ($env{stats})
+	{
+		return undef if (!$env{stats_koef} && !$env{stats_max});
+		$env{stats_koef}=$env{stats_max}/100 unless $env{stats_koef};
+	}
+
+	main::_log("stats koeficient: $env{stats_koef}");
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	if($env{xt_xlng})
+	{
+		Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+		main::_log("using xlng transformations");
+	}
+	return undef unless $env{ID};
+
+	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
+	$env{db_410}=$TOM::DB_name_TOM unless $env{db_410};
+
+	#$XSGN{TMP}="fungujem $tom::H<BR>";
+	# AND (domain IS NULL OR domain LIKE '%$tom::H')
+	#main::_log("beginning ...");
+
+	#####
+	#   fetching poll data
+	#####
+
+	my %loop;
+	loop:
+	my %db0_line;
+	$loop{$env{ID}}++;
+	if ($loop{$env{ID}}>1){$tom::ERR="ID $env{ID} cycle";return undef;}
+
+	$env{stats_colors_count}=1 unless $env{stats_colors_count};
+	$env{stats_colour_counter}=0;
+
+	#!!! defaultne nastavujem domenu na master domenu, ak nie je definovana z typecka
+	$env{domain}=$tom::Hm unless ($env{domain});
+
+	main::_log("
+		SELECT *
+		FROM $env{db_410}.a410
+		WHERE 	ID='$env{ID}'
+			AND (domain IS NULL OR domain='$env{domain}')
+			AND starttime<=$tom::time_current
+			AND (endtime IS NULL OR endtime>=$tom::time_current)
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'
+		LIMIT 1
+	");
+	
+	my $db0=$main::DBH->Query("
+		SELECT *
+		FROM $env{db_410}.a410
+		WHERE 	ID='$env{ID}'
+			AND (domain IS NULL OR domain='$env{domain}')
+			AND starttime<=$tom::time_current
+			AND (endtime IS NULL OR endtime>=$tom::time_current)
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'
+		LIMIT 1");
+	if (%db0_line=$db0->fetchhash)
+	{
+		if ($db0_line{IDlink})
+		{
+			$env{ID}=$db0_line{IDlink};
+			goto loop;
+		}
+	}
+	else
+	{
+		main::_log("db request error!!!");
+		main::_log("
+		SELECT *
+		FROM $env{db_410}.a410
+		WHERE 	ID='$env{ID}'
+			AND (domain IS NULL OR domain='$tom::Hm')
+			AND starttime<=$tom::time_current
+			AND (endtime IS NULL OR endtime>=$tom::time_current)
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'
+		LIMIT 1");
+		return 1;
+	}
+
+	#####
+	#   fetching poll answers data
+	#####
+
+	$XSGN{TMP}=~s|<%TITLE%>|$db0_line{title}|;
+
+	my %percentages;
+	my $db_counter;
+	my $total_percent;
+
+	main::_log("
+		SELECT *
+		FROM $env{db_410}.a410_answer
+		WHERE 	IDquestion='$env{ID}'
+			AND starttime<=$tom::time_current
+			AND (endtime IS NULL OR endtime>=$tom::time_current)
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'
+	");
+	
+	my $db1=$main::DBH->Query("
+		SELECT *
+		FROM $env{db_410}.a410_answer
+		WHERE 	IDquestion='$env{ID}'
+			AND starttime<=$tom::time_current
+			AND (endtime IS NULL OR endtime>=$tom::time_current)
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'
+	");
+	while (my %db1_line=$db1->fetchhash)
+	{
+		$XSGN{NULL}=$XSGN{ANSWER};
+
+		$XSGN{NULL}=~s|<%ID_QUESTION%>|$env{ID}|g;
+		$XSGN{NULL}=~s|<%ID_ANSWER%>|$db1_line{ID}|g;
+		$XSGN{NULL}=~s|<%ANSWER%>|$db1_line{answer}|g;
+
+		if($env{votes_ignore_lng})
+		{
+			main::_log("i am a LANGUAGE IGNORANT, man!");
+			my $db2=$main::DBH->Query("
+				SELECT
+					COUNT(*)
+				FROM
+					$env{db_410}.a410_votes
+				WHERE
+					IDquestion='$env{ID}'
+					AND IDanswer='$db1_line{ID}'
+					AND active='Y'
+			");
+			if (my @db2_line=$db2->fetchrow)
+			{
+				main::_log("this answer has $db2_line[0] votez all in all");
+				$db1_line{votes}=$db2_line[0];
+			}
+		}
+		
+		$XSGN{NULL}=~s|<%VOTES%>|$db1_line{votes}|g;
+
+		if ($env{stats})
+		{
+			my $var=0;
+			$db_counter++;
+			$var=int($db1_line{votes}/($db0_line{votes}/100)) if ($db1_line{votes}>0);
+			$percentages{$db_counter}=$var;
+			$total_percent+=$var;
+			#$XSGN{TMP}.="$var%<BR>";
+			#$XSGN{NULL}=~s|<%VOTES-PERCENT%>|$var|g;
+			$XSGN{NULL}=~s|<%VOTES-PERCENT%>|<%VOTES-PERCENT-$db_counter%>|g;
+			my $null=$var*$env{stats_koef};
+			#$XSGN{TMP}.="koef-$null<BR>";
+			$XSGN{NULL}=~s|<%VOTES-KOEF%>|$null|g;
+			main::_log("stats koeficient for line $db_counter: $null");
+			if($env{stats_colorize})
+			{
+				$env{stats_colours_counter}++;
+				$XSGN{NULL}=~s|<%VOTES-COLOUR-ID%>|$env{stats_colours_counter}|g;
+				if($env{stats_colours_counter} eq $env{stats_colours_count})
+				{$env{stats_colours_counter}=0;}
+			}
+		}
+
+		$XSGN{TMP}=~s|<#ANSWER#>|$XSGN{NULL}<#ANSWER#>|;
+	}
+	if(($total_percent>0) && ($total_percent<100) && ($env{allow_rounding}))
+	{
+		my $highest;
+		foreach(keys %percentages)
+		{
+			if($percentages{$_}>$percentages{$highest}){$highest=$_;}
+		}
+		$percentages{$highest}+=(100-$total_percent);
+	}
+	
+	foreach(keys %percentages)
+	{
+		main::_log("stats percent for line $_: $percentages{$_}");
+		$XSGN{TMP}=~s|<%VOTES-PERCENT-$_%>|$percentages{$_}|g;
+	}
+
+	$XSGN{TMP}=~s|<%ID%>|$env{ID}|g;
+
+	#####
+	#   fetching poll answers data
+	#####
+
+	if($env{allow_forum})
+	{
+		# fetching forum database table name
+		$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+		$env{db_820}=$TOM::DB_name unless $env{db_820};
+
+		#if (($db0_line{xrelated}=~/<VAR id="a820" value="(.*?)" \/>/)&&($env{TMP_820}))
+		if ($db0_line{xrelated}=~/<VAR id="a820" value="(.*?)" \/>/)
+		{
+			$env{forumID}=$1;
+
+			$XSGN{a820}=~s|<%ID%>|$env{forumID}|g;
+			$XSGN{TMP}=~s|<#a820#>|$XSGN{a820}|g;
+		}
+	}
+
+	return 1
+}
+
+1;

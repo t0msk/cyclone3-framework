@@ -1,0 +1,62 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use App::540;
+use App::540::file;
+
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+
+ # Podpora viacerych suborov.
+	my @files = split(",",$env{file});
+	foreach my $file ( @files )
+	{
+		my %arg;
+		# Prevzatie argumentov
+		$arg{ID_dir}="00";
+		$arg{ID_dir}=$env{dir} if defined($env{dir});
+		$arg{active}=$env{active} if defined($env{active});
+		$arg{lng}=$env{lng} if defined($env{lng});
+		$arg{comment}=$env{comment} if defined($env{comment});
+		$arg{name}=$env{name} if defined($env{name});
+
+		# Obsah suboru
+		$arg{handle}=$main::FORM{$file};
+		main::_log("test");
+		# Ak to nieje file tak dalsi
+		next if !$arg{handle};
+		# (HACK) File Name
+		$main::FORM{multipart} =~ /name="$file"; filename="(.*?)"/;
+		$arg{name} = $1 if !defined($env{name});
+		# Pridanie do DB
+		my $id = App::540::file::new( %arg );
+		if ($id<0)
+		{
+			main::_log("Upload Failed! file: $arg{name}",0);
+			$XSGN{TMP} =~ s|<#RESULT#>|$XSGN{'RESULT-FAILED'}|;
+			return 1;
+		}
+
+		# Associate with a400 article
+		if ($env{a400_id})
+		{
+			main::_log("Associating with a400 ID:$env{a400_id}");
+			my $assoc = $main::DB{main}->Query("
+				UPDATE a400
+				SET xrelated=concat(xrelated, '<VAR id=\"a540\" value=\"$id\" />')
+				WHERE ID='$env{a400_id}'
+			");
+		}
+		main::_log("Upload Success! file: $arg{name}",0);
+		$XSGN{TMP} =~ s|<#RESULT#>|$XSGN{'RESULT-SUCCESS'}|;
+	}
+	return 1;
+}
+1;

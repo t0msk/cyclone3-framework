@@ -1,0 +1,103 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+
+ $env{max}=15 unless $env{max};
+
+$env{URL}="?|?" unless $env{URL};
+
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+
+	if (!$env{ID})
+	{
+		$env{ID}="00a";
+	}
+
+  	my $page=$env{page};
+   $page=0 unless $env{page};
+
+   $env{from}=$page*$env{max};
+
+   $env{to}=$env{max}+1;
+
+
+   $env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+   $env{db_820}=$TOM::DB_name unless $env{db_820};
+
+ $XSGN{TMP}=$XSGN{FORUM};
+
+ my @struct;
+ my %struct_base;
+ my $views;
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_820}.a820
+	WHERE	type='F'
+		AND ID LIKE '$env{ID}___'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	ORDER BY createtime DESC LIMIT $env{from},$env{to}");
+ while (my %env0=$db0->fetchhash)
+ {
+	my $db1=$main::DBH->Query("
+	SELECT DISTINCT from_name
+	FROM $env{db_820}.a820_msgs
+	WHERE	IDforum='$env0{ID}'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'");
+
+  my $null=$db1->numRows();
+
+	my $db1=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_820}.a820_msgs
+	WHERE inserttime='$env{inserttime}'
+	LIMIT 1");
+
+   my %null2=$db1->fetchhash;
+
+	my %env1=Utils::datetime::ctodatetime($env0{inserttime},format=>1); # zkonvertujem cas do hashu a zformatujem
+
+  $XSGN{TMP} =~s|<#LINE#>|$XSGN{LINE}<#LINE#>|g;
+  $XSGN{TMP} =~s|<%NAME%>|$env0{name}|g;
+  $XSGN{TMP} =~s|<%ID%>|$env0{ID}|g;
+  $XSGN{TMP} =~s|<%forum_url%>|type=a820_view&IDforum=$env0{ID}|g;
+  $XSGN{TMP} =~s|<%FORUM_USERS%>|$null|g;
+  $XSGN{TMP} =~s|<%FORUM_STARTTIME%>|$env1{mday}.$env1{mom}.$env1{year} $env1{hour}:$env1{min}:$env1{sec}|g;
+  $XSGN{TMP} =~s|<%FORUM_MSGS%>|$env0{messages}|g;
+
+	$views++;
+
+ }
+
+if ($views==$env{to})
+{
+   my $nextpage=$page+1;
+	$XSGN{NULL}=$XSGN{NEXT};
+	$XSGN{NULL}=~s|<%url%>|page=$nextpage&ID=$env{ID}|g;
+ 	$XSGN{TMP}=~s|<#NEXT#>|$XSGN{NULL}|;
+ }
+
+if ($page>0)
+{
+   my $prevpage=$page-1;
+	$XSGN{NULL}=$XSGN{PREV};
+	$XSGN{NULL}=~s|<%url%>|page=$prevpage&ID=$env{ID}|g;
+ 	$XSGN{TMP}=~s|<#PREV#>|$XSGN{NULL}|;
+ }
+
+$XSGN{TMP}=~s|<%URL%>|$env{URL}|g;
+
+ return 1}
+
+1;

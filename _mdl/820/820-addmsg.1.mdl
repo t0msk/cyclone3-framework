@@ -1,0 +1,477 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use App::1B0;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ if (!$env{ID}){$XSGN{TMP}="";return 1;}
+ #return undef unless $env{ID};
+
+ # osetrim blbe znaky kvoli zobrazovaniu a aj vkladaniu
+ $main::FORM{title}=~s|[<>]||g;
+ $main::FORM{text}=~s|[<>]||g;
+ $main::FORM{text}=~s|\r||g;
+ $main::FORM{text}=~s|\n\n||g;
+ $main::FORM{title}=~s|\\||g;
+
+
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+ Tomahawk::XLNGtoXSGN(); # insert XLNG do XSGN
+ 
+#=head1                  
+=head1
+ main::_log("search banned user $main::USRM{IDhash}");
+ my $bann=App::1B0::IsBanned(
+	a300		=>	$main::USRM{IDhash},
+	-type	=>	"app",
+	-what	=>	"820"
+ );
+ main::_log("banned $bann");
+=cut
+
+=head1
+ my @bann=App::1B0::IsBanned(
+	a300		=>	$main::USRM{IDhash},
+	-type	=>	"app",
+	-what	=>	"820"
+ );
+ if ($bann[0])
+ {
+  $XSGN{TMP}=$XSGN{banned};
+  $XSGN{TMP}=~s|<%ABOUT%>|$bann[1]|g;
+  return 1;
+ }
+=cut
+
+ 
+ $env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+ $env{db_820}=$TOM::DB_name unless $env{db_820};
+
+ #$env{db_130}=Tomahawk::Getmdlvar("130","db") unless $env{db_130};
+ $env{db_130}=$TOM::DB_name_TOM;# unless $env{db_130};
+
+ $env{from_email}="forum\@localhost" unless $env{from_email};
+ $env{from}="forum" unless $env{from};
+
+ $env{mailtable}="a130_send";
+ #$env{mailtable}="Ca130_send" if ($env{db_130} eq $TOM::DB_name_TOM);
+
+ $env{name}=$main::USRM{login};
+ $XSGN{TMP}=$XSGN{FORM};
+ $XSGN{TMP}=$XSGN{FORM_anonymous} if $main::USRM{logged} eq "N";
+ $env{name}="anonym" if $main::USRM{logged} eq "N";
+
+=head1
+ # osetrenie znakov pre vpisanie
+ $main::FORM{title}=~s|\\||g;
+ $main::FORM{title}=~s|"|\\"|g;
+ $main::FORM{title}=~s|'|\\'|g;
+ $main::FORM{title}=~s|[<>]||g;
+
+ $main::FORM{text}=~s|"|\\"|g;
+ $main::FORM{text}=~s|'|\\'|g;
+ $main::FORM{text}=~s|[<>]||g;
+ $main::FORM{text}=~s|\r||g;
+ $main::FORM{text}=~s|\n\n||g;
+=cut
+
+
+ if (!$main::USRM{IDhash}) # niesi lognuty!
+ {
+  $XSGN{TMP}=$XSGN{notlogged};
+  return 1;
+ }
+
+	while ( (my $key, my $val) = each %main::FORM )
+	{
+		main::_log("$key: $val");
+	}
+
+ #foreach (keys %main::USRM){$XSGN{TMP}.="$_=$main::USRM{$_}<BR>";}
+# if ($main::USRM{logged} eq "Y")
+# {
+
+  if (($main::FORM{title})&&($main::FORM{text}))
+  {
+#=head1
+	my @bann=App::1B0::IsBanned(
+		a300			=>	$main::USRM{IDhash},
+		-type		=>	"app",
+		-what		=>	"820",
+		-what_action	=>	"add"
+ 	);
+
+	if ($bann[0])
+	{
+		$XSGN{TMP}=$XSGN{banned};
+		$XSGN{TMP}=~s|<%ABOUT%>|$bann[1]|g;
+		$XSGN{TMP}="You are not allowed to use this application, because you have violated terms of use." unless $XSGN{TMP};
+		return 1;
+	}
+#=cut
+  
+  
+   # vkladam prispevok
+
+	# tieto znaky osetrujem len kvoli zapisu
+	$main::FORM{title}=~s|"|\\"|g;
+	$main::FORM{title}=~s|'|\\'|g;
+	$main::FORM{text}=~s|"|\\"|g;
+	$main::FORM{text}=~s|'|\\'|g;
+
+	my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_820}.a820
+	LEFT JOIN $env{db_820}.a820_attrs
+		ON (a820.IDattrs AND a820.IDattrs=a820_attrs.IDattrs)
+	WHERE 	a820.ID='$env{ID}'
+		AND a820.type='F'
+		AND (a820.lng='$env{lng}' OR a820.lng='')
+		AND a820.active='Y'
+	LIMIT 1");
+	if (my %env1=$db0->fetchhash)
+	{
+	 # samotne vlozenie
+	 # kontrola codepage
+	 if ($tom::COOKIES{cp} ne $TOM::LNG_cp_default)
+	 {
+	  #konverzie
+	  #$HTML_send=conv::conv($tom::COOKIES{cp},$TOM::LNG_cp_default,$H->HTML_,'iconv');
+	 }
+	 my $db0=$main::DBH->Query("
+	 SELECT *
+	 FROM $env{db_820}.a820_msgs
+	 WHERE 	IDforum='$env{ID}'
+		AND from_name='$env{name}'
+		AND title='$main::FORM{title}'
+		AND msg='$main::FORM{text}' LIMIT 1");
+	 if (my %env0=$db0->fetchhash)
+	 {
+	  # tento prispevok uz existuje
+	 }
+	 else
+	 {
+	  my $email_reply='N';
+	  my $authorized="Y";
+	  $authorized="N" if $main::USRM{logged} eq "N";
+	  if (($main::FORM{email})&&($main::FORM{email_reply})&&($main::USRM{logged} eq "Y"))
+	  {
+	   $email_reply='Y';
+	  }
+	  $main::FORM{email}="" if $main::USRM{logged} eq "N";
+	  $main::DBH->Query("
+	  INSERT INTO $env{db_820}.a820_msgs
+		(
+		IDre,
+		IDforum,
+		from_name,
+		from_IDhash,
+		from_IP,
+		inserttime,
+		title,
+		msg,
+		lng,
+		from_email,
+		email_reply,
+		authorized,
+		active)
+	  VALUES	(
+		'$main::FORM{IDre}',
+		'$env{ID}',
+		'$env{name}',
+		'$main::USRM{IDhash}',
+		'$main::ENV{REMOTE_ADDR}',
+		'$tom::time_current',
+		'$main::FORM{title}',
+		'$main::FORM{text}',
+		'$env{lng}',
+		'$main::FORM{email}',
+		'$email_reply',
+		'$authorized',
+		'Y'
+		)");
+
+	  my $ID;
+	  my $db0=$main::DBH->Query("
+		SELECT	ID
+		FROM	$env{db_820}.a820_msgs
+		WHERE	IDforum='$env{ID}'
+			AND inserttime='$tom::time_current'
+			AND from_IDhash='$main::USRM{IDhash}' LIMIT 1");
+	  my @db0_line=$db0->fetchrow();
+	  $ID=$db0_line[0];
+
+
+
+
+
+
+
+
+
+
+
+	  $env{report}=Tomahawk::Getmdlvar("820","report",db=>$env{db_820});
+	  if ($env{report})
+	  {
+ 	   my $var="$Utils::datetime::DAYS{en}[$tom::Twday], $tom::Tmday $Utils::datetime::MONTHS{en}[$tom::Tmom-1] $tom::Fyear $tom::Fhour:$tom::Fmin:$tom::Fsec +-200";
+#=head1
+#		 $XSGN{NULL}=$XSGN{EMAIL_report};
+		 $XSGN{NULL}=Tomahawk::Getmdlvar("820","report_body",db=>$env{db_820});
+		 Utils::vars::replace($XSGN{NULL});
+
+		 $XSGN{NULL}=~s|<%TITLE%>|$main::FORM{title}|g;
+		 $XSGN{NULL}=~s|<%MSG%>|$main::FORM{text}|g;
+		 $XSGN{NULL}=~s|<%NAME%>|$env{name}|g;
+
+		my %env2;
+		foreach (split(';',$env{report})){$env2{$_}++;}
+		$env{to_email}="";foreach (sort keys %env2){$env{to_email}.=$_.";";}$env{to_email}=~s|;$||;
+		$env{to_email}=~s|;|>,<|g;
+		$env{to_email}="<".$env{to_email}.">";
+
+		 #$XSGN{NULL}=~s|<%TO_email%>|$env{anonymous_emailreport}|g;
+		 $XSGN{NULL}=~s|<%TO_email%>|$env{to_email}|g;
+		 $XSGN{NULL}=~s|<%IDforum%>|$env{ID}|g;
+		 $XSGN{NULL}=~s|<%FORUM%>|$env1{name}|g;
+		 $XSGN{NULL}=~s|<%ID%>|$ID|g;
+		 $XSGN{NULL}=~s|<%DATE%>|$var|g;
+
+		 # VYZIADANE KODOVANIE URL
+		 while ($XSGN{NULL}=~s|<code>(.*?)</code>|<!TMP!>|)
+		 {
+		  my $var=$1;
+		  if ($TOM::type_code)
+		  {$var=enc::enc($var,$tom::type_codes{root});$XSGN{NULL}=~s/<!TMP!>/?||$var-root/;}
+		  else{$XSGN{NULL}=~s/<!TMP!>/?$var/;}
+		 }
+
+		 if ($main::DBH->Query("
+		 INSERT INTO $env{db_130}.$env{mailtable}
+		 (
+		  sendtime,
+		  priority,
+		  from_name,
+		  from_email,
+		  from_host,
+		  from_service,
+		  to_name,
+		  to_email,
+		  body)
+	  	 VALUES	(
+		  '$tom::time_current',
+		  '0',
+		  '$env{from}',
+		  '$env{from_email}',
+		  '$tom::H',
+		  'a820',
+		  'authorizer',
+		  '$env{report}',
+		  '$XSGN{NULL}'
+		 )"))
+		 {
+		  #$XSGN{TMP}="podarilo sa poslat email\n";
+		 }
+		 else
+		 {
+		  #$XSGN{TMP}="nepodarilo sa poslat email\n";
+		 }
+#=cut
+	  }
+
+
+
+
+
+
+
+
+
+
+
+	  if ($main::USRM{logged} eq "Y")
+	  {
+	   $XSGN{TMP}=$XSGN{INSERTED};
+	   main::_log("inserted message by logged user");
+	  }
+	  else
+	  {
+	   $XSGN{TMP}=$XSGN{INSERTED_anonymous};
+	   main::_log("inserted message by anonymous");
+	  }
+
+
+	  #$XSGN{TMP}=$XSGN{INSERTED_anonymous} if $main::USRM{logged} ne "Y";
+
+	  # TERAZ BY SOM MAL SPRAVIT UPDATE
+	  # SAMOTNEHO FORUMU (pocet prispevkov, posledny visit a insert)
+	  my $db0=$main::DBH->Query("
+	  	SELECT COUNT(*)
+		FROM $env{db_820}.a820_msgs
+	  		WHERE	IDforum='$env{ID}'
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'");
+	  my @db0_line=$db0->fetchrow;
+	  $main::DBH->Query("
+	  	UPDATE $env{db_820}.a820
+		SET	inserttime='$tom::time_current',lasttime='$tom::time_current',messages='$db0_line[0]'
+		WHERE 	ID='$env{ID}'
+			AND type='F'
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'
+		LIMIT 1");
+
+	  # ak sa mi podaril pridat prispevok, tak si pozriem
+	  # na koho prispevok reagujem a ci neposlem reakciu
+	  # e-mailom
+	  if ($main::FORM{IDre})
+	  {
+	   my $IDre=$main::FORM{IDre};
+	   my $var="$Utils::datetime::DAYS{en}[$tom::Twday], $tom::Tmday $Utils::datetime::MONTHS{en}[$tom::Tmom-1] $tom::Fyear $tom::Fhour:$tom::Fmin:$tom::Fsec +-200";
+	   my %env1; # zoznam ludi ktori prijimaju e-mail;
+	   while ($IDre>0)
+	   {
+	    my $db0=$main::DBH->Query("
+	    SELECT *
+	    FROM $env{db_820}.a820_msgs
+	    WHERE IDforum='$env{ID}'
+		AND ID='$IDre'
+		LIMIT 1");
+	    if (my %env0=$db0->fetchhash)
+	    {
+
+
+		if (($env{name} ne $env0{from_name})&&($env0{email_reply} eq "Y")&&(!$env1{$env0{from_name}}))
+		{
+		 #$XSGN{TMP}.="posielam reakciu na $env0{from_email} z <BR>";
+		 $XSGN{NULL}=$XSGN{EMAIL};
+		 $XSGN{NULL}=~s|<%NAME%>|$env0{from_name}|g;
+		 $XSGN{NULL}=~s|<%NAME2%>|$env{name}|g;
+		 $XSGN{NULL}=~s|<%EMAIL%>|$env0{from_email}|g;
+		 $XSGN{NULL}=~s|<%EMAIL2%>|$main::USRM{email}|g;
+		 $XSGN{NULL}=~s|<%TITLE%>|$env0{title}|g;
+		 $XSGN{NULL}=~s|<%TITLE2%>|$main::FORM{title}|g;
+		 $XSGN{NULL}=~s|<%MSG%>|$env0{msg}|g;
+		 $XSGN{NULL}=~s|<%MSG2%>|$main::FORM{text}|g;
+		 $XSGN{NULL}=~s|<%IDforum%>|$env{ID}|g;
+		 $XSGN{NULL}=~s|<%FORUM%>|$env1{name}|g;
+		 #$XSGN{NULL}=~s|<%ID%>|$env0{ID}|g;
+		 #$XSGN{NULL}=~s|<%IDre%>|$IDre|g;
+		 $XSGN{NULL}=~s|<%ID%>|$ID|g;
+		 #$XSGN{NULL}=~s|<%ID%>|$env0{ID}|g;
+		 $XSGN{NULL}=~s|<%DATE%>|$var|g;
+
+		 # VYZIADANE KODOVANIE URL
+		 while ($XSGN{NULL}=~s|<code>(.*?)</code>|<!TMP!>|)
+		 {my $var=$1;
+		  if ($TOM::type_code){$var=enc::enc($var,$tom::type_codes{root});$XSGN{NULL}=~s/<!TMP!>/?||$var-root/;}
+		  else{$XSGN{NULL}=~s/<!TMP!>/?$var/;}}
+
+		 $env1{$env0{from_name}}++;
+		 if ($main::DBH->Query("
+		 INSERT INTO $env{db_130}.$env{mailtable}
+		 (
+		  sendtime,
+		  priority,
+		  from_name,
+		  from_email,
+		  from_host,
+		  from_service,
+		  to_name,
+		  to_email,
+		  body)
+	  	 VALUES	(
+		  '$tom::time_current',
+		  '0',
+		  '$env{from}',
+		  '$env{from_email}',
+		  '$tom::H',
+		  'a820',
+		  '$env0{from_name}',
+		  '$env0{from_email}',
+		  '$XSGN{NULL}'
+		 )"))
+		 {
+		  #$XSGN{TMP}="podarilo sa poslat email\n";
+		 }
+		 else
+		 {
+		  #$XSGN{TMP}="nepodarilo sa poslat email\n";
+		 }
+		}
+		else
+		{
+		 #$XSGN{TMP}.="neposielam reakciu na $env0{from_email} z <BR>";
+		 #$XSGN{NULL}=$XSGN{EMAIL};
+		}
+
+
+	     $IDre=$env0{IDre};next;
+	    }
+	    $IDre=0;
+	   }
+
+	  }
+	 }
+	}
+	else
+	{
+	 # snazim sa vlozit do neexistujuceho forumu prispevok
+	}
+
+
+  }
+  elsif ($main::FORM{submit})
+  {
+   # prazdne data :-O
+   $XSGN{TMP}=~s|<%ERR%>|$XLNG{missed}|; #starsia verzia XSGN
+   $XSGN{ERROR}=~s|<%ERR%>|$XLNG{missed}|;
+   $XSGN{TMP}=~s|<#ERR#>|$XSGN{ERROR}|;
+   $XSGN{TMP}=~s|<%TITLE%>|$main::FORM{title}|g;
+   $XSGN{TMP}=~s|<%TEXT%>|$main::FORM{text}|g;
+   # budem pokracovat formularom
+  }
+  else
+  {
+   if ($main::FORM{title}) # toto je prva ziadost o RE:
+   {
+    #$main::FORM{title}=~s|\\||g;
+    $main::FORM{title}=~s|^Re: ||;
+    $main::FORM{title}="Re: ".$main::FORM{title};
+   }
+   $XSGN{TMP}=~s|<%TITLE%>|$main::FORM{title}|g;
+   $XSGN{TMP}=~s|<%TEXT%>|$main::FORM{text}|g;
+   # budem pokracovat formularom
+  }
+ #}
+# else # niesi lognuty!
+# {
+#  $XSGN{TMP}=$XSGN{notlogged};
+#  return 1;
+# }
+
+ $XSGN{TMP}=~s|<%NAME%>|$env{name}|g;
+ $XSGN{TMP}=~s|<%IDforum%>|$env{ID}|g;
+ $XSGN{TMP}=~s|<%IDre%>|$env{IDre}|g;
+ $XSGN{TMP}=~s|<%TID%>|$main::FORM{TID}|g;
+
+ if ($main::USRM{email}) # nezistit aj ci je to ozaj overeny e-mail???
+ {
+  $XSGN{TMP}=~s|<%EMAIL%>|$main::USRM{email}|g;
+  # spravit checked len v pripade ze je aj verify email
+  $XSGN{TMP}=~s|<%EMAILATTR%>|checked|g if $main::USRM{email_verify} eq "Y";
+ }
+
+
+
+ return 1}
+
+1;

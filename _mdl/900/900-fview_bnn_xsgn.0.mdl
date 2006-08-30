@@ -1,0 +1,149 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+
+ $env{db_900}=Tomahawk::Getmdlvar("900","db") unless $env{db_900};
+ $env{db_900}=$TOM::DB_name unless $env{db_900};
+ 
+ 
+ #main::_log("em: $Tomahawk::mdl_C{-return_emptyifnull}");
+
+ # ak je include tak data zistujem z $main::env
+ $env{section}=$main::env{a900_section} if $env{section_include};
+
+ if ($env{search})
+ {
+  main::_log("start search for app banner $env{section}");
+  $env{section}=~s|^a(.*?)\-||;
+  $env{search}=$1;
+  $env{section}.=" ";
+  while ($env{section}=~s|.$||)
+  {
+   #main::_log("search app bnn $env{search}-$env{section}");
+#=head1
+	my $var="
+	SELECT code
+	FROM $env{db_900}.a900_bnn
+	WHERE 	(host='$tom::H' OR host='$tom::Hm')
+		AND section='a$env{search}-$env{section}'
+		AND position='$env{position}'
+		AND action='$env{action}'
+		AND starttime<=$tom::time_current
+		AND (endtime>=$tom::time_current OR endtime=0)
+		AND type='$env{type}'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	LIMIT 1";
+	main::_log("search app bnn $env{search}-$env{section}");
+	main::_log("$var");
+   my $db0=$main::DBH->Query($var);
+   if (my @db0_line=$db0->fetchrow)
+   {
+    main::_log("ok, i have banner $env{search}-$env{section}");    
+    $main::DBH->Query("
+	UPDATE $env{db_900}.a900_bnn
+	SET time_use='$main::time_current'
+	WHERE 	(host='$tom::H' OR host='$tom::Hm')
+		AND section='a$env{search}-$env{section}'
+		AND position='$env{position}'
+		AND action='$env{action}'
+		AND starttime<=$tom::time_current
+		AND (endtime>=$tom::time_current OR endtime=0)
+		AND type='$env{type}'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	LIMIT 1");        
+    $XSGN{TMP}=~s|<#CODE#>|$db0_line[0]|g;
+    return 1;
+   }
+  }
+
+  
+  $XSGN{TMP}="" if $Tomahawk::mdl_C{-return_emptyifnull};
+  
+  $XSGN{TMP}=~s|<#CODE#>|<!-- EMPTY BANNERCODE $tom::H-$env{section}-$env{position}-$env{type} --!>\n|g;
+  return 1;
+ }
+
+=head1
+ $XSGN{TMP}="
+ 	SELECT code
+	FROM $env{db_900}.a900_bnn
+	WHERE 	host='$tom::H'
+		AND section='$env{section}'
+		AND position='$env{position}'
+		AND starttime<=$tom::time_current
+		AND (endtime>=$tom::time_current OR endtime=0)
+		AND type='$env{type}'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	LIMIT 1";return 1;
+=cut
+
+=head1
+ Tomahawk::debug::log(9,"
+	SELECT code
+	FROM $env{db_900}.a900_bnn
+	WHERE 	host='$tom::H'
+		AND section='$env{section}'
+		AND position='$env{position}'
+		AND starttime<=$tom::time_current
+		AND (endtime>=$tom::time_current OR endtime=0)
+		AND type='$env{type}'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	LIMIT 1");
+=cut
+#=head1
+ my $db0=$main::DBH->Query("
+ 	SELECT code
+	FROM $env{db_900}.a900_bnn
+	WHERE 	host='$tom::H'
+		AND section='$env{section}'
+		AND position='$env{position}'
+		AND starttime<=$tom::time_current
+		AND (endtime>=$tom::time_current OR endtime=0)
+		AND type='$env{type}'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	LIMIT 1");
+ if (my @db0_line=$db0->fetchrow)
+ {
+  main::_log("mam banner");
+  $main::DBH->Query("
+	UPDATE $env{db_900}.a900_bnn
+	SET time_use='$main::time_current'
+	WHERE 	host='$tom::H'
+		AND section='$env{section}'
+		AND position='$env{position}'
+		AND starttime<=$tom::time_current
+		AND (endtime>=$tom::time_current OR endtime=0)
+		AND type='$env{type}'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	LIMIT 1");
+  $XSGN{TMP}=~s|<#CODE#>|$db0_line[0]|g;
+ }
+ else
+ {
+  main::_log("nemam banner");
+  
+  $XSGN{TMP}="" if $Tomahawk::mdl_C{-return_emptyifnull};
+  $XSGN{TMP}=~s|<#CODE#>|<!-- EMPTY BANNERCODE $tom::H-$env{section}-$env{position}-$env{type} --!>\n|g;
+  #$XSGN{TMP}="<!-- EMPTY BANNERCODE $tom::H-$env{section}-$env{position}-$env{type} --!>\n";
+ }
+#=cut
+ return 1}
+
+1;

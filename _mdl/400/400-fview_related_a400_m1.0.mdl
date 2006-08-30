@@ -1,0 +1,178 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 NAME
+fview_related_c400
+
+=head1 HEAD_VERSION_BUILD
+1.030725
+
+=head1 DESCRIPTION
+related articles display
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+ <value id="preview" value="1" />
+ <value id="output" value="xsgn" />
+ <input id="-xsgn" value="varchar(20)">design</input>
+	<source type="db_400" value="varchar">articles db name (default - web db_400)</source>
+	<input id="a_*" value="text">smdl variables</input>
+	<input id="return_null" value="boolean">return empty box if no related articles are found</input>
+	<input id="return_string" value="varchar">default content string if no related articles are found</input>
+</DESCRIPTION>
+
+
+=head1 CHANGES
+build 041104 - Deboot
+        *) max parameter added
+        *) format_500 parameter added
+        *) db_500 parameter added
+build 030725 - Deboot
+        *) return_string parameter added
+build 030709 - Deboot
+        *) return_null parameter added
+build 030709 - Deboot & Aben
+        *) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+
+=cut
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+
+ $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+ $env{db_400}=$TOM::DB_name unless $env{db_400};
+
+ $env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+ $env{db_500}=$TOM::DB_name unless $env{db_500};
+
+ $env{format_500}='t' unless $env{format_500};
+ $env{$env{format_500}.'_hash'}=Tomahawk::Getmdlvar("500",$env{format_500}.'_hash',db=>$env{db_500});
+
+ #return undef unless $env{_xrelated};
+
+ my $var;
+ my $count;
+
+ $env{max}="LIMIT $env{max}" if $env{max};
+
+ #$XSGN{TMP}=$env{_xrelated};return 1;
+
+ while ($env{_xrelated}=~s|<VAR id="a400" value="(.{0,11}?)" />||)
+ {
+   if (!$var) {$var = "ID='$1' ";next;}
+   $var .= "OR ID='$1' ";
+ }
+
+ if (!$var){goto label;}
+
+ if (my $db0=$main::DBH->Query("
+	(SELECT
+		ID,title, subtitle, tiny, xrelated
+	FROM $env{db_400}.a400
+	WHERE 	($var)
+		AND active='Y'
+		AND starttime<$tom::time_current
+		AND (endtime>$tom::time_current OR endtime=0)
+		AND (lng='$env{lng}' OR lng=''))
+	UNION ALL
+	(SELECT
+		ID,title, subtitle, tiny, xrelated
+	FROM $env{db_400}.a400_arch
+	WHERE 	($var)
+		AND active='Y'
+		AND starttime<$tom::time_current
+		AND (endtime>$tom::time_current OR endtime=0)
+		AND (lng='$env{lng}' OR lng=''))
+	$env{max}
+	"))
+ {
+  while (my @db0_line=$db0->FetchRow())
+  {
+   $count++;
+   $XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE}|;
+   $XSGN{TMP}=~s|<%ID%>|$db0_line[0]|g;
+   $XSGN{TMP}=~s|<%title%>|$db0_line[1]|g;
+   $XSGN{TMP}=~s|<%subtitle%>|$db0_line[2]|g;
+   $XSGN{TMP}=~s|<%tiny%>|$db0_line[3]|g;
+
+	my $zeroid;
+	if ($db0_line[4]=~/<VAR id="a500" value="(.*?)" \/>/)
+	{$zeroid=sprintf('%07d',$1);} else {$zeroid=sprintf('%07d',0);}
+	my $var;if ($zeroid=~/^(....)/i){$var=$1};
+
+	if (($env{$env{format_500}.'_hash'})&&($zeroid ne "0000000")&&($XSGN{a500}))
+	{
+		my $db0=$main::DBH->Query("
+			SELECT
+				hash
+			FROM $env{db_500}.a500
+			WHERE
+				ID='$zeroid'
+				AND format='$env{format_500}'
+				AND (lng='$env{lng}' OR lng='')
+				AND active='Y'
+			LIMIT 1
+		");
+		if (my @db0_line=$db0->fetchrow)
+		{
+			$zeroid=$db0_line[0];
+
+			$XSGN{TMP}=~s|<#a500#>|$XSGN{a500}|;
+
+			$XSGN{TMP}=~s|<%IMG%>|$tom::H_500/$var/$zeroid-$env{format_500}.jpg|g;
+			#Tomahawk::debug::log(9,"hash $var/$zeroid-$env{format_500}.jpg");
+		}
+		else
+		{
+			#Tomahawk::debug::log(9,"not hash $var/$zeroid-$env{format_500}.jpg");
+		}
+	}
+
+
+  }
+  #Tomahawk::debug::log(6,$count." related articles found.");
+  return 1;
+ }
+ else
+ {
+  #Tomahawk::debug::log(5,"Could not load data from database \"".$env{db_400}."\"! Check the db, or db select!", 1);
+  $tom::ERR = "DB request error!";
+  return undef;
+ }
+
+ label:
+ if ((!$count)||(!$var))
+ {
+  #Tomahawk::debug::log(6,"No related articles found.");
+  if ($env{return_null})
+  { undef $XSGN{TMP};return 1; }
+  elsif ($env{return_string})
+  { $XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE_NULL}|; $XSGN{TMP}=~s|<%LINE-NULL%>|$env{return_string}|; }
+  else
+  { $tom::ERR = "DB request error!"; return undef; }
+ }
+
+return 1}
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+

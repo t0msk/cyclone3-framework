@@ -1,0 +1,71 @@
+#!/bin/perl
+# ÁÉÍÓÚ - USE UTF-8 !!!
+package CRON::module;
+use Net::HTTP::LiteAgent;
+use Net::SMTP;
+use CVML;
+use strict;
+use Mysql;
+use Digest::MD5  qw(md5 md5_hex md5_base64);
+use MIME::Base64;
+
+our $authors = "gregor\@webcom.sk";
+
+# tento cron kontroluje emaily ulozene v databaze, pochadzajuce z adresy forms@webcom.sk
+sub execute
+{
+	my %env=@_;
+	main::_log("130 IMAGES CONTROL");
+
+	my $main_dir = '/www/TOM';
+
+	opendir(DIR, $main_dir) || die "can't opendir $main_dir: $!";
+	my @dirs = grep { /^!/ && -d "$main_dir/$_" } readdir(DIR);
+
+	foreach my $domain ( @dirs )
+	{
+		opendir (TMPDIR, "$main_dir/$domain");
+		my @dirssub = grep { /^!/ && -d "$main_dir/$domain/$_/!media/grf/temp" } readdir(TMPDIR);
+		foreach my $dirsub ( @dirssub )
+		{ print "$main_dir/$domain/$dirsub/!media/grf/temp\n";
+
+			opendir (TEMPDIR, "$main_dir/$domain/$dirsub/!media/grf/temp");
+			my @files = grep {
+											-f "$main_dir/$domain/$dirsub/!media/grf/temp/$_" &&
+											-M "$main_dir/$domain/$dirsub/!media/grf/temp/$_" > 0.0035 } readdir(TEMPDIR);
+			# parameter -M udava casovy rozdiel medzi spustenim skriptu a zmenou suboru v dnoch
+			# 0.0035 je v prepocte na jeden den 5 minut - 1 den ma 1440 minut, to je 288 5-minutoviek
+			# cize 1 5-minutovka je 0.0035 z celeho dna
+			foreach my $file ( @files )
+			{ print "$main_dir/$domain/$dirsub/!media/grf/temp/$file\n";
+				`rm $main_dir/$domain/$dirsub/!media/grf/temp/$file`;
+			}
+			closedir TEMPDIR;
+		}
+		closedir TMPDIR;
+
+		if ( -d "$main_dir/$domain/!media/grf/temp" )
+		{ print "$main_dir/$domain/!media/grf/temp\n";
+
+			opendir (TEMPDIR, "$main_dir/$domain/!media/grf/temp");
+			my @files = grep {
+											-f "$main_dir/$domain/!media/grf/temp/$_" &&
+											-M "$main_dir/$domain/!media/grf/temp/$_" > 0.0035 } readdir(TEMPDIR);
+			# parameter -M udava casovy rozdiel medzi spustenim skriptu a zmenou suboru v dnoch
+			# 0.0035 je v prepocte na jeden den 5 minut - 1 den ma 1440 minut, to je 288 5-minutoviek
+			# cize 1 5-minutovka je 0.0035 z celeho dna
+			foreach my $file ( @files )
+			{ print "$main_dir/$domain/!media/grf/temp/$file\n";
+				`rm $main_dir/$domain/!media/grf/temp/$file`;
+			}
+			closedir TEMPDIR;
+		}
+	}
+	
+	closedir DIR;
+
+	return 1;
+}
+
+1;
+

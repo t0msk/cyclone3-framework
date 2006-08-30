@@ -1,0 +1,137 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+$authors="fordinal\@webcom.sk;nemsak\@webcom.sk";
+use App::1B0;
+use strict;
+
+=head1 NAME
+message_delete_m1
+
+=head1 HEAD_VERSION_BUILD
+1.20060217
+
+=head1 DESCRIPTION
+discussion message deletion
+=cut
+
+sub execute
+{
+	my %env=@_;
+	if (not $env{db_ID})
+	{
+		$tom::ERR="no ID specified! finishing.";
+		return undef;
+	}
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	if($env{xt_xlng})
+	{
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
+	$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+	$env{db_820}=$TOM::DB_name unless $env{db_820};
+	
+	main::_log("
+		SELECT
+			*
+		FROM
+			$env{db_820}.a820_msgs
+		WHERE
+			ID='$env{db_ID}'
+			AND active NOT LIKE 'D'
+		LIMIT 1
+	");
+	
+	my $db=$main::DB{main}->Query("
+		SELECT
+			*
+		FROM
+			$env{db_820}.a820_msgs
+		WHERE
+			ID='$env{db_ID}'
+			AND active NOT LIKE 'D'
+		LIMIT 1
+	");
+	if(my %db_line=$db->fetchhash())
+	{
+		if($env{action} ne 'execute')
+		{
+			if (($env{msg_cut})&&(length($db_line{msg})>$env{msg_cut}))
+			{$db_line{msg}=substr($db_line{msg}, 0, $env{msg_cut});$db_line{msg}=~s|(.*) .*?$|$1&hellip;|;}
+	
+			# cleaning vulgarisms
+			Secure::vulgarisms::convert($env{lng},$db_line{msg});
+			Secure::vulgarisms::convert($env{lng},$db_line{title});
+	
+			main::_log("inserttime: ".$db_line{inserttime});
+			if ($env{datetime_allow})
+			{
+				my %env0=Utils::datetime::ctodatetime($db_line{inserttime},format=>1);
+	
+				$XSGN{TMP}=~s|<%day%>|$env0{mday}|g;
+				$XSGN{TMP}=~s|<%month%>|$env0{mom}|g;
+				$XSGN{TMP}=~s|<%year%>|$env0{year}|g;
+				$XSGN{TMP}=~s|<%hour%>|$env0{hour}|g;
+				$XSGN{TMP}=~s|<%minute%>|$env0{min}|g;
+				$XSGN{TMP}=~s|<%second%>|$env0{sec}|g;
+	
+				$XSGN{TMP}=~s|<%day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+				$XSGN{TMP}=~s|<%day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+				$XSGN{TMP}=~s|<%month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+				$XSGN{TMP}=~s|<%month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+			}
+			
+			foreach(keys %db_line)
+			{
+				$XSGN{TMP}=~s|<%$_%>|$db_line{$_}|g;
+			}
+		}
+		elsif($env{action} eq 'execute')
+		{
+			main::_log("
+				UPDATE
+					$env{db_820}.a820_msgs
+				SET
+					active='D'
+				WHERE
+					ID='$env{db_ID}'
+					AND active NOT LIKE 'D'
+				LIMIT 1
+			");
+			my $db1=$main::DB{main}->Query("
+				UPDATE
+					$env{db_820}.a820_msgs
+				SET
+					active='D'
+				WHERE
+					ID='$env{db_ID}'
+					AND active NOT LIKE 'D'
+				LIMIT 1
+			");
+			if($db1)
+			{
+				main::_log("success: message set to deleted");
+				$XSGN{TMP}=$XSGN{TMP_success};
+			}
+			else
+			{
+				main::_log("failure: could not set message deleted");
+				$XSGN{TMP}=$XSGN{TMP_failure};
+			}
+		}
+	}
+	else
+	{
+		main::_log("no data available");
+		$XSGN{TMP}=$XSGN{TMP_no_data};
+	}
+	return 1;
+}
+
+1;

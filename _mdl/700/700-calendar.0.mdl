@@ -1,0 +1,191 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use Utils::datetime;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+
+ # $env{yday}
+ # $env{year}
+ # $env{week}
+ # $env{mon}
+
+ #$XSGN{TMP}.=" !$env{v_year}!$env{v_mom}! ";return 1;
+
+ if ((!$env{v_year})||(!$env{v_mom}))
+ {
+  $env{v_year}=$tom::Tyear;
+  $env{v_mom}=$tom::Tmom;
+  $env{s_mday}=$tom::Tmday;
+#	$tom::Tsec,
+#	$tom::Tmin,
+#	$tom::Thour,
+#	$tom::Tmday,
+#	$tom::Tmom,
+#	$tom::Tyear,
+#	$tom::Twday,
+#	$tom::Tyday,
+#	$tom::Tisdst
+ }
+
+ if ((!$env{s_mday})&&(!$env{s_yweek})&&(!$env{s_wday}))
+ {
+  $env{s_mday}=1;
+ }
+
+ #$XSGN{TMP}.="!!!! $env{v_year}-$env{v_mom}<BR>";
+
+ #$env{v_mom}++;
+
+ # KOLKO MAM DNI V MESIACI?
+
+ #$env{v_mom}--;
+
+ my $starttime=Time::Local::timelocal(0,0,12,1,($env{v_mom}-1),($env{v_year}-1900),undef,undef,undef);
+ (undef,undef,undef,undef,undef,undef,$env{v_wday},undef,undef)=localtime($starttime);
+ $env{v_wday}=7 unless $env{v_wday};
+
+ $XSGN{TMP}=~s|<%MOM_NAME%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env{v_mom}-1]|g;
+
+ # NEXT
+ {
+  my @ref=($env{v_year},$env{v_mom});
+  $ref[1]++;
+  if ($ref[1] > 12) {$ref[0]++;$ref[1]=1};
+  $XSGN{TMP}=~s|<%mom_next_year%>|$ref[0]|g;
+  $XSGN{TMP}=~s|<%mom_next_mom%>|$ref[1]|g;
+ };
+
+ # PREV
+ {
+  my @ref=($env{v_year},$env{v_mom});
+  $ref[1]--;
+  if ($ref[1] < 1) {$ref[0]--;$ref[1]=12};
+  $XSGN{TMP}=~s|<%mom_prev_year%>|$ref[0]|g;
+  $XSGN{TMP}=~s|<%mom_prev_mom%>|$ref[1]|g;
+ };
+
+
+
+ #$XSGN{TMP}.="tento mesiac ($Utils::datetime::MONTHS_L{$env{lng}}[$env{v_mom}-1]-$env{v_year}) zacina dnom $env{v_wday} $Utils::datetime::DAYS_L{$env{lng}}[$env{v_wday}]<BR>";
+
+ for (27..32)
+ {
+  my (undef,undef,undef,undef,$Rmonth,$Ryear,$Rwday,$Ryday,undef)=localtime($starttime+(86400*$_));
+  if ($Rmonth == ($env{v_mom}-1))
+  {
+   $env{v_mdays}=$_+1;
+   $env{v2_wday}=$Rwday;
+  }
+ }
+ $env{v2_wday}=7 unless $env{v2_wday};
+
+ #$XSGN{TMP}.="tento mesiac ma $env{v_mdays} dni, konci dnom $env{v2_wday} $Utils::datetime::DAYS_L{$env{lng}}[$env{v2_wday}]<BR>";
+
+=head1
+ if ($env{v_wday}>0)
+ {
+  $XSGN{TMP}=~s|<#WEEK#>|$XSGN{WEEK}<#WEEK#>|;
+  for (1..$env{v_wday}-1)
+  {
+   $XSGN{NULL}=$XSGN{DAY};
+   $XSGN{NULL}=~s|<%ID%>|$_|g;
+   $XSGN{TMP}=~s|<#DAY#>|$XSGN{NULL}<#DAY#>|g;
+  }
+ }
+=cut
+
+ #$XSGN{TMP}.="dnes $env{v_wday}<BR>";
+
+ if ($env{v_wday}>1)
+ {
+  $XSGN{TMP}=~s|<#WEEK#>|$XSGN{WEEK}<#WEEK#>|;
+
+  for (1..$env{v_wday}-1)
+  {
+   $XSGN{NULL}=$XSGN{'DAY-null'};
+   $XSGN{NULL}=~s|<%ID%>|$_|g;
+   $XSGN{TMP}=~s|<#DAY#>|$XSGN{NULL}<#DAY#>|g;
+  }
+ }
+
+
+
+ my $wday=$env{v_wday};
+ for (1..$env{v_mdays})
+ {
+
+  if ($wday==1)
+  {
+   $XSGN{TMP}=~s|<#DAY#>||g;
+   $XSGN{TMP}=~s|<#WEEK#>|$XSGN{WEEK}<#WEEK#>|;
+  }
+
+
+  $XSGN{NULL}=$XSGN{DAY};
+  $XSGN{NULL}=$XSGN{'DAY-selected'} if $_ == $env{s_mday};
+  $XSGN{NULL}=~s|<%ID%>|$_|g;
+  $XSGN{TMP}=~s|<#DAY#>|$XSGN{NULL}<#DAY#>|g;
+
+
+
+  $wday++;
+  $wday=1 if $wday==8;
+ }
+
+ #$XSGN{TMP}.="$wday<BR>";
+
+#=head1
+ if ($wday!=1)
+ {
+  for ($wday..7)
+  {
+   $XSGN{TMP}=~s|<#DAY#>|$XSGN{'DAY-null'}<#DAY#>|g;
+  }
+ }
+#=cut
+
+ # 0 - Nedela
+ # 1 - Pondelok
+ # 2 - Utorok
+ # 3 - Streda
+ # 4 - Stvrtok
+ # 5 - Piatok
+ # 6 - Sobota
+ # 7 - Nedela
+
+=head1
+ my (undef,undef,undef,undef,undef,undef,$wday_start,undef,undef)=localtime($starttime);
+ my ($days,$dayw);
+ my ($Rmonth,$Ryear,$Rwday,$Ryday);
+ for (27..32)
+ {
+  (undef,undef,undef,undef,$Rmonth,$Ryear,$Rwday,$Ryday,undef)=localtime($starttime+(86400*$_));
+  if (($Rmonth ne ($tom::Tmom-1))&&(!$days)){$days=$_;$dayw=$Rwday;}
+ }
+=cut
+
+ $XSGN{TMP}=~s|<%v_year%>|$env{v_year}|g;
+ $XSGN{TMP}=~s|<%v_mom%>|$env{v_mom}|g;
+
+
+ return 1}
+1;
+
+
+
+
+
+
+
+
+
+

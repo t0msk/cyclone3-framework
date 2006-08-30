@@ -1,0 +1,285 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use Secure::vulgarisms;
+$authors="fordinal\@webcom.sk;nemsak\@webcom.sk";
+use strict;
+
+=head1 NAME
+messages_tlist_m1
+
+=head1 HEAD_VERSION_BUILD
+1.20050301
+
+=head1 DESCRIPTION
+discussion posts listing
+=cut
+
+sub execute
+{
+	my %env=@_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+
+	if (not $env{db_ID})
+	{
+		if($XSGN{TMP_NULL})
+		{$XSGN{TMP}=$XSGN{TMP_NULL}; return 1;}
+		else
+		{
+			main::_log("no ID specified! finishing.");
+			return undef;
+		}
+	}
+
+	if($env{xt_xlng})
+	{
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	my $isAdmin=0;
+
+	# TODO: deb00t : implementacia sw_ (switch) do inych app modulov
+	my @administrators=split(";", $env{sw_administrators});
+
+	foreach(@administrators)
+	{
+		if($_ eq $main::USRM{login})
+		{
+			main::_log("you are in administrators group");
+			$isAdmin=1;
+			last;
+		}
+	}
+
+	$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+	$env{db_820}=$TOM::DB_name unless $env{db_820};
+
+	$env{db_limit}=10 unless $env{db_limit};
+
+	$env{db_active}="1" unless (exists $env{db_active});
+	$env{db_active}="Y" if ($env{db_active} eq "1");
+	$env{db_active}="N" if ($env{db_active} eq "0");
+
+	$env{db_type}="F" unless (exists $env{db_type});
+
+	$env{db_where}.=" AND a820.ID='$env{db_ID}'" if (exists $env{db_ID});
+
+	if((exists $env{db_where}) && (!$env{db_where}=~/^ AND /))
+	{ $env{db_where}="AND ".$env{db_where}; }
+
+	main::_log("
+		SELECT *
+		FROM $env{db_820}.a820
+		LEFT JOIN $env{db_820}.a820_attrs
+			ON (a820.IDattrs AND a820.IDattrs=a820_attrs.IDattrs)
+		WHERE
+			a820.type='$env{db_type}'
+			AND (a820.lng='$env{lng}' OR a820.lng='')
+			AND a820.active LIKE '$env{db_active}'
+			$env{db_where}
+			AND a820.active NOT LIKE 'D'
+		LIMIT 1
+	");
+
+	# fetch forum info
+	my $db=$main::DB{main}->Query("
+			SELECT *
+			FROM $env{db_820}.a820
+			LEFT JOIN $env{db_820}.a820_attrs
+				ON (a820.IDattrs AND a820.IDattrs=a820_attrs.IDattrs)
+			WHERE
+				a820.type='$env{db_type}'
+				AND (a820.lng='$env{lng}' OR a820.lng='')
+				AND a820.active LIKE '$env{db_active}'
+				$env{db_where}
+				AND a820.active NOT LIKE 'D'
+			LIMIT 1
+	");
+	if (my %db_line=$db->fetchhash)
+	{
+=head1
+		# toto tu asi netreba ale pre istotu to tu este nechavam, keby nieco
+		my $db1=$main::DB{main}->Query("
+			SELECT
+				COUNT(ID)
+			FROM $env{db_820}.a820_msgs
+			WHERE
+				IDforum='$env{db_ID}'
+		");
+		$db_line{messages_all}=$db1->NumRows();
+=cut
+		$env{db_order_by}="inserttime DESC" unless $env{db_order_by};
+
+		$env{messages_db_where}.="AND ID='$env{message_db_ID}' " if (exists $env{message_db_ID});
+
+		$env{messages_db_active}="1" unless (exists $env{messages_db_active});
+		$env{messages_db_active}="Y" if ($env{messages_db_active} eq "1");
+		$env{messages_db_active}="N" if ($env{messages_db_active} eq "0");
+		
+		$env{messages_db_active}="%" if ($isAdmin);
+
+		main::_log("
+			SELECT *
+			FROM $env{db_820}.a820_msgs
+			WHERE
+				IDforum='$db_line{ID}'
+				AND active LIKE '$env{messages_db_active}'
+            $env{messages_db_where}
+            AND active NOT LIKE 'D'
+			ORDER BY
+            $env{db_order_by}
+			LIMIT
+            $env{db_limit}
+      ");
+
+		my $db1=$main::DB{main}->Query("
+			SELECT *
+			FROM $env{db_820}.a820_msgs
+			WHERE
+				IDforum='$db_line{ID}'
+				AND active LIKE '$env{messages_db_active}'
+            $env{messages_db_where}
+            AND active NOT LIKE 'D'
+			ORDER BY
+            $env{db_order_by}
+			LIMIT
+            $env{db_limit}
+		");
+
+		$db_line{messages_fetched}=$db1->NumRows();
+      $db_line{messages_fetched}=0 unless $db_line{messages_fetched};
+
+		if($db_line{messages_fetched})
+		{
+			my $line_counter;
+			
+			while (my %db1_line=$db1->fetchhash)
+			{
+				$XSGN{NULL}=undef;
+				$line_counter++;
+				
+				if ($db1_line{authorized} eq "Y")
+				{
+					if(exists $XSGN{'LINE_'.$env{db_page}.'_'.$line_counter})
+					{
+						main::_log("adding special xsgn - LINE_".$env{db_page}."_".$line_counter);
+						$XSGN{NULL}=$XSGN{'LINE_'.$env{db_page}.'_'.$line_counter};
+					}
+					elsif(exists $XSGN{'LINE_'.$line_counter})
+					{
+						main::_log("adding special xsgn - LINE_".$line_counter);
+						$XSGN{NULL}=$XSGN{'LINE_'.$line_counter};
+					}
+					elsif ((not $line_counter % 2) && (exists $XSGN{LINE_odd})) #is this an odd line?
+					{
+						main::_log("adding special xsgn - LINE_odd");
+						$XSGN{NULL}=$XSGN{LINE_odd};
+					}
+					else
+					{
+						$XSGN{NULL}=$XSGN{LINE};
+					}
+				}
+				else
+				{
+					if(exists $XSGN{'LINE_ANONYMOUS_'.$env{db_page}.'_'.$line_counter})
+					{
+						main::_log("adding special xsgn - LINE_ANONYMOUS_".$env{db_page}."_".$line_counter);
+						$XSGN{NULL}=$XSGN{'LINE_ANONYMOUS_'.$env{db_page}.'_'.$line_counter};
+					}
+					elsif(exists $XSGN{'LINE_ANONYMOUS_'.$line_counter})
+					{
+						main::_log("adding special xsgn - LINE_ANONYMOUS_".$line_counter);
+						$XSGN{NULL}=$XSGN{'LINE_ANONYMOUS_'.$line_counter};
+					}
+					elsif ((not $line_counter % 2) && (exists $XSGN{LINE_ANONYMOUS_odd})) #is this an odd line?
+					{
+						main::_log("adding special xsgn - LINE_ANONYMOUS_odd");
+						$XSGN{NULL}=$XSGN{LINE_ANONYMOUS_odd};
+					}
+					else
+					{
+						$XSGN{NULL}=$XSGN{LINE_ANONYMOUS};
+					}
+				}
+				
+				#oldway
+				#$XSGN{NULL}=$XSGN{LINE};
+				#$XSGN{NULL}=$XSGN{LINE_ANONYMOUS} if ($db1_line{authorized} ne "Y");
+
+				if (($env{msg_cut})&&(length($db1_line{msg})>$env{msg_cut}))
+				{$db1_line{msg}=substr($db1_line{msg}, 0, $env{msg_cut});$db1_line{msg}=~s|(.*) .*?$|$1&hellip;|;}
+
+				# cleaning vulgarisms
+				Secure::vulgarisms::convert($env{lng},$db1_line{msg});
+				Secure::vulgarisms::convert($env{lng},$db1_line{title});
+
+				main::_log("inserttime: ".$db1_line{inserttime});
+				if ($env{datetime_allow})
+				{
+					my %env0=Utils::datetime::ctodatetime($db1_line{inserttime},format=>1);
+
+					$XSGN{NULL}=~s|<%day%>|$env0{mday}|g;
+					$XSGN{NULL}=~s|<%month%>|$env0{mom}|g;
+					$XSGN{NULL}=~s|<%year%>|$env0{year}|g;
+					$XSGN{NULL}=~s|<%hour%>|$env0{hour}|g;
+					$XSGN{NULL}=~s|<%minute%>|$env0{min}|g;
+					$XSGN{NULL}=~s|<%second%>|$env0{sec}|g;
+	
+					$XSGN{NULL}=~s|<%day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+					$XSGN{NULL}=~s|<%day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+					$XSGN{NULL}=~s|<%month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+					$XSGN{NULL}=~s|<%month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+				}
+				
+				foreach(keys %db1_line)
+				{
+					$XSGN{NULL}=~s|<%$_%>|$db1_line{$_}|g;
+				}
+				$XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}|;
+				#$XSGN{TMP}.="<BR>$env1{from_IDhash},$env1{from_name},$env1{title}";
+				#$env1{ID}=sprintf ('%011d', $env1{ID});
+				#$env1{IDre}=sprintf ('%011d', $env1{IDre});
+				#$struct{$env1{ID}}=$env1{IDre};
+				#$struct_base{$env1{ID}}=	[
+				#		$env1{IDre},
+				#		$env1{from_name},
+				#		$env1{title}
+				#			];
+			}
+		}
+		else
+		{
+			$XSGN{TMP}=$XSGN{TMP_no_data} if(exists $XSGN{TMP_no_data});
+			$XSGN{TMP}=$XSGN{TMP_NO_DATA} if(exists $XSGN{TMP_NO_DATA});
+		}
+
+		foreach(keys %db_line)
+		{
+			$XSGN{TMP}=~s|<%$_%>|$db_line{$_}|g;
+		}
+		#$XSGN{TMP}=~s|<%ID%>|$db_line{ID}|g;
+		#$XSGN{TMP}=~s|<%name%>|$db_line{name}|g;
+		#$XSGN{TMP}=~s|<%messages_fetched%>|$db_line{messages_fetched}|g;
+		#$XSGN{TMP}=~s|<%messages%>|$db_line{messages}|g;
+		main::_log("messages: $db_line{messages} fetched: $db_line{messages_fetched}");
+	}
+	else
+	{
+		$tom::ERR="no data available! query description in log.";
+
+		if($env{return_null} || ($XSGN{TMP_NO_DATA}))
+		{ $XSGN{TMP}=$XSGN{TMP_NO_DATA}; }
+		else
+		{ return undef; }
+	}
+
+	return 1
+}
+
+1;

@@ -1,0 +1,95 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+ #Tomahawk::XLNGtoXSGN(); # insert XLNG do XSGN
+ $env{page}=$main::FORM{a300tlistonline_page} unless $env{page};
+ $env{max}=2 unless $env{max};
+ $env{from}=$env{page}*$env{max};
+ $env{to}=$env{max}+1;
+
+ $env{URL}="?|?" unless $env{URL};
+
+ my $db0=$main::DBH->Query("
+	SELECT	a300_online.login,a300_online.reqtime,profile
+	FROM 	$TOM::DB_name_USRM.a300_online
+	LEFT JOIN $TOM::DB_name_USRM.a300_users
+	     ON 	(a300_users.IDhash=a300_online.IDhash)
+	WHERE 	logged='Y'
+	ORDER BY a300_online.login
+	LIMIT $env{from},$env{to}");
+ $env{to}=$db0->NumRows;
+ while ((my %db0_line=$db0->fetchhash)&&($env{views}<$env{max}))
+ {
+  $env{views}++;
+  #$XSGN{TMP}.="$db0_line{login}<BR>";
+  $XSGN{NULL}=$XSGN{LINE};
+
+  $XSGN{NULL}=~s|<%LOGIN%>|$db0_line{login}|g;
+
+  my %env0=Utils::datetime::ctodatetime($db0_line{reqtime},format=>1); # zkonvertujem cas do hashu a zformatujem
+  $XSGN{NULL}=~s|<%REQTIME%>|$env0{mday}.$env0{mom}.$env0{year} $env0{hour}:$env0{min}:$env0{sec}|g;
+
+  my $null=int(($tom::time_current-$db0_line{reqtime})/60);
+  $XSGN{NULL}=~s|<%DELAY%>|$null|g;
+
+  while ($db0_line{profile}=~s|<VAR id="(.*?)">(.*?)</VAR>||s)
+  {
+   my $var=$1;my $null=$2;$XSGN{NULL}=~s|<%p_$var%>|$null|;
+   if ($var eq "birthday")
+   {
+    my @ref=split('-',$null);
+    my $null=$tom::Tyear-$ref[0];
+    if ($tom::Tmom<$ref[1]){$null--};
+    if (($tom::Tmom == $ref[1])&&($tom::Tmday<$ref[2])){$null--};
+    $XSGN{NULL}=~s|<%P_YEARS%>|$null|;
+   }
+  }
+
+  $XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}<#LINE#>|;
+ }
+
+if ($env{views}<$env{to})
+{
+   my $nextpage=$env{page}+1;
+	$XSGN{NULL}=$XSGN{NEXT};
+	$XSGN{NULL}=~s|<%url%>|a300tlistonline_page=$nextpage|g;
+ 	$XSGN{TMP}=~s|<#NEXT#>|$XSGN{NULL}|;
+}
+
+if ($env{page}>0)
+{
+   my $prevpage=$env{page}-1;
+	$XSGN{NULL}=$XSGN{PREV};
+	$XSGN{NULL}=~s|<%url%>|a300tlistonline_page=$prevpage|g;
+ 	$XSGN{TMP}=~s|<#PREV#>|$XSGN{NULL}|;
+ }
+
+$XSGN{TMP}=~s|<%URL%>|$env{URL}|g;
+
+
+ return 1}
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+

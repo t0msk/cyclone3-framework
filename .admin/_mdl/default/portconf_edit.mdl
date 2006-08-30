@@ -1,0 +1,63 @@
+sub BaseModul
+{
+my $id=$form{variable};
+if ($form{set})
+{
+# $HTML_HEADER{BODY}{extract}="yes";
+ $dbh->Query("UPDATE _config SET type='$form{types}',value='$form{values}',about='$form{about}' WHERE variable='$id' LIMIT 1");
+ return "\n<script>\nparent.document.frames['frm_base'].location.reload();\n</script>";
+}
+else
+{
+ $HTML_HEADER{BODY}{extract}="yes";
+
+ $db_micro = $dbh->Query("SELECT variable,value,type,about FROM _config WHERE variable='$id' LIMIT 1");
+ if (@db_micro_line=$db_micro->FetchRow())
+ {
+  my $mdl_temp=<<"HEADER";
+<table width=100% cellspacing=0 cellpadding=0 border=0><tr><td drag_here>
+<form name="$form{type}\_$id"  
+action="core.pl?type=$form{type}&variable=$id&set=yes" target="frm_micro" method="POST">
+</td><td width=100%>
+<input type=text name="types" value="$db_micro_line[2]" class=input0 maxlength=5><BR>
+<TEXTAREA
+	name="values"
+	class=input0
+	style="width:300px;height:150px;">$db_micro_line[1]</TEXTAREA><BR>
+<input type=text name="about" value="$db_micro_line[3]" class=input0 style="width:300px;" maxlength=200><BR>
+HEADER
+
+ $mdl_temp.=<<"HEADER";
+ 
+<table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit drag_here value="Save!" class=btn0 onclick="box_erase2();"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table>
+
+</td><td></form></td></tr></table>
+HEADER
+ 
+ my $box=&box_create2("Edit value of $db_micro_line[0]",
+	'color_title0'	=>	"blue",
+	'color_base0'	=>	"#8FADF9",
+	'width'			=>	150,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp);
+
+ return $box;
+ }
+ return undef;
+}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

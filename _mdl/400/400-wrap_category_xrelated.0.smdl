@@ -1,0 +1,92 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ #return 1;
+ #$main::H__name="clanok";
+ #main::_log("name je $main::H__name asdfasdfasd");
+
+ #Tomahawk::debug::mdllog(0,"ideme na tooo! :)");
+
+ my %env=@_;
+
+ #asdfasdfasdf
+	$env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+	$env{db_400}=$TOM::DB_name unless $env{db_400};
+
+	my $db0=$main::DB{main}->Query("
+		SELECT a400.xrelated as xrelated
+		FROM $env{db_400}.a400_category AS a400
+		WHERE
+				a400.ID='$env{IDcategory}' AND
+				(a400.lng='$env{lng}' OR a400.lng='') AND
+				a400.active='Y'
+		LIMIT 1");
+ 	if (my %db0_line=$db0->fetchhash())
+ 	{
+		main::_log("IDcategory: $env{IDcategory}");
+
+		 while ($db0_line{xrelated}=~s|<VAR id="(.*?)" value="(.*?)" />||s)
+ 		{
+			main::_log("related $1 $2");
+
+			my $var=$1;
+			my $null=$2;
+			if ($var eq "a500_cat")
+			{
+
+				&Tomahawk::module(
+					-type		=>	"mdl",
+					-category	=>	"500",
+					-name		=>	"flist_galeries",
+					-xsgn		=>	$env{'500_xsgn'},
+					-xsgn_global	=>	$env{'500_xsgn_global'},
+					-global		=>	1,
+					-TMP			=>	$env{'500_TMP'},
+						photo_orderby=>"rand()",
+						IDcategory	=>$2,
+						max	=>1,
+						max2	=>1,
+						format_500=>"f",
+						);
+
+			}
+
+		}
+
+
+	}
+
+  # SAME CATEGORY CLANKY
+
+=head1
+  Tomahawk::module(
+	-type		=>	"mdl",
+	-category		=>	"400",
+	-name		=>	"tlist",
+	-xsgn		=>	$env{xsgn_same_category},
+	-xsgn_global	=>	$env{xsgn_global},
+	-global		=>	1,
+	-TMP			=>	$env{TMP_same_category},
+	-cache_id		=>	"in_category",
+	-cache_master	=>	$env{cache_master},
+	-cache_id_sub	=>	$article{_a400_IDcategory},
+	db_400		=>	$env{db_400},
+	IDcategory	=>	$article{_a400_IDcategory},
+	allow_subs		=>	1
+	) if (exists $env{TMP_same_category});
+	as;ldfjasldfjasl;fdjasl;dfjals;fdjas;lfdjas;dlfjasf
+	asfl;jasfjasl;dfjasl;dfjas;fdljasdfj;lasdfjas;lfdjasdfa
+	sdfjasd;flajsfl;ajsf;lasjfl;asdfjl;asfjas;ldfj;slaf
+=cut
+
+ return 1;
+}
+1;

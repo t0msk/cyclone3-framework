@@ -1,0 +1,30 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+sub execute
+{
+	my %env=@_;
+
+	$env{rel} = "stylesheet" unless $env{rel};
+	$env{media} = "screen,tv,projection" unless $env{media};
+
+
+	$main::H->add_DOc_css_link(
+		'href'		=> $env{href},
+		'rel'		=> $env{rel},
+		'type'		=> "text/css",
+		'media'		=> "$env{media}",
+		'title'		=> "$env{title}"
+ );
+
+
+	return 1;
+}
+1;
+
+

@@ -1,0 +1,18 @@
+# OPEN ONLY AS UTF-8!!!
+<XML_LANGUAGE_DEFINITION lngs="sk">
+
+ <VALUE lng="sk" id="unlogged">
+	<strong>Si úspešne odhlásený!</strong><br /><br />
+	Táto stránka sa automaticky presmeruje v priebehu jednej sekundy.<br />
+	Pokiaľ tvoj prehliadač nepodporuje automatické presmerovanie, prosím klikni na túto linku:
+ </VALUE>
+
+ <VALUE lng="sk" id="err">Neúspešné odhlásenie!</VALUE>
+
+ <VALUE lng="sk" id="errnotlogged">Niesi prihlásený!</VALUE>
+
+ <VALUE lng="sk" id="back">Späť</VALUE>
+
+ <VALUE lng="sk" id="next">Pokračovať na www.markiza.sk</VALUE>
+
+</XML_LANGUAGE_DEFINITION>

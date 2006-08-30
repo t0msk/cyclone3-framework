@@ -1,0 +1,129 @@
+sub BaseModul
+{
+ my $id=$form{id};
+
+ if ($form{set}eq"yes")
+ {
+  my $hajuz;
+  if ($form{IDcategory})
+  {
+   $dbh->Query("UPDATE markiza_sk.a500 SET IDcategory='$form{IDcategory}' WHERE IDcategory='$id'");
+  }
+  else
+  {
+   #return "SELECT ID,hash,format FROM markiza_sk.a500 WHERE IDcategory LIKE '$id%'";
+
+   my $db_micro = $dbh->Query("SELECT ID,hash,format FROM markiza_sk.a500 WHERE IDcategory LIKE '$id%'");
+
+   while (my %db_micro_line=$db_micro->FetchHash())
+   {
+    $nullid=$db_micro_line{ID};
+
+    $nullid=sprintf('%07d',$db_micro_line{ID});
+    $nullid=~/^(....)/i;
+    my $var=$1;
+
+    if (-e "/var/www/TOM/!markiza.sk/!media/500/$var/$db_micro_line{hash}-$db_micro_line{format}.jpg")
+    {
+     #$hajus.="<br>/var/www/TOM/!markiza.sk/!media/500/$var/$db_micro_line{hash}-$db_micro_line{format}.jpg";
+     system ("rm /var/www/TOM/!markiza.sk/!media/500/$var/$db_micro_line{hash}-$db_micro_line{format}.jpg");}
+
+     #$hajus.="<br>DELETE FROM markiza_sk.a500 WHERE ID='$db_micro_line{ID}' AND hash='$db_micro_line{hash}' AND format='$db_micro_line{format}' LIMIT 1";
+     $dbh->Query("DELETE FROM markiza_sk.a500 WHERE ID='$db_micro_line{ID}' AND hash='$db_micro_line{hash}' AND format='$db_micro_line{format}' LIMIT 1");
+   }
+  }
+  #return $hajus;
+  $dbh->Query("DELETE FROM markiza_sk.a500_category WHERE ID='$id' LIMIT 1");
+  return "\n<script>\nparent.document.frames['frm_base'].location.reload();\n</script>";
+ }
+ else
+ {
+  $HTML_HEADER{BODY}{extract}="yes";
+  my $mdl_temp;
+  my $cathegories;
+  my $db_micro = $dbh->Query("SELECT ID,name,active FROM markiza_sk.a500_category WHERE ID LIKE '$id%' ORDER BY ID");
+  my $lines=$db_micro->NumRows();
+  if ($lines==1)
+  {
+   if (my @db_micro_line=$db_micro->FetchRow())
+   {
+    $mdl_temp=<<"HEADER";
+<table width=100% cellspacing=0 cellpadding=0 border=0><tr><td drag_here>
+<form name="$form{type}\_$id"
+action="core.pl?type=$form{type}&id=$id&set=yes" target="frm_micro" method="POST">
+</td><td width=100% style="FONT:bold 10px Verdana;COLOR:#F0F0F0;">
+&nbsp;Chystate sa odstranit
+<input type=text name="tinyname" value="$db_micro_line[1]" class=input0 maxlength=100 style="width:200px;"><BR>
+HEADER
+
+    my $db_micro1 = $dbh->Query("SELECT ID FROM markiza_sk.a500 WHERE IDcategory='$id' LIMIT 1");
+    my $lines=$db_micro1->NumRows();
+	if ($lines)
+	{
+	 $mdl_temp.=<<"HEADER";
+	 &nbsp;Kategoria obsahuje obrazky<BR>
+HEADER
+
+
+
+ my $db_micro2 = $dbh->Query("SELECT ID,name FROM markiza_sk.a500_category WHERE ID<>'$id' ORDER BY ID");
+ while (@db_micro2_line=$db_micro2->FetchRow())
+ {
+  my $from;
+  for (my $i=1;$i<length($db_micro2_line[0]);$i++){$from.="&nbsp;&nbsp;";}
+	$mdl_micro.=&select_add('value'=>$db_micro2_line[1],'html'=>$from.$db_micro2_line[1],'plus'=>"this.parentElement.parentElement.all['VALUE2'].value='$db_micro2_line[0]';");
+ }
+ $mdl_temp.="<DIV style=\"COLOR:black;\">".&select_create(
+ 	'name'		=>	"IDcathegory_",
+	'plus'		=>	"<input id=VALUE2 value=\"\" name=IDcategory type=hidden>",
+	'value'		=>	"delete or move to...",
+	'maxlength'	=>	100,
+	'width'		=>	200-12,
+	'select'	=>	$mdl_micro
+ )."</DIV>";
+
+
+
+
+
+
+	}
+
+	$mdl_temp.=<<"HEADER";
+<table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit drag_here value="Execute!" class=btn0 onclick="box_erase2();"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table>	
+</td><td></form></td></tr></table>
+HEADER
+   }
+  }
+  else
+  {
+   $mdl_temp=<<"HEADER";
+   <table width=100% cellspacing=0 cellpadding=3 border=0><tr><td style="FONT:bold 12px Verdana;COLOR:#F0F0F0;">
+   This category contains subcategories, so I am unable to remove it.
+   </td></tr></table>
+HEADER
+  }
+  
+  my $box=&box_create2("Zmazat kategoriu",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	200,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp);
+  return $box;
+ }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

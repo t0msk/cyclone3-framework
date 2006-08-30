@@ -1,0 +1,121 @@
+#!/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+
+ $env{max}=10 unless $env{max};
+
+ $env{IDcategory}=$main::env{a400_IDcategory} unless $env{IDcategory};
+ if ($env{IDcategory_cut}){$env{IDcategory}=substr($env{IDcategory}, 0, $env{IDcategory_cut});}
+
+ if ($env{IDcategory})
+ {
+  if ($env{allow_subs}){$env{sel}="IDcategory LIKE '$env{IDcategory}%' AND"}
+  else{$env{sel}="IDcategory='$env{IDcategory}' AND"}
+ }
+
+ $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+ $env{db_400}=$TOM::DB_name unless $env{db_400};
+
+ $env{old_days}=90 unless $env{old_days};
+
+ $env{URL}="?|?" unless $env{URL};
+ 
+ $env{where}.=" AND" if $env{where};
+
+ #Tomahawk::debug::mdllog(5,"SELECT PLUS $env{sel}");
+
+ my $db0=$main::DBH->Query("
+	SELECT ID,title,subtitle,link,visits_index7day,starttime,IDcategory
+	FROM $env{db_400}.a400
+	LEFT JOIN $env{db_400}.a400_attrs
+		ON (a400.IDattrs AND a400.IDattrs=a400_attrs.IDattrs)
+	WHERE	$env{sel}
+			$env{where}
+		a400.IDattrs
+		AND starttime<$tom::time_current-3600
+		AND starttime>$tom::time_current-(86400*$env{old_days})
+		AND (endtime>$tom::time_current OR endtime=0)
+		AND active='Y'
+		AND (lng='$env{lng}' OR lng='')
+	ORDER BY a400_attrs.visits_index7day DESC, starttime DESC
+	LIMIT $env{max}");
+ while (my %db0_line=$db0->FetchHash())
+ {
+  # TU BY SOM MOZNO MAL ZACAT POCITAT S archivom
+  my $var=$db0_line{ID};
+#=head1 NESKOR!!!
+  if ($db0_line{link})
+  {
+   my $db0=$main::DBH->Query("
+	(SELECT ID,title,subtitle,link,visits_index7day,starttime,IDcategory
+	FROM $env{db_400}.a400
+	LEFT JOIN $env{db_400}.a400_attrs
+		ON (a400.IDattrs AND a400.IDattrs=a400_attrs.IDattrs)
+	WHERE	ID='$var'
+		AND starttime<$tom::time_current
+		AND (endtime>$tom::time_current OR endtime=0)
+		AND active='Y'
+		AND (lng='$env{lng}' OR lng='')
+	LIMIT 1)
+	UNION ALL
+	(SELECT ID,title,subtitle,link,visits_index7day,starttime,IDcategory
+	FROM $env{db_400}.a400_arch
+	LEFT JOIN $env{db_400}.a400_attrs
+		ON (a400.IDattrs AND a400.IDattrs=a400_attrs.IDattrs)
+	WHERE	ID='$var'
+		AND starttime<$tom::time_current
+		AND (endtime>$tom::time_current OR endtime=0)
+		AND active='Y'
+		AND (lng='$env{lng}' OR lng='')
+	LIMIT 1)
+	LIMIT 1");
+   if (%db0_line=$db0->fetchhash()){
+   #Tomahawk::debug::log(9,"link $var=$db0_line{ID}");
+   }
+   else {$tom::ERR="k clanku $var som nenasiel fcnu linku :(";return undef;}
+  }
+#=cut
+
+  $XSGN{NULL}=$XSGN{LINE};
+
+  #Tomahawk::debug::mdllog(5,"$db0_line{title} $db0_line{visits_index7day} ".int(($tom::time_current-$db0_line{starttime})/60/60/24));
+
+
+  $XSGN{NULL}=~s|<%ID%>|$db0_line{ID}|g;
+	$XSGN{NULL}=~s|<%VISITS%>|$db0_line{visits_index7day}|g;
+	#foreach(keys %db0_line)
+	#{main::_log("++++ $_  --- $db0_line{$_}");}
+
+  if (($env{title_cut})&&(length($db0_line{title})>$env{title_cut}))
+  {$db0_line{title}=substr($db0_line{title}, 0, $env{title_cut});$db0_line{title}=~s|(.*) .*?$|$1...|;}
+  my $var=($tom::time_current-$db0_line{starttime})/60/60/24;
+  $XSGN{NULL}=~s|<%TITLE%>|$db0_line{title}|g;
+
+  if (($env{subtitle_cut})&&(length($db0_line{subtitle})>$env{subtitle_cut}))
+  {$db0_line{subtitle}=substr($db0_line{subtitle}, 0, $env{subtitle_cut});$db0_line{subtitle}=~s|(.*) .*?$|$1...|;}
+  $XSGN{NULL}=~s|<%SUBTITLE%>|$db0_line{subtitle}|g;
+
+  # VYTRHNUTIE PEVNYCH LINIEK NA PODPORTALY
+  if ($env{URL_IDcat})
+  {my $var;foreach (sort keys %env)
+  {$_=~/^URL_IDcat_(.*)/ && do {my $null=$1;$var=$env{'URL_IDcat_'.$null} if $db0_line{IDcategory}=~/^$null/;};}
+  $XSGN{NULL}=~s|<%URL%>|$var|g if $var;}
+
+  $XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}<#LINE#>|;
+ }
+
+ $XSGN{TMP}=~s|<%URL%>|$env{URL}|g;
+
+ return 1}
+
+1;

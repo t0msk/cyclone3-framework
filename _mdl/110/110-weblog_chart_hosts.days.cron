@@ -1,0 +1,183 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+#use App::400;
+#use App::400::SQL::a400;
+
+#use SVGraph;
+use SVGraph::2D::lines;
+use SVGraph::2D::columns;
+use TOM::Net::HTTP::UserAgent;
+#use SVGraph::2D::ring;
+
+#use Net::HTTP::LiteAgent;
+
+use Utils::datetime;
+
+use strict;
+
+sub execute
+{
+	alarm(3600);
+	my %env=@_;
+	
+	my $from=$main::time_current-(86400*31*2);
+	my %date=Utils::datetime::ctodatetime($from,format=>1);
+	my $from="$date{year}-$date{mom}-$date{mday}";
+	
+	my %date=Utils::datetime::ctodatetime(time,format=>1);
+	my $to="$date{year}-$date{mom}-$date{mday}";
+	
+	Database::connect::multi('stats') || die "cannot connect all databases";
+	
+	
+	
+	CRON::debug::log(5,"generating from $from");
+	
+	
+	
+	my $graf=SVGraph::2D::columns->new(
+		title		=>	"Generated pages of all domains from $from",
+		type		=>	"stacked",
+		reload	=>	1200,
+		x		=>	1000,
+		y		=>	400,
+		
+		show_legend => 1, # show legend of Columns
+		
+		grid_y_scale_minimum => 0, # zaciname od nuly
+		
+		show_grid_x => 1,
+		show_label_textsize => 10,
+	);
+	
+	my %columns;
+	
+	foreach (sort {$TOM::Net::HTTP::UserAgent::type{$a} cmp $TOM::Net::HTTP::UserAgent::type{$b}} keys %TOM::Net::HTTP::UserAgent::type)
+	{
+		$columns{$TOM::Net::HTTP::UserAgent::type{$_}}=$graf->addColumn(title=>$_);
+	}
+	
+#	$columns{pages_user}=$graf->addColumn(title=>"pages by user");
+#	$columns{pages_robot}=$graf->addColumn(title=>"pages by robot");
+	
+	my $db0=$main::DB{stats}->Query("
+		SELECT
+			SUBSTRING(reqdatetime,1,10) AS datetime,
+			reqtype,
+			COUNT(*) AS requests
+		FROM a110_weblog_rqs
+		WHERE
+			reqdatetime>'$from'
+		GROUP BY SUBSTRING(reqdatetime,1,10),reqtype
+		ORDER BY SUBSTRING(reqdatetime,1,10) ASC,requests DESC,reqtype ASC
+	");
+	
+=head1
+	my $db0=$main::DB{stats}->Query("
+		SELECT
+			SUBSTRING(reqdatetime,1,10) AS reqdatetime,
+			SUM(visits_all-visits) AS pages_robot,
+			SUM(visits) AS pages_user
+		FROM TOM.a110_weblog_day
+		WHERE
+			domain_sub='' AND
+			reqdatetime>'$from'
+		GROUP BY SUBSTRING(reqdatetime,1,10)
+		ORDER BY SUBSTRING(reqdatetime,1,10)
+	");
+=cut
+	
+	#print "reqdatetime>'$from' AND reqdatetime<'$to'";
+	
+	#my %labels;
+	while (my %db0_line=$db0->fetchhash)
+	{
+		print "$db0_line{datetime}\n";
+		
+		$graf->addRowLabel($db0_line{datetime});
+		
+		if (!$columns{$db0_line{reqtype}})
+		{
+			$columns{$db0_line{reqtype}}=$graf->addColumn(title=>"new-".$db0_line{reqtype});
+		}
+		$columns{$db0_line{reqtype}}->addData($db0_line{datetime},$db0_line{requests});
+		
+=head1
+		$db0_line{reqdatetime}=~s| \d\d:\d\d:\d\d$||;
+		
+		$graf->addRowLabel($db0_line{reqdatetime});
+		main::_log(5,"add $db0_line{pages_user}");
+		$columns{pages_user}->addData($db0_line{reqdatetime},$db0_line{pages_user});
+		$db0_line{pages_robot}=0 if $db0_line{pages_robot}<0;
+		main::_log(5,"add $db0_line{pages_robot}");
+		$columns{pages_robot}->addData($db0_line{reqdatetime},$db0_line{pages_robot});
+=cut
+=head1
+		if ($db0_line{reqdatetime}=~/00:00$/)
+		{
+			$graf->addRowMark($db0_line{reqdatetime},
+				front			=>1,
+				show_label		=>1,
+	#			size			=>1.5,
+			);
+		}
+=cut
+=head1
+		if ($db0_line{reqdatetime}=~/01$/)
+		{
+			$graf->addRowMark($db0_line{reqdatetime},
+				show_label		=>1,
+			);
+		}
+=cut
+	}
+
+#=head1
+eval
+{
+	alarm(5);
+	open HND,">$CRON::P/_data/pages_hosts_days.svg" or die "$!";
+	my $out=$graf->prepare();
+	$out=~s|[\s]+</text>|</text>|g;
+	#print $out."\n\n";
+	print HND $out; 
+	alarm(0);
+};
+if ($@)
+{
+	die "error! $@\n";
+}
+#=cut
+CRON::debug::log(6,"generated");
+
+
+
+return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

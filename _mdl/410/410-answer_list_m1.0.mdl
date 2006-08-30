@@ -1,0 +1,391 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+$authors="nemsak\@webcom.sk";
+use strict;
+
+=head1 NAME
+answers_list_m1
+
+=head1 HEAD_VERSION_BUILD
+1.050110
+
+=head1 DESCRIPTION
+listing odpovedi na anketu
+=cut
+
+sub execute
+{
+	my %env=@_;
+
+	my %sql_requests;
+
+	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
+	$env{db_410}=$TOM::DB_name_TOM unless $env{db_410};
+
+	$env{db_domain}=$tom::Hm unless $env{db_domain};
+
+	$env{db_limit}=10 unless $env{db_limit};
+
+	if($env{db_limit}=~/^(.*?),(.*)$/)
+	{
+		$env{db_offset}=$1;
+		$env{db_count}=$2;
+	}
+	else
+	{
+		$env{db_offset}=0;
+		$env{db_count}=$env{db_limit};
+	}
+
+	if($env{db_paging})
+	{
+		if((!exists $env{db_page}) && (exists $main::FORM{a400mlistpage}))
+		{
+			main::_log("you are using a deprecated way of paging! please use the 'db_page' parameter for sending page number, instead of automatic use of main::FORM{a400mlistpage}!");
+			$env{db_page}=$main::FORM{a400mlistpage};
+		}
+		$env{db_page}=0 unless $env{db_page};
+		$env{db_offset}=($env{db_page}*$env{db_count})+$env{db_offset};
+		$env{db_limit}=$env{db_offset}.",".($env{db_count}+1);
+		main::_log("listing with offset $env{db_offset} $env{db_from} requesting $env{db_count} surveys plus 1 more for paging");
+	}
+
+	#parsing IDcategory
+	if($env{db_where})
+	{ $env{db_where}.=" AND " unless ($env{db_where}=~/ AND$/i); }
+
+   if(exists $env{db_active})
+   {
+      if($env{db_active})
+      {
+      	if($env{db_active}=="1"){
+      		$env{db_where}.="a410.active='Y' AND ";
+      	}else{
+      		$env{db_where}.="a410.active LIKE '".$env{db_active}."' AND ";
+      	}
+      }
+      else
+      {
+      	$env{db_where}.="a410.active='N' AND ";
+      }
+   }
+
+	$env{db_order_by}="a410.starttime DESC" unless $env{db_order_by};
+
+	$sql_requests{'main'}="
+		SELECT
+			*
+		FROM $env{db_410}.a410_answer AS a410
+		WHERE
+			IDquestion='$env{db_IDquestion}'
+			AND a410.starttime<=$tom::time_current
+			AND (a410.endtime IS NULL OR a410.endtime>=$tom::time_current)
+			AND (a410.lng='$env{lng}' OR a410.lng='')
+			$env{sel}
+			$env{db_ID}
+		ORDER BY $env{db_order_by}
+		LIMIT $env{db_limit}
+	";
+main::_log('1 '.$sql_requests{'main'});
+	my $db=$main::DB{main}->Query($sql_requests{'main'});
+main::_log('2 '.$db);
+	my $line_counter;
+	my $db_count;
+
+	if ($db)
+	{
+		$db_count=$db->NumRows();
+		main::_log("received $db_count db lines");
+
+		Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+		if (($env{xt_xlng}) || ($env{xlng}))
+		{
+			main::_log("using xlng transformation");
+			if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+			Tomahawk::GetXLNG() || return undef; # retrieve language xml
+			Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+		}
+
+		if ($db_count)
+		{
+			while (my %db_line=$db->fetchhash())
+			{
+				$XSGN{NULL}=undef;
+				$line_counter++;
+				if ($line_counter eq ($env{db_count}+1)) {main::_log("we have an exceeding line - allowing next page");last;}
+
+				if(exists $XSGN{'LINE_'.$env{db_page}.'_'.$line_counter})
+				{
+					main::_log("adding special xsgn - LINE_".$env{db_page}."_".$line_counter);
+					$XSGN{NULL}=$XSGN{'LINE_'.$env{db_page}.'_'.$line_counter};
+				}
+				elsif(exists $XSGN{'LINE_'.$line_counter})
+				{
+					main::_log("adding special xsgn - LINE_".$line_counter);
+					$XSGN{NULL}=$XSGN{'LINE_'.$line_counter};
+				}
+				elsif ((not $line_counter % 2) && (exists $XSGN{LINE_odd})) #is this an odd line?
+				{
+					main::_log("adding special xsgn - LINE_odd");
+					$XSGN{NULL}=$XSGN{LINE_odd};
+				}
+				else
+				{
+					$XSGN{NULL}=$XSGN{LINE};
+				}
+
+				# display date and time
+				if (($env{datetime_allow}) || ($env{datetime}) || ($env{xt_datetime}))
+				{
+					my %env0=Utils::datetime::ctodatetime($db_line{starttime},format=>1);
+
+					$XSGN{NULL}=~s|<%day%>|$env0{mday}|g;
+					$XSGN{NULL}=~s|<%month%>|$env0{mom}|g;
+					$XSGN{NULL}=~s|<%year%>|$env0{year}|g;
+					$XSGN{NULL}=~s|<%hour%>|$env0{hour}|g;
+					$XSGN{NULL}=~s|<%minute%>|$env0{min}|g;
+					$XSGN{NULL}=~s|<%second%>|$env0{sec}|g;
+
+					$XSGN{NULL}=~s|<%day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+					$XSGN{NULL}=~s|<%day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+					$XSGN{NULL}=~s|<%month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}]|g;
+					$XSGN{NULL}=~s|<%month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}]|g;
+				}
+
+				if(
+					(($env{db_select}=~/a410.IDauthor/) || ($env{db_select}=~/a410.\*/)) &&
+					(($XSGN{NULL}=~/<%IDauthor_fullname%>/) || ($XSGN{NULL}=~/<%IDauthor_nickname%>/))
+				)
+				{
+					$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
+					$env{db_120}=$TOM::DB_name unless $env{db_120};
+
+					my $db1=$main::DB{main}->Query("
+						SELECT
+							ID,
+							IDcategory,
+							fullname,
+							nickname
+						FROM $env{db_120}.a120
+						WHERE
+							ID='$db_line{IDauthor}'
+							AND IDtype='0'
+						LIMIT 1
+					");
+					if (my %db1_line=$db1->FetchHash())
+					{
+						$XSGN{NULL}=~s|<%IDauthor%>|$db1_line{ID}|g;
+						$XSGN{NULL}=~s|<%IDauthor_fullname%>|$db1_line{fullname}|g;
+						$XSGN{NULL}=~s|<%IDauthor_nickname%>|$db1_line{nickname}|g;
+					}
+					else
+					{
+						main::_log($db1->errstr());
+					}
+				}
+
+				if(
+					(($env{db_select}=~/a410.IDcategory/) || ($env{db_select}=~/a410.\*/)) &&
+					($XSGN{NULL}=~/<%IDcategory_name%>/)
+				)
+				{
+					my $db1=$main::DB{main}->Query("
+						SELECT
+							name
+						FROM $env{db_410}.a410_category
+						WHERE
+							ID='$db_line{IDcategory}'
+							AND (lng='$env{lng}' OR lng='')
+							AND active='Y'
+						LIMIT 1
+					");
+					if (my %db1_line=$db1->fetchhash)
+					{
+						$XSGN{NULL}=~s|<%IDcategory_name%>|$db1_line{name}|g;
+					}
+					else
+					{
+						main::_log($db1->errstr());
+					}
+				}
+
+				foreach (keys %db_line)
+				{
+					my $tmpVar=$_;
+
+					if(
+						(exists($env{'xt_cut_'.$tmpVar}))
+						&&(length($db_line{$tmpVar})>$env{'xt_cut_'.$tmpVar})
+					)
+					{
+						my $tmpAddon="&hellip;";
+						$tmpAddon=$env{'xt_cut_suffix'} if (exists($env{'xt_cut_suffix'}));
+						$tmpAddon=$env{'xt_cut_'.$tmpVar.'_suffix'} if (exists($env{'xt_cut_'.$tmpVar.'_suffix'}));
+
+						$db_line{$tmpVar}=substr($db_line{$tmpVar}, 0, $env{'xt_cut_'.$tmpVar});
+						$db_line{$tmpVar}=~s|(.*) .*?$|$1$tmpAddon|;
+					}
+
+					$XSGN{NULL}=~s|<%$tmpVar%>|$db_line{$tmpVar}|g;
+				}
+
+				foreach (keys %db_line)
+				{
+					my $tmpVar=$_;
+
+					if($env{xt_datetime}){
+
+						if($tmpVar=~/time/)
+						{
+							if($db_line{$tmpVar}=~/^[0-9]+$/){
+								if($db_line{$tmpVar}<1){ next; }
+
+								$XSGN{NULL}=~s|<#xt_$tmpVar#>|$XSGN{'xt_'.$tmpVar}| if exists($XSGN{'xt_'.$tmpVar});
+
+								my %env0=Utils::datetime::ctodatetime($db_line{$tmpVar},format=>1);
+								$XSGN{NULL}=~s|<%$tmpVar\_day%>|$env0{mday}|g;
+								$XSGN{NULL}=~s|<%$tmpVar\_month%>|$env0{mom}|g;
+								$XSGN{NULL}=~s|<%$tmpVar\_year%>|$env0{year}|g;
+								$XSGN{NULL}=~s|<%$tmpVar\_hour%>|$env0{hour}|g;
+								$XSGN{NULL}=~s|<%$tmpVar\_minute%>|$env0{min}|g;
+								$XSGN{NULL}=~s|<%$tmpVar\_second%>|$env0{sec}|g;
+
+								$XSGN{NULL}=~s|<%$tmpVar\_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+								$XSGN{NULL}=~s|<%$tmpVar\_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+								$XSGN{NULL}=~s|<%$tmpVar\_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+								$XSGN{NULL}=~s|<%$tmpVar\_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+							}else{
+							 	next;
+							}
+						}
+					}
+
+					$XSGN{NULL}=~s|<%$tmpVar%>|$db_line{$tmpVar}|g;
+				}
+
+				if($XSGN{TMP}=~/<#LINE_$line_counter#>/)
+				{$XSGN{TMP}=~s|<#LINE_$line_counter#>|$XSGN{NULL}|;}
+				else
+				{$XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}|;}
+			}
+		}
+	}else{
+		main::_log('SQL request failure: '+$db->errstr());
+
+		if (!$env{'return_null'})
+		{
+			Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+			if (($env{'xt_xlng'}) || ($env{'xlng'}))
+			{
+				main::_log("using xlng transformation");
+				if ($env{'xlng'}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+				Tomahawk::GetXLNG() || return undef; # retrieve language xml
+				Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+			}
+		}
+	}
+
+	if($line_counter<1)
+	{
+		if($env{return_null})
+		{
+			main::_log("no data available. return_null parameter in effect");
+			$XSGN{TMP}="";
+		}
+		else
+		{
+			if(exists $XSGN{TMP_NO_DATA})
+			{
+				main::_log("no data available. returning TMP_NO_DATA");
+				$XSGN{TMP}=$XSGN{TMP_NO_DATA};
+			}
+			else
+			{
+				$tom::ERR="no data available! query description in log.";
+				return undef;
+			}
+		}
+	}
+
+	if (($line_counter eq ($env{db_count}+1)) || ($env{db_page}>0))
+	{
+		main::_log("actual page is: $env{db_page}");
+		#$XSGN{TMP}=~s|<#PAGING#>|$XSGN{PAGING}|;
+
+		if ($XSGN{'PAGING_'.$env{db_page}})
+		{
+			$XSGN{PAGING}=$XSGN{'PAGING_'.$env{db_page}};
+			main::_log("got a different design for paging!");
+		}
+
+		if($XSGN{TMP}=~/<#PAGING_$env{db_page}#>/)
+		{
+			#not sure about this
+			#$XSGN{TMP}=~s|<#PAGING_$env{db_page}#>|$XSGN{PAGING}|g;
+			$XSGN{TMP}=~s|<#PAGING#>|$XSGN{PAGING}|g;
+		}
+		else
+		{$XSGN{TMP}=~s|<#PAGING#>|$XSGN{PAGING}|g;}
+
+		# inserting links to all previous pages
+		if(($XSGN{TMP}=~/<#PAGES#>/) && ($XSGN{PAGES}) && ($env{db_page}>1))
+		{
+			my $var=$env{db_page}-1;
+			if ($var)
+			{
+				while ($var)
+				{
+					$XSGN{PAGES}=~s|<#PAGE#>|$XSGN{PAGE}|;
+					$XSGN{PAGES}=~s|<%page%>|$var|g;
+					$XSGN{PAGES}=~s|<%page_real%>|$var+1|ge;
+					$var--;
+				}
+				$XSGN{TMP}=~s|<#PAGES#>|$XSGN{PAGES}|g;
+			}
+		}
+
+		$XSGN{TMP}=~s|<%page%>|$env{db_page}|g;
+		$XSGN{TMP}=~s|<%page_real%>|$env{db_page}+1|eg;
+	}
+
+	if ($line_counter eq ($env{db_count}+1))
+	{
+		my $nextpage=$env{db_page}+1;
+		$XSGN{NULL}=$XSGN{PAGING_NEXT};
+		$XSGN{NULL}=~s|<%page%>|$nextpage|g;
+
+		if($XSGN{'PAGING_URL_'.$nextpage})
+		{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{'PAGING_URL_'.$nextpage}|;}
+		else
+		{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{PAGING_URL}|;}
+
+		$XSGN{NULL}=~s|<%page%>|$nextpage|g;
+		$XSGN{NULL}=~s|<%page_real%>|$nextpage+1|ge;
+		$XSGN{TMP}=~s|<#PAGING_NEXT#>|$XSGN{NULL}|;
+	}
+
+	if ($env{db_page}>0)
+	{
+		my $prevpage=$env{db_page}-1;
+		$XSGN{NULL}=$XSGN{PAGING_PREV};
+		$XSGN{NULL}=~s|<%page%>|$prevpage|g;
+
+		if($XSGN{'PAGING_URL_'.$prevpage})
+		{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{'PAGING_URL_'.$prevpage}|;}
+		else
+		{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{PAGING_URL}|;}
+
+		$XSGN{NULL}=~s|<%page%>|$prevpage|g;
+		$XSGN{NULL}=~s|<%page_real%>|$prevpage+1|ge;
+		$XSGN{TMP}=~s|<#PAGING_PREV#>|$XSGN{NULL}|;
+	}
+
+	return 1;
+}
+
+
+1;

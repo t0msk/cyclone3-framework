@@ -1,0 +1,54 @@
+sub BaseModul
+{
+	#$HTML_HEADER{BODY}{extract}="yes";
+	#my $mdl_temp="$form{table}:$form{id}";
+
+	my $id=$form{ID};
+	my $temp;
+	my $isArchive;
+
+ $db_micro = $dbh->Query("(SELECT priority,arch FROM $MAIN_db_a400 WHERE ID='$id') UNION ALL (SELECT priority,arch FROM $MAIN_db_a400_arch WHERE ID='$id') LIMIT 1");
+	if (%db_micro_line=$db_micro->FetchHash())
+	{
+		my %priority_vals;
+		#return $db_micro_line{priority};
+		$i=0;
+		while ($db_micro_line{priority}=~s|(.)||)
+		{
+			$priority_vals{$i}=$1;
+			$i++;
+		}
+		if ($priority_vals{$form{priority_depth}} eq '2'){$priority_vals{$form{priority_depth}}='0';}else{$priority_vals{$form{priority_depth}}++;}
+
+		for (my $j=2;$j>=0;$j--)
+		{
+			if (($priority_vals{$j} eq '0') or (not exists $priority_vals{$j})){$temp='0'.$temp;}else{$temp=$priority_vals{$j}.$temp;}
+			#$temp=$priority_vals{$j}.$temp."z";
+		}
+		if ($db_micro_line{arch} eq "Y") { $isArchive="_arch"; }
+	}
+	#$temp="SELECT priority FROM markiza_sk.a400 WHERE ID='$id' LIMIT 1";
+	#return $temp;
+	while (length($temp)<17)
+	{
+		$temp.="0";
+	}
+
+	$db_micro = $dbh->Query("UPDATE $MAIN_db_a400$isArchive SET priority='$temp' WHERE ID='$id' LIMIT 1");
+	
+	return "<script>parent.document.frames['frm_base'].location.reload();</script>";
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

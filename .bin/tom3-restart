@@ -1,0 +1,65 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+use Mysql;
+require "/usr/bin/tom3-init";
+%form=
+(
+ '--domain'	=>	"restart domain in db (eg. localhost.com)",
+ '-a'		=>	"restart all domains",
+);
+
+
+if (($FORM{h})||($FORM{help})||($ENV{USER} ne "root")){print "\n[PLEASE USE SUDO]\n\n";&help();}
+if ((!$FORM{domain})&&(!$FORM{a})){&help();}
+
+my $time_current=time;
+
+
+open(*STDERR,">/dev/null");
+
+
+use Proc::ProcessTable;
+
+
+print "restart DOMAIN: $FORM{domain}\n";
+
+$FORM{SIG}=HUP unless $FORM{SIG};
+
+$FORM{SIG}=HUP if $FORM{SIG} eq "HUP";
+$FORM{SIG}=HUP if $FORM{SIG} eq "-HUP";
+$FORM{SIG}=KILL if $FORM{SIG} eq "-9";
+
+$main::p=~s|^.*/www/TOM/||;
+
+my $t = new Proc::ProcessTable;
+foreach my $p (@{$t->table} )#grep {$_->cmndline()=~/ \.\/cron (.*)/} 
+{
+	my $cmd=$p->cmndline;
+	
+	#print "$cmd\n";
+	
+	next unless $cmd=~s|^.*/perl (.*?)/\!www/([\w]+)\.tom|$1|;
+	my $domain=$1;
+	my $core=$2;
+	$domain=~s|^.*/www/TOM/||;
+	
+	next if ((not $domain eq $main::p)&&(!$FORM{a}));
+	
+	$domain=~s|^.*TOM/||;
+	
+	print color 'reset bold yellow';
+	print " Send $FORM{SIG} to ($core) PID:".$p->pid." ($domain) =";
+	print color 'reset bold red';
+	
+	my $out=kill $FORM{SIG}, $p->pid;
+	print " $out\n";
+	
+	#my $cmd="kill $FORM{SIG} ".$p->pid;
+	#system($cmd);
+
+}
+
+
+
+
+&exit();

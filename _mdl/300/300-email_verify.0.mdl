@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use App::300;
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+ Tomahawk::XLNGtoXSGN(); # insert XLNG do XSGN
+
+ my $db0=$main::DBH->Query("
+	SELECT IDhash
+	FROM TOM.a300_emailverify
+	WHERE	hash='$main::FORM{hash}' LIMIT 1");
+ if (my @db0_line=$db0->fetchrow)
+ {
+  $XSGN{TMP}=$XSGN{OK};
+  $main::DBH->Query("UPDATE TOM.a300_users_attrs
+  			SET email_verify='Y'
+			WHERE IDhash='$db0_line[0]'
+			LIMIT 1");
+#  $main::DBH->Query("DELETE FROM $TOM::DB_name_USRM.a300_emailverify
+#  			WHERE hash='$main::FORM{hash}'
+#  			LIMIT 1");
+ }
+ else
+ {
+  $XSGN{TMP}=$XSGN{ERR};
+ }
+
+return 1}
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+

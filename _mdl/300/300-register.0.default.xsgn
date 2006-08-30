@@ -1,0 +1,71 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+ <DEFINITION id="registered">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-registered%><br><br>
+ <a href="<%LINK%>" style="FONT:11px Verdana;COLOR:blue;"><u>"<%LINK%>"</u></a>
+</div>
+
+ </DEFINITION>
+ <DEFINITION id="err_used">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-err%><br><br>
+ <%XLNG-used%><br><br>
+</div>
+
+ </DEFINITION>
+ <DEFINITION id="FORM">
+
+<div style="FONT:12px Verdana;" align=center>
+<FORM action="?|?type=register&submit=register" method="POST" enctype="plain/text">
+login:<input type=text name="login" value="<$main::FORM{login}>"><BR>
+pass:<input type=password name="pass" value="<$main::FORM{pass}>"><BR>
+verify pass:<input type=password name="pass2" value="<$main::FORM{pass2}>"><BR>
+<input type=submit><BR>
+</FORM>
+</div>
+
+ </DEFINITION>
+ <DEFINITION id="err_missed">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-err%><br><br>
+ <%XLNG-missed%><br><br>
+</div>
+
+ </DEFINITION>
+ <DEFINITION id="err_badlogin">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-err%><br><br>
+ <%XLNG-badlogin%><br><br>
+</div>
+
+ </DEFINITION>
+ <DEFINITION id="err_longlogin">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-err%><br><br>
+ <%XLNG-longlogin%><br><br>
+</div>
+
+ </DEFINITION>
+ <DEFINITION id="err_omeingott">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-err%><br><br>
+ <%XLNG-omeingott%><br><br>
+</div>
+
+ </DEFINITION>
+ <DEFINITION id="err_badpass">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-err%><br><br>
+ <%XLNG-badpass%><br><br>
+</div>
+
+ </DEFINITION>
+</XML_DESIGN_DEFINITION>

@@ -1,0 +1,112 @@
+sub BaseModul
+{
+ my $id=$form{id};
+
+ if ($form{set}eq"yes")
+ {
+  if ($form{IDcathegory})
+  {
+   $dbh->Query("UPDATE sport_markiza_sk.tabulky SET IDcathegory='$form{IDcathegory}' WHERE IDcathegory='$id'");
+  }
+  else
+  {
+   my $db_micro = $dbh->Query("SELECT ID FROM sport_markiza_sk.tabulky WHERE IDcathegory='$id'");
+   while (my @db_micro_line=$db_micro->FetchRow())  
+   {
+    $dbh->Query("DELETE FROM sport_markiza_sk.tabulky WHERE ID='$db_micro_line[0]'");
+   }
+  } 
+  $dbh->Query("DELETE FROM sport_markiza_sk.tabulky_cathegory WHERE ID='$id' LIMIT 1");
+  return "\n<script>\nparent.document.frames['frm_base'].location.reload();\n</script>";
+ }
+ else
+ {
+  $HTML_HEADER{BODY}{extract}="yes";
+  my $mdl_temp;
+  my $cathegories;
+  my $db_micro = $dbh->Query("SELECT ID,tinyname,active FROM sport_markiza_sk.tabulky_cathegory WHERE ID LIKE '$id%' ORDER BY ID");
+  my $lines=$db_micro->NumRows();
+  if ($lines==1)
+  {
+   if (my @db_micro_line=$db_micro->FetchRow())
+   {
+    $mdl_temp=<<"HEADER";
+<table width=100% cellspacing=0 cellpadding=0 border=0><tr><td drag_here>
+<form name="$form{type}\_$id"
+action="core.pl?type=$form{type}&id=$id&set=yes" target="frm_micro" method="POST">
+</td><td width=100% style="FONT:bold 10px Verdana;COLOR:#F0F0F0;">
+&nbsp;chyst�sa odobra kategriu
+<input type=text name="tinyname" value="$db_micro_line[1]" class=input0 maxlength=20 style="width:200px;"><BR>
+HEADER
+
+    my $db_micro1 = $dbh->Query("SELECT ID FROM sport_markiza_sk.tabulky WHERE IDcathegory='$id' LIMIT 1");
+    my $lines=$db_micro1->NumRows();
+	if ($lines)
+	{
+	 $mdl_temp.=<<"HEADER";
+	 &nbsp;kategria obsahuje tabulky<BR>
+HEADER
+
+
+
+ my $db_micro2 = $dbh->Query("SELECT ID,fullname,tinyname FROM sport_markiza_sk.tabulky_cathegory WHERE ID<>'$id' ORDER BY ID");
+ while (@db_micro2_line=$db_micro2->FetchRow())
+ {
+  my $from;
+  for (my $i=1;$i<length($db_micro2_line[0]);$i++){$from.="&nbsp;&nbsp;";}
+	$mdl_micro.=&select_add('value'=>$db_micro2_line[2],'html'=>$from.$db_micro2_line[2],'plus'=>"this.parentElement.parentElement.all['VALUE2'].value='$db_micro2_line[0]';");
+ }
+ $mdl_temp.="<DIV style=\"COLOR:black;\">".&select_create(
+ 	'name'		=>	"IDcathegory_",
+	'plus'		=>	"<input id=VALUE2 value=\"\" name=IDcathegory type=hidden>",
+	'value'		=>	"vymazat, alebo presunut do...",
+	'maxlength'	=>	100,
+	'width'		=>	200-12,
+	'select'	=>	$mdl_micro
+ )."</DIV>";
+
+
+
+
+
+
+	}
+
+	$mdl_temp.=<<"HEADER";
+<table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$h_grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$h_grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit drag_here value="Vykonaj!" class=btn0 onclick="box_erase2();"></center></td><td align=left width=50%><img src="$h_grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table>	
+</td><td></form></td></tr></table>
+HEADER
+   }
+  }
+  else
+  {
+   $mdl_temp=<<"HEADER";
+   <table width=100% cellspacing=0 cellpadding=3 border=0><tr><td style="FONT:bold 12px Verdana;COLOR:#F0F0F0;">
+   T�o kategria obsahuje podkategrie a preto ju nebude mon�odobra.
+   </td></tr></table>
+HEADER
+  }
+  
+  my $box=&box_create2("Vymaza kategriu",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	200,
+	'height'		=>	50,	
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp);
+  return $box;
+ }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

@@ -1,0 +1,106 @@
+sub BaseModul
+{
+ my $id=$form{id};
+
+ my $page_limit=10;
+ my $page_from=$page_limit*$form{page};
+ $form{page}="0" unless $form{page};
+ $next=$form{page}+1;
+ $prev=$form{page}-1;
+ $spage=$form{page}+1;
+
+ if ($form{page})
+ {
+  $button=<<"  HEADER";
+ <td style="cursor:hand;" onclick="document.frames['frm_$form{frm}'].location='core.pl?type=500-editadd2&IDcategory=$form{IDcategory}&frm=$form{frm}&page=$prev';"><img src="$tom::H_media/grf/admin/win_top_0_btn4.gif" border=0><BR></td>
+  HEADER
+ }
+
+ my $mdl_temp=<<" HEADER";
+
+ <table width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr>
+$button
+<td width=100% style="FONT:bold 10px Verdana;" align=middle>&nbsp;<font color=white>page $spage</font>&nbsp;</td>
+<td style="cursor:hand;" onclick="document.frames['frm_$form{frm}'].location='core.pl?type=500-editadd2&IDcategory=$form{IDcategory}&frm=$form{frm}&page=$next';"><img src="$tom::H_media/grf/admin/win_top_0_btn3.gif" border=0><BR></td>
+</tr>
+</table>
+
+
+ HEADER
+
+ my $mdl_after_temp=$mdl_temp;
+
+ my $mdl_line=<<" HEADER";
+
+<table width=100% cellspacing=2 cellpadding=3 border=0>
+<tr>
+<td bgcolor="#2B83FF"><img src="$tom::H_500/<%NULLHASH%>-t.jpg" width=80 height=80 border=0><BR></td>
+<td width=100% bgcolor="#2B83FF" style="FONT:10px Verdana;" valign=top>
+<B>ID:</B> #<%NULLID%><BR>
+<B>alt:</B><br>
+<%ALT%>
+<hr>
+<-LINE>
+</td>
+</tr>
+</table>
+
+ HEADER
+
+ $HTML_HEADER{BODY}{extract}="yes";
+
+ my $my_where;
+ $my_where="AND a.IDcategory='$form{IDcategory}'" if (exists $form{IDcategory});
+
+ #$db_micro = $dbh->Query("SELECT DISTINCT ID,hash,IDattrs,format FROM $MAIN_db_a500 $my_where GROUP BY ID ORDER BY ID DESC LIMIT $page_from,$page_limit");
+
+   $db_micro = $dbh->Query("
+     SELECT DISTINCT a.ID,a.IDattrs,a.IDcategory,a.hash,a.format,b.about,b.keywords
+	FROM $MAIN_db_a500 AS a,
+          $MAIN_db_a500_attrs AS b
+	WHERE a.IDattrs=b.IDattrs $my_where
+	GROUP BY a.ID ORDER BY starttime DESC LIMIT $page_from,$page_limit");
+
+
+#return "SELECT DISTINCT ID,hash,IDattrs,format FROM $MAIN_db_a500 WHERE IDcategory='$form{IDcategory}' ORDER BY ID DESC LIMIT $page_from,$page_limit";
+
+ while (%db_micro_line=$db_micro->FetchHash())
+ {
+  $nullid=sprintf ('%07d', $db_micro_line{ID});
+  $mdl_temp.=$mdl_line;
+
+  $nullid=~/^(....)/i;
+  my $var=$1;
+
+  #return "SELECT about FROM $MAIN_db_a500_attrs WHERE IDattrs='$db_micro_line[2]' LIMIT 1";
+  #return $img_alt;
+
+  $db_micro1 = $dbh->Query("SELECT ID,hash,IDattrs,format FROM $MAIN_db_a500 WHERE ID='$db_micro_line{ID}' ORDER BY ID DESC LIMIT 4");
+#return "SELECT ID,hash,IDattrs,format FROM $MAIN_db_a500 WHERE ID='$db_micro_line[0]' ORDER BY ID DESC LIMIT 4";
+  while (@db_micro1_line=$db_micro1->FetchRow())
+  {
+   $mdl_temp=~s|<%NULLHASH%>|$var/$db_micro1_line[1]|g if ($db_micro1_line[3] eq "t");
+   $mdl_temp=~s|<-LINE>|<B>ADD $db_micro1_line[3]:</B> <a href="#" onclick="editor_paste_img2('$tom::H_500/$var/$db_micro1_line[1]','$db_micro1_line[3]','left','$db_micro_line{about}');">left</a> <a href="#" onclick="editor_paste_img2('$tom::H_500/$var/$db_micro1_line[1]','$db_micro1_line[3]','absmiddle','$db_micro_line{about}');">middle</a> <a href="#" onclick="editor_paste_img2('$tom::H_500/$var/$db_micro1_line[1]','$db_micro1_line[3]','right','$db_micro_line{about}');">right</a><BR><-LINE>|;
+  }
+  $mdl_temp=~s|<%NULLID%>|$nullid|g;
+  #$mdl_temp=~s|<%NULLHASH%>|$var/$db_micro_line[1]|g;
+  $mdl_temp=~s|<%ALT%>|$db_micro_line{about}|g;
+  $mdl_temp=~s|<-LINE>||g;
+ }
+
+
+ return	$mdl_temp.$mdl_after_temp}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

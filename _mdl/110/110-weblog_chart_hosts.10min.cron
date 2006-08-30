@@ -1,0 +1,148 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+#use App::400;
+#use App::400::SQL::a400;
+
+#use SVGraph;
+use SVGraph::2D::lines;
+use SVGraph::2D::columns;
+#use SVGraph::2D::ring;
+
+#use Net::HTTP::LiteAgent;
+
+use Utils::datetime;
+
+use strict;
+
+sub execute
+{
+alarm(3600);
+ my %env=@_;
+ 
+ my $from=$main::time_current-(3600*12);
+ my %date=Utils::datetime::ctodatetime($from,format=>1);
+ my $from="$date{year}-$date{mom}-$date{mday} $date{hour}:$date{min}";
+ 
+# my %date=Utils::datetime::ctodatetime(time,format=>1);
+# my $to="$date{year}-$date{mom}-$date{mday} $date{hour}:$date{min}";
+
+ Database::connect::multi('stats') || die "cannot connect all databases";
+ 
+  my %date=Utils::datetime::ctodatetime(time-3600,format=>1);
+ my $now="$date{hour}";
+ 
+ CRON::debug::log(5,"generating from $from:00");
+ 
+ 
+ 
+ 
+my $graf2_10=SVGraph::2D::lines->new(
+	title		=>	"Availability by host (10min)",
+	type		=>	"normal",	# normal/stacked(spojene)	
+	reload	=>	300,
+	x		=>	1000,
+	y		=>	400,
+	show_legend			 =>	1, # show legend of Columns
+	show_lines_smooth	=>	1,
+	grid_y_scale_minimum	=>	0,
+# 	grid_y_scale_maximum	=> 1,
+	show_grid_x		=>	1,
+);
+
+
+
+
+my $db0=$main::DB{stats}->Query("
+	SELECT host
+	FROM `a110_weblog_rqs` 
+	GROUP BY host
+	ORDER BY host
+");
+my %columns2_10;
+while (my %db0_line=$db0->fetchhash)
+{
+	main::_log(5,"add column $db0_line{host}");
+	$columns2_10{$db0_line{host}}=$graf2_10->addColumn(title=>$db0_line{host});
+}
+
+
+
+#12345678901234
+#2005-00-00 15:00
+ my $db0=$main::DB{stats}->Query("
+	SELECT
+		SUBSTRING(reqdatetime,1,15) AS reqdatetime,
+		host,
+		COUNT(*) AS cnt,
+		AVG(load_req) AS load_req
+	FROM TOM.a110_weblog_rqs
+	WHERE
+		reqdatetime>'$from'
+	GROUP BY SUBSTRING(reqdatetime,1,15),host
+	ORDER BY SUBSTRING(reqdatetime,1,15)
+");
+while (my %db0_line=$db0->fetchhash)
+{
+	$db0_line{reqdatetime}.="0";
+	$graf2_10->addRowLabel($db0_line{reqdatetime});
+	$columns2_10{$db0_line{host}}->addData($db0_line{reqdatetime},$db0_line{load_req});
+	
+	
+	if ($db0_line{reqdatetime}=~/00$/)
+	{
+		$graf2_10->addRowMark($db0_line{reqdatetime},
+			front			=>1,
+#			show_label	=>1,
+#			size			=>1.5,
+		);
+	}
+	
+	
+}
+
+eval
+{
+	alarm(5);
+	open HND,">$cron::P/!www/farm_availability_10.svg" or die "$!";
+	my $out=$graf2_10->prepare();
+	$out=~s|[\s]+</text>|</text>|g;
+	#print $out."\n\n";
+	print HND $out; 
+	alarm(0);
+};
+if ($@)
+{
+	die "error! $@\n";
+}
+CRON::debug::log(6,"generated");
+
+
+return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

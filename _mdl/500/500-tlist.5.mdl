@@ -1,0 +1,180 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+#alarm 3;
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+
+	if ($env{xt_xlng})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+ $env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+ $env{db_500}=$TOM::DB_name unless $env{db_500};
+ $env{max_lines}="10" unless $env{max_lines};
+ $env{max_lines_paged}=$env{max_lines} unless $env{max_lines_paged};
+ $env{max}="6" unless $env{max};
+ $env{format}="t" unless $env{format};
+ $env{get_subs}="0" unless $env{get_subs};
+
+ $env{a500_cat}="" unless $env{a500_cat};
+ $env{a500_cat_page}=0 unless $env{a500_cat_page};
+ $env{a500_cat_img_page}=0 unless $env{a500_cat_img_page};
+
+ my $prevCat;
+ my $counter=-1;
+ my $firstItem=1;
+
+ if ($env{get_subs} eq "0"){$env{select}=$env{a500_cat};}else{$env{select}= $env{a500_cat}."%";}
+
+=head1
+ $XSGN{TMP}="
+     SELECT
+          a.ID,a.hash,a.IDcategory,c.name
+     FROM $env{db_500}.a500 AS a
+     LEFT JOIN $env{db_500}.a500_attrs AS b ON a.ID=b.ID
+     LEFT JOIN  $env{db_500}.a500_category AS c ON a.IDcategory=c.ID
+     WHERE
+          a.format='$env{format}'
+     	AND a.active='Y'
+     	AND b.IDcategory LIKE '$env{select}'
+	LIMIT $dblimit
+     "; return 1;
+=cut
+
+ my $db_ismore=0;
+ my $xcounter=0;
+ my $dblimit_str=0;
+ my $dblimit=0;
+
+ if ($env{a500_cat_img_page}>0)
+ {
+  #$dblimit_str+=$env{max_lines}*$env{max};
+  #Tomahawk::debug::log(5,"sring1: $dblimit_str");
+  my $var=$env{a500_cat_img_page};
+#  Tomahawk::debug::log(5,"sring2: $var");
+  while($var > 0)
+  {
+   	if($var == 1)
+		{$dblimit_str+=$env{max_lines}*$env{max};}
+		else
+		{$dblimit_str+=$env{max_lines_paged}*$env{max};}
+#   Tomahawk::debug::log(5,"sring3: $dblimit_str $env{max_lines_paged} $env{max}");
+   $var--;
+  }
+  $dblimit=($env{max}*$env{max_lines_paged})+1;
+#  Tomahawk::debug::log(5,"sring4: $dblimit");
+  $dblimit_str.=",".$dblimit;
+#  Tomahawk::debug::log(5,"sring5: $dblimit_str");
+ }
+ else {$dblimit=($env{max}*$env{max_lines})+1;$dblimit_str=$dblimit;}
+
+#Tomahawk::debug::log(5,"     SELECT          a.ID,a.hash,a.IDcategory,c.name     FROM $env{db_500}.a500 AS a     LEFT JOIN $env{db_500}.a500_attrs AS b ON a.ID=b.ID   LEFT JOIN  $env{db_500}.a500_category AS c ON a.IDcategory=c.ID     WHERE          a.format='$env{format}'     	AND a.active='Y'     	AND b.IDcategory LIKE '$env{select}'	LIMIT $dblimit     ");
+
+main::_log("
+     SELECT
+          a.ID,a.hash,b.about,a.IDcategory,c.name
+     FROM $env{db_500}.a500 AS a
+     LEFT JOIN $env{db_500}.a500_attrs AS b ON a.ID=b.ID
+     LEFT JOIN  $env{db_500}.a500_category AS c ON a.IDcategory=c.ID
+     WHERE
+          a.format='$env{format}'
+     	AND a.active='Y'
+     	AND b.IDcategory LIKE '$env{select}'
+	ORDER BY b.inserttime DESC
+	LIMIT $dblimit_str
+     ");
+
+ my $db0=$main::DBH->Query("
+     SELECT
+          a.ID,a.hash,b.about,a.IDcategory,c.name
+     FROM $env{db_500}.a500 AS a
+     LEFT JOIN $env{db_500}.a500_attrs AS b ON a.ID=b.ID
+     LEFT JOIN  $env{db_500}.a500_category AS c ON a.IDcategory=c.ID
+     WHERE
+          a.format='$env{format}'
+     	AND a.active='Y'
+     	AND b.IDcategory LIKE '$env{select}'
+	ORDER BY b.inserttime DESC
+	LIMIT $dblimit_str
+     ");
+ while (my %db0_line=$db0->FetchHash())
+ {
+   $xcounter++;
+   if ($xcounter eq $dblimit)
+   { $db_ismore=1; last; }
+   if (($counter==-1) || ($counter==$env{max}))
+   {
+	$XSGN{TMP}=~s|<#TMP2#>||;
+	$XSGN{TMP}=~s|<#TMP#>|$XSGN{LINE}<#TMP#>|;
+	$counter=0;
+	$firstItem=1;
+   }
+   if (length($db0_line{ID}) > length($env{a500_cat})+2)
+   {
+	if ($counter > $env{max}){next;}#else{$XSGN{TMP}=~s|<#TMP2#>||;$XSGN{TMP}=~s|<#TMP#>|$XSGN{ITEM}<#TMP#>|;}
+   }
+
+   $XSGN{TMP}=~s|<#ID#>|$db0_line{ID}|;
+   $XSGN{TMP}=~s|<#NAME#>|$db0_line{ID} $db0_line{name}|;
+
+   $db0_line{ID}=~/(.{4})/;
+   my $add=$1;
+   $XSGN{TMP}=~s|<#TMP2#>|$XSGN{ITEM}|;
+
+   $XSGN{TMP}=~s|<%IMG%>|$tom::H_500\/$add\/$db0_line{hash}-$env{format}|;
+   $XSGN{TMP}=~s|<%ID%>|$db0_line{ID}|g;
+   $XSGN{TMP}=~s|<%ID_CAT%>|$db0_line{IDcategory}|g;
+   $XSGN{TMP}=~s|<%ABOUT%>|$db0_line{about}|g;
+   #$XSGN{TMP}=~s|<%CAT_NAME%>|$db1_line{name}|g;
+
+	$XSGN{TMP}=~s|<%COUNTER_ITEM%>|$xcounter|g;
+	$XSGN{TMP}=~s|<%COUNTER_LINE_ITEM%>|$counter|g;
+
+   $counter++;
+ }
+
+ $XSGN{TMP}=~s|<%COUNTER_ALL%>|$xcounter|g;
+
+ if ($counter<1)
+ {
+  $XSGN{TMP}="";
+  return 1;
+ }
+
+ my $var;
+ if ($env{a500_cat_img_page}>0)
+ {
+	$XSGN{TMP}=~s|<#PAGER#>|$XSGN{PAGER}|;
+	$var=$env{a500_cat_img_page}-1;
+	$XSGN{TMP}=~s|<#PREV#>|$XSGN{PREV}|;
+	$XSGN{TMP}=~s|<%CAT_PAGE%>|$env{a500_cat_page}|;
+	$XSGN{TMP}=~s|<%CAT_IMG_PAGE%>|$var|;
+ }
+
+ if ($db_ismore eq 1)
+ {
+	$XSGN{TMP}=~s|<#PAGER#>|$XSGN{PAGER}|;
+	$XSGN{TMP}=~s|<#NEXT#>|$XSGN{NEXT}|;
+	$var=$env{a500_cat_img_page}+1;
+	$XSGN{TMP}=~s|<#NEXT#>|$XSGN{NEXT}|;
+	$XSGN{TMP}=~s|<%CAT_PAGE%>|$env{a500_cat_page}|;
+	$XSGN{TMP}=~s|<%CAT_IMG_PAGE%>|$var|;
+ }
+ $XSGN{TMP}=~s|<%ID_CAT%>|$env{a500_cat}|g;
+
+return 1;
+}
+
+
+1;

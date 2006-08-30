@@ -1,0 +1,49 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+use strict;
+
+sub execute
+{
+ my %env=@_;
+ if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
+
+ #if (!$env{max_months}){$cron::ERR="not defined max_months time to archiving";return undef;}
+
+ #$env{max_months}=$env{max_months}*31*24*60*60; # prepocet na sekundy
+ #$env{max}=100 unless $env{max};
+ #$env{db_400}=$TOM::DB_name;
+	
+	my $timestamp=time-(86400*31*3);
+	
+	$main::DBH->Query("
+		DELETE
+		FROM a400_visits
+		WHERE time_insert<=$timestamp");
+		
+	return 1;
+}
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

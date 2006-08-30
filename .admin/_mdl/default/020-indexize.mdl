@@ -1,0 +1,120 @@
+sub BaseModul
+{
+ my $id=$form{ID} if ($form{ID});
+ if ($form{set})
+ {
+  $HTML_HEADER{BODY}{extract}="yes";
+  $indexes=&convert_html($form{indexes});
+  my $temp;
+
+  while ($indexes=~s|<INDEX id=(.*?) value=(.*?) description=(.*?) />|<INDEXTO>|i)
+  {
+   $temp.="<INDEX id=\"$1\" value=\"$2\" description=\"$3\" />\n";
+  }
+  $indexes=$temp;
+  $indexes=~s|\'|\\'|g;
+  if ($id)
+  {
+   $dbh->Query("UPDATE markiza_sk.a020_archiv SET ind='$indexes' WHERE ID='$id' LIMIT 1");
+  }
+  return "\n<script>\nparent.document.frames['frm_base'].location.reload();\n</script>";
+ }
+ else #tu je ten predel dopice tam!!!------------------------------------------------------------------------------------------------------
+ {
+  $HTML_HEADER{BODY}{extract}="yes";
+  #$HTML_HEADER{BODY}{onunload}="parent.box_loading.style.display='block';";
+  $db_micro = $dbh->Query("SELECT ID,ID_cat,ind,description FROM markiza_sk.a020_archiv WHERE ID='$id' LIMIT 1");
+  %db_micro_line=$db_micro->FetchHash();
+  #return $db_micro_line{title};
+
+  #action="core.pl?type=$form{type}&id=$id&set=yes&image=$db_micro_line{xrelated}" method="POST">
+
+
+########for testing purposes .. targeting into the same frame
+  my $mdl_temp=<<"HEADER";
+  <table width=100% cellspacing=0 cellpadding=0 border=0><tr><td>
+  <form name="indexesEdit\_$id" action="core.pl?type=020-indexize&ID=$id&set=yes" method="POST" enctype="multipart/x-form-data" target="frm_micro">
+  </td><td width=100% style="FONT:10px Verdana;COLOR:white;">
+  &nbsp;Titul:<BR>
+  <span style="width: 270px; FONT:9px Verdana; font-weight: bold;">&nbsp;&nbsp;&nbsp;$db_micro_line{description}</span><BR>
+HEADER
+
+ my $temp;
+
+  my $index_counter;
+
+  while ($db_micro_line{ind}=~s|<INDEX id="(.*?)" value="(.*?)" description="(.*?)" />|<INDEXTO>|i)
+  {
+   $temp.="<option value=\"$id-$1\"> $1 - $2 - $3</option>\n";
+   $index_counter++;
+  }
+  $indexes=$temp;
+  #$db_micro_line{xrelated}=~s|*||gi;
+
+
+#<VAR id="a020" value="(.*?)" description\"(.*?)\"/>
+
+=head1
+  <input type=hidden name="index_counter" id="index_counter" value="$index_counter">
+  Cas:<br>
+  <input type=text id="index_time" value="" class=input0 maxlength=10 style="FONT:9px Verdana;width:445px;" drag_resizeX='0'><BR>
+  Popis:<br>
+  <input type=text id="index_desc" value="" class=input0 maxlength=260 style="FONT:9px Verdana;width:445px;" drag_resizeX='0'><BR>
+  <table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif">
+   <tr>
+    <td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td>
+    <td><center><input type=button value="Pridaj" class=btn0 onclick="add_opt($id);"></center></td>
+    <td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td>
+   </tr>
+  </table>
+  <style>
+   .indexize_item { padding: 2px; background-color: #8ac9ff; color: #000000; font-size: 10px; border: 1px gray solid; font-weight: bold; margin: 3px; cursor: hand;}
+   .indexize_item:hover { background-color: white; }
+   #indid { font-weight: bold; }
+   #indval { font-weight: normal; }
+   #inddesc { font-weight: normal; }
+  </style>
+=cut
+
+
+  $mdl_temp.=<<"HEADER";
+  doubleclick na index > pridanie indexu k clanku
+  <select size="10" name="indexes_all" onDblClick="relate_item('a020','$id_'+document.forms['indexesEdit_$id'].indexes_all.options[document.forms['indexesEdit_$id'].indexes_all.selectedIndex].value);" style="width: 100%; padding-top: 3px; border: 1px black solid;" class="input0">$indexes</select>
+HEADER
+
+=head1
+
+<table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit drag_here value="Uložiť!" class=btn0 onclick="box_erase2();"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table><br>
+
+
+
+  <TEXTAREA
+	drag_resizeX='0'
+	drag_resizeY='-300'
+	name="indexes"
+	id="indexes_all"
+	class=input0
+	style="width:445px;height:50px;FONT:12px Verdana;">$indexes</TEXTAREA><BR>
+=cut
+
+
+
+#<!-- <input type=hidden name=image value="$image_f"> /-->
+
+  $mdl_temp.="</td><td></form></td></tr></table>";
+  #$mdl_temp.="<script>lastOpenedArticleId=\"$db_micro_line{ID}\"; alert(lastOpenedArticleId);</script>";
+  my $box=&box_create2("Priradenie indexov k clanku",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	200,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp);
+
+  return $box;
+
+  return undef;
+ }
+}
+
+
+1;

@@ -1,0 +1,524 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use strict;
+
+
+sub execute
+{
+	my %env=@_;
+
+	main::_log(5, "cookie: ".$tom::H_cookie);
+
+	# NASTAVENIA
+
+	# upozornenia
+	if ($cron::P eq $CRON::P) { $cron::ERR="WARN: this cron is only for master/local use!!!"; return undef; }
+
+	#if ($TOM::DB_name_STAT eq $TOM::DB_name_TOM){$env{t}="C";}
+
+	# databaza
+	#$env{domain} = $env{xt_domain};
+	#$env{domain} = "zivot.sk" unless $env{domain};
+	$env{domain} = $tom::H_cookie unless $env{domain};
+	
+	$env{db_300} = $env{domain} unless $env{db_300};
+	$env{db_300} =~ s|\.|_|;
+
+ my $date=`date -u "+%a,%e %b %Y %H:%M:%S (%Z)"`;chomp($date);
+
+ $env{to_email} = $TOM::contact{'stats'}.";".$TOM::contact{'TOM'};
+ #$env{to_email} = "gregor\@webcom.sk;fordinal\@webcom.sk";
+ #$env{to_email} = "gregor\@webcom.sk";
+ 
+
+
+	# upozornenia
+	if (!$env{db_300}){$cron::ERR="WARN: db_300 not defined!!!";return undef}
+
+	# cas
+	my $day_length = 86400;
+	my $day_period = 31;
+
+	# jazyk
+	$env{lng} = 'sk' unless $env{lng};
+
+	# texty
+	my %TEXTS = (
+		'sk' => {
+			#'email-subject' => '[STAT][a300/USRM] user management bilance',
+			'email-subject' => 'CYCLONE STATS: Users / 7 days',
+			'stats-header' => 'Štatistiky pre <%domain-name%>',
+			'stats-term' => 'obdobie <%day-start%> - <%day-end%>',
+			'stats-info' => 'prehľad rôznych informácií o uživateľoch ako aj ich profiloch',
+		}
+		,
+		
+		'en' => {
+		}
+		,
+	);
+
+	# casy
+	# skorigujem cas - nastavim na 0:0:0
+	my %tm_correct = Utils::datetime::ctodatetime($main::time_current,format=>1);
+	my $time_correct = $main::time_current-($tm_correct{hour}*3600+$tm_correct{min}*60+$tm_correct{sec});
+
+	# tu nastavujem casy podla toho ake potrebujem 7dni, 31dni
+	my %times = (
+		'start'   => ($time_correct - ($day_length * $day_period)),
+		'end' => $time_correct,
+	);
+
+	my %tms = Utils::datetime::ctodatetime($times{start},format=>1);
+	my %tme = Utils::datetime::ctodatetime($times{end},format=>1);
+	
+	%{$times{sk}} = (
+		'start' => "$tms{mday}. $tms{mom}. $tms{year}",
+		'end' => "$tme{mday}. $tme{mom}. $tme{year}",
+	);
+
+	%{$times{en}} = (
+		'start' => "$tms{year}-$tms{mom}-$tms{mday}",
+		'end' => "$tme{year}-$tme{mom}-$tme{mday}",
+	);
+
+	# hranice priloh
+	my $boundary = "-----------9879522313565987";
+
+	# zaklad tela emailu
+	my $email=<<"HEADER";
+From: "$tom::Hm ($TOM::hostname)" <TOM\@$TOM::hostname>
+To: <%TO%>
+Subject: <%SUBJECT%>
+Date: $date
+List-Id: TOM3
+MIME-Version: 1.0
+Content-Type: multipart/related;
+ boundary="$boundary"
+
+This is a multi-part message in MIME format.
+--$boundary
+Content-Type: text/html;charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  </head>
+  <body>
+  	<style>
+			body { font-family: Arial, Verdana; }
+  	
+			h1 {
+				color: #808285;
+				font-family: Arial, Verdana;
+			}
+
+
+			.stats-header { font-size: 18px; }
+			.stats-term { font-size: 14px; font-weight: normal; }
+			.stats-info { font-size: 14px; font-weight: normal; }
+
+			table td { color: #555555; font-size: 12px; }
+			.value { font-weight: bold; padding-right: 20px; }
+
+			.header, .subheader { color: #555555; text-align: left; font-size: 14px; }
+
+			#profile { margin-top: 20px; }
+			.profil-info td { border-bottom: 1px solid #000; }
+
+  	</style>
+
+  	<h1>
+  		<img src="cid:part1.webcom.logo\@webcom.sk" alt="webcom logo" border="0" /><br /><br />
+  		<span class="stats-header"><%stats-header%></span><br />
+  		<span class="stats-term"><%stats-term%></span><br />
+  		<span class="stats-info"><%stats-info%></span>
+  	</h1>
+
+		<div id="page">
+<%BODY%>
+		</div>
+  </body>
+</html>
+--$boundary
+Content-Type: image/gif;
+ name="webcom_logo.gif"
+Content-ID: <part1.webcom.logo\@webcom.sk>
+Content-Transfer-Encoding: base64
+Content-Disposition: inline;
+ filename="webcom_logo.gif"
+
+R0lGODlhlgAcAMQAAL/Awd/g4O0bI/f395iam7i5urCxss/Q0YiKjJCSk+/v8NfY2Ofn6Kip
+q8fIyfaNke84P/zU1v3i4/RxdvebnvV/hKCho4CChP///wAAAAAAAAAAAAAAAAAAAAAAAAAA
+ACH5BAAAAAAALAAAAACWABwAAAX/ICaOZGmeaIpaV6u+cCzPL0MQFuLQfD+yLp9wSBQxEg6A
+I0DYFZ8l4AVKrZ4aAIChYGEgrFApeEy1BACWRgGTIBPF7rjPrDUYMF95D67vwwBYAEcOFn40
+fIaJJQM3Cwo5DIoxiJKSA4QWBQqVMJScnxgWohabJwOiDSmPowMkCgAELS0EmidSCgYJshcE
+AK0qCgWxuxYOvyXBurIJtSdcoiIHDcsGpdENCC0J1SrTLWsnB7ILKAWyqSMO2buyOiZS7LsI
+BygD5vGyhST2+LIFxz9k2cA3D8OjfvRQBGgHcMSwC/oWrbsQYISBfrvABcS4K+G+h/0iigDZ
+j8C7dhwP/0zERw7FQ48jFu6yNkLcrHS7EgAIsKDAypYi4EHMYmAlxY/sEoxSJhKDzRaBvLWA
+GZSdgQM8L8ZrgHWBVm0pnrYp8bXFnRLKLiRUMNEAQEbLSEjhNoJf3BH3ZlUkwcBAU6cQaR6k
+WrUFgr042wEV4WBXJBQTFyvAB3DBXQwALrvaBdSTiMzjREyWRaBhDRERHjyIIAJxFIEnIp9I
+67oEaIgkbksBIFcW75GyCIuQqtGziLTg8iIwHWOCgOcCJqgwLqV24Qu/Tc0coWz5urEYGDAc
+sctAlvPnpUQ0jiGvPikaaTyADv1BCuqyrGP4mv3E17NP8ZZXQv+RwBE+68mSgv9lYOGRnw8Q
+0PccBPcpaMuDJtzWnwmjtdDKLQblg8EA25F3IDsJBnGCTEHsoh8MEkJXoYqvtaCfhi/sJh5U
+G13AwG3omDhVAEQWaSSRj4Vi4QkMXjDWRC++EKGEFK6wZI1HZejbCyxugyEGTRb1pQiyzcCe
+e9fFN8N8EtpnJY292XgCji+kpRkb8YA3glRnycAeciIoxxwMFdBXwXRXxpmlbVu+8JQsToxw
+W3AmPCqcCPZkZ9yke3XIy6AoLNCKBBRQIMGIiyn65qK5NarCACsttwg7eZhgZ6Qj9JWNprI0
+ZNdNFu1CgHULBFkTL64xodaFcPZ4o6sqTNonCWVtOEKGk4YFksMuvJJWQBbYsJPkiCQppQUl
+jxJgB0iE4Senli1Ye4Kn48a0C6iPctTtiYTBdWAJJOFjEparPhuvDFr95ZBZLyxgVFIwCSVw
+vXXl1Q+8/ah5XcFzQqvCjpcCdgFN9RCSlAGpitCTxOpGOYICJhNTQMoGOQASLSTjNUo5o1Ds
+1CjChQAAOw==
+--$boundary--
+HEADER
+
+	$email =~ s|<%stats-header%>|$TEXTS{$env{lng}}{"stats-header"}|;
+	$email =~ s|<%stats-term%>|$TEXTS{$env{lng}}{"stats-term"}|;
+	$email =~ s|<%stats-info%>|$TEXTS{$env{lng}}{"stats-info"}|;
+	$email =~ s|<%domain-name%>|$env{domain}|;
+
+	$email =~ s|<%day-start%>|$times{$env{lng}}{start}|;
+	$email =~ s|<%day-end%>|$times{$env{lng}}{end}|;
+
+	my $doc;
+
+	
+	# --------======= Celkovy pocet uzivatelov =======--------
+	$doc .= "<table class=\"more-infos\">";
+	my $db0=$main::DBH->Query("
+		(SELECT COUNT(*)
+		FROM TOM.a300_users
+		WHERE host='$env{domain}')
+		UNION ALL
+		(SELECT COUNT(*)
+		FROM TOM.a300_users_arch
+		WHERE host='$env{domain}')
+		");
+	my $num;while (my @db0_line=$db0->fetchrow()){$num+=$db0_line[0]}main::_log(5,"select ok $num");
+	#$doc.="<tr><td>system rozpoznava celkovo $num roznych uzivatelov</td></tr>\n";
+	$doc .= "<tr><td class=\"value\">$num</td><td class=\"def\">system rozpoznava celkovo roznych uzivatelov</td></tr>\n";
+	
+	#$doc.="\n";
+
+
+	# --------======= Bezni uzivatelia =======--------
+	my $fromtime=$times{start};
+	my $db0=$main::DBH->Query("
+		(SELECT COUNT(*)
+		FROM TOM.a300_users
+		WHERE host='$env{domain}' AND reqtime>$fromtime)
+		UNION ALL
+		(SELECT COUNT(*)
+		FROM TOM.a300_users_arch
+		WHERE host='$env{domain}' AND reqtime>$fromtime)
+		");
+	my $num;while (my @db0_line=$db0->fetchrow()){$num+=$db0_line[0]}main::_log(5,"select ok $num");
+	$doc.="<tr><td class=\"value\">$num</td><td class=\"def\">beznych uzivatelov (pristup za posledny mesiac)</td></tr>\n";
+
+
+	# --------======= Bezni uzivatelia =======--------
+	my $fromtime=$times{start};
+	my $db0=$main::DBH->Query("
+		(SELECT COUNT(*)
+		FROM TOM.a300_users
+		WHERE host='$env{domain}' AND reqtime>$fromtime AND rqs>10)
+		UNION ALL
+		(SELECT COUNT(*)
+		FROM TOM.a300_users_arch
+		WHERE host='$env{domain}' AND reqtime>$fromtime AND rqs>10)
+		");
+	my $num;while (my @db0_line=$db0->fetchrow()){$num+=$db0_line[0]}main::_log(5,"select ok $num");
+	$doc.="<tr><td class=\"value\">$num</td><td class=\"def\">aktivnych uzivatelov (pristup za posledny mesiac a viac ako 10 pageviews)</td></tr>\n";
+
+	# --------======= Stali uzivatelia =======--------
+	my $fromtime=$times{start};
+	my $db0=$main::DBH->Query("
+		(SELECT COUNT(*)
+		FROM TOM.a300_users
+		WHERE host='$env{domain}' AND reqtime>$fromtime AND rqs>100)
+		UNION ALL
+		(SELECT COUNT(*)
+		FROM TOM.a300_users_arch
+		WHERE host='$env{domain}' AND reqtime>$fromtime AND rqs>100)
+		");
+	my $num;while (my @db0_line=$db0->fetchrow()){$num+=$db0_line[0]}main::_log(5,"select ok $num");
+	$doc.="<tr><td class=\"value\">$num</td><td class=\"def\">stalych uzivatelov (pristup za posledny mesiac a viac ako 100 pageviews)</td></tr>\n";
+	$doc.="\n";
+
+	# --------======= Novi uzivatelia =======--------
+	my $fromtime=$times{start};
+	my $db0=$main::DBH->Query("
+		(SELECT COUNT(*)
+		FROM TOM.a300_users
+		WHERE host='$env{domain}' AND regtime>$fromtime)
+		UNION ALL
+		(SELECT COUNT(*)
+		FROM TOM.a300_users_arch
+		WHERE host='$env{domain}' AND regtime>$fromtime)
+		");
+	my $num;while (my @db0_line=$db0->fetchrow()){$num+=$db0_line[0]}main::_log(5,"select ok $num");
+	$doc.="<tr><td class=\"value\">$num</td><td class=\"def\">novych uzivatelov za poslednych 31 dni</td></tr>\n";
+
+	# --------======= Novi uzivatelia =======--------
+	my $fromtime=$cron::time_current-(60*60*24*7);
+	my $db0=$main::DBH->Query("
+		(SELECT COUNT(*)
+		FROM TOM.a300_users
+		WHERE host='$env{domain}' AND regtime>$fromtime)
+		UNION ALL
+		(SELECT COUNT(*)
+		FROM TOM.a300_users_arch
+		WHERE host='$env{domain}' AND regtime>$fromtime)
+		");
+	my $num;while (my @db0_line=$db0->fetchrow()){$num+=$db0_line[0]}main::_log(5,"select ok $num");
+	$doc.="<tr><td class=\"value\">$num</td><td class=\"def\">novych uzivatelov za poslednych 7 dni</td></tr>\n";
+	$doc.="\n";
+
+	# --------======= Registrovani uzivatelia =======--------
+	my $db0=$main::DBH->Query("
+		(SELECT COUNT(*)
+		FROM TOM.a300_users
+		WHERE host='$env{domain}' AND login<>'')
+		UNION ALL
+		(SELECT COUNT(*)
+		FROM TOM.a300_users_arch
+		WHERE host='$env{domain}' AND login<>'')
+		");
+	my $num;while (my @db0_line=$db0->fetchrow()){$num+=$db0_line[0]}main::_log(5,"select ok $num");
+	$doc.="<tr><td class=\"value\">$num</td><td class=\"def\">system rozpoznava celkovo $num registrovanych uzivatelov</td></tr>\n";
+
+	# --------======= Registrovani uzivatelia =======--------
+	my $fromtime=$times{start};
+	my $db0=$main::DBH->Query("
+		(SELECT COUNT(*)
+		FROM TOM.a300_users
+		WHERE host='$env{domain}' AND regtime>$fromtime AND login<>'')
+		UNION ALL
+		(SELECT COUNT(*)
+		FROM TOM.a300_users_arch
+		WHERE host='$env{domain}' AND regtime>$fromtime AND login<>'')
+		");
+	my $num;while (my @db0_line=$db0->fetchrow()){$num+=$db0_line[0]}main::_log(5,"select ok $num");
+	$doc.="<tr><td class=\"value\">$num</td><td class=\"def\">registrovanych uzivatelov za poslednych 31 dni</td></tr>\n";
+
+	# --------======= Registrovani uzivatelia =======--------
+	my $fromtime=$cron::time_current-(60*60*24*7);
+	my $db0=$main::DBH->Query("
+		(SELECT COUNT(*)
+		FROM TOM.a300_users
+		WHERE host='$env{domain}' AND regtime>$fromtime AND login<>'')
+		UNION ALL
+		(SELECT COUNT(*)
+		FROM TOM.a300_users_arch
+		WHERE host='$env{domain}' AND regtime>$fromtime AND login<>'')
+		");
+	my $num;while (my @db0_line=$db0->fetchrow()){$num+=$db0_line[0]}main::_log(5,"select ok $num");
+	$doc.="<tr><td class=\"value\">$num</td><td class=\"def\">registrovanych uzivatelov za poslednych 7 dni</td></tr>\n";
+
+	# --------======= Bezni uzivatelia =======--------
+	my $fromtime=$times{start};
+	my $db0=$main::DBH->Query("
+		(SELECT COUNT(*)
+		FROM TOM.a300_users
+		WHERE host='$env{domain}' AND logtime>$fromtime AND login<>'')
+		UNION ALL
+		(SELECT COUNT(*)
+		FROM TOM.a300_users_arch
+		WHERE host='$env{domain}' AND logtime>$fromtime AND login<>'')
+		");
+	my $num;while (my @db0_line=$db0->fetchrow()){$num+=$db0_line[0]}main::_log(5,"select ok $num");
+	$doc.="<tr><td class=\"value\">$num</td><td class=\"def\">prihlasenych uzivatelov za poslednych 31 dni</td></tr>\n";
+
+	# --------======= Bezni uzivatelia =======--------
+	my $fromtime=$cron::time_current-(60*60*24*7);
+	my $db0=$main::DBH->Query("
+		(SELECT COUNT(*)
+		FROM TOM.a300_users
+		WHERE host='$env{domain}' AND logtime>$fromtime AND login<>'')
+		UNION ALL
+		(SELECT COUNT(*)
+		FROM TOM.a300_users_arch
+		WHERE host='$env{domain}' AND logtime>$fromtime AND login<>'')
+		");
+	my $num;while (my @db0_line=$db0->fetchrow()){$num+=$db0_line[0]}main::_log(5,"select ok $num");
+	$doc.="<tr><td class=\"value\">$num</td><td class=\"def\">prihlasenych uzivatelov za poslednych 7 dni</td></tr>\n";
+	$doc.="\n";
+
+	$doc.="\n</table><table id=\"profile\">\n";
+
+	
+	# --------======= Rozbor profilu =======--------
+	$doc.="<tr><th class=\"header\">rozbor vlozeneho profilu</th></tr>\n";
+	$doc.="<tr><th class=\"subheader\">pouzivaju sa nasledovne udaje:";
+	
+	my %prof;
+	my $fromtime=$cron::time_current-(60*60*24*7);
+	
+	my $db0=$main::DBH->Query("
+		(SELECT profile
+		FROM TOM.a300_users
+		WHERE host='$env{domain}' AND login<>'')
+		UNION ALL
+		(SELECT profile
+		FROM TOM.a300_users_arch
+		WHERE host='$env{domain}' AND login<>'')
+		");
+		
+	while (my @db0_line=$db0->fetchrow())
+	{
+		while ($db0_line[0]=~s|<VAR id="(.*?)">(.*?)</VAR>||)
+		{
+			#if ($1 eq "city"){print "$2\n";}
+			my $var=$1;
+			my $val=$2;
+			$val=~s|[\n\r]||g;
+			$prof{$var}{$val}++;
+		}
+	}
+
+	my $used_parameters;
+	foreach (keys %prof)
+	{
+		$used_parameters .= ", " if $used_parameters;
+		$used_parameters .= $_;
+	}
+	$doc.=$used_parameters;
+	$doc.="</th></tr>\n";
+	
+	$doc.="<tr><td colspan=\"2\">sex:</td></tr>\n";
+	foreach (sort keys %{$prof{sex}}){$doc.="<tr class=\"profil-info\"><td>$_</td><td>($prof{sex}{$_})</td></tr>\n";}
+	$doc.="<tr><td colspan=\"2\">&nbsp;</td></tr>\n";
+	
+	$doc.="<tr><td colspan=\"2\">education:</td></tr>\n";
+	foreach (sort keys %{$prof{education}}){$doc.="<tr class=\"profil-info\"><td>$_</td><td>($prof{education}{$_})</td></tr>\n";}
+	$doc.="<tr><td colspan=\"2\">&nbsp;</td></tr>\n";
+	
+	$doc.="<tr><td colspan=\"2\">city:</td></tr>\n";
+	foreach my $key(sort keys %{$prof{city}}){$doc.="<tr class=\"profil-info\"><td>$key</td><td>($prof{city}{$key})</td></tr>\n";}
+	$doc.="<tr><td colspan=\"2\">&nbsp;</td></tr></table>";
+
+
+=head1
+ $doc.="all hosts\n";
+ $doc.="day         visits     IPs   users   sess.\n";
+ my $lastday;
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $TOM::DB_name_STAT.$env{t}a110_weblog_day
+	WHERE host='$tom::H_cookie' AND host_sub=''
+	ORDER BY reqdatetime DESC
+	LIMIT 31");
+ while (my %db0_line=$db0->fetchhash)
+ {
+  $db0_line{reqdatetime}=~s/ \d\d:\d\d:\d\d$//;
+  $lastday=$db0_line{reqdatetime};
+  $doc.=$db0_line{reqdatetime};
+  $doc.=" ".sprintf("%7s",$db0_line{visits});
+  $doc.=" ".sprintf("%7s",$db0_line{IPs});
+  $doc.=" ".sprintf("%7s",$db0_line{IDhashs});
+  $doc.=" ".sprintf("%7s",$db0_line{IDsessions});
+
+  $doc.="\n";
+ }
+
+ $doc.="\n";
+
+ my $db0=$main::DBH->Query("
+	SELECT host_sub
+	FROM $TOM::DB_name_STAT.$env{t}a110_weblog_day
+	WHERE	host='$tom::H_cookie' AND host_sub!=''
+		AND reqdatetime LIKE '$lastday%'
+	ORDER BY reqdatetime DESC");
+ while (my %db0_line=$db0->fetchhash)
+ {
+  $doc.="\n";
+  $doc.="host: $db0_line{host_sub}\n";
+  $doc.="day         visits     IPs   users   sess.\n";
+  my $db1=$main::DBH->Query("
+	SELECT *
+	FROM $TOM::DB_name_STAT.$env{t}a110_weblog_day
+	WHERE host='$tom::H_cookie' AND host_sub='$db0_line{host_sub}'
+	ORDER BY reqdatetime DESC
+	LIMIT 31");
+  while (my %db1_line=$db1->fetchhash)
+  {
+   $db1_line{reqdatetime}=~s/ \d\d:\d\d:\d\d$//;
+   $doc.=$db1_line{reqdatetime};
+   $doc.=" ".sprintf("%7s",$db1_line{visits});
+   $doc.=" ".sprintf("%7s",$db1_line{IPs});
+   $doc.=" ".sprintf("%7s",$db1_line{IDhashs});
+   $doc.=" ".sprintf("%7s",$db1_line{IDsessions});
+
+   $doc.="\n";
+  }
+
+ }
+=cut
+
+ #print $doc."\n";
+
+
+
+
+	$email=~s|<%BODY%>|$doc|;
+	$email=~s|<%SUBJECT%>|$TEXTS{$env{lng}}{"email-subject"}|;
+	#$email=~s|<%FROM%>|"$CRON::core_uname_n($tom::H)" <CRON\@$tom::H>|;
+	use Utils::datetime;
+	#$email=~s|<%DATE%>|$Utils::datetime::DAYS{en}[$cron::Twday], $cron::Tmday $Utils::datetime::MONTHS{en}[$cron::Tmom-1] $cron::Fyear $cron::Fhour:$cron::Fmin:$cron::Fsec +-200|g;
+	
+	
+	my %env0;
+	foreach (split(';',$env{to_email})){$env0{$_}++;}
+	$env{to_email}="";foreach (sort keys %env0){$env{to_email}.=$_.";" if $_}$env{to_email}=~s|;$||;
+	$env{to_email_parse}=$env{to_email};$env{to_email_parse}=~s|;|>,<|g;$env{to_email_parse}="<".$env{to_email_parse}.">";
+	$email=~s|<%TO%>|$env{to_email_parse}|g;
+	
+	#print $email;
+
+	if
+	(
+		# sendtime='$main::time_current'
+		# priority=0
+		# from_name='CRON'
+		# from_email='TOM\@$TOM::hostname'
+		# from_host='$tom::H'
+		# from_service='a110' a400 a300
+		# to_name = ''
+ 
+		$main::DB{main}->Query("
+			INSERT INTO TOM.a130_send
+			(
+				sendtime,
+				priority,
+				from_name,
+				from_email,
+				from_host,
+				from_service,
+				to_name,
+				to_email,
+				body)
+			VALUES	(
+				'$main::time_current',
+				'0',
+				'CRON',
+				'TOM\@$TOM::hostname',
+				'$tom::H',
+				'a300',
+				'',
+				'$env{to_email}',
+				'$email'
+				)"
+		)
+	)
+	{
+		main::_log(9," ok, email sended");
+	}
+	else
+	{
+		main::_log(9," :((, email not sended");
+	}
+ 
+	return 1}
+
+1;

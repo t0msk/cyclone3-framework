@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+require "/usr/bin/tom3-init";
+
+
+%form=
+(
+# '-v'		=>	"verbosity",
+# '-vv, --v'	=>	"verbosity 2, --v=2",
+# '-e'		=>	"execute all modifications",
+# '-s'		=>	"show only all modifications",
+# '-a'	=>	"all directories",
+# '-t'	=>	"this directory",
+# '-r'	=>	"this directory with recursive",
+ '-v'	=>	"verbosity",
+);
+if (($FORM{h})||($FORM{help})){&help();}
+#if ((!$FORM{a})&&(!$FORM{t})&&(!$FORM{r})){&help();}
+
+my $time_current=time;
+
+chdir $TOM::P;
+print "creating tar...\n";
+system ('tar --exclude "*.log" --exclude "*.gz" --exclude "*.tar" --exclude "!*" --exclude "_Inline/*" --exclude "_trash/*" --exclude "_logs/httpd/*" -cvvzf tom3_install.'.$time_current.'.tar.gz .');
+#print "gzip tar...\n";
+#system ("gzip tom3.tar");
+print "chown tar...\n";
+system ("chown tom:tom tom3_install.".$time_current.".tar.gz");
+print "chmod tar...\n";
+system ("chmod 700 tom3_install.".$time_current.".tar.gz");
+#system ("mv archive.$time_current.tar.gz /home/tom/archive.$time_current.tar.gz");

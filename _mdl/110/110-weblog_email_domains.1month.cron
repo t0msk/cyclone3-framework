@@ -1,0 +1,582 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use strict;
+use TOM::Utils::datetime;
+use Utils::datetime;
+use TOM::Utils::vars;
+use TOM::Net::email;
+use Time::Local;
+use DateTime;
+
+sub execute
+{
+	alarm(3600);
+	my %env=@_;
+
+	if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
+	
+	$env{email} = $TOM::contact{'stats'}.";".$TOM::contact{'TOM'};
+	#$env{email} = 'gregor@webcom.sk';
+	$env{email} = TOM::Utils::vars::unique_split( $env{email} );
+	$env{email_body} = "<$env{email}>"; $env{email_body} =~ s|;|>,<|g;
+	$env{lng} = 'sk' unless $env{lng};
+	
+	my %texts =
+	(
+		'sk' =>
+		{
+			'header-from' => '"<%domain%> (<%host%>)" <TOM\@<%domain%>>',
+			'header-to' => $env{email_body},
+			'header-subject' => 'CYCLONE STATS: Navstevnost / Mesiac',
+			'header-date' => TOM::Utils::datetime::mail_current(),
+
+			'main-title' => 'Štatistiky návštev domény <%domain%>',
+			'main-term' => 'za časové obdobie <%time-from%> - <%time-to%>',
+			'main-desc' => 'Štatistiky návštevnosti vyjadrujú vo forme grafu a súvisiacich číselných údajov priebeh a výsledok návštevnosti webovej stránky za uplynulý mesiac. Zároveň nám štatistiky poskytujú prehľad o počte návštev v jednotlivých dňoch a špeciálne cez víkendy, ktoré sú vyznačené tmavšími pruhmi.',
+
+			'section-title' => 'Pre <%subdomain-name%>',
+			'graph-desc' => 'Počet zobrazených stránok',
+			'field-day' => 'Deň',
+			'field-av' => 'av',
+			'field-dv' => 'dv',
+			'field-fv' => 'fv',
+			'field-IP' => 'IP',
+			'field-users' => 'uživatelia',
+			'field-sessions' => 'návštev',
+
+			'def-title' => 'Vysvetlivky',
+			'def-av' => 'Počet všetkých zobrazení akejkoľvek stránky zo subdomény.',
+			'def-dv' => 'Počet všetkých primaych zobrazení stránky, teda ak užívateľ priamo do svojho browseru napíše adresu.',
+			'def-fv' => 'Počet všetkých zobrazení hlavnej stránky danej subdomény.',
+			'def-IP' => 'Počet unikátnych IP adries (nie je počet uživateľov).',
+			'def-users' => 'Počet uživateľov, ktorí navštívili danú subdoménu (užívateľ môže mať viac IP adries).',
+			'def-sessions' => 'Počet návštev. Návšteva je séria kliknutí (pohyb po stránke) od načítania prvej až do odchodu užívateľa zo stránky. Ak je viac návštev ako samotných unikátnych uživateľov, znamená to, že niektorí sa na stránku opakovane vracajú.',
+
+			'phrase-alldomains' => 'všetky subdomény',
+			'phrase-together' => 'celkovo',
+		},
+		'en' =>
+		{
+	
+		},
+		
+	);
+
+	Database::connect::multi('stats') || die 'cannot connect all databases';
+	
+	my $boundary = '------------060509090608000908080106';
+	my $email = <<"HEADER";
+From: <\%header-from%>
+To: <\%header-to%>
+Subject: <\%header-subject%>
+Date: <\%header-date%>
+List-Id: TOM3
+MIME-Version: 1.0
+Content-Type: multipart/related; boundary="$boundary"
+
+This is a multi-part message in MIME format.
+--$boundary
+Content-Type: text/html;charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+<#BODY#>
+--$boundary
+Content-Type: image/gif; name="webcom_logo.gif"
+Content-ID: <part1.webcom.icon\@webcom.sk>
+Content-Transfer-Encoding: base64
+Content-Disposition: inline; filename="webcom_logo.gif"
+
+R0lGODlhlgAcAMQAAL/Awd/g4O0bI/f395iam7i5urCxss/Q0YiKjJCSk+/v8NfY2Ofn6Kip
+q8fIyfaNke84P/zU1v3i4/RxdvebnvV/hKCho4CChP///wAAAAAAAAAAAAAAAAAAAAAAAAAA
+ACH5BAAAAAAALAAAAACWABwAAAX/ICaOZGmeaIpaV6u+cCzPL0MQFuLQfD+yLp9wSBQxEg6A
+I0DYFZ8l4AVKrZ4aAIChYGEgrFApeEy1BACWRgGTIBPF7rjPrDUYMF95D67vwwBYAEcOFn40
+fIaJJQM3Cwo5DIoxiJKSA4QWBQqVMJScnxgWohabJwOiDSmPowMkCgAELS0EmidSCgYJshcE
+AK0qCgWxuxYOvyXBurIJtSdcoiIHDcsGpdENCC0J1SrTLWsnB7ILKAWyqSMO2buyOiZS7LsI
+BygD5vGyhST2+LIFxz9k2cA3D8OjfvRQBGgHcMSwC/oWrbsQYISBfrvABcS4K+G+h/0iigDZ
+j8C7dhwP/0zERw7FQ48jFu6yNkLcrHS7EgAIsKDAypYi4EHMYmAlxY/sEoxSJhKDzRaBvLWA
+GZSdgQM8L8ZrgHWBVm0pnrYp8bXFnRLKLiRUMNEAQEbLSEjhNoJf3BH3ZlUkwcBAU6cQaR6k
+WrUFgr042wEV4WBXJBQTFyvAB3DBXQwALrvaBdSTiMzjREyWRaBhDRERHjyIIAJxFIEnIp9I
+67oEaIgkbksBIFcW75GyCIuQqtGziLTg8iIwHWOCgOcCJqgwLqV24Qu/Tc0coWz5urEYGDAc
+sctAlvPnpUQ0jiGvPikaaTyADv1BCuqyrGP4mv3E17NP8ZZXQv+RwBE+68mSgv9lYOGRnw8Q
+0PccBPcpaMuDJtzWnwmjtdDKLQblg8EA25F3IDsJBnGCTEHsoh8MEkJXoYqvtaCfhi/sJh5U
+G13AwG3omDhVAEQWaSSRj4Vi4QkMXjDWRC++EKGEFK6wZI1HZejbCyxugyEGTRb1pQiyzcCe
+e9fFN8N8EtpnJY292XgCji+kpRkb8YA3glRnycAeciIoxxwMFdBXwXRXxpmlbVu+8JQsToxw
+W3AmPCqcCPZkZ9yke3XIy6AoLNCKBBRQIMGIiyn65qK5NarCACsttwg7eZhgZ6Qj9JWNprI0
+ZNdNFu1CgHULBFkTL64xodaFcPZ4o6sqTNonCWVtOEKGk4YFksMuvJJWQBbYsJPkiCQppQUl
+jxJgB0iE4Senli1Ye4Kn48a0C6iPctTtiYTBdWAJJOFjEparPhuvDFr95ZBZLyxgVFIwCSVw
+vXXl1Q+8/ah5XcFzQqvCjpcCdgFN9RCSlAGpitCTxOpGOYICJhNTQMoGOQASLSTjNUo5o1Ds
+1CjChQAAOw==
+--$boundary--
+HEADER
+
+	# Najprv nalejem texty
+	while ( (my $k, my $v) = each %{$texts{$env{lng}}} )
+	{ next unless $k =~ /^header-/; $email =~ s|<%$k%>|$v|g; }
+
+	#$tom::Hm ($TOM::hostname
+	my $lm = DateTime->now->subtract( months => 1 )->truncate( to => 'month' );
+	my $lmd = DateTime->last_day_of_month( year => $lm->year,
+																				month => $lm->month,
+																				hour => 23,
+																				minute => 59,
+																				second => 59 );
+
+	my %times = (
+		'from' => $lm->strftime('%Y-%m-%d %H:%M:%S'),
+		'to' => $lmd->strftime('%Y-%m-%d %H:%M:%S'),
+
+		'year' => $lm->year,
+		'month' => $lm->month,
+		'duration' => $lmd->mday,
+
+		'sk' => {
+			'from' => $lm->strftime('%d. %m. %Y'),
+			'to' => $lmd->strftime('%d. %m. %Y'),
+		},
+		
+		'en' => {
+			'from' => $lm->strftime('%Y-%m-%d'),
+			'to' => $lmd->strftime('%Y-%m-%d'),
+		},
+	);
+
+	# telo statistik
+	my $doc = <<"BODY";
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=windows-1250" />
+  </head>
+  <body>
+  	<style>
+			body { font-family: Arial, Verdana; }
+
+			#page { width: 650px; }
+
+			/* Nadpis */
+			h1 { color: #808285; clear: left; }
+			.main-logo { float: left; margin: 0 15px 15px 0; }
+			/*.main-logo { margin: 0 15px 15px 0; } */
+				.main-title { font-size: 0.55em; }
+				.main-term { font-size: 0.4em; font-weight: normal; }
+				.main-desc { color: #808285;
+										 margin: 10px 0 20px 0; font-size: 0.4em; font-weight: normal;
+										 border: 10px solid gray; border-width: 0 0 0 10px;
+										 padding: 0 0 0 10px;
+				}
+
+			/* Obsah */
+			.days {
+				height: 200px;
+				vertical-align: bottom;
+				background-color: #cfcfcf;
+				padding-top: 15px;
+			}
+
+			.days div {
+				width: 100%;
+				vertical-align: top;
+				text-align: center;
+				background-color: #f00;
+				font-size: 0px;
+			}
+
+			.days .infoonly {
+				color: #000;
+				background: transparent;
+				font-size: 9px;
+			}
+
+			.dayinfo {
+				font-size: 9px;
+				background: #D1D1D1;
+			}
+
+			td, th { text-align: right; font-size: 12px; }
+
+			.odd { background: #e1e1e1; }
+			.even { background: #efefef; }
+
+			.others td {
+				background: #F7F7F7;
+				border-bottom: 1px solid #000;
+				font-size: 9px;
+			}
+
+			.endblock { clear: both; }
+			
+			#definitions { width: 350px; font-family: Verdana, Arial; font-size: 10px; }
+			#definitions h2 { font-size: 14px; }
+			#definitions p { font-size: 10px; }
+			
+			.definition { width: 350px; padding-bottom: 10px; }
+			.definition h2 { width: 100px; margin: 0; padding: 0; }
+			.definition p { display: block; width: 250px; margin: 0; padding: 0; }
+			.definition h2, .definition p { float: left; }
+			
+			.first { color: #646464; }
+			.others .first { color: #646464; font-size: 12px; }
+  	</style>
+
+  	<div id="page">
+			<h1>
+				<img class="main-logo" src="cid:part1.webcom.icon\@webcom.sk" alt="webcom logo" border="0" />
+				<div class="main-title"><\%main-title%></div>
+				<div class="main-term"><\%main-term%></div>
+				<div class="main-desc"><\%main-desc%></div>
+			</h1>
+
+			<div id="content">
+				<#SUMMARY#>
+				<#DEFINITIONS#>
+			</div>
+		</div>
+  </body>
+</html>
+BODY
+
+	# Najprv nalejem texty
+	while ( (my $k, my $v) = each %{$texts{$env{lng}}} )
+	{ next unless $k =~ /^main-/; $doc =~ s|<%$k%>|$v|g; }
+
+	$doc =~ s|<%time-from%>|$times{$env{lng}}{from}|g;
+	$doc =~ s|<%time-to%>|$times{$env{lng}}{to}|g;
+
+	$email =~ s|<#BODY#>|$doc|;
+
+	$email =~ s|<%domain%>|$tom::Hm|g;
+	$email =~ s|<%host%>|$TOM::hostname|g;
+
+ my $definitions = <<"EXPLAIN";
+<div id="definitions">
+	<h2><\%def-title%></h2>
+
+  <div class="definition">
+  	<h2><\%field-av%></h2>
+  	<p>
+  		<\%def-av%>
+  	</p>
+  	<br class="endblock" />
+  </div>
+
+  <div class="definition">
+  	<h2><\%field-dv%></h2>
+  	<p>
+  		<\%def-dv%>
+  	</p>
+  	<br class="endblock" />
+  </div>
+
+  <div class="definition">
+  	<h2><\%field-fv%></h2>
+  	<p>
+  		<\%def-fv%>
+  	</p>
+  	<br class="endblock" />
+  </div>
+
+  <div class="definition">
+  	<h2><\%field-IP%></h2>
+  	<p>
+  		<\%def-IP%>
+  	</p>
+  	<br class="endblock" />
+  </div>
+
+  <div class="definition">
+  	<h2><\%field-users%></h2>
+  	<p>
+  		<\%def-users%>
+  	</p>
+  	<br class="endblock" />
+  </div>
+
+  <div class="definition">
+  	<h2><\%field-sessions%></h2>
+  	<p>
+  		<\%def-sessions%>
+  	</p>
+  	<br class="endblock" />
+  </div>
+  
+  
+</div>
+<br /><br />
+EXPLAIN
+
+	# Najprv nalejem texty
+	while ( (my $k, my $v) = each %{$texts{$env{lng}}} )
+	{ next unless $k =~ /^(def|field)-/; $definitions =~ s|<%$k%>|$v|g; }
+
+	$email =~ s|<#DEFINITIONS#>|$definitions|;
+
+#----------------------------------------------------------------------------------------
+	
+
+	# zistim si pre ake subdomeny idem generovat statistiky
+	my @subdomains;
+
+	my $db0 = $main::DB{stats}->Query("
+		SELECT
+			distinct domain_sub
+		FROM
+			TOM.a110_weblog_day
+		WHERE
+			domain='$tom::H_cookie' AND
+			domain_sub!='' AND
+			reqdatetime>='$times{from}' AND
+			reqdatetime<='$times{to}'
+		ORDER BY
+			reqdatetime DESC");
+
+	if ( $db0->numrows > 1 )
+	{
+		push @subdomains, '';
+		while (my %db0_line=$db0->fetchhash)
+		{ push @subdomains, $db0_line{domain_sub}; }
+	}
+	else
+	{
+		push @subdomains, $tom::H_cookie;
+	}
+
+	# generujem
+	foreach my $subdomain (@subdomains)
+	{
+		my $summary = <<"SECTION";
+				<style>
+					<\%day_visits_style%>
+				</style>
+		
+				<table>
+					<tr>
+						<th colspan="32" class="domain-header">| <\%section-title%></th>
+					</tr>
+		
+					<tr>
+						<th class="first"><\%graph-desc%></th>
+						<\%table-visits_graph%>
+					</tr>
+		
+					<tr>
+						<th class="first"><\%field-day%></th><\%table-days%>
+					</tr>
+		
+					<tr class="others"><td class="first"><strong><\%field-av%></strong></td><\%table-av%></tr>
+					<tr class="others"><td class="first"><strong><\%field-dv%></strong></td><\%table-dv%></tr>
+					<tr class="others"><td class="first"><strong><\%field-fv%></strong></td><\%table-fv%></tr>
+					<tr class="others"><td class="first"><strong><\%field-IP%></strong></td><\%table-IP%></tr>
+					<tr class="others"><td class="first"><strong><\%field-users%></strong></td><\%table-users%></tr>
+					<tr class="others"><td class="first"><strong><\%field-sessions%></strong></td><\%table-sessions%></tr>
+		
+				</table>
+
+				<br />
+				<hr />
+				<br />
+				<#SUMMARY#>
+SECTION
+
+		# Najprv nalejem texty
+		while ( (my $k, my $v) = each %{$texts{$env{lng}}} )
+		{ next unless $k =~ /^(section|graph|field)-/; $summary =~ s|<%$k%>|$v|g; }
+
+		my $stats_header;
+		$stats_header = $subdomain if $subdomain;
+		$stats_header = $texts{$env{lng}}{'phrase-alldomains'} unless $subdomain;
+		my $style_header = $stats_header."-"; $style_header =~ s|[ _\.]|-|g;
+		
+		$summary =~ s|<%subdomain-name%>|$stats_header|g;
+		
+		# Medzipremenne
+		my $day_visits_style = ".".$style_header."day-<%day%> { height: <%visits-percent%>px; }\n";
+		my $day_visits = "<td class=\"days <%class-name%>\"><div class=\"infoonly\"><%visits%></div><div class=\"".$style_header."day-<%day%>\"></div></td>\n";
+		my $days = "<td class=\"dayinfo\"><%day_html%></td>\n";
+		my $others = "<td><%value%></td>\n";
+		
+		my $max = 0;
+		my $min = 0;
+		
+		# TODO: [Gregson to Aben] maximalna a minimalna hodnota v nejakom selekte sa da zistit aj funkciami min a max
+		my $db0 = $main::DB{stats}->Query("
+			SELECT
+				max(visits) as max,
+				min(visits) as min
+			FROM
+				TOM.a110_weblog_day
+			WHERE
+				domain='$tom::H_cookie' AND
+				domain_sub='$subdomain' AND
+				reqdatetime>='$times{from}' AND
+				reqdatetime<='$times{to}'
+		");
+		my %db0_line = $db0->fetchhash;
+		$max = $db0_line{max}; $min = $db0_line{min};
+		
+		# vyskladavam statistiky
+		my $db0 = $main::DB{stats}->Query("
+			SELECT
+				*
+			FROM
+				TOM.a110_weblog_day
+			WHERE
+				domain='$tom::H_cookie' AND
+				domain_sub='$subdomain' AND
+				reqdatetime>='$times{from}' AND
+				reqdatetime<='$times{to}'
+			ORDER BY
+				reqdatetime DESC");
+		
+		my %table; # pouzijem na ulozenie dat, hlavne preto, aby som sem mohol doplnit chybajuce hodiny
+		my %count = ( av => 0, dv => 0, fv => 0 );
+
+		# naplnim data do %table hashu
+		while (my %db0_line=$db0->fetchhash)
+		{
+			$db0_line{reqdatetime}=~s/^(\d\d\d\d\-\d\d\-\d\d).*$/\1/;
+		
+			$table{$db0_line{reqdatetime}}{visits_percent} = int(($db0_line{visits}/($max/100)));
+			$table{$db0_line{reqdatetime}}{visits_pixels} = int(2*$table{$db0_line{reqdatetime}}{visits_percent});
+			$table{$db0_line{reqdatetime}}{av} = $db0_line{visits}; $count{av} += $db0_line{visits};
+			$table{$db0_line{reqdatetime}}{dv} = $db0_line{visits_direct}; $count{dv} += $db0_line{visits_direct};
+			$table{$db0_line{reqdatetime}}{fv} = $db0_line{visits_firstpage}; $count{fv} += $db0_line{visits_firstpage};
+			$table{$db0_line{reqdatetime}}{IP} = $db0_line{IPs};
+			$table{$db0_line{reqdatetime}}{users} = $db0_line{IDhashs};
+			$table{$db0_line{reqdatetime}}{sessions} = $db0_line{IDsessions};
+		}
+
+		for my $i (1 .. $times{duration})
+		{
+			my $dt = DateTime->new( year => $times{year}, month => $times{month}, day => $i);
+			my $datetime_string = $dt->strftime('%Y-%m-%d');
+			my $datetime_html = $dt->year.'<br />'.$Utils::datetime::MONTHS{en}[$dt->month-1].'<br />'.$dt->day;
+
+			# ak k tejto hodine nie su statistiky, nastavim ich na 0
+			if (!$table{$datetime_string}{av})
+			{
+				$table{$datetime_string}{visits_percent} = 0;
+				$table{$datetime_string}{visits_pixels} = 0;
+				$table{$datetime_string}{av} = 0;
+				$table{$datetime_string}{dv} = 0;
+				$table{$datetime_string}{fv} = 0;
+				$table{$datetime_string}{IP} = 0;
+				$table{$datetime_string}{users} = 0;
+				$table{$datetime_string}{sessions} = 0;
+			}
+
+			my $class_name;
+			$class_name = "even" if $dt->wday <= 5;
+			$class_name = "odd" if $dt->wday >= 6;
+			
+			# naplnam statistiky do designu
+			$summary =~ s|<%day_visits_style%>|$day_visits_style<%day_visits_style%>|g;
+			$summary =~ s|<%table-visits_graph%>|$day_visits<%table-visits_graph%>|g;
+			$summary =~ s|<%table-days%>|$days<%table-days%>|g;
+
+			$summary =~ s|<%day%>|$datetime_string|g;
+			$summary =~ s|<%day_html%>|$datetime_html|g;
+
+			$summary =~ s|<%visits-percent%>|$table{$datetime_string}{visits_pixels}|g;
+
+			$summary =~ s|<%visits%>|$table{$datetime_string}{av}|g;
+		
+			$summary =~ s|<%table-av%>|$others<%table-av%>|g; $summary =~ s|<%value%>|$table{$datetime_string}{av}|g;
+			$summary =~ s|<%table-dv%>|$others<%table-dv%>|g; $summary =~ s|<%value%>|$table{$datetime_string}{dv}|g;
+			$summary =~ s|<%table-fv%>|$others<%table-fv%>|g; $summary =~ s|<%value%>|$table{$datetime_string}{fv}|g;
+			$summary =~ s|<%table-IP%>|$others<%table-IP%>|g; $summary =~ s|<%value%>|$table{$datetime_string}{IP}|g;
+			$summary =~ s|<%table-users%>|$others<%table-users%>|g; $summary =~ s|<%value%>|$table{$datetime_string}{users}|g;
+			$summary =~ s|<%table-sessions%>|$others<%table-sessions%>|g; $summary =~ s|<%value%>|$table{$datetime_string}{sessions}|g;
+
+			$summary =~ s|<%class%>| class="<%class-name%>"|g;
+			$summary =~ s|<%class-name%>|$class_name|g;
+		}
+
+
+		my $sql_IP = "
+		SELECT
+			IP
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			domain='$tom::H_cookie' AND
+			".(($subdomain)?("domain_sub='$subdomain' AND"):())."
+			reqdatetime>='$times{from}' AND
+			reqdatetime<='$times{to}'
+		GROUP BY
+			IP
+		";
+		my $dbIP = $main::DB{stats}->Query( $sql_IP );
+		$count{IP} = $dbIP->numrows;
+
+		my $sql_users = "
+		SELECT
+			IDhash
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			domain='$tom::H_cookie' AND
+			".(($subdomain)?("domain_sub='$subdomain' AND"):())."
+			reqdatetime>='$times{from}' AND
+			reqdatetime<='$times{to}'
+		GROUP BY
+			IDhash
+		";
+		my $dbusers = $main::DB{stats}->Query( $sql_users );
+		$count{users} = $dbusers->numrows;
+
+		my $sql_sessions = "
+		SELECT
+			IDsession
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			domain='$tom::H_cookie' AND
+			".(($subdomain)?("domain_sub='$subdomain' AND"):())."
+			reqdatetime>='$times{from}' AND
+			reqdatetime<='$times{to}'
+		GROUP BY
+			IDsession
+		";
+		my $dbsessions = $main::DB{stats}->Query( $sql_sessions );
+		$count{sessions} = $dbsessions->numrows;
+
+		# mazem gatewaye, aby som mohol dogenerovat statistiky dalsich subdomen
+		$summary =~ s|<%class%>||g;
+		$summary =~ s|<%class-name%>||g;
+		$summary =~ s|<%day_visits_style%>||g;
+		$summary =~ s|<%table-visits_graph%>||g;
+		$summary =~ s|<%table-days%>|$days|g; $summary =~ s|<%day_html%>|<strong>$texts{$env{lng}}{'phrase-together'}</strong>|g;
+		$summary =~ s|<%table-av%>|$others|g; $summary =~ s|<%value%>|<strong>$count{av}</strong>|g;
+		$summary =~ s|<%table-dv%>|$others|g; $summary =~ s|<%value%>|<strong>$count{fv}</strong>|g;
+		$summary =~ s|<%table-fv%>|$others|g; $summary =~ s|<%value%>|<strong>$count{dv}</strong>|g;
+		$summary =~ s|<%table-IP%>|$others|g; $summary =~ s|<%value%>|<strong>$count{IP}</strong>|g;
+		$summary =~ s|<%table-users%>|$others|g; $summary =~ s|<%value%>|<strong>$count{users}</strong>|g;
+		$summary =~ s|<%table-sessions%>|$others|g; $summary =~ s|<%value%>|<strong>$count{sessions}</strong>|g;
+
+		$summary =~ s|<%.*?%>||g;
+
+		$email =~ s|<#SUMMARY#>|$summary|;
+	}
+
+	$email =~ s|<#.*?#>||g;
+
+#----------------------------------------------------------------------------------------
+
+	if
+	(
+		TOM::Net::email::send
+		(
+			from => "TOM\@$TOM::hostname",
+			to => $env{email},
+			to_name => '',
+			body => $email
+		)
+	)
+	{ main::_log(" ok, email sent"); }
+	else
+	{ main::_log(" :((, email not sent"); }
+	
+	return 1;
+}
+
+1;

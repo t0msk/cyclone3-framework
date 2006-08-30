@@ -1,0 +1,82 @@
+#!/bin/perl
+# ÁÉÍÓÚ - USE UTF-8 !!!
+package CRON::module;
+use strict;
+
+
+sub execute
+{
+ die "this module is tooo old!";
+
+
+ my %env=@_;
+ if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
+
+ if (not CRON::Getvar('DEBUG_mdl_write'))
+ {
+  CRON::debug::log(5,"WARN: in this host nothing to do. DEBUG_mdl_write is off");
+  return 1;
+ }
+
+
+ my %modules;
+ my $count;
+ if (opendir (DIR,$cron::P."/_logs"))
+ {
+  my @files=readdir DIR;
+  foreach my $file(@files)
+  {
+   if (($file ne ".")&&($file ne "..")&&($file=~/\.pub\.mdl\.log$/))
+   {
+    CRON::debug::log(8,"parsing $file");
+    CRON::waitload($CRON::LOADAVG);
+    open (HND,"<$cron::P/_logs/$file");
+    my $file_data;
+    while (my $data=<HND>)
+    {
+     $file_data.=$data;
+
+	while ($file_data=~s|<MODULE>(.*?)</MODULE>||s)
+	{
+	 $count++;
+	 #if ($count/1000 == int($count/1000)){print "+$count\n"}
+	 my $data=$1;
+	 my %mdl_env;
+	 while ($data=~s|<VAR id="(.*?)" value="(.*?)" />||s)
+	 {
+	  next unless $1;
+	  next if not defined $2;
+	  $mdl_env{$1}=$2;
+	  $mdl_env{$1}=~s|\"|"|g;
+	 }
+	 $modules{$mdl_env{module}}{load_proc}+=$mdl_env{load_proc};
+	 $modules{$mdl_env{module}}{load_req}+=$mdl_env{load_req};
+	 $modules{$mdl_env{module}}{times}++;
+	}
+    }
+   }
+  }
+  closedir DIR;
+ }
+
+
+
+foreach (sort keys %modules)
+{
+ #CRON::debug::log(5,"$_ proc: $modules{$_}{load_proc}/$modules{$_}{times} ".($modules{$_}{load_proc}/$modules{$_}{times}));
+ #CRON::debug::log(5,"$_ req: $modules{$_}{load_req}/$modules{$_}{times} ".($modules{$_}{load_req}/$modules{$_}{times}));
+ my $var_proc=($modules{$_}{load_proc}/$modules{$_}{times});
+ my $var_req=($modules{$_}{load_req}/$modules{$_}{times});
+ my $times=$modules{$_}{times};
+
+ $main::DBH->Query("REPLACE INTO _mdl(engine,module,load_proc,load_req,executes,update_time)
+ 		VALUES('pub','$_','$var_proc','$var_req','$times','$cron::time_current')");
+}
+
+
+
+
+
+ return 1}
+
+1;

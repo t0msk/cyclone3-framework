@@ -1,0 +1,73 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+use TOM;
+use App::300;
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	#return 1;
+	
+	$env{max}=10000 unless $env{max};
+	
+	if (!$env{max_days}){$cron::ERR="not defined max_days time to archiving";return undef;}
+	$env{max_days}=$env{max_days}*60*60*24; # prepocet na sekundy
+	if (!$env{db_300}){$cron::ERR="not defined database db_300";return undef;}
+	if ($env{host})
+	{
+		$env{sel0}="host='$env{host}' AND (reqtime<$cron::time_current-$env{max_days})";
+		$env{sel1}="AND host='$env{host}'";
+	}
+	else
+	{
+		$env{sel0}="reqtime<$cron::time_current-$env{max_days}";
+		if ($cron::P eq $CRON::P){CRON::debug::log(5,"WARN: master cron, manipulating with all hosts!!!");}
+		else {$cron::ERR="you are not a master cron!!! cannot manipulate USRM with all hosts!!!";return undef;}
+	}
+	
+	my $db0=$main::DBH->Query("
+		SELECT *
+		FROM $env{db_300}.a300_users
+		WHERE $env{sel0}
+		LIMIT $env{max}");
+	my $i;
+	while (my %user=$db0->fetchhash)
+	{
+		my $var=$cron::time_current-$user{reqtime};
+		CRON::debug::log(8,"user:$user{login} IDhash:$user{IDhash} to archive ($var)");
+		App::300::UserArchive($user{IDhash});
+	}
+	
+	
+	
+	return 1;
+}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,135 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use Time::Local;
+use TOM::Net::HTTP::UserAgent;
+#use TOM;
+#use TOM::Debug::logs;
+use TOM::lock;
+use strict;
+use XML::Generator;
+
+sub execute
+{
+	alarm(3600);
+ #return 1;
+#	alarm(30)
+#	return 1;
+	my %env=@_;
+	#return 1;
+	
+	Database::connect::multi('stats') || die "cannot connect all databases";
+	
+	my $lock=new TOM::lock("sitemap generating") || return 1;
+	
+	my $from=$main::time_current-(86400*31);
+	
+	my $sql=qq{
+		SELECT
+			requests AS weight,
+			url
+		FROM
+			TOM.a110_sitemap
+		WHERE
+			domain='$tom::Hm' AND
+			domain_sub='$tom::H' AND
+			weight=0
+		ORDER BY requests DESC
+		LIMIT 1
+	};
+	main::_log("sql:=$sql");
+	my $db0=$main::DB{'stats'}->Query($sql);
+	my %db0_line=$db0->fetchhash();
+	my $weight_full=$db0_line{'weight'};
+	
+	main::_log("max weight is $weight_full on url='$db0_line{url}'");
+	
+	return 1 unless $weight_full;
+	
+	my $X = XML::Generator->new(':pretty');
+	
+=head1
+	print $X->urlset
+	(
+		{
+			'xmlns' => "http://www.google.com/schemas/sitemap/0.84"
+		},
+		$X->bar
+		(
+			{
+				baz => 3 
+			},
+			$X->bam()
+		),
+		$X->bar
+		(
+			"Hey there, world"
+		)
+	);
+=cut
+	my $file=$tom::P.'/!www/sitemap.xml';
+	main::_log("writing to file $file");
+	open(ZIP,'>'.$file) || die "$!";
+	print ZIP "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	print ZIP "<urlset xmlns=\"http://www.google.com/schemas/sitemap/0.84\">\n";
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			TOM.a110_sitemap
+		WHERE
+			domain='$tom::Hm' AND
+			domain_sub='$tom::H' AND
+			time_use>=$from AND
+			requests>=$weight_full/1000
+		ORDER BY requests DESC
+		LIMIT 50000
+	};
+	main::_log("sql:=$sql");
+	my $db0=$main::DB{'stats'}->Query($sql);
+	my $i;
+	while (my %db0_line=$db0->fetchhash())
+	{
+		next if $db0_line{'url'} eq "http://";
+		
+		$i++;
+		
+		$main::DB{'stats'}->Query("
+			UPDATE TOM.a110_sitemap SET time_generate='$main::time_current' WHERE ID='$db0_line{ID}' LIMIT 1
+		");
+		#my $priority=$db0_line{'requests'}/$weight_full;
+		my $priority=$db0_line{'weight'};
+		$priority=$db0_line{'requests'}/$weight_full unless $priority;
+		
+		$priority=sprintf("%.1f",$priority);
+		$priority="0.1" if $priority eq "0.0";
+		
+		my $changefreq=$db0_line{'changefreq'};
+		$changefreq="weekly" unless $changefreq;
+		
+		my $lastmod=$db0_line{'lastmod'};
+		$lastmod=$main::Fyear.'-'.$main::Fmom.'-'.$main::Fmday unless $lastmod;
+		
+		main::_log("[$i] add URL='$db0_line{'url'}' priority='$priority' changefreq='$changefreq' lastmod='$lastmod'");
+		
+		#$X->priority($priority)
+		print ZIP $X->url(
+			$X->loc($db0_line{'url'}),
+			$X->lastmod($lastmod),
+			$X->priority($priority),
+			$X->changefreq($changefreq)
+		)."\n";
+	}
+	
+	print ZIP "</urlset>\n";
+	close(ZIP);
+	
+	#`gzip -c $tom::P/!www/sitemap.xml > $tom::P/!www/sitemap.gz`;
+	
+	$lock->close();
+	
+	return 1
+}
+
+1;

@@ -1,0 +1,109 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+#use App::400;
+#use App::400::SQL::a400;
+
+#use SVGraph;
+#use SVGraph::2D::lines;
+#use SVGraph::2D::columns;
+#use SVGraph::2D::ring;
+
+#use Net::HTTP::LiteAgent;
+
+use Utils::datetime;
+
+use strict;
+
+sub execute
+{
+ my %env=@_;
+ 
+ Database::connect::multi('stats') || die "cannot connect all databases";
+ 
+# print "ideeeeeeeem\n";
+
+#SELECT reqdatetime,AVG(load_1min),AVG(load_5min),AVG(load_15min) FROM `Ca110_load_min` WHERE reqdatetime>'' GROUP BY substring(reqdatetime,1,13) ORDER BY reqdatetime 
+
+ my $lasttime;
+ my $db0=$main::DB{stats}->Query("
+ 	SELECT *
+	FROM TOM.a110_load_day
+	ORDER BY reqdatetime DESC
+	LIMIT 1");
+ if (my %db0_line=$db0->fetchhash())
+ {
+  $lasttime=$db0_line{reqdatetime};
+ }
+
+ $lasttime=~s|\d\d:\d\d:\d\d$|00:00:00|; 
+ print "lasttime=$lasttime\n";
+ 
+# my $from=$main::time_current;
+
+ my $thistime;
+ my $db0=$main::DB{stats}->Query("
+ 	SELECT *
+	FROM TOM.a110_load_min
+	ORDER BY reqdatetime DESC
+	LIMIT 1");
+ if (my %db0_line=$db0->fetchhash())
+ {
+  $thistime=$db0_line{reqdatetime};
+  $thistime=~s|\d\d:\d\d:\d\d$|00:00:00|; 
+ }
+ else
+ {
+  my %date=Utils::datetime::ctodatetime($main::time_current,format=>1);
+  $thistime="$date{year}-$date{mom}-$date{mday} 00:00:00";
+ }
+ 
+ print "to=$thistime\n";
+ 
+ my $db0=$main::DB{stats}->Query("
+	SELECT reqdatetime,AVG(load_1min),AVG(load_5min),AVG(load_15min)
+	FROM TOM.a110_load_min
+	WHERE reqdatetime>='$lasttime'
+	GROUP BY substring(reqdatetime,1,10) 
+	ORDER BY reqdatetime");
+ while (my @db0_line=$db0->fetchrow())
+ {
+#  print "$db0_line[0] $db0_line[1]\n";
+  $db0_line[0]=~s|\d\d:\d\d:\d\d$|00:00:00|;
+  print "-$db0_line[0] $db0_line[1]\n";
+  $main::DB{stats}->Query("
+  	REPLACE INTO TOM.a110_load_day(reqdatetime,load_1min,load_5min,load_15min)
+  	VALUES ('$db0_line[0]',$db0_line[1],$db0_line[2],$db0_line[3])
+  ");
+ }
+
+ 
+
+ return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

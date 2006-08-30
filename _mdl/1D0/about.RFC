@@ -1,0 +1,91 @@
+APP::1D0 - import manager
+--------------------------------
+
+UCEL
+------
+Aplikacia sluzi na automaticky, casovo definovatelny download dat z rozlicnych zdrojov
+(XML exporty, boxiky, etc...)
+Aplikacia nesluzi na dynamicky download zdroja podla momentalnej potreby inej aplikacie.
+
+
+DATA
+------
+CREATE TABLE `a1D0_manager` (
+ `ID` int(10) unsigned NOT NULL auto_increment,
+ `domain` varchar(50) NOT NULL default '',
+ `domain_sub` varchar(150) NOT NULL default '',
+ `name` varchar(50) NOT NULL default '',
+ `URI` varchar(255) binary NOT NULL default '',
+ `dtime_refresh` varchar(100) NOT NULL default 'min:* hour:* wday:* mday:*',
+ `time_insert` int(10) unsigned NOT NULL default '0',
+ `time_start` int(10) unsigned NOT NULL default '0',
+ `time_end` int(10) unsigned default NULL,
+ `time_use` int(10) unsigned NOT NULL default '0',
+ `time_next` int(10) unsigned NOT NULL default '0',
+ `active` char(1) NOT NULL default 'N',
+ PRIMARY KEY  (`ID`),
+ UNIQUE KEY `domain` (`domain`,`domain_sub`,`name`),
+ KEY `active` (`active`)
+) TYPE=MyISAM
+
+
+CREATE TABLE `a1D0_imports` (
+ `ID` int(10) unsigned NOT NULL auto_increment,
+ `IDimport` int(10) unsigned NOT NULL default '0',
+ `time_insert` int(10) unsigned NOT NULL default '0',
+ `time_use` int(10) unsigned NOT NULL default '0',
+ `uses` int(10) unsigned NOT NULL default '0',
+ `import` longtext NOT NULL,
+ PRIMARY KEY  (`ID`),
+ KEY `IDimport` (`IDimport`)
+) TYPE=MyISAM
+
+
+kazdy import ma unikatne ID. aplikacia je globalna, takze tabulky sa nachadzaju
+v databazi TOM a su domenovo zavisle.
+kazdy zdroj (tabulka a1D0_manager) ma tiez unikatne meno v domene. napr. "edon-pocasie" v domene
+"localhost.com"
+
+CONFIG
+---------
+importy sa konfiguruju v tabulke 'a1D0_manager'
+
+kazdemu importu sa definuje cas ako sa ma import opakovat.
+cas je definovany v poli dtime_refresh
+
+URL linka ktora sa ma downloadnut sa definuje v poli 'URI'
+URI ma atribut convert_vars, takze vie aktualne prekladat vsetky premmenne
+v tagoch <$premmenna>
+priklad: "http://www.localhost.com/exports/<$main::Fyear>-<$main::Fmom>-<$main::Fmday>.xml"
+
+configuracia dtime_refresh
+-------------------------------
+"min:* hour:* wday:* mday:*" - kazdu minutu
+"min:*/2 hour:* wday:* mday:*" - kazdu minutu delitelnu dvomi
+"min:*/10 hour:7-18 wday:* mday:*" - kazdu 10tu minutu medzi siedmou hodinou a 18-tou hodinou
+"min:0 hour:7-18 wday:* mday:1" - v prvy den v mesiaci kazdu hodinu medzi siedmou a 18-tou
+
+- nastavenie wday: este nieje implementovane!!!!!!!!!
+
+vsetky importy sa ukladaju do tabulky a1D0_imports.
+raz za den importy starsie ako den vymazava cron - toto bude treba este pozmenit
+
+
+CRON
+-------
+k stahovaniu importov a spravy casu kedy ma byt ktory import stiahnuty dochadza v cron
+systeme. riadenie je globalne. pokus o download a vyhodnocovanie prebieha v minutovych
+intervaloch. pokial sa nepodari niektori import stiahnut do 5s, dalsi pokus sa kona o minutu.
+
+
+API
+-----
+
+volanie kniznice s API:
+use App::1D0;
+
+pouzitie:
+v domenovom prostredi pre pouzitie importu staci volat fciu get_import
+my $import=App:1D0::get_import("edon-pocasie");
+fcia vrati najaktualnejsi stiahnuty import zdroja nazvaneho edon-pocasie
+

@@ -1,0 +1,197 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+#use Term::Screen;
+use Mysql;
+use Time::HiRes;
+use Term::InKey;
+require "/usr/bin/tom3-init";
+%form=
+(
+ '--host'	=>	"restart host (eg. www_localhost_com)",
+# '-s'		=>	"show all",
+);
+if (($FORM{h})||($FORM{help})){&help();}
+
+
+while(1)
+{
+my @pole=`ps aux | grep perl`;
+
+my %hosts;
+
+foreach my $proc(@pole)
+{
+ $proc=~/perl.*TOM.*core/ && do
+ {
+  $proc=~s|[\n\r]||g;
+  $proc=~s| |;|g;
+  while ($proc=~s|;;|;|g){}
+  #$proc=~s|\|\||\||g;
+  my @ref=split(';',$proc);
+  if ($ref[11]=~/tom/){$ref[10]=1}else{$ref[10]=0};
+  $ref[11]=~s|.*?!|!|;$ref[11]=~s|(.*)/.*?$|\1|;
+  my $host;
+  foreach (split('/',$ref[11]))
+  {
+   $_=~s/^!// && do
+   {
+    if ($host){$host=$_.".".$host;next}
+    $host=$_;next;
+   };
+   $host.="/".$_;
+  }
+  $host=~s|^www\.||;
+  push @{$hosts{$host}},[$ref[2],$ref[3],$ref[4],$ref[5],$ref[7],$ref[8],$ref[9],$ref[10],$ref[1]];
+
+  #print "$ref[1] $ref[11]  $host\n";
+ };
+}
+
+#my $terminal = Tgetent Term::Cap { TERM => undef, OSPEED => $ospeed };
+
+
+
+	if ($FORM{s})
+	{#}
+		print "\n";
+		print "[HOST                               ][CPU ][MEM ][VSZ  ][RSS   ]\n";
+		
+		my $cpu_all;
+		my $mem_all;
+		my $rss_all;
+		my $all;
+		my $all_d;
+		
+		foreach my $host(sort keys %hosts)
+		{#}
+			$all_d+=1;
+			for (0..@{$hosts{$host}}-1)
+			{
+				$all++;
+				# host
+				if (!$_){print "[".sprintf("%-35s",$host)."]";}else {print "                                     ";}
+				
+					
+				# CPU
+				print "[";print sprintf("%4s",$hosts{$host}[$_][0]);print "]";
+				$cpu_all+=$hosts{$host}[$_][0];
+				
+				# MEM
+				print "[";print sprintf("%4s",$hosts{$host}[$_][1]);print "]";
+				$mem_all+=$hosts{$host}[$_][1];
+				
+				# MEM
+				print "[";print sprintf("%5d",$hosts{$host}[$_][2]);print "]";
+				
+				print "[".sprintf("%6d",$hosts{$host}[$_][3])."]";
+				$rss_all+=$hosts{$host}[$_][3];
+#				print "[".sprintf("%-4s",$hosts{$host}[$_][4])."]";
+#				print "[".$hosts{$host}[$_][5]."]";
+				
+#				print "[";
+#				if ($hosts{$host}[$_][6] eq "0:00"){print color 'bold red'};
+#				printf("%5s",$hosts{$host}[$_][6]);print color $setcolor;print "]";
+				
+				print "\n";
+				
+			}
+			
+			
+		}
+		
+		
+		print "----------------------------------------------------------------\n";
+		print "[";print sprintf("%4d",$all_d);print "]";
+		print "[";print sprintf("%4d",$all);print "]";
+		print "                         ";#[CPU ][MEM ][VSZ  ][RSS  ]\n";
+		print "[";print sprintf("%4d",$cpu_all);print "]";
+		print "[";print sprintf("%4d",$mem_all);print "]";
+		print "       ";
+		print "[";print sprintf("%6d",$rss_all);print "]";
+		print "\n";
+		last;
+		
+	}
+	else
+	{
+	
+		my $l;
+		foreach my $host(sort keys %hosts)
+		{
+			$l=length($host) if length($host)>$l;
+		}
+	
+		&Clear();
+		print color 'reset bold cyan';
+		print "[HOST".(" " x ($l-4))."][F][P ][CPU ][MEM ][VSZ  ][RSS  ][STAT][START][TIME ]\n";
+		print color 'reset cyan';
+		
+		foreach my $host(sort keys %hosts)
+		{
+			for (0..@{$hosts{$host}}-1)
+			{
+				my $setcolor;
+				if ($hosts{$host}[$_][4] eq "R"){$setcolor = 'reset bold cyan';}
+				else {$setcolor = 'reset cyan';}
+				print color $setcolor;
+				
+				# host
+				if (!$_){print "[".sprintf("%-".$l."s",$host)."]";}else {print (" " x ($l+2));}
+				
+				# F
+				print "[";
+				if ($hosts{$host}[$_][7]){print color 'reset bold cyan';print "*";}
+				else{print color 'reset cyan';print " ";}
+				print color $setcolor;print "]";
+				
+				# P
+				print "[".sprintf("%2s",$_+1)."]";
+					
+					# CPU
+				print "[";
+				if ($hosts{$host}[$_][0] > 2){print color 'bold red'}
+				print sprintf("%4s",$hosts{$host}[$_][0]);print color $setcolor;print "]";
+				
+				# MEM
+				print "[";
+				if ($hosts{$host}[$_][1] > 1.5){print color 'bold red'}
+				print sprintf("%4s",$hosts{$host}[$_][1]);print color $setcolor;print "]";
+				
+				
+				# MEM
+				print "[";
+				if ($hosts{$host}[$_][2] > 12000){print color 'bold red'}
+				print sprintf("%5d",$hosts{$host}[$_][2]);print color $setcolor;print "]";
+				
+				
+				#print "[".sprintf("%4s",$hosts{$host}[$_][1])."]";
+				#print "[".sprintf("%5d",$hosts{$host}[$_][2])."]";
+				print "[".sprintf("%5d",$hosts{$host}[$_][3])."]";
+				print "[".sprintf("%-4s",$hosts{$host}[$_][4])."]";
+				print "[".$hosts{$host}[$_][5]."]";
+				
+				print "[";
+				if ($hosts{$host}[$_][6] eq "0:00"){print color 'bold red'};
+				printf("%5s",$hosts{$host}[$_][6]);print color $setcolor;print "]";
+				
+				print "[".$hosts{$host}[$_][8];
+				
+				print "\n";
+				
+			}
+			
+			
+		}
+		
+		#print color 'reset bold cyan';print "*";print "\n";
+		Time::HiRes::sleep(5);
+		
+	}
+	
+	
+}
+
+
+
+
+&exit();

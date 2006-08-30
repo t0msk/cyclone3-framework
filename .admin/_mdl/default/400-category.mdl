@@ -1,0 +1,118 @@
+#!/usr/bin/perl
+
+sub BaseModul
+{
+	require "_info.m";
+	#require "_table.m";
+
+	my $mdl_temp=<<"HEADER";
+&nbsp;&nbsp;<img src="$tom::H_media/grf/admin/tree_0.gif" border=0>&nbsp;<a style="FONT:bold 11px Verdana;" href="core.pl?type=400-category_add" target="frm_micro"><font color=white>nová</font></a>
+<table cellSpacing=1 cellPadding=0 width="100%" border=0 class="tree-listing">
+<%BASE%>
+</table>
+HEADER
+
+	my $mdl_temp_line=<<"HEADER";
+ <tr onmouseover="this.style.background='#94B7FC';" onmouseout="this.style.background='';" class="tree-item">
+  <td width="100%" nowrap>
+   &nbsp;&nbsp;<%OD%>
+   &nbsp;<a href="core.pl?type=400&whereby=IDcategory&where=<%ID%>" target=frm_base><b><%NAME%></b></a> [<%ID%>] <i>(<%ABOUT%>)</i>
+  </td>
+  <td style="font: bold 10px Verdana; background-color: #7497ec;" nowrap>
+   &nbsp;<img onclick="this.src='core.pl?type=set_active&table=a400_category&ID=<%ID%>';" src="$tom::H_grf/list_<%ACTIVE%>.gif" style="cursor: hand;"width=11 height=12 border=0>
+   &nbsp; <a href="core.pl?type=400-category_edit&ID=<%ID%>" target=frm_micro><IMG src="$tom::H_grf/list.gif" border=0></a>
+   &nbsp; <a href="core.pl?type=400-category_add&ID=<%ID%>"  target=frm_micro><IMG src="$tom::H_grf/close4.gif" border=0></a>
+   <!-- &nbsp;&nbsp;<%DATE%>&nbsp; /-->&nbsp;<B>______0</B> článkov&nbsp;
+   &nbsp;<a href="core.pl?type=400-category_move&ID=<%ID%>" target=frm_micro><IMG src="$tom::H_grf/close3.gif" border=0></a>
+   &nbsp;<a href="core.pl?type=400-category_del&ID=<%ID%>" target=frm_micro><IMG src="$tom::H_grf/close2.gif" border=0></a>
+   &nbsp;
+  </td>
+ </tr>
+HEADER
+
+	my $info=&info_create(
+		'icon'	=>	True,
+		'title'	=>	"Zoznam kategórií článkov",
+	);
+
+
+	my $db_micro = $dbh->Query("SELECT ID,name,xdata,active FROM $MAIN_db_a400_category ORDER BY ID ASC");
+	while (my @db_micro_line=$db_micro->FetchRow())
+	{
+		my $db_micro1 = $dbh->Query("SELECT COUNT(*) FROM $MAIN_db_a400 WHERE IDcategory='$db_micro_line[0]'");
+		my $lines=$db_micro1->FetchRow();
+
+		my $tr_uroven=@tr_cesta=split('',$db_micro_line[0]);
+		$mdl_temp=~s|<%BASE%>|$mdl_temp_line<%BASE%>|g;
+
+		my (undef,$minR,$hourR,$mdayR,$momR,$yearR,undef,undef,undef)=localtime($db_micro_line[3]);
+		$momR++;$yearR=$yearR+1900-2000;
+		if ($minR<"10"){$minR="0$minR"}
+		if ($hourR<"10"){$hourR="0$hourR"}
+		if ($mdayR<"10"){$mdayR="0$mdayR"}
+		if ($momR<"10"){$momR="0$momR"}
+		if ($yearR<"10"){$yearR="0$yearR"}
+
+		$width=$tr_uroven*10+5;
+		$mdl_temp =~s|<%DATE%>|$mdayR.$momR.$yearR $hourR:$minR|g;
+		#if ($db_micro_line[7] eq "Y"){$mdl_temp =~s|<%NAME%>|<font color="#00E050">$db_micro_line[2]</font>|g;}
+		#if ($db_micro_line[7] eq "Y"){$mdl_temp =~s|<%NAME%>|<font color="#00E050">$db_micro_line[2]</font>|g;}
+		$mdl_temp =~s|<%NAME%>|$db_micro_line[1]|g;
+		#if (length($db_micro_line[5])>30)
+		#{$db_micro_line[5]=substr($db_micro_line[5],0,30)."...";}
+		#$mdl_temp =~s|<%ABOUT%>|$db_micro_line[5]|g;
+		$nullid=$lines;
+		if ($nullid<10){$nullid="_$nullid"};
+		if ($nullid<100){$nullid="_$nullid"};
+		if ($nullid<1000){$nullid="_$nullid"};
+		if ($nullid<10000){$nullid="_$nullid"};
+		if ($nullid<100000){$nullid="_$nullid"};
+		if ($nullid<1000000){$nullid="_$nullid"};
+		$mdl_temp =~s|<%PICS%>|$nullid|g;
+
+		#  $mdl_temp =~s|<%ABOUT%>|$db_micro_line[5]|g;
+		$ID0=pack "A8",$db_micro_line[0];
+		$ID0=~s| |_|g;
+		$mdl_temp =~s|<%ID0%>|$ID0|g;
+		if ($db_micro_line[3] eq "Y"){$mdl_temp=~s|<%ACTIVE%>|g|;}
+		else {$mdl_temp=~s|<%ACTIVE%>|r|;}
+
+
+		$i0=0;$od="";
+
+		my $mdl_temp_od="<%IMG%>";
+
+		while ($i0<(length($db_micro_line[0])/2))
+		{
+			$i0++;
+			$od .= $mdl_temp_od;
+			$od =~s|<%TBG%>|<%TBG-$i0%>|g;
+
+			if (($i0+1) == (length($db_micro_line[0])/2))
+			{
+				$od=~s|<%IMG%>|<img src="$tom::H_media/grf/admin/forum_0_3.gif" border=0>|g;
+			}
+
+			if ($i0 == (length($db_micro_line[0])/2))
+			{
+				$od=~s|<%IMG%>|<a href="core.pl?type=400&wherelike=IDcategory&where=$db_micro_line[0]" target="frm_base"><img src="$tom::H_media/grf/admin/tree_0.gif" border=0></a>|g;
+			}
+			else
+			{
+				$od=~s|<%IMG%>|&nbsp;&nbsp;|g;
+			}
+		}
+
+		$mdl_temp =~s|<%ID%>|$db_micro_line[0]|g;
+
+		$mdl_temp =~s|<%OD%>|$od|g;
+
+		$mdl_temp =~s|<%BG%>|#96B2C8|g;
+
+		$i=$i+2;
+	}
+
+	return $info.$mdl_temp;
+}
+
+1;

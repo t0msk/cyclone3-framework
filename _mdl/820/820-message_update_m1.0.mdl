@@ -1,0 +1,101 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	
+	$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+	$env{db_820}=$TOM::DB_name unless $env{db_820};
+	
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	if($env{xt_xlng})
+	{
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
+	my $db=$main::DBH->Query("
+		SELECT
+			IDforum, lng
+		FROM
+			$env{db_820}.a820_msgs
+		WHERE
+			ID='$env{db_ID}'
+			AND (lng='$env{lng}' OR lng IS NULL)
+		LIMIT 1
+	");
+	if($db)
+	{
+		if(my %db_line=$db->fetchhash())
+		{
+			my $dbSetSQL="";
+			
+			my $fieldCounter;
+			
+			foreach(sort keys %main::FORM)
+			{
+				if($_=~/^val_(.*?)$/)
+				{
+					$fieldCounter++;
+					
+					my $tmpField=$1;
+					
+					$main::FORM{$tmpField}=~s|[<>]||g;
+					$main::FORM{$tmpField}=~s|[<>]||g;
+					$main::FORM{$tmpField}=~s|\r||g;
+					$main::FORM{$tmpField}=~s|\n\n||g;
+					$main::FORM{$tmpField}=~s|\\||g;
+					$dbSetSQL.=" $1='".$main::FORM{'val_'.$tmpField}."', ";
+				}
+			}
+			
+			if($fieldCounter)
+			{
+				$dbSetSQL=~s|, $||;
+				
+				main::_log("
+						UPDATE
+							$env{db_820}.a820_msgs
+						SET
+							$dbSetSQL
+						WHERE
+							ID='$env{db_ID}'
+							AND lng='$db_line{lng}'
+				");
+
+				if ($main::DBH->Query("
+						UPDATE
+							$env{db_820}.a820_msgs
+						SET
+							$dbSetSQL
+						WHERE
+							ID='$env{db_ID}'
+				"))
+				{
+					main::_log("success! have a beer!");
+				}
+			}
+			
+			$XSGN{TMP}=$XSGN{TMP_success};
+			
+			foreach(keys %db_line)
+			{
+				$XSGN{TMP}=~s|<%$_%>|$db_line{$_}|g;
+			}
+		}
+		else
+		{
+			$XSGN{TMP}=$XSGN{TMP_failure};
+		}
+	}
+	else
+	{
+		$XSGN{TMP}=$XSGN{TMP_failure};
+	}
+	return 1;
+}
+
+1;

@@ -1,0 +1,222 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 NAME
+fview_xX
+=cut
+=head1 HEAD_VERSION_BUILD
+3.030731
+=cut
+=head1 DESCRIPTION
+full view clanku s prepojenim na ine tabulky
+a moduly.
+- automaticky select jazyka
+- automaticke hladanie v archive
+- automaticke hladanie v linkach
+- updatuje visits v clanku (ak $env{visits})
+- updatuje lasttime v clanku
+- zobrazuje priradeny forum
+- zobrazuje vkladaci formular forumu
+=cut
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+        <value id="preview" value="1" />
+        <value id="output" value="xsgn" />
+
+        <input id="TMP_view" value="varchar(100)">gateway for the article body</input>
+	<input id="novisits" value="boolean">increase the visits</input>
+	<input id="show_catname" value="boolean">show name of category</input>
+	<input id="shift_first_img" value="boolean">exclude the first image for use in other gateway</input>
+	<input id="TMP_info" value="varchar(100)">gateway for the article information</input>
+	<input id="TMP_same_author" value="varchar(100)">gateway for list of articles from the same author</input>
+	<input id="same_author_return_null" value="boolean">return empty box if no articles from the author are found</input>
+	<input id="same_author_return_string" value="varchar">default content string if no articles from the same author are found</input>
+	<input id="TMP_same_editor" value="varchar(100)">gateway for list of articles from the same editor</input>
+	<input id="same_editor_return_null" value="boolean">return empty box if no articles from the editor are found</input>
+	<input id="same_editor_return_string" value="varchar">default content string if no articles from the same editor are found</input>
+
+	<source type="db_400" value="varchar">articles db name (default - web db_400)</source>????????????????????
+	<source type="db_400" value="varchar">articles db name (default - web db_400)</source>????????????????????
+        <source type="db.table" value="this.a400" />????????????????????
+	<source type="db.table" value="this.a400_arch" />????????????????????
+
+	<input id="xsgn_global" value="0/1/2" />
+
+</DESCRIPTION>
+
+=cut
+=head1 CHANGES
+build 030731 - Aben
+        *) pridanie forumov
+build 030730 - Aben
+        *) uprava na MySQL 4.x s UNION SELECTom
+build 030709 - Aben
+        *) db selects fixes
+build 030708 - Aben
+        *) data hash generation
+build 030703 - Aben
+        *) shift_first_img for 400-fview.mdl added
+build 030701 - Aben
+        *) FIRST MAKE
+=cut
+=head1 WARNINGS & BUGS
+        *) ak nenajde clanok vypisuje chybu v SK
+=cut
+
+sub execute
+{
+
+ #Tomahawk::debug::mdllog(0,"ideme na tooo! :)");
+
+ my %env=@_;
+ $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+ $env{db_400}=$TOM::DB_name unless $env{db_400};
+
+ # pokial taham articles z inej db, tak automaticky
+ # taham aj sources z inej db
+ $env{db_120}=$env{db_400} if ($env{db_400} ne $TOM::DB_name);
+
+ # KDE SU OBRAZKY?
+ $env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+ $env{db_500}=$TOM::DB_name unless $env{db_500};
+
+ # KDE SU FORUMY?
+ $env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+ $env{db_820}=$TOM::DB_name unless $env{db_820};
+
+ my %URL_IDcat; # kazdy clanok ina linka :)
+ if ($env{URL_IDcat})
+ {foreach (keys %env){$_=~/^URL_IDcat_(.*)$/ && do{$URL_IDcat{'URL_IDcat_'.$1}=$env{'URL_IDcat_'.$1};};}}
+
+# foreach (keys %URL_IDcat)
+# {
+#  Tomahawk::debug::log(0,"URL_IDcat $_=$URL_IDcat{$_}");
+# }
+
+  my %datestamps;
+  my %datevars=Utils::datetime::ctodatetime($tom::time_current);
+
+
+=head1
+  $datestamps{0}=$tempstamp2-((7-$env{max})*86400);
+  $env{temp_select}.=" OR datestamp='$datestamps{0}'";
+  $tempstamp2=$tempstamp;
+  $var=$weekday;
+  while ($var <= $env{max})
+  {
+   $datestamps{$var}=$tempstamp2;
+   $env{temp_select}.=" OR datestamp='$tempstamp2'";
+   $tempstamp2+=86400;
+   $var++;
+  }
+  $datestamps{8}=$tempstamp2+((7-$env{max})*86400);
+  $env{temp_select}.=" OR datestamp='$datestamps{8}'";
+  if ($main::IAdm){
+  $XSGN{TMP}.="weekday - ".$env{weekday}."<BR/>\n";
+  foreach (sort keys %datestamps)
+  {
+    my %datevarsx=Utils::datetime::ctodatetime($datestamps{$_});
+    $XSGN{TMP}.="datestamp $datestamps{$_} - $_ ::::  :::: ".($datevarsx{mday}).",".$datevarsx{mom}.",".$datevarsx{year}."<BR/>\n";
+    #if ($env{datestamp} ne $datestamps{$_}){$env{temp_select}.=" OR datestamp='$datestamps{$_}'";}##
+  }
+=cut
+
+=head1
+		if ($main::IAdm){$XSGN{TMP}.="
+		SELECT
+			datestamp
+		FROM $env{db_021}.a021_program
+		WHERE
+			ID_tv='$env{default_tv}'
+			AND
+			(datestamp='$env{datestamp}'$env{temp_select})
+		GROUP BY
+			datestamp
+		ORDER BY
+			start_stamp
+		";}
+
+	   }
+
+	  my @tab_activations=("0","0","0","0","0","0","0","0","0");
+
+	  if (my $db1=$main::DBH->Query("
+		SELECT
+			datestamp
+		FROM $env{db_021}.a021_program
+		WHERE
+			ID_tv='$env{default_tv}'
+			AND
+			(datestamp='$env{datestamp}'$env{temp_select})
+		GROUP BY
+			datestamp
+		ORDER BY
+			start_stamp
+		"))
+	  {
+		while(my %db1_line=$db1->FetchHash())
+	  	{
+			my $tempkey=(grep {$datestamps{$_} eq $db1_line{datestamp}} keys %datestamps)[0];
+			$tab_activations[$tempkey]="1";
+
+			if ($main::IAdm)
+			{
+				$XSGN{TMP}.="$db1_line{datestamp}<br/>";
+				$XSGN{TMP}.="$tempkey<br/>";
+				$XSGN{TMP}.="activations[$tempkey]=1 $tab_activations[$tempkey]------- $db1_line{datestamp} - $datestamps{$tempkey} ----<br/>";
+			}
+
+	  	}
+		foreach (sort keys %datestamps)
+		{
+			my $tmp;
+			if ($datestamps{$_} eq $env{datestamp})
+			{if ($tab_activations[$_] eq "1") {$var=$XSGN{DAY_TAB_ACTUAL};} else {$var="";}}
+			elsif ($_ eq "0")
+			{if ($tab_activations[0] eq "1") {$var=$XSGN{PREV_WEEK};} else {$var="";}}
+			elsif ($_ eq "8")
+			{if ($tab_activations[8] eq "1") {$var=$XSGN{NEXT_WEEK};} else {$var="";}}
+   			else
+			{if ($tab_activations[$_] eq "1") {$var=$XSGN{DAY_TAB_ACTIVE};} else {$var=$XSGN{DAY_TAB_INACTIVE};}}
+			$var=~s|<%ID%>|$_|;
+			$var=~s|<%DATESTAMP%>|$datestamps{$_}|;
+			my %datevarsx=Utils::datetime::ctodatetime($datestamps{$_});
+			$XSGN{TMP}=~s|<%TAB_$_%>|$var|;
+		}
+
+	  }
+
+
+  # TELO CLANKU
+  Tomahawk::module(
+	-type			=>	"mdl",
+	-category		=>	"400",
+	-name			=>	"fview",
+	-global			=>	1,
+	-xsgn     		=>	$env{xsgn_fview},
+	-xsgn_global		=>	$env{xsgn_global},
+	-TMP			=>	$env{TMP_view},
+	%caching,
+	-cache_id_sub		=>	$article{_a400_ID}."-".$article{_a400_changetime},
+	shift_first_img		=>	$env{shift_first_img},# vytiahnem prvu premennu obrazku
+	show_catname		=>	$env{show_catname},
+	show_catname_full	=>	$env{show_catname_full},
+	db_500			=>	$env{db_500},
+	format_500		=>	$env{format_500},
+	first_format_500	=>	$env{first_format_500},
+	page			=>	$main::FORM{page}, # nefunkcne, len posielam linku
+	a900_inline		=>	$env{a900_inline},
+	%article,
+	) if (exists $env{TMP_view});
+
+=cut
+
+
+ return 1;
+}
+1;

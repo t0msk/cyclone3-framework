@@ -1,0 +1,126 @@
+#!/bin/perl
+# ÁÉÍÓÚ - USE UTF-8 !!!
+package CRON::module;
+use strict;
+use Utils::datetime;
+
+
+sub execute
+{
+ #return 1;
+ 
+ die "this module is tooo old!";
+
+ my %env=@_;
+ if ($cron::P ne $CRON::P){$cron::ERR="WARN: this cron is only for global use!!!";return undef}
+
+ require "$CRON::P/.core/_config/TOM3.conf";
+ require "$CRON::P/.core/_config/TOM3.fcgi.conf";
+
+ $env{old}=$TOM::CACHE_time_max*2 unless $env{old};
+ $env{old2}=86400*31 unless $env{old2};
+
+ #my $var=$cron::time_current-$env{old};
+ #my $var2=$cron::time_current-(86400*31); # mesiac stary debug na cache
+
+ 
+ my $db0=$main::DBH->Query("SHOW DATABASES");
+ while (my @db0_line=$db0->fetchrow)
+ {
+  if ($main::DBH->selectdb($db0_line[0]))
+  {
+   my %table;
+   if (my $db1=$main::DBH->Query("SHOW TABLES"))
+   {
+    while (my @db1_line=$db1->fetchrow){$table{$db1_line[0]}=1;}
+    if ($table{_cache_conf})
+    {
+      my $from=$main::time_current-(86400*31);
+      CRON::debug::log(5,"i have database $db0_line[0]");
+      my $db2=$main::DBH->Query("
+     	SELECT * FROM $db0_line[0]._cache_conf
+     	WHERE reqtime<$from AND reqtime>0");
+      while (my %db2_line=$db2->fetchhash())
+      {
+        CRON::debug::log(6,"found old config for $db2_line{engine}/$db2_line{IDcategory}-$db2_line{module}/$db2_line{type}");
+	CRON::debug::log(7,"deleted") if $main::DBH->Query("
+	DELETE FROM $db0_line[0]._cache_conf
+	WHERE	engine='$db2_line{engine}'
+			AND IDcategory='$db2_line{IDcategory}'
+			AND module='$db2_line{module}'
+			AND type='$db2_line{type}'
+	LIMIT 1");
+      }
+      
+      my $db2=$main::DBH->Query("
+	SELECT * FROM $db0_line[0]._mdl
+	WHERE update_time<$from");
+      while (my %db2_line=$db2->fetchhash())
+      {
+        CRON::debug::log(6,"found old _mdl $db2_line{engine}-$db2_line{module}");
+	CRON::debug::log(7,"deleted") if $main::DBH->Query("
+	DELETE FROM $db0_line[0]._mdl
+	WHERE	engine='$db2_line{engine}'
+			AND module='$db2_line{module}'
+	LIMIT 1");
+      }      
+      
+    }
+   }
+  }
+ } 
+  
+# return 1;
+ 
+
+ if (opendir (DIR,$CRON::P))
+ {
+  my @files=readdir DIR;
+  foreach my $file(@files)
+  {
+   if (($file ne ".")&&($file ne ".."))
+   {
+    if ((-d $CRON::P."/".$file)&&(($file=~/![\w\.]+$/)||($file=~/_cache$/)))
+    {
+     if (opendir (DIR1,$CRON::P."/".$file)){foreach (readdir DIR1){if (($_ ne ".")&&($_ ne "..")){push @files,$file."/".$_;}}}
+    }
+
+    if ($file=~/\.pub\.(cache|count)$/)
+    {
+	 #CRON::debug::log(8,"checking $CRON::P/$file");
+	 my $var=(stat $CRON::P."/".$file)[9];
+	 #CRON::debug::log(8,"$file old ".($var-$cron::time_current));
+	 my %date0=Utils::datetime::splittime($cron::time_current-$var);
+	 my %date1=Utils::datetime::splittime($env{old2}-($cron::time_current-$var));
+	 CRON::debug::log(8,"$file old($date0{day}d $date0{hour}:$date0{min}:$date0{sec}) remain($date1{day}d $date1{hour}:$date1{min}:$date1{sec})");
+	 if (($cron::time_current-$var)>$env{old})
+	 {
+	  CRON::debug::log(9,"$file removing...");
+	  #unlink $CRON::P."/".$file;
+	 }
+
+    }
+    elsif ($file=~/\.pub\.debug$/)
+    {
+	 my $var=(stat $CRON::P."/".$file)[9];
+	 #my %date0=Utils::datetime::splittime($var-$cron::time_current);
+	 my %date0=Utils::datetime::splittime($cron::time_current-$var);
+	 my %date1=Utils::datetime::splittime($env{old2}-($cron::time_current-$var));
+	 CRON::debug::log(8,"$file old($date0{day}d $date0{hour}:$date0{min}:$date0{sec}) remain($date1{day}d $date1{hour}:$date1{min}:$date1{sec})");
+	 if (($cron::time_current-$var)>$env{old2})
+	 {
+	  CRON::debug::log(9,"$file removing...");
+	  #CRON::debug::log(9,"$file old ".($var-$cron::time_current));
+	  #unlink $CRON::P."/".$file;
+	 }
+    }
+
+   }
+  }
+  closedir DIR;
+ }
+
+
+ return 1}
+
+1;

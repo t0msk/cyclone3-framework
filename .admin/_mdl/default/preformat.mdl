@@ -1,0 +1,14 @@
+sub BaseModul
+{
+ $form{preformat}=~s|<BR>|!BR!|gi;
+ $form{preformat}=~s|</DIV>|!BR!|gi;
+ $form{preformat}=~s|\n|!BR!|gi;
+ $form{preformat}=~s|[\n\r]||gi;
+ $form{preformat}=~s|<.*?>||gi;
+
+ $form{preformat}=~s|!BR!|<BR>|gi;
+ return "<DIV>".$form{preformat}."</DIV>";
+}
+
+
+1;

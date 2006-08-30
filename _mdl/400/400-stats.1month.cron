@@ -1,0 +1,388 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use TOM::Utils::vars;
+use TOM::Utils::datetime;
+use DateTime;
+use strict;
+
+sub execute
+{
+	my %env=@_;
+
+	# NASTAVENIA
+
+	#return 1;
+	if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
+
+	# TODO: po spusteni toto treba odstranit
+	$env{domain} = $tom::H_cookie unless $env{domain};
+	#
+
+	# tiez treba odstranit
+	if ($env{domain})
+	{
+		my $null = $env{domain}; $null =~ s|\.|_|g;
+		$env{db_400} = $null;
+	}
+	#
+
+ my $date=TOM::Utils::datetime::mail_current();
+
+ $env{to_email} = $TOM::contact{'stats'}.";".$TOM::contact{'TOM'};
+ #$env{to_email} = "gregor\@webcom.sk;fordinal\@webcom.sk";
+ #$env{to_email} = "gregor\@webcom.sk";
+ $env{to_email} = TOM::Utils::vars::unique_split( $env{to_email} );
+
+	#if (!$env{db_130}){$cron::ERR="WARN: db_130 not defined!!!";return undef}
+	#if (!$env{db_120}){$cron::ERR="WARN: db_120 not defined!!!";return undef}
+
+
+	#$env{db_400}=$e;
+
+
+	# defaultny jazyk
+	$env{lng} = 'sk' unless $env{lng};
+
+	# hranice priloh
+	my $boundary = "-----------9879522313565987";
+
+	#
+	# Plan nahradzovania
+	# ------------------------------------------
+	# Hlavicky emailu - email
+	# (vacsinou len subject)
+	#
+	# Texty v tele emailu - stats
+	# (tie ktore su napisane v premennej $email uz na zaciatku)
+	#
+	# Texty pre jednotlive druhy statistik - stats_part-nazov statistiky
+	# (napriklad part_sub-agents)
+	#
+	# Globalne texty pre vsetky casti - stats_glob
+	#
+	# Vysvetlivky - description
+	#
+
+	# texty do mailu
+	my %TEXTS = (
+		'sk' => {
+			#'email-subject' => "[STAT][a400/articles] $env{period} bilance",
+			'email-subject' => "CYCLONE STATS: Citanost clankov a400",
+
+			'stats-header' => "Celková čítanosť článkov pre domény <%domain-name%>",
+			#'stats-term' => "za obdobie <%day-start%> - <%day-end%>",
+			#'stats-info' => "Štatistiky čítanosti článkov identifikujú presnú čítanosť všetkých článkov publikovaných na webe v uplynulom mesiaci a zoradí články podľa počtu videní od najčítanejšieho po najmenej čítaný.",
+			'stats-info' => "Štatistiky čítanosti článkov identifikujú presnú čítanosť všetkých článkov publikovaných na webe a zoradí články podľa počtu videní od najčítanejšieho po najmenej čítaný.",
+
+			'stats_part-articles-header' =>
+			"za poslednych 31 dni publikovanych <%articles%> clankov (<%articles-per-day%>/den)\n".
+			"celkom <%visits%> videni clankov, <%visits-per-article%>/clanok, <%visits-per-day%>/den"
+			,
+
+			'stats_part-articles-menu' =>
+			'<th>ID kategorie</th><th>pocet</th><th>%pocet</th><th>videni</th><th>%videni</th><th>videni/1</th><th>Meno kategorie</th>',
+
+			'table-art-title' => 'Články',
+			'table-art-col1' => 'Názov',
+			'table-art-col2' => 'Návštevnosť',
+
+
+			'stats_part-editors-header' =>
+			"rozbor za poslednych 31 dni podla editorov",
+
+			'stats_part-editors-menu' =>
+			'<th>ID</th><th>pocet</th><th>%pocet</th><th>videni</th><th>%videni</th><th>videni/1</th>',
+
+			'stats_part-authors-header' =>
+			"rozbor za poslednych 31 dni podla autorov",
+
+			'stats_part-authors-menu' =>
+			'<th>ID</th><th>pocet</th><th>%pocet</th><th>videni</th><th>%videni</th><th>videni/1</th>',
+		},
+	
+		'en' => {
+		},
+	);
+
+
+ # Naplnenie zakladnych veci
+ 
+	my $email=<<"HEADER";
+From: "$tom::Hm ($TOM::hostname)" <TOM\@$TOM::hostname>
+To: <%TO%>
+Subject: <%SUBJECT%>
+Date: $date
+List-Id: TOM3
+MIME-Version: 1.0
+Content-Type: multipart/related;
+ boundary="$boundary"
+
+This is a multi-part message in MIME format.
+--$boundary
+Content-Type: text/html;charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  </head>
+  <body>
+
+
+ 		<style>
+			body { font-family: Arial, Verdana; }
+
+			#page { width: 650px; }
+
+			/* Nadpis */
+			h1 { color: #808285; clear: left; }
+			.main-logo { float: left; margin: 0 15px 15px 0; }
+			/*.main-logo { margin: 0 15px 15px 0; } */
+				.main-title { font-size: 0.55em; }
+				.main-term { font-size: 0.4em; font-weight: normal; }
+				.main-desc { color: #808285;
+										 margin: 10px 0 20px 0; font-size: 0.4em; font-weight: normal;
+										 border: 10px solid gray; border-width: 0 0 0 10px;
+										 padding: 0 0 0 10px;
+				}
+
+			/* Obsah */
+			#content { clear: both; }
+				#content table { width: 450px; }
+
+			.tabletitle { text-align: left; }
+
+			.overview {
+				border: 1px dotted gray; border-width: 1px 1px 0 0;
+				font-size: 0.75em;
+				margin-bottom: 20px;
+			}
+			.overview td, .overview th {
+				border: 1px dotted gray; border-width: 0 0 1px 1px;
+				padding: 2px;
+			}
+			.overview th { background: #e5e5e5; color: gray; }
+
+			.bar { height: 10px; background: green; border: 1px solid gray; }
+		</style>
+
+		<div id="page">
+
+		<h1>
+			<img class="main-logo" src="cid:part1.webcom.icon\@webcom.sk" alt="webcom logo" border="0" />
+			<div class="main-title"><%stats-header%></div>
+			<div class="main-term"><%stats-term%>&nbsp;</div>
+			<div class="main-desc"><%stats-info%></div>
+  	</h1>
+
+			<div id="content">
+				<%BODY%>
+			</div>
+		</div>
+  </body>
+</html>
+--$boundary
+Content-Type: image/gif;
+ name="webcom_icon.gif"
+Content-ID: <part1.webcom.icon\@webcom.sk>
+Content-Transfer-Encoding: base64
+Content-Disposition: inline;
+ filename="webcom_icon.gif"
+
+R0lGODlhlgAcAMQAAL/Awd/g4O0bI/f395iam7i5urCxss/Q0YiKjJCSk+/v8NfY2Ofn6Kip
+q8fIyfaNke84P/zU1v3i4/RxdvebnvV/hKCho4CChP///wAAAAAAAAAAAAAAAAAAAAAAAAAA
+ACH5BAAAAAAALAAAAACWABwAAAX/ICaOZGmeaIpaV6u+cCzPL0MQFuLQfD+yLp9wSBQxEg6A
+I0DYFZ8l4AVKrZ4aAIChYGEgrFApeEy1BACWRgGTIBPF7rjPrDUYMF95D67vwwBYAEcOFn40
+fIaJJQM3Cwo5DIoxiJKSA4QWBQqVMJScnxgWohabJwOiDSmPowMkCgAELS0EmidSCgYJshcE
+AK0qCgWxuxYOvyXBurIJtSdcoiIHDcsGpdENCC0J1SrTLWsnB7ILKAWyqSMO2buyOiZS7LsI
+BygD5vGyhST2+LIFxz9k2cA3D8OjfvRQBGgHcMSwC/oWrbsQYISBfrvABcS4K+G+h/0iigDZ
+j8C7dhwP/0zERw7FQ48jFu6yNkLcrHS7EgAIsKDAypYi4EHMYmAlxY/sEoxSJhKDzRaBvLWA
+GZSdgQM8L8ZrgHWBVm0pnrYp8bXFnRLKLiRUMNEAQEbLSEjhNoJf3BH3ZlUkwcBAU6cQaR6k
+WrUFgr042wEV4WBXJBQTFyvAB3DBXQwALrvaBdSTiMzjREyWRaBhDRERHjyIIAJxFIEnIp9I
+67oEaIgkbksBIFcW75GyCIuQqtGziLTg8iIwHWOCgOcCJqgwLqV24Qu/Tc0coWz5urEYGDAc
+sctAlvPnpUQ0jiGvPikaaTyADv1BCuqyrGP4mv3E17NP8ZZXQv+RwBE+68mSgv9lYOGRnw8Q
+0PccBPcpaMuDJtzWnwmjtdDKLQblg8EA25F3IDsJBnGCTEHsoh8MEkJXoYqvtaCfhi/sJh5U
+G13AwG3omDhVAEQWaSSRj4Vi4QkMXjDWRC++EKGEFK6wZI1HZejbCyxugyEGTRb1pQiyzcCe
+e9fFN8N8EtpnJY292XgCji+kpRkb8YA3glRnycAeciIoxxwMFdBXwXRXxpmlbVu+8JQsToxw
+W3AmPCqcCPZkZ9yke3XIy6AoLNCKBBRQIMGIiyn65qK5NarCACsttwg7eZhgZ6Qj9JWNprI0
+ZNdNFu1CgHULBFkTL64xodaFcPZ4o6sqTNonCWVtOEKGk4YFksMuvJJWQBbYsJPkiCQppQUl
+jxJgB0iE4Senli1Ye4Kn48a0C6iPctTtiYTBdWAJJOFjEparPhuvDFr95ZBZLyxgVFIwCSVw
+vXXl1Q+8/ah5XcFzQqvCjpcCdgFN9RCSlAGpitCTxOpGOYICJhNTQMoGOQASLSTjNUo5o1Ds
+1CjChQAAOw==
+--$boundary--
+HEADER
+
+	$email =~ s|<%stats-header%>|$TEXTS{$env{lng}}{'stats-header'}|;
+	$email =~ s|<%stats-term%>|$TEXTS{$env{lng}}{'stats-term'}|;
+	$email =~ s|<%stats-info%>|$TEXTS{$env{lng}}{'stats-info'}|;
+	$email =~ s|<%domain-name%>|$tom::Hm|;
+
+	my $lmf = DateTime->now->subtract( months => 1 )->truncate( to => 'month' );
+	my $lml = DateTime->last_day_of_month( year => $lmf->year,
+																				month => $lmf->month,
+																				hour => 23,
+																				minute => 59,
+																				second => 59 );
+
+	my $day_period = $lml->mday;
+
+	my %times = (
+		'from' => Time::Local::timelocal(
+			$lmf->sec,
+			$lmf->min,
+			$lmf->hour,
+			$lmf->mday,
+			$lmf->mon-1,
+			$lmf->year
+		),
+		'to' => Time::Local::timelocal(
+			$lml->sec,
+			$lml->min,
+			$lml->hour,
+			$lml->mday,
+			$lml->mon-1,
+			$lml->year
+		),
+
+		'sk' => {
+			'from' => $lmf->strftime('%d. %m. %Y'),
+			'to' => $lml->strftime('%d. %m. %Y'),
+		},
+		
+		'en' => {
+			'from' => $lmf->strftime('%Y-%m-%d'),
+			'to' => $lml->strftime('%Y-%m-%d'),
+		},
+	);
+	
+	$email =~ s|<%day-start%>|$times{$env{lng}}{from}|;
+	$email =~ s|<%day-end%>|$times{$env{lng}}{to}|;
+
+	my $doc; # do $doc sa vyskladaju statistiky, ktore sa potom insertnu do $email-u
+
+	# SPRACOVANIE
+
+	my $STATS_PART =<<"XSGN";
+				<table cellpadding="0" cellspacing="0" class="overview">
+					<thead>
+						<tr>
+							<th colspan="2" class="tabletitle"><%table-art-title%></th>
+						</tr>
+						<tr>
+							<th><%table-art-col1%></th>
+							<th><%table-art-col2%></th>
+						</tr>
+					</thead>
+					<tbody>
+						<#LINE#>
+					</tbody>
+				</table>
+XSGN
+
+	$STATS_PART =~ s|<%table-art-title%>|$TEXTS{$env{lng}}{'table-art-title'}|g;
+	$STATS_PART =~ s|<%table-art-col1%>|$TEXTS{$env{lng}}{'table-art-col1'}|g;
+	$STATS_PART =~ s|<%table-art-col2%>|$TEXTS{$env{lng}}{'table-art-col2'}|g;
+
+	my $sql = "
+		SELECT
+			title,
+			visits
+		FROM
+			$env{db_400}.a400
+		WHERE
+			active='Y' AND
+			priority like '0%'
+		ORDER BY
+			visits DESC
+	";
+	my $db0 = $main::DB{main}->Query( $sql );
+
+	print $sql;
+
+	# vyhodnotenie
+	while ( my %hash = $db0->fetchhash )
+	{
+
+		my $line = <<"XSGN";
+		<tr>
+			<td><%txt%></td>
+			<td><%val%></td>
+		</tr>
+		<#LINE#>
+XSGN
+
+		$line =~ s|<%txt%>|$hash{title}|g;
+		$line =~ s|<%val%>|$hash{visits}|g;
+
+		$STATS_PART =~ s|<#LINE#>|$line|;
+	}
+
+	$STATS_PART =~ s|<#LINE#>||;
+	$doc .= $STATS_PART;
+
+	# toto je len testovacie !!!
+	#$doc =~ s|<td(.*?)>[\s]*?</td>|<td$1>&nbsp;</td>|gm;
+
+
+	$email=~s|<%BODY%>|$doc|;
+	$email=~s|<%SUBJECT%>|$TEXTS{$env{lng}}{'email-subject'}|;
+	#$email=~s|<%FROM%>|"$CRON::core_uname_n($tom::H)" <CRON\@$tom::H>|;
+	use Utils::datetime;
+	#$email=~s|<%DATE%>|$Utils::datetime::DAYS{en}[$cron::Twday], $cron::Tmday $Utils::datetime::MONTHS{en}[$cron::Tmom-1] $cron::Fyear $cron::Fhour:$cron::Fmin:$cron::Fsec +-200|g;
+	
+	
+	my %env0;
+	foreach (split(';',$env{to_email})){$env0{$_}++;}
+	$env{to_email}="";foreach (sort keys %env0){$env{to_email}.=$_.";" if $_}$env{to_email}=~s|;$||;
+	$env{to_email_parse}=$env{to_email};$env{to_email_parse}=~s|;|>,<|g;$env{to_email_parse}="<".$env{to_email_parse}.">";
+	$email=~s|<%TO%>|$env{to_email_parse}|g;
+	
+	#print $email;
+	
+	if
+	(
+		# sendtime='$main::time_current'
+		# priority=0
+		# from_name='CRON'
+		# from_email='TOM\@$TOM::hostname'
+		# from_host='$tom::H'
+		# from_service='a110' a400 a300
+		# to_name = ''
+ 
+		$main::DB{main}->Query("
+			INSERT INTO TOM.a130_send
+			(
+				sendtime,
+				priority,
+				from_name,
+				from_email,
+				from_host,
+				from_service,
+				to_name,
+				to_email,
+				body)
+			VALUES	(
+				'$main::time_current',
+				'0',
+				'CRON',
+				'TOM\@$TOM::hostname',
+				'$tom::H',
+				'a400',
+				'',
+				'$env{to_email}',
+				'$email'
+				)"
+		)
+	)
+	{
+		main::_log(" ok, email sended");
+	}
+	else
+	{
+		main::_log(" :((, email not sended");
+	}
+	
+	return 1}
+
+1;

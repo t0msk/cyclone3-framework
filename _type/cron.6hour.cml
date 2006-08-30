@@ -1,0 +1,14 @@
+<!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
+
+<MODULE> # stare emaily do prdeleeee!
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="130" />
+	<VAR id="-name" value="clear" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_chart_availability" />
+	<VAR id="-version" value="days" />
+</MODULE>

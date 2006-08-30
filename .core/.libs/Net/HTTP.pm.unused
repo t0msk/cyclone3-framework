@@ -1,0 +1,188 @@
+package Net::HTTP;
+
+BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
+
+use Socket;
+use IO::Socket;
+
+#sub ALARM {return}; $SIG{ALRM} = \&ALARM;
+
+sub new # initialize
+{
+ my $procc=shift;
+ my %env=@_;
+ my $self={};
+ $self->{host}="localhost" unless $self->{host}=$env{host};
+ $self->{port}="80" unless $self->{port}=$env{port};
+ $self->{proto}="tcp" unless $self->{proto}=$env{proto};
+ $self->{timeout}=50 unless $self->{timeout}=$env{timeout};
+ $self->{logout}=$env{logout};
+ bless $self;
+ return $self;
+}
+
+sub Connect # initialize & connect
+{
+ my $procc=shift;
+ my %env=@_;
+ my $self={};
+ $self->{host}="localhost" unless $self->{host}=$env{host};
+ $self->{port}="80" unless $self->{port}=$env{port};
+ $self->{proto}="tcp" unless $self->{proto}=$env{proto};
+ $self->{timeout}=2 unless $self->{timeout}=$env{timeout};
+ $self->{logout}=$env{logout};
+ bless $self;
+ return 0 unless $self->dataconn();
+ return $self;
+}
+
+sub ch_read
+{
+ my $self=shift;
+ my ($rin, $rout) = ('', '');
+ vec ($rin, fileno ($self->{SOCK}), 1) = 1;
+ my ($nfound, undef) = select ($rout = $rin, undef, undef, 0);
+ return $nfound;
+}
+
+sub ch_write
+{
+ my $self=shift;
+ my ($rin, $rout) = ('', '');
+ vec ($rin, fileno ($self->{SOCK}), 1) = 1;
+ my ($nfound, undef) = select ($rout = $rin, undef, undef, 0);
+ if ($nfound){undef $nfound;}else{$nfound=1;};
+ return $nfound;
+}
+
+
+sub R_line
+{
+ local $self=shift;
+ local $sock=$self->{SOCK};
+ local ($buf,$bufw);
+
+# return 0 unless $self->ch_read(); # da sa este citat? ak nie, vrat 0!
+ 
+ # PRIJIMAM V CASOVOM LIMITE...
+ eval
+ {
+  local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
+  local $SIG{PIPE} = sub { die "pipe\n" }; # NB: \n required
+  alarm $self->{timeout};
+  $buf=<$sock>;
+  $bufw=$buf;$bufw=~s|[\n\r]||g;
+#  if ($self->{logout}){print "<=[$bufw]\n";}
+#  print "<=[$bufw]\n";
+  alarm 0;
+ };
+ # ak som stiahol vrat stiahnuty riadok, ak nie, vrat 0!
+ if ($@){return undef}else{return $buf;}
+}
+
+
+sub W_line
+{
+ local $self=shift;
+ local $sock=$self->{SOCK};
+ local $line=shift @_;
+
+# zas na to drbe :(
+ return 0 unless $self->ch_write(); # da sa este zapisovat? ak nie, vrat 0!
+
+ # ZAPISUJEM V CASOVOM LIMITE...
+ eval
+ {
+  local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
+  local $SIG{PIPE} = sub { die "pipe\n" }; # NB: \n required
+  alarm $self->{timeout};
+  print $sock "$line\n";
+#  if ($self->{logout}){print "=>[$line]\n"}
+#  print "=>[$line]\n";
+  alarm 0;
+ };
+ # ak som zapisal vrat 1, ak nie, vrat 0!
+ return 1 unless $@;
+ return 0;
+}
+
+
+sub R_lines
+{
+ my $self=shift;
+ my ($buf,$body);
+ while ($buf=$self->R_line())
+ {
+  $body .= $buf;
+ }
+ return $body;
+}
+
+
+
+sub dataconn
+{
+ my $self=shift;
+ $self->{SOCK} = IO::Socket::INET->new(
+ 	PeerAddr=>$self->{host}, 
+	PeerPort=>$self->{port}, 
+	Proto=>$self->{proto});
+ return undef unless $self->{SOCK};
+ return 1;
+}
+
+
+sub G_url
+{
+ my ($self,$url)=(shift,shift);
+ my $buffer="a";
+ my %env=@_;
+
+ $env{'Host'}="192.168.0.1" unless $env{'Host'};
+ $env{'Accept'}="*/*" unless $env{'Accept'};
+ $env{'Accept-Encoding'}="*" unless $env{'Accept-Encoding'};
+ $env{'Connection'}="close" unless $env{'Connection'};
+ 
+# $url=~s/([^a-zA-Z0-9_\-.])/uc sprintf("%%%02x",ord($1))/eg; # URL encode
+# $url=~s|([^a-zA-Z0-9_/:\-&?=.])|uc sprintf("%%%02x",ord($1))|eg; 
+ $url=~s|([^a-zA-Z0-9_/:\-&?=.])|uc sprintf("%%%02x",ord($1))|eg; 
+ return undef unless $self->W_line("GET ".$url." HTTP/1.1");
+   
+ foreach (keys %env)
+ {
+  return undef unless $self->W_line($_.": ".$env{$_});
+ }
+ return undef unless $self->W_line();
+ 
+# if ($self->R_line()=~/404/){return 0}
+ 
+ while ($buffer)
+ {
+  $buffer=$self->R_line();
+  $buffer=~s|[\r\n]||g;
+  my ($head,$data)=split(' ',$buffer,2);
+  $head=~s|:$||;
+  $self->{header}{$head}=$data;
+ }
+ 
+ # kontrola chyby
+ if (not $self->{header}{'HTTP/1.1'}=~/200 OK/i){return undef;}
+ $buffer=$self->R_lines(); 
+
+ # odstranenie znakov pri chunked 
+ if ($self->{header}{'Transfer-Encoding'} eq "chunked")
+ {
+  $buffer=~s|^.*?\n||;
+  $buffer=~s|\r\n.*?\r\n\r\n$||;
+ }
+ 
+ return $buffer;
+}
+
+sub DESTROY
+{
+ my $self=shift;
+ delete $self->{SOCK};
+}
+
+1;

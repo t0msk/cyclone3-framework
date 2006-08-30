@@ -1,0 +1,567 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+$authors="nemsak\@webcom.sk";
+use strict;
+use App::400;
+
+=head1 NAME
+mview_m1
+
+=head1 HEAD_VERSION_BUILD
+1.050829
+
+=head1 DESCRIPTION
+stredne zobrazenie clanku
+
+=head1 CHANGES
+2005-08-11 - deb00t
+	- sync s modulom mlist_m1 kvoli zjednoteniu prace s datami a templates
+2005-08-22 - deb00t
+	- pridanie podpory pre IDname a IDname_category
+2005-08-29 - deb00t
+	- defaultne nastavenie db_select_arch_allow na true
+=cut
+
+sub execute
+{
+	my %env=@_;
+
+	$env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+	$env{db_400}=$TOM::DB{main}{name} unless $env{db_400};
+
+	my %IDcategory_url_hash;
+	if ($env{IDcategory_url_allow})
+	{
+		$env{db_400_url}=$env{db_400} unless $env{db_400_url};
+		$env{a400_IDcategory_url}=Tomahawk::Getmdlvar("400",'IDcategory_url', db=>$env{db_400_url});
+
+		%IDcategory_url_hash = ( $env{a400_IDcategory_url}=~/([^\r\n;]+);([^\r\n]+)/g );
+	}
+
+	$env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+	$env{db_500}=$TOM::DB{main}{name} unless $env{db_500};
+
+	$env{a500_format}='t' unless $env{a500_format};
+	foreach(grep {/a500_format.*?/} keys %env)
+	{
+		$env{$env{$_}.'_hash'}=Tomahawk::Getmdlvar("500",$env{$_}.'_hash',db=>$env{db_500}) unless (exists $env{$env{$_}.'_hash'});
+		if($env{$env{$_}.'_hash'})
+		{main::_log("$env{$_} is a hashed format");}
+		else
+		{main::_log("$env{$_} is not a hashed format");}
+	}
+
+	#loading only active articles by default
+	$env{db_active}=1 if (not exists  $env{db_active});
+
+	#allowing archive request by default
+	$env{db_select_arch_allow}=1 unless exists $env{db_select_arch_allow};
+
+	# setting default db_order_by
+	$env{db_order_by}="starttime DESC" unless $env{db_order_by};
+
+	$env{db_where}=$env{_db_where} if $env{_db_where};
+
+	#db_order_by priority transformation - fetching the shortest category
+	if(($env{db_order_by}=~/a400.priority/) &&
+		(($env{db_priority_transform}) || ($env{db_priority_transform_all}))
+	)
+	{
+		my $tmp;
+		my @db_cats=split(";",$env{db_IDcategory});
+		foreach (sort {length($a) <=> length($b)} @db_cats)
+		{
+			$tmp=(length($_)/2)+1; last;
+		}
+		$tmp.=",1" unless $env{db_priority_transform_all};
+		$env{db_order_by}=~s|a400.priority|SUBSTRING(a400.priority,$tmp)|;
+		main::_log("sorting by a400.priority from level ".$tmp);
+	}
+
+	if(exists $env{db_where})
+	{
+		$env{db_where}.=" AND a400_category.IDname='$env{db_IDname_category}'" if($env{db_IDname_category});
+		$env{db_where}.=" AND a400.IDname='$env{db_IDname}'" if($env{db_IDname});
+	}
+	else
+	{
+		$env{db_where}.="a400_category.IDname='$env{db_IDname_category}'" if($env{db_IDname_category});
+		$env{db_where}.="a400.IDname='$env{db_IDname}'" if($env{db_IDname});
+	}
+
+	my $list=App::400->get_article
+	(
+		db												=>	$env{db_400}, # load articles from database...
+		DBH											=>	$main::DB{main}, # use database object pointer...
+
+		select										=>	$env{db_select},
+		select_arch							=>	$env{db_select_arch}, # selectovat len z archivu
+		select_arch_allow				=>	$env{db_select_arch_allow}, # plynule prechadzanie do archivu "ORDER BY starttime DESC"
+																	# vyuzije sa len ak sa nenacita pozadovany limit z originalu
+		select_union							=>	$env{db_select_union}, # cely select ako jeden union, union sa pouzije VZDY!
+		select_union_allow				=>	$env{db_select_union_allow}, # union az po tom co nedokazem selectnut vsetko v original tabulke
+
+
+		select_limit								=>	1,
+		select_order							=>	$env{db_order_by},
+																	#NEMALO BY BYT select_where v a400? a dalsie v a400_category?
+		select_where						=>	$env{db_where},
+
+		a400 =>									# podmienky na select a400
+		{
+			lng											=>	$env{lng},
+			ID											=>	$env{db_ID},
+			ID_exclude								=>	$env{db_ID_exclude},
+			IDcategory							=>	$env{db_IDcategory},
+			IDcategory_exclude				=>	$env{db_IDcategory_exclude},
+			active									=>	$env{db_active},
+			starttime								=>	$env{db_starttime}, # actual
+			endtime								=>	$env{db_endtime}, # actual
+		},
+
+		a400_category_					=>	1, # podmienka ze MUSI byt lefnute
+		a400_category => 			# podmienky na to kedy ma byt left join a400_category
+		{
+			active									=>	$env{db_category_active},
+			lng											=>	$env{lng},
+		},
+
+		a400_attrs_							=>	$env{db_attrs}, # podmienka ze MUSI byt lefnute
+		a400_attrs								=>	$env{db_attrs},# podmienky na to kedy ma byt left join a400_attrs
+		{
+
+		},
+
+
+		link_disable							=>	$env{db_link_disable}, # nebudem nacitavat linky
+		link =>										# toto znamena ze budem robit replace najdenych linkov podla podmienok...
+		{
+			a400 =>
+			{
+				lng										=>	$env{lng},
+				active								=>	$env{db_active},
+				starttime								=>	$env{db_starttime}, # actual
+				endtime								=>	$env{db_endtime}, # actual
+			},
+			a400_attrs							=>	$env{db_attrs}, # podmienky na to kedy ma byt left join a400_attrs
+			a400_category =>			# podmienky na to kedy ma byt left join a400_category
+			{
+				active								=>	$env{db_category_active},
+				lng										=>	$env{lng},
+			},
+		},
+	);
+
+	$list->prepare();
+	
+	my $line_counter;
+	
+	if ($list->execute())
+	{
+		main::_log($list->{Query});
+	
+		Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+		if (($env{xt_xlng}) || ($env{xlng}))
+		{
+			main::_log("using xlng transformation");
+			if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+			Tomahawk::GetXLNG() || return undef; # retrieve language xml
+			Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+		}
+
+		if (my %db_line=$list->fetchhash())
+		{
+			$line_counter++;
+			
+			if ($env{'format'})
+			{
+				$db_line{full}=~s|\n|<br />|g;
+				1 while ($db_line{full}=~s|<br ?\/?>$||gi);
+			}
+			
+			# retrieving image
+			if ($db_line{xrelated}=~/<VAR id="a500" value="(.*?)" \/>/)
+			{
+				my $tmp_ID=sprintf('%07d',$1);
+				if (($XSGN{LINE_a500}) && ($env{$env{a500_format}.'_hash'}) && ($tmp_ID ne "0000000"))
+				{
+					my $tmp;
+					if ($tmp_ID=~/^(....)/i){$tmp=$1};
+
+					my $db0=$main::DB{main}->Query("
+						SELECT
+							a.hash, b.IDcategory, b.about
+						FROM
+							$env{db_500}.a500 as a
+						LEFT JOIN $env{db_500}.a500_attrs AS b ON a.IDattrs=b.IDattrs
+						WHERE
+							a.ID='$tmp_ID'
+							AND a.format='$env{a500_format}'
+							AND (a.lng='$env{lng}' OR a.lng='')
+							AND a.active='Y'
+						LIMIT 1
+					");
+					if (my %db0_line=$db0->fetchhash)
+					{
+						$XSGN{NULL}=$XSGN{LINE_a500};
+						$XSGN{NULL}=~s|<%fullpath%>|$tom::H_500/$tmp/$db0_line{hash}-$env{a500_format}.jpg|g;
+						$XSGN{NULL}=~s|<%name%>|$db0_line{hash}-$env{a500_format}.jpg|g;
+						$XSGN{NULL}=~s|<%about%>|$db0_line{about}|g;
+						$XSGN{NULL}=~s|<%IDcategory%>|$db0_line{IDcategory}|g;
+						$XSGN{TMP}=~s|<#LINE_a500#>|$XSGN{NULL}|g;
+					}
+					else
+					{
+						main::_log($db0->errstr());
+					}
+				}
+			}
+
+			# fetching all other xrelated
+			if ($env{xrelated})
+			{
+				my %already_related;
+				while ($db_line{xrelated}=~s|<VAR id="(.*?)" value="(.*?)" />||si)
+				{
+					my ($var,$null)=($1,$2);
+
+					$var=~/^a500$/ && $XSGN{a500} && do
+					{
+						my $db0=$main::DB{main}->Query("
+							SELECT
+								a.IDcategory
+							FROM
+								$env{db_500}.a500 AS a
+							LEFT JOIN $env{db_500}.a500_category AS b ON a.IDcategory=b.ID
+							WHERE
+								a.ID='$null'
+								AND (a.lng='$env{lng}' OR a.lng='')
+								AND a.active='Y'
+								AND b.active='Y'
+							LIMIT 1
+						");
+						if (my %db0_line=$db0->fetchhash)
+						{
+							next if $already_related{a500}{$db0_line{IDcategory}};
+							main::_log("related gallery ID: $db0_line{IDcategory}");
+							$XSGN{TMP}=~s|<#a500#>|$XSGN{a500}|g;
+							$XSGN{TMP}=~s|<%IDcategory%>|$db0_line{IDcategory}|g;
+							$already_related{a500}{$db0_line{IDcategory}}=1;
+						}
+						else
+						{
+							main::_log($db0->errstr());
+						}
+						next;
+					};
+
+					$var=~/^a820$/ && $XSGN{a820} && do
+					{
+						#next unless $XSGN{a820}=~/<%messages%>/;
+						$XSGN{NULL}=$XSGN{a820};
+
+						$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+						$env{db_820}=$TOM::DB{main}{name} unless $env{db_820};
+
+						my $db0=$main::DB{main}->Query("
+							SELECT
+								ID, messages
+							FROM
+								$env{db_820}.a820
+							WHERE
+								ID='$null'
+								AND (lng='$env{lng}' OR lng='')
+								AND active='Y'
+							LIMIT 1
+						");
+						if (my %db0_line=$db0->fetchhash)
+						{
+							next if $already_related{a820}{$db0_line{ID}};
+							main::_log("related forum ID: $db0_line{ID} messages: $db0_line{messages}");
+							$XSGN{NULL}=~s|<%messages%>|$db0_line{messages}|g;
+							$XSGN{NULL}=~s|<%ID%>|$db0_line{ID}|g;
+							$XSGN{TMP}=~s|<#a820#>|$XSGN{NULL}|g;
+							$already_related{a820}{$db0_line{ID}}=1;
+						}
+						else
+						{
+							main::_log($db0->errstr());
+						}
+						next;
+					};
+
+					if ($XSGN{$var})
+					{
+						$XSGN{NULL}=$XSGN{$var};
+						$XSGN{NULL}=~s|<%ID%>|$null|;
+						$XSGN{TMP}=~s|<#$var#>|$XSGN{NULL}|;
+						next;
+					}
+				}
+			}
+
+			$env{url}=$env{url_default} if $env{url_default};
+			$env{url}="?|?" unless $env{url_default};
+
+			# xsgn transformation according to db data
+			foreach(grep { /^xt_/ } keys %env)
+			{
+				next if ($_ eq "xt_xlng");
+				$_=~/^xt_(.*)/;
+				my $db_var=$1;
+				if($_ eq "xt_IDcategory")
+				{
+					#transforming actual IDcategory along with all parents
+					my $var=$db_line{IDcategory};
+					while ($var)
+					{
+						my $tmp_xsgn=$XSGN{xt_IDcategory};
+						$tmp_xsgn=$XSGN{'xt_IDcategory_'.$var} if ($XSGN{'xt_IDcategory_'.$var});
+						$XSGN{TMP}=~s|<#xt_IDcategory_$var#>|$tmp_xsgn|g;
+						$var=~s|(..)$||;
+					}
+				}
+				else
+				{
+					#transforming according to selected db field
+					my $tmp=$_."_".$db_line{$db_var};
+					$XSGN{TMP}=~s|<#$tmp#>|$XSGN{$tmp}|g;
+				}
+			}
+
+			# exchanging links heading to external locations
+			if ($env{IDcategory_url_allow})
+			{
+				my $var;
+
+				foreach (reverse sort keys %IDcategory_url_hash)
+				{
+					if ($db_line{IDcategory}=~/^$_/)
+					{
+						main::_log("redirecting article line ".$line_counter." to $IDcategory_url_hash{$_} (IDcategory: $db_line{IDcategory})");
+						$XSGN{TMP}=~s|<%url%>|$IDcategory_url_hash{$_}|g;
+						last;
+					}
+				}
+			}
+
+			if(
+				(($env{db_select}=~/a400.IDauthor/) || ($env{db_select}=~/a400.\*/)) &&
+				(($XSGN{TMP}=~/<%IDauthor_fullname%>/) || ($XSGN{TMP}=~/<%IDauthor_nickname%>/))
+			)
+			{
+				$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
+				$env{db_120}=$TOM::DB{main}{name} unless $env{db_120};
+
+				my $db0=$main::DB{main}->Query("
+					SELECT
+						ID,
+						IDcategory,
+						fullname,
+						nickname
+					FROM $env{db_120}.a120
+					WHERE
+						ID='$db_line{IDauthor}'
+						AND IDtype='0'
+					LIMIT 1
+				");
+				if (my %db0_line=$db0->FetchHash())
+				{
+					$XSGN{TMP}=~s|<%IDauthor%>|$db0_line{ID}|g;
+					$XSGN{TMP}=~s|<%IDauthor_fullname%>|$db0_line{fullname}|g;
+					$XSGN{TMP}=~s|<%IDauthor_nickname%>|$db0_line{nickname}|g;
+				}
+				else
+				{
+					main::_log($db0->errstr());
+				}
+			}
+
+			if(
+				(($env{db_select}=~/a400.IDeditor/) || ($env{db_select}=~/a400.\*/)) &&
+				(($XSGN{TMP}=~/<%IDeditor_fullname%>/) || ($XSGN{TMP}=~/<%IDeditor_nickname%>/))
+			)
+			{
+				$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
+				$env{db_120}=$TOM::DB{main}{name} unless $env{db_120};
+
+				my $db0=$main::DB{main}->Query("
+					SELECT
+						ID,
+						IDcategory,
+						fullname,
+						nickname
+					FROM $env{db_120}.a120
+					WHERE
+						ID='$db_line{IDeditor}'
+						AND IDtype='1'
+					LIMIT 1
+				");
+				if (my %db0_line=$db0->FetchHash())
+				{
+					$XSGN{TMP}=~s|<%IDeditor%>|$db0_line{ID}|g;
+					$XSGN{TMP}=~s|<%IDeditor_fullname%>|$db0_line{fullname}|g;
+					$XSGN{TMP}=~s|<%IDeditor_nickname%>|$db0_line{nickname}|g;
+				}
+				else
+				{
+					main::_log($db0->errstr());
+				}
+			}
+
+			if(
+				(($env{db_select}=~/a400.IDcategory/) || ($env{db_select}=~/a400.\*/)) &&
+				($XSGN{TMP}=~/<%IDcategory_name%>/)
+			)
+			{
+				my $db0=$main::DB{main}->Query("
+					SELECT
+						name
+					FROM $env{db_400}.a400_category
+					WHERE
+						ID='$db_line{IDcategory}'
+						AND (lng='$env{lng}' OR lng='')
+					LIMIT 1
+				");
+				#TODO: deb00t nie som si isty ci treba pri ziskavani nazvu kategorie, aby bola aktivna, potrebujeme len jej nazov, ne?
+				#						AND active='Y'
+				if (my %db0_line=$db0->fetchhash)
+				{$XSGN{TMP}=~s|<%IDcategory_name%>|$db0_line{name}|g;}
+				else
+				{
+					main::_log("category  $db_line{IDcategory} doesn't exist!");
+					main::_log($db0->errstr());
+				}
+			}
+
+			# display date and time
+			if ($env{datetime_allow})
+			{
+				my %env0=Utils::datetime::ctodatetime($db_line{starttime},format=>1);
+			
+				$XSGN{TMP}=~s|<%day%>|$env0{mday}|g;
+				$XSGN{TMP}=~s|<%month%>|$env0{mom}|g;
+				$XSGN{TMP}=~s|<%year%>|$env0{year}|g;
+				$XSGN{TMP}=~s|<%hour%>|$env0{hour}|g;
+				$XSGN{TMP}=~s|<%minute%>|$env0{min}|g;
+				$XSGN{TMP}=~s|<%second%>|$env0{sec}|g;
+			
+				$XSGN{TMP}=~s|<%day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+				$XSGN{TMP}=~s|<%day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+				$XSGN{TMP}=~s|<%month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+				$XSGN{TMP}=~s|<%month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+			
+				$XSGN{TMP}=~s|<%starttime_day%>|$env0{mday}|g;
+				$XSGN{TMP}=~s|<%starttime_month%>|$env0{mom}|g;
+				$XSGN{TMP}=~s|<%starttime_year%>|$env0{year}|g;
+				$XSGN{TMP}=~s|<%starttime_hour%>|$env0{hour}|g;
+				$XSGN{TMP}=~s|<%starttime_minute%>|$env0{min}|g;
+				$XSGN{TMP}=~s|<%starttime_second%>|$env0{sec}|g;
+			
+				$XSGN{TMP}=~s|<%starttime_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+				$XSGN{TMP}=~s|<%starttime_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+				$XSGN{TMP}=~s|<%starttime_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+				$XSGN{TMP}=~s|<%starttime_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+				
+				%env0=Utils::datetime::ctodatetime($db_line{changetime},format=>1);
+			
+				$XSGN{TMP}=~s|<%ch_day%>|$env0{mday}|g;
+				$XSGN{TMP}=~s|<%ch_month%>|$env0{mom}|g;
+				$XSGN{TMP}=~s|<%ch_year%>|$env0{year}|g;
+				$XSGN{TMP}=~s|<%ch_hour%>|$env0{hour}|g;
+				$XSGN{TMP}=~s|<%ch_minute%>|$env0{min}|g;
+				$XSGN{TMP}=~s|<%ch_second%>|$env0{sec}|g;
+			
+				$XSGN{TMP}=~s|<%ch_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+				$XSGN{TMP}=~s|<%ch_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+				$XSGN{TMP}=~s|<%ch_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+				$XSGN{TMP}=~s|<%ch_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+			
+				$XSGN{TMP}=~s|<%changetime_day%>|$env0{mday}|g;
+				$XSGN{TMP}=~s|<%changetime_month%>|$env0{mom}|g;
+				$XSGN{TMP}=~s|<%changetime_year%>|$env0{year}|g;
+				$XSGN{TMP}=~s|<%changetime_hour%>|$env0{hour}|g;
+				$XSGN{TMP}=~s|<%changetime_minute%>|$env0{min}|g;
+				$XSGN{TMP}=~s|<%changetime_second%>|$env0{sec}|g;
+			
+				$XSGN{TMP}=~s|<%changetime_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+				$XSGN{TMP}=~s|<%changetime_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+				$XSGN{TMP}=~s|<%changetime_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+				$XSGN{TMP}=~s|<%changetime_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+			
+				%env0=Utils::datetime::ctodatetime($db_line{endtime},format=>1);
+			
+				$XSGN{TMP}=~s|<%endtime_day%>|$env0{mday}|g;
+				$XSGN{TMP}=~s|<%endtime_month%>|$env0{mom}|g;
+				$XSGN{TMP}=~s|<%endtime_year%>|$env0{year}|g;
+				$XSGN{TMP}=~s|<%endtime_hour%>|$env0{hour}|g;
+				$XSGN{TMP}=~s|<%endtime_minute%>|$env0{min}|g;
+				$XSGN{TMP}=~s|<%endtime_second%>|$env0{sec}|g;
+			
+				$XSGN{TMP}=~s|<%endtime_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+				$XSGN{TMP}=~s|<%endtime_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+				$XSGN{TMP}=~s|<%endtime_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+				$XSGN{TMP}=~s|<%endtime_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+			}
+
+			if (($env{title_cut})&&(length($db_line{title})>$env{title_cut}))
+			{$db_line{title}=substr($db_line{title}, 0, $env{title_cut});$db_line{title}=~s|(.*) .*?$|$1&hellip;|;}
+
+			if (($env{subtitle_cut})&&(length($db_line{subtitle})>$env{subtitle_cut}))
+			{$db_line{subtitle}=substr($db_line{subtitle}, 0, $env{subtitle_cut});$db_line{subtitle}=~s|(.*) .*?$|$1&hellip;|;}
+
+			if (($env{tiny_cut})&&(length($db_line{tiny})>$env{tiny_cut}))
+			{$db_line{tiny}=substr($db_line{tiny}, 0, $env{tiny_cut});$db_line{tiny}=~s|(.*) .*?$|$1&hellip;|;}
+
+			foreach (keys %db_line)
+			{
+				$XSGN{TMP}=~s|<%$_%>|$db_line{$_}|g;
+			}
+		}
+	}
+	else
+	{
+		main::_log($list->errstr());
+		if (!$env{return_null})
+		{
+			Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+			if (($env{xt_xlng}) || ($env{xlng}))
+			{
+				main::_log("using xlng transformation");
+				if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+				Tomahawk::GetXLNG() || return undef; # retrieve language xml
+				Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+			}
+		}
+	}
+
+	if($line_counter<1)
+	{
+		if($env{return_null})
+		{
+			main::_log("no data available. return_null parameter in effect");
+			$XSGN{TMP}="";
+		}
+		else
+		{
+			if(exists $XSGN{TMP_NO_DATA})
+			{
+				main::_log("no data available. returning TMP_NO_DATA");
+				$XSGN{TMP}=$XSGN{TMP_NO_DATA};
+			}
+			else
+			{
+				$tom::ERR="no data available! query description in log.";
+				return undef;
+			}
+		}
+	}
+
+	return 1;
+}
+
+1;

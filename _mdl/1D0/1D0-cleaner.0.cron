@@ -1,0 +1,21 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use Utils::datetime;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+
+  Database::connect::multi('main') || die "cannot connect all databases";
+ 	
+# WEBCLICK
+ $main::DB{stats}->Query("
+	DELETE FROM TOM.a1D0_imports
+	WHERE time_insert<".($main::time_current-(86400*7)));
+
+ return 1}
+
+1;

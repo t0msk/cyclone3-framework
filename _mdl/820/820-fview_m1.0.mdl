@@ -1,0 +1,363 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+$authors="fordinal\@webcom.sk;nemsak\@webcom.sk";
+use Secure::vulgarisms;
+use Secure::form;
+use strict;
+
+=head1 NAME
+fview_m1
+
+=head1 HEAD_VERSION_BUILD
+1.20050301
+
+=head1 DESCRIPTION
+zobrazenie fora
+=cut
+
+sub execute
+{
+	my %env=@_;
+
+	if (not $env{db_ID})
+	{
+		$tom::ERR="no ID specified! finishing.";
+		return undef;
+	}
+
+	$env{db_limit}=150 unless $env{db_limit};
+
+	$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+	$env{db_820}=$TOM::DB_name unless $env{db_820};
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+	if($env{xt_xlng})
+	{
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	my %struct;
+	my %struct_base;
+
+   $env{db_active}="1" unless (exists $env{db_active});
+   $env{db_active}="Y" if ($env{db_active} eq "1");
+   $env{db_active}="N" if ($env{db_active} eq "0");
+
+   $env{db_type}="F" unless (exists $env{db_type});
+
+   $env{db_where}.=" AND a820.ID='$env{db_ID}'" if (exists $env{db_ID});
+
+   if((exists $env{db_where}) && (!$env{db_where}=~/^ AND /))
+   { $env{db_where}="AND ".$env{db_where}; }
+
+      main::_log("
+         SELECT *
+         FROM $env{db_820}.a820
+         LEFT JOIN $env{db_820}.a820_attrs
+            ON (a820.IDattrs AND a820.IDattrs=a820_attrs.IDattrs)
+         WHERE
+            a820.type='$env{db_type}'
+            AND (a820.lng='$env{lng}' OR a820.lng='')
+            AND a820.active='$env{db_active}'
+            $env{db_where}
+         LIMIT 1
+      ");
+
+	my $db=$main::DB{main}->Query("
+		SELECT *
+		FROM $env{db_820}.a820
+		LEFT JOIN $env{db_820}.a820_attrs
+			ON (a820.IDattrs AND a820.IDattrs=a820_attrs.IDattrs)
+		WHERE
+			a820.type='$env{db_type}'
+			AND (a820.lng='$env{lng}' OR a820.lng='')
+			AND a820.active='$env{db_active}'
+         $env{db_where}
+		LIMIT 1
+	");
+	if (my %db_line=$db->fetchhash)
+	{
+
+		my $db1=$main::DB{main}->Query("
+			UPDATE $env{db_820}.a820
+			SET lasttime='$tom::time_current'
+			WHERE
+				type='$env{db_type}'
+				AND (lng='$env{lng}' OR lng='')
+				AND active='$env{db_active}'
+            $env{db_where}
+			LIMIT 1
+		");
+
+      $env{messages_db_active}="1" unless (exists $env{messages_db_active});
+      $env{messages_db_active}="Y" if ($env{messages_db_active} eq "1");
+      $env{messages_db_active}="N" if ($env{messages_db_active} eq "0");
+
+      main::_log("
+			SELECT COUNT(*) AS messages
+			FROM $env{db_820}.a820_msgs
+			WHERE
+				IDforum='$db_line{ID}'
+				AND active='$env{messages_db_active}'
+		");
+
+		my $db1=$main::DB{main}->Query("
+			SELECT COUNT(*) AS messages
+			FROM $env{db_820}.a820_msgs
+			WHERE
+				IDforum='$db_line{ID}'
+				AND active='$env{messages_db_active}'
+		");
+		while (my %db1_line=$db1->fetchhash)
+		{
+         $db_line{messages}=$db1_line{messages};
+		}
+
+      main::_log("
+			SELECT *
+			FROM $env{db_820}.a820_msgs
+			WHERE
+				IDforum='$db_line{ID}'
+				AND active='Y'
+            $env{messages_db_where}
+			ORDER BY ID DESC
+			LIMIT $env{db_limit}
+      ");
+
+		my $db1=$main::DB{main}->Query("
+			SELECT *
+			FROM $env{db_820}.a820_msgs
+			WHERE
+				IDforum='$db_line{ID}'
+				AND active='Y'
+            $env{messages_db_where}
+			ORDER BY ID DESC
+			LIMIT $env{db_limit}
+		");
+		while (my %db1_line=$db1->fetchhash)
+		{
+			#$XSGN{TMP}.="<BR>$db1_line{from_IDhash},$db1_line{from_name},$db1_line{title}";
+			$db1_line{ID}=sprintf ('%011d', $db1_line{ID});
+			$db1_line{IDre}=sprintf ('%011d', $db1_line{IDre});
+			$struct{$db1_line{ID}}=$db1_line{IDre};
+
+         foreach (keys %db1_line)
+         { $struct_base{$db1_line{ID}}{$_}=$db1_line{$_}; };
+		}
+
+		# OSETRENIE PRE PREHLADAVANIE NEUPLNEJ CASTI STROMU - netusim zlaticko o com tocis :) co to robi??
+		foreach (keys %struct){if (not defined $struct{$struct{$_}}){$struct{$_}=0;}}
+
+		# generating the tree structure
+		my @msgArray;
+		foreach my $key(reverse sort keys %struct)
+		{
+			
+			if (($struct{$key}==0)&&(defined $struct{$key}))
+			{
+				push @msgArray,$key,0;
+				delete $struct{$key};
+				my $uroven=1;
+				my @urovne;
+				$urovne[$uroven]=$key;
+
+				while ($uroven>0)
+				{
+					my $nasiel;
+					foreach my $key0(sort keys %struct)
+					{
+						next if $nasiel;
+						if ($urovne[$uroven]==$struct{$key0})
+						{
+							push @msgArray,$key0,$uroven;
+							$nasiel=1;
+							$uroven++;
+							$urovne[$uroven]=$key0;
+							delete $struct{$key0};
+						}
+					}
+					if (!$nasiel){$uroven--;}
+				}
+			}
+		}
+
+		for (my $i=0;$i<@msgArray;$i=$i+2)
+		{ $struct_base{$msgArray[$i]}{offset}=$msgArray[$i+1]; }
+
+		my $lastOffset=-1;
+		my $tmpOffset;
+		my $tmpIndent="";
+
+		for(my $arrayID=0; $arrayID<@msgArray; $arrayID=$arrayID+2)
+		{
+			my %treeItem;
+			$treeItem{ID}=$struct_base{$msgArray[$arrayID]}{ID};
+			$treeItem{name}=$struct_base{$msgArray[$arrayID]}{name};
+			$treeItem{offset}=$struct_base{$msgArray[$arrayID]}{offset};
+			$treeItem{current_offset}=$struct_base{$msgArray[$arrayID]}{offset};
+			$treeItem{indent}="<#INDENT#>" x $struct_base{$msgArray[$arrayID]}{offset};
+
+			
+			#cleaning excessive line gateways
+			while($treeItem{current_offset} < $lastOffset)
+			{
+				#main::_log($XSGN{TMP});
+            $XSGN{TMP}=~s|<#LINE#>[\n]*||;
+				$treeItem{current_offset}++;
+				#main::_log($XSGN{TMP});
+				main::_log("diminishing offset!!!!!!");
+			}
+
+			if($treeItem{offset} < $struct_base{$msgArray[$arrayID+2]}{offset})
+			{
+				if ($struct_base{$msgArray[$arrayID]}{authorized} eq "N")
+				{
+					$XSGN{NULL}=$XSGN{LINE_PARENT_ANONYMOUS};
+				}
+				else
+				{
+					$XSGN{NULL}=$XSGN{LINE_PARENT};
+				}
+				#main::_log("this one's parent!");
+			}
+			else
+			{
+				if ($struct_base{$msgArray[$arrayID]}{authorized} eq "N")
+				{
+					$XSGN{NULL}=$XSGN{LINE_ANONYMOUS};
+				}
+				else
+				{
+					$XSGN{NULL}=$XSGN{LINE};
+				}
+			}
+
+         #TODO: toto sa mi tu nejako nezda
+
+         #if ($env{anonymous_reply_allow})
+         #{
+            $XSGN{NULL}=~s|<#REPLY#>|$XSGN{REPLY}|g;
+         #}
+			#else
+         #{$XSGN{NULL}=~s|<#REPLY#>||g;}
+
+			if ($struct_base{$msgArray[$arrayID]}{from_IDhash} eq $main::USRM{IDhash})
+			{$XSGN{NULL} =~s|<%CLASS_my%>| $XSGN{CLASS_my}|g;}
+			else {$XSGN{NULL} =~s|<%CLASS_my%>||g;}
+
+			if ($env{datetime_allow})
+			{
+				my %env0=Utils::datetime::ctodatetime($struct_base{$msgArray[$arrayID]}{inserttime},format=>1);
+
+				$XSGN{NULL}=~s|<%day%>|$env0{mday}|g;
+				$XSGN{NULL}=~s|<%month%>|$env0{mom}|g;
+				$XSGN{NULL}=~s|<%year%>|$env0{year}|g;
+				$XSGN{NULL}=~s|<%hour%>|$env0{hour}|g;
+				$XSGN{NULL}=~s|<%minute%>|$env0{min}|g;
+				$XSGN{NULL}=~s|<%second%>|$env0{sec}|g;
+
+				$XSGN{NULL}=~s|<%day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+				$XSGN{NULL}=~s|<%day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+				$XSGN{NULL}=~s|<%month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+				$XSGN{NULL}=~s|<%month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+			}
+
+         if($struct_base{$msgArray[$arrayID]}{from_IP}=~/^([\d]+).([\d]+).([\d]+).([\d]+)$/)
+         {
+            $struct_base{$msgArray[$arrayID]}{from_IP_1}=$1;
+            $struct_base{$msgArray[$arrayID]}{from_IP_2}=$2;
+            $struct_base{$msgArray[$arrayID]}{from_IP_3}=$3;
+            $struct_base{$msgArray[$arrayID]}{from_IP_4}=$4;
+         }
+
+			$struct_base{$msgArray[$arrayID]}{title}=~s|<.*?>||g;
+
+			# cleaning vulgarisms
+			Secure::form::convert_tags($struct_base{$msgArray[$arrayID]}{msg});
+			Secure::vulgarisms::convert($env{lng},$struct_base{$msgArray[$arrayID]}{msg});
+			Secure::vulgarisms::convert($env{lng},$struct_base{$msgArray[$arrayID]}{title});
+
+			$struct_base{$msgArray[$arrayID]}{msg}=~s|\n|<br />|g;
+
+			# osekavanie sibnutych prispevkov dlhsich ako 50 znakov
+			#$struct_base{$msgArray[$arrayID]}{msg}=~s/([^\s]{50,})/substr($1,0,50)."..."/eg;
+         $struct_base{$msgArray[$arrayID]}{msg}=~s/([\S]{50})/$1 /sg;
+
+         #my @msg_urls;
+			#while($struct_base{$msgArray[$arrayID]}{msg}=~s|http://([\w/\.]+)|<%URL-@msg_urls%>|si)
+         #{
+         #   push @msg_urls, $1;
+         #}
+
+         #$struct_base{$msgArray[$arrayID]}{msg}=~s|http://([\w/\.]+)|<a href="http://$1" target="_top">http://$1</a>|g;
+
+         #while ($struct_base{$msgArray[$arrayID]}{msg}=~/http:\/\/([\w/\.]+)/)
+         #{
+         #  my $url=$1
+         #   $struct_base{$msgArray[$arrayID]}{msg}=~s|http://([\w/\.]+)|<a href="http://$url" target="_top">http://$1</a>|g;
+         #}
+
+
+
+			#$XSGN{TMP} =~s|<%msg%>|$struct_base{$msgArray[$arrayID]}{msg}|g;
+
+         foreach (keys %{$struct_base{$msgArray[$arrayID]}})
+         {
+            $XSGN{NULL} =~s|<%$_%>|$struct_base{$msgArray[$arrayID]}{$_}|g;
+         }
+
+			#  if ($struct_base{$msgArray[$arrayID]}{from_IDhash} eq $main::USRM{IDhash}){$XSGN{TMP} =~s|<%CNAME%>|$XSGN{CNAME_my}|g;}
+			#  else {$XSGN{TMP} =~s|<%CNAME%>|$XSGN{CNAME}|g;}
+
+			$XSGN{NULL}=~s|<#LINE_INDENT#>|$treeItem{indent}|g;
+
+			$lastOffset=$treeItem{offset};
+
+			$XSGN{NULL}=~s|<#INDENT#>|	|g;
+
+         #main::_log("inserting line:");
+         #main::_log("$XSGN{TMP}");
+         #main::_log("$XSGN{NULL}");
+
+
+			$XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}|;
+		}
+      foreach (keys %db_line)
+      {
+         $XSGN{TMP} =~s|<%$_%>|$db_line{$_}|g;
+         $XSGN{TMP} =~s|<%forum_$_%>|$db_line{$_}|g;
+         if($_ eq "name")
+         {
+            #deprecated thingy
+            $XSGN{TMP} =~s|<%title%>|$db_line{$_}|g;
+            $XSGN{TMP} =~s|<%forum_title%>|$db_line{$_}|g;
+         }
+      }
+	}
+	else
+	{
+		$tom::ERR="could not execute query! query description in log.";
+		main::_log("
+				SELECT *
+				FROM $env{db_820}.a820
+				LEFT JOIN $env{db_820}.a820_attrs
+					ON (a820.IDattrs AND a820.IDattrs=a820_attrs.IDattrs)
+				WHERE
+					a820.ID='$env{db_ID}'
+					AND a820.type='F'
+					AND (a820.lng='$env{lng}' OR a820.lng='')
+					AND a820.active='Y'
+				LIMIT 1
+			");
+		return undef;
+	}
+
+	return 1;
+}
+
+1;

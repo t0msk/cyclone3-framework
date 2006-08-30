@@ -1,0 +1,37 @@
+#!/bin/perl
+# ÁÉÍÓÚ - USE UTF-8 !!!
+package CRON::module;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
+	
+	main::_log(5,$cron::P."/!media/grf/temp/");
+	if (opendir (DIR,$cron::P."/!media/grf/temp/") || die "$!\n")
+	{
+		#main::_log(5,"opened");
+		foreach my $file(readdir DIR)
+		{
+			if ($file=~/^........\.png$/)
+			{
+				my $old=$main::time_current-(stat $cron::P."/!media/grf/temp/".$file)[9];
+				main::_log(5,"file:$file old:".$old);
+				if ($old>1600)
+				{
+					main::_log(6,"delete $file");
+					system("rm -f ".$cron::P."/!media/grf/temp/".$file);
+				}
+			}
+		}
+		closedir DIR;
+	}
+	
+	
+	
+	
+return 1}
+
+1;

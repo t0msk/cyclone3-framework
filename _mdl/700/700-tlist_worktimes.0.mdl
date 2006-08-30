@@ -1,0 +1,46 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+sub execute
+{
+ my %env=@_;
+ $env{char}=3 unless $env{char};
+
+ return 1 if $main::USRM{logged} ne "Y";
+
+ my $db0=$main::DBH->Query("
+	SELECT task.ID, task.subject, SUM(time.endtime-time.starttime) AS workedtime
+	FROM TOM.Ca700_task_activity AS time, TOM.Ca700_task AS task
+	WHERE	task.ID=time.IDtask
+		AND (task.lng='$env{lng}' OR task.lng='')
+		AND task.active='Y'
+		AND task.endtime IS NULL
+		AND time.IDuser='$main::USRM{IDhash}'
+		AND time.endtime IS NOT NULL
+	GROUP BY task.ID,task.subject");
+ while (my %db0_line=$db0->fetchhash)
+ {
+  my %date=Utils::datetime::splittime($db0_line{workedtime});
+  $XSGN{TMP}.="g: $db0_line{ID}-$db0_line{subject} ($date{day}d $date{hour}:$date{min}) <BR>\n";
+ }
+
+
+ $XSGN{TMP}.="<BR><BR>\n";
+
+ return 1}
+1;
+
+
+
+
+
+
+
+
+
+

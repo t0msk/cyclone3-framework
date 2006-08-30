@@ -1,0 +1,146 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 NAME
+fview
+
+=head1 HEAD_VERSION_BUILD
+1.030824
+
+=head1 DESCRIPTION
+full view clanku s obrazkami a inymi mediami
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+
+ <value id="preview" value="1" />
+ <value id="output" value="xsgn" />
+	<input id="visits" value="boolean">increase visits count?</input>
+	<input id="format_500" value="varchar()">format of thumbnails</input>
+	<input id="first_format_500" value="varchar()">format of first thumbnail</input>
+	<input id="shift_first_img" value="boolean">exclude the first image for use in other gateway</input>
+	<input id="-xsgn" value="varchar(20)">design</input>
+	<input id="_a400_*" value="text">smdl sent parameters</input>
+
+</DESCRIPTION>
+
+
+=head1 CHANGES
+build 030826 - Aben
+        *) implementation format_500 && first_format_500
+	*) pre zobrazenie kategorie posielat show_catname
+build 030824 - Deboot
+        *) implementation of loading article category name from a400_category
+build 030709 - Deboot
+        *) ability to position the first image of the article anywhere in the display through an individual gateway
+build 030703 - Aben
+        *) shift_first_img function added
+build 030701 - Aben
+        *) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+        *) a lot of media still missing in the output
+=cut
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+
+ $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+ $env{db_400}=$TOM::DB_name unless $env{db_400};
+
+ $env{db_120}=$env{db_400} if ($env{db_400} ne $TOM::DB_name);
+ 
+ main::_log("$env{db_400} $TOM::DB_name db_120 = $env{db_120}");
+
+ #Tomahawk::debug::log(0,"format_500 = $env{format_500}");
+ #Tomahawk::debug::log(0,"first_format_500 = $env{first_format_500}");
+
+ $env{_a400_full}=~s|\n|<br />|g;
+#=head1
+
+#=cut
+
+ if ($env{show_catname})
+ {
+  my $db0=$main::DBH->Query("
+	SELECT name FROM $env{db_400}.a400_category
+	WHERE ID='$env{_a400_IDcategory}'
+	LIMIT 1");
+  if (my @db0_line=$db0->fetchrow){$XSGN{TMP}=~s|<%CATNAME%>|$db0_line[0]|g;}
+ }
+ elsif (($env{show_catname_full})&&($env{_a400_IDcategory}))
+ {
+  my $var;my $null;
+  foreach($env{_a400_IDcategory}=~/(..)/g){$var.="$_";$null.="OR ID='$var' ";}$null=~s|^OR ||;
+  my $db0=$main::DBH->Query("
+	SELECT name FROM $env{db_400}.a400_category
+	WHERE $null
+	ORDER BY ID");
+  my $var;
+  while (my @db0_line=$db0->fetchrow){$var.="$db0_line[0] / ";}
+  $XSGN{TMP}=~s|<%CATNAME%>|$var|g;
+ }
+
+ $env{_a400_full}=~s|<my_(.*?)/>||g;
+ $env{_a400_full}=~s|<myNEWPAGE>||g;
+
+ $XSGN{TMP}=~s|<#FOOTER#>|$XSGN{FOOTER}|g;
+
+ $XSGN{TMP}=~s|<%ID%>|$env{_a400_ID}|g;
+ $XSGN{TMP}=~s|<%TITLE%>|$env{_a400_title}|g;
+ $XSGN{TMP}=~s|<%SUBTITLE%>|$env{_a400_subtitle}|g;
+ $XSGN{TMP}=~s|<%TINY%>|$env{_a400_tiny}|g;
+ 
+ my $db0=$main::DBH->Query("
+	SELECT ID,IDcategory,fullname,nickname
+	FROM	$env{db_120}.a120
+	WHERE 	ID='$env{_a400_IDauthor}'
+	LIMIT 1");
+  while (my @db0_line=$db0->FetchRow())
+  {
+   $env{'_a400_author'}=$db0_line[2];
+   $env{'_a400_author_nick'}=$db0_line[3];
+  }
+ 
+ $XSGN{TMP}=~s|<%AUTHOR-NICK%>|$env{_a400_author_nick}|g;
+ $XSGN{TMP}=~s|<%AUTHOR%>|$env{_a400_author}|g;
+ 
+ $XSGN{TMP}=~s|<%EDITOR-NICK%>|$env{_a400_editor}|g;
+ $XSGN{TMP}=~s|<%EDITOR%>|$env{_a400_editor_nick}|g;
+
+ # TEXT
+ $env{_a400_full}=~s|<(.?)em>|<\1i>|gi;
+ $env{_a400_full}=~s|<(.?)strong>||gi;
+ #$env{_a400_full}=~s|</em>|</i>|gi;
+ 
+
+ $XSGN{TMP}=~s|<%FULL%>|$env{_a400_full}|g;
+
+ # DATE & TIME
+ my %env0=Utils::datetime::ctodatetime($env{_a400_starttime},format=>1); # zkonvertujem cas do hashu a zformatujem
+ $XSGN{TMP}=~s|<%START_TIME%>|$env0{mday}.$env0{mom}.$env0{year} $env0{hour}:$env0{min}:$env0{sec}|g;
+ my %env0=Utils::datetime::ctodatetime($env{_a400_changetime},format=>1);
+ $XSGN{TMP}=~s|<%CHANGE_TIME%>|$env0{mday}.$env0{mom}.$env0{year} $env0{hour}:$env0{min}:$env0{sec}|g;
+
+return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+

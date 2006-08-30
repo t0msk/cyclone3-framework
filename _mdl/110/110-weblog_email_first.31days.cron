@@ -1,0 +1,414 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+use TOM;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+#use App::400;
+#use App::400::SQL::a400;
+
+#use Chart;
+#use Chart::2D::lines;
+#use Chart::2D::columns;
+#use Chart::2D::ring;
+
+#use Net::HTTP::LiteAgent;
+
+use TOM::Net::HTTP::CGI;
+use Int::charsets::encode;
+
+use TOM::Net::HTTP;
+use TOM::Net::HTTP::UserAgent;
+use TOM::Net::HTTP::referer;
+use TOM::Utils::vars;
+use TOM::Utils::datetime;
+use MIME::Entity;
+
+#use Utils::datetime;
+#use App::1B0;
+use Database::connect;
+
+use strict;
+
+sub execute
+{
+	alarm(3600);
+	my %env=@_;
+	
+	$env{lng} = 'sk' unless $env{lng};
+	
+	my %TEXTS = (
+		'sk' => {
+			#header_subject => "[STAT][a110/weblog] last 7days domains/search engines",
+			header_subject => "CYCLONE STATS: First access / 31 days",
+
+			main_header => "Štatistiky prvých prístupov na doménu <%domain-name%>",
+			term => "za obdobie ",
+			info => "Návštevy sú rozdelené podľa pôvodu. K dispozícií je zoznam domén odkiaľ užívatelia prišli, ale aj vyhľadávačov. K nim potom zoznam fráz a kľúčových slov, vďaka ktorým sa mohli preklikať na stránky.",
+		},
+
+		'en' => {
+			
+		}
+	);
+	
+	my $body=<<"END";
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  </head>
+  <body>
+		<style>
+			body { font-family: Arial, Verdana; }
+		
+			h1 {
+				color: #808285;
+				font-family: Arial, Verdana;
+			}
+		
+			.info-domain { font-size: 18px; }
+			.term { font-size: 14px; font-weight: normal; }
+		
+			h2, th { font-size: 12px; }
+			th { text-align: left; }
+			td { font-size: 10px; }
+
+			#page { width: 600px; }
+			#domains, { width: 500px; float: left; }
+			#keywords, #keyphrases, #search_engines { width: 500px;}
+
+			.odd { background: #FFF6F6; }
+			.odd .first { border-left: 5px solid #D1D1D1; padding-left: 10px; }
+			.first { border-left: 5px solid #fff; padding-left: 10px; }
+			.endblock { clear: both;  }
+		</style>
+
+		<div id="page">
+
+			<h1>
+				<img src="cid:logo\@webcom.sk" alt="webcom logo" border="0" /><br /><br />
+				<span class="info-domain"><%main-header%></span><br />
+				<span class="term"><%term%></span><br />
+				<span class="term"><%info%></span>
+			</h1>
+			
+			<%DOC%>
+
+		</div>
+	</body>
+</html>
+END
+	
+	
+	Database::connect::multi("stats");
+	
+	my $date = TOM::Utils::datetime::mail_current();
+	
+	$env{to_email} = $TOM::contact{'stats'}.";".$TOM::contact{'TOM'};
+	
+	$env{to_email} = "fordinal\@webcom.sk";
+	$env{to_email}=TOM::Utils::vars::unique_split($env{to_email});
+	
+	
+	my $msg = MIME::Entity->build
+	(
+		'Type'    => "multipart/related",
+		'List-Id' => "TOM3",
+		'Date'    => $date,
+		'From'    => "$tom::H ($TOM::hostname) <TOM\@$TOM::hostname>",
+		'To'      => $env{'to_email'},
+		'Subject' => $TEXTS{$env{'lng'}}{'header_subject'}
+	);
+	
+	$msg->attach
+	(
+		'Data' => "<%BODY%>",
+		'Type' => "text/html;charset=\"UTF-8\"",
+		'Encoding' => "8bit",
+	);
+	
+	$msg->attach
+	(
+		'Path'       => $TOM::P."/_data/webcom_logo.gif",
+		'Type'       => "image/gif",
+		'Content-ID' => "<logo\@webcom.sk>",
+		'Encoding'   => "base64"
+	);
+	
+	my $doc;
+	my $doc1;
+	
+	
+	# kolko % z uvodnych stranok tvoria prichody z vyhladavacov
+	# kolko % zo stranok tvoria prichody z vyhladavacov
+	#return 1;
+	
+	my $analyze=0;
+	my %domains;
+	my %domains_search;
+	my $domains_search_count;
+	my %keys;
+	my %keys0;
+	my $lastday = $main::time_current - 86400;
+	my %last_date=Utils::datetime::ctodatetime($lastday,format=>1);
+	$lastday = "$last_date{year}-$last_date{mom}-$last_date{mday}";
+	my $last_datetime_string="$last_date{mday}. $last_date{mom}. $last_date{year}";
+	my $today = $lastday; $today =~ s/^((\d+)-(\d+)-(\d+))$/$4. $3. $2/;
+	my $from=time-(31*86400);
+	my %from_hash = Utils::datetime::ctodatetime($from, format=>1);
+	
+	my $db0=$main::DB{stats}->Query("
+		SELECT domain,domain_sub,referer,page_code
+		FROM TOM.a110_weblog_rqs
+		WHERE domain_sub='$tom::H'
+				AND reqtype='B'
+				AND reqtime>$from
+				AND IDhash=''
+		ORDER BY reqdatetime ASC");
+	while (my %db0_line=$db0->fetchhash)
+	{
+		my ($domain,$query)=TOM::Net::HTTP::domain_clear($db0_line{referer});
+		if ($domain=~/$tom::Hm/)
+		{
+			main::_log("same domain='$domain' page_code='$db0_line{page_code}'");
+			next;
+		}
+		
+		main::_log("first access from domain='$domain' page_code='$db0_line{page_code}'");
+		
+		$domains{$domain}++;
+		
+		if (my $dom=TOM::Net::HTTP::referer::analyze($domain))
+		{
+			if
+			(
+				($TOM::Net::HTTP::referer::table{$dom}{domain_type} eq "search engine")
+	 			&&($TOM::Net::HTTP::referer::table{$dom}{keywords_param})
+			)
+			{
+				$domains_search{$dom}++;
+				$domains_search_count++;
+				
+				my $keyword_param=$TOM::Net::HTTP::referer::table{$dom}{keywords_param};
+				
+				
+				
+				
+				main::_log("query='$query'");
+				my %FORM=TOM::Net::HTTP::CGI::GetQuery($query);
+				next if $FORM{$keyword_param}=~/^cache/;
+				next unless $FORM{$keyword_param};
+					
+				$FORM{$keyword_param}=Int::charsets::encode::UTF8_ASCII($FORM{$keyword_param});
+				$FORM{$keyword_param}=~tr/A-Z/a-z/;
+				#$FORM{$keyword_param}=~s|"(.*?) (.*?)"|"$1<M>$2"|g;
+				$FORM{$keyword_param}=~s|["+&]||g;
+				
+				$FORM{$keyword_param}=~s|\W| |g;
+				
+				$FORM{$keyword_param}=~s| |;|g;
+				$FORM{$keyword_param}=~s|^;||;$FORM{$keyword_param}=~s|;$||;
+				1 while ($FORM{$keyword_param}=~s|;;|;|);
+				$FORM{$keyword_param}=~s|<M>| |g;
+				
+				my %key;
+				foreach my $word(split(';',$FORM{$keyword_param}))
+				{
+					$key{$word}++;
+				}
+				
+				my $word;
+				foreach (sort keys %key)
+				{
+					$word.=$_.';';
+				}
+				$word=~s|;$||;
+				
+				$keys0{$word}++;
+
+=head1
+				main::_log("query='$query'");
+				my %FORM=TOM::Net::HTTP::CGI::GetQuery($query);
+				next if $FORM{$keyword_param}=~/^cache/;
+				next unless $FORM{$keyword_param};
+				
+				$FORM{$keyword_param}=Int::charsets::encode::UTF8_ASCII($FORM{$keyword_param});
+				$FORM{$keyword_param}=~tr/A-Z/a-z/;
+				$FORM{$keyword_param}=~s|"(.*?) (.*?)"|"$1<M>$2"|g;
+				$FORM{$keyword_param}=~s|["+&]||g;
+				$FORM{$keyword_param}=~s| |;|g;
+				$FORM{$keyword_param}=~s|^;||;$FORM{$keyword_param}=~s|;$||;$FORM{$keyword_param}=~s|;;|;|;
+				$FORM{$keyword_param}=~s|<M>| |g;
+				
+				main::_log("keywords='$FORM{$keyword_param}'");
+				
+				next unless $FORM{$keyword_param};
+				
+				$keys0{$FORM{$keyword_param}}++;
+				
+				my @keywords=split(';',$FORM{$keyword_param});
+				
+				my $par;
+				foreach (sort @keywords)
+				{
+					$keys{$_}++;
+					$par.="$_ ";
+				}
+=cut
+			}
+		}
+	}
+	
+	
+	
+	$body =~ s|<%domain-name%>|$tom::Hm|g;
+	$body =~ s|<%term%>|$TEXTS{$env{lng}}{term}$from_hash{mday}. $from_hash{mom}. $from_hash{year} - $today|g;
+	$body =~ s|<%info%>|$TEXTS{$env{lng}}{info}|;
+	$body =~ s|<%main-header%>|$TEXTS{$env{'lng'}}{'header_subject'}|;
+	
+	$doc.="\n";
+	
+	
+	# príchody z vyhľadávačov
+	
+	$doc.="\n";
+	my $count;
+	$doc .= "<div id=\"search_engines\"><h2>Prichody z vyhladavacov</h2><table>\n<tr><th>nazov</th><th>uzivatelov</th></tr>\n";
+	foreach (sort {$domains_search{$b} <=> $domains_search{$a}} keys %domains_search)
+	{
+		$count++;
+		last if $count>50;
+		
+		my $pict=$_."\@webcom.sk";
+		
+		# pokial mam k dispozicii obrazok, pridam ho do message
+		if (-e $TOM::P."/_data/SE_images/".$_.".gif")
+		{
+				$msg->attach
+				(
+					'Path'       => $TOM::P."/_data/SE_images/".$_.".gif",
+					'Type'       => "image/gif",
+					'Content-ID' => "<".$pict.">",
+					'Encoding'   => "base64"
+				);
+		}
+		
+		$doc .= "<tr<%class%>><td class=\"image first\"><img src=\"cid:$pict\" /></td><td>$_</td><td>$domains_search{$_}</td><td> ".((int(($domains_search{$_}/($domains_search_count/100))*100))/100)."%</td></tr>";
+		if ($count%2) { $doc =~ s|<%class%>| class="odd"|; }
+		else { $doc =~ s|<%class%>||; }
+	}
+	$doc .= "</table></div>\n";
+	
+	
+	
+	
+	$doc.="\n<hr class=\"endblock\" />\n";
+	
+	
+	
+	# prichody z domen
+	
+	my $count;
+	$doc .= "<div id=\"domains\"><h2>Prichody z domen</h2><table>\n<tr><th>nazov</th><th>uzivatelov</th></tr>\n";
+	foreach (sort {$domains{$b} <=> $domains{$a}} keys %domains)
+	{
+		$count++;
+		last if $count>50;
+		my $subdoc = "<tr<%class%>><td class=\"first\"><%domain%></td><td>$domains{$_}</td></tr>\n";
+		if (my $dom=TOM::Net::HTTP::referer::analyze($_))
+		{
+			$subdoc =~ s|<%domain%>|<abbr title="$dom/$TOM::Net::HTTP::referer::table{$dom}{domain_type}">$_</abbr>|g;
+		}
+		elsif (!$_)
+		{
+			$subdoc =~ s|<%domain%>|(direct)|g;
+		}
+		else
+		{
+			$subdoc =~ s|<%domain%>|$_|g;
+		}
+		$doc .= $subdoc;
+		if ($count%2) { $doc =~ s|<%class%>| class="odd"|; }
+		else { $doc =~ s|<%class%>||; }
+	}
+	$doc.="</table></div>\n";
+	
+	
+	
+	$doc.="\n<hr class=\"endblock\" />\n";
+	
+	
+=head1
+ my $count;
+ #$doc.="keywords (TOP 50):\n";
+  $doc .= "<div id=\"keywords\"><h2>klucove slova</h2><table>\n<tr><th>nazov</th><th>uzivatelov</th></tr>\n";
+ foreach (sort {$keys{$b} <=> $keys{$a}} keys %keys)
+ {
+  $count++;
+  last if $count>50;
+  #next if $keys{$_}<2;
+  #$doc.=" +[$count] $_ $keys{$_}\n";
+  $doc .= "<tr<%class%>><td class=\"first\">$_</td><td>$keys{$_}</td></tr>\n";
+  if ($count%2) { $doc =~ s|<%class%>| class="odd"|; }
+  else { $doc =~ s|<%class%>||; }
+ }
+ $doc .= "</table></div>\n";
+ 
+ 
+ $doc.="\n<hr class=\"endblock\" />\n";
+=cut
+ 
+ $doc.="\n";
+ 
+ my $count;
+ #$doc.="spojenia (TOP 50):\n";
+   $doc .= "<div id=\"keyphrases\"><h2>frazy</h2><table>\n<tr><th>nazov</th><th>uzivatelov</th></tr>\n";
+ foreach (sort {$keys0{$b} <=> $keys0{$a}} keys %keys0)
+ {
+  $count++;
+  last if $count>50;
+  #next if $keys0{$_}<2;
+  #$doc.=" +[$count] $_ $keys0{$_}\n";
+  $doc .= "<tr<%class%>><td class=\"first\">$_</td><td>$keys0{$_}</td></tr>\n";
+  if ($count%2) { $doc =~ s|<%class%>| class="odd"|; }
+  else { $doc =~ s|<%class%>||; }
+ }
+ $doc .= "</table></div>\n";
+
+ 
+ $doc.="\n";
+ 
+ 
+	$body=~s|<%DOC%>|$doc|;
+ 
+ 
+ use Utils::datetime;
+ #$email=~s|<%DATE%>|$Utils::datetime::DAYS{en}[$cron::Twday], $cron::Tmday $Utils::datetime::MONTHS{en}[$cron::Tmom-1] $cron::Fyear $cron::Fhour:$cron::Fmin:$cron::Fsec +-200|g;
+
+ 
+# my %env0;
+# foreach (split(';',$env{to_email})){$env0{$_}++;}
+# $env{to_email}="";foreach (sort keys %env0){$env{to_email}.=$_.";" if $_}$env{to_email}=~s|;$||;
+# $env{to_email_parse}=$env{to_email};$env{to_email_parse}=~s|;|>,<|g;$env{to_email_parse}="<".$env{to_email_parse}.">";
+# $email=~s|<%TO%>|$env{to_email_parse}|g;
+	
+	
+	my $email=$msg->as_string();
+	$email=~s|<%BODY%>|$body|;
+	
+	TOM::Net::email::send
+	(
+		from => 'dev\@webcom.sk',
+		to => $env{to_email},
+		to_name => '',
+		body => $email
+	);
+	
+ return 1;
+ }
+
+
+
+1;

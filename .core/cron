@@ -1,0 +1,487 @@
+#!/usr/bin/perl
+#$CRON::core_uname_n=`uname -n`;chomp($CRON::core_uname_n);
+
+BEGIN
+{
+	$TOM::engine='cron';
+	$TOM::hostname=`hostname`;chomp($TOM::hostname);
+	$TOM::core_uname_n=$TOM::hostname;
+	$CRON::core_uname_n=$TOM::hostname;
+	$CRON::P=`pwd`;
+	$CRON::P=~s|(.*)/.*?\n$|\1|;
+	unshift @INC,$CRON::P."/.core/.libs";
+}
+
+$TOM::P=$CRON::P;
+
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use Inline (Config => DIRECTORY => "$CRON::P/.core/.libs/_Inline");
+use enc2;
+use enc3;
+use strict; # scrict code
+use Mysql;
+use TOM;
+use TOM::Debug::logs;
+use TOM::lock;
+use Database::connect;
+use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
+use CRON;
+use CRON::debug;
+use CRON::error;
+use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
+use Parallel::ForkManager;
+use Proc::ProcessTable;
+
+=head1
+sub _log
+{
+# print "@_\n";
+	my @env=@_;
+	if (not $env[0]=~/^\d+/)
+	{
+		unshift @env,0;
+	}
+	CRON::debug::log(@env);
+}
+=cut
+
+require "_config.sg/TOM.conf";
+require "_config/TOM.conf";
+#require "_config/TOM3.fcgi.conf";
+require "_config/cron.conf";
+
+our $type=$ARGV[0];
+exit(0) unless $type;
+$cron::P=$CRON::P;
+$main::time_current=$cron::time_current=time;
+local (
+	$cron::Tsec,
+	$cron::Tmin,
+	$cron::Thour,
+	$cron::Tmday,
+	$cron::Tmom,
+	$cron::Tyear,
+	$cron::Twday,
+	$cron::Tyday,
+	$cron::Tisdst) = localtime($cron::time_current);
+   # doladenie casu
+   $cron::Tyear+=1900;$cron::Tmom++;
+   # formatujem cas
+   local (
+   	$cron::Fsec,
+	$cron::Fmin,
+	$cron::Fhour,
+	$cron::Fmday,
+	$cron::Fmom,
+	$cron::Fyear,
+	$cron::Fwday,
+	$cron::Fyday,
+	$cron::Fisdst
+	) = (
+	sprintf ('%02d', $cron::Tsec),
+	sprintf ('%02d', $cron::Tmin),
+	sprintf ('%02d', $cron::Thour),
+	sprintf ('%02d', $cron::Tmday),
+	sprintf ('%02d', $cron::Tmom),
+	$cron::Tyear,
+	$cron::Twday,
+	$cron::Tyday,
+	$cron::Tisdst
+	);
+	
+	
+local (
+	$main::Tsec,
+	$main::Tmin,
+	$main::Thour,
+	$main::Tmday,
+	$main::Tmom,
+	$main::Tyear,
+	$main::Twday,
+	$main::Tyday,
+	$main::Tisdst) = localtime($main::time_current);
+   # doladenie casu
+   $main::Tyear+=1900;$main::Tmom++;
+   # formatujem cas
+   local (
+   	$main::Fsec,
+	$main::Fmin,
+	$main::Fhour,
+	$main::Fmday,
+	$main::Fmom,
+	$main::Fyear,
+	$main::Fwday,
+	$main::Fyday,
+	$main::Fisdst
+	) = (
+	sprintf ('%02d', $main::Tsec),
+	sprintf ('%02d', $main::Tmin),
+	sprintf ('%02d', $main::Thour),
+	sprintf ('%02d', $main::Tmday),
+	sprintf ('%02d', $main::Tmom),
+	$main::Tyear,
+	$main::Twday,
+	$main::Tyday,
+	$main::Tisdst
+	);
+	$main::Fyear_sub=$main::Fyear;
+	$main::Fyear_sub=~s/^..//;
+	
+$TOM::engine_ready=1;
+$TOM::engine='cron.'.$type;
+	
+my $var=rand(1);
+main::_log("starting cron, sleeping $var secs.");
+	
+	
+Time::HiRes::sleep($var);
+	
+	
+my $lock=new TOM::lock("CRON ".$type) || exit;
+	
+=head1
+main::_log(0,"controlling cron.pid");
+	
+if (-e $CRON::P."/_temp/cron.pid")
+{
+	main::_log(1,"cron.pid exists");
+	
+	open (PID,"<".$CRON::P."/_temp/cron.pid");
+	my $PID=<PID>;
+	close PID;
+	
+	chomp($PID);
+	
+	main::_log(2,"found PID:$PID");
+	
+	my $out=`ps -ao pid | grep $PID`;
+	
+	if ($out =~/$PID/s)
+	{
+		main::_log(2,"PID:$PID exists, also exiting");
+		exit;
+	}
+	else
+	{
+		main::_log(2,"PID:$PID not exists (crash of previous cron?)");
+		unlink $CRON::P."/_temp/cron.pid";
+	}
+	
+}
+	
+
+open (PID,">".$CRON::P."/_temp/cron.pid");
+print PID $$;
+close PID;
+=cut
+	
+	
+=head1
+my $null;
+while((-e $CRON::P."/.core/cron.pid")&&($null<30)) # naximalne 5 minut
+{
+ $null++;
+ my $var=rand(1);
+ CRON::debug::log(0,"{$null} cron.pid exists, waiting... $var secs.");
+ Time::HiRes::sleep($var);
+}
+open (HND,">$CRON::P/.core/cron.pid");
+print HND "$$\n";
+=cut
+	
+	
+#exit;
+	
+=head1
+	my $count=0;
+	
+	main::_log(1,"reading ProcessTable");
+#=head1
+	my $t = new Proc::ProcessTable;
+	
+	main::_log(1,"readed ProcessTable");
+	foreach my $p (@{$t->table} )#grep {$_->cmndline()=~/ \.\/cron (.*)/} 
+	{
+		main::_log(2,"PID:".$p->pid." CMD:".$p->cmndline);
+		my $cron=$p->cmndline;
+		next unless $cron=~s|^.* \.\/cron ||;
+		next if $cron=~/null/;
+		$cron=~s| ||g;
+		#print "$cron=$type\n";
+		
+		main::_log(3,"detected event '$cron'");
+		
+		$count++ if $cron eq $type;
+	}
+#=cut
+	
+	
+	main::_log(1,"event '$type' running in $count processes");
+	if ($count>1)
+	{
+		main::_log(2,"too more, exiting...");
+		exit(0);
+	}
+=cut
+	
+
+CRON::waitload($CRON::LOADAVG);
+
+
+if (-e $CRON::P."/.core/_config/cron.".$type.".cml" || -e $CRON::P."/_type/cron.".$type.".cml")
+{
+	CRON::debug::log("event '$type' defined");
+	if ($DBH = Mysql->Connect($TOM::DB{main}{host},$TOM::DB_name_TOM,$TOM::DB{main}{user},$TOM::DB{main}{pass}))
+	#if ($DBH = Mysql->Connect($TOM::DB_host,$TOM::DB_name,$TOM::DB_user,$TOM::DB_pass))
+	{CRON::debug::log("connect ok");}else
+	{
+		CRON::debug::log("cannot connect MySQL (), exiting",1);
+		CRON::debug::log("cannot connect MySQL (), exiting",1,"cron.err");
+		system ("rm $CRON::P/.core/cron.pid");
+		exit(0);
+	}
+	$main::DB{main}=$main::DBH; 
+	
+	
+	my $file_data;
+	open (HND,"<".$CRON::P."/_type/cron.".$type.".cml");
+	while (my $data=<HND>){$file_data.=$data;} 
+	open (HND,"<".$CRON::P."/.core/_config/cron.".$type.".cml");
+	while (my $data=<HND>){$file_data.=$data;}
+	while ($file_data=~s|<MODULE>(.*?)</MODULE>||s)
+	{
+		my $data=$1;
+		my %mdl_env;
+		while ($data=~s|<VAR id="(.*?)" value="(.*?)" />||s)
+		{
+			next unless $1;
+			next if not defined $2;
+			$mdl_env{$1}=$2;
+			$mdl_env{$1}=~s|\"|"|g;
+		}
+		module(%mdl_env);
+	}
+}
+else
+{
+	main::_log("event $type not defined, exiting...",1);
+	system ("rm $CRON::P/.core/cron.pid");
+	exit(0);
+}
+
+foreach (%main::DB)
+{
+	#$main::DB{$_}->DESTROY();
+	undef $main::DB{$_};
+}
+undef $DBH;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# zacina praca s jednotlivymi hostami;
+
+CRON::waitload($CRON::LOADAVG);
+our $pm = new Parallel::ForkManager(5);
+
+
+
+
+sub file2domain
+{
+	my $file=shift;
+	my $domain;
+	
+	foreach my $part(split('/',$file))
+	{
+		next unless $part;
+		if ($part=~s/^!//)
+		{
+			$domain=$part.".".$domain;
+		}
+		else
+		{
+#			$domain.="$part";
+			$domain=~s|\.$||;
+			$domain.="/".$part;
+		}
+	}
+	$domain=~s/\.$//;
+
+	return $domain;
+}
+
+
+
+
+
+
+
+
+%CRON::hosts=();
+
+
+main::_log("automatic analyze of hosts $TOM::P");
+if (opendir (DIR,$TOM::P))
+{
+	my @files=readdir DIR;
+	foreach my $file(@files)
+	{
+		
+		next if $file=~/^(\.|\.\.)$/;
+		if (
+				(-d $TOM::P."/".$file) &&
+				($file=~/^([^_\.][!\w\.]+|.*\/[^_\.][!\w\.]+)$/) &&
+				(not $file=~/(!media|!www)/)
+			)
+		{
+			if (opendir (DIR1,$TOM::P."/".$file)){foreach (readdir DIR1){if (($_ ne ".")&&($_ ne "..")){push @files,$file."/".$_;}}}
+		}
+		if ($file=~s/\/local.conf$//)
+		{
+			main::_log(file2domain($file));
+			$CRON::hosts{file2domain($file)}=$file;
+		}
+		
+	}
+}
+
+
+
+
+
+
+foreach (sort keys %CRON::hosts)
+{
+ main::_log("host $_ in $CRON::hosts{$_}");
+ if (-e $CRON::P."/".$CRON::hosts{$_}."/cron.".$type.".cml")
+ {
+  main::_log("preparing for fork()");
+  CRON::waitload($CRON::LOADAVG);
+  
+  
+  $main::pm->start and next;
+  
+  
+=head1
+  if (my $pid=fork())
+  {
+   my $var=rand(0.1);
+   CRON::debug::log(0,"waiting... $var secs.");
+   Time::HiRes::sleep($var);
+  }
+  else
+  {
+=cut
+  
+  
+   $cron::P=$CRON::P."/".$CRON::hosts{$_};
+   $tom::P=$cron::P;
+   $TOM::P=$CRON::P;
+   #print "$cron::P\n";
+   main::_log("start forked cron");
+   CRON::waitload($CRON::LOADAVG);
+   require $cron::P."/local.conf";
+   #require $cron::P."/cron.conf";
+   
+	my $file_data;
+	 if (($tom::Pm)&&(-e $tom::Pm."/cron.m".$type.".cml"))
+	 {
+	  open (HND,"<".$tom::Pm."/cron.m".$type.".cml");
+	  while (my $data=<HND>){$file_data.=$data;}
+	 }
+	 open (HND,"<".$cron::P."/cron.".$type.".cml");
+	 while (my $data=<HND>){$file_data.=$data;}
+	 
+	 
+		# poriesim includy
+		while ($file_data=~s|<ADDTYPE (.*?)/>|<!TMP!>|)
+		{
+			use CML;
+			my %env0=CML::VARhash($1);
+			my $var;
+			main::_log("Importing type ".$env0{name});
+			
+			if ($env0{global} eq "1")
+			{
+				my $filename=$TOM::P."/_type/g_".$env0{'name'}.".cron.type";
+				if (-e $filename)
+				{
+					#my $file_data2;
+					open (HND2,"<".$filename);
+					while (my $data=<HND2>){$var.=$data;}
+				}
+			}
+			
+			$file_data=~s|<!TMP!>|$var|g;
+		}
+	 
+	 
+	 
+	if ($file_data=~/<MODULE>/)
+	{
+	  $TOM::DB{main}{name}=$TOM::DB_name unless $TOM::DB{main}{name};
+	  
+	  $DBH = Mysql->Connect($TOM::DB{main}{host},$TOM::DB_name_TOM,$TOM::DB{main}{user},$TOM::DB{main}{pass});
+	  $main::DB{main}=$DBH;
+	  
+#	  if ($DBH = Mysql->Connect($TOM::DB{main}{host},$TOM::DB{main}{name},$TOM::DB{main}{user},$TOM::DB{main}{pass}))
+#	  {CRON::debug::log(2,"MySQL connect to $TOM::DB_host,$TOM::DB_name,$TOM::DB_user,**** ok");}
+#	  else {CRON::debug::log(2,"MySQL bad connect, exiting -".Mysql->errmsg()."-",1);exit(0);}
+
+
+	  $DBH->selectdb($TOM::DB{main}{name});
+	  
+	  while ($file_data=~s|<MODULE>(.*?)</MODULE>||s)
+	  {
+	   my $data=$1;
+	   my %mdl_env;
+	   while ($data=~s|<VAR id="(.*?)" value="(.*?)" />||s)
+	   {
+	    next unless $1;
+	    next if not defined $2;
+	    $mdl_env{$1}=$2;
+	    $mdl_env{$1}=~s|\"|"|g;
+	   }
+	   CRON::waitload($CRON::LOADAVG);
+	   module(%mdl_env);
+	  }
+	}
+	
+	main::_log("end forked cron");
+	
+	$main::pm->finish();
+	
+	
+	#exit(0);
+  #}
+
+ }
+ else
+ {
+ }
+}
+
+$pm->wait_all_children;
+
+$lock->close();
+
+#CRON::debug::log(0,"end cron, erasing $CRON::P/_temp/cron.pid");
+#unlink $CRON::P."/_temp/cron.pid";
+#system ("rm $CRON::P/.core/cron.pid");
+
+exit(0);
+
+

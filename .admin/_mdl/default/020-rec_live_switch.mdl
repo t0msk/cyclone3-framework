@@ -1,0 +1,46 @@
+sub BaseModul
+{
+# $HTML_HEADER{BODY}{extract}="yes";
+ #my $mdl_temp="$form{table}:$form{id}";
+
+ my $id=$form{ID};
+ my $temp;
+
+
+ $db_micro = $dbh->Query("SELECT rec_live FROM markiza_sk.a020_cat WHERE ID='$id' LIMIT 1");
+ if (%db_micro_line=$db_micro->FetchHash())
+ {
+  #return $db_micro_line{rec_live};
+
+  my %rec_live_vals;
+
+  $i=1;
+
+  while ($db_micro_line{rec_live}=~s|(.)||)
+  {
+   #$blabla.=$1.",";
+   $rec_live_vals{$i}=$1;
+   $i++;
+  }
+  #return $blabla;
+  if ($rec_live_vals{$form{rec_live_depth}} eq '2'){$rec_live_vals{$form{rec_live_depth}}='0';}else{$rec_live_vals{$form{rec_live_depth}}++;}
+  for (my $j=7;$j>=1;$j--)
+  {
+   if (($rec_live_vals{$j} eq '0') or (not exists $rec_live_vals{$j})){$temp='0'.$temp;}else{$temp=$rec_live_vals{$j}.$temp;}
+   #$temp=$priority_vals{$j}.$temp."z";
+  }
+
+  $db_micro = $dbh->Query("UPDATE markiza_sk.a020_cat SET rec_live='$temp' WHERE ID='$id' LIMIT 1");
+ }
+  #$temp="SELECT priority FROM markiza_sk.a400 WHERE ID='$id' LIMIT 1";
+ #return $temp;
+ #while (length($temp)<17)
+ #{
+ # $temp.="0";
+ #}
+ return "<script>\nparent.document.frames['frm_base'].location.reload();\n</script>";
+}
+
+
+1;
+

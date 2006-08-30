@@ -1,0 +1,20 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+ <DEFINITION id="unlogged">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-unlogged%><br><br>
+ <!--<a href="<%LINK%>&_dsgn=default" style="FONT:11px Verdana;COLOR:blue;"><u>"<%LINK%>&_dsgn=default"</u></a>-->
+ <a href="<%LINK%>" style="FONT:11px Verdana;COLOR:blue;"><u>"<%LINK%>"</u></a>
+</div>
+
+ </DEFINITION>
+ <DEFINITION id="err_notlogged">
+
+<div style="FONT:12px Verdana;" align=center>
+ <%XLNG-err%><br><brs>
+ <%XLNG-errnotlogged%><br><br>
+</div>
+
+ </DEFINITION>
+</XML_DESIGN_DEFINITION>

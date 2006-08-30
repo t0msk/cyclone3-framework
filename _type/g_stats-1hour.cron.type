@@ -1,0 +1,70 @@
+<!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
+
+# Cyclone3 statistics
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_chart_visitors" />
+		<VAR id="day" value="1" />
+		<VAR id="week" value="1" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_chart_pageviews" />
+		<VAR id="day" value="1" />
+		<VAR id="week" value="1" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_chart_pagesfailed" />
+		<VAR id="day" value="1" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_chart_visits" />
+		<VAR id="day" value="1" />
+		<VAR id="week" value="1" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_chart_availability" />
+		<VAR id="day" value="1" />
+		<#VAR id="hour" value="1" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_chart_pagespervisit" />
+		<VAR id="week" value="1" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_chart_pagespervisitor" />
+		<VAR id="week" value="1" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_chart_visitspervisitor" />
+		<VAR id="week" value="1" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_chart_camefrom_type" />
+		<VAR id="day" value="1" />
+</MODULE>

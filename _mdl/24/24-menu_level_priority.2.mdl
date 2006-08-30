@@ -1,0 +1,147 @@
+#!/bin/perl
+#áéíóú USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 HEAD_VERSION
+1.030723
+
+=head1 NAME
+menu_level_priority
+
+=head1 DESCRIPTION
+menu generator
+
+data format:
+	<LINK id="string" l="depth level (1-x)" p="priority (0-x)">
+	<URL>url</URL>
+	<TARGET>target frame</TARGET>
+	</LINK>
+	...
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+ <value id="preview" value="1"/>
+ <value id="output" value="xsgn"/>
+	<source type="db" value="varchar">db name (default - this)</source>
+	<source type="db.table" value="this._config">db table where the menus are located (not needed when using menu_xml variable)</source>
+	<input id="menu_name" value="varchar">db variable identificator</input>
+	<input id="menu_type" value="hr/vr">orientation of menu (horizontal/vertical)</input>
+	<input id="menu_width" value="int">width of the menu block</input>
+	<input id="menu_width_m" value="%/px">menu width measurement</input>
+	<input id="menu_item_width_m" value="%/px">menu item width measurement</input>
+	<input id="menu_depth" value="int">maximum depth of menu items to display</input>
+	<input id="menu_start_at" value="int">first root (level=1) item to display</input>
+	<input id="menu_end_at" value="int">last root (level=1) item to display</input>
+	<input id="menu_blocks" value="int,int,int, ....">explicitly chosen blocks to display in given order</input>
+	<input id="menu_xml" value="xml">menu blocks data, in case it doesn't have to use db</input>
+	<input id="return_null" value="1/0">return empty box if module fails to execute</input>
+	<input id="return_string" value="varchar">default content string if module fails to execute</input>
+</DESCRIPTION>
+
+=head1 CHANGES
+build 030804 - Deboot
+	*) db parameter added
+build 030723 - Deboot
+	*) menu_xml parameter added
+build 030625 - Deboot
+	*) menu_width, menu_width_m, menu_item_width_m, menu_depth, menu_start_at, menu_end_at parameters added
+build 030624 - Deboot
+	*) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+	*) nothings
+=cut
+
+# takto bude vyzerat designovy modul
+
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+
+ $env{db_24}=Tomahawk::Getmdlvar("24","db") unless $env{db_24};
+ $env{db_24}=$TOM::DB_name unless $env{db_24};
+
+ my $data;
+
+ #Tomahawk::debug::log(5,"menu_xml=$env{menu_xml}", 1);
+
+ if (!$env{menu_xml})
+ {
+  #Tomahawk::debug::log(5,"nemam menu_xml");
+  if (not $data=Tomahawk::Getmdlvar("24","$env{menu_name}",db=>$env{db_24}))
+  {
+   #Tomahawk::debug::log(5,"ziadne data z getvaru");
+   #Tomahawk::debug::log(6,"Could not load data from config database! Check if db item \"" . $env{menu_name} ."\" exists!", 1);
+   $tom::ERR = "DB request error!";
+   return undef;
+  }
+  #Tomahawk::debug::log(5,"mam data z getvaru");
+ }
+ else
+ {
+  $data=$env{menu_xml};
+ }
+ if ($data)
+ {
+  my %menu_counts;
+
+  while ($data=~s|<LINK id="(.{2,150}?)" l="(.{0,2}?)" p="(.{0,2}?)">(.*?)</LINK>||si)
+  {
+   my ($var,$level,$prior,$line,$url,$target)=($1,$2,$3,$4);
+   if ($line=~s/<URL>(.*?)<\/URL>//si){$url=$1}
+   if ($line=~s/<TARGET>(.*?)<\/TARGET>//si){$target=$1}
+
+   $menu_counts{items}++;
+   $menu_counts{roots}++ if ($level==1);
+
+   next if ((defined $env{menu_depth}) && ($env{menu_depth} < $level));
+
+   next if ((defined $env{menu_start_at}) && ($env{menu_start_at} > $menu_counts{items}-1));
+
+   last if ((defined $env{menu_end_at}) && ($env{menu_end_at} < $menu_counts{roots}-1));
+
+   $XSGN{NULL}=$XSGN{LINE};
+   $XSGN{NULL}=~s|<%URL%>|$url|;
+   $XSGN{NULL}=~s|<%TARGET%>|$target|;
+   $XSGN{NULL}=~s|<%LEVEL%>|-level$level| if $level;
+   $XSGN{NULL}=~s|<%PRIOR%>|-prior$prior| if $prior;
+   $XSGN{NULL}=~s|<%PRIOR%>|-prior$prior| if $prior;
+
+   $XSGN{NULL}=~s|<%NAME%>|$var|;
+   #$XSGN{TMP}.=$XSGN{NULL};
+   $XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}<#LINE#>|;
+  }
+
+  if ($env{menu_type} eq "hr")
+  {
+   my $menu_item_width=$env{menu_width}/$menu_counts{roots};
+
+   $XSGN{TMP}=~s|<%MENU-ITEM-WIDTH%>| style="width: $menu_item_width$env{menu_item_width_m};" |g;
+   $XSGN{TMP}=~s|<%MENU-WIDTH%>|$env{menu_width}|;
+   $XSGN{TMP}=~s|<%MENU-WIDTH-M%>|$env{menu_width_m}|;
+  }
+ }
+ else
+ {
+   #Tomahawk::debug::log(5,"Could not load data from database! Check the db, or db select!", 1);
+   if ($env{return_null})
+   {
+    #Tomahawk::debug::log(6,"return_null set. Returning empty box.", 1);
+     undef $XSGN{TMP}; return 1; }
+   elsif ($env{return_string})
+   {
+    #Tomahawk::debug::log(6,"return_string set. Returning box with return_string.", 1);
+     $XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE_NULL}|; $XSGN{TMP}=~s|<%LINE-NULL%>|$env{return_string}|; }
+   else
+   { $tom::ERR = "DB request error!"; return undef; }
+ }
+ return 1}
+
+1;

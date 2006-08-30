@@ -1,0 +1,217 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use Secure::vulgarisms;
+use Secure::form;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ if (!$env{ID}){$tom::ERR="Missed ID forum!";return undef;}
+ $env{max}=50 unless $env{max};
+
+ $env{level_from}=-2 unless $env{level_from};
+
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+
+ $env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+ $env{db_820}=$TOM::DB_name unless $env{db_820};
+
+ my %struct;
+ my %struct_base;
+
+ # najpr nacitam info o tom forume :)
+ my $db0=$main::DBH->Query("
+ 	SELECT *
+	FROM $env{db_820}.a820
+	LEFT JOIN $env{db_820}.a820_attrs
+		ON (a820.IDattrs AND a820.IDattrs=a820_attrs.IDattrs)
+	WHERE 	a820.ID='$env{ID}'
+		AND a820.type='F'
+		AND (a820.lng='$env{lng}' OR a820.lng='')
+		AND a820.active='Y'
+	LIMIT 1
+ ");
+ if (my %env0=$db0->fetchhash)
+ {
+
+  $main::DBH->Query("
+	UPDATE $env{db_820}.a820
+	SET lasttime='$tom::time_current'
+	WHERE 	ID='$env{ID}'
+		AND type='F'
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'
+	LIMIT 1");
+
+  #$XSGN{TMP}="mam forum!";
+  $XSGN{TMP}=~s|<%NAME%>|$env0{name}|g;
+  $XSGN{TMP}=~s|<%IDforum%>|$env0{ID}|g;
+
+  my $db0 = $main::DBH->Query("
+	SELECT *
+	FROM $env{db_820}.a820_msgs
+	WHERE IDforum='$env{ID}' AND active='Y'
+	ORDER BY ID DESC
+	LIMIT $env{max}");
+  while (my %env1=$db0->fetchhash)
+  {
+   #$XSGN{TMP}.="<BR>$env1{from_IDhash},$env1{from_name},$env1{title}";
+   $env1{ID}=sprintf ('%011d', $env1{ID});
+   $env1{IDre}=sprintf ('%011d', $env1{IDre});
+   $struct{$env1{ID}}=$env1{IDre};
+   $struct_base{$env1{ID}}=	[
+			$env1{IDre},
+			$env1{from_name},
+			$env1{title},
+			$env1{msg},
+			$env1{from_IDhash},
+			$env1{inserttime},
+			$env1{from_IP},	#6
+				];
+  }
+ }
+ else
+ {
+  $tom::ERR="Missed forum by ID=$env{ID}!";
+  return undef;
+ }
+
+ # OSETRENIE PRE PREHLADAVANIE NEUPLNEJ CASTI STROMU
+ foreach (keys %struct){if (not defined $struct{$struct{$_}}){$struct{$_}=0;}}
+
+ my @struct0;
+ foreach my $key(reverse sort keys %struct)
+ {
+  if (($struct{$key}==0)&&(defined $struct{$key}))
+  {
+   push @struct0,$key,0;
+   delete $struct{$key};
+   my $uroven=1;
+   my @urovne;
+   $urovne[$uroven]=$key;
+
+   while ($uroven>0)
+   {
+    my $nasiel;
+    foreach my $key0(sort keys %struct)
+    {
+     next if $nasiel;
+     if ($urovne[$uroven]==$struct{$key0})
+     {
+      push @struct0,$key0,$uroven;
+      $nasiel=1;
+      $uroven++;
+      $urovne[$uroven]=$key0;
+      delete $struct{$key0};
+     }
+    }
+    if (!$nasiel){$uroven--;}
+   }
+  }
+ }
+
+
+ # VYKRESLENIE
+ for (my $i=0;$i<@struct0;$i=$i+2)
+ {
+  my $tr_uroven=$struct0[$i+1];
+  $XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE}<#LINE#>|;
+  my $width=$tr_uroven*10+5;
+
+  if (($main::USRM{logged} eq "Y")&&($struct_base{$struct0[$i]}[4] ne $main::USRM{IDhash})){$XSGN{TMP}=~s|<#REPLY#>|$XSGN{reply}|g;}
+  else {$XSGN{TMP}=~s|<#REPLY#>||g;}
+
+  if ($struct_base{$struct0[$i]}[4] eq $main::USRM{IDhash})
+  {$XSGN{TMP} =~s|<%CLASS_my%>| $XSGN{CLASS_my}|g;}
+  else {$XSGN{TMP} =~s|<%CLASS_my%>||g;}
+
+
+  my %env0=Utils::datetime::ctodatetime($struct_base{$struct0[$i]}[5],format=>1); # zkonvertujem cas do hashu a zformatujem
+  $XSGN{TMP}=~s|<%DATETIME%>|$env0{mday}.$env0{mom}.$env0{year} $env0{hour}:$env0{min}|g;
+
+	if($struct_base{$struct0[$i]}[1] ne "anonym")
+	{
+		#maskuje posledne cislo ipcky  -  deboot
+		$struct_base{$struct0[$i]}[6]=~s|(.*)\.(.*?)$|\1\.\*|;
+
+		$struct_base{$struct0[$i]}[6]="";
+	}
+
+	$XSGN{TMP} =~s|<%IP%>|$struct_base{$struct0[$i]}[6]|g;
+
+  $XSGN{TMP} =~s|<%NAME%>|$struct_base{$struct0[$i]}[1]|g;
+  $struct_base{$struct0[$i]}[2]=~s|<.*?>||g;
+
+  #if ($main::IAdm)
+  #{
+  # &Secure::vulgarisms::convert($env{lng},$struct_base{$struct0[$i]}[2]);
+    #Secure::vulgarisms::convert($env{lng},$struct_base{$struct0[$i]}[2]);
+  #}
+
+  Secure::vulgarisms::convert($env{lng},$struct_base{$struct0[$i]}[2]);
+
+  $XSGN{TMP} =~s|<%TITLE%>|$struct_base{$struct0[$i]}[2]|g;
+  my $var=$struct_base{$struct0[$i]}[2];#$var=~s| |%20|g;
+  #$var=~s|([^a-zA-Z0-9%])|%$1|g; # URL encode
+  #$var=~s/([^a-zA-Z0-9])/hex($1)/eg; # URL encode
+  $var=~s|([^a-zA-Z0-9])|uc sprintf("%%%02x",ord($1))|eg;
+  $XSGN{TMP} =~s|<%FTITLE%>|$var|g;
+
+  Secure::form::convert_tags($struct_base{$struct0[$i]}[3]);
+  Secure::vulgarisms::convert($env{lng},$struct_base{$struct0[$i]}[3]);
+  $struct_base{$struct0[$i]}[3]=~s|\n|<br />|g;
+  $struct_base{$struct0[$i]}[3]=~s|http://([\w/\.]+)|<a href="http://$1" target="_top">http://$1</a>|g;
+  $XSGN{TMP} =~s|<%MSG%>|$struct_base{$struct0[$i]}[3]|g;
+  $XSGN{TMP} =~s|<%ID%>|$struct0[$i]|g;
+#  if ($struct_base{$struct0[$i]}[4] eq $main::USRM{IDhash}){$XSGN{TMP} =~s|<%CNAME%>|$XSGN{CNAME_my}|g;}
+#  else {$XSGN{TMP} =~s|<%CNAME%>|$XSGN{CNAME}|g;}
+
+  my $i0=$env{level_from};
+  $XSGN{NULL}="";
+  while ($i0<($tr_uroven))
+  {
+   $i0++;
+   $XSGN{NULL} .= $XSGN{OD};
+   $XSGN{NULL} =~s|<%TBG%>|<%TBG-$i0%>|g;
+
+   if (($i0+1) == $tr_uroven)
+   {
+    $XSGN{NULL}=~s|<%IMG%>|$XSGN{img_cross}|g;
+    $XSGN{TMP} =~s|<%TBG-$i0%>| $XSGN{CLASS_bg_line}|g;
+   }
+
+   if ($i0 == $tr_uroven)
+   {
+     $XSGN{NULL}=~s|<%IMG%>|$XSGN{icon}|g;
+
+     if ($struct0[$i+3]>$struct0[$i+1])
+     {
+      $XSGN{NULL} =~s|<%TBG-$i0%>| $XSGN{CLASS_bg_line}|g;
+     }
+     else {
+      $XSGN{NULL} =~s|<%TBG-$i0%>||g;
+     }
+     $XSGN{TMP} =~s|<%TBG-$i0%>||g;
+   }
+   else
+   {
+    $XSGN{NULL}=~s|<%IMG%>||g;
+   }
+  }
+
+
+  $XSGN{TMP} =~s|<#OD#>|$XSGN{NULL}|g;
+ }
+
+ $XSGN{TMP} =~s|<%IDforum%>|$env{ID}|g;
+
+ return 1}
+
+1;

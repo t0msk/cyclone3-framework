@@ -1,0 +1,191 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+#alarm 3;
+sub execute
+{
+if($main::FORM{where}==3)
+ {
+  my %env=@_;
+  Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+  $env{db}=$TOM::DB_name unless $env{db};
+  $env{db_count}=15 unless $env{db_count};
+  $env{format}= "t" unless $env{format};
+  $env{horizontal}=6 unless $env{horizontal};
+  $env{vertical}=8 unless $env{vertical};
+  $env{level}=5 unless $env{level};
+  $env{first_horizontal} = 4 unless $env{first_horizontal};
+  $env{popis}= "1" unless $env{popis};
+  $env{sort}= "1"   unless $env{sort};
+  $env{category} = $main::FORM{went};   #urcuje pohyb v galerke
+
+ my $Line=$main::DBH->Query("
+select
+Z.ID,Z.hash,A.IDcategory,A.about
+from $env{db}.a500 as Z
+left join  $env{db}.a500_attrs A ON A.ID=Z.ID
+where Z.format='t' AND Z.active='Y' AND Z.IDcategory ='$env{category}'
+");
+
+ my %hash1;
+ my %hash2;
+ my %hash3;
+ my %hash4;
+
+ while(my @db_line=$Line->fetchrow)
+  {
+   $hash1{$db_line[1]}=$db_line[2];
+   $hash2{$db_line[1]}=$db_line[3];
+   $hash3{$db_line[1]}=$db_line[0];
+   $hash4{$db_line[0]}=$db_line[1];
+  }
+
+ my @array;
+ my @array2;
+ my $count=0;
+$XSGN{BUTONS_NULL}=$XSGN{BUTONS};
+ foreach(keys %hash1)
+  {
+   $array[$count]=$_;
+   $array2[$count]=$hash2{$_};
+   $count++;
+  }
+
+ $XSGN{ELEMENT}=~/(.{1,10000})/g;
+ my $xsgn_element=$1;
+ $XSGN{ELEMENT0}=~/(.{1,10000})/g;
+ my $xsgn_element0=$1;
+ $XSGN{LINE}=~/(.{1,10000})/g;
+ my $xsgn_line=$1;
+ $XSGN{POS}=~/(.*)/;
+ my $xsgn_pos=$1;
+ $XSGN{TMP}=~/(.*)/;
+ my $xsgn_tmp=$1;
+
+ $XSGN{POS}=~s|<#POS#>|$main::FORM{previous}|;
+ #$XSGN{LINE}=~s|<#LINE#>|$XSGN{POS}|;
+ $XSGN{TMP}=~s|<#TMP#>|$XSGN{POS}<#TMP#>|;
+ $XSGN{LINE}=$XSGN{LINE0};
+ my $what;
+ my $count_pole=0;
+ my $count=0;
+ my $combine_rows=$env{horizontal}*$env{vertical};
+ my $count_array23=@array;
+ my $page;
+
+ if(not defined $main::FORM{page})
+  {
+   $what=0;
+  }
+ else
+  {
+   $what=$main::FORM{page}*$combine_rows;
+  }
+
+ #$count_vertical=$what;
+ my $horizont=0;
+ my $count_vertical=0;
+
+ if($what==0){$page=0}
+
+ my $count_array;
+ my @array3=@array;
+ my $count_array2=@array;
+ my $count_horizontal;
+
+ for($what..@array-1)
+  {
+   $horizont++;
+   $hash3{$array[$_]}=~/^(\d{4})/;
+   my $addr=$1;
+   $XSGN{ELEMENT}=~s|<#ELEMENT#>|$tom::H_500\/$addr\/$array[$_]-t.jpg|;
+   $array2[$_]=~s|\_| |g;
+   $array2[$_]=~s|\s{2,}| |g;
+
+   $XSGN{ELEMENT}=~s|<%ID%>|$hash3{$array[$_]}|;
+
+   $XSGN{ELEMENT}=~s|<#POPIS#>|$array2[$_]|;
+   $XSGN{LINE}=~s|<#LINE#>|$XSGN{ELEMENT}<#LINE#>|;
+   $XSGN{ELEMENT}=$XSGN{ELEMENT0};
+
+	  if($horizont == $env{horizontal} )
+   		{
+    		$XSGN{TMP}=~s|<#TMP#>|$XSGN{LINE}<#TMP#>|;
+    		$XSGN{LINE}=$XSGN{LINE0};
+    		$horizont=0;
+   		}
+
+  $count_array=@array;
+  $count_vertical++;
+
+  if($count_vertical==$combine_rows)
+   {
+    	if($what>0)
+     	{
+      	$page=$main::FORM{page}-1;
+      	$XSGN{BUTTON_BACKWARD}=~s|<#ZDROJ#>|type=a500_cat&went=$main::FORM{went}&page=$page&style=end|;
+      	$page=$main::FORM{page}+1;
+      	$XSGN{BUTTON_FORWARD}=~s|<#ZDROJ#>|type=a500_cat&went=$main::FORM{went}&page=$page&style=end|;
+      	$XSGN{BUTONS}=~s|<#NEXT#>|$XSGN{BUTTON_FORWARD}|;
+      	$XSGN{BUTONS}=~s|<#BACK#>|$XSGN{BUTTON_BACKWARD}|;
+	#$XSGN{TMP}=~s|<#PAGING#>|$XSGN{BUTONS} <#PAGING#>|;
+     	}
+    	else
+     	{
+      	if($_+1 < $count_array2-1)
+       	{
+        $page=$main::FORM{page}+1;
+        $XSGN{BUTTON_FORWARD}=~s|<#ZDROJ#>|type=a500_cat&went=$main::FORM{went}&page=$page&style=end|;
+	$XSGN{BUTONS}=~s|<#NEXT#>|$XSGN{BUTTON_FORWARD}<#NEXT#>|;
+        $XSGN{TMP}=~s|<#PAGING#>|$XSGN{BUTONS}<#PAGING#>|;
+	$XSGN{BUTONS}=$XSGN{BUTONS_NULL};
+       }
+     }
+
+    $XSGN{TMP}=~s|<#TMP#>|$XSGN{LINE}<#TMP#>|;
+    $XSGN{TMP}=~s|<#PAGING#>|$XSGN{BUTONS}<#PAGING#>|;
+    $XSGN{LINEX}=$XSGN{LINE0X};
+    $XSGN{LINE}=$XSGN{LINE0};
+    undef $count_horizontal;
+    last;
+   }
+
+  			 if($_==$count_array2-1 && $array[($_-1)]=~/.{1,}/ && $what!=0)
+    			{
+     			$page=$main::FORM{page}-1;
+     			$XSGN{LINE}=$XSGN{LINE0};
+     			$XSGN{BUTTON_BACKWARD}=~s|<#ZDROJ#>|type=a500_cat&went=$main::FORM{went}&page=$page&style=end|;
+     			$XSGN{BUTONS}=~s|<#BACK#>|$XSGN{BUTTON_BACKWARD}<#BACK#>|;
+		     	$XSGN{TMP}=~s|<#PAGING#>|$XSGN{BUTONS}<#PAGING#>|;
+     			$XSGN{TMP}=~s|<#TMP#>|$XSGN{LINE}<#TMP#>|;
+    			}
+
+			if($_==$count_array2-1)
+			{
+			$XSGN{TMP}=~s|<#TMP#>|$XSGN{LINE}<#TMP#>|;
+			}
+
+  }
+ }
+
+ #ifko pre where
+ return 1 }
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+

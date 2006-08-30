@@ -1,0 +1,13 @@
+# OPEN ONLY AS UTF-8!!!
+<XML_LANGUAGE_DEFINITION lngs="sk">
+
+ <VALUE lng="sk" id="notlogged">
+	Niesi prihlásený.<br><br>
+	Pridávať do obľúbených položiek môžeš len ak si prihlásený.
+ </VALUE>
+
+ <VALUE lng="sk" id="removed">Položka bola úspešne odobraná zo zoznamu obľúbených položiek</VALUE>
+
+ <VALUE lng="sk" id="notremoved">Položka nemohla byť úspešne odobraná zo zoznamu obľúbených položiek, pretože bola už odobraná skôr.</VALUE>
+
+</XML_LANGUAGE_DEFINITION>

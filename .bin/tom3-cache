@@ -1,0 +1,447 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+BEGIN {require "/usr/bin/tom3-init";}
+use Mysql;
+use Database::connect;
+use Utils::datetime;
+#use strict;
+
+#print color 'bold green';
+
+$main::time_current=time;
+
+%form=
+(
+ '--domain'	=>	"cache domain (eg. localhost.com)",
+ '-v'		=>	"verbose all",
+ '--verb'	=>	"verbose number",
+ '--del'	=>	"delete number",
+ '--master'	=>	"masterize number",
+ '--global'	=>	"globalize number",
+ '--local'	=>	"localize number",
+ '--edit'	=>	"edit number",
+ '--recacheID'	=>	"recache number",
+ '--recache-all'	=>	"recache all in domain",
+# '-vv, --v'	=>	"verbosity 2, --v=2",
+# '-a'		=>	"analyze",
+# '-s'		=>	"show only all modifications",
+);
+if (($FORM{h})||($FORM{help})){&help();}
+if (!$FORM{domain} && !$FORM{a}){&help();}
+
+=head1
+$FORM{domain}=~s|^www\.||i;
+$main::h=$FORM{domain};$main::h=~s|\.|_|g;$main::h=~s|/|__|g;
+
+my $path=$FORM{domain};$path=~s|^(.[^/]*)(.*)||;
+my $path_dom=$1;my $path_sub=$2;
+$path_dom=~s|(.*\.\|)(.*?\..*?)$|\1|;
+$main::p="!$2";$path_dom=~s|\.$||;
+
+foreach (reverse split('\.',$path_dom)){$main::p.="/!$_";}
+foreach (split('/',$path_sub)){$main::p.="/$_";}
+
+$main::p=~s|//|/|g;
+$main::p=$main::P."/".$main::p;
+print "p:".$main::p."\n";
+print "h:".$main::h."\n";
+=cut
+
+if (not -e $p."/local.conf")
+{
+ print color 'reset bold yellow';
+ print "domain $main::h not exists\n";
+ &exit();
+}
+
+require $p."/local.conf";
+#my $DBH = Mysql->Connect($TOM::DB_host,$h,$TOM::DB_user,$TOM::DB_pass);
+
+Database::connect::all('main','sys','stats');
+
+#print "$TOM::DB{sys}{host},$TOM::DB{sys}{name},$TOM::DB{sys}{user},$TOM::DB{sys}{pass}\n";
+#$main::DBH = Mysql->Connect($TOM::DB{sys}{host},$TOM::DB{sys}{name},$TOM::DB{sys}{user},$TOM::DB{sys}{pass}) || die "cannot connect";
+
+#if ($FORM{a})
+#{
+ #print "[$FORM{host}] analyze\n";
+ print "\n";
+ print "[ ][No  ][Eng ][Name                               ][cache_id         ][last use        ][Afrag][Tfrag][durat.][Tuses]\n";#[opt time  ][ ]\n";
+ print "   -------------------------------------------------------------------------------------------------------------------\n";#------------\n";
+ 
+ my $count;
+ my $count0;
+ 
+ #print "$tom::Hm $tom::H\n";
+ my $db0=$DB{sys}->Query("
+	SELECT * FROM TOM.a150_config
+	WHERE
+			(domain='' OR domain='$tom::Hm')
+			AND (domain_sub='' OR domain_sub='$tom::H')
+	ORDER BY Capp, Cmodule, Cid, engine, domain, domain_sub ");
+ while (my %db0_line=$db0->fetchhash)
+ {
+   print color 'reset green';
+ 
+   #GM
+   if (!$db0_line{domain})
+   {
+    print " G ";
+   }
+   elsif (!$db0_line{domain_sub})
+   {
+    print " M ";
+   }else
+   {
+    print "   ";
+   }
+   
+   if ((!$db0_line{domain}||!$db0_line{domain_sub})&&($FORM{v}))
+   {
+     my $sel;
+     $sel.=" AND domain='$db0_line{domain}'" if $db0_line{domain};
+     $sel.=" AND domain_sub='$db0_line{domain_sub}'" if $db0_line{domain_sub};
+     my $var="
+	SELECT COUNT(*) FROM TOM.a150_cache
+	WHERE	Capp='$db0_line{Capp}'
+			AND Cmodule='$db0_line{Cmodule}'
+			AND Cid='$db0_line{Cid}'
+			$sel";
+#	print "$var\n";
+     my $db1=$DB{sys}->Query($var);
+     my @db1_line=$db1->fetchrow();
+     $db0_line{frags}=$db1_line[0];
+   }
+   
+	if ($FORM{v})
+	{
+		my $var="
+			SELECT COUNT(*), SUM(loads)/COUNT(*)
+			FROM TOM.a150_cache
+				WHERE domain='$tom::Hm'
+				AND (domain_sub='$tom::H' OR domain_sub='')
+				AND Capp='$db0_line{Capp}'
+				AND Cmodule='$db0_line{Cmodule}'
+				AND Cid='$db0_line{Cid}'
+		";
+		#print "$var\n";
+		my $db1=$DB{sys}->Query($var);
+		my @db1_line=$db1->fetchrow();
+		$db0_line{Tfrags}=$db1_line[0];
+		
+		# uses per frag
+		$db0_line{Tuses}=$db1_line[1];
+	}
+   
+   
+   if ((time-$db0_line{time_optimalization})>$TOM::DEBUG_cache_old){$colore='reset bold green';}
+   else {$colore='reset green';}   
+   if ((!$db0_line{Tfrags})&&($FORM{v}))
+   {
+    $colore='reset bold black';
+   }
+   if ((time-$db0_line{time_use})>(86400*31)){$colore='reset red';}
+   
+   
+   
+   if ($FORM{global} == $db0_line{ID})
+   {
+    $colore='reset bold yellow';
+    $DB{sys}->Query("
+    	INSERT INTO TOM.a150_config
+	(	domain,
+		domain_sub,
+		engine,
+		Capp,
+		Cmodule,
+		Cid,
+		time_insert,
+		time_duration,
+		time_duration_range_min,
+		time_duration_range_max)
+	VALUES
+	(	'',
+		'',
+		'$db0_line{engine}',
+		'$db0_line{Capp}',
+		'$db0_line{Cmodule}',
+		'$db0_line{Cid}',
+		'$main::time_curren',
+		'$db0_line{time_duration}',
+		'$db0_line{time_duration_range_min}',
+		'$db0_line{time_duration_range_max}')
+    ");
+   }
+   if ($FORM{master} == $db0_line{ID})
+   {
+    $DB{sys}->Query("
+	INSERT INTO TOM.a150_config
+	(	domain,
+		domain_sub,
+		engine,
+		Capp,
+		Cmodule,
+		Cid,
+		time_insert,
+		time_duration,
+		time_duration_range_min,
+		time_duration_range_max)
+	VALUES
+	(	'$tom::Hm',
+		'',
+		'$db0_line{engine}',
+		'$db0_line{Capp}',
+		'$db0_line{Cmodule}',
+		'$db0_line{Cid}',
+		'$main::time_curren',
+		'$db0_line{time_duration}',
+		'$db0_line{time_duration_range_min}',
+		'$db0_line{time_duration_range_max}')
+    ");   
+    $colore='reset bold yellow';
+   }
+   if ($FORM{local} == $db0_line{ID})
+   {
+    $DB{sys}->Query("
+	INSERT INTO TOM.a150_config
+	(	domain,
+		domain_sub,
+		engine,
+		Capp,
+		Cmodule,
+		Cid,
+		time_insert,
+		time_duration,
+		time_duration_range_min,
+		time_duration_range_max)
+	VALUES
+	(	'$tom::Hm',
+		'$tom::H',
+		'$db0_line{engine}',
+		'$db0_line{Capp}',
+		'$db0_line{Cmodule}',
+		'$db0_line{Cid}',
+		'$main::time_curren',
+		'$db0_line{time_duration}',
+		'$db0_line{time_duration_range_min}',
+		'$db0_line{time_duration_range_max}')
+    ");
+    $colore='reset bold yellow';
+   }
+   if ($FORM{del} == $db0_line{ID})
+   {
+    $DB{sys}->Query("DELETE FROM TOM.a150_config WHERE ID='$db0_line{ID}'");
+    $colore='reset bold yellow';
+   }
+   if ($FORM{edit} == $db0_line{ID})
+   {
+    $colore='reset bold yellow';
+   }
+   if ($FORM{del_} == $db0_line{ID})
+   {
+    $colore='reset bold yellow';
+   }
+   if ($FORM{recacheID} == $db0_line{ID})
+   {
+    $colore='reset bold yellow';
+   }
+      
+   print color $colore;
+   
+   
+   # ID
+   print "[".sprintf("%04d",$db0_line{ID})."]";
+   
+   # engine
+   print "[".sprintf("%-4s",$db0_line{engine})."]";
+   
+   # name
+   print "[".sprintf("%-35s",$db0_line{Capp}."-".$db0_line{Cmodule})."]";
+   
+   # cid
+   $db0_line{Cid}=substr($db0_line{Cid},0,17) if length($db0_line{Cid})>17;
+   print "[".sprintf("%-17s",$db0_line{Cid})."]";
+   
+   if ($db0_line{time_use})
+   {
+    my %date=Utils::datetime::ctodatetime($db0_line{time_use},format=>1);   
+    print "[$date{year}-$date{mom}-$date{mday} $date{hour}:$date{min}]";
+   }
+   else
+   {
+    print "[not used        ]";
+   }
+   
+   if ($db0_line{frags})
+   {
+    print "[".sprintf("%5d",$db0_line{frags})."]";
+   }
+   elsif ($db0_line{domain} && $db0_line{domain_sub})
+   {
+    print "[-----]";
+   }
+   else
+   {
+    print "[     ]";
+   }
+   
+   if ($db0_line{Tfrags})
+   {
+    print "[".sprintf("%5d",$db0_line{Tfrags})."]";
+   }
+   else
+   {
+    print "[     ]";
+   }
+      
+      
+      
+      #print "[$db0_line{Fuses}]";
+      print "[".sprintf("%6d",$db0_line{time_duration})."]";
+      print "[".sprintf("%5d",$db0_line{Tuses})."]";
+      #print "[".sprintf("%6d",$db0_line{Fuses})."]";
+   #print "[".sprintf("%6d",$db0_line{time_duration})."{".sprintf("%-10s",$db0_line{time_duration_range_min}."-".$db0_line{time_duration_range_max})."}]";
+   
+=head1
+   if ($db0_line{time_optimalization})
+   {
+    my %date=Utils::datetime::ctodatetime($db0_line{time_optimalization},format=>1);   
+    print "[$date{year}-$date{mom}-$date{mday}]";
+   }
+   else
+   {
+    print "[          ]";
+   }
+=cut
+   
+=head1
+   if ((time-$db0_line{time_optimalization})>$TOM::DEBUG_cache_old)
+   {
+    my $sel;
+    $sel.=" AND domain='$db0_line{domain}'" if $db0_line{domain};
+    $sel.=" AND domain_sub='$db0_line{domain_sub}'" if $db0_line{domain_sub};
+    my $db1=$DB{stats}->Query("
+	SELECT *
+	FROM TOM.a150_debug
+	WHERE	engine='$db0_line{engine}'
+			AND Capp='$db0_line{Capp}'
+			AND Cmodule='$db0_line{Cmodule}'
+			AND Cid='$db0_line{Cid}'
+			$sel
+	LIMIT 1");
+#     print $db1->errstr();
+    if (my @db1_line=$db1->fetchrow())
+    {
+     print color 'reset bold green';
+    }
+    else
+    {
+     my $db2=$DB{sys}->Query("
+	SELECT *
+	FROM TOM.a150_cache
+	WHERE	engine='$db0_line{engine}'
+			AND Capp='$db0_line{Capp}'
+			AND Cmodule='$db0_line{Cmodule}'
+			AND Cid='$db0_line{Cid}'
+			AND loads>0
+			$sel
+	LIMIT 1");     
+     if (my @db2_line=$db2->fetchrow())
+     {
+      print color 'reset bold yellow';
+     }
+     else
+     {
+      print color 'reset red';
+     }
+    }
+    print " D ";
+   }
+=cut
+   
+   print "\n";
+   
+#   if ($FORM{v}>0)
+#   {
+#    print "   ".sprintf("%50s",$db0_line{about})."]\n";
+#   }
+   
+   if (($FORM{recacheID} == $db0_line{ID})||($FORM{'recache-all'}))
+   {
+     my $sel;
+     $sel.=" AND domain='$db0_line{domain}'" if $db0_line{domain};
+     $sel.=" AND domain_sub='$db0_line{domain_sub}'" if $db0_line{domain_sub};
+     my $var="
+	UPDATE TOM.a150_cache
+	SET	time_to=$main::time_current, time_duration=$main::time_current-time_from
+	WHERE	Capp='$db0_line{Capp}'
+			AND Cmodule='$db0_line{Cmodule}'
+			AND Cid='$db0_line{Cid}'
+			$sel";
+     my $db1=$DB{sys}->Query($var);
+#     my @db1_line=$db1->fetchrow();
+#     my $frags=$db1_line[0];   
+     print "   [recached... ".($db1->NumRows())."\n";
+   }
+   
+   if ($FORM{del_} == $db0_line{ID})
+   {
+    print color 'reset bold yellow';
+    my $sel;
+    $sel.=" AND domain='$db0_line{domain}'" if $db0_line{domain};
+    $sel.=" AND domain_sub='$db0_line{domain_sub}'" if $db0_line{domain_sub};
+    my $db1=$DB{sys}->Query("
+	SELECT * FROM TOM.a150_config
+	WHERE	engine='$db0_line{engine}'
+			AND Capp='$db0_line{Capp}'
+			AND Cmodule='$db0_line{Cmodule}'
+			AND Cid='$db0_line{Cid}'
+			AND ID<>'$db0_line{ID}'
+			$sel
+    ");
+    while (my %db1_line=$db1->fetchhash)
+    {
+     print "   [$db1_line{domain}/$db1_line{domain_sub}\n";
+     $DB{sys}->Query("DELETE FROM TOM.a150_config WHERE ID='$db1_line{ID}' LIMIT 1");
+    }
+    #print "$db0_line{domain} $db0_line{domain_sub}\n";
+    
+   
+   }
+      
+   if ($FORM{edit} == $db0_line{ID})
+   {
+    print color 'reset bold yellow';
+    
+    print "   [about ($db0_line{about})\n   [";my $null=<STDIN>;chomp($null);
+    if (($null ne $db0_line{about})&&($null))
+    {$DB{sys}->Query("UPDATE TOM.a150_config SET about='$null' WHERE ID='$db0_line{ID}' LIMIT 1");}
+    
+    print "   [time_duration ($db0_line{time_duration}): ";my $null=<STDIN>;chomp($null);
+    if (($null ne $db0_line{time_duration})&&($null))
+    {$DB{sys}->Query("UPDATE TOM.a150_config SET time_duration=$null WHERE ID='$db0_line{ID}' LIMIT 1");}
+    
+=head1
+    print "   [time_dynamize ($db0_line{time_duration_range_min}-$db0_line{time_duration_range_max}): ";my $null=<STDIN>;chomp($null);
+    if ($null)
+    {
+     my @ref=split('-',$null);
+     $ref[0]="NULL" unless $ref[0];
+     $ref[1]="NULL" unless $ref[1];
+     $DB{sys}->Query("UPDATE TOM.a150_config SET time_duration_range_min=$ref[0],time_duration_range_max=$ref[1] WHERE ID='$db0_line{ID}' LIMIT 1");
+    }
+=cut
+        
+    next;
+   }
+ }
+
+#}
+#else
+#{
+# &help();
+#}
+
+
+
+&exit();

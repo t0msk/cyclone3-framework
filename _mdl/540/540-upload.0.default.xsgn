@@ -1,0 +1,32 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+	<form action="?|?TID=<?TID?>" method="post" enctype="multipart/form-data">
+	<fieldset>
+		<legend>Upload any file</legend>
+		<div>
+			<label for="file">Upload File:</label>
+			<input type="file" name="file0" id="file" class="fileinput" />
+		</div>
+		<p>
+				<input type="submit" value="Upload" />
+		</p>
+	</fieldset>
+	</form>
+	<#RESULT#>
+</DEFINITION>
+
+<DEFINITION id="RESULT-SUCCESS">
+<p>
+File has been sucessfully uploaded.
+</p>
+</DEFINITION>
+
+<DEFINITION id="RESULT-FAILED">
+<p>
+File upload failed.
+</p>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

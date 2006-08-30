@@ -1,0 +1,101 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use App::540;
+use App::540::file;
+use strict;
+
+sub execute
+{
+#=head1
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+	if ($env{xt_xlng})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	my @files;
+	my %arg;
+
+	# Priprava parametrov pre API
+	$arg{order} = "time DESC";
+	$arg{order}=$env{order} if defined ($env{order});
+	$arg{limit}=$env{limit} if defined ($env{limit});
+	$arg{active}=$env{active} if defined ($env{active});
+	$arg{ID_dir}=$env{dir} if defined ($env{dir});
+	$arg{ID_dir}=$env{IDcat} if defined ($env{IDcat});
+	$arg{owner}=$env{user} if defined ($env{user});
+	$arg{ID}=$env{id} if defined ($env{id});
+
+	# language
+	$arg{lng}=$env{lng};
+	$arg{lng}=$env{lang} if defined ($env{lang});
+
+	if ( defined( $arg{ID_dir} ) )
+	{
+		use App::540::dir;
+		my @dirs;
+		push @dirs, App::540::dir::get( ID_dir=>$arg{ID_dir}, lng=>$arg{lng}, limit=>"1" );
+		$XSGN{TMP} =~s|<%cat_name%>|$dirs[0]{name}|g if scalar(@dirs)>0;
+	}
+
+	# Prilohy k a400 !
+	if ($env{a400_id})
+	{
+		my $article = $main::DB{main}->Query("SELECT xrelated FROM a400 WHERE ID='$env{a400_id}'");
+		my %article_line = $article->fetchhash;
+		while ($article_line{xrelated} =~ s/<VAR id="a540" value="(.*?)" \/>//)
+		{
+			push @files, App::540::file::get( ID => $1 );
+		}
+	}
+	else
+	{
+		# Podla vstup. parametrov
+		push @files, App::540::file::get( %arg );
+	}
+
+	# Export
+	my $size = scalar( @files );
+	for (my $i;$i < $size;$i++)
+	{
+		# Rozumne formatovanie timestampu
+		my %time = Utils::datetime::ctodatetime( $files[$i]{'time'}, format => 1);
+
+		$XSGN{TMP} =~s|<#ITEM#>|$XSGN{'ITEM'}|;
+		# Pouzitelne Tagy
+		my $null = $files[$i]{ID}; $null =~ s/^[0]*//;
+		$XSGN{TMP} =~s|<%filename%>|$null-$files[$i]{hash}|g;
+		$XSGN{TMP} =~s|<%IDarticle%>|$env{db_ID_a400}|g;
+		$XSGN{TMP} =~s|<%name%>|$files[$i]{name}|g;
+		$XSGN{TMP} =~s|<%mime%>|$files[$i]{mime}|g;
+
+		$XSGN{TMP} =~s|<%size%>|$files[$i]{size}|g;
+		my $size_kb = sprintf("%0.2f", ($files[$i]{size} / 1024));
+		$XSGN{TMP} =~s|<%size_kb%>|$size_kb|g;
+		my $size_mb = sprintf("%0.2f", ($files[$i]{size} / (1024*1024)));
+		$XSGN{TMP} =~s|<%size_mb%>|$size_mb|g;
+
+		$XSGN{TMP} =~s|<%comment%>|$files[$i]{comment}|g;
+		$XSGN{TMP} =~s|<%ID%>|$files[$i]{ID}|g;
+		$XSGN{TMP} =~s|<%hash%>|$files[$i]{hash}|g;
+		$XSGN{TMP} =~s|<%owner%>|$files[$i]{owner}|g;
+		$XSGN{TMP} =~s|<%mime%>|$files[$i]{mime}|g;
+		$XSGN{TMP} =~s|<%time%>| $time{'year'}-$time{'mom'}-$time{'mday'} $time{'hour'}:$time{'min'}:$time{'sec'}|g;
+	}
+	# category
+
+
+	# No Files.
+	$XSGN{TMP} =~s|<#ITEM#>|$XSGN{NONE}|g if scalar(@files)==0;
+
+	return 1;
+};
+
+1;

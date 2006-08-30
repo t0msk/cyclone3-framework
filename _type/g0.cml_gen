@@ -1,0 +1,9 @@
+<!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
+
+<MODULE>
+	<VAR id="-type" value="smdl" />
+	<VAR id="-category" value="100" />
+	<VAR id="-global" value="1" />
+	<VAR id="-name" value="logged" />
+	<VAR id="-TMP" value="BASE" />
+</MODULE>

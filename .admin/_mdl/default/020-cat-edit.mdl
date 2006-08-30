@@ -1,0 +1,100 @@
+sub BaseModul
+{
+ my $id=$form{ID} if ($form{ID});
+ if ($form{set})
+ {
+  $HTML_HEADER{BODY}{extract}="yes";
+
+  if ($form{ID_a400}==""){$form{ID_a400}="0"};
+
+  if ($id)
+  {
+   $dbh->Query("UPDATE markiza_sk.a020_cat SET ID_a400='$form{ID_a400}',short='$form{short_name}',description='$form{description}',keywords='$form{keywords}',freq='$form{freq}', xrelated='$form{xrelated}' WHERE ID='$id' LIMIT 1");
+  }
+  else
+  {
+   $dbh->Query("INSERT INTO markiza_sk.a020_cat (ID, ID_a400, name, short, keywords, rec_live, description, freq, active, xrelated) VALUES ('','$form{ID_a400}','$form{name}','$form{short_name}','$form{keywords}','0000000','$form{description}','$form{freq}','N','$form{xrelated}')");
+  }
+  return "<script>parent.document.frames['frm_base'].location.reload();</script>";
+ }
+ else #tu je ten predel dopice tam!!!------------------------------------------------------------------------------------------------------
+ {
+  $HTML_HEADER{BODY}{extract}="yes";
+  #$HTML_HEADER{BODY}{onunload}="parent.box_loading.style.display='block';";
+  $db_micro = $dbh->Query("SELECT * FROM markiza_sk.a020_cat WHERE ID='$id' LIMIT 1");
+  %db_micro_line=$db_micro->FetchHash();
+
+########for testing purposes .. targeting into the same frame
+  my $mdl_temp=<<"HEADER";
+  <table width=100% cellspacing=0 cellpadding=0 border=0><tr><td>
+  <form name="indexesEdit\_$id" action="core.pl?type=020-cat-edit&ID=$id&set=yes" method="POST" enctype="multipart/x-form-data" target="frm_micro">
+  </td><td width=100% style="FONT:10px Verdana;COLOR:white;">
+  &nbsp;Relacia:<BR>
+  <input type=hidden name="IDcategory" value="$db_micro_line{ID_cat}">
+
+  <input type=text name="name" value="$db_micro_line{name}" class=input0 maxlength=260 style="FONT:9px Verdana;width:445px;" drag_resizeX='0'><BR>
+HEADER
+
+ my $temp;
+
+  while ($db_micro_line{ind}=~s|<INDEX id="(.*?)" value="(.*?)" description="(.*?)" />|<INDEXTO>|i)
+  {
+   $temp.="<INDEX id=$1 value=$2 description=$3 />";
+  }
+  $indexes=$temp;
+
+  if ($db_micro_line{ID_a400}=="0"){$db_micro_line{ID_a400}=""};
+
+  $mdl_temp.=<<"HEADER";
+  Skratka:<br>
+  <input type=text name="short_name" value="$db_micro_line{short}" class=input0 maxlength=260 style="FONT:9px Verdana;width:445px;" drag_resizeX='0'><BR>
+  Frekvencia:<br>
+  <input type=text name="freq" value="$db_micro_line{freq}" class=input0 maxlength=260 style="FONT:9px Verdana;width:445px;" drag_resizeX='0'><BR>
+  Popis:<br>
+  <textarea name="description" class=input0 style="FONT:9px Verdana;width:445px;width: 100%; height: 100px">$db_micro_line{description}</textarea>
+  Súvisiaci článok - ID:<br>
+  <input type=text name="ID_a400" value="$db_micro_line{ID_a400}" class=input0 maxlength=260 style="FONT:9px Verdana;width:145px;" drag_resizeX='0'><BR>
+  Súvisiace - ostatne:<br>
+  <textarea name="xrelated" class=input0 style="FONT:9px Verdana;width:445px;width: 100%; height: 60px">$db_micro_line{xrelated}</textarea>
+  Kľúčové slová:<br>
+  <textarea name="keywords" class=input0 style="FONT:9px Verdana;width:445px;width: 100%; height: 100px">$db_micro_line{keywords}</textarea>
+  <table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit drag_here value="Uložiť!" class=btn0 onclick="box_erase2();"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table><br>
+HEADER
+
+
+
+=head1
+
+
+
+  <TEXTAREA
+	drag_resizeX='0'
+	drag_resizeY='-300'
+	name="indexes"
+	id="indexes_all"
+	class=input0
+	style="width:445px;height:50px;FONT:12px Verdana;">$indexes</TEXTAREA><BR>
+=cut
+
+
+
+#<!-- <input type=hidden name=image value="$image_f"> /-->
+
+  $mdl_temp.="</td><td></form></td></tr></table>";
+  $mdl_temp.="<script>var lastOpenedRelaciaCatId=\"$db_micro_line{ID}\";</script>";
+  #$mdl_temp.="<script>lastOpenedArticleId=\"$db_micro_line{ID}\"; alert(lastOpenedArticleId);</script>";
+  my $box=&box_create2("Úprava/Pridanie relácie",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	200,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp);
+
+  return $box;
+
+  return undef;
+ }
+}
+
+
+1;

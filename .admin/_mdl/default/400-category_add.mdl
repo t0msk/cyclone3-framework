@@ -1,0 +1,138 @@
+sub BaseModul
+{
+	my $id=$form{id};
+	my $table="$MAIN_db_a400_category";
+
+	if ($form{set}eq"yes")
+	{
+		use Utils::vars;
+
+		my $uroven=my @from=split('',$id);
+		my @chars;
+		my $fullname_new;
+
+		my %env=@_;
+
+		# env{cat} - kategoria do ktorej vytvaram podkategoriu
+		# env{char} - pocet charov v charindexe
+
+		my $newcategoryid;
+
+		$env{char}=2 unless $env{char};
+		my @idx;
+		my $depth=$env{char};$idx[$depth]=-1;
+		my $to=@Utils::vars::WCHAR;
+		my $max=$to**$env{char};
+		for (1..$max)
+		{
+			$idx[$depth]++;
+			while ($idx[$depth]>@Utils::vars::WCHAR-1){$idx[$depth]=0;$depth--;$idx[$depth]++;}$depth=$env{char};
+			my $cat;for (1..$env{char}){$cat.=$Utils::vars::WCHAR[$idx[$_]];}
+			#tuto budem hladat ci uz v databaze existuje zaznam $nieco=$env{cat}.$cat :))
+
+			my $db0_micro = $dbh->Query("SELECT name FROM $MAIN_db_a400_category WHERE ID='$id$cat' LIMIT 1");
+			if (my @db_micro_line=$db0_micro->FetchRow())
+			{next;}
+			else
+			{ $newcategoryid=$form{id}.$cat; last;}
+		}
+
+#block 1
+
+		$dbh->Query("
+			INSERT INTO $MAIN_db_a400_category
+			(ID,name,xdata,lng,active)
+			VALUES('$newcategoryid','$form{tinyname}','','sk','N')");
+		return "<script>parent.document.frames['frm_base'].location.reload();</script>";
+	}
+	else
+	{
+		$HTML_HEADER{BODY}{extract}="yes";
+
+		my $mdl_temp=<<"HEADER";
+	<form name="$form{type}\_$id" action="core.pl?type=$form{type}&id=$id&set=yes" target="frm_micro" method="POST">
+		<input type=text name="tinyname" value="!!!none!!!" class=input0 maxlength=100 style="width:200px;">
+		<div class="btn-bar" style="background: url($tom::H_media/grf/admin/win_top_0_back.gif)">
+			<img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0>
+			<input type=submit drag_here value="Uložiť!" class="btn" onclick="box_erase2();">
+			<img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0>
+		</div>
+	</form>
+HEADER
+
+		my $box=&box_create2("Pridať kategóriu",
+			'color_base0'	=>	"#0B63F1",
+			'width'			=>	200,
+			'height'		=>	50,
+			'close'			=>	"yes",
+			'html'			=>	$mdl_temp);
+		return $box;
+	}
+}
+
+1;
+
+#block 1
+
+=head1
+  my $db_micro = $dbh->Query("
+	SELECT
+	ID,fullname
+	FROM $table
+	WHERE ID='$id'
+	LIMIT 1");
+  if (my @db_micro_line=$db_micro->FetchRow())
+  {$fullname_new=$db_micro_line[1];}
+
+  my $db_micro = $dbh->Query("
+	SELECT
+	ID,fullname,tinyname,starttime,about,active
+	FROM $table
+	WHERE ID LIKE '$id%'
+	ORDER BY ID");
+  while (my @db_micro_line=$db_micro->FetchRow())
+  {
+   my @ref=split('',$db_micro_line[0]);
+   my $char=unpack "C",$ref[$uroven];
+   $chars[$char]=1 if $char;
+  }
+
+  my $i;
+	# 48-57   [0-9]
+	# 65-90	  [A-Z]
+	# 97-122  [a-z]
+  for (48..57,65..90,97..122) # 59 znakov
+  {
+   next if $i;
+   $i=$_ unless $chars[$_];
+  }
+
+  my $ur=pack "C",$i;
+=cut
+
+  #$from[$uroven]=$ur;
+  #$from_w=join "",@from;
+  #$fullname_new.="/".$form{tinyname};
+  #$fullname_new=~s|^/||;
+
+# $HTML_HEADER{BODY}{extract}="yes";
+ #my $mdl_temp="$form{table}:$form{id}";
+
+=head1
+    $mdl_temp=<<"HEADER";
+    <table width=100% cellspacing=0 cellpadding=0 border=0><tr><td width=100% style="FONT:10px Verdana;COLOR:white;">
+    <br>&nbsp;$newcategoryid $form{tinyname}<BR><br><br><br><br>
+    </td></tr></table>
+HEADER
+
+  $HTML_HEADER{BODY}{extract}="yes";
+
+  my $box=&article_box_create("Výsledok",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	200,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp,);
+
+  return $box;
+=cut

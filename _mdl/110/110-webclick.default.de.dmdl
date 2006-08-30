@@ -1,0 +1,38 @@
+<img id='webclick' width=0 height=0 border=0 />
+
+<script type="text/javascript">
+<!--
+
+	document.onmouseup = getMouseXY;
+	var tempX = 0;
+	var tempY = 0;
+	var scrollTop = 0;
+	var scrollLeft = 0;
+
+	function getMouseXY(e)
+	{
+		
+		var elCurrent = event.srcElement;
+		if (elCurrent.tagName == 'BODY' || elCurrent.tagName == 'HTML'){return true;}
+		
+		if (document.documentElement.scrollTop)
+		{
+			scrollTop=document.documentElement.scrollTop;
+			scrollLeft=document.documentElement.scrollLeft;
+		}
+		else
+		{
+			scrollTop=document.body.scrollTop;
+			scrollLeft=document.body.scrollLeft;
+		}
+		
+		tempX = event.clientX + scrollLeft
+		tempX=tempX-(document.body.clientWidth/2)
+		tempY = event.clientY + scrollTop
+		status=tempX+';'+tempY;
+		document.getElementById('webclick').src='<$tom::H_www>/wc.tom?TID=<$main::FORM{TID}>&x='+tempX+'&y='+tempY+'&u=<$main::USRM{IDhash}>&l=<$main::USRM{logged}>';
+		return true
+	}
+
+//-->
+</script>

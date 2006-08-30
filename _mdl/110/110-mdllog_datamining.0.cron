@@ -1,0 +1,105 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use Time::Local;
+use strict;
+
+
+sub execute
+{
+	#return 1;
+	my %env=@_;
+	
+	Database::connect::multi('stats') || die "cannot connect all databases";
+	
+#=head1
+	my $null;
+	while((-e "$CRON::P/_logs/mdllog/lock.pid")&&($null<300)) # naximalne 5 minut
+	{
+		$null++;
+		my $var=rand(1);
+		CRON::debug::log(0,"{$null} lock.pid exists, waiting... $var secs.");
+		Time::HiRes::sleep($var);
+	}
+#=cut
+	
+	
+	# print "\n\npath $CRON::P\n\n";
+	unlink "$CRON::P/_logs/mdllog/lock.pid";
+	open (HND_pid,">$CRON::P/_logs/mdllog/lock.pid");print HND_pid "$$\n";close (HND_pid);
+	
+	my $mintime=Time::Local::timelocal(0,$cron::Tmin,$cron::Thour,$cron::Tmday,$cron::Tmom-1,$cron::Tyear-1900,undef,undef,undef);
+	
+	
+	if (opendir (DIR,$CRON::P."/_logs/mdllog"))
+	{
+		foreach my $file(readdir DIR)
+		{
+		
+			next unless $file=~/mdllog\.(\d*?)-(\d*?)-(\d*?)\.(\d*?)\.(\d*?)\.(.*?).log/;
+			
+			CRON::debug::log(5,"find file $file");
+			
+			my $day=$3;
+			$day="01" unless $day;
+			
+			my $starttime=Time::Local::timelocal(0,$5,$4,$day,($2-1),($1-1900),undef,undef,undef);
+				
+			if ($starttime<$mintime)
+			{
+				CRON::debug::log(6,"accessing file");
+				open (HND_IN,"<".$CRON::P."/_logs/mdllog/".$file) || next;
+				my $file_data;
+				while (my $line=<HND_IN>)
+				{
+					$file_data.=$line;
+					if ($file_data=~s/<request>(.*?)<\/request>//s)
+					{
+						my $data=$1;
+						my %hash;
+						while ($data=~s|<(.*?)>(.*?)</\1>||){$hash{$1}=$2;$hash{$1}=~s|'|\\'|g;}
+						
+						if (not $main::DB{stats}->Query("
+							INSERT INTO TOM.a110_mdl_log
+							(
+								reqtime,
+								reqdatetime,
+								domain,
+								domain_sub,
+								Ctype,
+								Capp,
+								Cmodule,
+								load_proc,
+								load_req
+							)
+							VALUES
+							(
+								'$hash{reqtime}',
+								'$hash{reqdatetime}',
+								'$hash{domain}',
+								'$hash{domain_sub}',
+								'$hash{Ctype}',
+								'$hash{Capp}',
+								'$hash{Cmodule}',
+								'$hash{load_proc}',
+								'$hash{load_req}'
+							)"))
+						{
+							CRON::debug::log(8,"failed insert",1);
+						}
+						
+					}
+					
+				}
+				
+				unlink $CRON::P."/_logs/mdllog/".$file;
+			}
+			
+		}
+	}
+
+	unlink "$CRON::P/_logs/mdllog/lock.pid";
+
+return 1}
+
+1;

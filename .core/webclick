@@ -1,0 +1,145 @@
+#!/usr/bin/perl
+#use encoding 'utf8';
+#use Encode qw(encode_utf8);
+use utf8;
+# ÁÉÍÓÚ - USE UTF-8!!!
+
+# BEGIN COMPILATION
+BEGIN
+{
+ # -END-
+ $tom::P=`pwd` unless $ENV{SCRIPT_FILENAME} && do
+ {$tom::P=$ENV{SCRIPT_FILENAME};$tom::P=~s|(.*)/.*?/||;$tom::P=$1;};
+ $tom::P=~s|(.*)/.*?\n$|\1|;
+ $tom::SCRIPT_NAME=$0;
+ $tom::fastcgi=1 if $tom::SCRIPT_NAME=~/(tom|fcgi|fpl)$/; # zistujem ci som fastcgi script
+ die "cannot search TOM directory /var/www/TOM/???" unless $TOM::P=`ls -l $tom::SCRIPT_NAME`;
+ $TOM::P=~s|.* (.*)/.*?/(.*)\n|\1|;$TOM::SCRIPT_NAME=$2;
+ #push @INC,$TOM::P."/.core/.libs"; # na koniec
+ unshift @INC,$TOM::P."/_mdl"; # na zaciatok
+ unshift @INC,$TOM::P."/.core/.libs"; # na zaciatok
+ sub _log{return};sub _applog{return};
+}
+
+# START SCRIPT
+use strict; # scrict code
+use Inline (Config => DIRECTORY => "$TOM::P/.core/.libs/_Inline");
+
+# PERL MODULES
+use FCGI;
+require $TOM::P."/.core/_config.sg/TOM.conf";
+require $TOM::P."/.core/_config/TOM.conf";
+#use Tomahawk::error;
+
+ # SYSTEM MODULES
+ use Mysql;
+ use Database::connect;
+ use Time::Local; # pre opacnu konverziu casu
+ use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
+ use Net::HTTP::CGI;
+ 
+  
+ # CORE CONFIGURE MODULES
+ require $tom::P."/local.conf";
+ 
+
+
+
+######################################################################################
+######################################################################################
+######################################################################################
+######################################################################################
+Database::connect::all('stats');
+
+my $req=FCGI::Request();
+while ($req->Accept() >= 0)
+{
+	my %env;  
+	my $time_current=time;
+	
+=head1
+	my (
+	$Tsec,
+	$Tmin,
+	$Thour,
+	$Tmday,
+	$Tmom,
+	$Tyear,
+	$Twday,
+	$Tyday,
+	$Tisdst) = localtime($main::time_current);
+   # doladenie casu
+	$Tyear+=1900;$Tmom++;
+   # formatujem cas
+	my (
+	$Fsec,
+	$Fmin,
+	$Fhour,
+	$Fmday,
+	$Fmom,
+	$Fyear,
+	$Fwday,
+	$Fyday,
+	$Fisdst
+	) = (
+	sprintf ('%02d', $Tsec),
+	sprintf ('%02d', $Tmin),
+	sprintf ('%02d', $Thour),
+	sprintf ('%02d', $Tmday),
+	sprintf ('%02d', $Tmom),
+	$Tyear,
+	$Twday,
+	$Tyday,
+	$Tisdst
+	);
+=cut
+	#print "idem\n";
+	
+	
+	my %FORM=GetQuery_h2($ENV{'QUERY_STRING'});
+	
+=head1
+	$main::DB{stats}->Query("
+		SELECT *
+		FROM TOM.a110_webclick_log
+		LIMIT 1
+	");
+=cut
+	
+	#print "ok\n";
+	
+	$main::DB{stats}->Query("
+		INSERT INTO TOM.a110_webclick_log
+		(
+			domain,
+			domain_sub,
+			TID,
+			time_insert,
+			x,
+			y,
+			logged,
+			IDuser
+		)
+		VALUES
+		(
+			'$tom::Hm',
+			'$tom::H',
+			'$FORM{TID}',
+			'$time_current',
+			'$FORM{x}',
+			'$FORM{y}',
+			'$FORM{l}',
+			'$FORM{u}'
+		)
+	");
+	
+	print "Location: http://toaster.markiza.sk/grf/tvn/t.gif\n\n";
+	
+	#print "$tom::Hm, $tom::H, $FORM{TID}, $FORM{x}, $FORM{y}\n";
+	
+	
+}
+######################################################################################
+######################################################################################
+######################################################################################
+######################################################################################

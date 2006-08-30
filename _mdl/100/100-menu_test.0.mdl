@@ -1,0 +1,90 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+
+ my %form=&Net::HTTP::CGI::GetQuery_h2($ENV{'QUERY_STRING_FULL'});
+ my $url;
+ foreach (keys %form)
+ {
+ 	next unless $form{$_};
+ 	next if $_ eq "__key_";
+	next if $_ eq "__ITst_uncache";
+	next if $_ eq "__key";
+ 	$url.="$_=$form{$_}&";
+ }
+ $url=~s|&$||;
+ 
+ $XSGN{TMP}=<<"HEADER";
+<script type="text/javascript">
+function ITstHideBar() {
+  var itstbar=document.getElementById('itstbar').style;
+  var itstbarin=document.getElementById('itstbar-i').style;
+  if((itstbarin.display=='inline')||(!itstbarin.display))
+  {
+    itstbarin.display='none';
+    itstbar.width='50px';
+    itstbar.left=null; itstbar.right=0;
+    itstbar.borderLeft='1px solid black';
+  }
+  else 
+  {
+    itstbar.width='100%';itstbarin.display='inline';
+  }
+}
+</script>
+
+<div id="itstbar" style="height:20px;background:white;border-bottom:1px solid black;text-align:left;position:fixed;_position:absolute;top:0;left:0;z-index:10;width:100%;-moz-opacity:.75;filter: alpha(opacity=75); overflow: hidden;">
+	<div style="padding:0.2em 0.5em;color:black;font:bold 11px Arial,Helvetica,sans-serif;">
+		<span style="float: right;">
+			<a style="text-decoration:none;color:blue;" href="#" onclick="ITstHideBar();" title="hide bar">_</a>&nbsp;
+			<a style="text-decoration:none;color:blue;" href="?|?$ENV{QUERY_STRING}&__key=1&__key_=1" title="exit">X</a>
+		</span>
+		<span id="itstbar-i">
+		<strong style="color:red;">TEST MODE</strong>&nbsp;|&nbsp;
+
+			<#CACHE#>
+			&nbsp;
+			<a style="text-decoration:underline;background:white;color:blue;" href="?|?$ENV{QUERY_STRING}&_rc=1">recache</a>
+			&nbsp;|&nbsp;
+
+			<input type="text" size="80" value="$tom::H_www/&#63|&#63$url" style="font-size: 11px; font-weight: normal; border: 1px black solid; background: #eee; padding: 0 3px" />
+			<a style="text-decoration:underline;color:blue;" href="?|?$ENV{QUERY_STRING}&_ITst_decode=1"	target="decode" onclick="window.open('','decode','width=810,height=600,scrollbars=1,status=1,resizable=1')">decode</a>
+		</span>
+  </div>
+</div>
+HEADER
+
+#foreach (sort keys %main::FORM)
+#{
+# $XSGN{TMP}.="$_=$main::FORM{$_}<BR>\n";
+#}
+
+if ($main::FORM{__ITst_uncache})
+{
+ $XSGN{TMP}=~s|<#CACHE#>|CACHE is <a style="color:red;text-decoration:underline;" href="?\|?$ENV{QUERY_STRING}&__ITst_uncache=0" title="enable">OFF</a>|;
+}
+else
+{
+ $XSGN{TMP}=~s|<#CACHE#>|CACHE is <a style="color:green;text-decoration:underline;" href="?\|?$ENV{QUERY_STRING}&__ITst_uncache=1" title="disable">ON</a>|;
+}
+
+
+
+}
+
+1;
+
+
+
+
+
+

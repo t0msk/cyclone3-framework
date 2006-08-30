@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+require "/usr/bin/tom3-init";
+
+
+%form=
+(
+# '-v'		=>	"verbosity",
+# '-vv, --v'	=>	"verbosity 2, --v=2",
+# '-e'		=>	"execute all modifications",
+# '-s'		=>	"show only all modifications",
+# '-a'	=>	"all directories",
+# '-t'	=>	"this directory",
+# '-r'	=>	"this directory with recursive",
+ '-v'	=>	"verbosity",
+);
+if (($FORM{h})||($FORM{help})){&help();}
+#if ((!$FORM{a})&&(!$FORM{t})&&(!$FORM{r})){&help();}
+
+my $time_current=time;
+
+chdir $TOM::P;
+#system ("tar -czf tom3_domain.$time_current.tar.gz * --exclude \*.jpg --exclude \*.log --exclude \*.tar --exclude \*.gz --exclude \*.bz2");
+
+system ('tar --exclude ".core/*" --exclude "*.log" --exclude "*.tar" --exclude "*.gz" --exclude "!www/*" --exclude "!media*" --exclude "_data/*" --exclude "_temp/*" --exclude "*.asf" --exclude "*.jpg" --exclude "_trash/*" -cvvzf _temp/tom3_domain.'.$time_current.'.tar.gz .');
+
+print "chown tar...\n";
+system ("chown tom:tom _temp/tom3_domain.".$time_current.".tar.gz");
+print "chmod tar...\n";
+system ("chmod 600 _temp/tom3_domain.".$time_current.".tar.gz");
+#system ("mv archive.$time_current.tar.gz /home/tom/archive.$time_current.tar.gz");

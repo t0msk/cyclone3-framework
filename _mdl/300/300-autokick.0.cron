@@ -1,0 +1,149 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use TOM;
+use strict;
+
+sub execute
+{
+	
+	my %env=@_;
+	if (!$env{max_online}){$cron::ERR="not defined max_online for maxtime online";return undef;}
+	
+	if ($cron::P eq $CRON::P)
+	{
+		CRON::debug::log(5,"WARN: global cron, manipulating with all hosts in TOM-database!!!");
+		$env{db_300}="TOM";
+		$env{sel0}="reqtime<$cron::time_current-$env{max_online} OR active='N'";
+	}
+	else
+	{
+		return 1;
+	}
+
+	my $db0=$main::DB{main}->Query("
+		SELECT
+			*
+		FROM TOM.a300_online
+		WHERE
+			$env{sel0}
+	");
+	while (my %user=$db0->fetchhash)
+	{
+		CRON::debug::log(5,"kick user IDhash:".$user{IDhash}." login:".$user{login}." old:".($cron::time_current-$user{reqtime}));
+		my $db0=$main::DB{main}->Query("
+			SELECT
+				*
+			FROM TOM.a300_users
+			WHERE
+				IDhash='$user{IDhash}'
+				$env{sel1}
+			LIMIT 1");
+		if (my %user0=$db0->fetchhash)
+		{
+			CRON::debug::log(6,"je lognuty") if ($user{logged} eq "Y");
+			CRON::debug::log(6,"nelognuty") if ($user{logged} ne "Y");
+			CRON::debug::log(6,"anonymny user") if (!$user0{login});
+			CRON::debug::log(6,"autorizovany user") if ($user0{login});
+			if	(
+					(($user{logged} eq "Y")&&($user0{login}))
+					||(($user{logged} ne "Y")&&(!$user0{login}))
+				)
+			{
+				CRON::debug::log(7,"prevediem zapis");
+				$user0{cookies}="";
+				while ($user{cookies}=~s|<VAR id="(.*?)">(.*?)</VAR>||)
+				{
+					my $var=$1;
+					my $value=$2;
+					if ($var=~/^_/){$user0{cookies}.="<VAR id=\"".$var."\">".$value."</VAR>\n";next}
+				}
+				
+				$main::DB{main}->Query("
+					UPDATE TOM.a300_users
+					SET
+						logtime = '$user{logtime}',
+						reqtime = '$user{reqtime}',
+						IPlast = '$user{IP}',
+						rqs = rqs+$user{rqs},
+						cookies = '$user0{cookies}'
+					WHERE
+						IDhash='$user{IDhash}'
+						$env{sel1}
+					LIMIT 1
+				");
+				
+				$main::DB{main}->Query("
+					DELETE FROM TOM.a300_online
+					WHERE
+						IDhash='$user{IDhash}'
+						$env{sel1}
+					LIMIT 1
+				");
+			}
+			else
+			{
+				CRON::debug::log(7,"neprevediem zapis, deleting");
+				if (
+					$main::DBH->Query("
+						DELETE FROM
+							TOM.a300_online
+						WHERE
+							IDhash='$user{IDhash}'
+							$env{sel1}
+						LIMIT 1
+					")
+				)
+				{CRON::debug::log(8,"deleted");}
+				else
+				{CRON::debug::log(8,"not deleted :(",1);}
+			}
+		}
+		else
+		{
+			CRON::debug::log(6,"user nieje vobec v a300_users!!!");
+			CRON::debug::log(7,"neprevediem zapis, deleting");
+			if (
+				$main::DBH->Query("
+					DELETE FROM TOM.a300_online
+					WHERE
+						IDhash='$user{IDhash}'
+						$env{sel1}
+					LIMIT 1
+				")
+			)
+			{CRON::debug::log(8,"deleted");}
+			else
+			{CRON::debug::log(8,"not deleted :(",1);}
+		}
+	}
+	
+	return 1;
+}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

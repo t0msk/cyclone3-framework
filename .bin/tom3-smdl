@@ -1,0 +1,119 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+require "/usr/bin/tom3-init";
+
+%form=
+(
+# '-v'		=>	"verbose",
+ '-vv, --v'	=>	"verbosity 2, --v=2",
+ '--regexp'	=>	"search module name regexp",
+# '-a'		=>	"analyze",
+# '-s'		=>	"show only all modifications",
+);
+if (($FORM{h})||($FORM{help})){&help();}
+if (!$FORM{regexp}){&help();}
+
+#print color 'bold green';
+
+$FORM{where}=~s|^([\-]?\w+)|\$env{\1}|;
+
+my $count;
+if (opendir (DIR,$P))
+{
+ my @files=readdir DIR;
+ foreach my $file(@files)
+ {
+  if (($file ne ".")&&($file ne ".."))
+  {
+   $count++;my $pcount=sprintf("%05d",$count);
+   my $dir;
+
+   if ((-d $P."/".$file)&&(($file=~/![\w\.]+$/)||($file=~/_type$/)))
+   {
+    if (opendir (DIR1,$P."/".$file)){foreach (readdir DIR1){if (($_ ne ".")&&($_ ne "..")){push @files,$file."/".$_;}}}
+    if ($file=~/_type$/)
+    {
+  #   if ($FORM{v}){print color 'reset blue';print " $file\n";}
+     next;
+    }
+   }
+
+   if (($file=~/\.type$/)||($file=~/cml_gen$/))
+   {
+#   	if ($FORM{v}){print color 'reset blue';print " $file\n";}
+    open (HND,"<".$P."/".$file);
+    my $file_data;
+    while (my $line=<HND>){$file_data.=$line}
+	my $count;
+	my @ref;
+	while ($file_data=~s/<MODULE>(.*?)<\/MODULE>//s) #/# pre system vary maximalne 1024 znakov
+	{
+	 my $data=$1;
+	 my %env;
+	 while ($data=~s/<VAR id="(.*?)" value="(.*?)" \/>//s) #/#
+	 {
+	  next unless $1;
+	  #next if not defined $2;
+	  $env{$1}=$2;
+	  $env{$1}=~s|\"|"|g;
+	 }
+	 my $name=$env{-category}."-".$env{-name};
+	 #print "$name - $FORM{regexp}\n";
+	 if ($name=~/$FORM{regexp}/)
+	 {
+	 
+#	 	print "$name\n";
+	 	foreach (keys %env)
+		{
+#			print "	+$_=$env{$_}\n";
+		}
+
+		if ($FORM{where})
+		{
+#			print "$FORM{where}\n";
+			
+			my $ano;
+			eval "if ($FORM{where}){\$ano=1}";
+			#$ano=0 if $@;
+			
+			
+#			if (eval "do {return 1 if ($FORM{where})};")
+#			{
+#				print "ok\n" if $ano;
+				
+				
+			if ($ano) 
+			{
+				$count.="*";push @ref,$name;
+			}
+				
+#			}
+		}
+		else
+		{
+			$count.="*";push @ref,$name;
+		}
+	 }
+	}
+
+    if ($count)
+    {
+     print color 'reset bold green';
+     print "\t$file $count\n";
+    }
+#    elsif ($FORM{v})
+#    {
+#     print color 'reset bold blue';
+#     print "\t$file $count\n";
+#    }
+    foreach (@ref){print color 'reset green';print "\t\t$_\n"}
+   }
+
+  }
+ }
+ closedir DIR;
+}
+
+
+
+&exit();

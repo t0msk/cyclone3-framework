@@ -1,0 +1,49 @@
+#!/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use Encode;
+use encoding 'utf8';
+use utf8;
+use strict; # scrict code
+
+=head1 NAME
+
+100-cleaner_auth.0.cron
+
+=head1 DESCRIPTION
+
+Cistenie cache suborov nachadzajucich sa vo /www/TOM/_temp/auth-* po scripte tom3-auth
+
+Tento proces zabezpecuje aby overenie mena a hesla nefungovalo natrvalo, ale vyexpirovalo po zadefinovanej dobe (30min).
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	
+	my $old_max=60*30;
+	
+	if ($cron::P ne $CRON::P){$cron::ERR="WARN: this cron is only for global use!!!";return undef}
+	
+	if (opendir (DIR,$CRON::P."/_temp/") || die "$!\n")
+	{
+		foreach my $file(readdir DIR)
+		{
+			if ($file=~/^auth-.*$/)
+			{
+				my $old=$main::time_current-(stat $CRON::P."/_temp/".$file)[9];
+				main::_log("file:$file old:".$old);
+				if ($old>$old_max)
+				{
+					main::_log("delete $file");
+					unlink $CRON::P."/_temp/".$file;
+				}
+			}
+		}
+		closedir DIR;
+	}
+	
+return 1}
+
+1;

@@ -1,0 +1,597 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use strict;
+
+sub execute
+{
+ my %env=@_;
+ #return 1;
+ if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
+
+ if (!$env{db_500}){$cron::ERR="not defined database db_500";return undef;}
+
+ #goto loop;
+
+
+ #######################################################################################################
+ #######################################################################################################
+ #######################################################################################################
+ #######################################################################################################
+ CRON::debug::log(5,"controll a500_category number");
+ #######################################################################################################
+ my $count;
+ my $count0;
+ my $db0=$main::DBH->Query("
+	SELECT ID,photos,photos_sub,lng
+	FROM $env{db_500}.a500_category
+	ORDER BY ID
+	");
+ while (my @db0_line=$db0->fetchrow)
+ {
+  my $db1=$main::DBH->Query("
+	SELECT COUNT(*)
+	FROM $env{db_500}.a500_attrs
+	WHERE IDcategory='$db0_line[0]' AND (lng='$db0_line[3]' OR lng='')");
+  if (my @db1_line=$db1->fetchrow)
+  {
+   if ($db0_line[1] != $db1_line[0])
+   {
+    CRON::debug::log(5,"cat ID:$db0_line[0] bad number of photos lng:$db0_line[3] ($db0_line[1]/$db1_line[0])",1);
+    $main::DBH->Query("	UPDATE $env{db_500}.a500_category
+			SET photos='$db1_line[0]'
+			WHERE ID='$db0_line[0]' AND lng='$db0_line[3]'");
+   }
+  }
+  else
+  {
+   CRON::debug::log(5,"cat ID:$db0_line[0] bad select of photos",1);
+  }
+
+  my $db1=$main::DBH->Query("
+	SELECT COUNT(*)
+	FROM $env{db_500}.a500_attrs
+	WHERE IDcategory LIKE '$db0_line[0]%' AND (lng='$db0_line[3]' OR lng='')");
+  if (my @db1_line=$db1->fetchrow)
+  {
+   if ($db0_line[2] != $db1_line[0])
+   {
+    CRON::debug::log(5,"cat ID:$db0_line[0] bad number of photos_sub lng:$db0_line[3] ($db0_line[1]/$db1_line[0])",1);
+    $main::DBH->Query("	UPDATE $env{db_500}.a500_category
+			SET photos_sub='$db1_line[0]'
+			WHERE ID='$db0_line[0]' AND lng='$db0_line[3]'");
+   }
+  }
+  else
+  {
+   CRON::debug::log(5,"cat ID:$db0_line[0] bad select of photos",1);
+  }
+
+
+ }
+
+ #return 1;
+ #######################################################################################################
+ #######################################################################################################
+ #######################################################################################################
+ #######################################################################################################
+ CRON::debug::log(5,"controll a500 related to real files...");
+ #######################################################################################################
+ my $count;
+ my $count0;
+ my $db0=$main::DBH->Query("
+	SELECT ID,hash,format
+	FROM $env{db_500}.a500");
+ while (my @db0_line=$db0->fetchrow)
+ {
+  $count0++;
+  if ($count0/10000 == int($count0/10000)){CRON::debug::log(6,"[$count0] checked");}
+
+  my $nullid=sprintf("%07d",$db0_line[0]);
+  $nullid=~/^(....)/;my $var=$1;
+  $nullid=$db0_line[1] if $db0_line[1];
+  if (not -e $cron::P."/!media/500/".$var."/$nullid-".$db0_line[2].".jpg")
+  {
+   CRON::debug::log(5,"not exist ID:$db0_line[0] IDhash:$db0_line[1] format:$db0_line[2] file /".$var."/$nullid-".$db0_line[2].".jpg",1);
+  }
+ }
+ #######################################################################################################
+ CRON::debug::log(5,"controll files related to a500...");
+ #######################################################################################################
+ my $count;
+ my $count0;
+ if (opendir (DIR,$cron::P."/!media/500"))
+ {
+  my @files=readdir DIR;
+  foreach my $file(@files)
+  {
+   if (($file ne ".")&&($file ne "..")&&($file ne "_trash"))
+   {
+    if (-d $cron::P."/!media/500/".$file)
+    {
+     if (opendir (DIR1,$cron::P."/!media/500/".$file)){foreach (readdir DIR1){if (($_ ne ".")&&($_ ne "..")){push @files,$file."/".$_;}}}
+    }
+    if ($file=~/\.jpg$/)
+    {
+	$count0++;
+	if ($count0/1000 == int($count0/1000)){CRON::debug::log(6,"[$count0] checked");}
+	$file=~/\/(.*?)-/;
+	my $db1=$main::DBH->Query("
+		SELECT ID
+		FROM $env{db_500}.a500
+		WHERE hash='$1'
+		LIMIT 1");
+	if (not my @db1_line=$db1->fetchrow)
+	{
+	 $count++;
+	 #CRON::debug::log(6,"[$count] a500_attrs:ID:$db0_line[0] has no pictures",1);
+	 CRON::debug::log(5,"[$count] file $file has no entry in database",1);
+	 system ("mv $cron::P/!media/500/$file $cron::P/!media/500/_trash/");
+	}
+
+     #print "$file\n";
+    }
+   }
+  }
+  closedir DIR;
+ }
+
+ #return 1;
+
+
+ #######################################################################################################
+ #######################################################################################################
+ #######################################################################################################
+ #######################################################################################################
+ CRON::debug::log(5,"controll a500_attrs related to a500...");
+ #######################################################################################################
+ my $count;
+ my $count0;
+ my $db0=$main::DBH->Query("
+	SELECT a.ID,b.ID
+	FROM $env{db_500}.a500_attrs AS a
+	LEFT JOIN $env{db_500}.a500 AS b
+	ON a.ID=b.ID");
+ while (my @db0_line=$db0->fetchrow)
+ {
+  $count0++;
+  if ($count0/10000 == int($count0/10000)){CRON::debug::log(6,"[$count0] checked");}
+  if (!$db0_line[1])
+  {
+   $count++;
+   CRON::debug::log(6,"[$count] a500_attrs:ID:$db0_line[0] has no pictures",1);
+   CRON::debug::log(7,"can't fix",1);
+=head1
+   my $db1=$main::DBH->Query("
+	SELECT IDhash
+	FROM $env{db_300}.a300_users_attrs_arch
+	WHERE IDhash='$db0_line[0]'
+	LIMIT 1");
+   if (my @db1_line=$db1->fetchhash)
+   {
+    CRON::debug::log(7,"a300_users:IDhash:$db0_line[0] has attrs in archive");
+    #$main::DBH->Query("	REPLACE INTO a300_users_attrs SELECT * FROM a300_users_attrs_arch
+    #			WHERE IDhash='$user{IDattrs}' LIMIT 1");
+    #$main::DBH->Query("DELETE FROM $env{db_300}.a300_users_attrs_arch WHERE IDhash='$user{IDhash}' LIMIT 1");
+   }
+   #else {$main::DBH->Query("INSERT INTO $env{db_300}.a300_users_attrs(IDhash) VALUES('$db0_line[0]')");}
+=cut
+  }
+ }
+ #######################################################################################################
+ CRON::debug::log(5,"controll a500 related to a500_attrs...");
+ #######################################################################################################
+ my $count;
+ my $count0;
+ my $db0=$main::DBH->Query("
+	SELECT a.ID,b.ID
+	FROM $env{db_500}.a500 AS a
+	LEFT JOIN $env{db_500}.a500_attrs AS b
+	ON a.ID=b.ID");
+ while (my @db0_line=$db0->fetchrow)
+ {
+  $count0++;
+  if ($count0/10000 == int($count0/10000)){CRON::debug::log(6,"[$count0] checked");}
+  if (!$db0_line[1])
+  {
+   $count++;
+   CRON::debug::log(6,"[$count] a500:ID:$db0_line[0] has no attrs",1);
+   CRON::debug::log(7,"can't fix",1);
+=head1
+   my $db1=$main::DBH->Query("
+	SELECT IDhash
+	FROM $env{db_300}.a300_users_attrs_arch
+	WHERE IDhash='$db0_line[0]'
+	LIMIT 1");
+   if (my @db1_line=$db1->fetchhash)
+   {
+    CRON::debug::log(7,"a300_users:IDhash:$db0_line[0] has attrs in archive");
+    #$main::DBH->Query("	REPLACE INTO a300_users_attrs SELECT * FROM a300_users_attrs_arch
+    #			WHERE IDhash='$user{IDattrs}' LIMIT 1");
+    #$main::DBH->Query("DELETE FROM $env{db_300}.a300_users_attrs_arch WHERE IDhash='$user{IDhash}' LIMIT 1");
+   }
+   #else {$main::DBH->Query("INSERT INTO $env{db_300}.a300_users_attrs(IDhash) VALUES('$db0_line[0]')");}
+=cut
+  }
+ }
+ #######################################################################################################
+
+
+
+
+
+
+ return 1;
+
+ #######################################################################################################
+ #######################################################################################################
+ #######################################################################################################
+ #######################################################################################################
+ CRON::debug::log(5,"controll a400_attrs related to a400...");
+ #######################################################################################################
+ my $count;
+ my $db0=$main::DBH->Query("
+	SELECT IDattrs
+	FROM $env{db_400}.a400_attrs");
+ while (my %article=$db0->fetchhash)
+ {
+  my $db1=$main::DBH->Query("
+	SELECT ID
+	FROM $env{db_400}.a400
+	WHERE IDattrs='$article{IDattrs}'");
+  if (my %db1_line=$db1->fetchhash)
+  {
+  }
+  else
+  {
+   $count++;
+   CRON::debug::log(6,"[$count] a400_attrs:IDattrs:$article{IDattrs} has no ID in a400",1);
+   my $db1=$main::DBH->Query("
+	SELECT ID
+	FROM $env{db_400}.a400_arch
+	WHERE IDattrs='$article{IDattrs}'");
+   if (my %db1_line=$db1->fetchhash)
+   {
+    CRON::debug::log(7,"a400_attrs:ID:$article{IDattrs} has ID in archive");
+    $main::DBH->Query("REPLACE INTO a400_attrs_arch SELECT * FROM a400_attrs WHERE IDattrs='$article{IDattrs}' LIMIT 1");
+    $main::DBH->Query("DELETE FROM $env{db_400}.a400_attrs WHERE IDattrs='$article{IDattrs}' LIMIT 1");
+   }
+   else {$main::DBH->Query("DELETE FROM $env{db_400}.a400_attrs WHERE IDattrs='$article{IDattrs}' LIMIT 1");}
+  }
+ }
+ #return 1;
+ #######################################################################################################
+ CRON::debug::log(5,"controll a400_attrs_arch related to a400_arch...");
+ #######################################################################################################
+ my $count;
+ my $db0=$main::DBH->Query("
+	SELECT IDattrs
+	FROM $env{db_400}.a400_attrs_arch");
+ while (my %article=$db0->fetchhash)
+ {
+  my $db1=$main::DBH->Query("
+	SELECT ID
+	FROM $env{db_400}.a400_arch
+	WHERE IDattrs='$article{IDattrs}'");
+  if (my %db1_line=$db1->fetchhash)
+  {
+  }
+  else
+  {
+   $count++;
+   CRON::debug::log(6,"[$count] a400_attrs_arch:IDattrs:$article{IDattrs} has no ID in a400_arch",1);
+   my $db1=$main::DBH->Query("
+	SELECT ID
+	FROM $env{db_400}.a400
+	WHERE IDattrs='$article{IDattrs}'");
+   if (my %db1_line=$db1->fetchhash)
+   {
+    CRON::debug::log(7,"a400_attrs_arch:ID:$article{IDattrs} has ID in a400");
+    $main::DBH->Query("REPLACE INTO a400_attrs SELECT * FROM a400_attrs_arch WHERE IDattrs='$article{IDattrs}' LIMIT 1");
+    $main::DBH->Query("DELETE FROM $env{db_400}.a400_attrs_arch WHERE IDattrs='$article{IDattrs}' LIMIT 1");
+   }
+   else {$main::DBH->Query("DELETE FROM $env{db_400}.a400_attrs_arch WHERE IDattrs='$article{IDattrs}' LIMIT 1");}
+  }
+ }
+
+
+
+
+ #######################################################################################################
+ #######################################################################################################
+ #######################################################################################################
+ #######################################################################################################
+ CRON::debug::log(5,"controll a400 related to a400_attrs...");
+ #######################################################################################################
+ my $count;
+ my $db0=$main::DBH->Query("
+	SELECT ID,IDattrs,title
+	FROM $env{db_400}.a400");
+ while (my %article=$db0->fetchhash)
+ {
+  my $db1=$main::DBH->Query("
+	SELECT IDattrs
+	FROM $env{db_400}.a400_attrs
+	WHERE IDattrs='$article{IDattrs}'
+	LIMIT 1");
+  if (my %db1_line=$db1->fetchhash)
+  {
+  }
+  else
+  {
+   $count++;
+   CRON::debug::log(6,"[$count] a400:ID:$article{ID} has no IDattrs:$article{IDattrs} ($article{title})",1);
+   my $db1=$main::DBH->Query("
+	SELECT IDattrs
+	FROM $env{db_400}.a400_attrs_arch
+	WHERE IDattrs='$article{IDattrs}'
+	LIMIT 1");
+   if (my %db1_line=$db1->fetchhash)
+   {
+    CRON::debug::log(7,"a400:ID:$article{ID} has IDattrs:$article{IDattrs} in archive");
+   }
+   else {$main::DBH->Query("INSERT INTO $env{db_400}.a400_attrs(IDattrs) VALUES('$article{IDattrs}')");}
+  }
+ }
+ #######################################################################################################
+ CRON::debug::log(5,"controll a400_arch related to a400_attrs_arch...");
+ #######################################################################################################
+ my $count;
+ my $db0=$main::DBH->Query("
+	SELECT ID,IDattrs,title
+	FROM $env{db_400}.a400_arch");
+ while (my %article=$db0->fetchhash)
+ {
+  my $db1=$main::DBH->Query("
+	SELECT IDattrs
+	FROM $env{db_400}.a400_attrs_arch
+	WHERE IDattrs='$article{IDattrs}'
+	LIMIT 1");
+  if (my %db1_line=$db1->fetchhash)
+  {
+  }
+  else
+  {
+   $count++;
+   CRON::debug::log(6,"[$count] a400_arch:ID:$article{ID} has no IDattrs_arch:$article{IDattrs} ($article{title})",1);
+   my $db1=$main::DBH->Query("
+	SELECT IDattrs
+	FROM $env{db_400}.a400_attrs
+	WHERE IDattrs='$article{IDattrs}'
+	LIMIT 1");
+   if (my %db1_line=$db1->fetchhash)
+   {
+    CRON::debug::log(7,"a400_arch:ID:$article{ID} has IDattrs_arch:$article{IDattrs} in a400");
+   }
+   else {$main::DBH->Query("INSERT INTO $env{db_400}.a400_attrs_arch(IDattrs) VALUES('$article{IDattrs}')");}
+  }
+ }
+
+
+
+
+
+
+
+
+
+ #loop:
+
+
+
+
+
+
+
+
+
+=head1
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_400}.a400
+	ORDER BY ID");
+ while (my %article=$db0->fetchhash)
+ {
+  print "$article{ID}\n";
+  my $var=int(rand(100000));
+  $main::DBH->Query("UPDATE $env{db_400}.a400 SET priority='$var' WHERE ID=$article{ID} LIMIT 1");
+ }
+=cut
+
+=head1
+ my $count;
+ my $db0=$main::DBH->Query("
+	SELECT ID,xrelated,full
+	FROM $env{db_400}.a400
+	ORDER BY ID
+	");
+ while (my %article=$db0->fetchhash)
+ {
+  $count++;
+  if (($count/1000) eq int($count/1000))
+  {CRON::debug::log(8,"$count");}
+  my $data;
+  my $from=$article{xrelated};
+  my %hash;
+  while ($article{xrelated}=~s|<VAR id="(.*?)" value="(.*?)" />||)
+  {
+   my $var=$1;
+   my $value=$2;
+   $hash{$var.'-'.$value}++;
+   if (!$value)
+   {
+    CRON::debug::log(9,"$article{ID} $var ma prazdny value");next
+   }
+   if ($var eq "a820")
+   {
+    my $db1=$main::DBH->Query("
+    	SELECT ID
+	FROM forum_markiza_sk.a820
+	WHERE ID='$value'
+	LIMIT 1");
+    if (not my @db1_line=$db1->fetchrow)
+    {
+     CRON::debug::log(9,"$article{ID} $var chybajuci forum");next;
+    }
+    $data.="<VAR id=\"".$var."\" value=\"".$value."\" />\n";
+    next;
+   }
+   if ($var eq "a500")
+   {
+    my $db1=$main::DBH->Query("
+    	SELECT ID
+	FROM markiza_sk.a500
+	WHERE ID='$value'
+	LIMIT 1");
+    if (not my @db1_line=$db1->fetchrow)
+    {
+     CRON::debug::log(9,"$article{ID} $var chybajuci obrazok $value");next;
+    }
+    $data.="<VAR id=\"".$var."\" value=\"".$value."\" />\n";
+    next;
+   }
+   if ($var eq "a400")
+   {
+    next if ($hash{$var.'-'.$value}>1);
+    my $db1=$main::DBH->Query("
+    	(SELECT ID
+	FROM markiza_sk.a400
+	WHERE ID='$value'
+	LIMIT 1)
+	UNION ALL
+	(SELECT ID
+	FROM markiza_sk.a400_arch
+	WHERE ID='$value'
+	LIMIT 1)");
+    if (not my @db1_line=$db1->fetchrow)
+    {
+     CRON::debug::log(9,"$article{ID} $var chybajuci clanok $value");next;
+    }
+    $data.="<VAR id=\"".$var."\" value=\"".$value."\" />\n";
+    next;
+   }
+
+   $data.="<VAR id=\"".$var."\" value=\"".$value."\" />\n";
+   CRON::debug::log(9,"$article{ID} $var neznama aplikacia");
+  }
+
+#=head1
+  while ($article{full}=~s|<my_a400(.*?)/>||)
+  {
+   my $var=$1;
+   my $id;my $value;
+   if ($var=~/id="(.*?)"/){$id=$1}
+   if ($var=~/value="(.*?)"/){$value=$1}
+   #CRON::debug::log(9,"$article{ID} $id=$value linka");
+   my $db1=$main::DBH->Query("
+	(SELECT ID
+	FROM markiza_sk.a400
+	WHERE ID='$id'
+	LIMIT 1)
+	UNION ALL
+	(SELECT ID
+	FROM markiza_sk.a400_arch
+	WHERE ID='$id'
+	LIMIT 1)");
+   if (not my @db1_line=$db1->fetchrow)
+   {
+    CRON::debug::log(9,"$article{ID} $id chybna linka");next;
+   }
+   next if $hash{'a400-'.$id};
+   $data.="<VAR id=\"a400\" value=\"".$id."\" />\n";
+  }
+#=cut
+
+  if ($from ne $data)
+  {
+   #CRON::debug::log(9,"$article{ID} update from $from");
+   #CRON::debug::log(9,"$article{ID} update to $data");
+   #$main::DBH->Query("UPDATE $env{db_400}.a400 SET xrelated='$data' WHERE ID='$article{ID}' LIMIT 1");
+  }
+
+ }
+=cut
+
+
+
+=head1
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_400}.a400
+	ORDER BY ID");
+ while (my %article=$db0->fetchhash)
+ {
+  if ($article{IDattrs})
+  {
+   my $db1=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_400}.a400_attrs
+	WHERE IDattrs='$article{IDattrs}'
+	LIMIT 1");
+   if (my @db1_line=$db1->fetchrow)
+   {
+   }
+   else
+   {
+    CRON::debug::log(9,"$article{ID}: this article has IDattrs $article{IDattrs}, but not exist!!!");
+   }
+  }
+  else
+  {
+   CRON::debug::log(9,"$article{ID}: this article has no IDattrs!!!");
+  }
+ }
+
+
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_400}.a400_attrs
+	ORDER BY IDattrs");
+ while (my %article=$db0->fetchhash)
+ {
+   my $db1=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_400}.a400
+	WHERE IDattrs='$article{IDattrs}'");
+   if (my @db1_line=$db1->fetchrow)
+   {
+    my $var=$db1->numrows;
+    if ($var>1){CRON::debug::log(9,"$article{IDattrs}: this attrs has $var articles!!!",1)}
+    #CRON::debug::log(9,"$article{IDattrs}: this attrs has article/s");
+   }
+   else
+   {
+    CRON::debug::log(9,"$article{IDattrs}: this attrs has no article!!!",1);
+   }
+
+ }
+=cut
+
+ return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

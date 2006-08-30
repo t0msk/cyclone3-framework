@@ -1,0 +1,53 @@
+#!/bin/perl
+# ÁÉÍÓÚ - USE UTF-8 !!!
+package CRON::module;
+use TOM::Debug::breakpoints;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ 
+ if ($cron::P ne $CRON::P){$cron::ERR="WARN: this cron is only for global use!!!";return undef}
+
+ #if (!$env{max_days}){$cron::ERR="not defined max_days old logs";return undef;}
+
+
+ #$env{max_days}=$env{max_days}*24*60*60;
+ #$env{max_days2}=31*24*60*60;
+ 
+ my $db0=$main::DB{main}->Query("SHOW DATABASES");
+ while (my @db0_line=$db0->fetchrow)
+ {
+	if ($main::DB{main}->selectdb($db0_line[0]))
+	{
+		main::_log(5,"use $db0_line[0]");
+		my $db1=$main::DB{main}->Query("SHOW TABLES");
+		while (my @db1_line=$db1->fetchrow)
+		{
+			my $time_check=TOM::Debug::breakpoints->new();$time_check->start();
+			main::_log(6,"check table $db1_line[0]");
+			my $out=$main::DB{main}->Query("CHECK TABLE $db1_line[0]");
+			my @out=$out->fetchrow();
+			$time_check->end();$time_check->duration();
+			main::_log(7,"$out[2] $out[3] (".($time_check->{time}{req}{duration})."s)");
+			if ($out[3] ne "OK")
+			{
+				main::_log(7,"repair table $db1_line[0]");
+				my $out=$main::DB{main}->Query("REPAIR TABLE $db1_line[0]");
+			}
+			
+			my $out=$main::DB{main}->Query("OPTIMIZE TABLE $db1_line[0]");
+			
+			#$table{$db1_line[0]}=1;
+		}
+	}
+ }
+ 
+ 
+ 
+ 
+return 1}
+
+1;

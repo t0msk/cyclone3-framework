@@ -1,0 +1,18 @@
+<!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
+
+<#CONF_VAR id="dsgn" value="<$tom::dsgn_>" /> zmenit design na taky na aky je prave poziadavka
+<#CONF_VAR id="xsgn" value="<$tom::dsgn_>" /> zmenit design modulov na taky na aky je prave poziadavka
+<#CONF_VAR id="xlng" value="<$tom::lng_>" /> zmenit lng modulov na taky na aky je prave poziadavka
+
+<#CONF_VAR id="xlng" value="en" /> zmenit lng modulov na taky na aky je prave poziadavka
+<CONF_VAR id="dsgn" value="notfound" global="1" />
+
+<MODULE>
+	<VAR id="-type" value="dmdl" />
+	<VAR id="-category" value="100" />
+	<VAR id="-global" value="1" />
+	<VAR id="-name" value="notfound" />
+	<VAR id="-TMP" value="BASE" />
+	
+	<VAR id="-convertvars" value="1" />
+</MODULE>

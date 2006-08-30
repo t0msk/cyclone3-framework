@@ -1,0 +1,141 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+use App::1D0;
+use Database::connect;
+use Utils::vars;
+use Net::HTTP::LiteAgent;
+
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	
+	#system("export PATH=/usr/bin:/usr/local/bin;");
+	
+	my $db0=$main::DB{main}->Query("
+	SELECT *
+	FROM TOM.a1D0_manager
+	WHERE	time_next<=$main::time_current AND
+				time_start<=$main::time_current AND
+				(time_end>=$main::time_current OR time_end IS NULL) AND
+				active='Y'
+	");
+	while (my %db0_line=$db0->fetchhash)
+	{
+	
+		CRON::debug::log(5,"get import $db0_line{name}($db0_line{URI})");
+	
+#		print "- $db0_line{name}\n";
+		my $time_next=App::1D0::getnexttime($db0_line{dtime_refresh});
+#		print "- nabuduce o $time_next, za ".($time_next-time)."\n";
+		
+		CRON::debug::log(5,"nabuduce za ".($time_next-$main::time_current)."s");
+		
+		CRON::debug::log(6,"fixing");
+		
+		$main::DB{main}->Query("
+			UPDATE TOM.a1D0_manager
+			SET	time_use='$main::time_current',
+					time_next='$time_next'
+			WHERE ID='$db0_line{ID}'
+			LIMIT 1
+			");
+		
+		# UNSECURE!!!!!!!!!!!!!!
+		my $out;
+		#$db0_line{URI};
+		Utils::vars::replace($db0_line{URI});
+		eval
+		{
+			alarm 5;
+			#my $which=`which wget`;
+#			CRON::debug::log(9,"$which");
+			#$where=~s|^wget:\s||;
+			#$where=~s|\s.*||;
+			my $http=new Net::HTTP::LiteAgent;
+			$http->request($db0_line{URI});# or die "Unable to get document: $!";
+			$out = $http->body();
+			
+			CRON::debug::log(6,"request $db0_line{URI}");
+#			$out=`wget $db0_line{URI} -q -O -`;
+			alarm 0;
+		};
+#		print "$out\n";
+#=head1
+		if ($out)
+		{
+			CRON::debug::log(6,"ok, saving");
+			$main::DB{main}->Query("
+				UPDATE TOM.a1D0_manager
+				SET	time_use='$main::time_current',
+						time_next='$time_next'
+				WHERE ID='$db0_line{ID}'
+				LIMIT 1
+			");
+#			print $main::DB{main}->errstr()."\n";
+			$out=~s|\'|\\'|g;
+			$main::DB{main}->Query("
+				INSERT INTO TOM.a1D0_imports
+				(
+					IDimport,
+					time_insert,
+					import
+				)
+				VALUES
+				(
+					'$db0_line{ID}',
+					'$main::time_current',
+					'$out'
+				)
+			");
+		}
+		else
+		{
+#=cut
+			CRON::debug::log(6,"ok, fixing");
+			$main::DB{main}->Query("
+				UPDATE TOM.a1D0_manager
+				SET	time_use='$main::time_current',
+						time_next='$main::time_current'
+				WHERE ID='$db0_line{ID}'
+				LIMIT 1
+			");
+		}
+		
+		
+	}
+
+#	use App::1D0;
+#	my $import=App::1D0::get_import('edon-pocasie');
+#	print "$import\n";	
+
+ return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

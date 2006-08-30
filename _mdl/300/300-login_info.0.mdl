@@ -1,0 +1,43 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 HEAD_VERSION
+1.030725
+
+=head1 NAME
+logged/unlogged info
+
+=head1 DESCRIPTION
+zobrazenie statusu uzivatela, prip. loginbox
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+ <value id="preview" value="1"/>
+ <value id="output" value="xsgn"/>
+</DESCRIPTION>
+
+=head1 CHANGES
+build 030724 - Deboot
+	*) first build
+=cut
+
+sub execute
+{
+ my %env=@_;
+
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+
+ $XSGN{'TMP'}=~s|<%LOGIN-NAME%>|$main::USRM{login}|g;
+
+ #$XSGN{'TMP'}=~s|<%USER_REALNAME%>|$main::USRM{login}|g;
+ #$XSGN{'TMP'}=~s|<%USER_EMAIL%>|$main::USRM{login}|g;
+
+ return 1}
+
+1;

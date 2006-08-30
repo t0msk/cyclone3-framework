@@ -1,0 +1,56 @@
+#!/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+ Tomahawk::XLNGtoXSGN(); # insert XLNG do XSGN
+
+ return undef unless $env{ID};
+ return undef unless $env{app};
+
+ if ($main::USRM{logged} ne "Y")
+ {
+  if ($env{popup}){if ($env{popup}){$main::H->rh("<%ONLOAD%>","window.focus();setTimeout('window.close()',5000);");}}
+  $XSGN{TMP}=$XSGN{notlogged};return 1
+ }
+
+ my $data=$main::USRM{favorities};
+ my $var;
+ my $data2;
+ while ($data=~s|<VAR (.*?)/>||)
+ {
+  my %env0=CML::VARhash($1);
+  if (($env0{app} eq $env{app})&&($env0{id} eq $env{ID})){$var=1;next;}
+  $data2.="<VAR ";foreach (sort keys %env0){$data2.=$_."=\"".$env0{$_}."\" "}$data2.="/>\n";
+ }
+ $main::USRM{favorities}=$data2;
+
+ if ($var)
+ {
+   $XSGN{TMP}=$XSGN{removed};
+   if ($env{popup}){$main::H->rh("<%ONLOAD%>","window.opener.location.reload();window.focus();setTimeout('window.close()',2000);");}
+   $main::DBH->Query("
+ 	UPDATE $TOM::DB_name_USRM.a300_users_attrs
+	SET	favorities='$main::USRM{favorities}'
+	WHERE	IDhash='$main::USRM{IDhash}'
+	LIMIT 1
+	");
+ }
+ else
+ {
+   $XSGN{TMP}=$XSGN{notremoved};
+   if ($env{popup}){$main::H->rh("<%ONLOAD%>","window.opener.location.reload();window.focus();setTimeout('window.close()',5000);");}
+ }
+
+ return 1}
+
+1;

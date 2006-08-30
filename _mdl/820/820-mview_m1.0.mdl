@@ -1,0 +1,284 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+$authors="nemsak\@webcom.sk";
+use strict;
+
+=head1 NAME
+mview_m1
+
+=head1 HEAD_VERSION_BUILD
+
+1.050829
+
+=head1 DESCRIPTION
+
+stredne zobrazenie fora
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+
+	my %sql_requests;
+	my %sql_strings;
+
+	$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+	$env{db_820}=$TOM::DB{main}{name} unless $env{db_820};
+
+	if(!exists($env{'db_select'})){
+		$sql_strings{'select'}="a820.*";
+	}else{
+		$sql_strings{'select'}=$env{'db_select'};
+	}
+
+
+	if(!exists($env{'db_ID'})){
+		$sql_strings{'ID'}="AND (a820.ID='".$env{'db_ID'}."')";
+	}else{
+		$sql_strings{'ID'}="AND a820.ID LIKE '".$env{'db_ID'}."'";
+	}
+	
+	if(!exists($env{'db_lng'})){
+		$sql_strings{'lng'}="AND (a820.lng='' OR a820.lng='".$env{'lng'}."')";
+	}else{
+		$sql_strings{'lng'}="AND a820.lng LIKE '".$env{'lng'}."'";
+	}
+	
+	if(!exists($env{'db_active'})){
+		$sql_strings{'active'}="AND a820.active='Y'";
+	}else{
+		$sql_strings{'active'}="AND a820.active LIKE '".$env{'db_active'}."'";
+	}
+	
+	if(!exists($env{'db_type'})){
+		$sql_strings{'type'}="AND a820.type='F'";
+	}else{
+		$sql_strings{'type'}="AND a820.type LIKE '".$env{'db_type'}."'";
+	}
+
+	# setting default db_order_by
+	if(!exists($env{'db_order_by'})){
+		$sql_strings{'order_by'}="a820.starttime DESC";
+	}else{
+		$sql_strings{'order_by'}=$env{'db_order_by'};
+	}
+
+	$env{'db_where'}=$env{'_db_where'} if $env{'_db_where'};
+	
+	$sql_requests{'main'}="
+		SELECT
+			*
+		FROM
+			$env{db_820}.a820 as a820
+		WHERE
+			1
+			$sql_strings{'ID'}
+			$sql_strings{'type'}
+			$sql_strings{'lng'}
+			$sql_strings{'active'}
+		ORDER BY
+			$sql_strings{'order_by'}
+		LIMIT 1
+	";
+	
+	main::_log('SQL request: '.$sql_requests{'main'});
+	
+	my $line_counter;
+	
+	my $db=$main::DBH->Query($sql_requests{'main'});
+	
+	if($db)
+	{
+		if (my %db_line=$db->FetchHash())
+		{
+			Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+			if (($env{xt_xlng}) || ($env{xlng}))
+			{
+				main::_log("using xlng transformation");
+				if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+				Tomahawk::GetXLNG() || return undef; # retrieve language xml
+				Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+			}
+			
+			$line_counter++;
+			
+			if(
+				(($env{db_select}=~/a820.IDauthor/) || ($env{db_select}=~/a820.\*/)) &&
+				(($XSGN{TMP}=~/<%IDauthor_fullname%>/) || ($XSGN{TMP}=~/<%IDauthor_nickname%>/))
+			)
+			{
+				$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
+				$env{db_120}=$TOM::DB{main}{name} unless $env{db_120};
+
+				my $db0=$main::DB{main}->Query("
+					SELECT
+						ID,
+						IDcategory,
+						fullname,
+						nickname
+					FROM $env{db_120}.a120
+					WHERE
+						ID='$db_line{IDauthor}'
+						AND IDtype='0'
+					LIMIT 1
+				");
+				if (my %db0_line=$db0->FetchHash())
+				{
+					$XSGN{TMP}=~s|<%IDauthor%>|$db0_line{ID}|g;
+					$XSGN{TMP}=~s|<%IDauthor_fullname%>|$db0_line{fullname}|g;
+					$XSGN{TMP}=~s|<%IDauthor_nickname%>|$db0_line{nickname}|g;
+				}
+				else
+				{
+					main::_log($db0->errstr());
+				}
+			}
+
+			if(
+				(($env{db_select}=~/a820.IDeditor/) || ($env{db_select}=~/a820.\*/)) &&
+				(($XSGN{TMP}=~/<%IDeditor_fullname%>/) || ($XSGN{TMP}=~/<%IDeditor_nickname%>/))
+			)
+			{
+				$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
+				$env{db_120}=$TOM::DB{main}{name} unless $env{db_120};
+
+				my $db0=$main::DB{main}->Query("
+					SELECT
+						ID,
+						IDcategory,
+						fullname,
+						nickname
+					FROM $env{db_120}.a120
+					WHERE
+						ID='$db_line{IDeditor}'
+						AND IDtype='1'
+					LIMIT 1
+				");
+				if (my %db0_line=$db0->FetchHash())
+				{
+					$XSGN{TMP}=~s|<%IDeditor%>|$db0_line{ID}|g;
+					$XSGN{TMP}=~s|<%IDeditor_fullname%>|$db0_line{fullname}|g;
+					$XSGN{TMP}=~s|<%IDeditor_nickname%>|$db0_line{nickname}|g;
+				}
+				else
+				{
+					main::_log($db0->errstr());
+				}
+			}
+
+			if(
+				(($env{db_select}=~/a820.IDcategory/) || ($env{db_select}=~/a820.\*/)) &&
+				($XSGN{TMP}=~/<%IDcategory_name%>/)
+			)
+			{
+				my $db0=$main::DB{main}->Query("
+					SELECT
+						name
+					FROM $env{db_820}.a820_category
+					WHERE
+						ID='$db_line{IDcategory}'
+						AND (lng='$env{lng}' OR lng='')
+					LIMIT 1
+				");
+				#TODO: deb00t nie som si isty ci treba pri ziskavani nazvu kategorie, aby bola aktivna, potrebujeme len jej nazov, ne?
+				#						AND active='Y'
+				if (my %db0_line=$db0->fetchhash)
+				{$XSGN{TMP}=~s|<%IDcategory_name%>|$db0_line{name}|g;}
+				else
+				{
+					main::_log("category  $db_line{IDcategory} doesn't exist!");
+					main::_log($db0->errstr());
+				}
+			}
+			
+			foreach (keys %db_line)
+			{
+				my $tmpVar=$_;
+				
+				if($env{xt_datetime}){
+					if($tmpVar=~/time/)
+					{
+						if($db_line{$tmpVar}!=~/^\d*$/){ next; }
+						
+						my %env0=Utils::datetime::ctodatetime($db_line{$tmpVar},format=>1);
+						$XSGN{TMP}=~s|<%$tmpVar\_day%>|$env0{mday}|g;
+						$XSGN{TMP}=~s|<%$tmpVar\_month%>|$env0{mom}|g;
+						$XSGN{TMP}=~s|<%$tmpVar\_year%>|$env0{year}|g;
+						$XSGN{TMP}=~s|<%$tmpVar\_hour%>|$env0{hour}|g;
+						$XSGN{TMP}=~s|<%$tmpVar\_minute%>|$env0{min}|g;
+						$XSGN{TMP}=~s|<%$tmpVar\_second%>|$env0{sec}|g;
+					
+						$XSGN{TMP}=~s|<%$tmpVar\_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+						$XSGN{TMP}=~s|<%$tmpVar\_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+						$XSGN{TMP}=~s|<%$tmpVar\_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+						$XSGN{TMP}=~s|<%$tmpVar\_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+					}
+				}
+				
+				if(
+					(exists($env{'xt_cut_'.$tmpVar}))
+					&&(length($db_line{$tmpVar})>$env{'xt_cut_'.$tmpVar})
+				)
+				{
+					my $tmpAddon="&hellip;";
+					$tmpAddon=$env{'xt_cut_suffix'} if (exists($env{'xt_cut_suffix'}));
+					$tmpAddon=$env{'xt_cut_'.$tmpVar.'_suffix'} if (exists($env{'xt_cut_'.$tmpVar.'_suffix'}));
+					
+					$db_line{$tmpVar}=substr($db_line{$tmpVar}, 0, $env{'xt_cut_'.$tmpVar});
+					$db_line{$tmpVar}=~s|(.*) .*?$|$1$tmpAddon|;
+				}
+				
+				$XSGN{TMP}=~s|<%$tmpVar%>|$db_line{$tmpVar}|g;
+			}
+		}else{
+			if (!$env{'return_null'})
+			{
+				Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+				if (($env{'xt_xlng'}) || ($env{'xlng'}))
+				{
+					main::_log("using xlng transformation");
+					if ($env{'xlng'}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+					Tomahawk::GetXLNG() || return undef; # retrieve language xml
+					Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+				}
+			}
+		}
+	}else{
+		main::_log('SQL request failure: '+$db->errstr());
+	}
+
+	if($line_counter<1)
+	{
+		if($env{'return_null'})
+		{
+			main::_log("no data available. return_null parameter in effect");
+			$XSGN{'TMP'}="";
+		}
+		else
+		{
+			if((exists $XSGN{'TMP_no_data'})||(exists $XSGN{'TMP_NO_DATA'}))
+			{
+				if(!exists $XSGN{'TMP_no_data'}){
+					main::_log('use of TMP_NO_DATA is deprecated in this module, please use TMP_no_data instead');
+					$XSGN{'TMP_no_data'}=$XSGN{'TMP_NO_DATA'};
+				}
+				main::_log("no data available. returning TMP_NO_DATA");
+				$XSGN{'TMP'}=$XSGN{'TMP_no_data'};
+			}
+			else
+			{
+				$tom::ERR="no data available! query description in log.";
+				return undef;
+			}
+		}
+	}
+
+	return 1;
+}
+
+1;

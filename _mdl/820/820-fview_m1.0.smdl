@@ -1,0 +1,176 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+fview_m1
+
+=head1 HEAD_VERSION_BUILD
+1.050404
+
+=head1 DESCRIPTION
+discussion display
+=cut
+
+
+sub execute
+{
+   my %env=@_;
+
+   $env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+   $env{db_820}=$TOM::DB_name unless $env{db_820};
+   
+
+   main::_log("
+      SELECT ID,messages,inserttime,xrelated
+      FROM $env{db_820}.a820
+      WHERE
+         ID='$env{db_ID}'
+         AND type='F'
+         AND (lng='' OR lng='$env{lng}')
+         AND active='Y'
+      LIMIT 1
+   ");
+   if
+   (
+      my $db=$main::DBH->Query("
+         SELECT ID,messages,inserttime,xrelated
+         FROM $env{db_820}.a820
+         WHERE
+            ID='$env{db_ID}'
+            AND type='F'
+            AND (lng='' OR lng='$env{lng}')
+            AND active='Y'
+         LIMIT 1
+      ")
+   )
+   {
+      if (my %db_line=$db->FetchHash())
+      {
+         $env{cache_id_sub}=$main::USRM{logged}.$main::USRM{IDhash} if ($main::USRM{logged} eq "Y");
+   
+=head1
+         if($db_line{xrelated}=~/<VAR id="a400" value="(.*?)" \/>/ && $env{fview_400_TMP})
+         {
+            my %article;
+            my $id=$1;
+   
+#=head1
+            main::_log("
+               SELECT *
+               FROM $env{db_400}.a400
+               WHERE
+                     ID='$id' AND
+                     (a400.lng='$env{lng}' OR a400.lng='') AND
+                     a400.active='Y'
+               LIMIT 1"); #return 1;
+#=cut
+   
+            my $db=$main::DBH->Query("
+               SELECT *
+               FROM $env{db_400}.a400
+               WHERE
+                     ID='$id' AND
+                     (a400.lng='$env{lng}' OR a400.lng='') AND
+                     a400.active='Y'
+               LIMIT 1
+            ");
+            if (not %article=$db->FetchHash())
+            {
+               main::_log("
+                  SELECT *
+                  FROM $env{db_400}.a400_arch
+                  LEFT JOIN $env{db_400}.a400_attrs_arch
+                     ON (a400_arch.IDattrs AND a400_arch.IDattrs=a400_attrs_arch.IDattrs)
+                  WHERE
+                     ID='$id' AND
+                     AND a400_arch.starttime<=$tom::time_current
+                     AND (a400_arch.lng='$env{lng}' OR a400_arch.lng='')
+                     AND a400_arch.active='Y'
+                  LIMIT 1
+               ");
+               my $db=$main::DBH->Query("
+                  SELECT *
+                  FROM $env{db_400}.a400_arch
+                  LEFT JOIN $env{db_400}.a400_attrs_arch
+                     ON (a400_arch.IDattrs AND a400_arch.IDattrs=a400_attrs_arch.IDattrs)
+                  WHERE
+                     ID='$id'
+                     AND a400_arch.starttime<=$tom::time_current
+                     AND (a400_arch.lng='$env{lng}' OR a400_arch.lng='')
+                     AND a400_arch.active='Y'
+                  LIMIT 1
+               ");
+               %article=$db->fetchhash();
+            }
+            foreach (keys %article) {~/^[^_]400_/ && do {$article{'_a400_'.$_}=$article{$_};delete $article{$_};next;}}
+   
+            my %caching;
+            #if ($article{a_starttime}>($tom::time_current-7200))
+   
+            # pridat podmienku zrusenia cache pri zmene clanku changetime
+            #  if (($article{_a400_lasttime}>($tom::time_current-3600))
+            #     &&($article{_a400_changetime}>($tom::time_current-86400))) # ak bol clanok naposledy videni pred hodinou
+   
+   #        if ($article{_a400_lasttime}>($tom::time_current-86400)) # ak bol clanok naposledy videni pred hodinou
+   #        {
+   #           %caching=(
+   #              -cache_id   => "a400_view",
+   #           );
+   #        }
+   
+            # TELO CLANKU
+            Tomahawk::module(
+            -type       => "mdl",
+            -category         => "400",
+            -name       => "fview",
+            -global        => 1,
+            -xsgn             => $env{xsgn_400_fview},
+            -xsgn_global      => $env{xsgn_400_global},
+            -TMP     => $env{fview_400_TMP},
+            -lng           => $env{lng},
+            %caching,
+            -cache_id_sub     => $article{_a400_ID}."-".$article{_a400_changetime},
+            -cache_id   => "a400_view",
+            #-cache_master    => $env{cache_master},
+               shift_first_img      => $env{shift_first_img},# vytiahnem prvu premennu obrazku
+               show_catname      => $env{show_catname},
+               show_catname_full => $env{show_catname_full},
+               db_500         => $env{db_500},
+               db_400         => $env{db_400},
+               db_120         => $env{db_120},
+               format_500     => $env{format_500},
+               first_format_500     => $env{first_format_500},
+               page           => $main::FORM{page}, # nefunkcne, len posielam linku
+               a900_inline    => $env{a900_inline},
+               %article,
+            );
+         }
+=cut
+   
+         Tomahawk::module(
+            %env,
+            -type    => "mdl",
+            -category   => "820",
+            -name    => "fview_m1",
+            -cache_id_sub  => $db_line{inserttime}.$env{cache_id_sub},
+         );
+      }
+      else
+      {
+         $tom::ERR="no data available! query description in log.";
+      }
+   }
+   else
+   {
+      $tom::ERR="could not execute query! query description in log.";
+   }
+
+   return 1;
+}
+
+1;

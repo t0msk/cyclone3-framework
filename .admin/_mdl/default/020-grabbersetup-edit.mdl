@@ -1,0 +1,389 @@
+sub BaseModul
+{
+ require "grabber_fnc.m";
+
+ if ($form{set})
+ {
+  $HTML_HEADER{BODY}{extract}="yes";
+
+
+  #return "<script>parent.document.frames['frm_base'].location.reload();</script>";
+
+  $form{year1}-=1900;
+  $form{year2}-=1900;
+  $form{mom1}--;
+  $form{mom2}--;
+  my $starttime=timelocal(undef,$form{min1},$form{hour1},$form{day1},$form{mom1},$form{year1},undef,undef,undef);
+  my $endtime=timelocal(undef,$form{min2},$form{hour2},$form{day2},$form{mom2},$form{year2},undef,undef,undef);
+    #return "UPDATE markiza_sk.a020_archiv SET description='$form{description}' WHERE ID='$id' LIMIT 1";
+
+     #calling GRABBER !!!!!!!!!!!!!!
+
+     #SetGrab($id);
+
+	#calling GRABBER !!!!!!!!!!!!!!
+
+  #@TIME = localtime($starttime);
+  #$Time=sprintf("_%02d_%02d_%04d.asf",$TIME[3],$TIME[4]+1,$TIME[5]+1900);
+  my @TIME;
+  if ($form{after_midnight} eq "Y") { @TIME = localtime($starttime-86400); } else { @TIME = localtime($starttime); $form{after_midnight}="N" }
+  my $Time=sprintf("_%02d_%02d_%04d.asf",$TIME[3],$TIME[4]+1,$TIME[5]+1900);
+
+		# po polnoci len live !!
+#		$Line{live}=2 if ($Line{midnight}=="Y" && $Line{live}==1);
+
+  $form{catname}=$form{IDcategory};
+
+  $db_micro1 = $dbh->Query("SELECT ID,short FROM markiza_sk.a020_cat WHERE name='$form{IDcategory}'");
+  if (@db_micro1_line=$db_micro1->FetchRow()) { $form{IDcategory}=$db_micro1_line[0]; $form{short}=$db_micro1_line[1]; }
+
+  $file=$form{short}.$Time;
+
+=head1
+  #-------------------------------------------------------------------
+  $HTML_HEADER{BODY}{extract}="yes";
+
+  $blablabla='INSERT INTO markiza_sk. a020_archiv (ID,ID_cat, video_file, time_from, time_to,description) VALUES
+			("","'.$form{IDcategory}.'","'.$file.'","'.$starttime.'","'.$endtime.'","'.$form{catname}.'")';
+
+  my $mdl_temp=<<"HEADER";
+<table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td>$blablabla</td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table>
+HEADER
+
+  my $box=&box_create2("Nastav grab!",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	150,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp);
+
+  return $box;
+  #-------------------------------------------------------------------
+=cut
+
+  $Res2=$dbh->Query('INSERT INTO markiza_sk.a020_archiv (ID,ID_cat, video_file, time_from, time_to, midnight, description) VALUES
+			("","'.$form{IDcategory}.'","'.$file.'","'.$starttime.'","'.$endtime.'","'.$form{after_midnight}.'","'.$form{catname}.'")') or print "ERROR: a020_archiv";
+  $id = $Res2->insert_id;
+  SetGrab($id);
+
+   #-----------------updating EXTERNAL event && tv_archiv tables for grabber !!!!!!!!!!!
+=head1
+	$T_SRV="192.168.1.20";
+     $T_DB="markiza";
+     $T_USR="webcom";
+     $T_PWD="plaque";
+
+     # CONNECT TARGET
+     $T_DBase=Mysql->Connect($T_SRV,$T_DB,$T_USR,$T_PWD);
+     $T_DBase->SelectDB($T_DB);
+     print "Connected to T\n";
+
+	if ($db_micro = $dbh->Query("SELECT * FROM markiza_sk.a020_archiv WHERE ID='$id' LIMIT 1"))
+	{
+	 if (%db_micro1_line=$db_micro1->FetchHash())
+	 {
+      # FAKE tv_archiv v starej DB
+		$T_DBase->Query('REPLACE INTO tv_archiv (id_event,id_category,id_relacie,file_asf,datetime_from,datetime_to) VALUES
+     			("'.$id.'","1","1","'.$db_micro1_line{video_file}.'","'.$db_micro1_line{time_from}.'","'.($db_micro1_line{time_to}+60*5).'")') or $update_success="0";
+
+      # FAKE event v starej DB
+     	$T_DBase->Query('REPLACE INTO event (id_event, id_type_event, id_org,  name,date_from,date_to,time_from,time_to,description,archiv) VALUES
+     			("'.$id.'","1","1","WebCom Grab","'.sprintf("%04d-%02d-%02d",$TIME[5]+1900,$TIME[4],$TIME[3]).'","'.sprintf("%04d-%02d-%02d",$TIME_TO[5]+1900,$TIME_TO[4],$TIME_TO[3]).'","'.sprintf("%02d:%02d:00",$TIME[2],$TIME[1]).'","'.sprintf("%02d:%02d:00",$TIME_TO[2],$TIME_TO[1]).'","","1")') or $update_success="0";
+	 }
+	}
+=cut
+   #-----------------end of updating EXTERNAL event && tv_archiv tables for grabber
+
+  return "\n<script>\nparent.document.frames['frm_base'].location.reload();\n</script>";
+ }
+ else #tu je ten predel!!!------------------------------------------------------------------------------------------------------
+ {
+  $HTML_HEADER{BODY}{extract}="yes";
+
+  #$HTML_HEADER{BODY}{onunload}="parent.box_loading.style.display='block';";
+
+   (undef,$minR1,$hourR1,$mdayR1,$momR1,$yearR1,undef,undef,undef) = localtime($db_micro_line{time_from});
+   (undef,$minR2,$hourR2,$mdayR2,$momR2,$yearR2,undef,undef,undef) = localtime($db_micro_line{time_to});
+
+  $momR1++;$yearR1=$yearR1+1900;
+  $momR2++;$yearR2=$yearR2+1900;
+
+  my $mdl_temp=<<"HEADER";
+  <table width=100% cellspacing=0 cellpadding=0 border=0><tr><td>
+  <form name="xx" action="core.pl?type=020-grabbersetup-edit&set=yes" method="POST" enctype="multipart/x-form-data" target="frm_micro">
+  </td><td width=100% style="FONT:10px Verdana;COLOR:white;">
+  &nbsp;Relácia:<BR>
+HEADER
+
+
+  my $mdl_micro;
+  $db_micro1 = $dbh->Query("SELECT ID,name FROM markiza_sk.a020_cat ORDER BY name");
+  while (@db_micro1_line=$db_micro1->FetchRow())
+  {
+   $db_micro1_line[1]=~s|"||g;
+   $db_micro1_line[1]=~s|'||g;
+   $mdl_micro.=&select_add('value'=>$db_micro1_line[1],'html'=>$db_micro1_line[1]);
+  }
+  $mdl_temp.=&select_create(
+ 	'name'		=>	"IDcategory",
+	'value'		=>	$forum_id_val,
+	'maxlength'	=>	30,
+	'width'		=>	250,
+	'height'	=>	200,
+	'drag_resizeX'	=>	'-150',
+	'select'	=>	$mdl_micro
+  );
+
+
+
+ my $temp;
+
+  while ($db_micro_line{ind}=~s|<INDEX id="(.*?)" value="(.*?)" description="(.*?)" />|<INDEXTO>|i)
+  {
+   $temp.="<id=$1 value=$2 desc=$3>\n";
+  }
+  $indexes=$temp;
+
+=head1
+  <table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=button drag_here value="vložiť 'kostru'" class=btn0 onclick="document.forms['indexesEdit_$id'].indexes.text=document.forms['indexesEdit_$id'].indexes.text + '<id= value= desc=>' ;"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table><br>
+=cut
+
+  $mdl_temp.="<table width=100% cellspacing=0 cellpadding=0 border=0><tr><td style=\"FONT:10px Verdana;COLOR:white;\"  width=\"50%\">&nbsp;Nahrávať od/do:<br>";
+
+  $mdl_temp.="<table cellspacing=2 cellpadding=0 border=0><tr><td colspan=16></td></tr><tr>";
+
+  my $width0=30-12;
+  my $width1=50-12;
+
+  my $mdl_micro;
+  for (my $i=1;$i<=31;$i++)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"day1",
+	'value'		=>	$mdayR1,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+
+  my $mdl_micro;
+  @mesiac=("january","february","march","april","may","june","july","august","september","october","november","december");
+  for (my $i=1;$i<=12;$i++)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i-$mesiac[$i-1]</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"mom1",
+	'value'		=>	$momR1,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	90,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+
+
+  my $mdl_micro;
+  for (my $i=2000;$i<=2050;$i++)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"year1",
+	'value'		=>	$yearR1,
+	'maxlength'	=>	30,
+	'width'		=>	$width1,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+
+  $mdl_temp.="<td>&nbsp;</td>";
+
+
+  my $mdl_micro;
+  for (my $i=0;$i<=23;$i++)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"hour1",
+	'value'		=>	$hourR1,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+  $mdl_temp.="<td></td>";
+
+  my $mdl_micro;
+  for (my $i=0;$i<=55;$i=$i+5)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"min1",
+	'value'		=>	$minR1,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+
+  #$mdl_temp.="</table>";
+
+  $mdl_temp.="</tr></table></td><td style=\"FONT:10px Verdana;COLOR:white;\">";
+  $mdl_temp.="</td><td style=\"FONT:10px Verdana;COLOR:white;\" width=\"50%\" valign=\"bottom\">";
+
+  #$mdl_temp.="<td nowrap>-</td>";
+
+  $mdl_temp.="<table cellspacing=2 cellpadding=0 border=0><tr><td colspan=16 valign=\"top\"></td></tr><tr>";
+
+  my $mdl_micro;
+  for (my $i=1;$i<=31;$i++)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"day2",
+	'value'		=>	$mdayR2,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+
+  my $mdl_micro;
+  @mesiac=("january","february","march","april","may","june","july","august","september","october","november","december");
+  for (my $i=1;$i<=12;$i++)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i-$mesiac[$i-1]</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"mom2",
+	'value'		=>	$momR2,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	90,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+
+
+  my $mdl_micro;
+  for (my $i=2000;$i<=2050;$i++)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"year2",
+	'value'		=>	$yearR2,
+	'maxlength'	=>	30,
+	'width'		=>	$width1,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+
+  $mdl_temp.="<td>&nbsp;</td>";
+
+
+  my $mdl_micro;
+  for (my $i=0;$i<=23;$i++)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"hour2",
+	'value'		=>	$hourR2,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+ )."</td>";
+
+  $mdl_temp.="<td></td>";
+
+  my $mdl_micro;
+  for (my $i=0;$i<=55;$i=$i+5)
+  {
+   $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+  }
+  $mdl_temp.="<td>".&select_create(
+ 	'name'		=>	"min2",
+	'value'		=>	$minR2,
+	'maxlength'	=>	30,
+	'width'		=>	$width0,
+	'width1'	=>	50,
+	'select'	=>	$mdl_micro
+  )."</td>";
+
+  $mdl_temp.="</tr></table></td></table>";
+
+
+
+  $mdl_temp.=<<"HEADER";
+  <input type="checkbox" name="after_midnight" value="Y">&nbsp;po polnoci<BR>
+  &nbsp;Popis:<br>
+ <input type=text name="description" id="description" value="$db_micro_line{description}" class=input0 maxlength=260 style="FONT:9px Verdana;width:445px;" drag_resizeX='0'><BR>
+HEADER
+=head1
+  $mdl_temp.=<<"HEADER";
+  &nbsp;Video:<br>
+ <input type=text name="vfile" id="vfile" value="" class=input0 maxlength=260 style="FONT:9px Verdana;width:445px;" drag_resizeX='0'><BR>
+  &nbsp;Audio:<br>
+ <input type=text name="afile" id="afile" value="" class=input0 maxlength=260 style="FONT:9px Verdana;width:445px;" drag_resizeX='0'><BR>
+HEADER
+=cut
+
+  $mdl_temp.=<<"HEADER";
+  <table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit drag_here value="Uložiť!" class=btn0 onclick="box_erase2();"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table><br>
+HEADER
+
+
+
+=head1
+
+
+
+  <TEXTAREA
+	drag_resizeX='0'
+	drag_resizeY='-300'
+	name="indexes"
+	id="indexes_all"
+	class=input0
+	style="width:445px;height:50px;FONT:12px Verdana;">$indexes</TEXTAREA><BR>
+=cut
+
+
+
+#<!-- <input type=hidden name=image value="$image_f"> /-->
+
+  $mdl_temp.="</td><td></form></td></tr></table>";
+  #$mdl_temp.="<script>lastOpenedArticleId=\"$db_micro_line{ID}\"; alert(lastOpenedArticleId);</script>";
+
+my $box;
+
+  $box=&box_create2("Nastavenie grabovania relacie",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	200,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp);
+
+
+  return $box;
+
+  return undef;
+ }
+}
+
+
+1;

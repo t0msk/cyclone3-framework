@@ -1,0 +1,47 @@
+sub BaseModul
+{
+# $HTML_HEADER{BODY}{extract}="yes";
+ #my $mdl_temp="$form{table}:$form{id}";
+
+ require "grabber_fnc.m";
+
+ my $checkFromTime = time;
+
+  if (&CheckArch($checkFromTime))
+  {
+   $mdl_temp=<<"HEADER";
+  <table width=100% cellspacing=0 cellpadding=0 border=0><tr><td width=100% style="FONT:10px Verdana;COLOR:white;">
+  <br>&nbsp;Kontrola prebehla v poriadku.<BR><br><br><br><br>
+  </td></tr></table>
+HEADER
+  }
+  else
+  {
+   $mdl_temp=<<"HEADER";
+  <table width=100% cellspacing=0 cellpadding=0 border=0><tr><td width=100% style="FONT:10px Verdana;COLOR:white;">
+  <br>&nbsp;Pri kontrole sa vyskytla chyba!!!<BR><br><br><br><br>
+  </td></tr></table>
+HEADER
+  }
+
+ $HTML_HEADER{BODY}{extract}="yes";
+
+  my $box=&article_box_create("Výsledok kontroly",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	200,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp,);
+
+  return $box;
+  #$temp="SELECT priority FROM markiza_sk.a400 WHERE ID='$id' LIMIT 1";
+ #return $temp;
+ #while (length($temp)<17)
+ #{
+ # $temp.="0";
+ #}
+}
+
+
+1;
+

@@ -1,0 +1,67 @@
+sub BaseModul
+{
+ my $id;
+ $id=$form{id} if ($form{id});
+ my $indexes;
+
+ $HTML_HEADER{BODY}{extract}="yes";
+
+ if ($form{set})
+ {
+  if ($form{id})
+  {
+   $dbh->query("UPDATE markiza_sk.a120 SET nickname='$form{nickname}',fullname='$form{fullname}' WHERE ID='$id'");
+  }
+  else
+  {
+   $dbh->query("INSERT INTO markiza_sk.a120 (ID,IDcategory,IDtype,nickname,fullname,xdata,active) VALUES ('', '1', '0', '$form{nickname}', '$form{fullname}', '', 'N');");
+
+
+  }
+  return "\n<script>\nparent.document.frames['frm_base'].location.reload();\n</script>";
+ }
+ else #tu je ten predel dopice tam!!!------------------------------------------------------------------------------------------------------
+ {
+  #$HTML_HEADER{BODY}{onunload}="parent.box_loading.style.display='block';";
+
+  my @db_micro_line;
+
+  if ($form{id})
+  {
+   $db_micro = $dbh->Query("SELECT * FROM markiza_sk.a120 WHERE ID='$id'");
+   %db_micro_line=$db_micro->FetchHash();
+  }
+
+
+########for testing purposes .. targeting into the same frame
+#<form name="articleEdit\_$id" action="core.pl?type=020-insert&set=yes" method="POST" enctype="multipart/x-form-data" target="frm_micro">
+
+  my $mdl_temp=<<"HEADER";
+  <form name="sourceEdit\_$id" action="core.pl?type=120-edit&set=yes&id=$id" method="POST" target="frm_micro" style="display: inline;">
+  <table width=100% cellspacing=0 cellpadding=0 border=0><tr><td width=100% style="FONT:10px Verdana;COLOR:white;">
+  &nbsp;Nickname:<BR>
+  <input type=text name="nickname" value="$db_micro_line{nickname}" class=input0 maxlength=100 style="FONT:9px Verdana;width:100%;">
+  &nbsp;Plne meno:<BR>
+  <input type=text name="fullname" value="$db_micro_line{fullname}" class=input0 maxlength=100 style="FONT:9px Verdana;width:100%;">
+  </td></tr></table>
+  <table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit drag_here value="Uložiť!" class=btn0 onclick="box_erase2();"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table></form>
+HEADER
+
+  $mdl_temp.="</td></tr></table>";
+
+  my $box=&article_box_create("Vloženie/Úprava zdroja",
+	'color_base0'	=>	"#0B63F1",
+	'width'			=>	150,
+	'height'		=>	50,
+	'close'			=>	"yes",
+	'html'			=>	$mdl_temp,
+	'article_id'			=>	$id,);
+
+  return $box;
+
+  return undef;
+ }
+}
+
+
+1;

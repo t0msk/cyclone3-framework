@@ -1,0 +1,67 @@
+sub BaseModul
+{
+ $HTML_HEADER{BODY}{extract}="yes";
+ 
+ 
+
+$microtmp=<<"HEADER";
+<TEXTAREA
+	id="edit_$current_time"
+	style="	width:250px;
+			border:solid 1px;
+			height:200px;
+			FONT: 9px Verdana;
+		BORDER-COLOR:#003366;
+		BACKGROUND:white;
+		scrollbar-face-color: #E0E0F0;
+		scrollbar-shadow-color: white;
+		scrollbar-highlight-color: white;
+		scrollbar-3dlight-color: white;
+		scrollbar-darkshadow-color: white;
+		scrollbar-track-color: white;
+		scrollbar-arrow-color: #000000;
+"></TEXTAREA><BR>
+
+<table height=16 width=100% cellspacing=0 cellpadding=0 border=0 bgcolor="#0B63F1" baackground="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=submit value="Copy from Editor+" class=btn0 style="width:120px;FONT:bold 10px Verdana;" onclick="edit_$current_time.value=edit.innerHTML;"></center></td><td><center><input type=submit value="Copy to Editor+" class=btn0 style="width:120px;FONT:bold 10px Verdana;" onclick="edit.innerHTML=edit_$current_time.value;"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table>
+
+HEADER
+return &box_create2("Notes",
+	'open'			=>	True,
+	'close'			=>	True,
+	'new'			=>	"load_box('core.pl?type=box_rightclick');",
+	'cellspacing2'	=>	"1",
+	'cellpadding2'	=>	"0",
+	'color_base0'	=>	"#8FADF9",
+	'top'			=>	102,
+	'left'			=>	600,
+	'display_start'	=>	"block",
+	'height_start'	=>	200,
+	'html'			=>	$microtmp);
+
+ 
+ 
+
+ my $mdl_temp.="Hehe! Wrong way!";
+ 
+ return $box=&box_create2("Right menu",
+	'color_title0'	=>	"blue",
+	'color_base0'	=>	"#8FADF9",
+	'width'			=>	150,
+	'height'		=>	50,
+	'close'			=>	True,
+	'html'			=>	$mdl_temp);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

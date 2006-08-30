@@ -1,0 +1,68 @@
+sub BaseModul
+{
+ my $id=$form{id};
+ 
+ my $page_limit=10;
+ my $page_from=$page_limit*$form{page};
+ $form{page}="0" unless $form{page};
+ $next=$form{page}+1;
+ $prev=$form{page}-1;
+ $spage=$form{page}+1;
+
+ if ($form{page})
+ {
+  $button=<<"  HEADER";
+ <td style="cursor:hand;" onclick="document.frames['frm_$form{frm}'].location='core.pl?type=photogallery_editadd2&cathegory=$form{cathegory}&frm=$form{frm}&page=$prev';"><img src="$tom::H_media/grf/admin/win_top_0_btn4.gif" border=0><BR></td>
+  HEADER
+ }
+
+ my $mdl_temp=<<" HEADER";
+
+ <table width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr>
+$button
+<td width=100% style="FONT:bold 10px Verdana;" align=middle>&nbsp;<font color=white>page $spage</font>&nbsp;</td>
+<td style="cursor:hand;" onclick="document.frames['frm_$form{frm}'].location='core.pl?type=photogallery_editadd2&cathegory=$form{cathegory}&frm=$form{frm}&page=$next';"><img src="$tom::H_media/grf/admin/win_top_0_btn3.gif" border=0><BR></td>
+</tr>
+</table>
+
+
+ HEADER
+ my $mdl_line=<<" HEADER";
+
+<table width=100% cellspacing=2 cellpadding=3 border=0>
+<tr>
+<td bgcolor="#2B83FF"><img src="$h_img/<%NULLID%>-t.jpg" width=80 height=80 border=0><BR></td>
+<td width=100% bgcolor="#2B83FF" style="FONT:10px Verdana;" valign=top>
+<B>ID:</B> #<%NULLID%><BR>
+<B>ADD:</B> <a href="#" onclick="editor_paste_img2('$h_img/<%NULLID%>','left','<%ABOUT2%>');">left</a> <a href="#" onclick="editor_paste_img2('$h_img/<%NULLID%>','absmiddle','<%ABOUT2%>');">middle</a> <a href="#" onclick="editor_paste_img2('$h_img/<%NULLID%>','right','<%ABOUT2%>');">right</a><BR>
+</td>
+</tr>
+</table>
+
+ HEADER
+
+ $HTML_HEADER{BODY}{extract}="yes";
+ $db_micro = $dbh->Query("SELECT ID,format FROM markiza_sk.a500 WHERE IDcategory='$form{category}' ORDER BY ID DESC LIMIT $page_from,$page_limit");
+ while (@db_micro_line=$db_micro->FetchRow())
+ {
+  $nullid=sprintf ('%07d', $db_micro_line[0]);
+  $mdl_temp.=$mdl_line;
+  $mdl_temp=~s|<%NULLID%>|$nullid|g;
+  $mdl_temp=~s|<%ABOUT2%>|$db_micro_line[5]|g;
+ }
+ 
+ return	$mdl_temp}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

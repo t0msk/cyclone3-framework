@@ -1,0 +1,201 @@
+#!/bin/perl
+# ÁÉÍÓÚ - USE UTF-8 !!!
+package CRON::module;
+use strict;
+use Utils::datetime;
+
+
+sub execute
+{
+ #return 1;
+ my %env=@_;
+ if ($cron::P ne $CRON::P){$cron::ERR="WARN: this cron is only for global use!!!";return undef}
+ #$env{limit}= unless $env{limit};
+ $env{limit_per}=10 unless $env{limit_per};
+ 
+ #require "$CRON::P/.core/_config.sg/TOM.conf";
+ #require "$CRON::P/.core/_config/TOM.conf";
+
+ Database::connect::multi('stats','sys') || die "cannot connect all databases";
+ 
+#=head1
+
+ my $db0=$main::DB{sys}->Query("
+	SELECT COUNT(*)
+	FROM TOM.a150_cache");
+ my @db1_line=$db0->fetchrow();
+ main::_log("caches celkom $db1_line[0]"); 
+
+
+ my $db0=$main::DB{sys}->Query("
+	SELECT COUNT(*),AVG(time_duration)
+	FROM TOM.a150_cache
+	WHERE	time_to<$main::time_current
+				AND loads=0");
+ my @db0_line=$db0->fetchrow();$db1_line[0]=100 unless $db1_line[0];#kvoli deleniu nulou
+ 
+ 
+ #my $per=int(($db0_line[0]/($db1_line[0]/100))*100)/100;
+ 
+ my $per=int(($db0_line[0]/(($db1_line[0]-$db0_line[0])/100))*100)/100;
+ 
+ 
+ main::_log("cache po platnosti celkom $db0_line[0](".($per)."% z aktualnych ".($db1_line[0]-$db0_line[0]).") duration AVG($db0_line[1])"); 
+ 
+ main::_log("limit is $env{limit_per}%"); 
+ if ($per>$env{limit_per})
+ {
+ 	
+ 	#my $del=int(($per-$env{limit_per})*($db1_line[0]/100));
+ 	my $del=int(($per-$env{limit_per})*(($db1_line[0]-$db0_line[0])/100));
+ 	
+ 	main::_log("deleting ".($per-$env{limit_per})."% $del");
+	
+#=head1
+	$main::DB{sys}->Query("
+ 	DELETE FROM TOM.a150_cache 
+	WHERE	time_to<$main::time_current
+				AND loads=0
+	LIMIT $del");
+#=cut
+	
+# 	if ($db0_line[0]>10000)
+ #	{
+# 		$main::DB{sys}->Query("OPTIMIZE TABLE TOM.a150_cache");
+# 	}
+	
+ }
+ 
+	main::_log("odstranenie skutocne nepotrebnych caches a detekcia nevyuzitych cache");
+	my $db0=$main::DB{sys}->Query("
+		SELECT
+			domain,
+			domain_sub,
+			engine,
+			Capp,
+			Cmodule,
+			Cid,
+			Cid_md5,
+			COUNT(*) AS cnt,
+			AVG(loads) AS loads,
+			MAX(ID) AS ID
+		FROM `a150_cache`
+		GROUP BY domain, domain_sub, engine, Capp, Cmodule, Cid, Cid_md5
+		HAVING cnt>2
+		ORDER BY cnt DESC
+	");
+	 while (my %db0_line=$db0->fetchhash())
+	{
+		main::_log("domain:$db0_line{domain} domain_sub:$db0_line{domain_sub} engine:$db0_line{engine} Capp:$db0_line{Capp} Cmodule:$db0_line{Cmodule} Cid:$db0_line{Cid} Cid_md5:$db0_line{Cid_md5} CNT:$db0_line{cnt} LOADS:$db0_line{loads} ID:$db0_line{ID}");
+		$main::DB{sys}->Query("
+			DELETE FROM TOM.a150_cache
+			WHERE
+				domain='$db0_line{domain}' AND
+				domain_sub='$db0_line{domain_sub}' AND
+				engine='$db0_line{engine}' AND
+				Cid_md5='$db0_line{Cid_md5}' AND
+				ID<>$db0_line{ID}
+		");
+	}
+ 
+=head1
+ return 1;
+
+ $env{limit}=int($db0_line[0]/10);
+ 
+ if ($db0_line[0]<20000)
+ {
+ 	$env{limit}=10;
+ }
+  
+ CRON::debug::log(6,"set limit to $env{limit}"); 
+  
+ $main::DB{sys}->Query("
+ 	DELETE FROM TOM.a150_cache 
+	WHERE	time_to<$main::time_current 
+				AND loads=0
+	LIMIT 		$env{limit}");
+	
+ if ($db0_line[0]>100000)
+ {
+ 	$main::DB{sys}->Query("OPTIMIZE TABLE TOM.a150_cache");
+ }
+=cut
+
+=head1 
+ my $db0=$main::DB{sys}->Query("
+	SELECT COUNT(*)
+	FROM TOM.a150_cache
+	WHERE	time_to<$main::time_current
+			AND loads>0");
+ my $count=$db0->NumRows();
+ CRON::debug::log(5,"starych cache na spracovanie a zmazanie celkom $count"); 
+=cut
+ 
+=head1
+
+# my $count=$db0->NumRows();
+ while (my %db0_line=$db0->fetchhash())
+ {
+  CRON::debug::log(5,"[$db0_line{ID}] $db0_line{domain}/$db0_line{domain_sub} $db0_line{Capp}-$db0_line{Cmodule}-$db0_line{Cid}");
+  $db0_line{time_duration0}=$db0_line{time_to}-$db0_line{time_from};
+  CRON::debug::log(6,"error in duration $db0_line{time_duration},$db0_line{time_duration0}")
+  	if $db0_line{time_duration0} != $db0_line{time_duration};
+
+  my $db1=$main::DB{stats}->Query("
+	SELECT * FROM TOM.a150_debug
+	WHERE	domain='$db0_line{domain}'
+			AND domain_sub='$db0_line{domain_sub}'
+			AND engine='$db0_line{engine}'
+			AND Capp='$db0_line{Capp}'
+			AND Cmodule='$db0_line{Cmodule}'
+			AND Cid='$db0_line{Cid}'
+	LIMIT 1");
+  if (my %db1_line=$db1->fetchhash())
+  {
+   CRON::debug::log(6,"found debug");
+   my $var="
+	UPDATE TOM.a150_debug
+	SET	time_duration=time_duration+$db0_line{time_duration},
+		loads=loads+$db0_line{loads},
+		fragments=fragments+1
+	WHERE	ID=$db1_line{ID}
+	LIMIT 1";
+#   CRON::debug::log(8,$var);
+   $main::DB{stats}->Query($var);
+  }
+  else
+  {
+   CRON::debug::log(6,"not found debug");
+   $main::DB{stats}->Query("
+	INSERT INTO TOM.a150_debug
+	(	domain,
+		domain_sub,
+		engine,
+		Capp,
+		Cmodule,
+		Cid,
+		fragments,
+		time_from,
+		time_duration,
+		loads)
+	VALUES
+	(	'$db0_line{domain}',
+		'$db0_line{domain_sub}',
+		'$db0_line{engine}',
+		'$db0_line{Capp}',
+		'$db0_line{Cmodule}',
+		'$db0_line{Cid}',
+		'1',
+		'$main::time_current',
+		'$db0_line{time_duration}',
+		'$db0_line{loads}')") || die "error in insert";
+  }
+  $main::DB{sys}->Query("DELETE FROM TOM.a150_cache WHERE ID='$db0_line{ID}' LIMIT 1");
+
+ }
+=cut
+
+ return 1}
+
+1;

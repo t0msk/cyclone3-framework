@@ -1,0 +1,403 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use Encode;
+use encoding 'utf8';
+use utf8;
+use strict;
+use Digest::MD5  qw(md5 md5_hex md5_base64);
+=head1 NAME
+login
+
+=head1 HEAD_VERSION_BUILD
+1.030722
+
+=head1 DESCRIPTION
+login, user menu a user-setup menu
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+
+<value id="preview" value="1" />
+<value id="output" value="xsgn" />
+
+</DESCRIPTION>
+
+
+=head1 CHANGES
+build 030722 - Deboot
+*) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+
+=cut
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+ Tomahawk::XLNGtoXSGN(); # insert XLNG do XSGN
+
+
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $TOM::DB_name_USRM.a300_profile_def");
+  while (my %db0_line=$db0->fetchhash)
+  {
+   Tomahawk::debug::log(9,"+$db0_line{variable}");
+   if ($db0_line{type_input}=~/^datetime\((.*?)\)/)
+   {
+    my $var=$1;
+    my $null;
+    $XSGN{NULL}="<select name=\"P_$db0_line{variable}_mday\"><option value=\"\">---</option>";
+    $null=31;for (1..$null){$XSGN{NULL}.="<option value=\"$_\">".sprintf("%02d",$_)."</option>"}
+    $XSGN{NULL}.="</select>";
+    $XSGN{NULL}.="<select name=\"P_$db0_line{variable}_mom\"><option value=\"\">---</option>";
+    $null=12;for (1..$null){$XSGN{NULL}.="<option value=\"$_\">".$Utils::datetime::MONTHS_L{$env{lng}}[$_-1]."</option>"}
+    $XSGN{NULL}.="</select>";
+    $XSGN{NULL}.="<select name=\"P_$db0_line{variable}_year\"><option value=\"\">---</option>";
+    $null=2000;if ($var eq "current"){$null=$tom::Fyear-5}
+    for (1940..$null){$XSGN{NULL}.="<option value=\"$_\">$_</option>"}
+    $XSGN{NULL}.="</select>";
+    $XSGN{FORM}=~s|<#P_$db0_line{variable}#>|$XSGN{NULL}|;
+    next;
+   }
+   if ($db0_line{type_input}=~/^select\((.*?)\)/)
+   {
+    Tomahawk::debug::log(9,"++select");
+    my $var=$1;
+    my $null;
+    if ($var eq "this")
+    {
+     $XSGN{NULL}="<select name=\"P_$db0_line{variable}\"><option value=\"\">---</option>\n";
+     foreach(split('\n',$db0_line{values}))
+     {
+      my @ref=split(':',$_);
+      $ref[0]=$ref[1] unless $ref[0];
+      $XSGN{NULL}.="<option value=\"$ref[0]\">".$ref[1]."</option>"
+     }
+     $XSGN{NULL}.="</select>";
+    }
+    $XSGN{FORM}=~s|<#P_$db0_line{variable}#>|$XSGN{NULL}|;
+    next;
+   }
+   if ($db0_line{type_input}=~/^varchar\((.*?)\)/)
+   {
+    Tomahawk::debug::log(9,"++varchar");
+    my $var=$1;
+    $XSGN{NULL}="<input name=\"P_$db0_line{variable}\" maxlength=\"$var\" value=\"\">\n";
+    $XSGN{FORM}=~s|<#P_$db0_line{variable}#>|$XSGN{NULL}|;
+    next;
+   }
+   #if ($db0_line{type_view}=~//)
+   #$XSGN{TMP}=~s|<#P_$db0_line{variable}#>|$XSGN{'P_'.$db0_line{variable}}|;
+  }
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+
+
+
+ if (!$main::FORM{submit})
+ {
+  $XSGN{TMP}=$XSGN{REGISTER};
+  $XSGN{TMP}=~s|<#FORM#>|$XSGN{FORM}|;
+  return 1;
+ }
+
+ if ((!$env{login})||(!$env{pass})||(!$env{pass2}))
+ {$XSGN{TMP}=$XSGN{err_missed};$XSGN{TMP}=~s|<#FORM#>|$XSGN{FORM}|;return 1}
+
+ if ($env{pass} ne $env{pass2})
+ {$XSGN{TMP}=$XSGN{err_badpass};$XSGN{TMP}=~s|<#FORM#>|$XSGN{FORM}|;return 1}
+
+ if ($env{login}=~/[^a-zA-Z0-9_]/){$XSGN{TMP}=$XSGN{err_badlogin};$XSGN{TMP}=~s|<#FORM#>|$XSGN{FORM}|;return 1;}
+
+ if ($env{pass}=~/[^a-zA-Z0-9_]/){$XSGN{TMP}=$XSGN{err_badlogin};$XSGN{TMP}=~s|<#FORM#>|$XSGN{FORM}|;return 1;}
+
+ if ((length($env{pass})<4)||(length($env{pass})>20))
+ {$XSGN{TMP}=$XSGN{err_longlogin};$XSGN{TMP}=~s|<#FORM#>|$XSGN{FORM}|;return 1;}
+ if ((length($env{login})<4)||(length($env{login})>20))
+ {$XSGN{TMP}=$XSGN{err_longlogin};$XSGN{TMP}=~s|<#FORM#>|$XSGN{FORM}|;return 1;}
+
+ if ($env{pass} eq $env{login}){$XSGN{TMP}=$XSGN{err_omeingott};$XSGN{TMP}=~s|<#FORM#>|$XSGN{FORM}|;return 1;}
+
+ $env{return}=$tom::H_www."?\|?TID=0&_dsgn=default" unless $env{return};
+
+ Tomahawk::debug::log(8,"vstup $env{login} $env{pass}");
+
+ $env{pass_md5}=md5_hex(Encode::encode_utf8($env{pass}));
+
+ my $db0=$main::DBH->Query("
+	(SELECT *
+	FROM $TOM::DB_name_USRM.a300_users
+	WHERE 	login='$env{login}'
+	LIMIT 1)
+	UNION ALL
+	(SELECT *
+	FROM $TOM::DB_name_USRM.a300_users_arch
+	WHERE 	login='$env{login}'
+	LIMIT 1)
+	LIMIT 1");
+ if (my %user=$db0->fetchhash)
+ {
+  # nemozem sa registrovat, tento clovek uz existuje!
+  Tomahawk::debug::log(8,"tento user uz existuje");
+  $XSGN{TMP}=$XSGN{err_used};$XSGN{TMP}=~s|<#FORM#>|$XSGN{FORM}|;
+ }
+ else
+ {
+  Tomahawk::debug::log(8,"super, ide sa registrovat");
+  $XSGN{TMP}=$XSGN{registered};#$XSGN{TMP}=~s|<#FORM#>|$XSGN{FORM}|;
+
+  foreach(keys %main::FORM){Tomahawk::debug::log(9,"form - $_ $main::FORM{$_}");}
+
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  my $profile;
+  my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $TOM::DB_name_USRM.a300_profile_def
+	ORDER BY necessary DESC");
+  while (my %db0_line=$db0->fetchhash)
+  {
+   my $null;
+   Tomahawk::debug::log(9,"+$db0_line{variable}");
+   if ($db0_line{type_input}=~/^datetime\((.*?)\)/)
+   {
+    Tomahawk::debug::log(9,"+datetime");
+    if (($main::FORM{'P_'.$db0_line{variable}.'_mday'})
+    	&&($main::FORM{'P_'.$db0_line{variable}.'_mom'})
+	&&($main::FORM{'P_'.$db0_line{variable}.'_year'}))
+    {
+     Tomahawk::debug::log(9,"++convert");
+     if ($db0_line{type_save}=~/timestamp/)
+     {
+      my @ref=($main::FORM{'P_'.$db0_line{variable}.'_mday'},
+     	$main::FORM{'P_'.$db0_line{variable}.'_mom'}-1,
+	$main::FORM{'P_'.$db0_line{variable}.'_year'}-1900);
+      my $starttime;
+      eval {$starttime=Time::Local::timelocal(0,0,12,$ref[0],$ref[1],$ref[2],undef,undef,undef)};
+      if ($starttime)
+      {
+       $profile.="<VAR id=\"".$db0_line{variable}."\">".$starttime."</VAR>\n";
+       $null=1;
+      #next;
+      }
+     }
+     else
+     {
+      my $var=$main::FORM{'P_'.$db0_line{variable}.'_year'}."-".
+      	$main::FORM{'P_'.$db0_line{variable}.'_mom'}."-".
+	$main::FORM{'P_'.$db0_line{variable}.'_mday'};
+      $profile.="<VAR id=\"".$db0_line{variable}."\">".$var."</VAR>\n";
+      $null=1;
+     }
+    }
+   }
+   if ($db0_line{type_input}=~/^select\((.*?)\)/)
+   {
+    Tomahawk::debug::log(9,"+selection");
+    if ($main::FORM{'P_'.$db0_line{variable}})
+    {
+     Tomahawk::debug::log(9,"++convert");
+     $profile.="<VAR id=\"".$db0_line{variable}."\">".$main::FORM{'P_'.$db0_line{variable}}."</VAR>\n";
+     $null=1;
+     #next;
+    }
+   }
+   if ($db0_line{type_input}=~/^varchar\((.*?)\)/)
+   {
+    Tomahawk::debug::log(9,"+varchar");
+    if ($main::FORM{'P_'.$db0_line{variable}})
+    {
+     Tomahawk::debug::log(9,"++convert");
+     $profile.="<VAR id=\"".$db0_line{variable}."\">".$main::FORM{'P_'.$db0_line{variable}}."</VAR>\n";
+     $null=1;
+     #next;
+    }
+   }
+
+   if ($null)
+   {
+    foreach my $var(split(';',$db0_line{type_check}))
+    {
+     Tomahawk::debug::log(9,"+check $var");
+     if ($var=~/^length\((.*?)\)/)
+     {
+      Tomahawk::debug::log(9,"++length");
+      my @ref=split('-',$1);
+      if ((length($main::FORM{'P_'.$db0_line{variable}})>=$ref[0])&&(length($main::FORM{'P_'.$db0_line{variable}})<=$ref[1]))
+      {Tomahawk::debug::log(9,"+++ok length");}
+      else
+      {
+       Tomahawk::debug::log(9,"+++bad length",1);
+       $null=2;
+       last;
+      }
+      next;
+     }
+
+     if ($var=~/^regexp\((.*?)\)/)
+     {
+      Tomahawk::debug::log(9,"++regexp $1");
+      my $var0=$1;
+      if ($main::FORM{'P_'.$db0_line{variable}}=~/$var0/)
+      {
+       Tomahawk::debug::log(9,"+++bad regexp",1);
+       $null=2;
+       last;
+      }
+      else
+      {
+       Tomahawk::debug::log(9,"+++ok regexp");
+      }
+      next;
+     }
+
+    }
+   }
+
+   Tomahawk::debug::log(9,"control $db0_line{variable} $null",1);
+
+   if ((($db0_line{necessary} eq "Y")&&(!$null))||($null==2))
+   {
+    Tomahawk::debug::log(9,"missed $db0_line{variable} $null",1);
+    $XSGN{TMP}=$XSGN{err_missedprofile};$XSGN{TMP}=~s|<#FORM#>|$XSGN{FORM}|;
+    if ($XLNG{'P_'.$db0_line{variable}})
+    {$XSGN{TMP}=~s|<%missedprofile%>|$XLNG{'P_'.$db0_line{variable}}|}
+    else{$XSGN{TMP}=~s|<%missedprofile%>|Chybaju data neznameho typu|;}
+    return 1;
+   }
+   #$XSGN{TMP}=~s|<#P_$db0_line{variable}#>|$XSGN{'P_'.$db0_line{variable}}|;
+  }
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+  #######################################################################################################
+
+
+  #$profile=~s|<|&lt;|g;
+  #$profile=~s|>|&gt;|g;
+  #$XSGN{TMP}.="xml-".$profile;
+  #return 1;
+
+  #$XSGN{TMP}=~s|<%PLUS%>|$env{pass_md5}|;
+
+
+   # NEMAL BY SOM OVERIT AKO KTO SOM TERAZ ONLINE A VYHODIT SA?
+
+   my $var;
+   while (1)
+   {
+    $var=Utils::vars::genhash(8);
+    my $db0=$main::DBH->Query("
+	(SELECT IDhash FROM $TOM::DB_name_USRM.a300_users WHERE IDhash='$var' LIMIT 1)
+	UNION ALL
+	(SELECT IDhash FROM $TOM::DB_name_USRM.a300_users_arch WHERE IDhash='$var' LIMIT 1)
+	");
+    if (my @db0_line=$db0->FetchRow()){next}
+    last;
+   }
+   foreach (keys %main::COOKIES){$main::COOKIES{$_}=""}; # staci vyprazdnit, tomahawk sa uz o DELETE postara sam
+   $main::COOKIES{_IDhash}=$var;
+   # OK, VYTVORIL SOM NOVY HASH, ZAPISUJEM
+   # TOTO JE TEDA AUTOREGISTRACIA NOVEHO USERA
+   Tomahawk::debug::log(8,"generujem IDhash=".$var." a zapisujem do users");
+   $main::DBH->Query("INSERT INTO
+	$TOM::DB_name_USRM.a300_users
+	(IDhash,host,login,profile,pass,pass_md5,regtime,logtime,reqtime,lng,IPlast,active)
+	VALUES('$var',
+	'$tom::H_cookie',
+	'$env{login}',
+	'$profile',
+	'$env{pass}',
+	'$env{pass_md5}',
+	'$tom::time_current',
+	'$tom::time_current',
+	'$tom::time_current',
+	'$env{lng}',
+	'$ENV{REMOTE_ADDR}',
+	'Y')");
+   Tomahawk::debug::log(8,"insert do attrs");
+   $main::DBH->Query("INSERT INTO $TOM::DB_name_USRM.a300_users_attrs (IDhash) VALUES('$var')");
+   Tomahawk::debug::log(8,"insert do online");
+   $main::COOKIES{_IDsession}=Utils::vars::genhash(32); # vygenerujem hash session
+   $main::DBH->Query("INSERT INTO
+	$TOM::DB_name_USRM.a300_online
+	(	IDhash,
+		IDsession,
+		login,
+		logged,
+		host,
+		host_sub,
+		logtime,
+		reqtime,
+		rqs,
+		IP,
+		xdata,
+		active)
+	VALUES(
+		'$main::COOKIES{_IDhash}',
+		'$main::COOKIES{_IDsession}',
+		'$env{login}',
+		'Y',
+		'$tom::H_cookie',
+		'$tom::H',
+		'$tom::time_current',
+		'$tom::time_current',
+		'1',
+		'$main::ENV{REMOTE_ADDR}',
+		'$main::USRM{xdata}',
+		'Y'
+		)");
+   # PRIDAT EXPORT DO $main::USRM
+   # je to tu vobec potreba?
+   # v tomto pripade urcite nebude user logged, budem potom
+   # teda priamo v tomto requeste potrebovat data $main::USRM???
+     ##############################################################
+     $main::USRM{IDhash}=$main::COOKIES{_IDhash}; # IDhash usera
+     $main::USRM{IDsession}=$main::COOKIES{_IDsession}; # Idhash pre session usera
+     # PRIDAT SEM LOGGED? a LOGIN?
+     ##############################################################
+  $main::H->{header}=~s|<!REFRESH!>|0; url=$env{return}|;
+  $XSGN{TMP}=~s|<%LINK%>|$env{return}|g;
+
+
+
+
+ }
+
+ return 1}
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+

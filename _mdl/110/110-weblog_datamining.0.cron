@@ -1,0 +1,192 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use Time::Local;
+use TOM::Net::HTTP::UserAgent;
+#use TOM;
+#use TOM::Debug::logs;
+use TOM::lock;
+use strict;
+
+
+sub execute
+{
+	alarm(3600);
+ #return 1;
+#	alarm(30)
+#	return 1;
+	my %env=@_;
+	#return 1;
+	
+	Database::connect::multi('stats') || die "cannot connect all databases";
+	
+	my $lock=new TOM::lock("weblog datamining") || return 1;
+	
+	my $mintime=Time::Local::timelocal(0, $cron::Tmin, $cron::Thour, $cron::Tmday, $cron::Tmom-1, $cron::Tyear-1900, undef, undef, undef);
+	
+	if (opendir (DIR,$CRON::P."/_logs/weblog"))
+	{
+		
+		foreach my $file(readdir DIR)
+		{
+			
+			next unless $file=~/weblog\.(\d*?)-(\d*?)-(\d*?)\.(\d*?)\.(\d*?)\.(.*?).log/;
+			
+			CRON::debug::log(5,"find file $file");
+			
+			my $day=$3;
+			$day="01" unless $day;
+			
+			my $starttime=Time::Local::timelocal(0,$5,$4,$day,($2-1),($1-1900),undef,undef,undef);
+			
+			if ($starttime<$mintime)
+			{
+				#CRON::debug::log(6,"accessing file");
+				main::_log("accessing file");
+				open (HND_IN,"<".$CRON::P."/_logs/weblog/".$file) || next;
+				my $file_data;
+				while (my $line=<HND_IN>)
+				{
+					$file_data.=$line;
+					if ($file_data=~s/<request>(.*?)<\/request>//s)
+					{
+						my $data=$1;
+						my %hash;
+						while ($data=~s|<(.*?)>(.*?)</\1>||){$hash{$1}=$2;$hash{$1}=~s|'|\\'|g;}
+						
+						main::_log("request '$hash{page_code}'");
+						
+						if (not $main::DB{stats}->Query("
+						INSERT INTO TOM.a110_weblog_rqs
+						(
+							page_code,
+							page_code_referer,
+							HTTP_unique_id,
+							reqtime,
+							reqdatetime,
+							host,
+							domain,
+							domain_sub,
+							IP,
+							IDhash,
+							IDsession,
+							logged,
+							USRM_flag,
+							query_string,
+							query_TID,
+							query_URL,
+							referer,
+							user_agent,
+							load_proc,
+							load_req,
+							result,
+							lng
+						)
+						VALUES
+						(
+							'$hash{page_code}',
+							'$hash{page_code_referer}',
+							'$hash{unique_id}',
+							'$hash{reqtime}',
+							'$hash{reqdatetime}',
+							'$hash{host}',
+							'$hash{domain}',
+							'$hash{domain_sub}',
+							'$hash{IP}',
+							'$hash{IDhash}',
+							'$hash{IDsession}',
+							'$hash{logged}',
+							'$hash{USRM_flag}',
+							'$hash{query_string}',
+							'$hash{query_TID}',
+							'$hash{query_URL}',
+							'$hash{referer}',
+							'$hash{user_agent}',
+							'$hash{load_proc}',
+							'$hash{load_req}',
+							'$hash{result}',
+							'$hash{lng}'
+						)"))
+						{
+							die "can't insert\n";
+						}
+						
+						
+						if ($hash{'sitemap'})
+						{
+							main::_log("this is sitemap request");
+							my $URL=$hash{'query_URL'};
+							
+							$URL=~s|\?.*$||;
+							
+							my $ID;
+							
+							my $db0=$main::DB{'stats'}->Query("
+								SELECT
+									ID
+								FROM
+									TOM.a110_sitemap
+								WHERE
+									domain='$hash{domain}' AND
+									domain_sub='$hash{domain_sub}' AND
+									url='$URL'
+								LIMIT 1
+							");
+							if (my %db0_line=$db0->fetchhash())
+							{
+								$ID=$db0_line{'ID'};
+								main::_log("found under ID='$ID'");
+							}
+							else
+							{
+								my $dbh=$main::DB{'stats'}->Query("
+									INSERT INTO TOM.a110_sitemap
+									(
+										domain,
+										domain_sub,
+										url,
+										time_create
+									)
+									VALUES
+									(
+										'$hash{domain}',
+										'$hash{domain_sub}',
+										'$URL',
+										'$main::time_current'
+									)
+								");
+								$ID = $dbh->{'mysql_insertid'};
+								main::_log("inserted under ID='$ID'");
+							}
+							
+							my $dbh=$main::DB{'stats'}->Query("
+								UPDATE TOM.a110_sitemap
+								SET
+									time_use='$main::time_current',
+									lastmod='$hash{lastmod}',
+									changefreq='$hash{changefreq}',
+									weight='$hash{weight}',
+									requests=requests+1
+								WHERE
+									ID='$ID'
+								LIMIT 1
+							");
+							
+						}
+						
+						
+					}
+					
+				}
+				unlink $CRON::P."/_logs/weblog/".$file;
+			}
+		}
+	}
+	
+	
+	$lock->close();
+	
+	return 1
+}
+
+1;

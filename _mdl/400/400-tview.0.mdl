@@ -1,0 +1,113 @@
+#!/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+ #Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+
+ return 1 unless $env{ID};
+
+ $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+ $env{db_400}=$TOM::DB_name unless $env{db_400};
+
+ #Tomahawk::debug::log(4,$var);
+ my %db0_line;
+ my $db0=$main::DBH->Query("
+	SELECT ID,title,subtitle,tiny,xrelated,link,starttime,full
+	FROM $env{db_400}.a400
+	WHERE	ID='$env{ID}' AND
+		starttime<$tom::time_current
+		AND (endtime>$tom::time_current OR endtime=0)
+		AND active='Y'
+		AND (lng='$env{lng}' OR lng='')
+	LIMIT 1");
+
+ if (not %db0_line=$db0->FetchHash())
+ {
+  #Tomahawk::debug::log(4,"dalsi");
+  my $db0=$main::DBH->Query("
+	SELECT ID,title,subtitle,tiny,xrelated,link,starttime,full
+	FROM $env{db_400}.a400_arch
+	WHERE	ID='$env{ID}' AND
+		starttime<$tom::time_current
+		AND (endtime>$tom::time_current OR endtime=0)
+		AND active='Y'
+		AND (lng='$env{lng}' OR lng='')
+	LIMIT 1");
+  if (not %db0_line=$db0->FetchHash())
+  {
+   # tuto vyskocim z modulu
+  }
+ }
+
+ if (%db0_line)
+ {
+  my $var=$db0_line{ID};
+  if ($db0_line{link})
+  {
+   my $db0=$main::DBH->Query("
+	(SELECT ID,title,subtitle,tiny,xrelated,link,full
+	FROM $env{db_400}.a400
+	WHERE	ID='$var'
+		AND starttime<$tom::time_current
+		AND ((endtime>$tom::time_current) OR (endtime='0'))
+		AND active='Y'
+		AND (lng='$env{lng}' OR lng='')
+	LIMIT 1)
+	UNION ALL
+	(SELECT ID,title,subtitle,tiny,xrelated,link,full
+	FROM $env{db_400}.a400
+	WHERE	ID='$var'
+		AND starttime<$tom::time_current
+		AND ((endtime>$tom::time_current) OR (endtime='0'))
+		AND active='Y'
+		AND (lng='$env{lng}' OR lng='')
+	LIMIT 1)
+	LIMIT 1");
+   if (%db0_line=$db0->fetchhash()){Tomahawk::debug::log(9,"link $var=$db0_line{ID}");}
+   else {$tom::ERR="k clanku $var som nenasiel fcnu linku :(";return undef;}
+  }
+
+  $XSGN{TMP}=~s|<%ID%>|$db0_line{ID}|g;
+
+  $XSGN{TMP}=~s|<%TITLE%>|$db0_line{title}|g;
+
+  $XSGN{TMP}=~s|<%TINY%>|$db0_line{tiny}|g;
+
+  $XSGN{TMP}=~s|<%SUBTITLE%>|$db0_line{subtitle}|g;
+
+  $db0_line{full}=~s|[\n]|<BR>|g;
+  $XSGN{TMP}=~s|<%FULL%>|$db0_line{full}|g;
+
+  # DATE & TIME
+  if ($env{show_datetime})
+  {
+   my %env0=Utils::datetime::ctodatetime($db0_line{starttime},format=>1);
+   if ($env{show_datetime} eq "1")
+   {$XSGN{TMP}=~s|<%DATETIME%>|$env0{mday}.$env0{mom}.$env0{year} $env0{hour}:$env0{min}|g;}
+   else
+   {
+    $XSGN{TMP}=~s|<%DAY%>|$env0{mday}|g;
+    $XSGN{TMP}=~s|<%MONTH%>|$env0{mom}|g;
+    $XSGN{TMP}=~s|<%YEAR%>|$env0{year}|g;
+    $XSGN{TMP}=~s|<%HOUR%>|$env0{hour}|g;
+    $XSGN{TMP}=~s|<%MINUTE%>|$env0{min}|g;
+   }
+  }
+
+
+
+ }
+
+
+ return 1}
+
+1;

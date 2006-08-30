@@ -1,0 +1,316 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use Encode;
+use encoding 'utf8';
+use utf8;
+use strict;
+use Digest::MD5  qw(md5 md5_hex md5_base64);
+
+use App::300;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+	Tomahawk::XLNGtoXSGN(); # insert XLNG do XSGN
+	
+	#main::_log("IDhash:$main::COOKIES{_IDhash} IDsession:$main::COOKIES{_IDsession} IP:$main::ENV{REMOTE_ADDR} AGENT: $ENV{HTTP_USER_AGENT}");
+	
+	if ((!$env{login})||(!$env{pass}))
+	{$XSGN{TMP}=$XSGN{err_missed};
+	return 1}
+	
+	#$env{return}=$tom::H_www."?\|?TID=0&_dsgn=default" unless $env{return};
+	$env{return}=$tom::H_www."?|?TID=l_default" unless $env{return};
+	
+	
+	main::_log("IDhash:$main::COOKIES{_IDhash} IDsession:$main::COOKIES{_IDsession} IP:$main::ENV{REMOTE_ADDR} AGENT: $ENV{HTTP_USER_AGENT}");
+	main::_log("vstup $env{login} $env{pass}");
+	#Tomahawk::debug::mdllog(9,"VSTUPY:");
+	# foreach (sort keys %main::COOKIES){Tomahawk::debug::mdllog(9,"C:$_=".$main::COOKIES{$_});}
+	# foreach (sort keys %main::USRM){if ($_ ne "xdata"){Tomahawk::debug::mdllog(9,"U:$_=".$main::USRM{$_})}}
+	
+	$env{pass_md5}=md5_hex(Encode::encode_utf8($env{pass}));
+	main::_log("md5='$env{pass_md5}'");
+	
+	
+	main::_log("SQL:
+		SELECT *
+		FROM TOM.a300_users
+		LEFT JOIN TOM.a300_users_attrs
+			ON (a300_users_attrs.IDhash=a300_users.IDhash)
+		WHERE 
+			a300_users.login='$env{login}'
+			AND a300_users.pass_md5='$env{pass_md5}'
+			AND a300_users.host='$tom::H_cookie'
+		LIMIT 1");
+	
+	my $var;
+	my $db0=$main::DBH->Query("
+		SELECT *
+		FROM TOM.a300_users
+		LEFT JOIN TOM.a300_users_attrs
+			ON (a300_users_attrs.IDhash=a300_users.IDhash)
+		WHERE 
+			a300_users.login='$env{login}'
+			AND a300_users.pass_md5='$env{pass_md5}'
+			AND a300_users.host='$tom::H_cookie'
+		LIMIT 1");
+	if (%main::USRM=$db0->fetchhash)
+	{
+		main::_log("nieje zaznam v a300_users_attrs");
+		# FIXME: [Aben] Pokial nieje zaznam v a300_users_attrs, nedostanem ziadny IDhash
+		$var=1;
+	}
+	else
+	{
+		my $db0=$main::DBH->Query("
+			SELECT *
+			FROM $TOM::DB_name_USRM.a300_users_arch
+			LEFT JOIN $TOM::DB_name_USRM.a300_users_attrs_arch
+				ON (a300_users_attrs_arch.IDhash=a300_users_arch.IDhash)
+			WHERE 	a300_users_arch.login='$env{login}'
+				AND a300_users_arch.pass_md5='$env{pass_md5}'
+				AND a300_users_arch.host='$tom::H_cookie'
+			LIMIT 1");
+		if (%main::USRM=$db0->fetchhash)
+		{
+			
+			main::_log("nasiel som v users_arch");
+			$var=1;
+			# PRESUN Z ARCH
+		
+			if ($main::DBH->Query("
+				INSERT INTO $TOM::DB_name_USRM.a300_users
+				SELECT * FROM $TOM::DB_name_USRM.a300_users_arch
+				WHERE IDhash='$main::USRM{IDhash}' LIMIT 1
+				"))
+			{
+				$main::DBH->Query("
+					UPDATE $TOM::DB_name_USRM.a300_users
+					SET reqtime='$tom::time_current'
+					WHERE IDhash='$main::USRM{IDhash}' LIMIT 1
+				");
+				main::_log("preneseny z users_arch do users, deleting");
+				$main::DBH->Query("
+					DELETE FROM $TOM::DB_name_USRM.a300_users_arch
+					WHERE IDhash='$main::USRM{IDhash}' LIMIT 1;
+				");
+				if ($main::DBH->Query("
+						INSERT INTO $TOM::DB_name_USRM.a300_users_attrs
+						SELECT * FROM $TOM::DB_name_USRM.a300_users_attrs_arch
+						WHERE IDhash='$main::USRM{IDhash}' LIMIT 1"))
+				{
+					main::_log("preneseny z users_attrs_arch do users_attrs, deleting");
+					$main::DBH->Query("
+						DELETE FROM $TOM::DB_name_USRM.a300_users_attrs_arch
+						WHERE IDhash='$main::USRM{IDhash}' LIMIT 1;
+					");
+				}
+			}
+		}
+	}
+	
+	if ($var)
+	{
+		main::_log("meno a heslo sedi");
+		my $db0=$main::DBH->Query("
+			SELECT *
+			FROM TOM.a300_online
+			WHERE	IDhash='$main::USRM{IDhash}'
+			LIMIT 1");
+		if (my %user=$db0->fetchhash)
+		{
+			main::_log("som v online");
+			if ($user{logged} eq "Y") # VED SOM UZ LOGNUTY :-O
+			{
+				main::_log("ved som uz lognuty (IDhash: $main::USRM{IDhash})",0,2);
+				$main::USRM{logged}="Y";
+				# staci vyprazdnit, tomahawk sa uz o DELETE postara sam
+				foreach (keys %main::COOKIES){next if $_ eq "key";$main::COOKIES{$_}=""}; 
+				$main::USRM{IDsession}=$main::COOKIES{_IDsession}=Utils::vars::genhash(32); # vygenerujem hash session
+				$main::COOKIES{_IDhash}=$main::USRM{IDhash};
+				$main::USRM{cookies}="";foreach (sort keys %main::COOKIES)
+				{if ($_=~/^_/){$main::USRM{cookies}.="<VAR id=\"".$_."\">".$main::COOKIES{$_}."</VAR>\n";next}}
+				$main::USRM{xdata}="";
+				foreach (sort keys %main::ENV){$main::USRM{xdata}.="<VAR id=\"".$_."\">".$main::ENV{$_}."</VAR>\n";}
+				
+				main::_log("overenie sedi, logujem sa znova :)",0,2);
+				
+				$main::DBH->Query("
+				UPDATE	$TOM::DB_name_USRM.a300_online
+				SET
+					IDsession='$main::USRM{IDsession}',
+					login='$main::USRM{login}',
+					logged='Y',
+					host_sub='$tom::H',
+					reqtime='$tom::time_current',
+					IP='$main::ENV{REMOTE_ADDR}',
+					cookies='$main::USRM{cookies}',
+					xdata='$main::USRM{xdata}',
+					HTTP_USER_AGENT='$main::ENV{HTTP_USER_AGENT}',
+					active='Y'
+				WHERE	IDhash='$main::USRM{IDhash}' AND host='$tom::H_cookie' LIMIT 1");
+				
+				$XSGN{TMP}=$XSGN{logged};
+				$main::USRM_flag="L";
+				#$main::H->{header}=~s|<!REFRESH!>|0; url=$env{return}|;
+				$main::H->rh("<!REFRESH!>","0; url=$env{return}");
+				$XSGN{TMP}=~s|<%LINK%>|$env{return}|g;
+			}
+			else
+			{
+				main::_log("som online, ale nie lognuty");
+				# vyhadzujem "stareho" seba
+				$main::DBH->Query("
+					UPDATE $TOM::DB_name_USRM.a300_online SET active='N'
+					WHERE	IDhash='$main::COOKIES{_IDhash}' AND host='$tom::H_cookie' LIMIT 1");
+					
+				$main::USRM{logged}="Y";
+				foreach (keys %main::COOKIES){$main::COOKIES{$_}=""}; # staci vyprazdnit, tomahawk sa uz o DELETE postara sam
+				$main::USRM{IDsession}=$main::COOKIES{_IDsession}=Utils::vars::genhash(32); # vygenerujem hash session
+				$main::COOKIES{_IDhash}=$main::USRM{IDhash};
+				$main::USRM{cookies}="";foreach (sort keys %main::COOKIES)
+				{if ($_=~/^_/){$main::USRM{cookies}.="<VAR id=\"".$_."\">".$main::COOKIES{$_}."</VAR>\n";next}}
+				$main::USRM{xdata}="";
+				foreach (sort keys %main::ENV){$main::USRM{xdata}.="<VAR id=\"".$_."\">".$main::ENV{$_}."</VAR>\n";}
+					
+				$main::DBH->Query("
+					UPDATE	$TOM::DB_name_USRM.a300_online
+					SET
+						IDsession='$main::USRM{IDsession}',
+						login='$main::USRM{login}',
+						logged='Y',
+						host_sub='$tom::H',
+						reqtime='$tom::time_current',
+						IP='$main::ENV{REMOTE_ADDR}',
+						cookies='$main::USRM{cookies}',
+						xdata='$main::USRM{xdata}',
+						HTTP_USER_AGENT='$main::ENV{HTTP_USER_AGENT}',
+						active='Y'
+					WHERE	IDhash='$main::USRM{IDhash}' AND host='$tom::H_cookie' LIMIT 1
+				");
+			}
+			
+		}
+		else # niesom este online (malo pravdepodobny pripad :)))
+		# prisiel som k cudziemu pocitacu a logujem sa tam
+		{
+			main::_log("niesom online");
+			# vyhadzujem "stareho" seba
+			$main::DBH->Query("
+				UPDATE $TOM::DB_name_USRM.a300_online SET active='N'
+				WHERE	IDhash='$main::COOKIES{_IDhash}' AND host='$tom::H_cookie' LIMIT 1
+			");
+			
+			##############################################################
+			# PRIPRAVA DAT PRE $main::USRM
+			$main::USRM{logged}="Y";
+			foreach (keys %main::COOKIES){$main::COOKIES{$_}=""}; # staci vyprazdnit, tomahawk sa uz o DELETE postara sam
+		#     Tomahawk::debug::mdllog(9,"destrukcia cookies");
+			my $var=$main::USRM{cookies}; # PREBRATIE COOKIES Z DATABAZY
+		#     Tomahawk::debug::mdllog(9,"cookies prebrate z databazy = ".$main::USRM{cookies});
+			while ($var=~s|<VAR id="(.*?)">(.*?)</VAR>||)
+			{$main::COOKIES{$1}=$2;
+		#     Tomahawk::debug::mdllog(9,"cookies prebrate z databazy $1 = ".$2);
+			}
+			# UPRAVA COOKIES
+			$main::COOKIES{_IDsession}=$main::USRM{IDsession}=Utils::vars::genhash(32); # vygenerujem hash session
+			$main::COOKIES{_IDhash}=$main::USRM{IDhash}; # prevezmem IDhash;
+			# ULOZENIE COOKIES DO DATABAZY
+			$main::USRM{cookies}="";foreach (sort keys %main::COOKIES)
+			{if ($_=~/^_/){$main::USRM{cookies}.="<VAR id=\"".$_."\">".$main::COOKIES{$_}."</VAR>\n";next}}
+			# XDATA
+			$main::USRM{xdata}="";foreach (sort keys %main::ENV)
+			{$main::USRM{xdata}.="<VAR id=\"".$_."\">".$main::ENV{$_}."</VAR>\n";}
+			
+			# INSERT DO ONLINE
+			main::_log("insert do online");
+			$main::DBH->Query("
+				INSERT INTO
+				TOM.a300_online
+				(	IDhash,
+					IDsession,
+					login,
+					logged,
+					host,
+					host_sub,
+					logtime,
+					reqtime,
+					rqs,
+					IP,
+					cookies,
+					HTTP_USER_AGENT,
+					xdata,
+					active)
+				VALUES(
+					'$main::USRM{IDhash}',
+					'$main::USRM{IDsession}',
+					'$main::USRM{login}',
+					'$main::USRM{logged}',
+					'$tom::H_cookie',
+					'$tom::H',
+					'$tom::time_current',
+					'$tom::time_current',
+					'1',
+					'$main::ENV{REMOTE_ADDR}',
+					'$main::USRM{cookies}',
+					'$main::ENV{HTTP_USER_AGENT}',
+					'$main::USRM{xdata}',
+					'Y'
+					)
+			");
+		}
+		
+		$XSGN{TMP}=$XSGN{logged};
+		$main::USRM_flag="L";
+		#$main::H->{header}=~s|<!REFRESH!>|0; url=$env{return}|;
+		$main::H->rh("<!REFRESH!>","0; url=$env{return}");
+		$XSGN{TMP}=~s|<%LINK%>|$env{return}|g;
+		# zistenie stareho ID v online a oznacenie na active="N"
+		
+		$main::DBH->Query("
+			UPDATE TOM.a300_users
+			SET	logtime	= '$main::time_current',
+				reqtime	= '$main::time_current',
+				autolog='N'
+			WHERE	IDhash='$main::USRM{IDhash}'
+				AND host='$tom::H_cookie' LIMIT 1
+		");
+		
+	}
+	else
+	{
+		main::_log("meno a heslo nesedi");
+		$XSGN{TMP}=$XSGN{err_badpassoruser};
+		#$XSGN{TMP}=~s|<%PLUS%>|$env{pass_md5}|;
+	}
+	
+	foreach my $key(keys %main::USRM)
+	{
+		$XSGN{TMP}=~s|<%$key%>|$main::USRM{$key}|g;
+	}
+ 
+	main::_log("Logged: ".$main::USRM{logged});
+	#main::_log("VYSTUPY:");
+	#foreach (sort keys %main::COOKIES){main::_log("C:$_=".$main::COOKIES{$_});}
+	#foreach (sort keys %main::USRM){if ($_ ne "xdata"){main::_log("U:$_=".$main::USRM{$_})}}
+	
+ return 1}
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+

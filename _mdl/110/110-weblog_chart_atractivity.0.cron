@@ -1,0 +1,340 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+
+
+use SVGraph::2D::lines;
+use Utils::datetime;
+
+use strict;
+
+sub execute
+{
+ #return 1;
+ my %env=@_;
+ 
+ Database::connect::multi('stats') || die "cannot connect all databases";
+ 
+ if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
+ #if ($TOM::DB_name_STAT eq $TOM::DB_name_TOM){$env{t}="C";}
+ $env{domain}=$tom::H unless exists $env{domain};
+  
+  
+# if ($env{day}){
+ my $graf=SVGraph::2D::lines->new(
+	title		=>	"Users comeback on $tom::Hm/$env{domain} (daily)",
+#	type		=>	"normal",	# normal/stacked(spojene)/percentage
+#	type		=>	"stacked",	# normal/stacked(spojene)
+#	type		=>	"percentage",	# normal/stacked(spojene)	
+	x		=>	1000,
+	y		=>	400,
+
+	show_legend		=>	1, # show legend of Columns
+	show_points		=>	1,
+#	show_points_middle	=>	1,
+#	show_lines			=>	1,
+	show_lines_smooth	=>	1,
+	show_areas		=>	1,
+	show_areas_opacity	=>	0.7,
+#	show_lines_smooth_range	=>	1,
+#	show_data			=>	1,
+#	show_data_background=>	1,
+
+	grid_y_scale_minimum		=>	1, # zaciname od nuly
+#	grid_y_scale_maximum		=>	15.00, #
+#	grid_y_main_spacing			=>	0.10,
+
+	show_grid_x		=>	1,
+ );
+ my %columns;
+
+ $columns{atractivity}=$graf->addColumn(title=>"sessions per user",color=>'blue');
+# $columns{load_proc}=$graf->addColumn(title=>"processor time",color=>"turquoise");
+ 
+ my $days=31*4;
+ for my $hour(0..$days)
+ {
+  my $from=$main::time_current-(86400*($days+1))+(86400*$hour);
+  my %date=Utils::datetime::ctodatetime($from,format=>1);
+  my $label="$date{mday}.$date{mom}.$date{year}";
+  
+  #CRON::debug::log(8,"create label $label");
+  
+  $graf->addRowLabel($label);
+#  $columns{atractivity}->addData($label,0);
+#  $columns{load_req}->addData($label,0);
+ }
+
+ my $from=$main::time_current-(86400*($days+1));
+ my %date=Utils::datetime::ctodatetime($from,format=>1);
+ $from="$date{year}-$date{mom}-$date{mday}";
+# print "from $from\n";
+ 
+ 
+# my $from=1*31;
+# my $db0=$main::DBH->Query("
+#	SELECT *
+#	FROM markiza_sk.a110_weblog_day
+#	WHERE domain_sub='$tom::H' AND reqdatetime>'$from'
+#	ORDER BY reqdatetime DESC");
+ my $db0=$main::DB{stats}->Query("
+	SELECT *
+	FROM $TOM::DB_name_STAT.$env{t}a110_weblog_day
+	WHERE domain='$tom::Hm' AND domain_sub='$env{domain}' AND reqdatetime>'$from'
+	ORDER BY reqdatetime DESC");
+
+#=head1	
+ $graf->addValueMark(1.5,
+	front			=>1,
+	show_label		=>1,
+#	size			=>1.5,
+	color			=>"black",
+	);
+ $graf->addValueMark(1,
+	front			=>1,
+	show_label		=>1,
+#	size			=>1.5,
+	color			=>"red",
+	);
+=head1
+$graf->addValueMark(0.2,
+	front			=>0,
+	show_label		=>1,
+#	size			=>1.5,
+	color			=>"yellow",
+	);
+
+$graf->addValueMarkArea(0.3,
+	front			=> 0,
+	color			=> "red",
+	);
+=cut
+	
+ while (my %db0_line=$db0->fetchhash)
+ {
+  my @date=($db0_line{reqdatetime}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/);  
+  my $label=$date[2].".".$date[1].".".$date[0];  
+#  print "-$label\n";
+  
+#  $graf->addRowLabelBegin($label);
+#  CRON::debug::log(8,"add to label $label - $avg");
+  my $avg=(int(($db0_line{IDsessions}/$db0_line{IDhashs})*100))/100;
+#  print "  $avg\n";
+  $columns{atractivity}->addData($label,$avg);
+
+#=head1
+  if ($db0_line{reqdatetime}=~/01 00:00:00$/)
+  {
+   $graf->addRowMark($label,
+#	front			=>1,
+	show_label		=>1,
+#	size			=>1.5,
+	);
+  }
+  
+  #CRON::debug::log(8,"add to label $label - $avg");
+  
+#=cut
+  
+ }
+
+
+ 
+ eval
+ {
+  alarm(10);
+  $env{atr1_file}="stats_chart_atractivity1.svg" unless $env{atr1_file};
+  open HND,">$cron::P/!www/".$env{atr1_file} or die "$!";
+  my $out=$graf->prepare();
+  $out=~s|[\s]+</text>|</text>|g;
+  print HND $out; 
+  alarm(0);
+ };
+ if ($@)
+ {
+  die "error! $@\n";
+ }
+# }
+
+
+
+
+
+ my $graf=SVGraph::2D::lines->new(
+	title		=>	"Atractivity of $tom::Hm/$env{domain} (daily)",
+#	type		=>	"normal",	# normal/stacked(spojene)/percentage
+#	type		=>	"stacked",	# normal/stacked(spojene)
+#	type		=>	"percentage",	# normal/stacked(spojene)	
+	x		=>	1000,
+	y		=>	400,
+
+	show_legend		=>	1, # show legend of Columns
+	show_points		=>	1,
+#	show_points_middle	=>	1,
+#	show_lines			=>	1,
+	show_lines_smooth	=>	1,
+	show_areas		=>	1,
+	show_areas_opacity	=>	0.3,
+#	show_lines_smooth_range	=>	1,
+#	show_data			=>	1,
+#	show_data_background=>	1,
+
+	grid_y_scale_minimum		=>	1, # zaciname od nuly
+#	grid_y_scale_maximum		=>	15.00, #
+#	grid_y_main_spacing			=>	0.10,
+
+	show_grid_x		=>	1,
+ );
+ my %columns;
+
+ $columns{atractivity}=$graf->addColumn(title=>"visits per session",color=>'blue');
+ $columns{atractivity2}=$graf->addColumn(title=>"visits per user",color=>'azure');
+# $columns{load_proc}=$graf->addColumn(title=>"processor time",color=>"turquoise");
+ 
+ my $days=31*4;
+ for my $hour(0..$days)
+ {
+  my $from=$main::time_current-(86400*($days+1))+(86400*$hour);
+  my %date=Utils::datetime::ctodatetime($from,format=>1);
+  my $label="$date{mday}.$date{mom}.$date{year}";
+  #CRON::debug::log(8,"create label $label");
+  $graf->addRowLabel($label);
+#  $columns{atractivity}->addData($label,0);
+#  $columns{load_req}->addData($label,0);
+ }
+
+ my $from=$main::time_current-(86400*($days+1));
+ my %date=Utils::datetime::ctodatetime($from,format=>1);
+ $from="$date{year}-$date{mom}-$date{mday}";
+# print "from $from\n";
+ 
+ 
+# my $from=1*31;
+# my $db0=$main::DBH->Query("
+#	SELECT *
+#	FROM markiza_sk.a110_weblog_day
+#	WHERE domain_sub='$tom::H' AND reqdatetime>'$from'
+#	ORDER BY reqdatetime DESC");
+ my $db0=$main::DB{stats}->Query("
+	SELECT *
+	FROM $TOM::DB_name_STAT.$env{t}a110_weblog_day
+	WHERE domain='$tom::Hm' AND domain_sub='$env{domain}' AND reqdatetime>'$from'
+	ORDER BY reqdatetime DESC");
+
+#=head1	
+# $graf->addValueMark(1.5,
+#	front			=>1,
+#	show_label		=>1,
+#	size			=>1.5,
+#	color			=>"black",
+#	);
+ $graf->addValueMark(2,
+	front			=>1,
+	show_label		=>1,
+	show_label_text	=>"too low",
+#	size			=>1.5,
+	color			=>"red",
+	);
+$graf->addValueMarkArea(0,
+	end			=> 2,
+	front			=> 0,
+	color			=> "red",
+	);
+=head1
+$graf->addValueMark(0.2,
+	front			=>0,
+	show_label		=>1,
+#	size			=>1.5,
+	color			=>"yellow",
+	);
+
+$graf->addValueMarkArea(0.3,
+	front			=> 0,
+	color			=> "red",
+	);
+=cut
+	
+ while (my %db0_line=$db0->fetchhash)
+ {
+  my @date=($db0_line{reqdatetime}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/);  
+  my $label=$date[2].".".$date[1].".".$date[0];  
+#  print "-$label\n";
+  
+#  $graf->addRowLabelBegin($label);
+  my $avg=(int(($db0_line{visits}/$db0_line{IDsessions})*100))/100;
+  $columns{atractivity}->addData($label,$avg);
+  
+  my $avg=(int(($db0_line{visits}/$db0_line{IDhashs})*100))/100;
+  $columns{atractivity2}->addData($label,$avg);
+
+#=head1
+  if ($db0_line{reqdatetime}=~/01 00:00:00$/)
+  {
+   $graf->addRowMark($label,
+#	front			=>1,
+	show_label		=>1,
+#	size			=>1.5,
+	);
+  }
+#=cut
+  
+ }
+
+ $graf->addValueMark(int($graf->GetAVG()*10)/10,
+	front			=>1,
+	show_label		=>1,
+	show_label_text	=>"AVG (".(int($graf->GetAVG()*10)/10).")",
+#	size			=>1.5,
+	color			=>"blue",
+	);
+
+ 
+ eval
+ {
+  alarm(15);
+  $env{atr2_file}="stats_chart_atractivity2.svg" unless $env{atr2_file};
+  open HND,">$cron::P/!www/".$env{atr2_file} or die "$!";
+  my $out=$graf->prepare();
+  $out=~s|[\s]+</text>|</text>|g;
+  print HND $out; 
+  alarm(0);
+ };
+ if ($@)
+ {
+  die "error! $@\n";
+ }
+
+
+
+
+ 
+ 
+ 
+ return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,73 @@
+$TEMPLATE=<<"HEADER";
+
+<style type="text/css" media="screen">
+  <!--
+	body {
+		font: small Arial, Helvetica, sans-serif;
+		text-align: center;
+		margin: 0; padding: 2em;
+	}
+	#page {
+		width: 550px;
+		margin: 0 auto;
+		text-align: left;
+		background: #FAFAFA;
+		border: 1px solid #E1E1E1;
+	}
+	#page-i { padding: 10px; }
+	a { color: red; }
+	h1 { margin-top: 0; font-size: 120%; color: #7E7F82; }
+	.right { text-align: right; }
+  -->
+</style>
+
+
+<div id="page"><div id="page-i">
+	<div class="right">
+		<a href="http://www.webcom.sk/"><img src="<\$TOM::H_grf>/cyclone-160x55.gif" alt="WebCom Cyclone CMS" width="160" height="55" /></a>
+	</div>
+	
+	<h1><\$tom::H>: under construction</h1>
+	
+	<hr/>
+	
+	<p>
+		<strong>We apologize, this page is currently unavailable.</strong>
+	</p>
+	<p>
+		We are currently working to construct this page.
+	</p>
+</div></div>
+
+
+
+<!TMP-ERROR!>
+
+
+HEADER
+
+%HEADER=(
+	'head'	=>
+	{
+		'title'	=>	"Page under construction",
+	
+		'style'	=>
+		{
+			'body' => " font:small Arial,Helvetica,sans-serif; text-align:center; margin:0; padding:2em; ",
+			'#page' => "width:550px; margin:0 auto; text-align:left; background:#FAFAFA; border:1px solid #E1E1E1; ",
+			'#page-i' => "padding:10px; ",
+			'a' => "color:red; ",
+			'h1' => "margin-top:0; font-size:120%; color:#7E7F82; ",
+			'.right' => " text-align: right; ",
+		},
+	
+		'meta'	=>
+		{
+						'robots'		=>	"noindex,nofollow",
+		}
+	},
+	
+);
+
+
+1;

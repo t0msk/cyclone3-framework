@@ -1,0 +1,340 @@
+sub BaseModul
+{
+ use Text::Iconv;
+
+ #$converter = Text::Iconv -> new("CP1250","UTF-8");
+
+ require "_table.m";
+ require "_info.m";
+
+ my $page_limit=20;
+ my $page_from=$page_limit*$form{page};
+ $form{page}="0" unless $form{page};
+
+ my $listingTitle;
+ if (($form{whereby} eq "ID_tv") && ($form{where} eq "0000")) { $listingTitle="Program TV Markíza"; } else { $listingTitle="Program televíznych staníc"; }
+
+ if ($form{search} eq "1")
+ {
+  if ($form{day1} && $form{mom1} && $form{year1})
+  {
+    $form{year1}-=1900;
+    $form{mom1}--;
+    my $starttime=timelocal(undef,undef,undef,$form{day1},$form{mom1},$form{year1},undef,undef,undef);
+    $form{from_stamp} = $starttime;
+    $ENV{'QUERY_STRING'}.="&from_stamp=$starttime";
+  }
+
+  if ($form{day2} && $form{mom2} && $form{year2})
+  {
+    $form{year2}-=1900;
+    $form{mom2}--;
+    my $endtime=timelocal(undef,undef,undef,$form{day2},$form{mom2},$form{year2},undef,undef,undef);
+    #if ($where eq "") { $where.="WHERE time_from < $endtime " } else { $where.="time_from < $endtime " }
+    $form{to_stamp} = $endtime;
+    $ENV{'QUERY_STRING'}.="&to_stamp=$endtime";
+  }
+
+  if ($form{'only_markiza'}) { $form{whereby}="ID_tv"; $form{where}="0000"; $ENV{'QUERY_STRING'}.="&whereby=ID_tv"; $ENV{'QUERY_STRING'}.="&where=0000"; }
+ }
+
+
+ my $info=&info_create(
+	'icon'	=>	"style=\"cursor:hand;\" onclick=\"load_box('core.pl?type=021-search');\"",
+	'new'	=>	True,
+	'title'	=>	"$listingTitle",
+	'next'	=>	$form{page},
+	'prev'	=>	$form{page}
+ );
+ my $select;
+
+ for (my $i=0;$i<=55;$i=$i+5)
+ {
+  $select.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$i';\">&nbsp;$i</div>\n";
+ }
+ my $select_author=&select_create(
+	'name'		=>	"min2",
+	'value'		=>	$minR2,
+	'maxlength'	=>	30,
+	'width'		=>	1,
+	'width1'	=>	50,
+	'select'	=>	$select
+ );
+
+
+ my $table=HP_TABLE->new(
+ 'title'			=>	"taky maly popis",
+ 'cellspacing'	=>	1,
+ 'cellpadding'	=>	1,
+ #'color_active'	=>	"#F0F080",
+ 'color_active'	=>	"#F0F0C0",
+ 'link_core'		=>	"core.pl?type=021&",
+ 'define'		=>
+ {
+ '1'	=>
+	{
+	'id'		=>	"A",
+	'code'		=>	"<img src=\"$tom::H_media/grf/admin/list_<%1%>.gif\" width=11 height=12 border=0 onclick=\"this.src='core.pl?type=set_active&table=a400&id=<!--ID-->';\">",
+	'select'	=>	"orderby=active,start_stamp",
+	'class'		=>	"td_act",
+	'td_class'	=>	"td_act"
+	},
+ '2'	=>
+	{
+	'id'		=>	"cat",
+	'code'		=>	"&nbsp;<b><%1%></b>",
+	'select'	=>	"orderby=IDcategory,start_stamp",
+	'class'		=>	"td_act",
+	'td_plus'	=>	"nowrap"
+	},
+ '3'	=>
+	{
+	'id'		=>	"start",
+	'code'		=>	"<%1%>",
+	'select'	=>	"orderby=start_stamp",
+	'class'		=>	"td_act",
+	'td_plus'	=>	"nowrap valign=\"top\""
+	},
+ '4'	=>
+	{
+	'id'		=>	"end",
+	'code'		=>	"<%1%>",
+	'select'	=>	"orderby=endtime",
+	'class'		=>	"td_act",
+	'td_plus'	=>	"nowrap valign=\"top\""
+	},
+ '5'	=>
+	{
+	'id'		=>	"id_tv",
+	'code'		=>	"<%1%>",
+	'select'	=>	"orderby=id_tv ASC,start_stamp",
+	'class'		=>	"td_act",
+	'td_plus'	=>	"valign=\"top\" nowrap style=\"font-weight: bold; font-style: italic\""
+	},
+ '6'	=>
+	{
+	'id'		=>	"name",
+	'code'		=>	"<%1%>",
+	'select'	=>	"orderby=name ASC,start_stamp",
+	'class'		=>	"td_act",
+	'td_plus'	=>	"nowrap valign=\"top\" style=\"font-weight: bold; font-size: 10px\""
+	},
+ '8'	=>
+	{
+	'id'		=>	"description",
+	'code'		=>	"&nbsp;<%1%>",
+	'class'		=>	"td_act",
+	'td_class'	=>	"td0",
+	'td_plus'	=>	"width=\"100%\" style=\"font-size: 9px\""
+	},
+
+ '9'	=>
+	{
+	'id'		=>	"rating",
+	'code'		=>	"&nbsp;<%1%>",
+	'select'	=>	"orderby=rating,start_stamp",
+	'class'		=>	"td_act",
+	'td_class'	=>	"td0",
+	'td_plus'	=>	"nowrap align=\"center\""
+	},
+ }
+ );
+
+ my $where;
+ if ($form{search} eq "1")
+ {
+=head1
+  if ($form{day1} && $form{mom1} && $form{year1})
+  {
+    $form{year1}-=1900;
+    $form{mom1}--;
+    my $starttime=timelocal(undef,undef,undef,$form{day1},$form{mom1},$form{year1},undef,undef,undef);
+    $form{from_stamp} = $starttime;
+  }
+
+  if ($form{day2} && $form{mom2} && $form{year2})
+  {
+    $form{year2}-=1900;
+    $form{mom2}--;
+    my $endtime=timelocal(undef,undef,undef,$form{day2},$form{mom2},$form{year2},undef,undef,undef);
+    #if ($where eq "") { $where.="WHERE time_from < $endtime " } else { $where.="time_from < $endtime " }
+    $form{to_stamp} = $endtime;
+  }
+
+  if ($form{'only_markiza'}) { $form{whereby}="ID_tv"; $form{where}="0000"; }
+=cut
+
+  if (not $form{'name'} eq "")
+  { if ($where eq "") { $where.="WHERE name LIKE '%$form{name}%' " } else { $where.="AND name LIKE '%$form{name}%' " } }
+  if (not $form{'description'} eq "")
+  { if ($where eq "") { $where.="WHERE description LIKE '%$form{description}%' " } else { $where.="AND description LIKE '%$form{description}%' " } }
+  if ($form{'rating'})
+  { if ($where eq "") { $where.="WHERE rating LIKE '%$form{rating}%' " } else { $where.=" AND rating LIKE '%$form{rating}%' " } }
+
+  if ($form{'from_stamp'})
+  { if ($where eq "") { $where.="WHERE start_stamp >= '$form{'from_stamp'}' " } else { $where.="AND start_stamp >= '$form{'from_stamp'}' " } }
+
+  if ($form{'to_stamp'})
+  {
+   if ($form{'from_stamp'} == $form{'to_stamp'})
+   {
+    if ($where eq "") { $where.="WHERE datestamp = '$form{'to_stamp'}' " } else { $where.="AND datestamp = '$form{'to_stamp'}' " }
+   }
+   else
+   {
+    if ($where eq "") { $where.="WHERE datestamp <= '$form{'to_stamp'}' " } else { $where.="AND datestamp <= '$form{'to_stamp'}' " }
+   }
+
+  }
+
+  #while ($form{wherestring}=~s|(.*?)=(.*?)&||)
+  #{
+  # $mdl_micro.="<div onclick=\"this.parentElement.parentElement.all['VALUE'].value='$sele{$_}';\" style=\"FONT:12px Verdana;\">&nbsp;$_</div>\n";
+  #}
+  #$where="WHERE
+
+  #return $where;
+ }
+ else
+ {
+ }
+
+  if ($form{'whereby'})
+  {
+   if ($where ne "") { $where.="AND $form{whereby}='$form{where}' " } else { $where.="WHERE $form{whereby}='$form{where}' " }
+  }
+
+  if ($form{'wherelike'})
+  { $where.="AND $form{wherelike} LIKE '$form{where}%'" if ($form{'wherelike'} eq "IDcategory"); }
+  else
+  { $where.="AND $form{wherelike} LIKE '$form{where}%'" if ($form{'wherelike'}); }
+
+ my $orderby;
+ if ($form{'orderby'}) { $orderby=$form{'orderby'}; } else { $orderby="datestamp, midnight, start_stamp"; }
+
+ #my $db_micro = $dbh->Query("SELECT ID, priority, starttime, endtime, updated, title, IDcathegory, typeview, visits_index, visits, absvisits_index, visits_index, votes, vote_full, vote_index, votes, image, data_plus, active  FROM clanky_trash $where $orderby LIMIT $page_from,$page_limit");
+
+ #return "SELECT * FROM markiza_sk.a021_program WHERE start_stamp > '".time."' $where ORDER BY $orderby ASC LIMIT $page_from,$page_limit";
+
+ my $fromtime;
+
+ if (exists $form{from_stamp})
+ {
+  $fromtime = $form{from_stamp};
+  if ($where eq "") { $where.="WHERE datestamp >= '$fromtime' " } else { $where.="AND datestamp >= '$fromtime' " }
+ }
+  #loads data from current time
+  #my $db_micro = $dbh->Query("SELECT * FROM markiza_sk.a021_program WHERE start_stamp > '".time."' $where ORDER BY $orderby ASC LIMIT $page_from,$page_limit");
+
+  #return "SELECT datestamp FROM markiza_sk.a021_program WHERE start_stamp > '".time."' $where ORDER BY $orderby ASC LIMIT 1";
+ else
+ {
+  #loads data from beginning of actual day
+  my $db_micro = $dbh->Query("SELECT datestamp FROM markiza_sk.a021_program WHERE start_stamp > '".time."' LIMIT 1");
+  if (my @db_micro_line=$db_micro->FetchRow())
+  {
+   $fromtime=$db_micro_line[0];
+  }
+  else
+  {
+   $fromtime=time;
+  }
+  if ($where eq "") { $where.="WHERE datestamp >= '$fromtime' " } else { $where.="AND datestamp >= '$fromtime' " }
+ }
+
+#$fromtime=time;
+ my $db_micro = $dbh->Query("SELECT * FROM markiza_sk.a021_program $where ORDER BY $orderby ASC LIMIT $page_from,$page_limit");
+
+ #return "SELECT * FROM markiza_sk.a021_program $where ORDER BY $orderby ASC LIMIT $page_from,$page_limit";
+
+=head1
+ my $haluza;
+ foreach (sort keys %form)
+ {
+  $haluza.="$_ - $form{$_}<br>";
+ }
+ return $haluza;
+=cut
+
+ if ($db_micro)
+ {
+
+ while (my %db_micro_line=$db_micro->FetchHash())
+ {
+
+#=head1
+  #active
+  my $cl_active="r";
+  if ($db_micro_line{'active'} eq "Y"){$cl_active="g"}
+  #today, yesterday, older line color
+  my $cl_color="#8FADF9";
+  if (($db_micro_line{start_stamp}>time) || (($db_micro_line{start_stamp}>$db_micro_line{datestamp}) && ($db_micro_line{midnight} eq 'Y'))){$cl_color="#E0EFFF"}
+  if ($db_micro_line{start_stamp}>(time+86400)){$cl_color="#B0CFFF"}
+
+  if ($db_micro_line{datestamp}>$fromtime) { $cl_color="#B0CFFF"; }
+
+  my $cl_class="tr1";
+  my %article_times;
+
+  $article_times{'time_from'}={Utils::datetime::ctodatetime($db_micro_line{'start_stamp'},format=>1)};
+  $article_times{'time_to'}={Utils::datetime::ctodatetime($db_micro_line{'end_stamp'},format=>1)};
+
+  #$article_times{'changetime'}={Utils::datetime::ctodatetime($db_micro_line{'changetime'},format=>1)};
+  #my $article_times{'lasttime'}=Tomahawk::utils::datetime::ctodatetime($db_micro_line{'lasttime'},format=>1);
+  #return "SELECT name FROM markiza_sk.a0_tv WHERE ID='$db_micro_line{'ID_tv'}' LIMIT 1";
+  #my $db_micro2=$dbh->Query("SELECT name FROM markiza_sk.a0_tv WHERE ID='$db_micro_line{'ID_tv'}' LIMIT 1");
+  #my @db_micro_line2=$db_micro2->FetchRow();
+  #$db_micro_line{'tv_name'}=$db_micro_line2[0];
+
+  #return "SELECT name FROM markiza_sk.a020_cat WHERE ID='$db_micro_line{'ID_cat'}' LIMIT 1";
+
+  my $db_micro2=$dbh->Query("SELECT name FROM markiza_sk.a020_cat WHERE ID='$db_micro_line{'ID_cat'}' LIMIT 1");
+  my @db_micro_line2=$db_micro2->FetchRow();
+  $db_micro_line{'cat_name'}=$db_micro_line2[0];
+
+  my $db_micro2=$dbh->Query("SELECT name FROM markiza_sk.a021_tv WHERE ID='$db_micro_line{'ID_tv'}' LIMIT 1");
+  my @db_micro_line2=$db_micro2->FetchRow();
+  $db_micro_line{'tv_name'}=$db_micro_line2[0];
+
+  $table->add(
+   'class'		=>	$cl_class,
+   'color'		=>	$cl_color,
+   'define'	=>{
+
+    'A'	=>
+    {	'1'	=>	$cl_active},
+
+    'cat'	=>
+    {'1'=>"<a href=\"javascript:load_box('core.pl?type=021-edit&ID=".$db_micro_line{ID}."')\">".$db_micro_line{cat_name}."</a>"},
+
+    'start'	=>
+    {'1'=>"&nbsp;$article_times{'time_from'}{mday}/$article_times{'time_from'}{mom}/$article_times{'time_from'}{year} $article_times{'time_from'}{hour}:$article_times{'time_from'}{min}&nbsp;"},
+
+    'end'	=>
+    {'1'=>"&nbsp;$article_times{'time_to'}{mday}/$article_times{'time_to'}{mom}/$article_times{'time_to'}{year} $article_times{'time_to'}{hour}:$article_times{'time_to'}{min}&nbsp;"},
+
+    'id_tv'	=>
+    {'1'=>"&nbsp;<a href=\"core.pl?type=tv-program&wherelike=IDcategory&where=$db_micro_line{'IDcategory'}\" target=\"frm_base\">$db_micro_line{tv_name}</a>&nbsp;"},
+
+    'name'	=>
+    {'1'=>"&nbsp;<a href=\"core.pl?type=tv-program&wherelike=IDcategory&where=$db_micro_line{'IDcategory'}\" target=\"frm_base\">$db_micro_line{name} (\'$db_micro_line{length})</a>&nbsp;"},
+
+    'description'	=>
+    {'1'=>"$db_micro_line{description}"},
+
+    'rating'	=>
+    {'1'=>"$db_micro_line{rating}"},
+
+#    'X'	=>
+#    {'1'=>"<a href=\"core.pl?type=clanok_trashdel&id=<!--ID-->\" target=\"frm_micro\"><img src=$tom::H_media/grf/admin/close1.gif border=0 width=12 height=12></a>"},
+
+   },'replace'	=>{'ID'	=>	$db_micro_line{ID}}
+  );
+
+ }
+}
+ return $info.$table->HTML;
+ #"<br>SELECT * FROM markiza_sk.a021_program $where ORDER BY $orderby ASC LIMIT $page_from,$page_limit"."<BR>".$ENV{'QUERY_STRING'};
+}
+
+1;

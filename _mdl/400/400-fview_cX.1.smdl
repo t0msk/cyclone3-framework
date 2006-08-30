@@ -1,0 +1,181 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 NAME
+fview_xX
+
+=head1 HEAD_VERSION_BUILD
+1.030703
+
+=head1 DESCRIPTION
+full view clanku s prepojenim na ine tabulky
+a moduly.
+- automaticky select jazyka
+- automaticke hladanie v archive
+- automaticke hladanie v linkach
+- updatuje visits v clanku (ak $env{visits})
+
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+
+        <value id="preview" value="1" />
+        <value id="output" value="xsgn" />
+
+        <input id="TMP_view" value="varchar(100)">kam zobrazit telo clanku</input>
+	<input id="novisits" value="boolean">nemam zvysovat visits clanku?</input>
+	<input id="shift_first_img" value="boolean">vybrat prvy obrazok clanku?</input>
+
+        <source type="db" value="markiza_sk" /> # zavisla databaza
+        <source type="db.table" value="this.articles" />
+	<source type="db.table" value="this.articles_arch" />
+
+</DESCRIPTION>
+
+
+=head1 CHANGES
+build 030703 - Aben
+        *) pridane shift_first_img pre 400-fview.mdl
+build 030701 - Aben
+        *) FIRST MAKE
+
+=head1 WARNINGS & BUGS
+        *) ak nenajde clanok vypisuje chybu v SK
+=cut
+
+sub execute
+{
+ my %env=@_;
+ $env{db}=Tomahawk::Getmdlvar("400","db") unless $env{db};
+ $env{db}=$TOM::DB_name unless $env{db};
+
+ # pokial taham articles z inej db, tak automaticky
+ # taham aj sources z inej db
+ $env{db_info}=$env{db} if ($env{db} ne $TOM::DB_name);
+
+ my %article;
+
+ # NACITANIE DAT CLANKU
+ my $var="articles";
+ my @db0_line;
+
+#SELECT * FROM articles LEFT JOIN articles_attrs ON (articles.IDattrs) WHERE articles.ID=4
+
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db}.articles
+	LEFT JOIN $env{db}.articles_attrs
+		ON (articles.IDattrs AND articles.IDattrs=articles_attrs.IDattrs)
+	WHERE	articles.ID='$env{ID}'
+		AND articles.active='Y'
+		AND articles.starttime<$tom::time_current
+		AND (articles.lng='$env{lng}' OR articles.lng='')
+	LIMIT 1");
+ if (not %article=$db0->fetchhash())
+ {
+  $var="articles_arch";
+  my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db}.articles_arch
+	LEFT JOIN $env{db}.articles_arch_attrs
+		ON (articles_arch.IDattrs AND articles_arch.IDattrs=articles_arch_attrs.IDattrs)
+	WHERE 	articles.ID='$env{ID}'
+		AND articles_arch.active='Y'
+		AND articles_arch.starttime<$tom::time_current
+		AND (articles_arch.lng='$env{lng}' OR articles_arch.lng='')
+	LIMIT 1");
+  if (not %article=$db0->fetchhash())
+  {
+   $main::H->r_("<!TMP-".$env{TMP_view}."!>","clanok ".$env{ID}." neexistuje");
+   return 1;
+  }
+ }
+
+ $main::DBH->Query("UPDATE $env{db}.$var SET visits=visits+1 WHERE ID='$env{ID}' AND (lng='$env{lng}' OR lng='') LIMIT 1") if !$env{novisits};
+
+ if ($article{link})
+ {
+  my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db}.articles
+	LEFT JOIN $env{db}.articles_attrs
+		ON (articles.IDattrs AND articles.IDattrs=articles_attrs.IDattrs)
+	WHERE 	ID='$article{link}'
+		AND articles.active='Y'
+		AND articles.starttime<$tom::time_current
+		AND (articles.lng='$env{lng}' OR articles.lng='')
+	LIMIT 1");
+  if (not %article=$db0->fetchhash())
+  {
+   $main::H->r_("<!TMP-".$env{TMP_view}."!>","clanok ".$env{ID}." nema funkcnu linku");
+   return 1;
+  }
+ }
+
+
+ # OSETRENIE %hashu
+ foreach (keys %article) {~/^[^a]_/ && do {$article{'a_'.$_}=$article{$_};delete $article{$_};next;}}
+
+	$main::env{a400_IDauthor}=$article{'_a400_IDauthor'};
+
+#  my %article=
+#  (
+#	'a_ID'			=>	$db0_line[0],
+#	'a_IDattrs'		=>	$db0_line[1],
+#	'a_IDcategory'		=>	$db0_line[2],
+#	'a_priority'		=>	$db0_line[3],
+#	'a_starttime'		=>	$db0_line[4],
+#	'a_endtime'		=>	$db0_line[5],
+#	'a_changetime'		=>	$db0_line[6],
+#	'a_IDauthor'		=>	$db0_line[7],
+#	'a_IDeditor'		=>	$db0_line[8],
+#	'a_title'		=>	$db0_line[9],
+#	'a_subtitle'		=>	$db0_line[10],
+#	'a_tiny'		=>	$db0_line[11],
+#	'a_full'		=>	$db0_line[12],
+#	'a_visits'		=>	$db0_line[13],
+#	'a_votes'		=>	$db0_line[14],
+#	'a_votes_value'		=>	$db0_line[15],
+#	'a_votes_index'		=>	$db0_line[16],
+#	'a_link'		=>	$db0_line[17],
+#	'a_xmedia'		=>	$db0_line[18],
+#	'a_xdata'		=>	$db0_line[19],
+#	'a_lng'			=>	$db0_line[20],
+#	'a_active'		=>	$db0_line[21]
+# );
+
+
+  my %plus;
+  if ($article{a_starttime}>($tom::time_current-7200))
+  {%plus=(
+	-cache_id	=>	$main::FORM{TID},
+	-cache_id_sub	=>	$article{a_ID}
+  );}
+
+  Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"400",
+	-name		=>	"fview",
+	-global		=>	1,
+	-TMP		=>	$env{TMP_view},
+	shift_first_img	=>	$env{shift_first_img},# vytiahnem prvu premennu
+	%article,
+	%plus
+	);
+
+  Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"400",
+	-name		=>	"fview_info_c120",
+	-global		=>	1,
+	-TMP		=>	$env{TMP_info},
+	db		=>	$env{db_info},
+	%article,
+	%plus,
+	);
+}
+1;

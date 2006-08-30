@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use App::540;
+use App::540::file;
+use strict;
+
+## a540 Delete File
+## > hash = hash string indentifier of the file to delete
+## < no return
+## Deletes All Links From a400 too.
+
+sub execute
+{
+	my %env=@_;
+	return 1 if !$env{'id'};
+
+	# Remove Any Attached Filles From Articles
+	my $attch = $main::DB{main}->Query("
+		UPDATE a400
+		SET xrelated=replace(xrelated, '<VAR id=\"a540\" value=\"$env{id}\" />', '')
+		WHERE xrelated like '%<VAR id=\"a540\" value=\"$env{id}\" />%'
+	");
+	# Delete The File
+	App::540::file::del(ID=>"=".$env{'id'} );
+	return 1;
+}
+1;

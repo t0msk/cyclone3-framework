@@ -1,0 +1,153 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+#use App::400;
+#use App::400::SQL::a400;
+
+#use SVGraph;
+use SVGraph::2D::lines;
+use SVGraph::2D::columns;
+#use SVGraph::2D::ring;
+
+#use Net::HTTP::LiteAgent;
+
+use Utils::datetime;
+
+use strict;
+
+sub execute
+{
+ my %env=@_;
+ 
+ Database::connect::multi('stats') || die "cannot connect all databases";
+ 
+ my $graf=SVGraph::2D::lines->new(
+	title		=>	"SEO: TOP10 robots activity on domain $tom::H",
+#	type		=>	"normal",	# normal/stacked(spojene)/percentage
+#	type		=>	"stacked",	# normal/stacked(spojene)/overlap(prechadzanie)
+	type		=>	"normal",
+#	reload	=>	600,
+	x		=>	750,
+	y		=>	300,
+
+	show_legend		=>	1, # show legend of Columns
+#	show_legend_reverse	 =>	1, # show legend of Columns
+	show_points		=>	1,
+#	show_points_middle	=>	1,
+#	show_lines			=>	1,
+	show_lines_smooth	=>	1,
+#	show_areas		=>	1,
+#	show_lines_smooth_range	=>	1,
+#	show_data			=>	1,
+#	show_data_background=>	1,
+
+	grid_y_scale_minimum		=> 0, # zaciname od nuly
+#	grid_y_scale_maximum		=>	15.00, #
+#	grid_y_main_spacing			=>	0.10,
+
+#	grid_y_main_lines			=>	10, # number of lines
+	show_grid_x		=>	1,
+	show_label_textsize	=>	10,
+);
+
+#$columns2{'AVG'}=$graf2->addColumn(title=>"AVG 31 days",color=>"blue",show_area=>1,show_area_opacity=>'0.35');
+#$columns3{'AVG'}=$graf3->addColumn(title=>"AVG 31 days",color=>"blue",show_area=>1,show_area_opacity=>'0.35');
+
+
+=head1
+SELECT
+   substring(reqdatetime,1,10) AS date,
+   user_agent_name AS robot,
+   COUNT(*) AS requests
+FROM
+   a110_weblog_rqs
+WHERE
+   domain_sub='webcom.sk' AND
+   reqtype='R' AND
+   active='Y'
+GROUP BY 
+   substring(reqdatetime,1,10),
+   user_agent_name
+ORDER BY
+   date DESC,
+   robot
+=cut
+
+my $td=$main::time_current-($tom::Thour*60*60)-($tom::Tmin*60)-($tom::Tsec);
+	$td-=86400*31;
+
+my %columns;
+
+my $db0=$main::DB{stats}->Query("
+	SELECT
+		user_agent_name AS robot,
+		COUNT(*) AS requests
+	FROM
+		a110_weblog_rqs
+	WHERE
+		domain_sub='$tom::H' AND
+		reqtype='R' AND
+		active='Y' AND
+		reqtime>$td
+	GROUP BY 
+		user_agent_name
+	ORDER BY
+		requests DESC
+	LIMIT 10
+");
+while (my %db0_line=$db0->fetchhash)
+{
+	$columns{$db0_line{'robot'}}=$graf->addColumn(title=>$db0_line{'robot'});
+}
+
+
+my $db0=$main::DB{stats}->Query("
+	SELECT
+		substring(reqdatetime,1,10) AS date,
+		user_agent_name AS robot,
+		COUNT(*) AS requests
+	FROM
+		a110_weblog_rqs
+	WHERE
+		domain_sub='$tom::H' AND
+		reqtype='R' AND
+		active='Y' AND
+		reqtime>$td
+	GROUP BY 
+		substring(reqdatetime,1,10),
+		user_agent_name
+	ORDER BY
+		date ASC,
+		robot
+");
+while (my %db0_line=$db0->fetchhash)
+{
+	# vsetko okrem dneska (pretoze dnesok este niesu uplne udaje, tak ich nechcem zobrazovat v grafe)
+	next if $db0_line{'date'} eq "$main::Fyear-$main::Fmom-$main::Fmday";
+	
+	$graf->addRowLabel($db0_line{'date'});
+	
+	$columns{$db0_line{'robot'}}->addData($db0_line{'date'},$db0_line{'requests'}) if $columns{$db0_line{'robot'}};
+	
+}
+
+eval
+{
+	alarm(5);
+	open HND,">$cron::P/_data/SEactivity.svg" or die "$!";
+	my $out=$graf->prepare();
+	$out=~s|[\s]+</text>|</text>|g;
+	print HND $out; 
+	alarm(0);
+};
+if ($@)
+{
+	die "error! $@\n";
+}
+
+
+return 1}
+
+
+
+1;

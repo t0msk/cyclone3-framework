@@ -1,0 +1,256 @@
+#!/bin/perl
+# USE UTF-8 !!! áščíéáščť
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+sub execute
+{
+	my %env=@_;
+	
+	# env{stats}=1
+	# env{stats_koef}=1
+	# env{stats_max}=200
+
+	if ($env{stats})
+	{
+		return undef if (!$env{stats_koef} && !$env{stats_max});
+		$env{stats_koef}=$env{stats_max}/100 unless $env{stats_koef};
+	}
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	Tomahawk::XLNGtoXSGN() if Tomahawk::GetXLNG(); # retrieve language xml
+	#Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
+	return undef unless $env{IDquestion};
+	return undef unless $env{IDanswer};
+
+	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
+	$env{db_410}=$TOM::DB_name_TOM unless $env{db_410};
+
+	#$XSGN{TMP}="fungujem $tom::H<BR>";
+
+	# AND (domain IS NULL OR domain LIKE '%$tom::H')
+
+	my %loop;
+	loop:
+	my %db0_line;
+	$loop{$env{IDquestion}}++;
+	if ($loop{$env{IDquestion}}>1)
+	{$tom::ERR="ID $env{IDquestion} cycle";return undef;}
+
+	#!!! defaultne nastavujem domenu na master domenu, ak nie je definovana z typecka
+	$env{domain}=$tom::Hm unless ($env{domain});
+
+	main::_log("
+		SELECT *
+		FROM
+			$env{db_410}.a410
+		WHERE
+			ID='$env{IDquestion}'
+			AND (domain IS NULL OR domain='$env{domain}')
+			AND starttime<=$tom::time_current
+			AND (endtime IS NULL OR endtime>=$tom::time_current)
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'
+		LIMIT 1
+	");
+
+	my $db0=$main::DBH->Query("
+		SELECT *
+		FROM
+			$env{db_410}.a410
+		WHERE
+			ID='$env{IDquestion}'
+			AND (domain IS NULL OR domain='$env{domain}')
+			AND starttime<=$tom::time_current
+			AND (endtime IS NULL OR endtime>=$tom::time_current)
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'
+		LIMIT 1
+	");
+	if (%db0_line=$db0->fetchhash)
+	{
+		if ($db0_line{IDlink})
+		{
+			$env{IDquestion}=$db0_line{IDlink};
+			goto loop;
+		}
+	}
+	else
+	{
+		main::_log("no data available!");
+		$XSGN{TMP}=$XSGN{ERROR_QUESTION};
+		return 1;
+	}
+
+	#$XSGN{TMP}.="question:$db0_line{title} with $db0_line{votes}<BR>";
+	$XSGN{TMP}=$XSGN{TMP_ok};
+	$XSGN{TMP}=~s|<%QUESTION%>|$db0_line{title}|;
+
+	# NAJPRV NAJDEM CI MOZEM HLASOVAT ZA TUTO ODPOVED
+
+	my $db1=$main::DBH->Query("
+		SELECT *
+		FROM
+			$env{db_410}.a410_answer
+		WHERE
+			ID='$env{IDanswer}'
+			AND IDquestion='$env{IDquestion}'
+			AND starttime<=$tom::time_current
+			AND (endtime IS NULL OR endtime>=$tom::time_current)
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'
+	");
+	if (my %db1_line=$db1->fetchhash)
+	{
+		#$XSGN{TMP}.="najdeny answer $env{IDanswer} $db1_line{answer}<BR>";
+	}
+	else
+	{
+		#$XSGN{TMP}.="nenajdeny answer\n";
+		$tom::ERR="Tried to vote for non-existing answer!!! ID_question-$env{IDquestion} IDanswer-$env{IDanswer}";
+		return 1;
+	}
+
+	# ZISTUJEM CI SOM UZ NAHODOU NEHLASOVAL
+
+	my $db2=$main::DBH->Query("
+		SELECT *
+		FROM
+			$env{db_410}.a410_votes
+		WHERE
+			IDuser='$main::USRM{IDhash}'
+			AND IDquestion='$env{IDquestion}'
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'
+	");
+	if (my %db2_line=$db2->fetchhash)
+	{
+		#$XSGN{TMP}.="uz si hlasoval<BR>";
+		main::_log("vote not added. you already voted!");
+		$XSGN{TMP}=$XSGN{ERROR_VOTED};
+		return 1;
+	}
+	else
+	{
+		if($main::DBH->Query("
+			INSERT INTO
+				$env{db_410}.a410_votes
+			(
+				IDquestion,
+				IDanswer,
+				IDuser,
+				votetime,
+				lng,
+				active
+			)
+			VALUES
+			(
+				'$env{IDquestion}',
+				'$env{IDanswer}',
+				'$main::USRM{IDhash}',
+				'$tom::time_current',
+				'$env{lng}',
+				'Y'
+			)
+		"))
+		{
+			main::_log("vote successfully added :)");
+		}
+	}
+
+	# prepocitanie hlasov pre anketu
+	my $db2=$main::DBH->Query("
+		SELECT
+			COUNT(*)
+		FROM
+			$env{db_410}.a410_votes
+		WHERE
+			IDquestion='$env{IDquestion}'
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'
+	");
+	if (my @db2_line=$db2->fetchrow)
+	{
+		#$XSGN{TMP}.="celkom hlasov - $db2_line[0]<BR>";
+		$XSGN{TMP}=~s|<%VOTES%>|$db2_line[0]|;
+		$main::DBH->Query("
+			UPDATE
+				$env{db_410}.a410
+			SET
+				votes=$db2_line[0]
+			WHERE
+				ID='$env{IDquestion}'
+				AND (domain IS NULL OR domain='$env{domain}')
+				AND starttime<=$tom::time_current
+				AND (endtime IS NULL OR endtime>=$tom::time_current)
+				AND (lng='$env{lng}' OR lng='')
+				AND active='Y'
+			LIMIT 1
+		");
+	}
+
+	my $db2=$main::DBH->Query("
+		SELECT
+			COUNT(*)
+		FROM
+			$env{db_410}.a410_votes
+		WHERE
+			IDquestion='$env{IDquestion}'
+			AND IDanswer='$env{IDanswer}'
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'
+	");
+	if (my @db2_line=$db2->fetchrow)
+	{
+		#$XSGN{TMP}.="hlasov odpovede - $db2_line[0]<BR>";
+		$XSGN{TMP}=~s|<%VOTES_ANSWER%>|$db2_line[0]|;
+		$main::DBH->Query("
+			UPDATE
+				$env{db_410}.a410_answer
+			SET
+				votes=$db2_line[0]
+			WHERE
+				ID='$env{IDanswer}'
+				AND IDquestion='$env{IDquestion}'
+				AND starttime<=$tom::time_current
+				AND (endtime IS NULL OR endtime>=$tom::time_current)
+				AND (lng='$env{lng}' OR lng='')
+				AND active='Y'
+			LIMIT 1
+		");
+	}
+
+=head1
+
+  my $db1=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_410}.a410_answer
+	WHERE 	IDentity='$env{ID}'
+		AND starttime<=$tom::time_current
+		AND (endtime IS NULL OR endtime>=$tom::time_current)
+		AND (lng='$env{lng}' OR lng='')
+		AND active='Y'");
+  while (my %db1_line=$db1->fetchhash)
+  {
+   $XSGN{TMP}.="answer $db1_line{ID} - <a href=\"http://app.markiza.sk/?|?type=a410_vote\&IDquestion=$env{ID}\&IDanswer=$db1_line{ID}\" target=\"_new\">$db1_line{answer}</a> with $db1_line{votes}<BR>";
+
+   if ($env{stats})
+   {
+    my $var=int($db1_line{votes}/($db0_line{votes}/100));
+    $XSGN{TMP}.="$var%<BR>";
+    my $null=$var*$env{stats_koef};
+    $XSGN{TMP}.="koef-$null<BR>";
+   }
+
+  }
+
+=cut
+
+	return 1;
+}
+
+1;

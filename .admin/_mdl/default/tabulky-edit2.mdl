@@ -1,0 +1,121 @@
+sub BaseModul
+{
+ $HTML_HEADER{BODY}{extract}="yes";
+
+ if ($form{submit} eq "Ulož!")
+ {
+
+my $id=$form{id};
+if ($form{set})
+{
+ $form{year1}-=1900;
+ $form{mom1}--;
+ $form{variables}=~s|\'|\\'|g;
+ my $starttime=timelocal(undef,$form{min1},$form{hour1},$form{day1},$form{mom1},$form{year1},undef,undef,undef);
+
+ if ($id)
+ {
+  $dbh->Query("UPDATE sport_markiza_sk.tabulky SET starttime='$starttime',IDcathegory='$form{IDcathegory}',title='$form{title}',variables='$form{variables}' WHERE ID='$id' LIMIT 1");
+ }
+ else
+ {
+  $dbh->Query("INSERT INTO sport_markiza_sk.tabulky(starttime,IDcathegory,title,variables) VALUES ('$starttime','$form{IDcathegory}','$form{title}','$form{variables}')");
+ }
+ return "\n<script>\nparent.document.frames['frm_base'].location.reload();\n</script>";
+}
+
+ }
+
+
+ my $mdl_temp=<<" HEADER";
+<BR>
+ HEADER
+
+if ($form{id})
+{
+ $mdl_temp.=<<" HEADER";
+<table height=16 width=100% cellspacing=0 cellpadding=0 border=0 background="$tom::H_media/grf/admin/win_top_0_back.gif"><tr><td width=50% align=right><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td><td><center><input type=button drag_here value="Copy to Editor+" class=btn0 onclick="edit.focus();document.selection.createRange().pasteHTML(copy_$current_time.innerHTML);"></center></td><td align=left width=50%><img src="$tom::H_media/grf/admin/win_top_0_del.gif" border=0><BR></td></tr></table>
+ HEADER
+}
+
+$mdl_temp.=<<" HEADER";
+
+<center>
+<div id="copy_$current_time">
+ <table cellspacing=1 cellpadding=1 border=0 bgcolor=black align=left id=$form{id}>
+ <%LINE0%>
+ <%LINES%>
+ </table>
+</div>
+</center>
+
+ HEADER
+
+ my $mdl_temp_line0=<<" HEADER";
+<tr>
+ <td colspan=<%TD%> bgcolor="#4B5398" style="FONT:bold 12px Arial;"><font color=white><%NAME%></td>
+</tr>
+<tr>
+ <%TD%>
+</tr>
+ HEADER
+
+  if ($form{variables}=~/;/)
+  {
+	$form{variables}=~s|^(.*?)\n||;
+	my $line=$1;
+	my @ref=split(';',$line);
+	my $td=@ref;
+	$mdl_temp=~s|<%LINE0%>|$mdl_temp_line0|;
+	$mdl_temp=~s|<%TD%>|$td|;
+	$mdl_temp=~s|<%NAME%>|$form{title}|;
+	for (0..$td-1)
+	{
+	 $mdl_temp=~s|<%TD%>|<td bgcolor="#A0A0C0" style="FONT:bold 11px Verdana;">$ref[$_]</td><%TD%>|;
+	}
+	$mdl_temp=~s|<%TD%>||;
+
+
+	for my $line(split('\n',$form{variables}))
+	{
+	 $mdl_temp=~s|<%LINES%>|<tr><%TD%></tr><%LINES%>|;
+	 my $td;
+	 for (split(';',$line))
+	 {
+          my $plus="bgcolor=\"#E0E0E0\"";
+          $plus="bgcolor=\"#A0A0C0\"" if (!$td);
+	  $td++;
+	  $mdl_temp=~s|<%TD%>|<td $plus style="FONT:10px Verdana;">$_</td><%TD%>|;
+	 }
+	 $mdl_temp=~s|<%TD%>||;
+	}
+	$mdl_temp=~s|<%LINES%>||;
+  }
+  else
+  {
+	$form{variables}=~s|[\n\r]|<BR>|g;
+	$mdl_temp=~s|<%LINE0%>|$mdl_temp_line0|;
+	$mdl_temp=~s|<%TD%>|1|;
+	$mdl_temp=~s|<%NAME%>|$form{title}|;
+	$mdl_temp=~s|<%TD%>|<td bgcolor="#E0E0E0" style="FONT:12px Verdana;">$form{variables}</td>|;
+  }
+
+  $mdl_temp=~s|<%.*?%>||g;
+
+
+
+ return	$mdl_temp}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

@@ -1,0 +1,43 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+sub execute
+{
+ my %env=@_;
+
+ 
+ 
+  if (!$main::FORM{_ITst_decode})
+ {
+  if (not $main::H->{OUT}{BODY}=~/<!TMP-ITst!>/){$main::H->{OUT}{BODY}="<!TMP-ITst!>".$main::H->{OUT}{BODY}}
+  Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"100",
+	-name		=>	"menu_test",
+	-global		=>	1,
+	-TMP		=>	"ITst",
+	);
+ }
+ else
+ {
+  Tomahawk::designmodule(
+	-type		=>	"dmdl",
+	-category		=>	"100",
+	-name		=>	"decoded",
+	-global		=>	1,
+	-TMP			=>	"ITst",
+	);
+ }
+ 
+ 
+ 
+ 
+
+ return 1;
+}
+1;

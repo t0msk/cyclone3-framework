@@ -1,0 +1,158 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+BEGIN {require "/usr/bin/tom3-init";}
+use Mysql;
+use Database::connect;
+use Utils::datetime;
+#use strict;
+
+#print color 'bold green';
+
+$main::time_current=time;
+
+%form=
+(
+ '--domain'	=>	"cache host (eg. localhost.com)",
+# '-v'		=>	"verbose all",
+# '--verb'	=>	"verbose number",
+# '--del'	=>	"delete number",
+# '--master'	=>	"masterize number",
+# '--global'	=>	"globalize number",
+# '--local'	=>	"localize number",
+# '--edit'	=>	"edit number",
+# '--recacheID'	=>	"recache number",
+# '-vv, --v'	=>	"verbosity 2, --v=2",
+# '-a'		=>	"analyze",
+# '-s'		=>	"show only all modifications",
+);
+if (($FORM{h})||($FORM{help})){&help();}
+if (!$FORM{domain}){&help();}
+
+=head1
+$FORM{domian}=~s|^www\.||i;
+$main::h=$FORM{domain};$main::h=~s|\.|_|g;$main::h=~s|/|__|g;
+
+my $path=$FORM{domain};$path=~s|^(.[^/]*)(.*)||;
+my $path_dom=$1;my $path_sub=$2;
+$path_dom=~s|(.*\.\|)(.*?\..*?)$|\1|;
+$main::p="!$2";$path_dom=~s|\.$||;
+
+foreach (reverse split('\.',$path_dom)){$main::p.="/!$_";}
+foreach (split('/',$path_sub)){$main::p.="/$_";}
+
+$main::p=~s|//|/|g;
+$main::p=$main::P."/".$main::p;
+print "p:".$main::p."\n";
+print "h:".$main::h."\n";
+=cut
+
+if (not -e $p."/local.conf")
+{
+ print color 'reset bold yellow';
+ print "domain $main::h not exists\n";
+ &exit();
+}
+
+require $p."/local.conf";
+$tom::P=$p;
+#my $DBH = Mysql->Connect($TOM::DB_host,$h,$TOM::DB_user,$TOM::DB_pass);
+
+
+print "\n";
+
+
+print "+TYPE\n";
+print " +defined\n";
+
+print color 'reset bold green';
+foreach (sort keys %tom::type_c)
+{
+	my $type=$tom::type_c{$_};
+	my $type_global=" ";
+	if ($type=~s/^([^0-9]+)//)
+	{
+		$type_global=$1;
+	}
+	$type=sprintf("%04d",$type);
+	
+	
+	print "  +[$type_global] ".($type)." {".sprintf("%-20s",$_)."}\n";
+	
+	my $filename=do
+	{
+		($type_global eq "m") ? $tom::Pm."/_type/m".$type.".cml_type" :
+		$tom::P."/_type/".$type.".cml_type"
+	};
+	
+	#print "       + $filename\n";
+	open (HND,"<".$filename) || die "can't $!";
+	my $file_data;while (my $line=<HND>){$file_data.=$line};
+	#print "$file_data\n";
+	while ($file_data=~s|<MODULE>(.*?)</MODULE>||s)
+	{
+		my $data=$1;
+		my %module;
+
+		#%module=map {$1 => $2} ($data=~/<VAR id="(.*?)" value="(.*?)" \/>/g);
+
+		$module{$1}=$2 while ($data=~s|<VAR id="(.*?)" value="(.*?)" />||);
+#		{
+#			$module{$1}=$2;
+#		}
+				
+#		foreach (keys %module)
+#		{
+#			print "          +$_=$module{$_}\n";
+#		}
+
+
+
+		$module{-xsgn}="default" unless $module{-xsgn};
+		$module{-xlng}="*" unless $module{-xlng};
+		$module{-version}="0" unless $module{-version};
+		if ($module{-type} eq "dmdl")
+		{
+			print "       +$module{-category}-$module{-name}.$module{-xsgn}.$module{-xlng}.dmdl\n";
+		}
+		elsif ($module{-type} eq "mdl")
+		{
+			print "       +$module{-category}-$module{-name}.$module{-version}.mdl\n";
+		}
+		elsif ($module{-type} eq "smdl")
+		{
+			print "       +$module{-category}-$module{-name}.$module{-version}.smdl\n";
+		}
+		
+		#print " $module{-name}\n";
+		
+				
+
+		
+		
+		#print "       +\n";
+	}
+}
+print color 'reset green';
+
+
+print " +not defined\n";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+&exit();

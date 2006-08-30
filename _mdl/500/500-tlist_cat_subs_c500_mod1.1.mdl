@@ -1,0 +1,240 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+#alarm 3;
+sub execute
+{
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+
+ $env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+ $env{db_500}=$TOM::DB_name unless $env{db_500};
+ $env{max_lines}="10" unless $env{max_lines};
+ $env{max_cat_subs}="6" unless $env{max_cat_subs};
+ $env{max_cat}="6" unless $env{max_cat};
+ $env{max_cat_if_first}="4" unless $env{max_cat};
+ $env{format}="t" unless $env{format};
+ $env{format_first}="f" unless $env{format_first};
+ $env{get_subs}="0" unless $env{get_subs};
+ $env{get_direct_subs}="0" unless $env{get_direct_subs};
+
+ $env{a500_cat}="" unless $env{a500_cat};
+ $env{a500_cat_page}=0 unless $env{a500_cat_page};
+ $env{a500_cat_img_page}=0 unless $env{a500_cat_img_page};
+
+ ##### fetching cathegory path #####
+
+ my $var=$env{a500_cat};
+ my $tempcat;
+
+ if ($var ne "")
+ {
+	my $select;
+	while ($var=~s|^(..)||)
+	{
+	 $tempcat=$tempcat.$1;
+	 if (length($tempcat)==2){$select.="ID='$tempcat' ";}else{$select.="OR ID='$tempcat' "}
+	}
+
+	my $db0=$main::DBH->Query("
+	SELECT
+		ID,name
+	FROM $env{db_500}.a500_category
+	WHERE
+		$select
+	ORDER BY ID ASC
+	");
+	#if (my %db0_line=$db0->FetchHash()){$env{cat_path}.=$db0_line{name}.' / '; $tempcat.=$1;}
+	while (my %db0_line=$db0->FetchHash())
+	{
+	 $XSGN{HEADER}=~s|<#HEADER_ITEM#>|$XSGN{HEADER_ITEM}|;
+	 #$temp_path=~s|<#HEADER_ITEM#>|$XSGN{HEADER_ITEM}|;
+	 $XSGN{HEADER}=~s|<%CAT_NAME%>|$db0_line{name}|;
+	 $XSGN{HEADER}=~s|<%ID_CAT%>|$db0_line{ID}|;
+	}
+ }
+
+ $XSGN{HEADER}=~s|<#HEADER_ITEM#>||;
+
+ if ($env{header_only} eq 1)
+ {
+  $XSGN{TMP}=$XSGN{HEADER};
+  $XSGN{TMP}=~s|<%CAT_PATH%>|$env{cat_path}|g;
+  return 1;
+ }
+ else
+ {
+  $XSGN{TMP}=~s|<#HEADER#>|$XSGN{HEADER}|;
+  $XSGN{TMP}=~s|<%CAT_PATH%>|$env{cat_path}|g;
+ }
+
+ my $prevCat;
+ my $counter=0;
+ my $db_counter=0;
+
+ if ($env{get_direct_subs} eq "1"){$env{select}= $env{a500_cat}."__";}else{$env{select}=$env{a500_cat};}
+ if ($env{get_subs} eq "1"){$env{select}.="%";}
+
+ my $linkcat;
+
+ ##### skipping searching for subcategories which contain further subcategories at first #####
+
+ ##### searching for the other subcategories, with no further subcategories #####
+
+ if ($counter ne $env{max_lines})
+ {
+  my $firstItem=1;
+  $db_counter=0;
+
+  my $db0=$main::DBH->Query("
+	SELECT
+		ID, name
+	FROM
+	     $env{db_500}.a500_category
+	WHERE
+          ID LIKE '$env{select}'
+		AND active='Y'
+	ORDER BY ID
+	");
+ while (my %db0_line=$db0->FetchHash())
+ {
+   $db_counter++;
+   next if ((($env{get_direct_subs} eq "1")||($env{get_subs} eq "1"))&&($db0_line{ID} eq $env{a500_cat}));
+   next if ($db_counter<=($env{a500_cat_page}*$env{max_lines}));
+   next if ($counter==$env{max_lines});
+
+   my $xcounter;
+
+   $linkcat=$db0_line{ID};
+   $XSGN{TMP}=~s|<#ITEM#>||;
+   $XSGN{TMP}=~s|<#LINE#>|$XSGN{LINE}<#LINE#>|;
+   $xcounter=0;
+   $firstItem=1;
+
+   if (length($db0_line{ID}) > length($env{a500_cat})+2)
+   {
+	if ($xcounter > $env{max_cat_subs}){next;}
+   }
+
+   $XSGN{TMP}=~s|<#ID#>|$db0_line{ID}|;
+   $XSGN{TMP}=~s|<%NAME%>|$db0_line{name}|;
+
+   my $db1=$main::DBH->Query("
+	SELECT
+		a.ID,a.hash,a.IDcategory,c.name
+	FROM $env{db_500}.a500 AS a
+	LEFT JOIN $env{db_500}.a500_attrs AS b ON a.ID=b.ID
+	LEFT JOIN  $env{db_500}.a500_category AS c ON a.IDcategory=c.ID
+	WHERE
+		a.format='$env{format_first}'
+		AND a.active='Y'
+		AND b.IDcategory LIKE '$db0_line{ID}%'
+	ORDER BY b.inserttime DESC
+	LIMIT 1
+	");
+   if (my %db1_line=$db1->FetchHash())
+   {
+      $db1_line{ID}=~/(.{4})/;
+      my $add=$1;
+	 $XSGN{TMP}=~s|<#ITEM#>|$XSGN{ITEM1}|;
+
+      $XSGN{TMP}=~s|<%IMG%>|$tom::H_500\/$add\/$db1_line{hash}-$env{format_first}|;
+	 $XSGN{TMP}=~s|<%ID%>|$db1_line{ID}|g;
+	 $XSGN{TMP}=~s|<%ID_CAT%>|$db0_line{ID}|g;
+	 #$XSGN{TMP}=~s|<%ID_CAT%>|$linkcat|g;
+      $XSGN{TMP}=~s|<%CAT_NAME%>|$db1_line{name}|g;
+
+	 $xcounter++;
+	 $firstItem=0;
+   }
+   my $limiter;
+   if ($xcounter>0)
+   {
+	$env{max_cat}=$env{max_cat}-$env{max_cut_if_first};
+	$limiter="1,$env{max_cat}";
+	$env{max_cat}=$env{max_cat}+$env{max_cut_if_first};
+   }else{$limiter="$env{max_cat}";}
+=head1
+$XSGN{TMP}="
+     SELECT
+          a.ID,a.hash,a.IDcategory,c.name
+     FROM $env{db_500}.a500 AS a
+     LEFT JOIN $env{db_500}.a500_attrs AS b ON a.ID=b.ID
+     LEFT JOIN  $env{db_500}.a500_category AS c ON a.IDcategory=c.ID
+     WHERE
+          a.format='$env{format}'
+     	AND a.active='Y'
+     	AND b.IDcategory LIKE '$db0_line{ID}%'
+	ORDER BY a.ID
+	LIMIT $limiter
+	"; return 1;
+=cut
+   my $db1=$main::DBH->Query("
+     SELECT
+          a.ID,a.hash,a.IDcategory,c.name
+     FROM $env{db_500}.a500 AS a
+     LEFT JOIN $env{db_500}.a500_attrs AS b ON a.ID=b.ID
+     LEFT JOIN  $env{db_500}.a500_category AS c ON a.IDcategory=c.ID
+     WHERE
+          a.format='$env{format}'
+     	AND a.active='Y'
+     	AND b.IDcategory LIKE '$db0_line{ID}%'
+	ORDER BY b.inserttime DESC
+	LIMIT $limiter
+     ");
+   while (my %db1_line=$db1->FetchHash())
+   {
+      $db1_line{ID}=~/(.{4})/;
+      my $add=$1;
+	 $XSGN{TMP}=~s|<#ITEM#>|$XSGN{ITEM2}|;
+
+      $XSGN{TMP}=~s|<%IMG%>|$tom::H_500\/$add\/$db1_line{hash}-$env{format}|;
+	 $XSGN{TMP}=~s|<%ID%>|$db1_line{ID}|g;
+	 $XSGN{TMP}=~s|<%ID_CAT%>|$db0_line{ID}|g;
+	 #$XSGN{TMP}=~s|<%ID_CAT%>|$linkcat|g;
+      $XSGN{TMP}=~s|<%CAT_NAME%>|$db1_line{name}|g;
+
+	 $xcounter++;
+   }
+   $counter++;
+  }
+ }
+
+#$XSGN{TMP}.="moffo2=$counter,$env{max_lines}, $env{get_direct_subs}, $env{get_subs} : $env{a500_cat}; ";
+
+ my $var;
+ if ($env{a500_cat_page}>0)
+ #if ((($counter ne $env{max_lines}) && ($db_counter>($env{max_lines}*$env{a500_cat_page}))) || ((0<($db_counter-$counter)) && ($env{a500_cat_page} ne 0)))
+ {
+	$XSGN{TMP}=~s|<#PAGER#>|$XSGN{PAGER}|;
+	$var=$env{a500_cat_page}-1;
+	$XSGN{TMP}=~s|<#PREV#>|$XSGN{PREV}|;
+	$XSGN{TMP}=~s|<%CAT_PAGE%>|$var|;
+	$XSGN{TMP}=~s|<%CAT_IMG_PAGE%>|$env{a500_cat_img_page}|;
+	$XSGN{TMP}=~s|<%ID_CAT%>|$env{a500_cat}|g;
+ }
+
+ if (($counter==$env{max_lines}) && ($counter<$db_counter))
+ {
+	$XSGN{TMP}=~s|<#PAGER#>|$XSGN{PAGER}|;
+	$XSGN{TMP}=~s|<#NEXT#>|$XSGN{NEXT}|;
+	$var=$env{a500_cat_page}+1;
+	$XSGN{TMP}=~s|<#NEXT#>|$XSGN{NEXT}|;
+	$XSGN{TMP}=~s|<%CAT_PAGE%>|$var|;
+	$XSGN{TMP}=~s|<%CAT_IMG_PAGE%>|$env{a500_cat_img_page}|;
+	$XSGN{TMP}=~s|<%ID_CAT%>|$env{a500_cat}|g;
+ }
+
+ return 1;
+}
+
+
+1;
+
+
+
+

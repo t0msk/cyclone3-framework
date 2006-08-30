@@ -1,0 +1,47 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+use Mysql;
+require "/usr/bin/tom3-init";
+%form=
+(
+	'--domain'	=>	"show team for domain (eg. localhost.com)",
+#	'-a'		=>	"show config all domains",
+);
+
+require "/www/TOM/.core/_config.sg/TOM.conf";
+require "/www/TOM/.core/_config/TOM.conf";
+#require "/www/TOM/.core/_config/cron.conf";
+
+$CRON::P="/www/TOM";
+$cron::P=$CRON::P;
+	
+if ($FORM{domain})
+{
+	require $p."/local.conf";
+	$cron::P=$main::p;
+	#print "$FORM{-category}\n";
+	
+	
+	#print "default language"
+	
+	foreach (sort keys %TOM::contact)
+	{
+		next if (not $_=~/^[A-Z]+$/ || $_ eq "manager");
+		
+		print "[ ".sprintf("%-5s",$_)." ] [ ";
+		
+		print "[ ".sprintf("%-55s",$TOM::contact{$_})." ]\n";
+		
+		#print "$_:$TOM::contact{$_}\n";
+	}
+	
+}
+
+
+
+
+
+
+
+
+&exit();

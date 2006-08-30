@@ -1,0 +1,43 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+
+	<style>
+		ul li ul li {margin-left:10px}
+		ul li ul li ul li {margin-left:20px}
+		ul li ul li ul li ul li{margin-left:30px}
+	</style>
+	
+ 	testik menu<br/>
+	
+	<#MENU#>
+	
+</DEFINITION>
+
+ 
+<DEFINITION id="LEVEL">
+<li>
+	-<%level%>-<a href="?|?opened=<%path%>"><%name%></a>
+	<#MENU#>
+</li>
+<#MENU#>
+</DEFINITION>
+
+<DEFINITION id="LEVEL_H">
+<li>
+	HIGHLIGHTED-<%level%>-<%name%>
+	<#MENU#>
+</li>
+<#MENU#>
+</DEFINITION>
+
+
+<DEFINITION id="GATEWAY">
+<ul>
+	<#MENU#>
+</ul>
+</DEFINITION>
+ 
+
+</XML_DESIGN_DEFINITION>

@@ -1,0 +1,23 @@
+sub BaseModul
+{
+ my $id=$form{id};
+
+ $dbh->Query("UPDATE photogallery_cathegory SET top='N'");
+ $dbh->Query("UPDATE photogallery_cathegory SET top='Y' WHERE ID='$id' LIMIT 1");
+ return "\n<script>\nparent.document.frames['frm_base'].location.reload();\n</script>";
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+1;

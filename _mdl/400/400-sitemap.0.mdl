@@ -1,0 +1,400 @@
+#!/usr/bin/perl
+# ????? - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+our $authors = "gregor\@webcom.sk";
+
+sub execute
+{
+	my %env = @_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	if ($env{xt_xlng})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+
+	# FIXME: sitemapa je rovnaka na yms aj alhamcopartners
+
+	# - where
+	# - Management IDcategory - IDcategory, IDcategory_exclude
+	# - direction
+	# - na konci moze byt subory
+	# - LINE: LINE, LINE_last, LINE_selected, LINE_article
+	# - moznost _config
+	# - ? moznost zobrazovat namiesto kategorii - subory
+
+=head1
+	ak nie je zadane like z modulu
+		kedy je cesta
+		- ked je direction to
+		- ked nie je zadany direction ale je kategoria
+		kedy je sitemap
+		- ked nie je ani direction ani kategoria
+		- ked je direction from
+
+	where
+	 - db_where, pridava sa do selectu
+
+	like
+	 - ak sa like, posle ako parameter do modulu, v module sa uz nevyskladava
+=cut
+
+=head1
+	db_
+		SELECT db_select
+		FROM a400_category
+		WHERE
+			db_where
+				db_like
+			db_active
+			db_lng
+			db_order_by
+			db_limit
+=cut
+
+	# NASTAVENIA
+	# informacie z _config pre url
+
+	$env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+	$env{db_400}=$TOM::DB{main}{name} unless $env{db_400};
+
+	$env{db_400_url}=$env{db_400} unless $env{db_400_url};
+	$env{a400_IDcategory_url}=Tomahawk::Getmdlvar("400",'IDcategory_url', db=>$env{db_400_url});
+
+	my %IDcategory_url_hash = ( $env{a400_IDcategory_url}=~/([^\r\n;]+);([^\r\n]+)/g );
+
+	# prevody zo starych typov premennych na nove
+	$env{db_limit} = $env{limit} if $env{limit};
+	$env{db_like} = $env{like} if $env{like};
+
+	# IDcategory
+	# nastavim defaultnu kategoriu ak nie je zadana normalna IDcategory
+	$env{db_IDcategory} = $env{db_IDcategory_def} if !$env{db_IDcategory} && $env{db_IDcategory_def};
+	# IDcategory exclude
+	$env{db_IDcategory_ex} = $env{db_IDcategory_exclude} if !$env{db_IDcategory_ex} && $env{db_IDcategory_exclude};
+	if ($env{db_IDcategory_ex})
+	{
+		my @exclude;
+		@exclude = split ";", $env{db_IDcategory_ex} if $env{db_IDcategory_ex} =~ /;/;
+		@exclude = split ",", $env{db_IDcategory_ex} if $env{db_IDcategory_ex} =~ /,/; # DEPRECATED
+		$env{db_IDcategory_ex} = "" if @exclude;
+		unless (@exclude)
+		{
+			$env{db_IDcategory_ex} = "'$env{db_IDcategory_ex}'" unless $env{db_IDcategory_ex} =~ /'/;
+		}
+		foreach (@exclude)
+		{
+			$env{db_IDcategory_ex} .= "'$_'" unless $_ =~ /'/;
+			$env{db_IDcategory_ex} .= "$_" if $_ =~ /'/; # DEPRECATED
+		}
+		$env{db_IDcategory_ex} = "AND ID not in ($env{db_IDcategory_ex})";
+	}
+	# ake kategorie maju byt otvorene
+	if ($env{db_IDcategory_open})
+	{
+		$env{global_variable_open} = $env{db_IDcategory_open};
+		my $tmp_open;
+		foreach (split ";", $env{db_IDcategory_open})
+		{
+			if ($_)
+			{
+				$tmp_open .= ", " if $tmp_open;
+				$tmp_open .= "'$_'";
+			}
+		}
+		$env{db_IDcategory_open} = " AND ID in ($tmp_open)" if $tmp_open;
+	}
+	# forma - cesta, alebo sitemap (defaultne sitemap)
+	$env{direction} = "to" if (!$env{direction} && $env{db_IDcategory}); # cesta
+	$env{direction} = "from" unless $env{direction}; # sitemap
+	# where
+	$env{db_where} = "AND $env{db_where}" if $env{db_where} && not $env{db_where_only};
+	# order by
+	$env{db_order_by} = "ORDER BY $env{db_order_by}" if $env{db_order_by};
+	$env{db_order_by} = "ORDER BY ID ASC" unless $env{db_order_by};
+	# limit
+	$env{db_limit} = "LIMIT $env{db_limit}" if $env{db_limit};
+	# selekt
+	$env{db_select} = "ID, name" unless $env{db_select};
+
+	# ak mam clanok - db_ID
+	if ($env{db_ID})
+	{
+		main::_log("Mam clanok s db_ID $env{db_ID}");
+
+		main::_log("
+			SELECT IDcategory
+			FROM $env{db_400}.a400
+			WHERE ID='$env{db_ID}'
+		");
+		
+		my $db_article = $main::DB{main}->Query("
+			SELECT IDcategory
+			FROM $env{db_400}.a400
+			WHERE ID='$env{db_ID}'
+		");
+
+		my %db_article_line = $db_article->fetchhash;
+		$env{db_IDcategory} = $db_article_line{IDcategory};
+	}
+
+	# ak po vsetkych nastaveni nemam IDcategory
+	if ($env{db_IDcategory} eq "null")
+	{
+		$env{db_IDcategory} = "%";
+	}
+	else
+	{	
+		$env{db_IDcategory} = "00" unless $env{db_IDcategory};
+	}
+
+	main::_log("xxx".$env{db_IDcategory});
+
+	# vyskladanie LIKE
+	unless ($env{db_like})
+	{
+		# ak je direction=from a kategoria nema na konci _ alebo %
+		# potom jej pridam na koniec %
+		$env{db_IDcategory} .= "%" if
+		(
+			$env{direction} eq "from" && $env{db_IDcategory}=~/(.)$/ && $1 ne "_" && $1 ne "%"
+		);
+		$env{db_like} = "ID like '$env{db_IDcategory}'" if $env{direction} eq "from";
+		$env{db_like} = "'$env{db_IDcategory}' like concat(ID, '%')" if $env{direction} eq "to";
+	}
+
+	# definitivne rozhodnutie o where podmienke na zaklade db_where_only parametra
+	unless ($env{db_where_only})
+	{
+		$env{db_where} = "
+			$env{db_like}
+			$env{db_where}
+			$env{db_IDcategory_ex}
+			$env{db_IDcategory_open}
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'
+		";
+	}
+	else
+	{
+		if ($env{db_where} && $env{db_where_keep_lang})
+		{
+			$env{db_where} .= " AND (lng='$env{lng}' OR lng='')";
+		}
+	}
+
+	# Idem uz pracovat - zacnem selektom kategorii
+	main::_log("
+		SELECT $env{db_select}
+		FROM $env{db_400}.a400_category
+		WHERE
+			$env{db_where}
+			$env{db_order_by}
+			$env{db_limit}
+	");
+	
+	my $db0 = $main::DB{main}->Query("
+		SELECT $env{db_select}
+		FROM $env{db_400}.a400_category
+		WHERE
+			$env{db_where}
+		$env{db_order_by}
+		$env{db_limit}
+	");
+
+	my $countline = 0; # sem si ukladam poradove cislo LINE
+	my %levelCountline; # toto sluzi ako pocitadlo poloziek v ramci levelu
+	my $numrows = $db0->numrows; # pocet riadkov
+
+	my $firstLevel; 
+	my $lastID; # podla neho si zistujem level v ktorom som
+	$XSGN{TMP} =~ s/<#LIST#>/$XSGN{LIST}/; # vsetko davam rovno do TMP
+
+	main::_log("Ziskal som zaznamy, prechadzam ich") if $numrows;
+ 	my $url_all;
+	# prechadzam zaznamy
+	while (my %db0_line = $db0->fetchhash)
+	{ 
+
+		# ak je prvy riadok, nastavim si ID (akoby starej urovne)
+		unless ($countline)
+		{
+			$lastID = $db0_line{ID};
+			$firstLevel = length($db0_line{ID})/2;
+		}
+		
+		$countline++;
+
+		my $ID = $db0_line{ID}; # sucasne ID
+
+		# nastavenie urovni
+		my $level = (length($ID)/2) - $firstLevel; my $lastLevel = (length($lastID)/2) - $firstLevel;
+
+		# ak nastavim maximalny level, za neho uz nejdem
+		next if $env{max_level} && $level > $env{max_level};
+
+		# vynulujem pocet poloziek v leveli, ak prisiel novy level
+		if ($levelCountline{"level$level"}) { $levelCountline{"level$level"}++; }
+		else { $levelCountline{"level$level"} = 1; }
+
+		if ($level<$lastLevel) { delete $levelCountline{"level$lastLevel"}; }
+
+		# pozeram ci je splneny limit poctu poloziek, pre danu uroven, alebo pre vsetky
+		next if $env{"level_${level}_limit"} && $levelCountline{"level$level"}>$env{"level_${level}_limit"};
+		
+		my $null; # toto je tmp premenna - aktualna polozka
+
+		# rozhodnem sa aku bude mat formu
+		$null = $XSGN{LINE};
+		$null = $XSGN{"LINE_level_$level"} if exists $XSGN{"LINE_level_$level"};
+
+		# exchanging links heading to external locations
+		# $env{IDcategory_url_allow} = 1;
+		my $url;
+		if ($env{IDcategory_url_allow})
+		{
+			my $var;
+			#main::_log("trying to fetch IDcategory url for $ID $db0_line{name}");
+			foreach (reverse sort keys %IDcategory_url_hash)
+			{
+				$url_all .= $_."<br />\n";
+				#main::_log("comparing $db0_line{ID} against $_");
+				if ($db0_line{ID}=~/^$_/)
+				{
+					main::_log("redirecting to '$IDcategory_url_hash{$_}' (ID: $ID | name: $db0_line{name} | level: $level)");
+					$url = $IDcategory_url_hash{$_};
+					last;
+				}
+			}
+			
+		}
+
+		# pripadne ak najdem Line s poradovym cislom
+		$null = $XSGN{"LINE_$countline"} if (exists $XSGN{"LINE_$countline"});
+		
+		# ak je url linka na externu stranku
+		if ($url=~/^http:/)
+		{
+			$null = $XSGN{LINE_out};
+			$null = $XSGN{"LINE_out_level_$level"} if exists $XSGN{"LINE_out_level_$level"};
+		}
+
+		# posledna kategoria
+		if ($countline>=$numrows && $env{direction} eq "to")
+		{
+			$null = $XSGN{LINE_last};
+			$null = $XSGN{"LINE_last_level_$level"} if exists $XSGN{"LINE_last_level_$level"};
+		}
+
+		# vybrana kategoria
+		if ($db0_line{ID} eq $env{db_select_IDcategory})
+		{
+			$null = $XSGN{LINE_selected};
+			$null = $XSGN{"LINE_selected_level_$level"} if exists $XSGN{"LINE_selected_level_$level"};
+		}
+
+
+		# nahradim url
+		$null=~s|<%url%>|$url|g;
+		$null=~s|<%url-test%>|xx$url|g;
+
+		# rozhodnem sa ci kategoriu po kliknuti na foldrik zavriem alebo otvorim
+		$env{global_variable_open} =~ s|$db0_line{ID};|| if $env{global_variable_open} =~ /$db0_line{ID};/;
+		$env{global_variable_open} .= "$db0_line{ID};" unless $env{global_variable_open} =~ /$db0_line{ID};/;
+		$null =~ s|<%url-open%>|$env{global_variable_open}|g;
+
+		# ak sa nic nenahradilo, tak to zmazem
+		if($null=~/<%url%>/){$XSGN{NULL}=~s|<%url%>||g;}
+
+		# nazov kategorie
+		#$null =~ s/<%NAME%>/$db0_line{name}/g; $null =~ s/<%name%>/$db0_line{name}/g;
+
+		# zamenim premenne
+		foreach (keys %db0_line) { $null =~ s|<%$_%>|$db0_line{$_}|g; }
+
+		# ID kategorie
+		$null =~ s/<%IDcategory%>/$db0_line{ID}/g if $db0_line{ID};
+
+		# FIXME: Level_space sa pouziva iba v SZLH
+		my $level_space = "";
+		for (2 .. $level) { $level_space .= "&nbsp;&nbsp;"; }
+
+		$null =~ s/<%LEVEL_space%>/$level_space/g;
+
+		# level_no je uz globalnejsia zalezitost
+		$null =~ s/<%LEVEL_NO%>/$level/g;
+
+		# OSETRENIE STROMOVEJ STRUKTURY
+		
+		# ak vchadzam do podurovne
+		# - vlozim LIST 
+		if ($level>$lastLevel) {
+			if (exists $XSGN{"LIST_level_$level"})
+			{ $XSGN{TMP} =~ s/<#LIST#>/$XSGN{"LIST_level_$level"}/; }
+			else
+			{ $XSGN{TMP} =~ s/<#LIST#>/$XSGN{LIST}/; }
+		}
+
+		# ak sa vraciam do nadurovne
+		# - pozatvaram vsetky podurovnevne
+		# - zatvorim aj LIST
+		if ($level<$lastLevel) {
+			for ($level .. $lastLevel-1) { $XSGN{TMP} =~ s/<#LINE#>//; }
+			$XSGN{TMP} =~ s/<#LIST#>//;
+		}
+
+		# ak je to len dalsia polozka v rovnakej urovni
+		# - zatvorim LIST (poduroven, nechcem ju)
+		if ($level==$lastLevel) {
+			$XSGN{TMP} =~ s/<#LIST#>//;
+		}
+
+		# VLOZENIE LINE...
+		
+		# - nemam design k LINE_x (normalna situacia)
+		unless (exists $XSGN{"LINE_$countline"})
+		{
+			# ale ak v TMP je LINE_x, treba ju odstranit
+			$XSGN{TMP} =~ s|<#LINE_$countline#>||g if $XSGN{TMP} =~ /<#LINE_$countline#>/;
+
+			$XSGN{TMP} =~ s|<#LINE#>|$null|;
+		}
+
+		# ak mam design LINE_x
+		else
+		{
+			# pozrem sa, ci ho mozem nahradit
+			# ak ano
+			if ($XSGN{TMP} =~ /<#LINE_$countline#>/)
+			{
+				# ak je v LINE_x designe <#LINE#>, potom jednu <#LINE#> zrusim, lebo
+				# - inak by tu boli dva priestory pre LINE a mohlo by to zhaluzit
+				$XSGN{TMP} =~ s|<#LINE#>|| if ( $XSGN{"LINE_$countline"} =~ /<#LINE#>/ );
+
+				$XSGN{TMP} =~ s|<#LINE_$countline#>|$null|g;
+			}
+
+			# ak ho nemozem nahradit, ostava mi len normalny <#LINE#>
+			else
+			{
+				$XSGN{TMP} =~ s|<#LINE#>|$null|;
+			}
+		}
+
+		$lastID = $ID;
+	}
+
+	$XSGN{TMP} =~ s|<#URLALL#>|$url_all|;
+	
+	return 1;
+}
+
+1;

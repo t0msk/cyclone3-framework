@@ -1,0 +1,6 @@
+sub BaseModul
+{
+	return "you should not see this message.<br /><br />please contact your administrator and report what were you doing before this message appeared. thank you.";
+}
+
+1;

@@ -1,0 +1,120 @@
+#!/usr/bin/perl
+# ????? - USE UTF-8 !!!
+package CRON::module;
+use strict;
+
+sub execute
+{
+ my %env=@_;
+ #return 1;
+
+ if (!$env{db_820}){$cron::ERR="not defined database db_820";return undef;}
+
+ $env{max_msgs}=200 unless $env{max_msgs};
+
+
+ # HLADANIE FORUMOV S PRIVELKYM POCTOM PRISPEVKOV
+ my $db0=$main::DBH->Query("
+	SELECT ID,messages,lng
+	FROM $env{db_820}.a820
+	WHERE type='F' AND messages>$env{max_msgs}");
+ my $forums=$db0->NumRows();
+ CRON::debug::log(5,"forumy s viac ako $env{max_msgs} - $forums");
+ while (my %forum=$db0->fetchhash)
+ {
+  CRON::debug::log(6,"uprava forumu $forum{ID} s $forum{messages} spravami");
+  my $db1=$main::DBH->Query("
+	SELECT COUNT(*) FROM $env{db_820}.a820_msgs
+	WHERE	IDforum='$forum{ID}'
+			AND active='Y'
+			AND (lng='$forum{lng}' OR lng='')");
+  if (my @db1_line=$db1->fetchrow)
+  {
+   CRON::debug::log(6,"skutocny pocet $db1_line[0] sprav, zmazat ".($db1_line[0]-$env{max_msgs})." ");
+   $main::DBH->Query("
+	DELETE FROM $env{db_820}.a820_msgs
+	WHERE	IDforum='$forum{ID}'
+		AND active='Y'
+		AND (lng='$forum{lng}' OR lng='')
+	ORDER BY inserttime
+	LIMIT ".($db1_line[0]-$env{max_msgs}));
+   $main::DBH->Query("
+   	UPDATE $env{db_820}.a820
+	SET messages=$env{max_msgs}
+	WHERE	ID='$forum{ID}'
+		AND lng='$forum{lng}'
+	LIMIT 1");
+  }
+ }
+
+
+ # HLADANIE PRAZDNYCH FORUMOV :)
+ my $db0=$main::DBH->Query("
+	SELECT ID,messages,lng,name
+	FROM $env{db_820}.a820
+	WHERE	type='F'
+		AND messages=0
+		AND lasttime<($cron::time_current-(86400*31*3))
+		AND createtime<($cron::time_current-(86400*31*3))
+		AND tactive='N'
+		");
+ my $forums=$db0->NumRows();
+ CRON::debug::log(5,"forumy s 0 spravami,videne >3mesiace - $forums");
+ while (my %forum=$db0->fetchhash)
+ {
+  CRON::debug::log(5,"delete forum $forum{ID} - $forum{name} ($forum{lng})");
+  $main::DBH->Query("DELETE FROM $env{db_820}.a820 WHERE ID='$forum{ID}' AND lng='$forum{lng}' LIMIT 1");
+
+  # nemazat ATTRS, o to sa postara 5dnovy robot potom sam kontrolou!
+  # lebo overovat tu na tomto mieste ci attrs nieje este na nieco previazane, etc... je trosku zbytocne
+  # a 5dnovy cron to precisti rychlo a na 100%
+
+ }
+
+ # HLADANIE NEPOUZIVANYCH FORUMOV :)
+ my $db0=$main::DBH->Query("
+	SELECT ID,messages,lng,name
+	FROM $env{db_820}.a820
+	WHERE	type='F'
+		AND lasttime<($cron::time_current-(86400*31*3))
+		AND createtime<($cron::time_current-(86400*31*3))
+		AND tactive='N'
+		");
+ my $forums=$db0->NumRows();
+ CRON::debug::log(5,"forumy posledne videne pred tromi mesiacmi - $forums");
+ while (my %forum=$db0->fetchhash)
+ {
+  CRON::debug::log(5,"delete forum $forum{ID} - $forum{name} ($forum{lng})");
+  $main::DBH->Query("DELETE FROM $env{db_820}.a820_msgs WHERE IDforum='$forum{ID}' AND (lng='$forum{lng}' OR lng='')");
+  $main::DBH->Query("DELETE FROM $env{db_820}.a820 WHERE ID='$forum{ID}' AND (lng='$forum{lng}' OR lng='') LIMIT 1");
+ }
+
+
+ return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

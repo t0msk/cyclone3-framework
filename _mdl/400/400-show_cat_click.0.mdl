@@ -1,0 +1,100 @@
+#!/usr/bin/perl
+#use strict;
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+
+sub execute
+{
+
+ my %env=@_;
+ Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+ #$XSGN{TMP}="asdf";
+
+ #$XSGN{TMP}=$env{db};
+
+  $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+  $env{db_400}=$TOM::DB_name unless $env{db_400};
+
+
+  $env{IDcat}.="__";
+  while ($env{IDcat}=~s/(..)$//)
+  {
+  	#$XSGN{TMP}.="$env{IDcat}<br/>\n";
+	my $db0=$main::DB{main}->Query("
+	SELECT name FROM $env{db_400}.a400_category
+	WHERE ID='$env{IDcat}'
+	LIMIT 1");
+	if (%db0_line=$db0->fetchhash())
+	{
+		#$XSGN{TMP}.="$db0_line{name}<br/>\n";
+		my $founded;
+		my $link;
+
+		foreach my $key(sort keys %env)
+		{
+			next unless $key=~/^URL_IDcat_(.*)/;
+			my $cat=$1;
+			#$XSGN{TMP}.="control $cat<br/>\n";
+
+
+			if ($cat=~s/!$//) # porovnanie vnutra kategorie
+			{
+				next if $founded eq $cat;
+				if ($env{IDcat}=~/^$cat/)
+				{
+					#$XSGN{TMP}.="!nasiel<br/>\n";
+					$link=$env{$key};
+				}
+			}
+			else # porovnanie pevnej linky
+			{
+
+				if ($env{IDcat} eq $cat)
+				{
+					#$XSGN{TMP}.="nasiel!!!<br/>\n";
+					$founded=$cat;
+					$link=$env{$key};
+					#last;
+				}
+
+			}
+		};
+
+		$link=~s|<%IDcat%>|$env{IDcat}|g;
+
+		#$XSGN{TMP}.="link $link<br/>\n";
+
+		
+		
+		$XSGN{NULL}=$XSGN{LINE};
+		
+		$XSGN{NULL}=~s|<%URL%>|$link|g;
+		$XSGN{NULL}=~s|<%CAT_NAME%>|$db0_line{name}|g;
+		
+		$XSGN{TMP}=~s|<#LINE#>|<#LINE#>$XSGN{NULL}|;
+	}
+  }
+
+
+
+  return 1;
+}
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,484 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+=head1 NAME
+fview_xX
+=cut
+=head1 HEAD_VERSION_BUILD
+3.030731
+=cut
+=head1 DESCRIPTION
+full view clanku s prepojenim na ine tabulky
+a moduly.
+- automaticky select jazyka
+- automaticke hladanie v archive
+- automaticke hladanie v linkach
+- updatuje visits v clanku (ak $env{visits})
+- updatuje lasttime v clanku
+- zobrazuje priradeny forum
+- zobrazuje vkladaci formular forumu
+=cut
+=head1 XMLDESCRIPTION
+
+<DESCRIPTION>
+        <value id="preview" value="1" />
+        <value id="output" value="xsgn" />
+
+        <input id="TMP_view" value="varchar(100)">gateway for the article body</input>
+	<input id="novisits" value="boolean">increase the visits</input>
+	<input id="show_catname" value="boolean">show name of category</input>
+	<input id="shift_first_img" value="boolean">exclude the first image for use in other gateway</input>
+	<input id="TMP_info" value="varchar(100)">gateway for the article information</input>
+	<input id="TMP_same_author" value="varchar(100)">gateway for list of articles from the same author</input>
+	<input id="same_author_return_null" value="boolean">return empty box if no articles from the author are found</input>
+	<input id="same_author_return_string" value="varchar">default content string if no articles from the same author are found</input>
+	<input id="TMP_same_editor" value="varchar(100)">gateway for list of articles from the same editor</input>
+	<input id="same_editor_return_null" value="boolean">return empty box if no articles from the editor are found</input>
+	<input id="same_editor_return_string" value="varchar">default content string if no articles from the same editor are found</input>
+
+	<source type="db_400" value="varchar">articles db name (default - web db_400)</source>????????????????????
+	<source type="db_400" value="varchar">articles db name (default - web db_400)</source>????????????????????
+        <source type="db.table" value="this.a400" />????????????????????
+	<source type="db.table" value="this.a400_arch" />????????????????????
+
+	<input id="xsgn_global" value="0/1/2" />
+
+</DESCRIPTION>
+
+=cut
+=head1 CHANGES
+build 041104 - Deboot
+        *) max_xrelated_c400 parameter added
+        *) format_500_xrelated_c400 parameter added
+        *) db_500 parameter added
+build 030731 - Aben
+        *) pridanie forumov
+build 030730 - Aben
+        *) uprava na MySQL 4.x s UNION SELECTom
+build 030709 - Aben
+        *) db selects fixes
+build 030708 - Aben
+        *) data hash generation
+build 030703 - Aben
+        *) shift_first_img for 400-fview.mdl added
+build 030701 - Aben
+        *) FIRST MAKE
+=cut
+=head1 WARNINGS & BUGS
+        *) ak nenajde clanok vypisuje chybu v SK
+=cut
+
+sub execute
+{
+
+ #Tomahawk::debug::mdllog(0,"ideme na tooo! :)");
+
+ my %env=@_;
+ $env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+ $env{db_400}=$TOM::DB_name unless $env{db_400};
+
+ # pokial taham articles z inej db, tak automaticky
+ # taham aj sources z inej db
+ $env{db_120}=$env{db_400} if ($env{db_400} ne $TOM::DB_name);
+
+ # KDE SU OBRAZKY?
+ $env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+ $env{db_500}=$TOM::DB_name unless $env{db_500};
+
+ # KDE SU FORUMY?
+ $env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+ $env{db_820}=$TOM::DB_name unless $env{db_820};
+
+ my %URL_IDcat; # kazdy clanok ina linka :)
+ if ($env{URL_IDcat})
+ {foreach (keys %env){$_=~/^URL_IDcat_(.*)$/ && do{$URL_IDcat{'URL_IDcat_'.$1}=$env{'URL_IDcat_'.$1};};}}
+
+# foreach (keys %URL_IDcat)
+# {
+#  Tomahawk::debug::log(0,"URL_IDcat $_=$URL_IDcat{$_}");
+# }
+
+ my %article;
+
+ # NACITANIE DAT CLANKU
+ my $var="a400";
+
+ if (not exists $env{ID})
+ {
+  my $catlike="";
+  $catlike="AND IDcategory LIKE '$main::FORM{IDcat}%'" if (exists $main::FORM{IDcat});
+
+  my $db0=$main::DBH->Query("
+	SELECT ID
+	FROM $env{db_400}.a400
+	WHERE
+		a400.starttime<=$tom::time_current
+		AND (a400.lng='$env{lng}' OR a400.lng='')
+		AND a400.active='Y'
+		$catlike
+	ORDER BY starttime DESC,changetime DESC LIMIT 1");
+	if (my @lastid=$db0->fetchrow())
+	{
+	  $env{ID}=$lastid[0];
+	}
+	else
+	{
+		my $db0=$main::DBH->Query("
+			SELECT ID
+			FROM $env{db_400}.a400_arch
+			WHERE
+				starttime<=$tom::time_current
+				AND (lng='$env{lng}' OR lng='')
+				AND active='Y'
+				$catlike
+			ORDER BY starttime DESC,changetime DESC LIMIT 1");
+		if (my @lastid=$db0->fetchrow())
+		{
+		  $env{ID}=$lastid[0];
+		}
+	}
+ }
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_400}.a400
+	LEFT JOIN $env{db_400}.a400_attrs
+		ON (a400.IDattrs AND a400.IDattrs=a400_attrs.IDattrs)
+	WHERE	a400.ID='$env{ID}'
+		AND a400.starttime<=$tom::time_current
+		AND (a400.lng='$env{lng}' OR a400.lng='')
+		AND a400.active='Y'
+	ORDER BY changetime DESC LIMIT 1");
+ if (not %article=$db0->fetchhash())
+ {
+  my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_400}.a400_arch
+	LEFT JOIN $env{db_400}.a400_attrs_arch
+		ON (a400_arch.IDattrs AND a400_arch.IDattrs=a400_attrs_arch.IDattrs)
+	WHERE	a400_arch.ID='$env{ID}'
+		AND a400_arch.starttime<=$tom::time_current
+		AND (a400_arch.lng='$env{lng}' OR a400_arch.lng='')
+		AND a400_arch.active='Y'
+	ORDER BY changetime DESC LIMIT 1");
+  %article=$db0->fetchhash();
+ }
+
+ if (%article){
+  $var.="_arch" if ($article{arch} eq "Y");
+
+  # dodavam informaciu pre ostatne aplikacie
+  $main::env{a400_IDcategory}=$article{IDcategory};
+  # dodavam informaciu pre banner system
+  $main::env{a900_section}="a400-".$article{IDcategory};
+
+  # UPDATE VISITS :))
+=head1
+  Tomahawk::debug::log(0,"
+  	UPDATE $env{db_400}.$var
+	SET visits=visits+1, lasttime='$tom::time_current'
+	WHERE ID='$env{ID}' AND (lng='$env{lng}' OR lng='') AND active='Y'
+	LIMIT 1");
+=cut
+  $main::DBH->Query("
+  	UPDATE $env{db_400}.$var
+	SET visits=visits+1, lasttime='$tom::time_current'
+	WHERE ID='$env{ID}' AND (lng='$env{lng}' OR lng='') AND active='Y'
+	LIMIT 1") unless $env{novisits};
+  $main::DBH->Query("
+	INSERT INTO $env{db_400}.a400_visits
+		(
+			IDarticle,
+			IDuser,
+			time_insert
+		)
+	VALUES	(
+				'$article{ID}',
+				'$main::USRM{IDhash}',
+				'$main::time_current'
+			)
+	") if (($env{visits}) && (($article{starttime}+(86400*7))>$main::time_current));
+
+  if ($article{link})
+  {
+   my $db0=$main::DBH->Query("
+	(SELECT *
+	FROM $env{db_400}.a400
+	LEFT JOIN $env{db_400}.a400_attrs
+		ON (a400.IDattrs AND a400.IDattrs=a400_attrs.IDattrs)
+	WHERE	a400.ID='$article{link}'
+		AND a400.active='Y'
+		AND a400.starttime<=$tom::time_current
+		AND (a400.lng='$env{lng}' OR a400.lng='') LIMIT 1)
+	UNION ALL
+	(SELECT *
+	FROM $env{db_400}.a400_arch
+	LEFT JOIN $env{db_400}.a400_attrs_arch
+		ON (a400_arch.IDattrs AND a400_arch.IDattrs=a400_attrs_arch.IDattrs)
+	WHERE 	a400_arch.ID='$article{link}'
+		AND a400_arch.active='Y'
+		AND a400_arch.starttime<=$tom::time_current
+		AND (a400_arch.lng='$env{lng}' OR a400_arch.lng='') LIMIT 1)
+	ORDER BY changetime DESC LIMIT 1");
+   if (not %article=$db0->fetchhash())
+   {
+    $main::H->r_("<!TMP-".$env{TMP_view}."!>","clanok ".$env{ID}." nema funkcnu linku");
+    return 1;
+   }
+  }
+
+
+#  Tomahawk::debug::log(0,"mam xrelated ".length($env{xrelated})."");
+
+  # OSETRENIE %hashu
+  foreach (keys %article) {~/^[^_]400_/ && do {$article{'_a400_'.$_}=$article{$_};delete $article{$_};next;}}
+
+	$main::env{a400_IDauthor}=$article{'_a400_IDauthor'};
+
+  # INFORMACIE O AUTOROVI
+  my $db0=$main::DBH->Query("
+	SELECT
+		ID,IDcategory,fullname,nickname
+	FROM $env{db_120}.a120
+	WHERE 	ID='$article{_a400_IDauthor}'
+		OR ID='$article{_a400_IDeditor}'
+	LIMIT 2");
+  while (my @db0_line=$db0->FetchRow())
+  {
+   if ($db0_line[0] eq $article{_a400_IDauthor})
+   {
+     $article{'_a400_author'}=$db0_line[2];
+     $article{'_a400_author_nick'}=$db0_line[3];
+   }
+   if ($db0_line[0] eq $article{_a400_IDeditor})
+   {
+     $article{'_a400_editor'}=$db0_line[2];
+     $article{'_a400_editor_nick'}=$db0_line[3];
+   }
+  }
+
+  # NASTAVIM PRIPADNE CACHOVANIE - Aben
+  my %caching;
+  #if ($article{a_starttime}>($tom::time_current-7200))
+
+  # pridat podmienku zrusenia cache pri zmene clanku changetime
+#  if (($article{_a400_lasttime}>($tom::time_current-3600))
+#     &&($article{_a400_changetime}>($tom::time_current-86400))) # ak bol clanok naposledy videni pred hodinou
+  if ($article{_a400_lasttime}>($tom::time_current-86400)) # ak bol clanok naposledy videni pred hodinou
+  {%caching=(
+	-cache_id	=>	"a400_view",
+  	);
+  }
+
+  # TELO CLANKU
+  Tomahawk::module(
+	-type			=>	"mdl",
+	-category		=>	"400",
+	-name			=>	"fview",
+	-global			=>	1,
+	-xsgn     		=>	$env{xsgn_fview},
+	-xsgn_global		=>	$env{xsgn_global},
+	-TMP			=>	$env{TMP_view},
+	%caching,
+	-cache_id_sub		=>	$article{_a400_ID}."-".$article{_a400_changetime},
+	shift_first_img		=>	$env{shift_first_img},# vytiahnem prvu premennu obrazku
+	show_catname		=>	$env{show_catname},
+	show_catname_full	=>	$env{show_catname_full},
+	db_500			=>	$env{db_500},
+	format_500		=>	$env{format_500},
+	first_format_500	=>	$env{first_format_500},
+	page			=>	$main::FORM{page}, # nefunkcne, len posielam linku
+	a900_inline		=>	$env{a900_inline},
+	%article,
+	) if (exists $env{TMP_view});
+
+=head1
+  # INFO O CLANKU
+  Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"400",
+	-name		=>	"fview_info_c120",
+	-global		=>	1,
+	-xsgn     	=>	$env{fview_info_c120},
+	-xsgn_global	=>	$env{xsgn_global},
+	-TMP		=>	$env{TMP_info},
+	%caching,
+	db_120		=>	$env{db_120},
+	%article,
+	) if (exists $env{TMP_info});
+=cut
+
+  # SAME CATEGORY CLANKY
+  Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"400",
+	-name		=>	"tlist",
+	-xsgn		=>	$env{xsgn_same_category},
+	-xsgn_global	=>	$env{xsgn_global},
+	-global		=>	1,
+	-TMP		=>	$env{TMP_same_category},
+	-cache_id	=>	"in_category",
+	-cache_id_sub	=>	$article{_a400_IDcategory},
+	db_400		=>	$env{db_400},
+	IDcategory	=>	$article{_a400_IDcategory},
+	allow_subs	=>	1,
+	max		=>	$env{max_same_category},
+	) if (exists $env{TMP_same_category});
+
+
+#  Tomahawk::debug::log(0,"mam xrelated ".$var." ".length($env{_a400_xrelated})."");
+
+  # RELATED CLANKY
+  Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"400",
+	-name		=>	"fview_related_c400",
+	-global		=>	1,
+	-xsgn		=>	$env{xsgn_fview_related_c400},
+	-xsgn_global	=>	$env{xsgn_global},
+	-TMP		=>	$env{TMP_related},
+	-TMP_check			=>	1,
+	%caching,
+	return_null	=>	$env{related_return_null},
+	return_string	=>	$env{related_return_string},
+	max		=>	$env{max_xrelated_c400},
+	format_500		=>	$env{format_500_xrelated_c400},
+	db_500		=>	$env{db_500},
+	db_400		=>	$env{db_400},
+	db_120		=>	$env{db_120},
+	_xrelated	=>	$article{_a400_xrelated},
+	xrelated	=>	$article{_a400_xrelated},
+	URL_IDcat	=>	$env{URL_IDcat}, # kazda kategoria na iny link?
+	%URL_IDcat,	# a na ake linky?
+	) if (exists $env{TMP_related});
+
+  # CLANKY TOHO ISTEHO AUTORA
+  Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"400",
+	-name		=>	"tlist",
+	-xsgn		=>	$env{xsgn_article_same_author},
+	-xsgn_global	=>	$env{xsgn_global},
+	-global		=>	1,
+	-TMP		=>	$env{TMP_same_author},
+	-cache_id	=>	"one_author",
+	db_400		=>	$env{db_400},
+	where		=>	"IDauthor='$article{_a400_IDauthor}'",
+	URL_IDcat	=>	$env{URL_IDcat}, # kazda kategoria na iny link?
+	%URL_IDcat,				 # a na ake linky?
+	) if (exists $env{TMP_same_author});
+
+  # XRELATED
+  Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"400",
+	-name		=>	"fview_xrelated",
+	-xsgn		=>	$env{xsgn_xrelated},
+	-xsgn_global	=>	$env{xsgn_global},
+	-global		=>	1,
+	-TMP		=>	$env{TMP_xrelated},
+	-cache_id	=>	"a400_view",
+#	a500_cat	=>	1,
+#	a500		=>	0,
+	xrelated	=>	$article{_a400_xrelated},
+	) if ((exists $env{TMP_xrelated})&&($main::H->{body}=~/<!TMP-$env{TMP_xrelated}!>/));
+
+
+  # clanok spojeny s forumom
+  # iba v pripade ak ma clanok info o forume!
+
+  # TOTO MUSI BYT SKOR NEZ
+  if (($article{_a400_xrelated}=~/<VAR id="a820" value="(.*?)" \/>/)
+  	&&($env{TMP_820}))
+  {
+   my $var=$1;
+   main::_log("nasiel som forum");
+   my %cache;if (!$main::FORM{submit} && !$main::USRM{logged}){%cache=(-cache_id	=>	"default",);}
+   Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"820",
+	-name		=>	"addmsg",
+	-xsgn		=>	"small",
+	-xsgn_global	=>	$env{xsgn_global},
+	-xlng_global	=>	$env{xsgn_global},
+	-global		=>	1,
+	-TMP		=>	$env{TMP_820},
+	%cache,
+	ID		=>	$var,
+	db_820		=>	$env{db_820},
+	);# if $env{TMP_820};
+
+   my $db0=$main::DBH->Query("
+	SELECT ID,messages
+	FROM $env{db_820}.a820
+	WHERE 	ID='$var'
+		AND type='F'
+		AND lng='$env{lng}'
+		AND active='Y'
+	LIMIT 1");
+   if (my @db0_line=$db0->fetchrow)
+   {
+    Tomahawk::module(
+	-type		=>	"mdl",
+	-category	=>	"400",
+	-name		=>	"tview_forum_c820",
+	-global		=>	1,
+	-xsgn_global	=>	$env{xsgn_tview_forum_c820},
+	-xsgn_global	=>	$env{xsgn_global},
+	-TMP		=>	$env{TMP_820},
+	-cache_id	=>	"default",
+	-cache_id_sub	=>	$db0_line[1],
+	ID		=>	$var,
+	db_820		=>	$env{db_820},
+	ID_rel		=>	$article{_a400_ID},
+#	%article
+	);# if $env{TMP_820};
+   }
+   else
+   {
+    $article{_a400_xrelated}=~s|<VAR id="a820" value="$var" />||;
+    $main::DBH->Query("UPDATE $env{db_400} SET xrelated='$article{_a400_xrelated}'
+		WHERE ID='$article{_a400_ID}'
+		AND active='Y'
+		AND (lng='$env{lng}' OR lng='') LIMIT 1");
+   }
+  }
+  else
+  {
+   #Tomahawk::debug::log(5,"nenasiel som forum $article{_a400_xrelated}");
+  }
+	#zobrazenie cesty k aktualnej kategorii
+  Tomahawk::module(
+	-type			=>	"mdl",
+	-category			=>	"400",
+	-name			=>	"show_cat_click",
+	-global			=>	1,
+	-xsgn     			=>	$env{xsgn_cat_click},
+	-xsgn_global		=>	$env{xsgn_global_cat_click},
+	-TMP				=>	$env{TMP_cat_click},
+	-cache_id				=>	"default",
+	IDcat				=>	$article{_a400_IDcategory},
+	db_400			=>	$env{db_400},
+	db_120			=>	$env{db_120},
+	format_500		=>	$env{format_500},
+	first_format_500		=>	$env{first_format_500},
+	page				=>	$main::FORM{page}, # nefunkcne, len posielam linku
+	%URL_IDcat
+	) if (exists $env{TMP_cat_click});
+ }
+ else
+ {
+  #$main::H->r_("<!TMP-".$env{TMP_view}."!>","clanok ".$env{ID}." neexistuje");
+  #return 1;
+  $tom::ERR="clanok $env{ID} neexistuje";
+  return undef;
+ }
+
+
+
+ return 1;
+}
+1;

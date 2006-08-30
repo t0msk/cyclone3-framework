@@ -1,0 +1,20 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<fieldset class="files">
+<legend>Files</legend>
+<#ITEM#>
+</fieldset>
+</DEFINITION>
+
+<DEFINITION id="ITEM">
+<a href="download.tom?hash=<%hash%>&amp;hash2=<%ID%>"><%name%></a> size:<%size%>
+<#ITEM#>
+</DEFINITION>
+
+<DEFINITION id="NONE">
+No Files.
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

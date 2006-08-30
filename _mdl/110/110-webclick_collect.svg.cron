@@ -1,0 +1,272 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+#use App::400;
+#use App::400::format;
+#use App::1D0;
+use SVG;
+use Utils::vars;
+#use App::400::SQL::a400;
+
+#use SVGraph;
+#use SVGraph::2D::lines;
+#use SVGraph::2D::columns;
+#use SVGraph::2D::ring;
+
+#use Net::HTTP::LiteAgent;
+
+#use TOM::Net::HTTP::agents;
+
+use Utils::datetime;
+#use App::1B0;
+use Time::Local;
+use Database::connect;
+use Int::charsets::encode;
+
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	Database::connect::multi("main","stats");
+	
+	my $svg=SVG->new(width=>900,height=>2000);
+#	my $dom="sport.markiza.sk";
+	
+	my $h=50;
+	my @arr;
+#	my $db0=$main::DB{stats}->Query($sel);
+
+	foreach (keys %env)
+	{
+		main::_log("$_: $env{$_}");
+	}
+
+	my $TID="l_default";
+	my $select_from;
+	my $select_to;
+
+	my $TID=$env{typeid} if (exists $env{typeid});
+
+	if($env{start})
+	{
+		#YYYY-MM-DD-HH-MM
+		my @arr_from=split(/-/,$env{start});
+		$select_from=Time::Local::timelocal(
+			undef,
+			$arr_from[4],
+			$arr_from[3],
+			$arr_from[2],
+			$arr_from[1]-1,
+			$arr_from[0]-1900,
+			undef,
+			undef,
+			undef
+		);
+	}
+	if($env{end})
+	{
+		#YYYY-MM-DD-HH-SS
+		my @arr_to=split(/-/,$env{end});
+		$select_to=Time::Local::timelocal(
+			undef,
+			$arr_to[4],
+			$arr_to[3],
+			$arr_to[2],
+			$arr_to[1]-1,
+			$arr_to[0]-1900,
+			undef,
+			undef,
+			undef
+		);
+	}
+
+	if(!$select_to)
+	{
+		main::_log("parameter --end not defined - using current time as end");
+		$select_to=$main::time_current unless($select_to);
+	}
+	if(!$select_from)
+	{
+		main::_log("parameter --start not defined - using current time minus 7 days as start");
+		$select_from=$select_to-(7*86400) unless($select_from);
+		$select_to=$main::time_current unless($select_to);
+	}
+	
+	my %datetime_from=Utils::datetime::ctodatetime($select_from,format=>1);
+	my %datetime_to=Utils::datetime::ctodatetime($select_to,format=>1);
+
+	# print "$select_from $select_to\n";
+	main::_log("data from: $select_from to: $select_to TID:$TID domain_sub: $tom::H");
+	
+	my %hash;
+	my $sel="
+		SELECT
+			*
+		FROM
+			TOM.a110_webclick_log
+		WHERE
+			time_insert>=$select_from
+			AND time_insert<=$select_to
+			AND TID='$TID'
+			AND domain_sub='$tom::H'
+	";
+	my $db0=$main::DB{stats}->Query($sel);
+	#my $p=$db0->NumRows();
+	my $p;
+	
+	my $num=$db0->NumRows();
+	main::_log("selected $num rows");
+	
+	while (my %db0_line=$db0->fetchhash)
+	{
+#		my %date=Utils::datetime::ctodatetime($db0_line{time_insert},format=>1);
+#		my $key="$date{year}-$date{mom}-$date{mday} $date{hour}:00:00";
+#		$hash{$key}++;
+		
+#		if ($key=~/2004-10-21 1[67]/)
+#		{
+			$p++;
+			my $x=int(($db0_line{x}+450)/$h);
+			my $y=int($db0_line{y}/$h);
+			$arr[$x][$y]++;
+#		}
+		
+#		my $x=int(($db0_line{x}+450)/$h);
+#		my $y=int($db0_line{y}/$h);
+#		$arr[$x][$y]++;
+	}
+	
+	my $max;
+	for my $x(0..@arr-1)
+	{
+		next if not ref($arr[$x]) eq "ARRAY";
+		for my $y(0..@{$arr[$x]}-1)
+		{
+			next unless $arr[$x][$y];
+			$max=$arr[$x][$y] if $arr[$x][$y]>$max;
+		}
+	}
+
+	for my $x(0..@arr-1)
+	{
+	
+		#print " -$x\n";
+		next if not ref($arr[$x]) eq "ARRAY";
+		for my $y(0..@{$arr[$x]}-1)
+		{
+			#print "  -$y\n";
+			#print "- $x , $y $arr[$x][$y]\n";
+			next unless $arr[$x][$y];
+			my $opacity=($arr[$x][$y]/$max); #/
+			$opacity=$opacity/2;
+
+#=head1
+			$svg->polyline(
+				'points'	=>	($x*$h).",".($y*$h-1)." ".
+								($x*$h).",".($y*$h+$h-1)." ".
+								($x*$h+$h-1).",".($y*$h+$h-1)." ".
+								($x*$h+$h-1).",".($y*$h)." ".
+								($x*$h).",".($y*$h)." ",
+				'fill'			=>"red",
+				'fill-opacity'	=>"0",
+				'stroke'		=>"rgb(0,0,0)",
+				'stroke-width'	=>"0.5",
+				'stroke-opacity'	=>"1",
+				'stroke-linecap'	=>"round",
+				'stroke-linejoin'	=>"round");
+			my $r=$arr[$x][$y];
+			$svg->circle
+			(
+				cx	=>	($x*$h)+($h/2),
+				cy	=>	($y*$h)+($h/2),
+				r	=>	$r,
+				'fill'			=>	"green",
+				'fill-opacity'	=>"0.2",
+				'stroke'		=>	"rgb(50,50,50)",
+				'stroke-width'	=>	"0.25pt",
+			);
+#=cut
+
+=head1
+			$svg->polyline(
+				'points'	=>	($x*$h).",".($y*$h-1)." ".
+								($x*$h).",".($y*$h+$h-1)." ".
+								($x*$h+$h-1).",".($y*$h+$h-1)." ".
+								($x*$h+$h-1).",".($y*$h)." ".
+								($x*$h).",".($y*$h)." ",
+				'fill'			=>"red",
+				'fill-opacity'	=>$opacity,
+#				'stroke'		=>"rgb(0,0,0)",
+#				'stroke-width'	=>"0.25",
+				'stroke-linecap'	=>"round",
+				'stroke-linejoin'	=>"round");
+=cut
+		}
+	}
+	
+	
+#=head1
+	my $r=4;
+	my $db0=$main::DB{stats}->Query($sel);
+	while (my %db0_line=$db0->fetchhash)
+	{
+	
+		my $color="white";
+
+		$svg->circle
+		(
+			cx	=>	$db0_line{x}+450,
+			cy	=>	$db0_line{y},
+			r	=>	$r,
+			'fill'			=>	$color,
+			'fill-opacity'	=>"0.2",
+			'stroke'		=>	"rgb(50,50,50)",
+			'stroke-width'	=>	"1pt",
+		);
+	}
+#=cut
+   
+	my $svg_out=$svg->xmlify
+	(
+	#	-namespace => "svg",
+	-pubid => "-//W3C//DTD SVG 1.0//EN",
+#	-inline   => 1
+	);
+	
+	my $filename=
+		$TID
+		."_".
+		$datetime_from{year}
+		."-".
+		$datetime_from{mom}
+		."-".
+		$datetime_from{mday}
+		."-".
+		$datetime_from{hour}
+		.
+		$datetime_from{min}
+		."_".
+		$datetime_to{year}
+		."-".
+		$datetime_to{mom}
+		."-".
+		$datetime_to{mday}
+		."-".
+		$datetime_to{hour}
+		.
+		$datetime_to{min}
+		.".svg"
+	;
+	
+	print $tom::P."/!www/".$filename."\n";
+	
+	open(HND0,">".$tom::P."/!www/".$filename);
+	print HND0 $svg_out;
+	close HND0;
+	
+	
+	
+ return 1}
+
+1;

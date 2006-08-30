@@ -1,0 +1,146 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+use Mysql;
+require "/usr/bin/tom3-init";
+%form=
+(
+ '--domain'	=>	"show config domain (eg. localhost.com)",
+ '-a'		=>	"show config all domains",
+);
+if (($FORM{h})||($FORM{help})){&help();}
+if ((!$FORM{domain})&&(!$FORM{a})){&help();}
+
+my $time_current=time;
+my $DBH = Mysql->Connect($TOM::DB{main}{host},$TOM::DB_name_TOM,$TOM::DB{main}{user},$TOM::DB{main}{pass});
+
+#print "setting restart hosts into databases:\n";
+print color 'reset bold green';
+
+if ($FORM{a})
+{
+ my $db0=$DBH->Query("SHOW DATABASES");
+ while (my @db0_line=$db0->fetchrow)
+ {
+  if ($DBH->selectdb($db0_line[0]))
+  {
+
+
+
+
+
+   my %table;
+   if (my $db1=$DBH->Query("SHOW TABLES"))
+   {
+    while (my @db1_line=$db1->fetchrow)
+    {
+     $table{$db1_line[0]}=1;
+    }
+    if ($table{_tom3})
+    {
+     print "\n[$db0_line[0]]\n";
+
+     my $db0=$DBH->Query("
+     	SELECT * FROM _config
+	ORDER BY type, variable");
+     while (%db0_line=$db0->fetchhash)
+     {
+      print "[ ".sprintf("%-4s",$db0_line{type})." ]";
+      print "[ ".sprintf("%-30s",$db0_line{variable})." ]";
+
+      #$db0_line{value}=~s|[\n\r]|!|g;
+      #print "[ ".sprintf("%-30s",$db0_line{value})." ]";
+      print "[ ".sprintf("%-6s",int((time-$db0_line{reqtime})/60/60))." ]";
+      #print "\n";
+      #$db0_line{value}=~s|[\n\r]|\\n|g;
+      print color 'reset green';
+
+      if (length($db0_line{value})>50){$db0_line{value}="length(".length($db0_line{value}).")"}
+
+      print "[ ".sprintf("%-20s",$db0_line{value})." ]\n";
+
+      print color 'reset bold green';
+     }
+    }
+    else
+    {
+     #print "... sorry, missing _tom3 table\n";
+    }
+   }
+
+
+
+
+
+
+  }
+ }
+}
+
+
+#print "$FORM{host}\n";
+
+if ($FORM{domain})
+{
+  if ($DBH->selectdb($main::h))
+  {
+
+   my %table;
+   if (my $db1=$DBH->Query("SHOW TABLES"))
+   {
+    while (my @db1_line=$db1->fetchrow)
+    {
+     $table{$db1_line[0]}=1;
+    }
+    if ($table{_tom3})
+    {
+
+
+
+#     print "\t$FORM{host}\n";
+
+     my $db0=$DBH->Query("
+     	SELECT * FROM _config
+	ORDER BY type, variable");
+     while (%db0_line=$db0->fetchhash)
+     {
+      print "[ ".sprintf("%-4s",$db0_line{type})." ]";
+      print "[ ".sprintf("%-30s",$db0_line{variable})." ]";
+
+      #$db0_line{value}=~s|[\n\r]|!|g;
+      #print "[ ".sprintf("%-30s",$db0_line{value})." ]";
+      print "[ ".sprintf("%-6s",int((time-$db0_line{reqtime})/60/60))." ]";
+      #print "\n";
+      #$db0_line{value}=~s|[\n\r]|\\n|g;
+      print color 'reset green';
+
+      if (length($db0_line{value})>50){$db0_line{value}="length(".length($db0_line{value}).")"}
+
+      print "[ ".sprintf("%-20s",$db0_line{value})." ]\n";
+      #foreach ($db0_line{value}=~/....................................................................../gs)
+      #foreach ($db0_line{value}=~/(.{0,70})/g)
+      #{
+#       print "        [$_]\n";
+ #     }
+      #print "        [$_]\n";
+      print color 'reset bold green';
+
+
+     }
+
+
+
+    }
+    else
+    {
+     print "... sorry, missing _tom3 table\n";
+    }
+   }
+  }
+  else
+  {
+   print "... nothing to do :(\n";
+  }
+}
+
+
+&exit();
