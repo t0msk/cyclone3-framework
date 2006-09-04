@@ -1,0 +1,38 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+use App::300;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use CVML;
+use strict;
+
+=head1 NAME
+
+Modul pre vytvorenie noveho uzivatela v USRM
+
+=head1 SYNOPSIS
+
+ tom3-cron --domain=domain.tld ---global=1 ---category=300 ---name=new --login=meno --pass=heslo
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	
+	return undef unless $env{'login'};
+	return undef unless $env{'pass'};
+	
+	App::300::UserGenerate
+	(
+		'login' => $env{'login'},
+		'pass' => $env{'pass'},
+		'active' => 'Y'
+	);
+	
+	return 1
+}
+
+1;
