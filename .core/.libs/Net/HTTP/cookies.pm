@@ -32,6 +32,7 @@ use Utils::datetime;
 
 sub GetCookies
 {
+	my $t=track TOM::Debug(__PACKAGE__."::GetCookies()");
  my %cookie;
  foreach (split(/; /, $ENV{'HTTP_COOKIE'}))
  {
@@ -41,6 +42,7 @@ sub GetCookies
   my ($chip, $val) = split(/=/,$_,2);
   $chip =~ s/%([A-Fa-f0-9]{2})/pack("c",hex($1))/ge;#url kodovanie do normal. kodovanie
   $val =~ s/%([A-Fa-f0-9]{2})/pack("c",hex($1))/ge;
+  main::_log("'$chip'='$val'");
   if ($val=~s/^$tom::cookie_name://)
   {
    $cookie{$chip} = $val;
@@ -49,14 +51,20 @@ sub GetCookies
    next;
   }
  }
+	$t->close();
  return %cookie;
 }
 
 
 
 sub SetCookies{
- my %env = @_;
- return undef unless $env{cookies};
+	my $t=track TOM::Debug(__PACKAGE__."::SetCookies()");
+	my %env = @_;
+	if (!$env{cookies})
+	{
+		$t->close();
+		return undef
+	}
 
  $env{time}=($tom::time_current+(60*60*24*31*4)) unless $env{time}; # na 4 mesiace dopredu
 
@@ -71,21 +79,30 @@ sub SetCookies{
  foreach (keys %{$env{cookies}})
  {
   my $var="Set-Cookie: $_\=$tom::cookie_name:$env{cookies}{$_}; $expires; path\=$tom::P_cookie; domain\=$main::tom::H_cookie;\n";
+  main::_log("$var");
   print $var;
   #Tomahawk::debug::log(8,$var);
   #Tomahawk::debug::log(0,$var,0,"a300");
  }
-
+	$t->close();
+	return 1;
 }
 
-sub DeleteCookie {foreach (@_)
+sub DeleteCookie
+{
+	my $t=track TOM::Debug(__PACKAGE__."::DeleteCookie()");
+	foreach (@_)
 {
   my $var="Set-Cookie:  $_=deleted; expires=Thu, 01-Jan-1970 00:00:00 GMT; path\=$tom::P_cookie; domain\=$main::tom::H_cookie;\n";
+  main::_log("$var");
   print $var;
   #Tomahawk::debug::log(8,$var);
   #Tomahawk::debug::log(0,$var,0,"a300");
  #print  "Set-Cookie:  $_=deleted; expires=Thu, 01-Jan-1970 00:00:00 GMT;\n";
-}}
+}
+	$t->close();
+	return 1;
+}
 
 
 
