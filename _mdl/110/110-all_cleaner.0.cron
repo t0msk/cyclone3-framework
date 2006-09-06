@@ -86,7 +86,7 @@ $main::DB{stats}->Query("
 	
  $main::DB{stats}->Query("
 	DELETE FROM TOM.a110_obsolete_log
-	WHERE reqtime<$long");
+	WHERE reqtime<".($main::time_current-(86400*7)));
 	
  return 1}
 
