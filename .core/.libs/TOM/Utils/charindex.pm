@@ -46,7 +46,7 @@ sub get
 	
 	# zistim aku mam hlbku IDcharindex
 	$env{depth}=Tomahawk::Getmdlvar($env{app},$env{table}."-IDcharindex_chars",db=>$env{db});
-	die "'$env{table}-IDcharindex_chars' is not configured in table _config\n" unless $env{depth};
+	$env{depth}=2 unless $env{depth};
 	
 	#return 1;
 	
