@@ -15,7 +15,7 @@ BEGIN
 use enc2;
 use enc3;
 use Mysql;
-use Database::connect;
+use TOM::Database::connect;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use CRON;
 use CRON::debug;
