@@ -41,12 +41,6 @@ sub SetCookies
 	
 	my %date=Utils::datetime::ctodatetime($env{'time'},'format'=>1);
 	
-	#my ($second,$minute,$hour,$day,$month,$year,$wday)=localtime($env{time});
-	#$year += 1900;
-	#$second = sprintf("%02d",$second);
-	#$minute = sprintf("%02d",$minute);
-	#$hour =  sprintf("%02d",$hour);
-	
 	my $expires = "expires\=$Utils::datetime::DAYS{en}[$date{wday}], $date{mday}-$Utils::datetime::MONTHS{en}[$date{mon}-1]-$date{year} 00:00:00 GMT";
 	
 	foreach (keys %{$env{cookies}})
