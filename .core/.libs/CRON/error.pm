@@ -35,7 +35,7 @@ sub module
  my %env=@_;
  return undef unless $env{-MODULE};
 
- CRON::debug::log(5,"[CRON::$env{-MODULE}] $env{-ERROR}",1,"cron.err");
+ main::_log("[CRON::$env{-MODULE}] $env{-ERROR}",1,"cron.err");
 
  my $var="#[$$]\n# module $env{-MODULE}\n# CRON $main::type\n# TIME $cron::time_current\n$env{-ERROR}\n";
  CRON::error::email::save
