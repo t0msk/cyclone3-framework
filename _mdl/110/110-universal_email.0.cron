@@ -379,6 +379,30 @@ sub execute
 			'table-description'=>"percent = kolko percent stranok zo vsetkych vygenerovanych stranok bolo chybnych",
 		},
 		
+		'obsolete' => 
+		{
+			'db'=>"stats",
+			'sql'=>"
+				SELECT
+					func_filename,
+					func,
+					call_filename,
+					call_line,
+					COUNT(*) AS calls
+				FROM a110_obsolete_log
+				GROUP BY
+					func,
+					call_filename,
+					call_line
+				ORDER BY
+					calls DESC
+				LIMIT 20
+			",
+			'title'=>"TOP-20 najpouzivanejsich miest obsolete funkcii",
+			'description'=>"Tabulka je zoradena podla poctu volani obsolete funkcie",
+			'table-title'=>"",
+			'table-description'=>"",
+		},
 		
 		'empty' =>
 		{
@@ -397,7 +421,7 @@ sub execute
 	
 	my $db=$types{$env{type}}{db};
 	$db="main" unless $db;
-	Database::connect::multi($db) || die "cannot connect all databases";
+	TOM::Database::connect::multi($db) || die "cannot connect all databases";
 	
 	
 	# STATS SELECT

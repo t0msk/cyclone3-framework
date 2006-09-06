@@ -75,3 +75,12 @@
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="weblog_email_agents" />
 </MODULE>
+
+# statistika obsolete funkcii
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="universal_email" />
+		<VAR id="type" value="obsolete" />
+		<VAR id="email_to" value="fordinal@webcom.sk" />
+</MODULE>
