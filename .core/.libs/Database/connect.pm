@@ -1,10 +1,12 @@
 package Database::connect;
+use TOM::Debug;
 use strict;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 sub all
 {
+	main::_obsolete_func();
 	my @databases=@_;
 	$TOM::DB{main}{name}=$TOM::DB_name unless $TOM::DB{main}{name};
 	
@@ -36,6 +38,7 @@ sub all
 
 sub multi
 {
+	main::_obsolete_func();
   my @databases=@_;
   
 #  foreach my $handler (keys %TOM::DB)
@@ -87,6 +90,7 @@ sub multi
 
 sub utf8
 {
+	main::_obsolete_func();
 	#  foreach my $handler (keys %TOM::DB)
 	foreach my $handler (keys %main::DB)
 	{
