@@ -2,7 +2,7 @@ package Database::connect;
 use TOM::Debug;
 use strict;
 
-BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
+BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};main::_obsolete_func();}
 
 sub all
 {
