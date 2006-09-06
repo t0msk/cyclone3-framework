@@ -84,6 +84,10 @@ $main::DB{stats}->Query("
 	DELETE FROM TOM.a110_mdl_log
 	WHERE reqtime<$long");
 	
+ $main::DB{stats}->Query("
+	DELETE FROM TOM.a110_obsolete_log
+	WHERE reqtime<$long");
+	
  return 1}
 
 1;

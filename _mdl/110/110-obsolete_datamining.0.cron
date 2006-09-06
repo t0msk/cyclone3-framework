@@ -1,0 +1,87 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use Time::Local;
+use TOM::lock;
+use strict;
+
+
+sub execute
+{
+	alarm(3600);
+	my %env=@_;
+	
+	Database::connect::multi('stats') || die "cannot connect all databases";
+	
+	my $lock=new TOM::lock("obsolete datamining") || return 1;
+	
+	if (opendir (DIR,$TOM::P."/_logs/obsolete"))
+	{
+		
+		foreach my $file(readdir DIR)
+		{
+			
+			next unless $file=~/^(\d+)\.xml$/;
+			my $pid=$1;
+			
+			main::_log("find file $file");
+			
+			if (-e "/proc/$pid")
+			{
+				main::_log("this file is 'live', also trying next file");
+				next;
+			}
+			
+			open (HND_IN,"<".$TOM::P."/_logs/obsolete/".$file) || next;
+			my $file_data;
+			while (my $line=<HND_IN>)
+			{
+				$file_data.=$line;
+				if ($file_data=~s/<obsolete>(.*?)<\/obsolete>//s)
+				{
+					#main::_log("obsolete");
+					my $data=$1;
+					my %hash;
+					while ($data=~s|<(.*?)>(.*?)</\1>||)
+					{
+						my $var=$1;
+						my $value=$2;
+						$hash{$var}=$value;
+					}
+					
+					$main::DB{stats}->Query("
+						INSERT INTO TOM.a110_obsolete_log
+						(
+							time_created,
+							type,
+							call_filename,
+							call_line,
+							func_filename,
+							func_line,
+							func
+						)
+						VALUES
+						(
+							'$hash{timestamp}',
+							'$hash{type}',
+							'$hash{call_filename}',
+							'$hash{call_line}',
+							'$hash{func_filename}',
+							'$hash{func_line}',
+							'$hash{func}'
+						)
+					");
+					
+				}
+			}
+			
+			unlink $TOM::P."/_logs/obsolete/".$file;
+		}
+	}
+	
+	$lock->close();
+	
+	return 1
+}
+
+1;
