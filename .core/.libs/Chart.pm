@@ -2,9 +2,11 @@
 package Chart;
 use Chart::columns;
 use Chart::colors;
+use TOM::Debug;
 use SVG;
 use strict;
 
+BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};main::_obsolete_func();}
 
 sub GetAVG
 {
