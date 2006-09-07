@@ -7,6 +7,7 @@ use Utils::datetime;
 use TOM::Utils::datetime;
 use TOM::Utils::vars;
 use TOM::Net::email;
+use TOM::Database::connect;
 use DateTime;
 
 use strict;
@@ -387,13 +388,11 @@ sub execute
 					func_filename,
 					func,
 					call_filename,
-					call_line,
 					COUNT(*) AS calls
 				FROM a110_obsolete_log
 				GROUP BY
 					func,
-					call_filename,
-					call_line
+					call_filename
 				ORDER BY
 					calls DESC
 				LIMIT 20
@@ -602,19 +601,19 @@ XSGN
 <td><\%val%></td>
 <#LINE_COL_VAL#>
 XSGN
-
+	
 	# SPRACOVANIE
-
+	
 	# statisticky select je definovany na zaciatku
 	my $db_stats = $main::DB{$db}->Query( $sql_stats );
-
+	
 	my $line_count = $db_stats->numrows;
 	my $col_count = $db_stats->numfields;
 	my @col_names = $db_stats->name;
-
+	
 	my $counter_line = 0; # pouzivam ho na to aby som vedel ci uz som na poslednom riadku
 	my $counter_col = 0; # ci listujem posledny stlpec
-
+	
 	# vykreslim hlavicku
 	$XSGN{TABLE} =~ s|<%title%>|$texts{$env{lng}}{'table-title'}|g;
 	$XSGN{TABLE} =~ s|<%subtitle%>|$texts{$env{lng}}{'table-subtitle'}|g;
@@ -625,18 +624,18 @@ XSGN
 	{
 		$counter_col++;
 		my $col = $XSGN{LINE_COL_NAME}; # design pre nazov stlpca
-
+		
 		$col =~ s|<%name%>|$col_name|g; # nalejem meno stlpca
-
+		
 		$XSGN{TABLE} =~ s|<#LINE_COL_NAME#>|$col|g; # nalejem do tabulky
 	}
-
+	
 	# vykreslim riadky
 	while ( my %db_stats_line = $db_stats->fetchhash )
 	{
 		$counter_line++;
 		my $line = $XSGN{LINE}; # design riadku
-
+		
 		# idem naliat hodnoty jednotlivych stlpcov
 		$counter_col = 0;
 		
@@ -644,33 +643,33 @@ XSGN
 		{
 			$counter_col++;
 			my $col = $XSGN{LINE_COL_VAL}; # design pre hodnotu stlpca
-
+			
 			$db_stats_line{$col_name} = "&nbsp;" unless $db_stats_line{$col_name};
 			# toto robim kvoli tabulke, aby bola pekna aj ked je bunka prazdna
 			
 			main::_log("$col_name='$db_stats_line{$col_name}'");
 			
 			$col =~ s|<%val%>|$db_stats_line{$col_name}|g; # nalejem hodnotu stlpca
-
+			
 			$line =~ s|<#LINE_COL_VAL#>|$col|g; # nalejem do riadku
 		}
 		
 		
 		$XSGN{TABLE} =~ s|<#LINE#>|$line|g; # nalejem do tabulky
 	}
-
+	
 	$XSGN{TABLE} =~ s|<#.*?#>\n+||gs; # odstranim bordel
-
+	
 	# nalejem do CONTENTu
 	$XSGN{CONTENT} =~ s|<#TABLE#>|$XSGN{TABLE}|;
-
+	
 	# nalejem do HTML
 	$XSGN{HTML} =~ s|<#CONTENT#>|$XSGN{CONTENT}|;
-
+	
 	# nalejem do TMP - hlavneho designu emailu
 	$XSGN{TMP} =~ s|<#HTML#>|$XSGN{HTML}|;
-
-
+	
+	
 	TOM::Net::email::send
 	(
 		from => 'dev\@webcom.sk',
@@ -678,27 +677,7 @@ XSGN
 		to_name => '',
 		body => $XSGN{TMP}
 	);
-
-=head1
-	# Poslem mail
-	my $sql_send = "
-				INSERT INTO TOM.a130_send
-				SET
-					ID_md5='',
-					sendtime=unix_timestamp(),
-					priority='5',
-					from_name='$tom::H',
-					from_email='dev\@webcom.sk',
-					from_host='$tom::H',
-					from_service='',
-					to_name='',
-					to_email='$env{to_email}',
-					body='$XSGN{TMP}'
-		";
-	#main::_log( $sql_send );
-	my $db_send = $main::DB{main}->Query( $sql_send );
-=cut
-
+	
 	return 1;
 }
 
