@@ -33,7 +33,7 @@ sub execute
 	
 	if ($cron::P eq $CRON::P)
 	{
-		main::log("WARN: global use, using database $TOM::DB_name_STAT, ALL DOMAINS!!!");
+		main::_log("WARN: global use, using database $TOM::DB_name_STAT, ALL DOMAINS!!!");
 		$env{sel}="";
 		$env{tbl}="a110_weblog_rqs";
 		#$env{t}="C";
