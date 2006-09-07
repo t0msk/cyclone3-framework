@@ -16,13 +16,13 @@ sub execute
 
  if ($cron::P eq $CRON::P)
  {
-  CRON::debug::log(5,"WARN: global/master use, using database $TOM::DB_name_TOM, table a130_received");
+  main::_log("WARN: global/master use, using database $TOM::DB_name_TOM, table a130_received");
   $env{table}="a130_received";
   $env{db_130}=$TOM::DB_name_TOM;
  }
  else
  {
-  CRON::debug::log(5,"WARN: local use, using database $TOM::DB_name, table a130_received");
+  main::_log("WARN: local use, using database $TOM::DB_name, table a130_received");
   $env{table}="a130_received";
   $env{db_130}=$TOM::DB_name;
  }
@@ -34,29 +34,27 @@ my $con=1;
 while ($env{'C_'.$con.'_host'})
 {
  my $rot;
- CRON::debug::log(5,"Preparing for connect $env{'C_'.$con.'_host'} $env{'C_'.$con.'_port'}");
+ main::_log("Preparing for connect $env{'C_'.$con.'_host'} $env{'C_'.$con.'_port'}");
  if (my $conn=Net::POP3->Connect(host=>$env{'C_'.$con.'_host'}, port=>$env{'C_'.$con.'_port'},timeout=>5)) #connected
  {
-  CRON::debug::log(6,"connected, logging $env{'C_'.$con.'_user'}...");
+  main::_log("connected, logging $env{'C_'.$con.'_user'}...");
   if (!$conn->login(account=>$env{'C_'.$con.'_user'},password=>$env{'C_'.$con.'_pass'}))
   {
-   CRON::debug::log(6,"error in login",1);
+   main::_log("error in login",1);
   }
   else
   {
-   CRON::debug::log(6,"logged, get list of messages...");
+   main::_log("logged, get list of messages...");
    if (my($msgs,$totalsize,@sizes)=$conn->get_list())
    {
-    CRON::debug::log(6,"list of messages is here ($msgs,$totalsize)");
+    main::_log("list of messages is here ($msgs,$totalsize)");
     foreach (@sizes)
     {
      $rot++;
-     #&save_log("   <= RETR $rot $_");
-     CRON::debug::log(7,"RETR $rot");
+     main::_log("RETR $rot");
      if (my $body=$conn->get_mail($rot))
      {
-      CRON::debug::log(6,"ok, i have body");
-      #&save_log("   <= +OK");
+      main::_log("ok, i have body");
       print "$body\n";
       $body=~s|"|\\"|g;
 #      print "$body\n";
@@ -65,9 +63,9 @@ while ($env{'C_'.$con.'_host'})
 	$mail_from=~s|<(.*?)>||;my $mail_from_email=$1;
 	$mail_from=~s|\\"||g;
 	#print "$1\n";
-	CRON::debug::log(8,"To: $mail_to");
-	CRON::debug::log(8,"From: $mail_from");
-	CRON::debug::log(8,"From_mail: $mail_from_email");
+	main::_log("To: $mail_to");
+	main::_log("From: $mail_from");
+	main::_log("From_mail: $mail_from_email");
 
 	$body=~s|\'|\\'|g;
 
@@ -79,7 +77,7 @@ while ($env{'C_'.$con.'_host'})
      }
      else
      {
-      CRON::debug::log(6,"i have no body :(");
+      main::_log("i have no body :(");
      }
     }
    }
@@ -89,7 +87,6 @@ while ($env{'C_'.$con.'_host'})
  else
  {
   print "+nepripojeny: SYS_ERR:$!\n";
-  #&save_log("  -bad connect");
  }
  $con++;
 }
