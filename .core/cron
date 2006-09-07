@@ -232,13 +232,13 @@ CRON::waitload($CRON::LOADAVG);
 
 if (-e $CRON::P."/.core/_config/cron.".$type.".cml" || -e $CRON::P."/_type/cron.".$type.".cml")
 {
-	CRON::debug::log("event '$type' defined");
+	main::_log("event '$type' defined");
 	if ($DBH = Mysql->Connect($TOM::DB{main}{host},$TOM::DB_name_TOM,$TOM::DB{main}{user},$TOM::DB{main}{pass}))
 	#if ($DBH = Mysql->Connect($TOM::DB_host,$TOM::DB_name,$TOM::DB_user,$TOM::DB_pass))
-	{CRON::debug::log("connect ok");}else
+	{main::_log("connect ok");}else
 	{
-		CRON::debug::log("cannot connect MySQL (), exiting",1);
-		CRON::debug::log("cannot connect MySQL (), exiting",1,"cron.err");
+		main::_log("cannot connect MySQL (), exiting",1);
+		main::_log("cannot connect MySQL (), exiting",1,"cron.err");
 		system ("rm $CRON::P/.core/cron.pid");
 		exit(0);
 	}
