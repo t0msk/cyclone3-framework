@@ -21,6 +21,7 @@ our @EXPORT = qw /
 	&GetCategories2
 	&GetSubcategories2
 	&GetProducts
+	&GetProductReserved
 	&VUEP_array
 	/;
 
@@ -394,5 +395,41 @@ sub VUEP_array
 	return @output;
 }
 
+
+sub GetProductReserved
+{
+	my $t=track TOM::Debug(__PACKAGE__."::GetProductReserved()",'namespace'=>'SPIN');
+	my %env=@_;
+	foreach (sort keys %env){main::_log("input $_='$env{$_}'");}
+	my %data;
+	
+	my $sql = qq{
+		SELECT
+			"prod".mep_id "ID_order",
+			"prod".produkt_id "ID_product",
+			"prod".mnozstvo "amount",
+			"prod".dod_mnozstvo "amount_delivered",
+			"prod".mnozstvo-"prod".dod_mnozstvo "reserved"
+		FROM
+			dl.sof_riadok_obj "prod"
+		WHERE
+			"prod".produkt_id = $env{product_ID} AND
+			"prod".dod_mnozstvo < "prod".mnozstvo
+	};
+	
+	my $db0 = $main::DB{spin}->prepare($sql);
+	die "$DBI::errstr" unless $db0;
+	$db0->execute();
+	while (my $ref=$db0->fetchrow_hashref())
+	{
+		main::_log("ID_order='$ref->{'ID_order'}' amount='$ref->{'amount'}' amount_delivered='$ref->{'amount_delivered'}' reserved='$ref->{'reserved'}'");
+		$data{'reserved'}+=$ref->{'reserved'};
+	}
+	
+	foreach (sort keys %data){main::_log("output $_='$data{$_}'");}
+	
+	$t->close();
+	return %data;
+}
 
 1;

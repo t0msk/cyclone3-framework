@@ -480,7 +480,7 @@ sub GetICDPH
 
 
 
-
+=head1
 sub GetProductReserved
 {
 	my $t=track TOM::Debug(__PACKAGE__."::GetProductReserved()",'namespace'=>'SPIN');
@@ -521,7 +521,7 @@ sub GetProductReserved
 	$t->close();
 	return %data;
 }
-
+=cut
 
 sub GetProductDocuments
 {
