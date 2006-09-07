@@ -63,7 +63,7 @@ sub execute
 
 
 
- Database::connect::multi('stats') || die "cannot connect all databases";
+ TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 
  my $boundary = "------------060509090608000908080106";
 

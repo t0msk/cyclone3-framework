@@ -20,7 +20,7 @@ use Utils::vars;
 use Utils::datetime;
 #use App::1B0;
 use Time::Local;
-use Database::connect;
+use TOM::Database::connect;
 use Int::charsets::encode;
 
 use strict;
@@ -28,7 +28,7 @@ use strict;
 sub execute
 {
 	my %env=@_;
-	Database::connect::multi("main","stats");
+	TOM::Database::connect::multi("main","stats");
 	
 	my $svg=SVG->new(width=>900,height=>2000);
 #	my $dom="sport.markiza.sk";

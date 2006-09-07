@@ -25,7 +25,7 @@ use TOM::Net::HTTP::referer;
 
 #use Utils::datetime;
 #use App::1B0;
-use Database::connect;
+use TOM::Database::connect;
 
 use strict;
 
@@ -65,7 +65,7 @@ sub execute
  return 1;
 =cut
  
- Database::connect::multi("stats");
+ TOM::Database::connect::multi("stats");
  
  #print "connected to $TOM::DB{stats}{name}\n";
  my $boundary = "------------080308060200060803000107";

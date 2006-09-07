@@ -28,7 +28,7 @@ use MIME::Entity;
 
 #use Utils::datetime;
 #use App::1B0;
-use Database::connect;
+use TOM::Database::connect;
 
 use strict;
 
@@ -102,7 +102,7 @@ sub execute
 END
 	
 	
-	Database::connect::multi("stats");
+	TOM::Database::connect::multi("stats");
 	
 	my $date = TOM::Utils::datetime::mail_current();
 	

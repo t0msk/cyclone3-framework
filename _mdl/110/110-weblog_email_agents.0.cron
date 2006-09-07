@@ -16,7 +16,7 @@ sub execute
 	alarm(0);
 	my %env=@_;
 
-	Database::connect::multi('stats') || die "cannot connect all databases";
+	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 
 	$env{lng} = 'sk' unless $env{lng};
 	$env{to_email} = $TOM::contact{'stats'}.";".$TOM::contact{'TOM'}.";".$env{'email'};

@@ -2,7 +2,7 @@
 # áéíóú - USE UTF-8 !!!
 package CRON::module;
 use App::1D0;
-use Database::connect;
+use TOM::Database::connect;
 use Utils::vars;
 use Net::HTTP::LiteAgent;
 

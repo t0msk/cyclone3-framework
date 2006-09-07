@@ -23,7 +23,7 @@ sub execute
  #$env{to_email} = "gregor\@webcom.sk;fordinal\@webcom.sk";
  #$env{to_email} = "gregor\@webcom.sk";
 	
- Database::connect::multi('stats') || die "cannot connect all databases";
+ TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	my $boundary = "------------080308060200060803000107";
 =head1
 From: <%FROM%>

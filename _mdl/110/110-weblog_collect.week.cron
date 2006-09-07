@@ -15,7 +15,7 @@ sub execute
 	
 	my $lock=new TOM::lock("weblog collect week") || return 1;
 	
-	Database::connect::multi('stats') || die "cannot connect all databases";
+	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
 	if ($cron::P eq $CRON::P)
 	{

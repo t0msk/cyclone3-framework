@@ -94,7 +94,7 @@ sub execute
 	
 	my $db=$types{$env{type}}{db};
 	$db="main" unless $db;
-	Database::connect::multi($db) || die "cannot connect all databases";
+	TOM::Database::connect::multi($db) || die "cannot connect all databases";
 	
 	
 	# STATS SELECT

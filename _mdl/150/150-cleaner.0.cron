@@ -16,7 +16,7 @@ sub execute
  #require "$CRON::P/.core/_config.sg/TOM.conf";
  #require "$CRON::P/.core/_config/TOM.conf";
 
- Database::connect::multi('stats','sys') || die "cannot connect all databases";
+ TOM::Database::connect::multi('stats','sys') || die "cannot connect all databases";
  
 #=head1
 

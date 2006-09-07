@@ -41,7 +41,7 @@ sub execute
 	#$env{table}="a130_send";#}else{$env{table}="a130_send";}
 
 	# connect
-	Database::connect::multi('stats') || die "cannot connect all databases";
+	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 
 	# boundary do mailu
 	my $boundary = "------------060509090608000908080106";

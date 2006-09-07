@@ -23,7 +23,7 @@ sub execute
 {
  my %env=@_;
  
- Database::connect::multi('stats') || die "cannot connect all databases";
+ TOM::Database::connect::multi('stats') || die "cannot connect all databases";
  
  my $graf=SVGraph::2D::columns->new(
 	title		=>	"SEO: Most used keywords from SE in last 31days",

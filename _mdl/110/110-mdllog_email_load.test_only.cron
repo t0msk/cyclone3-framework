@@ -69,7 +69,7 @@ sub execute
 
 	);
 
- Database::connect::multi('stats') || die "cannot connect all databases";
+ TOM::Database::connect::multi('stats') || die "cannot connect all databases";
  
 	# hranice priloh
 	my $boundary = "-----------9879522313565987";

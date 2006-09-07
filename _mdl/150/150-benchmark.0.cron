@@ -15,7 +15,7 @@ sub execute
 	# require "$CRON::P/.core/_config/TOM3.conf";
 	# require "$CRON::P/.core/_config/TOM3.fcgi.conf";
  
-	Database::connect::multi('stats','sys') || die "cannot connect all databases";
+	TOM::Database::connect::multi('stats','sys') || die "cannot connect all databases";
 	
 	my $time_queries=TOM::Debug::breakpoints->new();
 	$time_queries->start();

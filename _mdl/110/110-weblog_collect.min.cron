@@ -23,7 +23,7 @@ sub execute
 	}
 =cut
 	
-	Database::connect::multi('stats') || die "cannot connect all databases";
+	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
 	
 	my $lock=new TOM::lock("weblog collect min") || return 1;

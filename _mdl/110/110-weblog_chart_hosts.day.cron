@@ -27,7 +27,7 @@ alarm(3600);
  my %date=Utils::datetime::ctodatetime(time,format=>1);
  my $to="$date{year}-$date{mom}-$date{mday} $date{hour}";
 
- Database::connect::multi('stats') || die "cannot connect all databases";
+ TOM::Database::connect::multi('stats') || die "cannot connect all databases";
  
  my %date=Utils::datetime::ctodatetime(time-(86400*31),format=>1);
  my $from2="$date{year}-$date{mom}-$date{mday}";

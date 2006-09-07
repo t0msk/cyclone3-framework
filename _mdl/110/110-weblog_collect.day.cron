@@ -21,7 +21,7 @@ sub execute
 		Time::HiRes::sleep($var);
 	}
 	
-	Database::connect::multi('stats') || die "cannot connect all databases";
+	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
 	if ($cron::P eq $CRON::P)
 	{

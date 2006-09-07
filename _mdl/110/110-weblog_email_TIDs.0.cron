@@ -17,7 +17,7 @@ sub execute
 # if (!$env{db_130}){$cron::ERR="WARN: db_130 not defined!!!";return undef}
 
 
- Database::connect::multi('stats') || die "cannot connect all databases";
+ TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 
  my $date=`date -u "+%a,%e %b %Y %H:%M:%S (%Z)"`;chomp($date);
 

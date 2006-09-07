@@ -9,7 +9,7 @@ sub execute
 {
  my %env=@_;
 
-  Database::connect::multi('main') || die "cannot connect all databases";
+  TOM::Database::connect::multi('main') || die "cannot connect all databases";
  	
 # WEBCLICK
  $main::DB{stats}->Query("

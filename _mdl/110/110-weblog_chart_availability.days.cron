@@ -17,7 +17,7 @@ sub execute
 	my $from="$date{year}-$date{mom}-$date{mday}";
 	
 	
-	Database::connect::multi('stats') || die "cannot connect all databases";
+	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
 	$main::DB{stats}->selectdb("TOM");
  

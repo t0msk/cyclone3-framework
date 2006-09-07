@@ -13,7 +13,7 @@ sub execute
  #return 1;
  my %env=@_;
  
- Database::connect::multi('stats') || die "cannot connect all databases";
+ TOM::Database::connect::multi('stats') || die "cannot connect all databases";
  
  if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
  #if ($TOM::DB_name_STAT eq $TOM::DB_name_TOM){$env{t}="C";}

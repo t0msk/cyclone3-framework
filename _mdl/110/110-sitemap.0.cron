@@ -18,7 +18,7 @@ sub execute
 	my %env=@_;
 	#return 1;
 	
-	Database::connect::multi('stats') || die "cannot connect all databases";
+	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
 	my $lock=new TOM::lock("sitemap generating") || return 1;
 	

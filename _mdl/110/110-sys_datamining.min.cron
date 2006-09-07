@@ -17,7 +17,7 @@ sub execute
  #my ($avg_1min,$avg_5min,$avg_15min)=split(' ',<HND>);
  #close HND;
 
- Database::connect::multi('stats') || die "cannot connect all databases";
+ TOM::Database::connect::multi('stats') || die "cannot connect all databases";
   
  my ($avg_1min,$avg_5min,$avg_15min)=System::meter::getLoad;
 

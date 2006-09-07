@@ -27,7 +27,7 @@ alarm(3600);
 # my %date=Utils::datetime::ctodatetime(time,format=>1);
 # my $to="$date{year}-$date{mom}-$date{mday} $date{hour}:$date{min}";
 
- Database::connect::multi('stats') || die "cannot connect all databases";
+ TOM::Database::connect::multi('stats') || die "cannot connect all databases";
  
   my %date=Utils::datetime::ctodatetime(time-3600,format=>1);
  my $now="$date{hour}";

@@ -64,7 +64,7 @@ my %TEXTS=
  	},
  );
 
- Database::connect::multi('stats') || die "cannot connect all databases";
+ TOM::Database::connect::multi('stats') || die "cannot connect all databases";
  my $day_period = 31;
 	my $boundary = "------------060509090608000908080106";
 	my $webcom_logo = <<"WEBCOMLOGO";

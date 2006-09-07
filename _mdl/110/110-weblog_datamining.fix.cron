@@ -144,7 +144,7 @@ LIMIT 0,1000
 	#return 1;
 	alarm(0);
 	
-	Database::connect::multi('stats') || die "cannot connect all databases";
+	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
 	my $lock=new TOM::lock("weblog datamining") || return 1;
 	

@@ -10,7 +10,7 @@ sub execute
 	#return 1;
 	my %env=@_;
 	
-	Database::connect::multi('stats') || die "cannot connect all databases";
+	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
 #=head1
 	my $null;
