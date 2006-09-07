@@ -475,54 +475,6 @@ sub GetICDPH
 }
 
 
-
-
-
-
-
-=head1
-sub GetProductReserved
-{
-	my $t=track TOM::Debug(__PACKAGE__."::GetProductReserved()",'namespace'=>'SPIN');
-	my %env=@_;
-	foreach (sort keys %env){main::_log("input $_='$env{$_}'");}
-	my %data;
-	
-	my $db0=$main::DB{main}->Query("
-		SELECT
-			a01_order.ID AS IDorder,
-			order_product.IDproduct AS IDproduct,
-			order_product.amount-order_product.amount_delivered AS reserved
-		FROM
-			a01_order_product AS order_product
-		LEFT JOIN a01_order ON
-		(
-			a01_order.ID = order_product.IDorder
-		)
-		WHERE
-			a01_order.ID IS NOT NULL
-			AND a01_order.delivered='N'
-			AND order_product.IDproduct='$env{product_ID}'
-			AND (order_product.amount-order_product.amount_delivered)>0
-			AND order_product.active='Y'
-	");
-	
-	while (my %db0_line=$db0->fetchhash())
-#	while (my %db0_line = $db0->fetchhash())
-	{
-		main::_log("in order '$db0_line{'IDorder'}' reserved count '$db0_line{'reserved'}'");
-		$data{'reserved'}+=$db0_line{'reserved'};
-	}
-	
-#	main::_log
-	
-	#my %data=$db0->fetchhash();
-	foreach (sort keys %data){main::_log("output $_='$data{$_}'");}
-	$t->close();
-	return %data;
-}
-=cut
-
 sub GetProductDocuments
 {
 	my $t=track TOM::Debug(__PACKAGE__."::GetProductDocuments()",'namespace'=>'SPIN');
