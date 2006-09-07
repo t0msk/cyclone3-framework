@@ -12,7 +12,7 @@ sub execute
 	
 	if ($cron::P eq $CRON::P)
 	{
-		CRON::debug::log(5,"WARN: global cron, manipulating with all hosts in TOM-database!!!");
+		main::_log("WARN: global cron, manipulating with all hosts in TOM-database!!!");
 		$env{db_300}="TOM";
 		$env{sel0}="reqtime<$cron::time_current-$env{max_online} OR active='N'";
 	}
@@ -30,7 +30,7 @@ sub execute
 	");
 	while (my %user=$db0->fetchhash)
 	{
-		CRON::debug::log(5,"kick user IDhash:".$user{IDhash}." login:".$user{login}." old:".($cron::time_current-$user{reqtime}));
+		main::_log("kick user IDhash:".$user{IDhash}." login:".$user{login}." old:".($cron::time_current-$user{reqtime}));
 		my $db0=$main::DB{main}->Query("
 			SELECT
 				*
@@ -41,16 +41,16 @@ sub execute
 			LIMIT 1");
 		if (my %user0=$db0->fetchhash)
 		{
-			CRON::debug::log(6,"je lognuty") if ($user{logged} eq "Y");
-			CRON::debug::log(6,"nelognuty") if ($user{logged} ne "Y");
-			CRON::debug::log(6,"anonymny user") if (!$user0{login});
-			CRON::debug::log(6,"autorizovany user") if ($user0{login});
+			main::_log("je lognuty") if ($user{logged} eq "Y");
+			main::_log("nelognuty") if ($user{logged} ne "Y");
+			main::_log("anonymny user") if (!$user0{login});
+			main::_log("autorizovany user") if ($user0{login});
 			if	(
 					(($user{logged} eq "Y")&&($user0{login}))
 					||(($user{logged} ne "Y")&&(!$user0{login}))
 				)
 			{
-				CRON::debug::log(7,"prevediem zapis");
+				main::_log("prevediem zapis");
 				$user0{cookies}="";
 				while ($user{cookies}=~s|<VAR id="(.*?)">(.*?)</VAR>||)
 				{
@@ -83,7 +83,7 @@ sub execute
 			}
 			else
 			{
-				CRON::debug::log(7,"neprevediem zapis, deleting");
+				main::_log("neprevediem zapis, deleting");
 				if (
 					$main::DBH->Query("
 						DELETE FROM
@@ -94,15 +94,15 @@ sub execute
 						LIMIT 1
 					")
 				)
-				{CRON::debug::log(8,"deleted");}
+				{main::_log("deleted");}
 				else
-				{CRON::debug::log(8,"not deleted :(",1);}
+				{main::_log("not deleted :(",1);}
 			}
 		}
 		else
 		{
-			CRON::debug::log(6,"user nieje vobec v a300_users!!!");
-			CRON::debug::log(7,"neprevediem zapis, deleting");
+			main::_log("user nieje vobec v a300_users!!!");
+			main::_log("neprevediem zapis, deleting");
 			if (
 				$main::DBH->Query("
 					DELETE FROM TOM.a300_online
@@ -112,9 +112,9 @@ sub execute
 					LIMIT 1
 				")
 			)
-			{CRON::debug::log(8,"deleted");}
+			{main::_log("deleted");}
 			else
-			{CRON::debug::log(8,"not deleted :(",1);}
+			{main::_log("not deleted :(",1);}
 		}
 	}
 	
