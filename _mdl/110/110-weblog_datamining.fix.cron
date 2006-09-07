@@ -11,167 +11,13 @@ use strict;
 
 sub execute
 {
- #return 1;
 	my %env=@_;
 	
-#	return 1;
-#	return 1;
-	
-=head1
-
-SELECT 
-  page_code,
-  reqdatetime,
-  COUNT(*) AS requests
-FROM `a110_weblog_rqs`
-GROUP BY page_code,reqdatetime
-HAVING requests>1
-
-SELECT
-	reqtype,
-	user_agent_name,
-	COUNT(*) AS requests,
-	COUNT(DISTINCT(IDhash)) AS users
-FROM a110_weblog_rqs
-WHERE
-	active='Y'
-GROUP BY reqtype,user_agent_name
-ORDER BY reqtype,requests DESC
-=cut
-
-=head1
-ZOZNAM NEZNAMYCH BROWSEROV
-
-SELECT user_agent,
-           COUNT(*) AS requests,
-           COUNT(DISTINCT(IDhash)) AS users,
-           COUNT(*)/COUNT(DISTINCT(IDhash)) AS reqperuser
-FROM a110_weblog_rqs
-WHERE
-         active='Y' AND user_agent_name IS NULL
-GROUP BY user_agent
-ORDER BY requests DESC
-LIMIT 0,1000
-=cut
-
-
-=head1
-ZOZNAM PODOZRIVYCH BROWSEROV KDE ASI NEFUNGUJE USRM
-
-SELECT user_agent_name,
-           COUNT(*) AS requests,
-           COUNT(DISTINCT(IDhash)) AS users,
-           COUNT(DISTINCT(IDsession)) AS sessions,
-           COUNT(*)/COUNT(DISTINCT(IDhash)) AS reqperuser,
-           COUNT(*)/COUNT(DISTINCT(IDsession)) AS reqpersession,
-           COUNT(DISTINCT(IDsession))/COUNT(DISTINCT(IDhash)) AS sessionperuser
-FROM a110_weblog_rqs
-WHERE
-         active='Y' AND user_agent_name IS NOT NULL AND reqtype='B'
-GROUP BY user_agent_name
-ORDER BY reqpersession DESC
-LIMIT 0,1000
-
-ANALYZA PODOZRIVEHO USERAGENTA
-
-SELECT user_agent_name,
-	IP,
-	user_agent AS example,
-	COUNT(*) AS requests,
-	COUNT(DISTINCT(IDhash)) AS users,
-	COUNT(DISTINCT(IDsession)) AS sessions,
-	COUNT(*)/COUNT(DISTINCT(IDhash)) AS reqperuser,
-	COUNT(*)/COUNT(DISTINCT(IDsession)) AS reqpersession,
-	COUNT(DISTINCT(IDsession))/COUNT(DISTINCT(IDhash)) AS sessionperuser
-FROM TOM.a110_weblog_rqs
-WHERE
-        user_agent_name = 'Mozilla 1.3'
-GROUP BY user_agent,IP
-
-
-ZOBRAZI ZOZNAM IP, z ktorych je najviac requestov
-
-SELECT IP,
-       user_agent,
-       COUNT(*) AS requests,
-       COUNT(DISTINCT(user_agent_name)) AS browsers,
-       COUNT(DISTINCT(IDhash)) AS users,
-       COUNT(DISTINCT(IDsession)) AS sessions,
-       COUNT(*)/COUNT(DISTINCT(IDhash)) AS reqperuser,
-       COUNT(*)/COUNT(DISTINCT(IDsession)) AS reqpersession,
-       COUNT(DISTINCT(IDsession))/COUNT(DISTINCT(IDhash)) AS sessionperuser
-       FROM TOM.a110_weblog_rqs
-       WHERE
-              reqtype='B'
-       GROUP BY IP
-       ORDER BY requests DESC
-       LIMIT 0,50;
-
-
-# check checkerov
-
-SELECT
-	domain_sub,
-	user_agent_name,
-	IP,
-	COUNT(*) AS requests
-FROM a110_weblog_rqs
-WHERE
-	active='Y' AND reqtype='c'
-GROUP BY domain_sub,user_agent_name,IP
-ORDER BY domain_sub,user_agent_name,IP ASC
-LIMIT 0,1000
-
-
-#Nokia MobileBrowser
-
-# check checkerov
-
-SELECT
-	domain_sub,
-	user_agent_name,
-	COUNT(*) AS requests
-FROM a110_weblog_rqs
-WHERE
-	active='Y' AND reqtype='m'
-GROUP BY domain_sub,user_agent_name
-ORDER BY domain_sub,requests DESC
-LIMIT 0,1000
-
-=cut
-
-
-	#return 1;
 	alarm(0);
 	
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
 	my $lock=new TOM::lock("weblog datamining") || return 1;
-	
-=head1
-	my $db0=$main::DB{stats}->Query("
-	SELECT
-		page_code,
-		reqdatetime,
-		COUNT(*) AS requests
-	FROM `a110_weblog_rqs`
-	GROUP BY page_code,reqdatetime
-	HAVING requests>1
-	");
-	while(my %db0_line=$db0->fetchhash())
-	{
-		main::_log(0,"update $db0_line{page_code} $db0_line{reqdatetime}");
-		$main::DB{stats}->Query("
-		DELETE
-		FROM `a110_weblog_rqs`
-		WHERE page_code='$db0_line{page_code}' AND reqdatetime='$db0_line{reqdatetime}'
-		LIMIT 1
-		");
-	}
-	
-	
-	return 1;
-=cut
 	
 	my $db0=$main::DB{stats}->Query("
 		SELECT
@@ -191,9 +37,6 @@ LIMIT 0,1000
 	");
 	while (my %db0_line=$db0->fetchhash())
 	{
-#		next;
-		
-		#next;
 		
 		main::_log("user_agent='$db0_line{user_agent}'");
 		
@@ -210,7 +53,6 @@ LIMIT 0,1000
 			# neznamy typ browseru
 			if (!$hash{'reqtype'})
 			{
-				#$hash{'reqtype'}='NULL';
 				$reqtype='NULL';
 			}
 			else
@@ -222,10 +64,7 @@ LIMIT 0,1000
 		{
 			$user_agent_name="NULL";
 			$reqtype="NULL";
-#			$user_agent_name="'unknown'";
-#			$reqtype="'X'";
 		}
-		
 		
 		
 		if (!$db0_line{'page_code_referer'} &&
@@ -254,7 +93,6 @@ LIMIT 0,1000
 			");
 			if (my %db1_line=$db1->fetchhash())
 			{
-				#main::_log("I found page_code='$db1_line{'page_code'}'");
 				main::_log(" found: page_code='$db1_line{'page_code'}' reqdatetime='$db1_line{'reqdatetime'}' query_URL='$db1_line{'query_URL'}' referer='$db0_line{'referer'}'");
 				
 				my $sql="
@@ -266,7 +104,6 @@ LIMIT 0,1000
 							AND reqdatetime='$db0_line{reqdatetime}'
 					LIMIT 1
 				";
-				#main::_log(0,$sql);
 				$main::DB{stats}->Query($sql) || die "can't update";
 				
 			}
@@ -288,7 +125,6 @@ LIMIT 0,1000
 		}
 		
 		
-		#UPDATE TOM.a110_weblog_rqs SET active='N' WHERE IP LIKE '62.171.194%'
 		main::_log("'$db0_line{page_code}:$db0_line{reqdatetime}' user_agent_name='$hash{user_agent_name}' type='$hash{reqtype}' ($user_agent_name $reqtype)");
 		my $sql="
 			UPDATE TOM.a110_weblog_rqs
@@ -302,7 +138,6 @@ LIMIT 0,1000
 					AND reqdatetime='$db0_line{reqdatetime}'
 			LIMIT 1
 		";
-		#main::_log(0,$sql);
 		$main::DB{stats}->Query($sql) || die "can't update";
 		
 		next;
