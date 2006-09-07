@@ -33,14 +33,14 @@ sub execute
 	
 	if ($cron::P eq $CRON::P)
 	{
-		CRON::debug::log(5,"WARN: global use, using database $TOM::DB_name_STAT, ALL DOMAINS!!!");
+		main::log("WARN: global use, using database $TOM::DB_name_STAT, ALL DOMAINS!!!");
 		$env{sel}="";
 		$env{tbl}="a110_weblog_rqs";
 		#$env{t}="C";
 	}
 	else
 	{
-		CRON::debug::log(5,"WARN: local(master) use, using database $TOM::DB_name_STAT, domain $tom::H_cookie");
+		main::_log("WARN: local(master) use, using database $TOM::DB_name_STAT, domain $tom::H_cookie");
 		$env{sel}="domain='$tom::H_cookie'";
 		$env{tbl}="a110_weblog_rqs";
 	}
@@ -58,7 +58,7 @@ sub execute
 	if (my @db0_line=$db0->fetchrow)
 	{
 		$time_startat=$db0_line[0];
-		CRON::debug::log(5,"last data collected from minute \"$time_startat\"");
+		main::_log("last data collected from minute \"$time_startat\"");
 	}
 	
 	if (!$time_startat)
@@ -95,7 +95,7 @@ sub execute
 		$time_end="$date{year}-$date{mom}-$date{mday} $date{hour}:$date{min}";  
 	}
 	
-	CRON::debug::log(5,"data mining started in minute \"$time_startat\"");
+	main::_log("data mining started in minute \"$time_startat\"");
 	
 	# my %date=Utils::datetime::ctodatetime($main::time_current,format=>1);
 	# my $time_thisday="$date{year}-$date{mom}-$date{mday} $date{hour}:$date{min}:00";
@@ -118,13 +118,13 @@ sub execute
 		$time_thisday="$date{year}-$date{mom}-$date{mday} $date{hour}:$date{min}:00";
 	}
 	
-	CRON::debug::log(5,"(new) last minute for data mining \"$time_thisday\"");
+	main::_log("(new) last minute for data mining \"$time_thisday\"");
 	
 	#return 1;
 	
 	if ($time_thisday=~/^$time_startat/)
 	{
-		CRON::debug::log(6,"cannot create statistics...");
+		main::_log("cannot create statistics...");
 		return 1;
 	}
 	
@@ -192,7 +192,7 @@ sub execute
 			$direct=$db1_line[0];
 		}
 		
-		CRON::debug::log(7,"[$date:00] domain:$db0_line[1] sub:$db0_line[2] visits:$db0_line[3] users:$db0_line[4] sessions:$db0_line[5] IP:$db0_line[6] load_proc:$db0_line[7] load_req:$db0_line[8] 0000:$tid0000 direct:$direct");
+		main::_log("[$date:00] domain:$db0_line[1] sub:$db0_line[2] visits:$db0_line[3] users:$db0_line[4] sessions:$db0_line[5] IP:$db0_line[6] load_proc:$db0_line[7] load_req:$db0_line[8] 0000:$tid0000 direct:$direct");
 		
 		$main::DB{stats}->Query("
 		REPLACE INTO TOM.a110_weblog_min
@@ -290,7 +290,7 @@ sub execute
 		}
 		
 		
-		CRON::debug::log(7,"[$date:00] DOMAIN:$db0_line[1] visits:$db0_line[2] users:$db0_line[3] sessions:$db0_line[4] IP:$db0_line[5] load_proc:$db0_line[6] load_req:$db0_line[7] 0000:$tid0000 direct:$direct");
+		main::_log("[$date:00] DOMAIN:$db0_line[1] visits:$db0_line[2] users:$db0_line[3] sessions:$db0_line[4] IP:$db0_line[5] load_proc:$db0_line[6] load_req:$db0_line[7] 0000:$tid0000 direct:$direct");
 		
 		$main::DB{stats}->Query("
 		REPLACE INTO $TOM::DB_name_STAT.$env{t}a110_weblog_min
