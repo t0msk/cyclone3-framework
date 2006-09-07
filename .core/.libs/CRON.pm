@@ -76,7 +76,7 @@ sub waitload
 		$avg=(System::meter::getLoad)[0];
 		my $var=int(rand(10));
 		$loops++;
-		CRON::debug::log(21,"{$loops} load ".((System::meter::getLoad)[0])." has reached the maximum $_[0], waiting $var seconds",1);
+		main::_log("{$loops} load ".((System::meter::getLoad)[0])." has reached the maximum $_[0], waiting $var seconds",1);
 		Time::HiRes::sleep($var);
 	}
 	
@@ -89,7 +89,7 @@ sub waitload
 sub Getvar
 {
  return undef unless $_[0];
- CRON::debug::log(9,"Get var ".$_[0]." from ".$tom::DB_name);
+ main::_log("Get var ".$_[0]." from ".$tom::DB_name);
  my $db0 = $DBH->Query("
  	SELECT value,cache
 	FROM $tom::DB_name._config
@@ -109,7 +109,7 @@ sub Getmdlvar
  my %env=@_;
  $env{db}=$tom::DB_name unless $env{db};
 
- CRON::debug::log(9,"Get mdlvar ".$key." from ".$env{db});
+ main::_log("Get mdlvar ".$key." from ".$env{db});
 
  my $db0 = $DBH->Query("
  	SELECT value,cache
@@ -132,14 +132,14 @@ sub module
  local $cron::ERR;
  my $t=track TOM::Debug("module");
 
- CRON::debug::log(3,"adding module ($tom::H) ".$mdl_env{-category}."-".$mdl_env{-name}."/".$mdl_env{-version}."/".$mdl_env{-global});
+ main::_log("adding module ($tom::H) ".$mdl_env{-category}."-".$mdl_env{-name}."/".$mdl_env{-version}."/".$mdl_env{-global});
 
  # SPRACOVANIE PREMMENNYCH
  foreach (keys %mdl_env)
  {
 	my $var=$mdl_env{$_};$var=~s|[\n\r]||g;
 	if (length($var)>50){$var=substr($var,0,50)."..."}
-	CRON::debug::log(9,"input (".$_.")=".$var);
+	main::_log("input (".$_.")=".$var);
 	/^-/ && do {$mdl_C{$_}=$mdl_env{$_};delete $mdl_env{$_};}
  }
  $mdl_C{-category}="0" unless $mdl_C{-category};
@@ -149,7 +149,7 @@ sub module
 
  # NECACHUJEM, LEBO VYPRSALA CACHE
 
- CRON::debug::log(4,"executing");
+ main::_log("executing");
 
  # KDE JE MODUL?
  if ($mdl_C{-global})
@@ -162,14 +162,14 @@ sub module
  # AK MODUL NEEXISTUJE
  if (not -e $mdl_C{P_MODULE})
  {
- 	CRON::debug::log(4,"not exist",1);#return undef;
+ 	main::_log("not exist",1);#return undef;
  	CRON::error::module(
    	-MODULE	=>	$mdl_C{-category}."-".$mdl_C{-name},
 	-ERROR	=>	"module not exist $mdl_C{P_MODULE}"
    );
  }
 
- CRON::debug::log(4,"secure eval, alarm $CRON::ALRM_mdl");
+ main::_log("secure eval, alarm $CRON::ALRM_mdl");
 
  # V EVALKU OSETRIM CHYBU RYCHLOSTI A SPATNEHO MODULU
  eval
@@ -181,7 +181,7 @@ sub module
 
   if (CRON::module::execute(%mdl_env))
   {
-   CRON::debug::log(4,"end eval");
+   main::_log("end eval");
   }
   else # chyba o ktorej upozorni samotny program vratenim undef :)
   {
