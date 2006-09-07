@@ -38,7 +38,7 @@ HEADER
  #######################################################################################################
  #######################################################################################################
  #######################################################################################################
- CRON::debug::log(5,"controll a400 for empty lines");
+ main::_log("controll a400 for empty lines");
  $doc.="controll a400 for empty lines...\n";
  #######################################################################################################
  my $count;
@@ -58,9 +58,9 @@ HEADER
  while (my @db0_line=$db0->fetchrow)
  {
    $count++;
-   CRON::debug::log(6,"[$count] a400:$db0_line[0] is empty",1);$bugs++;
+   main::_log("[$count] a400:$db0_line[0] is empty",1);$bugs++;
    $doc.="[$count] a400:$db0_line[0] is empty\n";
-   CRON::debug::log(8,"repairing (delete)");$doc.="repairing (delete)\n";
+   main::_log("repairing (delete)");$doc.="repairing (delete)\n";
    $main::DBH->Query("
 	DELETE FROM $env{db_400}.a400
 	WHERE	ID='$db0_line[0]'		AND
@@ -78,7 +78,7 @@ HEADER
  #######################################################################################################
  #######################################################################################################
  #######################################################################################################
- CRON::debug::log(5,"controll a400_arch for empty lines");
+ main::_log("controll a400_arch for empty lines");
  $doc.="controll a400_arch for empty lines...\n";
  #######################################################################################################
  my $count;
@@ -98,9 +98,9 @@ HEADER
  while (my @db0_line=$db0->fetchrow)
  {
    $count++;
-   CRON::debug::log(6,"[$count] a400_arch:$db0_line[0] is empty",1);$bugs++;
+   main::_log("[$count] a400_arch:$db0_line[0] is empty",1);$bugs++;
    $doc.="[$count] a400_arch:$db0_line[0] is empty\n";
-   CRON::debug::log(8,"repairing (delete)");$doc.="repairing (delete)\n";
+   main::_log("repairing (delete)");$doc.="repairing (delete)\n";
    $main::DBH->Query("
 	DELETE FROM $env{db_400}.a400_arch
 	WHERE	ID='$db0_line[0]'		AND
@@ -117,7 +117,7 @@ HEADER
  #######################################################################################################
  #######################################################################################################
  #######################################################################################################
- CRON::debug::log(5,"controll a400 related to a400_attrs...");
+ main::_log("controll a400 related to a400_attrs...");
  $doc.="controll a400 related to a400_attrs...\n";
  #######################################################################################################
  my $count;
@@ -132,26 +132,26 @@ HEADER
  while (my @db0_line=$db0->fetchrow)
  {
   $count0++;
-  if ($count0/1000 == int($count0/1000)){CRON::debug::log(6,"[$count0] checked");CRON::waitload($CRON::LOADAVG);}
+  if ($count0/1000 == int($count0/1000)){main::_log("[$count0] checked");CRON::waitload($CRON::LOADAVG);}
   if (!$db0_line[0])
   {
    $count++;
-   CRON::debug::log(6,"[$count] a400:$db0_line[2] has null IDattrs:$db0_line[0]",1);$bugs++;
+   main::_log("[$count] a400:$db0_line[2] has null IDattrs:$db0_line[0]",1);$bugs++;
    $doc.="[$count] a400:$db0_line[2] has null IDattrs:$db0_line[0]\n";
-   CRON::debug::log(8,"repairing");$doc.="repairing\n";
+   main::_log("repairing");$doc.="repairing\n";
    if ($main::DBH->Query("UPDATE a400 SET IDattrs = NULL WHERE ID='$db0_line[2]'"))
    {
-    CRON::debug::log(9,"repaired");$doc.="repairing\n";
+    main::_log("repaired");$doc.="repairing\n";
    }
    else
    {
-    CRON::debug::log(9,"not repaired",1);$doc.="not repaired\n";
+    main::_log("not repaired",1);$doc.="not repaired\n";
    }
   }
   elsif (!$db0_line[1])
   {
    $count++;
-   CRON::debug::log(6,"[$count] a400:IDattrs:$db0_line[0] has no attrs",1);$bugs++;
+   main::_log("[$count] a400:IDattrs:$db0_line[0] has no attrs",1);$bugs++;
    $doc.="[$count] a400:IDattrs:$db0_line[0] has no attrs\n";
    my $db1=$main::DBH->Query("
 	SELECT IDattrs
@@ -160,22 +160,22 @@ HEADER
 	LIMIT 1");
    if (my @db1_line=$db1->fetchhash)
    {
-    CRON::debug::log(7,"a400:IDattrs:$db0_line[0] has attrs in archive");
+    main::_log("a400:IDattrs:$db0_line[0] has attrs in archive");
     $doc.="a400:IDattrs:$db0_line[0] has attrs in archive\n";
-    CRON::debug::log(8,"repairing");$doc.="repairing\n";
+    main::_log("repairing");$doc.="repairing\n";
     $main::DBH->Query("	REPLACE INTO a400_attrs SELECT * FROM a400_attrs_arch
     			WHERE IDattrs='$db0_line[0]' LIMIT 1");
     $main::DBH->Query("DELETE FROM $env{db_400}.a400_attrs_arch WHERE IDattrs='$db0_line[0]' LIMIT 1");
    }
    else
    {
-    CRON::debug::log(8,"repairing");$doc.="repairing\n";$main::DBH->Query("INSERT INTO $env{db_400}.a400_attrs(IDattrs) VALUES('$db0_line[0]')");
+    main::_log("repairing");$doc.="repairing\n";$main::DBH->Query("INSERT INTO $env{db_400}.a400_attrs(IDattrs) VALUES('$db0_line[0]')");
    }
   }
  }
 #=cut
  #######################################################################################################
- CRON::debug::log(5,"controll a400_arch related to a400_attrs_arch...");
+ main::_log("controll a400_arch related to a400_attrs_arch...");
  $doc.="controll a400_arch related to a400_attrs_arch...\n";
  #######################################################################################################
  my $count;
@@ -189,26 +189,26 @@ HEADER
  while (my @db0_line=$db0->fetchrow)
  {
   $count0++;
-  if ($count0/10000 == int($count0/10000)){CRON::debug::log(6,"[$count0] checked");CRON::waitload($CRON::LOADAVG);}
+  if ($count0/10000 == int($count0/10000)){main::_log("[$count0] checked");CRON::waitload($CRON::LOADAVG);}
   if (!$db0_line[0])
   {
    $count++;
-   CRON::debug::log(6,"[$count] a400_arch:$db0_line[2] has null IDattrs:$db0_line[0]",1);$bugs++;
+   main::_log("[$count] a400_arch:$db0_line[2] has null IDattrs:$db0_line[0]",1);$bugs++;
    $doc.="[$count] a400_arch:$db0_line[2] has null IDattrs:$db0_line[0]\n";
-   CRON::debug::log(8,"repairing");$doc.="repairing\n";
+   main::_log("repairing");$doc.="repairing\n";
    if ($main::DBH->Query("UPDATE a400_arch SET IDattrs = NULL WHERE ID='$db0_line[2]'"))
    {
-    CRON::debug::log(9,"repaired");$doc.="repairing\n";
+    main::_log("repaired");$doc.="repairing\n";
    }
    else
    {
-    CRON::debug::log(9,"not repaired",1);$doc.="not repaired\n";
+    main::_log("not repaired",1);$doc.="not repaired\n";
    }
   }
   elsif (!$db0_line[1])
   {
    $count++;
-   CRON::debug::log(6,"[$count] a400_arch:$db0_line[2] IDattrs:$db0_line[0] has no attrs",1);$bugs++;
+   main::_log("[$count] a400_arch:$db0_line[2] IDattrs:$db0_line[0] has no attrs",1);$bugs++;
    $doc.="[$count] a400_arch:$db0_line[2] IDattrs:$db0_line[0] has no attrs\n";
    my $db1=$main::DBH->Query("
 	SELECT IDattrs
@@ -217,16 +217,16 @@ HEADER
 	LIMIT 1");
    if (my @db1_line=$db1->fetchhash)
    {
-    CRON::debug::log(7,"a400_arch:IDattrs:$db0_line[0] has attrs in original");
+    main::_log("a400_arch:IDattrs:$db0_line[0] has attrs in original");
     $doc.="a400_arch:IDattrs:$db0_line[0] has attrs in original\n";
-    CRON::debug::log(8,"repairing");$doc.="repairing\n";
+    main::_log("repairing");$doc.="repairing\n";
     $main::DBH->Query("	REPLACE INTO a400_attrs_arch SELECT * FROM a400_attrs
     			WHERE IDattrs='$db0_line[0]' LIMIT 1");
     $main::DBH->Query("DELETE FROM $env{db_400}.a400_attrs WHERE IDattrs='$db0_line[0]' LIMIT 1");
    }
    else
    {
-    CRON::debug::log(8,"repairing");$doc.="repairing\n";$main::DBH->Query("INSERT INTO $env{db_400}.a400(IDattrs) VALUES('$db0_line[0]')");
+    main::_log("repairing");$doc.="repairing\n";$main::DBH->Query("INSERT INTO $env{db_400}.a400(IDattrs) VALUES('$db0_line[0]')");
    }
   }
  }
@@ -237,7 +237,7 @@ HEADER
  #######################################################################################################
  #######################################################################################################
  #######################################################################################################
- CRON::debug::log(5,"controll a400_attrs related to a400...");
+ main::_log("controll a400_attrs related to a400...");
  $doc.="controll a400_attrs related to a400...\n";
  #######################################################################################################
  my $count;
@@ -250,18 +250,18 @@ HEADER
  while (my @db0_line=$db0->fetchrow)
  {
   $count0++;
-  if ($count0/1000 == int($count0/1000)){CRON::debug::log(6,"[$count0] checked");CRON::waitload($CRON::LOADAVG);}
+  if ($count0/1000 == int($count0/1000)){main::_log("[$count0] checked");CRON::waitload($CRON::LOADAVG);}
   if (!$db0_line[1])
   {
    $count++;
-   CRON::debug::log(6,"[$count] a400_attrs:IDattrs:$db0_line[0] has no a400",1);$bugs++;
+   main::_log("[$count] a400_attrs:IDattrs:$db0_line[0] has no a400",1);$bugs++;
    $doc.="[$count] a400_attrs:IDattrs:$db0_line[0] has no a400\n";
-   CRON::debug::log(7,"deleting");$doc.="deleting\n";
+   main::_log("deleting");$doc.="deleting\n";
    $main::DBH->Query("DELETE FROM $env{db_400}.a400_attrs WHERE IDattrs='$db0_line[0]' LIMIT 1");
   }
  }
  #######################################################################################################
- CRON::debug::log(5,"controll a400_attrs_arch related to a400_arch...");
+ main::_log("controll a400_attrs_arch related to a400_arch...");
  $doc.="controll a400_attrs_arch related to a400_arch...\n";
  #######################################################################################################
  my $count;
@@ -274,13 +274,13 @@ HEADER
  while (my @db0_line=$db0->fetchrow)
  {
   $count0++;
-  if ($count0/10000 == int($count0/10000)){CRON::debug::log(6,"[$count0] checked");CRON::waitload($CRON::LOADAVG);}
+  if ($count0/10000 == int($count0/10000)){main::_log("[$count0] checked");CRON::waitload($CRON::LOADAVG);}
   if (!$db0_line[1])
   {
    $count++;
-   CRON::debug::log(6,"[$count] a400_attrs_arch:IDattrs:$db0_line[0] has no a400_arch",1);$bugs++;
+   main::_log("[$count] a400_attrs_arch:IDattrs:$db0_line[0] has no a400_arch",1);$bugs++;
    $doc.="[$count] a400_attrs_arch:IDattrs:$db0_line[0] has no a400_arch\n";
-   CRON::debug::log(7,"deleting");$doc.="deleting\n";
+   main::_log("deleting");$doc.="deleting\n";
    $main::DBH->Query("DELETE FROM $env{db_400}.a400_attrs_arch WHERE IDattrs='$db0_line[0]' LIMIT 1");
   }
  }

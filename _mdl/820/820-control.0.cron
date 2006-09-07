@@ -37,7 +37,7 @@ HEADER
  #######################################################################################################
  #######################################################################################################
  #######################################################################################################
- CRON::debug::log(5,"controll a820 related to a820_attrs...");
+ main::_log("controll a820 related to a820_attrs...");
  $doc.="controll a820 related to a820_attrs...\n";
  #######################################################################################################
  my $count;
@@ -50,18 +50,18 @@ HEADER
  while (my @db0_line=$db0->fetchrow)
  {
   $count0++;
-  if ($count0/1000 == int($count0/1000)){CRON::debug::log(6,"[$count0] checked");CRON::waitload($CRON::LOADAVG);}
+  if ($count0/1000 == int($count0/1000)){main::_log("[$count0] checked");CRON::waitload($CRON::LOADAVG);}
   if (!$db0_line[0])
   {
    $count++;
-   CRON::debug::log(6,"[$count] a820:ID:$db0_line[2] has no attrs",1);$bugs++;
+   main::_log("[$count] a820:ID:$db0_line[2] has no attrs",1);$bugs++;
    $doc.="[$count] a820:ID:$db0_line[2] has no attrs\n";
-   CRON::debug::log(8,"repairing");$doc.="repairing\n";
+   main::_log("repairing");$doc.="repairing\n";
    $main::DBH->Query("INSERT INTO $env{db_820}.a820_attrs(IDattrs) VALUES('0')");
    my $db1=$main::DBH->Query("SELECT IDattrs FROM $env{db_820}.a820_attrs ORDER BY IDattrs DESC LIMIT 1");
    if (my @db1_line=$db1->fetchrow)
    {
-    CRON::debug::log(9,"adding IDattrs $db1_line[0] to ID:$db0_line[2] lng:$db0_line[3]");
+    main::_log("adding IDattrs $db1_line[0] to ID:$db0_line[2] lng:$db0_line[3]");
     $doc.="adding IDattrs $db1_line[0] to ID:$db0_line[2] lng:$db0_line[3]\n";
     $main::DBH->Query("
 	UPDATE $env{db_820}.a820
@@ -74,14 +74,14 @@ HEADER
   elsif (!$db0_line[1])
   {
    $count++;
-   CRON::debug::log(6,"[$count] a820:IDattrs:$db0_line[0] has no attrs",1);$bugs++;
+   main::_log("[$count] a820:IDattrs:$db0_line[0] has no attrs",1);$bugs++;
    $doc.="[$count] a820:IDattrs:$db0_line[0] has no attrs\n";
-   CRON::debug::log(8,"repairing");$doc.="repairing\n";
+   main::_log("repairing");$doc.="repairing\n";
    $main::DBH->Query("INSERT INTO $env{db_820}.a820_attrs(IDattrs) VALUES($db0_line[0])");
   }
  }
  #######################################################################################################
- CRON::debug::log(5,"controll a820_attrs related to a820...");
+ main::_log("controll a820_attrs related to a820...");
  $doc.="controll a820_attrs related to a820...\n";
  #######################################################################################################
  my $count;
@@ -94,13 +94,13 @@ HEADER
  while (my @db0_line=$db0->fetchrow)
  {
   $count0++;
-  if ($count0/1000 == int($count0/1000)){CRON::debug::log(6,"[$count0] checked");CRON::waitload($CRON::LOADAVG);}
+  if ($count0/1000 == int($count0/1000)){main::_log("[$count0] checked");CRON::waitload($CRON::LOADAVG);}
   if (!$db0_line[1])
   {
    $count++;
-   CRON::debug::log(6,"[$count] a820_attrs:IDattrs:$db0_line[0] has no a820",1);$bugs++;
+   main::_log("[$count] a820_attrs:IDattrs:$db0_line[0] has no a820",1);$bugs++;
    $doc.="[$count] a820_attrs:IDattrs:$db0_line[0] has no a820\n";
-   CRON::debug::log(8,"repairing");$doc.="repairing\n";
+   main::_log("repairing");$doc.="repairing\n";
    $main::DBH->Query("DELETE FROM $env{db_820}.a820_attrs WHERE IDattrs=$db0_line[0] LIMIT 1");
   }
  }
@@ -113,7 +113,7 @@ HEADER
  #######################################################################################################
  #######################################################################################################
  #######################################################################################################
- CRON::debug::log(5,"controll a820_msgs related to a820...");
+ main::_log("controll a820_msgs related to a820...");
  $doc.="controll a820_msgs related to a820...\n";
  #######################################################################################################
  my $count;
@@ -126,15 +126,15 @@ HEADER
  while (my @db0_line=$db0->fetchrow)
  {
   $count0++;
-  if ($count0/1000 == int($count0/1000)){CRON::debug::log(6,"[$count0] checked");CRON::waitload($CRON::LOADAVG);}
+  if ($count0/1000 == int($count0/1000)){main::_log("[$count0] checked");CRON::waitload($CRON::LOADAVG);}
 #=head1
   if (!$db0_line[1])
   {
    $count++;
-   CRON::debug::log(6,"[$count] a820_msgs:ID:$db0_line[2] has no forum $db0_line[0]",1);$bugs++;
+   main::_log("[$count] a820_msgs:ID:$db0_line[2] has no forum $db0_line[0]",1);$bugs++;
    $doc.="[$count] a820_msgs:ID:$db0_line[2] has no forum $db0_line[0]\n";
 #=head1
-   CRON::debug::log(8,"repairing");$doc.="repairing\n";
+   main::_log("repairing");$doc.="repairing\n";
    $main::DBH->Query("DELETE FROM $env{db_820}.a820_msgs WHERE ID='$db0_line[2]'");
 #=cut
   }

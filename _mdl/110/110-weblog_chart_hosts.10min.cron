@@ -32,7 +32,7 @@ alarm(3600);
   my %date=Utils::datetime::ctodatetime(time-3600,format=>1);
  my $now="$date{hour}";
  
- CRON::debug::log(5,"generating from $from:00");
+ main::_log("generating from $from:00");
  
  
  
@@ -115,7 +115,7 @@ if ($@)
 {
 	die "error! $@\n";
 }
-CRON::debug::log(6,"generated");
+main::_log("generated");
 
 
 return 1}

@@ -25,15 +25,15 @@ sub execute
 	while (my %db0_line=$db0->fetchhash)
 	{
 	
-		CRON::debug::log(5,"get import $db0_line{name}($db0_line{URI})");
+		main::_log("get import $db0_line{name}($db0_line{URI})");
 	
 #		print "- $db0_line{name}\n";
 		my $time_next=App::1D0::getnexttime($db0_line{dtime_refresh});
 #		print "- nabuduce o $time_next, za ".($time_next-time)."\n";
 		
-		CRON::debug::log(5,"nabuduce za ".($time_next-$main::time_current)."s");
+		main::_log("nabuduce za ".($time_next-$main::time_current)."s");
 		
-		CRON::debug::log(6,"fixing");
+		main::_log("fixing");
 		
 		$main::DB{main}->Query("
 			UPDATE TOM.a1D0_manager
@@ -51,14 +51,14 @@ sub execute
 		{
 			alarm 5;
 			#my $which=`which wget`;
-#			CRON::debug::log(9,"$which");
+#			main::_log("$which");
 			#$where=~s|^wget:\s||;
 			#$where=~s|\s.*||;
 			my $http=new Net::HTTP::LiteAgent;
 			$http->request($db0_line{URI});# or die "Unable to get document: $!";
 			$out = $http->body();
 			
-			CRON::debug::log(6,"request $db0_line{URI}");
+			main::_log("request $db0_line{URI}");
 #			$out=`wget $db0_line{URI} -q -O -`;
 			alarm 0;
 		};
@@ -66,7 +66,7 @@ sub execute
 #=head1
 		if ($out)
 		{
-			CRON::debug::log(6,"ok, saving");
+			main::_log("ok, saving");
 			$main::DB{main}->Query("
 				UPDATE TOM.a1D0_manager
 				SET	time_use='$main::time_current',
@@ -94,7 +94,7 @@ sub execute
 		else
 		{
 #=cut
-			CRON::debug::log(6,"ok, fixing");
+			main::_log("ok, fixing");
 			$main::DB{main}->Query("
 				UPDATE TOM.a1D0_manager
 				SET	time_use='$main::time_current',

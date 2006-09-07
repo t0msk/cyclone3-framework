@@ -18,7 +18,7 @@ sub execute
 	{
 		$null++;
 		my $var=rand(1);
-		CRON::debug::log(0,"{$null} lock.pid exists, waiting... $var secs.");
+		main::_log("{$null} lock.pid exists, waiting... $var secs.");
 		Time::HiRes::sleep($var);
 	}
 =cut

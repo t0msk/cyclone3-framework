@@ -108,12 +108,12 @@ eval
  if ($list->execute())
  {
   #print "mam celkom ".$list->rows()." riadkov\n";
-#  CRON::debug::log(8,"rows: ".$list->rows()." duration:".$list->{Query_duration});
+#  main::_log("rows: ".$list->rows()." duration:".$list->{Query_duration});
   
   my $count=0;
   while ((my %nieco=$list->fetchhash())&&($count<1000))
   {
-#   CRON::debug::log(9,"[$count] $nieco{ID} {$nieco{IDcategory}/$nieco{name}} $nieco{title} [$nieco{arch}]".$list->{Query_hash}{ID});
+#   main::_log("[$count] $nieco{ID} {$nieco{IDcategory}/$nieco{name}} $nieco{title} [$nieco{arch}]".$list->{Query_hash}{ID});
 
 =head1   
    if (my $obj_update=$list->update("a400.lng='sk',a400.visits=visits+1"))

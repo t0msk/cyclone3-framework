@@ -32,7 +32,7 @@ sub execute
 	
 	
 	
-	CRON::debug::log(5,"generating from $from");
+	main::_log("generating from $from");
 	
 	
 	
@@ -149,7 +149,7 @@ if ($@)
 	die "error! $@\n";
 }
 #=cut
-CRON::debug::log(6,"generated");
+main::_log("generated");
 
 
 

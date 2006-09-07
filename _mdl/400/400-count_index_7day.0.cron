@@ -25,13 +25,13 @@ sub execute
  while (my %db0_line=$db0->FetchHash())
  {
   $art++;
-  #CRON::debug::log(8,"recounting article:[$art] $db0_line{ID}");
+  #main::_log("recounting article:[$art] $db0_line{ID}");
   my $time=($cron::time_current-$db0_line{starttime})/60/60;
   my $rel=(int(($db0_line{visits}/$time)*100))/100;
-  #CRON::debug::log(8,"recounting article:[$art]{$rel} $db0_line{ID}");
+  #main::_log("recounting article:[$art]{$rel} $db0_line{ID}");
   if ($rel ne $db0_line{visits_index7day})
   {
-   CRON::debug::log(8,"updating article:[$art] {$db0_line{visits_index7day}}-{$rel} $db0_line{ID}");
+   main::_log("updating article:[$art] {$db0_line{visits_index7day}}-{$rel} $db0_line{ID}");
    $main::DBH->Query("UPDATE $env{db_400}.a400_attrs SET visits_index7day='$rel' WHERE IDattrs='$db0_line{IDattrs}' LIMIT 1");
   }
  }

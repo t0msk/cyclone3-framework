@@ -35,7 +35,7 @@ sub execute
 	
 	# tento cront je striktne 7day
 	
-	# CRON::debug::log(5, "Wow it runs");
+	# main::_log( "Wow it runs");
 	my $db0 = $main::DBH->Query("
 	SELECT
 		ID,

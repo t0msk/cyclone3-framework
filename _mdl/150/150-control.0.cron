@@ -14,7 +14,7 @@ sub execute
  my %env=@_;
  if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
 
- CRON::debug::log(5,"loading cache_conf");
+ main::_log("loading cache_conf");
  my $count;
  my %CACHE;
  if (my $db0 = $main::DBH->Query("
@@ -28,9 +28,9 @@ sub execute
    my $var=$db0_line[0]."-".$db0_line[1]."-".$db0_line[2];
    $CACHE{$var}{-cache_time}=$db0_line[3];
    $CACHE{$var}{-destroy_time}=$db0_line[5];
-   #CRON::debug::log(6,"$var");
+   #main::_log("$var");
   }
-  CRON::debug::log(5,"loaded $count cache_confs");
+  main::_log("loaded $count cache_confs");
  }
  else
  {
@@ -38,7 +38,7 @@ sub execute
  }
  
 #=head1
- CRON::debug::log(5,"control database");
+ main::_log("control database");
  my $db1 = $main::DBH->Query("
 	SELECT *
 	FROM $TOM::DB_name._cache
@@ -52,17 +52,17 @@ sub execute
    $var=~s|^(.*?)-(.*?)-(.*?)-.*|\1-\2-\3|;
    $var0=~s|\..*?$||;
    
-   #CRON::debug::log(7,"$var/$varn/$var0");
+   #main::_log("$var/$varn/$var0");
    
    my $old=($main::time_current-$db1_line{time_from});
    if ($CACHE{$var}{-cache_time}<$old)
    {
-     CRON::debug::log(6,"module $db1_line{engine}/$db1_line{name}");
-     CRON::debug::log(7,"old, ".$CACHE{$var}{-cache_time}."<".$old." deleting");
+     main::_log("module $db1_line{engine}/$db1_line{name}");
+     main::_log("old, ".$CACHE{$var}{-cache_time}."<".$old." deleting");
      $main::DBH->Query("DELETE FROM $TOM::DB_name._cache WHERE engine='pub' AND name='$db1_line{name}' LIMIT 1");
      if ($db1_line{loads})
      {
-	CRON::debug::log(7,"debuging count, found ($db1_line{loads}), writing to $var.pub.debug");
+	main::_log("debuging count, found ($db1_line{loads}), writing to $var.pub.debug");
 #=head1
 	open HND,">>".$cron::P."/_cache/".$var.".pub.debug" || return undef;
 	my %date=Utils::datetime::ctodatetime(time,format=>1);
@@ -86,7 +86,7 @@ sub execute
  
  
 
- CRON::debug::log(5,"control directory");
+ main::_log("control directory");
  my $count;
  if (opendir (DIR,$cron::P."/_cache/"))
  {
@@ -104,14 +104,14 @@ sub execute
      #$var=~s|(.*)-(.*?)-.*?$|\1|;
      $var=~s|^(.*?)-(.*?)-(.*?)-.*|\1-\2-\3|;
      $var0=~s|\..*?$||;
-     #CRON::debug::log(5,"$var0");
+     #main::_log("$var0");
      if (exists $CACHE{$var})
      {
       my $old=($cron::time_current-(stat $cron::P."/_cache/".$file)[9]);
-      #CRON::debug::log(6,"exist config to $CACHE{$var}{-cache_time} secs. this old $old secs.");
+      #main::_log("exist config to $CACHE{$var}{-cache_time} secs. this old $old secs.");
       if ($CACHE{$var}{-cache_time}<$old)
       {
-       CRON::debug::log(6,"$var0 old, deleting");
+       main::_log("$var0 old, deleting");
        unlink $cron::P."/_cache/".$file;
        if (-e $cron::P."/_cache/".$var0.".pub.count")
        {
@@ -119,7 +119,7 @@ sub execute
 	my $null=<HND>;
 	close HND;
 	unlink $cron::P."/_cache/".$var0.".pub.count";
-	CRON::debug::log(7,"debuging count, found ($null), writing to $var.pub.debug");
+	main::_log("debuging count, found ($null), writing to $var.pub.debug");
 	open HND,">>".$cron::P."/_cache/".$var.".pub.debug" || return undef;
 	my %date=Utils::datetime::ctodatetime(time,format=>1);
 	print HND <<" HEADER";
@@ -138,7 +138,7 @@ sub execute
      }
      else
      {
-      CRON::debug::log(6,"not exist config to $var, deleting");
+      main::_log("not exist config to $var, deleting");
       unlink $cron::P."/_cache/".$file;
      }
     }
@@ -156,17 +156,17 @@ sub execute
       if (exists $CACHE{$var})
       {
        my $old=($cron::time_current-(stat $cron::P."/_cache/".$file)[9]);
-       #CRON::debug::log(5,"count for $var");
+       #main::_log("count for $var");
        # dvojnasobny naskok count pred cache
        if (($CACHE{$var}{-cache_time}*2)<$old)
        {
-        CRON::debug::log(6,"count $var old $old $CACHE{$var}{-cache_time}");
+        main::_log("count $var old $old $CACHE{$var}{-cache_time}");
         unlink $cron::P."/_cache/".$file;
        }
       }
       else
       {
-       CRON::debug::log(5,"count for unknown $var");
+       main::_log("count for unknown $var");
        unlink $cron::P."/_cache/".$file;
       }
 
@@ -179,10 +179,10 @@ sub execute
     else
     {
      my $old=($cron::time_current-(stat $cron::P."/_cache/".$file)[9]);
-     CRON::debug::log(5,"unknown file $file $old",1);
+     main::_log("unknown file $file $old",1);
      if ($old>604800)
      {
-      CRON::debug::log(6,"removing",1);
+      main::_log("removing",1);
       unlink $cron::P."/_cache/".$file;
      }
     }
@@ -191,7 +191,7 @@ sub execute
   }
   closedir DIR;
  }
- CRON::debug::log(5,"controlled ".$count." files");
+ main::_log("controlled ".$count." files");
 
 
 =head1

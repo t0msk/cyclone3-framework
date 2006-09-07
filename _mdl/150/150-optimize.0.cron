@@ -31,13 +31,13 @@ sub execute
   my @files=readdir DIR;
   foreach my $file(@files)
   {
-   #CRON::debug::log(8,"found $file");
+   #main::_log("found $file");
    if (($file ne ".")&&($file ne "..")&&($file=~/\.pub\.debug$/))
    {
 
     #if ($file=~/\.cache\.debug$/)
     #{
-     CRON::debug::log(8,"parsing $file");
+     main::_log("parsing $file");
      CRON::waitload($CRON::LOADAVG);
 
 	#my $fragged;my %mdl_frags;
@@ -48,18 +48,18 @@ sub execute
 
 	 while ($file_data=~s|<CACHE>(.*?)</CACHE>||s)
 	 {
-	  #CRON::debug::log(9,"line");
+	  #main::_log("line");
 	  my $data=$1;my %env;while ($data=~s|<VAR id="(.*?)" value="(.*?)" />||s){$env{$1}=$2;}
 	  if ($env{type} ne "mini")
 	  {
 
            if ($env{cache_time}>1000000)
 	   {
-	    CRON::debug::log(9,"time $env{time_insert} $env{cache_time} $env{insert}",1);
+	    main::_log("time $env{time_insert} $env{cache_time} $env{insert}",1);
 	    next;
 	   }
 
-	   #CRON::debug::log(9,"+ time $env{time_insert} $env{cache_time} $env{insert}") if $env{cache_time} > 604800;
+	   #main::_log("+ time $env{time_insert} $env{cache_time} $env{insert}") if $env{cache_time} > 604800;
 
 	   #if (!$fragged){$fragged=1;$mdl{$env{conf_name}}{fragment}++;}
 	   if (not exists $mdl_frags{$env{name_full}})
@@ -70,7 +70,7 @@ sub execute
 	   $mdl{$env{name_conf}}{loads}+=$env{loads};$mdl{$env{name_conf}}{time}+=$env{cache_time};
 	   #$mdl{$env{name_conf}}{first}=$env{time} unless $mdl{$env{name_conf}}{first};
 	   #print "	+ $env{old}/$env{loads}\n";
-	   #CRON::debug::log(9,"$env{old}/$env{loads}");
+	   #main::_log("$env{old}/$env{loads}");
 	  }
 	 }
 
@@ -93,16 +93,16 @@ sub execute
   my %date=Utils::datetime::ctodatetime(time,format=>1);
   $report.="$date{year}-$date{mom}-$date{mday} $date{hour}:$date{min}:$date{sec}\n";
 
-  CRON::debug::log(8,"$_ frags($mdl{$_}{fragment})");
+  main::_log("$_ frags($mdl{$_}{fragment})");
   $report.="$_ frags($mdl{$_}{fragment})\n";
-  CRON::debug::log(9,"time/loads ".$mdl{$_}{time}."/".$mdl{$_}{loads}." min(".$TOM::DEBUG_cache_mintime."/".$TOM::DEBUG_cache_min.")");
+  main::_log("time/loads ".$mdl{$_}{time}."/".$mdl{$_}{loads}." min(".$TOM::DEBUG_cache_mintime."/".$TOM::DEBUG_cache_min.")");
   $report.="time/loads ".$mdl{$_}{time}."/".$mdl{$_}{loads}." min(".$TOM::DEBUG_cache_mintime."/".$TOM::DEBUG_cache_min.")\n";
 
-  if ($mdl{$_}{loads}<$TOM::DEBUG_cache_min){CRON::debug::log(9,"need more data, next...");next;}
-  if ($mdl{$_}{time}<$TOM::DEBUG_cache_mintime){CRON::debug::log(9,"need more time, next...");next;}
+  if ($mdl{$_}{loads}<$TOM::DEBUG_cache_min){main::_log("need more data, next...");next;}
+  if ($mdl{$_}{time}<$TOM::DEBUG_cache_mintime){main::_log("need more time, next...");next;}
 
   my $everyxsecs=(int(($mdl{$_}{time}/$mdl{$_}{loads})*100))/100;
-  CRON::debug::log(9,"1 load in ".$everyxsecs." secs");
+  main::_log("1 load in ".$everyxsecs." secs");
   $report.="1 load in ".$everyxsecs." secs\n";
   my $type=$_;$type=~s|^(.*)-||;
   my $name=$1;$name=~s|^(.*)-||;
@@ -117,21 +117,21 @@ sub execute
   {
 
    my %date=Utils::datetime::splittime($cron::time_current-$db0_line[1]);
-   CRON::debug::log(9,"debugging... $date{day}d $date{hour}:$date{min}:$date{sec} (more $TOM::DEBUG_cache_minovertime)");
+   main::_log("debugging... $date{day}d $date{hour}:$date{min}:$date{sec} (more $TOM::DEBUG_cache_minovertime)");
    if ($cron::time_current-$db0_line[1]<$TOM::DEBUG_cache_minovertime)
    {
-    CRON::debug::log(9,"need more overtime, next...",1);next;
+    main::_log("need more overtime, next...",1);next;
    }
 
    #next;
-   #CRON::debug::log(9,"uz som fnutriiiii! !$db0_line[1]!");
+   #main::_log("uz som fnutriiiii! !$db0_line[1]!");
    #return 1;
 
    my $settoloads=$TOM::DEBUG_cache_optim;
 
 
    my $inxsecs=(int(($db0_line[0]/($mdl{$_}{time}/$mdl{$_}{loads}))*100))/100;
-   CRON::debug::log(9,"in ".$db0_line[0]." secs ".$inxsecs."x ");
+   main::_log("in ".$db0_line[0]." secs ".$inxsecs."x ");
    $report.="in ".$db0_line[0]." secs ".$inxsecs."x \n";
 
    my $db1=$main::DBH->Query("
@@ -142,21 +142,21 @@ sub execute
    if (my @db1_line=$db1->FetchRow())
    {
     $settoloads=(int(($TOM::DEBUG_cache_optimtime/$db1_line[0])*100))/100;
-    CRON::debug::log(9,"1 load_req $db1_line[0], $TOM::DEBUG_cache_optimtime secs load in ".$settoloads."x");
+    main::_log("1 load_req $db1_line[0], $TOM::DEBUG_cache_optimtime secs load in ".$settoloads."x");
     $report.="1 load_req $db1_line[0], $TOM::DEBUG_cache_optimtime secs load in ".$settoloads."x\n";
    }
    else
    {
-    CRON::debug::log(9,"unknown load_req",1);
+    main::_log("unknown load_req",1);
     $report.="unknown load_req\n";
    }
 
 
    my $settime=int($everyxsecs*$settoloads);
-   CRON::debug::log(9,$settoloads."x in ".($settime)." secs");
+   main::_log($settoloads."x in ".($settime)." secs");
    $report.=$settoloads."x in ".($settime)." secs\n";
    $settime=$settime*$mdl{$_}{fragment};
-   CRON::debug::log(9,$settoloads."x (frag) in ".($settime)." secs");
+   main::_log($settoloads."x (frag) in ".($settime)." secs");
    $report.=$settoloads."x (frag) in ".($settime)." secs\n";
    my @ref=split('-',$db0_line[2]);
    $ref[0]=$TOM::CACHE_time_min unless $ref[0];
@@ -164,7 +164,7 @@ sub execute
    my $needtime=$settime;
    if ($settime<$ref[0]){$settime=$ref[0]}
    if ($settime>$ref[1]){$settime=$ref[1]}
-   CRON::debug::log(9,"($ref[0]-$ref[1]) setting to ".($settime));
+   main::_log("($ref[0]-$ref[1]) setting to ".($settime));
    $report.="($ref[0]-$ref[1]) setting to ".($settime)."\n";
 
 #=head1
@@ -180,7 +180,7 @@ sub execute
 	LIMIT 1"))
    {
     #my $path=$cron::P;$path=~s|\!|\\!|g;
-      CRON::debug::log(9,"rm $cron::P/_cache/$category-$name-$type.pub.debug -f");
+      main::_log("rm $cron::P/_cache/$category-$name-$type.pub.debug -f");
       system("rm $cron::P/_cache/$category-$name-$type.pub.debug -f");
       $updated=1;
    }
@@ -189,8 +189,8 @@ sub execute
   }
   else
   {
-   CRON::debug::log(9,"unknown cache",1);
-   CRON::debug::log(9,"rm $cron::P/_cache/$category-$name-$type.pub.debug -f");
+   main::_log("unknown cache",1);
+   main::_log("rm $cron::P/_cache/$category-$name-$type.pub.debug -f");
    system("rm $cron::P/_cache/$category-$name-$type.pub.debug -f");
   }
 
@@ -200,7 +200,7 @@ sub execute
  # NEDEBUGOVAL UZ CONFNUTE VECI
  if ($updated)
  {
-  CRON::debug::log(9,"SETTING TOM3_CACHE_CONF TO RELOAD IN $cron::time_current");
+  main::_log("SETTING TOM3_CACHE_CONF TO RELOAD IN $cron::time_current");
   $main::DBH->Query("
 	UPDATE _config
 	SET	value='$cron::time_current'

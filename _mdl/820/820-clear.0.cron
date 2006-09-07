@@ -19,10 +19,10 @@ sub execute
 	FROM $env{db_820}.a820
 	WHERE type='F' AND messages>$env{max_msgs}");
  my $forums=$db0->NumRows();
- CRON::debug::log(5,"forumy s viac ako $env{max_msgs} - $forums");
+ main::_log("forumy s viac ako $env{max_msgs} - $forums");
  while (my %forum=$db0->fetchhash)
  {
-  CRON::debug::log(6,"uprava forumu $forum{ID} s $forum{messages} spravami");
+  main::_log("uprava forumu $forum{ID} s $forum{messages} spravami");
   my $db1=$main::DBH->Query("
 	SELECT COUNT(*) FROM $env{db_820}.a820_msgs
 	WHERE	IDforum='$forum{ID}'
@@ -30,7 +30,7 @@ sub execute
 			AND (lng='$forum{lng}' OR lng='')");
   if (my @db1_line=$db1->fetchrow)
   {
-   CRON::debug::log(6,"skutocny pocet $db1_line[0] sprav, zmazat ".($db1_line[0]-$env{max_msgs})." ");
+   main::_log("skutocny pocet $db1_line[0] sprav, zmazat ".($db1_line[0]-$env{max_msgs})." ");
    $main::DBH->Query("
 	DELETE FROM $env{db_820}.a820_msgs
 	WHERE	IDforum='$forum{ID}'
@@ -59,10 +59,10 @@ sub execute
 		AND tactive='N'
 		");
  my $forums=$db0->NumRows();
- CRON::debug::log(5,"forumy s 0 spravami,videne >3mesiace - $forums");
+ main::_log("forumy s 0 spravami,videne >3mesiace - $forums");
  while (my %forum=$db0->fetchhash)
  {
-  CRON::debug::log(5,"delete forum $forum{ID} - $forum{name} ($forum{lng})");
+  main::_log("delete forum $forum{ID} - $forum{name} ($forum{lng})");
   $main::DBH->Query("DELETE FROM $env{db_820}.a820 WHERE ID='$forum{ID}' AND lng='$forum{lng}' LIMIT 1");
 
   # nemazat ATTRS, o to sa postara 5dnovy robot potom sam kontrolou!
@@ -81,10 +81,10 @@ sub execute
 		AND tactive='N'
 		");
  my $forums=$db0->NumRows();
- CRON::debug::log(5,"forumy posledne videne pred tromi mesiacmi - $forums");
+ main::_log("forumy posledne videne pred tromi mesiacmi - $forums");
  while (my %forum=$db0->fetchhash)
  {
-  CRON::debug::log(5,"delete forum $forum{ID} - $forum{name} ($forum{lng})");
+  main::_log("delete forum $forum{ID} - $forum{name} ($forum{lng})");
   $main::DBH->Query("DELETE FROM $env{db_820}.a820_msgs WHERE IDforum='$forum{ID}' AND (lng='$forum{lng}' OR lng='')");
   $main::DBH->Query("DELETE FROM $env{db_820}.a820 WHERE ID='$forum{ID}' AND (lng='$forum{lng}' OR lng='') LIMIT 1");
  }

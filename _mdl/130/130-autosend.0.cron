@@ -21,11 +21,11 @@ sub execute
 
  if ($cron::P eq $CRON::P)
  {
-  CRON::debug::log(5,"WARN: global/master use, using database $TOM::DB_name_TOM, table a130_send");
+  main::_log("WARN: global/master use, using database $TOM::DB_name_TOM, table a130_send");
  }
  else
  {
-  CRON::debug::log(5,"WARN: local use, using database $TOM::DB_name, table a130_send");
+  main::_log("WARN: local use, using database $TOM::DB_name, table a130_send");
  }
 
 
@@ -60,7 +60,7 @@ sub execute
 	$env0{to_email}=~s|^;||g;
 	$env0{to_email}=~s|;$||g;
 	
-	CRON::debug::log(8,"sending email $env0{ID} ($env0{priority}) from $env0{from_email} to $env0{to_email}");
+	main::_log("sending email $env0{ID} ($env0{priority}) from $env0{from_email} to $env0{to_email}");
 	
 	my $smtp = Net::SMTP->new($env{host});
 	
@@ -68,35 +68,35 @@ sub execute
 	
 	if (not $smtp->mail($env0{from_email}))
 	{
-		CRON::debug::log(9,"can't send, not accepted sender ".$smtp->status,1);
+		main::_log("can't send, not accepted sender ".$smtp->status,1);
 		$main::DBH->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
 		next;
 	}
 	
 	if (not $smtp->recipient(@rcpt))
 	{
-		CRON::debug::log(9,"can't send, not accepted RCPT: $env0{to_email} ".$smtp->status,1);
+		main::_log("can't send, not accepted RCPT: $env0{to_email} ".$smtp->status,1);
 		$main::DBH->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
 		next;
 	}
 	
 	if (not $smtp->data())
 	{
-		CRON::debug::log(9,"can't accept DATA",1);
+		main::_log("can't accept DATA",1);
 		$main::DBH->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
 		next;
 	}
 	
 	if (not $smtp->datasend($env0{body}))
 	{
-		CRON::debug::log(9,"can't accept DATASEND",1);
+		main::_log("can't accept DATASEND",1);
 		$main::DBH->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
 		next;
 	}
 	
 	if (not $smtp->dataend())
 	{
-		CRON::debug::log(9,"can't accept DATAEND",1);
+		main::_log("can't accept DATAEND",1);
 		$main::DBH->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
 		next;
 	}
@@ -116,7 +116,7 @@ sub execute
  }
  else
  {
-  CRON::debug::log(8,"bad request",1);
+  main::_log("bad request",1);
  }
  
  $lock->close();

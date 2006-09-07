@@ -36,14 +36,14 @@ sub execute
     if ($table{_cache_conf})
     {
       my $from=$main::time_current-(86400*31);
-      CRON::debug::log(5,"i have database $db0_line[0]");
+      main::_log("i have database $db0_line[0]");
       my $db2=$main::DBH->Query("
      	SELECT * FROM $db0_line[0]._cache_conf
      	WHERE reqtime<$from AND reqtime>0");
       while (my %db2_line=$db2->fetchhash())
       {
-        CRON::debug::log(6,"found old config for $db2_line{engine}/$db2_line{IDcategory}-$db2_line{module}/$db2_line{type}");
-	CRON::debug::log(7,"deleted") if $main::DBH->Query("
+        main::_log("found old config for $db2_line{engine}/$db2_line{IDcategory}-$db2_line{module}/$db2_line{type}");
+	main::_log("deleted") if $main::DBH->Query("
 	DELETE FROM $db0_line[0]._cache_conf
 	WHERE	engine='$db2_line{engine}'
 			AND IDcategory='$db2_line{IDcategory}'
@@ -57,8 +57,8 @@ sub execute
 	WHERE update_time<$from");
       while (my %db2_line=$db2->fetchhash())
       {
-        CRON::debug::log(6,"found old _mdl $db2_line{engine}-$db2_line{module}");
-	CRON::debug::log(7,"deleted") if $main::DBH->Query("
+        main::_log("found old _mdl $db2_line{engine}-$db2_line{module}");
+	main::_log("deleted") if $main::DBH->Query("
 	DELETE FROM $db0_line[0]._mdl
 	WHERE	engine='$db2_line{engine}'
 			AND module='$db2_line{module}'
@@ -87,15 +87,15 @@ sub execute
 
     if ($file=~/\.pub\.(cache|count)$/)
     {
-	 #CRON::debug::log(8,"checking $CRON::P/$file");
+	 #main::_log("checking $CRON::P/$file");
 	 my $var=(stat $CRON::P."/".$file)[9];
-	 #CRON::debug::log(8,"$file old ".($var-$cron::time_current));
+	 #main::_log("$file old ".($var-$cron::time_current));
 	 my %date0=Utils::datetime::splittime($cron::time_current-$var);
 	 my %date1=Utils::datetime::splittime($env{old2}-($cron::time_current-$var));
-	 CRON::debug::log(8,"$file old($date0{day}d $date0{hour}:$date0{min}:$date0{sec}) remain($date1{day}d $date1{hour}:$date1{min}:$date1{sec})");
+	 main::_log("$file old($date0{day}d $date0{hour}:$date0{min}:$date0{sec}) remain($date1{day}d $date1{hour}:$date1{min}:$date1{sec})");
 	 if (($cron::time_current-$var)>$env{old})
 	 {
-	  CRON::debug::log(9,"$file removing...");
+	  main::_log("$file removing...");
 	  #unlink $CRON::P."/".$file;
 	 }
 
@@ -106,11 +106,11 @@ sub execute
 	 #my %date0=Utils::datetime::splittime($var-$cron::time_current);
 	 my %date0=Utils::datetime::splittime($cron::time_current-$var);
 	 my %date1=Utils::datetime::splittime($env{old2}-($cron::time_current-$var));
-	 CRON::debug::log(8,"$file old($date0{day}d $date0{hour}:$date0{min}:$date0{sec}) remain($date1{day}d $date1{hour}:$date1{min}:$date1{sec})");
+	 main::_log("$file old($date0{day}d $date0{hour}:$date0{min}:$date0{sec}) remain($date1{day}d $date1{hour}:$date1{min}:$date1{sec})");
 	 if (($cron::time_current-$var)>$env{old2})
 	 {
-	  CRON::debug::log(9,"$file removing...");
-	  #CRON::debug::log(9,"$file old ".($var-$cron::time_current));
+	  main::_log("$file removing...");
+	  #main::_log("$file old ".($var-$cron::time_current));
 	  #unlink $CRON::P."/".$file;
 	 }
     }

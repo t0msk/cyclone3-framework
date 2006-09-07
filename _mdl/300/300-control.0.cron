@@ -34,7 +34,7 @@ HEADER
  #######################################################################################################
  #######################################################################################################
  #######################################################################################################
- CRON::debug::log(5,"controll a300_users related to a300_users_attrs...");
+ main::_log("controll a300_users related to a300_users_attrs...");
  $doc.="controll a300_users related to a300_users_attrs...\n";
  #######################################################################################################
  my $count;
@@ -47,11 +47,11 @@ HEADER
  while (my @db0_line=$db0->fetchrow)
  {
   $count0++;
-  if ($count0/10000 == int($count0/10000)){CRON::debug::log(6,"[$count0] checked");CRON::waitload($CRON::LOADAVG);}
+  if ($count0/10000 == int($count0/10000)){main::_log("[$count0] checked");CRON::waitload($CRON::LOADAVG);}
   if (!$db0_line[1])
   {
    $count++;
-   CRON::debug::log(6,"[$count] a300_users:IDhash:$db0_line[0] has no attrs",1);$bugs++;
+   main::_log("[$count] a300_users:IDhash:$db0_line[0] has no attrs",1);$bugs++;
    $doc.="[$count] a300_users:IDhash:$db0_line[0] has no attrs\n";
    my $db1=$main::DBH->Query("
 	SELECT IDhash
@@ -60,18 +60,18 @@ HEADER
 	LIMIT 1");
    if (my @db1_line=$db1->fetchhash)
    {
-    CRON::debug::log(7,"a300_users:IDhash:$db0_line[0] has attrs in archive");
+    main::_log("a300_users:IDhash:$db0_line[0] has attrs in archive");
     $doc.="a300_users:IDhash:$db0_line[0] has attrs in archive\n";
 
     my $db2=$main::DBH->Query("SELECT IDhash FROM $env{db_300}.a300_users_arch WHERE IDhash='$db0_line[0]' LIMIT 1");
     if (my @db2_line=$db2->fetchhash)
     {
-     CRON::debug::log(8,"duplicate user, repairing");$doc.="duplicate user, repairing\n";
+     main::_log("duplicate user, repairing");$doc.="duplicate user, repairing\n";
      $main::DBH->Query("DELETE FROM $env{db_300}.a300_users_arch WHERE IDhash='$db0_line[0]' LIMIT 1");
     }
 #    else
 #    {
-     CRON::debug::log(8,"repairing");$doc.="repairing\n";
+     main::_log("repairing");$doc.="repairing\n";
      $main::DBH->Query("	REPLACE INTO a300_users_attrs SELECT * FROM a300_users_attrs_arch
     			WHERE IDhash='$db0_line[0]' LIMIT 1");
      $main::DBH->Query("DELETE FROM $env{db_300}.a300_users_attrs_arch WHERE IDhash='$db0_line[0]' LIMIT 1");
@@ -79,13 +79,13 @@ HEADER
    }
    else
    {
-    CRON::debug::log(8,"repairing");$doc.="repairing\n";
+    main::_log("repairing");$doc.="repairing\n";
     $main::DBH->Query("INSERT INTO $env{db_300}.a300_users_attrs(IDhash) VALUES('$db0_line[0]')");
    }
   }
  }
  #######################################################################################################
- CRON::debug::log(5,"controll a300_users_arch related to a300_users_attrs_arch...");
+ main::_log("controll a300_users_arch related to a300_users_attrs_arch...");
  $doc.="controll a300_users_arch related to a300_users_attrs_arch...\n";
  #######################################################################################################
  my $count;
@@ -98,11 +98,11 @@ HEADER
  while (my @db0_line=$db0->fetchrow)
  {
   $count0++;
-  if ($count0/10000 == int($count0/10000)){CRON::debug::log(6,"[$count0] checked");CRON::waitload($CRON::LOADAVG);}
+  if ($count0/10000 == int($count0/10000)){main::_log("[$count0] checked");CRON::waitload($CRON::LOADAVG);}
   if (!$db0_line[1])
   {
    $count++;
-   CRON::debug::log(6,"[$count] a300_users_arch:IDhash:$db0_line[0] has no attrs",1);$bugs++;
+   main::_log("[$count] a300_users_arch:IDhash:$db0_line[0] has no attrs",1);$bugs++;
    $doc.="[$count] a300_users_arch:IDhash:$db0_line[0] has no attrs\n";
    my $db1=$main::DBH->Query("
 	SELECT IDhash
@@ -111,16 +111,16 @@ HEADER
 	LIMIT 1");
    if (my @db1_line=$db1->fetchhash)
    {
-    CRON::debug::log(7,"a300_users:IDhash:$db0_line[0] has attrs in original");
+    main::_log("a300_users:IDhash:$db0_line[0] has attrs in original");
     $doc.="a300_users:IDhash:$db0_line[0] has attrs in original\n";
-    CRON::debug::log(8,"repairing");$doc.="repairing\n";
+    main::_log("repairing");$doc.="repairing\n";
     $main::DBH->Query("	REPLACE INTO a300_users_attrs_arch SELECT * FROM a300_users_attrs
     			WHERE IDhash='$db0_line[0]' LIMIT 1");
     $main::DBH->Query("DELETE FROM $env{db_300}.a300_users_attrs WHERE IDhash='$db0_line[0]' LIMIT 1");
    }
    else
    {
-    CRON::debug::log(8,"repairing");$doc.="repairing\n";
+    main::_log("repairing");$doc.="repairing\n";
     $main::DBH->Query("INSERT INTO $env{db_300}.a300_users_attrs_arch(IDhash) VALUES('$db0_line[0]')");
    }
   }
@@ -132,7 +132,7 @@ HEADER
  #######################################################################################################
  #######################################################################################################
  #######################################################################################################
- CRON::debug::log(5,"controll a300_users_attrs related to a300_users...");
+ main::_log("controll a300_users_attrs related to a300_users...");
  $doc.="controll a300_users_attrs related to a300_users...\n";
  #######################################################################################################
  my $count;
@@ -145,13 +145,13 @@ HEADER
  while (my @db0_line=$db0->fetchrow)
  {
   $count0++;
-  if ($count0/10000 == int($count0/10000)){CRON::debug::log(6,"[$count0] checked");CRON::waitload($CRON::LOADAVG);}
+  if ($count0/10000 == int($count0/10000)){main::_log("[$count0] checked");CRON::waitload($CRON::LOADAVG);}
   if (!$db0_line[1])
   {
    $count++;
-   CRON::debug::log(6,"[$count] a300_users_attrs:IDhash:$db0_line[0] has no users",1);$bugs++;
+   main::_log("[$count] a300_users_attrs:IDhash:$db0_line[0] has no users",1);$bugs++;
    $doc.="[$count] a300_users_attrs:IDhash:$db0_line[0] has no users\n";
-   CRON::debug::log(7,"deleting");$doc.="deleting\n";
+   main::_log("deleting");$doc.="deleting\n";
    $main::DBH->Query("DELETE FROM $env{db_300}.a300_users_attrs WHERE IDhash='$db0_line[0]' LIMIT 1");
 =head1
    my $db1=$main::DBH->Query("
@@ -161,7 +161,7 @@ HEADER
 	LIMIT 1");
    if (my @db1_line=$db1->fetchhash)
    {
-    CRON::debug::log(7,"a300_users:IDhash:$db0_line[0] has attrs in archive");
+    main::_log("a300_users:IDhash:$db0_line[0] has attrs in archive");
     #$main::DBH->Query("	REPLACE INTO a300_users_attrs SELECT * FROM a300_users_attrs_arch
     #			WHERE IDhash='$user{IDattrs}' LIMIT 1");
     #$main::DBH->Query("DELETE FROM $env{db_300}.a300_users_attrs_arch WHERE IDhash='$user{IDhash}' LIMIT 1");
@@ -171,7 +171,7 @@ HEADER
   }
  }
  #######################################################################################################
- CRON::debug::log(5,"controll a300_users_attrs_arch related to a300_users_arch...");
+ main::_log("controll a300_users_attrs_arch related to a300_users_arch...");
  $doc.="controll a300_users_attrs_arch related to a300_users_arch...\n";
  #######################################################################################################
  my $count;
@@ -184,13 +184,13 @@ HEADER
  while (my @db0_line=$db0->fetchrow)
  {
   $count0++;
-  if ($count0/10000 == int($count0/10000)){CRON::debug::log(6,"[$count0] checked");CRON::waitload($CRON::LOADAVG);}
+  if ($count0/10000 == int($count0/10000)){main::_log("[$count0] checked");CRON::waitload($CRON::LOADAVG);}
   if (!$db0_line[1])
   {
    $count++;
-   CRON::debug::log(6,"[$count] a300_users_attrs_arch:IDhash:$db0_line[0] has no users",1);$bugs++;
+   main::_log("[$count] a300_users_attrs_arch:IDhash:$db0_line[0] has no users",1);$bugs++;
    $doc.="[$count] a300_users_attrs_arch:IDhash:$db0_line[0] has no users\n";
-   CRON::debug::log(7,"deleting");$doc.="deleting\n";
+   main::_log("deleting");$doc.="deleting\n";
    $main::DBH->Query("DELETE FROM $env{db_300}.a300_users_attrs_arch WHERE IDhash='$db0_line[0]' LIMIT 1");
 =head1
    my $db1=$main::DBH->Query("
@@ -200,7 +200,7 @@ HEADER
 	LIMIT 1");
    if (my @db1_line=$db1->fetchhash)
    {
-    CRON::debug::log(7,"a300_users:IDhash:$db0_line[0] has attrs in archive");
+    main::_log("a300_users:IDhash:$db0_line[0] has attrs in archive");
     #$main::DBH->Query("	REPLACE INTO a300_users_attrs SELECT * FROM a300_users_attrs_arch
     #			WHERE IDhash='$user{IDattrs}' LIMIT 1");
     #$main::DBH->Query("DELETE FROM $env{db_300}.a300_users_attrs_arch WHERE IDhash='$user{IDhash}' LIMIT 1");

@@ -131,7 +131,7 @@ HEADER
  #######################################################################################################
  #######################################################################################################
  #######################################################################################################
- CRON::debug::log(5,"controll $env{app_f} xrelated to aX");
+ main::_log("controll $env{app_f} xrelated to aX");
  $doc.="controll $env{app_f} xrelated to aX\n";
  #######################################################################################################
  my $count;
@@ -140,7 +140,7 @@ HEADER
  while (my @db0_line=$db0->fetchrow)
  {
   $count0++;
-  if ($count0/100 == int($count0/100)){CRON::debug::log(6,"[$count0] checked");CRON::waitload($CRON::LOADAVG);}
+  if ($count0/100 == int($count0/100)){main::_log("[$count0] checked");CRON::waitload($CRON::LOADAVG);}
 
   my $debug;
   my $xrelated_old=$db0_line[1];
@@ -157,7 +157,7 @@ HEADER
     my $app_db=$app;$app_type=$1 if $app_db=~s|_(.*?)$||;
     my $app_domain;
 
-    #CRON::debug::log(6,"app $1 $2");
+    #main::_log("app $1 $2");
     $env{'db_'.$app_db}=CRON::Getmdlvar($app_db,"db") unless $env{'db_'.$app_db};
     $env{'db_'.$app_db}=$TOM::DB_name unless $env{'db_'.$app_db};
     next if $app=~/^0/;
@@ -228,11 +228,11 @@ HEADER
       if (not $db1_line[1]=~/<VAR id="a$env{app_f}" value="$db0_line[0]" \/>/s)
       {
        my $var=$db1_line[1];
-       CRON::debug::log(7,"$db0_line[0]: a$app with $val without crossing",1);
+       main::_log("$db0_line[0]: a$app with $val without crossing",1);
 	  
 	  if ($repair)
 	  {
-	  	CRON::debug::log(8,"repairing...",1);
+	  	main::_log("repairing...",1);
        	$doc.="$db0_line[0]: a$app with $val without crossing, repairing...\n";$bugs++;
        	$var.="<VAR id=\"a$env{app_f}\" value=\"$db0_line[0]\" />";
        	if ($db1_line[2] eq "Y")
@@ -245,7 +245,7 @@ HEADER
      }
      if (!$found0)
      {
-      CRON::debug::log(6,"a$env{app_f}:$db0_line[0]: cannot find application $app with value $val",1);
+      main::_log("a$env{app_f}:$db0_line[0]: cannot find application $app with value $val",1);
       $doc.="$db0_line[0]: cannot find aplication $app with value $val\n";
       $xrelated=~s|<VAR id="a$app" value="$val" />||g;
      }
@@ -262,7 +262,7 @@ HEADER
      }
      if (!$found0)
      {
-      CRON::debug::log(6,"a$env{app_f}:$db0_line[0]: cannot find application $app with value $val",1);
+      main::_log("a$env{app_f}:$db0_line[0]: cannot find application $app with value $val",1);
       $doc.="$db0_line[0]: cannot find aplication $app with value $val\n";
       $xrelated=~s|<VAR id="a$app" value="$val" />||g;#$debug=1;
      }
@@ -280,10 +280,10 @@ HEADER
       {
        my $var=$db1_line[1];
 	  
-       CRON::debug::log(7,"$db0_line[0]: a$app with $val without crossing",1);
+       main::_log("$db0_line[0]: a$app with $val without crossing",1);
 	  if ($repair)
 	  {
-	  	CRON::debug::log(8,"repairing...",1);
+	  	main::_log("repairing...",1);
        	$doc.="$db0_line[0]: a$app with $val without crossing, repairing...\n";$bugs++;
        	$var.="<VAR id=\"a$env{app_f}\" value=\"$db0_line[0]\" />";
        	$main::DBH->Query("UPDATE $env{db_500}.a500_category SET xrelated='$var'
@@ -295,7 +295,7 @@ HEADER
 
      if (!$found0)
      {
-      CRON::debug::log(6,"a$env{app_f}:$db0_line[0]: cannot find application $app with value $val",1);
+      main::_log("a$env{app_f}:$db0_line[0]: cannot find application $app with value $val",1);
       $doc.="$db0_line[0]: cannot find aplication $app with value $val\n";
       $xrelated=~s|<VAR id="a$app" value="$val" />||g;#$debug=1;
      }
@@ -313,10 +313,10 @@ HEADER
       if (not $db1_line[1]=~/<VAR id="a$env{app_f}" value="$db0_line[0]" \/>/s)
       {
        my $var=$db1_line[1];
-       CRON::debug::log(7,"$db0_line[0]: a$app with $val without crossing",1);
+       main::_log("$db0_line[0]: a$app with $val without crossing",1);
 	  if ($repair)
 	  {
-	  	CRON::debug::log(8,"repairing...",1);
+	  	main::_log("repairing...",1);
        	$doc.="$db0_line[0]: a$app with $val without crossing, repairing...\n";$bugs++;
        	$var.="<VAR id=\"a$env{app_f}\" value=\"$db0_line[0]\" />";
        	$main::DBH->Query("UPDATE $env{db_820}.a820 SET xrelated='$var'
@@ -326,7 +326,7 @@ HEADER
      }
      if (!$found0)
      {
-      CRON::debug::log(6,"a$env{app_f}:$db0_line[0]: cannot find application $app with value $val",1);
+      main::_log("a$env{app_f}:$db0_line[0]: cannot find application $app with value $val",1);
       $doc.="$db0_line[0]: cannot find aplication $app with value $val\n";
       $xrelated=~s|<VAR id="a$app" value="$val" />||g;
      }
@@ -346,7 +346,7 @@ HEADER
 
     if (!$found)
     {
-     CRON::debug::log(6,"$db0_line[0]: unknown aplication $app ($app_db) $env{'db_'.$app_db} with value $val",1);$bugs++;
+     main::_log("$db0_line[0]: unknown aplication $app ($app_db) $env{'db_'.$app_db} with value $val",1);$bugs++;
      $doc.="$db0_line[0]: unknown aplication $app with value $val\n";
     }
 
@@ -362,7 +362,7 @@ HEADER
    if ($xrelated_old ne $xrelated)
    {
     $normal++;
-    CRON::debug::log(5,"$db0_line[0]: normalized ($normal) xrelated",1);
+    main::_log("$db0_line[0]: normalized ($normal) xrelated",1);
     $doc.="$db0_line[0]: normalized ($normal) xrelated\n";#$bugs++;
     #print "$xrelated_old\n\n";
     #print "$xrelated\n";
@@ -372,7 +372,7 @@ HEADER
   if ($xrelated_old ne $xrelated)
   {
     next unless $repair;
-   CRON::debug::log(5,"$db0_line[0]: bad xrelated, repairing",1);
+   main::_log("$db0_line[0]: bad xrelated, repairing",1);
    $doc.="$db0_line[0]: bad xrelated, repairing\n";$bugs++;
 
    if ($debug)
@@ -389,7 +389,7 @@ HEADER
     }
     else
     {
-     CRON::debug::log(5,"$db0_line[0]: cannot repair :(",1);
+     main::_log("$db0_line[0]: cannot repair :(",1);
      $doc.="$db0_line[0]: cannot repair :(\n";$bugs++;
     }
    }
@@ -401,7 +401,7 @@ HEADER
     }
     else
     {
-     CRON::debug::log(5,"$db0_line[0]: cannot repair :(",1);
+     main::_log("$db0_line[0]: cannot repair :(",1);
      $doc.="$db0_line[0]: cannot repair :(\n";$bugs++;
     }
    }

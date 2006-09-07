@@ -58,7 +58,7 @@ sub execute
   my $from=$main::time_current-86400+(3600*$hour)-3600;
   my %date=Utils::datetime::ctodatetime($from,format=>1);
   my $label="$date{mday}.$date{mom}. $date{hour}:00";
-  #CRON::debug::log(8,"create label $label");
+  #main::_log("create label $label");
   $graf->addRowLabel($label);
 #  $columns{load_proc}->addData($label,0);
 #  $columns{load_req}->addData($label,0);
@@ -69,7 +69,7 @@ sub execute
  $from="$date{year}-$date{mom}-$date{mday} $date{hour}";
  #print "=$from\n";
   
- CRON::debug::log(5,"read data to hour chart from $from");
+ main::_log("read data to hour chart from $from");
   
  my $db0=$main::DB{stats}->Query("
 	SELECT *
@@ -101,7 +101,7 @@ $graf->addValueMarkArea(0.3,
   my @date=($db0_line{reqdatetime}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/);  
   my $label=$date[2].".".$date[1].". ".$date[3].":".$date[4];
   
-  CRON::debug::log(6,"add label $label");
+  main::_log("add label $label");
   
   #print "-$label\n";
   
@@ -181,7 +181,7 @@ $graf->addValueMarkArea(0.3,
   my $from=$main::time_current-(86400*32)+(86400*$hour);
   my %date=Utils::datetime::ctodatetime($from,format=>1);
   my $label="$date{mday}.$date{mom}.$date{year}";
-  #CRON::debug::log(8,"create label $label");
+  #main::_log("create label $label");
   $graf->addRowLabel($label);
 #  $columns{load_proc}->addData($label,0);
 #  $columns{load_req}->addData($label,0);

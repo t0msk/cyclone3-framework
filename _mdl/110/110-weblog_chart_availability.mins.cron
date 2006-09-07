@@ -62,7 +62,7 @@ sub execute
 	$from="$date{year}-$date{mom}-$date{mday} $date{hour}:$date{min}";
 	#print "=$from\n";
 	
-	CRON::debug::log(5,"read data to hour chart from $from");
+	main::_log("read data to hour chart from $from");
 	
 	#return 1;
 	
@@ -112,7 +112,7 @@ sub execute
 		#my @date=($db0_line{reqdatetime}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/);  
 		#my $label=$date[2].".".$date[1].". ".$date[3].":".$date[4];
 		
-		#CRON::debug::log(6,"add label $label");
+		#main::_log("add label $label");
 		
 		$db0_line{load_req}=(int($db0_line{load_req}*10000))/10000;
 		$db0_line{load_proc}=(int($db0_line{load_proc}*10000))/10000;

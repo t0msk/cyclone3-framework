@@ -11,14 +11,14 @@ sub execute
  
  if ($cron::P eq $CRON::P)
  {
-  CRON::debug::log(5,"WARN: global use, using database $TOM::DB_name_STAT, ALL DOMAINS!!!");
+  main::_log("WARN: global use, using database $TOM::DB_name_STAT, ALL DOMAINS!!!");
   $env{sel}="";
   $env{tbl}="Ca110_weblog_rqs";
   $env{t}="C";
  }
  else
  {
-  CRON::debug::log(5,"WARN: local(master) use, using database $TOM::DB_name_STAT, domain $tom::H_cookie");
+  main::_log("WARN: local(master) use, using database $TOM::DB_name_STAT, domain $tom::H_cookie");
   $env{sel}="domain='$tom::H_cookie'";
   $env{tbl}="a110_weblog_rqs";
  }
@@ -26,7 +26,7 @@ sub execute
  # zmenit $datetime1;
  my %dates = Utils::datetime::ctodatetime($cron::time_current-86400, format=>"1");
  my $datetime1="$dates{year}-$dates{mom}-$dates{mday}";
- CRON::debug::log(5,"this day \"$datetime1\"");
+ main::_log("this day \"$datetime1\"");
  
  my $var="
 	SELECT IDsession,domain_sub

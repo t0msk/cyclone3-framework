@@ -14,7 +14,7 @@ sub execute
 
  if (not CRON::Getvar('DEBUG_mdl_write'))
  {
-  CRON::debug::log(5,"WARN: in this host nothing to do. DEBUG_mdl_write is off");
+  main::_log("WARN: in this host nothing to do. DEBUG_mdl_write is off");
   return 1;
  }
 
@@ -28,7 +28,7 @@ sub execute
   {
    if (($file ne ".")&&($file ne "..")&&($file=~/\.pub\.mdl\.log$/))
    {
-    CRON::debug::log(8,"parsing $file");
+    main::_log("parsing $file");
     CRON::waitload($CRON::LOADAVG);
     open (HND,"<$cron::P/_logs/$file");
     my $file_data;
@@ -63,8 +63,8 @@ sub execute
 
 foreach (sort keys %modules)
 {
- #CRON::debug::log(5,"$_ proc: $modules{$_}{load_proc}/$modules{$_}{times} ".($modules{$_}{load_proc}/$modules{$_}{times}));
- #CRON::debug::log(5,"$_ req: $modules{$_}{load_req}/$modules{$_}{times} ".($modules{$_}{load_req}/$modules{$_}{times}));
+ #main::_log("$_ proc: $modules{$_}{load_proc}/$modules{$_}{times} ".($modules{$_}{load_proc}/$modules{$_}{times}));
+ #main::_log("$_ req: $modules{$_}{load_req}/$modules{$_}{times} ".($modules{$_}{load_req}/$modules{$_}{times}));
  my $var_proc=($modules{$_}{load_proc}/$modules{$_}{times});
  my $var_req=($modules{$_}{load_req}/$modules{$_}{times});
  my $times=$modules{$_}{times};

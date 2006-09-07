@@ -47,7 +47,7 @@ sub execute
 				AND time_to>=$main::time_current
 			LIMIT 1
 		");
-	#	CRON::debug::log(5,"hotovo ".Mysql->errstr());
+	#	main::_log("hotovo ".Mysql->errstr());
 	}
 	$time_query->end();
 	$time_query->duration();

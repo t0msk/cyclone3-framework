@@ -58,7 +58,7 @@ sub execute
   my %date=Utils::datetime::ctodatetime($from,format=>1);
   my $label="$date{mday}.$date{mom}.$date{year}";
   
-  #CRON::debug::log(8,"create label $label");
+  #main::_log("create label $label");
   
   $graf->addRowLabel($label);
 #  $columns{atractivity}->addData($label,0);
@@ -117,7 +117,7 @@ $graf->addValueMarkArea(0.3,
 #  print "-$label\n";
   
 #  $graf->addRowLabelBegin($label);
-#  CRON::debug::log(8,"add to label $label - $avg");
+#  main::_log("add to label $label - $avg");
   my $avg=(int(($db0_line{IDsessions}/$db0_line{IDhashs})*100))/100;
 #  print "  $avg\n";
   $columns{atractivity}->addData($label,$avg);
@@ -132,7 +132,7 @@ $graf->addValueMarkArea(0.3,
 	);
   }
   
-  #CRON::debug::log(8,"add to label $label - $avg");
+  #main::_log("add to label $label - $avg");
   
 #=cut
   
@@ -197,7 +197,7 @@ $graf->addValueMarkArea(0.3,
   my $from=$main::time_current-(86400*($days+1))+(86400*$hour);
   my %date=Utils::datetime::ctodatetime($from,format=>1);
   my $label="$date{mday}.$date{mom}.$date{year}";
-  #CRON::debug::log(8,"create label $label");
+  #main::_log("create label $label");
   $graf->addRowLabel($label);
 #  $columns{atractivity}->addData($label,0);
 #  $columns{load_req}->addData($label,0);

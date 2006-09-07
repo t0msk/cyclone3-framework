@@ -93,7 +93,7 @@ HEADER
 	$rss=~s|<%CATEGORY%>||;
 
 
-	CRON::debug::log(5,"checking for today's a400 items");
+	main::_log("checking for today's a400 items");
 
 	my %dates = Utils::datetime::ctodatetime($cron::time_current, format=>"1");
 
@@ -129,7 +129,7 @@ HEADER
 	while (my %db0_line=$db0->fetchhash())
 	{
 		$count0++;
-		#if ($count0/1000 == int($count0/1000)){CRON::debug::log(6,"[$count0] checked");CRON::waitload($CRON::LOADAVG);}
+		#if ($count0/1000 == int($count0/1000)){main::_log("[$count0] checked");CRON::waitload($CRON::LOADAVG);}
 
 		$db0_line{$_}=~s|&|&amp;|g foreach (keys %db0_line);
 		#{
