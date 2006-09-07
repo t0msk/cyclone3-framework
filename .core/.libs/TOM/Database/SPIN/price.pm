@@ -114,7 +114,7 @@ sub GetRebate
 				firma_id=$env{'user_ID'}
 			) AND
 			produkt_id='$env{'product_ID'}'
-		ORDER BY firma_id DESC
+		ORDER BY firma_id ASC
 	};
 	main::_log("sql:=$sql") if $debug;
 	my $db0 = $main::DB{spin}->prepare($sql);
@@ -152,7 +152,7 @@ sub GetRebate
 				firma_id=$env{'user_ID'}
 			) AND
 			chvuep='$env{'brand'}'
-		ORDER BY firma_id DESC
+		ORDER BY firma_id ASC
 	};
 	my $db0 = $main::DB{spin}->prepare($sql);
 	die "$DBI::errstr" unless $db0;
@@ -210,7 +210,7 @@ sub GetRebate
 				firma_id=$env{'user_ID'}
 			) AND
 			kategoria_id IN ($cat_in)
-		ORDER BY kategoria_id ASC, firma_id DESC
+		ORDER BY kategoria_id ASC, firma_id ASC
 	};
 	my $db0 = $main::DB{spin}->prepare($sql);
 	die "$DBI::errstr" unless $db0;
