@@ -3,8 +3,6 @@
 package CRON::module;
 use Time::Local;
 use TOM::Net::HTTP::UserAgent;
-#use TOM;
-#use TOM::Debug::logs;
 use TOM::lock;
 use strict;
 
@@ -32,7 +30,7 @@ sub execute
 			
 			next unless $file=~/weblog\.(\d*?)-(\d*?)-(\d*?)\.(\d*?)\.(\d*?)\.(.*?).log/;
 			
-			CRON::debug::log(5,"find file $file");
+			main::_log("find file $file");
 			
 			my $day=$3;
 			$day="01" unless $day;
@@ -41,7 +39,6 @@ sub execute
 			
 			if ($starttime<$mintime)
 			{
-				#CRON::debug::log(6,"accessing file");
 				main::_log("accessing file");
 				open (HND_IN,"<".$CRON::P."/_logs/weblog/".$file) || next;
 				my $file_data;
