@@ -323,6 +323,8 @@ sub fsklWriteObj
 	
 	$db0->execute() || die "$DBI::errstr\n";
 	
+	main::_log("(order) insert SPIN order anEPid='$data{'anEPid'}' acCisloDokladu='$data{'acCisloDokladu'}' anFirmaid='$main::USRM{'session'}{'SPIN'}{'ID'}' anDruhCenyid='$main::USRM{'session'}{'SPIN'}{'price_ID'}'",4,"eshop");
+	
 	foreach (sort keys %data){main::_log("output $_='$data{$_}'");}
 	
 	$t->close();
@@ -490,6 +492,8 @@ sub fsklWriteRObj
 	
 	$db0->execute() || die "$DBI::errstr\n";
 	
+	main::_log("(order) insert SPIN order product anEPid='$data{'anEPid'}' anMEPid='$env{'anMEPid'}' anProduktid='$env{'anProduktid'}' adMnozstvo='$env{'adMnozstvo'}' anDruhCenyid='$main::USRM{'session'}{'SPIN'}{'price_ID'}'",4,"eshop");
+	
 	foreach (sort keys %data){main::_log("output $_='$data{$_}'");}
 	
 	$t->close();
@@ -527,6 +531,8 @@ sub fsklDeleteObj
 	
 	$db0->execute() || die "$DBI::errstr\n";
 	
+	main::_log("(order) delete SPIN order anEPid='$env{'anEPid'}'",4,"eshop");
+	
 	foreach (sort keys %data){main::_log("output $_='$data{$_}'");}
 	
 	$t->close();
@@ -563,6 +569,8 @@ sub fsklDeleteRObj
 	$db0->bind_param_inout( ":retout", \$data{'retout'}, 32 );
 	
 	$db0->execute() || die "$DBI::errstr\n";
+	
+	main::_log("(order) delete SPIN order product anEPid='$env{'anEPid'}'",4,"eshop");
 	
 	foreach (sort keys %data){main::_log("output $_='$data{$_}'");}
 	
@@ -629,7 +637,10 @@ sub CheckCycloneOrder
 			# do samotnej objednavky bol pridany produkt uplne bez ceny
 			if (($dbx_line{'price'} ne $product->{'price'})&&(!$dbx_line{'price'}))
 			{
-				main::_log("price in Cyclon3 ('$dbx_line{'price'}') not equal to price in SPIN ('$product->{'price'}')");
+				main::_log("price in Cyclone3 ('$dbx_line{'price'}') not equal to price in SPIN ('$product->{'price'}')");
+				
+				main::_log("(check) change price '$dbx_line{'price'}' to '$product->{'price'}' in Cyclone3 order WHERE IDorder='$env{ID}' AND IDproduct='$product->{ID_product}'",4,"eshop");
+				
 				$main::DB{'main'}->Query("
 					UPDATE
 						a01_order_product
@@ -650,6 +661,7 @@ sub CheckCycloneOrder
 			if (my $productx=(TOM::Database::SPIN::GetProducts('ID'=>$product->{'ID_product'},force=>1))[0])
 			{
 				main::_log("inserting product type='T'");
+				main::_log("(check) insert Cyclone3 order product IDorder='$env{ID}' IDproduct='$productx->{'ID'}' amount='$product->{'amount'}' type='T'",4,"eshop");
 				my $dbx=$main::DB{main}->Query("
 					INSERT INTO a01_order_product
 					(
@@ -685,6 +697,7 @@ sub CheckCycloneOrder
 			elsif (my $productx=(TOM::Database::SPIN::GetProducts('ID'=>$product->{'ID_product'},force=>1,type=>'S'))[0])
 			{
 				main::_log("inserting product type='S'");
+				main::_log("(check) insert Cyclone3 order product IDorder='$env{ID}' IDproduct='$productx->{'ID'}' type='S'",4,"eshop");
 				my $dbx=$main::DB{main}->Query("
 					INSERT INTO a01_order_product
 					(
@@ -736,7 +749,7 @@ sub CheckCycloneOrder
 		if (!$pp{$dbx_line{'IDproduct'}})
 		{
 			main::_log("product ID='$dbx_line{'IDproduct'}' is missing in SPIN ");
-			
+			main::_log("(check) change Cyclone3 order product IDorder='$env{ID}' IDproduct='$dbx_line{'IDproduct'}' SET active='N'",4,"eshop");
 			$main::DB{main}->Query("
 				UPDATE a01_order_product
 				SET active='N'
