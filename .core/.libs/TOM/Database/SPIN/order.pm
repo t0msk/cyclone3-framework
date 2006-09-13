@@ -323,7 +323,7 @@ sub fsklWriteObj
 	
 	$db0->execute() || die "$DBI::errstr\n";
 	
-	main::_log("(order) insert SPIN order anEPid='$data{'anEPid'}' acCisloDokladu='$data{'acCisloDokladu'}' anFirmaid='$main::USRM{'session'}{'SPIN'}{'ID'}' anDruhCenyid='$main::USRM{'session'}{'SPIN'}{'price_ID'}'",4,"eshop");
+	main::_log("(order) insert SPIN order anEPid='$data{'anEPid'}' acCisloDoslobj='ES$env{'ID'}' acCisloDokladu='$data{'acCisloDokladu'}' anFirmaid='$main::USRM{'session'}{'SPIN'}{'ID'}' anDruhCenyid='$main::USRM{'session'}{'SPIN'}{'price_ID'}'",4,"eshop");
 	
 	foreach (sort keys %data){main::_log("output $_='$data{$_}'");}
 	
@@ -746,10 +746,10 @@ sub CheckCycloneOrder
 		");
 	while (my %dbx_line=$dbx->fetchhash())
 	{
-		if (!$pp{$dbx_line{'IDproduct'}})
+		if ((!$pp{$dbx_line{'IDproduct'}}) && ($dbx_line{'active'} ne "N"))
 		{
 			main::_log("product ID='$dbx_line{'IDproduct'}' is missing in SPIN ");
-			main::_log("(check) change Cyclone3 order product IDorder='$env{ID}' IDproduct='$dbx_line{'IDproduct'}' SET active='N'",4,"eshop");
+			main::_log("(check) change Cyclone3 order product IDorder='$env{ID}' IDproduct='$dbx_line{'IDproduct'}' SET active='N' ($dbx_line{'active'})",4,"eshop");
 			$main::DB{main}->Query("
 				UPDATE a01_order_product
 				SET active='N'
@@ -760,7 +760,7 @@ sub CheckCycloneOrder
 			");
 			
 		}
-		else
+		elsif (($pp{$dbx_line{'IDproduct'}}) && ($dbx_line{'active'} ne "Y"))
 		{
 			$main::DB{main}->Query("
 				UPDATE a01_order_product
