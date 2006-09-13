@@ -100,7 +100,7 @@ sub multi
 		{
 			main::_log("connecting '$handler' ('$TOM::DB{$handler}{host}' '$TOM::DB{$handler}{name}' '$TOM::DB{$handler}{user}' '****')");
 			
-			$main::DB{$handler} = Mysql->Connect
+			return undef unless $main::DB{$handler} = Mysql->Connect
 			(
 				$TOM::DB{$handler}{host},
 				$TOM::DB{$handler}{name},
@@ -108,7 +108,7 @@ sub multi
 				$TOM::DB{$handler}{pass},
 			);
 			
-			$main::DB{$handler}->{dbh}->{mysql_auto_reconnect}=1;
+			$main::DB{$handler}->{'dbh'}->{'mysql_auto_reconnect'}=1;
 		}
 		
 	}
