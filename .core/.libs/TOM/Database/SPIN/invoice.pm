@@ -173,6 +173,7 @@ sub GetInvoices
 	$where.="AND \"dl\".ep_id = $env{'ID'} " if $env{'ID'};
 	$where.="AND \"dl\".cislo_objednavky = '$env{'order_ID'}' " if $env{'order_ID'};
 	$where.="AND \"dl\".firma_id = $env{'user_ID'} " if $env{'user_ID'};
+	$where.="AND \"dl\".dd_id = $env{'dd_ID'} " if $env{'dd_ID'};
 	
 	if ($env{limit} == 1)
 	{
@@ -260,7 +261,7 @@ sub GetInvoices
 		$hash{'time_generated'}=$arr[15];
 		$hash{'time_payback'}=$arr[16];
 		
-		main::_log("output[$i] ID='$arr[0]' proof_ID='$arr[3]' order_ID='$arr[9]' price_1='$arr[10]'");
+		main::_log("output[$i] ID='$arr[0]' dd_ID='$arr[2]' proof_ID='$arr[3]' order_ID='$arr[9]' price_1='$arr[10]'");
 		
 		push @data,{%hash};
 		$i++;
