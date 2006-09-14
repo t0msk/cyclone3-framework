@@ -25,7 +25,7 @@ our @EXPORT = qw /
 	&VUEP_array
 	/;
 
-our $debug=1;
+our $debug=0;
 our $debug_disable=0;
 
 our %vuep_category;
@@ -35,13 +35,13 @@ our %category;
 
 sub GetCategories
 {
-	my $t=track TOM::Debug(__PACKAGE__."::GetCategories()");
+	#my $t=track TOM::Debug(__PACKAGE__."::GetCategories()");
 	my %env=@_;
 	$env{'status'}=1 unless exists $env{'status'};
 	my @data;
 	if ($env{ID})
 	{
-		main::_log("ID='$env{ID}'");
+		main::_log("ID='$env{ID}'") if $debug;
 		my $sql=qq{
 			SELECT
 				*
@@ -52,14 +52,14 @@ sub GetCategories
 				status=$env{'status'}
 			LIMIT 1
 		};
-		main::_log("$sql");
+		main::_log("$sql") if $debug;
 		my $db0=$main::DB{'main'}->Query($sql);
 		my %db0_line=$db0->fetchhash();
 		push @data,{%db0_line};
 	}
 	elsif ($env{'name_full_rewrite'})
 	{
-		main::_log("name_full_rewrite");
+		main::_log("name_full_rewrite") if $debug;
 		my $sql=qq{
 			SELECT
 				*
@@ -70,7 +70,7 @@ sub GetCategories
 				status=$env{'status'}
 			LIMIT 1
 		};
-		main::_log("$sql");
+		main::_log("$sql") if $debug;
 		my $db0=$main::DB{'main'}->Query($sql);
 		my %db0_line=$db0->fetchhash();
 		push @data,{%db0_line};
@@ -78,7 +78,7 @@ sub GetCategories
 	elsif (exists $env{IDre})
 	{
 		$env{'IDre'}=0 unless $env{'IDre'};
-		main::_log("IDre");
+		main::_log("IDre") if $debug;
 		my $sql=qq{
 			SELECT
 				*
@@ -88,28 +88,49 @@ sub GetCategories
 				IDre=$env{IDre} AND
 				status=$env{'status'}
 		};
-		main::_log("$sql");
+		main::_log("$sql") if $debug;
 		my $db0=$main::DB{'main'}->Query($sql);
 		while (my %db0_line=$db0->fetchhash())
 		{
 			push @data,{%db0_line};
 		}
 	}
-	$t->close();
+	elsif ($env{'all'})
+	{
+		main::_log("All") if $debug;
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				a01_category
+			WHERE
+				status=$env{'status'}
+		};
+		main::_log("$sql") if $debug;
+		my $db0=$main::DB{'main'}->Query($sql);
+		while (my %db0_line=$db0->fetchhash())
+		{
+			push @data,{%db0_line};
+		}
+	}
+	#$t->close();
 	return @data;
 }
 
 sub GetSubcategories
 {
 	my $ID=shift;
+	my %env=@_;
+	
+	$env{'status'}=1 unless exists $env{'status'};
 	
 	my @IDs;
 	push @IDs,$ID;
 	
 	# najdem zoznam kategorii ktore su childy mna
-	foreach my $category(GetCategories('IDre'=>$ID))
+	foreach my $category(GetCategories('IDre'=>$ID,'status'=>$env{'status'}))
 	{
-		push @IDs,GetSubcategories($category->{ID});
+		push @IDs,GetSubcategories($category->{ID},'status'=>$env{'status'});
 	}
 	
 	return @IDs;
