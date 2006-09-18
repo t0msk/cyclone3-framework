@@ -25,15 +25,9 @@ sub rqs
     $host=$tom::H_cookie unless $host; # ak nemam mastera, moj host je moj cookiehost
     $host=$tom::H unless $host; # ak nemam cookiehost tak moj host je default host v local configu
 
-#open HND_weblog, ">>$TOM::P/_logs/weblog/[$TOM::hostname]$tom::Fyear-$tom::Fmom-$tom::Fmday.$tom::Fhour.$tom::Fmin-".$$.".log";
-
 my $filename="$TOM::P/_logs/weblog/weblog.$tom::Fyear-$tom::Fmom-$tom::Fmday.$tom::Fhour.$tom::Fmin.".$$.".log";
 
-#main::_log("saving request stats into file '$filename'");
-
 open HND_weblog, ">>".$filename;
-
-flock(HND_weblog,LOCK_EX);
 
 print HND_weblog <<"HEAD";
 <request>
@@ -75,23 +69,9 @@ HEAD
 print HND_weblog <<"HEAD";
 </request>
 HEAD
-flock(HND_weblog,LOCK_UN);
 close (HND_weblog);
 
 return 1}
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
