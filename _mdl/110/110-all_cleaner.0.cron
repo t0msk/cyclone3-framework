@@ -9,6 +9,9 @@ sub execute
 {
 	my %env=@_;
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
+	
+	alarm(3600);
+	
 	my $long=$main::time_current-((31*86400)*2);
 
 	if ($cron::P ne $CRON::P)
@@ -19,11 +22,13 @@ sub execute
 	my %date=Utils::datetime::ctodatetime(($main::time_current-(86400*8)),format=>1);
 	my $reqdatetime="$date{year}-$date{mom}-$date{mday} 00:00:00";
 	
+	main::_log("cleaning TOM.a110_weblog_min by reqdatetime");
 	$main::DB{stats}->Query("
 		DELETE FROM TOM.a110_weblog_min
 		WHERE reqdatetime<'$reqdatetime'
 	");
 	
+	main::_log("cleaning TOM.a110_weblog_min by reqtime");
 	$main::DB{stats}->Query("
 		DELETE FROM TOM.a110_load_min
 		WHERE reqtime<".($main::time_current-(86400*7))
@@ -32,35 +37,41 @@ sub execute
 	my %date = Utils::datetime::ctodatetime(($main::time_current-((86400*31)*12)),format=>1);
 	my $reqdatetime="$date{year}-$date{mom}-$date{mday} 00:00:00";
 	
+	main::_log("cleaning TOM.a110_weblog_hour");
 	$main::DB{stats}->Query("
 		DELETE FROM TOM.a110_weblog_hour
 		WHERE reqdatetime<'$reqdatetime'
 	");
 	
+	main::_log("cleaning TOM.a110_weblog_rqs");
 	$main::DB{stats}->Query("
 		DELETE FROM TOM.a110_weblog_rqs
 		WHERE reqtime<$long
 	");
-		
+	
+	main::_log("cleaning TOM.a110_sitemap");
 	$main::DB{stats}->Query("
 		DELETE FROM TOM.a110_sitemap
 		WHERE time_use<$long
 	");
 	
 	# WEBCLICK
+	main::_log("cleaning TOM.a110_webclick_log");
 	$main::DB{stats}->Query("
 		DELETE FROM TOM.a110_webclick_log
 		WHERE time_insert<$long
 	");
-		
+	
+	main::_log("cleaning TOM.a110_mdl_log");
 	$main::DB{stats}->Query("
 		DELETE FROM TOM.a110_mdl_log
 		WHERE reqtime<$long
 	");
-		
+	
+	main::_log("cleaning TOM.a110_obsolete_log");
 	$main::DB{stats}->Query("
 		DELETE FROM TOM.a110_obsolete_log
-		WHERE reqtime<".($main::time_current-(86400*7))
+		WHERE time_created<".($main::time_current-(86400*7))
 	);
 	
  return 1}
