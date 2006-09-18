@@ -6,11 +6,14 @@ use strict;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
+use TOM::Debug;
 
 sub new
 {
 	my $class=shift;
 	my $self={};
+	
+	my $t=track TOM::Debug(__PACKAGE__."::new($class)");
 	
 	$self->{'name'}=shift;
 	$self->{'md5'}=Digest::MD5::md5_hex($self->{'name'});
@@ -28,6 +31,7 @@ sub new
 		if ($pid && -e "/proc/$pid")
 		{
 			main::_log("concurrent PID '$pid' is running, also return undef");
+			$t->close();
 			return undef;
 		}
 	}
@@ -37,6 +41,8 @@ sub new
 	open (LOCK,">".$self->{'filename'});
 	print LOCK $$;
 	close (LOCK);
+	
+	$t->close();
 	
 	return bless $self, $class;
 }
