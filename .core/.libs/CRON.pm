@@ -120,6 +120,10 @@ sub module
 	local %mdl_env=@_;
 	local %mdl_C;
 	local $cron::ERR;
+	
+	$TOM::DEBUG_log_file=98;
+	main::_log("call module with debug level='$TOM::DEBUG_log_file'");
+	
 	my $t=track TOM::Debug("module");
 	
 	main::_log("adding module ($tom::H) ".$mdl_env{-category}."-".$mdl_env{-name}."/".$mdl_env{-version}."/".$mdl_env{-global});
@@ -164,9 +168,8 @@ sub module
 		);
 	}
 	
-	main::_log("secure eval, alarm $CRON::ALRM_mdl");
-	
 	# V EVALKU OSETRIM CHYBU RYCHLOSTI A SPATNEHO MODULU
+	my $t_eval=track TOM::Debug("eval (timeout $CRON::ALRM_mdl)");
 	eval
 	{
 		local $SIG{ALRM} = sub {die "Timed out $CRON::ALRM_mdl sec.\n"};
@@ -176,7 +179,7 @@ sub module
 		
 		if (CRON::module::execute(%mdl_env))
 		{
-			main::_log("end eval");
+			#main::_log("end eval");
 		}
 		else # chyba o ktorej upozorni samotny program vratenim undef :)
 		{
@@ -188,6 +191,7 @@ sub module
 		};
 		alarm 0;
 	};
+	$t_eval->close();
 	
 	if ($@)
 	{
