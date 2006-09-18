@@ -61,7 +61,7 @@ sub execute
 						main::_log("request '$hash{page_code}'");
 						
 						if (not $main::DB{stats}->Query("
-						INSERT INTO TOM.a110_weblog_rqs
+						INSERT DELAYED INTO TOM.a110_weblog_rqs
 						(
 							page_code,
 							page_code_referer,
@@ -144,7 +144,7 @@ sub execute
 							else
 							{
 								my $dbh=$main::DB{'stats'}->Query("
-									INSERT INTO TOM.a110_sitemap
+									INSERT DELAYED INTO TOM.a110_sitemap
 									(
 										domain,
 										domain_sub,
