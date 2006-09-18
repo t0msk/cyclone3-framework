@@ -9,13 +9,8 @@ use strict;
 
 sub execute
 {
- #return 1;
 
  my %env=@_;
-
- #open (HND,"</proc/loadavg");
- #my ($avg_1min,$avg_5min,$avg_15min)=split(' ',<HND>);
- #close HND;
 
  TOM::Database::connect::multi('stats') || die "cannot connect all databases";
   
@@ -24,7 +19,7 @@ sub execute
  my %date=Utils::datetime::ctodatetime(time,format=>1);
  my $var="$date{year}-$date{mom}-$date{mday} $date{hour}:$date{min}:00";
  #my $ps=`ps aux`;
- $main::DB{stats}->Query("
+ $main::DB{'stats'}->Query("
 	REPLACE INTO TOM.a110_load_min
 		(
 			reqtime,
