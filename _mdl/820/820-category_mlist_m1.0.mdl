@@ -27,7 +27,7 @@ sub execute
 	# active
 	$env{db_active} = "Y" if not exists $env{db_active} || $env{db_active};
 
-	$env{db_select}="a820_category.ID, a820_category.IDentity, a820_category.IDcharindex, a820_category.name, a820_category.cvml" unless $env{db_select};
+	$env{db_select}="a820_category.*" unless $env{db_select};
 
 	$env{db_order_by}="a820_category.IDcharindex ASC";
 
@@ -71,7 +71,7 @@ sub execute
 				1
 				$env{db_where}
 				ID='$env{db_ID}'
-				AND active='$env{db_active}'
+				AND active LIKE '$env{db_active}'
 			LIMIT 1
 		");
 		my $db = $main::DB{main}->Query("
@@ -81,7 +81,7 @@ sub execute
 				1
 				$env{db_where}
 				ID='$env{db_ID}'
-				AND active='$env{db_active}'
+				AND active LIKE '$env{db_active}'
 			LIMIT 1
 		");
 		if(my %db_line=$db->fetchHash())
@@ -100,7 +100,7 @@ sub execute
 		WHERE
 			1
 			$env{db_where}
-			AND a820_category.active='$env{db_active}'
+			AND a820_category.active LIKE '$env{db_active}'
 		ORDER BY
 			$env{db_order_by}
 	");
@@ -111,7 +111,7 @@ sub execute
 		WHERE
 			1
 			$env{db_where}
-			AND a820_category.active='$env{db_active}'
+			AND a820_category.active LIKE '$env{db_active}'
 		ORDER BY
 			$env{db_order_by}
 	");
@@ -119,9 +119,15 @@ sub execute
 	{
 		my $lastLevel=1;
 
+		main::_log('db returned '.$db->NumRows().' rows');
+
+		my %tmpIDParentRewrite;
+
 		while(my %db_line=$db->fetchhash())
 		{
 			$XSGN{NULL}=undef;
+
+			$tmpIDParentRewrite{$db_line{'IDcharindex'}}=$db_line{'IDentity'};
 
 			my @levels=split(":",$db_line{IDcharindex});
 			$db_line{IDcharindex_level}=scalar(@levels);
@@ -258,6 +264,16 @@ sub execute
 				$XSGN{NULL}=~s|<%time_change_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
 				$XSGN{NULL}=~s|<%time_change_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
 				$XSGN{NULL}=~s|<%time_change_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+			}
+
+			if(!exists($db_line{'IDparent'})){
+				if($db_line{'IDcharindex'}=~/:/){
+					$db_line{'IDparentCharindex'}=$db_line{'IDcharindex'};
+					$db_line{'IDparentCharindex'}=~s|^(.*?):[0-9a-zA-Z]*?$|\1|;
+					$db_line{'IDparent'}=$tmpIDParentRewrite{$db_line{'IDparentCharindex'}};
+				}else{
+					$db_line{'IDparent'}="";
+				}
 			}
 
 			foreach (keys %db_line)
