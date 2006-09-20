@@ -1,0 +1,353 @@
+#!/usr/bin/perl
+# ????? - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use CVML;
+
+our $authors = "nemsak\@webcom.sk";
+
+sub execute
+{
+	my %env = @_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	if ($env{xt_xlng})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
+	$env{db_410}=$TOM::DB_name_TOM unless $env{db_410};
+
+	$env{db_domain}=$tom::Hm unless $env{db_domain};
+
+	# active
+	$env{db_active} = "Y" if not exists $env{db_active} || $env{db_active};
+
+	$env{db_select}="a410_category.*" unless $env{db_select};
+
+	$env{db_order_by}="a410_category.IDcharindex ASC";
+
+	if(exists($env{db_where}))
+	{ $env{db_where}=" AND ".$env{db_where} unless $env{db_where}=~/^\sAND\s/; }
+
+	if(exists($env{db_lng}))
+	{
+		if($env{db_lng})
+		{
+			my @levels=split(";",$env{db_lng});
+			$env{db_where}.=" AND a410_category.lng IN (";
+			foreach (@levels)
+			{
+				$env{db_where}.="'$_',";
+			}
+			$env{db_where}=~s|,$||;
+			$env{db_where}.=") ";
+		}
+		else
+		{
+			$env{db_where}.=" AND a410_category.lng IS NULL ";
+		}
+	}
+	else
+	{
+		$env{db_where}.=" AND ((a410_category.lng='$env{lng}') || (a410_category.lng IS NULL))";
+	}
+
+	# start level
+	$env{db_startlevel} = "(length(ID)/2>=$env{db_startlevel})" if $env{db_startlevel};
+
+	$env{db_item_active} = "Y" if not exists $env{db_item_active} || $env{db_item_active};
+
+	my $tmplng;
+	$tmplng="AND lng='$env{db_lng}'" if(defined($env{db_lng}));
+
+	$env{xt_reroot}=0 unless $env{xt_reroot};
+	if(($env{xt_reroot}) && ($env{db_ID}))
+	{
+		main::_log("xt_reroot parameter in effect. rerooting!");
+		main::_log("
+			SELECT
+				IDcharindex
+			FROM
+				$env{db_410}.a410_category
+			WHERE
+				1
+				$env{db_where}
+				ID='$env{db_ID}'
+				AND domain='$env{db_domain}'
+				AND active LIKE '$env{db_active}'
+			LIMIT 1
+		");
+		my $db = $main::DB{main}->Query("
+			SELECT
+				IDcharindex
+			FROM
+				$env{db_410}.a410_category
+			WHERE
+				1
+				$env{db_where}
+				ID='$env{db_ID}'
+				AND domain='$env{db_domain}'
+				AND active LIKE '$env{db_active}'
+			LIMIT 1
+		");
+		if(my %db_line=$db->fetchHash())
+		{
+			$env{db_where}.=" AND IDcharindex LIKE '$db_line{IDcharindex}%'";
+		}
+		else
+		{
+			main::_log("db error: ".$main::DB{main}->errstr());
+		}
+	}
+
+	main::_log("
+		SELECT $env{db_select}
+		FROM $env{db_410}.a410_category AS a410_category
+		WHERE
+			1
+			$env{db_where}
+			AND domain='$env{db_domain}'
+			AND a410_category.active LIKE '$env{db_active}'
+			$tmplng
+		ORDER BY
+			$env{db_order_by}
+	");
+
+	my $db = $main::DB{main}->Query("
+		SELECT $env{db_select}
+		FROM $env{db_410}.a410_category AS a410_category
+		WHERE
+			1
+			$env{db_where}
+			AND domain='$env{db_domain}'
+			AND a410_category.active LIKE '$env{db_active}'
+			$tmplng
+		ORDER BY
+			$env{db_order_by}
+	");
+	if($db)
+	{
+		my $lastLevel=1;
+
+		main::_log('db returned '.$db->NumRows().' rows');
+
+		my %tmpIDParentRewrite;
+
+		while(my %db_line=$db->fetchhash())
+		{
+			$XSGN{NULL}=undef;
+
+			$tmpIDParentRewrite{$db_line{'IDcharindex'}}=$db_line{'ID'};
+
+			$db_line{IDcharindex_level}=length($db_line{IDcharindex})/2;
+
+			if(exists $XSGN{'LINE_level_'.$db_line{IDcharindex_level}})
+			{
+				main::_log("adding special xsgn - LINE_".$db_line{IDcharindex_level});
+				$XSGN{NULL}=$XSGN{'LINE_level_'.$db_line{IDcharindex_level}};
+			}
+			elsif ((not $db_line{IDcharindex_level} % 2) && (exists $XSGN{LINE_level_odd})) #is this an odd line?
+			{
+				main::_log("adding special xsgn - LINE_level_odd");
+				$XSGN{NULL}=$XSGN{LINE_level_odd};
+			}
+			else
+			{
+				$XSGN{NULL}=$XSGN{LINE};
+			}
+
+			my $catChildren;
+			#zistime si kategorie ktorym sme parent (otazka je ci tam na konieco dat % alebo ne)
+			main::_log("
+				SELECT
+					ID
+				FROM
+					$env{db_410}.a410_category
+				WHERE
+					IDcharindex LIKE '$db_line{IDcharindex}'
+					AND domain='$env{db_domain}'
+					$tmplng
+			");
+			my $db0 = $main::DB{main}->Query("
+				SELECT
+					ID
+				FROM
+					$env{db_410}.a410_category
+				WHERE
+					IDcharindex LIKE '$db_line{IDcharindex}'
+					AND domain='$env{db_domain}'
+					$tmplng
+			");
+			if($db0)
+			{
+				while(my %db0_line=$db0->fetchHash())
+				{
+					if($catChildren){$catChildren.=",";}
+					$catChildren.="'$db0_line{IDentity}'";
+				}
+
+				main::_log("
+					SELECT
+						COUNT(ID) AS item_count
+					FROM $env{db_410}.a410
+					WHERE
+						IDcategory IN ($catChildren)
+						AND domain='$env{db_domain}'
+						AND ((a410.lng='$env{lng}') || (a410.lng IS NULL))
+						AND active='$env{db_item_active}'
+						$tmplng
+				");
+				my $db1 = $main::DB{main}->Query("
+					SELECT
+						COUNT(ID) AS item_count
+					FROM $env{db_410}.a410
+					WHERE
+						IDcategory IN ($catChildren)
+						AND domain='$env{db_domain}'
+						AND ((a410.lng='$env{lng}') || (a410.lng IS NULL))
+						AND active='$env{db_item_active}'
+						$tmplng
+				");
+				if(my %db1_line=$db1->fetchHash())
+				{
+					$db_line{item_count}=$db1_line{item_count};
+				}
+				else
+				{
+					main::_log("db error: ".$main::DB{main}->errstr());
+				}
+			}
+			else
+			{
+				main::_log("db error: ".$main::DB{main}->errstr());
+			}
+
+
+			if ($db_line{IDcharindex_level}>$lastLevel)
+			{
+				if (exists $XSGN{"LIST_level_$db_line{IDcharindex_level}"})
+				{ $XSGN{TMP} =~ s/<#LIST#>/$XSGN{"LIST_level_$db_line{IDcharindex_level}"}/; }
+				else
+				{ $XSGN{TMP} =~ s/<#LIST#>/$XSGN{LIST}/; }
+			}
+
+			# ak sa vraciam do nadurovne
+			# - pozatvaram vsetky podurovnevne
+			# - zatvorim aj LIST
+			if ($db_line{IDcharindex_level}<$lastLevel)
+			{
+				for ($db_line{IDcharindex_level} .. $lastLevel-1)
+				{ $XSGN{TMP} =~ s/<#LINE#>//; }
+				$XSGN{TMP} =~ s/<#LIST#>//;
+			}
+
+			# ak je to len dalsia polozka v rovnakej urovni
+			# - zatvorim LIST (poduroven, nechcem ju)
+			if ($db_line{IDcharindex_level}==$lastLevel)
+			{$XSGN{TMP} =~ s/<#LIST#>//;}
+
+			my $cvml=new CVML(data=>$db_line{cvml});
+			my %cvml_hash=%{$cvml->{hash}};
+
+			$db_line{description}=$cvml_hash{description};
+
+
+			main::_log("time_create: $db_line{time_create}");
+			if($db_line{time_create})
+			{
+				if(exists $XSGN{time_create})
+				{
+					$XSGN{NULL}=~s|<#time_create#>|$XSGN{time_create}|g;
+				}
+
+				my %env0=Utils::datetime::ctodatetime($db_line{time_create},format=>1);
+
+				$XSGN{NULL}=~s|<%time_create_day%>|$env0{mday}|g;
+				$XSGN{NULL}=~s|<%time_create_month%>|$env0{mom}|g;
+				$XSGN{NULL}=~s|<%time_create_year%>|$env0{year}|g;
+				$XSGN{NULL}=~s|<%time_create_hour%>|$env0{hour}|g;
+				$XSGN{NULL}=~s|<%time_create_minute%>|$env0{min}|g;
+				$XSGN{NULL}=~s|<%time_create_second%>|$env0{sec}|g;
+
+				$XSGN{NULL}=~s|<%time_create_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+				$XSGN{NULL}=~s|<%time_create_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+				$XSGN{NULL}=~s|<%time_create_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+				$XSGN{NULL}=~s|<%time_create_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+			}
+
+			if($db_line{time_change})
+			{
+				if(exists $XSGN{time_change})
+				{
+					$XSGN{NULL}=~s|<#time_change#>|$XSGN{time_change}|g;
+				}
+
+				my %env0=Utils::datetime::ctodatetime($db_line{time_change},format=>1);
+
+				$XSGN{NULL}=~s|<%time_change_day%>|$env0{mday}|g;
+				$XSGN{NULL}=~s|<%time_change_month%>|$env0{mom}|g;
+				$XSGN{NULL}=~s|<%time_change_year%>|$env0{year}|g;
+				$XSGN{NULL}=~s|<%time_change_hour%>|$env0{hour}|g;
+				$XSGN{NULL}=~s|<%time_change_minute%>|$env0{min}|g;
+				$XSGN{NULL}=~s|<%time_change_second%>|$env0{sec}|g;
+
+				$XSGN{NULL}=~s|<%time_change_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+				$XSGN{NULL}=~s|<%time_change_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+				$XSGN{NULL}=~s|<%time_change_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+				$XSGN{NULL}=~s|<%time_change_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+			}
+
+			if(!exists($db_line{'IDparent'})){
+				$db_line{'IDparentCharindex'}=$db_line{'IDcharindex'};
+				$db_line{'IDparentCharindex'}=~s|..$||;
+				$db_line{'IDparent'}=$tmpIDParentRewrite{$db_line{'IDparentCharindex'}};
+			}
+
+			foreach (keys %db_line)
+			{
+				$XSGN{NULL}=~s|<%$_%>|$db_line{$_}|g;
+			}
+
+			$XSGN{TMP} =~ s|<#LINE#>|$XSGN{NULL}|;
+
+			$lastLevel=$db_line{IDcharindex_level};
+		}
+		
+		my $db1 = $main::DB{main}->Query("
+			SELECT
+				COUNT(ID) AS item_count
+			FROM $env{db_410}.a410
+			WHERE
+				((IDcategory='') || (IDcategory IS NULL))
+				AND domain='$env{db_domain}'
+				AND ((a410.lng='$env{lng}') || (a410.lng IS NULL))
+				AND active='$env{db_item_active}'
+				$tmplng
+		");
+		if(my %db1_line=$db1->fetchHash())
+		{
+			$XSGN{TMP} =~ s|<%itemcount_root%>|$db1_line{item_count}|g;
+		}
+		else
+		{
+			main::_log("db error: ".$main::DB{main}->errstr());
+		}
+	}
+	else
+	{
+		main::_log("db error: ".$main::DB{main}->errstr());
+	}
+
+	$XSGN{TMP} =~ s/<#LIST#>/$XSGN{LIST}/; # vsetko davam rovno do TMP
+
+	return 1;
+}
+
+1;
