@@ -88,6 +88,7 @@ sub execute
 		WHERE
 			a820.active LIKE '$env{db_active}'
 			AND a820.starttime<=$tom::time_current
+			AND (lng='$env{lng}' OR lng='' OR lng IS NULL)
 			$env{db_where}
 		ORDER BY
 			$env{db_order_by}
