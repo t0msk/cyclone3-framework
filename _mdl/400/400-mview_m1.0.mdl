@@ -82,14 +82,21 @@ sub execute
 		main::_log("sorting by a400.priority from level ".$tmp);
 	}
 
-	if(exists $env{db_where})
+	if($env{db_where})
 	{
 		$env{db_where}.=" AND a400_category.IDname='$env{db_IDname_category}'" if($env{db_IDname_category});
-		$env{db_where}.=" AND a400.IDname='$env{db_IDname}'" if($env{db_IDname});
 	}
 	else
 	{
 		$env{db_where}.="a400_category.IDname='$env{db_IDname_category}'" if($env{db_IDname_category});
+	}
+
+	if(exists $env{db_where})
+	{
+		$env{db_where}.=" AND a400.IDname='$env{db_IDname}'" if($env{db_IDname});
+	}
+	else
+	{
 		$env{db_where}.="a400.IDname='$env{db_IDname}'" if($env{db_IDname});
 	}
 

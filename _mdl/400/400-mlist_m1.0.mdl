@@ -40,14 +40,14 @@ listing clankov s xrelated
 sub execute
 {
 	my %env=@_;
-
+	
 	$env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
 	$env{db_400}=$TOM::DB{main}{name} unless $env{db_400};
-	
+
 	# nevyzadujem vzdy aby clanok bol v nejakej kategorii, ale vyzadujem to defaultne
 	# poslanim db_IDcategory_ => 0 z TypeID mozem podmienku negovat
 	$env{'db_IDcategory_'}=1 if not exists $env{'db_IDcategory_'};
-	
+
 	my %IDcategory_url_hash;
 	if ($env{IDcategory_url_allow})
 	{
@@ -133,14 +133,21 @@ sub execute
 		main::_log("sorting by priority from level ".$tmp);
 	}
 
-	if(exists $env{db_where})
+	if($env{db_where})
 	{
 		$env{db_where}.=" AND a400_category.IDname='$env{db_IDname_category}'" if($env{db_IDname_category});
-		$env{db_where}.=" AND a400.IDname='$env{db_IDname}'" if($env{db_IDname});
 	}
 	else
 	{
 		$env{db_where}.="a400_category.IDname='$env{db_IDname_category}'" if($env{db_IDname_category});
+	}
+
+	if($env{db_where})
+	{
+		$env{db_where}.=" AND a400.IDname='$env{db_IDname}'" if($env{db_IDname});
+	}
+	else
+	{
 		$env{db_where}.="a400.IDname='$env{db_IDname}'" if($env{db_IDname});
 	}
 
@@ -234,7 +241,7 @@ sub execute
 
 			my $db0=$main::DB{main}->Query("
 				SELECT
-					name
+					name, IDname
 				FROM
 					$env{db_400}.a400_category
 				WHERE
@@ -246,6 +253,7 @@ sub execute
 			{
 				main::_log("success! the main category's name is '$db0_line{name}'");
 				$XSGN{TMP}=~s|<%MAIN_IDcategory_name%>|$db0_line{name}|g;
+				$XSGN{TMP}=~s|<%MAIN_IDcategory_IDname%>|$db0_line{IDname}|g;
 			}
 			else
 			{
@@ -448,7 +456,7 @@ sub execute
 						$XSGN{NULL0}=~s|<%inserttime_hour%>|$env0{hour}|g;
 						$XSGN{NULL0}=~s|<%inserttime_minute%>|$env0{min}|g;
 						$XSGN{NULL0}=~s|<%inserttime_second%>|$env0{sec}|g;
-		
+
 						$XSGN{NULL0}=~s|<%inserttime_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
 						$XSGN{NULL0}=~s|<%inserttime_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
 						$XSGN{NULL0}=~s|<%inserttime_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
@@ -524,6 +532,8 @@ sub execute
 				(($XSGN{NULL}=~/<%IDauthor_fullname%>/) || ($XSGN{NULL}=~/<%IDauthor_nickname%>/))
 			)
 			{
+
+
 				$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
 				$env{db_120}=$TOM::DB{main}{name} unless $env{db_120};
 
@@ -585,12 +595,12 @@ sub execute
 
 			if(
 				(($env{db_select}=~/a400.IDcategory/) || ($env{db_select}=~/a400.\*/)) &&
-				($XSGN{NULL}=~/<%IDcategory_name%>/)
+				(($XSGN{NULL}=~/<%IDcategory_name%>/) || ($XSGN{NULL}=~/<%IDcategory_IDname%>/))
 			)
 			{
 				my $db0=$main::DB{main}->Query("
 					SELECT
-						name
+						name, IDname
 					FROM $env{db_400}.a400_category
 					WHERE
 						ID='$db_line{IDcategory}'
@@ -600,7 +610,10 @@ sub execute
 				#TODO: deb00t nie som si isty ci treba pri ziskavani nazvu kategorie, aby bola aktivna, potrebujeme len jej nazov, ne?
 				#						AND active='Y'
 				if (my %db0_line=$db0->fetchhash)
-				{$XSGN{NULL}=~s|<%IDcategory_name%>|$db0_line{name}|g;}
+				{
+					$XSGN{NULL}=~s|<%IDcategory_name%>|$db0_line{name}|g;
+					$XSGN{NULL}=~s|<%IDcategory_IDname%>|$db0_line{IDname}|g;
+				}
 				else
 				{
 					main::_log("category  $db_line{IDcategory} doesn't exist!");
