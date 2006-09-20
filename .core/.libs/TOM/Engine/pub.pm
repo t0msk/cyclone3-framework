@@ -28,6 +28,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	use TOM::Warning;
 	use TOM::Database::connect;
 	use TOM::TypeID;
+	use TOM::Temp::file;
 	
 	#use TOM::Utils::vars;
 	
