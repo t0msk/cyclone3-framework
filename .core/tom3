@@ -2361,6 +2361,31 @@ while ($req->Accept() >= 0)
 #		else
 #		{
 			
+		if ($Net::DOC::content_type eq "application/pdf")
+		{
+			binmode STDOUT;
+			
+			# header
+			print "Content-Type: application/pdf\n";
+			print "Content-Disposition: attachment; filename = ".$main::H->{'env'}{'DOC_title'}.".pdf\n";
+			print "\n";
+			
+			# convert document
+			my $tmp_html=TOM::Temp::file->new('ext'=>'html');
+			$tmp_html->save_content($DOC_output);
+			my $tmp_pdf=TOM::Temp::file->new('ext'=>'pdf');
+			my $cmd="/usr/local/bin/htmldoc --webpage $tmp_html->{'filename'} -f $tmp_pdf->{'filename'} 2>/dev/null";
+			main::_log($cmd);
+			system($cmd);
+			
+			# send content
+			open (HND_PDF,'<'.$tmp_pdf->{'filename'});
+			print <HND_PDF>;
+			close (HND_PDF);
+		}
+		else
+		{
+			
 			print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n";
 			
 			if ($ENV{'HTTP_ACCEPT_ENCODING'}=~/gzip/i && !$pub::gzip_disable)
@@ -2383,6 +2408,7 @@ while ($req->Accept() >= 0)
 				print "\n";
 				print $DOC_output;
 			}
+		}
 #		}
 #		alarm (0);
 		
