@@ -57,7 +57,7 @@ sub execute
 	}
 
 	$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
-	$env{db_820}=$TOM::DB_name unless $env{db_820};
+	$env{db_820}=$TOM::DB{main}{name} unless $env{db_820};
 
 	$env{db_limit}=10 unless $env{db_limit};
 
@@ -120,7 +120,7 @@ sub execute
 		$env{messages_db_active}="1" unless (exists $env{messages_db_active});
 		$env{messages_db_active}="Y" if ($env{messages_db_active} eq "1");
 		$env{messages_db_active}="N" if ($env{messages_db_active} eq "0");
-		
+
 		$env{messages_db_active}="%" if ($isAdmin);
 
 		main::_log("
@@ -157,12 +157,12 @@ sub execute
 		if($db_line{messages_fetched})
 		{
 			my $line_counter;
-			
+
 			while (my %db1_line=$db1->fetchhash)
 			{
 				$XSGN{NULL}=undef;
 				$line_counter++;
-				
+
 				if ($db1_line{authorized} eq "Y")
 				{
 					if(exists $XSGN{'LINE_'.$env{db_page}.'_'.$line_counter})
@@ -207,7 +207,7 @@ sub execute
 						$XSGN{NULL}=$XSGN{LINE_ANONYMOUS};
 					}
 				}
-				
+
 				#oldway
 				#$XSGN{NULL}=$XSGN{LINE};
 				#$XSGN{NULL}=$XSGN{LINE_ANONYMOUS} if ($db1_line{authorized} ne "Y");
@@ -230,13 +230,13 @@ sub execute
 					$XSGN{NULL}=~s|<%hour%>|$env0{hour}|g;
 					$XSGN{NULL}=~s|<%minute%>|$env0{min}|g;
 					$XSGN{NULL}=~s|<%second%>|$env0{sec}|g;
-	
+
 					$XSGN{NULL}=~s|<%day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
 					$XSGN{NULL}=~s|<%day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
 					$XSGN{NULL}=~s|<%month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
 					$XSGN{NULL}=~s|<%month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
 				}
-				
+
 				foreach(keys %db1_line)
 				{
 					$XSGN{NULL}=~s|<%$_%>|$db1_line{$_}|g;
