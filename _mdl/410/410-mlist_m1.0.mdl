@@ -22,7 +22,7 @@ sub execute
 	my %env=@_;
 
 	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
-	$env{db_410}=$TOM::DB_name_TOM unless $env{db_410};
+	$env{db_410}="TOM" unless $env{db_410};
 
 	$env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
 	$env{db_500}=$TOM::DB_name unless $env{db_500};
