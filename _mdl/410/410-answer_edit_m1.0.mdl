@@ -1,0 +1,151 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+our $authors = 'gregor@webcom.sk';
+
+sub execute
+{
+	my %env = @_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	# ID
+	# IDquestion
+	# answer
+	# starttime
+	# endtime
+	# IDauthor
+	# IDeditor
+	# votes
+	# lng
+	# active
+
+	my %answerdata = (
+		answer			=> "'$main::FORM{answer}'",
+		starttime		=> $main::FORM{starttime} || $main::time_current,
+		endtime			=> $main::FORM{endtime} || 'NULL',
+		IDauthor		=> $main::FORM{IDauthor} || 0,
+		IDeditor		=> $main::FORM{IDeditor} || 0,
+		active			=> "'$main::FORM{active}'",
+	);
+	$answerdata{active} = "'N'" if $answerdata{active} eq "''";
+	my $answerexists;
+
+	# Zistim si ci odpoved existuje
+	if ( $env{db_ID} )
+	{
+		my $find = "
+		SELECT
+			ID, lng
+		FROM
+			TOM.a410_answer
+		WHERE
+			ID=$env{db_ID} AND
+			lng='$env{db_lng}'
+		";
+		my $dbfind = $main::DB{main}->Query( $find ); # Zistim, ci anketa existuje
+		$answerexists = 1 if $dbfind->numrows;
+	}
+
+	# DELETE, aby som nerobil nic ine (napriklad update)
+	if ( $env{action} eq 'delete' )
+	{
+		if ( $answerexists )
+		{
+			my $del = "
+			UPDATE TOM.a410_answer
+			SET
+				active='N'
+			WHERE
+				ID=$env{db_ID} AND
+				lng='$env{db_lng}'
+			";
+			my $dbdel = $main::DB{main}->Query( $del );
+
+			$XSGN{TMP} = $XSGN{DELETE};
+			$XSGN{TMP} =~ s|<%ID%>|$env{db_ID}|g;
+			$XSGN{TMP} =~ s|<%lng%>|$env{db_lng}|g;
+		}
+
+		return 1;
+	}
+
+	# Ak neexistuje, vytvorim ju
+	if ( !$answerexists )
+	{
+		return 1 unless $env{db_IDquestion};
+		my $new_cols; my $new_vals;
+
+		# Vkladam iba nenulove ID
+		if ( $env{db_ID} )
+		{
+			if ( $new_cols ) { $new_cols .= ', '; $new_vals .= ', '; }
+			$new_cols .= 'ID'; $new_vals .= $env{db_ID};
+		}
+
+		# ID otazky
+		if ( $new_cols ) { $new_cols .= ', '; $new_vals .= ', '; }
+		$new_cols .= 'IDquestion'; $new_vals .= $env{db_IDquestion};
+
+		# Jazyk sa vlozi aj prazdny
+		if ( $new_cols ) { $new_cols .= ', '; $new_vals .= ', '; }
+		$new_cols .= 'lng'; $new_vals .= "'$env{db_lng}'";
+
+		my $new = "
+		INSERT INTO TOM.a410_answer
+		( $new_cols )
+		VALUES
+		( $new_vals )
+		";
+
+		my $dbnew = $main::DB{main}->Query( $new );
+		$env{db_ID} = $dbnew->insertid;
+
+		$XSGN{TMP} = $XSGN{NEW};
+		$XSGN{TMP} =~ s|<%ID%>|$env{db_ID}|g;
+		$XSGN{TMP} =~ s|<%lng%>|$env{db_lng}|g;
+	}
+
+	# A updatnem ju
+	my $updinfo;
+	while ( my ($k,$v) = each %answerdata )
+	{
+		$updinfo .= ', ' if $updinfo;
+		$updinfo .= $k.'='.$v;
+	}
+
+	my $upd = "
+	UPDATE
+		TOM.a410_answer
+	SET
+		$updinfo
+	WHERE
+		ID=$env{db_ID} AND
+		lng='$env{db_lng}'
+	";
+main::_log($upd);
+	my $dbupd = $main::DB{main}->Query( $upd );
+
+	if ( $answerexists )
+	{
+		$XSGN{TMP} = $XSGN{UPDATE};
+		$XSGN{TMP} =~ s|<%ID%>|$env{db_ID}|g;
+		$XSGN{TMP} =~ s|<%lng%>|$env{db_lng}|g;
+	}
+
+	return 1;
+}
+
+1;

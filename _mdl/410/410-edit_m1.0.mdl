@@ -1,0 +1,156 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+our $authors = 'gregor@webcom.sk';
+
+sub execute
+{
+	my %env = @_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	# ID
+	# IDlink
+	# IDcategory
+	# domain
+	# title
+	# tiny
+	# starttime
+	# endtime
+	# IDauthor
+	# IDeditor
+	# votes
+	# xrelated
+	# lng
+	# active
+
+	my %polldata = (
+		IDlink			=> "'$main::FORM{IDlink}'",
+		IDcategory	=> "'$main::FORM{IDcategory}'",
+		domain			=> "'$main::FORM{domain}'",
+		title				=> "'$main::FORM{title}'",
+		tiny				=> "'$main::FORM{tiny}'",
+		starttime		=> $main::FORM{starttime} || $main::time_current,
+		endtime			=> $main::FORM{endtime} || 'NULL',
+		IDauthor		=> $main::FORM{IDauthor} || 0,
+		IDeditor		=> $main::FORM{IDeditor} || 0,
+		xrelated		=> "'$main::FORM{xrelated}'",
+		active			=> "'$main::FORM{active}'",
+	);
+	$polldata{active} = "'N'" if $polldata{active} eq "''";
+	my $pollexists;
+
+	# Zistim si ci anketa existuje
+	if ( $env{db_ID} )
+	{
+		my $find = "
+		SELECT
+			ID, lng
+		FROM
+			TOM.a410
+		WHERE
+			ID=$env{db_ID} AND
+			lng='$env{db_lng}'
+		";
+		my $dbfind = $main::DB{main}->Query( $find ); # Zistim, ci anketa existuje
+		$pollexists = 1 if $dbfind->numrows;
+	}
+
+	# DELETE, aby som nerobil nic ine (napriklad update)
+	if ( $env{action} eq 'delete' )
+	{
+		if ( $pollexists )
+		{
+			#my $del = "
+			#UPDATE TOM.a410
+			#SET
+			#	active='N'
+			#WHERE
+			#	ID=$env{db_ID} AND
+			#	lng='$env{db_lng}'
+			#";
+			my $del = "DELETE FROM TOM.a410 WHERE ID=$env{db_ID} AND lng='$env{db_lng}'";
+			my $dbdel = $main::DB{main}->Query( $del );
+
+			$XSGN{TMP} = $XSGN{DELETE};
+			$XSGN{TMP} =~ s|<%ID%>|$env{db_ID}|g;
+			$XSGN{TMP} =~ s|<%lng%>|$env{db_lng}|g;
+		}
+	
+		return 1;
+	}
+
+	# Ak neexistuje, vytvorim ju
+	if ( !$pollexists )
+	{
+		my $new_cols; my $new_vals;
+
+		# Vkladam iba nenulove ID
+		if ( $env{db_ID} )
+		{
+			if ( $new_cols ) { $new_cols .= ', '; $new_vals .= ', '; }
+			$new_cols .= 'ID'; $new_vals .= $env{db_ID};
+		}
+
+		# Jazyk sa vlozi aj prazdny
+		if ( $new_cols ) { $new_cols .= ', '; $new_vals .= ', '; }
+		$new_cols .= 'lng'; $new_vals .= "'$env{db_lng}'";
+
+		my $new = "
+		INSERT INTO TOM.a410
+		( $new_cols )
+		VALUES
+		( $new_vals )
+		";
+
+		my $dbnew = $main::DB{main}->Query( $new );
+		$env{db_ID} = $dbnew->insertid;
+
+		$XSGN{TMP} = $XSGN{NEW};
+		$XSGN{TMP} =~ s|<%ID%>|$env{db_ID}|g;
+		$XSGN{TMP} =~ s|<%lng%>|$env{db_lng}|g;
+	}
+
+	# A updatnem ju
+	my $updinfo;
+	while ( my ($k,$v) = each %polldata )
+	{
+		$updinfo .= ', ' if $updinfo;
+		$updinfo .= $k.'='.$v;
+	}
+
+	my $upd = "
+	UPDATE
+		TOM.a410
+	SET
+		$updinfo
+	WHERE
+		ID=$env{db_ID} AND
+		lng='$env{db_lng}'
+	";
+
+	my $dbupd = $main::DB{main}->Query( $upd );
+
+	if ( $pollexists )
+	{
+		$XSGN{TMP} = $XSGN{UPDATE};
+		$XSGN{TMP} =~ s|<%ID%>|$env{db_ID}|g;
+		$XSGN{TMP} =~ s|<%lng%>|$env{db_lng}|g;
+	}
+
+	return 1;
+}
+
+1;

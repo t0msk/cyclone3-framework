@@ -1,0 +1,226 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+our $authors = 'nemsak@webcom.sk';
+use strict;
+
+use TOM::Utils::charindex;
+use CVML;
+
+=head1 NAME
+login_info
+
+=head1 HEAD_VERSION_BUILD
+1.060104
+
+=head1 DESCRIPTION
+zobrazenie informacie o statuse usera
+
+=head1 CHANGES
+2006-01-04 - deb00t
+	- first make
+=cut
+
+sub execute
+{
+	my %env=@_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	my %out;
+
+	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
+	$env{db_410}=$TOM::DB_name_TOM unless $env{db_410};
+
+	$env{db_domain}=$tom::Hm unless $env{db_domain};
+
+	my $tmplng;
+	$tmplng="AND lng LIKE '$env{db_lng}'" if(exists($env{db_lng}));
+	
+	
+	#no limit - we may want to delete all the language versions at once
+	my $sql=qq{
+		SELECT
+			ID, IDcharindex
+		FROM
+			$env{db_410}.a410_category
+		WHERE
+			ID='$env{db_ID}'
+			AND ((domain='$env{db_domain}') OR (domain IS NULL))
+			$tmplng
+	};
+	main::_log($sql);
+	if(my $db1=$main::DB{main}->Query($sql))
+	{
+		main::_log("executed");
+		if(my %db1_line=$db1->FetchHash())
+		{
+			my $hasChildren;
+			
+			my @arrChildren;
+			
+			$sql=qq{
+				SELECT
+					ID
+				FROM
+					$env{db_410}.a410_category
+				WHERE
+					IDcharindex LIKE '$db1_line{IDcharindex}%'
+					AND ID NOT LIKE '$env{db_ID}'
+					AND ((domain='$env{db_domain}') OR (domain IS NULL))
+					$tmplng
+			};
+			main::_log($sql);
+			my $db2=$main::DB{main}->Query($sql);
+			
+			while(my @db2_line=$db2->FetchRow())
+			{
+				$hasChildren=1;
+				push @arrChildren, $db2_line[0];
+			}
+			
+			my $sqlAddon='';
+			
+			if(scalar(@arrChildren)>0)
+			{
+				main::_log('category '.$env{db_ID}.' has '.scalar(@arrChildren).' subcategories');
+				$sqlAddon.=" AND IDcategory IN ('$env{db_ID}', '".join("', '", @arrChildren)."')";
+			}
+			else
+			{
+				$sqlAddon.=" AND IDcategory='$env{db_ID}'";
+			}
+			
+			my $hasItems;
+
+			$sql=qq{
+				SELECT
+					ID
+				FROM
+					$env{db_410}.a410
+				WHERE
+					((domain='$env{db_domain}') OR (domain IS NULL))
+					$sqlAddon
+					$tmplng
+			};
+			main::_log($sql);
+			my $db2=$main::DB{main}->Query($sql);
+			if($db2->NumRows())
+			{
+				$hasItems=1;
+			}
+
+			my $forceDeletion=1;
+
+			if($hasChildren)
+			{
+				if($env{sw_children_ignore})
+				{ main::_log('forcing children deletion'); }
+				else
+				{
+					main::_log('unforced children deletion');
+					$XSGN{TMP}=$XSGN{RESULT_failure_has_children};
+					$forceDeletion=0;
+				}
+			}
+			if(($hasItems) && ($forceDeletion))
+			{
+				if($env{sw_items_ignore})
+				{ main::_log('forcing items deletion'); }
+				else
+				{
+					main::_log('unforced children deletion');
+					$XSGN{TMP}=$XSGN{RESULT_failure_has_items};
+					$forceDeletion=0;
+				}
+			}
+
+			if($forceDeletion)
+			{
+				my $successChildren=1;
+				my $db3=$main::DB{main}->Query("
+					DELETE
+					FROM
+						$env{db_410}.a410_category
+					WHERE
+						ID LIKE '$env{db_ID}%'
+						AND ((domain='$env{db_domain}') OR (domain IS NULL))
+						$tmplng
+				");
+				if($db3)
+				{
+					main::_log('deleted '.$db3->affectedrows.' children');
+				}
+				else
+				{
+					$successChildren=0;
+				}
+
+
+				my $successItems=1;
+				if(($hasItems) && ($successChildren))
+				{
+					my $db3=$main::DB{main}->Query("
+						UPDATE
+							$env{db_410}.a410
+						SET
+							IDcategory='$env{db_IDcategory_move}'
+						WHERE
+							IDcategory LIKE '$env{db_ID}%'
+							AND ((domain='$env{db_domain}') OR (domain IS NULL))
+							$tmplng
+					");
+					if($db3)
+					{
+						if($env{db_IDcategory_move}){
+							main::_log('moved '.$db3->affectedrows.' items into category \''.$env{db_IDcategory_move}.'\'');
+						}else{
+							main::_log('unset '.$db3->affectedrows.' items\' category');
+						}
+					}
+					else
+					{
+						$successItems=0;
+					}
+				}
+				if(!$successChildren)
+				{
+					$XSGN{TMP}=$XSGN{RESULT_failure_delete_children};
+				}
+				if(($successChildren) && (!$successItems))
+				{
+					$XSGN{TMP}=$XSGN{RESULT_failure_delete_children};
+				}
+				if(($successChildren) && ($successItems))
+				{
+					$XSGN{TMP}=$XSGN{RESULT_success};
+				}
+			}
+		}
+		else
+		{
+			$XSGN{TMP}=$XSGN{RESULT_failure_no_data};
+		}
+	}
+	else
+	{
+		$XSGN{TMP}=$XSGN{RESULT_failure_no_data};
+	}
+
+
+	$XSGN{TMP}=~s|<%ID%>|$out{db_ID}|g;
+
+	return 1;
+}
+
+1;

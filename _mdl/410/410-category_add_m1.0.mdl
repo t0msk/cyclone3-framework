@@ -1,0 +1,226 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+our $authors = 'nemsak@webcom.sk';
+use strict;
+
+use TOM::Utils::charindex;
+use CVML;
+
+=head1 NAME
+login_info
+
+=head1 HEAD_VERSION_BUILD
+1.060104
+
+=head1 DESCRIPTION
+zobrazenie informacie o statuse usera
+
+=head1 CHANGES
+2006-01-04 - deb00t
+	- first make
+=cut
+
+sub execute
+{
+	my %env=@_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	my %out;
+
+	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
+	$env{db_410}="TOM" unless $env{db_410};
+
+	$env{db_domain}=$tom::Hm unless $env{db_domain};
+
+	my $tmplng;
+	$tmplng="AND lng='$env{db_lng}'" if(defined($env{db_lng}));
+
+	my $tmpCharIndex='';
+
+	if($env{db_IDparent}){
+		main::_log("
+			SELECT
+				IDcharindex
+			FROM
+				$env{db_410}.a410_category
+			WHERE
+				ID='$env{db_IDparent}'
+				$tmplng
+			ORDER BY
+				ID DESC
+		");
+		my $db=$main::DB{main}->Query("
+			SELECT
+				IDcharindex
+			FROM
+				$env{db_410}.a410_category
+			WHERE
+				ID='$env{db_IDparent}'
+				$tmplng
+			ORDER BY
+				ID DESC
+		");
+		if($db)
+		{
+			if(my %db_line=$db->FetchHash()){
+				$tmpCharIndex=$db_line{IDcharindex};
+			}
+		}
+	}
+
+	use Utils::vars;
+
+	my $uroven=my @from=split('',$tmpCharIndex);
+	my @chars;
+	my $fullname_new;
+
+
+	# env{cat} - kategoria do ktorej vytvaram podkategoriu
+	# env{char} - pocet charov v charindexe
+
+	my $tmpIDCharindexChars=2;
+
+	my @idx;
+	my $depth=$tmpIDCharindexChars;
+	$idx[$depth]=-1;
+	my $to=@Utils::vars::WCHAR;
+	my $max=$to**$tmpIDCharindexChars;
+	for (1..$max)
+	{
+		$idx[$depth]++;
+		while ($idx[$depth]>@Utils::vars::WCHAR-1)
+		{
+			$idx[$depth]=0;
+			$depth--;
+			$idx[$depth]++;
+		}
+		$depth=$tmpIDCharindexChars;
+		my $cat;
+		for (1..$tmpIDCharindexChars)
+		{
+			$cat.=$Utils::vars::WCHAR[$idx[$_]];
+		}
+
+		if(my $db1=$main::DB{main}->Query("
+			SELECT
+				name
+			FROM
+				$env{db_410}.a410_category
+			WHERE
+				((domain='$env{db_domain}') OR (domain IS NULL))
+				AND IDcharindex='$tmpCharIndex$cat'
+				$tmplng
+			LIMIT 1
+		"))
+		{
+			if (my @db1_line=$db1->FetchRow())
+			{
+				next;
+			}
+			else
+			{
+				$tmpCharIndex=$tmpCharIndex.$cat;
+				last;
+			}
+		}
+		else
+		{
+			$tmpCharIndex=$tmpCharIndex.$cat;
+			last;
+		}
+	}
+
+	main::_log("
+		SELECT
+			ID
+		FROM
+			$env{db_410}.a410_category
+		WHERE
+			1
+			$tmplng
+		ORDER BY
+			ID DESC
+	");
+	my $db1=$main::DB{main}->Query("
+		SELECT
+			ID
+		FROM
+			$env{db_410}.a410_category
+		WHERE
+			1
+			$tmplng
+		ORDER BY
+			ID DESC
+	");
+	if($db1)
+	{
+		my $tmpIDEntity;
+		if (my %db1_line=$db1->FetchHash())
+		{
+			$tmpIDEntity=$db1_line{ID};
+			#toto nie je ok, ale je to momentalne najrychlejsie, len pridam jednotku, normalne by som si kontroloval ci vytvaram novu kategoriu alebo len lng verziu
+			$tmpIDEntity++;
+		}
+		else
+		{
+			$tmpIDEntity=1;
+		}
+
+		my $sqlAddon="";
+		$sqlAddon.=",lng='$env{db_lng}'" if(defined($env{db_lng}));
+
+		main::_log("
+			INSERT INTO
+				$env{db_410}.a410_category
+			SET
+				ID='$tmpIDEntity',
+				IDcharindex='$tmpCharIndex',
+				domain='$env{db_domain}',
+				name='$env{db_title}',
+				active='N'
+				$sqlAddon
+		");
+		my $db1=$main::DB{main}->Query("
+			INSERT INTO
+				$env{db_410}.a410_category
+			SET
+				ID='$tmpIDEntity',
+				IDcharindex='$tmpCharIndex',
+				domain='$env{db_domain}',
+				name='$env{db_title}',
+				active='N'
+				$sqlAddon
+		");
+		if($db1)
+		{
+			main::_log('charindexget returned next_free_child '.$tmpCharIndex.' for entity '.$tmpIDEntity.' for IDparent: '.$env{db_IDparent});
+			$XSGN{TMP}=$XSGN{RESULT_success};
+		}
+		else
+		{
+			main::_log('could not insert new category:'.$db1->errstr());
+			$XSGN{TMP}=$XSGN{RESULT_failure_insert};
+		}
+	}
+
+	$XSGN{TMP}=~s|<%IDparent%>|$env{db_IDparent}|g;
+	$XSGN{TMP}=~s|<%ID%>|$out{next_free_child}|g;
+	$XSGN{TMP}=~s|<%IDname%>|$env{db_IDname}|g;
+	$XSGN{TMP}=~s|<%description%>|$env{db_description}|g;
+	
+	return 1;
+}
+
+1;

@@ -1,0 +1,79 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+our $authors = 'gregor@webcom.sk';
+
+sub execute
+{
+	my %env = @_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	return 1 unless $env{db_ID};
+
+
+	my $sql = "
+	SELECT
+		ID,
+		IDquestion,
+		answer,
+		starttime,
+		endtime,
+		IDauthor,
+		IDeditor,
+		votes,
+		lng,
+		active
+	FROM
+		TOM.a410_answer
+	WHERE
+		ID=$env{db_ID} AND
+		lng='$env{db_lng}'
+	";
+
+	my $db0 = $main::DB{main}->Query( $sql );
+
+	if ( !$db0->numrows )
+	{
+		$XSGN{TMP} = $XSGN{TMP_NO_DATA};
+		return 1;
+	}
+	
+	my %db0_line = $db0->fetchhash;
+	while ( my ($k,$v) = each %db0_line )
+	{
+		$XSGN{TMP} =~ s|<%$k%>|$v|g;
+
+		if ( $k =~ /\w+time/ )
+		{
+			my $tt = $k; my %env0 = Utils::datetime::ctodatetime( $v, format => 1 );
+			$XSGN{NULL0}=~s|<%${tt}_day%>|$env0{mday}|g;
+			$XSGN{NULL0}=~s|<%${tt}_month%>|$env0{mom}|g;
+			$XSGN{NULL0}=~s|<%${tt}_year%>|$env0{year}|g;
+			$XSGN{NULL0}=~s|<%${tt}_hour%>|$env0{hour}|g;
+			$XSGN{NULL0}=~s|<%${tt}_minute%>|$env0{min}|g;
+			$XSGN{NULL0}=~s|<%${tt}_second%>|$env0{sec}|g;
+
+			$XSGN{NULL0}=~s|<%${tt}_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+			$XSGN{NULL0}=~s|<%${tt}_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+			$XSGN{NULL0}=~s|<%${tt}_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+			$XSGN{NULL0}=~s|<%${tt}_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+		}
+	}
+
+	return 1;
+}
+
+1;
