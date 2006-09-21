@@ -1,0 +1,71 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+our $authors = 'gregor@webcom.sk';
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	$env{db_400}=Tomahawk::Getmdlvar( 400, 'db' ) unless $env{db_400};
+	$env{db_400}=$TOM::DB_name unless $env{db_400};
+
+	main::_log( 'Logujem' );
+	
+
+	if ( !$env{db_ID} )
+	{
+		$XSGN{TMP} = $XSGN{RESULT_failure_no_input};
+		return 1;
+	}
+
+	my $sqlfind = "
+	SELECT
+		ID
+	FROM
+		$env{db_400}.a400
+	WHERE
+		ID=$env{db_ID} AND
+		active!='D'
+	";
+
+	my $dbfind = $main::DB{main}->Query( $sqlfind );
+	if ( !$dbfind->numrows )
+	{
+		$XSGN{TMP} = $XSGN{RESULT_failure_no_data};
+		$XSGN{TMP} =~ s|<%ID%>|$env{db_ID}|g;
+		return 1;
+	}
+
+	my $sqldel = "
+	UPDATE
+		$env{db_400}.a400
+	SET
+		active='D'
+	WHERE
+		ID=$env{db_ID}
+	";
+
+	main::_log( $sqldel );
+
+	my $db = $main::DB{main}->Query( $sqldel );
+
+	$XSGN{TMP} = $XSGN{RESULT_success};
+	$XSGN{TMP} =~ s|<%ID%>|$env{db_ID}|g;
+}
+
+1;
