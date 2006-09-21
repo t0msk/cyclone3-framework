@@ -1,0 +1,44 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+our $authors="nemsak\@webcom.sk";
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+
+	my $db=$main::DB{main}->Query("
+		SELECT
+			*
+		FROM
+			_config
+		WHERE
+			variable LIKE '500-%\_width_height'
+	");
+	if($db)
+	{
+		while(my %db_line=$db->FetchHash())
+		{
+			$XSGN{NULL}=$XSGN{LINE};
+			$db_line{variable}=~/500-(.)_width_height/;
+			my $tmp=$1;
+			main::_log("this site has an image format '".$tmp."' whose format is '".$db_line{value}."'");
+
+			$XSGN{NULL}=~s|<%format%>|$tmp|g;
+			foreach(keys %db_line)
+			{
+				$XSGN{NULL}=~s|<%$_%>|$db_line{$_}|;
+			}
+
+			$XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}|;
+		}
+	}
+	return 1;
+}
+1;

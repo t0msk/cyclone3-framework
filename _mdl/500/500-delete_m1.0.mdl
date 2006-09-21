@@ -1,0 +1,179 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use Int::charsets::encode;
+
+our $authors="nemsak\@webcom.sk";
+
+sub execute
+{
+	my %env=@_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		# TODO: [Aben] XLNG nieje deprecated! jeho fcia je len ina!!!! zabezpecuje zmenu jazyka nie natiahnutie xlng filesu
+		# TODO: [Deb00t] Roman, ak si to dobre precitas tak to pochopis. ide mi o zmenu parametra, nie nazvu fcie/systemoveho volania. chcem oddelit parametre urcitymi predponami - db_ (databazove parametre), xt_ (parametre ovplyvnujuce xsgncko - xsgn-transform, ...
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	if(!$env{db_ID})
+	{
+		$XSGN{TMP}=$XSGN{RESULT_failure_no_input};
+		if(!$env{db_ID}) {$XSGN{TMP}=~s|<%missing_parameter%>|db_ID|;}
+	}
+	else
+	{
+		$env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+		$env{db_500}=$TOM::DB{main}{name} unless $env{db_500};
+
+		$env{db_ID}=sprintf('%07d',$env{db_ID});
+		$env{db_ID}=~/^(....)/i;
+		my $diskSubDir=$1;
+
+		my $diskPath="../../!media/500/$diskSubDir/";
+
+		my $tmplng;
+		#$tmplng="AND lng LIKE '$env{lng}'" if(exists($env{lng}));
+
+		main::_applog("
+			SELECT
+				ID,hash,format
+			FROM
+				$env{db_500}.a500
+			WHERE
+				ID='$env{db_ID}'
+				$tmplng
+		");
+
+		my $db=$main::DB{main}->Query("
+			SELECT
+				ID,hash,format
+			FROM
+				$env{db_500}.a500
+			WHERE
+				ID='$env{db_ID}'
+				$tmplng
+		");
+		if ($db->numRows())
+		{
+			my $deletionSuccess = 1;
+			while(my %db_line = $db->FetchHash())
+			{
+				if (-e "$diskPath/$db_line{hash}-$db_line{format}.jpg")
+				{
+					main::_log("deleting: ".$diskPath.$db_line{hash}."-".$db_line{format}.".jpg");
+
+					if(unlink $diskPath.$db_line{hash}."-".$db_line{format}.".jpg")
+					{
+						main::_log('success!');
+
+						main::_log("
+							DELETE FROM
+								$env{db_500}.a500
+							WHERE
+								ID='$env{db_ID}'
+								AND hash='$db_line{hash}'
+								$tmplng
+						");
+						my $db1=$main::DB{main}->Query("
+							DELETE FROM
+								$env{db_500}.a500
+							WHERE
+								ID='$env{db_ID}'
+								$tmplng
+						");
+						if($db1){
+							main::_log('success!');
+						}else{
+							main::_log('failure! could not delete format from db');
+							$deletionSuccess = 0;
+						}
+					}
+					else
+					{
+						main::_log('failure! could not delete format from disk');
+						$deletionSuccess = 0;
+					}
+				}
+				else
+				{
+					main::_log('file not found: '.$diskPath.'/'.$db_line{hash}.'-'.$db_line{format}.'.jpg');
+
+					# this is quite dangerous - what if the path to  media is set wrong, f.e.?
+
+=head1
+					main::_log('deleting worthless record from db');
+
+					main::_log("
+						DELETE FROM
+							$env{db_500}.a500
+						WHERE
+							ID='$env{db_ID}'
+							AND hash='$db_line{hash}'
+							$tmplng
+					");
+					main::_log("
+						DELETE FROM
+							$env{db_500}.a500
+						WHERE
+							ID='$env{db_ID}'
+							AND hash='$db_line{hash}'
+							$tmplng
+					");
+=cut
+				}
+			}
+			if($deletionSuccess)
+			{
+				main::_log("deleting attrs...");
+				main::_log("
+					DELETE FROM
+						$env{db_500}.a500
+					WHERE
+						ID='$env{db_ID}'
+						$tmplng
+				");
+				if(my $db1=$main::DB{main}->Query("
+					DELETE FROM
+						$env{db_500}.a500_attrs
+					WHERE
+						ID='$env{db_ID}'
+						$tmplng
+				"))
+				{
+					main::_log("success!");
+					$XSGN{TMP}=$XSGN{RESULT_success};
+				}
+				else
+				{
+					main::_log("failure!");
+					$XSGN{TMP}=$XSGN{RESULT_failure_delete_attrs};
+				}
+			}
+			else
+			{
+				main::_log("could not delete all records/files for ID '".$env{db_ID}."', leaving attrs record intact");
+				$XSGN{TMP}=$XSGN{RESULT_failure_delete};
+			}
+		}
+		else
+		{
+			main::_log("no db data returned for '".$env{db_ID}."'!");
+			$XSGN{TMP}=$XSGN{RESULT_failure_no_data};
+		}
+	}
+
+	$XSGN{TMP}=~s|<%ID%>|$env{db_ID}|g;
+
+	return 1;
+}
+1;

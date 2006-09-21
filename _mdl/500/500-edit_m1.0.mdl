@@ -1,0 +1,365 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use Int::charsets::encode;
+
+our $authors="nemsak\@webcom.sk";
+
+sub execute
+{
+	my %env=@_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		# TODO: [Aben] XLNG nieje deprecated! jeho fcia je len ina!!!! zabezpecuje zmenu jazyka nie natiahnutie xlng filesu
+		# TODO: [Deb00t] Roman, ak si to dobre precitas tak to pochopis. ide mi o zmenu parametra, nie nazvu fcie/systemoveho volania. chcem oddelit parametre urcitymi predponami - db_ (databazove parametre), xt_ (parametre ovplyvnujuce xsgncko - xsgn-transform, ...
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	if (length ($env{db_IDname})==0)
+	{
+		$env{db_IDname}=$env{db_title};
+	}
+
+	$env{db_IDname}=Int::charsets::encode::UTF8_ASCII($env{db_IDname});
+	$env{db_IDname}="\L$env{db_IDname}";
+	$env{db_IDname}=~s|\s|-|g;
+
+	$env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+	$env{db_500}=$TOM::DB{main}{name} unless $env{db_500};
+
+	my %imageHashes;
+	my %imageSizes;
+	my %imageFileSizes;
+
+	if($env{db_ID})
+	{
+		main::_log("we are updating image ID: ".$env{db_ID});
+		
+		my $db=$main::DB{main}->Query("
+			SELECT
+				*
+			FROM $env{db_500}.a500 AS a500
+			LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.IDattrs=a500_attrs.ID
+			WHERE
+				a500.ID='$env{db_ID}'
+		");
+		if($db)
+		{
+			while (my %db_line=$db->FetchHash())
+			{
+				main::_log("we have existing hash for format '".$db_line{'format'}."': ".$db_line{'hash'});
+				$imageHashes{$db_line{'format'}}=$db_line{'hash'};
+				$imageSizes{$db_line{'format'}}=$db_line{'size'};
+			}
+		}
+	}
+	else
+	{
+		main::_log("we are creating a new image:");
+		main::_log("
+			SELECT
+				DISTINCT ID
+			FROM
+				$env{db_500}.a500_attrs
+			ORDER BY
+				ID DESC
+			LIMIT 1");
+			
+		getnewid:
+
+		if(my $db1=$main::DB{main}->Query("
+			SELECT
+				DISTINCT ID
+			FROM
+				$env{db_500}.a500_attrs
+			ORDER BY
+				ID DESC
+			LIMIT 1
+		")
+		)
+		{
+			if (my @db1_line=$db1->FetchRow())
+			{
+				$env{db_ID}=$db1_line[0]+1;
+			}else{
+				#no records in the database, beginning with id '1'
+				$env{db_ID}=1;
+			}
+
+			main::_log("proposed new image ID: ".$env{db_ID});
+
+			main::_log("
+				INSERT INTO
+					$env{db_500}.a500_attrs
+				SET
+					ID='$env{db_ID}',
+					IDattrs='$env{db_ID}'
+			");
+
+			if(my $db1=$main::DB{main}->Query("
+				INSERT INTO
+					$env{db_500}.a500_attrs
+				SET
+					ID='$env{db_ID}',
+					IDattrs='$env{db_ID}',
+					inserttime='$main::time_current'
+			"))
+			{
+				main::_log("final new article id: ".$env{db_ID}." created");
+			}
+			else
+			{
+				#bacha aby sa nam to tu nezabyciklilo :)
+				#goto getnewid;
+			}
+		}
+	}
+
+	if(!$env{'db_IDeditor'}){
+		main::_log("hladam editora");
+	
+		my $db0=$main::DB{main}->Query("
+			SELECT
+				ID
+			FROM $env{db_120}.a120
+			WHERE
+				nickname='$ENV{REMOTE_USER}'
+			LIMIT 1
+		");
+		if (my %db0_line=$db0->FetchHash())
+		{
+			main::_log('editor found! ID: '.$db0_line{ID});
+			$env{db_IDeditor}=$db0_line{ID};
+		}
+	}
+
+	my $sqlAddon = "";
+
+	if(exists($env{starttime})){ $sqlAddon.=",starttime='".$env{starttime}."'"; }
+	if(exists($env{endtime})){ $sqlAddon.=",endtime='".$env{endtime}."'"; }
+
+	if(my $db1=$main::DB{main}->Query("
+		UPDATE
+			$env{db_500}.a500_attrs
+		SET
+			IDname='$env{db_IDname}',
+			IDcategory='$env{db_IDcategory}',
+			about='$env{db_title}',
+			keywords='$env{db_keywords}',
+			IDauthor='$env{db_IDauthor}'
+		WHERE
+			ID='$env{db_ID}'
+	"))
+	{
+		main::_log("image id: ".$env{db_ID}." successfully updated");
+	}
+
+	$XSGN{'TMP'}=~s|<%ID%>|$env{db_ID}|g;
+	$XSGN{'TMP'}=~s|<%IDname%>|$env{db_IDname}|g;
+	$XSGN{'TMP'}=~s|<%IDcategory%>|$env{db_IDcategory}|g;
+	$XSGN{'TMP'}=~s|<%about%>|$env{db_title}|g;
+
+	$env{db_ID}=sprintf ('%07d', $env{db_ID});
+
+	foreach my $formVar (keys %main::FORM)
+	{
+		if($formVar=~/file_(.?)_data/){
+			main::_log("we have file data for format: ".$1);
+
+			my $tmpFormat=$1;
+
+			if(exists $imageHashes{$tmpFormat}){
+
+			}else{
+				our @WCHAR=qw/0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z/;
+	
+				sub genhash
+				{
+					my $var;
+					for (1..$_[0]){$var.=$WCHAR[int(rand(61))];}
+					return $var;
+				}
+	
+				my $hash = genhash(16);
+	
+				while(my $db1=$main::DB{main}->Query("
+					SELECT
+						ID
+					FROM
+						$env{db_500}.a500
+					WHERE
+						hash='$hash'
+						AND format='$tmpFormat'
+					LIMIT 1
+				"))
+				{
+					if (my @db1_line=$db1->FetchRow())
+					{ $hash = genhash(16); }
+					else
+					{
+						main::_log("trying to insert format '".$tmpFormat."' as hash '".$hash."'");
+						if(my $db1=$main::DB{main}->Query("
+							INSERT INTO
+								$env{db_500}.a500
+							SET
+								ID='$env{db_ID}',
+								IDattrs='$env{db_ID}',
+								hash='$hash',
+								IDcategory='$env{db_IDcategory}',
+								format='$tmpFormat',
+								size='".$env{'file_'.$tmpFormat.'_size'}."',
+								IDeditor='$env{'db_IDeditor'}',
+								changetime='$main::time_current',
+								lng='',
+								active='Y'
+						"))
+						{
+							main::_log("inserted format '".$tmpFormat."' as hash '".$hash."'");
+							
+							$imageHashes{$tmpFormat}=$hash;
+							
+							last;
+						}
+					}
+				}
+			}
+
+			my $hash=$imageHashes{$tmpFormat};
+			
+			$env{db_ID}=~/^(....)/i;
+			my $diskSubDir=$1;
+
+			my $diskPath="../!media/500/$diskSubDir/";
+			system ("mkdir $diskPath");
+
+			my $dirPath=$tom::H_500."/".$diskSubDir;
+
+			my $fileName = $diskPath . $hash . "-" . $tmpFormat . "." . $main::FORM{'file_'.$tmpFormat.'_extension'};
+			#temporary extension override
+			my $fileName = $diskPath . $hash . "-" . $tmpFormat . ".jpg";
+			main::_log("filename: " . $fileName);
+
+			if(open (HND,">$fileName"))
+			{
+				main::_log("opened handle");
+				binmode HND;
+				main::_log("set handle to binary mode");
+				if(print HND $main::FORM{'file_'.$tmpFormat.'_data'})
+				{
+					main::_log("written data to handle");
+					close (HND);
+					main::_log("closed handle");
+					chmod(0664, "$fileName");
+					main::_log("chmodded filename");
+
+					use Image::Magick;
+					my $tmpImage = new Image::Magick;
+					$tmpImage->Read($fileName);
+					
+					#ak file nenacital sa je byci
+					#if ( !$image->[0] )
+					#{}
+
+					main::_log('image format '.$tmpFormat.' height:'.$tmpImage->[0]->Get('height'));
+					main::_log('image format '.$tmpFormat.' width:'.$tmpImage->[0]->Get('width'));
+
+					$imageSizes{$tmpFormat} = $tmpImage->[0]->Get('height').'x'.$tmpImage->[0]->Get('width');
+
+					main::_log('image format '.$tmpFormat.' wxh:'.$imageSizes{$tmpFormat});
+
+					$imageFileSizes{$tmpFormat} = $tmpImage->[0]->Get('filesize');
+					
+					main::_log('image format '.$tmpFormat.' filesize:'.$imageFileSizes{$tmpFormat});
+
+					#$image->Thumbnail( width => $width, height => $height );
+
+					$XSGN{'NULL'}=$XSGN{'LINE'};
+					$XSGN{'NULL'}=~s|<%format%>|$tmpFormat|g;
+					$XSGN{'NULL'}=~s|<%size%>|$imageSizes{$tmpFormat}|g;
+					$XSGN{'NULL'}=~s|<%hash%>|$hash|g;
+					$XSGN{'NULL'}=~s|<%dirpath%>|$dirPath|g;
+					
+					$XSGN{'TMP'}=~s|<#LINE#>|$XSGN{'NULL'}|g;
+				}
+				else
+				{
+					main::_log('writing failed!!!');
+				}
+			}
+			else
+			{
+				main::_log("failed to open: $fileName");
+			}
+
+			#write the file to disk and append to database
+=head1
+				#main::_log("file_data exists");
+				my $path_a500="../!media/500";
+				system ("mkdir $path_a500/uptest");
+				my $filename = $path_a500."/uptest/" . $main::FORM{file_name};
+				#main::_log("filename: " . $filename);
+				if(open (HND,">$filename"))
+				{
+					#main::_log("opened handle");
+					binmode HND;
+					#main::_log("set handle to binary mode");
+					if(print HND $main::FORM{file_data})
+					{
+						#main::_log("written data to handle");
+						close (HND);
+						#main::_log("closed handle");
+						chmod(0770, "$filename");
+						#main::_log("chmodded filename");
+					}
+					else
+					{
+						main::_log('writing failed!!!');
+					}
+				}
+				else
+				{
+					main::_log("failed to open: $filename");
+				}
+			}
+=cut
+		}else{
+			next;
+		}
+	}
+
+	foreach(keys %imageHashes)
+	{
+		if(my $db1=$main::DB{main}->Query("
+			UPDATE
+				$env{db_500}.a500
+			SET
+				IDcategory='$env{db_IDcategory}',
+				size='".$imageSizes{$_}."',
+				lng='',
+				active='Y',
+				IDeditor='$env{db_IDeditor}'
+			WHERE
+				ID='$env{db_ID}'
+				AND hash='$imageHashes{$_}'
+				AND format='$_'
+		"))
+		{
+			main::_log("format '".$_."' (hash '".$imageHashes{$_}."') successfully updated");
+		}else{
+			main::_log("format '".$_."' (hash '".$imageHashes{$_}."') update failed!!!");
+		}
+	}
+
+	return 1;
+}
+1;

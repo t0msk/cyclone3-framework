@@ -1,0 +1,149 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+$authors="nemsak\@webcom.sk";
+use strict;
+
+use TOM::Utils::charindex;
+use CVML;
+
+=head1 NAME
+login_info
+
+=head1 HEAD_VERSION_BUILD
+1.060104
+
+=head1 DESCRIPTION
+zobrazenie informacie o statuse usera
+
+=head1 CHANGES
+2006-01-04 - deb00t
+	- first make
+=cut
+
+sub execute
+{
+	my %env=@_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	my %out;
+
+	use Utils::vars;
+
+	$env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+	$env{db_500}=$TOM::DB{main}{name} unless $env{db_500};
+
+	my $uroven=my @from=split('',$env{db_IDparent});
+	my @chars;
+	my $fullname_new;
+
+	my $newcategoryid;
+
+	my $tmplng;
+	$tmplng="AND lng='$env{db_lng}'" if(defined($env{db_lng}));
+
+	$env{char}=2 unless $env{char};
+	my @idx;
+	my $depth=$env{char};$idx[$depth]=-1;
+	my $to=@Utils::vars::WCHAR;
+	my $max=$to**$env{char};
+
+	for (1..$max)
+	{
+		$idx[$depth]++;
+		while ($idx[$depth]>@Utils::vars::WCHAR-1){$idx[$depth]=0;$depth--;$idx[$depth]++;}$depth=$env{char};
+		my $cat;for (1..$env{char}){$cat.=$Utils::vars::WCHAR[$idx[$_]];}
+		#tuto budem hladat ci uz v databaze existuje zaznam $nieco=$env{cat}.$cat :))
+
+		my $db1=$main::DB{main}->Query("
+			SELECT
+				ID
+			FROM
+				$env{db_500}.a500_category
+			WHERE
+				ID='$env{db_IDparent}$cat'
+				$tmplng
+			LIMIT 1
+		");
+		if (my @db1_line=$db1->FetchRow())
+		{next;}
+		else
+		{ $newcategoryid=$env{db_IDparent}.$cat; last;}
+	}
+	$out{next_free_child}=$newcategoryid;
+
+	if (length ($env{db_IDname})==0)
+	{
+		$env{db_IDname}=$env{db_title};
+	}
+
+	$env{db_IDname}=Int::charsets::encode::UTF8_ASCII($env{db_IDname});
+	$env{db_IDname}="\L$env{db_IDname}";
+	$env{db_IDname}=~s|\s|-|g;
+
+	my $sqlAddon = "";
+
+	if(exists $env{db_description})
+	{
+		my %cvml_hash;
+		$cvml_hash{description}=$env{db_description};
+
+		my $cvml_data=CVML::structure::serialize(%cvml_hash);
+
+		$sqlAddon.=",xdata='".$cvml_data."'";
+	}
+
+	$sqlAddon.=",lng='$env{db_lng}'" if(defined($env{db_lng}));
+
+	main::_log("
+		INSERT INTO
+			$env{db_500}.a500_category
+		SET
+			ID='$newcategoryid',
+			IDname='$env{db_IDname}',
+			name='$env{db_title}',
+			active='N'
+			$sqlAddon
+	");
+
+	my $db1=$main::DB{main}->Query("
+		INSERT INTO
+			$env{db_500}.a500_category
+		SET
+			ID='$newcategoryid',
+			IDname='$env{db_IDname}',
+			name='$env{db_title}',
+			active='N'
+			$sqlAddon
+	");
+	if($db1)
+	{
+		main::_log('charindexget returned next_free_child: '.$newcategoryid.' for IDparent: '.$env{db_IDparent});
+		$XSGN{TMP}=$XSGN{RESULT_success};
+	}
+	else
+	{
+		main::_log('could not insert new category:'.$db1->errstr());
+		$XSGN{TMP}=$XSGN{RESULT_failure_insert};
+	}
+
+	$XSGN{TMP}=~s|<%IDparent%>|$env{db_IDparent}|g;
+	$XSGN{TMP}=~s|<%ID%>|$out{next_free_child}|g;
+	$XSGN{TMP}=~s|<%IDname%>|$env{db_IDname}|g;
+	$XSGN{TMP}=~s|<%description%>|$env{db_description}|g;
+
+	return 1;
+}
+
+1;
