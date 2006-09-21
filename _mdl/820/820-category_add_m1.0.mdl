@@ -1,0 +1,147 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+$authors="nemsak\@webcom.sk";
+use strict;
+
+use TOM::Utils::charindex;
+use CVML;
+
+=head1 NAME
+login_info
+
+=head1 HEAD_VERSION_BUILD
+1.060104
+
+=head1 DESCRIPTION
+zobrazenie informacie o statuse usera
+
+=head1 CHANGES
+2006-01-04 - deb00t
+	- first make
+=cut
+
+sub execute
+{
+	my %env=@_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	my %out;
+
+
+	use TOM::Utils::charindex;
+
+	my $tmplng;
+	$tmplng="AND lng='$env{db_lng}'" if(defined($env{db_lng}));
+
+	my $tmpCharIndex='';
+
+	if($env{db_IDparent}){
+		my $db=$main::DB{main}->Query("
+			SELECT
+				IDcharindex
+			FROM
+				$env{db_820}.a820_category
+			WHERE
+				IDentity='$env{db_IDparent}'
+				$tmplng
+			ORDER BY
+				IDentity DESC
+		");
+		if($db)
+		{
+			if(my %db_line=$db->FetchHash()){
+				$tmpCharIndex=$db_line{IDcharindex};
+			}
+		}
+	}
+
+	my %out=TOM::Utils::charindex::get
+	(
+		table=>"a820_category",
+		IDcharindex=>$tmpCharIndex,
+		lng=>$env{db_lng},
+		'-first_free_child'=>1,
+		'-first_child'=>1,
+		'-next_free_child'=>1,
+		'-last_child'=>1,
+	);
+
+	use CVML;
+
+	my %tmpCVMLHash;
+	$tmpCVMLHash{description}=$env{db_description};
+
+	my $tmpCVMLData=CVML::structure::serialize(%tmpCVMLHash);
+
+	my $db=$main::DB{main}->Query("
+		SELECT
+			IDentity
+		FROM
+			$env{db_820}.a820_category
+		ORDER BY
+			IDentity DESC
+	");
+
+	if($db)
+	{
+		my $tmpIDEntity;
+		if (my %db_line=$db->FetchHash())
+		{
+			$tmpIDEntity=$db_line{IDentity};
+			#toto nie je ok, ale je to momentalne najrychlejsie, len pridam jednotku, normalne by som si kontroloval ci vytvaram novu kategoriu alebo len lng verziu
+			$tmpIDEntity++;
+		}
+		else
+		{
+			$tmpIDEntity=1;
+		}
+
+		my $sqlAddon="";
+		$sqlAddon.=",lng='$env{db_lng}'" if(defined($env{db_lng}));
+
+		my $db1=$main::DB{main}->Query("
+			INSERT INTO
+				$env{db_820}.a820_category
+			SET
+				ID='',
+				IDentity='$tmpIDEntity',
+				IDcharindex='$out{next_free_child}',
+				name='$env{db_title}',
+				cvml='$tmpCVMLData',
+				active='N',
+				time_create='".time()."'
+				$sqlAddon
+		");
+		if($db1)
+		{
+			main::_log('charindexget returned next_free_child '.$out{next_free_child}.' for entity '.$tmpIDEntity.' for IDparent: '.$env{db_IDparent});
+			$XSGN{TMP}=$XSGN{RESULT_success};
+		}
+		else
+		{
+			main::_log('could not insert new category:'.$db1->errstr());
+			$XSGN{TMP}=$XSGN{RESULT_failure_insert};
+		}
+	}
+
+	$XSGN{TMP}=~s|<%IDparent%>|$env{db_IDparent}|g;
+	$XSGN{TMP}=~s|<%ID%>|$out{next_free_child}|g;
+	$XSGN{TMP}=~s|<%IDname%>|$env{db_IDname}|g;
+	$XSGN{TMP}=~s|<%description%>|$env{db_description}|g;
+
+	return 1;
+}
+
+1;

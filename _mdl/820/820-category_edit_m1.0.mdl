@@ -1,0 +1,123 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+our $authors = 'nemsak@webcom.sk';
+use strict;
+
+sub execute
+{
+	my %env=@_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	use Utils::vars;
+
+	$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+	$env{db_820}=$TOM::DB{main}{name} unless $env{db_820};
+
+	my $tmplng;
+	$tmplng="AND lng='$env{db_lng}'" if(defined($env{db_lng}));
+
+	main::_log("
+		SELECT
+			ID
+		FROM
+			$env{db_820}.a820_category
+		WHERE
+			IDentity='$env{db_ID}'
+			$tmplng
+		LIMIT 1
+	");
+
+	my $db=$main::DB{main}->Query("
+		SELECT
+			IDentity
+		FROM
+			$env{db_820}.a820_category
+		WHERE
+			IDentity='$env{db_ID}'
+			$tmplng
+		LIMIT 1
+	");
+	if($db){
+		if($db->NumRows){
+			main::_log('success!');
+			my %db_line=$db->FetchHash();
+
+			if (length ($env{db_IDname})==0)
+			{
+				$env{db_IDname}=$env{db_title};
+			}
+
+			$env{db_IDname}=Int::charsets::encode::UTF8_ASCII($env{db_IDname});
+			$env{db_IDname}="\L$env{db_IDname}";
+			$env{db_IDname}=~s|\s|-|g;
+
+			my $sqlAddon = "";
+
+			if(exists $env{db_description})
+			{
+				my %cvml_hash;
+				$cvml_hash{description}=$env{db_description};
+
+				my $cvml_data=CVML::structure::serialize(%cvml_hash);
+
+				$sqlAddon.=",cvml='".$cvml_data."'";
+			}
+
+			#IDname='$env{db_IDname}'
+			main::_log("
+				UPDATE
+					$env{db_820}.a820_category
+				SET
+					name='$env{db_title}'
+					$sqlAddon
+				WHERE
+					IDentity='$env{db_ID}'
+					$tmplng
+				LIMIT 1
+			");
+
+			#IDname='$env{db_IDname}'
+			my $db1=$main::DB{main}->Query("
+				UPDATE
+					$env{db_820}.a820_category
+				SET
+					name='$env{db_title}'
+					$sqlAddon
+				WHERE
+					IDentity='$env{db_ID}'
+					$tmplng
+				LIMIT 1
+			");
+			if($db1){
+				main::_log('success!');
+				$XSGN{TMP}=$XSGN{RESULT_success};
+			}else{
+				main::_log('could not insert new category:'.$db1->errstr());
+				$XSGN{TMP}=$XSGN{RESULT_failure_update};
+			}
+		}
+	}else{
+		main::_log('db error!');
+	}
+
+	$XSGN{TMP}=~s|<%ID%>|$env{db_ID}|g;
+	$XSGN{TMP}=~s|<%IDname%>|$env{db_IDname}|g;
+	$XSGN{TMP}=~s|<%title%>|$env{db_title}|g;
+	$XSGN{TMP}=~s|<%description%>|$env{db_description}|g;
+	
+	return 1;
+}
+
+1;
