@@ -30,6 +30,7 @@ require $TOM::P."/.core/_config/TOM.conf";
  # SYSTEM MODULES
  use Mysql;
  use TOM;
+ use TOM::Engine::pub;
  use TOM::Database::connect;
  use Time::Local; # pre opacnu konverziu casu
  use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
