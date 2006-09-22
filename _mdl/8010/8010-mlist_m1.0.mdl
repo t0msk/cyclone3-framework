@@ -1,0 +1,182 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+$authors="nemsak\@webcom.sk";
+use strict;
+use App::400;
+use ISO::3611;
+
+=head1 NAME
+mlist_m1
+
+=head1 HEAD_VERSION_BUILD
+1.051122
+
+=head1 DESCRIPTION
+listing clankov s xrelated
+
+=head1 CHANGES
+2005-08-10 - deb00t
+	- sync modulov podla globalnej predlohy
+2005-08-05 - deb00t
+	- uprava implementacie specialnych xsgn templates pre LINE (LINE_linecounter, LINE_odd, ...)
+	- uprava implementacie specialnych xsgn templates pre LINE_a500 (LINE_a500_linecounter, LINE_a500_odd, ...)
+	- uprava implementacie specialnych formatov obrazkov pre a500_format (a500_format_linecounter, a500_format_odd, ...)
+2005-08-22 - deb00t
+	- pridanie podpory IDname, a IDname_category
+2005-08-29 - deb00t
+	- defaultne nastavenie db_select_arch_allow na true
+2005-09-16 - deb00t
+	- v zavere, pri zamene <%page%> (riadok cca 717) pridany na koniec regexp zameny parameter "g"
+	- opraveny regexp pri vyhladavani main category name (cca 222) - /^([a-zA-Z0-9]*?)%/ na /^([a-zA-Z0-9]*).*/ (ten prvy nezral, ak v idcku kategorie nebolo percento :) )
+2005-11-22 - deb00t
+	- pridana podpora 540 v bloku spracovania xrelated
+2005-12-15 - deb00t
+	- opakovanie zameny MAIN_IDcategory_name
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	$env{domain} = $tom::Hm unless $env{domain};
+
+	my $where;
+=head1
+		<active />
+		<email />
+		<name />
+		<surname />
+		<fax />
+		<country_code />
+		<country_name />
+		<county />
+		<road_housenumber />
+		<town_postalcode />
+		<lang />
+		<area />
+		<use />
+=cut
+
+	if ( $main::FORM{country} )
+	{ $where .= ' AND ' if $where;
+		$where .= "personalize like '%<country[".$main::FORM{country}."]>%'" }
+
+	if ( $main::FORM{lang} )
+	{ $where .= ' AND ' if $where;
+		$where .= "personalize like '%<lang[".$main::FORM{lang}."]>%'" }
+
+	if ( $main::FORM{area} )
+	{ $where .= ' AND ' if $where;
+
+		my $w_area;
+		foreach my $area ( split ';', $main::FORM{area} )
+		{
+			$w_area .= ' AND ' if $w_area;
+			$w_area .= "personalize like '%<area[%".$area."%]>%'";
+		}
+
+		$where .= $w_area;
+	}
+
+	if ( $main::FORM{use} )
+	{ $where .= ' AND ' if $where;
+		$where .= "personalize like '%<use[".$main::FORM{use}."]>%'" }
+
+		
+
+	$where = " AND $where" if $where;
+
+	my $limit;
+	if ( $main::FORM{limit} )
+	{
+		$XSGN{TMP} =~ s|<#PAGING#>|$XSGN{PAGING}|;
+		my $page = (($main::FORM{page}>0)?($main::FORM{page}):(1));
+
+		my $sql = "
+			SELECT
+				*
+			FROM
+				TOM.a8010_users
+			WHERE
+				domain='$env{domain}'
+				$where
+		";
+	
+		my $dbx = $main::DB{main}->Query( $sql );
+		my $records = $dbx->numrows;
+		my $pages = int( $records / $main::FORM{limit} ); $pages++ if $records % $main::FORM{limit};
+
+		$page = $pages if $page > $pages;
+		$limit = "LIMIT ".(($page-1)*$main::FORM{limit}).", ".$main::FORM{limit}."\n";
+
+		$XSGN{TMP} =~ s|<%records%>|$records|;
+		$XSGN{TMP} =~ s|<%pages%>|$pages|;
+		$XSGN{TMP} =~ s|<%page%>|$page|;
+	}
+
+	my $sql = "
+		SELECT
+			*
+		FROM
+			TOM.a8010_users
+		WHERE
+			domain='$env{domain}'
+			$where
+			$limit
+	";
+
+	main::_log( $sql );
+	my $db0 = $main::DB{main}->Query( $sql );
+
+	if (!$main::FORM{limit})
+	{
+		my $records = $db0->numrows;
+		$XSGN{TMP} =~ s|<%records%>|$records|;
+		$XSGN{TMP} =~ s|<%pages%>|1|;
+		$XSGN{TMP} =~ s|<%page%>|1|;
+	}
+
+	while ( my %db0_line = $db0->fetchhash )
+	{
+		my $null = $XSGN{LINE};
+
+		$db0_line{active} = 'Y'; $db0_line{active} = 'N' if $db0_line{time_use} eq '0';
+
+		while ( my ($k,$v) = each %db0_line )
+		{
+			$null =~ s|<%$k%>|$v|g;
+		}
+
+		# nacitaj personalize
+		my $news_cvml = new CVML(data=>$db0_line{'personalize'});
+		# a vytvor z neho hash
+		my %news_hash = %{$news_cvml->{'hash'}};
+		$news_hash{country_text} = $ISO::3611::code_a2{$news_hash{country}};
+		$news_hash{country_text} =~ s|^(.)(.*)|$1\L$2|;
+		$news_hash{country_text} =~ s| (.)| \U$1|g;
+		
+		while ( my ($k,$v) = each %news_hash )
+		{
+			$null =~ s|<%$k%>|$v|g;
+		}
+
+		$XSGN{TMP} =~ s|<#LINE#>|$null|;
+	}
+
+	return 1;
+}
+
+1;

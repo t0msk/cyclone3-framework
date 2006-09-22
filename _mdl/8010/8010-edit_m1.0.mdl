@@ -1,0 +1,106 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+our $authors = 'gregor@webcom.sk';
+use strict;
+use ISO::3611;
+use Utils::vars;
+use CVML::structure;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+
+	if ( $env{cmd_delete} )
+	{
+		$XSGN{TMP} = $XSGN{ERR_NOT_ID};
+		return 1 unless $env{ID};
+	
+		my $del = "UPDATE TOM.a8010_users SET active='D' WHERE ID=$env{ID}";
+		$XSGN{TMP} = $XSGN{DELETED};
+		$XSGN{TMP} =~ s|<%ID%>|$env{ID}|g;
+
+		return 1;
+	}
+
+	my %out = (
+		type => 1, # Toto sa nachadza v kazdom main::FORM
+		
+		ID => 1,
+		IDuser => 1,
+		IDuser_email => 1,
+		domain => 1,
+		domain_sub => 1,
+		time_insert => 1,
+		time_change => 1,
+		time_use => 1,
+		personalize => 1,
+		active => 1,
+	);
+
+	# Tu je jasne definovane, co sa vlozi do db. Nic ine, okrem casov sa nevklada
+	my %params = (
+		'IDuser_email' => $main::FORM{'IDuser_email'},
+		'domain' => $main::FORM{'domain'},
+		'domain_sub' => $main::FORM{'domain_sub'},
+		'active' => $main::FORM{'active'},
+	);
+	while ( my ($k,$v) = each %params ) { $v =~ s|'|\'|g; $params{$k} = "'".$v."'"; }
+
+	my %cvml;
+	while ( my ($k,$v) = each %main::FORM )
+	{
+		next if exists($def{$k}) || $k =~ /^[_-]/;
+		$v =~ s|'|\'|g;
+		$cvml{$k} = $v;
+	}
+	$params{'personalize'} = CVML::structure::serialize( %cvml );
+	
+	$XSGN{TMP} = $XSGN{UPDATED};
+	
+	if ( !$env{ID} )
+	{
+		while ( 1 )
+		{
+			$env{IDuser} = Utils::vars::genhash(8);
+			my $find = "SELECT ID FROM TOM.a8010_users WHERE IDuser='$env{IDuser}'";
+			my $dbfind = $main::DB{main}->Query( $find );
+			last unless $dbfind->numrows;
+		}
+		
+		my $ins = "INSERT INTO TOM.a8010_users (IDuser) VALUES ('$env{IDuser}')";
+		my $dbins = $main::DB{main}->Query( $ins );
+		$env{ID} = $dbins->insert_id;
+
+		$XSGN{TMP} = $XSGN{INSERTED};
+
+		$params{'time_insert'} = $main::time_current;
+	}
+
+	$XSGN{TMP} =~ s|<%ID%>|$env{ID}|g;
+
+	$params{'time_change'} = $main::time_current unless $params{'time_insert'};
+
+	my $set;
+	while ( my ($k,$v) = each %params )
+	{
+		$set .= ', ' if $set;
+		$set .= "$k=$v";
+	}
+
+	my $upd = "
+	UPDATE TOM.a8010_users
+	SET $set
+	WHERE ID=$env{ID}
+	";
+
+	my $dbupd = $main::DB{main}->Query( $upd );
+
+	return 1;
+}
+
+1;

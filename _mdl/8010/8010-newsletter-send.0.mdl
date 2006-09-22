@@ -1,0 +1,398 @@
+#!/bin/perl
+# A!A©A­A3Ao - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use Net::HTTP::LiteAgent;
+use CVML;
+use strict;
+use Mysql;
+use Digest::MD5  qw(md5 md5_hex md5_base64);
+use MIME::Base64;
+use TOM::Net::email;
+
+sub execute
+{
+	my %env=@_;
+
+	# NASTAVENIA
+	$main::FORM{sent} = 1;
+	# jazyk a xsgn
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	my $xlng_file = 1;
+	$xlng_file = 0 unless Tomahawk::GetXLNG(); # NATIAHNEM XML LANGUAGE
+	Tomahawk::XLNGtoXSGN() if $xlng_file; # insert XLNG do XSGN
+
+	# databazy
+	$env{db_130}=Tomahawk::Getmdlvar("130","db") unless $env{db_130};
+
+	# from email
+	$env{db_from_email} = "info\@webcom.sk" unless $env{db_from_email};
+
+	# kodovanie
+	if (!$env{encoding}) { $env{encoding} = "UTF-8"; $env{charset} = "UTF-8" }
+	$env{charset} = $env{encoding} unless $env{charset};
+
+	# boundary - oddelovanie priloh v maili
+	$env{boundary_mixed} = "--==webcom_attachment==--";
+	$env{boundary_alternative} = "--==webcom_alternative==--";
+	$env{boundary_related} = "--==webcom_related==--";
+
+	# domena
+	my @emails;
+	$env{domain} = $main::FORM{fs_domena} if $main::FORM{fs_domena} && !$env{domain};
+	if ($env{email_default})
+	{
+		push @emails, 'gregor@webcom.sk';
+		push @emails, 'nemsak@webcom.sk';
+
+		# Only for testing
+		#push @emails, "gregor\@webcom.sk;gregson\@visitors.sk;xgregor\@fi.muni.cz";
+		#push @emails, "<gregor\@webcom.sk>"; 
+		#push @emails, "gregson\@visitors.sk";
+		#push @emails, "xgregor\@fi.muni.cz";
+
+		$env{domain} = "";
+	}
+
+	# EMAIL
+	$XSGN{EMAIL} = <<"HEADER";
+From: <%from%>
+To: <%to%>
+Subject: <%subject%>
+Content-Type: <%contenttype%>
+X-Cyclone-Emails: <%emails_to%>
+
+<%body%>
+HEADER
+
+	# zamenim premenne v designe
+	foreach (keys %main::FORM)
+	{
+		next unless $_ =~ /^ft_/;
+		my $name = $_; $name =~ s|^ft_||;
+		$main::FORM{$_} =~ s|"|&quot;|g if $_ eq "ft_subject" || $_ eq "ft_from";
+		$XSGN{TMP} =~ s|<%$name%>|$main::FORM{$_}|g;
+		$main::FORM{$_} =~ s|&quot;|"|g;
+		$main::FORM{$_} =~ s|'|\\'|g;
+	}
+
+	# zistim ci, a ake su prilohy
+	my %attch; my %attch_inline;
+	foreach (keys %main::FORM)
+	{
+		next unless $_ =~ /^ff_/ && $main::FORM{$_};
+		
+		#$main::FORM{multipart} =~ /name="$_"; filename="(.*?)".*?Content-Type: ([^\s]+)/s;
+		$main::FORM{multipart} =~ /name="$_"; filename="(.*?)"/s;
+		my $filename = $1;
+
+		#if ($main::FORM{ft_html} =~ /<img.*?src="$filename".*?\/>/)
+		if ($main::FORM{ft_html} =~ /(src|href)="$filename"/)
+		{	main::_log('Pridavam do inline: '.$_.'; file: '.$filename);
+			$attch_inline{$_} = $main::FORM{$_}; }
+		else
+		{	main::_log('Pridavam do attch: '.$_.'; file: '.$filename);
+			$attch{$_} = $main::FORM{$_}; }
+	}
+
+	# idem spracovat mail
+	if
+	(
+		$main::FORM{sent} &&
+		($main::FORM{ft_plain} || $main::FORM{ft_html}) &&
+		$main::FORM{ft_from} &&
+		$main::FORM{ft_subject}
+	)
+	{
+		main::_log("Spracovavam email");
+		
+		# zamenim v emaili co poznam
+		$XSGN{EMAIL} =~ s|<%from%>|$main::FORM{ft_from}|g;
+		$XSGN{EMAIL} =~ s|<%subject%>|$main::FORM{ft_subject}|g;
+
+		my $first = 1;
+		my $first_text = "This is a multi-part message in MIME format.\n";
+
+		# email ma prilohy - multipart/mixed
+		if (keys %attch)
+		{
+			main::_log("Su prilohy");
+			my $contenttype; my $body;
+			$contenttype = "multipart/mixed; boundary=\"$env{boundary_mixed}\"";
+			$body = <<"MESSAGE-BODY";
+--$env{boundary_mixed}
+<%body%>
+<%attachments%>
+--$env{boundary_mixed}--
+MESSAGE-BODY
+			$body = $first_text.$body if $first;
+
+			# prejdem prilohy a doplnim do emailu
+			foreach (keys %attch)
+			{
+				#$main::FORM{multipart} =~ /name="$_"; filename="(.*?)".*?Content-Type: ([^\s]+)/s;
+				$main::FORM{multipart} =~ /name="$_"; filename="(.*?)"/s;
+				my $filename = $1; #my $file_ct = $2;
+
+				$filename =~ /\.(jpg|gif|png)$/; my $file_ct;
+				if ( $1 eq 'jpg') { $file_ct = 'image/jpeg'; }
+				elsif ( $1 eq 'gif') { $file_ct = 'image/gif'; }
+				elsif ( $1 eq 'png') { $file_ct = 'image/png'; }
+
+				main::_log('Multipart: '.$main::FORM{multipart});
+				main::_log('Filevar: '.$_);
+				main::_log('Filename: '.$filename);
+				main::_log('Content-Type: '.$file_ct);
+				my $attach_body = encode_base64($attch{$_});
+				my $attachment = <<"ATTACHMENT";
+--$env{boundary_mixed}
+Content-Type: $file_ct; name="$filename"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="$filename"
+
+$attach_body
+<%attachments%>
+ATTACHMENT
+
+				$body =~ s|<%attachments%>\n|$attachment|;
+			}
+			$body =~ s|<%attachments%>\n||;
+
+			$XSGN{EMAIL} =~ s|<%body%>|$body\n|;
+			$XSGN{EMAIL} =~ s|<%contenttype%>|$contenttype|;
+			$first = 0 if $first;
+		}
+
+		
+
+		# email ma aj plaintext aj html - multipart/alternative
+		if ($main::FORM{ft_plain} && $main::FORM{ft_html})
+		{
+			main::_log("Alternative");
+			my $contenttype; my $body;
+			$contenttype = "multipart/alternative; boundary=\"$env{boundary_alternative}\"";
+			$body = <<"MESSAGE-ALTERNATIVE";
+--$env{boundary_alternative}
+<%plain%>
+--$env{boundary_alternative}
+<%html%>
+--$env{boundary_alternative}--
+MESSAGE-ALTERNATIVE
+			$body = $first_text.$body if $first;
+			$body = "Content-Type: <%contenttype%>\n\n".$body unless $first;
+
+			$XSGN{EMAIL} =~ s|<%body%>|$body\n|;
+			$XSGN{EMAIL} =~ s|<%contenttype%>|$contenttype|;
+
+			$first = 0 if $first;
+		}
+
+		# ak je html + inline obrazky
+		if (keys %attch_inline)
+		{
+			main::_log("Inline");
+			my $contenttype = "multipart/related; boundary=\"$env{boundary_related}\"";
+			my $body = <<"MESSAGE-RELATED";
+--$env{boundary_related}
+<%html%>
+<%attachments_inline%>
+--$env{boundary_related}--
+MESSAGE-RELATED
+
+			$body = $first_text.$body if $first;
+			$body = "Content-Type: <%contenttype%>\n\n".$body unless $first;
+
+			my $from_server = ($main::FORM{ft_from} =~ /\@([\w\._-]+)/); $from_server = $1;
+
+			my $counter = 0;
+			foreach (keys %attch_inline)
+			{
+				$counter++;
+				#$main::FORM{multipart} =~ /name="$_"; filename="(.*?)".*?Content-Type: ([^\s]+)/s;
+				#my $filename = $1; my $file_ct = $2;
+
+				$main::FORM{multipart} =~ /name="$_"; filename="(.*?)"/s;
+				my $filename = $1; $filename =~ /\.(jpg|gif|png)$/; my $file_ct;
+				if ( $1 eq 'jpg') { $file_ct = 'image/jpeg'; }
+				elsif ( $1 eq 'gif') { $file_ct = 'image/gif'; }
+				elsif ( $1 eq 'png') { $file_ct = 'image/png'; }
+
+				main::_log('INLINE Multipart: '.$main::FORM{multipart});
+				main::_log('INLINE Filevar: '.$_);
+				main::_log('INLINE Filename: '.$filename);
+				main::_log('INLINE Content-Type: '.$file_ct);
+
+				
+				my $attach_body = encode_base64($attch_inline{$_});
+				my $ID = "part$counter.attch$counter\@$from_server";
+
+				my $attachment = <<"ATTACHMENT";
+--$env{boundary_related}
+Content-Type: $file_ct; name="$filename"
+Content-Transfer-Encoding: base64
+Content-ID: <$ID>
+Content-Disposition: inline; filename="$filename"
+
+$attach_body
+<%attachments_inline%>
+ATTACHMENT
+				$body =~ s|<%attachments_inline%>\n|$attachment|;
+				$main::FORM{ft_html} =~ s/(src|href)="$filename"/$1="cid:$ID"/g;
+			}
+
+			$body =~ s|<%attachments_inline%>\n||;
+			#$XSGN{EMAIL} =~ s|<%body%>|$body\n| if $first;
+			#$XSGN{EMAIL} =~ s|<%html%>|$body\n| unless $first;
+			if ( $XSGN{EMAIL} =~ /<%body%>/ ) { $XSGN{EMAIL} =~ s|<%body%>|$body\n|; }
+			else { $XSGN{EMAIL} =~ s|<%html%>|$body\n| unless $first; }
+			
+			$XSGN{EMAIL} =~ s|<%contenttype%>|$contenttype|;
+		}
+
+		# ak je k dispozicii plaintext
+		if ($main::FORM{ft_plain})
+		{
+			main::_log("Plain");
+			my $contenttype = "text/plain; charset=<%charset%>; format=flowed"; my $body;
+			$body = $main::FORM{ft_plain};
+			my $headers = <<"HEADERS";
+Content-Type: <%contenttype%>
+Content-Transfer-Encoding: 8bit
+
+HEADERS
+			$body = $headers.$body if $XSGN{EMAIL} =~ s|<%plain%>|<%body%>| || !$first;
+
+			$XSGN{EMAIL} =~ s|<%body%>|$body\n|;
+			$XSGN{EMAIL} =~ s|<%contenttype%>|$contenttype|;
+
+			my $tmp_email = $XSGN{EMAIL}; $tmp_email =~ s|<|&lt;|g; $tmp_email =~ s|>|&gt;|g;
+			$XSGN{TMP} .= "<h2>Plain</h2><pre>$tmp_email</pre>" if $main::IAdm;
+		}
+
+		# ak je k dispozicii html
+		if ($main::FORM{ft_html})
+		{
+			main::_log("Html");
+			my $contenttype = "text/html; charset=<%charset%>;"; my $body;
+			$body = $main::FORM{ft_html};
+			my $headers = <<"HEADERS";
+Content-Type: <%contenttype%>
+Content-Transfer-Encoding: 8bit
+
+HEADERS
+			$body = $headers.$body if $XSGN{EMAIL} =~ s|<%html%>|<%body%>| || !$first;
+
+			$XSGN{EMAIL} =~ s|<%body%>|$body\n|;
+			$XSGN{EMAIL} =~ s|<%contenttype%>|$contenttype|;
+		}
+
+		# vlozim kodovanie
+		$XSGN{EMAIL} =~ s|<%charset%>|$env{charset}|g;
+
+		# zistim, komu to poslat
+=head1
+		if ($env{domain})
+		{
+			my $db0 = $main::DB{main}->Query("
+			SELECT IDuser_email
+			FROM TOM.a8010_users
+			WHERE domain='$env{domain}'
+			");
+			while (my %user = $db0->fetchhash)
+			{
+				push @emails, $user{IDuser_email};
+			}
+		}
+=cut
+
+		# zapisem do 130 send tabulky
+#=head1
+		my $errs = 0;
+		foreach (@emails)
+		{
+			if ( $_ =~ /[<>]/ )
+			{
+				main::_log("Chyba - niektore emaily nie su v predpisanom tvare (bez <>, oddelene ;)") unless $errs;
+				$errs = 1;
+				next;
+			}
+
+			main::_log("Posielam na $_");
+			my %tmpemail; # rozne tvary emailovych adries
+			$tmpemail{db} = $_;
+			$tmpemail{body} = $_;
+
+			# uprava tvaru emailovych adries pre telo emailu
+			$tmpemail{body} =~ s|;|>,<|g; $tmpemail{body} = "<$tmpemail{body}>";
+
+			$XSGN{NULL} = $XSGN{EMAIL};
+			$XSGN{NULL} =~ s|<%to%>|$tmpemail{body}|g;
+
+			$XSGN{NULL} =~ s|<%emails_to%>|$main::FORM{emails_to}|g;
+
+			if (not $env{encoding} =~ /^UTF-8$/i)
+			{
+				my $converter = Text::Iconv->new('utf-8', $env{encoding});
+				$XSGN{NULL} = $converter->convert($XSGN{NULL});
+			}
+
+			#TOM::Net::email::send
+			#(
+			#	from => $env{db_from_email},
+			#	to => $tmpemail{db},
+			#	to_name => '',
+			#	body => $XSGN{NULL}
+			#)
+
+			$XSGN{NULL}=~s|'|\'|g;
+
+			main::_log('Pokus o zapis do db');
+
+			my $a130_send = "
+			INSERT INTO TOM.a130_send
+			(
+				sendtime,
+				from_name,
+				from_email,
+				from_host,
+				from_service,
+				to_name,
+				to_email,
+				body
+			)
+			VALUES
+			(
+				'$main::time_current',
+				'TOM3',
+				'$env{db_from_email}',
+				'$tom::H',
+				'TOM3',
+				'',
+				'$tmpemail{db}',
+				'$XSGN{NULL}'
+			)
+		";
+
+		main::_log( $a130_send );
+			my $a130_send_conn = $main::DB{main}->Query( $a130_send );
+
+			main::_log( 'Pocet afectovanych riadkov: '.$a130_send_conn->affectedrows );
+
+		}
+#=cut
+		$XSGN{TMP} = $XSGN{SENT};
+	}
+	else
+	{
+		if ($main::FORM{sent})
+		{
+			$XSGN{TMP} = $XSGN{INCORRECT_DATA};
+		}
+	}
+
+	return 1}
+
+1;
+
