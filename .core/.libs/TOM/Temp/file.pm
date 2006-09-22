@@ -1,5 +1,4 @@
 package TOM::Temp::file;
-use TOM::Utils::vars;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
