@@ -40,7 +40,7 @@ sub _log
 	return undef unless $get[1];
 	$get[0]=0 if $get[2]==3;
 	$get[0]=0 if $get[2]==4;
-	return undef if 
+	return undef if
 	(
 		($TOM::DEBUG_log_file<$get[0]) &&
 		(!$get[2]) &&
@@ -139,19 +139,10 @@ sub _log
 			$i++;
 		}
 		
-		
-		
-		#$main::IAdm_log.="</div>\n";
 	}
 	
 	return 1;
 };
-
-
-
-
-
-
 
 
 # main::_applog($urovne,"$text",$critique,$global);
@@ -167,6 +158,7 @@ sub _applog
 	return _log(@_);
 }
 
+
 # tu pridam uz rozoznavanie domen
 sub _deprecated
 {
@@ -174,18 +166,6 @@ sub _deprecated
 	my ($package, $filename, $line) = caller;
 	_log("[".($tom::H || "?domain?")."] ".$_[0]." from $filename:$line",0,"deprecated",1);
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 package TOM::Debug::logs;
