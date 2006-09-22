@@ -8,7 +8,8 @@ our $authors = 'gregor@webcom.sk';
 use strict;
 use ISO::3611;
 use Utils::vars;
-use CVML::structure;
+
+use CVML;
 
 sub execute
 {
@@ -18,16 +19,30 @@ sub execute
 	if ( $env{cmd_delete} )
 	{
 		$XSGN{TMP} = $XSGN{ERR_NOT_ID};
-		return 1 unless $env{ID};
+		
+		if(!$env{ID}){
+			main::_log('missing required parameter: ID');
+			return 1;
+		}
 	
-		my $del = "UPDATE TOM.a8010_users SET active='D' WHERE ID=$env{ID}";
+		my $del = "
+			UPDATE
+				TOM.a8010_users
+			SET
+				active='D'
+			WHERE
+				ID=$env{ID}
+		";
+		
+		main::_log($del);
+		
 		$XSGN{TMP} = $XSGN{DELETED};
 		$XSGN{TMP} =~ s|<%ID%>|$env{ID}|g;
 
 		return 1;
 	}
 
-	my %out = (
+	my %def = (
 		type => 1, # Toto sa nachadza v kazdom main::FORM
 		
 		ID => 1,
@@ -58,7 +73,7 @@ sub execute
 		$v =~ s|'|\'|g;
 		$cvml{$k} = $v;
 	}
-	$params{'personalize'} = CVML::structure::serialize( %cvml );
+	$params{'personalize'} = "'".CVML::structure::serialize( %cvml )."'";
 	
 	$XSGN{TMP} = $XSGN{UPDATED};
 	
@@ -67,15 +82,33 @@ sub execute
 		while ( 1 )
 		{
 			$env{IDuser} = Utils::vars::genhash(8);
-			my $find = "SELECT ID FROM TOM.a8010_users WHERE IDuser='$env{IDuser}'";
+			my $find = "
+				SELECT
+					ID
+				FROM
+					TOM.a8010_users
+				WHERE
+					IDuser='$env{IDuser}'
+			";
 			my $dbfind = $main::DB{main}->Query( $find );
 			last unless $dbfind->numrows;
 		}
 		
-		my $ins = "INSERT INTO TOM.a8010_users (IDuser) VALUES ('$env{IDuser}')";
+		my $ins = "
+			INSERT INTO
+				TOM.a8010_users
+			SET
+				IDuser='$env{IDuser}'
+		";
+		main::_log($ins);
 		my $dbins = $main::DB{main}->Query( $ins );
-		$env{ID} = $dbins->insert_id;
-
+		if($dbins){
+			main::_log('success!');
+			$env{ID} = $dbins->insert_id;
+		}else{
+			main::_log('failure: '.$dbins->errstr());
+		}
+		
 		$XSGN{TMP} = $XSGN{INSERTED};
 
 		$params{'time_insert'} = $main::time_current;
@@ -93,12 +126,22 @@ sub execute
 	}
 
 	my $upd = "
-	UPDATE TOM.a8010_users
-	SET $set
-	WHERE ID=$env{ID}
+		UPDATE
+			TOM.a8010_users
+		SET
+			$set
+		WHERE
+			ID=$env{ID}
 	";
 
-	my $dbupd = $main::DB{main}->Query( $upd );
+	main::_log($upd);
+
+	if(my $dbupd = $main::DB{main}->Query( $upd ))
+	{
+		main::_log('success!');
+	}else{
+		main::_log('failure: '.$dbupd->errstr());
+	}
 
 	return 1;
 }
