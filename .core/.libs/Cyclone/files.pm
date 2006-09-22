@@ -101,7 +101,7 @@ Zoznam regulárnych výrazov pre detekciu typu suboru + nastavenie práv
 
 our @setit_F=
 (
-	['\.svn'                            ,".svn files"                 ,"444",""],
+	['\.svn'                           ,".svn files"                  ,"444",""],
 	
 	['^\.admin'                        ,"global admin"                ,"",""],
 	['phprojekt'                       ,"phprojekt"                   ,"",""],
