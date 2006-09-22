@@ -266,7 +266,7 @@ sub UserGenerate
 	$env{'logtime'}=$main::time_current;
 	$env{'reqtime'}=$main::time_current;
 	
-	$env{'pass_md5'}=Digest::MD5::md5_hex(Encode::encode_utf8($env{'pass'}));
+	$env{'pass_md5'}=Digest::MD5::md5_hex(Encode::encode_utf8($env{'pass'})) unless $env{'pass_md5'};
 	
 	$env{'autolog'}="N" unless $env{'autolog'};
 	$env{'active'}="N" unless $env{'active'};
