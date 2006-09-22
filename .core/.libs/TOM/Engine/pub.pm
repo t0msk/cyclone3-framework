@@ -47,7 +47,8 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	use TOM::Math;
 	use TOM::Int::lng;
 	
-	
+	# nove Cyclone kniznice
+	use Cyclone;
 	
 package main;
 use open ':utf8', ':std';

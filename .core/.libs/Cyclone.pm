@@ -21,11 +21,12 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 knižnice:
 
  Cyclone::files - správa súborov a adresárovej štruktúry Cyclone
+ Cyclone::l10n - localization
 
 =cut
 
 use Cyclone::files;
-
+use Cyclone::l10n;
 
 # spetna kompatibilita
 our $PATH=$TOM::P;
