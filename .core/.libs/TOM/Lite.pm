@@ -96,7 +96,7 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__." (null) + _log + conf");};}
+BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__."::Lite (_log + conf)");};}
 
 
 
