@@ -361,6 +361,7 @@ sub prepare_last
 	{
 		$self->{env}{DOC_description}{$key}=~s|^\. ||g;
 		$self->{env}{DOC_description}{$key}=~s|[\n\r]| |g;
+		$self->{env}{DOC_description}{$key}=~s|"|'|g;
 		if (length ($self->{env}{DOC_description}{$key})>250)
 		{
 			$self->{env}{DOC_description}{$key}=~/^(.{250})/;
