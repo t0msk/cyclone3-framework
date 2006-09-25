@@ -33,7 +33,7 @@ sub execute
 		FROM TOM.a110_weblog_rqs
 		WHERE active='N'
 		ORDER BY reqdatetime ASC
-		LIMIT 10000
+		LIMIT 50000
 	");
 	while (my %db0_line=$db0->fetchhash())
 	{
