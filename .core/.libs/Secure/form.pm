@@ -42,7 +42,7 @@ sub check_email
 {
 	my $email=shift;
 	return undef if $email=~/\.\./;
-	return 1 if $email=~/^[a-zA-Z0-9_\.]{2,50}\@[a-zA-Z0-9_\.\-]{2,100}\.[a-zA-Z0-9]{2,10}$/;
+	return 1 if $email=~/^[a-zA-Z0-9_\.\-]{2,50}\@[a-zA-Z0-9_\.\-]{2,100}\.[a-zA-Z0-9]{2,10}$/;
 	return undef;
 }
 
