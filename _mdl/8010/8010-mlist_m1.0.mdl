@@ -113,7 +113,7 @@ sub execute
 			FROM
 				TOM.a8010_users
 			WHERE
-				domain='$env{domain}' AND active='Y'
+				domain='$env{domain}' AND active in ('Y','N')
 				$where
 		";
 	
@@ -135,7 +135,7 @@ sub execute
 		FROM
 			TOM.a8010_users
 		WHERE
-			domain='$env{domain}' AND active='Y'
+			domain='$env{domain}' AND active in ('Y','N')
 			$where
 			$limit
 	";
