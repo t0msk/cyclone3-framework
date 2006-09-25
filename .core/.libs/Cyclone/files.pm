@@ -113,6 +113,7 @@ our @setit_F=
 	['^_temp'                          ,"global _temp"                ,"",""],
  
 	['\.(pwd)$'                        ,".pwd (password file)"        ,"660","apache:cyclone3"],
+	['\.tmpl$'                         ,".tmpl (template)"            ,"660","cyclone3:cyclone3"],
 	
 	['^!media\/'                       ,"!media"                      ,"664","www:www"],
 	['!media\/'                        ,"!media symlink"              ,"",""],
