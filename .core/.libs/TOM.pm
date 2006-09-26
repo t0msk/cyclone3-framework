@@ -47,18 +47,6 @@ BEGIN
 	$TOM::InlineDIR="$TOM::P/_temp/_Inline.[".$TOM::hostname."]";
 	mkdir $TOM::InlineDIR if (! -e $TOM::InlineDIR);
 	
-	# data adresar
-	mkdir $tom::P."/_data" if (! -e $tom::P."/_data");
-	
-	# udrziavaci USRM adresar
-	mkdir $tom::P."/_data/USRM" if (! -e $tom::P."/_data/USRM");
-	
-	# debug adresare
-	mkdir $tom::P."/_logs/_debug" if (! -e $tom::P."/_logs/_debug");
-	
-	# odosielanie emailov "natvrdo"
-	#mkdir $TOM::P."/_temp/_email" if (! -e $TOM::P."/_temp/_email");
-	
 }
 
 

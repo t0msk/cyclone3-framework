@@ -3,9 +3,25 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
-	
+
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
+
+
+	use TOM;
 	
+	BEGIN
+	{
+		$TOM::Engine='pub';
+		
+		# data adresar
+		mkdir $tom::P."/_data" if (! -e $tom::P."/_data");
+		
+		# udrziavaci USRM adresar
+		mkdir $tom::P."/_data/USRM" if (! -e $tom::P."/_data/USRM");
+		
+		# debug adresare
+		mkdir $tom::P."/_logs/_debug" if (! -e $tom::P."/_logs/_debug");
+	}
 	
 	use Mysql;
 	use Digest::MD5  qw(md5 md5_hex md5_base64);
