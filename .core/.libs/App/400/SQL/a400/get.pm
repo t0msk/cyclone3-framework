@@ -118,7 +118,7 @@ sub prepare
  ($self->{ENV}{a400}{starttime}) ? "\tAND a400.starttime<=$self->{ENV}{a400}{starttime}\n":
  (exists $self->{ENV}{a400}{starttime}) ? "\tAND a400.starttime<=$main::time_current\n":""}; 
  # WHERE - endtime
- $self->{s_where}.="\tAND (a400.endtime=0 OR a400.endtime>=$main::time_current)\n" if exists $self->{ENV}{a400}{endtime};
+ $self->{s_where}.="\tAND (a400.endtime=0 OR a400.endtime>=$main::time_current)\n" if $self->{ENV}{a400}{endtime};
  # WHERE - active
  $self->{s_where}.="\tAND a400.active='Y'\n" if $self->{ENV}{a400}{active}; 
  # WHERE END
