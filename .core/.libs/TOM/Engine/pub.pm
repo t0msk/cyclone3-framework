@@ -7,10 +7,6 @@ use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	
 	
-	#use SVN::Core;
-	#use SVN::Repos;
-	#use SVN::Fs;
-	
 	use Mysql;
 	use Digest::MD5  qw(md5 md5_hex md5_base64);
 	use Text::Iconv;
@@ -20,17 +16,12 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	use MIME::Base64;
 	
 	
-	# CORE PORTAL MODULES
-	use TOM::rev;
-	use TOM::Debug; # vyziada si nove logovanie
+	# CORE Engine kniznice
 	use TOM::Debug::pub;
-	use TOM::Error;
 	use TOM::Warning;
 	use TOM::Database::connect;
 	use TOM::TypeID;
-	use TOM::Temp::file;
 	
-	#use TOM::Utils::vars;
 	
 	# TOM libraries
 	use TOM::Net::email;
@@ -43,19 +34,20 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	use TOM::Net::HTTP::hacked;
 	use TOM::Net::HTTP::CGI;
 	use TOM::Debug::breakpoints; # merania
-	#use TOM::Debug::trackpoints; # merania
 	use TOM::Math;
 	use TOM::Int::lng;
 	
+	
 	# nove Cyclone kniznice
 	use Cyclone;
+	
 	
 package main;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
-
-# 3rd-party libraries
+	
+	
 	use Tomahawk::error;
 	use Tomahawk::debug;
 	
@@ -66,7 +58,6 @@ use utf8;
 	use Net::HTTP::cookies;
 	use Net::HTTP::robots;
 	
-	#use Database::connect;
 	use CML;
 	use Int::charsets;
 	use Int::charsets::encode;

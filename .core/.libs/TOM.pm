@@ -1,13 +1,19 @@
 package main;
-use Fcntl;
-#
-# HLAVNY ZAVADZAC VSETKYCH ENGINES
-#
-# Framework v software, je definovany ako struktura v ktorej sa da vyvinut,
-# organizovat a udrzovat iny software projekt. Framework includuje podporu
-# pre programy, kniznice a iny software ktory pomaha v spajani roznych
-# komponentov do projektu.
-#
+
+=head1 NAME
+
+TOM
+
+=head1 DESCRIPTION
+
+Univerzálny zavádzač frameworku
+
+Framework v software, je definovany ako struktura v ktorej sa da vyvinut,
+organizovat a udrzovat iny software projekt. Framework includuje podporu
+pre programy, kniznice a iny software ktory pomaha v spajani roznych
+komponentov do projektu.
+
+=cut
 
 BEGIN
 {
@@ -62,23 +68,27 @@ use utf8;
 use strict;
 use Inline (Config => DIRECTORY => $TOM::InlineDIR);
 
+=head1 DEPENDS
+
+knižnice:
+
+ Inline;
+ TOM::Lite - základné knižnice v obmedzenej forme
+ TOM::Engine - základné knižnice každého engine
+
+konfigurácie:
+
+ _config.sg/TOM.conf
+ _config/TOM.conf
+
+=cut
+
+use TOM::Lite;
+use TOM::Engine;
+
 # hlavna konfiguracia
 require $TOM::P."/.core/_config.sg/TOM.conf";
 require $TOM::P."/.core/_config/TOM.conf";
-
-use TOM::Lite;
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 1;
