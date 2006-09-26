@@ -9,11 +9,8 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 # DEFINUJEM NULOVY DEBUG
 package CRON::debug;
-sub log{return}
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
-
-use conv;
 
 # CRON BEGINN
 package CRON;
@@ -120,9 +117,6 @@ sub module
 	local %mdl_env=@_;
 	local %mdl_C;
 	local $cron::ERR;
-	
-	$TOM::DEBUG_log_file=98;
-	main::_log("call module with debug level='$TOM::DEBUG_log_file'");
 	
 	my $t=track TOM::Debug("module");
 	

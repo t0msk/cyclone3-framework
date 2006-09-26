@@ -5,6 +5,9 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use TOM::Debug;
+use TOM::Debug::logs;
+
+BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 sub log
 {
