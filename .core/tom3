@@ -2253,7 +2253,6 @@ while ($req->Accept() >= 0)
 			if ($Net::DOC::content_type eq "application/pdf")
 			{
 				$main::LNG_cp=$Cyclone::l10n::charset::lng_charset{$tom::lng};
-				$main::LNG_cp="ISO-8859-1"; # docasne vypnute ostatne kodovania lebo robia problemy
 				main::_log("codepage set to '$main::LNG_cp' because Content-Type='application/pdf' and language='$tom::lng'");
 				$H->rh("<%CODEPAGE%>",$main::LNG_cp);
 				$DOC_output=$H->OUT_;
@@ -2384,10 +2383,11 @@ while ($req->Accept() >= 0)
 			print "Content-Disposition: attachment; filename = ".$main::H->{'env'}{'DOC_title'}.".pdf\n";
 			
 			# convert document
+			my $charset=$main::LNG_cp;$charset=~s|^ISO-||;
 			my $tmp_html=TOM::Temp::file->new('ext'=>'html');
 			$tmp_html->save_content($DOC_output);
 			my $tmp_pdf=TOM::Temp::file->new('ext'=>'pdf');
-			my $cmd="/usr/local/bin/htmldoc --charset $main::LNG_cp --webpage $main::env{'htmldoc'} $tmp_html->{'filename'} -f $tmp_pdf->{'filename'} 2>/dev/null";
+			my $cmd="/usr/local/bin/htmldoc --charset $charset --webpage $main::env{'htmldoc'} $tmp_html->{'filename'} -f $tmp_pdf->{'filename'} 2>/dev/null";
 			main::_log($cmd);
 			system($cmd);
 			
