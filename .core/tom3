@@ -1579,6 +1579,13 @@ while ($req->Accept() >= 0)
 				next;
 			}
 			
+			if ($env0{'id'} eq "env" && $env0{'type'})
+			{
+				_log("Change main::env ($env0{'type'}) to ".$env0{'value'});
+				$main::env{$env0{'type'}}=$env0{value};
+				next;
+			}
+			
 			if ($env0{id} eq "FORM_reject")
 			{
 				if (
@@ -2380,7 +2387,7 @@ while ($req->Accept() >= 0)
 			my $tmp_html=TOM::Temp::file->new('ext'=>'html');
 			$tmp_html->save_content($DOC_output);
 			my $tmp_pdf=TOM::Temp::file->new('ext'=>'pdf');
-			my $cmd="/usr/local/bin/htmldoc --charset $main::LNG_cp --webpage $tmp_html->{'filename'} -f $tmp_pdf->{'filename'} 2>/dev/null";
+			my $cmd="/usr/local/bin/htmldoc --charset $main::LNG_cp --webpage $main::env{'htmldoc'} $tmp_html->{'filename'} -f $tmp_pdf->{'filename'} 2>/dev/null";
 			main::_log($cmd);
 			system($cmd);
 			
