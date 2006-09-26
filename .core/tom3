@@ -70,6 +70,7 @@ use vars qw/
 use enc;
 use enc2;
 use enc3;
+use iconv;
 
 #local *HND; # localize file handlers
 
@@ -2246,24 +2247,43 @@ while ($req->Accept() >= 0)
 		
 		{my $t=track TOM::Debug("codepage settings");
 			
-			if (
-					($main::LNG_cp ne $TOM::LNG_cp_default)
-					&&($Int::charsets::table{$main::LNG_cp})
-				)
-				# ak chcem zobrazit web v inom kodovani nez UTF8
-				# tak bez debaty vyhoviem (teda ak take kodovanie existuje) :)
+			# pokial je vystup z publisheru ako PDF
+			# musim prevadzat HTML document do lokalneho kodovania
+			if ($Net::DOC::content_type eq "application/pdf")
 			{
-				$COOKIES{cp}=$main::LNG_cp; # aby som vedel v dalsej pejdzi aky bol posledny encoding
+				$main::LNG_cp=$Cyclone::l10n::charset::lng_charset{$tom::lng};
+				$main::LNG_cp="ISO-8859-1"; # docasne vypnute ostatne kodovania lebo robia problemy
+				main::_log("codepage set to '$main::LNG_cp' because Content-Type='application/pdf' and language='$tom::lng'");
 				$H->rh("<%CODEPAGE%>",$main::LNG_cp);
-				$DOC_output=$H->OUT_;   
-				if ($main::LNG_cp eq "ASCII")
+				$DOC_output=$H->OUT_;
+				if ($main::LNG_cp =~/^(ASCII|ISO-8859-1)$/)
 				{
 					$DOC_output=Int::charsets::encode::UTF8_ASCII($DOC_output);
 				}
 				else
 				{
-					my $converter = Text::Iconv->new($TOM::LNG_cp_default, $main::LNG_cp);
-					$DOC_output = $converter->convert($DOC_output);
+					$DOC_output=iconv::convert($DOC_output, $TOM::LNG_cp_default, $main::LNG_cp);
+				}
+				main::_log("output document converted to codepage '$main::LNG_cp' succesfully length=(".(length($DOC_output)).")");
+			}
+			elsif (
+					($main::LNG_cp ne $TOM::LNG_cp_default)
+					&&($Cyclone::l10n::charset::list{$main::LNG_cp})
+				)
+				# ak chcem zobrazit web v inom kodovani nez UTF8
+				# tak bez debaty vyhoviem (teda ak take kodovanie existuje) :)
+			{
+				main::_log("codepage set to '$main::LNG_cp' because requested");
+				$COOKIES{cp}=$main::LNG_cp; # aby som vedel v dalsej pejdzi aky bol posledny encoding
+				$H->rh("<%CODEPAGE%>",$main::LNG_cp);
+				$DOC_output=$H->OUT_;
+				if ($main::LNG_cp =~/^(ASCII|ISO-8859-1)$/)
+				{
+					$DOC_output=Int::charsets::encode::UTF8_ASCII($DOC_output);
+				}
+				else
+				{
+					$DOC_output=iconv::convert($DOC_output, $TOM::LNG_cp_default, $main::LNG_cp);
 				}
 			}
 			elsif (
@@ -2337,6 +2357,7 @@ while ($req->Accept() >= 0)
 			main::_log("cookie '$_'='$COOKIES{$_}'");
 		}
 		
+		
 		# aj ked nemam povolene cookies, posielam ich pre istotu,
 		# co ked si ich nahle niekto zapne? :))
 		# (nebudem vyuzivat GET cookies predsa stale)
@@ -2348,44 +2369,43 @@ while ($req->Accept() >= 0)
 		
 		$t_cookies->close();
 		
-		# POSIELAM KOMPRESNE
-		print "Expires: Mon, 1 Jan 1990 23:00:00 GMT\n";
-		print "Cache-control: no-cache\n";
-		print "Pragma: no-cache\n";
-		#print "Content-Type: text/html\n";
-		
 		if ($main::page_statuscode eq "404")
 		{
 			print "Status: 404 Not Found\n";
 		}
-#		else
-#		{
-			
+		
 		if ($Net::DOC::content_type eq "application/pdf")
 		{
-			binmode STDOUT;
 			
 			# header
+			print "Connection: close\n";
 			print "Content-Type: application/pdf\n";
 			print "Content-Disposition: attachment; filename = ".$main::H->{'env'}{'DOC_title'}.".pdf\n";
-			print "\n";
 			
 			# convert document
 			my $tmp_html=TOM::Temp::file->new('ext'=>'html');
 			$tmp_html->save_content($DOC_output);
 			my $tmp_pdf=TOM::Temp::file->new('ext'=>'pdf');
-			my $cmd="/usr/local/bin/htmldoc --webpage $tmp_html->{'filename'} -f $tmp_pdf->{'filename'} 2>/dev/null";
+			my $cmd="/usr/local/bin/htmldoc --charset $main::LNG_cp --webpage $tmp_html->{'filename'} -f $tmp_pdf->{'filename'} 2>/dev/null";
 			main::_log($cmd);
 			system($cmd);
 			
+			my $size=(stat($tmp_pdf->{'filename'}))[7];
+			main::_log("DOC length = '$size'");
+			print "Content-length: $size\n";
+			
 			# send content
+			print "\n";
+			binmode STDOUT;
 			open (HND_PDF,'<'.$tmp_pdf->{'filename'});
 			print <HND_PDF>;
 			close (HND_PDF);
 		}
 		else
 		{
-			
+			print "Expires: Mon, 1 Jan 1990 23:00:00 GMT\n";
+			print "Cache-control: no-cache\n";
+			print "Pragma: no-cache\n";
 			print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n";
 			
 			if ($ENV{'HTTP_ACCEPT_ENCODING'}=~/gzip/i && !$pub::gzip_disable)
@@ -2409,9 +2429,6 @@ while ($req->Accept() >= 0)
 				print $DOC_output;
 			}
 		}
-#		}
-#		alarm (0);
-		
 		
 		
 		
