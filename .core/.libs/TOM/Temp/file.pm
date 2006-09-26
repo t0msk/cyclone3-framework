@@ -32,6 +32,7 @@ sub save_content
 	my $content=shift;
 	
 	open(HND_CNT,'>'.$self->{'filename'});
+	binmode HND_CNT;
 	
 	if (ref($content))
 	{
