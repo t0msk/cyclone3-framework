@@ -47,6 +47,7 @@ BEGIN
 	$TOM::InlineDIR="$TOM::P/_temp/_Inline.[".$TOM::hostname."]";
 	mkdir $TOM::InlineDIR if (! -e $TOM::InlineDIR);
 	
+	$main::time_current=time();
 }
 
 
