@@ -54,6 +54,10 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	use TOM::Int::lng;
 	
 	
+	# default aplikácie
+	use App::1B0;
+	
+	
 	# nove Cyclone kniznice
 	use Cyclone;
 	

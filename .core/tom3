@@ -361,15 +361,10 @@ while ($req->Accept() >= 0)
 =cut
 	
 	
-=head1
-	main::_log("test banned IP's");
-	if(
-		($main::ENV{'REMOTE_ADDR'} eq "217.67.19.197")||
-		($main::ENV{'REMOTE_ADDR'} eq "217.118.103.1")||
-		($main::ENV{'REMOTE_ADDR'} eq "202.56.253.184") ||
-		($main::ENV{'REMOTE_ADDR'} eq "202.58.85.8") ||
-		($main::ENV{'REMOTE_ADDR'} eq "196.7.0.160")
-	)
+	my ($bann_ID,$bann_msg)=App::1B0::IsBanned(
+		'IP' => $main::ENV{'REMOTE_ADDR'},
+		'-type' => "pub");
+	if ($bann_ID)
 	{
 		main::_log("IP $main::ENV{'REMOTE_ADDR'} is banned",1);
 		print "Status: 404 Not Found\n";
@@ -379,7 +374,6 @@ while ($req->Accept() >= 0)
 		$t_request->close();
 		next;
 	}
-=cut
 	
 	$t_preeval->close();
 	eval
