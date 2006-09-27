@@ -1,11 +1,32 @@
 package TOM::Debug;
+
+=head1 NAME
+
+TOM::Debug
+
+=head1 DESCRIPTION
+
+Knižnica pre analýzy chovania Cyclone3
+
+=cut
+
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
-
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
+=head1 DEPENDS
+
+knižnice:
+
+ TOM::Debug::logs
+ TOM::Debug::breakpoints
+ XML::Generator
+
+=cut
+
+use TOM;
 use TOM::Debug::logs;
 use TOM::Debug::breakpoints;
 use XML::Generator;
@@ -14,6 +35,14 @@ package main;
 
 
 sub _obsolete {return 1;}
+
+=head1 FUNCTIONS
+
+=head2 main::_obsolete_func
+
+
+
+=cut
 
 sub _obsolete_func
 {
