@@ -11,7 +11,16 @@ use Time::Local;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw (&GetUserTypes &SetMU &GetUsers &GetUser &CreateUser &CheckCreateUser &DeleteUser &GetUserTelephones);
+our @EXPORT = qw /
+	&GetUserTypes
+	&SetMU
+	&GetUsers
+	&GetUser
+	&CreateUser
+	&CheckCreateUser
+	&DeleteUser
+	&GetUserTelephones
+	&GetICDPH/;
 
 our $debug=0;
 our $debug_disable=0;
@@ -566,6 +575,50 @@ sub GetUserTelephones
 	
 	$t->close();
 	return @data;
+}
+
+
+sub GetICDPH
+{
+	my $t=track TOM::Debug(__PACKAGE__."::GetICDPH()",'namespace'=>'SPIN');
+	my %env=@_;
+	foreach (sort keys %env){main::_log("input $_='$env{$_}'");}
+	my %data;
+	
+	my $sql = qq{
+		SELECT
+			ICDPH_ID,
+			FIRMA_ID,
+			STAT_ID,
+			IC_DPH
+		FROM
+			dl.dl_ic_dph
+		WHERE
+			stat_id=1 AND
+			firma_id=$env{ID_user}
+	};    # Prepare and execute SELECT
+	
+	#$sql=~s|\$where|$where|;
+	
+	my $db0 = $main::DB{spin}->prepare($sql);
+	die "$DBI::errstr" unless $db0;
+	
+	$db0->execute();
+	
+	if (my $arr=$db0->fetch())
+	{
+		my @arr=@{$arr};
+		$data{'icdph_id'}=$arr[0];
+		$data{'firma_id'}=$arr[1];
+		$data{'stat_id'}=$arr[2];
+		$data{'ic_dph'}=$arr[3];
+	}
+	
+	foreach (sort keys %data){main::_log("output $_='$data{$_}'");}
+	
+	$t->close();
+	
+	return %data;
 }
 
 

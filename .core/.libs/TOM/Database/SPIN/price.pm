@@ -29,7 +29,12 @@ use TOM::Database::SPIN;
 use Time::Local;
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw (&GetRebate);
+our @EXPORT = qw /
+	&GetRebate
+	&GetPriceID
+	&fsofGetPrice
+	&fsofGetRabat
+	/;
 
 
 =head1 VARIABLES
@@ -234,6 +239,175 @@ sub GetRebate
 	$t->close();
 	return %data;
 	
+}
+
+=head2 fsofGetRabat()
+
+=cut
+
+sub fsofGetRabat
+{
+	my $t=track TOM::Debug(__PACKAGE__."::fsofGetRabat()",'namespace'=>'SPIN');
+	my %env=@_;
+	foreach (sort keys %env){main::_log("input $_='$env{$_}'");}
+	my %data;
+	
+	my $sql=qq{
+		DECLARE
+			anFirmaId NUMBER;
+			anProduktId NUMBER;
+			avaTypRabatu VARCHAR2(32);
+			adecHodnota NUMBER;
+			avaTypHodnoty VARCHAR2(32);
+			adecRabat2 NUMBER;
+			avaTypRabatu2 VARCHAR2(32);
+			anDruhCenyId NUMBER;
+			adDatum DATE;
+			retout NUMBER;
+		BEGIN
+			:retout := dl.fsofGetRabat
+			(
+				:anFirmaId,
+				:anProduktId,
+				:avaTypRabatu,
+				:adecHodnota,
+				:avaTypHodnoty,
+				:adecRabat2,
+				:avaTypRabatu2,
+				:anDruhCenyId,
+				:adDatum
+			);
+		END;
+	};
+	my $db0 = $main::DB{'spin'}->prepare( $sql );
+	
+	my $date=$tom::Fmday.$tom::Fmom.$tom::Fyear;
+	main::_log("date='$date'");
+	
+	$db0->bind_param(":anFirmaId", $env{'user_ID'} );
+	$db0->bind_param(":anProduktId", $env{'product_ID'} );
+	$db0->bind_param(":adDatum", $date );
+	
+	$db0->bind_param_inout( ":avaTypRabatu", \$data{'rebate_type'}, 32 );
+	$db0->bind_param_inout( ":adecHodnota", \$data{'amount'}, 32 );
+	$db0->bind_param_inout( ":avaTypHodnoty", \$data{'amount_type'}, 32 );
+	$db0->bind_param_inout( ":adecRabat2", \$data{'rebate2'}, 32 );
+	$db0->bind_param_inout( ":avaTypRabatu2", \$data{'rebate_type2'}, 32 );
+	$db0->bind_param_inout( ":anDruhCenyId", \$data{'price_ID'}, 32 );
+	$db0->bind_param_inout( ":retout", \$data{'rebate'}, 32 );
+	$db0->execute();
+	
+	foreach (sort keys %data){main::_log("output $_='$data{$_}'");}
+	
+	$t->close();
+	return %data;
+}
+
+=head2 fsofGetPrice()
+
+=cut
+
+sub fsofGetPrice
+{
+	my $t=track TOM::Debug(__PACKAGE__."::fsofGetPrice()",'namespace'=>'SPIN');
+	my %env=@_;
+	foreach (sort keys %env){main::_log("input $_='$env{$_}'");}
+	my $data;
+	
+	return undef unless $env{'product_ID'};
+	
+	$env{'price_ID'} = $main::USRM{'session'}{'SPIN'}{'price_ID'} unless $env{'price_ID'};
+	$env{'price_ID'} = 2 unless $env{'price_ID'};
+	$env{'tax_DPH'}='N' unless $env{'tax_DPH'};
+	
+	main::_log("price_ID='$env{'price_ID'}'");
+	
+	my $sql=qq{
+		DECLARE
+			retout NUMBER;
+		BEGIN
+			:retout := dl.fsofGetPrice
+			(
+				:anProduktId,
+				:anDruhCenyId,
+				:adDatum,
+				:anFirmaId,
+				:acRetCenaSdph
+			);
+		END;
+	};
+	
+	my $db0 = $main::DB{'spin'}->prepare( $sql );
+	
+	my $date=$tom::Fmday.'.'.$Utils::datetime::MONTHS{en}[$tom::Tmom-1].'.'.$tom::Fyear;
+	my $date=$tom::Fmday.$tom::Fmom.$tom::Fyear;
+	main::_log("date='$date'");
+	
+	$db0->bind_param(":anFirmaId", $main::USRM{'session'}{'SPIN'}{'ID'} );
+	#$db0->bind_param(":anDruhCenyId", $main::USRM{'session'}{'SPIN'}{'price_ID'} );
+	$db0->bind_param(":anDruhCenyId", $env{'price_ID'} );
+	$db0->bind_param(":anProduktId", $env{'product_ID'} );
+	$db0->bind_param(":adDatum", $date );
+	$db0->bind_param(":acRetCenaSdph", $env{'tax_DPH'} );
+	
+	$db0->bind_param_inout( ":retout", \$data, 32 );
+	$db0->execute();
+	
+	main::_log("returning price '$data'");
+	
+	$t->close();
+	
+	return undef unless $data;
+	
+	return $data;
+}
+
+=head2 GetPriceID()
+
+=cut
+
+sub GetPriceID
+{
+	my $t=track TOM::Debug(__PACKAGE__."::GetPriceID()",'namespace'=>'SPIN');
+	my %env=@_;
+	foreach (sort keys %env){main::_log("input $_='$env{$_}'");}
+	my %data;
+	
+	my $where;
+	$where.="AND druh_ceny_id = $env{'ID'} " if $env{'ID'};
+	$where.="AND kod_druhu_ceny = '$env{'name'}' " if $env{'name'};
+	
+	my $sql = qq{
+		SELECT
+			druh_ceny_id "ID",
+			kod_druhu_ceny "name",
+			popis_druhu_ceny "about",
+			macro "macro"
+		FROM
+			dl.sof_druh_ceny
+		WHERE
+			mandant_id >= 0
+			$where
+	};    # Prepare and execute SELECT
+	
+	my $db0 = $main::DB{spin}->prepare($sql);
+	die "$DBI::errstr" unless $db0;
+	
+	$db0->execute();
+	
+	if (my $arr=$db0->fetch())
+	{
+		my @arr=@{$arr};
+		$data{'ID'}=$arr[0];
+		$data{'name'}=$arr[1];
+		$data{'about'}=$arr[2];
+		$data{'macro'}=$arr[3];
+	}
+	
+	foreach (sort keys %data){main::_log("output $_='$data{$_}'");}
+	
+	$t->close();
+	return %data;
 }
 
 
