@@ -1,0 +1,12 @@
+
+# TENTO MODUL NIKDY NEVYPINAT!!!
+
+<MODULE>
+   <VAR id="-type" value="mdl" />
+   <VAR id="-category" value="300" />
+   <VAR id="-name" value="process" />
+   <VAR id="-TMP" value="UP-SEARCH" />
+   <VAR id="-ALRM" value="0" />
+   <VAR id="-global" value="1" />
+</MODULE>
+
