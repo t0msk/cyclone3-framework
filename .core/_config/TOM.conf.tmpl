@@ -1,0 +1,19 @@
+#!/usr/bin/perl
+package TOM;
+use strict;
+
+$TOM::contact{'TECH_farm'}="name\@domain.tld"; # zodpovedny za konkretnu farmu
+$TOM::contact{'WEB_farm'}="name\@domain.tld";
+$TOM::contact{'from'}="cyclone3\@comsultia.com";
+
+$TOM::DB{'main'}=
+{
+	host	=>"localhost",
+	user	=>"TOM",
+	pass	=>"",
+};
+
+$TOM::DB{'stats'}=$TOM::DB{'main'};
+$TOM::DB{'sys'}=$TOM::DB{'main'};
+
+1;# DO NOT CHANGE !
