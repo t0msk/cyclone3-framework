@@ -147,10 +147,6 @@ sub help
  &exit();
 }
 
-sub _log
-{
-}
-
 sub exit
 {
  print color 'reset';
