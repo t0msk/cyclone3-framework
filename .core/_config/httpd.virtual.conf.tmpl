@@ -1,0 +1,33 @@
+#############################
+#
+# Apache virtuals configuration
+#
+#############################
+
+Options FollowSymLinks
+
+<Directory "/www/TOM/">
+	Options FollowSymLinks ExecCGI
+</Directory>
+
+<Directory "/www/TOM/.core">
+	Options FollowSymlinks ExecCGI
+</Directory>
+
+ErrorLog /www/TOM/_logs/httpd/all.err.log
+CustomLog /www/TOM/_logs/httpd/all.acc.log combined
+
+#######################################################################
+# EXAMPLE.TLD
+#######################################################################
+
+<VirtualHost 192.168.5.1>
+	ServerName example.tld
+	ServerAlias www.example.tld
+	DocumentRoot /www/TOM/!example.tld/!www
+	CustomLog /www/TOM/_logs/httpd/example_tld.acc.log combined
+	<Directory /www/TOM/!example.tld/!www>
+		Options Indexes FollowSymlinks ExecCGI
+		AllowOverride All
+	</Directory>
+</VirtualHost>
