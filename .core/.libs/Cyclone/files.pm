@@ -103,7 +103,6 @@ our @setit_F=
 (
 	['\.svn'                           ,".svn files"                  ,"444",""],
 	
-	['^\.admin'                        ,"global admin"                ,"",""],
 	['phprojekt'                       ,"phprojekt"                   ,"",""],
 	['!nc'                             ,"new Cyclone"                 ,"",""],
 	['phpmyadmin'                      ,"phpmyadmin"                  ,"",""],
@@ -114,9 +113,12 @@ our @setit_F=
  
 	['\.(pwd)$'                        ,".pwd (password file)"        ,"660","apache:cyclone3"],
 	['\.tmpl$'                         ,".tmpl (template)"            ,"660","cyclone3:cyclone3"],
+	['\.sql$'                          ,".sql (SQL queries)"          ,"660","cyclone3:cyclone3"],
 	
+	# www:www ak media su cez NFS na inom serveri
 	['^!media\/'                       ,"!media"                      ,"664","www:www"],
-	['!media\/'                        ,"!media symlink"              ,"",""],
+	# apache:cyclone3 ak media su normalne lokalne
+	['!media\/'                        ,"!media domain"               ,"664","apache:cyclone3"],
 	['\.htaccess$'                     ,".htaccess"                   ,"460","apache:cyclone3"],
 	
 	['_logs\/.*\.log$'                 ,"_logs cron .log"             ,"",""],
@@ -177,6 +179,7 @@ our @setit_F=
 	
 	['_mdl\/.*cron$'                   ,"_mdl cron"                   ,"660","apache:cyclone3"],
  
+	['_data\/USRM\/.*'                 ,"local _data USRM"            ,"",""],
 	['_data\/.*'                       ,"local _data"                 ,"660","apache:cyclone3"],
 	
 	# old admin
