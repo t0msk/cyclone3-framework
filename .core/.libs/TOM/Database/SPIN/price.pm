@@ -34,6 +34,7 @@ our @EXPORT = qw /
 	&GetPriceID
 	&fsofGetPrice
 	&fsofGetRabat
+	&fsklCenikCenaDatumOd
 	/;
 
 
@@ -341,13 +342,16 @@ sub fsofGetPrice
 	
 	my $date=$tom::Fmday.'.'.$Utils::datetime::MONTHS{en}[$tom::Tmom-1].'.'.$tom::Fyear;
 	my $date=$tom::Fmday.$tom::Fmom.$tom::Fyear;
-	main::_log("date='$date'");
+	
+	$env{'date'}=$date unless $env{'date'};
+	
+	main::_log("date='$env{'date'}'");
 	
 	$db0->bind_param(":anFirmaId", $main::USRM{'session'}{'SPIN'}{'ID'} );
 	#$db0->bind_param(":anDruhCenyId", $main::USRM{'session'}{'SPIN'}{'price_ID'} );
 	$db0->bind_param(":anDruhCenyId", $env{'price_ID'} );
 	$db0->bind_param(":anProduktId", $env{'product_ID'} );
-	$db0->bind_param(":adDatum", $date );
+	$db0->bind_param(":adDatum", $env{'date'} );
 	$db0->bind_param(":acRetCenaSdph", $env{'tax_DPH'} );
 	
 	$db0->bind_param_inout( ":retout", \$data, 32 );
@@ -361,6 +365,56 @@ sub fsofGetPrice
 	
 	return $data;
 }
+
+
+=head2 fsklCenikCenaDatumOd()
+
+Vráti dátum_od aktuálnej cenníkovej ceny
+
+=cut
+
+sub fsklCenikCenaDatumOd
+{
+	
+	my $t=track TOM::Debug(__PACKAGE__."::fsklCenikCenaDatumOd()",'namespace'=>'SPIN');
+	my %env=@_;
+	foreach (sort keys %env){main::_log("input $_='$env{$_}'");}
+	my $data;
+	
+	return undef unless $env{'product_ID'};
+	
+	$env{'price_ID'} = $main::USRM{'session'}{'SPIN'}{'price_ID'} unless $env{'price_ID'};
+	$env{'price_ID'} = 2 unless $env{'price_ID'};
+	
+	main::_log("price_ID='$env{'price_ID'}'");
+	
+	my $sql=qq{
+		DECLARE
+			retout DATE;
+		BEGIN
+			:retout := dl.fsklCenikCenaDatumOd
+			(
+				:anProduktId,
+				:anDruhCenyId
+			);
+		END;
+	};
+	
+	my $db0 = $main::DB{'spin'}->prepare( $sql );
+	
+	$db0->bind_param(":anDruhCenyId", $env{'price_ID'} );
+	$db0->bind_param(":anProduktId", $env{'product_ID'} );
+	
+	$db0->bind_param_inout( ":retout", \$data, 32 );
+	$db0->execute();
+	
+	main::_log("returning date '$data'");
+	
+	$t->close();
+	
+	return $data;
+}
+
 
 =head2 GetPriceID()
 
