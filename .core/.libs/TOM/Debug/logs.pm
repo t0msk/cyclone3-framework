@@ -87,7 +87,7 @@ sub _log
 		$get[0]=0 unless $get[0];
 		open (HND_LOG,">>".$file.".".$get[3].".log");
 #			|| die "System can't write into logfile ".$file.".".$get[3].".log"."\n";
-		chmod (0660,$file.".".$get[3].".log");
+		chmod (0666,$file.".".$get[3].".log");
 		print HND_LOG $msg."\n";
 		close HND_LOG; # TODO: [Aben] uzavretie HND mozno zrusit
 	}

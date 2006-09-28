@@ -60,9 +60,8 @@ sub _log_lite
 		" ".(" " x $get[0]).$ref[$get[2]].$get[1];
 	
 	
-	#sysopen(HND_LOG, $filename, O_WRONLY|O_APPEND|O_CREAT, 0660) || return undef;
 	open (HND_LOG,">>".$filename) || return undef;
-	chmod (0660,$filename);
+	chmod (0666,$filename);
 	print HND_LOG $msg."\n";
 	close HND_LOG;
 	
