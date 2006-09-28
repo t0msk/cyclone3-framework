@@ -27,7 +27,6 @@ BEGIN
 }
 
 
-use Inline (Config => DIRECTORY => $TOM::P."/.core/.libs/_Inline");
 use TOM::lock;
 
 
