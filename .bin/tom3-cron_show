@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
-BEGIN {require "/usr/bin/tom3-init";}
+BEGIN {require "/www/TOM/.bin/tom3-init";}
 use Mysql;
 use Utils::datetime;
 

@@ -4,7 +4,7 @@ use Term::ANSIColor;
 use Mysql;
 use Time::HiRes;
 use Term::InKey;
-require "/usr/bin/tom3-init";
+require "/www/TOM/.bin/tom3-init";
 %form=
 (
  '--host'	=>	"restart host (eg. www_localhost_com)",

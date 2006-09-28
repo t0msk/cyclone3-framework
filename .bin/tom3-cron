@@ -6,7 +6,7 @@ use Term::ANSIColor;
 
 BEGIN
 {
-	require "/usr/bin/tom3-init";
+	require "/www/TOM/.bin/tom3-init";
 	use Inline (Config => DIRECTORY => "/www/TOM/.core/.libs/_Inline");
 }
 

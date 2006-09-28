@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
 
-BEGIN {require "/usr/bin/tom3-init";}
+BEGIN {require "/www/TOM/.bin/tom3-init";}
 
 use Cyclone::files;
 
@@ -9,7 +9,7 @@ use Cyclone::files;
 # user cyclone3
 # user apache
 # groupa cyclone3 - zdruzuje vsetkych coderov a ostatnych vyvojarov, + apache usera
-# groupa www - zdruzuje apache usera a cyclone3 usera
+# groupa www - zdruzuje apache usera
 
 
 %form=
@@ -43,8 +43,6 @@ my @regexp_F=@Cyclone::files::setit_F;
 	'rw-'	=>	"6",
 	'rwx'	=>	"7",
 );
-
-
 
 
 sub setit3

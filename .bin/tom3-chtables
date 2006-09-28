@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
 use Mysql;
-BEGIN {require "/usr/bin/tom3-init";}
-use Database::connect;
+BEGIN {require "/www/TOM/.bin/tom3-init";}
+use TOM::Database::connect;
 %form=
 (
  '-v'		=>	"verbosity",

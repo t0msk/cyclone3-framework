@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
 use Mysql;
-require "/usr/bin/tom3-init";
+BEGIN {require "/www/TOM/.bin/tom3-init";};
 %form=
 (
 	'--domain'	=>	"show config domain (eg. localhost.com)",

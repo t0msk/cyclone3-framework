@@ -1,45 +1,35 @@
 #!/usr/bin/perl
-
-#use warnings;
 use strict;
 use Term::ANSIColor;
 use open ':utf8', ':std';
-#use encoding 'utf8';
+#use encoding 'utf8'; - uz si nepamatam preco je toto zakomentovane
 use utf8;
 
 BEGIN
 {
+	$TOM::engine="bin";
+	require "/www/TOM/.core/.libs/TOM.pm";
+	$TOM::engine_ready=1;
 	$TOM::hostname=`hostname`;chomp($TOM::hostname);
 	$TOM::core_uname_n=$TOM::hostname;
 	$CRON::core_uname_n=$TOM::hostname;
 	
 	print color 'bold blue';
-	print "[TOM3 Control Commands Engine]\n";
+	print "[Cyclone3 BIN Control]\n";
 	print color 'reset blue';
 	print "initializing...";
 	$main::p=`pwd`;$main::p=~s|\n||g;
 	print " p:".$main::p;
-	die "Unable to search TOM directory /www/TOM/???" unless $main::P=`ls -l /usr/bin/tom3-init`;
-	$main::P=~s|.* (.*)/.*?/(.*)\n|$1|;#$TOM::SCRIPT_NAME=$2;
+	$main::P="/www/TOM";
 	$TOM::P=$main::P;
 	print " P:".$main::P."\n";
 	unshift @INC,$main::P."/.core/.libs";
-	# unshift @INC,$main::p."/.core/bin/.libs";
 }
 
-#print "$ENV{USER}\n";
 
-if (open (NNL,$main::P."/.core/_config.sg/TOM.conf"))
-{
-	require $main::P."/.core/_config.sg/TOM.conf";
-	require $main::P."/.core/_config/TOM.conf";
-}
-
-use Inline (Config => DIRECTORY => "$TOM::P/.core/.libs/_Inline");
+use Inline (Config => DIRECTORY => $TOM::P."/.core/.libs/_Inline");
 use TOM::lock;
-#use TOM;
 
-#print "cesty..\n";
 
 print color 'bold green';
 my $filename=$0;
@@ -126,32 +116,30 @@ if ($main::FORM{domain})
 	
 }
 
+
 my $out=`id`;$ENV{USER}=($out=~/\((.*?)\)/)[0];
 
-#exit(0);
-
-#print "čaute";
 
 sub help
 {
- print "[using---------------------------------------------------]\n";
- print "[ -h, --help     this page                               ]\n";
- foreach (sort keys %main::form)
- {
-  print "[ ";
-  print sprintf("%-15s",$_);
-  print sprintf("%-40s",$main::form{$_});
-  print "]\n";
- }
- print "[--------------------------------------------------------]\n";
- &exit();
+	print "[using---------------------------------------------------]\n";
+	print "[ -h, --help     this page                               ]\n";
+	foreach (sort keys %main::form)
+	{
+		print "[ ";
+		print sprintf("%-15s",$_);
+		print sprintf("%-40s",$main::form{$_});
+		print "]\n";
+	}
+	print "[--------------------------------------------------------]\n";
+	&exit();
 }
 
 sub exit
 {
- print color 'reset';
- print "\n";
- exit();
+	print color 'reset';
+	print "\n";
+	exit();
 }
 
 1;

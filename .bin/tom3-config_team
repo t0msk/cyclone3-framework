@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
 use Mysql;
-require "/usr/bin/tom3-init";
+BEGIN {require "/www/TOM/.bin/tom3-init";};
 %form=
 (
 	'--domain'	=>	"show team for domain (eg. localhost.com)",
@@ -28,7 +28,7 @@ if ($FORM{domain})
 	{
 		next if (not $_=~/^[A-Z]+$/ || $_ eq "manager");
 		
-		print "[ ".sprintf("%-5s",$_)." ] [ ";
+		print "[ ".sprintf("%-10s",$_)." ] [ ";
 		
 		print "[ ".sprintf("%-55s",$TOM::contact{$_})." ]\n";
 		
