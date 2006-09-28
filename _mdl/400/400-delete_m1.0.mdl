@@ -57,9 +57,10 @@ sub execute
 	SET
 		active='D'
 	WHERE
-		ID=$env{db_ID}
+		ID=$env{db_ID} AND
+		lng='$env{db_lng}'
+	LIMIT 1
 	";
-
 	main::_log( $sqldel );
 
 	my $db = $main::DB{main}->Query( $sqldel );
