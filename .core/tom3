@@ -2374,7 +2374,7 @@ while ($req->Accept() >= 0)
 			# header
 			print "Connection: close\n";
 			print "Content-Type: application/pdf\n";
-			print "Content-Disposition: attachment; filename = ".$main::H->{'env'}{'DOC_title'}.".pdf\n";
+			print "Content-Disposition: attachment; filename = ".( $main::env{'htmldoc_filename'} || TOM::Net::URI::rewrite::convert($main::H->{'env'}{'DOC_title'})).".pdf\n";
 			
 			# convert document
 			my $charset=$main::LNG_cp;$charset=~s|^ISO-||;
