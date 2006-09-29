@@ -89,14 +89,6 @@ $SIG{ALRM}=sub # akceptujem ALRM ale nie padom scriptu
 	exit(0);
 };
 
-main::_log("redirecting SIG{TERM} to exit(0)");
-$SIG{TERM}=sub # akceptujem ( zatial ) TERM
-{
-	print "Location: http://$ENV{HTTP_HOST}$ENV{REQUEST_URI}\n\n";
-	main::_log("ACCEPT TERM (relocation) (lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H ($@ $!)",3,"pub.mng",1);
-	exit(0);
-};
-
 main::_log("redirecting SIG{ALRM} to exit(0)");
 $SIG{HUP}=sub # akceptujem ( zatial ) HUP
 {
@@ -290,15 +282,23 @@ $t_domain->close;
 my $req=FCGI::Request();
 main::_log("START FCGI PID:$$ domain:$tom::H",3,"pub.mng",1);
 
-#alarm($TOM::fcgi_timeout);
-
 while ($req->Accept() >= 0)
-{#alarm(0); # rusim alarm ( nastavujem tiez na konci cyklu )
-	#$ENV{'REMOTE_ADDR'}=~s/[\n\r]//g;
+{
+	# ignorujem TERM pocas behu requestu, povoleny je len pocas cakania na dalsi request
+	local $SIG{TERM}=sub 
+	{
+		main::_log("REQUEST TERM (lives ".
+			(time()-$TOM::time_start).
+			" secs, $tom::count requests) PID:$$ domain:$tom::H ($@ $!)",3,"pub.mng",1);
+		$tom::HUP=1;
+	};
+	
 	$main::request_code=Utils::vars::genhash(8);
 	TOM::Debug::clear_namespaces();
 	my $t_request=track TOM::Debug("request [".($tom::count+1)."/$TOM::max_count]");
 	my $t_preeval=track TOM::Debug("preeval");
+	
+	
 	if (!$tom::count)
 	{
 		#
@@ -307,13 +307,7 @@ while ($req->Accept() >= 0)
 		# zbytocne zabity
 		#
 		my $t_ready=track TOM::Debug("request_first");
-		main::_log("redirecting SIG{TERM} to ignore");
-		$SIG{TERM}=sub # ignorujem TERM
-		{
-			main::_log("REQUEST TERM (lives ".
-				(time()-$TOM::time_start).
-				" secs, $tom::count requests) PID:$$ domain:$tom::H ($@ $!)",3,"pub.mng",1);
-		};
+		#main::_log("redirecting SIG{TERM} to ignore");
 		main::_log("redirecting SIG{HUP} to please_wait");
 		$SIG{HUP}=sub # akceptujem do premennej HUP ( vykonam az po vygenerovani stranky )
 		{
