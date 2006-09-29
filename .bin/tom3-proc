@@ -3,8 +3,8 @@ use Term::ANSIColor;
 #use Term::Screen;
 use Mysql;
 use Time::HiRes;
+BEGIN {require "/www/TOM/.bin/tom3-init";}
 use Term::InKey;
-require "/www/TOM/.bin/tom3-init";
 %form=
 (
  '--host'	=>	"restart host (eg. www_localhost_com)",
