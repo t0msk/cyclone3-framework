@@ -101,7 +101,7 @@ our @setit_D=
 	['\/!www'                          ,"document roots"              ,"770","apache:$group"],
 	['![\w\.\-]+/[\w]+$'               ,"subdomain"                   ,"770","apache:$group"],
 	
-	['^.'                              ,"unknown"                     ,"","cyclone3:$group"],
+	['^\.'                             ,"unknown"                     ,"","cyclone3:$group"],
 );
 
 
@@ -206,7 +206,7 @@ our @setit_F=
 	
 	['\.key$'                          ,"key file"                    ,"660","apache:$group"],
 	
-	['^.'                              ,"unknown"                     ,"","cyclone3:$group"],
+	['^\.'                             ,"unknown"                     ,"","cyclone3:$group"],
 );
 
 
