@@ -12,13 +12,15 @@
 
 -- --------------------------------------------------------
 
+CREATE DATABASE TOM;
+
 USE TOM;
 
 -- 
 -- Table structure for table `_config`
 -- 
 
-CREATE TABLE `_config` (
+CREATE TABLE IF NOT EXISTS `_config` (
   `namespace` varchar(10) NOT NULL default '',
   `variable` varchar(50) binary NOT NULL default '',
   `linkT` char(1) NOT NULL default '',
@@ -36,7 +38,7 @@ CREATE TABLE `_config` (
 -- Table structure for table `_layers`
 -- 
 
-CREATE TABLE `_layers` (
+CREATE TABLE IF NOT EXISTS `_layers` (
   `ID` varchar(16) binary NOT NULL default '',
   `starttime` int(10) unsigned NOT NULL default '0',
   `endtime` int(10) unsigned NOT NULL default '0',
@@ -51,7 +53,7 @@ CREATE TABLE `_layers` (
 -- Table structure for table `_tom3`
 -- 
 
-CREATE TABLE `_tom3` (
+CREATE TABLE IF NOT EXISTS `_tom3` (
   `var` varchar(100) NOT NULL default '0',
   `value` text NOT NULL,
   PRIMARY KEY  (`var`)
@@ -63,7 +65,7 @@ CREATE TABLE `_tom3` (
 -- Table structure for table `_url`
 -- 
 
-CREATE TABLE `_url` (
+CREATE TABLE IF NOT EXISTS `_url` (
   `hash` varchar(32) NOT NULL default '',
   `url` text NOT NULL,
   `inserttime` int(10) unsigned NOT NULL default '0',
@@ -75,7 +77,7 @@ CREATE TABLE `_url` (
 
 
 
-CREATE TABLE `a110_load_day` (
+CREATE TABLE IF NOT EXISTS `a110_load_day` (
   `reqdatetime` varchar(50) NOT NULL default '',
   `load_1min` float NOT NULL default '0',
   `load_5min` float NOT NULL default '0',
@@ -89,7 +91,7 @@ CREATE TABLE `a110_load_day` (
 -- Table structure for table `a110_load_hour`
 -- 
 
-CREATE TABLE `a110_load_hour` (
+CREATE TABLE IF NOT EXISTS `a110_load_hour` (
   `reqdatetime` varchar(50) NOT NULL default '',
   `load_1min` float NOT NULL default '0',
   `load_5min` float NOT NULL default '0',
@@ -103,7 +105,7 @@ CREATE TABLE `a110_load_hour` (
 -- Table structure for table `a110_load_min`
 -- 
 
-CREATE TABLE `a110_load_min` (
+CREATE TABLE IF NOT EXISTS `a110_load_min` (
   `reqtime` int(10) unsigned NOT NULL default '0',
   `reqdatetime` varchar(50) NOT NULL default '',
   `hostname` varchar(50) NOT NULL default '',
@@ -122,7 +124,7 @@ CREATE TABLE `a110_load_min` (
 -- Table structure for table `a110_mdl_log`
 -- 
 
-CREATE TABLE `a110_mdl_log` (
+CREATE TABLE IF NOT EXISTS `a110_mdl_log` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `reqtime` int(10) unsigned NOT NULL default '0',
   `reqdatetime` varchar(50) NOT NULL default '',
@@ -136,7 +138,7 @@ CREATE TABLE `a110_mdl_log` (
   PRIMARY KEY  (`ID`),
   KEY `reqdatetime` (`reqdatetime`),
   KEY `domain` (`domain`,`domain_sub`)
-) TYPE=MyISAM AUTO_INCREMENT=35557770 ;
+) TYPE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -144,7 +146,7 @@ CREATE TABLE `a110_mdl_log` (
 -- Table structure for table `a110_obsolete_log`
 -- 
 
-CREATE TABLE `a110_obsolete_log` (
+CREATE TABLE IF NOT EXISTS `a110_obsolete_log` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `time_created` int(10) unsigned NOT NULL default '0',
   `type` varchar(20) NOT NULL default '',
@@ -154,7 +156,7 @@ CREATE TABLE `a110_obsolete_log` (
   `func_line` int(10) unsigned NOT NULL default '0',
   `func` varchar(100) NOT NULL default '',
   PRIMARY KEY  (`ID`)
-) TYPE=MyISAM AUTO_INCREMENT=114 ;
+) TYPE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -162,11 +164,11 @@ CREATE TABLE `a110_obsolete_log` (
 -- Table structure for table `a110_sitemap`
 -- 
 
-CREATE TABLE `a110_sitemap` (
+CREATE TABLE IF NOT EXISTS `a110_sitemap` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `domain` varchar(64) NOT NULL default '',
+  `domain` varchar(32) NOT NULL default '',
   `domain_sub` varchar(64) NOT NULL default '',
-  `url` varchar(255) NOT NULL default '',
+  `url` varchar(200) NOT NULL default '',
   `time_create` int(10) unsigned NOT NULL default '0',
   `time_use` int(10) unsigned NOT NULL default '0',
   `time_generate` int(10) unsigned NOT NULL default '0',
@@ -176,7 +178,7 @@ CREATE TABLE `a110_sitemap` (
   `weight` float NOT NULL default '0',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `domain` (`domain`,`domain_sub`,`url`)
-) TYPE=MyISAM AUTO_INCREMENT=3239 ;
+) TYPE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -184,7 +186,7 @@ CREATE TABLE `a110_sitemap` (
 -- Table structure for table `a110_webclick_log`
 -- 
 
-CREATE TABLE `a110_webclick_log` (
+CREATE TABLE IF NOT EXISTS `a110_webclick_log` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `domain` varchar(50) NOT NULL default '',
   `domain_sub` varchar(150) NOT NULL default '',
@@ -197,7 +199,7 @@ CREATE TABLE `a110_webclick_log` (
   PRIMARY KEY  (`ID`),
   KEY `domain` (`domain`,`domain_sub`),
   KEY `domain_2` (`domain`,`domain_sub`,`TID`,`time_insert`)
-) TYPE=MyISAM AUTO_INCREMENT=152915 ;
+) TYPE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -205,7 +207,7 @@ CREATE TABLE `a110_webclick_log` (
 -- Table structure for table `a110_weblog_day`
 -- 
 
-CREATE TABLE `a110_weblog_day` (
+CREATE TABLE IF NOT EXISTS `a110_weblog_day` (
   `reqdatetime` varchar(50) NOT NULL default '',
   `domain` varchar(50) NOT NULL default '',
   `domain_sub` varchar(150) NOT NULL default '',
@@ -230,7 +232,7 @@ CREATE TABLE `a110_weblog_day` (
 -- Table structure for table `a110_weblog_hour`
 -- 
 
-CREATE TABLE `a110_weblog_hour` (
+CREATE TABLE IF NOT EXISTS `a110_weblog_hour` (
   `reqdatetime` varchar(50) NOT NULL default '',
   `domain` varchar(50) NOT NULL default '',
   `domain_sub` varchar(150) NOT NULL default '',
@@ -255,7 +257,7 @@ CREATE TABLE `a110_weblog_hour` (
 -- Table structure for table `a110_weblog_min`
 -- 
 
-CREATE TABLE `a110_weblog_min` (
+CREATE TABLE IF NOT EXISTS `a110_weblog_min` (
   `reqdatetime` varchar(50) NOT NULL default '',
   `domain` varchar(50) NOT NULL default '',
   `domain_sub` varchar(150) NOT NULL default '',
@@ -280,27 +282,27 @@ CREATE TABLE `a110_weblog_min` (
 -- Table structure for table `a110_weblog_rqs`
 -- 
 
-CREATE TABLE `a110_weblog_rqs` (
+CREATE TABLE IF NOT EXISTS `a110_weblog_rqs` (
   `page_code` varchar(8) binary NOT NULL default '',
   `page_code_referer` varchar(8) binary NOT NULL default '',
   `HTTP_unique_ID` varchar(24) binary NOT NULL default '',
   `reqtime` int(10) unsigned NOT NULL default '0',
-  `reqdatetime` varchar(50) NOT NULL default '',
+  `reqdatetime` varchar(19) NOT NULL default '',
   `reqtype` char(1) binary default NULL,
   `host` varchar(50) NOT NULL default '',
-  `domain` varchar(100) NOT NULL default '',
-  `domain_sub` varchar(150) NOT NULL default '',
-  `IP` varchar(50) NOT NULL default '',
+  `domain` varchar(32) NOT NULL default '',
+  `domain_sub` varchar(64) NOT NULL default '',
+  `IP` varchar(15) NOT NULL default '',
   `IDhash` varchar(8) binary NOT NULL default '',
   `IDsession` varchar(32) binary NOT NULL default '',
   `logged` char(1) NOT NULL default 'N',
   `USRM_flag` char(1) NOT NULL default '',
-  `query_string` varchar(255) NOT NULL default '',
+  `query_string` varchar(200) NOT NULL default '',
   `query_TID` varchar(25) NOT NULL default '',
-  `query_URL` varchar(255) NOT NULL default '',
-  `referer` varchar(255) NOT NULL default '',
+  `query_URL` varchar(200) NOT NULL default '',
+  `referer` varchar(200) NOT NULL default '',
   `referer_SE` varchar(100) default NULL,
-  `user_agent` varchar(250) NOT NULL default '',
+  `user_agent` varchar(64) NOT NULL default '',
   `user_agent_name` varchar(50) default NULL,
   `load_proc` float unsigned NOT NULL default '0',
   `load_req` float unsigned NOT NULL default '0',
@@ -332,7 +334,7 @@ CREATE TABLE `a110_weblog_rqs` (
 -- Table structure for table `a110_weblog_week`
 -- 
 
-CREATE TABLE `a110_weblog_week` (
+CREATE TABLE IF NOT EXISTS `a110_weblog_week` (
   `reqdatetime` varchar(50) NOT NULL default '',
   `domain` varchar(50) NOT NULL default '',
   `domain_sub` varchar(150) NOT NULL default '',
@@ -367,7 +369,7 @@ CREATE TABLE `a110_weblog_week` (
 -- Table structure for table `a130_received`
 -- 
 
-CREATE TABLE `a130_received` (
+CREATE TABLE IF NOT EXISTS `a130_received` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `rectime` int(10) unsigned NOT NULL default '0',
   `from_name` varchar(50) NOT NULL default '',
@@ -386,7 +388,7 @@ CREATE TABLE `a130_received` (
 -- Table structure for table `a130_send`
 -- 
 
-CREATE TABLE `a130_send` (
+CREATE TABLE IF NOT EXISTS `a130_send` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `ID_md5` varchar(32) binary NOT NULL default '',
   `sendtime` int(10) unsigned NOT NULL default '0',
@@ -412,7 +414,7 @@ CREATE TABLE `a130_send` (
 -- Table structure for table `a130_send_history`
 -- 
 
-CREATE TABLE `a130_send_history` (
+CREATE TABLE IF NOT EXISTS `a130_send_history` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `hash` varchar(32) NOT NULL default '',
   `domain` varchar(50) NOT NULL default '',
@@ -434,7 +436,7 @@ CREATE TABLE `a130_send_history` (
 -- Table structure for table `a130_services`
 -- 
 
-CREATE TABLE `a130_services` (
+CREATE TABLE IF NOT EXISTS `a130_services` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `name` varchar(150) NOT NULL default '',
   `domain` varchar(32) NOT NULL default '',
@@ -456,7 +458,7 @@ CREATE TABLE `a130_services` (
 -- Table structure for table `a150_cache`
 -- 
 
-CREATE TABLE `a150_cache` (
+CREATE TABLE IF NOT EXISTS `a150_cache` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_config` int(10) unsigned NOT NULL default '0',
   `domain` varchar(50) NOT NULL default '',
@@ -488,7 +490,7 @@ CREATE TABLE `a150_cache` (
 -- Table structure for table `a150_config`
 -- 
 
-CREATE TABLE `a150_config` (
+CREATE TABLE IF NOT EXISTS `a150_config` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `domain` varchar(50) NOT NULL default '',
   `domain_sub` varchar(150) NOT NULL default '',
@@ -514,7 +516,7 @@ CREATE TABLE `a150_config` (
 -- Table structure for table `a150_debug`
 -- 
 
-CREATE TABLE `a150_debug` (
+CREATE TABLE IF NOT EXISTS `a150_debug` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `domain` varchar(50) NOT NULL default '',
   `domain_sub` varchar(150) NOT NULL default '',
@@ -533,30 +535,10 @@ CREATE TABLE `a150_debug` (
 -- --------------------------------------------------------
 
 -- 
--- Table structure for table `a180_google_sitemap`
--- 
-
-CREATE TABLE `a180_google_sitemap` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `domain` varchar(64) NOT NULL default '',
-  `domain_sub` varchar(64) NOT NULL default '',
-  `url` varchar(255) NOT NULL default '',
-  `time_create` int(10) unsigned NOT NULL default '0',
-  `time_use` int(10) unsigned NOT NULL default '0',
-  `time_generate` int(10) unsigned NOT NULL default '0',
-  `time_modified` int(10) unsigned NOT NULL default '0',
-  `time_freq` int(10) unsigned NOT NULL default '0',
-  PRIMARY KEY  (`ID`),
-  UNIQUE KEY `domain` (`domain`,`domain_sub`,`url`)
-) TYPE=MyISAM;
-
--- --------------------------------------------------------
-
--- 
 -- Table structure for table `a1A0_domainconfig`
 -- 
 
-CREATE TABLE `a1A0_domainconfig` (
+CREATE TABLE IF NOT EXISTS `a1A0_domainconfig` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `domain` varchar(32) default NULL,
   `domain_sub` varchar(64) default NULL,
@@ -574,7 +556,7 @@ CREATE TABLE `a1A0_domainconfig` (
 -- Table structure for table `a1B0_banned`
 -- 
 
-CREATE TABLE `a1B0_banned` (
+CREATE TABLE IF NOT EXISTS `a1B0_banned` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `domain` varchar(64) default NULL,
   `domain_sub` varchar(64) default NULL,
@@ -601,7 +583,7 @@ CREATE TABLE `a1B0_banned` (
 -- Table structure for table `a1B0_message`
 -- 
 
-CREATE TABLE `a1B0_message` (
+CREATE TABLE IF NOT EXISTS `a1B0_message` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `about` text NOT NULL,
   PRIMARY KEY  (`ID`)
@@ -613,7 +595,7 @@ CREATE TABLE `a1B0_message` (
 -- Table structure for table `a1D0_imports`
 -- 
 
-CREATE TABLE `a1D0_imports` (
+CREATE TABLE IF NOT EXISTS `a1D0_imports` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `IDimport` int(10) unsigned NOT NULL default '0',
   `time_insert` int(10) unsigned NOT NULL default '0',
@@ -630,7 +612,7 @@ CREATE TABLE `a1D0_imports` (
 -- Table structure for table `a1D0_manager`
 -- 
 
-CREATE TABLE `a1D0_manager` (
+CREATE TABLE IF NOT EXISTS `a1D0_manager` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `domain` varchar(50) NOT NULL default '',
   `domain_sub` varchar(150) NOT NULL default '',
@@ -654,7 +636,7 @@ CREATE TABLE `a1D0_manager` (
 -- Table structure for table `a300_emailverify`
 -- 
 
-CREATE TABLE `a300_emailverify` (
+CREATE TABLE IF NOT EXISTS `a300_emailverify` (
   `IDhash` varchar(8) binary NOT NULL default '',
   `hash` varchar(32) binary NOT NULL default '',
   `inserttime` int(10) unsigned NOT NULL default '0',
@@ -667,7 +649,7 @@ CREATE TABLE `a300_emailverify` (
 -- Table structure for table `a300_groups`
 -- 
 
-CREATE TABLE `a300_groups` (
+CREATE TABLE IF NOT EXISTS `a300_groups` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `IDcharindex` varchar(32) binary NOT NULL default '',
   `domain` varchar(100) default NULL,
@@ -690,7 +672,7 @@ CREATE TABLE `a300_groups` (
 -- Table structure for table `a300_groups_users`
 -- 
 
-CREATE TABLE `a300_groups_users` (
+CREATE TABLE IF NOT EXISTS `a300_groups_users` (
   `IDuser` varchar(8) binary NOT NULL default '',
   `IDgroup` int(10) unsigned NOT NULL default '0',
   `inserttime` int(10) unsigned NOT NULL default '0',
@@ -706,7 +688,7 @@ CREATE TABLE `a300_groups_users` (
 -- Table structure for table `a300_online`
 -- 
 
-CREATE TABLE `a300_online` (
+CREATE TABLE IF NOT EXISTS `a300_online` (
   `IDhash` varchar(8) binary NOT NULL default '',
   `IDsession` varchar(32) binary NOT NULL default '',
   `login` varchar(20) NOT NULL default '',
@@ -734,7 +716,7 @@ CREATE TABLE `a300_online` (
 -- Table structure for table `a300_profile_def`
 -- 
 
-CREATE TABLE `a300_profile_def` (
+CREATE TABLE IF NOT EXISTS `a300_profile_def` (
   `host` varchar(50) NOT NULL default '',
   `variable` varchar(30) binary NOT NULL default '',
   `type_save` varchar(30) NOT NULL default '',
@@ -753,7 +735,7 @@ CREATE TABLE `a300_profile_def` (
 -- Table structure for table `a300_roles`
 -- 
 
-CREATE TABLE `a300_roles` (
+CREATE TABLE IF NOT EXISTS `a300_roles` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `IDcharindex` varchar(64) binary NOT NULL default '',
   `domain` varchar(100) default NULL,
@@ -773,7 +755,7 @@ CREATE TABLE `a300_roles` (
 -- Table structure for table `a300_shadow`
 -- 
 
-CREATE TABLE `a300_shadow` (
+CREATE TABLE IF NOT EXISTS `a300_shadow` (
   `IDhash` varchar(8) binary NOT NULL default '',
   `host` varchar(50) binary NOT NULL default '',
   `inserttime` int(10) unsigned NOT NULL default '0',
@@ -793,7 +775,7 @@ CREATE TABLE `a300_shadow` (
 -- Table structure for table `a300_users`
 -- 
 
-CREATE TABLE `a300_users` (
+CREATE TABLE IF NOT EXISTS `a300_users` (
   `IDhash` varchar(8) binary NOT NULL default '',
   `login` varchar(20) NOT NULL default '',
   `pass` varchar(20) binary NOT NULL default '',
@@ -825,7 +807,7 @@ CREATE TABLE `a300_users` (
 -- Table structure for table `a300_users_arch`
 -- 
 
-CREATE TABLE `a300_users_arch` (
+CREATE TABLE IF NOT EXISTS `a300_users_arch` (
   `IDhash` varchar(8) binary NOT NULL default '',
   `login` varchar(20) NOT NULL default '',
   `pass` varchar(20) binary NOT NULL default '',
@@ -858,7 +840,7 @@ CREATE TABLE `a300_users_arch` (
 -- Table structure for table `a300_users_attrs`
 -- 
 
-CREATE TABLE `a300_users_attrs` (
+CREATE TABLE IF NOT EXISTS `a300_users_attrs` (
   `IDhash` varchar(8) binary NOT NULL default '',
   `favorities` text NOT NULL,
   `friends` text NOT NULL,
@@ -874,7 +856,7 @@ CREATE TABLE `a300_users_attrs` (
 -- Table structure for table `a300_users_attrs_arch`
 -- 
 
-CREATE TABLE `a300_users_attrs_arch` (
+CREATE TABLE IF NOT EXISTS `a300_users_attrs_arch` (
   `IDhash` varchar(8) binary NOT NULL default '',
   `favorities` text NOT NULL,
   `friends` text NOT NULL,
@@ -890,7 +872,7 @@ CREATE TABLE `a300_users_attrs_arch` (
 -- Table structure for table `a400_category`
 -- 
 
-CREATE TABLE `a400_category` (
+CREATE TABLE IF NOT EXISTS `a400_category` (
   `ID` varchar(32) binary NOT NULL default '',
   `IDname` varchar(255) default NULL,
   `name` varchar(100) binary NOT NULL default '',
@@ -909,7 +891,7 @@ CREATE TABLE `a400_category` (
 -- Table structure for table `a400_visits`
 -- 
 
-CREATE TABLE `a400_visits` (
+CREATE TABLE IF NOT EXISTS `a400_visits` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `IDarticle` int(10) unsigned NOT NULL default '0',
   `IDuser` varchar(8) binary NOT NULL default '',
@@ -923,7 +905,7 @@ CREATE TABLE `a400_visits` (
 -- Table structure for table `a401`
 -- 
 
-CREATE TABLE `a401` (
+CREATE TABLE IF NOT EXISTS `a401` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `IDattrs` int(10) unsigned default NULL,
   `IDcategory` varchar(32) binary NOT NULL default '',
@@ -959,7 +941,7 @@ CREATE TABLE `a401` (
 -- Table structure for table `a410`
 -- 
 
-CREATE TABLE `a410` (
+CREATE TABLE IF NOT EXISTS `a410` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `IDlink` int(10) unsigned NOT NULL default '0',
   `IDcategory` int(10) unsigned NOT NULL default '0',
@@ -983,7 +965,7 @@ CREATE TABLE `a410` (
 -- Table structure for table `a410_answer`
 -- 
 
-CREATE TABLE `a410_answer` (
+CREATE TABLE IF NOT EXISTS `a410_answer` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `IDquestion` int(10) unsigned NOT NULL default '0',
   `answer` varchar(250) NOT NULL default '',
@@ -1004,7 +986,7 @@ CREATE TABLE `a410_answer` (
 -- Table structure for table `a410_category`
 -- 
 
-CREATE TABLE `a410_category` (
+CREATE TABLE IF NOT EXISTS `a410_category` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `IDcharindex` varchar(64) binary NOT NULL default '',
   `domain` varchar(32) NOT NULL default '',
@@ -1023,7 +1005,7 @@ CREATE TABLE `a410_category` (
 -- Table structure for table `a410_votes`
 -- 
 
-CREATE TABLE `a410_votes` (
+CREATE TABLE IF NOT EXISTS `a410_votes` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `IDquestion` int(10) unsigned NOT NULL default '0',
   `IDanswer` int(10) unsigned NOT NULL default '0',
@@ -1041,7 +1023,7 @@ CREATE TABLE `a410_votes` (
 -- Table structure for table `a500`
 -- 
 
-CREATE TABLE `a500` (
+CREATE TABLE IF NOT EXISTS `a500` (
   `ID` int(7) unsigned zerofill NOT NULL default '0000000',
   `IDattrs` int(7) unsigned NOT NULL default '0',
   `hash` varchar(16) binary NOT NULL default '',
@@ -1064,7 +1046,7 @@ CREATE TABLE `a500` (
 -- Table structure for table `a500_attrs`
 -- 
 
-CREATE TABLE `a500_attrs` (
+CREATE TABLE IF NOT EXISTS `a500_attrs` (
   `ID` int(7) unsigned zerofill NOT NULL auto_increment,
   `IDname` varchar(255) default NULL,
   `IDattrs` int(7) unsigned NOT NULL default '0',
@@ -1094,7 +1076,7 @@ CREATE TABLE `a500_attrs` (
 -- Table structure for table `a500_category`
 -- 
 
-CREATE TABLE `a500_category` (
+CREATE TABLE IF NOT EXISTS `a500_category` (
   `ID` varchar(32) binary NOT NULL default '',
   `IDname` varchar(255) default NULL,
   `name` varchar(100) binary NOT NULL default '',
@@ -1115,7 +1097,7 @@ CREATE TABLE `a500_category` (
 -- Table structure for table `a540`
 -- 
 
-CREATE TABLE `a540` (
+CREATE TABLE IF NOT EXISTS `a540` (
   `ID` int(9) unsigned zerofill NOT NULL auto_increment,
   `ID_dir` varchar(32) binary NOT NULL default '',
   `name` tinytext NOT NULL,
@@ -1139,7 +1121,7 @@ CREATE TABLE `a540` (
 -- Table structure for table `a540_dir`
 -- 
 
-CREATE TABLE `a540_dir` (
+CREATE TABLE IF NOT EXISTS `a540_dir` (
   `ID` int(9) unsigned zerofill NOT NULL auto_increment,
   `ID_dir` varchar(32) binary NOT NULL default '',
   `name` tinytext NOT NULL,
@@ -1155,7 +1137,7 @@ CREATE TABLE `a540_dir` (
 -- Table structure for table `a540_visits`
 -- 
 
-CREATE TABLE `a540_visits` (
+CREATE TABLE IF NOT EXISTS `a540_visits` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `IDfile` int(10) unsigned NOT NULL default '0',
   `IDuser` varchar(8) binary NOT NULL default '',
@@ -1171,7 +1153,7 @@ CREATE TABLE `a540_visits` (
 -- Table structure for table `a700_categories`
 -- 
 
-CREATE TABLE `a700_categories` (
+CREATE TABLE IF NOT EXISTS `a700_categories` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `IDowner` varchar(8) binary NOT NULL default '',
   `name` varchar(30) NOT NULL default '',
@@ -1186,7 +1168,7 @@ CREATE TABLE `a700_categories` (
 -- Table structure for table `a700_task`
 -- 
 
-CREATE TABLE `a700_task` (
+CREATE TABLE IF NOT EXISTS `a700_task` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `domain` varchar(100) default NULL,
   `IDcharindex` varchar(64) binary NOT NULL default '',
@@ -1223,7 +1205,7 @@ CREATE TABLE `a700_task` (
 -- Table structure for table `a700_task_activity`
 -- 
 
-CREATE TABLE `a700_task_activity` (
+CREATE TABLE IF NOT EXISTS `a700_task_activity` (
   `IDtask` int(10) unsigned NOT NULL default '0',
   `IDuser` varchar(8) binary NOT NULL default '',
   `starttime` int(10) unsigned NOT NULL default '0',
@@ -1240,7 +1222,7 @@ CREATE TABLE `a700_task_activity` (
 -- Table structure for table `a700_task_categories`
 -- 
 
-CREATE TABLE `a700_task_categories` (
+CREATE TABLE IF NOT EXISTS `a700_task_categories` (
   `IDtask` int(10) unsigned NOT NULL default '0',
   `IDcategory` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`IDtask`,`IDcategory`)
@@ -1252,7 +1234,7 @@ CREATE TABLE `a700_task_categories` (
 -- Table structure for table `a700_task_dependencies`
 -- 
 
-CREATE TABLE `a700_task_dependencies` (
+CREATE TABLE IF NOT EXISTS `a700_task_dependencies` (
   `IDtask` int(10) unsigned NOT NULL default '0',
   `IDdependency` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`IDtask`,`IDdependency`)
@@ -1264,7 +1246,7 @@ CREATE TABLE `a700_task_dependencies` (
 -- Table structure for table `a700_task_groups`
 -- 
 
-CREATE TABLE `a700_task_groups` (
+CREATE TABLE IF NOT EXISTS `a700_task_groups` (
   `IDtask` int(10) unsigned NOT NULL default '0',
   `IDgroup` int(10) unsigned NOT NULL default '0',
   `starttime` int(10) unsigned NOT NULL default '0',
@@ -1284,7 +1266,7 @@ CREATE TABLE `a700_task_groups` (
 -- Table structure for table `a700_task_related`
 -- 
 
-CREATE TABLE `a700_task_related` (
+CREATE TABLE IF NOT EXISTS `a700_task_related` (
   `IDtask` int(10) unsigned NOT NULL default '0',
   `App_ID` varchar(32) binary NOT NULL default '',
   `App_type` varchar(10) NOT NULL default '',
@@ -1298,7 +1280,7 @@ CREATE TABLE `a700_task_related` (
 -- Table structure for table `a700_task_sources`
 -- 
 
-CREATE TABLE `a700_task_sources` (
+CREATE TABLE IF NOT EXISTS `a700_task_sources` (
   `IDtask` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`IDtask`)
 ) TYPE=MyISAM;
@@ -1309,7 +1291,7 @@ CREATE TABLE `a700_task_sources` (
 -- Table structure for table `a700_task_status`
 -- 
 
-CREATE TABLE `a700_task_status` (
+CREATE TABLE IF NOT EXISTS `a700_task_status` (
   `IDtask` int(10) unsigned NOT NULL default '0',
   `IDuser` varchar(8) binary NOT NULL default '',
   `endtime` int(10) unsigned NOT NULL default '0',
@@ -1322,7 +1304,7 @@ CREATE TABLE `a700_task_status` (
 -- Table structure for table `a700_task_users`
 -- 
 
-CREATE TABLE `a700_task_users` (
+CREATE TABLE IF NOT EXISTS `a700_task_users` (
   `IDtask` int(10) unsigned NOT NULL default '0',
   `IDuser` varchar(8) binary NOT NULL default '',
   `starttime` int(10) unsigned NOT NULL default '0',
@@ -1342,7 +1324,7 @@ CREATE TABLE `a700_task_users` (
 -- Table structure for table `a700_task_viewtimes`
 -- 
 
-CREATE TABLE `a700_task_viewtimes` (
+CREATE TABLE IF NOT EXISTS `a700_task_viewtimes` (
   `IDtask` int(10) unsigned NOT NULL default '0',
   `IDuser` varchar(8) binary NOT NULL default '',
   `viewtime` int(10) unsigned NOT NULL default '0',
@@ -1355,12 +1337,12 @@ CREATE TABLE `a700_task_viewtimes` (
 -- Table structure for table `a8010_cache`
 -- 
 
-CREATE TABLE `a8010_cache` (
+CREATE TABLE IF NOT EXISTS `a8010_cache` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `domain` varchar(32) NOT NULL default '',
   `domain_sub` varchar(64) NOT NULL default '',
   `time_insert` int(10) unsigned NOT NULL default '0',
-  `c_categories` varchar(250) NOT NULL default '',
+  `c_categories` varchar(200) NOT NULL default '',
   `c_from` int(11) NOT NULL default '0',
   `c_to` int(11) NOT NULL default '0',
   `c_max` int(11) NOT NULL default '0',
@@ -1375,7 +1357,7 @@ CREATE TABLE `a8010_cache` (
 -- Table structure for table `a8010_users`
 -- 
 
-CREATE TABLE `a8010_users` (
+CREATE TABLE IF NOT EXISTS `a8010_users` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `IDuser` varchar(8) binary NOT NULL default '',
   `IDuser_email` varchar(60) default NULL,
@@ -1396,7 +1378,7 @@ CREATE TABLE `a8010_users` (
 -- Table structure for table `a8020_mail`
 -- 
 
-CREATE TABLE `a8020_mail` (
+CREATE TABLE IF NOT EXISTS `a8020_mail` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `IDre` int(10) unsigned default NULL,
   `domain` varchar(32) default NULL,
@@ -1426,7 +1408,7 @@ CREATE TABLE `a8020_mail` (
 -- Table structure for table `a8020_mail_arch`
 -- 
 
-CREATE TABLE `a8020_mail_arch` (
+CREATE TABLE IF NOT EXISTS `a8020_mail_arch` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `IDre` int(10) unsigned default NULL,
   `domain` varchar(100) default NULL,
@@ -1455,7 +1437,7 @@ CREATE TABLE `a8020_mail_arch` (
 -- Table structure for table `a820`
 -- 
 
-CREATE TABLE `a820` (
+CREATE TABLE IF NOT EXISTS `a820` (
   `ID` varchar(48) binary NOT NULL default '',
   `IDattrs` int(10) unsigned NOT NULL default '0',
   `IDcategory` bigint(20) unsigned default NULL,
@@ -1489,7 +1471,7 @@ CREATE TABLE `a820` (
 -- Table structure for table `a820_attrs`
 -- 
 
-CREATE TABLE `a820_attrs` (
+CREATE TABLE IF NOT EXISTS `a820_attrs` (
   `IDattrs` int(10) unsigned NOT NULL auto_increment,
   PRIMARY KEY  (`IDattrs`)
 ) TYPE=MyISAM;
@@ -1500,7 +1482,7 @@ CREATE TABLE `a820_attrs` (
 -- Table structure for table `a820_msgs`
 -- 
 
-CREATE TABLE `a820_msgs` (
+CREATE TABLE IF NOT EXISTS `a820_msgs` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `IDre` int(10) unsigned NOT NULL default '0',
   `IDforum` varchar(48) binary NOT NULL default '0',
@@ -1526,10 +1508,10 @@ CREATE TABLE `a820_msgs` (
 -- Table structure for table `a900_bnn`
 -- 
 
-CREATE TABLE `a900_bnn` (
-  `host` varchar(150) NOT NULL default '',
-  `section` varchar(100) NOT NULL default '',
-  `position` varchar(100) NOT NULL default '',
+CREATE TABLE IF NOT EXISTS `a900_bnn` (
+  `host` varchar(64) NOT NULL default '',
+  `section` varchar(32) NOT NULL default '',
+  `position` varchar(32) NOT NULL default '',
   `type` varchar(50) NOT NULL default '',
   `action` varchar(50) NOT NULL default '',
   `starttime` int(10) unsigned NOT NULL default '0',
@@ -1553,7 +1535,7 @@ CREATE TABLE `a900_bnn` (
 -- Table structure for table `ac00`
 -- 
 
-CREATE TABLE `ac00` (
+CREATE TABLE IF NOT EXISTS `ac00` (
   `ID` int(11) NOT NULL default '0',
   `word` varchar(100) NOT NULL default '',
   `lng` char(3) NOT NULL default '',
