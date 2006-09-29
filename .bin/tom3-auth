@@ -1,11 +1,16 @@
-#!/bin/sh
-MD5_USER=`/sbin/md5 -qs "${HTTP_HOST}-${USER}"`
-MD5_PASS=`/sbin/md5 -qs "${PASS}"`
-MD5_FILE="/www/TOM/_temp/auth-${MD5_USER}-${MD5_PASS}"
+#!/usr/bin/perl
+use Digest::MD5  qw(md5 md5_hex md5_base64);
 
-if [ -f ${MD5_FILE} ] ; then
-	#echo "ok ${HTTP_HOST}-${USER}" >> /www/TOM/_logs/auth.log
-	echo 1
+$pass_md5=md5_hex($ENV{'PASS'});
+$user_md5=md5_hex($ENV{'HTTP_HOST'}.'-'.$ENV{'USER'});
+$filename="/www/TOM/_temp/auth-".$user_md5."-".$pass_md5;
+
+if (-e $filename)
+{
+	print 1;
+	exit;
+}
 else
-	/www/TOM/.bin/tom3-auth.full
-fi
+{
+	`/www/TOM/.bin/tom3-auth.full`;
+}
