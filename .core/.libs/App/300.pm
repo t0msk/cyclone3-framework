@@ -247,7 +247,15 @@ sub UserFind
 		}
 	}
 	
-	foreach (sort keys %data){main::_log("output $_='$data{$_}'");}
+	foreach (sort keys %data)
+	{
+		if ($_ eq "pass")
+		{
+			main::_log("output $_='".('*' x length($data{$_}))."'");
+			next;
+		}
+		main::_log("output $_='$data{$_}'");
+	}
 	$t->close();
 	return %data;
 }
@@ -257,7 +265,15 @@ sub UserGenerate
 {
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::UserGenerate()");
-	foreach (sort keys %env){main::_log("input $_='$env{$_}'");}
+	foreach (sort keys %env)
+	{
+		if ($_ eq "pass")
+		{
+			main::_log("output $_='".('*' x length($env{$_}))."'");
+			next;
+		}
+		main::_log("input $_='$env{$_}'");
+	}
 	my %data;
 	
 	$env{'IDhash'}=$data{'IDhash'}=GenerateUniqueHash();
@@ -316,7 +332,15 @@ sub UserGenerate
 		)
 	") || die "can't insert user into TOM.a300_users_attrs";
 	
-	foreach (sort keys %data){main::_log("output $_='$data{$_}'");}
+	foreach (sort keys %data)
+	{
+		if ($_ eq "pass")
+		{
+			main::_log("output $_='".('*' x length($data{$_}))."'");
+			next;
+		}
+		main::_log("output $_='$data{$_}'");
+	}
 	$t->close();
 	return %data;
 }
