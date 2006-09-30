@@ -44,17 +44,26 @@ use Fcntl;
 
 =head1 VARIABLES
 
-=head2 $Cyclone::files::group
+=head2 $user, $user_www, $group, $mediasrv_user, $mediasrv_group
 
-Skupina do ktorej patri cyclone3 a vsetci uzivatelia. Pokial nieje $Cyclone::files::group nastavene v TOM.conf, potom sa pouzije defaultna hodnota "cyclone3".
+Nastavenie uzivatela a skupiny Cyclone3, apache usera a taktiez prav adresarov pre mediaserver.
 
-Pokial v danej instalacii pracuje viac uzivatelov (nielen uzivatel apache a cyclone3), potom je vhodne aby vsetci tito uzivatelia (okrem apache) mali default groupu rovnaku, inak dochadza ku konfliktom pri vytvarani suborov, na ktore ostatni ludia nemaju prava, prace so subversion, etc...
+$user - uzivatel Cyclone3, defaultne "cyclone3", da sa prepisat v TOM.conf ako $TOM::user
 
-Ina skupina sa nastavuje pomocou premennej $TOM::group v TOM.conf
+$group - skupina uzivatelov Cyclone3, defaultne "cyclone3", da sa prepisat v TOM.conf ako $TOM::group. Pokial v danej instalacii pracuje viac uzivatelov (nielen uzivatel apache a cyclone3), potom je vhodne aby vsetci tito uzivatelia (okrem apache) mali default groupu rovnaku, inak dochadza ku konfliktom pri vytvarani suborov, na ktore ostatni ludia nemaju prava, prace so subversion, etc...
+
+$user_www - uzivatel httpd servera pod ktorym je spustany, defaultne "apache", da sa prepisat v TOM.conf ako $TOM::user_www
+
+$mediasrv_user, $mediasrv_group - Cyclone3 ma podporu pre pouzitie pracu s mediami na inom serveri. Toto je v hodne hlavne v pripade ak nechceme zatazovat aplikacny server servovanim statickych suborov. V takom pripade sa vytvori adresar /www/TOM/!media ktory je NFS adresarom na media server. Potom kazdy !media adresar v domene (eg. !example.tld/!media) je symlinkom dovnutra /www/TOM/!media/... V takomto pripade samozrejme kvoli NFS treba uplatnovat zvlastne prava na tieto adresare.
 
 =cut
 
-our $group = $TOM::group || "cyclone3";
+our $user      = $TOM::user       || "cyclone3";
+our $user_www  = $TOM::user_www   || "apache";
+our $group     = $TOM::group      || "cyclone3";
+
+our $mediasrv_user  = $TOM::mediasrv_user  || $user_www;
+our $mediasrv_group = $TOM::mediasrv_group || $group;
 
 =head2 @setid_d
 
@@ -66,8 +75,8 @@ Zoznam regulárnych výrazov pre detekciu typu adresára + nastavenie práv
 
 our @setit_D=
 (
-	['media.*\.svn'                     ,"media .svn directory"        ,"770","www:www"],
-	['\.svn'                            ,".svn directory"              ,"570","apache:$group"],
+	['media.*\.svn'                     ,"media .svn directory"       ,"770","$mediasrv_user:$mediasrv_group"],
+	['\.svn'                            ,".svn directory"             ,"570","$user_www:$group"],
 	
 	# exclude dirs
 	['phprojekt'                       ,"phprojekt"                   ,"",""],
@@ -75,33 +84,33 @@ our @setit_D=
 	['^\.admin'                        ,"global admin"                ,"",""],
 	
 	# global
-	['^_data'                          ,"global _data"                ,"570","apache:$group"],
-	['^_temp'                          ,"global _temp"                ,"770","apache:$group"],
-	['^.symlinks$'                     ,"global .symlinks"            ,"570","apache:$group"],
-	['^_mdl'                           ,"global _mdl"                 ,"570","apache:$group"],
-	['^\.core'                         ,"global .core"                ,"570","apache:$group"],
-	['^_dsgn$'                         ,"global _dsgn"                ,"570","apache:$group"],
-	['^_type$'                         ,"global _type"                ,"570","apache:$group"],
-	['^\.bin$'                         ,"global .bin"                 ,"770","cyclone3:$group"],
-	['^_logs'                          ,"global _logs"                ,"770","apache:$group"],
-	['^!media'                         ,"global !media"               ,"775","www:www"],
-	['^_trash'                         ,"global _trash"               ,"777","cyclone3:$group"],
+	['^_data'                          ,"global _data"                ,"570","$user_www:$group"],
+	['^_temp'                          ,"global _temp"                ,"770","$user_www:$group"],
+	['^.symlinks$'                     ,"global .symlinks"            ,"570","$user_www:$group"],
+	['^_mdl'                           ,"global _mdl"                 ,"570","$user_www:$group"],
+	['^\.core'                         ,"global .core"                ,"570","$user_www:$group"],
+	['^_dsgn$'                         ,"global _dsgn"                ,"570","$user_www:$group"],
+	['^_type$'                         ,"global _type"                ,"570","$user_www:$group"],
+	['^\.bin$'                         ,"global .bin"                 ,"770","$user:$group"],
+	['^_logs'                          ,"global _logs"                ,"770","$user_www:$group"],
+	['^!media'                         ,"global !media"               ,"775","$mediasrv_user:$mediasrv_group"],
+	['^_trash'                         ,"global _trash"               ,"777","$user:$group"],
 	
 	# local
-	['\/_mdl$'                         ,"local _mdl"                  ,"570","apache:$group"],
-	['\/\.libs'                        ,"local libraries"             ,"570","apache:$group"],
- 	['\/_dsgn$'                        ,"local _dsgn"                 ,"770","apache:$group"],
-	['\/!www$'                         ,"local !www"                  ,"770","apache:$group"],
-	['\/_type$'                        ,"local _type"                 ,"770","apache:$group"],
-	['\/_data'                         ,"local _data"                 ,"770","apache:$group"],
-	['\/_logs'                         ,"local _logs"                 ,"770","apache:$group"],
-	['\/!media'                        ,"local !media symlink"        ,"",""],
+	['\/_mdl$'                         ,"local _mdl"                  ,"570","$user_www:$group"],
+	['\/\.libs'                        ,"local libraries"             ,"570","$user_www:$group"],
+ 	['\/_dsgn$'                        ,"local _dsgn"                 ,"770","$user_www:$group"],
+	['\/!www$'                         ,"local !www"                  ,"770","$user_www:$group"],
+	['\/_type$'                        ,"local _type"                 ,"770","$user_www:$group"],
+	['\/_data'                         ,"local _data"                 ,"770","$user_www:$group"],
+	['\/_logs'                         ,"local _logs"                 ,"770","$user_www:$group"],
+	['\/!media'                        ,"local !media"                ,"770","$user_www:$group"],
 	
-	['![\w\.\-]+$'                     ,"domain"                      ,"770","apache:$group"],
-	['\/!www'                          ,"document roots"              ,"770","apache:$group"],
-	['![\w\.\-]+/[\w]+$'               ,"subdomain"                   ,"770","apache:$group"],
+	['![\w\.\-]+$'                     ,"domain"                      ,"770","$user_www:$group"],
+	['\/!www'                          ,"document roots"              ,"770","$user_www:$group"],
+	['![\w\.\-]+/[\w]+$'               ,"subdomain"                   ,"770","$user_www:$group"],
 	
-	['^\.'                             ,"unknown"                     ,"","cyclone3:$group"],
+	['^\.'                             ,"unknown"                     ,"","$user:$group"],
 );
 
 
@@ -121,92 +130,92 @@ our @setit_F=
 	['!nc'                             ,"new Cyclone"                 ,"",""],
 	['phpmyadmin'                      ,"phpmyadmin"                  ,"",""],
 	
-	['_trash'                          ,"_trash"                      ,"660","apache:$group"],
-	['^_temp/_Inline'                  ,"global Inline"               ,"777","apache:$group"],
+	['_trash'                          ,"_trash"                      ,"660","$user_www:$group"],
+	['^_temp/_Inline'                  ,"global Inline"               ,"777","$user_www:$group"],
 	['^_temp'                          ,"global _temp"                ,"",""],
  
-	['\.(pwd)$'                        ,".pwd (password file)"        ,"660","apache:$group"],
-	['\.tmpl$'                         ,".tmpl (template)"            ,"660","cyclone3:$group"],
-	['\.sql$'                          ,".sql (SQL queries)"          ,"660","cyclone3:$group"],
+	['\.(pwd)$'                        ,".pwd (password file)"        ,"660","$user_www:$group"],
+	['\.tmpl$'                         ,".tmpl (template)"            ,"660","$user:$group"],
+	['\.sql$'                          ,".sql (SQL queries)"          ,"660","$user:$group"],
 	
-	# www:www ak media su cez NFS na inom serveri
-	['^!media\/'                       ,"!media"                      ,"664","www:www"],
-	# apache:cyclone3 ak media su normalne lokalne
-	['!media\/'                        ,"!media domain"               ,"664","apache:$group"],
-	['\.htaccess$'                     ,".htaccess"                   ,"460","apache:$group"],
+	# www:$mediasrv_group ak media su cez NFS na inom serveri
+	['^!media\/'                       ,"!media"                      ,"664","$mediasrv_user:$mediasrv_group"],
+	# $user_www:cyclone3 ak media su normalne lokalne
+	['!media\/'                        ,"!media domain"               ,"664","$user_www:$group"],
+	['\.htaccess$'                     ,".htaccess"                   ,"460","$user_www:$group"],
 	
 	['_logs\/.*\.log$'                 ,"_logs cron .log"             ,"",""],
 	['_logs\/httpd\/'                  ,"_logs httpd"                 ,"",""],
 	['_logs\/'                         ,"_logs cron .log"             ,"",""],
  
-	['\.libs\/.*\.pm'                  ,"library"              ,"460","apache:$group"],
-	['\.libs\/.*\.txt'                 ,"library inputs"       ,"660","apache:$group"],
+	['\.libs\/.*\.pm'                  ,"library"              ,"460","$user_www:$group"],
+	['\.libs\/.*\.txt'                 ,"library inputs"       ,"660","$user_www:$group"],
 	
 	
-	['\.bin\/'                         ,"core binary"                 ,"770","cyclone3:$group"],
+	['\.bin\/'                         ,"core binary"                 ,"770","$user:$group"],
 	
-	['^\.core\/_config\/httpd\.virtual\.conf',"HTTPD virtual conf"    ,"460","apache:$group"],
-	['^\.core\/_config\/TOM.conf'      ,".core TOM.conf"              ,"460","apache:$group"],
-	['^\.core\/_config\/'              ,".core conf"                  ,"460","apache:$group"],
+	['^\.core\/_config\/httpd\.virtual\.conf',"HTTPD virtual conf"    ,"460","$user_www:$group"],
+	['^\.core\/_config\/TOM.conf'      ,".core TOM.conf"              ,"460","$user_www:$group"],
+	['^\.core\/_config\/'              ,".core conf"                  ,"460","$user_www:$group"],
 	
-	['^\.core\/_config\.sg\/httpd\.conf',"HTTPD virtual conf"         ,"460","apache:$group"],
-	['^\.core\/_config\.sg\/TOM.conf'  ,".core TOM.conf"              ,"460","apache:$group"],
+	['^\.core\/_config\.sg\/httpd\.conf',"HTTPD virtual conf"         ,"460","$user_www:$group"],
+	['^\.core\/_config\.sg\/TOM.conf'  ,".core TOM.conf"              ,"460","$user_www:$group"],
 	
 	
 	['^\.core\/.*pid$'                 ,".core .pid"                  ,"",""],
 	
 	['(^\.core\/(tom|cron|cyc|webclick|download|export|a540|test)|^core)'
-	                                   ,".core engines","770","cyclone3:$group"],
+	                                   ,".core engines","770","$user:$group"],
 	
-	['\.core\/.*\.so$'                 ,".core so"                    ,"660","apache:$group"],
+	['\.core\/.*\.so$'                 ,".core so"                    ,"660","$user_www:$group"],
 	
-	['\.RFC$'                          ,"RFC files"                   ,"660","apache:$group"],
-	['\/master\.conf$'                 ,"master conf"                 ,"660","apache:$group"],
-	['\/local\.conf$'                  ,"local conf"                  ,"660","apache:$group"],
-	['\/type\.conf$'                   ,"type conf"                   ,"660","apache:$group"],
-	['\/rewrite\.conf$'                ,"rewrite conf"                ,"660","apache:$group"],
-	['\/301\.conf$'                    ,"301 conf"                    ,"660","apache:$group"],
+	['\.RFC$'                          ,"RFC files"                   ,"660","$user_www:$group"],
+	['\/master\.conf$'                 ,"master conf"                 ,"660","$user_www:$group"],
+	['\/local\.conf$'                  ,"local conf"                  ,"660","$user_www:$group"],
+	['\/type\.conf$'                   ,"type conf"                   ,"660","$user_www:$group"],
+	['\/rewrite\.conf$'                ,"rewrite conf"                ,"660","$user_www:$group"],
+	['\/301\.conf$'                    ,"301 conf"                    ,"660","$user_www:$group"],
  
-	['\/cron\..*?\.cml$'               ,"local cron cml"              ,"460","apache:$group"],
+	['\/cron\..*?\.cml$'               ,"local cron cml"              ,"460","$user_www:$group"],
 	
 	
-	['!www.*(tom|pl|fcgi|php|asp)$'    ,"!www executables"            ,"560","apache:$group"],
+	['!www.*(tom|pl|fcgi|php|asp)$'    ,"!www executables"            ,"560","$user_www:$group"],
 	['!www.*(css|html|wml|js|xml|txt|ppt|pdf|xls|xsl|doc|cvml)$'
-	                                   ,"!www docs"                   ,"660","apache:$group"],
+	                                   ,"!www docs"                   ,"660","$user_www:$group"],
 	['!www.*php\?'
-	                                   ,"!www docs mirrored"          ,"660","apache:$group"],
+	                                   ,"!www docs mirrored"          ,"660","$user_www:$group"],
 	['\/!www\/.*(jpg|png|gif|wbmp|swf|svg|ico)$'
-	                                   ,"!www graphix"                ,"660","apache:$group"],
-	['\/!www\/.*(asf|avi)$'            ,"!www video"                  ,"660","apache:$group"],
-	['\/!www\/.*(gz|bz2|tar|zip)$'     ,"!www archive"                ,"660","apache:$group"],
-	['\/!www\/.*$'                     ,"!www unknown"                ,"660","apache:$group"],
+	                                   ,"!www graphix"                ,"660","$user_www:$group"],
+	['\/!www\/.*(asf|avi)$'            ,"!www video"                  ,"660","$user_www:$group"],
+	['\/!www\/.*(gz|bz2|tar|zip)$'     ,"!www archive"                ,"660","$user_www:$group"],
+	['\/!www\/.*$'                     ,"!www unknown"                ,"660","$user_www:$group"],
 	
 	
-	['_dsgn\/.*\.dsgn$'                ,"_dsgn dsgn"                  ,"660","apache:$group"],
-	['_type\/.*\.type$'                ,"_type type"                  ,"660","apache:$group"],
-	['_type\/.*\.cml_type$'            ,"_type cml_type"              ,"660","apache:$group"],
-	['_type\/.*\.cml_gen$'             ,"_type cml_gen"               ,"660","apache:$group"],
+	['_dsgn\/.*\.dsgn$'                ,"_dsgn dsgn"                  ,"660","$user_www:$group"],
+	['_type\/.*\.type$'                ,"_type type"                  ,"660","$user_www:$group"],
+	['_type\/.*\.cml_type$'            ,"_type cml_type"              ,"660","$user_www:$group"],
+	['_type\/.*\.cml_gen$'             ,"_type cml_gen"               ,"660","$user_www:$group"],
 	
-	['_mdl\/.*\.xlng$'                 ,"xlng"                        ,"660","apache:$group"],
-	['_mdl.*\.xsgn$'                   ,"xsgn"                        ,"660","apache:$group"],
-	['_mdl\/.*mdl$'                    ,"?mdl"                        ,"660","apache:$group"],
+	['_mdl\/.*\.xlng$'                 ,"xlng"                        ,"660","$user_www:$group"],
+	['_mdl.*\.xsgn$'                   ,"xsgn"                        ,"660","$user_www:$group"],
+	['_mdl\/.*mdl$'                    ,"?mdl"                        ,"660","$user_www:$group"],
 	
-	['_mdl\/.*cron$'                   ,"_mdl cron"                   ,"660","apache:$group"],
+	['_mdl\/.*cron$'                   ,"_mdl cron"                   ,"660","$user_www:$group"],
  
 	['_data\/USRM\/.*'                 ,"local _data USRM"            ,"",""],
-	['_data\/.*'                       ,"local _data"                 ,"660","apache:$group"],
+	['_data\/.*'                       ,"local _data"                 ,"660","$user_www:$group"],
 	
 	# old admin
-	['!admin/.*\.mdl$'                 ,"local !admin *.mdl","460","apache:$group"],
-	['!admin/.*\.pl$'                  ,"local !admin *.pl","570","apache:$group"],
-	['!admin'                          ,"local !admin","460","apache:$group"],
+	['!admin/.*\.mdl$'                 ,"local !admin *.mdl","460","$user_www:$group"],
+	['!admin/.*\.pl$'                  ,"local !admin *.pl","570","$user_www:$group"],
+	['!admin'                          ,"local !admin","460","$user_www:$group"],
 	
-	['^version\.[0-9]+$'               ,"version"                     ,"660","apache:$group"],
-	['^version$'                       ,"version"                     ,"660","apache:$group"],
+	['^version\.[0-9]+$'               ,"version"                     ,"660","$user_www:$group"],
+	['^version$'                       ,"version"                     ,"660","$user_www:$group"],
 	
-	['\.key$'                          ,"key file"                    ,"660","apache:$group"],
+	['\.key$'                          ,"key file"                    ,"660","$user_www:$group"],
 	
-	['^\.'                             ,"unknown"                     ,"","cyclone3:$group"],
+	['^\.'                             ,"unknown"                     ,"","$user:$group"],
 );
 
 
