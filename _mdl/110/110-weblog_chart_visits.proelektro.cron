@@ -1,0 +1,121 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+
+
+use SVGraph::2D::lines;
+use SVGraph::2D::columns;
+use Utils::datetime;
+use DateTime;
+
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	
+	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
+	
+	if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
+	$env{domain}=$tom::H unless exists $env{domain};
+
+	my $graf=SVGraph::2D::lines->new(
+		title		=>	"Visitors on $env{domain} (monthly)",
+		x		=>	750,
+		y		=>	300,
+		show_legend		=>	1, # show legend of Columns
+		show_points		=>	1,
+		show_lines_smooth	=>	1,
+		show_areas		=>	1,
+		show_areas_opacity	=>	0.8,
+		grid_y_scale_minimum		=>	000.00, # zaciname od nuly
+		show_grid_x		=>	1,
+	);
+
+	my %lines;
+
+	my $ft = DateTime->now->subtract( months => 1 );
+	my $tt = DateTime->last_day_of_month( year => $ft->year, month => $ft->month );
+	my $daycount = $tt->day;
+
+	my $fd = $ft->year.'-'.sprintf('%02s', $ft->month).'-01';
+	my $td = $tt->year.'-'.sprintf('%02s', $tt->month).'-'.sprintf('%02s', $tt->day);
+
+	for my $day ( 1 .. $daycount )
+	{
+		my $d = $ft->year.'-'.sprintf('%02s', $ft->month).'-'.sprintf('%02s', $day);
+		$graf->addRowLabel( $d );
+	}
+
+	# Najprv si ho hashu naplnim domeny z ktorych uzivatel prisiel
+	my $sql = "
+	SELECT
+		substring(reqdatetime, 1, 10) as datum,
+		referer_SE as SE,
+		count(*) as cnt
+	FROM
+		a110_weblog_rqs
+	WHERE
+		query_URL='http://www.proelektro.sk/kampan' and
+		reqtype='B' and
+		reqdatetime>='$fd' and reqdatetime<='$td'
+	GROUP BY
+		substring(reqdatetime, 1, 10),
+		referer_SE
+	ORDER BY
+		substring(reqdatetime, 1, 10) ASC,
+		referer_SE ASC;
+	";
+	my $db0 = $main::DB{stats}->Query( $sql );
+
+	my %days; my %lines;
+	while ( my %db0_line = $db0->fetchhash )
+	{
+		my $day = $db0_line{datum};
+		my $se = $db0_line{SE}; $se = 'neznamy' unless $se;
+		my $visits = $db0_line{cnt};
+
+		$lines{$se} = $graf->addColumn( title => $se ) unless $lines{$se};
+		$lines{$se}->addData( $day, $visits );
+	}
+
+	eval
+	{
+		alarm(15);
+		$env{hour_file}="kampan_month.svg" unless $env{hour_file};
+		open HND,">$cron::P/_data/".$env{hour_file} or die "$!";
+		my $out=$graf->prepare();
+		$out=~s|[\s]+</text>|</text>|g;
+		print HND $out;
+		alarm(0);
+	};
+
+	return 1;
+}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
