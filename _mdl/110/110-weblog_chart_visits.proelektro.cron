@@ -20,7 +20,7 @@ sub execute
 	$env{domain}=$tom::H unless exists $env{domain};
 
 	my $graf=SVGraph::2D::lines->new(
-		title		=>	"Visitors on $env{domain} (monthly)",
+		title		=>	"Visits on $env{domain} (monthly)",
 		x		=>	750,
 		y		=>	300,
 		show_legend		=>	1, # show legend of Columns
