@@ -20,7 +20,7 @@ sub execute
 	$env{domain}=$tom::H unless exists $env{domain};
 
 	my $graf=SVGraph::2D::lines->new(
-		title		=>	"Visits on $env{domain} (monthly)",
+		title		=>	"Visits in campaign on $env{domain} (last 31 days)",
 		x		=>	750,
 		y		=>	300,
 		show_legend		=>	1, # show legend of Columns
@@ -34,16 +34,17 @@ sub execute
 
 	my %lines;
 
-	my $ft = DateTime->now->subtract( months => 1 );
-	my $tt = DateTime->last_day_of_month( year => $ft->year, month => $ft->month );
-	my $daycount = $tt->day;
+	my $ft = DateTime->now()->subtract( days => 31 );
+	my $tt = DateTime->now();
+	my $daycount = 31;
 
 	my $fd = $ft->year.'-'.sprintf('%02s', $ft->month).'-01';
 	my $td = $tt->year.'-'.sprintf('%02s', $tt->month).'-'.sprintf('%02s', $tt->day);
 
 	for my $day ( 1 .. $daycount )
 	{
-		my $d = $ft->year.'-'.sprintf('%02s', $ft->month).'-'.sprintf('%02s', $day);
+		my $nt = $ft->add( days => 1 );
+		my $d = $nt->year.'-'.sprintf('%02s', $nt->month).'-'.sprintf('%02s', $nt->day);
 		$graf->addRowLabel( $d );
 	}
 
@@ -51,7 +52,7 @@ sub execute
 	my $sql = "
 	SELECT
 		substring(reqdatetime, 1, 10) as datum,
-		referer_SE as SE,
+		substring_index(referer, '/', 3) as ref_domain,
 		count(*) as cnt
 	FROM
 		a110_weblog_rqs
@@ -61,10 +62,10 @@ sub execute
 		reqdatetime>='$fd' and reqdatetime<='$td'
 	GROUP BY
 		substring(reqdatetime, 1, 10),
-		referer_SE
+		substring_index(referer, '/', 3)
 	ORDER BY
 		substring(reqdatetime, 1, 10) ASC,
-		referer_SE ASC;
+		substring_index(referer, '/', 3) ASC;
 	";
 	my $db0 = $main::DB{stats}->Query( $sql );
 
@@ -72,18 +73,18 @@ sub execute
 	while ( my %db0_line = $db0->fetchhash )
 	{
 		my $day = $db0_line{datum};
-		my $se = $db0_line{SE}; $se = 'neznamy' unless $se;
+		my $dom = $db0_line{ref_domain}; $dom = 'neznamy' unless $dom; $dom =~ s|^http://||;
 		my $visits = $db0_line{cnt};
 
-		$lines{$se} = $graf->addColumn( title => $se ) unless $lines{$se};
-		$lines{$se}->addData( $day, $visits );
+		$lines{$dom} = $graf->addColumn( title => $dom ) unless $lines{$dom};
+		$lines{$dom}->addData( $day, $visits );
 	}
 
 	eval
 	{
 		alarm(15);
-		$env{hour_file}="kampan_month.svg" unless $env{hour_file};
-		open HND,">$cron::P/_data/".$env{hour_file} or die "$!";
+		$env{month_file}="kampan_month.svg" unless $env{month_file};
+		open HND,">$cron::P/_data/".$env{month_file} or die "$!";
 		my $out=$graf->prepare();
 		$out=~s|[\s]+</text>|</text>|g;
 		print HND $out;
@@ -93,29 +94,4 @@ sub execute
 	return 1;
 }
 
-
-
 1;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
