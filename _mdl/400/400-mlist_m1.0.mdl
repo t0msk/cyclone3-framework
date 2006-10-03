@@ -288,6 +288,7 @@ sub execute
 
 		while (my %db_line=$list->fetchhash())
 		{
+		     my $tmpArticleLength = length $db_line{full};
 			$XSGN{NULL}=undef;
 			$line_counter++;
 			if ($line_counter eq ($env{db_count}+1)) {main::_log("we have an exceeding line - allowing next page");last;}
@@ -311,6 +312,7 @@ sub execute
 			{
 				$XSGN{NULL}=$XSGN{LINE};
 			}
+			$XSGN{NULL}=~s|<%length%>|$tmpArticleLength|g;
 
 			# retrieving image
 			if ($db_line{xrelated}=~/<VAR id="a500" value="(.*?)" \/>/)
