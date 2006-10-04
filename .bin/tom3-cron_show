@@ -52,7 +52,7 @@ require $p."/local.conf";
 print "\n";
 print color 'bold yellow';
 my @crons;
-if (opendir (DIR1,$P."/.core/_config"))
+if (opendir (DIR1,$P."/_type/"))
 {
  foreach (sort readdir DIR1)
  {
@@ -96,7 +96,7 @@ foreach my $cron(sort @crons)
  
  # GLOBAL
  my $file_data;
- open(HND0,"<$TOM::P/.core/_config/cron.".$cron.".cml") || die "cannot open $!";
+ open(HND0,"<$TOM::P/.core/_config/cron.".$cron.".cml");# || die "cannot open $!";
  while (my $line=<HND0>){$file_data.=$line} 
  print color 'reset bold green';
  cir($file_data);
