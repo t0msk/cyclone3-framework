@@ -3,6 +3,7 @@ use Term::ANSIColor;
 
 BEGIN {require "/www/TOM/.bin/tom3-init";}
 
+use Cwd;
 use Cyclone::files;
 
 # zaklad prav
@@ -184,17 +185,13 @@ sub remove
 
 #my $start;
 
-my $this=`pwd`;
-print "-$this";
+my $this=Cwd::abs_path();;
+print "-$this\n";
 
 if ($FORM{t} || $FORM{r})
 {
-#	&exit unless $this;
 	&exit unless $this=~/^$P/;
-	#$P=$this;
 	$plus=($this=~/$P\/(.*)/)[0];
-	
-	
 }
 else
 {
