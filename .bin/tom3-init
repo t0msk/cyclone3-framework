@@ -20,7 +20,7 @@ BEGIN
 	print "initializing...";
 	$main::p=`pwd`;$main::p=~s|\n||g;
 	print " p:".$main::p;
-	$main::P="/www/TOM";
+	$main::P=$TOM::P;
 	$TOM::P=$main::P;
 	print " P:".$main::P."\n";
 	unshift @INC,$main::P."/.core/.libs";
