@@ -76,6 +76,12 @@ sub execute
 		$XSGN{TMP} =~s|<%name%>|$files[$i]{name}|g;
 		$XSGN{TMP} =~s|<%mime%>|$files[$i]{mime}|g;
 
+		#temporary 'extension' field solution
+		if($files[$i]{name}=~/^.*?\.([a-zA-Z0-9]*?)$/){
+			my $var=$1;
+			$XSGN{TMP} =~s|<%extension%>|$var|g;
+		}
+
 		$XSGN{TMP} =~s|<%size%>|$files[$i]{size}|g;
 		my $size_kb = sprintf("%0.2f", ($files[$i]{size} / 1024));
 		$XSGN{TMP} =~s|<%size_kb%>|$size_kb|g;
