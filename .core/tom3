@@ -290,7 +290,7 @@ while ($req->Accept() >= 0)
 		main::_log("REQUEST TERM (lives ".
 			(time()-$TOM::time_start).
 			" secs, $tom::count requests) PID:$$ domain:$tom::H ($@ $!)",3,"pub.mng",1);
-		$tom::HUP=1;
+		$tom::HUP=2; # po dobehnuti tohto requestu na 100% exitnem
 	};
 	
 	$main::request_code=Utils::vars::genhash(8);
@@ -2540,7 +2540,10 @@ while ($req->Accept() >= 0)
 	
 	$t_request->close();
 	
-	if (($tom::HUP) && (($main::time_current-$TOM::time_start)<30))
+	if (
+			($tom::HUP) && (($main::time_current-$TOM::time_start)<30) ||
+			($tom::HUP == 2)
+		)
 	{
 		main::_log("SHUTDOWN (error mode) (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
 		Tomahawk::shutdown();
