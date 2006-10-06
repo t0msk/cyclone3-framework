@@ -41,7 +41,7 @@ sub sql_insert
 	}
 
 	my $id = $result->insertid;
-	main::_log("Inserted new ID: $id",0);
+	main::_log("Updated/Created ID: $id",0);
 	return $id;
 }
 
@@ -73,8 +73,10 @@ sub sql_get
 	delete $args{group};
 
 # Where (Spracuje Dodatocne Argumenty)
-	my $where = "";
-	my $first = "WHERE";
+	my $where ="";
+	my $first = "WHERE ";
+	$first =$first.$args{where}."AND " if defined($args{where});
+	delete $args{where};
 	foreach my $key (keys %args)
 	{
 		my $value = $args{$key};

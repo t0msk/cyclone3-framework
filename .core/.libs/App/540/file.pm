@@ -296,7 +296,7 @@ sub set
 		main::_log("App::540::file::set : SQL insert failed",1);
 		return -2;
 }
-	main::_log("App::540::file::set : File duplicated ID: $id",0);
+	main::_log("App::540::file::set : Updated ID: $id",0);
 	return $id;
 }
 1;
