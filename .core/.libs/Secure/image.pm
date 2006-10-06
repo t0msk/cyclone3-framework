@@ -1,4 +1,7 @@
 package Secure::image;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
 use strict;
 use Image::Magick;
 
