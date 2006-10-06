@@ -49,9 +49,10 @@ sub _log_lite
 	if ($TOM::path_log)
 	{
 		$filename=$TOM::path_log;
-		if ($tom::Pm && $get[4]==2) {$filename.='/'.$tom::Hm}
-		elsif ($get[4]==1) {$filename.='/'.$tom::H}
-		$filename.='/';
+		if ($get[4]==1) {} # global
+		elsif ($tom::Pm && $get[4]==2) {$filename.='/'.$tom::Hm} # master
+		elsif ($tom::H) {$filename.='/'.$tom::H} # local
+		$filename.='/'; # global
 		if (! -e $filename){mkdir $filename;}
 	}
 	else

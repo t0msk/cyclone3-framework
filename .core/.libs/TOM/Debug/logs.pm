@@ -61,9 +61,10 @@ sub _log
 	if ($TOM::path_log)
 	{
 		$file=$TOM::path_log;
-		if ($tom::Pm && $get[4]==2) {$file.='/'.$tom::Hm}
-		elsif ($get[4]==1) {$file.='/'.$tom::H}
-		$file.='/';
+		if ($get[4]==1) {} # global
+		elsif ($tom::Pm && $get[4]==2) {$file.='/'.$tom::Hm} # master
+		elsif ($tom::H) {$file.='/'.$tom::H} # local
+		$file.='/'; # global
 		if (! -e $file){mkdir $file;}
 	}
 	else
@@ -74,9 +75,7 @@ sub _log
 	}
 	
 	$file.="[".$TOM::hostname."]"."$date{year}-$date{mom}-$date{mday}";
-	$file.=".".$get[3].".log";
 	$file.="-$date{hour}" if $TOM::DEBUG_log_file_frag; # rozlisenie na hodiny
-	
 	
 	my $msg=
 		"[".sprintf ('%06d', $$).";$main::request_code]".
