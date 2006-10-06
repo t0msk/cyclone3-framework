@@ -45,9 +45,22 @@ sub _log_lite
 		(sprintf ('%02d', $date{sec}),sprintf ('%02d', $date{min}),sprintf ('%02d', $date{hour}),sprintf ('%02d', $date{mday}),sprintf ('%02d', $date{mom}+1),$date{year}+1900);
 	
 	
-	my $filename=$tom::P."/_logs/";
-	$filename=$tom::Pm."/_logs/" if ($tom::Pm && $get[4]==2);
-	$filename=$TOM::P."/_logs/" if $get[4]==1;
+	my $filename;
+	if ($TOM::path_log)
+	{
+		$filename=$TOM::path_log;
+		if ($tom::Pm && $get[4]==2) {$filename.='/'.$tom::Hm}
+		elsif ($get[4]==1) {$filename.='/'.$tom::H}
+		$filename.='/';
+		if (! -e $filename){mkdir $filename;}
+	}
+	else
+	{
+		$filename=$tom::P."/_logs/";
+		$filename=$tom::Pm."/_logs/" if ($tom::Pm && $get[4]==2);
+		$filename=$TOM::P."/_logs/" if $get[4]==1;
+	}
+	
 	$filename.="[".$TOM::hostname."]"."$date{year}-$date{mom}-$date{mday}";
 	$filename.=".".$get[3].".log";
 	

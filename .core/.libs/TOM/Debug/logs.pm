@@ -57,10 +57,24 @@ sub _log
 	my %date=Utils::datetime::ctodatetime(time,format=>1);
 	
 	
-	my $file=$tom::P."/_logs/";
-	$file=$tom::Pm."/_logs/" if ($tom::Pm && $get[4]==2);
-	$file=$TOM::P."/_logs/" if $get[4]==1;
+	my $file;
+	if ($TOM::path_log)
+	{
+		$file=$TOM::path_log;
+		if ($tom::Pm && $get[4]==2) {$file.='/'.$tom::Hm}
+		elsif ($get[4]==1) {$file.='/'.$tom::H}
+		$file.='/';
+		if (! -e $file){mkdir $file;}
+	}
+	else
+	{
+		$file=$tom::P."/_logs/";
+		$file=$tom::Pm."/_logs/" if ($tom::Pm && $get[4]==2);
+		$file=$TOM::P."/_logs/" if $get[4]==1;
+	}
+	
 	$file.="[".$TOM::hostname."]"."$date{year}-$date{mom}-$date{mday}";
+	$file.=".".$get[3].".log";
 	$file.="-$date{hour}" if $TOM::DEBUG_log_file_frag; # rozlisenie na hodiny
 	
 	
