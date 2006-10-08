@@ -11,7 +11,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 #use SVN::Repos;
 #use SVN::Fs;
 
-our $svn_info=`/usr/lobal/bin/svn info $TOM::P/.core` || `/usr/bin/svn info $TOM::P/.core`;
+our $svn_info=`/usr/local/bin/svn info $TOM::P/.core` || `/usr/bin/svn info $TOM::P/.core`;
 
 if ($svn_info=~/Revision: (\d+)/)
 {
