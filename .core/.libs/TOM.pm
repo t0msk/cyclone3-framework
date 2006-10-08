@@ -48,6 +48,10 @@ BEGIN
 	mkdir $TOM::InlineDIR if (! -e $TOM::InlineDIR);
 	
 	$main::time_current=time();
+	
+	# hlavna konfiguracia
+	require $TOM::P."/.core/_config.sg/TOM.conf";
+	require $TOM::P."/.core/_config/TOM.conf";
 }
 
 
@@ -75,9 +79,6 @@ konfigurácie:
 use TOM::Lite;
 use TOM::Engine;
 
-# hlavna konfiguracia
-require $TOM::P."/.core/_config.sg/TOM.conf";
-require $TOM::P."/.core/_config/TOM.conf";
 
 
 1;
