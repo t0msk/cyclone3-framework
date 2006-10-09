@@ -16,96 +16,61 @@ use utf8;
 use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-
-=head1 DEPENDS
-
-knižnice:
-
- DBI
-
-=cut
-
-use DBI;
-
-
-# [@sql] compare ([$table1], [$table2])
-# $table1 - SQL syntax for source table (SHOW CREATE TABLE ..]
-# $table2 - SQL syntax for destination table (SHOW CREATE TABLE ..]
-# @sql - Array of SQL commands that alters table2 to table1
-
-	my @deadapps=qw/
-		a300
-		a400
-		a500
-		a8020
-		a820
-		a900
-		a110
-		a150
-		a1D0
-		a1A0
-		a1B0
-		a410
-		a430
-			/;
-
-	my %keyfields=
-	(
-	# 'ID'			=>	"UNSIGNED",
-	'domain'		=>	"varchar(32) NOT NULL default ''",
-	'domain_sub'	=>	"varchar(64) NOT NULL default ''",
-	'lng'			=>	"char(3) NOT NULL default ''",
-	'active'		=>	"char(1) NOT NULL default 'N'",
-	'time_insert'	=>	"int(10) unsigned NOT NULL default '0'",
-	'time_start'	=>	"int(10) unsigned NOT NULL default '0'",
-	'time_from'	=>	"int(10) unsigned NOT NULL default '0'",
-	'time_end'		=>	"int(10) unsigned default NULL",
-	'time_use'		=>	"int(10) unsigned default NULL",
-	);
-
+use TOM::Database::SQL::file;
 
 =head1 FUNCTIONS
 
-=head2 compare()
+=head2 compare_create_table($table0,$table1)
 
-Vracia pole SQL QUERIES
+Vracia pole SQL príkazov ktoré musia byť vykonané aby sa štruktúra druhej tabuľky zmenila tak aby obidve tabuľky boli identické.
 
- ...
+ CREATE TABLE `database`.`table` (
+ 	`ID` ...
+ )
 
 =cut
 
-sub compare
+sub compare_create_table
 {
+	my $t=track TOM::Debug(__PACKAGE__."::compare_create_table()");
+	
 	my @return;
-
+	
 	my $type0;
 	my @fields0a;
 	my %fields0h;
 	my %keys0h;
 	my $create0 = shift;
-
+	
 	# Destination Table
 	my $type1;
 	my @fields1a;
 	my %fields1h;
 	my %keys1h;
 	my $create1 = shift;
-
+	
 	# Get Table Name
-	$create1 =~ /CREATE TABLE `(.*?)`/;
-	my $tbl  =$1;
-
+	$create1 =~ /CREATE TABLE `(.*?)`\.`(.*?)`/;
+	my $database=$1;
+	my $tbl  =$2;
+	
+	main::_log("database='$database' table='$tbl'");
+	
 	$create0=~s|^.*\(|\(|;
 	$create1=~s|^.*\(|\(|;
-
+	
 	if ($create0)
 	{
+		
+		
 		$create0=~s|\((.*)\)(.*)|\1|s;
-		$type0=$2;$type0=~/TYPE=(\w+)/;$type0=$1;
-
+		$type0=$2;$type0=~/(TYPE|ENGINE)=(\w+)/;$type0=$2;
+		
 		$create1=~s|\((.*)\)(.*)|\1|s;
-		$type1=$2;$type1=~/TYPE=(\w+)/;$type1=$1;
-
+		$type1=$2;$type1=~/(TYPE|ENGINE)=(\w+)/;$type1=$2;
+		
+		main::_log("table0 type='$type0' table1 type='$type1'");
+		
 		foreach my $line(split('\n',$create0))
 		{
 			next unless $line;1 while ($line=~s|^ ||);
@@ -114,7 +79,7 @@ sub compare
 				$line=~s|,$||;$line=~s|`(.*?)` (.*)|\2|;my $name=$1;
 				push @fields0a, $name;$fields0h{$name}=$line; next
 			};
-
+			
 			$line=~s|,$||;
 			if ($line=~/^PRIMARY KEY/)
 			{
@@ -128,7 +93,7 @@ sub compare
 				$line=~/`(.*?)`/;$keys0h{$1}=$line;
 			}
 		}
-
+		
 		foreach my $line(split('\n',$create1))
 		{
 			next unless $line;1 while ($line=~s|^ ||);
@@ -137,13 +102,13 @@ sub compare
 				$line=~s|,$||;$line=~s|`(.*?)` (.*)|\2|;my $name=$1;
 				push @fields1a, $name;$fields1h{$name}=$line; next
 			};
-
+			
 			$line=~s|,$||;
 			if ($line=~/^PRIMARY KEY/)
 			{
 				$keys1h{PRIMARY}=$line;
 			}
-
+			
 			elsif ($line=~/FOREIGN KEY/)
 			{
 			}
@@ -152,26 +117,30 @@ sub compare
 				$line=~/`(.*?)`/;$keys1h{$1}=$line;
 			}
 		}
-
+		
 		if ($type0 ne $type1)
 		{
 			my $exec="ALTER TABLE $tbl TYPE=$type0";
 			push @return,$exec;
-#			if ($FORM{e}){if ($db1=$DB{$tab}->Query($exec))
+			main::_log("add SQL '$exec'");
 			$type1=$type0;
 		}
-
+		
+		
+		my $t_fields=track TOM::Debug("table0 fields");
 		my $count;
 		my $field;
 		foreach my $field(@fields0a)
 		{
+			main::_log("field='$field'");
 			if (!$fields1h{$field})
 			{
+				main::_log("not exists in table1");
 				my $plus;
 				if (!$count){$plus.=" FIRST";}
 				elsif ($fields0a[$count-1]){$plus.=" AFTER $fields0a[$count-1]";}
-				my $exec="ALTER TABLE $tbl ADD $field $fields0h{$field}$plus";
-
+				my $exec="ALTER TABLE `$database`.`$tbl` ADD $field $fields0h{$field}$plus";
+				main::_log("add SQL '$exec'");
 				push @return,$exec;
 				$fields1h{$field}=$fields0h{$field};
 				$count++;
@@ -179,71 +148,177 @@ sub compare
 			}
 			if ($fields1h{$field} ne $fields0h{$field})
 			{
-				my $plus;
-				my $exec="ALTER TABLE $tbl CHANGE `$field` `$field` $fields0h{$field}$plus";
-				push @return,$exec;
-				$fields1h{$field}=$fields0h{$field};
-			}
-			$count++;
-		}
-		@fields1a=@fields0a;
-
-		my $count;
-		foreach my $key(keys %keys0h)
-		{
-			if (!$keys1h{$key})
-			{
-				my $plus=$keys0h{$key};
-				my $exec="ALTER TABLE $tbl ADD $plus";
-				push @return,$exec;
-				$keys1h{$key}=$keys0h{$key};
-				next;
-			}
-			if ($keys1h{$key} ne $keys0h{$key})
-			{
-				my $plus=$keys0h{$key};
-
-				my $exec;
-				if ($key eq "PRIMARY")
+				main::_log("not equals");
+				if ($fields1h{$field}=~/collate/ && not $fields0h{$field}=~/collate/)
 				{
-					$exec="ALTER TABLE $tbl DROP PRIMARY KEY, ADD $plus";
+					main::_log("MySQL 4.0 -> 4.1, cancel (not defined collation in struct SQL file)");
 				}
 				else
 				{
-					$exec="ALTER TABLE $tbl DROP KEY $key, ADD $plus";
+					my $plus;
+					my $exec="ALTER TABLE `$database`.`$tbl` CHANGE `$field` `$field` $fields0h{$field}$plus";
+					main::_log("add SQL '$exec'");
+					push @return,$exec;
+					$fields1h{$field}=$fields0h{$field};
 				}
-				push @return,$exec;
-				$keys1h{$key}=$keys0h{$key};
-				next;
 			}
+			$count++;
 		}
-
+		
 		if (not $tbl=~/_attrs(_arch|)$/)
 		{
-			foreach my $key(keys %keys1h)
+			foreach my $key(keys %fields1h)
 			{
-				if (!$keys0h{$key})
+				if (!$fields0h{$key})
 				{
-					my $exec="ALTER TABLE $tbl DROP INDEX `$key`";
+					my $exec="ALTER TABLE `$database`.`$tbl` DROP `$key`";
+					main::_log("add SQL '$exec'");
 					push @return,$exec;
 					delete $fields1h{$field};
 					next;
 				}
 			}
 		}
-
+		
+		@fields1a=@fields0a;
+		$t_fields->close();
+		
+		
+		my $t_keys=track TOM::Debug("table0 keys");
+		my $count;
+		foreach my $key(keys %keys0h)
+		{
+			main::_log("key='$key'");
+			if (!$keys1h{$key})
+			{
+				main::_log("not exists in table1");
+				my $plus=$keys0h{$key};
+				my $exec="ALTER TABLE `$database`.`$tbl` ADD $plus";
+				main::_log("add SQL '$exec'");
+				push @return,$exec;
+				$keys1h{$key}=$keys0h{$key};
+				next;
+			}
+			if ($keys1h{$key} ne $keys0h{$key})
+			{
+				main::_log("not equals '$keys0h{$key}'<=>'$keys1h{$key}'");
+				my $plus=$keys0h{$key};
+				my $exec;
+				if ($key eq "PRIMARY")
+				{
+					$exec="ALTER TABLE `$database`.`$tbl` DROP PRIMARY KEY, ADD $plus";
+				}
+				else
+				{
+					$exec="ALTER TABLE `$database`.`$tbl` DROP KEY $key, ADD $plus";
+				}
+				main::_log("add SQL '$exec'");
+				push @return,$exec;
+				$keys1h{$key}=$keys0h{$key};
+				next;
+			}
+		}
+		
+		if (not $tbl=~/_attrs(_arch|)$/)
+		{
+			foreach my $key(keys %keys1h)
+			{
+				if (!$keys0h{$key})
+				{
+					my $exec="ALTER TABLE `$database`.`$tbl` DROP INDEX `$key`";
+					main::_log("add SQL '$exec'");
+					push @return,$exec;
+					delete $fields1h{$field};
+					next;
+				}
+			}
+		}
+		
+		$t_keys->close();
+		
 		if ($type0 ne $type1)
 		{
-			my $exec="ALTER TABLE $tbl TYPE=$type0";
+			my $exec="ALTER TABLE `$database`.`$tbl` TYPE=$type0";
+			main::_log("add SQL '$exec'");
 		   push @return,$exec;
 		}
 	}
+	
+	$t->close();
 	return @return;
 };
+
+
+=head2 compare_database(%env)
+
+detekcia zoznamu aplikacii nachadzajucich sa v databaze a ich reinstalacia
+
+=cut
+
+sub compare_database
+{
+	my $database=shift;
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::compare_database($database)");
+	$env{'db_name'}=$database;
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'");
+	}
+	
+	my %output;
+	
+	if ($database eq 'TOM')
+	{
+		# zrusim pripadne predefinovanie handleru a nazvu databazy (to si precitam z TOM.sql a nemoze byt overridovane)
+		# hlavna databaza totiz moze byt len TOM a moze byt len v main handleri
+		$env{'db_h'}='main';
+		undef $env{'db_name'};
+		my %input=TOM::Database::SQL::file::install('TOM','-compare'=>1,'-compare_execute' => 0);
+		push @{$output{'ALTER'}}, @{$input{'ALTER'}} if $input{'ALTER'};
+	}
+	else
+	{
+		my %input=TOM::Database::SQL::file::install('_domain',
+			'db_name'=>$database,
+			'-compare'=>1,
+			'-compare_execute'=>0);
+		push @{$output{'ALTER'}}, @{$input{'ALTER'}} if $input{'ALTER'};
+	}
+	
+	# detekcia zoznamu aplikacii nachadzajucich sa v domene
+	foreach my $app (TOM::Database::SQL::get_database_applications($database,'db_h'=>$env{'db_h'}))
+	{
+		my %input=TOM::Database::SQL::file::install('a'.$app,
+			'db_name'=>$database,
+			'-compare'=>1,
+			'-compare_execute' => 0
+		) or die "can't install 'a$app' by TOM::Database::SQL::file::install";
+		push @{$output{'ALTER'}}, @{$input{'ALTER'}} if $input{'ALTER'};
+	}
+	
+	# zozbieram vsetky ALTER prikazy a vykonam ich az teraz,
+	foreach my $SQL_ALTER(@{$output{'ALTER'}})
+	{
+		main::_log("ALTER='$SQL_ALTER'");
+		if ($env{'-compare_execute'})
+		{
+			my $db=$main::DB{$env{'db_h'}}->Query($SQL_ALTER);
+			main::_log("executed, output='$db'");
+		}
+	}
+	
+	$t->close();
+}
+
+
 1;
 
-=head1 AUTHOR
+=head1 CONTRIB
 
 Peter Drahos
+Roman Fordinál
 
 =cut
