@@ -240,8 +240,7 @@ sub install
 		main::_log("ALTER='$SQL_ALTER'");
 		if ($env{'-compare_execute'})
 		{
-			my $db=$main::DB{$sql_header{'db_h'}}->Query($SQL_ALTER);
-			main::_log("executed, output='$db'");
+			my @eout=TOM::Database::SQL::execute($SQL_ALTER);
 		}
 	}
 	
@@ -322,12 +321,12 @@ sub install_table
 		my @out=TOM::Database::SQL::compare::compare_create_table($SQL,$SQL_real);
 		foreach my $SQL_ALTER (@out)
 		{
+			$SQL_ALTER.=" -- db_h=".$header->{'db_h'};
 			main::_log("ALTER='$SQL_ALTER'");
 			push @{$output{'ALTER'}}, $SQL_ALTER;
 			if ($env{'-compare_execute'})
 			{
-				my $db=$main::DB{$header->{'db_h'}}->Query($SQL_ALTER);
-				main::_log("executed, output='$db'");
+				my @eout=TOM::Database::SQL::execute($SQL_ALTER);
 			}
 		}
 		

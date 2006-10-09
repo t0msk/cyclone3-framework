@@ -305,8 +305,7 @@ sub compare_database
 		main::_log("ALTER='$SQL_ALTER'");
 		if ($env{'-compare_execute'})
 		{
-			my $db=$main::DB{$env{'db_h'}}->Query($SQL_ALTER);
-			main::_log("executed, output='$db'");
+			my @eout=TOM::Database::SQL::execute($SQL_ALTER);
 		}
 	}
 	

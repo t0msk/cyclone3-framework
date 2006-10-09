@@ -87,6 +87,49 @@ sub show_create_table
 	return $SQL;
 }
 
+
+=head2 execute($SQL,'db_h'=>'main')
+
+Vykoná SQL príkaz a vráti pole hodnot
+
+ @output=(return code, affected rows, ...)
+
+=cut
+
+sub execute
+{
+	my $SQL=shift;
+	my %env=shift;
+	my $t=track TOM::Debug(__PACKAGE__."::execute()");
+	
+	my @output;
+	
+	if ($SQL=~/-- db_h=([a-zA-Z0-9]*)/)
+	{
+		$env{'db_h'}=$1;
+		main::_log("db_h changed by comment to '$env{db_h}'");
+	}
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	TOM::Database::connect::multi($env{'db_h'}) unless $main::DB{$env{'db_h'}};
+	
+	my $sth=$main::DB{$env{'db_h'}}->Query($SQL);
+	
+	my @output=(
+		$main::DB{$env{'db_h'}}->info(),
+		$sth->affectedrows(),
+		$main::DB{$env{'db_h'}}->errmsg()
+	);
+	
+	main::_log("output errmsg=".$output[2]);
+	main::_log("output affectedrows=".$output[1]);
+	main::_log("output info=".$output[0]);
+	
+	$t->close();
+	return @output;
+}
+
 =head1 SYNOPSIS
 
 Nainstalovat globalnu databazu aj s datami (ak je uz nainstalovana, aktualizovat)
