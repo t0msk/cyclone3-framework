@@ -116,7 +116,8 @@ sub GetUsers
 			dl.pkdlFirmaMu.GetFirmaMuKodHodnota("dl".firma_id,'Dopr.fakt') AS mu_doprava,
 			dl.pkdlFirmaMu.GetFirmaMuKodHodnota("dl".firma_id,'ZFA') AS proforma,
 			dl.pkdlFirmaMu.GetFirmaMuKodHodnota("dl".firma_id,'preprava') AS mu_prepocet_prepravy,
-			dl.pkdlFirmaMu.GetFirmaMuKodHodnota("dl".firma_id,'Firma') AS mu_firma
+			dl.pkdlFirmaMu.GetFirmaMuKodHodnota("dl".firma_id,'Firma') AS mu_firma,
+			dl.pkdlFirmaMu.GetFirmaMuKodHodnota("dl".firma_id,'PAR') AS mu_partner
 		FROM
 			dl.dl_view_firma "dl",
 			dl.sof_view_firma "sof",
@@ -172,8 +173,9 @@ sub GetUsers
 		$hash{'mu_proforma'}=$arr[28];
 		$hash{'mu_prepocet_prepravy'}=$arr[29];
 		$hash{'mu_firma'}=$arr[30];
+		$hash{'mu_partner'}=$arr[31];
 		
-		main::_log("output[$i] ID='$arr[0]' name='$arr[1]' parent_ID='$arr[25]' mu_admin='$arr[26]'");
+		main::_log("output[$i] ID='$arr[0]' name='$arr[1]' parent_ID='$arr[25]' mu_admin='$arr[26]' mu_firma='$arr[30]' mu_partner='$arr[31]'");
 		
 		push @data,{%hash};
 		$i++;
@@ -233,7 +235,8 @@ sub GetUser
 			dl.pkdlFirmaMu.GetFirmaMuKodHodnota("dl".firma_id,'Dopr.fakt') AS mu_doprava,
 			dl.pkdlFirmaMu.GetFirmaMuKodHodnota("dl".firma_id,'ZFA') AS proforma,
 			dl.pkdlFirmaMu.GetFirmaMuKodHodnota("dl".firma_id,'preprava') AS mu_prepocet_prepravy,
-			dl.pkdlFirmaMu.GetFirmaMuKodHodnota("dl".firma_id,'Firma') AS mu_firma
+			dl.pkdlFirmaMu.GetFirmaMuKodHodnota("dl".firma_id,'Firma') AS mu_firma,
+			dl.pkdlFirmaMu.GetFirmaMuKodHodnota("dl".firma_id,'PAR') AS mu_partner
 		FROM
 			dl.dl_view_firma "dl",
 			dl.sof_view_firma "sof",
@@ -245,7 +248,6 @@ sub GetUser
 			$where
 	};    # Prepare and execute SELECT
 	
-	#$sql=~s|\$where|$where|;
 	
 	my $db0 = $main::DB{spin}->prepare($sql);
 	die "$DBI::errstr" unless $db0;
@@ -287,6 +289,7 @@ sub GetUser
 		$data{'mu_proforma'}=$arr[28];
 		$data{'mu_prepocet_prepravy'}=$arr[29];
 		$data{'mu_firma'}=$arr[30];
+		$data{'mu_partner'}=$arr[31];
 	}
 	
 	foreach (sort keys %data){main::_log("output $_='$data{$_}'");}
