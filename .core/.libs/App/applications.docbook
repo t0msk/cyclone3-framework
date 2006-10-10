@@ -25,8 +25,23 @@
 
     <itemizedlist>
       <listitem>
-        <para><emphasis role="bold">0</emphasis> - Nezaradené, lokálne a
-        generické</para>
+        <para><emphasis role="bold">0</emphasis> - Lokálne a generické
+        aplikácie</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold">010</emphasis> - Local App0</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">011</emphasis> - Local App1</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">020</emphasis> - Generic App0 podľa
+            DATA a API štandard</para>
+          </listitem>
+        </itemizedlist>
       </listitem>
 
       <listitem>
@@ -34,8 +49,8 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">100</emphasis> - IAdm &amp;
-            ITst</para>
+            <para><emphasis role="bold">100</emphasis> - IAdm &amp; ITst
+            (privilegovaný mód)</para>
           </listitem>
 
           <listitem>
@@ -49,7 +64,8 @@
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">130</emphasis> - Mailsystem</para>
+            <para><emphasis role="bold">130</emphasis> - Internal
+            mailsystem</para>
           </listitem>
 
           <listitem>
@@ -61,7 +77,8 @@
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">160</emphasis> - Xrelated</para>
+            <para><emphasis role="bold">160</emphasis> - Xrelated
+            <emphasis>nerealizované</emphasis></para>
           </listitem>
 
           <listitem>
@@ -89,7 +106,8 @@
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">1C0</emphasis> - TypeID</para>
+            <para><emphasis role="bold">1C0</emphasis> -
+            <emphasis>nevyužívané</emphasis></para>
           </listitem>
 
           <listitem>
@@ -99,7 +117,7 @@
       </listitem>
 
       <listitem>
-        <para><emphasis role="bold">2</emphasis> - Design</para>
+        <para><emphasis role="bold">2</emphasis> - Webpage publishing</para>
 
         <itemizedlist>
           <listitem>
@@ -107,11 +125,13 @@
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">21</emphasis> - basetyp</para>
+            <para><emphasis role="bold">210</emphasis> - Sitemap (mapa
+            stránky)</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">22</emphasis> - TMP's</para>
+            <para><emphasis role="bold">22</emphasis> -
+            <emphasis>nevyužívané</emphasis></para>
           </listitem>
 
           <listitem>
@@ -130,10 +150,15 @@
 
           <listitem>
             <para><emphasis role="bold">26</emphasis> - Import design</para>
+
+            <para>Importovanie častí iných webov. (napr. wiki)</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">27</emphasis> - Import datas</para>
+            <para><emphasis role="bold">27</emphasis> - Import data</para>
+
+            <para>Generovanie chunkov dokumentu na základe importu iných
+            dát.</para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -147,7 +172,8 @@
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">310</emphasis> - GOpass</para>
+            <para><emphasis role="bold">310</emphasis> - GOpass
+            <emphasis>nerealizované</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -157,19 +183,23 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">400</emphasis> - News</para>
+            <para><emphasis role="bold">400</emphasis> - News
+            <emphasis>deprecated</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">410</emphasis> - Ankety</para>
+            <para><emphasis role="bold">410</emphasis> - Ankety
+            <emphasis>deprecated</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">420</emphasis> - Articles</para>
+            <para><emphasis role="bold">420</emphasis> - Articles
+            <emphasis>nerealizované</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">430</emphasis> - Tickets</para>
+            <para><emphasis role="bold">430</emphasis> - Tickets
+            <emphasis>nerealizované</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -179,20 +209,23 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">500</emphasis> - Photogallery</para>
+            <para><emphasis role="bold">500</emphasis> - Photogallery
+            <emphasis>deprecated</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">510</emphasis> - Videogallery</para>
+            <para><emphasis role="bold">510</emphasis> - Videogallery
+            <emphasis>nerealizované</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">520</emphasis> - Audiogallery</para>
+            <para><emphasis role="bold">520</emphasis> - Audiogallery
+            <emphasis>nerealizované</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">530</emphasis> - Document
-            gallery</para>
+            <para><emphasis role="bold">530</emphasis> - Document gallery
+            <emphasis>nerealizované</emphasis></para>
           </listitem>
 
           <listitem>
@@ -200,7 +233,8 @@
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">550</emphasis> - Mediagallery</para>
+            <para><emphasis role="bold">550</emphasis> - Mediagallery
+            <emphasis>nerealizované</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -210,23 +244,28 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">600</emphasis> - E-Shop</para>
+            <para><emphasis role="bold">600</emphasis> - E-Shop
+            <emphasis>nerealizované</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">610</emphasis> - Burza</para>
+            <para><emphasis role="bold">610</emphasis> - Burza
+            <emphasis>nerealizované</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">620</emphasis> - Inzercia</para>
+            <para><emphasis role="bold">620</emphasis> - Inzercia
+            <emphasis>nerealizované</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">630</emphasis> - GoCredit</para>
+            <para><emphasis role="bold">630</emphasis> - GoCredit
+            <emphasis>nerealizované</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">640</emphasis> - SMSpay</para>
+            <para><emphasis role="bold">640</emphasis> - SMSpay
+            <emphasis>nerealizované</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -236,7 +275,8 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">700</emphasis> - Groupware</para>
+            <para><emphasis role="bold">700</emphasis> - Groupware
+            <emphasis>nedokončené</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -250,7 +290,8 @@
 
             <itemizedlist>
               <listitem>
-                <para><emphasis role="bold">8000</emphasis> - Mallist</para>
+                <para><emphasis role="bold">8000</emphasis> - Mallist
+                <emphasis>nerealizované</emphasis></para>
               </listitem>
 
               <listitem>
@@ -260,12 +301,12 @@
 
               <listitem>
                 <para><emphasis role="bold">8020</emphasis> - Internal
-                mailboxes</para>
+                mailboxes <emphasis>nerealizované</emphasis></para>
               </listitem>
 
               <listitem>
                 <para><emphasis role="bold">8030</emphasis> - External
-                mailboxes</para>
+                mailboxes <emphasis>nerealizované</emphasis></para>
               </listitem>
             </itemizedlist>
           </listitem>
@@ -276,15 +317,17 @@
             <itemizedlist>
               <listitem>
                 <para><emphasis role="bold">8100</emphasis> - Internal
-                messenger</para>
+                messenger <emphasis>nerealizované</emphasis></para>
               </listitem>
 
               <listitem>
-                <para><emphasis role="bold">8110</emphasis> - ICQ</para>
+                <para><emphasis role="bold">8110</emphasis> - ICQ
+                <emphasis>nerealizované</emphasis></para>
               </listitem>
 
               <listitem>
-                <para><emphasis role="bold">8120</emphasis> - IRC</para>
+                <para><emphasis role="bold">8120</emphasis> - IRC
+                <emphasis>nerealizované</emphasis></para>
               </listitem>
             </itemizedlist>
           </listitem>
@@ -294,7 +337,8 @@
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">830</emphasis> - chat</para>
+            <para><emphasis role="bold">830</emphasis> - chat
+            <emphasis>nerealizované</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -305,17 +349,17 @@
         <itemizedlist>
           <listitem>
             <para><emphasis role="bold">900</emphasis> - bridge to banner
-            system</para>
+            system <emphasis>obsolete</emphasis></para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">910</emphasis> - internal banner
-            system</para>
+            system <emphasis>nerealizované</emphasis></para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">920</emphasis> - external banner
-            system</para>
+            system <emphasis>nerealizované</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
