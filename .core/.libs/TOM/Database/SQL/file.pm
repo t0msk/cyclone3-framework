@@ -119,6 +119,7 @@ sub get_sqlfile_chunks
 		}
 		if ($chunk_ok)
 		{
+			main::_log("chunk length(".(length($chunk)).") bytes");
 			push @chunks, $chunk;
 		}
 	}
