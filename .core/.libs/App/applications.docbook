@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
+<article lang="sk">
+  <title>Aplikácie Cyclone3</title>
+
+  <articleinfo>
+    <releaseinfo>$Rev$</releaseinfo>
+
+    <authorgroup>
+      <corpauthor>Comsultia, s.r.o.</corpauthor>
+
+      <author>
+        <firstname>Roman</firstname>
+
+        <surname>Fordinál</surname>
+
+        <email>roman.fordinal@comsultia.com</email>
+      </author>
+    </authorgroup>
+  </articleinfo>
+
+  <section>
+    <title>Zoznam aplikácií</title>
+
+    <itemizedlist>
+      <listitem>
+        <para><emphasis role="bold">0</emphasis> - Nezaradené, lokálne a
+        generické</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">1</emphasis> - Core</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold">100</emphasis> - IAdm &amp;
+            ITst</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">110</emphasis> - Štatistický a
+            monitorovací subsystém</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">120</emphasis> - Zdroje
+            (editor)</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">130</emphasis> - Mailsystem</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">140</emphasis> - Logging system</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">150</emphasis> - Cache system</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">160</emphasis> - Xrelated</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">170</emphasis> -
+            <emphasis>nevyužívané</emphasis></para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">180</emphasis> -
+            <emphasis>nevyužívané</emphasis></para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">190</emphasis> -
+            <emphasis>nevyužívané</emphasis></para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">1A0</emphasis> -
+            <emphasis>nevyužívané</emphasis></para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">1B0</emphasis> - Banning system</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">1C0</emphasis> - TypeID</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">1D0</emphasis> - Imports</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">2</emphasis> - Design</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold">20</emphasis> - logotypy</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">21</emphasis> - basetyp</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">22</emphasis> - TMP's</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">23</emphasis> - design boxes</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">24</emphasis> - navigation,
+            menu</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">25</emphasis> - dynamic design
+            (kalendar,...)</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">26</emphasis> - Import design</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">27</emphasis> - Import datas</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">3</emphasis> - USRM</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold">300</emphasis> - domain USRM</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">310</emphasis> - GOpass</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">4</emphasis> - Content</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold">400</emphasis> - News</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">410</emphasis> - Ankety</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">420</emphasis> - Articles</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">430</emphasis> - Tickets</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">5</emphasis> - Galleries</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold">500</emphasis> - Photogallery</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">510</emphasis> - Videogallery</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">520</emphasis> - Audiogallery</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">530</emphasis> - Document
+            gallery</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">540</emphasis> - Filegallery</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">550</emphasis> - Mediagallery</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">6</emphasis> - eCommerce</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold">600</emphasis> - E-Shop</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">610</emphasis> - Burza</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">620</emphasis> - Inzercia</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">630</emphasis> - GoCredit</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">640</emphasis> - SMSpay</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">7</emphasis> - netOffice</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold">700</emphasis> - Groupware</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">8</emphasis> - Communication</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold">80</emphasis> - email</para>
+
+            <itemizedlist>
+              <listitem>
+                <para><emphasis role="bold">8000</emphasis> - Mallist</para>
+              </listitem>
+
+              <listitem>
+                <para><emphasis role="bold">8010</emphasis> -
+                Newsletter/Direct mail</para>
+              </listitem>
+
+              <listitem>
+                <para><emphasis role="bold">8020</emphasis> - Internal
+                mailboxes</para>
+              </listitem>
+
+              <listitem>
+                <para><emphasis role="bold">8030</emphasis> - External
+                mailboxes</para>
+              </listitem>
+            </itemizedlist>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">81</emphasis> - messengers</para>
+
+            <itemizedlist>
+              <listitem>
+                <para><emphasis role="bold">8100</emphasis> - Internal
+                messenger</para>
+              </listitem>
+
+              <listitem>
+                <para><emphasis role="bold">8110</emphasis> - ICQ</para>
+              </listitem>
+
+              <listitem>
+                <para><emphasis role="bold">8120</emphasis> - IRC</para>
+              </listitem>
+            </itemizedlist>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">820</emphasis> - forum</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">830</emphasis> - chat</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">9</emphasis> - Marketing</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold">900</emphasis> - bridge to banner
+            system</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">910</emphasis> - internal banner
+            system</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">920</emphasis> - external banner
+            system</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">A</emphasis> -
+        <emphasis>nevyužívané</emphasis></para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">B</emphasis> - Dictionaries</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold">B00</emphasis> - multilanguage
+            dictionary</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+    </itemizedlist>
+  </section>
+</article>
