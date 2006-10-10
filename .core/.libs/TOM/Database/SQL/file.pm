@@ -253,6 +253,7 @@ sub _chunk_prepare
 {
 	my $chunk=shift;
 	my $header=shift;
+	my $t=track TOM::Debug(__PACKAGE__."::_chunk_prepare");
 	
 	$$chunk=~s|^\s+||;
 	$$chunk=~s|\s+$||;
@@ -275,6 +276,23 @@ sub _chunk_prepare
 	
 	$$chunk=~s|TABLE|TABLE IF NOT EXISTS|;
 	
+	TOM::Database::connect::multi($header->{'db_h'}) unless $main::DB{$header->{'db_h'}};
+	
+	my $version=$main::DB{$header->{'db_h'}}->getserverinfo();
+		$version=~s|^([\d]+)\.([\d]+)\.([\d]+)$|\1.\2|;
+	main::_log("MySQL version on handler '$header->{'db_h'}' ='$version'");
+	
+	if ($version < $header->{'version'})
+	{
+		main::_log("converting SQL from $header->{'version'} to $version");
+		$$chunk=~s|ENGINE=|TYPE=|;
+		$$chunk=~s|character set (.*?) ||g;
+		$$chunk=~s|collate (.*?)_bin|binary|g;
+		$$chunk=~s|collate (.*?) ||g;
+		$$chunk=~s| DEFAULT CHARSET=(utf8\|ascii)||;
+	}
+	
+	$t->close();
 	return 1;
 }
 
@@ -298,20 +316,13 @@ sub install_table
 	$SQL=~/TABLE(.*?) `(.*?)`.`(.*?)`/;
 	my $database=$2;
 	my $table=$3;
-	main::_log("database='$database ' table='$table' in db_h='$header->{'db_h'}'");
+	main::_log("database='$database' table='$table' in db_h='$header->{'db_h'}'");
 	
 	TOM::Database::connect::multi($header->{'db_h'}) unless $main::DB{$header->{'db_h'}};
 	
-	if ($debug)
-	{
-		foreach my $line(split('\n',$SQL))
-		{
-			main::_log("$line");
-		}
-	}
+	if ($debug){foreach my $line(split('\n',$SQL)){main::_log("$line");}}
 	
-	my $db=$main::DB{$header->{'db_h'}}->Query($SQL);
-	main::_log("output='$db'");
+	my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$header->{'db_h'});
 	
 	if ($env{'-compare'})
 	{
