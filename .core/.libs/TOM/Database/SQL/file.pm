@@ -279,8 +279,8 @@ sub _chunk_prepare
 	TOM::Database::connect::multi($header->{'db_h'}) unless $main::DB{$header->{'db_h'}};
 	
 	my $version=$main::DB{$header->{'db_h'}}->getserverinfo();
-		$version=~s|^([\d]+)\.([\d]+)\.([\d]+)$|\1.\2|;
-	main::_log("MySQL version on handler '$header->{'db_h'}' ='$version'");
+		$version=~s|^([\d]+)\.([\d]+)\.(.*)$|\1.\2|;
+	main::_log("MySQL version on handler '$header->{'db_h'}'='$version'");
 	
 	if ($version < $header->{'version'})
 	{
