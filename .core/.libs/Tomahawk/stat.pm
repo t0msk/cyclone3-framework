@@ -28,6 +28,7 @@ sub rqs
 my $filename="$TOM::P/_logs/weblog/weblog.$tom::Fyear-$tom::Fmom-$tom::Fmday.$tom::Fhour.$tom::Fmin.".$$.".log";
 
 open HND_weblog, ">>".$filename;
+chmod (0666,$filename);
 
 print HND_weblog <<"HEAD";
 <request>
