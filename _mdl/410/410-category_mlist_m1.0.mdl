@@ -190,7 +190,8 @@ sub execute
 				while(my %db0_line=$db0->fetchHash())
 				{
 					if($catChildren){$catChildren.=",";}
-					$catChildren.="'$db0_line{IDentity}'";
+					$catChildren.="'$db0_line{ID}'";
+					
 				}
 
 				main::_log("
@@ -201,7 +202,7 @@ sub execute
 						IDcategory IN ($catChildren)
 						AND domain='$env{db_domain}'
 						AND ((a410.lng='$env{lng}') || (a410.lng IS NULL))
-						AND active='$env{db_item_active}'
+						AND active!='D'
 						$tmplng
 				");
 				my $db1 = $main::DB{main}->Query("
@@ -212,12 +213,12 @@ sub execute
 						IDcategory IN ($catChildren)
 						AND domain='$env{db_domain}'
 						AND ((a410.lng='$env{lng}') || (a410.lng IS NULL))
-						AND active='$env{db_item_active}'
+						AND active!='D'
 						$tmplng
 				");
 				if(my %db1_line=$db1->fetchHash())
 				{
-					$db_line{item_count}=$db1_line{item_count};
+					$db_line{count}=$db1_line{item_count};
 				}
 				else
 				{
@@ -328,7 +329,7 @@ sub execute
 				((IDcategory='') || (IDcategory IS NULL))
 				AND domain='$env{db_domain}'
 				AND ((a410.lng='$env{lng}') || (a410.lng IS NULL))
-				AND active='$env{db_item_active}'
+				AND active!='D'
 				$tmplng
 		");
 		if(my %db1_line=$db1->fetchHash())
