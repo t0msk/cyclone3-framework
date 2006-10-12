@@ -4,7 +4,7 @@
 
 -- --------------------------------------------------
 
-CREATE TABLE `a210_page_cat` (
+CREATE TABLE `/*db_name*/`.`/*app*/_page_cat` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
@@ -19,7 +19,7 @@ CREATE TABLE `a210_page_cat` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `a210_page_cat` (
+CREATE TABLE `/*db_name*/`.`/*app*/_page_cat_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
