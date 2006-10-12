@@ -15,23 +15,34 @@ sub execute
  $env{max_days}=$env{max_days}*24*60*60;
  $env{max_days2}=31*24*60*60;
 
-
- if (opendir (DIR,$CRON::P))
- {
-	my @files=readdir DIR;
-	foreach my $file(@files)
+	
+	my $dir_step;
+	
+	my @files;
+	opendir (DIR, $TOM::P);
+	push @files, readdir DIR;
+	my $dir=$TOM::P;
+	
+	while (my $file=shift @files)
 	{
+		
 		if (($file ne ".")&&($file ne ".."))
 		{
-			
 			next if $file =~/!media/;
 			next if $file =~/!www/;
 			next if $file =~/_data/;
+			next if $file =~/_debug/;
+			next if $file =~/\.svn/;
+			next if $file =~/_type/;
+			next if $file =~/_mdl/;
+			next if $file =~/\.core/;
+			next if $file =~/\.libs/;
+			next if $file =~/httpd/;
 			
-			if ((-d $CRON::P."/".$file)&&(($file=~/![\w\.\-]+$/)||($file=~/\/[\w\.\-]+$/)||($file=~/_logs$/)))
+			if ((-d $dir."/".$file)&&(($file=~/![\w\.\-]+$/)||($file=~/\/[\w\.\-]+$/)||($file=~/_logs$/)))
 			{
 				main::_log("opening dir $file");
-				if (opendir (DIR1,$CRON::P."/".$file))
+				if (opendir (DIR1,$dir."/".$file))
 				{foreach (readdir DIR1)
 				{
 					if (($_ ne ".")&&($_ ne "..")){push @files,$file."/".$_;}}
@@ -40,27 +51,29 @@ sub execute
 			
 			if ($file=~/\.log$/)
 			{
+				main::_log("$dir/$file");
 				
-				
-				if ($file=~/httpd/)
+				my $var=(stat $dir."/".$file)[9];
+				if (($cron::time_current-$var)>$env{max_days})
 				{
-				}
-				else #($file=~/\.(cron|pub|a).*?\.log$/)
-				{
-					my $var=(stat $CRON::P."/".$file)[9];
-					if (($cron::time_current-$var)>$env{max_days})
-					{
-						main::_log("$file old ".($cron::time_current-$var).", removing...");
-						unlink $CRON::P."/".$file;
-					}
+					main::_log("$file old ".($cron::time_current-$var).", removing...");
+					unlink $dir."/".$file;
 				}
 			}
 		}
+		
+		my $count=@files;
+		if (!$dir_step && !$count)
+		{
+			opendir (DIR2, $TOM::path_log);
+			push @files, readdir DIR2;
+			$dir=$TOM::path_log;
+			$dir_step++;
+		}
+		
 	}
-	closedir DIR;
- }
-
-
+	
+	
  return 1}
 
 1;
