@@ -43,7 +43,7 @@ sub execute
 	$env{db_500}=$TOM::DB{main}{name} unless $env{db_500};
 
 	my $tmplng;
-	$tmplng="AND lng LIKE '$env{db_lng}'" if(exists($env{db_lng}));
+	$tmplng="AND ((lng LIKE '$env{db_lng}') OR (lng IS NULL) OR (lng=''))" if(exists($env{db_lng}));
 
 	main::_log("
 		SELECT
@@ -121,7 +121,7 @@ sub execute
 				{ main::_log('forcing items deletion'); }
 				else
 				{
-					main::_log('unforced children deletion');
+					main::_log('unforced items deletion');
 					$XSGN{TMP}=$XSGN{RESULT_failure_has_items};
 					$forceDeletion=0;
 				}
