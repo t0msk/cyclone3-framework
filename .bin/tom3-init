@@ -10,7 +10,6 @@ BEGIN
 	$TOM::engine="bin";
 	require "/www/TOM/.core/.libs/TOM.pm";
 	$TOM::engine_ready=1;
-	$TOM::hostname=`hostname`;chomp($TOM::hostname);
 	$TOM::core_uname_n=$TOM::hostname;
 	$CRON::core_uname_n=$TOM::hostname;
 	
@@ -18,7 +17,7 @@ BEGIN
 	print "[Cyclone3 BIN Control]\n";
 	print color 'reset blue';
 	print "initializing...";
-	$main::p=`pwd`;$main::p=~s|\n||g;
+	chomp ($main::p=`pwd`);
 	print " p:".$main::p;
 	$main::P=$TOM::P;
 	$TOM::P=$main::P;
