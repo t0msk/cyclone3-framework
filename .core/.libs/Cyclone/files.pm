@@ -192,6 +192,7 @@ our @setit_F=
 	
 	
 	['_dsgn\/.*\.dsgn$'                ,"_dsgn dsgn"                  ,"660","$user_www:$group"],
+	['_dsgn\/.*\.template$'            ,"_dsgn template"              ,"660","$user_www:$group"],
 	['_type\/.*\.type$'                ,"_type type"                  ,"660","$user_www:$group"],
 	['_type\/.*\.cml_type$'            ,"_type cml_type"              ,"660","$user_www:$group"],
 	['_type\/.*\.cml_gen$'             ,"_type cml_gen"               ,"660","$user_www:$group"],

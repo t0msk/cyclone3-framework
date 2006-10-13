@@ -1416,7 +1416,6 @@ while ($req->Accept() >= 0)
 			next if not defined $env0{value};
 			# PODMIENKY
 			
-			#main::_log(0,"!$env0{id}!$env0{value}!$env0{global}!");
 			
 			if (($env0{id} eq "dsgn")&& not(($env0{value} eq $tom::DSGN) && (!$env0{global})))
 			{
@@ -1436,6 +1435,30 @@ while ($req->Accept() >= 0)
 				#$H=new Net::DOC(%main::HEADER || %main::HTML_HEADER);
 				$H->i($main::TEMPLATE || $main::HTML_TEMP);
 				$H->prepare();
+				next;
+			}
+			
+			if ($env0{id} eq "template" && $env0{value})
+			{
+				local $main::TEMPLATE='';
+				my $var=$tom::P;
+				if (($tom::Pm)&&($env0{global} eq "2")){$var=$tom::Pm;}
+				if ($env0{global} eq "1"){$var=$TOM::P;}
+				
+				main::_log("Load template $var '".$env0{value}."/".$env0{global}."'");
+				
+				#$H->
+				open (TMPL,'<'.$var.'/_dsgn/'.$env0{'value'}.'.template') || die "can't open template $env0{value}/$env0{global}";
+				while (my $line=<TMPL>)
+				{
+					$main::TEMPLATE.=$line;
+				}
+				
+				main::_log("Loaded template with length(".(length($main::TEMPLATE)).")");
+				
+				undef $H->{'OUT'}{'BODY'};
+				$H->i($main::TEMPLATE);
+				
 				next;
 			}
 			
