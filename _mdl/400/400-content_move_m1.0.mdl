@@ -12,10 +12,10 @@ sub execute
 {
 	my %env=@_;
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
-	
+
 	$env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
 	$env{db_400}=$TOM::DB{main}{name} unless $env{db_400};
-	
+
 	my $db=$main::DB{main}->Query("
 		UPDATE
 			$env{db_400}.a400
@@ -24,15 +24,15 @@ sub execute
 		WHERE
 			IDcategory='$env{db_ID_from}'
 	");
-	
+
 	main::_log("UPDATE
-			$env{db_400}.IDcategory
+			$env{db_400}.a400
 		SET
 			IDcategory='$env{db_ID_to}'
 		WHERE
 			IDcategory='$env{db_ID_from}'
 	");
-			
+
 	return 1;
 }
 1;
