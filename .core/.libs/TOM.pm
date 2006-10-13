@@ -22,17 +22,21 @@ BEGIN
 	# debug
 	$main::debug=1 if $ENV{'TERM'};
 	# hostname
-	$TOM::hostname=`hostname`;chomp($TOM::hostname);
-	#
+	chomp ($TOM::hostname=`hostname`);
+	# Engine
 	$TOM::engine='tom' unless $TOM::engine;
-	# cesta domain
-	$tom::P=`pwd` unless $ENV{SCRIPT_FILENAME} && do
-	{$tom::P=$ENV{SCRIPT_FILENAME};$tom::P=~s|(.*)/.*?/||;$tom::P=$1;};
-	$tom::P=~s|(.*)/.*?\n$|\1|;
+	
+	# cesta k aktualnemu adresaru a domene
+	chomp($tom::p=`pwd`);
+	$tom::P=$tom::p;
+	$tom::P=~s|^(.*)/!www$|\1|;
+	undef $tom::P unless -e $tom::P.'/local.conf'; # zrusit $tom::P ak tu nieje local.conf
+	
 	$tom::SCRIPT_NAME=$0;
 	$tom::fastcgi=1 if $tom::SCRIPT_NAME=~/(tom|fcgi|fpl)$/; # zistujem ci som fastcgi script
 	# cesta core
 	$TOM::P="/www/TOM"; # vzdy, bez diskusii
+	#$tom::P=~s|^.*?/!|$TOM::P/!|; # zrusenie aliasovanej linky, nahradenej za /www/TOM
 	# cesta libs
 	unshift @INC,$TOM::P."/.core/.libs"; # na zaciatok
 	unshift @INC,$tom::P."/.libs"; # na zaciatok
