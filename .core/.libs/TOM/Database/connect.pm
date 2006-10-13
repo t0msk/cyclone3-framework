@@ -18,7 +18,7 @@ sub all
 	
 	main::_log("connecting main ($TOM::DB{main}{host} $TOM::DB{main}{name} $TOM::DB{main}{user})");
 	
-	return undef unless $main::DB{main} = Mysql->Connect
+	$main::DB{'main'} = Mysql->Connect
 	(
 		$TOM::DB{main}{host},
 		$TOM::DB{main}{name},
@@ -26,12 +26,17 @@ sub all
 		$TOM::DB{main}{pass}
 	);
 	
+	if (!$main::DB{'main'})
+	{
+		die "Connection to MySQL database not established: ".Mysql->errmsg()."\n";
+	}
+	
 	$main::DB{main}->{dbh}->{mysql_auto_reconnect}=1;
 	
 	TOM::Database::connect::multi(@databases);
 	# spetna kompatiblita
 	# TODO: [Aben] Vyhodit spetnu kompatibilitu na $main::DBH
-	$main::DBH=$main::DB{main}; 
+	$main::DBH=$main::DB{'main'};
 	return 1;
 }
 
@@ -100,13 +105,18 @@ sub multi
 		{
 			main::_log("connecting '$handler' ('$TOM::DB{$handler}{host}' '$TOM::DB{$handler}{name}' '$TOM::DB{$handler}{user}' '****')");
 			
-			return undef unless $main::DB{$handler} = Mysql->Connect
+			$main::DB{$handler} = Mysql->Connect
 			(
 				$TOM::DB{$handler}{host},
 				$TOM::DB{$handler}{name},
 				$TOM::DB{$handler}{user},
 				$TOM::DB{$handler}{pass},
 			);
+			
+			if (!$main::DB{$handler})
+			{
+				die "Connection to MySQL database not established: ".Mysql->errmsg()."\n";
+			}
 			
 			$main::DB{$handler}->{'dbh'}->{'mysql_auto_reconnect'}=1;
 		}
