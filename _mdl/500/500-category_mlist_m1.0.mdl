@@ -432,6 +432,22 @@ sub execute
 						$lastLevel=$category_hash{$db_line{ID}}{level};
 					}
 				}
+				my $db1 = $main::DB{main}->Query("
+					SELECT
+						COUNT(ID) AS item_count
+					FROM $env{db_500}.a500
+					WHERE
+						((IDcategory='') || (IDcategory IS NULL))
+						AND active!='D'
+				");
+				if(my %db1_line=$db1->fetchHash())
+				{
+					$XSGN{TMP} =~ s|<%itemcount_root%>|$db1_line{item_count}|g;
+				}
+				else
+				{
+					main::_log("db error: ".$main::DB{main}->errstr());
+				}
 			}
 		}
 		else
