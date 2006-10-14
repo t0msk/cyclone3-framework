@@ -233,22 +233,37 @@ sub execute
 					}
 				}
 			}
-
+			
 			my $hash=$imageHashes{$tmpFormat};
 			
 			$env{db_ID}=~/^(....)/i;
 			my $diskSubDir=$1;
-
+			
 			my $diskPath="../!media/500/$diskSubDir/";
-			system ("mkdir $diskPath");
-
+			main::_log("creating directory '$diskPath' from '".`pwd`."' ");
+			
+			if (! -e '../!media/500')
+			{
+				die "can't create media directory '../!media/500' $!" unless mkdir '../!media/500';
+			}
+			
+			chmod(0777,'../!media/500');
+			
+			if (! -e $diskPath)
+			{
+				die "can't create media directory $diskPath $!" unless mkdir $diskPath;
+			}
+			chmod(0777,$diskPath);
+			#my $ret=mkdir $diskPath;
+			#main::_log("ret=$ret !=$!");
+			
 			my $dirPath=$tom::H_500."/".$diskSubDir;
-
+			
 			my $fileName = $diskPath . $hash . "-" . $tmpFormat . "." . $main::FORM{'file_'.$tmpFormat.'_extension'};
 			#temporary extension override
 			my $fileName = $diskPath . $hash . "-" . $tmpFormat . ".jpg";
 			main::_log("filename: " . $fileName);
-
+			
 			if(open (HND,">$fileName"))
 			{
 				main::_log("opened handle");
@@ -298,7 +313,7 @@ sub execute
 			}
 			else
 			{
-				main::_log("failed to open: $fileName");
+				die "can't open $fileName $!";
 			}
 
 			#write the file to disk and append to database
