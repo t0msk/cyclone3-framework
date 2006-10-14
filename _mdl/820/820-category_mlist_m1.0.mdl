@@ -191,8 +191,8 @@ sub execute
 						COUNT(ID) AS item_count
 					FROM $env{db_820}.a820
 					WHERE
-						((IDcategory='') || (IDcategory IS NULL))
-						AND ((a820.lng='$env{lng}') || (a820.lng IS NULL))
+						((IDcategory='') OR (IDcategory IS NULL))
+						AND ((a820.lng='$env{lng}') OR (a820.lng IS NULL))
 						AND active!='D'
 				");
 				if(my %db2_line=$db2->fetchHash())
