@@ -1,0 +1,152 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+our $authors = 'nemsak@webcom.sk';
+use strict;
+
+use TOM::Utils::charindex;
+
+sub execute
+{
+	my %env=@_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	my %out;
+
+	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
+	$env{db_410}="TOM" unless $env{db_410};
+
+	$env{db_domain}=$tom::Hm unless $env{db_domain};
+
+	my $tmplng;
+	$tmplng="AND lng LIKE '$env{db_lng}'" if(exists($env{db_lng}));
+
+	if($env{db_ID_from} ne $env{db_ID_to}){
+		my $tmpCatFromExists=1;
+		my $tmpCatToExists=1;
+
+		if($env{db_ID_from}){
+			$tmpCatFromExists=0;
+
+			main::_log("
+				SELECT
+					ID
+				FROM
+					$env{db_410}.a410_category
+				WHERE
+					((domain='$env{db_domain}') OR (domain IS NULL))
+					AND ID='$env{db_ID_from}'
+					$tmplng
+			");
+
+			my $db0=$main::DB{main}->Query("
+				SELECT
+					ID
+				FROM
+					$env{db_410}.a410_category
+				WHERE
+					((domain='$env{db_domain}') OR (domain IS NULL))
+					AND ID='$env{db_ID_from}'
+					$tmplng
+			");
+			if($db0)
+			{
+				if($db0->FetchRow())
+				{
+					$tmpCatFromExists=1;
+				}
+			}
+			if(!$tmpCatFromExists){
+				main::_log('FAILURE: source does not exist');
+				$XSGN{TMP}=$XSGN{'RESULT_failure_source-missing'};
+				return 1;
+			}
+		}
+
+		if($env{db_ID_to}){
+			$tmpCatToExists=0;
+
+			main::_log("
+				SELECT
+					ID
+				FROM
+					$env{db_410}.a410_category
+				WHERE
+					((domain='$env{db_domain}') OR (domain IS NULL))
+					AND ID='$env{db_ID_to}'
+					$tmplng
+			");
+
+			my $db0=$main::DB{main}->Query("
+				SELECT
+					ID
+				FROM
+					$env{db_410}.a410_category
+				WHERE
+					((domain='$env{db_domain}') OR (domain IS NULL))
+					AND ID='$env{db_ID_to}'
+					$tmplng
+			");
+			if($db0)
+			{
+				if($db0->FetchRow())
+				{
+					$tmpCatToExists=1;
+				}
+			}
+			if(!$tmpCatToExists){
+				main::_log('FAILURE: destination does not exist');
+				$XSGN{TMP}=$XSGN{'RESULT_failure_destination-missing'};
+				return 1;
+			}
+		}
+
+		if($tmpCatFromExists&&$tmpCatToExists){
+			main::_log("
+				UPDATE
+					$env{db_410}.a410
+				SET
+					IDcategory='$env{db_ID_to}'
+				WHERE
+					((domain='$env{db_domain}') OR (domain IS NULL))
+					AND IDcategory='$env{db_ID_from}'
+					$tmplng
+			");
+
+			my $db0=$main::DB{main}->Query("
+				UPDATE
+					$env{db_410}.a410
+				SET
+					IDcategory='$env{db_ID_to}'
+				WHERE
+					((domain='$env{db_domain}') OR (domain IS NULL))
+					AND IDcategory='$env{db_ID_from}'
+					$tmplng
+			");
+			if($db0){
+				main::_log('SUCCESS');
+				$XSGN{TMP}=$XSGN{'RESULT_success'};
+			}else{
+				main::_log('FAILURE: could not move');
+				$XSGN{TMP}=$XSGN{'RESULT_failure_move'};
+			}
+		}
+	}else{
+		main::_log('FAILURE: from equals to');
+		$XSGN{TMP}=$XSGN{'RESULT_failure_from-equals-to'};
+	}
+
+	return 1;
+}
+1;
