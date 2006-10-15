@@ -119,7 +119,8 @@ sub execute
 	my @output=(
 		$main::DB{$env{'db_h'}}->info(),
 		$sth->affectedrows(),
-		$main::DB{$env{'db_h'}}->errmsg()
+		$main::DB{$env{'db_h'}}->errmsg(),
+		$sth
 	);
 	
 	main::_log("output errmsg=".$output[2]);
