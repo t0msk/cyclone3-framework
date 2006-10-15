@@ -47,7 +47,7 @@ sub execute
 
 	main::_log("
 		SELECT
-			ID
+			ID,IDcharindex
 		FROM
 			$env{db_820}.a820_category
 		WHERE
@@ -58,7 +58,7 @@ sub execute
 	#no limit - we may want to delete all the language versions at once
 	my $db1=$main::DB{main}->Query("
 		SELECT
-			ID
+			ID,IDcharindex
 		FROM
 			$env{db_820}.a820_category
 		WHERE
@@ -67,9 +67,13 @@ sub execute
 	");
 	if($db1)
 	{
-		if($db1->FetchRow())
+		if(my %db1_hash=$db1->FetchHash())
 		{
 			my $hasChildren;
+
+			my @childrenArray;
+
+			push @childrenArray, $env{'db_ID'};
 
 			my $db2=$main::DB{main}->Query("
 				SELECT
@@ -77,14 +81,22 @@ sub execute
 				FROM
 					$env{db_820}.a820_category
 				WHERE
-					ID LIKE '$env{db_ID}%'
+					IDcharindex LIKE '$db1_hash{IDcharindex}%'
 					AND ID NOT LIKE '$env{db_ID}'
 					$tmplng
 			");
 			if($db2->NumRows())
 			{
 				$hasChildren=1;
+				while(my %db2_hash=$db2->FetchHash())
+				{
+					push @childrenArray, $db2_hash{'ID'};
+				}
 			}
+
+			my $categoryString=join ", ",@childrenArray;
+
+			main::_log('children categories:'.$categoryString);
 
 			my $hasItems;
 
@@ -94,7 +106,7 @@ sub execute
 				FROM
 					$env{db_820}.a820
 				WHERE
-					IDcategory LIKE '$env{db_ID}%'
+					IDcategory IN ($categoryString)
 					AND active!='D'
 					$tmplng
 			");
