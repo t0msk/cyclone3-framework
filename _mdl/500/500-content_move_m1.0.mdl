@@ -1,0 +1,166 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+our $authors = 'nemsak@webcom.sk';
+use strict;
+
+use TOM::Utils::charindex;
+
+sub execute
+{
+	my %env=@_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	my %out;
+
+	$env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+	$env{db_500}=$TOM::DB{main}{name} unless $env{db_500};
+
+	my $tmplng;
+	$tmplng="AND lng LIKE '$env{db_lng}'" if(exists($env{db_lng}));
+
+	if($env{db_ID_from} ne $env{db_ID_to}){
+		my $tmpCatFromExists=1;
+		my $tmpCatToExists=1;
+
+		if($env{db_ID_from}){
+			$tmpCatFromExists=0;
+
+			main::_log("
+				SELECT
+					ID
+				FROM
+					$env{db_500}.a500_category
+				WHERE
+					ID='$env{db_ID_from}'
+					$tmplng
+			");
+
+			my $db0=$main::DB{main}->Query("
+				SELECT
+					ID
+				FROM
+					$env{db_500}.a500_category
+				WHERE
+					ID='$env{db_ID_from}'
+					$tmplng
+			");
+			if($db0)
+			{
+				if($db0->FetchRow())
+				{
+					$tmpCatFromExists=1;
+				}
+			}
+			if(!$tmpCatFromExists){
+				main::_log('FAILURE: source does not exist');
+				$XSGN{TMP}=$XSGN{'RESULT_failure_source-missing'};
+				return 1;
+			}
+		}
+
+		if($env{db_ID_to}){
+			$tmpCatToExists=0;
+
+			main::_log("
+				SELECT
+					ID
+				FROM
+					$env{db_500}.a500_category
+				WHERE
+					ID='$env{db_ID_to}'
+					$tmplng
+			");
+
+			my $db0=$main::DB{main}->Query("
+				SELECT
+					ID
+				FROM
+					$env{db_500}.a500_category
+				WHERE
+					ID='$env{db_ID_to}'
+					$tmplng
+			");
+			if($db0)
+			{
+				if($db0->FetchRow())
+				{
+					$tmpCatToExists=1;
+				}
+			}
+			if(!$tmpCatToExists){
+				main::_log('FAILURE: destination does not exist');
+				$XSGN{TMP}=$XSGN{'RESULT_failure_destination-missing'};
+				return 1;
+			}
+		}
+
+		if($tmpCatFromExists&&$tmpCatToExists){
+			#temporarily not using $tmplng - the old records are WITHOUT lng
+			main::_log("
+				UPDATE
+					$env{db_500}.a500_attrs
+				SET
+					IDcategory='$env{db_ID_to}'
+				WHERE
+					IDcategory='$env{db_ID_from}'
+			");
+			#temporarily not using $tmplng - the old records are WITHOUT lng
+			my $db0=$main::DB{main}->Query("
+				UPDATE
+					$env{db_500}.a500_attrs
+				SET
+					IDcategory='$env{db_ID_to}'
+				WHERE
+					IDcategory='$env{db_ID_from}'
+			");
+			if($db0){
+				#temporarily not using $tmplng - the old records are WITHOUT lng
+				main::_log("
+					UPDATE
+						$env{db_500}.a500
+					SET
+						IDcategory='$env{db_ID_to}'
+					WHERE
+						IDcategory='$env{db_ID_from}'
+				");
+				#temporarily not using $tmplng - the old records are WITHOUT lng
+				my $db1=$main::DB{main}->Query("
+					UPDATE
+						$env{db_500}.a500
+					SET
+						IDcategory='$env{db_ID_to}'
+					WHERE
+						IDcategory='$env{db_ID_from}'
+				");
+				if($db1){
+					main::_log('SUCCESS');
+					$XSGN{TMP}=$XSGN{'RESULT_success'};
+				}else{
+					main::_log('FAILURE: could not move formats');
+					$XSGN{TMP}=$XSGN{'RESULT_failure_move-formats'};
+				}
+			}else{
+				main::_log('FAILURE: could not move attrs');
+				$XSGN{TMP}=$XSGN{'RESULT_failure_move-attrs'};
+			}
+		}
+	}else{
+		main::_log('FAILURE: from equals to');
+		$XSGN{TMP}=$XSGN{'RESULT_failure_from-equals-to'};
+	}
+
+	return 1;
+}
+1;
