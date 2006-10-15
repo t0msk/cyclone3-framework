@@ -80,7 +80,8 @@ sub execute
 				UPDATE
 					$env{db_820}.a820_category
 				SET
-					name='$env{db_title}'
+					name='$env{db_title}',
+					time_change='".time()."'
 					$sqlAddon
 				WHERE
 					IDentity='$env{db_ID}'
@@ -93,7 +94,8 @@ sub execute
 				UPDATE
 					$env{db_820}.a820_category
 				SET
-					name='$env{db_title}'
+					name='$env{db_title}',
+					time_change='".time()."'
 					$sqlAddon
 				WHERE
 					IDentity='$env{db_ID}'
@@ -116,7 +118,7 @@ sub execute
 	$XSGN{TMP}=~s|<%IDname%>|$env{db_IDname}|g;
 	$XSGN{TMP}=~s|<%title%>|$env{db_title}|g;
 	$XSGN{TMP}=~s|<%description%>|$env{db_description}|g;
-	
+
 	return 1;
 }
 
