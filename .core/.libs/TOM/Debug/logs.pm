@@ -65,7 +65,7 @@ sub _log
 		elsif ($tom::Pm && $get[4]==2) {$file.='/'.$tom::Hm} # master
 		elsif ($tom::H) {$file.='/'.$tom::H} # local
 		$file.='/'; # global
-		if (! -e $file){mkdir $file;}
+		if (! -e $file){mkdir $file;chmod (0777,$file)}
 	}
 	else
 	{

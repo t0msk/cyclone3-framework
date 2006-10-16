@@ -53,7 +53,7 @@ sub _log_lite
 		elsif ($tom::Pm && $get[4]==2) {$filename.='/'.$tom::Hm} # master
 		elsif ($tom::H) {$filename.='/'.$tom::H} # local
 		$filename.='/'; # global
-		if (! -e $filename){mkdir $filename;}
+		if (! -e $filename){mkdir $filename;chmod (0777,$filename)}
 	}
 	else
 	{
