@@ -85,6 +85,8 @@ foreach (keys %main::ENV)
 	main::_log("'$_'='$main::ENV{$_}'");
 }
 
+main::_log("'tom::H_cookie'='$tom::H_cookie'");
+
 if (my %user=App::300::UserFind('login'=>$main::ENV{'USER'},'-activize'=>1))
 {
 	main::_log("query executed");
@@ -98,7 +100,7 @@ if (my %user=App::300::UserFind('login'=>$main::ENV{'USER'},'-activize'=>1))
 			open(AUTH,">".$TOM::P.'/_temp/auth-'.$main::user_md5.'-'.$main::pass_md5);
 			print AUTH $main::ENV{'HTTP_HOST'}.'-'.$main::ENV{'USER'};
 			close(AUTH);
-			exit();
+			print "0\n";
 		}
 		else
 		{
@@ -116,5 +118,5 @@ else
 	main::_log("query not executed");
 }
 
-exit(1);
+print "1\n";
 

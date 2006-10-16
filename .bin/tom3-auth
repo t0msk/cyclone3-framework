@@ -5,12 +5,17 @@ $pass_md5=md5_hex($ENV{'PASS'});
 $user_md5=md5_hex($ENV{'HTTP_HOST'}.'-'.$ENV{'USER'});
 $filename="/www/TOM/_temp/auth-".$user_md5."-".$pass_md5;
 
-if (-e $filename)
+my $cache=1;
+
+if (-e $filename && $cache)
 {
-	print 1;
-	exit;
+	exit(0);
 }
 else
 {
-	`/www/TOM/.bin/tom3-auth.full`;
+	my $out;
+	chomp ($out=`/www/TOM/.bin/tom3-auth.full`);
+	exit($out);
+	#exit(0); # password okay
+	#exit(1); # password bad
 }
