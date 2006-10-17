@@ -56,6 +56,12 @@ sub parse_conf
 		
 		if ($line=~s/^%//)
 		{
+			my $important=1;
+			if ($line=~s|^\?||)
+			{
+				undef $important;
+			}
+			
 			my @cmd=split("=",$line,2);
 			main::_log("command $cmd[0]($cmd[1])");
 			if ($cmd[0] eq "import")
@@ -82,7 +88,8 @@ sub parse_conf
 				}
 				else
 				{
-					die "can't import type.conf named 'type.$cmd[1].conf'";
+					die "can't import type.conf named 'type.$cmd[1].conf'" if $important;
+					main::_log("can't import type.conf named 'type.$cmd[1].conf'",1);
 				}
 			}
 			next;
