@@ -231,13 +231,7 @@ eval
 	}
 	
 	main::_log("loading type.conf");
-	if (open (KEY,"<".$tom::P."/type.conf"))
-	{
-		my $data;
-		while (my $line=<KEY>){$data.=$line;};close(KEY);
-		TOM::TypeID::parse_conf($data);
-		$tom::type_time=time;
-	}
+	TOM::TypeID::read_conf($tom::P.'/type.conf');
 	
 	$TOM::engine_ready=1;
 };
@@ -512,13 +506,7 @@ while ($req->Accept() >= 0)
 		if ((stat "$tom::P/type.conf")[9] > $tom::type_time)
 		{
 			main::_log("type.conf changed, reloading");
-			if (open (KEY,"<".$tom::P."/type.conf"))
-			{
-				my $data;
-				while (my $line=<KEY>){$data.=$line;};close(KEY);
-				TOM::TypeID::parse_conf($data);
-				$tom::type_time=$main::time_current;
-			}
+			TOM::TypeID::read_conf($tom::P.'/type.conf');
 		}
 		
 		# prezriem si pravidla pre 301.conf

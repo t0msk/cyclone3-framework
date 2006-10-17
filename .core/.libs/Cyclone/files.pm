@@ -134,6 +134,7 @@ our @setit_F=
 	['^_temp/_Inline'                  ,"global Inline"               ,"777","$user_www:$group"],
 	['^_temp'                          ,"global _temp"                ,"",""],
  
+	['\/type.*?conf$'                  ,"type conf"                   ,"660","$user_www:$group"],
 	['\.(pwd)$'                        ,".pwd (password file)"        ,"660","$user_www:$group"],
 	['\.tmpl$'                         ,".tmpl (template)"            ,"660","$user:$group"],
 	['\.sql$'                          ,".sql (SQL queries)"          ,"660","$user:$group"],
@@ -172,7 +173,6 @@ our @setit_F=
 	['\.RFC$'                          ,"RFC files"                   ,"660","$user_www:$group"],
 	['\/master\.conf$'                 ,"master conf"                 ,"660","$user_www:$group"],
 	['\/local\.conf$'                  ,"local conf"                  ,"660","$user_www:$group"],
-	['\/type\.conf$'                   ,"type conf"                   ,"660","$user_www:$group"],
 	['\/rewrite\.conf$'                ,"rewrite conf"                ,"660","$user_www:$group"],
 	['\/301\.conf$'                    ,"301 conf"                    ,"660","$user_www:$group"],
  
