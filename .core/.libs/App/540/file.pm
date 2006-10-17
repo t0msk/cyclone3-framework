@@ -89,8 +89,8 @@ sub new
 	}
 	if (not exists $args{ID_dir})
 	{
-		main::_log("App::540::file::new : Treba predať 'ID_dir' súboru",1);
-		return -1;
+		$args{ID_dir} = "";
+		main::_log("App::540::file::new : WARNING: Ziadne 'ID_dir', subor bude umistneny do root-u",0);
 	}
 # Name Fix
 	main::_log("App::540::file::new : original name ".$args{name},0);
@@ -129,10 +129,13 @@ sub new
 	}
 
 # Check ID_dir for existence
-	if (scalar(App::540::dir::get(ID_dir=>$args{ID_dir})) == 0 )
+	if ($args{ID_dir} ne "")
 	{
-		main::_log("App::540::file::new : Adresár s daným 'ID_dir' (".$args{ID_dir}.") neexistuje");
-		return -1;
+		if (scalar(App::540::dir::get(ID_dir=>$args{ID_dir})) == 0 )
+		{
+			main::_log("App::540::file::new : Adresár s daným 'ID_dir' (".$args{ID_dir}.") neexistuje");
+			return -1;
+		}
 	}
 
 # SQL Insert
@@ -151,6 +154,7 @@ sub new
 	$zero_id=~/^(....)/i;
 	my $dir = "../!media/540/$1";
 # Make directory
+	mkdir("../!media/540");
 	mkdir($dir);
 	my $filename = "$dir/$args{hash}";
 
