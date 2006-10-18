@@ -17,14 +17,6 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 use TOM::Database::SQL;
 
 
-our $ERR_CODE;
-
-our %ERR_CODES={
-	'001' => "",
-	
-};
-
-
 =head1 FUNCTIONS
 
 =head2 my $ID=new(%env)
@@ -77,7 +69,8 @@ sub new
 		new_initialize(
 			'db_h' => $env{'db_h'},
 			'db_name' => $env{'db_name'},
-			'tb_name' => $env{'tb_name'}
+			'tb_name' => $env{'tb_name'},
+			'ID' => $ID
 		);
 		
 		if ($env{'-journalize'})
@@ -109,7 +102,7 @@ Inicializuje cerstvo vlozene riadky do tabulky. Updatne ID_entity vsetkym riadko
 sub new_initialize
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::new_initialize()");
+	my $t=track TOM::Debug(__PACKAGE__."::new_initialize($env{'ID'})");
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
@@ -118,7 +111,17 @@ sub new_initialize
 		main::_log("input '$_'='$env{$_}'");
 	}
 	
-	my $SQL="UPDATE `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=NOW(), ID_entity=ID WHERE ID_entity IS NULL";
+	my $SQL="UPDATE `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=NOW(), ID_entity=ID WHERE ";
+	
+	if ($env{'ID'})
+	{
+		$SQL.="ID=$env{'ID'}";
+	}
+	else
+	{
+		$SQL.="ID_entity IS NULL";
+	}
+	
 	main::_log("SQL='$SQL'");
 	
 	my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
@@ -147,7 +150,7 @@ sub get_ID(%env)
 	}
 	
 	my %data;
-	my @fields=
+	my @collumns=
 	(
 		'ID',
 		'ID_entity',
@@ -155,11 +158,14 @@ sub get_ID(%env)
 		'status'
 	);
 	
-	my $sel_fields=join ",",@fields;
+	push @collumns, keys %{$env{'collumns'}} if $env{'collumns'};
+	@collumns=('*') if $env{'collumns'}{'*'};
+	
+	my $sel_collumns=join ",",@collumns;
 	
 	my $SQL=qq{
 		SELECT
-			$sel_fields
+			$sel_collumns
 		FROM
 			`$env{'db_name'}`.`$env{'tb_name'}`
 		WHERE
@@ -303,6 +309,90 @@ sub diff_versions
 {
 	# porovna dve verzie a povie ktore riadky su rozdielne v ktorych collumnoch
 	
+}
+
+
+=head2 clone()
+
+Kopia ID zaznamu do noveho ID, ale rovnakeho ID_entity. Vytvorenie novej modifikacie ID_entity
+
+=cut
+
+sub clone
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::clone()");
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'");
+	}
+	
+	# najdem riadok ktory chcem naklonovat
+	my %data=get_ID(
+		'db_h' => $env{'db_h'},
+		'db_name' => $env{'db_name'},
+		'tb_name' => $env{'tb_name'},
+		'ID' => $env{'ID'},
+		'collumns' => {'*'=>1}
+	);
+	if ($data{'ID'} && $data{'status'}=~/^[YN]$/)
+	{
+		
+		# pripravim si collumny na new
+		
+		# nepovolim update tychto collumnov (z povodneho riadku)
+		delete $data{'datetime_create'};
+		delete $data{'ID'};
+		# nepovolim override tychto collumnov
+		delete $env{'collumns'}{'ID'};
+		delete $env{'collumns'}{'ID_entity'};
+		delete $env{'collumns'}{'datetime_create'};
+		
+		# osetrenie data
+		foreach (keys %data)
+		{
+			$data{$_}="'".$data{$_}."'";
+		}
+		
+		# override %data z $env{collumns}
+		foreach (keys %{$env{'collumns'}})
+		{
+			$data{$_}=$env{'collumns'}{$_};
+		}
+		
+		# pokusim sa o novy riadok modifikacie
+		my $ID=new(
+			'db_h' => $env{'db_h'},
+			'db_name' => $env{'db_name'},
+			'tb_name' => $env{'tb_name'},
+			'collumns' => {%data},
+			'-journalize' => $env{'-journalize'},
+		);
+		if (!$ID)
+		{
+			# error handling
+			${$env{'_errstr'}}=
+				"Can't create clone of ID $env{'ID'}\n".
+				(Mysql->errmsg())."\n".
+				${$env{'_errstr'}} if exists $env{'_errstr'};
+			main::_log("Mysql errmsg='".Mysql->errmsg()."'",1);
+			$t->close();
+			return undef;
+		}
+		
+	}
+	else
+	{
+		main::_log("Can't clone ID='$env{'ID'}. This ID not exists, or is in Trash/Deleted'",1);
+		$t->close();
+		return undef;
+	}
+	
+	$t->close();
+	return 1;
 }
 
 
