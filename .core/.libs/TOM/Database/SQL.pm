@@ -116,6 +116,20 @@ sub execute
 	
 	my $sth=$main::DB{$env{'db_h'}}->Query($SQL);
 	
+	if (not $sth)
+	{
+		my @output=(
+			$main::DB{$env{'db_h'}}->info(),
+			undef,
+			$main::DB{$env{'db_h'}}->errmsg(),
+			undef
+		);
+		main::_log("output errmsg=".$output[2]);
+		main::_log("output info=".$output[0]);
+		$t->close();
+		return @output;
+	}
+	
 	my @output=(
 		$main::DB{$env{'db_h'}}->info(),
 		$sth->affectedrows(),
