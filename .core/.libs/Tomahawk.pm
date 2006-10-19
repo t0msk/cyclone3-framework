@@ -1064,7 +1064,7 @@ sub designmodule
 	if ($mdl_env{-convertvars})
 	{
 		main::_log("'-convertvars' enabled, converting <\$vars>");
-		Utils::vars::replace($file_data);
+		TOM::Utils::vars::replace($file_data);
 	}
 	
 	if (not $main::H->r_("<!TMP-".$mdl_env{-TMP}."!>",$file_data))
@@ -1203,7 +1203,7 @@ sub GetXSGN
 # {my $var=$1;my $value;eval "\$value=\$$var;"; # TAK TOTO NEVIEM CI JE BEZPECNE
 #  $file_data=~s|<!TMP!>|$value|;
 # }}
- Utils::vars::replace($file_data) if $env{-convertvars};
+ TOM::Utils::vars::replace($file_data) if $env{-convertvars};
 
  #while ($file_data=~s|<DEFINITION id="(.*?)">[\n\r ]*(.*?)[\n\r ]*</DEFINITION>||s)
  while ($file_data=~s|<DEFINITION id="(.*?)">[\n\r]?(.*?)[\n\r]?</DEFINITION>||s)
