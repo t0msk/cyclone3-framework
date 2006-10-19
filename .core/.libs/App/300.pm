@@ -382,7 +382,7 @@ sub CookieClean
 		next unless $file=~/cookie/;
 		my $old=$main::time_current-(stat "../_data/USRM/".$file)[9];
 		main::_log("file '$file' old='$old'");
-		unlink "../_data/USRM/".$file if $old>86400;
+		unlink "../_data/USRM/".$file if $old>3600;
 	}
 	
 	$t->close();
