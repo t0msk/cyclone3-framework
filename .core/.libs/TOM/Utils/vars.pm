@@ -89,15 +89,16 @@ sub replace
 		{
 			my $value;
 			my $var=$1;
+			my $null="***";
 			
 			main::_log("replacing variable '$var'");
 			
-			if ($var=~/(sub\{|do\{|&|\+|\-|\*|\/|=|"|\||;)/)
+			if ($var=~/(sub\{|do\{|&|\+|\*|\/|=|"|\||;)/)
 			{
 				main::_log("VAZNY PRIENIK ZAMENY PREMENNEJ \"".
 				$var.
 				"\" z $main::ENV{'REMOTE_ADDR'} s $main::ENV{'QUERY_STRING'} ",1,"secure");
-				$var="***";
+				$var="null";
 				# TUTO POSLAT OZNAMENIE O TOMTO ERRORE!!
 			}
 			
