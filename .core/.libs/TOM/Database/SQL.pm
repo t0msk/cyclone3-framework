@@ -99,7 +99,7 @@ Vykoná SQL príkaz a vráti pole hodnot
 sub execute
 {
 	my $SQL=shift;
-	my %env=shift;
+	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::execute()");
 	
 	my @output;
@@ -113,6 +113,14 @@ sub execute
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	TOM::Database::connect::multi($env{'db_h'}) unless $main::DB{$env{'db_h'}};
+	
+	if ($env{'log'})
+	{
+		foreach my $line(split("\n",$SQL))
+		{
+			main::_log($line);
+		}
+	}
 	
 	my $sth=$main::DB{$env{'db_h'}}->Query($SQL);
 	
