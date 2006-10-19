@@ -185,13 +185,16 @@ sub UserFind
 {
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::UserFind()");
+	
+	$env{'host'}=$tom::H_cookie unless $env{'host'};
+	
 	foreach (sort keys %env){main::_log("input $_='$env{$_}'");}
 	
 	my $where;
 	my %data;
 	
-	$where.="AND users.login='$env{login}' " if $env{'login'};
-	$where.="AND users.IDhash='$env{IDhash}' " if $env{'IDhash'};
+	$where.="AND users.login='$env{login}' " if exists $env{'login'};
+	$where.="AND users.IDhash='$env{IDhash}' " if exists $env{'IDhash'};
 	
 	my $db0=$main::DB{main}->Query("
 		SELECT
@@ -205,7 +208,7 @@ sub UserFind
 				users_attrs.IDhash=users.IDhash
 			)
 		WHERE
-			users.host='$tom::H_cookie'
+			users.host='$env{host}'
 			$where
 		LIMIT 1");
 	if (%data=$db0->fetchhash)
@@ -227,7 +230,7 @@ sub UserFind
 					users_attrs.IDhash=users.IDhash
 				)
 			WHERE
-				users.host='$tom::H_cookie'
+				users.host='$env{host}'
 				$where
 			LIMIT 1");
 		if (%data=$db0->fetchhash)
