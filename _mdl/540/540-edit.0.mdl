@@ -23,6 +23,15 @@ sub execute
 	$arg{comment}=$env{db_comment} if defined($env{db_comment});
 	$arg{mime}=$env{db_mime} if defined($env{db_mime});
 	$arg{name}=$env{db_name} if defined($env{db_name});
+
+# Taaak a este raz bez db_ (koli lng)
+	$arg{ID}=$env{ID};
+	$arg{ID_dir}=$env{dir} if exists $env{dir};
+	$arg{active}=$env{active} if defined($env{active});
+	$arg{lng}=$env{lng} if exists $env{lng};
+	$arg{comment}=$env{comment} if defined($env{comment});
+	$arg{mime}=$env{mime} if defined($env{mime});
+	$arg{name}=$env{name} if defined($env{name});
 	my $id=-1;
 
 # Menime len zaznam
