@@ -120,7 +120,7 @@ sub compare_create_table
 		
 		if ($type0 ne $type1)
 		{
-			my $exec="ALTER TABLE $tbl TYPE=$type0";
+			my $exec="ALTER TABLE `$database`.`$tbl` TYPE=$type0";
 			push @return,$exec;
 			main::_log("add SQL '$exec'");
 			$type1=$type0;
