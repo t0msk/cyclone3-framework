@@ -11,27 +11,27 @@ use strict;
 
 sub execute
 {
-	main::_log("MODULE START!");
 	my %env=@_;
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
 
 	my %arg;
-	$arg{ID}=$env{ID};
+	$arg{ID}=$env{db_ID};
 	$arg{ID_dir}="00";
-	$arg{ID_dir}=$env{dir} if defined($env{dir});
-	$arg{active}=$env{active} if defined($env{active});
-	$arg{lng}=$env{lng} if defined($env{lng});
-	$arg{comment}=$env{comment} if defined($env{comment});
-	$arg{mime}=$env{mime} if defined($env{mime});
-	$arg{name}=$env{name} if defined($env{name});
+	$arg{ID_dir}=$env{db_dir} if exists $env{db_dir};
+	$arg{active}=$env{db_active} if defined($env{db_active});
+	$arg{lng}=$env{db_lng} if exists $env{db_lng};
+	$arg{comment}=$env{db_comment} if defined($env{db_comment});
+	$arg{mime}=$env{db_mime} if defined($env{db_mime});
+	$arg{name}=$env{db_name} if defined($env{db_name});
 	my $id=-1;
+
 # Menime len zaznam
 	if (length($env{ID})>0)
 	{
 		$id = App::540::file::set( %arg );
 		if ($id<0)
 		{
-			main::_log("Edit Failed!: $arg{name}");
+			main::_log("Edit Failed!: $arg{name}",1);
 			$XSGN{TMP} = $XSGN{'TMP_no_data'};
 			return 1;
 		}
@@ -40,7 +40,12 @@ sub execute
 		# Obsah suboru
 		$arg{handle}=$main::FORM{$file};
 		# Ak to nieje file tak dalsi
-		next if !$arg{handle};
+		if (!$arg{handle})
+		{
+			main::_log("Upload Failed! file: $arg{name}",1);
+			$XSGN{TMP} = $XSGN{'TMP_no_data'};
+			return undef;
+		}
 		# (HACK) File Name
 		$main::FORM{multipart} =~ /name="$file"; filename="(.*?)"/;
 		$arg{name} = $1;
@@ -49,7 +54,7 @@ sub execute
 		$id = App::540::file::new( %arg );
 		if ($id<0)
 		{
-			main::_log("Upload Failed! file: $arg{name}");
+			main::_log("Upload Failed! file: $arg{name}",1);
 			$XSGN{TMP} = $XSGN{'TMP_no_data'};
 			return 1;
 		}
