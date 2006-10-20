@@ -93,7 +93,7 @@ my $db0=$main::DB{stats}->Query("
 		IDhash,
 		USRM_flag
 	FROM
-		a110_weblog_rqs
+		TOM.a110_weblog_rqs
 	WHERE
 		domain_sub='$tom::H' AND
 		reqtype IN ('B','m','w') AND

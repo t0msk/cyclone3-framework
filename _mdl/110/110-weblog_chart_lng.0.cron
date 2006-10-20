@@ -119,7 +119,7 @@ my $db0=$main::DB{stats}->Query("
 	SELECT
 		DISTINCT(lng) AS lng
 	FROM
-		a110_weblog_rqs
+		TOM.a110_weblog_rqs
 	WHERE
 		domain_sub='$tom::H' AND
 		reqtime>".($main::time_current-(86400*32))." AND
@@ -144,7 +144,7 @@ my $db0=$main::DB{stats}->Query("
 		lng,
 		COUNT(*) AS pages
 	FROM
-		a110_weblog_rqs
+		TOM.a110_weblog_rqs
 	WHERE
 		domain_sub='$tom::H' AND
 		reqtype IN ('B','m','w') AND
