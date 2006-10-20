@@ -220,11 +220,14 @@ sub dup
 	$args{table}="a540";
 
 # Check ID_dir for existence
-	if (scalar(App::540::dir::get(ID_dir=>$args{ID_dir})) == 0 )
-{
-		main::_log("App::540::file::dup : Adresár s daným 'ID_dir' (".$args{ID_dir}.") neexistuje");
-		return -1;
-}
+	if ($args{ID_dir} ne "")
+	{
+		if (scalar(App::540::dir::get(ID_dir=>$args{ID_dir})) == 0 )
+		{
+			main::_log("App::540::file::new : Adresár s daným 'ID_dir' (".$args{ID_dir}.") neexistuje");
+			return -1;
+		}
+	}
 
 # SQL Insert
 	my $id = App::540::sql_insert( %args );
@@ -285,11 +288,14 @@ sub set
 	$args{table}="a540";
 
 # Check ID_dir for existence
-	if (scalar(App::540::dir::get(ID_dir=>$args{ID_dir})) == 0 )
-{
-		main::_log("App::540::file::set : Adresár s daným 'ID_dir' (".$args{ID_dir}.") neexistuje");
-		return -1;
-}
+	if ($args{ID_dir} ne "")
+	{
+		if (scalar(App::540::dir::get(ID_dir=>$args{ID_dir})) == 0 )
+		{
+			main::_log("App::540::file::new : Adresár s daným 'ID_dir' (".$args{ID_dir}.") neexistuje");
+			return -1;
+		}
+	}
 
 # SQL Insert
 	my $id = App::540::sql_insert( %args );
