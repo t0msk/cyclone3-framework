@@ -1,0 +1,7 @@
+$TEMPLATE=<<"HEADER";
+<!TMP-OUTPUT!>
+<!--<!TMP-ERROR!>-->
+HEADER
+
+%HEADER=();
+1;
