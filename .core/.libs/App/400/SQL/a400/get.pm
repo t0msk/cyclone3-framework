@@ -79,7 +79,36 @@ sub prepare
   
   $self->{s_where}.="\tAND a400_category.ID<>''\n" if $self->{ENV}{a400_category_};
  }
- 
+	
+	
+	if ($self->{'ENV'}{'a120'})
+	{
+		# JOIN
+		main::_log("LEFT JOIN a120");
+		$self->{s_left}.=qq{
+			LEFT JOIN $self->{db}.a120 AS a120_editor ON
+			(
+				a400.IDeditor = a120_editor.ID
+				AND a120_editor.IDtype=1
+			)
+			LEFT JOIN $self->{db}.a120 AS a120_author ON
+			(
+				a400.IDauthor = a120_author.ID
+				AND a120_author.IDtype=0
+			)
+		};
+		
+		$self->{ENV}{select}.=";a120_editor.ID AS a120_editor_ID";
+		$self->{ENV}{select}.=";a120_editor.fullname AS a120_editor_fullname";
+		$self->{ENV}{select}.=";a120_editor.nickname AS a120_editor_nickname";
+		
+		$self->{ENV}{select}.=";a120_author.ID AS a120_author_ID";
+		$self->{ENV}{select}.=";a120_author.fullname AS a120_author_fullname";
+		$self->{ENV}{select}.=";a120_author.nickname AS a120_author_nickname";
+		
+	}
+	
+	
  if ($self->{ENV}{a400_attrs})
  {   
   $self->{s_left_o}.="LEFT JOIN ".$self->{db}.".a400_attrs AS a400_attrs ON \n(\n a400.IDattrs IS NOT NULL\n AND a400_attrs.IDattrs = a400.IDattrs\n)\n";  
