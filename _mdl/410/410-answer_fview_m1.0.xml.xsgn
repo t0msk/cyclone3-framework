@@ -1,0 +1,22 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="NEW">
+<response IDapp="a410" type="answer-view">
+		<ID><%ID%></ID>
+		<IDquestion><%IDquestion%></IDquestion>
+		<answer><%answer%></answer>
+		<starttime><%starttime%></starttime>
+		<endtime><%endtime%></endtime>
+		<IDauthor><%IDauthor%></IDauthor>
+		<IDeditor><%IDeditor%></IDeditor>
+		<votes><%votes%></votes>
+		<lng><%lng%></lng>
+		<active><%active%></active>
+</response>
+</DEFINITION>
+
+<DEFINITION id="TMP_NO_DATA"><response IDapp="a410" type="answer-view"></response></DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>

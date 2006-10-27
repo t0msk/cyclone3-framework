@@ -1,0 +1,25 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="NEW">
+<response IDapp="a410" type="new">
+	<ID><%ID%></ID>
+	<lng><%lng%></lng>
+</response>
+</DEFINITION>
+
+<DEFINITION id="UPDATE">
+<response IDapp="a410" type="upd">
+	<ID><%ID%></ID>
+	<lng><%lng%></lng>
+</response>
+</DEFINITION>
+
+<DEFINITION id="DELETE">
+<response IDapp="a410" type="del">
+	<ID><%ID%></ID>
+	<lng><%lng%></lng>
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

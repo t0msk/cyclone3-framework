@@ -1,0 +1,121 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+our $authors = 'gregor@webcom.sk';
+
+sub execute
+{
+	my %env = @_;
+	
+	$env{'db_410'}=Tomahawk::Getmdlvar("410","db") unless $env{'db_410'};
+	$env{'db_410'}='TOM' unless $env{'db_410'};
+	
+	my $sql = "
+	SELECT
+		ID,
+		IDlink,
+		IDcategory,
+		domain,
+		title,
+		tiny,
+		starttime,
+		endtime,
+		IDauthor,
+		IDeditor,
+		votes,
+		xrelated,
+		lng,
+		active
+	FROM
+		$env{'db_410'}.a410
+	WHERE
+		ID='$env{db_ID}'
+		AND lng='$env{db_lng}'
+	";
+
+	my $line_counter;
+	main::_log($sql);
+	my $db0 = $main::DB{main}->Query($sql);
+
+	if ($db0)
+	{
+		if ($db0->numrows)
+		{
+			$line_counter++;
+			
+			Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+
+			if (($env{xt_xlng}) || ($env{xlng}))
+			{
+				main::_log("using xlng transformation");
+				if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+				Tomahawk::GetXLNG() || return undef; # retrieve language xml
+				Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+			}
+			
+			my %db0_line = $db0->fetchhash;
+			
+			while ( my ($k,$v) = each %db0_line )
+			{
+				$XSGN{TMP} =~ s|<%$k%>|$v|g;
+		
+				if ( $k =~ /\w+time/ )
+				{
+					my $tt = $k; my %env0 = Utils::datetime::ctodatetime( $v, format => 1 );
+					$XSGN{NULL0}=~s|<%${tt}_day%>|$env0{mday}|g;
+					$XSGN{NULL0}=~s|<%${tt}_month%>|$env0{mom}|g;
+					$XSGN{NULL0}=~s|<%${tt}_year%>|$env0{year}|g;
+					$XSGN{NULL0}=~s|<%${tt}_hour%>|$env0{hour}|g;
+					$XSGN{NULL0}=~s|<%${tt}_minute%>|$env0{min}|g;
+					$XSGN{NULL0}=~s|<%${tt}_second%>|$env0{sec}|g;
+		
+					$XSGN{NULL0}=~s|<%${tt}_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+					$XSGN{NULL0}=~s|<%${tt}_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+					$XSGN{NULL0}=~s|<%${tt}_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+					$XSGN{NULL0}=~s|<%${tt}_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+				}
+			}
+		}
+	}
+	
+	if($line_counter<1)
+	{
+		if($env{sw_return_null})
+		{
+			main::_log("no data available. return_null parameter in effect");
+			$XSGN{TMP}="";
+		}
+		else
+		{
+			Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+
+			if (($env{xt_xlng}) || ($env{xlng}))
+			{
+				main::_log("using xlng transformation");
+				if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+				Tomahawk::GetXLNG() || return undef; # retrieve language xml
+				Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+			}
+			
+			if(exists $XSGN{TMP_no_data})
+			{
+				main::_log("no data available. returning TMP_no_data");
+				$XSGN{TMP}=$XSGN{TMP_no_data};
+			}
+			else
+			{
+				$tom::ERR="no data available!";
+				return undef;
+			}
+		}
+	}
+	
+	return 1;
+}
+
+1;

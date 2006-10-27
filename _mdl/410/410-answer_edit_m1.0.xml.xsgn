@@ -1,0 +1,28 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="NEW">
+<response IDapp="a410" type="answer-new">
+	<id><![CDATA[<%ID%>]]></id>
+	<lng><![CDATA[<%lng%>]]></lng>
+	<answer><![CDATA[<%answer%>]]></answer>
+</response>
+</DEFINITION>
+
+<DEFINITION id="UPDATE">
+<response IDapp="a410" type="answer-upd">
+	<id><![CDATA[<%ID%>]]></id>
+	<lng><![CDATA[<%lng%>]]></lng>
+	<answer><![CDATA[<%answer%>]]></answer>
+</response>
+</DEFINITION>
+
+<DEFINITION id="DELETE">
+<response IDapp="a410" type="answer-del">
+	<id><![CDATA[<%ID%>]]></id>
+	<lng><![CDATA[<%lng%>]]></lng>
+	<answer><![CDATA[<%answer%>]]></answer>
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

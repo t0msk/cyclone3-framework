@@ -1,0 +1,28 @@
+<CONF_VAR id="layers" value="0" />
+<CONF_VAR id="dsgn" value="admin-backend-xml" global="1" />
+<CONF_VAR id="Content-Type" value="text/xml" />
+
+#
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-category" value="410" />
+	<VAR id="-name" value="mlist_m1" />
+	<VAR id="-xsgn" value="list" />
+	<VAR id="-global" value="1" />
+	<VAR id="-TMP" value="OUTPUT" />
+	<VAR id="-xsgn" value="xml" />
+	<VAR id="-xsgn_global" value="1" />
+		<VAR id="xt_datetime" value="1" />
+		<VAR id="db_lng" value="<$main::FORM{lng}>" />
+		<VAR id="db_order_by" value="<$main::FORM{order_by}>" />
+		<VAR id="db_IDcategory" value="<$main::FORM{IDcategory}>%" />
+		<#VAR id="show_catname" value="1" />
+		<VAR id="db_limit" value="50" />
+		<#VAR id="db_orderby" value="title asc" />
+		<VAR id="db_active" value="%" />
+		<VAR id="db_paging" value="1" />
+		<VAR id="db_page" value="<$main::FORM{page}>" />
+		<VAR id="db_where" value="a410.active NOT LIKE 'D'" />
+		<VAR id="db_time_ignore" value="1" />
+		<VAR id="datetime" value="1" />
+</MODULE>

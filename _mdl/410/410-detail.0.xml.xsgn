@@ -1,0 +1,28 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response IDapp="a410" type="detail" result="1">
+		<ID><%ID%></ID>
+		<IDlink><%IDlink%></IDlink>
+		<IDcategory><%IDcategory%></IDcategory>
+		<domain><%domain%></domain>
+		<title><%title%></title>
+		<tiny><%tiny%></tiny>
+		<starttime><%starttime%></starttime>
+		<endtime><%endtime%></endtime>
+		<IDauthor><%IDauthor%></IDauthor>
+		<IDeditor><%IDeditor%></IDeditor>
+		<votes><%votes%></votes>
+		<xrelated><%xrelated%></xrelated>
+		<lng><%lng%></lng>
+		<active><%active%></active>
+</response>
+</DEFINITION>
+
+<DEFINITION id="TMP_no_data">
+<response IDapp="a410" type="detail" result="0">
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
