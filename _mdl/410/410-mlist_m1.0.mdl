@@ -104,38 +104,27 @@ sub execute
    }
 
 	$env{db_order_by}="a410.starttime DESC" unless $env{db_order_by};
-
-   main::_log("
-      SELECT
-         ID,active
-      FROM $env{db_410}.a410 AS a410
-      WHERE
-         $env{db_where}
-         (domain IS NULL OR domain='$env{db_domain}')
-         AND a410.starttime<=$tom::time_current
-         AND (a410.endtime IS NULL OR a410.endtime>=$tom::time_current)
-         AND (a410.lng='$env{lng}' OR a410.lng='')
-         $env{sel}
-         $env{db_ID}
-      ORDER BY $env{db_order_by}
-      LIMIT $env{db_limit}
-   ");
-
-	my $db=$main::DB{main}->Query("
+	
+	
+	my $sql_time="AND a410.starttime<=$tom::time_current AND (a410.endtime IS NULL OR a410.endtime>=$tom::time_current)";
+	$sql_time="" if $env{'db_time_ignore'};
+	
+	my $sql=qq{
 		SELECT
 			ID,active
 		FROM $env{db_410}.a410 AS a410
 		WHERE
 			$env{db_where}
 			(domain IS NULL OR domain='$env{db_domain}')
-			AND a410.starttime<=$tom::time_current
-			AND (a410.endtime IS NULL OR a410.endtime>=$tom::time_current)
+			$sql_time
 			AND (a410.lng='$env{lng}' OR a410.lng='')
 			$env{sel}
 			$env{db_ID}
 		ORDER BY $env{db_order_by}
 		LIMIT $env{db_limit}
-	");
+	};
+	main::_log($sql);
+	my $db=$main::DB{main}->Query($sql);
 
 	my $line_counter;
 	my $db_count;
@@ -200,20 +189,21 @@ sub execute
 				$env{db_select}="a410.ID, a410.title, a410.tiny, a410.starttime" unless $env{db_select};
 	
 				#TODO: dorobit doplnenie IDlink do db_select, ak ho user nevyselektuje, nebudu sa hladat linky :(
-	
-				my $db0=$main::DB{main}->Query("
+				
+				my $sql=qq{
 					SELECT
 						*
 					FROM $env{db_410}.a410 as a410
 					WHERE
 						a410.ID='$db_line{ID}'
 						AND (a410.domain IS NULL OR a410.domain='$env{db_domain}')
-						AND a410.starttime<=$tom::time_current
-						AND (a410.endtime IS NULL OR a410.endtime>=$tom::time_current)
 						AND (a410.lng='$env{lng}' OR a410.lng='')
 						AND a410.active='$db_line{active}'
+						$sql_time
 					LIMIT 1
-				");
+				};
+				my $db0=$main::DB{main}->Query($sql);
+				
 				if (my %db0_line=$db0->fetchhash)
 				{
 					if ($db0_line{IDlink})
@@ -404,7 +394,7 @@ sub execute
 					# display date and time
 					if (($env{datetime_allow}) || ($env{datetime}) || ($env{xt_datetime}))
 					{
-						my %env0=Utils::datetime::ctodatetime($db_line{starttime},format=>1);
+						my %env0=Utils::datetime::ctodatetime($db0_line{'starttime'},format=>1);
 	
 						$XSGN{NULL}=~s|<%day%>|$env0{mday}|g;
 						$XSGN{NULL}=~s|<%month%>|$env0{mom}|g;
