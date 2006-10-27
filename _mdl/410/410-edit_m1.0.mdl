@@ -20,7 +20,11 @@ sub execute
 		Tomahawk::GetXLNG() || return undef; # retrieve language xml
 		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
 	}
-
+	
+	
+	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
+	$env{db_410}="TOM" unless $env{db_410};
+	
 	# ID
 	# IDlink
 	# IDcategory
@@ -39,7 +43,7 @@ sub execute
 	my %polldata = (
 		IDlink			=> "'$main::FORM{IDlink}'",
 		IDcategory	=> "'$main::FORM{IDcategory}'",
-		domain			=> "'$main::FORM{domain}'",
+		domain			=> "'$tom::Hm'",
 		title				=> "'$main::FORM{title}'",
 		tiny				=> "'$main::FORM{tiny}'",
 		starttime		=> $main::FORM{starttime} || $main::time_current,
@@ -59,7 +63,7 @@ sub execute
 		SELECT
 			ID, lng
 		FROM
-			TOM.a410
+			$env{db_410}.a410
 		WHERE
 			ID=$env{db_ID} AND
 			lng='$env{db_lng}'
@@ -81,7 +85,7 @@ sub execute
 			#	ID=$env{db_ID} AND
 			#	lng='$env{db_lng}'
 			#";
-			my $del = "DELETE FROM TOM.a410 WHERE ID=$env{db_ID} AND lng='$env{db_lng}'";
+			my $del = "DELETE FROM $env{db_410}.a410 WHERE ID=$env{db_ID} AND lng='$env{db_lng}'";
 			my $dbdel = $main::DB{main}->Query( $del );
 
 			$XSGN{TMP} = $XSGN{DELETE};
@@ -107,9 +111,11 @@ sub execute
 		# Jazyk sa vlozi aj prazdny
 		if ( $new_cols ) { $new_cols .= ', '; $new_vals .= ', '; }
 		$new_cols .= 'lng'; $new_vals .= "'$env{db_lng}'";
-
+		
+		main::_log("insertind poll into database $env{'db_410'}");
+		
 		my $new = "
-		INSERT INTO TOM.a410
+		INSERT INTO $env{db_410}.a410
 		( $new_cols )
 		VALUES
 		( $new_vals )
@@ -133,7 +139,7 @@ sub execute
 
 	my $upd = "
 	UPDATE
-		TOM.a410
+		$env{db_410}.a410
 	SET
 		$updinfo
 	WHERE
