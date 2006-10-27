@@ -1,0 +1,53 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response type="tree" IDapp="a400" itemcount_root="<%itemcount_root%>">
+<#LIST#>
+</response>
+</DEFINITION>
+
+<DEFINITION id="LIST"><#LINE#></DEFINITION>
+
+<DEFINITION id="LINE">
+<item IDitem="<%ID%>">
+	<name><![CDATA[<%name%>]]></name>
+	<count><![CDATA[<%count%>]]></count>
+	<ID><![CDATA[<%ID%>]]></ID>
+	<IDname><![CDATA[<%IDname%>]]></IDname>
+	<active><![CDATA[<%active%>]]></active>
+	<description><![CDATA[<%description%>]]></description>
+	<itemcount><![CDATA[<%count%>]]></itemcount>
+	<IDparent><![CDATA[<%IDparent%>]]></IDparent>
+</item>
+<#LIST#>
+<#LINE#>
+</DEFINITION>
+
+<xDEFINITION id="TMP">
+<response type="tree" IDapp="a400">
+<#LIST#>
+</response>
+</DEFINITION>
+
+<xDEFINITION id="LIST">
+<#LINE#>
+</DEFINITION>
+
+<xDEFINITION id="LINE">
+<item IDitem="<%ID%>">
+	<ID><![CDATA[<%ID%>]]></ID>
+	<IDparent><![CDATA[<%IDparent%>]]></IDparent>
+	<name><![CDATA[<%name%>]]></name>
+	<description><![CDATA[<%description%>]]></description>
+	<itemcount><![CDATA[<%count%>]]></itemcount>
+	<active><![CDATA[<%active%>]]></active>
+</item>
+<#LIST#>
+<#LINE#>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

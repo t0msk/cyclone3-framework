@@ -6,14 +6,13 @@
 <MODULE>
 	<VAR id="-type" value="mdl" />
 	<VAR id="-category" value="400" />
-	<VAR id="-name" value="private_m1" />
+	<VAR id="-name" value="category_add_m1" />
+	<VAR id="-TMP" value="OUTPUT" />
 	<VAR id="-global" value="1" />
 	<VAR id="-xsgn" value="xml" />
 	<VAR id="-xsgn_global" value="1" />
-		<VAR id="-TMP" value="OUTPUT" />
-		<VAR id="-xsgn" value="admin-backend-xml" />
-		<VAR id="-xsgn_global" value="1" />
 		<VAR id="db_lng" value="<$main::FORM{lng}>" />
-		<VAR id="db_ID" value="<$main::FORM{ID}>" />
-		<VAR id="db_private" value="<$main::FORM{private}>" />
+		<VAR id="db_IDparent" value="<$main::FORM{IDparent}>" />
+		<VAR id="db_title" value="<$main::FORM{title}>" />
+		<VAR id="db_description" value="<$main::FORM{description}>" />
 </MODULE>

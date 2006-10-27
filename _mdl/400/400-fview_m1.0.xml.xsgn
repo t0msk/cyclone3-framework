@@ -1,0 +1,46 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+<response type="detail" IDapp="a400" IDitem="<%ID%>">
+	<ID><%ID%></ID>
+	<IDname><![CDATA[<%IDname%>]]></IDname>
+	
+	<lng><![CDATA[<%lng%>]]></lng>
+
+	<title><![CDATA[<%title%>]]></title>
+	<subtitle><![CDATA[<%subtitle%>]]></subtitle>
+	<tiny multiline="1"><![CDATA[<%tiny%>]]></tiny>
+
+	<full><![CDATA[<%full%>]]></full>
+
+	<IDcategory><%IDcategory%></IDcategory>
+	<IDcategory_name><![CDATA[<%IDcategory_name%>]]></IDcategory_name>
+
+	<IDauthor><%IDauthor%></IDauthor>
+	<IDauthor_nickname><![CDATA[<%IDauthor_nickname%>]]></IDauthor_nickname>
+	<IDauthor_fullname><![CDATA[<%IDauthor_fullname%>]]></IDauthor_fullname>
+
+	<IDeditor><![CDATA[<%IDeditor%>]]></IDeditor>
+	<IDeditor_nickname><![CDATA[<%IDeditor_nickname%>]]></IDeditor_nickname>
+	<IDeditor_fullname><![CDATA[<%IDeditor_fullname%>]]></IDeditor_fullname>
+
+	<xrelated><![CDATA[<%xrelated%>]]></xrelated>
+	<xrelated_full><![CDATA[<%xrelated_full%>]]></xrelated_full>
+
+	<starttime><%starttime%></starttime>
+	<changetime><%changetime%></changetime>
+	<lasttime><%lasttime%></lasttime>
+	<endtime><%endtime%></endtime>
+</response>
+</DEFINITION>
+
+	<starttime><%starttime_day%>. <%starttime_month%>. <%starttime_year%> <%starttime_hour%>:<%starttime_minute%>:<%starttime_second%></starttime>
+	<changetime><%changetime_day%>. <%changetime_month%>. <%changetime_year%> <%changetime_hour%>:<%changetime_minute%>:<%changetime_second%></changetime>
+	<endtime><%endtime_day%>. <%endtime_month%>. <%endtime_year%> <%endtime_hour%>:<%endtime_minute%>:<%endtime_second%></endtime>
+
+
+<DEFINITION id="a500"><img src="<%fullpath%>" alt="<%about%>" title="<%about%>" align="<%align%>" /></DEFINITION>
+
+</XML_DESIGN_DEFINITION>

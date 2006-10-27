@@ -1,0 +1,79 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response IDapp="a400" type="list" code="<$main::request_code>">
+	<setup>
+		<page current="<%page_real%>" <#PAGING#> />
+	</setup>
+	<header>
+		<lng src="icons/treecol/lng.png" />
+		<active />
+		<ID />
+		<starttime flex="1" />
+		<title flex="1" />
+		<IDname flex="1" />
+		<subtitle flex="1" />
+		<priority />
+		<IDcategory_name flex="1" />
+		<IDauthor_fullname />
+		<IDeditor_fullname />
+		<visits />
+	</header>
+<#LINE#>
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="LINE">
+	<item IDitem="<%ID%>">
+		<lng><![CDATA[<%lng%>]]></lng>
+		<active><![CDATA[<%active%>]]></active>
+		<ID><![CDATA[<%ID%>]]></ID>
+		<starttime><![CDATA[<%starttime_day%>. <%starttime_month%> <%starttime_year%>  <%starttime_hour%>:<%starttime_minute%>]]></starttime>
+		<title><![CDATA[<%title%>]]></title>
+		<IDname><![CDATA[<%IDname%>]]></IDname>
+		<subtitle><![CDATA[<%subtitle%>]]></subtitle>
+		<priority><![CDATA[<%priority%>]]></priority>
+		<IDcategory_name><![CDATA[<%IDcategory_name%>]]></IDcategory_name>
+		<IDauthor_fullname><![CDATA[<%IDauthor_fullname%>]]></IDauthor_fullname>
+		<IDeditor_fullname><![CDATA[<%IDeditor_fullname%>]]></IDeditor_fullname>
+		<visits><![CDATA[<%visits%>]]></visits>
+		<private><![CDATA[<%private%>]]></private>
+		<length><![CDATA[<%length%>]]></length>
+	</item>
+<#LINE#>
+</DEFINITION>
+
+
+<DEFINITION id="TMP_NO_DATA">
+<response IDapp="a400" type="list">
+	<setup>
+		<page />
+	</setup>
+	<header>
+		<lng src="icons/treecol/lng.png" />
+		<active />
+		<ID />
+		<starttime flex="1" />
+		<title flex="1" />
+		<IDname flex="1" />
+		<subtitle flex="1" />
+		<priority />
+		<IDcategory_name flex="1" />
+		<IDauthor_fullname />
+		<IDeditor_fullname />
+		<visits />
+	</header>
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="PAGING"><#PAGING_PREV#> <#PAGING_NEXT#></DEFINITION>
+
+<DEFINITION id="PAGING_PREV">previous="<%page_real%>"</DEFINITION>
+
+<DEFINITION id="PAGING_NEXT">next="<%page_real%>"</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>

@@ -1,0 +1,613 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+$authors="fordinal\@webcom.sk;nemsak\@webcom.sk";
+use strict;
+use App::400;
+
+=head1 NAME
+fview_m1
+
+=head1 HEAD_VERSION_BUILD
+1.050829
+
+=head1 DESCRIPTION
+article display supermodule
+
+=head1 CHANGES
+2005-08-10 - deb00t
+	- sync modulov podla globalnej predlohy
+2005-08-22 - deb00t
+	- pridanie podpory IDname, a IDname_category
+2005-08-29 - deb00t
+	- defaultne nastavenie db_select_arch_allow na true
+=cut
+
+sub execute
+{
+	my %env=@_;
+
+	if ((not $env{db_ID}) && ($env{return_no_ID}))
+	{
+		main::_log("no ID defined. exiting.");
+		return 1;
+	}
+
+	#TODO: [deb00t] pofixovat fviewka vsade kde sa pouzivaju, aby sa posielali xt_xlng z typecka
+	#TODO: [deb00t] ak je nastavene xt_xlng, tak automaticky predavaj tento par aj vsetkym modularom
+	$env{fview_xt_xlng}="1" unless (!exists $env{fview_xt_xlng});
+
+	$env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+	$env{db_400}=$TOM::DB{main}{name} unless $env{db_400};
+
+	my %IDcategory_url_hash;
+	if ($env{IDcategory_url_allow})
+	{
+		$env{db_400_url}=$env{db_400} unless $env{db_400_url};
+		$env{a400_IDcategory_url}=Tomahawk::Getmdlvar("400",'IDcategory_url', db=>$env{db_400_url});
+
+		%IDcategory_url_hash = ( $env{a400_IDcategory_url}=~/([^\r\n;]+);([^\r\n]+)/g );
+	}
+
+	$env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
+	$env{db_500}=$TOM::DB{main}{name} unless $env{db_500};
+
+	$env{a500_format}='t' unless $env{a500_format};
+	foreach(grep {/a500_format.*?/} keys %env)
+	{
+		$env{$env{$_}.'_hash'}=Tomahawk::Getmdlvar("500",$env{$_}.'_hash',db=>$env{db_500}) unless (exists $env{$env{$_}.'_hash'});
+		if($env{$env{$_}.'_hash'})
+		{main::_log("$env{$_} is a hashed format");}
+		else
+		{main::_log("$env{$_} is not a hashed format");}
+	}
+
+	$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
+	$env{db_820}=$TOM::DB{main}{name} unless $env{db_820};
+
+	#loading only active articles by default
+	$env{db_active}=1 if (not exists  $env{db_active});
+
+	#allowing archive request by default
+	$env{db_select_arch_allow}=1 unless exists $env{db_select_arch_allow};
+
+	# setting default db_order_by
+	$env{db_order_by}="starttime DESC" unless $env{db_order_by};
+
+	#db_order_by priority transformation - fetching the shortest category
+	if(($env{db_order_by}=~/priority/) && ($env{db_priority_transform}))
+	{
+		my $tmp;
+		my $cat=$env{db_IDcategory};
+		$cat=";".$cat unless $cat=~/^;/;
+		$cat.=";" unless $cat=~/;$/;
+		$cat=~s|%||g;
+		$cat=~s|;([^;]*);||;
+		$tmp=$1;
+		while($cat=~s|;([^;]*);|;|)
+		{ $tmp=$1 if (length($1)<length($tmp)); main::_log($tmp); }
+		$tmp=(length($tmp)/2)+1;
+		$tmp.=",1" unless $env{db_priority_transform_all};
+		$env{db_order_by}=~s|priority|SUBSTRING(priority,$tmp)|;
+		main::_log("sorting by priority from level ".$tmp);
+	}
+
+	#pridavam do selectu changetime kvoli cachingu
+	$env{db_select}=$env{db_select}.",a400.changetime" unless $env{db_select}=~/a400\.changetime/;
+	$env{db_select}=$env{db_select}.",a400.visits" unless $env{db_select}=~/a400\.visits/;
+
+	if(exists $env{db_where})
+	{
+		$env{db_where}.=" AND a400_category.IDname='$env{db_IDname_category}'" if($env{db_IDname_category});
+		$env{db_where}.=" AND a400.IDname='$env{db_IDname}'" if($env{db_IDname});
+	}
+	else
+	{
+		$env{db_where}.="a400_category.IDname='$env{db_IDname_category}'" if($env{db_IDname_category});
+		$env{db_where}.="a400.IDname='$env{db_IDname}'" if($env{db_IDname});
+	}
+
+	my $list=App::400->get_article
+	(
+		db												=>	$env{db_400}, # load articles from database...
+		DBH											=>	$main::DB{main}, # use database object pointer...
+
+		select										=>	$env{db_select},
+		select_arch							=>	$env{db_select_arch}, # selectovat len z archivu
+		select_arch_allow				=>	$env{db_select_arch_allow}, # plynule prechadzanie do archivu "ORDER BY starttime DESC"
+																	# vyuzije sa len ak sa nenacita pozadovany limit z originalu
+		select_union							=>	$env{db_select_union}, # cely select ako jeden union, union sa pouzije VZDY!
+		select_union_allow				=>	$env{db_select_union_allow}, # union az po tom co nedokazem selectnut vsetko v original tabulke
+
+
+		select_limit								=>	1,
+		select_order							=>	$env{db_order_by},
+																	#NEMALO BY BYT select_where v a400? a dalsie v a400_category?
+		select_where						=>	$env{db_where},
+
+		a400 =>									# podmienky na select a400
+		{
+			#lng											=>	$env{lng},
+			ID											=>	$env{db_ID},
+			ID_exclude							=>	$env{db_ID_exclude},
+			IDcategory							=>	$env{db_IDcategory},
+			IDcategory_exclude		=>	$env{db_IDcategory_exclude},
+			#active									=>	$env{db_active},
+			starttime								=>	$env{db_starttime}, # actual
+			endtime								=>	$env{db_endtime}, # actual
+		},
+
+		a400_category_					=>	0, # podmienka ze MUSI byt lefnute
+		a400_category => 			# podmienky na to kedy ma byt left join a400_category
+		{
+			#active									=>	$env{db_category_active},
+			#lng											=>	$env{lng},
+		},
+
+		a400_attrs_							=>	$env{db_attrs}, # podmienka ze MUSI byt lefnute
+		a400_attrs								=>	$env{db_attrs},# podmienky na to kedy ma byt left join a400_attrs
+		{
+
+		},
+
+
+		link_disable							=>	$env{db_link_disable}, # nebudem nacitavat linky
+		link =>										# toto znamena ze budem robit replace najdenych linkov podla podmienok...
+		{
+			a400 =>
+			{
+				#lng										=>	$env{lng},
+				#active								=>	$env{db_active},
+				starttime								=>	$env{db_starttime}, # actual
+				endtime								=>	$env{db_endtime}, # actual
+			},
+			a400_attrs							=>	$env{db_attrs}, # podmienky na to kedy ma byt left join a400_attrs
+			a400_category =>			# podmienky na to kedy ma byt left join a400_category
+			{
+				#active								=>	$env{db_category_active},
+				#lng										=>	$env{lng},
+			},
+		},
+	);
+
+	$list->prepare();
+
+	my $line_counter;
+
+	if ($list->execute())
+	{
+		if (my %article=$list->fetchhash())
+		{
+			main::_log($list->{Query_log});
+			$line_counter++;
+
+			# dodavam informaciu pre ostatne aplikacie
+			$main::env{a400_IDcategory}=$article{IDcategory};
+
+			# dodavam informaciu pre banner system
+			$main::env{a900_section}="a400-".$article{IDcategory};
+
+			$env{update_visits}=1 unless (exists $env{update_visits});
+			if (($env{update_visits}) &&($list->update("a400.visits=a400.visits+1")))
+			{
+				main::_log("article visits incremented to: ".($article{visits}+1));
+			}
+			
+			if
+				(
+					(
+						(($env{log_visits}) && (($article{starttime}+(86400*7))>$main::time_current))
+						||($env{log_visits_force})
+					)
+					&&
+					(
+						$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type}=~/browser/
+					)
+					&&
+					(
+						!$App::110::IP_exclude{$main::ENV{'REMOTE_ADDR'}}
+					)
+				)
+			{
+				$main::DB{main}->Query("
+					INSERT INTO $env{db_400}.a400_visits
+					(
+						IDarticle,
+						IDuser,
+						time_insert
+					)
+					VALUES
+					(
+						'$article{ID}',
+						'$main::USRM{IDhash}',
+						'$main::time_current'
+					)
+				") or die "can't insert into a400_visits\n";
+				main::_log("article visit logged");
+			}
+
+			foreach (keys %article) {~/^[^_]400_/ && do {$article{'_a400_'.$_}=$article{$_};delete $article{$_};next;}}
+
+			#add title to html title tag
+			$main::H->add_DOC_title($article{_a400_title}) unless $env{DOC_title_disable};
+
+			#enable access to article data for use in modules following this one
+			$main::env{a400_IDauthor}=$article{'_a400_IDauthor'};
+			$main::env{a400_IDeditor}=$article{'_a400_IDeditor'};
+			$main::env{a400_ID}=$article{'_a400_ID'};
+
+			#setting cache
+			my %caching;
+			#if ($article{_a400_lasttime}>($tom::time_current-86400)) #the article was last seen an hour ago
+			#{
+				%caching=(
+					-cache_id	=>	"a400_view",
+				);
+			#}
+
+			$env{fview_global}="1" unless (exists $env{fview_global});
+         $env{fview_xsgn_global}=$env{xsgn_global} unless $env{fview_xsgn_global};
+
+			main::_log("trying to run fview");
+
+			my %formats;
+			foreach(grep {/fview_format_500(.*?)/} keys %env)
+			{
+				$_=~/fview_format_500(.*?)$/;
+				$formats{'a500_format'.$1}=$env{$_};
+			}
+
+
+			while ( (my $k, my $v) = each %article )
+			{
+				main::_log("VAR $k: $v");
+			}
+
+			#tu by som este chcel zrobit nieco ako v mliste - aby sa dal nastavit format pre kazdu stranu pre kazdy img
+			#article body
+			Tomahawk::module(
+				-type			=>	"mdl",
+				-category			=>	"400",
+				-name			=>	"fview_m1",
+				-global			=>	$env{fview_global},
+				-xsgn     			=>	$env{fview_xsgn},
+				-xsgn_global		=>	$env{fview_xsgn_global},
+				-TMP				=>	$env{fview_TMP},
+				-lng				=>	$env{lng},
+				%caching,
+				-cache_id_sub		=>	$article{_a400_ID}."-".$article{_a400_changetime},
+				shift_first_img		=>	$env{shift_first_img},# vytiahnem prvu premennu obrazku - vazne neccessary???
+				show_catname		=>	$env{show_catname}, #wtf?
+				show_catname_full	=>	$env{show_catname_full}, #wtf?
+				paging	=>	$env{fview_paging},
+				db_120			=>	$env{db_120},
+				db_400			=>	$env{db_400},
+				db_500			=>	$env{db_500},
+				db_820			=>	$env{db_820},
+				%formats,
+				page				=>	$main::FORM{page}, # nefunkcne, len posielam linku
+				%article,
+				return_null	=>	$env{fview_return_null},
+				xt_xlng				=>	$env{fview_xt_xlng},
+			) if (exists $env{fview_TMP});
+
+			$env{same_category_xsgn_global}=$env{xsgn_global} unless $env{same_category_xsgn_global};
+			$env{same_category_allow_subs}=1 unless ($env{same_category_allow_subs} eq "0"); #???
+
+			$env{same_category_db_select}="a400.ID, a400.title" unless ($env{same_category_db_select});
+
+			main::_log("trying to run same category article list");
+
+			Tomahawk::module(
+				-type		=>	"mdl",
+				-category		=>	"400",
+				-name		=>	"tlist_m1",
+				-xsgn		=>	$env{same_category_xsgn},
+				-xsgn_global	=>	$env{same_category_xsgn_global},
+				-global		=>	1,
+				-TMP			=>	$env{same_category_TMP},
+				-cache_id		=>	"same_category",
+				-cache_master	=>	$env{cache_master},
+				-cache_id_sub	=>	$article{_a400_IDcategory},
+				db_120		=>	$env{db_120},
+				db_400		=>	$env{db_400},
+				db_500		=>	$env{db_500},
+				db_820		=>	$env{db_820},
+				a400_IDcategory_url		=>	$env{a400_IDcategory_url}, # kazda kategoria na iny link?
+				db_IDcategory	=>	$article{_a400_IDcategory},
+				db_where	=>	"a400.ID!='".$article{_a400_ID}."'",
+				db_limit	=>	$env{same_category_db_limit},
+				db_select	=>	$env{same_category_db_select},
+				allow_subs		=>	$env{same_category_allow_subs},
+				return_null	=>	$env{same_category_return_null},
+				xt_xlng => $env{same_category_xt_xlng},
+			) if (exists $env{same_category_TMP});
+
+			main::_log("trying to run same author article list");
+
+			Tomahawk::module(
+				-type		=>	"mdl",
+				-category		=>	"400",
+				-name		=>	"tlist_m1",
+				-xsgn		=>	$env{same_author_xsgn},
+				-xsgn_global	=>	$env{same_author_xsgn_global},
+				-global		=>	1,
+				-TMP			=>	$env{same_author_TMP},
+				-cache_id		=>	"same_author",
+				-cache_master	=>	$env{cache_master},
+				-cache_id_sub	=>	$article{_a400_IDcategory},
+				db_120		=>	$env{db_120},
+				db_400		=>	$env{db_400},
+				db_500		=>	$env{db_500},
+				db_820		=>	$env{db_820},
+				db_where		=>	"a400.IDauthor='$article{_a400_IDauthor}'",
+				db_select	=>	$env{same_author_db_select},
+				a400_IDcategory_url		=>	$env{a400_IDcategory_url}, # kazda kategoria na iny link?
+				IDcategory	=>	$article{_a400_IDcategory},
+				return_null	=>	$env{same_author_return_null},
+				xt_xlng => $env{same_author_xt_xlng},
+			) if (exists $env{same_author_TMP});
+
+			main::_log("trying to run related articles list");
+
+			if(exists $env{related_a400_TMP})
+			{
+				$env{related_a400_count}=0;
+				while ($article{_a400_xrelated}=~s|<VAR id="a400" value="(.{0,11}?)" />||)
+				{
+					$env{related_a400_count}++;
+					if (!$env{related_a400_db_where}){$env{related_a400_db_where}="a400.ID IN($1, ";next;}
+					$env{related_a400_db_where}.="$1, ";
+				}
+				$env{related_a400_db_where}=~s|, $|)|;
+
+				#zeby hack? :)
+				$env{related_a400_db_where}="a400.ID='undefined'" if($env{related_a400_count}<1);
+
+				Tomahawk::module(
+					-type		=>	"mdl",
+					-category		=>	"400",
+					-name		=>	"tlist_m1",
+					-xsgn		=>	$env{related_a400_xsgn},
+					-xsgn_global	=>	$env{related_a400_xsgn_global},
+					-global		=>	1,
+					-TMP			=>	$env{related_a400_TMP},
+					-cache_id		=>	"related_a400",
+					-cache_master	=>	$env{cache_master},
+					-cache_id_sub	=>	$article{_a400_IDcategory},
+					db_120		=>	$env{db_120},
+					db_400		=>	$env{db_400},
+					db_500		=>	$env{db_500},
+					db_820		=>	$env{db_820},
+					db_where		=>	$env{related_a400_db_where},
+					db_IDcategory	=>	$env{related_a400_db_IDcategory},
+					db_select	=>	$env{related_a400_db_select},
+					db_limit		=>	$env{related_a400_db_limit},
+					a400_IDcategory_url		=>	$env{a400_IDcategory_url}, # kazda kategoria na iny link?
+					xrelated	=>	$env{related_a400_xrelated},
+					return_null	=>	$env{related_a400_return_null},
+					xt_xlng		=>	$env{related_a400_xt_xlng},
+					IDcategory_url_allow	=>	$env{related_a400_IDcategory_url_allow}
+				);
+			}
+
+			main::_log("parsing xrelated");
+=head1
+				# XRELATED
+				Tomahawk::module(
+					-type		=>	"mdl",
+					-category		=>	"400",
+					-name		=>	"fview_xrelated",
+					-xsgn		=>	$env{xsgn_xrelated},
+					-xsgn_global	=>	$env{xsgn_global},
+					-global		=>	1,
+					-TMP			=>	$env{TMP_xrelated},
+					-cache_id		=>	"a400_view",
+					-cache_master	=>	$env{cache_master},
+					#a500_cat		=>	1,
+					#a500			=>	0,
+					xrelated		=>	$article{_a400_xrelated},
+					) if ((exists $env{TMP_xrelated})&&($main::H->{body}=~/<!TMP-$env{TMP_xrelated}!>/));
+=cut
+			#$main::env{a400_IDcategory}=$article{IDcategory};
+
+			if($article{_a400_xrelated}=~/<VAR id="a820" value="(.*?)" \/>/)
+			{
+				$main::env{a820_ID}=$1;
+				if (exists $env{last_a820_TMP})
+				{
+					main::_log("trying to run last inserted message");
+
+					$env{last_a820_ID}=$main::env{a820_ID};
+
+					$main::env{a820_ID}=$env{last_a820_ID};
+
+					$env{last_a820_db_limit}=1 unless $env{last_a820_db_limit};
+					$env{last_a820_db_where}="messages>=10" unless $env{last_a820_db_where};
+					$env{last_a820_db_order_by}="inserttime DESC" unless $env{last_a820_db_order_by};
+
+
+					$env{last_a820_msg_limit}=1 unless $env{last_a820_msg_limit};
+					#$env{last_a820_msg_cut}=120 unless $env{last_a820_msg_cut};
+					$env{last_a820_msg_where}="length(msg)>100" unless $env{last_a820_msg_where};
+
+					Tomahawk::module(
+						-type		=>	"mdl",
+						-category		=>	"820",
+						-name		=>	"messages_tlist_m1",
+						-xsgn		=>	$env{last_a820_xsgn},
+						-xsgn_global	=>	$env{last_a820_xsgn_global},
+						-xlng_global	=>	$env{last_a820_xsgn_global}, #WARNING!!! using XSGN setting instead of XLNG setting!
+						-global		=>	1,
+						-cache_id		=>	"default",
+						-TMP			=>	$env{last_a820_TMP},
+						db_ID			=>	$env{last_a820_ID},
+						db_limit		=>	$env{last_a820_db_limit},
+						db_order_by		=>	$env{last_a820_db_order_by},
+						db_IDcategory			=>	$env{last_a820_IDcategory},
+						db_ID			=>	$env{last_a820_ID},
+						db_820		=>	$env{db_820},
+						msg_cut		=>	$env{last_a820_msg_cut},
+						xt_xlng => $env{last_a820_xt_xlng},
+					);
+				}
+
+				#mam taky dojem ze tu je nejaka moc restriktivna podmienka ... asi by sa to zislo rozdelit
+
+				if(
+					(exists $env{related_a820_TMP}) || (exists $env{related_a820_addmsg_TMP}) || (exists $env{related_a820_tview_TMP})
+				)
+				{
+					main::_log("trying to run forum add message");
+
+					$env{related_a820_ID}=$main::env{a820_ID};
+					my %cache;
+					if (!$main::FORM{submit} && !$main::USRM{logged}){%cache=(-cache_id	=>	"default",);}
+
+					$env{related_a820_addmsg_TMP}=$env{related_a820_TMP} unless $env{related_a820_addmsg_TMP};
+					$env{related_a820_addmsg_xsgn}=$env{related_a820_xsgn} unless $env{related_a820_addmsg_xsgn};
+					$env{related_a820_addmsg_xsgn_global}=$env{related_a820_xsgn_global} unless $env{related_a820_addmsg_xsgn_global};
+
+					Tomahawk::module(
+						-type		=>	"mdl",
+						-version		=>	1,
+						-category		=>	"820",
+						-name		=>	"addmsg",
+						-xsgn		=>	$env{related_a820_addmsg_xsgn},
+						-xsgn_global	=>	$env{related_a820_addmsg_xsgn_global},
+						-xlng_global	=>	$env{related_a820_addmsg_xsgn_global}, #WARNING!!! using XSGN setting instead of XLNG setting!
+						-global		=>	1,
+						-TMP			=>	$env{related_a820_addmsg_TMP},
+						#%cache,
+						ID			=>	$env{related_a820_ID},
+						db_820		=>	$env{db_820},
+						xt_xlng => $env{related_a820_xt_xlng},
+					);
+
+					main::_log("trying to run messages list");
+
+					$env{related_a820_tview_TMP}=$env{related_a820_TMP} unless $env{related_a820_addmsg_TMP};
+					$env{related_a820_tview_xsgn}=$env{related_a820_xsgn} unless $env{related_a820_tview_xsgn};
+					$env{related_a820_tview_xsgn_global}=$env{related_a820_xsgn_global} unless $env{related_a820_tview_xsgn_global};
+
+					my $db0=$main::DB{main}->Query("
+						SELECT
+							ID,messages,inserttime
+						FROM $env{db_820}.a820
+						WHERE
+							ID='$env{related_a820_ID}'
+							AND type='F'
+							AND lng='$env{lng}'
+							AND active='Y'
+						LIMIT 1
+					");
+					if (my %db0_line=$db0->fetchhash)
+					{
+						Tomahawk::module(
+							-type		=>	"mdl",
+							-category		=>	"400",
+							-name		=>	"tview_forum_c820",
+							-global		=>	1,
+							-xsgn		=>	$env{related_a820_tview_xsgn},
+							-xsgn_global	=>	$env{related_a820_tview_xsgn_global},
+							-TMP			=>	$env{related_a820_TMP},
+							-cache_id		=>	"default",
+							#	-cache_master	=>	$env{cache_master},
+							-cache_id_sub	=>	$db0_line{messages}."_".$db0_line{inserttime},
+							ID			=>	$env{related_a820_ID},
+							db_820		=>	$env{db_820},
+							ID_rel		=>	$article{_a400_ID},
+							xt_xlng => $env{related_a820_xt_xlng},
+						);
+					}
+					else
+					{
+						$article{_a400_xrelated}=~s|<VAR id="a820" value="$env{related_a820_ID}" />||;
+						$main::DB{main}->Query("
+							UPDATE $env{db_400}
+							SET
+								xrelated='$article{_a400_xrelated}'
+							WHERE
+								ID='$article{_a400_ID}'
+								AND active='Y'
+								AND (lng='$env{lng}' OR lng='')
+							LIMIT 1
+						");
+					}
+				}
+			}
+
+			#main::_log("goin' on with category path");
+=head1
+	#zobrazenie cesty k aktualnej kategorii
+  Tomahawk::module(
+	-type			=>	"mdl",
+	-category			=>	"400",
+	-name			=>	"show_cat_click",
+	-global			=>	1,
+	-xsgn     			=>	$env{xsgn_cat_click},
+	-xsgn_global		=>	$env{xsgn_global_cat_click},
+	-TMP				=>	$env{TMP_cat_click},
+	-cache_id				=>	"default",
+	IDcat				=>	$article{_a400_IDcategory},
+	db_400			=>	$env{db_400},
+	db_120			=>	$env{db_120},
+	format_500		=>	$env{format_500},
+	first_format_500		=>	$env{first_format_500},
+	page				=>	$main::FORM{page}, # nefunkcne, len posielam linku
+	%URL_IDcat
+	) if (exists $env{TMP_cat_click});
+=cut
+			return 1;
+		}
+		else
+		{
+			$tom::ERR="no data available! query description in log.";
+			main::_log($list->{Query_log});
+			
+			# if can't article found, give me 404 error code
+			if ($env{404})
+			{
+				$main::page_statuscode="404";
+			}
+			
+			#$main::H->r_("<!TMP-".$env{TMP_view}."!>","article [".$env{ID}."] not found");
+		}
+	}
+	else
+	{
+		$tom::ERR="could not execute query! query description in log.";
+		main::_log($list->{Query_log});
+		#return undef;
+	}
+
+	if ($env{return_null})
+	{
+		main::_log("no data available. return_null parameter in effect");
+		$XSGN{TMP}="";
+		return 1;
+	}
+	else
+	{
+		$env{fview_global}="1" unless (exists $env{fview_global});
+		$env{fview_xsgn_global}=$env{xsgn_global} unless $env{fview_xsgn_global};
+
+		Tomahawk::module(
+			-type			=>	"mdl",
+			-category			=>	"400",
+			-name			=>	"fview_m1",
+			-global			=>	$env{fview_global},
+			-xsgn     			=>	$env{fview_xsgn},
+			-xsgn_global		=>	$env{fview_xsgn_global},
+			-TMP				=>	$env{fview_TMP},
+			-lng				=>	$env{lng},
+			return_no_data	=>	1,
+			xt_xlng => $env{fview_xt_xlng},
+		) if (exists $env{fview_TMP});
+	}
+}
+
+1;

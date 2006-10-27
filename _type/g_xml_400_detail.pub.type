@@ -1,0 +1,23 @@
+<CONF_VAR id="layers" value="0" />
+<CONF_VAR id="dsgn" value="admin-backend-xml" global="1" />
+<CONF_VAR id="Content-Type" value="text/xml" />
+
+#
+<MODULE>
+	<VAR id="-type" value="smdl" />
+	<VAR id="-category" value="400" />
+	<VAR id="-name" value="fview_m1a" />
+	<VAR id="-global" value="1" />
+	<VAR id="-xsgn" value="xml" />
+	<VAR id="-xsgn_global" value="1" />
+		<VAR id="update_visits" value="0" />
+		<VAR id="fview_TMP" value="OUTPUT" />
+		<VAR id="fview_xsgn" value="xml" />
+		<VAR id="fview_xsgn_global" value="1" />
+		<VAR id="db_select" value="a400.*" />
+		<VAR id="db_ID" value="<$main::FORM{ID}>" />
+		<VAR id="db_where" value="a400.lng LIKE '<$main::FORM{lng}>'" />
+		<VAR id="db_starttime" value="9144845113" />
+		<VAR id="db_endtime" value="1" />
+		<#VAR id="db_active" value="%" />
+</MODULE>

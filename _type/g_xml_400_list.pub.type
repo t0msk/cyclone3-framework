@@ -1,0 +1,30 @@
+<CONF_VAR id="layers" value="0" />
+<CONF_VAR id="dsgn" value="admin-backend-xml" global="1" />
+<CONF_VAR id="Content-Type" value="text/xml" />
+
+#
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-category" value="400" />
+	<VAR id="-name" value="mlist_m1" />
+	<VAR id="-xlng" value="<$main::FORM{lng}>" />
+	<VAR id="-global" value="1" />
+	<VAR id="-xsgn" value="xml" />
+	<VAR id="-xsgn_global" value="1" />
+	<VAR id="-TMP" value="OUTPUT" />
+		<VAR id="db_select" value="a400.*,SUBSTRING(a400.priority,0,1) AS priority1,SUBSTRING(a400.priority,1,1) AS priority2,SUBSTRING(a400.priority,2,1) AS priority3" />
+		<VAR id="datetime_allow" value="1" />
+		<VAR id="db_order_by" value="<$main::FORM{order_by}>" />
+		<VAR id="db_starttime" value="99999999999999" />
+		<VAR id="db_endtime" value="0" />
+		<VAR id="db_IDcategory" value="<$main::FORM{IDcategory}>%" />
+		<VAR id="db_IDcategory_" value="0" />
+		<#VAR id="show_catname" value="1" />
+		<VAR id="db_limit" value="50" />
+		<#VAR id="db_orderby" value="title asc" />
+		<VAR id="db_priority_transform" value="1" />
+		<VAR id="db_active" value="0" />
+		<VAR id="db_paging" value="1" />
+		<VAR id="db_page" value="<$main::FORM{page}>" />
+		<VAR id="db_where" value="a400.active LIKE '%' AND a400.active NOT LIKE 'D'" />
+</MODULE>
