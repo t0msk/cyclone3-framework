@@ -163,8 +163,9 @@ sub execute
 		{
 
 		},
-
-
+		
+		a120 => {},
+		
 		link_disable							=>	$env{db_link_disable}, # nebudem nacitavat linky
 		link =>										# toto znamena ze budem robit replace najdenych linkov podla podmienok...
 		{

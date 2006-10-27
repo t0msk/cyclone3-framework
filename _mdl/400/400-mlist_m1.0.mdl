@@ -190,11 +190,9 @@ sub execute
 
 		a400_attrs_							=>	$env{db_attrs}, # podmienka ze MUSI byt lefnute
 		a400_attrs								=>	$env{db_attrs},# podmienky na to kedy ma byt left join a400_attrs
-		{
-
-		},
-
-
+		
+		'a120' => {},
+		
 		link_disable							=>	$env{db_link_disable}, # nebudem nacitavat linky
 		link =>										# toto znamena ze budem robit replace najdenych linkov podla podmienok...
 		{
@@ -534,33 +532,9 @@ sub execute
 				(($XSGN{NULL}=~/<%IDauthor_fullname%>/) || ($XSGN{NULL}=~/<%IDauthor_nickname%>/))
 			)
 			{
-
-
-				$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
-				$env{db_120}=$TOM::DB{main}{name} unless $env{db_120};
-
-				my $db0=$main::DB{main}->Query("
-					SELECT
-						ID,
-						IDcategory,
-						fullname,
-						nickname
-					FROM $env{db_120}.a120
-					WHERE
-						ID='$db_line{IDauthor}'
-						AND IDtype='0'
-					LIMIT 1
-				");
-				if (my %db0_line=$db0->FetchHash())
-				{
-					$XSGN{NULL}=~s|<%IDauthor%>|$db0_line{ID}|g;
-					$XSGN{NULL}=~s|<%IDauthor_fullname%>|$db0_line{fullname}|g;
-					$XSGN{NULL}=~s|<%IDauthor_nickname%>|$db0_line{nickname}|g;
-				}
-				else
-				{
-					main::_log($db0->errstr());
-				}
+				$XSGN{NULL}=~s|<%IDauthor%>|$db_line{'a120_author_ID'}|g;
+				$XSGN{NULL}=~s|<%IDauthor_fullname%>|$db_line{'a120_author_fullname'}|g;
+				$XSGN{NULL}=~s|<%IDauthor_nickname%>|$db_line{'a120_author_nickname'}|g;
 			}
 
 			if(
@@ -568,31 +542,9 @@ sub execute
 				(($XSGN{NULL}=~/<%IDeditor_fullname%>/) || ($XSGN{NULL}=~/<%IDeditor_nickname%>/))
 			)
 			{
-				$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
-				$env{db_120}=$TOM::DB{main}{name} unless $env{db_120};
-
-				my $db0=$main::DB{main}->Query("
-					SELECT
-						ID,
-						IDcategory,
-						fullname,
-						nickname
-					FROM $env{db_120}.a120
-					WHERE
-						ID='$db_line{IDeditor}'
-						AND IDtype='1'
-					LIMIT 1
-				");
-				if (my %db0_line=$db0->FetchHash())
-				{
-					$XSGN{NULL}=~s|<%IDeditor%>|$db0_line{ID}|g;
-					$XSGN{NULL}=~s|<%IDeditor_fullname%>|$db0_line{fullname}|g;
-					$XSGN{NULL}=~s|<%IDeditor_nickname%>|$db0_line{nickname}|g;
-				}
-				else
-				{
-					main::_log($db0->errstr());
-				}
+				$XSGN{NULL}=~s|<%IDeditor%>|$db_line{'a120_editor_ID'}|g;
+				$XSGN{NULL}=~s|<%IDeditor_fullname%>|$db_line{'a120_editor_fullname'}|g;
+				$XSGN{NULL}=~s|<%IDeditor_nickname%>|$db_line{'a120_editor_nickname'}|g;
 			}
 
 			if(
