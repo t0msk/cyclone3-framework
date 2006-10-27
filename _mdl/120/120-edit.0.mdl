@@ -1,0 +1,100 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+
+use strict;
+
+our $authors = 'gregor@webcom.sk';
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+
+	$env{db_120}=Tomahawk::Getmdlvar( 120, 'db') unless $env{db_120};
+	$env{db_120}=$main::DB{main}{name} unless $env{db_120};
+
+	my $IDeditor; my $IDauthor;
+
+	# Nickname musi byt!
+	if ( !$env{nickname} )
+	{
+		main::_log('No nickname error!');
+		$XSGN{TMP} = $XSGN{TMP_no_nickname};
+		return 1;
+	}
+
+	# Zistim, ci taky nick uz existuje
+	# O tom, ako s touto informaciou nalozim, sa rozhodnem neskor
+	# Mozu nastat pripady
+	# - VYTVARAM ZAZNAM - v takom pripade nic nevytvorim a skoncim
+	# - EDITUJEM ZAZNAM
+	# 	a, ak sa nickname nemeni - tak idem dalej
+	# 	b, ak sa nickname meni - skoncim
+	my $find = "SELECT ID FROM $env{db_120}.a120 WHERE nickname='$env{nickname}'";
+	my $dbfind = $main::DB{main}->Query( $find );
+
+	if ( !$env{ID} ) # VYTVARAM NOVE ZAZNAMY
+	{
+		main::_log('Trying to add new records ...');
+	
+		if ( $dbfind->numrows ) # Vyhodim chybu a koncim
+		{
+			main::_log('Failed!');
+			$XSGN{TMP} = $XSGN{TMP_nickname_already_exists};
+			return 1;
+		}
+
+		# Mozem vkladat, vsetko je ok
+		my $ins_e = "INSERT INTO $env{db_120}.a120 ( IDtype ) VALUES ( 1 )"; # Editor - 1
+		my $ins_a = "INSERT INTO $env{db_120}.a120 ( IDtype ) VALUES ( 0 )"; # Autor - 0
+		my $dbins_e = $main::DB{main}->Query( $ins_e ); $IDeditor = $dbins_e->insertid;
+		my $dbins_a = $main::DB{main}->Query( $ins_a ); $IDauthor = $dbins_a->insertid;
+		main::_log("Success (IDauthor: $IDauthor; IDeditor: $IDeditor)");
+	}
+	else # EDITUJEM EXISTUJUCE ZAZNAMY
+	{
+		main::_log('Finding old nickname for ID '.$env{ID});
+		# Zistujem stary nick
+		my $old_nick; my $new_nick = $env{nickname};
+		my $sql_nick = "SELECT nickname FROM $env{db_120}.a120 WHERE ID=$env{ID}";
+		my $db_nick = $main::DB{main}->Query( $sql_nick );
+		my %db_nick_line = $db_nick->fetchhash;
+		$old_nick = $db_nick_line{nickname};
+
+		if ( $old_nick ne $new_nick && $dbfind->numrows ) 
+		{ # Vyhodim chybu a skoncim ak chcem menit na uz existujuci
+			main::_log('New nickname already exists');
+			$XSGN{TMP} = $XSGN{TMP_nickname_already_exists};
+			return 1;
+		}
+
+		# Zistim si IDecka
+		my $sql_findIDs = "SELECT ID FROM $env{db_120}.a120 WHERE nickname='$old_nick' ORDER BY IDtype DESC";
+		my $db_findIDs = $main::DB{main}->Query( $sql_findIDs );
+		my %ids_e = $db_findIDs->fetchhash; $IDeditor = $ids_e{ID};
+		my %ids_a = $db_findIDs->fetchhash; $IDauthor = $ids_a{ID};
+		main::_log("Success (IDauthor: $IDauthor; IDeditor: $IDeditor)");
+	}
+
+	# A konecne updatujem
+	my $upd = "
+	UPDATE $env{db_120}.a120
+	SET
+		fullname='$env{fullname}',
+		nickname='$env{nickname}',
+		email='$env{email}',
+		homepage='$env{homepage}'
+	WHERE
+		ID in ($IDauthor, $IDeditor)
+	";
+	main::_log('Updating ...');
+	main::_log( $upd );
+	$main::DB{main}->Query( $upd );
+
+	return 1;
+}
+1;

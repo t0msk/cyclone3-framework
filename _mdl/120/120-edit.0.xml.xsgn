@@ -1,0 +1,27 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response type="edit" IDapp="a120" IDitem="<%ID%>" result="1">
+	<result>1</result>
+	<ID><![CDATA[<%ID%>]]></ID>
+</response>
+</DEFINITION>
+
+<DEFINITION id="TMP_no_data">
+<response type="edit" IDapp="a120" IDitem="" result="0">
+</response>
+</DEFINITION>
+
+<DEFINITION id="TMP_no_nickname">
+<response type="edit" IDapp="a120" IDitem="" result="-1">
+</response>
+</DEFINITION>
+
+<DEFINITION id="TMP_nickname_already_exists">
+<response type="edit" IDapp="a120" IDitem="" result="-2">
+</response>
+</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>
