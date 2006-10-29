@@ -1,0 +1,21 @@
+# UTF-8!!!
+
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+<response IDapp="a300" type="logout" result="0"><![CDATA[Missing record in online users database.]]></response>
+</DEFINITION>
+
+
+<DEFINITION id="unlogged">
+<response IDapp="a300" type="logout" result="1"><![CDATA[You have been unlogged]]></response>
+</DEFINITION>
+
+
+<DEFINITION id="err_notlogged">
+<response IDapp="a300" type="logout" result="0"><![CDATA[You are not logged in!]]></response>
+</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>

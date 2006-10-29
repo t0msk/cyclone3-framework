@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use strict;
+use App::300;
+use CVML;
+
+sub execute
+{
+	my %env=@_;
+	my @path = split("/",$env{set});
+
+	if ($main::USRM{logged} eq "Y")
+	{
+		my $db0=$main::DB{main}->Query ("
+			SELECT profile_shadow
+			FROM TOM.a300_users
+			WHERE IDhash='$main::USRM{IDhash}'
+			LIMIT 1
+		");
+		if (my %db0_line=$db0->fetchhash())
+		{
+			my $cvml=new CVML(data=>$db0_line{'profile_shadow'});
+			my %hash=%{$cvml->{hash}};
+
+			my $hlp = \%hash;
+
+			for (my $i ; $i<scalar(@path)-1;  $i++)
+			{
+				$hlp->{$path[$i]} = {} if  not defined $hlp->{$path[$i]};
+				$hlp= $hlp->{$path[$i]};
+			}
+			$hlp ->{$path[-1]} = $env{value};
+
+			# serializujem
+			my $text=CVML::structure::serialize( %hash );
+			$text=~s|\'|\\'|g;
+
+			# a tuto klasicke ulozenie
+			my $db0=$main::DB{main}->Query ("
+				UPDATE TOM.a300_users
+				SET profile_shadow='$text'
+				WHERE IDhash='$main::USRM{IDhash}'
+				LIMIT 1
+			");
+		}
+	}
+return 1;
+}
+1;

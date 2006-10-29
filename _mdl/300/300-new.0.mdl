@@ -1,0 +1,55 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use Encode;
+use encoding 'utf8';
+use utf8;
+use strict;
+use Digest::MD5  qw(md5 md5_hex md5_base64);
+use App::300;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+	
+	$env{'domain'} = $tom::H_cookie unless $env{'domain'};
+	
+	if ( !$env{login} || !$env{pass} )
+	{
+		# Nemam login alebo heslo
+		$XSGN{TMP} = $XSGN{ERR_LOGINORPASS};
+		return 1;
+	}
+	
+	my %user=App::300::UserFind(
+		login => $env{'login'},
+		host => $env{'domain'}
+	);
+	if ($user{'IDhash'})
+	{
+		$XSGN{TMP} = $XSGN{ERR_LOGINEXITS};
+		return 1;
+	}
+
+	# Mam aj Login aj Pass, idem pridat usera
+	
+	main::_log("new user='$env{'login'}' with pass='$env{'pass'}'");
+	
+	$env{'lng'} = 'en' unless $env{'lng'};
+	my $pass_md5 = Digest::MD5::md5_hex(Encode::encode_utf8($env{'pass'}));
+	
+	main::_log("md5 pass='$pass_md5'");
+	
+	App::300::UserGenerate(
+		login => $env{'login'},
+		pass_md5 => $pass_md5,
+		lng => $env{'lng'},
+		host => $env{'domain'},
+		active => 'Y',
+	);
+	
+	return 1;
+}
+1;

@@ -1,0 +1,35 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use strict;
+use App::300;
+use TOM::Data::XML;
+use CVML;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+	my $db0=$main::DB{main}->Query ("
+		SELECT profile_shadow
+		FROM TOM.a300_users
+		WHERE IDhash='$main::USRM{IDhash}'
+		LIMIT 1
+	");
+	if (my %db0_line=$db0->fetchhash())
+	{
+		my $cvml=new CVML(data=>$db0_line{'profile_shadow'});
+		my %hash=%{$cvml->{hash}};
+		my $XML = TOM::Data::XML::serialize_enh(data=>\%hash,strict=>1);
+		if($XML=~/^</>$/)
+		{}
+		else
+		{
+			$XSGN{TMP}=~ s/<%profile_xml%>/$XML/;
+		}
+		return 1;
+	}
+	$XSGN{TMP}=$XSGN{ERR};
+	return 1;
+}
+1;

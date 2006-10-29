@@ -1,0 +1,12 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP"></DEFINITION>
+
+<DEFINITION id="unlogged">
+<response IDapp="a300" type="login" result="0">
+<reason><![CDATA[Session Timeout!]]></reason>
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

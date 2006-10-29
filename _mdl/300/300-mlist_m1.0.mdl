@@ -1,0 +1,230 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+$authors="nemsak\@webcom.sk";
+use strict;
+use App::400;
+
+=head1 NAME
+mlist_m1
+
+=head1 HEAD_VERSION_BUILD
+1.051122
+
+=head1 DESCRIPTION
+listing clankov s xrelated
+
+=head1 CHANGES
+2005-08-10 - deb00t
+	- sync modulov podla globalnej predlohy
+2005-08-05 - deb00t
+	- uprava implementacie specialnych xsgn templates pre LINE (LINE_linecounter, LINE_odd, ...)
+	- uprava implementacie specialnych xsgn templates pre LINE_a500 (LINE_a500_linecounter, LINE_a500_odd, ...)
+	- uprava implementacie specialnych formatov obrazkov pre a500_format (a500_format_linecounter, a500_format_odd, ...)
+2005-08-22 - deb00t
+	- pridanie podpory IDname, a IDname_category
+2005-08-29 - deb00t
+	- defaultne nastavenie db_select_arch_allow na true
+2005-09-16 - deb00t
+	- v zavere, pri zamene <%page%> (riadok cca 717) pridany na koniec regexp zameny parameter "g"
+	- opraveny regexp pri vyhladavani main category name (cca 222) - /^([a-zA-Z0-9]*?)%/ na /^([a-zA-Z0-9]*).*/ (ten prvy nezral, ak v idcku kategorie nebolo percento :) )
+2005-11-22 - deb00t
+	- pridana podpora 540 v bloku spracovania xrelated
+2005-12-15 - deb00t
+	- opakovanie zameny MAIN_IDcategory_name
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	my $where;
+
+	$env{'domain'}=$tom::H_cookie unless $env{'domain'};
+
+	$env{db_limit}=50 unless $env{db_limit};
+
+	if($env{db_limit}=~/^(.*?),(.*)$/)
+	{
+		$env{db_offset}=$1;
+		$env{db_count}=$2;
+	}
+	else
+	{
+		$env{db_offset}=0;
+		$env{db_count}=$env{db_limit};
+	}
+
+	if($env{db_paging})
+	{
+		if(!exists $env{db_page})
+		{
+			main::_log("missing 'db_page'! probably you are expecting automatic use of main::FORM{a400mlistpage}, which is deprecated. please use 'db_page' parameter, i.e. &lt;VAR id=\"db_page\" value=\"&lt;\$main::FORM{page}&gt;\" />");
+		}
+		$env{db_page}=0 unless $env{db_page};
+		$env{db_offset}=($env{db_page}*$env{db_count})+$env{db_offset};
+		$env{db_limit}=$env{db_offset}.",".($env{db_count}+1);
+		main::_log("listing with offset $env{db_offset} $env{db_from} requesting $env{db_count} articles plus 1 more for paging");
+	}
+
+	# setting default db_order_by
+	$env{db_order_by}="login ASC" unless $env{db_order_by};
+
+	my $sql = "
+		(
+			SELECT
+				*
+			FROM
+				TOM.a300_users LEFT JOIN
+				TOM.a300_users_attrs ON
+					a300_users.IDhash=a300_users_attrs.IDhash
+			WHERE
+				host='$env{'domain'}' AND login!=''
+		)
+		UNION
+		(
+			SELECT
+				*
+			FROM
+				TOM.a300_users_arch LEFT JOIN
+				TOM.a300_users_attrs_arch ON
+					a300_users_arch.IDhash=a300_users_attrs_arch.IDhash
+			WHERE
+				host='$env{'domain'}' AND login!=''
+		)
+		ORDER BY $env{db_order_by}
+		LIMIT $env{db_limit}
+	";
+	main::_log($sql);
+	my $db0 = $main::DB{main}->Query( $sql );
+
+	my $line_counter;
+
+	main::_log("received ".$db0->numRows()." db lines");
+
+	while ( my %db0_line = $db0->fetchhash )
+	{
+		$line_counter++;
+		if ($line_counter eq ($env{db_count}+1)) {main::_log("we have an exceeding line - allowing next page");last;}
+
+		my $null = $XSGN{LINE};
+
+		while ( my ($k,$v) = each %db0_line )
+		{
+			$null =~ s|<%$k%>|$v|g;
+		}
+
+		$XSGN{TMP} =~ s|<#LINE#>|$null|;
+	}
+
+	if($line_counter<1)
+	{
+		if($env{return_null})
+		{
+			main::_log("no data available. return_null parameter in effect");
+			$XSGN{TMP}="";
+		}
+		else
+		{
+			if(exists $XSGN{TMP_NO_DATA})
+			{
+				main::_log("no data available. returning TMP_NO_DATA");
+				$XSGN{TMP}=$XSGN{TMP_NO_DATA};
+			}
+			else
+			{
+				$tom::ERR="no data available! query description in log.";
+				return undef;
+			}
+		}
+	}
+
+	if (($line_counter eq ($env{db_count}+1)) || ($env{db_page}>0))
+	{
+		main::_log("actual page is: $env{db_page}");
+		#$XSGN{TMP}=~s|<#PAGING#>|$XSGN{PAGING}|;
+
+		if ($XSGN{'PAGING_'.$env{db_page}})
+		{
+			$XSGN{PAGING}=$XSGN{'PAGING_'.$env{db_page}};
+			main::_log("got a different design for paging!");
+		}
+
+		if($XSGN{TMP}=~/<#PAGING_$env{db_page}#>/)
+		{
+			#not sure about this
+			#$XSGN{TMP}=~s|<#PAGING_$env{db_page}#>|$XSGN{PAGING}|g;
+			$XSGN{TMP}=~s|<#PAGING#>|$XSGN{PAGING}|g;
+		}
+		else
+		{$XSGN{TMP}=~s|<#PAGING#>|$XSGN{PAGING}|g;}
+
+		# inserting links to all previous pages
+		if(($XSGN{TMP}=~/<#PAGES#>/) && ($XSGN{PAGES}) && ($env{db_page}>1))
+		{
+			my $var=$env{db_page}-1;
+			if ($var)
+			{
+				while ($var)
+				{
+					$XSGN{PAGES}=~s|<#PAGE#>|$XSGN{PAGE}|;
+					$XSGN{PAGES}=~s|<%page%>|$var|g;
+					$XSGN{PAGES}=~s|<%page_real%>|$var+1|ge;
+					$var--;
+				}
+				$XSGN{TMP}=~s|<#PAGES#>|$XSGN{PAGES}|g;
+			}
+		}
+
+		$XSGN{TMP}=~s|<%page%>|$env{db_page}|g;
+		$XSGN{TMP}=~s|<%page_real%>|$env{db_page}+1|eg;
+	}
+
+	if ($line_counter eq ($env{db_count}+1))
+	{
+		my $nextpage=$env{db_page}+1;
+		$XSGN{NULL}=$XSGN{PAGING_NEXT};
+		$XSGN{NULL}=~s|<%page%>|$nextpage|g;
+
+		if($XSGN{'PAGING_URL_'.$nextpage})
+		{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{'PAGING_URL_'.$nextpage}|;}
+		else
+		{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{PAGING_URL}|;}
+
+		$XSGN{NULL}=~s|<%page%>|$nextpage|g;
+		$XSGN{NULL}=~s|<%page_real%>|$nextpage+1|ge;
+		$XSGN{TMP}=~s|<#PAGING_NEXT#>|$XSGN{NULL}|;
+	}
+
+	if ($env{db_page}>0)
+	{
+		my $prevpage=$env{db_page}-1;
+		$XSGN{NULL}=$XSGN{PAGING_PREV};
+		$XSGN{NULL}=~s|<%page%>|$prevpage|g;
+
+		if($XSGN{'PAGING_URL_'.$prevpage})
+		{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{'PAGING_URL_'.$prevpage}|;}
+		else
+		{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{PAGING_URL}|;}
+
+		$XSGN{NULL}=~s|<%page%>|$prevpage|g;
+		$XSGN{NULL}=~s|<%page_real%>|$prevpage+1|ge;
+		$XSGN{TMP}=~s|<#PAGING_PREV#>|$XSGN{NULL}|;
+	}
+
+	return 1;
+}
+
+1;

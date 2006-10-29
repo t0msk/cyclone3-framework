@@ -1,0 +1,46 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response IDapp="a300" type="list">
+	<setup>
+		<page current="<%page_real%>" <#PAGING#> />
+	</setup>
+	<header>
+		<lng src="icons/treecol/lng.png" />
+		<active />
+		<login />
+		<IPlast />
+		<last_login />
+	</header>
+<#LINE#>
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="LINE">
+	<item IDitem="<%IDhash%>">
+		<lng><![CDATA[<%lng%>]]></lng>
+		<active><![CDATA[<%active%>]]></active>
+		<login><![CDATA[<%login%>]]></login>
+		<IPlast><![CDATA[<%IPlast%>]]></IPlast>
+		<last_login><![CDATA[<%logtime%>]]></last_login>
+	</item>
+<#LINE#>
+</DEFINITION>
+
+
+<DEFINITION id="TMP_NO_DATA">
+<response IDapp="a300" type="list">
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="PAGING"><#PAGING_PREV#> <#PAGING_NEXT#></DEFINITION>
+
+<DEFINITION id="PAGING_PREV">previous="<%page_real%>"</DEFINITION>
+
+<DEFINITION id="PAGING_NEXT">next="<%page_real%>"</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>

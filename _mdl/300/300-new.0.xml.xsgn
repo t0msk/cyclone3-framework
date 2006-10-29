@@ -1,0 +1,21 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response IDapp="a300" type="new" result="1">
+</response>
+</DEFINITION>
+
+<DEFINITION id="ERR_LOGINORPASS">
+<response IDapp="a300" type="new" result="0">
+	<reason><![CDATA[Missing login or password.]]></reason>
+</response>
+</DEFINITION>
+
+<DEFINITION id="ERR_LOGINEXITS">
+	<response IDapp="a300" type="new" result="0">
+		<reason><![CDATA[User with this login exists.]]></reason>
+	</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

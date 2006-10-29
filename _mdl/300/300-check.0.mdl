@@ -1,0 +1,99 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+
+	main::_log("logged: ".$main::USRM{logged});
+	
+	if ($main::USRM{logged} eq "Y")
+	{
+		my $db0=$main::DB{'main'}->Query("
+			SELECT
+				nickname
+			FROM
+				a120
+			WHERE
+				nickname='$main::USRM{'login'}' AND
+				IDtype=1
+			LIMIT 1
+		");
+		if (not my %db0_line=$db0->fetchhash())
+		{
+			$main::DB{'main'}->Query("
+				INSERT INTO a120
+				(
+					IDcategory,
+					IDtype,
+					nickname,
+					fullname,
+					active
+				)
+				VALUES
+				(
+					'0',
+					'1',
+					'$main::USRM{'login'}',
+					'$main::USRM{'login'}',
+					'Y'
+				)
+			");
+		}
+		
+		my $db0=$main::DB{'main'}->Query("
+			SELECT
+				nickname
+			FROM
+				a120
+			WHERE
+				nickname='$main::USRM{'login'}' AND
+				IDtype=0
+			LIMIT 1
+		");
+		if (not my %db0_line=$db0->fetchhash())
+		{
+			$main::DB{'main'}->Query("
+				INSERT INTO a120
+				(
+					IDcategory,
+					IDtype,
+					nickname,
+					fullname,
+					active
+				)
+				VALUES
+				(
+					'0',
+					'0',
+					'$main::USRM{'login'}',
+					'$main::USRM{'login'}',
+					'Y'
+				)
+			");
+		}
+		return 1;
+	}
+	
+	$XSGN{TMP}=$XSGN{unlogged};
+
+	# Stop all following modules
+	$main::action = "stop";
+	main::_log("set \$main::action='stop'");
+
+	return 1;
+}
+
+1;
+
+
+
+
+
+
