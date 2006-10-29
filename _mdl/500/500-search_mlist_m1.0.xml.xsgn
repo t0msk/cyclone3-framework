@@ -1,0 +1,49 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+<response IDapp="a500" type="list">
+	<setup>
+		<page current="<%page_real%>" <#PAGING#> />
+	</setup>
+	<header>
+		<thumbnail />
+		<ID flex="1" />
+		<fullpath flex="1" />
+		<about flex="1" />
+	</header>
+<#LINE#>
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="LINE">
+<item IDitem="<%ID%>">
+	<thumbnail src="<%fullpath%>"></thumbnail>
+	<ID><![CDATA[<%ID%>]]></ID>
+	<IDname><![CDATA[<%IDname%>]]></IDname>
+	<fullpath><![CDATA[<%fullpath%>]]></fullpath>
+	<about><![CDATA[<%about%>]]></about>
+	<keywords><![CDATA[<%keywords%>]]></keywords>
+	<title><![CDATA[<%about%>]]></title>
+	<visits><![CDATA[<%visits%>]]></visits>
+</item>
+<#LINE#>
+</DEFINITION>
+
+
+<DEFINITION id="TMP_NO_DATA">
+<response IDapp="a500" type="list">
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="PAGING"><#PAGING_PREV#> <#PAGING_NEXT#></DEFINITION>
+
+<DEFINITION id="PAGING_PREV">previous="<%page_real%>"</DEFINITION>
+
+<DEFINITION id="PAGING_NEXT">next="<%page_real%>"</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>

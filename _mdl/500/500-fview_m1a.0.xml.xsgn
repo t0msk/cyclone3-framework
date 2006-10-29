@@ -1,0 +1,43 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+<response type="detail" IDapp="a500" IDitem="<%ID%>">
+	<ID><![CDATA[<%ID%>]]></ID>
+	<IDname><![CDATA[<%IDname%>]]></IDname>
+	<IDcategory><![CDATA[<%IDcategory%>]]></IDcategory>
+	<IDauthor><![CDATA[<%IDauthor%>]]></IDauthor>
+	<IDeditor><![CDATA[<%IDeditor%>]]></IDeditor>
+	<title><![CDATA[<%about%>]]></title>
+	<keywords><![CDATA[<%keywords%>]]></keywords>
+	<lasttime><![CDATA[<%keywords%>]]></lasttime>
+	<starttime><![CDATA[<%starttime%>]]></starttime>
+	<endtime><![CDATA[<%endtime%>]]></endtime>
+	<inserttime><![CDATA[<%inserttime%>]]></inserttime>
+	<formats>
+<#LINE#>
+	</formats>
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="LINE">
+		<item IDitem="<%format%>">
+			<format><![CDATA[<%format%>]]></format>
+			<size><%size%></size>
+			<hash><![CDATA[<%hash%>]]></hash>
+			<fullpath><![CDATA[<%dirpath%>/<%hash%>-<%format%>.jpg]]></fullpath>
+			<changetime><![CDATA[<%changetime%>]]></changetime>
+		</item>
+<#LINE#>
+</DEFINITION>
+
+
+<DEFINITION id="TMP_no_data">
+<response type="detail" IDapp="a500" IDitem="" result="0">
+</response>
+</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>

@@ -1,0 +1,27 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response IDapp="a0" type="list">
+<#LINE#>
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="LINE">
+	<item IDitem="<%format%>">
+		<format><![CDATA[<%format%>]]></format>
+		<size><![CDATA[<%value%>]]></size>
+		<description><![CDATA[<%about%>]]></description>
+	</item>
+<#LINE#>
+</DEFINITION>
+
+
+<DEFINITION id="TMP_NO_DATA">
+<response IDapp="a0" type="list">
+</response>
+</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>

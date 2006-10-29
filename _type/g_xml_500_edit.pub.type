@@ -1,0 +1,31 @@
+<CONF_VAR id="layers" value="0" />
+<CONF_VAR id="dsgn" value="admin-backend-xml" global="1" />
+<CONF_VAR id="Content-Type" value="text/xml" />
+
+#
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-category" value="500" />
+	<VAR id="-name" value="edit_m1" />
+	<VAR id="-TMP" value="OUTPUT" />
+	<VAR id="-global" value="1" />
+	<VAR id="-xsgn" value="xml" />
+	<VAR id="-xsgn_global" value="1" />
+		<VAR id="db_ID" value="<$main::FORM{ID}>" />
+		<VAR id="db_IDname" value="<$main::FORM{IDname}>" />
+		<VAR id="db_IDcategory" value="<$main::FORM{IDcategory}>" />
+		<VAR id="db_keywords" value="<$main::FORM{keywords}>" />
+		<VAR id="db_title" value="<$main::FORM{title}>" />
+		<#VAR id="file_t_data" value="<$main::FORM{file_data}>" />
+		<#VAR id="file_t_name" value="<$main::FORM{file_name}>" />
+		<#VAR id="file_t_extension" value="<$main::FORM{file_extension}>" />
+		<#VAR id="file_t_format" value="<$main::FORM{file_format}>" />
+		<#VAR id="file_o_data" value="<$main::FORM{file_data}>" />
+		<#VAR id="file_o_name" value="<$main::FORM{file_name}>" />
+		<#VAR id="file_o_extension" value="<$main::FORM{file_extension}>" />
+		<#VAR id="file_o_format" value="<$main::FORM{file_format}>" />
+		<#VAR id="file_s_data" value="<$main::FORM{file_data}>" />
+		<#VAR id="file_s_name" value="<$main::FORM{file_name}>" />
+		<#VAR id="file_s_extension" value="<$main::FORM{file_extension}>" />
+		<#VAR id="file_s_format" value="<$main::FORM{file_format}>" />
+</MODULE>
