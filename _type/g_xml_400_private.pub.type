@@ -11,7 +11,7 @@
 	<VAR id="-xsgn" value="xml" />
 	<VAR id="-xsgn_global" value="1" />
 		<VAR id="-TMP" value="OUTPUT" />
-		<VAR id="-xsgn" value="admin-backend-xml" />
+		<VAR id="-xsgn" value="xml" />
 		<VAR id="-xsgn_global" value="1" />
 		<VAR id="db_lng" value="<$main::FORM{lng}>" />
 		<VAR id="db_ID" value="<$main::FORM{ID}>" />
