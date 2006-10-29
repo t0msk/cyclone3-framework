@@ -1,0 +1,60 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response IDapp="a820" type="message_list">
+<#LINE#>
+</response>
+</DEFINITION>
+
+<DEFINITION id="FORUM_EMPTY">
+<response IDapp="a820" type="message_list">
+</response>
+</DEFINITION>
+
+<DEFINITION id="LINE_ANONYMOUS">
+	<item IDitem="<%ID%>">
+		<active><![CDATA[<%active%>]]></active>
+		<ID><![CDATA[<%ID%>]]></ID>
+		<IDparent><![CDATA[<%IDre%>]]></IDparent>
+		<inserttime><![CDATA[<%day%>. <%month%> <%year%>  <%hour%>:<%minute%>]]></inserttime>
+		<title><![CDATA[<%title%>]]></title>
+		<from_name><![CDATA[<%from_name%>]]></from_name>
+		<from_IP><![CDATA[<%from_IP%>]]></from_IP>
+		<from_email><![CDATA[<%from_email%>]]></from_email>
+		<authorized><![CDATA[<%authorized%>]]></authorized>
+	</item>
+<#LINE#>
+</DEFINITION>
+
+
+<DEFINITION id="INDENT">	</DEFINITION>
+
+
+# nasledujuce TMP sa nepouzivaju sa na tomto webe
+<#DEFINITION id="LINE_PARENT_ANONYM">
+</DEFINITION>
+
+<DEFINITION id="LINE">
+	<item IDitem="<%ID%>">
+		<active><![CDATA[<%active%>]]></active>
+		<ID><![CDATA[<%ID%>]]></ID>
+		<IDparent><![CDATA[<%IDre%>]]></IDparent>
+		<inserttime><![CDATA[<%day%>. <%month%> <%year%>  <%hour%>:<%minute%>]]></inserttime>
+		<title><![CDATA[<%title%>]]></title>
+		<from_name><![CDATA[<%from_name%>]]></from_name>
+		<from_IP><![CDATA[<%from_IP%>]]></from_IP>
+		<from_email><![CDATA[<%from_email%>]]></from_email>
+		<authorized><![CDATA[<%authorized%>]]></authorized>
+	</item>
+<#LINE#>
+</DEFINITION>
+
+<#DEFINITION id="LINE_PARENT">
+</DEFINITION>
+
+<#DEFINITION id="reply">
+</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>

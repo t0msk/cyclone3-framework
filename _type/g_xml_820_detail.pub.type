@@ -1,0 +1,22 @@
+<CONF_VAR id="layers" value="0" />
+<CONF_VAR id="dsgn" value="admin-backend-xml" global="1" />
+<CONF_VAR id="Content-Type" value="text/xml" />
+
+#
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-category" value="820" />
+	<VAR id="-name" value="mview_m1" />
+	<VAR id="-TMP" value="OUTPUT" />
+	<VAR id="-global" value="1" />
+	<VAR id="-xsgn" value="xml" />
+	<VAR id="-xsgn_global" value="1" />
+		<VAR id="db_lng" value="<$main::FORM{lng}>" />
+		<VAR id="db_active" value="%" />
+		<VAR id="db_ID" value="<$main::FORM{ID}>" />
+		<VAR id="db_IDname" value="<$main::FORM{IDname}>" />
+		<VAR id="db_IDcategory" value="<$main::FORM{IDcategory}>" />
+		<VAR id="db_title" value="<$main::FORM{title}>" />
+		<VAR id="db_description" value="<$main::FORM{description}>" />
+		<VAR id="db_login_required" value="<$main::FORM{login_required}>" />
+</MODULE> 

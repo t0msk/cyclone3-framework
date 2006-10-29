@@ -1,0 +1,46 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+#ak je user nalogovany
+<DEFINITION id="TMP">
+<response type="detail" IDapp="a820" IDitem="<%ID%>" result="1">
+	<result>1</result>
+	
+	<ID><![CDATA[<%ID%>]]></ID>
+	<IDattrs><![CDATA[<%IDattrs%>]]></IDattrs>
+	<IDname><![CDATA[<%IDname%>]]></IDname>
+	<IDcategory><![CDATA[<%IDcategory%>]]></IDcategory>
+	<title><![CDATA[<%name%>]]></title>
+	<description><![CDATA[<%about%>]]></description>
+	
+	<type><![CDATA[<%type%>]]></type>
+	<messages><![CDATA[<%messages%>]]></messages>
+	<login_required><![CDATA[<%login_required%>]]></login_required>
+	<xrelated><![CDATA[<%xrelated%>]]></xrelated>
+	<xdata><![CDATA[<%xdata%>]]></xdata>
+	
+	<starttime><![CDATA[<%starttime%>]]></starttime>
+	<createtime><![CDATA[<%createtime%>]]></createtime>
+	<inserttime><![CDATA[<%inserttime%>]]></inserttime>
+	<lasttime><![CDATA[<%lasttime%>]]></lasttime>
+	
+	<IDowner><![CDATA[<%IDowner%>]]></IDowner>
+	<IDgroup><![CDATA[<%IDgroup%>]]></IDgroup>
+	
+	<lng><![CDATA[<%lng%>]]></lng>
+	<active><![CDATA[<%active%>]]></active>
+	<tactive><![CDATA[<%tactive%>]]></tactive>
+	
+</response>
+</DEFINITION>
+
+
+#ak je user nenalogovany
+<DEFINITION id="TMP_no_data">
+<response type="detail" IDapp="a820" IDitem="<%ID%>" result="0">
+</response>
+</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>

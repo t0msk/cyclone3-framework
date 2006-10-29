@@ -1,0 +1,21 @@
+<CONF_VAR id="layers" value="0" />
+<CONF_VAR id="dsgn" value="admin-backend-xml" global="1" />
+<CONF_VAR id="Content-Type" value="text/xml" />
+
+#
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-category" value="820" />
+	<VAR id="-name" value="flist_m1" />
+	<VAR id="-TMP" value="OUTPUT" />
+	<VAR id="-global" value="1" />
+	<VAR id="-xsgn" value="xml" />
+	<VAR id="-xsgn_global" value="1" />
+		<VAR id="db_IDcategory" value="<$main::FORM{IDforum}>" />
+		<VAR id="db_limit" value="50" />
+		<VAR id="db_select" value="a820.createtime, a820.inserttime, a820.name, a820.messages, a820.ID, a820.IDcategory" />
+		<VAR id="db_where" value="((a820.name LIKE '%<$main::FORM{search}>%') OR (a820.about LIKE '%<$main::FORM{search}>%'))" />
+		<VAR id="db_active" value="%" />
+		<VAR id="db_page" value="<$main::FORM{a820page}>" />
+		<VAR id="db_paging" value="1" />
+</MODULE>

@@ -1,0 +1,112 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+#ak je user nalogovany
+<DEFINITION id="TMP">
+toto je editorco
+</DEFINITION>
+
+
+#ak je user nenalogovany
+<DEFINITION id="TMP_unlogged">
+<response type="edit" IDapp="a820" IDitem="<%ID%>" result="0">
+
+	<result>1</result>
+	<result>You are not logged in.</result>
+	
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="TMP_result_success">
+<response type="edit" IDapp="a820" IDitem="<%ID%>" result="1">
+	<result>1</result>
+	
+	<ID><![CDATA[<%ID%>]]></ID>
+	<IDattrs><![CDATA[<%IDattrs%>]]></IDattrs>
+	<IDname><![CDATA[<%IDname%>]]></IDname>
+	<IDcategory><![CDATA[<%IDcategory%>]]></IDcategory>
+	<title><![CDATA[<%title%>]]></title>
+	<description><![CDATA[<%description%>]]></description>
+	
+	<type><![CDATA[<%type%>]]></type>
+	<messages><![CDATA[<%messages%>]]></messages>
+	<login_required><![CDATA[<%login_required%>]]></login_required>
+	<xrelated><![CDATA[<%xrelated%>]]></xrelated>
+	<xdata><![CDATA[<%xdata%>]]></xdata>
+	
+	<starttime><![CDATA[<%starttime%>]]></starttime>
+	<createtime><![CDATA[<%createtime%>]]></createtime>
+	<inserttime><![CDATA[<%inserttime%>]]></inserttime>
+	<lasttime><![CDATA[<%lasttime%>]]></lasttime>
+	
+	<IDowner><![CDATA[<%IDowner%>]]></IDowner>
+	<IDgroup><![CDATA[<%IDgroup%>]]></IDgroup>
+	
+	<lng><![CDATA[<%lng%>]]></lng>
+	<active><![CDATA[<%active%>]]></active>
+	<tactive><![CDATA[<%tactive%>]]></tactive>
+	
+</response>
+</DEFINITION>
+
+
+
+
+<DEFINITION id="TMP_inserted">
+	<div id="forum">
+		<h2><a href="#">Forum</a></h2>
+		<hr class="endfloat" />
+		
+		<form>
+			<fieldset>
+				<legend>create new thread</legend>
+				thread <strong><%name%></strong> successfully created.<br />
+				you can now freely <a href="?|?type=forum-view&IDforum=<%ID%>&category_name=<%IDcategory_name%>">enter the thread</a>.
+			</fieldset>
+		</form>
+		
+	</div>
+</DEFINITION>
+
+
+#ak sa forum nepodarilo vlozit, a:
+# 1. vyzadujeme login a user bol v case odosielania formulara nalogovany
+# 2. je nam sumafuk, ci je user nalogovany
+<DEFINITION id="TMP_failed">
+	<div id="forum">
+		<h2><a href="#">Forum</a></h2>
+		<hr class="endfloat" />
+		
+		<form>
+			<fieldset>
+				<legend>create new thread</legend>
+				failed to create thread <strong><%name%></strong>.<br />
+				reason: <%reason%>
+			</fieldset>
+		</form>
+		
+	</div>
+</DEFINITION>
+
+
+#ak user nebol v case spracovania formulara nalogovany
+<DEFINITION id="TMP_failed_unlogged">
+	<div id="forum">
+		<h2><a href="#">Forum</a></h2>
+		<hr class="endfloat" />
+		
+		<form>
+			<fieldset>
+				<legend>create new thread</legend>
+				failed to create thread <strong><%name%></strong>.<br />
+				reason: you must log in to insert new threads. if you were logged in, and got this message while submitting the thread form, your session might have expired. please log in and try again.
+			</fieldset>
+		</form>
+		
+	</div>
+</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>

@@ -1,0 +1,65 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response type="list" IDapp="a820">
+	<setup>
+		<page current="<%page_real%>" <#PAGING#> />
+	</setup>
+	<header>
+		<lng src="icons/treecol/lng.png" />
+		<active />
+		<ID />
+		<starttime flex="1" />
+		<createtime flex="1" />
+		<title flex="1" />
+		<IDname flex="1" />
+		<subtitle flex="1" />
+		<IDcategory_name flex="1" />
+		<IDauthor_fullname />
+		<IDeditor_fullname />
+		<visits />
+	</header>
+<#LINE#>
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="LINE">
+	<item IDitem="<%ID%>">
+		<lng><![CDATA[<%lng%>]]></lng>
+		<active><![CDATA[<%active%>]]></active>
+		<ID><![CDATA[<%ID%>]]></ID>
+		<#starttime#>
+		<#createtime#>
+		<title><![CDATA[<%name%>]]></title>
+		<IDname><![CDATA[<%IDname%>]]></IDname>
+		<subtitle><![CDATA[<%subtitle%>]]></subtitle>
+		<IDcategory_name><![CDATA[<%IDcategory_name%>]]></IDcategory_name>
+		<IDauthor_fullname><![CDATA[<%IDauthor_fullname%>]]></IDauthor_fullname>
+		<IDeditor_fullname><![CDATA[<%IDeditor_fullname%>]]></IDeditor_fullname>
+		<visits><![CDATA[<%visits%>]]></visits>
+	</item>
+<#LINE#>
+</DEFINITION>
+
+
+<DEFINITION id="starttime"><starttime><![CDATA[<%starttime_day%>. <%starttime_month%> <%starttime_year%>  <%starttime_hour%>:<%starttime_minute%>]]></starttime></DEFINITION>
+
+<DEFINITION id="createtime"><createtime><![CDATA[<%createtime_day%>. <%createtime_month%> <%createtime_year%>  <%createtime_hour%>:<%createtime_minute%>]]></createtime></DEFINITION>
+
+
+<DEFINITION id="TMP_no_data">
+<response IDapp="a820" type="list">
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="PAGING"><#PAGING_PREV#> <#PAGING_NEXT#></DEFINITION>
+
+<DEFINITION id="PAGING_PREV">previous="<%page_real%>"</DEFINITION>
+
+<DEFINITION id="PAGING_NEXT">next="<%page_real%>"</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
+

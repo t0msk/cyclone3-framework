@@ -1,0 +1,20 @@
+<CONF_VAR id="layers" value="0" />
+<CONF_VAR id="dsgn" value="admin-backend-xml" global="1" />
+<CONF_VAR id="Content-Type" value="text/xml" />
+
+# zobrazenie fora
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-category" value="820" />
+	<VAR id="-name" value="messages_tlist_m1" />
+	<VAR id="-TMP" value="OUTPUT" />
+	<VAR id="-global" value="1" />
+	<VAR id="-xsgn" value="xml" />
+	<VAR id="-xsgn_global" value="1" />
+		<VAR id="db_ID" value="<$main::FORM{ID}>" />
+		<VAR id="db_active" value="%" />
+		<VAR id="db_select" value="a820.*" />
+		<VAR id="db_limit" value="1000" />
+		<VAR id="messages_db_active" value="%" />
+		<VAR id="datetime_allow" value="1" />
+</MODULE>
