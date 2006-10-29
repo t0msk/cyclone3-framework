@@ -1,5 +1,6 @@
 
 -- app=a820
+-- version=4.0
 
 -- --------------------------------------------------------
 
@@ -13,14 +14,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/` (
   `lasttime` int(10) unsigned NOT NULL default '0',
   `name` varchar(100) binary NOT NULL default '',
   `about` varchar(100) default NULL,
-  `type` char(1) NOT NULL default 'C',
+  `type` char(1) NOT NULL default 'C', -- C=category F=forum
   `messages` smallint(5) unsigned NOT NULL default '0',
   `login_required` char(1) NOT NULL default 'N',
   `xrelated` text NOT NULL,
   `xdata` text NOT NULL,
   `IDowner` varchar(8) binary NOT NULL default '',
   `IDgroup` varchar(32) binary NOT NULL default '',
-  `lng` varchar(2) NOT NULL default '',
+  `lng` char(2) character set ascii NOT NULL default '',
   `tactive` char(1) NOT NULL default 'N', -- keby si niekto spomenul na co je toto active, nech da vediet :)
   `active` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`lng`),
@@ -47,7 +48,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_category` ( -- tabulka vytvorena podla vsetk
   `name` varchar(54) NOT NULL default '',
   `time_create` int(10) unsigned NOT NULL default '0',
   `time_change` int(10) unsigned default NULL,
-  `lng` varchar(2) default NULL,
+  `lng` char(2) character set ascii NOT NULL default '',
   `active` char(1) NOT NULL default 'N',
   `cvml` text NOT NULL,
   PRIMARY KEY  (`ID`),
@@ -71,7 +72,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_msgs` (
   `title` varchar(50) NOT NULL default '',
   `msg` text NOT NULL,
   `authorized` char(1) NOT NULL default 'N',
-  `lng` varchar(2) NOT NULL default '0',
+  `lng` char(2) character set ascii NOT NULL default '',
   `active` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   KEY `IDforum` (`IDforum`)
