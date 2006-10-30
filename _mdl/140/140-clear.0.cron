@@ -39,7 +39,19 @@ sub execute
 			next if $file =~/\.libs/;
 			next if $file =~/httpd/;
 			
-			if ((-d $dir."/".$file)&&(($file=~/![\w\.\-]+$/)||($file=~/\/[\w\.\-]+$/)||($file=~/_logs$/)))
+			if
+			(
+				(-d $dir."/".$file) &&
+				(
+					($file=~/![\w\.\-]+$/)
+					||
+					($file=~/\/[\w\.\-]+$/)
+					||
+					($file=~/_logs$/)
+					||
+					($dir_step)
+				)
+			)
 			{
 				main::_log("opening dir $file");
 				if (opendir (DIR1,$dir."/".$file))
@@ -63,8 +75,9 @@ sub execute
 		}
 		
 		my $count=@files;
-		if (!$dir_step && !$count)
+		if (!$dir_step && $count==1)
 		{
+			main::_log("opening second '$TOM::path_log'");
 			opendir (DIR2, $TOM::path_log);
 			push @files, readdir DIR2;
 			$dir=$TOM::path_log;
