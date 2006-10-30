@@ -47,8 +47,8 @@ sub IsBanned
 			ban.IDmessage = msg.ID
 		)
 		WHERE
-			(ban.domain IS NULL OR ban.domain='$tom::Hm')
-			AND (ban.domain_sub IS NULL OR ban.domain_sub='$tom::H')
+			(ban.domain='' OR ban.domain='$tom::Hm')
+			AND (ban.domain_sub='' OR ban.domain_sub='$tom::H')
 			AND ban.time_start<=$main::time_current
 			AND (ban.time_end IS NULL OR ban.time_end>=$main::time_current)
 			AND ban.active='Y'
