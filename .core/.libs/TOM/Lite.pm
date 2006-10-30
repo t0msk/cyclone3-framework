@@ -57,7 +57,8 @@ sub _log_lite
 	}
 	else
 	{
-		$filename=$tom::P."/_logs/";
+		$filename=$TOM::P."/_logs/";
+		$filename=$tom::P."/_logs/" if $tom::P;
 		$filename=$tom::Pm."/_logs/" if ($tom::Pm && $get[4]==2);
 		$filename=$TOM::P."/_logs/" if $get[4]==1;
 	}

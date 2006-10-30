@@ -69,7 +69,8 @@ sub _log
 	}
 	else
 	{
-		$file=$tom::P."/_logs/";
+		$file=$TOM::P."/_logs/";
+		$file=$tom::P."/_logs/" if $tom::P;
 		$file=$tom::Pm."/_logs/" if ($tom::Pm && $get[4]==2);
 		$file=$TOM::P."/_logs/" if $get[4]==1;
 	}
