@@ -55,28 +55,27 @@ sub execute
 	#!!! defaultne nastavujem domenu na master domenu, ak nie je definovana z typecka
 	$env{domain}=$tom::Hm unless ($env{domain});
 
-	main::_log("
-		SELECT *
-		FROM $env{db_410}.a410
-		WHERE 	ID='$env{ID}'
-			AND (domain IS NULL OR domain='$env{domain}')
-			AND starttime<=$tom::time_current
-			AND (endtime IS NULL OR endtime>=$tom::time_current)
-			AND (lng='$env{lng}' OR lng='')
-			AND active='Y'
-		LIMIT 1
-	");
 	
-	my $db0=$main::DBH->Query("
+	my $sql_time="AND a410.starttime<=$main::time_current AND (a410.endtime IS NULL OR a410.endtime>=$main::time_current)";
+	$sql_time="" if $env{'db_time_ignore'};
+	
+	my $sql_active="AND active='Y'";
+	$sql_active="" if $env{'db_active_ignore'};
+	
+	my $sql=qq{
 		SELECT *
 		FROM $env{db_410}.a410
-		WHERE 	ID='$env{ID}'
+		WHERE
+			ID='$env{ID}'
 			AND (domain IS NULL OR domain='$env{domain}')
-			AND starttime<=$tom::time_current
-			AND (endtime IS NULL OR endtime>=$tom::time_current)
 			AND (lng='$env{lng}' OR lng='')
-			AND active='Y'
-		LIMIT 1");
+			$sql_time
+			$sql_active
+		LIMIT 1
+	};
+	main::_log($sql);
+	
+	my $db0=$main::DBH->Query($sql);
 	if (%db0_line=$db0->fetchhash)
 	{
 		if ($db0_line{IDlink})
@@ -88,16 +87,6 @@ sub execute
 	else
 	{
 		main::_log("db request error!!!");
-		main::_log("
-		SELECT *
-		FROM $env{db_410}.a410
-		WHERE 	ID='$env{ID}'
-			AND (domain IS NULL OR domain='$tom::Hm')
-			AND starttime<=$tom::time_current
-			AND (endtime IS NULL OR endtime>=$tom::time_current)
-			AND (lng='$env{lng}' OR lng='')
-			AND active='Y'
-		LIMIT 1");
 		return 1;
 	}
 
