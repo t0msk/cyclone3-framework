@@ -230,11 +230,15 @@ sub execute
 	$env_module{form_ok} = $ok;
 
 	# ocistim env_module od nepotrebnych premennych (zacinajucich na pomlcku)
+	main::_log("Modulu posuvam premenne");
 	foreach (keys %env)
 	{
-		next if $_ =~ /^(-|required|send_TMP|send_xsgn)/;
-		next if $_ =~ /^_a130_form_/ && $env_module{action};
-		$env_module{$_} = $env{$_};
+		my $kluc = $_; my $value = $env{$_};
+		next if $kluc =~ /^(-|required|send_TMP|send_xsgn)/;
+		next if $kluc =~ /^_a130_form_/ && $env_module{action};
+		$kluc =~ s|^_a130_formforce_|_a130_form_|;
+		main::_log("$kluc");
+		$env_module{$kluc} = $value;
 	}
 
 	#foreach (keys %env_module) { main::_log("env_module -> $_: $env_module{$_}"); }
