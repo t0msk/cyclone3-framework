@@ -15,8 +15,6 @@ sub execute
  #return 1;
  
  if (!$env{max}){$cron::ERR="not defined max messages";return undef;}
- if (!$env{host}){$cron::ERR="not defined smtp host";return undef;}
- #if (!$env{db_130}){$cron::ERR="not defined mail database db_130";return undef;}
  my $var;$var="AND priority>=$env{min_priority}" if $env{min_priority};
 
  if ($cron::P eq $CRON::P)
@@ -62,7 +60,7 @@ sub execute
 	
 	main::_log("sending email $env0{ID} ($env0{priority}) from $env0{from_email} to $env0{to_email}");
 	
-	my $smtp = Net::SMTP->new($env{host});
+	my $smtp = Net::SMTP->new($TOM::smtp_host);
 	
 	my @rcpt=split(';',$env0{to_email});
 	

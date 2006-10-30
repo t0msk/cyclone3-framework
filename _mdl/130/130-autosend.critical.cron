@@ -34,7 +34,7 @@ sub execute
 		main::_log("from:$from to:$to");
 		#main::_log(6,"to:$to");
 		
-		my $smtp = Net::SMTP->new($env{host});
+		my $smtp = Net::SMTP->new($TOM::smtp_host);
 		
 		my @rcpt=split(';',$to);
 		

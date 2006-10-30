@@ -13,3 +13,17 @@
 	<VAR id="-name" value="autoimport" />
 	<VAR id="-version" value="0" />
 </MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="130" />
+	<VAR id="-name" value="autosend" />
+	<VAR id="-version" value="critical" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="130" />
+	<VAR id="-name" value="autosend" />
+		<VAR id="max" value="100" />
+</MODULE>
