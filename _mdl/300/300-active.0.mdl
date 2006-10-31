@@ -15,22 +15,17 @@ sub execute
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
 	return 1 unless $env{'login'} && $env{'domain'} && $env{'active'};
 
+	my %user = App::300::UserFind( login => $env{'login'}, host => $env{'domain'} );
+	
 	my $sql = "
 	UPDATE TOM.a300_users
 	SET active='$env{active}'
-	WHERE login='$env{login}' AND domain='$env{domain}'
-	";
-
-	my $sql_arch = "
-	UPDATE TOM.a300_users_arch
-	SET active='$env{active}'
-	WHERE login='$env{login}' AND domain='$env{domain}'
+	WHERE IDhash='$user{IDhash}'
 	";
 
 	$XSGN{TMP} = $XSGN{RESULT_success};
 	$XSGN{TMP} =~ s|<%active%>|$env{'active'}|g;
 	my $db = $main::DB{main}->Query( $sql );
-	my $db_arch = $main::DB{main}->Query( $sql_arch );
 
 	return 1;
 }
