@@ -15,7 +15,7 @@ sub execute
 
 	# Skoncim
 	# - TMPcko tym padom automaticky obsahuje chybovu hlasku
-	return 1 if ( !$env{ID} || !$env{active} )
+	return 1 if !$env{ID} || !$env{active};
 	
 	my $IDeditor; my $IDauthor;
 
@@ -48,6 +48,8 @@ sub execute
 	main::_log('Updating ...');
 	main::_log( $upd );
 	$main::DB{main}->Query( $upd );
+
+	$XSGN{TMP} = $XSGN{RESULT_success};
 
 	return 1;
 }

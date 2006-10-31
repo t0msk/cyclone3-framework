@@ -80,6 +80,8 @@ sub execute
 		main::_log("Success (IDauthor: $IDauthor; IDeditor: $IDeditor)");
 	}
 
+	$XSGN{TMP} =~ s|<%ID%>|$IDauthor|g;
+
 	# A konecne updatujem
 	my $upd = "
 	UPDATE $env{db_120}.a120
