@@ -106,7 +106,14 @@ sub _log
 		close HND_LOG; # TODO: [Aben] uzavretie HND mozno zrusit
 	}
 	
-	print $msg."\n" if $main::debug;
+	if ($main::debug)
+	{
+		print color 'green';
+		print color 'bold' if $get[1]=~/^</;
+		print color 'red' if $ref[$get[2]] eq '-';
+		print $msg."\n";
+		print color 'reset';
+	}
 	
 	if (($main::IAdm)&&($main::FORM{__IAdm_log})&&($pub::output_log))
 	{
