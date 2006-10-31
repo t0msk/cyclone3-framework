@@ -11,7 +11,6 @@ sub execute
 {
 	my %env=@_;
 	
-	
 	while (my $file=<$TOM::P/_temp/_email-*>)
 	{
 		main::_log("found $file");
@@ -35,6 +34,12 @@ sub execute
 		#main::_log(6,"to:$to");
 		
 		my $smtp = Net::SMTP->new($TOM::smtp_host);
+		
+		if ($TOM::smtp_user)
+		{
+			main::_log("authentificationt with user '$TOM::smtp_user'");
+			$smtp->auth($TOM::smtp_user,$TOM::smtp_pass);
+		}
 		
 		my @rcpt=split(';',$to);
 		

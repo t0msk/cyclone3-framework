@@ -4,7 +4,7 @@ use strict;
 
 $TOM::contact{'TECH_farm'}=""; # zodpovedny za konkretnu farmu
 $TOM::contact{'WEB_farm'}="";
-$TOM::contact{'from'}="cyclone3\@localhost";
+#$TOM::contact{'from'}="cyclone3\@domain.tld";
 
 $TOM::DB{'main'}=
 {
@@ -16,6 +16,8 @@ $TOM::DB{'main'}=
 $TOM::DB{'stats'}=$TOM::DB{'main'};
 $TOM::DB{'sys'}=$TOM::DB{'main'};
 
-$TOM::smtp_host='localhost';
+#$TOM::smtp_host='mail.domain.tld';
+#$TOM::smtp_user='cyclone3@domain.tld';
+#$TOM::smtp_pass='***';
 
 1;# DO NOT CHANGE !
