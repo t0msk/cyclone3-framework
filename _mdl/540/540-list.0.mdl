@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# áéíóú - USE UTF-8 !!!
+# �� - USE UTF-8 !!!
 package Tomahawk::module;
 use open ':utf8', ':std';
 use encoding 'utf8';
@@ -32,10 +32,29 @@ sub execute
 	$arg{ID_dir}=$env{IDcat} if defined ($env{IDcat});
 	$arg{owner}=$env{user} if defined ($env{user});
 	$arg{ID}=$env{id} if defined ($env{id});
-
+	$arg{ID_dir} = "%".$arg{ID_dir}."%";
 	# language
 	$arg{lng}=$env{lng};
 	$arg{lng}=$env{lang} if defined ($env{lang});
+
+	# Paging
+	if ($env{paging})
+	{
+		if($env{limit}=~/^(.*?),(.*)$/)
+		{
+			$env{offset}=$1;
+			$env{count}=$2;
+		}
+		else
+		{
+			$env{offset}=0;
+			$env{count}=$env{limit};
+		}
+		$env{page}=0 unless $env{page};
+		$env{offset}=($env{page}*$env{count})+$env{offset};
+		$arg{limit}=$env{offset}.",".($env{count}+1);
+		main::_log("listing with offset $env{offset} $env{from} requesting $env{count} files plus 1 more for paging");
+	}
 
 	if ( defined( $arg{ID_dir} ) )
 	{
@@ -57,27 +76,39 @@ sub execute
 	}
 	else
 	{
+		main::_log(0,"Searching for: ".$env{search});
 		# Podla vstup. parametrov
+		if (length($env{search})>0)
+		{
+			$env{search}=~s/'/\\'/g;
+			$arg{where} = "(name LIKE '%".$env{search}."%' OR comment LIKE '%".$env{search}."%')";
+		}
 		push @files, App::540::file::get( %arg );
 	}
 
 	# Export
 	my $size = scalar( @files );
-	for (my $i;$i < $size;$i++)
+	my $limit = $size;
+	if ($env{paging})
+	{
+		$limit = $env{count} if $env{count}<$size;
+	}
+	main::_log('limit: '.$limit);
+	for (my $i;$i < $limit;$i++)
 	{
 		# Rozumne formatovanie timestampu
 		my %time = Utils::datetime::ctodatetime( $files[$i]{'time'}, format => 1);
 
-		$XSGN{TMP} =~s|<#ITEM#>|$XSGN{'ITEM'}|;
+		$XSGN{TMP} =~s|<#LINE#>|$XSGN{'LINE'}|;
 		# Pouzitelne Tagy
 		my $null = $files[$i]{ID}; $null =~ s/^[0]*//;
 		$XSGN{TMP} =~s|<%filename%>|$null-$files[$i]{hash}|g;
 		$XSGN{TMP} =~s|<%IDarticle%>|$env{db_ID_a400}|g;
 		$XSGN{TMP} =~s|<%name%>|$files[$i]{name}|g;
 		$XSGN{TMP} =~s|<%mime%>|$files[$i]{mime}|g;
-
+		
 		#temporary 'extension' field solution
-		if($files[$i]{name}=~/^.*?\.([a-zA-Z0-9]*?)$/){
+		if($files[$i]{name}=~/^.*?\.(\w)$/){
 			my $var=$1;
 			$XSGN{TMP} =~s|<%extension%>|$var|g;
 		}
@@ -88,15 +119,63 @@ sub execute
 		my $size_mb = sprintf("%0.2f", ($files[$i]{size} / (1024*1024)));
 		$XSGN{TMP} =~s|<%size_mb%>|$size_mb|g;
 
+		$XSGN{TMP} =~s|<%lng%>|$files[$i]{lng}|g;
+		$XSGN{TMP} =~s|<%active%>|$files[$i]{active}|g;
 		$XSGN{TMP} =~s|<%comment%>|$files[$i]{comment}|g;
 		$XSGN{TMP} =~s|<%ID%>|$files[$i]{ID}|g;
 		$XSGN{TMP} =~s|<%hash%>|$files[$i]{hash}|g;
 		$XSGN{TMP} =~s|<%owner%>|$files[$i]{owner}|g;
 		$XSGN{TMP} =~s|<%mime%>|$files[$i]{mime}|g;
+		$XSGN{TMP} =~s|<%starttime%>|$files[$i]{starttime}|g;
+		$XSGN{TMP} =~s|<%endtime%>|$files[$i]{endtime}|g;
 		$XSGN{TMP} =~s|<%time%>| $time{'year'}-$time{'mom'}-$time{'mday'} $time{'hour'}:$time{'min'}:$time{'sec'}|g;
 	}
 	# category
 
+	# Paging Design
+	if ($env{paging})
+	{
+		if(($files[$limit]) || ($env{page}>0)){
+			if ($XSGN{'PAGING_'.$env{page}})
+			{
+				$XSGN{PAGING}=$XSGN{'PAGING_'.$env{page}};
+				main::_log("got a different design for paging!");
+			}
+
+			if($XSGN{TMP}=~/<#PAGING_$env{page}#>/)
+			{
+				#not sure about this
+				#$XSGN{TMP}=~s|<#PAGING_$env{db_page}#>|$XSGN{PAGING}|g;
+				$XSGN{TMP}=~s|<#PAGING_$env{page}#>|$XSGN{PAGING}|g;
+			}
+			else
+			{$XSGN{TMP}=~s|<#PAGING#>|$XSGN{PAGING}|g;}
+
+			#Next
+			#if ($size>$env{count})
+			if($files[$limit])
+			{
+				my $nextpage=$env{page}+1;
+				$XSGN{NULL}=$XSGN{PAGING_NEXT};
+				$XSGN{NULL}=~s|<%page%>|$nextpage|g;
+				$XSGN{NULL}=~s|<%page_real%>|$nextpage+1|ge;
+				$XSGN{TMP}=~s|<#PAGING_NEXT#>|$XSGN{NULL}|;
+			}
+
+			# Prev
+			if ($env{page}>0)
+			{
+				my $prevpage=$env{page}-1;
+				$XSGN{NULL}=$XSGN{PAGING_PREV};
+				$XSGN{NULL}=~s|<%page%>|$prevpage|g;
+				$XSGN{NULL}=~s|<%page_real%>|$prevpage+1|ge;
+				$XSGN{TMP}=~s|<#PAGING_PREV#>|$XSGN{NULL}|;
+			}
+
+			$XSGN{TMP}=~s|<%page%>|$env{page}|;
+			$XSGN{TMP}=~s|<%page_real%>|$env{page}+1|ge;
+		}
+	}
 
 	# No Files.
 	$XSGN{TMP} =~s|<#ITEM#>|$XSGN{NONE}|g if scalar(@files)==0;

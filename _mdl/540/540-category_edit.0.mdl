@@ -1,0 +1,51 @@
+ #!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use App::540;
+use App::540::dir;
+use strict;
+
+## a540 Delete Category
+## > id = ID of the category to delete
+## < no return
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+	
+	if(
+		(!$env{'db_ID'})
+		|| (!$env{'db_lng'})
+		|| (!$env{'db_name'})
+	){
+		main::_log('required parameters not sent! finishing');
+		return 1;
+	}
+
+	my @dir = App::540::dir::get(
+		return=>"ID",
+		ID_dir=>"=".$env{'db_ID'},
+		lng=>"=".$env{'db_lng'}
+	);
+	if (scalar (@dir)<0){
+		main::_log('API did not return a valid object! finishing');
+		return 1;
+	}
+	
+	App::540::dir::set(
+		ID=>$dir[0]{'ID'},
+		name=>$env{'db_name'},
+		comment=>$env{'db_comment'}
+	);
+
+	$XSGN{TMP}=$XSGN{RESULT_success};
+	$XSGN{TMP}=~s/<%ID%>/$env{db_ID}/g;
+	$XSGN{TMP}=~s/<%name%>/$env{db_name}/g;
+	$XSGN{TMP}=~s/<%comment%>/$env{db_comment}/g;
+	return 1;
+}
+1;

@@ -1,0 +1,31 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response type="tree" IDapp="a540" itemcount_root="<%itemcount_root%>">
+<#LINE#>
+</response>
+</DEFINITION>
+
+<DEFINITION id="LINE_PARENT"><#LINE#></DEFINITION>
+
+<DEFINITION id="LINE">
+	<item IDitem="<%ID_dir%>">
+		<name><![CDATA[<%name%>]]></name>
+		<count><![CDATA[<%count%>]]></count>
+		<ID><![CDATA[<%ID_dir%>]]></ID>
+		<active><![CDATA[Y]]></active>
+		<description><![CDATA[<%description%>]]></description>
+		<itemcount><![CDATA[<%count%>]]></itemcount>
+		<IDparent><![CDATA[<%ID_parent%>]]></IDparent>
+	</item>
+<#LIST#>
+<#LINE#>
+</DEFINITION>
+
+<DEFINITION id="TMP_no_data">
+<response type="tree" IDapp="a540">
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

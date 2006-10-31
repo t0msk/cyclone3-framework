@@ -1,0 +1,18 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response type="category_active" IDapp="a540" IDitem="<%ID%>" result="0">
+	<result>0</result>
+	<reason>default error</reason>
+</response>
+</DEFINITION>
+
+<DEFINITION id="RESULT_success">
+<response type="category_active" IDapp="a540" IDitem="<%ID%>" result="1">
+	<result>1</result>
+	<active><![CDATA[<%active%>]]></active>
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

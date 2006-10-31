@@ -1,0 +1,34 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use App::540;
+use App::540::dir;
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+
+	my @dir = App::540::dir::get(
+	return=>"ID",
+		ID_dir=>"=".$env{'db_ID'},
+		lng=>"=".$env{'db_lng'}
+	);
+	if (scalar (@dir)<0){
+		main::_log('API did not return a valid object! finishing');
+		return 1;
+	}
+
+	App::540::dir::set(
+		ID=>$dir[0]{'ID'},
+		active=>$env{'db_active'},
+	);
+	$XSGN{RESULT_success}=~s/<%active%>/$env{'db_active'}/g;
+	$XSGN{TMP}=$XSGN{RESULT_success};
+	return 1;
+}
+1;

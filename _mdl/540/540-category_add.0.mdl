@@ -1,0 +1,52 @@
+ #!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use App::540;
+use App::540::dir;
+use strict;
+
+## a540 Delete Category
+## > id = ID of the category to delete
+## < no return
+
+sub execute
+{
+	my %env=@_;
+	return 1 if !$env{'title'};
+	return 1 if !$env{'lng'};
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+
+	$env{char}=2 unless $env{char};
+	my @idx;
+	my $depth=$env{char};
+	$idx[$depth]=-1;
+	my $to=@Utils::vars::WCHAR;
+	my $max=$to**$env{char};
+	my $newcategory = "";
+	for (1..$max)
+	{
+		$idx[$depth]++;
+		while ($idx[$depth]>@Utils::vars::WCHAR-1){$idx[$depth]=0;$depth--;$idx[$depth]++;}$depth=$env{char};
+		my $cat;for (1..$env{char}){$cat.=$Utils::vars::WCHAR[$idx[$_]];}
+		my @dirs = App::540::dir::get(ID_dir=>$env{IDparent}.$cat, lng=>$env{'lng'}, limit=>1);
+		if (scalar( @dirs )> 0)
+		{next;}
+		else
+		{ $newcategory=$env{IDparent}.$cat; last;}
+	}
+
+	my $id = App::540::dir::new(ID_dir=>$newcategory, name=>$env{'title'}, comment=>$env{'description'},lng=>$env{'lng'} );
+
+	if ($id>0){
+		$XSGN{TMP}=$XSGN{RESULT_success};
+	}else{
+		$XSGN{TMP}=$XSGN{RESULT_failure};
+	}
+
+	return 1;
+}
+1;
+

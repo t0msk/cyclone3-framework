@@ -1,0 +1,17 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response type="edit" IDapp="a540" IDitem="<%ID%>" result="1">
+	<result>1</result>
+	<ID><![CDATA[<%ID%>]]></ID>
+</response>
+</DEFINITION>
+
+<DEFINITION id="TMP_no_data">
+<response type="detail" IDapp="a540" IDitem="" result="0">
+</response>
+</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>

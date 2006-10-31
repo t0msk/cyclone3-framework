@@ -1,0 +1,46 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response type="list" IDapp="a540">
+	<setup>
+		<page current="<%page_real%>" <#PAGING#> />
+	</setup>
+	<header>
+		<ID />
+		<fullpath flex="1" />
+		<name flex="1" />
+		<size flex="1" />
+		<mime flex="1" />
+		<about flex="1" />
+	</header>
+<#LINE#>
+</response>
+</DEFINITION>
+
+<DEFINITION id="LINE">
+<item IDitem="<%ID%>">
+	<ID><%ID%></ID>
+	<fullpath><![CDATA[<$tom::H_www>/download.tom?hash=<%hash%>&hash2=<%ID%>]]></fullpath>
+	<name><![CDATA[<%name%>]]></name>
+	<size><%size%></size>
+	<mime><![CDATA[<%mime%>]]></mime>
+	<comment><![CDATA[<%comment%>]]></comment>
+	<active><![CDATA[<%active%>]]></active>
+	<starttime><![CDATA[<%starttime%>]]></starttime>
+	<endtime><![CDATA[<%endtime%>]]></endtime>
+	<lng><![CDATA[<%lng%>]]></lng>
+</item>
+<#LINE#></DEFINITION>
+
+<DEFINITION id="NONE">
+<response IDapp="a540" type="list"></response>
+</DEFINITION>
+
+<DEFINITION id="PAGING"><#PAGING_PREV#> <#PAGING_NEXT#></DEFINITION>
+
+<DEFINITION id="PAGING_PREV">previous="<%page_real%>"</DEFINITION>
+
+<DEFINITION id="PAGING_NEXT">next="<%page_real%>"</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

@@ -1,0 +1,25 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response type="detail" IDapp="a540" IDitem="<%ID%>">
+	<ID><%ID%></ID>
+	<IDcategory><%ID_dir%></IDcategory>
+	<fullpath><![CDATA[<$tom::H_www>/download.tom?hash=<%hash%>&hash2=<%ID%>]]></fullpath>
+	<name><![CDATA[<%name%>]]></name>
+	<size><%size_kb%></size>
+	<mime><![CDATA[<%mime%>]]></mime>
+	<comment><![CDATA[<%comment%>]]></comment>
+	<active><![CDATA[<%active%>]]></active>
+	<starttime><![CDATA[<%starttime%>]]></starttime>
+	<endtime><![CDATA[<%endtime%>]]></endtime>
+	<lng><![CDATA[<%lng%>]]></lng>
+</response>
+</DEFINITION>
+
+<DEFINITION id="TMP_no_data">
+<response type="detail" IDapp="a540" IDitem="" result="0">
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
