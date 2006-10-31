@@ -150,6 +150,7 @@ if (-e $CRON::P."/.core/_config/cron.".$type.".cml" || -e $CRON::P."/_type/cron.
 	while ($file_data=~s|<MODULE>(.*?)</MODULE>||s)
 	{
 		my $data=$1;
+		TOM::Utils::vars::replace($data);
 		my %mdl_env;
 		while ($data=~s|<VAR id="(.*?)" value="(.*?)" />||s)
 		{
@@ -308,6 +309,7 @@ foreach (sort keys %CRON::hosts)
 			while ($file_data=~s|<MODULE>(.*?)</MODULE>||s)
 			{
 				my $data=$1;
+				TOM::Utils::vars::replace($data);
 				my %mdl_env;
 				while ($data=~s|<VAR id="(.*?)" value="(.*?)" />||s)
 				{
