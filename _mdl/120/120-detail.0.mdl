@@ -1,0 +1,36 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+
+use strict;
+
+our $authors = 'gregor@webcom.sk';
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+
+	$env{db_120}=Tomahawk::Getmdlvar( 120, 'db') unless $env{db_120};
+	$env{db_120}=$main::DB{main}{name} unless $env{db_120};
+
+	# ID musi byt!
+	if ( !$env{ID} )
+	{
+		main::_log('No ID!');
+		$XSGN{TMP} = $XSGN{TMP_no_ID};
+		return 1;
+	}
+
+	my $find = "SELECT * FROM $env{db_120}.a120 WHERE ID=$env{ID}";
+	my $dbfind = $main::DB{main}->Query( $find );
+	my %view = $dbfind->fetchhash;
+
+	while ( my ($k, $v) = each %view ) { $XSGN{TMP} =~ s|<%$k%>|$v|g; }
+	
+	return 1;
+}
+1;

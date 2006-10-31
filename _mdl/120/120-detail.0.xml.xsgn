@@ -1,0 +1,20 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response type="detail" IDapp="a120" IDitem="<%ID%>" result="1">
+	<ID><![CDATA[<%ID%>]]></ID>
+	<IDcategory><![CDATA[<%IDcategory%>]]></IDcategory>
+	<IDtype><![CDATA[<%IDtype%>]]></IDtype>
+	<nickname><![CDATA[<%nickname%>]]></nickname>
+	<fullname><![CDATA[<%fullname%>]]></fullname>
+	<email><![CDATA[<%email%>]]></email>
+	<homepage><![CDATA[<%homepage%>]]></homepage>
+	<xdata><![CDATA[<%xdata%>]]></xdata>
+	<active><![CDATA[<%active%>]]></active>
+</response>
+</DEFINITION>
+
+<DEFINITION id="TMP_no_ID"><response type="detail" IDapp="a120" IDitem="" result="0"></response></DEFINITION>
+
+</XML_DESIGN_DEFINITION>
