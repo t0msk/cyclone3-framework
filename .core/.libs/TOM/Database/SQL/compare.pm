@@ -18,6 +18,8 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 use TOM::Database::SQL::file;
 
+our $debug=0;
+
 =head1 FUNCTIONS
 
 =head2 compare_create_table($table0,$table1)
@@ -133,6 +135,7 @@ sub compare_create_table
 		foreach my $field(@fields0a)
 		{
 			main::_log("field='$field'");
+			main::_log("'$fields1h{$field}' <=> '$fields0h{$field}'") if $debug;
 			if (!$fields1h{$field})
 			{
 				main::_log("not exists in table1");
@@ -149,7 +152,7 @@ sub compare_create_table
 			if ($fields1h{$field} ne $fields0h{$field})
 			{
 				main::_log("not equals");
-				if ($fields1h{$field}=~/collate/ && not $fields0h{$field}=~/collate/)
+				if ($fields1h{$field}=~/character set/ && not $fields0h{$field}=~/character set/)
 				{
 					main::_log("MySQL 4.0 -> 4.1, cancel (not defined collation in struct SQL file)");
 				}
