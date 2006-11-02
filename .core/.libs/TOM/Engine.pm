@@ -26,6 +26,15 @@ knižnice:
  TOM::Error
  TOM::Temp::file
 
+3rd party knižnice
+
+ DateTime
+ Time::Local
+ Time::HiRes
+ Digest::MD5
+ SVG
+ Term::ANSIColor
+
 =cut
 
 use Fcntl;
@@ -34,5 +43,12 @@ use TOM::Debug;
 use TOM::rev;
 use TOM::Error;
 use TOM::Temp::file;
+
+use DateTime;
+use Time::Local; # pre opacnu konverziu casu
+use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
+use Digest::MD5  qw( md5 md5_hex md5_base64 );
+use SVG;
+use Term::ANSIColor;
 
 1;

@@ -24,12 +24,11 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	}
 	
 	use Mysql;
-	use Digest::MD5  qw(md5 md5_hex md5_base64);
 	use Text::Iconv;
 	use Compress::Zlib;
-	use Time::Local; # pre opacnu konverziu casu
-	use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 	use MIME::Base64;
+	use File::Type;
+	use Image::Magick;
 	
 	
 	# CORE Engine kniznice
