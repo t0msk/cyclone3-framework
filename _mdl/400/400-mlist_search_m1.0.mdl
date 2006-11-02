@@ -110,8 +110,15 @@ sub execute
 	$env{QUERYkeywords} =~ s/'//g;
 
 	main::_log("keywords $env{QUERYkeywords}");
-
-	$env{db_where}.="(a400.full like '%".$env{QUERYkeywords}."%' OR a400.tiny like '%".$env{QUERYkeywords}."%' OR a400.subtitle like '%".$env{QUERYkeywords}."%' OR a400.title like '%".$env{QUERYkeywords}."%')";
+	
+	if ($env{'db_search_title'})
+	{
+		$env{db_where}.="(a400.subtitle like '%".$env{QUERYkeywords}."%' OR a400.title like '%".$env{QUERYkeywords}."%')";
+	}
+	else
+	{
+		$env{db_where}.="(a400.full like '%".$env{QUERYkeywords}."%' OR a400.tiny like '%".$env{QUERYkeywords}."%' OR a400.subtitle like '%".$env{QUERYkeywords}."%' OR a400.title like '%".$env{QUERYkeywords}."%')";
+	}
 
 	# TODO: [Aben] pridat volbu automaticky pre vsetky vstupne parametre s _ na zamenu (do jadra!)
 	$env{db_where}=$env{_db_where} if $env{_db_where};
@@ -205,7 +212,7 @@ sub execute
 			endtime								=>	$env{db_endtime}, # actual
 		},
 
-		a400_category_					=>	1, # podmienka ze MUSI byt lefnute
+		a400_category_					=>	$env{db_IDcategory_}, # podmienka ze MUSI byt lefnute
 		a400_category => 			# podmienky na to kedy ma byt left join a400_category
 		{
 			active									=>	$env{db_category_active},
