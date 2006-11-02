@@ -132,7 +132,7 @@ sub execute
 			$main::DB{$env{'db_h'}}->errmsg(),
 			undef
 		);
-		main::_log("output errmsg=".$output[2]);
+		main::_log("output errmsg=".$output[2],1) if $output[2];
 		main::_log("output info=".$output[0]);
 		$t->close();
 		return @output;
@@ -145,7 +145,7 @@ sub execute
 		$sth
 	);
 	
-	main::_log("output errmsg=".$output[2]);
+	main::_log("output errmsg=".$output[2],1) if $output[2];
 	main::_log("output affectedrows=".$output[1]);
 	main::_log("output info=".$output[0]);
 	
