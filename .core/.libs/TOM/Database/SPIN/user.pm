@@ -353,7 +353,7 @@ sub CreateUser
 	
 	my %data;
 	# FO = 4
-	$db0->bind_param(":anMandantId",1);
+	$db0->bind_param(":anMandantId",0);
 	$db0->bind_param(":anDuId",undef);
 	$db0->bind_param(":anTypFirmyId",$env{'user_type'});
 	$db0->bind_param(":avaIco",$env{'ICO'});
