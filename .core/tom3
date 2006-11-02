@@ -2145,14 +2145,12 @@ while ($req->Accept() >= 0)
 				)
 			{
 				if (
-						(
-							($main::ENV{'REMOTE_ADDR'} eq "86.110.229.129") && ($main::UserAgent_name eq "Wget"))
-							||($IAdm)||($ITst)
+						($IAdm)||($ITst)
 					)
 				{
-					#utf8::decode($var);
+					#utf8::encode($var);
 					main::_log("convert string '$var'",1,"lib.err",1);
-					my $link_md5=Digest::MD5::md5_hex($var);
+					my $link_md5=Digest::MD5::md5_hex(Encode::encode_utf8($var));
 					$main::DB{sys}->Query("
 						REPLACE INTO TOM._url
 						(
