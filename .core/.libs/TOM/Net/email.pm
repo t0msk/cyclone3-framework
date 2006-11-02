@@ -14,6 +14,7 @@ sub send
 	
 	$env{'time'}=time() unless $env{'time'};
 	$env{'priority'}=1 unless $env{'priority'};
+	$env{'from'}=$TOM::contact{'from'} unless $env{'from'};
 	
 	# spracovanie duplikatov emailovych adries
 	$env{to}=TOM::Utils::vars::unique_split($env{to});
@@ -54,10 +55,10 @@ sub send
 				'$env{md5}',
 				'$env{time}',
 				'$env{priority}',
-				'TOM3',
+				'Cyclone3',
 				'$env{from}',
 				'$tom::H',
-				'TOM3',
+				'Cyclone3',
 				'$env{to_name}',
 				'$env{to}',
 				'$env{body}'
