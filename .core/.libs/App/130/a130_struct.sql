@@ -13,7 +13,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_received` (
   `to_name` varchar(50) NOT NULL default '',
   `to_email` varchar(255) NOT NULL default '',
   `body` longtext NOT NULL,
-  `lng` varchar(3) NOT NULL default '',
+  `lng` char(2) NOT NULL default '',
   `active` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`ID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -34,7 +34,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_send` (
   `to_cc` varchar(250) NOT NULL default '',
   `to_bcc` varchar(250) NOT NULL default '',
   `body` longtext NOT NULL,
-  `lng` varchar(3) NOT NULL default '',
+  `lng` char(2) NOT NULL default '',
   `active` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   KEY `ID_md5` (`ID_md5`)
@@ -71,7 +71,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_services` (
   `time_change` int(10) unsigned default NULL,
   `cvml_data` text NOT NULL,
   `active` char(1) NOT NULL default 'N',
-  `lng` varchar(3) NOT NULL default '',
+  `lng` char(2) NOT NULL default '',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `name` (`name`,`domain`,`domain_sub`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
