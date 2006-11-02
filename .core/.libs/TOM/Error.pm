@@ -1,8 +1,4 @@
 package TOM::Error;
-use TOM::Error::design;
-use Utils::vars;
-use TOM::Utils::datetime;
-use TOM::Utils::vars;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
@@ -11,8 +7,12 @@ use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 
+use TOM::Net::email;
 use MIME::Entity;
-
+use TOM::Error::design;
+use TOM::Utils::datetime;
+use TOM::Utils::vars;
+use Utils::vars;
 
 sub engine
 {
@@ -21,7 +21,7 @@ sub engine
 	{
 		engine_pub(@_);
 	}
-	elsif ($TOM::engine eq "cron")
+	elsif ($TOM::engine=~/^cron/)
 	{
 		engine_cron(@_);
 	}
@@ -252,6 +252,10 @@ sub module
 	{
 		module_pub(@_);
 	}
+	elsif ($TOM::engine=~/^cron/)
+	{
+		module_cron(@_);
+	}
 #	else
 #	{
 #		engine_lite(@_);
@@ -362,6 +366,88 @@ sub module_pub
 	$main::H->a($out);
 }
 
+
+
+sub module_cron
+{
+	my %env=@_;
+	return undef unless $env{-MODULE};
+	$env{-TMP}="ERROR" unless $env{-TMP};
+	
+	main::_log("$env{-ERROR} $env{-PLUS}",1); #local
+	main::_log("[MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",1,"cron.err",0); #local
+	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"cron.err",1); #global
+	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"cron.err",2) if ($tom::H ne $tom::Hm); #master
+	
+	if ($TOM::ERROR_module_email)
+	{
+		
+		my $date = TOM::Utils::datetime::mail_current();
+		
+		my $email_addr;
+		foreach ("TOM",@TOM::ERROR_email_send)
+		{
+			$email_addr.=";".$TOM::contact{$_};
+		}
+		#$email_addr.=";".$Tomahawk::module::authors;
+		$email_addr=TOM::Utils::vars::unique_split($email_addr);
+		
+		my $msg = MIME::Entity->build
+		(
+			'Type'    => "multipart/related",
+			'List-Id' => "Cyclone3",
+			'Date'    => $date,
+			'From'    => "Cyclone3 ('$tom::H' at '$TOM::hostname') <$TOM::contact{'from'}>",
+			'To'      => TOM::Net::email::convert_TO($email_addr),
+			'Subject' => "[ERR][MODULE-$TOM::engine][$env{-MODULE}]"
+		);
+		
+		my $email=$module_email;
+		
+		$email=~s|<%TYPE_%>|Error|;
+		$email=~s|<%DATE%>|$date|;
+		$email=~s|<%DOMAIN%>|$tom::H|g;
+		$email=~s|<%ERROR%>|$env{-ERROR}|g;
+		$email=~s|<%ERROR-PLUS%>|$env{-PLUS}|g;
+		
+		$email=~s|<#PROJECT#>|$email_project|;
+		
+		$email=~s|<#MODULE#>|$email_module|;
+		
+		$email=~s|<%MODULE%>|$env{-MODULE}|g;
+		
+		foreach (sort keys %main::ENV)
+		{
+			my $val=$main::ENV{$_};
+			my $env=$email_ENV_;
+			$env=~s|<%var%>|$_|g;
+			$env=~s|<%value%>|$val|g;
+			$email=~s|<#ENV#>|$env\n<#ENV#>|;
+		}
+		
+		$email=~s|<%to%>|$email_addr|;
+		
+		Utils::vars::replace($email);
+		$email=~s|<#.*?#>||g;
+		$email=~s|<%.*?%>||g;
+		
+		$msg->attach
+		(
+			'Data' => $email,
+			'Type' => 'text/html;charset="UTF-8"',
+			'Encoding' => "8bit",
+		);
+		my $email_body=$msg->as_string();
+		
+		TOM::Net::email::send(
+			'priority'=>99,
+			'to'=>$email_addr,
+			'body'=>$email_body,
+		);
+	}
+	
+	return 1;
+}
 
 
 

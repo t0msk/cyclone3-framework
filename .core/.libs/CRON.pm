@@ -155,7 +155,7 @@ sub module
 	if (not -e $mdl_C{P_MODULE})
 	{
 		main::_log("not exist",1);#return undef;
-		CRON::error::module
+		TOM::Error::module
 		(
 			-MODULE	=>	$mdl_C{-category}."-".$mdl_C{-name},
 			-ERROR	=>	"module not exist $mdl_C{P_MODULE}"
@@ -177,7 +177,7 @@ sub module
 		}
 		else # chyba o ktorej upozorni samotny program vratenim undef :)
 		{
-			CRON::error::module
+			TOM::Error::module
 			(
 				-MODULE	=>	$mdl_C{-category}."-".$mdl_C{-name},
 				-ERROR	=>	$cron::ERR
@@ -189,7 +189,7 @@ sub module
 	
 	if ($@)
 	{
-		CRON::error::module
+		TOM::Error::module
 		(
 			-MODULE	=>	$mdl_C{-category}."-".$mdl_C{-name},
 			-ERROR	=>	$@
