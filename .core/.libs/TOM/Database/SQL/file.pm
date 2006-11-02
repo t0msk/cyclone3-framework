@@ -68,6 +68,8 @@ sub _sqlheader_process
 		next unless $line;
 		
 		my @var=split("=",$line,2);
+		next if $var[0]=~/^--/;
+		
 		$header->{$var[0]}=$var[1];
 		main::_log("set '$var[0]'='$header->{$var[0]}'");;
 	}
