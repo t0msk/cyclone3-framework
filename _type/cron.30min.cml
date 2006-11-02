@@ -3,6 +3,32 @@
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_datamining" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="obsolete_datamining" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_datamining" />
+	<VAR id="-version" value="fix" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_collect" />
+	<VAR id="-version" value="min" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
 	<VAR id="-name" value="weblog_chart_hosts" />
 	<VAR id="-version" value="day" />
 </MODULE>
