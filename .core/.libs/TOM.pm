@@ -81,8 +81,15 @@ konfigurácie:
 =cut
 
 use TOM::Lite;
-use TOM::Engine;
 
-
+eval
+{
+	require TOM::Engine;
+};
+if ($@)
+{
+	TOM::Error::engine($@);
+	die "$@";
+}
 
 1;
