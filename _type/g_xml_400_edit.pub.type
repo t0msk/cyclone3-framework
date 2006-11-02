@@ -8,8 +8,10 @@
 	<VAR id="-category" value="400" />
 	<VAR id="-name" value="edit_m1" />
 	<VAR id="-global" value="1" />
-	<VAR id="-xsgn" value="xml" />
-	<VAR id="-xsgn_global" value="1" />
+		
+		<VAR id="xsgn" value="xml" />
+		<VAR id="xsgn_global" value="1" />
+		
 		</VAR id="fview_TMP" value="OUTPUT" />
 		</VAR id="fview_xsgn" value="detail" />
 		</VAR id="db_select" value="a400.*" />
