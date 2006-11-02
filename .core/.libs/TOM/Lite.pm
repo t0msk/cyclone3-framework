@@ -153,19 +153,11 @@ use strict;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__." (Lite)");};}
 
+use MIME::Entity;
+
 my $date=`date "+%a,%e %b %Y %H:%M:%S %z (%Z)"`;$date=~s|[\n\r]||g;
 
 our $engine_email_lite=<<"HEADER";
-Return-Path: <TOM\@webcom.sk>
-From: "$TOM::hostname" <TOM\@$TOM::hostname>
-To: "TOM" <TOM\@webcom.sk>
-Subject: [ERR][ENGINE]
-Date: $date
-List-Id: TOM3
-MIME-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-
 <%ERROR%>
 HEADER
 
@@ -187,13 +179,22 @@ sub engine_lite
 	# co vyplujem von?
 	
 	# ZAPISANIE ERROR EMAILU DO textoveho suboru
-	my $email=$engine_email_lite;
-	$email=~s|<%ERROR%>|$var|;
+	
+	my $msg = MIME::Entity->build
+	(
+		'List-Id' => "Cyclone3",
+		'Date'    => $date,
+		'From'    => "Cyclone3 ('$tom::H' at '$TOM::hostname') <$TOM::contact{'from'}>",
+		'To'      => '<'.$TOM::contact{'TOM'}.'>',
+		'Subject' => "[ERR][ENGINE]",
+		'Data'    => $var
+	);
 	
 	TOM::Net::email::send(
-		'from'=>"TOM\@$TOM::hostname",
-		'to'=>"TOM\@webcom.sk",
-		'body'=>$email,
+		'priority'=>999,
+		'from'=> $TOM::contact{'from'},
+		'to'=> $TOM::contact{'TOM'},
+		'body'=>$msg->as_string(),
 	);
 	
 }

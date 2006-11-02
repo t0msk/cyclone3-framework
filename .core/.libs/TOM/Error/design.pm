@@ -25,20 +25,6 @@ our $color_red="#CD4545";
 our $color_black="#000000";
 
 our $engine_email=<<"HEADER";
-From: "<%DOMAIN%>($TOM::hostname)" <TOM\@$TOM::hostname>
-To: <%TO%>
-Subject: [ERR][ENGINE-$TOM::engine]<%SUBJ%>
-Date: <%DATE%>
-List-Id: TOM3
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Type: multipart/related; boundary="------------060509090608000908080106"
-
-This is a multi-part message in MIME format.
---------------060509090608000908080106
-Content-Type: text/html;charset="utf-8"
-Content-Transfer-Encoding: 7bit
-
 <html>
 	<head>
 	</head>
@@ -116,7 +102,6 @@ Content-Transfer-Encoding: 7bit
 		
 	</body>
 </html>
---------------060509090608000908080106--
 HEADER
 
 
@@ -376,20 +361,6 @@ HEADER
 
 
 our $module_email=<<"HEADER";
-From: "<%DOMAIN%>($TOM::hostname)" <TOM\@$TOM::hostname>
-To: <%TO%>
-Subject: [<%TYPE%>][MODULE-$TOM::engine]<%SUBJ%>
-Date: <%DATE%>
-List-Id: TOM3
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Type: multipart/related; boundary="------------060509090608000908080106"
-
-This is a multi-part message in MIME format.
---------------060509090608000908080106
-Content-Type: text/html;charset="utf-8"
-Content-Transfer-Encoding: 7bit
-
 <html>
 	<head>
 	</head>
@@ -473,7 +444,6 @@ Content-Transfer-Encoding: 7bit
 		
 	</body>
 </html>
---------------060509090608000908080106--
 HEADER
 
 

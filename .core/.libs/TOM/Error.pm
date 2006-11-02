@@ -11,7 +11,7 @@ use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 
-
+use MIME::Entity;
 
 
 sub engine
@@ -46,25 +46,30 @@ sub engine_pub
 	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4,"$TOM::engine.err",1);
 	
 	# poslem email co najskor
-	my $date=TOM::Utils::datetime::mail_current;
-	
-	my $email=$engine_email || $TOM::Error::engine_email_lite;
+	my $date=TOM::Utils::datetime::mail_current();
 	
 	my $email_addr;
-	my $email_name;
 	foreach ("TOM",@TOM::ERROR_email_send)
 	{
 		$email_addr.=";".$TOM::contact{$_};
-		$email_name.=$_."/";
-	};$email_name=~s|/$||;$email_name=~s|TOM/TOM|TOM|;
-	
+	};
 	$email_addr=TOM::Utils::vars::unique_split($email_addr);
 	
+	my $msg = MIME::Entity->build
+	(
+		'Type'    => "multipart/related",
+		'List-Id' => "Cyclone3",
+		'Date'    => $date,
+		'From'    => "Cyclone3 ('$tom::H' at '$TOM::hostname') <$TOM::contact{'from'}>",
+		'To'      => TOM::Net::email::convert_TO($email_addr),
+		'Subject' => "[ERR][ENGINE-$TOM::engine]"
+	);
+	
+	my $email=$engine_email || $TOM::Error::engine_email_lite;
 	
 	$email=~s|<%DATE%>|$date|;
 	$email=~s|<%SUBJ%>||;
 	$email=~s|<%DOMAIN%>|$tom::H|g;
-	$email=~s|<%TO%>|"$email_name" <TOM\@webcom.sk>|;
 	$email=~s|<%ERROR%>|$var|g;
 	
 	$email=~s|<#PROJECT#>|$email_project\n$email_project_pub|;
@@ -102,10 +107,17 @@ sub engine_pub
 	
 	if ($TOM::ERROR_email)
 	{
+		$msg->attach
+		(
+			'Data' => $email,
+			'Type' => 'text/html;charset="UTF-8"',
+			'Encoding' => "8bit",
+		);
+		my $email_body=$msg->as_string();
 		TOM::Net::email::send(
 			'priority'=>99,
 			'to'=>$email_addr,
-			'body'=>$email,
+			'body'=>$email_body,
 		);
 	}
 	
@@ -157,20 +169,24 @@ sub engine_cron
 	my $email=$engine_email || $TOM::Error::engine_email_lite;
 	
 	my $email_addr;
-	my $email_name;
 	foreach ("TOM",@TOM::ERROR_email_send)
 	{
 		$email_addr.=";".$TOM::contact{$_};
-		$email_name.=$_."/";
-	};$email_name=~s|/$||;$email_name=~s|TOM/TOM|TOM|;
-	
+	};
 	$email_addr=TOM::Utils::vars::unique_split($email_addr);
 	
+	my $msg = MIME::Entity->build
+	(
+		'Type'    => "multipart/related",
+		'List-Id' => "Cyclone3",
+		'Date'    => $date,
+		'From'    => "Cyclone3 ('$tom::H' at '$TOM::hostname') <$TOM::contact{'from'}>",
+		'To'      => TOM::Net::email::convert_TO($email_addr),
+		'Subject' => "[ERR][ENGINE-$TOM::engine][$cron::type]"
+	);
 	
 	$email=~s|<%DATE%>|$date|;
-	$email=~s|<%SUBJ%>| $cron::type|;
 	$email=~s|<%DOMAIN%>|$tom::H|g;
-	$email=~s|<%TO%>|"$email_name" <TOM\@webcom.sk>|;
 	$email=~s|<%ERROR%>|$var|g;
 	
 	
@@ -204,11 +220,17 @@ sub engine_cron
 	$email=~s|<#.*?#>||g;
 	$email=~s|<%.*?%>||g;
 	
+	$msg->attach
+	(
+		'Data' => $email,
+		'Type' => 'text/html;charset="UTF-8"',
+		'Encoding' => "8bit",
+	);
+	my $email_body=$msg->as_string();
 	TOM::Net::email::send(
-		'from'=>"TOM\@$TOM::hostname",
 		'priority'=>99,
 		'to'=>$email_addr,
-		'body'=>$email,
+		'body'=>$email_body,
 	);
 	
 }
@@ -257,35 +279,37 @@ sub module_pub
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"pub.err",1); #global
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"pub.err",2) if ($tom::H ne $tom::Hm); #master
 	
-	my $date=TOM::Utils::datetime::mail_current;
-	
-	# TODO:[fordinal] pridat dalsie emailove adresy
-	
-	my $email_addr;
-	my $email_name;
-	foreach ("TOM",@TOM::ERROR_email_send)
-	{
-		$email_addr.=";".$TOM::contact{$_};
-		$email_name.=$_."/";
-	};$email_name=~s|/$||;$email_name=~s|TOM/TOM|TOM|;
-	
-	$email_addr=TOM::Utils::vars::unique_split($email_addr);
-	
 	if (($TOM::ERROR_module_email) && (!$main::IAdm))
 	{
+		
+		my $date = TOM::Utils::datetime::mail_current();
+		
+		my $email_addr;
+		foreach ("TOM",@TOM::ERROR_email_send)
+		{
+			$email_addr.=";".$TOM::contact{$_};
+		}
+		$email_addr.=";".$Tomahawk::module::authors;
+		$email_addr=TOM::Utils::vars::unique_split($email_addr);
+		
+		my $msg = MIME::Entity->build
+		(
+			'Type'    => "multipart/related",
+			'List-Id' => "Cyclone3",
+			'Date'    => $date,
+			'From'    => "Cyclone3 ('$tom::H' at '$TOM::hostname') <$TOM::contact{'from'}>",
+			'To'      => TOM::Net::email::convert_TO($email_addr),
+			'Subject' => "[ERR][MODULE-$TOM::engine][$env{-MODULE}]"
+		);
+		
 		my $email=$module_email;
 		
-		$email=~s|<%TYPE%>|ERR|;
 		$email=~s|<%TYPE_%>|Error|;
 		$email=~s|<%DATE%>|$date|;
-		$email=~s|<%SUBJ%>|[$env{-MODULE}]|;
 		$email=~s|<%DOMAIN%>|$tom::H|g;
-		#$email=~s|<%ERROR%>|$var|;
-		$email=~s|<%TO%>|"$email_name" <TOM\@webcom.sk>|;
 		$email=~s|<%ERROR%>|$env{-ERROR}|g;
 		$email=~s|<%ERROR-PLUS%>|$env{-PLUS}|g;
 		
-		#$email=~s|<#PROJECT#>|$email_project|;
 		$email=~s|<#PROJECT#>|$email_project\n$email_project_pub|;
 		
 		$email=~s|<#MODULE#>|$email_module|;
@@ -312,17 +336,24 @@ sub module_pub
 			$email=~s|<#ENV#>|$env\n<#ENV#>|;
 		}
 		
-		$email=~s|<%to%>|$email_addr;$Tomahawk::module::authors|;
+		$email=~s|<%to%>|$email_addr|;
 		
 		Utils::vars::replace($email);
 		$email=~s|<#.*?#>||g;
 		$email=~s|<%.*?%>||g;
-	
+		
+		$msg->attach
+		(
+			'Data' => $email,
+			'Type' => 'text/html;charset="UTF-8"',
+			'Encoding' => "8bit",
+		);
+		my $email_body=$msg->as_string();
+		
 		TOM::Net::email::send(
 			'priority'=>99,
-			'from'=>"TOM\@$TOM::hostname",
-			'to'=>$email_addr.";".$Tomahawk::module::authors,
-			'body'=>$email,
+			'to'=>$email_addr,
+			'body'=>$email_body,
 		);
 	}
 	
