@@ -369,6 +369,8 @@ sub execute
 		-name => "edit_m1",
 		-TMP => "OUTPUT",
 		-global => "1",
+		'-xsgn' => $env{'xsgn'},
+		'-xsgn_global' => $env{'xsgn_global'},
 		%article_data
 	);
 
