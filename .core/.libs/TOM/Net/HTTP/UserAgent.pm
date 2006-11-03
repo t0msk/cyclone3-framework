@@ -270,6 +270,17 @@ our @table=
 	
 	# NASLEDUJU BROWSERY MENEJ CASTE
 	
+	# XULADMIN
+	{name=>'Comsultia C3 XUL 1.1',
+		regexp		=>	['Cyclone3CMS-XUL/1\.1'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Comsultia",
+	},
+	{name=>'Comsultia C3 XUL 1.0',
+		regexp		=>	['Cyclone3CMS-XUL/1\.0'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Comsultia",
+	},
 	
 	# NETSCAPE
 	{name=>'Netscape 8.X',
