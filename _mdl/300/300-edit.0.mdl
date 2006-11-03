@@ -13,9 +13,9 @@ sub execute
 {
 	my %env=@_;
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
-
+	
 	$env{domain} = $tom::H_cookie unless $env{domain};
-
+	
 	if ( $env{action} eq 'delete' )
 	{
 		if ( !$env{login} )
@@ -24,7 +24,7 @@ sub execute
 			$XSGN{TMP} = $XSGN{ERR_LOGINORPASS};
 			return 1;
 		}
-
+		
 		$main::DB{main}->Query("
 			UPDATE
 				TOM.a300_users
@@ -45,32 +45,32 @@ sub execute
 		");
 		return 1;
 	}
-
+	
 	if ( !$env{login} || !$env{pass} )
 	{
 		# Nemam login alebo heslo
 		$XSGN{TMP} = $XSGN{ERR_LOGINORPASS};
 		return 1;
 	}
-
+	
 	# Mam aj Login aj Pass, idem najst usera
-
+	
 	my %hash = App::300::UserFind( login => $env{login}, host => $env{domain} );
 	my $IDhash = $hash{IDhash};
-
+	
 	if ( !$IDhash )
 	{
 		# Nenasiel som takeho usera
 		$XSGN{TMP} = $XSGN{ERR_NOUSER};
 		return 1;
 	}
-
+	
 	main::_log("change user='$env{'login'}' with pass='$env{'pass'}'");
-
+	
 	my $pass_md5 = Digest::MD5::md5_hex( Encode::encode_utf8( $env{'pass'} ) );
-
+	
 	main::_log("md5 pass='$pass_md5'");
-
+	
 	# Updatnem heslo
 	my $sql1 = "
 		UPDATE
@@ -81,7 +81,7 @@ sub execute
 			IDhash='$IDhash'
 			AND host='$env{domain}'
 	";
-
+	
 	my $sql2 = "
 		UPDATE
 			TOM.a300_users_arch
@@ -91,10 +91,10 @@ sub execute
 			IDhash='$IDhash'
 			AND host='$env{domain}'
 	";
-
+	
 	$main::DB{main}->Query( $sql1 );
 	$main::DB{main}->Query( $sql2 );
-
+	
 	return 1;
 }
 1;
