@@ -117,8 +117,7 @@ local (
 	$main::Fyear_sub=$main::Fyear;
 	$main::Fyear_sub=~s/^..//;
 	
-	
-	
+	$TOM::engine="cron";
 	
 	if ($DBH = Mysql->Connect($TOM::DB{main}{host},$TOM::DB_name_TOM,$TOM::DB{main}{user},$TOM::DB{main}{pass}))
 	{
@@ -137,7 +136,8 @@ local (
 	
 	if ($FORM{domain})
 	{
-		require $p."/local.conf";
+		main::_log("loading $main::p/local.conf");
+		require $main::p."/local.conf";
 		$cron::P=$main::p;
 		$tom::P=$main::p;
 	}
