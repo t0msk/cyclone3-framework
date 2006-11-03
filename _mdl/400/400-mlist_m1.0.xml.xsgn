@@ -36,10 +36,10 @@
 		<subtitle><![CDATA[<%subtitle%>]]></subtitle>
 		<priority><![CDATA[<%priority%>]]></priority>
 		<IDcategory_name><![CDATA[<%IDcategory_name%>]]></IDcategory_name>
-		<IDauthor_nickname><![CDATA[<%IDauthor_nickname%>]]></IDauthor_nickname>
-		<IDeditor_nickname><![CDATA[<%IDeditor_nickname%>]]></IDeditor_nickname>
-		<IDauthor_fullname><![CDATA[<%IDauthor_fullname%>]]></IDauthor_fullname>
-		<IDeditor_fullname><![CDATA[<%IDeditor_fullname%>]]></IDeditor_fullname>
+		<a120_author_nickname><![CDATA[<%IDauthor_nickname%>]]></a120_author_nickname>
+		<a120_editor_nickname><![CDATA[<%IDeditor_nickname%>]]></a120_editor_nickname>
+		<a120_author_fullname><![CDATA[<%IDauthor_fullname%>]]></a120_author_fullname>
+		<a120_editor_fullname><![CDATA[<%IDeditor_fullname%>]]></a120_editor_fullname>
 		<visits><![CDATA[<%visits%>]]></visits>
 		<private><![CDATA[<%private%>]]></private>
 		<length><![CDATA[<%length%>]]></length>
