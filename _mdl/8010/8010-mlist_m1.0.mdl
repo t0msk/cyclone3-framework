@@ -178,6 +178,8 @@ sub execute
 		$XSGN{TMP} =~ s|<#LINE#>|$null|;
 	}
 
+	$XSGN{TMP} =~ s|<#.*?#>||g; $XSGN{TMP} =~ s|<%.*?%>||g;
+	
 	return 1;
 }
 
