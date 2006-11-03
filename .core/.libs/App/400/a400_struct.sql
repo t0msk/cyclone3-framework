@@ -15,14 +15,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/` (
   `lasttime` int(10) unsigned NOT NULL default '0',
   `IDauthor` smallint(5) unsigned NOT NULL default '0',
   `IDeditor` smallint(5) unsigned NOT NULL default '0',
-  `title` varchar(100) character set utf8 collate utf8_bin NOT NULL default '',
-  `subtitle` varchar(150) character set utf8 collate utf8_bin NOT NULL default '',
+  `title` varchar(100) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `subtitle` varchar(150) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `tiny` text character set utf8 collate utf8_bin NOT NULL,
   `full` text character set utf8 collate utf8_bin NOT NULL,
   `visits` mediumint(8) unsigned NOT NULL default '0',
   `link` int(10) unsigned NOT NULL default '0', -- linkovanie sa v praxi už nepoužíva
-  `xrelated` text character set utf8 collate utf8_bin NOT NULL,
-  `xdata` text character set utf8 collate utf8_bin NOT NULL,
+  `xrelated` text NOT NULL,
+  `xdata` text NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `private` char(1) character set ascii NOT NULL default 'N',
   `active` char(1) character set ascii NOT NULL default 'N',
@@ -34,8 +34,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/` (
   KEY `IDcategory` (`IDcategory`),
   KEY `endtime` (`endtime`),
   KEY `IDname` (`IDname`),
-  FULLTEXT KEY `MATSEARCH` (`full`,`tiny`,`subtitle`,`title`),
-  FULLTEXT KEY `xrelated` (`xrelated`)
+  FULLTEXT KEY `MATSEARCH` (`full`,`tiny`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -52,14 +51,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_arch` (
   `lasttime` int(10) unsigned NOT NULL default '0',
   `IDauthor` smallint(5) unsigned NOT NULL default '0',
   `IDeditor` smallint(5) unsigned NOT NULL default '0',
-  `title` varchar(100) character set utf8 collate utf8_bin NOT NULL default '',
-  `subtitle` varchar(150) character set utf8 collate utf8_bin NOT NULL default '',
+  `title` varchar(100) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `subtitle` varchar(150) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `tiny` text character set utf8 collate utf8_bin NOT NULL,
   `full` text character set utf8 collate utf8_bin NOT NULL,
   `visits` mediumint(8) unsigned NOT NULL default '0',
   `link` int(10) unsigned NOT NULL default '0', -- linkovanie sa v praxi už nepoužíva
-  `xrelated` text character set utf8 collate utf8_bin NOT NULL,
-  `xdata` text character set utf8 collate utf8_bin NOT NULL,
+  `xrelated` text NOT NULL,
+  `xdata` text NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `private` char(1) character set ascii NOT NULL default 'N',
   `active` char(1) character set ascii NOT NULL default 'N',
@@ -71,8 +70,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_arch` (
   KEY `IDcategory` (`IDcategory`),
   KEY `endtime` (`endtime`),
   KEY `IDname` (`IDname`),
-  FULLTEXT KEY `MATSEARCH` (`full`,`tiny`,`subtitle`,`title`),
-  FULLTEXT KEY `xrelated` (`xrelated`)
+  FULLTEXT KEY `MATSEARCH` (`full`,`tiny`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
