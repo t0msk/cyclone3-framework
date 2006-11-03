@@ -1,0 +1,75 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+$authors="nemsak\@webcom.sk";
+use strict;
+
+=head1 NAME
+list_m1
+
+=head1 HEAD_VERSION_BUILD
+1.060330
+
+=head1 DESCRIPTION
+sources list
+
+=head1 CHANGES
+2006-03-30 - deb00t
+	- first make
+=cut
+
+sub execute
+{
+	my %env=@_;
+	
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
+	my %out;
+	
+	$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
+	$env{db_120}=$TOM::DB{main}{name} unless $env{db_120};
+	
+	if($env{db_user} =~ /author/){ $env{db_where} = "IDtype='0'"}
+	if($env{db_user} =~ /editor/){ $env{db_where} = "IDtype='1'"}
+	unless($env{db_user}){ $env{db_where} = "1"}
+	$env{'db_order_by'} = 'nickname ASC' unless $env{'db_order_by'};
+					
+	my $db1=$main::DB{main}->Query("
+		SELECT
+			*
+		FROM
+			$env{db_120}.a120
+		WHERE
+			$env{db_where}
+		ORDER BY
+			$env{db_order_by}
+	");
+	
+	if($db1)
+	{
+		while(my %db1_line=$db1->FetchHash())
+		{
+			$XSGN{NULL}=$XSGN{LINE};
+			
+			foreach(keys %db1_line)
+			{
+				$XSGN{NULL}=~s|<%$_%>|$db1_line{$_}|g;
+			}
+			
+			$XSGN{TMP}=~s|<#LINE#>|$XSGN{NULL}|;
+		}
+	}
+	return 1;
+}
+
+1;

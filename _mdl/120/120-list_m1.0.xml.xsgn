@@ -1,0 +1,39 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response IDapp="a120" type="list">
+	<header>
+		<ID />
+		<nickname flex="1" />
+		<fullname flex="1" />
+		<email flex="1" />
+		<homepage flex="1" />
+		<xdata flex="1" />
+		<active flex="1" />
+	</header>
+<#LINE#>
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="LINE">
+	<item IDitem="<%ID%>">
+		<ID><![CDATA[<%ID%>]]></ID>
+		<nickname><![CDATA[<%nickname%>]]></nickname>
+		<fullname><![CDATA[<%fullname%>]]></fullname>
+		<email><![CDATA[<%email%>]]></email>
+		<homepage><![CDATA[<%homepage%>]]></homepage>
+		<xdata><![CDATA[<%xdata%>]]></xdata>
+		<active><![CDATA[<%active%>]]></active>
+	</item>
+<#LINE#>
+</DEFINITION>
+
+
+<DEFINITION id="TMP_NO_DATA">
+<response IDapp="a400" type="list">
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
