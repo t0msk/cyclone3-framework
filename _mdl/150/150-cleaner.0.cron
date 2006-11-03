@@ -26,6 +26,7 @@ sub execute
  my @db1_line=$db0->fetchrow();
  main::_log("caches celkom $db1_line[0]"); 
 
+	return 1 unless $db1_line[0]; # nemam co cistit
 
  my $db0=$main::DB{sys}->Query("
 	SELECT COUNT(*),AVG(time_duration)
