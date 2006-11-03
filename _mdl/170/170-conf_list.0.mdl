@@ -60,6 +60,7 @@ sub execute
 
 	use File::Find;
 	find({ wanted => sub{
+		return undef if $_=~/\.svn/;
 		return if -d $_;
 		$_=~s|$tom::p/.customization/||;
 		$XSGN{NULL}=$XSGN{FILE};
