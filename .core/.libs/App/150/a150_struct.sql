@@ -28,7 +28,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_cache` (
   UNIQUE KEY `Usecond` (`domain`,`domain_sub`,`engine`,`Cid_md5`,`time_from`),
   KEY `domain` (`domain`,`domain_sub`,`Capp`,`Cmodule`,`Cid`),
   KEY `ID_config` (`ID_config`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -50,7 +50,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_config` (
   `about` varchar(100) NOT NULL default '',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `domain` (`domain`,`domain_sub`,`engine`,`Capp`,`Cmodule`,`Cid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -68,4 +68,4 @@ CREATE TABLE `/*db_name*/`.`/*app*/_debug` (
   `loads` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `domain` (`domain`,`domain_sub`,`engine`,`Capp`,`Cmodule`,`Cid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
