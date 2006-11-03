@@ -15,6 +15,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 use TOM::Database::SQL::file;
 use TOM::Database::SQL::compare;
+use TOM::Database::SQL::transaction;
 
 =head1 FUNCTIONS
 
@@ -100,14 +101,14 @@ sub execute
 {
 	my $SQL=shift;
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::execute()");
+	my $t=track TOM::Debug(__PACKAGE__."::execute()") unless $env{'quiet'};
 	
 	my @output;
 	
 	if ($SQL=~/-- db_h=([a-zA-Z0-9]*)/)
 	{
 		$env{'db_h'}=$1;
-		main::_log("db_h changed by comment to '$env{db_h}'");
+		main::_log("db_h changed by comment to '$env{db_h}'") unless $env{'quiet'};
 	}
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
@@ -118,7 +119,7 @@ sub execute
 	{
 		foreach my $line(split("\n",$SQL))
 		{
-			main::_log($line);
+			main::_log($line) unless $env{'quiet'};
 		}
 	}
 	
@@ -132,9 +133,13 @@ sub execute
 			$main::DB{$env{'db_h'}}->errmsg(),
 			undef
 		);
-		main::_log("output errmsg=".$output[2],1) if $output[2];
-		main::_log("output info=".$output[0]);
-		$t->close();
+		
+		if ($output[2])
+		{
+			main::_log("output errmsg=".$output[2],1) unless $env{'quiet'};
+		}
+		main::_log("output info=".$output[0]) unless $env{'quiet'};
+		$t->close() unless $env{'quiet'};
 		return @output;
 	}
 	
@@ -145,11 +150,14 @@ sub execute
 		$sth
 	);
 	
-	main::_log("output errmsg=".$output[2],1) if $output[2];
-	main::_log("output affectedrows=".$output[1]);
-	main::_log("output info=".$output[0]);
+	if ($output[2])
+	{
+		main::_log("output errmsg=".$output[2],1) unless $env{'quiet'};
+	}
+	main::_log("output affectedrows=".$output[1]) unless $env{'quiet'};
+	main::_log("output info=".$output[0]) unless $env{'quiet'};
 	
-	$t->close();
+	$t->close() unless $env{'quiet'};
 	return @output;
 }
 
