@@ -1,0 +1,72 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+
+# Applications
+	foreach (keys %TOM::DEBUG_log_app)
+	{
+		$XSGN{NULL}=$XSGN{APP};
+		$XSGN{NULL}=~s|<%app%>|$_|g;
+		$XSGN{TMP}=~s|<#APP#>|$XSGN{NULL}|;
+	}
+
+# Languages
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	if($tom::lng)
+	{
+		main::_log('tom::lng = '.$tom::lng);
+		$XSGN{TMP}=~s|<%lng%>|$tom::lng|g;
+
+		foreach(@TOM::LNG_accept)
+		{
+			if($_ eq $tom::lng)
+			{
+				main::_log('skipping default language - already defined in $tom::lng');
+				next;
+			}
+			$XSGN{NULL}=$XSGN{LNG};
+			$XSGN{NULL}=~s|<%lng%>|$_|g;
+			$XSGN{TMP}=~s|<#LNG#>|$XSGN{NULL}|;
+		}
+	}
+	else
+	{
+		main::_log('main::lng not found');
+		return undef;
+	}
+
+# Addons
+	foreach( @TOM::ADM_modules )
+	{
+			$XSGN{NULL}=$XSGN{TAB};
+			$XSGN{NULL}=~s|<%tab%>|$_|g;
+			$XSGN{TMP}=~s|<#TAB#>|$XSGN{NULL}|;
+	}
+
+# Custom XPI addons
+
+	use File::Find;
+	find({ wanted => sub{
+		return if -d $_;
+		$_=~s|$tom::p/.customization/||;
+		$XSGN{NULL}=$XSGN{FILE};
+		$XSGN{NULL}=~s|<%file%>|$_|g;
+		$XSGN{TMP}=~s|<#FILE#>|$XSGN{NULL}|;
+},no_chdir => 1, hidden=>1 },"$tom::p/.customization/");
+
+	return 1;
+}
+1;

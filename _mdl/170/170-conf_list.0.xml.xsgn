@@ -1,0 +1,47 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response IDapp="a0" type="conf_list">
+	<USRM>
+		<my_domain><$tom::H_cookie></my_domain>
+		<domain><$tom::Hm_cookie></domain>
+	</USRM>
+	<lng>
+		<item primary="1"><![CDATA[<%lng%>]]></item>
+		<#LNG#>
+	</lng>
+	<apps>
+		<#APP#>
+	</apps>
+	<modules>
+		<#TAB#>
+	</modules>
+	<custom>
+		<#FILE#>
+	</custom>
+	<servertime><$main::time_current></servertime>
+</response>
+</DEFINITION>
+
+<DEFINITION id="LNG">
+		<item><![CDATA[<%lng%>]]></item>
+<#LNG#>
+</DEFINITION>
+
+<DEFINITION id="TAB">
+		<item><![CDATA[<%tab%>]]></item>
+<#TAB#>
+</DEFINITION>
+
+<DEFINITION id="APP">
+		<item><![CDATA[<%app%>]]></item>
+<#APP#>
+</DEFINITION>
+
+<DEFINITION id="FILE">
+		<item><![CDATA[<%file%>]]></item>
+<#FILE#>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
