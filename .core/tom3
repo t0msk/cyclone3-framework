@@ -13,14 +13,7 @@ Unauthorized access and modification prohibited!
 
 "Build a system that even an idiot can use and only idiots will want to use it."
 
-"If you think your users are idiots, only idiots will use it."
-
 =cut
-
-
-#my $pt=track_new("inicializacia");
-
-#track_close($pt);
 
 #
 # Volam univerzalny zavadzac Cyclone3
@@ -72,7 +65,6 @@ use enc2;
 use enc3;
 use iconv;
 
-#local *HND; # localize file handlers
 
 ######################################################################################
 ######################################################################################
@@ -112,27 +104,14 @@ if ($@)
 	exit(0);
 }
 
-#main::_log("TOM engine '$TOM::engine' initialized.");
 $t->close();
 
 
-=head1
-if ($main::debug)
-{
-	my $t0=track TOM::Debug('prvy');
-	my $t1=track TOM::Debug('druhy');
-	$t1->close();
-	$t0->close();
-	#$t->close();
-}
-=cut
+######################################################################################
+######################################################################################
 
-######################################################################################
-######################################################################################
 
 my $t_domain=track TOM::Debug("$TOM::engine domain initialization");
-#main::_log("TOM domain initializing...");
-#$url_regexp='';
 eval
 {
 	
@@ -251,14 +230,10 @@ if ($@)
 	{
 		my $time_this=time;
 		
-		main::_log("request in domain initialization error");
+		main::_log("request in domain initialization error",1);
 		
-		# neviem ci uz mam nacitanu TOM::Error;
-		#eval {TOM::Error::pub(@ERR);};
-		#if ($@){
 		TOM::Error::engine(@ERR);
-		#};
-	
+		
 		if ($time_err+30<$time_this){$req->Finish();exit(0);}
 	}
 	$req->Finish();
@@ -301,7 +276,6 @@ while ($req->Accept() >= 0)
 		# zbytocne zabity
 		#
 		my $t_ready=track TOM::Debug("request_first");
-		#main::_log("redirecting SIG{TERM} to ignore");
 		main::_log("redirecting SIG{HUP} to please_wait");
 		$SIG{HUP}=sub # akceptujem do premennej HUP ( vykonam az po vygenerovani stranky )
 		{
@@ -335,18 +309,13 @@ while ($req->Accept() >= 0)
 	$page_statuscode="200";
 	$pub::output_log=0;
 	
-	#main::_log("Get request [$tom::count/$TOM::max_count]");
 	
-	
-	
-=head1
-	main::_log('DOS control');
-	if (TOM::Net::HTTP::DOS::processENV(%main::ENV))
-	{
-		print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n\n";
-		next;
-	}
-=cut
+#	main::_log('DOS control');
+#	if (TOM::Net::HTTP::DOS::processENV(%main::ENV))
+#	{
+#		print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n\n";
+#		next;
+#	}
 	
 	
 	my ($bann_ID,$bann_msg)=App::1B0::IsBanned(
@@ -412,29 +381,17 @@ while ($req->Accept() >= 0)
 		
 		local $Net::DOC::content_type=$Net::DOC::content_type;
 		
-		#my $time_eval=TOM::Debug::breakpoints->new();$time_eval->start();
-		#$time_modules=TOM::Debug::breakpoints->new();
-		#my $time_pre=TOM::Debug::breakpoints->new();$time_pre->start();
-		
-#		if ($tom::rewrite_RewriteBase)
-#		{
-#			main::_log("cleaning RewriteBase from REQUEST_URI='$main::ENV{REQUEST_URI}'");
-#			$main::ENV{REQUEST_URI}=~s|^$tom::rewrite_RewriteBase||;
-#		}
-		
 		
 		main::_log("request from IP='$main::ENV{'REMOTE_ADDR'}'");
 		
 		
 		if ($main::ENV{'REQUEST_URI'}=~/^\/favicon.ico$/)
 		{
-			#$page_statuscode="404";
 			$main::page_statuscode="404";
 			TOM::Error::engine(
 				"silent - This error message is in silen mode",
 				"Can't resolve REQUEST_URI='$main::ENV{REQUEST_URI}'",
 				"Please check RewriteRules in .htaccess");
-			#die "Can't resolve REQUEST_URI='$main::ENV{REQUEST_URI}'. Please check RewriteRules in .htaccess";
 		}
 		
 		
@@ -444,13 +401,7 @@ while ($req->Accept() >= 0)
 			$main::ENV{'HTTP_USER_AGENT'}=" " unless $main::ENV{'HTTP_USER_AGENT'};
 			
 			($main::UserAgent,$main::UserAgent_name)= TOM::Net::HTTP::UserAgent::analyze($main::ENV{'HTTP_USER_AGENT'},IP=>$main::ENV{'REMOTE_ADDR'});
-			#($main::UserAgent,$main::UserAgent_name)= TOM::Net::HTTP::UserAgent::analyze($main::ENV{'HTTP_USER_AGENT'},IP=>'62.171.194.125');
 			main::_log("detected UserAgent='$main::UserAgent' UserAgent_name='$main::UserAgent_name' UserAgent_type='".($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'})."'");
-			
-#			foreach (keys %{$TOM::Net::HTTP::UserAgent[$main::UserAgent]})
-#			{
-#				main::_log(" - $_ $TOM::Net::HTTP::UserAgent[$main::UserAgent]{$_}");
-#			}
 			
 			($main::Media,$main::Media_name)= TOM::Net::HTTP::Media::analyze($main::ENV{'HTTP_USER_AGENT'});
 			main::_log("detected Media='$main::Media' Media_name='$main::Media_name'");
@@ -522,7 +473,7 @@ while ($req->Accept() >= 0)
 			}
 		}
 		
-		# osetrenie debilnych vyjebanych drbnutych kokotskych vyhladavacov ktore nepoznaju ?
+		# osetrenie ...piiiiiip.... vyhladavacov ktore nepoznaju ?
 		# a namiesto neho daju %3F, pricom je url_rewrite a hned je cela linka v REQUEST_URI
 		# napr. tiscali search
 		
@@ -538,10 +489,8 @@ while ($req->Accept() >= 0)
 			main::_log("By REQUEST_URI='$main::ENV{'REQUEST_URI'}' i know that this request is from hacked computer or virus (IP='$main::ENV{'REMOTE_ADDR'}')",1);
 			main::_log("By REQUEST_URI='$main::ENV{'REQUEST_URI'}' i know that this request is from hacked computer or virus (IP='$main::ENV{'REMOTE_ADDR'}')",4,"$TOM::engine.hacked",1);
 			TOM::Net::HTTP::hacked::add($main::ENV{'REMOTE_ADDR'});
-	#		main::_log("IP $main::ENV{'REMOTE_ADDR'} is banned",1);
 			print "Status: 404 Not Found\n";
 			print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n\n";
-	#		main::_log("IP \"$main::ENV{'REMOTE_ADDR'}\" banned from $tom::H",0,"pub.warn",1);
 			$t_querystring->close();
 			$t_preprocess->close();
 			$t_eval->close();
@@ -564,7 +513,6 @@ while ($req->Accept() >= 0)
 		
 		# ak potrebujem hackovat
 		# toto tu musi ostat, bohuzial :(((
-#=head1
 		if ($TOM::type_code && $ENV{'QUERY_STRING'}=~s|=1(.*)||)
 		{
 			$ENV{'QUERY_STRING_PLUS'}=$1;
@@ -576,16 +524,12 @@ while ($req->Accept() >= 0)
 			$ENV{'QUERY_STRING_PLUS'}=$1;
 			main::_log("lighthack with string QUERY_STRING_PLUS='$ENV{'QUERY_STRING_PLUS'}'");
 		}
-#=cut
 		
-		
-
 		
 		# secure kodovanie url
 		$env{admin}="request" if $ENV{'QUERY_STRING'}=~s|^admin||;
 		$env{test}="request" if $ENV{'QUERY_STRING'}=~s|^test||; # ITst mode
 		
-		#main::_log(0,"1:env{admin}:$env{admin}",0,"IAdm");
 		
 		if ($TOM::type_code && $ENV{'QUERY_STRING'})
 		{
@@ -710,7 +654,6 @@ while ($req->Accept() >= 0)
 			%FORM_rewrite=TOM::Net::URI::rewrite::parse_URL($ENV{'REQUEST_URI'});
 			foreach (keys %{$FORM_rewrite{'GET'}})
 			{
-				#main::_log(0,"priradujem $_ = $FORM_rewrite{'GET'}{$_}");
 				$FORM{$_}=$FORM_rewrite{'GET'}{$_};
 			}
 		}
@@ -718,9 +661,7 @@ while ($req->Accept() >= 0)
 		$ENV{'QUERY_STRING'}=$ARGV[0] if $ENV{USER} eq "apache";
 		
 		# pridam hashovane data
-		#my %FORM_get=&Net::HTTP::CGI::GetQuery_h2($ENV{'QUERY_STRING'});
 		my %FORM_get=TOM::Net::HTTP::CGI::GetQuery($ENV{'QUERY_STRING'});
-#		%FORM=GetQuery_h2($ENV{'QUERY_STRING'});
 		foreach (keys %FORM_get)
 		{
 			$FORM{$_}=$FORM_get{$_};
@@ -764,7 +705,6 @@ while ($req->Accept() >= 0)
 				
 				print "<HTML><HEAD></HEAD><BODY><H1>$code</H1></BODY></HTML>\n";
 				
-				#print "Location: $out\n\n";
 				next;
 			}
 			
@@ -903,14 +843,6 @@ while ($req->Accept() >= 0)
 			};
 		}
 		
-		# spracovania IAdm prostredia
-		#Tomahawk::debug::log(0,"Query $IAdm:$ENV{QUERY_STRING}",0,"IAdm");
-		#if ($IAdm){main::_log("process IAdm",0,"IAdm",1);}
-		
-		#  main::_log(0,"mam $IAdm, $ITst",0,"pub.ITst",0);  
-		#if ($ITst){main::_log("process ITst",0,"ITst",1);}
-		
-		
 		
 		
 		# TAHAM KONFIGURACIU CACHE VZDY KED VYVOLAM ZMENOU JEJ RELOAD
@@ -922,6 +854,7 @@ while ($req->Accept() >= 0)
 					Tomahawk::Getvar('_cache_conf_reload'));
 	 		&Tomahawk::GetCACHE_CONF;
 		}
+		
 		
 		
 		#
@@ -941,9 +874,7 @@ while ($req->Accept() >= 0)
 			$FORM{TID}=$tom::type_c{$FORM{type}};
 			main::_log("FORM{type}='$FORM{type}' converted to FORM{TID}='$FORM{TID}'");
 		}
-		#$FORM{TID}=$tom::type_c{$FORM{type}} if $FORM{type};
 		
-		#main::_log(2,"type=$FORM{type} TID=$FORM{TID}");
 		
 		# tu je pre spetnu kompatibilitu tvar "[mg]0000"
 		#if ($FORM{TID}=~/^([mg0-9])([0-9]+)$/)
@@ -960,7 +891,6 @@ while ($req->Accept() >= 0)
 			
 			$FORM{TID}=$pre."_".sprintf('%04d',$post);
 		}
-		
 		
 		
 		# ak som dostal $FORM{typecko co sa neda prelozit
@@ -980,30 +910,22 @@ while ($req->Accept() >= 0)
 		
 		if ($env{admin} eq "request"){$FORM{TID}="g_admin";}
 		if ($env{test} eq "request"){$FORM{TID}="g_test";}
-		#main::_log(0,"2:env{admin}:$env{admin}",0,"IAdm");
 		
-		main::_log("type='$main::FORM{type}' TID='$main::FORM{TID}'");
-		#foreach (keys %FORM){main::_log(9,"$_=".$FORM{$_});}
-		#main::_log(9,"query=$main::ENV{QUERY_STRING}");
-		
-		
+		main::_log("type='$main::FORM{type}' TID='$main::FORM{TID}'");		
 		
 		main::_log("Get cookies");
-		
 		
 		#  local %COOKIES;
 		%main::COOKIES=();
 		
 		%main::COOKIES=&Net::HTTP::cookies::GetCookies if !$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{cookies_disable};
 		
-		# teraz zistim ci vobec mam nejake cookies :)  
-#		if (!$COOKIES{_name}) # nemam klasicke cookies
+		# teraz zistim ci vobec mam nejake cookies :)
 		foreach (keys %main::COOKIES)
 		{
 			main::_log("key $_");
 		}
-#		main::_log(2,"cookies ".(keys %main::COOKIES));
-
+		
 		# nedostal som ziadne cookies (mozno je toto moj prvy request)
 		# nastavujem, teda cookies na posielanie cez URL linku (zaroven sa vzdy i tak
 		# budem snazit posielat cookies standardnou cestou)
@@ -1027,7 +949,6 @@ while ($req->Accept() >= 0)
 			elsif($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'}=~/browser/)
 			{
 				main::_log("trying to setup cookies");
-#=head1
 				open(USRM,">../_data/USRM/cookie.".$user_md5);
 				print USRM "trying to setup cookies\n";
 				close(USRM);
@@ -1049,7 +970,6 @@ while ($req->Accept() >= 0)
 				$t_request->close();
 				
 				next;
-#=cut
 			}
 			else
 			{
@@ -1059,26 +979,10 @@ while ($req->Accept() >= 0)
 		else
 		{
 			main::_log("cookies");
-			
-#			if (-e '../_data/USRM/cookie.'.$user_md5)
-#			{
-#				unlink '../_data/USRM/cookie.'.$user_md5;
-#			}
-			
 		}
 		
-#		foreach (keys %{$FORM_rewrite{'cookies'}})
-#		{
-#			main::_log(0,"priradujem C $_ = $FORM_rewrite{'cookies'}{$_}");
-#			$COOKIES{$_}=$FORM_rewrite{'cookies'}{$_};
-#		}
-		
 		%COOKIES_save=%COOKIES;
-		#Tomahawk::debug::log(0,"Get cookies",0,"a300");
-		#foreach (keys %COOKIES){Tomahawk::debug::log(0," $_=".$COOKIES{$_},0,"a300");}
 		
-		
-#=head1
 		# PREVERENIE IAdm a ITst module
 		if
 		(
@@ -1109,18 +1013,10 @@ while ($req->Accept() >= 0)
 		{
 			main::_log("session kluc suhlasi $main::FORM{__key_} == $main::COOKIES{key}");
 		}
-#=cut
-		
-		
 		
 		
 		# LOKALIZUJEM PROSTREDIE pre KAZDY REQUEST
 		local $H=$main::H_clone->clone();
-		#$main::H=$main::H_clone->clone();
-		#local %HTML_HEADER=%HTML_HEADER;
-		#local $HTML_TEMP=$HTML_TEMP;
-		#local $H->{header};
-		#local $H->{body};
 		
 		# DEFAULT DESIGN A LANGUAGE PROSTREDIA
 		# $tom::dsgn_ - poziadavka
@@ -1132,15 +1028,6 @@ while ($req->Accept() >= 0)
 		 
 		local %USRM;
 		
-		# DEFINUJEM ZAMENU PROSTREDIA
-=head1 old version
-		$tom::dsgn=$FORM{_dsgn} if $FORM{_dsgn};
-		$tom::lng=$FORM{_lng} if $FORM{_lng};
-=cut
-		
-		#TOTO OZAJ NEVIEM CI TU BUDE POTREBA
-		#$COOKIES{_dsgn}=$tom::DSGN unless $COOKIES{_dsgn};
-		#$COOKIES{_lng}=$tom::LNG unless $COOKIES{_lng};
 		
 		# ak nemam ulozeny ziadny jazyk v cookies a autodetekcia je zapnuta...
 		if (!$COOKIES{_lng} && $TOM::LNG_autodetect)
@@ -1206,6 +1093,7 @@ while ($req->Accept() >= 0)
 				}
 				main::_log("attribute LNG_permanent_accepted is enabled");
 				main::_log("set FORM{'__lng'} to $main::FORM{'__lng'}");
+				
 			}
 			
 			
@@ -1218,14 +1106,8 @@ while ($req->Accept() >= 0)
 			
 			$tom::lng_=$main::COOKIES{'_lng'}=$main::FORM{'__lng'};
 			
-			#my %form=%FORM;
-			#my $var="";foreach (sort keys %form){$var.="$_=$form{$_}&";}
-			#$var=~s|&$||; # osetrenie zaveru riadku
-			#main::_log(0,"to link $var",0,"test");
-			
 		}
 		
-		#main::_log(9,"language je $tom::lng_");
 		
 		# CODEPAGES
 		$main::LNG_cp=$TOM::LNG_cp_default;
@@ -1236,29 +1118,7 @@ while ($req->Accept() >= 0)
 		$main::LNG_cp_=$COOKIES{_cp}=$FORM{_cp} if $FORM{_cp};
 		
 		
-		#print "DEBUG: codepages: $main::LNG_cp_ a $main::LNG_cp\n" if $main::debug;
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
 		$t_preprocess->close();
-		#$time_pre->end();$time_pre->duration();
-		#my $time_page=TOM::Debug::breakpoints->new();$time_page->start();
 		
 		
 		
@@ -1354,8 +1214,7 @@ while ($req->Accept() >= 0)
 		# PRIDAVAM IAdm layer
 		$file_data="<CONF_VAR id=\"layers\" value=\"g0\" global=\"1\" />\n".$file_data if $IAdm;
 		$file_data="<CONF_VAR id=\"layers\" value=\"g1\" global=\"1\" />\n".$file_data if $ITst;
-		# PRIDAVAM type_pre
-		#$file_data=Tomahawk::Getvar("type_pre")."\n<#TYPE_PRE#>\n".$file_data if $TOM::type_pre;
+		
 		
 		#$TOM::type_pre=0;
 		if ($TOM::type_pre)
@@ -1375,10 +1234,6 @@ while ($req->Accept() >= 0)
 		}
 		
 		
-		# PRIDAVAM type_post
-		#$file_data.="\n<#TYPE_POST#>\n".Tomahawk::Getvar("type_post") if $TOM::type_post;
-		
-		#Utils::vars::replace($file_data);
 		TOM::Utils::vars::replace($file_data);
 		
 		#
@@ -1395,7 +1250,6 @@ while ($req->Accept() >= 0)
 			{
 				_log("Add to DOC::link");
 				delete $env0{'id'};
-				#my %env=Net::HTTP::CGI::GetQuery_l($env0{value});
 				$H->add_DOC_css_link(%env0);
 				next;
 			}
@@ -1420,7 +1274,6 @@ while ($req->Accept() >= 0)
 				
 				if (keys %main::HEADER == 0)
 				{$H=new Net::DOC(%HTML_HEADER)}else{$H=new Net::DOC(%HEADER)};
-				#$H=new Net::DOC(%main::HEADER || %main::HTML_HEADER);
 				$H->i($main::TEMPLATE || $main::HTML_TEMP);
 				$H->prepare();
 				next;
@@ -1435,7 +1288,6 @@ while ($req->Accept() >= 0)
 				
 				main::_log("Load template $var '".$env0{value}."/".$env0{global}."'");
 				
-				#$H->
 				open (TMPL,'<'.$var.'/_dsgn/'.$env0{'value'}.'.template') || die "can't open template $env0{value}/$env0{global}";
 				while (my $line=<TMPL>)
 				{
@@ -1603,9 +1455,6 @@ while ($req->Accept() >= 0)
 						$FORM_reject{$_}++;
 					}
 				}
-				#$Net::DOC::content_type=$env0{value};
-				#_log("Change Net::DOC::content_type to ".$env0{value});
-				#next;
 			}
 			
 			if (($TOM::LAYERS)&&($env0{id} eq "layers"))
@@ -1658,7 +1507,6 @@ while ($req->Accept() >= 0)
 		{
 			my $t_301=track TOM::Debug("REQUEST_URI link testing for 301 redirection");
 			
-			#main::_log("mod_rewrite enabled, testing REQUEST_URI");
 			main::_log("REQUEST_URI='$main::ENV{REQUEST_URI}'");
 			
 			my $rewrite_old=$ENV{REQUEST_URI};$rewrite_old=~s|^(.*)\?.*?$|$1|;
@@ -1671,8 +1519,6 @@ while ($req->Accept() >= 0)
 			delete $form{cookies};
 			
 			my $rewrite="/".TOM::Net::URI::rewrite::parse_hash(\%form);
-			#my $link=
-			#$forma{a}="ahoj";
 			main::_log("rewrited part is '$rewrite'");
 			
 			my $link;
@@ -1805,7 +1651,6 @@ while ($req->Accept() >= 0)
 			#while ($data=~s|<VAR id="(.*?)" value="(.*?)" />||s)
 			while ($data=~s|<VAR id="(.{1,150}?)" value="(.*?)" />||s)
 			{
-				#next unless $1;
 				next if not defined $2;
 				$mdl_env{$1}=$2;
 				$mdl_env{$1}=~s|\"|"|g;
@@ -1866,7 +1711,6 @@ while ($req->Accept() >= 0)
 				$t_eval->close();
 				$t_request->close();
 				print "Status: $code Unknown\n\n";
-				#print "Location: $out\n\n";
 				next;
 			}
 			
@@ -1958,7 +1802,6 @@ while ($req->Accept() >= 0)
 			$t_301->close();
 		}
 		
-		#$time_page->end();$time_page->duration();
 		
 		$t_process->close();
 		
@@ -2032,9 +1875,7 @@ while ($req->Accept() >= 0)
 		my $url_count;
 		
 		# AUTOMATICKA ZAMENA LINKOV
-		# CHCELO BY TO TROCHU DOLADIT!!!! RYCHLEJSI ALGORITMUS!!!!
-
-		
+		# CHCELO BY TO TROCHU DOLADIT!!!! RYCHLEJSI ALGORITMUS!!!
 		my $link;
 		my $hash=Utils::vars::genhash(8);
 		
@@ -2109,14 +1950,8 @@ while ($req->Accept() >= 0)
 				$prefix.=$rewrite;
 			}
 			
-#			foreach (keys %form)
-#			{
-#				main::_log("key '$_'");
-#			}
-			
 			# vygenerujem z %hash string
 			$var='';
-			#my $var;
 			if (keys %form > 0)
 			{
 				$var=TOM::Net::URI::URL::genGET(%form);
@@ -2211,9 +2046,6 @@ while ($req->Accept() >= 0)
 				" proc:".
 				($t_urlreplace->{'time'}{proc}{duration}/$url_count));
 		}
-		
-		#my $time_post=TOM::Debug::breakpoints->new();$time_post->start();
-		#$time_urlreplace->end();$time_urlreplace->duration();
 		
 		
 		# vpisujem log :)
@@ -2310,8 +2142,6 @@ while ($req->Accept() >= 0)
 				$DOC_output=Int::charsets::encode::UTF8_ASCII($H->OUT_);
 			}
 			
-			#main::_log("");
-			
 			$t->close();
 		};
 		
@@ -2325,14 +2155,10 @@ while ($req->Accept() >= 0)
 		
 		# UPRAVIM COOKIES, ALE LEN VTEDY AK TO NIESU GETCOOKIES
 		my $t_cookies=track TOM::Debug("Set Cookies");
-		#_log("Set cookies");
 		if (!$FORM{cookies})
 		{
-			
-			#undef 
 			$COOKIES{'lh'}=$main::request_code;
 			
-			#_log("Uprava cookies");
 			if (($COOKIES{_lt}+86400)<$tom::time_current){$COOKIES{_lt}=$tom::time_current}
 			# cistim a upravujem cookies len ak ide o normalne cookies
 			foreach (keys %COOKIES)
@@ -2434,33 +2260,6 @@ while ($req->Accept() >= 0)
 			}
 		}
 		
-		
-		
-		
-		#$time_post->end();$time_post->duration();
-		#$time_eval->end();$time_eval->duration();
-		
-		
-		
-=head1
-		main::_log("[$tom::H]".
-		" eval(".$time_eval->{'time'}{req}{duration}."/".$time_eval->{'time'}{proc}{duration}.")".
-		" pre(".$time_pre->{'time'}{req}{duration}."/".$time_pre->{'time'}{proc}{duration}.")".
-			"(".TOM::Math::percentage( $time_eval->{'time'}{'proc'}{'duration'}, $time_pre->{'time'}{'proc'}{'duration'}, 2)."\%)".
-		" page_regie(".($time_page->{'time'}{req}{duration}-$time_modules->{'time'}{req}{duration})."/".($time_page->{'time'}{proc}{duration}-$time_modules->{'time'}{proc}{duration}).")".
-			"(".TOM::Math::percentage( $time_eval->{'time'}{'proc'}{'duration'}, $time_page->{'time'}{'proc'}{'duration'}-$time_modules->{'time'}{'proc'}{'duration'}, 2)."\%)".
-		" modules(".$time_modules->{'time'}{req}{duration}."/".$time_modules->{'time'}{proc}{duration}.")".
-			"(".TOM::Math::percentage( $time_eval->{'time'}{'proc'}{'duration'}, $time_modules->{'time'}{'proc'}{'duration'}, 2)."\%)".
-		" url(".$url_count.")(".$time_urlreplace->{'time'}{req}{duration}."/".$time_urlreplace->{'time'}{proc}{duration}.")".
-			"(".TOM::Math::percentage( $time_eval->{'time'}{'proc'}{'duration'}, $time_urlreplace->{'time'}{'proc'}{'duration'}, 2)."\%)".
-		" post(".$time_post->{'time'}{req}{duration}."/".$time_post->{'time'}{proc}{duration}.")".
-			"(".TOM::Math::percentage( $time_eval->{'time'}{'proc'}{'duration'}, $time_post->{'time'}{'proc'}{'duration'}, 2)."\%)".
-		"",
-#		" (html(".$time_html->{'time'}{req}{duration}."/".$time_html->{'time'}{proc}{duration}."))",
-		0,"pub.bench",1);
-=cut
-		
-		
 		if (($tom::HUP) && (($main::time_current-$TOM::time_start)<30))
 		{
 			main::_log("HUP (waiting 30 seconds) (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
@@ -2538,7 +2337,6 @@ while ($req->Accept() >= 0)
 		
 		
 	}; # end of eval
-	#alarm 0;
 	
 	if ($@)
 	{
