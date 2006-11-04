@@ -89,7 +89,7 @@ sub close
 sub rollback
 {
 	my $self=shift;
-	main::_log("<={SQL:$self->{'db_h'}} ROLLBACK");
+	main::_log("<={SQL:$self->{'db_h'}} ROLLBACK",1);
 	
 	undef $handler{$self->{'db_h'}};
 	
