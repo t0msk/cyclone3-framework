@@ -243,7 +243,7 @@ sub install
 		main::_log("ALTER='$SQL_ALTER'");
 		if ($env{'-compare_execute'})
 		{
-			my @eout=TOM::Database::SQL::execute($SQL_ALTER);
+			my %sth0=TOM::Database::SQL::execute($SQL_ALTER);
 		}
 	}
 	
@@ -324,7 +324,7 @@ sub install_table
 	
 	if ($debug){foreach my $line(split('\n',$SQL)){main::_log("$line");}}
 	
-	my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$header->{'db_h'});
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$header->{'db_h'});
 	
 	if ($env{'-compare'})
 	{
@@ -340,7 +340,7 @@ sub install_table
 			push @{$output{'ALTER'}}, $SQL_ALTER;
 			if ($env{'-compare_execute'})
 			{
-				my @eout=TOM::Database::SQL::execute($SQL_ALTER);
+				my %sth1=TOM::Database::SQL::execute($SQL_ALTER);
 			}
 		}
 		
