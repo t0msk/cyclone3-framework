@@ -15,7 +15,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 
 use TOM::Net::URI::rewrite;
-
+use App::020::functions::charindex;
 
 =head1 FUNCTIONS
 
@@ -46,8 +46,6 @@ sub new
 		$env{'collumns'}{'name'}="'".$env{'collumns'}{'name'}."'";
 		main::_log("create 'collumns'->'name_url'='$env{'collumns'}{'name_url'}'");
 	}
-	
-	
 	
 	# najdem volny ID_charindex
 	my $level=0; # default
@@ -105,13 +103,17 @@ sub new
 	
 	if ($sth0{'rows'})
 	{
-		# idem vyratavat novy ID_charindex, pretoze tento nod ma childy
+		# idem vyratavat novy ID_charindex, pretoze tento nod ma child/y
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		main::_log("last child of parent ID_charindex='$db0_line{ID_charindex}'");
 		$db0_line{'ID_charindex'}=~/(...)$/;
 		my $sub=$1;
 		main::_log("ID_charindex '$sub'++");
-		# TODO: ratanie dalsieho ID_charindex
+		# ratanie dalsieho ID_charindex
+		my $idx=new App::020::functions::charindex('from'=>$sub);
+		my $sub_increased=$idx->increase();
+		main::_log("ID_charindex '$sub_increased'");
+		$ID_charindex_new.=$sub_increased;
 	}
 	else
 	{
