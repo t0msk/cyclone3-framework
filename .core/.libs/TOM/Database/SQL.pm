@@ -93,7 +93,7 @@ sub show_create_table
 
 Vykoná SQL príkaz a vráti pole hodnot
 
- @output=(return code, affected rows, ...)
+ %output={'sth', 'rows', 'info', 'err'}
 
 =cut
 
@@ -103,7 +103,7 @@ sub execute
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::execute()") unless $env{'quiet'};
 	
-	my @output;
+	my %output;
 	
 	if ($SQL=~/-- db_h=([a-zA-Z0-9]*)/)
 	{
@@ -123,42 +123,33 @@ sub execute
 		}
 	}
 	
-	my $sth=$main::DB{$env{'db_h'}}->Query($SQL);
+	$output{'sth'}=$main::DB{$env{'db_h'}}->Query($SQL);
 	
-	if (not $sth)
+	$output{'info'}=$main::DB{$env{'db_h'}}->info();
+	$output{'err'}=$main::DB{$env{'db_h'}}->errmsg();
+	
+	if (not $output{'sth'})
 	{
-		my @output=(
-			$main::DB{$env{'db_h'}}->info(),
-			undef,
-			$main::DB{$env{'db_h'}}->errmsg(),
-			undef
-		);
-		
-		if ($output[2])
+		if ($output{'err'})
 		{
-			main::_log("output errmsg=".$output[2],1) unless $env{'quiet'};
+			main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
 		}
-		main::_log("output info=".$output[0]) unless $env{'quiet'};
+		main::_log("output info=".$output{'info'}) unless $env{'quiet'};
 		$t->close() unless $env{'quiet'};
-		return @output;
+		return %output;
 	}
 	
-	my @output=(
-		$main::DB{$env{'db_h'}}->info(),
-		$sth->affectedrows(),
-		$main::DB{$env{'db_h'}}->errmsg(),
-		$sth
-	);
+	$output{'rows'}=$output{'sth'}->affectedrows();
 	
-	if ($output[2])
+	if ($output{'err'})
 	{
-		main::_log("output errmsg=".$output[2],1) unless $env{'quiet'};
+		main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
 	}
-	main::_log("output affectedrows=".$output[1]) unless $env{'quiet'};
-	main::_log("output info=".$output[0]) unless $env{'quiet'};
+	main::_log("output affectedrows=".$output{'rows'}) unless $env{'quiet'};
+	main::_log("output info=".$output{'info'}) unless $env{'quiet'};
 	
 	$t->close() unless $env{'quiet'};
-	return @output;
+	return %output;
 }
 
 =head1 SYNOPSIS
