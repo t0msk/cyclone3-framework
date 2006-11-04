@@ -16,6 +16,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 use TOM::Database::SQL;
 
+use App::020::SQL::functions::tree;
 
 =head1 FUNCTIONS
 
@@ -58,12 +59,12 @@ sub new
 	};
 	main::_log("SQL='$SQL'");
 	
-	my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
 	
-	if ($eout[1])
+	if ($sth0{'rows'})
 	{
 		# podarilo sa vlozit zaznam
-		my $ID=$eout[3]->insertid();
+		my $ID=$sth0{'sth'}->insertid();
 		main::_log("new ID='$ID'");
 		# aktivujem ho tym ze mu priradim cislo a cislo verzie
 		new_initialize(
@@ -124,7 +125,7 @@ sub new_initialize
 	
 	main::_log("SQL='$SQL'");
 	
-	my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
 	
 	$t->close();
 	return 1;
@@ -173,12 +174,12 @@ sub get_ID(%env)
 		LIMIT 1
 	};
 	
-	my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
-	if ($eout[1])
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>1);
+	if ($sth0{'rows'})
 	{
 		main::_log("returned row");
 		$t->close();
-		return $eout[3]->fetchhash();
+		return $sth0{'sth'}->fetchhash();
 	}
 	
 	$t->close();
@@ -212,6 +213,8 @@ sub update
 	}
 	$sel_set=~s|,\n$||;
 	
+	my $tr=new TOM::Database::SQL::transaction('db_h'=>$env{'db_h'});
+	
 	my $SQL=qq{
 		UPDATE `$env{'db_name'}`.`$env{'tb_name'}`
 		SET
@@ -222,21 +225,39 @@ $sel_set
 	
 	main::_log("SQL='$SQL'");
 	
-	my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
 	
-	if ($eout[1])
+	if ($sth0{'rows'})
 	{
 		if ($env{'-journalize'})
 		{
 			# zajournalujem sucasnu verziu
-			journalize(
+			my $out=journalize(
 				'db_h' => $env{'db_h'},
 				'db_name' => $env{'db_name'},
 				'tb_name' => $env{'tb_name'},
 				'ID' => $env{'ID'}
 			);
+			
+			if (!$out)
+			{
+				main::_log("can't journalize, rollback",1);
+				$tr->rollback();
+				$t->close();
+				return undef;
+			}
+			
 		}
 	}
+	else
+	{
+		main::_log("can't update, rollback",1);
+		$tr->rollback();
+		$t->close();
+		return undef;
+	}
+	
+	$tr->close();
 	
 	$t->close();
 	return 1;
@@ -275,7 +296,13 @@ sub journalize
 	
 	main::_log("SQL='$SQL'");
 	
-	my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
+	# error
+	if ($sth0{'err'})
+	{
+		$t->close();
+		return undef;
+	}
 	
 	$t->close();
 	return 1;
@@ -739,7 +766,7 @@ sub disable
 	
 	if ($collumns{'status'} ne "Y")
 	{
-		main::_log("only ID with status 'Y' can be disabled, not status='$collumns{'status'}'");
+		main::_log("only ID with status 'Y' can be disabled, not status='$collumns{'status'}'",1);
 		$t->close();
 		return undef;
 	}
