@@ -1,0 +1,13 @@
+ErrorDocument 404 /_errorpages/404.html
+ErrorDocument 500 /_errorpages/500.html
+
+# mod_rewrite nastavenia
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^.*$ - [S=35]
+
+RewriteRule ^favicon\.ico$ favicon.ico [L,QSA]
+RewriteRule ^robots\.txt$ robots.txt [L,QSA]
+RewriteRule ^.*$ core.tom [L,QSA]
