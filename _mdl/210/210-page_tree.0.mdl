@@ -40,14 +40,14 @@ $where
 	my $level_prev;
 	my $level_next;
 	
-	my @eout=TOM::Database::SQL::execute($sql,'log'=>1);
-	if ($eout[1])
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	if ($sth0{'sth'})
 	{
 		
 		# naplnim si @tree s polozkami zo stromu preto aby som mohol v dalsom
 		# cykle pracovat ako s predchadzajucimi tak i s buducimi polozkami
 		my @tree;
-		while (my %db0_line=$eout[3]->fetchhash())
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			push @tree, {%db0_line};
 		}
