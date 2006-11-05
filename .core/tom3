@@ -57,6 +57,8 @@ use vars qw/
 	$USRM_flag
 	$location
 	$sitemap
+	%a210
+	%key
 	/;
 
 # C kniznice /* musia byt tu, aby sa dali pouzivat -> musia byt zavedene pri kompilacii */
@@ -303,6 +305,8 @@ while ($req->Accept() >= 0)
 	local $page_save;
 	local $USRM_flag;
 	local $sitemap;
+	local %a210;
+	local %key;
 	my $rewrite_301;
 	my %FORM_reject;
 	$result="ok";
@@ -857,62 +861,6 @@ while ($req->Accept() >= 0)
 		
 		
 		
-		#
-		# NARABANIE S TYPECKAMI
-		#
-		######################
-		
-		# TID moze byt bud cislo (kvoli spetnej kompatibilite) alebo "g_nieco","l_nieco","m_nieco"
-		# type moze byt hocico
-		
-		local $tom::Ptype=$tom::P; # cesta k typeckam
-		local $tom::type;
-		
-		# vyrobim konverziu textoveho type cez configurak
-		if ($FORM{type})
-		{
-			$FORM{TID}=$tom::type_c{$FORM{type}};
-			main::_log("FORM{type}='$FORM{type}' converted to FORM{TID}='$FORM{TID}'");
-		}
-		
-		
-		# tu je pre spetnu kompatibilitu tvar "[mg]0000"
-		#if ($FORM{TID}=~/^([mg0-9])([0-9]+)$/)
-		if ($FORM{TID}=~/^([mg0-9])([0-9]+)?$/)
-		{
-			main::_deprecated(0,"using bad format of TID '$1$2' from $ENV{HTTP_REFERER}");
-			my $pre=$1;
-			my $post=$2;
-			if (not $pre=~/[lmg]/)
-			{
-				$post=$pre.$post;
-				$pre="l";
-			}
-			
-			$FORM{TID}=$pre."_".sprintf('%04d',$post);
-		}
-		
-		
-		# ak som dostal $FORM{typecko co sa neda prelozit
-		# dalsi riadok by mal sposobit to, ze ak nebude preklad na TID, vyhlasi to chybu, treba vsak
-		# nastavit statuscode na 404 aby sa jadro nepokusalo toto typecko nacitavat
-		if (!$FORM{TID} && $FORM{type} && $FORM{type} ne "default")
-		{
-			# nastavenie 404 je nutne, inak by som sa nedostal vobec k citaniu l_notfound
-			$main::page_statuscode="404";
-			$FORM{TID}="l_".$FORM{type};
-		}
-		# ak je len TID poslane prazdne alebo zle
-		else
-		{
-			$FORM{TID}="l_default" unless $FORM{TID}=~/^[lmg]_[0-9_\-a-zA-Z]{0,30}$/;
-		}
-		
-		if ($env{admin} eq "request"){$FORM{TID}="g_admin";}
-		if ($env{test} eq "request"){$FORM{TID}="g_test";}
-		
-		main::_log("type='$main::FORM{type}' TID='$main::FORM{TID}'");		
-		
 		main::_log("Get cookies");
 		
 		#  local %COOKIES;
@@ -1094,6 +1042,35 @@ while ($req->Accept() >= 0)
 				main::_log("attribute LNG_permanent_accepted is enabled");
 				main::_log("set FORM{'__lng'} to $main::FORM{'__lng'}");
 				
+				# spracovanie a210_path
+				# a210_path funguje len v pripade ak je 100% jasne definovany jazyk
+				# ktory bude platny v ramci requestu uz z parametrov (GET,rewrite)
+				# Inak nieje mozne hladat a210_path v databaze podla jazyku
+				if ($main::FORM{'a210_path'})
+				{
+					my $t_a210=track TOM::Debug($main::FORM{'a210_path'});
+					#... find this path in a210 
+					%a210=App::020::SQL::functions::tree::find_path_url(
+						"$main::FORM{'a210_path'}",
+						'db_h' => "main",
+						'db_name' => $TOM::DB{'main'}{'name'},
+						'tb_name' => "a210_page",
+						'lng'     => $main::FORM{'__lng'},
+					);
+					
+					if ($a210{'t_name'})
+					{
+						main::_log("set FORM{'type'}='$a210{'t_name'}'");
+						$main::FORM{'type'}=$a210{'t_name'};
+					}
+					
+					my $cvml = new CVML(data=>$a210{'t_keys'});
+					# a vytvor z neho hash
+					%key = %{$cvml->{'hash'}};
+					
+					$t_a210->close();
+				}
+				
 			}
 			
 			
@@ -1116,6 +1093,55 @@ while ($req->Accept() >= 0)
 		$main::LNG_cp_=$main::LNG_cp;
 		$main::LNG_cp_=$main::COOKIES{_cp} if $main::COOKIES{_cp};
 		$main::LNG_cp_=$COOKIES{_cp}=$FORM{_cp} if $FORM{_cp};
+		
+		
+		
+		########################
+		# NARABANIE S TYPECKAMI
+		########################
+		
+		# TID moze byt bud cislo (kvoli spetnej kompatibilite) alebo "g_nieco","l_nieco","m_nieco"
+		# type moze byt hocico
+		local $tom::Ptype=$tom::P; # cesta k typeckam
+		local $tom::type;
+		# vyrobim konverziu textoveho type cez configurak
+		if ($FORM{type})
+		{
+			$FORM{TID}=$tom::type_c{$FORM{type}};
+			main::_log("FORM{type}='$FORM{type}' converted to FORM{TID}='$FORM{TID}'");
+		}
+		# tu je pre spetnu kompatibilitu tvar "[mg]0000"
+		#if ($FORM{TID}=~/^([mg0-9])([0-9]+)$/)
+		if ($FORM{TID}=~/^([mg0-9])([0-9]+)?$/)
+		{
+			main::_deprecated(0,"using bad format of TID '$1$2' from $ENV{HTTP_REFERER}");
+			my $pre=$1;
+			my $post=$2;
+			if (not $pre=~/[lmg]/)
+			{
+				$post=$pre.$post;
+				$pre="l";
+			}
+			$FORM{TID}=$pre."_".sprintf('%04d',$post);
+		}
+		# ak som dostal $FORM{typecko co sa neda prelozit
+		# dalsi riadok by mal sposobit to, ze ak nebude preklad na TID, vyhlasi to chybu, treba vsak
+		# nastavit statuscode na 404 aby sa jadro nepokusalo toto typecko nacitavat
+		if (!$FORM{TID} && $FORM{type} && $FORM{type} ne "default")
+		{
+			# nastavenie 404 je nutne, inak by som sa nedostal vobec k citaniu l_notfound
+			$main::page_statuscode="404";
+			$FORM{TID}="l_".$FORM{type};
+		}
+		# ak je len TID poslane prazdne alebo zle
+		else
+		{
+			$FORM{TID}="l_default" unless $FORM{TID}=~/^[lmg]_[0-9_\-a-zA-Z]{0,30}$/;
+		}
+		if ($env{admin} eq "request"){$FORM{TID}="g_admin";}
+		if ($env{test} eq "request"){$FORM{TID}="g_test";}
+		main::_log("type='$main::FORM{type}' TID='$main::FORM{TID}'");
+		
 		
 		
 		$t_preprocess->close();
