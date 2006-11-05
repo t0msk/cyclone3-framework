@@ -1,0 +1,130 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	my $where;
+	
+	$where.="lng='$env{'lng'}'";
+	
+	$where="WHERE ".$where if $where;
+	
+	my $sql=qq{
+		SELECT
+			ID_entity,
+			ID_charindex,
+			name,
+			name_url,
+			lng
+		FROM
+			a210_page
+$where
+		ORDER BY
+			ID_charindex
+	};
+	
+	my @path;
+	my @path_url;
+	
+	my $level;
+	my $level_prev;
+	my $level_next;
+	
+	my @eout=TOM::Database::SQL::execute($sql,'log'=>1);
+	if ($eout[1])
+	{
+		
+		# naplnim si @tree s polozkami zo stromu preto aby som mohol v dalsom
+		# cykle pracovat ako s predchadzajucimi tak i s buducimi polozkami
+		my @tree;
+		while (my %db0_line=$eout[3]->fetchhash())
+		{
+			push @tree, {%db0_line};
+		}
+		
+		my $i=0;
+		
+		foreach my $entity(@tree)
+		{
+			
+			$level=($entity->{'ID_charindex'}=~s/:/:/g)+1;
+			
+			if ($tree[$i+1])
+			{
+				$level_next=($tree[$i+1]->{'ID_charindex'}=~s/:/:/g)+1;
+			}
+			else
+			{
+				$level_next=0;
+			}
+			
+			if ($level>$level_prev)
+			{
+				my $rec=$XSGN{'TMP'}=~s|<#tree#>|$XSGN{'SUB'}|;
+				main::_log("inserted tree ($rec) for level $level");
+			}
+			
+			main::_log("$level($level_next) $entity->{'ID_charindex'} $entity->{'name'} $entity->{'lng'}");
+			
+			for ($level..$level_prev+1)
+			{
+				delete $path[$_];
+			}
+			
+			$path[$level]=$entity->{'name_url'};
+			my $path_=join "/", @path;$path_=~s|^/||;
+			main::_log("path_='$path_'");
+			
+			$XSGN{'NULL'}=$XSGN{'ITEM'};
+			
+			$XSGN{'NULL'}=~s|<%name%>|$entity->{'name'}|g;
+			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
+			
+			if ($level_next<$level)
+			{
+				$XSGN{'NULL'}=~s|<#item#>||g;
+			}
+			
+			if ($level_next<=$level)
+			{
+				$XSGN{'NULL'}=~s|<#tree#>||g;
+			}
+			
+			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+			
+			for ($level_next..$level-2)
+			{
+				$XSGN{'TMP'}=~s|<#item#>||;
+			}
+			
+			for ($level_next..$level-1)
+			{
+				$XSGN{'TMP'}=~s|<#tree#>||;
+			}
+			
+			$level_prev=$level;
+			$i++;
+		}
+		
+	}
+	else
+	{
+		main::_log("can't select");
+	}
+	
+	return 1;
+}
+
+
+
+1;

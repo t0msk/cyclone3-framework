@@ -1,0 +1,32 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+<fieldset>
+<legend>a210-page_tree</legend>
+<#tree#>
+</fieldset>
+</DEFINITION>
+
+<DEFINITION id="ITEM">
+<li>
+<span><a href="?|?a210_path=<%path%>"><%name%></a></span>
+<!--tree_start()-->
+<#tree#>
+<!--tree_end()-->
+</li>
+<#item#>
+</DEFINITION>
+
+<DEFINITION id="SUB">
+<ul>
+<#item#>
+</ul>
+<!--tree_start2()-->
+<#tree#>
+<!--tree_end2()-->
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
+
