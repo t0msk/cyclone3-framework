@@ -39,6 +39,8 @@ knižnice:
 
 use Fcntl;
 
+use CVML;
+
 use TOM::Debug;
 use TOM::rev;
 use TOM::Error;

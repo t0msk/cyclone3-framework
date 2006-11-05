@@ -55,7 +55,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	
 	# default aplikácie
 	use App::1B0;
-	
+	use App::020; # standard 0
 	
 	# nove Cyclone kniznice
 	use Cyclone;
