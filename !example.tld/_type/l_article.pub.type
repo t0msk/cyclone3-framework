@@ -1,0 +1,36 @@
+<!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
+
+<CONF_KEY name="ID" description="ID of article" select="*" public="1" />
+
+<CONF_VAR id="xlng" value="<$tom::lng_>" />
+<CONF_VAR id="title_" value="<$main::key{'title'}>" />
+<CONF_VAR id="template" value="article" />
+
+<MODULE>
+	<VAR id="-type" value="dmdl" />
+	<VAR id="-global" value="0" />
+	<VAR id="-category" value="24" />
+	<VAR id="-name" value="lng" />
+	<VAR id="-TMP" value="BASE" />
+</MODULE>
+
+
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="210" />
+	<VAR id="-name" value="page_tree" />
+	<VAR id="-xsgn_global" value="1" />
+	<VAR id="-TMP" value="BASE" />
+</MODULE>
+
+
+<#MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="210" />
+	<VAR id="-name" value="page_tree" />
+	<VAR id="-xsgn_global" value="1" />
+	<VAR id="-TMP" value="BASE" />
+		<VAR id="ID" value="<$main::key{'ID'}>" />
+</MODULE>
