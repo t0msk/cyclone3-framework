@@ -546,7 +546,7 @@ sub find_path_url
 	}
 	
 	$t->close();
-	return 1;
+	return undef;
 }
 
 
@@ -615,6 +615,41 @@ sub rename
 	# end track
 	$t->close();
 	return 1;
+}
+
+
+=head2 clone()
+
+Vytvorenie mutacie nodu
+
+=cut
+
+sub clone
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::clone()");
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'");
+	}
+	
+	# automaticka zamena name na name_url
+	if (!$env{'collumns'}{'name_url'})
+	{
+		$env{'collumns'}{'name'}=~s|^'||;
+		$env{'collumns'}{'name'}=~s|'$||;
+		$env{'collumns'}{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'collumns'}{'name'})."'";
+		$env{'collumns'}{'name'}="'".$env{'collumns'}{'name'}."'";
+		main::_log("create 'collumns'->'name_url'='$env{'collumns'}{'name_url'}'");
+	}
+	
+	my $ID=App::020::SQL::functions::clone(%env);
+	
+	$t->close();
+	return $ID;
 }
 
 1;
