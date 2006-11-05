@@ -7,24 +7,17 @@ use Utils::datetime;
 
 sub execute
 {
- #return 1;
- my %env=@_;
- if ($cron::P ne $CRON::P){$cron::ERR="WARN: this cron is only for global use!!!";return undef}
- #$env{limit}= unless $env{limit};
- $env{limit_per}=10 unless $env{limit_per};
+	my %env=@_;
+	if ($cron::P ne $CRON::P){$cron::ERR="WARN: this cron is only for global use!!!";return undef}
+	$env{limit_per}=10 unless $env{limit_per};
+	
+	TOM::Database::connect::multi('stats','sys') || die "cannot connect all databases";
  
- #require "$CRON::P/.core/_config.sg/TOM.conf";
- #require "$CRON::P/.core/_config/TOM.conf";
-
- TOM::Database::connect::multi('stats','sys') || die "cannot connect all databases";
- 
-#=head1
-
- my $db0=$main::DB{sys}->Query("
-	SELECT COUNT(*)
-	FROM TOM.a150_cache");
- my @db1_line=$db0->fetchrow();
- main::_log("caches celkom $db1_line[0]"); 
+	my $db0=$main::DB{sys}->Query("
+		SELECT COUNT(*)
+		FROM TOM.a150_cache");
+	my @db1_line=$db0->fetchrow();
+ main::_log("caches celkom $db1_line[0]");
 
 	return 1 unless $db1_line[0]; # nemam co cistit
 
@@ -33,14 +26,22 @@ sub execute
 	FROM TOM.a150_cache
 	WHERE	time_to<$main::time_current
 				AND loads=0");
- my @db0_line=$db0->fetchrow();$db1_line[0]=100 unless $db1_line[0];#kvoli deleniu nulou
- 
- 
- #my $per=int(($db0_line[0]/($db1_line[0]/100))*100)/100;
- 
- my $per=int(($db0_line[0]/(($db1_line[0]-$db0_line[0])/100))*100)/100;
- 
- 
+	my @db0_line=$db0->fetchrow();
+	main::_log("caches outdated celkom $db0_line[0]");
+	$db1_line[0]=100 unless $db1_line[0];#kvoli deleniu nulou
+	
+	print "$db1_line[0]-$db0_line[0]\n";
+	
+	my $per;
+	if ($db1_line[0]-$db0_line[0] == 0)
+	{
+		$per=100;
+	}
+	else
+	{
+		$per=int( ($db0_line[0]/ ( ($db1_line[0]-$db0_line[0]) /100 ) )*100 ) /100;
+	}
+	
  main::_log("cache po platnosti celkom $db0_line[0](".($per)."% z aktualnych ".($db1_line[0]-$db0_line[0]).") duration AVG($db0_line[1])"); 
  
  main::_log("limit is $env{limit_per}%"); 
