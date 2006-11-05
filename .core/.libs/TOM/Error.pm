@@ -100,7 +100,7 @@ sub engine_pub
 	
 	$email=~s|<%to%>|$email_addr|;
 	
-	Utils::vars::replace($email);
+	TOM::Utils::vars::replace($email);
 	
 	$email=~s|<#.*?#>||g;
 	$email=~s|<%.*?%>||g;
