@@ -193,7 +193,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_rqs` (
   `query_URL` varchar(200) NOT NULL default '',
   `referer` varchar(200) NOT NULL default '',
   `referer_SE` varchar(100) default NULL,
-  `user_agent` varchar(64) NOT NULL default '',
+  `user_agent` varchar(128) NOT NULL default '',
   `user_agent_name` varchar(50) default NULL,
   `load_proc` float unsigned NOT NULL default '0',
   `load_req` float unsigned NOT NULL default '0',
