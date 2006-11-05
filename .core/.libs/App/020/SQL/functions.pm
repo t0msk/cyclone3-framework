@@ -116,7 +116,7 @@ sub new_initialize
 	
 	if ($env{'ID'})
 	{
-		$SQL.="ID=$env{'ID'}";
+		$SQL.="ID=$env{'ID'} AND ID_entity IS NULL";
 	}
 	else
 	{
@@ -350,6 +350,8 @@ sub clone
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::clone()");
 	
+	my $ID;
+	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	foreach (keys %env)
@@ -391,7 +393,7 @@ sub clone
 		}
 		
 		# pokusim sa o novy riadok modifikacie
-		my $ID=new(
+		$ID=new(
 			'db_h' => $env{'db_h'},
 			'db_name' => $env{'db_name'},
 			'tb_name' => $env{'tb_name'},
@@ -419,7 +421,7 @@ sub clone
 	}
 	
 	$t->close();
-	return 1;
+	return $ID;
 }
 
 
