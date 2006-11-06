@@ -5,10 +5,10 @@
 
 CREATE TABLE `/*db_name*/`.`/*app*/` (
   `ID` int(10) unsigned NOT NULL auto_increment,
-  `IDname` varchar(255) character set ascii collate ascii_bin default NULL,
+  `IDname` varchar(200) character set ascii default NULL,
   `IDattrs` int(10) unsigned default NULL,
   `IDcategory` varchar(32) character set ascii collate ascii_bin NOT NULL default '',
-  `priority` varchar(17) character set ascii NOT NULL default '00000000000000000',
+  `priority` varchar(17) character set ascii collate ascii_bin NOT NULL default '00000000000000000',
   `starttime` int(10) unsigned NOT NULL default '0',
   `endtime` int(10) unsigned NOT NULL default '0',
   `changetime` int(10) unsigned NOT NULL default '0',
@@ -17,8 +17,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/` (
   `IDeditor` smallint(5) unsigned NOT NULL default '0',
   `title` varchar(100) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `subtitle` varchar(150) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `tiny` text character set utf8 collate utf8_bin NOT NULL,
-  `full` text character set utf8 collate utf8_bin NOT NULL,
+  `tiny` text NOT NULL,
+  `full` text NOT NULL,
   `visits` mediumint(8) unsigned NOT NULL default '0',
   `link` int(10) unsigned NOT NULL default '0', -- linkovanie sa v praxi už nepoužíva
   `xrelated` text NOT NULL,
@@ -40,11 +40,11 @@ CREATE TABLE `/*db_name*/`.`/*app*/` (
 -- --------------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_arch` (
-  `ID` int(10) unsigned NOT NULL auto_increment,
-  `IDname` varchar(255) character set ascii collate ascii_bin default NULL,
+  `ID` int(10) unsigned NOT NULL default '0',
+  `IDname` varchar(200) character set ascii default NULL,
   `IDattrs` int(10) unsigned default NULL,
   `IDcategory` varchar(32) character set ascii collate ascii_bin NOT NULL default '',
-  `priority` varchar(17) character set ascii NOT NULL default '00000000000000000',
+  `priority` varchar(17) character set ascii collate ascii_bin NOT NULL default '00000000000000000',
   `starttime` int(10) unsigned NOT NULL default '0',
   `endtime` int(10) unsigned NOT NULL default '0',
   `changetime` int(10) unsigned NOT NULL default '0',
@@ -53,8 +53,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_arch` (
   `IDeditor` smallint(5) unsigned NOT NULL default '0',
   `title` varchar(100) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `subtitle` varchar(150) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `tiny` text character set utf8 collate utf8_bin NOT NULL,
-  `full` text character set utf8 collate utf8_bin NOT NULL,
+  `tiny` text NOT NULL,
+  `full` text NOT NULL,
   `visits` mediumint(8) unsigned NOT NULL default '0',
   `link` int(10) unsigned NOT NULL default '0', -- linkovanie sa v praxi už nepoužíva
   `xrelated` text NOT NULL,
@@ -98,13 +98,24 @@ CREATE TABLE `/*db_name*/`.`/*app*/_attrs_arch` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_category` (
   `ID` varchar(32) character set ascii collate ascii_bin NOT NULL default '',
-  `IDname` varchar(255) character set ascii collate ascii_bin default NULL,
+  `IDname` varchar(200) character set ascii default NULL,
   `name` varchar(100) character set utf8 collate utf8_bin NOT NULL default '',
-  `xrelated` text character set utf8 collate utf8_bin NOT NULL,
-  `xdata` text character set utf8 collate utf8_bin NOT NULL,
+  `xrelated` text character set utf8 NOT NULL,
+  `xdata` text character set utf8 NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `active` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`lng`),
   KEY `name` (`name`),
   KEY `IDname` (`IDname`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_visits` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `IDarticle` int(10) unsigned NOT NULL default '0',
+  `IDuser` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
+  `time_insert` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`ID`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
