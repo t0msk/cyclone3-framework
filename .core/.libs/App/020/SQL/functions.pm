@@ -38,22 +38,22 @@ sub new
 		main::_log("input '$_'='$env{$_}'");
 	}
 	
-	my $sel_collumns;
+	my $sel_columns;
 	my $sel_values;
-	my @collumns;
+	my @columns;
 	my @values;
-	foreach (sort keys %{$env{'collumns'}})
+	foreach (sort keys %{$env{'columns'}})
 	{
-		push @collumns, $_;
-		push @values, $env{'collumns'}{$_};
+		push @columns, $_;
+		push @values, $env{'columns'}{$_};
 	}
-	$sel_collumns="`" . (join "`,`" , @collumns) . "`" if @collumns;
+	$sel_columns="`" . (join "`,`" , @columns) . "`" if @columns;
 	$sel_values= join (",",@values) if @values;
 	
 	my $SQL=qq{
 		INSERT INTO
 			`$env{'db_name'}`.`$env{'tb_name'}`
-		($sel_collumns)
+		($sel_columns)
 		VALUES
 		($sel_values)
 	};
@@ -151,7 +151,7 @@ sub get_ID(%env)
 	}
 	
 	my %data;
-	my @collumns=
+	my @columns=
 	(
 		'ID',
 		'ID_entity',
@@ -159,14 +159,14 @@ sub get_ID(%env)
 		'status'
 	);
 	
-	push @collumns, keys %{$env{'collumns'}} if $env{'collumns'};
-	@collumns=('*') if $env{'collumns'}{'*'};
+	push @columns, keys %{$env{'columns'}} if $env{'columns'};
+	@columns=('*') if $env{'columns'}{'*'};
 	
-	my $sel_collumns=join ",",@collumns;
+	my $sel_columns=join ",",@columns;
 	
 	my $SQL=qq{
 		SELECT
-			$sel_collumns
+			$sel_columns
 		FROM
 			`$env{'db_name'}`.`$env{'tb_name'}`
 		WHERE
@@ -174,7 +174,7 @@ sub get_ID(%env)
 		LIMIT 1
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>1);
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'quiet'=>1);
 	if ($sth0{'rows'})
 	{
 		main::_log("returned row");
@@ -204,12 +204,12 @@ sub update
 		main::_log("input '$_'='$env{$_}'");
 	}
 	
-	$env{'collumns'}{'datetime_create'} = "NOW()";
+	$env{'columns'}{'datetime_create'} = "NOW()";
 	
 	my $sel_set;
-	foreach (sort keys %{$env{'collumns'}})
+	foreach (sort keys %{$env{'columns'}})
 	{
-		$sel_set.="\t\t`$_` = $env{'collumns'}{$_},\n";
+		$sel_set.="\t\t`$_` = $env{'columns'}{$_},\n";
 	}
 	$sel_set=~s|,\n$||;
 	
@@ -258,7 +258,6 @@ $sel_set
 	}
 	
 	$tr->close();
-	
 	$t->close();
 	return 1;
 }
@@ -268,7 +267,7 @@ $sel_set
 
 Prenesie kopiu ID zaznamu z hlavnej tabulky do journal tabulky
 
-Po tomto kroku by mal nasledovat update collumnov aktualneho ID v hlavnej tabulke a zmena datetime_create collumnu ktory uchovava informaciu o verzii tohto ID v hlavnej tabulke.
+Po tomto kroku by mal nasledovat update columnov aktualneho ID v hlavnej tabulke a zmena datetime_create columnu ktory uchovava informaciu o verzii tohto ID v hlavnej tabulke.
 
 =cut
 
@@ -334,7 +333,7 @@ sub update_now
 
 sub diff_versions
 {
-	# porovna dve verzie a povie ktore riadky su rozdielne v ktorych collumnoch
+	# porovna dve verzie a povie ktore riadky su rozdielne v ktorych columnoch
 	
 }
 
@@ -365,20 +364,20 @@ sub clone
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'},
-		'collumns' => {'*'=>1}
+		'columns' => {'*'=>1}
 	);
 	if ($data{'ID'} && $data{'status'}=~/^[YN]$/)
 	{
 		
-		# pripravim si collumny na new
+		# pripravim si columny na new
 		
-		# nepovolim update tychto collumnov (z povodneho riadku)
+		# nepovolim update tychto columnov (z povodneho riadku)
 		delete $data{'datetime_create'};
 		delete $data{'ID'};
-		# nepovolim override tychto collumnov
-		delete $env{'collumns'}{'ID'};
-		delete $env{'collumns'}{'ID_entity'};
-		delete $env{'collumns'}{'datetime_create'};
+		# nepovolim override tychto columnov
+		delete $env{'columns'}{'ID'};
+		delete $env{'columns'}{'ID_entity'};
+		delete $env{'columns'}{'datetime_create'};
 		
 		# osetrenie data
 		foreach (keys %data)
@@ -386,10 +385,10 @@ sub clone
 			$data{$_}="'".$data{$_}."'";
 		}
 		
-		# override %data z $env{collumns}
-		foreach (keys %{$env{'collumns'}})
+		# override %data z $env{columns}
+		foreach (keys %{$env{'columns'}})
 		{
-			$data{$_}=$env{'collumns'}{$_};
+			$data{$_}=$env{'columns'}{$_};
 		}
 		
 		# pokusim sa o novy riadok modifikacie
@@ -397,7 +396,7 @@ sub clone
 			'db_h' => $env{'db_h'},
 			'db_name' => $env{'db_name'},
 			'tb_name' => $env{'tb_name'},
-			'collumns' => {%data},
+			'columns' => {%data},
 			'-journalize' => $env{'-journalize'},
 		);
 		if (!$ID)
@@ -455,21 +454,21 @@ sub to_trash
 		main::_log("input '$_'='$env{$_}'");
 	}
 	
-	my %collumns=get_ID(
+	my %columns=get_ID(
 		'db_h' => $env{'db_h'},
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'}
 	);
 	
-	if (!$collumns{'ID'})
+	if (!$columns{'ID'})
 	{
 		main::_log("this ID not exists!",1);
 		$t->close();
 		return undef;
 	}
 	
-	if ($collumns{'status'} eq "T")
+	if ($columns{'status'} eq "T")
 	{
 		main::_log("this ID has been previously added to Trash");
 		$t->close();
@@ -482,7 +481,7 @@ sub to_trash
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'},
 		'-journalize' => $env{'-journalize'},
-		'collumns' => {
+		'columns' => {
 			'status' => "'T'"
 		}
 	);
@@ -510,21 +509,21 @@ sub trash_restore
 		main::_log("input '$_'='$env{$_}'");
 	}
 	
-	my %collumns=get_ID(
+	my %columns=get_ID(
 		'db_h' => $env{'db_h'},
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'}
 	);
 	
-	if (!$collumns{'ID'})
+	if (!$columns{'ID'})
 	{
 		main::_log("this ID not exists!",1);
 		$t->close();
 		return undef;
 	}
 	
-	if ($collumns{'status'} ne "T")
+	if ($columns{'status'} ne "T")
 	{
 		main::_log("this ID is previously restored");
 		$t->close();
@@ -537,7 +536,7 @@ sub trash_restore
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'},
 		'-journalize' => $env{'-journalize'},
-		'collumns' => {
+		'columns' => {
 			'status' => "'N'"
 		}
 	);
@@ -565,21 +564,21 @@ sub trash_delete
 		main::_log("input '$_'='$env{$_}'");
 	}
 	
-	my %collumns=get_ID(
+	my %columns=get_ID(
 		'db_h' => $env{'db_h'},
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'}
 	);
 	
-	if (!$collumns{'ID'})
+	if (!$columns{'ID'})
 	{
 		main::_log("this ID not exists!",1);
 		$t->close();
 		return undef;
 	}
 	
-	if ($collumns{'status'} ne "T")
+	if ($columns{'status'} ne "T")
 	{
 		main::_log("this ID is not in Trash");
 		$t->close();
@@ -592,7 +591,7 @@ sub trash_delete
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'},
-		'collumns' => {
+		'columns' => {
 			'status' => "'D'",
 		},
 		'-journalize' => $env{'-journalize'}
@@ -629,14 +628,14 @@ sub delete
 		main::_log("input '$_'='$env{$_}'");
 	}
 	
-	my %collumns=get_ID(
+	my %columns=get_ID(
 		'db_h' => $env{'db_h'},
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'}
 	);
 	
-	if (!$collumns{'ID'})
+	if (!$columns{'ID'})
 	{
 		main::_log("this ID not exists!",1);
 		$t->close();
@@ -649,7 +648,7 @@ sub delete
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'},
-		'collumns' => {
+		'columns' => {
 			'status' => "'D'",
 		},
 		'-journalize' => $env{'-journalize'}
@@ -745,30 +744,30 @@ sub disable
 		main::_log("input '$_'='$env{$_}'");
 	}
 	
-	my %collumns=get_ID(
+	my %columns=get_ID(
 		'db_h' => $env{'db_h'},
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'}
 	);
 	
-	if (!$collumns{'ID'})
+	if (!$columns{'ID'})
 	{
 		main::_log("this ID not exists!",1);
 		$t->close();
 		return undef;
 	}
 	
-	if ($collumns{'status'} eq "N")
+	if ($columns{'status'} eq "N")
 	{
 		main::_log("this ID is previously disabled");
 		$t->close();
 		return 1;
 	}
 	
-	if ($collumns{'status'} ne "Y")
+	if ($columns{'status'} ne "Y")
 	{
-		main::_log("only ID with status 'Y' can be disabled, not status='$collumns{'status'}'",1);
+		main::_log("only ID with status 'Y' can be disabled, not status='$columns{'status'}'",1);
 		$t->close();
 		return undef;
 	}
@@ -779,7 +778,7 @@ sub disable
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'},
 		'-journalize' => $env{'-journalize'},
-		'collumns' => {
+		'columns' => {
 			'status' => "'N'"
 		}
 	);
@@ -807,30 +806,30 @@ sub enable
 		main::_log("input '$_'='$env{$_}'");
 	}
 	
-	my %collumns=get_ID(
+	my %columns=get_ID(
 		'db_h' => $env{'db_h'},
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'}
 	);
 	
-	if (!$collumns{'ID'})
+	if (!$columns{'ID'})
 	{
 		main::_log("this ID not exists!",1);
 		$t->close();
 		return undef;
 	}
 	
-	if ($collumns{'status'} eq "Y")
+	if ($columns{'status'} eq "Y")
 	{
 		main::_log("this ID is previously enabled");
 		$t->close();
 		return 1;
 	}
 	
-	if ($collumns{'status'} ne "N")
+	if ($columns{'status'} ne "N")
 	{
-		main::_log("only ID with status 'N' can be enabled, not status='$collumns{'status'}'");
+		main::_log("only ID with status 'N' can be enabled, not status='$columns{'status'}'");
 		$t->close();
 		return undef;
 	}
@@ -841,7 +840,7 @@ sub enable
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'},
 		'-journalize' => $env{'-journalize'},
-		'collumns' => {
+		'columns' => {
 			'status' => "'Y'"
 		}
 	);

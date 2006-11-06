@@ -38,13 +38,13 @@ sub new
 	}
 	
 	# automaticka zamena name na name_url
-	if (!$env{'collumns'}{'name_url'})
+	if (!$env{'columns'}{'name_url'})
 	{
-		$env{'collumns'}{'name'}=~s|^'||;
-		$env{'collumns'}{'name'}=~s|'$||;
-		$env{'collumns'}{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'collumns'}{'name'})."'";
-		$env{'collumns'}{'name'}="'".$env{'collumns'}{'name'}."'";
-		main::_log("create 'collumns'->'name_url'='$env{'collumns'}{'name_url'}'");
+		$env{'columns'}{'name'}=~s|^'||;
+		$env{'columns'}{'name'}=~s|'$||;
+		$env{'columns'}{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'columns'}{'name'})."'";
+		$env{'columns'}{'name'}="'".$env{'columns'}{'name'}."'";
+		main::_log("create 'columns'->'name_url'='$env{'columns'}{'name_url'}'");
 	}
 	
 	# najdem volny ID_charindex
@@ -59,7 +59,7 @@ sub new
 			'db_h' => $env{'db_h'},
 			'db_name' => $env{'db_name'},
 			'tb_name' => $env{'tb_name'},
-			'collumns' =>
+			'columns' =>
 			{
 				'ID_charindex' => 1
 			}
@@ -77,54 +77,14 @@ sub new
 		}
 	}
 	
-	# ID_charindex_ - base pre novy ID_charindex
-	my $ID_charindex_= $parent_ID_charindex.':';
-	$ID_charindex_=~s|^:||;
+	my $ID_charindex_new=find_new_child(
+		$parent_ID_charindex,
+		'db_h' => $env{'db_h'},
+		'db_name' => $env{'db_name'},
+		'tb_name' => $env{'tb_name'},
+	);
 	
-	# novy ID_charindex
-	my $ID_charindex_new=$ID_charindex_;
-	
-	# hladam posledny child v tomto node podla ID_charindex_
-	my $sql=qq{
-	SELECT
-		ID_charindex
-	FROM `$env{'db_name'}`.`$env{'tb_name'}`
-	WHERE
-		ID_charindex LIKE '$ID_charindex_\___'
-	ORDER BY ID_charindex DESC
-	LIMIT 1
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'log'=>1);
-	if (!$sth0{'sth'})
-	{
-		$t->close();
-		return undef;
-	}
-	
-	if ($sth0{'rows'})
-	{
-		# idem vyratavat novy ID_charindex, pretoze tento nod ma child/y
-		my %db0_line=$sth0{'sth'}->fetchhash();
-		main::_log("last child of parent ID_charindex='$db0_line{ID_charindex}'");
-		$db0_line{'ID_charindex'}=~/(...)$/;
-		my $sub=$1;
-		main::_log("ID_charindex '$sub'++");
-		# ratanie dalsieho ID_charindex
-		my $idx=new App::020::functions::charindex('from'=>$sub);
-		my $sub_increased=$idx->increase();
-		main::_log("ID_charindex '$sub_increased'");
-		$ID_charindex_new.=$sub_increased;
-	}
-	else
-	{
-		# tento nod nema childy, takze "koncovka" noveho ID_charindex je 000
-		$ID_charindex_new.='000';
-	}
-	$ID_charindex_new=~s|:$||;
-	
-	main::_log("new ID_charindex='$ID_charindex_new'");
-	
-	$env{'collumns'}{'ID_charindex'}="'".$ID_charindex_new."'";
+	$env{'columns'}{'ID_charindex'}="'".$ID_charindex_new."'";
 	my $ID=App::020::SQL::functions::new(%env);
 	
 	$t->close();
@@ -156,7 +116,7 @@ sub move_up
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'},
-		'collumns' => {'ID_charindex'=>1}
+		'columns' => {'ID_charindex'=>1}
 	);
 	if (!$data{'ID'})
 	{
@@ -244,7 +204,7 @@ sub move_down
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'},
-		'collumns' => {'ID_charindex'=>1}
+		'columns' => {'ID_charindex'=>1}
 	);
 	if (!$data{'ID'})
 	{
@@ -325,14 +285,14 @@ sub swap
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID1'},
-		'collumns' => {'ID_charindex'=>1}
+		'columns' => {'ID_charindex'=>1}
 	);
 	my %data2=App::020::SQL::functions::get_ID(
 		'db_h' => $env{'db_h'},
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID2'},
-		'collumns' => {'ID_charindex'=>1}
+		'columns' => {'ID_charindex'=>1}
 	);
 	if (!$data1{'ID'} || !$data2{'ID'})
 	{
@@ -377,7 +337,7 @@ sub swap
 				'tb_name' => $env{'tb_name'},
 				'ID' => $db1_line{'ID'},
 #				'-journalize' => $env{'-journalize'},
-				'collumns' => {
+				'columns' => {
 					'ID_charindex' => "'$ID_charindex_c'"
 				}
 			);
@@ -414,7 +374,7 @@ sub swap
 				'tb_name' => $env{'tb_name'},
 				'ID' => $db1_line{'ID'},
 				'-journalize' => $env{'-journalize'},
-				'collumns' => {
+				'columns' => {
 					'ID_charindex' => "'$ID_charindex_c'"
 				}
 			);
@@ -451,13 +411,155 @@ sub swap
 				'tb_name' => $env{'tb_name'},
 				'ID' => $db1_line{'ID'},
 				'-journalize' => $env{'-journalize'},
-				'collumns' => {
+				'columns' => {
 					'ID_charindex' => "'$ID_charindex_c'"
 				}
 			);
 		}
 	}
 	
+	$t->close();
+	return 1;
+}
+
+
+=head2 move_to()
+
+Presunie záznam pod inú položku.
+
+=cut
+
+sub move_to
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::move_to()");
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'");
+	}
+	
+	# vyberiem si tento zaznam z databazy
+	my %data=App::020::SQL::functions::get_ID(
+		'db_h' => $env{'db_h'},
+		'db_name' => $env{'db_name'},
+		'tb_name' => $env{'tb_name'},
+		'ID' => $env{'ID'},
+		'columns' => {'ID_charindex'=>1}
+	);
+	if (!$data{'ID'})
+	{
+		$t->close();
+		return undef;
+	}
+	
+	if (not $data{'status'} =~ /^[YN]$/)
+	{
+		main::_log("only ID with status 'Y' or 'N' can be moved in tree, not status='$data{'status'}'",1);
+		$t->close();
+		return undef;
+	}
+	
+	main::_log("ID='$env{'ID'}' has ID_charindex='$data{'ID_charindex'}'");
+	
+	# nacitanie informacii o novom parente (ak existuje)
+	my %data2;
+	if ($env{'parent_ID'})
+	{
+		%data2=App::020::SQL::functions::get_ID(
+			'db_h' => $env{'db_h'},
+			'db_name' => $env{'db_name'},
+			'tb_name' => $env{'tb_name'},
+			'ID' => $env{'parent_ID'},
+			'columns' => {'ID_charindex'=>1}
+		);
+		if (!$data2{'ID'})
+		{
+			$t->close();
+			return undef;
+		}
+		
+		if (not $data2{'status'} =~ /^[YN]$/)
+		{
+			main::_log("only ID with status 'Y' or 'N' can be moved in tree, not status='$data2{'status'}'",1);
+			$t->close();
+			return undef;
+		}
+	}
+	
+	# zistenie ci novy parent nieje nahodou castou stromu sucasneho ID
+	# ( zeby som chcel presunut seba pod seba )
+	if ($data2{'ID_charindex'})
+	{
+		# 000:000 - $data->ID_charindex
+		# 000:000:000 - $data2->ID_charindex
+		if ($data2{'ID_charindex'}=~/^$data{'ID_charindex'}/)
+		{
+			main::_log("parent_ID is in ID tree !!!",1);
+			$t->close();
+			return undef;
+		}
+	}
+	
+	# najdem volny ID_charindex pod parent_ID	
+	my $ID_charindex=find_new_child(
+		$data2{'ID_charindex'},
+		'db_h' => $env{'db_h'},
+		'db_name' => $env{'db_name'},
+		'tb_name' => $env{'tb_name'},
+	);
+	
+	main::_log("ID_charindex old='$data{'ID_charindex'}' new='$ID_charindex'");
+	
+	my $tr=new TOM::Database::SQL::transaction('db_h'=>"main");
+	
+	# vyhladam vsetky polozky ktore su ako sub stareho ID_charindex a updatnem ich
+	# (vsetky = Y,N)
+	my $SQL=qq{
+		SELECT
+			ID,
+			ID_charindex
+		FROM
+			`$env{'db_name'}`.`$env{'tb_name'}`
+		WHERE
+			ID_charindex LIKE '$data{ID_charindex}%'
+			AND (status='Y' OR status='N')
+		ORDER BY
+			ID_charindex
+	};
+	my %sth1=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'quiet'=>1);
+	if ($sth1{'rows'})
+	{
+		while (my %db0_line=$sth1{'sth'}->fetchhash())
+		{
+			my $ID_charindex_new=$db0_line{'ID_charindex'};
+			$ID_charindex_new=~s|^$data{'ID_charindex'}|$ID_charindex|;
+			main::_log("ID='$db0_line{'ID'}' ID_charindex='$db0_line{'ID_charindex'}'->'$ID_charindex_new'");
+			
+			my $out=App::020::SQL::functions::update(
+				'ID'	=> $db0_line{'ID'},
+				'db_h' => $env{'db_h'},
+				'db_name' => $env{'db_name'},
+				'tb_name' => $env{'tb_name'},
+				'columns' =>
+				{
+					'ID_charindex' => "'$ID_charindex_new'",
+				}
+			);
+			if (!$out)
+			{
+				main::_log("can't move",1);
+				$tr->rollback();
+				$t->close();
+				return undef;
+			}
+			
+		}
+	}
+	
+	$tr->close();
 	$t->close();
 	return 1;
 }
@@ -471,6 +573,73 @@ Vypisanie cesty konkretnej polozky
 
 sub get_path
 {
+	my $ID=shift;
+	my @path;
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::get_path('$ID')");
+	
+	my %data=App::020::SQL::functions::get_ID(
+		'ID'	=> $ID,
+		'db_h' => $env{'db_h'},
+		'db_name' => $env{'db_name'},
+		'tb_name' => $env{'tb_name'},
+		'columns' =>
+		{
+			'name' => 1,
+			'name_url' => 1,
+			'ID_charindex' => 1,
+			'lng' => 1,
+		}
+	);
+	
+	if (!$data{'ID'})
+	{
+		main::_log("ID='$ID' not exists",1);
+		$t->close();
+		return undef;
+	}
+	
+	unshift @path, {%data};
+	
+	my $parent=$data{'ID_charindex'};
+	$parent=~s|^(.*)...$|\1|;
+	$parent=~s|:$||;
+	# hladam nody az po root
+	while ($parent)
+	{
+		main::_log("find parent '$parent'");
+		my $sql=qq{
+			SELECT
+				ID,
+				ID_entity,
+				ID_charindex,
+				name,
+				name_url,
+				status
+			FROM
+				`$env{'db_name'}`.`$env{'tb_name'}`
+			WHERE
+				ID_charindex='$parent'
+				AND lng='$data{'lng'}'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1);
+		if ($sth0{'rows'})
+		{
+			my %data2=$sth0{'sth'}->fetchhash();
+			unshift @path, {%data2};
+			$parent=$data2{'ID_charindex'};
+			$parent=~s|^(.*)...$|\1|;
+			$parent=~s|:$||;
+		}
+		else
+		{
+			last;
+		}
+	}
+	
+	$t->close();
+	return @path;
 }
 
 
@@ -480,8 +649,66 @@ Hladanie cesty
 
 =cut
 
-sub find_path
+sub find_new_child
 {
+	my $ID_charindex=shift;
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::find_new_child('$ID_charindex')");
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'");
+	}
+	
+	# ID_charindex_ - base pre novy ID_charindex
+	my $ID_charindex_= $ID_charindex.':';
+	$ID_charindex_=~s|^:||;
+	
+	# novy ID_charindex
+	my $ID_charindex_new=$ID_charindex_;
+	
+	# hladam posledny child v tomto node podla ID_charindex_
+	my $sql=qq{
+	SELECT
+		ID_charindex
+	FROM `$env{'db_name'}`.`$env{'tb_name'}`
+	WHERE
+		ID_charindex LIKE '$ID_charindex_\___'
+	ORDER BY ID_charindex DESC
+	LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1);
+	if (!$sth0{'sth'})
+	{
+		$t->close();
+		return undef;
+	}
+	if ($sth0{'rows'})
+	{
+		# idem vyratavat novy ID_charindex, pretoze tento nod ma child/y
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		main::_log("last child of parent ID_charindex='$db0_line{ID_charindex}'");
+		$db0_line{'ID_charindex'}=~/(...)$/;
+		my $sub=$1;
+		main::_log("ID_charindex chunk '$sub'++");
+		# ratanie dalsieho ID_charindex
+		my $idx=new App::020::functions::charindex('from'=>$sub);
+		my $sub_increased=$idx->increase();
+		main::_log("ID_charindex chunk '$sub_increased'");
+		$ID_charindex_new.=$sub_increased;
+	}
+	else
+	{
+		# tento nod nema childy, takze "koncovka" noveho ID_charindex je 000
+		$ID_charindex_new.='000';
+	}
+	$ID_charindex_new=~s|:$||;
+	main::_log("new ID_charindex='$ID_charindex_new'");
+	
+	$t->close();
+	return $ID_charindex_new;
 }
 
 
@@ -577,7 +804,7 @@ sub rename
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'},
-		'collumns' =>
+		'columns' =>
 		{
 			'status' => 1,
 		}
@@ -599,7 +826,7 @@ sub rename
 			'tb_name' => $env{'tb_name'},
 			'ID' => $env{'ID'},
 			'-journalize' => $env{'-journalize'},
-			'collumns' => {
+			'columns' => {
 				'name'     => "'$name'",
 				'name_url' => "'$name_url'"
 			}
@@ -637,13 +864,13 @@ sub clone
 	}
 	
 	# automaticka zamena name na name_url
-	if (!$env{'collumns'}{'name_url'})
+	if (!$env{'columns'}{'name_url'})
 	{
-		$env{'collumns'}{'name'}=~s|^'||;
-		$env{'collumns'}{'name'}=~s|'$||;
-		$env{'collumns'}{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'collumns'}{'name'})."'";
-		$env{'collumns'}{'name'}="'".$env{'collumns'}{'name'}."'";
-		main::_log("create 'collumns'->'name_url'='$env{'collumns'}{'name_url'}'");
+		$env{'columns'}{'name'}=~s|^'||;
+		$env{'columns'}{'name'}=~s|'$||;
+		$env{'columns'}{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'columns'}{'name'})."'";
+		$env{'columns'}{'name'}="'".$env{'columns'}{'name'}."'";
+		main::_log("create 'columns'->'name_url'='$env{'columns'}{'name_url'}'");
 	}
 	
 	my $ID=App::020::SQL::functions::clone(%env);
