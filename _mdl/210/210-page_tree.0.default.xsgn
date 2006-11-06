@@ -3,7 +3,7 @@
 
 
 <DEFINITION id="TMP">
-<fieldset>
+<fieldset class="a210-page_tree">
 <legend>a210-page_tree</legend>
 <#tree#>
 </fieldset>
