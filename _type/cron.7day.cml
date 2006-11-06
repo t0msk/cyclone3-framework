@@ -7,7 +7,7 @@
 		<VAR id="type" value="cache_efectivity" />
 </MODULE>
 
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="universal_email" />
@@ -95,5 +95,14 @@
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="weblog_email_agents" />
-		<VAR id="email" value="web@webcom.sk;dev@webcom.sk" />
+		<VAR id="email" value="<$TOM::contact{'cyclone3-dev'}>" />
+</MODULE>
+
+# statistika obsolete funkcii
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="universal_email" />
+		<VAR id="type" value="obsolete" />
+		<VAR id="to_email" value="<$TOM::contact{'cyclone3-dev'}>" />
 </MODULE>
