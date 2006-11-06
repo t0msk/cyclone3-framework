@@ -643,8 +643,11 @@ sub convert
 	$URL=~s|[;,]|_|g;
 	$URL=~s|[/\(\)\.]|-|g;
 	1 while ($URL=~s|--|-|g);
+	1 while ($URL=~s|_-|-|g);
 	
-	$URL=~s|[_-]$||g;
+	$URL=~s|["\']||g;
+	
+	$URL=~s|[_\-]$||g;
 	
 	return $URL;
 }
