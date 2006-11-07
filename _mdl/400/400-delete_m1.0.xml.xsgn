@@ -1,38 +1,32 @@
 # UTF-8!!!
 <XML_DESIGN_DEFINITION>
 
-
 <DEFINITION id="TMP">
-<response type="delete" IDapp="a400" IDitem="<%ID%>" result="0">
+<response type="delete" IDapp="a400" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>default error</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_success">
-<response type="delete" IDapp="a400" IDitem="<%ID%>" result="1">
+<response type="delete" IDapp="a400" IDitem="<%ID%>" result="1" code="<$main::request_code>">
 	<result>1</result>
 	<ID><![CDATA[<%ID%>]]></ID>
 </response>
 </DEFINITION>
 
-
-
 <DEFINITION id="RESULT_failure_no_data">
-<response type="delete" IDapp="a400" IDitem="<%ID%>" result="0">
+<response type="delete" IDapp="a400" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Article does not exist</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_failure_no_input">
-<response type="delete" IDapp="a400" result="0">
+<response type="delete" IDapp="a400" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Not enough information to act. Missing ID parameter.</reason>
 </response>
 </DEFINITION>
-
 
 </XML_DESIGN_DEFINITION>

@@ -1,9 +1,8 @@
 # UTF-8!!!
 <XML_DESIGN_DEFINITION>
 
-
 <DEFINITION id="TMP">
-<response type="detail" IDapp="a400" IDitem="<%ID%>">
+<response type="detail" IDapp="a400" IDitem="<%ID%>" code="<$main::request_code>">
 	<ID><%ID%></ID>
 	<IDname><![CDATA[<%IDname%>]]></IDname>
 	
@@ -39,7 +38,6 @@
 	<starttime><%starttime_day%>. <%starttime_month%>. <%starttime_year%> <%starttime_hour%>:<%starttime_minute%>:<%starttime_second%></starttime>
 	<changetime><%changetime_day%>. <%changetime_month%>. <%changetime_year%> <%changetime_hour%>:<%changetime_minute%>:<%changetime_second%></changetime>
 	<endtime><%endtime_day%>. <%endtime_month%>. <%endtime_year%> <%endtime_hour%>:<%endtime_minute%>:<%endtime_second%></endtime>
-
 
 <DEFINITION id="a500"><img src="<%fullpath%>" alt="<%about%>" title="<%about%>" align="<%align%>" /></DEFINITION>
 

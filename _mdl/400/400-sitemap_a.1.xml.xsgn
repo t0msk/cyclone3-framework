@@ -5,7 +5,7 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="TMP">
-<response type="tree" IDapp="a400" itemcount_root="<%itemcount_root%>">
+<response type="tree" IDapp="a400" itemcount_root="<%itemcount_root%>" code="<$main::request_code>">
 <#LIST#>
 </response>
 </DEFINITION>
@@ -28,7 +28,7 @@
 </DEFINITION>
 
 <xDEFINITION id="TMP">
-<response type="tree" IDapp="a400">
+<response type="tree" IDapp="a400" code="<$main::request_code>">
 <#LIST#>
 </response>
 </DEFINITION>

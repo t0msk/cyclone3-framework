@@ -24,7 +24,6 @@
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="LINE">
 	<item IDitem="<%ID%>">
 		<lng><![CDATA[<%lng%>]]></lng>
@@ -47,9 +46,8 @@
 <#LINE#>
 </DEFINITION>
 
-
 <DEFINITION id="TMP_NO_DATA">
-<response IDapp="a400" type="list">
+<response IDapp="a400" type="list" code="<$main::request_code>">
 	<setup>
 		<page />
 	</setup>
@@ -70,12 +68,10 @@
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="PAGING"><#PAGING_PREV#> <#PAGING_NEXT#></DEFINITION>
 
 <DEFINITION id="PAGING_PREV">previous="<%page_real%>"</DEFINITION>
 
 <DEFINITION id="PAGING_NEXT">next="<%page_real%>"</DEFINITION>
-
 
 </XML_DESIGN_DEFINITION>

@@ -1,13 +1,11 @@
 # UTF-8!!!
 <XML_DESIGN_DEFINITION>
 
-
 <DEFINITION id="TMP">
-<response type="edit" IDapp="a400" IDitem="<%ID%>" result="1">
+<response type="edit" IDapp="a400" IDitem="<%ID%>" result="1" code="<$main::request_code>">
 	<result>1</result>
 <%output%>
 </response>
 </DEFINITION>
-
 
 </XML_DESIGN_DEFINITION>
