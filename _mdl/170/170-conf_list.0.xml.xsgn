@@ -2,7 +2,7 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="TMP">
-<response IDapp="a0" type="conf_list">
+<response IDapp="a0" type="conf_list" code="<$main::request_code>">
 	<USRM>
 		<my_domain><$tom::H_cookie></my_domain>
 		<domain><$tom::Hm_cookie></domain>
