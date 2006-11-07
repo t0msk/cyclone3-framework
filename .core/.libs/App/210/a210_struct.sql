@@ -13,6 +13,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_page` (
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `t_name` varchar(64) character set ascii NOT NULL default '',
   `t_keys` text NOT NULL, -- kluce uchovavane ako CVML
+  `is_default` char(1) character set ascii NOT NULL default 'N',
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -31,6 +32,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_page_j` (
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `t_name` varchar(64) character set ascii NOT NULL default '',
   `t_keys` text NOT NULL,
+  `is_default` char(1) character set ascii NOT NULL default 'N',
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
