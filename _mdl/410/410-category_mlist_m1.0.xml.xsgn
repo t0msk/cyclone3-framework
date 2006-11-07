@@ -2,7 +2,7 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="TMP">
-<response type="tree" IDapp="a410" itemcount_root="<%itemcount_root%>">
+<response type="tree" IDapp="a410" itemcount_root="<%itemcount_root%>" code="<$main::request_code>">
 <#LINE#>
 </response>
 </DEFINITION>
@@ -27,9 +27,8 @@
 </DEFINITION>
 
 <DEFINITION id="TMP_no_data">
-<response type="tree" IDapp="a820">
+<response type="tree" IDapp="a820" code="<$main::request_code>">
 </response>
 </DEFINITION>
 
 </XML_DESIGN_DEFINITION>
-

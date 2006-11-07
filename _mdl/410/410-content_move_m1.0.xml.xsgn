@@ -1,111 +1,45 @@
 # UTF-8!!!
 <XML_DESIGN_DEFINITION>
 
-
 <DEFINITION id="TMP">
-<response type="content_move" IDapp="a410" IDitem="<%ID%>" result="0">
+<response type="content_move" IDapp="a410" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>default error</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_success">
-<response type="content_move" IDapp="a410" IDitem="<%ID%>" result="1">
+<response type="content_move" IDapp="a410" IDitem="<%ID%>" result="1" code="<$main::request_code>">
 	<result>1</result>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_failure_from-equals-to">
-<response type="content_move" IDapp="a410" IDitem="<%ID%>" result="0">
+<response type="content_move" IDapp="a410" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Source and destination are the same.</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_failure_source-missing">
-<response type="content_move" IDapp="a410" IDitem="<%ID%>" result="0">
+<response type="content_move" IDapp="a410" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Source does not exist</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_failure_destination-missing">
-<response type="content_move" IDapp="a410" IDitem="<%ID%>" result="0">
+<response type="content_move" IDapp="a410" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Destination does not exist</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_failure_move">
-<response type="content_move" IDapp="a410" IDitem="<%ID%>" result="0">
+<response type="content_move" IDapp="a410" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Could not move content</reason>
 </response>
 </DEFINITION>
-
-
-</XML_DESIGN_DEFINITION>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# UTF-8!!!
-<XML_DESIGN_DEFINITION>
-
-
-<DEFINITION id="TMP">
-<response type="content_move" IDapp="a410" result="1">
-	<result>1</result>
-</response>
-</DEFINITION>
-
 
 </XML_DESIGN_DEFINITION>

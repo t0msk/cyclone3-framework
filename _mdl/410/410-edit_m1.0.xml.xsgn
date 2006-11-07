@@ -2,21 +2,21 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="NEW">
-<response IDapp="a410" type="new">
+<response IDapp="a410" type="new" code="<$main::request_code>">
 	<ID><%ID%></ID>
 	<lng><%lng%></lng>
 </response>
 </DEFINITION>
 
 <DEFINITION id="UPDATE">
-<response IDapp="a410" type="upd">
+<response IDapp="a410" type="upd" code="<$main::request_code>">
 	<ID><%ID%></ID>
 	<lng><%lng%></lng>
 </response>
 </DEFINITION>
 
 <DEFINITION id="DELETE">
-<response IDapp="a410" type="del">
+<response IDapp="a410" type="del" code="<$main::request_code>">
 	<ID><%ID%></ID>
 	<lng><%lng%></lng>
 </response>

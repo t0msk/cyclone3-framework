@@ -1,53 +1,46 @@
 # UTF-8!!!
 <XML_DESIGN_DEFINITION>
 
-
 <DEFINITION id="TMP">
-<response type="category_delete" IDapp="a410" IDitem="<%ID%>" result="0">
+<response type="category_delete" IDapp="a410" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>default error</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_success">
-<response type="category_delete" IDapp="a410" IDitem="<%ID%>" result="1">
+<response type="category_delete" IDapp="a410" IDitem="<%ID%>" result="1" code="<$main::request_code>">
 	<result>1</result>
 	<ID><![CDATA[<%ID%>]]></ID>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_failure_has_children">
-<response type="category_delete" IDapp="a410" IDitem="<%ID%>" result="0">
+<response type="category_delete" IDapp="a410" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Category has subcategories</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_failure_has_items">
-<response type="category_delete" IDapp="a410" IDitem="<%ID%>" result="0">
+<response type="category_delete" IDapp="a410" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Category contains unmoved items</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_failure_no_data">
-<response type="category_delete" IDapp="a410" IDitem="<%ID%>" result="0">
+<response type="category_delete" IDapp="a410" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Category does not exist</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_failure_no_input">
-<response type="category_delete" IDapp="a410" IDitem="<%ID%>" result="0">
+<response type="category_delete" IDapp="a410" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Not enough information to act. Missing parameter '<%missing_parameter%>'</reason>
 </response>
 </DEFINITION>
-
 
 </XML_DESIGN_DEFINITION>

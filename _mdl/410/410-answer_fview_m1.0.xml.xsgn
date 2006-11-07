@@ -2,7 +2,7 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="NEW">
-<response IDapp="a410" type="answer-view">
+<response IDapp="a410" type="answer-view" code="<$main::request_code>">
 		<ID><%ID%></ID>
 		<IDquestion><%IDquestion%></IDquestion>
 		<answer><%answer%></answer>
@@ -16,7 +16,6 @@
 </response>
 </DEFINITION>
 
-<DEFINITION id="TMP_NO_DATA"><response IDapp="a410" type="answer-view"></response></DEFINITION>
-
+<DEFINITION id="TMP_NO_DATA"><response IDapp="a410" type="answer-view" code="<$main::request_code>"></response></DEFINITION>
 
 </XML_DESIGN_DEFINITION>

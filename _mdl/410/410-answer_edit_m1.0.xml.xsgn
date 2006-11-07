@@ -2,7 +2,7 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="NEW">
-<response IDapp="a410" type="answer-new">
+<response IDapp="a410" type="answer-new" code="<$main::request_code>">
 	<id><![CDATA[<%ID%>]]></id>
 	<lng><![CDATA[<%lng%>]]></lng>
 	<answer><![CDATA[<%answer%>]]></answer>
@@ -10,7 +10,7 @@
 </DEFINITION>
 
 <DEFINITION id="UPDATE">
-<response IDapp="a410" type="answer-upd">
+<response IDapp="a410" type="answer-upd" code="<$main::request_code>">
 	<id><![CDATA[<%ID%>]]></id>
 	<lng><![CDATA[<%lng%>]]></lng>
 	<answer><![CDATA[<%answer%>]]></answer>
@@ -18,7 +18,7 @@
 </DEFINITION>
 
 <DEFINITION id="DELETE">
-<response IDapp="a410" type="answer-del">
+<response IDapp="a410" type="answer-del" code="<$main::request_code>">
 	<id><![CDATA[<%ID%>]]></id>
 	<lng><![CDATA[<%lng%>]]></lng>
 	<answer><![CDATA[<%answer%>]]></answer>
