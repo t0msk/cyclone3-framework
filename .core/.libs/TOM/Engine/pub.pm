@@ -52,10 +52,11 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	use TOM::Math;
 	use TOM::Int::lng;
 	
+	use App::020; # standard 0
 	
 	# default aplikácie
-	use App::1B0;
-	use App::020; # standard 0
+	use App::1B0; # Banning system
+	use App::210; # Sitemap
 	
 	# nove Cyclone kniznice
 	use Cyclone;
