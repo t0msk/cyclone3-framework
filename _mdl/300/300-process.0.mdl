@@ -109,7 +109,7 @@ sub execute
 				if (
 					($main::USRM{IDsession} eq $main::COOKIES{_IDsession})
 					&&($ref[0] eq $ref[1])
-					&&($main::USRM{HTTP_USER_AGENT} eq $main::ENV{HTTP_USER_AGENT})
+#					&&($main::USRM{HTTP_USER_AGENT} eq $main::ENV{HTTP_USER_AGENT})
 				)
 				{
 					

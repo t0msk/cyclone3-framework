@@ -2,18 +2,18 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="TMP">
-<response IDapp="a300" type="edit" result="1">
+<response IDapp="a300" type="edit" result="1" code="<$main::request_code>">
 </response>
 </DEFINITION>
 
 <DEFINITION id="ERR_LOGINORPASS">
-<response IDapp="a300" type="new" result="0">
+<response IDapp="a300" type="new" result="0" code="<$main::request_code>">
 	<![CDATA[Missing login or password]]>
 </response>
 </DEFINITION>
 
 <DEFINITION id="ERR_NOUSER">
-<response IDapp="a300" type="new" result="0">
+<response IDapp="a300" type="new" result="0" code="<$main::request_code>">
 	<![CDATA[User does not exist.]]>
 </response>
 </DEFINITION>

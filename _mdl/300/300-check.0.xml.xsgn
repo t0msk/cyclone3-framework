@@ -4,7 +4,7 @@
 <DEFINITION id="TMP"></DEFINITION>
 
 <DEFINITION id="unlogged">
-<response IDapp="a300" type="login" result="0">
+<response IDapp="a300" type="login" result="0" code="<$main::request_code>">
 <reason><![CDATA[Session Timeout!]]></reason>
 </response>
 </DEFINITION>
