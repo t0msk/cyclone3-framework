@@ -1,53 +1,46 @@
 # UTF-8!!!
 <XML_DESIGN_DEFINITION>
 
-
 <DEFINITION id="TMP">
-<response type="category_active" IDapp="a500" IDitem="<%ID%>" result="0">
+<response type="category_active" IDapp="a500" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Default error message.</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_success">
-<response type="category_active" IDapp="a500" IDitem="<%ID%>" result="1">
+<response type="category_active" IDapp="a500" IDitem="<%ID%>" result="1" code="<$main::request_code>">
 	<result>1</result>
 	<active><![CDATA[<%active%>]]></active>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_failure_no_data">
-<response type="category_active" IDapp="a500" IDitem="<%ID%>" result="0">
+<response type="category_active" IDapp="a500" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Could not find a corresponding item to change</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_failure_set">
-<response type="category_active" IDapp="a500" IDitem="<%ID%>" result="0">
+<response type="category_active" IDapp="a500" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Culd not set</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_failure_equal">
-<response type="category_active" IDapp="a500" IDitem="<%ID%>" result="0">
+<response type="category_active" IDapp="a500" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>The item already has this status, no need to change</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_failure_no_input">
-<response type="category_active" IDapp="a500" IDitem="<%ID%>" result="0">
+<response type="category_active" IDapp="a500" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Not enough information to act. Missing parameter '<%missing_parameter%>'</reason>
 </response>
 </DEFINITION>
-
 
 </XML_DESIGN_DEFINITION>

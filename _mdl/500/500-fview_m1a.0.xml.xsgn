@@ -1,9 +1,8 @@
 # UTF-8!!!
 <XML_DESIGN_DEFINITION>
 
-
 <DEFINITION id="TMP">
-<response type="detail" IDapp="a500" IDitem="<%ID%>">
+<response type="detail" IDapp="a500" IDitem="<%ID%>" code="<$main::request_code>">
 	<ID><![CDATA[<%ID%>]]></ID>
 	<IDname><![CDATA[<%IDname%>]]></IDname>
 	<IDcategory><![CDATA[<%IDcategory%>]]></IDcategory>
@@ -21,7 +20,6 @@
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="LINE">
 		<item IDitem="<%format%>">
 			<format><![CDATA[<%format%>]]></format>
@@ -33,11 +31,9 @@
 <#LINE#>
 </DEFINITION>
 
-
 <DEFINITION id="TMP_no_data">
-<response type="detail" IDapp="a500" IDitem="" result="0">
+<response type="detail" IDapp="a500" IDitem="" result="0" code="<$main::request_code>">
 </response>
 </DEFINITION>
-
 
 </XML_DESIGN_DEFINITION>

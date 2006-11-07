@@ -2,7 +2,7 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="TMP">
-<response IDapp="a0" type="list">
+<response IDapp="a0" type="list" code="<$main::request_code>">
 <#LINE#>
 </response>
 </DEFINITION>
@@ -19,7 +19,7 @@
 
 
 <DEFINITION id="TMP_NO_DATA">
-<response IDapp="a0" type="list">
+<response IDapp="a0" type="list" code="<$main::request_code>">
 </response>
 </DEFINITION>
 

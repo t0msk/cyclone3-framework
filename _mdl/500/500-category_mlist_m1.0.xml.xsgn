@@ -2,11 +2,10 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="TMP">
-	<response type="tree" IDapp="a500" itemcount_root="<%itemcount_root%>">
+	<response type="tree" IDapp="a500" itemcount_root="<%itemcount_root%>" code="<$main::request_code>">
 <#LINE#>
 </response>
 </DEFINITION>
-
 
 <DEFINITION id="LINE_PARENT">
 <#LINE#>
@@ -27,7 +26,6 @@
 <#LINE#>
 </DEFINITION>
 
-
 <xDEFINITION id="LINE">
 	<item IDitem="<%ID%>">
 		<name><![CDATA[<%name%>]]></name>
@@ -42,7 +40,6 @@
 <#LINE_PARENT#>
 <#LINE#>
 </DEFINITION>
-
 
 </XML_DESIGN_DEFINITION>
 
