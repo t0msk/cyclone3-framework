@@ -2,7 +2,7 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="TMP">
-<response type="list" IDapp="a540">
+<response type="list" IDapp="a540" code="<$main::request_code>">
 	<setup>
 		<page current="<%page_real%>" <#PAGING#> />
 	</setup>
@@ -34,7 +34,7 @@
 <#LINE#></DEFINITION>
 
 <DEFINITION id="NONE">
-<response IDapp="a540" type="list"></response>
+<response IDapp="a540" type="list" code="<$main::request_code>"></response>
 </DEFINITION>
 
 <DEFINITION id="PAGING"><#PAGING_PREV#> <#PAGING_NEXT#></DEFINITION>

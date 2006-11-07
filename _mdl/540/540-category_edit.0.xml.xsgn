@@ -1,17 +1,15 @@
 # UTF-8!!!
 <XML_DESIGN_DEFINITION>
 
-
 <DEFINITION id="TMP">
-<response IDapp="a540" type="category_edit" IDitem="<%ID%>" result="0">
+<response IDapp="a540" type="category_edit" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>default error</reason>
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="RESULT_success">
-<response IDapp="a540" type="category_edit" IDitem="<%ID%>" result="1">
+<response IDapp="a540" type="category_edit" IDitem="<%ID%>" result="1" code="<$main::request_code>">
 	<result>1</result>
 	<ID><![CDATA[<%ID%>]]></ID>
 	<name><![CDATA[<%name%>]]></name>
@@ -19,6 +17,5 @@
 	<comment><![CDATA[<%comment%>]]></comment>
 </response>
 </DEFINITION>
-
 
 </XML_DESIGN_DEFINITION>
