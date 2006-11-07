@@ -2,13 +2,13 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="TMP">
-<response IDapp="a820" type="message_list">
+<response IDapp="a820" type="message_list" code="<$main::request_code>">
 <#LINE#>
 </response>
 </DEFINITION>
 
 <DEFINITION id="FORUM_EMPTY">
-<response IDapp="a820" type="message_list">
+<response IDapp="a820" type="message_list" code="<$main::request_code>">
 </response>
 </DEFINITION>
 
@@ -27,9 +27,7 @@
 <#LINE#>
 </DEFINITION>
 
-
 <DEFINITION id="INDENT">	</DEFINITION>
-
 
 # nasledujuce TMP sa nepouzivaju sa na tomto webe
 <#DEFINITION id="LINE_PARENT_ANONYM">
@@ -55,6 +53,5 @@
 
 <#DEFINITION id="reply">
 </DEFINITION>
-
 
 </XML_DESIGN_DEFINITION>

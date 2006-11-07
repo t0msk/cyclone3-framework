@@ -1,26 +1,21 @@
 # UTF-8!!!
 <XML_DESIGN_DEFINITION>
 
-
 #ak je user nalogovany
 <DEFINITION id="TMP">
 toto je editorco
 </DEFINITION>
 
-
 #ak je user nenalogovany
 <DEFINITION id="TMP_unlogged">
-<response type="edit" IDapp="a820" IDitem="<%ID%>" result="0">
-
+<response type="edit" IDapp="a820" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>1</result>
 	<result>You are not logged in.</result>
-	
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="TMP_result_success">
-<response type="edit" IDapp="a820" IDitem="<%ID%>" result="1">
+<response type="edit" IDapp="a820" IDitem="<%ID%>" result="1" code="<$main::request_code>">
 	<result>1</result>
 	
 	<ID><![CDATA[<%ID%>]]></ID>
@@ -50,9 +45,6 @@ toto je editorco
 	
 </response>
 </DEFINITION>
-
-
-
 
 <DEFINITION id="TMP_inserted">
 	<div id="forum">
@@ -90,7 +82,6 @@ toto je editorco
 	</div>
 </DEFINITION>
 
-
 #ak user nebol v case spracovania formulara nalogovany
 <DEFINITION id="TMP_failed_unlogged">
 	<div id="forum">
@@ -107,6 +98,5 @@ toto je editorco
 		
 	</div>
 </DEFINITION>
-
 
 </XML_DESIGN_DEFINITION>

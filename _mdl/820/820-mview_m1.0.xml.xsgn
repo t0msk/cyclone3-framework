@@ -1,10 +1,9 @@
 # UTF-8!!!
 <XML_DESIGN_DEFINITION>
 
-
 #ak je user nalogovany
 <DEFINITION id="TMP">
-<response type="detail" IDapp="a820" IDitem="<%ID%>" result="1">
+<response type="detail" IDapp="a820" IDitem="<%ID%>" result="1" code="<$main::request_code>">
 	<result>1</result>
 	
 	<ID><![CDATA[<%ID%>]]></ID>
@@ -35,12 +34,10 @@
 </response>
 </DEFINITION>
 
-
 #ak je user nenalogovany
 <DEFINITION id="TMP_no_data">
-<response type="detail" IDapp="a820" IDitem="<%ID%>" result="0">
+<response type="detail" IDapp="a820" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 </response>
 </DEFINITION>
-
 
 </XML_DESIGN_DEFINITION>

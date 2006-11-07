@@ -2,7 +2,7 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="TMP">
-<response type="list" IDapp="a820">
+<response type="list" IDapp="a820" code="<$main::request_code>">
 	<setup>
 		<page current="<%page_real%>" <#PAGING#> />
 	</setup>
@@ -24,7 +24,6 @@
 </response>
 </DEFINITION>
 
-
 <DEFINITION id="LINE">
 	<item IDitem="<%ID%>">
 		<lng><![CDATA[<%lng%>]]></lng>
@@ -43,17 +42,14 @@
 <#LINE#>
 </DEFINITION>
 
-
 <DEFINITION id="starttime"><starttime><![CDATA[<%starttime_day%>. <%starttime_month%> <%starttime_year%>  <%starttime_hour%>:<%starttime_minute%>]]></starttime></DEFINITION>
 
 <DEFINITION id="createtime"><createtime><![CDATA[<%createtime_day%>. <%createtime_month%> <%createtime_year%>  <%createtime_hour%>:<%createtime_minute%>]]></createtime></DEFINITION>
 
-
 <DEFINITION id="TMP_no_data">
-<response IDapp="a820" type="list">
+<response IDapp="a820" type="list" code="<$main::request_code>">
 </response>
 </DEFINITION>
-
 
 <DEFINITION id="PAGING"><#PAGING_PREV#> <#PAGING_NEXT#></DEFINITION>
 
@@ -62,4 +58,3 @@
 <DEFINITION id="PAGING_NEXT">next="<%page_real%>"</DEFINITION>
 
 </XML_DESIGN_DEFINITION>
-
