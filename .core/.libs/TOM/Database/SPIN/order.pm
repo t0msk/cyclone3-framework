@@ -453,6 +453,9 @@ sub fsklWriteRObj
 		'category_ID'=>$env{'category_ID'}
 	) unless $env{'price'};
 	
+	$rebate{'rebate_type'}='P' unless $rebate{'rebate_type'};
+	$rebate{'rebate_type2'}='P' unless $rebate{'rebate_type2'};
+	
 	$db0->bind_param(":aiTypEPid",361); # tovar v objednavke
 	$db0->bind_param(":anMandantid",1);
 #	$db0->bind_param(":anEPid",undef);
