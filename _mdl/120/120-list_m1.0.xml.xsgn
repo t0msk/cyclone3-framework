@@ -2,7 +2,7 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="TMP">
-<response IDapp="a120" type="list">
+<response IDapp="a120" type="list" code="<$main::request_code>">
 	<header>
 		<ID />
 		<nickname flex="1" />
@@ -15,7 +15,6 @@
 <#LINE#>
 </response>
 </DEFINITION>
-
 
 <DEFINITION id="LINE">
 	<item IDitem="<%ID%>">
@@ -30,9 +29,8 @@
 <#LINE#>
 </DEFINITION>
 
-
 <DEFINITION id="TMP_NO_DATA">
-<response IDapp="a400" type="list">
+<response IDapp="a400" type="list" code="<$main::request_code>">
 </response>
 </DEFINITION>
 
