@@ -143,17 +143,17 @@ sub _log
 			$message_out=~s| |&nbsp;|g;
 			if ($i>=10)
 			{
-				$main::IAdm_log.=$div.("&nbsp;" x ($get[0]+24))."<span style='color:yellow;'>&gt;</span>"."..."."</div>\n";
+				$main::IAdm_log.=$div.("&nbsp;" x ($get[0]+24))."<span style='color:yellow;'>&nbsp;</span>"."..."."</div>\n";
 				last;
 			}
 			elsif ($i)
 			{
-				$main::IAdm_log.=$div.("&nbsp;" x ($get[0]+24))."<span style='color:yellow;'>&gt;</span>";
+				$main::IAdm_log.=$div.("&nbsp;" x ($get[0]+24))."<span style='color:yellow;'>&nbsp;</span>";
 			}
 			
 			if ($message)
 			{
-				$message_out.="<span style='color:yellow;'>&gt;</span>";
+				$message_out.="<span style='color:yellow;'>&nbsp;</span>";
 			}
 			
 			$main::IAdm_log.=$message_out."</div>\n";
