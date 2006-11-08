@@ -35,6 +35,7 @@ sub execute
 		";
 		
 		main::_log($del);
+		$main::DB{main}->Query( $del );
 		
 		$XSGN{TMP} = $XSGN{DELETED};
 		$XSGN{TMP} =~ s|<%ID%>|$env{ID}|g;
