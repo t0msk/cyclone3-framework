@@ -614,19 +614,15 @@ sub copy_to
 			'lng' => 1
 		}
 	);
-	if (!$data2{'ID'})
+	if ($data2{'ID'})
 	{
-		main::_log("parent_ID='$env{parent_ID}' not exists",1);
-		$t->close();
-		return undef;
-	}
-	
-	# zistim ci sa nepokusam prekopirovat nejaky jazyk do ineho jazyka
-	if ($data{'lng'} ne $data2{'lng'})
-	{
-		main::_log("can't move, in parent_ID is different language",1);
-		$t->close();
-		return undef;
+		# zistim ci sa nepokusam prekopirovat nejaky jazyk do ineho jazyka
+		if ($data{'lng'} ne $data2{'lng'})
+		{
+			main::_log("can't move, in parent_ID is different language",1);
+			$t->close();
+			return undef;
+		}
 	}
 	
 	# zistim ci cielovy ID_charindex nieje sucastou stromu ktory chcem kopirovat
@@ -779,9 +775,9 @@ sub get_path
 }
 
 
-=head2 find_path
+=head2 find_new_child
 
-Hladanie cesty
+Najdenie noveho ID_charindexu pre child
 
 =cut
 
@@ -875,31 +871,97 @@ sub find_path_url
 	my $ID_charindex= '___:' x ($levels+1);
 	$ID_charindex=~s|:$||;
 	
-	# zistam zoznam vsetkych poloziek pod $IDcharindex3
+	my $i=0;
+	my @ID_charindex_find=('');
+	foreach my $level_part (@level)
+	{
+		my $t_level=track TOM::Debug("level-$i");
+		main::_log("part='$level_part'");
+		
+		my $i0=0;
+		foreach my $way (@ID_charindex_find)
+		{
+			my $ID_charindex=$way;
+			$ID_charindex.=":" if $ID_charindex;
+			if ($way eq "-"){$i0++;next;}
+			my $ll=($ID_charindex=~s|:|:|g);
+			if ($ll==$i+1){$i0++;next;}
+			
+			my $t_way=track TOM::Debug("way-$i0");
+			main::_log("ID_charindex='$way'");
+			
+			my $sql=qq{
+				SELECT
+					ID,
+					ID_charindex
+				FROM
+					`$env{'db_name'}`.`$env{'tb_name'}`
+				WHERE
+					ID_charindex LIKE '$ID_charindex\___'
+					AND name_url='$level[$i]'
+					AND lng='$env{'lng'}'
+					AND status='Y'
+				ORDER BY
+					ID_charindex
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1);
+			if (!$sth0{'sth'})
+			{
+				return undef;
+			}
+			
+			if (!$sth0{'rows'})
+			{
+				$way="-";
+				$t_way->close();
+				next;
+			}
+			
+			my $i2=0;
+			while (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				if (!$i2)
+				{
+					$ID_charindex_find[$i0]=$db0_line{'ID_charindex'};
+					main::_log("set way='$ID_charindex_find[$i0]'");
+				}
+				else
+				{
+					main::_log("new way='$db0_line{'ID_charindex'}'");
+					push @ID_charindex_find,$db0_line{'ID_charindex'};
+				}
+				
+				$i2++;
+			}
+			
+			$i0++;
+			$t_way->close();
+		}
+		$i++;
+		$t_level->close();
+	}
+	
+	foreach (@ID_charindex_find)
+	{
+		main::_log("out=$_");
+	}
+	
 	my $SQL=qq{
 		SELECT
 			*
 		FROM
 			`$env{'db_name'}`.`$env{'tb_name'}`
 		WHERE
-			ID_charindex LIKE '$ID_charindex'
+			ID_charindex='$ID_charindex_find[0]'
 			AND status='Y'
-			AND lng='$env{lng}'
-			AND name_url='$level[-1]'};
-	my %sth1=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>1);
-	if ($sth1{'rows'}==1)
+			AND lng='$env{lng}'};
+	my %sth1=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'quiet'=>1);
+	if ($sth1{'rows'})
 	{
 		main::_log("only 1 output");
 		my %data=$sth1{'sth'}->fetchhash();
 		$t->close();
 		return %data;
-	}
-	elsif ($sth1{'rows'})
-	{
-		main::_log("concurent outputs",1);
-		# TODO: dorobit spracovanie
-		$t->close();
-		return undef;
 	}
 	else
 	{
