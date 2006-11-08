@@ -1053,7 +1053,7 @@ while ($req->Accept() >= 0)
 					# ziskanie dat o Sitemap node
 					if (!$main::FORM{'a210_path'})
 					{
-						my $ID=App::210::SQL::page_get_default_ID('lng'=>"sk");
+						my $ID=App::210::SQL::page_get_default_ID('lng'=>$main::FORM{'__lng'});
 						%a210=App::020::SQL::functions::get_ID(
 							'db_h' => "main",
 							'db_name' => $TOM::DB{'main'}{'name'},
