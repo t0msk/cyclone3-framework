@@ -565,6 +565,142 @@ sub move_to
 }
 
 
+=head2 copy_to
+
+Kopirovanie casti stromu do inej casti stromu
+
+=cut
+
+sub copy_to
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::copy_to()");
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'");
+	}
+	
+	# zistim co za polozku idem presunut
+	my %data=App::020::SQL::functions::get_ID(
+		'ID'	=> $env{'ID'},
+		'db_h' => $env{'db_h'},
+		'db_name' => $env{'db_name'},
+		'tb_name' => $env{'tb_name'},
+		'columns' =>
+		{
+			'ID_charindex' => 1,
+			'lng' => 1
+		}
+	);
+	if (!$data{'ID'})
+	{
+		main::_log("ID='$env{ID}' not exists",1);
+		$t->close();
+		return undef;
+	}
+	
+	# pozriem sa kam idem presunut
+	my %data2=App::020::SQL::functions::get_ID(
+		'ID'	=> $env{'parent_ID'},
+		'db_h' => $env{'db_h'},
+		'db_name' => $env{'db_name'},
+		'tb_name' => $env{'tb_name'},
+		'columns' =>
+		{
+			'ID_charindex' => 1,
+			'lng' => 1
+		}
+	);
+	if (!$data2{'ID'})
+	{
+		main::_log("parent_ID='$env{parent_ID}' not exists",1);
+		$t->close();
+		return undef;
+	}
+	
+	# zistim ci sa nepokusam prekopirovat nejaky jazyk do ineho jazyka
+	if ($data{'lng'} ne $data2{'lng'})
+	{
+		main::_log("can't move, in parent_ID is different language",1);
+		$t->close();
+		return undef;
+	}
+	
+	# zistim ci cielovy ID_charindex nieje sucastou stromu ktory chcem kopirovat
+	if ($data2{'ID_charindex'})
+	{
+		# 000:000 - $data->ID_charindex
+		# 000:000:000 - $data2->ID_charindex
+		if ($data2{'ID_charindex'}=~/^$data{'ID_charindex'}/)
+		{
+			main::_log("parent_ID is in ID tree !!!",1);
+			$t->close();
+			return undef;
+		}
+	}
+	
+	# najdem pod parent_ID volny ID_charindex
+	my $ID_charindex_new=find_new_child(
+		$data2{'ID_charindex'},
+		'db_h' => $env{'db_h'},
+		'db_name' => $env{'db_name'},
+		'tb_name' => $env{'tb_name'},
+	);
+	if (!$ID_charindex_new)
+	{
+		main::_log("can't find new ID_charindex");
+		$t->close();
+		return undef;
+	}
+	
+	main::_log("new ID_charindex='$ID_charindex_new'");
+	
+	# zmapujem vsetky polozky stromu ID
+	my $sql=qq{
+		SELECT
+			ID,
+			ID_charindex
+		FROM `$env{'db_name'}`.`$env{'tb_name'}`
+		WHERE
+			ID_charindex LIKE '$data{ID_charindex}%'
+			AND lng='$data{'lng'}'
+			AND ( status='Y' OR status='N' )
+		ORDER BY
+			ID_charindex
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'});
+	if (!$sth0{'sth'})
+	{
+		main::_log("can't select ID tree",1);
+		return undef;
+	}
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $ID_charindex=$db0_line{'ID_charindex'};
+		$ID_charindex=~s|^$data{ID_charindex}|$ID_charindex_new|;
+		main::_log("ID='$db0_line{'ID'}' copy from ID_charindex='$db0_line{'ID_charindex'}'->'$ID_charindex'");
+		
+		App::020::SQL::functions::copy(
+			'ID' => $db0_line{'ID'},
+			'db_h' => $env{'db_h'},
+			'db_name' => $env{'db_name'},
+			'tb_name' => $env{'tb_name'},
+			'columns' =>
+			{
+				'ID_charindex' => "'$ID_charindex'",
+			},
+		);
+		
+	}
+	
+	$t->close();
+	return 1;
+}
+
+
 =head2 get_path
 
 Vypisanie cesty konkretnej polozky
@@ -847,7 +983,7 @@ sub rename
 
 =head2 clone()
 
-Vytvorenie mutacie nodu
+Vytvorenie mutacie nodu ( okrem podnodov )
 
 =cut
 
