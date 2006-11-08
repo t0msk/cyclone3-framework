@@ -424,9 +424,90 @@ sub clone
 }
 
 
+=head2 copy()
+
+Kopia ID zaznamu do noveho ID a noveho ID_entity
+
+=cut
+
 sub copy
 {
-	# kopia ID zaznamu do noveho ID a noveho ID_entity
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::copy()");
+	
+	my $ID;
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'");
+	}
+	
+	# najdem riadok ktory chcem naklonovat
+	my %data=get_ID(
+		'db_h' => $env{'db_h'},
+		'db_name' => $env{'db_name'},
+		'tb_name' => $env{'tb_name'},
+		'ID' => $env{'ID'},
+		'columns' => {'*'=>1}
+	);
+	if ($data{'ID'} && $data{'status'}=~/^[YN]$/)
+	{
+		
+		# pripravim si columny na new
+		
+		# nepovolim update tychto columnov (z povodneho riadku)
+		delete $data{'datetime_create'};
+		delete $data{'ID'};
+		delete $data{'ID_entity'};
+		# nepovolim override tychto columnov
+		delete $env{'columns'}{'ID'};
+		delete $env{'columns'}{'ID_entity'};
+		delete $env{'columns'}{'datetime_create'};
+		
+		# osetrenie data
+		foreach (keys %data)
+		{
+			$data{$_}="'".$data{$_}."'";
+		}
+		
+		# override %data z $env{columns}
+		foreach (keys %{$env{'columns'}})
+		{
+			$data{$_}=$env{'columns'}{$_};
+		}
+		
+		# pokusim sa o novy riadok
+		$ID=new(
+			'db_h' => $env{'db_h'},
+			'db_name' => $env{'db_name'},
+			'tb_name' => $env{'tb_name'},
+			'columns' => {%data},
+			'-journalize' => $env{'-journalize'},
+		);
+		if (!$ID)
+		{
+			# error handling
+			${$env{'_errstr'}}=
+				"Can't create copy of ID $env{'ID'}\n".
+				(Mysql->errmsg())."\n".
+				${$env{'_errstr'}} if exists $env{'_errstr'};
+			main::_log("Mysql errmsg='".Mysql->errmsg()."'",1);
+			$t->close();
+			return undef;
+		}
+		
+	}
+	else
+	{
+		main::_log("Can't copy ID='$env{'ID'}. This ID not exists, or is in Trash/Deleted'",1);
+		$t->close();
+		return undef;
+	}
+	
+	$t->close();
+	return $ID;
 }
 
 
