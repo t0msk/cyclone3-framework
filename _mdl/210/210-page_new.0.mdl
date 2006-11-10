@@ -1,0 +1,64 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	delete $env{'ID_charindex'};
+	
+	my $from;
+	
+	if (!$env{'ID_parent'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID_parent|g;
+		return 1;
+	}
+	
+	if (!$env{'name'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|name|g;
+		return 1;
+	}
+	
+	$env{'name'}=~s|\'|\\'|;
+	
+	my $ID=App::020::SQL::functions::tree::new(
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a210_page",
+		'-journalize' => 1,
+		'parent_ID'   => $env{'ID_parent'},
+		'columns' =>
+		{
+			'name' => "'$env{'name'}'",
+			'lng'  => "'$env{'lng'}'",
+			'status'  => "'N'",
+		}
+	);
+	
+	if ($ID)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		$XSGN{'TMP'}=~s|<%ID%>|$ID|g;
+	}
+	else
+	{
+		
+	}
+	
+	return 1;
+}
+
+
+
+1;

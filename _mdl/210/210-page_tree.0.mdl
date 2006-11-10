@@ -10,7 +10,7 @@ use App::020;
 
 =head1
 
-root - zobraz root element
+parent - zobraz parent element
 ID_charindex - vsetko od ID_charindex
 depth - hlbku
 
@@ -21,6 +21,8 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	delete $env{'ID_charindex'};
+	
+	$env{'tree'}=1 unless exists $env{'tree'};
 	
 	my $from;
 	
@@ -61,8 +63,8 @@ sub execute
 	if ($env{'ID_charindex'})
 	{
 		$from=$env{'ID_charindex'};
-		# zobrazit root element daneho levelu alebo nie
-		if (!$env{'root'})
+		# zobrazit parent element daneho levelu alebo nie
+		if (!$env{'parent'})
 		{
 			$from.=':';
 		}
@@ -70,9 +72,29 @@ sub execute
 	
 	my $where;
 	
+	# language
 	$where.="lng='$env{'lng'}' ";
-	$where.="AND status='Y' ";
+	
+	# status
+	if ($env{'status'})
+	{
+		$where.="AND (";
+		foreach (split('',$env{'status'}))
+		{
+			$where.="status='$_' OR ";
+		}
+		$where=~s|OR $||;
+		$where.=")";
+	}
+	else
+	{
+		$where.="AND status='Y' ";
+	}
+	
+	# charindex
 	$where.="AND ID_charindex LIKE '$from%' ";
+	
+	
 	# s akou hlbkou ziskavam data
 	if ($env{'depth'})
 	{
@@ -91,7 +113,8 @@ sub execute
 			ID_charindex,
 			name,
 			name_url,
-			lng
+			lng,
+			status
 		FROM
 			a210_page
 $where
@@ -101,6 +124,8 @@ $where
 	
 	my @path;
 	my @path_url;
+	
+	my %charindex_ID;
 	
 	my $level;
 	my $level_prev;
@@ -114,6 +139,13 @@ $where
 		my @tree;
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
+			$charindex_ID{$db0_line{'ID_charindex'}}=$db0_line{'ID'};
+			
+			my $dbg=$db0_line{'ID_charindex'};
+			$dbg=~s|^(.*?)(.{0,4})$|\1|;
+			
+			$db0_line{'ID_parent'}=$charindex_ID{$dbg};
+			
 			push @tree, {%db0_line};
 		}
 		
@@ -122,21 +154,26 @@ $where
 		foreach my $entity(@tree)
 		{
 			
-			$level=($entity->{'ID_charindex'}=~s/:/:/g)+1;
+			my $dbg_level=$entity->{'ID_charindex'};$dbg_level=~s|:||g;
+			$level=(length($dbg_level)/3)+1;
 			
 			if ($tree[$i+1])
 			{
-				$level_next=($tree[$i+1]->{'ID_charindex'}=~s/:/:/g)+1;
+				my $dbg_level=$tree[$i+1]->{'ID_charindex'};$dbg_level=~s|:||g;
+				$level_next=(length($dbg_level)/3)+1;
 			}
 			else
 			{
 				$level_next=0;
 			}
 			
-			if ($level>$level_prev)
+			if ($env{'tree'})
 			{
-				my $rec=$XSGN{'TMP'}=~s|<#tree#>|$XSGN{'SUB'}|;
-				main::_log("inserted tree ($rec) for level $level");
+				if ($level>$level_prev)
+				{
+					my $rec=$XSGN{'TMP'}=~s|<#tree#>|$XSGN{'SUB'}|;
+					main::_log("inserted tree ($rec) for level $level");
+				}
 			}
 			
 			main::_log("$level($level_next) $entity->{'ID_charindex'} $entity->{'name'} $entity->{'lng'}");
@@ -163,29 +200,37 @@ $where
 			
 			$XSGN{'NULL'}=$XSGN{'ITEM'};
 			
+			$XSGN{'NULL'}=~s|<%ID%>|$entity->{'ID'}|g;
+			$XSGN{'NULL'}=~s|<%ID_entity%>|$entity->{'ID_entity'}|g;
+			$XSGN{'NULL'}=~s|<%ID_parent%>|$entity->{'ID_parent'}|g;
 			$XSGN{'NULL'}=~s|<%name%>|$entity->{'name'}|g;
+			$XSGN{'NULL'}=~s|<%status%>|$entity->{'status'}|g;
 			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
 			
-			if ($level_next<$level)
+			if ($env{'tree'})
 			{
-				$XSGN{'NULL'}=~s|<#item#>||g;
-			}
-			
-			if ($level_next<=$level)
-			{
-				$XSGN{'NULL'}=~s|<#tree#>||g;
+				if ($level_next<$level)
+				{
+					$XSGN{'NULL'}=~s|<#item#>||g;
+				}
+				if ($level_next<=$level)
+				{
+					$XSGN{'NULL'}=~s|<#tree#>||g;
+				}
 			}
 			
 			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
 			
-			for ($level_next..$level-2)
+			if ($env{'tree'})
 			{
-				$XSGN{'TMP'}=~s|<#item#>||;
-			}
-			
-			for ($level_next..$level-1)
-			{
-				$XSGN{'TMP'}=~s|<#tree#>||;
+				for ($level_next..$level-2)
+				{
+					$XSGN{'TMP'}=~s|<#item#>||;
+				}
+				for ($level_next..$level-1)
+				{
+					$XSGN{'TMP'}=~s|<#tree#>||;
+				}
 			}
 			
 			$level_prev=$level;

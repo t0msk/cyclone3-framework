@@ -1,0 +1,22 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+<response type="page_tree" IDapp="a210" itemcount_root="<%itemcount_root%>" code="<$main::request_code>">
+<#item#>
+</response>
+</DEFINITION>
+
+<DEFINITION id="ITEM">
+<item IDitem="<%ID%>">
+	<ID><![CDATA[<%ID%>]]></ID>
+	<IDparent><![CDATA[<%ID_parent%>]]></IDparent>
+	<name><![CDATA[<%name%>]]></name>
+	<status><![CDATA[<%status%>]]></status>
+</item>
+<#item#>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
+
