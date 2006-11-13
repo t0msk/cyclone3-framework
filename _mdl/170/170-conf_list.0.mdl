@@ -8,6 +8,20 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
 
+# Finding Editor in a120
+	if ( $main::USRM{login} )
+	{
+		my $sql_120 = "SELECT * FROM a120 WHERE nickname='$main::USRM{login}' AND IDtype in (1,0)";
+		my $db_120 = $main::DB{main}->Query( $sql_120 );
+		while ( my %a120_record = $db_120->fetchhash )
+		{
+			my $type;
+			$type = 'author' if $a120_record{'IDtype'} == 0;
+			$type = 'editor' if $a120_record{'IDtype'} == 1;
+			while ( my ($k,$v) = each %a120_record ) { $XSGN{TMP} =~ s|<%${type}_$k%>|$v|g; }
+		}
+	}
+
 # Applications
 	foreach (keys %TOM::DEBUG_log_app)
 	{

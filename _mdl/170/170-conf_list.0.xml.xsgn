@@ -6,6 +6,13 @@
 	<USRM>
 		<my_domain><$tom::H_cookie></my_domain>
 		<domain><$tom::Hm_cookie></domain>
+		<login></login>
+		<author>
+			<ID><%author_ID%></ID>
+		</author>
+		<editor>
+			<ID><%editor_ID%></ID>
+		</editor>
 	</USRM>
 	<lng>
 		<item primary="1"><![CDATA[<%lng%>]]></item>
