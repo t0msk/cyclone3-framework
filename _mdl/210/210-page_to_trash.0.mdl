@@ -32,12 +32,14 @@ sub execute
 		'columns' =>
 		{
 			'ID_charindex' => 1,
-			'status' => 1
+			'status' => 1,
+			'lng' => 1,
 		}
 	);
 	
 	if (!$data{'ID'})
 	{
+		main::_log("ID='$env{'ID'}' not exists");
 		$XSGN{'TMP'}=$XSGN{'RESULT_failure_set'};
 		$XSGN{'TMP'}=~s|<%ID%>|$data{'ID'}|g;
 		return 1;
@@ -60,6 +62,7 @@ sub execute
 			ID_charindex LIKE '$data{'ID_charindex'}%'
 			AND ID != $env{'ID'}
 			AND ( status='Y' OR status='N' )
+			AND lng = '$data{'lng'}'
 		LIMIT 1
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>"main");
