@@ -147,6 +147,8 @@ sub page_get_default_ID
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::page_get_default_ID()");
 	
+	my $where;
+	
 	foreach (keys %env)
 	{
 		main::_log("input '$_'='$env{$_}'");
@@ -154,6 +156,8 @@ sub page_get_default_ID
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
+	
+	$where.="AND status='Y' ";
 	
 	# najdem polozku ktora je momentalne ako default
 	my $sql=qq{
@@ -164,6 +168,7 @@ sub page_get_default_ID
 	WHERE
 		lng='$env{'lng'}'
 		AND is_default='Y'
+		$where
 	LIMIT 1
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1);
