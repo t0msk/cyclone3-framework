@@ -114,7 +114,8 @@ sub execute
 			name,
 			name_url,
 			lng,
-			status
+			status,
+			is_default
 		FROM
 			a210_page
 $where
@@ -205,6 +206,7 @@ $where
 			$XSGN{'NULL'}=~s|<%ID_parent%>|$entity->{'ID_parent'}|g;
 			$XSGN{'NULL'}=~s|<%name%>|$entity->{'name'}|g;
 			$XSGN{'NULL'}=~s|<%status%>|$entity->{'status'}|g;
+			$XSGN{'NULL'}=~s|<%is_default%>|$entity->{'is_default'}|g;
 			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
 			
 			if ($env{'tree'})

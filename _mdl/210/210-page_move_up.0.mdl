@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	my $out;
+	
+	$out=App::020::SQL::functions::tree::move_up(
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a210_page",
+		'-journalize' => 1,
+		'ID'   => $env{'ID'}
+	);
+	
+	if ($out)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		return 1;
+	}
+	else
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_set'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		return 1;
+	}
+	
+	return 1;
+}
+
+
+
+1;
