@@ -181,6 +181,10 @@ sub get_ID(%env)
 		$t->close();
 		return $sth0{'sth'}->fetchhash();
 	}
+	else
+	{
+		main::_log("none row returned",1);
+	}
 	
 	$t->close();
 }
@@ -686,6 +690,68 @@ sub trash_delete
 		'ID' => $env{'ID'}
 	);
 	
+	$t->close();
+	return 1;
+}
+
+
+=head2 trash_empty()
+
+Vyprazdnenie trashu
+
+=cut
+
+sub trash_empty
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::trash_empty()");
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'");
+	}
+	
+	my $tr=new TOM::Database::SQL::transaction('db_h'=>$env{'db_h'});
+	
+	my $sql=qq{
+		SELECT
+			ID
+		FROM
+			`$env{'db_name'}`.`$env{'tb_name'}`
+		WHERE
+			status='T'
+		ORDER BY ID
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1);
+	if (!$sth0{'sth'})
+	{
+		$tr->rollback();
+		$t->close();
+		return undef;
+	}
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("ID='$db0_line{'ID'}'");
+		my $out=trash_delete(
+			'ID' => $db0_line{'ID'},
+			'db_h' => $env{'db_h'},
+			'db_name' => $env{'db_name'},
+			'tb_name' =>$env{'tb_name'}
+		);
+		if (!$out)
+		{
+			$tr->rollback();
+			$t->close();
+			return undef;
+		}
+	}
+	
+	
+	$tr->close();
 	$t->close();
 	return 1;
 }
