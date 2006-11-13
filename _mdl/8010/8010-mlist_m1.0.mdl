@@ -101,6 +101,10 @@ sub execute
 
 	$where = " AND $where" if $where;
 
+	my $order = "time_insert ASC";
+	$order = $env{'order_by'} if $env{'order_by'};
+	$order = "ORDER BY $order" if $order;
+
 	my $limit;
 	if ( $main::FORM{limit} )
 	{
@@ -137,7 +141,8 @@ sub execute
 		WHERE
 			domain='$env{domain}' AND active in ('Y','N')
 			$where
-			$limit
+		$order
+		$limit
 	";
 
 	main::_log( $sql );
