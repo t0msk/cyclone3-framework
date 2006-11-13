@@ -16,13 +16,6 @@ sub execute
 	
 	my $from;
 	
-	if (!$env{'ID_parent'})
-	{
-		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
-		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID_parent|g;
-		return 1;
-	}
-	
 	if (!$env{'name'})
 	{
 		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
