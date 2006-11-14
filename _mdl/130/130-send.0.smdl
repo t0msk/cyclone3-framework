@@ -121,13 +121,18 @@ sub execute
 	# Kontrola premennych
 	my $ok = 1;
 
+	my %mark;
 #=head1
 	if ($env{required_all})
 	{
 		foreach (keys %main::FORM)
 		{
 			next unless $_ =~ /^f(t|r|s|ch|f)_/;
-			$ok = 0 unless $main::FORM{$_};
+			if ( !$main::FORM{$_} )
+			{
+				$mark{$_} = 1;
+				$ok = 0
+			}
 		}
 	}
 #=cut
@@ -138,7 +143,7 @@ sub execute
 	{
 		foreach (@required)
 		{
-			unless ($formvars{$_} || $main::FORM{$_}) { $ok = 0; last; };
+			unless ($formvars{$_} || $main::FORM{$_}) { $mark{$_} = 1; $ok = 0; };
 			# kontrola tvaru emailu
 			if
 			(
@@ -146,8 +151,8 @@ sub execute
 				not Secure::form::check_email( $formvars{email} )
 			)
 			{
+				$mark{$_} = 1;
 				$ok = 0;
-				last;
 			}
 
 		}
@@ -199,9 +204,16 @@ sub execute
 	)
 	{
 		main::_log("Kontrola security hash - nespravny kod");
+		$mark{'security_hash'} = 1;
 		$ok = 0;
 	}
 
+	# Oznacim nevyplnene polozky
+	foreach my $field ( keys %mark )
+	{
+		main::_log( 'Mark: '.$field );
+		$formvars{'_a130_mark_'.$field} = 1;
+	}
 
 	# spracovanie priloh
 	my @file = grep { $_ =~ /^ff_/ && $main::FORM{$_} } (keys %main::FORM);
@@ -246,7 +258,8 @@ sub execute
 	# convert formvarsov do $env_module{_a130_form_} formatu
 	foreach (keys %formvars)
 	{
-		$env_module{"_a130_form_$_"} = $formvars{$_};
+		my $pref = "_a130_form_"; $pref = '' if $_ =~ /_a130_mark_/;
+		$env_module{"$pref$_"} = $formvars{$_};
 	}
 
 	$env{send_global}=1 unless (exists $env{send_global});

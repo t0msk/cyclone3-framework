@@ -118,6 +118,14 @@ sub execute
 				my $replace = $_; $replace =~ s|^_a130_form_||;
 				$XSGN{TMP} =~ s|<%$replace%>|$env{$_}|g;
 			}
+
+			# Oznacim nevyplnene
+			if ( $_ =~ /^_a130_mark_/ )
+			{
+				my $replace = $_; $replace =~ s|^_a130_mark_||;
+				$XSGN{TMP} =~ s|<%${replace}_uclass%>|$XSGN{UNFILLED_CLASS}|g;
+				$XSGN{TMP} =~ s|<%${replace}_usign%>|$XSGN{UNFILLED_SIGN}|g;
+			}
 		}
 		
 		return 1;
@@ -212,6 +220,14 @@ sub execute
 					# premennu replace vyuzival len v tomto cykle
 					my $replace = $_; $replace =~ s|^_a130_form_||;
 					$XSGN{TMP} =~ s|<%$replace%>|$env{$_}|g;
+				}
+
+				# Oznacim nevyplnene
+				if ( $_ =~ /^_a130_mark_/ )
+				{
+					my $replace = $_; $replace =~ s|^_a130_mark_||;
+					$XSGN{TMP} =~ s|<%${replace}_uclass%>|$XSGN{UNFILLED_CLASS}|g;
+					$XSGN{TMP} =~ s|<%${replace}_usign%>|$XSGN{UNFILLED_SIGN}|g;
 				}
 			}
 
