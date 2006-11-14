@@ -78,6 +78,7 @@ sub execute
 	# status
 	if ($env{'status'})
 	{
+		$XSGN{'TMP'}=~s|<%required_status%>|$env{'status'}|g;
 		$where.="AND (";
 		foreach (split('',$env{'status'}))
 		{

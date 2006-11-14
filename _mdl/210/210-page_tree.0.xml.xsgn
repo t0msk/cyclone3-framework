@@ -3,7 +3,7 @@
 
 
 <DEFINITION id="TMP">
-<response type="page_tree" IDapp="a210" itemcount_root="<%itemcount_root%>" code="<$main::request_code>">
+<response type="page_tree" IDapp="a210" required_status="<%required_status%>" code="<$main::request_code>">
 <#item#>
 </response>
 </DEFINITION>
