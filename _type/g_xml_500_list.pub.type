@@ -16,4 +16,6 @@
 		<VAR id="db_paging" value="1" />
 		<VAR id="db_page" value="<$main::FORM{page}>" />
 		<VAR id="db_order_by" value="<$main::FORM{order_by}>" />
+		<VAR id="db_active" value="0" />
+		<VAR id="xuladmin" value="1" />
 </MODULE>

@@ -129,6 +129,26 @@ sub execute
 	# setting default db_order_by
 	$env{db_order_by}="a500.ID DESC" unless $env{db_order_by};
 	
+=head1
+	my $sql=qq{
+		SELECT
+			a500.hash,
+			a500.IDcategory,
+			a500_attrs.*,
+			a500.ID,
+			a500_category.name
+		FROM $env{db_500}.a500 AS a500
+		LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.ID=a500_attrs.ID
+		LEFT JOIN  $env{db_500}.a500_category AS a500_category ON a500.IDcategory=a500_category.ID
+		WHERE
+			$env{db_where}
+			a500.format='$env{db_format}'
+		ORDER BY
+			$env{db_order_by}
+		LIMIT
+			$env{db_limit}
+	};
+=cut
 	
 	my $sql=qq{
 		SELECT
@@ -148,6 +168,29 @@ sub execute
 		LIMIT
 			$env{db_limit}
 	};
+	
+	if ($env{'xuladmin'})
+	{
+		$sql=qq{
+			SELECT
+				a500.hash,
+				a500.IDcategory,
+				a500_attrs.*,
+				a500.ID,
+				a500_category.name
+			FROM $env{db_500}.a500 AS a500
+			LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.ID=a500_attrs.ID
+			LEFT JOIN  $env{db_500}.a500_category AS a500_category ON a500.IDcategory=a500_category.ID
+			WHERE
+				$env{db_where}
+				(a500.active='Y' OR a500.active='N')
+			GROUP BY a500.ID
+			ORDER BY
+				$env{db_order_by}
+			LIMIT
+				$env{db_limit}
+		};
+	}
 	
 	main::_log($sql);
 
