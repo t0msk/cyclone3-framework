@@ -159,6 +159,74 @@ sub execute
 		#$XSGN{TMP}=~s|<%name%>|$db_line{name}|g;
 		#$XSGN{TMP}=~s|<%fullpath%>|$db_line{fullpath}|g;
 
+			if(
+				($XSGN{NULL}=~/<%IDauthor_fullname%>/) || ($XSGN{NULL}=~/<%IDauthor_nickname%>/)
+				|| ($XSGN{TMP}=~/<%IDauthor_fullname%>/) || ($XSGN{TMP}=~/<%IDauthor_nickname%>/)
+			)
+			{
+				$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
+				$env{db_120}=$TOM::DB{main}{name} unless $env{db_120};
+	
+				my $db0=$main::DB{main}->Query("
+					SELECT
+						ID,
+						IDcategory,
+						fullname,
+						nickname
+					FROM $env{db_120}.a120
+					WHERE
+						ID='$db_line{IDauthor}'
+						AND IDtype='0'
+					LIMIT 1
+				");
+				if (my %db0_line=$db0->FetchHash())
+				{
+					$XSGN{NULL}=~s|<%IDauthor%>|$db0_line{ID}|g;
+					$XSGN{NULL}=~s|<%IDauthor_fullname%>|$db0_line{fullname}|g;
+					$XSGN{NULL}=~s|<%IDauthor_nickname%>|$db0_line{nickname}|g;
+					
+					$XSGN{TMP}=~s|<%IDauthor%>|$db0_line{ID}|g;
+					$XSGN{TMP}=~s|<%IDauthor_fullname%>|$db0_line{fullname}|g;
+					$XSGN{TMP}=~s|<%IDauthor_nickname%>|$db0_line{nickname}|g;
+				}
+				else
+				{
+					main::_log($db0->errstr());
+				}
+			}
+	
+			if(($XSGN{NULL}=~/<%IDeditor_fullname%>/) || ($XSGN{NULL}=~/<%IDeditor_nickname%>/))
+			{
+				$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
+				$env{db_120}=$TOM::DB{main}{name} unless $env{db_120};
+	
+				my $db0=$main::DB{main}->Query("
+					SELECT
+						ID,
+						IDcategory,
+						fullname,
+						nickname
+					FROM $env{db_120}.a120
+					WHERE
+						ID='$db_line{IDeditor}'
+						AND IDtype='1'
+					LIMIT 1
+				");
+				if (my %db0_line=$db0->FetchHash())
+				{
+					$XSGN{NULL}=~s|<%IDeditor%>|$db0_line{ID}|g;
+					$XSGN{NULL}=~s|<%IDeditor_fullname%>|$db0_line{fullname}|g;
+					$XSGN{NULL}=~s|<%IDeditor_nickname%>|$db0_line{nickname}|g;
+					
+					$XSGN{TMP}=~s|<%IDeditor%>|$db0_line{ID}|g;
+					$XSGN{TMP}=~s|<%IDeditor_fullname%>|$db0_line{fullname}|g;
+					$XSGN{TMP}=~s|<%IDeditor_nickname%>|$db0_line{nickname}|g;
+				}
+				else
+				{
+					main::_log($db0->errstr());
+				}
+			}
 =head1
 		my @ref=split('x',$db0_line[3]);
 		$env{width}=$ref[0];

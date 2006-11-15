@@ -76,7 +76,7 @@ sub execute
 			LIMIT 1");
 			
 		getnewid:
-
+		
 		if(my $db1=$main::DB{main}->Query("
 			SELECT
 				DISTINCT ID
@@ -95,9 +95,9 @@ sub execute
 				#no records in the database, beginning with id '1'
 				$env{db_ID}=1;
 			}
-
+			
 			main::_log("proposed new image ID: ".$env{db_ID});
-
+			
 			main::_log("
 				INSERT INTO
 					$env{db_500}.a500_attrs
@@ -105,7 +105,7 @@ sub execute
 					ID='$env{db_ID}',
 					IDattrs='$env{db_ID}'
 			");
-
+			
 			if(my $db1=$main::DB{main}->Query("
 				INSERT INTO
 					$env{db_500}.a500_attrs
@@ -204,7 +204,9 @@ sub execute
 				"))
 				{
 					if (my @db1_line=$db1->FetchRow())
-					{ $hash = genhash(16); }
+					{
+						$hash = genhash(16);
+					}
 					else
 					{
 						main::_log("trying to insert format '".$tmpFormat."' as hash '".$hash."'");
@@ -229,6 +231,12 @@ sub execute
 							$imageHashes{$tmpFormat}=$hash;
 							
 							last;
+						}
+						else
+						{
+							main::_log("can't insert format '".$tmpFormat."' as hash '".$hash."'".($main::DB{'main'}->errmsg())."",1);
+							return undef;
+							#last;
 						}
 					}
 				}
@@ -276,7 +284,7 @@ sub execute
 					main::_log("closed handle");
 					chmod(0664, "$fileName");
 					main::_log("chmodded filename");
-
+					
 					use Image::Magick;
 					my $tmpImage = new Image::Magick;
 					$tmpImage->Read($fileName);

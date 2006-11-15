@@ -69,7 +69,12 @@ sub execute
 
 	#loading only active images by default
 	$env{db_active}=1 if (not exists  $env{db_active});
-
+	
+	if ($env{db_order_by}=~/ID/)
+	{
+		$env{db_order_by}=~s/ID/a500.ID/;
+	}
+	
 	# setting default db_order_by
 	$env{db_order_by}="a500.ID DESC" unless $env{db_order_by};
 	$env{db_order_by}=~s|title|about|g;
@@ -115,16 +120,22 @@ sub execute
 			$env{db_where}.="(a500.IDcategory NOT LIKE '$tmp') AND ";
 		}
 	}
-
+	
+	if ($env{'db_active'})
+	{
+		$env{db_where}.="a500.active='Y' AND ";
+	}
+	
 	# setting default db_order_by
 	$env{db_order_by}="a500.ID DESC" unless $env{db_order_by};
-
-	main::_log("
+	
+	
+	my $sql=qq{
 		SELECT
-			a500.ID,
 			a500.hash,
 			a500.IDcategory,
 			a500_attrs.*,
+			a500.ID,
 			a500_category.name
 		FROM $env{db_500}.a500 AS a500
 		LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.ID=a500_attrs.ID
@@ -132,32 +143,15 @@ sub execute
 		WHERE
 			$env{db_where}
 			a500.format='$env{db_format}'
-			AND a500.active='Y'
 		ORDER BY
 			$env{db_order_by}
 		LIMIT
 			$env{db_limit}
-	");
+	};
+	
+	main::_log($sql);
 
-	my $list=$main::DBH->Query("
-		SELECT
-			a500.ID,
-			a500.hash,
-			a500.IDcategory,
-			a500_attrs.*,
-			a500_category.name
-		FROM $env{db_500}.a500 AS a500
-		LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.ID=a500_attrs.ID
-		LEFT JOIN  $env{db_500}.a500_category AS a500_category ON a500.IDcategory=a500_category.ID
-		WHERE
-			$env{db_where}
-			a500.format='$env{db_format}'
-			AND a500.active='Y'
-		ORDER BY
-			$env{db_order_by}
-		LIMIT
-			$env{db_limit}
-	");
+	my $list=$main::DBH->Query($sql);
 
 	my $line_counter;
 
@@ -190,6 +184,7 @@ sub execute
 				$XSGN{TMP}=~s|<%IDcategory_name%>|$db0_line{name}|g;
 				#main::_log("a just - $db0_line{name}");
 			}
+			$XSGN{TMP}=~s|<%IDcategory%>|$tmpID|g;
 		}
 		else
 		{$XSGN{TMP}=~s|<%IDcategory_name%>||g;}
