@@ -1,483 +1,54 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
 use Mysql;
-BEGIN {require "/www/TOM/.bin/tom3-init";}
+BEGIN {require "/www/TOM/.bin/tom3-init";$main::debug=0;}
+
 use TOM::Database::connect;
+use TOM::Database::SQL;
+
 %form=
 (
  '-v'		=>	"verbosity",
  '-vv, --v'	=>	"verbosity 2, --v=2",
  '-e'		=>	"execute all modifications",
- '-s'		=>	"show only all modifications",
- '--db'	=>	"use type of database",
+ '--db_h'	=>	"use type of database",
+ '--db_name'	=>	"use name of database",
 );
-if (($FORM{h})||($FORM{help})){&help();}
-if ((!$FORM{e})&&(!$FORM{'s'})){&help();}
+if (($FORM{'h'})||($FORM{'help'})){&help();}
+
+if (!$FORM{'db_h'}){&help();}
 
 #################################################################################################
-#$
-
-my %keyfields=
-(
-# 'ID'			=>	"UNSIGNED",
- 'domain'		=>	"varchar(32) NOT NULL default ''",
- 'domain_sub'	=>	"varchar(64) NOT NULL default ''",
- 'lng'			=>	"char(3) NOT NULL default ''",
- 'active'		=>	"char(1) NOT NULL default 'N'",
- 'time_insert'	=>	"int(10) unsigned NOT NULL default '0'",
- 'time_start'	=>	"int(10) unsigned NOT NULL default '0'",
- 'time_from'	=>	"int(10) unsigned NOT NULL default '0'",
- 'time_end'		=>	"int(10) unsigned default NULL",
- 'time_use'		=>	"int(10) unsigned default NULL",
-);
-
-my @deadapps=qw/
-		a300
-		a400
-		a500
-		a8020
-		a820
-		a900
-		a110
-		a150
-		a1D0
-		a1A0
-		a1B0
-		a410
-		a430
-			/;
-			
-my %pre;
-
-my $prepare;
-
-#open(STDERR,">>stderr.log") || die "Cant redirect STDERR: $!\n"; 
-
-print "DB_types:";
-foreach (keys %TOM::DB)
-{
-	print "$_,";
-}
-print "\n";
-
-my $tab=$FORM{db};
-$tab='main' unless $tab;
-print "USE:$tab\n";
-#exit;
-#print "a";
-
-
-
-use TOM;
-
-#main::_log("ahoj");
-use TOM::Database::connect;
-
-#sub _log
-#{
-#	print "$_[0] $_[1]\n";
-#}
 
 $TOM::DB{'main'}{'name'}="TOM";
+TOM::Database::connect::multi($FORM{'db_h'}) || die "can't connect";
 
-TOM::Database::connect::all('clone',$tab);
+print "connected '$FORM{'db_h'}' database handler\n";
 
-#print "b";
-
-#$main::DB{'main'}->Query("USE TOM;");
-#$main::DB{'main'}->Query("SELECT 5");
-#$main::DB{'main'}->Query("SELECT 5");
-
-#exit;
-
-#$main::DB{'main'}->selectdb("TOM");
-
-#exit;
-#
-
-#my $db0=$DB{main}->Query("INSERT INTO hovno(ahoj) VALUES('bububub')");
-#exit(0);
-
-print "\n";
-
-my %table0;
-my $db0=$DB{clone}->Query("SHOW TABLES");
-while (my @db0_line=$db0->fetchrow)
+if ($FORM{'db_name'})
 {
- $table0{$db0_line[0]}=1;
+	my %out=TOM::Database::SQL::compare::compare_database($FORM{'db_name'},'db_h'=>$FORM{'db_h'});
+	print "compared database '$FORM{'db_name'}'\n";
+	print color 'reset bold yellow';
+	foreach my $SQL(@{$out{'ALTER'}})
+	{
+		print "$SQL\n";
+	}
+	
+	print "Do it? [No/yes]";
+	my $do=<STDIN>;
+	
+	if ($do=~/yes/i)
+	{
+		print color 'reset red';
+		foreach my $SQL(@{$out{'ALTER'}})
+		{
+			print "$SQL\n";
+			TOM::Database::SQL::execute($SQL);
+		}
+	}
+	
 }
 
-#exit(0);
-#print "$DBH\n";
-my $db0=$DB{$tab}->Query("SHOW DATABASES");
-while (my @db0_line=$db0->fetchrow)
-{
- #print "DB:$db0_line[0]\n";
- #next;
-
- next if $db0_line[0] eq "TOM_clone";
- 
- #print "$db0_line[0]\n";
- if ($DB{$tab}->selectdb($db0_line[0]))
- {
- my %table;
- my $db1=$DB{$tab}->Query("SHOW TABLES");
- while (my @db1_line=$db1->fetchrow)
- {
-  $table{$db1_line[0]}=1;
-  #print "+$db1_line[0]\n";
- }
- #next;
- if ($table{_tom3})
- {
-  print "[$db0_line[0]]\n";# if $FORM{v};
-  foreach my $tbl(sort keys %table)
-  {
-   #next;
-   my $nodrop;
-   if ($tbl=~/attrs/){$nodrop=1;} # NESKOR VYRIESIT INAK!!!
-   
-   if ($tbl eq "a400" && $db0_line[0] eq "szlh_sk")
-   {
-   	next;
-   }
-
-   # data o originale
-   if ($tbl=~/(^a0|_(old|backup)$)/)
-   {
-   }
-   elsif (!$table0{$tbl})
-   {
-    print color 'reset bold red';
-    print " +?[$db0_line[0].$tbl]\n";
-    print color 'reset green';
-    
-    if ($tbl eq "_cache" || $tbl eq "_mdl" || $tbl eq "_cache_conf")
-    {     
-      print color 'reset bold yellow';
-      print color 'reset bold red' if $FORM{e};
-      my $exec="DROP TABLE $db0_line[0].$tbl";
-      print "  + $exec\n";
-      if ($FORM{e}){$db1=$DB{$tab}->Query($exec);}
-      print color 'reset green';
-    }
-    
-   }
-   elsif ($table0{$tbl})
-   {
-    if ($FORM{v}>1){print color 'bold green';print " +[$tbl]\n";}
-    #print color 'bold green';print " +[$tbl]\n";
-    print color 'reset green';
-
-=head1
-    my %fields0;
-    my @fields0p;
-    my $db1=$DBH->Query("DESCRIBE $TOM::DB_name_TOM.C$tbl");
-    while (my @db1_line=$db1->fetchrow)
-    {
-     $fields0{$db1_line[0]}=[$db1_line[1],$db1_line[2],$db1_line[3],$db1_line[4],$db1_line[5],$db1_line[6],$db1_line[7]];
-     push @fields0p,$db1_line[0];
-    }
-    my %fields1;
-    my @fields1p;
-    my $db1=$DBH->Query("DESCRIBE $tbl");
-    while (my @db1_line=$db1->fetchrow)
-    {$fields1{$db1_line[0]}=[$db1_line[1],$db1_line[2],$db1_line[3],$db1_line[4],$db1_line[5],$db1_line[6],$db1_line[7]];}
-=cut
-
-    my $create0;
-    my $type0;
-    my @fields0a;
-    my %fields0h;
-    my %keys0h;
-    my $db1=$DB{clone}->Query("SHOW CREATE TABLE $tbl");
-    if (my @db1_line=$db1->fetchrow){$create0=$db1_line[1];$create0=~s|^.*\(|\(|;}
-
-    my $create1;
-    my $type1;
-    my @fields1a;
-    my %fields1h;
-    my %keys1h;
-    my $db1=$DB{$tab}->Query("SHOW CREATE TABLE $tbl");
-    if (my @db1_line=$db1->fetchrow){$create1=$db1_line[1];$create1=~s|^.*\(|\(|;}
-
-    #if ($create0 ne $create1)
-    if ($create0)
-    {
-     #print "$create0\n$create1\n";
-     $create0=~s|\((.*)\)(.*)|\1|s;
-     $type0=$2;$type0=~/TYPE=(\w+)/;$type0=$1;
-
-     $create1=~s|\((.*)\)(.*)|\1|s;
-     $type1=$2;$type1=~/TYPE=(\w+)/;$type1=$1;
-
-     #print "$create0\n$create1\n";
-
-     foreach my $line(split('\n',$create0))
-     {
-      next unless $line;1 while ($line=~s|^ ||);
-      
-#      print "$line\n";
-          
-      $line=~/^`/ && do
-      {$line=~s|,$||;$line=~s|`(.*?)` (.*)|\2|;my $name=$1;
-      
-     
-       if (($keyfields{$name})&&($line ne $keyfields{$name}))
-       {
-#        print "ID $line<>$keyfields{$name}\n";
-	      #print color 'reset bold red';
-	      #print "  + $name=$line\n";
-	      #my $exec="ALTER TABLE TOM_clone.$tbl CHANGE `$name` `$name` $keyfields{$name}";
-	      #print "  + $exec\n";
-	      my $out;
-	      foreach (@deadapps)
-	      {
-	       if (($tbl=~/^$_\_/) || ($tbl eq $_))
-	       {
-	        $out=1;
-	       }
-	      }
-	      
-	      if (!$out)
-	      {
-	       $prepare.="ALTER TABLE TOM_clone.$tbl CHANGE `$name` `$name` $keyfields{$name};\n";
-	      }
-	      
-#	      $prepare.=$
-#	      if ($FORM{e}){if ($db1=$DB{$tab}->Query($exec)){$type1=$type0;}}
-	      #print color 'reset green';
-       }
-      
-      
-       print "  +[0]f $name = $line\n" if ($FORM{v}>2);
-       push @fields0a, $name;$fields0h{$name}=$line; next
-      };
-      $line=~s|,$||;
-      if ($line=~/^PRIMARY KEY/)
-      {
-       $keys0h{PRIMARY}=$line;
-       print "   +[0]k PRIMARY = $line\n" if ($FORM{v}>3);
-      }
-      elsif ($line=~/FOREIGN KEY/)
-      {
-#       $line=~s|^CONSTRAINT `(.*?)` ||;
-#       my $var=$1;$line=~s|REFERENCES `C(.*?)`|REFERENCES `\1`|;
-#       $keys0h{$var}=$line;
-#       print "   +[0]kf $var = $line\n";# if ($FORM{v}>3);
-      }
-      else
-      {
-       $line=~/`(.*?)`/;$keys0h{$1}=$line;
-       print "   +[0]k $1 = $line\n" if ($FORM{v}>3);;
-      }
-      #print "  +[0]k $line\n";
-     }
-
-     foreach my $line(split('\n',$create1))
-     {
-      next unless $line;1 while ($line=~s|^ ||);
-      $line=~/^`/ && do
-      {$line=~s|,$||;$line=~s|`(.*?)` (.*)|\2|;my $name=$1;
-       print "  +[1]f $name = $line\n" if ($FORM{v}>2);
-       push @fields1a, $name;$fields1h{$name}=$line; next
-      };
-      $line=~s|,$||;
-      if ($line=~/^PRIMARY KEY/)
-      {
-       $keys1h{PRIMARY}=$line;
-       print "   +[1]k PRIMARY = $line\n" if ($FORM{v}>3);
-      }
-      elsif ($line=~/FOREIGN KEY/)
-      {
-#       $line=~s|^CONSTRAINT `(.*?)` ||;
-#       my $var=$1;#$line=~s|REFERENCES `C(.*?)`|REFERENCES `\1`|;
-#       $keys1h{$var}=$line;
-#       print "   +[1]kf $var = $line\n";# if ($FORM{v}>3);
-      }
-      else
-      {
-       $line=~/`(.*?)`/;$keys1h{$1}=$line;
-       print "   +[1]k $1 = $line\n" if ($FORM{v}>3);;
-      }
-#      if ($line=~/^PRIMARY KEY/)
-#      {
-#       $keys1h{PRIMARY}=$line;
-#       print "   +[1]k PRIMARY = $line\n" if ($FORM{v}>3);
-#      }
-#      else
-#      {
-#       $line=~/`(.*?)`/;$keys1h{$1}=$line;
-#       print "   +[1]k $1 = $line\n"  if ($FORM{v}>3);
-#      }
-      #print "   +[0]k $line\n" if ($FORM{v}>2);
-     }
-
-
-     # porovnanie typu tabulky :)
-     if ($type0 ne $type1)
-     {
-      print color 'reset bold yellow';
-      print color 'reset bold red' if $FORM{e};
-      my $exec="ALTER TABLE $db0_line[0].$tbl TYPE=$type0";
-      print "  + $exec\n";
-      if ($FORM{e}){if ($db1=$DB{$tab}->Query($exec)){$type1=$type0;}}
-      print color 'reset green';
-     }
-
-     # tuto budem prehladavat zle poradie ale iba v fields0a podla indexu
-     # a v fields1 podla najblizsieho existujuceho indexu???
-     # da sa vobec menit poradie?
-
-     # prehladavam podla originalu a robim add a change
-     my $count;
-     foreach my $field(@fields0a)
-     {
-      if (!$fields1h{$field})
-      {
-       my $plus;
-       print color 'reset bold yellow';
-       print color 'reset bold red' if $FORM{e};
-       if (!$count){$plus.=" FIRST";}
-       elsif ($fields0a[$count-1]){$plus.=" AFTER $fields0a[$count-1]";}
-       my $exec="ALTER TABLE $db0_line[0].$tbl ADD $field $fields0h{$field}$plus";
-       print "  + $exec\n";
-       $db1=$DB{$tab}->Query($exec) if $FORM{e};
-       print color 'reset green';
-       $fields1h{$field}=$fields0h{$field};
-       $count++;
-       next;
-      }
-      if ($fields1h{$field} ne $fields0h{$field})
-      {
-       my $plus;
-       print color 'reset bold yellow';
-       print color 'reset bold red' if $FORM{e};
-       my $exec="ALTER TABLE $db0_line[0].$tbl CHANGE `$field` `$field` $fields0h{$field}$plus";
-       print "  + $exec\n";
-       $db1=$DB{$tab}->Query($exec) if $FORM{e};
-       print color 'reset green';
-       $fields1h{$field}=$fields0h{$field};
-      }
-      $count++;
-     }
-     # po vykonani budu polia rovnake :)
-     @fields1a=@fields0a;
-
-     # zmazem polia co su navyse
-     if (not $tbl=~/_attrs(_arch|)$/)
-     {
-      foreach my $field(keys %fields1h)
-      {
-       #print "-$field\n";
-       if (!$fields0h{$field})
-       {
-        print color 'reset bold yellow';
-        print color 'reset bold red' if $FORM{e};
-        my $exec="ALTER TABLE $db0_line[0].$tbl DROP `$field`";
-        print "  + $exec\n";
-        $db1=$DB{$tab}->Query($exec) if $FORM{e};
-        print color 'reset green';
-        delete $fields1h{$field};
-        next;
-       }
-      }
-     }
-
-
-     # prehladavam podla originalu a robim add a change
-     my $count;
-     foreach my $key(keys %keys0h)
-     {
-      #print "+$key\n";
-      if (!$keys1h{$key})
-      {
-       my $plus=$keys0h{$key};
-
-       #$plus=~s|KEY|INDEX| unless $plus=~/FOREIGN KEY/;
-
-       print color 'reset bold yellow';
-       print color 'reset bold red' if $FORM{e};
-       my $exec="ALTER TABLE $db0_line[0].$tbl ADD $plus";
-       print "  + $exec\n";
-       $db1=$DB{$tab}->Query($exec) if $FORM{e};
-       print color 'reset green';
-       $keys1h{$key}=$keys0h{$key};
-       next;
-      }
-      if ($keys1h{$key} ne $keys0h{$key})
-      {
-       #print "- $keys1h{$key} ne $keys0h{$key}\n";
-       my $plus=$keys0h{$key};
-
-       print color 'reset bold yellow';
-       print color 'reset bold red' if $FORM{e};
-       my $exec;
-       if ($key eq "PRIMARY")
-       {
-        $exec="ALTER TABLE $db0_line[0].$tbl DROP PRIMARY KEY, ADD $plus";
-       }
-       else
-       {
-        $exec="ALTER TABLE $db0_line[0].$tbl DROP KEY $key, ADD $plus";
-       }
-       print "  + $exec\n";
-       $db1=$DB{$tab}->Query($exec) if $FORM{e};
-       print color 'reset green';
-       $keys1h{$key}=$keys0h{$key};
-       next;
-      }
-     }
-
-     # zmazem polia co su navyse
-     if (not $tbl=~/_attrs(_arch|)$/)
-     {
-      foreach my $key(keys %keys1h)
-      {
-       #print "-$field\n";
-       if (!$keys0h{$key})
-       {
-        print color 'reset bold yellow';
-        print color 'reset bold red' if $FORM{e};
-        my $exec="ALTER TABLE $db0_line[0].$tbl DROP INDEX `$key`";
-        print "  + $exec\n";
-        $db1=$DB{$tab}->Query($exec) if $FORM{e};
-        print color 'reset green';
-        delete $fields1h{$field};
-        next;
-       }
-      }
-     }
-
-     # porovnanie typu tabulky :)
-     if (($type0 ne $type1)&&($FORM{e}))
-     {
-      #print color 'reset bold yellow';
-      print color 'reset bold red';
-      my $exec="ALTER TABLE $db0_line[0].$tbl TYPE=$type0";
-      print "  + $exec\n";
-      $db1=$DB{$tab}->Query($exec);
-      print color 'reset green';
-     }
-
-
-    }
-    else
-    {
-     print " +[$tbl]\n" if ($FORM{v}>1);
-    }
-   }
-  }
- }
-
- }
- 
-}
-
- if ($prepare)
- {
-  print "\n\n";
-  print $prepare;
- }
 
 &exit();
