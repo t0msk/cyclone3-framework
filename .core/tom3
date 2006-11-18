@@ -60,6 +60,7 @@ use vars qw/
 	%a210
 	%key
 	/;
+our $sig_term=1;
 
 # C kniznice /* musia byt tu, aby sa dali pouzivat -> musia byt zavedene pri kompilacii */
 use enc;
@@ -73,23 +74,6 @@ use iconv;
 
 
 my $t=track TOM::Debug("TOM engine '$TOM::engine' initializing...");
-
-main::_log("redirecting SIG{ALRM} to exit(0)");
-$SIG{ALRM}=sub # akceptujem ALRM ale nie padom scriptu
-{
-	# nech ide aspon na titulku ked je to killnute uprostred
-	print "Location: http://$ENV{HTTP_HOST}$ENV{REQUEST_URI}\n\n";
-	main::_log("ALRM KILL (relocation) (timeout $TOM::fcgi_timeout secs, lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
-	exit(0);
-};
-
-main::_log("redirecting SIG{ALRM} to exit(0)");
-$SIG{HUP}=sub # akceptujem ( zatial ) HUP
-{
-	print "Location: http://$ENV{HTTP_HOST}$ENV{REQUEST_URI}\n\n";
-	main::_log("ACCEPT HUP (relocation) (lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H ($@ $!)",3,"pub.mng",1);
-	exit(0);
-};
 
 eval
 {
@@ -255,20 +239,12 @@ main::_log("START FCGI PID:$$ domain:$tom::H",3,"pub.mng",1);
 
 while ($req->Accept() >= 0)
 {
-	# ignorujem TERM pocas behu requestu, povoleny je len pocas cakania na dalsi request
-	local $SIG{TERM}=sub 
-	{
-		main::_log("REQUEST TERM (lives ".
-			(time()-$TOM::time_start).
-			" secs, $tom::count requests) PID:$$ domain:$tom::H ($@ $!)",3,"pub.mng",1);
-		$tom::HUP=2; # po dobehnuti tohto requestu na 100% exitnem
-	};
+	local $sig_term=0; # ignorujem TERM pocas behu requestu, povoleny je len pocas cakania na dalsi request
 	
 	$main::request_code=Utils::vars::genhash(8);
 	TOM::Debug::clear_namespaces();
 	my $t_request=track TOM::Debug("request [".($tom::count+1)."/$TOM::max_count]");
 	my $t_preeval=track TOM::Debug("preeval");
-	
 	
 	if (!$tom::count)
 	{
