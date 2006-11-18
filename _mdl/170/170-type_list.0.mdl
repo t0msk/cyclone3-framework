@@ -1,0 +1,26 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+	
+	local %tom::type_c;
+	
+	TOM::TypeID::read_conf($tom::Pm.'/type.conf');
+	
+	foreach (keys %tom::type_c)
+	{
+		$XSGN{'NULL'}=$XSGN{'ITEM'};
+		$XSGN{'NULL'}=~s|<%type%>|$_|g;
+		$XSGN{'NULL'}=~s|<%TypeID%>|$tom::type_c{$_}|g;
+		
+		$XSGN{'TMP'}=~s|<#ITEM#>|$XSGN{'NULL'}|;
+	}
+	
+	return 1;
+}
+1;

@@ -1,0 +1,31 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response IDapp="a170" type="typeid_detail" result="0" code="<$main::request_code>">
+	<result>0</result>
+	<reason>Unknown problem to load TypeID</reason>
+</response>
+</DEFINITION>
+
+<DEFINITION id="RESULT_success">
+<response IDapp="a170" type="typeid_detail" result="1" code="<$main::request_code>">
+	<keys>
+		<#KEY#>
+	</keys>
+</response>
+</DEFINITION>
+
+<DEFINITION id="KEY">
+		<key<#attrs#>/>
+<#KEY#>
+</DEFINITION>
+
+<DEFINITION id="RESULT_failure">
+<response IDapp="a170" type="typeid_detail" result="0" code="<$main::request_code>">
+	<result>0</result>
+	<reason><%reason%></reason>
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

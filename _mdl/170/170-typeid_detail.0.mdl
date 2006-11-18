@@ -1,0 +1,68 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+	
+	if (!$env{'TypeID'})
+	{
+		return 1;
+	}
+	
+	my $path="../../"; # cesta do rootu spravovanej domenu
+	
+	if ($env{'TypeID'}=~/^l_/)
+	{
+		#$path.=""
+	}
+	elsif ($env{'TypeID'}=~/^m_/)
+	{
+		$path.="../";
+	}
+	elsif ($env{'TypeID'}=~/^g_/)
+	{
+		$path=$TOM::P."/";
+	}
+	
+	$path.="_type";
+	
+	my $filename=$path.'/'.$env{'TypeID'}.'.pub.type';
+	
+	if (not -e $filename)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure'};
+		$XSGN{'TMP'}=~s|<%reason%>|File '$filename' not exists|;
+		return 1;
+	}
+	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	
+	open (TypeID,'<'.$filename) || return 1;
+	my $filedata;
+	while (my $line=<TypeID>)
+	{
+		$filedata.=$line;
+	}
+	
+	# parse CONF_KEY
+	
+	
+	while ($filedata=~s/<CONF_KEY(.*?)\/>//)
+	{
+		my $attrs=$1;
+		
+		$XSGN{'NULL'}=$XSGN{'KEY'};
+		
+		$XSGN{'NULL'}=~s|<#attrs#>|$attrs|;
+		
+		$XSGN{'TMP'}=~s|<#KEY#>|$XSGN{'NULL'}|;
+	}
+	
+	
+	return 1;
+}
+1;

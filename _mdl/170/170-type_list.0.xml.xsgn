@@ -1,0 +1,18 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response IDapp="a170" type="type_list" code="<$main::request_code>">
+<#ITEM#>
+</response>
+</DEFINITION>
+
+<DEFINITION id="ITEM">
+	<item>
+		<type><![CDATA[<%type%>]]></type>
+		<TypeID><![CDATA[<%TypeID%>]]></TypeID>
+	</item>
+<#ITEM#>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
