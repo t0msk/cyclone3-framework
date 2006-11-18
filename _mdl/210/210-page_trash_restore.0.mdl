@@ -1,0 +1,87 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	my $tr=new TOM::Database::SQL::transaction('db_h'=>"main");
+	
+	# kvoli obnoveniu polozky z trashu musim najst pre neho novy IDcharindex
+	# rovno v roote
+	my $ID_charindex=App::020::SQL::functions::tree::find_new_child(
+		undef,
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a210_page",
+	);
+	
+	if (!$ID_charindex)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_set'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		return 1;
+	}
+	
+	# polozku updatnem bez journalingu na novy IDcharindex
+	my $out=App::020::SQL::functions::update(
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a210_page",
+		'ID' => $env{'ID'},
+		'columns' =>
+		{
+			'ID_charindex' => "'$ID_charindex'",
+		}
+	);
+	
+	if (!$out)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_set'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		return 1;
+	}
+	
+	$out=App::020::SQL::functions::trash_restore(
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a210_page",
+		'-journalize' => 1,
+		'ID'   => $env{'ID'}
+	);
+	
+	if ($out)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		$tr->close();
+		return 1;
+	}
+	else
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_set'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		return 1;
+	}
+	
+	return 1;
+}
+
+
+
+1;

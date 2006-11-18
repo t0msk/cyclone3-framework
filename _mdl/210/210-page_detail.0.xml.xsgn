@@ -1,0 +1,49 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response type="page_detail" IDapp="a210" IDitem="<%ID%>" result="0" code="<$main::request_code>">
+	<result>0</result>
+	<reason>Default error message.</reason>
+</response>
+</DEFINITION>
+
+<DEFINITION id="RESULT_success">
+<response type="page_detail" IDapp="a210" IDitem="<%ID%>" result="1" code="<$main::request_code>">
+	<ID><%ID%></ID>
+	<ID_entity><%ID_entity%></ID_entity>
+	<ID_charindex><![CDATA[<%ID_charindex%>]]></ID_charindex>
+	<name><![CDATA[<%name%>]]></name>
+	<name_url><![CDATA[<%name_url%>]]></name_url>
+	<datetime_create><![CDATA[<%datetime_create%>]]></datetime_create>
+	<t_name><![CDATA[<%t_name%>]]></t_name>
+	<is_default><![CDATA[<%is_default%>]]></is_default>
+	<lng><![CDATA[<%lng%>]]></lng>
+	<status><![CDATA[<%status%>]]></status>
+	<keys>
+<#KEY#>
+	</keys>
+</response>
+</DEFINITION>
+
+<DEFINITION id="KEY">
+		<<%key%>><[CDATA[<%value%>]]></<%key%>>
+<#KEY#>
+</DEFINITION>
+
+<DEFINITION id="RESULT_failure_get">
+<response type="page_detail" IDapp="a210" IDitem="<%ID%>" result="0" code="<$main::request_code>">
+	<result>0</result>
+	<reason>Can't get data</reason>
+</response>
+</DEFINITION>
+
+<DEFINITION id="RESULT_failure_no_input">
+<response type="page_detail" IDapp="a210" IDitem="<%ID%>" result="0" code="<$main::request_code>">
+	<result>0</result>
+	<reason>Not enough information to act. Missing parameter '<%missing_parameter%>'</reason>
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
+

@@ -1,0 +1,75 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020;
+
+=head1
+
+parent - zobraz parent element
+ID_charindex - vsetko od ID_charindex
+depth - hlbku
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	my %a210=App::020::SQL::functions::get_ID(
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a210_page",
+		'ID'      => $env{'ID'},
+		'columns' => { '*' => 1 }
+	);
+	
+	if (not $a210{'status'}=~/^[YN]$/)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_get'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	
+	foreach (keys %a210)
+	{
+		$XSGN{'TMP'}=~s|<%$_%>|$a210{$_}|g;
+	}
+	
+	
+	my $cvml = new CVML(data=>$a210{'t_keys'});
+	# a vytvor z neho hash
+	my %key = %{$cvml->{'hash'}};
+	foreach (keys %key)
+	{
+		main::_log("key '$_'='$key{$_}'");
+		$XSGN{'NULL'}=$XSGN{'KEY'};
+		
+		$XSGN{'NULL'}=~s|<%key%>|$_|g;
+		$XSGN{'NULL'}=~s|<%value%>|$key{$_}|g;
+		
+		$XSGN{'TMP'}=~s|<#KEY#>|$XSGN{'NULL'}|;
+	}
+	
+	
+	return 1;
+}
+
+
+
+1;

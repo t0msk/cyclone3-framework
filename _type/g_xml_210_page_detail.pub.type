@@ -6,13 +6,11 @@
 <MODULE>
 	<VAR id="-type" value="mdl" />
 	<VAR id="-category" value="210" />
-	<VAR id="-name" value="page_tree" />
+	<VAR id="-name" value="page_detail" />
 	<VAR id="-global" value="1" />
 	<VAR id="-TMP" value="OUTPUT" />
 	<VAR id="-xlng" value="<$main::FORM{'lng'}>" />
 	<VAR id="-xsgn" value="xml" />
 	<VAR id="-xsgn_global" value="1" />
-		<VAR id="status" value="<$main::FORM{'status'}>" />
-		<VAR id="tree" value="0" />
-		<VAR id="db_order" value="<$main::FORM{'db_order'}>" />
+		<VAR id="ID" value="<$main::FORM{'ID'}>" />
 </MODULE>
