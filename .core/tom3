@@ -505,6 +505,7 @@ while ($req->Accept() >= 0)
 			main::_log("lighthack with string QUERY_STRING_PLUS='$ENV{'QUERY_STRING_PLUS'}'");
 		}
 		
+		$ENV{'QUERY_STRING_orig'}=$ENV{'QUERY_STRING'};
 		
 		# secure kodovanie url
 		$env{admin}="request" if $ENV{'QUERY_STRING'}=~s|^admin||;
@@ -1168,7 +1169,7 @@ while ($req->Accept() >= 0)
 		###################################################################
 		
 		$pub::output_log=1;
-		my $t_process=track TOM::Debug('processing');
+		my $t_process=track TOM::Debug("processing TypeID='$FORM{TID}'");
 		
 		
 		my $t_TypeID=track TOM::Debug("TypeID '$FORM{TID}'");

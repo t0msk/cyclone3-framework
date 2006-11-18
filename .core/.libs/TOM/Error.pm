@@ -80,7 +80,14 @@ sub engine_pub
 	}
 	
 	$email=~s|<%uri-parsed%>|$tom::H_www/?$main::ENV{QUERY_STRING_FULL}|g;
-	$email=~s|<%uri-orig%>|$tom::H_www$main::ENV{REQUEST_URI}|g;
+	if ($main::ENV{'QUERY_STRING_orig'})
+	{
+		$email=~s|<%uri-orig%>|$tom::H_www$main::ENV{REQUEST_URI}?$main::ENV{'QUERY_STRING_orig'}|g;
+	}
+	else
+	{
+		$email=~s|<%uri-orig%>|$tom::H_www$main::ENV{REQUEST_URI}|g;
+	}
 	$email=~s|<%uri-referer%>|$main::ENV{HTTP_REFERER}|g;
 	#$email=~s|<%page_code%>|$main::request_code|g;
 	
