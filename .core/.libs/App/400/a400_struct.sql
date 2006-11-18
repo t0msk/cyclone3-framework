@@ -18,7 +18,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/` (
   `title` varchar(100) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `subtitle` varchar(150) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `tiny` text NOT NULL,
-  `full` text NOT NULL,
+  `full` mediumtext NOT NULL,
   `visits` mediumint(8) unsigned NOT NULL default '0',
   `link` int(10) unsigned NOT NULL default '0', -- linkovanie sa v praxi už nepoužíva
   `xrelated` text NOT NULL,
@@ -54,7 +54,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_arch` (
   `title` varchar(100) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `subtitle` varchar(150) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `tiny` text NOT NULL,
-  `full` text NOT NULL,
+  `full` mediumtext NOT NULL,
   `visits` mediumint(8) unsigned NOT NULL default '0',
   `link` int(10) unsigned NOT NULL default '0', -- linkovanie sa v praxi už nepoužíva
   `xrelated` text NOT NULL,
