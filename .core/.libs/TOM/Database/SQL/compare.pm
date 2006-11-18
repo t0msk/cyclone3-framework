@@ -313,6 +313,7 @@ sub compare_database
 	}
 	
 	$t->close();
+	return %output;
 }
 
 
