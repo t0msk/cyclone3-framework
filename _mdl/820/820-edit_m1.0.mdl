@@ -7,7 +7,7 @@ use utf8;
 use strict;
 use CVML;
 
-our $authors = "nemsak\@webcom.sk";
+our $authors = "nemsak\@webcom.sk;roman.fordinal\@comsultia.com";
 
 =head1 NAME
 create_m1
@@ -37,12 +37,17 @@ sub execute
 		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
 	}
 	
-	if((exists($XSGN{'TMP_unlogged'})) && ($main::USRM{'logged'} eq 'N'))
-	{ $XSGN{TMP}=$XSGN{'TMP_unlogged'}; }
-
-
-	if($env{action}=='execute'){
-
+	if (
+		(exists($XSGN{'TMP_unlogged'}))
+		&& ($main::USRM{'logged'} eq 'N')
+	)
+	{
+		$XSGN{TMP}=$XSGN{'TMP_unlogged'};
+	}
+	
+	
+	if( $env{action} eq "execute" )
+	{
 		if(
 			($env{'login_required'}) && ($main::USRM{'logged'} eq 'Y')
 			||
@@ -51,22 +56,23 @@ sub execute
 		{
 			$env{'db_820'}=Tomahawk::Getmdlvar("820","db") unless $env{'db_820'};
 			$env{'db_820'}=$TOM::DB{main}{name} unless $env{'db_820'};
-		
+			
 			$env{'db_active'}="N" unless $env{'db_active'};
 			
 			$env{'db_lng'}="" unless $env{'db_lng'};
-		
+			
 			$env{'IDcharindex_chars'}=Tomahawk::Getmdlvar("820","a820-IDcharindex_chars") unless ($env{IDcharindex_chars});
 			$env{'IDcharindex_chars'}=2 unless ($env{IDcharindex_chars});
-		
+			
 			main::_log("IDcharindex_chars: $env{IDcharindex_chars}");
-		
+			
 			use TOM::Utils::charindex;
-		
+			
 			my $finalID;
 			my $finalIDattrs;
-	
-			if($env{db_ID}){
+			
+			if($env{db_ID})
+			{
 				#COMMENT: we have an ID, let's check if it exists for the given language
 				my $db0=$main::DB{main}->Query("
 					SELECT
@@ -80,13 +86,15 @@ sub execute
 				");
 				if($db0)
 				{
-					if (my %db0_line = $db0->FetchHash()){
-
+					if (my %db0_line = $db0->FetchHash())
+					{
 						#COMMENT: success, we can continue with the following scope
 						$finalID=$db0_line{'ID'};
 						$finalIDattrs=$db0_line{'IDattrs'};
 					}
-				}else{
+				}
+				else
+				{
 					main::_log("forum '$env{db_ID}' with lng '$env{db_lng}' doesn't exist! creating...");
 					#COMMENT: failure, we have to create a language version for this id
 					
@@ -97,7 +105,7 @@ sub execute
 							$env{db_820}.a820
 						SET
 							ID='$env{db_ID}',
-							IDattrs=$env{'db_IDname'},
+							IDattrs='$env{'db_IDname'}',
 							IDcategory='',
 							createtime='$env{db_createtime}',
 							name='',
@@ -147,7 +155,10 @@ sub execute
 						main::_log("failure! could not insert forum '$finalID' (lng: '$env{db_lng}')");
 					}
 				}
-			}else{
+			}
+			else
+			{
+				main::_log("inserting new forum");
 				my $db0=$main::DB{main}->Query("
 					SELECT
 						ID
@@ -159,6 +170,7 @@ sub execute
 				");
 				if($db0)
 				{
+					main::_log("selected last ID");
 					if(my %db0_line=$db0->FetchHash())
 					{
 						my $object=TOM::Utils::charindex::find->new
@@ -197,14 +209,16 @@ sub execute
 						$finalID=sprintf("%0$env{IDcharindex_chars}d", $finalID);
 					}
 					
+					main::_log("finalID='$finalID'");
+					
 					$env{db_createtime}=$main::time_current;
 					
-					my $db1=$main::DB{main}->Query("
+					my $db1=$main::DB{'main'}->Query("
 						INSERT INTO
 							$env{db_820}.a820
 						SET
 							ID='$finalID',
-							IDattrs=$env{'db_IDname'},
+							IDattrs='$env{'db_IDname'}',
 							IDcategory='',
 							createtime='$env{db_createtime}',
 							name='',
@@ -250,12 +264,17 @@ sub execute
 							#COMMENT: we are expecting this to pass, due to previous successes (maybe to be rewritten later to improve security)
 						}
 					}
+					else
+					{
+						main::_log("error - ".$main::DB{'main'}->errmsg());
+					}
 				}
 			}
 			
 			#COMMENT: changetime v tabulke neexistuje!!! doplnit?
 			#$env{db_changetime}=$main::time_current;
-			if(($finalID) && ($finalIDattrs)){
+			if(($finalID) && ($finalIDattrs))
+			{
 				#COMMENT: everything is alright, we are saving/updating an existing forum (doesn't matter now, if it existed previously, or was created by previous scope)
 				$env{db_ID}=$finalID;
 				$env{db_IDattrs}=$finalIDattrs;
@@ -290,7 +309,9 @@ main::_log("UPDATE $env{db_820}.a820 SET IDcategory='$env{db_IDcategory}', name=
 					}
 				}				
 				
-			}else{
+			}
+			else
+			{
 				#COMMENT: something failed previously, returning failure design - to be edited later, to support customized failure designs for different failures in previous scope
 				main::_log("failure! could not insert forum");
 				$XSGN{'TMP'}=$XSGN{'TMP_result_failure'};
@@ -513,6 +534,7 @@ main::_log("UPDATE $env{db_820}.a820 SET IDcategory='$env{db_IDcategory}', name=
 		main::_log("nikto od nas nic neste, nemame action");
 	}
 =cut
+	main::_log("exiting");
 	return 1;
 }
 
