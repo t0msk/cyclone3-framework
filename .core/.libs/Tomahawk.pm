@@ -629,35 +629,23 @@ sub module
 	
 	
 	
-	#Tomahawk::debug::mdllog(1,"executing module ".$mdl_C{-name}."/".$mdl_C{-version}."/".$mdl_C{-global});
 	main::_log("executing module ".$mdl_C{-name}."/".$mdl_C{-version}."/".$mdl_C{-global});
 	main::_log("secure eval");
-	#Tomahawk::debug::mdllog(2,"secure eval");
 	
 	# zapinam defaultne debug, ktory mozem v module vypnut
 	$Tomahawk::module::debug_disable=0;
 	$Tomahawk::module::authors=""; # vyprazdnim zoznam authorov
 	
 	# V EVALKU OSETRIM CHYBU RYCHLOSTI A SPATNEHO MODULU
-	#$main::time_modules->start();
 	eval
 	{
-		#local $SIG{__DIE__} = sub {return};
-		local $SIG{ALRM} = sub {die "Timed out $mdl_C{-ALRM} sec.\n"};
-		#  local $SIG{__WARN__} = sub {die "warn"};
-		
+		# registering alarm
+		my $action_die = POSIX::SigAction->new(
+			sub {die "Timed out $mdl_C{-ALRM} sec.\n"},
+			$TOM::Engine::pub::SIG::sigset,
+			&POSIX::SA_NODEFER);
+		POSIX::sigaction(&POSIX::SIGALRM, $action_die);
 		Time::HiRes::alarm($mdl_C{-ALRM});
-		
-#		eval
-#		{
-#			package Tomahawk::module;
-#			use encoding 'utf8';
-#			use open ':utf8', ':std';
-#			use encoding 'utf8';
-#			use utf8;
-#			use strict;
-#			package Tomahawk;
-#		};
 		
 		if (not do $mdl_C{P_MODULE}){$tom::ERR="$@ $!";die "pre-compilation error: $@ $!\n";}#- $! $@\n";
 		

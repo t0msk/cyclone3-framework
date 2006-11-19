@@ -239,6 +239,7 @@ main::_log("START FCGI PID:$$ domain:$tom::H",3,"pub.mng",1);
 
 while ($req->Accept() >= 0)
 {
+	alarm($TOM::fcgi_timeout); # zacnem pocitat X sekund kym nezbehne request
 	local $sig_term=0; # ignorujem TERM pocas behu requestu, povoleny je len pocas cakania na dalsi request
 	
 	$main::request_code=Utils::vars::genhash(8);
@@ -249,20 +250,9 @@ while ($req->Accept() >= 0)
 	if (!$tom::count)
 	{
 		#
-		# pri uplne prvom requeste akceptujem tento process za
-		# zivotaschopny a tak presmerujem TERM a HUP volania aby nebol
-		# zbytocne zabity
+		# pri uplne prvom requeste akceptujem tento process za zivotaschopny
 		#
 		my $t_ready=track TOM::Debug("request_first");
-		main::_log("redirecting SIG{HUP} to please_wait");
-		$SIG{HUP}=sub # akceptujem do premennej HUP ( vykonam az po vygenerovani stranky )
-		{
-			main::_log("ACCEPT HUP (lives ".
-				(time()-$TOM::time_start).
-				" secs, $tom::count requests) PID:$$ domain:$tom::H ($@ $!)",3,"pub.mng",1);
-			$tom::HUP=1;
-		};
-		
 		main::_log("FCGI IS READY (first request) PID:$$ domain:$tom::H",3,"pub.mng",1);
 		
 		$t_ready->close();
@@ -2394,11 +2384,14 @@ while ($req->Accept() >= 0)
 			($tom::HUP == 2)
 		)
 	{
-		main::_log("SHUTDOWN (error mode) (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
+		main::_log("SHUTDOWN (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
 		Tomahawk::shutdown();
 	}
 	
 	$main::request_code="00000000";
+	# re-registering ALARM
+	POSIX::sigaction(&POSIX::SIGALRM, $TOM::Engine::pub::SIG::action_exit);
+	alarm($TOM::fcgi_timeout);
 } # end of while
 ######################################################################################
 ######################################################################################
