@@ -211,7 +211,6 @@ $where
 			$XSGN{'NULL'}=~s|<%ID_parent%>|$entity->{'ID_parent'}|g;
 			$XSGN{'NULL'}=~s|<%name%>|$entity->{'name'}|g;
 			$XSGN{'NULL'}=~s|<%name_url%>|$entity->{'name_url'}|g;
-			$XSGN{'NULL'}=~s|<%path%>|$entity->{'path'}|g;
 			$XSGN{'NULL'}=~s|<%datetime_create%>|$entity->{'datetime_create'}|g;
 			$XSGN{'NULL'}=~s|<%t_name%>|$entity->{'t_name'}|g;
 			$XSGN{'NULL'}=~s|<%status%>|$entity->{'status'}|g;
