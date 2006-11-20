@@ -63,8 +63,6 @@ use vars qw/
 our $sig_term=1;
 
 # C kniznice /* musia byt tu, aby sa dali pouzivat -> musia byt zavedene pri kompilacii */
-use enc;
-use enc2;
 use enc3;
 use iconv;
 
@@ -525,22 +523,7 @@ while ($req->Accept() >= 0)
 					if ($ENV{'QUERY_STRING'}=~s/^(.*)-(.*?)-v(\d)$//) #
 					{
 						main::_log("query is encoded string '$1' by key named '$2' version '$3'");
-						#_log("decode ".$1." ".$2." v".$3);
-						if ($3 eq "1")
-						{
-							main::_log("version 1 decoding");
-							#$ENV{'QUERY_STRING'}=enc::dec($1,$tom::type_codes{$2});
-							$ENV{'QUERY_STRING'}=enc::dec($1,$tom::code_keys{$2}{key});
-							main::_log("output QUERY_STRING='$ENV{'QUERY_STRING'}'");
-						}
-						elsif ($3 eq "2")
-						{
-							main::_log("version 2 decoding");
-							#$ENV{'QUERY_STRING'}=enc2::dec($1,$tom::type_codes{$2});
-							$ENV{'QUERY_STRING'}=enc2::dec($1,$tom::code_keys{$2}{key});
-							main::_log("output QUERY_STRING='$ENV{'QUERY_STRING'}'");
-						}
-						elsif (($3 eq "3") && ($tom::code_keys{$2}{key}))
+						if (($3 eq "3") && ($tom::code_keys{$2}{key}))
 						{
 							main::_log("version 3 decoding");
 							#
@@ -560,12 +543,6 @@ while ($req->Accept() >= 0)
 						{
 							$rewrite_301=1;
 						}
-					}
-					#elsif ($ENV{'QUERY_STRING'}=~s/^(.*)-(.*?)-v(.*?)$//) #
-					elsif (($ENV{'QUERY_STRING'}=~s/^(.*)-(.*?)$//)&&($tom::code_keys{$2}{key})) # stary typ liniek
-					{
-						main::_deprecated("decode QUERY_STRING old format with hash '$1' and key named '$2'");
-						$ENV{'QUERY_STRING'}=enc::dec($1,$tom::code_keys{$2}{key});
 					}
 					else
 					{
@@ -2015,7 +1992,6 @@ while ($req->Accept() >= 0)
 						($IAdm)||($ITst)
 					)
 				{
-					#utf8::encode($var);
 					main::_log("convert string '$var'",1,"lib.err",1);
 					my $link_md5=Digest::MD5::md5_hex(Encode::encode_utf8($var));
 					$main::DB{sys}->Query("
