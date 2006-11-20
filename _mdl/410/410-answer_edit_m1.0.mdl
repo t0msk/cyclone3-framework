@@ -21,6 +21,9 @@ sub execute
 		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
 	}
 
+	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
+	$env{db_410}="TOM" unless $env{db_410};
+
 	# ID
 	# IDquestion
 	# answer
@@ -47,13 +50,13 @@ sub execute
 	if ( $env{db_ID} )
 	{
 		my $find = "
-		SELECT
-			ID, lng
-		FROM
-			TOM.a410_answer
-		WHERE
-			ID=$env{db_ID} AND
-			lng='$env{db_lng}'
+			SELECT
+				ID, lng
+			FROM
+				$env{db_410}.a410_answer
+			WHERE
+				ID=$env{db_ID} AND
+				lng='$env{db_lng}'
 		";
 		my $dbfind = $main::DB{main}->Query( $find ); # Zistim, ci anketa existuje
 		$answerexists = 1 if $dbfind->numrows;
@@ -65,7 +68,8 @@ sub execute
 		if ( $answerexists )
 		{
 			my $del = "
-			UPDATE TOM.a410_answer
+			UPDATE
+				$env{db_410}.a410_answer
 			SET
 				active='N'
 			WHERE
@@ -104,10 +108,11 @@ sub execute
 		$new_cols .= 'lng'; $new_vals .= "'$env{db_lng}'";
 
 		my $new = "
-		INSERT INTO TOM.a410_answer
-		( $new_cols )
-		VALUES
-		( $new_vals )
+			INSERT INTO
+				$env{db_410}.a410_answer
+			( $new_cols )
+			VALUES
+			( $new_vals )
 		";
 
 		my $dbnew = $main::DB{main}->Query( $new );
@@ -127,13 +132,13 @@ sub execute
 	}
 
 	my $upd = "
-	UPDATE
-		TOM.a410_answer
-	SET
-		$updinfo
-	WHERE
-		ID=$env{db_ID} AND
-		lng='$env{db_lng}'
+		UPDATE
+			$env{db_410}.a410_answer
+		SET
+			$updinfo
+		WHERE
+			ID=$env{db_ID} AND
+			lng='$env{db_lng}'
 	";
 main::_log($upd);
 	my $dbupd = $main::DB{main}->Query( $upd );

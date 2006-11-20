@@ -21,8 +21,13 @@ sub execute
 		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
 	}
 
-	return 1 unless $env{db_ID};
+	if(!$env{db_ID}){
+		main::_log('no ID given, finishing');
+		return 1;
+	}
 
+	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
+	$env{db_410}="TOM" unless $env{db_410};
 
 	my $sql = "
 	SELECT
@@ -37,7 +42,7 @@ sub execute
 		lng,
 		active
 	FROM
-		TOM.a410_answer
+		$env{db_410}.a410_answer
 	WHERE
 		ID=$env{db_ID} AND
 		lng='$env{db_lng}'
