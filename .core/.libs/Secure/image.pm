@@ -3,6 +3,7 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
+
 use Image::Magick;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}

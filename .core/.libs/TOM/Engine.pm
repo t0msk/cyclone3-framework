@@ -37,7 +37,7 @@ knižnice:
 
 =cut
 
-use Fcntl;
+use Fcntl; # 300KB
 
 use CVML;
 
@@ -46,7 +46,7 @@ use TOM::rev;
 use TOM::Error;
 use TOM::Temp::file;
 
-use DateTime;
+use DateTime; # mem:1.5MB
 use Time::Local; # pre opacnu konverziu casu
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Digest::MD5  qw( md5 md5_hex md5_base64 );

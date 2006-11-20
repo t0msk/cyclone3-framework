@@ -23,12 +23,12 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 		mkdir $tom::P."/_logs/_debug" if (! -e $tom::P."/_logs/_debug");
 	}
 	
-	use Mysql;
+	use Mysql; # 3.5MB
 	use Text::Iconv;
 	use Compress::Zlib;
 	use MIME::Base64;
 	use File::Type;
-	use Image::Magick;
+	#use Image::Magick; # 2.8MB
 	
 	
 	# CORE Engine kniznice
