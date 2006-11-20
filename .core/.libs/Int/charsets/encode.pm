@@ -224,29 +224,21 @@ our %table=
 
 sub UTF8_ASCII_
 {
- #print "mam - $_[0]  ".ord($_[0])." \n";
- return $table{ord($_[0])} if $table{ord($_[0])};
- my ($package, $filename, $line, $subroutine,
-     $hasargs, $wantarray, $evaltext, $is_require) = caller(1);
- main::_log("Int::charsets::encode::* ASCII from UTF-8 \\$_[0] {".(ord($_[0]))."} - unknown from ($package/$filename/$line)",1,"lib.err",1) if (ord($_[0])>127);
- 
- return "\\utf{".ord($_[0])."}" if ord($_[0])>127;
- 
- return $_[0];# if ord($_[0])<255;
+	return $table{ord($_[0])} if $table{ord($_[0])};
+	
+	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require) = caller(1);
+	main::_log("Int::charsets::encode::* ASCII from UTF-8 \\$_[0] {".(ord($_[0]))."} - unknown from ($package/$filename/$line)",1,"lib.err",1) if (ord($_[0])>127);
+	return "\\utf{".ord($_[0])."}" if ord($_[0])>127;
+	
+	return $_[0];
 }
 
 sub UTF8_ASCII
 {
- my $text=shift;
- 
- #utf8::decode($text);# if utf8::is_utf8($null);
- #utf8::decode($text) if utf8::is_utf8($null);
- #$text=~s/Â / /g; # utf8 medzery
- $text=~s/([^a-zA-Z0-9\s])/UTF8_ASCII_($1)/eg;
- 
- # teoreticky -_
- #utf8::encode($text);
- return $text;
+	my $text=shift;
+	utf8::decode($text) unless utf8::is_utf8($text);
+	$text=~s/([^a-zA-Z0-9\s])/UTF8_ASCII_($1)/eg;
+	return $text;
 }
 
 
