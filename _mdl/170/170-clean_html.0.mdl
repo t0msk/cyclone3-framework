@@ -1,0 +1,45 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+$authors="nemsak\@webcom.sk";
+use strict;
+
+use TOM::Text::format;
+
+=head1 NAME
+clean_html
+
+=head1 HEAD_VERSION_BUILD
+1.06071004
+
+=head1 DESCRIPTION
+preformatovanie html, vycistenie od prebytocnych/invalidnych tagov
+
+=head1 CHANGES
+2006-07-10 - deb00t
+	- first make
+=cut
+
+sub execute
+{
+	my %env=@_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	$env{html_input}=TOM::Text::format::html_clean($env{html_input});
+	$XSGN{TMP}=~s|<%output%>|$env{html_input}|;
+
+	return 1;
+}
+
+1;

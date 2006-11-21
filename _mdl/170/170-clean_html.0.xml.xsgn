@@ -1,0 +1,10 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response IDapp="a0" type="clean_html">
+	<result><![CDATA[<%output%>]]></result>
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
