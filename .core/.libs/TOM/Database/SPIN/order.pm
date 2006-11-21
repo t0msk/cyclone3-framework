@@ -269,6 +269,8 @@ sub fsklWriteObj
 	};
 	my $db0 = $main::DB{'spin'}->prepare( $sql );
 	
+	my $price_ID=$env{'price_ID'} || $main::USRM{'session'}{'SPIN'}{'price_ID'} || 2;
+	
 	die "$DBI::errstr" unless $db0;
 	
 	#my $date=$tom::Fmday.'.'.$Utils::datetime::MONTHS{en}[$tom::Tmom-1].'.'.$tom::Fyear;
@@ -301,7 +303,7 @@ sub fsklWriteObj
 	$db0->bind_param(":acKodDodavky",undef);
 	$db0->bind_param(":acKodDopravy",$env{'acKodDopravy'});
 	$db0->bind_param(":acObjednal",undef);
-	$db0->bind_param(":anDruhCenyid",$main::USRM{'session'}{'SPIN'}{'price_ID'});
+	$db0->bind_param(":anDruhCenyid",$price_ID);
 	$db0->bind_param(":adRabat",$main::USRM{'session'}{'SPIN'}{'purchaser_rebate1'});
 	$db0->bind_param(":adRabat2",$main::USRM{'session'}{'SPIN'}{'purchaser_rebate2'});
 	$db0->bind_param(":adSplatnost",$main::USRM{'session'}{'SPIN'}{'purchaser_payback'} || 14);
@@ -434,7 +436,7 @@ sub fsklWriteRObj
 #	my $price=&fsofGetPrice('product_ID'=>$env{'anProduktid'})
 #				|| &fsofGetPrice('product_ID'=>$env{'anProduktid'},'price_ID'=>1);
 	
-	my $price_ID=$main::USRM{'session'}{'SPIN'}{'price_ID'} || 2;
+	my $price_ID=$env{'price_ID'} || $main::USRM{'session'}{'SPIN'}{'price_ID'} || 2;
 #	my $price;
 	
 	
@@ -474,7 +476,7 @@ sub fsklWriteRObj
 	$db0->bind_param(":adTypRabatu1",$rebate{'rebate_type'});
 	$db0->bind_param(":adRabat2",$rebate{'rebate2'});
 	$db0->bind_param(":adTypRabatu2",$rebate{'rebate_type2'});
-	$db0->bind_param(":anDruhCenyid",$main::USRM{'session'}{'SPIN'}{'price_ID'});
+	$db0->bind_param(":anDruhCenyid",$price_ID);
 	$db0->bind_param(":anTypPDPid",undef);
 	$db0->bind_param(":adtDatumPln",$date2);
 	$db0->bind_param(":adtObjednatOd",undef);
