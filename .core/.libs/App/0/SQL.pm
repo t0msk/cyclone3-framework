@@ -8,6 +8,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 our @ISA=("App::0::SQL::functions"); # pytam si abstrakciu
 
 
+use TOM::Database::SQL;
 
 
 sub _new
@@ -134,10 +135,26 @@ sub _execute
 	
 	eval
 	{
-		local *STDERR;open(STDERR,">>/dev/null") || die "Cant redirect STDERR: $!\n";  
-		$pointer=$self->{DBH}->Query($query) || die "SQL ERROR >>".$query."<< :".$self->{DBH}->errstr();
-	};  
-	return undef if $self->{errstr}=$@;  
+		local *STDERR;open(STDERR,">>/dev/null") || die "Cant redirect STDERR: $!\n";
+		
+		my %sth=TOM::Database::SQL::execute($query,'db_h'=>"main",'quiet'=>0,'log'=>0);
+		if ($sth{'sth'})
+		{
+			$pointer=$sth{'sth'};
+		}
+		else
+		{
+			die "SQL ERROR: ".$sth{'err'};
+		}
+		
+	};
+	
+	if ($@)
+	{
+		die "$@";
+	}
+	
+	return undef if $self->{errstr}=$@;
 	
 	return $pointer;
 }
