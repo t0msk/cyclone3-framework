@@ -254,8 +254,9 @@ sub GetProducts
 	{
 		my @lim=split(',',$env{'limit'});
 		$lim[0]++;
-		$lim[1]+=$lim[0];
+		$lim[1]=$lim[0]+$lim[1]-1;
 		$limit="WHERE NUM>=$lim[0] AND NUM<=$lim[1]";
+		main::_log("limit='$limit'");
 	}
 	else
 	{
@@ -285,14 +286,14 @@ sub GetProducts
 				dl.ffakvuepvalues(produkt_id,'0005') "description",
 				dl.ffakvuepvalues(produkt_id,'0006') "new",
 				
-				row_number() over (order by nazov_produktu) "NUM",
+				row_number() over (order by produkt_id DESC) "NUM",
 				typ_produktu "type"
 			FROM
 				dl.sof_view_produkt
 			WHERE
 				mandant_id >= 0
 				$where
-			ORDER BY nazov_produktu
+			ORDER BY produkt_id DESC
 		)
 		$limit
 	};    # Prepare and execute SELECT
@@ -430,11 +431,14 @@ sub GetProductReserved
 			"prod".produkt_id "ID_product",
 			"prod".mnozstvo "amount",
 			"prod".dod_mnozstvo "amount_delivered",
-			"prod".mnozstvo-"prod".dod_mnozstvo "reserved"
+			"prod".mnozstvo-"prod".dod_mnozstvo "reserved",
+			"obj".stav_dokladu "stav"
 		FROM
-			dl.sof_riadok_obj "prod"
+			dl.sof_riadok_obj "prod",
+			dl.sof_objednavka "obj"
 		WHERE
 			"prod".produkt_id = $env{product_ID} AND
+			"obj".ep_id = "prod".mep_id AND
 			"prod".dod_mnozstvo < "prod".mnozstvo
 	};
 	
@@ -443,7 +447,8 @@ sub GetProductReserved
 	$db0->execute();
 	while (my $ref=$db0->fetchrow_hashref())
 	{
-		main::_log("ID_order='$ref->{'ID_order'}' amount='$ref->{'amount'}' amount_delivered='$ref->{'amount_delivered'}' reserved='$ref->{'reserved'}'");
+		main::_log("ID_order='$ref->{'ID_order'}' amount='$ref->{'amount'}' amount_delivered='$ref->{'amount_delivered'}' reserved='$ref->{'reserved'}' stav='$ref->{'stav'}'");
+		next if $ref->{'stav'}==2;
 		$data{'reserved'}+=$ref->{'reserved'};
 	}
 	
