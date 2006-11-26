@@ -32,7 +32,7 @@ use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Parallel::ForkManager;
 use Proc::ProcessTable;
 
-require "/www/TOM/_config/cron.conf";
+require "/www/TOM/.core/_config/cron.conf";
 
 our $type=$ARGV[0];
 exit(0) unless $type;
