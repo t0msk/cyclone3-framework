@@ -395,9 +395,9 @@ sub execute
 					call_filename
 				ORDER BY
 					calls DESC
-				LIMIT 20
+				LIMIT 100
 			",
-			'title'=>"TOP-20 najpouzivanejsich miest obsolete funkcii",
+			'title'=>"TOP-100 najpouzivanejsich miest obsolete funkcii",
 			'description'=>"Tabulka je zoradena podla poctu volani obsolete funkcie",
 			'table-title'=>"",
 			'table-description'=>"",
