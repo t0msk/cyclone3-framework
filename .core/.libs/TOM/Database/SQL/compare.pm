@@ -143,6 +143,7 @@ sub compare_create_table
 				if (!$count){$plus.=" FIRST";}
 				elsif ($fields0a[$count-1]){$plus.=" AFTER $fields0a[$count-1]";}
 				my $exec="ALTER TABLE `$database`.`$tbl` ADD $field $fields0h{$field}$plus";
+				$exec=~s|auto_increment||;
 				main::_log("add SQL '$exec'");
 				push @return,$exec;
 				$fields1h{$field}=$fields0h{$field};
