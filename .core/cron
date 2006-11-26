@@ -127,7 +127,7 @@ my $lock=new TOM::lock("CRON ".$type) || exit;
 CRON::waitload($CRON::LOADAVG);
 
 
-if (-e $CRON::P."/.core/_config/cron.".$type.".cml" || -e $CRON::P."/_type/cron.".$type.".cml")
+if (-e $CRON::P."/_config/cron.".$type.".cml" || -e $CRON::P."/_type/cron.".$type.".cml")
 {
 	main::_log("event '$type' defined");
 	if ($DBH = Mysql->Connect($TOM::DB{main}{host},$TOM::DB_name_TOM,$TOM::DB{main}{user},$TOM::DB{main}{pass}))
