@@ -15,63 +15,63 @@
 		<VAR id="to_email" value="dev@webcom.sk;web@webcom.sk" />
 </MODULE>
 
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="universal_email" />
 		<VAR id="type" value="agent_unknown" />
 </MODULE>
 
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="universal_email" />
 		<VAR id="type" value="agent_checker" />
 </MODULE>
 
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="universal_email" />
 		<VAR id="type" value="TypeID_effectivity" />
 </MODULE>
 
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="universal_email" />
 		<VAR id="type" value="domain_effectivity" />
 </MODULE>
 
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="universal_email" />
 		<VAR id="type" value="IP-users" />
 </MODULE>
 
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="universal_email" />
 		<VAR id="type" value="robot_31days" />
 </MODULE>
 
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="universal_email" />
 		<VAR id="type" value="robot_hours" />
 </MODULE>
 
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="universal_email" />
 		<VAR id="type" value="IP-without_referer" />
 </MODULE>
 
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="universal_email" />
@@ -79,7 +79,7 @@
 </MODULE>
 
 # MDL statistika
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="mdllog_email_load" />
@@ -89,14 +89,7 @@
 
 
 
-# statistika user agentov posielana raz za tyzden na web@ a dev@
 
-<MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="110" />
-	<VAR id="-name" value="weblog_email_agents" />
-		<VAR id="email" value="<$TOM::contact{'cyclone3-dev'}>" />
-</MODULE>
 
 # statistika obsolete funkcii
 <MODULE>
