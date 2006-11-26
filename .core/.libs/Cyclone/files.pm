@@ -162,8 +162,8 @@ our @setit_F=
 	['^\.core\/_config\/TOM.conf'      ,".core TOM.conf"              ,"460","$user_www:$group"],
 	['^\.core\/_config\/'              ,".core conf"                  ,"460","$user_www:$group"],
 	
-	['^\.core\/_config\.sg\/httpd\.conf',"HTTPD virtual conf"         ,"460","$user_www:$group"],
-	['^\.core\/_config\.sg\/TOM.conf'  ,".core TOM.conf"              ,"460","$user_www:$group"],
+	['^\.core\/_config\/httpd\.conf'   ,"HTTPD virtual conf"          ,"460","$user_www:$group"],
+	['^\.core\/_config\/TOM.conf'      ,".core TOM.conf"              ,"460","$user_www:$group"],
 	
 	
 	['^\.core\/.*pid$'                 ,".core .pid"                  ,"",""],
