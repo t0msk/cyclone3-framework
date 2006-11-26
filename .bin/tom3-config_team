@@ -8,10 +8,6 @@ BEGIN {require "/www/TOM/.bin/tom3-init";};
 #	'-a'		=>	"show config all domains",
 );
 
-require "/www/TOM/.core/_config.sg/TOM.conf";
-require "/www/TOM/.core/_config/TOM.conf";
-#require "/www/TOM/.core/_config/cron.conf";
-
 $CRON::P="/www/TOM";
 $cron::P=$CRON::P;
 	

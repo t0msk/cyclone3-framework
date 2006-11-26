@@ -38,8 +38,6 @@ if ((!$FORM{-name}) || ($FORM{h})||($FORM{help})){&help();}
 
 print color 'reset bold blue';
 
-require "/www/TOM/.core/_config.sg/TOM.conf";
-require "/www/TOM/.core/_config/TOM.conf";
 require "/www/TOM/.core/_config/cron.conf";
 
 $cron::P=$CRON::P;

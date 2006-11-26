@@ -77,14 +77,14 @@ sub parse_conf
 					_read_conf($tom::Pm.'/type.'.$cmd[1].'.conf');
 				}
 				# global
+				elsif (-e $TOM::P.'/_config/type.'.$cmd[1].'.conf')
+				{
+					_read_conf($TOM::P.'/_config/type.'.$cmd[1].'.conf');
+				}
+				# superglobal
 				elsif (-e $TOM::P.'/.core/_config/type.'.$cmd[1].'.conf')
 				{
 					_read_conf($TOM::P.'/.core/_config/type.'.$cmd[1].'.conf');
-				}
-				# superglobal
-				elsif (-e $TOM::P.'/.core/_config.sg/type.'.$cmd[1].'.conf')
-				{
-					_read_conf($TOM::P.'/.core/_config.sg/type.'.$cmd[1].'.conf');
 				}
 				else
 				{
