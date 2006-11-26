@@ -145,7 +145,7 @@ if (-e $CRON::P."/_config/cron.".$type.".cml" || -e $CRON::P."/_type/cron.".$typ
 	my $file_data;
 	open (HND,"<".$CRON::P."/_type/cron.".$type.".cml");
 	while (my $data=<HND>){$file_data.=$data;} 
-	open (HND,"<".$CRON::P."/.core/_config/cron.".$type.".cml");
+	open (HND,"<".$CRON::P."/_config/cron.".$type.".cml");
 	while (my $data=<HND>){$file_data.=$data;}
 	while ($file_data=~s|<MODULE>(.*?)</MODULE>||s)
 	{
