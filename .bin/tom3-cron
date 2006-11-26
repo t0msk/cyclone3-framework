@@ -119,18 +119,6 @@ local (
 	
 	$TOM::engine="cron";
 	
-	if ($DBH = Mysql->Connect($TOM::DB{main}{host},$TOM::DB_name_TOM,$TOM::DB{main}{user},$TOM::DB{main}{pass}))
-	{
-		main::_log("connect ok");
-	}
-	else
-	{
-		main::_log("cannot connect MySQL (), exiting",1);
-		main::_log("cannot connect MySQL (), exiting",1,"cron.err");
-		exit(0);
-	}
-	$main::DB{main}=$main::DBH; 
-	
 	$CRON::P="/www/TOM";
 	$cron::P=$CRON::P;
 	
@@ -143,8 +131,10 @@ local (
 	}
 	else
 	{
-		
+		$TOM::DB{'main'}{'name'}="TOM";
 	}
+	
+	TOM::Database::connect::multi('main');
 	
 	print "";
 	
