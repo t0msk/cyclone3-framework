@@ -9,7 +9,7 @@ use strict;
 
 sub execute
 {
-	alarm(3600);
+	alarm(0);
  #return 1;
 #	alarm(30)
 #	return 1;
@@ -60,59 +60,62 @@ sub execute
 						
 						main::_log("request '$hash{page_code}'");
 						
-						if (not $main::DB{stats}->Query("
-						INSERT DELAYED INTO TOM.a110_weblog_rqs
-						(
-							page_code,
-							page_code_referer,
-							HTTP_unique_id,
-							reqtime,
-							reqdatetime,
-							host,
-							domain,
-							domain_sub,
-							IP,
-							IDhash,
-							IDsession,
-							logged,
-							USRM_flag,
-							query_string,
-							query_TID,
-							query_URL,
-							referer,
-							user_agent,
-							load_proc,
-							load_req,
-							result,
-							lng
-						)
-						VALUES
-						(
-							'$hash{page_code}',
-							'$hash{page_code_referer}',
-							'$hash{unique_id}',
-							'$hash{reqtime}',
-							'$hash{reqdatetime}',
-							'$hash{host}',
-							'$hash{domain}',
-							'$hash{domain_sub}',
-							'$hash{IP}',
-							'$hash{IDhash}',
-							'$hash{IDsession}',
-							'$hash{logged}',
-							'$hash{USRM_flag}',
-							'$hash{query_string}',
-							'$hash{query_TID}',
-							'$hash{query_URL}',
-							'$hash{referer}',
-							'$hash{user_agent}',
-							'$hash{load_proc}',
-							'$hash{load_req}',
-							'$hash{result}',
-							'$hash{lng}'
-						)"))
+						my $sql=qq{
+							INSERT INTO TOM.a110_weblog_rqs
+							(
+								page_code,
+								page_code_referer,
+								HTTP_unique_id,
+								reqtime,
+								reqdatetime,
+								host,
+								domain,
+								domain_sub,
+								IP,
+								IDhash,
+								IDsession,
+								logged,
+								USRM_flag,
+								query_string,
+								query_TID,
+								query_URL,
+								referer,
+								user_agent,
+								load_proc,
+								load_req,
+								result,
+								lng
+							)
+							VALUES
+							(
+								'$hash{page_code}',
+								'$hash{page_code_referer}',
+								'$hash{unique_id}',
+								'$hash{reqtime}',
+								'$hash{reqdatetime}',
+								'$hash{host}',
+								'$hash{domain}',
+								'$hash{domain_sub}',
+								'$hash{IP}',
+								'$hash{IDhash}',
+								'$hash{IDsession}',
+								'$hash{logged}',
+								'$hash{USRM_flag}',
+								'$hash{query_string}',
+								'$hash{query_TID}',
+								'$hash{query_URL}',
+								'$hash{referer}',
+								'$hash{user_agent}',
+								'$hash{load_proc}',
+								'$hash{load_req}',
+								'$hash{result}',
+								'$hash{lng}'
+							)
+						};
+						
+						if (not $main::DB{stats}->Query($sql))
 						{
-							die "can't insert\n";
+							die "can't insert $sql\n";
 						}
 						
 						
@@ -144,7 +147,7 @@ sub execute
 							else
 							{
 								my $dbh=$main::DB{'stats'}->Query("
-									INSERT DELAYED INTO TOM.a110_sitemap
+									INSERT INTO TOM.a110_sitemap
 									(
 										domain,
 										domain_sub,
