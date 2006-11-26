@@ -55,7 +55,7 @@ BEGIN
 	
 	# hlavna konfiguracia
 	require $TOM::P."/.core/_config.sg/TOM.conf";
-	require $TOM::P."/.core/_config/TOM.conf";
+	require $TOM::P."/_config/TOM.conf";
 }
 
 
