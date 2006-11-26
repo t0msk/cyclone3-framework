@@ -11,24 +11,26 @@ sub handler_exit
 {
 	my $signame = shift;
 	print "Location: http://$ENV{HTTP_HOST}$ENV{REQUEST_URI}\n\n";
-	main::_log("SIG '$signame' (relocation) (timeout $TOM::fcgi_timeout secs, lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
+	main::_log("SIG '$signame' [EXIT] (timeout $TOM::fcgi_timeout secs, lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
 	exit(0);
 }
 
 sub handler_wait
 {
 	my $signame=shift;
-	main::_log("REQUEST SIG '$signame' (lives ".
-			(time()-$TOM::time_start).
-			" secs, $tom::count requests) PID:$$ domain:$tom::H ($@ $!)",3,"pub.mng",1);
-	if ($main::sig_term)
+	if ($main::sig_term) # proces je v stave ze moze byt ukonceny
 	{
 		print "Location: http://$ENV{HTTP_HOST}$ENV{REQUEST_URI}\n\n";
-		main::_log("ACCEPTING SIG '$signame'",3,"pub.mng",1);
+		main::_log("SIG '$signame' [WAIT-EXIT] (lives ".
+			(time()-$TOM::time_start).
+			" secs, $tom::count requests) PID:$$ domain:$tom::H ($@ $!)",3,"pub.mng",1);
 		exit(0);
 	}
 	else
 	{
+		main::_log("SIG '$signame' [WAIT-WAIT] (lives ".
+			(time()-$TOM::time_start).
+			" secs, $tom::count requests) PID:$$ domain:$tom::H ($@ $!)",3,"pub.mng",1);
 		$tom::HUP=2; # po dobehnuti tohto requestu na 100% exitnem
 	};
 }
@@ -37,7 +39,7 @@ sub handler_ignore
 {
 	my $signame = shift;
 	print "Location: http://$ENV{HTTP_HOST}$ENV{REQUEST_URI}\n\n";
-	main::_log("IGNORE SIG '$signame' (timeout $TOM::fcgi_timeout secs, lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
+	main::_log("SIG '$signame' [IGNORE] (timeout $TOM::fcgi_timeout secs, lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
 }
 
 
@@ -66,10 +68,10 @@ main::_log("registering SIG{ALRM} action to exit");
 POSIX::sigaction(&POSIX::SIGALRM, $action_exit);
 
 main::_log("registering SIG{HUP} action to exit");
-POSIX::sigaction(&POSIX::SIGHUP, $action_exit);
+POSIX::sigaction(&POSIX::SIGHUP, $action_wait);
 
 main::_log("registering SIG{TERM} action to ignore");
-POSIX::sigaction(&POSIX::SIGTERM, $action_ignore);
+POSIX::sigaction(&POSIX::SIGTERM, $action_wait);
 
 main::_log("start counting timeout $TOM::fcgi_timeout");
 alarm($TOM::fcgi_timeout); # zacnem pocitat X sekund kym nedostanem request
