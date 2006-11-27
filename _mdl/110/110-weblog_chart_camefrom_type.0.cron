@@ -16,6 +16,8 @@ sub execute
 {
 	my %env=@_;
 	
+	alarm(1200);
+	
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
 	if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
