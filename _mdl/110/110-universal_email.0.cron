@@ -8,6 +8,7 @@ use TOM::Utils::datetime;
 use TOM::Utils::vars;
 use TOM::Net::email;
 use TOM::Database::connect;
+use TOM::Database::SQL;
 use DateTime;
 
 use strict;
@@ -42,11 +43,8 @@ sub execute
 
 	$env{lng} = 'en' unless $env{lng};
 	$env{type} = 'empty' unless $env{type};
-	#$env{to_email} = $TOM::contact{'stats'}.";".$TOM::contact{'TOM'};
-	$env{to_email} = 'fordinal@webcom.sk' unless $env{to_email};
-	#$env{to_email} = 'dev@webcom.sk;web@webcom.sk';
+	$env{to_email} = $TOM::contact{'TOM'} unless $env{to_email};
 	$env{to_email}=TOM::Utils::vars::unique_split($env{to_email});
-	#$env{to_email} = 'gregor@webcom.sk';
 	
 		my $days=10;
 		my $from=$main::time_current-(86400*($days+1));
@@ -228,7 +226,7 @@ sub execute
 				SELECT
 					domain_sub,
 					query_TID,
-					SUM(*) requests,
+					COUNT(*) AS requests,
 					AVG(load_req) AS load_req,
 					AVG(load_proc) AS load_proc
 				FROM TOM.a110_weblog_rqs
@@ -428,7 +426,7 @@ sub execute
 	# DEFINICIA TEXTOV
 	my %texts = (
 		'en' => {
-			'header-from' => '"Cyclone3 (<%HOST%>)" <TOM\@<%HOST%>>',
+			'header-from' => '"Cyclone3 (<%HOST%>)" <'.$TOM::contact{'from'}.'>',
 			'header-subject' => "[STAT][a110+] $types{$env{type}}{title}",
 			'main-title' => $types{$env{type}}{title},
 			'main-desc' => $types{$env{type}}{description},
@@ -605,7 +603,8 @@ XSGN
 	# SPRACOVANIE
 	
 	# statisticky select je definovany na zaciatku
-	my $db_stats = $main::DB{$db}->Query( $sql_stats );
+	my %sth0=TOM::Database::SQL::execute($sql_stats,'db_h'=>$db,'log'=>1);
+	my $db_stats = $sth0{'sth'};
 	
 	my $line_count = $db_stats->numrows;
 	my $col_count = $db_stats->numfields;
@@ -672,9 +671,7 @@ XSGN
 	
 	TOM::Net::email::send
 	(
-		from => 'dev\@webcom.sk',
 		to => $env{to_email},
-		to_name => '',
 		body => $XSGN{TMP}
 	);
 	
