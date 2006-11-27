@@ -639,15 +639,20 @@ sub convert
 	
 	$URL=Int::charsets::encode::UTF8_ASCII($URL); 
 	$URL="\L$URL" unless $env{'notlower'};
-	$URL=~s|\s|-|g;
-	$URL=~s|[;,]|_|g;
-	$URL=~s|[/\(\)\.]|-|g;
+	
+	# convert znakov ktore chcem zachovat v kontexte
+	$URL=~s|;|_|g;
+	$URL=~s|[/\(\) ]|-|g;
+	
+	# uplne odstranenie nevhodnych znakov
+	$URL=~s|[^a-zA-Z0-9\._\- ]||g;
+	
+	# odstranenie duplicit
 	1 while ($URL=~s|--|-|g);
 	1 while ($URL=~s|_-|-|g);
 	
-	$URL=~s|["\']||g;
-	
-	$URL=~s|[_\-]$||g;
+	# odstranit znaky na konci ktore niesu sucastou slova
+	$URL=~s|[^a-zA-Z0-9]$||g;
 	
 	return $URL;
 }
