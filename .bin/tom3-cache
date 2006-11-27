@@ -323,11 +323,11 @@ TOM::Database::connect::all('main','sys','stats');
 		{
 			print color 'reset bold yellow';
 			
-			print "   [about ($db0_line{about})\n   [";my $null=<STDIN>;chomp($null);
+			print "   [about ($db0_line{about})\n   [\n";my $null=<STDIN>;chomp($null);
 			if (($null ne $db0_line{about})&&($null))
 			{$DB{sys}->Query("UPDATE TOM.a150_config SET about='$null' WHERE ID='$db0_line{ID}' LIMIT 1");}
 			
-			print "   [time_duration ($db0_line{time_duration}): ";my $null=<STDIN>;chomp($null);
+			print "   [time_duration ($db0_line{time_duration}): \n";my $null=<STDIN>;chomp($null);
 			if (($null ne $db0_line{time_duration})&&($null))
 			{$DB{sys}->Query("UPDATE TOM.a150_config SET time_duration=$null WHERE ID='$db0_line{ID}' LIMIT 1");}
 			
