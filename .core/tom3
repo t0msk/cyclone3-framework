@@ -1018,7 +1018,14 @@ while ($req->Accept() >= 0)
 							$main::FORM{'a210_path'}.="/".$p->{'name_url'};
 						}
 						$main::FORM{'a210_path'}=~s|^/||;
-						main::_log("path='$main::FORM{'a210_path'}'");
+						if ($main::FORM{'a210_path'})
+						{
+							main::_log("path='$main::FORM{'a210_path'}'");
+						}
+						else
+						{
+							delete $main::FORM{'a210_path'};
+						}
 					}
 					elsif ($main::FORM{'a210_path'})
 					{
