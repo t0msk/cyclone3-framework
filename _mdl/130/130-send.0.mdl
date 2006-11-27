@@ -146,10 +146,10 @@ sub execute
 			$cvml{$cvml_key} = $env{$_};
 
 	}
-	my $cvml_output = CVML::structure::serialize(%cvml);
+	my $cvml_output = CVML::structure::serialize( %cvml );
 	$cvml_output =~ s|\'|\\'|g;
 	
-	my $md5_output = md5_hex($main::ENV{'HTTP_REFERER'}.$main::USRM{IDsession}.$main::USRM{IDhash}.$cvml_output);
+	my $md5_output = Digest::MD5::md5_hex( $main::USRM{IDsession}.$main::USRM{IDhash}.$cvml_output );
 
 	# osetrenie refreshov
 	if ($env{xt_ban_refresh})
