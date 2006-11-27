@@ -147,6 +147,7 @@ eval
 	main::_log("loading IAdm.key");
 	if (open (KEY,"<".$tom::P."/IAdm.key")
 		|| open (KEY,"<".$tom::Pm."/IAdm.key")
+		|| open (KEY,"<".$TOM::P."/_config/IAdm.key")
 		|| open (KEY,"<".$TOM::P."/.core/_config/IAdm.key")
 		)
 	{undef $/;$TOM::IAdm_key=<KEY>;close(KEY);}
@@ -154,6 +155,7 @@ eval
 	main::_log("loading ITst.key");
 	if (open (KEY,"<".$tom::P."/ITst.key")
 		|| open (KEY,"<".$tom::Pm."/ITst.key")
+		|| open (KEY,"<".$TOM::P."/_config/ITst.key")
 		|| open (KEY,"<".$TOM::P."/.core/_config/ITst.key")
 		)
 	{undef $/;$TOM::ITst_key=<KEY>;close(KEY);}
