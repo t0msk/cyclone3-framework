@@ -146,7 +146,7 @@ GOEYHu8ASQUABReibEAQoMCTPAgSZvkiJAgAOw=='
 
 	my %texts = (
 		'sk' => {
-			'header-from' => '"Global (<%HOST%>)" <TOM\@<%HOST%>>',
+			'header-from' => '"Cyclone3 (<%HOST%>)" <'.$TOM::contact{'from'}.'>',
 			'header-subject' => '[STAT][a110/weblog] last 31days user_agents',
 
 			'main-title' => 'Štatistiky UserAgent-ov',
@@ -205,7 +205,7 @@ GOEYHu8ASQUABReibEAQoMCTPAgSZvkiJAgAOw=='
 			'table-W-col5' => 'graf',
 		},
 		'en' => {
-			'header-from' => '"Global (<%HOST%>)" <TOM\@<%HOST%>>',
+			'header-from' => '"Cyclone3 (<%HOST%>)" <'.$TOM::contact{'from'}.'>',
 			'header-subject' => '[STAT][a110/weblog] last 31days user_agents',
 
 			'main-title' => 'User Agent Stats',
@@ -561,7 +561,7 @@ XSGN
 		ORDER BY
 				reqtype DESC,requests DESC
 	";
-	main::_log( $sql );
+	#main::_log( $sql );
 	my $db0 = $main::DB{stats}->Query( $sql );
 
 	# tu len spocitam hodnoty
@@ -708,7 +708,7 @@ XSGN
 	# a opat debordelizaz
 	$XSGN{TMP} =~ s|<#.*?#>\n+||gs;
 
-	main::_log( $XSGN{TMP} );
+	#main::_log( $XSGN{TMP} );
 	
 	TOM::Net::email::send
 	(
