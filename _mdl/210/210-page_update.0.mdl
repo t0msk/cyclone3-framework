@@ -1,0 +1,114 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020;
+use CVML;
+
+=head1
+
+parent - zobraz parent element
+ID_charindex - vsetko od ID_charindex
+depth - hlbku
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	my %a210=App::020::SQL::functions::get_ID(
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a210_page",
+		'ID'      => $env{'ID'},
+		'columns' => { '*' => 1 }
+	);
+	
+	if (not $a210{'status'}=~/^[YN]$/)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_get'};
+		return 1;
+	}
+	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	
+	my %columns;
+	
+	# uprava keys
+	###################################
+	
+	my $cvml = new CVML('data'=>$a210{'t_keys'});
+	# a vytvor z neho hash
+	my %key = %{$cvml->{'hash'}};
+	foreach my $kk (keys %main::FORM)
+	{
+		next unless $kk=~s/^key_//;
+		main::_log("override t_keys name='$kk' value='".($main::FORM{'key_'.$kk})."'");
+		$key{$kk}=$main::FORM{'key_'.$kk};
+		if (!$key{$kk})
+		{
+			delete $key{$kk};
+		}
+	}
+	my $t_keys=CVML::structure::serialize( %key );
+	$t_keys=~s|\'|\\'|g;
+	if ($t_keys ne $a210{'t_keys'})
+	{
+		$columns{'t_keys'}="'".$t_keys."'";
+		main::_log("set t_keys=$columns{'t_keys'}");
+	}
+	
+	# uprava t_name
+	###################################
+	
+	if (exists $main::FORM{'t_name'} && $main::FORM{'t_name'} ne $a210{'t_name'})
+	{
+		$columns{'t_name'}="'".$main::FORM{'t_name'}."'";
+		main::_log("set t_name=$columns{'t_name'}");
+	}
+	
+	my $update=keys %columns;
+	
+	# nic nieje na update
+	if (!$update)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|any|g;
+		return 1;
+	}
+	
+	my $out=App::020::SQL::functions::update(
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a210_page",
+		'ID' => $env{'ID'},
+		'-journalize' => 1,
+		'columns' => {%columns}
+	);
+	
+	if (!$out)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_set'};
+		return 1;
+	}
+	
+	return 1;
+}
+
+
+
+1;
