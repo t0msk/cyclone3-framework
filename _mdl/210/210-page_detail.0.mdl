@@ -7,6 +7,7 @@ use utf8;
 use strict;
 
 use App::020;
+use CVML;
 
 =head1
 
@@ -51,8 +52,7 @@ sub execute
 		$XSGN{'TMP'}=~s|<%$_%>|$a210{$_}|g;
 	}
 	
-	
-	my $cvml = new CVML(data=>$a210{'t_keys'});
+	my $cvml = new CVML('data'=>$a210{'t_keys'});
 	# a vytvor z neho hash
 	my %key = %{$cvml->{'hash'}};
 	foreach (keys %key)

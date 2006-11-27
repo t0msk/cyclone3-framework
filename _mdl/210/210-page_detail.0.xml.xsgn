@@ -27,7 +27,7 @@
 </DEFINITION>
 
 <DEFINITION id="KEY">
-		<<%key%>><[CDATA[<%value%>]]></<%key%>>
+		<<%key%>><![CDATA[<%value%>]]></<%key%>>
 <#KEY#>
 </DEFINITION>
 
