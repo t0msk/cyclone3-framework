@@ -104,8 +104,8 @@ HEADER
 	my $REV=<<"HEADER";
 <#REVISION#>
 					<tr>
-						<td class="var" nowrap="nowrap">r<%revision%></td>
-						<td class="value" width="100%"><%msg%></td>
+						<td class="var" nowrap="nowrap" valign="top">r<%revision%></td>
+						<td class="value" nowrap="nowrap" width="100%"><%msg%></td>
 					</tr>
 HEADER
 	
@@ -156,8 +156,8 @@ HEADER
 			$data=~/<msg>(.*?)<\/msg>/s;
 			my $msg=$1;
 			$msg=~s|[\n]|<br/>|g;
-			main::_log("rev=$rev");
-			main::_log("msg=$msg");
+			main::_log("rev='$rev'");
+			main::_log("msg='$msg'");
 			
 			my $null=$REV;
 			$null=~s|<%revision%>|$rev|g;
