@@ -1,0 +1,191 @@
+#!/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use Encode;
+use encoding 'utf8';
+use utf8;
+use strict; # scrict code
+
+=head1 NAME
+
+100-check_upgrade.0.cron
+
+=head1 DESCRIPTION
+
+Zistim ci sa upgradol system
+
+=cut
+
+
+use TOM::Utils::datetime;
+use TOM::Net::email;
+use MIME::Entity;
+
+
+our $color_gray="#F2F2F2";
+our $color_red="#CD4545";
+our $color_green="#45CD45";
+our $color_black="#000000";
+
+
+sub execute
+{
+	my %env=@_;
+	
+	open(HNDR,"</www/TOM/_config/revision");
+	my $revision=<HNDR>;chomp($revision);
+	
+	main::_log("last checked revision='$revision'");
+	main::_log("actual revision='$TOM::core_revision'");
+	
+	if (!$revision)
+	{
+		open(HNDR,">/www/TOM/_config/revision");
+		print HNDR $TOM::core_revision;
+		chmod (0666,"/www/TOM/_config/revision");
+		return 1;
+	}
+	
+	my $body=<<"HEADER";
+<html>
+	<head>
+	</head>
+	<body>
+	
+		<style>
+		<!--
+			body
+			{
+				color: $color_black;
+			}
+			td
+			{
+				font-family: Verdana;
+				font-size: 12px;
+			}
+			.var
+			{
+				font-weight: bold;
+			}
+		-->
+		</style>
+		<table width="100%" cellspacing=1 cellpadding=3 bgcolor="#000000">
+			<tr>
+				<td bgcolor="$color_green" style="color:white;font-weight: bold;">Information</td>
+			</tr>
+			<tr>
+				<td bgcolor="$color_gray" class="value"><%MESSAGE%></td>
+			</tr>
+		</table>
+		<br/>
+		
+		<table width="100%" cellspacing=1 cellpadding=3 bgcolor="#000000">
+			<tr>
+				<td bgcolor="$color_green" style="color:white;font-weight: bold;">Changelog</td>
+			</tr>
+			<tr>
+				<td bgcolor="$color_gray">
+				
+				<table width="100%">
+					
+<#REVISION#>
+					
+				</table>
+				
+				</td>
+			</tr>
+		</table>
+		<br/>
+		
+	</body>
+</html>
+HEADER
+
+	my $REV=<<"HEADER";
+<#REVISION#>
+					<tr>
+						<td class="var" nowrap="nowrap">r<%revision%></td>
+						<td class="value" width="100%"><%msg%></td>
+					</tr>
+HEADER
+	
+	
+	if ($revision<$TOM::core_revision)
+	{
+		main::_log("Cyclone3 has been upgraded r$revision->r$TOM::core_revision");
+		$body=~s|<%MESSAGE%>|Cyclone3 has been upgraded from r$revision to r$TOM::core_revision at $TOM::hostname|g;
+		
+		my $to=
+			TOM::Utils::vars::unique_split(
+				$TOM::contact{'TOM'}.';'.
+				$TOM::contact{'cyclone3-dev'}.';'.
+				$TOM::contact{'TECH_farm'}
+			);
+		
+		
+		my $date = TOM::Utils::datetime::mail_current();
+		my $msg = MIME::Entity->build
+		(
+			'Type'    => "multipart/mixed",
+			'List-Id' => "Cyclone3",
+			'Date'    => $date,
+			'From'    => "Cyclone3 <".($TOM::contact{'from'}).">",
+			'To'      => TOM::Net::email::convert_TO($to),
+			'Subject' => "Cyclone3 upgraded r$revision->r$TOM::core_revision at $TOM::hostname"
+		);
+		
+		
+		my $xml=`/usr/local/bin/svn log -r$revision:$TOM::core_revision --xml`
+			|| `/usr/bin/svn log -r$revision:$TOM::core_revision --xml`;
+		
+		my $changes;
+		while ($xml=~s|<logentry\s+revision="(.*?)">(.*?)</logentry>||s)
+		{
+			my $rev=$1;
+			my $data=$2;
+			$data=~/<msg>(.*?)<\/msg>/s;
+			my $msg=$1;
+			$msg=~s|[\n]|<br/>|g;
+			main::_log("rev=$rev");
+			main::_log("msg=$msg");
+			
+			my $null=$REV;
+			$null=~s|<%revision%>|$rev|g;
+			$null=~s|<%msg%>|$msg|g;
+			
+			$body=~s|<#REVISION#>|$null|g;
+			$changes++;
+		}
+		
+		open(HNDR,">/www/TOM/_config/revision");
+		print HNDR $TOM::core_revision;
+		close (HNDR);
+		chmod (0666,"/www/TOM/_config/revision");
+		
+		if (!$changes)
+		{
+			return 1;
+		}
+		
+		$msg->attach
+		(
+			'Data' => $body,
+			'Type' => "text/html;charset=\"UTF-8\"",
+			'Encoding' => "8bit",
+		);
+		
+		my $email_body=$msg->as_string();
+		
+		$email_body=~s|<#.*?#>||g;
+		
+		TOM::Net::email::send
+		(
+			to => $to,
+			body => $email_body
+		);
+		
+	}
+	
+return 1}
+
+1;
