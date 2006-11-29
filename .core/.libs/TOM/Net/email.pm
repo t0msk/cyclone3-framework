@@ -31,7 +31,7 @@ sub send
 	
 	if (!$@)
 	{
-		main::_log("sending email over a130");
+		main::_log("sending email over a130 to '$env{to}'");
 		
 		$env{body}=~s|'|\\'|g;
 		
@@ -74,7 +74,7 @@ sub send
 	#
 	# zapisanie emailu ako file je az ako posledna moznost
 	#
-	main::_log("sending email over file $ID");
+	main::_log("sending email over file '$ID' to to '$env{to}'");
 	
 	open(HND_mail,">".$TOM::P."/_temp/_email-".$ID) || die "can't send email over file!\n";
 	print HND_mail "$env{from}\n";
