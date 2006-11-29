@@ -115,11 +115,21 @@ HEADER
 		main::_log("Cyclone3 has been upgraded r$revision->r$TOM::core_revision");
 		$body=~s|<%MESSAGE%>|Cyclone3 has been upgraded from r$revision to r$TOM::core_revision at $TOM::hostname|g;
 		
+		
+		# informaciu o upgrade farmy odoslem nasledovnym ludom:
+		# - zodpovednemu za cely Cyclone3
+		# - zodpovednemu za cely Cyclone3 na danej farme
+		# - zodpovednemu za TECH farmy
+		# - zodpovednemu za DEV farmy
+		# - zodpovednemu za WEB farmy
+		# pre inych nieje tato informacia dolezita
 		my $to=
 			TOM::Utils::vars::unique_split(
 				$TOM::contact{'TOM'}.';'.
-				$TOM::contact{'cyclone3-dev'}.';'.
-				$TOM::contact{'TECH_farm'}
+				$TOM::contact{'TOM_farm'}.';'.
+				$TOM::contact{'TECH_farm'}.';'.
+				$TOM::contact{'DEV_farm'}.';'.
+				$TOM::contact{'WEB_farm'}
 			);
 		
 		
@@ -129,7 +139,7 @@ HEADER
 			'Type'    => "multipart/mixed",
 			'List-Id' => "Cyclone3",
 			'Date'    => $date,
-			'From'    => "Cyclone3 <".($TOM::contact{'from'}).">",
+			'From'    => "Cyclone3 ('$TOM::hostname') <$TOM::contact{'from'}>",
 			'To'      => TOM::Net::email::convert_TO($to),
 			'Subject' => "Cyclone3 upgraded r$revision->r$TOM::core_revision at $TOM::hostname"
 		);
