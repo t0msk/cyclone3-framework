@@ -12,7 +12,7 @@ our @EXPORT = qw/
 	$color_gray
 	$color_red
 	$engine_email
-	$email_crontype
+	$email_farm
 	$email_project
 	$email_project_pub
 	$email_module
@@ -81,9 +81,9 @@ our $engine_email=<<"HEADER";
 					</tr>
 					
 				</table>
-				
 				</td>
 			</tr>
+<#FARM#>
 		</table>
 		<br/>
 <#PROJECT#>
@@ -105,29 +105,44 @@ our $engine_email=<<"HEADER";
 HEADER
 
 
-our $email_crontype=<<"HEADER";
-		<table width="100%" cellspacing=1 cellpadding=3 bgcolor="#000000">
-			<tr>
-				<td bgcolor="$color_red" style="color:white;font-weight: bold;">Project <\$tom::H></td>
-			</tr>
-			<tr>
-				<td bgcolor="$color_gray">
-				
+our $email_farm=<<"HEADER";
+		<tr>
+			<td bgcolor="$color_gray">
 				<table width="100%">
-					
-					<tr>
-						<td class="var" nowrap="nowrap">project manager:</td>
-						<td class="value" width="100%"><\$TOM::contact{'manager'}></td>
-					</tr>
-					
+				
 					<tr>
 						<td class="var" nowrap="nowrap">TOM:</td>
 						<td class="value" width="100%"><\$TOM::contact{'TOM'}></td>
 					</tr>
 					
 					<tr>
-						<td class="var" nowrap="nowrap">TECH:</td>
-						<td class="value" width="100%"><\$TOM::contact{'TECH'}></td>
+						<td class="var" nowrap="nowrap">TOM_farm:</td>
+						<td class="value" width="100%"><\$TOM::contact{'TOM_farm'}></td>
+					</tr>
+					
+					<tr>
+						<td class="var" nowrap="nowrap">WEB_manager:</td>
+						<td class="value" width="100%"><\$TOM::contact{'WEB_manager'}></td>
+					</tr>
+					
+					<tr>
+						<td class="var" nowrap="nowrap">WEB_farm:</td>
+						<td class="value" width="100%"><\$TOM::contact{'WEB_farm'}></td>
+					</tr>
+					
+					<tr>
+						<td class="var" nowrap="nowrap">DEV_manager:</td>
+						<td class="value" width="100%"><\$TOM::contact{'DEV_manager'}></td>
+					</tr>
+					
+					<tr>
+						<td class="var" nowrap="nowrap">DEV_farm:</td>
+						<td class="value" width="100%"><\$TOM::contact{'DEV_farm'}></td>
+					</tr>
+					
+					<tr>
+						<td class="var" nowrap="nowrap">TECH_manager:</td>
+						<td class="value" width="100%"><\$TOM::contact{'TECH_manager'}></td>
 					</tr>
 					
 					<tr>
@@ -135,82 +150,9 @@ our $email_crontype=<<"HEADER";
 						<td class="value" width="100%"><\$TOM::contact{'TECH_farm'}></td>
 					</tr>
 					
-					<tr>
-						<td class="var" nowrap="nowrap">WEB:</td>
-						<td class="value" width="100%"><\$TOM::contact{'WEB'}></td>
-					</tr>
-					
-					<tr>
-						<td class="var" nowrap="nowrap">DEV:</td>
-						<td class="value" width="100%"><\$TOM::contact{'DEV'}></td>
-					</tr>
-					
-					<tr>
-						<td class="var" nowrap="nowrap">CONT:</td>
-						<td class="value" width="100%"><\$TOM::contact{'CONT'}></td>
-					</tr>
-					
-					<tr>
-						<td class="var" nowrap="nowrap">send to:</td>
-						<td class="value" width="100%"><%to%></td>
-					</tr>
-					
 				</table>
-				
-				</td>
-			</tr>
-		</table>
-		<table width="100%" cellspacing=1 cellpadding=3 bgcolor="#000000">
-			<tr>
-				<td bgcolor="$color_gray">
-				
-				<table width="100%">
-					
-					<tr>
-						<td class="var" nowrap="nowrap">original URI:</td>
-						<td class="value" width="100%"><%uri-orig%></td>
-					</tr>
-					
-					<tr>
-						<td class="var" nowrap="nowrap">parsed URI:</td>
-						<td class="value" width="100%"><%uri-parsed%></td>
-					</tr>
-					
-					<tr>
-						<td class="var" nowrap="nowrap">referer URI:</td>
-						<td class="value" width="100%"><%uri-referer%></td>
-					</tr>
-					
-					<tr>
-						<td class="var" nowrap="nowrap">request number:</td>
-						<td class="value" width="100%"><\$tom::count> of <\$TOM::max_count></td>
-					</tr>
-					
-					<tr>
-						<td class="var" nowrap="nowrap">unique hash:</td>
-						<td class="value" width="100%"><\$main::request_code></td>
-					</tr>
-					
-					<tr>
-						<td class="var" nowrap="nowrap">TypeID:</td>
-						<td class="value" width="100%"><\$main::FORM{TID}></td>
-					</tr>
-					
-					<tr>
-						<td class="var" nowrap="nowrap">IAdm:</td>
-						<td class="value" width="100%"><\$main::IAdm></td>
-					</tr>
-					
-					<tr>
-						<td class="var" nowrap="nowrap">ITst:</td>
-						<td class="value" width="100%"><\$main::ITst></td>
-					</tr>
-					
-				</table>
-				
-				</td>
-			</tr>
-		</table>
+			</td>
+		</tr>
 HEADER
 
 
@@ -230,18 +172,8 @@ our $email_project=<<"HEADER";
 					</tr>
 					
 					<tr>
-						<td class="var" nowrap="nowrap">TOM:</td>
-						<td class="value" width="100%"><\$TOM::contact{'TOM'}></td>
-					</tr>
-					
-					<tr>
 						<td class="var" nowrap="nowrap">TECH:</td>
 						<td class="value" width="100%"><\$TOM::contact{'TECH'}></td>
-					</tr>
-					
-					<tr>
-						<td class="var" nowrap="nowrap">TECH_farm:</td>
-						<td class="value" width="100%"><\$TOM::contact{'TECH_farm'}></td>
 					</tr>
 					
 					<tr>
@@ -421,9 +353,9 @@ our $module_email=<<"HEADER";
 					</tr>
 					
 				</table>
-				
 				</td>
 			</tr>
+<#FARM#>
 		</table>
 		<br/>
 <#PROJECT#>

@@ -72,6 +72,8 @@ sub engine_pub
 	$email=~s|<%DOMAIN%>|$tom::H|g;
 	$email=~s|<%ERROR%>|$var|g;
 	
+	$email=~s|<#FARM#>|$email_farm|;
+	
 	$email=~s|<#PROJECT#>|$email_project\n$email_project_pub|;
 	
 	if ($main::IAdm || $main::ITst)
@@ -189,6 +191,7 @@ sub engine_cron
 	$email=~s|<%DOMAIN%>|$tom::H|g;
 	$email=~s|<%ERROR%>|$var|g;
 	
+	$email=~s|<#FARM#>|$email_farm|;
 	
 	if ($tom::H)
 	{
@@ -314,6 +317,8 @@ sub module_pub
 		$email=~s|<%ERROR%>|$env{-ERROR}|g;
 		$email=~s|<%ERROR-PLUS%>|$env{-PLUS}|g;
 		
+		$email=~s|<#FARM#>|$email_farm|;
+		
 		$email=~s|<#PROJECT#>|$email_project\n$email_project_pub|;
 		
 		$email=~s|<#MODULE#>|$email_module|;
@@ -409,6 +414,8 @@ sub module_cron
 		$email=~s|<%DOMAIN%>|$tom::H|g;
 		$email=~s|<%ERROR%>|$env{-ERROR}|g;
 		$email=~s|<%ERROR-PLUS%>|$env{-PLUS}|g;
+		
+		$email=~s|<#FARM#>|$email_farm|;
 		
 		$email=~s|<#PROJECT#>|$email_project|;
 		
