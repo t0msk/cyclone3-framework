@@ -10,6 +10,7 @@
 	<VAR id="-TMP" value="OUTPUT" />
 	<VAR id="-xsgn_global" value="1" />
 	<VAR id="-xsgn" value="xml" />
-		<VAR id="IDcat" value="%" />
-		<VAR id="count" value="true" />
+		<VAR id="db_ID" value="%<$main::FORM{IDcategory}>%" />
+		<VAR id="db_lng" value="<$main::FORM{lng}>" />
+		<VAR id="db_count" value="true" />
 </MODULE>

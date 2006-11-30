@@ -9,7 +9,7 @@
 	<VAR id="-xsgn_global" value="1" />
 	<VAR id="-xsgn" value="xml" />
 	<VAR id="-global" value="1" />
-		<VAR id="ID" value="<$main::FORM{ID}>" />
-		<VAR id="lng" value="<$main::FORM{lng}>" />
-		<VAR id="active" value="<$main::FORM{active}>" />
+		<VAR id="db_ID" value="<$main::FORM{ID}>" />
+		<VAR id="db_lng" value="<$main::FORM{lng}>" />
+		<VAR id="db_active" value="<$main::FORM{active}>" />
 </MODULE>

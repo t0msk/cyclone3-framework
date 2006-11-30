@@ -10,8 +10,8 @@
 	<VAR id="-xsgn_global" value="1" />
 	<VAR id="-xsgn" value="xml" />
 	<VAR id="-global" value="1" />
-		<VAR id="lng" value="<$main::FORM{lng}>" />
-		<VAR id="IDparent" value="<$main::FORM{IDparent}>" />
-		<VAR id="title" value="<$main::FORM{title}>" />
-		<VAR id="description" value="<$main::FORM{description}>" />
+		<VAR id="db_lng" value="<$main::FORM{lng}>" />
+		<VAR id="db_IDparent" value="<$main::FORM{IDparent}>" />
+		<VAR id="db_title" value="<$main::FORM{title}>" />
+		<VAR id="db_description" value="<$main::FORM{description}>" />
 </MODULE>
