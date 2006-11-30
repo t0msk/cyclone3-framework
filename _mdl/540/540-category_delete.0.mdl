@@ -15,14 +15,14 @@ use strict;
 sub execute
 {
 	my %env=@_;
-	return 1 if !$env{'id'};
-	return 1 if !$env{'lng'};
+	return 1 if !$env{'db_ID'};
+	return 1 if !$env{'db_lng'};
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
 
-	App::540::dir::del(ID_dir=>"=".$env{'id'}, lng=>"=".$env{'lng'} );
+	App::540::dir::del(ID_dir=>"=".$env{'db_ID'}, lng=>"=".$env{'db_lng'} );
 
 	$XSGN{TMP}=$XSGN{RESULT_success};
-	$XSGN{TMP}=~s/<%ID%>/$env{'id'}/;
+	$XSGN{TMP}=~s/<%ID%>/$env{'db_ID'}/;
 	return 1;
 }
 1;

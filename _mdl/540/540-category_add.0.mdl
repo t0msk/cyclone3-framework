@@ -15,8 +15,8 @@ use strict;
 sub execute
 {
 	my %env=@_;
-	return 1 if !$env{'title'};
-	return 1 if !$env{'lng'};
+	return 1 if !$env{'db_title'};
+	return 1 if !$env{'db_lng'};
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
 
 	$env{char}=2 unless $env{char};
@@ -31,14 +31,14 @@ sub execute
 		$idx[$depth]++;
 		while ($idx[$depth]>@Utils::vars::WCHAR-1){$idx[$depth]=0;$depth--;$idx[$depth]++;}$depth=$env{char};
 		my $cat;for (1..$env{char}){$cat.=$Utils::vars::WCHAR[$idx[$_]];}
-		my @dirs = App::540::dir::get(ID_dir=>$env{IDparent}.$cat, lng=>$env{'lng'}, limit=>1);
+		my @dirs = App::540::dir::get(ID_dir=>$env{db_IDparent}.$cat, lng=>$env{'db_lng'}, limit=>1);
 		if (scalar( @dirs )> 0)
 		{next;}
 		else
-		{ $newcategory=$env{IDparent}.$cat; last;}
+		{ $newcategory=$env{db_IDparent}.$cat; last;}
 	}
 
-	my $id = App::540::dir::new(ID_dir=>$newcategory, name=>$env{'title'}, comment=>$env{'description'},lng=>$env{'lng'} );
+	my $id = App::540::dir::new(ID_dir=>$newcategory, name=>$env{'db_title'}, comment=>$env{'db_description'},lng=>$env{'db_lng'} );
 
 	if ($id>0){
 		$XSGN{TMP}=$XSGN{RESULT_success};

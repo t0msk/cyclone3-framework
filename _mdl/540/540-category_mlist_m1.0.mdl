@@ -26,7 +26,7 @@ sub execute
 	$args{order}="ID_dir, name";
 	$args{order}=$env{db_order_by} if ($env{db_order_by});
 	$args{ID_dir}=$env{db_ID} if ($env{db_ID});
-	$args{lng}=$env{lng} if ($env{lng});
+	$args{lng}=$env{db_lng} if ($env{db_lng});
 
 	my @dirs;
 	@dirs = App::540::dir::get(%args);
@@ -50,8 +50,8 @@ sub execute
 			my $actualLevel=length($db_line{ID_dir})/2;
 
 			main::_log("got category ID " . $db_line{ID_dir} . " at level " . $actualLevel);
-			main::_log(">>>>>>>>> $env{count}");
-			if (exists $env{count}){
+			main::_log(">>>>>>>>> $env{db_count}");
+			if (exists $env{db_count}){
 			main::_log(">>>>>>>>>Robim count");
 				my @tmp;
 				@tmp = App::540::file::get('return'=>'count(*) as count', 'ID_dir'=>"=".$db_line{ID_dir}, lng=>$args{lng});
@@ -149,13 +149,13 @@ sub execute
 			$XSGN{'NULL'}=~s|<%level%>|$actualLevel|g;
 
 			$XSGN{'TMP'} =~ s|<#LINE#>|$XSGN{'NULL'}|;
-	
+
 			$lastLevel=$actualLevel;
 		}
 		#TOTAL COUNT - NIE TOTAL count, ale count poloziek v roote, bez adresara(kategorie)
 		#toto v 540tke pokial viem nejde, polozka musi byt v nejakom adresari podla api - kym sa to neprerobi, vraciame nulu
 		#[pnemsak]
-		
+
 		my @cnt = App::540::file::get(return=>"count(*) as count", ID_dir=>"", lng=>"$args{lng}");
 		$XSGN{'TMP'} =~ s|<%itemcount_root%>|$cnt[0]{count}|;
 	}

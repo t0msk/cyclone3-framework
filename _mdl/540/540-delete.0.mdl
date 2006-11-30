@@ -16,12 +16,12 @@ use strict;
 sub execute
 {
 	my %env=@_;
-	return 1 if !$env{'id'};
+	return 1 if !$env{'db_ID'};
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
 
-	App::540::file::del(ID=>$env{'id'} );
-	$XSGN{RESULT_success}=~s/<%ID%>/$env{'id'}/g; 
-	$XSGN{TMP}=$XSGN{RESULT_success}; 	
-	return 1;	
+	App::540::file::del(ID=>$env{'db_ID'} );
+	$XSGN{RESULT_success}=~s/<%ID%>/$env{'db_ID'}/g;
+	$XSGN{TMP}=$XSGN{RESULT_success};
+	return 1;
 }
 1;

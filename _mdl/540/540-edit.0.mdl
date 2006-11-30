@@ -7,6 +7,8 @@ use utf8;
 use App::540;
 use App::540::file;
 
+our $authors = "drahos\@webcom.sk";
+
 use strict;
 
 sub execute
@@ -16,26 +18,16 @@ sub execute
 
 	my %arg;
 	$arg{ID}=$env{db_ID};
-	$arg{ID_dir}="00";
 	$arg{ID_dir}=$env{db_dir} if exists $env{db_dir};
 	$arg{active}=$env{db_active} if defined($env{db_active});
 	$arg{lng}=$env{db_lng} if exists $env{db_lng};
 	$arg{comment}=$env{db_comment} if defined($env{db_comment});
 	$arg{mime}=$env{db_mime} if defined($env{db_mime});
 	$arg{name}=$env{db_name} if defined($env{db_name});
-
-# Taaak a este raz bez db_ (koli lng)
-	$arg{ID}=$env{ID};
-	$arg{ID_dir}=$env{dir} if exists $env{dir};
-	$arg{active}=$env{active} if defined($env{active});
-	$arg{lng}=$env{lng} if exists $env{lng};
-	$arg{comment}=$env{comment} if defined($env{comment});
-	$arg{mime}=$env{mime} if defined($env{mime});
-	$arg{name}=$env{name} if defined($env{name});
 	my $id=-1;
 
 # Menime len zaznam
-	if (length($env{ID})>0)
+	if (length($arg{ID})>0)
 	{
 		$id = App::540::file::set( %arg );
 		if ($id<0)
