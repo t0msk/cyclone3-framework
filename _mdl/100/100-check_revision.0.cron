@@ -144,9 +144,9 @@ HEADER
 			'Subject' => "Cyclone3 upgraded r$revision->r$TOM::core_revision at $TOM::hostname"
 		);
 		
-		
-		my $xml=`/usr/local/bin/svn log -r$revision:$TOM::core_revision --xml`
-			|| `/usr/bin/svn log -r$revision:$TOM::core_revision --xml`;
+		my $cmd="svn -v --xml -r$revision:$TOM::core_revision log .";
+		main::_log("cmd='$cmd'");
+		my $xml=`cd $TOM::P;/usr/local/bin/$cmd` || `cd $TOM::P;/usr/bin/$cmd`;
 		
 		my $changes;
 		while ($xml=~s|<logentry\s+revision="(.*?)">(.*?)</logentry>||s)
