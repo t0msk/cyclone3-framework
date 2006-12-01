@@ -58,6 +58,7 @@ sub execute
 			a300_users.login='$env{login}'
 			AND a300_users.pass_md5='$env{pass_md5}'
 			AND a300_users.host='$tom::H_cookie'
+			AND active='Y'
 		LIMIT 1");
 	if (%main::USRM=$db0->fetchhash)
 	{
@@ -75,6 +76,7 @@ sub execute
 			WHERE 	a300_users_arch.login='$env{login}'
 				AND a300_users_arch.pass_md5='$env{pass_md5}'
 				AND a300_users_arch.host='$tom::H_cookie'
+				AND a300_users_arch.active='Y'
 			LIMIT 1");
 		if (%main::USRM=$db0->fetchhash)
 		{
