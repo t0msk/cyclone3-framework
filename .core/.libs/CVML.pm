@@ -42,88 +42,101 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 sub parse
 {
- my $data=shift;
- my %arr;
- my $env;
- my $W='[ \t\n\r]{0,255}?';
-
- my $var=$data;$var=~s|[\n\r]||g;
- print "+input with $var\n\n" if $debug;
- print "+parsing\n" if $debug;
- #while ($data=~s|^(.*?)<(#?)([a-zA-Z0-9_ \-\.\+]{1,255}?)$W(=?)([\[:].*?[^\\]\])>||s) #]/
- while ($data=~s|^(.*?)<(#?)([a-zA-Z0-9_ \-\.\+]{0,255}?)$W(=?)([\[:].*?[^\\]?\])>||s) #]/
- {
-  my ($deathblock,$com,$name,$block,$head)=($1,$2,$3,$4,$5);
-  my $head_in=$head;$head_in=~s|^\[(.*?)\]$|\1| if $block;
-
-  print "+parse ? death:".length($deathblock)." com:$com name:$name block:$block head:$head\n" if $debug;
-
-  if ($block)
-  {
-   print " +block\n" if $debug;
-   if (not $data=~s|^(.*?)<\[$head_in\]>||s){die "  -not parsed (.*?)<\[$head_in\]> $data\n";}
-   my $data_in=$1;
-   next if $com eq "#";
-
-   # spracovanie
-   if ($name eq "+") # ide len o pridanie array
-   {
-    print " + +array\n" if $debug;    
-    #my @out=CVML::microparser::parse_line($data_in);
-    my @out=CVML::microparser::parse($data_in);
-    push @{$env},@out;
-    next;
-   }
-   if (defined ${$env}{$name})
-   {
-    print "  +exist\n" if $debug;
-    if (!$arr{$name})
-    {
-     print "  +not arr\n" if $debug;
-     my $var=${$env}{$name};delete ${$env}{$name};${$env}{$name}[0]=$var;
-    }
-    print "  +arr\n" if $debug;
-    push @{${$env}{$name}},CVML::microparser::parse($data_in);$arr{$name}=1;
-   }
-   else {${$env}{$name}=CVML::microparser::parse($data_in);}
-   next;
-  }
-
-  print " +normal $head\n" if $debug;
-  if ($name eq "+") # ide len o pridanie array
-  {
-   print " + +array line\n" if $debug;
-   my @out=CVML::microparser::parse_line($head);
-   push @{$env},@out;
-   next;
-  }
-  if (defined ${$env}{$name})
-  {
-   if (!$arr{$name}){my $var=${$env}{$name};delete ${$env}{$name};${$env}{$name}[0]=$var;}
-   push @{${$env}{$name}},CVML::microparser::parse_line($head);$arr{$name}=1;
-  }
-  else {${$env}{$name}=CVML::microparser::parse_line($head);}
-
-  next;
- }
-
- 
- if ($env)
- {
-  print "-return ref\n" if $debug;
-  return $env;
- }
- 
- my $var=$data;$var=~s|[\n\r]||g; 
- 
- $data=~s|^\n||g;
- #$data=~s|\s+$||g; # kvoli typu TEXT
- $data=~s|\n[\t ]+$||g; # kvoli typu TEXT
- 
- $data=~s|\\([\[\]])|\1|g;
- print "-return data !$data!\n" if $debug;
- #return undef unless $data;
- return $data;
+	my $data=shift;
+	my %arr;
+	my $env;
+	my $W='[ \t\n\r]{0,255}?';
+	
+	my $var=$data;$var=~s|[\n\r]||g;
+	print "+input with $var\n\n" if $debug;
+	print "+parsing\n" if $debug;
+	while ($data=~s|^(.*?)<(#?)([a-zA-Z0-9_ \-\.\+]{0,255}?)$W(=?)([\[:].*?[^\\]?\])>||s)
+	{
+		my ($deathblock,$com,$name,$block,$head)=($1,$2,$3,$4,$5);
+		my $head_in=$head;$head_in=~s|^\[(.*?)\]$|\1| if $block;
+		
+		print "+parse ? death=length(".length($deathblock).") com='$com' name='$name' block='$block' head='$head'\n" if $debug;
+		
+		if ($block)
+		{
+			print " +block\n" if $debug;
+			if (not $data=~s|^(.*?)<\[$head_in\]>||s){die "  -not parsed (.*?)<\[$head_in\]> $data\n";}
+			my $data_in=$1;
+			next if $com eq "#";
+			
+			# spracovanie
+			if ($name eq "+") # ide len o pridanie array
+			{
+				print " + +array\n" if $debug;    
+				my @out=CVML::microparser::parse($data_in);
+				push @{$env},@out;
+				next;
+			}
+			
+			if (defined ${$env}{$name})
+			{
+				print "  +exist\n" if $debug;
+				if (!$arr{$name})
+				{
+					print "  +not arr\n" if $debug;
+					my $var=${$env}{$name};delete ${$env}{$name};${$env}{$name}[0]=$var;
+				}
+				print "  +arr\n" if $debug;
+				push @{${$env}{$name}},CVML::microparser::parse($data_in);$arr{$name}=1;
+			}
+			else
+			{
+				${$env}{$name}=CVML::microparser::parse($data_in);
+			}
+			next;
+		}
+		
+		print " +normal $head\n" if $debug;
+		if (!$name && $head eq ":[]")
+		{
+			print " + +empty hash\n" if $debug;
+			$env={};
+			next;
+		}
+		elsif ($name eq "+") # ide len o pridanie array
+		{
+			print " + +array line\n" if $debug;
+			my @out=CVML::microparser::parse_line($head);
+			push @{$env},@out;
+			next;
+		}
+		if (defined ${$env}{$name})
+		{
+			print " + +defined line\n" if $debug;
+			if (!$arr{$name}){my $var=${$env}{$name};delete ${$env}{$name};${$env}{$name}[0]=$var;}
+			push @{${$env}{$name}},CVML::microparser::parse_line($head);$arr{$name}=1;
+		}
+		else 
+		{
+			print " + +new line\n" if $debug;
+			${$env}{$name}=CVML::microparser::parse_line($head);
+		}
+		
+		next;
+	}
+	
+	
+	if ($env)
+	{
+		print "-return ref\n" if $debug;
+		return $env;
+	}
+	
+	my $var=$data;$var=~s|[\n\r]||g; 
+	
+	$data=~s|^\n||g;
+	#$data=~s|\s+$||g; # kvoli typu TEXT
+	$data=~s|\n[\t ]+$||g; # kvoli typu TEXT
+	
+	$data=~s|\\([\[\]])|\1|g;
+	print "-return data !$data!\n" if $debug;
+	#return undef unless $data;
+	return $data;
 }
 
 
@@ -146,14 +159,14 @@ sub parse_line
 	my $W='[ \t\n\r]*?';
 	
 	my $env;
-	print "     +line $data\n" if $debug;
+	print "     +line '$data'\n" if $debug;
 	if ($data=~s/^\[(.*?)\]$/\1/s) # array
 	{
 		#print "      +array\n" if $debug;
 		if ($data=~/[^\\]\].*?[^\\]\[/s)
 		{
 			$data=~s|([^\\])\]$W\[|\1\]\[|gs;
-			print "      +array !$data!\n" if $debug;
+			print "      +array '$data'\n" if $debug;
 			
 			@{$env}=split('\]\[',$data);
 			foreach (@{$env}){$_=~s|\\([\[\]])|\1|gs;} # osetrujem spet vykomentovane znaky []
@@ -163,45 +176,40 @@ sub parse_line
 		else
 		{
 			#${$env}[0]=undef;
-			print "      +standard !$data!\n" if $debug;
+			print "      +standard '$data'\n" if $debug;
 			#$data=~s/\\(\[|\])/\1/gs;
 			$data=~s|\\([\[\]])|\1|gs; # osetrujem spet vykomentovane znaky []
 			
-			print "       +standard !$data!\n" if $debug;
+			print "       +standard '$data'\n" if $debug;
 		}
-		
-#  foreach (@{$env})
-#  {
-#  	print "+kontrola prazdnosti\n";
-#  }
-  
- }
- elsif ($data=~s/^:(.*?)\]$/\1/s) # hash
- {
- 
-  $data=~s|([^\\])\]$W:|\1\]:|gs;
-  
-  print "      +hash $data\n" if $debug;
-	foreach my $line(split(/\]:/,$data))
-	{
-		my @ref=split(/\[/,$line,2);
-		$ref[0]=~s|$W||g;
-		next unless $ref[0]; # osetrujem tento pripad -> <key:[]>, teda ked ide o prazdny hash
-		$ref[1]=~s|\\([\[\]])|\1|gs; # osetrujem spet vykomentovane znaky []
-		print "       +$ref[0] = $ref[1]\n" if $debug;
-		${$env}{$ref[0]}=$ref[1];
 	}
-	$env={} unless $env;
- }
- if(!$env)
- {
-  #$data=~s|\\([\[\]])|\1|g;
-  print "-return data !$data!\n" if $debug;
-  #return undef if ((!$data));
-  #print "-return\n";
-  return $data;
- }
- return $env;
+	elsif ($data=~s/^:(.*?)\]$/\1/s) # hash
+	{
+		$data=~s|([^\\])\]$W:|\1\]:|gs;
+		print "      +hash '$data'\n" if $debug;
+		foreach my $line(split(/\]:/,$data))
+		{
+			my @ref=split(/\[/,$line,2);
+			$ref[0]=~s|$W||g;
+			next unless $ref[0]; # osetrujem tento pripad -> <key:[]>, teda ked ide o prazdny hash
+			$ref[1]=~s|\\([\[\]])|\1|gs; # osetrujem spet vykomentovane znaky []
+			print "       +'$ref[0]'='$ref[1]'\n" if $debug;
+			${$env}{$ref[0]}=$ref[1];
+		}
+		$env={} unless $env;
+	}
+	
+	if(!$env)
+	{
+		#$data=~s|\\([\[\]])|\1|g;
+		print "-return data !$data!\n" if $debug;
+		#return undef if ((!$data));
+		#print "-return\n";
+		return $data;
+	}
+	
+	return $env;
+	
 }
 
 
