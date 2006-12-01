@@ -11,12 +11,12 @@ use TOM::Database::SQL;
  '-v'		=>	"verbosity",
  '-vv, --v'	=>	"verbosity 2, --v=2",
  '-e'		=>	"execute all modifications",
- '--db_h'	=>	"use type of database",
- '--db_name'	=>	"use name of database",
+ '--db_h'	=>	"use type of database (default main)",
+ '--domain'	=>	"use name of domain",
 );
 if (($FORM{'h'})||($FORM{'help'})){&help();}
 
-if (!$FORM{'db_h'}){&help();}
+$FORM{'db_h'}='main' unless $FORM{'db_h'};
 
 #################################################################################################
 
@@ -25,26 +25,34 @@ TOM::Database::connect::multi($FORM{'db_h'}) || die "can't connect";
 
 print "connected '$FORM{'db_h'}' database handler\n";
 
-if ($FORM{'db_name'})
+
+if ($FORM{'domain'})
 {
-	my %out=TOM::Database::SQL::compare::compare_database($FORM{'db_name'},'db_h'=>$FORM{'db_h'});
-	print "compared database '$FORM{'db_name'}'\n";
+	require $tom::P."/local.conf";
+	
+	my %out=TOM::Database::SQL::compare::compare_database(
+		$TOM::DB{$FORM{'db_h'}}{'name'},
+		'db_h'=>$FORM{'db_h'}
+	);
+	print "compared database '$TOM::DB{$FORM{'db_h'}}{'name'}'\n";
 	print color 'reset bold yellow';
 	foreach my $SQL(@{$out{'ALTER'}})
 	{
 		print "$SQL\n";
 	}
 	
-	print "Do it? [No/yes]\n";
-	my $do=<STDIN>;
-	
-	if ($do=~/yes/i)
+	if (@{$out{'ALTER'}})
 	{
-		print color 'reset red';
-		foreach my $SQL(@{$out{'ALTER'}})
+		print "Do it? [No/yes]\n";
+		my $do=<STDIN>;
+		if ($do=~/yes/i)
 		{
-			print "$SQL\n";
-			TOM::Database::SQL::execute($SQL);
+			print color 'reset red';
+			foreach my $SQL(@{$out{'ALTER'}})
+			{
+				print "$SQL\n";
+				TOM::Database::SQL::execute($SQL);
+			}
 		}
 	}
 	
