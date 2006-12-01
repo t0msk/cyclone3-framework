@@ -284,14 +284,45 @@ sub _chunk_prepare
 		$version=~s|^([\d]+)\.([\d]+)\.(.*)$|\1.\2|;
 	main::_log("MySQL version on handler '$header->{'db_h'}'='$version'");
 	
-	if ($version < $header->{'version'})
+	# upgrade na vyssie verzie
+	
+	# 4.0 -> 4.1
+	if ($header->{'version'} eq "4.0" && $version > $header->{'version'})
 	{
-		main::_log("converting SQL from $header->{'version'} to $version");
+		main::_log("converting SQL $header->{'version'} to 4.1");
+		$header->{'version'}="4.1";
+	}
+	
+	# 4.1 -> 5.0
+	if ($header->{'version'} eq "4.1" && $version > $header->{'version'})
+	{
+		main::_log("converting SQL $header->{'version'} to 5.0");
+		$header->{'version'}="5.0";
+	}
+	
+	# 5.0 -> 5.1
+	if ($header->{'version'} eq "5.0" && $version > $header->{'version'})
+	{
+		main::_log("converting SQL $header->{'version'} to 5.1");
+		$$chunk=~s|collate|COLLATE|g;
+		$$chunk=~s|character set|CHARACTER SET|g;
+		$$chunk=~s|default|DEFAULT|g;
+		$$chunk=~s|auto_increment|AUTO_INCREMENT|g;
+		$header->{'version'}="5.1";
+	}
+	
+	# downgrade na nizsie verzie
+	
+	# 4.1 -> 4.0
+	if ($header->{'version'} eq "4.1" && $version eq "4.0")
+	{
+		main::_log("converting SQL $header->{'version'} to $version");
 		$$chunk=~s|ENGINE=|TYPE=|;
 		$$chunk=~s|character set (.*?) ||g;
 		$$chunk=~s|collate (.*?)_bin|binary|g;
 		$$chunk=~s|collate (.*?) ||g;
 		$$chunk=~s| DEFAULT CHARSET=(utf8\|ascii)||;
+		$header->{'version'}=$version;
 	}
 	
 	$t->close();
