@@ -17,7 +17,7 @@
 </DEFINITION>
 
 <DEFINITION id="KEY">
-		<key<#attrs#>/>
+		<key <#attrs#>/>
 <#KEY#>
 </DEFINITION>
 

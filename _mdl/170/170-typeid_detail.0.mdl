@@ -54,10 +54,18 @@ sub execute
 	while ($filedata=~s/<CONF_KEY(.*?)\/>//)
 	{
 		my $attrs=$1;
+		my %env0=CML::VARhash($attrs);
+		my $attrs2;
+		foreach my $kk(sort keys %env0)
+		{
+			$env0{$kk}=~s|<|&lt;|g;
+			$env0{$kk}=~s|>|&gt;|g;
+			$attrs2.=$kk.'='.'"'.$env0{$kk}.'" ';
+		}
 		
 		$XSGN{'NULL'}=$XSGN{'KEY'};
 		
-		$XSGN{'NULL'}=~s|<#attrs#>|$attrs|;
+		$XSGN{'NULL'}=~s|<#attrs#>|$attrs2|;
 		
 		$XSGN{'TMP'}=~s|<#KEY#>|$XSGN{'NULL'}|;
 	}
