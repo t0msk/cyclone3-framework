@@ -81,11 +81,10 @@ sub prepare_last
 	$self->{OUT}{HEADER}=~s|<%PAGE-CODE%>|$main::request_code|;
 	$self->{OUT}{HEADER}=~s|<%domain%>|$tom::H#$env{result}|;
 	
-	#$self->{OUT}{HEADER}="";
-	
-	Utils::vars::replace($self->{OUT}{HEADER});
-	Utils::vars::replace($self->{OUT}{BODY});
-	Utils::vars::replace($self->{OUT}{FOOTER});
+	# autoreplace vsetkeho je potencionalne nebezpecne
+#	Utils::vars::replace($self->{OUT}{HEADER});
+#	Utils::vars::replace($self->{OUT}{BODY});
+#	Utils::vars::replace($self->{OUT}{FOOTER});
 	
  return 1;
 }
