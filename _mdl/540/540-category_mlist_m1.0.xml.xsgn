@@ -14,7 +14,7 @@
 		<name><![CDATA[<%name%>]]></name>
 		<count><![CDATA[<%count%>]]></count>
 		<ID><![CDATA[<%ID_dir%>]]></ID>
-		<active><![CDATA[Y]]></active>
+		<active><![CDATA[<%active%>]]></active>
 		<description><![CDATA[<%description%>]]></description>
 		<itemcount><![CDATA[<%count%>]]></itemcount>
 		<IDparent><![CDATA[<%ID_parent%>]]></IDparent>

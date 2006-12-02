@@ -21,8 +21,9 @@ sub execute
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
 
 	App::540::file::set(ID=>$env{'db_ID'}, active=>$env{'db_active'} );
-	$XSGN{RESULT_success}=~s/<%active%>/$env{'active'}/g;
+	$XSGN{RESULT_success}=~s/<%active%>/$env{'db_active'}/g;
 	$XSGN{TMP}=$XSGN{RESULT_success};
+	$XSGN{TMP}=~s/<%ID%>/$env{'db_ID'}/g;
 	return 1;
 }
 1;

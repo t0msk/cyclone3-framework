@@ -4,7 +4,7 @@
 <DEFINITION id="TMP">
 <response type="category_active" IDapp="a540" IDitem="<%ID%>" result="0" code="<$main::request_code>">
 	<result>0</result>
-	<reason>default error</reason>
+	<reason>Could not set item active.</reason>
 </response>
 </DEFINITION>
 
