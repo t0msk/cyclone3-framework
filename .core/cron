@@ -27,7 +27,6 @@ use TOM::lock;
 use TOM::Database::connect;
 use CRON;
 use CRON::debug;
-use CRON::error;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Parallel::ForkManager;
 use Proc::ProcessTable;

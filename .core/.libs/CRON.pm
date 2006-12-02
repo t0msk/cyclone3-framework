@@ -22,7 +22,6 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 use Utils::vars;
 use Utils::datetime;
 use System::meter;
-use CRON::error;
 
 #use warnings;
 use vars qw/
