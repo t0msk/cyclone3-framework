@@ -232,9 +232,14 @@ sub GetProducts
 		$where.="AND (";
 		foreach (split(' ',$env{'name_search'}))
 		{
-#			$where.="nazov_produktu LIKE '%$_%' AND ";
-			$where.="UPPER(nazov_produktu) LIKE UPPER('%$_%') AND ";
-#			UPPERCASE(SEARCH) LIKE UPPERCASE('%co%')
+			$where.=qq{
+				(
+					UPPER(nazov_produktu) LIKE UPPER('%$_%') OR
+					UPPER(nazov_kategorie) LIKE UPPER('%$_%') OR
+					UPPER(dl.ffakvuepvalues(produkt_id,'0004')) LIKE UPPER('%$_%') OR
+					kod_produktu LIKE '$_'
+				)
+				AND };
 		}
 		$where=~s|AND $||;
 		$where.=") ";
@@ -286,16 +291,18 @@ sub GetProducts
 				dl.ffakvuepvalues(produkt_id,'0005') "description",
 				dl.ffakvuepvalues(produkt_id,'0006') "new",
 				
-				row_number() over (order by produkt_id DESC) "NUM",
-				typ_produktu "type"
+				row_number() over (order by nazov_produktu ASC,produkt_id DESC) "NUM",
+				typ_produktu "type",
+				nazov_kategorie
 			FROM
 				dl.sof_view_produkt
 			WHERE
 				mandant_id >= 0
 				$where
-			ORDER BY produkt_id DESC
+			ORDER BY nazov_produktu ASC,produkt_id DESC
 		)
 		$limit
+		ORDER BY NUM
 	};    # Prepare and execute SELECT
 	
 	if ($env{count})
