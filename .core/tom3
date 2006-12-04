@@ -1226,7 +1226,22 @@ while ($req->Accept() >= 0)
 		TOM::Utils::vars::replace($file_data);
 		
 		#
-		# CONF TYPECKA
+		# KEYS TypeID
+		#
+		while ($file_data=~s|<CONF_KEY (.*?)/>||)
+		{
+			next unless $1; # vyhnem sa vykonavaniu dalsich podmienok
+			my %env0=CML::VARhash($1);
+			next unless $env0{'name'};
+			next unless $env0{'default'};
+			if (!$main::key{$env0{'name'}})
+			{
+				main::_log("set key='$env0{'name'}' default value='$env0{'default'}'");
+			}
+		}
+		
+		#
+		# CONF TypeID
 		#
 		while ($file_data=~s|<CONF_VAR (.*?)/>||)
 		{
