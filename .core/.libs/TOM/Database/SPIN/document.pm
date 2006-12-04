@@ -204,6 +204,7 @@ sub GetDocument
 			print SPF $blob;
 			close (SPF);
 			
+			$data{'changed'}=1;
 		}
 		
 		if (
