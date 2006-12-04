@@ -1169,39 +1169,13 @@ while ($req->Accept() >= 0)
 			main::_deprecated("using bad TypeID file, $tom::P/_type/l_0000.pub.type");
 			undef $/;$file_data=<TYPE>;
 		}
-		
 		# potom sa pokusam najst not_found page
-		elsif (open (TYPE,"<".$tom::P."/_type/l_notfound.pub.type"))
+		elsif (
+			open (TYPE,"<".$tom::P."/_type/l_notfound.pub.type") ||
+			open (TYPE,"<".$tom::Pm."/_type/m_notfound.pub.type") ||
+			open (TYPE,"<".$TOM::P."/_type/g_notfound.pub.type") )
 		{
-			main::_log("access to:".$tom::P."/_type/l_notfound.pub.type");
-			undef $/;$file_data=<TYPE>;
-			$main::page_statuscode="404";
-			if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type} ne "vandaliser")
-			{
-				TOM::Error::engine(
-					"silent - This error message is in silen mode",
-					"Can't display page with requested REQUEST_URI='$main::ENV{REQUEST_URI}' TID='$FORM{TID}'",
-					"Please check type.conf, rewrite.conf or RewriteRules in .htaccess");
-				$result="failed";
-			}
-		}
-		elsif (open (TYPE,"<".$tom::Pm."/_type/m_notfound.pub.type"))
-		{
-			main::_log("access to:".$tom::Pm."/_type/m_notfound.pub.type");
-			undef $/;$file_data=<TYPE>;
-			$main::page_statuscode="404";
-			if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type} ne "vandaliser")
-			{
-				TOM::Error::engine(
-					"silent - This error message is in silen mode",
-					"Can't display page with requested REQUEST_URI='$main::ENV{REQUEST_URI}' TID='$FORM{TID}'",
-					"Please check type.conf, rewrite.conf or RewriteRules in .htaccess");
-				$result="failed";
-			}
-		}
-		elsif (open (TYPE,"<".$TOM::P."/_type/g_notfound.pub.type"))
-		{
-			main::_log("access to:".$TOM::P."/_type/g_notfound.pub.type");
+			main::_log("access to: notfound.pub.type");
 			undef $/;$file_data=<TYPE>;
 			$main::page_statuscode="404";
 			if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type} ne "vandaliser")
