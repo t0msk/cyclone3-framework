@@ -15,5 +15,6 @@
 		<VAR id="db_lng" value="<$main::FORM{lng}>" />
 		<VAR id="db_ID" value="<$main::FORM{ID}>" />
 		<VAR id="db_title" value="<$main::FORM{title}>" />
+		<VAR id="db_IDname" value="<$main::FORM{IDname}>" />
 		<VAR id="db_description" value="<$main::FORM{description}>" />
 </MODULE>

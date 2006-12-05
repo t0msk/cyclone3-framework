@@ -22,7 +22,7 @@ sub execute
 
 	use Utils::vars;
 
-	$env{db_410}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+	$env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
 	$env{db_400}=$TOM::DB{main}{name} unless $env{db_400};
 
 	my $tmplng;
@@ -64,12 +64,23 @@ sub execute
 			$env{db_IDname}=~s|\s|-|g;
 
 			my $sqlAddon = "";
-
+			
+			if(exists $env{db_description})
+			{
+				my %cvml_hash;
+				$cvml_hash{description}=$env{db_description};
+		
+				my $cvml_data=CVML::structure::serialize(%cvml_hash);
+		
+				$sqlAddon.=",xdata='".$cvml_data."'";
+			}
+			
 			main::_log("
 				UPDATE
 					$env{db_400}.a400_category
 				SET
-					name='$env{db_title}'
+					name='$env{db_title}',
+					IDname='$env{db_IDname}'
 					$sqlAddon
 				WHERE
 					ID='$env{db_ID}'
@@ -82,7 +93,8 @@ sub execute
 				UPDATE
 					$env{db_400}.a400_category
 				SET
-					name='$env{db_title}'
+					name='$env{db_title}',
+					IDname='$env{db_IDname}'
 					$sqlAddon
 				WHERE
 					ID='$env{db_ID}'
