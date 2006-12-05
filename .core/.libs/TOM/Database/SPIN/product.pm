@@ -255,6 +255,9 @@ sub GetProducts
 	
 	$where.="AND kategoria_id = $env{'category_ID'} " if $env{'category_ID'};
 	$where.="AND kod_kategorie LIKE '$env{'category_code'}%' " if $env{'category_code'};
+	
+	$env{'order'}="nazov_produktu ASC,produkt_id DESC" unless $env{'order'};
+	
 	if ($env{'limit'})
 	{
 		my @lim=split(',',$env{'limit'});
@@ -291,7 +294,7 @@ sub GetProducts
 				dl.ffakvuepvalues(produkt_id,'0005') "description",
 				dl.ffakvuepvalues(produkt_id,'0006') "new",
 				
-				row_number() over (order by nazov_produktu ASC,produkt_id DESC) "NUM",
+				row_number() over (order by $env{'order'}) "NUM",
 				typ_produktu "type",
 				nazov_kategorie
 			FROM
@@ -299,7 +302,7 @@ sub GetProducts
 			WHERE
 				mandant_id >= 0
 				$where
-			ORDER BY nazov_produktu ASC,produkt_id DESC
+			ORDER BY NUM
 		)
 		$limit
 		ORDER BY NUM
