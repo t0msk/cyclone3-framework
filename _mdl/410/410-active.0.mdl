@@ -1,0 +1,121 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+$authors="nemsak\@webcom.sk";
+use strict;
+
+=head1 NAME
+set_active_m1
+
+=head1 HEAD_VERSION_BUILD
+1.060330
+
+=head1 DESCRIPTION
+activation/deactivation
+
+=head1 CHANGES
+2006-03-30 - deb00t
+	- first make
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	my $lngstring="";
+	$lngstring = "AND lng='$env{db_lng}'" if$env{db_lng};
+
+	#FIXME: nemsak - toto tu VOBEC nema byt ... ale momentalne to tak byt musi, lebo momentalne adminko neposiela itemcek :( zabow som, zabite ma :/
+	if(!$env{db_type})
+	{
+		$env{db_type}="item";
+	}
+
+	if((!$env{db_ID}) || (!$env{db_active}) || (!$env{db_type}))
+	{
+		$XSGN{TMP}=$XSGN{RESULT_failure_no_input};
+		if(!$env{db_active}) {$XSGN{TMP}=~s|<%missing_parameter%>|db_active|;}
+		if(!$env{db_ID}) {$XSGN{TMP}=~s|<%missing_parameter%>|db_ID|;}
+		if(!$env{db_type}) {$XSGN{TMP}=~s|<%missing_parameter%>|db_type|;}
+	}
+	else
+	{
+		$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
+		$env{db_410}=$TOM::DB_name_TOM unless $env{db_410};
+		my $success;
+		my $db;
+		my %db_line;
+
+		#TODO: nemsak - dorobit kontrolu ci sme dostali viac riadkov alebo len jeden - zavisi od toho vystup - napriklad:
+		# chceme nastavit active na "Y", a neposleme lng - mame tri mutacie, z ktorych jedna je D, druha Y, a tretia N
+		# musime odignorovat tuto kontrolu, pretoze netusime, ktoru z mutacii mame skontrolovat proti "Y"
+
+		$db=$main::DB{main}->Query("
+			SELECT
+				ID,active
+			FROM
+				$env{db_410}.a410
+			WHERE
+				ID='$env{db_ID}'
+				$lngstring
+		");
+		if($db)
+		{
+			if(%db_line=$db->FetchHash())
+			{
+				$success=1;
+			}
+		}
+		if($success)
+		{
+			if($db_line{active} eq $env{db_active})
+			{
+				$XSGN{TMP}=$XSGN{RESULT_failure_equal};
+			}
+			else
+			{
+				$db=$main::DB{main}->Query("
+					UPDATE
+						$env{db_410}.a410
+					SET
+						active='$env{db_active}'
+					WHERE
+						ID='$env{db_ID}'
+						$lngstring
+				");
+				if($db)
+				{
+					$XSGN{TMP}=$XSGN{RESULT_success};
+				}
+				else
+				{
+					$XSGN{TMP}=$XSGN{RESULT_failure_set};
+				}
+			}
+		}
+		else
+		{
+			$XSGN{TMP}=$XSGN{RESULT_failure_no_data};
+		}
+	}
+
+	$XSGN{TMP}=~s|<%IDapp%>|a410|g;
+	$XSGN{TMP}=~s|<%ID%>|$env{db_ID}|g;
+	$XSGN{TMP}=~s|<%active%>|$env{db_active}|g;
+	$XSGN{TMP}=~s|<%lng%>|$env{db_lng}|g;
+
+	return 1;
+}
+1;
