@@ -997,7 +997,8 @@ while ($req->Accept() >= 0)
 				{
 					my $t_a210=track TOM::Debug('a210:'.$main::FORM{'a210_path'});
 					# ziskanie dat o Sitemap node
-					if (!$main::FORM{'a210_path'} && !$main::FORM{'type'})
+					# toto len v pripade ak uz nieje nastavene type z GET na nieco ine ako 'default' type
+					if (!$main::FORM{'a210_path'} && (!$main::FORM{'type'} || $main::FORM{'type'} eq "default"))
 					{
 						my $ID=App::210::SQL::page_get_default_ID('lng'=>$main::FORM{'__lng'});
 						%a210=App::020::SQL::functions::get_ID(
