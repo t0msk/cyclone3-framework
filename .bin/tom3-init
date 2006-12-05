@@ -112,6 +112,7 @@ if ($main::FORM{domain})
 	$tom::P=$main::p;
 	$TOM::P=$main::P;
 	
+	unshift @INC,$tom::P."/.libs";
 }
 
 

@@ -259,6 +259,8 @@ foreach (sort keys %CRON::hosts)
 		$tom::P=$cron::P;
 		$TOM::P=$CRON::P;
 		
+		unshift @INC, $tom::P."/.libs";
+		
 		main::_log("start forked cron on path='$cron::P'");
 		CRON::waitload($CRON::LOADAVG);
 		require $cron::P."/local.conf";
