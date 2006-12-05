@@ -1553,9 +1553,13 @@ while ($req->Accept() >= 0)
 						($ITst && !$FORM{_ITst_decode})
 						||(!$ITst)
 					)
+					&&
+					(
+						# encodovat cast URI s premennymi len ak je v linke hashovana cast
+						$main::ENV{'REQUEST_URI'}=~/^(.*)-(.*?)-v\d$/
+					)
 				)
 			{
-				$main::ENV{REQUEST_URI}=~/^(.*)-(.*?)-v\d$/;
 				my $key=$2;
 				
 				# v pripade ze som robot tak ked pridem na stranku linkou hashovanou pomocou
