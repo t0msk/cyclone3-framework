@@ -224,7 +224,7 @@ sub GetProducts
 	
 	if ($env{'type'} eq "T")
 	{
-		$where.="AND hmotnost_mj>0 ";
+#		$where.="AND hmotnost_mj>0 ";
 	}
 	
 	if ($env{'name_search'})
