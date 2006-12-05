@@ -6,5 +6,5 @@
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="universal_email" />
 		<VAR id="type" value="obsolete" />
-		<VAR id="to_email" value="<$TOM::contact{'cyclone3-dev'}>" />
+		<VAR id="to_email" value="<$TOM::contact{'DEV_list_farm'}>" />
 </MODULE>
