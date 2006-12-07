@@ -76,7 +76,7 @@ sub execute
 	}
 	
 	# setting default db_order_by
-	$env{db_order_by}="a500.ID DESC" unless $env{db_order_by};
+	$env{db_order_by}="a500_attrs.inserttime DESC" unless $env{db_order_by};
 	$env{db_order_by}=~s|title|about|g;
 
 	#parsing IDcategory
@@ -471,7 +471,7 @@ sub execute
 			}
 
 			$XSGN{NULL}=~s|<%IDcategory_name%>|$db_line{IDcategory_name}|g;
-
+				
 			# display date and time
 			if ($env{datetime_allow})
 			{
