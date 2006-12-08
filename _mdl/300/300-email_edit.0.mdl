@@ -79,7 +79,7 @@ sub execute
 
 	while ($XSGN{EMAIL}=~s|<code>(.*?)</code>|<!TMP!>|)
 	{my $var=$1;
-	if ($TOM::type_code){$var=enc::enc($var,$tom::type_codes{root});$XSGN{EMAIL}=~s/<!TMP!>/?||$var-root/;}
+	if ($TOM::type_code){$var=TOM::Net::URI::URL::hash_encode( $var );$XSGN{EMAIL}=~s/<!TMP!>/?||$var-root/;}
 	else{$XSGN{EMAIL}=~s/<!TMP!>/?$var/;}}
 
 

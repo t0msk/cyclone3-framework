@@ -303,7 +303,7 @@ sub execute
 						my $var=$1;
 						if ($TOM::type_code)
 						{
-							$var=enc::enc($var,$tom::type_codes{root});
+							$var=TOM::Net::URI::URL::hash_encode( $var );
 							$XSGN{NULL}=~s/<!TMP!>/?||$var-root/;
 						}
 						else
@@ -456,7 +456,7 @@ sub execute
 									my $var=$1;
 									if ($TOM::type_code)
 									{
-										$var=enc::enc($var,$tom::type_codes{root});
+										$var=TOM::Net::URI::URL::hash_encode( $var );
 										$XSGN{NULL}=~s/<!TMP!>/?||$var-root/;
 									}
 									else
