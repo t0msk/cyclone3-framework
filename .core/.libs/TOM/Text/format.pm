@@ -66,7 +66,6 @@ sub USmoney
 use TOM::Net::URI::URL;
 use Net::HTTP::CGI;
 use MIME::Base64;
-use enc2;
 use enc3;
 
 # TOM::Text::format::decode_URLS
@@ -82,14 +81,7 @@ sub decode_URLS
 			my ($ver,$code,$url)=($3,$2,$1);
 			if ($ver eq "2")
 			{
-				my $query=TOM::Net::URI::URL::url_decode(enc2::dec($url,$tom::code_keys{$code}{key}));
-				my %form=Net::HTTP::CGI::GetQuery_l($query);
-				# kontrola spravnosti rozparsovania - pravdepodobnosti normalnej linky
-				my $bad;foreach (keys %form){$bad=1 if $_=/[^a-zA-Z0-9_\-]/;}
-				if (!$bad)
-				{
-					$text=~s|<!TMPURLDEC!>|?\|?$query|;
-				}
+				main::_log("unsupported enc2 encoding of url",1);
 			}
 			elsif ($ver eq "3")
 			{
