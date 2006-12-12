@@ -449,6 +449,7 @@ sub GetProductReserved
 		WHERE
 			"prod".produkt_id = $env{product_ID} AND
 			"obj".ep_id = "prod".mep_id AND
+			"obj".dd_id = 21 AND
 			"prod".dod_mnozstvo < "prod".mnozstvo
 	};
 	
