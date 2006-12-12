@@ -1,0 +1,65 @@
+#!/bin/perl
+# A!A©A­A3Ao - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use TOM::Utils::datetime;
+use MIME::Entity;
+
+our $authors = 'gregor@webcom.sk';
+
+sub execute
+{
+	my %env=@_;
+
+	if ( $env{xt_design} ne 'none' )
+	{
+		Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	}
+	if ($env{xt_xlng})
+	{
+		main::_log('using xlng transformation');
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	if ( !$env{'contact_type'} ||
+			 !$env{'message'}
+	)
+	{
+		$tom::ERR = 'No data specified!';
+		return undef;
+	}
+
+	my $date = TOM::Utils::datetime::mail_current(); chomp( $date );
+
+	my $email = $TOM::contact{$env{'contact_type'}};
+	my $email_email = $email; $email_email =~ s|;|,|g;
+	
+	my $subject = $env{'subject'} || 'cyclone feedback';
+	
+	my $from = "\"$env{'name'}\" <$env{'email'}>";
+	$from = 'cyclone@comsultia.sk' unless $env{'email'} && $env{'name'};
+
+	my $ent = MIME::Entity->build(
+		'Type'    => 'text/plain; charset=UTF-8',
+		'From'    => $from,
+		'To'      => $email_email,
+		'Subject' => $subject,
+		'Date'    => $date,
+		'Data'    => $env{'message'}
+	);
+
+	TOM::Net::email::send(
+		'to' => $email,
+		'body' => $ent->as_string
+	);
+	
+	return 1;
+}
+
+1;
+
