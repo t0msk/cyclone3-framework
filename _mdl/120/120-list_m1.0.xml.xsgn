@@ -9,6 +9,7 @@
 		<fullname flex="1" />
 		<email flex="1" />
 		<homepage flex="1" />
+		<is_default flex="1" />
 		<xdata flex="1" />
 		<active flex="1" />
 	</header>
@@ -23,6 +24,7 @@
 		<fullname><![CDATA[<%fullname%>]]></fullname>
 		<email><![CDATA[<%email%>]]></email>
 		<homepage><![CDATA[<%homepage%>]]></homepage>
+		<is_default><![CDATA[<%is_default%>]]></is_default>
 		<xdata><![CDATA[<%xdata%>]]></xdata>
 		<active><![CDATA[<%active%>]]></active>
 	</item>
