@@ -1,0 +1,61 @@
+package TOM::Engine::pub::cookies;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
+
+use Net::HTTP::cookies;
+
+sub send
+{
+	# UPRAVIM COOKIES, ALE LEN VTEDY AK TO NIESU GETCOOKIES
+	my $t_cookies=track TOM::Debug("Set Cookies");
+	
+	if (!$main::FORM{'cookies'})
+	{
+		$main::COOKIES{'lh'}=$main::request_code;
+		
+		if (($main::COOKIES{'_lt'}+86400)<$tom::time_current){$main::COOKIES{'_lt'}=$tom::time_current}
+		# cistim a upravujem cookies len ak ide o normalne cookies
+		foreach (keys %main::COOKIES)
+		{
+			if (!$main::COOKIES{$_}) # cookie je prazdna (pripravena na zmazanie :))
+			{
+				main::_log("empty cookie '".$_."'");
+				Net::HTTP::cookies::DeleteCookie($_);
+				delete $main::COOKIES{$_};
+				next;
+			}
+			if (($main::COOKIES{'_lt'} ne $tom::time_current)&&($main::COOKIES{$_} eq $main::COOKIES_save{$_}))
+				{delete $main::COOKIES{$_};next;} # zmazem rovnake
+			# ostanu mi nerovnake cookies, a len tie budem zapisovat
+			# neskor opravit tak aby sa zapisalo aspon raz za mesiac vsetko!!!
+		}
+	}
+	
+	#
+	# FIXME: [Aben] neustale posielam cookie {key} z IAdm modu, bolo by ho treba zrusit, neviem preco tu stale ostava :(
+	#
+	
+	foreach (keys %main::COOKIES)
+	{
+		main::_log("cookie '$_'='$main::COOKIES{$_}'");
+	}
+	
+	
+	# aj ked nemam povolene cookies, posielam ich pre istotu,
+	# co ked si ich nahle niekto zapne? :))
+	# (nebudem vyuzivat GET cookies predsa stale)
+	Net::HTTP::cookies::SetCookies
+	(
+		time	=>	$tom::time_current+(86400*31*6)+86400+3600,
+		cookies	=>	{%main::COOKIES}
+	) unless $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'cookies_disable'};
+	
+	$t_cookies->close();
+	
+}
+
+1;
