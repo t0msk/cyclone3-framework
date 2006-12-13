@@ -1,0 +1,46 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+<response type="send" IDapp="a130" IDitem="feedback" result="0">
+	<result>0</result>
+	<reason><#INCORRECT_DATA#></reason>
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="SENT">
+<response type="send" IDapp="a130" IDitem="feedback" result="1">
+	<result>1</result>
+	<reason>Mail sent</reason>
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="INCORRECT_DATA">
+<response type="send" IDapp="a130" IDitem="feedback" result="0">
+	<result>0</result>
+	<reason>Incorrect data</reason>
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="EMAIL">
+From: <%from%>
+To: <%to%>
+Subject: <$tom::H> - feedback
+MIME-Version: 1.0
+List-Id: TOM3
+Content-Type: <%ct%>
+Content-Transfer-Encoding: 7bit
+
+Name: <%name%>
+E-mail: <%email%>
+
+Message:
+<%message%>
+</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>

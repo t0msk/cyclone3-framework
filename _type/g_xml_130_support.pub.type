@@ -1,0 +1,19 @@
+<CONF_VAR id="layers" value="0" />
+<CONF_VAR id="dsgn" value="xml" global="0" />
+<CONF_VAR id="Content-Type" value="text/xml" />
+
+# napiste nam - odoslanie formulara
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-category" value="130" />
+	<VAR id="-name" value="send_support" />
+	<VAR id="-global" value="1" />
+	<VAR id="-xsgn_global" value="1" />
+	<VAR id="-TMP" value="OUTPUT" />
+		
+		<VAR id="contact_type" value="<$main::FORM{contact_type}>" />
+
+		<VAR id="name" value="<$main::FORM{ft_name}>" />
+		<VAR id="email" value="<$main::FORM{ft_email}>" />
+		<VAR id="message" value="<$main::FORM{ft_message}>" />
+</MODULE>
