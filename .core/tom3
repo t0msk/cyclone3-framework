@@ -1223,9 +1223,6 @@ while ($req->Accept() >= 0)
 			$file_data=$data."\n<#TYPE_PRE#>\n".$file_data;
 		}
 		
-		
-		TOM::Utils::vars::replace($file_data);
-		
 		#
 		# KEYS TypeID
 		#
@@ -1238,8 +1235,16 @@ while ($req->Accept() >= 0)
 			if (!$main::key{$env0{'name'}})
 			{
 				main::_log("set key='$env0{'name'}' default value='$env0{'default'}'");
+				if ($env0{'default'}=~/^<\$/)
+				{
+					TOM::Utils::vars::replace($env0{'default'});
+					main::_log("re-set key='$env0{'name'}' default value='$env0{'default'}'");
+				}
+				$main::key{$env0{'name'}}=$env0{'default'};
 			}
 		}
+		
+		TOM::Utils::vars::replace($file_data);
 		
 		#
 		# CONF TypeID
@@ -1654,7 +1659,7 @@ while ($req->Accept() >= 0)
 			my $data=$1;
 			
 			# tu som pridal novu konverziu :)
-			Utils::vars::replace($data) if $var_replace;
+			TOM::Utils::vars::replace($data) if $var_replace;
 			
 			# v module ako -xlng pouzijem default $tom::lng
 			
