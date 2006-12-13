@@ -119,7 +119,10 @@ sub execute
 		$main::H->rh("<!REFRESH!>","0; url=$env{return}");
 		$XSGN{TMP}=~s|<%LINK%>|$env{return}|g;
 		
-		$main::location=$env{'return'};
+		if ($env{'relocate'})
+		{
+			$main::location=$env{'return'};
+		}
   }
   else
   {
