@@ -1,5 +1,4 @@
 package Utils::vars;
-use enc;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 

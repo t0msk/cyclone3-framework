@@ -4,7 +4,6 @@ package CRON::module;
 use Time::Local;
 use Text::Iconv;
 use Utils::datetime;
-use enc;
 use strict;
 
 sub execute
@@ -142,7 +141,7 @@ HEADER
 
 		$var="type=a400_view&ID=$db0_line{ID}";
 
-		$var=enc::enc($var,$tom::type_codes{root});
+		$var=TOM::Net::URI::URL::hash_encode( $var );
 
 		$db0_line{IDcategory}=~/^(..)/;
 		if (exists $rss_categories{$1})

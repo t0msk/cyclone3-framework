@@ -4,7 +4,6 @@ package CRON::module;
 use Time::Local;
 use Text::Iconv;
 use Utils::datetime;
-use enc;
 use strict;
 
 sub execute
