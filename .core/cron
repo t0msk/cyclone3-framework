@@ -16,7 +16,6 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use conv;
-use enc2;
 use enc3;
 use iconv;
 use strict; # scrict code
