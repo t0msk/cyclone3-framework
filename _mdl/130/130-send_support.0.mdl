@@ -41,7 +41,7 @@ sub execute
 
 	main::_log("Sending to $email ...");
 	
-	my $subject = $env{'subject'} || 'cyclone feedback';
+	my $subject = $env{'subject'} || 'support request';
 	
 	my $from = "\"$env{'name'}\" <$env{'email'}>";
 	$from = 'cyclone@comsultia.sk' unless $env{'email'} && $env{'name'};
