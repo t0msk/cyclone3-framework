@@ -12,6 +12,7 @@
 	<VAR id="-xsgn_global" value="1" />
 	<VAR id="-TMP" value="OUTPUT" />
 	<VAR id="-xlng" value="<$main::FORM{lng}>" />
+		<VAR id="db_starttime" value="9999999999" />
 		<VAR id="keywords" value="<$main::FORM{search}>" />
 		<VAR id="db_select" value="a400.*,SUBSTRING(a400.priority,0,1) AS priority1,SUBSTRING(a400.priority,1,1) AS priority2,SUBSTRING(a400.priority,2,1) AS priority3" />
 		<VAR id="datetime_allow" value="1" />

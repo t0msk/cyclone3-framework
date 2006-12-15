@@ -208,6 +208,8 @@ sub execute
 			IDcategory							=>	$env{db_IDcategory},
 			IDcategory_exclude		=>	$env{db_IDcategory_exclude},
 			active									=>	$env{db_active},
+			starttime								=>	$env{db_starttime}, # actual
+			endtime								=>	$env{db_endtime}, # actual
 		},
 
 		a400_category_					=>	$env{db_IDcategory_}, # podmienka ze MUSI byt lefnute
@@ -231,6 +233,8 @@ sub execute
 			{
 				lng										=>	$env{lng},
 				active								=>	$env{db_active},
+				starttime								=>	$env{db_starttime}, # actual
+				endtime								=>	$env{db_endtime}, # actual
 			},
 			a400_attrs							=>	$env{db_attrs}, # podmienky na to kedy ma byt left join a400_attrs
 			a400_category =>			# podmienky na to kedy ma byt left join a400_category
