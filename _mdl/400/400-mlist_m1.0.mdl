@@ -111,7 +111,10 @@ sub execute
 
 	#allowing archive request by default
 	$env{db_select_arch_allow}=1 unless exists $env{db_select_arch_allow};
-
+	
+	# replace order columnov
+	$env{db_order_by}=~s|^IDcategory_name|a400_category.name|;
+	
 	# setting default db_order_by
 	$env{db_order_by}="starttime DESC" unless $env{db_order_by};
 
