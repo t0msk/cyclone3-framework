@@ -292,6 +292,7 @@ sub execute
 									a500.hash,
 									a500.IDcategory,
 									a500_attrs.about,
+									a500_attrs.IDname as imgIDname,
 									a500_category.name
 								FROM $env{db_500}.a500 AS a500
 								LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.ID=a500_attrs.ID
@@ -313,6 +314,7 @@ sub execute
 									a500.hash,
 									a500.IDcategory,
 									a500_attrs.about,
+									a500_attrs.IDname as imgIDname,
 									a500_category.name
 								FROM $env{db_500}.a500 AS a500
 								LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.ID=a500_attrs.ID

@@ -8,21 +8,16 @@ use App::540;
 use App::540::file;
 use strict;
 
-## a540 Delete File
-## > hash = hash string indentifier of the file to delete
-## < no return
-## Deletes All Links From a400 too.
-
 sub execute
 {
 	my %env=@_;
-	return 1 if !$env{'db_active'};
-	return 1 if !$env{'db_ID'};
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
 
-	App::540::file::set(ID=>$env{'db_ID'}, active=>$env{'db_active'} );
-	$XSGN{RESULT_success}=~s/<%active%>/$env{'db_active'}/g;
-	$XSGN{TMP}=$XSGN{RESULT_success};
+	if (App::540::file::set(ID=>$env{'db_ID'}, active=>$env{'db_active'} ) > 0)
+	{
+		$XSGN{RESULT_success}=~s/<%active%>/$env{'db_active'}/g;
+		$XSGN{TMP}=$XSGN{RESULT_success};
+	}
 	$XSGN{TMP}=~s/<%ID%>/$env{'db_ID'}/g;
 	return 1;
 }
