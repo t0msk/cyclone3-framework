@@ -59,6 +59,8 @@ sub execute
 		'to' => $email,
 		'body' => $ent->as_string
 	);
+
+	$XSGN{TMP} = $XSGN{SENT};
 	
 	return 1;
 }
