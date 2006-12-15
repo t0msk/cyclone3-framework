@@ -164,6 +164,7 @@ sub prepare
  # ORDER arch
  $self->{s_order_arch}=$self->{s_order};
  $self->{s_order_arch}=~s|([a-zA-Z0-9_]+)\.|$1_arch.|g;
+ $self->{s_order_arch}=~s|a400_category_arch\.|a400_category.|g;
 
  # SELECT [WHAT?]
  #$self->s_what_collect(@App::400::SQL::a400::PRIMARY,@App::400::SQL::a400::REQUIRED,split(',|;',$env{select}));
