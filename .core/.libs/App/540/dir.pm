@@ -43,15 +43,18 @@ sub del
 	alarm 30;
 	for (my $i=0;$i< scalar(@dirs);$i++)
 	{
-		App::540::sql_del ( ID=>$dirs[$i]{ID}, table=>"a540_dir" );
-		my @mutations = get( return=>"count(*) as count", ID_dir=>$dirs[$i]{ID_dir});
-		if ($mutations[0]{count} eq 0)
-		{
-			App::540::file::del ( ID_dir=>"%$dirs[$i]{ID_dir}%" ) ;
-			del ( ID_dir=>"%$dirs[$i]{ID_dir}%" ) ;
-		}
+		my $category = $dirs[$i]{'ID_dir'};
+		my $language = $dirs[$i]{'lng'};
+		my @subdirs = get(ID_dir=>"%$category%", lng=>$language, limit=>"2");
+# Error .. kategoria obsahuje podkategorie
+		return -1 if scalar(@subdirs) > 1;
+
+		my @subfiles = App::540::file::get(ID_dir=>"%$category%",lng=>$language, limit=>"1");
+# Error .. kategoria obsahuje subory
+		return -2 if scalar(@subfiles) > 0;
 	}
-	return 1;
+	$args{table}="a540_dir";
+	return App::540::sql_del(%args);
 }
 
 sub new
