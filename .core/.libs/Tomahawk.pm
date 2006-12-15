@@ -492,11 +492,10 @@ sub module
 		
 		
 		# AK SOM STLACIL RECACHE TAK SKRATIM DURATION
-		if (($main::IAdm) && ($main::FORM{_rc}))
+		if ($main::FORM{'_rc'})
 		{
-			main::_log("skracujem duration cache pre recache");
-			#$mdl_C{-cache_old}=$CACHE{$mdl_C{T_CACHE}}{-cache_time}-1;
-			$mdl_C{-cache_duration}=$mdl_C{-cache_old};
+			main::_log("skracujem duration cache (request na recache)");
+			$mdl_C{'-cache_duration'}=$mdl_C{'-cache_old'};
 		}
 		
 		
