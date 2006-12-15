@@ -7,7 +7,7 @@
 	<VAR id="-type" value="mdl" />
 	<VAR id="-category" value="410" />
 	<VAR id="-name" value="mlist_m1" />
-	<VAR id="-xsgn" value="list" />
+	<VAR id="-xlng" value="<$main::FORM{lng}>" />
 	<VAR id="-global" value="1" />
 	<VAR id="-TMP" value="OUTPUT" />
 	<VAR id="-xsgn" value="xml" />
