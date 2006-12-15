@@ -4,8 +4,8 @@
 
 <MODULE>
 	<VAR id="-type" value="mdl" />
-	<VAR id="-category" value="540" />
-	<VAR id="-name" value="active" />
+	<VAR id="-category" value="410" />
+	<VAR id="-name" value="answer_active" />
 	<VAR id="-xsgn_global" value="1" />
 	<VAR id="-xsgn" value="xml" />
 	<VAR id="-TMP" value="OUTPUT" />

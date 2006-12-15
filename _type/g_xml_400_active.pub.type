@@ -4,7 +4,7 @@
 
 <MODULE>
 	<VAR id="-type" value="mdl" />
-	<VAR id="-category" value="540" />
+	<VAR id="-category" value="400" />
 	<VAR id="-name" value="active" />
 	<VAR id="-xsgn_global" value="1" />
 	<VAR id="-xsgn" value="xml" />
