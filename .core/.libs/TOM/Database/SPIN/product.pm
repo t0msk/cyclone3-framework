@@ -459,7 +459,7 @@ sub GetProductReserved
 	while (my $ref=$db0->fetchrow_hashref())
 	{
 		main::_log("ID_order='$ref->{'ID_order'}' amount='$ref->{'amount'}' amount_delivered='$ref->{'amount_delivered'}' reserved='$ref->{'reserved'}' stav='$ref->{'stav'}'");
-		next if $ref->{'stav'}==2;
+		next if $ref->{'stav'}==3;
 		$data{'reserved'}+=$ref->{'reserved'};
 	}
 	
