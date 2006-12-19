@@ -245,6 +245,13 @@ if (opendir (DIR,$TOM::P))
 foreach (sort keys %CRON::hosts)
 {
 	main::_log("host $_ in $CRON::hosts{$_}");
+	
+	if (-e $CRON::P."/".$CRON::hosts{$_}."/.cron_ignore")
+	{
+		main::_log("requested ignore to domain '$_'");
+		next;
+	}
+	
 	if (-e $CRON::P."/".$CRON::hosts{$_}."/cron.".$type.".cml")
 	{
 		main::_log("preparing for fork()");
