@@ -15,20 +15,20 @@ sub handler_exit
 	exit(0);
 }
 
-sub handler_wait
+sub handler_check
 {
 	my $signame=shift;
 	if ($main::sig_term) # proces je v stave ze moze byt ukonceny
 	{
 		print "Location: http://$ENV{HTTP_HOST}$ENV{REQUEST_URI}\n\n";
-		main::_log("SIG '$signame' [WAIT-EXIT] (lives ".
+		main::_log("SIG '$signame' [CHECK-EXIT] (lives ".
 			(time()-$TOM::time_start).
 			" secs, $tom::count requests) PID:$$ domain:$tom::H ($@ $!)",3,"pub.mng",1);
 		exit(0);
 	}
 	else
 	{
-		main::_log("SIG '$signame' [WAIT-WAIT] (lives ".
+		main::_log("SIG '$signame' [CHECK-WAIT] (lives ".
 			(time()-$TOM::time_start).
 			" secs, $tom::count requests) PID:$$ domain:$tom::H ($@ $!)",3,"pub.mng",1);
 		$tom::HUP=2; # po dobehnuti tohto requestu na 100% exitnem
@@ -58,20 +58,20 @@ our $action_ignore = POSIX::SigAction->new(
 	&POSIX::SA_NODEFER);
 
 
-our $action_wait = POSIX::SigAction->new(
-	\&TOM::Engine::pub::SIG::handler_wait,
+our $action_check = POSIX::SigAction->new(
+	\&TOM::Engine::pub::SIG::handler_check,
 	$sigset,
 	&POSIX::SA_NODEFER);
 	
 	
-main::_log("registering SIG{ALRM} action to exit");
+main::_log("registering SIG{ALRM} action to EXIT");
 POSIX::sigaction(&POSIX::SIGALRM, $action_exit);
 
-main::_log("registering SIG{HUP} action to exit");
-POSIX::sigaction(&POSIX::SIGHUP, $action_wait);
+main::_log("registering SIG{HUP} action to CHECK");
+POSIX::sigaction(&POSIX::SIGHUP, $action_check);
 
-main::_log("registering SIG{TERM} action to ignore");
-POSIX::sigaction(&POSIX::SIGTERM, $action_wait);
+main::_log("registering SIG{TERM} action to CHECK");
+POSIX::sigaction(&POSIX::SIGTERM, $action_check);
 
 main::_log("start counting timeout $TOM::fcgi_timeout");
 alarm($TOM::fcgi_timeout); # zacnem pocitat X sekund kym nedostanem request
