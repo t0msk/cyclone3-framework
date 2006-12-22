@@ -1,0 +1,10 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response type="tree" IDapp="a120" itemcount_root="<%itemcount_root%>" code="<$main::request_code>">
+<#LINE#>
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

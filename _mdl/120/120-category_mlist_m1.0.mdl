@@ -1,0 +1,59 @@
+#!/usr/bin/perl
+# ????? - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use CVML;
+
+our $authors = "ondrovic\@comsultia.com";
+
+sub execute
+{
+	my %env = @_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	if ($env{xt_xlng})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
+	$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
+	$env{db_120}=$TOM::DB{main}{name} unless $env{db_120};
+
+	$env{db_domain}=$tom::Hm unless $env{db_domain};
+	
+	main::_log("
+		SELECT
+			COUNT(ID) AS item_count
+		FROM 
+			$env{db_120}.a120
+		WHERE
+			a120.IDtype=1
+	");
+	
+	# len si zratame polozky, nemame ziadne kategorie, takze to je easy
+	my $db1 = $main::DB{main}->Query("
+		SELECT
+			COUNT(ID) AS item_count
+		FROM $env{db_120}.a120
+		WHERE
+			a120.IDtype='1'
+	");
+
+	if(my %db1_line=$db1->fetchHash())
+	{
+		$XSGN{TMP} =~ s|<%itemcount_root%>|$db1_line{item_count}|g;
+	}
+	else
+	{
+		main::_log("db error: ".$main::DB{main}->errstr());
+	}
+
+	return 1;
+}
+
+1;
