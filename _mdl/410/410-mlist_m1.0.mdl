@@ -186,7 +186,7 @@ sub execute
 				$loop{$env{ID}}++;
 				if ($loop{$env{ID}}>1){$tom::ERR="ID $env{ID} endless cycle";return undef;}
 	
-				$env{db_select}="a410.ID, a410.title, a410.tiny, a410.starttime" unless $env{db_select};
+				$env{db_select}="a410.ID, a410.title, a410.tiny, a410.starttime, a410.IDauthor" unless $env{db_select};
 	
 				#TODO: dorobit doplnenie IDlink do db_select, ak ho user nevyselektuje, nebudu sa hladat linky :(
 				
@@ -425,7 +425,7 @@ sub execute
 								nickname
 							FROM $env{db_120}.a120
 							WHERE
-								ID='$db_line{IDauthor}'
+								ID='$db0_line{IDauthor}'
 								AND IDtype='0'
 							LIMIT 1
 						");
