@@ -11,8 +11,15 @@
 		<tiny><%tiny%></tiny>
 		<starttime><%starttime%></starttime>
 		<endtime><%endtime%></endtime>
+			
 		<IDauthor><%IDauthor%></IDauthor>
-		<IDeditor><%IDeditor%></IDeditor>
+		<IDauthor_nickname><![CDATA[<%IDauthor_nickname%>]]></IDauthor_nickname>
+		<IDauthor_fullname><![CDATA[<%IDauthor_fullname%>]]></IDauthor_fullname>
+	
+		<IDeditor><![CDATA[<%IDeditor%>]]></IDeditor>
+		<IDeditor_nickname><![CDATA[<%IDeditor_nickname%>]]></IDeditor_nickname>
+		<IDeditor_fullname><![CDATA[<%IDeditor_fullname%>]]></IDeditor_fullname>
+			
 		<votes><%votes%></votes>
 		<xrelated><%xrelated%></xrelated>
 		<lng><%lng%></lng>

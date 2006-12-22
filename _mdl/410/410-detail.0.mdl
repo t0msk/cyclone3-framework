@@ -80,6 +80,26 @@ sub execute
 					$XSGN{NULL0}=~s|<%${tt}_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
 				}
 			}
+			
+			$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
+			$env{db_120}=$TOM::DB_name unless $env{db_120};
+				
+			my $db1=$main::DB{main}->Query("
+				SELECT
+					ID,
+					IDcategory,
+					fullname,
+					nickname
+				FROM $env{db_120}.a120
+				WHERE
+					ID='$db0_line{IDeditor}'
+				LIMIT 1
+			");
+			if (my %db1_line=$db1->FetchHash())
+			{
+				$XSGN{TMP}=~s|<%IDeditor_fullname%>|$db1_line{fullname}|g;
+				$XSGN{TMP}=~s|<%IDeditor_nickname%>|$db1_line{nickname}|g;
+			}
 		}
 	}
 	
