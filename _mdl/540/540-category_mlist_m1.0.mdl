@@ -161,6 +161,8 @@ sub execute
 	}
 	else
 	{
+		my @cnt = App::540::file::get(return=>"count(*) as count", ID_dir=>"", lng=>"$args{lng}");
+		$XSGN{'TMP_no_data'} =~ s|<%itemcount_root%>|$cnt[0]{count}|;
 		$XSGN{TMP} = $XSGN{TMP_no_data};
 	}
 
