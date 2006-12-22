@@ -34,6 +34,7 @@ require $TOM::P."/_config/TOM.conf";
  use Database::connect;
  use Time::Local; # pre opacnu konverziu casu
  use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
+ use TOM::Engine::pub;
  use Net::HTTP::CGI;
  use TOM::Data::XML;
  use TOM::Text::format;
