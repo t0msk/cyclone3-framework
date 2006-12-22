@@ -186,7 +186,7 @@ sub execute
 				$loop{$env{ID}}++;
 				if ($loop{$env{ID}}>1){$tom::ERR="ID $env{ID} endless cycle";return undef;}
 	
-				$env{db_select}="a410.ID, a410.title, a410.tiny, a410.starttime, a410.IDauthor" unless $env{db_select};
+				$env{db_select}="a410.ID, a410.title, a410.tiny, a410.starttime, a410.IDauthor, a410.IDeditor" unless $env{db_select};
 	
 				#TODO: dorobit doplnenie IDlink do db_select, ak ho user nevyselektuje, nebudu sa hladat linky :(
 				
@@ -434,6 +434,38 @@ sub execute
 							$XSGN{NULL}=~s|<%IDauthor%>|$db1_line{ID}|g;
 							$XSGN{NULL}=~s|<%IDauthor_fullname%>|$db1_line{fullname}|g;
 							$XSGN{NULL}=~s|<%IDauthor_nickname%>|$db1_line{nickname}|g;
+						}
+						else
+						{
+							main::_log($db1->errstr());
+						}
+					}
+					
+					if(
+						(($env{db_select}=~/a410.IDeditor/) || ($env{db_select}=~/a410.\*/)) &&
+						(($XSGN{NULL}=~/<%IDeditor_fullname%>/) || ($XSGN{NULL}=~/<%IDeditor_nickname%>/))
+					)
+					{
+						$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
+						$env{db_120}=$TOM::DB_name unless $env{db_120};
+	
+						my $db1=$main::DB{main}->Query("
+							SELECT
+								ID,
+								IDcategory,
+								fullname,
+								nickname
+							FROM $env{db_120}.a120
+							WHERE
+								ID='$db0_line{IDeditor}'
+								AND IDtype='1'
+							LIMIT 1
+						");
+						if (my %db1_line=$db1->FetchHash())
+						{
+							$XSGN{NULL}=~s|<%IDeditor%>|$db1_line{ID}|g;
+							$XSGN{NULL}=~s|<%IDeditor_fullname%>|$db1_line{fullname}|g;
+							$XSGN{NULL}=~s|<%IDeditor_nickname%>|$db1_line{nickname}|g;
 						}
 						else
 						{
