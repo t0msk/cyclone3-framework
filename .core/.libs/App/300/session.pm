@@ -7,13 +7,14 @@ use strict;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
+our $debug;
 our $serialize=1;
 our $IDsession;
 
 sub TIEHASH
 {
 	my $class = shift;
-	main::_log("TIE-TIEHASH a300::session");
+	main::_log("TIE-TIEHASH a300::session") if $debug;
 	$IDsession=$main::USRM{'IDsession'};
 	return bless {}, $class;
 }
@@ -21,18 +22,18 @@ sub TIEHASH
 sub DESTROY
 {
 	my $self = shift;
-	main::_log("TIE-DESTROY a300::session");
+	main::_log("TIE-DESTROY a300::session") if $debug;
 	
 	# pokial nemam jednoznacny identifikator danej session je
 	# zbytocne nieco serializovat a ukladat to, ked sa to vlastne
 	# nikam neulozi
 	return undef unless $IDsession;
 	
-		main::_log("TIE-serializing '$IDsession'");
+		main::_log("TIE-serializing '$IDsession'") if $debug;
 		my $cvml=CVML::structure::serialize(%{$self});
 		$cvml=~s|\'|\\'|g;
 		
-		main::_log("TIE-cvml:='$cvml'");
+		main::_log("TIE-cvml:='$cvml'") if $debug;
 		
 		$main::DB{main}->Query("
 			UPDATE TOM.a300_online
@@ -42,7 +43,7 @@ sub DESTROY
 				IDsession='$IDsession'
 			LIMIT 1
 		");
-		main::_log("TIE-serialized");
+		main::_log("TIE-serialized") if $debug;
 	
 	return undef;
 }
@@ -63,7 +64,7 @@ sub DELETE
 sub STORE
 {
 	my ($self,$key,$value)=@_;
-	main::_log("TIE-STORE a300::session change key '$key' to value '$value'");
+	main::_log("TIE-STORE a300::session change key '$key' to value '$value'") if $debug;
 	$self->{$key}=$value;
 }
 
