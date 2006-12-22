@@ -311,13 +311,24 @@ sub _chunk_prepare
 		$header->{'version'}="5.1";
 	}
 	
+	
 	# downgrade na nizsie verzie
+	
+	
+	# 5.0 -> 4.1
+	if ($header->{'version'} eq "5.0" && $version < $header->{'version'})
+	{
+		my $to='4.1';
+		main::_log("converting SQL $header->{'version'} to $to");
+		$header->{'version'}=$to;
+	}
 	
 	# 4.1 -> 4.0
 	if ($header->{'version'} eq "4.1" && $version eq "4.0")
 	{
 		main::_log("converting SQL $header->{'version'} to $version");
 		$$chunk=~s|ENGINE=|TYPE=|;
+		$$chunk=~s|TYPE=InnoDB|TYPE=MyISAM|;
 		$$chunk=~s|character set (.*?) ||g;
 		$$chunk=~s|collate (.*?)_bin|binary|g;
 		$$chunk=~s|collate (.*?) ||g;
