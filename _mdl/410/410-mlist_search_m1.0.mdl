@@ -314,21 +314,110 @@ sub execute
 
 			# display date and time
 			if (($env{datetime_allow}) || ($env{datetime}) || ($env{xt_datetime}))
-					{
-						my %env0=Utils::datetime::ctodatetime($db_line{'starttime'},format=>1);
-	
-						$XSGN{NULL}=~s|<%day%>|$env0{mday}|g;
-						$XSGN{NULL}=~s|<%month%>|$env0{mom}|g;
-						$XSGN{NULL}=~s|<%year%>|$env0{year}|g;
-						$XSGN{NULL}=~s|<%hour%>|$env0{hour}|g;
-						$XSGN{NULL}=~s|<%minute%>|$env0{min}|g;
-						$XSGN{NULL}=~s|<%second%>|$env0{sec}|g;
-	
-						$XSGN{NULL}=~s|<%day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
-						$XSGN{NULL}=~s|<%day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
-						$XSGN{NULL}=~s|<%month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}]|g;
-						$XSGN{NULL}=~s|<%month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}]|g;
-					}
+			{
+				my %env0=Utils::datetime::ctodatetime($db_line{'starttime'},format=>1);
+
+				$XSGN{NULL}=~s|<%day%>|$env0{mday}|g;
+				$XSGN{NULL}=~s|<%month%>|$env0{mom}|g;
+				$XSGN{NULL}=~s|<%year%>|$env0{year}|g;
+				$XSGN{NULL}=~s|<%hour%>|$env0{hour}|g;
+				$XSGN{NULL}=~s|<%minute%>|$env0{min}|g;
+				$XSGN{NULL}=~s|<%second%>|$env0{sec}|g;
+
+				$XSGN{NULL}=~s|<%day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+				$XSGN{NULL}=~s|<%day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+				$XSGN{NULL}=~s|<%month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}]|g;
+				$XSGN{NULL}=~s|<%month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}]|g;
+			}
+			
+			if(
+				(($XSGN{NULL}=~/<%IDauthor_fullname%>/) || ($XSGN{NULL}=~/<%IDauthor_nickname%>/))
+			)
+			{
+				$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
+				$env{db_120}=$TOM::DB_name unless $env{db_120};
+
+				my $db1=$main::DB{main}->Query("
+					SELECT
+						ID,
+						IDcategory,
+						fullname,
+						nickname
+					FROM $env{db_120}.a120
+					WHERE
+						ID='$db_line{IDauthor}'
+						AND IDtype='0'
+					LIMIT 1
+				");
+				if (my %db1_line=$db1->FetchHash())
+				{
+					$XSGN{NULL}=~s|<%IDauthor%>|$db1_line{ID}|g;
+					$XSGN{NULL}=~s|<%IDauthor_fullname%>|$db1_line{fullname}|g;
+					$XSGN{NULL}=~s|<%IDauthor_nickname%>|$db1_line{nickname}|g;
+				}
+				else
+				{
+					main::_log($db1->errstr());
+				}
+			}
+			
+			if(
+				(($XSGN{NULL}=~/<%IDeditor_fullname%>/) || ($XSGN{NULL}=~/<%IDeditor_nickname%>/))
+			)
+			{
+				$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
+				$env{db_120}=$TOM::DB_name unless $env{db_120};
+
+				my $db1=$main::DB{main}->Query("
+					SELECT
+						ID,
+						IDcategory,
+						fullname,
+						nickname
+					FROM $env{db_120}.a120
+					WHERE
+						ID='$db_line{IDeditor}'
+						AND IDtype='1'
+					LIMIT 1
+				");
+				if (my %db1_line=$db1->FetchHash())
+				{
+					$XSGN{NULL}=~s|<%IDeditor%>|$db1_line{ID}|g;
+					$XSGN{NULL}=~s|<%IDeditor_fullname%>|$db1_line{fullname}|g;
+					$XSGN{NULL}=~s|<%IDeditor_nickname%>|$db1_line{nickname}|g;
+				}
+				else
+				{
+					main::_log($db1->errstr());
+				}
+			}
+			
+			my $db1=$main::DBH->Query("
+				SELECT
+				*
+				FROM $env{db_410}.a410_answer
+				WHERE
+					IDquestion='$db_line{ID}'
+					AND starttime<=$tom::time_current
+					AND (endtime IS NULL OR endtime>=$tom::time_current)
+					AND (lng='$env{lng}' OR lng='')
+					AND active='Y'
+			");
+			if($db1->NumRows())
+			{
+				my $tmpVotes = 0;
+				while (my %db1_line=$db1->fetchhash)
+				{
+					
+					$tmpVotes += $db1_line{votes};
+					
+				}
+				$XSGN{NULL}=~s|<%votes%>|$tmpVotes|g;
+			}
+			else
+			{
+				main::_log($db1->errstr());
+			}
 
 			my $tmp;
 			if ($tmp_ID=~/^(....)/i){$tmp=$1};
