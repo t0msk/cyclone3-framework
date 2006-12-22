@@ -488,6 +488,7 @@ sub execute
 					");
 					if($db1->NumRows())
 					{
+						my $tmpVotes = 0;
 						while (my %db1_line=$db1->fetchhash)
 						{
 							$XSGN{NULL_ANSWER}=$XSGN{LINE_ANSWER};
@@ -497,6 +498,7 @@ sub execute
 							$db1_line{line_no}=$line_answer_counter;
 	
 							$percentages{$line_answer_counter}{percent_exact}=0;
+							
 							if($db0_line{votes}>0)
 							{
 								$percentages{$line_answer_counter}{percent_exact}=sprintf("%.2f", $db1_line{votes}/($db0_line{votes}/100))
@@ -510,7 +512,8 @@ sub execute
 								$XSGN{NULL_ANSWER}=~s|<%$_%>|$db1_line{$_}|g;
 								$XSGN{NULL_ANSWER_SUB}=~s|<%$_%>|$db1_line{$_}|g;
 							}
-	
+							$tmpVotes += $db1_line{votes};
+							
 							$XSGN{NULL}=~s|<#LINE_ANSWER#>|$XSGN{NULL_ANSWER}|;
 							$XSGN{NULL}=~s|<#LINE_ANSWER_SUB#>|$XSGN{NULL_ANSWER_SUB}|;
 	
@@ -518,6 +521,7 @@ sub execute
 							$XSGN{NULL}=~s|<%votes_percent_exact%>|<%votes_percent_exact$line_answer_counter%>|g;
 							$XSGN{NULL}=~s|<%votes_koef%>|<%votes_koef$line_answer_counter%>|g;
 						}
+						$XSGN{NULL}=~s|<%votes%>|$tmpVotes|g;
 					}
 					else
 					{
