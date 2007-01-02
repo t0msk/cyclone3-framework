@@ -84,6 +84,7 @@ our @setit_D=
 	['^\.admin'                        ,"global admin"                ,"",""],
 	
 	# global
+	['^_addons'                        ,"global _addons"              ,"570","$user_www:$group"],
 	['^_data'                          ,"global _data"                ,"570","$user_www:$group"],
 	['^_temp'                          ,"global _temp"                ,"770","$user_www:$group"],
 	['^.symlinks$'                     ,"global .symlinks"            ,"570","$user_www:$group"],
@@ -98,6 +99,7 @@ our @setit_D=
 	['^_trash'                         ,"global _trash"               ,"777","$user:$group"],
 	
 	# local
+	['\/addons'                        ,"local _addons"               ,"570","$user_www:$group"],
 	['\/_mdl$'                         ,"local _mdl"                  ,"570","$user_www:$group"],
 	['\/\.libs'                        ,"local libraries"             ,"570","$user_www:$group"],
  	['\/_dsgn$'                        ,"local _dsgn"                 ,"770","$user_www:$group"],
@@ -127,14 +129,10 @@ our @setit_F=
 (
 	['\.svn'                           ,".svn files"                  ,"444",""],
 	
-	['phprojekt'                       ,"phprojekt"                   ,"",""],
-	['!nc'                             ,"new Cyclone"                 ,"",""],
-	['phpmyadmin'                      ,"phpmyadmin"                  ,"",""],
-	
 	['_trash'                          ,"_trash"                      ,"660","$user_www:$group"],
 	['^_temp/_Inline'                  ,"global Inline"               ,"777","$user_www:$group"],
 	['^_temp'                          ,"global _temp"                ,"",""],
- 
+	
 	['\/type.*?conf$'                  ,"type conf"                   ,"660","$user_www:$group"],
 	['\.(pwd)$'                        ,".pwd (password file)"        ,"660","$user_www:$group"],
 	['\.tmpl$'                         ,".tmpl (template)"            ,"660","$user:$group"],
@@ -149,8 +147,12 @@ our @setit_F=
 	['_logs\/.*\.log$'                 ,"_logs cron .log"             ,"",""],
 	['_logs\/httpd\/'                  ,"_logs httpd"                 ,"",""],
 	['_logs\/'                         ,"_logs cron .log"             ,"",""],
- 
-	['\.libs\/.*\.pm'                  ,"library"              ,"460","$user_www:$group"],
+	
+	
+	['\.pm'                            ,"perl library"                ,"460","$user_www:$group"],
+	['_addons'                         ,"addons files"                ,"460","$user_www:$group"],
+	
+	
 	['\.libs\/.*\.txt'                 ,"library inputs"       ,"660","$user_www:$group"],
 	
 	

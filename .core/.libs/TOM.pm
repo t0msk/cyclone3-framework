@@ -39,7 +39,9 @@ BEGIN
 	#$tom::P=~s|^.*?/!|$TOM::P/!|; # zrusenie aliasovanej linky, nahradenej za /www/TOM
 	# cesta libs
 	unshift @INC,$TOM::P."/.core/.libs"; # na zaciatok
+	unshift @INC,$TOM::P."/_addons"; # na zaciatok
 	unshift @INC,$tom::P."/.libs"; # na zaciatok
+	unshift @INC,$tom::P."/_addons"; # na zaciatok
 	
 	# default log aby som nepadol na volani niecoho neexistujuceho
 	sub _log{return};sub _applog{return};
