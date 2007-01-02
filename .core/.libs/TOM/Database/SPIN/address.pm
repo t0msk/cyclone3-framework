@@ -50,7 +50,7 @@ sub GetCities
 		$hash{'name'}=$arr[1];
 		$hash{'PSC'}=$arr[2];
 		
-		main::_log("output[$i] ID='$arr[0]' name='$arr[1]' PSC='$arr[2]'");
+		#main::_log("output[$i] ID='$arr[0]' name='$arr[1]' PSC='$arr[2]'");
 		
 		push @data,{%hash};
 		$i++;
