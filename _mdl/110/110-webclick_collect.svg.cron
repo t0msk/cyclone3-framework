@@ -8,11 +8,6 @@ use SVG;
 use Utils::vars;
 #use App::400::SQL::a400;
 
-#use SVGraph;
-#use SVGraph::2D::lines;
-#use SVGraph::2D::columns;
-#use SVGraph::2D::ring;
-
 #use Net::HTTP::LiteAgent;
 
 #use TOM::Net::HTTP::agents;
@@ -46,7 +41,7 @@ sub execute
 	my $select_from;
 	my $select_to;
 
-	my $TID=$env{typeid} if (exists $env{typeid});
+	$TID=$env{typeid} if ($env{typeid});
 
 	if($env{start})
 	{
@@ -111,6 +106,7 @@ sub execute
 			AND TID='$TID'
 			AND domain_sub='$tom::H'
 	";
+	main::_log($sel);
 	my $db0=$main::DB{stats}->Query($sel);
 	#my $p=$db0->NumRows();
 	my $p;
