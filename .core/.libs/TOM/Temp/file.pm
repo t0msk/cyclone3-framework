@@ -45,6 +45,8 @@ sub save_content
 	
 	close (HND_CNT);
 	
+	$self->{'unlink'}=1;
+	
 	return 1;
 }
 
@@ -53,9 +55,11 @@ sub DESTROY
 {
 	my $self=shift;
 	
-	main::_log("destroying tempfile $self->{'filename'} (if exists)");
-	
-	unlink $self->{'filename'};
+	if ($self->{'unlink'})
+	{
+		main::_log("destroying tempfile $self->{'filename'} (if exists)");
+		unlink $self->{'filename'};
+	}
 	
 	return undef;
 }
