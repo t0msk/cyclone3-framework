@@ -3,7 +3,7 @@
 package CRON::module;
 
 
-use SVGraph::2D::lines;
+use Ext::SVGraph::_init;
 use Utils::datetime;
 
 use strict;

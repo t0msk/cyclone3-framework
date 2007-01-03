@@ -1,15 +1,8 @@
 #!/usr/bin/perl
 # áéíóú - USE UTF-8 !!!
 package CRON::module;
-#use App::400;
-#use App::400::SQL::a400;
 
-#use SVGraph;
-use SVGraph::2D::lines;
-use SVGraph::2D::columns;
-#use SVGraph::2D::ring;
-
-#use Net::HTTP::LiteAgent;
+use Ext::SVGraph::_init;
 
 use Utils::datetime;
 

@@ -2,8 +2,8 @@
 # áéíóú - USE UTF-8 !!!
 package CRON::module;
 
+use Ext::SVGraph::_init;
 
-use SVGraph::2D::lines;
 use Utils::datetime;
 
 use strict;

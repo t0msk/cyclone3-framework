@@ -22,7 +22,13 @@ BEGIN
 	unshift @INC, $DIR.'/src';
 }
 
-BEGIN {require SVGraph::Core;}
+BEGIN
+{
+	require SVGraph::Core;
+	use SVGraph::2D::lines;
+	use SVGraph::2D::columns;
+	use SVGraph::2D::map;
+}
 
 BEGIN {shift @INC;}
 

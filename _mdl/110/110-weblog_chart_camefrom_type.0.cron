@@ -2,9 +2,7 @@
 # áéíóú - USE UTF-8 !!!
 package CRON::module;
 
-
-use SVGraph::2D::lines;
-use SVGraph::2D::columns;
+use Ext::SVGraph::_init;
 use Utils::datetime;
 use DateTime;
 use TOM::Net::HTTP;
