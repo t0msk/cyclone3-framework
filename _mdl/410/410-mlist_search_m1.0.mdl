@@ -122,7 +122,7 @@ sub execute
 			$tmpWhere.="((a410.title LIKE '%".$tmp."%') || (a410.tiny LIKE '%".$tmp."%')) AND ";
 		}
 		$tmpWhere=~s| AND $||;
-		$env{db_where}="(".$tmpWhere.") AND ";
+		$env{db_where}.="(".$tmpWhere.") AND ";
 	}
 
 	# setting default db_order_by
