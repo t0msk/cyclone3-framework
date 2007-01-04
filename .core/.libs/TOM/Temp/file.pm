@@ -19,6 +19,7 @@ sub new
 	$self->{'unique'}=TOM::Utils::vars::genhash(32);
 	$self->{'filename'}=$TOM::P.'/_temp/tmp-'.$self->{'unique'};
 	$self->{'filename'}.='.'.$env{'ext'} if $env{'ext'};
+	$self->{'unlink'}=1;
 	
 	main::_log("opened tempfile $self->{'filename'}");
 	
