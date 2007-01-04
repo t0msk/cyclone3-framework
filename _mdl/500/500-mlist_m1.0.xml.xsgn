@@ -26,6 +26,7 @@
 	<keywords><![CDATA[<%keywords%>]]></keywords>
 	<title><![CDATA[<%about%>]]></title>
 	<visits><![CDATA[<%visits%>]]></visits>
+	<IDcategory_name><![CDATA[<%IDcategory_name%>]]></IDcategory_name>
 	<inserttime><![CDATA[<%inserttime_day%>. <%inserttime_month%> <%inserttime_year%>  <%inserttime_hour%>:<%inserttime_minute%>]]></inserttime>
 </item>
 <#LINE#></DEFINITION>
