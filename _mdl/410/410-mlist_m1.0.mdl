@@ -441,6 +441,23 @@ sub execute
 						}
 					}
 					
+					if($XSGN{NULL}=~/<%IDcategory_name%>/)
+					{
+						my $db1=$main::DB{main}->Query("
+							SELECT
+								name
+							FROM $env{db_410}.a410_category
+							WHERE
+								ID='$db0_line{IDcategory}'
+								AND ($env{db_410}.a410_category.domain IS NULL OR $env{db_410}.a410_category.domain='$env{db_domain}')
+								AND (lng='$env{lng}' OR lng='')
+								AND active!='D'
+							LIMIT 1
+						");
+						if (my %db1_line=$db1->fetchhash)
+						{$XSGN{NULL}=~s|<%IDcategory_name%>|$db1_line{name}|g;}
+					}
+					
 					if(
 						(($env{db_select}=~/a410.IDeditor/) || ($env{db_select}=~/a410.\*/)) &&
 						(($XSGN{NULL}=~/<%IDeditor_fullname%>/) || ($XSGN{NULL}=~/<%IDeditor_nickname%>/))
