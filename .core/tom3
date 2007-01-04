@@ -150,7 +150,7 @@ eval
 		|| open (KEY,"<".$TOM::P."/_config/IAdm.key")
 		|| open (KEY,"<".$TOM::P."/.core/_config/IAdm.key")
 		)
-	{undef $/;$TOM::IAdm_key=<KEY>;close(KEY);}
+	{local $/;$TOM::IAdm_key=<KEY>;close(KEY);}
 	
 	main::_log("loading ITst.key");
 	if (open (KEY,"<".$tom::P."/ITst.key")
@@ -158,14 +158,13 @@ eval
 		|| open (KEY,"<".$TOM::P."/_config/ITst.key")
 		|| open (KEY,"<".$TOM::P."/.core/_config/ITst.key")
 		)
-	{undef $/;$TOM::ITst_key=<KEY>;close(KEY);}
+	{local $/;$TOM::ITst_key=<KEY>;close(KEY);}
 	
 	
 	# aktivizovanie mod_rewrite 0.136
 	main::_log("loading rewrite.conf");
 	if (open (KEY,"<".$tom::P."/rewrite.conf"))
 	{
-		#undef $/;
 		my $data;
 		while (my $line=<KEY>)
 		{
@@ -184,7 +183,6 @@ eval
 	main::_log("loading 301.conf");
 	if (open (KEY,"<".$tom::P."/301.conf"))
 	{
-		#undef $/;
 		my $data;
 		while (my $line=<KEY>)
 		{
@@ -1163,12 +1161,12 @@ while ($req->Accept() >= 0)
 		if (($main::page_statuscode eq "200")&&(open (TYPE,"<".$tom::Ptype."/_type/".($FORM{TID}).".pub.type")))
 		{
 			main::_log("access to:".$tom::Ptype."/_type/".($FORM{TID}).".pub.type");
-			undef $/;$file_data=<TYPE>;
+			local $/;$file_data=<TYPE>;
 		}
 		elsif (($main::page_statuscode eq "200")&&($main::FORM{TID} =~/default/)&&(open (TYPE,"<".$tom::P."/_type/l_0000.pub.type")))
 		{
 			main::_deprecated("using bad TypeID file, $tom::P/_type/l_0000.pub.type");
-			undef $/;$file_data=<TYPE>;
+			local $/;$file_data=<TYPE>;
 		}
 		# potom sa pokusam najst not_found page
 		elsif (
@@ -1177,7 +1175,7 @@ while ($req->Accept() >= 0)
 			open (TYPE,"<".$TOM::P."/_type/g_notfound.pub.type") )
 		{
 			main::_log("access to: notfound.pub.type");
-			undef $/;$file_data=<TYPE>;
+			local $/;$file_data=<TYPE>;
 			$main::page_statuscode="404";
 			if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type} ne "vandaliser")
 			{

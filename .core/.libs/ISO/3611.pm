@@ -14,7 +14,7 @@ our %code_lng;
 
 -e $TOM::P."/.core/.libs/ISO/3611/a3.txt" && do
 {
-	undef $/;
+	local $/;
 	open (HNDI,"<".$TOM::P."/.core/.libs/ISO/3611/a3.txt") 
 		|| die "cannot open ".$TOM::P."/.core/.libs/ISO/3611/a3.txt for ISO-3611 library";
 	foreach my $line(split('\n',<HNDI>))
