@@ -41,7 +41,18 @@ sub _obsolete {return 1;}
 
 =head2 main::_obsolete_func
 
+Označenie funkcie ako obsolete:
 
+ sub funkcia
+ {
+   main::_obsolete_func();
+ }
+
+Označenie knižnice ako obsolete:
+
+ #!/bin/perl
+ package SVGraph::Core;
+ BEGIN{main::_log("<={LIB} ".__PACKAGE__);main::_obsolete_func();}
 
 =cut
 
