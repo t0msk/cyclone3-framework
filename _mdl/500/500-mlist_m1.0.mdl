@@ -108,7 +108,7 @@ sub execute
 		$env{db_where}.="(";
 		foreach my $tmp (split(";",$env{db_IDcategory}))
 		{
-			$env{db_where}.="(a500.IDcategory LIKE '$tmp') OR ";
+			$env{db_where}.="(a500.IDcategory LIKE '$tmp%') OR ";
 		}
 		$env{db_where}=~s|\) OR $|\)\) AND |;
 	}
