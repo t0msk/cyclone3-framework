@@ -1,7 +1,25 @@
 package Secure::form;
 use strict;
 
+=head1 NAME
+
+Secure::form
+
+=head1 DESCRIPTION
+
+Knižnica ktorá má za úlohu ošetrovať vstupy z formulárov
+
+=cut
+
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
+
+=head1 FUNCTIONS
+
+=head2 convert()
+
+obsolete
+
+=cut
 
 sub convert
 {
@@ -14,6 +32,11 @@ sub convert
 return 1
 }
 
+=head2 convert_sql(@)
+
+Zamena znakov \"' v mnozine SQL prikazov predtym nez sa vykonaju
+
+=cut
 
 sub convert_sql
 {
@@ -26,6 +49,9 @@ sub convert_sql
 return 1
 }
 
+=head2 convert_tags()
+
+=cut
 
 sub convert_tags
 {
@@ -37,6 +63,9 @@ sub convert_tags
 	return 1
 }
 
+=head2 check_email()
+
+=cut
 
 sub check_email
 {
