@@ -89,7 +89,7 @@ our @setit_D=
 	['^_temp'                          ,"global _temp"                ,"770","$user_www:$group"],
 	['^.symlinks$'                     ,"global .symlinks"            ,"570","$user_www:$group"],
 	['^_mdl'                           ,"global _mdl"                 ,"570","$user_www:$group"],
-	['^_config'                        ,"global _config"              ,"570","$user_www:$group"],
+	['^_config'                        ,"global _config"              ,"770","$user_www:$group"],
 	['^\.core'                         ,"global .core"                ,"570","$user_www:$group"],
 	['^_dsgn$'                         ,"global _dsgn"                ,"570","$user_www:$group"],
 	['^_type$'                         ,"global _type"                ,"570","$user_www:$group"],
@@ -158,7 +158,7 @@ our @setit_F=
 	
 	['\.bin\/'                         ,"core binary"                 ,"770","$user:$group"],
 	
-	['^_config\/'                      ,"global _config"              ,"460","$user_www:$group"],
+	['^_config\/'                      ,"global _config"              ,"660","$user_www:$group"],
 	
 	['^\.core\/_config\/httpd\.virtual\.conf',"HTTPD virtual conf"    ,"460","$user_www:$group"],
 	['^\.core\/_config\/TOM.conf'      ,".core TOM.conf"              ,"460","$user_www:$group"],

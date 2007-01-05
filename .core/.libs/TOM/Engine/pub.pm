@@ -34,6 +34,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	# CORE Engine kniznice
 	use TOM::Engine::pub::SIG;
 	use TOM::Engine::pub::cookies;
+	use TOM::Engine::pub::IAdm;
 	use TOM::Debug::pub;
 	use TOM::Warning;
 	use TOM::Database::connect;

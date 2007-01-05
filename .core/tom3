@@ -143,23 +143,7 @@ eval
 	$TOM::IAdm_key='';
 	$TOM::ITst_key='';
 	
-	# nacitanie ITsd a IAdm klucov
-	main::_log("loading IAdm.key");
-	if (open (KEY,"<".$tom::P."/IAdm.key")
-		|| open (KEY,"<".$tom::Pm."/IAdm.key")
-		|| open (KEY,"<".$TOM::P."/_config/IAdm.key")
-		|| open (KEY,"<".$TOM::P."/.core/_config/IAdm.key")
-		)
-	{local $/;$TOM::IAdm_key=<KEY>;close(KEY);}
-	
-	main::_log("loading ITst.key");
-	if (open (KEY,"<".$tom::P."/ITst.key")
-		|| open (KEY,"<".$tom::Pm."/ITst.key")
-		|| open (KEY,"<".$TOM::P."/_config/ITst.key")
-		|| open (KEY,"<".$TOM::P."/.core/_config/ITst.key")
-		)
-	{local $/;$TOM::ITst_key=<KEY>;close(KEY);}
-	
+	TOM::Engine::pub::IAdm::load();
 	
 	# aktivizovanie mod_rewrite 0.136
 	main::_log("loading rewrite.conf");
