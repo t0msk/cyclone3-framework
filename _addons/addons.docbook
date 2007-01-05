@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>Addons</title>
+
+  <section>
+    <title>Čo je addon</title>
+
+    <para>Add-ons are optional computer hardware or software modules that
+    supplement or enhance the original unit they are adding on to. Also known
+    as applications, extensions or various other specific names, these modules
+    often have own proprietary interfaces that are tightly held by the company
+    that manufactured the original unit in order to prevent competing
+    companies from producing add-ons.</para>
+
+    <para><emphasis role="bold">Použitý adresár:
+    (<filename>_addons|!domain.tld/_addons)</filename></emphasis></para>
+  </section>
+
+  <section>
+    <title>App::*</title>
+
+    <subtitle>Application</subtitle>
+
+    <para></para>
+  </section>
+
+  <section>
+    <title>Ext::*</title>
+
+    <subtitle>Extension</subtitle>
+
+    <para></para>
+  </section>
+</article>
