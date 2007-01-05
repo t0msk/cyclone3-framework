@@ -20,6 +20,7 @@ sub execute
 
 	# Pouzitelne Tagy
 	my $null = $files[0]{ID}; $null =~ s/^[0]*//;
+	my $id = $files[0]{ID}*1;
 	$XSGN{TMP} =~s|<%filename%>|$null-$files[0]{hash}|g;
 	$XSGN{TMP} =~s|<%IDarticle%>|$env{db_ID_a400}|g;
 	$XSGN{TMP} =~s|<%name%>|$files[0]{name}|g;
@@ -34,7 +35,7 @@ sub execute
 	$XSGN{TMP} =~s|<%lng%>|$files[0]{lng}|g;
 	$XSGN{TMP} =~s|<%active%>|$files[0]{active}|g;
 	$XSGN{TMP} =~s|<%comment%>|$files[0]{comment}|g;
-	$XSGN{TMP} =~s|<%ID%>|$files[0]{ID}|g;
+	$XSGN{TMP} =~s|<%ID%>|$id|g;
 	$XSGN{TMP} =~s|<%hash%>|$files[0]{hash}|g;
 	$XSGN{TMP} =~s|<%owner%>|$files[0]{owner}|g;
 	$XSGN{TMP} =~s|<%mime%>|$files[0]{mime}|g;
