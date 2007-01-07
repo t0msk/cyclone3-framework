@@ -33,7 +33,7 @@ use TOM::Temp::file;
 sub pod2docbook
 {
 	my $data=shift;
-	my %env=shift;
+	my %env=@_;
 	
 	my $t=track TOM::Debug(__PACKAGE__."::pod2docbook");
 	
