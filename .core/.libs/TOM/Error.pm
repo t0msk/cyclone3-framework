@@ -108,7 +108,7 @@ sub engine_pub
 	$email=~s|<#.*?#>||g;
 	$email=~s|<%.*?%>||g;
 
-	my $ticket_ok;
+	my $ticket_ok = 1;
 	
 	if ( $TOM::ERROR_ticket )
 	{
@@ -378,7 +378,7 @@ sub module_pub
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"pub.err",1); #global
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"pub.err",2) if ($tom::H ne $tom::Hm); #master
 
-	my $ticket_ok;
+	my $ticket_ok = 1;
 
 	if ($TOM::ERROR_module_ticket)
 	{
@@ -530,7 +530,7 @@ sub module_cron
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"cron.err",1); #global
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"cron.err",2) if ($tom::H ne $tom::Hm); #master
 
-	my $ticket_ok;
+	my $ticket_ok = 1;
 
 	if ($TOM::ERROR_module_ticket)
 	{
