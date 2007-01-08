@@ -140,12 +140,7 @@ sub engine_pub
 				'ITst'=>$main::ITst,
 			},
 		);
-
-		main::_log( "CVML HASH - ENV" );
-		while ( my ($k,$v) = each %{$cvml_hash{'ENV'}} ) { main::_log("$k: $v;"); }
-		main::_log( "CVML HASH - Cyclone" );
-		while ( my ($k,$v) = each %{$cvml_hash{'Cyclone'}} ) { main::_log("$k: $v;"); }
-
+		
 		my $cvml = CVML::structure::serialize( %cvml_hash );
 		Utils::vars::replace( $cvml );
 		
@@ -313,11 +308,6 @@ sub engine_cron
 			},
 		);
 
-		main::_log( "CVML HASH - ENV" );
-		while ( my ($k,$v) = each %{$cvml_hash{'ENV'}} ) { main::_log("$k: $v;"); }
-		main::_log( "CVML HASH - Cyclone" );
-		while ( my ($k,$v) = each %{$cvml_hash{'Cyclone'}} ) { main::_log("$k: $v;"); }
-
 		my $cvml = CVML::structure::serialize( %cvml_hash );
 		Utils::vars::replace( $cvml );
 
@@ -414,11 +404,6 @@ sub module_pub
 				'ITst'=>$main::ITst,
 			},
 		);
-
-		main::_log( "CVML HASH - ENV" );
-		while ( my ($k,$v) = each %{$cvml_hash{'ENV'}} ) { main::_log("$k: $v;"); }
-		main::_log( "CVML HASH - Cyclone" );
-		while ( my ($k,$v) = each %{$cvml_hash{'Cyclone'}} ) { main::_log("$k: $v;"); }
 
 		my $cvml = CVML::structure::serialize( %cvml_hash );
 
@@ -562,11 +547,6 @@ sub module_cron
 				'ITst'=>$main::ITst,
 			},
 		);
-
-		main::_log( "CVML HASH - ENV" );
-		while ( my ($k,$v) = each %{$cvml_hash{'ENV'}} ) { main::_log("$k: $v;"); }
-		main::_log( "CVML HASH - Cyclone" );
-		while ( my ($k,$v) = each %{$cvml_hash{'Cyclone'}} ) { main::_log("$k: $v;"); }
 
 		my $cvml = CVML::structure::serialize( %cvml_hash );
 		Utils::vars::replace( $cvml );
