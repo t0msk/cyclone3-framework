@@ -46,6 +46,9 @@ use TOM::rev;
 use TOM::Error;
 use TOM::Temp::file;
 
+# default aplikácie
+use App::100; # Ticket system
+
 use DateTime; # mem:1.5MB
 use Time::Local; # pre opacnu konverziu casu
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
