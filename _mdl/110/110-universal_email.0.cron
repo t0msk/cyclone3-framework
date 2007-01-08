@@ -2,6 +2,46 @@
 # áéíóú - USE UTF-8 !!!
 package CRON::module;
 
+=head1 NAME
+
+110-universal_email.0.cron
+
+=cut
+
+=head1 DESCRIPTION
+
+jedna sa o univerzalny cron, kde by boli udaje definovane len v
+sql selecte, a bola by zobrazovane podla sablony, no nebolo by
+potrebne dalsie prepocitavanie dat
+
+=head1 CLAIMS
+
+hlavicka webcomu
+
+nadesignovanie vystupu zo selectu
+
+ziadne preratavanie (tj. ani precenta ani nic)
+
+okrem loga, ani ziadna grafika
+
+=cut
+
+
+=head1 DEPENDS
+
+Kniznice:
+
+ TOM::Net::HTTP::UserAgent
+ Utils::datetime
+ TOM::Utils::datetime
+ TOM::Utils::vars
+ TOM::Net::email
+ TOM::Database::connect
+ TOM::Database::SQL
+ DateTime
+
+=cut
+
 use TOM::Net::HTTP::UserAgent; # detekcia a praca s UserAgentami
 use Utils::datetime;
 use TOM::Utils::datetime;
@@ -13,20 +53,39 @@ use DateTime;
 
 use strict;
 
-our $authors = "gregor\@webcom.sk;fordinal\@webcom.sk";
 
-=head1
-DESCRIPTION
-	jedna sa o univerzalny cron, kde by boli udaje definovane len v
-	sql selecte, a bola by zobrazovane podla sablony, no nebolo by
-	potrebne dalsie prepocitavanie dat
+=head1 SYNOPSIS
 
-=head1
-CLAIMS
-	- hlavicka webcomu
-	- nadesignovanie vystupu zo selectu
-		- ziadne preratavanie (tj. ani precenta ani nic)
-		- okrem loga, ani ziadna grafika
+Volanie modulu v cron type:
+
+ <MODULE>
+    <VAR id="-global" value="1" />
+    <VAR id="-category" value="110" />
+    <VAR id="-name" value="universal_email" />
+       <VAR id="type" value="name-of-stat" />
+       <VAR id="to_email" value="<$TOM::contact{'DEV_list_farm'}>" />
+ </MODULE>
+
+Definovanie typu statistiky v module:
+
+ %types=
+ (
+  'name-of-stat' =>
+  {
+   'db'=>'stats', # db_h name
+   'sql'=> "
+     SELECT
+      *
+     FROM TOM.a110_??????
+     WHERE
+      ??????
+     LIMIT 0,50;",
+   'title'=>"This is cool stat",
+   'description'=>"This statistic description",
+   'table-title'=>"Title of Table",
+   'table-description'=>"Description of Table",
+  },
+ )
 
 =cut
 
@@ -607,6 +666,9 @@ XSGN
 	my $db_stats = $sth0{'sth'};
 	
 	my $line_count = $db_stats->numrows;
+	
+	next unless $line_count;
+	
 	my $col_count = $db_stats->numfields;
 	my @col_names = $db_stats->name;
 	
@@ -677,5 +739,14 @@ XSGN
 	
 	return 1;
 }
+
+
+our $authors = "gregor\@webcom.sk;roman.fordinal\@comsultia.com";
+
+=head1 AUTHORS
+
+gregor@webcom.sk; roman.fordinal@comsultia.com;
+
+=cut
 
 1;
