@@ -64,6 +64,15 @@ if ($FORM{'domain'})
 }
 else
 {
+	# default aplikacie instalovane v TOM
+	foreach my $app(@TOM::default_TOM_App)
+	{
+		TOM::Database::SQL::file::install(
+			'a'.$app,
+			'db_name'=>'TOM',
+			'db_h'=>$FORM{'db_h'},
+		);
+	}
 	
 	my %out=TOM::Database::SQL::compare::compare_database(
 		'TOM',
