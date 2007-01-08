@@ -149,7 +149,7 @@ sub engine_pub
 		my $cvml = CVML::structure::serialize( %cvml_hash );
 		Utils::vars::replace( $cvml );
 		
-		$ticket_ok = App::100::SQL::ticket_new(
+		$ticket_ok = App::100::SQL::ticket_event_new(
 			'domain' => $tom::H,
 			'name' => 'engine/'.$TOM::engine,
 			'emails' => $email_addr,
@@ -321,7 +321,7 @@ sub engine_cron
 		my $cvml = CVML::structure::serialize( %cvml_hash );
 		Utils::vars::replace( $cvml );
 
-		App::100::SQL::ticket_new(
+		App::100::SQL::ticket_event_new(
 			'domain' => $tom::H,
 			'name' => 'engine/'.$TOM::engine,
 			'emails' => $email_addr,
@@ -422,7 +422,7 @@ sub module_pub
 
 		my $cvml = CVML::structure::serialize( %cvml_hash );
 
-		$ticket_ok = App::100::SQL::ticket_new(
+		$ticket_ok = App::100::SQL::ticket_event_new(
 			'domain' => $tom::H,
 			'name' => $env{'-MODULE'},
 			'emails' => $email_addr,
@@ -571,7 +571,7 @@ sub module_cron
 		my $cvml = CVML::structure::serialize( %cvml_hash );
 		Utils::vars::replace( $cvml );
 		
-		$ticket_ok = App::100::SQL::ticket_new(
+		$ticket_ok = App::100::SQL::ticket_event_new(
 			'domain' => $tom::H,
 			'name' => 'cron/'.$env{'-MODULE'},
 			'emails' => $email_addr,

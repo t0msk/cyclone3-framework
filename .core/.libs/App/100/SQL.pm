@@ -31,7 +31,7 @@ Vloží nový záznam
 
 our $debug=1;
 
-sub ticket_new
+sub ticket_event_new
 {
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::page_set_as_default()");
@@ -78,6 +78,17 @@ sub ticket_new
 	{
 		my %ticket = $sth0{'sth'}->fetchhash;
 		$ID_ticket = $ticket{'ID'};
+		App::020::SQL::functions::update(
+			'db_h' => "main",
+			'db_name' => "TOM",
+			'tb_name' => "a100_ticket",
+			'ID' => $ticket{'ID'},
+			'columns' =>
+			{
+				'status' => "'Y'",
+			}
+		);
+		
 	}
 
 	return 0 unless $ID_ticket;
