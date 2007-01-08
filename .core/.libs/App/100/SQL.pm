@@ -66,26 +66,12 @@ sub ticket_new
 			'db_name' => "TOM",
 			'tb_name' => "a100_ticket",
 			'columns' => {
-				'datetime_create' => "unix_timestamp()",
 				'domain' => "'$env{'domain'}'",
 				'name' => "'$env{'name'}'",
 				'emails' => "'$env{'emails'}'",
 				'status' => "'Y'",
 			},
 			'-journalize' => 1
-		);
-
-		# Updatnem ID_entity - to je v podstate to iste ako ID, ale kvoli standardu je nutne mat aj
-		# ID_entity
-		App::020::SQL::functions::update(
-			'db_h' => "main",
-			'db_name' => "TOM",
-			'tb_name' => "a100_ticket",
-			'ID' => $ID_ticket,
-			'columns' =>
-			{
-				'ID_entity' => $ID_ticket,
-			}
 		);
 	}
 	else
@@ -105,25 +91,12 @@ sub ticket_new
 		'tb_name' => "a100_ticket_event",
 		'columns' => {
 			'ID_ticket' => $ID_ticket,
-			'datetime_create' => "unix_timestamp()",
 			'cvml' => "'$env{'cvml'}'",
 			'status' => "'Y'",
 		},
 	);
-
-	return 0 unless $ID_ticket_event;
-
-	App::020::SQL::functions::update(
-		'db_h' => "main",
-		'db_name' => "TOM",
-		'tb_name' => "a100_ticket_event",
-		'ID' => $ID_ticket_event,
-		'columns' =>
-		{
-			'ID_entity' => $ID_ticket_event,
-		}
-	);
 	
+	return 0 unless $ID_ticket_event;
 	$t->close();
 	return 1;
 }
