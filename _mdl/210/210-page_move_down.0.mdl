@@ -8,6 +8,62 @@ use strict;
 
 use App::020;
 
+=head1 NAME
+
+210-page_move_down.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Presunutie položky a jej subpoložiek ( časť stromu ) nižšie
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID záznamu
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - defaultne error
+
+=item *
+
+B<RESULT_success> - bez erroru
+
+=item *
+
+B<RESULT_failure_no_input> - zlý vstup
+
+=item *
+
+B<RESULT_failure_set> - nepodarilo sa vykonať
+
+=item *
+
+B<&lt;%ID%&gt;> - ID
+
+=item *
+
+B<&lt;%missing_parameter%&gt;> - chýbajúci parameter
+
+=back
+
+=cut
+
 sub execute
 {
 	my %env=@_;
@@ -46,6 +102,12 @@ sub execute
 	return 1;
 }
 
+our $authors='roman.fordinal@comsultia.com';
 
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
 
 1;

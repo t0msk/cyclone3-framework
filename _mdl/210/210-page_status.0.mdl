@@ -8,6 +8,66 @@ use strict;
 
 use App::020;
 
+=head1 NAME
+
+210-page_status.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Nastavenie statusu danej položky
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID záznamu
+
+=item *
+
+B<status> - nový status záznamu
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - defaultne error
+
+=item *
+
+B<RESULT_success> - bez erroru
+
+=item *
+
+B<RESULT_failure_no_input> - zlý vstup
+
+=item *
+
+B<RESULT_failure_set> - nepodarilo sa vykonať
+
+=item *
+
+B<%ID%> - ID
+
+=item *
+
+B<%missing_parameter%> - chýbajúci parameter
+
+=back
+
+=cut
+
 sub execute
 {
 	my %env=@_;
@@ -49,28 +109,28 @@ sub execute
 			'ID'   => $env{'ID'},
 		);
 	}
-=head1
-	elsif ($env{'status'} eq "T")
-	{
-		$out=App::020::SQL::functions::to_trash(
-			'db_h' => "main",
-			'db_name' => $TOM::DB{'main'}{'name'},
-			'tb_name' => "a210_page",
-			'-journalize' => 1,
-			'ID'   => $env{'ID'}
-		);
-	}
-	elsif ($env{'status'} eq "D")
-	{
-		$out=App::020::SQL::functions::delete(
-			'db_h' => "main",
-			'db_name' => $TOM::DB{'main'}{'name'},
-			'tb_name' => "a210_page",
-			'-journalize' => 1,
-			'ID'   => $env{'ID'}
-		);
-	}
-=cut
+
+#	elsif ($env{'status'} eq "T")
+#	{
+#		$out=App::020::SQL::functions::to_trash(
+#			'db_h' => "main",
+#			'db_name' => $TOM::DB{'main'}{'name'},
+#			'tb_name' => "a210_page",
+#			'-journalize' => 1,
+#			'ID'   => $env{'ID'}
+#		);
+#	}
+#	elsif ($env{'status'} eq "D")
+#	{
+#		$out=App::020::SQL::functions::delete(
+#			'db_h' => "main",
+#			'db_name' => $TOM::DB{'main'}{'name'},
+#			'tb_name' => "a210_page",
+#			'-journalize' => 1,
+#			'ID'   => $env{'ID'}
+#		);
+#	}
+	
 	else
 	{
 		$XSGN{'TMP'}=$XSGN{'RESULT_failure_set'};
@@ -114,6 +174,12 @@ sub execute
 	return 1;
 }
 
+our $authors='roman.fordinal@comsultia.com';
 
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
 
 1;

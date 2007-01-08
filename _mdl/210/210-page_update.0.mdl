@@ -9,11 +9,67 @@ use strict;
 use App::020;
 use CVML;
 
-=head1
+=head1 NAME
 
-parent - zobraz parent element
-ID_charindex - vsetko od ID_charindex
-depth - hlbku
+210-page_update.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Update položky
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID záznamu
+
+=item *
+
+B<t_name> - názov type aliasu
+
+=item *
+
+B<key_?> - hodnota kľúča
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - defaultne error
+
+=item *
+
+B<RESULT_success> - bez erroru
+
+=item *
+
+B<RESULT_failure_no_input> - zlý vstup
+
+=item *
+
+B<RESULT_failure_set> - nepodarilo sa vykonať
+
+=item *
+
+B<&lt;%ID%&gt;> - ID
+
+=item *
+
+B<&lt;%missing_parameter%&gt;> - chýbajúci parameter
+
+=back
 
 =cut
 
@@ -109,6 +165,12 @@ sub execute
 	return 1;
 }
 
+our $authors='roman.fordinal@comsultia.com';
 
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
 
 1;

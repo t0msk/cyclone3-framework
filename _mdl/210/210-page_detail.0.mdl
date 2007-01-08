@@ -9,11 +9,129 @@ use strict;
 use App::020;
 use CVML;
 
-=head1
+=head1 NAME
 
-parent - zobraz parent element
-ID_charindex - vsetko od ID_charindex
-depth - hlbku
+210-page_detail.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Zobrazenie detailu položky
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID záznamu
+
+=item *
+
+B<status> - default 'Y' - statusy stromu ktoré sa zobrazujú ( napr. 'YNT' )
+
+=back
+
+=cut
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default error
+
+=item *
+
+B<RESULT_success> - default ok vystup
+
+=item *
+
+B<%ID%>
+
+=item *
+
+B<%ID_entity%>
+
+=item *
+
+B<%ID_charindex%>
+
+=item *
+
+B<%name%>
+
+=item *
+
+B<%name_url%>
+
+=item *
+
+B<%datetime_create%>
+
+=item *
+
+B<%is_default%>
+
+=item *
+
+B<%lng%>
+
+=item *
+
+B<%status%>
+
+=item *
+
+B<%ID%>
+
+=item *
+
+B<#KEY#>
+
+=item *
+
+B<KEY> - kľúč
+
+=item *
+
+B<%key%>
+
+=item *
+
+B<%value%>
+
+=back
+
+ <DEFINITION id="TMP">
+  Default error output
+ </DEFINITION>
+ 
+ <DEFINITION id="RESULT_success">
+  <ID><%ID%></ID>
+  <ID_entity><%ID_entity%></ID_entity>
+  <ID_charindex><%ID_charindex%></ID_charindex>
+  <name><%name%></name>
+  <name_url><%name_url%></name_url>
+  <datetime_create><%datetime_create%></datetime_create>
+  <t_name><%t_name%></t_name>
+  <is_default><%is_default%></is_default>
+  <lng><%lng%></lng>
+  <status><%status%></status>
+  <keys>
+ <#KEY#>
+  </keys>
+ </DEFINITION>
+ 
+ <DEFINITION id="KEY">
+  <<%key%>><%value%></<%key%>>
+ <#KEY#>
+ </DEFINITION>
 
 =cut
 
@@ -70,6 +188,12 @@ sub execute
 	return 1;
 }
 
+our $authors='roman.fordinal@comsultia.com';
 
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
 
 1;

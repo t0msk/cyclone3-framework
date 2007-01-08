@@ -8,13 +8,140 @@ use strict;
 
 use App::020;
 
-=head1
+=head1 NAME
 
-parent - zobraz parent element
-ID_charindex - vsetko od ID_charindex
-depth - hlbku
+210-page_tree.0.mdl
 
 =cut
+
+=head1 DESCRIPTION
+
+Zobrazenie stromu, alebo zoznamu položiek
+
+Použiteľné pre zobrazenie jednoduchého a stromového menu
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID parent záznamu ktorého childy sa zobrazujú
+
+=item *
+
+B<tree> - default '1' - zobrazenie formou stromu alebo klasického zoznamu
+
+=item *
+
+B<parent> - default '0' - zobrazenie aj parent elementu definovaného v B<ID>
+
+=item *
+
+B<depth> - default '' - hľbka zobrazovaného stromu
+
+=item *
+
+B<status> - default 'Y' - statusy stromu ktoré sa zobrazujú ( napr. 'YNT' )
+
+=item *
+
+B<db_order> - default 'ID_charindex' - zoradenie položiek v SQL syntaxe
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default
+
+=item *
+
+B<ITEM> - položka stromu
+
+=item *
+
+B<SUB> - v režime 'tree' používané pre vytvorenie sub-stromu v strome
+
+=item *
+
+B<#tree#> - miesto pre vloženie sub-stromu
+
+=item *
+
+B<#item#> - miesto pre vloženie ITEM
+
+=item *
+
+B<%path%> - ID
+
+=item *
+
+B<%name%> - chýbajúci parameter
+
+=back
+
+Režim stromu:
+
+ <XML_DESIGN_DEFINITION>
+ 
+ <DEFINITION id="TMP">
+  <#tree#>
+ </DEFINITION>
+ 
+ <DEFINITION id="ITEM">
+  <li>
+  <span><a href="...a210_path=<%path%>"><%name%></a></span>
+  <#tree#>
+  </li>
+  <#item#>
+ </DEFINITION>
+ 
+ <DEFINITION id="SUB">
+  <ul>
+  <#item#>
+  </ul>
+  <#tree#>
+ </DEFINITION>
+ 
+ </XML_DESIGN_DEFINITION>
+
+Režim zoznamu:
+
+ <XML_DESIGN_DEFINITION>
+ 
+ <DEFINITION id="TMP">
+  <#item#>
+ </DEFINITION>
+ 
+ <DEFINITION id="ITEM">
+  <item IDitem="<%ID%>">
+   <ID><%ID%></ID>
+   <ID_entity><%ID_entity%></ID_entity>
+   <IDparent><%ID_parent%></IDparent>
+   <name><%name%></name>
+   <name_url><%name_url%></name_url>
+   <path><%path%></path>
+   <datetime_create><%datetime_create%></datetime_create>
+   <t_name><%t_name%></t_name>
+   <lng><%lng%></lng>
+   <status><%status%></status>
+   <is_default><%is_default%></is_default>
+  </item>
+  <#item#>
+ </DEFINITION>
+ 
+ </XML_DESIGN_DEFINITION>
+
+=cut
+
 
 sub execute
 {
@@ -256,6 +383,12 @@ $where
 	return 1;
 }
 
+our $authors="roman.fordinal\@comsultia.com";
 
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
 
 1;
