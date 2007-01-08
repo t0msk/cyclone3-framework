@@ -62,6 +62,36 @@ if ($FORM{'domain'})
 	}
 	
 }
+else
+{
+	
+	my %out=TOM::Database::SQL::compare::compare_database(
+		'TOM',
+		'db_h'=>$FORM{'db_h'}
+	);
+	print "compared database 'TOM'\n";
+	print color 'reset bold yellow';
+	foreach my $SQL(@{$out{'ALTER'}})
+	{
+		print "$SQL\n";
+	}
+	
+	if (@{$out{'ALTER'}})
+	{
+		print "Do it? [No/yes]\n";
+		my $do=<STDIN>;
+		if ($do=~/yes/i)
+		{
+			print color 'reset red';
+			foreach my $SQL(@{$out{'ALTER'}})
+			{
+				print "$SQL\n";
+				TOM::Database::SQL::execute($SQL);
+			}
+		}
+	}
+	
+}
 
 
 &exit();
