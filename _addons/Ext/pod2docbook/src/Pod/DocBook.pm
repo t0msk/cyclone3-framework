@@ -695,7 +695,7 @@ sub _handle_item
 				$parser->_indent (),
 				"<varlistentry>\n",
 				$parser->_current_indent (),
-				qq!<term><anchor id="$id">$paragraph</term>\n!,
+				qq!<term><anchor id="$id"/>$paragraph</term>\n!,
 				$parser->_indent (),
 				qq!<listitem>\n!);
 	    $state = 'vlist+';
@@ -721,7 +721,7 @@ sub _handle_item
 			    $parser->_indent (),
 			    "<varlistentry>\n",
 			    $parser->_current_indent (),
-			    qq!<term><anchor id="$id">$paragraph</term>\n!,
+			    qq!<term><anchor id="$id"/>$paragraph</term>\n!,
 			    $parser->_indent (),
 			    "<listitem>\n");
 	$state = 'vlist+';
