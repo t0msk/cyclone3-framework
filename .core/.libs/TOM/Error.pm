@@ -13,6 +13,7 @@ use TOM::Error::design;
 use TOM::Utils::datetime;
 use TOM::Utils::vars;
 use Utils::vars;
+use CVML;
 
 sub engine
 {
@@ -106,8 +107,57 @@ sub engine_pub
 	
 	$email=~s|<#.*?#>||g;
 	$email=~s|<%.*?%>||g;
+
+	my $ticket_err;
 	
-	if ($TOM::ERROR_email)
+	if ( $TOM::ERROR_ticket )
+	{
+		main::_log("Chcem vlozit ticket s errorom engine modulu $TOM::engine");
+		# Zistim si emaily
+		my $email_addr;
+		foreach ("TOM",@TOM::ERROR_email_send)
+		{
+			if ( $TOM::contact{$_} )
+			{
+				$email_addr.=";" if $email_addr;
+				$email_addr.="<".$TOM::contact{$_}.">";
+			}
+		}
+		$email_addr=TOM::Utils::vars::unique_split( $email_addr );
+
+		## Vyskladam CVML
+		my %cvml_hash = (
+			'ENV' => { %main::ENV },
+			'ERROR' => { 'text' => $var },
+			'Cyclone' => {
+				'orig_URI'=>"$tom::H_www/?$main::ENV{QUERY_STRING_FULL}",
+				'parsed_URI'=>"$tom::H_www$main::ENV{REQUEST_URI}",
+				'referer_URI'=>"$main::ENV{HTTP_REFERER}",
+				'request_number'=>"$tom::count/$TOM::max_count",
+				'unique_hash'=>$main::request_code,
+				'TypeID'=>$main::FORM{'TID'},
+				'IAdm'=>$main::IAdm,
+				'ITst'=>$main::ITst,
+			},
+		);
+
+		main::_log( "CVML HASH - ENV" );
+		while ( my ($k,$v) = each %{$cvml_hash{'ENV'}} ) { main::_log("$k: $v;"); }
+		main::_log( "CVML HASH - Cyclone" );
+		while ( my ($k,$v) = each %{$cvml_hash{'Cyclone'}} ) { main::_log("$k: $v;"); }
+
+		my $cvml = CVML::structure::serialize( %cvml_hash );
+		Utils::vars::replace( $cvml );
+		
+		$ticket_err = App::100::SQL::ticket_new(
+			'domain' => $tom::H,
+			'name' => 'engine/'.$TOM::engine,
+			'emails' => $email_addr,
+			'cvml' => $cvml,
+		);
+	}
+
+	if ($TOM::ERROR_email || $ticket_err)
 	{
 		$msg->attach
 		(
@@ -122,7 +172,7 @@ sub engine_pub
 			'body'=>$email_body,
 		);
 	}
-	
+
 	# aky kod budem vypluvat?
 	# stihol som uz nacitat?
 	if ($_[0]=~/^silent/)
@@ -235,7 +285,49 @@ sub engine_cron
 		'to'=>$email_addr,
 		'body'=>$email_body,
 	);
-	
+
+	if ( $TOM::ERROR_ticket )
+	{
+		main::_log("Chcem vlozit ticket s errorom engine cronu $TOM::engine");
+		# Zistim si emaily
+		my $email_addr;
+		foreach ("TOM",@TOM::ERROR_email_send)
+		{
+			if ( $TOM::contact{$_} )
+			{
+				$email_addr.=";" if $email_addr;
+				$email_addr.="<".$TOM::contact{$_}.">";
+			}
+		}
+		$email_addr=TOM::Utils::vars::unique_split( $email_addr );
+
+		## Vyskladam CVML
+		my %cvml_hash = (
+			'ENV' => { %main::ENV },
+			'ERROR' => { 'text' => $var },
+			'Cyclone' => {
+				'unique_hash'=>$main::request_code,
+				'TypeID'=>$main::FORM{'TID'},
+				'IAdm'=>$main::IAdm,
+				'ITst'=>$main::ITst,
+			},
+		);
+
+		main::_log( "CVML HASH - ENV" );
+		while ( my ($k,$v) = each %{$cvml_hash{'ENV'}} ) { main::_log("$k: $v;"); }
+		main::_log( "CVML HASH - Cyclone" );
+		while ( my ($k,$v) = each %{$cvml_hash{'Cyclone'}} ) { main::_log("$k: $v;"); }
+
+		my $cvml = CVML::structure::serialize( %cvml_hash );
+		Utils::vars::replace( $cvml );
+
+		App::100::SQL::ticket_new(
+			'domain' => $tom::H,
+			'name' => 'engine/'.$TOM::engine,
+			'emails' => $email_addr,
+			'cvml' => $cvml,
+		);
+	}
 }
 
 
@@ -285,8 +377,62 @@ sub module_pub
 	main::_log("[MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",1,"pub.err",0); #local
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"pub.err",1); #global
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"pub.err",2) if ($tom::H ne $tom::Hm); #master
+
+	my $ticket_err;
+
+	if ($TOM::ERROR_module_ticket)
+	{
+		main::_log("Chcem vlozit ticket s errorom modulu $env{-MODULE}");
+
+		# Zistim si emaily
+		my $email_addr;
+		foreach ("TOM",@TOM::ERROR_email_send)
+		{
+			if ( $TOM::contact{$_} )
+			{
+				$email_addr.=";" if $email_addr;
+				$email_addr.="<".$TOM::contact{$_}.">";
+			}
+		}
+		$email_addr=TOM::Utils::vars::unique_split( $email_addr );
+
+		## Vyskladam CVML
+		my %cvml_hash = (
+			'ENV' => { %main::ENV },
+			'ERROR' => {
+				'text' => $env{'-ERROR'},
+				'plus' => $env{'-PLUS'},
+			},
+			'Cyclone' => {
+				'orig_URI'=>"$tom::H_www/?$main::ENV{QUERY_STRING_FULL}",
+				'parsed_URI'=>"$tom::H_www$main::ENV{REQUEST_URI}",
+				'referer_URI'=>"$main::ENV{HTTP_REFERER}",
+				'request_number'=>"$tom::count/$TOM::max_count",
+				'unique_hash'=>$main::request_code,
+				'TypeID'=>$main::FORM{'TID'},
+				'IAdm'=>$main::IAdm,
+				'ITst'=>$main::ITst,
+			},
+		);
+
+		main::_log( "CVML HASH - ENV" );
+		while ( my ($k,$v) = each %{$cvml_hash{'ENV'}} ) { main::_log("$k: $v;"); }
+		main::_log( "CVML HASH - Cyclone" );
+		while ( my ($k,$v) = each %{$cvml_hash{'Cyclone'}} ) { main::_log("$k: $v;"); }
+
+		my $cvml = CVML::structure::serialize( %cvml_hash );
+
+		$ticket_err = App::100::SQL::ticket_new(
+			'domain' => $tom::H,
+			'name' => $env{'-MODULE'},
+			'emails' => $email_addr,
+			'cvml' => $cvml,
+		);
+		
+	}
+
 	
-	if (($TOM::ERROR_module_email) && (!$main::IAdm))
+	if ((($TOM::ERROR_module_email) && (!$main::IAdm))||$ticket_err)
 	{
 		
 		my $date = TOM::Utils::datetime::mail_current();
@@ -365,7 +511,7 @@ sub module_pub
 			'body'=>$email_body,
 		);
 	}
-	
+
 	return 1 if $main::H->r_("<!TMP-".$env{-TMP}."!>",$out);
 	return 1 if $main::H->r_("<!TMP-ERROR!>",$out);
 	$main::H->a($out);
@@ -383,8 +529,58 @@ sub module_cron
 	main::_log("[MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",1,"cron.err",0); #local
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"cron.err",1); #global
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"cron.err",2) if ($tom::H ne $tom::Hm); #master
+
+	my $ticket_err;
+
+	if ($TOM::ERROR_module_ticket)
+	{
+		main::_log("Chcem vlozit ticket s errorom cronu $env{-MODULE}");
+		# Zistim si emaily
+		my $email_addr;
+		foreach ("TOM",@TOM::ERROR_email_send)
+		{
+			if ( $TOM::contact{$_} )
+			{
+				$email_addr.=";" if $email_addr;
+				$email_addr.="<".$TOM::contact{$_}.">";
+			}
+		}
+		$email_addr=TOM::Utils::vars::unique_split( $email_addr );
+
+		## Vyskladam CVML
+		my %cvml_hash = (
+			'ENV' => { %main::ENV },
+			'ERROR' => {
+				'text' => $env{'-ERROR'},
+				'plus' => $env{'-PLUS'},
+			},
+			'Cyclone' => {
+				'request_number'=>"$tom::count/$TOM::max_count",
+				'unique_hash'=>$main::request_code,
+				'TypeID'=>$main::FORM{'TID'},
+				'IAdm'=>$main::IAdm,
+				'ITst'=>$main::ITst,
+			},
+		);
+
+		main::_log( "CVML HASH - ENV" );
+		while ( my ($k,$v) = each %{$cvml_hash{'ENV'}} ) { main::_log("$k: $v;"); }
+		main::_log( "CVML HASH - Cyclone" );
+		while ( my ($k,$v) = each %{$cvml_hash{'Cyclone'}} ) { main::_log("$k: $v;"); }
+
+		my $cvml = CVML::structure::serialize( %cvml_hash );
+		Utils::vars::replace( $cvml );
+		
+		$ticket_err = App::100::SQL::ticket_new(
+			'domain' => $tom::H,
+			'name' => 'cron/'.$env{'-MODULE'},
+			'emails' => $email_addr,
+			'cvml' => $cvml,
+		);
+		
+	}
 	
-	if ($TOM::ERROR_module_email)
+	if ($TOM::ERROR_module_email||$ticket_err)
 	{
 		
 		my $date = TOM::Utils::datetime::mail_current();
@@ -452,7 +648,7 @@ sub module_cron
 			'body'=>$email_body,
 		);
 	}
-	
+
 	return 1;
 }
 
