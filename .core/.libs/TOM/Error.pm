@@ -108,7 +108,7 @@ sub engine_pub
 	$email=~s|<#.*?#>||g;
 	$email=~s|<%.*?%>||g;
 
-	my $ticket_err;
+	my $ticket_ok;
 	
 	if ( $TOM::ERROR_ticket )
 	{
@@ -149,7 +149,7 @@ sub engine_pub
 		my $cvml = CVML::structure::serialize( %cvml_hash );
 		Utils::vars::replace( $cvml );
 		
-		$ticket_err = App::100::SQL::ticket_new(
+		$ticket_ok = App::100::SQL::ticket_new(
 			'domain' => $tom::H,
 			'name' => 'engine/'.$TOM::engine,
 			'emails' => $email_addr,
@@ -157,7 +157,7 @@ sub engine_pub
 		);
 	}
 
-	if ($TOM::ERROR_email || $ticket_err)
+	if ($TOM::ERROR_email || !$ticket_ok)
 	{
 		$msg->attach
 		(
@@ -378,7 +378,7 @@ sub module_pub
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"pub.err",1); #global
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"pub.err",2) if ($tom::H ne $tom::Hm); #master
 
-	my $ticket_err;
+	my $ticket_ok;
 
 	if ($TOM::ERROR_module_ticket)
 	{
@@ -422,7 +422,7 @@ sub module_pub
 
 		my $cvml = CVML::structure::serialize( %cvml_hash );
 
-		$ticket_err = App::100::SQL::ticket_new(
+		$ticket_ok = App::100::SQL::ticket_new(
 			'domain' => $tom::H,
 			'name' => $env{'-MODULE'},
 			'emails' => $email_addr,
@@ -432,7 +432,7 @@ sub module_pub
 	}
 
 	
-	if ((($TOM::ERROR_module_email) && (!$main::IAdm))||$ticket_err)
+	if ((($TOM::ERROR_module_email) && (!$main::IAdm))||!$ticket_ok)
 	{
 		
 		my $date = TOM::Utils::datetime::mail_current();
@@ -530,7 +530,7 @@ sub module_cron
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"cron.err",1); #global
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"cron.err",2) if ($tom::H ne $tom::Hm); #master
 
-	my $ticket_err;
+	my $ticket_ok;
 
 	if ($TOM::ERROR_module_ticket)
 	{
@@ -571,7 +571,7 @@ sub module_cron
 		my $cvml = CVML::structure::serialize( %cvml_hash );
 		Utils::vars::replace( $cvml );
 		
-		$ticket_err = App::100::SQL::ticket_new(
+		$ticket_ok = App::100::SQL::ticket_new(
 			'domain' => $tom::H,
 			'name' => 'cron/'.$env{'-MODULE'},
 			'emails' => $email_addr,
@@ -580,7 +580,7 @@ sub module_cron
 		
 	}
 	
-	if ($TOM::ERROR_module_email||$ticket_err)
+	if ($TOM::ERROR_module_email||!$ticket_ok)
 	{
 		
 		my $date = TOM::Utils::datetime::mail_current();
