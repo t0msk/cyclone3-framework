@@ -1,0 +1,35 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<table cellpadding="0" cellspacing="0">
+	<tr><th>ID</th><th>domain</th><th>name</th><th>error count</th><th>last error</th><th>actions</th></tr>
+	<#LINE#>
+</table>
+</DEFINITION>
+
+<DEFINITION id="LINE">
+<tr>
+	<td><a href="?|?type=ticket-event-list&ID=<%ID%>"><%ID%></a></td>
+	<td><a href="?|?type=ticket-list&domain=<%domain_link%>"><%domain_link%></a></td>
+	<td><a href="?|?type=ticket-event-list&ID=<%ID%>"><%name%></a></td>
+	<td><%error_count%></td>
+	<td><a href="?|?type=ticket-event-detail&ID=<%last_error_id%>"><%last_error%></a></td>
+	<td>
+		<a href="?|?type=ticket-event-list&ID=<%ID%>">events</a> |
+		<a href="?|?type=ticket-list&close_ID=<%ID%>">close</a>
+	</td>
+</tr>
+<#LINE#>
+</DEFINITION>
+
+<DEFINITION id="TMP_NO_DATA">
+</DEFINITION>
+
+<DEFINITION id="PAGING"><#PAGING_PREV#> <#PAGING_NEXT#></DEFINITION>
+
+<DEFINITION id="PAGING_PREV">previous="<%page_real%>"</DEFINITION>
+
+<DEFINITION id="PAGING_NEXT">next="<%page_real%>"</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

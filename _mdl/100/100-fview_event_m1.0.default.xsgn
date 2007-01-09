@@ -1,0 +1,52 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<#TICKET#>
+	
+<table cellpadding="0" cellspacing="0" style="width: 80% !important; word-wrap: break-word;">
+	<tr><th colspan="2" style="font-weight: bold; text-align: center;">Event (ID: <%ID%>)</th></tr>
+	<tr><th>name</th><th>value</th></tr>
+	<#GROUP#>
+</table>
+</DEFINITION>
+
+<DEFINITION id="GROUP">
+<tr><th colspan="2" style="text-align: center; font-weight: bold;"><%name%></th></tr>
+<#LINE#>
+<#GROUP#>
+</DEFINITION>
+
+<DEFINITION id="LINE">
+<tr>
+	<td><%key%></td>
+	<td><%value%></td>
+</tr>
+<#LINE#>
+</DEFINITION>
+
+<DEFINITION id="TICKET">
+<a href="?|?type=ticket-event-list&ID=<%ID_ticket%>">&laquo; back to ticket events list</a>
+<table cellpadding="0" cellspacing="0">
+	<tr><th colspan="4" style="font-weight: bold; text-align: center;">TICKET</th></tr>
+	<tr><th>ID</th><th>domain</th><th>name</th><th>emails</th></tr>
+	<tr>
+		<td><%ID_ticket%></td>
+		<td><%domain%></td>
+		<td><%name%></td>
+		<td><%emails%></td>
+	</tr>
+</table>
+<br />
+</DEFINITION>
+
+<DEFINITION id="TMP_NO_DATA">
+</DEFINITION>
+
+<DEFINITION id="PAGING"><#PAGING_PREV#> <#PAGING_NEXT#></DEFINITION>
+
+<DEFINITION id="PAGING_PREV">previous="<%page_real%>"</DEFINITION>
+
+<DEFINITION id="PAGING_NEXT">next="<%page_real%>"</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

@@ -1,0 +1,88 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use TOM::Database::SQL;
+use CVML;
+use DateTime;
+
+our $debug = 1;
+
+sub execute
+{
+	my %env=@_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+
+	return 1 unless $env{'ID_ticket'};
+
+	my $sql_ticket = qq/
+	SELECT
+		t.*
+	FROM
+		TOM.a100_ticket as t
+	WHERE
+		ID=$env{'ID_ticket'}
+	/;
+	my %sth_ticket = TOM::Database::SQL::execute( $sql_ticket, 'log' => $debug);
+	return 1 unless $sth_ticket{'rows'};
+
+	my %ticket = $sth_ticket{'sth'}->fetchhash;
+	my $ticket_box = $XSGN{'TICKET'};
+	$ticket{'emails'} =~ s/(<|>)//g;
+	$ticket{'emails'} =~ s|;|<br />\n|g;
+	while ( my ($k,$v) = each %ticket ) { $ticket_box =~ s|<%$k%>|$v|g; }
+	$XSGN{'TMP'} =~ s|<#TICKET#>|$ticket_box|;
+
+	my $today = DateTime->now()->strftime('%Y-%m-%d');
+	
+	my $sql_events = qq/
+	SELECT
+		e.*,
+		if(
+			e.datetime_create>='$today', date_format(e.datetime_create, '\%H:\%i'),
+			date_format(e.datetime_create, '\%d. \%m. \%Y')
+		) as time_create
+	FROM
+		TOM.a100_ticket_event as e
+	WHERE
+		ID_ticket=$env{'ID_ticket'} AND
+		e.status='Y'
+	ORDER BY
+		e.ID DESC
+	/;
+	my %sth = TOM::Database::SQL::execute( $sql_events, 'log' => $debug);
+
+	if ( $sth{'rows'} )
+	{
+		while ( my %row = $sth{'sth'}->fetchhash )
+		{
+			my $line = $XSGN{'LINE'};
+
+			my $cvml = new CVML( data => $row{'cvml'} );
+			my %cvml_hash = %{$cvml->{'hash'}};
+
+			$row{'error'} = $cvml_hash{'ERROR'}{'text'};
+			
+			while ( my ($k,$v) = each %row ) { $line =~ s|<%$k%>|$v|g; }
+			
+			$XSGN{'TMP'} =~ s|<#LINE#>|$line|;
+		}
+	}
+
+	return 1;
+}
+
+our $authors = 'matej.gregor@comsultia.com';
+
+=head1 AUTHORS
+
+Matej Gregor (matej.gregor@comsultia.com)
+
+=cut
+
+1;

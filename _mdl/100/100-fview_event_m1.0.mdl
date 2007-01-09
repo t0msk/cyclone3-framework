@@ -1,0 +1,82 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use TOM::Database::SQL;
+use CVML;
+use DateTime;
+
+our $debug = 1;
+
+sub execute
+{
+	my %env=@_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+
+	return 1 unless $env{'ID'};
+
+	my $sql = qq/
+	SELECT
+		t.*,
+		e.*
+	FROM
+		TOM.a100_ticket as t LEFT JOIN
+		TOM.a100_ticket_event as e ON
+			e.ID_ticket=t.ID
+	WHERE
+		e.ID=$env{'ID'}
+	/;
+	my %sth = TOM::Database::SQL::execute( $sql, 'log' => $debug);
+
+	if ( $sth{'rows'} )
+	{
+		my %row = $sth{'sth'}->fetchhash;
+		my $cvml = new CVML( data => $row{'cvml'} );
+		my %cvml_hash = %{$cvml->{'hash'}};
+
+		my $ticket_box = $XSGN{'TICKET'};
+		$row{'emails'} =~ s/(<|>)//g;
+		$row{'emails'} =~ s|;|<br />\n|g;
+		while ( my ($k,$v) = each %row ) { $ticket_box =~ s|<%$k%>|$v|g; }
+		$XSGN{'TMP'} =~ s|<#TICKET#>|$ticket_box|;
+		$XSGN{'TMP'} =~ s|<%ID%>|$row{'ID'}|;
+
+		my @groups = ('ERROR', 'Cyclone', 'ENV');
+
+		foreach my $group ( @groups )
+		{
+			next unless ref($cvml_hash{$group}) eq 'HASH';
+			my $line_group = $XSGN{'GROUP'};
+			$line_group =~ s|<%name%>|$group|g;
+			
+			while ( my ($k,$v) = each %{$cvml_hash{$group}} )
+			{
+				my $line = $XSGN{'LINE'};
+				$v =~ s|(.{60})|$1\n|g;
+				$line =~ s|<%key%>|$k|g; $line =~ s|<%value%>|$v|g;
+				$line_group =~ s|<#LINE#>|$line|;
+			}
+
+			$line_group =~ s|<#LINE#>||g;
+
+			$XSGN{'TMP'} =~ s|<#GROUP#>|$line_group|;
+		}
+	}
+
+	return 1;
+}
+
+our $authors = 'matej.gregor@comsultia.com';
+
+=head1 AUTHORS
+
+Matej Gregor (matej.gregor@comsultia.com)
+
+=cut
+
+1;

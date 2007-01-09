@@ -1,0 +1,36 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::100::SQL;
+
+sub execute
+{
+	my %env=@_;
+
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
+
+	$XSGN{'TMP'} = $XSGN{'ERROR_no_id'};
+
+	return 1 unless $env{'ID'};
+
+	App::100::SQL::ticket_close( 'ID' => $env{'ID'} );
+
+	$XSGN{'TMP'} = $XSGN{'CLOSED'};
+
+	return 1;
+}
+
+our $authors = 'matej.gregor@comsultia.com';
+
+=head1 AUTHORS
+
+Matej Gregor (matej.gregor@comsultia.com)
+
+=cut
+
+1;
