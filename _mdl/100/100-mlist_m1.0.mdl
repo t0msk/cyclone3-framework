@@ -26,7 +26,7 @@ sub execute
 	
 	if ( $env{'db_domain'} )
 	{
-		$env{'db_domain'} = '' if $env{'db_domain'} eq 'no_domain';
+		$env{'db_domain'} = '' if $env{'db_domain'} eq '(null)';
 		$where .= ' AND ' if $where;
 		$where .= "t.domain='$env{'db_domain'}'";
 	}
@@ -35,7 +35,7 @@ sub execute
 	SELECT
 		t.ID,
 		t.domain,
-		if(t.domain!='',t.domain,'no_domain') as domain_link,
+		if(t.domain!='',t.domain,'(null)') as domain_link,
 		t.name as name,
 		if(
 			max(e.datetime_create)>='$today', date_format(max(e.datetime_create), '\%H:\%i'),
