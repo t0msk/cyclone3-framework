@@ -57,7 +57,6 @@ sub new
 		VALUES
 		($sel_values)
 	};
-	main::_log("SQL='$SQL'");
 	
 	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
 	
