@@ -156,7 +156,7 @@ sub module
 		main::_log("not exist",1);#return undef;
 		TOM::Error::module
 		(
-			-MODULE	=>	$mdl_C{-category}."-".$mdl_C{-name},
+			-MODULE	=>	"[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."]",
 			-ERROR	=>	"module not exist $mdl_C{P_MODULE}"
 		);
 	}
@@ -178,7 +178,7 @@ sub module
 		{
 			TOM::Error::module
 			(
-				-MODULE	=>	$mdl_C{-category}."-".$mdl_C{-name},
+				-MODULE	=>	"[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."]",
 				-ERROR	=>	$cron::ERR
 			);
 		};
@@ -190,7 +190,7 @@ sub module
 	{
 		TOM::Error::module
 		(
-			-MODULE	=>	$mdl_C{-category}."-".$mdl_C{-name},
+			-MODULE	=>	"[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."]",
 			-ERROR	=>	$@
 		);
 	};

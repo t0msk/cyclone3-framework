@@ -63,7 +63,7 @@ sub engine_pub
 		'Date'    => $date,
 		'From'    => "Cyclone3 ('$tom::H' at '$TOM::hostname') <$TOM::contact{'from'}>",
 		'To'      => TOM::Net::email::convert_TO($email_addr),
-		'Subject' => "[ERR][ENGINE-$TOM::engine]"
+		'Subject' => "[ERR][$TOM::engine]"
 	);
 	
 	my $email=$engine_email || $TOM::Error::engine_email_lite;
@@ -130,8 +130,8 @@ sub engine_pub
 			'ENV' => { %main::ENV },
 			'ERROR' => { 'text' => $var },
 			'Cyclone' => {
-				'orig_URI'=>"$tom::H_www/?$main::ENV{QUERY_STRING_FULL}",
-				'parsed_URI'=>"$tom::H_www$main::ENV{REQUEST_URI}",
+				'parsed_URI'=>"$tom::H_www/?$main::ENV{QUERY_STRING_FULL}",
+				'orig_URI'=>"$tom::H_www$main::ENV{REQUEST_URI}",
 				'referer_URI'=>"$main::ENV{HTTP_REFERER}",
 				'request_number'=>"$tom::count/$TOM::max_count",
 				'unique_hash'=>$main::request_code,
@@ -146,7 +146,7 @@ sub engine_pub
 		
 		$ticket_ok = App::100::SQL::ticket_event_new(
 			'domain' => $tom::H,
-			'name' => 'engine/'.$TOM::engine,
+			'name' => "[$TOM::engine]",
 			'emails' => $email_addr,
 			'cvml' => $cvml,
 		);
@@ -229,7 +229,7 @@ sub engine_cron
 		'Date'    => $date,
 		'From'    => "Cyclone3 ('$tom::H' at '$TOM::hostname') <$TOM::contact{'from'}>",
 		'To'      => TOM::Net::email::convert_TO($email_addr),
-		'Subject' => "[ERR][ENGINE-$TOM::engine][$cron::type]"
+		'Subject' => "[ERR][$TOM::engine][$cron::type]"
 	);
 	
 	$email=~s|<%DATE%>|$date|;
@@ -313,7 +313,7 @@ sub engine_cron
 
 		App::100::SQL::ticket_event_new(
 			'domain' => $tom::H,
-			'name' => 'engine/'.$TOM::engine,
+			'name' => "[$TOM::engine][$cron::type]",
 			'emails' => $email_addr,
 			'cvml' => $cvml,
 		);
@@ -394,8 +394,8 @@ sub module_pub
 				'plus' => $env{'-PLUS'},
 			},
 			'Cyclone' => {
-				'orig_URI'=>"$tom::H_www/?$main::ENV{QUERY_STRING_FULL}",
-				'parsed_URI'=>"$tom::H_www$main::ENV{REQUEST_URI}",
+				'parsed_URI'=>"$tom::H_www/?$main::ENV{QUERY_STRING_FULL}",
+				'orig_URI'=>"$tom::H_www$main::ENV{REQUEST_URI}",
 				'referer_URI'=>"$main::ENV{HTTP_REFERER}",
 				'request_number'=>"$tom::count/$TOM::max_count",
 				'unique_hash'=>$main::request_code,
@@ -409,7 +409,7 @@ sub module_pub
 
 		$ticket_ok = App::100::SQL::ticket_event_new(
 			'domain' => $tom::H,
-			'name' => $env{'-MODULE'},
+			'name' => "[$TOM::engine]$env{-MODULE}",
 			'emails' => $email_addr,
 			'cvml' => $cvml,
 		);
@@ -437,7 +437,7 @@ sub module_pub
 			'Date'    => $date,
 			'From'    => "Cyclone3 ('$tom::H' at '$TOM::hostname') <$TOM::contact{'from'}>",
 			'To'      => TOM::Net::email::convert_TO($email_addr),
-			'Subject' => "[ERR][MODULE-$TOM::engine][$env{-MODULE}]"
+			'Subject' => "[ERR][$TOM::engine]$env{-MODULE}"
 		);
 		
 		my $email=$module_email;
@@ -553,7 +553,7 @@ sub module_cron
 		
 		$ticket_ok = App::100::SQL::ticket_event_new(
 			'domain' => $tom::H,
-			'name' => 'cron/'.$env{'-MODULE'},
+			'name' => "[cron]$env{-MODULE}",
 			'emails' => $email_addr,
 			'cvml' => $cvml,
 		);
@@ -580,7 +580,7 @@ sub module_cron
 			'Date'    => $date,
 			'From'    => "Cyclone3 ('$tom::H' at '$TOM::hostname') <$TOM::contact{'from'}>",
 			'To'      => TOM::Net::email::convert_TO($email_addr),
-			'Subject' => "[ERR][MODULE-$TOM::engine][$env{-MODULE}]"
+			'Subject' => "[ERR][$TOM::engine]$env{-MODULE}"
 		);
 		
 		my $email=$module_email;
