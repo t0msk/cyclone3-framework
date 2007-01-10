@@ -335,7 +335,7 @@ TMP_line
 	{
 		$all_count=$db0_line{count};
 		$all_time=$db0_line{load_req_sum};
-		main::_log(5,"$all_count requests in $times{text}{in} ($all_time reqtime)");
+		main::_log("$all_count requests in $times{text}{in} ($all_time reqtime)");
 	}
 
 	# zrejme nejake predbezne vypocty
@@ -359,7 +359,7 @@ TMP_line
 		$dom_full{$db0_line{'domain_sub'}}{'load_proc_sum'}=$db0_line{'load_proc_sum'};
 		$dom_full{$db0_line{'domain_sub'}}{'load_req_sum'}=$db0_line{'load_req_sum'};
 		$dom_full{$db0_line{'domain_sub'}}{'count'}=$db0_line{'count'};
-		main::_log(5, "read $db0_line{'domain_sub'} proc_sum:$db0_line{'load_proc_sum'} req_sum:$db0_line{'load_req_sum'} count:$db0_line{'count'}");
+		main::_log("read $db0_line{'domain_sub'} proc_sum:$db0_line{'load_proc_sum'} req_sum:$db0_line{'load_req_sum'} count:$db0_line{'count'}");
 	}
 
 	# tu uz je LISTING
@@ -507,7 +507,7 @@ TMP_line
 
 	# SUMAR K DOMAINS
 
-	main::_log(5,"selecting requests from primetime (60 minuts)");
+	main::_log("selecting requests from primetime (60 minuts)");
  
 	# Vypocty
 	my $business_req=0.3;
@@ -532,7 +532,7 @@ TMP_line
 	");
 	while (my %db0_line=$db0->fetchhash)
 	{
-		main::_log(6,"requests from $db0_line{reqdatetime}: $db0_line{visits} (".($db0_line{load_req_avg}*$db0_line{visits})." reqtime)");
+		main::_log("requests from $db0_line{reqdatetime}: $db0_line{visits} (".($db0_line{load_req_avg}*$db0_line{visits})." reqtime)");
 		
 		my $load=1;
 		my $db1=$main::DB{stats}->Query("
@@ -545,7 +545,7 @@ TMP_line
 		{
 			$load=$db1_line{load_1min};
 		};
-		main::_log(7,"load $load");
+		main::_log("load $load");
 		$sel_load+=$load;
 		
 		
@@ -553,8 +553,8 @@ TMP_line
 		$sel_visits+=$db0_line{visits};
 		$sel_reqtime+=($db0_line{load_req_avg}*$db0_line{visits});
 	}
-	main::_log(5,"total requests $sel_visits in primetime ($sel_reqtime total reqtime in 3600s) (avg load ".($sel_load/60).")");
-	main::_log(5,"avg reqtime to 1 request in primetime is ".($sel_reqtime/$sel_visits)." norma is $business_req");
+	main::_log("total requests $sel_visits in primetime ($sel_reqtime total reqtime in 3600s) (avg load ".($sel_load/60).")");
+	main::_log("avg reqtime to 1 request in primetime is ".($sel_reqtime/$sel_visits)." norma is $business_req");
 
 =head1
 	my $reserve=$max_second/($all_count/$all_time);
@@ -628,7 +628,8 @@ PART
 </tr>
 PART
 	my %part_vars = (); # sem ulozim vypocty
-	my $reserve=1/($sel_load/60);
+	
+	my $reserve=do {($sel_load) ? 1/($sel_load/60) : 0};
 	$part_vars{'count'} = int($all_count*$reserve);
 	$part_vars{'proc'} = int($all_proc*$reserve);
 	$part_vars{'time'} = int($all_time*$reserve);
@@ -839,7 +840,7 @@ TMP_line
 	#print $email;
 	#print $XSGN{PART};
 
-	main::_log(5, $email);
+	main::_log($email);
 
 	#return 1; # nechcem mail posielat, iba vidiet
 
@@ -881,13 +882,13 @@ TMP_line
 	{
 		# ak sa mi podarilo mail vlozit do db (poslat)
 		#print "ok\n";
-		main::_log(5,"email sent");
+		main::_log("email sent");
 	}
 	else
 	{
 		# nepodqarilo sa to
 		#print "err\n";
-		main::_log(5,"email not sent");
+		main::_log("email not sent");
 	}
  
 	return 1}
