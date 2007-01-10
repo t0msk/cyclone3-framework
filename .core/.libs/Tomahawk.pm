@@ -620,7 +620,7 @@ sub module
 		main::_log("not exist",1);
 		TOM::Error::module(
 			-TMP	=>	$mdl_C{-TMP},
-			-MODULE	=>	$mdl_C{-category}."-".$mdl_C{-name}."/".$mdl_C{-version}."/".$mdl_C{-global},
+			-MODULE	=>	"[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."]",
 			-ERROR	=>	"module does not exist!"#.$!
 		);
 		return undef;
@@ -687,7 +687,7 @@ sub module
 				TOM::Error::module
 				(
 					-TMP	=>	$mdl_C{-TMP},
-					-MODULE	=>	$mdl_C{-category}."-".$mdl_C{-name}."/".$mdl_C{-version}."/".$mdl_C{-global},
+					-MODULE	=>	"[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."]",
 					-ERROR	=>	"Unknown TMP-".$mdl_C{-TMP},
 				);return undef;
 				
@@ -773,7 +773,7 @@ sub module
 		{
 			TOM::Error::module(
 				-TMP	=>	$mdl_C{-TMP},
-				-MODULE	=>	$mdl_C{-category}."-".$mdl_C{-name}."/".$mdl_C{-version}."/".$mdl_C{-global},
+				-MODULE	=>	"[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."]",
 				-ERROR	=>	$tom::ERR,
 				-PLUS	=>	$tom::ERR_plus,
 			)
@@ -791,7 +791,7 @@ sub module
 		TOM::Error::module
 		(
 			-TMP	=>	$mdl_C{-TMP},
-			-MODULE	=>	"mdl/".$mdl_C{-category}."-".$mdl_C{-name}."/".$mdl_C{-version}."/".$mdl_C{-global},
+			-MODULE	=>	"[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."]",
 			-ERROR	=>	$@,
 		);# unless $mdl_C{-noerror_run};
 	};
@@ -896,7 +896,7 @@ sub supermodule
  # AK MODUL NEEXISTUJE
  if (not -e $smdl_env{P_MODULE})
  {TOM::Error::module(
-	-MODULE	=>	"smdl/".$smdl_env{P_MODULE},
+	-MODULE	=>	"[SMDL::".$smdl_env{-category}."-".$smdl_env{-name}."]",
 	-ERROR	=>	$!);return undef;}
 
 
@@ -912,7 +912,7 @@ sub supermodule
 	else
 	{
 		TOM::Error::module(
-		-MODULE	=>	"smdl/".$smdl_env{-category}."-".$smdl_env{-name},
+		-MODULE	=>	"[SMDL::".$smdl_env{-category}."-".$smdl_env{-name}."]",
 		-ERROR	=>	$tom::ERR);
 		alarm 0;
 		return undef;
@@ -925,7 +925,7 @@ sub supermodule
 #=head1
  if ($@){TOM::Error::module( # toto je syntakticka chyba zistitelna az pri behu
   	-TMP	=>	$mdl_C{-TMP},
-	-MODULE	=>	"smdl/".$smdl_env{-category}."-".$smdl_env{-name},
+	-MODULE	=>	"[SMDL::".$smdl_env{-category}."-".$smdl_env{-name}."]",
 	-ERROR	=>	$@,
 	-PLUS	=>	$@." ".$!." ".$tom::ERR
   	)};
@@ -997,6 +997,8 @@ sub designmodule
 	# if ($mdl_env{-global}){$mdl_env{P_MODULE}=$TOM::P.$mdl_env{P_MODULE}}
 	# else{$mdl_env{P_MODULE}=$tom::P.$mdl_env{P_MODULE}}
 	
+	$mdl_env{'MODULE'}=$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng};
+	
 	if (($mdl_env{-global}==2)&&($tom::Pm))
 	{
 		$mdl_env{P_MODULE}=
@@ -1024,7 +1026,7 @@ sub designmodule
 	{
 		TOM::Error::module(
 		-TMP	=>	$mdl_env{-TMP},
-		-MODULE	=>	"dmdl/".$mdl_env{P_MODULE},
+		-MODULE	=>	"[DMDL::".$mdl_env{'MODULE'}."]",
 		-ERROR	=>	$!
 				);
 		$t->close();
@@ -1036,7 +1038,7 @@ sub designmodule
 		$tom::ERR="Can't open design file ".$mdl_env{P_MODULE};
 		TOM::Error::module(
 			-TMP	=>	$mdl_env{-TMP},
-			-MODULE	=>	"dmdl/".$mdl_env{P_MODULE},
+			-MODULE	=>	"[DMDL::".$mdl_env{'MODULE'}."]",
 			-ERROR	=>	"Cannot open design module ".$!
 		);
 		$t->close();
@@ -1058,7 +1060,7 @@ sub designmodule
 	{
 		TOM::Error::module(
 			-TMP	=>	$mdl_env{-TMP},
-			-MODULE	=>	"dmdl/".$mdl_env{P_MODULE},
+			-MODULE	=>	"[DMDL::".$mdl_env{'MODULE'}."]",
 			-ERROR	=>	"Unknown TMP ".$mdl_env{-TMP}
 		);
 		$t->close();
