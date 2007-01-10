@@ -141,16 +141,14 @@ sub ticket_close
 		'-journalize' => 1
 	);
 
-	App::020::SQL::functions::update(
-		'db_h' => 'main',
-		'db_name' => 'TOM',
-		'tb_name' => 'a100_ticket_event',
-		'ID_ticket' => $env{'ID'},
-		'columns' =>
-		{
-			'status' => "'N'",
-		}
-	);
+	my $sql_events = qq/
+	UPDATE TOM.a100_ticket_event
+	SET
+		status='N'
+	WHERE
+		ID_ticket=$env{'ID'}
+	/;
+	my %sth0 = TOM::Database::SQL::execute( $sql_events, 'db_h'=>$env{'db_h'} );
 
 	$t->close();
 	return 1;
