@@ -266,6 +266,7 @@ foreach (sort keys %CRON::hosts)
 		$TOM::P=$CRON::P;
 		
 		unshift @INC, $tom::P."/.libs";
+		unshift @INC, $tom::P."/_addons";
 		
 		main::_log("start forked cron on path='$cron::P'");
 		CRON::waitload($CRON::LOADAVG);
