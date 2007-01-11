@@ -54,10 +54,11 @@ sub execute
 			my $line_group = $XSGN{'GROUP'};
 			$line_group =~ s|<%name%>|$group|g;
 			
-			while ( my ($k,$v) = each %{$cvml_hash{$group}} )
+			foreach my $k ( sort {$a cmp $b} keys %{$cvml_hash{$group}} ) # Zoradim si to abecedne
 			{
+				my $v = $cvml_hash{$group}{$k};
 				my $line = $XSGN{'LINE'};
-				$v =~ s|(.{60})|$1\n|g;
+				$v =~ s|<|&lt;|g; $v =~ s|>|&gt;|g;
 				$line =~ s|<%key%>|$k|g; $line =~ s|<%value%>|$v|g;
 				$line_group =~ s|<#LINE#>|$line|;
 			}
