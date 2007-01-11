@@ -24,6 +24,10 @@ sub execute
 		e.status='Y'
 	";
 	
+	$env{'db_limit'}="10" unless $env{'db_limit'};
+	
+	$env{'db_order'}="t.ID DESC" unless $env{'db_order'};
+	
 	if ( $env{'db_domain'} )
 	{
 		$env{'db_domain'} = '' if $env{'db_domain'} eq '(null)';
@@ -52,7 +56,8 @@ sub execute
 	GROUP BY
 		t.ID
 	ORDER BY
-		t.ID DESC
+		$env{'db_order'}
+	LIMIT $env{'db_limit'}
 	/;
 	my %sth = TOM::Database::SQL::execute( $sql, 'log' => $debug);
 
