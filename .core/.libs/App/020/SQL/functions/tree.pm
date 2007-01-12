@@ -317,7 +317,6 @@ sub swap
 			`$env{'db_name'}`.`$env{'tb_name'}`
 		WHERE
 			ID_charindex LIKE '$data1{ID_charindex}%'
-			AND (status='Y' OR status='N')
 		ORDER BY
 			ID_entity
 	};
@@ -354,7 +353,6 @@ sub swap
 			`$env{'db_name'}`.`$env{'tb_name'}`
 		WHERE
 			ID_charindex LIKE '$data2{ID_charindex}%'
-			AND (status='Y' OR status='N')
 		ORDER BY
 			ID_entity
 	};
@@ -391,7 +389,6 @@ sub swap
 			`$env{'db_name'}`.`$env{'tb_name'}`
 		WHERE
 			ID_charindex LIKE '$ID_charindex%'
-			AND (status='Y' OR status='N')
 		ORDER BY
 			ID_entity
 	};
