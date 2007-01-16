@@ -712,7 +712,6 @@ XSGN
 	
 	TOM::Net::email::send
 	(
-		from => 'dev\@webcom.sk',
 		to => $env{to_email},
 		to_name => '',
 		body => $XSGN{TMP}
