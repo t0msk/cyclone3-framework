@@ -646,8 +646,8 @@ while ($req->Accept() >= 0)
 			if ($out=~/^http/)
 			{
 				# ide kod 301
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to $out",0,"301");
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to $out");
+				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out'",0,"301");
+				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out'");
 				
 				$t_301->close();
 				$t_querystring->close();
@@ -721,8 +721,12 @@ while ($req->Accept() >= 0)
 				
 				main::_log("URL='$link'");
 				
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to $ENV{HTTP_HOST}$tom::rewrite_RewriteBase$link ($ENV{'HTTP_USER_AGENT'})",0,"301");
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to $ENV{HTTP_HOST}$tom::rewrite_RewriteBase$link ($ENV{'HTTP_USER_AGENT'})");
+				my $URI_base=$tom::H_www;
+				my $URI_enh="$tom::rewrite_RewriteBase$link";
+				$URI_base.='/' unless $URI_enh=~/^\//;
+				
+				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$URI_base$tom::rewrite_RewriteBase$link' ($ENV{'HTTP_USER_AGENT'})",0,"301");
+				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$URI_base$tom::rewrite_RewriteBase$link' ($ENV{'HTTP_USER_AGENT'})");
 				
 				$t_301->close();
 				$t_querystring->close();
@@ -730,7 +734,7 @@ while ($req->Accept() >= 0)
 				$t_eval->close();
 				$t_request->close();
 				print "Status: 301 Moved permanently\n";
-				print "Location: http://$ENV{HTTP_HOST}$tom::rewrite_RewriteBase$link\n\n";
+				print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 				
 				next;
 			}
@@ -837,9 +841,13 @@ while ($req->Accept() >= 0)
 					cookies	=>	{%COOKIES}
 				);
 				
-				main::_log("301 to http://$ENV{HTTP_HOST}$ENV{REQUEST_URI} (trying setup cookies) IP='$ENV{REMOTE_ADDR}");
-				main::_log("301 to http://$ENV{HTTP_HOST}$ENV{REQUEST_URI} (trying setup cookies) IP='$ENV{REMOTE_ADDR}'",3,"301");
-				print "Location: http://$ENV{HTTP_HOST}$ENV{REQUEST_URI}\n\n";
+				my $URL=$tom::H_www;
+				$URL.='/' unless $main::ENV{'REQUEST_URI'}=~/^\//;
+				$URL.=$main::ENV{'REQUEST_URI'};
+				
+				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}");
+				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}'",3,"301");
+				print "Location: $URL\n\n";
 				
 				$t_preprocess->close();
 				$t_eval->close();
@@ -1578,15 +1586,15 @@ while ($req->Accept() >= 0)
 			{
 				main::_log("URL:'$rewrite_old' ne URL:'$rewrite'");
 				# ide kod 301
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to $ENV{HTTP_HOST}$link ($ENV{'HTTP_USER_AGENT'})",0,"301");
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to $ENV{HTTP_HOST}$link ($ENV{'HTTP_USER_AGENT'})");
+				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$tom::H_www$link' ($ENV{'HTTP_USER_AGENT'})",0,"301");
+				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$tom::H_www$link' ($ENV{'HTTP_USER_AGENT'})");
 				
 				$t_301->close();
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
 				print "Status: 301 Moved permanently\n";
-				print "Location: http://$ENV{HTTP_HOST}$link\n\n";
+				print "Location: $tom::H_www$link\n\n";
 				
 				next;
 			}
@@ -1720,8 +1728,8 @@ while ($req->Accept() >= 0)
 			if ($out=~/^http/)
 			{
 				# ide kod 301
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to $out",3,"301");
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to $out");
+				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out'",3,"301");
+				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out'");
 				
 				$t_301->close();
 				$t_process->close();
@@ -1786,18 +1794,22 @@ while ($req->Accept() >= 0)
 					$link="$rewrite";
 				}
 				
+				my $URI_base=$tom::H_www;
+				my $URI_enh="$tom::rewrite_RewriteBase$link";
+				$URI_base.='/' unless $URI_enh=~/^\//;
+				
 				# nekodovana linka
 				$link=~s|&|&amp;|g unless $TOM::type_code;
 				main::_log("URL='$link'");
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to $ENV{HTTP_HOST}$tom::rewrite_RewriteBase$link ($ENV{'HTTP_USER_AGENT'})",3,"301");
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to $ENV{HTTP_HOST}$tom::rewrite_RewriteBase$link ($ENV{'HTTP_USER_AGENT'})");
+				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$URI_base$tom::rewrite_RewriteBase$link' ($ENV{'HTTP_USER_AGENT'})",3,"301");
+				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$URI_base$tom::rewrite_RewriteBase$link' ($ENV{'HTTP_USER_AGENT'})");
 				
 				$t_301->close();
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
 				print "Status: 301 Moved permanently\n";
-				print "Location: http://$ENV{HTTP_HOST}$tom::rewrite_RewriteBase$link\n\n";
+				print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 				next;
 			}
 			$t_301->close();

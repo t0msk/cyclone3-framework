@@ -30,6 +30,11 @@ my $filename="$TOM::P/_logs/weblog/weblog.$tom::Fyear-$tom::Fmom-$tom::Fmday.$to
 open HND_weblog, ">>".$filename;
 chmod (0666,$filename);
 
+
+my $URL=$tom::H_www;
+$URL.='/' unless $main::ENV{'REQUEST_URI'}=~/^\//;
+$URL.=$main::ENV{'REQUEST_URI'};
+
 print HND_weblog <<"HEAD";
 <request>
  <page_code>$main::request_code</page_code>
@@ -47,7 +52,7 @@ print HND_weblog <<"HEAD";
  <USRM_flag>$main::USRM_flag</USRM_flag>
  <query_string>$main::ENV{QUERY_STRING_FULL}</query_string>
  <query_TID>$main::FORM{TID}</query_TID>
- <query_URL>http://$main::ENV{HTTP_HOST}$main::ENV{REQUEST_URI}</query_URL>
+ <query_URL>$URL</query_URL>
  <referer>$main::ENV{HTTP_REFERER}</referer>
  <user_agent>$main::ENV{HTTP_USER_AGENT}</user_agent>
  <unique_id>$main::ENV{UNIQUE_ID}</unique_id>
