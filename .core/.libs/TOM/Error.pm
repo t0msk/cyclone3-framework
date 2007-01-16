@@ -63,7 +63,7 @@ sub engine_pub
 		'Date'    => $date,
 		'From'    => "Cyclone3 ('$tom::H' at '$TOM::hostname') <$TOM::contact{'from'}>",
 		'To'      => TOM::Net::email::convert_TO($email_addr),
-		'Subject' => "[ERR][$TOM::engine]"
+		'Subject' => "[ERR][$TOM::engine][URI::$main::ENV{REQUEST_URI}]"
 	);
 	
 	my $email=$engine_email || $TOM::Error::engine_email_lite;
@@ -146,7 +146,7 @@ sub engine_pub
 		
 		$ticket_ok = App::100::SQL::ticket_event_new(
 			'domain' => $tom::H,
-			'name' => "[$TOM::engine]",
+			'name' => "[$TOM::engine][URI::$main::ENV{REQUEST_URI}]",
 			'emails' => $email_addr,
 			'cvml' => $cvml,
 		);
