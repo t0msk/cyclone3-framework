@@ -76,7 +76,7 @@ sub execute
 	}
 	else
 	{
-		main::_log(0,"Searching for: ".$env{search});
+		main::_log("Searching for: ".$env{search});
 		# Podla vstup. parametrov
 		if (length($env{search})>0)
 		{
