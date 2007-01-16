@@ -39,6 +39,8 @@ sub execute
 	$XSGN{'TMP'} =~ s|<#TICKET#>|$ticket_box|;
 
 	my $today = DateTime->now()->strftime('%Y-%m-%d');
+
+	$env{'db_limit'} = "LIMIT $env{'db_limit'}" if $env{'db_limit'};
 	
 	my $sql_events = qq/
 	SELECT
@@ -54,6 +56,7 @@ sub execute
 		e.status='Y'
 	ORDER BY
 		e.ID DESC
+	$env{'db_limit'}
 	/;
 	my %sth = TOM::Database::SQL::execute( $sql_events, 'log' => $debug);
 

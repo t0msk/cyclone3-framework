@@ -4,10 +4,14 @@
 <DEFINITION id="TMP">
 <a href="?|?type=ticket-list">&laquo; back to ticket list</a>
 <#TICKET#>
-<table cellpadding="0" cellspacing="0">
+<table cellpadding="0" cellspacing="0" class="vtable">
+	<thead>
 	<tr><th colspan="4" style="font-weight: bold; text-align: center;">EVENTS</th></tr>
 	<tr><th>ID</th><th>time</th><th>error</th><th>actions</th></tr>
+	</thead>
+	<tbody>
 	<#LINE#>
+	</tbody>
 </table>
 </DEFINITION>
 
@@ -22,9 +26,12 @@
 </DEFINITION>
 
 <DEFINITION id="TICKET">
-<table cellpadding="0" cellspacing="0">
+<table cellpadding="0" cellspacing="0" class="vtable">
+	<thead>
 	<tr><th colspan="5" style="font-weight: bold; text-align: center;">TICKET</th></tr>
 	<tr><th>ID</th><th>domain</th><th>name</th><th>emails</th><th>actions</th></tr>
+	</thead>
+	<tbody>
 	<tr>
 		<td><%ID%></td>
 		<td><%domain%></td>
@@ -32,6 +39,7 @@
 		<td><%emails%></td>
 		<td><a href="?|?type=ticket-list&close_ID=<%ID%>">close</a></td>
 	</tr>
+	</tbody>
 </table>
 <br />
 </DEFINITION>
