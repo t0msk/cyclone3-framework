@@ -33,7 +33,9 @@ require $TOM::P."/_config/TOM.conf";
 
  # SYSTEM MODULES
  use Mysql;
- use Database::connect;
+ use TOM;
+ use TOM::Debug::logs;
+ use TOM::Database::connect;
  use Time::Local; # pre opacnu konverziu casu
  use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
  use Net::HTTP::CGI;
@@ -49,7 +51,11 @@ require $TOM::P."/_config/TOM.conf";
 ######################################################################################
 ######################################################################################
 ######################################################################################
-Database::connect::all('stats');
+TOM::Database::connect::all('stats') || do
+{
+	print "Location: http://media.webcom.sk/grf/t.gif\n\n";
+	print "can't connect\n";
+};
 
 my $req=FCGI::Request();
 while ($req->Accept() >= 0)
@@ -109,7 +115,7 @@ while ($req->Accept() >= 0)
 	#print "ok\n";
 	
 	$main::DB{stats}->Query("
-		INSERT INTO TOM.a110_webclick_log
+		REPLACE DELAYED INTO TOM.a110_webclick_log
 		(
 			domain,
 			domain_sub,
@@ -133,7 +139,7 @@ while ($req->Accept() >= 0)
 		)
 	");
 	
-	print "Location: http://toaster.markiza.sk/grf/tvn/t.gif\n\n";
+	print "Location: http://media.webcom.sk/grf/t.gif\n\n";
 	
 	#print "$tom::Hm, $tom::H, $FORM{TID}, $FORM{x}, $FORM{y}\n";
 	
