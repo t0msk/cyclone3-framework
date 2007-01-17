@@ -69,7 +69,15 @@ use strict; # scrict code
 use Digest::MD5  qw(md5 md5_hex md5_base64);
 
 # domain loading
-require $tom::P."/local.conf";
+eval
+{
+	require $tom::P."/local.conf";
+};
+if ($@)
+{
+	print "1\n";
+	exit;
+}
 
 our $pass_md5=md5_hex(Encode::encode_utf8($main::ENV{'PASS'}));
 our $user_md5=md5_hex(Encode::encode_utf8($main::ENV{'HTTP_HOST'}.'-'.$main::ENV{'USER'}));
@@ -78,7 +86,6 @@ use App::300;
 use TOM::Database::connect;
 
 TOM::Database::connect::multi('main');
-
 
 foreach (keys %main::ENV)
 {
