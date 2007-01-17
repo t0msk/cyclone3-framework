@@ -722,6 +722,7 @@ while ($req->Accept() >= 0)
 				main::_log("URL='$link'");
 				
 				my $URI_base=$tom::H_www;
+					$URI_base=~s|$tom::rewrite_RewriteBase$||;
 				my $URI_enh="$tom::rewrite_RewriteBase$link";
 				$URI_base.='/' unless $URI_enh=~/^\//;
 				
@@ -842,6 +843,7 @@ while ($req->Accept() >= 0)
 				);
 				
 				my $URL=$tom::H_www;
+					$URL=~s|$tom::rewrite_RewriteBase$||;
 				$URL.='/' unless $main::ENV{'REQUEST_URI'}=~/^\//;
 				$URL.=$main::ENV{'REQUEST_URI'};
 				
@@ -1044,6 +1046,12 @@ while ($req->Accept() >= 0)
 						foreach (keys %key)
 						{
 							main::_log("key '$_'='$key{$_}'");
+						}
+						
+						if (!$a210{'ID'})
+						{
+							main::_log("page not found, setting 404 code");
+							$main::page_statuscode="404";
 						}
 						
 					}
@@ -1795,6 +1803,7 @@ while ($req->Accept() >= 0)
 				}
 				
 				my $URI_base=$tom::H_www;
+					$URI_base=~s|$tom::rewrite_RewriteBase$||;
 				my $URI_enh="$tom::rewrite_RewriteBase$link";
 				$URI_base.='/' unless $URI_enh=~/^\//;
 				
