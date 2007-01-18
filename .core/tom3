@@ -614,8 +614,12 @@ while ($req->Accept() >= 0)
 		$t_querystring->close();
 		
 		
-		
-		
+		# only browser can recache content of a page
+		# when another useragent type uses URL with _rc, then is redirected
+		if (not $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type}=~/browser/)
+		{
+			delete $main::FORM{'_rc'};
+		};
 		
 		if (my $out=TOM::Net::URI::301::check($ENV{'REQUEST_URI'},\%main::FORM))
 		{
@@ -992,6 +996,7 @@ while ($req->Accept() >= 0)
 					# toto len v pripade ak uz nieje nastavene type z GET na nieco ine ako 'default' type
 					if (!$main::FORM{'a210_path'} && (!$main::FORM{'type'} || $main::FORM{'type'} eq "default"))
 					{
+						main::_log("finding default");
 						my $ID=App::210::SQL::page_get_default_ID('lng'=>$main::FORM{'__lng'});
 						%a210=App::020::SQL::functions::get_ID(
 							'db_h' => "main",
@@ -1036,6 +1041,10 @@ while ($req->Accept() >= 0)
 						# spracovanie a210 dat
 						if ($a210{'t_name'})
 						{
+							if ($main::FORM{'type'})
+							{
+								main::_log("FORM{'type'} has been defined from GET, this link must be relinked by code 301");
+							}
 							main::_log("set FORM{'type'}='$a210{'t_name'}'");
 							$main::FORM{'type'}=$a210{'t_name'};
 						}
@@ -1519,7 +1528,8 @@ while ($req->Accept() >= 0)
 			
 			main::_log("REQUEST_URI='$main::ENV{REQUEST_URI}'");
 			
-			my $rewrite_old=$ENV{REQUEST_URI};$rewrite_old=~s|^(.*)\?.*?$|$1|;
+			my $link_old=$main::ENV{REQUEST_URI};
+			my $rewrite_old=$main::ENV{REQUEST_URI};$rewrite_old=~s|^(.*)\?.*?$|$1|;
 			
 			# pokus o vytvorenie rewrite linky
 			main::_log("cleaning FORM variables");
@@ -1527,6 +1537,7 @@ while ($req->Accept() >= 0)
 			delete $form{TID} if $form{type};
 			delete $form{TID} if $form{TID}="l_default";
 			delete $form{cookies};
+			delete $form{type} if $a210{'t_name'};
 			
 			my $rewrite="/".TOM::Net::URI::rewrite::parse_hash(\%form);
 			main::_log("rewrited part is '$rewrite'");
@@ -1588,11 +1599,11 @@ while ($req->Accept() >= 0)
 			# nekodovana linka
 			$link=~s|&|&amp;|g unless $TOM::type_code;
 			
-			main::_log("URL='$link'");
+			main::_log("link_old='$link_old' link='$link'");
 			
-			if (($rewrite_old ne $rewrite) || $rewrite_301)
+			#if (($rewrite_old ne $rewrite) || $rewrite_301)
+			if (($link_old ne $link) || $rewrite_301)
 			{
-				main::_log("URL:'$rewrite_old' ne URL:'$rewrite'");
 				# ide kod 301
 				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$tom::H_www$link' ($ENV{'HTTP_USER_AGENT'})",0,"301");
 				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$tom::H_www$link' ($ENV{'HTTP_USER_AGENT'})");
@@ -1962,6 +1973,7 @@ while ($req->Accept() >= 0)
 			delete $form{_lng} if $form{_lng} eq $tom::lng_;
 			# spracujem %form este cez rewrite a mozno z %form budu este vyhodne
 			# nadbytocne veci
+			delete $form{_rc}; # prikaz na recache ( nemal by sa dalej prenasat v ramci linky )
 			if
 			(
 				($prefix ne "http://null/")&&
