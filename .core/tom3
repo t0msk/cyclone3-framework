@@ -525,6 +525,7 @@ while ($req->Accept() >= 0)
 						}
 						else
 						{
+							# tuto linku otestujem a spravim relokaciu podla kodu 301
 							$rewrite_301=1;
 						}
 					}
@@ -615,10 +616,13 @@ while ($req->Accept() >= 0)
 		
 		
 		# only browser can recache content of a page
-		# when another useragent type uses URL with _rc, then is redirected
-		if (not $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type}=~/browser/)
+		# when another useragent type uses URL with _rc, then is redirected by code 301
+		if (
+				(not $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type}=~/browser/) && ($main::FORM{'_rc'})
+			)
 		{
 			delete $main::FORM{'_rc'};
+			$rewrite_301=1;
 		};
 		
 		if (my $out=TOM::Net::URI::301::check($ENV{'REQUEST_URI'},\%main::FORM))
@@ -650,8 +654,9 @@ while ($req->Accept() >= 0)
 			if ($out=~/^http/)
 			{
 				# ide kod 301
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out'",0,"301");
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out'");
+				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out' (301.conf)",3,"301",1);
+				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out' (301.conf)",3,"301");
+				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out' (301.conf)");
 				
 				$t_301->close();
 				$t_querystring->close();
@@ -730,8 +735,9 @@ while ($req->Accept() >= 0)
 				my $URI_enh="$tom::rewrite_RewriteBase$link";
 				$URI_base.='/' unless $URI_enh=~/^\//;
 				
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$URI_base$tom::rewrite_RewriteBase$link' ($ENV{'HTTP_USER_AGENT'})",0,"301");
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$URI_base$tom::rewrite_RewriteBase$link' ($ENV{'HTTP_USER_AGENT'})");
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)",3,"301",1);
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)",3,"301");
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)");
 				
 				$t_301->close();
 				$t_querystring->close();
@@ -851,8 +857,9 @@ while ($req->Accept() >= 0)
 				$URL.='/' unless $main::ENV{'REQUEST_URI'}=~/^\//;
 				$URL.=$main::ENV{'REQUEST_URI'};
 				
-				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}");
+				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}'",3,"301",1);
 				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}'",3,"301");
+				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}");
 				print "Location: $URL\n\n";
 				
 				$t_preprocess->close();
@@ -1044,6 +1051,8 @@ while ($req->Accept() >= 0)
 							if ($main::FORM{'type'})
 							{
 								main::_log("FORM{'type'} has been defined from GET, this link must be relinked by code 301");
+								# tuto linku otestujem a spravim relokaciu podla kodu 301
+								$rewrite_301=1;
 							}
 							main::_log("set FORM{'type'}='$a210{'t_name'}'");
 							$main::FORM{'type'}=$a210{'t_name'};
@@ -1522,7 +1531,11 @@ while ($req->Accept() >= 0)
 		# $tom::rewrite - priznak ze je nacitany rewrite.conf
 		# $tom::rewrite_301 - zapnuty rewrite 301 v local.conf
 		#
-		if ($tom::rewrite && $tom::rewrite_301 && $ENV{'HTTP_HOST'})
+		if (
+				$tom::rewrite &&
+				$tom::rewrite_301 &&
+				$ENV{'HTTP_HOST'}
+			)
 		{
 			my $t_301=track TOM::Debug("REQUEST_URI link testing for 301 redirection");
 			
@@ -1600,13 +1613,15 @@ while ($req->Accept() >= 0)
 			$link=~s|&|&amp;|g unless $TOM::type_code;
 			
 			main::_log("link_old='$link_old' link='$link'");
+			main::_log("rewrite_old='$rewrite_old' rewrite='$rewrite'");
 			
-			#if (($rewrite_old ne $rewrite) || $rewrite_301)
-			if (($link_old ne $link) || $rewrite_301)
+			if (($rewrite_old ne $rewrite) || $rewrite_301)
+			#if (($link_old ne $link) || $rewrite_301)
 			{
 				# ide kod 301
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$tom::H_www$link' ($ENV{'HTTP_USER_AGENT'})",0,"301");
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$tom::H_www$link' ($ENV{'HTTP_USER_AGENT'})");
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$tom::H_www$link' (test)",3,"301",1);
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$tom::H_www$link' (test)",3,"301");
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$tom::H_www$link' (test)");
 				
 				$t_301->close();
 				$t_process->close();
@@ -1732,8 +1747,9 @@ while ($req->Accept() >= 0)
 			if ($out=~/^-(\d+)/)
 			{
 				my $code=$1;
-				main::_log("code $1 on REQUEST_URI='$ENV{'REQUEST_URI'}'",1);
-				main::_log("code $1 on REQUEST_URI='$ENV{'REQUEST_URI'}'",3,"301");
+				main::_log("code $1 on REQUEST_URI='$ENV{'REQUEST_URI'}' (location)",3,"301",1);
+				main::_log("code $1 on REQUEST_URI='$ENV{'REQUEST_URI'}' (location)",3,"301");
+				main::_log("code $1 on REQUEST_URI='$ENV{'REQUEST_URI'}' (location)",1);
 				$t_301->close();
 				$t_process->close();
 				$t_eval->close();
@@ -1747,8 +1763,9 @@ while ($req->Accept() >= 0)
 			if ($out=~/^http/)
 			{
 				# ide kod 301
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out'",3,"301");
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out'");
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"301",1);
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"301");
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)");
 				
 				$t_301->close();
 				$t_process->close();
@@ -1821,8 +1838,9 @@ while ($req->Accept() >= 0)
 				# nekodovana linka
 				$link=~s|&|&amp;|g unless $TOM::type_code;
 				main::_log("URL='$link'");
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$URI_base$tom::rewrite_RewriteBase$link' ($ENV{'HTTP_USER_AGENT'})",3,"301");
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$URI_base$tom::rewrite_RewriteBase$link' ($ENV{'HTTP_USER_AGENT'})");
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"301",1);
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"301");
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)");
 				
 				$t_301->close();
 				$t_process->close();
