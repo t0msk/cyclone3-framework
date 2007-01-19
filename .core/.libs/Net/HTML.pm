@@ -23,7 +23,7 @@ our $err_page=<<"HEADER";
   <title>Systémová chyba / System error</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
   <meta http-equiv="domain" content="<\$tom::H>#failed" />
-  <meta name="author" content="Webcom, s.r.o. [www.webcom.sk]; e-mail: info\@webcom.sk" />
+  <meta name="author" content="Comsultia, Ltd. [www.comsultia.com]; e-mail: info\@comsultia.com" />
   <meta name="generator" content="Cyclone <\$TOM::core_version>/<\$TOM::core_build> at <\$TOM::hostname> [$$;<\$main::request_code>]" />
 
   <style type="text/css" media="screen">
@@ -62,7 +62,7 @@ our $err_page=<<"HEADER";
 	</p>
 	<p>
 		Na odstránení chyby pracujeme. Ak problém pretrváva, môžete
-		kontaktovať nášho administrátora na <a href="mailto:admin\@webcom.sk">admin\@webcom.sk</a>.
+		kontaktovať nášho administrátora na <a href="mailto:admin\@comsultia.com">admin\@comsultia.com</a>.
 	</p>
 	<hr />
 
@@ -72,7 +72,7 @@ our $err_page=<<"HEADER";
 	</p>
 	<p>
 		We are currently working to fix this error.
-		If the problem still persists, you can contact our administrator at <a href="mailto:admin\@webcom.sk">admin\@webcom.sk</a>.
+		If the problem still persists, you can contact our administrator at <a href="mailto:admin\@comsultia.com">admin\@comsultia.com</a>.
 	</p>
 </div></div>
 	
@@ -169,29 +169,6 @@ sub prepare
 
  
  # chybajuce powered
- $self->{OUT}{HEADER} .=
-	" <META HTTP-EQUIV='copyright' CONTENT='C $year, WebCom s.r.o.'>\n"
-	unless $self->{ENV}{HEAD}{META}{copyright};
-	
- $self->{OUT}{HEADER} .=
-	" <META HTTP-EQUIV='contact-office' CONTENT='+421 905 231168'>\n"
-	unless $self->{ENV}{HEAD}{META}{'contact-office'};
-
- $self->{OUT}{HEADER} .=
-	" <META HTTP-EQUIV='Reply-to' CONTENT='TOM\@webcom.sk'>\n"
-	unless $self->{ENV}{HEAD}{META}{'Reply-to'};
-
- $self->{OUT}{HEADER} .=
-	" <META HTTP-EQUIV='projected' CONTENT='projected by Roman Fordinal'>\n"
-	unless $self->{ENV}{HEAD}{META}{projected};
-
- $self->{OUT}{HEADER} .=
-	" <META HTTP-EQUIV='author' CONTENT='WebCom coreteam: Peter Becar, Roman Fordinal, Peter Nemsak, ...'>\n"
-	unless $self->{ENV}{HEAD}{META}{author};
-
-$self->{OUT}{HEADER} .=
-	" <META HTTP-EQUIV='admin' CONTENT='Martin Hudec'>\n"
-	unless $self->{ENV}{HEAD}{META}{admin};
 	
 $self->{OUT}{HEADER} .=
 	" <META HTTP-EQUIV='robots' CONTENT='index, follow'>\n"

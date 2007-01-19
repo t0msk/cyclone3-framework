@@ -25,7 +25,7 @@ our $err_page=<<"HEADER";
   <title>Systémová chyba / System error</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
   <meta http-equiv="domain" content="<\$tom::H>#failed" />
-  <meta name="author" content="Webcom, s.r.o. [www.webcom.sk]; e-mail: info\@webcom.sk" />
+  <meta name="author" content="Comsultia, Ltd. [www.comsultia.com]; e-mail: info\@comsultia.com" />
   <meta name="generator" content="Cyclone<\$TOM::core_version>.<\$TOM::core_build> (r<\$TOM::core_revision>) at <\$TOM::hostname> [$$;<\$main::request_code>]" />
 
   <style type="text/css" media="screen">
@@ -64,7 +64,7 @@ our $err_page=<<"HEADER";
 	</p>
 	<p>
 		Na odstránení chyby pracujeme. Ak problém pretrváva, môžete
-		kontaktovať nášho administrátora na <a href="mailto:admin\@webcom.sk">admin\@webcom.sk</a>.
+		kontaktovať nášho administrátora na <a href="mailto:admin\@comsultia.com">admin\@comsultia.com</a>.
 	</p>
 	<hr />
 
@@ -74,7 +74,7 @@ our $err_page=<<"HEADER";
 	</p>
 	<p>
 		We are currently working to fix this error.
-		If the problem still persists, you can contact our administrator at <a href="mailto:admin\@webcom.sk">admin\@webcom.sk</a>.
+		If the problem still persists, you can contact our administrator at <a href="mailto:admin\@comsultia.com">admin\@comsultia.com</a>.
 	</p>
 </div></div>
 	
@@ -219,11 +219,6 @@ $self->{OUT}{HEADER} .=
 #=head1
 
 
- # META - NAME
- 	$self->{ENV}{head}{meta}{author}="Webcom, s.r.o. [www.webcom.sk]; e-mail: info\@webcom.sk" unless $self->{ENV}{head}{meta}{author};
-# $self->{OUT}{HEADER} .=
-#	" <meta name=\"author\" content=\"Webcom, s.r.o. [www.webcom.sk]; e-mail: info\@webcom.sk\" />\n"
-#	unless $self->{ENV}{head}{meta}{author};delete $self->{ENV}{head}{meta}{author};
 	
 =head1
  $self->{OUT}{HEADER} .=
