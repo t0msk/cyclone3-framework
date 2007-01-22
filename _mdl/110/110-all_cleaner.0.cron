@@ -10,14 +10,14 @@ sub execute
 	my %env=@_;
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
-	alarm(3600);
+	alarm(86400);
 	
 	my $long=$main::time_current-((31*86400)*1)-86400;
 	main::_log("long=$long");
 	
 	if ($cron::P ne $CRON::P)
 	{
-		return undef
+		return undef;
 	}
 	
 	my %date=Utils::datetime::ctodatetime(($main::time_current-(86400*8)),format=>1);
@@ -74,6 +74,22 @@ sub execute
 		DELETE FROM TOM.a110_obsolete_log
 		WHERE time_created<".($main::time_current-(86400*7))
 	);
+	
+	foreach my $domain(keys %TOM::a110_domain)
+	{
+		next unless $TOM::a110_domain{$domain}{'expire'};
+		main::_log("cleaning TOM.a110_weblog_rqs domain '$domain' (max $TOM::a110_domain{$domain}{'expire'} days old)");
+		$main::DB{stats}->Query("
+			DELETE
+			FROM
+				TOM.a110_weblog_rqs
+			WHERE
+				reqtime<".($main::time_current-($TOM::a110_domain{$domain}{'expire'}*86400))."
+				AND domain='$domain'
+		");
+	}
+	
+	
 	
  return 1}
 
