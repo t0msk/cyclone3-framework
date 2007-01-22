@@ -131,7 +131,7 @@ sub parse
 	
 	$data=~s|^\n||g;
 	#$data=~s|\s+$||g; # kvoli typu TEXT
-	$data=~s|\n[\t ]+$||g; # kvoli typu TEXT
+	$data=~s|\n[\t ]{0,}$||g; # kvoli typu TEXT
 	
 	$data=~s|\\([\[\]])|\1|g;
 	print "-return data !$data!\n" if $debug;
