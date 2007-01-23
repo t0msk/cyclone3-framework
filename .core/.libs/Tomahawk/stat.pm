@@ -11,6 +11,8 @@ sub rqs
  #return 1;
  return undef if $main::IAdm;
  return undef if $App::110::IP_exclude{$main::ENV{'REMOTE_ADDR'}};
+ return undef if $main::FORM{'_rc'}; # if this page is only request to recache content
+ return undef unless $TOM::STAT;
  
  my %env=@_;
  my $null;$null="C" if $TOM::DB_name_TOM eq $TOM::DB_name_STAT;
