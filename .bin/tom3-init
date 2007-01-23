@@ -113,6 +113,7 @@ if ($main::FORM{domain})
 	$TOM::P=$main::P;
 	
 	unshift @INC,$tom::P."/.libs";
+	unshift @INC,$tom::P."/_addons";
 }
 
 
