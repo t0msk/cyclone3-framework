@@ -153,13 +153,13 @@ eval
 			$data.=$line;
 		}
 		TOM::Net::URI::rewrite::get($data);close(KEY);$tom::rewrite=1;#$/="\n";
-		$url_regexp='(http[s]?:\/\/[a-zA-Z0-9\-\/\._:]{0,150}|)\?\|\?(.*?)(["\'#])';
+		$url_regexp=qr'(http[s]?:\/\/[a-zA-Z0-9\-\/\._:]{0,150}|)\?\|\?(.*?)(["\'#])';
 		$tom::rewrite_time=time;
 	}
 	else
 	{
 		$tom::rewrite=0;
-		$url_regexp='\?\|\?(.*?)(["\'#])';
+		$url_regexp=qr'\?\|\?(.*?)(["\'#])';
 	}
 	
 	main::_log("loading 301.conf");
@@ -1933,7 +1933,7 @@ while ($req->Accept() >= 0)
 			$H->{OUT}{BODY}=~s/http:\/\/null\///g;
 		}
 		
-		while ($H->{OUT}{BODY}=~s/$main::url_regexp/<!TMP-$hash!>/)
+		while ($H->{OUT}{BODY}=~s/$url_regexp/<!TMP-$hash!>/)
 		{
 			$url_count++;
 			my $t_link=track TOM::Debug("URL '$url_count'");
