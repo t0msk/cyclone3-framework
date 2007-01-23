@@ -1989,7 +1989,6 @@ while ($req->Accept() >= 0)
 			delete $form{_lng} if $form{_lng} eq $tom::lng_;
 			# spracujem %form este cez rewrite a mozno z %form budu este vyhodne
 			# nadbytocne veci
-			delete $form{_rc}; # prikaz na recache ( nemal by sa dalej prenasat v ramci linky )
 			if
 			(
 				($prefix ne "http://null/")&&
