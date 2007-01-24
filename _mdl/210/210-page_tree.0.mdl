@@ -50,6 +50,14 @@ B<status> - default 'Y' - statusy stromu ktoré sa zobrazujú ( napr. 'YNT' )
 
 B<db_order> - default 'ID_charindex' - zoradenie položiek v SQL syntaxe
 
+=item *
+
+B<current_ID> - aktuálne ID položky stromu ($main::a210{'ID'})
+
+=item *
+
+B<current_path_url> - aktuálna URL cesta stromu ( ASCII rewrite podoba )
+
 =back
 
 =cut
@@ -65,6 +73,10 @@ B<TMP> - default
 =item *
 
 B<ITEM> - položka stromu
+
+=item *
+
+B<ITEM-current> - aktuálna položka stromu ak je použitý vstupný parameter B<current_*>=''
 
 =item *
 
@@ -332,6 +344,15 @@ $where
 			main::_log("path_='$path_'");
 			
 			$XSGN{'NULL'}=$XSGN{'ITEM'};
+			
+			if (
+					(($env{'current_ID'} eq $entity->{'ID'})
+					|| ($env{'current_path_url'} eq $path_))
+					&& $XSGN{'ITEM-current'}
+			)
+			{
+				$XSGN{'NULL'}=$XSGN{'ITEM-current'};
+			}
 			
 			$XSGN{'NULL'}=~s|<%ID%>|$entity->{'ID'}|g;
 			$XSGN{'NULL'}=~s|<%ID_entity%>|$entity->{'ID_entity'}|g;
