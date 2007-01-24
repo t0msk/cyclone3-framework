@@ -1,0 +1,401 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use strict;
+
+use DateTime;
+
+sub execute
+{
+	alarm(3600);
+	my %env=@_;
+
+ #if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
+
+ my $date = TOM::Utils::datetime::mail_current();
+
+ $env{to_email} = $TOM::contact{'stats'}.";".$TOM::contact{'TOM'};
+
+ $env{to_email} = "gregor\@webcom.sk;fordinal\@webcom.sk";
+ #$env{to_email} = 'gregor@webcom.sk';
+
+$env{lng} = "sk" unless $env{lng};
+my %TEXTS=
+ (
+ 	'sk' =>
+ 	{
+		#email_subject => "[STAT][a110/weblog] last 31days bilance",
+		email_subject => "CYCLONE STATS: Farm Performance / 31 days",
+		main_header => "Štatistiky výkonu farmy",
+		time_description => "za časové obdobie <\%time-from%> - <\%time-to%>",
+		main_description => "Graf ukazuje výkon farmy.",
+	
+		section_header => "Pre <%subdomain-name%>",
+	
+		subdomain_all_domains => "všetky subdomény",
+
+		together_stats => "celkovo",
+		
+ 	},
+ 	'en' =>
+ 	{
+
+ 	},
+ );
+
+ TOM::Database::connect::multi('stats') || die "cannot connect all databases";
+ my $day_period = 31;
+	my $boundary = "------------060509090608000908080106";
+	my $webcom_logo = <<"WEBCOMLOGO";
+Content-Type: image/gif;
+ name="webcom_logo.gif"
+Content-ID: <part1.webcom.logo\@webcom.sk>
+Content-Transfer-Encoding: base64
+Content-Disposition: inline;
+ filename="webcom_logo.gif"
+
+R0lGODlhlgAcAMQAAL/Awd/g4O0bI/f395iam7i5urCxss/Q0YiKjJCSk+/v8NfY2Ofn6Kip
+q8fIyfaNke84P/zU1v3i4/RxdvebnvV/hKCho4CChP///wAAAAAAAAAAAAAAAAAAAAAAAAAA
+ACH5BAAAAAAALAAAAACWABwAAAX/ICaOZGmeaIpaV6u+cCzPL0MQFuLQfD+yLp9wSBQxEg6A
+I0DYFZ8l4AVKrZ4aAIChYGEgrFApeEy1BACWRgGTIBPF7rjPrDUYMF95D67vwwBYAEcOFn40
+fIaJJQM3Cwo5DIoxiJKSA4QWBQqVMJScnxgWohabJwOiDSmPowMkCgAELS0EmidSCgYJshcE
+AK0qCgWxuxYOvyXBurIJtSdcoiIHDcsGpdENCC0J1SrTLWsnB7ILKAWyqSMO2buyOiZS7LsI
+BygD5vGyhST2+LIFxz9k2cA3D8OjfvRQBGgHcMSwC/oWrbsQYISBfrvABcS4K+G+h/0iigDZ
+j8C7dhwP/0zERw7FQ48jFu6yNkLcrHS7EgAIsKDAypYi4EHMYmAlxY/sEoxSJhKDzRaBvLWA
+GZSdgQM8L8ZrgHWBVm0pnrYp8bXFnRLKLiRUMNEAQEbLSEjhNoJf3BH3ZlUkwcBAU6cQaR6k
+WrUFgr042wEV4WBXJBQTFyvAB3DBXQwALrvaBdSTiMzjREyWRaBhDRERHjyIIAJxFIEnIp9I
+67oEaIgkbksBIFcW75GyCIuQqtGziLTg8iIwHWOCgOcCJqgwLqV24Qu/Tc0coWz5urEYGDAc
+sctAlvPnpUQ0jiGvPikaaTyADv1BCuqyrGP4mv3E17NP8ZZXQv+RwBE+68mSgv9lYOGRnw8Q
+0PccBPcpaMuDJtzWnwmjtdDKLQblg8EA25F3IDsJBnGCTEHsoh8MEkJXoYqvtaCfhi/sJh5U
+G13AwG3omDhVAEQWaSSRj4Vi4QkMXjDWRC++EKGEFK6wZI1HZejbCyxugyEGTRb1pQiyzcCe
+e9fFN8N8EtpnJY292XgCji+kpRkb8YA3glRnycAeciIoxxwMFdBXwXRXxpmlbVu+8JQsToxw
+W3AmPCqcCPZkZ9yke3XIy6AoLNCKBBRQIMGIiyn65qK5NarCACsttwg7eZhgZ6Qj9JWNprI0
+ZNdNFu1CgHULBFkTL64xodaFcPZ4o6sqTNonCWVtOEKGk4YFksMuvJJWQBbYsJPkiCQppQUl
+jxJgB0iE4Senli1Ye4Kn48a0C6iPctTtiYTBdWAJJOFjEparPhuvDFr95ZBZLyxgVFIwCSVw
+vXXl1Q+8/ah5XcFzQqvCjpcCdgFN9RCSlAGpitCTxOpGOYICJhNTQMoGOQASLSTjNUo5o1Ds
+1CjChQAAOw==
+WEBCOMLOGO
+
+ my $email=<<"HEADER";
+From: "$tom::Hm ($TOM::hostname)" <TOM\@$TOM::hostname>
+To: <%TO%>
+Subject: <%SUBJECT%>
+Date: $date
+List-Id: TOM3
+MIME-Version: 1.0
+Content-Type: multipart/related;
+ boundary="$boundary"
+
+This is a multi-part message in MIME format.
+--$boundary
+Content-Type: text/html;charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+<%BODY%>
+--$boundary
+$webcom_logo
+--$boundary--
+HEADER
+
+	my $global_height_px = 200;
+
+	my $tf = DateTime->now()->subtract( days => 32 );
+	my $tf_str = $tf->strftime('%Y-%m-%d');
+	my $tf_str_sk = $tf->strftime('%d. %m. %Y');
+	my $tt = DateTime->now()->subtract( days => 1 );
+	my $tt_str = $tt->strftime('%Y-%m-%d');
+	my $tt_str_sk = $tt->strftime('%d. %m. %Y');
+
+# telo statistik
+ my $doc = <<"BODY";
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=windows-1250" />
+  </head>
+  <body>
+  	<style>
+			body { font-family: Arial, Verdana; }
+  	
+  		h1 {
+  			color: #808285;
+  			font-family: Arial, Verdana;
+  		}
+  		
+      .days {
+      	height: ${global_height_px}px;
+      	vertical-align: bottom;
+      	background-color: #cfcfcf;
+      	padding-top: 15px;
+      }
+
+      .days div {
+      	width: 100%;
+      	vertical-align: top;
+      	text-align: center;
+      	background-color: #f00;
+      	font-size: 0px;
+      }
+
+      .days .infoonly {
+      	color: #000;
+      	background: transparent;
+      	font-size: 9px;
+      }
+
+      .dayinfo {
+      	font-size: 9px;
+      	background: #D1D1D1;
+      }
+
+      td, th { text-align: right; font-size: 12px; }
+
+      .info-domain { font-size: 18px; }
+      .term { font-size: 14px; font-weight: normal; }
+
+      .domain-header { color: #555555; text-align: left; font-size: 15px; }
+
+      .odd { background: #e1e1e1; }
+      .even { background: #efefef; }
+
+      .others td {
+      	background: #F7F7F7;
+      	border-bottom: 1px solid #000;
+      	font-size: 9px;
+      }
+
+      #definitions h2 {
+      	font-size: 14px;
+      }
+
+      #definitions p {
+      	font-size: 10px;
+      }
+
+			.first { color: #646464; }
+      .others .first { color: #646464; font-size: 12px; }
+  	</style>
+
+  	<h1>
+  		<img src="cid:part1.webcom.logo\@webcom.sk" alt="webcom logo" border="0" /><br /><br />
+  		<span class="info-domain"><%MAIN-HEADER%></span><br />
+  		<span class="term"><%TIME-HEADER%></span><br />
+  		<span class="term"><%EMAIL-DESCRIPTION%></span>
+  	</h1>
+  	
+		<%summary%>
+		<%summaryw%>
+  </body>
+</html>
+BODY
+
+
+	$doc =~ s|<%MAIN-HEADER%>|$TEXTS{$env{lng}}{main_header}|g;
+	$doc =~ s|<%TIME-HEADER%>|$TEXTS{$env{lng}}{time_description}|g;
+	$doc =~ s|<%EMAIL-DESCRIPTION%>|$TEXTS{$env{lng}}{main_description}|g;
+	$doc =~ s|<%time-from%>|$tf_str_sk|g;
+	$doc =~ s|<%time-to%>|$tt_str_sk|g;
+	$doc =~ s|<%domain-name%>|$tom::Hm|g;
+#----------------------------------------------------------------------------------------
+	my $summary = <<"SUMMARY";
+	<style>
+		<#STYLES#>
+	</style>
+
+	<table>
+		<tr>
+			<th colspan="31" class="domain-header">| By Day</th>
+		</tr>
+
+		<tr>
+			<#DAYCOLS#>
+		</tr>
+
+		<tr>
+			<#DAYNUMS#>
+		</tr>
+
+	</table>
+SUMMARY
+
+	my $sql = "
+	select
+		substring(reqdatetime, 1, 10) as datum,
+		(sum(visits_all*load_req) / sum(visits_all)) as average_rqs
+
+	from
+		TOM.a110_weblog_day
+
+	where
+		reqdatetime between '$tf_str' and '$tt_str' and
+		domain_sub=''
+
+	group by
+		substring(reqdatetime, 1, 10)
+
+	order by
+		substring(reqdatetime, 1, 10) asc
+	";
+	my %db = TOM::Database::SQL::execute( $sql, 'db_h' => 'stats' );
+	my %days; my $max;
+	while ( my %row = $db{'sth'}->fetchhash )
+	{
+		$days{$row{'datum'}} = $row{'average_rqs'};
+		$max = $row{'average_rqs'} if $max<$row{'average_rqs'};
+	}
+	$max += 0.5;
+	my $max_perc = $max/100;
+
+	my $nt = $tf; my $nt_str = $nt->strftime('%Y-%m-%d');
+	main::_log('Doing cycle '.$nt_str."; Max: $max; Max_perc: $max_perc;");
+	my $style; my $daycols; my $daynums;
+	while ( $nt_str ne $tt_str )
+	{
+		my $perc = $days{$nt_str}/($max/100);
+		my $height = int($perc*2);
+		my $dayinfo = $nt->strftime("\%d\n\%m\n\%Y");
+		main::_log("$nt_str: $days{$nt_str} ::: $perc ::: $height");
+		$style .= ".perform-$nt_str { height: ".$height."px; }\n";
+		$daycols .= "<td class=\"days\"><div class=\"infoonly\">".(int($days{$nt_str}*100)/100)."</div><div class=\"perform-$nt_str\"></div></td>\n";
+		$daynums .= "<td class=\"dayinfo\">$dayinfo</td>\n";
+
+		$nt->add( days => 1 );
+		$nt_str = $nt->strftime('%Y-%m-%d');
+	}
+
+	$summary =~ s|<#STYLES#>|$style|g;
+	$summary =~ s|<#DAYCOLS#>|$daycols|g;
+	$summary =~ s|<#DAYNUMS#>|$daynums|g;
+
+	$doc =~ s|<%summary%>|$summary|;
+
+#----------------------------------------------------------------------------------------
+	my $summaryw = <<"SUMMARY";
+	<style>
+		<#STYLES#>
+	</style>
+
+	<table>
+		<tr>
+			<th colspan="31" class="domain-header">| By Week</th>
+		</tr>
+
+		<tr>
+			<#DAYCOLS#>
+		</tr>
+
+		<tr>
+			<#DAYNUMS#>
+		</tr>
+
+	</table>
+SUMMARY
+
+	my $wf = DateTime->now()->subtract( days => 7*25 );
+	my $wf_str = $wf->strftime('%Y-%V');
+	my $wt = DateTime->now()->subtract( days => 1 );
+	my $wt_str = $wt->strftime('%Y-%V');
+
+	my $sql = "
+	select
+		date_format(reqdatetime, '\%Y-\%v') as datum,
+		(sum(visits_all*load_req) / sum(visits_all)) as average_rqs
+
+	from
+		TOM.a110_weblog_day
+
+	where
+		date_format(reqdatetime, '\%Y-\%v') between '$wf_str' and '$wt_str' and
+		domain_sub=''
+
+	group by
+		date_format(reqdatetime, '\%Y-\%v')
+
+	order by
+		date_format(reqdatetime, '\%Y-\%v') asc
+	";
+	my %db = TOM::Database::SQL::execute( $sql, 'db_h' => 'stats' );
+	my %days; my $max;
+	main::_log("Week; ");
+	while ( my %row = $db{'sth'}->fetchhash )
+	{
+		next if $wt_str eq $row{'datum'};
+		main::_log("Week: ".$row{'datum'}." ".$row{'average_rqs'});
+		$days{$row{'datum'}} = $row{'average_rqs'};
+		$max = $row{'average_rqs'} if $max<$row{'average_rqs'};
+	}
+	$max += 0.5;
+	my $max_perc = $max/100;
+
+	my $nw = $wf; my $nw_str = $nw->strftime('%Y-%V');
+	main::_log('Doing cycle '.$nt_str."; Max: $max; Max_perc: $max_perc;");
+	my $style; my $daycols; my $daynums;
+	while ( $nw_str ne $wt_str )
+	{
+		my $perc = $days{$nw_str}/($max/100);
+		my $height = int($perc*2);
+		my $dayinfo = $nw->strftime("\%V\n\%Y");
+		main::_log("$nw_str: $days{$nw_str} ::: $perc ::: $height");
+		$style .= ".perform-$nw_str { height: ".$height."px; }\n";
+		$daycols .= "<td class=\"days\"><div class=\"infoonly\">".(int($days{$nw_str}*100)/100)."</div><div class=\"perform-$nw_str\"></div></td>\n";
+		$daynums .= "<td class=\"dayinfo\">$dayinfo</td>\n";
+
+		$nw->add( days => 7 );
+		$nw_str = $nw->strftime('%Y-%V');
+	}
+
+	$summaryw =~ s|<#STYLES#>|$style|g;
+	$summaryw =~ s|<#DAYCOLS#>|$daycols|g;
+	$summaryw =~ s|<#DAYNUMS#>|$daynums|g;
+
+	$doc =~ s|<%summaryw%>|$summaryw|;
+
+	# mazem vsetky gatewaye - skoncilo sa generovanie
+	$doc =~ s|<%.*?%>||g;
+
+#----------------------------------------------------------------------------------------
+
+
+ $email=~s|<%BODY%>|$doc|;
+ $email=~s|<%SUBJECT%>|$TEXTS{$env{lng}}{email_subject}|;
+ #$email=~s|<%FROM%>|"$CRON::core_uname_n($tom::H)" <tom\@webcom.sk>|;
+ #$email=~s|<%FROM%>|"Cyclone 3 Stats" <tom\@webcom.sk>|;
+ #use Utils::datetime;
+ #$email=~s|<%DATE%>|$Utils::datetime::DAYS{en}[$cron::Twday], $cron::Tmday $Utils::datetime::MONTHS{en}[$cron::Tmom-1] $cron::Fyear $cron::Fhour:$cron::Fmin:$cron::Fsec +-200|g;
+
+
+ my %env0;
+ foreach (split(';',$env{to_email})){$env0{$_}++;}
+ $env{to_email}="";foreach (sort keys %env0){$env{to_email}.=$_.";" if $_}$env{to_email}=~s|;$||;
+ $env{to_email_parse}=$env{to_email};$env{to_email_parse}=~s|;|>,<|g;$env{to_email_parse}="<".$env{to_email_parse}.">";
+ $email=~s|<%TO%>|$env{to_email_parse}|g;
+	#print $email;
+
+	if
+	( 
+		# sendtime='$main::time_current'
+		# priority=0
+		# from_name='CRON'
+		# from_email='TOM\@$TOM::hostname'
+		# from_host='$tom::H'
+		# from_service='a110' a400 a300
+		# to_name = ''
+
+	TOM::Net::email::send(
+		'host' => 'webcom.sk',
+		'to' => $env{'to_email'},
+		'body' => $email
+	)
+
+
+	)
+	{
+		main::_log(" ok, email sended");
+	}
+	else
+	{
+		main::_log(" :((, email not sended");
+	}
+ 
+ return 1}
+
+1;
