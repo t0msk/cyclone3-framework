@@ -33,6 +33,7 @@ sub execute
 		WHERE
 			domain='$tom::Hm' AND
 			domain_sub='$tom::H' AND
+			url LIKE '$tom::H_www%' AND
 			weight=0
 		ORDER BY requests DESC
 		LIMIT 1
@@ -48,25 +49,7 @@ sub execute
 	
 	my $X = XML::Generator->new(':pretty');
 	
-=head1
-	print $X->urlset
-	(
-		{
-			'xmlns' => "http://www.google.com/schemas/sitemap/0.84"
-		},
-		$X->bar
-		(
-			{
-				baz => 3 
-			},
-			$X->bam()
-		),
-		$X->bar
-		(
-			"Hey there, world"
-		)
-	);
-=cut
+	
 	my $file=$tom::P.'/!www/sitemap.xml';
 	main::_log("writing to file $file");
 	open(ZIP,'>'.$file) || die "$!";
@@ -82,6 +65,7 @@ sub execute
 			domain='$tom::Hm' AND
 			domain_sub='$tom::H' AND
 			time_use>=$from AND
+			url LIKE '$tom::H_www%' AND
 			requests>=$weight_full/1000
 		ORDER BY requests DESC
 		LIMIT 50000
