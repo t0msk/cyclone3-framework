@@ -18,6 +18,7 @@ sub execute
 
 	# NASTAVENIA
 	$main::FORM{sent} = 1;
+
 	# jazyk a xsgn
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
 	my $xlng_file = 1;
@@ -25,10 +26,10 @@ sub execute
 	Tomahawk::XLNGtoXSGN() if $xlng_file; # insert XLNG do XSGN
 
 	# databazy
-	$env{db_130}=Tomahawk::Getmdlvar("130","db") unless $env{db_130};
+	$env{db_130}=Tomahawk::Getmdlvar('130','db') unless $env{db_130};
 
 	# from email
-	$env{db_from_email} = "info\@webcom.sk" unless $env{db_from_email};
+	$env{db_from_email} = 'info@webcom.sk' unless $env{db_from_email};
 
 	# kodovanie
 	if (!$env{encoding}) { $env{encoding} = "UTF-8"; $env{charset} = "UTF-8" }
@@ -46,15 +47,12 @@ sub execute
 	{
 		push @emails, 'gregor@webcom.sk';
 		push @emails, 'nemsak@webcom.sk';
-
-		# Only for testing
-		#push @emails, "gregor\@webcom.sk;gregson\@visitors.sk;xgregor\@fi.muni.cz";
-		#push @emails, "<gregor\@webcom.sk>"; 
-		#push @emails, "gregson\@visitors.sk";
-		#push @emails, "xgregor\@fi.muni.cz";
-
 		$env{domain} = "";
 	}
+
+	push @emails, split ';', $env{'emails_selected'} if $env{'emails_selected'};
+
+	push @emails, split ';', $env{'emails_test'} if $env{'emails_test'};
 
 	# EMAIL
 	$XSGN{EMAIL} = <<"HEADER";
@@ -338,48 +336,15 @@ HEADERS
 				$XSGN{NULL} = $converter->convert($XSGN{NULL});
 			}
 
-			#TOM::Net::email::send
-			#(
-			#	from => $env{db_from_email},
-			#	to => $tmpemail{db},
-			#	to_name => '',
-			#	body => $XSGN{NULL}
-			#)
-
-			$XSGN{NULL}=~s|'|\'|g;
+			#$XSGN{NULL}=~s|'|\'|g;
 
 			main::_log('Pokus o zapis do db');
 
-			my $a130_send = "
-			INSERT INTO TOM.a130_send
+			TOM::Net::email::send
 			(
-				sendtime,
-				from_name,
-				from_email,
-				from_host,
-				from_service,
-				to_name,
-				to_email,
-				body
-			)
-			VALUES
-			(
-				'$main::time_current',
-				'TOM3',
-				'$env{db_from_email}',
-				'$tom::H',
-				'TOM3',
-				'',
-				'$tmpemail{db}',
-				'$XSGN{NULL}'
-			)
-		";
-
-		main::_log( $a130_send );
-			my $a130_send_conn = $main::DB{main}->Query( $a130_send );
-
-			main::_log( 'Pocet afectovanych riadkov: '.$a130_send_conn->affectedrows );
-
+				'to' => $tmpemail{'db'},
+				'body' => $XSGN{'NULL'}
+			);
 		}
 #=cut
 		$XSGN{TMP} = $XSGN{SENT};
