@@ -82,10 +82,19 @@ sub execute
 				next;
 			}
 			
-			if (not $smtp->recipient(@rcpt))
+			my $rcpt_count;
+			foreach my $rcpt_mail (@rcpt)
 			{
-				main::_log("can't send, not accepted RCPT: $env0{to_email} ".$smtp->status,1);
-				$main::DBH->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
+				if (not $smtp->recipient($rcpt_mail))
+				{
+					main::_log("not accepted RCPT: '$rcpt_mail'".$smtp->status,1);
+					next;
+				}
+				$rcpt_count++;
+			}
+			if (!$rcpt_count)
+			{
+				$main::DBH->Query("UPDATE TOM.a130_send SET priority=priority-10 WHERE ID='$env0{ID}' LIMIT 1");
 				next;
 			}
 			
