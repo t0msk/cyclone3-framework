@@ -14,6 +14,8 @@
 			<ID><%editor_ID%></ID>
 		</editor>
 	</USRM>
+	<my_domain_url><$tom::H_www></my_domain_url>
+	<domain_url><$tom::Hm_www></domain_url>
 	<lng>
 		<item primary="1"><![CDATA[<%lng%>]]></item>
 		<#LNG#>
