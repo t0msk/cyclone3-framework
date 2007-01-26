@@ -32,8 +32,6 @@ use vars qw/
 	/;
 
 # C kniznice /* musia byt tu, aby sa dali pouzivat -> musia byt zavedene pri kompilacii */
-use enc;
-use enc2;
 use enc3;
 use iconv;
 
