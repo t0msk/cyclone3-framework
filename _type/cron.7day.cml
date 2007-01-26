@@ -8,3 +8,10 @@
 		<VAR id="type" value="obsolete" />
 		<VAR id="to_email" value="<$TOM::contact{'DEV_list_farm'}>" />
 </MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_email_performance" />
+	<VAR id="-version" value="31day" />
+</MODULE>

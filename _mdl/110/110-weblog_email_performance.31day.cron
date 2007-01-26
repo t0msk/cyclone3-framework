@@ -9,22 +9,21 @@ sub execute
 {
 	alarm(3600);
 	my %env=@_;
-
- #if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
-
- my $date = TOM::Utils::datetime::mail_current();
-
- $env{to_email} = $TOM::contact{'stats'}.";".$TOM::contact{'TOM'};
-
- $env{to_email} = "gregor\@webcom.sk;fordinal\@webcom.sk";
- #$env{to_email} = 'gregor@webcom.sk';
+	
+	my $date = TOM::Utils::datetime::mail_current();
+	
+	$env{to_email} =
+		$TOM::contact{'TOM'}.';'.
+		$TOM::contact{'TOM_farm'}.';'.
+		$TOM::contact{'TECH_farm'}.';'.
+		$TOM::contact{'WEB_farm'}.';'.
+		$TOM::contact{'DEV_farm'};
 
 $env{lng} = "sk" unless $env{lng};
 my %TEXTS=
  (
  	'sk' =>
  	{
-		#email_subject => "[STAT][a110/weblog] last 31days bilance",
 		email_subject => "CYCLONE STATS: Farm Performance / 31 days",
 		main_header => "Štatistiky výkonu farmy",
 		time_description => "za časové obdobie <\%time-from%> - <\%time-to%>",
