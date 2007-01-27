@@ -373,7 +373,11 @@ sub module_pub
 	if ($TOM::ERROR_module_ticket)
 	{
 		main::_log("Chcem vlozit ticket s errorom modulu $env{-MODULE}");
-
+		
+		# nebudem logovat informacie o tom ako zapisujem error
+		local $TOM::DEBUG_log_file=-1;
+		local $main::debug=0;
+		
 		# Zistim si emaily
 		my $email_addr;
 		foreach ("TOM",@TOM::ERROR_email_send)
@@ -520,6 +524,11 @@ sub module_cron
 	if ($TOM::ERROR_module_ticket)
 	{
 		main::_log("Chcem vlozit ticket s errorom cronu $env{-MODULE}");
+		
+		# nebudem logovat informacie o tom ako zapisujem error
+		local $TOM::DEBUG_log_file=-1;
+		local $main::debug=0;
+		
 		# Zistim si emaily
 		my $email_addr;
 		foreach ("TOM",@TOM::ERROR_email_send)
