@@ -18,6 +18,6 @@
 		<VAR id="db_ID" value="<$main::FORM{ID}>" />
 		<VAR id="db_where" value="a400.lng LIKE '<$main::FORM{lng}>'" />
 		<VAR id="db_starttime" value="9144845113" />
-		<VAR id="db_endtime" value="1" />
+		<VAR id="db_endtime" value="0" />
 		<#VAR id="db_active" value="%" />
 </MODULE>
