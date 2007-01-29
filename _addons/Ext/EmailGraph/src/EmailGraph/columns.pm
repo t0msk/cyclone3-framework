@@ -36,7 +36,7 @@ sub addColumn
 {
 	my $self = shift;
 
-	my $title = $_[0]; my $value = int($_[1]); my $even = $_[2] || 0;
+	my $title = $_[0]; my $value = $_[1]; my $even = $_[2] || 0;
 	return 0 if !$title || $value<0;
 
 	main::_log( "Pushing: \"$title\" => \"$value\" (even: $even)" );
