@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+use Mysql;
+BEGIN {require "/www/TOM/.bin/tom3-init";$main::debug=0;}
+
+use TOM::Database::connect;
+use TOM::Database::SQL;
+
+%form=
+(
+ '-v'		=>	"verbosity",
+ '-vv, --v'	=>	"verbosity 2, --v=2",
+ '--db_h'	=>	"use type of database (default main)",
+ '--domain'	=>	"use name of domain",
+ '--name'	=>	"name of extension or application",
+);
+if (($FORM{'h'})||($FORM{'help'})||(!$FORM{'name'})){&help();}
+
+if ($FORM{'v'})
+{
+	$main::debug=1;
+}
+
+$FORM{'db_h'}='main' unless $FORM{'db_h'};
+
+#################################################################################################
+
+$TOM::DB{'main'}{'name'}="TOM";
+TOM::Database::connect::multi($FORM{'db_h'}) || die "can't connect";
+
+print "connected '$FORM{'db_h'}' database handler\n";
+
+
+if ($FORM{'domain'})
+{
+	require $tom::P."/local.conf";
+}
+
+TOM::Database::SQL::file::install(
+	$FORM{'name'},
+	'db_h'=>$FORM{'db_h'},
+	'db_name'=>$TOM::DB{$FORM{'db_h'}}{'name'},
+	'-compare' => 1
+);
+
+
+
+&exit();
