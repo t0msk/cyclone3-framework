@@ -102,6 +102,12 @@ use Utils::datetime;
 use conv;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Digest::MD5  qw(md5 md5_hex md5_base64);
+use Cache::Memcached;
+
+my  $memcache = new Cache::Memcached {
+	'servers' => [ "localhost:11211"  ],
+ 	'debug' => 0,
+};
 
 #use warnings;
 use vars qw/
@@ -399,19 +405,41 @@ sub module
 		
 		# NAZOV PRE TYP CACHE V KONFIGURAKU
 		$mdl_C{T_CACHE}=$mdl_C{-category}."-".$mdl_C{-name}."-".$mdl_C{-cache_id};
-		
-		
-		my $db0=$main::DB{sys}->Query("
-			SELECT *
-			FROM TOM.a150_cache
-			WHERE
-					domain='$tom::Hm'
-					AND domain_sub='$cache_domain'
-					AND engine='pub'
-					AND Cid_md5='$mdl_C{-md5}'
-			ORDER BY ID DESC
-			LIMIT 1
-		");
+
+		main::_log("memcached: checking");
+		my $cache=$memcache->get("cache:".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5});
+		if ($cache)
+		{
+		 main::_log("memcached: hit");
+		}
+		else
+		{
+			main::_log("memcached: miss.");
+			my $db0=$main::DB{sys}->Query("
+				SELECT *
+				FROM TOM.a150_cache
+				WHERE
+						domain='$tom::Hm'
+						AND domain_sub='$cache_domain'
+						AND engine='pub'
+						AND Cid_md5='$mdl_C{-md5}'
+				ORDER BY ID DESC
+				LIMIT 1
+			");
+			my %db0_line=$db0->fetchhash();
+			if (%db0_line)
+			{
+				$cache = \%db0_line;
+				if ($memcache->set("cache:".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5},$cache))
+				{
+					main::_log("memcached: New cache set");
+				}
+				else
+				{
+					main::_log("memcached: Cannot set cache.");
+				}
+			}
+		}
 		# AND time_to>=$main::time_current
 		#
 		# mal som tu este tuto podmienku, ale v podstate sposobila to,
@@ -423,14 +451,14 @@ sub module
 		# vykonovy rozdiel sa da zmerat takto
 		# SELECT reqtype, AVG(load_proc), AVG(load_req) FROM `a110_weblog_rqs` GROUP BY reqtype
 		#
-		if (my %db0_line=$db0->fetchhash())
+		if ($cache)
 		{
-			$mdl_C{N_IDcache}=$db0_line{ID};
-			$mdl_C{-cache_from}=$db0_line{time_from};
-			$mdl_C{-cache_duration}=$db0_line{time_duration};
-			$file_data=$db0_line{body};
-			
-			$return_code=$db0_line{return_code};
+			$mdl_C{N_IDcache}=$cache->{ID};
+			$mdl_C{-cache_from}=$cache->{time_from};
+			$mdl_C{-cache_duration}=$cache->{time_duration};
+			$file_data=$cache->{body};
+
+			$return_code=$cache->{return_code};
 			$return_code=1 if $return_code<1; # osetrenie pre stare caches
 		}
 		else
