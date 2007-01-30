@@ -139,7 +139,7 @@ sub convert
 	{
 		my $converter=new net::sf::jooreports::openoffice::converter::OpenOfficeDocumentConverter($connection);
 		# conversion
-		$converter->convert($file1, $file2);
+		$converter->convert($file1_h, $file2_h);
 	};
 	if ($@)
 	{
