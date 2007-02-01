@@ -741,60 +741,93 @@ sub module
 			# if ((defined $mdl_C{-cache_id})&&($TOM::CACHE))
 			if ((exists $mdl_C{-cache_id})&&($TOM::CACHE))
 			{
-				main::_log("sqlcache: saving '$tom::Hm', '$cache_domain', 'pub', '$mdl_C{-category}', '$mdl_C{-name}', '$mdl_C{-cache_id}', '$mdl_C{-md5}', '$mdl_C{-cache_id_sub}', '$mdl_env{dsgn}', '$mdl_env{lng}', '$main::time_current', '".$CACHE{$mdl_C{T_CACHE}}{-cache_time}."'");  #
-				
-				$Tomahawk::module::XSGN{TMP}=~s|'|\\'|g;
-				
 				my $ID_config=$CACHE{$mdl_C{T_CACHE}}{'-ID_config'};
-				
-				my $sql="
-				REPLACE INTO $TOM::DB_name_TOM.a150_cache
-				(
-					ID_config,
-					domain,
-					domain_sub,
-					engine,
-					Capp,
-					Cmodule,
-					Cid,
-					Cid_md5,
-					C_id_sub,
-					C_xsgn,
-					C_xlng,
-					body,
-					time_from,
-					time_duration,
-					time_to,
-					return_code
-					)
-				VALUES
-				(
-					'$ID_config',
-					'$tom::Hm',
-					'$cache_domain',
-					'pub',
-					'$mdl_C{-category}',
-					'$mdl_C{-name}',
-					'$mdl_C{-cache_id}',
-					'$mdl_C{-md5}',
-					'$mdl_C{-cache_id_sub}',
-					'$mdl_env{dsgn}',
-					'$mdl_env{lng}',
-					'".$Tomahawk::module::XSGN{TMP}."',
-					'$main::time_current',
-					'$CACHE{$mdl_C{T_CACHE}}{-cache_time}',
-					'".($main::time_current+$CACHE{$mdl_C{T_CACHE}}{-cache_time})."',
-					'$return_code'
-					)
-				";
-				#main::_log("s: $sql");
-				if (my $null=$main::DB{sys}->Query($sql))
+				my $memcached;
+				if ($TOM::CACHE_memcached)
 				{
-					main::_log("ok");
+					# trying to save new cache to memcached
+					my $cache={
+						'ID_config' => $ID_config,
+						'domain' => $tom::Hm,
+						'domain_sub' => $cache_domain,
+						'engine' => "pub",
+						'Capp' => $mdl_C{'-category'},
+						'Cmodule' => $mdl_C{'-name'},
+						'Cid' => $mdl_C{'-cache_id'},
+						'Cid_md5' => $mdl_C{'-md5'},
+						'C_id_sub' => $mdl_C{'-cache_id_sub'},
+						'C_xsgn' => $mdl_env{'dsgn'},
+						'C_xlng' => $mdl_env{'lng'},
+						'body' => $Tomahawk::module::XSGN{'TMP'},
+						'time_from' => $main::time_current,
+						'time_duration' => $CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'},
+						'time_to' => ($main::time_current+$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}),
+						'return_code' => $return_code
+					};
+					
+					if ($memcache->set("cache:".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5},$cache))
+					{
+						main::_log("memcached: saved record");
+						$memcached=1;
+					}
+					else {main::_log("memcached: can't save record");}
 				}
-				else
+				
+				if (!$memcached)
 				{
-					main::_log("bad");
+					main::_log("sqlcache: saving '$tom::Hm', '$cache_domain', 'pub', '$mdl_C{-category}', '$mdl_C{-name}', '$mdl_C{-cache_id}', '$mdl_C{-md5}', '$mdl_C{-cache_id_sub}', '$mdl_env{dsgn}', '$mdl_env{lng}', '$main::time_current', '".$CACHE{$mdl_C{T_CACHE}}{-cache_time}."'");  #
+					
+					$Tomahawk::module::XSGN{TMP}=~s|'|\\'|g;
+					
+					my $sql="
+					REPLACE INTO $TOM::DB_name_TOM.a150_cache
+					(
+						ID_config,
+						domain,
+						domain_sub,
+						engine,
+						Capp,
+						Cmodule,
+						Cid,
+						Cid_md5,
+						C_id_sub,
+						C_xsgn,
+						C_xlng,
+						body,
+						time_from,
+						time_duration,
+						time_to,
+						return_code
+						)
+					VALUES
+					(
+						'$ID_config',
+						'$tom::Hm',
+						'$cache_domain',
+						'pub',
+						'$mdl_C{-category}',
+						'$mdl_C{-name}',
+						'$mdl_C{-cache_id}',
+						'$mdl_C{-md5}',
+						'$mdl_C{-cache_id_sub}',
+						'$mdl_env{dsgn}',
+						'$mdl_env{lng}',
+						'".$Tomahawk::module::XSGN{TMP}."',
+						'$main::time_current',
+						'$CACHE{$mdl_C{T_CACHE}}{-cache_time}',
+						'".($main::time_current+$CACHE{$mdl_C{T_CACHE}}{-cache_time})."',
+						'$return_code'
+						)
+					";
+					#main::_log("s: $sql");
+					if (my $null=$main::DB{sys}->Query($sql))
+					{
+						main::_log("ok");
+					}
+					else
+					{
+						main::_log("bad");
+					}
 				}
 				
 				$main::DB{sys}->Query("
