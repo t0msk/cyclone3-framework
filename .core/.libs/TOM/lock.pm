@@ -47,6 +47,22 @@ sub new
 	return bless $self, $class;
 }
 
+
+sub get_pid
+{
+	my $name=shift;
+	my $filename=get_pidfile($name);
+	open(PID,'<'.$filename);
+	return <PID>;
+}
+
+sub get_pidfile
+{
+	my $name=shift;
+	return $TOM::P."/_temp/".Digest::MD5::md5_hex($name).".pid";
+}
+
+
 sub close
 {
 	my $self=shift;
