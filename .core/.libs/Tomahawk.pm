@@ -104,9 +104,14 @@ use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Digest::MD5  qw(md5 md5_hex md5_base64);
 use Cache::Memcached;
 
-my  $memcache = new Cache::Memcached {
-	'servers' => [ "localhost:11211"  ],
- 	'debug' => 0,
+our  $memcache;
+if ($TOM::CACHE_memcached)
+{
+	$memcache = new Cache::Memcached
+	{
+		'servers' => $TOM::CACHE_memcached_servers,
+		'debug' => 0,
+	}
 };
 
 #use warnings;
@@ -405,16 +410,22 @@ sub module
 		
 		# NAZOV PRE TYP CACHE V KONFIGURAKU
 		$mdl_C{T_CACHE}=$mdl_C{-category}."-".$mdl_C{-name}."-".$mdl_C{-cache_id};
-
-		main::_log("memcached: checking");
-		my $cache=$memcache->get("cache:".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5});
+		
+		my $cache;
+		
+		if ($TOM::CACHE_memcached)
+		{
+			main::_log("memcached: reading");
+			$cache=$memcache->get("cache:".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5});
+		}
+		
 		if ($cache)
 		{
-		 main::_log("memcached: hit");
+			main::_log("memcached: readed");
 		}
 		else
 		{
-			main::_log("memcached: miss.");
+			main::_log("sqlcache: reading");
 			my $db0=$main::DB{sys}->Query("
 				SELECT *
 				FROM TOM.a150_cache
@@ -430,13 +441,17 @@ sub module
 			if (%db0_line)
 			{
 				$cache = \%db0_line;
-				if ($memcache->set("cache:".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5},$cache))
+				
+				if ($TOM::CACHE_memcached)
 				{
-					main::_log("memcached: New cache set");
-				}
-				else
-				{
-					main::_log("memcached: Cannot set cache.");
+					if ($memcache->set("cache:".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5},$cache))
+					{
+						main::_log("memcached: saved record from db");
+					}
+					else
+					{
+						main::_log("memcached: can't save record from db");
+					}
 				}
 			}
 		}
@@ -487,7 +502,7 @@ sub module
 			$CACHE{$mdl_C{T_CACHE}}{-cache_time}=$mdl_C{-cache_time};
 			
 			# TERAZ SPRAVIM INSERT DO DATABAZY   
-			main::_log("insert $mdl_C{T_CACHE} s -cache_time $mdl_C{-cache_time}",0,"pub.cache");
+			main::_log("sqlcache: insert config $mdl_C{T_CACHE} s -cache_time $mdl_C{-cache_time}",0,"pub.cache");
 			
 			$main::DB{sys}->Query("
 				INSERT INTO TOM.a150_config
@@ -528,7 +543,7 @@ sub module
 		
 		
 		
-		main::_log("cache md5:$mdl_C{-md5} old:$mdl_C{-cache_old} duration:$mdl_C{-cache_duration} from:$mdl_C{-cache_from} to:$mdl_C{-cache_to}");
+		main::_log("cache info md5:$mdl_C{-md5} old:$mdl_C{-cache_old} duration:$mdl_C{-cache_duration} from:$mdl_C{-cache_from} to:$mdl_C{-cache_to}");
 		
 		if(
 			(
@@ -559,7 +574,7 @@ sub module
 		)
 		# TAK TUTO CACHE POUZIJEM
 		{
-			main::_log("access to cache domain:$cache_domain from:$mdl_C{-cache_from} old:$mdl_C{-cache_old} ".
+			main::_log("using cache domain:$cache_domain from:$mdl_C{-cache_from} old:$mdl_C{-cache_old} ".
 				"max:$CACHE{$mdl_C{T_CACHE}}{-cache_time} ".
 				"remain:".($CACHE{$mdl_C{T_CACHE}}{-cache_time}-$mdl_C{-cache_old}));
 				
@@ -726,7 +741,7 @@ sub module
 			# if ((defined $mdl_C{-cache_id})&&($TOM::CACHE))
 			if ((exists $mdl_C{-cache_id})&&($TOM::CACHE))
 			{
-				main::_log("caching '$tom::Hm', '$cache_domain', 'pub', '$mdl_C{-category}', '$mdl_C{-name}', '$mdl_C{-cache_id}', '$mdl_C{-md5}', '$mdl_C{-cache_id_sub}', '$mdl_env{dsgn}', '$mdl_env{lng}', '$main::time_current', '".$CACHE{$mdl_C{T_CACHE}}{-cache_time}."'");  #
+				main::_log("sqlcache: saving '$tom::Hm', '$cache_domain', 'pub', '$mdl_C{-category}', '$mdl_C{-name}', '$mdl_C{-cache_id}', '$mdl_C{-md5}', '$mdl_C{-cache_id_sub}', '$mdl_env{dsgn}', '$mdl_env{lng}', '$main::time_current', '".$CACHE{$mdl_C{T_CACHE}}{-cache_time}."'");  #
 				
 				$Tomahawk::module::XSGN{TMP}=~s|'|\\'|g;
 				
@@ -792,6 +807,7 @@ sub module
 							AND Cmodule='$mdl_C{-name}'
 							AND Cid='$mdl_C{-cache_id}'
 					LIMIT 1");
+				
 			}
 			
 			undef &Tomahawk::module::execute;
