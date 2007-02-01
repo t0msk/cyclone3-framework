@@ -20,7 +20,7 @@ Zistim ci sa upgradol system
 use TOM::Utils::datetime;
 use TOM::Net::email;
 use MIME::Entity;
-
+use App::100;
 
 our $color_gray="#F2F2F2";
 our $color_red="#CD4545";
@@ -115,6 +115,7 @@ HEADER
 		main::_log("Cyclone3 has been upgraded r$revision->r$TOM::core_revision");
 		$body=~s|<%MESSAGE%>|Cyclone3 has been upgraded from r$revision to r$TOM::core_revision at $TOM::hostname|g;
 		
+		App::100::SQL::ircbot_msg_new("upgraded from r$revision to r$TOM::core_revision");
 		
 		# informaciu o upgrade farmy odoslem nasledovnym ludom:
 		# - zodpovednemu za cely Cyclone3
