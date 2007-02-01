@@ -155,4 +155,37 @@ sub ticket_close
 }
 
 
+=head2 ircbot_msg_new()
+
+Saves message into table a100_ircbot_msg and ircbot it sends when it is running
+
+Function return true or false
+
+=cut
+
+sub ircbot_msg_new
+{
+	my $message=shift;
+	my $t=track TOM::Debug(__PACKAGE__."::ircbot_msg_new()");
+	
+	$message=TOM::Database::SQL::escape($message);
+	
+	my $ID= App::020::SQL::functions::new(
+		'db_h' => "main",
+		'db_name' => "TOM",
+		'tb_name' => "a100_ircbot_msg",
+		'columns' =>
+			{
+				'message' => "'$message'",
+				'status' => "'Y'",
+			},
+			'-journalize' => 0
+		);
+	
+	return 0 unless $ID;
+	$t->close();
+	return 1;
+}
+
+
 1;

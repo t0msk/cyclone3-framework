@@ -1,0 +1,140 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+use Net::IRC;
+use Parallel::ForkManager;
+
+BEGIN {require "/www/TOM/.bin/tom3-init";}
+
+use TOM::Database::connect;
+
+%form=
+(
+	'-d'	=>	"start as deamon",
+	'-r'	=>	"restart service",
+	'-s'	=>	"stop the service",
+	'-v'	=>	"verbosity",
+);
+
+if (($FORM{h})||($FORM{help})){&help();}
+
+# basic commands
+
+if ($FORM{'d'})
+{
+	our $pm = new Parallel::ForkManager(1);
+	my $pid=$main::pm->start and do
+	{
+		main::_log("exiting");
+		&exit();
+	};
+	main::_log("started fork $pid");
+}
+
+if ($FORM{'r'})
+{
+	my $pid=TOM::lock::get_pid('ircbot');
+	main::_log("killing pid='$pid'");
+	kill 1,$pid;
+}
+
+if ($FORM{'s'})
+{
+	my $pid=TOM::lock::get_pid('ircbot');
+	main::_log("killing pid='$pid'");
+	kill 1,$pid;
+	&exit();
+}
+
+# locking this process
+
+our $lock=new TOM::lock("ircbot") || do
+{
+	main::_log("sorry, another ircbot is still running");
+	&exit();
+};
+
+# preparing to connect
+
+my $nickname='C3b_'.$TOM::hostname;
+	$nickname=~s|[\.]|_|g;
+
+main::_log("nickname='$nickname'");
+
+my $irc = new Net::IRC;
+
+my $conn = $irc->newconn
+(
+	Server   => 'irc.freenode.org',
+	Port     => '6667',
+	Nick     => $nickname,
+	Ircname  => "Cyclone3 bot from ".$TOM::hostname,
+	Username => $nickname
+);
+
+$conn->{channel} = '#cyclone3';
+
+$conn->add_handler('376', \&on_connect);
+
+# handlers
+
+sub on_connect
+{
+	my $conn = shift;
+	# when we connect, join our channel and greet it
+	main::_log("joining $conn->{channel}");
+	$conn->join($conn->{channel});
+	main::_log("greeting");
+	$conn->privmsg($conn->{channel}, 'Hello! I am Cyclone3 bot from '.$TOM::hostname.' server');
+	$conn->{connected} = 1;
+}
+
+# main processing
+
+$TOM::DB{'main'}{'name'}="TOM";
+
+# finding last message
+my $sql=qq{
+	SELECT
+		ID_entity
+	FROM
+		TOM.a100_ircbot_msg
+	WHERE
+		status='Y'
+	ORDER BY
+		ID_entity DESC
+	LIMIT 1
+};
+my %sth0=TOM::Database::SQL::execute($sql);
+my %db0_line=$sth0{'sth'}->fetchhash();
+my $ID_entity=$db0_line{'ID_entity'};
+
+$ID_entity=0 unless $ID_entity;
+
+while (1)
+{
+	$irc->do_one_loop();
+	sleep 5;
+	
+	next unless $conn->{connected};
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			TOM.a100_ircbot_msg
+		WHERE
+			status='Y'
+			AND ID_entity>$ID_entity
+		ORDER BY ID ASC
+		LIMIT 10
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("sending message='$db0_line{'message'}'");
+		$conn->privmsg($conn->{channel}, $db0_line{'message'});
+		$ID_entity=$db0_line{'ID_entity'};
+	}
+}
+
+&exit();
