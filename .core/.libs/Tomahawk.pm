@@ -412,11 +412,19 @@ sub module
 		$mdl_C{T_CACHE}=$mdl_C{-category}."-".$mdl_C{-name}."-".$mdl_C{-cache_id};
 		
 		my $cache;
-		
+		my $memcached;
 		if ($TOM::CACHE_memcached)
 		{
+			$memcached=$memcache->set("test",'1');
 			main::_log("memcached: reading");
-			$cache=$memcache->get("cache:".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5});
+			if ($memcached)
+			{
+				$cache=$memcache->get("cache:".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5});
+			}
+			else
+			{
+				main::_log("memcached: daemon is not running");
+			}
 		}
 		
 		if ($cache)
@@ -743,6 +751,7 @@ sub module
 			{
 				my $ID_config=$CACHE{$mdl_C{T_CACHE}}{'-ID_config'};
 				my $memcached;
+				
 				if ($TOM::CACHE_memcached)
 				{
 					# trying to save new cache to memcached
