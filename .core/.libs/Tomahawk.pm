@@ -104,6 +104,7 @@ use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Digest::MD5  qw(md5 md5_hex md5_base64);
 use Cache::Memcached;
 
+
 our  $memcache;
 if ($TOM::CACHE_memcached)
 {
@@ -113,6 +114,7 @@ if ($TOM::CACHE_memcached)
 		'debug' => 0,
 	}
 };
+
 
 #use warnings;
 use vars qw/
@@ -837,19 +839,19 @@ sub module
 					{
 						main::_log("bad");
 					}
+					
+					$main::DB{sys}->Query("
+						UPDATE TOM.a150_config
+						SET		time_use='$main::time_current'
+						WHERE	domain='$CACHE{$mdl_C{T_CACHE}}{-domain}'
+								AND domain_sub='$CACHE{$mdl_C{T_CACHE}}{-domain_sub}'
+								AND engine='pub'
+								AND Capp='$mdl_C{-category}'
+								AND Cmodule='$mdl_C{-name}'
+								AND Cid='$mdl_C{-cache_id}'
+						LIMIT 1
+					");
 				}
-				
-				$main::DB{sys}->Query("
-					UPDATE TOM.a150_config
-					SET		time_use='$main::time_current'
-					WHERE	domain='$CACHE{$mdl_C{T_CACHE}}{-domain}'
-							AND domain_sub='$CACHE{$mdl_C{T_CACHE}}{-domain_sub}'
-							AND engine='pub'
-							AND Capp='$mdl_C{-category}'
-							AND Cmodule='$mdl_C{-name}'
-							AND Cid='$mdl_C{-cache_id}'
-					LIMIT 1");
-				
 			}
 			
 			undef &Tomahawk::module::execute;
