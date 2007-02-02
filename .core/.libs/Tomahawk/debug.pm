@@ -71,7 +71,8 @@ sub cache_conf_opt_plus
 	#return 1;
 	# zapisujem debug data o cache len v pripade ze je optimalizacia velmi davno
 	
-	#return undef unless $TOM::DEBUG_cache;
+	return undef unless $TOM::DEBUG_cache;
+	return undef if $TOM::CACHE_memcached;
 	#return undef if (($tom::time_current-$Tomahawk::CACHE{$Tomahawk::mdl_C{T_CACHE}}{-opt_time})<$TOM::DEBUG_cache_old);
 	
 #	main::_log("cache_conf_opt_plus ID='$Tomahawk::mdl_C{N_IDcache}'");
