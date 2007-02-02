@@ -1,0 +1,234 @@
+#!/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use Encode;
+use encoding 'utf8';
+use utf8;
+use strict; # scrict code
+
+=head1 NAME
+
+100-ticket_email_list.0.cron
+
+=head1 DESCRIPTION
+
+Posiela zoznam poslednych 10 ticketov kaz
+
+=cut
+
+use TOM::Database::SQL;
+
+sub execute
+{
+	my %env=@_;
+	
+	if ($cron::P ne $CRON::P){$cron::ERR="WARN: this cron is only for global use!!!";return undef}
+	$env{'lng'} = 'en' unless $env{'lng'};
+
+	my %text = (
+		'sk' => {
+			'subject' => 'CYCLONE STATS: Najdolezitejsie Tickety / Tyzden',
+			
+			'main-title' => 'Štatistika ticketov',
+			'main-term' => 'za posledný týždeň',
+			'main-desc' => 'Táto štatistika zobrazuje posledných desať aktuálnych nevyriešených ticketov.',
+		},
+		'en' => {
+			'subject' => 'CYCLONE STATS: Most Important Unsolved Tickets',
+			
+			'main-title' => 'Ticket Statistics',
+			'main-term' => '&nbsp;',
+			'main-desc' => 'This statistics shows max <%number%> most relevant unsolved tickets where you are assigned person.
+It is ordered by count of events.
+',
+		},
+	);
+
+	my $number = 30;
+
+	my $maindoc = qq!
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+	</head>
+	<body>
+		<style>
+			body { font-family: Arial, Verdana; }
+			#page { width: 650px; }
+			/* Nadpis */
+			h1 { color: #808285; clear: left; }
+			.main-logo { float: left; margin: 0 15px 15px 0; }
+			.main-title { font-size: 0.55em; }
+			.main-term { font-size: 0.4em; font-weight: normal; }
+			.main-desc { color: #808285;
+									 margin: 10px 0 20px 0; font-size: 0.4em; font-weight: normal;
+									 border: 10px solid gray; border-width: 0 0 0 10px;
+									 padding: 0 0 0 10px;
+			}
+			.overview {
+				border: 1px dotted gray; border-width: 1px 1px 0 0;
+				font-size: 0.75em;
+				margin-bottom: 20px;
+			}
+			.overview td, .overview th {
+				border: 1px dotted gray; border-width: 0 0 1px 1px;
+				padding: 2px;
+			}
+			.overview th { background: #e5e5e5; color: gray; }
+  	</style>
+
+		<div id="page">
+			<h1>
+				<div class="main-title"><\%main-title%></div>
+				<div class="main-term"><\%main-term%></div>
+				<div class="main-desc"><\%main-desc%></div>
+			</h1>
+
+			<div id="content">
+
+				<#SUMMARY#>
+
+			</div>
+		</div>
+	</body>
+</html>
+	!;
+#<img class="main-logo" src="cid:part1.webcom.logo\@webcom.sk" alt="webcom logo" border="0" />
+
+	$maindoc =~ s|<%main-title%>|$text{$env{'lng'}}{'main-title'}|g;
+	$maindoc =~ s|<%main-term%>|$text{$env{'lng'}}{'main-term'}|g;
+	$maindoc =~ s|<%main-desc%>|$text{$env{'lng'}}{'main-desc'}|g;
+	$maindoc =~ s|<%number%>|$number|g;
+
+	my $sql = qq/
+	SELECT
+		t.emails
+	FROM
+		TOM.a100_ticket as t LEFT JOIN
+		TOM.a100_ticket_event as e ON
+			t.ID=e.ID_ticket
+	WHERE
+		t.status='Y' AND e.status='Y'
+	GROUP BY
+		t.ID
+	ORDER BY
+		count(e.ID) desc
+	/;
+	my %db = TOM::Database::SQL::execute( $sql, 'log' => 1);
+
+	if ( $db{'rows'} )
+	{
+		my %emaillist;
+		while ( my %row = $db{'sth'}->fetchhash )
+		{
+			my @emails = ( $row{'emails'} =~ /([^<>;]+\@[^<>;]+)/g );
+			foreach my $email ( @emails )
+			{
+				$emaillist{$email} = 1;
+			}
+		}
+		#%emaillist = ( 'matej.gregor@comsultia.com' );
+		foreach my $email ( keys %emaillist )
+		{
+			my $doc = $maindoc;
+			main::_log( $email );
+
+			my $table_xsgn = qq!
+			<table cellspacing="0" cellpadding="0" class="overview" />
+				<tr>
+					<th>ID</th>
+					<th>domain</th>
+					<th>name</th>
+					<th>count</th>
+					<th>last event</th>
+				</tr>
+				<#LINE#>
+			</table>
+			!;
+
+			my $row_xsgn = qq!
+				<tr>
+					<td>#<\%ID%></td>
+					<td><\%domain%></td>
+					<td><\%name%></td>
+					<td><\%count%></td>
+					<td><\%last_err%></td>
+				</tr>
+				<#LINE#>
+			!;
+
+			my $sql1 = qq/
+			SELECT
+				t.ID,
+				t.domain,
+				t.name,
+				count(e.ID) as count,
+				max(e.datetime_create) as last_err
+			FROM
+				TOM.a100_ticket as t LEFT JOIN
+				TOM.a100_ticket_event as e ON
+					t.ID=e.ID_ticket
+			WHERE
+				t.emails like '%$email%' AND
+				t.status='Y' AND e.status='Y'
+			GROUP BY
+				t.ID
+			ORDER BY
+				count(e.ID) desc
+			LIMIT
+				$number
+			/;
+			my %db1 = TOM::Database::SQL::execute( $sql1 );
+			while ( my %row = $db1{'sth'}->fetchhash )
+			{
+				my $line = $row_xsgn;
+				while ( my ($k,$v) = each %row ) { $line =~ s|<%$k%>|$v|g; }
+				$table_xsgn =~ s|<#LINE#>|$line|;
+			}
+			$table_xsgn =~ s|<#LINE#>||g;
+			$doc =~ s|<#SUMMARY#>|$table_xsgn|;
+
+			#----------------------------------------------------------------
+			# Completing mail
+			my $db_email = TOM::Utils::vars::unique_split( $email );
+			my $body_email_addr = TOM::Net::email::convert_TO( $db_email );
+			my $date = TOM::Utils::datetime::mail_current();
+			$doc =~ s|<%email%>|$email|g;
+
+			my $ent = MIME::Entity->build(
+				'Type'    => 'multipart/related',
+				'From'    => '"Cyclone3 ('.$TOM::hostname.')" <'.$TOM::contact{'from'}.'>',
+				'To'      => $body_email_addr,
+				'Subject' => $text{$env{'lng'}}{'subject'},
+				'Date'    => $date,
+			);
+
+			$ent->attach( Type    => 'text/html',
+										Charset => 'UTF-8',
+										Data    => $doc );
+
+			#$ent->attach( Path     => '/www/TOM/_data/webcom_logo.gif',
+			#							Filename => 'webcom_logo.gif',
+			#							Id       => 'part1.webcom.logo@webcom.sk',
+			#							Type     => 'image/gif',
+			#							Encoding => 'base64' );
+
+			if (
+				TOM::Net::email::send(
+					'host' => $TOM::hostname,
+					'to' => $email,
+					'body' => $ent->as_string
+				)
+			) { main::_log('ok, email sent'); }
+			else
+			{ main::_log('email not sent'); }
+
+		}
+	}
+
+	
+	
+	return 1;
+}
+
+1;
