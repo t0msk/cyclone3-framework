@@ -55,9 +55,13 @@ BEGIN
 	
 	$main::time_current=time();
 	
-	# hlavna konfiguracia
-	require $TOM::P."/.core/_config/TOM.conf";
-	require $TOM::P."/_config/TOM.conf";
+	# CONFIG
+	# configuration defined by software
+	require $TOM::P.'/.core/_config/TOM.conf';
+	# configuration defined by this installation ( server farm )
+	require $TOM::P.'/_config/TOM.conf';
+	# configuration defined by this hostname ( one node in server farm )
+	require $TOM::P.'/_config/'.$TOM::hostname.'.conf' if -e $TOM::P.'/_config/'.$TOM::hostname.'.conf';
 }
 
 
@@ -76,10 +80,11 @@ knižnice:
  TOM::Lite - základné knižnice v obmedzenej forme
  TOM::Engine - základné knižnice každého engine
 
-konfigurácie:
+CONFIG files:
 
- _config.sg/TOM.conf
+ .core/_config/TOM.conf
  _config/TOM.conf
+ _config/${hostname}.conf
 
 =cut
 
