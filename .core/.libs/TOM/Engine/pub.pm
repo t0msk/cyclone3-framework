@@ -57,11 +57,12 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	
 	use App::020; # standard 0
 	
-	# default aplikácie
+	# default addons
 	use App::1B0; # Banning system
 	use App::210; # Sitemap
+	use Ext::Cache_memcache::_init; # memcache support
 	
-	# nove Cyclone kniznice
+	# new Cyclone libs
 	use Cyclone;
 	
 	

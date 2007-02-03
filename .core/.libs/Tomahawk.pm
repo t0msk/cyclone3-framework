@@ -102,18 +102,6 @@ use Utils::datetime;
 use conv;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Digest::MD5  qw(md5 md5_hex md5_base64);
-use Cache::Memcached;
-
-
-our  $memcache;
-if ($TOM::CACHE_memcached)
-{
-	$memcache = new Cache::Memcached
-	{
-		'servers' => $TOM::CACHE_memcached_servers,
-		'debug' => 0,
-	}
-};
 
 
 #use warnings;
@@ -417,11 +405,14 @@ sub module
 		my $memcached;
 		if ($TOM::CACHE_memcached)
 		{
-			$memcached=$memcache->set("test",'1');
+			$memcached=Ext::Cache_memcache::check();
 			main::_log("memcached: reading");
 			if ($memcached)
 			{
-				$cache=$memcache->get("cache:".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5});
+				$cache=$Ext::Cache_memcache::cache->get(
+					'namespace' => "mcache",
+					'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
+				);
 			}
 			else
 			{
@@ -454,7 +445,11 @@ sub module
 				
 				if ($TOM::CACHE_memcached)
 				{
-					if ($memcache->set("cache:".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5},$cache))
+					if ($Ext::Cache_memcache::cache->set(
+							'namespace' => "mcache",
+							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5},
+							'value' => $cache
+						))
 					{
 						main::_log("memcached: saved record from db");
 					}
@@ -776,7 +771,12 @@ sub module
 						'return_code' => $return_code
 					};
 					
-					if ($memcache->set("cache:".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5},$cache))
+					if ($Ext::Cache_memcache::cache->set(
+							'namespace' => "mcache",
+							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5},
+							'value' => $cache
+						)
+					)
 					{
 						main::_log("memcached: saved record");
 						$memcached=1;
