@@ -1,0 +1,15 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<link
+	href="<$tom::H_www>/docbook.css"
+	media="screen,tv,projection"
+	rel="stylesheet"
+	type="text/css" />
+
+<#DOCBOOK#>
+
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

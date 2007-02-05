@@ -1,0 +1,71 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+our $authors="roman.fordinal\@comsultia.com";
+
+use Ext::xuladmin::_init;
+use Ext::docbook4CMS::_init;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+	
+	$env{'file'}='index' unless $env{'file'};
+	$env{'file'}.='-'.$env{'lng'};
+	
+	# finding files and max available version
+	main::_log("finding file named '$env{'file'}*.docbook' in max version '$env{'version'}'");
+	
+	opendir(DIR,$Ext::xuladmin::DIR.'/doc/');
+	my $version_max=0;
+	while (my $file=readdir DIR)
+	{
+		next unless $file=~/^$env{'file'}\-(.*?)\.docbook$/;
+		my $version=$1;
+		main::_log("file='$file' version='$version'");
+		if ($version < $env{'version'} && $version>$version_max)
+		{
+			$version_max=$version;
+		}
+	}
+	
+	main::_log("available version for use ='$version_max'");
+	
+	# error handling - any available file not found
+	if (!$version_max)
+	{
+		#main::_log("can't find any available version to file named ='$env{'file'}'",1);
+		die "can't find any available version to file named ='$env{'file'}'\n";
+		return undef;
+	}
+	
+	# defining filename
+	my $filename=$Ext::xuladmin::DIR.'/doc/'.$env{'file'}.'-'.$version_max.'.docbook';
+	main::_log("full path to file ='$filename'");
+	
+	# open file and read docbook content
+	my $docbook;
+	do
+	{
+		open(DB,'<'.$filename) || die "can't open '$filename' $!\n";
+		local $/;
+		$docbook=<DB>;
+	};
+	
+	# convert do xhtml
+	my $xhtml=Ext::docbook4CMS::docbook2xhtml($docbook);
+	
+	# postprocessing
+	
+	# pasting into XHTML
+	$XSGN{'TMP'}=~s|<#DOCBOOK#>|$xhtml|;
+	
+	return 1;
+}
+1;
