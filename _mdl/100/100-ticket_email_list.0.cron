@@ -102,17 +102,11 @@ It is ordered by count of events.
 
 	my $sql = qq/
 	SELECT
-		t.emails
+		emails
 	FROM
-		TOM.a100_ticket as t LEFT JOIN
-		TOM.a100_ticket_event as e ON
-			t.ID=e.ID_ticket
+		TOM.a100_ticket
 	WHERE
-		t.status='Y' AND e.status='Y'
-	GROUP BY
-		t.ID
-	ORDER BY
-		count(e.ID) desc
+		status='Y'
 	/;
 	my %db = TOM::Database::SQL::execute( $sql, 'log' => 1);
 
@@ -174,7 +168,7 @@ It is ordered by count of events.
 			GROUP BY
 				t.ID
 			ORDER BY
-				count(e.ID) desc
+				count desc
 			LIMIT
 				$number
 			/;
