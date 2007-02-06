@@ -3,6 +3,11 @@
 
 <DEFINITION id="TMP">
 <link
+	href="<$tom::H_www>/help.css"
+	media="screen,tv,projection"
+	rel="stylesheet"
+	type="text/css" />
+<link
 	href="<$tom::H_www>/docbook.css"
 	media="screen,tv,projection"
 	rel="stylesheet"

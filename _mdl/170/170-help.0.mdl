@@ -13,30 +13,6 @@ use Ext::docbook4CMS::_init;
 use File::Copy;
 use Digest::MD5;
 
-sub convert_link
-{
-	my $link=shift;
-	main::_log("link='$link'");
-	
-	#my $hash=Utils::vars::genhash(8);
-	
-	my $from=$TOM::P.'/_addons/Ext/xuladmin/help/'.$link;
-	
-	my $hash=Digest::MD5::md5_base64($from);
-	
-	my $to=$tom::P.'/!media/grf/temp/'.$hash.'-'.$link;
-	my $link_to=$tom::H_grf.'/temp/'.$hash.'-'.$link;
-	
-	if (-e $to)
-	{
-		return $link_to;
-	}
-	
-	main::_log("from='$from' to='$to'");
-	File::Copy::copy($from,$to);
-	
-	return $link_to;
-}
 
 sub execute
 {
@@ -104,6 +80,12 @@ sub execute
 	# convert do xhtml
 	my $xhtml=Ext::docbook4CMS::docbook2xhtml(
 		$docbook,
+		'translate_images' =>
+		{
+			'dir_from' => $TOM::P.'/_addons/Ext/xuladmin/help',
+			'dir_to' => $tom::P.'/!media/grf/temp',
+			'uri' => $tom::H_grf.'/temp',
+		}
 	);
 	
 	# postprocessing of links
@@ -117,11 +99,6 @@ sub execute
 		$i++;
 	}
 	$xhtml=~s/<!TMP-$hash-(\d+)!>/?|?$lnk[$1]"/g;
-	
-	# postprocessing of images
-	my $hash=Utils::vars::genhash(8);
-	
-	$xhtml=~s/<img(.*?)src="(.*?)"/'<img'.$1.'src="'.(&convert_link($2)).'"'/eg;
 	
 	# pasting into XHTML
 	$XSGN{'TMP'}=~s|<#DOCBOOK#>|$xhtml|;
