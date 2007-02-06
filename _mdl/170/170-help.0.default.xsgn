@@ -12,4 +12,17 @@
 
 </DEFINITION>
 
+
+<DEFINITION id="NOT_FOUND">
+<link
+	href="<$tom::H_www>/docbook.css"
+	media="screen,tv,projection"
+	rel="stylesheet"
+	type="text/css" />
+
+<h1>Not found file <%file%></h1>
+
+</DEFINITION>
+
+
 </XML_DESIGN_DEFINITION>

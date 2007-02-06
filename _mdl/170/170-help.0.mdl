@@ -10,6 +10,33 @@ our $authors="roman.fordinal\@comsultia.com";
 
 use Ext::xuladmin::_init;
 use Ext::docbook4CMS::_init;
+use File::Copy;
+use Digest::MD5;
+
+sub convert_link
+{
+	my $link=shift;
+	main::_log("link='$link'");
+	
+	#my $hash=Utils::vars::genhash(8);
+	
+	my $from=$TOM::P.'/_addons/Ext/xuladmin/help/'.$link;
+	
+	my $hash=Digest::MD5::md5_base64($from);
+	
+	my $to=$tom::P.'/!media/grf/temp/'.$hash.'-'.$link;
+	my $link_to=$tom::H_grf.'/temp/'.$hash.'-'.$link;
+	
+	if (-e $to)
+	{
+		return $link_to;
+	}
+	
+	main::_log("from='$from' to='$to'");
+	File::Copy::copy($from,$to);
+	
+	return $link_to;
+}
 
 sub execute
 {
@@ -17,36 +44,52 @@ sub execute
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
 	
 	$env{'file'}='index' unless $env{'file'};
-	$env{'file'}.='-'.$env{'lng'};
 	
-	# finding files and max available version
-	main::_log("finding file named '$env{'file'}*.docbook' in max version '$env{'version'}'");
-	
-	opendir(DIR,$Ext::xuladmin::DIR.'/doc/');
+	my $env_file;
 	my $version_max=0;
-	while (my $file=readdir DIR)
+	foreach my $lng ($env{'lng'},'en')
 	{
-		next unless $file=~/^$env{'file'}\-(.*?)\.docbook$/;
-		my $version=$1;
-		main::_log("file='$file' version='$version'");
-		if ($version < $env{'version'} && $version>$version_max)
+		
+		$env_file=$env{'file'}.'-'.$lng;
+		
+		# finding files and max available version
+		main::_log("finding file named '$env_file*.docbook' in max version '$env{'version'}'");
+		
+		opendir(DIR,$Ext::xuladmin::DIR.'/help/');
+		$version_max=0;
+		while (my $file=readdir DIR)
 		{
-			$version_max=$version;
+			next unless $file=~/^$env_file\-(.*?)\.docbook$/;
+			my $version=$1;
+			main::_log("file='$file' version='$version'");
+			if ($version < $env{'version'} && $version>$version_max)
+			{
+				$version_max=$version;
+			}
 		}
+		
+		main::_log("available version for use ='$version_max'");
+		
+		# error handling - any available file not found
+		if (!$version_max)
+		{
+			next;
+		}
+		last;
 	}
 	
-	main::_log("available version for use ='$version_max'");
-	
-	# error handling - any available file not found
 	if (!$version_max)
 	{
-		#main::_log("can't find any available version to file named ='$env{'file'}'",1);
-		die "can't find any available version to file named ='$env{'file'}'\n";
-		return undef;
+		#die "can't find any available version to file named ='$env_file'\n";
+		
+		$XSGN{'TMP'}=$XSGN{'NOT_FOUND'};
+		$XSGN{'TMP'}=~s|<%file%>|$env_file|;
+		
+		return 1;
 	}
 	
 	# defining filename
-	my $filename=$Ext::xuladmin::DIR.'/doc/'.$env{'file'}.'-'.$version_max.'.docbook';
+	my $filename=$Ext::xuladmin::DIR.'/help/'.$env_file.'-'.$version_max.'.docbook';
 	main::_log("full path to file ='$filename'");
 	
 	# open file and read docbook content
@@ -59,13 +102,31 @@ sub execute
 	};
 	
 	# convert do xhtml
-	my $xhtml=Ext::docbook4CMS::docbook2xhtml($docbook);
+	my $xhtml=Ext::docbook4CMS::docbook2xhtml(
+		$docbook,
+	);
 	
-	# postprocessing
+	# postprocessing of links
+	my $hash=Utils::vars::genhash(8);
+	my $i=0;
+	my @lnk;
+	while ($xhtml=~s/\?\|\?(.*?)"/<!TMP-$hash-$i!>/)
+	{
+		$lnk[$i]=$1;
+		$lnk[$i].="&type=$main::FORM{'type'}&version=$env{'version'}&lng=$env{'lng'}";
+		$i++;
+	}
+	$xhtml=~s/<!TMP-$hash-(\d+)!>/?|?$lnk[$1]"/g;
+	
+	# postprocessing of images
+	my $hash=Utils::vars::genhash(8);
+	
+	$xhtml=~s/<img(.*?)src="(.*?)"/'<img'.$1.'src="'.(&convert_link($2)).'"'/eg;
 	
 	# pasting into XHTML
 	$XSGN{'TMP'}=~s|<#DOCBOOK#>|$xhtml|;
 	
 	return 1;
 }
+
 1;
