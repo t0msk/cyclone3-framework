@@ -34,6 +34,14 @@
 	<VAR id="-name" value="cleaner" />
 </MODULE>
 
+# Mazanie obrazkov
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="130" />
+	<VAR id="-name" value="control" />
+	<VAR id="-version" value="images" />
+</MODULE>
+
 <#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
