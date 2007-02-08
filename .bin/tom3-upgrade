@@ -41,10 +41,11 @@ foreach my $rev (@{$revs})
 
 print "last stable revision=r$STABLE\n";
 
-if ($STABLE==$TOM::rev::repository)
+if ($STABLE==$TOM::core_revision)
 {
 	print color 'bold red';
-	print "can't upgrade to unstable version\n";
+	print "\n";
+	print "Can't find any new stable revision, try later\n";
 	&exit();
 }
 
