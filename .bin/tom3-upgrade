@@ -1,0 +1,101 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+use Mysql;
+BEGIN {$main::debug=0;require "/www/TOM/.bin/tom3-init";}
+
+use SVN::Ra;
+use SVN::Log;
+
+%form=
+(
+ '-v'		=>	"verbosity",
+ '-vv, --v'	=>	"verbosity 2, --v=2",
+ '-e'		=>	"execute all modifications",
+ '--db_h'	=>	"use type of database (default main)",
+ '--domain'	=>	"use name of domain",
+);
+if (($FORM{'h'})||($FORM{'help'})){&help();}
+
+
+$FORM{'db_h'}='main' unless $FORM{'db_h'};
+
+#################################################################################################
+
+
+# check current version;
+print "current version='$TOM::core_revision'\n";
+
+# last revision number
+$TOM::core_revision-=200;
+my $ra = SVN::Ra->new($TOM::rev::repository);
+my $HEAD=$ra->get_latest_revnum ();
+print "last revision=r$HEAD\n";
+
+# finding last stable version (message marked with '(stable)')
+my $revs = SVN::Log::retrieve ($TOM::rev::repository, $TOM::core_revision,$HEAD);
+
+my $STABLE=$TOM::core_revision;
+foreach my $rev (@{$revs})
+{
+	$STABLE=$rev->{'revision'} if $rev->{'message'}=~/\(stable\)/;
+}
+
+print "last stable revision=r$STABLE\n";
+
+if ($STABLE==$TOM::rev::repository)
+{
+	print color 'bold red';
+	print "can't upgrade to unstable version\n";
+	&exit();
+}
+
+print "\n";
+
+print "List of changes in repository to upgrade:\n";
+foreach my $rev (@{$revs})
+{
+	if (($rev->{'revision'}>$TOM::core_revision)
+		&& ($rev->{'revision'}<=$HEAD)
+	)
+	{
+		# display only changes in framework
+		#next unless $rev->{'message'}=~/\[frame/;
+		
+		1 while ($rev->{'message'}=~s|\n$||);
+		if ($rev->{'message'}=~/\(major\)/)
+		{
+			print color 'bold yellow';
+		}
+		elsif ($rev->{'message'}=~/\(stable\)/)
+		{
+			print color 'bold yellow';
+		}
+		elsif ($rev->{'message'}=~/\(security\)/)
+		{
+			print color 'bold red';
+		}
+		elsif ($rev->{'message'}=~/bug/ || $rev->{'message'}=~/^\[!\]/)
+		{
+			print color 'bold green';
+		}
+		elsif ($rev->{'message'}=~/\(minor\)/ || !$rev->{'message'})
+		{
+			next;
+		}
+		else
+		{
+			print color 'reset green';
+		}
+		print "r".$rev->{'revision'}." ".$rev->{'message'}."\n";
+	}
+}
+
+print "Do it? [No/yes]\n";
+my $do=<STDIN>;
+if ($do=~/yes/i)
+{
+	print color 'yellow';
+	system("cd $TOM::P;svn up");
+}
+
+&exit();
