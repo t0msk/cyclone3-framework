@@ -172,34 +172,35 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_min` (
 ) TYPE=MyISAM;
 
 -- --------------------------------------------------------
+-- version=5.0
 
 CREATE TABLE `/*db_name*/`.`/*app*/_weblog_rqs` (
-  `page_code` varchar(8) binary NOT NULL default '',
-  `page_code_referer` varchar(8) binary NOT NULL default '',
-  `HTTP_unique_ID` varchar(24) binary NOT NULL default '',
+  `page_code` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
+  `page_code_referer` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
+  `HTTP_unique_ID` varchar(24) character set ascii collate ascii_bin NOT NULL default '',
   `reqtime` int(10) unsigned NOT NULL default '0',
-  `reqdatetime` /*reqdatetime*/,
-  `reqtype` char(1) binary default NULL,
-  `host` varchar(50) NOT NULL default '',
-  `domain` /*domain*/,
-  `domain_sub` /*domain_sub*/,
-  `IP` varchar(15) NOT NULL default '',
-  `IDhash` varchar(8) binary NOT NULL default '',
-  `IDsession` varchar(32) binary NOT NULL default '',
-  `logged` char(1) NOT NULL default 'N',
-  `USRM_flag` char(1) NOT NULL default '',
-  `query_string` varchar(200) NOT NULL default '',
-  `query_TID` varchar(25) NOT NULL default '',
-  `query_URL` varchar(200) NOT NULL default '',
-  `referer` varchar(200) NOT NULL default '',
-  `referer_SE` varchar(100) default NULL,
-  `user_agent` varchar(128) NOT NULL default '',
-  `user_agent_name` varchar(50) default NULL,
+  `reqdatetime` varchar(50) character set ascii NOT NULL default '',
+  `reqtype` char(1) character set ascii collate ascii_bin default NULL,
+  `host` varchar(50) character set ascii NOT NULL default '',
+  `domain` varchar(100) character set ascii NOT NULL default '',
+  `domain_sub` varchar(150) character set ascii NOT NULL default '',
+  `IP` varchar(50) character set ascii NOT NULL default '',
+  `IDhash` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
+  `IDsession` varchar(32) character set ascii collate ascii_bin NOT NULL default '',
+  `logged` char(1) character set ascii NOT NULL default 'N',
+  `USRM_flag` char(1) character set ascii collate ascii_bin NOT NULL default '',
+  `query_string` varchar(255) character set ascii collate ascii_bin NOT NULL default '',
+  `query_TID` varchar(25) character set ascii collate ascii_bin NOT NULL default '',
+  `query_URL` varchar(255) character set ascii collate ascii_bin NOT NULL default '',
+  `referer` varchar(255) character set ascii collate ascii_bin NOT NULL default '',
+  `referer_SE` varchar(100) character set ascii default NULL,
+  `user_agent` varchar(250) character set ascii collate ascii_bin NOT NULL default '',
+  `user_agent_name` varchar(50) character set ascii collate ascii_bin default NULL,
   `load_proc` float unsigned NOT NULL default '0',
   `load_req` float unsigned NOT NULL default '0',
-  `result` varchar(10) NOT NULL default '',
-  `lng` varchar(2) NOT NULL default '',
-  `active` char(1) NOT NULL default 'N',
+  `result` varchar(10) character set ascii NOT NULL default '',
+  `lng` char(2) character set ascii NOT NULL default '',
+  `active` char(1) character set ascii NOT NULL default 'N',
   KEY `reqdatetime` (`reqdatetime`),
   KEY `domain` (`domain`),
   KEY `domain_sub` (`domain_sub`),
@@ -217,7 +218,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_rqs` (
   KEY `USRM_flag` (`USRM_flag`),
   KEY `lng` (`lng`),
   KEY `result` (`result`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
