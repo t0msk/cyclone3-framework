@@ -126,7 +126,6 @@ HEADER
 		# pre inych nieje tato informacia dolezita
 		my $to=
 			TOM::Utils::vars::unique_split(
-				$TOM::contact{'TOM'}.';'.
 				$TOM::contact{'TOM_farm'}.';'.
 				$TOM::contact{'TECH_farm'}.';'.
 				$TOM::contact{'DEV_farm'}.';'.
