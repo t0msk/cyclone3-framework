@@ -26,7 +26,6 @@ $FORM{'db_h'}='main' unless $FORM{'db_h'};
 print "current version='$TOM::core_revision'\n";
 
 # last revision number
-$TOM::core_revision-=200;
 my $ra = SVN::Ra->new($TOM::rev::repository);
 my $HEAD=$ra->get_latest_revnum ();
 print "last revision=r$HEAD\n";
