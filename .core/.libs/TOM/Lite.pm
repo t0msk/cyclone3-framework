@@ -8,6 +8,7 @@ use strict;
 # len zakladna funkcia, bude prevalena TOM::Debug::logs
 sub _log_lite
 {
+	return undef if $TOM::DEBUG_log_file==-1;
 	if ($_[0]=~/^\d+$/)
 	{
 		shift @_;

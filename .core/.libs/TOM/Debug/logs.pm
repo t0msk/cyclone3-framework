@@ -12,8 +12,8 @@ use Term::ANSIColor;
 
 sub _log
 {
+	return undef if $TOM::DEBUG_log_file==-1;
 	return _log_lite(@_) unless $TOM::engine_ready;
-	
 	# spetna kompatibilita, toto sa neskor vyhodi!
 	if ($_[0]=~/^\d+$/ && $_[1])
 	{
