@@ -22,13 +22,23 @@ sub execute
 {
 	my %env=@_;
 	
-	return undef unless $env{'login'};
-	return undef unless $env{'pass'};
+	if((!$env{'pass'}) && (!$env{'pass_md5'})){
+		main::_log('failure - pass/pass_md5 undefined - define at least one');
+		return undef
+	}
+	if(!$env{'login'}){
+		main::_log('failure - login undefined');
+		return undef
+	}
+	if(!$env{'pass_md5'}){
+		main::_log('pass_md5 missing - generating md5 from pass');
+		$env{'pass_md5'}=Digest::MD5::md5_hex(Encode::encode_utf8($env{'pass'})) unless $env{'pass_md5'};
+	}
 	
 	App::300::UserGenerate
 	(
 		'login' => $env{'login'},
-		'pass' => $env{'pass'},
+		'pass_md5' => $env{'pass_md5'},
 		'active' => 'Y'
 	);
 	
