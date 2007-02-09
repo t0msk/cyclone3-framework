@@ -39,29 +39,22 @@ sub execute
 	$env{db_startlevel} = "(length(ID)/2>=$env{db_startlevel})" if $env{db_startlevel};
 
 	# whole tree
-	main::_log("
+	my $sql=qq{
 		SELECT ID
 		FROM $env{db_500}.a500_category
 		WHERE
 			1
 		ORDER BY
 			ID ASC
-	");
-
-	my $db = $main::DB{main}->Query("
-		SELECT ID
-		FROM $env{db_500}.a500_category
-		WHERE
-			1
-		ORDER BY
-			ID ASC
-	");
+	};
+	my %sth=TOM::Database::SQL::execute($sql,'log'=>1);
+	my $db = $sth{'sth'};
 	if($db)
 	{
+		main::_log("SQL executed, returned ".$sth{'rows'});
 		if($db->NumRows())
 		{
 			main::_log("db returned " . $db->NumRows() . " rows");
-
 			my %category_hash;
 
 			while(my %db_line = $db->FetchHash())
@@ -90,52 +83,39 @@ sub execute
 				main::_log("xt_reroot parameter in effect. rerooting!");
 
 				# start level
-				main::_log("
-					SELECT ID
-					FROM $env{db_500}.a500_category
+				my $sql=qq{
+					SELECT
+						ID
+					FROM
+						$env{db_500}.a500_category
 					WHERE
-						1
-						AND ID='$env{db_ID}'
+						ID='$env{db_ID}'
 					LIMIT 1
-				");
-				my $db = $main::DB{main}->Query("
-					SELECT ID
-					FROM $env{db_500}.a500_category
-					WHERE
-						1
-						AND ID='$env{db_ID}'
-					LIMIT 1
-				");
-				if(my %db_line=$db->fetchHash())
+				};
+				my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+				if(my %db0_line=$sth0{'sth'}->fetchhash())
 				{
-					$env{db_where}.=" AND ID LIKE '$db_line{ID}__%'";
+					$env{db_where}.=" AND ID LIKE '$db0_line{ID}__%'";
 				}
 				else
 				{
-					main::_log("db error: ".$main::DB{main}->errstr());
+					main::_log("db error: ".$sth0{'err'});
 				}
 			}
-
-			main::_log("
-				SELECT $env{db_select}
-				FROM $env{db_500}.a500_category
+			
+			my $sql=qq{
+				SELECT
+					$env{db_select}
+				FROM
+					$env{db_500}.a500_category
 				WHERE
 					1
 					$env{db_where}
 				ORDER BY
 					ID ASC
-			");
-
-			my $db = $main::DB{main}->Query("
-				SELECT $env{db_select}
-				FROM $env{db_500}.a500_category
-				WHERE
-					1
-					$env{db_where}
-				ORDER BY
-					ID ASC
-			");
-			if($db)
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+			if($db=$sth0{'sth'})
 			{
 				if($db->NumRows())
 				{
