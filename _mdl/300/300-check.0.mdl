@@ -10,8 +10,12 @@ sub execute
 {
 	my %env=@_;
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
-
+	
 	main::_log("logged: ".$main::USRM{logged});
+	
+	$env{'db_120'}=Tomahawk::Getmdlvar("120","db") unless $env{'db_120'};
+	$env{'db_120'}=$tom::DB{'main'}{'name'} unless $env{'db_120'};
+	main::_log("db_120='$env{'db_120'}'");
 	
 	if ($main::USRM{logged} eq "Y")
 	{
@@ -19,7 +23,7 @@ sub execute
 			SELECT
 				nickname
 			FROM
-				a120
+				$env{'db_120'}.a120
 			WHERE
 				nickname='$main::USRM{'login'}' AND
 				IDtype=1
@@ -28,7 +32,7 @@ sub execute
 		if (not my %db0_line=$db0->fetchhash())
 		{
 			$main::DB{'main'}->Query("
-				INSERT INTO a120
+				INSERT INTO $env{'db_120'}.a120
 				(
 					IDcategory,
 					IDtype,
@@ -51,7 +55,7 @@ sub execute
 			SELECT
 				nickname
 			FROM
-				a120
+				$env{'db_120'}.a120
 			WHERE
 				nickname='$main::USRM{'login'}' AND
 				IDtype=0
@@ -60,7 +64,7 @@ sub execute
 		if (not my %db0_line=$db0->fetchhash())
 		{
 			$main::DB{'main'}->Query("
-				INSERT INTO a120
+				INSERT INTO $env{'db_120'}.a120
 				(
 					IDcategory,
 					IDtype,
