@@ -15,7 +15,7 @@
 		<VAR id="db_select" value="a500_category.*" />
 		<VAR id="db_ID" value="<$main::FORM{IDcategory}>" />
 		<VAR id="sw_itemcount" value="1" />
-		<VAR id="db_where" value=" AND lng='<$main::FORM{lng}>'" />
+		<VAR id="db_where" value=" AND (lng='<$main::FORM{lng}>' OR lng='')" />
 		<#VAR id="db_active" value="1" />
 		<#VAR id="db_limit" value="4" />
 		<#VAR id="images_db_limit" value="4" />
