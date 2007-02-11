@@ -1,0 +1,122 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020;
+use CVML;
+
+=head1 NAME
+
+210-page_path.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Display full path of one Entity - used for displaying navigation path on webpage by L<sitemap>
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID of record
+
+=back
+
+=cut
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default output
+
+=item *
+
+B<#item#> - place for one of item
+
+=item *
+
+B<ITEM> - one of item
+
+=item *
+
+B<%ID%>
+
+=item *
+
+B<%ID_entity%>
+
+=item *
+
+B<%ID_charindex%>
+
+=item *
+
+B<%name%>
+
+=item *
+
+B<%name_url%>
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	my @path=App::020::SQL::functions::tree::get_path(
+		$env{'ID'},
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a210_page",
+		'ID'      => $env{'ID'},
+	);
+	
+	my $path_url;
+	my $i=0;
+	foreach my $item(@path)
+	{
+		$i++;
+		$path_url.='/'.$item->{'name_url'};
+		$path_url=~s|^/||;
+		$XSGN{'NULL'}=$XSGN{'ITEM'};
+		$XSGN{'NULL'}=$XSGN{'ITEM-last'} if $i==@path;
+		$XSGN{'NULL'}=~s|<%name%>|$item->{'name'}|g;
+		$XSGN{'NULL'}=~s|<%path_url%>|$path_url|g;
+		$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+	}
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

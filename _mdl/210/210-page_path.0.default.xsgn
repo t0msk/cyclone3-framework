@@ -1,0 +1,32 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+<fieldset class="a210-page_path">
+	<legend>a210-page_path</legend>
+	<ul>
+<#item#>
+	</ul>
+</fieldset>
+</DEFINITION>
+
+
+<DEFINITION id="ITEM">
+<li>
+	<span><a href="?|?a210_path=<%path_url%>"><%name%></a></span>
+</li>
+<#item#>
+</DEFINITION>
+
+
+<DEFINITION id="ITEM-last">
+<li>
+	<span><%name%></span>
+</li>
+<#item#>
+</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>
+
