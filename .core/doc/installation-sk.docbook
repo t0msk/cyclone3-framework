@@ -2,12 +2,10 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
 "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
 <article lang="sk">
-  <title>Inštalácia Cyclone3</title>
+  <title>Inštalácia Cyclone3 framework</title>
 
   <articleinfo>
     <authorgroup>
-      <corpauthor>Comsultia, s.r.o.</corpauthor>
-
       <author>
         <firstname>Roman</firstname>
 
@@ -32,20 +30,25 @@
 
     <orderedlist>
       <listitem>
-        <para>Vytvorenie pracovneho adresara pre Cyclone3 ktory sa musi
-        nachadzat vo /www/TOM</para>
+        <para>Vytvorenie adresára pre Cyclone3:
+        <filename>/www/TOM</filename></para>
       </listitem>
 
       <listitem>
-        <para>Ziskanie cyclone3 frame z trunku do /www/TOM</para>
+        <para>Získanie Cyclone3 frame z trunku do
+        <filename>/www/TOM</filename></para>
+
+        <synopsis>svn co http://svn.comsultia.com/cyclone3/trunk/frame /www/TOM</synopsis>
       </listitem>
 
       <listitem>
-        <para>Uzivatelia</para>
+        <para>Užívatelia</para>
 
-        <para>Zvolime si skupinu v ktorej budu posobit cyclone3 uzivatela.
-        defaultne sa tato group nazyva "cyclone3" a je v premennej
-        $TOM::group. konfiguraciou TOM.conf ju mozno overridnut.</para>
+        <para>Zvolíme si skupinu v ktorej budú pôsobit Cyclone3 užívatelia (
+        samotný cyclone framework a developeri ). Defaultne sa tato group
+        nazýva <quote>cyclone3</quote> a je v premennej $TOM::group.
+        Konfiguráciou <filename>/www/TOM/_config/TOM.conf</filename> ju možno
+        zmeniť napr. na <quote>www</quote>.</para>
 
         <itemizedlist>
           <listitem>
