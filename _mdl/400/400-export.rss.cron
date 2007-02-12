@@ -6,6 +6,90 @@ use Text::Iconv;
 use Utils::datetime;
 use strict;
 
+=head1 NAME
+
+400-exports.rss.cron
+
+=cut
+
+=head1 DESCRIPTION
+
+Export list of articles (a400) as rss feed ( file in !www directory )
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<db_400> - default $TOM::DB_name
+
+=item *
+
+B<db_120> - default $TOM::DB_name
+
+=item *
+
+B<xml_file> - default 'RSS.xml'
+
+=item *
+
+B<base_url> - default $tom::H_www
+
+=item *
+
+B<rss_url> - default $tom::H_www/RSS.xml
+
+=item *
+
+B<lng> - default $tom::lng
+
+=item *
+
+B<db_encoding> - default 'utf-8'
+
+=item *
+
+B<encoding> - default 'utf-8'
+
+=item *
+
+B<generator>
+
+=item *
+
+B<title> -
+
+=item *
+
+B<copyright> -
+
+=item *
+
+B<description> -
+
+=item *
+
+B<managing_editor> -
+
+=item *
+
+B<admin_mail> -
+
+=item *
+
+B<img_url> -
+
+=item *
+
+B<IDcategory> -
+
+=back
+
+=cut
+
 sub execute
 {
 	my %env=@_;
