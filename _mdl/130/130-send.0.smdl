@@ -203,11 +203,10 @@ B<xt_picture_noisecolor1> [varchar]: rgb format like in css
 
 =head1 INPUT EXAMPLES
 
-B<SZLH>:
+B<Call from type>:
 
 This contact form is secured by images. It sends emails to our client and also to us.
 
- # kontaktny formular - k nam
  <MODULE>
   <VAR id="-type" value="smdl" />
   <VAR id="-global" value="1" />
@@ -219,12 +218,12 @@ This contact form is secured by images. It sends emails to our client and also t
 
    <VAR id="from_service" value="Kontakt" />
    <VAR id="required" value="name;email" />
-   <VAR id="email" value="szlh@szlh.sk;dobias@szlh.sk;szlh@webcom.sk" />
+   <VAR id="email" value="example@example.tld" />
 
    <VAR id="xt_EMAIL" value="bcc" />
    <VAR id="allow_EMAIL_bcc" value="1" />
    <VAR id="send_bcc" value="1" />
-   <VAR id="email_bcc" value="gregor@webcom.sk;kopca@webcom.sk" />
+   <VAR id="email_bcc" value="boss@example.tld" />
 
    <#VAR id="_a130_form_email" value="@" />
 
@@ -364,10 +363,10 @@ B<EMAIL>:
  From: <%email%>
  To: <%to%>
  Date: <%date%>
- Subject: www.szlh.sk Contact form
+ Subject: www.example.tld Contact form
  Content-Type: <%ct%>
 
- This email was automaticaly generated on form from na szlh.sk
+ This email was automaticaly generated on form from na example.tld
 
  Name: <%name%>
  E-mail: <%email%>
