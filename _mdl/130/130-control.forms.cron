@@ -1,15 +1,22 @@
 #!/bin/perl
 # ÁÉÍÓÚ - USE UTF-8 !!!
 package CRON::module;
-use Net::HTTP::LiteAgent;
-use Net::SMTP;
-use CVML;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
 use strict;
-use Mysql;
-use Digest::MD5  qw(md5 md5_hex md5_base64);
-use MIME::Base64;
 
-our $authors = "gregor\@webcom.sk";
+=head1 NAME
+
+130-control.forms.cron
+
+=head1 DESCRIPTION
+
+This cron can be used to control if email from web form has come. But now it is not used.
+
+There are no inputs or dependencies.
+
+=cut
 
 # tento cron kontroluje emaily ulozene v databaze, pochadzajuce z adresy forms@webcom.sk
 sub execute
@@ -285,6 +292,14 @@ HEADER
 	}
 
 }
+
+our $authors = 'matej.gregor@comsultia.com';
+
+=head1 AUTHOR
+
+Matej Gregor (matej.gregor@comsultia.com)
+
+=cut
 
 1;
 

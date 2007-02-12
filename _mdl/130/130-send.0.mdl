@@ -6,6 +6,32 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
+=head1 NAME
+
+130-send.0.mdl
+
+=head1 DEPENDS
+
+libraries:
+
+ CVML
+ Secure::image
+ TOM::Utils::datetime
+
+3rd party libraries:
+
+ MIME::Base64
+ Digest::MD5  qw(md5 md5_hex md5_base64)
+ Int::charsets::encode
+ Net::HTTP::LiteAgent
+ conv
+
+modules:
+
+ 130-send.0.smdl
+
+=cut
+
 use MIME::Base64;
 use Digest::MD5  qw(md5 md5_hex md5_base64);
 
@@ -17,11 +43,11 @@ use TOM::Utils::datetime;
 
 use conv;
 
-our $authors = "gregor\@webcom.sk";
+=head1 DOCUMENTATION
 
-# filozofia
-# modul NEPRACUJE s formularovymi premennymi
-# 3 krokove spracovanie designu - default, check, send
+All necessary documentation is in B<130-send.0.smdl> because this module cannot be used alone.
+
+=cut
 
 sub execute
 {
@@ -366,9 +392,9 @@ sub execute
 				
 				#$XSGN{$email}=~s|<%date%>|$Utils::datetime::DAYS{en}[$tom::Twday], $tom::Tmday $Utils::datetime::MONTHS{en}[$tom::Tmom-1] $tom::Fyear $tom::Fhour:$tom::Fmin:$tom::Fsec +-200|g;
 
-=head1
-				$env{body}=~s|<%DATE%>|$Utils:atetime:AYS{en}[$tom::GTwday], $tom::GTmday $Utils:atetime::MONTHS{en}[$tom::GTmom-1] $tom::GFyear $tom::GFhour:$tom::GFmin:$tom::GFsec GMT|g;
-=cut
+
+				#$env{body}=~s|<%DATE%>|$Utils:atetime:AYS{en}[$tom::GTwday], $tom::GTmday $Utils:atetime::MONTHS{en}[$tom::GTmom-1] $tom::GFyear $tom::GFhour:$tom::GFmin:$tom::GFsec GMT|g;
+
 		
 				# FROM
 				$XSGN{$email}=~s|<%from%>|$env{from_email}|g;
@@ -514,7 +540,16 @@ sub execute
 		}
 	}
 	
-	return 1}
+	return 1;
+}
+
+our $authors = 'matej.gregor@comsultia.com';
+
+=head1 AUTHOR
+
+Matej Gregor (matej.gregor@comsultia.com)
+
+=cut
 
 1;
 

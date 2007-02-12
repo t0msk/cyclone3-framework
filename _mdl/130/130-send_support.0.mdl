@@ -1,15 +1,85 @@
 #!/bin/perl
-# A!A©A­A3Ao - USE UTF-8 !!!
+# ŠĽČŤŽžťčľš - USE UTF-8 !!!
 package Tomahawk::module;
+
+=head1 NAME
+
+130-send_support.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+This module sends support emails from xuladmin to selected contacts.
+
+It is used only in xuladmin and only with xml output.
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<xt_design> [1/0]: determines whether design should be loaded
+
+=item *
+
+B<xt_xlng> [1/0]: determines whether language file should be loaded
+
+=item *
+
+B<contact_type> [varchar]: group of contact ('WEB', 'DEV', 'manager' ...)
+
+=item *
+
+B<name> [varchar]: name of user who is sending request (further "user" only)
+
+=item *
+
+B<email> [varchar]: email of the user
+
+=item *
+
+B<message> [varchar]: any text
+
+=back
+
+=cut
+
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
 
+=head1 DEPENDENCIES
+
+Libraries:
+
+ TOM::Utils::datetime
+ MIME::Entity
+
+=cut
+
 use TOM::Utils::datetime;
 use MIME::Entity;
 
-our $authors = 'gregor@webcom.sk';
+=head1 SYNOPSIS
+
+Call from type:
+
+ <MODULE>
+    <VAR id="-global" value="1" />
+    <VAR id="-category" value="130" />
+    <VAR id="-name" value="send_support" />
+       <VAR id="contact_type" value="<$main::FORM{'contact_type'}>" />
+       <VAR id="name" value="<$main::FORM{'name'}>" />
+       <VAR id="email" value="<$main::FORM{'email'}>" />
+       <VAR id="message" value="<$main::FORM{'message'}>" />
+ </MODULE>
+
+=cut
 
 sub execute
 {
@@ -44,7 +114,7 @@ sub execute
 	my $subject = $env{'subject'} || 'support request';
 	
 	my $from = "\"$env{'name'}\" <$env{'email'}>";
-	$from = 'cyclone@comsultia.sk' unless $env{'email'} && $env{'name'};
+	$from = 'cyclone@comsultia.com' unless $env{'email'} && $env{'name'};
 
 	my $ent = MIME::Entity->build(
 		'Type'    => 'text/plain; charset=UTF-8',
@@ -64,6 +134,14 @@ sub execute
 	
 	return 1;
 }
+
+our $authors = 'matej.gregor@comsultia.com';
+
+=head1 AUTHORS
+
+Matej Gregor (matej.gregor@comsultia.com)
+
+=cut
 
 1;
 
