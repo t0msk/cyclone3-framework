@@ -543,6 +543,12 @@ sub execute
 	return 1;
 }
 
+=head1 SEE ALSO
+
+L<130-send.0.smdl|source-doc/"_mdl/130/130-send.0.smdl">
+
+=cut
+
 our $authors = 'matej.gregor@comsultia.com';
 
 =head1 AUTHOR
