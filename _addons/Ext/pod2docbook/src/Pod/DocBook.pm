@@ -506,7 +506,16 @@ sub _handle_L
     # are de-protected in _fix_chars ()
 
     my ($text, $inferred, $name, $section, $type) = parselink ($argument);
-
+	
+	main::_log("text='$text' inferred='$inferred' name='$name' section='$section' type='$type'");
+	
+	if ($section && $name && $text && $type eq "pod")
+	{
+		main::_log("returning this link as internal 'section=$name&file=$section'");
+		$name=~s|\\|/|g;
+		return qq!<ulink\37632\377url="?|?section=$name&amp;file=$section">$inferred</ulink>!;
+	}
+	
     if ($type eq 'url') {
 	return qq!<ulink\37632\377url="$inferred">$inferred</ulink>!;
     }
