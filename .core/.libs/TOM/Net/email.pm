@@ -5,7 +5,47 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
+=head1 NAME
+
+TOM::Net::email
+
+=cut
+
+=head1 DESCRIPTION
+
+Allow you to send and manage emails
+
+=cut
+
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
+
+=head1 FUNCTIONS
+
+=head2 send()
+
+Write email to database or to email. Cron system module L<a130|docbook-sec/.core/.libs/App/a130/> sends this emails automatically.
+
+=over
+
+=item *
+
+B<from> - only information ( not saved to email header )
+
+=item *
+
+B<to> - real email adresses ( not saved to email header )
+
+=item *
+
+B<body> - body of email
+
+=item *
+
+B<priority> - default '1' ( higher priority means sending sooner )
+
+=back
+
+=cut
 
 sub send
 {
@@ -88,6 +128,11 @@ sub send
 	return 1;
 }
 
+=head2 convert_TO('email@domain.tld;my@domain.tld')
+
+Converts comma separated list of emails to string which is usable in email header
+
+=cut
 
 sub convert_TO
 {
@@ -97,5 +142,10 @@ sub convert_TO
 	return $to;
 }
 
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
 
 1;
