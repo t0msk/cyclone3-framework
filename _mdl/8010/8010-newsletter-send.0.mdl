@@ -28,9 +28,6 @@ sub execute
 	# databazy
 	$env{db_130}=Tomahawk::Getmdlvar('130','db') unless $env{db_130};
 
-	# from email
-	$env{db_from_email} = 'info@webcom.sk' unless $env{db_from_email};
-
 	# kodovanie
 	if (!$env{encoding}) { $env{encoding} = "UTF-8"; $env{charset} = "UTF-8" }
 	$env{charset} = $env{encoding} unless $env{charset};
