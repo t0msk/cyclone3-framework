@@ -4,17 +4,367 @@ package Tomahawk::module;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
-$authors="nemsak\@webcom.sk";
 use strict;
 
 =head1 NAME
-mlist_m1
 
-=head1 HEAD_VERSION_BUILD
-1.050222
+500-mlist_m1.0.mdl
 
 =head1 DESCRIPTION
-listing obrazkov
+
+Image listing.
+
+=head1 DEPENDENCIES
+
+No dependencies.
+
+=head1 INPUTS
+
+B<Design>:
+
+=over
+
+=item
+
+B<xt_xlng> [1/0]: parameter for loading language file for design
+
+=item
+
+B<return_null> [1/0]: If it is 1 and no image is selected, blank or TMP_NO_DATA design is returned
+
+=back
+
+B<Selecting images>:
+
+=over
+
+=item
+
+B<db_select> [varchar]: columns that should be selected from database (sql syntax)
+
+Example:
+
+ <VAR id="db_select" value="a500.ID, a500.hash, a500_attrs.about" />
+
+=item
+
+B<db_ID> [int]: IDs of images
+
+Example 1:
+
+ <VAR id="db_ID" value="12" />
+
+Example 2:
+
+ <VAR id="db_ID" value="12;13;14" />
+
+=item
+
+B<db_ID_exclude> [int,int,...]: IDs of images, that should not be selected (separated by semicolon)
+
+Example 1:
+
+ <VAR id="db_ID_exclude" value="12" />
+
+Example 2:
+
+ <VAR id="db_ID_exclude" value="12;13;14" />
+
+=item
+
+B<db_IDcategory> [varchar]: IDs of categories where image is placed
+
+Example 1:
+
+ <VAR id="db_IDcategory" value="0102" />
+
+Example 2:
+
+ <VAR id="db_IDcategory" value="0102;0103;0104" />
+
+=item
+
+B<db_IDcategory_exclude> [varchar]: IDs of image categories from which not to select images (separated by semicolon)
+
+Example 1:
+
+ <VAR id="db_IDcategory_exclude" value="0102" />
+
+Example 2:
+
+ <VAR id="db_IDcategory_exclude" value="0102;0103;0104" />
+
+=item
+
+B<db_format> [f/o/s/t] [default: t]: Image format
+
+Example:
+
+ <VAR id="db_format" value="o" />
+
+=item
+
+B<db_active> [1/0]: select only active images
+
+=item
+
+B<db_order_by> [varchar]: sql sorting rule
+
+Example:
+
+ <VAR id="db_order_by" value="a500.ID ASC" />
+
+=item
+
+B<db_where> [varchar]: additional SQL where
+
+Example:
+
+ <VAR id="db_where" value="a500_attrs.about like '%image1.jpg%'" />
+
+=back
+
+B<Paging>:
+
+=over
+
+=item
+
+B<db_paging> [1/0]: turn on/off paging
+
+=item
+
+B<db_limit> [int]: maximum number of images per page
+
+=item
+
+B<db_page> [int]: number of the page (usually this is dynamic parameter)
+
+Example:
+
+ <VAR id="db_page" value="<$main::FORM{'page'}>" />
+
+=back
+
+B<Special inputs>:
+
+=over
+
+=item
+
+B<db_format_PAGE_COUNTER> [f/o/s/t]: image format for page and count of image
+
+Example:
+
+ <VAR id="db_format_2_12" value="s" />
+
+This example shows how to set special format "s" for the 2nd page and 12th image
+
+=item
+
+B<db_format_COUNTER> [f/o/s/t]: image format for certain image
+
+Example:
+
+ <VAR id="db_format_12" value="s" />
+
+This example shows how to set special format "s" for the 12th image in order
+
+=item
+
+B<db_format_odd> [f/o/s/t]: image format for odd images
+
+Example:
+
+ <VAR id="db_format_odd" value="s" />
+
+=item
+
+B<datetime_allow> [1/0]: turn on/off extracting time variables from timestamp. More in XSGN section - Date and Time.
+
+=item
+
+B<about_cut> [int]: maximum length of "about" in image. Rest of the "about" text will be cutted off.
+
+Cutting respects words, so it will be cutted from last space. And after will be added 3 dots.
+
+=back
+
+=head1 XSGN
+
+B<Main>:
+
+=over
+
+=item
+
+B<TMP>: main design
+
+=back
+
+B<Lines> [>B<&lt;#LINE#&gt;[TMP]>]:
+
+=over
+
+=item
+
+B<LINE>: standard line design
+
+=item
+
+B<LINE_PAGE_COUNTER>: design of x-th line on y-th page
+
+=item
+
+B<LINE_COUNTER>: design of x-th line
+
+=item
+
+B<LINE_odd>: design of odd line
+
+=item
+
+B<&lt;%COLUMN%&gt;>: column from sql select
+
+Example:
+
+ SELECT a500.ID, a500.about ...
+
+result
+
+ <%ID%>
+ <%about%>
+
+=item
+
+B<&lt;%IDcategory%&gt;>
+
+=item
+
+B<&lt;%IDcategory_name%&gt;>
+
+=item
+
+B<&lt;%IDauthor%&gt;>
+
+=item
+
+B<&lt;%IDauthor_fullname%&gt;>
+
+=item
+
+B<&lt;%IDauthor_nickname%&gt;>
+
+=item
+
+B<&lt;%IDeditor%&gt;>
+
+=item
+
+B<&lt;%IDeditor_fullname%&gt;>
+
+=item
+
+B<&lt;%IDeditor_nickname%&gt;>
+
+=item
+
+B<&lt;%alt%&gt;>
+
+=item
+
+B<&lt;%line_no%&gt;>
+
+=item
+
+B<&lt;%counter%&gt;>
+
+=back
+
+B<Date and Time> [>B<[LINE]>]
+
+=over
+
+=item
+
+B<&lt;%day%&gt;>: day of month
+
+=item
+
+B<&lt;%day_name%&gt;>: day of week name in short form - Pon, Ut, St ... or Mon, Tue, Wed ...
+
+=item
+
+B<&lt;%day_name_long%&gt;>: day of week name full - Pondelok, Utorok, ... or Monday, Tuesday ...
+
+=item
+
+B<&lt;%month%&gt;>: month number
+
+=item
+
+B<&lt;%month_name%&gt;>: name of month in short form - Jan, Feb, ...
+
+=item
+
+B<&lt;%month_name_long%&gt;>: name of month full - Január, Február, ... or January, February ...
+
+=item
+
+B<&lt;%year%&gt;>: 4 digits year
+
+=item
+
+B<&lt;%hour%&gt;>: 2 digits hour
+
+=item
+
+B<&lt;%minute%&gt;>: 2 digits minute
+
+=item
+
+B<&lt;%second%&gt;>: 2 digits second
+
+=item
+
+This was variables for nowtime.
+
+But similar usage is for other time information with prefixes - B<inserttime>, B<changetime>, B<lasttime>, B<starttime>, B<endtime>.
+
+Example:
+
+B<&lt;%inserttime_year%&gt;> OR
+
+B<&lt;%endtime_month_name%&gt;>
+
+=back
+
+B<Paging>:
+
+=over
+
+=item
+
+B<PAGING> [>B<&lt;#PAGING#&gt;[TMP]>]
+
+=item
+
+B<PAGING_PREV> [>B<&lt;#PAGING_PREV#&gt;[PAGING]>]
+
+=item
+
+B<PAGING_NEXT> [>B<&lt;#PAGING_NEXT#&gt;[PAGING]>]
+
+=item
+
+B<&lt;%page%&gt;> [>B<[PAGING_PREV,PAGING_NEXT]>]: number of the previous or next page
+
+=item
+
+B<&lt;%page_real%&gt;>: number of this page
+
+=back
+
 =cut
 
 sub execute
@@ -128,27 +478,6 @@ sub execute
 	
 	# setting default db_order_by
 	$env{db_order_by}="a500.ID DESC" unless $env{db_order_by};
-	
-=head1
-	my $sql=qq{
-		SELECT
-			a500.hash,
-			a500.IDcategory,
-			a500_attrs.*,
-			a500.ID,
-			a500_category.name
-		FROM $env{db_500}.a500 AS a500
-		LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.ID=a500_attrs.ID
-		LEFT JOIN  $env{db_500}.a500_category AS a500_category ON a500.IDcategory=a500_category.ID
-		WHERE
-			$env{db_where}
-			a500.format='$env{db_format}'
-		ORDER BY
-			$env{db_order_by}
-		LIMIT
-			$env{db_limit}
-	};
-=cut
 	
 	my $sql=qq{
 		SELECT
@@ -277,111 +606,6 @@ sub execute
 			}
 			else
 			{ $env{db_format_tmp}=$env{db_format}; }
-
-=head1
-			# fetching all other xrelated
-			if ($env{xrelated})
-			{
-				my %already_related;
-				while ($db_line{xrelated}=~s|<VAR id="(.*?)" value="(.*?)" />||si)
-				{
-					my ($var,$null)=($1,$2);
-
-					$var=~/^a500$/ && $XSGN{a500} && do
-					{
-						my $db0=$main::DB{main}->Query("
-							SELECT
-								a.IDcategory
-							FROM
-								$env{db_500}.a500 AS a
-							LEFT JOIN $env{db_500}.a500_category AS b ON a.IDcategory=b.ID
-							WHERE
-								a.ID='$null'
-								AND (a.lng='$env{lng}' OR a.lng='')
-								AND a.active='Y'
-								AND b.active='Y'
-							LIMIT 1
-						");
-						if (my %db0_line=$db0->fetchhash)
-						{
-							next if $already_related{a500}{$db0_line{IDcategory}};
-							main::_log("related gallery ID: $db0_line{IDcategory}");
-							$XSGN{NULL}=~s|<#a500#>|$XSGN{a500}|g;
-							$XSGN{NULL}=~s|<%IDcategory%>|$db0_line{IDcategory}|g;
-							$already_related{a500}{$db0_line{IDcategory}}=1;
-						}
-						next;
-					};
-
-					$var=~/^a820$/ && $XSGN{a820} && do
-					{
-						next unless $XSGN{a820}=~/<%messages%>/;
-						$XSGN{NULL0}=$XSGN{a820};
-
-						$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
-						$env{db_820}=$TOM::DB_name unless $env{db_820};
-
-						my $db0=$main::DB{main}->Query("
-							SELECT
-								ID, messages
-							FROM
-								$env{db_820}.a820
-							WHERE
-								ID='$null'
-								AND (lng='$env{lng}' OR lng='')
-								AND active='Y'
-							LIMIT 1
-						");
-						if (my %db0_line=$db0->fetchhash)
-						{
-							next if $already_related{a820}{$db0_line{IDcategory}};
-							main::_log("related forum ID: $db0_line{ID} messages: $db0_line{messages}");
-							$XSGN{NULL0}=~s|<%messages%>|$db0_line{messages}|g;
-							$XSGN{NULL0}=~s|<%ID%>|$db0_line{ID}|g;
-							$XSGN{NULL}=~s|<#a820#>|$XSGN{NULL0}|g;
-							$already_related{a500}{$db0_line{IDcategory}}=1;
-						}
-						next;
-					};
-
-					if ($XSGN{$var})
-					{
-						$XSGN{NULL0}=$XSGN{$var};
-						$XSGN{NULL0}=~s|<%ID%>|$null|;
-						$XSGN{NULL}=~s|<#$var#>|$XSGN{NULL0}|;
-						next;
-					}
-				}
-			}
-
-			if(
-				(($env{db_select}=~/a400.IDauthor/) || ($env{db_select}=~/a400.\*/)) &&
-				(($XSGN{NULL}=~/<%IDauthor_fullname%>/) || ($XSGN{NULL}=~/<%IDauthor_nickname%>/))
-			)
-			{
-				$env{db_120}=Tomahawk::Getmdlvar("120","db") unless $env{db_120};
-				$env{db_120}=$TOM::DB_name unless $env{db_120};
-
-				my $db0=$main::DB{main}->Query("
-					SELECT
-						ID,
-						IDcategory,
-						fullname,
-						nickname
-					FROM $env{db_120}.a120
-					WHERE
-						ID='$db_line{IDauthor}'
-						AND IDtype='0'
-					LIMIT 1
-				");
-				if (my %db0_line=$db0->FetchHash())
-				{
-					$XSGN{NULL}=~s|<%IDauthor%>|$db0_line{ID}|g;
-					$XSGN{NULL}=~s|<%IDauthor_fullname%>|$db0_line{fullname}|g;
-					$XSGN{NULL}=~s|<%IDauthor_nickname%>|$db0_line{nickname}|g;
-				}
-			}
-=cut
 
 			if(
 				(($env{db_select}=~/a500_attrs.IDauthor/) || ($env{db_select}=~/a500_attrs.\*/)) &&
@@ -694,5 +918,19 @@ sub execute
 
 	return 1;
 }
+
+our $authors = 'nemsak@webcom.sk';
+
+=head1 AUTHOR
+
+Peter Nemšák (nemsak@webcom.sk)
+
+=cut
+
+=head1 DOCUMENTATION AUTHOR
+
+Matej Gregor (matej.gregor@comsultia.com)
+
+=cut
 
 1;
