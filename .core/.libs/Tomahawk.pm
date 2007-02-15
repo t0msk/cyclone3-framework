@@ -42,7 +42,17 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 use vars qw/%XSGN %XLNG $ERR/;
 
-
+sub XSGN_load_hash
+{
+	my $XSGN=shift;
+	my $refhash=shift;
+	
+	foreach my $key(keys %{$refhash})
+	{
+		$$XSGN=~s|<%$key%>|$refhash->{$key}|g;
+	}
+	return 1;
+}
 
 # DEFINUJEM NULOVY DEBUG
 use Tomahawk::debug;
@@ -1397,8 +1407,6 @@ sub XLNGtoVARS
  for(0..@ref){foreach my $ref0(%Tomahawk::module::XLNG){$ref[$_]=~s|<%XLNG-$ref0%>|$Tomahawk::module::XLNG{$ref0}|g;}}
  return @ref;
 }
-
-
 
 
 # EXIT(us) :)
