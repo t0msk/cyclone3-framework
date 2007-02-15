@@ -12,7 +12,7 @@ use strict; # scrict code
 
 =head1 DESCRIPTION
 
-Zistim ci sa upgradol system
+Check if this Cyclone3 installation is upgraded and send about upgrades email
 
 =cut
 
@@ -158,6 +158,8 @@ HEADER
 			$msg=~s|[\n]|<br/>|g;
 			main::_log("rev='$rev'");
 			main::_log("msg='$msg'");
+			
+			next if $msg=~/\(minor\)/;
 			
 			my $null=$REV;
 			$null=~s|<%revision%>|$rev|g;
