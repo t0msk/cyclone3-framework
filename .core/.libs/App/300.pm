@@ -218,7 +218,7 @@ sub UserFind
 	else
 	{
 		main::_log("user not found in active table, trying archive");
-		my $db0=$main::DB{main}->Query("
+		my $sql=qq{
 			SELECT
 				*
 			FROM
@@ -232,8 +232,10 @@ sub UserFind
 			WHERE
 				users.host='$env{host}'
 				$where
-			LIMIT 1");
-		if (%data=$db0->fetchhash)
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		if (%data=$sth0{'sth'}->fetchhash)
 		{
 			main::_log("user found in archive table");
 			if ($env{'-activize'})
