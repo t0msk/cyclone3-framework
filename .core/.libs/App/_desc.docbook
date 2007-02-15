@@ -2,44 +2,43 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
 "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
 <article lang="sk">
-  <title>Aplikácie Cyclone3</title>
+  <title>Cyclone3 Apllications</title>
+
+  <subtitle>Old Applications stored in .core/.libs/App</subtitle>
 
   <articleinfo>
     <releaseinfo>$Rev$</releaseinfo>
-
-    <authorgroup>
-      <corpauthor>Comsultia, s.r.o.</corpauthor>
-
-      <author>
-        <firstname>Roman</firstname>
-
-        <surname>Fordinál</surname>
-
-        <email>roman.fordinal@comsultia.com</email>
-      </author>
-    </authorgroup>
   </articleinfo>
 
   <section>
-    <title>Zoznam aplikácií</title>
+    <title>List of applications</title>
 
     <itemizedlist>
       <listitem>
-        <para><emphasis role="bold">0</emphasis> - Lokálne a generické
-        aplikácie</para>
+        <para><emphasis role="bold">0</emphasis> - Local and generic</para>
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">010</emphasis> - Local App0</para>
+            <para><emphasis role="bold">010</emphasis> - Local domain
+            App0</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">011</emphasis> - Local App1</para>
+            <para><emphasis role="bold">011</emphasis> - Local domain App1,
+            etc...</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">020</emphasis> - Generic App0 podľa
-            DATA a API štandard</para>
+            <para><emphasis role="bold">012</emphasis> - etc,...</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/020">020</ulink></emphasis>
+            - Generic App0 defined by <ulink
+            url="?|?section=standard&amp;file=DATA">DATA</ulink> and <ulink
+            url="?|?section=standard&amp;file=API">API</ulink>
+            standards</para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -49,23 +48,27 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">100</emphasis> - IAdm &amp; ITst
-            (privilegovaný mód)</para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/100">100</ulink></emphasis>
+            - IAdm &amp; ITst (special mode)</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">110</emphasis> - Štatistický a
-            monitorovací subsystém</para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/110">110</ulink></emphasis>
+            - Statistic and monitoring subsystem</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">120</emphasis> - Zdroje
-            (editor)</para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/120">120</ulink></emphasis>
+            - Sources (editors)</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">130</emphasis> - Internal
-            mailsystem</para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/130">130</ulink></emphasis>
+            - Internal mailsystem</para>
           </listitem>
 
           <listitem>
@@ -73,45 +76,52 @@
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">150</emphasis> - Cache system</para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/150">150</ulink></emphasis>
+            - Cache system</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">160</emphasis> - Xrelated
-            <emphasis>nerealizované</emphasis></para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/160">160</ulink></emphasis>
+            - Xrelated <emphasis>not realized</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">170</emphasis> - <emphasis>XULadmin
-            backend</emphasis></para>
+            <para><emphasis role="bold">170</emphasis> - XULadmin
+            backend</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">180</emphasis> -
-            <emphasis>nevyužívané</emphasis></para>
+            <para><emphasis role="bold">180</emphasis> - <emphasis>not
+            used</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">190</emphasis> -
-            <emphasis>nevyužívané</emphasis></para>
+            <para><emphasis role="bold">190</emphasis> - <emphasis>not
+            used</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">1A0</emphasis> -
-            <emphasis>nevyužívané</emphasis></para>
+            <para><emphasis role="bold">1A0</emphasis> - <emphasis>not
+            used</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">1B0</emphasis> - Banning system</para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/1B0">1B0</ulink></emphasis>
+            - Banning system</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">1C0</emphasis> -
-            <emphasis>nevyužívané</emphasis></para>
+            <para><emphasis role="bold">1C0</emphasis> - <emphasis>not
+            used</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">1D0</emphasis> - Imports</para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/1D0">1D0</ulink></emphasis>
+            - Imports</para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -121,44 +131,48 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">20</emphasis> - logotypy</para>
+            <para><emphasis role="bold">20</emphasis> - Logotyp</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">210</emphasis> - Sitemap (mapa
-            stránky)</para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/210">210</ulink></emphasis>
+            - Sitemap ( new application based on <ulink
+            url="?|?section=standard&amp;file=DATA">DATA</ulink> and <ulink
+            url="?|?section=standard&amp;file=API">API</ulink> standards
+            )</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">22</emphasis> -
-            <emphasis>nevyužívané</emphasis></para>
+            <para><emphasis role="bold">22</emphasis> - <emphasis>not
+            used</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">23</emphasis> - design boxes</para>
+            <para><emphasis role="bold">23</emphasis> - Design boxes</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">24</emphasis> - navigation,
-            menu</para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/24.pm">24</ulink></emphasis>
+            - Navigation, menu</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">25</emphasis> - dynamic design
-            (kalendar,...)</para>
+            <para><emphasis role="bold">25</emphasis> - Dynamic design
+            (calendar,...)</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">26</emphasis> - Import design</para>
 
-            <para>Importovanie častí iných webov. (napr. wiki)</para>
+            <para>Import parts of others web portals ( http proxy )</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">27</emphasis> - Import data</para>
 
-            <para>Generovanie chunkov dokumentu na základe importu iných
-            dát.</para>
+            <para>Generating document chunks from imports</para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -168,12 +182,15 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">300</emphasis> - domain USRM</para>
+            <para><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/300"><emphasis
+            role="bold">300</emphasis></ulink> - Domain USRM ( User Management
+            )</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">310</emphasis> - GOpass
-            <emphasis>nerealizované</emphasis></para>
+            <para><emphasis role="bold">310</emphasis> - GOpass <emphasis>not
+            realized</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -183,23 +200,31 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">400</emphasis> - News
-            <emphasis>deprecated</emphasis></para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/400">400</ulink></emphasis>
+            - News <emphasis>robuts, but old</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">410</emphasis> - Ankety
-            <emphasis>deprecated</emphasis></para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/401">401</ulink></emphasis>
+            - News1 <emphasis>planning</emphasis></para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/410">410</ulink></emphasis>
+            - Ankety <emphasis>old</emphasis></para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">420</emphasis> - Articles
-            <emphasis>nerealizované</emphasis></para>
+            <emphasis>planning</emphasis></para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">430</emphasis> - Tickets
-            <emphasis>nerealizované</emphasis></para>
+            <emphasis>planning</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -209,32 +234,35 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">500</emphasis> - Photogallery
-            <emphasis>deprecated</emphasis></para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/500">500</ulink></emphasis>
+            - Photogallery <emphasis>old</emphasis></para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">510</emphasis> - Videogallery
-            <emphasis>nerealizované</emphasis></para>
+            <emphasis>not realized</emphasis></para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">520</emphasis> - Audiogallery
-            <emphasis>nerealizované</emphasis></para>
+            <emphasis>not realized</emphasis></para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">530</emphasis> - Document gallery
-            <emphasis>nerealizované</emphasis></para>
+            <emphasis>not realized</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">540</emphasis> - Filegallery</para>
+            <para><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/540"><emphasis
+            role="bold">540</emphasis></ulink> - Filegallery</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold">550</emphasis> - Mediagallery
-            <emphasis>nerealizované</emphasis></para>
+            <emphasis>not realized</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -245,27 +273,27 @@
         <itemizedlist>
           <listitem>
             <para><emphasis role="bold">600</emphasis> - E-Shop
-            <emphasis>nerealizované</emphasis></para>
+            <emphasis>realized by extensions</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">610</emphasis> - Burza
-            <emphasis>nerealizované</emphasis></para>
+            <para><emphasis role="bold">610</emphasis> - <emphasis>not
+            used</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">620</emphasis> - Inzercia
-            <emphasis>nerealizované</emphasis></para>
+            <para><emphasis role="bold">620</emphasis> - <emphasis>not
+            used</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">630</emphasis> - GoCredit
-            <emphasis>nerealizované</emphasis></para>
+            <para><emphasis role="bold">630</emphasis> - <emphasis>not
+            used</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">640</emphasis> - SMSpay
-            <emphasis>nerealizované</emphasis></para>
+            <para><emphasis role="bold">640</emphasis> - <emphasis>not
+            used</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -275,8 +303,9 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">700</emphasis> - Groupware
-            <emphasis>nedokončené</emphasis></para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/700">700</ulink></emphasis>
+            - Groupware <emphasis>not finished</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -286,59 +315,59 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">80</emphasis> - email</para>
+            <para><emphasis role="bold">80</emphasis> - Email</para>
 
             <itemizedlist>
               <listitem>
                 <para><emphasis role="bold">8000</emphasis> - Mallist
-                <emphasis>nerealizované</emphasis></para>
+                <emphasis>not realized</emphasis></para>
               </listitem>
 
               <listitem>
-                <para><emphasis role="bold">8010</emphasis> -
-                Newsletter/Direct mail</para>
+                <para><ulink
+                url="?|?section=source-doc&amp;file=.core/.libs/App/8010"><emphasis
+                role="bold">8010</emphasis></ulink> - Newsletter/Direct
+                mail</para>
               </listitem>
 
               <listitem>
-                <para><emphasis role="bold">8020</emphasis> - Internal
-                mailboxes <emphasis>nerealizované</emphasis></para>
+                <para><emphasis role="bold"><ulink
+                url="?|?section=source-doc&amp;file=.core/.libs/App/8020">8020</ulink></emphasis>
+                - Internal mailboxes</para>
               </listitem>
 
               <listitem>
                 <para><emphasis role="bold">8030</emphasis> - External
-                mailboxes <emphasis>nerealizované</emphasis></para>
+                mailboxes <emphasis>not realized</emphasis></para>
               </listitem>
             </itemizedlist>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">81</emphasis> - messengers</para>
+            <para><emphasis role="bold">81</emphasis> - Messengers</para>
 
             <itemizedlist>
               <listitem>
                 <para><emphasis role="bold">8100</emphasis> - Internal
-                messenger <emphasis>nerealizované</emphasis></para>
+                messenger <emphasis>planning</emphasis></para>
               </listitem>
 
               <listitem>
-                <para><emphasis role="bold">8110</emphasis> - ICQ
-                <emphasis>nerealizované</emphasis></para>
-              </listitem>
-
-              <listitem>
-                <para><emphasis role="bold">8120</emphasis> - IRC
-                <emphasis>nerealizované</emphasis></para>
+                <para><emphasis role="bold">8110</emphasis> - <emphasis>not
+                used</emphasis></para>
               </listitem>
             </itemizedlist>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">820</emphasis> - forum</para>
+            <para><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/820"><emphasis
+            role="bold">820</emphasis></ulink> - Forum</para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">830</emphasis> - chat
-            <emphasis>nerealizované</emphasis></para>
+            <para><emphasis role="bold">830</emphasis> - Chat
+            <emphasis>planning</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -348,25 +377,21 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">900</emphasis> - bridge to banner
-            system <emphasis>obsolete</emphasis></para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/900">900</ulink></emphasis>
+            - Bridge to banner system <emphasis>obsolete</emphasis></para>
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold">910</emphasis> - internal banner
-            system <emphasis>nerealizované</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">920</emphasis> - external banner
-            system <emphasis>nerealizované</emphasis></para>
+            <para><emphasis role="bold">910</emphasis> - <emphasis>not
+            used</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
 
       <listitem>
-        <para><emphasis role="bold">A</emphasis> -
-        <emphasis>nevyužívané</emphasis></para>
+        <para><emphasis role="bold">A</emphasis> - <emphasis>not
+        used</emphasis></para>
       </listitem>
 
       <listitem>
@@ -374,8 +399,9 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">B00</emphasis> - multilanguage
-            dictionary</para>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=.core/.libs/App/B00.pm">B00</ulink></emphasis>
+            - Multilanguage dictionary</para>
           </listitem>
         </itemizedlist>
       </listitem>
