@@ -201,9 +201,8 @@ sub execute
 					WHERE
 						IDcategory IN ($catChildren)
 						AND domain='$env{db_domain}'
-						AND ((a410.lng='$env{lng}') || (a410.lng IS NULL))
+						AND ((a410.lng='$env{db_lng}') || (a410.lng IS NULL))
 						AND active!='D'
-						$tmplng
 				");
 				my $db1 = $main::DB{main}->Query("
 					SELECT
@@ -212,9 +211,8 @@ sub execute
 					WHERE
 						IDcategory IN ($catChildren)
 						AND domain='$env{db_domain}'
-						AND ((a410.lng='$env{lng}') || (a410.lng IS NULL))
+						AND ((a410.lng='$env{db_lng}') || (a410.lng IS NULL))
 						AND active!='D'
-						$tmplng
 				");
 				if(my %db1_line=$db1->fetchHash())
 				{
@@ -326,11 +324,10 @@ sub execute
 				COUNT(ID) AS item_count
 			FROM $env{db_410}.a410
 			WHERE
-				((IDcategory='') || (IDcategory IS NULL))
+				((IDcategory='0') ||(IDcategory='') || (IDcategory IS NULL))
 				AND domain='$env{db_domain}'
-				AND ((a410.lng='$env{lng}') || (a410.lng IS NULL))
+				AND ((a410.lng='$env{db_lng}') || (a410.lng IS NULL))
 				AND active!='D'
-				$tmplng
 		");
 		if(my %db1_line=$db1->fetchHash())
 		{
