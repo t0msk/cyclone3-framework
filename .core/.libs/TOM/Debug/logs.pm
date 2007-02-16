@@ -107,7 +107,10 @@ sub _log
 		close HND_LOG; # TODO: [Aben] uzavretie HND mozno zrusit
 	}
 	
-	if ($main::debug)
+	if (
+			$main::stdout && $main::debug ||
+			($main::stdout && $get[3] eq "stdout")
+		)
 	{
 		print color 'green';
 		print color 'bold' if $get[1]=~/^</;
@@ -165,6 +168,21 @@ sub _log
 	
 	return 1;
 };
+
+
+
+=head2 _log_stdout()
+
+Log message to STDOUT when $main::stdout is enabled. Used to log in console utils
+
+=cut
+
+sub _log_stdout
+{
+	return undef unless $main::stdout;
+	$_[2]="stdout";
+	_log(@_);
+}
 
 
 # main::_applog($urovne,"$text",$critique,$global);

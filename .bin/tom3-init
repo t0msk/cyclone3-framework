@@ -7,6 +7,8 @@ use utf8;
 
 BEGIN
 {
+	$main::debug=0;
+	$main::stdout=1;
 	$TOM::engine="bin";
 	require "/www/TOM/.core/.libs/TOM.pm";
 	$TOM::engine_ready=1;
