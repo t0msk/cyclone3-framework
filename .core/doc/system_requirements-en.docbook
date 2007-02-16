@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
+<article lang="sk">
+  <title>Cyclone3 Framework System Requirements</title>
+
+  <section>
+    <title>System</title>
+
+    <para></para>
+  </section>
+
+  <section>
+    <title>Perl libs</title>
+
+    <itemizedlist>
+      <listitem>
+        <para>Inline</para>
+      </listitem>
+
+      <listitem>
+        <para>MIME::Entity</para>
+      </listitem>
+
+      <listitem>
+        <para>&gt;=Proc::ProcessTable-0.41</para>
+      </listitem>
+
+      <listitem>
+        <para>XML::Generator</para>
+      </listitem>
+
+      <listitem>
+        <para>DateTime</para>
+      </listitem>
+
+      <listitem>
+        <para>SVG</para>
+      </listitem>
+
+      <listitem>
+        <para>DBD-Mysql</para>
+      </listitem>
+
+      <listitem>
+        <para>DBD-SQLite</para>
+      </listitem>
+
+      <listitem>
+        <para>FCGI</para>
+      </listitem>
+
+      <listitem>
+        <para>Text::Iconv</para>
+      </listitem>
+
+      <listitem>
+        <para>File::Type</para>
+      </listitem>
+
+      <listitem>
+        <para>Geo::IP</para>
+      </listitem>
+
+      <listitem>
+        <para>Parallel::ForkManager</para>
+      </listitem>
+
+      <listitem>
+        <para>Net::IRC</para>
+      </listitem>
+
+      <listitem>
+        <para>String::CRC32</para>
+      </listitem>
+
+      <listitem>
+        <para>XML::Sablotron</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section>
+    <title>Oracle</title>
+
+    <para>When you are using connection to Oracle with DBD::Oracle, you must
+    for utf-8 patche file <filename>oci8.c</filename></para>
+
+    <synopsis>case  96:                               /* CHAR         */
+         fbh-&gt;disize = fbh-&gt;dbsize*4;
+         if (CS_IS_UTF8(fbh-&gt;csid))
+             fbh-&gt;disize = fbh-&gt;dbsize * 4;
+         fbh-&gt;prec   = fbh-&gt;disize;
+         break;</synopsis>
+  </section>
+</article>

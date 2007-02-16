@@ -5,16 +5,6 @@
   <title>Inštalácia Cyclone3 framework</title>
 
   <articleinfo>
-    <authorgroup>
-      <author>
-        <firstname>Roman</firstname>
-
-        <surname>Fordinál</surname>
-
-        <email>roman.fordinal@comsultia.com</email>
-      </author>
-    </authorgroup>
-
     <revhistory>
       <revision>
         <revnumber>$Rev$</revnumber>
@@ -32,11 +22,14 @@
       <listitem>
         <para>Vytvorenie adresára pre Cyclone3:
         <filename>/www/TOM</filename></para>
+
+        <synopsis>su root
+mkdir -p /www/TOM
+chmod 777 /www/TOM</synopsis>
       </listitem>
 
       <listitem>
-        <para>Získanie Cyclone3 frame z trunku do
-        <filename>/www/TOM</filename></para>
+        <para>Získanie Cyclone3 Frameworku</para>
 
         <synopsis>svn co http://svn.comsultia.com/cyclone3/trunk/frame /www/TOM</synopsis>
       </listitem>
@@ -44,119 +37,200 @@
       <listitem>
         <para>Užívatelia</para>
 
-        <para>Zvolíme si skupinu v ktorej budú pôsobit Cyclone3 užívatelia (
-        samotný cyclone framework a developeri ). Defaultne sa tato group
-        nazýva <quote>cyclone3</quote> a je v premennej $TOM::group.
-        Konfiguráciou <filename>/www/TOM/_config/TOM.conf</filename> ju možno
-        zmeniť napr. na <quote>www</quote>.</para>
+        <para>Treba si zadefinovať skupinu v ktorej bude fungovať Cyclone3 a
+        taktiež vývojári. Defaultne je táto skupina nastavená ako
+        <quote>cyclone3</quote>. Taktiež užívateľ pod ktorým Cyclone3 funguje
+        je defaultne nastavený ako <quote>cyclone3</quote>.</para>
+
+        <para>Pokiaľ niekto potrebuje napríklad nastaviť užívateľa na
+        <quote>apache</quote> a skupinu na <quote>www</quote> (pri vývojárskej
+        jednoužívateľkej inštalácii býva najvhodnejšie nastavenie
+        <quote>cyclone3</quote>/<quote>users</quote>), môže toto
+        prekonfigurovať v súbore
+        <filename>/www/TOM/_config/TOM.conf</filename>.</para>
+
+        <synopsis>$TOM::user='cyclone3';
+$TOM::group='cyclone3';</synopsis>
+
+        <para>Pokiaľ nechcete meniť toto defaultné nastavenie, nemusíte nič v
+        <filename>TOM.conf</filename> meniť.</para>
+
+        <warning>
+          <para>Súbor <filename>/www/TOM/_config/TOM.conf</filename> v tejto
+          fázi ešte neexistuje, pre jeho vytvorenie stačí ak zadáte:</para>
+
+          <synopsis>cp /www/TOM/_config/TOM.conf.tmpl /www/TOM/_config/TOM.conf</synopsis>
+        </warning>
 
         <itemizedlist>
-          <listitem>
-            <para>uzivatel cyclone3 v groupe $group</para>
+          <title>Vytvorenie užívateľského prostredia:</title>
 
-            <para>uzivatel ma home vo /www/TOM</para>
+          <para>Predpokladajme že $user='cyclone3' a $group='cyclone3'</para>
+
+          <listitem>
+            <para>Vytvorenie užívateľa cyclone3</para>
+
+            <synopsis>su root
+groupadd cyclone3
+useradd cyclone3 -g cyclone3 -G wheel,www,cron -d /www/TOM
+passwd cyclone3
+</synopsis>
           </listitem>
 
           <listitem>
-            <para>uzivatel cyclone3 v groupe wheel</para>
+            <para>Pridanie užívateľa apache do groupy cyclone3</para>
+
+            <synopsis>usermod apache -a -G cyclone3</synopsis>
           </listitem>
 
           <listitem>
-            <para>pridanie uzivatela apache do groupy $group</para>
+            <para>Apache musí mať shell ( ak chceme robiť debugging z konzoly
+            web služieb )</para>
           </listitem>
 
           <listitem>
-            <para>pridanie uzivatelov co maju pracovat s cyclone3 do $group
+            <para>Pridanie užívateľov čo majú pracovať s cyclone3 do $group
             groupy</para>
+
+            <synopsis>usermod freeman -a -G cyclone3
+usermod oldman -a -G cyclone3
+</synopsis>
           </listitem>
         </itemizedlist>
       </listitem>
 
       <listitem>
-        <para>Pridanie cesty /www/TOM/.bin do PATH</para>
+        <para>Pridajte cestu <filename>/www/TOM/.bin</filename> do
+        <varname>$PATH</varname><synopsis>su root
+echo "PATH=/www/TOM/.bin" &gt; /etc/env.d/30cyclone
+echo "ROOTPATH=/www/TOM/.bin" &gt;&gt; /etc/env.d/30cyclone
+env-update</synopsis></para>
       </listitem>
 
       <listitem>
-        <para>nastavit adresar /www/TOM s pravami 777</para>
+        <para>Konfigurácia
+        <filename>/www/TOM/_config/TOM.conf</filename></para>
+
+        <para>Pokiaľ súbor neexistuje:</para>
+
+        <synopsis>cp /www/TOM/_config/TOM.conf.tmpl /www/TOM/_config/TOM.conf</synopsis>
+
+        <para>Defaultná konfigurácia by mala postačovať, pokiaľ nie, stačí si
+        otvoriť konfiguračný súbor a zmeniť ho podľa potreby.</para>
       </listitem>
 
       <listitem>
-        <para>nakonfigurovat /www/TOM/_config/TOM.conf</para>
+        <para>Nastavenie správnych práv pre Cyclone3 súbory</para>
+
+        <synopsis>su root
+tom3-chfiles -r
+</synopsis>
+
+        <para>Toto je prvý Cyclone3 príkaz ktorý vykonávate. Pokiaľ by
+        vyhlásil chybu chýbajúcej knižnice, doinštalujte ju a opakujte
+        vykonanie príkazu.</para>
       </listitem>
 
       <listitem>
-        <para>ako root spustit /www/TOM/.bin/tom3-chfiles -a</para>
+        <para>MySQL</para>
 
-        <para>doinstalovanie chybajucich perl kniznic</para>
-      </listitem>
+        <orderedlist spacing="compact">
+          <para>Nezabudnite, že MySQL by mal byť verzie &gt;=4.1.
+          Predpokladáme že databáza beží na localhost.</para>
 
-      <listitem>
-        <para>nastartovat MySQL &gt;=4.1</para>
-      </listitem>
-
-      <listitem>
-        <para>prava v mysql ( obsolete, avšak ešte nieje dostupná náhrada
-        )</para>
-
-        <para>mysql -h localhost -u root -p &lt;
-        /www/TOM/_data/mysql.sql</para>
-      </listitem>
-
-      <listitem>
-        <para>data v mysql ( obsolete, avšak ešte nieje dostupná náhrada
-        )</para>
-
-        <para>mysql -h localhost -u TOM &lt; /www/TOM/_data/TOM.sql</para>
-
-        <para>mysql -h localhost -u TOM &lt;
-        /www/TOM/\!example.tld/_data/example_tld.sql</para>
-      </listitem>
-
-      <listitem>
-        <para>pokus o spustenie core.tom v example.tld ako uzivatel
-        apache</para>
-
-        <para>doinstalovanie chybajucich perl kniznic</para>
-      </listitem>
-
-      <listitem>
-        <para>pokus o vykonanie cron scriptu pod uzivatelom cyclone3</para>
-
-        <para>cd /www/TOM/.core</para>
-
-        <para>./cron 1min</para>
-
-        <para>doinstalovanie chybajucich perl kniznic</para>
-      </listitem>
-
-      <listitem>
-        <para>apache</para>
-
-        <orderedlist>
           <listitem>
-            <para>nainstalovat mod_auth_external</para>
+            <para>Overte si či databáza beží</para>
           </listitem>
 
           <listitem>
-            <para>pridat odkaz na konfiguracie v Cyclone3 z httpd.conf</para>
+            <para>Vytvorenie užívateľa <quote>TOM</quote> do MySQL</para>
 
-            <para>Include /www/TOM/.core/_config/httpd.conf</para>
-
-            <para>Include /www/TOM/_config/httpd.virtual.conf</para>
+            <synopsis>mysql -h localhost -u root -p &lt; /www/TOM/_data/mysql.sql</synopsis>
           </listitem>
 
           <listitem>
-            <para>editacia /www/TOM/_config/httpd.virtual.conf</para>
+            <para>Vytvorenie tabuľky <quote>TOM</quote></para>
+
+            <synopsis>mysql -h localhost -u TOM &lt; /www/TOM/_data/TOM.sql</synopsis>
+          </listitem>
+
+          <listitem>
+            <para>Vytvorenie tabuľky <quote>example_tld</quote> pre
+            example.tld portál</para>
+
+            <synopsis>mysql -h localhost -u TOM &lt; /www/TOM/\!example.tld/_data/example_tld.sql</synopsis>
+          </listitem>
+
+          <listitem>
+            <para>Upgrade databázových štruktúr</para>
+
+            <synopsis>tom-chtables --db_name=TOM
+tom-chtables --domain=example.tld
+</synopsis>
           </listitem>
         </orderedlist>
       </listitem>
 
       <listitem>
-        <para>cron system</para>
+        <para>Test spustenia webovej služby z konzoly</para>
+
+        <synopsis>su apache
+cd /www/TOM/\!example.tld/\!www/
+perl core.tom
+</synopsis>
+
+        <para>Pokiaľ by výstupom bola chyba chýbajúcej knižnice, doinštalujte
+        ju a opakujte vykonanie príkazu.</para>
+      </listitem>
+
+      <listitem>
+        <para>Test spustenia cron služby z konzoly</para>
+
+        <synopsis>su cyclone3
+cd /www/TOM/.core
+./cron 1min
+</synopsis>
+
+        <para>Pokiaľ by výstupom bola chyba chýbajúcej knižnice, doinštalujte
+        ju a opakujte vykonanie príkazu.</para>
+      </listitem>
+
+      <listitem>
+        <para>Konfigurácia Apache</para>
 
         <orderedlist>
           <listitem>
-            <para>ako uzivatel cyclone3 crontab -e</para>
+            <para>Nainštalujte mod_auth_external</para>
+          </listitem>
+
+          <listitem>
+            <para>Pridajte odkaz na Cyclone3 <filename>httpd.conf</filename>
+            konfigurácie</para>
+
+            <synopsis>echo "Include /www/TOM/.core/_config/httpd.conf" &gt;&gt; /etc/apache2/httpd.conf
+echo "Include /www/TOM/.core/_config/httpd.virtual.conf" &gt;&gt; /etc/apache2/httpd.conf</synopsis>
+          </listitem>
+
+          <listitem>
+            <para>Upravte
+            <filename>/www/TOM/.core/_config/httpd.virtual.conf</filename>
+            podľa potreby.</para>
+          </listitem>
+        </orderedlist>
+      </listitem>
+
+      <listitem>
+        <para>Konfigurácia cron systému</para>
+
+        <orderedlist>
+          <listitem>
+            <para>Ako užívateľ cyclone3 crontab -e</para>
+
+            <synopsis>su cyclone3
+crontab -e
+</synopsis>
+
+            <para>Vložte nasledujúci blok textu a uložte</para>
 
             <synopsis>*    *    * * * cd /www/TOM/.core/;nice -n 20 ./cron 1min &gt; /dev/null 2&gt; /dev/null
 */5  *    * * * cd /www/TOM/.core/;nice -n 20 ./cron 5min &gt; /dev/null 2&gt; /dev/null
@@ -167,108 +241,24 @@
 20    2    */5 * * cd /www/TOM/.core/;nice -n 20 ./cron 5day &gt; /dev/null 2&gt; /dev/null
 30    3    * * 1 cd /www/TOM/.core/;nice -n 20 ./cron 7day &gt; /dev/null 2&gt; /dev/null
 40    4    1 * * cd /www/TOM/.core/;nice -n 20 ./cron 1month &gt; /dev/null 2&gt; /dev/null</synopsis>
+
+            <para>V adresári <filename>/www/TOM/_logs/</filename> by ste mali
+            vidieť ako sa tvoria nové logy zo spúšťaných cronov, pokiaľ nie,
+            niekde nastala chyba ( najčastejšie sú to práva ).</para>
           </listitem>
         </orderedlist>
       </listitem>
 
       <listitem>
-        <para>sudo</para>
+        <para>Sudo</para>
 
-        <orderedlist>
-          <listitem>
-            <para>pridať do sudoers pre skupinu $group commandy
-            /www/TOM/.bin/tom3-chfiles a /www/TOM/.bin/tom3-restart</para>
-          </listitem>
-        </orderedlist>
+        <para>Pokiaľ Cyclone3 používa viacero vývojárov, sudo zabezpečuje to,
+        že privilegované príkazy môžu vykonávať i títo užívatelia. Ide najmä o
+        príkazy <command>tom3-chfiles</command> a
+        <command>tom3-restart</command>.</para>
+
+        <para>Konfiguráciu už necháme na vás.</para>
       </listitem>
     </orderedlist>
   </section>
-
-  <appendix>
-    <title>Voliteľné inštalácie</title>
-
-    <section>
-      <title>Oracle</title>
-
-      <para>Ak sa inštaluje oracle driver DBD::Oracle, treba pre správne
-      fungovanie utf-8 upraviť súbor oci8.c</para>
-
-      <synopsis>case  96:                               /* CHAR         */
-         fbh-&gt;disize = fbh-&gt;dbsize*4;
-         if (CS_IS_UTF8(fbh-&gt;csid))
-             fbh-&gt;disize = fbh-&gt;dbsize * 4;
-         fbh-&gt;prec   = fbh-&gt;disize;
-         break;</synopsis>
-    </section>
-  </appendix>
-
-  <appendix>
-    <title>Závislosti</title>
-
-    <itemizedlist>
-      <listitem>
-        <para>Inline</para>
-      </listitem>
-
-      <listitem>
-        <para>MIME::Entity</para>
-      </listitem>
-
-      <listitem>
-        <para>&gt;=Proc::ProcessTable-0.41</para>
-      </listitem>
-
-      <listitem>
-        <para>XML::Generator</para>
-      </listitem>
-
-      <listitem>
-        <para>DateTime</para>
-      </listitem>
-
-      <listitem>
-        <para>SVG</para>
-      </listitem>
-
-      <listitem>
-        <para>DBD-Mysql</para>
-      </listitem>
-
-      <listitem>
-        <para>DBD-SQLite</para>
-      </listitem>
-
-      <listitem>
-        <para>FCGI</para>
-      </listitem>
-
-      <listitem>
-        <para>Text::Iconv</para>
-      </listitem>
-
-      <listitem>
-        <para>File::Type</para>
-      </listitem>
-
-      <listitem>
-        <para>Geo::IP</para>
-      </listitem>
-
-      <listitem>
-        <para>Parallel::ForkManager</para>
-      </listitem>
-
-      <listitem>
-        <para>Net::IRC</para>
-      </listitem>
-
-      <listitem>
-        <para>String::CRC32</para>
-      </listitem>
-
-      <listitem>
-        <para>XML::Sablotron</para>
-      </listitem>
-    </itemizedlist>
-  </appendix>
 </article>
