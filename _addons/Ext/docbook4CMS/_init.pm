@@ -39,6 +39,11 @@ Convert DocBook XML content into XHTML content
   	'dir_to' => '/www/TOM/!example.tld/!media/grf/temp'
   	'uri' => 'http://media.example.tld/grf/temp'
   }
+  
+  'translate_images' =>
+  {
+  	'prefix' => 'http://media.example.tld/grf/'
+  }
 
 =cut
 
@@ -91,9 +96,7 @@ sub docbook2xhtml
 		$output=~s/<img(.*?)src="(.*?)"/'<img'.$1.'src="'.(
 			_docbook2xhtml_translate_image(
 				$2,
-				$env{'translate_images'}{'dir_from'},
-				$env{'translate_images'}{'dir_to'},
-				$env{'translate_images'}{'uri'}
+				$env{'translate_images'}
 			)
 		).'"'/eg;
 	}
@@ -106,26 +109,40 @@ sub docbook2xhtml
 sub _docbook2xhtml_translate_image
 {
 	my $link=shift;
-	my $dir_from=shift;
-	my $dir_to=shift;
-	my $uri=shift;
-	main::_log("link='$link'");
+	my $env=shift;
 	
-	my $hash=Utils::vars::genhash(8);
-	
-	my $from=$TOM::P.'/_addons/Ext/xuladmin/help/'.$link;
-	my $hash=Digest::MD5::md5_base64($from);
-	my $to=$dir_to.'/'.$hash.'-'.$link;
-	my $uri_to=$uri.'/'.$hash.'-'.$link;
-	
-	main::_log("from='$from' to='$to'");
-	
-	if (-e $to)
+	main::_log("input 'link'='$link'");
+	foreach (keys %{$env})
 	{
-		return $uri_to;
+		main::_log("input '$_'='$env->{$_}'");
 	}
 	
-	File::Copy::copy($from,$to);
+	my $uri_to;
+	
+	if ($env->{'prefix'})
+	{
+		$uri_to=$env->{'prefix'}.'/'.$link;
+	}
+	elsif ($env->{'dir_to'})
+	{
+		my $hash=Utils::vars::genhash(8);
+		my $from=$TOM::P.'/'.$env->{'dir_from'}.'/'.$link;
+		my $hash=Digest::MD5::md5_base64($from);
+		my $to=$env->{'dir_to'}.'/'.$hash.'-'.$link;
+		my $uri_to=$env->{'uri'}.'/'.$hash.'-'.$link;
+		
+		main::_log("from='$from' to='$to'");
+		
+		if (-e $to)
+		{
+			return $uri_to;
+		}
+		
+		File::Copy::copy($from,$to);
+	}
+	
+=head1
+=cut
 	
 	return $uri_to;
 }
