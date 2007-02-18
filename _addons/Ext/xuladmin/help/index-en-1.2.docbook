@@ -2,66 +2,100 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
 <article>
-  <title>What is DocBook?</title>
+  <title>Welcome to Cyclone CMS Help.</title>
 
   <section>
-    <title>DocBook - ideal solution for content management</title>
+    <title>About Cyclone CMS</title>
 
-    <para><emphasis role="bold">Do you want to store, share and convert your
-    electronic documents more effectively? The answer is at hand: use the
-    DocBook content and documentation standard.</emphasis></para>
+    <para>Cyclone CMS is a powerful multiuser content management user
+    interface focused on ease of use, functionality and user comfort. Using
+    Cyclone CMS you can easily create, manage and modify the content of your
+    website presentation.</para>
 
-    <para>DocBook is an XML standard for content and documentation interchange
-    since 1991. At the beginning only its designers from HaL Computers and the
-    publisher O'Reilly used this format to store content for their
-    publications. In the 90s DocBook became popular and many big name
-    companies such as Novell, Digital, Hewlett-Packard, SCO or Fujitsu adopted
-    it. In the late 90s DocBook was already considered a well designed
-    standard as it was adopted by the OASIS open standards
-    organization.</para>
+    <figure>
+      <title>Blee</title>
 
-    <para>Currently DocBook is mainly used as a standard for storing
-    documentation, articles, publications and for storing structured content
-    in general. DocBook can even be used to create interactive
-    presentations.</para>
-
-    <para>Another advantage of using DocBook is its XML origin which makes it
-    ideal for sharing electronic documents. Information in DocBook does not
-    contain formatting and all content is divided into clear semantic
-    blocks.</para>
-
-    <para>The main and most useful advantage of using DocBook is that it can
-    be easily converted to any other standard distribution formats such as
-    HTML, RTF, DOC, OpenDocument and many more. From one source document many
-    others can be generated with custom formatting. DocBook supports
-    autogeneration of content lists, bibliography, links and many other useful
-    features.</para>
-
-    <para>DocBook dramatically reduces the time needed to write a document
-    because the writer is concerned only with the content and not with
-    formatting which is automatically handled by conversion tools.</para>
-
-    <para>DocBook is a timeless data format which relies on the XML format
-    which can be used with any XML tools. All information stored in this
-    format is usable anytime.</para>
-
-    <blockquote>
-      <attribution>Roman Fordinál</attribution>
-
-      <para>DocBook is a different view on document creation and storeage. At
-      first we used docbook to store our technical documentation but today we
-      use it for every document that leaves our company. For many companies it
-      is important to keep a consistent CI formatting for every document. With
-      DocBook your employees don't need to follow any formatting as it is
-      handled by conversion tools.</para>
-    </blockquote>
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="cyclone-logo.png" />
+        </imageobject>
+      </mediaobject>
+    </figure>
   </section>
 
   <section>
-    <title>Questions</title>
+    <title>Overview</title>
 
-    <para>If you have any questions about the <emphasis role="bold">DocBook
-    standard</emphasis> or its integration in information systems feel free to
-    contact us by <ulink url="?|?type=contact">contact page</ulink>.</para>
+    <para><itemizedlist>
+        <listitem>
+          <para><emphasis><ulink
+          url="?|?file=content">Content</ulink></emphasis></para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis><ulink
+          url="?|?file=preview">Preview</ulink></emphasis></para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis><ulink
+          url="?|?file=support">Support</ulink></emphasis></para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis><ulink
+          url="?|?file=statistics">Statistics</ulink></emphasis></para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis><ulink
+          url="?|?file=sitemap">Sitemap</ulink></emphasis></para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis><ulink
+          url="?|?file=editors">Editors</ulink></emphasis></para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis><ulink
+          url="?|?file=users">Users</ulink></emphasis></para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis><ulink
+          url="?|?file=directmail">DirectMail</ulink></emphasis></para>
+        </listitem>
+      </itemizedlist></para>
+  </section>
+
+  <section>
+    <title>Tutorials</title>
+
+    <para><itemizedlist>
+        <listitem>
+          <para>Tutorial: New Article</para>
+        </listitem>
+
+        <listitem>
+          <para>Tutorial: New Image</para>
+        </listitem>
+
+        <listitem>
+          <para>Tutorial: New File</para>
+        </listitem>
+
+        <listitem>
+          <para>Tutorial: New Pool</para>
+        </listitem>
+
+        <listitem>
+          <para>Tutorial: New Source</para>
+        </listitem>
+
+        <listitem>
+          <para>Tutorial: New Content Category</para>
+        </listitem>
+      </itemizedlist></para>
   </section>
 </article>

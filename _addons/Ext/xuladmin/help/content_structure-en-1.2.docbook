@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>Content View - Content Structure.</title>
+
+  <section>
+    <title>Language</title>
+
+    <para>2DO:</para>
+  </section>
+
+  <section>
+    <title>Tree List</title>
+
+    <para>2DO:</para>
+  </section>
+
+  <section>
+    <title>Related help</title>
+
+    <itemizedlist>
+      <listitem>
+        <para><emphasis><ulink
+        url="?|?file=language">Language</ulink></emphasis></para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis><ulink url="?|?file=content_tree_list">Tree
+        List</ulink></emphasis></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink url="?|?file=content_list">List</ulink></para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section>
+    <title>Related Tutorials</title>
+
+    <para><itemizedlist>
+        <listitem>
+          <para>Tutorial: New Content Category</para>
+        </listitem>
+      </itemizedlist></para>
+  </section>
+</article>

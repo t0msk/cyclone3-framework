@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>Content View.</title>
+
+  <section>
+    <title>Content</title>
+
+    <para>The Content part of the Cyclone CMS manages all content including
+    published files, articles, images and sources. Content screen is verticaly
+    divided into two parts: <emphasis><ulink
+    url="?|?file=content_structure">Content Structure</ulink></emphasis> and
+    <ulink url="???"><emphasis>Work Area</emphasis></ulink>.</para>
+
+    <para><emphasis><ulink url="?|?file=content_structure">Content
+    Structure</ulink></emphasis> is dominated by an dynamic content tree
+    listing with language dropdown selector on top. Changing the language
+    automatcaly reloads the <emphasis><ulink
+    url="?|?file=content_structure">Content Structure</ulink></emphasis> tree.
+    All content inside the tree is divided into five major branches: Articles,
+    Pools, Image, Files and Sources.</para>
+
+    <para><ulink url="???"><emphasis>Work Area</emphasis></ulink> is placed on
+    the right side of the screen. This area always contains a <emphasis><ulink
+    url="?|?file=content_list">List</ulink></emphasis> tabpannel whith listed
+    content items such as articles, files or pictures. Double clicking any
+    content item in the <emphasis><ulink
+    url="?|?file=content_list">List</ulink></emphasis> opens up another
+    tab-panel with details about the item.</para>
+  </section>
+
+  <section>
+    <title>Related help</title>
+
+    <itemizedlist>
+      <listitem>
+        <para><emphasis><ulink url="?|?file=content_structure">Content
+        Structure</ulink></emphasis></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink url="???"><emphasis>Work Area</emphasis></ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink url="?|?file=content_list">List</ulink></para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section>
+    <title>Related Tutorials</title>
+
+    <para><itemizedlist>
+        <listitem>
+          <para>Tutorial: New Article</para>
+        </listitem>
+
+        <listitem>
+          <para>Tutorial: New Image</para>
+        </listitem>
+
+        <listitem>
+          <para>Tutorial: New File</para>
+        </listitem>
+
+        <listitem>
+          <para>Tutorial: New Pool</para>
+        </listitem>
+
+        <listitem>
+          <para>Tutorial: New Source</para>
+        </listitem>
+
+        <listitem>
+          <para>Tutorial: New Content Category</para>
+        </listitem>
+      </itemizedlist></para>
+  </section>
+</article>
