@@ -20,7 +20,7 @@ BEGIN
 	
 	$main::request_code="00000000";
 	# debug
-	$main::debug=1 if ($ENV{'TERM'} && not defined $main::debug);
+	$main::stdout=1 if ($ENV{'TERM'} && not defined $main::stdout);
 	# hostname
 	chomp ($TOM::hostname=`hostname`);
 	# Engine
