@@ -20,6 +20,7 @@
 BEGIN
 {
 	$TOM::engine='pub';
+	$main::debug=1 if $ENV{'TERM'};
 	require "/www/TOM/.core/.libs/TOM.pm";
 }
 
