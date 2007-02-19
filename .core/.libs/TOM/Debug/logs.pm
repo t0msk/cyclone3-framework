@@ -10,6 +10,8 @@ use Utils::datetime;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Term::ANSIColor;
 
+
+
 sub _log
 {
 	return undef if $TOM::DEBUG_log_file==-1;
@@ -51,7 +53,10 @@ sub _log
 	);
 	
 	$get[3]=$TOM::engine unless $get[3];
-	$get[1]=~s|[\n\r\t]| |g;
+	#$get[1]=~s|([\n\r\t]| |g;
+	$get[1]=~s|\n|\\n|g;
+	$get[1]=~s|\r|\\r|g;
+	$get[1]=~s|\t|\\t|g;
 	
 	my @ref=("+","-","+","+","-");
 	
@@ -112,6 +117,7 @@ sub _log
 			($main::stdout && $get[3] eq "stdout")
 		)
 	{
+		$msg=" ".(" " x $get[0]).$ref[$get[2]].' '.$get[1] unless $main::debug;
 		print color 'green';
 		print color 'bold' if $get[1]=~/^</;
 		print color 'red' if $ref[$get[2]] eq '-';
