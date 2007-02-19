@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
 use Mysql;
-BEGIN {require "/www/TOM/.bin/tom3-init";$main::debug=0;}
+BEGIN {require "/www/TOM/.bin/tom3-init";}
 
 use TOM::Database::connect;
 use TOM::Database::SQL;
@@ -28,7 +28,7 @@ $FORM{'db_h'}='main' unless $FORM{'db_h'};
 $TOM::DB{'main'}{'name'}="TOM";
 TOM::Database::connect::multi($FORM{'db_h'}) || die "can't connect";
 
-print "connected '$FORM{'db_h'}' database handler\n";
+main::_log_stdout "connected '$FORM{'db_h'}' database handler";
 
 
 if ($FORM{'domain'})
@@ -36,13 +36,19 @@ if ($FORM{'domain'})
 	require $tom::P."/local.conf";
 }
 
-TOM::Database::SQL::file::install(
-	$FORM{'name'},
-	'db_h'=>$FORM{'db_h'},
-	'db_name'=>$TOM::DB{$FORM{'db_h'}}{'name'},
-	'-compare' => 1
-);
+print color 'reset bold yellow';
 
+foreach my $name (split(',',$FORM{'name'}))
+{
+	main::_log_stdout "installing '$name' to '$TOM::DB{$FORM{'db_h'}}{'name'}'";
+	TOM::Database::SQL::file::install(
+		$name,
+		'db_h'=>$FORM{'db_h'},
+		'db_name'=>$TOM::DB{$FORM{'db_h'}}{'name'},
+		'-compare' => 1
+	);
+	main::_log_stdout "successfully installed";
+}
 
 
 &exit();
