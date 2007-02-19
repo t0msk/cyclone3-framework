@@ -361,6 +361,7 @@ sub install_table
 	my $database=$2;
 	my $table=$3;
 	main::_log("database='$database' table='$table' in db_h='$header->{'db_h'}'");
+	main::_log_stdout("installing database='$database' table='$table' in db_h='$header->{'db_h'}'");
 	
 	TOM::Database::connect::multi($header->{'db_h'}) unless $main::DB{$header->{'db_h'}};
 	
