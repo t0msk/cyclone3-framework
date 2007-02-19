@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
+<article lang="sk">
+  <title>Create and start new domain service</title>
+
+  <section>
+    <title>Create and configure</title>
+
+    <orderedlist>
+      <listitem>
+        <para>Export domain template from subverion into:
+        <filename>/www/TOM</filename></para>
+
+        <synopsis>cd /www/TOM/
+svn export http://svn.comsultia.com/cyclone3/templates/business/docroot \!domain.tld
+svn export http://svn.comsultia.com/cyclone3/templates/business/media \!domain.tld/\!media</synopsis>
+      </listitem>
+
+      <listitem>
+        <para>Configure domain</para>
+
+        <synopsis>vim \!domain.tld/master.conf
+vim \!domain.tld/local.conf
+</synopsis>
+      </listitem>
+
+      <listitem>
+        <para>Need you XULadmin backend to manage this domain service?</para>
+
+        <synopsis>cd \!domain.tld
+svn co http://svn.comsultia.com/cyclone3/xuladmin/docroot-tmpl \!cyclone
+cp \!cyclone/local.conf.tmpl \!cyclone/local.conf
+vim \!cyclone/local.conf
+</synopsis>
+      </listitem>
+
+      <listitem>
+        <para>Create database source for domain</para>
+
+        <synopsis>mysql -h localhost -u root -p
+CREATE DATABASE domain_tld;
+</synopsis>
+      </listitem>
+
+      <listitem>
+        <para>Fill required tables into database, and check
+        installation</para>
+
+        <synopsis>tom3-db_install --domain=domain.tld --name=a120,a210,a400,a410,a500,a540
+tom3-chtables --domain=domain.tld</synopsis>
+      </listitem>
+
+      <listitem>
+        <para>Add your account into XULadmin backend ( cyclone.domain.tld
+        )</para>
+
+        <synopsis>tom3-cron --domain=domain.tld ---global=1 ---category=300 ---name=new --login=username --pass=password</synopsis>
+      </listitem>
+
+      <listitem>
+        <para>Fix file permissions</para>
+
+        <synopsis>cd /www/TOM
+sudo tom3-chfiles -t
+cd \!domain.tld
+sudo tom3-chfiles -r
+</synopsis>
+      </listitem>
+
+      <listitem>
+        <para>Add domain services into apache virtual hosts</para>
+
+        <synopsis>vim /www/TOM/_config/httpd.virtual.conf</synopsis>
+
+        <para>Add these lines:</para>
+
+        <synopsis>#######################################################################
+
+&lt;VirtualHost 127.0.0.1:80&gt;
+        ServerName www.domain.tld
+        ServerAlias domain.tld
+        DocumentRoot /usr/www/TOM/!domain.tld/!www
+        CustomLog /usr/www/TOM/_logs/httpd/www_domain_tld.acc.server1.log combined
+        &lt;Directory /usr/www/TOM/!domain.tld/!www&gt;
+                AllowOverride All
+        &lt;/Directory&gt;
+&lt;/VirtualHost&gt;
+
+&lt;VirtualHost 127.0.0.1:80&gt;
+        ServerName cyclone.domain.tld
+        DocumentRoot /usr/www/TOM/!domain.tld/!cyclone/!www
+        CustomLog /usr/www/TOM/_logs/httpd/cyclone_domain_tld.server1.log combined
+        &lt;Directory /usr/www/TOM/!domain.tld/!cyclone/!www&gt;
+                Options FollowSymlinks ExecCGI
+                AllowOverride All
+        &lt;/Directory&gt;
+&lt;/VirtualHost&gt;</synopsis>
+      </listitem>
+    </orderedlist>
+  </section>
+
+  <section>
+    <title>Start</title>
+
+    <para>Just:</para>
+
+    <synopsis>/etc/init.d/apache2 stop
+/etc/init.d/apache2 start
+</synopsis>
+  </section>
+</article>
