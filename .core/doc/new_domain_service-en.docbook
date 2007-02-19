@@ -20,8 +20,10 @@ svn export http://svn.comsultia.com/cyclone3/templates/business/media \!domain.t
       <listitem>
         <para>Configure domain</para>
 
-        <synopsis>vim \!domain.tld/master.conf
-vim \!domain.tld/local.conf
+        <synopsis>vim \!domain.tld/<ulink
+            url="?|?section=source-doc&amp;file=!example.tld/master.conf">master.conf</ulink>
+vim \!domain.tld/<ulink
+            url="?|?section=source-doc&amp;file=!example.tld/local.conf">local.conf</ulink>
 </synopsis>
       </listitem>
 
