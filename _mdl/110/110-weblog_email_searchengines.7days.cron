@@ -6,25 +6,57 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
-#use App::400;
-#use App::400::SQL::a400;
 
-#use Chart;
-#use Chart::2D::lines;
-#use Chart::2D::columns;
-#use Chart::2D::ring;
+=head1 NAME
 
-#use Net::HTTP::LiteAgent;
+110-weblog_email_searchengines.7days.cron
+
+=head1 DEPENDENCIES
+
+Libraries:
+
+ TOM::Net::HTTP::CGI
+ TOM::Net::HTTP
+ TOM::Net::HTTP::UserAgent
+ TOM::Net::HTTP::referer
+ TOM::Database::connect
+ Int::charsets::encode
+
+=head1 DESCRIPTION
+
+This cron sends 4 types of search engine statistics in one email:
+
+=over
+
+=item
+
+1. domains (all non search engine webs that links to the domain)
+
+=item
+
+2. search engines
+
+=item
+
+3. keywords
+
+=item
+
+4. phrases
+
+=back
+
+=head1 PERIOD
+
+Weekly, week summary
+
+=cut
 
 use TOM::Net::HTTP::CGI;
 use Int::charsets::encode;
-
 use TOM::Net::HTTP;
 use TOM::Net::HTTP::UserAgent;
 use TOM::Net::HTTP::referer;
-
-#use Utils::datetime;
-#use App::1B0;
 use TOM::Database::connect;
 
 use strict;
@@ -32,38 +64,6 @@ use strict;
 sub execute
 {
  my %env=@_;
- 
-=head1
-	my $val='q=IT+kari%C3%A9ra&hl=sk&lr=&cr=countrySK&start=40&sa=N';
-	
-	my %FORM=TOM::Net::HTTP::CGI::GetQuery($val);
-	
-	print "$FORM{q}\n";
-	
-#	if (utf8::is_utf8($FORM{'q'}))
-#	{
-#		print "je utf8\n";
-#	}
-#	utf8::decode($FORM{'q'});
-	if (utf8::is_utf8($FORM{'q'}))
-	{
-		print "SUPER je utf8\n";
-	}
-	
-	$FORM{'q'}=Int::charsets::encode::UTF8_ASCII2($FORM{'q'});
-	
-	Int::charsets::encode::UTF8_ASCII2('čačané');
-	
-#	while ($FORM{'q'}=~s/^(.)//)
-#	{
-#		print "-$1\n";
-#	}
-	
-	print "$FORM{q}\n";
-	
-	
- return 1;
-=cut
  
  TOM::Database::connect::multi("stats");
  
@@ -562,6 +562,18 @@ $doc.="</table></div>\n";
  return 1;
  }
 
+=head1 SEE ALSO
 
+L<110-weblog_email_searchengines.1month.cron|source-doc/"_mdl/110/110-weblog_email_searchengines.1month.cron">
+
+=cut
+
+our $authors = 'matej.gregor@comsultia.com';
+
+=head1 AUTHOR
+
+Matej Gregor (matej.gregor@comsultia.com)
+
+=cut
 
 1;
