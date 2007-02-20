@@ -19,6 +19,7 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
 	
+	die "can'open this file='$env{'file'}'" if $env{'file'}=~/\.\./;
 	$env{'file'}='index' unless $env{'file'};
 	
 	my $env_file;
@@ -95,7 +96,14 @@ sub execute
 	while ($xhtml=~s/\?\|\?(.*?)"/<!TMP-$hash-$i!>/)
 	{
 		$lnk[$i]=$1;
-		$lnk[$i].="&type=$main::FORM{'type'}&version=$env{'version'}&lng=$env{'lng'}";
+		if ($env{'query_string_full'})
+		{
+			$lnk[$i]=$main::ENV{'QUERY_STRING_FULL'}.'&'.$lnk[$i];
+		}
+		else
+		{
+			$lnk[$i].="&type=$main::FORM{'type'}&version=$env{'version'}&lng=$env{'lng'}";
+		}
 		$i++;
 	}
 	$xhtml=~s/<!TMP-$hash-(\d+)!>/?|?$lnk[$1]"/g;
