@@ -81,7 +81,7 @@ sub execute
 
  $env{to_email} = $TOM::contact{'stats'}.";".$TOM::contact{'TOM'};
  $env{to_email} = TOM::Utils::vars::unique_split( $env{to_email} );
- $env{to_email} = "gregor\@webcom.sk";
+ #$env{to_email} = "gregor\@webcom.sk";
 
 my $pics = <<"PICS";
 Content-Type: image/gif;
