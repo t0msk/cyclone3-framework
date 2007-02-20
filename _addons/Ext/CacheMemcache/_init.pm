@@ -1,5 +1,5 @@
 #!/bin/perl
-package Ext::Cache_memcache;
+package Ext::CacheMemcache;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
