@@ -32,11 +32,11 @@ BEGIN
 		close (HND);
 	}
 	
-	if (not -e $TOM::P.'/_config/ITst.key')
+	if (not -e $tom::P.'/ITst.key')
 	{
 		main::_log("generating ITst.key");
 		my $key=TOM::Utils::vars::genhash(2048);
-		open(HND,'>'.$TOM::P.'/_config/ITst.key') || die "$!";
+		open(HND,'>'.$tom::P.'/ITst.key') || die "$!";
 		print HND $key;
 		close (HND);
 	}
