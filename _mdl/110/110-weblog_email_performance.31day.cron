@@ -1,7 +1,55 @@
 #!/bin/perl
 # USE UTF-8 !!!
 package CRON::module;
+use TOM;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
 use strict;
+
+=head1 NAME
+
+110-weblog_email_searchengines.7days.cron
+
+=head1 DEPENDENCIES
+
+Libraries:
+
+ Ext::EmailGraph::_init
+ TOM::Net::email
+ TOM::Utils::vars
+ TOM::Utils::datetime
+ TOM::Database::connect
+ TOM::Database::SQL
+
+3-rd party libraries:
+
+ MIME::Entity
+ DateTime
+
+=head1 DESCRIPTION
+
+This cron sends information about average request from all domains together.
+
+It is according to newest standards.
+
+=head1 PERIOD
+
+Monthly, with 2 parts:
+
+=over
+
+=item
+
+graph by (31) days
+
+=item
+
+graph by (31) weeks
+
+=back
+
+=cut
 
 use Ext::EmailGraph::_init;
 use MIME::Entity;
@@ -242,5 +290,13 @@ sub execute
 	else
 	{ main::_log('email not sent'); }
 }
+
+our $authors = 'matej.gregor@comsultia.com';
+
+=head1 AUTHOR
+
+Matej Gregor (matej.gregor@comsultia.com)
+
+=cut
 
 1;
