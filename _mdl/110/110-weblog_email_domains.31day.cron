@@ -9,7 +9,7 @@ use strict;
 
 =head1 NAME
 
-110-weblog_email_domains.1month.cron
+110-weblog_email_domains.31day.cron
 
 =head1 DEPENDENCIES
 
