@@ -171,10 +171,18 @@ sub install
 		{
 			$filename=$tom::P.'/.libs/App/'.$what.'/a'.$what.'_struct.sql';
 		}
+		elsif (-e $tom::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
+		{
+			$filename=$tom::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql';
+		}
 		# or in global library
 		elsif (-e $TOM::P.'/.core/.libs/App/'.$what.'/a'.$what.'_struct.sql')
 		{
 			$filename=$TOM::P.'/.core/.libs/App/'.$what.'/a'.$what.'_struct.sql';
+		}
+		elsif (-e $TOM::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
+		{
+			$filename=$TOM::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql';
 		}
 		else
 		{
