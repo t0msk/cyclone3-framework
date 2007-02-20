@@ -175,7 +175,7 @@ our @setit_F=
 	
 	['\.core\/.*\.so$'                 ,".core so"                    ,"660","$user_www:$group"],
 	
-	['\.RFC$'                          ,"RFC files"                   ,"660","$user_www:$group"],
+	['\.(RFC|docbook)$'                ,"documentation files"         ,"660","$user_www:$group"],
 	['\/master\.conf$'                 ,"master conf"                 ,"660","$user_www:$group"],
 	['\/local\.conf$'                  ,"local conf"                  ,"660","$user_www:$group"],
 	['\/rewrite\.conf$'                ,"rewrite conf"                ,"660","$user_www:$group"],
