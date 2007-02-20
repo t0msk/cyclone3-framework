@@ -1,7 +1,41 @@
 #!/bin/perl
 # USE UTF-8 !!!
 package CRON::module;
+use TOM;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
 use strict;
+
+=head1 NAME
+
+110-weblog_email_domains.1month.cron
+
+=head1 DEPENDENCIES
+
+Libraries:
+
+ TOM::Utils::datetime
+ Utils::datetime
+
+3-rd party libraries:
+
+ Time::Local
+
+=head1 DESCRIPTION
+
+B<Old version>
+
+This cron sends information about daily visits for certain domain in graph.
+
+And also about other information related to visits as avegare visits, direct visits ...
+
+=head1 PERIOD
+
+Monthly, by days
+
+=cut
+
 use TOM::Utils::datetime;
 use Utils::datetime;
 use Time::Local;
@@ -613,5 +647,23 @@ SUMMARY
 	}
  
  return 1}
+
+=head1 SEE ALSO
+
+L<110-weblog_email_domain.1day.cron|source-doc/"_mdl/110/110-weblog_email_domain.1day.cron">
+
+L<110-weblog_email_domains.1day.cron|source-doc/"_mdl/110/110-weblog_email_domains.1day.cron">
+
+L<110-weblog_email_domains.1month.cron|source-doc/"_mdl/110/110-weblog_email_domains.1month.cron">
+
+=cut
+
+our $authors = 'matej.gregor@comsultia.com';
+
+=head1 AUTHOR
+
+Matej Gregor (matej.gregor@comsultia.com)
+
+=cut
 
 1;

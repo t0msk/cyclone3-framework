@@ -634,6 +634,16 @@ SUMMARY
 	return 1;
 }
 
+=head1 SEE ALSO
+
+L<110-weblog_email_domain.1day.cron|source-doc/"_mdl/110/110-weblog_email_domain.1day.cron">
+
+L<110-weblog_email_domains.1month.cron|source-doc/"_mdl/110/110-weblog_email_domains.1month.cron">
+
+L<110-weblog_email_domains.31day.cron|source-doc/"_mdl/110/110-weblog_email_domains.31day.cron">
+
+=cut
+
 our $authors = 'matej.gregor@comsultia.com';
 
 =head1 AUTHOR
