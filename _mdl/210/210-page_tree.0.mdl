@@ -44,6 +44,14 @@ B<depth> - default '' - hľbka zobrazovaného stromu
 
 =item *
 
+B<level> - default '' - from which level display elements
+
+=item *
+
+B<check_sub> - default '' - if none sub elements is available, display siblings
+
+=item *
+
 B<status> - default 'Y' - statusy stromu ktoré sa zobrazujú ( napr. 'YNT' )
 
 =item *
@@ -190,12 +198,39 @@ sub execute
 		
 	}
 	
+	my @ID_charindex_plus;
+	
 	# ak chcem zobrazit levely nad current levelom
 	if ($env{'level'}<0)
 	{
 		my $reg='(.{0,'.(abs($env{'level'})*4).'})';
 		$env{'ID_charindex'}=~s|^(.*?)$reg$|\1|;
 		main::_log("ID_charindex=$env{'ID_charindex'} reg='$reg'");
+	}
+	# start output in level
+	elsif ($env{'level'})
+	{
+		main::_log("adding all ID's from level='$env{'level'}'");
+		my $ID_charindex=$env{'ID_charindex'};$ID_charindex=~s|:$||;
+		
+		my $level=$env{'level'}+1;
+		while ($level>$env{'level'})
+		{
+			# level count
+			my $dbg_level=$ID_charindex;$dbg_level=~s|:||g;
+			my $level=(length($dbg_level)/3)+1;
+			main::_log("I'm in level='$level' with charindex='$ID_charindex'");
+			my $out=$ID_charindex=~s|(...)$||;$ID_charindex=~s|:$||;
+			last unless $out;
+			main::_log("cut to '$ID_charindex'");
+			push @ID_charindex_plus, $ID_charindex;
+		}
+		
+		#my $reg=('.' x ($env{'level'}*4));
+		#$env{'ID_charindex2'}=$env{'ID_charindex'};
+		#$env{'ID_charindex2'}=~s|^($reg)(.*)$|$1|;
+		#$env{'ID_charindex2'}=~s|:$||;
+		#main::_log("ID_charindex2='$env{'ID_charindex'}'->'$env{'ID_charindex2'}'");
 	}
 	
 	# vykreslujem od urciteho levelu
@@ -231,8 +266,46 @@ sub execute
 		$where.="AND status='Y' ";
 	}
 	
+	
+	if ($env{'check_sub'})
+	{
+		main::_log("checking if ID_charindex='$from' has subs");
+		my $sql=qq{
+			SELECT
+				ID
+			FROM
+				a210_page
+			WHERE $where AND ID_charindex LIKE '$from%'
+		};
+		my %sth0=TOM::Database::SQL::execute($sql);
+		if ($sth0{'rows'}==1)
+		{
+			my $ID_charindex=$env{'ID_charindex'};$ID_charindex=~s|:$||;
+			$ID_charindex=~s|...$||;
+			$ID_charindex=~s|:$||;
+			push @ID_charindex_plus, $ID_charindex.'____';
+			if ($env{'parent'})
+			{
+				push @ID_charindex_plus, $ID_charindex;
+			}
+		}
+	}
+	
+	
 	# charindex
-	$where.="AND ID_charindex LIKE '$from%' ";
+	if (@ID_charindex_plus)
+	{
+		$where.="AND (ID_charindex LIKE '$from%'";
+		foreach (@ID_charindex_plus)
+		{
+			$where.=" OR ID_charindex LIKE '$_'";
+		}
+		$where.=") ";
+	}
+	else
+	{
+		$where.="AND ID_charindex LIKE '$from%' ";
+	}
 	
 	
 	# s akou hlbkou ziskavam data
