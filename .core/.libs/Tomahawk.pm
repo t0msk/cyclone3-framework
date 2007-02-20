@@ -415,11 +415,11 @@ sub module
 		my $memcached;
 		if ($TOM::CACHE_memcached)
 		{
-			$memcached=Ext::Cache_memcache::check();
+			$memcached=Ext::CacheMemcache::check();
 			main::_log("memcached: reading");
 			if ($memcached)
 			{
-				$cache=$Ext::Cache_memcache::cache->get(
+				$cache=$Ext::CacheMemcache::cache->get(
 					'namespace' => "mcache",
 					'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
 				);
@@ -455,7 +455,7 @@ sub module
 				
 				if ($TOM::CACHE_memcached)
 				{
-					if ($Ext::Cache_memcache::cache->set(
+					if ($Ext::CacheMemcache::cache->set(
 							'namespace' => "mcache",
 							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5},
 							'value' => $cache
@@ -654,19 +654,46 @@ sub module
 	
 
 	
-	# KDE JE MODUL?
+	# Where is the modul?
 	if (($mdl_C{-global}==2)&&($tom::Pm))
 	{
-		$mdl_C{P_MODULE}=$tom::Pm."/_mdl/".$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".mdl";
+		# at first try addons directory
+		my $addon_path = $tom::Pm . "/_addons/App/" . $mdl_C{-category} . "/_mdl/" . $mdl_C{-category} . "-" . $mdl_C{-name} . "." . $mdl_C{-version} . ".mdl";
+		if (-e $addon_path)
+		{
+			$mdl_C{P_MODULE}=$addon_path;
+		}
+		else
+		{
+			$mdl_C{P_MODULE}=$tom::Pm."/_mdl/".$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".mdl";
+		}
 	}
 	elsif ($mdl_C{-global})
 	{
 		$mdl_C{-global}=1;
-		$mdl_C{P_MODULE}=$TOM::P."/_mdl/".$mdl_C{-category}."/".$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".mdl";
+		my $addon_path = $TOM::P . "/_addons/App/" . $mdl_C{-category} . "/_mdl/" . $mdl_C{-category} . "-" . $mdl_C{-name} . "." . $mdl_C{-version} . ".mdl";
+		# at first try addons directory
+		if (-e $addon_path)
+		{
+			$mdl_C{P_MODULE}=$addon_path;
+		}
+		else
+		{
+			$mdl_C{P_MODULE}=$TOM::P."/_mdl/".$mdl_C{-category}."/".$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".mdl";
+		}
 	}
 	else
 	{
-		$mdl_C{P_MODULE}=$tom::P."/_mdl/".$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".mdl";
+		my $addon_path = $tom::P . "/_addons/App/" . $mdl_C{-category} . "/_mdl/" . $mdl_C{-category} . "-" . $mdl_C{-name} . "." . $mdl_C{-version} . ".mdl";
+		# at first try addons directory
+		if (-e $addon_path)
+		{
+			$mdl_C{P_MODULE}=$addon_path;
+		}
+		else
+		{
+			$mdl_C{P_MODULE}=$tom::P."/_mdl/".$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".mdl";
+		}
 	}
 	
 	
@@ -781,7 +808,7 @@ sub module
 						'return_code' => $return_code
 					};
 					
-					if ($Ext::Cache_memcache::cache->set(
+					if ($Ext::CacheMemcache::cache->set(
 							'namespace' => "mcache",
 							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5},
 							'value' => $cache
