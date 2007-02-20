@@ -7,39 +7,73 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-use DateTime;
-#use App::400;
-#use App::400::SQL::a400;
+=head1 NAME
 
-#use Chart;
-#use Chart::2D::lines;
-#use Chart::2D::columns;
-#use Chart::2D::ring;
+110-weblog_email_searchengines.7days.cron
 
-#use Net::HTTP::LiteAgent;
+=head1 DEPENDENCIES
+
+Libraries:
+
+ TOM::Net::HTTP::CGI
+ Int::charsets::encode
+ TOM::Net::HTTP
+ TOM::Net::HTTP::UserAgent
+ TOM::Net::HTTP::referer
+ TOM::Utils::datetime
+ TOM::Utils::vars
+ TOM::Database::connect
+
+3-rd party libraries:
+
+ DateTime
+
+=head1 DESCRIPTION
+
+This cron sends 4 types of search engine statistics in one email:
+
+=over
+
+=item
+
+1. domains (all non search engine webs that links to the domain)
+
+=item
+
+2. search engines
+
+=item
+
+3. keywords
+
+=item
+
+4. phrases
+
+=back
+
+=head1 PERIOD
+
+Monthly, month summary
+
+=cut
 
 use TOM::Net::HTTP::CGI;
 use Int::charsets::encode;
-
 use TOM::Net::HTTP;
 use TOM::Net::HTTP::UserAgent;
 use TOM::Net::HTTP::referer;
-
 use TOM::Utils::datetime;
 use TOM::Utils::vars;
-
-#use Utils::datetime;
-#use App::1B0;
 use TOM::Database::connect;
-
-use strict;
+use DateTime;
 
 sub execute
 {
  my %env=@_;
  
  TOM::Database::connect::multi("stats");
- 
+
  #print "connected to $TOM::DB{stats}{name}\n";
  my $boundary = "------------080308060200060803000107";
 
@@ -47,7 +81,7 @@ sub execute
 
  $env{to_email} = $TOM::contact{'stats'}.";".$TOM::contact{'TOM'};
  $env{to_email} = TOM::Utils::vars::unique_split( $env{to_email} );
- #$env{to_email} = "gregor\@webcom.sk";
+ $env{to_email} = "gregor\@webcom.sk";
 
 my $pics = <<"PICS";
 Content-Type: image/gif;
@@ -532,10 +566,22 @@ $doc.="</table></div>\n";
 	{
 		main::_log(" :((, email not sended");
 	}
-#=cut
- return 1;
- }
 
+	return 1;
+}
 
+=head1 SEE ALSO
+
+L<110-weblog_email_searchengines.7days.cron|source-doc/"_mdl/110/110-weblog_email_searchengines.7days.cron">
+
+=cut
+
+our $authors = 'matej.gregor@comsultia.com';
+
+=head1 AUTHOR
+
+Matej Gregor (matej.gregor@comsultia.com)
+
+=cut
 
 1;
