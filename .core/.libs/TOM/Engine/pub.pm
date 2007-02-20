@@ -21,6 +21,13 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 		
 		# debug adresare
 		mkdir $tom::P."/_logs/_debug" if (! -e $tom::P."/_logs/_debug");
+		
+		# temp grf directory
+		if (! -e $tom::P.'/!media/grf/temp')
+		{
+			mkdir $tom::P.'/!media/grf/temp';
+			chmod(0777,$tom::P.'/!media/grf/temp');
+		}
 	}
 	
 	use Mysql; # 3.5MB
@@ -60,7 +67,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	# default addons
 	use App::1B0; # Banning system
 	use App::210; # Sitemap
-	require Ext::Cache_memcache::_init if $TOM::CACHE_memcached; # memcache support
+	require Ext::CacheMemcache::_init if $TOM::CACHE_memcached; # memcache support
 	
 	# new Cyclone libs
 	use Cyclone;
