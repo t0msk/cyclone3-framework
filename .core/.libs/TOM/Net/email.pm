@@ -23,7 +23,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 =head2 send()
 
-Write email to database or to email. Cron system module L<a130|docbook-sec/.core/.libs/App/a130/> sends this emails automatically.
+Write email to database or to email. Cron system module L<a130|source-doc/".core/.libs/App/a130/"> sends this emails automatically.
 
 =over
 
