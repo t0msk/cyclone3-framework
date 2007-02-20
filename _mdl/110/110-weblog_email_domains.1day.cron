@@ -1,9 +1,35 @@
 #!/bin/perl
 # USE UTF-8 !!!
 package CRON::module;
+use TOM;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
 use strict;
-use TOM::Utils::datetime;
 
+=head1 NAME
+
+110-weblog_email_domains.1day.cron
+
+=head1 DEPENDENCIES
+
+Libraries:
+
+ TOM::Utils::datetime
+
+=head1 DESCRIPTION
+
+This cron sends information about hourly visits for certain domain in graph.
+
+And also about other information related to visits as avegare visits, direct visits ...
+
+=head1 PERIOD
+
+Daily, by hours
+
+=cut
+
+use TOM::Utils::datetime;
 
 sub execute
 {
@@ -605,6 +631,15 @@ SUMMARY
 		main::_log(" :((, email not sent");
 	}
  
- return 1}
+	return 1;
+}
+
+our $authors = 'matej.gregor@comsultia.com';
+
+=head1 AUTHOR
+
+Matej Gregor (matej.gregor@comsultia.com)
+
+=cut
 
 1;
