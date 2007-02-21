@@ -2,18 +2,7 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
 "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
 <article lang="sk">
-  <title>Inštalácia Cyclone3 framework</title>
-
-  <articleinfo>
-    <revhistory>
-      <revision>
-        <revnumber>$Rev$</revnumber>
-
-        <date>$Id: install.docbook 1041 2006-11-26 14:42:42Z rfordinal
-        $</date>
-      </revision>
-    </revhistory>
-  </articleinfo>
+  <title>Inštalácia Cyclone3 Framework</title>
 
   <section>
     <title>Postup</title>
@@ -37,35 +26,11 @@ chmod 777 /www/TOM</synopsis>
       <listitem>
         <para>Užívatelia</para>
 
-        <para>Treba si zadefinovať skupinu v ktorej bude fungovať Cyclone3 a
-        taktiež vývojári. Defaultne je táto skupina nastavená ako
-        <quote>cyclone3</quote>. Taktiež užívateľ pod ktorým Cyclone3 funguje
-        je defaultne nastavený ako <quote>cyclone3</quote>.</para>
-
-        <para>Pokiaľ niekto potrebuje napríklad nastaviť užívateľa na
-        <quote>apache</quote> a skupinu na <quote>www</quote> (pri vývojárskej
-        jednoužívateľkej inštalácii býva najvhodnejšie nastavenie
-        <quote>cyclone3</quote>/<quote>users</quote>), môže toto
-        prekonfigurovať v súbore
-        <filename>/www/TOM/_config/TOM.conf</filename>.</para>
-
-        <synopsis>$TOM::user='cyclone3';
-$TOM::group='cyclone3';</synopsis>
-
-        <para>Pokiaľ nechcete meniť toto defaultné nastavenie, nemusíte nič v
-        <filename>TOM.conf</filename> meniť.</para>
-
-        <warning>
-          <para>Súbor <filename>/www/TOM/_config/TOM.conf</filename> v tejto
-          fázi ešte neexistuje, pre jeho vytvorenie stačí ak zadáte:</para>
-
-          <synopsis>cp /www/TOM/_config/TOM.conf.tmpl /www/TOM/_config/TOM.conf</synopsis>
-        </warning>
-
         <itemizedlist>
           <title>Vytvorenie užívateľského prostredia:</title>
 
-          <para>Predpokladajme že $user='cyclone3' a $group='cyclone3'</para>
+          <para>Defaulne nastavený užívateľ je <quote>cyclone3</quote> a
+          skupina <quote>cyclone3</quote></para>
 
           <listitem>
             <para>Vytvorenie užívateľa cyclone3</para>
