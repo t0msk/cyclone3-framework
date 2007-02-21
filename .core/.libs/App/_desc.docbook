@@ -34,7 +34,7 @@
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/020">020</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/020/">020</ulink></emphasis>
             - Generic App0 defined by <ulink
             url="?|?section=standard&amp;file=DATA">DATA</ulink> and <ulink
             url="?|?section=standard&amp;file=API">API</ulink>
@@ -49,25 +49,25 @@
         <itemizedlist>
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/100">100</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/100/">100</ulink></emphasis>
             - IAdm &amp; ITst (special mode)</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/110">110</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/110/">110</ulink></emphasis>
             - Statistic and monitoring subsystem</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/120">120</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/120/">120</ulink></emphasis>
             - Sources (editors)</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/130">130</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/130/">130</ulink></emphasis>
             - Internal mailsystem</para>
           </listitem>
 
@@ -77,14 +77,14 @@
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/150">150</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/150/">150</ulink></emphasis>
             - Cache system</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/160">160</ulink></emphasis>
-            - Xrelated <emphasis>not realized</emphasis></para>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/160/">160</ulink></emphasis>
+            - Xrelated <emphasis>in progress</emphasis></para>
           </listitem>
 
           <listitem>
@@ -109,7 +109,7 @@
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/1B0">1B0</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/1B0/">1B0</ulink></emphasis>
             - Banning system</para>
           </listitem>
 
@@ -120,7 +120,7 @@
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/1D0">1D0</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/1D0/">1D0</ulink></emphasis>
             - Imports</para>
           </listitem>
         </itemizedlist>
@@ -136,7 +136,7 @@
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/210">210</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/210/">210</ulink></emphasis>
             - Sitemap ( new application based on <ulink
             url="?|?section=standard&amp;file=DATA">DATA</ulink> and <ulink
             url="?|?section=standard&amp;file=API">API</ulink> standards
@@ -183,7 +183,7 @@
         <itemizedlist>
           <listitem>
             <para><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/300"><emphasis
+            url="?|?section=source-doc&amp;file=.core/.libs/App/300/"><emphasis
             role="bold">300</emphasis></ulink> - Domain USRM ( User Management
             )</para>
           </listitem>
@@ -201,19 +201,19 @@
         <itemizedlist>
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/400">400</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/400/">400</ulink></emphasis>
             - News <emphasis>robuts, but old</emphasis></para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/401">401</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/401/">401</ulink></emphasis>
             - News1 <emphasis>planning</emphasis></para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/410">410</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/410/">410</ulink></emphasis>
             - Ankety <emphasis>old</emphasis></para>
           </listitem>
 
@@ -235,7 +235,7 @@
         <itemizedlist>
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/500">500</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/500/">500</ulink></emphasis>
             - Photogallery <emphasis>old</emphasis></para>
           </listitem>
 
@@ -256,7 +256,7 @@
 
           <listitem>
             <para><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/540"><emphasis
+            url="?|?section=source-doc&amp;file=.core/.libs/App/540/"><emphasis
             role="bold">540</emphasis></ulink> - Filegallery</para>
           </listitem>
 
@@ -304,7 +304,7 @@
         <itemizedlist>
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/700">700</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/700/">700</ulink></emphasis>
             - Groupware <emphasis>not finished</emphasis></para>
           </listitem>
         </itemizedlist>
@@ -325,14 +325,14 @@
 
               <listitem>
                 <para><ulink
-                url="?|?section=source-doc&amp;file=.core/.libs/App/8010"><emphasis
+                url="?|?section=source-doc&amp;file=.core/.libs/App/8010/"><emphasis
                 role="bold">8010</emphasis></ulink> - Newsletter/Direct
                 mail</para>
               </listitem>
 
               <listitem>
                 <para><emphasis role="bold"><ulink
-                url="?|?section=source-doc&amp;file=.core/.libs/App/8020">8020</ulink></emphasis>
+                url="?|?section=source-doc&amp;file=.core/.libs/App/8020/">8020</ulink></emphasis>
                 - Internal mailboxes</para>
               </listitem>
 
@@ -361,7 +361,7 @@
 
           <listitem>
             <para><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/820"><emphasis
+            url="?|?section=source-doc&amp;file=.core/.libs/App/820/"><emphasis
             role="bold">820</emphasis></ulink> - Forum</para>
           </listitem>
 
@@ -378,7 +378,7 @@
         <itemizedlist>
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/900">900</ulink></emphasis>
+            url="?|?section=source-doc&amp;file=.core/.libs/App/900/">900</ulink></emphasis>
             - Bridge to banner system <emphasis>obsolete</emphasis></para>
           </listitem>
 
