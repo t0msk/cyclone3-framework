@@ -9,7 +9,7 @@
 
     <orderedlist>
       <listitem>
-        <para>Create containter directory for Cyclone3:
+        <para>Create directory for Cyclone3:
         <filename>/www/TOM</filename></para>
 
         <synopsis>su root
@@ -18,40 +18,16 @@ chmod 777 /www/TOM</synopsis>
       </listitem>
 
       <listitem>
-        <para>Get source codes</para>
+        <para>Fill it using the latest snapshot</para>
 
         <synopsis>svn co http://svn.comsultia.com/cyclone3/trunk/frame /www/TOM</synopsis>
       </listitem>
 
       <listitem>
-        <para>Users</para>
-
-        <para>Define group in which will Cyclone3 and Cyclone3 developers
-        working. Default is it setted as <quote>cyclone3</quote>. Username is
-        default <quote>cyclone3</quote>.</para>
-
-        <para>When you will to setup another username and group, you can edit
-        file <filename>/www/TOM/_config/TOM.conf</filename>. When you are
-        working on cyclone3 on server alone, the good choise is
-        <quote>cyclone3</quote>/<quote>users</quote>.</para>
-
-        <synopsis>$TOM::user='cyclone3';
-$TOM::group='cyclone3';</synopsis>
-
-        <para>When you not will changing this default setting, don't edit
-        <filename>TOM.conf</filename>.</para>
-
-        <warning>
-          <para>Filename <filename>/www/TOM/_config/TOM.conf</filename> in
-          this stage not exists, also you can just type:</para>
-
-          <synopsis>cp /www/TOM/_config/TOM.conf.tmpl /www/TOM/_config/TOM.conf</synopsis>
-        </warning>
+        <para>Setting up user and group</para>
 
         <itemizedlist>
-          <title>Users environment:</title>
-
-          <para>Default is $user='cyclone3' and $group='cyclone3'</para>
+          <para>The default user is 'cyclone3' and group 'cyclone3'</para>
 
           <listitem>
             <para>Creating user cyclone3</para>
@@ -64,14 +40,14 @@ passwd cyclone3
           </listitem>
 
           <listitem>
-            <para>Adding user apache into group cyclone3</para>
+            <para>Adding user apache to the group cyclone3</para>
 
             <synopsis>usermod apache -a -G cyclone3</synopsis>
           </listitem>
 
           <listitem>
-            <para>Apache must have shell when you will to debug web services
-            from console ( can be run only as user apache ).</para>
+            <para>If you wish to debug web pages from commandline make sure
+            apache user has shell enabled.</para>
           </listitem>
 
           <listitem>
@@ -79,15 +55,15 @@ passwd cyclone3
             cyclone3</para>
 
             <synopsis>usermod freeman -a -G cyclone3
-usermod oldman -a -G cyclone3
-</synopsis>
+usermod oldman -a -G cyclone3</synopsis>
           </listitem>
         </itemizedlist>
       </listitem>
 
       <listitem>
         <para>Publish directory <filename>/www/TOM/.bin</filename> to
-        environment variable <varname>$PATH</varname><synopsis>su root
+        environment variable <varname>$PATH for maintanance
+        utilities.</varname><synopsis>su root
 echo "PATH=/www/TOM/.bin" &gt; /etc/env.d/30cyclone
 echo "ROOTPATH=/www/TOM/.bin" &gt;&gt; /etc/env.d/30cyclone
 env-update</synopsis></para>
@@ -97,24 +73,23 @@ env-update</synopsis></para>
         <para>Configure Cyclone3 by editing
         <filename>/www/TOM/_config/TOM.conf</filename></para>
 
-        <para>When file not exists, just type this command:</para>
+        <para>If the file does not exist, create it from default template
+        using:</para>
 
         <synopsis>cp /www/TOM/_config/TOM.conf.tmpl /www/TOM/_config/TOM.conf</synopsis>
-
-        <para>Default configuration is working, also only you will anything
-        change, open this configuration file and edit.</para>
       </listitem>
 
       <listitem>
-        <para>Setup correct file permission to /www/TOM directory
-        container.</para>
+        <para>Make sure permissions are set right in the /www/TOM
+        directory.</para>
 
         <synopsis>su root
 tom3-chfiles -r
 </synopsis>
 
-        <para>This is first Cyclone3 command running. When crashed for missing
-        perl library, just install it manual and repeat.</para>
+        <para>If this Cyclone3 utility crashes than you are probably missing
+        some perl library, install it and repeat. List of missing libraries
+        will wary between systems.</para>
       </listitem>
 
       <listitem>
@@ -159,27 +134,28 @@ tom-chtables --domain=example.tld
       </listitem>
 
       <listitem>
-        <para>Check if web services can be started.</para>
+        <para>Try to execute Cyclone3 core from the commandline. (requires
+        shell for apache)</para>
 
         <synopsis>su apache
 cd /www/TOM/\!example.tld/\!www/
 perl core.tom
 </synopsis>
 
-        <para>When this command crashed for missing perl library, just install
-        it manual and repeat.</para>
+        <para>Again if this produces errors you are missing some perl
+        libraries, install them and retry.</para>
       </listitem>
 
       <listitem>
-        <para>Check if cron services can be working without problems.</para>
+        <para>Check if cron services work without problems.</para>
 
         <synopsis>su cyclone3
 cd /www/TOM/.core
 ./cron 1min
 </synopsis>
 
-        <para>When this command crashed for missing perl library, just install
-        it manual and repeat.</para>
+        <para>Again if this produces errors you are missing some perl
+        libraries, install them and retry.</para>
       </listitem>
 
       <listitem>
@@ -201,7 +177,7 @@ echo "Include /www/TOM/.core/_config/httpd.virtual.conf" &gt;&gt; /etc/apache2/h
           <listitem>
             <para>Edit
             <filename>/www/TOM/.core/_config/httpd.virtual.conf</filename> to
-            setup virtual hosts or jus edit IP adress of default
+            setup virtual hosts or just edit IP adress of default
             example.tld.</para>
           </listitem>
         </orderedlist>
@@ -218,7 +194,7 @@ echo "Include /www/TOM/.core/_config/httpd.virtual.conf" &gt;&gt; /etc/apache2/h
 crontab -e
 </synopsis>
 
-            <para>Just paste following text and save.</para>
+            <para>Just paste following text in and save.</para>
 
             <synopsis>*    *    * * * cd /www/TOM/.core/;nice -n 20 ./cron 1min &gt; /dev/null 2&gt; /dev/null
 */5  *    * * * cd /www/TOM/.core/;nice -n 20 ./cron 5min &gt; /dev/null 2&gt; /dev/null
@@ -241,12 +217,9 @@ crontab -e
       <listitem>
         <para>Sudo</para>
 
-        <para>When Cyclone3 is using more developers than only you, sudo
-        allows to this developers running privileged commands like
-        <command>tom3-chfiles</command> a
-        <command>tom3-restart</command>.</para>
-
-        <para>Configure it as you wish.</para>
+        <para>It is recomended to use Sudo for utilities
+        <command>tom3-chfiles</command> and <command>tom3-restart</command>
+        when more developers work on Cyclone3.</para>
       </listitem>
     </orderedlist>
   </section>
