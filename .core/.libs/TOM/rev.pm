@@ -6,7 +6,7 @@ use strict;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-our $repository='http://svn.comsultia.com/cyclone3/trunk/frame';
+our $repository='http://svn.cyclone3.org/trunk/frame';
 
 #neskor zistovanie verzie pomocou dostupnych SVN kniznic
 #use SVN::Core;
