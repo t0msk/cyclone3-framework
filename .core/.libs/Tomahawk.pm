@@ -1205,13 +1205,23 @@ sub designmodule
 
 
 
+=head2 GetXSGN()
 
+Used in modules to load xsgn file
 
+ sub execute
+ {
+  my %env=@_;
+  Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+  return 1;
+ }
+
+=cut
 
 sub GetXSGN
 {
- my %env=@_;
-	# HLADAME DESIGN
+	my %env=@_;
+	
 	main::_log("loading XSGN -category='$mdl_C{-category}' -name='$mdl_C{-name}' -version='$mdl_C{-version}' -xsgn='$mdl_C{-xsgn}'");
 	$mdl_C{P_XSGN}=$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".".$mdl_C{-xsgn}.".xsgn";
 	main::_log("P_XSGN='$mdl_C{P_XSGN}'");
@@ -1223,112 +1233,88 @@ sub GetXSGN
 		return undef;
 	}
 	
+#  MDL  MSTR XSGN =
+#  G    0    0    0
+#  -G   0    1    1+
+#  G    0    2    0
+#  G    1    0    0
+#  -G   1    1    1+
+#  G    1    2    2+
+#  ---
+#  M   0    0    0
+#  M   0    1    1
+#  M   0    2    0
+#  M   1    0    0
+#  M   1    1    1
+#  M   1    2    0
+#  ---
+#  L   0    0    0
+#  L   0    1    0
+#  L   0    2    0
+#  L   1    0    0
+#  L   1    1    0
+#  L   1    2    0
 
-=head1
- moznosti
- MDL MSTR XSGN =
- G   0    0    0
- -G   0    1    1+
- G   0    2    0
- G   1    0    0
- -G   1    1    1+
- G   1    2    2+
- ---
- M   0    0    0
- M   0    1    1
- M   0    2    0
- M   1    0    0
- M   1    1    1
- M   1    2    0
- ---
- L   0    0    0
- L   0    1    0
- L   0    2    0
- L   1    0    0
- L   1    1    0
- L   1    2    0
-=cut
-
- if (!$mdl_C{-global}) # ak je modul lokalny, tak moze byt design len lokalny
- {
-  $mdl_C{-xsgn_global}=0;
-  $mdl_C{P_XSGN}=$tom::P."/_mdl/".$mdl_C{P_XSGN};
-  #Tomahawk::debug::log(9,"1 - ak je modul lokalny, tak moze byt design len lokalny");
- }
- # ak je modul global, a chcem design global, tak ho dostanem :))
- elsif ($mdl_C{-xsgn_global}==1)
- {
-  $mdl_C{-xsgn_global}=1;
-  $mdl_C{P_XSGN}=$TOM::P."/_mdl/".$mdl_C{-category}."/".$mdl_C{P_XSGN};
-  #Tomahawk::debug::log(9,"2 - ak je modul global, a chcem design global, tak ho dostanem :))");
- }
- # chcem mastera, mam mastera a modul je global, alebo master
- elsif (($tom::Pm)&&($mdl_C{-xsgn_global}==2))
- {
-  $mdl_C{-xsgn_global}=2;
-  $mdl_C{P_XSGN}=$tom::Pm."/_mdl/".$mdl_C{P_XSGN};
-  #Tomahawk::debug::log(4,"executing");
-  #Tomahawk::debug::log(9,"3 - chcem mastera, mam mastera a modul je global, alebo master");
- }
- else
- {
-  $mdl_C{-xsgn_global}=0;
-  $mdl_C{P_XSGN}=$tom::P."/_mdl/".$mdl_C{P_XSGN};
-  #Tomahawk::debug::log(9,"4 - posledna podmienka, nastavujem local");
- }
-
+	# if module is local, xsgn file can be only local
+	if (!$mdl_C{-global})
+	{
+		$mdl_C{-xsgn_global}=0;
+		my $addon_path=$tom::P."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XSGN};
+		main::_log("addon_path='$addon_path'");
+		if (-e $addon_path){$mdl_C{P_XSGN}=$addon_path;}
+		else {$mdl_C{P_XSGN}=$tom::P."/_mdl/".$mdl_C{P_XSGN};}
+	}
+	# if module is global and xsgn file is global
+	elsif ($mdl_C{-xsgn_global}==1)
+	{
+		$mdl_C{-xsgn_global}=1;
+		my $addon_path=$TOM::P."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XSGN};
+		main::_log("addon_path='$addon_path'");
+		if (-e $addon_path){$mdl_C{P_XSGN}=$addon_path;}
+		else {$mdl_C{P_XSGN}=$TOM::P."/_mdl/".$mdl_C{-category}."/".$mdl_C{P_XSGN}}
+	}
+	# if module is in master/global and i wish to load xsgn file master
+	elsif (($tom::Pm)&&($mdl_C{-xsgn_global}==2))
+	{
+		$mdl_C{-xsgn_global}=2;
+		my $addon_path=$tom::Pm."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XSGN};
+		main::_log("addon_path='$addon_path'");
+		if (-e $addon_path){$mdl_C{P_XSGN}=$addon_path;}
+		else {$mdl_C{P_XSGN}=$tom::Pm."/_mdl/".$mdl_C{P_XSGN};}
+	}
+	else
+	{
+		$mdl_C{-xsgn_global}=0;
+		my $addon_path=$tom::P."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XSGN};
+		main::_log("addon_path='$addon_path'");
+		if (-e $addon_path){$mdl_C{P_XSGN}=$addon_path;}
+		else {$mdl_C{P_XSGN}=$tom::P."/_mdl/".$mdl_C{P_XSGN};}
+	}
+	
 	main::_log("P_XSGN='$mdl_C{P_XSGN}'");
 	
-=head1
- if (!$mdl_C{-global}) # ak je modul lokalny, tak samozrejme ze je aj design lokalny
- {		       # nemoze byt ani master, ani global
-  $mdl_C{P_XSGN}=$tom::P."/_mdl/".$mdl_C{P_XSGN};
- }
- elsif (($mdl_C{-xsgn_global}==2)&&($tom::Pm)&&($mdl_C{-global})) # ak mam cestu k masterovi a chcem mastera
- {
-  $mdl_C{P_XSGN}=$tom::Pm."/_mdl/".$mdl_C{P_XSGN};
- }
- elsif ($mdl_C{-xsgn_global}) # design je globalny, modul je globalny
- {
-  $mdl_C{P_XSGN}=$TOM::P."/_mdl/".$mdl_C{-category}."/".$mdl_C{P_XSGN};
- }
- else # design je lokalny, modul je globalny
- {
-  $mdl_C{P_XSGN}=$tom::P."/_mdl/".$mdl_C{P_XSGN};
- }
-=cut
-
- # OTVORIM DESIGN
- open (HND,"<".$mdl_C{P_XSGN}) || do
- {
- 	main::_log("can't open file '$mdl_C{P_XSGN}' '$!'",1);
-  $tom::ERR="Cannot import design \"".$mdl_C{-xsgn}."\" (".$mdl_C{-xsgn_global}."/".$mdl_C{-global}."/".$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".".$mdl_C{-xsgn}.".xsgn".") ($mdl_C{P_XSGN}) - ".$!;
-  return undef;
- };
- 
- 
- my $file_data;my $file_line;
- while ($file_line=<HND>){$file_data.=$file_line;}
- ($file_data)=$file_data=~/<XML_DESIGN_DEFINITION.*?>(.*)<\/XML_DESIGN_DEFINITION>/s;
-
- # KONVERZIA PREMMENNYCH
-# if ($env{-convertvars})
-# {while ($file_data=~s/<\$(.*?)>/<!TMP!>/s) # ZRUSIT S?
-# {my $var=$1;my $value;eval "\$value=\$$var;"; # TAK TOTO NEVIEM CI JE BEZPECNE
-#  $file_data=~s|<!TMP!>|$value|;
-# }}
- TOM::Utils::vars::replace($file_data) if $env{-convertvars};
-
- #while ($file_data=~s|<DEFINITION id="(.*?)">[\n\r ]*(.*?)[\n\r ]*</DEFINITION>||s)
- while ($file_data=~s|<DEFINITION id="(.*?)">[\n\r]?(.*?)[\n\r]?</DEFINITION>||s)
- #while ($file_data=~s|<DEFINITION id="(.*?)">(.*?)</DEFINITION>||s)
- {
-  my $var=$1;
-  $Tomahawk::module::XSGN{$var}=$2;
-#  $Tomahawk::module::XSGN{$var}=~s|^\W||g; # zmaze vsetky neviditelne znaky na zaciatku
-  #$Tomahawk::module::XSGN{$var}=~s|[\n\r]\W$||g; # zmaze vsetky neviditelne znaky na konci
- }
- return 1;
+	# open file with xsgn
+	open (HND,"<".$mdl_C{P_XSGN}) || do
+	{
+		main::_log("can't open file '$mdl_C{P_XSGN}' '$!'",1);
+		$tom::ERR= "Can't import design \"" .
+			$mdl_C{-xsgn} . "\" (" . $mdl_C{-xsgn_global} . "/" . $mdl_C{-global} . "/" . $mdl_C{-category} . "-" . $mdl_C{-name} . "." . $mdl_C{-version} . "." . $mdl_C{-xsgn} . ".xsgn".") ($mdl_C{P_XSGN}) - " . $!;
+		return undef;
+	};
+	
+	my $file_data;my $file_line;
+	while ($file_line=<HND>){$file_data.=$file_line;}
+	($file_data)=$file_data=~/<XML_DESIGN_DEFINITION.*?>(.*)<\/XML_DESIGN_DEFINITION>/s;
+	
+	TOM::Utils::vars::replace($file_data) if $env{'-convertvars'};
+	
+	while ($file_data=~s|<DEFINITION id="(.*?)">[\n\r]?(.*?)[\n\r]?</DEFINITION>||s)
+	{
+		my $var=$1;
+		$Tomahawk::module::XSGN{$var}=$2;
+	}
+	
+	return 1;
 }
 
 
