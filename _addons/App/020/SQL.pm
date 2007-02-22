@@ -19,7 +19,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 =item *
 
-L<App::020::_init|app/"020/init.pm">
+L<App::020::_init|app/"020/_init.pm">
 
 =item *
 
