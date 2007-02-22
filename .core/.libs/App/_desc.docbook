@@ -6,9 +6,8 @@
 
   <subtitle>Old applications stored in .core/.libs/App</subtitle>
 
-  <para>See also: <ulink
-  url="?|?section=source-doc&amp;file=_addons/App/">List of new applications
-  in _addons directory</ulink></para>
+  <para>See also: <ulink url="?|?section=app">List of new applications in
+  _addons directory</ulink></para>
 
   <section>
     <title>List of applications</title>

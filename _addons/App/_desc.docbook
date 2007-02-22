@@ -28,8 +28,8 @@
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=_addons/App/020/">020</ulink></emphasis>
-            - Generic application</para>
+            url="?|?section=app&amp;file=020/">020</ulink></emphasis> -
+            Generic application</para>
 
             <para>This is the very first application defined by <ulink
             url="?|?section=standard&amp;file=DATA">DATA</ulink> and <ulink
@@ -46,8 +46,8 @@
         <itemizedlist>
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=_addons/App/160/">160</ulink></emphasis>
-            - Xrelated <action>[in progress]</action></para>
+            url="?|?section=app&amp;file=160/">160</ulink></emphasis> -
+            Xrelated <action>[in progress]</action></para>
 
             <para><action>This application allow to create relations between
             entities in other applications ( forum to article, ect...
