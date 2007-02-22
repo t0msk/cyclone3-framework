@@ -62,7 +62,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	use TOM::Math;
 	use TOM::Int::lng;
 	
-	use App::020; # standard 0
+	use App::020::_init; # standard 0
 	
 	# default addons
 	use App::1B0; # Banning system

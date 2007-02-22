@@ -6,7 +6,7 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-use App::020;
+use App::020::_init;
 use CVML;
 
 =head1 NAME

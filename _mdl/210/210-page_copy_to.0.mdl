@@ -66,7 +66,7 @@ B<&lt;%missing_parameter%&gt;> - chýbajúci parameter
 
 =cut
 
-use App::020;
+use App::020::_init;
 
 sub execute
 {
