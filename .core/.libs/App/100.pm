@@ -14,7 +14,7 @@ use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 
-use App::020; # data standard 0
+use App::020::_init; # data standard 0
 use App::100::SQL;
 
 1;
