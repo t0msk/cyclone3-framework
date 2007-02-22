@@ -20,7 +20,7 @@ chmod 777 /www/TOM</synopsis>
       <listitem>
         <para>Získanie Cyclone3 Frameworku</para>
 
-        <synopsis>svn co http://svn.comsultia.com/cyclone3/trunk/frame /www/TOM</synopsis>
+        <synopsis>svn co http://svn.cyclone3.org/trunk/frame /www/TOM</synopsis>
       </listitem>
 
       <listitem>

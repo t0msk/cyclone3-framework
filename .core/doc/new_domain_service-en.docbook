@@ -13,8 +13,8 @@
         <filename>/www/TOM</filename></para>
 
         <synopsis>cd /www/TOM/
-svn export http://svn.comsultia.com/cyclone3/templates/business/docroot \!domain.tld
-svn export http://svn.comsultia.com/cyclone3/templates/business/media \!domain.tld/\!media</synopsis>
+svn export http://svn.cyclone3.org/trunk/templates/business/docroot \!domain.tld
+svn export http://svn.cyclone3.org/trunk/templates/business/media \!domain.tld/\!media</synopsis>
       </listitem>
 
       <listitem>
@@ -31,7 +31,7 @@ vim \!domain.tld/<ulink
         <para>Need you XULadmin backend to manage this domain service?</para>
 
         <synopsis>cd \!domain.tld
-svn co http://svn.comsultia.com/cyclone3/xuladmin/docroot-tmpl \!cyclone
+svn co http://svn.cyclone3.org/trunk/xuladmin/docroot-tmpl \!cyclone
 cp \!cyclone/local.conf.tmpl \!cyclone/local.conf
 vim \!cyclone/local.conf
 </synopsis>
