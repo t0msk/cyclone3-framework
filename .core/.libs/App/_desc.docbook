@@ -4,45 +4,16 @@
 <article lang="sk">
   <title>Cyclone3 Apllications</title>
 
-  <subtitle>Old Applications stored in .core/.libs/App</subtitle>
+  <subtitle>Old applications stored in .core/.libs/App</subtitle>
 
-  <articleinfo>
-    <releaseinfo>$Rev$</releaseinfo>
-  </articleinfo>
+  <para>See also: <ulink
+  url="?|?section=source-doc&amp;file=_addons/App/">List of new applications
+  in _addons directory</ulink></para>
 
   <section>
     <title>List of applications</title>
 
     <itemizedlist>
-      <listitem>
-        <para><emphasis role="bold">0</emphasis> - Local and generic</para>
-
-        <itemizedlist>
-          <listitem>
-            <para><emphasis role="bold">010</emphasis> - Local domain
-            App0</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">011</emphasis> - Local domain App1,
-            etc...</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">012</emphasis> - etc,...</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/020/">020</ulink></emphasis>
-            - Generic App0 defined by <ulink
-            url="?|?section=standard&amp;file=DATA">DATA</ulink> and <ulink
-            url="?|?section=standard&amp;file=API">API</ulink>
-            standards</para>
-          </listitem>
-        </itemizedlist>
-      </listitem>
-
       <listitem>
         <para><emphasis role="bold">1</emphasis> - Core</para>
 
@@ -82,40 +53,14 @@
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/160/">160</ulink></emphasis>
-            - Xrelated <emphasis>in progress</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">170</emphasis> - XULadmin
-            backend</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">180</emphasis> - <emphasis>not
-            used</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">190</emphasis> - <emphasis>not
-            used</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">1A0</emphasis> - <emphasis>not
-            used</emphasis></para>
+            <para><emphasis role="bold">170</emphasis> - XULadmin backend
+            <action>[moving to _addons]</action></para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=source-doc&amp;file=.core/.libs/App/1B0/">1B0</ulink></emphasis>
             - Banning system</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">1C0</emphasis> - <emphasis>not
-            used</emphasis></para>
           </listitem>
 
           <listitem>
@@ -131,21 +76,13 @@
 
         <itemizedlist>
           <listitem>
-            <para><emphasis role="bold">20</emphasis> - Logotyp</para>
+            <para><emphasis role="bold">20</emphasis> - Logotypes</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=source-doc&amp;file=.core/.libs/App/210/">210</ulink></emphasis>
-            - Sitemap ( new application based on <ulink
-            url="?|?section=standard&amp;file=DATA">DATA</ulink> and <ulink
-            url="?|?section=standard&amp;file=API">API</ulink> standards
-            )</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">22</emphasis> - <emphasis>not
-            used</emphasis></para>
+            - Sitemap <action>[moving to _addons]</action></para>
           </listitem>
 
           <listitem>
@@ -187,11 +124,6 @@
             role="bold">300</emphasis></ulink> - Domain USRM ( User Management
             )</para>
           </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">310</emphasis> - GOpass <emphasis>not
-            realized</emphasis></para>
-          </listitem>
         </itemizedlist>
       </listitem>
 
@@ -202,29 +134,13 @@
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=source-doc&amp;file=.core/.libs/App/400/">400</ulink></emphasis>
-            - News <emphasis>robuts, but old</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/401/">401</ulink></emphasis>
-            - News1 <emphasis>planning</emphasis></para>
+            - News <emphasis>robust, but very old</emphasis></para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=source-doc&amp;file=.core/.libs/App/410/">410</ulink></emphasis>
-            - Ankety <emphasis>old</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">420</emphasis> - Articles
-            <emphasis>planning</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">430</emphasis> - Tickets
-            <emphasis>planning</emphasis></para>
+            - Ankety</para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -236,64 +152,13 @@
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=source-doc&amp;file=.core/.libs/App/500/">500</ulink></emphasis>
-            - Photogallery <emphasis>old</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">510</emphasis> - Videogallery
-            <emphasis>not realized</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">520</emphasis> - Audiogallery
-            <emphasis>not realized</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">530</emphasis> - Document gallery
-            <emphasis>not realized</emphasis></para>
+            - Photogallery</para>
           </listitem>
 
           <listitem>
             <para><ulink
             url="?|?section=source-doc&amp;file=.core/.libs/App/540/"><emphasis
             role="bold">540</emphasis></ulink> - Filegallery</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">550</emphasis> - Mediagallery
-            <emphasis>not realized</emphasis></para>
-          </listitem>
-        </itemizedlist>
-      </listitem>
-
-      <listitem>
-        <para><emphasis role="bold">6</emphasis> - eCommerce</para>
-
-        <itemizedlist>
-          <listitem>
-            <para><emphasis role="bold">600</emphasis> - E-Shop
-            <emphasis>realized by extensions</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">610</emphasis> - <emphasis>not
-            used</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">620</emphasis> - <emphasis>not
-            used</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">630</emphasis> - <emphasis>not
-            used</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">640</emphasis> - <emphasis>not
-            used</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -319,11 +184,6 @@
 
             <itemizedlist>
               <listitem>
-                <para><emphasis role="bold">8000</emphasis> - Mallist
-                <emphasis>not realized</emphasis></para>
-              </listitem>
-
-              <listitem>
                 <para><ulink
                 url="?|?section=source-doc&amp;file=.core/.libs/App/8010/"><emphasis
                 role="bold">8010</emphasis></ulink> - Newsletter/Direct
@@ -335,27 +195,6 @@
                 url="?|?section=source-doc&amp;file=.core/.libs/App/8020/">8020</ulink></emphasis>
                 - Internal mailboxes</para>
               </listitem>
-
-              <listitem>
-                <para><emphasis role="bold">8030</emphasis> - External
-                mailboxes <emphasis>not realized</emphasis></para>
-              </listitem>
-            </itemizedlist>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">81</emphasis> - Messengers</para>
-
-            <itemizedlist>
-              <listitem>
-                <para><emphasis role="bold">8100</emphasis> - Internal
-                messenger <emphasis>planning</emphasis></para>
-              </listitem>
-
-              <listitem>
-                <para><emphasis role="bold">8110</emphasis> - <emphasis>not
-                used</emphasis></para>
-              </listitem>
             </itemizedlist>
           </listitem>
 
@@ -363,11 +202,6 @@
             <para><ulink
             url="?|?section=source-doc&amp;file=.core/.libs/App/820/"><emphasis
             role="bold">820</emphasis></ulink> - Forum</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">830</emphasis> - Chat
-            <emphasis>planning</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -381,17 +215,7 @@
             url="?|?section=source-doc&amp;file=.core/.libs/App/900/">900</ulink></emphasis>
             - Bridge to banner system <emphasis>obsolete</emphasis></para>
           </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">910</emphasis> - <emphasis>not
-            used</emphasis></para>
-          </listitem>
         </itemizedlist>
-      </listitem>
-
-      <listitem>
-        <para><emphasis role="bold">A</emphasis> - <emphasis>not
-        used</emphasis></para>
       </listitem>
 
       <listitem>

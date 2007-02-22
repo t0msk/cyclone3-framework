@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
+<article lang="sk">
+  <title>Cyclone3 Apllications</title>
+
+  <subtitle>New applications stored in _addons/App</subtitle>
+
+  <para>See also: <ulink
+  url="?|?section=source-doc&amp;file=.core/.libs/App/">List of old
+  applications in .core/.libs/App/ directory</ulink></para>
+
+  <section>
+    <title>List of applications</title>
+
+    <itemizedlist>
+      <listitem>
+        <para><emphasis role="bold">0</emphasis> - Local and generic</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold">010</emphasis> - Application for local
+            domain service</para>
+
+            <para>This is only declared namespace for application defined in
+            domain. 010 is first, 011 second, ect...</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=_addons/App/020/">020</ulink></emphasis>
+            - Generic application</para>
+
+            <para>This is the very first application defined by <ulink
+            url="?|?section=standard&amp;file=DATA">DATA</ulink> and <ulink
+            url="?|?section=standard&amp;file=API">API</ulink> standards. Can
+            be inherited by others applications or used in local domain
+            services implementations.</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">1</emphasis> - Core</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=source-doc&amp;file=_addons/App/160/">160</ulink></emphasis>
+            - Xrelated <action>[in progress]</action></para>
+
+            <para><action>This application allow to create relations between
+            entities in other applications ( forum to article, ect...
+            )</action></para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+    </itemizedlist>
+  </section>
+</article>
