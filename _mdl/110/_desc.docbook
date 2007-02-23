@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>a110: Module List</title>
+
+  <section>
+    <title>Email Stats</title>
+
+    <para>Domains</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><citation>110-weblog_email_domains.1day.cron</citation> daily
+        visits hour by hour (also dv, av, users, sessions hour by hour)</para>
+      </listitem>
+
+      <listitem>
+        <para><citation>110-weblog_email_domains.7day.cron</citation> weekly
+        visits day by day (also dv, av, users, sessions day by day)</para>
+      </listitem>
+
+      <listitem>
+        <para><citation>110-weblog_email_domains.1month.cron</citation>
+        monthly visits day by day (also dv, av, users, sessions day by
+        day)</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Performance</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><citation>110-weblog_email_performance.0.cron</citation>
+        about</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Search Engines</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><citation>110-weblog_email_searchengines.7days.cron</citation>
+        a</para>
+      </listitem>
+
+      <listitem>
+        <para><citation>110-weblog_email_searchengines.1month.cron</citation>
+        a</para>
+      </listitem>
+    </itemizedlist>
+
+    <para></para>
+
+    <para></para>
+  </section>
+
+  <section>
+    <title>SVG Stats - generating files</title>
+
+    <para></para>
+  </section>
+</article>
