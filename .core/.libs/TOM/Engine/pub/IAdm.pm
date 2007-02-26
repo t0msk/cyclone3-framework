@@ -16,7 +16,9 @@ use TOM::Utils::vars;
 
 =head1 DESCRIPTION
 
-Knižnica zabezpečuje obsluhu IAdm módu a IAdm kľúča v publisheri (+ITst)
+This library maintained handling for special mode of webpage browsing named admin mode (IAdm) and test mode (ITst)
+
+When library is loaded, IAdm in /www/TOM/_config and ITast in domain directory is automatically created ( when not exists ).
 
 =cut
 
@@ -27,7 +29,7 @@ BEGIN
 	{
 		main::_log("generating IAdm.key");
 		my $key=TOM::Utils::vars::genhash(2048);
-		open(HND,'>'.$TOM::P.'/_config/IAdm.key') || die "$!";
+		open(HND,'>'.$TOM::P.'/_config/IAdm.key');# || die "$!";
 		print HND $key;
 		close (HND);
 	}
@@ -36,12 +38,20 @@ BEGIN
 	{
 		main::_log("generating ITst.key");
 		my $key=TOM::Utils::vars::genhash(2048);
-		open(HND,'>'.$tom::P.'/ITst.key') || die "$!";
+		open(HND,'>'.$tom::P.'/ITst.key');# || die "$!";
 		print HND $key;
 		close (HND);
 	}
 	
 }
+
+=head1 FUNCTIONS
+
+=head2 load()
+
+Load ( if possible ) required keys for IAdm and ITst.
+
+=cut
 
 sub load
 {
