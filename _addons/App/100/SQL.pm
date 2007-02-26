@@ -19,7 +19,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 =cut
 
-use App::100;
+use App::100::_init;
 
 =head1 FUNCTIONS
 

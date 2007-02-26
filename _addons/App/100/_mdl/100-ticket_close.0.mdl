@@ -6,7 +6,7 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-use App::100::SQL;
+use App::100::_init;
 
 sub execute
 {

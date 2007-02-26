@@ -20,7 +20,7 @@ Check if this Cyclone3 installation is upgraded and send about upgrades email
 use TOM::Utils::datetime;
 use TOM::Net::email;
 use MIME::Entity;
-use App::100;
+use App::100::_init;
 
 our $color_gray="#F2F2F2";
 our $color_red="#CD4545";
