@@ -7,3 +7,5 @@ BEGIN
 }
 
 use App::300::_init;
+
+1;
