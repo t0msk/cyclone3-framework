@@ -10,11 +10,17 @@ use strict;
 
 =head1 NAME
 
-Modul pre vytvorenie noveho uzivatela v USRM
+300-new.0.cron
+
+=head1 DESCRIPTION
+
+Create new user into USRM a300
+
+=cut
 
 =head1 SYNOPSIS
 
- tom3-cron --domain=domain.tld ---global=1 ---category=300 ---name=new --login=meno --pass=heslo
+ tom3-cron --domain=domain.tld ---global=1 ---category=300 ---name=new --login=login --pass=password
 
 =cut
 
@@ -22,17 +28,44 @@ sub execute
 {
 	my %env=@_;
 	
-	if((!$env{'pass'}) && (!$env{'pass_md5'})){
-		main::_log('failure - pass/pass_md5 undefined - define at least one');
-		return undef
+	if((!$env{'pass'}) && (!$env{'pass_md5'}))
+	{
+		my %user=App::300::UserFind(
+			'host' => "",
+			'login' => $env{'login'}
+		);
+		if ($user{'pass_md5'})
+		{
+			main::_log('password for user found');
+			$env{'pass_md5'}=$user{'pass_md5'};
+		}
+		else
+		{
+			main::_log('failure - pass/pass_md5 undefined - define at least one',1);
+			return undef;
+		}
 	}
-	if(!$env{'login'}){
+	
+	if(!$env{'login'})
+	{
 		main::_log('failure - login undefined');
 		return undef
 	}
-	if(!$env{'pass_md5'}){
+	
+	if(!$env{'pass_md5'})
+	{
 		main::_log('pass_md5 missing - generating md5 from pass');
 		$env{'pass_md5'}=Digest::MD5::md5_hex(Encode::encode_utf8($env{'pass'})) unless $env{'pass_md5'};
+	}
+	
+	# check if this username exists
+	my %user=App::300::UserFind(
+		'login' => $env{'login'}
+	);
+	if ($user{'IDhash'})
+	{
+		main::_log('sorry this user exists',1);
+		return 1;
 	}
 	
 	App::300::UserGenerate
