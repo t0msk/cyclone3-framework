@@ -4,31 +4,9 @@ use encoding 'utf8';
 use utf8;
 use Tomahawk::debug;
 
-#use encoding 'utf8';
-# áéíóú - USE UTF-8!!!
 =head1 NAME
 
-Tomahawk core library - 3.030807
-developed on Unix and Linux based systems and Perl 5.8.0 script language
-=cut
-=head1 COPYRIGHT
-
-(c) 2003 WebCom s.r.o.
-All right reserved!
-Unauthorized access and modification prohibited!
-=cut
-=head1 CHANGES
-
-Tomahawk 3.030807
-	*) hlbsie previazanie verzii
-	*) zmena adresarov modulov, designov, languages
-=cut
-=head1 SYNOPSIS
-=cut
-=head1 DESCRIPTION
-=cut
-=head1 WARNINGS & BUGS
-	*) tak dufam ze ziadne :)
+Tomahawk - core library
 
 =cut
 
@@ -138,8 +116,17 @@ use Exporter;
 	
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
+=head1 FUNCTIONS
 
 
+
+=cut
+
+=head2 Getvar()
+
+
+
+=cut
 
 sub Getvar
 {
@@ -192,6 +179,11 @@ sub Getvar
  return undef}
 
 
+=head2 Getmdlvar
+
+
+
+=cut
 
 sub Getmdlvar
 {
@@ -252,7 +244,11 @@ sub Getmdlvar
  return undef}
 
 
+=head2 GetCACHE_CONF
 
+
+
+=cut
 
 sub GetCACHE_CONF
 {
@@ -286,10 +282,12 @@ sub GetCACHE_CONF
 
 
 
+=head2 module
 
 
-# ADD MODULE
-###############
+
+=cut
+
 sub module
 {
 	my $t=track TOM::Debug(__PACKAGE__."::module()");
@@ -948,13 +946,13 @@ sub module
 
 
 
+=head2 supermodule()
 
 
 
+=cut
 
 
-# ADD MODULE
-###############
 sub supermodule
 {
  local %smdl_env=@_;
@@ -1087,8 +1085,13 @@ sub supermodule
 
 
 
-# ADD MODULE
-###############
+=head2 designmodule()
+
+
+
+=cut
+
+
 sub designmodule
 {
 	my $t=track TOM::Debug(__PACKAGE__."::designmodule()");
@@ -1319,90 +1322,92 @@ sub GetXSGN
 
 
 
+=head2 GetXLNG()
+
+Used in modules to load xlng file
+
+ sub execute
+ {
+  my %env=@_;
+  Tomahawk::GetXLNG() || return undef;
+  return 1;
+ }
+
+=cut
 
 sub GetXLNG
 {
 	my %env=@_;
- # HLADAME LANGUAGE
- $mdl_C{P_XLNG}=$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version};
- $mdl_C{P_XLNG}.=".".$mdl_C{-xsgn} if $mdl_C{-xlng_xsgn};
- $mdl_C{P_XLNG}.=".xlng";
-
-
- if (!$mdl_C{-global}) # ak je modul lokalny, tak moze byt design len lokalny
- {
-  $mdl_C{-xlng_global}=0;
-  $mdl_C{P_XLNG}=$tom::P."/_mdl/".$mdl_C{P_XLNG};
- }
- # ak je modul global, a chcem design global, tak ho dostanem :))
- elsif ($mdl_C{-xlng_global}==1)
- {
-  $mdl_C{P_XLNG}=$TOM::P."/_mdl/".$mdl_C{-category}."/".$mdl_C{P_XLNG};
- }
- # chcem mastera, mam mastera a modul je global, alebo master
- elsif (($tom::Pm)&&($mdl_C{-xlng_global}==2))
- {
-  $mdl_C{P_XLNG}=$tom::Pm."/_mdl/".$mdl_C{P_XLNG};
- }
- else
- {
-  $mdl_C{-xlng_global}=0;
-  $mdl_C{P_XLNG}=$tom::P."/_mdl/".$mdl_C{P_XLNG};
- }
-
-
-=head1
- if (!$mdl_C{-global}) # ak je modul lokalny, tak samozrejme ze je aj jazyk lokalny
- {		       # nemoze byt ani master, ani global
-  $mdl_C{P_XLNG}=$tom::P."/_mdl/".$mdl_C{P_XLNG};
- }
- elsif (($mdl_C{-xlng_global}==2)&&($tom::Pm)&&($mdl_C{-global})) # ak mam cestu k masterovi a chcem mastera
- {
-  $mdl_C{P_XLNG}=$tom::Pm."/_mdl/".$mdl_C{P_XLNG};
- }
- elsif ($mdl_C{-xlng_global})
- {
-  $mdl_C{P_XLNG}=$TOM::P."/_mdl/".$mdl_C{-category}."/".$mdl_C{P_XLNG};
- }# design je globalny, modul je globalny
- else
- {
-  $mdl_C{P_XLNG}=$tom::P."/_mdl/".$mdl_C{P_XLNG};
- }# design je lokalny, modul je globalny
-=cut
-
- # OTVORIM DESIGN
- open (HND,"<".$mdl_C{P_XLNG}) || do
- {$tom::ERR="Cannot open language file ".$mdl_C{-xlng}."/".$mdl_C{-xlng_global}."-".$mdl_C{P_XLNG};return undef;};
- my $file_data;my $file_line;
- while ($file_line=<HND>){$file_data.=$file_line;}
- ($file_line,$file_data)=$file_data=~/<XML_LANGUAGE_DEFINITION lngs="(.*?)">(.*)<\/XML_LANGUAGE_DEFINITION>/s;
- $file_line=",".$file_line.",";
-
-# return undef;
-
- # hladam rec :)
- if (not $file_line=~/,$mdl_env{lng},/)
- {
-  if ($TOM::LNG_search)
-  {
-   if ($file_line=~/,$tom::lng,/){$mdl_env{lng}=$tom::lng;}#print "ok:".$mdl_env{lng}."\n";}
-   elsif ($file_line=~/,$tom::LNG,/){$mdl_env{lng}=$tom::LNG;}#print "ok:".$mdl_env{lng}."\n";}
-   elsif ($file_line=~/,$TOM::LNG,/){$mdl_env{lng}=$TOM::LNG;}#print "ok:".$mdl_env{lng}."\n";}
-   else{$tom::ERR="Cannot import language code ".$mdl_env{lng}.",".$tom::lng.",".$tom::LNG.",".$TOM::LNG;return undef}
-  }
-  else {$tom::ERR="Cannot import language code ".$mdl_env{lng};return undef}
- }
+	# HLADAME LANGUAGE
+	$mdl_C{P_XLNG}=$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version};
+	$mdl_C{P_XLNG}.=".".$mdl_C{-xsgn} if $mdl_C{-xlng_xsgn};
+	$mdl_C{P_XLNG}.=".xlng";
 	
+	
+	if (!$mdl_C{-global}) # ak je modul lokalny, tak moze byt design len lokalny
+	{
+		$mdl_C{-xlng_global}=0;
+		my $addon_path=$tom::P."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XLNG};
+		if (-e $addon_path){$mdl_C{P_XLNG}=$addon_path}
+		else {$mdl_C{P_XLNG}=$tom::P."/_mdl/".$mdl_C{P_XLNG};}
+	}
+	# ak je modul global, a chcem design global, tak ho dostanem :))
+	elsif ($mdl_C{-xlng_global}==1)
+	{
+		my $addon_path=$TOM::P."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XLNG};
+		if (-e $addon_path){$mdl_C{P_XLNG}=$addon_path}
+		else {$mdl_C{P_XLNG}=$TOM::P."/_mdl/".$mdl_C{-category}."/".$mdl_C{P_XLNG}};
+	}
+	# chcem mastera, mam mastera a modul je global, alebo master
+	elsif (($tom::Pm)&&($mdl_C{-xlng_global}==2))
+	{
+		my $addon_path=$tom::Pm."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XLNG};
+		if (-e $addon_path){$mdl_C{P_XLNG}=$addon_path}
+		else {$mdl_C{P_XLNG}=$tom::Pm."/_mdl/".$mdl_C{P_XLNG}};
+	}
+	else
+	{
+		$mdl_C{-xlng_global}=0;
+		my $addon_path=$tom::P."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XLNG};
+		if (-e $addon_path){$mdl_C{P_XLNG}=$addon_path}
+		else {$mdl_C{P_XLNG}=$tom::P."/_mdl/".$mdl_C{P_XLNG}};
+	}
+	
+	
+	# load design file
+	open (HND,"<".$mdl_C{P_XLNG}) || do
+	{$tom::ERR="Cannot open language file ".$mdl_C{-xlng}."/".$mdl_C{-xlng_global}."-".$mdl_C{P_XLNG};return undef;};
+	my $file_data;my $file_line;
+	while ($file_line=<HND>){$file_data.=$file_line;}
+	($file_line,$file_data)=$file_data=~/<XML_LANGUAGE_DEFINITION lngs="(.*?)">(.*)<\/XML_LANGUAGE_DEFINITION>/s;
+	
+	# check language
+	$file_line=",".$file_line.",";
+	if (not $file_line=~/,$mdl_env{lng},/)
+	{
+		if ($TOM::LNG_search)
+		{
+			if ($file_line=~/,$tom::lng,/){$mdl_env{lng}=$tom::lng;}
+			elsif ($file_line=~/,$tom::LNG,/){$mdl_env{lng}=$tom::LNG;}
+			elsif ($file_line=~/,$TOM::LNG,/){$mdl_env{lng}=$TOM::LNG;}
+			else{$tom::ERR="Cannot import language code ".$mdl_env{lng}.",".$tom::lng.",".$tom::LNG.",".$TOM::LNG;return undef}
+		}
+		else {$tom::ERR="Cannot import language code ".$mdl_env{lng};return undef}
+	}
 	
 	TOM::Utils::vars::replace($file_data) if $env{'-convertvars'};
 	
 	while ($file_data=~s|<VALUE lng="$mdl_env{lng}" id="(.*?)">(.*?)</VALUE>||s){$Tomahawk::module::XLNG{$1}=$2;}
 	
- return $mdl_env{lng};
+	return $mdl_env{lng};
 }
 
 
+=head2 XLNGtoXSGN()
 
+
+
+=cut
 
 sub XLNGtoXSGN
 {
@@ -1412,7 +1417,11 @@ sub XLNGtoXSGN
  return 1;
 }
 
+=head2 XLNGtoVARS()
 
+
+
+=cut
 
 sub XLNGtoVARS
 {
@@ -1422,8 +1431,12 @@ sub XLNGtoVARS
 }
 
 
-# EXIT(us) :)
-#############
+=head2 shutdown()
+
+
+
+=cut
+
 sub shutdown
 {
  my $req = FCGI::Request();
