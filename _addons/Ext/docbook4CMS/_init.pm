@@ -126,7 +126,7 @@ sub _docbook2xhtml_translate_image
 	elsif ($env->{'dir_to'})
 	{
 		my $hash=Utils::vars::genhash(8);
-		my $from=$TOM::P.'/'.$env->{'dir_from'}.'/'.$link;
+		my $from=$env->{'dir_from'}.'/'.$link;
 		my $hash=Digest::MD5::md5_base64($from);
 		my $to=$env->{'dir_to'}.'/'.$hash.'-'.$link;
 		my $uri_to=$env->{'uri'}.'/'.$hash.'-'.$link;
