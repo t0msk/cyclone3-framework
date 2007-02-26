@@ -999,22 +999,40 @@ sub supermodule
 # if ($smdl_env{-global}){$smdl_env{P_MODULE}=$TOM::P.$smdl_env{P_MODULE}}
 # else{$smdl_env{P_MODULE}=$tom::P.$smdl_env{P_MODULE}}
 
- if (($smdl_env{-global}==2)&&($tom::Pm))
- {
-  $smdl_env{P_MODULE}=
-  $tom::Pm."/_mdl/".$smdl_env{-category}."-".$smdl_env{-name}.".".$smdl_env{-version}.".smdl";
- }
- elsif ($smdl_env{-global})
- {
-  $smdl_env{-global}=1;
-  $smdl_env{P_MODULE}=
-  $TOM::P."/_mdl/".$smdl_env{-category}."/".$smdl_env{-category}."-".$smdl_env{-name}.".".$smdl_env{-version}.".smdl";
- }
- else
- {
-  $smdl_env{P_MODULE}=
-  $tom::P."/_mdl/".$smdl_env{-category}."-".$smdl_env{-name}.".".$smdl_env{-version}.".smdl";
- }
+	if (($smdl_env{-global}==2)&&($tom::Pm))
+	{
+		my $addon_path=
+			$tom::Pm . "/_addons/App/" . $smdl_env{-category} . "/_mdl/" . $smdl_env{-category} . "-" . $smdl_env{-name} . "." . $smdl_env{-version} . ".smdl";
+		if (-e $addon_path)
+		{$smdl_env{P_MODULE}=$addon_path}
+		else
+		{$smdl_env{P_MODULE}=
+			$tom::Pm."/_mdl/".$smdl_env{-category}."-".$smdl_env{-name}.".".$smdl_env{-version}.".smdl";
+		}
+	}
+	elsif ($smdl_env{-global})
+	{
+		$smdl_env{-global}=1;
+		my $addon_path=
+			$TOM::P . "/_addons/App/" . $smdl_env{-category} . "/_mdl/" . $smdl_env{-category} . "-" . $smdl_env{-name} . "." . $smdl_env{-version} . ".smdl";
+		if (-e $addon_path)
+		{$smdl_env{P_MODULE}=$addon_path}
+		else
+		{$smdl_env{P_MODULE}=
+			$TOM::P."/_mdl/".$smdl_env{-category}."/".$smdl_env{-category}."-".$smdl_env{-name}.".".$smdl_env{-version}.".smdl";
+		}
+	}
+	else
+	{
+		my $addon_path=
+			$tom::P . "/_addons/App/" . $smdl_env{-category} . "/_mdl/" . $smdl_env{-category} . "-" . $smdl_env{-name} . "." . $smdl_env{-version} . ".smdl";
+		if (-e $addon_path)
+		{$smdl_env{P_MODULE}=$addon_path}
+		else
+		{$smdl_env{P_MODULE}=
+			$tom::P."/_mdl/".$smdl_env{-category}."-".$smdl_env{-name}.".".$smdl_env{-version}.".smdl";
+		}
+	}
 
  # AK MODUL NEEXISTUJE
  if (not -e $smdl_env{P_MODULE})
@@ -1129,22 +1147,40 @@ sub designmodule
 	
 	if (($mdl_env{-global}==2)&&($tom::Pm))
 	{
-		$mdl_env{P_MODULE}=
+		my $addon_path=$tom::Pm."/_addons/App/".$mdl_env{-category}."/_mdl/".
+			$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
+		if (-e $addon_path)
+		{$mdl_env{P_MODULE}=$addon_path}
+		else
+		{$mdl_env{P_MODULE}=
 			$tom::Pm."/_mdl/".
 			$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
+		}
 	}
 	elsif ($mdl_env{-global})
 	{
 		$mdl_env{-global}=1;
-		$mdl_env{P_MODULE}=
+		my $addon_path=$TOM::P."/_addons/App/".$mdl_env{-category}."/_mdl/".
+			$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
+		if (-e $addon_path)
+		{$mdl_env{P_MODULE}=$addon_path}
+		else
+		{$mdl_env{P_MODULE}=
 			$TOM::P."/_mdl/".$mdl_env{-category}."/".
 			$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
+		}
 	}
 	else
 	{
-		$mdl_env{P_MODULE}=
+		my $addon_path=$tom::P."/_addons/App/".$mdl_env{-category}."/_mdl/".
+			$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
+		if (-e $addon_path)
+		{$mdl_env{P_MODULE}=$addon_path}
+		else
+		{$mdl_env{P_MODULE}=
 			$tom::P."/_mdl/".
 			$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
+		}
 	}
 	
 	main::_log("file '$mdl_env{P_MODULE}'");
