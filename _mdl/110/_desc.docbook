@@ -7,58 +7,375 @@
   <section>
     <title>Email Stats</title>
 
-    <para>Domains</para>
-
-    <itemizedlist>
-      <listitem>
-        <para><citation>110-weblog_email_domains.1day.cron</citation> daily
-        visits hour by hour (also dv, av, users, sessions hour by hour)</para>
-      </listitem>
-
-      <listitem>
-        <para><citation>110-weblog_email_domains.7day.cron</citation> weekly
-        visits day by day (also dv, av, users, sessions day by day)</para>
-      </listitem>
-
-      <listitem>
-        <para><citation>110-weblog_email_domains.1month.cron</citation>
-        monthly visits day by day (also dv, av, users, sessions day by
-        day)</para>
-      </listitem>
-    </itemizedlist>
-
-    <para>Performance</para>
-
-    <itemizedlist>
-      <listitem>
-        <para><citation>110-weblog_email_performance.0.cron</citation>
-        about</para>
-      </listitem>
-    </itemizedlist>
-
-    <para>Search Engines</para>
+    <para>Universal</para>
 
     <itemizedlist>
       <listitem>
         <para><ulink
-        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_email_searchengines.7days.cron">110-weblog_email_searchengines.7days.cron</ulink>
-        a</para>
-      </listitem>
+        url="?|?section=source-doc&amp;file=_mdl/110/110-universal_email.0.cron">110-universal_email.0.cron</ulink></para>
 
-      <listitem>
-        <para><citation>110-weblog_email_searchengines.1month.cron</citation>
-        a</para>
+        <para>universal template for email stats. it is used as a clon.</para>
       </listitem>
     </itemizedlist>
 
-    <para></para>
+    <para>Weblog Email</para>
 
-    <para></para>
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_email_agents.0.cron">110-weblog_email_agents.0.cron</ulink></para>
+
+        <para>list of browsers and groups of browsers, that visits a
+        domain.</para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_email_domain.1day.cron">110-weblog_email_domain.1day.cron</ulink><citation>
+        deprecated</citation></para>
+
+        <para>visits on domain</para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_email_domains.1day.cron">110-weblog_email_domains.1day.cron</ulink></para>
+
+        <para>daily visits hour by hour (also dv, av, users, sessions hour by
+        hour)</para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_email_domains.1month.cron">110-weblog_email_domains.1month.cron</ulink></para>
+
+        <para>monthly visits day by day (also dv, av, users, sessions day by
+        day)</para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_email_domains.31day.cron">110-weblog_email_domains.31day.cron</ulink>
+        <citation>deprecated</citation></para>
+
+        <para>monthly visits day by day (also dv, av, users, sessions day by
+        day)</para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_email_farm.0.cron">110-weblog_email_farm.0.cron</ulink></para>
+
+        <para></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_email_first.31days.cron">110-weblog_email_first.31days.cron</ulink></para>
+
+        <para></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_email_performance.31day.cron">110-weblog_email_performance.31day.cron</ulink></para>
+
+        <para></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_email_searchengines.1month.cron">110-weblog_email_searchengines.1month.cron</ulink></para>
+
+        <para></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_email_searchengines.7days.cron">110-weblog_email_searchengines.7days.cron</ulink></para>
+
+        <para></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_email_TIDs.0.cron">110-weblog_email_TIDs.0.cron</ulink></para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section>
+    <title>Cleaners and others</title>
+
+    <para>Cleaners</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-all_cleaner.0.cron">110-all_cleaner.0.cron</ulink></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Others</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-mdllog_datamining.0.cron">110-mdllog_datamining.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-mdllog_email_load.0.cron">110-mdllog_email_load.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-obsolete_datamining.0.cron">110-obsolete_datamining.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-sitemap.0.cron">110-sitemap.0.cron</ulink></para>
+      </listitem>
+    </itemizedlist>
   </section>
 
   <section>
     <title>SVG Stats - generating files</title>
 
-    <para></para>
+    <para>System</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-sys_chart_load.0.cron">110-sys_chart_load.0.cron</ulink>
+        aa</para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-sys_collect.day.cron">110-sys_collect.day.cron</ulink>
+        kjhkjhk</para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-sys_collect.hour.cron">110-sys_collect.hour.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-sys_datamining.min.cron">110-sys_datamining.min.cron</ulink></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Webclick collect</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-webclick_collect.svg.cron">110-webclick_collect.svg.cron</ulink></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Weblog chart</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_atractivity.0.cron">110-weblog_chart_atractivity.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_availability.0.cron">110-weblog_chart_availability.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_availability.days.cron">110-weblog_chart_availability.days.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_availability.mins.cron">110-weblog_chart_availability.mins.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_camefrom_domain.0.cron">110-weblog_chart_camefrom_domain.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_camefrom_domains.0.cron">110-weblog_chart_camefrom_domains.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_camefrom_type.0.cron">110-weblog_chart_camefrom_type.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_hosts.10min.cron">110-weblog_chart_hosts.10min.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_hosts.day.cron">110-weblog_chart_hosts.day.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_hosts.days.cron">110-weblog_chart_hosts.days.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_lng.0.cron">110-weblog_chart_lng.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_load.0.cron">110-weblog_chart_load.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_load.1.cron">110-weblog_chart_load.1.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_pagesfailed.0.cron">110-weblog_chart_pagesfailed.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_pagespervisit.0.cron">110-weblog_chart_pagespervisit.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_pagespervisitor.0.cron">110-weblog_chart_pagespervisitor.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_pageviews.0.cron">110-weblog_chart_pageviews.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_SEaccess.0.cron">110-weblog_chart_SEaccess.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_SEactivity.0.cron">110-weblog_chart_SEactivity.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_SEfirst.0.cron">110-weblog_chart_SEfirst.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_SEkeywords.0.cron">110-weblog_chart_SEkeywords.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_users.0.cron">110-weblog_chart_users.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_visitors.0.cron">110-weblog_chart_visitors.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_visits.0.cron">110-weblog_chart_visits.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_chart_visitspervisitor.0.cron">110-weblog_chart_visitspervisitor.0.cron</ulink></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Weblog Collect</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_collect.day.cron">110-weblog_collect.day.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_collect.hour.cron">110-weblog_collect.hour.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_collect.min.cron">110-weblog_collect.min.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_collect.week.cron">110-weblog_collect.week.cron</ulink></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Weblog Datamining</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_datamining.0.cron">110-weblog_datamining.0.cron</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=_mdl/110/110-weblog_datamining.fix.cron">110-weblog_datamining.fix.cron</ulink></para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section>
+    <title>Modules</title>
+
+    <para>Dmdl</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>110-webclick.default.de.dmdl</para>
+      </listitem>
+
+      <listitem>
+        <para>110-webclick.default.en.dmdl</para>
+      </listitem>
+
+      <listitem>
+        <para>110-webclick.default.sk.dmdl</para>
+      </listitem>
+
+      <listitem>
+        <para>110-webclick_show.default.de.dmdl</para>
+      </listitem>
+
+      <listitem>
+        <para>110-webclick_show.default.en.dmdl</para>
+      </listitem>
+
+      <listitem>
+        <para>110-webclick_show.default.sk.dmdl</para>
+      </listitem>
+    </itemizedlist>
   </section>
 </article>
