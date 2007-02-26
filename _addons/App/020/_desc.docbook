@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>Application 020 - Generic 0</title>
+
+  <para>This is only generic applications. All informations is included in
+  <ulink url="?|?section=app&amp;file=020/_init.pm">sources</ulink>.</para>
+</article>
