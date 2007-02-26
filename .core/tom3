@@ -1021,6 +1021,7 @@ while ($req->Accept() >= 0)
 							)
 						)
 						{
+							push @{$a210{'IDs'}}, $p->{'ID'};
 							$main::FORM{'a210_path'}.="/".$p->{'name_url'};
 						}
 						$main::FORM{'a210_path'}=~s|^/||;
@@ -1043,6 +1044,18 @@ while ($req->Accept() >= 0)
 							'tb_name' => "a210_page",
 							'lng'     => $main::FORM{'__lng'},
 						);
+						foreach my $p(
+							App::020::SQL::functions::tree::get_path(
+								$a210{'ID'},
+								'db_h' => "main",
+								'db_name' => $TOM::DB{'main'}{'name'},
+								'tb_name' => "a210_page",
+							)
+						)
+						{
+							push @{$a210{'IDs'}}, $p->{'ID'};
+						}
+						
 						
 						# spracovanie a210 dat
 						if ($a210{'t_name'})
