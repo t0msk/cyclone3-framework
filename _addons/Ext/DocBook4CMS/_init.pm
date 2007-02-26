@@ -1,5 +1,5 @@
 #!/bin/perl
-package Ext::docbook4CMS;
+package Ext::DocBook4CMS;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
