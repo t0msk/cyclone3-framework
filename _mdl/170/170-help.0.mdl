@@ -8,7 +8,7 @@ use strict;
 
 our $authors="roman.fordinal\@comsultia.com";
 
-use Ext::xuladmin::_init;
+use Ext::XULadmin::_init;
 use Ext::docbook4CMS::_init;
 use File::Copy;
 use Digest::MD5;
@@ -32,7 +32,7 @@ sub execute
 		# finding files and max available version
 		main::_log("finding file named '$env_file*.docbook' in max version '$env{'version'}'");
 		
-		opendir(DIR,$Ext::xuladmin::DIR.'/help/');
+		opendir(DIR,$Ext::XULadmin::DIR.'/help/');
 		$version_max=0;
 		while (my $file=readdir DIR)
 		{
@@ -66,7 +66,7 @@ sub execute
 	}
 	
 	# defining filename
-	my $filename=$Ext::xuladmin::DIR.'/help/'.$env_file.'-'.$version_max.'.docbook';
+	my $filename=$Ext::XULadmin::DIR.'/help/'.$env_file.'-'.$version_max.'.docbook';
 	main::_log("full path to file ='$filename'");
 	
 	# open file and read docbook content
@@ -83,7 +83,7 @@ sub execute
 		$docbook,
 		'translate_images' =>
 		{
-			'dir_from' => $TOM::P.'/_addons/Ext/xuladmin/help',
+			'dir_from' => $TOM::P.'/_addons/Ext/XULadmin/help',
 			'dir_to' => $tom::P.'/!media/grf/temp',
 			'uri' => $tom::H_grf.'/temp',
 		}

@@ -1,5 +1,5 @@
 #!/bin/perl
-package Ext::xuladmin;
+package Ext::XULadmin;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
@@ -11,7 +11,7 @@ Extension xuladmin
 
 =head1 DESCRIPTION
 
-This extension gives support and stores datas to XUL Cyclone3 administration frontend named shortly 'xuladmin'
+This extension gives support and stores datas to XUL Cyclone3 administration frontend named shortly 'XULadmin'
 
 =cut
 
