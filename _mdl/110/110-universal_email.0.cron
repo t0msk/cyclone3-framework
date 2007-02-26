@@ -448,6 +448,7 @@ sub execute
 					COUNT(*) AS calls
 				FROM a110_obsolete_log
 				GROUP BY
+					func_filename,
 					func,
 					call_filename
 				ORDER BY
