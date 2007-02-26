@@ -47,7 +47,7 @@ use TOM::Error;
 use TOM::Temp::file;
 
 # default aplikácie
-use App::100; # Ticket system
+use App::100::_init; # Ticket system
 
 use DateTime; # mem:1.5MB
 use Time::Local; # pre opacnu konverziu casu
