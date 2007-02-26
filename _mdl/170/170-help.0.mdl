@@ -9,7 +9,7 @@ use strict;
 our $authors="roman.fordinal\@comsultia.com";
 
 use Ext::XULadmin::_init;
-use Ext::docbook4CMS::_init;
+use Ext::DocBook4CMS::_init;
 use File::Copy;
 use Digest::MD5;
 
@@ -79,7 +79,7 @@ sub execute
 	};
 	
 	# convert do xhtml
-	my $xhtml=Ext::docbook4CMS::docbook2xhtml(
+	my $xhtml=Ext::DocBook4CMS::docbook2xhtml(
 		$docbook,
 		'translate_images' =>
 		{
