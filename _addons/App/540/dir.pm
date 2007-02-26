@@ -2,7 +2,7 @@
 
 package App::540::dir;
 
-use App::540;
+use App::540::_init;
 use App::540::file;
 use strict;
 

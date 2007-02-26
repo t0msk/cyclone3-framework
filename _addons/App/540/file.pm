@@ -3,7 +3,7 @@
 package App::540::file;
 
 use File::Basename;
-use App::540;
+use App::540::_init;
 use App::540::dir;
 use Utils::vars;
 use File::Type;
