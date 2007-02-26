@@ -121,6 +121,7 @@ if ($main::FORM{domain})
 
 my $out=`id`;$ENV{USER}=($out=~/\((.*?)\)/)[0];
 
+print "\n";
 
 sub help
 {
