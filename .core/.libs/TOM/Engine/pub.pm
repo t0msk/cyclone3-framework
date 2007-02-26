@@ -66,7 +66,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	
 	# default addons
 	use App::1B0; # Banning system
-	use App::210; # Sitemap
+	use App::210::_init; # Sitemap
 	require Ext::CacheMemcache::_init if $TOM::CACHE_memcached; # memcache support
 	
 	# new Cyclone libs

@@ -6,6 +6,8 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
+use App::020::_init;
+
 =head1 NAME
 
 210-page_copy_to.0.mdl
@@ -65,8 +67,6 @@ B<&lt;%missing_parameter%&gt;> - chýbajúci parameter
 =back
 
 =cut
-
-use App::020::_init;
 
 sub execute
 {
