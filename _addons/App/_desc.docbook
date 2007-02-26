@@ -46,6 +46,41 @@
         <itemizedlist>
           <listitem>
             <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=100/">100</ulink></emphasis> - IAdm
+            &amp; ITst (special mode)</para>
+
+            <para>IAdm and ITst allow you browse webpages in special mode with
+            enabled debug, display future articles, preview pages,
+            etc...</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=120/">120</ulink></emphasis> -
+            Sources (editors)</para>
+
+            <para>Management of sources like editors and authors.</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?service=app&amp;file=140/">140</ulink></emphasis> -
+            Logging system</para>
+
+            <para>Logging system is part of a core system, a140 allow
+            management of logging and log files.</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=150/">150</ulink></emphasis> - Cache
+            system</para>
+
+            <para>Allow to cache any module</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=160/">160</ulink></emphasis> -
             Xrelated <action>[in progress]</action></para>
 
@@ -63,6 +98,47 @@
             <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=210/">210</ulink></emphasis> -
             Sitemap</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">3</emphasis> - USRM</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><ulink url="?|?section=app&amp;file=300/"><emphasis
+            role="bold">300</emphasis></ulink> - Domain USRM ( User Management
+            )</para>
+
+            <para>Allow to logging users, registering, special sections of
+            content, etc...</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">5</emphasis> - Galleries</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><ulink url="?|?section=app&amp;file=540/"><emphasis
+            role="bold">540</emphasis></ulink> - Filegallery</para>
+
+            <para>Uploading, Downloading and management of file
+            storage.</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">7</emphasis> - netOffice</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=700/">700</ulink></emphasis> -
+            Groupware <emphasis>not finished</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>

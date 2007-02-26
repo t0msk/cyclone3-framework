@@ -19,36 +19,14 @@
         <itemizedlist>
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/100/">100</ulink></emphasis>
-            - IAdm &amp; ITst (special mode)</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold"><ulink
             url="?|?section=source-doc&amp;file=.core/.libs/App/110/">110</ulink></emphasis>
             - Statistic and monitoring subsystem</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/120/">120</ulink></emphasis>
-            - Sources (editors)</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold"><ulink
             url="?|?section=source-doc&amp;file=.core/.libs/App/130/">130</ulink></emphasis>
             - Internal mailsystem</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold">140</emphasis> - Logging system</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/150/">150</ulink></emphasis>
-            - Cache system</para>
           </listitem>
 
           <listitem>
@@ -108,19 +86,6 @@
       </listitem>
 
       <listitem>
-        <para><emphasis role="bold">3</emphasis> - USRM</para>
-
-        <itemizedlist>
-          <listitem>
-            <para><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/300/"><emphasis
-            role="bold">300</emphasis></ulink> - Domain USRM ( User Management
-            )</para>
-          </listitem>
-        </itemizedlist>
-      </listitem>
-
-      <listitem>
         <para><emphasis role="bold">4</emphasis> - Content</para>
 
         <itemizedlist>
@@ -146,24 +111,6 @@
             <para><emphasis role="bold"><ulink
             url="?|?section=source-doc&amp;file=.core/.libs/App/500/">500</ulink></emphasis>
             - Photogallery</para>
-          </listitem>
-
-          <listitem>
-            <para><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/540/"><emphasis
-            role="bold">540</emphasis></ulink> - Filegallery</para>
-          </listitem>
-        </itemizedlist>
-      </listitem>
-
-      <listitem>
-        <para><emphasis role="bold">7</emphasis> - netOffice</para>
-
-        <itemizedlist>
-          <listitem>
-            <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/700/">700</ulink></emphasis>
-            - Groupware <emphasis>not finished</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
