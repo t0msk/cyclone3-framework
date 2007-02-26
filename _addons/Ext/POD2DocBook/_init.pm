@@ -1,5 +1,5 @@
 #!/bin/perl
-package Ext::pod2docbook;
+package Ext::POD2DocBook;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
@@ -7,7 +7,7 @@ use strict;
 
 =head1 NAME
 
-Extension pod2docbook
+Extension POD2DocBook
 
 =head1 DESCRIPTION
 
