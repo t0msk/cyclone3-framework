@@ -186,7 +186,7 @@ sub UserFind
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::UserFind()");
 	
-	$env{'host'}=$tom::H_cookie unless $env{'host'};
+	$env{'host'}=$tom::H_cookie if not exists $env{'host'};
 	
 	foreach (sort keys %env){main::_log("input $_='$env{$_}'");}
 	
