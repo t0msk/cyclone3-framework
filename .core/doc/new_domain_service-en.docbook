@@ -28,16 +28,6 @@ vim \!domain.tld/<ulink
       </listitem>
 
       <listitem>
-        <para>Need you XULadmin backend to manage this domain service?</para>
-
-        <synopsis>cd \!domain.tld
-svn co http://svn.cyclone3.org/trunk/xuladmin/docroot-tmpl \!cyclone
-cp \!cyclone/local.conf.tmpl \!cyclone/local.conf
-vim \!cyclone/local.conf
-</synopsis>
-      </listitem>
-
-      <listitem>
         <para>Create database source for domain</para>
 
         <synopsis>mysql -h localhost -u root -p
@@ -51,13 +41,6 @@ CREATE DATABASE domain_tld;
 
         <synopsis>tom3-db_install --domain=domain.tld --name=a120,a210,a400,a410,a500,a540
 tom3-chtables --domain=domain.tld</synopsis>
-      </listitem>
-
-      <listitem>
-        <para>Add your account into XULadmin backend ( cyclone.domain.tld
-        )</para>
-
-        <synopsis>tom3-cron --domain=domain.tld ---global=1 ---category=300 ---name=new --login=username --pass=password</synopsis>
       </listitem>
 
       <listitem>
@@ -87,7 +70,41 @@ sudo tom3-chfiles -r
         &lt;Directory /usr/www/TOM/!domain.tld/!www&gt;
                 AllowOverride All
         &lt;/Directory&gt;
-&lt;/VirtualHost&gt;
+&lt;/VirtualHost&gt;</synopsis>
+      </listitem>
+    </orderedlist>
+  </section>
+
+  <section>
+    <title>Install XULadmin backend cyclone.domain.tld</title>
+
+    <orderedlist>
+      <listitem>
+        <para>Need you XULadmin backend to manage domain.tld domain
+        service?</para>
+
+        <synopsis>cd \!domain.tld
+svn co http://svn.cyclone3.org/trunk/xuladmin/docroot-tmpl \!cyclone
+cp \!cyclone/local.conf.tmpl \!cyclone/local.conf
+vim \!cyclone/local.conf
+</synopsis>
+      </listitem>
+
+      <listitem>
+        <para>Add your account into XULadmin backend ( cyclone.domain.tld
+        )</para>
+
+        <synopsis>tom3-cron --domain=cyclone.domain.tld ---global=1 ---category=300 ---name=new --login=username --pass=password</synopsis>
+      </listitem>
+
+      <listitem>
+        <para>Add domain services into apache virtual hosts</para>
+
+        <synopsis>vim /www/TOM/_config/httpd.virtual.conf</synopsis>
+
+        <para>Add these lines:</para>
+
+        <synopsis>#######################################################################
 
 &lt;VirtualHost 127.0.0.1:80&gt;
         ServerName cyclone.domain.tld
@@ -98,6 +115,50 @@ sudo tom3-chfiles -r
                 AllowOverride All
         &lt;/Directory&gt;
 &lt;/VirtualHost&gt;</synopsis>
+      </listitem>
+
+      <listitem>
+        <para>Fix file permissions</para>
+
+        <synopsis>cd /www/TOM/\!domain.tld/
+sudo tom3-chfiles -t
+cd \!cyclone
+sudo tom3-chfiles -r
+</synopsis>
+      </listitem>
+    </orderedlist>
+  </section>
+
+  <section>
+    <title>Install basic SVG statistics into XULadmin</title>
+
+    <orderedlist>
+      <listitem>
+        <para>Craeate http://cyclone.domain.tld/stats/</para>
+
+        <synopsis>cd \!domain.tld/\!cyclone/\!www
+svn co http://svn.cyclone3.org/trunk/xuladmin/stats-docroot stats
+cp stats/custom.html.tmpl stats/custom.html</synopsis>
+      </listitem>
+
+      <listitem>
+        <para>Start SVGraph generation</para>
+
+        <para>Place into \!domain.tld/cron.1day.cml</para>
+
+        <synopsis>&lt;ADDTYPE name="stats-1day" global="1" /&gt;</synopsis>
+
+        <para>Place into \!domain.tld/cron.1hour.cml</para>
+
+        <synopsis>&lt;ADDTYPE name="stats-1hour" global="1" /&gt;</synopsis>
+      </listitem>
+
+      <listitem>
+        <para>Fix file permissions</para>
+
+        <synopsis>cd /www/TOM/\!domain.tld/\!cyclone/\!www
+sudo tom3-chfiles -r
+</synopsis>
       </listitem>
     </orderedlist>
   </section>
