@@ -41,7 +41,7 @@ require $TOM::P."/_config/TOM.conf";
  use MIME::Base64;
  use TOM::Net::URI::URL;
  use TOM::Net::HTTP::CGI;
- use App::540;
+ use App::540::_init;
  use App::540::file;
  use enc3;
 
