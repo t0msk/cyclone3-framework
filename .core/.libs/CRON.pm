@@ -156,7 +156,7 @@ sub module
 	else
 	{
 		my $addon_path=
-			$cron::P."/_mdl/".
+			$cron::P."/_addons/App/".$mdl_C{-category}."/_mdl/".
 			$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".cron";
 		if (-e $addon_path)
 		{
