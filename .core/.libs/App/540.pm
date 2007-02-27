@@ -7,3 +7,5 @@ BEGIN
 }
 
 use App::540::_init;
+
+1;
