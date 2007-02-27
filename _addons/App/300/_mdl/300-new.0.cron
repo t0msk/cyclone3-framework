@@ -1,12 +1,13 @@
 #!/usr/bin/perl
 # áéíóú - USE UTF-8 !!!
 package CRON::module;
-use App::300;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
-use CVML;
 use strict;
+
+use App::300::_init;
+use CVML;
 
 =head1 NAME
 
