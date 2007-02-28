@@ -13,16 +13,60 @@ use utf8;
 use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
+=head1 DESCRIPTIONS
+
+This is low level SQL API to database tables defined by L<DATA standard|standard/"DATA">.
+
+Allow you to automatically journalize entities, make clones, copies, etc...
+
+=cut
+
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<TOM::Database::SQL|source-doc/".core/.libs/TOM/Database/SQL.pm">
+
+=item *
+
+L<App::020::SQL::functions::tree|app/"020/SQL/functions/tree.pm">
+
+=back
+
+=cut
 
 use TOM::Database::SQL;
-
 use App::020::SQL::functions::tree;
+
 
 =head1 FUNCTIONS
 
-=head2 my $ID=new(%env)
+=head2 new()
 
-Vlozi ID zaznam do hlavnej tabulky. Vrati nove ID
+Function creates new row into main table and initializes it ( creates ID and ID_entity ).
+
+This function makes automatically journalization copy of every created new row, when -journalize is enabled (table with suffix '_j' must exists).
+
+ my $ID=new
+ (
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+  'columns'=>
+  {
+   'column1' => "'value'",
+   'column2' => "NOW()",
+   'column3' => "NULL"
+  },
+  '-journalize' => 1
+ )
+
+Please never try over this function setting columns named ID, ID_entity and datetime_create.
+
+Function returns ID, which is in new() same as ID_entity!
 
 =cut
 
@@ -93,9 +137,19 @@ sub new
 }
 
 
-=head2 new_initialize(%env)
 
-Inicializuje cerstvo vlozene riadky do tabulky. Updatne ID_entity vsetkym riadkom ktore maju ID_entity NULL
+=head2 new_initialize()
+
+This function is called from new() function. Finds all rows where ID_entity IS NULL and initializes this rows with setting ID_entity=ID, datetime_create=NOW()
+
+Function can be called with one param - ID;
+
+ new_initialize(
+  ID => $ID, # or undef
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+ );
 
 =cut
 
@@ -131,9 +185,26 @@ sub new_initialize
 }
 
 
-=head2 get_ID(%env)
+=head2 get_ID()
 
-Vypise hodnoty ID zaznamu hlavnej tabulky
+Function returns one row in %hash from main table ( also actual row, not journalized ).
+
+ my %hash=get_ID
+ (
+  ID => $ID, # must be defined
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+  'colums' =>
+  {
+  	'column1' => 1, # return value of this column
+  	'column2' => 1, # same
+  }
+ )
+
+Into 'columns' is automatically added ID, ID_entity, datetime_create and status.
+
+Into 'columns' you are able set '*' => 1
 
 =cut
 
@@ -191,7 +262,22 @@ sub get_ID(%env)
 
 =head2 update()
 
-Updatne ID záznam v hlavnej tabuľke
+Updates one row ( also one ID ) in main table.
+
+ my $retcode=update(
+  'ID' => $ID, # must be defined
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+  'colums' =>
+  {
+   'column1' => "'string'", # set value of this column
+   'column2' => "number", # same
+  },
+  '-journalize' => 1, # create journal copy of this update
+ )
+
+Please do not set column datetime_create. datetime_create is updatet automatically.
 
 =cut
 
@@ -225,8 +311,6 @@ $sel_set
 		WHERE ID=$env{'ID'}
 		LIMIT 1
 	};
-	
-	main::_log("SQL='$SQL'");
 	
 	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
 	
@@ -266,11 +350,20 @@ $sel_set
 }
 
 
+
 =head2 journalize()
 
-Prenesie kopiu ID zaznamu z hlavnej tabulky do journal tabulky
+Copies actual row from main table into journal table.
 
-Po tomto kroku by mal nasledovat update columnov aktualneho ID v hlavnej tabulke a zmena datetime_create columnu ktory uchovava informaciu o verzii tohto ID v hlavnej tabulke.
+ journalize
+ (
+  'ID' => $ID, # must be defined
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+ )
+
+Please do not execute this function alone. After this function must be in main table updated column datetime_create with same ID.
 
 =cut
 
@@ -295,9 +388,7 @@ sub journalize
 		WHERE ID=$env{'ID'}
 		LIMIT 1
 	};
-	
-	main::_log("SQL='$SQL'");
-	
+		
 	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
 	# error
 	if ($sth0{'err'})
@@ -309,6 +400,7 @@ sub journalize
 	$t->close();
 	return 1;
 }
+
 
 
 sub update_now
@@ -343,7 +435,25 @@ sub diff_versions
 
 =head2 clone()
 
-Kopia ID zaznamu do noveho ID, ale rovnakeho ID_entity. Vytvorenie novej modifikacie ID_entity
+Makes copy of given ID, into new ID, but with same ID_entity. Also makes new version/modification of ID_entity.
+
+For example, when ID_entity is like 'article', and one ID is language version of this article, then making clones is as making new language version of this article.
+
+ my $new_ID=clone
+ (
+  'ID' => $ID, # must be defined
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+  'colums' => # list of columns which are changed above old ID
+  {
+   'column1' => "'string'", # set value of this column
+   'column2' => "number", # same
+  },
+  '-journalize' => 1, # create journal copy of this clone
+ );
+
+Clone can be created only from enabled or disabled rows, not from deleted or trashed.
 
 =cut
 
@@ -429,7 +539,23 @@ sub clone
 
 =head2 copy()
 
-Kopia ID zaznamu do noveho ID a noveho ID_entity
+Makes copy of given ID, into new ID and new ID_entity. Also makes new entity
+
+ my $new_ID=copy
+ (
+  'ID' => $ID, # must be defined
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+  'colums' => # list of columns which are changed above old ID
+  {
+   'column1' => "'string'", # set value of this column
+   'column2' => "number", # same
+  },
+  '-journalize' => 1, # create journal copy of this copy
+ );
+
+Clone can be created only from enabled or disabled rows, not from deleted or trashed.
 
 =cut
 
@@ -522,7 +648,18 @@ sub copy_entity
 
 =head2 to_trash()
 
-Vyhodenie ID záznamu do Trash v hlavnej tabuľke (označenie statusom T zo statusu Y/N)
+Moves one row ( also ID ) into trash. Physically only changes status of this row to 'T'.
+
+ my $retcode=to_trash
+ (
+  'ID' => $ID, # must be defined
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+  '-journalize' => 1, # create journal copy of this action
+ );
+
+Only rows with status Y or N can be moved into trash.
 
 =cut
 
@@ -577,7 +714,18 @@ sub to_trash
 
 =head2 trash_restore()
 
-Obnovenie ID záznamu z Trash v hlavnej tabuľke (označenie statusom N zo statusu T)
+Restores one row ( also ID ) from trash. Physically only changes status of this row to 'N'.
+
+ my $retcode=to_restore
+ (
+  'ID' => $ID, # must be defined
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+  '-journalize' => 1, # create journal copy of this action
+ );
+
+Only rows with status T can be restored
 
 =cut
 
@@ -632,7 +780,18 @@ sub trash_restore
 
 =head2 trash_delete()
 
-Vyhodenie ID záznamu z Trash v hlavnej tabuľke (Presunutie do journal tabulky a označenie statusom D zo statusu T)
+Delete one row ( also ID ) from trash. Physically only changes status of this row to 'D' and moves it from main table into journal table ( when journalize is enabled ).
+
+ my $retcode=trash_delete
+ (
+  'ID' => $ID, # must be defined
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+  '-journalize' => 1, # create journal copy of this action
+ );
+
+Only rows with status T can be deleted
 
 =cut
 
@@ -696,7 +855,17 @@ sub trash_delete
 
 =head2 trash_empty()
 
-Vyprazdnenie trashu
+Empty trash with all trashed ID's. Use carefully. When journalize is not enabled, all this rows is gone and can't be returned.
+
+ my $retcode=trash_empty
+ (
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+  '-journalize' => 1, # create journal copy of this action
+ );
+
+Only rows with status T will be deleted
 
 =cut
 
@@ -758,7 +927,16 @@ sub trash_empty
 
 =head2 delete()
 
-Zmazanie ID záznamu z hlavnej tabuľky (Presunutie do journal tabulky a označenie statusom D)
+Deletes one row ( also ID ) from main table. Physically only changes status of this row to 'D' and moves it into journal table ( if enabled ).
+
+ my $retcode=delete
+ (
+  'ID' => $ID, # must be defined
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+  '-journalize' => 1, # create journal copy of this action
+ );
 
 =cut
 
@@ -813,11 +991,6 @@ sub delete
 }
 
 
-=head2 undele()
-
-Pokus o vrátenie zmazaného ID záznamu z hlavnej tabuľke (v journal tabulke oznaceny statusom D)
-
-=cut
 
 sub undele
 {
@@ -838,11 +1011,6 @@ sub undele
 }
 
 
-=head2 _remove()
-
-Reálne zmazanie ID záznamu z hlavnej tabuľky
-
-=cut
 
 sub _remove
 {
@@ -874,7 +1042,18 @@ sub _remove
 
 =head2 disable()
 
-Vypnutie ID záznamu v hlavnej tabuľke (označenie statusom N zo statusu Y)
+Sets one row ( also ID ) as disabled ( not active ). Physically only changes status of this row to 'N'.
+
+ my $retcode=disable
+ (
+  'ID' => $ID, # must be defined
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+  '-journalize' => 1, # create journal copy of this action
+ );
+
+Only rows with status Y can be disabled
 
 =cut
 
@@ -936,7 +1115,18 @@ sub disable
 
 =head2 enable()
 
-Zapnutie ID záznamu v hlavnej tabuľke (označenie statusom Y zo statusu N)
+Sets one row ( also ID ) as enabled ( active ). Physically only changes status of this row to 'Y'.
+
+ my $retcode=enable
+ (
+  'ID' => $ID, # must be defined
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+  '-journalize' => 1, # create journal copy of this action
+ );
+
+Only rows with status N can be enabled
 
 =cut
 
