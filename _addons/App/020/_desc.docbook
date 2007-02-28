@@ -6,4 +6,9 @@
 
   <para>This is only generic applications. All informations is included in
   <ulink url="?|?section=app&amp;file=020/_init.pm">sources</ulink>.</para>
+
+  <para>This application can be used as example and how-to build a new
+  application. Or can be used as local domain application to build very simple
+  things. All newest applications inherits classes from this generic
+  App.</para>
 </article>

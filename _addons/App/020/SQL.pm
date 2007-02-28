@@ -13,6 +13,12 @@ use utf8;
 use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
+=head1 DESCRIPTION
+
+This library only loads all needed SQL libs into L<a020|app/"020/">
+
+=cut
+
 =head1 DEPENDS
 
 =over
