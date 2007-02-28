@@ -1,61 +1,52 @@
 #!/usr/bin/perl
 use utf8;
-# ÁÉÍÓÚ - USE UTF-8!!!
 
-# BEGIN COMPILATION
 BEGIN
 {
- # -END-
- $tom::P=`pwd` unless $ENV{SCRIPT_FILENAME} && do
- {$tom::P=$ENV{SCRIPT_FILENAME};$tom::P=~s|(.*)/.*?/||;$tom::P=$1;};
- $tom::P=~s|(.*)/.*?\n$|\1|;
- $tom::SCRIPT_NAME=$0;
- $tom::fastcgi=1 if $tom::SCRIPT_NAME=~/(tom|fcgi|fpl)$/; # zistujem ci som fastcgi script
- $TOM::P="/www/TOM";
- unshift @INC,$TOM::P."/_mdl"; # na zaciatok
- unshift @INC,$TOM::P."/.core/.libs"; # na zaciatok
- sub _log{return};sub _applog{return};
+	$tom::P=`pwd` unless $ENV{SCRIPT_FILENAME} && do
+	{$tom::P=$ENV{SCRIPT_FILENAME};$tom::P=~s|(.*)/.*?/||;$tom::P=$1;};
+	$tom::P=~s|(.*)/.*?\n$|\1|;
+	$TOM::P="/www/TOM";
+	unshift @INC,$TOM::P."/_mdl"; # na zaciatok
+	unshift @INC,$TOM::P."/.core/.libs"; # na zaciatok
+	sub _log{return};sub _applog{return};
 }
 
-# START SCRIPT
+
 use strict; # scrict code
 use Inline (Config => DIRECTORY => "$TOM::P/.core/.libs/_Inline");
 
-# PERL MODULES
 use FCGI;
 require $TOM::P."/.core/_config/TOM.conf";
 require $TOM::P."/_config/TOM.conf";
-#use Tomahawk::error;
 
- # SYSTEM MODULES
- use Mysql;
- use TOM;
- use TOM::Engine::pub;
- use TOM::Database::connect;
- use Time::Local; # pre opacnu konverziu casu
- use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
- use Net::HTTP::CGI;
- use Net::HTTP::cookies;
- use TOM::Data::XML;
- use TOM::Text::format;
- use MIME::Base64;
- use TOM::Net::URI::URL;
- use TOM::Net::HTTP::CGI;
- use App::540::_init;
- use App::540::file;
- use enc3;
+use Mysql;
+use Time::Local;
+use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
+use MIME::Base64;
+
+use Net::HTTP::cookies;
+
+use TOM;
+use TOM::Engine::pub;
+use TOM::Database::connect;
+use TOM::Data::XML;
+use TOM::Text::format;
+use TOM::Net::URI::URL;
+use TOM::Net::URI::rewrite;
+use TOM::Net::HTTP::CGI;
+
+use App::540::_init;
+use App::540::file;
+
+use enc3;
 
 
- # CORE CONFIGURE MODULES
- require $tom::P."/local.conf";
-
- foreach (keys %tom::code_keys){push @tom::type_code,$_ unless $tom::code_keys{$_}{notuse};}
-
+# domain configuration
+require $tom::P."/local.conf";
 
 ######################################################################################
-######################################################################################
-######################################################################################
-######################################################################################
+
 TOM::Database::connect::multi('main');
 
 
@@ -64,29 +55,26 @@ while ($req->Accept() >= 0)
 {
 	my %env;
 	my $time_current=time;
-
-	#my %FORM=GetQuery_h2($ENV{'QUERY_STRING'} || $ARGV[0]);
+	
 	my %FORM=TOM::Net::HTTP::CGI::GetQuery($ENV{'QUERY_STRING'} || $ARGV[0]);
-
+	
 	main::_log("QUERY_STRING='$ENV{QUERY_STRING}'");
-
+	
 	my @file = App::540::file::get( hash => $FORM{hash}, ID => $FORM{hash2} );
-
+	
 	main::_log("file='$file[0]{fullpath}' @file");
-
+	
 	if (scalar(@file) == 0 || !open FILE,$file[0]{fullpath})
 	{
-		# TODO:[drahos] !! Poslat rozumny header
- 		print "Status: 404 Not Found\n\n";
- 		#print "$FORM{hash}, $FORM{hash2}, $file[0]{filename}\r\n\r\n";
- 		next;
- 	}
-
+		print "Status: 404 Not Found\n\n";
+		next;
+	}
+	
 	my %user = &Net::HTTP::cookies::GetCookies;
-
+	
 	my $ip = $ENV{REMOTE_ADDR};
 	my $host = gethostbyaddr( pack( 'C4', split( '\.', $ip) ), 2);
-
+	
 	main::_log("logging: file:".$file[0]{ID}." user:".$user{_IDhash});
 	$main::DB{main}->Query("
 		INSERT INTO a540_visits
@@ -106,14 +94,15 @@ while ($req->Accept() >= 0)
 			'$host'
 		)
 	");
-
+	
 	print "Content-Type: $file[0]{mime}\n";
-	print "Content-Disposition: attachment; filename = ".$file[0]{name}."\n\n";
- 	print while <FILE>;
- 	close FILE;
+	my $filename=TOM::Net::URI::rewrite::convert($file[0]{name},'notlower'=>1);
+	print "Content-Disposition: attachment; filename = ".$filename."\n\n";
+	print while <FILE>;
+	close FILE;
+	
 }
+
 ######################################################################################
-######################################################################################
-######################################################################################
-######################################################################################
+
 1;
