@@ -122,6 +122,15 @@
 
         <itemizedlist>
           <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=500/">500</ulink></emphasis> -
+            Photogallery</para>
+
+            <para>Storage for jpeg photos and formats ( original, thumbnail,
+            etc.. )</para>
+          </listitem>
+
+          <listitem>
             <para><ulink url="?|?section=app&amp;file=540/"><emphasis
             role="bold">540</emphasis></ulink> - Filegallery</para>
 
