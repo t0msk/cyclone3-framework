@@ -82,7 +82,7 @@ if ($@)
 our $pass_md5=md5_hex(Encode::encode_utf8($main::ENV{'PASS'}));
 our $user_md5=md5_hex(Encode::encode_utf8($main::ENV{'HTTP_HOST'}.'-'.$main::ENV{'USER'}));
 
-use App::300;
+use App::300::_init;
 use TOM::Database::connect;
 
 TOM::Database::connect::multi('main');
