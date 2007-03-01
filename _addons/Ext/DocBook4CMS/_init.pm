@@ -148,4 +148,55 @@ sub _docbook2xhtml_translate_image
 }
 
 
+
+=head2 docbook2dc('<?xml>')
+
+Convert DocBook XML content into Dublin Core metadata.
+
+Function returns %hash:
+
+ my %dc=docbook2dc('<?xml>');
+
+Modyfiing output document by Dublin Core:
+
+ $main::H->change_DOC_title($dc{'title'}) if $dc{'title'};
+ $main::H->change_DOC_description($dc{'abstract'}) if $dc{'abstract'};
+
+=cut
+
+sub docbook2dc
+{
+	my $data=shift;
+	my %env=@_;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::docbook2dc()");
+	
+	my $sab = new XML::Sablotron();
+	my $situa = new XML::Sablotron::Situation();
+	
+	$sab->RegHandler(0,
+		{
+			MHMakeCode => \&sab_MHMakeCode,
+			MHLog => \&sab_MHLog,
+			MHError => \&sab_MHError
+		}
+	);
+	
+	$sab->addArg($situa, 'data', $data);
+	$sab->process($situa, $DIR.'/src/xsl/docbook2dc.xsl', 'arg:/data', 'arg:/output');
+	my $output=$sab->getResultArg('arg:/output');
+	$output=~s|^<\?xml.*?>||;
+	main::_log("output=length(".(length($output)).")");
+	
+	my %hash;
+	$hash{'dc'}=$output;
+	while ($output=~s|<dc:(.*?)>(.*?)</dc:\1>||s)
+	{
+		$hash{$1}=$2;
+	}
+	
+	$t->close();
+	return %hash;
+}
+
 1;
