@@ -1,22 +1,67 @@
 #!/bin/perl
-# USE UTF-8 !!!
 package CRON::module;
-use Time::Local;
-use TOM::Net::HTTP::UserAgent;
-#use TOM;
-#use TOM::Debug::logs;
-use TOM::lock;
 use strict;
+
+=head1 NAME
+
+110-sitemap.0.cron
+
+=cut
+
+=head1 DESCRIPTION
+
+This cron module automatically generates google sitemap xml index file. File is stored in !domain.tld/!www/sitemap.xml file.
+
+=cut
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+Time::Local
+
+=item *
+
+XML::Generator
+
+=item *
+
+L<TOM::lock|source-doc/".core/.libs/TOM/lock.pm">
+
+=back
+
+=cut
+
+=head1 SYNOPSIS
+
+Informations is stored in service type files.
+
+ <CONF_VAR id="sitemap" value="1" />
+ <CONF_VAR id="weight" value="1" />
+ <CONF_VAR id="lastmod" value="2006-12-12" />
+ <CONF_VAR id="changefreq" value="weekly" />
+
+Or you can setup it from modules:
+
+ $main::sitemap=1;
+ $main::env{'changefreq'}="weekly";
+ $main::env{'lastmod'}="2006-12-12";
+ $main::env{'weight'}="1";
+
+Automatized calculation of weight in sitemap.xml generation is currently not very well.
+
+=cut
+
+use Time::Local;
 use XML::Generator;
+use TOM::lock;
 
 sub execute
 {
 	alarm(3600);
- #return 1;
-#	alarm(30)
-#	return 1;
 	my %env=@_;
-	#return 1;
 	
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
@@ -48,7 +93,6 @@ sub execute
 	return 1 unless $weight_full;
 	
 	my $X = XML::Generator->new(':pretty');
-	
 	
 	my $file=$tom::P.'/!www/sitemap.xml';
 	main::_log("writing to file $file");
@@ -97,7 +141,6 @@ sub execute
 		
 		main::_log("[$i] add URL='$db0_line{'url'}' priority='$priority' changefreq='$changefreq' lastmod='$lastmod'");
 		
-		#$X->priority($priority)
 		print ZIP $X->url(
 			$X->loc($db0_line{'url'}),
 			$X->lastmod($lastmod),
@@ -108,8 +151,6 @@ sub execute
 	
 	print ZIP "</urlset>\n";
 	close(ZIP);
-	
-	#`gzip -c $tom::P/!www/sitemap.xml > $tom::P/!www/sitemap.gz`;
 	
 	$lock->close();
 	
