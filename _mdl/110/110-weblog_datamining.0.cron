@@ -1,20 +1,46 @@
 #!/bin/perl
 # USE UTF-8 !!!
 package CRON::module;
-use Time::Local;
-use TOM::Net::HTTP::UserAgent;
-use TOM::lock;
 use strict;
+
+=head1 NAME
+
+110-weblog_datamining.0.cron
+
+=cut
+
+=head1 DESCRIPTION
+
+This cron module raw data from XML files stored by publisher and fills it into database tables a110_weblog_rqs and a110_sitemap
+
+XML files is stored in /www/TOM/_logs/weblog/
+
+=cut
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+Time::Local
+
+=item *
+
+L<TOM::lock|source-doc/".core/.libs/TOM/lock.pm">
+
+=back
+
+=cut
+
+use Time::Local;
+use TOM::lock;
 
 
 sub execute
 {
 	alarm(0);
- #return 1;
-#	alarm(30)
-#	return 1;
 	my %env=@_;
-	#return 1;
 	
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
@@ -195,5 +221,11 @@ sub execute
 	
 	return 1
 }
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
 
 1;
