@@ -144,8 +144,7 @@ sub execute
 							die "can't insert $sql\n";
 						}
 						
-						
-						if ($hash{'sitemap'})
+						if ($hash{'sitemap'} && $hash{'result'} eq "ok")
 						{
 							main::_log("this is sitemap request");
 							my $URL=$hash{'query_URL'};
