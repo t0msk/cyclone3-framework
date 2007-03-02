@@ -114,7 +114,8 @@ sub new
 			'db_h' => $env{'db_h'},
 			'db_name' => $env{'db_name'},
 			'tb_name' => $env{'tb_name'},
-			'ID' => $ID
+			'ID' => $ID,
+			'ID_entity' => $env{'columns'}{'ID_entity'}
 		);
 		
 		if ($env{'-journalize'})
@@ -167,7 +168,11 @@ sub new_initialize
 	
 	my $SQL="UPDATE `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=NOW(), ID_entity=ID WHERE ";
 	
-	if ($env{'ID'})
+	if ($env{'ID_entity'} && $env{'ID'})
+	{
+		$SQL="UPDATE `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=NOW() WHERE ID=$env{'ID'}";
+	}
+	elsif ($env{'ID'})
 	{
 		$SQL.="ID=$env{'ID'} AND ID_entity IS NULL";
 	}
@@ -195,10 +200,10 @@ Function returns one row in %hash from main table ( also actual row, not journal
   'db_h' => 'main', # name of database handler
   'db_name' => 'domain_tld', # name of database
   'tb_name' => 'a020_object', # name of main table
-  'colums' =>
+  'columns' =>
   {
-  	'column1' => 1, # return value of this column
-  	'column2' => 1, # same
+   'column1' => 1, # return value of this column
+   'column2' => 1, # same
   }
  )
 
@@ -269,7 +274,7 @@ Updates one row ( also one ID ) in main table.
   'db_h' => 'main', # name of database handler
   'db_name' => 'domain_tld', # name of database
   'tb_name' => 'a020_object', # name of main table
-  'colums' =>
+  'columns' =>
   {
    'column1' => "'string'", # set value of this column
    'column2' => "number", # same
@@ -445,7 +450,7 @@ For example, when ID_entity is like 'article', and one ID is language version of
   'db_h' => 'main', # name of database handler
   'db_name' => 'domain_tld', # name of database
   'tb_name' => 'a020_object', # name of main table
-  'colums' => # list of columns which are changed above old ID
+  'columns' => # list of columns which are changed above old ID
   {
    'column1' => "'string'", # set value of this column
    'column2' => "number", # same
@@ -547,7 +552,7 @@ Makes copy of given ID, into new ID and new ID_entity. Also makes new entity
   'db_h' => 'main', # name of database handler
   'db_name' => 'domain_tld', # name of database
   'tb_name' => 'a020_object', # name of main table
-  'colums' => # list of columns which are changed above old ID
+  'columns' => # list of columns which are changed above old ID
   {
    'column1' => "'string'", # set value of this column
    'column2' => "number", # same
