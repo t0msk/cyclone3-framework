@@ -4,7 +4,7 @@
 -- --------------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_relation` (
-  `ID` bigint(20) unsigned NOT NULL,
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `l_prefix` varchar(32) character set ascii collate ascii_bin NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_relation` (
 -- --------------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_relation_j` (
-  `ID` bigint(20) unsigned NOT NULL,
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `l_prefix` varchar(32) character set ascii collate ascii_bin NOT NULL,
