@@ -1,0 +1,20 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP_error">
+Error
+</DEFINITION>
+
+<DEFINITION id="TMP">
+<div>
+<#ITEM#>
+</div>
+</DEFINITION>
+
+<DEFINITION id="ITEM">
+<span>ID=<%ID%></span>
+<#ITEM#>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
+

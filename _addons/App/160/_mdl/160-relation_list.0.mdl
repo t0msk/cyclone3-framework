@@ -1,0 +1,244 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+160-relation_list.0.mdl
+
+=head1 DESCRIPTION
+
+Return list of assigned relations ( to one or more entities )
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::160::_init|app/"160/_init.pm">
+
+=back
+
+=cut
+
+use App::160::_init;
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID of row
+
+=item *
+
+B<ID_entity> - ID of entity
+
+=item *
+
+B<l_prefix>
+
+=item *
+
+B<l_table>
+
+=item *
+
+B<l_ID_entity>
+
+=item *
+
+B<r_db_name>
+
+=item *
+
+B<r_prefix>
+
+=item *
+
+B<r_table>
+
+=item *
+
+B<r_ID_entity>
+
+=item *
+
+B<status> - default 'Y' - can be defined as 'YNT'
+
+=back
+
+=cut
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default output
+
+=item *
+
+B<#ITEM#> - entry to one item
+
+=item *
+
+B<ITEM> - one item
+
+=item *
+
+B<%ID%> - ID of row
+
+=item *
+
+B<%ID_entity%> - ID of entity
+
+=item *
+
+B<%datetime_change%>
+
+=item *
+
+B<%l_prefix%>
+
+=item *
+
+B<%l_table%>
+
+=item *
+
+B<%l_ID_entity%>
+
+=item *
+
+B<%r_db_name%>
+
+=item *
+
+B<%r_prefix%>
+
+=item *
+
+B<%r_table%>
+
+=item *
+
+B<%r_ID_entity%>
+
+=item *
+
+B<%status%>
+
+=back
+
+Example:
+
+ <XML_DESIGN_DEFINITION>
+ 
+  <DEFINITION id="TMP_error">
+   Error
+  </DEFINITION>
+ 
+  <DEFINITION id="TMP">
+   <div>
+    <#ITEM#>
+   </div>
+  </DEFINITION>
+ 
+  <DEFINITION id="ITEM">
+   <span>ID=<%ID%></span>
+   <#ITEM#>
+  </DEFINITION>
+ 
+ </XML_DESIGN_DEFINITION>
+
+Example of xml output:
+
+ <XML_DESIGN_DEFINITION>
+ 
+ <DEFINITION id="TMP_error">
+  <response type="relation_list" IDapp="a160" result="0" code="<$main::request_code>">
+   <result>0</result>
+   <reason>Default error message.</reason>
+  </response>
+ </DEFINITION>
+ 
+ <DEFINITION id="TMP">
+  <response type="relation_list" IDapp="a160" result="1" code="<$main::request_code>">
+   <#ITEM#>
+  </response>
+ </DEFINITION>
+ 
+ <DEFINITION id="ITEM">
+  <item IDitem="<%ID%>">
+   <ID><%ID%></ID>
+   <ID_entity><%ID_entity%></ID_entity>
+   <datetime_change><%datetime_change%></datetime_change>
+   <l_prefix><%l_prefix%></l_prefix>
+   <l_table><%l_table%></l_table>
+   <l_ID_entity><%l_ID_entity%></l_ID_entity>
+   <r_db_name><%r_db_name%></r_db_name>
+   <r_prefix><%r_prefix%></r_prefix>
+   <r_table><%r_table%></r_table>
+   <r_ID_entity><%r_ID_entity%></r_ID_entity>
+   <status><%status%></status>
+  </item>
+  <#ITEM#>
+ </DEFINITION>
+ 
+ </XML_DESIGN_DEFINITION>
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	$env{'r_db_name'}=$main::FORM{'r_db_name'} if not exists $env{'r_db_name'};
+	$env{'l_table'}=$main::FORM{'l_table'} if not exists $env{'l_table'};
+	$env{'r_table'}=$main::FORM{'r_table'} if not exists $env{'r_table'};
+	
+	foreach (keys %env)
+	{
+		main::_log("parsed input '$_'");
+	}
+	
+	foreach my $relation (App::160::SQL::get_relations(
+		'ID' => $env{'ID'} || $main::FORM{'ID'},
+		'ID_entity' => $env{'ID_entity'} || $main::FORM{'ID_entity'},
+		'l_prefix' => $env{'l_prefix'} || $main::FORM{'l_prefix'},
+		'l_table' => $env{'l_table'}, # this value can be send as undefined
+		'l_ID_entity' => $env{'l_ID_entity'} || $main::FORM{'l_ID_entity'},
+		'r_db_name' => $env{'r_db_name'}, # this value can be send as undefined
+		'r_prefix' => $env{'r_prefix'} || $main::FORM{'r_prefix'},
+		'r_table' => $env{'r_table'}, # this value can be send as undefined
+		'r_ID_entity' => $env{'r_ID_entity'} || $main::FORM{'r_ID_entity'},
+		'status' => $env{'status'} || $main::FORM{'status'}
+		))
+	{
+		my $null=$XSGN{'ITEM'};
+		XSGN_load_hash(\$null,$relation);
+		$XSGN{'TMP'}=~s|<#ITEM#>|$null|;
+	}
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
