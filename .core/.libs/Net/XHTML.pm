@@ -355,7 +355,9 @@ sub prepare_last
 	foreach my $key (keys %{$self->{env}{DOC_description}})
 	{
 		$self->{env}{DOC_description}{$key}=~s|^\. ||g;
-		$self->{env}{DOC_description}{$key}=~s|[\n\r]| |g;
+		$self->{env}{DOC_description}{$key}=~s|^\s+||;
+		$self->{env}{DOC_description}{$key}=~s|[\t\n\r]| |g;
+		1 while ($self->{env}{DOC_description}{$key}=~s|  | |g);
 		$self->{env}{DOC_description}{$key}=~s|"|'|g;
 		if (length ($self->{env}{DOC_description}{$key})>250)
 		{
