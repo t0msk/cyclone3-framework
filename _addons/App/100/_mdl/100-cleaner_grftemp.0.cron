@@ -1,0 +1,93 @@
+#!/bin/perl
+# ÁÉÍÓÚ - USE UTF-8 !!!
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+100-cleaner_grftemp.0.cron
+
+=head1 DESCRIPTION
+
+This cron removes temporary grf images in folder domain(or subdomain)/!media/grf/temp.
+
+There are no inputs or dependencies.
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	
+	my @files;
+	opendir (DIR, $TOM::P);
+	push @files, readdir DIR;
+	while (my $file=shift @files)
+	{
+		
+		if (($file ne ".")&&($file ne ".."))
+		{
+			next if $file =~/!www/;
+			next if $file =~/_(\w+)$/;
+			next if $file =~/\.svn/;
+			
+			if
+			(
+				(-d $TOM::P."/".$file)&&
+				(-e $TOM::P."/".$file."/local.conf")
+			)
+			{
+				main::_log("adding domain directory '$file'");
+				if (opendir (DIR1,$TOM::P."/".$file))
+				{foreach (readdir DIR1)
+				{
+					if (($_ ne ".")&&($_ ne "..")){push @files,$file."/".$_;}}
+				}
+			}
+			
+			if (-d $TOM::P."/".$file."/!media/grf/temp")
+			{
+				my $dir_chk=$TOM::P."/".$file."/!media/grf/temp";
+				main::_log("checking directory '$file'+'/!media/grf/temp'");
+				
+				opendir (DIR_CHK, $dir_chk);
+				foreach my $tmpfile(readdir DIR_CHK)
+				{
+					next if $tmpfile eq ".";
+					next if $tmpfile eq "..";
+					next if -d $tmpfile;
+					main::_log("tmpfile '$tmpfile'");
+					
+					my $var=(stat $dir_chk."/".$tmpfile)[9];
+					if (($main::time_current-$var)>86400)
+					{
+						main::_log("old ".($main::time_current-$var).", removing...");
+						unlink $dir_chk."/".$tmpfile;
+					}
+					
+				}
+				
+			}
+			
+		}
+	}
+	
+	return 1;
+}
+
+
+our $authors = 'roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Rewrited by Roman Fordinal (roman.fordinal@comsultia.com)
+
+Original script by Matej Gregor (matej.gregor@comsultia.com)
+
+=cut
+
+1;
+
