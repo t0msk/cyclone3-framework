@@ -64,6 +64,14 @@
 
           <listitem>
             <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=130/">130</ulink></emphasis> -
+            Internal mailsystem</para>
+
+            <para>Automatically sends and receives emails</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
             url="?|?service=app&amp;file=140/">140</ulink></emphasis> -
             Logging system</para>
 

@@ -24,12 +24,6 @@
           </listitem>
 
           <listitem>
-            <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/130/">130</ulink></emphasis>
-            - Internal mailsystem</para>
-          </listitem>
-
-          <listitem>
             <para><emphasis role="bold">170</emphasis> - XULadmin backend
             <action>[moving to _addons]</action></para>
           </listitem>
