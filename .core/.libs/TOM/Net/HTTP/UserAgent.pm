@@ -1,38 +1,78 @@
 #!/usr/bin/perl
-
 package TOM::Net::HTTP::UserAgent;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
 use strict;
-use warnings;
+
+=head1
+
+TOM::Net::HTTP::UserAgent
+
+=cut
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-=head1
-	-regexp
-	-agent_type = browser/robot
-	-agent_group	=	Microsoft/OpenSource/Netscape/Mozilla
-	-utf8_disable	=	1 # vypnutie utf8
-	-recache_disable	= 1 # vypnutie recache
-	-cookies_disable	= 1 # vypnutie cookies
-	-USRM_disable		= 1 # vypnuty USRM
-	-engine_disable		= 1 # vypnutie generovania
-	-home_url			= "text" # domovska adresa useragenta
-	-messages			= ["txt","txt"]
-	-notfinished		= 1 # tento regexp nieje konecny a padaju sem browsery ktore sem nepatria
-	-old				= 0 # upgradni
-					   1 # trosicku stary - nejaka nekompatibilita
-					   2 # trochu stary
-					   3 # stary - nepodporuje vela veci
-					   4 # nepodporuje vacsinu veci
-					   5 # uplne hrozne!!!
+=head1 DESCRIPTION
+
+List of known UserAgents.
+
+List is stored in @table
 
 =cut
 
-=head1
-#	 name			,regexp			,Dpage	,Dcook	,cache
+=head1 SYNOPSIS
+
+ @table=(
+  {
+   'name'="Bot",
+   'regexp'=>['bot','Bot'],
+   'agent_type' => "browser",
+   'agent_group' => "Microsoft",
+   'utf8_disable' => 1,
+   'recache_disable' => 1,
+   'cookies_disable' => 1,
+   'USRM_disable' => 1,
+   'engine_disable => 1,
+   'home_url' => "http://google.com/bot.html",
+   'messages' => ["dont' use this agent"],
+   'notfinished' => 1,
+   'old' => undef, # undef,0,1,2,3,4,5
+  },
+ )
+
+List of old browser types:
+
+=over
+
+=item *
+
+0 - A newer version of your browser/user_agent is available.
+
+=item *
+
+1 - Your browser/user_agent ist out-of-date.
+
+=item *
+
+2 - Your browser/user_agent ist very out-of-date. Nothig for safe and bugless internet browsing.
+
+=item *
+
+3 - You are using an old version of your browser/user_agent. It is not safe enough to continue using it.
+
+=item *
+
+4 - You are using an very old version of your browser/user_agent. Using it might be a risk.
+
+=item *
+
+5 - You are using an unsupported very old version of your browser/user_agent. Using it might be a big risk. This page can't be display as the creator intended, because your browser/user_agent does not support up-to-time safety and technology standards.
+
+=back
 
 =cut
 
-#=head1
 
 our %messages=
 (
@@ -65,7 +105,6 @@ our %messages=
 
 
 
-#=head1
 our %type=
 (
 	'browser'           => 'B',
@@ -83,7 +122,6 @@ our %type=
 	'unknown'           => 'X',
 	'anonymizer'        => 'A',
 );
-#=cut
 
 
 
@@ -867,61 +905,40 @@ our @table=
 
 
 
-
-
-	# MALE BLBINKY
-
-
 	{name=>'intraVnews 1.X', # RSS reader ktory aj browsuje po webe
 		regexp		=>	['intraVnews/1'],
 		agent_type	=>	"RSS browser",
-#		agent_group	=>	"Mozilla.org",
 		utf8_disable	=>	1,
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
 #		notfinished		=>	1,
 	},
+	{name=>'Akregator 1.X',
+		regexp		=>	['Akregator/1'],
+		agent_type	=>	"RSS browser",
+	},
 	{name=>'Lotus-Notes 5.X', # Lotus
 		regexp		=>	['Lotus-Notes/5'],
-#		agent_type	=>	"RSS browser",
-#		agent_group	=>	"Mozilla.org",
-#		utf8_disable	=>	1,
-#		cookies_disable	=>	1,
-#		USRM_disable	=>	1,
-#		notfinished		=>	1,
 	},
 	{name=>'Lotus-Notes 4.X', # Lotus
 		regexp		=>	['Lotus-Notes/4'],
-#		agent_type	=>	"RSS browser",
-#		agent_group	=>	"Mozilla.org",
-#		utf8_disable	=>	1,
-#		cookies_disable	=>	1,
-#		USRM_disable	=>	1,
-#		notfinished		=>	1,
 		old			=>	1,
 	},
 	{name=>'Offline Explorer 2.X',
 		regexp		=>	['Offline Explorer/2'],
-#		agent_type	=>	"RSS browser",
-#		agent_group	=>	"Mozilla.org",
 	},
 	{name=>'Offline Explorer 1.X',
 		regexp		=>	['Offline Explorer/1'],
-#		agent_type	=>	"RSS browser",
-#		agent_group	=>	"Mozilla.org",
 	},
 	
 	{name=>'MSFrontPage 5.X',
 		regexp		=>	['MSFrontPage/5'],
-#		agent_type	=>	"browser",
 		agent_group	=>	"Microsoft",
 	},
 	{name=>'MSFrontPage 4.X',
 		regexp		=>	['MSFrontPage/4'],
-#		agent_type	=>	"browser",
 		agent_group	=>	"Microsoft",
 	},
-
 
 
 	# CHECKERS
@@ -1946,7 +1963,13 @@ our %table_IP=
 #	'212\.5\.195\.97' => 'hacked',
 );
 
+=head1 FUNCTIONS
 
+=head2 analyze()
+
+
+
+=cut
 
 sub analyze
 {
@@ -1975,6 +1998,12 @@ sub analyze
 };
 
 
+
+=head2 getIDbyName()
+
+
+=cut
+
 sub getIDbyName
 {
 	my $name=shift @_;
@@ -1985,6 +2014,11 @@ sub getIDbyName
 	return undef;
 }
 
+
+=head2 initialize_hacked()
+
+
+=cut
 
 sub initialize_hacked
 {
