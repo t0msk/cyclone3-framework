@@ -2,88 +2,21 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
 <article>
-  <title>a210 - sitemap</title>
+  <title>a210 - Sitemap</title>
 
   <section>
-    <title>Zadanie</title>
+    <title>...</title>
 
-    <itemizedlist>
-      <listitem>
-        <para>editovatelny - mazanie, pridavanie, uprava poloziek</para>
-
-        <itemizedlist>
-          <listitem>
-            <para>title</para>
-          </listitem>
-
-          <listitem>
-            <para>check box - patri do menu</para>
-          </listitem>
-
-          <listitem>
-            <para>language</para>
-          </listitem>
-
-          <listitem>
-            <para>description</para>
-          </listitem>
-
-          <listitem>
-            <para>keywords</para>
-          </listitem>
-
-          <listitem>
-            <para>parametre do GET</para>
-          </listitem>
-        </itemizedlist>
-      </listitem>
-
-      <listitem>
-        <para>zadefinovanie spravania funkcnosti stranky - definicia
-        type</para>
-      </listitem>
-
-      <listitem>
-        <para>moznost presuvania poloziek - hore-dole</para>
-      </listitem>
-
-      <listitem>
-        <para>klonovanie sekcii</para>
-      </listitem>
-    </itemizedlist>
-
-    <itemizedlist>
-      <title>Problemy</title>
-
-      <listitem>
-        <para>odstranenie editovania suborov type.conf, rewrite.conf</para>
-      </listitem>
-
-      <listitem>
-        <para>staticke linkovanie - type.conf</para>
-      </listitem>
-
-      <listitem>
-        <para>definovanie parametrov type</para>
-      </listitem>
-
-      <listitem>
-        <para>linkovanie - previazanie na editor+</para>
-      </listitem>
-
-      <listitem>
-        <para>keywords</para>
-      </listitem>
-
-      <listitem>
-        <para>title</para>
-      </listitem>
-    </itemizedlist>
+    <para>...</para>
   </section>
 
   <section>
-    <title>Realizácia</title>
+    <title>SEE ALSO</title>
 
-    <para></para>
+    <para><ulink url="?|?section=app&amp;file=210/_init.pm">Souce code
+    documentation</ulink></para>
+
+    <para><ulink url="?|?section=app&amp;file=210/_mdl/">List of
+    modules</ulink></para>
   </section>
 </article>
