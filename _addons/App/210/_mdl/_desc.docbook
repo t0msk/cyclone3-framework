@@ -10,28 +10,28 @@
     <itemizedlist>
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_new.0.mdl">210-page_new.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_new.0.mdl">210-page_new.0.mdl</ulink></para>
 
         <para>Creates a new page in Sitemap</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_detail.0.mdl">210-page_detail.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_detail.0.mdl">210-page_detail.0.mdl</ulink></para>
 
         <para>Output information about requested page</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_path.0.mdl">210-page_path.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_path.0.mdl">210-page_path.0.mdl</ulink></para>
 
         <para>Returns path to page from tree</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_tree.0.mdl">210-page_tree.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_tree.0.mdl">210-page_tree.0.mdl</ulink></para>
 
         <para>Displays tree structure from requested page ( usable as menu
         )</para>
@@ -39,77 +39,77 @@
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_update.0.mdl">210-page_update.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_update.0.mdl">210-page_update.0.mdl</ulink></para>
 
         <para>Updates informations about page and it's keys</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_rename.0.mdl">210-page_rename.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_rename.0.mdl">210-page_rename.0.mdl</ulink></para>
 
         <para>Renames page</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_status.0.mdl">210-page_status.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_status.0.mdl">210-page_status.0.mdl</ulink></para>
 
         <para>Changes status of a page</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_setasdefault.0.mdl">210-page_setasdefault.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_setasdefault.0.mdl">210-page_setasdefault.0.mdl</ulink></para>
 
         <para>Sets requested page as default</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_copy_to.0.mdl">210-page_copy_to.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_copy_to.0.mdl">210-page_copy_to.0.mdl</ulink></para>
 
         <para>Copies page and its childs into another page node</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_move_to.0.mdl">210-page_move_to.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_move_to.0.mdl">210-page_move_to.0.mdl</ulink></para>
 
         <para>Moves page and its childs into another page node</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_move_up.0.mdl">210-page_move_up.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_move_up.0.mdl">210-page_move_up.0.mdl</ulink></para>
 
         <para>Moves page and its childs upper in tree</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_move_down.0.mdl">210-page_move_down.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_move_down.0.mdl">210-page_move_down.0.mdl</ulink></para>
 
         <para>Moves page and its childs down in tree</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_to_trash.0.mdl">210-page_to_trash.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_to_trash.0.mdl">210-page_to_trash.0.mdl</ulink></para>
 
         <para>Moves page into Trash</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_trash_delete.0.mdl">210-page_trash_delete.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_trash_delete.0.mdl">210-page_trash_delete.0.mdl</ulink></para>
 
         <para>Removes page from Trash</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=210/210-page_trash_restore.0.mdl">210-page_trash_restore.0.mdl</ulink></para>
+        url="?|?section=app&amp;file=210/_mdl/210-page_trash_restore.0.mdl">210-page_trash_restore.0.mdl</ulink></para>
 
         <para>Restores page from Trash</para>
       </listitem>
