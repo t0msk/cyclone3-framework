@@ -32,6 +32,7 @@ sub execute
 
 	$env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
 	$env{db_400}=$TOM::DB{main}{name} unless $env{db_400};
+	
 
 	# nevyzadujem vzdy aby clanok bol v nejakej kategorii, ale vyzadujem to defaultne
 	# poslanim db_IDcategory_ => 0 z TypeID mozem podmienku negovat

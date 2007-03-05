@@ -128,13 +128,14 @@ sub execute
 		FROM $env{db_400}.a400_category
 		WHERE
 			ID='$env{_a400_IDcategory}'
+			AND lng='$env{_a400_lng}'
 		LIMIT 1
 	");
 	if (my %db0_line=$db0->fetchHash)
 	{
 		$env{_a400_IDcategory_name}=$db0_line{name};
 		#$XSGN{TMP}=~s|<%IDcategory_name%>|$db0_line{name}|g;
-		#main::_log("a just - $db0_line{name}");
+		main::_log("a just - $db0_line{name}");
 	}
 
 	#toto asi treba prerobit si myslim ...
