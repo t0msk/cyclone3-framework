@@ -93,12 +93,7 @@ sub docbook2xhtml
 	# postprocessing
 	if ($env{'translate_images'})
 	{
-		$output=~s/<img(.*?)src="(.*?)"/'<img'.$1.'src="'.(
-			_docbook2xhtml_translate_image(
-				$2,
-				$env{'translate_images'}
-			)
-		).'"'/eg;
+		$output=~s/<img(.*?)src="(.*?)"/'<img'.$1.'src="' . &_docbook2xhtml_translate_image($2,$env{'translate_images'}) . '"'/eg;
 	}
 	
 	$t->close();
@@ -129,9 +124,9 @@ sub _docbook2xhtml_translate_image
 		my $from=$env->{'dir_from'}.'/'.$link;
 		my $hash=Digest::MD5::md5_base64($from);
 		my $to=$env->{'dir_to'}.'/'.$hash.'-'.$link;
-		my $uri_to=$env->{'uri'}.'/'.$hash.'-'.$link;
+		$uri_to=$env->{'uri'}.'/'.$hash.'-'.$link;
 		
-		main::_log("from='$from' to='$to'");
+		main::_log("from='$from' to='$to' uri_to='$uri_to'");
 		
 		if (-e $to)
 		{
@@ -140,9 +135,6 @@ sub _docbook2xhtml_translate_image
 		
 		File::Copy::copy($from,$to);
 	}
-	
-=head1
-=cut
 	
 	return $uri_to;
 }
