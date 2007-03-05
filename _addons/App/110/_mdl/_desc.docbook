@@ -12,7 +12,7 @@
     <itemizedlist>
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-universal_email.0.cron">110-universal_email.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-universal_email.0.cron">110-universal_email.0.cron</ulink></para>
 
         <para>universal template for email stats. it is used as a clon.</para>
       </listitem>
@@ -23,7 +23,7 @@
     <itemizedlist>
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_email_agents.0.cron">110-weblog_email_agents.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_email_agents.0.cron">110-weblog_email_agents.0.cron</ulink></para>
 
         <para>list of browsers and groups of browsers, that visits a
         domain.</para>
@@ -31,7 +31,7 @@
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_email_domain.1day.cron">110-weblog_email_domain.1day.cron</ulink><citation>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_email_domain.1day.cron">110-weblog_email_domain.1day.cron</ulink><citation>
         deprecated</citation></para>
 
         <para>visits on domain</para>
@@ -39,7 +39,7 @@
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_email_domains.1day.cron">110-weblog_email_domains.1day.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_email_domains.1day.cron">110-weblog_email_domains.1day.cron</ulink></para>
 
         <para>daily visits hour by hour (also dv, av, users, sessions hour by
         hour)</para>
@@ -47,7 +47,7 @@
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_email_domains.1month.cron">110-weblog_email_domains.1month.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_email_domains.1month.cron">110-weblog_email_domains.1month.cron</ulink></para>
 
         <para>monthly visits day by day (also dv, av, users, sessions day by
         day)</para>
@@ -55,7 +55,7 @@
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_email_domains.31day.cron">110-weblog_email_domains.31day.cron</ulink>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_email_domains.31day.cron">110-weblog_email_domains.31day.cron</ulink>
         <citation>deprecated</citation></para>
 
         <para>monthly visits day by day (also dv, av, users, sessions day by
@@ -64,42 +64,42 @@
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_email_farm.0.cron">110-weblog_email_farm.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_email_farm.0.cron">110-weblog_email_farm.0.cron</ulink></para>
 
         <para>load on farm</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_email_first.31days.cron">110-weblog_email_first.31days.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_email_first.31days.cron">110-weblog_email_first.31days.cron</ulink></para>
 
         <para>search engines</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_email_performance.31day.cron">110-weblog_email_performance.31day.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_email_performance.31day.cron">110-weblog_email_performance.31day.cron</ulink></para>
 
         <para>Farm load</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_email_searchengines.1month.cron">110-weblog_email_searchengines.1month.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_email_searchengines.1month.cron">110-weblog_email_searchengines.1month.cron</ulink></para>
 
         <para>search engines - monthly</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_email_searchengines.7days.cron">110-weblog_email_searchengines.7days.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_email_searchengines.7days.cron">110-weblog_email_searchengines.7days.cron</ulink></para>
 
         <para>search engines - weekly</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_email_TIDs.0.cron">110-weblog_email_TIDs.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_email_TIDs.0.cron">110-weblog_email_TIDs.0.cron</ulink></para>
 
         <para>info about visits on TIDs in domain</para>
       </listitem>
@@ -114,7 +114,7 @@
     <itemizedlist>
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-all_cleaner.0.cron">110-all_cleaner.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-all_cleaner.0.cron">110-all_cleaner.0.cron</ulink></para>
 
         <para>Removes unnecessary rows from a110 tables</para>
       </listitem>
@@ -125,28 +125,28 @@
     <itemizedlist>
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-mdllog_datamining.0.cron">110-mdllog_datamining.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-mdllog_datamining.0.cron">110-mdllog_datamining.0.cron</ulink></para>
 
         <para>Inserting info from module logs into a database</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-mdllog_email_load.0.cron">110-mdllog_email_load.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-mdllog_email_load.0.cron">110-mdllog_email_load.0.cron</ulink></para>
 
         <para>list of slowest modules</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-obsolete_datamining.0.cron">110-obsolete_datamining.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-obsolete_datamining.0.cron">110-obsolete_datamining.0.cron</ulink></para>
 
         <para>inserting info about obsolete modules into database</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-sitemap.0.cron">110-sitemap.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-sitemap.0.cron">110-sitemap.0.cron</ulink></para>
 
         <para>creating xml sitemap file from database for google</para>
       </listitem>
@@ -161,28 +161,28 @@
     <itemizedlist>
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-sys_chart_load.0.cron">110-sys_chart_load.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-sys_chart_load.0.cron">110-sys_chart_load.0.cron</ulink></para>
 
         <para>creating svg graph about load</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-sys_collect.day.cron">110-sys_collect.day.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-sys_collect.day.cron">110-sys_collect.day.cron</ulink></para>
 
         <para>collecting info from hour and inserts into a day</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-sys_collect.hour.cron">110-sys_collect.hour.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-sys_collect.hour.cron">110-sys_collect.hour.cron</ulink></para>
 
         <para>collecting info from min and inserts into a hour</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-sys_datamining.min.cron">110-sys_datamining.min.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-sys_datamining.min.cron">110-sys_datamining.min.cron</ulink></para>
 
         <para>filling rows in a110_weblog_min table</para>
       </listitem>
@@ -193,7 +193,7 @@
     <itemizedlist>
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-webclick_collect.svg.cron">110-webclick_collect.svg.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-webclick_collect.svg.cron">110-webclick_collect.svg.cron</ulink></para>
       </listitem>
     </itemizedlist>
 
@@ -202,98 +202,98 @@
     <itemizedlist>
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_atractivity.0.cron">110-weblog_chart_atractivity.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_atractivity.0.cron">110-weblog_chart_atractivity.0.cron</ulink></para>
 
         <para>returning and new users</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_availability.0.cron">110-weblog_chart_availability.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_availability.0.cron">110-weblog_chart_availability.0.cron</ulink></para>
 
         <para>average time for generating html responds</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_availability.days.cron">110-weblog_chart_availability.days.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_availability.days.cron">110-weblog_chart_availability.days.cron</ulink></para>
 
         <para>average time for generating html responds</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_availability.mins.cron">110-weblog_chart_availability.mins.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_availability.mins.cron">110-weblog_chart_availability.mins.cron</ulink></para>
 
         <para>average time for generating html responds</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_camefrom_domain.0.cron">110-weblog_chart_camefrom_domain.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_camefrom_domain.0.cron">110-weblog_chart_camefrom_domain.0.cron</ulink></para>
 
         <para>list of domains, that users came from - for one domain</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_camefrom_domains.0.cron">110-weblog_chart_camefrom_domains.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_camefrom_domains.0.cron">110-weblog_chart_camefrom_domains.0.cron</ulink></para>
 
         <para>list of domains, that users came from - for more domains</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_camefrom_type.0.cron">110-weblog_chart_camefrom_type.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_camefrom_type.0.cron">110-weblog_chart_camefrom_type.0.cron</ulink></para>
 
         <para>list of domains, that users came from - for type</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_hosts.10min.cron">110-weblog_chart_hosts.10min.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_hosts.10min.cron">110-weblog_chart_hosts.10min.cron</ulink></para>
 
         <para>svg graph of farm availability</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_hosts.day.cron">110-weblog_chart_hosts.day.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_hosts.day.cron">110-weblog_chart_hosts.day.cron</ulink></para>
 
         <para>svg graph of farm availability</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_hosts.days.cron">110-weblog_chart_hosts.days.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_hosts.days.cron">110-weblog_chart_hosts.days.cron</ulink></para>
 
         <para>svg graph of farm availability</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_lng.0.cron">110-weblog_chart_lng.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_lng.0.cron">110-weblog_chart_lng.0.cron</ulink></para>
 
         <para>used languages</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_load.0.cron">110-weblog_chart_load.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_load.0.cron">110-weblog_chart_load.0.cron</ulink></para>
 
         <para>chart of average load</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_load.1.cron">110-weblog_chart_load.1.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_load.1.cron">110-weblog_chart_load.1.cron</ulink></para>
 
         <para>chart of average load</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_pagesfailed.0.cron">110-weblog_chart_pagesfailed.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_pagesfailed.0.cron">110-weblog_chart_pagesfailed.0.cron</ulink></para>
 
         <para>hourly statistics about failed pages - pages which result is
         400</para>
@@ -301,77 +301,77 @@
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_pagespervisit.0.cron">110-weblog_chart_pagespervisit.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_pagespervisit.0.cron">110-weblog_chart_pagespervisit.0.cron</ulink></para>
 
         <para></para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_pagespervisitor.0.cron">110-weblog_chart_pagespervisitor.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_pagespervisitor.0.cron">110-weblog_chart_pagespervisitor.0.cron</ulink></para>
 
         <para></para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_pageviews.0.cron">110-weblog_chart_pageviews.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_pageviews.0.cron">110-weblog_chart_pageviews.0.cron</ulink></para>
 
         <para></para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_SEaccess.0.cron">110-weblog_chart_SEaccess.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_SEaccess.0.cron">110-weblog_chart_SEaccess.0.cron</ulink></para>
 
         <para>Number of accesses of search engines</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_SEactivity.0.cron">110-weblog_chart_SEactivity.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_SEactivity.0.cron">110-weblog_chart_SEactivity.0.cron</ulink></para>
 
         <para></para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_SEfirst.0.cron">110-weblog_chart_SEfirst.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_SEfirst.0.cron">110-weblog_chart_SEfirst.0.cron</ulink></para>
 
         <para>search engines stats from first page</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_SEkeywords.0.cron">110-weblog_chart_SEkeywords.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_SEkeywords.0.cron">110-weblog_chart_SEkeywords.0.cron</ulink></para>
 
         <para>statistics about keywords</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_users.0.cron">110-weblog_chart_users.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_users.0.cron">110-weblog_chart_users.0.cron</ulink></para>
 
         <para>logged users</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_visitors.0.cron">110-weblog_chart_visitors.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_visitors.0.cron">110-weblog_chart_visitors.0.cron</ulink></para>
 
         <para>all visitors</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_visits.0.cron">110-weblog_chart_visits.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_visits.0.cron">110-weblog_chart_visits.0.cron</ulink></para>
 
         <para>all visits</para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_chart_visitspervisitor.0.cron">110-weblog_chart_visitspervisitor.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_visitspervisitor.0.cron">110-weblog_chart_visitspervisitor.0.cron</ulink></para>
 
         <para>how much visits done one visitor (average information)</para>
       </listitem>
@@ -382,28 +382,28 @@
     <itemizedlist>
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_collect.day.cron">110-weblog_collect.day.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_collect.day.cron">110-weblog_collect.day.cron</ulink></para>
 
         <para></para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_collect.hour.cron">110-weblog_collect.hour.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_collect.hour.cron">110-weblog_collect.hour.cron</ulink></para>
 
         <para></para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_collect.min.cron">110-weblog_collect.min.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_collect.min.cron">110-weblog_collect.min.cron</ulink></para>
 
         <para></para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_collect.week.cron">110-weblog_collect.week.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_collect.week.cron">110-weblog_collect.week.cron</ulink></para>
 
         <para></para>
       </listitem>
@@ -414,14 +414,14 @@
     <itemizedlist>
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_datamining.0.cron">110-weblog_datamining.0.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_datamining.0.cron">110-weblog_datamining.0.cron</ulink></para>
 
         <para></para>
       </listitem>
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110/110-weblog_datamining.fix.cron">110-weblog_datamining.fix.cron</ulink></para>
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_datamining.fix.cron">110-weblog_datamining.fix.cron</ulink></para>
 
         <para></para>
       </listitem>
