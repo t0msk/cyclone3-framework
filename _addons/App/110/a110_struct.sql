@@ -74,22 +74,38 @@ CREATE TABLE `/*db_name*/`.`/*app*/_obsolete_log` (
 ) TYPE=MyISAM;
 
 -- --------------------------------------------------------
+-- version=5.0
 
 CREATE TABLE `/*db_name*/`.`/*app*/_sitemap` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `domain` /*domain*/,
-  `domain_sub` /*domain_sub*/,
+  `domain` varchar(32) NOT NULL default '',
+  `domain_sub` varchar(64) NOT NULL default '',
   `url` varchar(200) NOT NULL default '',
-  `time_create` int(10) unsigned NOT NULL default '0',
-  `time_use` int(10) unsigned NOT NULL default '0',
-  `time_generate` int(10) unsigned NOT NULL default '0',
+  `datetime_create` datetime NOT NULL,
   `lastmod` varchar(30) NOT NULL default '',
   `changefreq` varchar(20) NOT NULL default '',
   `requests` bigint(20) unsigned NOT NULL default '0',
   `weight` float NOT NULL default '0',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `domain` (`domain`,`domain_sub`,`url`)
-) TYPE=MyISAM;
+) TYPE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+-- version=5.0
+
+CREATE TABLE `/*db_name*/`.`/*app*/_sitemap_day` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `domain` varchar(32) NOT NULL default '',
+  `domain_sub` varchar(64) NOT NULL default '',
+  `url` varchar(200) NOT NULL default '',
+  `date_create` date NOT NULL,
+  `lastmod` varchar(30) NOT NULL default '',
+  `changefreq` varchar(20) NOT NULL default '',
+  `requests` bigint(20) unsigned NOT NULL default '0',
+  `weight` float NOT NULL default '0',
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `domain` (`domain`,`domain_sub`,`url`,`date_create`)
+) TYPE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 

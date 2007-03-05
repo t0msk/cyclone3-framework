@@ -157,8 +157,9 @@ sub execute
 								SELECT
 									ID
 								FROM
-									TOM.a110_sitemap
+									TOM.a110_sitemap_day
 								WHERE
+									date_create=FROM_UNIXTIME($hash{reqtime}) AND
 									domain='$hash{domain}' AND
 									domain_sub='$hash{domain_sub}' AND
 									url='$URL'
@@ -172,19 +173,19 @@ sub execute
 							else
 							{
 								my $dbh=$main::DB{'stats'}->Query("
-									INSERT INTO TOM.a110_sitemap
+									INSERT INTO TOM.a110_sitemap_day
 									(
 										domain,
 										domain_sub,
-										url,
-										time_create
+										date_create,
+										url
 									)
 									VALUES
 									(
 										'$hash{domain}',
 										'$hash{domain_sub}',
-										'$URL',
-										'$main::time_current'
+										FROM_UNIXTIME($hash{reqtime}),
+										'$URL'
 									)
 								");
 								$ID = $dbh->{'mysql_insertid'};
@@ -192,9 +193,8 @@ sub execute
 							}
 							
 							my $dbh=$main::DB{'stats'}->Query("
-								UPDATE TOM.a110_sitemap
+								UPDATE TOM.a110_sitemap_day
 								SET
-									time_use='$main::time_current',
 									lastmod='$hash{lastmod}',
 									changefreq='$hash{changefreq}',
 									weight='$hash{weight}',

@@ -65,7 +65,71 @@ sub execute
 	
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
-	my $lock=new TOM::lock("sitemap generating") || return 1;
+	my $lock=new TOM::lock("$tom::H sitemap generating") || return 1;
+	
+	
+	main::_log("cleaning and create summary at first");
+	
+	my $sql=qq{
+		DELETE
+		FROM
+			TOM.a110_sitemap
+		WHERE
+			domain_sub='$tom::H'
+	};
+	TOM::Database::SQL::execute($sql);
+	
+	my $sql=qq{
+		SELECT
+			ID,
+			SUM(requests) AS requests,
+			url,
+			lastmod,
+			changefreq,
+			weight
+		FROM
+			TOM.a110_sitemap_day
+		WHERE
+			domain='$tom::Hm' AND
+			domain_sub='$tom::H' AND
+			url LIKE '$tom::H_www%'
+		GROUP BY ID
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'stats');
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("summary ID='$db0_line{ID}'");
+		my $sql=qq{
+			INSERT INTO
+				TOM.a110_sitemap
+				(
+					ID,
+					domain,
+					domain_sub,
+					url,
+					datetime_create,
+					lastmod,
+					changefreq,
+					requests,
+					weight
+				)
+				VALUES
+				(
+					'$db0_line{'ID'}',
+					'$tom::Hm',
+					'$tom::H',
+					'$db0_line{'url'}',
+					NOW(),
+					'$db0_line{'lastmod'}',
+					'$db0_line{'changefreq'}',
+					'$db0_line{'requests'}',
+					'$db0_line{'weight'}'
+				)
+		};
+		TOM::Database::SQL::execute($sql,'db_h'=>'stats','quiet'=>1);
+	}
+	
+	main::_log("find all url's with undefined weight");
 	
 	my $from=$main::time_current-(86400*31);
 	
@@ -83,12 +147,11 @@ sub execute
 		ORDER BY requests DESC
 		LIMIT 1
 	};
-	main::_log("sql:=$sql");
-	my $db0=$main::DB{'stats'}->Query($sql);
-	my %db0_line=$db0->fetchhash();
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'stats');
+	my %db0_line=$sth0{'sth'}->fetchhash();
 	my $weight_full=$db0_line{'weight'};
 	
-	main::_log("max weight is $weight_full on url='$db0_line{url}'");
+	main::_log("max weight is '$weight_full' on url='$db0_line{url}'");
 	
 	return 1 unless $weight_full;
 	
@@ -108,25 +171,19 @@ sub execute
 		WHERE
 			domain='$tom::Hm' AND
 			domain_sub='$tom::H' AND
-			time_use>=$from AND
 			url LIKE '$tom::H_www%' AND
 			requests>=$weight_full/1000
 		ORDER BY requests DESC
 		LIMIT 50000
 	};
-	main::_log("sql:=$sql");
-	my $db0=$main::DB{'stats'}->Query($sql);
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'stats');
 	my $i;
-	while (my %db0_line=$db0->fetchhash())
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		next if $db0_line{'url'} eq "http://";
 		
 		$i++;
 		
-		$main::DB{'stats'}->Query("
-			UPDATE TOM.a110_sitemap SET time_generate='$main::time_current' WHERE ID='$db0_line{ID}' LIMIT 1
-		");
-		#my $priority=$db0_line{'requests'}/$weight_full;
 		my $priority=$db0_line{'weight'};
 		$priority=$db0_line{'requests'}/$weight_full unless $priority;
 		

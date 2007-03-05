@@ -50,6 +50,12 @@ sub execute
 		WHERE reqtime<$long
 	");
 	
+	main::_log("cleaning TOM.a110_sitemap_day");
+	$main::DB{stats}->Query("
+		DELETE FROM TOM.a110_sitemap_day
+		WHERE date_create<FROM_UNIXTIME($long)
+	");
+	
 	main::_log("cleaning TOM.a110_sitemap");
 	$main::DB{stats}->Query("
 		DELETE FROM TOM.a110_sitemap
