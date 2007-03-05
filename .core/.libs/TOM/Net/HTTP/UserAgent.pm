@@ -916,6 +916,8 @@ our @table=
 	{name=>'Akregator 1.X',
 		regexp		=>	['Akregator/1'],
 		agent_type	=>	"RSS browser",
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
 	},
 	{name=>'Lotus-Notes 5.X', # Lotus
 		regexp		=>	['Lotus-Notes/5'],
