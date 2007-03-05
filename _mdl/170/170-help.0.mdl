@@ -89,6 +89,10 @@ sub execute
 		}
 	);
 	
+	# get dc data
+	my %dc=Ext::DocBook4CMS::docbook2dc($docbook);
+	$main::H->change_DOC_description($dc{'abstract'}) if $dc{'abstract'};
+	
 	# postprocessing of links
 	my $hash=Utils::vars::genhash(8);
 	my $i=0;
