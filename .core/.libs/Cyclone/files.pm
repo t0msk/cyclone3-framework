@@ -88,7 +88,6 @@ our @setit_D=
 	['^_data'                          ,"global _data"                ,"570","$user_www:$group"],
 	['^_temp'                          ,"global _temp"                ,"770","$user_www:$group"],
 	['^.symlinks$'                     ,"global .symlinks"            ,"570","$user_www:$group"],
-	['^_mdl'                           ,"global _mdl"                 ,"570","$user_www:$group"],
 	['^_config'                        ,"global _config"              ,"770","$user_www:$group"],
 	['^\.core'                         ,"global .core"                ,"570","$user_www:$group"],
 	['^_dsgn$'                         ,"global _dsgn"                ,"570","$user_www:$group"],
@@ -96,10 +95,9 @@ our @setit_D=
 	['^\.bin$'                         ,"global .bin"                 ,"770","$user:$group"],
 	['^_logs'                          ,"global _logs"                ,"770","$user_www:$group"],
 	['^!media'                         ,"global !media"               ,"775","$mediasrv_user:$mediasrv_group"],
-	['^_trash'                         ,"global _trash"               ,"777","$user:$group"],
 	
 	# local
-	['\/addons'                        ,"local _addons"               ,"570","$user_www:$group"],
+	['\/_addons'                       ,"local _addons"               ,"570","$user_www:$group"],
 	['\/_mdl$'                         ,"local _mdl"                  ,"570","$user_www:$group"],
 	['\/\.libs'                        ,"local libraries"             ,"570","$user_www:$group"],
  	['\/_dsgn$'                        ,"local _dsgn"                 ,"770","$user_www:$group"],
@@ -129,14 +127,13 @@ our @setit_F=
 (
 	['\.svn'                           ,".svn files"                  ,"444",""],
 	
-	['_trash'                          ,"_trash"                      ,"660","$user_www:$group"],
 	['^_temp/_Inline'                  ,"global Inline"               ,"777","$user_www:$group"],
 	['^_temp'                          ,"global _temp"                ,"",""],
 	
-	['\/type.*?conf$'                  ,"type conf"                   ,"660","$user_www:$group"],
+	['\/type.*?conf$'                  ,"service type.conf"           ,"660","$user_www:$group"],
 	['\.(pwd)$'                        ,".pwd (password file)"        ,"660","$user_www:$group"],
 	['\.tmpl$'                         ,".tmpl (template)"            ,"660","$user:$group"],
-	['\.sql$'                          ,".sql (SQL queries)"          ,"660","$user:$group"],
+	['\.sql$'                          ,".sql (SQL file)"             ,"660","$user:$group"],
 	
 	# www:$mediasrv_group ak media su cez NFS na inom serveri
 	['^!media\/'                       ,"!media"                      ,"664","$mediasrv_user:$mediasrv_group"],
@@ -150,7 +147,7 @@ our @setit_F=
 	
 	
 	['\.pm'                            ,"perl library"                ,"460","$user_www:$group"],
-	['_addons'                         ,"addons files"                ,"460","$user_www:$group"],
+	['_addons'                         ,"addons file"                 ,"460","$user_www:$group"],
 	
 	
 	['\.libs\/.*\.txt'                 ,"library inputs"       ,"660","$user_www:$group"],
@@ -158,14 +155,9 @@ our @setit_F=
 	
 	['\.bin\/'                         ,"core binary"                 ,"770","$user:$group"],
 	
-	['^_config\/'                      ,"global _config"              ,"660","$user_www:$group"],
 	
-	['^\.core\/_config\/httpd\.virtual\.conf',"HTTPD virtual conf"    ,"460","$user_www:$group"],
-	['^\.core\/_config\/TOM.conf'      ,".core TOM.conf"              ,"460","$user_www:$group"],
-	['^\.core\/_config\/'              ,".core conf"                  ,"460","$user_www:$group"],
-	
-	['^\.core\/_config\/httpd\.conf'   ,"HTTPD virtual conf"          ,"460","$user_www:$group"],
-	['^\.core\/_config\/TOM.conf'      ,".core TOM.conf"              ,"460","$user_www:$group"],
+	['^_config\/'                      ,"_config"                     ,"660","$user_www:$group"],
+	['^\.core\/_config\/'              ,".core config"                ,"460","$user_www:$group"],
 	
 	
 	['^\.core\/.*pid$'                 ,".core .pid"                  ,"",""],
