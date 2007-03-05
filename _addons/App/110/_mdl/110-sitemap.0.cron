@@ -77,7 +77,7 @@ sub execute
 		WHERE
 			domain_sub='$tom::H'
 	};
-	TOM::Database::SQL::execute($sql);
+	TOM::Database::SQL::execute($sql,'db_h'=>'stats');
 	
 	my $sql=qq{
 		SELECT
