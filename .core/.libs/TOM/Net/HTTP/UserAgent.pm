@@ -5,7 +5,7 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-=head1
+=head1 NAME
 
 TOM::Net::HTTP::UserAgent
 
@@ -1969,8 +1969,6 @@ our %table_IP=
 
 =head2 analyze()
 
-
-
 =cut
 
 sub analyze
@@ -2003,7 +2001,6 @@ sub analyze
 
 =head2 getIDbyName()
 
-
 =cut
 
 sub getIDbyName
@@ -2018,7 +2015,6 @@ sub getIDbyName
 
 
 =head2 initialize_hacked()
-
 
 =cut
 
