@@ -2,7 +2,7 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
 "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
 <article lang="sk">
-  <title>Cyclone3 Apllications</title>
+  <title>Cyclone3 Applications</title>
 
   <subtitle>Addons::Applications ( App:: namespace )</subtitle>
 
@@ -48,6 +48,12 @@
             <para>IAdm and ITst allow you browse webpages in special mode with
             enabled debug, display future articles, preview pages,
             etc...</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=110/">110</ulink></emphasis> -
+            Statistic and monitoring subsystem</para>
           </listitem>
 
           <listitem>
@@ -177,6 +183,24 @@
 
             <para>Allow to logging users, registering, special sections of
             content, etc...</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">4</emphasis> - Content</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=400/">400</ulink></emphasis> - News
+            <emphasis>robust, but very old</emphasis></para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=410/">410</ulink></emphasis> -
+            Polls</para>
           </listitem>
         </itemizedlist>
       </listitem>

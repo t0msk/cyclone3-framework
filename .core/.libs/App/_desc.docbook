@@ -8,40 +8,4 @@
 
   <para>See also: <ulink url="?|?section=app">List of new applications in
   _addons directory</ulink></para>
-
-  <section>
-    <title>List of applications</title>
-
-    <itemizedlist>
-      <listitem>
-        <para><emphasis role="bold">1</emphasis> - Core</para>
-
-        <itemizedlist>
-          <listitem>
-            <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/110/">110</ulink></emphasis>
-            - Statistic and monitoring subsystem</para>
-          </listitem>
-        </itemizedlist>
-      </listitem>
-
-      <listitem>
-        <para><emphasis role="bold">4</emphasis> - Content</para>
-
-        <itemizedlist>
-          <listitem>
-            <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/400/">400</ulink></emphasis>
-            - News <emphasis>robust, but very old</emphasis></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold"><ulink
-            url="?|?section=source-doc&amp;file=.core/.libs/App/410/">410</ulink></emphasis>
-            - Ankety</para>
-          </listitem>
-        </itemizedlist>
-      </listitem>
-    </itemizedlist>
-  </section>
 </article>
