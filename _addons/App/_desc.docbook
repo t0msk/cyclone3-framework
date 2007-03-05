@@ -4,11 +4,7 @@
 <article lang="sk">
   <title>Cyclone3 Apllications</title>
 
-  <subtitle>New applications stored in _addons/App</subtitle>
-
-  <para>See also: <ulink
-  url="?|?section=source-doc&amp;file=.core/.libs/App/">List of old
-  applications in .core/.libs/App/ directory</ulink></para>
+  <subtitle>Addons::Applications ( App:: namespace )</subtitle>
 
   <section>
     <title>List of applications</title>
@@ -95,6 +91,34 @@
             <para>This application allow to create relations between entities
             in other applications ( forum to article, ect... )</para>
           </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=170/">170</ulink></emphasis> -
+            XULadmin backend</para>
+
+            <para>Modules to background XULadmin processes ( display help,
+            cleanup XHTML code, etc... )</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=1B0/">1B0</ulink></emphasis> -
+            Banning system</para>
+
+            <para>Banning of IP or user to acces to page, or work with
+            restricted applications ( submitting new messages into forums,
+            etc... )</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=1D0/">1D0</ulink></emphasis> -
+            Imports</para>
+
+            <para>Automatically imports and manages http sources of data (
+            weather, etc... )</para>
+          </listitem>
         </itemizedlist>
       </listitem>
 
@@ -103,9 +127,41 @@
 
         <itemizedlist>
           <listitem>
+            <para><emphasis role="bold">20</emphasis> - Logotypes</para>
+          </listitem>
+
+          <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=210/">210</ulink></emphasis> -
             Sitemap</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">23</emphasis> - Design boxes</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=24/">24</ulink></emphasis> -
+            Navigation, menu</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=25/">25</ulink></emphasis> - Dynamic
+            design (calendar,...)</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">26</emphasis> - Import design</para>
+
+            <para>Import parts of others web portals ( http proxy )</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold">27</emphasis> - Import data</para>
+
+            <para>Generating document chunks from imports</para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -156,6 +212,60 @@
             <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=700/">700</ulink></emphasis> -
             Groupware <emphasis>not finished</emphasis></para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">8</emphasis> - Communication</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold">80</emphasis> - Email</para>
+
+            <itemizedlist>
+              <listitem>
+                <para><emphasis role="bold"><ulink
+                url="?|?section=app&amp;file=8010/">8010</ulink></emphasis> -
+                Newsletter/Direct mail</para>
+              </listitem>
+
+              <listitem>
+                <para><emphasis role="bold"><ulink
+                url="?|?section=app&amp;file=8020/">8020</ulink></emphasis> -
+                Internal mailboxes</para>
+              </listitem>
+            </itemizedlist>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=820/">820</ulink></emphasis> -
+            Forum</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">9</emphasis> - Marketing</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=900/">900</ulink></emphasis> - Bridge
+            to banner system <emphasis>obsolete</emphasis></para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">B</emphasis> - Dictionaries</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=B00/">B00</ulink></emphasis> -
+            Multilanguage dictionary</para>
           </listitem>
         </itemizedlist>
       </listitem>
