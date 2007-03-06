@@ -383,7 +383,7 @@ sub execute
 		my $counter=0;
 		main::_log("replacing in-article links  to files.");
 
-		use App::540;
+		use App::540::_init;
 		use App::540::file;
 
 		while ($pages[$env{page}]=~s|<my_a540 (.*?)/>|<!TMP!>|s)
