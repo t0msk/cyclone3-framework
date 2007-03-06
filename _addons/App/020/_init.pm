@@ -23,7 +23,7 @@ Initial library of generic application L<020|app/"020/">.
 
  use App::020::_init;
  
- my $ID=L<App::020::SQL::functions|app/"020/SQL/functions.pm">::new
+ my $ID=App::020::SQL::functions::new
  (
   'db_name' => $TOM::DB{'main'}{'name'},
   'tb_name' => 'a020_object',
