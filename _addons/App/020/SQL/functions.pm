@@ -34,6 +34,14 @@ L<TOM::Database::SQL|source-doc/".core/.libs/TOM/Database/SQL.pm">
 
 L<App::020::SQL::functions::tree|app/"020/SQL/functions/tree.pm">
 
+=item *
+
+L<App::020::SQL|app/"020/SQL.pm">
+
+=item *
+
+L<App::020|app/"020/_init.pm">
+
 =back
 
 =cut
@@ -1189,5 +1197,31 @@ sub enable
 	$t->close();
 	return 1;
 }
+
+=head1 SEE ALSO
+
+=over
+
+=item *
+
+L<DATA standard|standard/"DATA">
+
+=item *
+
+L<API standard|standard/"API">
+
+=item *
+
+L<a020 database structure|app/"020/a020_struct.sql">
+
+=back
+
+=cut
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
 
 1;
