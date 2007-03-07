@@ -242,6 +242,76 @@ sub get_relations
 	return @relations;
 }
 
+
+
+=head2 get_relation_iteminfo
+
+Return information hash of relation right table, also about concrete entity
+
+ my %info=get_relation_iteminfo(
+    lng => 'en' # get this language if support
+   'r_db_name' => 'example_tld',
+   'r_prefix' => 'a210',
+   'r_table' => 'page',
+   'r_ID_entity' => '2',
+ );
+ 
+ main::_log("name of relation = '$info{name}'");
+
+=cut
+
+sub get_relation_iteminfo
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::get_relation_iteminfo()");
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	$env{'r_db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'r_db_name'};
+	
+	# list of input
+	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_}};
+	
+	if (!$env{'r_prefix'} || !$env{'r_ID_entity'})
+	{
+		main::_log("missing r_prefix or r_ID_entity");
+		$t->close();
+		return undef;
+	}
+	
+	my %info;
+	
+	# at first check if this addon is available
+	my $r_prefix=$env{'r_prefix'};
+		$r_prefix=~s|^a|App::|;
+		$r_prefix=~s|^e|Ext::|;
+	eval "use $r_prefix".'::a160;' unless $r_prefix->VERSION;
+	
+	# check if a160 enhancement of this application is available
+	my $pckg=$r_prefix."::a160";
+	if ($pckg->VERSION)
+	{
+		main::_log("trying get_relation_iteminfo() from package '$pckg'");
+		%info=$pckg->get_relation_iteminfo(
+			'r_db_name' => $env{'r_db_name'},
+			'r_table' => $env{'r_table'},
+			'r_ID_entity' => $env{'r_ID_entity'},
+			'lng' => $env{'lng'}
+		);
+		$info{'r_db_name'}=$env{'r_db_name'};
+		$info{'r_prefix'}=$env{'r_prefix'};
+		$info{'r_table'}=$env{'r_table'};
+		$info{'r_ID_entity'}=$env{'r_ID_entity'};
+		$info{'lng'}=$env{'lng'};
+		main::_log("info name='$info{'name'}'");
+		$t->close();
+		return %info;
+	}
+	
+	$t->close();
+	return %info;
+}
+
+
 =head1 AUTHORS
 
 Roman Fordinal (roman.fordinal@comsultia.com)
