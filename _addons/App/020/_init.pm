@@ -66,12 +66,19 @@ L<App::020::SQL|app/"020/SQL.pm">
 
 L<App::020::SQL::functions|app/"020/SQL/functions.pm">
 
+=item *
+
+L<App::020::a160|app/"020/a160.pm">
+
 =back
 
 =cut
 
 use App::020::SQL;
 use App::020::SQL::functions;
+use App::020::a160;
+
+our $VERSION='$Rev$';
 
 =head1 SEE ALSO
 
