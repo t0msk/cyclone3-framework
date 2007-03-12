@@ -84,7 +84,7 @@ env-update</synopsis></para>
         directory.</para>
 
         <synopsis>su root
-tom3-chfiles -r
+tom3-chfiles -a
 </synopsis>
 
         <para>If this Cyclone3 utility crashes than you are probably missing

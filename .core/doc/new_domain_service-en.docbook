@@ -30,7 +30,7 @@ vim \!domain.tld/<ulink
       <listitem>
         <para>Create database source for domain</para>
 
-        <synopsis>mysql -h localhost -u root -p
+        <synopsis>mysql -h localhost -u TOM -p
 CREATE DATABASE domain_tld;
 </synopsis>
       </listitem>

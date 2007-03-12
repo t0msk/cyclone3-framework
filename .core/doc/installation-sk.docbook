@@ -88,7 +88,7 @@ env-update</synopsis></para>
         <para>Nastavenie správnych práv pre Cyclone3 súbory</para>
 
         <synopsis>su root
-tom3-chfiles -r
+tom3-chfiles -a
 </synopsis>
 
         <para>Toto je prvý Cyclone3 príkaz ktorý vykonávate. Pokiaľ by
