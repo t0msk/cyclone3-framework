@@ -4,6 +4,16 @@
 <article lang="sk">
   <title>Cyclone3 Framework System Requirements</title>
 
+  <articleinfo>
+    <date>$Date$</date>
+
+    <editor>
+      <surname>$Author$</surname>
+    </editor>
+
+    <releaseinfo>$Rev$</releaseinfo>
+  </articleinfo>
+
   <section>
     <title>System</title>
 
@@ -13,7 +23,7 @@
   <section>
     <title>Perl libs</title>
 
-    <itemizedlist>
+    <itemizedlist spacing="compact">
       <listitem>
         <para>Inline</para>
       </listitem>

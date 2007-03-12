@@ -4,6 +4,16 @@
 <article lang="sk">
   <title>Create and start new domain service</title>
 
+  <articleinfo>
+    <date>$Date$</date>
+
+    <editor>
+      <surname>$Author$</surname>
+    </editor>
+
+    <releaseinfo>$Rev$</releaseinfo>
+  </articleinfo>
+
   <section>
     <title>Create and configure</title>
 

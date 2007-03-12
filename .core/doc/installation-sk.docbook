@@ -4,6 +4,16 @@
 <article lang="sk">
   <title>Inštalácia Cyclone3 Framework</title>
 
+  <articleinfo>
+    <date>$Date$</date>
+
+    <editor>
+      <surname>$Author$</surname>
+    </editor>
+
+    <releaseinfo>$Rev$</releaseinfo>
+  </articleinfo>
+
   <section>
     <title>Postup</title>
 
