@@ -5,6 +5,8 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
+
+use CGI;
 use TOM::Net::URI::URL;
 use Text::Iconv;
 use MIME::Base64;
@@ -81,7 +83,6 @@ sub GetQuery
 	if ($ct=~/^multipart/)
 	{
 		main::_log("POST MULTIPART processing");
-		#read(STDIN,my $buffer,$ENV{'CONTENT_LENGTH'}); # POST
 		
 		my $i;
 		my $boundary;if ($ct=~/boundary=(.*)$/i){$boundary=$1;}
@@ -94,11 +95,8 @@ sub GetQuery
 			my ($head,$data) = split (/\r\n\r\n/,$parse,2);
 			$form{multipart}.="head:$head\n";
 			
-			# v pripade ze nejde o poslany subor (teda binarne data)
-			# tak na data zapinam utf8
 			if (not $head=~/filename=/)
 			{
-				#main::_log("setting to '$head' utf8");
 				utf8::decode($data);
 			}
 			
@@ -115,39 +113,22 @@ sub GetQuery
 			if ($head=~/name="?([\w\[\]]+)"?/i)
 			{
 				my $name=$1;
-				if ($name=~s/\[\]$//){push @{$form{$name}},$data;}else{$form{$name}=$data;}
+				
+#				if ($head=~/filename=/)
+#				{
+#					$form{$name}->{'location'}="file://$name";
+#				}
+#				else
+#				{
+					if ($name=~s/\[\]$//){push @{$form{$name}},$data;}else{$form{$name}=$data;}
+#				}
 				
 				if (length($data)<1024)
-				{
-					main::_log("'$name'='".$data."'");
-				}
-				else
-				{
-					main::_log("'$name'=length(".length($data).")");
-				}
+				{main::_log("'$name'='".$data."'");}
+				else {main::_log("'$name'=length(".length($data).")");}
 				
-				if ($TOM::DEBUG_log_file==99)
-				{
-					open(FOUT,">../_logs/_debug/".$main::request_code."-".$name);
-					binmode(FOUT);
-					print FOUT $data;
-					close (FOUT);
-				}
-
 			}
-			# pridam spracovanie filesov
-			if ($head=~/filename=/)
-			{
-
-				#if ($name=~s/\[\]$//){push @{$form{$name}},$data;}else{$form{$name}=$data;}
-				# v pripade ze ide o pole, treba poslednemu prvku v poli priradit
-				# _filename='nieco'
-				#main::_log("...filename");
-			}
-			else
-			{
-				#utf8::encode($value);
-			}
+			
 		}
 		
 		
@@ -190,5 +171,45 @@ sub GetQuery
  $t->close();
  return %form;
 }
+
+
+
+=head1 in development
+sub GetQuery
+{
+	my $t=track TOM::Debug(__PACKAGE__."::GetQuery()");
+	my $query=shift;
+	my %form;
+	#local $main::ENV{'QUERY_STRING'};
+	
+	main::_log("query='$query'");
+	
+	my $CGI = new CGI();
+	
+	my @names = $CGI->param;
+	
+	foreach my $name(@names)
+	{
+		if (length($CGI->param($name))<1024)
+		{
+			main::_log("name '$name'='".$CGI->param($name)."'");
+		}
+		else
+		{
+			main::_log("name '$name'=length(".length($CGI->param($name)).")");
+		}
+		
+		if (my $fh=CGI::upload($name))
+		{
+			main::_log("this is uploaded file");
+		}
+		
+		$form{$name}=$CGI->param($name);
+	}
+	
+	$t->close();
+	return %form;
+}
+=cut
 
 1;

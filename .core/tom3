@@ -30,6 +30,7 @@ use utf8;
 use strict; # scrict code
 use FCGI;
 use vars qw/
+	$CGI
 	%FORM
 	$H
 	$action
@@ -242,6 +243,7 @@ while ($req->Accept() >= 0)
 	main::_log('localize variables');
 	undef $!;
 	$tom::count++;
+	local $CGI;
 	local %env;
 	local $IAdm;
 	local $IAdm_log;
