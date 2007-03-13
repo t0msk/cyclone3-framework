@@ -116,8 +116,16 @@ sub GetQuery
 			{
 				my $name=$1;
 				if ($name=~s/\[\]$//){push @{$form{$name}},$data;}else{$form{$name}=$data;}
-				main::_log("'$name'='".$data."'");
-
+				
+				if (length($data)<1024)
+				{
+					main::_log("'$name'='".$data."'");
+				}
+				else
+				{
+					main::_log("'$name'=length(".length($data).")");
+				}
+				
 				if ($TOM::DEBUG_log_file==99)
 				{
 					open(FOUT,">../_logs/_debug/".$main::request_code."-".$name);
