@@ -9,4 +9,17 @@
 
     <para>...</para>
   </section>
+
+  <section>
+    <title>Administration</title>
+
+    <para><ulink url="?|?section=frame&amp;file=system_requirements">System
+    requirements</ulink></para>
+
+    <para><ulink url="?|?section=frame&amp;file=installation">Framework
+    installation</ulink></para>
+
+    <para><ulink url="?|?section=frame&amp;file=new_domain_service">Creating
+    and starting new domain service</ulink></para>
+  </section>
 </article>
