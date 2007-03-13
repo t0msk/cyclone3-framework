@@ -206,7 +206,8 @@
       </listitem>
 
       <listitem>
-        <para><emphasis role="bold">5</emphasis> - Galleries</para>
+        <para><emphasis role="bold">5</emphasis> - Galleries and
+        storages</para>
 
         <itemizedlist>
           <listitem>
@@ -216,6 +217,14 @@
 
             <para>Storage for jpeg photos and formats ( original, thumbnail,
             etc.. )</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=520/">520</ulink></emphasis> -
+            Document management system <action>[planning]</action></para>
+
+            <para>Storage documents and media files</para>
           </listitem>
 
           <listitem>
@@ -235,7 +244,7 @@
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=700/">700</ulink></emphasis> -
-            Groupware <emphasis>not finished</emphasis></para>
+            Workgroup <action>[in progress]</action></para>
           </listitem>
         </itemizedlist>
       </listitem>
