@@ -604,8 +604,15 @@ while ($req->Accept() >= 0)
 		foreach (keys %FORM)
 		{
 			next if $_ eq "multipart";
-			main::_log("output FORM '$_'='$FORM{$_}'");
-			$main::ENV{'QUERY_STRING_FULL'}.="&".$_."=".$FORM{$_} if (length($FORM{$_}) < 64);
+			if (length($FORM{$_})<1024)
+			{
+				main::_log("output FORM '$_'='$FORM{$_}'");
+			}
+			else
+			{
+				main::_log("output FORM '$_'=length(".length($FORM{$_}).")");
+			}
+			$main::ENV{'QUERY_STRING_FULL'}.="&".$_."=".$FORM{$_} if (length($FORM{$_}) < 1024);
 		};
 		$main::ENV{'QUERY_STRING_FULL'}=~s|^&||;
 		
