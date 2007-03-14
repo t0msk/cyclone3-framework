@@ -1,22 +1,66 @@
 #!/usr/bin/perl
 # DEFINUJEM PREMENNE V OBLASTI MODULOV
 package TOM::Net::HTTP::CGI;
+
+=head1 NAME
+
+TOM::Net::HTTP::CGI
+
+=cut
+
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
+BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-use CGI;
-use TOM::Net::URI::URL;
+=head1 DESCRIPTION
+
+Functions above CGI to handle it actions
+
+=cut
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+Text::Iconv
+
+=item *
+
+MIME::Base64
+
+=item *
+
+L<TOM::Net::URI::URL|source-doc/".core/.libs/TOM/Net/URI/URL.pm">
+
+=back
+
+=cut
+
+$CGI::POST_MAX=1024*1024*200; # 200MB
+$CGI::POST_MAX_USE=1024*1024*20; # 20MB
+
 use Text::Iconv;
 use MIME::Base64;
+use TOM::Net::URI::URL;
 
-BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
+
 
 my $ISO_UTF = Text::Iconv->new("ISO-8859-1", "UTF-8");
 my $ISO2_UTF = Text::Iconv->new("ISO-8859-2", "UTF-8");
 
 
+
+=head1 FUNCTIONS
+
+=head2 GetQuery()
+
+Returns %form from parsed QUERY_STRING and STDIN ( the old way )
+
+=cut
 
 # maximalny import z GET, POSTU a zaroven i POST MULTIPART
 ## zvlada navyse polia, v pripade ?type[]=ahoj&type[]=bebebe
@@ -174,42 +218,136 @@ sub GetQuery
 
 
 
-=head1 in development
-sub GetQuery
+
+sub get_QUERY_STRING
 {
-	my $t=track TOM::Debug(__PACKAGE__."::GetQuery()");
+	my $t=track TOM::Debug(__PACKAGE__."::get_QUERY_STRING()");
+	my $query=shift;
+	my %env=@_;
+	
+	main::_log("GET processing '$query'");
+	
+	my %form;
+	foreach (split('&',$query))
+	{
+		next unless $_;
+		my ($name,$value)=split('=',$_);
+		utf8::encode($value);
+		utf8::decode($value);
+		
+		# su tu UTF-8 sekvencie
+		if ($value=~/%(C3|C4|C5)%([0-9A-Fa-f]{2})/i)
+		{
+			main::_log("utf-8 sequence");
+			utf8::encode($value);
+			#$value=~s/%([0-9A-Fa-f]{2})/pack("C",hex($1))/eg;
+			TOM::Net::URI::URL::url_decode_($value);
+			utf8::decode($value);
+		}
+		
+		# su tu ISO-8859-2 sekvencie
+		if ($value=~/%([0-9A-Fa-f]{2})/)
+		{
+			main::_log("iso-8859-2 sequence");
+			utf8::encode($value);
+			#$value=~s/%([0-9A-Fa-f]{2})/pack("C",hex($1))/eg;
+			TOM::Net::URI::URL::url_decode_($value);
+			$value = $ISO2_UTF->convert($value);
+			utf8::decode($value);
+		}
+		
+		if ($name=~s/\[\]$//){push @{$form{$name}},$value;}else{$form{$name}=$value;}
+		
+		main::_log("'$name'='".$value."'");
+	}
+ 
+	$t->close();
+	return %form;
+}
+
+
+
+=head2 get_CGI()
+
+by CGI.pm returns hash with parsed INPUT and QUERY_STRING
+
+=cut
+
+sub get_CGI
+{
+	my $t=track TOM::Debug(__PACKAGE__."::get_CGI()");
 	my $query=shift;
 	my %form;
-	#local $main::ENV{'QUERY_STRING'};
 	
 	main::_log("query='$query'");
 	
-	my $CGI = new CGI();
-	
-	my @names = $CGI->param;
+	my @names = $main::CGI->param;
 	
 	foreach my $name(@names)
 	{
-		if (length($CGI->param($name))<1024)
-		{
-			main::_log("name '$name'='".$CGI->param($name)."'");
-		}
-		else
-		{
-			main::_log("name '$name'=length(".length($CGI->param($name)).")");
-		}
 		
 		if (my $fh=CGI::upload($name))
 		{
+			# file
 			main::_log("this is uploaded file");
+			
+			$form{$name.'_file'}=$main::CGI->param($name);
+			$form{$name}=$main::CGI->param($name);
+			
+			# backward compatibility (ugly hack)
+			$form{'multipart'}.="name=\"$name\"; filename=\"$form{'name'}\" ___ ";
+			
+			# get file informations
+			my $fileinfo=CGI::uploadInfo($form{$name.'_file'});
+			foreach my $key(keys %{$fileinfo})
+			{
+				main::_log("key $key='".$fileinfo->{$key}."'");
+			}
+			
+			# check if file exists
+			my $tmpfilename = $main::CGI->tmpFileName($form{$name.'_file'});
+			my $size=(stat($tmpfilename))[7];
+			main::_log("tmpfilename='$tmpfilename' size='$size'");
+			if (not -e $tmpfilename){main::_log("file not exists",1);}
+			else
+			{
+				main::_log("file exists");
+				# fill content from file if is small
+				if ($size<$CGI::POST_MAX_USE)
+				{
+					main::_log("attaching file into memory value form{$name}");
+					do
+					{
+						local $/;
+						open(CGI_FILE,'<'.$tmpfilename) || main::_log("can't open this filename");
+						binmode(CGI_FILE);
+						$form{$name}=<CGI_FILE>;
+					};
+					main::_log("attached length(".length($form{$name}).")");
+				}
+			}
+		}
+		else
+		{
+			# classical variable
+			$form{$name}=$main::CGI->param($name);
 		}
 		
-		$form{$name}=$CGI->param($name);
+		if (length($form{$name})<1024)
+		{main::_log("name '$name'='".$form{$name}."'");}
+		else {main::_log("name '$name'=length(".length($form{$name}).")");}
+		
+	}
+	
+	my %form_qs=get_QUERY_STRING($query);
+	foreach my $key(keys %form_qs)
+	{
+		$form{$key}=$form_qs{$key};
 	}
 	
 	$t->close();
 	return %form;
 }
-=cut
+
 
 1;
