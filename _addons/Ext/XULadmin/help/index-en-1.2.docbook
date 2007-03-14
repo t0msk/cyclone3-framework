@@ -2,25 +2,18 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
 <article>
-  <title>Welcome to Cyclone CMS Help.</title>
+  <title>Cyclone3 Help</title>
+
+  <subtitle>User Manual for Cyclone3 XULadmin (Firefox extension)</subtitle>
 
   <section>
-    <title>About Cyclone CMS</title>
+    <title>About</title>
 
-    <para>Cyclone CMS is a powerful multiuser content management user
-    interface focused on ease of use, functionality and user comfort. Using
-    Cyclone CMS you can easily create, manage and modify the content of your
-    website presentation.</para>
-
-    <figure>
-      <title>Blee</title>
-
-      <mediaobject>
-        <imageobject>
-          <imagedata fileref="cyclone-logo.png" />
-        </imageobject>
-      </mediaobject>
-    </figure>
+    <para><emphasis role="bold">Cyclone3 XULadmin</emphasis> is a powerful
+    multiuser content management user interface focused on ease of use,
+    functionality and user comfort. Using this Firefox extension you can
+    easily create, manage and modify the content of your domain service
+    (website).</para>
   </section>
 
   <section>
