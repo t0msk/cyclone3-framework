@@ -1475,9 +1475,7 @@ sub XLNGtoVARS
 
 sub shutdown
 {
- my $req = FCGI::Request();
- $req->Finish();
- exit(0);
+	exit(0);
 }
 
 
