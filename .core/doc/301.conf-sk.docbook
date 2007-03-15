@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
+<article lang="sk">
+  <title>Súbor 301.conf</title>
+
+  <articleinfo>
+    <date>$Date$</date>
+
+    <editor>
+      <surname>$Author$</surname>
+    </editor>
+
+    <releaseinfo>$Rev$</releaseinfo>
+  </articleinfo>
+
+  <section>
+    <title>Príklad</title>
+
+    <para>Ako asi občas vídíte podľa errorov ktoré chodia emailami, jedným z
+    neduhov ktorým trpí veľa webových stranok je absencia liniek ktoré
+    existovali pred prerábkou webu. Na riešenie tohto problému sa zameriava
+    konfiguračný súbor 301.conf ktorý sa nachádza priamo v doméne.</para>
+
+    <para>Stránky domain.tld obsahovali pred prerábkou napr. linku
+    <quote>index.html</quote>. Túto linku malo iste veľa užívateľov v
+    bookmarkoch, bola naindexovaná vyhľadávačmi, etc... Po našej prerábke
+    prestala existovať a hlási sa štandardnou chybou - kód 404. To zapríčinilo
+    nedostupnosť stránky cez známu linku a zároveň vypadnutie liniek z
+    vyhľadávačov (a stratu celého obsahu).</para>
+  </section>
+
+  <section>
+    <title>Použitie</title>
+
+    <para>Riešenie: V Cyclone3 je existujúca podpora pre automatický redirect
+    pomocou kódu 301 (Moved permanently). Tento redirect sa však viaže len na
+    naše zmeny rewrite liniek, teda ak je automatický redirect zapnutý, a
+    niekto príde na linku ktorá sa už zapisuje inak, bude redirektovaný na
+    správnu linku. Rovnako je možné zakázať v niektorých TypeID súboroch vstup
+    s určitými premennými a človek je automaticky presmerovaný.</para>
+
+    <para>Existuje podpora pre ručný redirect pomocou kódu 301 a to pomocou
+    konfiguračného súboru 301.conf</para>
+
+    <para>Syntax je nasledovná:</para>
+
+    <synopsis>"regexp"= linka
+linka = linka
+'type=type' = linka</synopsis>
+
+    <para>Osetrenie pre domaint.tld aby index.html previedla na home
+    stránku:</para>
+
+    <synopsis>/index.html= ?|?</synopsis>
+
+    <para>Presmerovanie na inú linku:</para>
+
+    <synopsis>/index.html = http://oldweb.com</synopsis>
+
+    <para>Zadanie s regexpami:</para>
+
+    <synopsis>"^/index.html$" = http://oldweb.com/old-link</synopsis>
+
+    <para>Treba spomenúť že Cyclone3 si načítava 301.conf automaticky a
+    okamžite, takže všetky zmeny sa prejavujú okamžite po uložení
+    301.conf.</para>
+  </section>
+
+  <section>
+    <title>Formát súboru 301.conf</title>
+
+    <synopsis>/stara/linka.html = ?|?type=novetype
+"^/stara/" = ?|?type=default
+"^/msoffice/" = -404
+'type=neexistujuce' = ?|?type=default</synopsis>
+  </section>
+</article>
