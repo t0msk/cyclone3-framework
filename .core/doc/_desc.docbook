@@ -4,8 +4,70 @@
 <article>
   <title>Cyclone3 Framework documentation</title>
 
+  <para><emphasis role="bold">Cyclone3</emphasis> is a framework primary
+  oriented for development of <quote>Content Management Applications</quote>.
+  That means - Cyclone3 is oriented to developers which will to build web
+  portals ( XHTML, WML, ect... ), web services ( like SOAP or XML-RPC ) or
+  intranet systems based on web technologies eg. XUL.</para>
+
+  <para><emphasis role="bold">Cyclone3 Framework is running domain services
+  (web portals) and is a backend for <ulink url="?|?section=xuladmin">Cyclone3
+  XULadmin</ulink>.</emphasis></para>
+
   <section>
-    <title>...</title>
+    <title>What is a Framework ?</title>
+
+    <para>Framework is an software infrastructure that is composed of various
+    standard compliant software libraries, programs and utilities which are
+    used in many of our software development projects. This ensures that all
+    project behave according to standards and share the same unified basic
+    structure.</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><emphasis role="bold">Application framework</emphasis></para>
+
+        <para>Set of standards and libraries which define common behavior and
+        code for applications and enable seamless interaction between
+        them.</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">Content management
+        framework</emphasis></para>
+
+        <para>CMF is an abstract Application Program Interface (API) which is
+        used for content management purposes.</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">Multimedia framework</emphasis></para>
+
+        <para>Comprehensive set of libraries, protocols and programs dedicated
+        to sharing of multimedial content over computer networks. These
+        include high quality and intuitive APIs for easy manipulation of many
+        media formats.</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">Software framework</emphasis></para>
+
+        <para>Software framework is a design concept and an API that is common
+        for a type of software products. For example a third party "billing"
+        system can be supplied by various software vendors but these systems
+        often differ significantly. Software framework ensures that inside our
+        applications they will behave identicaly.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Frameworks are used in every software development process as the
+    interfaces they provide are often well tested and reliable. Also, features
+    such "user management" provided by the framework can be easily customized
+    and used in many projects. This reduces development time and costs.</para>
+  </section>
+
+  <section>
+    <title>About Cyclone3 Framework</title>
 
     <para>...</para>
   </section>
@@ -21,5 +83,12 @@
 
     <para><ulink url="?|?section=frame&amp;file=new_domain_service">Creating
     and starting new domain service</ulink></para>
+  </section>
+
+  <section>
+    <title>See Also</title>
+
+    <para><ulink url="?|?section=xuladmin">Cyclone3 XULadmin</ulink> - XUL
+    frontend for Cyclone3 Framework</para>
   </section>
 </article>
