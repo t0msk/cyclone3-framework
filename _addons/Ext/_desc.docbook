@@ -18,7 +18,7 @@
   </section>
 
   <section>
-    <title>List of Extensions</title>
+    <title>List of buid-in Extensions</title>
 
     <itemizedlist>
       <listitem>
@@ -46,7 +46,8 @@
         <para><emphasis role="bold"><ulink
         url="?|?section=ext&amp;file=Jooconverter/">Jooconverter</ulink></emphasis></para>
 
-        <para></para>
+        <para>This Extension uses JOOConverter, the Java OpenOffice.org
+        Converter, converts documents between different office formats.</para>
       </listitem>
 
       <listitem>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>Extension Jooconverter</title>
+
+  <para>This Extension uses JOOConverter, the Java OpenOffice.org Converter,
+  converts documents between different office formats.</para>
+
+  <para>It leverages OpenOffice.org, which provides arguably the best
+  import/export filters for OpenDocument and Microsoft Office formats
+  available today.</para>
+
+  <itemizedlist>
+    <title>JOOConverter automates all conversions supported by OpenOffice.org,
+    including:</title>
+
+    <listitem>
+      <para>Microsoft Office to OpenDocument, and viceversa</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Word to OpenDocument Text (odt); OpenDocument Text (odt) to
+          Word</para>
+        </listitem>
+
+        <listitem>
+          <para>Excel to OpenDocument Spreadsheet (ods); OpenDocument
+          Spreadsheet (ods) to Excel</para>
+        </listitem>
+
+        <listitem>
+          <para>PowerPoint to OpenDocument Presentation (odp); OpenDocument
+          Presentation (odp) to PowerPoint</para>
+        </listitem>
+      </itemizedlist>
+    </listitem>
+
+    <listitem>
+      <para>Any format to PDF</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>OpenDocument (Text, Spreadsheet, Presentation) to PDF</para>
+        </listitem>
+
+        <listitem>
+          <para>Word to PDF; Excel to PDF; PowerPoint to PDF</para>
+        </listitem>
+
+        <listitem>
+          <para>RTF to PDF; WordPerfect to PDF; ...</para>
+        </listitem>
+      </itemizedlist>
+    </listitem>
+
+    <listitem>
+      <para>And more</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>OpenDocument Presentation (ods) to Flash; PowerPoint to
+          Flash</para>
+        </listitem>
+
+        <listitem>
+          <para>RTF to OpenDocument; WordPerfect to OpenDocument</para>
+        </listitem>
+
+        <listitem>
+          <para>Any format to HTML (with limitations)</para>
+        </listitem>
+
+        <listitem>
+          <para>Support for OpenOffice.org 1.0 and old StarOffice
+          formats</para>
+        </listitem>
+
+        <listitem>
+          <para>...</para>
+        </listitem>
+      </itemizedlist>
+    </listitem>
+  </itemizedlist>
+
+  <para>JOOConverter is open source software released under the terms of the
+  LGPL and can be downloaded from <ulink
+  url="http://sourceforge.net/project/showfiles.php?group_id=91849">SourceForge.net</ulink>.</para>
+
+  <note>
+    <para>The project is currently known as JODConverter (for Java
+    OpenDocument Converter).</para>
+  </note>
+
+  <section>
+    <title>See Also</title>
+
+    <para><ulink type=""
+    url="?|?section=ext&amp;file=Jooconverter/_init.pm">Documentation from
+    source code</ulink></para>
+  </section>
+</article>
