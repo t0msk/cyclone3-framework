@@ -11,4 +11,24 @@
   application. Or can be used as local domain application to build very simple
   things. All newest applications inherits classes from this generic
   App.</para>
+
+  <section>
+    <title>Implementations</title>
+
+    <para>See <ulink url="?|?section=app&amp;file=a210/">a210</ulink>
+    (Sitemap) as example</para>
+  </section>
+
+  <section>
+    <title>See Also</title>
+
+    <para><ulink url="?|?section=standard&amp;file=DATA">DATA
+    standard</ulink></para>
+
+    <para><ulink url="?|?section=app&amp;file=020/SQL/functions.pm">low-level
+    API</ulink> to handle DATA standard</para>
+
+    <para>Example of MySQL <ulink url="???">table structure in
+    a020</ulink></para>
+  </section>
 </article>
