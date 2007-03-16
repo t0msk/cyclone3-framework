@@ -52,6 +52,7 @@ our %def=(
 		'page' =>
 		{
 			'name_column' => 'name',
+			'type_name' => 'Sitemap page',
 			'db_h' => 'main'
 		}
 	}

@@ -78,6 +78,7 @@ sub get_relation_iteminfo
 	# define info hash
 	my %info;
 	$info{'name'}=$db0_line{$env{'column'}};
+	$info{'type_name'}=$def{'table'}{$env{'r_table'}}{'type_name'};
 	$info{'status'}=$db0_line{'status'};
 	
 	$t->close();

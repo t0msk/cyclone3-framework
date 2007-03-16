@@ -47,6 +47,13 @@ sub get_relation_iteminfo
 	# if db_name is undefined, use local name
 	$env{'r_db_name'}=$TOM::DB{'main'}{'name'} unless $env{'r_db_name'};
 	
+	my $lng_in;
+	
+	if ($env{'lng'})
+	{
+		$lng_in="AND LNG='".$env{'lng'}."'";
+	}
+	
 	my %info;
 	
 	if ($env{'r_table'} eq "")
@@ -58,8 +65,8 @@ sub get_relation_iteminfo
 				FROM
 					`$env{'r_db_name'}`.`a400`
 				WHERE
-					ID=$env{'r_ID_entity'} AND
-					lng='$env{'lng'}'
+					ID=$env{'r_ID_entity'}
+					$lng_in
 				LIMIT 1
 			)
 			UNION ALL
@@ -69,8 +76,8 @@ sub get_relation_iteminfo
 				FROM
 					`$env{'r_db_name'}`.`a400_arch`
 				WHERE
-					ID=$env{'r_ID_entity'} AND
-					lng='$env{'lng'}'
+					ID=$env{'r_ID_entity'}
+					$lng_in
 				LIMIT 1
 			)
 		};
@@ -78,6 +85,7 @@ sub get_relation_iteminfo
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			$info{'name'}=$db0_line{'title'};
+			$info{'type_name'}='Article';
 			main::_log("returning name='$db0_line{'title'}'");
 			$t->close();
 			return %info;
