@@ -71,9 +71,9 @@ Example:
  
  <DEFINITION id="ITEM">
    <item>
-     <name><![CDATA[<%name%>]]></name>
-     <style><![CDATA[<%style%>]]></style>
-     <element><![CDATA[<%element%>]]></element>
+     <name><%name%></name>
+     <style><%style%></style>
+     <element><%element%></element>
   </item>
  <#ITEM#>
  </DEFINITION>
