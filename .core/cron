@@ -3,6 +3,7 @@
 BEGIN
 {
 	$TOM::engine='cron';
+	$main::debug=1 if $ENV{'TERM'};
 	require "/www/TOM/.core/.libs/TOM.pm";
 	$CRON::P=$TOM::P;
 	#$CRON::P=`pwd`;
@@ -71,41 +72,27 @@ local (
 	$cron::Tisdst
 	);
 	
+	$tom::Tsec=$main::Tsec=$cron::Tsec;
+	$tom::Tmin=$main::Tmin=$cron::Tmin;
+	$tom::Thour=$main::Thour=$cron::Thour;
+	$tom::Tmday=$main::Tmday=$cron::Tmday;
+	$tom::Tmom=$main::Tmom=$cron::Tmom;
+	$tom::Tmon=$main::Tmon=$cron::Tmon;
+	$tom::Tyear=$main::Tyear=$cron::Tyear;
+	$tom::Twday=$main::Twday=$cron::Twday;
+	$tom::Tyday=$main::Tyday=$cron::Tyday;
+	$tom::Tisdst=$main::Tisdst=$cron::Tisdst;
+	$tom::Fsec=$main::Fsec=$cron::Fsec;
+	$tom::Fmin=$main::Fmin=$cron::Fmin;
+	$tom::Fhour=$main::Fhour=$cron::Fhour;
+	$tom::Fmday=$main::Fmday=$cron::Fmday;
+	$tom::Fmom=$main::Fmom=$cron::Fmom;
+	$tom::Fmon=$main::Fmon=$cron::Fmon;
+	$tom::Fyear=$main::Fyear=$cron::Fyear;
+	$tom::Fwday=$main::Fwday=$cron::Fwday;
+	$tom::Fyday=$main::Fyday=$cron::Fyday;
+	$tom::Fisdst=$main::Fisdst=$cron::Fisdst;
 	
-local (
-	$main::Tsec,
-	$main::Tmin,
-	$main::Thour,
-	$main::Tmday,
-	$main::Tmom,
-	$main::Tyear,
-	$main::Twday,
-	$main::Tyday,
-	$main::Tisdst) = localtime($main::time_current);
-   # doladenie casu
-   $main::Tyear+=1900;$main::Tmom++;
-   # formatujem cas
-   local (
-   	$main::Fsec,
-	$main::Fmin,
-	$main::Fhour,
-	$main::Fmday,
-	$main::Fmom,
-	$main::Fyear,
-	$main::Fwday,
-	$main::Fyday,
-	$main::Fisdst
-	) = (
-	sprintf ('%02d', $main::Tsec),
-	sprintf ('%02d', $main::Tmin),
-	sprintf ('%02d', $main::Thour),
-	sprintf ('%02d', $main::Tmday),
-	sprintf ('%02d', $main::Tmom),
-	$main::Tyear,
-	$main::Twday,
-	$main::Tyday,
-	$main::Tisdst
-	);
 	$main::Fyear_sub=$main::Fyear;
 	$main::Fyear_sub=~s/^..//;
 	

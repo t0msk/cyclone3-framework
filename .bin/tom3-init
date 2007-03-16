@@ -54,45 +54,67 @@ foreach my $key(@ARGV)
 	};
 }
 
-$main::time_current=time;
+$main::time_current=$cron::time_current=$tom::time_current=time;
 (
-	$main::Tsec,
-	$main::Tmin,
-	$main::Thour,
-	$main::Tmday,
-	$main::Tmom,
-	$main::Tyear,
-	$main::Twday,
-	$main::Tyday,
-	$main::Tisdst) = localtime($main::time_current);
+	$cron::Tsec,
+	$cron::Tmin,
+	$cron::Thour,
+	$cron::Tmday,
+	$cron::Tmom,
+	$cron::Tyear,
+	$cron::Twday,
+	$cron::Tyday,
+	$cron::Tisdst) = localtime($main::time_current);
    # doladenie casu
-   $main::Tyear+=1900;$main::Tmom++;
+   $cron::Tyear+=1900;$cron::Tmom++;
    # formatujem cas
 (
-	$main::Fsec,
-	$main::Fmin,
-	$main::Fhour,
-	$main::Fmday,
-	$main::Fmom,
-	$main::Fyear,
-	$main::Fwday,
-	$main::Fyday,
-	$main::Fisdst
+	$cron::Fsec,
+	$cron::Fmin,
+	$cron::Fhour,
+	$cron::Fmday,
+	$cron::Fmom,
+	$cron::Fyear,
+	$cron::Fwday,
+	$cron::Fyday,
+	$cron::Fisdst
 	) = (
-	sprintf ('%02d', $main::Tsec),
-	sprintf ('%02d', $main::Tmin),
-	sprintf ('%02d', $main::Thour),
-	sprintf ('%02d', $main::Tmday),
-	sprintf ('%02d', $main::Tmom),
-	$main::Tyear,
-	$main::Twday,
-	$main::Tyday,
-	$main::Tisdst
+	sprintf ('%02d', $cron::Tsec),
+	sprintf ('%02d', $cron::Tmin),
+	sprintf ('%02d', $cron::Thour),
+	sprintf ('%02d', $cron::Tmday),
+	sprintf ('%02d', $cron::Tmom),
+	$cron::Tyear,
+	$cron::Twday,
+	$cron::Tyday,
+	$cron::Tisdst
 	);
+	
+	$tom::Tsec=$main::Tsec=$cron::Tsec;
+	$tom::Tmin=$main::Tmin=$cron::Tmin;
+	$tom::Thour=$main::Thour=$cron::Thour;
+	$tom::Tmday=$main::Tmday=$cron::Tmday;
+	$tom::Tmom=$main::Tmom=$cron::Tmom;
+	$tom::Tmon=$main::Tmon=$cron::Tmon;
+	$tom::Tyear=$main::Tyear=$cron::Tyear;
+	$tom::Twday=$main::Twday=$cron::Twday;
+	$tom::Tyday=$main::Tyday=$cron::Tyday;
+	$tom::Tisdst=$main::Tisdst=$cron::Tisdst;
+	$tom::Fsec=$main::Fsec=$cron::Fsec;
+	$tom::Fmin=$main::Fmin=$cron::Fmin;
+	$tom::Fhour=$main::Fhour=$cron::Fhour;
+	$tom::Fmday=$main::Fmday=$cron::Fmday;
+	$tom::Fmom=$main::Fmom=$cron::Fmom;
+	$tom::Fmon=$main::Fmon=$cron::Fmon;
+	$tom::Fyear=$main::Fyear=$cron::Fyear;
+	$tom::Fwday=$main::Fwday=$cron::Fwday;
+	$tom::Fyday=$main::Fyday=$cron::Fyday;
+	$tom::Fisdst=$main::Fisdst=$cron::Fisdst;
+	
 	$main::Fyear_sub=$main::Fyear;
 	$main::Fyear_sub=~s/^..//;
-
-
+	
+	
 if ($main::FORM{domain})
 {
 	$main::FORM{domain}=~s|^www\.||i;
