@@ -207,6 +207,8 @@ sub execute
 	$env{'l_table'}=$main::FORM{'l_table'} if not exists $env{'l_table'};
 	$env{'r_table'}=$main::FORM{'r_table'} if not exists $env{'r_table'};
 	
+	$env{'get_name'}=$main::FORM{'get_name'} unless $env{'get_name'};
+	
 	foreach (keys %env)
 	{
 		main::_log("parsed input '$_'");
@@ -226,6 +228,20 @@ sub execute
 		))
 	{
 		my $null=$XSGN{'ITEM'};
+		
+		if ($env{'get_name'})
+		{
+			my %item=App::160::SQL::get_relation_iteminfo
+			(
+				'r_prefix' => $relation->{'r_prefix'},
+				'r_table' => $relation->{'r_table'},
+				'r_ID_entity' => $relation->{'r_ID_entity'},
+				#'lng' => 'en'
+			);
+			$null=~s|<%name%>|$item{'name'}|g;
+			$null=~s|<%type_name%>|$item{'type_name'}|g;
+		}
+		
 		XSGN_load_hash(\$null,$relation);
 		$XSGN{'TMP'}=~s|<#ITEM#>|$null|;
 	}

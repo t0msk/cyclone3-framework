@@ -2,14 +2,14 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="TMP_error">
-<response type="relation_list" IDapp="a160" result="0" code="<$main::request_code>">
+<response type="relation_list" IDapp="a160" sub="relation" result="0" code="<$main::request_code>">
 	<result>0</result>
 	<reason>Default error message.</reason>
 </response>
 </DEFINITION>
 
 <DEFINITION id="TMP">
-<response type="relation_list" IDapp="a160" result="1" code="<$main::request_code>">
+<response type="relation_list" IDapp="a160" sub="relation" result="1" code="<$main::request_code>">
 <#ITEM#>
 </response>
 </DEFINITION>
@@ -26,6 +26,8 @@
 		<r_prefix><%r_prefix%></r_prefix>
 		<r_table><%r_table%></r_table>
 		<r_ID_entity><%r_ID_entity%></r_ID_entity>
+		<type_name><![CDATA[<%type_name%>]]></type_name>
+		<name><![CDATA[<%name%>]]></name>
 		<status><%status%></status>
 	</item>
 <#ITEM#>
