@@ -1,0 +1,26 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response IDapp="a170" type="css_getlist" css="<%file%>" code="<$main::request_code>">
+<#ITEM#>
+</response>
+</DEFINITION>
+
+<DEFINITION id="TMP_failure">
+<response IDapp="a170" type="css_getlist" css="<%file%>" result="0" code="<$main::request_code>">
+	<result>0</result>
+	<reason><%reason%></reason>
+</response>
+</DEFINITION>
+
+<DEFINITION id="ITEM">
+	<item>
+		<name><![CDATA[<%name%>]]></name>
+		<style><![CDATA[<%style%>]]></style>
+		<element><![CDATA[<%element%>]]></element>
+	</item>
+<#ITEM#>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

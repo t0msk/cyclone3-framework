@@ -1,0 +1,129 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+170-css_getstyles.0.mdl
+
+=head1 DESCRIPTION
+
+Return list of public styles from a CSS file (used by editor in XULadmin)
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<file> - filename of CSS without .css located in domain !media/css/
+
+=back
+
+=cut
+
+=head1 CSS
+
+To public styles from CSS file is used following CSS comments
+
+ .red /*+name=red style;style=red*/
+ {
+  color: red; text-decoration: none;
+ }
+ 
+ .yellow /*+name=highlight;style=yellow*/
+ {
+  background-color: yellow;
+ }
+ 
+ /*+name=abbrev;style=blue;element=abbrev*/
+ .blue
+ {
+  background-color: blue;
+ }
+
+=cut
+
+=head1 XSGN
+
+Example:
+
+ <XML_DESIGN_DEFINITION>
+ 
+ <DEFINITION id="TMP">
+   <response IDapp="a170" type="css_getlist" css="<%file%>" code="<$main::request_code>">
+     <#ITEM#>
+   </response>
+ </DEFINITION>
+ 
+ <DEFINITION id="TMP_failure">
+   <response IDapp="a170" type="css_getlist" css="<%file%>" result="0" code="<$main::request_code>">
+     <result>0</result>
+     <reason><%reason%></reason>
+   </response>
+ </DEFINITION>
+ 
+ <DEFINITION id="ITEM">
+   <item>
+     <name><![CDATA[<%name%>]]></name>
+     <style><![CDATA[<%style%>]]></style>
+     <element><![CDATA[<%element%>]]></element>
+  </item>
+ <#ITEM#>
+ </DEFINITION>
+ 
+ </XML_DESIGN_DEFINITION>
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+	
+	return undef if $env{'file'}=~/\.\./;
+	
+	$env{'file'}='editor' unless $env{'file'};
+	
+	open (CSS,'<'.$tom::P.'/!media/css/'.$env{'file'}.'.css') || do
+	{
+		$XSGN{'TMP'}=$XSGN{'TMP_failure'};
+		$XSGN{'TMP'}=~s|<%file%>|$env{'file'}|g;
+		$XSGN{'TMP'}=~s|<%result%>|Can't open or find CSS file|g;
+		return 1;
+	};
+	
+	my $css;
+	do
+	{
+		undef $/;
+		$css=<CSS>;
+	};
+	
+	$XSGN{'TMP'}=~s|<%file%>|$env{'file'}|g;
+	
+	while ($css=~s|/\*\+(.*?)\*/||)
+	{
+		my $def=$1;
+		
+		my $null=$XSGN{'ITEM'};
+		foreach my $part(split('[&;]',$def))
+		{
+			my ($key,$value)=$part=~/^(.*?)=(.*)$/;
+			$value=~s|^"||;
+			$value=~s|"$||;
+			$null=~s|<%$key%>|$value|g;
+		}
+		
+		$XSGN{'TMP'}=~s|<#ITEM#>|$null|;
+	}
+	
+	return 1;
+}
+1;
