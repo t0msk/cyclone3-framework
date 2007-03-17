@@ -1131,7 +1131,8 @@ while ($req->Accept() >= 0)
 		# type moze byt hocico
 		local $tom::Ptype=$tom::P; # cesta k typeckam
 		local $tom::type;
-		# vyrobim konverziu textoveho type cez configurak
+		# convert type to TID
+		undef $FORM{'TID'}; # don't allow to request TID directly
 		if ($FORM{type})
 		{
 			$FORM{TID}=$tom::type_c{$FORM{type}};
