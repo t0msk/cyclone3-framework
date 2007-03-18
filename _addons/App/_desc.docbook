@@ -193,8 +193,8 @@
         <itemizedlist>
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=app&amp;file=400/">400</ulink></emphasis> - News
-            <emphasis>robust, but very old</emphasis></para>
+            url="?|?section=app&amp;file=400/">400</ulink></emphasis> -
+            Articles (html) <emphasis>planned rewrite</emphasis></para>
           </listitem>
 
           <listitem>
@@ -213,9 +213,9 @@
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=500/">500</ulink></emphasis> -
-            Photogallery</para>
+            Images</para>
 
-            <para>Storage for jpeg photos and formats ( original, thumbnail,
+            <para>Storage for jpeg images and formats ( original, thumbnail,
             etc.. )</para>
           </listitem>
 
@@ -229,7 +229,7 @@
 
           <listitem>
             <para><ulink url="?|?section=app&amp;file=540/"><emphasis
-            role="bold">540</emphasis></ulink> - Filegallery</para>
+            role="bold">540</emphasis></ulink> - Files</para>
 
             <para>Uploading, Downloading and management of file
             storage.</para>
