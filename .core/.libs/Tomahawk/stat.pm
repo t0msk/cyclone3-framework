@@ -33,9 +33,11 @@ open HND_weblog, ">>".$filename;
 chmod (0666,$filename);
 
 
-my $URL=$tom::H_www;
-$URL.='/' unless $main::ENV{'REQUEST_URI'}=~/^\//;
+my $URL=$tom::H_www;$URL=~s/\/$//;
+$URL=~s|$tom::rewrite_RewriteBase$||;
+$URL.='/' unless $main::ENV{'REQUEST_URI'}=~/^\//; # adding '/' if link si like 'http://example.tld'
 $URL.=$main::ENV{'REQUEST_URI'};
+
 
 print HND_weblog <<"HEAD";
 <request>
