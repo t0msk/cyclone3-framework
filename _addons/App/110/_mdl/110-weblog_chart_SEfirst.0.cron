@@ -22,8 +22,8 @@ sub execute
 #	type		=>	"stacked",	# normal/stacked(spojene)/overlap(prechadzanie)
 	type		=>	"stacked",
 #	reload	=>	600,
-	x		=>	750,
-	y		=>	300,
+	x		=>	600,
+	y		=>	250,
 
 	show_legend		=>	1, # show legend of Columns
 #	show_legend_reverse	 =>	1, # show legend of Columns

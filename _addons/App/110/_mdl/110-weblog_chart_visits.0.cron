@@ -24,8 +24,8 @@ sub execute
 		#	type		=>	"normal",	# normal/stacked(spojene)/percentage
 		#	type		=>	"stacked",	# normal/stacked(spojene)
 			type		=>	"stacked",	# normal/stacked(spojene)	
-			x		=>	750,
-			y		=>	300,
+			x		=>	600,
+			y		=>	250,
 		
 			show_legend		=>	1, # show legend of Columns
 		#	show_points		=>	1,
@@ -139,8 +139,8 @@ $graf->addValueMarkArea(0.3,
 		#	type		=>	"normal",	# normal/stacked(spojene)/percentage
 		#	type		=>	"stacked",	# normal/stacked(spojene)
 		#	type		=>	"percentage",	# normal/stacked(spojene)	
-			x		=>	750,
-			y		=>	300,
+			x		=>	600,
+			y		=>	250,
 		
 			show_legend		=>	1, # show legend of Columns
 			show_points		=>	1,
@@ -263,8 +263,8 @@ $graf->addValueMark(0.2,
 	#	type		=>	"normal",	# normal/stacked(spojene)/percentage
 	#	type		=>	"stacked",	# normal/stacked(spojene)
 		type		=>	"stacked",	# normal/stacked(spojene)	
-		x		=>	750,
-		y		=>	300,
+		x		=>	600,
+		y		=>	250,
 	
 		show_legend		=>	1, # show legend of Columns
 	#	show_points		=>	1,

@@ -20,12 +20,12 @@ sub execute
 	$env{domain}=$tom::H unless exists $env{domain};
 
 		my $graf=SVGraph::2D::columns->new(
-			title		=>	"New visitors came from TOP-20 domains (in last 10 days)",
+			title		=>	"New visitors came from TOP-20 domains (in last 7 days)",
 		#	type		=>	"normal",	# normal/stacked(spojene)/percentage
 		#	type		=>	"stacked",	# normal/stacked(spojene)
 			type		=>	"stacked",	# normal/stacked(spojene)	
-			x		=>	750,
-			y		=>	300,
+			x		=>	600,
+			y		=>	250,
 		
 			show_legend		=>	1, # show legend of Columns
 			show_points		=>	1,
@@ -54,7 +54,7 @@ sub execute
 		#$columns{'domain'}=$graf->addColumn(title=>"Another domain");
 		#$columns{'direct'}=$graf->addColumn(title=>"Direct");
 		
-		my $days=10;
+		my $days=7;
 #		for my $day(0..$days)
 #		{
 #			my $from=$main::time_current-(86400*($days+1))+(86400*$day);
