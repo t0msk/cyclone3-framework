@@ -2,7 +2,7 @@
 # áéíóú - USE UTF-8 !!!
 package CRON::module;
 use TOM;
-use App::300;
+use App::300::_init;
 use strict;
 
 sub execute

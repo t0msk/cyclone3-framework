@@ -10,7 +10,7 @@ $authors="fordinal\@webcom.sk";
 use strict;
 
 
-use App::300;
+use App::300::_init;
 
 =head1 domeny
 
@@ -82,8 +82,8 @@ sub execute
 		if ($main::COOKIES{_IDhash}) # MAM HASH? (ak ano, tak som zjavne zucastneny v USRM)
 		{
 			
-			# HLADAM CI SOM ONLINE
-			my $db0=$main::DBH->Query("
+			# finding if the user is in online table
+			my $sql=qq{
 				SELECT *
 				FROM TOM.a300_online
 				LEFT JOIN TOM.a300_users_attrs
@@ -96,8 +96,9 @@ sub execute
 					TOM.a300_online.IDhash='$main::COOKIES{_IDhash}' AND
 					TOM.a300_online.host='$tom::H_cookie'
 				LIMIT 1
-			");
-			if (%main::USRM=$db0->fetchhash()) # USER JE ONLINE
+			};
+			my %sth0=TOM::Database::SQL::execute($sql);
+			if (%main::USRM=$sth0{'sth'}->fetchhash()) # yes, user is online
 			{
 				main::_log("I'am online");
 				$main::USRM{IDhash}=$main::COOKIES{_IDhash} unless $main::USRM{IDhash};
