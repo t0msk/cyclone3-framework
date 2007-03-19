@@ -58,16 +58,19 @@ sub execute
 			
 			if ($file=~/\.log$/)
 			{
-				$file =~ /\d\.(.*)\.log$/; my $log_type = $1;
-
+				$file =~ /^.*\d\.(.*?)\.log$/; my $log_type = $1;
+				
 				my $max_days = $env{max_days};
-				$max_days = $TOM::DEBUG_log_type{$log_type}{'max_days'} if $log_type && $TOM::DEBUG_log_type{$log_type}{'max_days'};
+				if ($log_type && $TOM::DEBUG_log_type{$log_type}{'max_days'})
+				{
+					$max_days = $TOM::DEBUG_log_type{$log_type}{'max_days'};
+				}
 				my $max_secs = $max_days*86400;
-
+				
 				main::_log("$dir/$file (max $max_secs)");
 				
 				my $var=(stat $dir."/".$file)[9];
-				if (($cron::time_current-$var)>$max_secs)
+				if (($main::time_current-$var)>$max_secs)
 				{
 					main::_log("$file old ".($cron::time_current-$var).", removing...");
 					unlink $dir."/".$file;
