@@ -5,13 +5,13 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
-=head1 NAME
-fview
 
-=head1 HEAD_VERSION_BUILD
-1.030702
+=head1 NAME
+
+500-fview_m1.0.mdl
 
 =head1 DESCRIPTION
+
 fview original photo
 zobrazenie originalu obrazku so vsetkymi
 informaciami
@@ -34,13 +34,6 @@ informaciami
 
 </DESCRIPTION>
 
-
-=head1 CHANGES
-build 030702 - Aben
-        *) FIRST MAKE
-
-=head1 WARNINGS & BUGS
-        *) nothings
 =cut
 
 sub execute
@@ -120,7 +113,7 @@ sub execute
 		my $db1=$main::DB{main}->Query("
 			UPDATE $env{db_500}.a500_attrs
 			SET
-				lasttime='$tom::time_current',
+				lasttime='$main::time_current',
 				visits=visits+1
 			WHERE
 				IDattrs='$db_line{IDattrs}'
@@ -156,6 +149,7 @@ sub execute
 		}
 		# small hack
 		$XSGN{TMP}=~s|<%alt%>|$db_line{about}|g;
+		$main::H->add_DOC_title($db_line{about}) unless $env{DOC_title_disable};
 		#$XSGN{TMP}=~s|<%name%>|$db_line{name}|g;
 		#$XSGN{TMP}=~s|<%fullpath%>|$db_line{fullpath}|g;
 
@@ -227,86 +221,17 @@ sub execute
 					main::_log($db0->errstr());
 				}
 			}
-=head1
-		my @ref=split('x',$db0_line[3]);
-		$env{width}=$ref[0];
-		$env{height}=$ref[1];
-
-		# ak som popup, ovladam okno
-		if ($env{popup})
-		{
-			# plus zaklad
-			$env{width}+=$env{width_plus};
-			$env{height}+=$env{height_plus};
-			# plus browser
-
-			# hranice
-			if ($env{width}<$env{width_min}){$env{width}=$env{width_min}};
-			if ($env{height}<$env{height_min}){$env{height}=$env{height_min}};
-			if (($env{width_max})&&($env{width}>$env{width_max})){$env{width}=$env{width_max}};
-			if (($env{height_max})&&($env{height}>$env{height_max})){$env{height}=$env{height_max}};
-
-			#$env{width}=$env{width_min} unless $env{width};
-			#$env{height}=$env{height_min} unless $env{height};
-
-			$XSGN{TMP}=~s|<%WIDTH%>|$env{width}|g;
-			$XSGN{TMP}=~s|<%HEIGHT%>|$env{height}|g;
-		}
-		else # ak niesom popup, ovladam velkost obrazku
-		{
-			if (($env{width_max})&&($env{width}>$env{width_max}))
-			{$env{width}=$env{width_max};delete $env{height};}
-			if (($env{height_max})&&($env{height}>$env{height_max}))
-			{$env{height}=$env{height_max};delete $env{width};}
-
-			if ($env{width}){$XSGN{TMP}=~s|<%VAR%>|width="$env{width}" <%VAR%>|;}
-			if ($env{height}){$XSGN{TMP}=~s|<%VAR%>|height="$env{height}" <%VAR%>|;}
-		}
-=cut
+		
 	}
 	else
 	{
 		# TODO: [Deb00t] zalozne zobrazenie obrazku
 		# snazim sa aspon o thumbnail
 		#$env{hash}=Tomahawk::Getmdlvar("500","t_hash",db=>$env{db_500});
-
-=head1
-		my $db0=$main::DBH->Query("
-			SELECT
-				ID,
-				hash,
-				IDcategory,
-				size
-			FROM $env{db_500}.a500
-			WHERE	ID='$env{ID}'
-				AND format='t'
-				AND (lng='$env{lng}' OR lng='')
-				AND active='Y'
-			LIMIT 1");
-		if (my @db0_line=$db0->FetchRow())
-		{
-			$db0_line[0]=~/^(....)/;
-			my $var=$1;
-
-			if ($env{hash})
-			{$XSGN{TMP}=~s|<%IMG%>|$tom::H_500/$var/$db0_line[1]-t.jpg|g}
-			else
-			{$XSGN{TMP}=~s|<%IMG%>|$tom::H_500/$var/$db0_line[0]-t.jpg|g}
-
-			if ($env{popup})
-			{
-				$XSGN{TMP}=~s|<%WIDTH%>|$env{width_min}|g;
-				$XSGN{TMP}=~s|<%HEIGHT%>|$env{height_min}|g;
-			}
-		}
-		else
-		{
-=cut
-			$XSGN{TMP}=$XSGN{TMP_no_data};
-			main::_log("no data available. query in log");
-=head1
-		}
-=cut
+		
+		$XSGN{TMP}=$XSGN{TMP_no_data};
+		main::_log("no data available. query in log");
+		
 	}
 	return 1;
 }
