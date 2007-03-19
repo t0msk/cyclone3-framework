@@ -1,93 +1,27 @@
-$TEMPLATE=<<"HEADER";
-	<div id="page">
-
-		<div id="page-i">
-
-			<div id="header">
-			
-				<div id="logo">
-				
-					<a href="http://www.localhost.tld/?|?">
-						<img src="$tom::H_grf/logo.jpg" alt="LocalhostTLD logo" width="200" height="53" />
-					</a>
-					<h2>LocalhostTLD</h2>
-
-				</div>
-
-<!TMP-BASE-TOP!>
-
-			</div>
-
-			<hr class="nodisp" />
-
-			<div id="content">
-				<div id="content-i">
-
-<!TMP-CONTENT!>
-
-				</div>
-<!TMP-CONTENT-PARTNERS!>
-			</div>
-		
-			<div id="content-bottom">
-				<div id="content-bottom-i">
-
-<!TMP-CONTENT-BOTTOM!>
-					<div class="cleft">&nbsp;</div>
-				</div>
-			</div>
-		
-			<hr class="nodisp" />
-		
-			<div id="footer">
-				<div id="footer-i">
-					Copyright &copy; 2006 LocalhostTLD, s.r.o.&nbsp;|&nbsp;<a href="http://www.webcom.sk" title="Internet services supplied by WebCom">Internet Partner - WebCom</a></span>
-				</div>
-			</div>
-			
-		</div>
-		
-	</div>
-
-<!TMP-ERROR!>
-
-HEADER
-
 %HEADER=(
-	'head'	=>
-	{
-		'title'	=>	"localhostTLD",
-		
-		'meta'	=>
-		{
-			'pragma'		=>	"no-cache",
-			'expires'		=>	"0"
-		},
-		
-		'link'	=>
-		[
-			{
-				'href'     =>	"$tom::H_css/main.screen.css",
-				'rel'      =>	"stylesheet",
-				'type'     =>	"text/css",
-				'media'    =>	"screen, tv, projection",
-			},
-			
-			{
-				'href'     =>	"$tom::H_css/main.print.css",
-				'rel'      =>	"stylesheet",
-				'type'     =>	"text/css",
-				'media'    =>	"print",
-			},
-			
-		]
+'head'	=>
+{
+	'title'	=>	"Cyclone3 example.tld",
 	
+	'meta'	=>
+	{
+		'pragma'		=>	"no-cache",
+		'expires'		=>	"0"
 	},
 	
-	'body'	=>
-	{
-	
-	}
+	'link'	=>
+	[
+		{
+			'href'     =>	"$tom::H_css/main.css",
+			'rel'      =>	"stylesheet",
+			'type'     =>	"text/css",
+			'media'    =>	"screen, tv, projection",
+		},
+	]
+
+},
+
+'body'	=>	{}
 );
 
 1;

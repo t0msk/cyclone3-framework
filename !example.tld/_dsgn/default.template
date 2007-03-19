@@ -1,0 +1,29 @@
+<div id="page">
+	<div id="cnt">
+		
+		<div id="header">
+			<a href="?|?"><img src="<$tom::H_grf>/example.gif" alt="example.tld" title="example.tld" /></a>
+		</div>
+		
+		<div id="cnt-menu">
+			
+			<!TMP-MENU!>
+			
+		</div>
+		
+		<div id="cnt-content">
+			
+			<!TMP-CONTENT!>
+			
+		</div>
+	</div>
+	
+	<div id="footer">
+		<a href="http://www.cyclone3.org"><img border="0" alt="Get Cyclone!" title="Get Cyclone!" src="<$tom::H_grf>/poweredbycyclone.gif"/></a>
+		&nbsp;&nbsp;
+		<a href="http://sourceforge.net/projects/cyclone3"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=189072&amp;type=1" width="88" height="31" border="0" alt="SourceForge.net Logo" /></a>
+		&nbsp;&nbsp;
+		<a href="http://www.spreadfirefox.com/?q=affiliates&amp;id=0&amp;t=68"><img border="0" alt="Get Firefox!" title="Get Firefox!" src="http://sfx-images.mozilla.org/affiliates/Buttons/88x31/take.gif"/></a>
+	</div>
+	
+</div>
