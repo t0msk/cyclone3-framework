@@ -17,15 +17,55 @@
   <section>
     <title>System</title>
 
-    <para></para>
+    <itemizedlist spacing="compact">
+      <title>Minimal</title>
+
+      <listitem>
+        <para>POSIX operating system - Linux/*BSD/Solaris</para>
+      </listitem>
+
+      <listitem>
+        <para>Perl 5.8.*</para>
+      </listitem>
+
+      <listitem>
+        <para>MySQL &gt;=4.1 (+InnoDB)</para>
+      </listitem>
+
+      <listitem>
+        <para>Apache2 (+mod_auth_external +mod_fastcgi)</para>
+      </listitem>
+
+      <listitem>
+        <para>subversion (+perl)</para>
+      </listitem>
+    </itemizedlist>
+
+    <itemizedlist spacing="compact">
+      <title>Optional or required</title>
+
+      <listitem>
+        <para>memcached (+perl)</para>
+      </listitem>
+    </itemizedlist>
   </section>
 
   <section>
     <title>Perl libs</title>
 
     <itemizedlist spacing="compact">
+      <title>Minimal:</title>
+
       <listitem>
         <para>Inline</para>
+      </listitem>
+
+      <listitem>
+        <para>CGI::Fast</para>
+      </listitem>
+
+      <listitem>
+        <para>DBD::Mysql</para>
       </listitem>
 
       <listitem>
@@ -37,27 +77,7 @@
       </listitem>
 
       <listitem>
-        <para>XML::Generator</para>
-      </listitem>
-
-      <listitem>
         <para>DateTime</para>
-      </listitem>
-
-      <listitem>
-        <para>SVG</para>
-      </listitem>
-
-      <listitem>
-        <para>DBD-Mysql</para>
-      </listitem>
-
-      <listitem>
-        <para>DBD-SQLite</para>
-      </listitem>
-
-      <listitem>
-        <para>FCGI</para>
       </listitem>
 
       <listitem>
@@ -77,11 +97,27 @@
       </listitem>
 
       <listitem>
+        <para>String::CRC32</para>
+      </listitem>
+
+      <listitem>
+        <para>XML::Generator</para>
+      </listitem>
+    </itemizedlist>
+
+    <itemizedlist spacing="compact">
+      <title>Required by extended features:</title>
+
+      <listitem>
+        <para>Inline::Java</para>
+      </listitem>
+
+      <listitem>
         <para>Net::IRC</para>
       </listitem>
 
       <listitem>
-        <para>String::CRC32</para>
+        <para>SVG</para>
       </listitem>
 
       <listitem>
