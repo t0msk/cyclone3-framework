@@ -28,7 +28,7 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict; # scrict code
-use FCGI;
+use CGI::Fast qw(:standard);
 use vars qw/
 	$CGI
 	%FORM
@@ -192,19 +192,19 @@ if ($@)
 	my @ERR=("Error occured during domain initialization");
 	push @ERR,$@;
 	#push @ERR,$!;
-	my $req=FCGI::Request();
-	my $time_err=time;
-	while ($req->Accept() >= 0)
-	{
-		my $time_this=time;
+	#my $req=FCGI::Request();
+	#my $time_err=time;
+#	while ($req->Accept() >= 0)
+#	{
+		#my $time_this=time;
 		
 		main::_log("request in domain initialization error",1);
 		
 		TOM::Error::engine(@ERR);
 		
-		if ($time_err+30<$time_this){$req->Finish();exit(0);}
-	}
-	$req->Finish();
+		#if ($time_err+30<$time_this){exit(0);}
+#	}
+#	$req->Finish();
 	exit(0);
 }
 
@@ -216,10 +216,10 @@ $t_domain->close;
 ######################################################################################
 
 
-my $req=FCGI::Request();
+#my $req=FCGI::Request();
 main::_log("START FCGI PID:$$ domain:$tom::H",3,"pub.mng",1);
 
-while ($req->Accept() >= 0)
+while ($main::CGI=new CGI::Fast())
 {
 	alarm($TOM::fcgi_timeout); # zacnem pocitat X sekund kym nezbehne request
 	local $sig_term=0; # ignorujem TERM pocas behu requestu, povoleny je len pocas cakania na dalsi request
@@ -243,7 +243,6 @@ while ($req->Accept() >= 0)
 	main::_log('localize variables');
 	undef $!;
 	$tom::count++;
-	local $CGI;
 	local %env;
 	local $IAdm;
 	local $IAdm_log;
@@ -595,7 +594,8 @@ while ($req->Accept() >= 0)
 		$ENV{'QUERY_STRING'}=$ARGV[0] if $ENV{USER} eq "apache";
 		
 		# pridam hashovane data
-		my %FORM_get=TOM::Net::HTTP::CGI::GetQuery($ENV{'QUERY_STRING'});
+		#my %FORM_get=TOM::Net::HTTP::CGI::GetQuery($ENV{'QUERY_STRING'});
+		my %FORM_get=TOM::Net::HTTP::CGI::get_CGI($ENV{'QUERY_STRING'});
 		foreach (keys %FORM_get)
 		{
 			$FORM{$_}=$FORM_get{$_};
@@ -606,6 +606,7 @@ while ($req->Accept() >= 0)
 		foreach (keys %FORM)
 		{
 			next if $_ eq "multipart";
+			next if $_=~/_file$/;
 			if (length($FORM{$_})<1024)
 			{
 				main::_log("output FORM '$_'='$FORM{$_}'");
@@ -902,7 +903,7 @@ while ($req->Accept() >= 0)
 		)
 		{
 			# hups, prienik!
-			main::_log("session kluc nesuhlasi $main::FORM{__key_}<>$main::COOKIES{key}");
+			main::_log("session key not equals form:'$main::FORM{__key_}' ne cookies:'$main::COOKIES{key}'");
 			undef $main::COOKIES{key};
 			undef $main::IAdm;
 			undef $main::ITst;
