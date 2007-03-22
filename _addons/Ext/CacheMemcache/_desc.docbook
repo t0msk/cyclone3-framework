@@ -7,7 +7,9 @@
   <para>This extension implements <productname>memcached</productname> into
   Cyclone3 as extension. Cyclone3 can use this extension to improve higher
   availability to use it as cache system intead of <ulink
-  url="?|?section=app&amp;file=150/">a150</ulink> cache tables.</para>
+  url="?|?section=app&amp;file=150/">a150</ulink> cache tables. Look into
+  <ulink url="?|?section=ext&amp;file=CacheMemcache/_init.pm">source code
+  documentation</ulink>.</para>
 
   <section>
     <title>What is <productname>memcached</productname>?</title>
@@ -24,6 +26,26 @@
     memcached dropped the database load to almost nothing, yielding faster
     page load times for users, better resource utilization, and faster access
     to the databases on a memcache miss.</para>
+  </section>
+
+  <section>
+    <title>Synopsis</title>
+
+    <synopsis>use <ulink url="?|?section=ext&amp;file=CacheMemcache/_init.pm">Ext::CacheMemcache::_init</ulink>;
+
+if ($TOM::CACHE_memcached &amp;&amp; Ext::CacheMemcache::check())
+{
+  # memcached is enabled and running
+  $cache=$Ext::CacheMemcache::cache-&gt;get(
+    'namespace' =&gt; "MyCache",
+    'key' =&gt; "variable name"
+  );
+}
+
+</synopsis>
+
+    <para><ulink url="?|?section=ext&amp;file=CacheMemcache/_init.pm">Learn
+    more</ulink>.</para>
   </section>
 
   <section>
@@ -112,7 +134,11 @@
   <section>
     <title>See Also</title>
 
-    <para><ulink type=""
-    url="?|?section=app&amp;file=150/">a150</ulink></para>
+    <para>eCacheMemcache <ulink
+    url="?|?section=ext&amp;file=CacheMemcache/_init.pm">source code
+    documentation</ulink>.</para>
+
+    <para>Classical implementation of cache by <ulink type=""
+    url="?|?section=app&amp;file=150/">a150</ulink>.</para>
   </section>
 </article>
