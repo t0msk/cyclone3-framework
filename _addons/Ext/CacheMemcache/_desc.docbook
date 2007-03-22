@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>Extension CacheMemcache</title>
+
+  <para>This extension implements <productname>memcached</productname> into
+  Cyclone3 as extension. Cyclone3 can use this extension to improve higher
+  availability to use it as cache system intead of <ulink
+  url="?|?section=app&amp;file=150/">a150</ulink> cache tables.</para>
+
+  <section>
+    <title>What is <productname>memcached</productname>?</title>
+
+    <para>memcached is a high-performance, distributed memory object caching
+    system, generic in nature, but intended for use in speeding up dynamic web
+    applications by alleviating database load.</para>
+
+    <para><ulink url="http://www.danga.com/">Danga Interactive</ulink>
+    developed memcached to enhance the speed of <ulink
+    url="http://www.livejournal.com/">LiveJournal.com</ulink>, a site which
+    was already doing 20 million+ dynamic page views per day for 1 million
+    users with a bunch of webservers and a bunch of database servers.
+    memcached dropped the database load to almost nothing, yielding faster
+    page load times for users, better resource utilization, and faster access
+    to the databases on a memcache miss.</para>
+  </section>
+
+  <section>
+    <title>Shouldn't the database do this?</title>
+
+    <para>Regardless of what database you use (MS-SQL, Oracle, Postgres,
+    MysQL-InnoDB, etc..), there's a lot of overhead in implementing <ulink
+    url="http://www.wikipedia.org/wiki/ACID">ACID</ulink> properties in a
+    RDBMS, especially when disks are involved, which means queries are going
+    to block. For databases that aren't ACID-compliant (like MySQL-MyISAM),
+    that overhead doesn't exist, but reading threads block on the writing
+    threads.</para>
+
+    <para>memcached never blocks. See the "Is memcached fast?" question
+    below.</para>
+  </section>
+
+  <section>
+    <title>What about shared memory?</title>
+
+    <para>The first thing people generally do is cache things within their web
+    processes. But this means your cache is duplicated multiple times, once
+    for each mod_perl/PHP/etc thread. This is a waste of memory and you'll get
+    low cache hit rates. If you're using a multi-threaded language or a shared
+    memory API (IPC::Shareable, etc), you can have a global cache for all
+    threads, but it's per-machine. It doesn't scale to multiple machines. Once
+    you have 20 webservers, those 20 independent caches start to look just as
+    silly as when you had 20 threads with their own caches on a single box.
+    (plus, shared memory is typically laden with limitations)</para>
+
+    <para>The memcached server and clients work together to implement one
+    global cache across as many machines as you have. In fact, it's
+    recommended you run both web nodes (which are typically memory-lite and
+    CPU-hungry) and memcached processes (which are memory-hungry and CPU-lite)
+    on the same machines. This way you'll save network ports.</para>
+  </section>
+
+  <section>
+    <title>What about MySQL 4.x query caching?</title>
+
+    <itemizedlist>
+      <title>MySQL query caching is less than ideal, for a number of
+      reasons:</title>
+
+      <listitem>
+        <para>MySQL's query cache destroys the entire cache for a given table
+        whenever that table is changed. On a high-traffic site with updates
+        happening many times per second, this makes the the cache practically
+        worthless. In fact, it's often harmful to have it on, since there's a
+        overhead to maintain the cache.</para>
+      </listitem>
+
+      <listitem>
+        <para>On 32-bit architectures, the entire server (including the query
+        cache) is limited to a 4 GB virtual address space. memcached lets you
+        run as many processes as you want, so you have no limit on memory
+        cache size.</para>
+      </listitem>
+
+      <listitem>
+        <para>MySQL has a query cache, not an object cache. If your objects
+        require extra expensive construction after the data retrieval step,
+        MySQL's query cache can't help you there.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>If the data you need to cache is small and you do infrequent
+    updates, MySQL's query caching should work for you. If not, use
+    memcached.</para>
+  </section>
+
+  <section>
+    <title>Is memcached fast?</title>
+
+    <para>Very fast. It uses <ulink
+    url="http://www.monkey.org/~provos/libevent/">libevent</ulink> to scale to
+    any number of open connections (using <ulink
+    url="http://www.xmailserver.org/linux-patches/nio-improve.html">epoll</ulink>
+    on Linux, if available at runtime), uses non-blocking network I/O,
+    refcounts internal objects (so objects can be in multiple states to
+    multiple clients), and uses its own slab allocator and hash table so
+    virtual memory never gets externally fragmented and allocations are
+    guaranteed O(1).</para>
+  </section>
+
+  <section>
+    <title>See Also</title>
+
+    <para><ulink type=""
+    url="?|?section=app&amp;file=150/">a150</ulink></para>
+  </section>
+</article>
