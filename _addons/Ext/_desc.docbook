@@ -25,7 +25,9 @@
         <para><emphasis role="bold"><ulink
         url="?|?section=ext&amp;file=CacheMemcache/">CacheMemcache</ulink></emphasis></para>
 
-        <para></para>
+        <para>Memcached is a high-performance, distributed memory object
+        caching system, generic in nature, but intended for use in speeding up
+        dynamic web applications by alleviating database load.</para>
       </listitem>
 
       <listitem>
@@ -33,6 +35,25 @@
         url="?|?section=ext&amp;file=DocBook4CMS/">DocBook4CMS</ulink></emphasis></para>
 
         <para></para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold"><ulink
+        url="?|?section=ext&amp;file=DocBook4CMS/">ODFvalidator</ulink>
+        <action>[planning]</action></emphasis></para>
+
+        <para>The purpose of this extension is to provide a validator, which
+        developers and users can use to ensure the consistency and correctness
+        of OpenDocument files. Original code writed by Alex Hudson.</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold"><ulink
+        url="?|?section=ext&amp;file=OpenDocument4CMS/">OpenDocument4CMS</ulink>
+        <action>[in progress]</action></emphasis></para>
+
+        <para>List of functions for use in content management and document
+        management systems - extract, convert, analyze, publish.</para>
       </listitem>
 
       <listitem>

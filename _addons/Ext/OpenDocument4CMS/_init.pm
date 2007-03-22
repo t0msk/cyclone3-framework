@@ -127,7 +127,7 @@ sub odf2xml
 }
 
 
-=head2 explode('file:/')
+=head2 extract('file:/')
 
  my $obj=Ext::OpenDocument4CMS->extract('/home/user/test.odt');
  main::_log("tmpdir='".$obj->{'tmpdir'}."'");
