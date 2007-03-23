@@ -1,0 +1,26 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP_error">
+<response type="relation_new" IDapp="a160" sub="relation" result="0" code="<$main::request_code>">
+	<result>0</result>
+	<reason>Default error message.</reason>
+</response>
+</DEFINITION>
+
+<DEFINITION id="TMP_failure_no_input">
+<response type="relation_new" IDapp="a160" sub="relation" result="0" code="<$main::request_code>">
+	<result>0</result>
+	<reason>Not enough information to act. Missing parameter '<%missing_parameter%>'</reason>
+</response>
+</DEFINITION>
+
+<DEFINITION id="TMP">
+<response type="relation_new" IDapp="a160" sub="relation" result="1" code="<$main::request_code>">
+	<result>1</result>
+</response>
+</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>
+

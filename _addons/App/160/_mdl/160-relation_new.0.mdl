@@ -1,0 +1,144 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+160-relation_new.0.mdl
+
+=head1 DESCRIPTION
+
+Add one relation
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::160::_init|app/"160/_init.pm">
+
+=back
+
+=cut
+
+use App::160::_init;
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID of row
+
+=item *
+
+B<ID_entity> - ID of entity
+
+=item *
+
+B<l_prefix>
+
+=item *
+
+B<l_table>
+
+=item *
+
+B<l_ID_entity>
+
+=item *
+
+B<r_db_name>
+
+=item *
+
+B<r_prefix>
+
+=item *
+
+B<r_table>
+
+=item *
+
+B<r_ID_entity>
+
+=item *
+
+B<status> - default 'Y' - can be defined as 'YNT'
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	$env{'r_db_name'}=$main::FORM{'r_db_name'} if not exists $env{'r_db_name'};
+	$env{'l_table'}=$main::FORM{'l_table'} if not exists $env{'l_table'};
+	$env{'r_table'}=$main::FORM{'r_table'} if not exists $env{'r_table'};
+	
+	$env{'l_prefix'}=$main::FORM{'l_prefix'} unless $env{'l_prefix'};
+	$env{'l_ID_entity'}=$main::FORM{'l_ID_entity'} unless $env{'l_ID_entity'};
+	$env{'r_prefix'}=$main::FORM{'r_prefix'} unless $env{'r_prefix'};
+	$env{'r_ID_entity'}=$main::FORM{'r_ID_entity'} unless $env{'r_ID_entity'};
+	
+	foreach (keys %env)
+	{
+		main::_log("parsed input '$_'");
+	}
+	
+	if (!$env{'l_prefix'})
+	{
+		$XSGN{'TMP'}=$XSGN{'TMP_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|l_prefix|;
+		return 1;
+	}
+	if (!$env{'l_ID_entity'})
+	{
+		$XSGN{'TMP'}=$XSGN{'TMP_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|l_ID_entity|;
+		return 1;
+	}
+	if (!$env{'r_prefix'})
+	{
+		$XSGN{'TMP'}=$XSGN{'TMP_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|r_prefix|;
+		return 1;
+	}
+	if (!$env{'r_ID_entity'})
+	{
+		$XSGN{'TMP'}=$XSGN{'TMP_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|r_ID_entity|;
+		return 1;
+	}
+	
+	my ($ID_entity,$ID)=App::160::SQL::new_relation(
+		'l_prefix' => $env{'l_prefix'},
+		'l_table' => $env{'l_table'}, # this value can be send as undefined
+		'l_ID_entity' => $env{'l_ID_entity'},
+		'r_db_name' => $env{'r_db_name'}, # this value can be send as undefined
+		'r_prefix' => $env{'r_prefix'},
+		'r_table' => $env{'r_table'}, # this value can be send as undefined
+		'r_ID_entity' => $env{'r_ID_entity'},
+	);
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
