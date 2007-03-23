@@ -5,6 +5,20 @@ use utf8;
 use strict;
 
 
+sub _log_long
+{
+	my @get=@_;
+	
+	foreach my $msg(split('\n',$get[0]))
+	{
+		my @get0=@get;
+		$get0[0]=$msg;
+		_log(@get0);
+	}
+	
+	return 1;
+}
+
 # len zakladna funkcia, bude prevalena TOM::Debug::logs
 sub _log_lite
 {
