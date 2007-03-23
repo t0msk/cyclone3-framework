@@ -2,7 +2,29 @@
 package App::540;
 use strict;
 
+=head1 NAME
+
+App::540
+
+=cut
+
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::540::a160|app/"540/a160.pm">
+
+=back
+
+=cut
+
+use App::540::a160;
+
+
 
 # Generic HASH => SQL => HASH get query
 sub sql_insert
