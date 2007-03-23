@@ -35,6 +35,18 @@ $TOM::DB{'main'}=
 	pass	=>"",
 };
 
+#$TOM::DB{'stats'}=
+#{
+#	host	=>"anotherhost",
+#	user	=>"TOM",
+#	pass	=>"",
+#	sql => [ # you need super privileges - GRANT SUPER
+#		'SET GLOBAL delayed_queue_size=100000',
+#		'SET GLOBAL delayed_insert_timeout=86400',
+#	],
+#	delayed => 1
+#};
+
 $TOM::DB{'stats'}=$TOM::DB{'main'};
 $TOM::DB{'sys'}=$TOM::DB{'main'};
 

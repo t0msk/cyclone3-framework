@@ -1,13 +1,41 @@
 package TOM::Database::connect;
+
+=head1 NAME
+
+TOM::Database::connect
+
+=cut
+
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
-use DBI;
-use Mysql;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
+=head1 DEPENDS
+
+=over
+
+=item *
+
+DBI
+
+=item *
+
+Mysql
+
+=item *
+
+L<TOM::Database:SQL|source-doc/".core/.libs/TOM/Database/SQL.pm">
+
+=back
+
+=cut
+
+use DBI;
+use Mysql;
+use TOM::Database::SQL;
 
 sub all
 {
@@ -32,6 +60,12 @@ sub all
 	}
 	
 	$main::DB{main}->{dbh}->{mysql_auto_reconnect}=1;
+	
+	foreach my $sql(@{$TOM::DB{'main'}{'sql'}})
+	{
+		main::_log("sql='$sql'");
+		TOM::Database::SQL::execute($sql,'db_h'=>'main','quiet'=>1);
+	}
 	
 	TOM::Database::connect::multi(@databases);
 	# spetna kompatiblita
@@ -119,6 +153,13 @@ sub multi
 			}
 			
 			$main::DB{$handler}->{'dbh'}->{'mysql_auto_reconnect'}=1;
+			
+			foreach my $sql(@{$TOM::DB{$handler}{'sql'}})
+			{
+				main::_log("sql='$sql'");
+				TOM::Database::SQL::execute($sql,'db_h'=>$handler,'quiet'=>1);
+			}
+			
 		}
 		
 	}
