@@ -142,6 +142,14 @@ sub validate
 	
 	# extract
 	$self->{'extract'}=Ext::OpenDocument4CMS->extract($self->{'file'},'extract'=>"*");
+	
+	if (!$self->{'extract'})
+	{
+		main::_log("file is not extracted",1);
+		$t->close();
+		return undef;
+	}
+	
 	$self->{'tmpdir'}=$self->{'extract'}->{'tmpdir'};
 	main::_log("extracted to directory '".$self->{'tmpdir'}."'");
 	
