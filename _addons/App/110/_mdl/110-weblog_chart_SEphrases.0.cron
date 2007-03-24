@@ -1,0 +1,232 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+use strict;
+
+=head1 NAME
+
+110-weblog_chart_SEprahses.0.cron
+
+=head1 DESCRIPTION
+
+Using SVGraph extension draws graph with most used phrases from Search Engines
+
+=cut
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<Utils::datetime|source-doc/".core/.libs/Utils/datetime.pm">
+
+=item *
+
+L<Int::charsets::encode|source-doc/".core/.libs/Int/charsets/encode.pm">
+
+=item *
+
+L<TOM::Net::HTTP|source-doc/".core/.libs/TOM/Net/HTTP.pm">
+
+=item *
+
+L<TOM::Net::HTTP::CGI|source-doc/".core/.libs/TOM/Net/HTTP/CGI.pm">
+
+=item *
+
+L<TOM::Net::HTTP::referer|source-doc/".core/.libs/TOM/Net/HTTP/referer.pm">
+
+=item *
+
+L<TOM::Database::SQL|source-doc/".core/.libs/TOM/Database/SQL.pm">
+
+=item *
+
+L<Ext::SVGraph::_init|ext/"SVGraph/_init.pm">
+
+=item *
+
+=back
+
+=cut
+
+use Utils::datetime;
+use Int::charsets::encode;
+use TOM::Net::HTTP;
+use TOM::Net::HTTP::CGI;
+use TOM::Net::HTTP::referer;
+use TOM::Database::SQL;
+use Ext::SVGraph::_init;
+
+
+
+sub execute
+{
+	my %env=@_;
+	
+	$env{'days'}=31 unless $env{'days'};
+	
+	my $graf=SVGraph::2D::columns->new(
+		'title' => "SEO: Most used phrases from SE in last $env{'days'} days",
+		'type' => "normal/overlap",
+		'x' => 600,
+		'y' => 250,
+		'show_legend' => 1, # show legend of Columns
+		'show_points' => 1,
+		'show_lines_smooth' => 1,
+		'show_areas' => 1,
+		'grid_y_scale_minimum' => 0.000, # start with 0
+		'show_grid_x' => 1,
+		'show_label_textsize' => 10,
+		'show_legend_label' => 1,
+	);
+	
+	my $td=$main::time_current-($tom::Thour*60*60)-($tom::Tmin*60)-($tom::Tsec);
+	$td-=86400*$env{'days'};
+	
+	my %columns;
+	my %phrases;
+	
+	my $reqtime=$main::time_current-(86400*$env{'days'});
+	my $sql=qq{
+		SELECT
+			referer_SE,
+			referer,
+			substring(reqdatetime,1,10) AS date,
+			IDhash,
+			USRM_flag
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			domain_sub='$tom::H' AND
+			referer_SE IS NOT NULL AND
+			reqtime>$reqtime
+	};
+	
+	main::_log("executing SQL to analyse requests");
+	
+	# connects to database automatically
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>"stats");
+	
+	main::_log("rows to analyse := '".$sth0{'rows'}."'");
+	
+	# analyse requests
+	
+	my $row;
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$row++;
+		
+		# parsing domain name
+		my ($domain,$query)=TOM::Net::HTTP::domain_clear($db0_line{referer});
+		# check type of domain
+		if (my $dom=TOM::Net::HTTP::referer::analyze($domain))
+		{
+			# check if it is a know search engine
+			if (
+					($TOM::Net::HTTP::referer::table{$dom}{'domain_type'} eq "search engine")
+					&&($TOM::Net::HTTP::referer::table{$dom}{'keywords_param'})
+				)
+			{
+				# in which parameter are stored keywords?
+				my $keyword_param=$TOM::Net::HTTP::referer::table{$dom}{'keywords_param'};
+				
+				main::_log("row[$row] query='$query'");
+				
+				# parse query from QUERY_STRING into %hash
+				my %FORM=TOM::Net::HTTP::CGI::get_QUERY_STRING($query,'quiet'=>1);
+				
+				# don't analyze queries from google cache
+				next if $FORM{$keyword_param}=~/^cache/;
+				next unless $FORM{$keyword_param};
+				
+				# convert keywords to ASCII
+				$FORM{$keyword_param}=Int::charsets::encode::UTF8_ASCII($FORM{$keyword_param});
+				main::_log("converted to '$FORM{$keyword_param}'");
+				
+				# here are corrupted keywords (i can't say why)
+				next if $FORM{$keyword_param}=~/\\utf\{65533\}/;
+				
+				# convert to lowercase
+				$FORM{$keyword_param}=~tr/A-Z/a-z/;
+				
+				# prepare string for split keywords
+				$FORM{$keyword_param}=~s|["&]||g;
+				#$FORM{$keyword_param}=~s|\W| |g;
+				$FORM{$keyword_param}=~s|[ \+]|;|g;
+				$FORM{$keyword_param}=~s|^;||;$FORM{$keyword_param}=~s|;$||;
+				1 while ($FORM{$keyword_param}=~s|;;|;|);
+				
+				my $phrase=join ' ', sort split ';',$FORM{$keyword_param};
+				$phrases{$phrase}{'all'}++;
+				if ($db0_line{'USRM_flag'} eq "G") # generated new user
+				{
+					$phrases{$phrase}{'new'}++;
+				}
+				else
+				{
+					$phrases{$phrase}{'old'}++;
+				}
+				
+			}
+		}
+		
+	}
+	
+	$columns{'hits'}=$graf->addColumn(title=>'Phrase hits',color=>'yellow');
+	$columns{'hits_new'}=$graf->addColumn(title=>'New visitors',color=>'gold');
+	
+	my $i;
+	foreach (sort {$phrases{$b}{'all'} <=> $phrases{$a}{'all'}} keys %phrases)
+	{
+		$i++;
+		main::_log("phrase='$_' hits='$phrases{$_}{'all'}'");
+		
+		$graf->addRowLabel($_);
+		$columns{'hits'}->addData($_,$phrases{$_}{'all'});
+		$columns{'hits_new'}->addData($_,$phrases{$_}{'new'});
+		
+		last if $i==25;
+	}
+	
+	my $filename=$tom::P.'/_data/SEphrases.svg';
+	open HND,'>'.$filename or die "$!";
+	chmod (0666,$filename);
+	my $out=$graf->prepare();
+	$out=~s|[\s]+</text>|</text>|g;
+	print HND $out;
+	
+return 1}
+
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
