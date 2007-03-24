@@ -151,7 +151,8 @@ sub extract
 	my $status = $zip->read($file);
 	if ($status != Archive::Zip::AZ_OK)
 	{
-		main::_log("Read of $file failed",1);
+		main::_log("Opening zip archive $file failed (is this zip archive?)",1);
+		$t->close();
 		return undef;
 	}
 	
