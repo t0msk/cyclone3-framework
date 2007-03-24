@@ -40,11 +40,11 @@
       <listitem>
         <para><emphasis role="bold"><ulink
         url="?|?section=ext&amp;file=DocBook4CMS/">ODFvalidator</ulink>
-        <action>[planning]</action></emphasis></para>
+        <action>[in progress]</action></emphasis></para>
 
         <para>The purpose of this extension is to provide a validator, which
         developers and users can use to ensure the consistency and correctness
-        of OpenDocument files. Original code writed by Alex Hudson.</para>
+        of OpenDocument files. Original code writen by Alex Hudson.</para>
       </listitem>
 
       <listitem>

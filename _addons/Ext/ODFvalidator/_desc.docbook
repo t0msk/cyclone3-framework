@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>Extension ODFvalidator</title>
+
+  <para>The purpose of this extension is to provide a validator, which
+  developers and users can use to ensure the consistency and correctness of
+  OpenDocument files. Original code writen by Alex Hudson as part of the
+  <ulink
+  url="http://www.opendocumentfellowship.org/development/projects/odftools">ODF
+  Tools</ulink> project.</para>
+
+  <para>The validator will list out any problems it finds with the file.
+  Errors are fatal: these are problems where the file does not conform to the
+  OpenDocument specification. Warnings are less fatal, but could indicate
+  problems.</para>
+
+  <para>Some of the errors will be somewhat inscrutable. You will probably not
+  be able to fix them unless you're a developer.</para>
+
+  <para>Look into <ulink
+  url="?|?section=ext&amp;file=ODFvalidator/_init.pm">source code
+  documentation</ulink>.</para>
+
+  <section>
+    <title>Checks</title>
+
+    <para>This is a non-exhaustive list of the checks this tool
+    performs:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Right files being present in a package</para>
+      </listitem>
+
+      <listitem>
+        <para>Mimetype and file extension exist and correspond</para>
+      </listitem>
+
+      <listitem>
+        <para>That all XML is valid XML</para>
+      </listitem>
+
+      <listitem>
+        <para>Manifest.xml exists and is correct according to the RelaxNG
+        schema</para>
+      </listitem>
+
+      <listitem>
+        <para>Content.xml, meta.xml, settings.xml and styles.xml exist and are
+        correct according to the RelaxNG schema</para>
+      </listitem>
+
+      <listitem>
+        <para>That all defined XML namespaces that are used are correct
+        according to the OpenDocument specification <action>[in
+        development]</action></para>
+      </listitem>
+
+      <listitem>
+        <para>That all defined included files (images) are correct in ODF file
+        <action>[in development]</action></para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section>
+    <title>Warning</title>
+
+    <para>This is very much alpha software right now. It may warn or error on
+    things which are valid OpenDocument; similarly, it may miss obvious
+    problems with files. Let odf-devel know how you get on.</para>
+  </section>
+
+  <section>
+    <title>Help Out</title>
+
+    <para>Please let us know of any extra tests you think we can perform, new
+    checks, or about documents and/or applications you've found which trip up
+    the validator, or trip up on the validator :)</para>
+  </section>
+
+  <section>
+    <title>See Also</title>
+
+    <para><ulink type=""
+    url="?|?section=ext&amp;file=OpenDocument4CMS/">Extension
+    OpenDocument4CMS</ulink> <ulink
+    url="www.opendocumentfellowship.org">ODFtools</ulink> <ulink
+    url="http://www.opendocumentfellowship.org">OpenDocument
+    Fellowship</ulink></para>
+  </section>
+</article>
