@@ -1,6 +1,6 @@
 <!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
 
-# cistenie starych logov, necham si ich 7 dni
+# logs cleaning
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="140" />
@@ -15,8 +15,7 @@
 	<VAR id="-name" value="cleaner_hacked" />
 </MODULE>
 
-# vymazanie starych zaznamov z weblog, z $TOM::DB_name_STAT
-
+# delete old logs from weblog, z $TOM::DB_name_STAT
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
@@ -29,15 +28,6 @@
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="all_cleaner" />
 </MODULE>
-
-
-<MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="110" />
-	<VAR id="-name" value="sys_collect" />
-	<VAR id="-version" value="day" />
-</MODULE>
-
 
 <MODULE>
 	<VAR id="-global" value="1" />
@@ -62,7 +52,7 @@
 		<VAR id="db_300" value="TOM" />
 </MODULE>
 
-# statistika FARMY
+# FARM stats
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />

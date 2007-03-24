@@ -6,40 +6,11 @@
 -- domain=varchar(32) NOT NULL default ''
 -- domain_sub=varchar(64) NOT NULL default ''
 
--- --------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*app*/_load_day` (
-  `reqdatetime` /*reqdatetime*/,
-  `load_1min` float default NULL,
-  `load_5min` float default NULL,
-  `load_15min` float default NULL,
-  PRIMARY KEY  (`reqdatetime`)
-) TYPE=MyISAM;
-
--- --------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*app*/_load_hour` (
-  `reqdatetime` /*reqdatetime*/,
-  `load_1min` float default NULL,
-  `load_5min` float default NULL,
-  `load_15min` float default NULL,
-  PRIMARY KEY  (`reqdatetime`)
-) TYPE=MyISAM;
-
--- --------------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*app*/_load_min` (
-  `reqtime` int(10) unsigned NOT NULL default '0',
-  `reqdatetime` /*reqdatetime*/,
-  `hostname` varchar(50) NOT NULL default '',
-  `load_1min` float default NULL,
-  `load_5min` float default NULL,
-  `load_15min` float default NULL,
-  `output_vmstat` tinytext NOT NULL,
-  `output_psaux` text NOT NULL,
-  PRIMARY KEY  (`reqdatetime`,`hostname`),
-  KEY `reqtime` (`reqtime`)
-) TYPE=MyISAM;
+-- &DROP `/*db_name*/`.`/*app*/_load_day`
+-- &DROP `/*db_name*/`.`/*app*/_load_hour`
+-- &DROP `/*db_name*/`.`/*app*/_load_min`
+-- &DROP `/*db_name*/`.`/*app*/_weblog_hour`
+-- &DROP `/*db_name*/`.`/*app*/_weblog_min`
 
 -- --------------------------------------------------------
 
@@ -125,69 +96,6 @@ CREATE TABLE `/*db_name*/`.`/*app*/_webclick_log` (
 ) TYPE=MyISAM;
 
 -- --------------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*app*/_weblog_day` (
-  `reqdatetime` /*reqdatetime*/,
-  `domain` /*domain*/,
-  `domain_sub` /*domain_sub*/,
-  `visits` int(10) unsigned NOT NULL default '0',
-  `visits_all` int(10) unsigned NOT NULL default '0',
-  `visits_direct` int(10) unsigned NOT NULL default '0',
-  `visits_firstpage` int(10) unsigned NOT NULL default '0',
-  `visits_failed` int(10) unsigned NOT NULL default '0',
-  `IPs` int(10) unsigned NOT NULL default '0',
-  `IDhashs` int(10) unsigned NOT NULL default '0',
-  `IDhashs_return` int(10) unsigned NOT NULL default '0',
-  `IDsessions` int(10) unsigned NOT NULL default '0',
-  `load_proc` float unsigned NOT NULL default '0',
-  `load_req` float unsigned NOT NULL default '0',
-  PRIMARY KEY  (`reqdatetime`,`domain`,`domain_sub`),
-  KEY `reqdatetime` (`reqdatetime`)
-) TYPE=MyISAM;
-
--- --------------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*app*/_weblog_hour` (
-  `reqdatetime` /*reqdatetime*/,
-  `domain` /*domain*/,
-  `domain_sub` /*domain_sub*/,
-  `visits` int(10) unsigned NOT NULL default '0',
-  `visits_all` int(10) unsigned NOT NULL default '0',
-  `visits_direct` int(10) unsigned NOT NULL default '0',
-  `visits_firstpage` int(10) unsigned NOT NULL default '0',
-  `visits_failed` int(10) unsigned NOT NULL default '0',
-  `IPs` int(10) unsigned NOT NULL default '0',
-  `IDhashs` int(10) unsigned NOT NULL default '0',
-  `IDhashs_return` int(10) unsigned NOT NULL default '0',
-  `IDsessions` int(10) unsigned NOT NULL default '0',
-  `load_proc` float unsigned NOT NULL default '0',
-  `load_req` float unsigned NOT NULL default '0',
-  PRIMARY KEY  (`reqdatetime`,`domain`,`domain_sub`),
-  KEY `reqdatetime` (`reqdatetime`)
-) TYPE=MyISAM;
-
--- --------------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*app*/_weblog_min` (
-  `reqdatetime` /*reqdatetime*/,
-  `domain` /*domain*/,
-  `domain_sub` /*domain_sub*/,
-  `visits` int(10) unsigned NOT NULL default '0',
-  `visits_all` int(10) unsigned NOT NULL default '0',
-  `visits_direct` int(10) unsigned NOT NULL default '0',
-  `visits_firstpage` int(10) unsigned NOT NULL default '0',
-  `IPs` int(10) unsigned NOT NULL default '0',
-  `IDhashs` int(10) unsigned NOT NULL default '0',
-  `IDsessions` int(10) unsigned NOT NULL default '0',
-  `load_proc` float unsigned NOT NULL default '0',
-  `load_req` float unsigned NOT NULL default '0',
-  `load_proc_max` float unsigned NOT NULL default '0',
-  `load_req_max` float unsigned NOT NULL default '0',
-  PRIMARY KEY  (`reqdatetime`,`domain`,`domain_sub`),
-  KEY `reqdatetime` (`reqdatetime`)
-) TYPE=MyISAM;
-
--- --------------------------------------------------------
 -- version=5.0
 
 CREATE TABLE `/*db_name*/`.`/*app*/_weblog_rqs` (
@@ -235,6 +143,27 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_rqs` (
   KEY `lng` (`lng`),
   KEY `result` (`result`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_weblog_day` (
+  `reqdatetime` /*reqdatetime*/,
+  `domain` /*domain*/,
+  `domain_sub` /*domain_sub*/,
+  `visits` int(10) unsigned NOT NULL default '0',
+  `visits_all` int(10) unsigned NOT NULL default '0',
+  `visits_direct` int(10) unsigned NOT NULL default '0',
+  `visits_firstpage` int(10) unsigned NOT NULL default '0',
+  `visits_failed` int(10) unsigned NOT NULL default '0',
+  `IPs` int(10) unsigned NOT NULL default '0',
+  `IDhashs` int(10) unsigned NOT NULL default '0',
+  `IDhashs_return` int(10) unsigned NOT NULL default '0',
+  `IDsessions` int(10) unsigned NOT NULL default '0',
+  `load_proc` float unsigned NOT NULL default '0',
+  `load_req` float unsigned NOT NULL default '0',
+  PRIMARY KEY  (`reqdatetime`,`domain`,`domain_sub`),
+  KEY `reqdatetime` (`reqdatetime`)
+) TYPE=MyISAM;
 
 -- --------------------------------------------------------
 

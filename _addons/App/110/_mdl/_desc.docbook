@@ -156,38 +156,6 @@
   <section>
     <title>SVG Stats - generating files</title>
 
-    <para>System</para>
-
-    <itemizedlist>
-      <listitem>
-        <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110-sys_chart_load.0.cron">110-sys_chart_load.0.cron</ulink></para>
-
-        <para>creating svg graph about load</para>
-      </listitem>
-
-      <listitem>
-        <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110-sys_collect.day.cron">110-sys_collect.day.cron</ulink></para>
-
-        <para>collecting info from hour and inserts into a day</para>
-      </listitem>
-
-      <listitem>
-        <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110-sys_collect.hour.cron">110-sys_collect.hour.cron</ulink></para>
-
-        <para>collecting info from min and inserts into a hour</para>
-      </listitem>
-
-      <listitem>
-        <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110-sys_datamining.min.cron">110-sys_datamining.min.cron</ulink></para>
-
-        <para>filling rows in a110_weblog_min table</para>
-      </listitem>
-    </itemizedlist>
-
     <para>WebClick</para>
 
     <itemizedlist>
@@ -350,6 +318,13 @@
 
       <listitem>
         <para><ulink
+        url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_SEphrases.0.cron">110-weblog_chart_SEphrases.0.cron</ulink></para>
+
+        <para>List of most used phrases in search engines</para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
         url="?|?section=app&amp;file=110/_mdl/110-weblog_chart_users.0.cron">110-weblog_chart_users.0.cron</ulink></para>
 
         <para>logged users</para>
@@ -389,20 +364,6 @@
 
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110-weblog_collect.hour.cron">110-weblog_collect.hour.cron</ulink></para>
-
-        <para></para>
-      </listitem>
-
-      <listitem>
-        <para><ulink
-        url="?|?section=app&amp;file=110/_mdl/110-weblog_collect.min.cron">110-weblog_collect.min.cron</ulink></para>
-
-        <para></para>
-      </listitem>
-
-      <listitem>
-        <para><ulink
         url="?|?section=app&amp;file=110/_mdl/110-weblog_collect.week.cron">110-weblog_collect.week.cron</ulink></para>
 
         <para></para>
@@ -424,38 +385,6 @@
         url="?|?section=app&amp;file=110/_mdl/110-weblog_datamining.fix.cron">110-weblog_datamining.fix.cron</ulink></para>
 
         <para></para>
-      </listitem>
-    </itemizedlist>
-  </section>
-
-  <section>
-    <title>Modules</title>
-
-    <para>Dmdl</para>
-
-    <itemizedlist>
-      <listitem>
-        <para>110-webclick.default.de.dmdl</para>
-      </listitem>
-
-      <listitem>
-        <para>110-webclick.default.en.dmdl</para>
-      </listitem>
-
-      <listitem>
-        <para>110-webclick.default.sk.dmdl</para>
-      </listitem>
-
-      <listitem>
-        <para>110-webclick_show.default.de.dmdl</para>
-      </listitem>
-
-      <listitem>
-        <para>110-webclick_show.default.en.dmdl</para>
-      </listitem>
-
-      <listitem>
-        <para>110-webclick_show.default.sk.dmdl</para>
       </listitem>
     </itemizedlist>
   </section>

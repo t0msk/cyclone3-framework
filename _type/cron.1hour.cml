@@ -4,28 +4,7 @@
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="weblog_collect" />
-	<VAR id="-version" value="hour" />
-</MODULE>
-
-<MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="110" />
-	<VAR id="-name" value="weblog_collect" />
 	<VAR id="-version" value="week" />
-</MODULE>
-
-<MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="110" />
-	<VAR id="-name" value="sys_collect" />
-	<VAR id="-version" value="hour" />
-</MODULE>
-
-<MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="110" />
-	<VAR id="-name" value="sys_collect" />
-	<VAR id="-version" value="day" />
 </MODULE>
 
 <MODULE>
@@ -41,9 +20,3 @@
 	<VAR id="-name" value="cleaner_grftemp" />
 </MODULE>
 
-<#MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="110" />
-	<VAR id="-name" value="weblog_chart_hosts" />
-	<VAR id="-version" value="days" />
-</MODULE>
