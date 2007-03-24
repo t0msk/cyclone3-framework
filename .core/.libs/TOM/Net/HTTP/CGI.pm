@@ -221,11 +221,11 @@ sub GetQuery
 
 sub get_QUERY_STRING
 {
-	my $t=track TOM::Debug(__PACKAGE__."::get_QUERY_STRING()");
 	my $query=shift;
 	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::get_QUERY_STRING()") unless $env{'quiet'};
 	
-	main::_log("GET processing '$query'");
+	main::_log("GET processing '$query'") unless $env{'quiet'};
 	
 	my %form;
 	foreach (split('&',$query))
@@ -238,7 +238,7 @@ sub get_QUERY_STRING
 		# su tu UTF-8 sekvencie
 		if ($value=~/%(C3|C4|C5)%([0-9A-Fa-f]{2})/i)
 		{
-			main::_log("utf-8 sequence");
+			main::_log("utf-8 sequence") unless $env{'quiet'};
 			utf8::encode($value);
 			#$value=~s/%([0-9A-Fa-f]{2})/pack("C",hex($1))/eg;
 			TOM::Net::URI::URL::url_decode_($value);
@@ -248,7 +248,7 @@ sub get_QUERY_STRING
 		# su tu ISO-8859-2 sekvencie
 		if ($value=~/%([0-9A-Fa-f]{2})/)
 		{
-			main::_log("iso-8859-2 sequence");
+			main::_log("iso-8859-2 sequence") unless $env{'quiet'};
 			utf8::encode($value);
 			#$value=~s/%([0-9A-Fa-f]{2})/pack("C",hex($1))/eg;
 			TOM::Net::URI::URL::url_decode_($value);
@@ -258,10 +258,10 @@ sub get_QUERY_STRING
 		
 		if ($name=~s/\[\]$//){push @{$form{$name}},$value;}else{$form{$name}=$value;}
 		
-		main::_log("'$name'='".$value."'");
+		main::_log("'$name'='".$value."'") unless $env{'quiet'};
 	}
  
-	$t->close();
+	$t->close() unless $env{'quiet'};
 	return %form;
 }
 
