@@ -2270,8 +2270,8 @@ while ($main::CGI=new CGI::Fast())
 			{
 				main::_log("Gzipping DOC");
 				print "Content-Encoding: gzip\n";
+				utf8::encode($DOC_output); # don't send to Compress::Zlib UTF-8
 				my $out=Compress::Zlib::memGzip($DOC_output);
-				#utf8::encode($out);
 				print "Content-length: ".(length($out))."\n";
 				main::_log("DOC length = '".(length($out))."'");
 				print "\n";
