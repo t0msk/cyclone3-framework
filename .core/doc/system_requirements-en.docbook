@@ -123,6 +123,10 @@
       <listitem>
         <para>XML::Sablotron</para>
       </listitem>
+
+      <listitem>
+        <para>XML::LibXML</para>
+      </listitem>
     </itemizedlist>
   </section>
 

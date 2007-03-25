@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>Where can I host my Cyclone3 project?</title>
+
+  <subtitle>How should you host a small or large Cyclone3 domain
+  service?</subtitle>
+
+  <articleinfo>
+    <date>$Date$</date>
+
+    <editor>
+      <surname>$Author$</surname>
+    </editor>
+
+    <releaseinfo>$Rev$</releaseinfo>
+  </articleinfo>
+
+  <para>Cyclone3 doesn't run on every generic $5/month webhosting accounts.
+  One of the biggest perceived barriers to using Cyclone3 Framework is the
+  fact that it doesn't run nicely in the most common kind of commodity
+  webhosting space.</para>
+
+  <para>Why not? Well, in a word, <emphasis
+  role="bold">performance</emphasis>.</para>
+
+  <para>Cyclone3 Framework is an application that runs on Linux/BSD server.
+  This means that to use Plone, you've got to be able to run standard
+  applications on that server. Unfortunately, most low-end web hosting
+  providers don't support Cyclone3, choosing instead to optimize their
+  webservers for hosting lots and lots of small MySQL/PHP sites.</para>
+
+  <para>This isn't that big a deal for large Cyclone3 projects, who typically
+  run on one or more dedicated servers, and have IT staff on staff (or
+  outsourced) with the appropriate skills. But it seems like a challenge for
+  small Cyclone3 projects, doesn't it?</para>
+
+  <section>
+    <title>How to tell if your current web hosting provider supports
+    Cyclone3</title>
+
+    <para>Ask them! Say <quote>Hey, [friendly tech support person], does [your
+    web hosting provider] support Cyclone3?</quote></para>
+
+    <para>If your web hosting provider does not explicitly mention that they
+    support Cyclone3, then they almost certainly don't.</para>
+
+    <para>If your web server does not allow you to do any of the following
+    things, then you probably can't run Cyclone3:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Become a root user</para>
+      </listitem>
+
+      <listitem>
+        <para>Install any software you want ( subversion, perl, fastcgi, ...
+        )</para>
+      </listitem>
+
+      <listitem>
+        <para>Use Perl</para>
+      </listitem>
+
+      <listitem>
+        <para>Use FastCGI</para>
+      </listitem>
+
+      <listitem>
+        <para>Use MySQL</para>
+      </listitem>
+
+      <listitem>
+        <para>Use cron system</para>
+      </listitem>
+
+      <listitem>
+        <para>Run long-running system processes that use 256 MB or more of
+        RAM</para>
+      </listitem>
+    </itemizedlist>
+
+    <section>
+      <title>Why not use my current $5/month hosting provider?</title>
+
+      <para>It's an old adage: <quote>you get what you pay for.</quote> More
+      accurately, though, you don't get what you don't pay for.</para>
+
+      <para>In the case of "el cheapo"1 web hosting providers, what you're not
+      paying for is any kind of helpful support. That's labor, and labor is
+      expensive. The entire business model of commodity hosting providers is
+      to gamble that you won't have any tech support questions, and to provide
+      the least amount of help possible if you do. This might be fine if all
+      you're trying to do is host a few static web pages, or run a simple PHP
+      script. But in the long run, ultra-low-cost commodity hosting providers
+      are rarely a good value.</para>
+
+      <para>Which we define as $5-20/month hosting providers selling shared
+      LAMP instances.</para>
+    </section>
+  </section>
+
+  <section>
+    <title>OK, then which web hosting providers do support Cyclone3?</title>
+
+    <para>The situation sounds pretty bleak, right? Don't worry: finding good
+    reliable hosting for Cyclone3 isn't so hard.</para>
+
+    <para>There are several solid approaches to hosting a Cyclone3. In
+    increasing order of difficulty they are:</para>
+
+    <orderedlist>
+      <listitem>
+        <para>Get Cyclone3 hosting from a Cyclone3 developers company that
+        you're working with on your project.</para>
+      </listitem>
+
+      <listitem>
+        <para>Get Cyclone3 hosting from one of the many companies that
+        specialize in Cyclone3 hosting.</para>
+      </listitem>
+
+      <listitem>
+        <para>Get a low-cost <quote>virtual server</quote> account from a web
+        hosting provider and set up your own copy of Cyclone3.</para>
+      </listitem>
+    </orderedlist>
+  </section>
+</article>

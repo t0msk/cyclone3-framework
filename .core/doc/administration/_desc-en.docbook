@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>Cyclone3 Administration</title>
+
+  <subtitle>Help to Cyclone3 XULadmin administration</subtitle>
+
+  <articleinfo>
+    <date>$Date$</date>
+
+    <editor>
+      <surname>$Author$</surname>
+    </editor>
+
+    <releaseinfo>$Rev$</releaseinfo>
+  </articleinfo>
+
+  <section>
+    <title>How to start to using Cyclone3</title>
+
+    <itemizedlist>
+      <title>Related documents:</title>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=frame&amp;file=system_requirements">System
+        requirements</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink url="?|?section=admin&amp;file=hosting">Where can I host
+        Cyclone3?</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink url="?|?section=frame&amp;file=installation">Framework
+        installation</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=frame&amp;file=new_domain_service">Creating and
+        starting new domain service</ulink></para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section>
+    <title>Upgrading</title>
+
+    <para></para>
+  </section>
+
+  <section>
+    <title>Troubleshooting</title>
+
+    <para></para>
+  </section>
+
+  <section>
+    <title>See Also</title>
+
+    <para><ulink url="?|?section=xuladmin">Cyclone3 XULadmin</ulink> - XUL
+    frontend for Cyclone3 Framework</para>
+  </section>
+</article>
