@@ -295,7 +295,7 @@ sub get_CGI
 			$form{$name}=$main::CGI->param($name);
 			
 			# backward compatibility (ugly hack)
-			$form{'multipart'}.="name=\"$name\"; filename=\"$form{'name'}\" ___ ";
+			$form{'multipart'}.="name=\"$name\"; filename=\"$form{$name}\" ___ ";
 			
 			# get file informations
 			my $fileinfo=CGI::uploadInfo($form{$name.'_file'});
