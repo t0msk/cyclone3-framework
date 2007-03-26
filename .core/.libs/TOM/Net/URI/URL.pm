@@ -1,15 +1,16 @@
 package TOM::Net::URI::URL;
 use open ':utf8', ':std';
 use encoding 'utf8';
+use Encode;
 use enc3;
-use utf8;
+use bytes;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-#my $URLENCODE_VALID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+.=&%";
-my $URLENCODE_VALID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+.=&%";
+# List of valid characters in QUERY_STRING
+my $URLENCODE_VALID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+.=";
 
-# Validne chary si pripravym do pola a nevalidnych ich hex
+# Prepare list of valid and invalid characters (hex)
 my @urlencode_valid;
 $urlencode_valid[ord $_]=$_ foreach (split('', $URLENCODE_VALID));
 
@@ -90,8 +91,9 @@ sub genGET
 	foreach (sort keys %form)
 	{
 		next unless $form{$_};
+		next if length($form{$_})>1024;
 #		main::_log("'$_'='$form{$_}'");
-		$GET.="$_=".url_decode($form{$_})."&";
+		$GET.="$_=".url_encode($form{$_})."&";
 	}
 	$GET=~s|&$||;
 	
