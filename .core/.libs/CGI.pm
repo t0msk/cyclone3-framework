@@ -689,10 +689,10 @@ sub init {
     # different things for keyword lists and parameter lists.
     if (defined $query_string && length $query_string) {
 	if ($query_string =~ /[&=;]/) {
-	    $self->parse_params($query_string);
+	    #$self->parse_params($query_string);
 	} else {
-	    $self->add_parameter('keywords');
-	    $self->{'keywords'} = [$self->parse_keywordlist($query_string)];
+	    #$self->add_parameter('keywords');
+	    #$self->{'keywords'} = [$self->parse_keywordlist($query_string)];
 	}
     }
 
