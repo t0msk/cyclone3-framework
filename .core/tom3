@@ -562,7 +562,7 @@ while ($main::CGI=new CGI::Fast())
 		$ENV{'QUERY_STRING'}.=$ENV{'QUERY_STRING_PLUS'};
 		
 		# dekodovanie % znakov
-		$ENV{'QUERY_STRING'}=TOM::Net::URI::URL::url_decode($ENV{'QUERY_STRING'});
+		#$ENV{'QUERY_STRING'}=TOM::Net::URI::URL::url_decode($ENV{'QUERY_STRING'});
 		
 		
 		# nemozem si len tak halabala decodovat cely REQUEST_URI, mozem tak dekodovat len 
@@ -571,7 +571,8 @@ while ($main::CGI=new CGI::Fast())
 		do
 		{
 			my ($uri_1,$uri_2)=split('\?',$ENV{'REQUEST_URI'},2);
-			$ENV{'REQUEST_URI'}=TOM::Net::URI::URL::url_decode($uri_1);
+			#$ENV{'REQUEST_URI'}=TOM::Net::URI::URL::url_decode($uri_1);
+			$ENV{'REQUEST_URI'}=$uri_1;
 			$ENV{'REQUEST_URI'}.='?'.$uri_2 if $uri_2;
 			# pokial volam v linke priamo core.tom, tak osetrim linku
 			# aby sa z tohto prefixu pomocou rewrite nestalo napr. TypeID
@@ -607,15 +608,9 @@ while ($main::CGI=new CGI::Fast())
 		{
 			next if $_ eq "multipart";
 			next if $_=~/_file$/;
-			if (length($FORM{$_})<1024)
-			{
-				main::_log("output FORM '$_'='$FORM{$_}'");
-			}
-			else
-			{
-				main::_log("output FORM '$_'=length(".length($FORM{$_}).")");
-			}
-			$main::ENV{'QUERY_STRING_FULL'}.="&".$_."=".$FORM{$_} if (length($FORM{$_}) < 1024);
+			next if length($FORM{$_}) > 1024;
+			main::_log("output FORM '$_'='$FORM{$_}'");
+			$main::ENV{'QUERY_STRING_FULL'}.="&".$_."=".$FORM{$_};
 		};
 		$main::ENV{'QUERY_STRING_FULL'}=~s|^&||;
 		
@@ -795,6 +790,7 @@ while ($main::CGI=new CGI::Fast())
 				main::_log("FORM{__key}='$FORM{__key}'");
 				main::_log("TOM::IAdm_key='$TOM::IAdm_key'");
 				delete $FORM{__key};
+				delete $FORM{__key_file};
 				delete $FORM{__IAdm_log};
 			};
 		}
@@ -1917,6 +1913,7 @@ while ($main::CGI=new CGI::Fast())
 			$main::COOKIES{key}="";
 			delete $main::FORM{__key_};
 			delete $main::FORM{__key};
+			delete $main::FORM{__key_file};
 			delete $main::FORM{__IAdm_log};
 		}
 		
@@ -1992,7 +1989,7 @@ while ($main::CGI=new CGI::Fast())
 			my %form;
 			# pridam systemovo posielane premenne __nieco
 			foreach (keys %FORM){$_=~/^__/ && do{$form{$_}=$FORM{$_};};}
-			# rozsekam $var do $form
+			# parsing $var to %form
 			foreach my $cc(split('&',$var))
 			{
 				my @ref=split('=',$cc);
@@ -2006,9 +2003,10 @@ while ($main::CGI=new CGI::Fast())
 			
 			# ochrana proti ukazaniu IAdm kluca ked dekodujem stranku v IAdm mode
 			delete $form{__key} if (($IAdm)&&($FORM{_IAdm_decode}));
+			delete $form{__key_file} if (($IAdm)&&($FORM{_IAdm_decode}));
 			delete $form{__key} if (($ITst)&&($FORM{_ITst_decode}));
-			# do zameny linkov samozrejme pridavam GET cookies (najvyssia priorita, preto nakoniec)
-			#if ($FORM{cookies}){foreach (sort keys %COOKIES){$form{'_c'.$_}=$COOKIES{$_};}};
+			delete $form{__key_file} if (($ITst)&&($FORM{_ITst_decode}));
+			
 			# POSLEDNE UPRAVY
 			delete $form{_dsgn} if $form{_dsgn} eq $tom::dsgn_;
 			delete $form{_lng} if $form{_lng} eq $tom::lng_;
@@ -2073,6 +2071,7 @@ while ($main::CGI=new CGI::Fast())
 							'$tom::time_current'
 						)
 					");
+					TOM::Net::URI::URL::url_decode_($prefix);
 					main::_log("output URL '$prefix?__$link_md5$end'");
 					$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?__$link_md5$end/;
 				}
@@ -2080,9 +2079,8 @@ while ($main::CGI=new CGI::Fast())
 				{
 					# tomu http://null/ uz vobec nerozumiem
 					$prefix="" if ($prefix eq "http://null/");
-					
 					my $link_hash=TOM::Net::URI::URL::hash_encode($var);
-					
+					TOM::Net::URI::URL::url_decode_($prefix);
 					main::_log("output URL '$prefix?$link_hash$end'");
 					$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?$link_hash$end/;
 				}
@@ -2096,14 +2094,16 @@ while ($main::CGI=new CGI::Fast())
 			# v HTML kode ako &amp; (je to tak podla standardov)
 			$var=~s|&|&amp;|g unless $TOM::type_code;
 			$prefix="" if ($prefix eq "http://null/");
-			
+			TOM::Net::URI::URL::url_decode_($prefix);
 			
 			if ($tom::rewrite && !$var) # nechcem zbytocne vypisovat ?
 			{
+				main::_log("output URL '$prefix$end'");
 				$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix$end/;
 			}
 			else
 			{
+				main::_log("output URL '$prefix?$var$end'");
 				$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?$var$end/;
 			}
 			
