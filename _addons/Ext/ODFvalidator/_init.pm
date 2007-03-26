@@ -240,6 +240,7 @@ sub process
 	else
 	{
 		$self->xmlvalidate(
+			'file' => 'manifest.xml',
 			'xml' => $self->{'tmpdir'}.'/META-INF/manifest.xml',
 			'rng' => $DIR.'/OpenDocument-manifest-schema-v1.0-os.rng'
 		);
@@ -254,6 +255,7 @@ sub process
 			next;
 		}
 		$self->xmlvalidate(
+			'file' => $xmlfile,
 			'xml' => $self->{'tmpdir'}.'/'.$xmlfile,
 			'rng' => $DIR.'/OpenDocument-schema-v1.0-os.rng'
 		);
@@ -286,7 +288,7 @@ sub xmlvalidate
 	{
 		my $msg=$@;
 		$msg=~s|^.*_temp/[a-zA-Z0-9]+||; # don't display info where is the file stored
-		$self->error((split("\n",$msg))[0]);
+		$self->error("in $env{'file'}\n".(split("\n",$msg))[0]);
 		$t->close();
 		return;
 	}
@@ -297,7 +299,7 @@ sub xmlvalidate
 	};
 	if ($@)
 	{
-		$self->error($@);
+		$self->error("in $env{'file'}\n".$@);
 	}
 	
 	$t->close();
