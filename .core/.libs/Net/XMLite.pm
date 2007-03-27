@@ -29,7 +29,7 @@ HEADER
 
 our $err_mdl=<<"HEADER";
 <error module="<%MODULE%>">
-<%ERROR%><%PLUS%>
+<![CDATA[<%ERROR%><%PLUS%>]]>
 </error>
 HEADER
 
