@@ -331,6 +331,10 @@ sub get_CGI
 		{
 			# classical variable
 			$form{$name}=$main::CGI->param($name);
+			
+#			utf8::encode($value);
+			utf8::decode($form{$name});
+			
 		}
 		
 		if (length($form{$name})<1024)
