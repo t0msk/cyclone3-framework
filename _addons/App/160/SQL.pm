@@ -168,6 +168,66 @@ sub new_relation
 
 
 
+=head2 remove_relation()
+
+Removes relation and return true/false
+
+ my $output=remove_relation(
+   'ID' => $ID
+ );
+
+=cut
+
+sub remove_relation
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::remove_relation()");
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'");
+	}
+	
+	# check if this relation already exists
+	my $relation=(get_relations(
+		'ID'=>$env{'ID'},
+		'status' => 'YNT',
+		'limit' => '0,1'
+	))[0];
+	if ($relation)
+	{
+		main::_log("this relation exists with status='$relation->{'status'}'");
+		# when it exists, check if is enabled or disabled
+		if ($relation->{'status'}=~/[YN]/)
+		{
+			main::_log("also giving it into trash");
+			App::020::SQL::functions::to_trash(
+				'ID' => $relation->{'ID'},
+				'db_h' => $env{'db_h'},
+				'db_name' => $env{'db_name'},
+				'tb_name' => 'a160_relation',
+			);
+			$t->close();
+			return 1;
+		}
+		else
+		{
+			# this relation is already in trash
+		}
+		
+	}
+	
+	# this relation not exists
+	
+	$t->close();
+	return 1;
+}
+
+
+
 =head2 get_relations()
 
 Returns list of references to relations
