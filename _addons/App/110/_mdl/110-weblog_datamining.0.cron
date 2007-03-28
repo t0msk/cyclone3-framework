@@ -42,6 +42,12 @@ sub execute
 	alarm(0);
 	my %env=@_;
 	
+	my $time_start=time();
+	my $time_max=60*10;
+	
+	my $DELAYED;
+	$DELAYED="DELAYED" if $TOM::DB{'stats'}{'delayed'};
+	
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
 	my $lock=new TOM::lock("weblog datamining") || return 1;
@@ -51,7 +57,7 @@ sub execute
 	if (opendir (DIR,$CRON::P."/_logs/weblog"))
 	{
 		
-		foreach my $file(readdir DIR)
+		foreach my $file(sort readdir DIR)
 		{
 			
 			next unless $file=~/weblog\.(\d*?)-(\d*?)-(\d*?)\.(\d*?)\.(\d*?)\.(.*?).log/;
@@ -84,10 +90,10 @@ sub execute
 							$hash{$var}=~s|\'|\\'|g;
 						}
 						
-						main::_log("request '$hash{page_code}'");
+						#main::_log("request '$hash{page_code}'");
 						
 						my $sql=qq{
-							INSERT INTO TOM.a110_weblog_rqs
+							INSERT $DELAYED INTO TOM.a110_weblog_rqs
 							(
 								page_code,
 								page_code_referer,
@@ -211,6 +217,13 @@ sub execute
 					
 				}
 				unlink $CRON::P."/_logs/weblog/".$file;
+				
+				if ($time_start+$time_max<time())
+				{
+					main::_log("this job is running too long, exiting",1);
+					last;
+				}
+				
 			}
 		}
 	}
