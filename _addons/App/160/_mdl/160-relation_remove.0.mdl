@@ -1,0 +1,63 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+160-relation_remove.0.mdl
+
+=head1 DESCRIPTION
+
+Removes one relation
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::160::_init|app/"160/_init.pm">
+
+=back
+
+=cut
+
+use App::160::_init;
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID of a relation
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	my $out=App::160::SQL::remove_relation(
+		'ID' => $env{'ID'}
+	);
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
