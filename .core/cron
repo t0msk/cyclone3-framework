@@ -121,7 +121,6 @@ if (-e $CRON::P."/_config/cron.".$type.".cml" || -e $CRON::P."/_type/cron.".$typ
 	{
 		main::_log("cannot connect MySQL (), exiting",1);
 		main::_log("cannot connect MySQL (), exiting",1,"cron.err");
-		system ("rm $CRON::P/.core/cron.pid");
 		exit(0);
 	}
 	$main::DB{main}=$main::DBH; 
@@ -150,7 +149,6 @@ if (-e $CRON::P."/_config/cron.".$type.".cml" || -e $CRON::P."/_type/cron.".$typ
 else
 {
 	main::_log("event $type not defined, exiting...",1);
-	system ("rm $CRON::P/.core/cron.pid");
 	exit(0);
 }
 
@@ -330,7 +328,11 @@ foreach (sort keys %CRON::hosts)
 	}
 }
 
+main::_log("parent cron iw waitig to all children");
+
 $pm->wait_all_children;
+
+main::_log("end parent cron");
 
 $lock->close();
 
