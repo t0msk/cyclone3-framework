@@ -1,15 +1,11 @@
 <!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
 
-<MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="110" />
-	<VAR id="-name" value="weblog_datamining" />
-</MODULE>
+# a110 - datamining
 
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
-	<VAR id="-name" value="obsolete_datamining" />
+	<VAR id="-name" value="weblog_datamining" />
 </MODULE>
 
 <MODULE>
@@ -17,6 +13,12 @@
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="weblog_datamining" />
 	<VAR id="-version" value="fix" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="obsolete_datamining" />
 </MODULE>
 
 <#MODULE>

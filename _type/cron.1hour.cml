@@ -1,10 +1,12 @@
 <!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
 
+# a110
+
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="weblog_collect" />
-	<VAR id="-version" value="week" />
+	<VAR id="-version" value="hour" />
 </MODULE>
 
 <MODULE>

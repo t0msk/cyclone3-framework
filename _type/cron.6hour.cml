@@ -1,9 +1,13 @@
 <!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
 
+
+# a110
+
 <MODULE>
 	<VAR id="-global" value="1" />
-	<VAR id="-category" value="130" />
-	<VAR id="-name" value="clear" />
+	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_collect" />
+	<VAR id="-version" value="day" />
 </MODULE>
 
 <MODULE>
@@ -12,3 +16,13 @@
 	<VAR id="-name" value="weblog_chart_availability" />
 	<VAR id="-version" value="days" />
 </MODULE>
+
+
+# a130
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="130" />
+	<VAR id="-name" value="clear" />
+</MODULE>
+
