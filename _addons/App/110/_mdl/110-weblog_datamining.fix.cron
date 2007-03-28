@@ -1,8 +1,42 @@
 #!/bin/perl
 # USE UTF-8 !!!
 package CRON::module;
+
+=head1 NAME
+
+110-weblog_datamining.fix.cron
+
+=head1 DESCRIPTION
+
+Postprocessing of every one line writed into TOM.a110_weblog_rqs
+
+Analyses type of useragent, if previous request is known, and refferer type.
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+Time::Local
+
+=item *
+
+L<TOM::Net::HTTP|source-doc/".core/.libs/TOM/Net/HTTP.pm">
+
+=item *
+
+L<TOM::Net::HTTP::UserAgent|source-doc/".core/.libs/TOM/Net/HTTP/UserAgent.pm">
+
+=item *
+
+L<TOM::Net::HTTP::referer|source-doc/".core/.libs/TOM/Net/HTTP/referer.pm">
+
+=back
+
+=cut
+
 use Time::Local;
-#use TOM;
 use TOM::Net::HTTP;
 use TOM::Net::HTTP::UserAgent;
 use TOM::Net::HTTP::referer;
@@ -14,6 +48,8 @@ sub execute
 	my %env=@_;
 	
 	alarm(0);
+	
+	my $time_max=60*20;
 	
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
@@ -30,13 +66,23 @@ sub execute
 			referer,
 			domain,
 			query_URL
-		FROM TOM.a110_weblog_rqs
-		WHERE active='N'
-		ORDER BY reqdatetime ASC
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			active='N'
+		ORDER BY
+			reqdatetime ASC
 		LIMIT 50000
 	");
+	my $time_start=time();
 	while (my %db0_line=$db0->fetchhash())
 	{
+		
+		if ($time_start+$time_max<time())
+		{
+			main::_log("this job is running too long, exiting",1);
+			last;
+		}
 		
 		main::_log("user_agent='$db0_line{user_agent}'");
 		
@@ -45,12 +91,16 @@ sub execute
 		my $reqtype;
 		my %hash;
 		
-		($user_agent,$hash{'user_agent_name'})=TOM::Net::HTTP::UserAgent::analyze($db0_line{user_agent},IP=>$db0_line{IP});
+		($user_agent,$hash{'user_agent_name'})
+			=TOM::Net::HTTP::UserAgent::analyze($db0_line{user_agent},IP=>$db0_line{IP});
 		if ($hash{'user_agent_name'})
 		{
 			$user_agent_name="'".$hash{'user_agent_name'}."'";
-			$hash{'reqtype'}=$TOM::Net::HTTP::UserAgent::type{$TOM::Net::HTTP::UserAgent::table[$user_agent]{'agent_type'}};
-			# neznamy typ browseru
+			$hash{'reqtype'}
+				= $TOM::Net::HTTP::UserAgent::type{
+					$TOM::Net::HTTP::UserAgent::table[$user_agent]{'agent_type'}
+				};
+			# unknown browser
 			if (!$hash{'reqtype'})
 			{
 				$reqtype='NULL';
@@ -100,15 +150,14 @@ sub execute
 					SET
 						page_code_referer='$db1_line{page_code}'
 					WHERE
-							page_code='$db0_line{page_code}'
-							AND reqdatetime='$db0_line{reqdatetime}'
+						page_code='$db0_line{page_code}'
+						AND reqdatetime='$db0_line{reqdatetime}'
 					LIMIT 1
 				";
 				$main::DB{stats}->Query($sql) || die "can't update";
 				
 			}
 		}
-		
 		
 		# referer_SE
 		my $referer_SE="NULL";
