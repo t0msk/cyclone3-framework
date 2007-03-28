@@ -100,7 +100,7 @@ sub execute
 	{
 		main::_log("summary ID='$db0_line{ID}'");
 		my $sql=qq{
-			INSERT INTO
+			REPLACE INTO
 				TOM.a110_sitemap
 				(
 					ID,
