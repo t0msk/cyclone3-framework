@@ -56,9 +56,10 @@ sub new
 	my $class=shift;
 	my $self={};
 	
-	my $t=track TOM::Debug(__PACKAGE__."::new($class)");
-	
 	$self->{'name'}=shift;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::new($self->{'name'})");
+	
 	$self->{'md5'}=Digest::MD5::md5_hex($self->{'name'});
 	
 	main::_log("request for lock named '$self->{name}' to PID '$$' md5 '$self->{'md5'}'");
@@ -126,6 +127,15 @@ sub get_pidfile
 sub close
 {
 	my $self=shift;
+	unlink $self->{'filename'};
+	return 1;
+}
+
+
+sub DESTROY
+{
+	my $self=shift;
+	main::_log("destroying lock named '$self->{name}'");
 	unlink $self->{'filename'};
 	return 1;
 }
