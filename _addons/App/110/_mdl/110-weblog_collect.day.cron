@@ -1,48 +1,48 @@
 #!/bin/perl
 # USE UTF-8 !!!
 package CRON::module;
+
+=head1 NAME
+
+110-weblog_collect.day.cron
+
+=head1 DESCRIPTION
+
+Fills data into table TOM.a110_weblog_day from TOM.a110_weblog_rqs
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+Time::Local
+
+=back
+
+=cut
+
 use Time::Local;
 use strict;
 
-
 sub execute
 {
-	alarm(0);
-	
-	#return 1;
+	alarm(0); # don't stop, just do it
 	my %env=@_;
-	
-	my $null;
-	while((-e "$CRON::P/_logs/weblog/lock.pid")&&($null<300)) # naximalne 5 minut
-	{
-		$null++;
-		my $var=rand(1);
-		main::_log("{$null} lock.pid exists, waiting... $var secs.");
-		Time::HiRes::sleep($var);
-	}
+	my $lock=new TOM::lock("weblog collect day") || return 1;
 	
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
-	if ($cron::P eq $CRON::P)
-	{
-		main::_log("WARN: global use, using database $TOM::DB_name_STAT, ALL DOMAINS!!!");
-		$env{sel}="";
-		$env{tbl}="a110_weblog_rqs";
-	}
-	else
-	{
-		main::_log("WARN: local(master) use, using database $TOM::DB_name_STAT, domain $tom::H_cookie");
-		$env{sel}="domain='$tom::H_cookie'";
-		$env{tbl}="a110_weblog_rqs";
-	}
-	
-	
 	my $time_startat;
 	my $db0=$main::DB{stats}->Query("
-		SELECT reqdatetime
-		FROM TOM.a110_weblog_day
-		WHERE domain_sub=''
-		ORDER BY reqdatetime DESC
+		SELECT
+			reqdatetime
+		FROM
+			TOM.a110_weblog_day
+		WHERE
+			domain_sub=''
+		ORDER BY
+			reqdatetime DESC
 		LIMIT 1");
 	if (my @db0_line=$db0->fetchrow)
 	{
@@ -73,10 +73,14 @@ sub execute
 	
 	my $time_thisday;
 	my $db0=$main::DB{stats}->Query("
-		SELECT reqdatetime
-		FROM TOM.a110_weblog_rqs
-		WHERE active='Y'
-		ORDER BY reqdatetime DESC
+		SELECT
+			reqdatetime
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			active='Y'
+		ORDER BY
+			reqdatetime DESC
 		LIMIT 1");
 	if (my @db0_line=$db0->fetchrow)
 	{
@@ -89,15 +93,15 @@ sub execute
 		$time_thisday="$date{year}-$date{mom}-$date{mday} 00:00:00";
 	}
 	
-	main::_log("last day for data mining \"$time_thisday\"");
+	main::_log("last day for data mining \"$time_thisday\" (last data available)");
 	
 	if ($time_thisday=~/^$time_startat/)
 	{
-		main::_log("cannot create statistics...");
+		main::_log("can't create statistics...",1);
 		return 1;
 	}
 	
-	my $sql="
+	my $sql=qq{
 	SELECT
 			reqdatetime,
 			domain,
@@ -111,11 +115,12 @@ sub execute
 	FROM
 		TOM.a110_weblog_rqs
 	WHERE
-		reqdatetime>'$time_startat' AND
+		reqdatetime>='$time_startat' AND
 		reqdatetime<'$time_thisday' AND
 		reqtype IN ('B','m','w')
 	GROUP BY
-		substring(reqdatetime,1,10),domain,domain_sub";
+		substring(reqdatetime,1,10),domain,domain_sub
+	};
 	
 	my $db0=$main::DB{stats}->Query($sql);
 	while (my @db0_line=$db0->fetchrow)
@@ -125,11 +130,6 @@ sub execute
 		my $all;
 		my $IDhashs_return;
 		my $visits_failed;
-		
-		# count( if(IDhash='',NULL,IDhash) )
-		# COUNT (DISTINCT(if(IDhash='',NULL,IDhash)))
-		
-		#$db0_line[4]=$db0_line[5] if $db0_line[4]>$db0_line[5];
 		
 		my $date=$db0_line[0];$date=~s| \d\d:\d\d:\d\d$||;
 		my $db1=$main::DB{stats}->Query("
@@ -148,7 +148,6 @@ sub execute
 			$tid0000=$db1_line[0];
 		}
 		
-		# idem vyselectovat pocet VSETKYCH requestov
 		my $db1=$main::DB{stats}->Query("
 			SELECT
 				COUNT(*)
@@ -208,60 +207,66 @@ sub execute
 			$visits_failed=$db1_line[0];
 		}
 		
-		main::_log("[$date 00:00:00] domain:$db0_line[1] sub:$db0_line[2] visits:$db0_line[3] users:$db0_line[4] users_return:$IDhashs_return sessions:$db0_line[5] IP:$db0_line[6] load_proc:$db0_line[7] load_req:$db0_line[8] 0000:$tid0000 direct:$direct");
+		main::_log("[$date] domain:$db0_line[1] sub:$db0_line[2] visits:$db0_line[3] users:$db0_line[4] users_return:$IDhashs_return sessions:$db0_line[5] IP:$db0_line[6] load_proc:$db0_line[7] load_req:$db0_line[8] 0000:$tid0000 direct:$direct");
 		
 		$main::DB{stats}->Query("
-		REPLACE INTO $TOM::DB_name_STAT.$env{t}a110_weblog_day
-		(	reqdatetime,
-			domain,
-			domain_sub,
-			visits,
-			visits_all,
-			visits_direct,
-			visits_firstpage,
-			visits_failed,
-			IPs,
-			IDhashs,
-			IDhashs_return,
-			IDsessions,
-			load_proc,
-			load_req)
-		VALUES
-		(	'$date 00:00:00',
-			'$db0_line[1]',
-			'$db0_line[2]',
-			'$db0_line[3]',
-			'$all',
-			'$direct',
-			'$tid0000',
-			'$visits_failed',
-			'$db0_line[6]',
-			'$db0_line[4]',
-			'$IDhashs_return',
-			'$db0_line[5]',
-			'$db0_line[7]',
-			'$db0_line[8]'
-			)
+			REPLACE INTO TOM.a110_weblog_day
+			(
+				reqdatetime,
+				domain,
+				domain_sub,
+				visits,
+				visits_all,
+				visits_direct,
+				visits_firstpage,
+				visits_failed,
+				IPs,
+				IDhashs,
+				IDhashs_return,
+				IDsessions,
+				load_proc,
+				load_req)
+			VALUES
+			(
+				'$date',
+				'$db0_line[1]',
+				'$db0_line[2]',
+				'$db0_line[3]',
+				'$all',
+				'$direct',
+				'$tid0000',
+				'$visits_failed',
+				'$db0_line[6]',
+				'$db0_line[4]',
+				'$IDhashs_return',
+				'$db0_line[5]',
+				'$db0_line[7]',
+				'$db0_line[8]'
+				)
 		") || die "cannot insert!";
 	}
 	
-	my $sql="
-	SELECT
-			reqdatetime,
-			domain,
-			COUNT(*),
-			COUNT(DISTINCT(IDhash)),
-			COUNT(DISTINCT(IDsession)),
-			COUNT(DISTINCT(IP)),
-			AVG(load_proc),
-			AVG(load_req)
-	FROM
-		TOM.a110_weblog_rqs
-	WHERE
-		reqdatetime>'$time_startat' AND
-		reqdatetime<'$time_thisday' AND
-		reqtype IN ('B','m','w')
-	GROUP BY substring(reqdatetime,1,10),domain";
+	
+	
+	
+	my $sql=qq{
+		SELECT
+				reqdatetime,
+				domain,
+				COUNT(*),
+				COUNT(DISTINCT(IDhash)),
+				COUNT(DISTINCT(IDsession)),
+				COUNT(DISTINCT(IP)),
+				AVG(load_proc),
+				AVG(load_req)
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			reqdatetime>='$time_startat' AND
+			reqdatetime<'$time_thisday' AND
+			reqtype IN ('B','m','w')
+		GROUP BY substring(reqdatetime,1,10),domain
+	};
 	
 	my $db0=$main::DB{stats}->Query($sql);
 	while (my @db0_line=$db0->fetchrow)
@@ -350,11 +355,12 @@ sub execute
 			$visits_failed=$db1_line[0];
 		}
 		
-		main::_log("[$date 00:00:00] DOMAIN:$db0_line[1] visits:$db0_line[2] users:$db0_line[3] users_return:$IDhashs_return sessions:$db0_line[4] IP:$db0_line[5] load_proc:$db0_line[6] load_req:$db0_line[7] 0000:$tid0000 direct:$direct");
+		main::_log("[$date] DOMAIN:$db0_line[1] visits:$db0_line[2] users:$db0_line[3] users_return:$IDhashs_return sessions:$db0_line[4] IP:$db0_line[5] load_proc:$db0_line[6] load_req:$db0_line[7] 0000:$tid0000 direct:$direct");
 		
 		$main::DB{stats}->Query("
-		REPLACE INTO $TOM::DB_name_STAT.$env{t}a110_weblog_day
-		(	reqdatetime,
+		REPLACE INTO TOM.a110_weblog_day
+		(
+			reqdatetime,
 			domain,
 			domain_sub,
 			visits,
@@ -369,7 +375,8 @@ sub execute
 			load_proc,
 			load_req)
 		VALUES
-		(	'$date 00:00:00',
+		(
+			'$date',
 			'$db0_line[1]',
 			'',
 			'$db0_line[2]',
@@ -387,7 +394,13 @@ sub execute
 		") || die "cannot insert!";
 	}
 	
-
+	
  return 1}
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia)
+
+=cut
 
 1;
