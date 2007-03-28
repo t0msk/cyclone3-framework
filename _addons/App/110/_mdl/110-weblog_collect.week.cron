@@ -1,34 +1,43 @@
 #!/bin/perl
 # USE UTF-8 !!!
 package CRON::module;
-use Time::Local;
-use strict;
-use DateTime;
 
+=head1 NAME
+
+110-weblog_collect.week.cron
+
+=head1 DESCRIPTION
+
+Fills data into table TOM.a110_weblog_week from TOM.a110_weblog_rqs
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+Time::Local
+
+=item *
+
+DateTime
+
+=back
+
+=cut
+
+
+use Time::Local;
+use DateTime;
+use strict;
 
 sub execute
 {
 	alarm(0);
-	
-	#return 1;
 	my %env=@_;
-	
 	my $lock=new TOM::lock("weblog collect week") || return 1;
 	
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
-	
-	if ($cron::P eq $CRON::P)
-	{
-		main::_log("WARN: global use, using database $TOM::DB_name_STAT, ALL DOMAINS!!!");
-		$env{sel}="";
-		$env{tbl}="a110_weblog_rqs";
-	}
-	else
-	{
-		main::_log("WARN: local(master) use, using database $TOM::DB_name_STAT, domain $tom::H_cookie");
-		$env{sel}="domain='$tom::H_cookie'";
-		$env{tbl}="a110_weblog_rqs";
-	}
 	
 	
 	my $time_startat;
@@ -166,7 +175,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime>'$b_year-$b_month-$b_day' AND
+				reqdatetime>='$b_year-$b_month-$b_day' AND
 				reqdatetime<'$p_year-$p_month-$p_day' AND
 				query_TID IN ('l_default','l_0000','m_default','g_default') AND
 				reqtype IN ('B','m','w') AND
@@ -184,7 +193,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime>'$b_year-$b_month-$b_day' AND
+				reqdatetime>='$b_year-$b_month-$b_day' AND
 				reqdatetime<'$p_year-$p_month-$p_day' AND
 				domain_sub='$db0_line[2]'
 		");
@@ -199,7 +208,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime>'$b_year-$b_month-$b_day' AND
+				reqdatetime>='$b_year-$b_month-$b_day' AND
 				reqdatetime<'$p_year-$p_month-$p_day' AND
 				page_code_referer='' AND
 				reqtype IN ('B','m','w') AND
@@ -216,7 +225,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime>'$b_year-$b_month-$b_day' AND
+				reqdatetime>='$b_year-$b_month-$b_day' AND
 				reqdatetime<'$p_year-$p_month-$p_day' AND
 				USRM_flag IN ('G','R') AND
 				reqtype IN ('B','m','w') AND
@@ -233,7 +242,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime>'$b_year-$b_month-$b_day' AND
+				reqdatetime>='$b_year-$b_month-$b_day' AND
 				reqdatetime<'$p_year-$p_month-$p_day' AND
 				result='failed' AND
 				domain_sub='$db0_line[2]'
@@ -303,7 +312,7 @@ sub execute
 	FROM
 		TOM.a110_weblog_rqs
 	WHERE
-		reqdatetime>'$b_year-$b_month-$b_day' AND
+		reqdatetime>='$b_year-$b_month-$b_day' AND
 		reqdatetime<'$p_year-$p_month-$p_day' AND
 		reqtype IN ('B','m','w')
 	GROUP BY
@@ -325,7 +334,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime>'$b_year-$b_month-$b_day' AND
+				reqdatetime>='$b_year-$b_month-$b_day' AND
 				reqdatetime<'$p_year-$p_month-$p_day' AND
 				query_TID IN ('l_default','l_0000','m_default','g_default') AND
 				reqtype IN ('B','m','w') AND
@@ -343,7 +352,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime>'$b_year-$b_month-$b_day' AND
+				reqdatetime>='$b_year-$b_month-$b_day' AND
 				reqdatetime<'$p_year-$p_month-$p_day' AND
 				domain='$db0_line[1]'
 		");
@@ -358,7 +367,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime>'$b_year-$b_month-$b_day' AND
+				reqdatetime>='$b_year-$b_month-$b_day' AND
 				reqdatetime<'$p_year-$p_month-$p_day' AND
 				page_code_referer='' AND
 				reqtype IN ('B','m','w') AND
@@ -375,7 +384,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime>'$b_year-$b_month-$b_day' AND
+				reqdatetime>='$b_year-$b_month-$b_day' AND
 				reqdatetime<'$p_year-$p_month-$p_day' AND
 				USRM_flag IN ('G','R') AND
 				reqtype IN ('B','m','w') AND
@@ -392,7 +401,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime>'$b_year-$b_month-$b_day' AND
+				reqdatetime>='$b_year-$b_month-$b_day' AND
 				reqdatetime<'$p_year-$p_month-$p_day' AND
 				result='failed' AND
 				domain='$db0_line[1]'
@@ -447,5 +456,11 @@ sub execute
 	$lock->close();
 	
  return 1}
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
 
 1;
