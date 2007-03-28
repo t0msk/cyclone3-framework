@@ -1,4 +1,15 @@
 package TOM::Net::URI::URL;
+
+=head1 NAME
+
+TOM::Net::URI::URL
+
+=head1 DESCRIPTION
+
+
+
+=cut
+
 use open ':utf8', ':std';
 use encoding 'utf8';
 use Encode;
@@ -7,13 +18,29 @@ use bytes;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
+
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<TOM::Net::HTTP::CGI|source-doc/".core/.libs/TOM/Net/HTTP/CGI.pm">
+
+=back
+
+=cut
+
+use TOM::Net::HTTP::CGI;
+
+
 # List of valid characters in QUERY_STRING
 my $URLENCODE_VALID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+.=";
 
 # Prepare list of valid and invalid characters (hex)
 my @urlencode_valid;
-$urlencode_valid[ord $_]=$_ foreach (split('', $URLENCODE_VALID));
-
+	$urlencode_valid[ord $_]=$_ foreach (split('', $URLENCODE_VALID));
 for (0..255)
 {
 	next if $urlencode_valid[$_];
@@ -21,11 +48,32 @@ for (0..255)
 }
 
 
+
+=head1 FUNCTIONS
+
+=head2 url_encode()
+
+Return encoded part of a string
+
+ my $string=TOM::Net::URI::URL::url_encode('string');
+
+=cut
+
 sub url_encode
 {
 	my $toencode = shift;
 	return join('', map { $urlencode_valid[ord $_] } split('', $toencode));
 }
+
+
+
+=head2 url_decode()
+
+Return decoded part of a string
+
+ my $string=TOM::Net::URI::URL::url_decode('string');
+
+=cut
 
 sub url_decode
 {
@@ -34,11 +82,27 @@ sub url_decode
 	return $toencode;
 }
 
+
+
+=head2 url_decode_()
+
+Decode given variable
+
+ TOM::Net::URI::URL::url_decode_($string);
+
+=cut
+
 sub url_decode_ {$_[0]=~s/%([0-9A-Fa-f]{2})/pack("C",hex($1))/eg;}
 
-#
-#	CODING
-#
+
+
+=head2 hash_encode()
+
+From given QUERY_STRING, creates hashed QUERY_STRING in form: ?__${hash}-${code}-v3
+
+ my $query_hashed=TOM::Net::URI::URL::hash_encode('variable=value&variable2=value2');
+
+=cut
 
 sub hash_encode
 {
@@ -82,7 +146,16 @@ sub hash_encode
 	return $link;
 }
 
-# generate GET line from %hash
+
+
+=head2 genGET()
+
+From given %hash generates QUERY_STRING
+
+ my $query_string=TOM::Net::URI::URL::genGET(%hash);
+
+=cut
+
 sub genGET
 {
 	my $t0=track TOM::Debug(__PACKAGE__."::genGET()");
@@ -92,7 +165,6 @@ sub genGET
 	{
 		next unless $form{$_};
 		next if length($form{$_})>1024;
-#		main::_log("'$_'='$form{$_}'");
 		$GET.="$_=".url_encode($form{$_})."&";
 	}
 	$GET=~s|&$||;
@@ -103,12 +175,21 @@ sub genGET
 }
 
 
+
+=head2 exclude()
+
+From given QUERY_STRING deletes list of variables
+
+ my $query_string=TOM::Net::URI::URL::exclude($QUERY_STRING,'variable','variable2');
+
+=cut
+
 sub exclude
 {
 	my $URI=shift;
 	my @vars=@_;
 	
-	my %form=TOM::Net::HTTP::CGI::GetQuery($URI,'-lite'=>1);
+	my %form=TOM::Net::HTTP::CGI::get_QUERY_STRING($URI);
 	foreach (@vars)
 	{
 		delete $form{$_};
@@ -118,7 +199,17 @@ sub exclude
 	return $URI;
 }
 
+=head1 SEE ALSO
 
-#$ENV{'QUERY_STRING'}=~s/%([0-9A-Fa-f]{2})/pack("C",hex($1))/eg; # URL decode
+L<TOM::Net::HTTP::CGI|source-doc/".core/.libs/TOM/Net/HTTP/CGI.pm">
+
+=cut
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
 
 1;
