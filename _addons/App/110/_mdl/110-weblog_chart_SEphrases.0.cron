@@ -5,7 +5,7 @@ use strict;
 
 =head1 NAME
 
-110-weblog_chart_SEprahses.0.cron
+110-weblog_chart_SEphrases.0.cron
 
 =head1 DESCRIPTION
 
@@ -44,8 +44,6 @@ L<TOM::Database::SQL|source-doc/".core/.libs/TOM/Database/SQL.pm">
 =item *
 
 L<Ext::SVGraph::_init|ext/"SVGraph/_init.pm">
-
-=item *
 
 =back
 
