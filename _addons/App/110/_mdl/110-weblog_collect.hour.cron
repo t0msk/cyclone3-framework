@@ -133,7 +133,7 @@ sub execute
 	FROM
 			TOM.a110_weblog_rqs
 	WHERE
-			reqdatetime>'$time_startat' AND
+			reqdatetime>='$time_startat' AND
 			reqdatetime<'$time_endat' AND
 			reqtype IN ('B','m','w')
 	GROUP BY
@@ -286,7 +286,7 @@ sub execute
 	FROM
 		TOM.a110_weblog_rqs
 	WHERE
-		reqdatetime>'$time_startat' AND
+		reqdatetime>='$time_startat' AND
 		reqdatetime<'$time_endat' AND
 		reqtype IN ('B','m','w')
 	GROUP BY
