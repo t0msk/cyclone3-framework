@@ -18,7 +18,7 @@
 		<VAR id="week" value="1" />
 </MODULE>
 
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="weblog_chart_pagesfailed" />
@@ -33,7 +33,7 @@
 		<VAR id="week" value="1" />
 </MODULE>
 
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
 	<VAR id="-name" value="weblog_chart_availability" />
