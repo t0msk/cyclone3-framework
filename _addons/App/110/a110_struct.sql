@@ -101,7 +101,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_rqs` (
   `page_code` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   `page_code_referer` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   `HTTP_unique_ID` varchar(24) character set ascii collate ascii_bin NOT NULL default '',
-  `reqtime` int(10) unsigned NOT NULL default '0',
+  `reqtime` int(10) unsigned NOT NULL default '0', -- will be removed in future
   `reqdatetime` varchar(50) character set ascii NOT NULL default '',
   `reqtype` char(1) character set ascii collate ascii_bin default NULL,
   `host` varchar(50) character set ascii NOT NULL default '',
@@ -144,11 +144,12 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_rqs` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
+-- version=5.0
 
 CREATE TABLE `/*db_name*/`.`/*app*/_weblog_hour` (
-  `reqdatetime` /*reqdatetime*/,
-  `domain` /*domain*/,
-  `domain_sub` /*domain_sub*/,
+  `reqdatetime` datetime NOT NULL,
+  `domain` varchar(32) character set ascii NOT NULL,
+  `domain_sub` varchar(64) character set ascii NOT NULL,
   `visits` int(10) unsigned NOT NULL default '0',
   `visits_all` int(10) unsigned NOT NULL default '0',
   `visits_direct` int(10) unsigned NOT NULL default '0',
@@ -162,14 +163,15 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_hour` (
   `load_req` float unsigned NOT NULL default '0',
   PRIMARY KEY  (`reqdatetime`,`domain`,`domain_sub`),
   KEY `reqdatetime` (`reqdatetime`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
+-- version=5.0
 
 CREATE TABLE `/*db_name*/`.`/*app*/_weblog_day` (
-  `reqdatetime` /*reqdatetime*/,
-  `domain` /*domain*/,
-  `domain_sub` /*domain_sub*/,
+  `reqdatetime` date NOT NULL,
+  `domain` varchar(32) character set ascii NOT NULL,
+  `domain_sub` varchar(64) character set ascii NOT NULL,
   `visits` int(10) unsigned NOT NULL default '0',
   `visits_all` int(10) unsigned NOT NULL default '0',
   `visits_direct` int(10) unsigned NOT NULL default '0',
@@ -183,7 +185,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_day` (
   `load_req` float unsigned NOT NULL default '0',
   PRIMARY KEY  (`reqdatetime`,`domain`,`domain_sub`),
   KEY `reqdatetime` (`reqdatetime`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
