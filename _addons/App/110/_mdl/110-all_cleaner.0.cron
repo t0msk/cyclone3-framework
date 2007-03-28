@@ -78,7 +78,7 @@ sub execute
 	main::_log("cleaning TOM.a110_obsolete_log");
 	$main::DB{stats}->Query("
 		DELETE FROM TOM.a110_obsolete_log
-		WHERE time_created<".($main::time_current-(86400*14))
+		WHERE time_created<".($main::time_current-(86400*7))
 	);
 	
 	foreach my $domain(keys %TOM::a110_domain)
