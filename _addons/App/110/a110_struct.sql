@@ -102,7 +102,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_rqs` (
   `page_code_referer` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   `HTTP_unique_ID` varchar(24) character set ascii collate ascii_bin NOT NULL default '',
   `reqtime` int(10) unsigned NOT NULL default '0', -- will be removed in future
-  `reqdatetime` varchar(50) character set ascii NOT NULL default '',
+  `reqdatetime` datetime NOT NULL,
   `reqtype` char(1) character set ascii collate ascii_bin default NULL,
   `host` varchar(50) character set ascii NOT NULL default '',
   `domain` varchar(100) character set ascii NOT NULL default '',

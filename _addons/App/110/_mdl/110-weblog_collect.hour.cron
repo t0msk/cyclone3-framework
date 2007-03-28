@@ -16,6 +16,10 @@ Fills data into table TOM.a110_weblog_hour from TOM.a110_weblog_rqs
 
 =item *
 
+L<App::110::_init|app/"110/_init.pm">
+
+=item *
+
 Time::Local
 
 =back
@@ -23,6 +27,7 @@ Time::Local
 =cut
 
 use Time::Local;
+use App::110::_init;
 use strict;
 
 sub execute
@@ -35,65 +40,43 @@ sub execute
 	
 	my $max_hours=12;
 	
+	
+	
+	# finding last collected hour
+	
 	my $time_startat;
 	my $time_from;
-	my $db0=$main::DB{stats}->Query("
-		SELECT
-			reqdatetime
-		FROM
-			TOM.a110_weblog_hour
-		WHERE
-			domain_sub=''
-		ORDER BY
-			reqdatetime DESC
-		LIMIT 1");
-	if (my @db0_line=$db0->fetchrow)
+	my %last_collected_hour=App::110::SQL::get_last_collected_hour();
+	if ($last_collected_hour{'reqdatetime'})
 	{
-		$time_startat=$db0_line[0];
+		$time_startat=$last_collected_hour{'reqdatetime'};
 		main::_log("last data collected from hour \"$time_startat\"");
 	}
 	else
 	{
 		$time_startat="1970-01-01 00";
-		main::_log("none last data collected from hour");
+		main::_log("none data collected in TOM.a110_weblog_hour",1);
 	}
 	
-	if (!$time_startat)
-	{
-		# TODO find first request
-		return 1;
-	}
-	else
-	{
-		# add one hour
-		my ($year,$month,$day,$hour)=($time_startat=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d)/);
-		$time_from=Time::Local::timelocal(undef,1,$hour,$day,$month-1,$year-1900,undef,undef,undef)+3600;
-		my %date=Utils::datetime::ctodatetime($time_from,format=>1);
-		$time_startat="$date{year}-$date{mom}-$date{mday} $date{hour}";
-	}
+	# add one hour
+	my ($year,$month,$day,$hour)=($time_startat=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d)/);
+	$time_from=Time::Local::timelocal(undef,1,$hour,$day,$month-1,$year-1900,undef,undef,undef)+3600;
+	my %date=Utils::datetime::ctodatetime($time_from,format=>1);
+	$time_startat="$date{year}-$date{mom}-$date{mday} $date{hour}";
 	
 	main::_log("data collecting starting in hour \"$time_startat\"='$time_from'");
 	
+	
+	
+	# finding last active request in TOM.a110_weblog_rqs
+	
 	my $time_endat;
 	my $time_to;
-	
-	my $sql=qq{
-		SELECT
-			reqtime
-		FROM
-			TOM.a110_weblog_rqs
-		WHERE
-			active='Y'
-		ORDER BY
-			reqdatetime DESC
-		LIMIT 1;
-	};
-	main::_log("finding last active request in TOM.a110_weblog_rqs");
-	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>"stats");
-	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	my %last_request=App::110::SQL::get_last_active_request();
+	if ($last_request{'reqtime'})
 	{
-		$time_to=$db0_line{'reqtime'}-3600;
-		main::_log("last active row TOM.a110_weblog_rqs hast time ='$time_to'");
+		$time_to=$last_request{'reqtime'}-3600;
+		main::_log("last active row TOM.a110_weblog_rqs has time ='$time_to'");
 	}
 	else
 	{
@@ -101,7 +84,44 @@ sub execute
 		return 1;
 	}
 	
-	# don't analyze more than 24x hour at once run
+	
+	
+	# finding first active request in TOM.a110_weblog_rqs starting last collected hour
+	
+	main::_log("finding first active request in TOM.a110_weblog_rqs starting last collected hour");
+	my $sql=qq{
+		SELECT
+			reqdatetime,
+			reqtime
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			reqdatetime>='$time_startat' AND
+			reqtime<'$time_to' AND
+			active='Y'
+		ORDER BY
+			reqdatetime ASC
+		LIMIT 1;
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>"stats",'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$time_startat=$db0_line{'reqdatetime'};
+		my ($year,$month,$day,$hour)=($time_startat=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d)/);
+		$time_from=Time::Local::timelocal(undef,1,$hour,$day,$month-1,$year-1900,undef,undef,undef);
+		my %date=Utils::datetime::ctodatetime($time_from,format=>1);
+		$time_startat="$date{year}-$date{mom}-$date{mday} $date{hour}";
+		main::_log("first active row TOM.a110_weblog_rqs hast time ='$time_startat'='$db0_line{'reqtime'}'");
+	}
+	else
+	{
+		main::_log("none available rows in TOM.a110_weblog_rqs - can't collect data",1);
+		return 1;
+	}
+	
+	
+	
+	# don't analyze more than 12x hour at once
 	if ($time_to>$time_from+(3600*$max_hours))
 	{
 		$time_to=$time_from+(3600*$max_hours);
@@ -111,14 +131,18 @@ sub execute
 	my %date=Utils::datetime::ctodatetime($time_to,format=>1);
 	$time_endat="$date{year}-$date{mom}-$date{mday} $date{hour}:00:00";
 	
-	main::_log("last datetime for data mining \"$time_endat\"='$time_to'");
+	main::_log("last datetime available for data mining \"$time_endat\"='$time_to'");
 	
 	if ($time_endat=~/^$time_startat/)
 	{
-		main::_log("cannot create statistics...");
+		main::_log("cannot create statistics...",1);
 		return 1;
 	}
 	
+	
+	# START COLLECTING DATA
+	
+	main::_log("collecting from='$time_startat' to='$time_endat'");
 	my $sql="
 	SELECT
 			reqdatetime,
