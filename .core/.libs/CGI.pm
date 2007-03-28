@@ -524,7 +524,7 @@ sub init {
     $self->charset('ISO-8859-1');
 
   METHOD: {
-
+		main::_log("method=$ENV{'CONTENT_TYPE'}");
       # avoid unreasonably large postings
       if (($POST_MAX > 0) && ($content_length > $POST_MAX)) {
 	#discard the post, unread
@@ -534,9 +534,10 @@ sub init {
 
       # Process multipart postings, but only if the initializer is
       # not defined.
-      if ($meth eq 'POST'
-	  && defined($ENV{'CONTENT_TYPE'})
-	  && $ENV{'CONTENT_TYPE'}=~m|^multipart/form-data|
+      if (
+			$meth eq 'POST'
+	  	&& defined($ENV{'CONTENT_TYPE'})
+	  && ( $ENV{'CONTENT_TYPE'}=~m/^multipart\/form-data/ )
 	  && !defined($initializer)
 	  ) {
 	  my($boundary) = $ENV{'CONTENT_TYPE'} =~ /boundary=\"?([^\";,]+)\"?/;
@@ -642,8 +643,8 @@ sub init {
 	  if ($MOD_PERL) {
 	    $query_string = $self->r->args;
 	  } else {
-	      $query_string = $ENV{'QUERY_STRING'} if defined $ENV{'QUERY_STRING'};
-	      $query_string ||= $ENV{'REDIRECT_QUERY_STRING'} if defined $ENV{'REDIRECT_QUERY_STRING'};
+	      #$query_string = $ENV{'QUERY_STRING'} if defined $ENV{'QUERY_STRING'};
+	      #$query_string ||= $ENV{'REDIRECT_QUERY_STRING'} if defined $ENV{'REDIRECT_QUERY_STRING'};
 	  }
 	  last METHOD;
       }
@@ -689,7 +690,7 @@ sub init {
     # different things for keyword lists and parameter lists.
     if (defined $query_string && length $query_string) {
 	if ($query_string =~ /[&=;]/) {
-	    #$self->parse_params($query_string);
+	    $self->parse_params($query_string);
 	} else {
 	    #$self->add_parameter('keywords');
 	    #$self->{'keywords'} = [$self->parse_keywordlist($query_string)];
