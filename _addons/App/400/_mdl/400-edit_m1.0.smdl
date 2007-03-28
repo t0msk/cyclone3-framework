@@ -14,17 +14,17 @@ our $authors="nemsak\@webcom.sk";
 sub execute
 {
 	my %env=@_;
-
+	
 	$env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
 	$env{db_400}=$TOM::DB{main}{name} unless $env{db_400};
-
+	
 	$env{db_500}=Tomahawk::Getmdlvar("500","db") unless $env{db_500};
 	$env{db_500}=$TOM::DB{main}{name} unless $env{db_500};
-
+	
 	$env{lng} = "sk" unless $env{lng};
-
+	
 	my $tmpOutput="";
-
+	
 	my @formVariables=(
 		'ID',
 		'IDname',
@@ -39,9 +39,9 @@ sub execute
 		'IDauthor',
 		'IDcategory'
 	);
-
+	
 	my %article_data;
-
+	
 	foreach my $fV(@formVariables)
 	{
 		if(exists($main::FORM{$fV}))
@@ -52,10 +52,10 @@ sub execute
 			#$tmpOutput.="<".$fV."><![CDATA[".."]]></".$fV.">\n";
 		}
 	}
-
+	
 	if(!$article_data{'IDeditor'}){
 		main::_log("hladam editora");
-
+		
 		my $db0=$main::DB{main}->Query("
 			SELECT
 				ID
@@ -69,22 +69,22 @@ sub execute
 			$article_data{IDeditor}=$db0_line{ID};
 		}
 	}
-
+	
 	$article_data{lng}=$env{lng} unless $article_data{lng};
-
+	
 	#tu by sa mozno zislo zriesit clearing tagov a mrdnika z niektorych fieldov, ale myslim ze to je skor obskurita
-
+	
 	if (length ($article_data{IDname})==0)
 	{
 		$article_data{IDname}=$article_data{title};
 	}
-
+	
 	$article_data{'IDname'}=TOM::Net::URI::rewrite::convert($article_data{'IDname'},'notlower'=>1);
-
+	
 	my $xrelated;
-
+	
 	my @images;
-
+	
 	#parse out images
 	$article_data{full_decoded}=$article_data{full};
 	while ($article_data{full_decoded}=~s|<img (.*?)>|<IMG-TEMP>|i)
@@ -94,31 +94,31 @@ sub execute
 		$var=~s|/$||;
 		
 		$var=$var." ";
-
+		
 		my %image;
-
+		
 		$var=~s|src="(.*?)"||i;
 		$image{fullpath}=$1;
-
+		
 		$image{hash}=$image{fullpath};
 		
 		$image{hash}=~s|.*\/(.*?)-(.*?).jpg||i;
 		$image{hash}=$1;
-
-		$image{format}=$2;
-
+		
+		$image{'format'}=$2;
+		
 		$var=~s|alt="(.*?)"||i;
 		$image{alt}=$1;
-
+		
 		$var=~s|title="(.*?)"||i;
 		$image{title}=$1;
-
+		
 		#cleanup unenclosed parameters
 		$var=~s|=(.*?) |="\1" |gi;
 		$var=~s|""|"|gi;
-
+		
 		$image{others}=$var;
-
+		
 		my $nullid;
 		if ($image{hash}=~s|/d||)
 		{
@@ -147,7 +147,7 @@ sub execute
 				main::_log($db1->errstr());
 			}
 		}
-
+		
 		1 while ($image{others}=~s|[\s\n]{2,}| |gi);
 		
 		$xrelated.="<VAR id=\"a500\" value=\"$image{ID}\" />\n";
@@ -156,15 +156,15 @@ sub execute
 		$image{alt}="alt=\"".$image{alt}."\" " if($image{alt});
 		$image{title}="title=\"".$image{title}."\" " if($image{title});
 		$image{format}="format=\"".$image{format}."\" " if($image{format});
-
+		
 		$article_data{full_decoded}=~s|<IMG-TEMP>|<my_a500 $image{ID}$image{format}$image{alt}$image{title}$image{others} />|i;
 	}
-
+	
 	while ($article_data{xrelated}=~s|<VAR id="(.*?)" value="(.*?)" />||i)
 	{
 		$xrelated.="<VAR id=\"$1\" value=\"$2\" />";
 	}
-
+	
 	if($article_data{ID})
 	{
 		$article_data{IDattrs}=$article_data{ID};
@@ -195,7 +195,7 @@ sub execute
 			if(!$db1->NumRows())
 			{
 				main::_log("no '".$article_data{ID}."' language mutation for ID: ".$article_data{ID}." and lng: '".$article_data{ID}."' (creating new record)");
-
+				
 				main::_log("
 					INSERT INTO
 						$env{db_400}.a400
@@ -211,7 +211,7 @@ sub execute
 						lng='$article_data{lng}'
 				"))
 				{
-
+					
 				}
 			}
 		}
@@ -219,9 +219,9 @@ sub execute
 	else
 	{
 		main::_log("we are creating a new article");
-
+		
 		getnewid:
-
+		
 		if(my $db1=$main::DB{main}->Query("
 				(
 					SELECT
@@ -248,7 +248,7 @@ sub execute
 				$article_data{ID}=1;
 			}
 			main::_log("proposed new article id: ".$article_data{ID});
-
+			
 			if(my $db2=$main::DB{main}->Query("
 				INSERT INTO
 					$env{db_400}.a400
@@ -258,7 +258,7 @@ sub execute
 			"))
 			{
 				main::_log("final new article id: ".$article_data{ID});
-
+				
 				main::_log("
 					INSERT INTO
 						$env{db_400}.a400_attrs
@@ -285,26 +285,26 @@ sub execute
 			}
 		}
 	}
-
+	
 	foreach (keys %article_data)
 	{
 		$article_data{$_}=~s|\'|\\'|g;
 	}
-
+	
 	$article_data{changetime}=$main::time_current;
-
+	
 	my $sqlAddon = "";
-
+	
 	if(exists($article_data{starttime})){ $sqlAddon.=",starttime='".$article_data{starttime}."'"; }
 	if(exists($article_data{endtime})){ $sqlAddon.=",endtime='".$article_data{endtime}."'"; }
 	if($article_data{IDauthor}){ $sqlAddon.=",IDauthor='".$article_data{IDauthor}."'"; }
 	if($article_data{IDeditor}){ $sqlAddon.=",IDeditor='".$article_data{IDeditor}."'"; }
 	if($article_data{IDcategory}){ $sqlAddon.=",IDcategory='".$article_data{IDcategory}."'"; }
-
-	$article_data{full_decoded}=~s|>[\r\n\s]*?<|> <|g;
-	$article_data{full_decoded}=~s|>[\r\n]*?(\S)|> \1|g;
-	$article_data{full_decoded}=~s|(\S)[\r\n\s]*?<|\1 <|g;
-
+	
+	$article_data{full_decoded}=~s|>[\r\n\s]*?<|><|g;
+	$article_data{full_decoded}=~s|>[\r\n]*?(\S)|>\1|g;
+	$article_data{full_decoded}=~s|(\S)[\r\n\s]*?<|\1<|g;
+	
 	my $db4=$main::DB{main}->Query("
 		UPDATE
 			$env{db_400}.a400
@@ -324,26 +324,7 @@ sub execute
 			ID='$article_data{ID}'
 			AND lng='$article_data{lng}'
 	");
-
-=head1
-	foreach (keys %article_data)
-	{
-			subtitle='$article_data{subtitle}',
-			full='$article_data{full_decoded}',
-			xrelated='$article_data{xrelated}',
-			changetime='$article_data{changetime}'
-		WHERE
-			ID='$article_data{ID}'
-			AND lng='$article_data{lng}'
-	");
-
-=head1
-	foreach (keys %article_data)
-	{
-		main::_log("var: ".$_." value: ".$article_data{$_});
-	}
-=cut
-
+	
 	#transforming keys - tom does not allow passing hashes as variables :(
 	foreach (keys %article_data)
 	{
@@ -354,14 +335,7 @@ sub execute
 			next;
 		}
 	}
-
-=head1
-	foreach (keys %article_data)
-	{
-		main::_log("var: ".$_." value: ".$article_data{$_});
-	}
-=cut
-
+	
 	Tomahawk::module(
 		-type => "mdl",
 		-category => "400",
@@ -372,805 +346,8 @@ sub execute
 		'-xsgn_global' => $env{'xsgn_global'},
 		%article_data
 	);
-
+	
 	return 1;
-
-=head1
-	$env{include} = "" unless $env{include};
-
-	while ( (my $key, my $val) = each %main::FORM )
-	{
-		main::_log("$key: $val");
-		if ( $key eq "multipart" )
-		{
-			foreach my $row ( split '\n', $val )
-			{
-				next unless $row =~ /^head:Content-Disposition: form-data;/;
-				$row =~ /name="(.*?)"/;
-				my $fvar = $1; my $ftyp; if ( $fvar =~ s/^f(t|r|s|ch)_// ) { $ftyp = $1; }
-				main::_log("MULTIPART: $fvar ($ftyp)");
-			}
-		}
-	}
-
-	# spracovanie premennych
-	# rozdelenie
-	$env{include} = "article;category;forum;file;" if $env{object} =~ /^def:(client|service|project)/;
-	$env{include} = "article;forum;file;" if $env{object} =~ /^data:other/;
-	$env{include} = "article;" if $env{object} =~ /^data:(hrm|org)/;
-
-	my %pass;
-
-	# nacitam article
-	#if ( $env{include} =~ /article;/ && $env{art_ID} && !$env{sent} )
-	# tu si je treba uvedomit, ze ja nacitavam informacie aj ked uz bol formular
-	# poslany - co mi umozni vidiet presne zmeny, ale zaroven musim osetrit,
-	# aby ked napriklad nieco zrusim, aby to tam neostalo.
-	if ( $env{include} =~ /article;/ && $env{art_ID} )
-	{
-
-		my $db_art = $main::DB{main}->Query("
-			SELECT a400.*, a400_attrs.*
-			FROM
-				$env{db_400}.a400
-				left join
-				$env{db_400}.a400_attrs
-				on
-				a400.IDattrs=a400_attrs.IDattrs
-			WHERE
-				ID='$env{art_ID}'
-		");
-
-		main::_log("
-			SELECT a400.*, a400_attrs.*
-			FROM
-				$env{db_400}.a400
-				left join
-				$env{db_400}.a400_attrs
-				on
-				a400.IDattrs=a400_attrs.IDattrs
-			WHERE
-				ID='$env{art_ID}'
-		");
-		my %db_art_line = $db_art->fetchhash;
-		while ( (my $key, my $val) = each %db_art_line ) { $pass{"_a400_$key"} = $val; }
-
-		my $db_hrm = $main::DB{main}->Query("
-			SELECT IDhrm
-			FROM $env{db_400}.a400_hrm
-			WHERE
-				IDentity='$env{art_ID}'
-		");
-		main::_log("
-			SELECT IDhrm
-			FROM $env{db_400}.a400_hrm
-			WHERE
-				IDentity='$env{art_ID}'
-		");
-		while ( my %db_hrm_line = $db_hrm->fetchhash ) { $pass{"_a400hrm_".$db_hrm_line{IDhrm}} = 1; }
-
-		my $db_org = $main::DB{main}->Query("
-			SELECT IDorg
-			FROM $env{db_400}.a400_org
-			WHERE
-				IDentity='$env{art_ID}'
-		");
-		while ( my %db_org_line = $db_org->fetchhash ) { $pass{"_a400org_".$db_org_line{IDorg}} = 1; }
-
-		while ( (my $key, my $val) = each %pass )
-		{
-			next unless $key =~ /^_a400/;
-			if ( $key =~ /^_a400(org|hrm)_(.*)/ )
-			{
-				$pass{"_form_${1}_${2}_selected"} = "selected";
-			}
-			else
-			{
-				$key =~ s|^_\w+_||;
-				$pass{"_form_$key"} = $val;
-				if ( $key eq "priority" )
-				{
-					$val =~ /(.)(.)/;
-					$pass{"_form_status_${1}_checked"} = "checked";
-					$pass{"_form_severity_${2}_checked"} = "checked";
-					$pass{"_form_status_${1}_selected"} = "selected";
-					$pass{"_form_severity_${2}_selected"} = "selected";
-				}
-
-				if ( $key eq "xdata" )
-				{
-					my %tmp_hash = ($val =~ /id="(.*?)" value="(.*?)"/g);
-					while ( (my $k,my $v) = each %tmp_hash )
-					{
-						$pass{"_form_xdata_$k"} = $v;
-					}
-				}
-
-				if
-				(
-					$key eq "subtitle" &&
-					$val =~ /DATA:/
-				)
-				{
-					main::_log("_form_subtitle_${val}_selected");
-					$pass{"_form_subtitle_${val}_selected"} = "selected";
-				}
-
-				if ( $key =~ /(\w+time)/ && $val )
-				{
-					my %mdate = Utils::datetime::ctodatetime($val, format=>1);
-					$pass{"_form_${key}_sk"} = "$mdate{hour}:$mdate{min} / $mdate{mday}. $mdate{mom}. $mdate{year}";
-					$pass{"_form_${key}_us"} = "$mdate{year}-$mdate{mom}-$mdate{mday} $mdate{hour}:$mdate{min}:00";
-				}
-			}
-		}
-	}
-
-	if ( $env{object} =~ /^data:(hrm|org)/ )
-	{
-		my $db_parent = $main::DB{main}->Query("
-			SELECT
-				ID as IDcategory
-			FROM
-				a400_category
-			WHERE
-				ID like '$env{parent}%' AND
-				name='_\U$1'
-		");
-
-		main::_log("
-			SELECT
-				ID as IDcategory
-			FROM
-				a400_category
-			WHERE
-				ID like '$env{parent}%' AND
-				name='_\U$1'
-		");
-
-
-		my %db_parent_line = $db_parent->fetchhash;
-
-		$env{parent} = $db_parent_line{IDcategory};
-		$pass{_form_IDcategory} = $env{parent};
-	}
-
-	if ( $env{include} =~ /article;/ && $env{art_ID} && $env{sent})
-	{
-		my $db_forum = $main::DB{main}->Query("
-			SELECT ID, xrelated
-			FROM $env{db_400}.a400
-			WHERE
-				ID='$env{art_ID}' AND xrelated like '\%id=\"a820\"\%'
-		");
-		if ( my %db_forum_line = $db_forum->fetchhash )
-		{
-			$db_forum_line{xrelated} =~ /id="a820" value="(.*?)"/;
-			$env{forum_ID} = $1;
-		}
-	}
-
-	# osetrujem hrm a org
-	if ( $env{sent} && $env{art_ID} )
-	{
-		foreach ( keys %pass )
-		{
-			delete $pass{$_} if $_ =~ /^_a400(hrm|org)_/;
-		}
-	}
-
-	# osetrujem parent
-	if ( $env{sent} && $env{object} =~ /^data:.*/ && $main::FORM{parent} )
-	{
-		$pass{"_a400_IDcategory"} = $main::FORM{parent};
-	}
-
-	while ( (my $key, my $val) = each %main::FORM )
-	{
-		my $fulltmpkey = $key;
-		next unless $key =~ s/^f(t|r|s|ch)_//;
-		my $type = $1;
-
-		$pass{"_last_a400_$key"} = $pass{"_a400_$key"} if $pass{"_a400_$key"};
-		$pass{"_a400_$key"} = $val;
-
-		$pass{"_form_$key"} = $val;
-		$pass{"_form_${key}_checked"} = "checked" if $type eq "ch";
-		$pass{"_form_${key}_${val}_checked"} = "checked" if $type eq "r";
-		$pass{"_form_${key}_${val}_selected"} = "selected" if $type eq "s" && ref($val) ne "ARRAY";
-
-		main::_log("REF $fulltmpkey ".ref($val));
-
-		if ( $type eq "s" && ref($val) eq "ARRAY" )
-		{
-			foreach my $subval (@{$val})
-			{
-				$pass{"_form_${key}_${subval}_selected"} = "selected";
-				if ( $key =~ /^(org|hrm)/ )
-				{
-					$pass{"_a400${1}_$subval"} = 1;
-				}
-			}
-		}
-
-		if ($key =~ /(org|hrm)/)
-		{
-			$pass{"_a400${1}_$val"} = 1;
-		}
-
-		if ($key eq "title")
-		{
-			$pass{"_a400category_name"} = $val;
-			$pass{"_a820_name"} = $val;
-		}
-
-		if ( $key =~ /^xdata_(.*)/ && $val )
-		{
-			my $null_xdata_k = $1;
-			$pass{"_a400_xdata"} .= "<VAR id=\"$null_xdata_k\" value=\"$val\" />\n"
-			unless
-			$pass{"_a400_xdata"} =~ s|id=\"($null_xdata_k)\" value=\".*?\"|id=\"$1\" value=\"$val\"|
-			;
-		}
-
-		if ( $key =~ /^(status|severity)/ )
-		{
-			$pass{"_last_a400_priority"} = $pass{"_a400_priority"} if $pass{"_a400_priority"};
-			$pass{"_a400_priority"} = "0" x 17 unless length( $pass{"_a400_priority"} );
-			$pass{"_a400_priority"} =~ s|.|$val| if $key =~ /^status/;
-			$pass{"_a400_priority"} =~ s|(.).|${1}$val| if $key =~ /^severity/;
-		}
-
-		if ( $key eq "active" )
-		{
-			$pass{"_a400category_active"} = $val;
-			$pass{"_a820_active"} = $val;
-		}
-
-		if ( $key eq "lng" )
-		{
-			$pass{"_a400category_lng"} = $val;
-			$pass{"_a820_lng"} = $val;
-		}
-
-		if ( $key =~ /\w+time/ || $key eq "deadline" )
-		{
-			if ( $val =~ /[-\.]/ )
-			{
-				my $timestamp = $main::DB{main}->Query("select unix_timestamp('$val') as tims");
-				main::_log("select unix_timestamp('$val') as tims");
-				my %tims_line = $timestamp->fetchhash;
-				$pass{"_a400_$key"} = $tims_line{tims};
-			}
-		}
-
-	}
-
-
-	# co tam nie je, to tam pridam
-
-	# now - aktualny cas - zvacsa iba pre testovacie ucely
-	my %now = Utils::datetime::ctodatetime($main::time_current, format=>1);
-	$pass{"_form_now"} = $main::time_current;
-	$pass{"_form_now_sk"} = "$now{hour}:$now{min} / $now{mday}. $now{mom}. $now{year}";
-
-	# createtime
-	main::_log("NEXT CREATETIME $pass{_form_createtime} && $pass{_a400_createtime}");
-	if ( !$pass{"_form_createtime"} || !$pass{"_a400_createtime"} || !$pass{"_form_createtime_sk"} )
-	{
-		$pass{"_form_createtime"} = $pass{"_a400_createtime"} unless $pass{"_form_createtime"};
-		$pass{"_form_createtime"} = $main::time_current unless $pass{"_form_createtime"};
-		my %mdate = Utils::datetime::ctodatetime($pass{"_form_createtime"}, format=>1);
-		$pass{"_form_createtime_sk"} = "$mdate{hour}:$mdate{min} / $mdate{mday}. $mdate{mom}. $mdate{year}";
-		$pass{"_form_createtime_us"} = "$mdate{year}-$mdate{mom}-$mdate{mday} $mdate{hour}:$mdate{min}:00";
-	}
-
-	# starttime
-	main::_log("STARTTIME ".$pass{"_a400_starttime"});
-	if ( $pass{"_a400_starttime"} )
-	{
-		$pass{"_form_starttime"} = $pass{"_a400_starttime"};
-		my %mdate = Utils::datetime::ctodatetime($pass{"_form_starttime"}, format=>1);
-		$pass{"_form_starttime_sk"} = "$mdate{hour}:$mdate{min} / $mdate{mday}. $mdate{mom}. $mdate{year}";
-		$pass{"_form_starttime_us"} = "$mdate{year}-$mdate{mom}-$mdate{mday} $mdate{hour}:$mdate{min}:00";
-	}
-
-	# endtime
-	main::_log("endtime ".$pass{"_a400_endtime"});
-	if ( $pass{"_a400_endtime"} )
-	{
-		$pass{"_form_endtime"} = $pass{"_a400_endtime"};
-		my %mdate = Utils::datetime::ctodatetime($pass{"_form_endtime"}, format=>1);
-		$pass{"_form_endtime_sk"} = "$mdate{hour}:$mdate{min} / $mdate{mday}. $mdate{mom}. $mdate{year}";
-		$pass{"_form_endtime_us"} = "$mdate{year}-$mdate{mom}-$mdate{mday} $mdate{hour}:$mdate{min}:00";
-	}
-
-	# deadline
-	main::_log("deadline ".$pass{"_a400_deadline"});
-	if ( $pass{"_a400_deadline"} )
-	{
-		$pass{"_form_deadline"} = $pass{"_a400_deadline"};
-		my %mdate = Utils::datetime::ctodatetime($pass{"_form_deadline"}, format=>1);
-		$pass{"_form_deadline_sk"} = "$mdate{hour}:$mdate{min} / $mdate{mday}. $mdate{mom}. $mdate{year}";
-		$pass{"_form_deadline_us"} = "$mdate{year}-$mdate{mom}-$mdate{mday} $mdate{hour}:$mdate{min}:00";
-	}
-
-	# users
-	my $db0_where;
-	if ( $env{art_ID} )
-	{
-		$db0_where .= "a.IDa400='$pass{_a400_IDeditor}'" if $pass{_a400_IDeditor};
-		$db0_where .= " OR " if $db0_where && $pass{_a400_IDauthor};
-		$db0_where .= "a.IDa400='$pass{_a400_IDauthor}'" if $pass{_a400_IDauthor};
-	}
-	else
-	{
-		$db0_where = "a.IDa300='$main::USRM{IDhash}'";
-	}
-
-	if ( $db0_where )
-	{
-		my $db0 = $main::DB{main}->Query("
-			select
-				b.ID,
-				b.title as fullname
-			from
-				$env{db_400}.a400_a300 as a left join
-				$env{db_400}.a400 as b on a.IDa400=b.ID
-			where
-				$db0_where
-		");
-
-		main::_log("
-			select
-				b.ID,
-				b.title as fullname
-			from
-				$env{db_400}.a400_a300 as a left join
-				$env{db_400}.a400 as b on a.IDa400=b.ID
-			where
-				$db0_where
-		");
-
-		while ( my %db0_line = $db0->fetchhash )
-		{
-			if
-			(
-				!$env{art_ID} ||
-				( $env{art_ID} && $db0_line{ID} == $pass{_a400_IDauthor} )
-			)
-			{
-				$pass{"_a400_IDauthor"} = $db0_line{ID};
-				$pass{"_form_author_ID"} = $db0_line{ID};
-				$pass{"_form_author_fullname"} = $db0_line{fullname};
-			}
-			else
-			{
-				$pass{"_form_editor_ID"} = $db0_line{ID};
-				$pass{"_form_editor_fullname"} = $db0_line{fullname};
-			}
-		}
-	}
-
-	# nastavim defaultne status a severity
-	$pass{"_form_status_1_checked"} = "checked" unless $pass{"_form_status_1_checked"};
-	$pass{"_form_severity_3_checked"} = "checked" unless $pass{"_form_severity_3_checked"};
-	$pass{"_form_status_1_selected"} = "selected" unless $pass{"_form_status_1_selected"};
-	$pass{"_form_severity_3_selected"} = "selected" unless $pass{"_form_severity_3_selected"};
-
-	if ($env{object} =~ /^data:other/)
-	{
-		$pass{"_a400_IDcategory"} = $env{parent} unless $pass{"_a400_IDcategory"};
-		$pass{"_form_IDcategory"} = $env{parent} unless $pass{"_form_IDcategory"};
-	}
-
-	# NASTAVENIA práv a udalostí ( napríklad statusov, časov apod. )
-	my %rights;
-	$rights{'org'} = 1; # proces
-	$rights{'hrm'} = 1; # ludia
-	$rights{'editor'} = 1; # zodpovedny clovek
-
-	# prava overuje
-	# najprv si zistim, kto som - ID mojho clanku
-	my $db_whoiam = $main::DB{main}->Query("
-		SELECT
-			a400.ID
-		FROM
-			a400_a300 LEFT JOIN a400
-			ON a400_a300.IDa400=a400.ID
-		WHERE
-			a400_a300.IDa300='$main::USRM{IDhash}'
-	");
-	if ( my %db_whoiam_line = $db_whoiam->fetchhash )
-	{
-		$main::USRM{IDa400} = $db_whoiam_line{ID};
-	}
-
-	if ( $env{object} =~ /^(def|data):/ && not $env{object} =~ /^data:(hrm|org)/ )
-	{
-
-		# proces sa ani nebude nikdy priradzovat, nakolko klient nema mat proces,
-		# iba cloveka
-		# ale u projektu moze byt aj proces
-		$rights{'org'} = 0;
-		$rights{'hrm'} = 0; # Ludi moze priradzovat iba vlastnik
-		$rights{'editor'} = 0; # Vlastnika autor
-
-		# ak som autorom - mozem priradit zodpovedneho cloveka
-		if ( $main::USRM{IDa400} == $pass{_a400_IDauthor} )
-		{
-			if ( !$env{sent} ) { $rights{'editor'} = 1; }
-		}
-
-		# ak som editorom - mozem priradit ludi
-		if
-		(
-			# ak sa prvy krat zada editor
-			( $main::USRM{IDa400} == $pass{_a400_IDeditor} && !$pass{_last_a400_IDeditor} )
-			||
-			# alebo uz je, ale nezmenil sa
-			( $main::USRM{IDa400} == $pass{_a400_IDeditor} && $pass{_last_a400_IDeditor} == $pass{_a400_IDeditor} )
-			# je to kvoli tomu, ze ked som nadelegoval ludi a zmenil som editora
-			# ludia sa vymazali
-		)
-		{
-			$rights{'hrm'} = 1;
-		}
-
-		$rights{'org'} = 1 if $env{object} =~ /^(def:project|data:other)/;
-
-		if
-		(
-			$pass{"_last_a400_priority"} =~ /^1/ &&
-			$pass{"_a400_priority"} =~ /^2/
-		)
-		{
-			$pass{"_a400_starttime"} = $pass{"_form_now"};
-		}
-
-	}
-
-
-	# nastavim si globalne premenne
-	$Tomahawk::smdl_env{article_ID} = "";
-	$Tomahawk::smdl_env{category_ID} = "";
-	$Tomahawk::smdl_env{forum_ID} = "";
-
-	if ( $env{include} =~ /category;/ )
-	{
-		Tomahawk::module(
-			-type => "mdl",
-			-category => "400",
-			-name => "catedit",
-			-TMP => $env{cat_TMP},
-			-xsgn => $env{cat_xsgn},
-
-			sent => $env{sent},
-			action => $env{cat_action},
-			ID => $env{cat_ID},
-			parent => $env{parent},
-
-			%pass
-		);
-	}
-
-	if ( $env{include} =~ /article;/ )
-	{
-		$pass{_a400_IDcategory} = $Tomahawk::smdl_env{category_ID} if $Tomahawk::smdl_env{category_ID};
-
-		Tomahawk::module(
-			-type => "mdl",
-			-category => "400",
-			-name => "artedit",
-			-TMP => $env{art_TMP},
-			-xsgn => $env{art_xsgn},
-
-			sent => $env{sent},
-			action => $env{art_action},
-			ID => $env{art_ID},
-
-			%pass
-		);
-	}
-
-	if
-	(
-		$env{include} =~ /file;/ &&
-		( $Tomahawk::smdl_env{article_ID} || $env{art_ID} )
-	)
-	{
-		my $art_ID;
-		$art_ID = $env{art_ID} unless $art_ID;
-		$art_ID = $Tomahawk::smdl_env{article_ID} unless $art_ID;
-
-		Tomahawk::module(
-			-type => "mdl",
-			-category => "540",
-			-name => "attachment_upload",
-			-TMP				=>	$env{file_TMP},
-
-			db_ID_a400 => $art_ID,
-		) if $env{file_TMP};
-
-			# modul zmazania suboru
-			Tomahawk::module(
-				-type => "mdl",
-				-category => "540",
-				-name => "delete",
-
-				hash => $env{file_del}
-			) if $env{file_del};
-
-			# listing priloh
-			#$env{attachment_TMP} = $env{fview_TMP} unless $env{attachment_TMP};
-			Tomahawk::module(
-				-type			=>	"mdl",
-				-category			=>	"540",
-				-name			=>	"attachment_list",
-				-global			=>	0,
-				-TMP				=>	$env{file_TMP},
-				-xsgn				=>	$env{file_xsgn},
-
-				db_ID_a400 => $art_ID
-			) if $env{file_TMP} && $env{file_xsgn} && !$env{sent};
-	}
-
-	if ( $env{include} =~ /forum;/ )
-	{
-
-		Tomahawk::module(
-			-type => "mdl",
-			-category => "820",
-			-name => "forumedit",
-			-TMP => $env{forum_TMP},
-			-xsgn => $env{forum_xsgn},
-
-			sent => $env{sent},
-			action => $env{forum_action},
-			ID => $env{forum_ID},
-			_a400_ID => $Tomahawk::smdl_env{article_ID},
-			_a820_type => "F",
-
-			%pass
-		);
-	}
-
-
-	# zobrazenie hrm
-	if (
-		$env{object} =~ /^(def|data):/
-		&&
-		not $env{object} =~ /data:(hrm|org)/
-	)
-	{
-		my $tmp_sent = $env{sent};
-		$tmp_sent = "" unless $pass{_a400_title};
-
-		# hrm
-		$env{xsgn_hrm} = "hrm" unless $env{xsgn_hrm};
-		Tomahawk::module(
-			-type => "mdl",
-			-category => "400",
-			-name => "hrm_org",
-			-TMP => "HRM",
-			-xsgn => $env{xsgn_hrm},
-
-			object => "hrm",
-			sent => $tmp_sent,
-			process => 1,
-			IDentity => $Tomahawk::smdl_env{article_ID},
-			IDentity_from => "322",
-			#db_IDentity_only => $env{db_IDentity_only},
-
-			%pass
-		) if $rights{'hrm'};
-
-		# org
-		$env{xsgn_org} = "org" unless $env{xsgn_org};
-		Tomahawk::module(
-			-type => "mdl",
-			-category => "400",
-			-name => "hrm_org",
-			-TMP => "ORG",
-			-xsgn => $env{xsgn_org},
-
-			object => "org",
-			sent => $tmp_sent,
-			process => 1,
-			IDentity => $Tomahawk::smdl_env{article_ID},
-			IDentity_from => "322",
-
-			%pass
-		) if $rights{'org'};
-
-		$env{xsgn_editor} = "editor" unless $env{xsgn_editor};
-		Tomahawk::module(
-			-type => "mdl",
-			-category => "400",
-			-name => "hrm_org",
-			-TMP => "EDITOR",
-			-xsgn => $env{xsgn_editor},
-
-			object => "hrm",
-			sent => $tmp_sent,
-			process => 0,
-			IDentity_from => "322",
-			#db_IDentity_only => $env{db_IDentity_only},
-			"_a400hrm_$pass{_a400_IDeditor}" => 1,
-		) if $rights{'editor'};
-
-
-		if ( $env{object} eq "def:client" )
-		{
-			# logo ku klientom
-			$main::FORM{ff_img_o} = "" unless $Tomahawk::smdl_env{article_ID};
-			Tomahawk::module(
-				-type => "mdl",
-				-category => "500",
-				-name => "edit",
-				-TMP => "IMG",
-				-xsgn => "client",
-
-					_a500_about => $pass{_a400_title},
-					parse_main_form => 1,
-					ID => $main::FORM{image_ID},
-					art_ID => $Tomahawk::smdl_env{article_ID},
-					complement => "f=o;s=o;t=o",
-			) unless $env{sent} && !$main::FORM{ff_img_o};
-		}
-	}
-
-	if
-	(
-		$env{object} =~ /^(def:service|def:project|data:other)/ &&
-		( !$pass{_a400_title} || !$env{sent} )
-	)
-	{
-		Tomahawk::module(
-			-type => "mdl",
-			-category => "400",
-			-name => "sitemap",
-			-version => "2",
-			-TMP => "IDCAT",
-			-xsgn => "idcategory",
-
-			db_where => "ID like '01_%' and name not in ('_HRM','_ORG')",
-			db_where_only => "1",
-			db_select_IDcategory => $env{parent},
-		);
-	}
-
-
-	# dalsie
-	if ( $env{object} eq "def:client" && !$env{art_ID} && $env{sent} )
-	{
-		my $tmp_parent = $Tomahawk::smdl_env{category_ID};
-
-		# hrm
-		Tomahawk::module(
-			-type => "mdl",
-			-category => "400",
-			-name => "catedit",
-			-TMP => $env{cat_TMP},
-			-xsgn => $env{cat_xsgn},
-
-			sent => $env{sent},
-			parent => $tmp_parent,
-
-			_a400category_name => "_HRM",
-			_a400category_lng => "sk",
-			_a400category_active => "Y",
-		);
-
-		# org
-		Tomahawk::module(
-			-type => "mdl",
-			-category => "400",
-			-name => "catedit",
-			-TMP => $env{cat_TMP},
-			-xsgn => $env{cat_xsgn},
-
-			sent => $env{sent},
-			parent => $tmp_parent,
-
-			_a400category_name => "_ORG",
-			_a400category_lng => "sk",
-			_a400category_active => "Y",
-		);
-	}
-
-	if ( $env{object} =~ /^data:(hrm|org)/ )
-	{
-		my $typ = $1;
-
-		if ( $typ eq "hrm" )
-		{
-			# fotka k ludom
-			$main::FORM{ff_img_o} = "" unless $Tomahawk::smdl_env{article_ID};
-			Tomahawk::module(
-				-type => "mdl",
-				-category => "500",
-				-name => "edit",
-				-TMP => "IMG",
-				-xsgn => "hrm",
-
-					_a500_about => $pass{_a400_title},
-					parse_main_form => 1,
-					ID => $main::FORM{image_ID},
-					art_ID => $Tomahawk::smdl_env{article_ID},
-					complement => "f=o;s=o;t=o",
-			) unless $env{sent} && !$main::FORM{ff_img_o};
-		}
-
-		if ( $typ eq "org" )
-		{
-			# hrm
-			Tomahawk::module(
-				-type => "mdl",
-				-category => "400",
-				-name => "mlist_virtual_m1",
-				-TMP => "PROCESSES",
-				-xsgn => "org",
-
-					db_select => "a400.ID,a400.IDcategory,a400.title",
-					db_IDcategory => $env{parent},
-
-					db_active => 1,
-					db_category_active => 1,
-
-					db_limit => 1000,
-					db_order_by => "title ASC",
-
-					IDcategory_url_allow => 1,
-					datetime_allow => 1,
-			) if !$env{sent};
-
-			my $db_client = $main::DB{main}->Query("
-				SELECT
-					ID
-				FROM
-					a400
-				WHERE
-					IDcategory=substring('$env{parent}',1,4) AND
-					subtitle='DEF:CLIENT'
-			");
-			my %db_client_line = $db_client->fetchhash;
-
-			# hrm
-			Tomahawk::module(
-				-type => "mdl",
-				-category => "400",
-				-name => "hrm_org",
-				-TMP => "HRM",
-				-xsgn => "hrm",
-
-				object => "hrm",
-				sent => $env{sent},
-				process => 1,
-				IDentity => $Tomahawk::smdl_env{article_ID},
-				IDentity_from => $db_client_line{ID},
-				%pass
-			);
-#=head1
-			$env{xsgn_editor} = "editor" unless $env{xsgn_editor};
-			Tomahawk::module(
-				-type => "mdl",
-				-category => "400",
-				-name => "hrm_org",
-				-TMP => "EDITOR",
-				-xsgn => $env{xsgn_editor},
-
-				object => "hrm",
-				sent => $env{sent},
-				process => 0,
-				IDentity_from => "322",
-				db_IDentity_only => $env{db_IDentity_only},
-				"_a400hrm_$pass{_a400_IDeditor}" => 1,
-			) if $rights{'editor'};
-#=cut
-		}
-
-	}
-=cut
+	
 }
 1;
