@@ -153,9 +153,10 @@ sub compare_create_table
 			if ($fields1h{$field} ne $fields0h{$field})
 			{
 				main::_log("not equals");
-				if ($fields1h{$field}=~/character set/ && not $fields0h{$field}=~/character set/)
+				if ($fields1h{$field}=~/character set/ && (not $fields0h{$field}=~/character set/)
+					&& $fields0h{$field}=~/(char|text)/)
 				{
-					main::_log("MySQL 4.0 -> 4.1, cancel (not defined collation in struct SQL file)");
+					main::_log("MySQL '4.0' -> '>=4.1', cancel (not defined collation in struct SQL file)");
 				}
 				else
 				{
