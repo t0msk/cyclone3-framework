@@ -2,6 +2,48 @@
 # áéíóú - USE UTF-8 !!!
 package CRON::module;
 
+=head1 NAME
+
+110-weblog_chart_camefrom_domain.0.cron
+
+=head1 DESCRIPTION
+
+Generates SVG graph named "New visitors came from TOP-20 domains (in last 7 days)" into file camefrom_domain.svg
+
+=cut
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<Ext::SVGraph::_init|ext/"SVGraph/_init.pm">
+
+=item *
+
+L<Utils::datetime|source-doc/".core/.libs/Utils/datetime.pm">
+
+=item *
+
+L<TOM::Net::HTTP|source-doc/".core/.libs/TOM/Net/HTTP.pm">
+
+=item *
+
+L<TOM::Net::HTTP::referer|source-doc/".core/.libs/TOM/Net/HTTP/referer">
+
+=item *
+
+L<TOM::Database::SQL|source-doc/".core/.libs/TOM/Database/SQL">
+
+=item *
+
+DateTime
+
+=back
+
+=cut
+
 use Ext::SVGraph::_init;
 use Utils::datetime;
 use DateTime;
@@ -14,184 +56,114 @@ sub execute
 {
 	my %env=@_;
 	
-	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
-	
 	if ($cron::P eq $CRON::P){$cron::ERR="WARN: this cron is only for local use!!!";return undef}
 	$env{domain}=$tom::H unless exists $env{domain};
-
-		my $graf=SVGraph::2D::columns->new(
-			title		=>	"New visitors came from TOP-20 domains (in last 7 days)",
-		#	type		=>	"normal",	# normal/stacked(spojene)/percentage
-		#	type		=>	"stacked",	# normal/stacked(spojene)
-			type		=>	"stacked",	# normal/stacked(spojene)	
-			x		=>	600,
-			y		=>	250,
+	
+	my $graf=SVGraph::2D::columns->new(
+		'title' => "New visitors came from TOP-20 domains (in last 7 days)",
+		'type' => "stacked",
+		'x' => 600,
+		'y' => 250,
+		'show_legend' => 1,
+		'show_points' => 1,
+		'show_areas' => 1,
+		'show_areas_opacity' => 1,
+		'grid_y_scale_minimum' => 000.00,
+		'show_grid_x' => 1,
+		'show_legend_label' => 1,
+	);
+	
+	my %columns;
+	
+	$columns{'SE'}=$graf->addColumn(title=>"SearchEngine");
+	$columns{'domain'}=$graf->addColumn(title=>"Another domain");
+	$columns{'direct'}=$graf->addColumn(title=>"Direct");
+	
+	my $days=7;
+	my $from=$main::time_current-(86400*($days+1));
+	my %date=Utils::datetime::ctodatetime($from,format=>1);
+	$from="$date{year}-$date{mom}-$date{mday}";
+	
+	my %domains;
+	my $sql=qq{
+		SELECT
+			DATE(reqdatetime) as date,
+			referer,
+			page_code_referer
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			domain='$tom::Hm' AND
+			domain_sub='$env{domain}' AND
+			reqtype IN ('B','m','w') AND
+			USRM_flag IN ('G') AND
+			page_code_referer='' AND
+			reqdatetime>='$from' AND
+			active='Y'
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>"stats");
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my ($domain,$query)=TOM::Net::HTTP::domain_clear($db0_line{referer});
+		next if $domain=~/^$tom::H/;
 		
-			show_legend		=>	1, # show legend of Columns
-			show_points		=>	1,
-		#	show_points_middle	=>	1,
-		#	show_lines			=>	1,
-		#	show_lines_smooth	=>	1,
-			show_areas		=>	1,
-			show_areas_opacity	=>	1,
-		#	show_lines_smooth_range	=>	1,
-#			show_data			=>	1,
-#			show_data_background=>	1,
-		
-			grid_y_scale_minimum		=>	000.00, # zaciname od nuly
-		#	grid_y_scale_maximum		=>	15.00, #
-		#	grid_y_main_spacing			=>	0.10,
-		
-			show_grid_x		=>	1,
-			show_legend_label=>1,
-		);
-		
-		my %columns;
-		
-		$columns{'SE'}=$graf->addColumn(title=>"SearchEngine");
-		$columns{'domain'}=$graf->addColumn(title=>"Another domain");
-		$columns{'direct'}=$graf->addColumn(title=>"Direct");
-		#$columns{'domain'}=$graf->addColumn(title=>"Another domain");
-		#$columns{'direct'}=$graf->addColumn(title=>"Direct");
-		
-		my $days=7;
-#		for my $day(0..$days)
-#		{
-#			my $from=$main::time_current-(86400*($days+1))+(86400*$day);
-#			my %date=Utils::datetime::ctodatetime($from,format=>1);
-#			my $label="$date{year}-$date{mom}-$date{mday}";
-#			$graf->addRowLabel($label);
-#		}
-		
-		my $from=$main::time_current-(86400*($days+1));
-		my %date=Utils::datetime::ctodatetime($from,format=>1);
-		$from="$date{year}-$date{mom}-$date{mday}";
-		
-		
-		my %domains;
-		my $db0=$main::DB{stats}->Query("
-			SELECT
-				substring(reqdatetime,1,10) AS date,
-				referer,
-				page_code_referer
-			FROM
-				TOM.a110_weblog_rqs
-			WHERE
-				domain='$tom::Hm' AND
-				domain_sub='$env{domain}' AND
-				reqtype IN ('B','m','w') AND
-				USRM_flag IN ('G') AND
-				page_code_referer='' AND
-				reqdatetime>'$from' AND
-				active='Y'
-		");
-		while (my %db0_line=$db0->fetchhash)
+		if (!$db0_line{'page_code_referer'} && !$db0_line{referer})
 		{
-			my ($domain,$query)=TOM::Net::HTTP::domain_clear($db0_line{referer});
-			
-			#print "$domain/$tom::H\n";
-			
-			next if $domain=~/^$tom::H/;
-			
-			#print "$domain/$tom::H_www";
-			
-		#	if (!$db0_line{referer})
-			if (!$db0_line{'page_code_referer'} && !$db0_line{referer})
-			{
-				$domains{'(Direct)'}++;
-				next;
-			}
-			
-			# pokial clovek browsi po stranke a nema refereri (spatne useragnety, alebo falosne boty)
-			if (!$db0_line{referer})
-			{
-				next;
-			}
-			
-#			if (my $dom=TOM::Net::HTTP::referer::analyze($domain))
-#			{
-				$domains{$domain}++;
-#			}
-			
-			
+			$domains{'(Direct)'}++;
+			next;
 		}
 		
-		my $i;
-		foreach (sort {$domains{$b} <=> $domains{$a}} keys %domains)
+		# bot?
+		if (!$db0_line{referer})
 		{
-			$i++;
-			last if $i==21;
-			
-			#print "$_ $domains{$_}\n";
-			
-			$graf->addRowLabel($_);
-			
-			if ($_ eq "(Direct)")
+			next;
+		}
+		
+		$domains{$domain}++;
+	}
+	
+	my $i;
+	foreach (sort {$domains{$b} <=> $domains{$a}} keys %domains)
+	{
+		$i++;
+		last if $i==21;
+		
+		$graf->addRowLabel($_);
+		
+		if ($_ eq "(Direct)")
+		{
+			$columns{'direct'}->addData($_,$domains{$_});
+			next;
+		}
+		
+		if (my $dom=TOM::Net::HTTP::referer::analyze($_))
+		{
+			main::_log("i know domain $dom");
+			if ($TOM::Net::HTTP::referer::table{$dom}{domain_type} eq "search engine")
 			{
-				$columns{'direct'}->addData($_,$domains{$_});
+				main::_log("add search engine");
+				$columns{'SE'}->addData($_,$domains{$_});
 				next;
 			}
-			
-			if (my $dom=TOM::Net::HTTP::referer::analyze($_))
-			{
-				print "-i know domain $dom\n";
-				if ($TOM::Net::HTTP::referer::table{$dom}{domain_type} eq "search engine")
-				{
-					print "add search engine\n";
-					$columns{'SE'}->addData($_,$domains{$_});
-					next;
-				}
-			}
-			
-			$columns{'domain'}->addData($_,$domains{$_});
-			
 		}
 		
-#		return 1;
+		$columns{'domain'}->addData($_,$domains{$_});
 		
-		eval
-		{
-			alarm(15);
-			$env{day_file}="camefrom_domain.svg" unless $env{day_file};
-			
-			print ">$cron::P/_data/".$env{day_file}."!\n";
-		
-			open HND,">$cron::P/_data/".$env{day_file} or die "$!";
-			my $out=$graf->prepare();
-			$out=~s|[\s]+</text>|</text>|g;
-			print HND $out; 
-			alarm(0);
-		};
-		if ($@)
-		{
-			die "error! $@\n";
-		}
- 
- return 1}
+	}
+	
+	$env{day_file}="camefrom_domain.svg" unless $env{day_file};
+	open HND,">$cron::P/_data/".$env{day_file} or die "$!";
+	my $out=$graf->prepare();
+	$out=~s|[\s]+</text>|</text>|g;
+	print HND $out;
+	
+	return 1;
+}
 
+=head1 AUTHORS
 
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
 
 1;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
