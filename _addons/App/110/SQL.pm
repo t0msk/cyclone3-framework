@@ -59,7 +59,8 @@ sub get_last_active_request()
 		SELECT
 			page_code,
 			reqtime,
-			reqdatetime
+			reqdatetime,
+			DATE(reqdatetime) as reqdate
 		FROM
 			TOM.a110_weblog_rqs
 		WHERE
