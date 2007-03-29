@@ -1562,6 +1562,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			my $link_old=$main::ENV{REQUEST_URI};
 			my $rewrite_old=$main::ENV{REQUEST_URI};$rewrite_old=~s|^(.*)\?.*?$|$1|;
+				$rewrite_old=~s|^$tom::rewrite_RewriteBase||;
 			
 			# pokus o vytvorenie rewrite linky
 			main::_log("cleaning FORM variables");
