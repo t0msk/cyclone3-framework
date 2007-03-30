@@ -96,8 +96,9 @@ eval
 };
 if ($@)
 {
-	TOM::Error::engine($@);
-	die "$@";
+	my $error_msg=$@;
+	TOM::Error::engine($error_msg);
+	die "$error_msg";
 }
 
 1;

@@ -17,19 +17,22 @@ use CVML;
 
 sub engine
 {
-	$main::result="failed";
-	if ($TOM::engine eq "pub")
+	eval
 	{
-		engine_pub(@_);
-	}
-	elsif ($TOM::engine=~/^cron/)
-	{
-		engine_cron(@_);
-	}
-	else
-	{
-		engine_lite(@_);
-	}
+		$main::result="failed";
+		if ($TOM::engine eq "pub")
+		{
+			engine_pub(@_);
+		}
+		elsif ($TOM::engine=~/^cron/)
+		{
+			engine_cron(@_);
+		}
+		else
+		{
+			engine_lite(@_);
+		}
+	};
 }
 
 
