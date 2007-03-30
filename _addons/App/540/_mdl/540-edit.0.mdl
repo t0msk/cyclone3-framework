@@ -38,19 +38,9 @@ sub execute
 		}
 	}else{
 		my $file = $env{file};
-		# Obsah suboru
-		$arg{handle}=$main::FORM{$file};
-		# Ak to nieje file tak dalsi
-		if (!$arg{handle})
-		{
-			main::_log("Upload Failed! file: $arg{name}",1);
-			$XSGN{TMP} = $XSGN{'TMP_no_data'};
-			return undef;
-		}
-		# (HACK) File Name
-		$main::FORM{multipart} =~ /name="$file"; filename="(.*?)"/;
-		$arg{name} = $1;
+		
 		$arg{name}=$env{name} if defined($env{name});
+		$arg{file}=$file;
 		# Pridanie do DB
 		$id = App::540::file::new( %arg );
 		if ($id<0)

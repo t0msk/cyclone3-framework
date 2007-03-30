@@ -75,7 +75,8 @@ sub del
 sub new
 {
 	my %args = @_;
-
+# Use Modern version if file id is passed
+	return new2(%args) if ( exists $args{file});
 # Check required arguments
 	if (not exists $args{handle})
 	{
@@ -173,6 +174,109 @@ sub new
 	main::_log("App::540::file::new : File saved as: $filename",0);
 	return $id;
 }
+
+sub new2
+{
+	my %args = @_;
+
+# Check required arguments
+	if (not exists $args{file})
+	{
+		main::_log("App::540::file::new : Treba predať 'file' na súbor, ktorý sa má uložiť",1);
+		return -1;
+	}
+	if (not exists $args{name})
+	{
+		$args{name}=$args{file};
+	}
+	if (not exists $args{ID_dir})
+	{
+		$args{ID_dir} = "";
+		main::_log("App::540::file::new : WARNING: Ziadne 'ID_dir', subor bude umistneny do root-u",0);
+	}
+# Name Fix
+	main::_log("App::540::file::new : original name ".$args{name},0);
+	$args{name} = basename($args{name});
+	fileparse_set_fstype("MSWin32"); # MicroSoft Stupidity Fix
+	$args{name} = basename($args{name});
+	main::_log("App::540::file::new : base name ".$args{name},0);
+
+# CGI
+	main::_log("App::540::file::new : file ".$args{file},0);
+	my $cgi_file = $main::CGI->param($args{file});
+	my $fileinfo=CGI::uploadInfo($cgi_file);
+	main::_log("App::540::file::new : fileinfo ".$fileinfo,0);
+	my $tmpfilename = $main::CGI->tmpFileName($cgi_file);
+	main::_log("App::540::file::new : TMP ".$tmpfilename,0);
+	delete $args{file};
+
+# Generate hash
+	$args{hash}=Utils::vars::genhash(16) if not exists $args{hash};
+	while ( scalar(get(hash=>$args{hash})) == 1 )
+	{
+		$args{hash}=Utils::vars::genhash(16)
+	}
+	$args{table}="a540";
+
+# Time
+	$args{'time'} = $main::time_current if not exists $args{'time'};
+
+# Default user
+	$args{owner} = $main::USRM{IDhash} if not exists $args{owner};
+
+# Get Filesize
+	$args{size} = (stat($tmpfilename))[7];
+
+# In mime was not specified ... guess.
+	if ($args{mime} eq "auto" )
+	{
+		my $type = File::Type->new();
+		$args{mime} = $type->checktype_filename( $tmpfilename );
+	}
+
+# Check ID_dir for existence
+	if ($args{ID_dir} ne "")
+	{
+		if (scalar(App::540::dir::get(ID_dir=>$args{ID_dir})) == 0 )
+		{
+			main::_log("App::540::file::new : Adresár s daným 'ID_dir' (".$args{ID_dir}.") neexistuje");
+			return -1;
+		}
+	}
+
+# SQL Insert
+	my $id = App::540::sql_insert( %args );
+
+# Failed
+	if ($id < 0)
+	{
+		main::_log("App::540::file::new : SQL insert failed",1);
+		return -2;
+	}
+	main::_log("App::540::file::new : File inserted ID: $id",0);
+
+# Prepare filename
+	my $zero_id = sprintf ('%07d', $id);
+	$zero_id=~/^(....)/i;
+	my $dir = "../!media/540/$1";
+# Make directory
+	mkdir("../!media/540");
+	mkdir($dir);
+	my $filename = "$dir/$args{hash}";
+
+# Save file
+	use File::Copy;
+	if (!copy($tmpfilename,$filename))
+	{
+		main::_log("App::540::file::new : Cannot copy $tmpfilename to $filename!",1);
+		del($id);
+		return -3;
+	}
+	chmod(0770,$filename);
+	main::_log("App::540::file::new : File $tmpfilename saved as $filename",0);
+	return $id;
+}
+
 
 sub dup
 {
