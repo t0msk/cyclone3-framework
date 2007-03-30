@@ -115,7 +115,9 @@ Replaces variables in given string. Variables are represented by this syntax: <$
 
  TOM::Utils::vars::replace($string)
 
-Can execute functions which is represented in this library by syntax: <@function></@function>
+Can execute functions which is represented in this library by syntax:
+
+ <@function></@function>
 
 List of available functions is in %replace_functions hash;
 
@@ -149,7 +151,7 @@ sub replace
 			my $var=$1;
 			my $null="***";
 			
-			main::_log("replacing variable '$var'");
+			main::_log("replacing variable '\$$var'");
 			
 			if ($var=~/(sub\{|do\{|&|\+|\*|\/|=|"|\||;)/)
 			{
@@ -164,14 +166,14 @@ sub replace
 			
 			if ('<$'.$var.'>' eq $value)
 			{
-				main::_log("neverending");
+				main::_log("neverending",1);
 				$value=~s|^<||;
 				$value=~s|>$||;
 			}
 			
 			if ($@)
 			{
-				main::_log("error:$@");
+				main::_log("error:$@",1);
 			}
 			
 			$_=~s|<!TMP-$TMP!>|$value|;
@@ -190,7 +192,7 @@ sub replace
 			
 			eval $cmd;
 			
-			main::_log("error '$@'") if $@;
+			main::_log("error '$@'",1) if $@;
 			
 			$_=~s|<!TMP-$TMP!>|$text|;
 			
@@ -229,7 +231,7 @@ sub replace_sec
 		my $var=$1;
 		my $null="***";
 		
-		main::_log("replacing variable '$var'");
+		main::_log("replacing variable '\$$var'");
 		
 		if ($var=~/(sub\{|do\{|&|\+|\*|\/|=|"|\||;)/)
 		{
