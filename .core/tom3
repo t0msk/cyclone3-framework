@@ -1279,7 +1279,10 @@ while ($main::CGI=new CGI::Fast())
 			}
 		}
 		
-		TOM::Utils::vars::replace($file_data);
+		$file_data=TOM::Utils::vars::replace_sec(
+			$file_data,
+			'notallow'=>['<MODULE','<VAR id']
+		);
 		
 		#
 		# CONF TypeID
