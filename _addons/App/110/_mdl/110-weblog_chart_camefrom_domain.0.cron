@@ -98,7 +98,7 @@ sub execute
 			reqtype IN ('B','m','w') AND
 			USRM_flag IN ('G') AND
 			page_code_referer='' AND
-			reqdatetime>='$from' AND
+			DATE(reqdatetime)>='$from' AND
 			active='Y'
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>"stats");
