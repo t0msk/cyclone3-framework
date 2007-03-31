@@ -139,8 +139,8 @@ sub execute
 	}
 	
 	
-	my $sql="
-	SELECT
+	my $sql=qq{
+		SELECT
 			reqdatetime,
 			domain,
 			domain_sub,
@@ -150,23 +150,27 @@ sub execute
 			COUNT(DISTINCT(IP)),
 			AVG(load_proc),
 			AVG(load_req)
-	FROM
-		TOM.a110_weblog_rqs
-	WHERE
-		reqdatetime>'$b_year-$b_month-$b_day' AND
-		reqdatetime<'$p_year-$p_month-$p_day' AND
-		reqtype IN ('B','m','w')
-	GROUP BY
-		domain,domain_sub";
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			reqdatetime>'$b_year-$b_month-$b_day' AND
+			reqdatetime<'$p_year-$p_month-$p_day' AND
+			reqtype IN ('B','m','w')
+		GROUP BY
+			domain,domain_sub
+	};
 		
-	my $db0=$main::DB{stats}->Query($sql);
-	while (my @db0_line=$db0->fetchrow)
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>"stats");
+	my $i;
+	my $i_=$sth0{'rows'};
+	while (my @db0_line=$sth0{'sth'}->fetchrow)
 	{
 		my $tid0000;
 		my $direct;
 		my $all;
 		my $IDhashs_return;
 		my $visits_failed;
+		$i++;
 		
 		my $date=$db0_line[0];$date=~s| \d\d:\d\d:\d\d$||;
 		my $db1=$main::DB{stats}->Query("
@@ -252,7 +256,7 @@ sub execute
 			$visits_failed=$db1_line[0];
 		}
 		
-		main::_log("[$year/$week] domain:$db0_line[1] sub:$db0_line[2] visits:$db0_line[3] users:$db0_line[4] users_return:$IDhashs_return sessions:$db0_line[5] IP:$db0_line[6] load_proc:$db0_line[7] load_req:$db0_line[8] 0000:$tid0000 direct:$direct");
+		main::_log("[$year/$week][$i/$i_] domain:$db0_line[1] sub:$db0_line[2] visits:$db0_line[3] users:$db0_line[4] users_return:$IDhashs_return sessions:$db0_line[5] IP:$db0_line[6] load_proc:$db0_line[7] load_req:$db0_line[8] 0000:$tid0000 direct:$direct");
 		
 		$main::DB{stats}->Query("
 			REPLACE INTO
@@ -298,8 +302,8 @@ sub execute
 	
 	
 	
-	my $sql="
-	SELECT
+	my $sql=qq{
+		SELECT
 			reqdatetime,
 			domain,
 			domain_sub,
@@ -309,23 +313,27 @@ sub execute
 			COUNT(DISTINCT(IP)),
 			AVG(load_proc),
 			AVG(load_req)
-	FROM
-		TOM.a110_weblog_rqs
-	WHERE
-		reqdatetime>='$b_year-$b_month-$b_day' AND
-		reqdatetime<'$p_year-$p_month-$p_day' AND
-		reqtype IN ('B','m','w')
-	GROUP BY
-		domain";
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			reqdatetime>='$b_year-$b_month-$b_day' AND
+			reqdatetime<'$p_year-$p_month-$p_day' AND
+			reqtype IN ('B','m','w')
+		GROUP BY
+			domain
+	};
 		
-	my $db0=$main::DB{stats}->Query($sql);
-	while (my @db0_line=$db0->fetchrow)
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>"stats");
+	my $i;
+	my $i_=$sth0{'rows'};
+	while (my @db0_line=$sth0{'sth'}->fetchrow)
 	{
 		my $tid0000;
 		my $direct;
 		my $all;
 		my $IDhashs_return;
 		my $visits_failed;
+		$i++;
 		
 		my $date=$db0_line[0];$date=~s| \d\d:\d\d:\d\d$||;
 		my $db1=$main::DB{stats}->Query("
@@ -411,7 +419,7 @@ sub execute
 			$visits_failed=$db1_line[0];
 		}
 		
-		main::_log("[$year/$week] domain:$db0_line[1] visits:$db0_line[3] users:$db0_line[4] sessions:$db0_line[5] IP:$db0_line[6] load_proc:$db0_line[7] load_req:$db0_line[8] 0000:$tid0000 direct:$direct");
+		main::_log("[$year/$week][$i/$i_] domain:$db0_line[1] visits:$db0_line[3] users:$db0_line[4] sessions:$db0_line[5] IP:$db0_line[6] load_proc:$db0_line[7] load_req:$db0_line[8] 0000:$tid0000 direct:$direct");
 		
 		$main::DB{stats}->Query("
 			REPLACE INTO

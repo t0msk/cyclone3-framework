@@ -38,7 +38,7 @@ sub execute
 	
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
-	my $max_hours=12;
+	my $max_hours=3; # 300% speed (every one hour collect data from 3 hours)
 	
 	
 	
@@ -133,6 +133,7 @@ sub execute
 	
 	main::_log("last datetime available for data mining \"$time_endat\"='$time_to'");
 	
+	main::_log("collecting from='$time_startat' to='$time_endat'");
 	if ($time_endat=~/^$time_startat/)
 	{
 		main::_log("cannot create statistics...",1);
@@ -142,9 +143,8 @@ sub execute
 	
 	# START COLLECTING DATA
 	
-	main::_log("collecting from='$time_startat' to='$time_endat'");
-	my $sql="
-	SELECT
+	my $sql=qq{
+		SELECT
 			reqdatetime,
 			domain,
 			domain_sub,
@@ -154,23 +154,28 @@ sub execute
 			COUNT(DISTINCT(IP)),
 			AVG(load_proc),
 			AVG(load_req)
-	FROM
+		FROM
 			TOM.a110_weblog_rqs
-	WHERE
-			reqdatetime>='$time_startat' AND
-			reqdatetime<'$time_endat' AND
+		WHERE
+			reqdatetime >= '$time_startat' AND
+			reqdatetime < '$time_endat' AND
 			reqtype IN ('B','m','w')
-	GROUP BY
-			substring(reqdatetime,1,13),domain,domain_sub";
-	
-	my $db0=$main::DB{stats}->Query($sql);
-	while (my @db0_line=$db0->fetchrow)
+		GROUP BY
+			substring(1,13,reqdatetime),domain,domain_sub
+		ORDER BY
+			reqdatetime
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>"stats");
+	my $i;
+	my $i_=$sth0{'rows'};
+	while (my @db0_line=$sth0{'sth'}->fetchrow)
 	{
 		my $tid0000;
 		my $direct;
 		my $all;
 		my $IDhashs_return;
 		my $visits_failed;
+		$i++;
 		
 		my $date=$db0_line[0];$date=~s|:\d\d:\d\d$||;
 		my $db1=$main::DB{stats}->Query("
@@ -179,7 +184,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime LIKE '$date%' AND
+				substring(1,13,reqdatetime) = '$date' AND
 				query_TID IN ('l_default','l_0000','m_default','g_default') AND
 				reqtype='B' AND
 				reqtype IN ('B','m','w') AND
@@ -195,7 +200,7 @@ sub execute
 			SELECT COUNT(*)
 			FROM TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime LIKE '$date%' AND
+				substring(1,13,reqdatetime) = '$date' AND
 				domain_sub='$db0_line[2]'");
 		if (my @db1_line=$db1->fetchrow)
 		{
@@ -208,7 +213,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime LIKE '$date%' AND
+				substring(1,13,reqdatetime) = '$date' AND
 				page_code_referer='' AND
 				reqtype IN ('B','m','w') AND
 				domain_sub='$db0_line[2]'
@@ -231,7 +236,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime LIKE '$date%' AND
+				substring(1,13,reqdatetime) = '$date' AND
 				USRM_flag IN ('G','R') AND
 				reqtype IN ('B','m','w') AND
 				domain_sub='$db0_line[2]'
@@ -247,7 +252,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime LIKE '$date%' AND
+				substring(1,13,reqdatetime) = '$date' AND
 				result='failed' AND
 				domain_sub='$db0_line[2]'
 		");
@@ -256,7 +261,7 @@ sub execute
 			$visits_failed=$db1_line[0];
 		}
 		
-		main::_log("[$date:00:00] domain:$db0_line[1] sub:$db0_line[2] visits:$db0_line[3] users:$db0_line[4] users_return:$IDhashs_return sessions:$db0_line[5] IP:$db0_line[6] load_proc:$db0_line[7] load_req:$db0_line[8] 0000:$tid0000 direct:$direct");
+		main::_log("[$date:00:00][$i/$i_] domain:$db0_line[1] sub:$db0_line[2] visits:$db0_line[3] users:$db0_line[4] users_return:$IDhashs_return sessions:$db0_line[5] IP:$db0_line[6] load_proc:$db0_line[7] load_req:$db0_line[8] 0000:$tid0000 direct:$direct");
 		
 		$main::DB{stats}->Query("
 		REPLACE INTO TOM.a110_weblog_hour
@@ -297,8 +302,8 @@ sub execute
 	
 	# return 1;
 	
-	my $sql="
-	SELECT
+	my $sql=qq{
+		SELECT
 			reqdatetime,
 			domain,
 			COUNT(*),
@@ -307,23 +312,29 @@ sub execute
 			COUNT(DISTINCT(IP)),
 			AVG(load_proc),
 			AVG(load_req)
-	FROM
-		TOM.a110_weblog_rqs
-	WHERE
-		reqdatetime>='$time_startat' AND
-		reqdatetime<'$time_endat' AND
-		reqtype IN ('B','m','w')
-	GROUP BY
-		substring(reqdatetime,1,13),domain";
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			reqdatetime>='$time_startat' AND
+			reqdatetime<'$time_endat' AND
+			reqtype IN ('B','m','w')
+		GROUP BY
+			substring(1,13,reqdatetime),domain
+		ORDER BY
+			reqdatetime
+	};
 	
-	my $db0=$main::DB{stats}->Query($sql);
-	while (my @db0_line=$db0->fetchrow)
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>"stats");
+	my $i;
+	my $i_=$sth0{'rows'};
+	while (my @db0_line=$sth0{'sth'}->fetchrow)
 	{
 		my $tid0000;
 		my $direct;
 		my $all;
 		my $IDhashs_return;
 		my $visits_failed;
+		$i++;
 		
 		my $date=$db0_line[0];$date=~s|:\d\d:\d\d$||;
 		my $db1=$main::DB{stats}->Query("
@@ -332,7 +343,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime LIKE '$date%' AND
+				substring(1,13,reqdatetime) = '$date' AND
 				query_TID IN ('l_default','l_0000','m_default','g_default') AND
 				reqtype IN ('B','m','w') AND
 				domain='$db0_line[1]'");
@@ -348,7 +359,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime LIKE '$date%' AND
+				substring(1,13,reqdatetime) = '$date' AND
 				domain='$db0_line[1]'
 		");
 		if (my @db1_line=$db1->fetchrow)
@@ -362,7 +373,7 @@ sub execute
 		FROM
 			TOM.a110_weblog_rqs
 		WHERE
-			reqdatetime LIKE '$date%' AND
+			substring(1,13,reqdatetime) = '$date' AND
 			page_code_referer='' AND
 			reqtype IN ('B','m','w') AND
 			domain='$db0_line[1]'
@@ -378,7 +389,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime LIKE '$date%' AND
+				substring(1,13,reqdatetime) = '$date' AND
 				USRM_flag IN ('G','R') AND
 				reqtype IN ('B','m','w') AND
 				domain='$db0_line[1]'
@@ -394,7 +405,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime LIKE '$date%' AND
+				substring(1,13,reqdatetime) = '$date' AND
 				result='failed' AND
 				domain='$db0_line[1]'
 		");
@@ -403,7 +414,7 @@ sub execute
 			$visits_failed=$db1_line[0];
 		}
 		
-		main::_log("[$date:00:00] DOMAIN:$db0_line[1] visits:$db0_line[2] users:$db0_line[3] users_return:$IDhashs_return sessions:$db0_line[4] IP:$db0_line[5] load_proc:$db0_line[6] load_req:$db0_line[7] 0000:$tid0000 direct:$direct");
+		main::_log("[$date:00:00][$i/$i_] DOMAIN:$db0_line[1] visits:$db0_line[2] users:$db0_line[3] users_return:$IDhashs_return sessions:$db0_line[4] IP:$db0_line[5] load_proc:$db0_line[6] load_req:$db0_line[7] 0000:$tid0000 direct:$direct");
 		
 		$main::DB{stats}->Query("
 			REPLACE INTO TOM.a110_weblog_hour
