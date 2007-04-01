@@ -36,7 +36,7 @@ use TOM::Net::HTTP::CGI;
 
 
 # List of valid characters in QUERY_STRING
-my $URLENCODE_VALID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+.=";
+my $URLENCODE_VALID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+.";
 
 # Prepare list of valid and invalid characters (hex)
 my @urlencode_valid;
