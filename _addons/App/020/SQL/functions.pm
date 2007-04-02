@@ -466,7 +466,7 @@ For example, when ID_entity is like 'article', and one ID is language version of
   '-journalize' => 1, # create journal copy of this clone
  );
 
-Clone can be created only from enabled or disabled rows, not from deleted or trashed.
+Clone can be created only from enabled, disabled or trashed rows, not from deleted.
 
 =cut
 
@@ -492,7 +492,7 @@ sub clone
 		'ID' => $env{'ID'},
 		'columns' => {'*'=>1}
 	);
-	if ($data{'ID'} && $data{'status'}=~/^[YN]$/)
+	if ($data{'ID'} && $data{'status'}=~/^[YNT]$/)
 	{
 		
 		# pripravim si columny na new
@@ -540,7 +540,7 @@ sub clone
 	}
 	else
 	{
-		main::_log("Can't clone ID='$env{'ID'}. This ID not exists, or is in Trash/Deleted'",1);
+		main::_log("Can't clone ID='$env{'ID'}. This ID not exists, or is Deleted'",1);
 		$t->close();
 		return undef;
 	}
