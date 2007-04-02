@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>Installation of Cyclone3 to Firefox</title>
+
+  <subtitle>Installation procedure of Cyclone3 management tool to Firefox
+  browser.</subtitle>
+
+  <orderedlist>
+    <listitem>
+      <para>Download and install Firefox browser if you don't have it.</para>
+
+      <para>Download from <ulink
+      url="http://www.getfirefox.com">www.getfirefox.com</ulink>.</para>
+    </listitem>
+
+    <listitem>
+      <para>Start Firefox browser</para>
+    </listitem>
+
+    <listitem>
+      <para>Download Cyclone3 extension for Firefox</para>
+
+      <para><ulink
+      url="http://www.cyclone3.org/downloads/cyclone3xuladmin.xpi">http://www.cyclone3.org/downloads/cyclone3xuladmin.xpi</ulink></para>
+
+      <para>Just click on this link or enter this address into address field
+      and follow the instructions - the Cyclone3 will be automatically
+      installed.</para>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="install1.jpg" />
+        </imageobject>
+      </mediaobject>
+
+      <para></para>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="install2.jpg" />
+        </imageobject>
+      </mediaobject>
+    </listitem>
+
+    <listitem>
+      <para>Click on Restart your browser.</para>
+    </listitem>
+  </orderedlist>
+</article>

@@ -22,6 +22,11 @@
     <para><itemizedlist>
         <listitem>
           <para><emphasis><ulink
+          url="?|?file=install">Installation</ulink></emphasis></para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis><ulink
           url="?|?file=content">Content</ulink></emphasis></para>
         </listitem>
 
