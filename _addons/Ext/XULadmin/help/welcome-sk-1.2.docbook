@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>Vitajte v Cyclone3</title>
+
+  <subtitle>Informačný text o Cyclone3 XULadmin verzia 1.2</subtitle>
+
+  <para>Tento text má za úlohu Vás informovať o zmenách ktoré sa udiali v
+  tomto <emphasis role="bold">nástroji Cyclone3 verzie 1.2</emphasis> od jeho
+  poslednej verzie <emphasis role="bold">1.1</emphasis>. Pokiaľ sa Vám
+  zobrazilo toto okno po inštalácii alebo upgrade, prosím pozorne si ho
+  prečítajte. Pokiaľ hľadáte manuál k Cyclone3, použite tlačítko Help v pravom
+  hornom rohu Cyclone3 XULadmin-u.</para>
+
+  <section>
+    <title>Zoznam zmien</title>
+
+    <itemizedlist>
+      <listitem>
+        <para><emphasis role="bold">Zmena výzoru</emphasis></para>
+
+        <para>Zjednodušili a zjemnili sme výzor pracovného prostredia aby sa s
+        ním ľahšie dalo pracovať. Orientovali sme sa hlavne na zväčšenie
+        efektívnej pracovnej plochy, odstránenie rušivých elementov a taktiež
+        zmenu proporcií jednotlivých elementov. Jednou z viditeľných zmien je
+        taktiež výmena témy ikoniek za <emphasis role="bold">Tango</emphasis>.
+        V týchto chceme pokračovať i v ďalších verziách.</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">Zmena editácie článku</emphasis></para>
+
+        <para>Snažili sme sa uľahčiť Vám prácu s editáciou článku. Zväčšili
+        sme priestor v ktorom sa píše text článku a schovali sme informácie
+        ktoré sa vo väčšine prípadov nepoužívajú.</para>
+
+        <para>V Editore článku už môžete používať CSS štýly definované webovou
+        stránkou ktorú spravujete, taktiež (ak je podpora) môžete
+        bezproblémovo prikladať k článkom ľubovolné súbory. Pri vkladaní
+        obrázku si môžete definovať aká akcia sa má pri kliknutí na obrázok na
+        webe vyvolať.</para>
+
+        <para>Veríme že sa Vám bude takto lepšie pracovať.</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">Zmena editácie obrázku</emphasis></para>
+
+        <para>Spravili sme niekoľko menších zmien vo výzore editácie obrázku
+        ktoré by mali pomôcť vyhnúť sa chybám. Už nieje možno uložiť nový
+        obrázok ktorý nemá definovaný i <emphasis
+        role="bold">thumbnail</emphasis>, samotný thumbnail je automaticky
+        vybratý ako prvá položka. Pri zobrazovaní listingu obrázkov už náhľady
+        niesu deformované.</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">Sitemap - štruktúra
+        stránky</emphasis></para>
+
+        <para>Rozšírili sme možnosti pri editácii stránok, a taktiež sme
+        umožnili editáciu viacerých stránok pomocou záložiek. V budúcnosti
+        plánujeme interaktívny výber hodnôt kľúčov ktoré konfigurujú stánku =
+        výber článku, kategórie, zoznam hodnôt,...</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">Štatistiky</emphasis></para>
+
+        <para>Upravili sme jemne výzor grafov a zmenšili sme ich aby zaberali
+        menej priestoru. V budúcnosti plánujeme tiež voliteľné zobrazovanie
+        tabuľiek a konkrétnych čísiel.</para>
+      </listitem>
+    </itemizedlist>
+
+    <itemizedlist>
+      <title>Dalšie zmeny</title>
+
+      <listitem>
+        <para>Download obrázkov.</para>
+      </listitem>
+
+      <listitem>
+        <para>Kopírovanie linky na súbor v článku.</para>
+      </listitem>
+
+      <listitem>
+        <para>Preview testmode.</para>
+      </listitem>
+
+      <listitem>
+        <para>Welcome obrazovka.</para>
+      </listitem>
+
+      <listitem>
+        <para>Help.</para>
+      </listitem>
+
+      <listitem>
+        <para>Opravy chýb.</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+</article>
