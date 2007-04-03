@@ -6,7 +6,11 @@
 
   <subtitle>Information about Cyclone3 XULadmin version 1.2</subtitle>
 
-  <para>This text amis to inform you about changes which were made to <emphasis role="bold">Cyclone3 version 1.2</emphasis> from its previous release <emphasis role="bold">1.1</emphasis>. If you are reading this window after you upgraded from previous version please read on. For additional help please use the help icon in the right top corner of the main window.</para>
+  <para>This text amis to inform you about changes which were made to
+  <emphasis role="bold">Cyclone3 version 1.2</emphasis> from its previous
+  release <emphasis role="bold">1.1</emphasis>. If you are reading this window
+  after you upgraded from previous version please read on. For additional help
+  please use the help icon in the right top corner of the main window.</para>
 
   <section>
     <title>Changes</title>
@@ -15,33 +19,44 @@
       <listitem>
         <para><emphasis role="bold">New Look</emphasis></para>
 
-        <para>We have simplified and cleared the default look of the environment. Aiming for greater work area we redesigned or removed unndeeded elements. Additionaly we now use a more integrated <emphasis role="bold">Tango</emphasis> icon theme set.</para>
+        <para>We have simplified and cleared the default look of the
+        environment. Aiming for greater work area we redesigned or removed
+        unndeeded elements. Additionaly we now use a more integrated <emphasis
+        role="bold">Tango</emphasis> icon theme set.</para>
       </listitem>
 
       <listitem>
         <para><emphasis role="bold">Editing Articles</emphasis></para>
 
-        <para>
-	In effort to make creating and editing atricles more pleasant we have increased the editor area significantly by hiding header elements which are not needed for most articles.</para>
+        <para>In effort to make creating and editing articles more pleasant we
+        have increased the editor area significantly by hiding header elements
+        which are not needed for most articles.</para>
 
-        <para>CSS styles used by the website now can be used during directly while editing articles. This helps authors to see how the final article will look without the need to preview it.</para>
+        <para>CSS styles used by the website now can be used during directly
+        while editing articles. This helps authors to see how the final
+        article will look without the need to preview it.</para>
 
-	<para>File attachments can now added to articles making it easier to share documents or files.</para>
+        <para>File attachments can now added to articles making it easier to
+        share documents or files.</para>
 
-	<para>Images can have a click action associated with them.</para>
+        <para>Images can have a click action associated with them.</para>
       </listitem>
 
       <listitem>
-        <para><emphasis role="bold">Editing Pictures</emphasis></para>
+        <para><emphasis role="bold">Editing Images</emphasis></para>
 
-        <para>Editing articles should now be easier. It is now imposible to save an image without defining a <emphasis
-        role="bold">thumbnail</emphasis> which is now selected as first for insertion.</para>
+        <para>Editing images should now be easier. It is now imposible to save
+        an image without defining a <emphasis role="bold">thumbnail</emphasis>
+        which is now selected as first for insertion.</para>
       </listitem>
 
       <listitem>
         <para><emphasis role="bold">Sitemap - site structure</emphasis></para>
 
-        <para>Editing the page structure has been extended to support more pages. Currently this section is still under development and more features such as interactive configuration of page attributes is in progress.</para>
+        <para>Editing the page structure has been extended to support more
+        pages. Currently this section is still under development and more
+        features such as interactive configuration of page attributes is in
+        progress.</para>
       </listitem>
 
       <listitem>
@@ -55,7 +70,7 @@
       <title>Other changes</title>
 
       <listitem>
-        <para>Picture downloads.</para>
+        <para>Image downloads.</para>
       </listitem>
 
       <listitem>
