@@ -4,39 +4,37 @@ package Tomahawk::module;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
-$authors="nemsak\@webcom.sk";
+$authors="nemsak\@webcom.sk;matej.gregor\@comsultia.com";
 use strict;
 
 use App::400::_init;
 use App::160::_init;
 
 =head1 NAME
-mlist_m1
 
-=head1 HEAD_VERSION_BUILD
-1.051122
+400-mlist_m1.0.mdl
 
-=head1 DESCRIPTION
-listing clankov s xrelated
+=head1 DEPENDS
 
-=head1 CHANGES
-2005-08-10 - deb00t
-	- sync modulov podla globalnej predlohy
-2005-08-05 - deb00t
-	- uprava implementacie specialnych xsgn templates pre LINE (LINE_linecounter, LINE_odd, ...)
-	- uprava implementacie specialnych xsgn templates pre LINE_a500 (LINE_a500_linecounter, LINE_a500_odd, ...)
-	- uprava implementacie specialnych formatov obrazkov pre a500_format (a500_format_linecounter, a500_format_odd, ...)
-2005-08-22 - deb00t
-	- pridanie podpory IDname, a IDname_category
-2005-08-29 - deb00t
-	- defaultne nastavenie db_select_arch_allow na true
-2005-09-16 - deb00t
-	- v zavere, pri zamene <%page%> (riadok cca 717) pridany na koniec regexp zameny parameter "g"
-	- opraveny regexp pri vyhladavani main category name (cca 222) - /^([a-zA-Z0-9]*?)%/ na /^([a-zA-Z0-9]*).*/ (ten prvy nezral, ak v idcku kategorie nebolo percento :) )
-2005-11-22 - deb00t
-	- pridana podpora 540 v bloku spracovania xrelated
-2005-12-15 - deb00t
-	- opakovanie zameny MAIN_IDcategory_name
+libraries:
+
+ App::400
+ App::540;
+ App::540::file;
+ TOM::Utils::datetime
+
+3rd party libraries:
+
+ MIME::Base64
+ Digest::MD5  qw(md5 md5_hex md5_base64)
+ Int::charsets::encode
+ Net::HTTP::LiteAgent
+ conv
+
+modules:
+
+ 130-send.0.smdl
+
 =cut
 
 sub execute
@@ -321,7 +319,7 @@ sub execute
 			if ($db_line{xrelated}=~/<VAR id="a500" value="(.*?)" \/>/)
 			{
 				my $tmp_ID=sprintf('%07d',$1);
-
+				main::_log("adding image tmp_ID='$tmp_ID'");
 				if (exists $env{'a500_format_'.$env{db_page}.'_'.$line_counter})
 				{
 					main::_log("setting special image format - a500_format_".$env{db_page}."_".$line_counter." to ".$env{'a500_format_'.$env{db_page}.'_'.$line_counter});
@@ -339,7 +337,9 @@ sub execute
 				}
 				else
 				{ $env{a500_format_tmp}=$env{a500_format}; }
-
+				
+				main::_log("a500_format_tmp='$env{a500_format_tmp}'");
+				
 				if (($XSGN{LINE_a500}) && ($env{$env{a500_format_tmp}.'_hash'}) && ($tmp_ID ne "0000000"))
 				{
 					my $tmp;
@@ -437,7 +437,7 @@ sub execute
 
 						$XSGN{NULL0}=$XSGN{a540};
 
-						use App::540;
+						use App::540::_init;
 						use App::540::file;
 
 						my @db0_line = App::540::file::get( ID => $null);
@@ -679,7 +679,9 @@ sub execute
 
 			if (($env{tiny_cut})&&(length($db_line{tiny})>$env{tiny_cut}))
 			{$db_line{tiny}=substr($db_line{tiny}, 0, $env{tiny_cut});$db_line{tiny}=~s|(.*) .*?$|$1&hellip;|;}
-
+			
+			#$db_line{'title'}=~s|&|&amp;|g;
+			
 			foreach (keys %db_line)
 			{
 				$XSGN{NULL}=~s|<%$_%>|$db_line{$_}|g;
