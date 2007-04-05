@@ -341,6 +341,8 @@ sub _chunk_prepare
 		$$chunk=~s|collate (.*?)_bin|binary|g;
 		$$chunk=~s|collate (.*?) ||g;
 		$$chunk=~s| DEFAULT CHARSET=(utf8\|ascii)||;
+		$$chunk=~s|varchar\((.*?)NOT NULL,|varchar(\1NOT NULL default '',|g;
+		$$chunk=~s|int\((.*?)NOT NULL,|int(\1NOT NULL default '0',|g;
 		$header->{'version'}=$version;
 	}
 	
