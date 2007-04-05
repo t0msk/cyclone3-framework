@@ -6,20 +6,16 @@
 
   <subtitle>User Manual for Cyclone3 XULadmin (Firefox extension)</subtitle>
 
-  <section>
-    <title>About</title>
-
-    <para><emphasis role="bold">Cyclone3 XULadmin</emphasis> is a powerful
-    multiuser content management user interface focused on ease of use,
-    functionality and user comfort. Using this Firefox extension you can
-    easily create, manage and modify the content of your domain service
-    (website).</para>
-  </section>
+  <para><emphasis role="bold">Cyclone3 XULadmin</emphasis> is a powerful
+  multiuser content management user interface focused on ease of use,
+  functionality and user comfort. Using this Firefox extension you can easily
+  create, manage and modify the content of your domain service
+  (website).</para>
 
   <section>
-    <title>Overview</title>
+    <title>Table Of Content</title>
 
-    <para><itemizedlist>
+    <itemizedlist>
         <listitem>
           <para><emphasis><ulink
           url="?|?file=install">Installation</ulink></emphasis></para>
@@ -30,70 +26,70 @@
           url="?|?file=content">Content</ulink></emphasis></para>
         </listitem>
 
-        <listitem>
-          <para><emphasis><ulink
-          url="?|?file=preview">Preview</ulink></emphasis></para>
-        </listitem>
+      <listitem>
+        <para><emphasis><ulink
+        url="?|?file=preview">Preview</ulink></emphasis></para>
+      </listitem>
 
-        <listitem>
-          <para><emphasis><ulink
-          url="?|?file=support">Support</ulink></emphasis></para>
-        </listitem>
+      <listitem>
+        <para><emphasis><ulink
+        url="?|?file=statistics">Statistics</ulink></emphasis></para>
+      </listitem>
 
-        <listitem>
-          <para><emphasis><ulink
-          url="?|?file=statistics">Statistics</ulink></emphasis></para>
-        </listitem>
+      <listitem>
+        <para><emphasis><ulink
+        url="?|?file=sitemap">Sitemap</ulink></emphasis></para>
+      </listitem>
 
-        <listitem>
-          <para><emphasis><ulink
-          url="?|?file=sitemap">Sitemap</ulink></emphasis></para>
-        </listitem>
+      <listitem>
+        <para><emphasis><ulink
+        url="?|?file=editors">Editors</ulink></emphasis></para>
+      </listitem>
 
-        <listitem>
-          <para><emphasis><ulink
-          url="?|?file=editors">Editors</ulink></emphasis></para>
-        </listitem>
+      <listitem>
+        <para><emphasis><ulink
+        url="?|?file=users">Users</ulink></emphasis></para>
+      </listitem>
 
-        <listitem>
-          <para><emphasis><ulink
-          url="?|?file=users">Users</ulink></emphasis></para>
-        </listitem>
+      <listitem>
+        <para><emphasis><ulink
+        url="?|?file=directmail">DirectMail</ulink></emphasis></para>
+      </listitem>
 
-        <listitem>
-          <para><emphasis><ulink
-          url="?|?file=directmail">DirectMail</ulink></emphasis></para>
-        </listitem>
-      </itemizedlist></para>
+      <listitem>
+        <para><emphasis><ulink
+        url="?|?file=support">Support</ulink></emphasis></para>
+      </listitem>
+    </itemizedlist>
   </section>
 
   <section>
     <title>Tutorials</title>
 
-    <para><itemizedlist>
-        <listitem>
-          <para>Tutorial: New Article</para>
-        </listitem>
+    <itemizedlist>
+      <listitem>
+        <para>Tutorial: New Article</para>
+      </listitem>
 
-        <listitem>
-          <para>Tutorial: New Image</para>
-        </listitem>
+      <listitem>
+        <para>Tutorial: New Image</para>
+      </listitem>
 
-        <listitem>
-          <para>Tutorial: New File</para>
-        </listitem>
+      <listitem>
+        <para>Tutorial: New File</para>
+      </listitem>
 
-        <listitem>
-          <para>Tutorial: New Pool</para>
-        </listitem>
+      <listitem>
+        <para>Tutorial: New Pool</para>
+      </listitem>
 
-        <listitem>
-          <para>Tutorial: New Source</para>
-        </listitem>
+      <listitem>
+        <para>Tutorial: New Source</para>
+      </listitem>
 
-        <listitem>
-          <para>Tutorial: New Content Category</para>
-        </listitem>
-      </itemizedlist></para>
+      <listitem>
+        <para>Tutorial: New Content Category</para>
+      </listitem>
+    </itemizedlist>
   </section>
 </article>
