@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>a130: Module List</title>
+
+  <section>
+    <title>Standard modules</title>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="?|?section=app&amp;file=130/_mdl/130-send.0.smdl">130-send.0.smdl</ulink></para>
+
+        <para></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=app&amp;file=130/_mdl/130-send.0.mdl">130-send.0.mdl</ulink></para>
+
+        <para></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=app&amp;file=130/_mdl/130-send_support.0.mdl">130-send_support.0.mdl</ulink></para>
+
+        <para></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=app&amp;file=130/_mdl/130-bugreport.0.mdl">130-bugreport.0.mdl</ulink></para>
+
+        <para></para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section>
+    <title>Cron system</title>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="?|?section=app&amp;file=130/_mdl/130-autosend.0.cron">130-autosend.0.cron</ulink></para>
+
+        <para></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=app&amp;file=130/_mdl/130-autosend.critical.cron">130-autosend.critical.cron</ulink></para>
+
+        <para></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=app&amp;file=130/_mdl/130-autorecv.0.cron">130-autorecv.0.cron</ulink></para>
+
+        <para></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=app&amp;file=130/_mdl/130-clear.0.cron">130-clear.0.cron</ulink></para>
+
+        <para></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=app&amp;file=130/_mdl/130-control.forms.cron">130-control.forms.cron</ulink></para>
+
+        <para></para>
+      </listitem>
+    </itemizedlist>
+  </section>
+</article>
