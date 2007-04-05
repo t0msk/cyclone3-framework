@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
 use Mysql;
-BEGIN {require "/www/TOM/.bin/tom3-init";$main::debug=0;}
+BEGIN {require "/www/TOM/.bin/tom3-init";$main::debug=0;$main::debug=0;}
 
 use TOM::Database::connect;
 use TOM::Database::SQL;
@@ -21,6 +21,8 @@ if ($FORM{'v'})
 	$main::debug=1;
 }
 
+$TOM::engine_ready=1;
+
 $FORM{'db_h'}='main' unless $FORM{'db_h'};
 
 #################################################################################################
@@ -34,6 +36,15 @@ print "connected '$FORM{'db_h'}' database handler\n";
 if ($FORM{'domain'})
 {
 	require $tom::P."/local.conf";
+	
+	foreach my $addon(@TOM::domain_default_addons)
+	{
+		TOM::Database::SQL::file::install(
+			$addon,
+			'db_name'=> $TOM::DB{$FORM{'db_h'}}{'name'},
+			'db_h'=>$FORM{'db_h'},
+		);
+	}
 	
 	my %out=TOM::Database::SQL::compare::compare_database(
 		$TOM::DB{$FORM{'db_h'}}{'name'},
@@ -64,11 +75,11 @@ if ($FORM{'domain'})
 }
 else
 {
-	# default aplikacie instalovane v TOM
-	foreach my $app(@TOM::default_TOM_App)
+	
+	foreach my $addon(@TOM::default_addons)
 	{
 		TOM::Database::SQL::file::install(
-			'a'.$app,
+			$addon,
 			'db_name'=>'TOM',
 			'db_h'=>$FORM{'db_h'},
 		);

@@ -279,7 +279,7 @@ sub compare_database
 	{
 		# zrusim pripadne predefinovanie handleru a nazvu databazy (to si precitam z TOM.sql a nemoze byt overridovane)
 		# hlavna databaza totiz moze byt len TOM a moze byt len v main handleri
-		$env{'db_h'}='main';
+		#$env{'db_h'}='main';
 		undef $env{'db_name'};
 		my %input=TOM::Database::SQL::file::install('TOM','-compare'=>1,'-compare_execute' => 0);
 		push @{$output{'ALTER'}}, @{$input{'ALTER'}} if $input{'ALTER'};
