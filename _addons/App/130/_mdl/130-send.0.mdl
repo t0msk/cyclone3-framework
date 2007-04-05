@@ -80,6 +80,7 @@ sub execute
 
 		foreach my $email_TMP (split ";", $env{"xt_EMAIL".$email_postfix})
 		{
+			main::_log("XSGN transformation: EMAIL_".$email_TMP." = "."EMAIL".$email_postfix);
 			$XSGN{"EMAIL_".$email_TMP} = $XSGN{"EMAIL".$email_postfix};
 		}
 	}
@@ -109,7 +110,7 @@ sub execute
 	# ak nie je - DEFAULTne TMP
 	unless ($env{action})
 	{
-		main::_log("Formular nebol odoslany");
+		main::_log("WARNING: 'action' not specified");
 
 
 		# vygenerujem bezpecnostny obrazok
@@ -206,13 +207,13 @@ sub execute
 	# formular bol poslany, idem dalej
 	if ($env{action})
 	{
-		main::_log("Formular odoslany");
+		main::_log("Form action: " . $env{action});
 
 		# zistim, ci mam spravne data - ci je dobre vyplneny formular
 		# ak nie, tak nahradim premenne do designu, error hlasku a koncim
 		unless ($env{form_ok})
 		{
-			main::_log("Nespravne vyplneny formular");
+			main::_log("WARNING: Form not filled in correctly!");
 
 			# vygenerujem bezpecnostny obrazok
 			if ($env{xt_picture_security})
@@ -266,8 +267,8 @@ sub execute
 			# vypisem hlasku s dovodmi
 			unless (exists $XSGN{INCORRECT_DATA} && $XSGN{TMP} =~ s|<#INCORRECT_DATA#>|$XSGN{INCORRECT_DATA}|)
 			{
-				main::_log("- chýba XSGN{INCORRECT_DATA}") unless exists $XSGN{INCORRECT_DATA};
-				main::_log("- chýba priestor <#INCORRECT_DATA#> v TMP") unless $XSGN{TMP} =~ /<#INCORRECT_DATA#>/;
+				main::_log("- missing XSGN{INCORRECT_DATA}") unless exists $XSGN{INCORRECT_DATA};
+				main::_log("- missing <#INCORRECT_DATA#> v TMP") unless $XSGN{TMP} =~ /<#INCORRECT_DATA#>/;
 			}
 
 			# koncim s navratovou hodnotou nespravneho vyplnenia - 201
@@ -275,7 +276,7 @@ sub execute
 		}
 
 		# vsetko zbehlo, idem dalej
-		main::_log("Spravne vyplneny formular");
+		main::_log("Form filled in correctly");
 		# teraz zistujem, ci pouzit check alebo send design (podla action)
 
 		# Check
@@ -319,8 +320,6 @@ sub execute
 		# - popripade na uzivatelov
 		if ($env{action} eq "send")
 		{
-			main::_log("Send design");
-
 			my $db_emails_history; # toto je sumar emailov, pre tabulku a130_send_history
 
 			# vygenerovanie hashu
@@ -333,14 +332,15 @@ sub execute
 				if ( $email =~ /(_.*)/ ) { $email_postfix = $1; }
 
 				# zistim, ci tento email vobec pouzijem
-				main::_log("Checkujem $email");
+				main::_log("Checking '$email'...");
+
 				# zalogujem si pripadne chyby
-				main::_log("- chýba allow_EMAIL$email_postfix") unless $env{"allow_EMAIL$email_postfix"};
-				main::_log("- chýba send$email_postfix") unless $env{"send$email_postfix"};
+				main::_log("- missing allow_EMAIL$email_postfix") unless $env{"allow_EMAIL$email_postfix"};
+				main::_log("- missing send$email_postfix") unless $env{"send$email_postfix"};
 				next if !$env{"allow_EMAIL$email_postfix"} || !$env{"send$email_postfix"};
 
 				# vsetko fajn - spracovanie
-				main::_log("Spracovavam $email");
+				main::_log("Processing '$email'...");
 
 				# TMP NASTAVENIA
 				# email
@@ -412,14 +412,14 @@ sub execute
 				}
 
 				# checkovanie priloh
-				main::_log("Checkujem prilohy");
-				main::_log("- nemam povolenie [allow_attachment$email_postfix]") unless $env{"allow_EMAIL$email_postfix"};
-				main::_log("- nie su ziadne prilohy") unless $env{"_a130_attachmentcount"};
+				main::_log("Checking attachments...");
+				main::_log("- attachments not allowed [allow_attachment$email_postfix]") unless $env{"allow_EMAIL$email_postfix"};
+				main::_log("- no attachments") unless $env{"_a130_attachmentcount"};
 				
 				if ($env{"allow_attachment$email_postfix"} && $env{"_a130_attachmentcount"})
 				{
 					# spracovanie priloh
-					main::_log("Spracovavam prilohy");
+					main::_log("Processing attachments...");
 
 					my $boundary = "==webcom_attachment==";
 					my $begin = "This is a multi-part message in MIME format.\n\n";
@@ -469,7 +469,7 @@ sub execute
 				$XSGN{$email} =~ s/\'/\\'/g;
 				
 				# zasielanie emailov
-				main::_log("Zapis do Send tabulky");
+				main::_log("Adding e-mail for '$env{tmp_db_email}' to send table");
 
 				# emaily pre a130_send_history
 				$db_emails_history .= ';' if $db_emails_history;
@@ -494,10 +494,15 @@ sub execute
 				# zapis do send tabulky
 				my $result = $main::DBH->Query($sql);
 
+				if($result){
+					main::_log("SUCCESS");
+				}else{
+					main::_log("FAILURE");
+				}
 			}
 
 			# zapis do archivacnej tabulky
-			main::_log("Zapis do archivačnej tabulky");
+			main::_log("Appending message to archive table");
 
 			my $sql_arch = "
 			INSERT INTO TOM.a130_send_history
@@ -516,6 +521,12 @@ sub execute
 
 			main::_log( $sql_arch );
 			my $result_arch = $main::DBH->Query( $sql_arch );
+
+			if($result_arch){
+				main::_log("SUCCESS");
+			}else{
+				main::_log("FAILURE");
+			}
 
 			# nahradim za poslany design
 			$XSGN{TMP} = $XSGN{SENT};
