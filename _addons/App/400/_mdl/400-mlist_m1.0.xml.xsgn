@@ -42,6 +42,7 @@
 		<visits><![CDATA[<%visits%>]]></visits>
 		<private><![CDATA[<%private%>]]></private>
 		<length><![CDATA[<%length%>]]></length>
+		<attachments><![CDATA[<%attachments%>]]></attachments>
 	</item>
 <#LINE#>
 </DEFINITION>

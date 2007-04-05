@@ -6,7 +6,9 @@ use encoding 'utf8';
 use utf8;
 $authors="nemsak\@webcom.sk";
 use strict;
-use App::400;
+
+use App::400::_init;
+use App::160::_init;
 
 =head1 NAME
 mlist_m1
@@ -646,6 +648,27 @@ sub execute
 				$XSGN{NULL}=~s|<%endtime_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
 				$XSGN{NULL}=~s|<%endtime_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
 				$XSGN{NULL}=~s|<%endtime_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+			}
+			
+			if ($env{'attachments_allow'})
+			{
+				my $attachments=App::160::SQL::get_relations
+				(
+					'l_prefix' => 'a400',
+					'l_table' => '',
+					'l_ID_entity' => $db_line{'ID'},
+					#'r_db_name' => 'example_tld',
+					'r_prefix' => 'a540',
+					#'r_table' => 'file',
+				);
+				if ($attachments)
+				{
+					$XSGN{'NULL'}=~s|<%attachments%>|Y|g;
+				}
+				else
+				{
+					$XSGN{'NULL'}=~s|<%attachments%>|N|g;
+				}
 			}
 
 			if (($env{title_cut})&&(length($db_line{title})>$env{title_cut}))

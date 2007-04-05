@@ -27,4 +27,5 @@
 		<VAR id="db_paging" value="1" />
 		<VAR id="db_page" value="<$main::FORM{page}>" />
 		<VAR id="db_where" value="a400.active LIKE '%' AND a400.active NOT LIKE 'D'" />
+		<VAR id="attachments_allow" value="1" />
 </MODULE>
