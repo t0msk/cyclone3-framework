@@ -28,7 +28,6 @@ sub _log
 	my ($package, $filename, $line) = caller;
 	
 	my @get=@_;
-	
 	#$get[0] = level
 	#$get[1] = message
 	#$get[2] = rezim 
@@ -49,7 +48,8 @@ sub _log
 		(!$get[2]) &&
 		(!$main::IAdm) &&
 		(!$main::ITst) &&
-		(!$main::debug)
+		(!$main::debug) &&
+		(!$main::stdout)
 	);
 	
 	$get[3]=$TOM::engine unless $get[3];
