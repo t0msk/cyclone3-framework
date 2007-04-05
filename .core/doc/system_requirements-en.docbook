@@ -65,6 +65,10 @@
       </listitem>
 
       <listitem>
+        <para>DBI</para>
+      </listitem>
+
+      <listitem>
         <para>DBD::Mysql</para>
       </listitem>
 
@@ -78,6 +82,10 @@
 
       <listitem>
         <para>DateTime</para>
+      </listitem>
+
+      <listitem>
+        <para>Params::Validate</para>
       </listitem>
 
       <listitem>
@@ -98,6 +106,10 @@
 
       <listitem>
         <para>String::CRC32</para>
+      </listitem>
+
+      <listitem>
+        <para>Compress::Zlib</para>
       </listitem>
 
       <listitem>
