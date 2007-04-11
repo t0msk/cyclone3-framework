@@ -170,24 +170,28 @@ sub process
 	# exists mimetype file?
 	if (not -e $self->{'tmpdir'}.'/mimetype')
 	{
-		$self->error('does not contain a mimetype. This is a SHOULD in OpenDocument 1.0');
-		$t->close();
-		return undef;
+		$self->warning('does not contain a /mimetype file. This is a SHOULD in OpenDocument 1.0');
+#		$t->close();
+#		return undef;
 	}
 	
 	# checking content of mimetype, and if is known
 	do
 	{
 		local $/;
-		open(HND,'<',$self->{'tmpdir'}.'/mimetype') || die "$!";
+		open(HND,'<',$self->{'tmpdir'}.'/mimetype');# || die "$!";
 		$self->{'mimetype'}=<HND>;
 	};
 	
 	main::_log("mimetype readed as '$self->{'mimetype'}'");
 	
-	if (!$self->{'mimetype'})
+	if (!$self->{'mimetype'} && -e $self->{'tmpdir'}.'/mimetype')
 	{
-		$self->error('does not contain a mimetype. This is a SHOULD in OpenDocument 1.0');
+		$self->warning('does not contain a mimetype. This is a SHOULD in OpenDocument 1.0');
+	}
+	elsif (!$self->{'mimetype'})
+	{
+		# if this file has not defined mimetype, we not continue with mimetype checking
 	}
 	else
 	{
