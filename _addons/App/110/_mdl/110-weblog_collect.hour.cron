@@ -38,7 +38,7 @@ sub execute
 	
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
-	my $max_hours=3; # 300% speed (every one hour collect data from 3 hours)
+	my $max_hours=12; # 1200% speed (every one hour collect data from 12 hours)
 	
 	
 	
