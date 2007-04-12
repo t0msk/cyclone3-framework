@@ -12,7 +12,7 @@ use utf8;
 use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-
+use TOM::Database::connect;
 use TOM::Database::SQL::file;
 use TOM::Database::SQL::compare;
 use TOM::Database::SQL::transaction;
@@ -21,7 +21,7 @@ use TOM::Database::SQL::transaction;
 
 =head2 escape()
 
-Očistenie SQL príkazu
+Cleaning variable used to SQL query
 
 =cut
 
@@ -31,6 +31,12 @@ sub escape
 	$sql=~s|\'|\\'|g;
 	return $sql;
 }
+
+=head2 get_database_applications($database_name)
+
+Return list of available applications installed in this database
+
+=cut
 
 
 sub get_database_applications
@@ -119,6 +125,7 @@ sub execute
 	{
 		foreach my $line(split("\n",$SQL))
 		{
+			$line=~s|\t|   |g;
 			main::_log($line) unless $env{'quiet'};
 		}
 	}
