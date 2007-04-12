@@ -1121,6 +1121,17 @@ sub designmodule
 	$mdl_env{-xsgn}=$tom::dsgn unless $mdl_env{-xsgn}; # SAJRAJT
 	$mdl_env{-xlng}=$tom::lng unless $mdl_env{-xlng};
 	
+	if ($mdl_env{-TMP_check})
+	{
+		main::_log("-TMP_check enabled");
+		if (not $main::H->{OUT}{BODY}=~/<!TMP-$mdl_env{-TMP}!>/)
+		{
+			main::_log("return 10, TMP '$mdl_env{-TMP}' not exists in BODY");
+			$t->close();
+			return 10;
+		}
+	}
+	
 	#main::_log("adding designmodule ".$mdl_env{-category}."-".$mdl_env{-name}."/".$mdl_env{-global});
 	
 	my $file_data;
