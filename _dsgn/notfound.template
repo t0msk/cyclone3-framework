@@ -1,0 +1,66 @@
+<style>
+	body
+	{
+		font-family: Arial, Helvetica, sans-serif;
+		text-align:center;
+		margin:0;
+		padding:2em;
+		color: #00335E;
+	}
+	
+	#page
+	{
+		width:550px; margin:0 auto; text-align:left;
+	}
+	
+	#page-i
+	{
+		padding:15px;background:#FAFAFF; border:1px solid #E1E1EF;min-height:300px;
+	}
+	
+	a
+	{
+		color:blue;
+	}
+	
+	h1
+	{
+		margin-top:0;
+		font-size:150%;
+		/* color:#7E7F82;*/
+		color: #EF5959;
+	}
+	
+	h2
+	{
+		margin-top:0;
+		font-size:110%;
+	}
+	
+	.right
+	{
+		text-align: right;
+	}
+</style>
+
+<div id="page">
+	<div class="right">
+		<img src="<$TOM::H_grf>/cyclone3-262x76.png" alt="Cyclone3" width="262" height="76" />
+	</div>
+	<div id="page-i">
+		
+		<h1>404 - Page not found</h1>
+		<h2><$main::ENV{'REQUEST_URI'}> [<$main::FORM{'TID'}>]</h2>
+		<p>
+			<strong>There is no page or document on requested address.</strong>
+		</p>
+		<ul>
+			<li>Please check if the entered address is correct</li>
+			<li>
+				If the problem repeats, you can contact our administrator at <a href="mailto:admin@webcom.sk">admin@webcom.sk</a>
+			</li>
+		</ul>
+	
+	</div>
+</div>
+
