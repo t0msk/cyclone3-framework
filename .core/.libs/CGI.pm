@@ -3789,7 +3789,13 @@ sub new {
     unless ($boundary_read) {
       while ($self->read(0)) { }
     }
-    die "Malformed multipart POST: data truncated\n" if $self->eof;
+    if ($self->eof)
+    {
+    	# if empty form is sended (Konqueror)
+    	main::_log("Malformed multipart POST: data truncated",1);
+    	return undef;
+    }
+    #die "Malformed multipart POST: data truncated\n" if $self->eof;
 
     return $retval;
 }
