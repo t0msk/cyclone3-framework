@@ -4,27 +4,39 @@
 <article>
   <title>Extension OpenDocument4CMS</title>
 
-  <para>This extension is in development.</para>
+  <para>This extension gives OpenDocument support to Cyclone3
+  Framework.</para>
 
   <itemizedlist spacing="compact">
     <title>List of features:</title>
-
-    <listitem>
-      <para>Convert content into DocBook <action>[planning]</action></para>
-    </listitem>
 
     <listitem>
       <para>Extract document into temporary directory</para>
     </listitem>
 
     <listitem>
-      <para>Allow to publish content in XHTML form
+      <para>Convert content into DocBook <action>[progress]</action></para>
+    </listitem>
+
+    <listitem>
+      <para>Store and index content in <ulink
+      url="?|?section=app&amp;file=520/">a520</ulink>
       <action>[planning]</action></para>
     </listitem>
 
     <listitem>
+      <para>Transform using <ulink
+      url="?|?section=ext&amp;file=Jooconverter/">eJooconverter</ulink></para>
+    </listitem>
+
+    <listitem>
+      <para>Allow to publish content in XHTML form
+      <action>[progress]</action></para>
+    </listitem>
+
+    <listitem>
       <para>Convert OpenDocument into well-formed XHTML
-      <action>[planning]</action></para>
+      <action>[progress]</action></para>
     </listitem>
 
     <listitem>
@@ -34,7 +46,7 @@
 
     <listitem>
       <para>Support Dublin Core metadata storage
-      <action>[planning]</action></para>
+      <action>[progress]</action></para>
     </listitem>
   </itemizedlist>
 
@@ -50,11 +62,9 @@
 
 my $obj=Ext::OpenDocument4CMS-&gt;extract('/home/user/document.odt');
 ...
-$obj-&gt;close();
+$obj-&gt;close();</synopsis>
 
-</synopsis>
-
-    <para><ulink url="?|?section=ext&amp;file=CacheMemcache/_init.pm">Learn
+    <para><ulink url="?|?section=ext&amp;file=OpenDocument4CMS/_init.pm">Learn
     more</ulink>.</para>
   </section>
 
@@ -64,6 +74,9 @@ $obj-&gt;close();
     <para>eOpenDocument4CMS <ulink
     url="?|?section=ext&amp;file=OpenDocument4CMS/_init.pm">source code
     documentation</ulink>.</para>
+
+    <para><ulink
+    url="?|?section=ext&amp;file=ODFvalidator/">eODFvalidator</ulink>.</para>
 
     <para><ulink
     url="?|?section=ext&amp;file=Docbook4CMS/">eDocBook4CMS</ulink>.</para>
