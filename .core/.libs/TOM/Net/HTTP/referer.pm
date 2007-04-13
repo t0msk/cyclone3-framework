@@ -33,34 +33,11 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
    ...
  );
 
-List of known search engines
-
- google.com
- zoohoo.sk
- search.centrum.sk
- hladaj.atlas.sk
- search.szm.sk
- zoznam.sk
- seznam.cz
- msn.com
- live.com
- yahoo.com
- aolsearch
- search.netscape
- mywebsearch.com
- freshmeat.net/search
- search.bearshare.com
- ask.com
- search.imesh.com
- search.myway.com
- best.sk
- azet.sk
-
 =cut
 
 our %table;
 
-=head1 DOMAINS
+=head1 KNOWN DOMAINS
 
 =head2 Global domains
 
