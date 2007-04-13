@@ -60,7 +60,9 @@ List of known search engines
 
 our %table;
 
-=head2 DOMAINS
+=head1 DOMAINS
+
+=head2 Global domains
 
 =over
 
@@ -73,11 +75,313 @@ google.com
  keywords_param => 'q'
 
 =cut
-$table{'google.com'}=>
+$table{'google.com'}=
 {
  urls => ["google\."],
  domain_type => 'search engine',
  keywords_param => 'q',
+};
+
+
+=item *
+
+msn.com
+
+ urls => ["msn\."],
+ domain_type => 'search engine',
+ keywords_param => 'q',
+
+=cut
+$table{'msn.com'}=
+{
+ urls => ["msn\."],
+ domain_type => 'search engine',
+ keywords_param => 'q',
+};
+
+
+=item *
+
+live.com
+
+added: 2007-04-12
+
+ urls => ["live\.com"],
+ domain_type => 'search engine',
+ keywords_param => 'q',
+
+=cut
+$table{'live.com'}=
+{
+ urls => ["live\.com"],
+ domain_type => 'search engine',
+ keywords_param => 'q',
+};
+
+
+=item *
+
+yahoo.com
+
+ urls => ["yahoo\."],
+ domain_type => 'search engine',
+ keywords_param => 'p',
+
+=cut
+$table{'yahoo.com'}=
+{
+ urls => ["yahoo\."],
+ domain_type => 'search engine',
+ keywords_param => 'p',
+};
+
+
+=item *
+
+aolsearch
+
+ urls => ["aolsearch\.aol\.co\.uk"],
+ domain_type => 'search engine',
+ keywords_param => 'query',
+
+=cut
+$table{'aolsearch'}=
+{
+ urls => ["aolsearch\.aol\.co\.uk"],
+ domain_type => 'search engine',
+ keywords_param => 'query',
+};
+
+
+=item *
+
+search.netscape
+
+ urls => ["netscape\.com"],
+ domain_type => 'search engine',
+ keywords_param => 'query',
+
+=cut
+$table{'search.netscape'}=
+{
+ urls => ["netscape\.com"],
+ domain_type => 'search engine',
+ keywords_param => 'query',
+};
+
+
+=item *
+
+mywebsearch.com
+
+ urls => ["mywebsearch\.com"],
+ domain_type => 'search engine',
+ keywords_param => 'searchfor',
+
+=cut
+$table{'mywebsearch.com'}=
+{
+ urls => ["mywebsearch\.com"],
+ domain_type => 'search engine',
+ keywords_param => 'searchfor',
+};
+
+
+=item *
+
+freshmeat.net/search
+
+ urls => ["freshmeat\.net/search/"],
+ domain_type => 'search engine',
+ keywords_param => 'q',
+
+=cut
+$table{'freshmeat.net/search'}=
+{
+ urls => ["freshmeat\.net/search/"],
+ domain_type => 'search engine',
+ keywords_param => 'q',
+};
+
+
+=item *
+
+search.bearshare.com
+
+added: 2007-04-12
+
+ urls => ["search\.bearshare\.com"],
+ domain_type => 'search engine',
+ keywords_param => 'q',
+
+=cut
+$table{'search.bearshare.com'}=
+{
+ urls => ["search\.bearshare\.com"],
+ domain_type => 'search engine',
+ keywords_param => 'q',
+};
+
+
+=item *
+
+ask.com
+
+added: 2007-04-12
+
+ urls => ["ask\.com"],
+ domain_type => 'search engine',
+ keywords_param => 'q',
+
+=cut
+$table{'ask.com'}=
+{
+ urls => ["ask\.com"],
+ domain_type => 'search engine',
+ keywords_param => 'q',
+};
+
+
+=item *
+
+search.imesh.com
+
+added: 2007-04-12
+
+ urls => ["search\.imesh\.com"],
+ domain_type => 'search engine',
+ keywords_param => 'q',
+
+=cut
+$table{'search.imesh.com'}=
+{
+ urls => ["search\.imesh\.com"],
+ domain_type => 'search engine',
+ keywords_param => 'q',
+};
+
+
+=item *
+
+search.myway.com
+
+added: 2007-04-12
+
+ urls => ["search\.myway\.com"],
+ domain_type => 'search engine',
+ keywords_param => 'searchfor',
+
+=cut
+$table{'search.myway.com'}=
+{
+ urls => ["search\.myway\.com"],
+ domain_type => 'search engine',
+ keywords_param => 'searchfor',
+};
+
+
+
+
+=back
+
+=head2 CZ domains
+
+=over
+
+=cut
+
+=item *
+
+seznam.cz
+
+ urls => ["seznam\.cz"],
+ domain_type => 'search engine',
+ keywords_param => 'w',
+
+=cut
+$table{'seznam.cz'}=
+{
+ urls => ["seznam\.cz"],
+ domain_type => 'search engine',
+ keywords_param => 'w',
+};
+
+
+
+
+=back
+
+=head2 SK domains
+
+=over
+
+=cut
+
+=item *
+
+zoznam.sk
+
+ urls => ["zoznam\.sk"],
+ domain_type => 'search engine',
+ keywords_param => 's',
+
+=cut
+$table{'zoznam.sk'}=
+{
+ urls => ["zoznam\.sk"],
+ domain_type => 'search engine',
+ keywords_param => 's',
+};
+
+
+=item *
+
+search.centrum.sk
+
+ urls => ["search.*?\.centrum\.sk"],
+ domain_type => 'search engine',
+ keywords_param => 'q',
+
+=cut
+$table{'search.centrum.sk'}=
+{
+ urls => ["search.*?\.centrum\.sk"],
+ domain_type => 'search engine',
+ keywords_param => 'q',
+};
+
+
+=item *
+
+hladaj.atlas.sk
+
+ urls => ["hladaj\.atlas\.sk"],
+ domain_type => 'search engine',
+ keywords_param => 'phrase',
+
+=cut
+$table{'hladaj.atlas.sk'}=
+{
+ urls => ["hladaj\.atlas\.sk"],
+ domain_type => 'search engine',
+ keywords_param => 'phrase',
+};
+
+
+=item *
+
+search.szm.sk
+
+ urls => ["search\.szm\.sk"],
+ domain_type => 'search engine',
+ keywords_param => 'WS',
+
+=cut
+$table{'search.szm.sk'}=
+{
+ urls => ["search\.szm\.sk"],
+ domain_type => 'search engine',
+ keywords_param => 'WS',
 };
 
 
@@ -90,153 +394,57 @@ zoohoo.sk
  keywords_param => 'q',
 
 =cut
-$table{'zoohoo.sk'}=>
+$table{'zoohoo.sk'}=
 {
  urls => ["zoohoo\.sk"],
  domain_type => 'search engine',
  keywords_param => 'q',
-},
+};
+
+
+=item *
+
+best.sk
+
+added: 2007-04-12
+
+ urls => ["best\.sk"],
+ domain_type => 'search engine',
+
+=cut
+$table{'best.sk'}=
+{
+ urls => ["best\.sk"],
+ domain_type => 'search engine',
+};
+
+
+=item *
+
+azet.sk
+
+added: 2007-04-12
+
+ urls => ["azet\.sk"],
+ domain_type => 'search engine',
+ keywords_param => 'sq',
+
+=cut
+$table{'azet.sk'}=
+{
+ urls => ["azet\.sk"],
+ domain_type => 'search engine',
+ keywords_param => 'sq',
+};
+
 
 =back
 
 =cut
 
-%table=
-(
-	'google.com'=>	
-	{
-		urls			=>	["google\."],
-		domain_type	=>	'search engine',
-		keywords_param =>	'q',
-#		regexp_keywords	=>	'q=(.*?)\&',
-	},
-	'zoohoo.sk'	=>	
-	{
-		urls			=>	["zoohoo\.sk"],
-		domain_type	=>	'search engine',
-		keywords_param =>	'q',
-#		regexp_keywords	=>	'(.*?)',
-	},
-	'search.centrum.sk'	=>	
-	{
-		urls			=>	["search.*?\.centrum\.sk"],
-		domain_type	=>	'search engine',
-		keywords_param =>	'q',
-#		regexp_keywords	=>	'(.*?)',
-	},
-	'hladaj.atlas.sk'	=>	
-	{
-		urls			=>	["hladaj\.atlas\.sk"],
-		domain_type	=>	'search engine',
-		keywords_param =>	'phrase',
-#		regexp_keywords	=>	'(.*?)',
-	},
-	'search.szm.sk'	=>	
-	{
-		urls			=>	["search\.szm\.sk"],
-		domain_type	=>	'search engine',
-		keywords_param =>	'WS',
-#		regexp_keywords	=>	'(.*?)',
-	},
-	'zoznam.sk'	=>	
-	{
-		urls			=>	["zoznam\.sk"],
-		domain_type	=>	'search engine',
-		keywords_param =>	's',
-#		regexp_keywords	=>	'(.*?)',
-	},
-	'seznam.cz'	=>	
-	{
-		urls			=>	["seznam\.cz"],
-		domain_type	=>	'search engine',
-		keywords_param =>	'w',
-#		regexp_keywords	=>	'(.*?)',
-	},
-	'msn.com'	=>	
-	{
-		urls			=>	["msn\."],
-		domain_type	=>	'search engine',
-		keywords_param =>	'q',
-#		regexp_keywords	=>	'(.*?)',
-	},
-	'yahoo.com'	=>	
-	{
-		urls			=>	["yahoo\."],
-		domain_type	=>	'search engine',
-		keywords_param =>	'p',
-#		regexp_keywords	=>	'[&\?]p=(.*?)(\&|$)',
-	},
-	'aolsearch'	=>	
-	{
-		urls			=>	["aolsearch\.aol\.co\.uk"],
-		domain_type	=>	'search engine',
-		keywords_param =>	'query',
-#		regexp_keywords	=>	'[&\?]p=(.*?)(\&|$)',
-	},
-	'search.netscape'	=>	
-	{
-		urls			=>	["netscape\.com"],
-		domain_type	=>	'search engine',
-		keywords_param =>	'query',
-#		regexp_keywords	=>	'[&\?]p=(.*?)(\&|$)',
-	},
-	'mywebsearch.com' =>
-	{
-		urls			=>	["mywebsearch\.com"],
-		domain_type	=>	'search engine',
-		keywords_param =>	'searchfor',
-#		regexp_keywords	=>	'[&\?]p=(.*?)(\&|$)',
-	},
-	'freshmeat.net/search' =>
-	{
-		urls			=>	["freshmeat\.net/search/"],
-		domain_type	=>	'search engine',
-		keywords_param =>	'q',
-#		regexp_keywords	=>	'[&\?]p=(.*?)(\&|$)',
-	},
-	'live.com' => # 2007-04-12
-	{
-		urls => ["live\.com"],
-		domain_type => 'search engine',
-		keywords_param => 'q',
-	},
-	'search.bearshare.com' => # 2007-04-12
-	{
-		urls => ["search\.bearshare\.com"],
-		domain_type => 'search engine',
-		keywords_param => 'q',
-	},
-	'ask.com' => # 2007-04-12
-	{
-		urls => ["ask\.com"],
-		domain_type => 'search engine',
-		keywords_param => 'q',
-	},
-	'search.imesh.com' => # 2007-04-12
-	{
-		urls => ["search\.imesh\.com"],
-		domain_type => 'search engine',
-		keywords_param => 'q',
-	},
-	'search.myway.com' => # 2007-04-12
-	{
-		urls => ["search\.myway\.com"],
-		domain_type => 'search engine',
-		keywords_param => 'searchfor',
-	},
-	'best.sk' => # 2007-04-12
-	{
-		urls => ["best\.sk"],
-		domain_type => 'search engine',
-		keywords_param => 'searchfor',
-	},
-	'azet.sk' => # 2007-04-12
-	{
-		urls => ["azet\.sk"],
-		domain_type => 'search engine',
-		keywords_param => 'sq',
-	},
-);
+
+
+
 
 =head1 FUNCTIONS
 
