@@ -649,7 +649,7 @@ sub execute
 
 =head1 SEE ALSO
 
-L<130-send.0.mdl|source-doc/"_mdl/130/130-send.0.mdl">
+L<130-send.0.mdl|app/"130/_mdl/130-send.0.mdl">
 
 =cut
 
