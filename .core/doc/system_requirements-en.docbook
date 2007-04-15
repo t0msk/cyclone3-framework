@@ -115,6 +115,10 @@
       <listitem>
         <para>XML::Generator</para>
       </listitem>
+
+      <listitem>
+        <para>XML::XPath</para>
+      </listitem>
     </itemizedlist>
 
     <itemizedlist spacing="compact">
