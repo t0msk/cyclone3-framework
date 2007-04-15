@@ -26,41 +26,58 @@
   <section>
     <title>Checks</title>
 
-    <para>This is a non-exhaustive list of the checks this tool
-    performs:</para>
+    <para>This is a list of the checks this tool performs:</para>
 
     <itemizedlist>
       <listitem>
-        <para>Right files being present in a package</para>
+        <para><emphasis role="bold">Mimetype</emphasis> and file extension
+        exist and correspond</para>
       </listitem>
 
       <listitem>
-        <para>Mimetype and file extension exist and correspond</para>
-      </listitem>
-
-      <listitem>
-        <para>That all XML is valid XML</para>
-      </listitem>
-
-      <listitem>
-        <para>Manifest.xml exists and is correct according to the RelaxNG
-        schema</para>
-      </listitem>
-
-      <listitem>
-        <para>Content.xml, meta.xml, settings.xml and styles.xml exist and are
+        <para><emphasis role="bold">Manifest.xml</emphasis> exists and is
         correct according to the RelaxNG schema</para>
       </listitem>
 
       <listitem>
-        <para>That all defined XML namespaces that are used are correct
-        according to the OpenDocument specification <action>[in
-        development]</action></para>
+        <para><emphasis role="bold">Right files</emphasis> being present in a
+        package (<filename>content.xml</filename>,
+        <filename>styles.xml</filename>, <filename>settings.xml</filename>,
+        ...)</para>
       </listitem>
 
       <listitem>
-        <para>That all defined included files (images) are correct in ODF file
+        <para><filename>Content.xml</filename>, <filename>meta.xml</filename>,
+        <filename>settings.xml</filename> and <filename>styles.xml</filename>
+        are correct according to the RelaxNG schema and is <emphasis
+        role="bold">valid XML</emphasis></para>
+      </listitem>
+
+      <listitem>
+        <para>Checks if all <emphasis role="bold">images</emphasis> are
+        included in zipped archive</para>
+      </listitem>
+
+      <listitem>
+        <para>Checks that all included images are <emphasis
+        role="bold">correct images</emphasis> (usable file type)</para>
+      </listitem>
+
+      <listitem>
+        <para>That all defined <emphasis role="bold">XML namespaces</emphasis>
+        that are used are correct according to the OpenDocument specification
         <action>[in development]</action></para>
+      </listitem>
+
+      <listitem>
+        <para>Check <emphasis role="bold">objects</emphasis> for the use of
+        ODF’s accessibility features <action>[in development]</action></para>
+      </listitem>
+
+      <listitem>
+        <para>Verifying that every <emphasis role="bold">style</emphasis> that
+        is used is actually defined somewhere <action>[in
+        development]</action></para>
       </listitem>
     </itemizedlist>
   </section>
@@ -70,7 +87,8 @@
 
     <para>This is very much alpha software right now. It may warn or error on
     things which are valid OpenDocument; similarly, it may miss obvious
-    problems with files. Let odf-devel know how you get on.</para>
+    problems with files. Let us know how you get on (leave your own comment on
+    this page)</para>
   </section>
 
   <section>
@@ -86,9 +104,15 @@
 
     <para><ulink type=""
     url="?|?section=ext&amp;file=OpenDocument4CMS/">Extension
-    OpenDocument4CMS</ulink> <ulink
-    url="http://www.opendocumentfellowship.org/development/projects/odftools">ODFtools</ulink>
-    <ulink url="http://www.opendocumentfellowship.org">OpenDocument
+    OpenDocument4CMS</ulink></para>
+
+    <para><ulink
+    url="http://www.opendocumentfellowship.org/development/projects/odftools">ODFtools</ulink></para>
+
+    <para><ulink url="http://www.opendocumentfellowship.org">OpenDocument
     Fellowship</ulink></para>
+
+    <para><ulink url="http://odfvalidator.cyclone3.org/fellowship">Online
+    ODFvalidator</ulink></para>
   </section>
 </article>
