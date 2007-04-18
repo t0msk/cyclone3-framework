@@ -153,6 +153,7 @@ Režim zoznamu:
    <t_name><%t_name%></t_name>
    <lng><%lng%></lng>
    <status><%status%></status>
+   <visible><![CDATA[<%visible%>]]></visible>
    <is_default><%is_default%></is_default>
   </item>
   <#item#>
@@ -333,6 +334,7 @@ sub execute
 			t_name,
 			lng,
 			status,
+			visible,
 			is_default
 		FROM
 			a210_page
@@ -436,6 +438,7 @@ $where
 			$XSGN{'NULL'}=~s|<%datetime_create%>|$entity->{'datetime_create'}|g;
 			$XSGN{'NULL'}=~s|<%t_name%>|$entity->{'t_name'}|g;
 			$XSGN{'NULL'}=~s|<%status%>|$entity->{'status'}|g;
+			$XSGN{'NULL'}=~s|<%visible%>|$entity->{'visible'}|g;
 			$XSGN{'NULL'}=~s|<%is_default%>|$entity->{'is_default'}|g;
 			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
 			

@@ -60,6 +60,13 @@
 
       <listitem>
         <para><ulink
+        url="?|?section=app&amp;file=210/_mdl/210-page_visible.0.mdl">210-page_visible.0.mdl</ulink></para>
+
+        <para>Changes visibility of a page (in menu)</para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
         url="?|?section=app&amp;file=210/_mdl/210-page_setasdefault.0.mdl">210-page_setasdefault.0.mdl</ulink></para>
 
         <para>Sets requested page as default</para>

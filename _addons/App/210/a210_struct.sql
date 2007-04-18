@@ -15,6 +15,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_page` (
   `t_keys` text NOT NULL, -- kluce uchovavane ako CVML
   `is_default` char(1) character set ascii NOT NULL default 'N',
   `lng` char(2) character set ascii NOT NULL default '',
+  `visible` char(1) character set ascii NOT NULL default 'Y',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -34,6 +35,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_page_j` (
   `t_keys` text NOT NULL,
   `is_default` char(1) character set ascii NOT NULL default 'N',
   `lng` char(2) character set ascii NOT NULL default '',
+  `visible` char(1) character set ascii NOT NULL default 'Y',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -20,6 +20,7 @@
 	<t_name><![CDATA[<%t_name%>]]></t_name>
 	<lng><![CDATA[<%lng%>]]></lng>
 	<status><![CDATA[<%status%>]]></status>
+	<visible><![CDATA[<%visible%>]]></visible>
 	<is_default><![CDATA[<%is_default%>]]></is_default>
 </item>
 <#item#>
