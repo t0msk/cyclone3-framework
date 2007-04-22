@@ -1,0 +1,64 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+$authors="roman.fordinal\@comsultia.com";
+use strict;
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+	
+	if (($env{xt_xlng}) || ($env{xlng}))
+	{
+		main::_log("using xlng transformation");
+		if ($env{xlng}) { main::_log("WARNING! using deprecated parameter 'xlng'! please, use 'xt_xlng';"); }
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
+	my $lngstring="";
+	$lngstring = "AND lng='$env{db_lng}'" if $env{db_lng};
+	
+	
+	if((!$env{db_ID}) || (!$env{db_IDcat}))
+	{
+		$XSGN{TMP}=$XSGN{RESULT_failure_no_input};
+		if(!$env{db_ID}) {$XSGN{TMP}=~s|<%missing_parameter%>|db_ID|;}
+		if(!$env{db_IDcat}) {$XSGN{TMP}=~s|<%missing_parameter%>|db_IDcat|;}
+	}
+	else
+	{
+		$env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
+		$env{db_400}=$TOM::DB{main}{name} unless $env{db_400};
+		my $success;
+		my $db;
+		my %db_line;
+		
+		my $sql=qq{
+			UPDATE
+				$env{'db_400'}.a400
+			SET
+				IDcategory='$env{'db_IDcat'}'
+			WHERE
+				ID=$env{'db_ID'}
+				$lngstring
+			LIMIT 1
+		};
+		TOM::Database::SQL::execute($sql);
+		
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		
+	}
+	
+	$XSGN{TMP}=~s|<%IDapp%>|a400|g;
+	$XSGN{TMP}=~s|<%ID%>|$env{db_ID}|g;
+	$XSGN{TMP}=~s|<%lng%>|$env{db_lng}|g;
+	
+	return 1;
+}
+1;
