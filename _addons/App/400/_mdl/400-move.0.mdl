@@ -35,21 +35,39 @@ sub execute
 	{
 		$env{db_400}=Tomahawk::Getmdlvar("400","db") unless $env{db_400};
 		$env{db_400}=$TOM::DB{main}{name} unless $env{db_400};
-		my $success;
-		my $db;
-		my %db_line;
 		
-		my $sql=qq{
-			UPDATE
-				$env{'db_400'}.a400
-			SET
-				IDcategory='$env{'db_IDcat'}'
-			WHERE
-				ID=$env{'db_ID'}
-				$lngstring
-			LIMIT 1
-		};
-		TOM::Database::SQL::execute($sql);
+		if ($env{'db_ID'}=~/;/)
+		{
+			foreach my $ID (split(';',$env{'db_ID'}))
+			{
+				next unless $ID;
+				my $sql=qq{
+					UPDATE
+						$env{'db_400'}.a400
+					SET
+						IDcategory='$env{'db_IDcat'}'
+					WHERE
+						ID=$ID
+						$lngstring
+					LIMIT 1
+				};
+				TOM::Database::SQL::execute($sql);
+			}
+		}
+		else
+		{
+			my $sql=qq{
+				UPDATE
+					$env{'db_400'}.a400
+				SET
+					IDcategory='$env{'db_IDcat'}'
+				WHERE
+					ID=$env{'db_ID'}
+					$lngstring
+				LIMIT 1
+			};
+			TOM::Database::SQL::execute($sql);
+		}
 		
 		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
 		
