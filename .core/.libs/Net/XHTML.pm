@@ -393,7 +393,6 @@ sub prepare_last
 			$self->{OUT}{HEADER}=~s|<%DESCRIPTION%>| <meta name="description" lang="$key" content="$self->{env}{DOC_description}{$key}" />\n<%DESCRIPTION%>|;
 		}
 	}
-
 	
 	# aplikujem DOC_css_link
 	my $DOC_css_link;
@@ -408,8 +407,6 @@ sub prepare_last
 	
 	$self->{OUT}{HEADER}=~s|<%domain%>|$tom::H#$env{result}|;
 	
-	TOM::Utils::vars::replace($self->{OUT}{HEADER});
-	TOM::Utils::vars::replace($self->{OUT}{BODY});
 	
  return 1;
 }

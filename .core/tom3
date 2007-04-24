@@ -1691,6 +1691,10 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		
+		# Replace all variables available in document
+		TOM::Utils::vars::replace($main::H->{'OUT'}{'HEADER'});
+		TOM::Utils::vars::replace($main::H->{'OUT'}{'BODY'});
+		
 		
 		my $var_replace;
 		$var_replace=1 if $file_data=~s|<#\$|<\$|g; # priprava pre next data
