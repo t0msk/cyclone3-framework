@@ -6,7 +6,7 @@ use encoding 'utf8';
 use utf8;
 $authors="fordinal\@webcom.sk;nemsak\@webcom.sk";
 use strict;
-use App::400;
+use App::400::_init;
 
 =head1 NAME
 fview_m1
@@ -292,6 +292,7 @@ sub execute
 				%article,
 				return_null	=>	$env{fview_return_null},
 				xt_xlng				=>	$env{fview_xt_xlng},
+				'ignore_n' => 1,
 			) if (exists $env{fview_TMP});
 
 			$env{same_category_xsgn_global}=$env{xsgn_global} unless $env{same_category_xsgn_global};
