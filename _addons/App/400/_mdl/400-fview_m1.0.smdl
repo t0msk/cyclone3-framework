@@ -6,7 +6,7 @@ use encoding 'utf8';
 use utf8;
 $authors="fordinal\@webcom.sk;nemsak\@webcom.sk";
 use strict;
-use App::400;
+use App::400::_init;
 
 =head1 NAME
 fview_m1
@@ -46,6 +46,24 @@ sub execute
 	# nevyzadujem vzdy aby clanok bol v nejakej kategorii, ale vyzadujem to defaultne
 	# poslanim db_IDcategory_ => 0 z TypeID mozem podmienku negovat
 	$env{'db_IDcategory_'}=1 if not exists $env{'db_IDcategory_'};
+
+	if(($env{default_db_IDcategory})&&(!$env{db_IDcategory})){
+		main::_log("no category ID defined, applying default: ".$env{default_db_IDcategory}.".");
+		$env{db_IDcategory}=$env{default_db_IDcategory};
+	}
+	if(($env{default_db_IDname_category})&&(!$env{db_IDname_category})){
+		main::_log("no category IDname defined, applying default: ".$env{default_db_IDname_category}.".");
+		$env{db_IDname_category}=$env{default_db_IDname_category};
+	}
+
+	if(($env{default_db_ID})&&(!$env{db_ID})){
+		main::_log("no ID defined, applying default: ".$env{default_db_ID}.".");
+		$env{db_ID}=$env{default_db_ID};
+	}
+	if(($env{default_db_IDname})&&(!$env{db_IDname})){
+		main::_log("no IDname defined, applying default: ".$env{default_db_IDname}.".");
+		$env{db_IDname}=$env{default_db_IDname};
+	}
 
 	my %IDcategory_url_hash;
 	if ($env{IDcategory_url_allow})
@@ -247,7 +265,21 @@ sub execute
 			
 			#add title to html title tag
 			$main::H->add_DOC_title($article{_a400_title}) unless $env{DOC_title_disable};
-			$main::H->add_DOC_description($article{_a400_tiny}) unless $env{DOC_description_disable};
+			if (!$env{DOC_description_disable})
+			{
+				if ($article{_a400_tiny})
+				{
+					$main::H->add_DOC_description($article{_a400_tiny});
+				}
+				elsif ($article{_a400_subtitle})
+				{
+					$main::H->add_DOC_description($article{_a400_title}.' - '.$article{_a400_subtitle});
+				}
+				else
+				{
+					$main::H->add_DOC_description($article{_a400_title});
+				}
+			}
 			
 			#enable access to article data for use in modules following this one
 			$main::env{a400_IDauthor}=$article{'_a400_IDauthor'};
@@ -307,6 +339,8 @@ sub execute
 				%article,
 				return_null	=>	$env{fview_return_null},
 				xt_xlng				=>	$env{fview_xt_xlng},
+				
+				a500_fetch_originals	=>	$env{fview_a500_fetch_originals}
 			) if (exists $env{fview_TMP});
 
 			$env{same_category_xsgn_global}=$env{xsgn_global} unless $env{same_category_xsgn_global};
@@ -589,7 +623,7 @@ sub execute
 				main::_log("I got 404");
 				$main::page_statuscode="404";
 			}
-			
+			#return 1;
 			#$main::H->r_("<!TMP-".$env{TMP_view}."!>","article [".$env{ID}."] not found");
 		}
 	}
