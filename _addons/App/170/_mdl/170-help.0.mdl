@@ -39,7 +39,7 @@ sub execute
 			next unless $file=~/^$env_file\-(.*?)\.docbook$/;
 			my $version=$1;
 			main::_log("file='$file' version='$version'");
-			if ($version < $env{'version'} && $version>$version_max)
+			if ($version lt $env{'version'} && $version gt $version_max)
 			{
 				$version_max=$version;
 			}
