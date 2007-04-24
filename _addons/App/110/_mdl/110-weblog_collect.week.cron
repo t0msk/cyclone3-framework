@@ -16,6 +16,10 @@ Fills data into table TOM.a110_weblog_week from TOM.a110_weblog_rqs
 
 =item *
 
+L<App::110::_init|app/"110/_init.pm">
+
+=item *
+
 Time::Local
 
 =item *
@@ -26,7 +30,7 @@ DateTime
 
 =cut
 
-
+use App::110::_init;
 use Time::Local;
 use DateTime;
 use strict;
@@ -111,26 +115,19 @@ sub execute
 	main::_log("week $year/$week is defined byt date $b_year-$b_month-$b_day to $e_year-$e_month-$e_day");
 	
 	my $time_thisday;
-	my $db0=$main::DB{stats}->Query("
-		SELECT
-			reqdatetime
-		FROM
-			TOM.a110_weblog_day
-		ORDER BY
-			reqdatetime DESC
-		LIMIT 1");
-	if (my @db0_line=$db0->fetchrow)
+	my %last_request=App::110::SQL::get_last_active_request();
+	if ($last_request{'reqdate'})
 	{
-		$time_thisday=$db0_line[0];
-		$time_thisday=~s| \d\d:\d\d:\d\d$||; 
+		$time_thisday=$last_request{'reqdate'};
+		main::_log("last active row TOM.a110_weblog_rqs has date ='$time_thisday'");
 	}
 	else
 	{
-		my %date=Utils::datetime::ctodatetime($main::time_current,format=>1);
-		$time_thisday="$date{year}-$date{mom}-$date{mday}";
+		main::_log("none rows in TOM.a110_weblog_rqs - can't create statistics...");
+		return 1;
 	}
 	
-	main::_log("last day for data mining \"$time_thisday\"");
+	main::_log("last day available for data mining \"$time_thisday\"");
 	
 	if ("$e_year-$e_month-$e_day" gt $time_thisday)
 	{
