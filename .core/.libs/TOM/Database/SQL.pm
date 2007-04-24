@@ -159,6 +159,33 @@ sub execute
 	return %output;
 }
 
+
+
+=head2 get_database_version
+
+Return version of database identified by database handler name
+
+ my $version=TOM::Database::SQL::get_database_version('main');
+
+=cut
+
+sub get_database_version
+{
+	my $db_h=shift;
+	
+	TOM::Database::connect::multi($db_h) unless $main::DB{$db_h};
+	
+	my $version=$main::DB{$db_h}->getserverinfo();
+		$version=~s|^([\d]+)\.([\d]+)\.(.*)$|\1.\2|;
+		
+	main::_log("MySQL version on handler '$db_h'='$version'");
+	
+	return $version;
+}
+
+
+
+
 =head1 SYNOPSIS
 
 Nainstalovat globalnu databazu aj s datami (ak je uz nainstalovana, aktualizovat)
