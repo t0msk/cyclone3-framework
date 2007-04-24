@@ -49,7 +49,7 @@ sub execute
 	
 	alarm(0);
 	
-	my $time_max=60*20;
+	my $time_max=60*60;
 	
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
