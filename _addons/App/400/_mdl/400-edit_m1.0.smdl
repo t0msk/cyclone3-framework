@@ -53,20 +53,22 @@ sub execute
 		}
 	}
 	
-	if(!$article_data{'IDeditor'}){
+	if(!$article_data{'IDeditor'})
+	{
 		main::_log("hladam editora");
-		
 		my $db0=$main::DB{main}->Query("
 			SELECT
 				ID
-			FROM $env{db_120}.a120
+			FROM
+				$env{db_120}.a120
 			WHERE
 				nickname='$ENV{REMOTE_USER}'
+				AND IDtype=1
 			LIMIT 1
 		");
 		if (my %db0_line=$db0->FetchHash())
 		{
-			$article_data{IDeditor}=$db0_line{ID};
+			$article_data{'IDeditor'}=$db0_line{'ID'};
 		}
 	}
 	
@@ -301,9 +303,10 @@ sub execute
 	if($article_data{IDeditor}){ $sqlAddon.=",IDeditor='".$article_data{IDeditor}."'"; }
 	if($article_data{IDcategory}){ $sqlAddon.=",IDcategory='".$article_data{IDcategory}."'"; }
 	
-	$article_data{full_decoded}=~s|>[\r\n\s]*?<|><|g;
-	$article_data{full_decoded}=~s|>[\r\n]*?(\S)|>\1|g;
-	$article_data{full_decoded}=~s|(\S)[\r\n\s]*?<|\1<|g;
+	$article_data{full_decoded}=~s|[\r\n]+| |g;
+	#$article_data{full_decoded}=~s|>[\r\n\s]*?<|><|g;
+	#$article_data{full_decoded}=~s|>[\r\n]*?(\S)|>\1|g;
+	#$article_data{full_decoded}=~s|(\S)[\r\n\s]*?<|\1 <|g;
 	
 	my $db4=$main::DB{main}->Query("
 		UPDATE
