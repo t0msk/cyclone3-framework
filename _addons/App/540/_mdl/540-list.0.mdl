@@ -4,7 +4,7 @@ package Tomahawk::module;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
-use App::540;
+use App::540::_init;
 use App::540::file;
 use strict;
 
@@ -96,6 +96,7 @@ sub execute
 	main::_log('limit: '.$limit);
 	for (my $i;$i < $limit;$i++)
 	{
+
 		# Rozumne formatovanie timestampu
 		my %time = Utils::datetime::ctodatetime( $files[$i]{'time'}, format => 1);
 
@@ -106,10 +107,13 @@ sub execute
 		$XSGN{TMP} =~s|<%IDarticle%>|$env{db_ID_a400}|g;
 		$XSGN{TMP} =~s|<%name%>|$files[$i]{name}|g;
 		$XSGN{TMP} =~s|<%mime%>|$files[$i]{mime}|g;
-		
+
+		main::_log('filename: '.$files[$i]{name});
+
 		#temporary 'extension' field solution
-		if($files[$i]{name}=~/^.*?\.(\w)$/){
+		if($files[$i]{name}=~/\.([^\.]+)$/){
 			my $var=$1;
+			main::_log('extension: '.$var);
 			$XSGN{TMP} =~s|<%extension%>|$var|g;
 		}
 
