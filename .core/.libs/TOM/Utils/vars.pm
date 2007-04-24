@@ -233,6 +233,11 @@ sub replace_sec
 		
 		main::_log("replacing variable '\$$var'");
 		
+		if ($env{'log'})
+		{
+			main::_log("[$tom::H] replacing variable '\$$var'",4,'secure',1);
+		}
+		
 		if ($var=~/(sub\{|do\{|&|\+|\*|\/|=|"|\||;)/)
 		{
 			main::_log("Unsecure variable replacement \"".
