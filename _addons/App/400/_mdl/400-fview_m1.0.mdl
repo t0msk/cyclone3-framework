@@ -118,9 +118,15 @@ sub execute
 	{ push @pages, $env{_a400_full}; $env{page}=0; }
 
 	#$env{_a400_full}=~s|\n|<br />|g;
-	$pages[$env{page}]=~s|\n|<br />|g;
+	$pages[$env{page}]=~s|\n|<br />|g unless $env{'ignore_n'};
 	1 while ($pages[$env{page}]=~s|<br ?\/?>$||gi);
 
+	main::_log('before hotfixing: '.$pages[$env{page}]);
+
+	#hotfix: repairing of invalid tags
+	$pages[$env{page}]=~s|<br>|<br />|gi;
+
+	main::_log('after hotfixing: '.$pages[$env{page}]);
 
 	my $db0=$main::DB{main}->Query("
 		SELECT
@@ -183,6 +189,7 @@ sub execute
 
 		#Tomahawk::debug::log(6,"extracting photo ".$counter);
 		my %env0=CML::VARhash($1);
+		my %env_original;
 
 		main::_log("found image ID: $env0{id}");
 
@@ -190,6 +197,7 @@ sub execute
 		#$env0{format}=$env{a500_format} unless $env0{format};
 		#$env0{format}=$env{a500_format_hard} if $env{a500_format_hard};
 
+		$env_original{format}="o";
 
 		# if exists, use the standard format defined in type
 		$env0{format}=$env{a500_format} if $env{a500_format};
@@ -199,6 +207,11 @@ sub execute
 		#if it's not already defined, fetch info about format
 		$env{$env0{format}.'_hash'}=Tomahawk::Getmdlvar("500",$env0{format}.'_hash',db=>$env{db_500}) unless (exists $env{$env0{format}.'_hash'});
 		main::_log("is ".$env0{format}."_hash a hashed image format? ".$env{$env0{format}.'_hash'});
+
+		if($env0{format}!='o'){
+			$env{'o_hash'}=Tomahawk::Getmdlvar("500",'o_hash',db=>$env{db_500}) unless (exists $env{'o_hash'});
+			main::_log("is o_hash a hashed image format? ".$env{'o_hash'});
+		}
 
 		# fetching image's h&w from _config table, if undefined in <myPHOTO> tag
 		if ((!$env0{width})&&(!$env0{height})) # len pokial su nezname obdidve velkosti
@@ -215,6 +228,9 @@ sub execute
 		my $var;
 		#my $zeroid=$photos[$counter];if ($zeroid=~/^(....)/i){$var=$1};
 		my $zeroid=sprintf('%07d',$env0{id});
+		
+		my $zeroid_original=$zeroid;
+		
 		if ($zeroid=~/^(....)/i){$var=$1};
 		#Tomahawk::debug::log(9,"!$zeroid!$var!");
 		if ($env{$env0{format}.'_hash'})
@@ -256,6 +272,35 @@ sub execute
 			{
 				main::_log($db0->errstr());
 			}
+			
+			if($env{a500_fetch_originals}){
+				main::_log('fetching original image');
+				my $db1=$main::DB{main}->Query("
+					SELECT
+						a.hash,b.about,b.keywords
+					FROM $env{db_500}.a500 AS a
+					LEFT JOIN $env{db_500}.a500_attrs AS b ON a.IDattrs=b.IDattrs
+					WHERE
+						a.ID='$zeroid_original'
+						AND a.format='o'
+						AND (a.lng='$env{lng}' OR a.lng='')
+						AND a.active='Y'
+					LIMIT 1
+				");
+				if (my %db1_line=$db1->FetchHash)
+				{
+					$zeroid_original=$db1_line{hash};
+					$env_original{alt}=$db1_line{about};
+					$env_original{keywords}=$db1_line{keywords};
+
+					$env_original{name}=$zeroid_original."-o.jpg";
+					$env_original{fullpath}=$tom::H_500."/".$var."/".$zeroid_original."-o.jpg";
+				}
+				else
+				{
+					main::_log($db1->errstr());
+				}
+			}
 		}
 
 		#Tomahawk::debug::log(9,"!$zeroid!$var!");
@@ -286,6 +331,15 @@ sub execute
 		$XSGN{NULL}=~s|<%ID%>|$env0{id}|g;
 		$XSGN{NULL}=~s|<%keywords%>|$env0{keywords}|g;delete $env0{keywords};
 		$XSGN{NULL}=~s|<%about%>|$env0{alt}|g;delete $env0{alt};
+
+		if($env{a500_fetch_originals}){
+			main::_log('replacing original image');
+			$XSGN{NULL}=~s|<%original_name%>|$env_original{name}|g;delete $env_original{name};
+			$XSGN{NULL}=~s|<%original_fullpath%>|$env_original{fullpath}|g;delete $env_original{fullpath};
+			$XSGN{NULL}=~s|<%original_ID%>|$env_original{id}|g;
+			$XSGN{NULL}=~s|<%original_keywords%>|$env_original{keywords}|g;delete $env_original{keywords};
+			$XSGN{NULL}=~s|<%original_about%>|$env_original{alt}|g;delete $env_original{alt};
+		}
 
 		$env0{align}="left" unless $env0{align};
 
@@ -542,6 +596,7 @@ sub execute
 		{
 			$env{'_a400_author'}=$db0_line{fullname};
 			$env{'_a400_author_nick'}=$db0_line{nickname};
+			$main::env{'a400_IDauthor_fullname'}=$db0_line{fullname};
 		}
 	}
 
