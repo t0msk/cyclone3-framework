@@ -49,7 +49,7 @@ sub new
 		my $SQL="SET AUTOCOMMIT=0";
 		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1) if $self->{'supported'};
 		
-		my $SQL="START TRANSACTION WITH CONSISTENT SNAPSHOT";
+		my $SQL="START TRANSACTION";
 		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1) if $self->{'supported'};
 		
 	}
