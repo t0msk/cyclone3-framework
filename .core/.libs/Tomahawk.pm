@@ -1120,6 +1120,7 @@ sub designmodule
 	$mdl_env{-category}=0 unless $mdl_env{-category};
 	$mdl_env{-xsgn}=$tom::dsgn unless $mdl_env{-xsgn}; # SAJRAJT
 	$mdl_env{-xlng}=$tom::lng unless $mdl_env{-xlng};
+	$mdl_env{'-convertvars'}=1 unless exists $mdl_env{'-convertvars'};
 	
 	if ($mdl_env{-TMP_check})
 	{
