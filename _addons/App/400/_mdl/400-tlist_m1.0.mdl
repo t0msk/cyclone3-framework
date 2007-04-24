@@ -4,7 +4,7 @@ package Tomahawk::module;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
-$authors="nemsak\@webcom.sk";
+$authors="nemsak\@webcom.sk;matej.gregor\@comsultia.com";
 use strict;
 use App::400::_init;
 
@@ -103,7 +103,7 @@ sub execute
 		main::_log("sorting by priority from level ".$tmp);
 	}
 
-	$env{db_select}="a400.title, a400.subtitle, a400.tiny, a400.IDcategory" unless $env{db_select};
+	$env{db_select}="a400.title, a400.IDname, a400.subtitle, a400.tiny, a400.IDcategory" unless $env{db_select};
 
 	if($env{db_where})
 	{
@@ -113,7 +113,7 @@ sub execute
 	{
 		$env{db_where}.="a400_category.IDname='$env{db_IDname_category}'" if($env{db_IDname_category});
 	}
-	
+
 	if($env{db_where})
 	{
 		$env{db_where}.=" AND a400.IDname='$env{db_IDname}'" if($env{db_IDname});
@@ -720,7 +720,7 @@ sub execute
 			}
 		}
 	}
-	
+
 	return 1;
 }
 
