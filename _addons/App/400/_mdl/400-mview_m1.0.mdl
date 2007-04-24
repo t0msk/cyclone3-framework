@@ -6,7 +6,7 @@ use encoding 'utf8';
 use utf8;
 $authors="nemsak\@webcom.sk";
 use strict;
-use App::400;
+use App::400::_init;
 
 =head1 NAME
 mview_m1
@@ -164,13 +164,13 @@ sub execute
 	);
 
 	$list->prepare();
-	
+
 	my $line_counter;
-	
+
 	if ($list->execute())
 	{
 		main::_log($list->{Query});
-	
+
 		Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
 		if (($env{xt_xlng}) || ($env{xlng}))
 		{
@@ -183,13 +183,13 @@ sub execute
 		if (my %db_line=$list->fetchhash())
 		{
 			$line_counter++;
-			
+
 			if ($env{'format'})
 			{
 				$db_line{full}=~s|\n|<br />|g;
 				1 while ($db_line{full}=~s|<br ?\/?>$||gi);
 			}
-			
+
 			# retrieving image
 			if ($db_line{xrelated}=~/<VAR id="a500" value="(.*?)" \/>/)
 			{
@@ -449,66 +449,66 @@ sub execute
 			if ($env{datetime_allow})
 			{
 				my %env0=Utils::datetime::ctodatetime($db_line{starttime},format=>1);
-			
+
 				$XSGN{TMP}=~s|<%day%>|$env0{mday}|g;
 				$XSGN{TMP}=~s|<%month%>|$env0{mom}|g;
 				$XSGN{TMP}=~s|<%year%>|$env0{year}|g;
 				$XSGN{TMP}=~s|<%hour%>|$env0{hour}|g;
 				$XSGN{TMP}=~s|<%minute%>|$env0{min}|g;
 				$XSGN{TMP}=~s|<%second%>|$env0{sec}|g;
-			
+
 				$XSGN{TMP}=~s|<%day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
 				$XSGN{TMP}=~s|<%day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
 				$XSGN{TMP}=~s|<%month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
 				$XSGN{TMP}=~s|<%month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
-			
+
 				$XSGN{TMP}=~s|<%starttime_day%>|$env0{mday}|g;
 				$XSGN{TMP}=~s|<%starttime_month%>|$env0{mom}|g;
 				$XSGN{TMP}=~s|<%starttime_year%>|$env0{year}|g;
 				$XSGN{TMP}=~s|<%starttime_hour%>|$env0{hour}|g;
 				$XSGN{TMP}=~s|<%starttime_minute%>|$env0{min}|g;
 				$XSGN{TMP}=~s|<%starttime_second%>|$env0{sec}|g;
-			
+
 				$XSGN{TMP}=~s|<%starttime_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
 				$XSGN{TMP}=~s|<%starttime_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
 				$XSGN{TMP}=~s|<%starttime_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
 				$XSGN{TMP}=~s|<%starttime_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
-				
+
 				%env0=Utils::datetime::ctodatetime($db_line{changetime},format=>1);
-			
+
 				$XSGN{TMP}=~s|<%ch_day%>|$env0{mday}|g;
 				$XSGN{TMP}=~s|<%ch_month%>|$env0{mom}|g;
 				$XSGN{TMP}=~s|<%ch_year%>|$env0{year}|g;
 				$XSGN{TMP}=~s|<%ch_hour%>|$env0{hour}|g;
 				$XSGN{TMP}=~s|<%ch_minute%>|$env0{min}|g;
 				$XSGN{TMP}=~s|<%ch_second%>|$env0{sec}|g;
-			
+
 				$XSGN{TMP}=~s|<%ch_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
 				$XSGN{TMP}=~s|<%ch_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
 				$XSGN{TMP}=~s|<%ch_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
 				$XSGN{TMP}=~s|<%ch_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
-			
+
 				$XSGN{TMP}=~s|<%changetime_day%>|$env0{mday}|g;
 				$XSGN{TMP}=~s|<%changetime_month%>|$env0{mom}|g;
 				$XSGN{TMP}=~s|<%changetime_year%>|$env0{year}|g;
 				$XSGN{TMP}=~s|<%changetime_hour%>|$env0{hour}|g;
 				$XSGN{TMP}=~s|<%changetime_minute%>|$env0{min}|g;
 				$XSGN{TMP}=~s|<%changetime_second%>|$env0{sec}|g;
-			
+
 				$XSGN{TMP}=~s|<%changetime_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
 				$XSGN{TMP}=~s|<%changetime_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
 				$XSGN{TMP}=~s|<%changetime_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
 				$XSGN{TMP}=~s|<%changetime_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
-			
+
 				%env0=Utils::datetime::ctodatetime($db_line{endtime},format=>1);
-			
+
 				$XSGN{TMP}=~s|<%endtime_day%>|$env0{mday}|g;
 				$XSGN{TMP}=~s|<%endtime_month%>|$env0{mom}|g;
 				$XSGN{TMP}=~s|<%endtime_year%>|$env0{year}|g;
 				$XSGN{TMP}=~s|<%endtime_hour%>|$env0{hour}|g;
 				$XSGN{TMP}=~s|<%endtime_minute%>|$env0{min}|g;
 				$XSGN{TMP}=~s|<%endtime_second%>|$env0{sec}|g;
-			
+
 				$XSGN{TMP}=~s|<%endtime_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
 				$XSGN{TMP}=~s|<%endtime_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
 				$XSGN{TMP}=~s|<%endtime_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
