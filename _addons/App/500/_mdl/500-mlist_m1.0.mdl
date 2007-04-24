@@ -512,6 +512,7 @@ sub execute
 			LEFT JOIN  $env{db_500}.a500_category AS a500_category ON a500.IDcategory=a500_category.ID
 			WHERE
 				$env{db_where}
+				a500.format = 't' AND
 				(a500.active='Y' OR a500.active='N')
 			GROUP BY a500.ID
 			ORDER BY

@@ -132,46 +132,31 @@ sub execute
 
 	# setting default db_order_by
 	$env{db_order_by}="a500.ID DESC" unless $env{db_order_by};
-
-	main::_log("
+	
+	my $sql=qq{
 		SELECT
 			a500.hash,
 			a500.IDcategory,
 			a500_attrs.*,
 			a500.ID,
+			a500.format,
 			a500_category.name
 		FROM $env{db_500}.a500 AS a500
 		LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.ID=a500_attrs.ID
 		LEFT JOIN  $env{db_500}.a500_category AS a500_category ON a500.IDcategory=a500_category.ID
 		WHERE
 			$env{db_where}
+			(a500.format='t') AND
 			(a500.active='Y' OR a500.active='N')
 		GROUP BY a500.ID
 		ORDER BY
 			$env{db_order_by}
 		LIMIT
 			$env{db_limit}
-	");
-
-	my $list=$main::DBH->Query("
-		SELECT
-			a500.hash,
-			a500.IDcategory,
-			a500_attrs.*,
-			a500.ID,
-			a500_category.name
-		FROM $env{db_500}.a500 AS a500
-		LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.ID=a500_attrs.ID
-		LEFT JOIN  $env{db_500}.a500_category AS a500_category ON a500.IDcategory=a500_category.ID
-		WHERE
-			$env{db_where}
-			(a500.active='Y' OR a500.active='N')
-		GROUP BY a500.ID
-		ORDER BY
-			$env{db_order_by}
-		LIMIT
-			$env{db_limit}
-	");
+	};
+	
+	main::_log($sql);
+	my $list=$main::DBH->Query($sql);
 
 	my $line_counter;
 
@@ -667,7 +652,9 @@ sub execute
 		$XSGN{NULL}=~s|<%page_real%>|$prevpage+1|ge;
 		$XSGN{TMP}=~s|<#PAGING_PREV#>|$XSGN{NULL}|;
 	}
-
+	
+	$XSGN{'TMP'}=~s|<%page_real%>|1|g;
+	
 	return 1;
 }
 
