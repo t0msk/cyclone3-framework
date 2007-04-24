@@ -6,7 +6,7 @@ use encoding 'utf8';
 use utf8;
 $authors="nemsak\@webcom.sk";
 use strict;
-use App::400;
+use App::400::_init;
 use App::400::format;
 
 =head1 NAME
@@ -423,7 +423,7 @@ sub execute
 
 						$XSGN{NULL0}=$XSGN{a540};
 
-						use App::540;
+						use App::540::_init;
 						use App::540::file;
 
 						my @db0_line = App::540::file::get( ID => $null);
