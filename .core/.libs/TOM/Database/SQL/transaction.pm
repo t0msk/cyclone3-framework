@@ -41,13 +41,16 @@ sub new
 	else
 	{
 		
+		$self->{'version'}=TOM::Database::SQL::get_database_version($self->{'db_h'});
+		$self->{'supported'}=1 if $self->{'version'} gt '4.0';
+		
 		main::_log("<={SQL:$self->{'db_h'}} START TRANSACTION");
 		
 		my $SQL="SET AUTOCOMMIT=0";
-		my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1);
+		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1) if $self->{'supported'};
 		
 		my $SQL="START TRANSACTION WITH CONSISTENT SNAPSHOT";
-		my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1);
+		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1) if $self->{'supported'};
 		
 	}
 	
@@ -74,7 +77,7 @@ sub close
 	{
 		main::_log("<={SQL:$self->{'db_h'}} END TRANSACTION");
 		my $SQL="SET AUTOCOMMIT=1";
-		my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1);
+		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1) if $self->{'supported'};
 	}
 	else
 	{
@@ -94,10 +97,10 @@ sub rollback
 	undef $handler{$self->{'db_h'}};
 	
 	my $SQL="ROLLBACK";
-	my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1);
+	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1) if $self->{'supported'};
 	
 	my $SQL="SET AUTOCOMMIT=1";
-	my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1);
+	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1) if $self->{'supported'};
 	
 	delete $self->{'db_h'};
 	return undef;
@@ -115,10 +118,10 @@ sub DESTROY
 	main::_log("<={SQL:$self->{'db_h'}} DESTROY TRANSACTION",1);
 	
 	my $SQL="ROLLBACK";
-	my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'quiet'=>1);
+	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'quiet'=>1) if $self->{'supported'};
 	
 	my $SQL="SET AUTOCOMMIT=1";
-	my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'quiet'=>1);
+	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'quiet'=>1) if $self->{'supported'};
 	
  	die "Not ended transaction on handler '$self->{'db_h'}'.";
 	
