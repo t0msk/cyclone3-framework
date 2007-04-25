@@ -72,8 +72,12 @@ sub sab_MHLog
 sub sab_MHError
 {
 	sab_MHLog(@_);
-	die "Dying from Sablotron errors, see log\n";
+	main::_log("Dying from Sablotron errors, see log",1);
+	return undef;
+	#die "Dying from Sablotron errors, see log\n";
 }
+
+
 
 =head1 FUNCTIONS
 
@@ -125,6 +129,7 @@ sub odf2xml
 	$t->close();
 	return $output;
 }
+
 
 
 =head2 extract('file:/')
@@ -193,6 +198,67 @@ sub extract
 	return bless $self,$class;
 }
 
+
+
+=head2 ->get_images
+
+Function return list of hashes with informations about included images
+
+ @images=$obj->get_images();
+ main::_log("first image source='".$images[0]{'src'}."'");
+
+=cut
+
+sub get_images
+{
+	my $self=shift;
+	
+	my $sab = new XML::Sablotron();
+	my $situa = new XML::Sablotron::Situation();
+	$sab->RegHandler(0,
+		{
+			MHMakeCode => \&sab_MHMakeCode,
+			MHLog => \&sab_MHLog,
+			MHError => \&sab_MHError
+		}
+	);
+	
+	my $output;
+	
+	if (-e $self->{'tmpdir'}.'/styles.xml')
+	{
+		$sab->process($situa, $DIR.'/xsl/get_images.xsl', $self->{'tmpdir'}.'/styles.xml', 'arg:/output');
+		$output.=$sab->getResultArg('arg:/output');
+	}
+	
+	if (-e $self->{'tmpdir'}.'/content.xml')
+	{
+		$sab->process($situa, $DIR.'/xsl/get_images.xsl', $self->{'tmpdir'}.'/content.xml', 'arg:/output');
+		$output.=$sab->getResultArg('arg:/output');
+	}
+	
+	main::_log("output=length(".(length($output)).")");
+	
+	my @images;
+	
+	while ($output=~s|<image>(.*?)</image>||)
+	{
+		my $image=$1;
+		my %hash;
+		while ($image=~s|<([\w]+)>(.*?)</\1>||)
+		{
+			my $var=$1;
+			my $val=$2;
+			$hash{$1}=$2;
+		}
+		push @images, {%hash};
+	}
+	
+	return @images;
+}
+
+
+
 sub close
 {
 	my $self=shift;
@@ -206,6 +272,7 @@ sub DESTROY
 	# cleaning
 	rmtree $self->{'tmpdir'};
 }
+
 
 =head1 AUTHORS
 
