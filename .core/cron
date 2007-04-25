@@ -115,15 +115,16 @@ CRON::waitload($CRON::LOADAVG);
 if (-e $CRON::P."/_config/cron.".$type.".cml" || -e $CRON::P."/_type/cron.".$type.".cml")
 {
 	main::_log("event '$type' defined");
-	if ($DBH = Mysql->Connect($TOM::DB{main}{host},$TOM::DB_name_TOM,$TOM::DB{main}{user},$TOM::DB{main}{pass}))
-	#if ($DBH = Mysql->Connect($TOM::DB_host,$TOM::DB_name,$TOM::DB_user,$TOM::DB_pass))
+	$TOM::DB{'main'}{'name'}='TOM' unless $TOM::DB{'main'}{'name'};
+	TOM::Database::connect::multi('main');
+	$DBH=$main::DB{'main'};
+	if ($DBH)
 	{main::_log("connect ok");}else
 	{
 		main::_log("cannot connect MySQL (), exiting",1);
 		main::_log("cannot connect MySQL (), exiting",1,"cron.err");
 		exit(0);
 	}
-	$main::DB{main}=$main::DBH; 
 	
 	
 	my $file_data;
@@ -293,11 +294,10 @@ foreach (sort keys %CRON::hosts)
 	 
 		if ($file_data=~/<MODULE>/)
 		{
-			$TOM::DB{main}{name}=$TOM::DB_name unless $TOM::DB{main}{name};
-			$DBH = Mysql->Connect($TOM::DB{main}{host},$TOM::DB_name_TOM,$TOM::DB{main}{user},$TOM::DB{main}{pass});
-			$main::DB{main}=$DBH;
+			$TOM::DB{'main'}{'name'}=$TOM::DB_name unless $TOM::DB{'main'}{'name'};
 			
-			$DBH->selectdb($TOM::DB{main}{name});
+			TOM::Database::connect::multi('main');
+			$DBH=$main::DB{'main'};
 			
 			while ($file_data=~s|<MODULE>(.*?)</MODULE>||s)
 			{
