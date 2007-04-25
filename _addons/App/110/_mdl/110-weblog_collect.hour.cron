@@ -161,7 +161,7 @@ sub execute
 			reqdatetime < '$time_endat' AND
 			reqtype IN ('B','m','w')
 		GROUP BY
-			substring(1,13,reqdatetime),domain,domain_sub
+			substring(reqdatetime,1,13),domain,domain_sub
 		ORDER BY
 			reqdatetime
 	};
@@ -184,7 +184,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				substring(1,13,reqdatetime) = '$date' AND
+				substring(reqdatetime,1,13) = '$date' AND
 				query_TID IN ('l_default','l_0000','m_default','g_default') AND
 				reqtype='B' AND
 				reqtype IN ('B','m','w') AND
@@ -200,7 +200,7 @@ sub execute
 			SELECT COUNT(*)
 			FROM TOM.a110_weblog_rqs
 			WHERE
-				substring(1,13,reqdatetime) = '$date' AND
+				substring(reqdatetime,1,13) = '$date' AND
 				domain_sub='$db0_line[2]'");
 		if (my @db1_line=$db1->fetchrow)
 		{
@@ -213,7 +213,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				substring(1,13,reqdatetime) = '$date' AND
+				substring(reqdatetime,1,13) = '$date' AND
 				page_code_referer='' AND
 				reqtype IN ('B','m','w') AND
 				domain_sub='$db0_line[2]'
@@ -236,7 +236,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				substring(1,13,reqdatetime) = '$date' AND
+				substring(reqdatetime,1,13) = '$date' AND
 				USRM_flag IN ('G','R') AND
 				reqtype IN ('B','m','w') AND
 				domain_sub='$db0_line[2]'
@@ -252,7 +252,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				substring(1,13,reqdatetime) = '$date' AND
+				substring(reqdatetime,1,13) = '$date' AND
 				result='failed' AND
 				domain_sub='$db0_line[2]'
 		");
@@ -319,7 +319,7 @@ sub execute
 			reqdatetime<'$time_endat' AND
 			reqtype IN ('B','m','w')
 		GROUP BY
-			substring(1,13,reqdatetime),domain
+			substring(reqdatetime,1,13),domain
 		ORDER BY
 			reqdatetime
 	};
@@ -343,7 +343,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				substring(1,13,reqdatetime) = '$date' AND
+				substring(reqdatetime,1,13) = '$date' AND
 				query_TID IN ('l_default','l_0000','m_default','g_default') AND
 				reqtype IN ('B','m','w') AND
 				domain='$db0_line[1]'");
@@ -359,7 +359,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				substring(1,13,reqdatetime) = '$date' AND
+				substring(reqdatetime,1,13) = '$date' AND
 				domain='$db0_line[1]'
 		");
 		if (my @db1_line=$db1->fetchrow)
@@ -373,7 +373,7 @@ sub execute
 		FROM
 			TOM.a110_weblog_rqs
 		WHERE
-			substring(1,13,reqdatetime) = '$date' AND
+			substring(reqdatetime,1,13) = '$date' AND
 			page_code_referer='' AND
 			reqtype IN ('B','m','w') AND
 			domain='$db0_line[1]'
@@ -389,7 +389,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				substring(1,13,reqdatetime) = '$date' AND
+				substring(reqdatetime,1,13) = '$date' AND
 				USRM_flag IN ('G','R') AND
 				reqtype IN ('B','m','w') AND
 				domain='$db0_line[1]'
@@ -405,7 +405,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				substring(1,13,reqdatetime) = '$date' AND
+				substring(reqdatetime,1,13) = '$date' AND
 				result='failed' AND
 				domain='$db0_line[1]'
 		");
