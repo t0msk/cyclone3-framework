@@ -1,0 +1,242 @@
+#!/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use Encode;
+use encoding 'utf8';
+use utf8;
+use strict; # scrict code
+
+=head1 NAME
+
+100-check_upgrade.0.cron
+
+=head1 DESCRIPTION
+
+Check if this Cyclone3 can be upgraded and send email about avalable upgrade to TECH_farm contact
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<TOM::Utils::datetime|source-doc/".core/.libs/TOM/Utils/datetime.pm">
+
+=item *
+
+L<TOM::Net::email|source-doc/".core/.libs/TOM/Net/email.pm">
+
+=item *
+
+MIME::Entity
+
+=item *
+
+L<App::100::_init|app/"100/_init.pm">
+
+=item *
+
+SVN::Ra
+
+=item *
+
+SVN::Log
+
+=back
+
+=cut
+
+
+use TOM::Utils::datetime;
+use TOM::Net::email;
+use MIME::Entity;
+use App::100::_init;
+use SVN::Ra;
+use SVN::Log;
+
+our $color_gray="#F2F2F2";
+our $color_red="#CD4545";
+our $color_green="#45CD45";
+our $color_black="#000000";
+
+
+sub execute
+{
+	my %env=@_;
+	
+	main::_log("actual revision='$TOM::core_revision'");
+	
+	my $ra = SVN::Ra->new($TOM::rev::repository);
+	my $HEAD=$ra->get_latest_revnum ();
+	main::_log("last available revision=r$HEAD");
+	
+	# find last stable revision
+	my $STABLE=TOM::rev::get_last_stable_revision();
+	main::_log("last stable revision=r$STABLE");
+	
+	if ($STABLE<=$TOM::core_revision)
+	{
+		main::_log("none upgrade available");
+		return 1;
+	}
+	
+	
+	my $body=<<"HEADER";
+<html>
+	<head>
+	</head>
+	<body>
+	
+		<style>
+		<!--
+			body
+			{
+				color: $color_black;
+			}
+			td
+			{
+				font-family: Verdana;
+				font-size: 12px;
+			}
+			.var
+			{
+				font-weight: bold;
+			}
+			.security
+			{
+				font-weight: bold;
+				color: red;
+			}
+			.major
+			{
+				font-weight: green;
+				font-weight: bold;
+			}
+			.fix
+			{
+				font-weight: bold;
+			}
+		-->
+		</style>
+		<table width="100%" cellspacing=1 cellpadding=3 bgcolor="#000000">
+			<tr>
+				<td bgcolor="$color_red" style="color:white;font-weight: bold;">Information</td>
+			</tr>
+			<tr>
+				<td bgcolor="$color_gray" class="value"><%MESSAGE%></td>
+			</tr>
+		</table>
+		<br/>
+		
+		<table width="100%" cellspacing=1 cellpadding=3 bgcolor="#000000">
+			<tr>
+				<td bgcolor="$color_red" style="color:white;font-weight: bold;">Changelog</td>
+			</tr>
+			<tr>
+				<td bgcolor="$color_gray">
+				
+				<table width="100%">
+					
+<#REVISION#>
+					
+				</table>
+				
+				</td>
+			</tr>
+		</table>
+		<br/>
+		
+	</body>
+</html>
+HEADER
+
+	my $REV=<<"HEADER";
+<#REVISION#>
+					<tr>
+						<td class="var" nowrap="nowrap" valign="top">r<%revision%></td>
+						<td class="value <\%class%>" nowrap="nowrap" width="100%"><%msg%></td>
+					</tr>
+HEADER
+	
+	main::_log("Cyclone3 upgrade available!");
+	$body=~s|<%MESSAGE%>|Upgrade for Cyclone3 Framework is available (r$TOM::core_revision to r$STABLE) at server <strong>$TOM::hostname</strong><br/>We highly recommend to upgrade this installation with console command '<strong>tom3-upgrade</strong>' or 'svn up' in directory /www/TOM|g;
+	
+	App::100::SQL::ircbot_msg_new("upgrade available from r$TOM::core_revision to r$STABLE");
+	
+	my $to=
+		TOM::Utils::vars::unique_split(
+			$TOM::contact{'TECH_farm'}.';'.
+			$TOM::contact{'DEV_farm'}.';'
+		);
+	
+	my $date = TOM::Utils::datetime::mail_current();
+	my $msg = MIME::Entity->build
+	(
+		'Type'    => "multipart/mixed",
+		'List-Id' => "Cyclone3",
+		'Date'    => $date,
+		'From'    => "Cyclone3 ('$TOM::hostname') <$TOM::contact{'from'}>",
+		'To'      => TOM::Net::email::convert_TO($to),
+		'Subject' => "Cyclone3 upgrade available!"
+	);
+	
+	
+	# list of changes
+	my $revs = SVN::Log::retrieve ($TOM::rev::repository, $TOM::core_revision+1,$STABLE);
+	
+	foreach my $rev (@{$revs})
+	{
+		# revision, date, author, message, paths
+		next unless $rev->{'message'};
+		next if $rev->{'message'}=~/\(minor\)/;
+		
+		my $class;
+		if ($rev->{'message'}=~/\[!\]/)
+		{
+			$class='fix';
+		}
+		if ($rev->{'message'}=~/\((security|major)\)/)
+		{
+			$class=$1;
+		}
+		
+		$rev->{'message'}=~s|\n|<br/>|g;
+		
+		my $null=$REV;
+		$null=~s|<%revision%>|$rev->{'revision'}|g;
+		$null=~s|<%msg%>|$rev->{'message'}|g;
+		$null=~s|<%class%>|$class|g;
+		
+		$body=~s|<#REVISION#>|$null|g;
+		
+	}
+	
+	$msg->attach
+	(
+		'Data' => $body,
+		'Type' => "text/html;charset=\"UTF-8\"",
+		'Encoding' => "8bit",
+	);
+	
+	my $email_body=$msg->as_string();
+	
+	$email_body=~s|<#.*?#>||g;
+	
+	TOM::Net::email::send
+	(
+		to => $to,
+		body => $email_body
+	);
+	
+	
+return 1}
+
+
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

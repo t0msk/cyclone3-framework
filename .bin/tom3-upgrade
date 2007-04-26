@@ -33,15 +33,12 @@ print "last revision=r$HEAD\n";
 # finding last stable version (message marked with '(stable)')
 my $revs = SVN::Log::retrieve ($TOM::rev::repository, $TOM::core_revision,$HEAD);
 
-my $STABLE=$TOM::core_revision;
-foreach my $rev (@{$revs})
-{
-	$STABLE=$rev->{'revision'} if $rev->{'message'}=~/\(stable\)/;
-}
+# find last stable revision
+my $STABLE=TOM::rev::get_last_stable_revision();
 
 print "last stable revision=r$STABLE\n";
 
-if ($STABLE==$TOM::core_revision)
+if ($STABLE<=$TOM::core_revision)
 {
 	print color 'bold red';
 	print "\n";
