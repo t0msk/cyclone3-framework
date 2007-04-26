@@ -1,0 +1,177 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use strict;
+
+=head1 NAME
+
+300-check.0.cron
+
+=head1 DESCRIPTION
+
+Checks data integrity of L<a300|app/"300/">
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	
+	main::_log("controling a300_users related to a300_users_attrs...");
+	my $sql=qq{
+		SELECT
+			a.IDhash AS IDhash_a,
+			b.IDhash AS IDhash_b
+		FROM
+			TOM.a300_users AS a
+		LEFT JOIN TOM.a300_users_attrs AS b ON
+		(
+			a.IDhash=b.IDhash
+		)
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash)
+	{
+		if (!$db0_line{'IDhash_b'})
+		{
+			main::_log("a300_users: IDhash='$db0_line{'IDhash_a'}' has no attrs",1);
+			
+			my %sth1=TOM::Database::SQL::execute("
+				SELECT IDhash
+				FROM TOM.a300_users_attrs_arch
+				WHERE IDhash='$db0_line{IDhash_a}'
+				LIMIT 1
+			",'quiet'=>1);
+			if (my %db1_line=$sth1{'sth'}->fetchhash)
+			{
+				main::_log("attrs in a300_users_attrs_arch, moving");
+				TOM::Database::SQL::execute(
+					"REPLACE INTO TOM.a300_users_attrs SELECT * FROM a300_users_attrs_arch WHERE IDhash='$db0_line{IDhash_a}' LIMIT 1",
+					'quiet' => 1
+				);
+				TOM::Database::SQL::execute(
+					"DELETE FROM TOM.a300_users_attrs_arch WHERE IDhash='$db0_line{IDhash_a}' LIMIT 1",
+					'quiet' => 1
+				);
+			}
+			else
+			{
+				main::_log("missing, repairing");
+				TOM::Database::SQL::execute(
+					"INSERT INTO TOM.a300_users_attrs(IDhash) VALUES('$db0_line{IDhash_a}')",
+					'quiet' => 1
+				);
+			}
+			
+		}
+	}
+	
+	
+	
+	main::_log("controling a300_users_arch related to a300_users_attrs_arch...");
+	my $sql=qq{
+		SELECT
+			a.IDhash AS IDhash_a,
+			b.IDhash AS IDhash_b
+		FROM
+			TOM.a300_users_arch AS a
+		LEFT JOIN TOM.a300_users_attrs_arch AS b ON
+		(
+			a.IDhash=b.IDhash
+		)
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash)
+	{
+		if (!$db0_line{'IDhash_b'})
+		{
+			main::_log("a300_users_arch: IDhash='$db0_line{'IDhash_a'}' has no attrs",1);
+			
+			my %sth1=TOM::Database::SQL::execute("
+				SELECT IDhash
+				FROM TOM.a300_users_attrs
+				WHERE IDhash='$db0_line{IDhash_a}'
+				LIMIT 1
+			",'quiet'=>1);
+			if (my %db1_line=$sth1{'sth'}->fetchhash)
+			{
+				main::_log("attrs in a300_users_attrs, moving");
+				TOM::Database::SQL::execute(
+					"REPLACE INTO TOM.a300_users_attrs_arch SELECT * FROM a300_users_attrs WHERE IDhash='$db0_line{IDhash_a}' LIMIT 1",
+					'quiet' => 1
+				);
+				TOM::Database::SQL::execute(
+					"DELETE FROM TOM.a300_users_attrs WHERE IDhash='$db0_line{IDhash_a}' LIMIT 1",
+					'quiet' => 1
+				);
+			}
+			else
+			{
+				main::_log("missing, repairing");
+				TOM::Database::SQL::execute(
+					"INSERT INTO TOM.a300_users_attrs_arch(IDhash) VALUES('$db0_line{IDhash_a}')",
+					'quiet' => 1
+				);
+			}
+			
+		}
+	}
+	
+	
+	
+	main::_log("controling a300_users_attrs related to a300_users...");
+	my $sql=qq{
+		SELECT
+			a.IDhash AS IDhash_a,
+			b.IDhash AS IDhash_b
+		FROM TOM.a300_users_attrs AS a
+		LEFT JOIN TOM.a300_users AS b ON
+		(
+			a.IDhash=b.IDhash
+		)
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash)
+	{
+		if (!$db0_line{'IDhash_b'})
+		{
+			main::_log("a300_users_attrs: IDhash='$db0_line{'IDhash_a'}' without user, repairing",1);
+			TOM::Database::SQL::execute(
+				"DELETE FROM TOM.a300_users_attrs WHERE IDhash='$db0_line{IDhash_a}' LIMIT 1",
+				'quiet' => 1
+			);
+		}
+	}
+	
+	
+	
+	main::_log("controling a300_users_attrs_arch related to a300_users_arch...");
+	my $sql=qq{
+		SELECT
+			a.IDhash AS IDhash_a,
+			b.IDhash AS IDhash_b
+		FROM TOM.a300_users_attrs_arch AS a
+		LEFT JOIN TOM.a300_users_arch AS b ON
+		(
+			a.IDhash=b.IDhash
+		)
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash)
+	{
+		if (!$db0_line{'IDhash_b'})
+		{
+			main::_log("a300_users_attrs_arch: IDhash='$db0_line{'IDhash_a'}' without user_arch, repairing",1);
+			TOM::Database::SQL::execute(
+				"DELETE FROM TOM.a300_users_attrs_arch WHERE IDhash='$db0_line{IDhash_a}' LIMIT 1",
+				'quiet' => 1
+			);
+		}
+	}
+	
+	
+	return 1
+}
+
+
+1;
