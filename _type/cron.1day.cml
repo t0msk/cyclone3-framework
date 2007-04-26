@@ -64,6 +64,5 @@
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="300" />
-	<VAR id="-name" value="clear" />
-		<VAR id="db_300" value="TOM" />
+	<VAR id="-name" value="cleaner" />
 </MODULE>

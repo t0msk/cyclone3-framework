@@ -1,0 +1,102 @@
+#!/usr/bin/perl
+package CRON::module;
+use strict;
+
+=head1 NAME
+
+300-cleaner.0.cron
+
+=head1 DESCRIPTION
+
+Removes old users (only anonymous) from L<a300|app/"300/"> user tables
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	my $loc;
+	
+	
+	
+	my $sql=qq{
+		SELECT
+			IDhash
+		FROM TOM.a300_users_arch
+		WHERE
+			login='' AND
+			rqs<2 AND
+			logtime<($main::time_current-(86400*31*6))
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	main::_log("removing users (last login >6month, anonymous, <2rqs) = '$sth0{'rows'}'");
+	
+	while (my %user=$sth0{'sth'}->fetchhash)
+	{
+		TOM::Database::SQL::execute(
+			"DELETE FROM TOM.a300_users_arch WHERE IDhash='$user{IDhash}' LIMIT 1",
+			'quiet'=>1);
+		TOM::Database::SQL::execute(
+			"DELETE FROM TOM.a300_users_attrs_arch WHERE IDhash='$user{IDhash}' LIMIT 1",
+			'quiet'=>1);
+	}
+	
+	
+	
+	my $sql=qq{
+		SELECT
+			IDhash
+		FROM TOM.a300_users_arch
+		WHERE
+			login='' AND
+			rqs<10 AND
+			logtime<($main::time_current-(86400*31*12))
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	main::_log("removing users (last login >12month, anonymous, <10rqs) = '$sth0{'rows'}'");
+	
+	while (my %user=$sth0{'sth'}->fetchhash)
+	{
+		TOM::Database::SQL::execute(
+			"DELETE FROM TOM.a300_users_arch WHERE IDhash='$user{IDhash}' LIMIT 1",
+			'quiet'=>1);
+		TOM::Database::SQL::execute(
+			"DELETE FROM TOM.a300_users_attrs_arch WHERE IDhash='$user{IDhash}' LIMIT 1",
+			'quiet'=>1);
+	}
+	
+	
+	
+	my $sql=qq{
+		SELECT
+			IDhash
+		FROM TOM.a300_users_arch
+		WHERE
+			login='' AND
+			logtime<($main::time_current-(86400*31*12*2))
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	main::_log("removing users (last login >2years, anonymous) = '$sth0{'rows'}'");
+	
+	while (my %user=$sth0{'sth'}->fetchhash)
+	{
+		TOM::Database::SQL::execute(
+			"DELETE FROM TOM.a300_users_arch WHERE IDhash='$user{IDhash}' LIMIT 1",
+			'quiet'=>1);
+		TOM::Database::SQL::execute(
+			"DELETE FROM TOM.a300_users_attrs_arch WHERE IDhash='$user{IDhash}' LIMIT 1",
+			'quiet'=>1);
+	}
+	
+	
+	
+	main::_log("removing email verifications older than 1 month");
+	
+	TOM::Database::SQL::execute("DELETE FROM TOM.a300_emailverify WHERE inserttime<($main::time_current-(31*86400))");
+	
+	return 1
+}
+
+
+
+1;
