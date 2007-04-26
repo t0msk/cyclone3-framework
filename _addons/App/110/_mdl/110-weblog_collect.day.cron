@@ -50,8 +50,9 @@ sub execute
 	}
 	else
 	{
-		$date_collect="1970-01-01";
-		main::_log("none data collected in TOM.a110_weblog_day",1);
+		my %first_request=App::110::SQL::get_first_active_request();
+		$date_collect=$first_request{'reqdate'};
+		main::_log("none data collected in TOM.a110_weblog_day - first active request from '$date_collect'",1);
 	}
 	
 	# add one day
@@ -387,6 +388,24 @@ sub execute
 		") || die "cannot insert!";
 	}
 	
+	if (!$i)
+	{
+		# when this day not contain any data, mark this day as collected without datas
+		TOM::Database::SQL::execute("
+			REPLACE INTO TOM.a110_weblog_day
+			(
+				reqdatetime,
+				domain,
+				domain_sub,
+			)
+			VALUES
+			(
+				'$date_collect',
+				'',
+				''
+			)
+		");
+	}
 	
  return 1}
 

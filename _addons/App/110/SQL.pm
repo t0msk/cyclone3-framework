@@ -70,7 +70,7 @@ sub get_last_active_request()
 		LIMIT 1
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'log'=>$DEBUG,'db_h'=>"stats");
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>undef,'log'=>$DEBUG,'db_h'=>'stats');
 	
 	my %data=$sth0{'sth'}->fetchhash();
 	
@@ -80,6 +80,47 @@ sub get_last_active_request()
 	return %data;
 }
 
+
+
+=head2 get_first_active_request()
+
+Returns informations about first active request in TOM.a110_weblog_rqs
+
+ my %data=get_first_active_request();
+
+=cut
+
+sub get_first_active_request()
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::get_first_active_request()");
+	
+	my %data;
+	
+	my $sql=qq{
+		SELECT
+			page_code,
+			reqtime,
+			reqdatetime,
+			DATE(reqdatetime) as reqdate
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			active='Y'
+		ORDER BY
+			reqdatetime ASC
+		LIMIT 1
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>undef,'log'=>$DEBUG,'db_h'=>'stats');
+	
+	my %data=$sth0{'sth'}->fetchhash();
+	
+	main::_log("returning datetime='$data{'reqdatetime'}'");
+	
+	$t->close();
+	return %data;
+}
 
 
 =head2 get_last_collected_hour()
