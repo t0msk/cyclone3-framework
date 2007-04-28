@@ -194,13 +194,25 @@
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=400/">400</ulink></emphasis> -
-            Articles (html) <emphasis>planned rewrite</emphasis></para>
+            Articles (html)</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=401/">401</ulink></emphasis> -
+            Articles (rewrite) <action>[in progress]</action></para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=410/">410</ulink></emphasis> -
             Polls</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=411/">411</ulink></emphasis> - Polls
+            (rewrite) <action>[in progress]</action></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -221,6 +233,15 @@
 
           <listitem>
             <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=501/">501</ulink></emphasis> - Images
+            (rewrite) <action>[in progress]</action></para>
+
+            <para>Storage for images and formats ( original, thumbnail, etc..
+            ), automatical conversions</para>
+          </listitem>
+
+          <listitem>
+            <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=520/">520</ulink></emphasis> -
             Document management system <action>[planning]</action></para>
 
@@ -230,6 +251,15 @@
           <listitem>
             <para><ulink url="?|?section=app&amp;file=540/"><emphasis
             role="bold">540</emphasis></ulink> - Files</para>
+
+            <para>Uploading, Downloading and management of file
+            storage.</para>
+          </listitem>
+
+          <listitem>
+            <para><ulink url="?|?section=app&amp;file=541/"><emphasis
+            role="bold">541</emphasis></ulink> - Files (rewrite) <action>[in
+            progress]</action></para>
 
             <para>Uploading, Downloading and management of file
             storage.</para>
