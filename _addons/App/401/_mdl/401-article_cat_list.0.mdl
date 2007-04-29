@@ -301,7 +301,8 @@ sub execute
 	#
 	
 	
-	
+	my $where_category="AND ID_category='$env{'ID'}'";
+	$where_category="AND ID_category IS NULL" unless $env{'ID'};
 	my $sql=qq{
 		SELECT
 			ID,
@@ -313,7 +314,7 @@ sub execute
 			status
 		FROM
 			a401_article
-		WHERE $where AND ID_category='$env{'ID'}'
+		WHERE $where $where_category
 		ORDER BY
 			datetime_create DESC
 	};
