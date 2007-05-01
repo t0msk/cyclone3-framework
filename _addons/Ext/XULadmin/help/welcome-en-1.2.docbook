@@ -51,6 +51,14 @@
       </listitem>
 
       <listitem>
+        <para><emphasis role="bold">Drag and Drop</emphasis></para>
+
+        <para>V Cyclone3 you can now freely in tab <quote>Sitemap</quote> drag
+        any page and in tab <quote>Content</quote> move any articles into
+        categories. Just try.</para>
+      </listitem>
+
+      <listitem>
         <para><emphasis role="bold">Sitemap - site structure</emphasis></para>
 
         <para>Editing the page structure has been extended to support more

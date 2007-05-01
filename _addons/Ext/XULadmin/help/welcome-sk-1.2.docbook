@@ -56,6 +56,17 @@
       </listitem>
 
       <listitem>
+        <para><emphasis role="bold">Drag and Drop</emphasis></para>
+
+        <para>Drag and Drop znamená, že môžete chytiť ikonku, alebo záznam a
+        pohybom myši ho presunúť inam - rovnako ako napr. v správci súborov
+        alebo na ploche. V Cyclone3 teraz môžete v tabe <quote>Sitemap</quote>
+        presúvať jednotlivé stránky ľubovolne v rámci štruktúry, a v tabe
+        <quote>Obsah</quote> môžete hromadne presúvať články do jednotlivých
+        kategórií.</para>
+      </listitem>
+
+      <listitem>
         <para><emphasis role="bold">Sitemap - štruktúra
         stránky</emphasis></para>
 
