@@ -396,7 +396,7 @@ sub execute
 			(
 				reqdatetime,
 				domain,
-				domain_sub,
+				domain_sub
 			)
 			VALUES
 			(
