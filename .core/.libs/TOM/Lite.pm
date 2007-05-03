@@ -276,14 +276,14 @@ sub close
 	if ($self->{DESTROY})
 	{
 		my ($package, $filename, $line) = caller;
-		main::_log("Ooops! from '$filename:$line' This track named '$self->{name}' has been destroyed by calling from '$self->{'DESTROY_filename'}:$self->{'DESTROY_line'}'. Track is generated on '$self->{'filename'}:$self->{'line'}'");
+		main::_log("Ooops! from '$filename:$line' This track named '$self->{name}' has been destroyed by calling from '$self->{'DESTROY_filename'}:$self->{'DESTROY_line'}'. Track is generated on '$self->{'filename'}:$self->{'line'}'",1);
 		return undef;
 	}
 	
 	if ($self->{level}<$track_level)
 	{
 		my ($package, $filename, $line) = caller;
-		main::_log("Ooops! from '$filename:$line' Can't close this track! You must close first track named '$tracks[$track_level]'. Trying to close");
+		main::_log("Ooops! from '$filename:$line' Can't close this track! You must close first track named '$tracks[$track_level]'. Trying to close",1);
 		$tracks_obj[$track_level]->close();
 		$self->close();
 		return undef;
