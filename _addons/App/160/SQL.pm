@@ -235,6 +235,8 @@ Returns list of references to relations
  my @list=get_relations(
    #'ID' => 1,
    #'ID_entity' => 1,
+   #'db_h' => 'main',
+   #'db_name' => $TOM::DB{$env{'db_h'}}{'name'},
    'l_prefix' => 'a400',
    'l_table' => '',
    'l_ID_entity' => '2'
@@ -245,7 +247,7 @@ Returns list of references to relations
  );
  foreach $reference (@list)
  {
-  main::_log("reference with ID='$reverence->{'ID'}'");
+  main::_log("reference with ID='$reference->{'ID'}'");
  }
 
 =cut
