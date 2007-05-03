@@ -107,6 +107,11 @@ sub execute
 		my ($domain,$query)=TOM::Net::HTTP::domain_clear($db0_line{referer});
 		next if $domain=~/^$tom::H/;
 		
+		if ($domain=~/google\./)
+		{
+			$domain="google.*";
+		}
+		
 		if (!$db0_line{'page_code_referer'} && !$db0_line{referer})
 		{
 			$domains{'(Direct)'}++;
@@ -153,6 +158,7 @@ sub execute
 	
 	$env{day_file}="camefrom_domain.svg" unless $env{day_file};
 	open HND,">$cron::P/_data/".$env{day_file} or die "$!";
+	chmod(0777,"$cron::P/_data/".$env{day_file});
 	my $out=$graf->prepare();
 	$out=~s|[\s]+</text>|</text>|g;
 	print HND $out;
