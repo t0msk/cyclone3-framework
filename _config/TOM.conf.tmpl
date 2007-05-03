@@ -33,6 +33,10 @@ $TOM::DB{'main'}=
 	host	=>"localhost",
 	user	=>"TOM",
 	pass	=>"",
+	sql => [
+		"SET NAMES 'utf8'",
+		"SET CHARACTER SET 'utf8'",
+	],
 };
 
 #$TOM::DB{'stats'}=
@@ -41,6 +45,8 @@ $TOM::DB{'main'}=
 #	user	=>"TOM",
 #	pass	=>"",
 #	sql => [ # you need super privileges - GRANT SUPER
+#		"SET NAMES 'utf8'",
+#		"SET CHARACTER SET 'utf8'",
 #		'SET GLOBAL delayed_queue_size=100000',
 #		'SET GLOBAL delayed_insert_timeout=86400',
 #	],
