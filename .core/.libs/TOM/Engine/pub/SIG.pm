@@ -79,8 +79,8 @@ our $action_check = POSIX::SigAction->new(
 # when enabled, apache2 on FreeBSD caused too much errors
 # Broken pipe
 #
-#main::_log("registering SIG{ALRM} action to EXIT");
-#POSIX::sigaction(&POSIX::SIGALRM, $action_exit);
+main::_log("registering SIG{ALRM} action to EXIT");
+POSIX::sigaction(&POSIX::SIGALRM, $action_exit);
 #POSIX::sigaction(&POSIX::SIGALRM, $TOM::Engine::pub::SIG::action_exit);
 
 =head2 HUP
