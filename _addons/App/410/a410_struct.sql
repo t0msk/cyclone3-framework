@@ -15,7 +15,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/` (
   `IDeditor` smallint(5) unsigned NOT NULL default '0',
   `votes` int(10) unsigned NOT NULL default '0',
   `xrelated` text NOT NULL,
-  `lng` varchar(3) NOT NULL default '',
+  `lng` char(2) NOT NULL default '',
   `active` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`lng`,`active`,`starttime`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -31,7 +31,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_answer` (
   `IDauthor` smallint(5) unsigned NOT NULL default '0',
   `IDeditor` smallint(5) unsigned NOT NULL default '0',
   `votes` int(10) unsigned NOT NULL default '0',
-  `lng` varchar(3) NOT NULL default '',
+  `lng` char(2) NOT NULL default '',
   `active` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`lng`,`active`,`starttime`),
   UNIQUE KEY `answer` (`answer`,`IDquestion`,`starttime`,`lng`,`active`)
@@ -46,7 +46,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_category` (
   `domain_sub` varchar(64) NOT NULL default '',
   `name` varchar(100) NOT NULL default '',
   `xrelated` text NOT NULL,
-  `lng` varchar(3) NOT NULL default '',
+  `lng` char(2) NOT NULL default '',
   `active` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`lng`,`active`,`domain`,`domain_sub`),
   UNIQUE KEY `IDcharindex` (`IDcharindex`,`lng`,`active`,`domain`,`domain_sub`)
@@ -60,7 +60,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_votes` (
   `IDanswer` int(10) unsigned NOT NULL default '0',
   `IDuser` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
   `votetime` int(10) unsigned NOT NULL default '0',
-  `lng` varchar(3) NOT NULL default '',
+  `lng` char(2) NOT NULL default '',
   `active` char(1) NOT NULL default '',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `IDuser` (`IDuser`,`IDquestion`,`lng`,`active`)
