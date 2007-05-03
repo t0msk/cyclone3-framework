@@ -62,7 +62,17 @@ sub execute
 	}
 	else
 	{
-		$time_startat="2006/11";
+		my %first_request=App::110::SQL::get_first_active_request();
+		$first_request{'reqdate'}=~/^(\d\d\d\d)-(\d\d)-(\d\d)/;
+		my $dt = DateTime->new
+		(
+			'year' => $1,
+			'month' => $2,
+			'day' => $3
+		);
+		$dt->add(days=>-7);
+		my ($week_year, $week_number) = $dt->week;
+		$time_startat="$week_year/$week_number";
 		main::_log("none last data collected from week");
 	}
 	
@@ -94,7 +104,6 @@ sub execute
 	$week=sprintf("%02d",$week);
 	
 	main::_log("changed collecting to $year/$week");
-	
 	
 	my $b_year=$dt->year();
 	my $b_month=sprintf("%02d",$dt->month());
