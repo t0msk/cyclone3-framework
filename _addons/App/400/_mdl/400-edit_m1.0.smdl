@@ -37,7 +37,8 @@ sub execute
 		'endtime',
 		'IDeditor',
 		'IDauthor',
-		'IDcategory'
+		'IDcategory',
+		'xrelated'
 	);
 	
 	my %article_data;
@@ -162,7 +163,7 @@ sub execute
 		$article_data{full_decoded}=~s|<IMG-TEMP>|<my_a500 $image{ID}$image{format}$image{alt}$image{title}$image{others} />|i;
 	}
 	
-	while ($article_data{xrelated}=~s|<VAR id="(.*?)" value="(.*?)" />||i)
+	while ($article_data{xrelated}=~s|<VAR\s+id="(.*?)"\s+value="(.*?)"[\s]?/>||i)
 	{
 		$xrelated.="<VAR id=\"$1\" value=\"$2\" />";
 	}
