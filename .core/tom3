@@ -21,6 +21,7 @@ BEGIN
 {
 	$TOM::engine='pub';
 	$main::debug=1 if $ENV{'TERM'};
+	#print "Content-Type: text/html\n\n";
 	require "/www/TOM/.core/.libs/TOM.pm";
 }
 
@@ -857,15 +858,15 @@ while ($main::CGI=new CGI::Fast())
 					cookies	=>	{%COOKIES}
 				);
 				
-				my $URL=$tom::H_www;
-					$URL=~s|$tom::rewrite_RewriteBase$||;
-				$URL.='/' unless $main::ENV{'REQUEST_URI'}=~/^\//;
-				$URL.=$main::ENV{'REQUEST_URI'};
+				my %form=TOM::Net::HTTP::CGI::get_CGI($main::ENV{'QUERY_STRING_FULL'});
+				my $rewrite="/";
+				$rewrite.=TOM::Net::URI::rewrite::parse_hash(\%form) if $tom::rewrite;
+				my $var=TOM::Net::URI::URL::genGET(%form);
+				my $link_hash=$var;
+				$link_hash=TOM::Net::URI::URL::hash_encode($var) if $TOM::type_code;
+				my $link="$rewrite";$link.="?".$link_hash if $link_hash;
 				
-				if ($main::ENV{'QUERY_STRING_FULL'})
-				{
-					$URL.="?".$main::ENV{'QUERY_STRING_FULL'};
-				}
+				my $URL=$tom::H_www.$link;
 				
 				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}'",3,"301",1);
 				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}'",3,"301");
@@ -2257,7 +2258,7 @@ while ($main::CGI=new CGI::Fast())
 			my $tmp_html=TOM::Temp::file->new('ext'=>'html');
 			$tmp_html->save_content($DOC_output);
 			my $tmp_pdf=TOM::Temp::file->new('ext'=>'pdf');
-			my $cmd="/usr/local/bin/htmldoc --charset $charset --webpage $main::env{'htmldoc'} $tmp_html->{'filename'} -f $tmp_pdf->{'filename'} 2>/dev/null";
+			my $cmd="/usr/local/bin/htmldoc --quiet --jpeg --charset $charset --webpage $main::env{'htmldoc'} $tmp_html->{'filename'} -f $tmp_pdf->{'filename'} 2>/www/TOM/_temp/stderr.log";
 			main::_log($cmd);
 			system($cmd);
 			
