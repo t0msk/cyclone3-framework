@@ -862,6 +862,11 @@ while ($main::CGI=new CGI::Fast())
 				$URL.='/' unless $main::ENV{'REQUEST_URI'}=~/^\//;
 				$URL.=$main::ENV{'REQUEST_URI'};
 				
+				if ($main::ENV{'QUERY_STRING_FULL'})
+				{
+					$URL.="?".$main::ENV{'QUERY_STRING_FULL'};
+				}
+				
 				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}'",3,"301",1);
 				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}'",3,"301");
 				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}");
