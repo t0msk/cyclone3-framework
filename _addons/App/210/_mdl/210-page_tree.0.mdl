@@ -153,7 +153,7 @@ Režim zoznamu:
    <t_name><%t_name%></t_name>
    <lng><%lng%></lng>
    <status><%status%></status>
-   <visible><![CDATA[<%visible%>]]></visible>
+   <visible><%visible%></visible>
    <is_default><%is_default%></is_default>
   </item>
   <#item#>
