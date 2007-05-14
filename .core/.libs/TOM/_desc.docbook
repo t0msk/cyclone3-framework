@@ -4,11 +4,7 @@
 <article>
   <title>TOM::*</title>
 
-  <section>
-    <title>Namespace description</title>
-
-    <para>Primary Cyclone3 Framework namespace</para>
-  </section>
+  <para>Primary Cyclone3 Framework namespace</para>
 
   <section>
     <title>Libraries</title>
