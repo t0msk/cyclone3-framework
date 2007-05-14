@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>TOM::*</title>
+
+  <section>
+    <title>Namespace description</title>
+
+    <para>Primary Cyclone3 Framework namespace</para>
+  </section>
+
+  <section>
+    <title>Libraries</title>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM.pm"><emphasis
+        role="bold">TOM</emphasis></ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Debug.pm">TOM::Debug</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Domain.pm">TOM::Domain</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Engine.pm">TOM::Engine</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Error.pm">TOM::Error</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Lite.pm">TOM::Lite</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Math.pm">TOM::Math</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Overlays.pm">TOM::Overlays</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TypeID.pm">TOM::TypeID</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Warning.pm">TOM::Warning</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/lock.pm">TOM::lock</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/rev.pm">TOM::rev</ulink></para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section>
+    <title>Namespaces</title>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Data/">TOM::Data::</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Database/">TOM::Database::</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Debug/">TOM::Debug::</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Engine/">TOM::Engine::</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Error/">TOM::Error::</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Int/">TOM::Int::</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Net/">TOM::Net::</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/System/">TOM::System::</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Temp/">TOM::Temp::</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Text/">TOM::Text::</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=source-doc&amp;file=.core/.libs/TOM/Utils/">TOM::Utils::</ulink></para>
+      </listitem>
+    </itemizedlist>
+  </section>
+</article>
