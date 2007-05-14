@@ -15,6 +15,8 @@ our %table=
 
 #	'136'	=>	"",
 
+	'138'	=>	" ", # ?
+
 #	'140'	=>	"",
 #	'141'	=>	"",
 	'142'	=>	"Z", # SS2 ??? 'Z' s makcenom
@@ -24,6 +26,8 @@ our %table=
 	'145'	=>	"", # PU1
 
 	'154'	=>	"s", # 's' s makcenom
+	
+	'157'	=>	" ", # ?
 	
 	'158'	=>	"z", # 'z' s makcenom
 	
@@ -47,6 +51,7 @@ our %table=
 	'186'	=>	"º", # stupne - ºC
 	
 	'187'	=>	"»", # dvojita pomlcka
+	'188'	=>	"¼", # 1/4
 	
 	'189'	=>	"½", # 1/2
 	'190'	=>	"Z", # 'Z' s makcenom
@@ -58,17 +63,21 @@ our %table=
 	'196'	=> "A", # 'A' s dvojbodkou
 	'197'	=> "A", # 'A' s makcenom
 	
+	'200'	=> "E", # 'E' s opacnym dlznom
 	'201'	=> "E", # 'E' s dlznom na konci
 	
 	'203'	=> "E", # 'E' s dvoma dlznami
 	
 	'205'	=>	"I", # 'I' s dlznom
 	
+	'207'	=>	"I", # 'I' s dvojbodkou
+	
 	'211'	=> "U", # 'U' s dvomi dlznami
 	'212'	=> "U", # 'U' so strieskou
 	
 	'214'	=>	"O", # 'O' s dvojbodkou
 	
+	'216'	=>	"O", # 'O' preskrtnute
 	
 	'218'	=>	"U", # 'U' s dlznom
 	
@@ -76,21 +85,23 @@ our %table=
 	
 	'221'	=> "Y", # 'Y' s dlznom na konci
 	
-	'223'	=>	"S", # 'ß' nemecke ostre s
-	
-#	'224'	=>	"", #
+	'223'	=>	"S", # 'ß' nemecke ostre s	
+	'224'	=>	"a", # 'a' s opacnym dlznom
 	'225'	=>	"a", # 'a' s dlznom
 	'226'	=> "a", # 'a' so strieskou
 	'227'	=> "a", # 'a' s vlnovkou
 	'228' =>	"a", # 'a' s dvojbodkou
+	'229' =>	"a", # 'a' s kruzkom
 	
 	'231'	=>	"c", # 'c' s chvostikom
 	'232'	=>	"c", # 'c' s makcenom
 	'233'	=>	"e", # 'e' s dlznom
-	
+	'234'	=> "e", # 'e' s opacnym hacikom
 	'235'	=> "e", # 'e' s dvojbodkou
-	
+	'236'	=> "i", # 'i' s opacnym dlznom
 	'237'	=> "i",
+	
+	'239'	=> "i", # 'i' s dvojbodkou
 	
 	'241'	=>	"n", # 'n' s dvomi dlznami
 	'242'	=>	"n", # 'n' s makcenom
@@ -99,6 +110,8 @@ our %table=
 	
 	'246'	=>	"o", # 'o' s dvojbodkou
 	
+	'248'	=>	"o", # 'o' preskrtnute
+	'249'	=>	"u", # 'o' s opacnym dlznom
 	'250'	=>	"u", # 'u' s dlznom
 	
 	'252'	=>	"u", # 'u' s dvojdlznom
