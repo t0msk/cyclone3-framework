@@ -250,6 +250,8 @@ sub process
 		);
 	}
 	
+	# validation of other important XML files
+	
 	my @xmlfiles = ('content.xml', 'styles.xml', 'settings.xml', 'meta.xml');
 	foreach my $xmlfile (@xmlfiles)
 	{
@@ -264,6 +266,19 @@ sub process
 			'rng' => $DIR.'/OpenDocument-schema-v1.0-os.rng'
 		);
 		#other_checks($file, $xmlfile);
+	}
+	
+	
+	# checking list of included images
+	my @images=$self->{'extract'}->get_images();
+	
+	foreach my $image(@images)
+	{
+		main::_log("image with src='$image->{'src'}'");
+		if (not -e $self->{'tmpdir'}.'/'.$image->{'src'})
+		{
+			$self->warning("reffered image with source '$image->{'src'}' is missing");
+		}
 	}
 	
 	$t->close();
