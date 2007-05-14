@@ -21,6 +21,43 @@ $FORM{'db_h'}='main' unless $FORM{'db_h'};
 
 #################################################################################################
 
+if ($FORM{'xuladmin'})
+{
+	# find all cyclone.* domains
+	
+	print "Upgrading all Cyclone3 XULadmin backend domain services\n";
+	
+	if (opendir (DIR,$TOM::P))
+	{
+		my @files=readdir DIR;
+		foreach my $file(@files)
+		{
+			
+			next if $file=~/^(\.|\.\.)$/;
+			if (
+					(-d $TOM::P."/".$file) &&
+					($file=~/^([^_\.][!\w\.\-]+|.*\/[^_\.][!\w\.]+)$/) &&
+					(not $file=~/(!media|!www)/)
+				)
+			{
+				if (opendir (DIR1,$TOM::P."/".$file)){foreach (readdir DIR1){if (($_ ne ".")&&($_ ne "..")){push @files,$file."/".$_;}}}
+			}
+			if ($file=~s/\/local.conf$// && $file=~/\/\!cyclone$/)
+			{
+				main::_log_stdout($file);
+				chdir $TOM::P.'/'.$file;
+				system("svn up >/dev/null");
+				#$CRON::hosts{file2domain($file)}=$file;
+			}
+			
+		}
+	}
+	
+	#main::_log_stdout("exot")
+	
+	&exit();
+}
+
 
 # check current version;
 print "current version='$TOM::core_revision'\n";
