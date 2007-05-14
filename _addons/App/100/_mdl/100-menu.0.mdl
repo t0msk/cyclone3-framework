@@ -19,6 +19,7 @@ sub execute
  	next if $_ eq "__key_";
 	next if $_ eq "__ITst_uncache";
 	next if $_ eq "__key";
+	next if $_ eq "__key_file";
  	$url.="$_=$form{$_}&";
  }
  $url=~s|&$||;
@@ -49,7 +50,7 @@ function IAdmHideBar() {
 	<div style="padding:0.2em 0.5em;color:black;font:bold 11px Arial,Helvetica,sans-serif;">
 		<span style="float: right;">
 			<a style="text-decoration:none;color:blue;" href="#" onclick="IAdmHideBar();" title="hide bar">_</a>&nbsp;
-			<a style="text-decoration:none;color:blue;" href="?|?$ENV{QUERY_STRING_FULL}&__key=&__key_=" title="exit">X</a>
+			<a style="text-decoration:none;color:blue;" href="?|?$ENV{QUERY_STRING_FULL}&__key=&__key_file=&__key_=" title="exit">X</a>
 		</span>
 		<span id="iadmbar-i">
 		<strong style="color:red;">ADMIN MODE</strong>&nbsp;|&nbsp;

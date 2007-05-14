@@ -32,10 +32,10 @@ sub execute
 $XSGN{TMP}=<<"HEADER";
 
 <form action="?|?$ENV{QUERY_STRING_FULL}" method="POST" enctype="multipart/form-data">
-	<label for="key">Vlož kľúč</label>
+	<label for="key">Key file:</label>
   <input type="file" id="key" name="__key">
 	<p>
-    <input type="submit" value="Vstúpiť">
+    <input type="submit" value="Enter!">
   </p>
 </form>
 
