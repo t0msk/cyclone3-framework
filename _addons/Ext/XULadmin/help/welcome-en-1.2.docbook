@@ -86,19 +86,15 @@
       </listitem>
 
       <listitem>
-        <para>Preview testmode.</para>
-      </listitem>
-
-      <listitem>
         <para>Welcome screen.</para>
       </listitem>
 
       <listitem>
-        <para>Help.</para>
+        <para>Known bug fixes.</para>
       </listitem>
 
       <listitem>
-        <para>Known bug fixes.</para>
+        <para>German translation.</para>
       </listitem>
     </itemizedlist>
   </section>
