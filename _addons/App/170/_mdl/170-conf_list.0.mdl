@@ -21,16 +21,16 @@ sub execute
 			while ( my ($k,$v) = each %a120_record ) { $XSGN{TMP} =~ s|<%${type}_$k%>|$v|g; }
 		}
 	}
-
-# Applications
+	
+	# Applications
 	foreach (keys %TOM::DEBUG_log_app)
 	{
 		$XSGN{NULL}=$XSGN{APP};
 		$XSGN{NULL}=~s|<%app%>|$_|g;
 		$XSGN{TMP}=~s|<#APP#>|$XSGN{NULL}|;
 	}
-
-# Languages
+	
+	# Languages
 	if (($env{xt_xlng}) || ($env{xlng}))
 	{
 		main::_log("using xlng transformation");
@@ -38,12 +38,12 @@ sub execute
 		Tomahawk::GetXLNG() || return undef; # retrieve language xml
 		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
 	}
-
+	
 	if($tom::lng)
 	{
 		main::_log('tom::lng = '.$tom::lng);
 		$XSGN{TMP}=~s|<%lng%>|$tom::lng|g;
-
+		
 		foreach(@TOM::LNG_accept)
 		{
 			if($_ eq $tom::lng)
@@ -61,27 +61,63 @@ sub execute
 		main::_log('main::lng not found');
 		return undef;
 	}
-
-# Addons
+	
+	
+	# Tabs
+	
+	# the old way
 	foreach( @TOM::ADM_modules )
 	{
-			$XSGN{NULL}=$XSGN{TAB};
-			$XSGN{NULL}=~s|<%tab%>|$_|g;
-			$XSGN{TMP}=~s|<#TAB#>|$XSGN{NULL}|;
+		main::_log("c: enabled $_");
+		$XSGN{NULL}=$XSGN{TAB};
+		$XSGN{NULL}=~s|<%tab%>|$_|g;
+		$XSGN{TMP}=~s|<#TAB#>|$XSGN{NULL}|;
 	}
-
-# Custom XPI addons
-
+	# the new way
+	main::_log("XULadmin version = '$env{'version'}'");
+	$env{'version'}='1.1' unless $env{'version'};
+	foreach my $tab (sort keys %Ext::XULadmin::tabs)
+	{
+		main::_log("tab='$tab'='$Ext::XULadmin::tabs{$tab}{'name'}' enabled='$Ext::XULadmin::tabs{$tab}{'enabled'}' minversion='$Ext::XULadmin::tabs{$tab}{'minversion'}' maxversion='$Ext::XULadmin::tabs{$tab}{'maxversion'}'");
+		my $enabled=$Ext::XULadmin::tabs{$tab}{'enabled'};
+		if ($Ext::XULadmin::tabs{$tab}{'minversion'})
+		{
+			if ($Ext::XULadmin::tabs{$tab}{'minversion'} gt $env{'version'}){$enabled=0;}
+		}
+		if ($Ext::XULadmin::tabs{$tab}{'maxversion'})
+		{
+			if ($Ext::XULadmin::tabs{$tab}{'maxversion'} lt $env{'version'}){$enabled=0;}
+		}
+		next unless $enabled;
+		$XSGN{NULL}=$XSGN{TAB};
+		$XSGN{NULL}=~s|<%tab%>|$Ext::XULadmin::tabs{$tab}{'name'}|g;
+		$XSGN{TMP}=~s|<#TAB#>|$XSGN{NULL}|;
+		main::_log("enabled");
+	}
+	
+	# Custom XPI addons
 	use File::Find;
-	find({ wanted => sub{
-		return undef if $_=~/\.svn/;
-		return if -d $_;
-		$_=~s|$tom::p/.customization/||;
-		$XSGN{NULL}=$XSGN{FILE};
-		$XSGN{NULL}=~s|<%file%>|$_|g;
-		$XSGN{TMP}=~s|<#FILE#>|$XSGN{NULL}|;
-},no_chdir => 1, hidden=>1 },"$tom::p/.customization/");
-
+	find
+	(
+		{
+			'wanted' => sub
+			{
+				return undef if $_=~/\.svn/;
+				return if -d $_;
+				$_=~s|$tom::p/.customization/||;
+				$XSGN{NULL}=$XSGN{FILE};
+				$XSGN{NULL}=~s|<%file%>|$_|g;
+				$XSGN{TMP}=~s|<#FILE#>|$XSGN{NULL}|;
+			},
+			'no_chdir' => 1,
+			'hidden' => 1
+		},
+		"$tom::p/.customization/"
+	);
+	
 	return 1;
 }
+
+
+
 1;
