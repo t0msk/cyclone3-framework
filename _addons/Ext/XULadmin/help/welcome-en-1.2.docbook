@@ -21,7 +21,7 @@
 
         <para>We have simplified and cleared the default look of the
         environment. Aiming for greater work area we redesigned or removed
-        unndeeded elements. Additionaly we now use a more integrated <emphasis
+        unneeded elements. Additionally we now use a more integrated <emphasis
         role="bold">Tango</emphasis> icon theme set.</para>
       </listitem>
 
@@ -32,12 +32,12 @@
         have increased the editor area significantly by hiding header elements
         which are not needed for most articles.</para>
 
-        <para>CSS styles used by the website now can be used during directly
-        while editing articles. This helps authors to see how the final
-        article will look without the need to preview it.</para>
+        <para>CSS styles used by the website now can be used directly while
+        editing articles. This helps authors to see how the final article will
+        look without the need to preview it.</para>
 
-        <para>File attachments can now added to articles making it easier to
-        share documents or files.</para>
+        <para>File attachments can now be added to articles making it easier
+        to share documents or files.</para>
 
         <para>Images can have a click action associated with them.</para>
       </listitem>
@@ -53,9 +53,9 @@
       <listitem>
         <para><emphasis role="bold">Drag and Drop</emphasis></para>
 
-        <para>V Cyclone3 you can now freely in tab <quote>Sitemap</quote> drag
-        any page and in tab <quote>Content</quote> move any articles into
-        categories. Just try.</para>
+        <para>In <quote>Sitemap</quote> tab you can now freely drag any page
+        and in tab <quote>Content</quote> move any articles into categories.
+        Just try.</para>
       </listitem>
 
       <listitem>
@@ -94,7 +94,7 @@
       </listitem>
 
       <listitem>
-        <para>German translation.</para>
+        <para>German localization.</para>
       </listitem>
     </itemizedlist>
   </section>
