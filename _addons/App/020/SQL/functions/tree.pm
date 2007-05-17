@@ -116,7 +116,7 @@ sub move_up
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'},
-		'columns' => {'ID_charindex'=>1}
+		'columns' => {'*'=>1}
 	);
 	if (!$data{'ID'})
 	{
@@ -137,7 +137,9 @@ sub move_up
 	my $ID_charindex_=$data{'ID_charindex'};
 	$ID_charindex_=~s|^(.*)...$|\1|;
 	
-	# najdem predchadzajucu polozku
+	# find previous sibling
+	my $where_lng;
+	$where_lng="AND lng='$data{lng}'" if $data{'lng'};
 	my $SQL=qq{
 		SELECT
 			ID,
@@ -148,6 +150,7 @@ sub move_up
 			ID_charindex < '$data{'ID_charindex'}'
 			AND ID_charindex LIKE '$ID_charindex_\___'
 			AND (status='Y' OR status='N')
+			$where_lng
 		ORDER BY
 			ID_charindex DESC
 		LIMIT 1
@@ -204,7 +207,7 @@ sub move_down
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'},
-		'columns' => {'ID_charindex'=>1}
+		'columns' => {'*'=>1}
 	);
 	if (!$data{'ID'})
 	{
@@ -225,7 +228,9 @@ sub move_down
 	my $ID_charindex_=$data{'ID_charindex'};
 	$ID_charindex_=~s|^(.*)...$|\1|;
 	
-	# najdem predchadzajucu polozku
+	# find next sibling
+	my $where_lng;
+	$where_lng="AND lng='$data{lng}'" if $data{'lng'};
 	my $SQL=qq{
 		SELECT
 			ID,
@@ -236,6 +241,7 @@ sub move_down
 			ID_charindex > '$data{'ID_charindex'}'
 			AND ID_charindex LIKE '$ID_charindex_\___'
 			AND (status='Y' OR status='N')
+			$where_lng
 		ORDER BY
 			ID_charindex ASC
 		LIMIT 1
