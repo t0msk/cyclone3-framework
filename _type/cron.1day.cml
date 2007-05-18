@@ -1,6 +1,7 @@
 <!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
 
 
+
 # a100
 
 <MODULE>
@@ -16,6 +17,7 @@
 </MODULE>
 
 
+
 # a140 - cleaning
 
 <MODULE>
@@ -24,6 +26,7 @@
 	<VAR id="-name" value="clear" />
 		<VAR id="max_days" value="7" />
 </MODULE>
+
 
 
 # a110
@@ -41,11 +44,6 @@
 	<VAR id="-name" value="all_cleaner" />
 </MODULE>
 
-<MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="110" />
-	<VAR id="-name" value="weblog_email_farm" />
-</MODULE>
 
 
 # a1D0
@@ -55,6 +53,7 @@
 	<VAR id="-category" value="1D0" />
 	<VAR id="-name" value="cleaner" />
 </MODULE>
+
 
 
 # a300 - USRM

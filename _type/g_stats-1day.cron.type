@@ -14,12 +14,6 @@
 	<VAR id="-name" value="weblog_chart_SEphrases" />
 </MODULE>
 
-<#MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="110" />
-	<VAR id="-name" value="weblog_chart_lng" />
-</MODULE>
-
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />

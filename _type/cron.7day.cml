@@ -1,6 +1,7 @@
 <!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
 
-# statistika obsolete funkcii
+
+# Send list of obsolete functions
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
@@ -9,14 +10,8 @@
 		<VAR id="to_email" value="<$TOM::contact{'DEV_list_farm'}>" />
 </MODULE>
 
-<MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="110" />
-	<VAR id="-name" value="weblog_email_performance" />
-	<VAR id="-version" value="31day" />
-</MODULE>
 
-# Listing ticketov emailom
+# Send list of opened error tickets
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="100" />
@@ -24,11 +19,10 @@
 </MODULE>
 
 
-
-# a300 - USRM
-
+# a300 - USRM - check consistence of datas
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="300" />
 	<VAR id="-name" value="check" />
 </MODULE>
+
