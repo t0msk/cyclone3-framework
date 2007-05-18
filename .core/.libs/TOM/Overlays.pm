@@ -53,7 +53,7 @@ BEGIN
 		foreach my $file(sort readdir DIR)
 		{
 			next unless -d $TOM::P.'/_overlays/'.$file;
-			next if $file=~/^\.+$/;
+			next if $file=~/^\./;
 			$i++;
 			main::_log("init '$file' prior: $i");
 			
