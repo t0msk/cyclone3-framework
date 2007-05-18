@@ -136,12 +136,24 @@ sub module
 	
 	main::_log("executing");
 
-	# KDE JE MODUL?
+	# where is module?
 	if ($mdl_C{-global})
 	{
 		my $addon_path=
 			$CRON::P."/_addons/App/".$mdl_C{-category}."/_mdl/".
 			$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".cron";
+			
+		
+		# find in overlays
+		foreach my $item(@TOM::Overlays::item)
+		{
+			my $file=
+				$TOM::P.'/_overlays/'.$item
+				.'/_addons/App/'.$mdl_C{'-category'}.'/_mdl/'
+				.$mdl_C{'-category'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".cron";
+			if (-e $file){$addon_path=$file;last;}
+		}
+		
 		if (-e $addon_path)
 		{
 			$mdl_C{P_MODULE}=$addon_path;
