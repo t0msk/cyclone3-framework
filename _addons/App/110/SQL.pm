@@ -140,7 +140,8 @@ sub get_last_collected_hour()
 	
 	my $sql=qq{
 		SELECT
-			reqdatetime
+			reqdatetime,
+			DATE(reqdatetime) as reqdate
 		FROM
 			TOM.a110_weblog_hour
 		WHERE
