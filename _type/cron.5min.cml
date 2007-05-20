@@ -2,12 +2,6 @@
 
 <MODULE>
 	<VAR id="-global" value="1" />
-	<VAR id="-category" value="110" />
-	<VAR id="-name" value="mdllog_datamining" />
-</MODULE>
-
-<MODULE>
-	<VAR id="-global" value="1" />
 	<VAR id="-category" value="300" />
 	<VAR id="-name" value="autokick" />
 		<VAR id="max_online" value="1800" />
