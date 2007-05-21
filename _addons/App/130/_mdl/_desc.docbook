@@ -10,28 +10,7 @@
     <itemizedlist>
       <listitem>
         <para><ulink
-        url="?|?section=app&amp;file=130/_mdl/130-send.0.smdl">130-send.0.smdl</ulink></para>
-
-        <para></para>
-      </listitem>
-
-      <listitem>
-        <para><ulink
-        url="?|?section=app&amp;file=130/_mdl/130-send.0.mdl">130-send.0.mdl</ulink></para>
-
-        <para></para>
-      </listitem>
-
-      <listitem>
-        <para><ulink
         url="?|?section=app&amp;file=130/_mdl/130-send_support.0.mdl">130-send_support.0.mdl</ulink></para>
-
-        <para></para>
-      </listitem>
-
-      <listitem>
-        <para><ulink
-        url="?|?section=app&amp;file=130/_mdl/130-bugreport.0.mdl">130-bugreport.0.mdl</ulink></para>
 
         <para></para>
       </listitem>
@@ -66,13 +45,6 @@
       <listitem>
         <para><ulink
         url="?|?section=app&amp;file=130/_mdl/130-clear.0.cron">130-clear.0.cron</ulink></para>
-
-        <para></para>
-      </listitem>
-
-      <listitem>
-        <para><ulink
-        url="?|?section=app&amp;file=130/_mdl/130-control.forms.cron">130-control.forms.cron</ulink></para>
 
         <para></para>
       </listitem>
