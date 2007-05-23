@@ -5,6 +5,8 @@ BEGIN {$main::debug=0;require "/www/TOM/.bin/tom3-init";}
 
 use SVN::Ra;
 use SVN::Log;
+use SVN::Wc;
+use SVN::Repos;
 
 %form=
 (
@@ -80,56 +82,101 @@ if ($STABLE<=$TOM::core_revision)
 	print color 'bold red';
 	print "\n";
 	print "Can't find any new stable revision, try later\n";
-	&exit();
+	#&exit();
 }
-
-print "\n";
-
-print "List of changes in repository to upgrade:\n";
-foreach my $rev (@{$revs})
+else
 {
-	if (($rev->{'revision'}>$TOM::core_revision)
-		&& ($rev->{'revision'}<=$HEAD)
-	)
+	print "\n";
+	
+	print "List of changes in repository to upgrade:\n";
+	foreach my $rev (@{$revs})
 	{
-		# display only changes in framework
-		#next unless $rev->{'message'}=~/\[frame/;
-		
-		1 while ($rev->{'message'}=~s|\n$||);
-		if ($rev->{'message'}=~/\(major\)/)
+		if (($rev->{'revision'}>$TOM::core_revision)
+			&& ($rev->{'revision'}<=$HEAD)
+		)
 		{
-			print color 'bold yellow';
+			# display only changes in framework
+			#next unless $rev->{'message'}=~/\[frame/;
+			
+			1 while ($rev->{'message'}=~s|\n$||);
+			if ($rev->{'message'}=~/\(major\)/)
+			{
+				print color 'bold yellow';
+			}
+			elsif ($rev->{'message'}=~/\(stable\)/)
+			{
+				print color 'bold yellow';
+			}
+			elsif ($rev->{'message'}=~/\(security\)/)
+			{
+				print color 'bold red';
+			}
+			elsif ($rev->{'message'}=~/bug/ || $rev->{'message'}=~/^\[!\]/)
+			{
+				print color 'bold green';
+			}
+			elsif ($rev->{'message'}=~/\(minor\)/ || !$rev->{'message'})
+			{
+				next;
+			}
+			else
+			{
+				print color 'reset green';
+			}
+			print "r".$rev->{'revision'}." ".$rev->{'message'}."\n";
 		}
-		elsif ($rev->{'message'}=~/\(stable\)/)
-		{
-			print color 'bold yellow';
-		}
-		elsif ($rev->{'message'}=~/\(security\)/)
-		{
-			print color 'bold red';
-		}
-		elsif ($rev->{'message'}=~/bug/ || $rev->{'message'}=~/^\[!\]/)
-		{
-			print color 'bold green';
-		}
-		elsif ($rev->{'message'}=~/\(minor\)/ || !$rev->{'message'})
-		{
-			next;
-		}
-		else
-		{
-			print color 'reset green';
-		}
-		print "r".$rev->{'revision'}." ".$rev->{'message'}."\n";
+	}
+	
+	print "Update? [No/yes]\n";
+	my $do=<STDIN>;
+	if ($do=~/yes/i)
+	{
+		print color 'yellow';
+		system("cd $TOM::P;svn up");
 	}
 }
 
-print "Do it? [No/yes]\n";
-my $do=<STDIN>;
-if ($do=~/yes/i)
+
+# Checking overlays (only SVN capable)
+print "\n";
+print color 'reset green';
+
+foreach my $overlay(reverse @TOM::Overlays::item)
 {
-	print color 'yellow';
-	system("cd $TOM::P;svn up");
+	next if $overlay eq "10-local";
+	
+	print "checking overlay '$overlay' for update\n";
+	chdir $TOM::P.'/_overlays/'.$overlay;
+	my $out=`svn info`;
+	next unless $out;
+	
+	$out=~/URL: (.*?)\n/s;my $url=$1;
+	$out=~/Revision: (\d+)/;my $revision=$1;
+	
+	my $stable=TOM::Overlays::get_last_stable_revision($url.'/stable');
+	
+	#print "URL: $url $revision $stable\n";
+	if ($stable>$revision)
+	{
+		my $revs = SVN::Log::retrieve ($url, $revision+1,$stable);
+		foreach my $rev (@{$revs})
+		{
+			print "r".$rev->{'revision'}." ".$rev->{'message'}."\n";
+		}
+		
+		print "Update? [No/yes]\n";
+		my $do=<STDIN>;
+		if ($do=~/yes/i)
+		{
+			print color 'yellow';
+			system("svn up");
+		}
+		
+	}
+	
 }
+
+
+
 
 &exit();
