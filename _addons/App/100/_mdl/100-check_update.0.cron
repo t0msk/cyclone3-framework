@@ -8,11 +8,11 @@ use strict; # scrict code
 
 =head1 NAME
 
-100-check_upgrade.0.cron
+100-check_update.0.cron
 
 =head1 DESCRIPTION
 
-Check if this Cyclone3 can be upgraded and send email about avalable upgrade to TECH_farm contact
+Check if this Cyclone3 can be updated, and send email about avalable updates to TECH_farm,DEV_farm contact
 
 =head1 DEPENDS
 
@@ -76,7 +76,7 @@ sub execute
 	
 	if ($STABLE<=$TOM::core_revision)
 	{
-		main::_log("none upgrade available");
+		main::_log("none update available");
 		return 1;
 	}
 	
@@ -158,10 +158,10 @@ HEADER
 					</tr>
 HEADER
 	
-	main::_log("Cyclone3 upgrade available!");
-	$body=~s|<%MESSAGE%>|Upgrade for Cyclone3 Framework is available (r$TOM::core_revision to r$STABLE) at server <strong>$TOM::hostname</strong><br/>We highly recommend to upgrade this installation with console command '<strong>tom3-upgrade</strong>' or 'svn up' in directory /www/TOM|g;
+	main::_log("Cyclone3 update available!");
+	$body=~s|<%MESSAGE%>|Update for Cyclone3 Framework is available (r$TOM::core_revision to r$STABLE) at server <strong>$TOM::hostname</strong><br/>We highly recommend to update this installation with console command '<strong>tom3-update</strong>' or 'svn up' in directory /www/TOM|g;
 	
-	App::100::SQL::ircbot_msg_new("upgrade available from r$TOM::core_revision to r$STABLE");
+	App::100::SQL::ircbot_msg_new("update available from r$TOM::core_revision to r$STABLE");
 	
 	my $to=
 		TOM::Utils::vars::unique_split(
@@ -177,7 +177,7 @@ HEADER
 		'Date'    => $date,
 		'From'    => "Cyclone3 ('$TOM::hostname') <$TOM::contact{'from'}>",
 		'To'      => TOM::Net::email::convert_TO($to),
-		'Subject' => "Cyclone3 upgrade available!"
+		'Subject' => "Cyclone3 update available!"
 	);
 	
 	
