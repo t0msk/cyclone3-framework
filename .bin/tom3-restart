@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
-use Mysql;
 require "/www/TOM/.bin/tom3-init";
 %form=
 (
