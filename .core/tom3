@@ -2333,6 +2333,8 @@ while ($main::CGI=new CGI::Fast())
 		$t_postprocess->close();
 		$t_eval->close();
 		
+		main::_log("IDhash='$main::USRM{'IDhash'}' QUERY='$main::ENV{QUERY_STRING_FULL}' ",3,'pub.track');
+		
 		Tomahawk::stat::rqs(
 			proc => $t_eval->{'time'}{proc}{duration},
 			req => $t_eval->{'time'}{req}{duration}
