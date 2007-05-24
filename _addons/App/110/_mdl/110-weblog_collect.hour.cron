@@ -40,13 +40,19 @@ sub execute
 	
 	my $max_hours=12; # 1200% speed (every one hour collect data from 12 hours)
 	
-	
+	my $domain=$tom::Hm;
+	main::_log("collecting hours for domain '$domain'");
+	my $where;
+	if ($domain)
+	{
+		$where.="AND domain='$domain' ";
+	}
 	
 	# finding last collected hour
 	
 	my $time_startat;
 	my $time_from;
-	my %last_collected_hour=App::110::SQL::get_last_collected_hour();
+	my %last_collected_hour=App::110::SQL::get_last_collected_hour('domain' => $domain);
 	if ($last_collected_hour{'reqdatetime'})
 	{
 		$time_startat=$last_collected_hour{'reqdatetime'};
@@ -160,6 +166,7 @@ sub execute
 			reqdatetime >= '$time_startat' AND
 			reqdatetime < '$time_endat' AND
 			reqtype IN ('B','m','w')
+			$where
 		GROUP BY
 			substring(reqdatetime,1,13),domain,domain_sub
 		ORDER BY
@@ -318,6 +325,7 @@ sub execute
 			reqdatetime>='$time_startat' AND
 			reqdatetime<'$time_endat' AND
 			reqtype IN ('B','m','w')
+			$where
 		GROUP BY
 			substring(reqdatetime,1,13),domain
 		ORDER BY

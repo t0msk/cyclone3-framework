@@ -129,14 +129,22 @@ Returns informations about last collected hour in TOM.a110_weblog_hour
 
  my %data=get_last_collected_hour();
 
+ my %data=get_last_collected_hour('domain' => "example.tld");
+
 =cut
 
-sub get_last_collected_hour()
+sub get_last_collected_hour
 {
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::get_last_collected_hour()");
 	
 	my %data;
+	my $where;
+	
+	if ($env{'domain'})
+	{
+		$where.="AND domain='$env{'domain'}' ";
+	}
 	
 	my $sql=qq{
 		SELECT
@@ -146,6 +154,7 @@ sub get_last_collected_hour()
 			TOM.a110_weblog_hour
 		WHERE
 			domain_sub=''
+			$where
 		ORDER BY
 			reqdatetime DESC
 		LIMIT 1
