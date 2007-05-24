@@ -1,73 +1,74 @@
 #!/usr/bin/perl
-# áéíóú - USE UTF-8 !!!
 package CRON::module;
-use TOM;
-use App::300::_init;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
 use strict;
+
+=head1 NAME
+
+300-archive.0.cron
+
+=head1 DESCRIPTION
+
+This cron module moves all unactive users from primary USRM table (a300_users) to secondary USRM table (a300_users_arch)
+
+More cleaner a300_users table improves speedup of USRM operation
+
+Default time of inactivity is 31 days.
+
+=head1 DEPENDS
+
+=over
+
+=item*
+
+L<App::300::_init|app/"300/_init.pm">
+
+=back
+
+=cut
+
+use App::300::_init;
+
+
 
 sub execute
 {
 	my %env=@_;
-	#return 1;
 	
-	$env{max}=10000 unless $env{max};
+	$env{'max'}=10000 unless $env{'max'};
 	
-	if (!$env{max_days}){$cron::ERR="not defined max_days time to archiving";return undef;}
-	$env{max_days}=$env{max_days}*60*60*24; # prepocet na sekundy
-	if (!$env{db_300}){$cron::ERR="not defined database db_300";return undef;}
-	if ($env{host})
-	{
-		$env{sel0}="host='$env{host}' AND (reqtime<$cron::time_current-$env{max_days})";
-		$env{sel1}="AND host='$env{host}'";
-	}
-	else
-	{
-		$env{sel0}="reqtime<$cron::time_current-$env{max_days}";
-		if ($cron::P eq $CRON::P){main::_log("WARN: master cron, manipulating with all hosts!!!");}
-		else {$cron::ERR="you are not a master cron!!! cannot manipulate USRM with all hosts!!!";return undef;}
-	}
+	$env{'max_days'}=31 unless $env{'max_days'};
 	
-	my $db0=$main::DBH->Query("
-		SELECT *
-		FROM $env{db_300}.a300_users
-		WHERE $env{sel0}
-		LIMIT $env{max}");
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			TOM.a300_users
+		WHERE
+			reqtime<($main::time_current-(86400*$env{'max_days'}))
+		LIMIT $env{'max'}
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	
 	my $i;
-	while (my %user=$db0->fetchhash)
+	while (my %user=$sth0{'sth'}->fetchhash)
 	{
-		my $var=$cron::time_current-$user{reqtime};
-		main::_log("user:$user{login} IDhash:$user{IDhash} to archive ($var)");
-		App::300::UserArchive($user{IDhash});
+		my $var=$main::time_current-$user{'reqtime'};
+		main::_log("user:$user{'login'} IDhash:$user{'IDhash'} to archive ($var)");
+		App::300::UserArchive($user{'IDhash'});
 	}
-	
-	
 	
 	return 1;
 }
 
 
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
 
 1;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
