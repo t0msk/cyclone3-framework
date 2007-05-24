@@ -27,7 +27,7 @@ if ($FORM{'xuladmin'})
 {
 	# find all cyclone.* domains
 	
-	print "Upgrading all Cyclone3 XULadmin backend domain services\n";
+	print "Updating all Cyclone3 XULadmin backend domain services\n";
 	
 	if (opendir (DIR,$TOM::P))
 	{
@@ -62,12 +62,12 @@ if ($FORM{'xuladmin'})
 
 
 # check current version;
-print "current version='$TOM::core_revision'\n";
+print "Cyclone3 Framework current: r$TOM::core_revision\n";
 
 # last revision number
 my $ra = SVN::Ra->new($TOM::rev::repository);
 my $HEAD=$ra->get_latest_revnum ();
-print "last revision=r$HEAD\n";
+#print "last revision=r$HEAD\n";
 
 # finding last stable version (message marked with '(stable)')
 my $revs = SVN::Log::retrieve ($TOM::rev::repository, $TOM::core_revision,$HEAD);
@@ -75,20 +75,20 @@ my $revs = SVN::Log::retrieve ($TOM::rev::repository, $TOM::core_revision,$HEAD)
 # find last stable revision
 my $STABLE=TOM::rev::get_last_stable_revision();
 
-print "last stable revision=r$STABLE\n";
+print "Cyclone3 Framework last stable: r$STABLE\n";
 
 if ($STABLE<=$TOM::core_revision)
 {
 	print color 'bold red';
 	print "\n";
-	print "Can't find any new stable revision, try later\n";
+	print "Stable update is not available, try later\n";
 	#&exit();
 }
 else
 {
 	print "\n";
 	
-	print "List of changes in repository to upgrade:\n";
+	print "List of changes in repository to update:\n";
 	foreach my $rev (@{$revs})
 	{
 		if (($rev->{'revision'}>$TOM::core_revision)
@@ -145,17 +145,27 @@ foreach my $overlay(reverse @TOM::Overlays::item)
 {
 	next if $overlay eq "10-local";
 	
-	print "checking overlay '$overlay' for update\n";
+	print "Cyclone3 overlay '$overlay' (update check)\n";
+	
+	if (not -d $TOM::P.'/_overlays/'.$overlay.'/.svn')
+	{
+		print " (not subversion source)\n";
+		next;
+	}
+	
 	chdir $TOM::P.'/_overlays/'.$overlay;
 	my $out=`svn info`;
-	next unless $out;
+	if (!$out)
+	{
+		print " (can't get subversion info)\n";
+		next;
+	}
 	
 	$out=~/URL: (.*?)\n/s;my $url=$1;
 	$out=~/Revision: (\d+)/;my $revision=$1;
 	
-	my $stable=TOM::Overlays::get_last_stable_revision($url.'/stable');
+	my $stable=TOM::rev::get_uri_content($url.'/stable');
 	
-	#print "URL: $url $revision $stable\n";
 	if ($stable>$revision)
 	{
 		my $revs = SVN::Log::retrieve ($url, $revision+1,$stable);

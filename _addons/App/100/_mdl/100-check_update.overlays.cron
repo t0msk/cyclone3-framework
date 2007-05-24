@@ -78,15 +78,13 @@ sub execute
 		$out=~/Revision: (\d+)/;my $revision=$1;
 		main::_log("actual revision='$revision'");
 		
-		my $stable=TOM::Overlays::get_last_stable_revision($url.'/stable');
+		my $stable=TOM::rev::get_uri_content($url.'/stable');
 		
 		main::_log("last stable revision=r$stable");
 		
-		$revision-=5;
-		
 		if ($stable>$revision)
 		{
-		
+			
 			my $body=<<"HEADER";
 <html>
 	<head>

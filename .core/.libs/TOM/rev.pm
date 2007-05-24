@@ -47,4 +47,25 @@ sub get_last_stable_revision
 	return $2;
 }
 
+sub get_uri_content
+{
+	my $uri=shift;
+	return undef unless $uri;
+	
+	my $ctx = new SVN::Client();
+	my $tmp_file=new TOM::Temp::file();
+	open(HNDF,'>'.$tmp_file->{'filename'});
+	eval {$ctx->cat(\*HNDF, $uri, 'HEAD')};
+	if ($@){return 1;}
+	open(HNDF,'<'.$tmp_file->{'filename'});
+	my $data;
+	do
+	{
+		local $/;
+		$data=<HNDF>;
+	};
+	chomp($data);
+	return $data;
+}
+
 1;
