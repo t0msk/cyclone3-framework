@@ -41,6 +41,7 @@ sub save_content
 	}
 	else
 	{
+		main::_log("saving to file='$self->{'filename'}' content length='".(length($content))."'");
 		print HND_CNT $content;
 	}
 	
