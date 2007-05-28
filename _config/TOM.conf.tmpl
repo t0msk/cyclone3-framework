@@ -2,10 +2,105 @@
 package TOM;
 use strict;
 
-#$TOM::contact{'from'}="cyclone3\@server.tld";
+=head1 NAME
+
+Cyclone3 installation configuration - _config/TOM.conf
+
+=cut
+
+$TOM::contact{'_'}='root@localhost'; # default contact
+
+=head2 CONTACTS
+
+This very important part defines standardised way how peoples are informed about available Cyclone3 updates, errors and how all others reports is sended
+
+=over
+
+=item *
+
+$TOM::contact{'from'}='cyclone3@localhost'
+
+Default email address used in 'From:' email header, also visible in all sended emails - identifier of server.
+
+=item *
+
+$TOM::contact{'TOM_farm'}
+
+Email of responsible person(s) to this Cyclone3 server installation or server farm (manager)
+
+=item *
+
+$TOM::contact{'WEB_manager'}
+
+Email address of web developers manager from company (want to receive summary reports)
+
+Want to receive summary informations about all domains in one report.
+
+=item *
+
+$TOM::contact{'WEB'}
+
+Email address of default responsible web developer(s) when none in domain is defined
+
+=item *
+
+$TOM::contact{'WEB_farm'}
+
+Email address of web developers manager at this server farm (for example one big project).
+
+Want to receive summary information about every one running domain service.
+
+=item *
+
+$TOM::contact{'WEB_list_farm'}
+
+Email address of web developers mailinglist
+
+=item *
+
+$TOM::contact{'DEV_'*},$TOM::contact{'TECH_'*}
+
+DEV - software developers, TECH - technology support. Same configurations as for WEB.
+
+=item *
+
+$TOM::contact{'websupport'}
+
+Email of person or automat to receive all client requests from domains about WEB-design
+
+=item *
+
+$TOM::contact{'devsupport'}
+
+Email of person or automat to receive all client requests from domains about DEV-elopment
+
+=item *
+
+$TOM::contact{'techsupport'}
+
+Email of person or automat to receive all client requests from domains about TECH-support
+
+=item *
+
+$TOM::contact{'support'}
+
+Email of person or automat to receive all others client requests
+
+=back
+
+When smtp is used, authorization can be configured to send emails
+
+ #$TOM::smtp_host='mail.domain.tld';
+ #$TOM::smtp_user='cyclone3@domain.tld';
+ #$TOM::smtp_pass='***';
+
+
+=cut
+
+$TOM::contact{'from'}='cyclone3@localhost';
 
 # responsible contacts of this Cyclone3 installation
-$TOM::contact{'_'}="root\@localhost"; # default
+
 $TOM::contact{'TOM_farm'}=$TOM::contact{'_'}; # This installation lead developer and manager
 
 $TOM::contact{'WEB_manager'}=$TOM::contact{'_'}; # manager of WEB services
@@ -27,6 +122,59 @@ $TOM::contact{'devsupport'}=$TOM::contact{'_'};
 $TOM::contact{'websupport'}=$TOM::contact{'_'};
 $TOM::contact{'techsupport'}=$TOM::contact{'_'};
 $TOM::contact{'support'}=$TOM::contact{'_'};
+
+#$TOM::smtp_host='mail.domain.tld';
+#$TOM::smtp_user='cyclone3@domain.tld';
+#$TOM::smtp_pass='***';
+
+
+=head2 PRIMARY DATABASE SOURCES
+
+Cyclone3 know three primary database sources
+
+=over
+
+=item *
+
+main
+
+In this database source are stored all application datas, like articles, images, etc...
+
+=item *
+
+sys
+
+In this database source are stored system informations like main application datas cache, banning system, etc... All with system datas with less amount but with high-availability
+
+=item *
+
+stats
+
+In this database source are stored all statistics informations. This database is full with huge amount of data and operations above it is slow.
+
+=back
+
+For small projects all those database sources can be store in one physical database - this is default configuration.
+
+Configuration of main database source (All data are stored in UTF-8 encoding):
+
+ $TOM::DB{'main'}=
+ {
+   host => "localhost",
+   user => "TOM",
+   pass => "",
+   sql => [
+     "SET NAMES 'utf8'",
+     "SET CHARACTER SET 'utf8'",
+   ],
+ };
+
+When sys and stats database source is stored in main database source (Also we have only one database to all purposes):
+
+ $TOM::DB{'stats'}=$TOM::DB{'main'};
+ $TOM::DB{'sys'}=$TOM::DB{'main'};
+
+=cut
 
 $TOM::DB{'main'}=
 {
@@ -56,8 +204,5 @@ $TOM::DB{'main'}=
 $TOM::DB{'stats'}=$TOM::DB{'main'};
 $TOM::DB{'sys'}=$TOM::DB{'main'};
 
-#$TOM::smtp_host='mail.domain.tld';
-#$TOM::smtp_user='cyclone3@domain.tld';
-#$TOM::smtp_pass='***';
 
 1;# DO NOT CHANGE !
