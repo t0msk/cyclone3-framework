@@ -83,8 +83,8 @@ env-update</synopsis></para>
       </listitem>
 
       <listitem>
-        <para>Konfigurácia
-        <filename>/www/TOM/_config/TOM.conf</filename></para>
+        <para>Konfigurácia <ulink
+        url="?|?section=source-doc&amp;file=_config/TOM.conf.tmpl"><filename>/www/TOM/_config/TOM.conf</filename></ulink></para>
 
         <para>Pokiaľ súbor neexistuje:</para>
 

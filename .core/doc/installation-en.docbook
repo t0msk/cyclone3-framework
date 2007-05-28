@@ -80,8 +80,8 @@ env-update</synopsis></para>
       </listitem>
 
       <listitem>
-        <para>Configure Cyclone3 by editing
-        <filename>/www/TOM/_config/TOM.conf</filename></para>
+        <para>Configure Cyclone3 by editing <ulink
+        url="?|?section=source-doc&amp;file=_config/TOM.conf.tmpl"><filename>/www/TOM/_config/TOM.conf</filename></ulink></para>
 
         <para>If the file does not exist, create it from default template
         using:</para>
