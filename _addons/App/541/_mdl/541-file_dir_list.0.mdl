@@ -1,0 +1,359 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+541-file_dir_list.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+List of folders and items
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID parent záznamu ktorého childy sa zobrazujú
+
+=item *
+
+B<status> - default 'Y' - statusy stromu ktoré sa zobrazujú ( napr. 'YNT' )
+
+=item *
+
+B<db_order> - default 'ID_charindex' - zoradenie položiek v SQL syntaxe
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default
+
+=item *
+
+B<ITEM> - položka stromu
+
+=item *
+
+B<ITEM-current> - aktuálna položka stromu ak je použitý vstupný parameter B<current_*>=''
+
+=item *
+
+B<SUB> - v režime 'tree' používané pre vytvorenie sub-stromu v strome
+
+=item *
+
+B<#tree#> - miesto pre vloženie sub-stromu
+
+=item *
+
+B<#item#> - miesto pre vloženie ITEM
+
+=item *
+
+B<%path%> - ID
+
+=item *
+
+B<%name%> - chýbajúci parameter
+
+=back
+
+Režim zoznamu:
+
+ <XML_DESIGN_DEFINITION>
+ 
+ <DEFINITION id="TMP">
+  <#item#>
+ </DEFINITION>
+ 
+ <DEFINITION id="ITEM">
+  <item IDitem="<%ID%>">
+   <ID><%ID%></ID>
+   <ID_entity><%ID_entity%></ID_entity>
+   <IDparent><%ID_parent%></IDparent>
+   <name><%name%></name>
+   <name_url><%name_url%></name_url>
+   <path><%path%></path>
+   <datetime_create><%datetime_create%></datetime_create>
+   <lng><%lng%></lng>
+   <status><%status%></status>
+  </item>
+  <#item#>
+ </DEFINITION>
+ 
+ </XML_DESIGN_DEFINITION>
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	delete $env{'ID_charindex'};
+	
+	$env{'tree'}=1 unless exists $env{'tree'};
+	
+	my $from;
+	
+	my $where;
+	
+	# language
+	$where.="lng='$env{'lng'}' ";
+	
+	# status
+	if ($env{'status'})
+	{
+		$XSGN{'TMP'}=~s|<%required_status%>|$env{'status'}|g;
+		$where.="AND (";
+		foreach (split('',$env{'status'}))
+		{
+			$where.="status='$_' OR ";
+		}
+		$where=~s|OR $||;
+		$where.=")";
+	}
+	else
+	{
+		$where.="AND status='Y' ";
+	}
+	
+	if ($env{'ID'})
+	{
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h'    => 'main',
+			'db_name' => $TOM::DB{'main'}{'name'},
+			'tb_name' => 'a541_file_dir',
+			'ID'      => $env{'ID'},
+			'columns' => 
+			{
+				'ID_charindex' => 1
+			}
+		);
+		if ($data{'ID'})
+		{
+			$env{'ID_charindex'}=$data{'ID_charindex'}.':';
+		}
+		else
+		{
+			main::_log("can't find ID='$data{'ID'}'",1);
+			return undef;
+		}
+		
+		my $path_;
+		foreach my $node (App::020::SQL::functions::tree::get_path(
+			$env{'ID'},
+			'db_h'    => 'main',
+			'db_name' => $TOM::DB{'main'}{'name'},
+			'tb_name' => 'a541_file_dir'
+		))
+		{
+			$path_.='/'.$node->{'name_url'};
+		}
+		$path_=~s|^/||;
+		
+		$XSGN{'TMP'}=~s|<%location%>|$path_|g;
+		
+		
+		# add at first parent :))
+		$env{'ID_charindex_parent'}=$env{'ID_charindex'};
+		$env{'ID_charindex_parent'}=~s|:$||;
+		$env{'ID_charindex_parent'}=~s|...$||;
+		$env{'ID_charindex_parent'}=~s|:$||;
+		if ($env{'ID_charindex_parent'})
+		{
+			main::_log('finding parent');
+			# exist parent?
+			my $sql=qq{
+				SELECT
+					ID
+				FROM
+					a541_file_dir
+				WHERE $where AND ID_charindex = '$env{'ID_charindex_parent'}'
+				LIMIT 1
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+			if (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				main::_log('adding parent');
+				$XSGN{'NULL'}=$XSGN{'ITEM'};
+				
+				$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID'}|g;
+				$XSGN{'NULL'}=~s|<%name%>|..|g;
+				$XSGN{'NULL'}=~s|<%folder%>|Y|g;
+				
+				$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+			}
+		}
+		else
+		{
+			$XSGN{'NULL'}=$XSGN{'ITEM'};
+			
+			$XSGN{'NULL'}=~s|<%ID%>||g;
+			$XSGN{'NULL'}=~s|<%name%>|..|g;
+			$XSGN{'NULL'}=~s|<%folder%>|Y|g;
+			
+			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+		}
+	}
+	
+	
+	$env{'db_order'}="ID_charindex" unless $env{'db_order'};
+	
+	
+	
+	
+	#
+	# LISTING OF FOLDERS
+	#
+	
+	
+	
+	my $sql=qq{
+		SELECT
+			ID,
+			ID_entity,
+			ID_charindex,
+			datetime_create,
+			name,
+			name_url,
+			lng,
+			status
+		FROM
+			a541_file_dir
+		WHERE $where AND ID_charindex LIKE '$env{'ID_charindex'}___'
+		ORDER BY
+			$env{'db_order'}
+	};
+	
+	my @path;
+	my @path_url;
+	
+	my %charindex_ID;
+	
+	my $level;
+	my $level_prev;
+	my $level_next;
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	if ($sth0{'sth'})
+	{
+		# naplnim si @tree s polozkami zo stromu preto aby som mohol v dalsom
+		# cykle pracovat ako s predchadzajucimi tak i s buducimi polozkami
+		my @tree;
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$charindex_ID{$db0_line{'ID_charindex'}}=$db0_line{'ID'};
+			
+			my $dbg=$db0_line{'ID_charindex'};
+			$dbg=~s|^(.*?)(.{0,4})$|\1|;
+			
+			$db0_line{'ID_parent'}=$charindex_ID{$dbg};
+			
+			$XSGN{'NULL'}=$XSGN{'ITEM'};
+			
+			$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID'}|g;
+			$XSGN{'NULL'}=~s|<%ID_entity%>|$db0_line{'ID_entity'}|g;
+			$XSGN{'NULL'}=~s|<%ID_parent%>|$db0_line{'ID_parent'}|g;
+			$XSGN{'NULL'}=~s|<%name%>|$db0_line{'name'}|g;
+			$XSGN{'NULL'}=~s|<%name_url%>|$db0_line{'name_url'}|g;
+			$XSGN{'NULL'}=~s|<%datetime_create%>|$db0_line{'datetime_create'}|g;
+			$XSGN{'NULL'}=~s|<%status%>|$db0_line{'status'}|g;
+			$XSGN{'NULL'}=~s|<%lng%>|$db0_line{'lng'}|g;
+			$XSGN{'NULL'}=~s|<%folder%>|Y|g;
+			#$XSGN{'NULL'}=~s|<%path%>|$path_|g;
+			
+			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+		}
+		
+	}
+	else
+	{
+		main::_log("can't select");
+	}
+	
+	
+	
+	#
+	# LISTING OF ITEMS
+	#
+	
+	
+	my $where_category="AND ID_category='$env{'ID'}'";
+	$where_category="AND ID_category IS NULL" unless $env{'ID'};
+	my $sql=qq{
+		SELECT
+			ID,
+			ID_entity,
+			datetime_create,
+			name,
+			name_url,
+			lng,
+			status
+		FROM
+			a541_file
+		WHERE $where $where_category
+		ORDER BY
+			datetime_create DESC
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	if ($sth0{'sth'})
+	{
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$XSGN{'NULL'}=$XSGN{'ITEM'};
+			
+			$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID'}|g;
+			$XSGN{'NULL'}=~s|<%ID_entity%>|$db0_line{'ID_entity'}|g;
+			$XSGN{'NULL'}=~s|<%name%>|$db0_line{'name'}|g;
+			$XSGN{'NULL'}=~s|<%name_url%>|$db0_line{'name_url'}|g;
+			$XSGN{'NULL'}=~s|<%datetime_create%>|$db0_line{'datetime_create'}|g;
+			$XSGN{'NULL'}=~s|<%status%>|$db0_line{'status'}|g;
+			$XSGN{'NULL'}=~s|<%lng%>|$db0_line{'lng'}|g;
+			
+			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+		}
+		
+	}
+	else
+	{
+		main::_log("can't select");
+	}
+	
+	
+	
+	return 1;
+}
+
+our $authors="roman.fordinal\@comsultia.com";
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
