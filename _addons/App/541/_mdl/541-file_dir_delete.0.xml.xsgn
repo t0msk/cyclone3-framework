@@ -1,0 +1,30 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+	
+<DEFINITION id="TMP">
+<response addon="a541" addon_type="file_dir" type="file_dir_new" result="0" code="<$main::request_code>">
+	<result>0</result>
+	<reason>default error</reason>
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="RESULT_success">
+<response addon="a541" addon_type="file_dir" type="file_dir_delete" result="1" code="<$main::request_code>">
+	<result>1</result>
+	<ID><![CDATA[<%ID%>]]></ID>
+</response>
+</DEFINITION>
+
+
+<DEFINITION id="RESULT_failure_no_input">
+<response addon="a541" addon_type="file_dir" type="file_dir_delete" result="0" code="<$main::request_code>">
+	<result>0</result>
+	<reason>Not enough information to act. Missing parameter '<%missing_parameter%>'</reason>
+</response>
+</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>
+
