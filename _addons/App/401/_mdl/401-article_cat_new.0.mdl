@@ -42,7 +42,7 @@ sub execute
 	# find parent to check childs
 	my %parent;
 	my %parent=App::020::SQL::functions::get_ID(
-		'ID' => $env{'parent_ID'},
+		'ID' => $env{'ID_parent'},
 		'db_h' => "main",
 		'db_name' => $TOM::DB{'main'}{'name'},
 		'tb_name' => "a401_article_cat",
@@ -50,7 +50,7 @@ sub execute
 		{
 			'ID_charindex' => 1
 		}
-	) if $env{'parent'};
+	) if $env{'ID_parent'};
 	
 #	if (!$parent{'ID'})
 #	{
