@@ -53,7 +53,7 @@ sub get_relation_iteminfo
 	{
 		my $sql=qq{
 			SELECT
-				name
+				name, hash
 			FROM
 				`$env{'r_db_name'}`.`a540`
 			WHERE
@@ -65,6 +65,9 @@ sub get_relation_iteminfo
 		{
 			$info{'name'}=$db0_line{'name'};
 			$info{'type_name'}='File';
+			
+			$info{'hash'}=$db0_line{'hash'};
+			
 			main::_log("returning name='$db0_line{'name'}'");
 			$t->close();
 			return %info;
