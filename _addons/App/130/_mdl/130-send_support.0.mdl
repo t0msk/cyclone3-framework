@@ -63,6 +63,7 @@ Libraries:
 =cut
 
 use TOM::Utils::datetime;
+use Int::charsets::encode;
 use MIME::Entity;
 
 =head1 SYNOPSIS
@@ -114,8 +115,10 @@ sub execute
 	my $subject = $env{'subject'} || 'support request';
 	
 	my $from = "\"$env{'name'}\" <$env{'email'}>";
-	$from = 'cyclone@comsultia.com' unless $env{'email'} && $env{'name'};
-
+	$from = $TOM::contact{'from'} unless $env{'email'} && $env{'name'};
+	$from=Int::charsets::encode::UTF8_ASCII($from);
+	
+	
 	my $ent = MIME::Entity->build(
 		'Type'    => 'text/plain; charset=UTF-8',
 		'From'    => $from,
