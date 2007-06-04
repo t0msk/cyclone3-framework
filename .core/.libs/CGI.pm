@@ -3,6 +3,8 @@ require 5.004;
 use Carp 'croak';
 use bytes;
 
+BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
+
 # See the bottom of this file for the POD documentation.  Search for the
 # string '=head'.
 
