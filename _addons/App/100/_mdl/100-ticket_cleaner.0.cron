@@ -1,0 +1,128 @@
+#!/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use Encode;
+use encoding 'utf8';
+use utf8;
+use strict; # scrict code
+
+=head1 NAME
+
+100-ticket_cleaner.0.cron
+
+=head1 DESCRIPTION
+
+Cleans old tickets, events, autoclose autosolved tickets, etc...
+
+=cut
+
+use TOM::Database::SQL;
+use App::100::_init;
+use App::020::SQL::functions;
+
+sub execute
+{
+	my %env=@_;
+	
+	my $long=$main::time_current-86400*14;
+	
+	# get all tickets
+	my $sql = qq{
+		SELECT
+			ID,ID_entity,domain,name
+		FROM
+			TOM.a100_ticket
+		WHERE
+			status='Y'
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		
+		main::_log("ID='$db0_line{'ID'}' domain='$db0_line{'domain'}' name='$db0_line{'name'}'");
+		
+		# more than 2 weeks old last event
+		my $sql = qq{
+			SELECT
+				ID, ID_entity
+			FROM
+				TOM.a100_ticket_event
+			WHERE
+				ID_ticket=$db0_line{'ID'}
+				AND datetime_create>FROM_UNIXTIME($long)
+				AND status='Y'
+			LIMIT 1
+		};
+		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		
+		if ($sth1{'sth'}->fetchhash())
+		{
+			#main::_log("active");
+		}
+		else
+		{
+			main::_log("inactive ticket $db0_line{'ID'} for last 2 weeks",1);
+			App::100::SQL::ticket_close(
+				'ID' => $db0_line{'ID'}
+			);
+		}
+		
+	}
+	
+	
+	# remove old closed events
+	
+	my $long=$main::time_current-86400*31*3;
+	
+	my $sql = qq{
+		SELECT
+			ID,ID_entity
+		FROM
+			TOM.a100_ticket_event
+		WHERE
+			datetime_create<FROM_UNIXTIME($long)
+			AND status='N'
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("event $db0_line{'ID_entity'}");
+		App::020::SQL::functions::delete(
+			'ID' => $db0_line{'ID'},
+			'db_h' => 'main',
+			'db_name' => 'TOM',
+			'tb_name' => 'a100_ticket_event',
+		);
+	}
+	
+	
+	# remove old closed tickets
+	
+	my $long=$main::time_current-86400*31*12;
+	
+	my $sql = qq{
+		SELECT
+			ID,ID_entity
+		FROM
+			TOM.a100_ticket
+		WHERE
+			datetime_create<FROM_UNIXTIME($long)
+			AND status='N'
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("event $db0_line{'ID_entity'}");
+		App::020::SQL::functions::delete(
+			'ID' => $db0_line{'ID'},
+			'db_h' => 'main',
+			'db_name' => 'TOM',
+			'tb_name' => 'a100_ticket',
+			'-journalize' => 1,
+		);
+	}
+	
+	return 1;
+}
+
+1;

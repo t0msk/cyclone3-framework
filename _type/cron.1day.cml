@@ -23,6 +23,12 @@
 	<VAR id="-name" value="cleaner_hacked" />
 </MODULE>
 
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="100" />
+	<VAR id="-name" value="ticket_cleaner" />
+</MODULE>
+
 
 
 # a140 - cleaning
