@@ -1,56 +1,61 @@
 #!/usr/bin/perl
 # USE UTF-8 !!!
 package CRON::module;
-use TOM;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
 use strict;
+
+=head1 NAME
+
+300-autokick.0.cron
+
+=head1 DESCRIPTION
+
+This cron module moves users with expired session into users table
+
+=cut
+
 
 sub execute
 {
 	
 	my %env=@_;
 	if (!$env{max_online}){$cron::ERR="not defined max_online for maxtime online";return undef;}
-	
-	if ($cron::P eq $CRON::P)
-	{
-		main::_log("WARN: global cron, manipulating with all hosts in TOM-database!!!");
-		$env{db_300}="TOM";
-		$env{sel0}="reqtime<$cron::time_current-$env{max_online} OR active='N'";
-	}
-	else
-	{
-		return 1;
-	}
 
 	my $db0=$main::DB{main}->Query("
 		SELECT
 			*
 		FROM TOM.a300_online
 		WHERE
-			$env{sel0}
+			reqtime < $main::time_current-$env{'max_online'}
+			OR active='N'
 	");
 	while (my %user=$db0->fetchhash)
 	{
-		main::_log("kick user IDhash:".$user{IDhash}." login:".$user{login}." old:".($cron::time_current-$user{reqtime}));
+		main::_log("kick user IDhash'$user{'IDhash'}' login='$user{'login'}' old='".($main::time_current-$user{'reqtime'})."'");
+		
 		my $db0=$main::DB{main}->Query("
 			SELECT
 				*
 			FROM TOM.a300_users
 			WHERE
 				IDhash='$user{IDhash}'
-				$env{sel1}
 			LIMIT 1");
 		if (my %user0=$db0->fetchhash)
 		{
-			main::_log("je lognuty") if ($user{logged} eq "Y");
-			main::_log("nelognuty") if ($user{logged} ne "Y");
-			main::_log("anonymny user") if (!$user0{login});
-			main::_log("autorizovany user") if ($user0{login});
+			main::_log("is loggled") if ($user{logged} eq "Y");
+			main::_log("not logged") if ($user{logged} ne "Y");
+			main::_log("anonymous") if (!$user0{login});
+			main::_log("authorized") if ($user0{login});
 			if	(
 					(($user{logged} eq "Y")&&($user0{login}))
 					||(($user{logged} ne "Y")&&(!$user0{login}))
 				)
 			{
-				main::_log("prevediem zapis");
+				
+				main::_log("save data into users table");
+				
 				$user0{cookies}="";
 				while ($user{cookies}=~s|<VAR id="(.*?)">(.*?)</VAR>||)
 				{
@@ -59,91 +64,89 @@ sub execute
 					if ($var=~/^_/){$user0{cookies}.="<VAR id=\"".$var."\">".$value."</VAR>\n";next}
 				}
 				
+				# get session data and store ich as cookies_system->{session}
+				my $session=new CVML(data=>$user{'session'});
+				my $cookies_system=new CVML(data=>$user0{'cookies_system'});
+				%{$cookies_system->{'hash'}{'session'}}=%{$session->{'hash'}};
+				my $cvml=CVML::structure::serialize(%{$cookies_system->{'hash'}});
+				$cvml=~s|\'|\\'|g;
+				
+				
 				$main::DB{main}->Query("
-					UPDATE TOM.a300_users
+					UPDATE
+						TOM.a300_users
 					SET
 						logtime = '$user{logtime}',
 						reqtime = '$user{reqtime}',
 						IPlast = '$user{IP}',
 						rqs = rqs+$user{rqs},
-						cookies = '$user0{cookies}'
+						cookies = '$user0{cookies}',
+						cookies_system = '$cvml'
 					WHERE
 						IDhash='$user{IDhash}'
-						$env{sel1}
 					LIMIT 1
 				");
 				
 				$main::DB{main}->Query("
-					DELETE FROM TOM.a300_online
+					DELETE FROM
+						TOM.a300_online
 					WHERE
 						IDhash='$user{IDhash}'
-						$env{sel1}
 					LIMIT 1
 				");
 			}
 			else
 			{
-				main::_log("neprevediem zapis, deleting");
+				main::_log("just delete from online");
 				if (
 					$main::DBH->Query("
 						DELETE FROM
 							TOM.a300_online
 						WHERE
 							IDhash='$user{IDhash}'
-							$env{sel1}
 						LIMIT 1
 					")
 				)
-				{main::_log("deleted");}
+				{
+					main::_log("deleted");
+				}
 				else
-				{main::_log("not deleted :(",1);}
+				{
+					main::_log("not deleted :(",1);
+				}
 			}
 		}
 		else
 		{
-			main::_log("user nieje vobec v a300_users!!!");
-			main::_log("neprevediem zapis, deleting");
-			if (
-				$main::DBH->Query("
-					DELETE FROM TOM.a300_online
+			main::_log("user not exists in users table",1);
+			main::_log("just delete from online");
+			if
+			(
+				$main::DB{'main'}->Query("
+					DELETE FROM
+						TOM.a300_online
 					WHERE
 						IDhash='$user{IDhash}'
-						$env{sel1}
 					LIMIT 1
 				")
 			)
-			{main::_log("deleted");}
+			{
+				main::_log("deleted");
+			}
 			else
-			{main::_log("not deleted :(",1);}
+			{
+				main::_log("not deleted :(",1);
+			}
 		}
 	}
 	
 	return 1;
 }
 
+=head1 AUTHORS
 
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
 
 1;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
