@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
-use Mysql;
 BEGIN {require "/www/TOM/.bin/tom3-init";$main::debug=0;$main::debug=0;}
 
 use TOM::Database::connect;
@@ -73,6 +72,92 @@ if ($FORM{'domain'})
 	}
 	
 }
+elsif ($FORM{'a'})
+{
+	# control all domains
+	my @ALTER;
+	foreach my $local(&get_domains())
+	{
+		eval
+		{
+			print "require $local\n";
+			require $local;
+			
+			foreach my $addon(@TOM::domain_default_addons)
+			{
+				TOM::Database::SQL::file::install(
+					$addon,
+					'db_name'=> $TOM::DB{$FORM{'db_h'}}{'name'},
+					'db_h'=>$FORM{'db_h'},
+				);
+			}
+			
+			my %out=TOM::Database::SQL::compare::compare_database(
+				$TOM::DB{$FORM{'db_h'}}{'name'},
+				'db_h'=>$FORM{'db_h'}
+			);
+			
+			#print "compared database '$TOM::DB{$FORM{'db_h'}}{'name'}'\n";
+			#print color 'reset bold yellow';
+#			foreach my $SQL(@{$out{'ALTER'}})
+#			{
+#				print "$SQL\n";
+#			}
+			
+			push @ALTER, @{$out{'ALTER'}};
+			
+			if (@ALTER > 10)
+			{
+			
+				print color 'reset bold yellow';
+				foreach my $SQL(@ALTER)
+				{
+					print "$SQL\n";
+				}
+			
+				print "Do it? [No/yes]\n";
+				my $do=<STDIN>;
+				if ($do=~/yes/i)
+				{
+					print color 'reset red';
+					foreach my $SQL(@ALTER)
+					{
+						print "$SQL\n";
+						TOM::Database::SQL::execute($SQL);
+					}
+				}
+				
+				@ALTER=();
+				
+			}
+			
+			
+		};
+	}
+	
+#	print color 'reset bold yellow';
+#	
+#	foreach my $SQL(@ALTER)
+#	{
+#		print "$SQL\n";
+#	}
+#	
+#	if (@ALTER)
+#	{
+#		print "Do it? [No/yes]\n";
+#		my $do=<STDIN>;
+#		if ($do=~/yes/i)
+#		{
+#			print color 'reset red';
+#			foreach my $SQL(@ALTER)
+#			{
+#				print "$SQL\n";
+#				TOM::Database::SQL::execute($SQL);
+#			}
+#		}
+#	}
+	
+}
 else
 {
 	
@@ -113,5 +198,42 @@ else
 	
 }
 
+
+
+sub get_domains
+{
+	my @files;
+	my @domain_conf;
+	opendir (DIR, $TOM::P);
+	push @files, readdir DIR;
+	while (my $file=shift @files)
+	{
+		
+		if (($file ne ".")&&($file ne ".."))
+		{
+			next if $file =~/!www/;
+			next if $file =~/_(\w+)$/;
+			next if $file =~/\.svn/;
+			
+			if
+			(
+				(-d $TOM::P."/".$file)&&
+				(-e $TOM::P."/".$file."/local.conf")
+			)
+			{
+				#main::_log_stdout("adding domain directory '$file'");
+				push @domain_conf, $TOM::P.'/'.$file.'/local.conf';
+				if (opendir (DIR1,$TOM::P."/".$file))
+				{foreach (readdir DIR1)
+				{
+					if (($_ ne ".")&&($_ ne "..")){push @files,$file."/".$_;}}
+				}
+			}
+			
+		}
+	}
+	
+	return @domain_conf;
+}
 
 &exit();
