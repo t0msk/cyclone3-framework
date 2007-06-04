@@ -189,6 +189,7 @@ HEADER
 		# revision, date, author, message, paths
 		next unless $rev->{'message'};
 		next if $rev->{'message'}=~/\(minor\)/;
+		next unless $rev->{'message'}=~/\[frame:/;
 		
 		my $class;
 		if ($rev->{'message'}=~/\[!\]/)

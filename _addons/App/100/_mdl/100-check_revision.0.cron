@@ -160,6 +160,7 @@ HEADER
 			main::_log("msg='$msg'");
 			
 			next if $msg=~/\(minor\)/;
+			next unless $msg=~/\[frame:/;
 			
 			my $null=$REV;
 			$null=~s|<%revision%>|$rev|g;
