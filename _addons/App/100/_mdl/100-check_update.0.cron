@@ -165,6 +165,7 @@ HEADER
 	
 	my $to=
 		TOM::Utils::vars::unique_split(
+			$TOM::contact{'TOM_farm'}.';'.
 			$TOM::contact{'TECH_farm'}.';'.
 			$TOM::contact{'DEV_farm'}.';'
 		);
