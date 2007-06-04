@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
-use Mysql;
 BEGIN {$main::debug=0;require "/www/TOM/.bin/tom3-init";}
 
 use SVN::Ra;
@@ -96,7 +95,7 @@ else
 		)
 		{
 			# display only changes in framework
-			#next unless $rev->{'message'}=~/\[frame/;
+			next unless $rev->{'message'}=~/\[frame/;
 			
 			1 while ($rev->{'message'}=~s|\n$||);
 			if ($rev->{'message'}=~/\(major\)/)
