@@ -1,0 +1,84 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+541-file_dir_properties.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Get properties of directory
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	my $from;
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	my %directory=App::020::SQL::functions::get_ID
+	(
+		'ID' => $env{'ID'},
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a541_file_dir",
+		'columns' =>
+		{
+			'*' => 1
+		}
+	);
+	
+	if ($directory{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		$XSGN{'TMP'}=~s|<%ID%>|$directory{'ID'}|g;
+		$XSGN{'TMP'}=~s|<%name%>|$directory{'name'}|g;
+		# get location
+		my $location;
+		foreach my $p(
+			App::020::SQL::functions::tree::get_path(
+				$env{'ID'},
+				'db_h' => "main",
+				'db_name' => $TOM::DB{'main'}{'name'},
+				'tb_name' => "a541_file_dir",
+			)
+		)
+		{
+			$location.="/".$p->{'name'};
+		}
+		$location=~s|/$directory{name}$||;
+		$XSGN{'TMP'}=~s|<%location%>|$location|g;
+		$XSGN{'TMP'}=~s|<%modified%>|$directory{'datetime_create'}|g;
+	}
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
