@@ -41,7 +41,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_attrs` (
 
 -- --------------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_category` ( -- tabulka vytvorena podla vsetkeho podla DATA standardu
+CREATE TABLE `/*db_name*/`.`/*app*/_category` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `IDentity` bigint(20) unsigned NOT NULL default '0',
   `IDcharindex` varchar(64) binary NOT NULL default '',
