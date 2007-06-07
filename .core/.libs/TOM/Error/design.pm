@@ -67,7 +67,7 @@ our $engine_email=<<"HEADER";
 					
 					<tr>
 						<td class="var" nowrap="nowrap">core:</td>
-						<td class="value" width="100%">$TOM::core_name$TOM::core_version.$TOM::core_build (r$TOM::core_revision)</td>
+						<td class="value" width="100%">$TOM::core_name $TOM::core_version.$TOM::core_build (r$TOM::core_revision)</td>
 					</tr>
 					
 					<tr>
@@ -339,7 +339,7 @@ our $module_email=<<"HEADER";
 					
 					<tr>
 						<td class="var" nowrap="nowrap">core:</td>
-						<td class="value" width="100%">$TOM::core_name$TOM::core_version.$TOM::core_build (r$TOM::core_revision)</td>
+						<td class="value" width="100%">$TOM::core_name $TOM::core_version.$TOM::core_build (r$TOM::core_revision)</td>
 					</tr>
 					
 					<tr>
