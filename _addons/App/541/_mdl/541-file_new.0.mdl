@@ -1,0 +1,109 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::541::_init;
+
+=head1 NAME
+
+541-file_new.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Create new file item
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	delete $env{'ID_charindex'};
+	
+	my $from;
+	
+	if (!$env{'name'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|name|g;
+		return 1;
+	}
+	
+	# prepare 'name' for SQL's
+	$env{'name'}=~s|\'|\\'|;
+	
+	# I have ID of directory, but I must have ID_entity of directory
+	my %parent;
+	%parent=App::020::SQL::functions::get_ID(
+		'ID' => $env{'ID_dir'},
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a541_file_dir",
+		'columns' =>
+		{
+			'ID_entity' => 1
+		}
+	) if $env{'ID_dir'};
+	
+	# parent is in $parent{'ID_entity'}
+	
+	# check if in this directory is not file with same name!
+	
+	
+	
+	
+	
+	# find new hash
+	my $hash=App::541::functions::file_newhash();
+	
+	# create name_url
+	my $name_url=TOM::Net::URI::rewrite::convert($env{'name'});
+	
+	# create a new file
+	my $ID=App::020::SQL::functions::new(
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a541_file",
+		'-journalize' => 1,
+		'columns' =>
+		{
+			'ID_category' => "'$parent{'ID_entity'}'",
+			'name' => "'$env{'name'}'",
+			'name_url' => "'$name_url'",
+			'name_hash'  => "'$hash'",
+			'posix_owner' => "'".$main::USRM{'IDhash'}."'",
+			'lng'  => "'$env{'lng'}'",
+			'status'  => "'N'",
+		}
+	);
+	
+	# check output
+	if ($ID)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		$XSGN{'TMP'}=~s|<%ID%>|$ID|g;
+	}
+	else
+	{
+		
+	}
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
