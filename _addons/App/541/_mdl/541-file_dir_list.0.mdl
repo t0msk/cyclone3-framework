@@ -302,7 +302,7 @@ sub execute
 	
 	
 	my $where_category="AND ID_category='$env{'ID'}'";
-	$where_category="AND ID_category IS NULL" unless $env{'ID'};
+	$where_category="AND ID_category = 0" unless $env{'ID'};
 	my $sql=qq{
 		SELECT
 			ID,
