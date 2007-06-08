@@ -12,6 +12,6 @@
 	<VAR id="-xlng" value="<$main::FORM{'lng'}>" />
 	<VAR id="-xsgn" value="xml" />
 	<VAR id="-xsgn_global" value="1" />
-		<VAR id="name" value="<$main::FORM{'name'}>" />
 		<VAR id="ID_dir" value="<$main::FORM{'ID_dir'}>" />
+		<VAR id="mimetype" value="<$main::FORM{'mimetype'}>" />
 </MODULE>

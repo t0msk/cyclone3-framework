@@ -7,6 +7,8 @@ use utf8;
 use strict;
 
 use App::541::_init;
+use File::Copy;
+use File::Path;
 
 =head1 NAME
 
@@ -29,15 +31,29 @@ sub execute
 	
 	my $from;
 	
-	if (!$env{'name'})
+	if (!$main::FORM{'file_data'})
 	{
 		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
-		$XSGN{'TMP'}=~s|<%missing_parameter%>|name|g;
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|file_data|g;
 		return 1;
 	}
 	
+	# get file data and filename
+	my $filename=$main::FORM{'file_data_file'};
+	main::_log("filename='$filename'");
+	my $fileinfo=CGI::uploadInfo($main::FORM{'file_data_file'});
+	# check if file exists
+	my $tmpfilename = $main::CGI->tmpFileName($main::FORM{'file_data_file'});
+	main::_log("tmpfilename='$tmpfilename'");
+	my $size=(stat($tmpfilename))[7];
+	main::_log("size='$size'");
+	main::_log("mimetype='$env{'mimetype'}'");
+	
+	#$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};return 1;
+	
+	
 	# prepare 'name' for SQL's
-	$env{'name'}=~s|\'|\\'|;
+	$filename=~s|\'|\\'|;
 	
 	# I have ID of directory, but I must have ID_entity of directory
 	my %parent;
@@ -64,7 +80,7 @@ sub execute
 	my $hash=App::541::functions::file_newhash();
 	
 	# create name_url
-	my $name_url=TOM::Net::URI::rewrite::convert($env{'name'});
+	my $name_url=TOM::Net::URI::rewrite::convert($filename);
 	
 	# create a new file
 	my $ID=App::020::SQL::functions::new(
@@ -75,14 +91,27 @@ sub execute
 		'columns' =>
 		{
 			'ID_category' => "'$parent{'ID_entity'}'",
-			'name' => "'$env{'name'}'",
+			'name' => "'$filename'",
 			'name_url' => "'$name_url'",
 			'name_hash'  => "'$hash'",
 			'posix_owner' => "'".$main::USRM{'IDhash'}."'",
+			'file_size' => $size,
+			'mimetype' => "'$env{'mimetype'}'",
 			'lng'  => "'$env{'lng'}'",
 			'status'  => "'N'",
 		}
 	);
+	
+	# ID = ID_entity
+	
+	my $subdir=sprintf('%010d',int($ID/10000));
+	
+	my $path_to=$tom::P.'/!media/a541/'.$subdir;
+	File::Path::mkpath $path_to;
+	my $file_to=$path_to.'/'.$hash;
+	main::_log("copy file to '$file_to'");
+	File::Copy::copy($tmpfilename,$file_to);
+	
 	
 	# check output
 	if ($ID)
@@ -92,7 +121,7 @@ sub execute
 	}
 	else
 	{
-		
+		return 1;
 	}
 	
 	return 1;
