@@ -15,6 +15,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file` (
   `posix_group` int(10) unsigned NOT NULL,
   `posix_rights` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `file_size` bigint(20) unsigned default NULL,
+  `mimetype` varchar(120) character set ascii NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -35,6 +37,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_j` (
   `posix_group` int(10) unsigned NOT NULL,
   `posix_rights` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `file_size` bigint(20) unsigned default NULL,
+  `mimetype` varchar(120) character set ascii NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
