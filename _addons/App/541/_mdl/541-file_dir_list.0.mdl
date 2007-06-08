@@ -7,6 +7,7 @@ use utf8;
 use strict;
 
 use App::020::_init;
+use App::300::_init;
 
 =head1 NAME
 
@@ -170,7 +171,7 @@ sub execute
 			'tb_name' => 'a541_file_dir'
 		))
 		{
-			$path_.='/'.$node->{'name_url'};
+			$path_.='/'.$node->{'name'};
 		}
 		$path_=~s|^/||;
 		
@@ -223,6 +224,7 @@ sub execute
 	$env{'db_order'}="ID_charindex" unless $env{'db_order'};
 	
 	
+	my %owners;
 	
 	
 	#
@@ -279,6 +281,7 @@ sub execute
 			$XSGN{'NULL'}=~s|<%ID_parent%>|$db0_line{'ID_parent'}|g;
 			$XSGN{'NULL'}=~s|<%name%>|$db0_line{'name'}|g;
 			$XSGN{'NULL'}=~s|<%name_url%>|$db0_line{'name_url'}|g;
+			$XSGN{'NULL'}=~s|<%size%>|<DIR>|g;
 			$XSGN{'NULL'}=~s|<%datetime_create%>|$db0_line{'datetime_create'}|g;
 			$XSGN{'NULL'}=~s|<%status%>|$db0_line{'status'}|g;
 			$XSGN{'NULL'}=~s|<%lng%>|$db0_line{'lng'}|g;
@@ -307,7 +310,10 @@ sub execute
 		SELECT
 			ID,
 			ID_entity,
+			file_size,
 			datetime_create,
+			posix_perms,
+			posix_owner,
 			name,
 			name_url,
 			lng,
@@ -330,9 +336,34 @@ sub execute
 			$XSGN{'NULL'}=~s|<%ID_entity%>|$db0_line{'ID_entity'}|g;
 			$XSGN{'NULL'}=~s|<%name%>|$db0_line{'name'}|g;
 			$XSGN{'NULL'}=~s|<%name_url%>|$db0_line{'name_url'}|g;
+			$XSGN{'NULL'}=~s|<%file_size%>|$db0_line{'file_size'}|g;
 			$XSGN{'NULL'}=~s|<%datetime_create%>|$db0_line{'datetime_create'}|g;
 			$XSGN{'NULL'}=~s|<%status%>|$db0_line{'status'}|g;
 			$XSGN{'NULL'}=~s|<%lng%>|$db0_line{'lng'}|g;
+			
+			my $size=$db0_line{'file_size'};
+			my $size_symb='B';
+			if ($size > 1024){$size=$size/1024;$size_symb='KB';}
+			if ($size > 1024){$size=$size/1024;$size_symb='MB';}
+			if ($size > 1024){$size=$size/1024;$size_symb='GB';}
+			$size=int($size);
+			$XSGN{'NULL'}=~s|<%size%>|$size $size_symb|g;
+			
+			$XSGN{'NULL'}=~s|<%perms%>|$db0_line{'posix_perms'}|g;
+			
+			my $rwx=$db0_line{'posix_perms'};$rwx=~s|^(...).*$|\1|;
+			$XSGN{'NULL'}=~s|<%rwx%>|$rwx|g;
+			
+			my $owner="???";
+			if (!$owners{$db0_line{'posix_owner'}})
+			{
+				my %user=App::300::UserFind(
+					'IDhash' => $db0_line{'posix_owner'}
+				);
+				$owners{$db0_line{'posix_owner'}}=$user{'login'} || '?'.$db0_line{'posix_owner'}.'?';
+			}
+			$owner=$owners{$db0_line{'posix_owner'}};
+			$XSGN{'NULL'}=~s|<%owner%>|$owner|g;
 			
 			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
 		}

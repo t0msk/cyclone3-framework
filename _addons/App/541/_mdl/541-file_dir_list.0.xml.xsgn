@@ -17,7 +17,12 @@
 		<name><![CDATA[<%name%>]]></name>
 		<name_url><![CDATA[<%name_url%>]]></name_url>
 		<path><![CDATA[<%path%>]]></path>
+		<file_size><![CDATA[<%file_size%>]]></file_size>
+		<size><![CDATA[<%size%>]]></size>
 		<datetime_create><![CDATA[<%datetime_create%>]]></datetime_create>
+		<perms><![CDATA[<%perms%>]]></perms>
+		<rwx><![CDATA[<%rwx%>]]></rwx>
+		<owner><![CDATA[<%owner%>]]></owner>
 		<lng><![CDATA[<%lng%>]]></lng>
 		<status><![CDATA[<%status%>]]></status>
 		<folder><![CDATA[<%folder%>]]></folder>
