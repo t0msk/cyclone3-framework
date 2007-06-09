@@ -23,6 +23,8 @@
 		<perms><![CDATA[<%perms%>]]></perms>
 		<rwx><![CDATA[<%rwx%>]]></rwx>
 		<owner><![CDATA[<%owner%>]]></owner>
+		<mimetype><![CDATA[<%mimetype%>]]></mimetype>
+		<ico_mime><![CDATA[<%ico_mime%>]]></ico_mime>
 		<lng><![CDATA[<%lng%>]]></lng>
 		<status><![CDATA[<%status%>]]></status>
 		<folder><![CDATA[<%folder%>]]></folder>

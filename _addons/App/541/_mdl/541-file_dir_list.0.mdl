@@ -6,8 +6,9 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-use App::020::_init;
+use App::541::_init;
 use App::300::_init;
+use TOM::Text::format;
 
 =head1 NAME
 
@@ -314,6 +315,7 @@ sub execute
 			datetime_create,
 			posix_perms,
 			posix_owner,
+			mimetype,
 			name,
 			name_url,
 			lng,
@@ -322,7 +324,7 @@ sub execute
 			a541_file
 		WHERE $where $where_category
 		ORDER BY
-			datetime_create DESC
+			name ASC
 	};
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
@@ -341,15 +343,14 @@ sub execute
 			$XSGN{'NULL'}=~s|<%status%>|$db0_line{'status'}|g;
 			$XSGN{'NULL'}=~s|<%lng%>|$db0_line{'lng'}|g;
 			
-			my $size=$db0_line{'file_size'};
-			my $size_symb='B';
-			if ($size > 1024){$size=$size/1024;$size_symb='KB';}
-			if ($size > 1024){$size=$size/1024;$size_symb='MB';}
-			if ($size > 1024){$size=$size/1024;$size_symb='GB';}
-			$size=int($size);
-			$XSGN{'NULL'}=~s|<%size%>|$size $size_symb|g;
+			$XSGN{'NULL'}=~s|<%size%>|TOM::Text::format::bytes($db0_line{'file_size'})|ge;
 			
 			$XSGN{'NULL'}=~s|<%perms%>|$db0_line{'posix_perms'}|g;
+			$XSGN{'NULL'}=~s|<%mimetype%>|$db0_line{'mimetype'}|g;
+			
+			my $ico_mime=$db0_line{'mimetype'};$ico_mime=~s|[/\.]|-|g;
+			$XSGN{'NULL'}=~s|<%ico_mime%>|$ico_mime|g;
+			
 			
 			my $rwx=$db0_line{'posix_perms'};$rwx=~s|^(...).*$|\1|;
 			$XSGN{'NULL'}=~s|<%rwx%>|$rwx|g;

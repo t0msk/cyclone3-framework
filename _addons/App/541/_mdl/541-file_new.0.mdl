@@ -64,16 +64,40 @@ sub execute
 		'tb_name' => "a541_file_dir",
 		'columns' =>
 		{
-			'ID_entity' => 1
+			'ID_entity' => 1,
+			'lng' => 1
 		}
 	) if $env{'ID_dir'};
+	
+	$parent{'lng'}=$env{'lng'} unless $parent{'lng'};
 	
 	# parent is in $parent{'ID_entity'}
 	
 	# check if in this directory is not file with same name!
-	
-	
-	
+	my $ID_rewrite;
+	my $sql=qq{
+		SELECT
+			ID, ID_entity
+		FROM
+			a541_file
+		WHERE
+			ID_category='$parent{'ID_entity'}'
+			AND lng='$parent{'lng'}'
+			AND name='$filename'
+			AND status IN ('Y','N')
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("same file already exists",1);
+		$ID_rewrite=$db0_line{'ID'};
+		if (!$env{'rewrite'})
+		{
+			$XSGN{'TMP'}=$XSGN{'RESULT_failure_same_name'};
+			return 1;
+		}
+	}
 	
 	
 	# find new hash
@@ -83,30 +107,54 @@ sub execute
 	my $name_url=TOM::Net::URI::rewrite::convert($filename);
 	
 	# create a new file
-	my $ID=App::020::SQL::functions::new(
-		'db_h' => "main",
-		'db_name' => $TOM::DB{'main'}{'name'},
-		'tb_name' => "a541_file",
-		'-journalize' => 1,
-		'columns' =>
-		{
-			'ID_category' => "'$parent{'ID_entity'}'",
-			'name' => "'$filename'",
-			'name_url' => "'$name_url'",
-			'name_hash'  => "'$hash'",
-			'posix_owner' => "'".$main::USRM{'IDhash'}."'",
-			'file_size' => $size,
-			'mimetype' => "'$env{'mimetype'}'",
-			'lng'  => "'$env{'lng'}'",
-			'status'  => "'N'",
-		}
-	);
+	my $ID;
+	
+	if ($ID_rewrite)
+	{
+		# i'm updating existing entry
+		$ID=$ID_rewrite;
+		my $out=App::020::SQL::functions::update(
+			'ID' => $ID_rewrite,
+			'db_h' => "main",
+			'db_name' => $TOM::DB{'main'}{'name'},
+			'tb_name' => "a541_file",
+			'-journalize' => 1,
+			'columns' =>
+			{
+				'name_hash'  => "'$hash'",
+				'file_size' => $size,
+				'mimetype' => "'$env{'mimetype'}'"
+			}
+		);
+	}
+	else
+	{
+		# creating new entry
+		$ID=App::020::SQL::functions::new(
+			'db_h' => "main",
+			'db_name' => $TOM::DB{'main'}{'name'},
+			'tb_name' => "a541_file",
+			'-journalize' => 1,
+			'columns' =>
+			{
+				'ID_category' => "'$parent{'ID_entity'}'",
+				'name' => "'$filename'",
+				'name_url' => "'$name_url'",
+				'name_hash'  => "'$hash'",
+				'posix_owner' => "'".$main::USRM{'IDhash'}."'",
+				'file_size' => $size,
+				'mimetype' => "'$env{'mimetype'}'",
+				'lng'  => "'$parent{'lng'}'",
+				'status'  => "'N'",
+			}
+		);
+	}
 	
 	# ID = ID_entity
 	
-	my $subdir=sprintf('%010d',int($ID/10000));
+	my $subdir=sprintf('%010d',int($ID/1000));
 	
-	my $path_to=$tom::P.'/!media/a541/'.$subdir;
+	my $path_to=$tom::P.'/!media/a541/files/'.$subdir;
 	File::Path::mkpath $path_to;
 	my $file_to=$path_to.'/'.$hash;
 	main::_log("copy file to '$file_to'");
@@ -126,6 +174,8 @@ sub execute
 	
 	return 1;
 }
+
+
 
 our $authors='roman.fordinal@comsultia.com';
 

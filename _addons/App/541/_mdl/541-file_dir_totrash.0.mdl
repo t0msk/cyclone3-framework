@@ -1,0 +1,123 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+541-file_dir_totrash.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Remove directory (directories), all childs and files contained
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	$env{'ID'}.=';';
+	foreach my $ID(split(';',$env{'ID'}))
+	{
+		next unless $ID;
+		
+		# get this ID
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h'    => 'main',
+			'db_name' => $TOM::DB{'main'}{'name'},
+			'tb_name' => 'a541_file_dir',
+			'ID'      => $ID,
+			'columns' => 
+			{
+				'ID_charindex' => 1,
+				'lng' => 1
+			}
+		);
+		
+		# get ID and list of ID's childs
+		my $sql=qq{
+			SELECT
+				ID, ID_entity, ID_charindex
+			FROM
+				a541_file_dir
+			WHERE
+				ID_charindex LIKE '$data{'ID_charindex'}%'
+				AND status IN ('Y','N')
+				AND lng='$data{'lng'}'
+			ORDER BY
+				ID_charindex DESC
+		};
+		# ordered DESC because child must be deleted before parent
+		my %sth0=TOM::Database::SQL::execute($sql);
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			
+			# get files from this node
+			my $sql=qq{
+				SELECT
+					ID, ID_entity
+				FROM
+					a541_file
+				WHERE
+					ID_category='$db0_line{'ID_entity'}'
+					AND lng='$data{'lng'}'
+					AND status IN ('Y','N')
+			};
+			my %sth1=TOM::Database::SQL::execute($sql);
+			while (my %db1_line=$sth1{'sth'}->fetchhash())
+			{
+				App::020::SQL::functions::to_trash
+				(
+					'ID' => $db1_line{'ID'},
+					'db_h' => 'main',
+					'db_name' => $TOM::DB{'main'}{'name'},
+					'tb_name' => 'a541_file',
+					'-journalize' => 1,
+				);
+			}
+			
+			App::020::SQL::functions::to_trash
+			(
+				'ID' => $db0_line{'ID'},
+				'db_h' => 'main',
+				'db_name' => $TOM::DB{'main'}{'name'},
+				'tb_name' => 'a541_file_dir',
+				'-journalize' => 1,
+			);
+			
+			
+			$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+			
+		}
+		
+	}
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

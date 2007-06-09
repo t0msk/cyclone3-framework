@@ -6,13 +6,10 @@
 <MODULE>
 	<VAR id="-type" value="mdl" />
 	<VAR id="-category" value="541" />
-	<VAR id="-name" value="file_new" />
+	<VAR id="-name" value="file_dir_totrash" />
 	<VAR id="-global" value="1" />
 	<VAR id="-TMP" value="OUTPUT" />
-	<VAR id="-xlng" value="<$main::FORM{'lng'}>" />
 	<VAR id="-xsgn" value="xml" />
 	<VAR id="-xsgn_global" value="1" />
-		<VAR id="ID_dir" value="<$main::FORM{'ID_dir'}>" />
-		<VAR id="mimetype" value="<$main::FORM{'mimetype'}>" />
-		<VAR id="rewrite" value="<$main::FORM{'rewrite'}>" />
+		<VAR id="ID" value="<$main::FORM{'ID'}>" />
 </MODULE>

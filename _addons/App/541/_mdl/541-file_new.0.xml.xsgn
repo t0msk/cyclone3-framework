@@ -25,14 +25,14 @@
 <DEFINITION id="RESULT_failure_insert">
 <response addon="a541" addon_type="file" type="file_new" result="0" code="<$main::request_code>">
 	<result>0</result>
-	<reason>Could not create a child</reason>
+	<reason>Could not create a new item</reason>
 </response>
 </DEFINITION>
 
 <DEFINITION id="RESULT_failure_same_name">
 <response addon="a541" addon_type="file" type="file_new" result="0" code="<$main::request_code>">
 	<result>0</result>
-	<reason>Folder with same name already exists</reason>
+	<reason>Item with same name already exists</reason>
 </response>
 </DEFINITION>
 
