@@ -52,6 +52,7 @@ sub plain_logical # uprava logiky textu
 }
 
 
+
 sub USmoney
 {
 	my $money=shift;
@@ -59,6 +60,20 @@ sub USmoney
 	$money=~s|([^,\-])(\d\d\d)\.|$1,$2\.|;
 	while ($money=~s|([^,\-])(\d\d\d),|$1,$2,|g){1};
 	return $money;
+}
+
+
+
+sub bytes
+{
+	my $size=shift;
+	my $size_symb='B';
+	if ($size > 1024){$size=$size/1024;$size_symb='KB';}
+	if ($size > 1024){$size=$size/1024;$size_symb='MB';}
+	if ($size > 1024){$size=$size/1024;$size_symb='GB';}
+	$size=int($size*10)/10;
+	if ((not $size=~s|\.|,|) && ($size_symb ne "B")){$size.=',0'}
+	return $size.' '.$size_symb;
 }
 
 
