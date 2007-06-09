@@ -204,7 +204,7 @@ sub execute
 				
 				$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID'}|g;
 				$XSGN{'NULL'}=~s|<%name%>|..|g;
-				$XSGN{'NULL'}=~s|<%folder%>|Y|g;
+				$XSGN{'NULL'}=~s|<%folder%>|P|g;
 				
 				$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
 			}
@@ -215,7 +215,7 @@ sub execute
 			
 			$XSGN{'NULL'}=~s|<%ID%>||g;
 			$XSGN{'NULL'}=~s|<%name%>|..|g;
-			$XSGN{'NULL'}=~s|<%folder%>|Y|g;
+			$XSGN{'NULL'}=~s|<%folder%>|P|g;
 			
 			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
 		}
