@@ -67,12 +67,24 @@ sub USmoney
 sub bytes
 {
 	my $size=shift;
+	my %env=@_;
 	my $size_symb='B';
-	if ($size > 1024){$size=$size/1024;$size_symb='KB';}
-	if ($size > 1024){$size=$size/1024;$size_symb='MB';}
-	if ($size > 1024){$size=$size/1024;$size_symb='GB';}
-	$size=int($size*10)/10;
-	if ((not $size=~s|\.|,|) && ($size_symb ne "B")){$size.=',0'}
+	
+	if ($env{'-notconvert'})
+	{
+		$size=~s|(\d)(\d\d\d)$|$1 $2|;
+		$size=~s|(\d)(\d\d\d \d\d\d)$|$1 $2|;
+	}
+	else
+	{
+		if ($size > 1024){$size=$size/1024;$size_symb='KB';}
+		if ($size > 1024){$size=$size/1024;$size_symb='MB';}
+		if ($size > 1024){$size=$size/1024;$size_symb='GB';}
+		$size=int($size*10)/10;
+		if ((not $size=~s|\.|,|) && ($size_symb ne "B")){$size.=',0'}
+	}
+
+	
 	return $size.' '.$size_symb;
 }
 
