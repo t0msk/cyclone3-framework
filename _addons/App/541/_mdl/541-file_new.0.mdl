@@ -9,6 +9,8 @@ use strict;
 use App::541::_init;
 use File::Copy;
 use File::Path;
+use Digest::MD5  qw(md5 md5_hex md5_base64);
+use Digest::SHA1  qw(sha1 sha1_hex sha1_base64);
 
 =head1 NAME
 
@@ -75,9 +77,12 @@ sub execute
 	
 	# check if in this directory is not file with same name!
 	my $ID_rewrite;
+	my $size_rewrite;
+	my $checksum;
+	my $checksum_method;
 	my $sql=qq{
 		SELECT
-			ID, ID_entity
+			ID, ID_entity, file_checksum, file_size
 		FROM
 			a541_file
 		WHERE
@@ -92,10 +97,40 @@ sub execute
 	{
 		main::_log("same file already exists",1);
 		$ID_rewrite=$db0_line{'ID'};
+		$size_rewrite=$db0_line{'file_size'};
+		if ($db0_line{'file_checksum'}=~/^(.*?):(.*)$/)
+		{
+			$checksum_method=$1;
+			$checksum=$2;
+		}
 		if (!$env{'rewrite'})
 		{
 			$XSGN{'TMP'}=$XSGN{'RESULT_failure_same_name'};
 			return 1;
+		}
+	}
+	
+	
+	# calculate checksum
+	if ($checksum_method eq "MD5")
+	{
+		
+	}
+	else
+	{
+		open(CHKSUM,'<'.$tmpfilename);
+		my $ctx = Digest::SHA1->new;
+		$ctx->addfile(*CHKSUM);
+		$env{'checksum'} = $ctx->hexdigest;
+		$env{'checksum_method'} = 'SHA1';
+	}
+	
+	# define mimetype
+	if ($env{'mimetype'} eq "unknown")
+	{
+		if ($filename=~/\.flv$/)
+		{
+			$env{'mimetype'}="video/x-flv";
 		}
 	}
 	
@@ -109,7 +144,23 @@ sub execute
 	# create a new file
 	my $ID;
 	
-	if ($ID_rewrite)
+	main::_log("ID_rewrite=$ID_rewrite");
+	main::_log("checksum $env{'checksum'}=$checksum");
+	main::_log("checksum_method $env{'checksum_method'}=$checksum_method");
+	main::_log("size $size=$size_rewrite");
+	
+	if ( # when I want to replace file with same file (same checksum)
+			($ID_rewrite) && # same ID
+			($env{'checksum'} eq $checksum) && # same checksum
+			($env{'checksum_method'} eq $checksum_method) && # same checksum_method
+			($size eq $size_rewrite) 
+		)
+	{
+		# we not need to update anything
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		return 1;
+	}
+	elsif ($ID_rewrite)
 	{
 		# i'm updating existing entry
 		$ID=$ID_rewrite;
@@ -123,7 +174,8 @@ sub execute
 			{
 				'name_hash'  => "'$hash'",
 				'file_size' => $size,
-				'mimetype' => "'$env{'mimetype'}'"
+				'mimetype' => "'$env{'mimetype'}'",
+				'file_checksum' => "'".$env{'checksum_method'}.':'.$env{'checksum'}."'",
 			}
 		);
 	}
@@ -143,6 +195,7 @@ sub execute
 				'name_hash'  => "'$hash'",
 				'posix_owner' => "'".$main::USRM{'IDhash'}."'",
 				'file_size' => $size,
+				'file_checksum' => "'".$env{'checksum_method'}.':'.$env{'checksum'}."'",
 				'mimetype' => "'$env{'mimetype'}'",
 				'lng'  => "'$parent{'lng'}'",
 				'status'  => "'N'",
