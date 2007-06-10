@@ -66,6 +66,7 @@ sub execute
 			$location.="/".$p->{'name'};
 		}
 		$location=~s|/$directory{name}$||;
+		$location=~s|^/||;
 		$XSGN{'TMP'}=~s|<%location%>|$location|g;
 		$XSGN{'TMP'}=~s|<%modified%>|$directory{'datetime_create'}|g;
 	}

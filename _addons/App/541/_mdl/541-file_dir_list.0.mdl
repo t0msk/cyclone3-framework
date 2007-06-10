@@ -348,7 +348,7 @@ sub execute
 			$XSGN{'NULL'}=~s|<%perms%>|$db0_line{'posix_perms'}|g;
 			$XSGN{'NULL'}=~s|<%mimetype%>|$db0_line{'mimetype'}|g;
 			
-			my $ico_mime=$db0_line{'mimetype'};$ico_mime=~s|[/\.]|-|g;
+			my $ico_mime=$db0_line{'mimetype'};$ico_mime=~s|[/\.+]|-|g;
 			$XSGN{'NULL'}=~s|<%ico_mime%>|$ico_mime|g;
 			
 			

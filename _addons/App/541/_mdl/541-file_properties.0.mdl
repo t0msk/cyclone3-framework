@@ -1,0 +1,112 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use TOM::Text::format;
+
+=head1 NAME
+
+541-file_properties.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Get properties of file
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	my $from;
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	my %file=App::020::SQL::functions::get_ID
+	(
+		'ID' => $env{'ID'},
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a541_file",
+		'columns' =>
+		{
+			'*' => 1
+		}
+	);
+	
+	
+	if ($file{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		$XSGN{'TMP'}=~s|<%ID%>|$file{'ID'}|g;
+		$XSGN{'TMP'}=~s|<%name%>|$file{'name'}|g;
+		$XSGN{'TMP'}=~s|<%mimetype%>|$file{'mimetype'}|g;
+		
+		# get location ID from ID_entity
+		my $sql=qq{
+			SELECT
+				ID
+			FROM
+				a541_file_dir
+			WHERE
+				ID_entity='$file{'ID_category'}'
+				AND lng='$file{'lng'}'
+				AND status IN ('Y','N')
+			LIMIT 1
+		};
+		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		# convert location to path
+		if (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			my $location;
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$db1_line{'ID'},
+					'db_h' => "main",
+					'db_name' => $TOM::DB{'main'}{'name'},
+					'tb_name' => "a541_file_dir",
+				)
+			)
+			{
+				$location.="/".$p->{'name'};
+			}
+			$location=~s|^/||;
+			$XSGN{'TMP'}=~s|<%location%>|$location|g;
+		}
+		
+		my $icomime=$file{'mimetype'};$icomime=~s|[/\.+]|-|g;
+		$XSGN{'TMP'}=~s|<%icomime%>|$icomime|g;
+		
+		$XSGN{'TMP'}=~s|<%size%>|TOM::Text::format::bytes($file{'file_size'}).' ('.TOM::Text::format::bytes($file{'file_size'},'-notconvert'=>1).')'|ge;
+		
+		$XSGN{'TMP'}=~s|<%modified%>|$file{'datetime_create'}|g;
+	}
+	
+	return 1;
+}
+
+
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

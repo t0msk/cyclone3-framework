@@ -1,0 +1,37 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+	<response
+		addon="a541"
+		addon_type="file"
+		type="file_properties"
+		result="0"
+		code="<$main::request_code>">
+		<result>0</result>
+		<reason>default error</reason>
+	</response>
+</DEFINITION>
+
+<DEFINITION id="RESULT_success">
+	<response
+		addon="a541"
+		addon_type="file"
+		type="file_properties"
+		result="1"
+		code="<$main::request_code>">
+		<result>1</result>
+		<ID><![CDATA[<%ID%>]]></ID>
+		<name><![CDATA[<%name%>]]></name>
+		<mimetype><![CDATA[<%mimetype%>]]></mimetype>
+		<icomime><![CDATA[<%icomime%>]]></icomime>
+		<size><![CDATA[<%size%>]]></size>
+		<location><![CDATA[<%location%>]]></location>
+		<owner><![CDATA[<%owner%>]]></owner>
+		<group><![CDATA[<%group%>]]></group>
+		<modified><![CDATA[<%modified%>]]></modified>
+	</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
+
