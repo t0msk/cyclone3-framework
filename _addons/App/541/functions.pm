@@ -5,6 +5,10 @@ package App::541::functions;
 
 App::541::functions
 
+=head1 DESCRIPTION
+
+
+
 =cut
 
 use open ':utf8', ':std';
@@ -13,8 +17,36 @@ use utf8;
 use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
+
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::541::_init|app/"541/_init.pm">
+
+=item *
+
+L<TOM::Utils::vars|source-doc/".core/.libs/TOM/Utils/vars.pm">
+
+=back
+
+=cut
+
+use App::541::_init;
 use TOM::Utils::vars;
 
+
+
+=head1 FUNCTIONS
+
+=head2 file_newhash()
+
+Find new unique not already used for file.
+
+=cut
 
 sub file_newhash
 {
@@ -56,6 +88,14 @@ sub file_newhash
 	
 	return $hash;
 }
+
+
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
 
 
 1;

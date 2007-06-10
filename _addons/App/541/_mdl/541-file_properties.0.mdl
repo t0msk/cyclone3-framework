@@ -6,7 +6,7 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-use App::020::_init;
+use App::541::_init;
 use TOM::Text::format;
 
 =head1 NAME
@@ -94,6 +94,20 @@ sub execute
 		$XSGN{'TMP'}=~s|<%size%>|TOM::Text::format::bytes($file{'file_size'}).' ('.TOM::Text::format::bytes($file{'file_size'},'-notconvert'=>1).')'|ge;
 		
 		$XSGN{'TMP'}=~s|<%modified%>|$file{'datetime_create'}|g;
+		
+		# tabs
+		
+		
+		# preview
+		if ($App::541::preview::mimetypes_selfpreview{$file{'mimetype'}})
+		{
+			$XSGN{'TMP'}=~s|<%tabs-preview_enabled%>|true|g;
+		}
+		
+		
+		
+		$XSGN{'TMP'}=~s|<%tabs-preview_enabled%>|false|g;
+		
 	}
 	
 	return 1;

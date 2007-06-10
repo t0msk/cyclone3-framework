@@ -1,0 +1,85 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+541-file_preview.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Display preview
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	my %file=App::020::SQL::functions::get_ID(
+		'ID' => $env{'ID'},
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a541_file",
+		'columns' =>
+		{
+			'*' => 1,
+		}
+	);
+	
+	my $subdir=sprintf('%010d',int($env{'ID'}/1000));
+	my $path=$tom::P.'/!media/a541/files/'.$subdir;
+	my $filename=$path.'/'.$file{'name_hash'};
+	
+	
+	if ($file{'mimetype'} eq "application/docbook+xml")
+	{
+		main::_log("$filename");
+		open(HND,'<'.$filename);
+		my $data;
+		do
+		{
+			local $/;
+			$data=<HND>;
+		};
+		
+		use Ext::DocBook4CMS::_init;
+		my $xhtml=Ext::DocBook4CMS::docbook2xhtml(
+			$data,
+		);
+		
+		$XSGN{'TMP'}=$xhtml;
+		
+	}
+	
+	return 1;
+}
+
+
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

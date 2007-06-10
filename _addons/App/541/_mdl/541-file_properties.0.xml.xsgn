@@ -21,6 +21,9 @@
 		result="1"
 		code="<$main::request_code>">
 		<result>1</result>
+		<tabs>
+			<preview enabled="<%tabs-preview_enabled%>"></preview>
+		</tabs>
 		<ID><![CDATA[<%ID%>]]></ID>
 		<name><![CDATA[<%name%>]]></name>
 		<mimetype><![CDATA[<%mimetype%>]]></mimetype>

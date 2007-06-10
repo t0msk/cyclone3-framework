@@ -46,7 +46,47 @@ BEGIN
 	
 }
 
+
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::020::_init|app/"020/_init.pm">
+
+=item *
+
+L<App::541::functions|app/"541/functions.pm">
+
+=item *
+
+L<App::541::preview|app/"541/preview.pm">
+
+=item *
+
+L<App::541::mimetypes|app/"541/mimetypes.pm">
+
+=item *
+
+File::Path
+
+=back
+
+=cut
+
 use App::020::_init; # data standard 0
 use App::541::functions;
+use App::541::preview;
+use App::541::mimetypes;
+
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
 
 1;

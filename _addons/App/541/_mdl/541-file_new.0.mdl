@@ -128,9 +128,11 @@ sub execute
 	# define mimetype
 	if ($env{'mimetype'} eq "unknown")
 	{
-		if ($filename=~/\.flv$/)
+		$filename=~/^.*\.(.*?)$/;
+		my $ext=$1;
+		if ($App::541::mimetypes::ext{$ext})
 		{
-			$env{'mimetype'}="video/x-flv";
+			$env{'mimetype'}=$App::541::mimetypes::ext{$ext}
 		}
 	}
 	
