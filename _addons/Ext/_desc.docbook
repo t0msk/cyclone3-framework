@@ -32,6 +32,19 @@
 
       <listitem>
         <para><emphasis role="bold"><ulink
+        url="?|?section=ext&amp;file=DocBook2ODF/">DocBook2ODF</ulink></emphasis></para>
+
+        <para><emphasis role="bold">Docbook2odf</emphasis> is a toolkit that
+        automaticaly converts <emphasis role="bold">DocBook</emphasis> to
+        <emphasis role="bold">OASIS OpenDocument</emphasis> (ODF, the ISO
+        standardized format used for texts, spreadsheets and presentations).
+        Conversion is based on a XSLT which makes it easy to convert
+        DocBook-&gt;ODF, ODT, ODS and ODP as all these documents are XML
+        based.</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold"><ulink
         url="?|?section=ext&amp;file=DocBook4CMS/">DocBook4CMS</ulink></emphasis></para>
 
         <para></para>
@@ -69,13 +82,6 @@
 
         <para>This Extension uses JOOConverter, the Java OpenOffice.org
         Converter, converts documents between different office formats.</para>
-      </listitem>
-
-      <listitem>
-        <para><emphasis role="bold"><ulink
-        url="?|?section=ext&amp;file=Munin/">Munin</ulink></emphasis></para>
-
-        <para></para>
       </listitem>
 
       <listitem>
