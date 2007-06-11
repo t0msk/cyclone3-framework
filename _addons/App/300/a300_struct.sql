@@ -13,37 +13,6 @@ CREATE TABLE `/*db_name*/`.`/*app*/_emailverify` (
 
 -- --------------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_groups` (
-  `ID` int(10) unsigned NOT NULL auto_increment,
-  `IDcharindex` varchar(32) character set utf8 collate utf8_bin NOT NULL default '',
-  `domain` varchar(100) default NULL,
-  `name` varchar(30) NOT NULL default '',
-  `IDowner` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
-  `createtime` int(10) unsigned NOT NULL default '0',
-  `starttime` int(10) unsigned NOT NULL default '0',
-  `endtime` int(10) unsigned default NULL,
-  `data_cvml` text NOT NULL,
-  `lng` char(2) NOT NULL default '',
-  `active` char(1) NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`lng`,`active`,`starttime`),
-  UNIQUE KEY `IDcharindex` (`IDcharindex`,`lng`,`active`,`starttime`),
-  UNIQUE KEY `name` (`domain`,`name`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*app*/_groups_users` (
-  `IDuser` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
-  `IDgroup` int(10) unsigned NOT NULL default '0',
-  `inserttime` int(10) unsigned NOT NULL default '0',
-  `starttime` int(10) unsigned NOT NULL default '0',
-  `endtime` int(10) unsigned default NULL,
-  `active` char(1) NOT NULL default 'N',
-  PRIMARY KEY  (`IDuser`,`IDgroup`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
 CREATE TABLE `/*db_name*/`.`/*app*/_online` (
   `IDhash` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
   `IDsession` varchar(32) character set utf8 collate utf8_bin NOT NULL default '',
@@ -193,3 +162,16 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_attrs_arch` (
   `email_verify` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`IDhash`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_users_group` (
+  `ID` int(10) unsigned NOT NULL auto_increment,
+  `host` varchar(100) default NULL,
+  `name` varchar(30) NOT NULL default '',
+  `status` char(1) NOT NULL default 'N',
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`host`,`name`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------

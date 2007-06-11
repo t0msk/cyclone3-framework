@@ -1,0 +1,29 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+<response
+	addon="a300"
+	addon_type="users_group"
+	type="tree"
+	required_status="<%required_status%>"
+	code="<$main::request_code>">
+<#item#>
+</response>
+</DEFINITION>
+
+<DEFINITION id="ITEM">
+<item IDitem="<%ID%>">
+	<ID><![CDATA[<%ID%>]]></ID>
+	<ID_entity><![CDATA[<%ID%>]]></ID_entity>
+	<IDparent><![CDATA[]]></IDparent>
+	<name><![CDATA[<%name%>]]></name>
+	<name_url><![CDATA[<%name_url%>]]></name_url>
+	<status><![CDATA[<%status%>]]></status>
+</item>
+<#item#>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
+
