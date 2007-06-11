@@ -31,7 +31,7 @@ sub execute
 			TOM.a300_users_group
 		WHERE
 			host='$tom::H_cookie'
-			AND status IN ('Y','N')
+			AND status IN ('Y','N','L')
 		ORDER BY name
 	};
 	

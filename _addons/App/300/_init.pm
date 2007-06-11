@@ -12,6 +12,7 @@ use CVML;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
+
 sub GetGroups
 {
  my @env=@_;
@@ -53,16 +54,6 @@ sub GetGroups
  }
  foreach (keys %groups){push @groups0,$_;}
  return @groups0;
-}
-
-
-
-sub GetRoles
-{
- my @env=@_;
- my @roles;
-
- return @roles;
 }
 
 
@@ -266,6 +257,7 @@ sub UserFind
 }
 
 
+
 sub UserGenerate
 {
 	my %env=@_;
@@ -351,6 +343,7 @@ sub UserGenerate
 }
 
 
+
 sub GenerateUniqueHash
 {
 	my $t=track TOM::Debug(__PACKAGE__."::GenerateUniqueHash()");
@@ -377,6 +370,7 @@ sub GenerateUniqueHash
 }
 
 
+
 sub CookieClean
 {
 	my $t=track TOM::Debug(__PACKAGE__."::CookieClean()");
@@ -396,31 +390,37 @@ sub CookieClean
 
 CookieClean();
 
-=head1
-sub SessionUpdate
+
+if ($tom::H_cookie)
 {
-	my $t=track TOM::Debug(__PACKAGE__."::SessionUpdate()");
-	
-	if ($main::USRM{IDsession})
+	# admin is group for administrators
+	# editor is group with access into cyclone.domain.tld
+	foreach my $group('admin','editor')
 	{
-		my $cvml=CVML::structure::serialize($main::USRM{'session'});
-		$cvml=~s|\'|\\'|g;
-		$main::DB{main}->Query("
-			UPDATE TOM.a300_online
-			SET
-				session='$cvml'
-			WHERE
-				IDsession='$main::USRM{session}'
-			LIMIT 1
-		");
+		my $sql=qq{
+			SELECT *
+			FROM TOM.a300_users_group
+			WHERE host='$tom::H_cookie' AND name='$group'
+			LIMIT 1;
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		if (!$db0_line{'ID'})
+		{
+			TOM::Database::SQL::execute(
+				"INSERT INTO TOM.a300_users_group(host,name,status)
+					VALUES ('$tom::H_cookie','$group','Y')",
+				'quiet'=>1);
+		}
+		elsif ($db0_line{'status'} ne "L")
+		{
+			TOM::Database::SQL::execute(
+				"UPDATE TOM.a300_users_group SET status='L'
+					WHERE ID=$db0_line{'ID'} LIMIT 1",
+				'quiet'=>1);
+		}
 	}
-	
-	$t->close();
-	return 1;
 }
-=cut
-
-
 
 
 1;
