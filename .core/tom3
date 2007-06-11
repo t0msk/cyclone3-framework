@@ -580,9 +580,16 @@ while ($main::CGI=new CGI::Fast())
 			$ENV{'REQUEST_URI'}='' if $ENV{'REQUEST_URI'}=~/^\/core.tom/;
 		};
 		
-		# mod_rewrite
+		
+		
+		#
+		#  Get %FORM data from GET, POST, REQUEST_URI
+		#
+		
 		%FORM=();
 		my %FORM_rewrite=();
+		
+		# parse rewrited part of url and translate it to variables by rewrite.conf
 		if ($tom::rewrite)
 		{
 			main::_log("decode rewrited link REQUEST_URI='$ENV{'REQUEST_URI'}' and generating \%FORM_rewrite");
@@ -593,10 +600,10 @@ while ($main::CGI=new CGI::Fast())
 			}
 		}
 		
+		# when I'm running publisher from commandline replace QUERY_STRING by params
 		$ENV{'QUERY_STRING'}=$ARGV[0] if $ENV{USER} eq "apache";
 		
-		# pridam hashovane data
-		#my %FORM_get=TOM::Net::HTTP::CGI::GetQuery($ENV{'QUERY_STRING'});
+		# add to %FORM sended data in POST and GET (in this order)
 		my %FORM_get=TOM::Net::HTTP::CGI::get_CGI($ENV{'QUERY_STRING'});
 		foreach (keys %FORM_get)
 		{
@@ -604,6 +611,12 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		main::_log("processed QUERY_STRING='$main::ENV{'QUERY_STRING'}'");
+		
+		#
+		# %FORM filled
+		#
+		
+		
 		$main::ENV{'QUERY_STRING_FULL'}='';
 		foreach (keys %FORM)
 		{
