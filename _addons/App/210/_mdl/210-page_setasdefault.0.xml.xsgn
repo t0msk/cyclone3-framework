@@ -2,27 +2,55 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="TMP">
-<response type="page_setasdefault" IDapp="a210" IDitem="<%ID%>" result="0" code="<$main::request_code>">
+<response
+	addon="a210"
+	addon_type="page"
+	type="page_setasdefault"
+	IDapp="a210"
+	IDitem="<%ID%>"
+	result="0"
+	code="<$main::request_code>">
 	<result>0</result>
 	<reason>Default error message.</reason>
 </response>
 </DEFINITION>
 
 <DEFINITION id="RESULT_success">
-<response type="page_setasdefault" IDapp="a210" IDitem="<%ID%>" result="1" code="<$main::request_code>">
+<response
+	addon="a210"
+	addon_type="page"
+	type="page_setasdefault"
+	IDapp="a210"
+	IDitem="<%ID%>"
+	result="1"
+	code="<$main::request_code>">
 	<result>1</result>
 </response>
 </DEFINITION>
 
 <DEFINITION id="RESULT_failure_set">
-<response type="page_setasdefault" IDapp="a210" IDitem="<%ID%>" result="0" code="<$main::request_code>">
+<response
+	addon="a210"
+	addon_type="page"
+	type="page_setasdefault"
+	IDapp="a210"
+	IDitem="<%ID%>"
+	result="0"
+	code="<$main::request_code>">
 	<result>0</result>
 	<reason>Could not set as default</reason>
 </response>
 </DEFINITION>
 
 <DEFINITION id="RESULT_failure_no_input">
-<response type="page_setasdefault" IDapp="a210" IDitem="<%ID%>" result="0" code="<$main::request_code>">
+<response
+	addon="a210"
+	addon_type="page"
+	type="page_setasdefault"
+	IDapp="a210"
+	IDitem="<%ID%>"
+	result="0"
+	code="<$main::request_code>">
 	<result>0</result>
 	<reason>Not enough information to act. Missing parameter '<%missing_parameter%>'</reason>
 </response>
