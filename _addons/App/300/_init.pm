@@ -409,7 +409,7 @@ if ($tom::H_cookie)
 		{
 			TOM::Database::SQL::execute(
 				"INSERT INTO TOM.a300_users_group(host,name,status)
-					VALUES ('$tom::H_cookie','$group','Y')",
+					VALUES ('$tom::H_cookie','$group','L')",
 				'quiet'=>1);
 		}
 		elsif ($db0_line{'status'} ne "L")
