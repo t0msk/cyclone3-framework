@@ -126,7 +126,7 @@ sub execute
 	}
 	
 	# define mimetype
-	if ($env{'mimetype'} eq "unknown")
+	if ($env{'mimetype'} eq "unknown" || !$env{'mimetype'})
 	{
 		$filename=~/^.*\.(.*?)$/;
 		my $ext=$1;
