@@ -1,0 +1,38 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+<response
+	addon="a210"
+	addon_type="page"
+	type="list"
+	required_status="<%required_status%>"
+	code="<$main::request_code>"
+	required_ID="<%ID%>">
+	<location><![CDATA[/<%location%>]]></location>
+<#item#>
+</response>
+</DEFINITION>
+
+<DEFINITION id="ITEM">
+	<item IDitem="<%ID%>">
+		<ID><![CDATA[<%ID%>]]></ID>
+		<ID_entity><![CDATA[<%ID_entity%>]]></ID_entity>
+		<IDparent><![CDATA[<%ID_parent%>]]></IDparent>
+		<name><![CDATA[<%name%>]]></name>
+		<name_url><![CDATA[<%name_url%>]]></name_url>
+		<path><![CDATA[<%path%>]]></path>
+		<datetime_create><![CDATA[<%datetime_create%>]]></datetime_create>
+		<lng><![CDATA[<%lng%>]]></lng>
+		<status><![CDATA[<%status%>]]></status>
+		<folder><![CDATA[<%folder%>]]></folder>
+		<is_default><![CDATA[<%is_default%>]]></is_default>
+		<t_name><![CDATA[<%t_name%>]]></t_name>
+		<visible><![CDATA[<%visible%>]]></visible>
+	</item>
+<#item#>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
+

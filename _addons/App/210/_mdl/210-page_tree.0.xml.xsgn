@@ -6,7 +6,7 @@
 <response
 	addon="a210"
 	addon_type="page"
-	type="tree"
+	type="page_tree"
 	IDapp="a210"
 	required_status="<%required_status%>"
 	code="<$main::request_code>">

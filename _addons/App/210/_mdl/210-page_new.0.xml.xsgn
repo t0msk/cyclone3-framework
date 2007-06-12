@@ -2,35 +2,70 @@
 <XML_DESIGN_DEFINITION>
 
 <DEFINITION id="TMP">
-<response type="page_new" IDapp="a210" IDitem="<%ID%>" result="0" code="<$main::request_code>">
+<response
+	addon="a210"
+	addon_type="page"
+	type="page_new"
+	IDapp="a210"
+	IDitem="<%ID%>"
+	result="0"
+	code="<$main::request_code>">
 	<result>0</result>
 	<reason>default error</reason>
 </response>
 </DEFINITION>
 
 <DEFINITION id="RESULT_success">
-<response type="page_new" IDapp="a210" IDitem="<%ID%>" result="1" code="<$main::request_code>">
+<response
+	addon="a210"
+	addon_type="page"
+	type="page_new"
+	IDapp="a210"
+	IDitem="<%ID%>"
+	result="1"
+	code="<$main::request_code>">
 	<result>1</result>
 	<ID><![CDATA[<%ID%>]]></ID>
 </response>
 </DEFINITION>
 
 <DEFINITION id="RESULT_failure_no_parent">
-<response type="page_new" IDapp="a210" IDitem="<%ID%>" result="0" code="<$main::request_code>">
+<response
+	addon="a210"
+	addon_type="page"
+	type="page_new"
+	IDapp="a210"
+	IDitem="<%ID%>"
+	result="0"
+	code="<$main::request_code>">
 	<result>0</result>
 	<reason>No corresponding parent found</reason>
 </response>
 </DEFINITION>
 
 <DEFINITION id="RESULT_failure_insert">
-<response type="page_new" IDapp="a210" IDitem="<%ID%>" result="0" code="<$main::request_code>">
+<response
+	addon="a210"
+	addon_type="page"
+	type="page_new"
+	IDapp="a210"
+	IDitem="<%ID%>"
+	result="0"
+	code="<$main::request_code>">
 	<result>0</result>
 	<reason>Could not create a child</reason>
 </response>
 </DEFINITION>
 
 <DEFINITION id="RESULT_failure_no_input">
-<response type="page_new" IDapp="a210" IDitem="<%ID%>" result="0" code="<$main::request_code>">
+<response
+	addon="a210"
+	addon_type="page"
+	type="page_new"
+	IDapp="a210"
+	IDitem="<%ID%>"
+	result="0"
+	code="<$main::request_code>">
 	<result>0</result>
 	<reason>Not enough information to act. Missing parameter '<%missing_parameter%>'</reason>
 </response>
