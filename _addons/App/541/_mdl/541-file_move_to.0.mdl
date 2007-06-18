@@ -1,0 +1,139 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+541-file_dir_totrash.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Remove directory (directories), all childs and files contained
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	if (!$env{'ID_dir'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID_dir|g;
+		return 1;
+	}
+	
+	
+	# get this ID
+	my %dir=App::020::SQL::functions::get_ID(
+		'db_h'    => 'main',
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => 'a541_file_dir',
+		'ID'      => $env{'ID_dir'},
+		'columns' =>
+		{
+			'ID_charindex' => 1,
+			'lng' => 1,
+			'status' => 1
+		}
+	);
+	
+	if (!$dir{'ID_entity'})
+	{
+		return 1;
+	}
+	
+	if (not $dir{'status'}=~/^[YN]$/)
+	{
+		return 1;
+	}
+	
+	$env{'ID'}.=';';
+	foreach my $ID(split(';',$env{'ID'}))
+	{
+		next unless $ID;
+		
+		# get this ID
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h'    => 'main',
+			'db_name' => $TOM::DB{'main'}{'name'},
+			'tb_name' => 'a541_file',
+			'ID'      => $ID,
+			'columns' =>
+			{
+				'ID_category' => 1,
+				'lng' => 1,
+				'status' => 1
+			}
+		);
+		
+		if (!$data{'ID_entity'})
+		{
+			main::_log("none row returned",1);
+			next;
+		}
+		
+		# not same language
+		if ($dir{'lng'} ne $data{'lng'})
+		{
+			main::_log("not the same language as directory",1);
+			next;
+		}
+		
+		if (not $data{'status'}=~/^[YN]$/)
+		{
+			main::_log("only status YN can be moved",1);
+			next;
+		}
+		
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		
+		if ($data{'ID_category'} eq $dir{'ID_entity'})
+		{
+			main::_log("already in requested directory");
+			next;
+		}
+		
+		App::020::SQL::functions::update(
+			'db_h'    => 'main',
+			'db_name' => $TOM::DB{'main'}{'name'},
+			'tb_name' => 'a541_file',
+			'ID'      => $ID,
+			'columns' =>
+			{
+				'ID_category' => $dir{'ID_entity'}
+			},
+			'-journalize' => 1,
+		);
+		
+	}
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
