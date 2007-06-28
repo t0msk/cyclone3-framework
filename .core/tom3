@@ -27,7 +27,7 @@ BEGIN
 
 use open ':utf8', ':std';
 use encoding 'utf8';
-use utf8;
+use utf8; # encode = fromutf8, decode=toutf8
 use strict; # scrict code
 use CGI::Fast qw(:standard);
 use vars qw/
@@ -2242,6 +2242,8 @@ while ($main::CGI=new CGI::Fast())
 				$DOC_output=Int::charsets::encode::UTF8_ASCII($H->OUT_);
 			}
 			
+			#if (utf8::is_utf8($DOC_output)){main::_log("DOC_output flag is utf8");}
+			
 			$t->close();
 		};
 		
@@ -2293,11 +2295,17 @@ while ($main::CGI=new CGI::Fast())
 			print "Pragma: no-cache\n";
 			print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n";
 			
+			
 			if ($ENV{'HTTP_ACCEPT_ENCODING'}=~/gzip/i && !$pub::gzip_disable)
 			{
 				main::_log("Gzipping DOC");
 				print "Content-Encoding: gzip\n";
-				utf8::encode($DOC_output); # don't send to Compress::Zlib UTF-8
+				# disable utf8 flag when sending data
+				if (utf8::is_utf8($DOC_output))
+				{
+					main::_log("DOC flag is utf8");
+					utf8::encode($DOC_output);
+				}
 				my $out=Compress::Zlib::memGzip($DOC_output);
 				print "Content-length: ".(length($out))."\n";
 				main::_log("DOC length = '".(length($out))."'");
@@ -2307,7 +2315,12 @@ while ($main::CGI=new CGI::Fast())
 			}
 			else
 			{
-				utf8::encode($DOC_output);
+				# disable utf8 flag when sending data
+				if (utf8::is_utf8($DOC_output))
+				{
+					main::_log("DOC flag is utf8");
+					utf8::encode($DOC_output);
+				}
 				print "Content-length: ".(length($DOC_output))."\n";
 				main::_log("DOC length = '".(length($DOC_output))."'");
 				print "\n";
