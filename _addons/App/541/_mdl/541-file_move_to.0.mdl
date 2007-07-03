@@ -33,36 +33,33 @@ sub execute
 		return 1;
 	}
 	
-	if (!$env{'ID_dir'})
-	{
-		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
-		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID_dir|g;
-		return 1;
-	}
-	
-	
 	# get this ID
-	my %dir=App::020::SQL::functions::get_ID(
-		'db_h'    => 'main',
-		'db_name' => $TOM::DB{'main'}{'name'},
-		'tb_name' => 'a541_file_dir',
-		'ID'      => $env{'ID_dir'},
-		'columns' =>
+	my %dir;
+	
+	if ($env{'ID_dir'})
+	{
+		%dir=App::020::SQL::functions::get_ID(
+			'db_h'    => 'main',
+			'db_name' => $TOM::DB{'main'}{'name'},
+			'tb_name' => 'a541_file_dir',
+			'ID'      => $env{'ID_dir'},
+			'columns' =>
+			{
+				'ID_charindex' => 1,
+				'lng' => 1,
+				'status' => 1
+			}
+		);
+		
+		if (!$dir{'ID_entity'})
 		{
-			'ID_charindex' => 1,
-			'lng' => 1,
-			'status' => 1
+			return 1;
 		}
-	);
-	
-	if (!$dir{'ID_entity'})
-	{
-		return 1;
-	}
-	
-	if (not $dir{'status'}=~/^[YN]$/)
-	{
-		return 1;
+		
+		if (not $dir{'status'}=~/^[YN]$/)
+		{
+			return 1;
+		}
 	}
 	
 	$env{'ID'}.=';';
