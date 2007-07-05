@@ -14,6 +14,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 
 our %handler;
+our $DEBUG=0;
 
 =head1 FUNCTIONS
 
@@ -47,10 +48,10 @@ sub new
 		main::_log("<={SQL:$self->{'db_h'}} START TRANSACTION");
 		
 		my $SQL="SET AUTOCOMMIT=0";
-		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1) if $self->{'supported'};
+		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'quiet'=>1) if $self->{'supported'};
 		
 		my $SQL="START TRANSACTION";
-		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1) if $self->{'supported'};
+		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'quiet'=>1) if $self->{'supported'};
 		
 	}
 	
@@ -77,7 +78,7 @@ sub close
 	{
 		main::_log("<={SQL:$self->{'db_h'}} END TRANSACTION");
 		my $SQL="SET AUTOCOMMIT=1";
-		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1) if $self->{'supported'};
+		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'quiet'=>1) if $self->{'supported'};
 	}
 	else
 	{
@@ -97,10 +98,10 @@ sub rollback
 	undef $handler{$self->{'db_h'}};
 	
 	my $SQL="ROLLBACK";
-	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1) if $self->{'supported'};
+	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'quiet'=>1) if $self->{'supported'};
 	
 	my $SQL="SET AUTOCOMMIT=1";
-	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>1) if $self->{'supported'};
+	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'quiet'=>1) if $self->{'supported'};
 	
 	delete $self->{'db_h'};
 	return undef;
