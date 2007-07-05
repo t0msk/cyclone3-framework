@@ -273,7 +273,7 @@ sub _chunk_prepare
 	foreach my $line(split('\n',$$chunk))
 	{
 		$line=~s|[\n\r]||g;
-		$line=~s|--(.*)$||; # odstranim commenty na konci riadkov
+		$line=~s|-- (.*)$||; # odstranim commenty na konci riadkov
 		$line=~s|\s+$||g;
 		next unless $line;
 		next if $line=~/^--/;
