@@ -139,7 +139,7 @@ tom3-chfiles -a
           <listitem>
             <para>Upgrade databázových štruktúr</para>
 
-            <synopsis>tom3-chtables --db_name=TOM
+            <synopsis>tom3-chtables
 tom3-chtables --domain=example.tld
 </synopsis>
           </listitem>
