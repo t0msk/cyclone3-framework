@@ -1,10 +1,17 @@
 #!/bin/perl
 package TOM::Int::lng;
 use ISO::639;
-use Geo::IP;
 use strict;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
+
+our $GEOIP;
+
+BEGIN
+{
+	eval "use Geo::IP";
+	if ($@){main::_log("can't find Geo::IP",1)}else{$GEOIP=1}
+}
 
 our @ISA=("ISO::639");
 
@@ -51,25 +58,30 @@ sub browser_autodetect
 	}
 =cut
 	
-	my $gi = Geo::IP->new(GEOIP_STANDARD);
-	my $country = $gi->country_code_by_addr($ENV{'REMOTE_ADDR'});$country="\L$country";
-	
-	main::_log("Geoip $ENV{'REMOTE_ADDR'} country: '$country'");
-	
-	if ($TOM::Int::lng::table_ISO639_2{$country})
+	if ($GEOIP)
 	{
-		foreach (@TOM::LNG_accept)
+		
+		my $gi = Geo::IP->new();
+		my $country = $gi->country_code_by_addr($ENV{'REMOTE_ADDR'});$country="\L$country";
+		
+		main::_log("Geoip $ENV{'REMOTE_ADDR'} country: '$country'");
+		
+		if ($TOM::Int::lng::table_ISO639_2{$country})
 		{
-		
-			if ($TOM::Int::lng::table_ISO639_2{$country} eq $_)
+			foreach (@TOM::LNG_accept)
 			{
-				main::_log("selected '$_'");
-				$t->close();
-				return $_;
+			
+				if ($TOM::Int::lng::table_ISO639_2{$country} eq $_)
+				{
+					main::_log("selected '$_'");
+					$t->close();
+					return $_;
+				}
+			
+	#			return $_ if $TOM::Int::lng::table_ISO639_2{$country} eq $_;
 			}
-		
-#			return $_ if $TOM::Int::lng::table_ISO639_2{$country} eq $_;
 		}
+		
 	}
 	
 	main::_log("can't autodetect");
