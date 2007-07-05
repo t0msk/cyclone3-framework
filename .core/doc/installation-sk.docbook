@@ -124,13 +124,13 @@ tom3-chfiles -a
           </listitem>
 
           <listitem>
-            <para>Vytvorenie tabuľky <quote>TOM</quote></para>
+            <para>Vytvorenie databázy <quote>TOM</quote></para>
 
             <synopsis>mysql -h localhost -u TOM &lt; /www/TOM/_data/TOM.sql</synopsis>
           </listitem>
 
           <listitem>
-            <para>Vytvorenie tabuľky <quote>example_tld</quote> pre
+            <para>Vytvorenie databázy <quote>example_tld</quote> pre
             example.tld portál</para>
 
             <synopsis>mysql -h localhost -u TOM &lt; /www/TOM/\!example.tld/_data/example_tld.sql</synopsis>
@@ -139,8 +139,8 @@ tom3-chfiles -a
           <listitem>
             <para>Upgrade databázových štruktúr</para>
 
-            <synopsis>tom-chtables --db_name=TOM
-tom-chtables --domain=example.tld
+            <synopsis>tom3-chtables --db_name=TOM
+tom3-chtables --domain=example.tld
 </synopsis>
           </listitem>
         </orderedlist>

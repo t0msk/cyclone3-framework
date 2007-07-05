@@ -136,8 +136,8 @@ tom3-chfiles -a
           <listitem>
             <para>Upgrade cyclone3 database structures.</para>
 
-            <synopsis>tom-chtables --db_name=TOM
-tom-chtables --domain=example.tld
+            <synopsis>tom3-chtables --db_name=TOM
+tom3-chtables --domain=example.tld
 </synopsis>
           </listitem>
         </orderedlist>
