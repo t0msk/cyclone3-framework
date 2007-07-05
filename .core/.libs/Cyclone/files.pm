@@ -85,6 +85,7 @@ our @setit_D=
 	
 	# global
 	['^_addons'                        ,"global _addons"              ,"570","$user_www:$group"],
+	['^_overlays'                      ,"global _overlays"            ,"570","$user_www:$group"],
 	['^_data'                          ,"global _data"                ,"570","$user_www:$group"],
 	['^_temp'                          ,"global _temp"                ,"770","$user_www:$group"],
 	['^.symlinks$'                     ,"global .symlinks"            ,"570","$user_www:$group"],
@@ -212,6 +213,8 @@ our @setit_F=
 	['^version$'                       ,"version"                     ,"660","$user_www:$group"],
 	
 	['\.key$'                          ,"key file"                    ,"660","$user_www:$group"],
+	
+	['_overlays'                       ,"overlay file"                ,"660","$user_www:$group"],
 	
 	['^\.'                             ,"unknown"                     ,"","$user:$group"],
 );
