@@ -249,6 +249,8 @@ sub UTF8_ASCII_
 sub UTF8_ASCII
 {
 	my $text=shift;
+	# enable utf8 flag unless enabled
+	# only utf8 string can be converted
 	utf8::decode($text) unless utf8::is_utf8($text);
 	$text=~s/([^a-zA-Z0-9\s])/UTF8_ASCII_($1)/eg;
 	return $text;
