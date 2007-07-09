@@ -130,33 +130,16 @@ sub execute
 		}
 	}
  
-# return 1;
-	if ($env{day})
+	if ($env{'day'})
 	{
 		my $graf=SVGraph::2D::lines->new(
-			title		=>	"Web publisher availability - average time for page generation (daily)",
-		#	type		=>	"normal",	# normal/stacked(spojene)/percentage
-		#	type		=>	"stacked",	# normal/stacked(spojene)
-		#	type		=>	"percentage",	# normal/stacked(spojene)	
-			x		=>	750,
-			y		=>	300,
-		
+			'title' => "Web publisher availability - average time for page generation (daily)",
+			'x' => 600,
+			'y' => 250,
 			show_legend		=>	1, # show legend of Columns
-#			show_points		=>	1,
-		#	show_points_middle	=>	1,
-		#	show_lines			=>	1,
 			show_lines_smooth	=>	1,
-#			show_areas		=>	1,
-#			show_areas_opacity	=>	0.5,
-		#	show_lines_smooth_range	=>	1,
-#			show_data			=>	1,
-#			show_data_background=>	1,
 			grid_y_suffix => "s",
-		
 			grid_y_scale_minimum		=>	000.00, # zaciname od nuly
-#			grid_y_scale_maximum		=>	1.500, #
-#			grid_y_main_spacing			=>	0.20,
-		
 			show_grid_x		=>	1,
 		);
 		
@@ -164,45 +147,31 @@ sub execute
 		
 		$columns{'speed'}=$graf->addColumn(title=>"Average time",'color'=>"red");
 		$columns{'speed2'}=$graf->addColumn(title=>"Processor time",'color'=>"yellow");
-		#$columns{'visitors_return'}=$graf->addColumn(title=>"Returned visitors",'color'=>"azure",show_data=>1,show_data_background=>1);
 		
 		my $days=7*4;
 		for my $day(0..$days)
 		{
 			my $from=$main::time_current-(86400*($days+1))+(86400*$day);
 			my %date=Utils::datetime::ctodatetime($from,format=>1);
-			my $label="$date{mday}.$date{mom}.$date{year}";
+			my $label="$date{year}-$date{mom}-$date{mday}";
+			main::_log("label $label");
 			$graf->addRowLabel($label);
+			
+			if ($label=~/01$/)
+			{
+				$graf->addRowMark($label,
+			#	front			=>1,
+				show_label		=>1,
+			#	size			=>1.5,
+				);
+			}
+			
 		}
 		
 		my $from=$main::time_current-(86400*($days+1));
 		my %date=Utils::datetime::ctodatetime($from,format=>1);
 		$from="$date{year}-$date{mom}-$date{mday}";
 		
-		my $db0=$main::DB{stats}->Query("
-			SELECT *
-			FROM
-				TOM.a110_weblog_day
-			WHERE
-				domain='$tom::Hm' AND
-				domain_sub='$env{domain}' AND
-				reqdatetime>'$from'
-			ORDER BY
-				reqdatetime DESC");
-=head1
- $graf->addValueMark(0.3,
-	front			=>0,
-	show_label		=>1,
-#	size			=>1.5,
-	color			=>"red",
-	);
-$graf->addValueMark(0.2,
-	front			=>0,
-	show_label		=>1,
-#	size			=>1.5,
-	color			=>"yellow",
-	);
-=cut
 		$graf->addValueMarkArea(undef,
 			end => "1",
 			front => 0,
@@ -216,47 +185,42 @@ $graf->addValueMark(0.2,
 		#	size			=>1.5,
 			color => "green",
 		);
-#=cut
+		
+		my $db0=$main::DB{stats}->Query("
+			SELECT *
+			FROM
+				TOM.a110_weblog_day
+			WHERE
+				domain='$tom::Hm' AND
+				domain_sub='$env{domain}' AND
+				reqdatetime>'$from'
+			ORDER BY
+				reqdatetime DESC
+		");
+		
 		while (my %db0_line=$db0->fetchhash)
 		{
-			my @date=($db0_line{reqdatetime}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/);  
-			my $label=$date[2].".".$date[1].".".$date[0];
+			#my @date=($db0_line{reqdatetime}=~/^(\d\d\d\d)-(\d\d)-(\d\d)/);
+			my $label=$db0_line{'reqdatetime'};
 			
 			$db0_line{'load_req'}=int($db0_line{'load_req'}*100)/100;
 			$db0_line{'load_proc'}=int($db0_line{'load_proc'}*100)/100;
 			
+			main::_log("value $label $db0_line{'load_req'} $db0_line{'load_proc'}");
+			
 			$columns{'speed'}->addData($label,$db0_line{'load_req'});
 			$columns{'speed2'}->addData($label,$db0_line{'load_proc'});
 			#$columns{visitors_new}->addData($label,$db0_line{'IDhashs'}-$db0_line{'IDhashs_return'});
-			
-			if ($db0_line{reqdatetime}=~/01 00:00:00$/)
-			{
-				$graf->addRowMark($label,
-			#	front			=>1,
-				show_label		=>1,
-			#	size			=>1.5,
-				);
-			}
 		}
 		
-		eval
-		{
-			alarm(15);
-			$env{day_file}="availability_day.svg" unless $env{day_file};
-			
-			print ">$cron::P/_data/".$env{day_file}."!\n";
-		
-			open HND,">$cron::P/_data/".$env{day_file} or die "$!";
-			my $out=$graf->prepare();
-			$out=~s|[\s]+</text>|</text>|g;
-			print HND $out; 
-			alarm(0);
-		};
-		if ($@)
-		{
-			die "error! $@\n";
-		}
- }
+		$env{'day_file'}="availability_day.svg" unless $env{'day_file'};
+		open HND,">$cron::P/_data/".$env{'day_file'} or die "$!";
+		chmod(0777,"$cron::P/_data/".$env{'day_file'});
+		my $out=$graf->prepare();
+		$out=~s|[\s]+</text>|</text>|g;
+		print HND $out; 
+	}
+	
  
  
  
