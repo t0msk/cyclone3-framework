@@ -2030,8 +2030,10 @@ while ($main::CGI=new CGI::Fast())
 			
 			# ochrana proti ukazaniu IAdm kluca ked dekodujem stranku v IAdm mode
 			delete $form{__key} if (($IAdm)&&($FORM{_IAdm_decode}));
+			delete $form{__key_} if (($IAdm)&&($FORM{_IAdm_decode}));
 			delete $form{__key_file} if (($IAdm)&&($FORM{_IAdm_decode}));
 			delete $form{__key} if (($ITst)&&($FORM{_ITst_decode}));
+			delete $form{__key_} if (($ITst)&&($FORM{_ITst_decode}));
 			delete $form{__key_file} if (($ITst)&&($FORM{_ITst_decode}));
 			
 			# POSLEDNE UPRAVY
