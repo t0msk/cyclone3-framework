@@ -135,27 +135,30 @@ elsif ($FORM{'a'})
 		};
 	}
 	
-#	print color 'reset bold yellow';
-#	
-#	foreach my $SQL(@ALTER)
-#	{
-#		print "$SQL\n";
-#	}
-#	
-#	if (@ALTER)
-#	{
-#		print "Do it? [No/yes]\n";
-#		my $do=<STDIN>;
-#		if ($do=~/yes/i)
-#		{
-#			print color 'reset red';
-#			foreach my $SQL(@ALTER)
-#			{
-#				print "$SQL\n";
-#				TOM::Database::SQL::execute($SQL);
-#			}
-#		}
-#	}
+	if (@ALTER > 0)
+	{
+		
+		print color 'reset bold yellow';
+		foreach my $SQL(@ALTER)
+		{
+			print "$SQL\n";
+		}
+		
+		print "Do it? [No/yes]\n";
+		my $do=<STDIN>;
+		if ($do=~/yes/i)
+		{
+			print color 'reset red';
+			foreach my $SQL(@ALTER)
+			{
+				print "$SQL\n";
+				TOM::Database::SQL::execute($SQL);
+			}
+		}
+		
+		@ALTER=();
+		
+	}
 	
 }
 else
