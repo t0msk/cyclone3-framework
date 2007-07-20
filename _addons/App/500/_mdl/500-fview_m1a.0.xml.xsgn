@@ -6,6 +6,7 @@
 	<ID><![CDATA[<%ID%>]]></ID>
 	<IDname><![CDATA[<%IDname%>]]></IDname>
 	<IDcategory><![CDATA[<%IDcategory%>]]></IDcategory>
+	<IDcategory_name><![CDATA[<%IDcategory_name%>]]></IDcategory_name>
 	<IDauthor><![CDATA[<%IDauthor%>]]></IDauthor>
 	<IDeditor><![CDATA[<%IDeditor%>]]></IDeditor>
 	<title><![CDATA[<%about%>]]></title>
