@@ -44,8 +44,16 @@ List of file extensions related to mimetypes
 =cut
 
 our %ext=(
+	'avi' => 'video/x-msvideo',
+	'docbook' => 'application/docbook+xml',
+	'fli' => 'video/x-fli',
 	'flv' => 'video/x-flv',
-	'docbook' => 'application/docbook+xml'
+	'mov' => 'video/quicktime',
+	'mpe' => 'video/mpeg',
+	'mpeg' => 'video/mpeg',
+	'mpg' => 'video/mpeg',
+	'qt' => 'video/quicktime',
+	'xml' => 'text/xml',
 );
 
 
