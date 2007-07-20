@@ -76,6 +76,7 @@ sub execute
 	# the new way
 	main::_log("XULadmin version = '$env{'version'}'");
 	$env{'version'}='1.1' unless $env{'version'};
+	$env{'version'}=~s|^(\d+)\.(\d+).*$|\1.\2|;
 	foreach my $tab (sort keys %Ext::XULadmin::tabs)
 	{
 		main::_log("tab='$tab'='$Ext::XULadmin::tabs{$tab}{'name'}' enabled='$Ext::XULadmin::tabs{$tab}{'enabled'}' minversion='$Ext::XULadmin::tabs{$tab}{'minversion'}' maxversion='$Ext::XULadmin::tabs{$tab}{'maxversion'}'");
