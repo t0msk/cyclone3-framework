@@ -2,7 +2,7 @@
 # USE UTF-8 !!!
 package Tomahawk::module;
 use strict;
-use App::300;
+use App::300::_init;
 use TOM::Data::XML;
 use CVML;
 
@@ -20,7 +20,7 @@ sub execute
 	{
 		my $cvml=new CVML(data=>$db0_line{'profile_shadow'});
 		my %hash=%{$cvml->{hash}};
-		my $XML = TOM::Data::XML::serialize_enh(data=>\%hash,strict=>1);
+		my $XML = TOM::Data::XML::serialize_enh('data'=>\%hash,'strict'=>1);
 		if($XML=~/^</>$/)
 		{}
 		else
