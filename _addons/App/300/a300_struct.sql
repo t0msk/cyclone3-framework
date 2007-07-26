@@ -141,6 +141,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_arch` (
 
 -- --------------------------------------------------------
 
+CREATE ALGORITHM=UNDEFINED DEFINER=`TOM`@`localhost` SQL SECURITY DEFINER VIEW `/*db_name*/`.`/*app*/_user` AS (select `a300_users`.`IDhash` AS `IDhash`,`a300_users`.`login` AS `login`,`a300_users`.`pass` AS `pass`,`a300_users`.`pass_md5` AS `pass_md5`,`a300_users`.`autolog` AS `autolog`,`a300_users`.`host` AS `host`,`a300_users`.`regtime` AS `regtime`,`a300_users`.`logtime` AS `logtime`,`a300_users`.`reqtime` AS `reqtime`,`a300_users`.`rqs` AS `rqs`,`a300_users`.`IPlast` AS `IPlast`,`a300_users`.`profile` AS `profile`,`a300_users`.`profile_shadow` AS `profile_shadow`,`a300_users`.`cookies` AS `cookies`,`a300_users`.`cookies_system` AS `cookies_system`,`a300_users`.`lng` AS `lng`,`a300_users`.`active` AS `active` from `a300_users`) union all (select `a300_users_arch`.`IDhash` AS `IDhash`,`a300_users_arch`.`login` AS `login`,`a300_users_arch`.`pass` AS `pass`,`a300_users_arch`.`pass_md5` AS `pass_md5`,`a300_users_arch`.`autolog` AS `autolog`,`a300_users_arch`.`host` AS `host`,`a300_users_arch`.`regtime` AS `regtime`,`a300_users_arch`.`logtime` AS `logtime`,`a300_users_arch`.`reqtime` AS `reqtime`,`a300_users_arch`.`rqs` AS `rqs`,`a300_users_arch`.`IPlast` AS `IPlast`,`a300_users_arch`.`profile` AS `profile`,`a300_users_arch`.`profile_shadow` AS `profile_shadow`,`a300_users_arch`.`cookies` AS `cookies`,`a300_users_arch`.`cookies_system` AS `cookies_system`,`a300_users_arch`.`lng` AS `lng`,`a300_users_arch`.`active` AS `active` from `a300_users_arch`)
+
+-- --------------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*app*/_users_attrs` (
   `IDhash` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
   `favorities` text NOT NULL,
@@ -172,6 +176,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_group` (
   `status` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`host`,`name`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_users_rel_group` (
+  `IDgroup` int(10) unsigned NOT NULL auto_increment,
+  `IDuser` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
+  PRIMARY KEY  (`IDgroup`,`IDuser`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
