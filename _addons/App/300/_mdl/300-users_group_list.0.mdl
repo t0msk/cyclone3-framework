@@ -1,0 +1,54 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::300::_init;
+
+=head1 NAME
+
+300-users_group_list.0.mdl
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # LOADING XML DESIGN
+	
+	$XSGN{'TMP'}=~s|<%required_status%>|$env{'status'}|g;
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			TOM.a300_users_rel_group
+		WHERE
+			IDgroup=$env{'IDgroup'}
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql);
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$XSGN{'NULL'}=$XSGN{'ITEM'};
+		
+		my %user=App::300::UserFind(
+			'IDhash' => $db0_line{'IDuser'}
+		);
+		
+		$XSGN{'NULL'}=~s|<%ID%>|$user{'IDhash'}|g;
+		$XSGN{'NULL'}=~s|<%name%>|$user{'login'}|g;
+		$XSGN{'NULL'}=~s|<%status%>|$user{'status'}|g;
+		
+		$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+	}
+	
+	return 1;
+}
+
+1;

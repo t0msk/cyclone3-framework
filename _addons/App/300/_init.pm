@@ -13,6 +13,11 @@ use CVML;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 
+=head1 FUNCTIONS
+
+=cut
+
+
 sub GetGroups
 {
  my @env=@_;
@@ -171,6 +176,19 @@ sub UserArchive
 }
 
 
+
+=head2 UserFind()
+
+Find user from a300 tables and return %hash
+
+ my %user=App::300::UserFind
+ (
+  login => 'XY',
+  IDhash => 'XXXXX',
+  host => 'domain.tld'
+ );
+
+=cut
 
 sub UserFind
 {
