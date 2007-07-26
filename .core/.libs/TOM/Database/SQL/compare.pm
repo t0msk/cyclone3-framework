@@ -51,6 +51,13 @@ sub compare_create_table
 	my %keys1h;
 	my $create1 = shift;
 	
+	if ($create1=~/CREATE ALGORITHM/)
+	{
+		main::_log("this is ALGORITHM, not able to compare");
+		$t->close();
+		return @return;
+	}
+	
 	# Get Table Name
 	$create1 =~ /CREATE TABLE `(.*?)`\.`(.*?)`/;
 	my $database=$1;

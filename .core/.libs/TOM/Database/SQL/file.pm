@@ -367,9 +367,15 @@ sub install_table
 	my %env=@_;
 	my %output;
 	
-	$SQL=~/TABLE(.*?) `(.*?)`.`(.*?)`/;
-	my $database=$2;
-	my $table=$3;
+	$SQL=~/(TABLE|VIEW)(.*?) `(.*?)`.`(.*?)`/ || do
+	{
+		main::_log("this is not a table or view",1);
+		$t->close();
+		return undef;
+	};
+	
+	my $database=$3;
+	my $table=$4;
 	main::_log("database='$database' table='$table' in db_h='$header->{'db_h'}'");
 	#main::_log_stdout("installing database='$database' table='$table' in db_h='$header->{'db_h'}'");
 	
