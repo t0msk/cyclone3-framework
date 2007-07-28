@@ -158,7 +158,7 @@ foreach my $proc(@pole)
 				
 				# MEM
 				print "[";
-				if ($hosts{$host}[$_][2] > 30000){print color 'bold red'}
+				if ($hosts{$host}[$_][2] > 50000){print color 'bold red'}
 				print sprintf("%5d",$hosts{$host}[$_][2]);print color $setcolor;print "]";
 				
 				
