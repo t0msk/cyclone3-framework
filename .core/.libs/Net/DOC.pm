@@ -167,7 +167,9 @@ sub OUT_ # get clean html code
  #return $self->{OUT}{HEADER}."\n\n".$self->{OUT}{BODY}."\n\n".$self->{OUT}{FOOTER};
  my $doc=$self->{OUT}{HEADER}.$self->{OUT}{BODY}.$self->{OUT}{FOOTER};
  1 while ($doc=~s|\n\n$|\n|g);
- utf8::decode($doc);
+ 
+ utf8::decode($doc) unless utf8::is_utf8($doc);
+ 
  return $doc;
 }
 
