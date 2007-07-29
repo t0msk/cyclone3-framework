@@ -839,6 +839,7 @@ while ($main::CGI=new CGI::Fast())
 		# nedostal som ziadne cookies (mozno je toto moj prvy request)
 		# nastavujem, teda cookies na posielanie cez URL linku (zaroven sa vzdy i tak
 		# budem snazit posielat cookies standardnou cestou)
+		
 		if ((keys %main::COOKIES) == 0)
 		{
 			main::_log("none cookies");
@@ -872,12 +873,24 @@ while ($main::CGI=new CGI::Fast())
 				);
 				
 				my %form=TOM::Net::HTTP::CGI::get_CGI($main::ENV{'QUERY_STRING_FULL'});
+				delete $form{'gclid'} if $form{'gclid'}; # remove AdWords
+				delete $form{'ref'} if $form{'ref'}; # remove other campaings
 				my $rewrite="/";
 				$rewrite.=TOM::Net::URI::rewrite::parse_hash(\%form) if $tom::rewrite;
 				my $var=TOM::Net::URI::URL::genGET(%form);
 				my $link_hash=$var;
 				$link_hash=TOM::Net::URI::URL::hash_encode($var) if $TOM::type_code;
 				my $link="$rewrite";$link.="?".$link_hash if $link_hash;
+				
+				# hack for Google AdWords (to save 'gclid' in QUERY_STRING)
+				if ($FORM{'gclid'})
+				{if ($link_hash){$link.="&gclid=".$FORM{'gclid'}."&ref=adwords";}
+				else{$link.="?gclid=".$FORM{'gclid'}."&ref=adwords";}}
+				
+				# hack for another campaings (to save 'ref' in QUERY_STRING)
+				if ($FORM{'ref'})
+				{if ($link_hash){$link.="&ref=".$FORM{'ref'};}
+				else{$link.="?ref=".$FORM{'ref'}}}
 				
 				my $URL=$tom::H_www.$link;
 				
@@ -2220,6 +2233,12 @@ while ($main::CGI=new CGI::Fast())
 				}
 				else
 				{
+					#use encoding $main::LNG_cp;
+					#utf8::downgrade($DOC_output);
+					#utf8::decode($DOC_output);
+					#my $converter = Text::Iconv->new($TOM::LNG_cp_default, $main::LNG_cp);
+					#$DOC_output = $converter->convert($DOC_output);
+					#utf8::encode($DOC_output);
 					$DOC_output=iconv::convert($DOC_output, $TOM::LNG_cp_default, $main::LNG_cp);
 				}
 			}
