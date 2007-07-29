@@ -69,12 +69,45 @@ sub execute
 		return 1;
 	}
 	
-	App::300::UserGenerate
+	my %user=App::300::UserGenerate
 	(
 		'login' => $env{'login'},
 		'pass_md5' => $env{'pass_md5'},
 		'active' => 'Y'
 	);
+	
+	if ($env{'groups'})
+	{
+		foreach my $group(split(',',$env{'groups'}))
+		{
+			my $sql=qq{
+				SELECT
+					ID
+				FROM
+					TOM.a300_users_group
+				WHERE
+					name = '$group' AND
+					host = '$tom::H_cookie'
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+			if (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				my $sql=qq{
+					INSERT INTO TOM.a300_users_rel_group
+					(
+						IDuser,
+						IDgroup
+					)
+					VALUES
+					(
+						'$user{'IDhash'}',
+						'$db0_line{'ID'}'
+					)
+				};
+				TOM::Database::SQL::execute($sql,'quiet'=>1);
+			}
+		}
+	}
 	
 	return 1
 }
