@@ -45,6 +45,18 @@ sub execute
 		$XSGN{'NULL'}=~s|<%name%>|$db0_line{'name'}|g;
 		$XSGN{'NULL'}=~s|<%status%>|$db0_line{'status'}|g;
 		
+		my $sql=qq{
+			SELECT COUNT(*) AS itemcount
+			FROM TOM.a300_users_rel_group
+			WHERE IDgroup=$db0_line{'ID'}
+		};
+		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		if (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			#main::_log("itemcount = $db1_line{'itemcount'}");
+			$XSGN{'NULL'}=~s|<%itemcount%>|$db1_line{'itemcount'}|g;
+		}
+		
 		$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
 	}
 	

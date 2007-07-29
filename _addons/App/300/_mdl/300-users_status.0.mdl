@@ -1,0 +1,147 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+300-users_status.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Change status of user
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID of user
+
+=item *
+
+B<status> - new status
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default error
+
+=item *
+
+B<RESULT_success> - without error
+
+=item *
+
+B<RESULT_failure_no_input> - failure input
+
+=item *
+
+B<RESULT_failure_set> - failure to set
+
+=item *
+
+B<%ID%> - ID
+
+=item *
+
+B<%missing_parameter%> - missing parameter
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	if (!$env{'status'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|status|g;
+		return 1;
+	}
+	
+	my $out;
+	
+	my %user=App::300::UserFind(
+		'IDhash' => $env{'ID'},
+		'-activize' => 1,
+	);
+	
+	if (!$user{'IDhash'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_set'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		return 1;
+	}
+	
+	if ($env{'status'} eq "Y")
+	{
+		my $sql=qq{
+			UPDATE TOM.a300_users
+			SET active='Y'
+			WHERE IDhash='$env{'ID'}'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql);
+	}
+	elsif ($env{'status'} eq "N")
+	{
+		my $sql=qq{
+			UPDATE TOM.a300_users
+			SET active='N'
+			WHERE IDhash='$env{'ID'}'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql);
+	}
+	else
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_set'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		return 1;
+	}
+	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+	$XSGN{'TMP'}=~s|<%status%>|$env{'status'}|g;
+
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

@@ -1,0 +1,128 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+300-users_group_new.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Create new user management group in domain
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<name> - name of group
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default error
+
+=item *
+
+B<RESULT_success> - without erroru
+
+=item *
+
+B<RESULT_failure_no_input> - failure - no input
+
+=item *
+
+B<RESULT_failure_set> - failure to set
+
+=item *
+
+B<&lt;%ID%&gt;> - ID
+
+=item *
+
+B<&lt;%missing_parameter%&gt;> - missing param
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	my $from;
+	
+	if (!$env{'name'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|name|g;
+		return 1;
+	}
+	
+	$env{'name'}=~s|\'|\\'|;
+	
+	my $sql=qq{
+		SELECT
+			name
+		FROM
+			TOM.a300_users_group
+		WHERE
+			host='$tom::H_cookie' AND
+			name='$env{'name'}'
+		LIMIT 1;
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_insert'};
+		#$XSGN{'TMP'}=~s|<%ID%>|$ID|g;
+		return 1;
+	}
+	
+	my $sql=qq{
+		INSERT INTO TOM.a300_users_group
+		(
+			host,
+			name
+		)
+		VALUES
+		(
+			'$tom::H_cookie',
+			'$env{'name'}'
+		)
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

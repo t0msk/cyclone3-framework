@@ -24,12 +24,78 @@ sub execute
 	
 	my $sql=qq{
 		SELECT
-			*
+			`user`.IDhash,
+			`user`.login,
+			`user`.autolog,
+			`user`.host,
+			FROM_UNIXTIME(`user`.regtime) AS datetime_reg,
+			FROM_UNIXTIME(`user`.logtime) AS datetime_log,
+			FROM_UNIXTIME(`user`.reqtime) AS datetime_req,
+			`user`.rqs,
+			`user`.IPlast,
+			`user`.profile,
+			`user`.profile_shadow,
+			`user`.cookies,
+			`user`.cookies_system,
+			`user`.lng,
+			`user`.active
 		FROM
-			TOM.a300_users_rel_group
+			TOM.a300_user AS `user`,
+			TOM.a300_users_rel_group AS `group`
 		WHERE
-			IDgroup=$env{'IDgroup'}
+			`group`.IDgroup = $env{'IDgroup'} AND
+			`group`.IDuser = `user`.IDhash AND
+			`user`.host = '$tom::H_cookie' AND
+			`user`.login != ''
+		ORDER BY
+			`user`.login ASC
 	};
+	
+	if (!$env{'IDgroup'})
+	{
+		$sql=qq{
+			SELECT
+				`user`.IDhash,
+				`user`.login,
+				`user`.autolog,
+				`user`.host,
+				FROM_UNIXTIME(`user`.regtime) AS datetime_reg,
+				FROM_UNIXTIME(`user`.logtime) AS datetime_log,
+				FROM_UNIXTIME(`user`.reqtime) AS datetime_req,
+				`user`.rqs,
+				`user`.IPlast,
+				`user`.profile,
+				`user`.profile_shadow,
+				`user`.cookies,
+				`user`.cookies_system,
+				`user`.lng,
+				`user`.active
+			FROM
+				TOM.a300_user AS `user`
+			WHERE
+				`user`.host = '$tom::H_cookie' AND
+				`user`.login != ''
+			ORDER BY
+				`user`.login ASC
+		};
+	}
+	else
+	{
+		my	$sql=qq{
+			SELECT
+				name
+			FROM
+				TOM.a300_users_group
+			WHERE
+				ID = '$env{'IDgroup'}'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql);
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$XSGN{'TMP'}=~s|<%location%>|$db0_line{'name'}|;
+		}
+	}
 	
 	my %sth0=TOM::Database::SQL::execute($sql);
 	
@@ -37,13 +103,52 @@ sub execute
 	{
 		$XSGN{'NULL'}=$XSGN{'ITEM'};
 		
-		my %user=App::300::UserFind(
-			'IDhash' => $db0_line{'IDuser'}
-		);
+		my @groups;
+		my $sql=qq{
+			SELECT
+				`group`.name,
+				`group`.status
+			FROM
+				TOM.a300_users_group AS `group`,
+				TOM.a300_users_rel_group AS `rel`,
+				TOM.a300_user AS `user`
+			WHERE
+				`group`.ID = `rel`.IDgroup AND
+				`rel`.IDuser = `user`.IDhash AND
+				`user`.IDhash = '$db0_line{'IDhash'}' AND
+				`group`.status IN ('Y','L','N')
+			ORDER BY
+				`group`.name
+		};
+		my %sth1=TOM::Database::SQL::execute($sql);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			if ($db1_line{'status'} eq "N")
+			{
+				$db1_line{'name'}='-'.$db1_line{'name'};
+			}
+			if ($db1_line{'status'} eq "L")
+			{
+				$db1_line{'name'}='+'.$db1_line{'name'};
+			}
+			if ($db1_line{'status'} eq "T")
+			{
+				$db1_line{'name'}='!'.$db1_line{'name'};
+			}
+			push @groups, $db1_line{'name'};
+		}
+		my $groups_=join (", ",@groups);
 		
-		$XSGN{'NULL'}=~s|<%ID%>|$user{'IDhash'}|g;
-		$XSGN{'NULL'}=~s|<%name%>|$user{'login'}|g;
-		$XSGN{'NULL'}=~s|<%status%>|$user{'status'}|g;
+		
+		$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'IDhash'}|g;
+		$XSGN{'NULL'}=~s|<%name%>|$db0_line{'login'}|g;
+		$XSGN{'NULL'}=~s|<%groups%>|$groups_|g;
+		$XSGN{'NULL'}=~s|<%datetime_reg%>|$db0_line{'datetime_reg'}|g;
+		$XSGN{'NULL'}=~s|<%datetime_log%>|$db0_line{'datetime_log'}|g;
+		$XSGN{'NULL'}=~s|<%datetime_req%>|$db0_line{'datetime_req'}|g;
+		$XSGN{'NULL'}=~s|<%rqs%>|$db0_line{'rqs'}|g;
+		$XSGN{'NULL'}=~s|<%IP%>|$db0_line{'IPlast'}|g;
+		$XSGN{'NULL'}=~s|<%status%>|$db0_line{'active'}|g;
 		
 		$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
 	}

@@ -9,6 +9,7 @@
 	type="list"
 	required_status="<%required_status%>"
 	code="<$main::request_code>">
+	<location><![CDATA[/<%location%>]]></location>
 <#item#>
 </response>
 </DEFINITION>
@@ -17,6 +18,12 @@
 <item IDitem="<%ID%>">
 	<ID><![CDATA[<%ID%>]]></ID>
 	<name><![CDATA[<%name%>]]></name>
+	<groups><![CDATA[<%groups%>]]></groups>
+	<datetime_reg><![CDATA[<%datetime_reg%>]]></datetime_reg>
+	<datetime_req><![CDATA[<%datetime_req%>]]></datetime_req>
+	<datetime_log><![CDATA[<%datetime_log%>]]></datetime_log>
+	<rqs><![CDATA[<%rqs%>]]></rqs>
+	<IP><![CDATA[<%IP%>]]></IP>
 	<status><![CDATA[<%status%>]]></status>
 </item>
 <#item#>

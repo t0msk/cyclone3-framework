@@ -1,0 +1,123 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+300-users_rel_group_new.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Add user into user management group
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID_user> - ID of user
+
+=item *
+
+B<ID_group> - ID of group
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default error
+
+=item *
+
+B<RESULT_success> - without error
+
+=item *
+
+B<RESULT_failure_no_input> - failure - no input
+
+=item *
+
+B<RESULT_failure_set> - failure to set
+
+=item *
+
+B<&lt;%ID%&gt;> - ID
+
+=item *
+
+B<&lt;%missing_parameter%&gt;> - missing param
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	my $from;
+	
+	if (!$env{'ID_user'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID_user|g;
+		return 1;
+	}
+	
+	if (!$env{'ID_group'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID_group|g;
+		return 1;
+	}
+	
+	foreach my $user(split(';',$env{'ID_user'}))
+	{
+		next unless $user;
+		my $sql=qq{
+			REPLACE INTO TOM.a300_users_rel_group
+			(
+				IDuser,
+				IDgroup
+			)
+			VALUES
+			(
+				'$user',
+				'$env{'ID_group'}'
+			)
+		};
+		my %sth0=TOM::Database::SQL::execute($sql);
+	}
+	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

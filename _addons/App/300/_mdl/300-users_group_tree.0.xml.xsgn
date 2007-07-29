@@ -21,6 +21,7 @@
 	<name><![CDATA[<%name%>]]></name>
 	<name_url><![CDATA[<%name_url%>]]></name_url>
 	<status><![CDATA[<%status%>]]></status>
+	<itemcount><![CDATA[<%itemcount%>]]></itemcount>
 </item>
 <#item#>
 </DEFINITION>
