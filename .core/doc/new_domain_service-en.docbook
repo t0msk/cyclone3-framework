@@ -104,7 +104,7 @@ vim \!cyclone/local.conf
         <para>Add your account into XULadmin backend ( cyclone.domain.tld
         )</para>
 
-        <synopsis>tom3-cron --domain=cyclone.domain.tld ---global=1 ---category=300 ---name=new --login=username --pass=password</synopsis>
+        <synopsis>tom3-cron --domain=cyclone.domain.tld ---global=1 ---category=300 ---name=new --login=username --pass=password --groups=admin,editor</synopsis>
       </listitem>
 
       <listitem>
