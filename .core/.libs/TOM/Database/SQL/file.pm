@@ -369,7 +369,7 @@ sub install_table
 	
 	$SQL=~/(TABLE|VIEW)(.*?) `(.*?)`.`(.*?)`/ || do
 	{
-		main::_log("this is not a table or view",1);
+		main::_log("this chunk is not a table or view",1);
 		$t->close();
 		return undef;
 	};
