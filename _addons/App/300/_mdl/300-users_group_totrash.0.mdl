@@ -6,17 +6,16 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-use App::020::_init;
 
 =head1 NAME
 
-300-users_group_new.0.mdl
+300-users_group_totrash.0.mdl
 
 =cut
 
 =head1 DESCRIPTION
 
-Create new user management group in domain
+Remore user management group from domain
 
 =cut
 
@@ -26,7 +25,7 @@ Create new user management group in domain
 
 =item *
 
-B<name> - name of group
+B<ID> - ID of group
 
 =back
 
@@ -42,7 +41,7 @@ B<TMP> - default error
 
 =item *
 
-B<RESULT_success> - without erroru
+B<RESULT_success> - without error
 
 =item *
 
@@ -69,55 +68,66 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
+	my $from;
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	
 	# check user privileges
 	my %groups=App::300::GetGroups($main::USRM{'IDhash'});
 	if ($groups{'admin'}{'status'} ne "L")
 	{$XSGN{'TMP'}=$XSGN{'RESULT_failure_permissions'};return 1;}
 	
-	my $from;
 	
-	if (!$env{'name'})
-	{
-		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
-		$XSGN{'TMP'}=~s|<%missing_parameter%>|name|g;
-		return 1;
-	}
-	
-	$env{'name'}=~s|\'|\\'|;
-	
+	# check if this group is not locked
 	my $sql=qq{
 		SELECT
-			name
+			status,
+			name,
+			ID
 		FROM
 			TOM.a300_users_group
 		WHERE
-			host='$tom::H_cookie' AND
-			name='$env{'name'}'
+			ID='$env{'ID'}'
 		LIMIT 1;
 	};
 	my %sth0=TOM::Database::SQL::execute($sql);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
+		if ($db0_line{'status'} eq "L")
+		{
+			$XSGN{'TMP'}=$XSGN{'RESULT_failure_insert'};
+			return 1;
+		}
+		
+		my $name=$db0_line{'name'}."_".$db0_line{'ID'};
+		
+		my $sql=qq{
+			UPDATE
+				TOM.a300_users_group
+			SET
+				name='$name',
+				status='T'
+			WHERE
+				ID='$env{'ID'}'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql);
+		
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		
+	}
+	else
+	{
 		$XSGN{'TMP'}=$XSGN{'RESULT_failure_insert'};
-		#$XSGN{'TMP'}=~s|<%ID%>|$ID|g;
 		return 1;
 	}
 	
-	my $sql=qq{
-		INSERT INTO TOM.a300_users_group
-		(
-			host,
-			name
-		)
-		VALUES
-		(
-			'$tom::H_cookie',
-			'$env{'name'}'
-		)
-	};
-	my %sth0=TOM::Database::SQL::execute($sql);
-	
-	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
 	
 	return 1;
 }

@@ -5,7 +5,7 @@
 <response
 	addon="a300"
 	addon_type="users_group"
-	type="new"
+	type="totrash"
 	IDitem="<%ID%>"
 	result="0"
 	code="<$main::request_code>">
@@ -18,7 +18,7 @@
 <response
 	addon="a300"
 	addon_type="users_group"
-	type="new"
+	type="totrash"
 	IDitem="<%ID%>"
 	result="1"
 	code="<$main::request_code>">
@@ -31,12 +31,12 @@
 <response
 	addon="a300"
 	addon_type="users_group"
-	type="new"
+	type="totrash"
 	IDitem="<%ID%>"
 	result="0"
 	code="<$main::request_code>">
 	<result>0</result>
-	<reason>Could not create a group</reason>
+	<reason>Could not remove a group</reason>
 </response>
 </DEFINITION>
 
@@ -44,7 +44,7 @@
 <response
 	addon="a300"
 	addon_type="users_group"
-	type="new"
+	type="totrash"
 	IDitem="<%ID%>"
 	result="0"
 	code="<$main::request_code>">
@@ -57,7 +57,7 @@
 <response
 	addon="a300"
 	addon_type="users_group"
-	type="new"
+	type="totrash"
 	IDitem="<%ID%>"
 	result="0"
 	code="<$main::request_code>">

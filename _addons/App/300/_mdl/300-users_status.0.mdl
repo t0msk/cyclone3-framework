@@ -73,6 +73,11 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
+	# check user privileges
+	my %groups=App::300::GetGroups($main::USRM{'IDhash'});
+	if ($groups{'admin'}{'status'} ne "L")
+	{$XSGN{'TMP'}=$XSGN{'RESULT_failure_permissions'};return 1;}
+	
 	if (!$env{'ID'})
 	{
 		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};

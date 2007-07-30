@@ -53,5 +53,18 @@
 </response>
 </DEFINITION>
 
+<DEFINITION id="RESULT_failure_permissions">
+<response
+	addon="a300"
+	addon_type="users_rel_group"
+	type="new"
+	IDitem="<%ID%>"
+	result="0"
+	code="<$main::request_code>">
+	<result>0</result>
+	<reason>Permissions denied</reason>
+</response>
+</DEFINITION>
+
 </XML_DESIGN_DEFINITION>
 
