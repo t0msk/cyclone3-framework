@@ -18,47 +18,44 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 =cut
 
 
+=head2 GetGroups(IDhash)
+
+=cut
+
 sub GetGroups
 {
- my @env=@_;
- my %groups;
- my @groups0;
- my @groups1;
-
- my $var="'".$env[0]."'";
-
- my $db0=$main::DB{'main'}->Query("
-	SELECT	groups1.IDcharindex
-	FROM TOM.Ca300_groups_users AS users1, TOM.Ca300_groups AS groups1
-	WHERE	users1.IDgroup = groups1.ID
-		AND users1.IDuser IN ($var)
-		AND users1.starttime<=$tom::time_current
-		AND (users1.endtime>=$tom::time_current OR users1.endtime IS NULL)
-		AND users1.active='Y'
-		AND groups1.starttime<=$tom::time_current
-		AND (groups1.endtime>=$tom::time_current OR groups1.endtime IS NULL)
-		AND groups1.active='Y'
-	");
- while (my %db0_line=$db0->fetchhash)
- {
-  my $db1=$main::DB{'main'}->Query("
-	SELECT	groups1.IDcharindex, groups1.ID
-	FROM	TOM.Ca300_groups AS groups1
-	WHERE
-		groups1.IDcharindex LIKE '$db0_line{IDcharindex}%'
-		AND groups1.starttime<=$tom::time_current
-		AND (groups1.endtime>=$tom::time_current OR groups1.endtime IS NULL)
-		AND groups1.active='Y'
-	");
-  while (my %db1_line=$db1->fetchhash)
-  {
-   $groups{$db1_line{ID}}=1;
-   #push @groups0,$db1_line{ID};
-   #push @groups1,$db1_line{IDcharindex};
-  }
- }
- foreach (keys %groups){push @groups0,$_;}
- return @groups0;
+	my $IDhash=shift;
+	my $t=track TOM::Debug(__PACKAGE__."::GetGroups($IDhash)");
+	
+	my %env=@_;
+	
+	my %groups;
+	
+	my $sql=qq{
+		SELECT
+			`group`.name,
+			`group`.status
+		FROM
+			TOM.a300_users_group AS `group`,
+			TOM.a300_users_rel_group AS `rel`,
+			TOM.a300_user AS `user`
+		WHERE
+			`group`.ID = `rel`.IDgroup AND
+			`rel`.IDuser = `user`.IDhash AND
+			`user`.IDhash = '$IDhash'
+		ORDER BY
+			`group`.name
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$groups{$db0_line{'name'}}{'ID'} = $db0_line{'ID'};
+		$groups{$db0_line{'name'}}{'status'} = $db0_line{'status'};
+	}
+	
+	$t->close();
+	return %groups;
 }
 
 
