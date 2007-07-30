@@ -1,0 +1,21 @@
+# TYPE: login
+
+# LAYERS
+<CONF_VAR id="dsgn" value="default" global="0" />
+<CONF_VAR id="Content-Type" value="application/vnd.mozilla.xul+xml" />
+
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-category" value="300" />
+	<VAR id="-name" value="login" />
+	<VAR id="-TMP" value="OUTPUT" />
+	<VAR id="-global" value="1" />
+	<VAR id="-version" value="xuladmin" />
+	<VAR id="-xsgn" value="xml" />
+	<VAR id="-xlng_xsgn" value="1" />
+	<VAR id="-xsgn_global" value="1" />
+	<VAR id="-xlng_global" value="1" />
+		<VAR id="login" value="<$main::FORM{login}>" />
+		<VAR id="pass" value="<$main::FORM{pass}>" />
+		<VAR id="return" value="<$main::FORM{return}>" />
+</MODULE>

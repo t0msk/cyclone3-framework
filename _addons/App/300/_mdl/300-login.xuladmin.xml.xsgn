@@ -1,0 +1,28 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="logged">
+<response IDapp="a300" type="login" result="1" code="<$main::request_code>">
+	<![CDATA[You have been successfully signed in]]>
+</response>
+</DEFINITION>
+
+<DEFINITION id="err_missed">
+<response IDapp="a300" type="login" result="0" code="<$main::request_code>">
+	<reason><![CDATA[No login or password entered]]></reason>
+</response>
+</DEFINITION>
+
+<DEFINITION id="err_badpassoruser">
+<response IDapp="a300" type="login" result="0" code="<$main::request_code>">
+	<reason><![CDATA[Login incorrect]]></reason>
+</response>
+</DEFINITION>
+
+<DEFINITION id="err_logged">
+<response IDapp="a300" type="login" result="0" code="<$main::request_code>">
+	<reason><![CDATA[You are already logged on from another location]]></reason>
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
