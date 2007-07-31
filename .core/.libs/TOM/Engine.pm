@@ -44,6 +44,7 @@ use CVML;
 use TOM::Debug;
 use TOM::rev;
 use TOM::Error;
+use TOM::Warning;
 use TOM::Temp::file;
 
 # default aplikácie

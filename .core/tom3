@@ -384,7 +384,7 @@ while ($main::CGI=new CGI::Fast())
 				push @ERR, $TOM::Net::HTTP::UserAgent::messages{old}[$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{old}] if exists $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{old};
 				# FIXME:[fordinal] zrusit Tomahawk::error::page_warn(@ERR) a nahradit novym
 				$t_request->close();
-				Tomahawk::error::page_warn(@ERR);
+				TOM::Warning::engine(@ERR);
 				next;
 			}
 			

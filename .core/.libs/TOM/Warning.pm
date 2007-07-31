@@ -1,14 +1,41 @@
 package TOM::Warning;
-use TOM::Error::design;
-use Utils::vars;
-use TOM::Utils::datetime;
-use TOM::Utils::vars;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
+
+use TOM::Error::design;
+use Utils::vars;
+use TOM::Utils::datetime;
+use TOM::Utils::vars;
+
+
+sub engine
+{
+	eval
+	{
+		if ($TOM::engine eq "pub")
+		{
+			engine_pub(@_);
+		}
+	};
+}
+
+
+
+sub engine_pub
+{
+	my $var=join(". ",@_);$var=~s|[\n\r]| |g;
+	
+	print "Content-Type: ".$Net::DOC::content_type."; charset=UTF-8\n\n";
+	my $out=$Net::DOC::warn_page;
+	Utils::vars::replace($out);
+	$out=~s|<%message%>|$var|;
+	print $out;
+	
+}
 
 
 

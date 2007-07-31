@@ -101,6 +101,87 @@ our $err_page=<<"HEADER";
 HEADER
 
 
+our $warn_page=<<"HEADER";
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<title>System warning</title>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+		<meta http-equiv="domain" content="<\$tom::H>#failed" />
+		<meta name="generator" content="Cyclone<\$TOM::core_version>.<\$TOM::core_build> (r<\$TOM::core_revision>) at <\$TOM::hostname> [$$;<\$main::request_code>]" />
+		
+		<style>
+			body
+			{
+				font-family: Arial, Helvetica, sans-serif;
+				text-align:center;
+				margin:0;
+				padding:2em;
+				color: #00335E;
+			}
+			
+			#page
+			{
+				width:550px; margin:0 auto; text-align:left;
+			}
+			
+			#page-i
+			{
+				padding:15px;background:#FAFAFF; border:1px solid #E1E1EF;min-height:300px;
+			}
+			
+			a
+			{
+				color:blue;
+			}
+			
+			h1
+			{
+				margin-top:0;
+				font-size:150%;
+				/* color:#7E7F82;*/
+				color: #EF5959;
+			}
+			
+			h2
+			{
+				margin-top:0;
+				font-size:110%;
+			}
+			
+			.right
+			{
+				text-align: right;
+			}
+		</style>
+	</head>
+	
+	<body>
+		
+		<div id="page">
+			<div class="right">
+				<img src="$TOM::H_grf/cyclone3-262x76.png" alt="Cyclone3" width="262" height="76" />
+			</div>
+			<div id="page-i">
+				
+				<h1>System Warning</h1>
+				<p>
+					<strong><%message%></strong>
+				</p>
+				<p>
+					You can contact our administrator at <a href="mailto:$TOM::contact{'TECH_farm'}">$TOM::contact{'TECH_farm'}</a>.
+				</p>
+				
+			</div>
+		</div>
+
+<!--ERROR-->
+
+	</body>
+</html>
+HEADER
+
+
 our $err_mdl=<<"HEADER";
 <table bgcolor='black' cellspacing='2' cellpadding='2'>
 	<tr>
