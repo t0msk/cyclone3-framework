@@ -281,8 +281,17 @@ sub get_CGI
 	
 	main::_log("query='$query'");
 	
-	my @names = $main::CGI->param;
+	# parse GET method
 	
+	my %form_qs=get_QUERY_STRING($query);
+	foreach my $key(keys %form_qs)
+	{
+		$form{$key}=$form_qs{$key};
+	}
+	
+	# parse POST method
+	
+	my @names = $main::CGI->param;
 	foreach my $name(@names)
 	{
 		
@@ -341,12 +350,6 @@ sub get_CGI
 		{main::_log("name '$name'='".$form{$name}."'");}
 		else {main::_log("name '$name'=length(".length($form{$name}).")");}
 		
-	}
-	
-	my %form_qs=get_QUERY_STRING($query);
-	foreach my $key(keys %form_qs)
-	{
-		$form{$key}=$form_qs{$key};
 	}
 	
 	$t->close();
