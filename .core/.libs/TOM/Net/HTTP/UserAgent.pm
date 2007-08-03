@@ -124,7 +124,7 @@ our %type=
 );
 
 
-
+#our $anonymizer_
 
 
 
@@ -163,7 +163,7 @@ our @table=
 				'pitche',
 #				'',
 				],
-#		agent_type	=>	"browser",
+		agent_type	=>	"anonymizer",
 #		agent_group	=>	"",
 		engine_disable	=>	1,
 		utf8_disable	=>	1,
@@ -171,18 +171,18 @@ our @table=
 		USRM_disable	=>	1,
 		messages		=>	["Your browser does not identify itself with any user agent information. Please use at least \"Mozilla/3.0 (compatible;)\".","For more information, please refer to RFC2616 chapter 3.8.,14.43 and turn on your browser identification."],
 	},
-	{name=>'anonym',
+	{name=>'anonymizer',
 		regexp=>	[
 				'anonym',
 				'hysteria\.sk',
 				],
 		agent_type	=>	"anonymizer",
 #		agent_group	=>	"",
-#		engine_disable	=>	1,
-		utf8_disable	=>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-		messages		=>	["Your browser does not identify itself with any user agent information. Please use at least \"Mozilla/3.0 (compatible;)\".","For more information, please refer to RFC2616 chapter 3.8.,14.43 and turn on your browser identification."],
+		engine_disable => 1,
+		utf8_disable => 1,
+		cookies_disable => 1,
+		USRM_disable => 1,
+		messages => ["Accessing this service using anonymizer is not allowed","Your browser does not identify itself with any user agent information. Please use at least \"Mozilla/3.0 (compatible;)\".","For more information, please refer to RFC2616 chapter 3.8.,14.43 and turn on your browser identification."],
 	},
 
 
@@ -1887,7 +1887,7 @@ our @table=
 	},
 
 
-# IPs, falosni useragenti
+# IPs, false useragents
 	
 	{name=>'Internet For Learning',
 		agent_type	=>	"vandaliser",
@@ -1980,12 +1980,10 @@ our %table_IP=
 	# 2006-04-03 - Japan Network Information Center
 	'219\.117\.215\.202' => 'JPNIC-NET-JP',
 	
-	# 2006-05-26
-#	'86\.110\.225\.21' => 'hacked',
-	# 2006-05-29
-#	'217\.172\.156\.3' => 'hacked',
-	# 2006-05-30
-#	'212\.5\.195\.97' => 'hacked',
+	
+	# list of anonymizers
+	#'91\.127\.103\.156' => 'anonymizer',
+	
 );
 
 =head1 FUNCTIONS
