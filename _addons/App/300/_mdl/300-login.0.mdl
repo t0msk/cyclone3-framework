@@ -23,6 +23,14 @@ sub execute
 	{$XSGN{TMP}=$XSGN{err_missed};
 	return 1}
 	
+	# cookies are dissabled
+	if ((keys %main::COOKIES_save) == 0)
+	{
+		$XSGN{'TMP'}=$XSGN{'err_cookies'};
+		return 1;
+	}
+	
+	
 	#$env{return}=$tom::H_www."?\|?TID=0&_dsgn=default" unless $env{return};
 	$env{return}=$tom::H_www."?|?TID=l_default" unless $env{return};
 	

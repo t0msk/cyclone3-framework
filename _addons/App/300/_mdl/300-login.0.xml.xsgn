@@ -7,6 +7,12 @@
 </response>
 </DEFINITION>
 
+<DEFINITION id="err_cookies">
+<response IDapp="a300" type="login" result="0" code="<$main::request_code>">
+	<reason><![CDATA[Unable to login, because your cookies are dissabled!!!]]></reason>
+</response>
+</DEFINITION>
+
 <DEFINITION id="err_missed">
 <response IDapp="a300" type="login" result="0" code="<$main::request_code>">
 	<reason><![CDATA[No login or password entered]]></reason>
