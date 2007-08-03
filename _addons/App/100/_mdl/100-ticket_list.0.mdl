@@ -14,11 +14,11 @@ our $debug = 1;
 sub execute
 {
 	my %env=@_;
-
+	
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
-
+	
 	my $today = DateTime->now()->strftime('%Y-%m-%d');
-
+	
 	my $where = "
 		t.status='Y' AND
 		e.status='Y'
@@ -34,23 +34,26 @@ sub execute
 		$where .= ' AND ' if $where;
 		$where .= "t.domain='$env{'db_domain'}'";
 	}
-
-	my $sql = qq/
+	
+	my $sql = qq{
 	SELECT
 		t.ID,
 		t.domain,
-		if(t.domain!='',t.domain,'(null)') as domain_link,
+		if (t.domain !='' , t.domain , '(null)' ) as domain_link,
 		t.name as name,
-		if(
+		if
+		(
 			max(e.datetime_create)>='$today', date_format(max(e.datetime_create), '\%H:\%i'),
 			date_format(max(e.datetime_create), '\%d. \%m. \%Y')
 		) as last_error,
 		max(e.ID) as last_error_id,
 		count(e.ID) as error_count
-	FROM
-		TOM.a100_ticket as t LEFT JOIN
-		TOM.a100_ticket_event as e ON
+	FROM TOM.a100_ticket as t
+	LEFT JOIN TOM.a100_ticket_event as e ON
+	(
 			e.ID_ticket=t.ID
+			AND e.status='Y'
+	)
 	WHERE
 		$where
 	GROUP BY
@@ -58,7 +61,7 @@ sub execute
 	ORDER BY
 		$env{'db_order'}
 	LIMIT $env{'db_limit'}
-	/;
+	};
 	my %sth = TOM::Database::SQL::execute( $sql, 'log' => $debug);
 
 	if ( $sth{'rows'} )
