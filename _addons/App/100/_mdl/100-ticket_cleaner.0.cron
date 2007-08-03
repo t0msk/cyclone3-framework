@@ -24,6 +24,8 @@ sub execute
 {
 	my %env=@_;
 	
+	alarm 0;
+	
 	my $long=$main::time_current-86400*14;
 	
 	# get all tickets
