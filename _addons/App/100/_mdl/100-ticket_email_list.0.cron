@@ -22,9 +22,11 @@ sub execute
 {
 	my %env=@_;
 	
+	my $time_from=$main::time_current-86400*7;
+	
 	if ($cron::P ne $CRON::P){$cron::ERR="WARN: this cron is only for global use!!!";return undef}
 	$env{'lng'} = 'en' unless $env{'lng'};
-
+	
 	my %text = (
 		'sk' => {
 			'subject' => 'CYCLONE STATS: Najdolezitejsie Tickety / Tyzden',
@@ -43,9 +45,9 @@ It is ordered by count of events.
 ',
 		},
 	);
-
+	
 	my $number = 30;
-
+	
 	my $maindoc = qq!
 <html>
 	<head>
@@ -93,23 +95,23 @@ It is ordered by count of events.
 	</body>
 </html>
 	!;
-#<img class="main-logo" src="cid:part1.webcom.logo\@webcom.sk" alt="webcom logo" border="0" />
-
+	
 	$maindoc =~ s|<%main-title%>|$text{$env{'lng'}}{'main-title'}|g;
 	$maindoc =~ s|<%main-term%>|$text{$env{'lng'}}{'main-term'}|g;
 	$maindoc =~ s|<%main-desc%>|$text{$env{'lng'}}{'main-desc'}|g;
 	$maindoc =~ s|<%number%>|$number|g;
-
-	my $sql = qq/
-	SELECT
-		emails
-	FROM
-		TOM.a100_ticket
-	WHERE
-		status='Y'
-	/;
+	
+	my $sql = qq{
+		SELECT
+			emails
+		FROM
+			TOM.a100_ticket
+		WHERE
+			status='Y'
+	};
+	
 	my %db = TOM::Database::SQL::execute( $sql, 'log' => 1);
-
+	
 	if ( $db{'rows'} )
 	{
 		my %emaillist;
@@ -126,21 +128,21 @@ It is ordered by count of events.
 		{
 			my $doc = $maindoc;
 			main::_log( $email );
-
-			my $table_xsgn = qq!
-			<table cellspacing="0" cellpadding="0" class="overview" />
-				<tr>
-					<th>ID</th>
-					<th>domain</th>
-					<th>name</th>
-					<th>count</th>
-					<th>last event</th>
-				</tr>
-				<#LINE#>
-			</table>
-			!;
-
-			my $row_xsgn = qq!
+			
+			my $table_xsgn = qq{
+				<table cellspacing="0" cellpadding="0" class="overview" />
+					<tr>
+						<th>ID</th>
+						<th>domain</th>
+						<th>name</th>
+						<th>count</th>
+						<th>last event</th>
+					</tr>
+					<#LINE#>
+				</table>
+			};
+			
+			my $row_xsgn = qq{
 				<tr>
 					<td>#<\%ID%></td>
 					<td><\%domain%></td>
@@ -149,29 +151,32 @@ It is ordered by count of events.
 					<td><\%last_err%></td>
 				</tr>
 				<#LINE#>
-			!;
-
-			my $sql1 = qq/
-			SELECT
-				t.ID,
-				t.domain,
-				t.name,
-				count(e.ID) as count,
-				max(e.datetime_create) as last_err
-			FROM
-				TOM.a100_ticket as t LEFT JOIN
-				TOM.a100_ticket_event as e ON
-					t.ID=e.ID_ticket
-			WHERE
-				t.emails like '%$email%' AND
-				t.status='Y' AND e.status='Y'
-			GROUP BY
-				t.ID
-			ORDER BY
-				count desc
-			LIMIT
-				$number
-			/;
+			};
+			
+			my $sql1 = qq{
+				SELECT
+					t.ID,
+					t.domain,
+					t.name,
+					count(e.ID) as count,
+					max(e.datetime_create) as last_err
+				FROM
+					TOM.a100_ticket as t
+				LEFT JOIN TOM.a100_ticket_event as e ON
+				(
+					t.ID = e.ID_ticket
+					AND e.status = 'Y'
+				)
+				WHERE
+					t.emails like '%$email%'
+					AND t.status = 'Y' AND e.status = 'Y'
+				GROUP BY
+					t.ID
+				ORDER BY
+					count desc
+				LIMIT $number
+			};
+			
 			my %db1 = TOM::Database::SQL::execute( $sql1 );
 			while ( my %row = $db1{'sth'}->fetchhash )
 			{
@@ -188,35 +193,40 @@ It is ordered by count of events.
 			my $body_email_addr = TOM::Net::email::convert_TO( $db_email );
 			my $date = TOM::Utils::datetime::mail_current();
 			$doc =~ s|<%email%>|$email|g;
-
-			my $ent = MIME::Entity->build(
+			
+			my $ent = MIME::Entity->build
+			(
 				'Type'    => 'multipart/related',
 				'From'    => '"Cyclone3 ('.$TOM::hostname.')" <'.$TOM::contact{'from'}.'>',
 				'To'      => $body_email_addr,
 				'Subject' => $text{$env{'lng'}}{'subject'},
 				'Date'    => $date,
 			);
-
-			$ent->attach( Type    => 'text/html',
-										Charset => 'UTF-8',
-										Data    => $doc );
-
-			#$ent->attach( Path     => '/www/TOM/_data/webcom_logo.gif',
-			#							Filename => 'webcom_logo.gif',
-			#							Id       => 'part1.webcom.logo@webcom.sk',
-			#							Type     => 'image/gif',
-			#							Encoding => 'base64' );
-
-			if (
-				TOM::Net::email::send(
+			
+			$ent->attach
+			(
+				'Type' => 'text/html',
+				'Charset' => 'UTF-8',
+				'Data' => $doc
+			);
+			
+			if
+			(
+				TOM::Net::email::send
+				(
 					'host' => $TOM::hostname,
 					'to' => $email,
 					'body' => $ent->as_string
 				)
-			) { main::_log('ok, email sent'); }
+			)
+			{
+				main::_log('ok, email sent');
+			}
 			else
-			{ main::_log('email not sent'); }
-
+			{
+				main::_log('email not sent');
+			}
+			
 		}
 	}
 
