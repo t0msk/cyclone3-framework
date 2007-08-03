@@ -221,7 +221,7 @@ sub execute
 
 	if ($list->execute())
 	{
-		main::_log($list->{Query_log});
+		main::_log_long($list->{Query_log});
 		main::_log("received ".$list->{rows}." db lines");
 
 		Tomahawk::GetXSGN(-convertvars=>1) || return undef; # load design file
@@ -379,6 +379,7 @@ sub execute
 						else
 						{$XSGN{NULL0}=$XSGN{LINE_a500};}
 
+						$XSGN{NULL0}=~s|<%image_ID%>|$tmp_ID|g;
 						$XSGN{NULL0}=~s|<%fullpath%>|$tom::H_500/$tmp/$db0_line{hash}-$env{a500_format_tmp}.jpg|g;
 						$XSGN{NULL0}=~s|<%name%>|$db0_line{hash}-$env{a500_format_tmp}.jpg|g;
 						$XSGN{NULL0}=~s|<%about%>|$db0_line{about}|g;
@@ -586,6 +587,7 @@ sub execute
 				my %env0=Utils::datetime::ctodatetime($db_line{starttime},format=>1);
 
 				$XSGN{NULL}=~s|<%day%>|$env0{mday}|g;
+				$XSGN{NULL}=~s|<%wday%>|$env0{wday}|g;
 				$XSGN{NULL}=~s|<%month%>|$env0{mom}|g;
 				$XSGN{NULL}=~s|<%year%>|$env0{year}|g;
 				$XSGN{NULL}=~s|<%hour%>|$env0{hour}|g;
@@ -605,8 +607,10 @@ sub execute
 				$XSGN{NULL}=~s|<%starttime_second%>|$env0{sec}|g;
 
 				$XSGN{NULL}=~s|<%starttime_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+				$XSGN{NULL}=~s|<%starttime_day_name_en%>|$Utils::datetime::DAYS{en}[$env0{wday}]|g;
 				$XSGN{NULL}=~s|<%starttime_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
 				$XSGN{NULL}=~s|<%starttime_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+				$XSGN{NULL}=~s|<%starttime_month_name_en%>|$Utils::datetime::MONTHS{en}[$env0{mom}-1]|g;
 				$XSGN{NULL}=~s|<%starttime_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
 
 				%env0=Utils::datetime::ctodatetime($db_line{changetime},format=>1);

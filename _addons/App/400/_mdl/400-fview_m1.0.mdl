@@ -33,7 +33,7 @@ sub execute
 {
 	my %env=@_;
 
-	
+
 	if ((!$env{return_no_data}) && (!$env{_a400_ID}))
 	{
 		$tom::ERR="no data available!";
@@ -228,9 +228,9 @@ sub execute
 		my $var;
 		#my $zeroid=$photos[$counter];if ($zeroid=~/^(....)/i){$var=$1};
 		my $zeroid=sprintf('%07d',$env0{id});
-		
+
 		my $zeroid_original=$zeroid;
-		
+
 		if ($zeroid=~/^(....)/i){$var=$1};
 		#Tomahawk::debug::log(9,"!$zeroid!$var!");
 		if ($env{$env0{format}.'_hash'})
@@ -272,7 +272,7 @@ sub execute
 			{
 				main::_log($db0->errstr());
 			}
-			
+
 			if($env{a500_fetch_originals}){
 				main::_log('fetching original image');
 				my $db1=$main::DB{main}->Query("
@@ -331,12 +331,14 @@ sub execute
 		$XSGN{NULL}=~s|<%ID%>|$env0{id}|g;
 		$XSGN{NULL}=~s|<%keywords%>|$env0{keywords}|g;delete $env0{keywords};
 		$XSGN{NULL}=~s|<%about%>|$env0{alt}|g;delete $env0{alt};
+		$temp_counter=$counter+1;
+		$XSGN{NULL}=~s|<%image_ordinal%>|$temp_counter|g;
 
 		if($env{a500_fetch_originals}){
 			main::_log('replacing original image');
 			$XSGN{NULL}=~s|<%original_name%>|$env_original{name}|g;delete $env_original{name};
 			$XSGN{NULL}=~s|<%original_fullpath%>|$env_original{fullpath}|g;delete $env_original{fullpath};
-			$XSGN{NULL}=~s|<%original_ID%>|$env_original{id}|g;
+			$XSGN{NULL}=~s|<%original_ID%>|$env_original{ID}|g;
 			$XSGN{NULL}=~s|<%original_keywords%>|$env_original{keywords}|g;delete $env_original{keywords};
 			$XSGN{NULL}=~s|<%original_about%>|$env_original{alt}|g;delete $env_original{alt};
 		}
@@ -700,7 +702,7 @@ sub execute
 			}
 		}
 	}
-	
+
 	#2006-01-25 - deb00t - zamienanie kazduckej premennej zo selectu clanku
 	#duplicitny foreach, v xt_* templatoch mozeme mat totiz aj <%%> pre ine vary, ako ten aktualny - napriklad xt_tiny moze obsahovat aj <%IDcategory%>, nie len <%tiny%>
 	foreach(grep {/a400_.*?/} keys %env)

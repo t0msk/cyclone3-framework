@@ -5,7 +5,7 @@
 <response type="detail" IDapp="a400" IDitem="<%ID%>" code="<$main::request_code>">
 	<ID><%ID%></ID>
 	<IDname><![CDATA[<%IDname%>]]></IDname>
-	
+
 	<lng><![CDATA[<%lng%>]]></lng>
 
 	<title><![CDATA[<%title%>]]></title>
