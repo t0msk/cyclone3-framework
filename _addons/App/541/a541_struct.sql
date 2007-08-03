@@ -18,6 +18,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file` (
   `file_size` bigint(20) unsigned default NULL,
   `file_checksum` varchar(128) character set ascii collate ascii_bin NOT NULL,
   `mimetype` varchar(120) character set ascii NOT NULL,
+  `views` int(10) unsigned NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -41,6 +42,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_j` (
   `file_size` bigint(20) unsigned default NULL,
   `file_checksum` varchar(128) character set ascii collate ascii_bin NOT NULL,
   `mimetype` varchar(120) character set ascii NOT NULL,
+  `views` int(10) unsigned NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
