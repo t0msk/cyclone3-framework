@@ -55,7 +55,7 @@ while ($env{'C_'.$con.'_host'})
      if (my $body=$conn->get_mail($rot))
      {
       main::_log("ok, i have body");
-      print "$body\n";
+      #print "$body\n";
       $body=~s|"|\\"|g;
 #      print "$body\n";
 	$body=~/\nTo: (.*?)\n/;my $mail_to=$1;
