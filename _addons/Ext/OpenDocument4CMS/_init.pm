@@ -200,6 +200,29 @@ sub extract
 
 
 
+=head2 save_as('file:/')
+
+ $obj->save_as('/home/user/test2.odt');
+
+=cut
+
+sub save_as
+{
+	my $self=shift;
+	my $file=shift;
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."->save_as()");
+	
+	my $zip = Archive::Zip->new();
+	$zip->addTree($self->{'tmpdir'});
+	$zip->writeToFileNamed($file);
+	
+	$t->close();
+	return 1;
+}
+
+
+
 =head2 ->get_images
 
 Function return list of hashes with informations about included images
@@ -257,6 +280,43 @@ sub get_images
 	return @images;
 }
 
+
+
+
+=head2 ->to_xhtml
+
+Function converts content into simple XHTML
+
+ my $xhtml=$obj->to_xhtml();
+
+=cut
+
+sub to_xhtml
+{
+	my $self=shift;
+	
+	my $sab = new XML::Sablotron();
+	my $situa = new XML::Sablotron::Situation();
+	$sab->RegHandler(0,
+		{
+			MHMakeCode => \&sab_MHMakeCode,
+			MHLog => \&sab_MHLog,
+			MHError => \&sab_MHError
+		}
+	);
+	
+	my $output;
+	
+	if (-e $self->{'tmpdir'}.'/content.xml')
+	{
+		$sab->process($situa, $DIR.'/xsl/to_xhtml.xsl', $self->{'tmpdir'}.'/content.xml', 'arg:/output');
+		$output=$sab->getResultArg('arg:/output');
+	}
+	
+	main::_log("output=length(".(length($output)).")");
+	
+	return $output;
+}
 
 
 sub close
