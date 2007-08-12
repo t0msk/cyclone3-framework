@@ -4,14 +4,23 @@
 <template>
 	<header>
 		<!--<extend level="global" name="default"/>-->
+		<!--
 		<extract>
 			<file location="css/main.css" replace_variables="true"/>
 			<file location="grf/a400/logo.gif"/>
 		</extract>
+		-->
+		
+		<extract>
+			<file location="cyclone3-150x44.png"/>
+		</extract>
+		
 	</header>
-	<entry id="logo">
-		<![CDATA[
-This is a logo <$tom::H_media>/tpl/grf/a400/logo.gif
-		]]>
-	</entry>
+	
+	<entity id="logo">
+	<![CDATA[
+		This is a logo <img src="<$tom::H_media>/tpl/cyclone3-150x44.png"/>
+	]]>
+	</entity>
+	
 </template>

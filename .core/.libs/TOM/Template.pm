@@ -17,8 +17,21 @@ use strict;
 
 BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 
+use File::Path;
+use File::Copy;
 use XML::XPath;
 use XML::XPath::XMLParser;
+
+
+BEGIN
+{
+	if (!-e $tom::P.'/!media/tpl')
+	{
+		File::Path::mkpath $tom::P.'/!media/tpl';
+		chmod (0777, $tom::P.'/!media/tpl');
+	}
+}
+
 
 our %objects;
 
@@ -31,10 +44,11 @@ our %objects;
   'content-type' => "xhtml" # default is XML
  )
 
-tpl moze byt ako
-	nieco.content-type.tpl # this is xml file
-	nieco.content-type.tpl.d/_init.xml
-	nieco.content-type.ztpl # this is zipped directory
+tpl source can be as
+
+	everything.content-type.tpl # this is xml file
+	everything.content-type.tpl.d/_init.xml
+	everything.content-type.ztpl # this is zipped directory
 
 
 =cut
@@ -42,12 +56,11 @@ tpl moze byt ako
 sub new
 {
 	my $class=shift;
-	my $self={};
 	my %env=@_;
 	
 	my $t=track TOM::Debug(__PACKAGE__."->new($env{'level'}/$env{'addon'}/$env{'name'}.$env{'content-type'})");
 	
-	my $obj=bless $self, $class;
+	my $obj=bless {}, $class;
 	
 	foreach my $key(keys %env)
 	{
@@ -59,31 +72,38 @@ sub new
 	
 	# add params into object
 	%{$obj->{'ENV'}}=%env;
+	$obj->{'entity'}={};
+	$obj->{'file'}={};
 	
 	# find where is the source file/files
 	$obj->prepare_location();
 	
 	# check if same location is already loaded in another object
 	# (location is unique identification of template)
-	# when yes, return reference to this object
-	if ($objects{$obj->{'location'}})
+	# when no, proceed parsing this tpl source
+	if (!$objects{$obj->{'location'}})
 	{
-		main::_log("returning cached object");
-		$t->close();
-		return $objects{$obj->{'location'}};
+		# add this object into global $TOM::Template::objects{} hash
+		$objects{$obj->{'location'}}=$obj;
+		
+		# add this location into ignore list
+		push @{$obj->{'ENV'}->{'ignore'}}, $obj->{'location'};
+		$obj->prepare_xml();
+		$obj->parse_header();
+		$obj->parse_entity();
 	}
 	
-	# add this object into global $TOM::Template::objects{} hash
-	$objects{$obj->{'location'}}=$obj;
+	# create copy of object to return it as unique
+	# this is important to allow changing variables
+	# without affecting original objects
 	
-	# add this location into ignore list
-	push @{$self->{'ENV'}->{'ignore'}}, $obj->{'location'};
-	$obj->prepare_xml();
-	$obj->parse_header();
-	$obj->parse_entry();
-	
+	my $obj_return=bless {}, $class;
+		$obj_return->{'location'}=$obj->{'location'};
+		%{$obj_return->{'ENV'}}=%env;
+		%{$obj_return->{'entity'}}=%{$objects{$obj->{'location'}}{'entity'}};
+		%{$obj_return->{'file'}}=%{$objects{$obj->{'location'}}{'file'}};
 	$t->close();
-	return $obj;
+	return $obj_return;
 }
 
 =head1 METHODS
@@ -142,6 +162,13 @@ sub prepare_location
 		main::_log("xml location '$self->{'location'}'");
 	}
 	
+	
+	if ($self->{'location'}=~/\/_init.xml$/)
+	{
+		$self->{'dir'}=$self->{'location'};
+		$self->{'dir'}=~s/\/_init.xml$//;
+	}
+	
 	return $self->{'location'};
 }
 
@@ -187,9 +214,16 @@ sub parse_header
 				'ignore' => $self->{'ENV'}{'ignore'}
 			);
 			
-			foreach (keys %{$extend->{'entry'}})
+			# add entries from inherited tpl
+			foreach (keys %{$extend->{'entity'}})
 			{
-				$self->{'entry'}{$_}=$extend->{'entry'}{$_};
+				$self->{'entity'}{$_}=$extend->{'entity'}{$_};
+			}
+			
+			# add files from inherited tpl
+			foreach (keys %{$extend->{'file'}})
+			{
+				$self->{'file'}{$_}=$extend->{'file'}{$_};
 			}
 			
 			next;
@@ -198,45 +232,75 @@ sub parse_header
 	}
 	
 	
-	my $nodeset = $self->{'xp'}->find('/template/header/extract/*'); # find all extract items
-	
-	foreach my $node ($nodeset->get_nodelist)
+	if ($self->{'dir'})
 	{
-		my $name=$node->getName();
-		#main::_log("extract '$name'");
+		# proceed extracting files only when tpl is a tpl.d/ type
 		
-		if ($name eq "file")
+		my $nodeset = $self->{'xp'}->find('/template/header/extract/*'); # find all extract items
+		
+		foreach my $node ($nodeset->get_nodelist)
 		{
-			my $location=$node->getAttribute('location');
-			my $replace_variables=$node->getAttribute('replace_variables');
+			my $name=$node->getName();
 			
-			main::_log("extract file '$location' replace_variables='$replace_variables'");
-			#my $level=$node->getAttribute('level');
+			if ($name eq "file")
+			{
+				my $location=$node->getAttribute('location');
+				my $replace_variables=$node->getAttribute('replace_variables');
+				
+				main::_log("extract file '$location' from '$self->{'dir'}' replace_variables='$replace_variables'");
+				
+				# check if this file is not oveerided, or already exists in
+				# destination directory
+				
+				my $src=$self->{'dir'}.'/'.$location;
+				my $dst=$tom::P.'/!media/tpl/'.$location;
+				
+				$self->{'file'}{$location}{'src'}=$src;
+				$self->{'file'}{$location}{'dst'}=$dst;
+				
+				if (!-e $dst)
+				{
+					#File::Copy::copy($src, $dst);
+					symlink($src,$dst);
+					next;
+				}
+				
+				main::_log("file '$location' already exists");
+				
+				my $src_stat=(stat($src))[7];
+				my $dst_stat=(stat($dst))[7];
+				if ($src_stat ne $dst_stat)
+				{
+					main::_log("not same filesize, rewrite by source");
+					#File::Copy::copy($src, $dst);
+					symlink($src,$dst);
+					next;
+				}
+				
+				next;
+			}
 			
-			next;
 		}
 		
 	}
-	
-	
 	
 	
 }
 
 
 
-sub parse_entry
+sub parse_entity
 {
 	my $self=shift;
 	
-	my $nodeset = $self->{'xp'}->find('/template/entry'); # find all entries
+	my $nodeset = $self->{'xp'}->find('/template/entity'); # find all entries
 	
 	foreach my $node ($nodeset->get_nodelist)
 	{
 		my $name=$node->getName();
 		my $id=$node->getAttribute('id');
-		$self->{'entry'}{$id}=XML::XPath::XMLParser::as_string($node);
-		main::_log("setup entry id='$id' with length(".(length($self->{'entry'}{$id})).")");
+		$self->{'entity'}{$id}=$node->string_value();
+		main::_log("setup entity id='$id' with length(".(length($self->{'entity'}{$id})).")");
 	}
 	
 }
@@ -309,12 +373,13 @@ sub get_tpl_xml
 {
 	my %env=@_;
 	
-	foreach my $ext(".ztpl",".tpl.d/_init.xml",".tpl")
+	foreach my $ext(".tpl.d/_init.xml",".ztpl",".tpl")
 	{
 		my $filename="$env{'dir'}/$env{'filename'}$ext";
 		#main::_log("find $env{'dir'}/$env{'filename'}$ext");
 		
-		# if checking ztpl, unpack them into .tpl.d extension and return included xml
+		# if checking ztpl, unpack them into _temp .tpl.d extension
+		# (check if not alredy actual exists) and return included xml
 		
 		return $filename if -e $filename;
 	}

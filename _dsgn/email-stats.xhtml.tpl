@@ -10,53 +10,97 @@
 		<!--<include level="current" name="a400"/>-->
 		
 	</header>
-	<entry id="main">
+	
+	<entity id="email.xhtml">
 		<![CDATA[
 <html>
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 	</head>
 	<body>
-	<style>
-		body
-		{ font-family: Arial, Verdana; }
-		h1 {
-			color: #808285;
-			font-family: Arial, Verdana;
-		}
-		
-		/*.domain { color: #555555; text-align: left; font-size: 15px;  }
-		.term { font-size: 14px; font-weight: normal; }
-		.info { font-size: 18px; }*/
-	
-		.domain { font-size: 18px; }
-		.term { font-size: 14px; font-weight: normal; }
-		.info { font-size: 14px; font-weight: normal; }
-		
-		#page table { margin-bottom: 30px; }
-		
-		#page td { border: 1px solid gray; }
-		#page th { border: 1px solid gray; text-align: left; }
-		#domains td, #domains th { border: none; }
-		#domains .tableinfos td, #domains .tableinfos th { border: 1px solid #000; }
-	</style>
-		<h1>
-			<img src="cid:part1.webcom.logo\@webcom.sk" alt="webcom logo" border="0" /><br /><br />
-			<span class="domain"><%header%></span><br />
-			<span class="term"><%term%></span><br />
-			<span class="info"><%info%></span>
-		</h1>
+		<style>
+			body { font-family: Arial, Verdana; font-size: 14px;}
+			#page { width: 650px; }
+			h1 { color: #90bf56; clear: left; }
+			.main-logo { float: left; margin: 0 15px 15px 0; }
+			.main-title { font-size: 0.65em; font-weight: bold; }
+			.main-desc { font-size: 0.5em; font-weight: normal; }
+			#content { clear: both; }
+			#content table { width: 450px; }
+			table
+			{
+				border: 1px dotted gray; border-width: 1px 1px 0 0;
+				font-size: 0.8em;
+				margin-bottom: 20px;
+			}
+			table td, table th
+			{
+				border: 1px dotted gray; border-width: 0 0 1px 1px;
+				padding: 2px;
+				text-align: left;
+			}
+			table th { background: #e5e5e5; color: gray; }
+		</style>
 		<div id="page">
-			
-			<#BODY#>
-			
+			<h1>
+				<img class="main-logo" src="cid:logo@cyclone3.org" alt="Cyclone3 logo" border="0" />
+				<div class="main-title"><%main-title%></div>
+				<div class="main-desc"><%main-desc%></div>
+			</h1>
+			<div id="content">
+<#email.content#>
+			</div>
 		</div>
 	</body>
 </html>
 		]]>
-	</entry>
-	<entry id="line">asdfsdfasdfasdf</entry>
-	<entry id="adsfasdf@a400">
-		<![CDATA[asdfasfd]]>
-	</entry>
+	</entity>
+	
+	<entity id="email.table">
+	<![CDATA[
+		<table cellpadding="0" cellspacing="0">
+			<thead>
+				<tr>
+					<th colspan="<%colscount%>"><%title%></th>
+				</tr>
+				<tr>
+					<th colspan="<%colscount%>"><%subtitle%></th>
+				</tr>
+				<tr>
+					<#email.table.col.name#>
+				</tr>
+			</thead>
+			<tbody>
+				<#email.table.line#>
+			</tbody>
+		</table>
+	]]>
+	</entity>
+	
+	<entity id="email.table.line">
+	<![CDATA[
+		<tr>
+			<#email.table.col.value#>
+		</tr>
+		<#email.table.line#>
+	]]>
+	</entity>
+	
+	
+	<entity id="email.table.col.name">
+	<![CDATA[
+		<th><%name%></th>
+		<#email.table.col.name#>
+	]]>
+	</entity>
+	
+	
+	<entity id="email.table.col.value">
+	<![CDATA[
+		<td><%value%></td>
+		<#email.table.col.value#>
+	]]>
+	</entity>
+	
+	
 </template>
