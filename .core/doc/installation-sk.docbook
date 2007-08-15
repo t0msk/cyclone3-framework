@@ -47,7 +47,7 @@ chmod 777 /www/TOM</synopsis>
 
             <synopsis>su root
 groupadd cyclone3
-useradd cyclone3 -g cyclone3 -G wheel,www,cron -d /www/TOM
+useradd cyclone3 -g cyclone3 -G www,cron -d /www/TOM
 passwd cyclone3
 </synopsis>
           </listitem>
@@ -183,7 +183,7 @@ cd /www/TOM/.core
             konfigurácie</para>
 
             <synopsis>echo "Include /www/TOM/.core/_config/httpd.conf" &gt;&gt; /etc/apache2/httpd.conf
-echo "Include /www/TOM/.core/_config/httpd.virtual.conf" &gt;&gt; /etc/apache2/httpd.conf</synopsis>
+echo "Include /www/TOM/_config/httpd.virtual.conf" &gt;&gt; /etc/apache2/httpd.conf</synopsis>
           </listitem>
 
           <listitem>
