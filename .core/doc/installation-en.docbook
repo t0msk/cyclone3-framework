@@ -37,7 +37,10 @@ chmod 777 /www/TOM</synopsis>
         <para>Setting up user and group</para>
 
         <itemizedlist>
-          <para>The default user is 'cyclone3' and group 'cyclone3'</para>
+          <para>The default user is 'cyclone3' and group 'cyclone3'.</para>
+
+          <para>The default apache user is 'apache' and apache group is 'www'
+          ('www-data'/'www-data' on Debian based system)</para>
 
           <listitem>
             <para>Creating user cyclone3</para>
@@ -87,6 +90,17 @@ env-update</synopsis></para>
         using:</para>
 
         <synopsis>cp /www/TOM/_config/TOM.conf.tmpl /www/TOM/_config/TOM.conf</synopsis>
+      </listitem>
+
+      <listitem>
+        <para>Install depend perl libs</para>
+
+        <synopsis>Proc/ProcessTable
+XML/Generator
+DateTime
+Inline
+SVG
+</synopsis>
       </listitem>
 
       <listitem>

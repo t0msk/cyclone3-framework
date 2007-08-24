@@ -42,6 +42,9 @@ chmod 777 /www/TOM</synopsis>
           <para>Defaulne nastavený užívateľ je <quote>cyclone3</quote> a
           skupina <quote>cyclone3</quote></para>
 
+          <para>Defaultný užívateľ apache je 'apache' a skupina 'www'
+          ('www-data'/'www-data' na Debiane)</para>
+
           <listitem>
             <para>Vytvorenie užívateľa cyclone3</para>
 
@@ -92,6 +95,17 @@ env-update</synopsis></para>
 
         <para>Defaultná konfigurácia by mala postačovať, pokiaľ nie, stačí si
         otvoriť konfiguračný súbor a zmeniť ho podľa potreby.</para>
+      </listitem>
+
+      <listitem>
+        <para>Nainštalujte perl knižnice</para>
+
+        <synopsis>Proc/ProcessTable
+XML/Generator
+DateTime
+Inline
+SVG
+</synopsis>
       </listitem>
 
       <listitem>
