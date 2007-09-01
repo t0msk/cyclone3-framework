@@ -49,7 +49,7 @@ CREATE DATABASE domain_tld;
         <para>Fill required tables into database, and check
         installation</para>
 
-        <synopsis>tom3-db_install --domain=domain.tld --name=a120,a210,a400,a410,a500,a540
+        <synopsis>tom3-db_install --domain=domain.tld --name=a120,a210,a400,a410,a500,a540,a541
 tom3-chtables --domain=domain.tld</synopsis>
       </listitem>
 
@@ -76,7 +76,7 @@ sudo tom3-chfiles -r
         ServerName www.domain.tld
         ServerAlias domain.tld
         DocumentRoot /usr/www/TOM/!domain.tld/!www
-        CustomLog /usr/www/TOM/_logs/httpd/www_domain_tld.acc.server1.log combined
+        CustomLog /usr/www/TOM/_logs/httpd/www_domain_tld.acc.log combined
         &lt;Directory /usr/www/TOM/!domain.tld/!www&gt;
                 AllowOverride All
         &lt;/Directory&gt;
@@ -104,7 +104,8 @@ vim \!cyclone/local.conf
         <para>Add your account into XULadmin backend ( cyclone.domain.tld
         )</para>
 
-        <synopsis>tom3-cron --domain=cyclone.domain.tld ---global=1 ---category=300 ---name=new --login=username --pass=password --groups=admin,editor</synopsis>
+        <synopsis>tom3-cron --domain=domain.tld ---global=1 ---category=300 ---name=new \
+--login=username --pass=password --groups=admin,editor</synopsis>
       </listitem>
 
       <listitem>
@@ -178,8 +179,6 @@ sudo tom3-chfiles -r
 
     <para>Just:</para>
 
-    <synopsis>/etc/init.d/apache2 stop
-/etc/init.d/apache2 start
-</synopsis>
+    <synopsis>/etc/init.d/apache2 restart</synopsis>
   </section>
 </article>
