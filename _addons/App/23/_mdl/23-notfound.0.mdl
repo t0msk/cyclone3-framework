@@ -1,0 +1,34 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+23-notfound.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+ $XSGN{'TMP'}=$Net::DOC::notfound_page;
+ TOM::Utils::vars::replace($XSGN{'TMP'});
+
+This modules is used by TypeID g_notfound to display design defined by TOM::Template "default" named "notfound.page". notfound.page is loaded into variable $Net::DOC::notfound_page after "use Net::DOC::XHTML".
+
+=cut
+
+sub execute
+{
+	
+	$XSGN{'TMP'}=$Net::DOC::notfound_page;
+	TOM::Utils::vars::replace($XSGN{'TMP'});
+	
+	return 1;
+}
+
+
+1;
