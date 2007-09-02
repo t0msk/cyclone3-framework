@@ -32,6 +32,8 @@ _type
 
 =back
 
+Overlay initialization can be skipped when .ignore file is available in overlay directory, so the present overlay is ignored.
+
 =cut
 
 use open ':utf8', ':std';
@@ -54,6 +56,8 @@ BEGIN
 		{
 			next unless -d $TOM::P.'/_overlays/'.$file;
 			next if $file=~/^\./;
+			next if -e $TOM::P.'/_overlays/'.$file.'/.ignore';
+			
 			$i++;
 			main::_log("init '$file' prior: $i");
 			
