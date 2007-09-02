@@ -32,7 +32,7 @@ BEGIN
 	}
 }
 
-
+our $debug=0;
 our %objects;
 
 =head1 new
@@ -64,7 +64,7 @@ sub new
 	
 	foreach my $key(keys %env)
 	{
-		main::_log("input '$key'='$env{$key}'");
+		main::_log("input '$key'='$env{$key}'") if $debug;
 	}
 	
 	$env{'content-type'}="xml" unless $env{'content-type'};
@@ -73,7 +73,9 @@ sub new
 	# add params into object
 	%{$obj->{'ENV'}}=%env;
 	$obj->{'entity'}={};
+	$obj->{'entity_'}={};
 	$obj->{'file'}={};
+	$obj->{'file_'}={};
 	
 	# find where is the source file/files
 	$obj->prepare_location();
@@ -101,7 +103,12 @@ sub new
 		$obj_return->{'location'}=$obj->{'location'};
 		%{$obj_return->{'ENV'}}=%env;
 		%{$obj_return->{'entity'}}=%{$objects{$obj->{'location'}}{'entity'}};
+		%{$obj_return->{'entity_'}}=%{$objects{$obj->{'location'}}{'entity_'}};
+		%tpl::entity=%{$objects{$obj->{'location'}}{'entity'}};
+		# replace_variables only in root level of Template not in templates called by <extend*>
+		$obj_return->process_entity() if (caller)[0] ne "TOM::Template";
 		%{$obj_return->{'file'}}=%{$objects{$obj->{'location'}}{'file'}};
+		%{$obj_return->{'file_'}}=%{$objects{$obj->{'location'}}{'file_'}};
 	$t->close();
 	return $obj_return;
 }
@@ -128,7 +135,7 @@ sub prepare_location
 	
 	foreach (@dirs)
 	{
-		main::_log("dir='$_'");
+		main::_log("dir='$_'") if $debug;
 		
 		# 
 		$self->{'location'}=get_tpl_xml
@@ -159,7 +166,7 @@ sub prepare_location
 	}
 	else
 	{
-		main::_log("xml location '$self->{'location'}'");
+		main::_log("XML '$self->{'location'}'");# if $debug;
 	}
 	
 	
@@ -204,7 +211,7 @@ sub parse_header
 			my $content_type=$node->getAttribute('content-type');
 			$content_type=$self->{'ENV'}->{'content-type'} unless $content_type;
 			
-			main::_log("request to extend by level='$level' addon='$addon' name='$name' content-type='$content_type'");
+			main::_log("request to extend by level='$level' addon='$addon' name='$name' content-type='$content_type'") if $debug;
 			
 			my $extend=new TOM::Template(
 				'level' => $level,
@@ -218,12 +225,14 @@ sub parse_header
 			foreach (keys %{$extend->{'entity'}})
 			{
 				$self->{'entity'}{$_}=$extend->{'entity'}{$_};
+				$self->{'entity_'}{$_}=$extend->{'entity_'}{$_};
 			}
 			
 			# add files from inherited tpl
 			foreach (keys %{$extend->{'file'}})
 			{
 				$self->{'file'}{$_}=$extend->{'file'}{$_};
+				$self->{'file_'}{$_}=$extend->{'file_'}{$_};
 			}
 			
 			next;
@@ -247,7 +256,7 @@ sub parse_header
 				my $location=$node->getAttribute('location');
 				my $replace_variables=$node->getAttribute('replace_variables');
 				
-				main::_log("extract file '$location' from '$self->{'dir'}' replace_variables='$replace_variables'");
+				main::_log("extract file '$location' from '$self->{'dir'}' replace_variables='$replace_variables'") if $debug;
 				
 				# check if this file is not oveerided, or already exists in
 				# destination directory
@@ -260,20 +269,25 @@ sub parse_header
 				
 				if (!-e $dst)
 				{
-					#File::Copy::copy($src, $dst);
-					symlink($src,$dst);
+					main::_log("extract '$location'") unless $debug;
+					File::Copy::copy($src, $dst);
+					chmod (0666,$dst);
+					#symlink($src,$dst);
 					next;
 				}
 				
-				main::_log("file '$location' already exists");
+				main::_log("file '$location' already exists") if $debug;
 				
 				my $src_stat=(stat($src))[7];
 				my $dst_stat=(stat($dst))[7];
+				#main::_log("src size '$src_stat' dst size '$dst_stat'") if $debug;
 				if ($src_stat ne $dst_stat)
 				{
-					main::_log("not same filesize, rewrite by source");
-					#File::Copy::copy($src, $dst);
-					symlink($src,$dst);
+					main::_log("not same filesize, rewrite by source") if $debug;
+					main::_log("extract override '$location'") unless $debug;
+					File::Copy::copy($src, $dst);
+					chmod (0666,$dst);
+					#symlink($src,$dst);
 					next;
 				}
 				
@@ -295,12 +309,35 @@ sub parse_entity
 	
 	my $nodeset = $self->{'xp'}->find('/template/entity'); # find all entries
 	
+	my @ents;
+	
 	foreach my $node ($nodeset->get_nodelist)
 	{
 		my $name=$node->getName();
 		my $id=$node->getAttribute('id');
 		$self->{'entity'}{$id}=$node->string_value();
-		main::_log("setup entity id='$id' with length(".(length($self->{'entity'}{$id})).")");
+		$self->{'entity_'}{$id}{'replace_variables'}=$node->getAttribute('replace_variables');
+		main::_log("setup entity id='$id' with length(".(length($self->{'entity'}{$id})).")") if $debug;
+		push @ents, $id;
+	}
+	
+	main::_log("entities '".(join "','",@ents)."'") unless $debug;
+	
+}
+
+
+
+sub process_entity
+{
+	my $self=shift;
+	
+	foreach my $entity (keys %{$self->{'entity'}})
+	{
+		if ($self->{'entity_'}{$entity}{'replace_variables'} eq "true")
+		{
+			main::_log("replace_variables in entity '$entity'") if $debug;
+			TOM::Utils::vars::replace($self->{'entity'}{$entity});
+		}
 	}
 	
 }
@@ -356,7 +393,7 @@ sub get_tpl_dirs
 	# else
 	
 	# overlays
-	main::_log("allowed overlays=$env{'overlays'}");
+	main::_log("allowed overlays=$env{'overlays'}") if $debug;
 	foreach (@TOM::Overlays::item)
 	{
 		push @dirs,$TOM::P."/_overlays/".$_."/".$subdir;
