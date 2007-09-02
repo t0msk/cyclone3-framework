@@ -68,12 +68,12 @@ sub format
 }
 =cut
 
+
+
 sub format
 {
 	my $currency=shift;
 	my $delimiter=".";
-	
-	$currency=(ceil($currency*100)/100);
 	
 	$currency=sprintf("%01.2f", $currency);
 	$currency=~s|\.|,|g;
