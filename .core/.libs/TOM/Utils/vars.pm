@@ -20,6 +20,8 @@ our @NCHAR=qw/0 1 2 3 4 5 6 7 8 9/;
 our @UCHAR=qw/A B C D E F G H I J K L M N O P Q R S T U V W X Y Z/;
 our @LCHAR=qw/a b c d e f g h i j k l m n o p q r s t u v w x y z/;
 
+our $debug=0;
+
 =head1 DEPENDS
 
 =over
@@ -135,23 +137,23 @@ Checks string for security vulnerable - sub, do, &, |, etc...
 
 sub replace
 {
-	my $t=track TOM::Debug(__PACKAGE__."::replace()");
+	my $t=track TOM::Debug(__PACKAGE__."::replace()") if $debug;
 	
 	my $TMP=TOM::Utils::vars::genhash(8);
 	my $i;
 	for (@_)
 	{
 		$i++;
-		main::_log("replacing text No. $i");
+		main::_log("replacing text No. $i") if $debug;
 		
 		
-		while ($_=~s/<\$(.{2,100}?)>/<!TMP-$TMP!>/) # MAXIMALNE 100 znakova premmenna
+		while ($_=~s/<\$(.{1,100}?)>/<!TMP-$TMP!>/) # MAXIMALNE 100 znakova premmenna
 		{
 			my $value;
 			my $var=$1;
 			my $null="***";
 			
-			main::_log("replacing variable '\$$var'");
+			main::_log("replacing variable '\$$var'") if $debug;
 			
 			if ($var=~/(sub\{|do\{|&|\+|\*|\/|=|"|\||;)/)
 			{
@@ -184,7 +186,7 @@ sub replace
 		{
 			my $function=$1;
 			my $text=$2;
-			main::_log("requesting function '$1'");
+			main::_log("requesting function '$1'") if $debug;
 			
 			my $cmd="\$text=".$replace_functions{$function}{'function'};
 			
@@ -199,7 +201,7 @@ sub replace
 		}
 	}
 	
-	$t->close();
+	$t->close() if $debug;
 }
 
 
@@ -217,7 +219,7 @@ Same as replace(), but more secure, and: without function, return string
 
 sub replace_sec
 {
-	my $t=track TOM::Debug(__PACKAGE__."::replace_sec()");
+	my $t=track TOM::Debug(__PACKAGE__."::replace_sec()") if $debug;
 	
 	my $TMP=TOM::Utils::vars::genhash(8);
 	
@@ -231,7 +233,7 @@ sub replace_sec
 		my $var=$1;
 		my $null="***";
 		
-		main::_log("replacing variable '\$$var'");
+		main::_log("replacing variable '\$$var'") if $debug;
 		
 		if ($env{'log'})
 		{
@@ -276,7 +278,7 @@ sub replace_sec
 		
 	}
 	
-	$t->close();
+	$t->close() if $debug;
 	return $data;
 }
 
