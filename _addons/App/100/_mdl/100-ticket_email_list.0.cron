@@ -24,17 +24,7 @@ sub execute
 	
 	my $time_from=$main::time_current-86400*7;
 	
-	if ($cron::P ne $CRON::P){$cron::ERR="WARN: this cron is only for global use!!!";return undef}
-	$env{'lng'} = 'en' unless $env{'lng'};
-	
-	my %text = (
-		'sk' => {
-			'subject' => 'CYCLONE STATS: Najdolezitejsie Tickety / Tyzden',
-			
-			'main-title' => 'Štatistika ticketov',
-			'main-term' => 'za posledný týždeň',
-			'main-desc' => 'Táto štatistika zobrazuje posledných desať aktuálnych nevyriešených ticketov.',
-		},
+=head1
 		'en' => {
 			'subject' => 'CYCLONE STATS: Most Important Unsolved Tickets',
 			
@@ -45,61 +35,9 @@ It is ordered by count of events.
 ',
 		},
 	);
+=cut
 	
 	my $number = 30;
-	
-	my $maindoc = qq!
-<html>
-	<head>
-		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-	</head>
-	<body>
-		<style>
-			body { font-family: Arial, Verdana; }
-			#page { width: 650px; }
-			/* Nadpis */
-			h1 { color: #808285; clear: left; }
-			.main-logo { float: left; margin: 0 15px 15px 0; }
-			.main-title { font-size: 0.55em; }
-			.main-term { font-size: 0.4em; font-weight: normal; }
-			.main-desc { color: #808285;
-									 margin: 10px 0 20px 0; font-size: 0.4em; font-weight: normal;
-									 border: 10px solid gray; border-width: 0 0 0 10px;
-									 padding: 0 0 0 10px;
-			}
-			.overview {
-				border: 1px dotted gray; border-width: 1px 1px 0 0;
-				font-size: 0.75em;
-				margin-bottom: 20px;
-			}
-			.overview td, .overview th {
-				border: 1px dotted gray; border-width: 0 0 1px 1px;
-				padding: 2px;
-			}
-			.overview th { background: #e5e5e5; color: gray; }
-  	</style>
-
-		<div id="page">
-			<h1>
-				<div class="main-title"><\%main-title%></div>
-				<div class="main-term"><\%main-term%></div>
-				<div class="main-desc"><\%main-desc%></div>
-			</h1>
-
-			<div id="content">
-
-				<#SUMMARY#>
-
-			</div>
-		</div>
-	</body>
-</html>
-	!;
-	
-	$maindoc =~ s|<%main-title%>|$text{$env{'lng'}}{'main-title'}|g;
-	$maindoc =~ s|<%main-term%>|$text{$env{'lng'}}{'main-term'}|g;
-	$maindoc =~ s|<%main-desc%>|$text{$env{'lng'}}{'main-desc'}|g;
-	$maindoc =~ s|<%number%>|$number|g;
 	
 	my $sql = qq{
 		SELECT
@@ -110,50 +48,44 @@ It is ordered by count of events.
 			status='Y'
 	};
 	
-	my %db = TOM::Database::SQL::execute( $sql, 'log' => 1);
+	my %sth0 = TOM::Database::SQL::execute($sql);
 	
-	if ( $db{'rows'} )
+	if ($sth0{'rows'})
 	{
 		my %emaillist;
-		while ( my %row = $db{'sth'}->fetchhash )
+		while (my %db0_line=$sth0{'sth'}->fetchhash)
 		{
-			my @emails = ( $row{'emails'} =~ /([^<>;]+\@[^<>;]+)/g );
-			foreach my $email ( @emails )
-			{
-				$emaillist{$email} = 1;
-			}
+			my @emails=($db0_line{'emails'}=~/([^<>;]+\@[^<>;]+)/g);
+			foreach (@emails){$emaillist{$_}=1;}
 		}
-		#%emaillist = ( 'matej.gregor@comsultia.com' );
+		
 		foreach my $email ( keys %emaillist )
 		{
-			my $doc = $maindoc;
-			main::_log( $email );
 			
-			my $table_xsgn = qq{
-				<table cellspacing="0" cellpadding="0" class="overview" />
-					<tr>
-						<th>ID</th>
-						<th>domain</th>
-						<th>name</th>
-						<th>count</th>
-						<th>last event</th>
-					</tr>
-					<#LINE#>
-				</table>
-			};
+			my $tpl=new TOM::Template(
+				'level' => "auto",
+				'name' => "email-stats",
+				'content-type' => "xhtml"
+			);
 			
-			my $row_xsgn = qq{
-				<tr>
-					<td>#<\%ID%></td>
-					<td><\%domain%></td>
-					<td><\%name%></td>
-					<td><\%count%></td>
-					<td><\%last_err%></td>
-				</tr>
-				<#LINE#>
-			};
+			# DESIGN
+			$tpl->{'entity'}{'email.xhtml'}=~s|<%main-title%>|Unsolved Ticket Statistics|g;
+			$tpl->{'entity'}{'email.xhtml'}=~s|<%main-desc%>|This statistics shows max 30 most relevant unsolved tickets where you are assigned person. It is ordered by count of events.|g;
 			
-			my $sql1 = qq{
+		
+			# vykreslim hlavicku
+			$tpl->{'entity'}{'email.table'} =~ s|<%title%>|Table of tickets|g;
+			$tpl->{'entity'}{'email.table'} =~ s|<%main-term%>||g;
+			$tpl->{'entity'}{'email.table'} =~ s|<%colscount%>|5|g;
+			
+			foreach my $col_name ( 'ID','domain','name','count','lastevent' )
+			{
+				my $col = $tpl->{'entity'}{'email.table.col.name'};
+				$col =~ s|<%name%>|$col_name|g;
+				$tpl->{'entity'}{'email.table'}=~s|<#email.table.col.name#>|$col|g;
+			}
+			
+			my $sql = qq{
 				SELECT
 					t.ID,
 					t.domain,
@@ -177,55 +109,76 @@ It is ordered by count of events.
 				LIMIT $number
 			};
 			
-			my %db1 = TOM::Database::SQL::execute( $sql1 );
-			while ( my %row = $db1{'sth'}->fetchhash )
+			my %sth1=TOM::Database::SQL::execute($sql);
+			while (my %db1_line=$sth1{'sth'}->fetchhash)
 			{
-				my $line = $row_xsgn;
-				while ( my ($k,$v) = each %row ) { $line =~ s|<%$k%>|$v|g; }
-				$table_xsgn =~ s|<#LINE#>|$line|;
+				my $line = $tpl->{'entity'}{'email.table.line'};
+				
+				my $col = $tpl->{'entity'}{'email.table.col.value'};
+					$col =~ s|<%value%>|$db1_line{'ID'}|g;
+					$line =~ s|<#email.table.col.value#>|$col|g;
+					
+				my $col = $tpl->{'entity'}{'email.table.col.value'};
+					$col =~ s|<%value%>|$db1_line{'domain'}|g;
+					$line =~ s|<#email.table.col.value#>|$col|g;
+					
+				my $col = $tpl->{'entity'}{'email.table.col.value'};
+					$col =~ s|<%value%>|$db1_line{'name'}|g;
+					$line =~ s|<#email.table.col.value#>|$col|g;
+					
+				my $col = $tpl->{'entity'}{'email.table.col.value'};
+					$col =~ s|<%value%>|$db1_line{'count'}|g;
+					$line =~ s|<#email.table.col.value#>|$col|g;
+					
+				my $col = $tpl->{'entity'}{'email.table.col.value'};
+					$col =~ s|<%value%>|$db1_line{'last_err'}|g;
+					$line =~ s|<#email.table.col.value#>|$col|g;
+					
+				$tpl->{'entity'}{'email.table'} =~ s|<#email.table.line#>|$line|g;
 			}
-			$table_xsgn =~ s|<#LINE#>||g;
-			$doc =~ s|<#SUMMARY#>|$table_xsgn|;
-
+			
+			
+			# nalejem do HTML
+			$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$tpl->{'entity'}{'email.table'}|;
+			
+			# cleaning
+			$tpl->{'entity'}{'email.xhtml'} =~ s|<#.*?#>||gs;
+			$tpl->{'entity'}{'email.xhtml'} =~ s|<%.*?%>||gs;
+			
 			#----------------------------------------------------------------
 			# Completing mail
-			my $db_email = TOM::Utils::vars::unique_split( $email );
-			my $body_email_addr = TOM::Net::email::convert_TO( $db_email );
+			my $db_email = TOM::Utils::vars::unique_split($email);
 			my $date = TOM::Utils::datetime::mail_current();
-			$doc =~ s|<%email%>|$email|g;
 			
 			my $ent = MIME::Entity->build
 			(
 				'Type'    => 'multipart/related',
 				'From'    => '"Cyclone3 ('.$TOM::hostname.')" <'.$TOM::contact{'from'}.'>',
-				'To'      => $body_email_addr,
-				'Subject' => $text{$env{'lng'}}{'subject'},
+				'To'      => TOM::Net::email::convert_TO($db_email),
+				'Subject' => "Cyclone3 Stats: Most Important Unsolved Tickets",
 				'Date'    => $date,
 			);
 			
 			$ent->attach
 			(
-				'Type' => 'text/html',
-				'Charset' => 'UTF-8',
-				'Data' => $doc
+				'Data' => $tpl->{'entity'}{'email.xhtml'},
+				'Type' => "text/html;charset=\"UTF-8\"",
+				'Encoding' => "8bit",
 			);
 			
-			if
+			$ent->attach
 			(
-				TOM::Net::email::send
-				(
-					'host' => $TOM::hostname,
-					'to' => $email,
-					'body' => $ent->as_string
-				)
-			)
-			{
-				main::_log('ok, email sent');
-			}
-			else
-			{
-				main::_log('email not sent');
-			}
+				'Path'       => $tpl->{'file'}{'cyclone3-150x44.png'}{'dst'},
+				'Type'       => "image/gif",
+				'Content-ID' => "<logo\@cyclone3.org>",
+				'Encoding'   => "base64"
+			);
+			
+			TOM::Net::email::send
+			(
+				'to' => $db_email,
+				'body' => $ent->as_string()
+			);
 			
 		}
 	}
