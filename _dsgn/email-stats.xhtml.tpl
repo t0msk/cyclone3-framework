@@ -11,7 +11,9 @@
 		
 	</header>
 	
-	<entity id="email.xhtml">
+	<entity id="color.h1">#90bf56</entity>
+	
+	<entity id="email.xhtml" replace_variables="true">
 		<![CDATA[
 <html>
 	<head>
@@ -21,10 +23,19 @@
 		<style>
 			body { font-family: Arial, Verdana; font-size: 14px;}
 			#page { width: 650px; }
-			h1 { color: #90bf56; clear: left; }
+			h1 { color: <$tpl::entity{'color.h1'}>; clear: left; }
 			.main-logo { float: left; margin: 0 15px 15px 0; }
 			.main-title { font-size: 0.65em; font-weight: bold; }
-			.main-desc { font-size: 0.5em; font-weight: normal; }
+			.main-term { font-size: 0.4em; font-weight: normal; }
+			.main-desc
+			{
+				color: #808285;
+				margin: 10px 0 20px 0; font-size: 0.4em; font-weight: normal;
+				border: 10px solid gray; border-width: 0 0 0 10px;
+				padding: 0 0 0 10px;
+			}
+
+
 			#content { clear: both; }
 			#content table { width: 450px; }
 			table
@@ -45,6 +56,7 @@
 			<h1>
 				<img class="main-logo" src="cid:logo@cyclone3.org" alt="Cyclone3 logo" border="0" />
 				<div class="main-title"><%main-title%></div>
+				<div class="main-term"><%main-term%></div>
 				<div class="main-desc"><%main-desc%></div>
 			</h1>
 			<div id="content">
@@ -56,6 +68,7 @@
 		]]>
 	</entity>
 	
+	
 	<entity id="email.table">
 	<![CDATA[
 		<table cellpadding="0" cellspacing="0">
@@ -63,9 +76,11 @@
 				<tr>
 					<th colspan="<%colscount%>"><%title%></th>
 				</tr>
+				<!--
 				<tr>
 					<th colspan="<%colscount%>"><%subtitle%></th>
 				</tr>
+				-->
 				<tr>
 					<#email.table.col.name#>
 				</tr>
@@ -76,6 +91,7 @@
 		</table>
 	]]>
 	</entity>
+	
 	
 	<entity id="email.table.line">
 	<![CDATA[
