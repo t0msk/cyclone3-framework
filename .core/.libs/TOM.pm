@@ -110,18 +110,18 @@ BEGIN
 	# Engine
 	$TOM::engine='tom' unless $TOM::engine;
 	
-	# actual path and domain service path
-	chomp($tom::p=`pwd`);
-	$tom::P=$tom::p;
-	$tom::P=~s|^(.*)/!www$|\1|;
-	# undef $tom::P if here is not domain service
-	undef $tom::P unless -e $tom::P.'/local.conf';
-	
 	$tom::SCRIPT_NAME=$0;
 	# i'm fastcgi?
 	$tom::fastcgi=1 if $tom::SCRIPT_NAME=~/(tom|fcgi|fpl)$/;
 	# TOM installation directory
 	$TOM::P="/www/TOM"; # always
+	
+	# actual path and domain service path
+	chomp($tom::p=`pwd`);
+	$tom::P=$tom::p;
+	$tom::P=~s|^(.*)/!www$|\1|;
+	# undef $tom::P if here is not domain service
+	$tom::P=$TOM::P unless -e $tom::P.'/local.conf';
 	
 	# paths libs
 	unshift @INC,$TOM::P."/.core/.libs"; # to beginning

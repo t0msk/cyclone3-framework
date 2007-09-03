@@ -25,7 +25,7 @@ use XML::XPath::XMLParser;
 
 BEGIN
 {
-	if (!-e $tom::P.'/!media/tpl')
+	if (!-e $tom::P.'/!media/tpl' && $tom::P)
 	{
 		File::Path::mkpath $tom::P.'/!media/tpl';
 		chmod (0777, $tom::P.'/!media/tpl');

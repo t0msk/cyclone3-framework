@@ -62,6 +62,10 @@ L<TOM::Temp::file|source-doc/".core/.libs/TOM/Temp/file.pm">
 
 =item *
 
+L<TOM::Template|source-doc/".core/.libs/TOM/Template.pm">
+
+=item *
+
 L<CVML|source-doc/".core/.libs/CVML.pm">
 
 =item *
@@ -85,6 +89,7 @@ use TOM::rev;
 use TOM::Error;
 use TOM::Warning;
 use TOM::Temp::file;
+use TOM::Template;
 use CVML;
 
 # default aplikácie
