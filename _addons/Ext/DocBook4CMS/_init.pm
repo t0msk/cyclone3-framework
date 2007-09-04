@@ -123,6 +123,7 @@ sub _docbook2xhtml_translate_image
 		my $hash=Utils::vars::genhash(8);
 		my $from=$env->{'dir_from'}.'/'.$link;
 		my $hash=Digest::MD5::md5_base64($from);
+			$hash=~s|/|_|g;
 		my $to=$env->{'dir_to'}.'/'.$hash.'-'.$link;
 		$uri_to=$env->{'uri'}.'/'.$hash.'-'.$link;
 		
