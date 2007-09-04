@@ -1,10 +1,10 @@
- #!/usr/bin/perl
+#!/usr/bin/perl
 # áéíóú - USE UTF-8 !!!
 package Tomahawk::module;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
-use App::540;
+use App::540::_init;
 use App::540::dir;
 use strict;
 
