@@ -8,7 +8,7 @@ Cyclone3 installation configuration - _config/TOM.conf
 
 =cut
 
-$TOM::contact{'_'}='root@localhost'; # default contact
+$TOM::contact{'_'}='cyclone3@'.$TOM::hostname; # default contact
 
 =head2 CONTACTS
 
@@ -97,7 +97,7 @@ When smtp is used, authorization can be configured to send emails
 
 =cut
 
-$TOM::contact{'from'}='cyclone3@localhost';
+#$TOM::contact{'from'}='cyclone3@'.$TOM::hostname;
 
 # responsible contacts of this Cyclone3 installation
 

@@ -1,11 +1,11 @@
 #!/bin/perl
 # USE UTF-8 !!!
 package CRON::module;
-#use halabala;
-use TOM::Utils::vars;
 use strict;
-use Net::SMTP;
 
+use TOM::Utils::vars;
+use Mail::Mailer qw(sendmail);
+use Net::SMTP;
 
 sub execute
 {
@@ -29,9 +29,20 @@ sub execute
 		$to=TOM::Utils::vars::unique_split($to);
 		my $body;
 		while (my $line=<HND_EMAIL>){$body.=$line};
-		#undef=<HND_EMAIL>;
 		main::_log("from:$from to:$to");
-		#main::_log(6,"to:$to");
+		
+		if (!$TOM::smtp_host)
+		{
+			main::_log("sending using mailer");
+			$body=~/Subject: (.*?)\n/;
+			my $subject=$1;
+			main::_log("subject = $subject");
+			my $mailer = new Mail::Mailer 'sendmail';
+			$mailer->open({'From' => $from,'To' => $to,'Subject' => $subject,});
+			print $mailer $body;
+			$mailer->close();
+			next;
+		}
 		
 		my $smtp = Net::SMTP->new($TOM::smtp_host);
 		
