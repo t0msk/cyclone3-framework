@@ -34,6 +34,38 @@ our %table=
 	{
 		'uri' => ['^/desktopdefault\.aspx']
 	},
+	'unknown-editfunc'=>
+	{
+		'uri' => ['^/include/editfunc\.inc\.php']
+	},
+	'unknown-guestbook'=>
+	{
+		'uri' => ['^/cgi-sys/guestbook\.cgi']
+	},
+	'unknown-archive'=>
+	{
+		'uri' => ['/archive/archive\.php']
+	},
+	'unknown-adminfoot'=>
+	{
+		'uri' => ['/adminfoot\.php']
+	},
+	'unknown-mvcw'=>
+	{
+		'uri' => ['vwar/convert/mvcw\.php']
+	},
+	'unknown-ezsql'=>
+	{
+		'uri' => ['/lib/db/ez_sgl\.php']
+	},
+	'unknown-principal'=>
+	{
+		'uri' => ['/principal\.php']
+	},
+	'unknown-lanaicms'=>
+	{
+		'uri' => ['/lanai-cms']
+	},
 );
 
 
@@ -62,7 +94,7 @@ sub add
 	open(HCK, ">>".$filename) || die "$!";
 	print HCK time().":".$IP."\n";
 	close (HCK);
-	chmod (0660,$filename);
+	chmod (0666,$filename);
 	
 	return 1;
 }

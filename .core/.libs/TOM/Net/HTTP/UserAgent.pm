@@ -1873,7 +1873,7 @@ our @table=
 #	},
 
 	# SHELLS
-	{name=>'/bin/sh',
+	{name=>'shell',
 		regexp		=>	['^/bin/sh'],
 #		agent_type	=>	"browser",
 		agent_type	=>	"shell",
@@ -1882,8 +1882,8 @@ our @table=
 #		recache_disable =>	1,
 #		cookies_disable	=>	1,
 #		USRM_disable	=>	1,
-		old			=>	5,
-		messages		=>	["In shell, is this only preview!!!"],
+#		old			=>	5,
+		messages		=>	["Detected shell. In shell, is this only preview!!!"],
 	},
 
 

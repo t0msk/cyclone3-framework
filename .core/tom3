@@ -445,11 +445,17 @@ while ($main::CGI=new CGI::Fast())
 		
 		if (my $hacked=TOM::Net::HTTP::hacked::check($main::ENV{'REQUEST_URI'}))
 		{
-			main::_log("By REQUEST_URI='$main::ENV{'REQUEST_URI'}' i know that this request is from hacked computer or virus (IP='$main::ENV{'REMOTE_ADDR'}')",1);
-			main::_log("By REQUEST_URI='$main::ENV{'REQUEST_URI'}' i know that this request is from hacked computer or virus (IP='$main::ENV{'REMOTE_ADDR'}')",4,"$TOM::engine.hacked",1);
+			main::_log("By REQUEST_URI='$main::ENV{'REQUEST_URI'}' this request is from virus or hacked computer (IP='$main::ENV{'REMOTE_ADDR'}')",1);
+			main::_log("[$tom::H] By REQUEST_URI='$main::ENV{'REQUEST_URI'}' this request is from virus or hacked computer (IP='$main::ENV{'REMOTE_ADDR'}')",4,"$TOM::engine.hacked",1);
 			TOM::Net::HTTP::hacked::add($main::ENV{'REMOTE_ADDR'});
-			print "Status: 404 Not Found\n";
-			print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n\n";
+			
+			#print "Status: 404 Not Found\n";
+			#print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n\n";
+			TOM::Warning::engine(
+				"The page you have requested can't be displayed",
+				"This request type is not allowed on this page"
+			);
+			
 			$t_querystring->close();
 			$t_preprocess->close();
 			$t_eval->close();
