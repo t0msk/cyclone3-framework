@@ -58,23 +58,22 @@ sub clone
 
 sub prepare
 {
- my $self=shift;
-# my %env=@_;
+	my $self=shift;
  
- $self->{ENV}{DOCTYPE} = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">" unless $self->{ENV}{DOCTYPE};
- 
- $self->{OUT}{HEADER} .= $self->{ENV}{DOCTYPE}."\n";
-
- $self->{OUT}{HEADER} .= "<html>\n";
- 
- #------------------------------#
- # HEADER                         #
- #------------------------------#
- $self->{OUT}{HEADER} .= "<head>\n"; 
- 
-
- # TITLE
- $self->{OUT}{HEADER} .= " <title><%HEADER-TITLE%></title>\n";
+	$self->{'ENV'}{'DOCTYPE'} =
+		"<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">"
+		unless $self->{ENV}{DOCTYPE};
+	
+	$self->{'OUT'}{'HEADER'} .= $self->{'ENV'}{'DOCTYPE'}."\n";
+	
+	$self->{'OUT'}{'HEADER'} .=
+		'<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<%HEADER-LNG%>" lang="<%HEADER-LNG%>">'."\n";
+	
+	$self->{'OUT'}{'HEADER'} .= '<head>'."\n"; 
+	
+	
+	# TITLE
+	$self->{'OUT'}{'HEADER'} .= ' <title><%HEADER-TITLE%></title>'."\n";
  
  $self->{env}{DOC_title}=$self->{ENV}{'head'}{'title'};
  $self->{env}{DOC_title}=$tom::H unless $self->{env}{DOC_title};
@@ -249,7 +248,7 @@ sub prepare_last
 	# aplikujem title
 	$self->{OUT}{HEADER}=~s|<%HEADER-TITLE%>|$self->{env}{DOC_title}|;
 	$self->{OUT}{HEADER}=~s|<%HEADER-ROBOTS%>|$self->{env}{DOC_robots}|;
-	$self->{OUT}{HEADER}=~s|<%HEADER-LNG%>|$tom::lng|;
+	$self->{OUT}{HEADER}=~s|<%HEADER-LNG%>|$tom::lng|g;
 	$self->{OUT}{HEADER}=~s|<%PAGE-CODE%>|$main::request_code|;
  
 	#$self->{env}{DOC_keywords}=~s|^,||;
