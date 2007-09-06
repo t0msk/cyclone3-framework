@@ -592,7 +592,8 @@ while ($main::CGI=new CGI::Fast())
 			$ENV{'REQUEST_URI'}='' if $ENV{'REQUEST_URI'}=~/^\/core.tom/;
 		};
 		
-		
+		# request_uri decoding
+		TOM::Net::URI::URL::url_decode_($ENV{'REQUEST_URI'});
 		
 		#
 		#  Get %FORM data from GET, POST, REQUEST_URI

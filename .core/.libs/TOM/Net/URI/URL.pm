@@ -40,10 +40,10 @@ my $URLENCODE_VALID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234
 
 # Prepare list of valid and invalid characters (hex)
 my @urlencode_valid;
-	$urlencode_valid[ord $_]=$_ foreach (split('', $URLENCODE_VALID));
+	$urlencode_valid[ord "$_"]="$_" foreach (split('', $URLENCODE_VALID));
 for (0..255)
 {
-	next if $urlencode_valid[$_];
+	next if defined $urlencode_valid[$_];
 	$urlencode_valid[$_]=sprintf("%%%02X", $_);
 }
 
@@ -62,7 +62,7 @@ Return encoded part of a string
 sub url_encode
 {
 	my $toencode = shift;
-	return join('', map { $urlencode_valid[ord $_] } split('', $toencode));
+	return join('', map { $urlencode_valid[ord "$_"] } split('', $toencode));
 }
 
 
