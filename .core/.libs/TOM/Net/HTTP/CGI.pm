@@ -298,7 +298,7 @@ sub get_CGI
 		if (my $fh=CGI::upload($name))
 		{
 			# file
-			main::_log("this is uploaded file");
+			main::_log("param '$name' is uploaded file");
 			
 			$form{$name.'_file'}=$main::CGI->param($name);
 			$form{$name}=$main::CGI->param($name);
