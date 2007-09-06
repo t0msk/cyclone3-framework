@@ -2,6 +2,7 @@ package CGI; # 3.27
 require 5.004;
 use Carp 'croak';
 use bytes;
+no encoding;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
