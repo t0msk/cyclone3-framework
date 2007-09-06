@@ -3,6 +3,7 @@ use utf8;
 
 BEGIN
 {
+	$TOM::engine='download';
 	$tom::P=`pwd` unless $ENV{SCRIPT_FILENAME} && do
 	{$tom::P=$ENV{SCRIPT_FILENAME};$tom::P=~s|(.*)/.*?/||;$tom::P=$1;};
 	$tom::P=~s|(.*)/.*?\n$|\1|;
@@ -66,6 +67,7 @@ while ($req->Accept() >= 0)
 	
 	if (scalar(@file) == 0 || !open FILE,$file[0]{fullpath})
 	{
+		main::_log('Error: File not found',1);
 		print "Status: 404 Not Found\n\n";
 		next;
 	}
