@@ -16,7 +16,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_emailverify` (
 CREATE TABLE `/*db_name*/`.`/*app*/_online` (
   `IDhash` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
   `IDsession` varchar(32) character set utf8 collate utf8_bin NOT NULL default '',
-  `login` varchar(20) NOT NULL default '',
+  `login` varchar(30) NOT NULL default '',
   `logged` char(1) NOT NULL default 'N',
   `host` varchar(50) character set utf8 collate utf8_bin NOT NULL default '',
   `host_sub` varchar(50) character set utf8 collate utf8_bin NOT NULL default '',
@@ -86,7 +86,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_shadow` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_users` (
   `IDhash` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
-  `login` varchar(20) NOT NULL default '',
+  `login` varchar(30) NOT NULL default '',
   `pass` varchar(20) character set utf8 collate utf8_bin NOT NULL default '',
   `pass_md5` varchar(32) character set utf8 collate utf8_bin NOT NULL default '',
   `autolog` char(1) NOT NULL default 'N',
@@ -114,7 +114,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_users_arch` (
   `IDhash` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
-  `login` varchar(20) NOT NULL default '',
+  `login` varchar(30) NOT NULL default '',
   `pass` varchar(20) character set utf8 collate utf8_bin NOT NULL default '',
   `pass_md5` varchar(32) character set utf8 collate utf8_bin NOT NULL default '',
   `autolog` char(1) NOT NULL default 'N',
