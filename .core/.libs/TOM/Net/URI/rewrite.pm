@@ -208,7 +208,7 @@ sub parse_hash_old(\%)
 sub parse_hash
 #sub parse_hash
 {
-	my $t=track TOM::Debug(__PACKAGE__."::parse_hash()");
+	my $t=track TOM::Debug(__PACKAGE__."::parse_hash()") if $debug;
 	
 	#my $hash=shift;
 	my $hash=shift;
@@ -263,12 +263,23 @@ sub parse_hash
 					last;
 				}
 			}
+			# in rule variable=""
+#			elsif (exists $rules[$rule]{'GET'}{$kluc})
+#			{
+#				main::_log("vyzadovana neexistencia kluca '$kluc'") if $debug;
+#				if ($hash->{$kluc})
+#				{
+#					$true=0;
+#					last;
+#				}
+#				next;
+#			}
 			# porovnanie na existenciu kluca
 			else
 			{
 				main::_log("vyzadovana existencia '$kluc'='".($hash->{$kluc})."' ") if $debug;
 				#if (exists $hash->{$kluc})
-				if (exists $hash->{$kluc})
+				if (defined $hash->{$kluc})
 				{
 					main::_log("existuje") if $debug;
 					next;
@@ -356,7 +367,7 @@ sub parse_hash
 			
 			main::_log("output URL '$URL'") if $debug;
 			
-			$t->close();
+			$t->close() if $debug;
 			return $URL;
 		}
 		else
@@ -367,7 +378,7 @@ sub parse_hash
 	}
 	
 	main::_log("output default URL 'index.html'") if $debug;
-	$t->close();
+	$t->close() if $debug;
 	return "index.html";
 }
 
@@ -513,7 +524,7 @@ sub get
 	my $t=track TOM::Debug(__PACKAGE__."::get()");
 	
 	my $data=shift;
-	main::_log("get data to url_rewrite");
+	#main::_log("get data to url_rewrite");
 	
 	@rules=();
 	
@@ -529,14 +540,17 @@ sub get
 		next unless $line=~/\|/;
 		#print " spracuvam line: $line\n" if $main::debug;
 		
-		my $t_line=track TOM::Debug("line '$line'");
+		my $t_line=track TOM::Debug("line '$line'") if $debug;
+		#main::_log("$line") unless $debug;
 		
 		my @sections=split('\|',$line);
 		
 		#print "  spracuvam sekciu URL: $sections[0]\n" if $main::debug;
 		#main::_log("spracuvam sekciu URL: '$sections[0]'");
 		
-		my $t_sec=track TOM::Debug("URL '$sections[0]'");
+		main::_log("URL '$sections[0]' GET '$sections[1]'") unless $debug;
+		
+		my $t_sec=track TOM::Debug("URL '$sections[0]'") if $debug;
 		
 		$rule{'URL'}=();
 		
@@ -545,7 +559,7 @@ sub get
 			my $before=$1;
 			my $url=$2;
 			
-			main::_log("spracuvam before:'$1' url:'$2'");
+			main::_log("processing before:'$1' url:'$2'") if $debug;
 			
 			my %rule_url;
 			
@@ -554,7 +568,7 @@ sub get
 			$rule_url{before}=$before;
 			if ($url=~/;/)
 			{
-				main::_log("hlbsie definovany var: '$url'");
+				main::_log("var defined in depth: '$url'") if $debug;
 				my @data=split(';',$url);
 				$url=shift @data;
 				foreach my $data(@data)
@@ -562,19 +576,19 @@ sub get
 					if ($data=~/default="(.*)"/)
 					{
 						$rule_url{default}=$1;
-						main::_log("default='$1'");
+						main::_log("default='$1'") if $debug;
 						next;
 					}
 					if ($data=~/regexp="(.*)"/)
 					{
 						$rule_url{regexp}=$1;
-						main::_log("regexp='$1'");
+						main::_log("regexp='$1'") if $debug;
 						next;
 					}
 					if ($data=~/source="(.*)"/)
 					{
 						$rule_url{source}=$1;
-						main::_log("source='$1'");
+						main::_log("source='$1'") if $debug;
 						next;
 					}
 				}
@@ -597,32 +611,32 @@ sub get
 			$rule{'URL'}[0]{after}=$sections[0];
 		}
 		
-		$t_sec->close();
-		my $t_sec=track TOM::Debug("GET '$sections[1]'");
+		$t_sec->close() if $debug;
+		my $t_sec=track TOM::Debug("GET '$sections[1]'") if $debug;
 		
 		foreach my $get(split(';',$sections[1]))
 		{
-			main::_log("spracuvam '$get'");
+			main::_log("processing '$get'") if $debug;
 			#print "   spracuvam: $get\n" if $main::debug;
-			if ($get=~/(.*)="(.*)"/)
+			if ($get=~/(.*)="(.{0,})"/)
 			{
-				main::_log("hard '$1'='$2'");
+				main::_log("hard '$1'='$2'") if $debug;
 				#print "    hard: $1=$2\n" if $main::debug;
 				$rule{'GET'}{$1}=$2;
 			}
 			else
 			{
-				main::_log("dynamic '$get'");
+				main::_log("dynamic '$get'") if $debug;
 				#print "    dynamic: $get\n" if $main::debug;
 				$rule{'GET'}{$get}=0;
 			}
 		}
 		
-		$t_sec->close();
+		$t_sec->close() if $debug;
 		
 		push @rules,{%rule};
 		
-		$t_line->close();
+		$t_line->close() if $debug;
 		
 	}
 	
