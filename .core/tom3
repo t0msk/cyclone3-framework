@@ -2008,10 +2008,11 @@ while ($main::CGI=new CGI::Fast())
 			$H->{OUT}{BODY}=~s/http:\/\/null\///g;
 		}
 		
+		my $debug_url;
 		while ($H->{OUT}{BODY}=~s/$url_regexp/<!TMP-$hash!>/)
 		{
 			$url_count++;
-			my $t_link=track TOM::Debug("URL '$url_count'");
+			my $t_link=track TOM::Debug("URL '$url_count'") if $debug_url;
 			
 			my $www;
 			my $var;
@@ -2031,7 +2032,7 @@ while ($main::CGI=new CGI::Fast())
 				$end=$2;
 			}
 			
-			main::_log("URL '$prefix$var$end'");
+			main::_log("URL '$prefix' '$var' '$end'") if $debug_url;
 			
 			# neviem odkial by sa tu vzali &amp;, ale pre istotu keby to niekto tymto stylom
 			# zapisal do XSGN alebo DSGN
@@ -2127,7 +2128,8 @@ while ($main::CGI=new CGI::Fast())
 						)
 					");
 					TOM::Net::URI::URL::url_decode_($prefix);
-					main::_log("output URL '$prefix?__$link_md5$end'");
+					main::_log("output URL '$prefix?__$link_md5$end'") if $debug_url;
+					main::_log("URL '$prefix?__$link_md5$end'") unless $debug_url;
 					$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?__$link_md5$end/;
 				}
 				else  # klasicke kodovanie
@@ -2136,10 +2138,11 @@ while ($main::CGI=new CGI::Fast())
 					$prefix="" if ($prefix eq "http://null/");
 					my $link_hash=TOM::Net::URI::URL::hash_encode($var);
 					TOM::Net::URI::URL::url_decode_($prefix);
-					main::_log("output URL '$prefix?$link_hash$end'");
+					main::_log("output URL '$prefix?$link_hash$end'") if $debug_url;
+					main::_log("URL '$prefix?$link_hash$end'") unless $debug_url;
 					$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?$link_hash$end/;
 				}
-				$t_link->close();
+				$t_link->close() if $debug_url;
 				next;
 			}
 			
@@ -2153,16 +2156,18 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($tom::rewrite && !$var) # nechcem zbytocne vypisovat ?
 			{
-				main::_log("output URL '$prefix$end'");
+				main::_log("output URL '$prefix$end'") if $debug_url;
+				main::_log("URL '$prefix$end'") unless $debug_url;
 				$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix$end/;
 			}
 			else
 			{
-				main::_log("output URL '$prefix?$var$end'");
+				main::_log("output URL '$prefix?$var$end'") if $debug_url;
+				main::_log("URL '$prefix?$var$end'") unless $debug_url;
 				$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?$var$end/;
 			}
 			
-			$t_link->close();
+			$t_link->close() if $debug_url;
 		}
 		
 		$t_urlreplace->close();

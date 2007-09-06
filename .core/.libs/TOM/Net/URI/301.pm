@@ -82,7 +82,7 @@ sub get
 	{
 		chomp($line);
 		
-		main::_log("reading line '$line'");
+		main::_log("reading line '$line'") if $debug;
 		
 		#$line=~s| ||g;
 		#$line=~s|\t||g;
@@ -100,7 +100,7 @@ sub get
 			#$ref[0]=~s|^'||;
 			#$ref[0]=~s|'$||;
 			$ref[1]=$line;
-			main::_log("type line");
+			main::_log("type line") if $debug;
 			#$line=~s|^'(.*?)'=||;
 		}
 		else

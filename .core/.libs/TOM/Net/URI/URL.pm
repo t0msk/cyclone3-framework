@@ -34,6 +34,7 @@ L<TOM::Net::HTTP::CGI|source-doc/".core/.libs/TOM/Net/HTTP/CGI.pm">
 
 use TOM::Net::HTTP::CGI;
 
+our $debug=0;
 
 # List of valid characters in QUERY_STRING
 my $URLENCODE_VALID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+.";
@@ -158,7 +159,7 @@ From given %hash generates QUERY_STRING
 
 sub genGET
 {
-	my $t0=track TOM::Debug(__PACKAGE__."::genGET()");
+	my $t0=track TOM::Debug(__PACKAGE__."::genGET()") if $debug;
 	my %form=@_;
 	my $GET;
 	foreach (sort keys %form)
@@ -169,8 +170,8 @@ sub genGET
 	}
 	$GET=~s|&$||;
 	
-	main::_log("output '$GET'");
-	$t0->close();
+	main::_log("output '$GET'") if $debug;
+	$t0->close() if $debug;
 	return $GET;
 }
 
