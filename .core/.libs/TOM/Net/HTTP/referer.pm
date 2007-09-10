@@ -280,7 +280,7 @@ $table{'seznam.cz'}=
 {
  urls => ["seznam\.cz"],
  domain_type => 'search engine',
- keywords_param => 'w',
+ keywords_param => 'q',
 };
 
 
