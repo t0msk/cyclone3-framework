@@ -34,8 +34,13 @@
 				border: 10px solid gray; border-width: 0 0 0 10px;
 				padding: 0 0 0 10px;
 			}
-
-
+			.sum
+			{
+				color: gray;
+				font-weight: bold;
+				background: #e5e5e5;
+			}
+			
 			#content { clear: both; }
 			#content table { width: 450px; }
 			table
@@ -96,6 +101,16 @@
 	<entity id="email.table.line">
 	<![CDATA[
 		<tr>
+			<#email.table.col.value#>
+		</tr>
+		<#email.table.line#>
+	]]>
+	</entity>
+	
+	
+	<entity id="email.table.line_sum">
+	<![CDATA[
+		<tr class="sum">
 			<#email.table.col.value#>
 		</tr>
 		<#email.table.line#>
