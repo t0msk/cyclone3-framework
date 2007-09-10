@@ -585,7 +585,7 @@ while ($main::CGI=new CGI::Fast())
 		{
 			my ($uri_1,$uri_2)=split('\?',$ENV{'REQUEST_URI'},2);
 			#$ENV{'REQUEST_URI'}=TOM::Net::URI::URL::url_decode($uri_1);
-			$ENV{'REQUEST_URI'}=$uri_1;
+			$ENV{'REQUEST_URI'}=TOM::Net::URI::URL::url_decode($uri_1);
 			$ENV{'REQUEST_URI'}.='?'.$uri_2 if $uri_2;
 			# pokial volam v linke priamo core.tom, tak osetrim linku
 			# aby sa z tohto prefixu pomocou rewrite nestalo napr. TypeID
@@ -593,7 +593,7 @@ while ($main::CGI=new CGI::Fast())
 		};
 		
 		# request_uri decoding
-		TOM::Net::URI::URL::url_decode_($ENV{'REQUEST_URI'});
+		
 		
 		#
 		#  Get %FORM data from GET, POST, REQUEST_URI
