@@ -53,6 +53,7 @@ our %ext=(
 	'mpeg' => 'video/mpeg',
 	'mpg' => 'video/mpeg',
 	'qt' => 'video/quicktime',
+	'wmv' => 'video/x-ms-wmv',
 	'xml' => 'text/xml',
 );
 
