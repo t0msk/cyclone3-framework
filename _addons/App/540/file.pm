@@ -28,7 +28,9 @@ sub get
  		%args = @_;
 	}
 # Execute
- 	$args{table}="a540";
+	$args{db_name}=$TOM::DB{main}{name} unless $args{db_name};
+ 	$args{table}=$args{db_name}.".a540";
+	delete $args{db_name};
  	my @files = App::540::sql_get( %args );
 # Add filename
 	my $filec = scalar(@files);
@@ -68,7 +70,9 @@ sub del
 		unlink($files[$i]{fullpath});
 }
 # Delete From DB
-	$args{table}="a540";
+	$args{db_name}=$TOM::DB{main}{name} unless $args{db_name};
+ 	$args{table}=$args{db_name}.".a540";
+	delete $args{db_name};
 	return App::540::sql_del( %args );
 }
 
@@ -110,7 +114,9 @@ sub new
 		$args{hash}=Utils::vars::genhash(16)
 	}
 
-	$args{table}="a540";
+	$args{db_name}=$TOM::DB{main}{name} unless $args{db_name};
+ 	$args{table}=$args{db_name}.".a540";
+	delete $args{db_name};
 
 # Time
 	$args{'time'} = $main::time_current if not exists $args{'time'};
@@ -321,7 +327,9 @@ sub dup
 	main::_log("App::540::file::dup : base name ".$args{name},0);
 
 # DB
-	$args{table}="a540";
+	$args{db_name}=$TOM::DB{main}{name} unless $args{db_name};
+ 	$args{table}=$args{db_name}.".a540";
+	delete $args{db_name};
 
 # Check ID_dir for existence
 	if ($args{ID_dir} ne "")
@@ -389,7 +397,9 @@ sub set
 	main::_log("App::540::file::set : base name ".$args{name},0);
 
 # DB
-	$args{table}="a540";
+	$args{db_name}=$TOM::DB{main}{name} unless $args{db_name};
+ 	$args{table}=$args{db_name}.".a540";
+	delete $args{db_name};
 
 # Check ID_dir for existence
 	if ($args{ID_dir} ne "")
