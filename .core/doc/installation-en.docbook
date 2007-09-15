@@ -14,6 +14,10 @@
     <releaseinfo>$Rev$</releaseinfo>
   </articleinfo>
 
+  <para>For installation on Debian based system look into <ulink
+  url="?|?section=wiki&amp;file=Debian_installation">this wiki step by step
+  manual</ulink>.</para>
+
   <section>
     <title>Procedure</title>
 
