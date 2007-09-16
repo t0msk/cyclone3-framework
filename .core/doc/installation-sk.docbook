@@ -206,8 +206,11 @@ echo "Include /www/TOM/_config/httpd.virtual.conf" &gt;&gt; /etc/apache2/httpd.c
 
           <listitem>
             <para>Upravte
-            <filename>/www/TOM/.core/_config/httpd.virtual.conf</filename>
-            podľa potreby.</para>
+            <filename>/www/TOM/_config/httpd.virtual.conf</filename> podľa
+            potreby.</para>
+
+            <synopsis>cp /www/TOM/_config/httpd.virtual.conf.tmpl /www/TOM/_config/httpd.virtual.conf
+vim /www/TOM/_config/httpd.virtual.conf</synopsis>
           </listitem>
         </orderedlist>
       </listitem>

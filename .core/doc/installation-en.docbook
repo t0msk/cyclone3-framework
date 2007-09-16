@@ -204,9 +204,12 @@ echo "Include /www/TOM/_config/httpd.virtual.conf" &gt;&gt; /etc/apache2/httpd.c
 
           <listitem>
             <para>Edit
-            <filename>/www/TOM/.core/_config/httpd.virtual.conf</filename> to
-            setup virtual hosts or just edit IP adress of default
+            <filename>/www/TOM/_config/httpd.virtual.conf</filename> to setup
+            virtual hosts or just edit IP adress of default
             example.tld.</para>
+
+            <synopsis>cp /www/TOM/_config/httpd.virtual.conf.tmpl /www/TOM/_config/httpd.virtual.conf
+vim /www/TOM/_config/httpd.virtual.conf</synopsis>
           </listitem>
         </orderedlist>
       </listitem>
