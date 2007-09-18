@@ -1259,7 +1259,7 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("access to: notfound.pub.type");
 			local $/;$file_data=<TYPE>;
 			$main::page_statuscode="404";
-			if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type} ne "vandaliser")
+			if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'} ne "vandaliser")
 			{
 				TOM::Error::engine(
 					"silent - This error message is in silen mode",
@@ -1270,7 +1270,7 @@ while ($main::CGI=new CGI::Fast())
 		}
 		else
 		{
-			do {die "Cannot open TYPE file TID=$FORM{TID}\n";};
+			do {die "Can't open TYPE file TID=$FORM{TID}\n";};
 		}
 		close(TYPE);
 		

@@ -22,49 +22,33 @@ our %table=
 	{
 		'uri' => ['^/_vti_bin/']
 	},
-	'unknown-mambo'=>
-	{
-		'uri' => ['^/mambo/index\.php']
-	},
 	'unknown-vti_inf'=>
 	{
 		'uri' => ['^/_vti_inf\.html']
-	},
-	'unknown-desktopdefault.aspx'=>
-	{
-		'uri' => ['^/desktopdefault\.aspx']
-	},
-	'unknown-editfunc'=>
-	{
-		'uri' => ['^/include/editfunc\.inc\.php']
 	},
 	'unknown-guestbook'=>
 	{
 		'uri' => ['^/cgi-sys/guestbook\.cgi']
 	},
-	'unknown-archive'=>
-	{
-		'uri' => ['/archive/archive\.php']
-	},
-	'unknown-adminfoot'=>
-	{
-		'uri' => ['/adminfoot\.php']
-	},
-	'unknown-mvcw'=>
-	{
-		'uri' => ['vwar/convert/mvcw\.php']
-	},
-	'unknown-ezsql'=>
-	{
-		'uri' => ['/lib/db/ez_sgl\.php']
-	},
-	'unknown-principal'=>
-	{
-		'uri' => ['/principal\.php']
-	},
 	'unknown-lanaicms'=>
 	{
 		'uri' => ['/lanai-cms']
+	},
+	'unknown-php'=> # all unknown php attacks
+	{
+		'uri' => ['\.php\?']
+	},
+	'unknown-asp'=> # all unknown asp attacks
+	{
+		'uri' => ['\.asp\?']
+	},
+	'unknown-asp'=> # all unknown aspx attacks
+	{
+		'uri' => ['\.aspx\?']
+	},
+	'unknown-dll'=> # all unknown dll attacks
+	{
+		'uri' => ['\.dll\?']
 	},
 );
 
