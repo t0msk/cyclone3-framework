@@ -4,10 +4,41 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
+=head1 NAME
+
+TOM::Warning
+
+=cut
+
+=head1 DESCRIPTION
+
+Generates warning page when page can't be displayed or warning email when comudle can't be correctly displayed to user.
+
+=cut
+
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<TOM::Error::design|source-doc/".core/.libs/TOM/Error/design.pm">
+
+=item *
+
+L<TOM::Utils::datetime|source-doc/".core/.libs/TOM/Utils/datetime.pm">
+
+=item *
+
+L<TOM::Utils::vars|source-doc/".core/.libs/TOM/Utils/vars.pm">
+
+=back
+
+=cut
+
 use TOM::Error::design;
-use Utils::vars;
 use TOM::Utils::datetime;
 use TOM::Utils::vars;
 
@@ -31,7 +62,7 @@ sub engine_pub
 	
 	print "Content-Type: ".$Net::DOC::content_type."; charset=UTF-8\n\n";
 	my $out=$Net::DOC::warn_page;
-	Utils::vars::replace($out);
+	TOM::Utils::vars::replace($out);
 	$out=~s|<%message%>|$var|;
 	print $out;
 	
@@ -45,10 +76,6 @@ sub module
 	{
 		module_pub(@_);
 	}
-#	else
-#	{
-#		engine_lite(@_);
-#	}
 }
 
 
@@ -57,21 +84,10 @@ sub module_pub
 {
 	my %env=@_;
 	
-#	foreach(keys %env)
-#	{
-#		main::_log("input key '$_'='$env{$_}'");
-#	}
-	
 	$env{'-MODULE'}=$Tomahawk::mdl_C{-category}."-".$Tomahawk::mdl_C{-name}."/".$Tomahawk::mdl_C{-version}."/".$Tomahawk::mdl_C{-global};
 	$env{'-ERROR'}=$env{message};
 	
 	my $env_=$env{'ENV'};
-	
-=head1
-DAVE: ak sú nejasné pravidlá mailovej komunikácie, prosím napíšte mi. môžme 
-zopakovať workshop o komunikácii, aby sme odstránili akékoľvek 
-nejasnosti. vďaka.
-=cut
 	
 	return undef unless $env{'-MODULE'};
 	
@@ -80,8 +96,6 @@ nejasnosti. vďaka.
 	main::_log("[$tom::H][WARN::MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"pub.warn",2) if ($tom::H ne $tom::Hm); #master
 	
 	my $date=TOM::Utils::datetime::mail_current;
-	
-	# TODO:[fordinal] pridat dalsie emailove adresy
 	
 	my $email_addr;
 	my $email_name;
@@ -136,37 +150,20 @@ nejasnosti. vďaka.
 			$email=~s|<#ENV#>|$env\n<#ENV#>|;
 		}
 		
-#		return 1;
-=head1
-		foreach (sort keys %main::ENV)
-		{
-			my $val=$main::ENV{$_};
-			if (($main::IAdm || $main::ITst)&& ($_=~/^(QUERY|HTTP_COOKIE)/))
-			{$val="(search do log)";}
-			my $env=$email_ENV_;
-			$env=~s|<%var%>|$_|g;
-			$env=~s|<%value%>|$val|g;
-			$email=~s|<#ENV#>|$env\n<#ENV#>|;
-		}
-=cut
-		
 		$email=~s|<%to%>|$email_addr;$Tomahawk::module::authors|;
 		
-		Utils::vars::replace($email);
+		TOM::Utils::vars::replace($email);
 		$email=~s|<#.*?#>||g;
 		$email=~s|<%.*?%>||g;
 	
 		TOM::Net::email::send(
-			'priority'=>9,
-			'from'=>"TOM\@$TOM::hostname",
-			'to'=>$email_addr.";".$Tomahawk::module::authors,
-			'body'=>$email,
+			'priority'=> 9,
+			'from' => "TOM\@$TOM::hostname",
+			'to' => $email_addr.";".$Tomahawk::module::authors,
+			'body' => $email,
 		);
 	}
 	
-	#return 1 if $main::H->r_("<!TMP-".$env{-TMP}."!>",$out);
-	#return 1 if $main::H->r_("<!TMP-ERROR!>",$out);
-	#$main::H->a($out);
 	return 1;
 }
 
