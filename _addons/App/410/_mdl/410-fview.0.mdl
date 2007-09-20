@@ -10,19 +10,19 @@ use strict;
 sub execute
 {
 	my %env=@_;
-
+	
 	# env{stats}=1
 	# env{stats_koef}=1
 	# env{stats_max}=200
-
+	
 	if ($env{stats})
 	{
 		return undef if (!$env{stats_koef} && !$env{stats_max});
 		$env{stats_koef}=$env{stats_max}/100 unless $env{stats_koef};
 	}
-
+	
 	main::_log("stats koeficient: $env{stats_koef}");
-
+	
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
 	if($env{xt_xlng})
 	{
@@ -31,18 +31,18 @@ sub execute
 		main::_log("using xlng transformations");
 	}
 	return undef unless $env{ID};
-
+	
 	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
 	$env{db_410}=$TOM::DB_name_TOM unless $env{db_410};
-
+	
 	#$XSGN{TMP}="fungujem $tom::H<BR>";
 	# AND (domain IS NULL OR domain LIKE '%$tom::H')
 	#main::_log("beginning ...");
-
+	
 	#####
 	#   fetching poll data
 	#####
-
+	
 	my %loop;
 	loop:
 	my %db0_line;
@@ -95,6 +95,8 @@ sub execute
 	#####
 
 	$XSGN{TMP}=~s|<%TITLE%>|$db0_line{title}|;
+	$XSGN{TMP}=~s|<%tiny%>|$db0_line{tiny}|;
+	$XSGN{TMP}=~s|<%votes%>|$db0_line{votes}|g;
 
 	my %percentages;
 	my $db_counter;
