@@ -19,13 +19,13 @@ sub execute
 		Tomahawk::GetXLNG() || return undef; # retrieve language xml
 		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
 	}
-
+	
 	my @files;
 	my %arg;
-
+	
 	# Priprava parametrov pre API
 	$arg{order} = "time DESC";
-	$arg{order}=$env{order} if defined ($env{order});
+	$arg{order}=$env{order} if $env{order};
 	$arg{limit}=$env{limit} if defined ($env{limit});
 	$arg{active}=$env{active} if defined ($env{active});
 	$arg{ID_dir}=$env{dir} if defined ($env{dir});
