@@ -187,8 +187,10 @@ sub install
 		else
 		{
 			main::_log("SQL file of structure application '$what' not exists",1);
+			main::_log_stdout("SQL file of structure application '$what' not exists",4);
 			$t->close();
-			die "SQL file of structure application '$what' not exists";
+			#die "SQL file of structure application '$what' not exists";
+			return undef;
 		}
 	}
 	elsif ($what=~s/^_//)
@@ -207,8 +209,10 @@ sub install
 		else
 		{
 			main::_log("SQL file of structure standardized '$what' not exists",1);
+			main::_log_stdout("SQL file of structure standardized '$what' not exists",4);
 			$t->close();
-			die "SQL file of structure standardized '$what' not exists";
+			#die "SQL file of structure standardized '$what' not exists";
+			return undef;
 		}
 	}
 	elsif ($what eq "TOM")
