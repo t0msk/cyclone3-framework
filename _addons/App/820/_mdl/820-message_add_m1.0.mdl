@@ -5,7 +5,7 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 $authors="fordinal\@webcom.sk;nemsak\@webcom.sk";
-use App::1B0;
+use App::1B0::_init;
 use strict;
 
 =head1 NAME
@@ -33,42 +33,42 @@ sub execute
 	$main::FORM{msg}=~s|\r||g;
 	$main::FORM{msg}=~s|\n\n||g;
 	$main::FORM{title}=~s|\\||g;
-	
+
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
 	if($env{xt_xlng})
 	{
 		Tomahawk::GetXLNG() || return undef; # retrieve language xml
 		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
 	}
-	
+
 	$env{db_820}=Tomahawk::Getmdlvar("820","db") unless $env{db_820};
 	$env{db_820}=$TOM::DB_name unless $env{db_820};
-	
+
 	#
 	# TODO: [Deb00t] na toto sa treba romana spytat, ze preco nacitava db_130 LEN z $TOM::DB_name_TOM
 	#$env{db_130}=Tomahawk::Getmdlvar("130","db") unless $env{db_130};
 	$env{db_130}=$TOM::DB_name_TOM;# unless $env{db_130};
-	
+
 	$env{from_email}="forum\@localhost" unless $env{from_email};
 	$env{from}="forum" unless $env{from};
-	
+
 	$env{mailtable}="a130_send";
 	#$env{mailtable}="Ca130_send" if ($env{db_130} eq $TOM::DB_name_TOM);
-	
+
 	#$env{name}=$main::USRM{login} || $main::FORM{name};
 	$env{name}=$main::FORM{name};
-	
+
 	#$XSGN{TMP}=$XSGN{TMP};
 	$XSGN{TMP}=$XSGN{TMP_anonymous} if $main::USRM{logged} ne "Y";
 	main::_log("TMP: '$main::USRM{logged}' $XSGN{TMP}");
-	
+
 	if ($main::USRM{logged} eq "N")
 	{
 #		$env{name}=~s|anonym||g;
 		$env{name}="anonym" if $env{name}=~/[^a-zA-Z0-9 ]/;
 #		$env{name}="anonym_".$env{name};
 #		$env{name}=~s|_$||;
-		
+
 		main::_log("nickname bude $env{name}");
 	}
 	else
@@ -121,12 +121,13 @@ sub execute
 			AND a820.active='Y'
 		LIMIT 1
 	");
-	
+
 	if (my %forum_hash=$db0->fetchhash)
 	{
 		main::_log("toto forum existuje, mozem do neho zapisovat");
 
-		if (($main::FORM{title})&&($main::FORM{msg}))
+		#($main::FORM{title})
+		if ($main::FORM{msg})
 		{
 			main::_log("idem pridat msg");
 
@@ -147,7 +148,7 @@ sub execute
 =cut
 
 			# inserting message
-	
+
 			# tieto znaky osetrujem len kvoli zapisu
 			$main::FORM{title}=~s|"|\\"|g;
 			$main::FORM{title}=~s|'|\\'|g;
@@ -176,6 +177,11 @@ sub execute
 			if (my %env0=$db0->fetchhash)
 			{
 				$XSGN{TMP}=$XSGN{TMP_repeated};
+
+				foreach(keys %forum_hash)
+				{
+					$XSGN{TMP}=~s|<%FORUM\_$_%>|$forum_hash{$_}|;
+				}
 			}
 			else
 			{
@@ -361,7 +367,7 @@ sub execute
 				{
 					$XSGN{TMP}=~s|<%FORUM\_$_%>|$forum_hash{$_}|;
 				}
-            
+
 				#$XSGN{TMP}=$XSGN{INSERTED_anonymous} if $main::USRM{logged} ne "Y";
 
 				# TERAZ BY SOM MAL SPRAVIT UPDATE
@@ -413,7 +419,7 @@ sub execute
 								AND ID='$IDre'
 							LIMIT 1
 						");
-						
+
 						if (my %env0=$db0->fetchhash)
 						{
 							if (($env{name} ne $env0{from_name})&&($env0{email_reply} eq "Y")&&(!$env1{$env0{from_name}}))
@@ -563,12 +569,12 @@ sub execute
 
 	$XSGN{TMP}=~s|<%title%>|$main::FORM{title}|g;
 	$XSGN{TMP}=~s|<%msg%>|$main::FORM{msg}|g;
-	
+
 	$XSGN{TMP}=~s|<%name%>|$env{name}|g;
 	$XSGN{TMP}=~s|<%IDforum%>|$env{db_ID}|g;
 	$XSGN{TMP}=~s|<%IDre%>|$env{IDre}|g;
 	$XSGN{TMP}=~s|<%TID%>|$main::FORM{TID}|g;
-	
+
 	if ($main::USRM{email}) # nezistit aj ci je to ozaj overeny e-mail???
 	{
 		$XSGN{TMP}=~s|<%email%>|$main::USRM{email}|g;
