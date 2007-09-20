@@ -3,7 +3,7 @@ use Term::ANSIColor;
 use Net::IRC;
 use Parallel::ForkManager;
 
-BEGIN {require "/www/TOM/.bin/tom3-init";}
+BEGIN {require "/www/TOM/.bin/tom3-init";$main::debug=1}
 
 use TOM::Database::connect;
 
