@@ -41,9 +41,7 @@ sub execute
 		endtime			=> $main::FORM{endtime} || 'NULL',
 		IDauthor		=> $main::FORM{IDauthor} || 0,
 		IDeditor		=> $main::FORM{IDeditor} || 0,
-		active			=> "'$main::FORM{active}'",
 	);
-	$answerdata{active} = "'N'" if $answerdata{active} eq "''";
 	my $answerexists;
 
 	# Zistim si ci odpoved existuje
@@ -60,6 +58,19 @@ sub execute
 		";
 		my $dbfind = $main::DB{main}->Query( $find ); # Zistim, ci anketa existuje
 		$answerexists = 1 if $dbfind->numrows;
+	}
+
+	if (!$answerexists)
+	{
+		if($main::FORM{'active'}){
+			$answerdata{'active'}="'$main::FORM{active}'";
+		}else{
+			$answerdata{'active'}="'N'";
+		}
+	}else{
+		if($main::FORM{'active'}){
+			$answerdata{'active'}="'$main::FORM{active}'";
+		}
 	}
 
 	# DELETE, aby som nerobil nic ine (napriklad update)
