@@ -170,6 +170,7 @@ foreach my $overlay(reverse @TOM::Overlays::item)
 		my $revs = SVN::Log::retrieve ($url, $revision+1,$stable);
 		foreach my $rev (@{$revs})
 		{
+			$rev->{'message'}=~s|[\n\r]||g;
 			print "r".$rev->{'revision'}." ".$rev->{'message'}."\n";
 		}
 		
