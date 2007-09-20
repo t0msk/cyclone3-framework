@@ -90,24 +90,27 @@ sub execute
 
 	my $orderby=$env{orderby};
 	$orderby="RAND()" unless $env{orderby};
-
-	my $db0=$main::DBH->Query("
-	SELECT ID, votes, xrelated
-	FROM $env{db_410}.a410
-	WHERE
-		(domain IS NULL OR domain='$tom::Hm')
-		AND starttime<=$tom::time_current
-		AND (endtime IS NULL OR endtime>=$tom::time_current)
-		AND (lng='$env{lng}' OR lng='')
-		AND active='Y'
-		$env{IDcategory}
-		$env{ID}
-	ORDER BY $orderby
-	LIMIT 1
-	");
-	if (my %db0_line=$db0->FetchHash())
+	
+	my $sql=qq{
+		SELECT ID, votes, xrelated, domain
+		FROM $env{db_410}.a410
+		WHERE
+			(domain IS NULL OR domain='$tom::Hm' OR domain='$tom::H')
+			AND starttime<=$tom::time_current
+			AND (endtime IS NULL OR endtime>=$tom::time_current)
+			AND (lng='$env{lng}' OR lng='')
+			AND active='Y'
+			$env{IDcategory}
+			$env{ID}
+		ORDER BY $orderby
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		#main::_log("wrapper : $env{allow_cat} $env{actual_cat}");
+		
+		main::_log("wrapper : $env{allow_cat} $env{actual_cat}");
+		
 		Tomahawk::module(
 			-type				=>	"mdl",
 			-category	=>	"410",
@@ -116,8 +119,9 @@ sub execute
 			-xsgn				=>	$env{-xsgn},
 			-xsgn_global	=>	$env{-xsgn_global},
 			-TMP				=>	$env{-TMP},
-			-cache_id	=>	"default",
-			-cache_id_sub		=>	$db0_line{ID}."-".$db0_line{votes},
+#			-cache_id	=>	"default",
+#			-cache_id_sub		=>	$db0_line{ID}."-".$db0_line{votes},
+			'domain' => $db0_line{'domain'},
 			xt_xlng					=>	$env{xt_xlng},
 			ID							=>	$db0_line{ID},
 			stats							=>	$env{stats},
@@ -128,11 +132,11 @@ sub execute
 			allow_rounding			=>	$env{allow_rounding},
 			votes_ignore_lng			=>	$env{votes_ignore_lng}
 		);
-
-
+		
 	}
 	else
 	{
+		main::_log("can't find");
 		#NYST!
 	}
 
