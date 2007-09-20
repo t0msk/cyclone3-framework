@@ -219,38 +219,21 @@ sub parse_hash
 		main::_log("input key '$_'='$hash->{$_}'") if $debug;
 	}
 	
-	#main::_log("finding right rule") if $debug;
-	
 	for my $rule(0..@rules-1)
 	{
-		#print " pravidlo $rule\n" if $main::debug;
 		main::_log("[$rule] checking rule") if $debug;
-#		main::_
+		
 		my $true=1;
 		foreach my $kluc(keys %{$rules[$rule]{'GET'}})
 		{
-			#print "  vyzaduje key $kluc\n" if $main::debug;
-			main::_log("vyzaduje key '$kluc'") if $debug;
 			
-#			if ('type' eq $kluc)
-#			{
-#				main::_log("0 type=type");
-#			}
-			
-#			if (exists $hash->{$kluc})
-#			{
-#				main::_log("1 existuje key '$kluc'");
-#			}
-			
-#			if (exists $hash->{'type'})
-#			{
-#				main::_log("2 existuje key 'type'");
-#			}
+			main::_log("[$rule] key '$kluc' exists") if exists $rules[$rule]{'GET'}{$kluc};
+			main::_log("[$rule] key '$kluc' defined") if defined $rules[$rule]{'GET'}{$kluc};
 			
 			# porovnanie na hodnotu kluca
 			if ($rules[$rule]{'GET'}{$kluc})
 			{
-				main::_log("vyzadovana hodnota '$rules[$rule]{'GET'}{$kluc}'") if $debug;
+				main::_log("[$rule] proc key '$kluc' requested value '$rules[$rule]{'GET'}{$kluc}'") if $debug;
 				if ($rules[$rule]{'GET'}{$kluc} eq $hash->{$kluc})
 				{
 					next;
@@ -261,28 +244,27 @@ sub parse_hash
 					last;
 				}
 			}
-			# in rule variable=""
-#			elsif (exists $rules[$rule]{'GET'}{$kluc})
-#			{
-#				main::_log("vyzadovana neexistencia kluca '$kluc'") if $debug;
-#				if ($hash->{$kluc})
-#				{
-#					$true=0;
-#					last;
-#				}
-#				next;
-#			}
+			elsif (defined $rules[$rule]{'GET'}{$kluc})
+			{
+				main::_log("[$rule] proc key '$kluc' requested empty value ''") if $debug;
+				if ($rules[$rule]{'GET'}{$kluc} eq $hash->{$kluc})
+				{
+					next;
+				}
+				else
+				{
+					$true=0;
+					last;
+				}
+			}
 			# porovnanie na existenciu kluca
 			else
 			{
-				main::_log("vyzadovana existencia '$kluc'='".($hash->{$kluc})."' ") if $debug;
-				#if (exists $hash->{$kluc})
+				main::_log("[$rule] proc key '$kluc' requested any value") if $debug;
 				if (defined $hash->{$kluc})
 				{
-					main::_log("existuje") if $debug;
 					next;
 				}
-				main::_log("neexistuje") if $debug;
 				$true=0;
 				last;
 			}
@@ -290,7 +272,7 @@ sub parse_hash
 		
 		if ($true)
 		{
-			main::_log("rule with number $rule is the right") if $debug;
+			main::_log("[$rule] rule equals") if $debug;
 			
 			# VYTVORENIE LINKY
 			my $URL;
@@ -320,14 +302,6 @@ sub parse_hash
 			}
 			
 			# VYPRAZDNENIE NEPOTREBNEHO Z %HASH
-=head1
-			foreach my $kluc(keys %{$rules[$rule]{'GET'}})
-			{
-				main::_log("delete key $kluc");
-				delete $hash->{$kluc};
-			}
-=cut
-			#main::_log("idem mazat nepotrebne kluce z hash");
 			foreach my $kluc(keys %{$rules[$rule]{'GET'}})
 			{
 				# pokial na pravej strane pravidla je premennej priradena konkretna
@@ -344,11 +318,9 @@ sub parse_hash
 			
 			foreach my $kluc(@{$rules[$rule]{'URL'}})
 			{
-				#$i++;
-				#print "  $i:".$kluc->{name}."\n" if $main::debug;
 				if ($kluc->{dynamic}) # ak je tato premenna dynamicka
 				{
-					main::_log("delete key $kluc->{name}") if $debug;
+					main::_log("delete key '$kluc->{name}'") if $debug;
 					delete $hash->{$kluc->{name}};
 				}
 			}
@@ -361,7 +333,6 @@ sub parse_hash
 			
 			
 			$URL=~s/\/$/.html/ if $rules[$rule]{type} eq "html";
-			#print "URL=$URL\n";
 			
 			main::_log("output URL '$URL'") if $debug;
 			
@@ -615,18 +586,15 @@ sub get
 		foreach my $get(split(';',$sections[1]))
 		{
 			main::_log("processing '$get'") if $debug;
-			#print "   spracuvam: $get\n" if $main::debug;
 			if ($get=~/(.*)="(.{0,})"/)
 			{
 				main::_log("hard '$1'='$2'") if $debug;
-				#print "    hard: $1=$2\n" if $main::debug;
 				$rule{'GET'}{$1}=$2;
 			}
 			else
 			{
 				main::_log("dynamic '$get'") if $debug;
-				#print "    dynamic: $get\n" if $main::debug;
-				$rule{'GET'}{$get}=0;
+				undef $rule{'GET'}{$get};
 			}
 		}
 		
