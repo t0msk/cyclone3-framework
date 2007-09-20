@@ -211,7 +211,7 @@ sub execute
 	
 	foreach (keys %env)
 	{
-		main::_log("parsed input '$_'");
+		main::_log("parsed input '$_'='$env{$_}'");
 	}
 	
 	foreach my $relation (App::160::SQL::get_relations(
