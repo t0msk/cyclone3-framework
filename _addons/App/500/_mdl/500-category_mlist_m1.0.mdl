@@ -195,23 +195,6 @@ sub execute
 							}
 						}
 
-						if ( $env{sw_itemcount} )
-						{
-							my $conditionAdd;
-							$conditionAdd = '%' if $env{sw_itemcount_recurse};
-							my $sql_icount = "
-								SELECT
-									COUNT(DISTINCT ID) as countImages
-								FROM
-									$env{db_500}.a500_attrs
-								WHERE
-									IDcategory LIKE '$db_line{ID}$conditionAdd'
-									AND active!='D'
-							";
-							my %db_icount = $main::DB{main}->Query( $sql_icount )->fetchhash;
-							$XSGN{'NULL'} =~ s|<%count%>|$db_icount{'countImages'}|g;
-						}
-
 						$XSGN{'NULL_LINE_IMAGES'}="";
 						if (exists $XSGN{'LINE_IMAGES_'.$category_hash{$db_line{ID}}{ID}})
 						{
@@ -382,6 +365,24 @@ sub execute
 							$XSGN{'NULL_LINE_IMAGES'}=~s|<#LINE_IMAGES_LINE#>||sg;
 						}
 						$XSGN{'NULL'} =~ s|<#LINE_IMAGES#>|$XSGN{'NULL_LINE_IMAGES'}|;
+
+						if ( $env{sw_itemcount} )
+						{
+							my $conditionAdd;
+							$conditionAdd = '%' if $env{sw_itemcount_recurse};
+							my $sql_icount = "
+								SELECT
+									COUNT(DISTINCT ID) as countImages
+								FROM
+									$env{db_500}.a500_attrs
+								WHERE
+									IDcategory LIKE '$db_line{ID}$conditionAdd'
+									AND active!='D'
+							";
+							my %db_icount = $main::DB{main}->Query( $sql_icount )->fetchhash;
+							$XSGN{'NULL'} =~ s|<%count%>|$db_icount{'countImages'}|g;
+							main::_log('getting count of all items in category: '.$db_icount{'countImages'});
+						}
 
 						# ak sa vraciam do nadurovne
 						# - pozatvaram vsetky podurovnevne
