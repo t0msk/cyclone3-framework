@@ -111,6 +111,15 @@ sub execute
 	if (my %db0_line=$db0->FetchHash())
 	{
 		#main::_log("wrapper : $env{allow_cat} $env{actual_cat}");
+		
+		my %tmpCache;
+		if(
+			($env{-cache_id})||(!exists($env{-cache_id}))
+		){
+			$tmpCache{-cache_id}="default";
+			$tmpCache{-cache_id_sub}=$db0_line{ID}."-".$db0_line{votes};
+		}
+		
 		Tomahawk::module(
 			-type				=>	"mdl",
 			-category	=>	"410",
@@ -119,8 +128,10 @@ sub execute
 			-xsgn				=>	$env{-xsgn},
 			-xsgn_global	=>	$env{-xsgn_global},
 			-TMP				=>	$env{-TMP},
-			-cache_id	=>	"default",
-			-cache_id_sub		=>	$db0_line{ID}."-".$db0_line{votes},
+			#-cache_id	=>	"default",
+			#-cache_id_sub		=>	$db0_line{ID}."-".$db0_line{votes},
+			%tmpCache,
+			db_410					=>	$env{db_410},
 			xt_xlng					=>	$env{xt_xlng},
 			domain					=>	$env{domain},
 			ID							=>	$db0_line{ID},
