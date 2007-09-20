@@ -206,14 +206,12 @@ sub parse_hash_old(\%)
 
 
 sub parse_hash
-#sub parse_hash
 {
 	my $t=track TOM::Debug(__PACKAGE__."::parse_hash()") if $debug;
 	
-	#my $hash=shift;
 	my $hash=shift;
 	
-	# mam tu problem. odkial? -> zle napisana linka.
+	# problematic hash with undefined keyname
 	my $null;delete $hash->{$null};
 	
 	foreach (keys %{$hash})
@@ -221,12 +219,12 @@ sub parse_hash
 		main::_log("input key '$_'='$hash->{$_}'") if $debug;
 	}
 	
-	main::_log("finding right rule") if $debug;
+	#main::_log("finding right rule") if $debug;
 	
 	for my $rule(0..@rules-1)
 	{
 		#print " pravidlo $rule\n" if $main::debug;
-		main::_log("rule '$rule'") if $debug;
+		main::_log("[$rule] checking rule") if $debug;
 #		main::_
 		my $true=1;
 		foreach my $kluc(keys %{$rules[$rule]{'GET'}})
