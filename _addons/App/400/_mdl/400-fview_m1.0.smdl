@@ -218,6 +218,8 @@ sub execute
 			
 			# dodavam informaciu pre ostatne aplikacie
 			$main::env{a400_IDcategory}=$article{IDcategory};
+			
+			$main::env{'a400_ID'}=$article{'ID'};
 
 			# dodavam informaciu pre banner system
 			$main::env{a900_section}="a400-".$article{IDcategory};
