@@ -404,7 +404,7 @@ sub execute
 				'',
 				''
 			)
-		");
+		",'db_h'=>"stats");
 	}
 	
  return 1}
