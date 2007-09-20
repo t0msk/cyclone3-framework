@@ -35,14 +35,21 @@ Convert DocBook XML content into XHTML content
 
   'translate_images' =>
   {
-  	'dir_from' => '/www/TOM/_temp/' ?
-  	'dir_to' => '/www/TOM/!example.tld/!media/grf/temp'
+  	'dir_from' => '/www/TOM/_temp/', # ?
+  	'dir_to' => '/www/TOM/!example.tld/!media/grf/temp',
   	'uri' => 'http://media.example.tld/grf/temp'
   }
-  
+
   'translate_images' =>
   {
   	'prefix' => 'http://media.example.tld/grf/'
+  }
+
+  'translate_images' =>
+  {
+  	'uri_from' => 'http://media.example.tld/',
+  	'dir_to' => '/www/TOM/!example.tld/!media/grf/temp',
+  	'uri' => 'http://media.example.tld/grf/temp'
   }
 
 =cut
@@ -114,10 +121,46 @@ sub _docbook2xhtml_translate_image
 	
 	my $uri_to;
 	
+	# just add prefix to img uri
 	if ($env->{'prefix'})
 	{
 		$uri_to=$env->{'prefix'}.'/'.$link;
 	}
+	# download image and copy it
+	elsif ($env->{'uri_from'} && $env->{'dir_to'})
+	{
+		# links
+		my $from=$env->{'uri_from'}.'/'.$link;
+		my $hash=Digest::MD5::md5_base64($from);
+		$link=~s|/|_|g;
+		my $to=$env->{'dir_to'}.'/'.$hash.'-'.$link;
+		$uri_to=$env->{'uri'}.'/'.$hash.'-'.$link;
+		main::_log("from='$from' to='$to' uri_to='$uri_to'");
+		
+		# check if already available
+		if (-e $to)
+		{
+			return $uri_to;
+		}
+		
+		# download if not available
+		main::_log("downloading '$from'");
+		my $image=TOM::Temp::file->new();
+		my $bin='/usr/bin/wget';
+		if (-e '/usr/local/bin/wget'){$bin='/usr/local/bin/wget'}
+		my $cmd="$bin -q $from -O $image->{'filename'}";
+		system($cmd);
+		
+		# copy to target directory
+		if (-e $image->{'filename'})
+		{
+			main::_log("downloaded");
+			File::Copy::copy($image->{'filename'},$to);
+			return $uri_to;
+		}
+		
+	}
+	# copy image to this directory
 	elsif ($env->{'dir_to'})
 	{
 		my $hash=Utils::vars::genhash(8);
