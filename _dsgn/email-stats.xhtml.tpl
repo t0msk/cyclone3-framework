@@ -12,6 +12,7 @@
 	</header>
 	
 	<entity id="color.h1">#90bf56</entity>
+	<entity id="content.width">450</entity>
 	
 	<entity id="email.xhtml" replace_variables="true">
 		<![CDATA[
@@ -22,7 +23,7 @@
 	<body>
 		<style>
 			body { font-family: Arial, Verdana; font-size: 14px;}
-			#page { width: 650px; }
+			#page { width: <$tpl::entity{'content.width'}>px; }
 			h1 { color: <$tpl::entity{'color.h1'}>; clear: left; }
 			.main-logo { float: left; margin: 0 15px 15px 0; }
 			.main-title { font-size: 0.65em; font-weight: bold; }
@@ -41,8 +42,13 @@
 				background: #e5e5e5;
 			}
 			
-			#content { clear: both; }
-			#content table { width: 450px; }
+			#_content { clear: both; width:<$tpl::entity{'content.width'}>px }
+			#_content table { width: <$tpl::entity{'content.width'}>px; }
+			#content .graph
+			{
+				border: 2px dotted <$tpl::entity{'color.h1'}>;
+				margin-bottom: 20px;
+			}
 			table
 			{
 				border: 1px dotted gray; border-width: 1px 1px 0 0;
@@ -76,7 +82,7 @@
 	
 	<entity id="email.table">
 	<![CDATA[
-		<table cellpadding="0" cellspacing="0">
+		<table width="100%" cellpadding="0" cellspacing="0">
 			<thead>
 				<tr>
 					<th colspan="<%colscount%>"><%title%></th>
@@ -129,6 +135,14 @@
 	<entity id="email.table.col.value">
 	<![CDATA[
 		<td><%value%></td>
+		<#email.table.col.value#>
+	]]>
+	</entity>
+	
+	
+	<entity id="email.table.col.value_sum">
+	<![CDATA[
+		<td class="sum"><%value%></td>
 		<#email.table.col.value#>
 	]]>
 	</entity>
