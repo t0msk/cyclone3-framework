@@ -67,11 +67,11 @@ sub execute
 	$env{db_active}="1" unless (exists $env{db_active});
 	$env{db_active}="Y" if ($env{db_active} eq "1");
 	$env{db_active}="N" if ($env{db_active} eq "0");
-	
+
 	$env{db_type}="F" unless (exists $env{db_type});
-	
+
 	$env{db_where}.=" AND a820.ID='$env{db_ID}'" if (exists $env{db_ID});
-	
+
 	if((exists $env{db_where}) && (!$env{db_where}=~/^ AND /))
 	{ $env{db_where}="AND ".$env{db_where}; }
 
@@ -116,7 +116,7 @@ sub execute
 		$env{messages_db_active}="1" unless (exists $env{messages_db_active});
 		$env{messages_db_active}="Y" if ($env{messages_db_active} eq "1");
 		$env{messages_db_active}="N" if ($env{messages_db_active} eq "0");
-		
+
 		$env{messages_db_active}="%" if ($isAdmin);
 
       main::_applog(5, "
@@ -227,7 +227,7 @@ sub execute
 
 					my %lastparent=(
 						id	=>	$msgArray[$line_first],
-						level	=> $msgArray[$line_first+1] 
+						level	=> $msgArray[$line_first+1]
 					);
 
 					$struct_base{$msgArray[$arrayID]}{isPrevpageParent}=1;
@@ -277,14 +277,14 @@ sub execute
 			}
 
 			#povyplnaj vece
-			
+
 			if(exists($XSGN{'LINE_CONTENT_level_'.$struct_base{$msgArray[$arrayID]}{offset}}))
 			{
 				$XSGN{NULL}=$XSGN{'LINE_CONTENT_level_'.$struct_base{$msgArray[$arrayID]}{offset}};
 			}
 			else
 			{ $XSGN{NULL}=$XSGN{LINE_CONTENT}; }
-			
+
 			if(
 				($struct_base{$msgArray[$arrayID]}{offset} < $msgArray[$arrayID+3])
 			)
@@ -318,7 +318,7 @@ sub execute
 					$XSGN{NULL}=$XSGN{'LINE_CONTENT_PARENT_PREVPAGE'};
 				}
 			}
-			
+
 			if(($main::USRM{logged} eq "Y")&&($isAdmin))
 			{
 				# ak je uzivatel nalogovany a patri medzi administratorov fora
@@ -359,13 +359,13 @@ sub execute
 			$struct_base{$msgArray[$arrayID]}{msg}=~s|\n|<br />|g;
 
 			my %urlhash;
-			
+
 			if($env{xt_url_relink})
 			{
 				$env{xt_url_cut}=50 unless $env{xt_url_cut};
-				
+
 				my $urlcounter=0;
-				
+
 				while(
 					($struct_base{$msgArray[$arrayID]}{msg}=~s|(\bhttp[s]?:\/\/[^ <]+\b)|<#TMP$urlcounter#>|)
 					||
@@ -384,7 +384,7 @@ sub execute
 					{$urlhash{$urlcounter}{label}=substr($urlhash{$urlcounter}{label},0,$env{xt_url_cut})."&hellip;";}
 					$urlcounter++;
 				}
-				
+
 				if(($struct_base{$msgArray[$arrayID]}{isPrevpageParent}) && ($env{xt_parent_prevpage_msg_cut}))
 				{
 					#osekavanie msg v parentovi z predoslych stranok
@@ -447,7 +447,7 @@ sub execute
 					}
 				}
 			}
-			
+
 			#$XSGN{TMP} =~s|<%msg%>|$struct_base{$msgArray[$arrayID]}{msg}|g;
 
 			#nu way o' replacin'
@@ -472,7 +472,7 @@ sub execute
 				$XSGN{NULL}=~s|<%month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
 				$XSGN{NULL}=~s|<%month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
 			}
-			
+
 			$XSGN{NULL}=~s|<%line_no%>|($arrayID/2)+1|ge;
 			my $tmpLineLevel=$struct_base{$msgArray[$arrayID]}{offset};
 			$XSGN{NULL}=~s|<%line_level%>|$tmpLineLevel|g;
@@ -503,18 +503,18 @@ sub execute
 				}
 			}
 		}
-	
+
 		if (($db_line{messages_count}>($line_last/2)) || (($env{db_page}>0)))
 		{
 			main::_applog(5, "yes, mylord. i am paging. actual page is: $env{db_page}");
 			#$XSGN{TMP}=~s|<#PAGING#>|$XSGN{PAGING}|;
-	
+
 			if ($XSGN{'PAGING_'.$env{db_page}})
 			{
 				$XSGN{PAGING}=$XSGN{'PAGING_'.$env{db_page}};
 				main::_applog(5, "got a different design for paging!");
 			}
-	
+
 			if($XSGN{TMP}=~/<#PAGING_$env{db_page}#>/)
 			{
 				#not sure about this
@@ -523,10 +523,10 @@ sub execute
 			}
 			else
 			{$XSGN{TMP}=~s|<#PAGING#>|$XSGN{PAGING}|g;}
-	
+
 			$XSGN{TMP}=~s|<%page%>|$env{db_page}|;
 		}
-	
+
 		# inserting links to all previous pages
 		if(($XSGN{TMP}=~/<#PAGES#>/) && ($XSGN{PAGES}))
 		{
@@ -537,40 +537,40 @@ sub execute
 				{$XSGN{PAGES}=~s|<#PAGE#>|$XSGN{PAGE_ACTUAL}|;}
 				else
 				{$XSGN{PAGES}=~s|<#PAGE#>|$XSGN{PAGE}|;}
-				
+
 				$XSGN{PAGES}=~s|<%page%>|$var|g;
 				$var++;
 				$XSGN{PAGES}=~s|<%page_real%>|$var|g;
 			}
 			$XSGN{TMP}=~s|<#PAGES#>|$XSGN{PAGES}|g;
 		}
-	
+
 		if ($db_line{messages_count}>($line_last/2))
 		{
 			my $nextpage=$env{db_page}+1;
 			$XSGN{NULL}=$XSGN{PAGING_NEXT};
-	
+
 			if($XSGN{'PAGING_URL_'.$nextpage})
 			{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{'PAGING_URL_'.$nextpage}|;}
 			else
 			{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{PAGING_URL}|;}
-	
+
 			$XSGN{NULL}=~s|<%page%>|$nextpage|g;
 			$nextpage++;
 			$XSGN{NULL}=~s|<%page_real%>|$nextpage|g;
 			$XSGN{TMP}=~s|<#PAGING_NEXT#>|$XSGN{NULL}|g;
 		}
-	
+
 		if ($env{db_page}>0)
 		{
 			my $prevpage=$env{db_page}-1;
 			$XSGN{NULL}=$XSGN{PAGING_PREV};
-	
+
 			if($XSGN{'PAGING_URL_'.$prevpage})
 			{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{'PAGING_URL_'.$prevpage}|;}
 			else
 			{$XSGN{NULL}=~s|<#PAGING_URL#>|$XSGN{PAGING_URL}|;}
-	
+
 			$XSGN{NULL}=~s|<%page%>|$prevpage|g;
 			$prevpage++;
 			$XSGN{NULL}=~s|<%page_real%>|$prevpage|g;

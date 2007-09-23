@@ -109,11 +109,11 @@ sub execute
 
 				my %caching;
             #if ($article{a_starttime}>($tom::time_current-7200))
-   
+
             # pridat podmienku zrusenia cache pri zmene clanku changetime
             #  if (($article{_a400_lasttime}>($tom::time_current-3600))
             #     &&($article{_a400_changetime}>($tom::time_current-86400))) # ak bol clanok naposledy videni pred hodinou
-   
+
    #        if ($article{_a400_lasttime}>($tom::time_current-86400)) # ak bol clanok naposledy videni pred hodinou
    #        {
    #           %caching=(

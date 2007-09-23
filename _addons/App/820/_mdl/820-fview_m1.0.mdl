@@ -157,7 +157,7 @@ sub execute
 		my @msgArray;
 		foreach my $key(reverse sort keys %struct)
 		{
-			
+
 			if (($struct{$key}==0)&&(defined $struct{$key}))
 			{
 				push @msgArray,$key,0;
@@ -202,7 +202,7 @@ sub execute
 			$treeItem{current_offset}=$struct_base{$msgArray[$arrayID]}{offset};
 			$treeItem{indent}="<#INDENT#>" x $struct_base{$msgArray[$arrayID]}{offset};
 
-			
+
 			#cleaning excessive line gateways
 			while($treeItem{current_offset} < $lastOffset)
 			{
