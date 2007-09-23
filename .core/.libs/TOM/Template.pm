@@ -315,7 +315,15 @@ sub parse_entity
 	{
 		my $name=$node->getName();
 		my $id=$node->getAttribute('id');
-		$self->{'entity'}{$id}=$node->string_value();
+		if ($node->getAttribute('map'))
+		{
+			main::_log("entity id='$id' map id='".$node->getAttribute('map')."'") if $debug;
+			$self->{'entity'}{$id}=$self->{'entity'}{$node->getAttribute('map')};
+		}
+		else
+		{
+			$self->{'entity'}{$id}=$node->string_value();
+		}
 		$self->{'entity_'}{$id}{'replace_variables'}=$node->getAttribute('replace_variables');
 		main::_log("setup entity id='$id' with length(".(length($self->{'entity'}{$id})).")") if $debug;
 		push @ents, $id;
