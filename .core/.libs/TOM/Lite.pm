@@ -267,7 +267,19 @@ sub track
 	return $tracks_obj[$track_level];
 }
 
-
+sub DESTROY
+{
+	my $self=shift;
+	
+	if ($self->{DESTROY})
+	{
+		return undef;
+	}
+	else
+	{
+		$self->close();
+	}
+}
 
 sub close
 {

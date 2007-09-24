@@ -21,7 +21,7 @@ use File::Path;
 use File::Copy;
 use XML::XPath;
 use XML::XPath::XMLParser;
-
+use TOM::L10n;
 
 BEGIN
 {
@@ -74,6 +74,7 @@ sub new
 	%{$obj->{'ENV'}}=%env;
 	$obj->{'entity'}={};
 	$obj->{'entity_'}={};
+	$obj->{'L10n'}={};
 	$obj->{'file'}={};
 	$obj->{'file_'}={};
 	
@@ -105,6 +106,7 @@ sub new
 		%{$obj_return->{'entity'}}=%{$objects{$obj->{'location'}}{'entity'}};
 		%{$obj_return->{'entity_'}}=%{$objects{$obj->{'location'}}{'entity_'}};
 		%tpl::entity=%{$objects{$obj->{'location'}}{'entity'}};
+		%{$obj_return->{'L10n'}}=%{$objects{$obj->{'location'}}{'L10n'}};
 		# replace_variables only in root level of Template not in templates called by <extend*>
 		$obj_return->process_entity() if (caller)[0] ne "TOM::Template";
 		%{$obj_return->{'file'}}=%{$objects{$obj->{'location'}}{'file'}};
@@ -228,6 +230,9 @@ sub parse_header
 				$self->{'entity_'}{$_}=$extend->{'entity_'}{$_};
 			}
 			
+			# add L10n
+			%{$self->{'L10n'}}=%{$extend->{'L10n'}};
+			
 			# add files from inherited tpl
 			foreach (keys %{$extend->{'file'}})
 			{
@@ -236,6 +241,14 @@ sub parse_header
 			}
 			
 			next;
+		}
+		elsif ($name eq "L10n")
+		{
+			$self->{'L10n'}{'level'}=$node->getAttribute('level');
+			$self->{'L10n'}{'addon'}=$node->getAttribute('addon');
+			$self->{'L10n'}{'name'}=$node->getAttribute('name');
+			$self->{'L10n'}{'lng'}=$node->getAttribute('lng');
+			main::_log("request to load L10n level='$self->{'L10n'}{'level'}' addon='$self->{'L10n'}{'addon'}' name='$self->{'L10n'}{'name'}' lng='$self->{'L10n'}{'lng'}'") if $debug;
 		}
 		
 	}
@@ -255,8 +268,9 @@ sub parse_header
 			{
 				my $location=$node->getAttribute('location');
 				my $replace_variables=$node->getAttribute('replace_variables');
+				my $replace_L10n=$node->getAttribute('replace_L10n');
 				
-				main::_log("extract file '$location' from '$self->{'dir'}' replace_variables='$replace_variables'") if $debug;
+				main::_log("extract file '$location' from '$self->{'dir'}' replace_variables='$replace_variables' replace_L10n='$replace_L10n'") if $debug;
 				
 				# check if this file is not oveerided, or already exists in
 				# destination directory
@@ -325,6 +339,7 @@ sub parse_entity
 			$self->{'entity'}{$id}=$node->string_value();
 		}
 		$self->{'entity_'}{$id}{'replace_variables'}=$node->getAttribute('replace_variables');
+		$self->{'entity_'}{$id}{'replace_L10n'}=$node->getAttribute('replace_L10n');
 		main::_log("setup entity id='$id' with length(".(length($self->{'entity'}{$id})).")") if $debug;
 		push @ents, $id;
 	}
@@ -338,6 +353,40 @@ sub parse_entity
 sub process_entity
 {
 	my $self=shift;
+	
+	if (exists $self->{'L10n'})
+	{
+		my $lng=$self->{'L10n'}{'lng'};
+		if (!$lng || $lng eq "auto")
+		{
+			$lng=$tom::lng;
+			$lng=$tom::LNG unless $lng;
+			$lng=$TOM::LNG unless $lng;
+		}
+		my $L10n=new TOM::L10n(
+			'level' => $self->{'L10n'}{'level'},
+			'addon' => $self->{'L10n'}{'addon'},
+			'name' => $self->{'L10n'}{'name'},
+			'lng' => $lng,
+		);
+		
+		foreach my $entity (keys %{$self->{'entity'}})
+		{
+			if ($self->{'entity_'}{$entity}{'replace_L10n'} eq "true")
+			{
+				main::_log("replace_L10n in entity '$entity'") if $debug;
+				while ($self->{'entity'}{$entity}=~s/<\${(.{1,512}?)}>/<!L10N!>/)
+				{
+					my $string=$1;
+					my $number=$L10n::num{'#'.$L10n->{'id'}}{$string};
+					my $variable='<$L10n::obj{\'#'.$L10n->{'id'}.'#'.$number.'\'}>';
+					$self->{'entity'}{$entity}=~s/<!L10N!>/$variable/;
+				}
+				
+			}
+		}
+		
+	}
 	
 	foreach my $entity (keys %{$self->{'entity'}})
 	{

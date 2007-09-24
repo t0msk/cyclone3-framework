@@ -145,7 +145,7 @@ sub engine_pub
 		);
 		
 		my $cvml = CVML::structure::serialize( %cvml_hash );
-		Utils::vars::replace( $cvml );
+		TOM::Utils::vars::replace( $cvml );
 		
 		$ticket_ok = App::100::SQL::ticket_event_new(
 			'domain' => $tom::H,
@@ -193,7 +193,7 @@ sub engine_pub
 	{
 		print "Content-Type: ".$Net::DOC::content_type."; charset=UTF-8\n\n";
 		my $out=$Net::DOC::err_page;
-		Utils::vars::replace($out);
+		TOM::Utils::vars::replace($out);
 		$out=~s|<!--ERROR-->|<!-- $var -->|;
 		print $out;
 	}
@@ -266,7 +266,7 @@ sub engine_cron
 	
 	$email=~s|<%to%>|$email_addr|;
 	
-	Utils::vars::replace($email);
+	TOM::Utils::vars::replace($email);
 	
 	$email=~s|<#.*?#>||g;
 	$email=~s|<%.*?%>||g;
@@ -312,7 +312,7 @@ sub engine_cron
 		);
 
 		my $cvml = CVML::structure::serialize( %cvml_hash );
-		Utils::vars::replace( $cvml );
+		TOM::Utils::vars::replace( $cvml );
 
 		App::100::SQL::ticket_event_new(
 			'domain' => $tom::H,
@@ -359,7 +359,7 @@ sub module_pub
 	$env{-TMP}="ERROR" unless $env{-TMP};
 	
 	my $out=$Net::DOC::err_mdl;
-	Utils::vars::replace($out);
+	TOM::Utils::vars::replace($out);
 	
 	$out=~s|<%MODULE%>|$env{-MODULE}|;
 	$out=~s|<%ERROR%>|$env{-ERROR}| if $main::IAdm;
@@ -485,7 +485,7 @@ sub module_pub
 		
 		$email=~s|<%to%>|$email_addr|;
 		
-		Utils::vars::replace($email);
+		TOM::Utils::vars::replace($email);
 		$email=~s|<#.*?#>||g;
 		$email=~s|<%.*?%>||g;
 		
@@ -561,7 +561,7 @@ sub module_cron
 		);
 
 		my $cvml = CVML::structure::serialize( %cvml_hash );
-		Utils::vars::replace( $cvml );
+		TOM::Utils::vars::replace( $cvml );
 		
 		$ticket_ok = App::100::SQL::ticket_event_new(
 			'domain' => $tom::H,
@@ -622,7 +622,7 @@ sub module_cron
 		
 		$email=~s|<%to%>|$email_addr|;
 		
-		Utils::vars::replace($email);
+		TOM::Utils::vars::replace($email);
 		$email=~s|<#.*?#>||g;
 		$email=~s|<%.*?%>||g;
 		

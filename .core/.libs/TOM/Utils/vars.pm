@@ -146,8 +146,13 @@ sub replace
 		$i++;
 		main::_log("replacing text No. $i") if $debug;
 		
+		while ($_=~s/<\${(.{1,1024}?)}>/<!TMP-$TMP!>/) # max 1024 long L10n variable string
+		{
+			my $var=$1;
+			$_=~s|<!TMP-$TMP!>|{$var}|;
+		}
 		
-		while ($_=~s/<\$(.{1,100}?)>/<!TMP-$TMP!>/) # MAXIMALNE 100 znakova premmenna
+		while ($_=~s/<\$(.{1,512}?)>/<!TMP-$TMP!>/) # max 512 long variable name
 		{
 			my $value;
 			my $var=$1;
@@ -155,13 +160,21 @@ sub replace
 			
 			main::_log("replacing variable '\$$var'") if $debug;
 			
+#			if ($var=~/^{/ && $var=~/}$/)
+#			{
+#				$_=~s|<!TMP-$TMP!>|$var|;
+#				next;
+				#$var=~s|'|\\'|;
+				#$var=~s|^{|L10n::string{'|;
+				#$var=~s|}$|'}|;
+#			}
+			
 			if ($var=~/(sub\{|do\{|&|\+|\*|\/|=|"|\||;)/)
 			{
 				main::_log("Unsecure variable replacement \"".
 				$var.
-				"\" z $main::ENV{'REMOTE_ADDR'} s $main::ENV{'QUERY_STRING'} ",1,"secure");
+				"\" from $main::ENV{'REMOTE_ADDR'} with $main::ENV{'REQUEST_URI'} ",1,"secure");
 				$var="null";
-				# TUTO POSLAT OZNAMENIE O TOMTO ERRORE!!
 			}
 			
 			eval "\$value=\$$var;";
@@ -172,6 +185,7 @@ sub replace
 				$value=~s|^<||;
 				$value=~s|>$||;
 			}
+
 			
 			if ($@)
 			{

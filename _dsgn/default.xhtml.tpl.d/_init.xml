@@ -10,6 +10,7 @@
 			<file location="grf/a400/logo.gif"/>
 		</extract>
 		-->
+		<L10n level="auto" name="xhtml" lng="auto"/>
 		
 		<extract>
 			<file location="cyclone3-150x44.png"/>
@@ -182,7 +183,7 @@
 	</entity>
 	
 	
-	<entity id="body.notfound" replace_variables="false">
+	<entity id="body.notfound" replace_L10n="true" replace_variables="false">
 	<![CDATA[
 	<style>
 		body
@@ -242,17 +243,17 @@
 		
 		<div id="page-i">
 			
-			<h1>Page not found</h1>
+			<h1><${Page not found}></h1>
 			<h2><$main::ENV{'REQUEST_URI'}></h2>
-			<h2>Service '<$main::FORM{'TID'}>'</h2>
+			<h2><${Service}> '<$main::FORM{'TID'}>'</h2>
 			<p>
-				<strong>The page or service type cannot be found.</strong>
+				<strong><${The page or service type cannot be found}>.</strong>
 			</p>
-			<p>The page or service type you are looking for might have been disabled, removed, or has its name changed.</p>
-			<p>You can try the following:</p>
+			<p><${The page or service type you are looking for might have been disabled, removed, or has its name changed}>.</p>
+			<p><${You can try the following}>:</p>
 			<ul>
-				<li>If you typed the page address in the Address bar, make sure that it is spelled correctly.</li>
-				<li>Open the <a href="<$tom::H_www>"><$tom::H_www></a> home page, and then look for links to the information you want.</li>
+				<li><${If you typed the page address in the Address bar, make sure that it is spelled correctly}>.</li>
+				<li><${Open the <a href="<$tom::H_www>"><$tom::H_www></a> home page, and then look for links to the information you want}>.</li>
 				<li>Click the <a href="javascript:history.back(1)">Back</a> button to try another link.</li>
 				<li>If the problem repeats, you can contact administrator of this page at <a href="mailto:<$TOM::contact{'TECH'}>"><$TOM::contact{'TECH'}></a></li>
 			</ul>
@@ -266,12 +267,12 @@
 	</entity>
 	
 	
-	<entity id="box.error" replace_variables="true">
+	<entity id="box.error" replace_variables="true" replace_L10n="true">
 	<![CDATA[
 	<table bgcolor='black' cellspacing='2' cellpadding='2'>
 	<tr>
 		<td style="FONT:bold 10px Verdana;COLOR:black;BACKGROUND:#F0F0F0;">
-			<img src="<$tom::H_media>/tpl/error_02.png" border='0' align='left'><%MODULE%> This service is currently not available. We're trying to fix this problem at the moment and apologize for any incovnenience. <%ERROR%> <%PLUS%>
+			<img src="<$tom::H_media>/tpl/error_02.png" border='0' align='left'><%MODULE%> <${This service is currently not available}>. <${We're trying to fix this problem at the moment and apologize for any incovnenience}>. <%ERROR%> <%PLUS%>
 		</td>
 	</tr>
 	</table>
