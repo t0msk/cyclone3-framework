@@ -4,14 +4,6 @@
 		<extend level="global" name="default"/>
 	</header>
 	
-	<string id="This service is currently not available">
-		<sk-SK>Táto služba je momentálne nedostupná</sk-SK>
-	</string>
-	
-	<string id="We're trying to fix this problem at the moment and apologize for any incovnenience">
-		<sk-SK>Ospravedlňujeme sa za dočasné nepohodlie, na odstránení problému pracujeme</sk-SK>
-	</string>
-	
 	<string id="Page not found">
 		<sk-SK>Stránka nebola nájdená</sk-SK>
 	</string>
@@ -36,21 +28,24 @@
 		<sk-SK>Skontrolujte či ste napísali do adresného riadku správne adresu, prípadne či ste sa nepreklepli</sk-SK>
 	</string>
 	
+	<string id="Powered by Cyclone3">
+		<en-US><![CDATA[Powered by <a href="http://www.cyclone3.org" alt="Cyclone3 - Open Perl/XUL CMS Framework">Cyclone3 (<$TOM::core_version>)</a>]]></en-US>
+		<sk-SK><![CDATA[Generuje <a href="http://www.cyclone3.org" alt="Cyclone3 - Open Perl/XUL CMS Framework">Cyclone3 (<$TOM::core_version>)</a>]]></sk-SK>
+	</string>
+	
 	<string>
 		<en-US><![CDATA[Open the <a href="<$tom::H_www>"><$tom::H_www></a> home page, and then look for links to the information you want]]></en-US>
 		<sk-SK><![CDATA[Otvorte domovskú stránku <a href="<$tom::H_www>"><$tom::H_www></a> a skúste znova vyhľadať informácie ktoré potrebujete]]></sk-SK>
 	</string>
 	
-	<string id="Open the">
-		<sk-SK>Otvorte domovskú stránku</sk-SK>
+	<string>
+		<en-US><![CDATA[Click the <a href="javascript:history.back(1)">Back</a> button to try another link]]></en-US>
+		<sk-SK><![CDATA[Kliknite <a href="javascript:history.back(1)">späť</a> a vyskúšajte iný odkaz]]></sk-SK>
 	</string>
 	
-	<string id="home page, and then look for links to the information you want">
-		<sk-SK>, a skúste nájsť znova informácie ktoré hľadáte</sk-SK>
-	</string>
-	
-	<string id="Service">
-		<sk-SK>Služba</sk-SK>
+	<string id="You can contact administrator of this page">
+		<en-US><![CDATA[If the problem persist, you can contact administrator of this page at <a href="mailto:<$TOM::contact{'TECH'}>"><$TOM::contact{'TECH'}></a>]]></en-US>
+		<sk-SK><![CDATA[Ak problém pretrváva, môžete kontaktovať správcu týchto stránok na adrese <a href="mailto:<$TOM::contact{'TECH'}>"><$TOM::contact{'TECH'}></a>]]></sk-SK>
 	</string>
 	
 </L10n>

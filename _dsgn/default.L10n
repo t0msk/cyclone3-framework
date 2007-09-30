@@ -14,4 +14,16 @@
 		<cs-CZ>Ne</cs-CZ>
 	</string>
 	
+	<string id="Service">
+		<sk-SK>Služba</sk-SK>
+	</string>
+	
+	<string id="This service is currently not available">
+		<sk-SK>Táto služba je momentálne nedostupná</sk-SK>
+	</string>
+	
+	<string id="We're trying to fix this problem at the moment and apologize for any incovnenience">
+		<sk-SK>Ospravedlňujeme sa za dočasné nepohodlie, na odstránení problému pracujeme</sk-SK>
+	</string>
+	
 </L10n>
