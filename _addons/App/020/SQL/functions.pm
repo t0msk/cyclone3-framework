@@ -49,6 +49,8 @@ L<App::020|app/"020/_init.pm">
 use TOM::Database::SQL;
 use App::020::SQL::functions::tree;
 
+our $debug=0;
+our $quiet;$quiet=1 unless $debug;
 
 =head1 FUNCTIONS
 
@@ -69,7 +71,8 @@ This function makes automatically journalization copy of every created new row, 
    'column2' => "NOW()",
    'column3' => "NULL"
   },
-  '-journalize' => 1
+  '-journalize' => 1,
+  '-replace' => 0 # use REPLACE INTO instead of INSERT INTO
  )
 
 Please never try over this function setting columns named ID, ID_entity and datetime_create.
@@ -81,13 +84,13 @@ Function returns ID, which is in new() same as ID_entity!
 sub new
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::new()");
+	my $t=track TOM::Debug(__PACKAGE__."::new()") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	foreach (keys %env)
 	{
-		main::_log("input '$_'='$env{$_}'");
+		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
 	my $sel_columns;
@@ -102,22 +105,25 @@ sub new
 	$sel_columns="`" . (join "`,`" , @columns) . "`" if @columns;
 	$sel_values= join (",",@values) if @values;
 	
+	my $type="INSERT";
+	$type="REPLACE" if $env{'-replace'};
 	my $SQL=qq{
-		INSERT INTO
+		REPLACE INTO
 			`$env{'db_name'}`.`$env{'tb_name'}`
 		($sel_columns)
 		VALUES
 		($sel_values)
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
 	
 	if ($sth0{'rows'})
 	{
-		# podarilo sa vlozit zaznam
+		# new entry inserted
 		my $ID=$sth0{'sth'}->insertid();
-		main::_log("new ID='$ID'");
-		# aktivujem ho tym ze mu priradim cislo a cislo verzie
+		main::_log("new ID='$ID'") if $debug;
+		main::_log("<={SQL:$env{'db_h'}} '$env{'db_name'}'.'$env{'tb_name'}' ID='$ID' $type") unless $debug;
+		# activating by setting ID_entity
 		new_initialize(
 			'db_h' => $env{'db_h'},
 			'db_name' => $env{'db_name'},
@@ -137,11 +143,15 @@ sub new
 			);
 		}
 		
-		$t->close();
+		$t->close() if $debug;
 		return $ID;
 	}
+	else
+	{
+		main::_log("can't $type into $env{'db_h'}:'$env{'db_name'}'.'$env{'tb_name'}'",1);
+	}
 	
-	$t->close();
+	$t->close() if $debug;
 	return undef;
 }
 
@@ -165,13 +175,13 @@ Function can be called with one param - ID;
 sub new_initialize
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::new_initialize($env{'ID'})");
+	my $t=track TOM::Debug(__PACKAGE__."::new_initialize($env{'ID'})") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	foreach (keys %env)
 	{
-		main::_log("input '$_'='$env{$_}'");
+		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
 	my $SQL="UPDATE `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=NOW(), ID_entity=ID WHERE ";
@@ -189,11 +199,9 @@ sub new_initialize
 		$SQL.="ID_entity IS NULL";
 	}
 	
-	main::_log("SQL='$SQL'");
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
 	
-	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
-	
-	$t->close();
+	$t->close() if $debug;
 	return 1;
 }
 
@@ -224,13 +232,13 @@ Into 'columns' you are able set '*' => 1
 sub get_ID(%env)
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::get_ID($env{'ID'})");
+	my $t=track TOM::Debug(__PACKAGE__."::get_ID($env{'ID'})") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	foreach (keys %env)
 	{
-		main::_log("input '$_'='$env{$_}'");
+		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
 	my %data;
@@ -257,16 +265,16 @@ sub get_ID(%env)
 		LIMIT 1
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'quiet'=>1);
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
 	if ($sth0{'rows'})
 	{
-		main::_log("returned row");
-		$t->close();
+		main::_log("returned row") if $debug;
+		$t->close() if $debug;
 		return $sth0{'sth'}->fetchhash();
 	}
 	else
 	{
-		main::_log("none row returned",1);
+		main::_log("none row returned",1) if $debug;
 	}
 	
 	$t->close();
@@ -297,13 +305,13 @@ Please do not set column datetime_create. datetime_create is updatet automatical
 sub update
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::update()");
+	my $t=track TOM::Debug(__PACKAGE__."::update()") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	foreach (keys %env)
 	{
-		main::_log("input '$_'='$env{$_}'");
+		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
 	$env{'columns'}{'datetime_create'} = "NOW()";
@@ -315,7 +323,7 @@ sub update
 	}
 	$sel_set=~s|,\n$||;
 	
-	my $tr=new TOM::Database::SQL::transaction('db_h'=>$env{'db_h'});
+	my $tr=new TOM::Database::SQL::transaction('db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
 	
 	my $SQL=qq{
 		UPDATE `$env{'db_name'}`.`$env{'tb_name'}`
@@ -325,10 +333,13 @@ $sel_set
 		LIMIT 1
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
+	my $clmns=join "','", keys %{$env{'columns'}};
+	
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
 	
 	if ($sth0{'rows'})
 	{
+		main::_log("<={SQL:$env{'db_h'}} '$env{'db_name'}'.'$env{'tb_name'}' ID='$env{'ID'}' UPDATE '$clmns'");
 		if ($env{'-journalize'})
 		{
 			# zajournalujem sucasnu verziu
@@ -341,9 +352,9 @@ $sel_set
 			
 			if (!$out)
 			{
-				main::_log("can't journalize, rollback",1);
+				main::_log("can't journalize, rollback",1) if $debug;
 				$tr->rollback();
-				$t->close();
+				$t->close() if $debug;
 				return undef;
 			}
 			
@@ -351,14 +362,14 @@ $sel_set
 	}
 	else
 	{
-		main::_log("can't update, rollback",1);
+		main::_log("can't update, rollback",1) if $debug;
 		$tr->rollback();
-		$t->close();
+		$t->close() if $debug;
 		return undef;
 	}
 	
 	$tr->close();
-	$t->close();
+	$t->close() if $debug;
 	return 1;
 }
 
@@ -1146,13 +1157,13 @@ Only rows with status N can be enabled
 sub enable
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::enable()");
+	my $t=track TOM::Debug(__PACKAGE__."::enable()") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	foreach (keys %env)
 	{
-		main::_log("input '$_'='$env{$_}'");
+		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
 	my %columns=get_ID(
@@ -1164,22 +1175,24 @@ sub enable
 	
 	if (!$columns{'ID'})
 	{
-		main::_log("this ID not exists!",1);
-		$t->close();
+		main::_log("this ID not exists!",1) if $debug;
+		main::_log("<={SQL:$env{'db_h'}} can't update ID='$columns{'ID'}' in '$env{'db_name'}'.'$env{'tb_name'}' because ID not exists",1) unless $debug;
+		$t->close() if $debug;
 		return undef;
 	}
 	
 	if ($columns{'status'} eq "Y")
 	{
-		main::_log("this ID is previously enabled");
-		$t->close();
+		main::_log("this ID is already enabled") if $debug;
+		main::_log("<={SQL:$env{'db_h'}} '$env{'db_name'}'.'$env{'tb_name'}' ID='$columns{'ID'}' already enabled") unless $debug;
+		$t->close() if $debug;
 		return 1;
 	}
 	
 	if ($columns{'status'} ne "N")
 	{
-		main::_log("only ID with status 'N' can be enabled, not status='$columns{'status'}'");
-		$t->close();
+		main::_log("only ID with status 'N' can be enabled, not status='$columns{'status'}'") if $debug;
+		$t->close() if $debug;
 		return undef;
 	}
 	
@@ -1194,7 +1207,7 @@ sub enable
 		}
 	);
 	
-	$t->close();
+	$t->close() if $debug;
 	return 1;
 }
 
