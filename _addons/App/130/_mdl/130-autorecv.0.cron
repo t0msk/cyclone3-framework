@@ -1,96 +1,99 @@
 #!/bin/perl
 # USE UTF-8 !!!
 package CRON::module;
-use strict;
+use open ':utf8', ':std';
+use Encode;
+use encoding 'utf8';
+use utf8;
+#use bytes;
+use strict; # scrict code
 
+use Net::POP3;
+use MIME::Parser;
 
 sub execute
 {
- my %env=@_;
-
- #if (!$env{host}){$cron::ERR="not defined pop3 host";return undef;}
- #if (!$env{port}){$cron::ERR="not defined pop3 port";return undef;}
- #if (!$env{user}){$cron::ERR="not defined pop3 user";return undef;}
- #if (!$env{pass}){$cron::ERR="not defined pop3 pass";return undef;}
-
-
- if ($cron::P eq $CRON::P)
- {
-  main::_log("WARN: global/master use, using database $TOM::DB_name_TOM, table a130_received");
-  $env{table}="a130_received";
-  $env{db_130}=$TOM::DB_name_TOM;
- }
- else
- {
-  main::_log("WARN: local use, using database $TOM::DB_name, table a130_received");
-  $env{table}="a130_received";
-  $env{db_130}=$TOM::DB_name;
- }
-
- use Net::POP3;
-
-
-my $con=1;
-while ($env{'C_'.$con.'_host'})
-{
- my $rot;
- main::_log("Preparing for connect $env{'C_'.$con.'_host'} $env{'C_'.$con.'_port'}");
- if (my $conn=Net::POP3->Connect(host=>$env{'C_'.$con.'_host'}, port=>$env{'C_'.$con.'_port'},timeout=>5)) #connected
- {
-  main::_log("connected, logging $env{'C_'.$con.'_user'}...");
-  if (!$conn->login(account=>$env{'C_'.$con.'_user'},password=>$env{'C_'.$con.'_pass'}))
-  {
-   main::_log("error in login",1);
-  }
-  else
-  {
-   main::_log("logged, get list of messages...");
-   if (my($msgs,$totalsize,@sizes)=$conn->get_list())
-   {
-    main::_log("list of messages is here ($msgs,$totalsize)");
-    foreach (@sizes)
-    {
-     $rot++;
-     main::_log("RETR $rot");
-     if (my $body=$conn->get_mail($rot))
-     {
-      main::_log("ok, i have body");
-      #print "$body\n";
-      $body=~s|"|\\"|g;
-#      print "$body\n";
-	$body=~/\nTo: (.*?)\n/;my $mail_to=$1;
-	$body=~/\nFrom: (.*?)\n/;my $mail_from=$1;
-	$mail_from=~s|<(.*?)>||;my $mail_from_email=$1;
-	$mail_from=~s|\\"||g;
-	#print "$1\n";
-	main::_log("To: $mail_to");
-	main::_log("From: $mail_from");
-	main::_log("From_mail: $mail_from_email");
-
-	$body=~s|\'|\\'|g;
-
-	if ($main::DBH->Query("INSERT INTO $env{db_130}.$env{table}(rectime,from_name,from_email,to_name,to_email,body)
-	VALUES ('$cron::time_current','$mail_from','$mail_from_email','','$env{'C_'.$con.'_email'}','$body')"))
+	my %env=@_;
+	
+	my $con=1;
+	while ($env{'C_'.$con.'_host'})
 	{
-	 $conn->del_mail($rot);
+		
+		my $pop = Net::POP3->new($env{'C_'.$con.'_host'}, 'timeout'=>60);
+		
+		if ($pop->login($env{'C_'.$con.'_user'}, $env{'C_'.$con.'_pass'}) > 0)
+		{
+			my $msgnums = $pop->list; # hashref of msgnum => size
+			foreach my $msgnum (keys %{$msgnums})
+			{
+				my $msg = $pop->get($msgnum);
+				
+				my $body;
+				foreach (@{$msg})
+				{
+					$body.=$_;
+				}
+				
+				my $parser = new MIME::Parser;
+				#$parser->output_to_core(1);
+				#$parser->extract_uuencode(1);
+				$parser->decode_headers(1);
+				
+				my $entity = $parser->parse_data($body);
+				
+				my $from=$entity->head->get('From');chomp($from);
+				my $mail_from=$from;
+				$mail_from=~s|<(.*?)>||;my $mail_from_email=$1;
+					$mail_from=~s|\\"||g;
+				my $subject=$entity->head->get('Subject');chomp($subject);
+				
+				main::_log("from=$mail_from email=$mail_from_email");
+				main::_log("subject=$subject");
+				
+				$body=~s|\'|\\'|g;
+				
+				if (utf8::is_utf8($body))
+				{
+					main::_log("body is utf8");
+				}
+				
+				my $sql=qq{
+					INSERT INTO TOM.a130_received
+					(
+						rectime,
+						from_name,
+						from_email,
+						to_name,
+						to_email,
+						subject,
+						body
+					)
+					VALUES
+					(
+						'$main::time_current',
+						'$mail_from',
+						'$mail_from_email',
+						'',
+						'$env{'C_'.$con.'_email'}',
+						'$subject',
+						'$body'
+					)
+				};
+				my %sth0=TOM::Database::SQL::execute($sql);
+				if ($sth0{'rows'})
+				{
+					main::_log("deleting $msgnum");
+					$pop->delete($msgnum);
+				}
+				
+			}
+		}
+		$pop->quit();
+		
+		$con++;
 	}
-     }
-     else
-     {
-      main::_log("i have no body :(");
-     }
-    }
-   }
-  }
-  $conn->disconnect();
- }
- else
- {
-  print "+nepripojeny: SYS_ERR:$!\n";
- }
- $con++;
+	
+	return 1;
 }
-
- return 1}
 
 1;

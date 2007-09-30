@@ -4,19 +4,25 @@
 -- version=4.1
 
 -- --------------------------------------------------
+-- version=5.0
 
 CREATE TABLE `/*db_name*/`.`/*app*/_received` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `rectime` int(10) unsigned NOT NULL default '0',
-  `from_name` varchar(50) NOT NULL default '',
-  `from_email` varchar(50) NOT NULL default '',
-  `to_name` varchar(50) NOT NULL default '',
-  `to_email` varchar(255) NOT NULL default '',
-  `body` longtext NOT NULL,
-  `lng` char(2) NOT NULL default '',
-  `active` char(1) NOT NULL default 'N',
-  PRIMARY KEY  (`ID`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  `from_name` varchar(50) NOT NULL,
+  `from_email` varchar(50) character set ascii NOT NULL,
+  `to_name` varchar(50) NOT NULL,
+  `to_email` varchar(50) character set ascii NOT NULL,
+  `subject` varchar(255) character set ascii NOT NULL,
+  `body` blob NOT NULL,
+  `lng` char(2) character set ascii NOT NULL,
+  `active` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`),
+  KEY `subject` (`subject`),
+  KEY `rectime` (`rectime`),
+  KEY `from_email` (`from_email`),
+  KEY `active` (`active`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -41,38 +47,4 @@ CREATE TABLE `/*db_name*/`.`/*app*/_send` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*app*/_send_history` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `hash` varchar(32) NOT NULL default '',
-  `domain` varchar(50) NOT NULL default '',
-  `domain_sub` varchar(150) NOT NULL default '',
-  `IP` varchar(25) NOT NULL default '',
-  `from_email` varchar(100) NOT NULL default '',
-  `from_service` varchar(100) NOT NULL default '',
-  `to_email` varchar(100) NOT NULL default '',
-  `to_service` varchar(100) NOT NULL default '',
-  `time_create` int(10) unsigned NOT NULL default '0',
-  `cvml_message` text NOT NULL,
-  `active` char(1) NOT NULL default 'N',
-  PRIMARY KEY  (`ID`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*app*/_services` (
-  `ID` int(10) unsigned NOT NULL auto_increment,
-  `name` varchar(150) NOT NULL default '',
-  `domain` varchar(32) NOT NULL default '',
-  `domain_sub` varchar(64) NOT NULL default '',
-  `email_count` int(10) unsigned NOT NULL default '0',
-  `time_last` int(10) unsigned default NULL,
-  `time_create` int(10) unsigned NOT NULL default '0',
-  `time_change` int(10) unsigned default NULL,
-  `cvml_data` text NOT NULL,
-  `active` char(1) NOT NULL default 'N',
-  `lng` char(2) NOT NULL default '',
-  PRIMARY KEY  (`ID`),
-  UNIQUE KEY `name` (`name`,`domain`,`domain_sub`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
