@@ -17,6 +17,8 @@ use TOM::Database::SQL::file;
 use TOM::Database::SQL::compare;
 use TOM::Database::SQL::transaction;
 
+our $debug=0;
+
 =head1 FUNCTIONS
 
 =head2 escape()
@@ -178,7 +180,7 @@ sub get_database_version
 	my $version=$main::DB{$db_h}->getserverinfo();
 		$version=~s|^([\d]+)\.([\d]+)\.(.*)$|\1.\2|;
 		
-	main::_log("MySQL version on handler '$db_h'='$version'");
+	main::_log("MySQL version on handler '$db_h'='$version'") if $debug;
 	
 	return $version;
 }
