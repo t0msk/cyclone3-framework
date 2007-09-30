@@ -9,17 +9,21 @@ sub xml2plain
 {
 	my $text=shift;
 	
-	# odstranenie dvojiteho odriadkovania
+	# remove header
+	$text=~s|<!DOCTYPE.*?>||s;
+	$text=~s|<html.*?<body.*?>||s;
+	
+	# remove double enter
 	$text=~s|[\r\n]||g;
 	#$text=~s|<p[ ]?[/]?>\n|\n|gsi;
 	#$text=~s|<br[ ]?[/]?>\n|\n|gsi;
 	
-	# vytvorenie riadkov
+	# convert enters
 	$text=~s|<div[ ]?[/]?>|\n|gsi;
 	$text=~s|<p[ ]?[/]?>|\n|gsi;
 	$text=~s|<br[ ]?[/]?>|\n|gsi;
 	
-	# rusenie trojitych odriatkovani
+	# remove triple enter
 	1 while ($text=~s|\n\n\n|\n\n|g);
 	
 	1 while ($text=~s|^\n||g);
