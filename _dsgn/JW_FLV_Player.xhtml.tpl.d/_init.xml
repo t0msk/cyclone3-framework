@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	<header>
+		<extend level="auto" name="SWFObject"/>
+		<extract>
+			<file location="flvplayer.swf" />
+		</extract>
+	</header>
+	
+	<entity id="swfplayer.singleflv.alternative">
+	<![CDATA[
+		<p id="swfplayer.singleflv.alternative">
+			<a href="http://www.macromedia.com/go/getflashplayer">
+				Get the Flash Player
+			</a>
+			to see this player.
+		</p>
+	]]>
+	</entity>
+	
+	
+	<entity id="swfplayer.singleflv" replace_variables="true">
+	<![CDATA[
+		<script type="text/javascript" src="<$tom::H_media>/tpl/swfobject.js" />
+		<$tpl::entity{'swfplayer.singleflv.alternative'}>
+		<script type="text/javascript">
+			var s1 = new SWFObject("<$tom::H_media>/tpl/flvplayer.swf","single","<%variable.width%>","<%variable.height%>","7");
+			s1.addParam("allowfullscreen","true");
+			s1.addVariable("file","<%variable.file%>");
+			s1.addVariable("image","<%variable.image%>");
+			s1.write("swfplayer.singleflv.alternative");
+		</script>
+	]]>
+	</entity>
+	
+</template>
