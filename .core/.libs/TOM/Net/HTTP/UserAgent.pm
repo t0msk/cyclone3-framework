@@ -930,6 +930,12 @@ our @table=
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
 	},
+	{name=>'Feedreader',
+		regexp		=>	['Feedreader'],
+		agent_type	=>	"RSS browser",
+		#cookies_disable	=>	1,
+		#USRM_disable	=>	1,
+	},
 	{name=>'Lotus-Notes 5.X', # Lotus
 		regexp		=>	['Lotus-Notes/5'],
 	},
@@ -943,6 +949,8 @@ our @table=
 	{name=>'Offline Explorer 1.X',
 		regexp		=>	['Offline Explorer/1'],
 	},
+	
+	
 	
 	{name=>'MSFrontPage 5.X',
 		regexp		=>	['MSFrontPage/5'],
