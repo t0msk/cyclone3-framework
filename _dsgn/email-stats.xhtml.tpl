@@ -42,8 +42,7 @@
 				background: #e5e5e5;
 			}
 			
-			#_content { clear: both; width:<$tpl::entity{'content.width'}>px }
-			#_content table { width: <$tpl::entity{'content.width'}>px; }
+			#content { clear: both }
 			#content .graph
 			{
 				border: 2px dotted <$tpl::entity{'color.h1'}>;
