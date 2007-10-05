@@ -5,8 +5,6 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use CVML;
-#$debug_disable=1;
-$authors="fordinal\@webcom.sk";
 use strict;
 
 
@@ -23,6 +21,8 @@ Do host je ukladana hodnota $tom::H_cookie a do host_sub nazov aktualnej domeny 
 
 sub execute
 {
+	
+	my $debug=0;
 	
 =head1
 	G - generated new user
@@ -97,10 +97,10 @@ sub execute
 					TOM.a300_online.host='$tom::H_cookie'
 				LIMIT 1
 			};
-			my %sth0=TOM::Database::SQL::execute($sql);
+			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 			if (%main::USRM=$sth0{'sth'}->fetchhash()) # yes, user is online
 			{
-				main::_log("I'am online");
+				main::_log("user '$main::COOKIES{_IDhash}' is online");
 				$main::USRM{IDhash}=$main::COOKIES{_IDhash} unless $main::USRM{IDhash};
 				
 				# overenie pravosti prihlasenia
@@ -124,19 +124,19 @@ sub execute
 					#{$main::USRM{xdata}.="<VAR id=\"".$_."\">".$main::ENV{$_}."</VAR>\n";}
 					
 					# UPDATE online
-					$main::DBH->Query("
+					TOM::Database::SQL::execute(qq{
 						UPDATE TOM.a300_online
 						SET
 							host_sub='$tom::H',
 							reqtime='$tom::time_current',
-							cookies='$main::USRM{cookies}',
-							HTTP_USER_AGENT='$ENV{HTTP_USER_AGENT}',
+							cookies='$main::USRM{'cookies'}',
+							HTTP_USER_AGENT='$ENV{'HTTP_USER_AGENT'}',
 							rqs=rqs+1,
 							active='Y'
 						WHERE
-							IDhash='$main::COOKIES{_IDhash}'
+							IDhash='$main::COOKIES{'_IDhash'}'
 						LIMIT 1
-					")
+					},'quiet'=>1);
 				}
 				else # NIEKTO SA MI SEM NABURAL
 				{
@@ -212,7 +212,7 @@ sub execute
 					# INSERT DO ONLINE
 					main::_log("insert to online");
 					
-					$main::DBH->Query("
+					TOM::Database::SQL::execute(qq{
 						UPDATE TOM.a300_users
 						SET
 							logtime = '$tom::time_current',
@@ -221,9 +221,9 @@ sub execute
 							IDhash='$main::COOKIES{_IDhash}'
 							AND host='$tom::H_cookie'
 						LIMIT 1
-					");
+					});
 					
-					$main::DBH->Query("
+					TOM::Database::SQL::execute(qq{
 						INSERT INTO
 						TOM.a300_online
 						(
@@ -257,7 +257,7 @@ sub execute
 							'$ENV{HTTP_USER_AGENT}',
 							'Y'
 						)
-					");
+					});
 				}
 				else # NENASIEL SOM SA ANI V OLD
 				{
@@ -276,7 +276,6 @@ sub execute
 		}
 		else # mam cookies, ale nemam IDhash, idem sa registrovat
 		{
-			#Tomahawk::debug::mdllog(2,"none IDhash",1);
 			main::_log("none IDhash");
 			
 			# NAJPRV SA POZRIEM CI TENTO USER SA NEPOKUSA OPAKOVANE
@@ -318,7 +317,7 @@ sub execute
 			#Tomahawk::debug::mdllog(3,"generujem IDhash=".$var." a zapisujem do users");
 			main::_log("generujem IDhash=".$var." a zapisujem do users");
 			
-			$main::DBH->Query("
+			TOM::Database::SQL::execute(qq{
 				INSERT INTO TOM.a300_users
 				(
 					IDhash,
@@ -341,20 +340,15 @@ sub execute
 					'$ENV{REMOTE_ADDR}',
 					'Y'
 				)
-			");
+			});
 			
 			main::_log("insert do attrs");
 			$main::DBH->Query("INSERT INTO TOM.a300_users_attrs (IDhash) VALUES('$var')");
 			$main::COOKIES{_IDsession}=Utils::vars::genhash(32); # vygenerujem hash session
-			#Tomahawk::debug::mdllog(3,"insert do online IDsession:$main::COOKIES{_IDsession}");
-			main::_log("insert do online IDsession:$main::COOKIES{_IDsession}");
+			main::_log("insert into online IDsession:$main::COOKIES{_IDsession}");
 			
-			#$main::USRM{xdata}="";
-			#foreach (sort keys %main::ENV){$main::USRM{xdata}.="<VAR id=\"".$_."\">".$main::ENV{$_}."</VAR>\n";}
-			
-			$main::DBH->Query("
-				INSERT INTO
-				TOM.a300_online
+			TOM::Database::SQL::execute(qq{
+				INSERT INTO TOM.a300_online
 				(
 					IDhash,
 					IDsession,
@@ -380,69 +374,59 @@ sub execute
 					'$ENV{HTTP_USER_AGENT}',
 					'Y'
 				)
-			");
+			});
 			
 			# PRIDAT EXPORT DO $main::USRM
 			# je to tu vobec potreba?
 			# v tomto pripade urcite nebude user logged, budem potom
 			# teda priamo v tomto requeste potrebovat data $main::USRM???
 			##############################################################
-			$main::USRM{IDhash}=$main::COOKIES{_IDhash}; # IDhash usera
-			$main::USRM{IDsession}=$main::COOKIES{_IDsession}; # Idhash pre session usera
+			$main::USRM{'IDhash'}=$main::COOKIES{'_IDhash'}; # IDhash usera
+			$main::USRM{'IDsession'}=$main::COOKIES{'_IDsession'}; # Idhash pre session usera
 			$main::USRM_flag="G";
 			##############################################################
 		}
 	}
 	else
 	{
-		#Tomahawk::debug::mdllog(2,"none cookies",1);
 		main::_log("none cookies IP:$main::ENV{REMOTE_ADDR} agent=$main::ENV{HTTP_USER_AGENT} cookies=$main::ENV{HTTP_COOKIE}");
-		#$main::COOKIES{_name}=$tom::cookie_name;
-		# set _name robi automaticky tomahawk a stara
-		# sa aj o GET cookies, takze to nemusim robit ja sam
 	}
 	
-	#$main::USRM{cvml}="<a[4]>" unless $main::USRM{cvml};
 	
-	my $cvml=new CVML(data=>$main::USRM{session});
-	undef $main::USRM{session};
-	#$main::USRM{session}={};
-	tie %{$main::USRM{session}}, 'App::300::session';
+	
+	# get session datas from online table in CVM
+	my $cvml=new CVML(data=>$main::USRM{'session'});
+	undef $main::USRM{'session'};
+	
+	# control CVML session datas as object
+	tie %{$main::USRM{'session'}}, 'App::300::session';
 	$App::300::session::serialize=0;
-	#eval
-	#{
-		%{$main::USRM{session}}=%{$cvml->{hash}};
-	#};
+	%{$main::USRM{'session'}}=%{$cvml->{'hash'}};
 	$App::300::session::serialize=1;
 	
-	#$main::USRM{'session'}{'time_process'}=$main::time_current;
+	
 	
 	foreach (keys %main::USRM)
 	{
-		main::_log("USRM $_='$main::USRM{$_}'");
-	}
+		main::_log("USRM $_='$main::USRM{$_}'") if $debug;
+	};
 	
 	foreach (keys %main::COOKIES)
 	{
-		main::_log("COOKIES $_='$main::COOKIES{$_}'");
+		main::_log("COOKIES $_='$main::COOKIES{$_}'") if $debug;
 	}
 	
 	foreach (keys %{$main::USRM{session}})
 	{
-		main::_log("USRM-SESSION $_='".$main::USRM{session}{$_}."'");
+		main::_log("USRM-SESSION $_='".$main::USRM{session}{$_}."'") if $debug;
 	}
 	
 	main::_log("main::USRM_flag='$main::USRM_flag'");
+	
+	return 1
+}
 
- return 1
- }
 
-
+our $authors="fordinal\@webcom.sk";
 
 1;
-
-
-
-
-
-

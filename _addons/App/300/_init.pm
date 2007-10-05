@@ -260,15 +260,18 @@ sub UserFind
 		}
 	}
 	
-	foreach (sort keys %data)
-	{
-		if ($_ eq "pass")
-		{
-			main::_log("output $_='".('*' x length($data{$_}))."'");
-			next;
-		}
-		main::_log("output $_='$data{$_}'");
-	}
+#	foreach (sort keys %data)
+#	{
+#		if ($_ eq "pass")
+#		{
+#			main::_log("output $_='".('*' x length($data{$_}))."'");
+#			next;
+#		}
+#		main::_log("output $_='$data{$_}'");
+#	}
+	
+	main::_log("IDhash='$data{'IDhash'}' login='$data{'login'}' host='$data{'host'}' lng='$data{'lng'}' rqs='$data{'rqs'}'");
+	
 	$t->close();
 	return %data;
 }
