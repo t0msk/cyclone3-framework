@@ -227,8 +227,8 @@ sub parse_hash
 		foreach my $kluc(keys %{$rules[$rule]{'GET'}})
 		{
 			
-			main::_log("[$rule] key '$kluc' exists") if exists $rules[$rule]{'GET'}{$kluc};
-			main::_log("[$rule] key '$kluc' defined") if defined $rules[$rule]{'GET'}{$kluc};
+			#main::_log("[$rule] key '$kluc' exists") if exists $rules[$rule]{'GET'}{$kluc};
+			#main::_log("[$rule] key '$kluc' defined") if defined $rules[$rule]{'GET'}{$kluc};
 			
 			# porovnanie na hodnotu kluca
 			if ($rules[$rule]{'GET'}{$kluc})

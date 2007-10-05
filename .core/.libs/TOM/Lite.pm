@@ -85,7 +85,7 @@ sub _log_lite
 	
 	my $msg=
 		"[".sprintf ('%06d', $$).";$main::request_code]".
-		"[$date{hour}:$date{min}:$date{sec}.???????]".
+		"[$date{hour}:$date{min}:$date{sec}.???]".
 		"[".sprintf("%02d",$get[0])."]".
 		" ".(" " x $get[0]).$ref[$get[2]].$get[1];
 	
@@ -307,8 +307,8 @@ sub close
 	$self->{'time'}{proc}{end}=(times)[0];
 	$self->{'time'}{req}{duration}=$self->{'time'}{req}{end}-$self->{'time'}{req}{start};
 	$self->{'time'}{proc}{duration}=$self->{'time'}{proc}{end}-$self->{'time'}{proc}{start};
-	$self->{'time'}{req}{duration}=int($self->{'time'}{req}{duration}*10000)/10000;
-	$self->{'time'}{proc}{duration}=int($self->{'time'}{proc}{duration}*10000)/10000;
+	$self->{'time'}{req}{duration}=int($self->{'time'}{req}{duration}*1000)/1000;
+	$self->{'time'}{proc}{duration}=int($self->{'time'}{proc}{duration}*1000)/1000;
 	
 	
 	if ($self->{'namespace'})

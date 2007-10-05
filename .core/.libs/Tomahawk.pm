@@ -362,7 +362,7 @@ sub module
 			main::_log("input '$_'='$var'");
 		}
 =cut
-		main::_log("input '$_'='$mdl_env{$_}'");
+		#main::_log("input '$_'='$mdl_env{$_}'");
 		/^-/ && do {$mdl_C{$_}=$mdl_env{$_};delete $mdl_env{$_};}
 	}
 	
@@ -519,7 +519,8 @@ sub module
 			
 			$main::DB{sys}->Query("
 				INSERT INTO TOM.a150_config
-				(	domain,
+				(
+					domain,
 					domain_sub,
 					engine,
 					Capp,
@@ -720,8 +721,8 @@ sub module
 	
 	
 	
-	main::_log("executing module ".$mdl_C{-name}."/".$mdl_C{-version}."/".$mdl_C{-global});
-	main::_log("secure eval");
+	#main::_log("executing module ".$mdl_C{-name}."/".$mdl_C{-version}."/".$mdl_C{-global});
+	#main::_log("start eval");
 	
 	# zapinam defaultne debug, ktory mozem v module vypnut
 	$Tomahawk::module::debug_disable=0;
@@ -738,7 +739,9 @@ sub module
 		POSIX::sigaction(&POSIX::SIGALRM, $action_die);
 		Time::HiRes::alarm($mdl_C{-ALRM});
 		
+		#my $t_do=track TOM::Debug("do");
 		if (not do $mdl_C{P_MODULE}){$tom::ERR="$@ $!";die "pre-compilation error: $@ $!\n";}#- $! $@\n";
+		#$t_do->close();
 		
 		local %Tomahawk::module::XSGN;
 		local %Tomahawk::module::XLNG;
@@ -749,48 +752,46 @@ sub module
 		
 		if ($return_code)
 		{
-			$Tomahawk::module::XSGN{TMP}=~s|<#.*?#>||g;
-			$Tomahawk::module::XSGN{TMP}=~s|<%.*?%>||g;
+			#main::_log("replacing");
+			$Tomahawk::module::XSGN{'TMP'}=~s|<#.*?#>||g;
+			$Tomahawk::module::XSGN{'TMP'}=~s|<%.*?%>||g;
 			
 			# preco som toto robil?
 			# rusim pretoze chcem ten isty vystup ako mam vstup
 			#1 while ($Tomahawk::module::XSGN{TMP}=~s|\n\n|\n|g);
-			if ($Tomahawk::module::XSGN{TMP})
-			{
-				if (not utf8::is_utf8($Tomahawk::module::XSGN{TMP}))
-				{
-					$main::page_save=1; # tuto stranku si radsej ulozim
-					main::_log("XSGN{TMP} nieje v UTF-8!",1);
-					main::_log("[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."/".$mdl_C{-version}."/".$mdl_C{-global}." XSGN{TMP} nieje v UTF-8",1,"pub.err");
-					utf8::decode($Tomahawk::module::XSGN{TMP});
-				}
-			}
 			
-			#main::_log("length of XSGN{TMP} is ".length($Tomahawk::module::XSGN{TMP}));
+#			if ($Tomahawk::module::XSGN{'TMP'})
+#			{
+#				if (not utf8::is_utf8($Tomahawk::module::XSGN{'TMP'}))
+#				{
+#					$main::page_save=1; # tuto stranku si radsej ulozim
+#					main::_log("XSGN{TMP} nieje v UTF-8!",1);
+#					main::_log("[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."/".$mdl_C{-version}."/".$mdl_C{-global}." XSGN{TMP} nieje v UTF-8",1,"pub.err");
+#					utf8::decode($Tomahawk::module::XSGN{'TMP'});
+#				}
+#			}
 			
-			if (($Tomahawk::module::XSGN{TMP})
-				&&(not $main::H->r_("<!TMP-".$mdl_C{-TMP}."!>",$Tomahawk::module::XSGN{TMP})))
+			#main::_log("inserting");
+			if (($Tomahawk::module::XSGN{'TMP'})
+				&&(not $main::H->r_("<!TMP-".$mdl_C{'-TMP'}."!>",$Tomahawk::module::XSGN{'TMP'})))
 			{
-				#TOM::Debug::pub::output_save();
 				Time::HiRes::alarm(0);
-				#$main::time_modules->end();
-				#$main::time_modules->duration_plus();
-				
 				TOM::Error::module
 				(
-					-TMP	=>	$mdl_C{-TMP},
-					-MODULE	=>	"[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."]",
-					-ERROR	=>	"Unknown TMP-".$mdl_C{-TMP},
-				);return undef;
-				
+					'-TMP' => $mdl_C{'-TMP'},
+					'-MODULE' => "[MDL::".$mdl_C{'-category'}."-".$mdl_C{'-name'}."]",
+					'-ERROR' => "Unknown TMP-".$mdl_C{'-TMP'},
+				);
+				return undef;
 			};
-		
+			
+			#main::_log("caching");
 			# IDEME NACACHOVAT - VERY VERY VERY SPEEEEEDY! BUAAAh!:))
 			# BUD DO FILESU ALEBO DO DB :))
 			# if ((defined $mdl_C{-cache_id})&&($TOM::CACHE))
-			if ((exists $mdl_C{-cache_id})&&($TOM::CACHE))
+			if ((exists $mdl_C{'-cache_id'})&&($TOM::CACHE))
 			{
-				my $ID_config=$CACHE{$mdl_C{T_CACHE}}{'-ID_config'};
+				my $ID_config=$CACHE{$mdl_C{'T_CACHE'}}{'-ID_config'};
 				my $memcached;
 				
 				if ($TOM::CACHE_memcached)
@@ -874,14 +875,13 @@ sub module
 						'$return_code'
 						)
 					";
-					#main::_log("s: $sql");
 					if (my $null=$main::DB{sys}->Query($sql))
 					{
-						main::_log("ok");
+						#main::_log("ok");
 					}
 					else
 					{
-						main::_log("bad");
+						#main::_log("bad");
 					}
 					
 					$main::DB{sys}->Query("
@@ -916,7 +916,7 @@ sub module
 	#$main::time_modules->duration_plus();
 	Time::HiRes::alarm(0);
 	
-	main::_log("end of secure eval");
+	#main::_log("end of secure eval");
 	
 	if ($@)
 	{
@@ -930,17 +930,16 @@ sub module
 	
 	
 	$t->close();
-	#main::_log("end of module req:".($t->{'time'}{req}{duration})." proc:".($t->{'time'}{proc}{duration})." ret:".$return_code);
 	
 	# spravim debug tohto modulu ak bol fyzicky vykonany
 	# a v module som nenastavil ze nan nemam robit debug
-	main::_log("debug_disable is $Tomahawk::module::debug_disable");
+	main::_log("debug_disable=$Tomahawk::module::debug_disable");
 	Tomahawk::debug::module_load(
-		-type => $mdl_C{-type},
-		-category => $mdl_C{-category},
-		-name => $mdl_C{-name},
- 		-load_req => $t->{'time'}{req}{duration},
-		-load_proc => $t->{'time'}{proc}{duration}
+		'-type' => $mdl_C{'-type'},
+		'-category' => $mdl_C{'-category'},
+		'-name' => $mdl_C{'-name'},
+ 		'-load_req' => $t->{'time'}{'req'}{'duration'},
+		'-load_proc' => $t->{'time'}{'proc'}{'duration'}
 	) unless $Tomahawk::module::debug_disable==0;
 	
 	#$t->close();

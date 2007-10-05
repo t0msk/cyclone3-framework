@@ -8,10 +8,12 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 use Net::HTTP::cookies;
 
+our $debug=0;
+
 sub send
 {
 	# UPRAVIM COOKIES, ALE LEN VTEDY AK TO NIESU GETCOOKIES
-	my $t_cookies=track TOM::Debug("Set Cookies");
+	my $t_cookies=track TOM::Debug("Set Cookies") if $debug;
 	
 	if (!$main::FORM{'cookies'})
 	{
@@ -23,7 +25,7 @@ sub send
 		{
 			if (!$main::COOKIES{$_}) # cookie je prazdna (pripravena na zmazanie :))
 			{
-				main::_log("empty cookie '".$_."'");
+				main::_log("empty cookie '".$_."'") if $debug;
 				Net::HTTP::cookies::DeleteCookie($_);
 				delete $main::COOKIES{$_};
 				next;
@@ -41,7 +43,7 @@ sub send
 	
 	foreach (keys %main::COOKIES)
 	{
-		main::_log("cookie '$_'='$main::COOKIES{$_}'");
+		main::_log("cookie '$_'='$main::COOKIES{$_}'") if $debug;
 	}
 	
 	
@@ -50,11 +52,11 @@ sub send
 	# (nebudem vyuzivat GET cookies predsa stale)
 	Net::HTTP::cookies::SetCookies
 	(
-		time	=>	$tom::time_current+(86400*31*6)+86400+3600,
-		cookies	=>	{%main::COOKIES}
+		'time' => $tom::time_current + (86400*31*6)+86400+3600,
+		'cookies' => {%main::COOKIES}
 	) unless $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'cookies_disable'};
 	
-	$t_cookies->close();
+	$t_cookies->close() if $debug;
 	
 }
 

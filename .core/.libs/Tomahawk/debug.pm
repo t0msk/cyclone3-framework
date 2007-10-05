@@ -8,6 +8,7 @@ use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 
+
 sub module_load
 {
 	return 1;
@@ -50,19 +51,7 @@ HEAD
 
 
 
-sub cache_conf_opt
-{
-=head1
- return undef;
-
-# return undef if $TOM::CACHE==2;
- 
- # TOTO BY V PRIPADE DATABASE CACHE NEMAL PRECO ROBIT
- # SAMOTNY PORTAL A NEVIEMPRECO SA TYM ZDRZOVAT, ZE ANO?
- # LEBO TO ROBI UZ SAM CRON
-=cut
-return 1}
-
+sub cache_conf_opt {return 1}
 
 
 
@@ -77,37 +66,14 @@ sub cache_conf_opt_plus
 	
 #	main::_log("cache_conf_opt_plus ID='$Tomahawk::mdl_C{N_IDcache}'");
 	
-#=head1
 	$main::DB{sys}->Query("
 		UPDATE TOM.a150_cache
 		SET loads=loads+1
 		WHERE ID='$Tomahawk::mdl_C{N_IDcache}'
 		LIMIT 1");
-#=cut
 		
-return 1}
-
-
-
-
-
-
-
-
-
-
-
-
-# MUSIM PRIDAT POCITANIE CASU, PAMATE, A INYCH SYS.PROSTRIEDKOV
-
-
-
-
-
-
-
-
-
+	return 1
+}
 
 
 

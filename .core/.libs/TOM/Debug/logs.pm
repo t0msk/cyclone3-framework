@@ -84,9 +84,14 @@ sub _log
 	$file.="[".$TOM::hostname."]"."$date{year}-$date{mom}-$date{mday}";
 	$file.="-$date{hour}" if $TOM::DEBUG_log_file_frag; # rozlisenie na hodiny
 	
+	my $msec='0.'.(Time::HiRes::gettimeofday)[1];
+		$msec=int($msec*1000);
+		#$msec=~s|^(.....).*|\1|;
+		#$msec=
+	
 	my $msg=
 		"[".sprintf ('%06d', $$).";$main::request_code]".
-		"[$date{hour}:$date{min}:$date{sec}.".sprintf("%07d",((Time::HiRes::gettimeofday)[1]))."]".
+		"[$date{hour}:$date{min}:$date{sec}.".sprintf("%03d",$msec)."]".
 		"[".sprintf("%02d",$get[0])."]".
 		" ".(" " x $get[0]).$ref[$get[2]].$get[1];
 	if (length($msg)>2048)

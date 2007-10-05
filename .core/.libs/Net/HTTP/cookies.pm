@@ -5,9 +5,11 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 use strict;
 use Utils::datetime;
 
+our $debug=0;
+
 sub GetCookies
 {
-	my $t=track TOM::Debug(__PACKAGE__."::GetCookies()");
+	my $t=track TOM::Debug(__PACKAGE__."::GetCookies()") if $debug;
 	my %cookie;
 	foreach (split(/; /, $ENV{'HTTP_COOKIE'}))
 	{
@@ -15,21 +17,21 @@ sub GetCookies
 		my ($chip, $val) = split(/=/,$_,2);
 		$chip =~ s/%([A-Fa-f0-9]{2})/pack("c",hex($1))/ge;#url kodovanie do normal. kodovanie
 		$val =~ s/%([A-Fa-f0-9]{2})/pack("c",hex($1))/ge;
-		main::_log("'$chip'='$val'");
+		#main::_log("'$chip'='$val'");
 		if ($val=~s/^$tom::cookie_name://)
 		{
 			$cookie{$chip} = $val;
 			next;
 		}
 	}
-	$t->close();
+	$t->close() if $debug;
 	return %cookie;
 }
 
 
 sub SetCookies
 {
-	my $t=track TOM::Debug(__PACKAGE__."::SetCookies()");
+	my $t=track TOM::Debug(__PACKAGE__."::SetCookies()") if $debug;
 	my %env = @_;
 	if (!$env{cookies})
 	{
@@ -49,21 +51,21 @@ sub SetCookies
 		main::_log("$var");
 		print $var;
 	}
-	$t->close();
+	$t->close() if $debug;
 	return 1;
 }
 
 
 sub DeleteCookie
 {
-	my $t=track TOM::Debug(__PACKAGE__."::DeleteCookie()");
+	my $t=track TOM::Debug(__PACKAGE__."::DeleteCookie()") if $debug;
 	foreach (@_)
 	{
 		my $var="Set-Cookie:  $_=deleted; expires=Thu, 01-Jan-1970 00:00:00 GMT; path\=$tom::P_cookie; domain\=$main::tom::H_cookie;\n";
 		main::_log("$var");
 		print $var;
 	}
-	$t->close();
+	$t->close() if $debug;
 	return 1;
 }
 

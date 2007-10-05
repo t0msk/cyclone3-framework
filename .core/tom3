@@ -271,19 +271,20 @@ while ($main::CGI=new CGI::Fast())
 #	}
 	
 	
-	my ($bann_ID,$bann_msg)=App::1B0::IsBanned(
-		'IP' => $main::ENV{'REMOTE_ADDR'},
-		'-type' => "pub");
-	if ($bann_ID)
-	{
-		main::_log("IP $main::ENV{'REMOTE_ADDR'} is banned",1);
-		print "Status: 404 Not Found\n";
-		print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n\n";
-		main::_log("IP \"$main::ENV{'REMOTE_ADDR'}\" banned from $tom::H",0,"pub.warn",1);
-		$t_preeval->close();
-		$t_request->close();
-		next;
-	}
+#	my ($bann_ID,$bann_msg)=App::1B0::IsBanned(
+#		'IP' => $main::ENV{'REMOTE_ADDR'},
+#		'-type' => "pub");
+#	if ($bann_ID)
+#	{
+#		main::_log("IP $main::ENV{'REMOTE_ADDR'} is banned",1);
+#		print "Status: 404 Not Found\n";
+#		print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n\n";
+#		main::_log("IP \"$main::ENV{'REMOTE_ADDR'}\" banned from $tom::H",0,"pub.warn",1);
+#		$t_preeval->close();
+#		$t_request->close();
+#		next;
+#	}
+	
 	
 	$t_preeval->close();
 	eval
@@ -294,7 +295,7 @@ while ($main::CGI=new CGI::Fast())
 		main::_log("redirecting SIG{ALRM} to die");
 		local $SIG{ALRM} = sub {die "Timed out during page sending! limit $TOM::ALRM sec.\n"};
 		
-		main::_log("get current_time");
+		#main::_log("get current_time");
 		$main::time_current=$tom::time_current=time();
 		local (
 			$tom::Tsec,
@@ -354,7 +355,8 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		
-		my $t_agent=track TOM::Debug("HTTP_USER_AGENT '$main::ENV{'HTTP_USER_AGENT'}'");
+		#my $t_agent=track TOM::Debug("HTTP_USER_AGENT '$main::ENV{'HTTP_USER_AGENT'}'");
+		my $t_agent=track TOM::Debug("UserAgent");
 			
 			$main::ENV{'HTTP_USER_AGENT'}=$main::ENV{SHELL} if $main::ENV{SHELL};
 			$main::ENV{'HTTP_USER_AGENT'}=" " unless $main::ENV{'HTTP_USER_AGENT'};
@@ -835,18 +837,17 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		
-		
-		main::_log("Get cookies");
+		my $t_cookies=track TOM::Debug("Cookies");
+		#main::_log("Get cookies");
 		
 		#  local %COOKIES;
 		%main::COOKIES=();
 		
 		%main::COOKIES=&Net::HTTP::cookies::GetCookies if !$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{cookies_disable};
 		
-		# teraz zistim ci vobec mam nejake cookies :)
 		foreach (keys %main::COOKIES)
 		{
-			main::_log("key $_");
+			main::_log("key $_='$main::COOKIES{$_}'");
 		}
 		
 		# nedostal som ziadne cookies (mozno je toto moj prvy request)
@@ -855,7 +856,7 @@ while ($main::CGI=new CGI::Fast())
 		
 		if ((keys %main::COOKIES) == 0)
 		{
-			main::_log("none cookies");
+			main::_log("none cookies found");
 			
 			
 			my $user_md5=Digest::MD5::md5_hex
@@ -912,6 +913,7 @@ while ($main::CGI=new CGI::Fast())
 				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}");
 				print "Location: $URL\n\n";
 				
+				$t_cookies->close();
 				$t_preprocess->close();
 				$t_eval->close();
 				$t_request->close();
@@ -925,10 +927,12 @@ while ($main::CGI=new CGI::Fast())
 		}
 		else
 		{
-			main::_log("cookies");
+			#main::_log("cookies");
 		}
 		
 		%COOKIES_save=%COOKIES;
+		
+		$t_cookies->close();
 		
 		# PREVERENIE IAdm a ITst module
 		if
@@ -949,7 +953,7 @@ while ($main::CGI=new CGI::Fast())
 			undef $main::IAdm;
 			undef $main::ITst;
 		}
-		elsif 
+		elsif
 		(
 			(
 				($IAdm) || ($ITst)
@@ -958,7 +962,7 @@ while ($main::CGI=new CGI::Fast())
 			($main::FORM{__key_} eq $main::COOKIES{key})
 		)
 		{
-			main::_log("session kluc suhlasi $main::FORM{__key_} == $main::COOKIES{key}");
+			main::_log("session key equals $main::FORM{__key_} == $main::COOKIES{key}");
 		}
 		
 		
@@ -972,7 +976,7 @@ while ($main::CGI=new CGI::Fast())
 		local $tom::dsgn_=$tom::dsgn=$tom::DSGN;
 		local $tom::lng_=$tom::lng=$tom::LNG;
 		
-		 
+		
 		local %USRM;
 		
 		
@@ -996,7 +1000,8 @@ while ($main::CGI=new CGI::Fast())
 		
 		if ($TOM::LNG_permanent)
 		{
-			main::_log("attribute LNG_permanent is enabled");
+			my $t=track TOM::Debug("LNG_permanent");
+			#main::_log("attribute LNG_permanent is enabled");
 			#
 			# takze popis
 			#
@@ -1152,6 +1157,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			$tom::lng_=$main::COOKIES{'_lng'}=$main::FORM{'__lng'};
 			
+			$t->close();
 		}
 		
 		
@@ -1379,15 +1385,15 @@ while ($main::CGI=new CGI::Fast())
 				if (($tom::Pm)&&($env0{global} eq "2")){$var=$tom::Pm;}
 				if ($env0{global} eq "1"){$var=$TOM::P;}
 				
-				main::_log("Load template $var '".$env0{value}."/".$env0{global}."'");
+				main::_log("Loading template $var '".$env0{value}."/".$env0{global}."'");
 				
-				open (TMPL,'<'.$var.'/_dsgn/'.$env0{'value'}.'.template') || die "can't open template $env0{value}/$env0{global}";
-				while (my $line=<TMPL>)
+				open (TMPL, '<'.$var.'/_dsgn/'.$env0{'value'}.'.template')
+					|| die "can't open template $env0{value}/$env0{global}";
+				do
 				{
-					$main::TEMPLATE.=$line;
-				}
-				
-				main::_log("Loaded template with length(".(length($main::TEMPLATE)).")");
+					local $/;
+					$main::TEMPLATE=<TMPL>
+				};
 				
 				undef $H->{'OUT'}{'BODY'};
 				$H->i($main::TEMPLATE);
@@ -2180,6 +2186,7 @@ while ($main::CGI=new CGI::Fast())
 				($t_urlreplace->{'time'}{proc}{duration}/$url_count));
 		}
 		
+		#my $t_doc_output=track TOM::Debug("output");
 		
 		# vpisujem log :)
 		if (($IAdm)&&($FORM{__IAdm_log})){$H->r("<!TMP-IAdm-LOG!>",$IAdm_log);}
@@ -2212,7 +2219,7 @@ while ($main::CGI=new CGI::Fast())
 		# ak mam pre tento browser specialny message do zdrojoveho kodu stranky
 		$main::H->message(@{$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{messages}}) if $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{messages};
 		
-		
+		#$t_doc_output->close();
 		
 		{my $t=track TOM::Debug("codepage settings");
 			
@@ -2286,6 +2293,7 @@ while ($main::CGI=new CGI::Fast())
 			$t->close();
 		};
 		
+		my $t_send=track TOM::Debug("send");
 		
 		# codepage pouzity pre tuto page;
 		$main::LNG_cp_this=$COOKIES{cp};
@@ -2389,12 +2397,14 @@ while ($main::CGI=new CGI::Fast())
 		{
 			main::_log("SHUTDOWN (".$tom::count."reqs ".($main::time_current-$TOM::time_start)."secs) PID:$$ domain:$tom::H HUP:$tom::HUP",3,"pub.mng",1);
 			#_log(0,"Shutdown & End request [$tom::count/$TOM::max_count]");
+			$t_send->close();
 			$t_postprocess->close();
 			$t_eval->close();
 			$t_request->close();
 			Tomahawk::shutdown();
 		}
 		
+		$t_send->close();
 		$t_postprocess->close();
 		$t_eval->close();
 		
