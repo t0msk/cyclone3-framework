@@ -391,12 +391,12 @@ sub module
 	
 	# AK JE DEFINOVANA POZIADAVKA NA CACHOVANIE A JE DEFINOVANA
 	# POZIADAVKA NA VOBEC CACHOVANIE, TAK SA TOMU VENUJEM
-	if ((exists $mdl_C{-cache_id})&&($TOM::CACHE))
+	if ((exists $mdl_C{'-cache_id'})&&($TOM::CACHE))
 	{
 		$mdl_C{-cache_id_sub}="0" unless $mdl_C{-cache_id_sub};
 		$mdl_C{-cahe_id}="0" unless $mdl_C{-cache_id}; # ak je vstup s cache_id ale nieje 0
 		$cache_domain=$tom::H unless $mdl_C{-cache_master};
-	
+		
 		# Tomahawk::debug::log(3,"cache defined");
 		my $null;
 		foreach (sort keys %mdl_env){$_=~/^[^_]/ && do{$null.=$_."=\"".$mdl_env{$_}."\"\n";}}
@@ -410,6 +410,7 @@ sub module
 		$mdl_C{T_CACHE}=$mdl_C{-category}."-".$mdl_C{-name}."-".$mdl_C{-cache_id};
 		
 		my $cache;
+		my $cache_parallel;
 		my $memcached;
 		if ($TOM::CACHE_memcached)
 		{
@@ -419,6 +420,11 @@ sub module
 			{
 				$cache=$Ext::CacheMemcache::cache->get(
 					'namespace' => "mcache",
+					'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
+				);
+				# get info if this cache is already filling in parallel process
+				$cache_parallel=$Ext::CacheMemcache::cache->get(
+					'namespace' => "mcache_parallel",
 					'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
 				);
 			}
@@ -563,7 +569,7 @@ sub module
 			(
 				# AK JE STARIE CACHE MENSIE AKO VYZADOVANE STARIE
 				#($mdl_C{-cache_old}<$CACHE{$mdl_C{T_CACHE}}{-cache_time})
-				($mdl_C{-cache_old} < $mdl_C{-cache_duration})
+				($mdl_C{'-cache_old'} < $mdl_C{'-cache_duration'})
 				# ALEBO
 				||
 				(
@@ -572,8 +578,14 @@ sub module
 					# TO V PREKLADE DO SLOVENCINY ZNAMENA ZE ROBOT
 					# AK NAJDE NAJAKY STARY CACHE, NEZAUJIMA HO CI JE AKTUALNY,
 					# STACI MU ZE CACHE PROSTE MA A TAK HO POUZIJE
-					($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{recache_disable})
-					&&($mdl_C{-cache_from})
+					($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'recache_disable'})
+					&&($mdl_C{'-cache_from'})
+				)
+				||
+				(
+					# ak iny proces sa snazi prave naplnit tuto cache
+					# pouzijem proste tu cache ktoru mam
+					$cache_parallel == 1
 				)
 			)
 			# A
@@ -582,15 +594,17 @@ sub module
 				# NIESOM V IADM MODE A MAM SPUSTENE VYPNUTIE CACHE
 			not(
 					($main::IAdm)
-					&& ($main::FORM{_rc})
+					&& ($main::FORM{'_rc'})
 				)
 			)
 		)
 		# TAK TUTO CACHE POUZIJEM
 		{
 			main::_log("using cache domain:$cache_domain from:$mdl_C{-cache_from} old:$mdl_C{-cache_old} ".
-				"max:$CACHE{$mdl_C{T_CACHE}}{-cache_time} ".
-				"remain:".($CACHE{$mdl_C{T_CACHE}}{-cache_time}-$mdl_C{-cache_old}));
+				"max: ".$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}." ".
+				"remain:".($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}-$mdl_C{'-cache_old'})." ".
+				"parallel: ".$cache_parallel
+				);
 				
 			# NATIAHNEM HTML KOD :))
 			
@@ -623,7 +637,7 @@ sub module
 		}
 		else # CACHE JE STARY, SPRACUJEM DATA O CACHE
 		{
-			if ($mdl_C{-cache_old} eq $tom::time_current)
+			if ($mdl_C{'-cache_old'} eq $tom::time_current)
 			{
 				# tato cache prebehla cez destroy()
 				#main::_log("cache $mdl_C{N_CACHE} neexistuje, preslo destroy()",1,"pub.cache");
@@ -737,7 +751,16 @@ sub module
 			$TOM::Engine::pub::SIG::sigset,
 			&POSIX::SA_NODEFER);
 		POSIX::sigaction(&POSIX::SIGALRM, $action_die);
-		Time::HiRes::alarm($mdl_C{-ALRM});
+		Time::HiRes::alarm($mdl_C{'-ALRM'});
+		
+		if (exists $mdl_C{'-cache_id'} && $TOM::CACHE && $TOM::CACHE_memcached)
+		{
+			$Ext::CacheMemcache::cache->set(
+				'namespace' => "mcache_parallel",
+				'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
+				'value' => 1
+			);
+		}
 		
 		#my $t_do=track TOM::Debug("do");
 		if (not do $mdl_C{P_MODULE}){$tom::ERR="$@ $!";die "pre-compilation error: $@ $!\n";}#- $! $@\n";
@@ -825,6 +848,12 @@ sub module
 					{
 						main::_log("memcached: saved record");
 						$memcached=1;
+						# filling cache stopped
+						$Ext::CacheMemcache::cache->set(
+							'namespace' => "mcache_parallel",
+							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
+							'value' => 0
+						);
 					}
 					else {main::_log("memcached: can't save record");}
 				}
@@ -903,6 +932,15 @@ sub module
 		}
 		else # chyba o ktorej upozorni samotny program vratenim undef :)
 		{
+			if (exists $mdl_C{'-cache_id'} && $TOM::CACHE && $TOM::CACHE_memcached)
+			{
+				# refilling cache stopped
+				$Ext::CacheMemcache::cache->set(
+					'namespace' => "mcache_parallel",
+					'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
+					'value' => 0
+				);
+			}
 			TOM::Error::module(
 				-TMP	=>	$mdl_C{-TMP},
 				-MODULE	=>	"[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."]",
@@ -920,6 +958,15 @@ sub module
 	
 	if ($@)
 	{
+		if (exists $mdl_C{'-cache_id'} && $TOM::CACHE && $TOM::CACHE_memcached)
+		{
+			# refilling cache stopped
+			$Ext::CacheMemcache::cache->set(
+				'namespace' => "mcache_parallel",
+				'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
+				'value' => 0
+			);
+		}
 		TOM::Error::module
 		(
 			-TMP	=>	$mdl_C{-TMP},
