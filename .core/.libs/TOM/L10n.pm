@@ -22,7 +22,7 @@ use XML::XPath;
 use XML::XPath::XMLParser;
 use TOM::L10n::codes;
 
-our $debug=1;
+our $debug=0;
 our %objects;
 our $id;
 
@@ -257,7 +257,7 @@ sub parse_string
 			$id=$node2->string_value();
 		}
 		
-		if ($node->getAttribute('automap') eq "true" || $self->{'ENV'}{'lng'} eq "en-US")
+		if ($node->getAttribute('automap') eq "true")
 		{
 			main::_log("setup string id='$id' automap") if $debug;
 			$self->{'string'}{$id}=$id;
@@ -268,6 +268,10 @@ sub parse_string
 			if (my $node2=($nodeset2->get_nodelist())[0])
 			{
 				$self->{'string'}{$id}=$node2->string_value();
+			}
+			elsif ($self->{'ENV'}{'lng'} eq "en-US")
+			{
+				$self->{'string'}{$id}=$id;
 			}
 			else
 			{

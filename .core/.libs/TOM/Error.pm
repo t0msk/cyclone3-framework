@@ -170,15 +170,25 @@ sub engine_pub
 			'body'=>$email_body,
 		);
 	}
-
+	
+	
+#	my $tpl=new TOM::Template(
+#		'level' => "auto",
+#		'name' => "default",
+#		'content-type' => $Net::DOC::type
+#	);
+#	my $page=$tpl->{'entity'}{'page.error'};
+	
+	
 	# aky kod budem vypluvat?
 	# stihol som uz nacitat?
 	if ($_[0]=~/^silent/)
 	{
-		
+		main::_log("silent error");
 	}
 	elsif (!$Net::DOC::err_page)
 	{
+		main::_log("not defined err_page");
 		# ak nemam ziadny kod, tak som "umrel" prilis v skorej faze a v tom
 		# pripade nevyplujem ziaden kod a dam radsej rovno exit
 		# ( email o chybe som poslal, tak dufam ze to bude niekto okamzite riesit )
@@ -192,10 +202,16 @@ sub engine_pub
 	else
 	{
 		print "Content-Type: ".$Net::DOC::content_type."; charset=UTF-8\n\n";
-		my $out=$Net::DOC::err_page;
-		TOM::Utils::vars::replace($out);
-		$out=~s|<!--ERROR-->|<!-- $var -->|;
-		print $out;
+		my $tpl=new TOM::Template(
+			'level' => "auto",
+			'name' => "default",
+			'content-type' => $Net::DOC::type
+		);
+		my $page=$tpl->{'entity'}{'page.error'};
+		TOM::Utils::vars::replace($page);
+		$page=~s|<!--ERROR-->|<!-- $var -->|;
+		$page=~s|<%message%>|$var|;
+		print $page;
 	}
 	
 }
@@ -358,24 +374,30 @@ sub module_pub
 	return undef unless $env{-MODULE};
 	$env{-TMP}="ERROR" unless $env{-TMP};
 	
-	my $out=$Net::DOC::err_mdl;
-	TOM::Utils::vars::replace($out);
+	my $tpl=new TOM::Template(
+		'level' => "auto",
+		'name' => "default",
+		'content-type' => $Net::DOC::type
+	);
+	my $box=$tpl->{'entity'}{'box.error'};
 	
-	$out=~s|<%MODULE%>|$env{-MODULE}|;
-	$out=~s|<%ERROR%>|$env{-ERROR}| if $main::IAdm;
-	$out=~s|<%PLUS%>|$env{-PLUS}| if $main::IAdm;
-	$out=~s|<%.*?%>||g;
+	TOM::Utils::vars::replace($box);
+	
+	$box=~s|<%MODULE%>|$env{-MODULE}|;
+	$box=~s|<%ERROR%>|$env{-ERROR}| if $main::IAdm;
+	$box=~s|<%PLUS%>|$env{-PLUS}| if $main::IAdm;
+	$box=~s|<%.*?%>||g;
 	
 	main::_log("$env{-ERROR} $env{-PLUS}",1); #local
 	main::_log("[MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",1,"pub.err",0); #local
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"pub.err",1); #global
 	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"pub.err",2) if ($tom::H ne $tom::Hm); #master
-
+	
 	my $ticket_ok = 1;
-
+	
 	if ($TOM::ERROR_module_ticket)
 	{
-		main::_log("Chcem vlozit ticket s errorom modulu $env{-MODULE}");
+		#main::_log("Chcem vlozit ticket s errorom modulu $env{-MODULE}");
 		
 		# nebudem logovat informacie o tom ako zapisujem error
 		local $TOM::DEBUG_log_file=-1;
@@ -392,7 +414,7 @@ sub module_pub
 			}
 		}
 		$email_addr=TOM::Utils::vars::unique_split( $email_addr );
-
+		
 		## Vyskladam CVML
 		my %cvml_hash = (
 			'ENV' => { %main::ENV },
@@ -411,9 +433,9 @@ sub module_pub
 				'ITst'=>$main::ITst,
 			},
 		);
-
+		
 		my $cvml = CVML::structure::serialize( %cvml_hash );
-
+		
 		$ticket_ok = App::100::SQL::ticket_event_new(
 			'domain' => $tom::H,
 			'name' => "[$TOM::engine]$env{-MODULE}",
@@ -422,7 +444,7 @@ sub module_pub
 		);
 		
 	}
-
+	
 	
 	if ((($TOM::ERROR_module_email) && (!$main::IAdm))||!$ticket_ok)
 	{
@@ -503,10 +525,10 @@ sub module_pub
 			'body'=>$email_body,
 		);
 	}
-
-	return 1 if $main::H->r_("<!TMP-".$env{-TMP}."!>",$out);
-	return 1 if $main::H->r_("<!TMP-ERROR!>",$out);
-	$main::H->a($out);
+	
+	return 1 if $main::H->r_("<!TMP-".$env{-TMP}."!>",$box);
+	return 1 if $main::H->r_("<!TMP-ERROR!>",$box);
+	$main::H->a($box);
 }
 
 

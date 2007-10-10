@@ -22,6 +22,7 @@ use File::Copy;
 use XML::XPath;
 use XML::XPath::XMLParser;
 use TOM::L10n;
+use TOM::Template::contenttypes;
 
 BEGIN
 {
@@ -68,6 +69,7 @@ sub new
 	}
 	
 	$env{'content-type'}="xml" unless $env{'content-type'};
+	TOM::Template::contenttypes::trans($env{'content-type'});
 	$env{'level'}="auto" unless $env{'level'};
 	
 	# add params into object
@@ -359,6 +361,7 @@ sub process_entity
 		my $lng=$self->{'L10n'}{'lng'};
 		if (!$lng || $lng eq "auto")
 		{
+			main::_log("$tom::lng $tom::LNG $TOM::LNG");
 			$lng=$tom::lng;
 			$lng=$tom::LNG unless $lng;
 			$lng=$TOM::LNG unless $lng;
@@ -375,11 +378,17 @@ sub process_entity
 			if ($self->{'entity_'}{$entity}{'replace_L10n'} eq "true")
 			{
 				main::_log("replace_L10n in entity '$entity'") if $debug;
-				while ($self->{'entity'}{$entity}=~s/<\${(.{1,512}?)}>/<!L10N!>/)
+				while ($self->{'entity'}{$entity}=~s/<\$\((.{1,1024}?)\)>/<!L10N!>/)
 				{
 					my $string=$1;
+					#main::_log("replace L10n string='$string'");
 					my $number=$L10n::num{'#'.$L10n->{'id'}}{$string};
+					if (!$number)
+					{
+						$self->{'entity'}{$entity}=~s/<!L10N!>/$string/;
+					}
 					my $variable='<$L10n::obj{\'#'.$L10n->{'id'}.'#'.$number.'\'}>';
+					#main::_log("replaced by L10n id='$variable'");
 					$self->{'entity'}{$entity}=~s/<!L10N!>/$variable/;
 				}
 				

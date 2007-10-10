@@ -24,7 +24,13 @@ This modules is used by TypeID g_notfound to display design defined by TOM::Temp
 sub execute
 {
 	
-	$XSGN{'TMP'}=$Net::DOC::notfound_page;
+	my $tpl=new TOM::Template(
+		'level' => "auto",
+		'name' => "default",
+		'content-type' => $Net::DOC::type
+	);
+	
+	$XSGN{'TMP'}=$tpl->{'entity'}{'body.notfound'};
 	TOM::Utils::vars::replace($XSGN{'TMP'});
 	
 	return 1;

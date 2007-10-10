@@ -146,10 +146,10 @@ sub replace
 		$i++;
 		main::_log("replacing text No. $i") if $debug;
 		
-		while ($_=~s/<\${(.{1,1024}?)}>/<!TMP-$TMP!>/) # max 1024 long L10n variable string
+		while ($_=~s/<\$\((.{1,1024}?)\)>/<!TMP-$TMP!>/) # max 1024 long L10n variable string
 		{
 			my $var=$1;
-			$_=~s|<!TMP-$TMP!>|{$var}|;
+			$_=~s|<!TMP-$TMP!>|($var)|;
 		}
 		
 		while ($_=~s/<\$(.{1,512}?)>/<!TMP-$TMP!>/) # max 512 long variable name
@@ -192,6 +192,8 @@ sub replace
 				main::_log("error:$@",1);
 			}
 			
+			main::_log("value='$value'") if $debug;
+			
 			$_=~s|<!TMP-$TMP!>|$value|;
 		}
 		
@@ -209,6 +211,8 @@ sub replace
 			eval $cmd;
 			
 			main::_log("error '$@'",1) if $@;
+			
+			main::_log("value='$text'") if $debug;
 			
 			$_=~s|<!TMP-$TMP!>|$text|;
 			
@@ -287,6 +291,8 @@ sub replace_sec
 				last;
 			}
 		}
+		
+		main::_log("value='$value'") if $debug;
 		
 		$data=~s|<!TMP-$TMP!>|$value|;
 		

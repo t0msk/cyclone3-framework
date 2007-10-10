@@ -4,7 +4,8 @@ our @ISA=("Net::DOC::base"); # dedim z neho
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-our (	undef,
+our (
+	undef,
 	undef,
 	undef,
 	undef,
@@ -15,6 +16,7 @@ our (	undef,
 	undef) = localtime(time);$year+=1900;
 
 our $content_type="text/vnd.wap.wml";
+our $type='wml';
 $pub::engine_disabling=0;
 
 our $err_page=<<"HEADER";
@@ -29,72 +31,62 @@ our $err_mdl=<<"HEADER";
 <!-- <%MODULE%> - <%ERROR%> <%PLUS%> -->
 HEADER
 
-
-#binmode(STDOUT,":utf-8");
-
 sub new
 {
- my $class=shift;
- my %env=@_;
- my $self={};
- %{$self->{ENV}}=%env;
- return bless $self,$class;
+	my $class=shift;
+	my %env=@_;
+	my $self={};
+	%{$self->{ENV}}=%env;
+	return bless $self,$class;
 }
 
 
 sub clone
 {
- my $class=shift;
- my $self={};
- %{$self->{ENV}}=%{$class->{ENV}};
- %{$self->{env}}=%{$class->{env}};
- %{$self->{OUT}}=%{$class->{OUT}};
- return bless $self;
+	my $class=shift;
+	my $self={};
+	%{$self->{ENV}}=%{$class->{ENV}};
+	%{$self->{env}}=%{$class->{env}};
+	%{$self->{OUT}}=%{$class->{OUT}};
+	return bless $self;
 }
 
 sub message {return 1;}
 
 sub prepare
 {
- my $self=shift;
+	my $self=shift;
+	
+	$self->{ENV}{DOCTYPE} = "<!DOCTYPE wml PUBLIC \"-//WAPFORUM//DTD WML 1.1//EN\" \"http://www.wapforum.org/DTD/wml_1.1.xml\">" unless $self->{ENV}{DOCTYPE};
+	
+	$self->{OUT}{HEADER} .= "<?xml version=\"1.0\" encoding=\"<%CODEPAGE%>\"?>\n";
+	
+	$self->{OUT}{HEADER} .= $self->{ENV}{DOCTYPE}."\n";
+	
+	$self->{OUT}{HEADER} .= "<wml>\n";
+	
+	$self->{OUT}{HEADER} .= "<card id=\"XML\" title=\"<%TITLE%>\">";
+	$self->{env}{DOC_title}=$self->{ENV}{'HEAD'}{'TITLE'};
+	$self->{env}{DOC_title}=$tom::H unless $self->{env}{DOC_title};
+	
+	
+	$self->{OUT}{FOOTER} = "</card>\n</wml>\n";
  
- $self->{ENV}{DOCTYPE} = "<!DOCTYPE wml PUBLIC \"-//WAPFORUM//DTD WML 1.1//EN\" \"http://www.wapforum.org/DTD/wml_1.1.xml\">" unless $self->{ENV}{DOCTYPE};
- 
- $self->{OUT}{HEADER} .= "<?xml version=\"1.0\" encoding=\"<%CODEPAGE%>\"?>\n";
- 
- $self->{OUT}{HEADER} .= $self->{ENV}{DOCTYPE}."\n";
-
- $self->{OUT}{HEADER} .= "<wml>\n";
- 
- $self->{OUT}{HEADER} .= "<card id=\"XML\" title=\"<%TITLE%>\">";
- $self->{env}{DOC_title}=$self->{ENV}{'HEAD'}{'TITLE'};
- $self->{env}{DOC_title}=$tom::H unless $self->{env}{DOC_title};
-
-
- $self->{OUT}{FOOTER} = "</card>\n</wml>\n";
-#=cut
- 
- return 1;
+	return 1;
 }
 
 
 sub prepare_last
 {
- my $self=shift;
- 
- # aplikujem title
- $self->{OUT}{HEADER}=~s|<%TITLE%>|$self->{env}{DOC_title}|;
- 
- return 1;
+	my $self=shift;
+	
+	# aplikujem title
+	$self->{OUT}{HEADER}=~s|<%TITLE%>|$self->{env}{DOC_title}|;
+	
+	return 1;
 }
 
 
 sub add_DOC_css_link {return 1}
 
-
-
-
-
-
-
-
+1;
