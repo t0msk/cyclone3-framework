@@ -108,7 +108,7 @@ sub new
 	my $type="INSERT";
 	$type="REPLACE" if $env{'-replace'};
 	my $SQL=qq{
-		REPLACE INTO
+		$type INTO
 			`$env{'db_name'}`.`$env{'tb_name'}`
 		($sel_columns)
 		VALUES
@@ -149,6 +149,8 @@ sub new
 	else
 	{
 		main::_log("can't $type into $env{'db_h'}:'$env{'db_name'}'.'$env{'tb_name'}'",1);
+		main::_log("err: $sth0{'err'}",1);
+		main::_log("SQL: $SQL",1);
 	}
 	
 	$t->close() if $debug;
