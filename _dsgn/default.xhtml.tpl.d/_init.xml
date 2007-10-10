@@ -3,19 +3,17 @@
 "/www/TOM/_data/dtd/template.dtd">-->
 <template>
 	<header>
-		<!--<extend level="global" name="default"/>-->
-		<!--
-		<extract>
-			<file location="css/main.css" replace_variables="true"/>
-			<file location="grf/a400/logo.gif"/>
-		</extract>
-		-->
+		
 		<L10n level="auto" name="xhtml" lng="auto"/>
 		
 		<extract>
 			<file location="cyclone3-150x44.png"/>
 			<file location="cyclone3-262x76.png"/>
 			<file location=".htaccess"/>
+			<!--
+			<file location="css/main.css" replace_variables="true"/>
+			<file location="grf/a400/logo.gif"/>
+			-->
 		</extract>
 		
 	</header>
@@ -102,10 +100,10 @@
 	</entity>
 	
 	
-	<entity id="page.warning" replace_variables="false"><![CDATA[<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+	<entity id="page.warning" replace_L10n="true" replace_variables="false"><![CDATA[<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 	<head>
-		<title>System warning</title>
+		<title><$(System warning)></title>
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 		<meta http-equiv="domain" content="<$tom::H>#failed" />
 		<meta name="generator" content="Cyclone<$TOM::core_version>.<$TOM::core_build> (r<$TOM::core_revision>) at <$TOM::hostname> [<$$>;<$main::request_code>]" />
@@ -164,12 +162,12 @@
 			</div>
 			<div id="page-i">
 				
-				<h1>System Warning</h1>
+				<h1><$(System warning)></h1>
 				<p>
 					<strong><%message%></strong>
 				</p>
 				<p>
-					You can contact our administrator at <a href="mailto:<$TOM::contact{'TECH_farm'}>"><$TOM::contact{'TECH_farm'}></a>.
+					<$(You can contact administrator of this page)>.
 				</p>
 				
 			</div>
@@ -243,25 +241,25 @@
 		
 		<div id="page-i">
 			
-			<h1><${Page not found}></h1>
+			<h1><$(Page not found)></h1>
 			<h2><$main::ENV{'REQUEST_URI'}></h2>
-			<h2><${Service}> '<$main::FORM{'TID'}>'</h2>
+			<h2><$(Service)> '<$main::FORM{'TID'}>'</h2>
 			<p>
-				<strong><${The page or service type cannot be found}>.</strong>
+				<strong><$(The page or service type cannot be found)>.</strong>
 			</p>
-			<p><${The page or service type you are looking for might have been disabled, removed, or has its name changed}>.</p>
-			<p><${You can try the following}>:</p>
+			<p><$(The page or service type you are looking for might have been disabled, removed, or has its name changed)>.</p>
+			<p><$(You can try the following)>:</p>
 			<ul>
-				<li><${If you typed the page address in the Address bar, make sure that it is spelled correctly}>.</li>
-				<li><${Open the <a href="<$tom::H_www>"><$tom::H_www></a> home page, and then look for links to the information you want}>.</li>
-				<li>Click the <a href="javascript:history.back(1)">Back</a> button to try another link.</li>
-				<li>If the problem repeats, you can contact administrator of this page at <a href="mailto:<$TOM::contact{'TECH'}>"><$TOM::contact{'TECH'}></a></li>
+				<li><$(If you typed the page address in the Address bar, make sure that it is spelled correctly)>.</li>
+				<li><$(Open the <a href="<$tom::H_www>"><$tom::H_www></a> home page, and then look for links to the information you want)>.</li>
+				<li><$(Click the <a href="javascript:history.back(1)">Back</a> button to try another link)>.</li>
+				<li><$(You can contact administrator of this page)>.</li>
 			</ul>
 			
 		</div>
-		<!--
-		<div id="footer">Powered by <a href="http://www.cyclone3.org" alt="Cyclone3 - Open Perl/XUL CMS Framework">Cyclone3 (<$TOM::core_version>)</a></div>
-		-->
+		
+		<div id="footer"><$(Powered by Cyclone3)></div>
+		
 	</div>
 	]]>
 	</entity>
@@ -272,7 +270,7 @@
 	<table bgcolor='black' cellspacing='2' cellpadding='2'>
 	<tr>
 		<td style="FONT:bold 10px Verdana;COLOR:black;BACKGROUND:#F0F0F0;">
-			<img src="<$tom::H_media>/tpl/error_02.png" border='0' align='left'><%MODULE%> <${This service is currently not available}>. <${We're trying to fix this problem at the moment and apologize for any incovnenience}>. <%ERROR%> <%PLUS%>
+			<img src="<$tom::H_media>/tpl/error_02.png" border='0' align='left'><%MODULE%> <$(This service is currently not available)>. <$(We're trying to fix this problem at the moment and apologize for any incovnenience)>. <%ERROR%> <%PLUS%>
 		</td>
 	</tr>
 	</table>
