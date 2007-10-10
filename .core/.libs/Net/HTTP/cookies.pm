@@ -61,29 +61,13 @@ sub DeleteCookie
 	my $t=track TOM::Debug(__PACKAGE__."::DeleteCookie()") if $debug;
 	foreach (@_)
 	{
-		my $var="Set-Cookie:  $_=deleted; expires=Thu, 01-Jan-1970 00:00:00 GMT; path\=$tom::P_cookie; domain\=$main::tom::H_cookie;\n";
+		my $var="Set-Cookie: $_=deleted; expires=Thu, 01-Jan-1970 00:00:00 GMT; path\=$tom::P_cookie; domain\=$main::tom::H_cookie;\n";
 		main::_log("$var");
 		print $var;
 	}
 	$t->close() if $debug;
 	return 1;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
