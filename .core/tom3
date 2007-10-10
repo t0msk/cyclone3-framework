@@ -1099,6 +1099,7 @@ while ($main::CGI=new CGI::Fast())
 							'db_name' => $TOM::DB{'main'}{'name'},
 							'tb_name' => "a210_page",
 							'lng'     => $main::FORM{'__lng'},
+							'-cache' => 1
 						);
 						foreach my $p(
 							App::020::SQL::functions::tree::get_path(
@@ -1106,6 +1107,7 @@ while ($main::CGI=new CGI::Fast())
 								'db_h' => "main",
 								'db_name' => $TOM::DB{'main'}{'name'},
 								'tb_name' => "a210_page",
+								'-cache' => 1
 							)
 						)
 						{
@@ -1946,6 +1948,7 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		
+		
 		$pub::output_log=0;
 		my $t_postprocess=track TOM::Debug("postprocess");
 		
@@ -1984,7 +1987,7 @@ while ($main::CGI=new CGI::Fast())
 			{
 				if (!$COOKIES{$_})
 				{
-					_log("empty ".$_);delete $COOKIES{$_};next;
+					main::_log("empty ".$_);delete $COOKIES{$_};next;
 				}
 			}
 		}
@@ -2014,7 +2017,8 @@ while ($main::CGI=new CGI::Fast())
 			$H->{OUT}{BODY}=~s/http:\/\/null\///g;
 		}
 		
-		my $debug_url;
+		my $debug_url=0;
+		my %url_cache=();
 		while ($H->{OUT}{BODY}=~s/$url_regexp/<!TMP-$hash!>/)
 		{
 			$url_count++;
@@ -2038,7 +2042,19 @@ while ($main::CGI=new CGI::Fast())
 				$end=$2;
 			}
 			
+			
 			main::_log("URL '$prefix' '$var' '$end'") if $debug_url;
+			
+			my $cache_key="$prefix".'/'."$var";
+			if ($url_cache{$cache_key})
+			{
+				main::_log("URL cached") if $debug_url;
+				main::_log("output URL '$url_cache{$cache_key}$end'") if $debug_url;
+				#main::_log("URL '$url_cache{$cache_key}$end'") unless $debug_url;
+				$H->{'OUT'}{'BODY'}=~s/<!TMP-$hash!>/$url_cache{$cache_key}$end/;
+				$t_link->close() if $debug_url;
+				next;
+			}
 			
 			# neviem odkial by sa tu vzali &amp;, ale pre istotu keby to niekto tymto stylom
 			# zapisal do XSGN alebo DSGN
@@ -2049,6 +2065,7 @@ while ($main::CGI=new CGI::Fast())
 			my %form;
 			# pridam systemovo posielane premenne __nieco
 			foreach (keys %FORM){$_=~/^__/ && do{$form{$_}=$FORM{$_};};}
+			#foreach (keys %form){main::_log("key $_")};
 			# parsing $var to %form
 			foreach my $cc(split('&',$var))
 			{
@@ -2136,6 +2153,7 @@ while ($main::CGI=new CGI::Fast())
 					TOM::Net::URI::URL::url_decode_($prefix);
 					main::_log("output URL '$prefix?__$link_md5$end'") if $debug_url;
 					main::_log("URL '$prefix?__$link_md5$end'") unless $debug_url;
+					$url_cache{$cache_key}="$prefix?__$link_md5";
 					$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?__$link_md5$end/;
 				}
 				else  # klasicke kodovanie
@@ -2146,6 +2164,7 @@ while ($main::CGI=new CGI::Fast())
 					TOM::Net::URI::URL::url_decode_($prefix);
 					main::_log("output URL '$prefix?$link_hash$end'") if $debug_url;
 					main::_log("URL '$prefix?$link_hash$end'") unless $debug_url;
+					$url_cache{$cache_key}="$prefix?$link_hash";
 					$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?$link_hash$end/;
 				}
 				$t_link->close() if $debug_url;
@@ -2164,12 +2183,14 @@ while ($main::CGI=new CGI::Fast())
 			{
 				main::_log("output URL '$prefix$end'") if $debug_url;
 				main::_log("URL '$prefix$end'") unless $debug_url;
+				$url_cache{$cache_key}="$prefix";
 				$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix$end/;
 			}
 			else
 			{
 				main::_log("output URL '$prefix?$var$end'") if $debug_url;
 				main::_log("URL '$prefix?$var$end'") unless $debug_url;
+				$url_cache{$cache_key}="$prefix?$hash";
 				$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?$var$end/;
 			}
 			
@@ -2180,7 +2201,7 @@ while ($main::CGI=new CGI::Fast())
 		
 		if ($url_count)
 		{
-			main::_log("url_replace performance req:".
+			main::_log("url_replace performance ($url_count) req:".
 				($t_urlreplace->{'time'}{req}{duration}/$url_count).
 				" proc:".
 				($t_urlreplace->{'time'}{proc}{duration}/$url_count));
@@ -2221,7 +2242,7 @@ while ($main::CGI=new CGI::Fast())
 		
 		#$t_doc_output->close();
 		
-		{my $t=track TOM::Debug("codepage settings");
+#		{my $t=track TOM::Debug("codepage settings");
 			
 			# pokial je vystup z publisheru ako PDF
 			# musim prevadzat HTML document do lokalneho kodovania
@@ -2290,8 +2311,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			#if (utf8::is_utf8($DOC_output)){main::_log("DOC_output flag is utf8");}
 			
-			$t->close();
-		};
+#		$t->close();};
 		
 		my $t_send=track TOM::Debug("send");
 		
