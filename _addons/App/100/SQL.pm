@@ -21,6 +21,9 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 use App::100::_init;
 
+our $debug=0;
+our $quiet=0;$quiet=1 unless $debug;
+
 =head1 FUNCTIONS
 
 =head2 ticket_event_new
@@ -33,19 +36,19 @@ Uzavrie ticket
 
 =cut
 
-our $debug=0;
+
 
 sub ticket_event_new
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::ticket_event_new()");
+	my $t=track TOM::Debug(__PACKAGE__."::ticket_event_new()") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
 	
 	foreach (keys %env)
 	{
-		main::_log("input '$_'='$env{$_}'");
+		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 
 	my $ID_ticket;
@@ -60,7 +63,7 @@ sub ticket_event_new
 		domain='$env{'domain'}' AND
 		name='$env{'name'}'
 	/;
-	my %sth0 = TOM::Database::SQL::execute( $sql, 'db_h'=>$env{'db_h'}, 'log'=>$debug);
+	my %sth0 = TOM::Database::SQL::execute( $sql, 'db_h'=>$env{'db_h'}, 'quiet'=>$quiet, 'log'=>$debug);
 	
 	if ( !$sth0{'rows'} )
 	{
@@ -97,11 +100,11 @@ sub ticket_event_new
 			'-journalize' => $journalize
 		);
 	}
-
+	
 	return 0 unless $ID_ticket;
-
+	
 	$env{'cvml'} =~ s|'|\\'|g;
-
+	
 	# Vytvaram ticket event
 	my $ID_ticket_event = App::020::SQL::functions::new(
 		'db_h' => "main",
@@ -115,9 +118,11 @@ sub ticket_event_new
 	);
 	
 	return 0 unless $ID_ticket_event;
-	$t->close();
+	$t->close() if $debug;
 	return 1;
 }
+
+
 
 sub ticket_close
 {
