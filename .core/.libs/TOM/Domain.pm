@@ -21,6 +21,11 @@ BEGIN
 {
 	unshift @INC,$tom::P."/.libs" if $tom::P;
 	unshift @INC,$tom::P."/_addons" if $tom::P;
+	if ($tom::P)
+	{
+		mkdir $tom::P.'/_logs' if (! -e $tom::P.'/_logs');
+		chmod 0777,$tom::P.'/_logs';
+	}
 }
 
 1;
