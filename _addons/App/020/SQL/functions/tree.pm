@@ -17,6 +17,8 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 use TOM::Net::URI::rewrite;
 use App::020::functions::charindex;
 
+our $debug;
+
 =head1 FUNCTIONS
 
 =head2 new()
@@ -706,12 +708,15 @@ Vypisanie cesty konkretnej polozky
 
 =cut
 
+our %path_cache=();
+
 sub get_path
 {
 	my $ID=shift;
 	my @path;
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::get_path('$ID')");
+	my $debug=1;
+	my $t=track TOM::Debug(__PACKAGE__."::get_path('$ID')") if $debug;
 	
 	my %data=App::020::SQL::functions::get_ID(
 		'ID'	=> $ID,
@@ -724,13 +729,14 @@ sub get_path
 			'name_url' => 1,
 			'ID_charindex' => 1,
 			'lng' => 1,
-		}
+		},
+		'-cache' => $env{'-cache'}
 	);
 	
 	if (!$data{'ID'})
 	{
-		main::_log("ID='$ID' not exists",1);
-		$t->close();
+		main::_log("ID='$ID' not exists",1) if $debug;
+		$t->close() if $debug;
 		return undef;
 	}
 	
@@ -742,7 +748,7 @@ sub get_path
 	# hladam nody az po root
 	while ($parent)
 	{
-		main::_log("find parent '$parent'");
+		main::_log("find parent '$parent'") if $debug;
 		my $sql=qq{
 			SELECT
 				ID,
@@ -773,7 +779,7 @@ sub get_path
 		}
 	}
 	
-	$t->close();
+	$t->close() if $debug;
 	return @path;
 }
 
@@ -849,27 +855,47 @@ sub find_new_child
 
 =head2 find_path_url
 
-Hladanie cesty
+Find path_url in table
+
+ my %data=App::020::SQL::functions::tree::find_path_url(
+  "path/path/path",
+  'db_h' => "main",
+  'db_name' => 'example_tld',
+  'tb_name' => "a210_page",
+  '-cache' => 1
+ );
 
 =cut
+
+our %path_url_cache=();
 
 sub find_path_url
 {
 	my $path=shift;
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::find_path_url('$path')");
+	my $t=track TOM::Debug(__PACKAGE__."::find_path_url('$path')") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	foreach (keys %env)
 	{
-		main::_log("input '$_'='$env{$_}'");
+		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
+	
+	my $cache_key=$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'tb_name'}.'::'.$env{'lng'}.'::'.$path;
+	if ($path_url_cache{$cache_key} && $env{'-cache'})
+	{
+		main::_log("found in cache") if $debug;
+		main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$path_url_cache{$cache_key}{'ID'}'") unless $debug;
+		$t->close() if $debug;
+		return %{$path_url_cache{$cache_key}};
+	}
+	
 	
 	my @level=split('/',$path);
 	my $levels=($path=~s|/|/|g);
 	
-	main::_log("levels=$levels");
+	main::_log("levels=$levels") if $debug;
 	
 	my $ID_charindex= '___:' x ($levels+1);
 	$ID_charindex=~s|:$||;
@@ -878,8 +904,8 @@ sub find_path_url
 	my @ID_charindex_find=('');
 	foreach my $level_part (@level)
 	{
-		my $t_level=track TOM::Debug("level-$i");
-		main::_log("part='$level_part'");
+		my $t_level=track TOM::Debug("level-$i") if $debug;
+		main::_log("part='$level_part'") if $debug;
 		
 		my $i0=0;
 		foreach my $way (@ID_charindex_find)
@@ -890,8 +916,8 @@ sub find_path_url
 			my $ll=($ID_charindex=~s|:|:|g);
 			if ($ll==$i+1){$i0++;next;}
 			
-			my $t_way=track TOM::Debug("way-$i0");
-			main::_log("ID_charindex='$way'");
+			my $t_way=track TOM::Debug("way-$i0") if $debug;
+			main::_log("ID_charindex='$way'") if $debug;
 			
 			my $sql=qq{
 				SELECT
@@ -916,7 +942,7 @@ sub find_path_url
 			if (!$sth0{'rows'})
 			{
 				$way="-";
-				$t_way->close();
+				$t_way->close() if $debug;
 				next;
 			}
 			
@@ -926,11 +952,11 @@ sub find_path_url
 				if (!$i2)
 				{
 					$ID_charindex_find[$i0]=$db0_line{'ID_charindex'};
-					main::_log("set way='$ID_charindex_find[$i0]'");
+					main::_log("set way='$ID_charindex_find[$i0]'") if $debug;
 				}
 				else
 				{
-					main::_log("new way='$db0_line{'ID_charindex'}'");
+					main::_log("new way='$db0_line{'ID_charindex'}'") if $debug;
 					push @ID_charindex_find,$db0_line{'ID_charindex'};
 				}
 				
@@ -938,15 +964,15 @@ sub find_path_url
 			}
 			
 			$i0++;
-			$t_way->close();
+			$t_way->close() if $debug;
 		}
 		$i++;
-		$t_level->close();
+		$t_level->close() if $debug;
 	}
 	
 	foreach (@ID_charindex_find)
 	{
-		main::_log("out=$_");
+		main::_log("out=$_") if $debug;
 	}
 	
 	my $SQL=qq{
@@ -961,19 +987,21 @@ sub find_path_url
 	my %sth1=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'quiet'=>1);
 	if ($sth1{'rows'})
 	{
-		main::_log("only 1 output");
+		main::_log("only 1 output") if $debug;
 		my %data=$sth1{'sth'}->fetchhash();
-		$t->close();
+		main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$data{'ID'}'") unless $debug;
+		%{$path_url_cache{$cache_key}}=%data if $env{'-cache'};
+		$t->close() if $debug;
 		return %data;
 	}
 	else
 	{
-		main::_log("can't be found",1);
-		$t->close();
+		main::_log("can't be found",1) if $debug;
+		$t->close() if $debug;
 		return undef;
 	}
 	
-	$t->close();
+	$t->close() if $debug;
 	return undef;
 }
 
