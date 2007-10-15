@@ -32,6 +32,10 @@ L<TOM::Database::SQL|source-doc/".core/.libs/TOM/Database/SQL.pm">
 
 =item *
 
+L<Ext::CacheMemcache::_init|ext/"CacheMemcache/_init.pm">
+
+=item *
+
 L<App::020::SQL::functions::tree|app/"020/SQL/functions/tree.pm">
 
 =item *
@@ -47,6 +51,7 @@ L<App::020|app/"020/_init.pm">
 =cut
 
 use TOM::Database::SQL;
+use Ext::CacheMemcache::_init;
 use App::020::SQL::functions::tree;
 
 our $debug=0;
@@ -142,6 +147,8 @@ sub new
 				'ID' => $ID
 			);
 		}
+		
+		_save_changetime(\%env);
 		
 		$t->close() if $debug;
 		return $ID;
@@ -361,6 +368,9 @@ $sel_set
 			}
 			
 		}
+		
+		_save_changetime(\%env);
+		
 	}
 	else
 	{
@@ -1212,6 +1222,73 @@ sub enable
 	$t->close() if $debug;
 	return 1;
 }
+
+
+
+
+
+sub _get_changetime
+{
+	my %env=%{shift @_};
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
+	
+	if (!$TOM::CACHE_memcached)
+	{
+		# when memcached is not enabled, return 1 = database is changed
+		return time();
+	}
+	
+	my $key=$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'tb_name'};
+	
+	#main::_log("get key $key");
+	
+	my $changetime=$Ext::CacheMemcache::cache->get
+	(
+		'namespace' => "db_changed",
+		'key' => $key
+	);
+	
+	if (!$changetime)
+	{
+		_save_changetime(%env);
+	}
+	
+	return $changetime || time();
+}
+
+
+sub _save_changetime
+{
+	my %env=%{shift @_};
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
+	
+	if (!$TOM::CACHE_memcached)
+	{
+		# when memcached is not enabled, return 1
+		return 1;
+	}
+	
+	my $key=$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'tb_name'};
+	
+	#main::_log("set key $key");
+	
+	$Ext::CacheMemcache::cache->set
+	(
+		'namespace' => "db_changed",
+		'key' => $key,
+		'value' => time(),
+	);
+	
+	return 1;
+}
+
+
+
+
 
 =head1 SEE ALSO
 
