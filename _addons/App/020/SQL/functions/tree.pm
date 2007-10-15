@@ -17,7 +17,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 use TOM::Net::URI::rewrite;
 use App::020::functions::charindex;
 
-our $debug;
+our $debug=0;
 
 =head1 FUNCTIONS
 
@@ -867,8 +867,6 @@ Find path_url in table
 
 =cut
 
-our %path_url_cache=();
-
 sub find_path_url
 {
 	my $path=shift;
@@ -882,15 +880,28 @@ sub find_path_url
 		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
-	my $cache_key=$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'tb_name'}.'::'.$env{'lng'}.'::'.$path;
-	if ($path_url_cache{$cache_key} && $env{'-cache'})
-	{
-		main::_log("found in cache") if $debug;
-		main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$path_url_cache{$cache_key}{'ID'}'") unless $debug;
-		$t->close() if $debug;
-		return %{$path_url_cache{$cache_key}};
-	}
+	my $cache_key='tree_path::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'tb_name'}.'::'.$env{'lng'}.'::'.$path;
+	my $cache_changetime;
 	
+	if ($env{'-cache'} && $TOM::CACHE_memcached)
+	{
+		$cache_changetime=App::020::SQL::functions::_get_changetime(\%env);
+		
+		my $cache=$Ext::CacheMemcache::cache->get
+		(
+			'namespace' => "db_cache",
+			'key' => $cache_key
+		);
+		
+		if ($cache_changetime <= $cache->{'time'})
+		{
+			main::_log("found in cache") if $debug;
+			main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$cache->{'data'}{'ID'}'") unless $debug;
+			$t->close() if $debug;
+			return %{$cache->{'data'}};
+		}
+		
+	}
 	
 	my @level=split('/',$path);
 	my $levels=($path=~s|/|/|g);
@@ -990,7 +1001,21 @@ sub find_path_url
 		main::_log("only 1 output") if $debug;
 		my %data=$sth1{'sth'}->fetchhash();
 		main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$data{'ID'}'") unless $debug;
-		%{$path_url_cache{$cache_key}}=%data if $env{'-cache'};
+		
+		if ($env{'-cache'} && $TOM::CACHE_memcached)
+		{
+			$Ext::CacheMemcache::cache->set
+			(
+				'namespace' => "db_cache",
+				'key' => $cache_key,
+				'value' =>
+				{
+					'time' => time(),
+					'data' => {%data}
+				}
+			);
+		}
+		
 		$t->close() if $debug;
 		return %data;
 	}
