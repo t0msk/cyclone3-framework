@@ -51,6 +51,8 @@ sub parse_conf
 	
 	foreach my $line(split('\n',$data))
 	{
+		#chomp($line);
+		$line=~s|[\n\r]||g;
 		next unless $line;
 		next if $line=~/^#/;
 		
@@ -101,6 +103,7 @@ sub parse_conf
 		my $TypeID=$1;
 		foreach my $type(split(';',$line))
 		{
+			#chomp($type);
 			next unless $type;
 			$tom::type_c{$type}=$TypeID;
 			main::_log("type:'$type'=TypeID:'$TypeID'");
