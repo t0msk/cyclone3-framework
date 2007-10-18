@@ -1120,12 +1120,17 @@ while ($main::CGI=new CGI::Fast())
 						{
 							if ($main::FORM{'type'})
 							{
-								main::_log("FORM{'type'} has been defined from GET, this link must be relinked by code 301");
+								#main::_log("FORM{'type'} has been defined from GET, this link must be relinked by code 301");
+								main::_log("FORM{'type'} already defined, a210{'t_name'} ignored");
 								# tuto linku otestujem a spravim relokaciu podla kodu 301
-								$rewrite_301=1;
+								#$rewrite_301=1;
 							}
-							main::_log("set FORM{'type'}='$a210{'t_name'}'");
-							$main::FORM{'type'}=$a210{'t_name'};
+							else
+							{
+								main::_log("set FORM{'type'}='$a210{'t_name'}'");
+								$main::FORM{'type'}=$a210{'t_name'};
+								$a210{'t_name_used'} = 1;
+							}
 						}
 						
 						my $cvml = new CVML(data=>$a210{'t_keys'});
@@ -1183,10 +1188,10 @@ while ($main::CGI=new CGI::Fast())
 		local $tom::type;
 		# convert type to TID
 		undef $FORM{'TID'}; # don't allow to request TID directly
-		if ($FORM{type})
+		if ($FORM{'type'})
 		{
-			$FORM{TID}=$tom::type_c{$FORM{type}};
-			main::_log("FORM{type}='$FORM{type}' converted to FORM{TID}='$FORM{TID}'");
+			$FORM{'TID'}=$tom::type_c{$FORM{'type'}};
+			main::_log("FORM{type}='$FORM{'type'}' converted to FORM{'TID'}='$FORM{TID}'");
 		}
 		# tu je pre spetnu kompatibilitu tvar "[mg]0000"
 		#if ($FORM{TID}=~/^([mg0-9])([0-9]+)$/)
@@ -1200,12 +1205,12 @@ while ($main::CGI=new CGI::Fast())
 				$post=$pre.$post;
 				$pre="l";
 			}
-			$FORM{TID}=$pre."_".sprintf('%04d',$post);
+			$FORM{'TID'}=$pre."_".sprintf('%04d',$post);
 		}
 		# ak som dostal $FORM{typecko co sa neda prelozit
 		# dalsi riadok by mal sposobit to, ze ak nebude preklad na TID, vyhlasi to chybu, treba vsak
 		# nastavit statuscode na 404 aby sa jadro nepokusalo toto typecko nacitavat
-		if (!$FORM{TID} && $FORM{type} && $FORM{type} ne "default")
+		if (!$FORM{'TID'} && $FORM{'type'} && $FORM{'type'} ne "default")
 		{
 			# nastavenie 404 je nutne, inak by som sa nedostal vobec k citaniu l_notfound
 			$main::page_statuscode="404";
@@ -1218,7 +1223,7 @@ while ($main::CGI=new CGI::Fast())
 		}
 		if ($env{admin} eq "request"){$FORM{TID}="g_admin";}
 		if ($env{test} eq "request"){$FORM{TID}="g_test";}
-		main::_log("type='$main::FORM{type}' TID='$main::FORM{TID}'");
+		main::_log("type='$main::FORM{type}' TID='$main::FORM{TID}'($main::page_statuscode)");
 		
 		
 		
@@ -1626,7 +1631,7 @@ while ($main::CGI=new CGI::Fast())
 			delete $form{TID} if $form{type};
 			delete $form{TID} if $form{TID}="l_default";
 			delete $form{cookies};
-			delete $form{type} if $a210{'t_name'};
+			delete $form{type} if $a210{'t_name_used'}; # dont' paste to URL $form{'type'} when is defined by $a210{'t_name'}
 			
 			my $rewrite="/".TOM::Net::URI::rewrite::parse_hash(\%form);
 			main::_log("rewrited part is '$rewrite'");
