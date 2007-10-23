@@ -119,6 +119,10 @@
       <listitem>
         <para>XML::XPath</para>
       </listitem>
+
+      <listitem>
+        <para>SOAP::Lite</para>
+      </listitem>
     </itemizedlist>
 
     <itemizedlist spacing="compact">

@@ -352,6 +352,32 @@ sub get_CGI
 		
 	}
 	
+	# process SOAP data
+	if ($form{'POSTDATA'} && $Net::DOC::type eq "soap")
+	{
+		main::_log("received SOAP POSTDATA, parsing");
+		
+		require SOAP::Lite;
+		
+		my $som = SOAP::Deserializer->deserialize($form{'POSTDATA'});
+		my $body = $som->body;
+		
+		$form{'type'}=(keys %{$body})[0];
+		
+		main::_log("SOAP type='$form{'type'}'");
+		
+		if ($body->{$form{'type'}}->{'c-gensym3'})
+		{
+			%{$main::SOAP}=%{$body->{$form{'type'}}->{'c-gensym3'}};
+		}
+		else
+		{
+			%{$main::SOAP}=%{$body->{$form{'type'}}};
+		}
+		
+		delete $form{'POSTDATA'};
+	}
+	
 	$t->close();
 	return %form;
 }

@@ -33,6 +33,7 @@ use CGI::Fast qw(:standard);
 use vars qw/
 	$CGI
 	%FORM
+	$SOAP
 	$H
 	$action
 	$TEMPLATE
@@ -602,6 +603,7 @@ while ($main::CGI=new CGI::Fast())
 		#
 		
 		%FORM=();
+		%{$SOAP}=();
 		my %FORM_rewrite=();
 		
 		# parse rewrited part of url and translate it to variables by rewrite.conf
@@ -1093,8 +1095,9 @@ while ($main::CGI=new CGI::Fast())
 					elsif ($main::FORM{'a210_path'})
 					{
 						#... find this path in a210
+						#main::_log("find this path in a210");
 						%a210=App::020::SQL::functions::tree::find_path_url(
-							"$main::FORM{'a210_path'}",
+							$main::FORM{'a210_path'},
 							'db_h' => "main",
 							'db_name' => $TOM::DB{'main'}{'name'},
 							'tb_name' => "a210_page",
