@@ -1,0 +1,36 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response
+	addon="a910"
+	addon_type="product"
+	type="view"
+	result="1"
+	code="<$main::request_code>">
+	<result>0</result>
+	<reason>default error</reason>
+	
+	<ID><![CDATA[<%ID%>]]></ID>
+	<product_number><![CDATA[<%product_number%>]]></product_number>
+	<name><![CDATA[<%name%>]]></name>
+	<description><![CDATA[<%description%>]]></description>
+	
+	
+</response>
+</DEFINITION>
+
+<DEFINITION id="RESULT_failure_no_input">
+<response
+	addon="a910"
+	addon_type="product"
+	type="view"
+	result="0"
+	code="<$main::request_code>">
+	<result>0</result>
+	<reason>Not enough information to act. Missing parameter '<%missing_parameter%>'</reason>
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
+

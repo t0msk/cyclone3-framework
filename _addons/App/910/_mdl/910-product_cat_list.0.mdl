@@ -1,0 +1,268 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::910::_init;
+use App::300::_init;
+use TOM::Text::format;
+
+=head1 NAME
+
+910-product_cat_list.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+List of products in folder
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID parent záznamu ktorého childy sa zobrazujú
+
+=item *
+
+B<status> - default 'Y' - statusy stromu ktoré sa zobrazujú ( napr. 'YNT' )
+
+=item *
+
+B<db_order> - default 'ID_charindex' - zoradenie položiek v SQL syntaxe
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default
+
+=item *
+
+B<ITEM> - položka stromu
+
+=item *
+
+B<ITEM-current> - aktuálna položka stromu ak je použitý vstupný parameter B<current_*>=''
+
+=item *
+
+B<SUB> - v režime 'tree' používané pre vytvorenie sub-stromu v strome
+
+=item *
+
+B<#tree#> - miesto pre vloženie sub-stromu
+
+=item *
+
+B<#item#> - miesto pre vloženie ITEM
+
+=item *
+
+B<%path%> - ID
+
+=item *
+
+B<%name%> - chýbajúci parameter
+
+=back
+
+Režim zoznamu:
+
+ <XML_DESIGN_DEFINITION>
+ 
+ <DEFINITION id="TMP">
+  <#item#>
+ </DEFINITION>
+ 
+ <DEFINITION id="ITEM">
+  <item IDitem="<%ID%>">
+   <ID><%ID%></ID>
+   <ID_entity><%ID_entity%></ID_entity>
+   <IDparent><%ID_parent%></IDparent>
+   <name><%name%></name>
+   <name_url><%name_url%></name_url>
+   <path><%path%></path>
+   <datetime_create><%datetime_create%></datetime_create>
+   <lng><%lng%></lng>
+   <status><%status%></status>
+  </item>
+  <#item#>
+ </DEFINITION>
+ 
+ </XML_DESIGN_DEFINITION>
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	delete $env{'ID_charindex'};
+	
+	$env{'tree'}=1 unless exists $env{'tree'};
+	
+	my $from;
+	
+	my $where;
+	
+	# language
+	$where.="a910_product.lng='$env{'lng'}' ";
+	
+	# status
+	if ($env{'status'})
+	{
+		$XSGN{'TMP'}=~s|<%required_status%>|$env{'status'}|g;
+		$where.="AND (";
+		foreach (split('',$env{'status'}))
+		{
+			$where.="a910_product.status='$_' OR ";
+		}
+		$where=~s|OR $||;
+		$where.=")";
+	}
+	else
+	{
+		$where.="AND a910_product.status='Y' ";
+	}
+	
+	if ($env{'ID'})
+	{
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h'    => 'main',
+			'db_name' => $TOM::DB{'main'}{'name'},
+			'tb_name' => 'a910_product_cat',
+			'ID'      => $env{'ID'},
+			'columns' => 
+			{
+				'ID_charindex' => 1
+			}
+		);
+		if ($data{'ID'})
+		{
+			#$env{'ID_charindex'}=$data{'ID_charindex'}.':';
+			$env{'ID_charindex'}=$data{'ID_charindex'};
+		}
+		else
+		{
+			main::_log("can't find ID='$data{'ID'}'",1);
+			return undef;
+		}
+		
+		my $path_;
+		foreach my $node (App::020::SQL::functions::tree::get_path(
+			$env{'ID'},
+			'db_h'    => 'main',
+			'db_name' => $TOM::DB{'main'}{'name'},
+			'tb_name' => 'a910_product_cat'
+		))
+		{
+			$path_.='/'.$node->{'name'};
+		}
+		$path_=~s|^/||;
+		
+		$XSGN{'TMP'}=~s|<%location%>|$path_|g;
+		
+	}
+	
+	
+	if ($env{'order_by'})
+	{
+		$env{'db_order'}="a910_product.".$env{'order_by'};
+	}
+	
+	$env{'db_order'}="a910_product.ID_entity ASC" unless $env{'db_order'};
+	
+	
+	my %owners;
+	
+	
+	
+	
+	#
+	# LISTING OF ITEMS
+	#
+	
+	
+	#my $where_category="AND ID_category IN ()'$env{'ID'}'";
+	my $where_category="AND a910_product.ID_category IN (SELECT ID_entity FROM a910_product_cat WHERE ID_charindex LIKE '$env{'ID_charindex'}%' AND status IN ('Y','N'))";
+	
+	
+	#$where_category="AND ID_category = 0" unless $env{'ID'};
+	my $sql=qq{
+		SELECT
+			a910_product.*,
+			a910_product_brand.name AS brand_name
+		FROM
+			a910_product
+		LEFT JOIN a910_product_brand ON
+		(
+			a910_product.ID_brand=a910_product_brand.ID_entity
+		)
+		WHERE $where $where_category
+		ORDER BY
+			$env{'db_order'}
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	if ($sth0{'sth'})
+	{
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$XSGN{'NULL'}=$XSGN{'ITEM'};
+			
+			$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID'}|g;
+			$XSGN{'NULL'}=~s|<%ID_entity%>|$db0_line{'ID_entity'}|g;
+			$XSGN{'NULL'}=~s|<%name%>|$db0_line{'name'}|g;
+			$XSGN{'NULL'}=~s|<%name_url%>|$db0_line{'name_url'}|g;
+			$XSGN{'NULL'}=~s|<%datetime_create%>|$db0_line{'datetime_create'}|g;
+			$XSGN{'NULL'}=~s|<%status%>|$db0_line{'status'}|g;
+			$XSGN{'NULL'}=~s|<%lng%>|$db0_line{'lng'}|g;
+			
+			$XSGN{'NULL'}=~s|<%product_number%>|$db0_line{'product_number'}|g;
+			$XSGN{'NULL'}=~s/<%brand_name%>/$db0_line{'brand_name'} || 'No Name'/eg;
+			$XSGN{'NULL'}=~s|<%amount%>|$db0_line{'amount'}|g;
+			$XSGN{'NULL'}=~s|<%price%>|$db0_line{'price'}|g;
+			$XSGN{'NULL'}=~s/<%price_format%>/TOM::Utils::currency::format($db0_line{'price'}).' '.$App::910::currency/eg;
+			$XSGN{'NULL'}=~s|<%VAT%>|$db0_line{'VAT'}%|g;
+			
+			
+			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+		}
+		
+	}
+	else
+	{
+		main::_log("can't select");
+	}
+	
+	
+	
+	return 1;
+}
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;

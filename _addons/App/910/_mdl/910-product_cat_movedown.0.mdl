@@ -1,0 +1,113 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+910-product_cat_movedown.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Presunutie položky a jej subpoložiek ( časť stromu ) vyššie
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID záznamu
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - defaultne error
+
+=item *
+
+B<RESULT_success> - bez erroru
+
+=item *
+
+B<RESULT_failure_no_input> - zlý vstup
+
+=item *
+
+B<RESULT_failure_set> - nepodarilo sa vykonať
+
+=item *
+
+B<&lt;%ID%&gt;> - ID
+
+=item *
+
+B<&lt;%missing_parameter%&gt;> - chýbajúci parameter
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	my $out;
+	
+	$out=App::020::SQL::functions::tree::move_down(
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a910_product_cat",
+		'-journalize' => 1,
+		'ID'   => $env{'ID'}
+	);
+	
+	if ($out)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		return 1;
+	}
+	else
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_set'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		return 1;
+	}
+	
+	return 1;
+}
+
+our $authors='open@comsultia.com';
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;

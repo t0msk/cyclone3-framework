@@ -1,0 +1,78 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+910-product_view.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Get details of product
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID of product
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	my %data=App::020::SQL::functions::get_ID(
+		'ID' => $env{'ID'},
+		'db_h' => "main",
+		'db_name' => $TOM::DB{'main'}{'name'},
+		'tb_name' => "a910_product",
+		'columns' =>
+		{
+			'*' => 1,
+		}
+	);
+	
+	if ($data{'ID'})
+	{
+		
+		foreach (keys %data)
+		{
+			$XSGN{'TMP'}=~s|<%$_%>|$data{$_}|g;
+		}
+		
+		return 1;
+	}
+	else
+	{
+		
+	}
+	
+	return 1;
+}
+
+
+our $authors='open@comsultia.com';
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;

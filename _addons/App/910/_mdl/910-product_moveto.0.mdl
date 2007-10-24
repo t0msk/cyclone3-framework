@@ -1,0 +1,68 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+910-product_moveto.0.mdl
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	if (!$env{'parent_ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|parent_ID|g;
+		return 1;
+	}
+	
+	
+	$env{'ID'}.=';';
+	foreach my $ID(split(';',$env{'ID'}))
+	{
+		next unless $ID;
+		
+		App::020::SQL::functions::update(
+			'ID' => $ID,
+			'db_h' => "main",
+			'db_name' => $TOM::DB{'main'}{'name'},
+			'tb_name' => "a910_product",
+			'-journalize' => 1,
+			'columns' =>
+			{
+				'ID_category'   => $env{'parent_ID'},
+			}
+		);
+		
+	}
+	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	return 1;
+}
+
+our $authors='open@comsultia.com';
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;

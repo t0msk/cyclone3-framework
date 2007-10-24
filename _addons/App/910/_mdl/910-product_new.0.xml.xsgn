@@ -1,0 +1,65 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<response
+	addon="a910"
+	addon_type="product"
+	type="new"
+	result="0"
+	code="<$main::request_code>">
+	<result>0</result>
+	<reason>default error</reason>
+</response>
+</DEFINITION>
+
+<DEFINITION id="RESULT_success">
+<response
+	addon="a910"
+	addon_type="product"
+	type="new"
+	result="1"
+	code="<$main::request_code>">
+	<result>1</result>
+	<ID><![CDATA[<%ID%>]]></ID>
+</response>
+</DEFINITION>
+
+<DEFINITION id="RESULT_failure_no_parent">
+<response
+	addon="a910"
+	addon_type="product"
+	type="new"
+	result="0"
+	code="<$main::request_code>">
+	<result>0</result>
+	<reason>No corresponding parent found</reason>
+</response>
+</DEFINITION>
+
+<DEFINITION id="RESULT_failure_insert">
+<response
+	addon="a910"
+	addon_type="product"
+	type="new"
+	result="0"
+	code="<$main::request_code>">
+	<result>0</result>
+	<reason>Could not create a child</reason>
+</response>
+</DEFINITION>
+
+<DEFINITION id="RESULT_failure_no_input">
+<response
+	addon="a910"
+	addon_type="product"
+	type="new"
+	result="0"
+	code="<$main::request_code>">
+	<result>0</result>
+	<reason>Not enough information to act. Missing parameter '<%missing_parameter%>'</reason>
+</response>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
+
