@@ -1,8 +1,9 @@
-#############################
-#
-# Apache virtuals configuration
-#
-#############################
+######################################
+#                                    #
+# Apache VirtualHost's configuration #
+#                                    #
+######################################
+
 
 Options FollowSymLinks
 
@@ -17,9 +18,14 @@ Options FollowSymLinks
 ErrorLog /www/TOM/_logs/httpd/all.err.log
 CustomLog /www/TOM/_logs/httpd/all.acc.log combined
 
+
+
 #######################################################################
 # EXAMPLE.TLD
+# (this is just example, you don't need all here
+#  configured domains and subdomains)
 #######################################################################
+
 
 <VirtualHost 192.168.5.1>
 	ServerName example.tld
@@ -30,4 +36,35 @@ CustomLog /www/TOM/_logs/httpd/all.acc.log combined
 		Options Indexes FollowSymlinks ExecCGI
 		AllowOverride All
 	</Directory>
+	
+	# SOAP domain service
+	Alias /soap "/www/TOM/!example.tld/soap/!www"
+	<Directory /www/TOM/!example.tld/soap/!www>
+		Options FollowSymlinks ExecCGI
+		AllowOverride All
+	</Directory>
+	
 </VirtualHost>
+
+# domain service backend to Cyclone3 XULadmin
+<VirtualHost 192.168.5.3:80>
+	ServerName cyclone.example.tld
+	DocumentRoot /www/TOM/!example.tld/!cyclone/!www
+	CustomLog /www/TOM/_logs/httpd/cyclone_example_tld.acc.log combined
+	<Directory /www/TOM/!example.tld/!cyclone/!www>
+		Options Indexes FollowSymlinks ExecCGI
+		AllowOverride All
+	</Directory>
+</VirtualHost>
+
+
+
+
+#######################################################################
+# ANOTHER-DOMAIN.TLD
+#######################################################################
+
+
+
+
+
