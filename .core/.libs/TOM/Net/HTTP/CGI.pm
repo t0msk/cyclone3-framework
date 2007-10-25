@@ -353,30 +353,50 @@ sub get_CGI
 	}
 	
 	# process SOAP data
-	if ($form{'POSTDATA'} && $Net::DOC::type eq "soap")
+	if ($form{'POSTDATA'})
 	{
-		main::_log("received SOAP POSTDATA, parsing");
-		
-		require SOAP::Lite;
-		
-		my $som = SOAP::Deserializer->deserialize($form{'POSTDATA'});
-		my $body = $som->body;
-		
-		$form{'type'}=(keys %{$body})[0];
-		
-		main::_log("SOAP type='$form{'type'}'");
-		
-		if ($body->{$form{'type'}}->{'c-gensym3'})
+		if ($Net::DOC::type eq "soap")
 		{
-			%{$main::SOAP}=%{$body->{$form{'type'}}->{'c-gensym3'}};
+			main::_log("received SOAP POSTDATA, parsing");
+			
+			require SOAP::Lite;
+			
+			my $som = SOAP::Deserializer->deserialize($form{'POSTDATA'});
+			my $body = $som->body;
+			
+			$form{'type'}=(keys %{$body})[0];
+			
+			main::_log("SOAP type='$form{'type'}'");
+			
+			if ($body->{$form{'type'}}->{'c-gensym3'})
+			{
+				%{$main::RPC}=%{$body->{$form{'type'}}->{'c-gensym3'}};
+			}
+			else
+			{
+				%{$main::RPC}=%{$body->{$form{'type'}}};
+			}
 		}
-		else
+		elsif ($Net::DOC::type eq "xmlrpc")
 		{
-			%{$main::SOAP}=%{$body->{$form{'type'}}};
+			main::_log("received XML-RPC POSTDATA, parsing");
+			
+			require XMLRPC::Lite;
+			
+			my $som = XMLRPC::Deserializer->deserialize($form{'POSTDATA'});
+			my $body = $som->body;
+			
+			$form{'type'}=$som->method;
+			
+			main::_log("XML-RPC type='$form{'type'}'");
+			
+			%{$main::RPC}=%{$som->paramsin};
+			
 		}
 		
 		delete $form{'POSTDATA'};
 	}
+	
 	
 	$t->close();
 	return %form;

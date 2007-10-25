@@ -33,7 +33,7 @@ use CGI::Fast qw(:standard);
 use vars qw/
 	$CGI
 	%FORM
-	$SOAP
+	$RPC
 	$H
 	$action
 	$TEMPLATE
@@ -603,7 +603,7 @@ while ($main::CGI=new CGI::Fast())
 		#
 		
 		%FORM=();
-		%{$SOAP}=();
+		%{$RPC}=();
 		my %FORM_rewrite=();
 		
 		# parse rewrited part of url and translate it to variables by rewrite.conf
