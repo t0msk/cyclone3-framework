@@ -1252,7 +1252,7 @@ sub _get_changetime
 	
 	if (!$changetime)
 	{
-		_save_changetime(%env);
+		_save_changetime(\%env);
 	}
 	
 	return $changetime || time();
