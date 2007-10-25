@@ -9,6 +9,8 @@ my $res=XMLRPC::Lite
       -> call('test', {state1 => 12, state2 => 28})
       -> result;
 
-print "output:".$res->{'lowerBound'}."\n";
+#print "output:".$res->{'lowerBound'}."\n";
+
+print "output:".$res->{'header'}->{'generator'}."\n";
 
 #}

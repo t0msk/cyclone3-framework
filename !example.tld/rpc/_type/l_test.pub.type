@@ -5,5 +5,5 @@
 	<VAR id="-global" value="0" />
 	<VAR id="-category" value="020" />
 	<VAR id="-name" value="test" />
-	<VAR id="-TMP" value="BODY" />
+	<VAR id="-TMP" value="OUTPUT" />
 </MODULE>

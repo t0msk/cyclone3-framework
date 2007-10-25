@@ -59,9 +59,52 @@ sub prepare
 	$self->{'OUT'}{'HEADER'} = qq{<?xml version="1.0" encoding="<%CODEPAGE%>"?>\n};
 	$self->{'OUT'}{'HEADER'} .= qq{<methodResponse>\n};
 	
-	# body
+	$self->{'OUT'}{'BODY'} = qq{
+	<params>
+		<param>
+			<struct>
+				<member>
+					<name>header</name>
+					<value>
+						<struct>
+							<member>
+								<name>generator</name>
+								<value><string>Cyclone$TOM::core_version.$TOM::core_build (r$TOM::core_revision)</string></value>
+							</member>
+							<member>
+								<name>hostname</name>
+								<value><string>$TOM::hostname</string></value>
+							</member>
+							<member>
+								<name>domain</name>
+								<value><string>$tom::H</string></value>
+							</member>
+							<member>
+								<name>process</name>
+								<value><i4>$$</i4></value>
+							</member>
+							<member>
+								<name>request_code</name>
+								<value><string><\$main::request_code></string></value>
+							</member>
+							<member>
+								<name>method</name>
+								<value><string><\$main::FORM{'type'}></string></value>
+							</member>
+							<member>
+								<name>TypeID</name>
+								<value><string><\$main::FORM{'TID'}></string></value>
+							</member>
+						</struct>
+					</value>
+				</member>
+<!TMP-OUTPUT!>
+			</struct>
+		</param>
+	</params>
+} unless $self->{'OUT'}{'BODY'};
 	
-	$self->{'OUT'}{'FOOTER'} = qq{\n</methodResponse>\n};
+	$self->{'OUT'}{'FOOTER'} .= qq{</methodResponse>};
 	
 	return 1;
 }
