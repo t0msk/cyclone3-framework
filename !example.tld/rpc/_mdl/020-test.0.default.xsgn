@@ -1,0 +1,28 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+<params>
+	<param>
+		<struct>
+			<member>
+				<name>lowerBound</name>
+				<value><i4>18</i4></value>
+				</member>
+			<member>
+				<name>upperBound</name>
+				<value><i4>139</i4></value>
+			</member>
+		</struct>
+	</param>
+</params>
+</DEFINITION>
+
+
+<DEFINITION id="item">
+
+<#item#>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
