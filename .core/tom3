@@ -2312,8 +2312,8 @@ while ($main::CGI=new CGI::Fast())
 				$main::H->message("Your browser detected as \"".$main::UserAgent_name."\" does not support utf-8 encoding or does not send the information about accepted encodings through http token. The system will automatically generate this page in default (ISO-8859-1/ASCII) charset. For more information, please refer to RFC2616 chapter 3.4. and inform your software distributor, or try to upgrade your this (or to another) software.");
 				main::_log("ASCII encoding for UserAgent \"$ENV{HTTP_USER_AGENT}\"-\"$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{name}\" encodings($ENV{HTTP_ACCEPT_CHARSET})",1,"pub.warn_low",1);
 				
-				$COOKIES{cp}="ASCII";
-				$H->rh("<%CODEPAGE%>","ASCII");
+				$COOKIES{cp}="ISO-8859-1";
+				$H->rh("<%CODEPAGE%>","ISO-8859-1");
 				$DOC_output=Int::charsets::encode::UTF8_ASCII($H->OUT_);
 			}
 			
