@@ -56,7 +56,7 @@
 	<entity id="box.error" replace_variables="true" replace_L10n="true"><![CDATA[
 <module>
 	<name><%MODULE%></name>
-	<message><$(This service is currently not available)>. <$(We're trying to fix this problem at the moment and apologize for any incovnenience)>.</message>
+	<message><$(This service is currently not available)>. <$(We're trying to fix this problem at the moment and apologize for any inconvenience)>.</message>
 	<error><%ERROR%> <%PLUS%></error>
 </module>
 ]]></entity>

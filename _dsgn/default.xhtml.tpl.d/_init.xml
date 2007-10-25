@@ -270,7 +270,7 @@
 	<table bgcolor='black' cellspacing='2' cellpadding='2'>
 	<tr>
 		<td style="FONT:bold 10px Verdana;COLOR:black;BACKGROUND:#F0F0F0;">
-			<img src="<$tom::H_media>/tpl/error_02.png" border='0' align='left'><%MODULE%> <$(This service is currently not available)>. <$(We're trying to fix this problem at the moment and apologize for any incovnenience)>. <%ERROR%> <%PLUS%>
+			<img src="<$tom::H_media>/tpl/error_02.png" border='0' align='left'><%MODULE%> <$(This service is currently not available)>. <$(We're trying to fix this problem at the moment and apologize for any inconvenience)>. <%ERROR%> <%PLUS%>
 		</td>
 	</tr>
 	</table>
