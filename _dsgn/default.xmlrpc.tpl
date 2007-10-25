@@ -4,62 +4,62 @@
 		<L10n level="auto" name="xml" lng="auto"/>
 	</header>
 	
-	
 	<entity id="page.error" replace_L10n="false" replace_variables="false"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
-<SOAP-ENV:Envelope
-	xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
-	SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
-	<SOAP-ENV:Body>
-		<SOAP-ENV:Fault>
-			<faultcode>SOAP-ENV:Server</faultcode>
-			<faultstring>Server error</faultstring>
-			<detail>
-				<message><%message%></message>
-			</detail>
-		</SOAP-ENV:Fault>
-	</SOAP-ENV:Body>
-</SOAP-ENV:Envelope>
+<methodResponse>
+	<fault>
+		<value>
+			<struct>
+				<member>
+					<name>faultCode</name>
+					<value><int>505</int></value>
+				</member>
+				<member>
+					<name>faultString</name>
+					<value><string><%message%></string></value>
+				</member>
+			</struct>
+		</value>
+	</fault>
+</methodResponse>
 	]]>
 	</entity>
 	
 	
 	<entity id="page.warning" replace_L10n="false" replace_variables="false"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
-<SOAP-ENV:Envelope
-	xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
-	SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
-	<SOAP-ENV:Body>
-		<SOAP-ENV:Fault>
-			<faultcode>SOAP-ENV:Client</faultcode>
-			<faultstring>Client error</faultstring>
-			<detail>
-				<message><%message%></message>
-				<domain><$tom::H></domain>
-				<engine><$TOM::engine></engine>
-				<TypeID><$main::FORM{'TID'}></TypeID>
-				<request>
-					<code><$main::request_code></code>
-				</request>
-			</detail>
-		</SOAP-ENV:Fault>
-	</SOAP-ENV:Body>
-</SOAP-ENV:Envelope>
+<methodResponse>
+	<fault>
+		<value>
+			<struct>
+				<member>
+					<name>faultCode</name>
+					<value><int>300</int></value>
+				</member>
+				<member>
+					<name>faultString</name>
+					<value><string><%message%></string></value>
+				</member>
+			</struct>
+		</value>
+	</fault>
+</methodResponse>
 ]]></entity>
 	
 	
 	<entity id="body.notfound" replace_L10n="true" replace_variables="false"><![CDATA[
-<SOAP-ENV:Fault>
-	<faultcode>SOAP-ENV:Client</faultcode>
-	<faultstring>Client error</faultstring>
-	<detail>
-		<message><$(The page or service type cannot be found)></message>
-		<domain><$tom::H></domain>
-		<engine><$TOM::engine></engine>
-		<TypeID><$main::FORM{'TID'}></TypeID>
-		<request>
-			<code><$main::request_code></code>
-		</request>
-	</detail>
-</SOAP-ENV:Fault>
+<fault>
+	<value>
+		<struct>
+			<member>
+				<name>faultCode</name>
+				<value><int>404</int></value>
+			</member>
+			<member>
+				<name>faultString</name>
+				<value><string><$main::FORM{'TID'}>: <$(The page or service type cannot be found)>. </string></value>
+			</member>
+		</struct>
+	</value>
+</fault>
 ]]></entity>
 	
 	

@@ -57,13 +57,11 @@ sub prepare
 	my $self=shift;
 	
 	$self->{'OUT'}{'HEADER'} = qq{<?xml version="1.0" encoding="<%CODEPAGE%>"?>\n};
-	$self->{'OUT'}{'HEADER'} .= qq{<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">\n};
-	$self->{'OUT'}{'HEADER'} .= qq{<SOAP-ENV:Body>\n};
+	$self->{'OUT'}{'HEADER'} .= qq{<methodResponse>\n};
 	
 	# body
 	
-	$self->{'OUT'}{'FOOTER'} = qq{\n</SOAP-ENV:Body>\n};
-	$self->{'OUT'}{'FOOTER'} .= qq{</SOAP-ENV:Envelope>\n};
+	$self->{'OUT'}{'FOOTER'} = qq{\n</methodResponse>\n};
 	
 	return 1;
 }
