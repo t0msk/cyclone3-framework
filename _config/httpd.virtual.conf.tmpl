@@ -37,9 +37,9 @@ CustomLog /www/TOM/_logs/httpd/all.acc.log combined
 		AllowOverride All
 	</Directory>
 	
-	# SOAP domain service
-	Alias /soap "/www/TOM/!example.tld/soap/!www"
-	<Directory /www/TOM/!example.tld/soap/!www>
+	# SOAP or XML-RPC domain service
+	Alias /rpc "/www/TOM/!example.tld/rpc/!www"
+	<Directory /www/TOM/!example.tld/rpc/!www>
 		Options FollowSymlinks ExecCGI
 		AllowOverride All
 	</Directory>
