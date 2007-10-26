@@ -235,6 +235,23 @@ sub process
 		
 	}
 	
+	# check version of document
+	$self->{'version'}='1.0';
+	if (-e $self->{'tmpdir'}.'/meta.xml')
+	{
+		open(FILE,'<'.$self->{'tmpdir'}.'/meta.xml');
+		do
+		{
+			local $/;
+			my $content=<FILE>;
+			if ($content=~/office:version="(.*?)"/sm)
+			{
+				$self->{'version'}=$1;
+				main::_log("office:version=".$self->{'version'});
+			}
+		};
+	}
+	
 	# manifest validation
 	
 	if (not -e $self->{'tmpdir'}.'/META-INF/manifest.xml')
@@ -246,7 +263,7 @@ sub process
 		$self->xmlvalidate(
 			'file' => 'manifest.xml',
 			'xml' => $self->{'tmpdir'}.'/META-INF/manifest.xml',
-			'rng' => $DIR.'/OpenDocument-manifest-schema-v1.0-os.rng'
+			'rng' => $DIR.'/OpenDocument-manifest-schema-v'.'1.0'.'.rng'
 		);
 	}
 	
@@ -263,7 +280,7 @@ sub process
 		$self->xmlvalidate(
 			'file' => $xmlfile,
 			'xml' => $self->{'tmpdir'}.'/'.$xmlfile,
-			'rng' => $DIR.'/OpenDocument-schema-v1.0-os.rng'
+			'rng' => $DIR.'/OpenDocument-schema-v'.$self->{'version'}.'.rng'
 		);
 		#other_checks($file, $xmlfile);
 	}
