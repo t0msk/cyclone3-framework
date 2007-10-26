@@ -286,7 +286,7 @@ sub get_ID(%env)
 		main::_log("none row returned",1) if $debug;
 	}
 	
-	$t->close();
+	$t->close() if $debug;
 }
 
 
