@@ -36,10 +36,9 @@ use vars qw/
 	$RPC
 	$H
 	$action
-	$TEMPLATE
-	%HEADER
-	%HTML_HEADER
-	$HTML_TEMP
+	$DOC_BODY
+	%DOC_HEADER
+	$TPL
 	%COOKIES
 	%COOKIES_save
 	%USRM
@@ -109,9 +108,15 @@ eval
 	main::_log("use Content-Type library type='$pub::DOC'");
 	eval "use Net::".$pub::DOC; die "can't load library DOC($pub::DOC)" if $@;
 	
-	# import default design
-	main::_log("require default.dsgn");
-	require $tom::P."/_dsgn/default.dsgn"; # define portal design
+	# import default header
+	main::_log("require default.header");
+	do $tom::P."/_dsgn/default.header"
+		|| do $tom::P."/_dsgn/default.dsgn";
+	
+	$main::DOC_BODY=$main::TEMPLATE if $main::TEMPLATE;
+	%main::DOC_HEADER=%main::HEADER if %main::HEADER;
+	
+	#$DOC_BODY = $TEMPLATE unless $DOC_BODY;
 	
 	# FIXME:[fordinal] check $tom::LNG_available ci je este vobec potrebna
 	$tom::DSGN="default"; # default design portal variable
@@ -120,10 +125,11 @@ eval
 	# PRIPRAVIM SI DEFAULT DOC
 	# FIXME:[fordinal] Odstranit spetnu kompatibilitu %HTML_HEADER a $HTML_TEMP
 	main::_log("generating template $pub::DOC from default.dsgn");
-	if (keys %HEADER == 0)
-	{$main::H_clone=new Net::DOC(%HTML_HEADER)}else{$main::H_clone=new Net::DOC(%HEADER)};
+	#if (keys %DOC_HEADER == 0)
+	$main::H_clone=new Net::DOC(%DOC_HEADER);
 	$main::H_clone->prepare();
-	$main::H_clone->i($TEMPLATE || $HTML_TEMP);
+	$main::H_clone->i($DOC_BODY);
+	main::_log("DOC_BODY = $DOC_BODY");
 	
 	#if ($TOM::CACHE){require Tomahawk::cache;}; # budem logovat v pripade ze ho mam nastavene
 	if ($TOM::LAYERS){require Tomahawk::layers;}; # budem robit s layermi tak natiahnem kniznicu
@@ -255,6 +261,7 @@ while ($main::CGI=new CGI::Fast())
 	local $page_save;
 	local $USRM_flag;
 	local $sitemap;
+	local $TPL;
 	local %a210;
 	local %key;
 	my $rewrite_301;
@@ -1147,7 +1154,7 @@ while ($main::CGI=new CGI::Fast())
 						if (!$a210{'ID'})
 						{
 							main::_log("page not found, setting 404 code");
-							$main::page_statuscode="404";
+							$main::page_statuscode="404"; # display 404 error
 						}
 						
 					}
@@ -1364,50 +1371,85 @@ while ($main::CGI=new CGI::Fast())
 			}
 			
 			
-			next if not defined $env0{value};
+			next if (not defined $env0{'value'} && not defined $env0{'name'});
 			# PODMIENKY
 			
 			
-			if (($env0{id} eq "dsgn")&& not(($env0{value} eq $tom::DSGN) && (!$env0{global})))
+			if (
+					(
+						$env0{'id'} eq "header" ||
+						$env0{'id'} eq "dsgn" # obsolete
+					)
+					&& not
+					(
+						($env0{'value'} eq $tom::DSGN)
+						&& (!$env0{'global'})
+					)
+			)
 			{
-				local $main::TEMPLATE='';
-				local $main::HTML_TEMP='';
-				local %main::HEADER=();
-				local %main::HTML_HEADER=();
+				local $main::DOC_BODY='';
+				local %main::DOC_HEADER=();
 				my $var=$tom::P;
-				if (($tom::Pm)&&($env0{global} eq "2")){$var=$tom::Pm;}
-				if ($env0{global} eq "1"){$var=$TOM::P;}
+				if (($tom::Pm)&&($env0{'global'} eq "2")){$var=$tom::Pm;}
+				if ($env0{'global'} eq "1"){$var=$TOM::P;}
 				
-				do $var."/_dsgn/".$env0{value}.".dsgn" || die "Cannot import new design file named $env0{value}/$env0{global}\n";
-				_log("Change design to ".$env0{value}."/".$env0{global});
+				do $var."/_dsgn/".$env0{'value'}.".header"
+					|| do $var."/_dsgn/".$env0{'value'}.".dsgn"
+					|| die "Cannot import new design file named $env0{value}/$env0{global}\n";
+				_log("Change design to ".$env0{'value'}."/".$env0{'global'});
 				
-				if (keys %main::HEADER == 0)
-				{$H=new Net::DOC(%HTML_HEADER)}else{$H=new Net::DOC(%HEADER)};
-				$H->i($main::TEMPLATE || $main::HTML_TEMP);
+				$main::DOC_BODY=$main::TEMPLATE if $main::TEMPLATE;
+				%main::DOC_HEADER=%main::HEADER if %main::HEADER;
+				
+				$H=new Net::DOC(%DOC_HEADER);
+				$H->i($main::DOC_BODY);
 				$H->prepare();
 				next;
 			}
 			
-			if ($env0{id} eq "template" && $env0{value})
+			if ((
+						$env0{'id'} eq "body" ||
+						$env0{'id'} eq "template" # obsolete
+				)
+				&& $env0{'value'})
 			{
-				local $main::TEMPLATE='';
+				local $main::DOC_BODY='';
 				my $var=$tom::P;
-				if (($tom::Pm)&&($env0{global} eq "2")){$var=$tom::Pm;}
-				if ($env0{global} eq "1"){$var=$TOM::P;}
+				if (($tom::Pm)&&($env0{'global'} eq "2")){$var=$tom::Pm;}
+				if ($env0{'global'} eq "1"){$var=$TOM::P;}
 				
-				main::_log("Loading template $var '".$env0{value}."/".$env0{global}."'");
+				main::_log("Loading body $var '".$env0{'value'}."/".$env0{'global'}."'");
 				
-				open (TMPL, '<'.$var.'/_dsgn/'.$env0{'value'}.'.template')
-					|| die "can't open template $env0{value}/$env0{global}";
+				open (TMPL, '<'.$var.'/_dsgn/'.$env0{'value'}.'.body')
+					|| open (TMPL, '<'.$var.'/_dsgn/'.$env0{'value'}.'.template')
+					|| die "can't open body $env0{value}/$env0{global}";
 				do
 				{
 					local $/;
-					$main::TEMPLATE=<TMPL>
+					$main::DOC_BODY=<TMPL>
 				};
 				
 				undef $H->{'OUT'}{'BODY'};
-				$H->i($main::TEMPLATE);
+				$H->i($main::DOC_BODY);
 				
+				next;
+			}
+			
+			if (
+					(
+						$env0{'id'} eq "tpl"
+						|| $env0{'id'} eq "template"
+					)
+					 && ($env0{'name'} || $env0{'value'})
+				)
+			{
+				main::_log("Loading template $env0{'value'}");
+				# load template
+				$TPL=new TOM::Template(
+					'level' => $env0{'level'},
+					'name' => $env0{'name'} || $env0{'value'},
+					'content-type' => $Net::DOC::type
+				);
 				next;
 			}
 			
@@ -1613,11 +1655,12 @@ while ($main::CGI=new CGI::Fast())
 		# control if this URL is correct
 		# $tom::rewrite - priznak ze je nacitany rewrite.conf
 		# $tom::rewrite_301 - zapnuty rewrite 301 v local.conf
-		#
+		# and if not displaying 404 error is not required
 		if (
 				$tom::rewrite &&
 				$tom::rewrite_301 &&
-				$ENV{'HTTP_HOST'}
+				$ENV{'HTTP_HOST'} &&
+				$main::page_statuscode ne "404"
 			)
 		{
 			my $t_301=track TOM::Debug("REQUEST_URI link testing for 301 redirection");
