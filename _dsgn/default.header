@@ -1,4 +1,4 @@
-$TEMPLATE=<<"HEADER";
+$DOC_BODY=<<"HEADER";
 
 <style type="text/css" media="screen">
   <!--
@@ -46,7 +46,7 @@ $TEMPLATE=<<"HEADER";
 
 HEADER
 
-%HEADER=(
+%DOC_HEADER=(
 	'head'	=>
 	{
 		'title'	=>	"Page under construction",

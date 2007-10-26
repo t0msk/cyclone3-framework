@@ -3,7 +3,7 @@
 # This TypeID is used as standard page to display info about non existing requested page
 # Can be redefined by local l_notfound.pub.type file in domain service (for example search dialog,...)
 
-<CONF_VAR id="dsgn" value="notfound" global="1" />
+<CONF_VAR id="header" value="notfound" global="1" />
 
 # This TypeID loads module with design defined by TOM::Template "default" named "notfound.page"
 # notfound.page is loaded into variable $Net::DOC::notfound_page after "use Net::DOC::XHTML"

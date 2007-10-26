@@ -1,7 +1,7 @@
-$TEMPLATE=<<"HEADER";
+$DOC_BODY=<<"HEADER";
 <!TMP-OUTPUT!>
 <!--<!TMP-ERROR!>-->
 HEADER
 
-%HEADER=();
+%DOC_HEADER=();
 1;
