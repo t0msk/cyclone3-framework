@@ -9,6 +9,15 @@
 <SOAP-ENV:Envelope
 	xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
 	SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+	<SOAP-ENV:Header>
+		<generator>Cyclone<$TOM::core_version>.<$TOM::core_build> (r<$TOM::core_revision>)</generator>
+		<hostname><$TOM::hostname></hostname>
+		<domain><$tom::H></domain>
+		<process><$$></process>
+		<request_code><$main::request_code></request_code>
+		<method><$main::FORM{'type'}></method>
+		<TypeID><$main::FORM{'TID'}></TypeID>
+	</SOAP-ENV:Header>
 	<SOAP-ENV:Body>
 		<SOAP-ENV:Fault>
 			<faultcode>SOAP-ENV:Server</faultcode>
@@ -27,18 +36,21 @@
 <SOAP-ENV:Envelope
 	xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
 	SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+	<SOAP-ENV:Header>
+		<generator>Cyclone<$TOM::core_version>.<$TOM::core_build> (r<$TOM::core_revision>)</generator>
+		<hostname><$TOM::hostname></hostname>
+		<domain><$tom::H></domain>
+		<process><$$></process>
+		<request_code><$main::request_code></request_code>
+		<method><$main::FORM{'type'}></method>
+		<TypeID><$main::FORM{'TID'}></TypeID>
+	</SOAP-ENV:Header>
 	<SOAP-ENV:Body>
 		<SOAP-ENV:Fault>
 			<faultcode>SOAP-ENV:Client</faultcode>
 			<faultstring>Client error</faultstring>
 			<detail>
 				<message><%message%></message>
-				<domain><$tom::H></domain>
-				<engine><$TOM::engine></engine>
-				<TypeID><$main::FORM{'TID'}></TypeID>
-				<request>
-					<code><$main::request_code></code>
-				</request>
 			</detail>
 		</SOAP-ENV:Fault>
 	</SOAP-ENV:Body>
@@ -52,12 +64,6 @@
 	<faultstring>Client error</faultstring>
 	<detail>
 		<message><$(The page or service type cannot be found)></message>
-		<domain><$tom::H></domain>
-		<engine><$TOM::engine></engine>
-		<TypeID><$main::FORM{'TID'}></TypeID>
-		<request>
-			<code><$main::request_code></code>
-		</request>
 	</detail>
 </SOAP-ENV:Fault>
 ]]></entity>

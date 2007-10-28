@@ -56,11 +56,25 @@ sub prepare
 {
 	my $self=shift;
 	
-	$self->{'OUT'}{'HEADER'} = qq{<?xml version="1.0" encoding="<%CODEPAGE%>"?>\n};
-	$self->{'OUT'}{'HEADER'} .= qq{<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">\n};
-	$self->{'OUT'}{'HEADER'} .= qq{<SOAP-ENV:Body>\n};
+	$self->{'OUT'}{'HEADER'} = qq{<?xml version="1.0" encoding="<%CODEPAGE%>"?>
+<SOAP-ENV:Envelope
+	xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" 
+	SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+	<SOAP-ENV:Header>
+		<generator>Cyclone$TOM::core_version.$TOM::core_build (r$TOM::core_revision)</generator>
+		<hostname>$TOM::hostname</hostname>
+		<domain>$tom::H</domain>
+		<process>$$</process>
+		<request_code><\$main::request_code></request_code>
+		<method><\$main::FORM{'type'}></method>
+		<TypeID><\$main::FORM{'TID'}></TypeID>
+	</SOAP-ENV:Header>
+};
+	
+	$self->{'OUT'}{'HEADER'} .= qq{	<SOAP-ENV:Body>\n};
 	
 	# body
+	$self->{'OUT'}{'BODY'} = qq{<!TMP-OUTPUT!>} unless $self->{'OUT'}{'BODY'};
 	
 	$self->{'OUT'}{'FOOTER'} = qq{\n</SOAP-ENV:Body>\n};
 	$self->{'OUT'}{'FOOTER'} .= qq{</SOAP-ENV:Envelope>\n};
