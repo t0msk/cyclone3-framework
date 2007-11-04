@@ -95,12 +95,34 @@ sub execute
 			}
 			
 			
-			my $smtp = Net::SMTP->new($TOM::smtp_host);
+			my $smtp;
 			
-			if ($TOM::smtp_user)
+			if ($TOM::smtp_SSL)
 			{
-				main::_log("authentification with user '$TOM::smtp_user'");
-				$smtp->auth($TOM::smtp_user,$TOM::smtp_pass);
+				require Net::SMTP::SSL;
+				$smtp = new Net::SMTP::SSL
+				(
+					$TOM::smtp_host,
+					'Port' => 465,
+				);
+				if (not $smtp->auth($TOM::smtp_user,$TOM::smtp_pass))
+				{
+					main::_log("SSL Authentification not works",1);
+					return 1;
+				}
+			}
+			else
+			{
+				$smtp = Net::SMTP->new($TOM::smtp_host);
+				if ($TOM::smtp_user)
+				{
+					main::_log("authentification with user '$TOM::smtp_user'");
+					if (not $smtp->auth($TOM::smtp_user,$TOM::smtp_pass))
+					{
+						main::_log("Authentification not works (SSL or TLS?)",1);
+						return 1;
+					}
+				}
 			}
 			
 			my @rcpt=split(';',$env0{to_email});
