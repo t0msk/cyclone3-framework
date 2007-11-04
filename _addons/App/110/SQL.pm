@@ -189,7 +189,8 @@ sub get_last_collected_day()
 	
 	my $sql=qq{
 		SELECT
-			reqdatetime
+			reqdatetime,
+			DATE(reqdatetime) AS reqdate
 		FROM
 			TOM.a110_weblog_day
 		WHERE
@@ -203,7 +204,7 @@ sub get_last_collected_day()
 	
 	my %data=$sth0{'sth'}->fetchhash();
 	
-	main::_log("returning datetime='$data{'reqdatetime'}'");
+	main::_log("returning date='$data{'reqdate'}'");
 	
 	$t->close();
 	return %data;
