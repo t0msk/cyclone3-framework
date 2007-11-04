@@ -65,7 +65,7 @@ sub send
 	#
 	eval
 	{
-		my $db0=$main::DB{main}->Query("SELECT ID FROM TOM.a130_send LIMIT 1");
+		my $db0=$main::DB{'main'}->Query("SELECT ID FROM TOM.a130_send LIMIT 1");
 		my %db0_line=$db0->fetchhash();
 	};
 	
@@ -76,7 +76,7 @@ sub send
 		$env{body}=~s|'|\\'|g;
 		
 		if (
-			$main::DB{main}->Query("
+			$main::DB{'main'}->Query("
 			INSERT INTO TOM.a130_send
 			(
 				ID_md5,
@@ -117,10 +117,10 @@ sub send
 	main::_log("sending email over file '$ID' to to '$env{to}'");
 	
 	open(HND_mail,">".$TOM::P."/_temp/_email-".$ID) || die "can't send email over file!\n";
-	print HND_mail "$env{from}\n";
-	print HND_mail "$env{to}\n";
+	print HND_mail "$env{'from'}\n";
+	print HND_mail "$env{'to'}\n";
 	#print HND_mail "---\n";
-	print HND_mail $env{body}."\n";
+	print HND_mail $env{'body'}."\n";
 	#print HND_mail "---\n";
 	close (HND_mail);
 	chmod 0666, $TOM::P."/_temp/_email-".$ID;
