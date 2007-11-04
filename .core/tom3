@@ -880,7 +880,11 @@ while ($main::CGI=new CGI::Fast())
 			{
 				main::_log("this user can't have a cookies");
 			}
-			elsif($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'}=~/browser/)
+			elsif
+			(
+				$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'}=~/browser/
+				&& !$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'cookies_disable'}
+			)
 			{
 				main::_log("trying to setup cookies");
 				open(USRM,">../_data/USRM/cookie.".$user_md5);
@@ -917,9 +921,9 @@ while ($main::CGI=new CGI::Fast())
 				
 				my $URL=$tom::H_www.$link;
 				
-				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}'",3,"301",1);
-				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}'",3,"301");
-				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}");
+				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"301",1);
+				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"301");
+				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'");
 				print "Location: $URL\n\n";
 				
 				$t_cookies->close();
