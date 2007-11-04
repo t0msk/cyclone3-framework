@@ -34,6 +34,22 @@ our %table=
 	{
 		'uri' => ['/lanai-cms']
 	},
+	
+	
+	'phpbb'=> # PHPBB
+	{
+		'uri' => ['^/phpbb']
+	},
+	'forumphp'=>
+	{
+		'uri' => ['^/forums/index\.php']
+	},
+	'boardphp'=>
+	{
+		'uri' => ['^/board/index\.php']
+	},
+	
+	
 	'unknown-php'=> # all unknown php attacks
 	{
 		'uri' => ['\.php\?']
@@ -75,7 +91,7 @@ sub add
 	
 	my $filename=$TOM::P."/_temp/hacked_IP.list";
 	
-	open(HCK, ">>".$filename) || die "$!";
+	open(HCK, ">>".$filename) || return undef;
 	print HCK time().":".$IP."\n";
 	close (HCK);
 	chmod (0666,$filename);
