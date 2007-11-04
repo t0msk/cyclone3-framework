@@ -1,0 +1,75 @@
+#!/bin/perl
+# ÁÉÍÓÚ - USE UTF-8 !!!
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+100-cleaner_temp.0.cron
+
+=head1 DESCRIPTION
+
+This cron removes all temporary files from $TOM::P/_temp
+
+There are no inputs or dependencies.
+
+=cut
+
+use File::Path;
+
+sub execute
+{
+	my %env=@_;
+	
+	my $max=86400;
+	
+	opendir (DIR, $TOM::P.'/_temp');
+	foreach my $file (readdir DIR)
+	{
+		
+		next if $file=~/^_/;
+		next if $file=~/^\./;
+		
+		#main::_log("file:$file");
+		my $filename=$TOM::P."/_temp/".$file;
+		
+		if (-f $filename)
+		{
+			my $created=(stat $filename)[9];
+			if (($main::time_current-$created) > $max)
+			{
+				main::_log("old $file ".($main::time_current-$created).", removing...");
+				unlink $filename;
+			}
+			
+		}
+		
+#		if (-d $filename)
+#		{
+#			my $created=(stat $filename)[9];
+#			if (($main::time_current-$created) > $max)
+#			{
+#				main::_log("olddir $file ".($main::time_current-$created).", removing...");
+#				File::Path::rmtree $filename;
+#			}
+#		}
+		
+	}
+	
+	return 1;
+}
+
+
+our $authors = 'open@comsultia.com';
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
+
