@@ -8,7 +8,7 @@ TOM::Net::HTTP::referer
 =cut
 
 use strict;
-use warnings;
+#use warnings;
 
 =head1 DESCRIPTION
 
@@ -435,10 +435,6 @@ Analyzes domain name and returns name of known domain (search engine, etc...)
 =cut
 
 
-sub extract_keywords
-{
-}
-
 sub analyze
 {
 	return undef unless $_[0];
@@ -452,11 +448,131 @@ sub analyze
 	return undef;
 };
 
-=head1 AUTHORS
 
-Roman Fordinal (roman.fordinal@comsultia.com)
+
+=head2 extract_keywords
+
+Analyzes referer and extract keywords when referer is from known search engine
+
+ my %data=TOM::Net::HTTP::referer::extrac_keywords('http://www.google.sk/search?hl=sk&q=cyclone3');
+ # $data{'phrase'}
+ # %{$data{'keywords'}}
 
 =cut
+
+sub extract_keywords
+{
+	my $referer=shift;
+	
+	my %data;
+	
+	# parsing domain name
+	my ($domain,$query)=TOM::Net::HTTP::domain_clear($referer);
+	# check type of domain
+	if (my $dom=TOM::Net::HTTP::referer::analyze($domain))
+	{
+		# check if it is a know search engine
+		if (
+				($TOM::Net::HTTP::referer::table{$dom}{'domain_type'} eq "search engine")
+				&&($TOM::Net::HTTP::referer::table{$dom}{'keywords_param'})
+			)
+		{
+			# in which parameter are stored keywords?
+			my $keyword_param=$TOM::Net::HTTP::referer::table{$dom}{'keywords_param'};
+			
+			# parse query from QUERY_STRING into %hash
+			my %FORM=TOM::Net::HTTP::CGI::get_QUERY_STRING($query,'quiet'=>1);
+			
+			# don't analyze queries from google cache
+			next if $FORM{$keyword_param}=~/^cache/;
+			next unless $FORM{$keyword_param};
+			
+			# convert keywords to ASCII
+			$FORM{$keyword_param}=Int::charsets::encode::UTF8_ASCII($FORM{$keyword_param});
+			#main::_log("phrase '$FORM{$keyword_param}'");
+			
+			# this is a corrupted encoding (i can't say why)
+			next if $FORM{$keyword_param}=~/\\utf\{65533\}/;
+			
+			# convert to lowercase
+			#$FORM{$keyword_param}=~tr/A-Z/a-z/;
+			
+			# prepare string for split keywords
+			$FORM{$keyword_param}=~s|["&]||g;
+			#$FORM{$keyword_param}=~s|\W| |g;
+			$FORM{$keyword_param}=~s|[ \+]|;|g;
+			$FORM{$keyword_param}=~s|^;||;$FORM{$keyword_param}=~s|;$||;
+			1 while ($FORM{$keyword_param}=~s|;;|;|);
+			
+			# keywords
+			#@{$data{'keywords'}}=split ';',$FORM{$keyword_param};
+			foreach my $word(split ';',$FORM{$keyword_param})
+			{
+				next if ((length($word)<4) && (not $word=~/^[A-Z0-9]$/));
+				$word=~tr/A-Z/a-z/;
+				push @{$data{'keywords'}},$word;
+			}
+			# phrase
+			$data{'phrase'}=join ' ', sort split ';',$FORM{$keyword_param};
+			$data{'phrase'}=~tr/A-Z/a-z/;
+		}
+		
+	}
+	
+	return %data;
+}
+
+
+
+=head2 extract_domainsource
+
+Analyzes referer and extracts domain name
+
+ my $domain=TOM::Net::HTTP::referer::extrac_domainsource(referer => 'http://www.google.sk/search?hl=sk&q=cyclone3');
+
+=cut
+
+sub extract_domainsource
+{
+	my %env=@_;
+	
+	my ($domain,$query)=TOM::Net::HTTP::domain_clear($env{'referer'});
+	
+	# check if refering domain is not the same
+	if ($env{'domain'})
+	{
+		return undef if $domain=~/^$env{'domain'}/;
+	}
+	
+	if ($domain=~/google\./)
+	{
+		$domain="google.*";
+	}
+	
+	if (!$env{'page_code_referer'} && !$env{'referer'})
+	{
+		return '(Direct)';
+	}
+	
+	# bot?
+	if (!$env{'referer'})
+	{
+		return undef;
+	}
+	
+	return $domain;
+}
+
+
+
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+
 
 # END
 1;# DO NOT CHANGE !
