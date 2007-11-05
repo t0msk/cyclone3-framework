@@ -25,11 +25,10 @@ sub execute
 		FROM TOM.a300_users_arch
 		WHERE
 			login='' AND
-			rqs<2 AND
 			logtime<($main::time_current-(86400*31*6))
 	};
 	my %sth0=TOM::Database::SQL::execute($sql);
-	main::_log("removing users (last login >6month, anonymous, <2rqs) = '$sth0{'rows'}'");
+	main::_log("removing users (last login >6month, anonymous) = '$sth0{'rows'}'");
 	
 	while (my %user=$sth0{'sth'}->fetchhash)
 	{
@@ -54,29 +53,6 @@ sub execute
 	};
 	my %sth0=TOM::Database::SQL::execute($sql);
 	main::_log("removing users (last login >12month, anonymous, <10rqs) = '$sth0{'rows'}'");
-	
-	while (my %user=$sth0{'sth'}->fetchhash)
-	{
-		TOM::Database::SQL::execute(
-			"DELETE FROM TOM.a300_users_arch WHERE IDhash='$user{IDhash}' LIMIT 1",
-			'quiet'=>1);
-		TOM::Database::SQL::execute(
-			"DELETE FROM TOM.a300_users_attrs_arch WHERE IDhash='$user{IDhash}' LIMIT 1",
-			'quiet'=>1);
-	}
-	
-	
-	
-	my $sql=qq{
-		SELECT
-			IDhash
-		FROM TOM.a300_users_arch
-		WHERE
-			login='' AND
-			logtime<($main::time_current-(86400*31*12*2))
-	};
-	my %sth0=TOM::Database::SQL::execute($sql);
-	main::_log("removing users (last login >2years, anonymous) = '$sth0{'rows'}'");
 	
 	while (my %user=$sth0{'sth'}->fetchhash)
 	{
