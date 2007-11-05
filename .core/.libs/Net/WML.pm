@@ -1,6 +1,13 @@
 package Net::DOC;
+
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
 use strict;
-our @ISA=("Net::DOC::base"); # dedim z neho
+
+our @ISA=("Net::DOC::base");
+
+use TOM::Template;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
@@ -17,26 +24,27 @@ our (
 
 our $content_type="text/vnd.wap.wml";
 our $type='wml';
-$pub::engine_disabling=0;
+my $tpl=new TOM::Template(
+	'level' => "auto",
+	'name' => "default",
+	'content-type' => $type
+);
 
-our $err_page=<<"HEADER";
-<p align="center">ERROR</p>
-<p>We apologize, this page is currently unavailable. Please, try to reload it in a few minutes.</p>
-<!--ERROR-->
-HEADER
+# special mode
+#$pub::engine_disabling=0;
 
+our $err_page=$tpl->{'entity'}->{'page.error'};
+our $warn_page=$tpl->{'entity'}->{'page.warning'};
+our $err_mdl=$tpl->{'entity'}->{'box.error'};
+our $notfound_page=$tpl->{'entity'}->{'body.notfound'};
 
-our $err_mdl=<<"HEADER";
-<p><%MODULE%> - This service is currently not available. We're trying to fix this problem at the moment and apologize for any incovnenience.</p>
-<!-- <%MODULE%> - <%ERROR%> <%PLUS%> -->
-HEADER
 
 sub new
 {
 	my $class=shift;
 	my %env=@_;
 	my $self={};
-	%{$self->{ENV}}=%env;
+	%{$self->{'ENV'}}=%env;
 	return bless $self,$class;
 }
 
@@ -45,9 +53,9 @@ sub clone
 {
 	my $class=shift;
 	my $self={};
-	%{$self->{ENV}}=%{$class->{ENV}};
-	%{$self->{env}}=%{$class->{env}};
-	%{$self->{OUT}}=%{$class->{OUT}};
+	%{$self->{'ENV'}}=%{$class->{'ENV'}};
+	%{$self->{'env'}}=%{$class->{'env'}};
+	%{$self->{'OUT'}}=%{$class->{'OUT'}};
 	return bless $self;
 }
 
@@ -57,20 +65,20 @@ sub prepare
 {
 	my $self=shift;
 	
-	$self->{ENV}{DOCTYPE} = "<!DOCTYPE wml PUBLIC \"-//WAPFORUM//DTD WML 1.1//EN\" \"http://www.wapforum.org/DTD/wml_1.1.xml\">" unless $self->{ENV}{DOCTYPE};
+	$self->{'ENV'}{'DOCTYPE'} = "<!DOCTYPE wml PUBLIC \"-//WAPFORUM//DTD WML 1.1//EN\" \"http://www.wapforum.org/DTD/wml_1.1.xml\">" unless $self->{'ENV'}{'DOCTYPE'};
 	
-	$self->{OUT}{HEADER} .= "<?xml version=\"1.0\" encoding=\"<%CODEPAGE%>\"?>\n";
+	$self->{'OUT'}{'HEADER'} .= "<?xml version=\"1.0\" encoding=\"<%CODEPAGE%>\"?>\n";
 	
-	$self->{OUT}{HEADER} .= $self->{ENV}{DOCTYPE}."\n";
+	$self->{'OUT'}{'HEADER'} .= $self->{'ENV'}{'DOCTYPE'}."\n";
 	
-	$self->{OUT}{HEADER} .= "<wml>\n";
+	$self->{'OUT'}{'HEADER'} .= "<wml>\n";
 	
-	$self->{OUT}{HEADER} .= "<card id=\"XML\" title=\"<%TITLE%>\">";
-	$self->{env}{DOC_title}=$self->{ENV}{'HEAD'}{'TITLE'};
-	$self->{env}{DOC_title}=$tom::H unless $self->{env}{DOC_title};
+	$self->{'OUT'}{'HEADER'} .= "<card id=\"main\" title=\"<%TITLE%>\">";
 	
+	$self->{'env'}{'DOC_title'}=$self->{'ENV'}{'HEAD'}{'TITLE'};
+	$self->{'env'}{'DOC_title'}=$tom::H unless $self->{'env'}{'DOC_title'};
 	
-	$self->{OUT}{FOOTER} = "</card>\n</wml>\n";
+	$self->{'OUT'}{'FOOTER'} = "</card>\n</wml>\n";
  
 	return 1;
 }
@@ -80,8 +88,7 @@ sub prepare_last
 {
 	my $self=shift;
 	
-	# aplikujem title
-	$self->{OUT}{HEADER}=~s|<%TITLE%>|$self->{env}{DOC_title}|;
+	$self->{'OUT'}{'HEADER'}=~s|<%TITLE%>|$self->{'env'}{'DOC_title'}|;
 	
 	return 1;
 }
