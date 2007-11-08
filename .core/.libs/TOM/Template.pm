@@ -26,10 +26,15 @@ use TOM::Template::contenttypes;
 
 BEGIN
 {
-	if (!-e $tom::P.'/!media/tpl' && $tom::P)
+	if (!-e $tom::P.'/!media/tpl' && $tom::P && $tom::H)
 	{
 		File::Path::mkpath $tom::P.'/!media/tpl';
 		chmod (0777, $tom::P.'/!media/tpl');
+	}
+	elsif (!-e $TOM::P.'/!media/tpl')
+	{
+		File::Path::mkpath $TOM::P.'/!media/tpl';
+		chmod (0777, $TOM::P.'/!media/tpl');
 	}
 }
 
