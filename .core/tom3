@@ -1393,6 +1393,8 @@ while ($main::CGI=new CGI::Fast())
 			{
 				local $main::DOC_BODY='';
 				local %main::DOC_HEADER=();
+				local %main::HEADER=();
+				local $main::TEMPLATE='';
 				my $var=$tom::P;
 				if (($tom::Pm)&&($env0{'global'} eq "2")){$var=$tom::Pm;}
 				if ($env0{'global'} eq "1"){$var=$TOM::P;}
