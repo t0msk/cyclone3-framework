@@ -132,6 +132,8 @@ our %table=
 	'282'	=>	"E", # 'E' s makcenom
 	'283'	=>	"e", # 'e' s makcenom
 	
+	'304' => "I", # 'I' s ciarkou
+	
 	'313'	=>	"L", # 'L' s dlznom
 	'314'	=>	"l", # 'l' s dlznom
 	
