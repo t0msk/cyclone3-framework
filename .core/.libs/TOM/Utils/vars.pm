@@ -245,7 +245,7 @@ sub replace_sec
 	
 	my %env=@_;
 	
-	while ($data=~s/<\$(.{2,100}?)>/<!TMP-$TMP!>/)
+	while ($data=~s/<\$(.{2,100}?[^\-])>/<!TMP-$TMP!>/)
 	{
 		my $value;
 		my $var=$1;
