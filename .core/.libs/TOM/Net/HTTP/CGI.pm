@@ -368,13 +368,16 @@ sub get_CGI
 			
 			main::_log("SOAP type='$form{'type'}'");
 			
-			if ($body->{$form{'type'}}->{'c-gensym3'})
+			if ($body->{$form{'type'}})
 			{
-				%{$main::RPC}=%{$body->{$form{'type'}}->{'c-gensym3'}};
-			}
-			else
-			{
-				%{$main::RPC}=%{$body->{$form{'type'}}};
+				if ($body->{$form{'type'}}->{'c-gensym3'})
+				{
+					%{$main::RPC}=%{$body->{$form{'type'}}->{'c-gensym3'}};
+				}
+				else
+				{
+					%{$main::RPC}=%{$body->{$form{'type'}}};
+				}
 			}
 		}
 		elsif ($Net::DOC::type eq "xmlrpc")
