@@ -1096,13 +1096,13 @@ Only rows with status Y can be disabled
 sub disable
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::disable()");
+	my $t=track TOM::Debug(__PACKAGE__."::disable()") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	foreach (keys %env)
 	{
-		main::_log("input '$_'='$env{$_}'");
+		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
 	my %columns=get_ID(
@@ -1114,26 +1114,28 @@ sub disable
 	
 	if (!$columns{'ID'})
 	{
-		main::_log("this ID not exists!",1);
+		main::_log("this ID not exists!",1) if $debug;
+		main::_log("<={SQL:$env{'db_h'}} can't update ID='$columns{'ID'}' in '$env{'db_name'}'.'$env{'tb_name'}' because ID not exists",1) unless $debug;
 		$t->close();
 		return undef;
 	}
 	
 	if ($columns{'status'} eq "N")
 	{
-		main::_log("this ID is previously disabled");
+		main::_log("this ID is already disabled") if $debug;
+		main::_log("<={SQL:$env{'db_h'}} '$env{'db_name'}'.'$env{'tb_name'}' ID='$columns{'ID'}' already disabled") unless $debug;
 		$t->close();
 		return 1;
 	}
 	
 	if ($columns{'status'} ne "Y")
 	{
-		main::_log("only ID with status 'Y' can be disabled, not status='$columns{'status'}'",1);
+		main::_log("only ID with status 'N' can be disabled, not status='$columns{'status'}'") if $debug;
 		$t->close();
 		return undef;
 	}
 	
-	update(
+	my $out=update(
 		'db_h' => $env{'db_h'},
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
@@ -1144,8 +1146,8 @@ sub disable
 		}
 	);
 	
-	$t->close();
-	return 1;
+	$t->close() if $debug;
+	return $out;
 }
 
 
@@ -1208,7 +1210,7 @@ sub enable
 		return undef;
 	}
 	
-	update(
+	my $out=update(
 		'db_h' => $env{'db_h'},
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
@@ -1220,7 +1222,7 @@ sub enable
 	);
 	
 	$t->close() if $debug;
-	return 1;
+	return $out;
 }
 
 
