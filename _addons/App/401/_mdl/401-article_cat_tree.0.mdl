@@ -16,9 +16,7 @@ use App::020::_init;
 
 =head1 DESCRIPTION
 
-Zobrazenie stromu, alebo zoznamu položiek
-
-Použiteľné pre zobrazenie jednoduchého a stromového menu
+Display tree of article categories (folders)
 
 =cut
 
@@ -28,19 +26,19 @@ Použiteľné pre zobrazenie jednoduchého a stromového menu
 
 =item *
 
-B<ID> - ID parent záznamu ktorého childy sa zobrazujú
+B<ID> - ID parent of category item
 
 =item *
 
-B<tree> - default '1' - zobrazenie formou stromu alebo klasického zoznamu
+B<tree> - default '1' - display as tree or listing
 
 =item *
 
-B<parent> - default '0' - zobrazenie aj parent elementu definovaného v B<ID>
+B<parent> - default '0' - display items including parent B<ID>
 
 =item *
 
-B<depth> - default '' - hľbka zobrazovaného stromu
+B<depth> - default '' - depth of tree
 
 =item *
 
@@ -52,19 +50,19 @@ B<check_sub> - default '' - if none sub elements is available, display siblings
 
 =item *
 
-B<status> - default 'Y' - statusy stromu ktoré sa zobrazujú ( napr. 'YNT' )
+B<status> - default 'Y' - display only items where status is IN ( example. 'YNT' )
 
 =item *
 
-B<db_order> - default 'ID_charindex' - zoradenie položiek v SQL syntaxe
+B<db_order> - default 'ID_charindex' - order item by SQL
 
 =item *
 
-B<current_ID> - aktuálne ID položky stromu ($main::a401{'ID'})
+B<current_ID> - current ID of item (to highlight)
 
 =item *
 
-B<current_path_url> - aktuálna URL cesta stromu ( ASCII rewrite podoba )
+B<current_path_url> - current path_url (to highlight)
 
 =back
 
@@ -80,23 +78,23 @@ B<TMP> - default
 
 =item *
 
-B<ITEM> - položka stromu
+B<ITEM> - item of tree
 
 =item *
 
-B<ITEM-current> - aktuálna položka stromu ak je použitý vstupný parameter B<current_*>=''
+B<ITEM-current> - current item of tree when param B<current_*>='' is used
 
 =item *
 
-B<SUB> - v režime 'tree' používané pre vytvorenie sub-stromu v strome
+B<SUB> - in 'tree' mode used for creating sub-tree entry
 
 =item *
 
-B<#tree#> - miesto pre vloženie sub-stromu
+B<#tree#> - entry for sub-tree
 
 =item *
 
-B<#item#> - miesto pre vloženie ITEM
+B<#item#> - entry for ITEM
 
 =item *
 
@@ -104,11 +102,11 @@ B<%path%> - ID
 
 =item *
 
-B<%name%> - chýbajúci parameter
+B<%name%> - name of item
 
 =back
 
-Režim zoznamu:
+Listing mode:
 
  <XML_DESIGN_DEFINITION>
  
@@ -120,7 +118,7 @@ Režim zoznamu:
   <item IDitem="<%ID%>">
    <ID><%ID%></ID>
    <ID_entity><%ID_entity%></ID_entity>
-   <IDparent><%ID_parent%></IDparent>
+   <ID_parent><%ID_parent%></ID_parent>
    <name><%name%></name>
    <name_url><%name_url%></name_url>
    <path><%path%></path>
@@ -408,6 +406,31 @@ $where
 			$XSGN{'NULL'}=~s|<%status%>|$entity->{'status'}|g;
 			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
 			
+			if ($env{'itemcount'})
+			{
+				# count of items
+				
+				my $sql=qq{
+					SELECT COUNT(ID) AS itemcount
+					FROM
+						`$TOM::DB{'main'}{'name'}`.`a401_article`
+					WHERE
+						ID_category = $entity->{'ID'}
+						AND lng='$entity->{'lng'}'
+						AND status IN ('Y','N')
+				};
+				my %sth1=TOM::Database::SQL::execute($sql);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					$XSGN{'NULL'}=~s|<%itemcount%>|$db1_line{'itemcount'}|g;
+				}
+				else
+				{
+					$XSGN{'NULL'}=~s|<%itemcount%>|0|g;
+				}
+				
+			}
+			
 			if ($env{'tree'})
 			{
 				if ($level_next<$level)
@@ -447,11 +470,12 @@ $where
 	return 1;
 }
 
-our $authors="roman.fordinal\@comsultia.com";
+
+our $authors="open\@comsultia.com";
 
 =head1 AUTHORS
 
-Roman Fordinál (roman.fordinal@comsultia.com)
+Comsultia, Ltd. (open@comsultia.com)
 
 =cut
 
