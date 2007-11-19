@@ -36,6 +36,8 @@ sub execute
 				
 				my $parser = new MIME::Parser;
 				#$parser->output_to_core(1);
+				$parser->output_under($TOM::P.'/_temp');
+				$parser->output_prefix("mime");
 				#$parser->extract_uuencode(1);
 				$parser->decode_headers(1);
 				
