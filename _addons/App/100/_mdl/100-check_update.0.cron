@@ -128,6 +128,8 @@ sub execute
 		</table>
 		<br/>
 		
+<#DEP#>
+		
 		<table width="100%" cellspacing=1 cellpadding=3 bgcolor="#000000">
 			<tr>
 				<td bgcolor="$color_red" style="color:white;font-weight: bold;">Changelog</td>
@@ -158,10 +160,48 @@ HEADER
 					</tr>
 HEADER
 	
+	my $DEP=<<"HEADER";
+		<table width="100%" cellspacing=1 cellpadding=3 bgcolor="#000000">
+			<tr>
+				<td bgcolor="$color_red" style="color:white;font-weight: bold;">Chaged dependencies (fix first before upgrade)</td>
+			</tr>
+			<tr>
+				<td bgcolor="$color_gray">
+				
+				<pre><\%dep%></pre>
+				
+				</td>
+			</tr>
+		</table>
+		<br/>
+HEADER
+	
 	main::_log("Cyclone3 update available!");
-	$body=~s|<%MESSAGE%>|Update for Cyclone3 Framework is available (r$TOM::core_revision to r$STABLE) at server <strong>$TOM::hostname</strong><br/>We highly recommend to update this installation with console command '<strong>tom3-update</strong>' or 'svn up' in directory /www/TOM|g;
+	$body=~s|<%MESSAGE%>|Update for Cyclone3 Framework is available (r$TOM::core_revision to r$STABLE) at server <strong>$TOM::hostname</strong><br/>We highly recommend to update this installation with console command '<strong>tom3-update</strong>' or 'svn up -r$STABLE' in directory /www/TOM. Don't forget to fix all new/old dependencies, check file structure (tom3-chfiles script) and database structures (tom3-chtables script)|g;
 	
 	App::100::SQL::ircbot_msg_new("update available from r$TOM::core_revision to r$STABLE");
+	
+	
+	
+	# check dependencie changes
+	
+	my $out=`/usr/local/bin/svn diff $tom::P/.core/.libs/dependencies.pm -r$STABLE`
+		|| `/usr/bin/svn diff $tom::P/.core/.libs/dependencies.pm -r$STABLE`;
+	my $dep;
+	foreach my $line(split('\n',$out))
+	{
+		next if $line=~/^(\+\+|\-\-)/;
+		next unless $line=~/^[\+\-]/;
+		main::_log("$line");
+		$dep.=$line."\n";
+	}
+	if ($dep)
+	{
+		$DEP=~s|<%dep%>|$dep|;
+		$body=~s|<#DEP#>|$DEP|;
+	}
+	
+	#return 1;
 	
 	my $to=
 		TOM::Utils::vars::unique_split(
@@ -237,7 +277,7 @@ return 1}
 
 =head1 AUTHORS
 
-Roman Fordinal (roman.fordinal@comsultia.com)
+Comsultia, Ltd. (open@comsultia.com), WebCom, s.r.o. (info@webcom.sk)
 
 =cut
 
