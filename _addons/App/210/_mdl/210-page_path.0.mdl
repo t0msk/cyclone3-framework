@@ -77,7 +77,14 @@ sub execute
 {
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
-	
+
+	if ($env{'xt_xlng'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+
 	if (!$env{'ID'})
 	{
 		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
