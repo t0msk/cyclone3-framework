@@ -246,7 +246,7 @@ sub get_QUERY_STRING
 		}
 		
 		# su tu ISO-8859-2 sekvencie
-		if ($value=~/%([0-9A-Fa-f]{2})/)
+		elsif ($value=~/%([0-9A-Fa-f]{2})/)
 		{
 			main::_log("iso-8859-2 sequence") unless $env{'quiet'};
 			utf8::encode($value);
@@ -254,6 +254,11 @@ sub get_QUERY_STRING
 			TOM::Net::URI::URL::url_decode_($value);
 			$value = $ISO2_UTF->convert($value);
 			utf8::decode($value);
+		}
+		else
+		{
+			# decode only '+'
+			$value=~s|\+| |g;
 		}
 		
 		if ($name=~s/\[\]$//){push @{$form{$name}},$value;}else{$form{$name}=$value;}

@@ -37,11 +37,12 @@ use TOM::Net::HTTP::CGI;
 our $debug=0;
 
 # List of valid characters in QUERY_STRING
-my $URLENCODE_VALID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+.";
+my $URLENCODE_VALID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-.";
 
 # Prepare list of valid and invalid characters (hex)
 my @urlencode_valid;
 	$urlencode_valid[ord "$_"]="$_" foreach (split('', $URLENCODE_VALID));
+	$urlencode_valid[ord " "]="+"; # translate all spaces to '+' characters
 for (0..255)
 {
 	next if defined $urlencode_valid[$_];
@@ -63,7 +64,9 @@ Return encoded part of a string
 sub url_encode
 {
 	my $toencode = shift;
-	return join('', map { $urlencode_valid[ord "$_"] } split('', $toencode));
+	my $out=join('', map { $urlencode_valid[ord "$_"] } split('', $toencode));
+	main::_log("url_encode '$toencode'->'$out'") if $debug;
+	return $out;
 }
 
 
@@ -93,7 +96,11 @@ Decode given variable
 
 =cut
 
-sub url_decode_ {$_[0]=~s/%([0-9A-Fa-f]{2})/pack("C",hex($1))/eg;}
+sub url_decode_
+{
+	$_[0]=~s|\+| |g;
+	$_[0]=~s/%([0-9A-Fa-f]{2})/pack("C",hex($1))/eg;
+}
 
 
 
@@ -164,6 +171,9 @@ sub genGET
 	my $GET;
 	foreach (sort keys %form)
 	{
+		next if $_ eq "multipart";
+		next if $_=~/_file$/;
+		
 		next unless $form{$_};
 		next if length($form{$_})>1024;
 		$GET.="$_=".url_encode($form{$_})."&";

@@ -640,17 +640,7 @@ while ($main::CGI=new CGI::Fast())
 		# %FORM filled
 		#
 		
-		
-		$main::ENV{'QUERY_STRING_FULL'}='';
-		foreach (keys %FORM)
-		{
-			next if $_ eq "multipart";
-			next if $_=~/_file$/;
-			next if length($FORM{$_}) > 1024;
-			main::_log("output FORM '$_'='$FORM{$_}'");
-			$main::ENV{'QUERY_STRING_FULL'}.="&".$_."=".$FORM{$_};
-		};
-		$main::ENV{'QUERY_STRING_FULL'}=~s|^&||;
+		$main::ENV{'QUERY_STRING_FULL'}=TOM::Net::URI::URL::genGET(%main::FORM);
 		
 		main::_log("output QUERY_STRING_FULL='$main::ENV{'QUERY_STRING_FULL'}'");
 		
@@ -2125,6 +2115,18 @@ while ($main::CGI=new CGI::Fast())
 			foreach (keys %FORM){$_=~/^__/ && do{$form{$_}=$FORM{$_};};}
 			#foreach (keys %form){main::_log("key $_")};
 			# parsing $var to %form
+			
+			if ($var=~s/^\|//)
+			{
+				main::_log("first pipe, adding QUERY_STRING_FULL") if $debug_url;
+				my %pp=TOM::Net::HTTP::CGI::get_QUERY_STRING($main::ENV{'QUERY_STRING_FULL'});
+				foreach my $cc (keys %pp)
+				{
+					$form{$cc}=$pp{$cc};
+					main::_log("set '$cc' = '$form{$cc}'") if $debug_url;
+				}
+			}
+			
 			foreach my $cc(split('&',$var))
 			{
 				my @ref=split('=',$cc);

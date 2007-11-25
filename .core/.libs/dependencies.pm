@@ -44,5 +44,6 @@ use File::Type; # libfile-type-perl (debian)
 
 =cut
 
+# remove all used <a href="?|?<$main::ENV{'QUERY_STRING_FULL'}>... and use this new form <a href="?|?|...
 
 1;
