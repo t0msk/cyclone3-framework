@@ -49,7 +49,8 @@ Creates a new relation and return ID_entity, ID
  my ($ID_entity,$ID)=new_relation(
    'l_prefix' => 'a400',
    'l_table' => '',
-   'l_ID_entity' => '2'
+   'l_ID_entity' => '2',
+   #'rel_type' => '', # relation type
    #'r_db_name' => 'example_tld',
    #'r_prefix' => 'a210',
    #'r_table' => 'page',
@@ -111,6 +112,7 @@ sub new_relation
 	# find if this relation has ID_entity
 	my $relation=(get_relations(
 		%env,
+		'rel_type' => undef,
 		'r_db_name' => undef,
 		'r_prefix' => undef,
 		'r_table' => undef,
@@ -129,6 +131,7 @@ sub new_relation
 			'tb_name' => 'a160_relation',
 			'columns' =>
 			{
+				'rel_type' => "'$env{'rel_type'}'",
 				'r_db_name' => "'$env{'r_db_name'}'",
 				'r_prefix' => "'$env{'r_prefix'}'",
 				'r_table' => "'$env{'r_table'}'",
@@ -154,6 +157,7 @@ sub new_relation
 			'l_prefix' => "'$env{'l_prefix'}'",
 			'l_table' => "'$env{'l_table'}'",
 			'l_ID_entity' => "'$env{'l_ID_entity'}'",
+			'rel_type' => "'$env{'rel_type'}'",
 			'r_db_name' => "'$env{'r_db_name'}'",
 			'r_prefix' => "'$env{'r_prefix'}'",
 			'r_table' => "'$env{'r_table'}'",
@@ -276,6 +280,7 @@ sub get_relations
 		next unless defined $env{$_};
 		if ($_=~/^(l|r)_/ || $_=~/^ID/){ $where.="AND $_='$env{$_}' ";}
 	}
+	if (exists $env{'rel_type'}){$where.="AND rel_tyle='$env{rel_tyle}' ";}
 	
 	my @relations;
 	
@@ -295,7 +300,7 @@ sub get_relations
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>$DEBUG);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		main::_log("relation[$i] r_db_name='$db0_line{'r_db_name'}' r_prefix='$db0_line{'r_prefix'}' r_table='$db0_line{'r_table'}' r_ID_entity='$db0_line{'r_ID_entity'}'");
+		main::_log("relation[$i] rel_tyle='$db0_line{'rel_type'}' r_db_name='$db0_line{'r_db_name'}' r_prefix='$db0_line{'r_prefix'}' r_table='$db0_line{'r_table'}' r_ID_entity='$db0_line{'r_ID_entity'}'");
 		push @relations, {%db0_line};
 		$i++;
 	}
