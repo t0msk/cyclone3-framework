@@ -1,0 +1,3 @@
+#!/usr/bin/perl
+system("/www/TOM/.core/tom3");
+
