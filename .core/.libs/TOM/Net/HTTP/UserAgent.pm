@@ -1711,14 +1711,14 @@ our @table=
 	# NAKONIEC UNKNOWN BOT	
 	
 	{name=>'unknown robot',
-		regexp		=>	['bot','crawler','spider'],
-		agent_type	=>	"robot",
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-		utf8_disable	=>	1,
-		agent_group	=>	0,
-		notfinished		=>	1,
+		regexp => ['bot','crawler','spider'],
+		agent_type => "robot",
+		recache_disable => 1,
+		cookies_disable => 1,
+		USRM_disable => 1,
+		utf8_disable => 0,
+		agent_group => 0,
+		notfinished => 1,
 	},
 
 
