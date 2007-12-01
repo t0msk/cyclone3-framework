@@ -13,44 +13,46 @@ if (($FORM{h})||($FORM{help})){&help();}
 
 while(1)
 {
-my @pole=`ps aux | grep perl`;
-
-my %hosts;
-
-foreach my $proc(@pole)
-{
- $proc=~/perl.*TOM.*core/ && do
- {
-  $proc=~s|[\n\r]||g;
-  $proc=~s| |;|g;
-  while ($proc=~s|;;|;|g){}
-  #$proc=~s|\|\||\||g;
-  my @ref=split(';',$proc);
-  if ($ref[11]=~/tom/){$ref[10]=1}else{$ref[10]=0};
-  $ref[11]=~s|.*?!|!|;$ref[11]=~s|(.*)/.*?$|\1|;
-  my $host;
-  foreach (split('/',$ref[11]))
-  {
-   $_=~s/^!// && do
-   {
-    if ($host){$host=$_.".".$host;next}
-    $host=$_;next;
-   };
-   $host.="/".$_;
-  }
-  $host=~s|^www\.||;
-  push @{$hosts{$host}},[$ref[2],$ref[3],$ref[4],$ref[5],$ref[7],$ref[8],$ref[9],$ref[10],$ref[1]];
-
-  #print "$ref[1] $ref[11]  $host\n";
- };
-}
-
-#my $terminal = Tgetent Term::Cap { TERM => undef, OSPEED => $ospeed };
-
-
-
-	if ($FORM{s})
-	{#}
+	my @pole=`ps aux | grep perl`;
+	
+	my %hosts;
+	
+	foreach my $proc(@pole)
+	{
+		$proc=~/perl.*TOM.*core/ && do
+		{
+			$proc=~s|[\n\r]||g;
+			$proc=~s| |;|g;
+			while ($proc=~s|;;|;|g){}
+			#$proc=~s|\|\||\||g;
+			my @ref=split(';',$proc);
+			if ($ref[11]=~/tom/){$ref[10]=1}else{$ref[10]=0};
+			$ref[11]=~s|.*?!|!|;$ref[11]=~s|(.*)/.*?$|\1|;
+			my $host;
+			
+			$ref[12]=~/pwd=(.*)/;
+			my $pwd=$1;
+				$pwd=~s|^/www/TOM/||;
+			
+			foreach (split('/',$pwd))
+			{
+				$_=~s/^!// && do
+				{
+					if ($host){$host=$_.".".$host;next}
+					$host=$_;next;
+				};
+				$host.="/".$_;
+			}
+			$host=~s|^www\.||;
+			
+			push @{$hosts{$host}},[$ref[2],$ref[3],$ref[4],$ref[5],$ref[7],$ref[8],$ref[9],$ref[10],$ref[1]];
+		};
+	}
+	
+	#my $terminal = Tgetent Term::Cap { TERM => undef, OSPEED => $ospeed };
+	
+	if ($FORM{'s'})
+	{
 		print "\n";
 		print "[HOST                               ][CPU ][MEM ][VSZ  ][RSS   ]\n";
 		
@@ -145,20 +147,23 @@ foreach my $proc(@pole)
 				# P
 				print "[".sprintf("%2s",$_+1)."]";
 					
-					# CPU
+				# CPU
 				print "[";
-				if ($hosts{$host}[$_][0] > 2){print color 'bold red'}
+				if ($hosts{$host}[$_][0] > 10){print color 'yellow'}
+				if ($hosts{$host}[$_][0] > 30){print color 'bold red'}
 				print sprintf("%4s",$hosts{$host}[$_][0]);print color $setcolor;print "]";
 				
 				# MEM
 				print "[";
-				if ($hosts{$host}[$_][1] > 1.5){print color 'bold red'}
+				if ($hosts{$host}[$_][1] > 2){print color 'yellow'}
+				if ($hosts{$host}[$_][1] > 5){print color 'bold red'}
 				print sprintf("%4s",$hosts{$host}[$_][1]);print color $setcolor;print "]";
 				
 				
 				# MEM
 				print "[";
-				if ($hosts{$host}[$_][2] > 50000){print color 'bold red'}
+				if ($hosts{$host}[$_][2] > 50000){print color 'yellow'}
+				if ($hosts{$host}[$_][2] > 100000){print color 'bold red'}
 				print sprintf("%5d",$hosts{$host}[$_][2]);print color $setcolor;print "]";
 				
 				
@@ -185,7 +190,6 @@ foreach my $proc(@pole)
 		Time::HiRes::sleep(5);
 		
 	}
-	
 	
 }
 
