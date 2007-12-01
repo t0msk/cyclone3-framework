@@ -11,9 +11,6 @@ use SVN::Repos;
 (
  '-v'		=>	"verbosity",
  '-vv, --v'	=>	"verbosity 2, --v=2",
- '-e'		=>	"execute all modifications",
- '--db_h'	=>	"use type of database (default main)",
- '--domain'	=>	"use name of domain",
 );
 if (($FORM{'h'})||($FORM{'help'})){&help();}
 
@@ -187,6 +184,33 @@ foreach my $overlay(reverse @TOM::Overlays::item)
 }
 
 
+# Checking core.tom scripts
+#print "\n";
+print color 'reset green';
+
+my $cmd='/usr/bin/find /www/TOM -name core.tom 2>/dev/null';
+
+my $out=`/usr/bin/md5sum /www/TOM/.symlinks/core.tom`;
+	$out=~/^([0-9a-z]+)/;
+my $md5_orig=$1;
+
+foreach my $file (split('\n',`$cmd`))
+{
+	
+	next if $file=~/\.symlinks/;
+	
+	my $out=`/usr/bin/md5sum $file`;
+		$out=~/^([0-9a-z]+)/;
+	my $md5=$1;
+	
+	if ($md5 ne $md5_orig)
+	{
+		print "updating $file\n";
+		`rm $file`;
+		`cp /www/TOM/.symlinks/core.tom $file`;
+	}
+	
+}
 
 
 &exit();
