@@ -53,7 +53,8 @@ while(1)
 			'pctcpu'=>$p->{'pctcpu'},
 			'state'=>$p->{'state'},
 			'start'=>$p->{'start'},
-			'time'=>$p->{'time'}
+			'time'=>$p->{'time'},
+			'pid'=>$p->{'pid'}
 		};
 		
 	}
@@ -107,7 +108,7 @@ while(1)
 				
 				print "[".sprintf('%5s',time()-$hosts{$host}[$_]{'start'})."]";
 				
-				print " #".$hosts{$host}[$_][8];
+				print " #".$hosts{$host}[$_]{'pid'};
 				
 				print "\n";
 				
