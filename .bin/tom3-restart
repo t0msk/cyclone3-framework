@@ -31,15 +31,12 @@ $FORM{SIG}=KILL if $FORM{SIG} eq "-9";
 $main::p=~s|^.*/www/TOM/||;
 
 my $t = new Proc::ProcessTable;
-foreach my $p (@{$t->table} )#grep {$_->cmndline()=~/ \.\/cron (.*)/} 
+foreach my $p (@{$t->table})
 {
 	my $cmd=$p->cmndline;
 	
-	#print "$cmd\n";
-	
-	next unless $cmd=~s|^.*/perl (.*?)/\!www/([\w]+)\.tom|$1|;
+	next unless $cmd=~/^.*\/perl .*?tom3 pwd=(.*)/;
 	my $domain=$1;
-	my $core=$2;
 	$domain=~s|^.*/www/TOM/||;
 	
 	next if ((not $domain eq $main::p)&&(!$FORM{a}));
@@ -53,9 +50,6 @@ foreach my $p (@{$t->table} )#grep {$_->cmndline()=~/ \.\/cron (.*)/}
 	my $out=kill $FORM{SIG}, $p->pid;
 	print " $out\n";
 	
-	#my $cmd="kill $FORM{SIG} ".$p->pid;
-	#system($cmd);
-
 }
 
 
