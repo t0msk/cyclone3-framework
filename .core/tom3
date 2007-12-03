@@ -2548,7 +2548,9 @@ while ($main::CGI=new CGI::Fast())
 	
 	if (
 			($tom::HUP) && (($main::time_current-$TOM::time_start)<30) ||
-			($tom::HUP == 2)
+			($tom::HUP == 2) ||
+			($TOM::max_count <= $tom::count) ||
+			($TOM::max_time <= ($main::time_current-$TOM::time_start))
 		)
 	{
 		main::_log("SHUTDOWN (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
