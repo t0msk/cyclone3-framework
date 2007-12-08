@@ -353,13 +353,13 @@ while ($main::CGI=new CGI::Fast())
 			#alarm 0;
 		}
 		
-		if ($main::ENV{'REQUEST_URI'}=~/^\/favicon.ico$/)
+		if ($main::ENV{'REQUEST_URI'}=~/^(\/favicon\.ico|\/robots\.txt|\/sitemap\.xml)$/)
 		{
 			$main::page_statuscode="404";
-			TOM::Error::engine(
-				"silent - This error message is in silen mode",
-				"Can't resolve REQUEST_URI='$main::ENV{REQUEST_URI}'",
-				"Please check RewriteRules in .htaccess");
+#			TOM::Error::engine(
+#				"silent - This error message is in silen mode",
+#				"Can't resolve REQUEST_URI='$main::ENV{REQUEST_URI}'",
+#				"Please check RewriteRules in .htaccess");
 		}
 		
 		
@@ -1320,6 +1320,22 @@ while ($main::CGI=new CGI::Fast())
 			$file_data=$data."\n<#TYPE_PRE#>\n".$file_data;
 		}
 		
+		
+		#
+		# CHECK_FORM variables
+		#
+		while ($file_data=~s|<CHECK_FORM (.*?)/>||)
+		{
+			my %env0=CML::VARhash($1);
+			next unless $env0{'variable'};
+			foreach (split(';',$env0{'variable'}))
+			{
+				$env0{'variable'}=$_;
+				TOM::Security::form::check_form(%env0);
+			}
+		}
+		
+		
 		#
 		# KEYS TypeID
 		#
@@ -1477,6 +1493,10 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($env0{id} eq "title")
 			{
+				if ($env0{'lng'})
+				{
+					next if $env0{'lng'} ne $tom::lng;
+				}
 				_log("Change DOC::title to ".$env0{value});
 				$H->change_DOC_title($env0{value});
 				next;
