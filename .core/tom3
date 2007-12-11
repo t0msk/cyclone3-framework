@@ -356,10 +356,14 @@ while ($main::CGI=new CGI::Fast())
 		if ($main::ENV{'REQUEST_URI'}=~/^(\/favicon\.ico|\/robots\.txt|\/sitemap\.xml)$/)
 		{
 			$main::page_statuscode="404";
-#			TOM::Error::engine(
-#				"silent - This error message is in silen mode",
-#				"Can't resolve REQUEST_URI='$main::ENV{REQUEST_URI}'",
-#				"Please check RewriteRules in .htaccess");
+			TOM::Warning::engine(
+				"The page you have requested can't be displayed",
+				"This request type is not allowed on this service"
+			);
+			$t_preprocess->close();
+			$t_eval->close();
+			$t_request->close();
+			next;
 		}
 		
 		
@@ -463,7 +467,7 @@ while ($main::CGI=new CGI::Fast())
 			#print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n\n";
 			TOM::Warning::engine(
 				"The page you have requested can't be displayed",
-				"This request type is not allowed on this page"
+				"This request type is not allowed on this service"
 			);
 			
 			$t_querystring->close();
