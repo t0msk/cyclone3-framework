@@ -288,7 +288,7 @@ sub _chunk_prepare
 	# zamenim premenne
 	1 while($$chunk=~s|/\*(.*?)\*/|$header->{$1}|g);
 	
-	$$chunk=~s|TABLE|TABLE IF NOT EXISTS|;
+	$$chunk=~s| TABLE| TABLE IF NOT EXISTS|;
 	
 	TOM::Database::connect::multi($header->{'db_h'}) unless $main::DB{$header->{'db_h'}};
 	
@@ -387,9 +387,11 @@ sub install_table
 	
 	if ($debug){foreach my $line(split('\n',$SQL)){main::_log("$line");}}
 	
+	main::_log_stdout("(re)installing view `$database`.`$table`",3) if $SQL=~/ VIEW /;
+	
 	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$header->{'db_h'});
 	
-	if ($env{'-compare'})
+	if ($env{'-compare'} && !$sth0{'err'})
 	{
 		main::_log("calling '-compare'");
 		
