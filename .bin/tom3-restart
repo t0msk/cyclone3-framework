@@ -38,6 +38,7 @@ foreach my $p (@{$t->table})
 	next unless $cmd=~/^.*\/perl .*?tom3 pwd=(.*)/;
 	my $domain=$1;
 	$domain=~s|^.*/www/TOM/||;
+	$domain=~s|/!www\s?$||;
 	
 	next if ((not $domain eq $main::p)&&(!$FORM{a}));
 	
