@@ -41,7 +41,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_obsolete_log` (
   `func_line` int(10) unsigned NOT NULL default '0',
   `func` varchar(100) NOT NULL default '',
   PRIMARY KEY  (`ID`)
-) TYPE=MyISAM;
+) TYPE=InnoDB;
 
 -- --------------------------------------------------------
 -- version=5.0
@@ -58,7 +58,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_sitemap` (
   `weight` float NOT NULL default '0',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `domain` (`domain`,`domain_sub`,`url`)
-) TYPE=MyISAM DEFAULT CHARSET=utf8;
+) TYPE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- version=5.0
@@ -75,24 +75,26 @@ CREATE TABLE `/*db_name*/`.`/*app*/_sitemap_day` (
   `weight` float NOT NULL default '0',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `domain` (`domain`,`domain_sub`,`url`,`date_create`)
-) TYPE=MyISAM DEFAULT CHARSET=utf8;
+) TYPE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
+-- version=5.0
 
 CREATE TABLE `/*db_name*/`.`/*app*/_webclick_log` (
   `ID` int(10) unsigned NOT NULL auto_increment,
-  `domain` /*domain*/,
-  `domain_sub` /*domain_sub*/,
-  `TID` varchar(25) NOT NULL default '',
-  `time_insert` int(10) unsigned NOT NULL default '0',
+  `domain` varchar(32) character set ascii NOT NULL,
+  `domain_sub` varchar(64) character set armscii8 NOT NULL,
+  `TID` varchar(25) character set ascii NOT NULL,
+  `datetime_insert` datetime NOT NULL,
   `x` int(10) NOT NULL default '0',
-  `y` int(10) unsigned NOT NULL default '0',
-  `logged` char(1) NOT NULL default 'N',
-  `IDuser` varchar(8) binary NOT NULL default '',
+  `y` int(10) NOT NULL default '0',
+  `logged` char(1) character set ascii NOT NULL default 'N',
+  `IDuser` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `user_agent` varchar(256) character set ascii collate ascii_bin NOT NULL,
   PRIMARY KEY  (`ID`),
   KEY `domain` (`domain`,`domain_sub`),
-  KEY `domain_2` (`domain`,`domain_sub`,`TID`,`time_insert`)
-) TYPE=MyISAM;
+  KEY `domain_2` (`domain`,`domain_sub`,`TID`,`datetime_insert`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- version=5.0
@@ -141,7 +143,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_rqs` (
   KEY `USRM_flag` (`USRM_flag`),
   KEY `lng` (`lng`),
   KEY `result` (`result`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- version=5.0
