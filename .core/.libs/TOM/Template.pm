@@ -26,8 +26,9 @@ use TOM::Template::contenttypes;
 
 BEGIN
 {
-	if (!-e $tom::P.'/!media/tpl' && $tom::P && $tom::H)
+	if (!-e $tom::P.'/!media/tpl' && -e $tom::P.'/local.conf')
 	{
+		main::_log("mkpath '$tom::P/!media/tpl'");
 		File::Path::mkpath $tom::P.'/!media/tpl';
 		chmod (0777, $tom::P.'/!media/tpl');
 	}
