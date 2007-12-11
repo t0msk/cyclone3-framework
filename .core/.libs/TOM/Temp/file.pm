@@ -16,12 +16,18 @@ sub new
 	my $self={};
 	my %env=@_;
 	
+	loop_file:
+	
 	$self->{'unique'}=TOM::Utils::vars::genhash(32);
 	$self->{'filename'}=$TOM::P.'/_temp/tmp-'.$self->{'unique'};
 	$self->{'filename'}.='.'.$env{'ext'} if $env{'ext'};
 	$self->{'unlink'}=1;
 	
+	if (-e $self->{'filename'}){goto loop_file;}
+	
 	main::_log("opened tempfile $self->{'filename'}");
+	
+	open(HND_CNT,'>'.$self->{'filename'});binmode HND_CNT;close(HND_CNT);
 	
 	return bless $self, $class;
 }
