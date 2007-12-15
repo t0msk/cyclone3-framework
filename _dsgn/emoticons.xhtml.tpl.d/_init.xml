@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	<header>
+		
+		<extract>
+			
+			<file location="emoticon_angry.png"/>
+			<file location="emoticon_confused.png"/>
+			<file location="emoticon_cry.png"/>
+			<file location="emoticon_omg.png"/>
+			<file location="emoticon_sad.png"/>
+			<file location="emoticon_smile.png"/>
+			
+		</extract>
+		
+	</header>
+		
+</template>
