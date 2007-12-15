@@ -83,65 +83,62 @@ CREATE TABLE `/*db_name*/`.`/*app*/_shadow` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
+-- version=5.0
 
 CREATE TABLE `/*db_name*/`.`/*app*/_users` (
-  `IDhash` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
-  `login` varchar(30) NOT NULL default '',
-  `pass` varchar(20) character set utf8 collate utf8_bin NOT NULL default '',
-  `pass_md5` varchar(32) character set utf8 collate utf8_bin NOT NULL default '',
-  `autolog` char(1) NOT NULL default 'N',
-  `host` varchar(50) NOT NULL default '',
+  `IDhash` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `login` varchar(64) character set utf8 collate utf8_bin NOT NULL,
+  `pass` varchar(20) character set utf8 collate utf8_bin NOT NULL,
+  `pass_md5` varchar(32) character set ascii collate ascii_bin NOT NULL,
+  `autolog` char(1) character set ascii NOT NULL default 'N',
+  `host` varchar(50) character set ascii NOT NULL,
   `regtime` int(10) unsigned NOT NULL default '0',
   `logtime` int(10) unsigned NOT NULL default '0',
   `reqtime` int(10) unsigned NOT NULL default '0',
   `rqs` mediumint(8) unsigned NOT NULL default '0',
-  `IPlast` varchar(20) NOT NULL default '',
-  `profile` text NOT NULL,
-  `profile_shadow` text NOT NULL,
-  `cookies` text NOT NULL,
-  `cookies_system` text NOT NULL,
-  `lng` char(2) default NULL,
-  `active` char(1) NOT NULL default 'N',
+  `IPlast` varchar(20) character set ascii NOT NULL,
+  `profile` text character set utf8 collate utf8_bin NOT NULL,
+  `profile_shadow` text character set utf8 collate utf8_bin NOT NULL,
+  `cookies` text character set utf8 collate utf8_bin NOT NULL,
+  `cookies_system` text character set utf8 collate utf8_bin NOT NULL,
+  `lng` char(2) character set ascii default NULL,
+  `active` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`IDhash`),
   KEY `login` (`login`),
   KEY `pass_md5` (`pass_md5`),
   KEY `host` (`host`),
   KEY `lng` (`lng`),
   KEY `active` (`active`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
+-- version=5.0
 
 CREATE TABLE `/*db_name*/`.`/*app*/_users_arch` (
-  `IDhash` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
-  `login` varchar(30) NOT NULL default '',
-  `pass` varchar(20) character set utf8 collate utf8_bin NOT NULL default '',
-  `pass_md5` varchar(32) character set utf8 collate utf8_bin NOT NULL default '',
-  `autolog` char(1) NOT NULL default 'N',
-  `host` varchar(50) NOT NULL default '',
+  `IDhash` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `login` varchar(64) character set utf8 collate utf8_bin NOT NULL,
+  `pass` varchar(20) character set utf8 collate utf8_bin NOT NULL,
+  `pass_md5` varchar(32) character set ascii collate ascii_bin NOT NULL,
+  `autolog` char(1) character set ascii NOT NULL default 'N',
+  `host` varchar(50) character set ascii NOT NULL,
   `regtime` int(10) unsigned NOT NULL default '0',
   `logtime` int(10) unsigned NOT NULL default '0',
   `reqtime` int(10) unsigned NOT NULL default '0',
   `rqs` mediumint(8) unsigned NOT NULL default '0',
-  `IPlast` varchar(20) NOT NULL default '',
-  `profile` text NOT NULL,
-  `profile_shadow` text NOT NULL,
-  `cookies` text NOT NULL,
-  `cookies_system` text NOT NULL,
-  `lng` char(2) default NULL,
-  `active` char(1) NOT NULL default 'N',
+  `IPlast` varchar(20) character set ascii NOT NULL,
+  `profile` text character set utf8 collate utf8_bin NOT NULL,
+  `profile_shadow` text character set utf8 collate utf8_bin NOT NULL,
+  `cookies` text character set utf8 collate utf8_bin NOT NULL,
+  `cookies_system` text character set utf8 collate utf8_bin NOT NULL,
+  `lng` char(2) character set ascii default NULL,
+  `active` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`IDhash`),
   KEY `login` (`login`),
   KEY `pass_md5` (`pass_md5`),
   KEY `host` (`host`),
   KEY `lng` (`lng`),
-  KEY `active` (`active`),
-  KEY `rqs` (`rqs`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`TOM`@`localhost` SQL SECURITY DEFINER VIEW `/*db_name*/`.`/*app*/_user` AS (select `a300_users`.`IDhash` AS `IDhash`,`a300_users`.`login` AS `login`,`a300_users`.`pass` AS `pass`,`a300_users`.`pass_md5` AS `pass_md5`,`a300_users`.`autolog` AS `autolog`,`a300_users`.`host` AS `host`,`a300_users`.`regtime` AS `regtime`,`a300_users`.`logtime` AS `logtime`,`a300_users`.`reqtime` AS `reqtime`,`a300_users`.`rqs` AS `rqs`,`a300_users`.`IPlast` AS `IPlast`,`a300_users`.`profile` AS `profile`,`a300_users`.`profile_shadow` AS `profile_shadow`,`a300_users`.`cookies` AS `cookies`,`a300_users`.`cookies_system` AS `cookies_system`,`a300_users`.`lng` AS `lng`,`a300_users`.`active` AS `active` from `a300_users`) union all (select `a300_users_arch`.`IDhash` AS `IDhash`,`a300_users_arch`.`login` AS `login`,`a300_users_arch`.`pass` AS `pass`,`a300_users_arch`.`pass_md5` AS `pass_md5`,`a300_users_arch`.`autolog` AS `autolog`,`a300_users_arch`.`host` AS `host`,`a300_users_arch`.`regtime` AS `regtime`,`a300_users_arch`.`logtime` AS `logtime`,`a300_users_arch`.`reqtime` AS `reqtime`,`a300_users_arch`.`rqs` AS `rqs`,`a300_users_arch`.`IPlast` AS `IPlast`,`a300_users_arch`.`profile` AS `profile`,`a300_users_arch`.`profile_shadow` AS `profile_shadow`,`a300_users_arch`.`cookies` AS `cookies`,`a300_users_arch`.`cookies_system` AS `cookies_system`,`a300_users_arch`.`lng` AS `lng`,`a300_users_arch`.`active` AS `active` from `a300_users_arch`)
+  KEY `active` (`active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -153,7 +150,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_attrs` (
   `email` varchar(50) NOT NULL default '',
   `email_verify` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`IDhash`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -165,7 +162,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_attrs_arch` (
   `email` varchar(50) NOT NULL default '',
   `email_verify` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`IDhash`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -176,7 +173,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_group` (
   `status` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`host`,`name`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -184,6 +181,28 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_rel_group` (
   `IDgroup` int(10) unsigned NOT NULL auto_increment,
   `IDuser` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   PRIMARY KEY  (`IDgroup`,`IDuser`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
+-- version=5.0
+
+CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_user` AS
+(
+	SELECT * FROM `/*db_name*/`.`/*app*/_users`
+)
+UNION ALL
+(
+	SELECT * FROM `/*db_name*/`.`/*app*/_users_arch`
+)
+
+-- --------------------------------------------------------
+-- version=5.0
+
+CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_user_view_login` AS
+(
+	SELECT * FROM `/*db_name*/`.`/*app*/_users`
+	WHERE login NOT LIKE ''
+)
+
+-- --------------------------------------------------------
+
