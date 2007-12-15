@@ -1,0 +1,167 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+=head1 NAME
+
+510-video_list.lite.mdl
+
+=head1 DESCRIPTION
+
+Lite list of videos. Optimal to display gallery of thumbnails
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::510::_init|app/"510/_init.pm">
+
+=back
+
+=cut
+
+use App::510::_init;
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<db_name> - database name
+
+=item *
+
+B<ID_format> - ID of video format to display (image_format.ID)
+
+=item *
+
+B<format_name> - name of video format to display (image_format.name)
+
+=item *
+
+B<sql_limit> - limit to display (default '1')
+
+=item *
+
+B<sql_status> - required status (default 'Y')
+
+=item *
+
+B<sql_lng> - required language (default is current)
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default
+
+=item *
+
+B<#item#> - gateway to image item
+
+=item *
+
+B<item> - image item
+
+=item *
+
+B<%ID%> - image ID
+
+=item *
+
+B<%ID_entity%> - image ID_entity
+
+=item *
+
+B<%name%> - image name
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	$env{'db_name'}=$App::510::db_name unless $env{'db_name'};
+	
+	if (!$env{'ID_format'} && !$env{'format_name'})
+	{
+		$env{'format_name'}='thumbnail';
+	}
+	
+	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
+	$env{'sql_limit'}='1' unless $env{'sql_limit'};
+	$env{'sql_status'}='Y' unless $env{'sql_status'};
+	
+	#$env{'ID_format'}
+	if ($env{'ID_format'})
+	{
+		$env{'sql_where'}.=" AND video.ID_format=$env{'ID_format'}";
+	}
+	if ($env{'format_name'})
+	{
+		$env{'sql_where'}.=" AND video.ID_format_name='$env{'format_name'}'";
+	}
+	
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$env{'db_name'}`.a510_video_view AS video
+		WHERE
+			video.status IN ('$env{'sql_status'}') AND
+			video.lng='$env{'sql_lng'}'
+			$env{'sql_where'}
+		ORDER BY
+			video.order_id ASC
+		LIMIT $env{'sql_limit'}
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $item=$XSGN{'item'};
+		foreach(keys %db0_line)
+		{
+			$item=~s|<%$_%>|$db0_line{$_}|g;
+		}
+		
+		$XSGN{'TMP'}=~s|<#item#>|$item|;
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
