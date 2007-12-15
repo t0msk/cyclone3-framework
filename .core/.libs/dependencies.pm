@@ -33,6 +33,7 @@ use CGI::Fast; # libfcgi-perl + libcgi-fast-perl (debian)
 use Parallel::ForkManager; # libparallel-forkmanager-perl
 use Compress::Zlib; # libcompress-zlib-perl (debian) || libzlib-perl (ubuntu)
 use File::Type; # libfile-type-perl (debian)
+use HTML::Parser; # perl
 
 
 =head1 Other dependencies
@@ -41,6 +42,9 @@ use File::Type; # libfile-type-perl (debian)
  =Apache1.3 || >=Apache2.0
  ?inkscape  # convert SVG images to PNG and send stats emails
  ?memcached  # cache more effectively
+ mplayer && mencoder # to manage and encode videos
+ ffmpeg # video encoding
+ libcv-dev # OpenCV to support facedetect
 
 =cut
 
