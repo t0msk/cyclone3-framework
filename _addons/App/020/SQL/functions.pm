@@ -104,6 +104,7 @@ sub new
 	my @values;
 	foreach (sort keys %{$env{'columns'}})
 	{
+#		next unless $env{'columns'}{$_};
 		push @columns, $_;
 		push @values, $env{'columns'}{$_};
 	}
@@ -290,6 +291,74 @@ sub get_ID(%env)
 }
 
 
+
+=head2 get_ID_entity()
+
+Function returns list of get_ID()'s used by one ID_entity
+
+ my @IDs=get_ID_entity
+ (
+  ID_entity => $ID_entity, # must be defined
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+  'columns' =>
+  {
+   'column1' => 1, # return value of this column
+   'column2' => 1, # same
+  }
+ )
+
+Into 'columns' is automatically added ID, ID_entity, datetime_create and status.
+
+Into 'columns' you are able set '*' => 1
+
+=cut
+
+sub get_ID_entity(%env)
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::get_ID_entity($env{'ID_entity'})") if $debug;
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'") if $debug;
+	}
+	
+	my $SQL=qq{
+		SELECT
+			ID
+		FROM
+			`$env{'db_name'}`.`$env{'tb_name'}`
+		WHERE
+			ID_entity=$env{'ID_entity'}
+		ORDER BY
+			ID
+	};
+	
+	my @data;
+	
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("adding ID='$db0_line{'ID'}'");# if $debug;
+		
+		push @data, {get_ID(
+			%env,
+			'ID' => $db0_line{'ID'}
+		)};
+		
+	}
+	
+	$t->close() if $debug;
+	return @data;
+}
+
+
+
 =head2 update()
 
 Updates one row ( also one ID ) in main table.
@@ -406,13 +475,13 @@ Please do not execute this function alone. After this function must be in main t
 sub journalize
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::journalize()");
+	my $t=track TOM::Debug(__PACKAGE__."::journalize()") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	foreach (keys %env)
 	{
-		main::_log("input '$_'='$env{$_}'");
+		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
 	my $SQL=qq{
@@ -424,8 +493,8 @@ sub journalize
 		WHERE ID=$env{'ID'}
 		LIMIT 1
 	};
-		
-	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
+	
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
 	# error
 	if ($sth0{'err'})
 	{
@@ -433,7 +502,9 @@ sub journalize
 		return undef;
 	}
 	
-	$t->close();
+	main::_log("<={SQL:$env{'db_h'}} '$env{'db_name'}'.'$env{'tb_name'}' ID='$env{'ID'}' JOURNAL");
+	
+	$t->close() if $debug;
 	return 1;
 }
 
