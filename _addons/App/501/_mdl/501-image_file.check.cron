@@ -1,0 +1,169 @@
+#!/usr/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+501-image_file.check.cron
+
+=cut
+
+=head1 DESCRIPTION
+
+Automatically checks all image_file items, its directories and files. Removes entries with missing file, moves journalized files.
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::501::_init|app/"501/_init.pm">
+
+=back
+
+=cut
+
+use App::501::_init;
+
+
+
+=head1 INPUTS
+
+
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	
+	alarm(0);
+	
+	# find missing files
+	main::_log("checking image_file items in image_file table");
+	my $sql=qq{
+		SELECT
+			*,
+			CONCAT(ID_format,'/',SUBSTR(ID,1,4),'/',name,'.',file_ext) AS file_path
+		FROM
+			`$App::501::db_name`.a501_image_file
+		ORDER BY
+			ID
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		#main::_log("check image_file $db0_line{'ID'} in $db0_line{'file_path'}");
+		
+		if (!-e $tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'})
+		{
+			main::_log("file $db0_line{'file_path'} not exists",1);
+			TOM::Database::SQL::execute(qq{
+				DELETE FROM `$App::501::db_name`.`a501_image_file`
+				WHERE ID=$db0_line{'ID'} LIMIT 1
+			},'quiet'=>1);
+		}
+		
+		
+	}
+	
+	
+	# find missing files in file_j
+	main::_log("checking image_file items in image_file_j table");
+	my $sql=qq{
+		SELECT
+			*,
+			CONCAT(ID_format,'/',SUBSTR(ID,1,4),'/',name,'.',file_ext) AS file_path
+		FROM
+			`$App::501::db_name`.a501_image_file_j
+		ORDER BY
+			ID
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		#main::_log("check image_file $db0_line{'ID'} in $db0_line{'file_path'}");
+		
+		my $pth=$tom::P.'/!media/a501/image/file_j/'.$db0_line{'file_path'};
+		$pth=~s|/$db0_line{'name'}\.$db0_line{'file_ext'}$||;
+		
+		if (!-d $pth)
+		{
+			File::Path::mkpath($pth);
+			main::_log("creating directory '$pth'");
+		}
+		
+		if (!-e $tom::P.'/!media/a501/image/file_j/'.$db0_line{'file_path'})
+		{
+			if (-e $tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'})
+			{
+				
+				# check if this file is not required in not journalized table
+				my $sql=qq{
+					SELECT
+						ID
+					FROM
+						`$App::501::db_name`.a501_image_file
+					WHERE
+						name='$db0_line{'name'}'
+					LIMIT 1;
+				};
+				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+				my %db1_line=$sth1{'sth'}->fetchhash();
+				if ($db1_line{'ID'})
+				{
+					main::_log("copy file '$db0_line{'file_path'}'");
+					# so, copy to journal archive
+					File::Copy::copy($tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'},
+						$tom::P.'/!media/a501/image/file_j/'.$db0_line{'file_path'});
+				}
+				else
+				{
+					# so, move to journal archive
+					main::_log("move file '$db0_line{'file_path'}'");
+					File::Copy::move($tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'},
+						$tom::P.'/!media/a501/image/file_j/'.$db0_line{'file_path'});
+				}
+				
+			}
+			else
+			{
+				main::_log("file $db0_line{'file_path'} not exists",1);
+				TOM::Database::SQL::execute(qq{
+					DELETE FROM `$App::501::db_name`.`a501_image_file_j`
+					WHERE
+						ID=$db0_line{'ID'} AND
+						name='$db0_line{'name'}' AND
+						datetime_create='$db0_line{'datetime_create'}'
+					LIMIT 1
+				},'quiet'=>1);
+			}
+			
+			
+#			TOM::Database::SQL::execute(qq{
+#				DELETE FROM `$App::501::db_name`.`a501_image_file`
+#				WHERE ID=$db0_line{'ID'} LIMIT 1
+#			},'quiet'=>1);
+		}
+		
+		
+	}
+	
+	return 1
+}
+
+
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
