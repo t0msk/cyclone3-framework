@@ -1,0 +1,17 @@
+Deps:
+OpenCV i s highgui castou
+
+Build:
+make - by mal zriesit build (robil som to na ubuntu) v pripade problemu IMme.
+
+Note:
+cascade.xml by mal vzdy byt v aktualnom adreasry prr volani fdetect.
+
+Vstup:
+./fdetect <filename> - zerie to jpegy.
+
+Vystup:
+A:B,C-D,E\n
+A je cislo najdenej tvare. B a C su x a y koordinaty laveho horneho rohu. D a E praveho dolneho.
+
+pd.
