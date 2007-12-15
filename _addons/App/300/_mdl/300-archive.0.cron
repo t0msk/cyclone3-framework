@@ -15,7 +15,7 @@ This cron module moves all unactive users from primary USRM table (a300_users) t
 
 More cleaner a300_users table improves speedup of USRM operation
 
-Default time of inactivity is 31 days.
+Default time of inactivity are 7 days.
 
 =head1 DEPENDS
 
@@ -39,7 +39,7 @@ sub execute
 	
 	$env{'max'}=10000 unless $env{'max'};
 	
-	$env{'max_days'}=31 unless $env{'max_days'};
+	$env{'max_days'}=7 unless $env{'max_days'};
 	
 	my $sql=qq{
 		SELECT
@@ -47,7 +47,8 @@ sub execute
 		FROM
 			TOM.a300_users
 		WHERE
-			reqtime<($main::time_current-(86400*$env{'max_days'}))
+			reqtime<($main::time_current-(86400*$env{'max_days'})) AND
+			login=''
 		LIMIT $env{'max'}
 	};
 	my %sth0=TOM::Database::SQL::execute($sql);

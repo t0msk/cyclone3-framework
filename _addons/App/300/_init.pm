@@ -6,17 +6,61 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-use Digest::MD5;
-use App::300::session;
-use CVML;
+
+
+=head1 NAME
+
+Application 300 - User Management
+
+=head1 DESCRIPTION
+
+Application which manages users
+
+=cut
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 
-=head1 FUNCTIONS
+
+=head1 SYNOPSIS
+
+ use App::300::_init;
 
 =cut
 
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::300::session|app/"300/session.pm">
+
+=item *
+
+L<App::300::authors|app/"300/authors.pm">
+
+=item *
+
+CVML
+
+=item *
+
+Digest::MD5
+
+=back
+
+=cut
+
+
+use App::300::session;
+use App::300::authors;
+use CVML;
+use Digest::MD5;
+
+
+
+=head1 FUNCTIONS
 
 =head2 GetGroups(IDhash)
 
@@ -441,6 +485,14 @@ if ($tom::H_cookie)
 		}
 	}
 }
+
+
+
+=head1 AUTHOR
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
 
 
 1;
