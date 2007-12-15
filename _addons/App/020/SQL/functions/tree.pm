@@ -18,6 +18,8 @@ use TOM::Net::URI::rewrite;
 use App::020::functions::charindex;
 
 our $debug=0;
+our $quiet;$quiet=1 unless $debug;
+
 
 =head1 FUNCTIONS
 
@@ -784,6 +786,74 @@ sub get_path
 }
 
 
+
+=head2 get_parent_ID
+
+Find parent ID for defined node, similar to App::020::SQL::functions::get_ID
+
+ my %hash=get_parent_ID
+ (
+  ID => $ID, # must be defined
+  'db_h' => 'main', # name of database handler
+  'db_name' => 'domain_tld', # name of database
+  'tb_name' => 'a020_object', # name of main table
+  'columns' =>
+  {
+   'column1' => 1, # return value of this column
+   'column2' => 1, # same
+  }
+ )
+
+Into 'columns' is automatically added ID, ID_entity, datetime_create and status.
+
+Into 'columns' you are able set '*' => 1
+
+=cut
+
+sub get_parent_ID
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::get_parent_ID('$env{'ID'}')") if $debug;
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'") if $debug;
+	}
+	
+	# at first, get this ID and check uniqe
+	my %child=App::020::SQL::functions::get_ID(%env,'columns' => {'*'=>1});
+	
+	my $where;
+	
+	# when note is unique to lng, find parent with same lng
+	if ($child{'lng'}){$where.=" AND lng='$child{'lng'}'"}
+	
+	my $ID_charindex=$child{'ID_charindex'};
+		$ID_charindex=~s|^(.*)...$|\1|;
+		$ID_charindex=~s|:$||;
+		
+	#main::_log("charindex=$ID_charindex");
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$env{'db_name'}`.`$env{'tb_name'}`
+		WHERE
+			ID_charindex LIKE '$ID_charindex'
+			$where
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>$debug,'quiet'=>$quiet);
+	my %parent=$sth0{'sth'}->fetchhash();
+	
+	$t->close() if $debug;
+	return %parent;
+}
+
+
 =head2 find_new_child
 
 Najdenie noveho ID_charindexu pre child
@@ -1071,7 +1141,7 @@ sub rename
 		return undef;
 	}
 	
-	if ($data{status}=~/^[YN]$/)
+	if ($data{'status'}=~/^[YN]$/)
 	{
 		# premenovanie
 		App::020::SQL::functions::update(
