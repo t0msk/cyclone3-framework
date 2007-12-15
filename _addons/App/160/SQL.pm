@@ -38,7 +38,8 @@ L<App::160::_init|app/"160/_init.pm">
 use App::020::_init;
 use App::160::_init;
 
-our $DEBUG=0;
+our $debug=0;
+our $quiet;$quiet=1 unless $debug;
 
 =head1 FUNCTIONS
 
@@ -68,7 +69,7 @@ sub new_relation
 	delete $env{'ID_entity'} if exists $env{'ID_entity'};
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
-	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
+	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	
 	foreach (keys %env)
 	{
@@ -188,7 +189,7 @@ sub remove_relation
 	my $t=track TOM::Debug(__PACKAGE__."::remove_relation()");
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
-	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
+	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	
 	foreach (keys %env)
 	{
@@ -240,7 +241,7 @@ Returns list of references to relations
    #'ID' => 1,
    #'ID_entity' => 1,
    #'db_h' => 'main',
-   #'db_name' => $TOM::DB{$env{'db_h'}}{'name'},
+   #'db_name' => $App::160::db_name,
    'l_prefix' => 'a400',
    'l_table' => '',
    'l_ID_entity' => '2'
@@ -262,7 +263,7 @@ sub get_relations
 	my $t=track TOM::Debug(__PACKAGE__."::get_relation()");
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
-	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
+	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	$env{'limit'}="0,100" unless $env{'limit'};
 	
 	# list of input
@@ -280,7 +281,7 @@ sub get_relations
 		next unless defined $env{$_};
 		if ($_=~/^(l|r)_/ || $_=~/^ID/){ $where.="AND $_='$env{$_}' ";}
 	}
-	if (exists $env{'rel_type'}){$where.="AND rel_tyle='$env{rel_tyle}' ";}
+	if (exists $env{'rel_type'}){$where.="AND rel_type='$env{rel_type}' ";}
 	
 	my @relations;
 	
@@ -288,7 +289,7 @@ sub get_relations
 		SELECT
 			*
 		FROM
-			$env{'db_name'}.a160_relation
+			`$env{'db_name'}`.`a160_relation`
 		WHERE
 			$where
 		ORDER BY
@@ -297,10 +298,10 @@ sub get_relations
 			$env{'limit'};
 	};
 	my $i=0;
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>$DEBUG);
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>$debug,'quiet'=>$quiet);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		main::_log("relation[$i] rel_tyle='$db0_line{'rel_type'}' r_db_name='$db0_line{'r_db_name'}' r_prefix='$db0_line{'r_prefix'}' r_table='$db0_line{'r_table'}' r_ID_entity='$db0_line{'r_ID_entity'}'");
+		main::_log("relation[$i] rel_type='$db0_line{'rel_type'}' r_db_name='$db0_line{'r_db_name'}' r_prefix='$db0_line{'r_prefix'}' r_table='$db0_line{'r_table'}' r_ID_entity='$db0_line{'r_ID_entity'}'");
 		push @relations, {%db0_line};
 		$i++;
 	}
@@ -333,7 +334,7 @@ sub get_relation_iteminfo
 	my $t=track TOM::Debug(__PACKAGE__."::get_relation_iteminfo()");
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
-	$env{'r_db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'r_db_name'};
+	$env{'r_db_name'}=$App::160::db_name unless $env{'r_db_name'};
 	
 	# list of input
 	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_}};

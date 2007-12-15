@@ -35,12 +35,17 @@ L<App::160::SQL|app/"160/SQL.pm">
 
 =cut
 
+
+our $db_name=$App::160::db_name || $TOM::DB{'main'}{'name'};
+
+
 use App::160::SQL;
+
 
 1;
 
 =head1 AUTHOR
 
-Roman Fordinal (roman.fordinal@comsultia.com)
+Comsultia, Ltd. (open@comsultia.com)
 
 =cut
