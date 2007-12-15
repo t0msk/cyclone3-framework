@@ -57,11 +57,22 @@ our %ext=(
 	'xml' => 'text/xml',
 );
 
+our %mime=(
+	'image/jpeg' => 'jpg',
+	'image/x-png' => 'png',
+	'image/gif' => 'gif',
+);
+
+
+our %filetype_ext=(
+	'Macromedia Flash Video' => 'flv',
+	'Microsoft ASF' => 'asf'
+);
 
 
 =head1 AUTHORS
 
-Roman Fordinal (roman.fordinal@comsultia.com)
+Comsultia, Ltd. (open@comsultia.com)
 
 =cut
 
