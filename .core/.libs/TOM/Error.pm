@@ -389,9 +389,10 @@ sub module_pub
 	$box=~s|<%.*?%>||g;
 	
 	main::_log("$env{-ERROR} $env{-PLUS}",1); #local
-	main::_log("[MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",1,"pub.err",0); #local
-	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"pub.err",1); #global
-	main::_log("[$tom::H][MDL::$env{-MODULE}] $env{-ERROR} $env{-PLUS}",4,"pub.err",2) if ($tom::H ne $tom::Hm); #master
+	main::_log("$env{-MODULE} $env{-ERROR} $env{-PLUS}",1,"pub.err",0); #local
+	main::_log("[$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}",4,"pub.err",1); #global
+	main::_log("[$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}",4,"pub.err",2) if ($tom::H ne $tom::Hm); #master
+	App::100::SQL::ircbot_msg_new("[ERR][$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}");
 	
 	my $ticket_ok = 1;
 	
