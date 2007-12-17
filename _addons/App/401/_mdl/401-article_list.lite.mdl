@@ -46,7 +46,7 @@ B<sql_limit> - limit to display (default '1')
 
 =item *
 
-B<sql_status> - required status, comma separated values (default 'Y')
+B<sql_status> - required status, nonseparated values (default 'Y')
 
 =item *
 
@@ -65,31 +65,13 @@ B<sql_mimetype> - required mimetype (default 'text/html')
 =head1 XSGN
 
 =over
-
-=item *
-
-B<TMP> - default
-
-=item *
-
-B<#item#> - gateway to article item
-
-=item *
-
-B<item> - article item
-
-=item *
-
-B<%ID%> - article ID
-
-=item *
-
-B<%ID_entity%> - article ID_entity
-
-=item *
-
-B<%name%> - article name
-
+=item B<TMP> - default output
+=item <#item#> - gateway to article item
+=item B<item> - article item
+=item B<%db_*%> - article database items
+=item B<%ID%> - article ID
+=item B<%ID_entity%> - article ID_entity
+=item B<%name%> - article name
 =back
 
 =cut
@@ -106,9 +88,11 @@ sub execute
 	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
 	$env{'sql_limit'}='1' unless $env{'sql_limit'};
 	$env{'sql_status'}='Y' unless $env{'sql_status'};
+		my $status_sql=join "','" split('',$env{'sql_status'});
 	$env{'sql_mimetype'}='text/html' unless $env{'sql_mimetype'};
 	
 	my $execution_success=1;
+	
 	
 	my $sql=qq{
 		SELECT
@@ -116,7 +100,7 @@ sub execute
 		FROM
 			`$env{'db_name'}`.a401_article_view AS article
 		WHERE
-			article.status IN ('$env{'sql_status'}') AND
+			article.status IN ('$status_sql') AND
 			article.lng='$env{'sql_lng'}' AND
 			article.mimetype='$env{'sql_mimetype'}'
 		ORDER BY
@@ -149,18 +133,22 @@ sub execute
 		$item_counter++;
 		
 		# fill raw data into $XSGN{'item'}
-		foreach(keys %db0_line)
-		{
-			$item=~s|<%db_$_%>|$db0_line{$_}|g;
-		}
+		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
 		
 		my %author=App::300::authors::get_author($db0_line{'posix_author'});
-		
 		foreach(keys %author)
 		{
 			$item=~s|<%author_$_%>|$author{$_}|g;
 		}
+		
+		
+		# process body
+		my $p=new App::401::mimetypes::html;
+		$p->parse($db0_line{'body'});
+		$p->eof();
+		my $body_html=$p->{'out'};
+		$item=~s|<%body%>|$body_html|;
 		
 		
 		# Transforming datetime fields
