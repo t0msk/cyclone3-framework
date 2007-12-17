@@ -92,6 +92,7 @@ our @setit_D=
 	['^_config'                        ,"global _config"              ,"770","$user_www:$group"],
 	['^\.core'                         ,"global .core"                ,"570","$user_www:$group"],
 	['^_dsgn$'                         ,"global _dsgn"                ,"570","$user_www:$group"],
+	['^_dsgn\/'                        ,"global _dsgn"                ,"570","$user_www:$group"],
 	['^_type$'                         ,"global _type"                ,"570","$user_www:$group"],
 	['^\.bin$'                         ,"global .bin"                 ,"770","$user:$group"],
 	['^_logs'                          ,"global _logs"                ,"770","$user_www:$group"],
@@ -101,7 +102,8 @@ our @setit_D=
 	['\/_addons'                       ,"local _addons"               ,"570","$user_www:$group"],
 	['\/_mdl$'                         ,"local _mdl"                  ,"570","$user_www:$group"],
 	['\/\.libs'                        ,"local libraries"             ,"570","$user_www:$group"],
- 	['\/_dsgn$'                        ,"local _dsgn"                 ,"770","$user_www:$group"],
+	['\/_dsgn$'                        ,"local _dsgn"                 ,"770","$user_www:$group"],
+	['\/_dsgn\/'                       ,"local _dsgn"                 ,"770","$user_www:$group"],
 	['\/!www$'                         ,"local !www"                  ,"770","$user_www:$group"],
 	['\/_type$'                        ,"local _type"                 ,"770","$user_www:$group"],
 	['\/_data'                         ,"local _data"                 ,"770","$user_www:$group"],
@@ -188,9 +190,15 @@ our @setit_F=
 	['\/!www\/.*(gz|bz2|tar|zip)$'     ,"!www archive"                ,"660","$user_www:$group"],
 	['\/!www\/.*$'                     ,"!www unknown"                ,"660","$user_www:$group"],
 	
-	
 	['_dsgn\/.*\.dsgn$'                ,"_dsgn dsgn"                  ,"660","$user_www:$group"],
 	['_dsgn\/.*\.template$'            ,"_dsgn template"              ,"660","$user_www:$group"],
+	['_dsgn\/.*\.body$'                ,"_dsgn body"                  ,"660","$user_www:$group"],
+	['_dsgn\/.*\.header$'              ,"_dsgn header"                ,"660","$user_www:$group"],
+	['_dsgn\/.*\.tpl$'                 ,"tpl file"                    ,"660","$user_www:$group"],
+	['_dsgn\/.*\.tpl\.d\/'             ,"tpl.d file"                  ,"660","$user_www:$group"],
+	
+	['_dsgn\/.*\.L10n$'                ,"L10n"                        ,"660","$user_www:$group"],
+	
 	['_type\/.*\.type$'                ,"_type type"                  ,"660","$user_www:$group"],
 	['_type\/.*\.cml_type$'            ,"_type cml_type"              ,"660","$user_www:$group"],
 	['_type\/.*\.cml_gen$'             ,"_type cml_gen"               ,"660","$user_www:$group"],
