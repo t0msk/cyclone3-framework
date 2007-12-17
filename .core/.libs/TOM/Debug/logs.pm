@@ -136,6 +136,7 @@ sub _log
 		
 		my $var="#D0D0D0";
 		$var="#F0F0F0" if $package eq "Tomahawk::module";
+		$var="#F00000" if $ref[$get[2]]=~/^-/;
 		my $div="<div style=\"font-family:monospace;background:$var;color:black;\" align=left>";
 		
 		$get[0]=0 unless $get[0];
