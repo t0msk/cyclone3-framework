@@ -66,19 +66,35 @@ B<sql_mimetype> - required mimetype (default 'text/html')
 
 =over
 
-=item B<TMP> - default output
+=item *
 
-=item <#item#> - gateway to article item
+B<TMP> - default
 
-=item B<item> - article item
+=item *
 
-=item B<%db_*%> - article database items
+B<#item#> - gateway to article item
 
-=item B<%ID%> - article ID
+=item *
 
-=item B<%ID_entity%> - article ID_entity
+B<item> - article item
 
-=item B<%name%> - article name
+=item *
+
+B<%db_*%> - article database items
+
+B<%db_ID_category%>, B<%db_ID_category_name%>, B<%db_name%>, B<%db_name_url%>, B<%db_subtitle%>
+
+=item *
+
+B<%ID%> - article ID
+
+=item *
+
+B<%ID_entity%> - article ID_entity
+
+=item *
+
+B<%name%> - article name
 
 =back
 
