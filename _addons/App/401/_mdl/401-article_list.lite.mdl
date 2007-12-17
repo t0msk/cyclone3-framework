@@ -65,13 +65,21 @@ B<sql_mimetype> - required mimetype (default 'text/html')
 =head1 XSGN
 
 =over
+
 =item B<TMP> - default output
+
 =item <#item#> - gateway to article item
+
 =item B<item> - article item
+
 =item B<%db_*%> - article database items
+
 =item B<%ID%> - article ID
+
 =item B<%ID_entity%> - article ID_entity
+
 =item B<%name%> - article name
+
 =back
 
 =cut
