@@ -130,7 +130,7 @@ sub execute
 
 		my $db0=$main::DB{main}->Query("
 			SELECT
-				name
+				name, IDname
 			FROM $env{db_500}.a500_category
 			WHERE
 				ID='$db_line{IDcategory}'
@@ -138,7 +138,8 @@ sub execute
 		");
 		if (my %db0_line=$db0->fetchHash)
 		{
-			$db_line{IDcategory_name}=$db0_line{name};
+			$db_line{'IDcategory_name'}=$db0_line{'name'};
+			$db_line{'IDcategory_IDname'}=$db0_line{'IDname'};
 			#$XSGN{TMP}=~s|<%IDcategory_name%>|$db0_line{name}|g;
 			#main::_log("a just - $db0_line{name}");
 		}
