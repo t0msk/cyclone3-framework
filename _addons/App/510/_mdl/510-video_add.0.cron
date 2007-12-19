@@ -1,0 +1,137 @@
+#!/usr/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+501-image_add.0.cron
+
+=cut
+
+=head1 DESCRIPTION
+
+
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::501::_init|app/"501/_init.pm">
+
+=back
+
+=cut
+
+use App::510::_init;
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<time_max> - max seconds to process (default 60*5 seconds)
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	
+	alarm(0);
+	
+	use TOM::Template;
+	
+	my $tpl=new TOM::Template(
+		'level' => 'auto',
+		'name' => 'SWFUpload',
+		'content-type'=> 'xhtml'
+	);
+	
+	return 1;
+	
+=head1
+	App::510::functions::_video_part_file_thumbnail(
+		'file' => "/www/TOM/!markiza.sk/!media/a510/video/part/file/1/0000/Q0pngwGH.asf",
+		'timestamps' => [
+			'3',
+#			'6',
+#			'10',
+#			'15'
+		]
+	);
+	
+	return 1;
+=cut
+	
+#	App::510::functions::video_part_file_generate(
+#		'video_part.ID' => 18,
+#		'video_format.ID' => 2
+#	);
+#	return 1;
+	
+#	return 1;
+	
+#=head1
+	($env{'video.ID'},$env{'video.ID_entity'})=App::510::functions::video_add
+	(
+		'file' => $tom::P.'/!media/new/'.'2007-12-16_superstar_10_rozhodnutie.wmv',
+		'video.ID' => 3,
+#		'video_attrs.ID_category' => 1,
+#		'video_attrs.name' => "Slovensko Hĺadá Superstar 3",
+#		'video_attrs.lng' => 'sk', # default $tom::lng
+#		'video.ID_entity' => 2,
+#		'video_format.ID' => 1,
+#		'video_part.ID' => 2,
+		'video_part.part_id' => 10-1, # default 1
+		'video_part_attrs.name' => "Rozhodnutie",
+	);
+	main::_log("added video ID=$env{'video.ID'} ID_entity=$env{'video.ID_entity'}");
+#=cut
+	
+	return 1;
+	
+	
+	$env{'video_part.ID'}=App::510::functions::video_part_add
+	(
+		'file' => $tom::P.'/!media/new/'.'2007-12-10_TN_14_zahranicne_spravy.wmv',
+#		'video.ID_entity' => 8,
+		#'video_format.ID' => 1,
+#		'video_part.part_id' => 2,
+		
+#		'video_part.part_id' => 1, # default 1
+		
+#		'video_part_attrs.lng' => 'en', # default $tom::lng
+		
+	);
+	
+	
+#	my $ID_video=App::510::functions::video_add(
+#		'file' => $tom::P.'/!media/new/'.'2007-12-10_TN_14_zahranicne_spravy.wmv',
+#	);
+	
+	
+	
+	return 1
+}
+
+
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
