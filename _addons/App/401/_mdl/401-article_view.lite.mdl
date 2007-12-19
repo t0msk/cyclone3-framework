@@ -1,0 +1,125 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+=head1 NAME
+
+401-article_view.lite.mdl
+
+=head1 DESCRIPTION
+
+Lite view of article
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::401::_init|app/"401/_init.pm">
+
+=back
+
+=cut
+
+use App::401::_init;
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<db_name> - database name
+
+=item *
+
+B<sql_status> - required status (default 'Y')
+
+=item *
+
+B<sql_lng> - required language (default is current)
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - article item
+
+=item *
+
+B<%db_*%> - article database variables
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	$env{'db_name'}=$App::401::db_name unless $env{'db_name'};
+	
+	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
+	$env{'sql_status'}='Y' unless $env{'sql_status'};
+	
+	my $sql=qq{
+		SELECT
+			article.*
+		FROM
+			`$env{'db_name'}`.a401_article_view AS article
+		WHERE
+			article.lng='$env{'sql_lng'}' AND
+			article.status IN ('$env{'sql_status'}')
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		# process body
+		my $p=new App::401::mimetypes::html;
+		
+		$p->{'entity'}{'a501_image'}=$XSGN{'a501_image'} if $XSGN{'a501_image'};
+		$p->{'entity'}{'a510_video_part'}=$XSGN{'a510_video_part'} if $XSGN{'a510_video_part'};
+		
+		$p->parse($db0_line{'body'});
+		$p->eof();
+		my $body_html=$p->{'out'};
+		$XSGN{'TMP'}=~s|<%body%>|$body_html|;
+		
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;

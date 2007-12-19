@@ -10,7 +10,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -23,17 +23,17 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_ent` (
+CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `ID_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -41,10 +41,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_ent` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_ent_j` (
+CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `ID_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -54,11 +54,11 @@ CREATE TABLE `/*db_name*/`.`/*app*/_ent_j` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_entity` bigint(20) unsigned default NULL,
+  `ID_entity` bigint(20) unsigned default NULL, -- rel 
   `ID_category` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `datetime_start` datetime NOT NULL,
   `datetime_end` datetime default NULL,
   `priority_A` tinyint(3) unsigned default NULL,
@@ -78,7 +78,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs_j` (
   `ID_category` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `datetime_start` datetime NOT NULL,
   `datetime_end` datetime default NULL,
   `priority_A` tinyint(3) unsigned default NULL,
@@ -94,7 +94,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs_j` (
 CREATE TABLE `/*db_name*/`.`/*app*/_article_content` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `subtitle` varchar(250) character set utf8 collate utf8_unicode_ci NOT NULL,
   `mimetype` varchar(50) character set ascii NOT NULL default 'text/html',
   `abstract` text character set utf8 collate utf8_unicode_ci NOT NULL,
@@ -110,7 +110,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content` (
 CREATE TABLE `/*db_name*/`.`/*app*/_article_content_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `subtitle` varchar(250) character set utf8 collate utf8_unicode_ci NOT NULL,
   `mimetype` varchar(50) character set ascii NOT NULL default 'text/html',
   `abstract` text character set utf8 collate utf8_unicode_ci NOT NULL,
@@ -141,7 +141,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -160,7 +160,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)

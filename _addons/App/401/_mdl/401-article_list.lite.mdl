@@ -169,10 +169,10 @@ sub execute
 		
 		# process body
 		my $p=new App::401::mimetypes::html;
-		$p->parse($db0_line{'body'});
+		$p->parse($db0_line{'abstract'});
 		$p->eof();
-		my $body_html=$p->{'out'};
-		$item=~s|<%body%>|$body_html|;
+		my $abstract_html=$p->{'out'};
+		$item=~s|<%abstract%>|$abstract_html|;
 		
 		
 		# Transforming datetime fields

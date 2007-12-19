@@ -39,12 +39,17 @@ L<App::020::_init|app/"020/_init.pm">
 
 L<App::300::_init|app/"300/_init.pm">
 
+=item *
+
+L<App::401::mimetypes|app/"401/mimetypes.pm">
+
 =back
 
 =cut
 
 use App::020::_init; # data standard 0
 use App::300::_init;
+use App::401::mimetypes;
 
 
 =head1 CONFIGURATION

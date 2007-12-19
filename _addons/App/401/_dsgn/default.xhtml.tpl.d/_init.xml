@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	<header>
+		
+		<!--<L10n level="auto" name="xhtml" lng="auto"/>-->
+		
+		<extract>
+			<!--
+			<file location="cyclone3-150x44.png"/>
+			<file location="cyclone3-262x76.png"/>
+			<file location="cyclone3-errorbox.png"/>
+			<file location=".htaccess"/>
+			-->
+			<!--
+			<file location="css/main.css" replace_variables="true"/>
+			<file location="grf/a400/logo.gif"/>
+			-->
+		</extract>
+		
+	</header>
+	
+	
+	<entity id="parser.a501_image" replace_variables="false"><![CDATA[
+	<div class="img_<%attr_align%>" style="margin: 2px; padding: 2px;background:gray; float: left">
+		<#tag_#>
+		<img src="<%attr_src%>" alt="<%attr_alt%>" width="<%db_width%>" height="<%attr_height%>" />
+		<p><%db_name%></p>
+	</div>
+	]]>
+	</entity>
+	
+	
+	<entity id="parser.a510_video_part" replace_variables="true"><![CDATA[
+		<script type="text/javascript" src="<$tom::H_media>/tpl/swfobject.js"></script>
+		<div id="player_<%db_ID%>_<%rand%>">This text will be replaced</div>
+		<script type="text/javascript">
+			var so = new SWFObject("<$tom::H_media>/tpl/mediaplayer.swf","mpl","<%attr_width%>","<%attr_height_plus%>","7");
+			so.addParam('allowfullscreen','true');
+			so.addVariable("file","<$tom::H_media>/a510/video/part/file/<%db_file_part_path%>");
+			so.addVariable("image","<%attr_src%>");
+			so.addVariable('width','<%attr_width%>');
+			so.addVariable('height','<%attr_height_plus%>');
+			so.write('player_<%db_ID%>_<%rand%>');
+		</script>
+	]]>
+	</entity>
+	
+	
+</template>

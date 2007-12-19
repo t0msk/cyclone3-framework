@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <title>a401: Module List</title>
+
+  <section>
+    <title>Basic modules</title>
+
+    <para>Articles</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="?|?section=app&amp;file=401/_mdl/401-article_list.lite.mdl">401-article_list.lite.mdl</ulink></para>
+
+        <para>Lite listing of articles</para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="?|?section=app&amp;file=401/_mdl/401-article_view.lite.mdl">401-article_view.lite.mdl</ulink></para>
+
+        <para>Process and display one article</para>
+      </listitem>
+
+    </itemizedlist>
+
+  </section>
+
+
+
+</article>
