@@ -4,12 +4,12 @@
 		
 		<extract>
 			
-			<file location="emoticon_angry.png"/>
-			<file location="emoticon_confused.png"/>
-			<file location="emoticon_cry.png"/>
-			<file location="emoticon_omg.png"/>
-			<file location="emoticon_sad.png"/>
-			<file location="emoticon_smile.png"/>
+			<file location="angry.png" dest="emoticons/" />
+			<file location="confused.png" dest="emoticons/" />
+			<file location="cry.png" dest="emoticons/" />
+			<file location="omg.png" dest="emoticons/" />
+			<file location="sad.png" dest="emoticons/" />
+			<file location="smile.png" dest="emoticons/" />
 			
 		</extract>
 		
