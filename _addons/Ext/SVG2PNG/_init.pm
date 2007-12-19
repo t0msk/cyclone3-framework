@@ -26,8 +26,21 @@ sub convert
 	my $file1=shift;
 	my $file2=shift;
 	
+	# wait if inkscape is running
+	
+	waitloop:
+	
+	my $lock=new TOM::lock("inkscape") || do {
+		main::_log("inscape running");
+		sleep 1;
+		goto waitloop;
+	};
+	
+	
+	
 	if (-x '/usr/bin/inkscape')
 	{
+		main::_log("converting svg to png with inkscape");
 		system("/usr/bin/inkscape $file1 -e=$file2 >/dev/null 2>/dev/null");
 		return 1;
 	}
