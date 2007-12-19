@@ -1378,8 +1378,10 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($env0{id} eq "link")
 			{
+				if ($env0{'lng'}){next if $env0{'lng'} ne $tom::lng;}
 				_log("Add to DOC::link");
 				delete $env0{'id'};
+				delete $env0{'lng'};
 				$H->add_DOC_css_link(%env0);
 				next;
 			}
@@ -1497,10 +1499,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($env0{id} eq "title")
 			{
-				if ($env0{'lng'})
-				{
-					next if $env0{'lng'} ne $tom::lng;
-				}
+				if ($env0{'lng'}){next if $env0{'lng'} ne $tom::lng;}
 				_log("Change DOC::title to ".$env0{value});
 				$H->change_DOC_title($env0{value});
 				next;
@@ -1578,6 +1577,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($env0{id} eq "css_link")
 			{
+				if ($env0{'lng'}){next if $env0{'lng'} ne $tom::lng;}
 				_log("Add to DOC::css_link to ".$env0{value});
 				my %env=Net::HTTP::CGI::GetQuery_l($env0{value});
 				$H->add_DOC_css_link(%env);
