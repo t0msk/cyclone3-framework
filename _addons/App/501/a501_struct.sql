@@ -10,7 +10,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -23,7 +23,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -32,11 +32,11 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_j` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_image_attrs` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL,
+  `ID_entity` mediumint(8) unsigned default NULL, -- rel image.ID
   `ID_category` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `order_id` int(10) unsigned NOT NULL,
   `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
@@ -53,7 +53,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_attrs_j` (
   `ID_category` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `order_id` int(10) unsigned NOT NULL,
   `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
@@ -68,7 +68,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_file` (
   `ID_entity` mediumint(8) unsigned default NULL,
   `ID_format` bigint(20) unsigned NOT NULL,
   `name` varchar(128) character set ascii collate ascii_bin NOT NULL,
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `image_width` int(10) unsigned NOT NULL,
   `image_height` int(10) unsigned NOT NULL,
   `file_size` bigint(20) unsigned default NULL,
@@ -86,7 +86,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_file_j` (
   `ID_entity` mediumint(8) unsigned default NULL,
   `ID_format` bigint(20) unsigned NOT NULL,
   `name` varchar(128) character set ascii collate ascii_bin NOT NULL,
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `image_width` int(10) unsigned NOT NULL,
   `image_height` int(10) unsigned NOT NULL,
   `file_size` bigint(20) unsigned default NULL,
@@ -116,7 +116,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_cat` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -135,7 +135,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_cat_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -149,7 +149,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_format` (
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `process` tinytext character set ascii NOT NULL,
   `required` char(1) NOT NULL default 'Y',
   `lng` char(2) character set ascii NOT NULL default 'xx',
@@ -167,7 +167,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_format_j` (
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `process` tinytext character set ascii NOT NULL,
   `required` char(1) NOT NULL default 'Y',
   `lng` char(2) character set ascii NOT NULL default 'xx',
@@ -264,3 +264,4 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_image_view_thumbnail` AS (
 )
 
 -- --------------------------------------------------
+
