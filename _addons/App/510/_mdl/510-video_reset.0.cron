@@ -1,0 +1,82 @@
+#!/usr/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+510-video_reset.0.cron
+
+=cut
+
+=head1 DESCRIPTION
+
+Removes all not original files (also resets the application)
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::510::_init|app/"510/_init.pm">
+
+=back
+
+=cut
+
+use App::510::_init;
+
+
+
+sub execute
+{
+	my %env=@_;
+	
+	alarm(0);
+	
+	my $sql=qq{
+		SELECT
+			CONCAT(ID_format,'/',SUBSTR(ID,1,4),'/',name,'.',file_ext) AS file_part_path
+		FROM
+			`$App::510::db_name`.a510_video_part_file
+		WHERE
+			ID_format != $App::510::video_format_original_ID
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("$db0_line{'file_part_path'}");
+		`rm $tom::P/!media/a510/video/part/file/$db0_line{'file_part_path'}`;
+	}
+	
+	my $sql=qq{
+		SELECT
+			CONCAT(ID_format,'/',SUBSTR(ID,1,4),'/',name,'.',file_ext) AS file_part_path
+		FROM
+			`$App::510::db_name`.a510_video_part_file_j
+		WHERE
+			ID_format != $App::510::video_format_original_ID
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("$db0_line{'file_part_path'}");
+		`rm $tom::P/!media/a510/video/part/file_j/$db0_line{'file_part_path'}`;
+		`rm $tom::P/!media/a510/video/part/file/$db0_line{'file_part_path'}`;
+	}
+	
+	return 1
+}
+
+
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
