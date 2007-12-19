@@ -1,0 +1,212 @@
+#!/usr/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+501-image_add.0.cron
+
+=cut
+
+=head1 DESCRIPTION
+
+
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::501::_init|app/"501/_init.pm">
+
+=back
+
+=cut
+
+use App::501::_init;
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<time_max> - max seconds to process (default 60*5 seconds)
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	
+	alarm(0);
+	
+	
+	my $sql=qq{
+		SELECT
+			ID_entity
+		FROM
+			`$App::501::db_name`.`a501_image`
+		ORDER BY ID_entity
+		LIMIT 20
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		App::501::functions::image_file_generate(
+			'image.ID_entity' => $db0_line{'ID_entity'},
+			'image_format.ID' => 5
+		);
+	}
+	
+	return 1;
+	
+	my $ad;
+	$ad='1/0000/QFRuVfij.jpg';
+	$ad='1/0000/KSTXd3o4.jpg';
+	$ad='1/0000/DyOlkcbk.jpg'; # tlacovka
+	$ad='1/0000/iZTGY0yI.jpg'; # plagat
+	$ad='1/0000/A0swCBO8.jpg'; # plagat2
+	$ad='1/0000/MMdvK9ga.jpg'; # lowres
+	$ad='1/0000/Dgv6k2kV.jpg'; # zly plagat
+	$ad='1/0000/2uwWX76o.jpg'; # dlha postava
+	
+	
+	my $file=$tom::P.'/!media/a501/image/file/'.$ad;
+	
+	my $out=`cd /www/TOM/_addons/App/501/FaceDetect/;./fdetect $file`;
+	
+	my $image = new Image::Magick;
+	$image->Read($file);
+	
+	foreach my $face (split('\n',$out))
+	{
+		$face=~s|^(\d+):||;
+		$face=~/(\d+),(\d+)-(\d+),(\d+)/;
+		my $x1=$1;my $y1=$2;my $x2=$3;my $y2=$4;
+		main::_log("$x1 $y1 $x2 $y2");
+		
+		$image->Draw(stroke=>'red', primitive=>'rectangle', points=>"$x1,$y1 $x2,$y2");
+		
+		# vypocet chranenej oblasti
+		my $width=$x2-$x1;
+		my $height=$y2-$y1;
+		
+		$y1=$y1-($height/3);
+		$y2=$y2+($height/8);
+		
+		$x1=$x1-($width/8);
+		$x2=$x2+($width/8);
+		
+		$image->Draw(stroke=>'green', primitive=>'rectangle', points=>"$x1,$y1 $x2,$y2");
+	}
+	
+	$image->Write('/www/TOM/test.jpg');
+	
+	#main::_log("$out");
+	
+	return 1;
+	
+	my $sql=qq{
+		SELECT
+			ID
+		FROM
+			`$App::501::db_name`.`a501_image_attrs`
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	while (my %db0_line=$sth0{'sth'}->fetchhash)
+	{
+		main::_log("$db0_line{'ID'}");
+		App::020::SQL::functions::enable(
+			'ID' => $db0_line{'ID'},
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image_attrs',
+			'-journalize' => 1,
+		);
+	}
+	
+	return 1;
+	
+	
+	open (HND,'<:encoding(cp1250)',$tom::P.'/!media/new/leticia.portal.sk/export/markiza.imgs/index.html') || die "$!";
+	
+	while (my $line=<HND>)
+	{
+		chomp($line);
+		next unless $line=~/"gallery"/;
+		$line=~/http:\/\/(.*?)"/;
+		my $url=$1;
+		
+		$url=~/(\d+)-gallery/;
+		my $id=$1;
+		
+		$line=~/^".*?", ".*?", ".*?", "(.*?)"/;
+		my $desc=$1;
+		
+		main::_log("'$desc' '$id' '$url' ");
+		
+		`/usr/bin/wget $url -o test.log -O img.jpg`;
+		
+		my $ID_image=App::501::functions::image_add(
+	#		'image.ID_entity' => 3,
+			'file' => 'img.jpg',
+			'image_attrs.ID_category' => 3,
+	#		'image_attrs.ID_category' => '1',
+			'image_attrs.name' => '#'.$id,
+			'image_attrs.description' => $desc
+		);
+		
+	}
+	
+	return 1;
+	
+	# test IDs
+	
+#	App::020::SQL::functions::get_ID_entity(
+#		'ID_entity' => 1,
+#		'db_name' => $App::501::db_name,
+#		'tb_name' => "a501_image"
+#	);
+#	return 1;
+	
+	my $num=1;
+	my $cat=1;
+	
+=head1
+	my $ID_image=App::501::functions::image_add(
+		'image.ID_entity' => $num,
+		'file' => '/www/TOM/test.png',
+	);
+=cut
+	
+	# update description
+	my $ID_image=App::501::functions::image_add(
+		'image.ID_entity' => 3,
+		'file' => '/www/TOM/test.png',
+#		'image_attrs.ID_category' => '1',
+#		'image_attrs.description' => 'český popis'
+	);
+	
+	
+	return 1
+}
+
+
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
