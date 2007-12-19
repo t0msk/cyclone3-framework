@@ -1,0 +1,149 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+=head1 NAME
+
+411-poll_view.lite.mdl
+
+=head1 DESCRIPTION
+
+Lite view of poll
+
+=head1 DEPENDS
+
+=over
+
+=back
+
+=cut
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<db_name> - database name
+
+=item *
+
+B<sql_ID> - requested poll ID
+
+=item *
+
+B<sql_status> - required status (default 'Y')
+
+=item *
+
+B<sql_lng> - required language (default is current)
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - poll item
+
+=item *
+
+B<ANSWER> - answer
+
+=item *
+
+B<%db_*%> - article database variables
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	$env{'db_name'}=$App::401::db_name unless $env{'db_name'};
+	
+	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
+	$env{'sql_status'}='Y' unless $env{'sql_status'};
+	
+	my $no_data=1;
+
+	my $sql=qq{
+		SELECT
+			`poll`.*
+		FROM
+			`$env{'db_name'}`.`a411_poll_view` AS `poll`
+		WHERE
+			`poll`.`lng`='$env{'sql_lng'}' AND
+			`poll`.`status` IN ('$env{'sql_status'}')
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+
+	if(!$sth0{'sth'})
+	{
+		main::_log("err: SQL can't be executed",1);
+	}
+
+	if($sth0{'rows'})
+	{
+		$no_data=0;
+	}else{
+		main::_log("warn: no data for given attributes");
+	}
+
+	if($no_data)
+	{
+		if(exists $XSGN{'TMP_no-data'})
+		{
+			$XSGN{'TMP'}=$XSGN{'TMP_no-data'};
+		}else{
+			return 0;
+		}
+	}
+
+	main::_log("received ".$sth0{'rows'}." rows");
+
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $answer=$XSGN{'answer'};
+
+		$XSGN{'TMP'}=~s|<%db_question%>|$db0_line{'question'}|g;
+		$XSGN{'TMP'}=~s|<%db_description%>|$db0_line{'description'}|g;
+		$XSGN{'TMP'}=~s|<%db_ID_entity_poll%>|$db0_line{'ID_entity_poll'}|g;
+
+		$answer=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+
+		$XSGN{'TMP'}=~s|<#answer#>|$answer|;
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
