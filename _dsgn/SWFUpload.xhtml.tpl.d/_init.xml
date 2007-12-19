@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	
+	<header>
+		
+		<extract>
+			<file location="SWFUpload.js" dest="swfupload/swfupload.js" />
+			<file location="handlers.js" dest="swfupload/" />
+			<file location="swfupload.swf" dest="swfupload/" />
+		</extract>
+		
+	</header>
+	
+</template>
