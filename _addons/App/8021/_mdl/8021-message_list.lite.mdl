@@ -1,0 +1,168 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+=head1 NAME
+
+8021-message_list.lite.mdl
+
+=head1 DESCRIPTION
+
+Lite list of messages
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::8021::_init|app/"8021/_init.pm">
+
+=back
+
+=cut
+
+use App::8021::_init;
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<db_name> - database name
+
+=item *
+
+B<sql_limit> - limit to display (default '1')
+
+=item *
+
+B<sql_status> - required status, nonseparated values (default 'Y')
+
+=item *
+
+B<sql_lng> - required language (default is current)
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default
+
+=item *
+
+B<#item#> - gateway to message item
+
+=item *
+
+B<item> - message item
+
+=item *
+
+B<%db_*%> - message database values
+
+B<%db_ID_category%>, B<%db_ID_category_name%>, B<%db_name%>, B<%db_name_url%>, B<%db_subtitle%>
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	$env{'db_name'}=$App::8021::db_name unless $env{'db_name'};
+	
+	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
+	$env{'sql_limit'}='10' unless $env{'sql_limit'};
+	$env{'sql_status'}='Y' unless $env{'sql_status'};
+		my $status_sql=join "','" split('',$env{'sql_status'});
+	
+	my $execution_success=1;
+	
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$env{'db_name'}`.a8021_message AS message
+		WHERE
+			message.status IN ('$status_sql') AND
+			message.lng='$env{'sql_lng'}'
+		ORDER BY
+			message.datetime_send DESC
+		LIMIT $env{'sql_limit'}
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	
+	if(!$sth0{'sth'})
+	{
+		main::log("SQL can't be executed",1);
+	}
+	
+	if(!$sth0{'rows'})
+	{
+		main::log("err: could not fetch articles");
+	}
+	
+	main::_log("received ".$sth0{'rows'}." rows");
+	
+	# Line counter
+	my $item_counter=0;
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $item=$XSGN{'item'};
+		$item_counter++;
+		
+		# fill raw data into $XSGN{'item'}
+		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		
+		my %author=App::300::authors::get_author($db0_line{'posix_author'});
+		foreach(keys %author)
+		{
+			$item=~s|<%author_$_%>|$author{$_}|g;
+		}
+		
+		$item=~s|<%item_number%>|$item_counter|;
+		
+		$item=~s|<%name%>|$db0_line{'name'}|;
+		
+		$XSGN{'TMP'}=~s|<#item#>|$item|;
+	}
+	
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
