@@ -1,6 +1,6 @@
 <!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
 
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="1D0" />
 	<VAR id="-name" value="autoimport" />
