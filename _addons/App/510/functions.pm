@@ -409,6 +409,7 @@ sub video_add
 		
 		my %columns;
 		$columns{'ID_entity'}=$env{'video.ID_entity'} if $env{'video.ID_entity'};
+		$columns{'datetime_rec_start'}="NOW()" unless $columns{'datetime_rec_start'};
 		
 		$env{'video.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
