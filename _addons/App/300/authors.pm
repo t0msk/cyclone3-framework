@@ -60,7 +60,7 @@ sub get_author
 			SELECT
 				*
 			FROM
-				`TOM`.`a300_users_view`
+				`TOM`.`a300_user`
 			WHERE
 				IDhash='$IDhash'
 			LIMIT 1;
