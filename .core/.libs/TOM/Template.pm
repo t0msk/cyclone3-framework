@@ -42,7 +42,52 @@ BEGIN
 our $debug=0;
 our %objects;
 
-=head1 new
+
+=head1 SYNOPSIS
+
+ my $tpl=TOM::Template::new(
+  'level' => "global", # auto/local/master/global
+  #'addon' => "a400",
+  #'name' => "email-stats",
+  'content-type' => "xhtml" # default is XML
+ )
+ print $tpl->{'entity'}{'test'};
+
+=cut
+
+
+
+=head1 TPL EXAMPLES
+
+ <?xml version="1.0" encoding="UTF-8"?>
+ <template>
+   <header>
+     <!--<L10n level="auto" name="xhtml" lng="auto"/>-->
+     <extract>
+       <!--
+       <file location="cyclone3-150x44.png"/>
+       <file location=".htaccess"/>
+       -->
+       <file location="css/main.css" replace_variables="true"/>
+       <file location="grf/a400/logo.gif"/>
+     </extract>
+   </header>
+
+   <entity id="parser.a501_image" replace_variables="false"><![CDATA[
+    <table>
+     <#tag#>
+    </table>
+   ]]>
+   </entity>
+ </template>
+
+=cut
+
+
+=head1 FUNCTIONS
+
+
+=head2 new
 
  my $tpl=TOM::Template::new(
   'level' => "global", # auto/local/master/global
@@ -75,6 +120,7 @@ sub new
 	}
 	
 	$env{'content-type'}="xml" unless $env{'content-type'};
+	$env{'name'}="default" unless $env{'name'};
 	TOM::Template::contenttypes::trans($env{'content-type'});
 	$env{'level'}="auto" unless $env{'level'};
 	
@@ -123,11 +169,11 @@ sub new
 	return $obj_return;
 }
 
-=head1 METHODS
 
 
 
-=cut
+
+
 
 
 sub prepare_location
@@ -275,16 +321,23 @@ sub parse_header
 			if ($name eq "file")
 			{
 				my $location=$node->getAttribute('location');
+				my $destination=$node->getAttribute('dest') || $node->getAttribute('destination');
+					$destination.=$location if $destination=~/\/$/;
+					$destination.=$location unless $destination;
+				my $destination_dir=$tom::P.'/!media/tpl/'.$destination;
+					$destination_dir=~s|^(.*)/(.*?)$|$1|;
+				my $destination_file=$2;
+					
 				my $replace_variables=$node->getAttribute('replace_variables');
 				my $replace_L10n=$node->getAttribute('replace_L10n');
 				
-				main::_log("extract file '$location' from '$self->{'dir'}' replace_variables='$replace_variables' replace_L10n='$replace_L10n'") if $debug;
+				main::_log("extract file '$location' from '$self->{'dir'}' to '$destination' replace_variables='$replace_variables' replace_L10n='$replace_L10n'") if $debug;
 				
 				# check if this file is not oveerided, or already exists in
 				# destination directory
 				
 				my $src=$self->{'dir'}.'/'.$location;
-				my $dst=$tom::P.'/!media/tpl/'.$location;
+				my $dst=$destination_dir.'/'.$destination_file;
 				
 				$self->{'file'}{$location}{'src'}=$src;
 				$self->{'file'}{$location}{'dst'}=$dst;
@@ -292,6 +345,11 @@ sub parse_header
 				if (!-e $dst)
 				{
 					main::_log("extract '$location'") unless $debug;
+					if (!-e $destination_dir)
+					{
+						File::Path::mkpath $destination_dir;
+						chmod (0777,$destination_dir);
+					}
 					File::Copy::copy($src, $dst);
 					chmod (0666,$dst);
 					#symlink($src,$dst);
@@ -415,11 +473,8 @@ sub process_entity
 }
 
 
-=head1 FUNCTIONS
 
 
-
-=cut
 
 sub get_tpl_dirs
 {
