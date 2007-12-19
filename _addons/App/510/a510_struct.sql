@@ -10,7 +10,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `datetime_rec_start` datetime default NULL,
   `datetime_rec_end` datetime default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -25,7 +25,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `datetime_rec_start` datetime default NULL,
   `datetime_rec_end` datetime default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -40,9 +40,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_attrs` (
   `ID_category` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `order_id` int(10) unsigned NOT NULL,
-  `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -57,9 +57,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_attrs_j` (
   `ID_category` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `order_id` int(10) unsigned NOT NULL,
-  `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -71,7 +71,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
   `part_id` mediumint(8) unsigned NOT NULL default '0',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -82,7 +82,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_j` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
   `part_id` mediumint(8) unsigned NOT NULL default '0',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -92,12 +92,11 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_j` (
 CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo` ( -- experimental EMO characteristics
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `emo_angry` int(10) unsigned NOT NULL default '0',
   `emo_confused` int(10) unsigned NOT NULL default '0',
   `emo_cry` int(10) unsigned NOT NULL default '0',
   `emo_omg` int(10) unsigned NOT NULL default '0',
-  `emo_sad` int(10) unsigned NOT NULL default '0',
   `emo_smile` int(10) unsigned NOT NULL default '0',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -109,18 +108,16 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo` ( -- experimental EMO charac
 CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_part_emo_view` AS (
 	SELECT
 		emo.ID,
-		(emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_sad + emo.emo_smile) AS emo_all,
-		(emo.emo_angry/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_sad + emo.emo_smile)/100))
+		(emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_smile) AS emo_all,
+		(emo.emo_angry/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_smile)/100))
 			AS emo_angry_perc,
-		(emo.emo_confused/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_sad + emo.emo_smile)/100))
+		(emo.emo_confused/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_smile)/100))
 			AS emo_confused_perc,
-		(emo.emo_cry/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_sad + emo.emo_smile)/100))
+		(emo.emo_cry/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_smile)/100))
 			AS emo_cry_perc,
-		(emo.emo_omg/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_sad + emo.emo_smile)/100))
+		(emo.emo_omg/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_smile)/100))
 			AS emo_omg_perc,
-		(emo.emo_sad/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_sad + emo.emo_smile)/100))
-			AS emo_sad_perc,
-		(emo.emo_smile/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_sad + emo.emo_smile)/100))
+		(emo.emo_smile/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_smile)/100))
 			AS emo_smile_perc
 	FROM
 		`/*db_name*/`.`/*app*/_video_part_emo` AS emo
@@ -136,23 +133,23 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_part_emo_viewEQ` AS (
 		ABS(emo1.emo_confused_perc - emo2.emo_confused_perc) AS emo_confused_diff,
 		ABS(emo1.emo_cry_perc - emo2.emo_cry_perc) AS emo_cry_diff,
 		ABS(emo1.emo_omg_perc - emo2.emo_omg_perc) AS emo_omg_diff,
-		ABS(emo1.emo_sad_perc - emo2.emo_sad_perc) AS emo_sad_diff,
 		ABS(emo1.emo_smile_perc - emo2.emo_smile_perc) AS emo_smile_diff,
 		(100-((
 			ABS(emo1.emo_angry_perc - emo2.emo_angry_perc) +
 			ABS(emo1.emo_confused_perc - emo2.emo_confused_perc) +
 			ABS(emo1.emo_cry_perc - emo2.emo_cry_perc) +
 			ABS(emo1.emo_omg_perc - emo2.emo_omg_perc) +
-			ABS(emo1.emo_sad_perc - emo2.emo_sad_perc) +
 			ABS(emo1.emo_smile_perc - emo2.emo_smile_perc)
-		)/6)) AS EQ
+		)/5)) AS EQ
 	FROM
 		`/*db_name*/`.`/*app*/_video_part_emo_view` AS emo1,
 		`/*db_name*/`.`/*app*/_video_part_emo_view` AS emo2
 	WHERE
 		emo1.ID <> emo2.ID AND
 		emo2.emo_all > emo1.emo_all/100 AND
-		emo1.emo_all > emo2.emo_all/100
+		emo1.emo_all > emo2.emo_all/100 AND
+		emo2.emo_all > 1 AND
+		emo1.emo_all > 1
 )
 
 -- --------------------------------------------------
@@ -160,7 +157,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_part_emo_viewEQ` AS (
 CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo_j` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `emo_angry` int(10) unsigned NOT NULL default '0',
   `emo_confused` int(10) unsigned NOT NULL default '0',
   `emo_cry` int(10) unsigned NOT NULL default '0',
@@ -178,7 +175,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_attrs` (
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -193,7 +190,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_attrs_j` (
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -207,7 +204,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_file` (
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
   `ID_format` bigint(20) unsigned NOT NULL,
   `name` varchar(128) character set ascii collate ascii_bin NOT NULL,
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `video_width` int(10) unsigned NOT NULL,
   `video_height` int(10) unsigned NOT NULL,
   `video_codec` varchar(50) character set ascii NOT NULL,
@@ -232,7 +229,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_file_j` (
   `ID_entity` mediumint(8) unsigned default NULL,
   `ID_format` bigint(20) unsigned NOT NULL,
   `name` varchar(128) character set ascii collate ascii_bin NOT NULL,
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `video_width` int(10) unsigned NOT NULL,
   `video_height` int(10) unsigned NOT NULL,
   `video_codec` varchar(50) character set ascii NOT NULL,
@@ -269,7 +266,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_cat` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -288,7 +285,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_cat_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -302,7 +299,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_format` (
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `process` text character set ascii NOT NULL,
   `required` char(1) NOT NULL default 'Y',
   `lng` char(2) character set ascii NOT NULL default 'xx',
@@ -320,7 +317,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_format_j` (
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
-  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_create` datetime NOT NULL,
   `process` text character set ascii NOT NULL,
   `required` char(1) NOT NULL default 'Y',
   `lng` char(2) character set ascii NOT NULL default 'xx',
@@ -332,7 +329,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_format_j` (
 
 CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 	SELECT
-		CONCAT(video.ID_entity,'-',video.ID,'-',video_attrs.lng,'-',video_format.ID) AS ID,
+		CONCAT(video.ID_entity,'_',video.ID,'_',video_attrs.lng,'_',video_format.ID) AS ID,
 		
 		video.ID_entity AS ID_entity_video,
 		video.ID AS ID_video,
@@ -342,6 +339,8 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 		video_part.ID AS ID_part,
 		video_part_attrs.ID AS ID_part_attrs,
 		video_part_file.ID AS ID_part_file,
+		
+		DATE(video.datetime_rec_start) AS date_recorded,
 		
 		video_attrs.ID_category,
 		video_cat.name AS ID_category_name,
@@ -412,6 +411,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 	WHERE
 		video.ID AND
 		video_attrs.ID AND
+		video_part_attrs.ID AND
 		video_format.ID AND
 		video_part.ID AND
 		video_part_file.ID
