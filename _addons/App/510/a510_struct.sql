@@ -217,6 +217,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_file` (
   `file_size` bigint(20) unsigned default NULL,
   `file_checksum` varchar(128) character set ascii collate ascii_bin NOT NULL,
   `file_ext` varchar(120) character set ascii NOT NULL,
+  `from_parent` char(1) character set ascii NOT NULL default 'Y', -- is this file generated from parent video_part_file?
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`ID_format`)
@@ -242,6 +243,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_file_j` (
   `file_size` bigint(20) unsigned default NULL,
   `file_checksum` varchar(128) character set ascii collate ascii_bin NOT NULL,
   `file_ext` varchar(120) character set ascii NOT NULL,
+  `from_parent` char(1) character set ascii NOT NULL default 'Y',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
