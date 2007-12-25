@@ -65,8 +65,9 @@ sub send
 	#
 	eval
 	{
-		my $db0=$main::DB{'main'}->Query("SELECT ID FROM TOM.a130_send LIMIT 1");
-		my %db0_line=$db0->fetchhash();
+		my %sth0=TOM::Database::SQL::execute("SELECT ID FROM TOM.a130_send LIMIT 1");
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		die "can't select ID from a130_send" unless $db0_line{'ID'};
 	};
 	
 	if (!$@)
@@ -75,8 +76,7 @@ sub send
 		
 		$env{body}=~s|'|\\'|g;
 		
-		if (
-			$main::DB{'main'}->Query("
+		my %sth0=TOM::Database::SQL::execute(qq{
 			INSERT INTO TOM.a130_send
 			(
 				ID_md5,
@@ -103,8 +103,8 @@ sub send
 				'$env{to}',
 				'$env{body}'
 			)
-		")
-		)
+		});
+		if ($sth0{'rows'})
 		{
 			main::_log(" sended");
 			return 1;
