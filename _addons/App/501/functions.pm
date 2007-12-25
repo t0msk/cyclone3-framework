@@ -575,34 +575,31 @@ sub image_add
 	main::_log("lng='$env{'image_attrs.lng'}'");
 	
 	
-#	return 1;
-	
-=head1
-	# check if ID_image not already exists for this lng under ID_entity
-	if (!$env{'ID_image'} && $env{'ID_entity_image'})
+	# check if this symlink with same ID_category not exists
+	# and image.ID is unknown
+	if ($env{'image_attrs.ID_category'} && !$env{'image.ID'} && $env{'image.ID_entity'})
 	{
+		main::_log("search for ID");
 		my $sql=qq{
 			SELECT
-				ID
+				*
 			FROM
-				`$App::501::db_name`.`a501_image`
+				`$App::501::db_name`.`a501_image_view`
 			WHERE
-				ID_entity=$env{'ID_entity_image'} AND
-				lng='$env{'lng'}' AND
-				status IN ('Y','N')
+				ID_entity_image=$env{'image.ID_entity'} AND
+				( ID_category = $env{'image_attrs.ID_category'} OR ID_category IS NULL )
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		if ($db0_line{'ID'})
 		{
-			$env{'ID_image'}=$db0_line{'ID'};
-			main::_log("setup ID_image='$db0_line{'ID'}'");
+			$env{'image.ID'}=$db0_line{'ID_image'};
+			$env{'image_attrs.ID'}=$db0_line{'ID_attrs'};
+			main::_log("setup image.ID='$db0_line{'ID_image'}'");
 		}
 	}
-=cut
 	
-#	return 1;
 	
 	if (!$env{'image.ID'})
 	{
@@ -619,8 +616,8 @@ sub image_add
 			'columns' =>
 			{
 				%columns,
-			}
-#			'-journalize' => 1,
+			},
+			'-journalize' => 1,
 		);
 		
 		main::_log("generated image ID='$env{'image.ID'}'");
@@ -674,6 +671,7 @@ sub image_add
 		# create one language representation of image
 		my %columns;
 		$columns{'ID_category'}=$env{'image_attrs.ID_category'} if $env{'image_attrs.ID_category'};
+		#$columns{'status'}="'".$env{'image_attrs.status'}."'" if $env{'image_attrs.status'};
 		
 		$env{'image_attrs.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
@@ -685,8 +683,8 @@ sub image_add
 				'ID_entity' => $env{'image.ID'},
 #				'order_id' => $order_id,
 				'lng' => "'$env{'image_attrs.lng'}'",
-			}
-#			'-journalize' => 1,
+			},
+			'-journalize' => 1,
 		);
 	}
 	
@@ -707,7 +705,8 @@ sub image_add
 	(
 		$env{'image_attrs.name'} ||
 		$env{'image_attrs.description'} ||
-		$env{'image_attrs.ID_category'}
+		$env{'image_attrs.ID_category'} ||
+		$env{'image_attrs.status'}
 	))
 	{
 		my %columns;
@@ -716,6 +715,7 @@ sub image_add
 		$columns{'name'}="'".$env{'image_attrs.name'}."'" if $env{'image_attrs.name'};
 		$columns{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'image_attrs.name'})."'" if $env{'image_attrs.name'};
 		$columns{'description'}="'".$env{'image_attrs.description'}."'" if $env{'image_attrs.description'};
+		$columns{'status'}="'".$env{'image_attrs.status'}."'" if $env{'image_attrs.status'};
 		
 		App::020::SQL::functions::update(
 			'ID' => $env{'image_attrs.ID'},
@@ -726,6 +726,83 @@ sub image_add
 			'-journalize' => 1
 		);
 	}
+	
+	$t->close();
+	return %env;
+}
+
+
+
+=head2 image_del()
+
+Remove image from gallery
+
+=cut
+
+sub image_del
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::image_del()");
+	
+	my $tr=new TOM::Database::SQL::transaction('db_h'=>"main");
+	
+	foreach my $entity (App::020::SQL::functions::get_ID_entity
+	(
+		'ID_entity' => $env{'image.ID_entity'},
+		'db_h' => 'main',
+		'db_name' => $App::501::db_name,
+		'tb_name' => 'a501_image',
+	))
+	{
+		main::_log("image.ID='$entity->{'ID'}'");
+		
+		foreach my $entity1 (App::020::SQL::functions::get_ID_entity
+		(
+			'ID_entity' => $entity->{'ID'},
+			'db_h' => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image_attrs',
+		))
+		{
+			main::_log("image_attrs.ID='$entity1->{'ID'}'");
+			App::020::SQL::functions::delete(
+				'ID' => $entity1->{'ID'},
+				'db_h' => 'main',
+				'db_name' => $App::501::db_name,
+				'tb_name' => 'a501_image_attrs',
+				'-journalize' => 1
+			);
+		}
+		
+		App::020::SQL::functions::delete(
+			'ID' => $entity->{'ID'},
+			'db_h' => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image',
+			'-journalize' => 1
+		);
+		
+	}
+	
+	foreach my $entity1 (App::020::SQL::functions::get_ID_entity
+	(
+		'ID_entity' => $env{'image.ID_entity'},
+		'db_h' => 'main',
+		'db_name' => $App::501::db_name,
+		'tb_name' => 'a501_image_file',
+	))
+	{
+		main::_log("image_file.ID='$entity1->{'ID'}'");
+		App::020::SQL::functions::delete(
+			'ID' => $entity1->{'ID'},
+			'db_h' => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image_file',
+			'-journalize' => 1
+		);
+	}
+	
+	$tr->close();
 	
 	$t->close();
 	return %env;
@@ -846,7 +923,7 @@ sub image_file_add
 #					'file_ext' => "'$file_ext'",
 					'status' => "'Y'",
 				},
-				#'-journalize' => 1,
+				#'-journalize' => 1, -- must be disabled
 			);
 			$t->close();
 			return $db0_line{'ID'};
