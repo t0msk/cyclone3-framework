@@ -2545,13 +2545,14 @@ while ($main::CGI=new CGI::Fast())
 			foreach (keys %TOM::Debug::namespace)
 			{
 				main::_log
-				(
-					"namespace '$_' process:".
+				("[$tom::H]".
+					" ".
+					"namespace '$_' eval:".
+							$TOM::Debug::namespace{$_}{'time'}{'proc'}{'duration'}."/".
+							$TOM::Debug::namespace{$_}{'time'}{'req'}{'duration'}." (".
 							TOM::Math::percentage($e_p,$TOM::Debug::namespace{$_}{'time'}{'proc'}{'duration'})."%/".
 							TOM::Math::percentage($e_r,$TOM::Debug::namespace{$_}{'time'}{'req'}{'duration'})."%".
-							" process:".
-							$TOM::Debug::namespace{$_}{'time'}{'proc'}{'duration'}."s/".
-							$TOM::Debug::namespace{$_}{'time'}{'req'}{'duration'}."s"
+							")"
 					,3,"pub.bench",1
 				) if $TOM::DEBUG_benchmark;
 			}
