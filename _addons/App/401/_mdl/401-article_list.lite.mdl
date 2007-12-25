@@ -112,7 +112,7 @@ sub execute
 	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
 	$env{'sql_limit'}='1' unless $env{'sql_limit'};
 	$env{'sql_status'}='Y' unless $env{'sql_status'};
-		my $status_sql=join "','" split('',$env{'sql_status'});
+		my $status_sql=join "','", split('',$env{'sql_status'});
 	$env{'sql_mimetype'}='text/html' unless $env{'sql_mimetype'};
 	
 	my $execution_success=1;
