@@ -23,7 +23,7 @@ sub execute
 	my %env=@_;
 	if (!$env{max_online}){$cron::ERR="not defined max_online for maxtime online";return undef;}
 
-	my $db0=$main::DB{main}->Query("
+	my %sth0=TOM::Database::SQL::execute("
 		SELECT
 			*
 		FROM TOM.a300_online
@@ -31,7 +31,7 @@ sub execute
 			reqtime < $main::time_current-$env{'max_online'}
 			OR active='N'
 	");
-	while (my %user=$db0->fetchhash)
+	while (my %user=$sth0{'sth'}->fetchhash)
 	{
 		main::_log("kick user IDhash'$user{'IDhash'}' login='$user{'login'}' old='".($main::time_current-$user{'reqtime'})."'");
 		

@@ -35,14 +35,15 @@ sub DESTROY
 		
 		main::_log("TIE-cvml:='$cvml'") if $debug;
 		
-		$main::DB{main}->Query("
+		TOM::Database::SQL::execute(qq{
 			UPDATE TOM.a300_online
 			SET
 				session='$cvml'
 			WHERE
 				IDsession='$IDsession'
 			LIMIT 1
-		");
+		});
+		
 		main::_log("TIE-serialized") if $debug;
 	
 	return undef;
