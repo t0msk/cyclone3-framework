@@ -165,25 +165,42 @@ sub listfields ($$) {
     $self->query("LISTFIELDS $table");
 }
 
-sub query ($$) {
-    my($self, $statement) = @_;
-    my $dbh = $self->{'dbh'};
-    my $sth = $dbh->prepare($statement);
-    if (!$sth) {
-	$db_errstr = $dbh->errstr();
-	return undef;
-    }
-    $sth->{'PrintError'} = !$Mysql::QUIET;
-    my $result = $sth->execute();
-    if (!$result) {
-	$db_errstr = $sth->errstr();
-	return undef;
-    }
-    $sth->{'CompatMode'} = 1;
-    bless($sth, ref($self) . "::Statement");
-    undef $db_errstr;
-    $sth;
+
+
+sub query ($$)
+{
+	my($self, $statement) = @_;
+	my $dbh = $self->{'dbh'};
+	
+	my ($package, $filename, $line) = caller;
+	if ($package eq "Mysql")
+	{
+	}
+	else
+	{
+		main::_log("query from '$package':'$filename':'$line'",1);
+	}
+	
+	my $sth = $dbh->prepare($statement);
+	if (!$sth)
+	{
+		$db_errstr = $dbh->errstr();
+		return undef;
+	}
+	$sth->{'PrintError'} = !$Mysql::QUIET;
+	my $result = $sth->execute();
+	if (!$result)
+	{
+		$db_errstr = $sth->errstr();
+		return undef;
+	}
+	$sth->{'CompatMode'} = 1;
+	bless($sth, ref($self) . "::Statement");
+	undef $db_errstr;
+	$sth;
 }
+
+
 
 sub shutdown ($) {
     my($self) = shift;
@@ -222,20 +239,33 @@ sub sock ($) { shift->{'dbh'}->{'sock'} }
 sub sockfd ($) { shift->{'dbh'}->{'sockfd'} }
 
 
-sub AUTOLOAD {
-    my $meth = $Mysql::AUTOLOAD;
-    my $converted = 0;
-
-    my $class;
-    if ($meth =~ /(.*)::(.*)/) {
-	$meth = $2;
-	$class = $1;
-    } else {
-	$class = "main";
-    }
-
-
-    TRY: {
+sub AUTOLOAD
+{
+	my $meth = $Mysql::AUTOLOAD;
+	my $converted = 0;
+	
+	my $class;
+	if ($meth =~ /(.*)::(.*)/)
+	{
+		$meth = $2;
+		$class = $1;
+	}
+	else
+	{
+		$class = "main";
+	}
+	
+	my ($package, $filename, $line) = caller;
+	if ($meth eq "Query")
+	{
+		if ($package eq "Mysql" || $package eq "TOM::Database::SQL"){}
+		else
+		{
+			main::_log("called '$meth' from '$package':'$filename':'$line'",4,"Mysql",1);
+		}
+	}
+	
+	TRY: {
 	my $val = DBD::mysql::constant($meth, @_ ? $_[0] : 0);
 	if ($! == 0) {
 	    eval "sub $Mysql::AUTOLOAD { $val }";
