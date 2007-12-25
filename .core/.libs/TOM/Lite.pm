@@ -246,10 +246,11 @@ sub track
 	
 	$self->{'name'}=shift;
 	my %env=@_;
+	$self->{'quiet'}=$env{'quiet'} if $env{'quiet'};
 	
-	main::_log("<$self->{name}>");
+	main::_log("<$self->{name}>") unless $self->{'quiet'};
 	
-	$track_level++;
+	$track_level++;# unless $self->{'quiet'};
 	$self->{'level'}=$track_level;
 	
 	$tracks[$track_level]=$self->{'name'};
@@ -285,14 +286,14 @@ sub close
 {
 	my $self=shift;
 	
-	if ($self->{DESTROY})
+	if ($self->{'DESTROY'})
 	{
 		my ($package, $filename, $line) = caller;
 		main::_log("Ooops! from '$filename:$line' This track named '$self->{name}' has been destroyed by calling from '$self->{'DESTROY_filename'}:$self->{'DESTROY_line'}'. Track is generated on '$self->{'filename'}:$self->{'line'}'",1);
 		return undef;
 	}
 	
-	if ($self->{level}<$track_level)
+	if ($self->{'level'}<$track_level)
 	{
 		my ($package, $filename, $line) = caller;
 		main::_log("Ooops! from '$filename:$line' Can't close this track! You must close first track named '$tracks[$track_level]'. Trying to close",1);
@@ -301,14 +302,14 @@ sub close
 		return undef;
 	}
 	
-	$track_level--;
+	$track_level--;# unless $self->{'quiet'};
 	
-	$self->{'time'}{req}{end}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
-	$self->{'time'}{proc}{end}=(times)[0];
-	$self->{'time'}{req}{duration}=$self->{'time'}{req}{end}-$self->{'time'}{req}{start};
-	$self->{'time'}{proc}{duration}=$self->{'time'}{proc}{end}-$self->{'time'}{proc}{start};
-	$self->{'time'}{req}{duration}=int($self->{'time'}{req}{duration}*1000)/1000;
-	$self->{'time'}{proc}{duration}=int($self->{'time'}{proc}{duration}*1000)/1000;
+	$self->{'time'}{'req'}{'end'}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+	$self->{'time'}{'proc'}{'end'}=(times)[0];
+	$self->{'time'}{'req'}{'duration'}=$self->{'time'}{req}{end}-$self->{'time'}{req}{start};
+	$self->{'time'}{'proc'}{'duration'}=$self->{'time'}{proc}{end}-$self->{'time'}{proc}{start};
+	$self->{'time'}{'req'}{'duration'}=int($self->{'time'}{req}{duration}*1000)/1000;
+	$self->{'time'}{'proc'}{'duration'}=int($self->{'time'}{proc}{duration}*1000)/1000;
 	
 	
 	if ($self->{'namespace'})
@@ -325,7 +326,8 @@ sub close
 	$self->{'DESTROY'}=1;
 	($self->{'DESTROY_package'}, $self->{'DESTROY_filename'}, $self->{'DESTROY_line'}) = caller;
 	
-	main::_log("</$self->{name}> (req:".($self->{'time'}{req}{duration})." proc:".($self->{'time'}{proc}{duration}).")");
+	main::_log("</$self->{name}> (req:".($self->{'time'}{req}{duration})." proc:".($self->{'time'}{proc}{duration}).")")
+		unless $self->{'quiet'};
 	
 }
 
