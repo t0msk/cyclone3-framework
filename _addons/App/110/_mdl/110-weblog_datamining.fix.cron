@@ -55,7 +55,7 @@ sub execute
 	
 	my $lock=new TOM::lock("weblog datamining") || return 1;
 	
-	my $db0=$main::DB{stats}->Query("
+	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			page_code,
 			page_code_referer,
@@ -73,9 +73,9 @@ sub execute
 		ORDER BY
 			reqdatetime ASC
 		LIMIT 50000
-	");
+	},'db_h'=>'stats');
 	my $time_start=time();
-	while (my %db0_line=$db0->fetchhash())
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		
 		if ($time_start+$time_max<time())
@@ -122,7 +122,7 @@ sub execute
 		{
 			main::_log("Unknown page_code_referer: page_code='$db0_line{'page_code'}' IP='$db0_line{'IP'}' reqdatetime='$db0_line{'reqdatetime'}' query_URL='$db0_line{'query_URL'}' referer='$db0_line{'referer'}'");
 			
-			my $db1=$main::DB{stats}->Query("
+			my %sth1=TOM::Database::SQL::execute(qq{
 				SELECT
 					page_code,
 					page_code_referer,
@@ -140,12 +140,12 @@ sub execute
 					reqtime>".($db0_line{'reqtime'}-(60*20))."
 				ORDER BY reqdatetime DESC
 				LIMIT 1
-			");
-			if (my %db1_line=$db1->fetchhash())
+			},'db_h'=>'stats');
+			if (my %db1_line=$sth1{'sth'}->fetchhash())
 			{
 				main::_log(" found: page_code='$db1_line{'page_code'}' reqdatetime='$db1_line{'reqdatetime'}' query_URL='$db1_line{'query_URL'}' referer='$db0_line{'referer'}'");
 				
-				my $sql="
+				my $sql=qq{
 					UPDATE TOM.a110_weblog_rqs
 					SET
 						page_code_referer='$db1_line{page_code}'
@@ -153,8 +153,8 @@ sub execute
 						page_code='$db0_line{page_code}'
 						AND reqdatetime='$db0_line{reqdatetime}'
 					LIMIT 1
-				";
-				$main::DB{stats}->Query($sql) || die "can't update";
+				};
+				TOM::Database::SQL::execute($sql,'db_h'=>'stats') || die "can't update";
 				
 			}
 		}
@@ -175,7 +175,7 @@ sub execute
 		
 		
 		main::_log("'$db0_line{page_code}:$db0_line{reqdatetime}' user_agent_name='$hash{user_agent_name}' type='$hash{reqtype}' ($user_agent_name $reqtype)");
-		my $sql="
+		my $sql=qq{
 			UPDATE TOM.a110_weblog_rqs
 			SET
 				user_agent_name=$user_agent_name,
@@ -186,15 +186,15 @@ sub execute
 					page_code='$db0_line{page_code}'
 					AND reqdatetime='$db0_line{reqdatetime}'
 			LIMIT 1
-		";
-		$main::DB{stats}->Query($sql) || die "can't update";
+		};
+		TOM::Database::SQL::execute($sql,'db_h'=>'stats') || die "can't update";
 		
 		next;
 		
 	}
-
- $lock->close();
- 
+	
+	$lock->close();
+	
  return 1}
 
 1;
