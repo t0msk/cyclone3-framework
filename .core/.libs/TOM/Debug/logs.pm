@@ -118,7 +118,7 @@ sub _log
 	}
 	
 	if (
-			$main::stdout && $main::debug ||
+			($main::stdout && $main::debug && $get[3] eq $TOM::engine) ||
 			($main::stdout && $get[3] eq "stdout")
 		)
 	{
