@@ -313,6 +313,19 @@ foreach (sort keys %CRON::hosts)
 				}
 				CRON::waitload($CRON::LOADAVG);
 				main::_log("call module with debug level='$TOM::DEBUG_log_file'");
+				
+				if ($mdl_env{'-fork'})
+				{
+					main::_log("running module in separate fork");
+					my $pm = new Parallel::ForkManager(50);
+					my $pid = $pm->start and next;
+					sleep(2);
+					undef $main::DB{'main'};
+					TOM::Database::connect::multi('main');
+					CRON::module(%mdl_env);
+					$pm->finish();
+				}
+				
 				CRON::module(%mdl_env);
 			}
 		}
