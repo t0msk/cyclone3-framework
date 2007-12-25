@@ -344,7 +344,7 @@ sub get_ID_entity(%env)
 	
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		main::_log("adding ID='$db0_line{'ID'}'");# if $debug;
+		main::_log("adding ID='$db0_line{'ID'}'") if $debug;
 		
 		push @data, {get_ID(
 			%env,
@@ -823,7 +823,7 @@ sub to_trash
 
 Restores one row ( also ID ) from trash. Physically only changes status of this row to 'N'.
 
- my $retcode=to_restore
+ my $retcode=trash_restore
  (
   'ID' => $ID, # must be defined
   'db_h' => 'main', # name of database handler
@@ -1050,13 +1050,13 @@ Deletes one row ( also ID ) from main table. Physically only changes status of t
 sub delete
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::delete()");
+	my $t=track TOM::Debug(__PACKAGE__."::delete()") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	foreach (keys %env)
 	{
-		main::_log("input '$_'='$env{$_}'");
+		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
 	my %columns=get_ID(
@@ -1068,7 +1068,7 @@ sub delete
 	
 	if (!$columns{'ID'})
 	{
-		main::_log("this ID not exists!",1);
+		main::_log("this ID not exists!",1) if $debug;
 		$t->close();
 		return undef;
 	}
@@ -1093,7 +1093,7 @@ sub delete
 		'ID' => $env{'ID'}
 	);
 	
-	$t->close();
+	$t->close() if $debug;
 	return 1;
 }
 
@@ -1123,26 +1123,25 @@ sub _remove
 {
 	# fyzicke zmazanie verziovaneho zaznamu z hlavnej tabulky
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::_delete()");
+	my $t=track TOM::Debug(__PACKAGE__."::_remove()") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	foreach (keys %env)
 	{
-		main::_log("input '$_'='$env{$_}'");
+		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
 	my $SQL="DELETE FROM `$env{'db_name'}`.`$env{'tb_name'}` WHERE ID=$env{'ID'} LIMIT 1";
-	main::_log("SQL='$SQL'");
 	
-	my @eout=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'});
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
 	
-	if ($eout[1])
+	if ($sth0{'rows'})
 	{
-		main::_log("ID='$env{'ID'}' successfully deleted from `$env{db_name}`.`$env{tb_name}`");
+		main::_log("<={SQL:$env{'db_h'}} '$env{'db_name'}'.'$env{'tb_name'}' ID='$env{'ID'}' DELETE");
 	}
 	
-	$t->close();
+	$t->close() if $debug;
 	return 1;
 }
 
