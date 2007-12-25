@@ -35,7 +35,7 @@ sub execute
 	my $lock=new TOM::lock("a130 - autosend") || return 1;
 	
 	my $emails;
-	if (my $db0=$main::DB{'main'}->Query("
+	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			*
 		FROM
@@ -48,145 +48,139 @@ sub execute
 			priority DESC,
 			sendtime
 		LIMIT
-			$env{max}"))
+			$env{max}
+	});
+	while (my %env0=$sth0{'sth'}->fetchhash)
 	{
-	
-		while (my %env0=$db0->fetchhash)
+		$emails++;
+		if ($env0{from_email} ne $TOM::contact{'from'})
 		{
-			$emails++;
-			if ($env0{from_email} ne $TOM::contact{'from'})
+			main::_log("DEPRECATED from_email (not from $TOM::contact{'from'}) used in table a130_send, email ID $env0{ID}",1,"pub.warn",1);
+			$env0{'from_email'}=$TOM::contact{'from'};
+		};
+		
+		if ($env0{to_email}=~s|,|;|g)
+		{
+			main::_log("DEPRECATED delimiter , not ; used in table a130_send, email ID $env0{ID}",1,"pub.warn",1);
+		};
+		
+		$env0{to_email}=~s| ||g;
+		$env0{to_email}=~s|<||g;
+		$env0{to_email}=~s|>||g;
+		
+		$env0{to_email}=~s|^;||g;
+		$env0{to_email}=~s|;$||g;
+		
+		main::_log("sending email $env0{ID} ($env0{priority}) from $env0{from_email} to $env0{to_email}");
+		
+		if (!$TOM::smtp_host)
+		{
+			main::_log("sending using mailer");
+			$env0{'body'}=~/Subject: (.*?)\n/;
+			my $subject=$1;
+			main::_log("subject = $subject");
+			my $mailer = new Mail::Mailer 'sendmail';
+			main::_log("defined mailer");
+			$mailer->open(
+				{
+					'From' => $env0{'from_email'},
+					'To' => $env0{'to_email'},
+					'Subject' => $subject,
+				}) or die "Can't open: $!\n";
+			print $mailer $env0{'body'};
+			$mailer->close();
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET active='Y' WHERE ID='$env0{ID}' LIMIT 1");
+			next;
+		}
+		
+		
+		my $smtp;
+		
+		if ($TOM::smtp_SSL)
+		{
+			require Net::SMTP::SSL;
+			$smtp = new Net::SMTP::SSL
+			(
+				$TOM::smtp_host,
+				'Port' => 465,
+			);
+			if (not $smtp->auth($TOM::smtp_user,$TOM::smtp_pass))
 			{
-				main::_log("DEPRECATED from_email (not from $TOM::contact{'from'}) used in table a130_send, email ID $env0{ID}",1,"pub.warn",1);
-				$env0{'from_email'}=$TOM::contact{'from'};
-			};
-			
-			if ($env0{to_email}=~s|,|;|g)
-			{
-				main::_log("DEPRECATED delimiter , not ; used in table a130_send, email ID $env0{ID}",1,"pub.warn",1);
-			};
-			
-			$env0{to_email}=~s| ||g;
-			$env0{to_email}=~s|<||g;
-			$env0{to_email}=~s|>||g;
-			
-			$env0{to_email}=~s|^;||g;
-			$env0{to_email}=~s|;$||g;
-			
-			main::_log("sending email $env0{ID} ($env0{priority}) from $env0{from_email} to $env0{to_email}");
-			
-			if (!$TOM::smtp_host)
-			{
-				main::_log("sending using mailer");
-				$env0{'body'}=~/Subject: (.*?)\n/;
-				my $subject=$1;
-				main::_log("subject = $subject");
-				my $mailer = new Mail::Mailer 'sendmail';
-				main::_log("defined mailer");
-				$mailer->open(
-					{
-						'From' => $env0{'from_email'},
-						'To' => $env0{'to_email'},
-						'Subject' => $subject,
-					}) or die "Can't open: $!\n";
-				print $mailer $env0{'body'};
-				$mailer->close();
-				$main::DB{'main'}->Query("UPDATE TOM.a130_send SET active='Y' WHERE ID='$env0{ID}' LIMIT 1");
-				next;
+				main::_log("SSL Authentification not works",1);
+				return 1;
 			}
-			
-			
-			my $smtp;
-			
-			if ($TOM::smtp_SSL)
+		}
+		else
+		{
+			$smtp = Net::SMTP->new($TOM::smtp_host);
+			if ($TOM::smtp_user)
 			{
-				require Net::SMTP::SSL;
-				$smtp = new Net::SMTP::SSL
-				(
-					$TOM::smtp_host,
-					'Port' => 465,
-				);
+				main::_log("authentification with user '$TOM::smtp_user'");
 				if (not $smtp->auth($TOM::smtp_user,$TOM::smtp_pass))
 				{
-					main::_log("SSL Authentification not works",1);
+					main::_log("Authentification not works (SSL or TLS?)",1);
 					return 1;
 				}
 			}
-			else
-			{
-				$smtp = Net::SMTP->new($TOM::smtp_host);
-				if ($TOM::smtp_user)
-				{
-					main::_log("authentification with user '$TOM::smtp_user'");
-					if (not $smtp->auth($TOM::smtp_user,$TOM::smtp_pass))
-					{
-						main::_log("Authentification not works (SSL or TLS?)",1);
-						return 1;
-					}
-				}
-			}
-			
-			my @rcpt=split(';',$env0{to_email});
-			
-			if (not $smtp->mail($env0{from_email}))
-			{
-				main::_log("can't send, not accepted sender ".$smtp->status,1);
-				$main::DB{'main'}->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
-				next;
-			}
-			
-			my $rcpt_count;
-			foreach my $rcpt_mail (@rcpt)
-			{
-				if (not $smtp->recipient($rcpt_mail))
-				{
-					main::_log("not accepted RCPT: '$rcpt_mail' status:".$smtp->status,1);
-					next;
-				}
-				$rcpt_count++;
-			}
-			if (!$rcpt_count)
-			{
-				$main::DB{'main'}->Query("UPDATE TOM.a130_send SET priority=priority-10 WHERE ID='$env0{ID}' LIMIT 1");
-				next;
-			}
-			
-			if (not $smtp->data())
-			{
-				main::_log("can't accept DATA",1);
-				$main::DB{'main'}->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
-				next;
-			}
-			
-			if (not $smtp->datasend($env0{body}))
-			{
-				main::_log("can't accept DATASEND",1);
-				$main::DB{'main'}->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
-				next;
-			}
-			
-			if (not $smtp->dataend())
-			{
-				main::_log("can't accept DATAEND",1);
-				$main::DB{'main'}->Query("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
-				next;
-			}
-			
-			$smtp->quit;
-			
-			$main::DB{'main'}->Query("UPDATE TOM.a130_send SET active='Y' WHERE ID='$env0{ID}' LIMIT 1");
-			
-			next;
-			
-			
-			$smtp->dataend();
-			
-			$smtp->quit;
-			
 		}
-	}
-	else
-	{
-		main::_log("bad request",1);
+		
+		my @rcpt=split(';',$env0{to_email});
+		
+		if (not $smtp->mail($env0{from_email}))
+		{
+			main::_log("can't send, not accepted sender ".$smtp->status,1);
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
+			next;
+		}
+		
+		my $rcpt_count;
+		foreach my $rcpt_mail (@rcpt)
+		{
+			if (not $smtp->recipient($rcpt_mail))
+			{
+				main::_log("not accepted RCPT: '$rcpt_mail' status:".$smtp->status,1);
+				next;
+			}
+			$rcpt_count++;
+		}
+		if (!$rcpt_count)
+		{
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-10 WHERE ID='$env0{ID}' LIMIT 1");
+			next;
+		}
+		
+		if (not $smtp->data())
+		{
+			main::_log("can't accept DATA",1);
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
+			next;
+		}
+		
+		if (not $smtp->datasend($env0{body}))
+		{
+			main::_log("can't accept DATASEND",1);
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
+			next;
+		}
+		
+		if (not $smtp->dataend())
+		{
+			main::_log("can't accept DATAEND",1);
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
+			next;
+		}
+		
+		$smtp->quit;
+		
+		TOM::Database::SQL::execute("UPDATE TOM.a130_send SET active='Y' WHERE ID='$env0{ID}' LIMIT 1");
+		
+		next;
+		
+		
+		$smtp->dataend();
+		
+		$smtp->quit;
+		
 	}
 	
 	$lock->close();
