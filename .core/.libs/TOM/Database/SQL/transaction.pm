@@ -38,7 +38,7 @@ sub new
 	
 	if ($handler{$self->{'db_h'}})
 	{
-		main::_log("<={SQL:$self->{'db_h'}} TRANSACTION STARTED IN TRANSACTION ($handler{$self->{'db_h'}}+)");
+		#main::_log("<={SQL:$self->{'db_h'}} TRANSACTION STARTED IN TRANSACTION ($handler{$self->{'db_h'}}+)");
 	}
 	else
 	{
@@ -83,7 +83,7 @@ sub close
 	}
 	else
 	{
-		main::_log("<={SQL:$self->{'db_h'}} CAN'T END TRANSACTION ($handler{$self->{'db_h'}}-)");
+		#main::_log("<={SQL:$self->{'db_h'}} CAN'T END TRANSACTION ($handler{$self->{'db_h'}}-)");
 	}
 	
 	delete $self->{'db_h'};

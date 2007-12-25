@@ -18,6 +18,8 @@ use TOM::Database::SQL::compare;
 use TOM::Database::SQL::transaction;
 
 our $debug=0;
+our $logquery=1;
+our $logquery_long=1;
 
 =head1 FUNCTIONS
 
@@ -109,10 +111,11 @@ sub execute
 {
 	my $SQL=shift;
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::execute()") unless $env{'quiet'};
+	my $t=track TOM::Debug(__PACKAGE__."::execute()",'namespace'=>"SQL",'quiet' => $env{'quiet'});
 	
 	my %output;
 	
+	$SQL=~s|^[\t\n\r]+||;
 	if ($SQL=~/-- db_h=([a-zA-Z0-9]*)/)
 	{
 		$env{'db_h'}=$1;
@@ -120,6 +123,12 @@ sub execute
 	}
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	if ($TOM::DB{$env{'db_h'}.':s1'} && $SQL=~/^SELECT/)
+	{
+		#main::_log("using slave");
+		#$env{'db_h'}=$env{'db_h'}.':s1';
+	}
 	
 	TOM::Database::connect::multi($env{'db_h'}) unless $main::DB{$env{'db_h'}};
 	
@@ -130,6 +139,14 @@ sub execute
 			$line=~s|\t|   |g;
 			main::_log($line) unless $env{'quiet'};
 		}
+	}
+	
+	if ($logquery)
+	{
+		my $SQL_=$SQL;
+		$SQL_=~s|[\n\t\r]+| |g;
+		$SQL_=~s|^[ ]+||;
+		main::_log("{$env{'db_h'}} $SQL_",3,"sql");
 	}
 	
 	$output{'sth'}=$main::DB{$env{'db_h'}}->Query($SQL);
@@ -144,7 +161,7 @@ sub execute
 			main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
 		}
 		main::_log("output info=".$output{'info'}) unless $env{'quiet'};
-		$t->close() unless $env{'quiet'};
+		$t->close();
 		return %output;
 	}
 	
@@ -157,7 +174,7 @@ sub execute
 	main::_log("output affectedrows=".$output{'rows'}) unless $env{'quiet'};
 	main::_log("output info=".$output{'info'}) unless $env{'quiet'};
 	
-	$t->close() unless $env{'quiet'};
+	$t->close();
 	return %output;
 }
 
