@@ -31,19 +31,47 @@ use App::510::_init;
 use TOM::Text::format;
 
 
-=head1 INPUTS
-
-
-
-=cut
-
-
 
 sub execute
 {
 	my %env=@_;
 	
 	alarm(0);
+	
+	
+	
+	
+	# find video_part with missing 'original' format
+	# and delete it
+	main::_log("checking for empty video_part items");
+	my $sql=qq{
+		SELECT
+			video_part.ID
+		FROM
+			`$App::510::db_name`.a510_video_part AS video_part
+		LEFT JOIN `$App::510::db_name`.a510_video_part_file AS video_part_file ON
+		(
+			video_part_file.ID_entity = video_part.ID AND
+			video_part_file.status IN ('Y','N') AND
+			video_part_file.ID_format=$App::510::video_format_original_ID
+		)
+		WHERE
+			video_part.status IN ('Y','N') AND
+			video_part_file.ID IS NULL
+		ORDER BY
+			video_part.ID
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>0);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("delete empty video_part.ID='$db0_line{'ID'}'");
+		
+#		App::501::functions::image_del(
+#			'image.ID_entity' => $db0_line{'ID_entity'}
+#		);
+		
+	}
+		
 	
 	# find missing files
 	main::_log("checking video_part_file items in video_part_file table");
@@ -53,6 +81,8 @@ sub execute
 			CONCAT(ID_format,'/',SUBSTR(ID,1,4),'/',name,'.',file_ext) AS file_path
 		FROM
 			`$App::510::db_name`.a510_video_part_file
+		WHERE
+			file_alt_src IS NULL
 		ORDER BY
 			ID
 	};
@@ -64,10 +94,10 @@ sub execute
 		if (!-e $tom::P.'/!media/a510/video/part/file/'.$db0_line{'file_path'})
 		{
 			main::_log("file $db0_line{'file_path'} not exists",1);
-#			TOM::Database::SQL::execute(qq{
-#				DELETE FROM `$App::501::db_name`.`a501_image_file`
-#				WHERE ID=$db0_line{'ID'} LIMIT 1
-#			},'quiet'=>1);
+			TOM::Database::SQL::execute(qq{
+				DELETE FROM `$App::510::db_name`.`a510_video_part_file`
+				WHERE ID=$db0_line{'ID'} LIMIT 1
+			},'quiet'=>1);
 		}
 		
 	}
@@ -82,6 +112,8 @@ sub execute
 			CONCAT(ID_format,'/',SUBSTR(ID,1,4),'/',name,'.',file_ext) AS file_path
 		FROM
 			`$App::510::db_name`.a510_video_part_file_j
+		WHERE
+			file_alt_src IS NULL
 		ORDER BY
 			ID
 	};
