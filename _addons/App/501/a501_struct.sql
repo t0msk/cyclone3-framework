@@ -65,7 +65,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_attrs_j` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_image_file` (
   `ID` mediumint(8) unsigned zerofill NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL,
+  `ID_entity` mediumint(8) unsigned default NULL, -- rel image.ID_entity
   `ID_format` bigint(20) unsigned NOT NULL,
   `name` varchar(128) character set ascii collate ascii_bin NOT NULL,
   `datetime_create` datetime NOT NULL,

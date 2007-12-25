@@ -149,9 +149,12 @@ sub execute
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		my $item=$XSGN{'item'};
-		foreach(keys %db0_line){
-			$item=~s|<%$_%>|$db0_line{$_}|g;
-		}
+		
+		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+#		foreach(keys %db0_line){
+#			$item=~s|<%$_%>|$db0_line{$_}|g;
+#		}
 		
 		$XSGN{'TMP'}=~s|<#item#>|$item|;
 	}

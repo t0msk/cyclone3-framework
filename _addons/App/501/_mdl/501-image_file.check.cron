@@ -45,7 +45,128 @@ sub execute
 	
 	alarm(0);
 	
-	# find missing files
+	
+	# find image with missing 'original' format
+	# and delete it
+	main::_log("checking for empty images");
+	my $sql=qq{
+		SELECT
+			image.ID_entity
+		FROM
+			`$App::501::db_name`.a501_image AS image
+		LEFT JOIN `$App::501::db_name`.a501_image_file AS image_file ON
+		(
+			image_file.ID_entity = image.ID_entity AND
+			image_file.status IN ('Y','N') AND
+			image_file.ID_format=$App::501::image_format_thumbnail_ID
+		)
+		WHERE
+			image.status IN ('Y','N') AND
+			image_file.ID IS NULL
+		GROUP BY
+			image.ID_entity
+		ORDER BY
+			image.ID_entity
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("delete empty image.ID_entity='$db0_line{'ID_entity'}'");
+		
+		App::501::functions::image_del(
+			'image.ID_entity' => $db0_line{'ID_entity'}
+		);
+		
+	}
+	
+	
+	
+	# find image with missing 'original' format
+	# and delete it
+	main::_log("checking for image.ID items without image_attrs ");
+	my $sql=qq{
+		SELECT
+			image.ID
+		FROM
+			`$App::501::db_name`.a501_image AS image
+		LEFT JOIN `$App::501::db_name`.a501_image_attrs AS image_attrs ON
+		(
+			image_attrs.ID_entity = image.ID
+		)
+		WHERE
+			image_attrs.ID IS NULL
+		ORDER BY
+			image.ID
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("add image_attrs to image.ID='$db0_line{'ID'}'");
+		
+		App::020::SQL::functions::new(
+			'db_h' => "main",
+			'db_name' => $App::501::db_name,
+			'tb_name' => "a501_image_attrs",
+			'columns' =>
+			{
+				'ID_entity' => $db0_line{'ID'}
+			},
+			'-journalize' => 1
+		);
+		
+	}
+	
+	
+	# find duplicated image_attrs
+	main::_log("checking for duplicated image_attrs items");
+	my $tr=new TOM::Database::SQL::transaction('db_h'=>"main");
+	my $sql=qq{
+		SELECT
+			image_attrs.ID_entity,
+			image_attrs.ID,
+			image_attrs.ID_category,
+			COUNT(*) AS cnt
+		FROM
+			`$App::501::db_name`.a501_image AS image
+		LEFT JOIN `$App::501::db_name`.a501_image_attrs AS image_attrs ON
+		(
+			image_attrs.ID_entity = image.ID AND
+			image_attrs.status IN ('Y','N')
+		)
+		WHERE
+			image.status IN ('Y','N') AND
+			image_attrs.ID
+		GROUP BY
+			image.ID_entity, image_attrs.ID_category
+		HAVING cnt>1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("image.ID='$db0_line{'ID_entity'}' image_attrs.ID='$db0_line{'ID'}' ID_category='$db0_line{'ID_category'}'");
+		
+		App::020::SQL::functions::delete(
+			'ID' => $db0_line{'ID_entity'},
+			'db_h' => "main",
+			'db_name' => $App::501::db_name,
+			'tb_name' => "a501_image",
+			'-journalize' => 1
+		);
+		
+		App::020::SQL::functions::delete(
+			'ID' => $db0_line{'ID'},
+			'db_h' => "main",
+			'db_name' => $App::501::db_name,
+			'tb_name' => "a501_image_attrs",
+			'-journalize' => 1
+		);
+		
+	}
+	$tr->close();
+	
+	
+	
+	# find missing file
 	main::_log("checking image_file items in image_file table");
 	my $sql=qq{
 		SELECT
