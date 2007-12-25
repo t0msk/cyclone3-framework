@@ -107,6 +107,16 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo` ( -- experimental EMO charac
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*app*/_video_part_callback` (
+  `ID_part` mediumint(8) unsigned NOT NULL,
+  `datetime_create` datetime NOT NULL,
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `duration` int(10) unsigned NOT NULL default '0',
+  `state` varchar(10) character set ascii collate ascii_bin NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
 CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_part_emo_view` AS (
 	SELECT
 		emo.ID,
