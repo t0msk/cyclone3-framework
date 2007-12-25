@@ -64,9 +64,11 @@ our %mime=(
 );
 
 
-our %filetype_ext=(
-	'Macromedia Flash Video' => 'flv',
-	'Microsoft ASF' => 'asf'
+our @filetype_ext=
+(
+	['Macromedia Flash Video' => 'flv'],
+	['setgid sticky Microsoft ASF' => 'wmv'],
+	['Microsoft ASF' => 'asf']
 );
 
 
