@@ -130,7 +130,8 @@ if (!$db0_line{'ID'})
 		{
 			'name' => "'original'",
 			'status' => "'L'"
-		}
+		},
+		'-journalize' => 1
 	);
 }
 else
@@ -160,7 +161,8 @@ if ($video_format_original_ID)
 				'name' => "'full'",
 				'process' => "'scale(320,240)'",
 				'status' => "'L'"
-			}
+			},
+			'-journalize' => 1
 		);
 	}
 	else
@@ -188,7 +190,8 @@ if ($video_format_original_ID)
 				'name' => "'preview'",
 				'process' => "'crop(00:00:00,00:00:20)'",
 				'status' => "'L'"
-			}
+			},
+			'-journalize' => 1
 		);
 	}
 	else
@@ -230,7 +233,8 @@ else
 			'name' => "'video thumbnails'",
 			'lng' => "'$tom::LNG'",
 			'status' => "'L'"
-		}
+		},
+		'-journalize' => 1
 	);
 }
 
@@ -264,7 +268,8 @@ foreach my $lng(@TOM::LNG_accept)
 				'name' => "'video thumbnails'",
 				'lng' => "'$lng'",
 				'status' => "'L'"
-			}
+			},
+			'-journalize' => 1
 		);
 	}
 }

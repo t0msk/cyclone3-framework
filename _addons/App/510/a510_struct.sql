@@ -72,6 +72,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part` (
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
   `part_id` mediumint(8) unsigned NOT NULL default '0',
   `datetime_create` datetime NOT NULL,
+  `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -83,6 +84,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_j` (
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
   `part_id` mediumint(8) unsigned NOT NULL default '0',
   `datetime_create` datetime NOT NULL,
+  `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -217,7 +219,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_file` (
   `file_size` bigint(20) unsigned default NULL,
   `file_checksum` varchar(128) character set ascii collate ascii_bin NOT NULL,
   `file_ext` varchar(120) character set ascii NOT NULL,
-  `from_parent` char(1) character set ascii NOT NULL default 'Y', -- is this file generated from parent video_part_file?
+  `from_parent` char(1) character set ascii NOT NULL default 'N', -- is this file generated from parent video_part_file?
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`ID_format`)
@@ -243,7 +245,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_file_j` (
   `file_size` bigint(20) unsigned default NULL,
   `file_checksum` varchar(128) character set ascii collate ascii_bin NOT NULL,
   `file_ext` varchar(120) character set ascii NOT NULL,
-  `from_parent` char(1) character set ascii NOT NULL default 'Y',
+  `from_parent` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -342,6 +344,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 		video_part_attrs.ID AS ID_part_attrs,
 		video_part_file.ID AS ID_part_file,
 		
+		video.datetime_rec_start,
 		DATE(video.datetime_rec_start) AS date_recorded,
 		
 		video_attrs.ID_category,

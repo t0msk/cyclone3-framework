@@ -97,11 +97,11 @@ sub video_part_file_generate
 		'tb_name' => 'a510_video_part',
 		'columns' =>
 		{
-			'status' => 1,
+			'part_id' => 1,
 		}
 	);
 	
-	main::_log("video_part ID='$video_part{'ID'}' part_id='$video_part{'part_id'}' status='$video_part{'status'}'");
+	main::_log("video_part.ID='$video_part{'ID'}' part_id='$video_part{'part_id'}' status='$video_part{'status'}'");
 	
 	if ($video_part{'status'} ne "Y" && $video_part{'status'} ne "N")
 	{
@@ -172,12 +172,12 @@ sub video_part_file_generate
 	
 	if ($file_parent{'status'} ne "Y")
 	{
-		main::_log("parent video_part_file is disabled or not available",1);
+		main::_log("parent video_part_file.ID='$file_parent{'ID'}' is disabled or not available",1);
 		$t->close();
 		return undef;
 	}
 	
-	my $video1_path=$file_parent{'file_alt_src'} || _video_part_file_genpath
+	my $video1_path=$file_parent{'file_alt_src'} || $tom::P.'/!media/a510/video/part/file/'._video_part_file_genpath
 	(
 		$format_parent{'ID'},
 		$file_parent{'ID'},
@@ -189,7 +189,7 @@ sub video_part_file_generate
 	my $video2=new TOM::Temp::file();
 	
 	my $out=video_part_file_process(
-		'video1' => $tom::P.'/!media/a510/video/part/file/'.$video1_path,
+		'video1' => $video1_path,
 		'video2' => $video2->{'filename'},
 		'process' => $format{'process'}
 	);
@@ -207,8 +207,9 @@ sub video_part_file_generate
 	(
 		'file' => $video2->{'filename'},
 		'video_part.ID' => $video_part{'ID'},
-		'video_format.ID' => $format{'ID'}
-	);
+		'video_format.ID' => $format{'ID'},
+		'from_parent' => "Y",
+	) || do {$t->close();return undef};
 	
 	$t->close();
 	return 1;
@@ -322,7 +323,7 @@ Adds new video to gallery, or updates old video
 
 Add new video (uploading new original sized video)
 
- video_add
+ %video=video_add
  (
    'file' => '/path/to/file',
 #   'video.ID' => '',
@@ -338,7 +339,6 @@ Add new video (uploading new original sized video)
 #   'video_part_attrs.ID_category' => '',
 #   'video_part_attrs.name' => '',
 #   'video_part_attrs.description' => '',
-
  );
 
 Add new part of video
@@ -357,8 +357,22 @@ sub video_add
 {
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::video_add()");
+	my $tr=new TOM::Database::SQL::transaction('db_h'=>"main");
 	
 	$env{'video_format.ID'}=$App::510::video_format_original_ID unless $env{'video_format.ID'};
+	
+	# check if thumbnail file is correct
+	if ($env{'file_thumbnail'})
+	{
+		if (! -e $env{'file_thumbnail'})
+		{
+			delete $env{'file_thumbnail'};
+		}
+		elsif (-s $env{'file_thumbnail'} == 0)
+		{
+			delete $env{'file_thumbnail'};
+		}
+	}
 	
 	my %category;
 	if ($env{'video_attrs.ID_category'})
@@ -409,6 +423,12 @@ sub video_add
 		
 		my %columns;
 		$columns{'ID_entity'}=$env{'video.ID_entity'} if $env{'video.ID_entity'};
+		if ($env{'video.datetime_rec_start'})
+		{
+			if ($env{'video.datetime_rec_start'}=~/^FROM/)
+			{$columns{'datetime_rec_start'}=$env{'video.datetime_rec_start'};}
+			else {$columns{'datetime_rec_start'}="'".$env{'video.datetime_rec_start'}."'"}
+		}
 		$columns{'datetime_rec_start'}="NOW()" unless $columns{'datetime_rec_start'};
 		
 		$env{'video.ID'}=App::020::SQL::functions::new(
@@ -418,11 +438,11 @@ sub video_add
 			'columns' =>
 			{
 				%columns,
-			}
-#			'-journalize' => 1,
+			},
+			'-journalize' => 1,
 		);
 		
-		main::_log("generated video ID='$env{'video.ID'}'");
+		main::_log("generated video.ID='$env{'video.ID'}'");
 	}
 	
 	
@@ -473,6 +493,7 @@ sub video_add
 		# create one language representation of video
 		my %columns;
 		$columns{'ID_category'}=$env{'video_attrs.ID_category'} if $env{'video_attrs.ID_category'};
+		$columns{'status'}="'$env{'video_attrs.status'}'" if $env{'video_attrs.status'};
 		
 		$env{'video_attrs.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
@@ -484,14 +505,16 @@ sub video_add
 				'ID_entity' => $env{'video.ID'},
 #				'order_id' => $order_id,
 				'lng' => "'$env{'video_attrs.lng'}'",
-			}
-#			'-journalize' => 1,
+			},
+			'-journalize' => 1,
 		);
 	}
 	
 	$env{'video_part.ID'}=video_part_add
 	(
 		'file' => $env{'file'},
+		'file_nocopy' => $env{'file_nocopy'},
+		'file_thumbnail' => $env{'file_thumbnail'},
 		'video.ID_entity' => $env{'video.ID_entity'},
 		'video_format.ID' => $env{'video_format.ID'},
 		'video_part.ID' => $env{'video_part.ID'},
@@ -500,6 +523,11 @@ sub video_add
 		'video_part_attrs.name' => $env{'video_part_attrs.name'},
 		'video_part_attrs.description' => $env{'video_part_attrs.description'},
 	);
+	if (!$env{'video_part.ID'})
+	{
+		$t->close();
+		return undef
+	};
 	
 	if ($env{'video_attrs.ID'} &&
 	(
@@ -525,8 +553,11 @@ sub video_add
 		);
 	}
 	
+	main::_log("video.ID='$env{'video.ID'}' added");
+	
+	$tr->close(); # commit transaction
 	$t->close();
-	return ($env{'video.ID'},$env{'video.ID_entity'});
+	return %env;
 }
 
 
@@ -606,7 +637,7 @@ sub video_part_add
 	my %video_part;
 	if ($env{'video_part.part_id'} && !$env{'video_part.ID'})
 	{
-		main::_log("video_part.part_id, !video_part.ID = checking if part_id exists");
+		main::_log("video_part.part_id='$env{'video_part.part_id'}', video.ID_entity='$env{'video.ID_entity'}', !video_part.ID = checking if part_id exists");
 		my $sql=qq{
 			SELECT
 				*
@@ -621,8 +652,24 @@ sub video_part_add
 		%video_part=$sth0{'sth'}->fetchhash();
 		$env{'video_part.ID'}=$video_part{'ID'} if $video_part{'ID'};
 		main::_log("video_part.ID='$env{'video_part.ID'}'");
+		
+		if ($env{'file_thumbnail'} && $video_part{'thumbnail_lock'} ne 'Y' && $video_part{'ID'})
+		{
+			# lock this thumbnail to not regenerate if
+			App::020::SQL::functions::update(
+				'ID' => $video_part{'ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_video_part",
+				'columns' =>
+				{
+					'thumbnail_lock' => "'Y'"
+				},
+				'-journalize' => 1
+			);
+		}
+		
 	}
-	
 	
 	if (!$env{'video_part.ID'})
 	{
@@ -645,6 +692,7 @@ sub video_part_add
 		my %columns;
 		$columns{'ID_entity'}=$env{'video.ID_entity'};
 		$columns{'part_id'}=$env{'video_part.part_id'} if $env{'video_part.part_id'};
+		$columns{'thumbnail_lock'}="'Y'" if $env{'file_thumbnail'};
 		$env{'video_part.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
 			'db_name' => $App::510::db_name,
@@ -652,8 +700,8 @@ sub video_part_add
 			'columns' =>
 			{
 				%columns,
-			}
-#			'-journalize' => 1,
+			},
+			'-journalize' => 1,
 		);
 		main::_log("generated video_part ID='$env{'video_part.ID'}'");
 	}
@@ -693,8 +741,8 @@ sub video_part_add
 				%columns,
 				'ID_entity' => $env{'video_part.ID'},
 				'lng' => "'$env{'video_part_attrs.lng'}'",
-			}
-#			'-journalize' => 1,
+			},
+			'-journalize' => 1,
 		);
 	}
 	
@@ -706,10 +754,17 @@ sub video_part_add
 		$env{'video_part_file.ID'}=video_part_file_add
 		(
 			'file' => $env{'file'},
+			'file_nocopy' => $env{'file_nocopy'},
+			'file_thumbnail' => $env{'file_thumbnail'},
 			'video_part.ID' => $env{'video_part.ID'},
 			'video_format.ID' => $env{'video_format.ID'},
+			'from_parent' => "N",
 		);
-		
+		if (!$env{'video_part_file.ID'})
+		{
+			$t->close();
+			return undef;
+		}
 	}
 	
 	if ($env{'video_part_attrs.ID'} &&
@@ -734,6 +789,8 @@ sub video_part_add
 		);
 	}
 	
+	main::_log("video_part.ID='$env{'video_part.ID'}' added");
+	
 	$t->close();
 	return 1;
 }
@@ -755,7 +812,8 @@ Adds new file to video, or updates old
  (
    'file' => '/path/to/file',
    'video_part.ID' => '',
-   'video_format.ID' => ''
+   'video_format.ID' => '',
+   ''
  )
 
 =cut
@@ -795,72 +853,15 @@ sub video_part_file_add
 	}
 	
 	
-	if ($env{'video_format.ID'} eq $App::510::video_format_full_ID)
-	{
-		# generate thumbnail from full
-		main::_log("generate thumbnail from 'full' video_format.name");
-		
-		my $tmpjpeg=new TOM::Temp::file('ext'=>'jpeg');
-		my $out=_video_part_file_thumbnail(
-			'file' => $env{'file'},
-			'file2' => $tmpjpeg->{'filename'},
-			'timestamps' => [
-				'5',
-#				'10',
-#				'15'
-			]
-		);
-		
-		return undef unless $out;
-		
-		# find if already exists relation to any thumbnail in a501
-		my $relation=(App::160::SQL::get_relations(
-			'l_prefix' => 'a510',
-			'l_table' => 'video_part',
-			'l_ID_entity' => $env{'video_part.ID'},
-			'rel_type' => 'thumbnail',
-			'r_db_name' => $App::501::db_name,
-			'r_prefix' => 'a501',
-			'r_table' => 'image',
-#			'r_ID_entity' => '2'
-			'limit' => 1
-		))[0];
-		if (!$relation->{'ID'})
-		{
-			# add image to gallery
-			main::_log("adding image");
-			my %image=App::501::functions::image_add(
-				'file' => $tmpjpeg->{'filename'},
-				'image_attrs.ID_category' => $App::501::thumbnail_cat{$tom::LNG},
-				'image_attrs.name' => 'video_part #'.$env{'video_part.ID'},
-#				'image_attrs.description' => $desc
-			);
-			main::_log("added image $image{'image.ID_entity'}");
-			return undef unless $image{'image.ID_entity'};
-			App::160::SQL::new_relation(
-				'l_prefix' => 'a510',
-				'l_table' => 'video_part',
-				'l_ID_entity' => $env{'video_part.ID'},
-				'rel_type' => 'thumbnail',
-				'r_db_name' => $App::501::db_name,
-				'r_prefix' => 'a501',
-				'r_table' => 'image',
-				'r_ID_entity' => $image{'image.ID_entity'}
-			);
-		}
-		else
-		{
-			# updating related image
-			main::_log("updating related image $relation->{'r_ID_entity'}");
-			my %image=App::501::functions::image_add(
-				'image.ID_entity' => $relation->{'r_ID_entity'},
-				'file' => $tmpjpeg->{'filename'},
-				'image_attrs.ID_category' => $App::501::thumbnail_cat{$tom::LNG},
-				'image_attrs.name' => 'video_part #'.$env{'video_part.ID'},
-			);
-		}
-		
-	}
+	my %part=App::020::SQL::functions::get_ID(
+		'ID' => $env{'video_part.ID'},
+		'db_h' => "main",
+		'db_name' => $App::510::db_name,
+		'tb_name' => "a510_video_part",
+		'columns' => {'*'=>1}
+	);
+	
+	$env{'from_parent'}='N' unless $env{'from_parent'};
 	
 	
 	# file must be analyzed
@@ -878,16 +879,32 @@ sub video_part_file_add
 	main::_log("file checksum $checksum_method:$checksum");
 	
 	my $out=`file -b $env{'file'}`;chomp($out);
-	my $file_ext=$App::541::mimetypes::filetype_ext{$out};
-		$file_ext='avi' unless $file_ext;
+	my $file_ext;#
+	
+	# find if this file type exists
+	foreach my $reg (@App::541::mimetypes::filetype_ext)
+	{
+		if ($out=~/$reg->[0]/){$file_ext=$reg->[1];last;}
+	}
+	$file_ext='avi' unless $file_ext;
+	
 	main::_log("type='$out' ext='$file_ext'");
 	
-	# file must be copied to have correct extension
-	my $file3=new TOM::Temp::file('ext'=>$file_ext);
-	File::Copy::copy($env{'file'},$file3->{'filename'});
 	
 	my $vd = Movie::Info->new || die "Couldn't find an mplayer to use\n";
-	my %video = $vd->info($file3->{'filename'});
+	
+	# file must be copied to have correct extension
+	# if (not already has it)
+	my $file3=new TOM::Temp::file('ext'=>$file_ext);
+	my %video;
+	if (not $env{'file'}=~/\.$file_ext$/)
+	{
+		File::Copy::copy($env{'file'},$file3->{'filename'});
+		%video = $vd->info($file3->{'filename'});
+	}
+	else {%video = $vd->info($env{'file'});}
+	
+	# play video
 	foreach (keys %video)
 	{
 		main::_log("key $_='$video{$_}'");
@@ -923,18 +940,19 @@ sub video_part_file_add
 				'tb_name' => 'a510_video_part_file',
 				'columns' =>
 				{
-					'video_width' => $video{'width'},
-					'video_height' => $video{'height'},
+					'video_width' => "'$video{'width'}'",
+					'video_height' => "'$video{'height'}'",
 					'video_codec' => "'$video{'codec'}'",
-					'video_fps' => $video{'fps'},
-					'video_bitrate' => $video{'bitrate'},
+					'video_fps' => "'$video{'fps'}'",
+					'video_bitrate' => "'$video{'bitrate'}'",
 					'audio_codec' => "'$video{'audio_codec'}'",
-					'audio_bitrate' => $video{'audio_bitrate'},
-					'length' => int($video{'length'}),
-					'file_size' => $file_size,
+					'audio_bitrate' => "'$video{'audio_bitrate'}'",
+					'length' => "'".int($video{'length'})."'",
+					'file_size' => "'$file_size'",
+					'from_parent' => "'$env{'from_parent'}'",
 					'status' => "'Y'",
 				},
-				#'-journalize' => 1,
+				'-journalize' => 1,
 			);
 			$t->close();
 			return $db0_line{'ID'};
@@ -950,30 +968,34 @@ sub video_part_file_add
 				'columns' =>
 				{
 					'name' => "'$name'",
-					'video_width' => $video{'width'},
-					'video_height' => $video{'height'},
+					'video_width' => "'$video{'width'}'",
+					'video_height' => "'$video{'height'}'",
 					'video_codec' => "'$video{'codec'}'",
-					'video_fps' => $video{'fps'},
-					'video_bitrate' => $video{'bitrate'},
+					'video_fps' => "'$video{'fps'}'",
+					'video_bitrate' => "'$video{'bitrate'}'",
 					'audio_codec' => "'$video{'audio_codec'}'",
-					'audio_bitrate' => $video{'audio_bitrate'},
-					'length' => int($video{'length'}),
-					'file_size' => $file_size,
+					'audio_bitrate' => "'$video{'audio_bitrate'}'",
+					'length' => "'".int($video{'length'})."'",
+					'file_size' => "'$file_size'",
 					'file_checksum' => "'$checksum_method:$checksum'",
 					'file_ext' => "'$file_ext'",
+					'from_parent' => "'$env{'from_parent'}'",
 					'status' => "'Y'",
 				},
 				'-journalize' => 1,
 			);
-			my $path=$tom::P.'/!media/a510/video/part/file/'._video_part_file_genpath
-			(
-				$env{'video_format.ID'},
-				$db0_line{'ID'},
-				$name,
-				$file_ext
-			);
-			main::_log("copy to $path");
-			File::Copy::copy($file3->{'filename'},$path);
+			if (!$env{'file_nocopy'})
+			{
+				my $path=$tom::P.'/!media/a510/video/part/file/'._video_part_file_genpath
+				(
+					$env{'video_format.ID'},
+					$db0_line{'ID'},
+					$name,
+					$file_ext
+				);
+				main::_log("copy to $path");
+				File::Copy::copy($env{'file'},$path);
+			}
 			$t->close();
 			return $db0_line{'ID'};
 		}
@@ -982,6 +1004,8 @@ sub video_part_file_add
 	{
 		# file creating
 		main::_log("creating video_part_file");
+		my %columns;
+		$columns{'file_alt_src'}="'$env{'file'}'" if $env{'file_nocopy'};
 		
 		my $ID=App::020::SQL::functions::new(
 			'db_h' => "main",
@@ -992,35 +1016,138 @@ sub video_part_file_add
 				'ID_entity' => $env{'video_part.ID'},
 				'ID_format' => $env{'video_format.ID'},
 				'name' => "'$name'",
-				'video_width' => $video{'width'},
-				'video_height' => $video{'height'},
+				'video_width' => "'$video{'width'}'",
+				'video_height' => "'$video{'height'}'",
 				'video_codec' => "'$video{'codec'}'",
-				'video_fps' => $video{'fps'},
-				'video_bitrate' => $video{'bitrate'},
+				'video_fps' => "'$video{'fps'}'",
+				'video_bitrate' => "'$video{'bitrate'}'",
 				'audio_codec' => "'$video{'audio_codec'}'",
-				'audio_bitrate' => $video{'audio_bitrate'},
-				'length' => int($video{'length'}),
-				'file_size' => $file_size,
+				'audio_bitrate' => "'$video{'audio_bitrate'}'",
+				'length' => "'".int($video{'length'})."'",
+				'file_size' => "'$file_size'",
 				'file_checksum' => "'$checksum_method:$checksum'",
 				'file_ext' => "'$file_ext'",
-				'status' => "'Y'"
+				'from_parent' => "'$env{'from_parent'}'",
+				'status' => "'Y'",
+				%columns
 			},
 			'-journalize' => 1
 		);
+		if (!$ID)
+		{
+			$t->close();
+			return undef
+		};
 		$ID=sprintf("%08d",$ID);
 		main::_log("ID='$ID'");
 		
-		my $path=$tom::P.'/!media/a510/video/part/file/'._video_part_file_genpath
-		(
-			$env{'video_format.ID'},
-			$ID,
-			$name,
-			$file_ext
-		);
-		main::_log("copy to $path");
-		File::Copy::copy($file3->{'filename'},$path);
+		if (!$env{'file_nocopy'})
+		{
+			my $path=$tom::P.'/!media/a510/video/part/file/'._video_part_file_genpath
+			(
+				$env{'video_format.ID'},
+				$ID,
+				$name,
+				$file_ext
+			);
+			main::_log("copy to $path");
+			File::Copy::copy($env{'file'},$path);
+		}
 		$t->close();
 		return $ID;
+	}
+	
+	
+	if (
+			($env{'video_format.ID'} eq $App::510::video_format_full_ID)
+			||($env{'file_thumbnail'})
+		)
+	{
+		# generate thumbnail from full
+		my $rel;
+		
+		my $tmpjpeg=new TOM::Temp::file('ext'=>'jpeg');
+		
+		if (!$env{'file_thumbnail'} && ($part{'thumbnail_lock'} eq 'N' ))
+		{
+			main::_log("generate thumbnail from 'full' video_format.name");
+			_video_part_file_thumbnail(
+				'file' => $env{'file'},
+				'file2' => $tmpjpeg->{'filename'},
+				'timestamps' => [
+					'5',
+	#				'10',
+	#				'15'
+				]
+			) || do {$t->close();return undef};
+			$rel=1;
+		}
+		elsif ($env{'file_thumbnail'})
+		{
+			main::_log("add existing thumbnail to video_part");
+			File::Copy::copy($env{'file_thumbnail'},$tmpjpeg->{'filename'});
+			$rel=1;
+		}
+		else
+		{
+			main::_log("thumbnail already added to video_part");
+		}
+		
+		if ($rel)
+		{
+			# find if already exists relation to any thumbnail in a501
+			my $relation=(App::160::SQL::get_relations(
+				'l_prefix' => 'a510',
+				'l_table' => 'video_part',
+				'l_ID_entity' => $env{'video_part.ID'},
+				'rel_type' => 'thumbnail',
+				'r_db_name' => $App::501::db_name,
+				'r_prefix' => 'a501',
+				'r_table' => 'image',
+	#			'r_ID_entity' => '2'
+				'limit' => 1
+			))[0];
+			if (!$relation->{'ID'})
+			{
+				# add image to gallery
+				main::_log("adding image");
+				my %image=App::501::functions::image_add(
+					'file' => $tmpjpeg->{'filename'},
+					'image_attrs.ID_category' => $App::501::thumbnail_cat{$tom::LNG},
+					'image_attrs.name' => 'video_part #'.$env{'video_part.ID'},
+					'image_attrs.status' => 'Y',
+	#				'image_attrs.description' => $desc
+				);
+				if (!$image{'image.ID'})
+				{
+					$t->close();
+					return undef;
+				};
+				main::_log("added image $image{'image.ID_entity'}");
+				App::160::SQL::new_relation(
+					'l_prefix' => 'a510',
+					'l_table' => 'video_part',
+					'l_ID_entity' => $env{'video_part.ID'},
+					'rel_type' => 'thumbnail',
+					'r_db_name' => $App::501::db_name,
+					'r_prefix' => 'a501',
+					'r_table' => 'image',
+					'r_ID_entity' => $image{'image.ID_entity'}
+				);
+			}
+			else
+			{
+				# updating related image
+				main::_log("updating related image $relation->{'r_ID_entity'} to category '$App::510::thumbnail_cat{$tom::LNG}'");
+				my %image=App::501::functions::image_add(
+					'image.ID_entity' => $relation->{'r_ID_entity'},
+					'file' => $tmpjpeg->{'filename'},
+					'image_attrs.ID_category' => $App::510::thumbnail_cat{$tom::LNG},
+					'image_attrs.name' => 'video_part #'.$env{'video_part.ID'},
+				);
+			}
+		}
+		
 	}
 	
 	$t->close();
