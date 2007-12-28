@@ -107,6 +107,10 @@ our %replace_functions=
 	{
 		function => 'Int::charsets::encode::UTF8_ASCII($text)',
 	},
+	'hive' =>
+	{
+		function => 'TOM::Security::form::html_input_value_escape($text)',
+	},
 );
 
 
