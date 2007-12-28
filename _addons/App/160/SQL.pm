@@ -260,14 +260,14 @@ Returns list of references to relations
 sub get_relations
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::get_relation()");
+	my $t=track TOM::Debug(__PACKAGE__."::get_relation()") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	$env{'limit'}="0,100" unless $env{'limit'};
 	
 	# list of input
-	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_}};
+	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_} && $debug};
 	
 	my $where;
 	
@@ -301,12 +301,12 @@ sub get_relations
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>$debug,'quiet'=>$quiet);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		main::_log("relation[$i] rel_type='$db0_line{'rel_type'}' r_db_name='$db0_line{'r_db_name'}' r_prefix='$db0_line{'r_prefix'}' r_table='$db0_line{'r_table'}' r_ID_entity='$db0_line{'r_ID_entity'}'");
+		main::_log("relation[$i] rel_type='$db0_line{'rel_type'}' r_db_name='$db0_line{'r_db_name'}' r_prefix='$db0_line{'r_prefix'}' r_table='$db0_line{'r_table'}' r_ID_entity='$db0_line{'r_ID_entity'}'") if $debug;
 		push @relations, {%db0_line};
 		$i++;
 	}
 	
-	$t->close();
+	$t->close() if $debug;
 	return @relations;
 }
 
