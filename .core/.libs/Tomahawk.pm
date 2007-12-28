@@ -776,6 +776,8 @@ sub module
 		if ($return_code)
 		{
 			#main::_log("replacing");
+			TOM::Utils::vars::replace($Tomahawk::module::XSGN{'TMP'});
+			
 			$Tomahawk::module::XSGN{'TMP'}=~s|<#.*?#>||g;
 			$Tomahawk::module::XSGN{'TMP'}=~s|<%.*?%>||g;
 			
@@ -1439,7 +1441,7 @@ sub GetXSGN
 	while ($file_line=<HND>){$file_data.=$file_line;}
 	($file_data)=$file_data=~/<XML_DESIGN_DEFINITION.*?>(.*)<\/XML_DESIGN_DEFINITION>/s;
 	
-	TOM::Utils::vars::replace($file_data) if $env{'-convertvars'};
+	#TOM::Utils::vars::replace($file_data) if $env{'-convertvars'};
 	
 	while ($file_data=~s|<DEFINITION id="(.*?)">[\n\r]?(.*?)[\n\r]?</DEFINITION>||s)
 	{
