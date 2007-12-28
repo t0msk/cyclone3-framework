@@ -196,7 +196,7 @@ sub start
 							FROM
 								`$App::501::db_name`.`a501_image_view`
 							WHERE
-								ID_image=$relation->{'r_ID_entity'} AND
+								ID_entity_image=$relation->{'r_ID_entity'} AND
 								ID_format=$App::501::image_format_fullsize_ID
 							LIMIT 1
 						};
@@ -224,7 +224,7 @@ sub start
 							FROM
 								`$App::501::db_name`.`a501_image_view`
 							WHERE
-								ID_image=$relation->{'r_ID_entity'} AND
+								ID_entity_image=$relation->{'r_ID_entity'} AND
 								ID_format=$App::501::image_format_thumbnail_ID
 							LIMIT 1
 						};
