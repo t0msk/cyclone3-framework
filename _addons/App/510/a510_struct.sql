@@ -14,7 +14,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video` (
   `datetime_rec_start` datetime default NULL,
   `datetime_rec_end` datetime default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  PRIMARY KEY  (`ID`,`datetime_create`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `datetime_rec_start` (`datetime_rec_start`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -46,7 +49,12 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_attrs` (
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
+  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `name` (`name`),
+  KEY `lng` (`lng`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -72,9 +80,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part` (
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
   `part_id` mediumint(8) unsigned NOT NULL default '0',
   `datetime_create` datetime NOT NULL,
+  `process_lock` char(1) character set ascii NOT NULL default 'N',
   `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  PRIMARY KEY  (`ID`,`datetime_create`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `part_id` (`part_id`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -84,6 +97,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_j` (
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
   `part_id` mediumint(8) unsigned NOT NULL default '0',
   `datetime_create` datetime NOT NULL,
+  `process_lock` char(1) character set ascii NOT NULL default 'N',
   `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -192,7 +206,12 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_attrs` (
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
+  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `name` (`name`),
+  KEY `lng` (`lng`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -230,9 +249,16 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_file` (
   `file_checksum` varchar(128) character set ascii collate ascii_bin NOT NULL,
   `file_ext` varchar(120) character set ascii NOT NULL,
   `from_parent` char(1) character set ascii NOT NULL default 'N', -- is this file generated from parent video_part_file?
+  `regen` char(1) character set ascii NOT NULL default 'N', -- regenerate this video_part_file?
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`ID_format`)
+  UNIQUE KEY `UNI_0` (`ID_entity`,`ID_format`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID_format` (`ID_format`),
+  KEY `ID` (`ID`),
+  KEY `name` (`name`),
+  KEY `regen` (`regen`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -256,6 +282,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_file_j` (
   `file_checksum` varchar(128) character set ascii collate ascii_bin NOT NULL,
   `file_ext` varchar(120) character set ascii NOT NULL,
   `from_parent` char(1) character set ascii NOT NULL default 'N',
+  `regen` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -285,7 +312,13 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_cat` (
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
-  UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`)
+  UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID_charindex` (`ID_charindex`),
+  KEY `ID` (`ID`),
+  KEY `name` (`name`),
+  KEY `lng` (`lng`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -320,7 +353,13 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_format` (
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
-  UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`)
+  UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID_charindex` (`ID_charindex`),
+  KEY `ID` (`ID`),
+  KEY `name` (`name`),
+  KEY `lng` (`lng`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -430,6 +469,69 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 		video_format.ID AND
 		video_part.ID AND
 		video_part_file.ID
+)
+
+-- --------------------------------------------------
+
+CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view_lite` AS (
+	SELECT
+		
+		video.ID_entity AS ID_entity_video,
+		video.ID AS ID_video,
+		video_attrs.ID AS ID_attrs,
+		video_part.ID AS ID_part,
+		video_part_attrs.ID AS ID_part_attrs,
+		
+		video.datetime_rec_start,
+		DATE(video.datetime_rec_start) AS date_recorded,
+		
+		video_attrs.ID_category,
+		
+		video.posix_owner,
+		video.posix_group,
+		video.posix_perms,
+		
+		video_attrs.name,
+		video_attrs.description,
+		video_attrs.order_id,
+		video_attrs.lng,
+		
+		video_part_attrs.name AS part_name,
+		video_part_attrs.description AS part_description,
+		video_part.part_id AS part_id,
+		
+		IF
+		(
+			(
+				video.status LIKE 'Y' AND
+				video_attrs.status LIKE 'Y' AND
+				video_part.status LIKE 'Y'
+			),
+			 'Y', 'U'
+		) AS status
+		
+	FROM
+		`/*db_name*/`.`/*app*/_video` AS video
+	LEFT JOIN `/*db_name*/`.`/*app*/_video_attrs` AS video_attrs ON
+	(
+		video_attrs.ID_entity = video.ID
+	)
+	LEFT JOIN `/*db_name*/`.`/*app*/_video_part` AS video_part ON
+	(
+		video_part.ID_entity = video.ID AND
+		video_part.part_id = 1
+	)
+	LEFT JOIN `/*db_name*/`.`/*app*/_video_part_attrs` AS video_part_attrs ON
+	(
+		video_part_attrs.ID_entity = video_part.ID AND
+		video_part_attrs.lng = video_attrs.lng
+	)
+	
+	WHERE
+		video.ID AND
+		video_attrs.ID AND
+		video_part_attrs.ID AND
+		video_part.ID
 )
 
 -- --------------------------------------------------

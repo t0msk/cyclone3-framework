@@ -199,6 +199,22 @@ sub video_part_file_generate
 	if (!$out)
 	{
 		main::_log("parent video_part_file can't be processed",1);
+		
+		if ($file_parent{'ID_format'} == $App::510::video_format_original_ID && ($out <=> 512))
+		{
+			main::_log("lock processing of video_part.ID='$env{'video_part.ID'}'",1);
+			App::020::SQL::functions::update(
+				'ID' => $env{'video_part.ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_video_part",
+				'columns' =>
+				{
+					'process_lock' => "'Y'"
+				},
+				'-journalize' => 1
+			);
+		}
 		$t->close();
 		return undef;
 	}
@@ -224,7 +240,12 @@ sub _video_part_file_genpath
 	my $name=shift;
 	my $ext=shift;
 	$ID=~s|^(....).*$|\1|;
-	File::Path::mkpath($tom::P.'/!media/a510/video/part/file/'.$format.'/'.$ID);
+	
+	my $pth=$tom::P.'/!media/a510/video/part/file/'.$format.'/'.$ID;
+	if (!-d $pth)
+	{
+		File::Path::mkpath($tom::P.'/!media/a510/video/part/file/'.$format.'/'.$ID);
+	}
 	return "$format/$ID/$name.$ext";
 };
 
@@ -298,7 +319,7 @@ sub video_part_file_process
 			$cmd.=" $_";
 		}
 		main::_log("$cmd");
-		my $out=system("$cmd 2>/www/TOM/_logs/stderr.log");
+		my $out=system("$cmd");
 		main::_log("out=$out");
 		$t->close();
 		return 1 if $out == 0;
@@ -364,12 +385,15 @@ sub video_add
 	# check if thumbnail file is correct
 	if ($env{'file_thumbnail'})
 	{
-		if (! -e $env{'file_thumbnail'})
+		main::_log("checking file_thumbnail='$env{'file_thumbnail'}'");
+		if (!-e $env{'file_thumbnail'})
 		{
+			main::_log("file_thumbnail file not exists",1);
 			delete $env{'file_thumbnail'};
 		}
 		elsif (-s $env{'file_thumbnail'} == 0)
 		{
+			main::_log("file_thumbnail file is empty",1);
 			delete $env{'file_thumbnail'};
 		}
 	}
@@ -655,7 +679,7 @@ sub video_part_add
 		
 		if ($env{'file_thumbnail'} && $video_part{'thumbnail_lock'} ne 'Y' && $video_part{'ID'})
 		{
-			# lock this thumbnail to not regenerate if
+			# lock this thumbnail to not regenerate it
 			App::020::SQL::functions::update(
 				'ID' => $video_part{'ID'},
 				'db_h' => "main",
@@ -914,148 +938,7 @@ sub video_part_file_add
 	my $name=video_part_file_newhash();
 	
 	
-	# Check if video_part_file for this format exists
-	my $sql=qq{
-		SELECT
-			*
-		FROM
-			`$App::510::db_name`.`a510_video_part_file`
-		WHERE
-			ID_entity=$env{'video_part.ID'} AND
-			ID_format=$env{'video_format.ID'}
-		LIMIT 1
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);	
-	if (my %db0_line=$sth0{'sth'}->fetchhash)
-	{
-		# file updating
-		main::_log("check for update video_part_file");
-		if ($db0_line{'file_checksum'} eq "$checksum_method:$checksum")
-		{
-			main::_log("same checksum, just enabling file when disabled");
-			App::020::SQL::functions::update(
-				'ID' => $db0_line{'ID'},
-				'db_h' => 'main',
-				'db_name' => $App::510::db_name,
-				'tb_name' => 'a510_video_part_file',
-				'columns' =>
-				{
-					'video_width' => "'$video{'width'}'",
-					'video_height' => "'$video{'height'}'",
-					'video_codec' => "'$video{'codec'}'",
-					'video_fps' => "'$video{'fps'}'",
-					'video_bitrate' => "'$video{'bitrate'}'",
-					'audio_codec' => "'$video{'audio_codec'}'",
-					'audio_bitrate' => "'$video{'audio_bitrate'}'",
-					'length' => "'".int($video{'length'})."'",
-					'file_size' => "'$file_size'",
-					'from_parent' => "'$env{'from_parent'}'",
-					'status' => "'Y'",
-				},
-				'-journalize' => 1,
-			);
-			$t->close();
-			return $db0_line{'ID'};
-		}
-		else
-		{
-			main::_log("checksum differs");
-			App::020::SQL::functions::update(
-				'ID' => $db0_line{'ID'},
-				'db_h' => 'main',
-				'db_name' => $App::510::db_name,
-				'tb_name' => 'a510_video_part_file',
-				'columns' =>
-				{
-					'name' => "'$name'",
-					'video_width' => "'$video{'width'}'",
-					'video_height' => "'$video{'height'}'",
-					'video_codec' => "'$video{'codec'}'",
-					'video_fps' => "'$video{'fps'}'",
-					'video_bitrate' => "'$video{'bitrate'}'",
-					'audio_codec' => "'$video{'audio_codec'}'",
-					'audio_bitrate' => "'$video{'audio_bitrate'}'",
-					'length' => "'".int($video{'length'})."'",
-					'file_size' => "'$file_size'",
-					'file_checksum' => "'$checksum_method:$checksum'",
-					'file_ext' => "'$file_ext'",
-					'from_parent' => "'$env{'from_parent'}'",
-					'status' => "'Y'",
-				},
-				'-journalize' => 1,
-			);
-			if (!$env{'file_nocopy'})
-			{
-				my $path=$tom::P.'/!media/a510/video/part/file/'._video_part_file_genpath
-				(
-					$env{'video_format.ID'},
-					$db0_line{'ID'},
-					$name,
-					$file_ext
-				);
-				main::_log("copy to $path");
-				File::Copy::copy($env{'file'},$path);
-			}
-			$t->close();
-			return $db0_line{'ID'};
-		}
-	}
-	else
-	{
-		# file creating
-		main::_log("creating video_part_file");
-		my %columns;
-		$columns{'file_alt_src'}="'$env{'file'}'" if $env{'file_nocopy'};
-		
-		my $ID=App::020::SQL::functions::new(
-			'db_h' => "main",
-			'db_name' => $App::510::db_name,
-			'tb_name' => "a510_video_part_file",
-			'columns' =>
-			{
-				'ID_entity' => $env{'video_part.ID'},
-				'ID_format' => $env{'video_format.ID'},
-				'name' => "'$name'",
-				'video_width' => "'$video{'width'}'",
-				'video_height' => "'$video{'height'}'",
-				'video_codec' => "'$video{'codec'}'",
-				'video_fps' => "'$video{'fps'}'",
-				'video_bitrate' => "'$video{'bitrate'}'",
-				'audio_codec' => "'$video{'audio_codec'}'",
-				'audio_bitrate' => "'$video{'audio_bitrate'}'",
-				'length' => "'".int($video{'length'})."'",
-				'file_size' => "'$file_size'",
-				'file_checksum' => "'$checksum_method:$checksum'",
-				'file_ext' => "'$file_ext'",
-				'from_parent' => "'$env{'from_parent'}'",
-				'status' => "'Y'",
-				%columns
-			},
-			'-journalize' => 1
-		);
-		if (!$ID)
-		{
-			$t->close();
-			return undef
-		};
-		$ID=sprintf("%08d",$ID);
-		main::_log("ID='$ID'");
-		
-		if (!$env{'file_nocopy'})
-		{
-			my $path=$tom::P.'/!media/a510/video/part/file/'._video_part_file_genpath
-			(
-				$env{'video_format.ID'},
-				$ID,
-				$name,
-				$file_ext
-			);
-			main::_log("copy to $path");
-			File::Copy::copy($env{'file'},$path);
-		}
-		$t->close();
-		return $ID;
-	}
+	
 	
 	
 	if (
@@ -1148,6 +1031,154 @@ sub video_part_file_add
 			}
 		}
 		
+	}
+	
+	
+	
+	
+	# Check if video_part_file for this format exists
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$App::510::db_name`.`a510_video_part_file`
+		WHERE
+			ID_entity=$env{'video_part.ID'} AND
+			ID_format=$env{'video_format.ID'}
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);	
+	if (my %db0_line=$sth0{'sth'}->fetchhash)
+	{
+		# file updating
+		main::_log("check for update video_part_file");
+		if ($db0_line{'file_checksum'} eq "$checksum_method:$checksum")
+		{
+			main::_log("same checksum, just enabling file when disabled");
+			App::020::SQL::functions::update(
+				'ID' => $db0_line{'ID'},
+				'db_h' => 'main',
+				'db_name' => $App::510::db_name,
+				'tb_name' => 'a510_video_part_file',
+				'columns' =>
+				{
+					'video_width' => "'$video{'width'}'",
+					'video_height' => "'$video{'height'}'",
+					'video_codec' => "'$video{'codec'}'",
+					'video_fps' => "'$video{'fps'}'",
+					'video_bitrate' => "'$video{'bitrate'}'",
+					'audio_codec' => "'$video{'audio_codec'}'",
+					'audio_bitrate' => "'$video{'audio_bitrate'}'",
+					'length' => "'".int($video{'length'})."'",
+					'file_size' => "'$file_size'",
+					'from_parent' => "'$env{'from_parent'}'",
+					'regen' => "'N'",
+					'status' => "'Y'",
+				},
+				'-journalize' => 1,
+			);
+			$t->close();
+			return $db0_line{'ID'};
+		}
+		else
+		{
+			main::_log("checksum differs");
+			App::020::SQL::functions::update(
+				'ID' => $db0_line{'ID'},
+				'db_h' => 'main',
+				'db_name' => $App::510::db_name,
+				'tb_name' => 'a510_video_part_file',
+				'columns' =>
+				{
+					'name' => "'$name'",
+					'video_width' => "'$video{'width'}'",
+					'video_height' => "'$video{'height'}'",
+					'video_codec' => "'$video{'codec'}'",
+					'video_fps' => "'$video{'fps'}'",
+					'video_bitrate' => "'$video{'bitrate'}'",
+					'audio_codec' => "'$video{'audio_codec'}'",
+					'audio_bitrate' => "'$video{'audio_bitrate'}'",
+					'length' => "'".int($video{'length'})."'",
+					'file_size' => "'$file_size'",
+					'file_checksum' => "'$checksum_method:$checksum'",
+					'file_ext' => "'$file_ext'",
+					'from_parent' => "'$env{'from_parent'}'",
+					'regen' => "'N'",
+					'status' => "'Y'",
+				},
+				'-journalize' => 1,
+			);
+			if (!$env{'file_nocopy'})
+			{
+				my $path=$tom::P.'/!media/a510/video/part/file/'._video_part_file_genpath
+				(
+					$env{'video_format.ID'},
+					$db0_line{'ID'},
+					$name,
+					$file_ext
+				);
+				main::_log("copy to $path");
+				File::Copy::copy($env{'file'},$path);
+			}
+			$t->close();
+			return $db0_line{'ID'};
+		}
+	}
+	else
+	{
+		# file creating
+		main::_log("creating video_part_file");
+		my %columns;
+		$columns{'file_alt_src'}="'$env{'file'}'" if $env{'file_nocopy'};
+		
+		my $ID=App::020::SQL::functions::new(
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_video_part_file",
+			'columns' =>
+			{
+				'ID_entity' => $env{'video_part.ID'},
+				'ID_format' => $env{'video_format.ID'},
+				'name' => "'$name'",
+				'video_width' => "'$video{'width'}'",
+				'video_height' => "'$video{'height'}'",
+				'video_codec' => "'$video{'codec'}'",
+				'video_fps' => "'$video{'fps'}'",
+				'video_bitrate' => "'$video{'bitrate'}'",
+				'audio_codec' => "'$video{'audio_codec'}'",
+				'audio_bitrate' => "'$video{'audio_bitrate'}'",
+				'length' => "'".int($video{'length'})."'",
+				'file_size' => "'$file_size'",
+				'file_checksum' => "'$checksum_method:$checksum'",
+				'file_ext' => "'$file_ext'",
+				'from_parent' => "'$env{'from_parent'}'",
+				'status' => "'Y'",
+				%columns
+			},
+			'-journalize' => 1
+		);
+		if (!$ID)
+		{
+			$t->close();
+			return undef
+		};
+		$ID=sprintf("%08d",$ID);
+		main::_log("ID='$ID'");
+		
+		if (!$env{'file_nocopy'})
+		{
+			my $path=$tom::P.'/!media/a510/video/part/file/'._video_part_file_genpath
+			(
+				$env{'video_format.ID'},
+				$ID,
+				$name,
+				$file_ext
+			);
+			main::_log("copy to $path");
+			File::Copy::copy($env{'file'},$path);
+		}
+		$t->close();
+		return $ID;
 	}
 	
 	$t->close();
