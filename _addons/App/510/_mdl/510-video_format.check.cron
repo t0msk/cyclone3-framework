@@ -35,13 +35,17 @@ L<App::510::_init|app/"510/_init.pm">
 
 L<App::501::_init|app/"501/_init.pm">
 
+=item *
+
+Proc::ProcessTable
+
 =back
 
 =cut
 
 use App::510::_init;
 use App::501::_init;
-
+use Proc::ProcessTable;
 
 
 =head1 INPUTS
@@ -64,8 +68,10 @@ sub execute
 	
 	alarm(0);
 	$env{'time_max'}=60*10 unless $env{'time_max'};
-	my $encode_max=4; # max parallel processes
-	$env{'sql_limit'}=$encode_max*10; # find max files to encode
+	my $encode_max=$env{'parallel'}; # max parallel processes
+		$encode_max=3 unless $encode_max;
+	$env{'sql_limit'}=$encode_max*4; # find max files to encode
+	
 	
 	# check directory of formats
 	
@@ -73,9 +79,22 @@ sub execute
 	# check list of formats and its directories
 	
 	
-	
-	
+	# check how many encoders are running parrallel
+	my $t = new Proc::ProcessTable;
 	my $encode;
+	foreach my $p (@{$t->table})
+	{
+		next unless $p->{'cmndline'}=~/\/usr\/bin\/mencoder/;
+		next if $p->{'cmndline'}=~/sh -c/;
+		$encode++;
+	}
+	main::_log("mencoders running - $encode");
+	
+	if ($encode > $encode_max)
+	{
+		main::_log("sorry, too many encoding processes already running",1);
+		return 1;
+	}
 	
 	my $time_start=time();
 	
@@ -111,6 +130,7 @@ sub execute
 			(format.ID_entity = $db0_line{'ID'})
 			WHERE
 				video_part.status IN ('Y','N') AND
+				video_part.process_lock = 'N' AND
 				(file.ID IS NULL OR (format.datetime_create > file.datetime_create))
 			ORDER BY
 				video_part.ID_entity DESC, video_part.ID ASC
@@ -122,7 +142,7 @@ sub execute
 		{
 			main::_log("video_part ID='$db1_line{'video_part_ID'}' with missing format '$db0_line{'name'}'");
 			
-			# check this file again if is not already processed by concurence process
+			# check this file again if is not already processed by parallel process
 			my $sql=qq{
 				SELECT
 					video_part.ID
@@ -141,18 +161,11 @@ sub execute
 			};
 			my %sth2=TOM::Database::SQL::execute($sql,'quiet'=>1);
 			my %db2_line=$sth2{'sth'}->fetchhash();
-			if (!$db2_line{'ID'}){main::_log("this video_part_file.ID='' is already processed");$encode++;next;}
+			if (!$db2_line{'ID'}){main::_log("this video_part_file.ID='' is already processed");next;}
 			
 			# lock this file encoding
 			my $lock=new TOM::lock("a510:encode video_part.ID=$db1_line{'video_part_ID'} video_format.ID=$db0_line{'ID'}")
-			|| do {
-				$encode++;
-				main::_log("this video_part_file.ID='' is already processing");
-				return 1 if $encode_max<=$encode;
-				next
-			}; # when this video is now already encoding, skip to next video
-			
-#			exit;
+			|| do {main::_log("this video_part_file.ID='$db1_line{'video_part_ID'}' is already processing");next};
 			
 			App::510::functions::video_part_file_generate(
 				'video_part.ID' => $db1_line{'video_part_ID'},
