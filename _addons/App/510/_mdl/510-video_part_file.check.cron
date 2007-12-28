@@ -61,17 +61,38 @@ sub execute
 		ORDER BY
 			video_part.ID
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>0);
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		main::_log("delete empty video_part.ID='$db0_line{'ID'}'");
 		
-#		App::501::functions::image_del(
-#			'image.ID_entity' => $db0_line{'ID_entity'}
-#		);
+		# find all video_part_attrs
+		foreach my $ID (App::020::SQL::functions::get_ID_entity(
+				'ID_entity' => $db0_line{'ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_video_part_attrs",
+		))
+		{
+			main::_log("part_attrs.ID='$ID->{'ID'}'");
+			App::020::SQL::functions::delete(
+				'ID' => $ID->{'ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_video_part_attrs",
+				'-journalize' => 1
+			);
+		}
+		App::020::SQL::functions::delete(
+			'ID' => $db0_line{'ID'},
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_video_part",
+			'-journalize' => 1
+		);
 		
 	}
-		
+	
 	
 	# find missing files
 	main::_log("checking video_part_file items in video_part_file table");
@@ -98,11 +119,54 @@ sub execute
 				DELETE FROM `$App::510::db_name`.`a510_video_part_file`
 				WHERE ID=$db0_line{'ID'} LIMIT 1
 			},'quiet'=>1);
+			next;
 		}
 		
+		if ($db0_line{'ID_format'} == $App::510::video_format_full_ID)
+		{
+			# find related image
+			my $relation=(App::160::SQL::get_relations(
+				'l_prefix' => 'a510',
+				'l_table' => 'video_part',
+				'l_ID_entity' => $db0_line{'ID_entity'},
+				'rel_type' => 'thumbnail',
+				'r_db_name' => $App::501::db_name,
+				'r_prefix' => 'a501',
+				'r_table' => 'image',
+		#		'r_ID_entity' => '2'
+				'limit' => 1
+			))[0];
+			if (!$relation->{'ID'})
+			{
+				main::_log("missing thumbnail image for video_part.ID='$db0_line{'ID'}'");
+				
+				# remove full format file
+				App::020::SQL::functions::delete(
+					'ID' => $db0_line{'ID'},
+					'db_h' => "main",
+					'db_name' => $App::510::db_name,
+					'tb_name' => "a510_video_part_file",
+					'-journalize' => 1
+				);
+				
+				# unlock thumbnail regeneration
+				App::020::SQL::functions::update(
+					'ID' => $db0_line{'ID_entity'},
+					'db_h' => "main",
+					'db_name' => $App::510::db_name,
+					'tb_name' => "a510_video_part",
+					'columns' =>
+					{
+						'thumbnail_lock' => "'N'"
+					},
+					'-journalize' => 1
+				);
+				
+			}
+		}
 	}
 	
-	
+#	return 1;
 	
 	# find missing files in file_j
 	main::_log("checking video_part_file items in video_part_file_j table");
@@ -127,8 +191,8 @@ sub execute
 		
 		if (!-d $pth)
 		{
-			File::Path::mkpath($pth);
 			main::_log("creating directory '$pth'");
+			File::Path::mkpath($pth);
 		}
 		
 		if (!-e $tom::P.'/!media/a510/video/part/file_j/'.$db0_line{'file_path'})
@@ -184,26 +248,57 @@ sub execute
 	}
 	
 	
+	
+	main::_log("remove all old generated video_part_file_j items in video_part_file_j table");
 	my $sql=qq{
 		SELECT
-			SUM(file_size) AS size
+			*,
+			CONCAT(ID_format,'/',SUBSTR(ID,1,4),'/',name,'.',file_ext) AS file_path
 		FROM
-			`$App::510::db_name`.`a510_video_part_file`
+			`$App::510::db_name`.a510_video_part_file
+		WHERE
+			file_alt_src IS NULL AND
+			from_parent = 'Y' AND
+			datetime_create <= DATE_SUB(CURDATE(),INTERVAL 1 DAY)
+		ORDER BY
+			ID
 	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $file=$tom::P.'/!media/a510/video/part/file_j/'.$db0_line{'file_path'};
+		if (-e $file)
+		{
+			main::_log("remove file video_part_file_j.ID=$db0_line{'ID'} $file");
+			unlink $file;
+		}
+	}
+	
+	
+	
+	my $sql=qq{SELECT SUM(file_size) AS size FROM `$App::510::db_name`.`a510_video_part_file`};
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	my %db0_line=$sth0{'sth'}->fetchhash();
 	
 	
-	my $sql=qq{
-		SELECT
-			SUM(file_size) AS size
-		FROM
-			`$App::510::db_name`.`a510_video_part_file_j`
-	};
+	my $sql=qq{SELECT SUM(file_size) AS size FROM `$App::510::db_name`.`a510_video_part_file_j`};
 	my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	my %db1_line=$sth1{'sth'}->fetchhash();
 	
-	main::_log("file_size active='".TOM::Text::format::bytes($db0_line{'size'})."' journalized='".TOM::Text::format::bytes($db1_line{'size'})."'");
+	main::_log("all file_size active='".TOM::Text::format::bytes($db0_line{'size'})."' journalized='".TOM::Text::format::bytes($db1_line{'size'})."'");
+	
+	
+	
+	my $sql=qq{SELECT SUM(file_size) AS size FROM `$App::510::db_name`.`a510_video_part_file` WHERE file_alt_src IS NULL};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	my %db0_line=$sth0{'sth'}->fetchhash();
+	
+	my $sql=qq{SELECT SUM(file_size) AS size FROM `$App::510::db_name`.`a510_video_part_file_j` WHERE file_alt_src IS NULL};
+	my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	my %db1_line=$sth1{'sth'}->fetchhash();
+	
+	main::_log("internal file_size active='".TOM::Text::format::bytes($db0_line{'size'})."' journalized='".TOM::Text::format::bytes($db1_line{'size'})."'");
+	
 	
 	return 1
 }
