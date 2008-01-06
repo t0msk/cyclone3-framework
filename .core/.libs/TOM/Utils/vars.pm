@@ -201,8 +201,85 @@ sub replace
 			$_=~s|<!TMP-$TMP!>|$value|;
 		}
 		
-		
 		while ($_=~s|<@([a-zA-Z0-9_\-:]+)>(.*?)</@\1>|<!TMP-$TMP!>|)
+		{
+			my $function=$1;
+			my $text=$2;
+			main::_log("requesting function '$1'") if $debug;
+			
+			my $cmd="\$text=".$replace_functions{$function}{'function'};
+			
+			main::_log("calling '$cmd'");
+			
+			eval $cmd;
+			
+			main::_log("error '$@'",1) if $@;
+			
+			main::_log("value='$text'") if $debug;
+			
+			$_=~s|<!TMP-$TMP!>|$text|;
+			
+		}
+	}
+	
+	$t->close() if $debug;
+}
+
+
+sub replace_comment
+{
+	my $t=track TOM::Debug(__PACKAGE__."::replace_last()") if $debug;
+	
+	my $TMP=TOM::Utils::vars::genhash(8);
+	my $i;
+	for (@_)
+	{
+		$i++;
+		main::_log("replacing text No. $i") if $debug;
+		
+		while ($_=~s/<#\$\((.{1,1024}?)\)>/<!TMP-$TMP!>/) # max 1024 long L10n variable string
+		{
+			my $var=$1;
+			$_=~s|<!TMP-$TMP!>|($var)|;
+		}
+		
+		while ($_=~s/<#\$(.{1,512}?)>/<!TMP-$TMP!>/) # max 512 long variable name
+		{
+			my $value;
+			my $var=$1;
+			my $null="***";
+			
+			main::_log("replacing variable '\$$var'") if $debug;
+			
+			if ($var=~/(sub\{|do\{|&|\+|\*|\/|=|"|\||;)/)
+			{
+				main::_log("Unsecure variable replacement \"".
+				$var.
+				"\" from $main::ENV{'REMOTE_ADDR'} with $main::ENV{'REQUEST_URI'} ",1,"secure");
+				$var="null";
+			}
+			
+			eval "\$value=\$$var;";
+			
+			if ('<$'.$var.'>' eq $value)
+			{
+				main::_log("neverending",1);
+				$value=~s|^<||;
+				$value=~s|>$||;
+			}
+
+			
+			if ($@)
+			{
+				main::_log("error:$@",1);
+			}
+			
+			main::_log("value='$value'") if $debug;
+			
+			$_=~s|<!TMP-$TMP!>|$value|;
+		}
+		
+		while ($_=~s|<#@([a-zA-Z0-9_\-:]+)>(.*?)</#?@\1>|<!TMP-$TMP!>|)
 		{
 			my $function=$1;
 			my $text=$2;
