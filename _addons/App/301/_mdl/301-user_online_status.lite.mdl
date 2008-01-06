@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use Encode;
+use encoding 'utf8';
+use utf8;
+use strict;
+use Digest::MD5  qw(md5 md5_hex md5_base64);
+
+use App::301::_init;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	
+	if ($main::USRM{'logged'} eq "Y")
+	{
+		$XSGN{'TMP'}=$XSGN{'logged'};
+	}
+	
+	$XSGN{'TMP'}=~s|<%user_(.*?)%>|$main::USRM{$1}|g;
+	
+	return 1
+}
+
+
+1;

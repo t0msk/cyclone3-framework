@@ -1,0 +1,91 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::301::_init;
+use CVML;
+
+=head1 NAME
+
+301-new.0.cron
+
+=head1 DESCRIPTION
+
+Create new user into USRM a301
+
+=cut
+
+=head1 SYNOPSIS
+
+ tom3-cron --domain=domain.tld ---global=1 ---category=301 ---name=new --login=login --pass=password --groups=admin,editor
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	
+	
+	if(!$env{'login'})
+	{
+		main::_log('failure - login undefined');
+		return undef
+	}
+	
+	
+	if(!$env{'pass'})
+	{
+		main::_log('failure - pass undefined');
+		return undef
+	}
+	
+	
+	my %user=App::301::functions::user_add
+	(
+		'login' => $env{'login'},
+		'pass' => $env{'pass'},
+		'status' => 'Y'
+	);
+	
+	
+	if ($env{'groups'})
+	{
+		foreach my $group(split(',',$env{'groups'}))
+		{
+			my $sql=qq{
+				SELECT
+					ID
+				FROM
+					TOM.a301_user_group
+				WHERE
+					name = '$group' AND
+					hostname = '$tom::H_cookie'
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+			if (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				my $sql=qq{
+					INSERT INTO TOM.a301_user_rel_group
+					(
+						ID_user,
+						ID_group
+					)
+					VALUES
+					(
+						'$user{'ID_user'}',
+						'$db0_line{'ID'}'
+					)
+				};
+				TOM::Database::SQL::execute($sql,'quiet'=>1);
+			}
+		}
+	}
+	
+	return 1
+}
+
+1;

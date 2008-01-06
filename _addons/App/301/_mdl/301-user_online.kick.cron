@@ -1,0 +1,118 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+301-user_online.kick.cron
+
+=head1 DESCRIPTION
+
+This cron module moves users with expired session into user table
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	
+	if (!$env{'max_online'}){$env{'max_online'}=20};
+
+	my %sth=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM TOM.a301_user_online_view
+		WHERE
+			datetime_request <= DATE_SUB(NOW(),INTERVAL $env{'max_online'} MINUTE)
+	},'quiet'=>0);
+	while (my %user=$sth{'sth'}->fetchhash)
+	{
+		
+		main::_log("kick user.ID_user='$user{'ID_user'}'");
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM TOM.a301_user
+			WHERE
+				ID_user='$user{'ID_user'}'
+			LIMIT 1
+		},'quiet'=>1);
+		if (my %user0=$sth0{'sth'}->fetchhash)
+		{
+			main::_log("is logged") if ($user{'logged'} eq "Y");
+			main::_log("not logged") if ($user{'logged'} ne "Y");
+			main::_log("anonymous") if (!$user0{'login'});
+			main::_log("authorized") if ($user0{'login'});
+			
+			if (
+					(($user{'logged'} eq "Y")&&($user0{'login'}))
+					||(($user{'logged'} ne "Y")&&(!$user0{'login'}))
+				)
+			{
+				
+				main::_log("save data into users table");
+				
+				TOM::Database::SQL::execute(qq{
+					UPDATE
+						TOM.a301_user
+					SET
+						datetime_last_login = '$user{datetime_login}',
+						requests_all = requests_all + $user{requests},
+						saved_cookies = '$user{cookies}',
+						saved_session = '$user{session}'
+					WHERE
+						ID_user='$user{ID_user}'
+					LIMIT 1
+				},'quiet'=>1);
+				
+				TOM::Database::SQL::execute(qq{
+					DELETE FROM
+						TOM.a301_user_online
+					WHERE
+						ID_user='$user{'ID_user'}'
+					LIMIT 1
+				},'quiet'=>1);
+				
+			}
+			else
+			{
+				main::_log("just delete from online");
+				TOM::Database::SQL::execute(qq{
+					DELETE FROM
+						TOM.a301_user_online
+					WHERE
+						ID_user='$user{'ID_user'}'
+					LIMIT 1
+				},'quiet'=>1);
+			}
+		}
+		else
+		{
+			main::_log("user not exists in users table",1);
+			main::_log("just delete from online");
+			TOM::Database::SQL::execute(qq{
+				DELETE FROM
+					TOM.a301_user_online
+				WHERE
+					ID_session='$user{'ID_session'}'
+				LIMIT 1
+			},'quiet'=>1);
+		}
+	}
+	
+	return 1;
+}
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+301-user.clean.cron
+
+=head1 DESCRIPTION
+
+Clean user table from unused or old users
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	
+	my %sth=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM TOM.a301_user
+		WHERE
+			datetime_register <= DATE_SUB(NOW(),INTERVAL 7 DAY)
+			AND status='N'
+	},'quiet'=>1);
+	while (my %user=$sth{'sth'}->fetchhash)
+	{
+		
+		#main::_log("kick user.ID_user='$user{'ID_user'}'");
+		
+		
+		
+	}
+	
+	return 1;
+}
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
