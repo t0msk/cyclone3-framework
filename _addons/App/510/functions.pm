@@ -191,7 +191,7 @@ sub video_part_file_generate
 	my $out=video_part_file_process(
 		'video1' => $video1_path,
 		'video2' => $video2->{'filename'},
-		'process' => $format{'process'}
+		'process' => $env{'process'} || $format{'process'}
 	);
 	
 	main::_log("out=$out");
@@ -210,7 +210,7 @@ sub video_part_file_generate
 				'tb_name' => "a510_video_part",
 				'columns' =>
 				{
-					'process_lock' => "'Y'"
+					'process_lock' => "'E'"
 				},
 				'-journalize' => 1
 			);
@@ -275,7 +275,13 @@ sub video_part_file_process
 		main::_log("key $_='$movie1_info{$_}'");
 	}
 	
-	my @env0;
+	my @files;
+	my %files_key;
+	$env{'process'}=~s|\s+$||m;
+	$env{'process'}.="\nencode()" unless $env{'process'}=~/encode\(\)$/m;
+	
+	if (-e 'frameno.avi'){main::_log("removing frameno.avi");unlink 'frameno.avi'}
+	
 	foreach my $function(split('\n',$env{'process'}))
 	{
 		$function=~s|\s+$||g;
@@ -298,8 +304,143 @@ sub video_part_file_process
 		if ($function_name eq "set_env")
 		{
 			main::_log("exec $function_name($params[0],$params[1])");
-			push @env0, '-'.$params[0].' '.$params[1];
-			#$env0{$params[0]}=$params[1];
+			#push @env0, '-'.$params[0].' '.$params[1];
+			$env{$params[0]}=$params[1];
+			#$procs++;
+			next;
+		}
+		
+		if ($function_name eq "del_env")
+		{
+			main::_log("exec $function_name(@params)");
+			foreach (@params){delete $env{$_};}
+			next;
+		}
+		
+		if ($function_name eq "stop")
+		{
+			main::_log("exec $function_name()");
+			last;
+		}
+		
+		if ($function_name eq "encode")
+		{
+			main::_log("exec $function_name()");
+			
+			# add params in this order
+			my @mencoder_env;
+			if ($env{'oac'}){push @mencoder_env, '-oac '.$env{'oac'};}
+			if ($env{'lameopts'}){push @mencoder_env, '-lameopts '.$env{'lameopts'};}
+			if ($env{'srate'}){push @mencoder_env, '-srate '.$env{'srate'};}
+			if ($env{'sws'}){push @mencoder_env, '-sws '.$env{'sws'};}
+			if ($env{'mc'}){push @mencoder_env, '-mc '.$env{'mc'};}
+			if ($env{'idx'}){push @mencoder_env, '-idx '.$env{'idx'};}
+			if ($env{'ovc'}){push @mencoder_env, '-ovc '.$env{'ovc'};}
+			if ($env{'vc'}){push @mencoder_env, '-vc '.$env{'vc'};}
+			if ($env{'x264encopts'})
+				{push @mencoder_env, '-x264encopts '.$env{'x264encopts'}.do{$env{'pass'} ? ':pass='.$env{'pass'} : '';};}
+			if ($env{'lavcopts'}){push @mencoder_env, '-lavcopts '.$env{'lavcopts'};}
+			if ($env{'of'}){push @mencoder_env, '-of '.$env{'of'};}
+			if ($env{'lavfopts'}){push @mencoder_env, '-lavfopts '.$env{'lavfopts'};}
+			if ($env{'vf'}){push @mencoder_env, '-vf '.$env{'vf'};}
+			if ($env{'ofps_max'})
+			{
+				main::_log("checking -ofps for max value $env{'ofps_max'}");
+				if ($movie1_info{'fps'} > $env{'ofps_max'})
+				{
+					main::_log("exec set_env('ofps','$env{'ofps_max'}')");
+					$env{'ofps'}=$env{'ofps_max'};
+				}
+			}
+			if ($env{'ofps'}){push @mencoder_env, '-ofps '.$env{'ofps'};}
+			if (exists $env{'nosound'}){push @mencoder_env, '-nosound'}
+			if (exists $env{'novideo'}){push @mencoder_env, '-novideo'}
+			if ($env{'endpos'}){push @mencoder_env, '-endpos '.$env{'endpos'};}
+			
+			my $ext='avi';
+			$ext='mp4' if $env{'x264encopts'};
+			$ext='avi' if $env{'lavfopts'}=~/format=avi/;
+			$ext='flv' if $env{'lavfopts'}=~/format=flv/;
+			$ext='264' if ($env{'x264encopts'} && exists $env{'nosound'});
+			my $temp_video;
+			if ($env{'pass'})
+			{
+				if ($files_key{'pass'})
+				{
+					main::_log("using same file for pass encoding ".$files_key{'pass'}->{'filename'});
+					$temp_video=$files_key{'pass'};
+				}
+				else
+				{
+					$temp_video=new TOM::Temp::file('ext'=>$ext);
+					$files_key{'pass'}=$temp_video;
+				}
+			}
+			$temp_video=new TOM::Temp::file('ext'=>$ext) unless $temp_video;
+			# don't erase files after partial encode()
+			push @files, $temp_video;
+			$files_key{$env{'o_key'}}=$temp_video if $env{'o_key'};
+			
+			
+			#main::_log("encoding to file '$temp_video->{'filename'}'");
+			my $cmd="/usr/bin/mencoder ".$env{'video1'}." -o ".($env{'o'} || $temp_video->{'filename'});
+			foreach (@mencoder_env){$cmd.=" $_";}
+			main::_log("cmd=$cmd");
+			
+			my $out=system("$cmd");main::_log("out=$out");
+			if ($out){$t->close();return undef}
+			
+			$procs++;
+			next;
+		}
+		
+		if ($function_name eq "MP4BoxImport")
+		{
+			main::_log("exec $function_name()");
+			my $temp_video=new TOM::Temp::file('ext'=>'mp4','nocreate'=>1);
+			
+			if ($files_key{'video'})
+			{
+				main::_log("adding m4v");
+				my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.$files_key{'video'}->{'filename'}.'#video '.$temp_video->{'filename'};
+				main::_log("cmd=$cmd");
+				my $out=system("$cmd");main::_log("out=$out");
+				if ($out){$t->close();return undef}
+			}
+			if ($files_key{'audio'})
+			{
+				main::_log("adding m4a");
+				my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.$files_key{'audio'}->{'filename'}.'#audio '.$temp_video->{'filename'};
+				main::_log("cmd=$cmd");
+				my $out=system("$cmd");main::_log("out=$out");
+				if ($out){$t->close();return undef}
+			}
+			
+			if ($files_key{'audiovideo'})
+			{
+				main::_log("adding m4v");
+				my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.$files_key{'audiovideo'}->{'filename'}.'#video '.$temp_video->{'filename'};
+				main::_log("cmd=$cmd");
+				my $out=system("$cmd");main::_log("out=$out");
+				if ($out){$t->close();return undef}
+				
+				main::_log("adding m4a");
+				my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.$files_key{'audiovideo'}->{'filename'}.'#audio '.$temp_video->{'filename'};
+				main::_log("cmd=$cmd");
+				my $out=system("$cmd");main::_log("out=$out");
+				if ($out){$t->close();return undef}
+			}
+			
+			if ($files_key{'all'})
+			{
+				main::_log("adding a+v");
+				my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.$files_key{'all'}->{'filename'}.' '.$temp_video->{'filename'};
+				main::_log("cmd=$cmd");
+				my $out=system("$cmd");main::_log("out=$out");
+				if ($out){$t->close();return undef}
+			}
+			
+			push @files, $temp_video;
 			$procs++;
 			next;
 		}
@@ -309,26 +450,19 @@ sub video_part_file_process
 		return undef;
 		
 	}
-		
+	
 	if ($procs)
 	{
-		main::_log("encoding file '$env{'video2'}' ext='$env{'ext'}'");
-		my $cmd="/usr/bin/mencoder ".$env{'video1'}." -o ".$env{'video2'};
-		foreach (@env0)
-		{
-			$cmd.=" $_";
-		}
-		main::_log("$cmd");
-		my $out=system("$cmd");
-		main::_log("out=$out");
+		main::_log("copying last processed file '$files[-1]->{'filename'}' ext='$env{'ext'}'");
+		File::Copy::copy($files[-1]->{'filename'}, $env{'video2'});
 		$t->close();
-		return 1 if $out == 0;
-		return undef;
+		return 1;
 	}
 	else
 	{
 		main::_log("copying same file '$env{'video2'}' ext='$env{'ext'}'");
-		File::Copy::copy($env{'video1'},$env{'video2'});
+		File::Copy::copy($env{'video1'}, $env{'video2'});
+		$t->close();
 		return 1;
 	}
 	
