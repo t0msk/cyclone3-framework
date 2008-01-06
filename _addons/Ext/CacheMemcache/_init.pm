@@ -63,7 +63,7 @@ sub memcached_start
 	}
 	else
 	{
-		main::_log("memcached is not running");
+		main::_log("memcached is not running",1);
 		my $i=0;
 		foreach (@{$TOM::CACHE_memcached_servers})
 		{
@@ -162,11 +162,20 @@ sub connect
 		return undef;
 	}
 	
+	main::_log("cache connecting,...");
 	$cache = Cache::Memcached::Managed->new($TOM::CACHE_memcached_servers);
 	
 	if ($cache)
 	{
 		main::_log("cache connected");
+		foreach my $server(keys %{$cache->dead})
+		{
+			main::_log("dead server: $server", 1);
+		}
+		foreach my $server(keys %{$cache->servers})
+		{
+			main::_log("active server: $server");
+		}
 	}
 	else
 	{
