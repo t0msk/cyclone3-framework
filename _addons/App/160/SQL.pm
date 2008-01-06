@@ -76,6 +76,8 @@ sub new_relation
 		main::_log("input '$_'='$env{$_}'");
 	}
 	
+	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'l_prefix'}.'/'.$env{'l_table'};
+	
 	# check if this relation already exists
 	my $relation=(get_relations(
 		%env,
@@ -105,6 +107,12 @@ sub new_relation
 				'status' => "'Y'",
 			},
 		);
+		
+		if ($TOM::CACHE_memcached)
+		{
+			# save info about changed set of relations
+			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time());
+		}
 		
 		$t->close();
 		return $relation->{'ID_entity'}, $relation->{'ID'};
@@ -143,6 +151,12 @@ sub new_relation
 		
 		main::_log("clone with ID='$ID'");
 		
+		if ($TOM::CACHE_memcached)
+		{
+			# save info about changed set of relations
+			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time());
+		}
+		
 		$t->close();
 		return $relation->{'ID_entity'}, $ID;
 	}
@@ -166,6 +180,12 @@ sub new_relation
 			'status' => "'Y'",
 		},
 	);
+	
+	if ($TOM::CACHE_memcached)
+	{
+		# save info about changed set of relations
+		$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time());
+	}
 	
 	$t->close();
 	return $ID, $ID;
@@ -215,6 +235,13 @@ sub remove_relation
 				'db_name' => $env{'db_name'},
 				'tb_name' => 'a160_relation',
 			);
+			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'
+				.$relation->{'l_prefix'}.'/'.$relation->{'l_table'};
+			if ($TOM::CACHE_memcached)
+			{
+				# save info about changed set of relations
+				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time());
+			}
 			$t->close();
 			return 1;
 		}
@@ -269,6 +296,20 @@ sub get_relations
 	# list of input
 	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_} && $debug};
 	
+	# Memcached key
+	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.
+		$env{'l_prefix'}.'/'.$env{'l_table'};
+	my $cache_key='a160_relation::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.
+		$env{'ID'}.'/'.
+		$env{'ID_entity'}.'/'.
+		$env{'l_prefix'}.'/'.
+		$env{'l_table'}.'/'.
+		$env{'l_ID_entity'}.'/'.
+		$env{'r_db_name'}.'/'.
+		$env{'r_prefix'}.'/'.
+		$env{'r_table'}.'/'.
+		$env{'r_ID_entity'};
+	
 	my $where;
 	
 	# status
@@ -284,6 +325,21 @@ sub get_relations
 	if (exists $env{'rel_type'}){$where.="AND rel_type='$env{rel_type}' ";}
 	
 	my @relations;
+	
+	if ($TOM::CACHE_memcached)
+	{
+		my $cache_change=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_change_key);
+		my $cache=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_key);
+		
+		#main::_log("cache-time='".$cache->{'time'}."' cache_change='".$cache_change."'");
+		
+		if ($cache->{'time'} && ($cache->{'time'} > $cache_change))
+		{
+			main::_log("found in cache") if $debug;
+			$t->close() if $debug;
+			return @{$cache->{'data'}};
+		}
+	}
 	
 	my $sql=qq{
 		SELECT
@@ -304,6 +360,20 @@ sub get_relations
 		main::_log("relation[$i] rel_type='$db0_line{'rel_type'}' r_db_name='$db0_line{'r_db_name'}' r_prefix='$db0_line{'r_prefix'}' r_table='$db0_line{'r_table'}' r_ID_entity='$db0_line{'r_ID_entity'}'") if $debug;
 		push @relations, {%db0_line};
 		$i++;
+	}
+	
+	if ($TOM::CACHE_memcached)
+	{
+		$Ext::CacheMemcache::cache->set
+		(
+			'namespace' => "db_cache",
+			'key' => $cache_key,
+			'value' =>
+			{
+				'time' => time(),
+				'data' => [@relations]
+			}
+		);
 	}
 	
 	$t->close() if $debug;
