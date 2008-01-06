@@ -19,7 +19,7 @@ use TOM::Database::SQL::transaction;
 
 our $debug=0;
 our $logquery=1;
-our $logquery_long=1;
+our $logquery_long=5;
 
 =head1 FUNCTIONS
 
@@ -101,9 +101,21 @@ sub show_create_table
 
 =head2 execute($SQL,'db_h'=>'main')
 
-Vykoná SQL príkaz a vráti pole hodnot
+Executes SQL query and return hash with variables
 
- %output={'sth', 'rows', 'info', 'err'}
+ %sth=TOM::Database::SQL::execute(
+   $SQL,
+   'db_h' => "main",
+   'slave' => 1 # is safe to execute this SQL query on slave server?
+                # other queries than SELECT will be executed on master
+   'cache' => 1 # is safe to cache this SQL query
+                # when another number than 1 is used, represents seconds in cache
+ );
+ # %sth={'sth', 'rows', 'info', 'err'};
+ while (my %db_line=$sth{'sth'}->fetchhash())
+ {
+   # parsing data
+ }
 
 =cut
 
@@ -124,16 +136,21 @@ sub execute
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
-	if ($TOM::DB{$env{'db_h'}.':s1'} && $SQL=~/^SELECT/)
+	if ($env{'slave'} && $TOM::DB{$env{'db_h'}}{'slaves'} && $SQL=~/^SELECT/)
 	{
-		#main::_log("using slave");
-		#$env{'db_h'}=$env{'db_h'}.':s1';
+		my $slave=int(rand($TOM::DB{$env{'db_h'}}{'slaves'}+1));
+		if ($TOM::DB{$env{'db_h'}.':'.$slave})
+		{
+			main::_log("using slave:$slave") unless $env{'quiet'};
+			$env{'db_h'}=$env{'db_h'}.':'.$slave;
+		}
 	}
 	
 	TOM::Database::connect::multi($env{'db_h'}) unless $main::DB{$env{'db_h'}};
 	
 	if ($env{'log'})
 	{
+		main::_log("db_h='$env{'db_h'}'") unless $env{'quiet'};
 		foreach my $line(split("\n",$SQL))
 		{
 			$line=~s|\t|   |g;
@@ -141,15 +158,17 @@ sub execute
 		}
 	}
 	
+	my $SQL_=$SQL;
+	$SQL_=~s|[\n\t\r]+| |g;
+	$SQL_=~s|^[ ]+||;
 	if ($logquery)
 	{
-		my $SQL_=$SQL;
-		$SQL_=~s|[\n\t\r]+| |g;
-		$SQL_=~s|^[ ]+||;
 		main::_log("{$env{'db_h'}} $SQL_",3,"sql");
 	}
 	
+	#main::_log("Query $env{'db_h'}");
 	$output{'sth'}=$main::DB{$env{'db_h'}}->Query($SQL);
+	#main::_log("after Query");
 	
 	$output{'info'}=$main::DB{$env{'db_h'}}->info();
 	$output{'err'}=$main::DB{$env{'db_h'}}->errmsg();
@@ -158,7 +177,10 @@ sub execute
 	{
 		if ($output{'err'})
 		{
+			my ($package, $filename, $line) = caller;
 			main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
+			main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
+			main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
 		}
 		main::_log("output info=".$output{'info'}) unless $env{'quiet'};
 		$t->close();
@@ -169,12 +191,24 @@ sub execute
 	
 	if ($output{'err'})
 	{
+		my ($package, $filename, $line) = caller;
 		main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
+		main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
+		main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1);
 	}
 	main::_log("output affectedrows=".$output{'rows'}) unless $env{'quiet'};
 	main::_log("output info=".$output{'info'}) unless $env{'quiet'};
 	
 	$t->close();
+	
+	if ($logquery_long && ($t->{'time'}{'req'}{'duration'} > $logquery_long))
+	{
+		my ($package, $filename, $line) = caller;
+		main::_log("{$env{'db_h'}} executed ".($t->{'time'}{'req'}{'duration'})."s query",1);
+		main::_log("{$env{'db_h'}} duration:".($t->{'time'}{'req'}{'duration'})."s SQL='$SQL_' from $package:$filename:$line",4,"sql.long");
+		main::_log("[$tom::H] {$env{'db_h'}} duration:".($t->{'time'}{'req'}{'duration'})."s SQL='$SQL_' from $package:$filename:$line",4,"sql.long",1) if $tom::H;
+	}
+	
 	return %output;
 }
 
