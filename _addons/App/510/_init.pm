@@ -68,37 +68,40 @@ use File::Path;
 
 BEGIN
 {
-	
-	my $htaccess_j=qq{
-	# safe data
-		RewriteEngine Off
-		Deny from All
-	};
-	
-	# check media directory
-	if ($tom::P)
+	eval
 	{
+		alarm 1; # when media directory is a freezed network filesystem
+		my $htaccess_j=qq{
+		# safe data
+			RewriteEngine Off
+			Deny from All
+		};
 		
-		if (!-e $tom::P.'/!media/a510/video/part/file')
+		# check media directory
+		if ($tom::P)
 		{
-			File::Path::mkpath $tom::P.'/!media/a510/video/part/file';
+			main::_log("checking a510 media directory");
+			if (!-e $tom::P.'/!media/a510/video/part/file')
+			{
+				File::Path::mkpath $tom::P.'/!media/a510/video/part/file';
+			}
+			
+			if (!-e $tom::P.'/!media/a510/video/part/file_j')
+			{
+				main::_log("creating path $tom::P/!media/a510/video/part/file_j");
+				File::Path::mkpath $tom::P.'/!media/a510/video/part/file_j';
+			}
+			
+			if (!-e $tom::P.'/!media/a510/video/part/file_j/.htaccess')
+			{
+				open (HND,'>'.$tom::P.'/!media/a510/video/part/file_j/.htaccess');
+				print HND $htaccess_j;
+				close HND;
+			}
+			
 		}
-		
-		if (!-e $tom::P.'/!media/a510/video/part/file_j')
-		{
-			main::_log("creating path $tom::P/!media/a510/video/part/file_j");
-			File::Path::mkpath $tom::P.'/!media/a510/video/part/file_j';
-		}
-		
-		if (!-e $tom::P.'/!media/a510/video/part/file_j/.htaccess')
-		{
-			open (HND,'>'.$tom::P.'/!media/a510/video/part/file_j/.htaccess');
-			print HND $htaccess_j;
-			close HND;
-		}
-		
-	}
-	
+	};
+	alarm 0;
 }
 
 
