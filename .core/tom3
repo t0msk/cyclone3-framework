@@ -1227,7 +1227,7 @@ while ($main::CGI=new CGI::Fast())
 		# ak je len TID poslane prazdne alebo zle
 		else
 		{
-			$FORM{TID}="l_default" unless $FORM{TID}=~/^[lmg]_[0-9_\-a-zA-Z]{0,30}$/;
+			$FORM{TID}="l_default" unless $FORM{TID}=~/^[lmg]_[0-9_\-a-zA-Z]{0,64}$/;
 		}
 		if ($env{admin} eq "request"){$FORM{TID}="g_admin";}
 		if ($env{test} eq "request"){$FORM{TID}="g_test";}
@@ -2512,7 +2512,7 @@ while ($main::CGI=new CGI::Fast())
 		$t_postprocess->close();
 		$t_eval->close();
 		
-		main::_log("IDhash='$main::USRM{'IDhash'}' QUERY='$main::ENV{QUERY_STRING_FULL}' ",3,'pub.track');
+		main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' ",3,'pub.track');
 		
 		Tomahawk::stat::rqs(
 			proc => $t_eval->{'time'}{proc}{duration},
