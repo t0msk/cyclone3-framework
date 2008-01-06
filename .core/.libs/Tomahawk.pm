@@ -130,53 +130,50 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 sub Getvar
 {
- return undef unless $_[0];
- if (($TOM::var_cache)&&($var{$_[0]}{time}+$var{$_[0]}{cachetime}>$tom::time_current)){return $var{$_[0]}{value}}
- 
- #main::_log("Quering");
- 
- main::_log("Getvar($_[0]) from database $TOM::DB{main}{name}");
- 
- #main::_log("Get var SQL ".$_[0]." from ".$TOM::DB_name." ".($tom::time_current-$var{$_[0]}{time})."-".$var{$_[0]}{cachetime});
- 
- my $db0 = $main::DB{main}->Query("
- 	SELECT value,cache
-	FROM $TOM::DB_name._config
-	WHERE type='var' AND variable='$_[0]' LIMIT 1");
- if (my @db0_line=$db0->FetchRow())
- {
-  $main::DB{main}->Query("
-	UPDATE $TOM::DB_name._config
-	SET reqtime='$tom::time_current'
-	WHERE type='var' AND variable='$_[0]' LIMIT 1") if $TOM::DEBUG_var_cache;
-  if ($TOM::var_cache)
-  {
-   $db0_line[1]=$TOM::var_loadtime unless $db0_line[1];
-   $var{$_[0]}{time}=$tom::time_current;$var{$_[0]}{value}=$db0_line[0];
-   $var{$_[0]}{cachetime}=$db0_line[1];
-  }
-  return $db0_line[0];
- }
- else
- {
-  main::_log("writing");
-  my $db0 = $main::DB{main}->Query("
-	SELECT *
-	FROM $TOM::DB_name_TOM._config
-	WHERE type='var' AND variable='$_[0]' LIMIT 1");
-  if (my %env0=$db0->fetchhash())
-  {
-   $main::DB{main}->Query("
-   	INSERT INTO $TOM::DB_name._config(variable,value,type,cache,about)
-	VALUES('$_[0]','$env0{value}','var','$env0{cache}','RQS - $env0{about}')
-	");
-  }
-  else
-  {
-   $main::DB{main}->Query("INSERT INTO $TOM::DB_name._config(variable,type,about) VALUES('$_[0]','var','RQS! - ')");
-  }
- }
- return undef}
+	return undef unless $_[0];
+	if (($TOM::var_cache)&&($var{$_[0]}{'time'}+$var{$_[0]}{'cachetime'}>$main::time_current)){return $var{$_[0]}{'value'}}
+	main::_log("Getvar($_[0]) from database $TOM::DB{'main'}{'name'}");
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT value,cache
+		FROM `$TOM::DB{'main'}{'name'}`._config
+		WHERE type='var' AND variable='$_[0]'
+		LIMIT 1
+	},'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		TOM::Database::SQL::execute(qq{
+			UPDATE `$TOM::DB{'main'}{'name'}`._config
+			SET reqtime='$main::time_current'
+			WHERE type='var' AND variable='$_[0]' LIMIT 1},'quiet'=>1) if $TOM::DEBUG_var_cache;
+		if ($TOM::var_cache)
+		{
+			$db0_line{'cache'}=$TOM::var_loadtime unless $db0_line{'cache'};
+			$var{$_[0]}{'time'}=$tom::time_current;$var{$_[0]}{'value'}=$db0_line{'value'};
+			$var{$_[0]}{'cachetime'}=$db0_line{'cache'};
+		}
+		return $db0_line{'value'};
+	}
+	else
+	{
+		my %sth0 = TOM::Database::SQL::execute(qq{
+			SELECT *
+			FROM `TOM`._config
+			WHERE type='var' AND variable='$_[0]' LIMIT 1},'quiet'=>1);
+		if (my %env0=$sth0{'sth'}->fetchhash())
+		{
+			TOM::Database::SQL::execute(qq{
+				INSERT INTO `$TOM::DB{'main'}{'name'}`._config(variable,value,type,cache,about)
+				VALUES('$_[0]','$env0{'value'}','var','$env0{'cache'}','RQS - $env0{'about'}')
+			},'quiet'=>1);
+		}
+		else
+		{
+			TOM::Database::SQL::execute(qq{INSERT INTO `$TOM::DB{'main'}{'name'}`._config(variable,type,about) VALUES('$_[0]','var','RQS! - ')"},'quiet'=>1);
+		}
+	}
+	return undef
+}
 
 
 =head2 Getmdlvar
@@ -254,23 +251,23 @@ sub GetCACHE_CONF
 {
 	my $t=track TOM::Debug(__PACKAGE__."::GetCACHE_CONF()");
 	my $count=0;
-	my $db0 = $main::DB{sys}->Query("
+	my %sth0 = TOM::Database::SQL::execute(qq{
 		SELECT *
 		FROM TOM.a150_config
 		WHERE	(domain='$tom::Hm' OR domain='')
 				AND (domain_sub='$tom::H' OR domain_sub='')
 				AND engine='pub'
 		ORDER BY domain,domain_sub
-		");
-	while (my %db0_line=$db0->fetchhash())
+		},'quiet'=>1,'db_h'=>'sys');
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$count++;
-		my $var=$db0_line{Capp}."-".$db0_line{Cmodule}."-".$db0_line{Cid};
-		$CACHE{$var}{'-cache_time'}=$db0_line{time_duration};
-		$CACHE{$var}{'-opt_time'}=$db0_line{time_optimalization};
-		$CACHE{$var}{'-domain'}=$db0_line{domain};
-		$CACHE{$var}{'-domain_sub'}=$db0_line{domain_sub};
-		$CACHE{$var}{'-ID_config'}=$db0_line{ID};
+		my $var=$db0_line{'Capp'}."-".$db0_line{'Cmodule'}."-".$db0_line{'Cid'};
+		$CACHE{$var}{'-cache_time'}=$db0_line{'time_duration'};
+		$CACHE{$var}{'-opt_time'}=$db0_line{'time_optimalization'};
+		$CACHE{$var}{'-domain'}=$db0_line{'domain'};
+		$CACHE{$var}{'-domain_sub'}=$db0_line{'domain_sub'};
+		$CACHE{$var}{'-ID_config'}=$db0_line{'ID'};
 	}
 	main::_log("loaded ".$count." cache configs from TOM.a150_config");
 	$t->close();
@@ -776,7 +773,7 @@ sub module
 		if ($return_code)
 		{
 			#main::_log("replacing");
-			TOM::Utils::vars::replace($Tomahawk::module::XSGN{'TMP'});
+			TOM::Utils::vars::replace_comment($Tomahawk::module::XSGN{'TMP'});
 			
 			$Tomahawk::module::XSGN{'TMP'}=~s|<#.*?#>||g;
 			$Tomahawk::module::XSGN{'TMP'}=~s|<%.*?%>||g;
@@ -1441,7 +1438,7 @@ sub GetXSGN
 	while ($file_line=<HND>){$file_data.=$file_line;}
 	($file_data)=$file_data=~/<XML_DESIGN_DEFINITION.*?>(.*)<\/XML_DESIGN_DEFINITION>/s;
 	
-	#TOM::Utils::vars::replace($file_data) if $env{'-convertvars'};
+	TOM::Utils::vars::replace($file_data);# if $env{'-convertvars'};
 	
 	while ($file_data=~s|<DEFINITION id="(.*?)">[\n\r]?(.*?)[\n\r]?</DEFINITION>||s)
 	{
