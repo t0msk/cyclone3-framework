@@ -94,6 +94,53 @@ sub execute
 	}
 	
 	
+	# find all video_part's with missing thumbnail
+	main::_log("check video_part items for missing a501_image");
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$App::510::db_name`.a510_video_part
+		WHERE
+			thumbnail_lock='Y'
+		ORDER BY
+			ID
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		# find related image
+		my $relation=(App::160::SQL::get_relations(
+			'l_prefix' => 'a510',
+			'l_table' => 'video_part',
+			'l_ID_entity' => $db0_line{'ID'},
+			'rel_type' => 'thumbnail',
+			'r_db_name' => $App::501::db_name,
+			'r_prefix' => 'a501',
+			'r_table' => 'image',
+		#	'r_ID_entity' => '2'
+			'limit' => 1
+		))[0];
+		if (!$relation->{'ID'})
+		{
+			main::_log("missing thumbnail image for video_part.ID='$db0_line{'ID'}'");
+			
+			# unlock thumbnail regeneration
+			App::020::SQL::functions::update(
+				'ID' => $db0_line{'ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_video_part",
+				'columns' =>
+				{
+					'thumbnail_lock' => "'N'"
+				},
+				'-journalize' => 1
+			);
+		}
+	}
+	
+	
 	# find missing files
 	main::_log("checking video_part_file items in video_part_file table");
 	my $sql=qq{
@@ -164,6 +211,7 @@ sub execute
 				
 			}
 		}
+		
 	}
 	
 #	return 1;
