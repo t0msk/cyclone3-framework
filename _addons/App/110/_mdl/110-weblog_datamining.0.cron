@@ -145,7 +145,8 @@ sub execute
 							)
 						};
 						
-						if (not $main::DB{stats}->Query($sql))
+						my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'db_h'=>'stats');
+						if ($sth0{'err'})
 						{
 							die "can't insert $sql\n";
 						}
@@ -159,26 +160,26 @@ sub execute
 							
 							my $ID;
 							
-							my $db0=$main::DB{'stats'}->Query("
+							my %sth0=TOM::Database::SQL::execute(qq{
 								SELECT
 									ID
 								FROM
 									TOM.a110_sitemap_day
 								WHERE
-									date_create=FROM_UNIXTIME($hash{reqtime}) AND
+									date_create=DATE(FROM_UNIXTIME($hash{reqtime})) AND
 									domain='$hash{domain}' AND
 									domain_sub='$hash{domain_sub}' AND
 									url='$URL'
 								LIMIT 1
-							");
-							if (my %db0_line=$db0->fetchhash())
+							},'db_h'=>'stats','quiet'=>1);
+							if (my %db0_line=$sth0{'sth'}->fetchhash())
 							{
 								$ID=$db0_line{'ID'};
 								main::_log("found under ID='$ID'");
 							}
 							else
 							{
-								my $dbh=$main::DB{'stats'}->Query("
+								my %sth0=TOM::Database::SQL::execute(qq{
 									INSERT INTO TOM.a110_sitemap_day
 									(
 										domain,
@@ -190,15 +191,15 @@ sub execute
 									(
 										'$hash{domain}',
 										'$hash{domain_sub}',
-										FROM_UNIXTIME($hash{reqtime}),
+										DATE(FROM_UNIXTIME($hash{reqtime})),
 										'$URL'
 									)
-								");
-								$ID = $dbh->{'mysql_insertid'};
+								},'quiet'=>1,'db_h'=>'stats');
+								$ID = $sth0{'sth'}->{'mysql_insertid'};
 								main::_log("inserted under ID='$ID'");
 							}
 							
-							my $dbh=$main::DB{'stats'}->Query("
+							TOM::Database::SQL::execute(qq{
 								UPDATE TOM.a110_sitemap_day
 								SET
 									lastmod='$hash{lastmod}',
@@ -208,7 +209,7 @@ sub execute
 								WHERE
 									ID='$ID'
 								LIMIT 1
-							");
+							});
 							
 						}
 						
