@@ -647,6 +647,10 @@ sub image_add
 		}
 	}
 	
+	if (!$env{'image.ID_entity'})
+	{
+		die "ufff, missing image.ID_entity\n";
+	}
 	
 	if (!$env{'image_attrs.ID'})
 	{
