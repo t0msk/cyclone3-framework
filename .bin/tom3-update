@@ -184,33 +184,30 @@ foreach my $overlay(reverse @TOM::Overlays::item)
 }
 
 
-# Checking core.tom scripts
-#print "\n";
+# Checking core scripts
+
 print color 'reset green';
 
-my $cmd='/usr/bin/find /www/TOM -name core.tom 2>/dev/null';
-
-my $out=`/usr/bin/md5sum /www/TOM/.symlinks/core.tom`;
-	$out=~/^([0-9a-z]+)/;
-my $md5_orig=$1;
-
-foreach my $file (split('\n',`$cmd`))
+foreach my $script('core.tom','download.tom')
 {
 	
-	next if $file=~/\.symlinks/;
-	
-	my $out=`/usr/bin/md5sum $file`;
+	my $cmd='/usr/bin/find /www/TOM -name '.$script.' 2>/dev/null';
+	my $out=`/usr/bin/md5sum /www/TOM/.symlinks/$script`;
 		$out=~/^([0-9a-z]+)/;
-	my $md5=$1;
-	
-	if ($md5 ne $md5_orig)
+	my $md5_orig=$1;
+	foreach my $file (split('\n',`$cmd`))
 	{
-		print "updating $file\n";
-		`rm $file`;
-		`cp /www/TOM/.symlinks/core.tom $file`;
+		next if $file=~/\.symlinks/;
+		my $out=`/usr/bin/md5sum $file`;
+			$out=~/^([0-9a-z]+)/;
+		my $md5=$1;
+		if ($md5 ne $md5_orig)
+		{
+			print "updating $file\n";
+			`rm $file`;
+			`cp /www/TOM/.symlinks/$script $file`;
+		}
 	}
-	
 }
-
 
 &exit();

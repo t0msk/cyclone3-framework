@@ -1,0 +1,3 @@
+#!/bin/sh
+/www/TOM/.core/download pwd=$PWD;
+
