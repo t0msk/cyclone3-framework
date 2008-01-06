@@ -92,6 +92,21 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part` (
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*app*/_video_part_caption` (
+  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
+  `datetime_create` datetime NOT NULL,
+  `time_start` time NOT NULL,
+  `time_end` time NOT NULL,
+  `caption` varchar(128) character set utf8 NOT NULL default '',
+  `lng` char(2) character set ascii NOT NULL default '',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`),
+  UNIQUE KEY `UNI_0` (`ID_entity`,`time_start`,`lng`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*app*/_video_part_j` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
