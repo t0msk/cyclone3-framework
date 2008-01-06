@@ -38,7 +38,7 @@ L<App::020::_init|app/"020/_init.pm">
 
 =item *
 
-L<App::300::_init|app/"300/_init.pm">
+L<App::301::_init|app/"301/_init.pm">
 
 =item *
 
@@ -57,7 +57,7 @@ File::Path
 =cut
 
 use App::020::_init; # data standard 0
-use App::300::_init;
+use App::301::_init;
 use App::501::functions;
 use File::Copy;
 use File::Path;
@@ -66,37 +66,40 @@ use File::Path;
 
 BEGIN
 {
-	
-	my $htaccess_j=qq{
-	# safe data
-		RewriteEngine Off
-		Deny from All
-	};
-	
-	# check media directory
-	if ($tom::P)
+	eval
 	{
+		alarm 1; # when media directory is a freezed network filesystem
+		my $htaccess_j=qq{
+		# safe data
+			RewriteEngine Off
+			Deny from All
+		};
 		
-		if (!-e $tom::P.'/!media/a501/image/file')
+		# check media directory
+		if ($tom::P)
 		{
-			File::Path::mkpath $tom::P.'/!media/a501/image/file';
+			
+			if (!-e $tom::P.'/!media/a501/image/file')
+			{
+				File::Path::mkpath $tom::P.'/!media/a501/image/file';
+			}
+			
+			if (!-e $tom::P.'/!media/a501/image/file_j')
+			{
+				main::_log("creating path $tom::P/!media/a501/image/file_j");
+				File::Path::mkpath $tom::P.'/!media/a501/image/file_j';
+			}
+			
+			if (!-e $tom::P.'/!media/a501/image/file_j/.htaccess')
+			{
+				open (HND,'>'.$tom::P.'/!media/a501/image/file_j/.htaccess');
+				print HND $htaccess_j;
+				close HND;
+			}
+			
 		}
-		
-		if (!-e $tom::P.'/!media/a501/image/file_j')
-		{
-			main::_log("creating path $tom::P/!media/a501/image/file_j");
-			File::Path::mkpath $tom::P.'/!media/a501/image/file_j';
-		}
-		
-		if (!-e $tom::P.'/!media/a501/image/file_j/.htaccess')
-		{
-			open (HND,'>'.$tom::P.'/!media/a501/image/file_j/.htaccess');
-			print HND $htaccess_j;
-			close HND;
-		}
-		
-	}
-	
+	};
+	alarm 0;
 }
 
 
