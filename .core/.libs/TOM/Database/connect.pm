@@ -138,14 +138,16 @@ sub multi
 		}
 		else
 		{
+			$TOM::DB{$handler}{'name'}=$TOM::DB{'main'}{'name'} unless $TOM::DB{$handler}{'name'};
+			
 			main::_log("connecting '$handler' ('$TOM::DB{$handler}{host}' '$TOM::DB{$handler}{name}' '$TOM::DB{$handler}{user}' '****')");
 			
 			$main::DB{$handler} = Mysql->Connect
 			(
-				$TOM::DB{$handler}{host},
-				$TOM::DB{$handler}{name},
-				$TOM::DB{$handler}{user},
-				$TOM::DB{$handler}{pass},
+				$TOM::DB{$handler}{'host'},
+				$TOM::DB{$handler}{'name'},
+				$TOM::DB{$handler}{'user'},
+				$TOM::DB{$handler}{'pass'},
 			);
 			
 			if (!$main::DB{$handler})
@@ -158,7 +160,7 @@ sub multi
 			foreach my $sql(@{$TOM::DB{$handler}{'sql'}})
 			{
 				main::_log("sql='$sql'");
-				TOM::Database::SQL::execute($sql,'db_h'=>$handler,'quiet'=>1);
+				TOM::Database::SQL::execute($sql, 'db_h'=>$handler, 'quiet'=>1);
 			}
 			
 		}
