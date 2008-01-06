@@ -109,7 +109,7 @@ sub execute
 			required LIKE 'Y' AND
 			name NOT LIKE 'original'
 		ORDER BY
-			ID_charindex
+			RAND()
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
