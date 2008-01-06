@@ -27,7 +27,10 @@ sub new
 	
 	main::_log("opened tempfile $self->{'filename'}");
 	
-	open(HND_CNT,'>'.$self->{'filename'});binmode HND_CNT;close(HND_CNT);
+	if (!$env{'nocreate'})
+	{
+		open(HND_CNT,'>'.$self->{'filename'});binmode HND_CNT;close(HND_CNT);
+	}
 	
 	return bless $self, $class;
 }
