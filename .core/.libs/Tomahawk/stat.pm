@@ -50,8 +50,14 @@ print HND_weblog <<"HEAD";
  <domain>$host</domain>
  <domain_sub>$tom::H</domain_sub>
  <IP>$main::ENV{REMOTE_ADDR}</IP>
- <IDhash>$main::USRM{IDhash}</IDhash>
- <IDsession>$main::USRM{IDsession}</IDsession>
+HEAD;
+
+print HND_weblog "
+ <IDhash>".($main::USRM{'ID_user'} || $main::USRM{'IDhash'})."</IDhash>
+ <IDsession>".($main::USRM{'ID_session'} || $main::USRM{'IDsession'})."</IDsession>
+";
+
+print HND_weblog <<"HEAD";
  <logged>$main::USRM{logged}</logged>
  <USRM_flag>$main::USRM_flag</USRM_flag>
  <query_string>$main::ENV{QUERY_STRING_FULL}</query_string>
@@ -72,7 +78,7 @@ HEAD
 	if ($main::sitemap)
 	{
 		print HND_weblog <<"HEAD";
-<sitemap>1</sitemap>
+ <sitemap>1</sitemap>
 HEAD
 	}
 	
