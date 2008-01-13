@@ -48,7 +48,29 @@ our %table=
 	{
 		'uri' => ['^/board/index\.php']
 	},
+	'phpads'=>
+	{
+		'uri' => ['adxmlrpc\.php']
+	},
+	'phpmychat'=>
+	{
+		'uri' => ['messagesL\.php3']
+	},
 	
+	'horde'=>
+	{
+		'uri' => ['^/horde\-']
+	},
+	
+	'crossxml'=>
+	{
+		'uri' => ['^/cross\*\*\*\*in\.xml']
+	},
+	
+	'awstats'=>
+	{
+		'uri' => ['awstats\.pl']
+	},
 	
 	'unknown-php'=> # all unknown php attacks
 	{
