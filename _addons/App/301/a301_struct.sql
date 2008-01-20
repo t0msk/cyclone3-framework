@@ -39,7 +39,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_emailverify` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_user_profile` (
-  `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel _user.ID_user
+  `datetime_create` datetime NOT NULL,
   `firstname` varchar(32) character set utf8 collate utf8_bin default NULL,
   `surname` varchar(64) character set utf8 collate utf8_bin default NULL,
   `sex` char(1) character set ascii default NULL,
@@ -50,7 +52,31 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_profile` (
   `ZIP` varchar(16) character set ascii default NULL,
   `street` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `street_num` varchar(12) character set ascii default NULL,
-  PRIMARY KEY  (`ID_user`)
+  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`datetime_create`),
+  UNIQUE KEY `UNI_0` (`ID_entity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_user_profile_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
+  `datetime_create` datetime NOT NULL,
+  `firstname` varchar(32) character set utf8 collate utf8_bin default NULL,
+  `surname` varchar(64) character set utf8 collate utf8_bin default NULL,
+  `sex` char(1) character set ascii default NULL,
+  `date_birth` date default NULL,
+  `country` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `state` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `city` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `ZIP` varchar(16) character set ascii default NULL,
+  `street` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `street_num` varchar(12) character set ascii default NULL,
+  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -68,11 +94,11 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_user_profile_view` AS (
 		`/*db_name*/`.`/*app*/_user` AS user
 	LEFT JOIN `/*db_name*/`.`/*app*/_user_profile` AS user_profile ON
 	(
-		user.ID_user = user_profile.ID_user
+		user.ID_user = user_profile.ID_entity
 	)
 	WHERE
 		user.login IS NOT NULL AND
-		user_profile.ID_user IS NOT NULL
+		user_profile.ID_entity IS NOT NULL
 )
 
 -- --------------------------------------------------------
