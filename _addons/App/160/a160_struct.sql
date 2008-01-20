@@ -1,9 +1,9 @@
--- app=a160
+-- addon=a160
 -- version=5.0
 
 -- --------------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_relation` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_relation` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
@@ -23,7 +23,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_relation` (
 
 -- --------------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_relation_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_relation_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
