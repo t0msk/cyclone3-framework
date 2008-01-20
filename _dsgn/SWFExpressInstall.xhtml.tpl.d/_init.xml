@@ -4,10 +4,11 @@
 	<header>
 		
 		<extend level="auto" name="default"/>
-		<extend level="auto" name="SWFExpressInstall"/>
 		
 		<extract>
-			<file location="swfobject.js" />
+			
+			<file location="expressinstall.swf" />
+			
 		</extract>
 		
 	</header>
