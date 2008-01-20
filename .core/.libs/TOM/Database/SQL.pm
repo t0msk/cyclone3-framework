@@ -148,9 +148,9 @@ sub execute
 	
 	TOM::Database::connect::multi($env{'db_h'}) unless $main::DB{$env{'db_h'}};
 	
+	main::_log("db_h='$env{'db_h'}'") unless $env{'quiet'};
 	if ($env{'log'})
 	{
-		main::_log("db_h='$env{'db_h'}'") unless $env{'quiet'};
 		foreach my $line(split("\n",$SQL))
 		{
 			$line=~s|\t|   |g;
