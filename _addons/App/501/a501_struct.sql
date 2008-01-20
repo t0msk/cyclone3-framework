@@ -1,10 +1,10 @@
 -- db_h=main
--- app=a501
+-- addon=a501
 -- version=5.0
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_image` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_image` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_image_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_j` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_j` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_image_attrs` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_attrs` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel image.ID
   `ID_category` bigint(20) unsigned default NULL,
@@ -47,7 +47,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_attrs` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_image_attrs_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_attrs_j` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
   `ID_category` bigint(20) unsigned default NULL,
@@ -63,7 +63,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_attrs_j` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_image_file` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_file` (
   `ID` mediumint(8) unsigned zerofill NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel image.ID_entity
   `ID_format` bigint(20) unsigned NOT NULL,
@@ -82,7 +82,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_file` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_image_file_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_file_j` (
   `ID` mediumint(8) unsigned zerofill NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
   `ID_format` bigint(20) unsigned NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_file_j` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_image_visit` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_visit` (
   `datetime_event` datetime NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_image` bigint(20) NOT NULL,
@@ -109,7 +109,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_visit` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_image_cat` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_cat` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
@@ -128,7 +128,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_cat` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_image_cat_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_cat_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
@@ -145,7 +145,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_cat_j` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_image_format` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_format` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
@@ -163,7 +163,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_format` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_image_format_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_format_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
@@ -179,7 +179,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_image_format_j` (
 
 -- --------------------------------------------------
 
-CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_image_view` AS (
+CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_view` AS (
 	SELECT
 		CONCAT(image.ID_entity,'-',image.ID,'-',image_attrs.lng,'-',image_format.ID) AS ID,
 		
@@ -229,20 +229,20 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_image_view` AS (
 		) AS status
 		
 	FROM
-		`/*db_name*/`.`/*app*/_image` AS image
-	LEFT JOIN `/*db_name*/`.`/*app*/_image_attrs` AS image_attrs ON
+		`/*db_name*/`.`/*addon*/_image` AS image
+	LEFT JOIN `/*db_name*/`.`/*addon*/_image_attrs` AS image_attrs ON
 	(
 		image_attrs.ID_entity = image.ID
 	)
-	LEFT JOIN `/*db_name*/`.`/*app*/_image_file` AS image_file ON
+	LEFT JOIN `/*db_name*/`.`/*addon*/_image_file` AS image_file ON
 	(
 		image_file.ID_entity = image.ID_entity
 	)
-	LEFT JOIN `/*db_name*/`.`/*app*/_image_format` AS image_format ON
+	LEFT JOIN `/*db_name*/`.`/*addon*/_image_format` AS image_format ON
 	(
 		image_format.ID = image_file.ID_format
 	)
-	LEFT JOIN `/*db_name*/`.`/*app*/_image_cat` AS image_cat ON
+	LEFT JOIN `/*db_name*/`.`/*addon*/_image_cat` AS image_cat ON
 	(
 		image_cat.ID = image_attrs.ID_category
 	)
@@ -256,11 +256,11 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_image_view` AS (
 
 -- --------------------------------------------------
 
-CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_image_view_thumbnail` AS (
+CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_view_thumbnail` AS (
 	SELECT
 		*
 	FROM
-		`/*db_name*/`.`/*app*/_image_view` AS image
+		`/*db_name*/`.`/*addon*/_image_view` AS image
 	WHERE
 		image.ID_format_name='thumbnail'
 )
