@@ -72,6 +72,17 @@ sub _sqlheader_process
 		
 		$header->{$var[0]}=$var[1];
 		main::_log("set '$var[0]'='$header->{$var[0]}'");;
+		if ($var[0] eq "addon" && $tom::H)
+		{
+			# try to override db_name, when addon is installed into another domain
+			if ($var[1]=~s/^a//)
+			{
+				my $db_name;
+				eval "\$db_name=\$App::".$var[1]."::db_name || \$TOM::DB{'main'}{'name'}";
+				$header->{'db_name'}=$db_name;
+				main::_log("re-set 'db_name'='$db_name'");
+			}
+		}
 	}
 	
 	return 1;
@@ -167,19 +178,11 @@ sub install
 	{
 		main::_log("application '$what'");
 		# searching localized structure in domain
-		if (-e $tom::P.'/.libs/App/'.$what.'/a'.$what.'_struct.sql')
-		{
-			$filename=$tom::P.'/.libs/App/'.$what.'/a'.$what.'_struct.sql';
-		}
-		elsif (-e $tom::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
+		if (-e $tom::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
 		{
 			$filename=$tom::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql';
 		}
-		# or in global library
-		elsif (-e $TOM::P.'/.core/.libs/App/'.$what.'/a'.$what.'_struct.sql')
-		{
-			$filename=$TOM::P.'/.core/.libs/App/'.$what.'/a'.$what.'_struct.sql';
-		}
+		# or in global
 		elsif (-e $TOM::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
 		{
 			$filename=$TOM::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql';
