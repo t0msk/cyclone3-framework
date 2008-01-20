@@ -12,7 +12,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article` (
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  PRIMARY KEY  (`ID`,`datetime_create`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -32,11 +35,15 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_j` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_entity` bigint(20) unsigned default NULL,
+  `ID_entity` bigint(20) unsigned default NULL, -- rel article.ID_entity
   `datetime_create` datetime NOT NULL,
   `ID_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  PRIMARY KEY  (`ID`,`datetime_create`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `ID_author` (`ID_author`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -67,7 +74,12 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
+  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `name` (`name`),
+  KEY `lng` (`lng`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -102,7 +114,12 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content` (
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
+  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `subtitle` (`subtitle`),
+  KEY `lng` (`lng`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -146,7 +163,13 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat` (
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
-  UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`)
+  UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID_charindex` (`ID_charindex`),
+  KEY `ID` (`ID`),
+  KEY `name` (`name`),
+  KEY `lng` (`lng`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -168,7 +191,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat_j` (
 
 -- --------------------------------------------------
 
-CREATE OR REPLACE ALGORITHM=TEMPTABLE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
+CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 	SELECT
 		CONCAT(article.ID_entity,'-',article.ID,'-',article_attrs.lng) AS ID,
 		
