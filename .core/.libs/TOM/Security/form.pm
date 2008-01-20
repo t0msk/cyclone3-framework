@@ -91,5 +91,12 @@ sub html_input_value_escape
 	return $val;
 }
 
+sub sql_escape
+{
+	my $sql=shift;
+	$sql=~s|\\|\\\\|g;
+	$sql=~s|\'|\\'|g;
+	return $sql;
+}
 
 1;
