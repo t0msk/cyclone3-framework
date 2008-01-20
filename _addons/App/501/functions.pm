@@ -866,6 +866,12 @@ sub image_file_add
 	# size
 	my $file_size=(stat($env{'file'}))[7];
 	main::_log("file size='$file_size'");
+	if (!$file_size)
+	{
+		main::_log("image_file is empty",1);
+		$t->close();
+		return undef;
+	}
 	
 	# file mimetype
 	my $ft = File::Type->new();
