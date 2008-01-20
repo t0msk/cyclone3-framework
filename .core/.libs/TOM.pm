@@ -184,4 +184,6 @@ if ($@)
 	die "$error_msg";
 }
 
+main::_log("<={LIB} TOM loaded");
+
 1;
