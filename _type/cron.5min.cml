@@ -9,6 +9,14 @@
 
 <MODULE>
 	<VAR id="-global" value="1" />
+	<VAR id="-category" value="301" />
+	<VAR id="-name" value="user_online" />
+	<VAR id="-version" value="kick" />
+		<VAR id="max_online" value="40" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
 	<VAR id="-category" value="300" />
 	<VAR id="-name" value="archive" />
 		<VAR id="max_days" value="7" />
