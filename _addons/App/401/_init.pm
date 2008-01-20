@@ -43,6 +43,10 @@ L<App::300::_init|app/"300/_init.pm">
 
 L<App::401::mimetypes|app/"401/mimetypes.pm">
 
+=item *
+
+L<App::401::functions|app/"401/functions.pm">
+
 =back
 
 =cut
@@ -50,6 +54,7 @@ L<App::401::mimetypes|app/"401/mimetypes.pm">
 use App::020::_init; # data standard 0
 use App::300::_init;
 use App::401::mimetypes;
+use App::401::functions;
 
 
 =head1 CONFIGURATION
