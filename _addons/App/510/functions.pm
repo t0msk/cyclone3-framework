@@ -275,6 +275,8 @@ sub video_part_file_process
 		main::_log("key $_='$movie1_info{$_}'");
 	}
 	
+	$env{'fps'}=$movie1_info{'fps'} if $movie1_info{'fps'};
+	
 	my @files;
 	my %files_key;
 	$env{'process'}=~s|\s+$||m;
@@ -328,40 +330,86 @@ sub video_part_file_process
 			main::_log("exec $function_name()");
 			
 			# add params in this order
-			my @mencoder_env;
-			if ($env{'oac'}){push @mencoder_env, '-oac '.$env{'oac'};}
-			if ($env{'lameopts'}){push @mencoder_env, '-lameopts '.$env{'lameopts'};}
-			if ($env{'srate'}){push @mencoder_env, '-srate '.$env{'srate'};}
-			if ($env{'sws'}){push @mencoder_env, '-sws '.$env{'sws'};}
-			if ($env{'mc'}){push @mencoder_env, '-mc '.$env{'mc'};}
-			if ($env{'idx'}){push @mencoder_env, '-idx '.$env{'idx'};}
-			if ($env{'ovc'}){push @mencoder_env, '-ovc '.$env{'ovc'};}
-			if ($env{'vc'}){push @mencoder_env, '-vc '.$env{'vc'};}
-			if ($env{'x264encopts'})
-				{push @mencoder_env, '-x264encopts '.$env{'x264encopts'}.do{$env{'pass'} ? ':pass='.$env{'pass'} : '';};}
-			if ($env{'lavcopts'}){push @mencoder_env, '-lavcopts '.$env{'lavcopts'};}
-			if ($env{'of'}){push @mencoder_env, '-of '.$env{'of'};}
-			if ($env{'lavfopts'}){push @mencoder_env, '-lavfopts '.$env{'lavfopts'};}
-			if ($env{'vf'}){push @mencoder_env, '-vf '.$env{'vf'};}
-			if ($env{'ofps_max'})
-			{
-				main::_log("checking -ofps for max value $env{'ofps_max'}");
-				if ($movie1_info{'fps'} > $env{'ofps_max'})
-				{
-					main::_log("exec set_env('ofps','$env{'ofps_max'}')");
-					$env{'ofps'}=$env{'ofps_max'};
-				}
-			}
-			if ($env{'ofps'}){push @mencoder_env, '-ofps '.$env{'ofps'};}
-			if (exists $env{'nosound'}){push @mencoder_env, '-nosound'}
-			if (exists $env{'novideo'}){push @mencoder_env, '-novideo'}
-			if ($env{'endpos'}){push @mencoder_env, '-endpos '.$env{'endpos'};}
-			
+			my @encoder_env;
 			my $ext='avi';
-			$ext='mp4' if $env{'x264encopts'};
-			$ext='avi' if $env{'lavfopts'}=~/format=avi/;
-			$ext='flv' if $env{'lavfopts'}=~/format=flv/;
-			$ext='264' if ($env{'x264encopts'} && exists $env{'nosound'});
+			if (!$env{'encoder'} || $env{'encoder'} eq "mencoder")
+			{
+				if ($env{'oac'}){push @encoder_env, '-oac '.$env{'oac'};}
+				if ($env{'lameopts'}){push @encoder_env, '-lameopts '.$env{'lameopts'};}
+				if ($env{'faacopts'}){push @encoder_env, '-faacopts '.$env{'faacopts'};}
+				if ($env{'srate'}){push @encoder_env, '-srate '.$env{'srate'};}
+				if ($env{'sws'}){push @encoder_env, '-sws '.$env{'sws'};}
+				if ($env{'mc'}){push @encoder_env, '-mc '.$env{'mc'};}
+				if ($env{'idx'}){push @encoder_env, '-idx '.$env{'idx'};}
+				if ($env{'ovc'}){push @encoder_env, '-ovc '.$env{'ovc'};}
+				if ($env{'vc'}){push @encoder_env, '-vc '.$env{'vc'};}
+				if ($env{'x264encopts'})
+					{push @encoder_env, '-x264encopts '.$env{'x264encopts'}.do{$env{'pass'} ? ':pass='.$env{'pass'} : '';};}
+				if ($env{'lavcopts'}){push @encoder_env, '-lavcopts '.$env{'lavcopts'};}
+				if ($env{'of'}){push @encoder_env, '-of '.$env{'of'};}
+				if ($env{'lavfopts'}){push @encoder_env, '-lavfopts '.$env{'lavfopts'};}
+				if ($env{'vf'}){push @encoder_env, '-vf '.$env{'vf'};}
+				if ($env{'fps'}){push @encoder_env, '-fps '.$env{'fps'};}
+				if ($env{'ofps_max'})
+				{
+					main::_log("checking -ofps for max value $env{'ofps_max'}");
+					if ($movie1_info{'fps'} > $env{'ofps_max'})
+					{
+						main::_log("exec set_env('ofps','$env{'ofps_max'}')");
+						$env{'ofps'}=$env{'ofps_max'};
+					}
+				}
+				if ($env{'ofps'}){push @encoder_env, '-ofps '.$env{'ofps'};}
+				if (exists $env{'nosound'}){push @encoder_env, '-nosound'}
+				if (exists $env{'novideo'}){push @encoder_env, '-novideo'}
+				if ($env{'endpos'}){push @encoder_env, '-endpos '.$env{'endpos'};}
+				# suggest extension
+				$ext='mp4' if $env{'x264encopts'};
+				$ext='avi' if $env{'lavfopts'}=~/format=avi/;
+				$ext='flv' if $env{'lavfopts'}=~/format=flv/;
+				$ext='264' if ($env{'x264encopts'} && exists $env{'nosound'});
+			}
+			elsif ($env{'encoder'} eq "ffmpeg")
+			{
+				if ($env{'pass'}){push @encoder_env, '-pass '.$env{'pass'};}
+				if ($env{'vframes'}){push @encoder_env, '-vframes '.$env{'vframes'};}
+				if ($env{'f'}){push @encoder_env, '-f '.$env{'f'};}
+				if (exists $env{'an'}){push @encoder_env, '-an'}
+				if ($env{'flags'}){push @encoder_env, '-flags '.$env{'flags'};}
+				if ($env{'cmp'}){push @encoder_env, '-cmp '.$env{'cmp'};}
+				if ($env{'partitions'}){push @encoder_env, '-partitions '.$env{'partitions'};}
+				if ($env{'flags2'}){push @encoder_env, '-flags2 '.$env{'flags2'};}
+				if ($env{'me'}){push @encoder_env, '-me '.$env{'me'};}
+				if ($env{'subq'}){push @encoder_env, '-subq '.$env{'subq'};}
+				if ($env{'trellis'}){push @encoder_env, '-trellis '.$env{'trellis'};}
+				if ($env{'refs'}){push @encoder_env, '-refs '.$env{'refs'};}
+				if ($env{'bf'}){push @encoder_env, '-bf '.$env{'bf'};}
+				if ($env{'b_strategy'}){push @encoder_env, '-b_strategy '.$env{'b_strategy'};}
+				if ($env{'coder'}){push @encoder_env, '-coder '.$env{'coder'};}
+				if ($env{'me_range'}){push @encoder_env, '-me_range '.$env{'me_range'};}
+				if ($env{'q'}){push @encoder_env, '-q '.$env{'q'};}
+				if ($env{'keyint_min'}){push @encoder_env, '-keyint_min '.$env{'keyint_min'};}
+				if ($env{'sc_threshold'}){push @encoder_env, '-sc_threshold '.$env{'sc_threshold'};}
+				if ($env{'i_qfactor'}){push @encoder_env, '-i_qfactor '.$env{'i_qfactor'};}
+				if ($env{'bt'}){push @encoder_env, '-bt '.$env{'bt'};}
+				if ($env{'rc_eq'}){push @encoder_env, "-rc_eq '".$env{'rc_eq'}."'";}
+				if ($env{'qcomp'}){push @encoder_env, '-qcomp '.$env{'qcomp'};}
+				if ($env{'qmin'}){push @encoder_env, '-qmin '.$env{'qmin'};}
+				if ($env{'qmax'}){push @encoder_env, '-qmax '.$env{'qmax'};}
+				if ($env{'qdiff'}){push @encoder_env, '-qdiff '.$env{'qdiff'};}
+				if ($env{'vcodec'}){push @encoder_env, '-vcodec '.$env{'vcodec'};}
+				if ($env{'b'}){push @encoder_env, '-b '.$env{'b'};}
+				if ($env{'s_width'})
+					{$env{'s'}=$env{'s_width'}.'x'.(int($movie1_info{'height'}/($movie1_info{'width'}/$env{'s_width'})/2)*2);}
+				if ($env{'s'}){push @encoder_env, '-s '.$env{'s'};}
+				if ($env{'r'}){push @encoder_env, '-r '.$env{'r'};}
+				if ($env{'acodec'}){push @encoder_env, '-acodec '.$env{'acodec'};}
+				if ($env{'ab'}){push @encoder_env, '-ab '.$env{'ab'};}
+				
+				# suggest extension
+				$ext='mp4' if $env{'f'} eq "mp4";
+			}
+			
 			my $temp_video;
 			if ($env{'pass'})
 			{
@@ -384,7 +432,10 @@ sub video_part_file_process
 			
 			#main::_log("encoding to file '$temp_video->{'filename'}'");
 			my $cmd="/usr/bin/mencoder ".$env{'video1'}." -o ".($env{'o'} || $temp_video->{'filename'});
-			foreach (@mencoder_env){$cmd.=" $_";}
+			$cmd="cd /www/TOM/_temp;/usr/bin/ffmpeg -y -i ".$env{'video1'} if $env{'encoder'} eq "ffmpeg";
+			
+			foreach (@encoder_env){$cmd.=" $_";}
+			$cmd.=" ".($env{'o'} || $temp_video->{'filename'}) if $env{'encoder'} eq "ffmpeg";
 			main::_log("cmd=$cmd");
 			
 			my $out=system("$cmd");main::_log("out=$out");
@@ -397,6 +448,7 @@ sub video_part_file_process
 		if ($function_name eq "MP4BoxImport")
 		{
 			main::_log("exec $function_name()");
+			
 			my $temp_video=new TOM::Temp::file('ext'=>'mp4','nocreate'=>1);
 			
 			if ($files_key{'video'})
@@ -406,18 +458,22 @@ sub video_part_file_process
 				main::_log("cmd=$cmd");
 				my $out=system("$cmd");main::_log("out=$out");
 				if ($out){$t->close();return undef}
+				
+				if ($files_key{'audio'})
+				{
+					main::_log("adding m4a");
+					my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.$files_key{'audio'}->{'filename'}.'#audio '.$temp_video->{'filename'};
+					main::_log("cmd=$cmd");
+					my $out=system("$cmd");main::_log("out=$out");
+					if ($out){$t->close();return undef}
+				}
+				
 			}
-			if ($files_key{'audio'})
+			elsif ($files_key{'audiovideo'})
 			{
-				main::_log("adding m4a");
-				my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.$files_key{'audio'}->{'filename'}.'#audio '.$temp_video->{'filename'};
-				main::_log("cmd=$cmd");
-				my $out=system("$cmd");main::_log("out=$out");
-				if ($out){$t->close();return undef}
-			}
-			
-			if ($files_key{'audiovideo'})
-			{
+				
+				my $temp_video_input=new TOM::Temp::file('ext'=>'mp4','nocreate'=>1);
+				
 				main::_log("adding m4v");
 				my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.$files_key{'audiovideo'}->{'filename'}.'#video '.$temp_video->{'filename'};
 				main::_log("cmd=$cmd");
@@ -430,11 +486,18 @@ sub video_part_file_process
 				my $out=system("$cmd");main::_log("out=$out");
 				if ($out){$t->close();return undef}
 			}
-			
-			if ($files_key{'all'})
+			elsif ($files_key{'all'})
 			{
 				main::_log("adding a+v");
 				my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.$files_key{'all'}->{'filename'}.' '.$temp_video->{'filename'};
+				main::_log("cmd=$cmd");
+				my $out=system("$cmd");main::_log("out=$out");
+				if ($out){$t->close();return undef}
+			}
+			else
+			{
+				main::_log("adding a+v last");
+				my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.($files[@files-1]->{'filename'}).' '.$temp_video->{'filename'};
 				main::_log("cmd=$cmd");
 				my $out=system("$cmd");main::_log("out=$out");
 				if ($out){$t->close();return undef}
@@ -599,7 +662,6 @@ sub video_add
 			},
 			'-journalize' => 1,
 		);
-		
 		main::_log("generated video.ID='$env{'video.ID'}'");
 	}
 	
@@ -632,7 +694,7 @@ sub video_add
 	{
 		my $sql=qq{
 			SELECT
-				ID
+				*
 			FROM
 				`$App::510::db_name`.`a510_video_attrs`
 			WHERE
@@ -641,8 +703,8 @@ sub video_add
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-		my %db0_line=$sth0{'sth'}->fetchhash();
-		$env{'video_attrs.ID'}=$db0_line{'ID'};
+		%video_attrs=$sth0{'sth'}->fetchhash();
+		$env{'video_attrs.ID'}=$video_attrs{'ID'};
 	}
 	
 	
@@ -666,6 +728,13 @@ sub video_add
 			},
 			'-journalize' => 1,
 		);
+		%video_attrs=App::020::SQL::functions::get_ID(
+			'ID' => $env{'video_attrs.ID'},
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_video_attrs",
+			'columns' => {'*'=>1}
+		);
 	}
 	
 	$env{'video_part.ID'}=video_part_add
@@ -674,6 +743,8 @@ sub video_add
 		'file_nocopy' => $env{'file_nocopy'},
 		'file_thumbnail' => $env{'file_thumbnail'},
 		'video.ID_entity' => $env{'video.ID_entity'},
+		'video.datetime_rec_start' => $video{'datetime_rec_start'},
+		'video_attrs.name' => $video_attrs{'name'},
 		'video_format.ID' => $env{'video_format.ID'},
 		'video_part.ID' => $env{'video_part.ID'},
 		'video_part.part_id' => $env{'video_part.part_id'},
@@ -917,6 +988,10 @@ sub video_part_add
 			'video_part.ID' => $env{'video_part.ID'},
 			'video_format.ID' => $env{'video_format.ID'},
 			'from_parent' => "N",
+			# used to detect optimal filename
+			'video.datetime_rec_start' => $env{'video.datetime_rec_start'},
+			'video_attrs.name' => $env{'video_attrs.name'},
+			'video_part_attrs.name' => $env{'video_part_attrs.name'},
 		);
 		if (!$env{'video_part_file.ID'})
 		{
@@ -1019,6 +1094,19 @@ sub video_part_file_add
 		'columns' => {'*'=>1}
 	);
 	
+	my $sql=qq{
+		SELECT
+			video.*
+		FROM
+			`$App::510::db_name`.a510_video_view AS video
+		WHERE
+			video.ID_part=$env{'video_part.ID'} AND
+			video.ID_format=$App::510::video_format_original_ID
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	my %video_db=$sth0{'sth'}->fetchhash();
+	main::_log("video.ID='$video_db{'ID'}' video.name='$video_db{'name'}'");
 	$env{'from_parent'}='N' unless $env{'from_parent'};
 	
 	
@@ -1069,7 +1157,15 @@ sub video_part_file_add
 	}
 	
 	# generate new unique hash
-	my $name=video_part_file_newhash();
+	my $optimal_hash=
+		($env{'video.datetime_rec_start'} || $video_db{'datetime_rec_start'})
+		."-".($env{'video_attrs.name'} || $video_db{'name'} || $video_db{'ID'})
+		."-".$video_db{'part_id'}
+		."-".($env{'video_part_attrs.name'} || $video_db{'part_name'})
+		."-".$video_db{'ID_format'}
+		;
+	main::_log("optimal_hash='$optimal_hash'");
+	my $name=video_part_file_newhash($optimal_hash);
 	
 	
 	
@@ -1091,11 +1187,11 @@ sub video_part_file_add
 			_video_part_file_thumbnail(
 				'file' => $env{'file'},
 				'file2' => $tmpjpeg->{'filename'},
-				'timestamps' => [
-					'5',
+#				'timestamps' => [
+#					'5',
 	#				'10',
 	#				'15'
-				]
+#				]
 			) || do {$t->close();return undef};
 			$rel=1;
 		}
@@ -1309,7 +1405,13 @@ sub video_part_file_add
 				$file_ext
 			);
 			main::_log("copy to $path");
-			File::Copy::copy($env{'file'},$path);
+			my $out=File::Copy::copy($env{'file'},$path);
+			if (!$out)
+			{
+				main::_log("can't copy file $!",1);
+				$t->close();
+				return undef;
+			}
 		}
 		$t->close();
 		return $ID;
@@ -1336,13 +1438,13 @@ sub _video_part_file_thumbnail
 	
 	if (!$env{'timestamps'})
 	{
-		$env{'timestamps'}=[5,10,60];
+		$env{'timestamps'}=[300,120,60,30,20,10,5,1];
 	}
 	
-	
+	my $out2;
 	foreach my $timestamp(@{$env{'timestamps'}})
 	{
-		main::_log("timestamp = $timestamp");
+		main::_log("timestamp = ".$timestamp."s");
 		
 		#-msglevel all=-1
 		#my $cmd="/usr/bin/mencoder $env{'file'} -o $tmp->{'filename'} -ss $timestamp -oac copy -ovc lavc -lavcopts vcodec=mpeg4 -frames 5";
@@ -1351,9 +1453,21 @@ sub _video_part_file_thumbnail
 		#last if $out;
 		
 		my $cmd2="/usr/bin/ffmpeg -y -i $env{'file'} -ss $timestamp -t 0.001 -f mjpeg -an $env{'file2'}";
-		main::_log("$cmd2");
-		my $out2=system("$cmd2 >/dev/null 2>/dev/null");
-		last if $out2;
+		main::_log("$cmd2");system("$cmd2 >/dev/null 2>/dev/null");
+		
+		my $size=-s $env{'file2'};
+		#main::_log("size=$size");
+		if ($size > 0)
+		{
+			$out2=1;
+			last;
+		}
+	}
+	if (!$out2)
+	{
+		main::_log("thumbnail can't be generated",1);
+		$t->close();
+		return undef;
 	}
 	
 	File::Copy::copy($env{'file2'},'/www/TOM/test.jpg');
@@ -1378,6 +1492,20 @@ Find new unique hash for file
 
 sub video_part_file_newhash
 {
+	my $optimal_hash=shift;
+	if ($optimal_hash)
+	{
+		$optimal_hash=Int::charsets::encode::UTF8_ASCII($optimal_hash);
+		$optimal_hash=~tr/[A-Z]/[a-z]/;
+		$optimal_hash=~s|[^a-z0-9]|_|g;
+		1 while ($optimal_hash=~s|__|_|g);
+		my $max=120;
+		if (length($optimal_hash)>$max)
+		{
+			$optimal_hash=substr($optimal_hash,0,$max);
+		}
+		main::_log("optimal_hash='$optimal_hash'");
+	}
 	
 	my $okay=0;
 	my $hash;
@@ -1385,8 +1513,8 @@ sub video_part_file_newhash
 	while (!$okay)
 	{
 		
-		$hash=TOM::Utils::vars::genhash(8);
-		
+		$hash=$optimal_hash || TOM::Utils::vars::genhash(8);
+		main::_log("testing hash='$hash'");
 		my $sql=qq{
 			(
 				SELECT ID
@@ -1410,8 +1538,11 @@ sub video_part_file_newhash
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		if (!$sth0{'sth'}->fetchhash())
 		{
+			main::_log("found hash '$hash'");
 			$okay=1;
+			last;
 		}
+		undef $optimal_hash;
 	}
 	
 	return $hash;
