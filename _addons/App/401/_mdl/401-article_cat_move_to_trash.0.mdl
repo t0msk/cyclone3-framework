@@ -69,12 +69,12 @@ sub execute
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			
-			# get files from this node
+			# get articles from this node
 			my $sql=qq{
 				SELECT
 					ID, ID_entity
 				FROM
-					a401_article
+					a401_article_attrs
 				WHERE
 					ID_category='$db0_line{'ID_entity'}'
 					AND lng='$data{'lng'}'
@@ -88,7 +88,7 @@ sub execute
 					'ID' => $db1_line{'ID'},
 					'db_h' => 'main',
 					'db_name' => $TOM::DB{'main'}{'name'},
-					'tb_name' => 'a401_article',
+					'tb_name' => 'a401_article_attrs',
 					'-journalize' => 1,
 				);
 			}
