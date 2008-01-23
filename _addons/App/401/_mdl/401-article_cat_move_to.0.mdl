@@ -1,0 +1,118 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+401-article_cat_move_to.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Move article_cat items and subitems ( tree ) into another node
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID of item
+
+=item *
+
+B<ID_parent> - Parent ID of time to move tree into
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default error
+
+=item *
+
+B<RESULT_success> - without error
+
+=item *
+
+B<RESULT_failure_no_input> - invalid input
+
+=item *
+
+B<RESULT_failure_set> - can't be executed
+
+=item *
+
+B<%ID%> - ID
+
+=item *
+
+B<%missing_parameter%> - missing param
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	my $out;
+	
+	$out=App::020::SQL::functions::tree::move_to(
+		'db_h' => "main",
+		'db_name' => $App::401::db_name,
+		'tb_name' => "a401_article_cat",
+		'-journalize' => 1,
+		'ID'   => $env{'ID'},
+		'parent_ID'   => $env{'parent_ID'}
+	);
+	
+	if ($out)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		return 1;
+	}
+	else
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_set'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		return 1;
+	}
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
