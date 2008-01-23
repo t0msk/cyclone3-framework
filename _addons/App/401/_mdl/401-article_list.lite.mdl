@@ -135,12 +135,12 @@ sub execute
 	
 	if(!$sth0{'sth'})
 	{
-		main::log("SQL can't be executed",1);
+		main::_log("SQL can't be executed",1);
 	}
 	
 	if(!$sth0{'rows'})
 	{
-		main::log("err: could not fetch articles");
+		main::_log("err: could not fetch articles");
 	}
 	
 	main::_log("received ".$sth0{'rows'}." rows");
