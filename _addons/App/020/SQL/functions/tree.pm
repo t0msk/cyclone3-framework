@@ -128,9 +128,9 @@ sub move_up
 		return undef;
 	}
 	
-	if (not $data{'status'} =~ /^[YN]$/)
+	if (not $data{'status'} =~ /^[YNL]$/)
 	{
-		main::_log("only ID with status 'Y' or 'N' can be moved in tree, not status='$data{'status'}'",1);
+		main::_log("only ID with status 'Y'/'N'/'L' can be moved in tree, not status='$data{'status'}'",1);
 		$t->close();
 		return undef;
 	}
@@ -153,7 +153,7 @@ sub move_up
 		WHERE
 			ID_charindex < '$data{'ID_charindex'}'
 			AND ID_charindex LIKE '$ID_charindex_\___'
-			AND (status='Y' OR status='N')
+			AND status IN ('Y','N','L')
 			$where_lng
 		ORDER BY
 			ID_charindex DESC
@@ -219,9 +219,9 @@ sub move_down
 		return undef;
 	}
 	
-	if (not $data{'status'} =~ /^[YN]$/)
+	if (not $data{'status'} =~ /^[YNL]$/)
 	{
-		main::_log("only ID with status 'Y' or 'N' can be moved in tree, not status='$data{'status'}'",1);
+		main::_log("only ID with status 'Y'/'N'/'L' can be moved in tree, not status='$data{'status'}'",1);
 		$t->close();
 		return undef;
 	}
@@ -244,7 +244,7 @@ sub move_down
 		WHERE
 			ID_charindex > '$data{'ID_charindex'}'
 			AND ID_charindex LIKE '$ID_charindex_\___'
-			AND (status='Y' OR status='N')
+			AND status IN ('Y','N','L')
 			$where_lng
 		ORDER BY
 			ID_charindex ASC
@@ -462,7 +462,7 @@ sub move_to
 		return undef;
 	}
 	
-	if (not $data{'status'} =~ /^[YN]$/)
+	if (not $data{'status'} =~ /^[YNL]$/)
 	{
 		main::_log("only ID with status 'Y' or 'N' can be moved in tree, not status='$data{'status'}'",1);
 		$t->close();
@@ -488,7 +488,7 @@ sub move_to
 			return undef;
 		}
 		
-		if (not $data2{'status'} =~ /^[YN]$/)
+		if (not $data2{'status'} =~ /^[YNL]$/)
 		{
 			main::_log("only ID with status 'Y' or 'N' can be moved in tree, not status='$data2{'status'}'",1);
 			$t->close();
