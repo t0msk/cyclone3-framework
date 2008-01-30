@@ -169,7 +169,7 @@ sub Getvar
 		}
 		else
 		{
-			TOM::Database::SQL::execute(qq{INSERT INTO `$TOM::DB{'main'}{'name'}`._config(variable,type,about) VALUES('$_[0]','var','RQS! - ')"},'quiet'=>1);
+			TOM::Database::SQL::execute(qq{INSERT INTO `$TOM::DB{'main'}{'name'}`._config(variable,type,about) VALUES('$_[0]','var','RQS! - ')},'quiet'=>1);
 		}
 	}
 	return undef
