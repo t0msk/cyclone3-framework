@@ -69,7 +69,15 @@
 ]]></entity>
 	
 	
-	<entity id="box.error" replace_variables="true" replace_L10n="true"><![CDATA[<!-- <%MODULE%> <$(This service is currently not available)>. <%ERROR%> <%PLUS%> -->]]></entity>
+	<entity id="box.error" replace_variables="true" replace_L10n="true"><![CDATA[
+<SOAP-ENV:Fault>
+	<faultcode>SOAP-ENV:Server</faultcode>
+	<faultstring>Server error</faultstring>
+	<detail>
+		<message><%MODULE%> <$(This service is currently not available)>. <%ERROR%> <%PLUS%></message>
+	</detail>
+</SOAP-ENV:Fault>
+]]></entity>
 	
 	
 </template>
