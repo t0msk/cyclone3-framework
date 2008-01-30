@@ -74,7 +74,7 @@ sub execute
 				SELECT
 					ID, ID_entity
 				FROM
-					`$App::501::db_name`.a510_video_attrs
+					`$App::510::db_name`.a510_video_attrs
 				WHERE
 					ID_category='$db0_line{'ID_entity'}'
 					AND lng='$data{'lng'}'

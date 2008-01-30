@@ -413,7 +413,7 @@ $where
 				my $sql=qq{
 					SELECT COUNT(ID) AS itemcount
 					FROM
-						`$TOM::DB{'main'}{'name'}`.`a510_video_attrs`
+						`$App::510::db_name`.`a510_video_attrs`
 					WHERE
 						ID_category = $entity->{'ID'}
 						AND status IN ('Y','N')

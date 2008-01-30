@@ -40,6 +40,10 @@ L<App::020::_init|app/"020/_init.pm">
 
 =item *
 
+L<App::301::_init|app/"301/_init.pm">
+
+=item *
+
 L<App::501::_init|app/"501/_init.pm">
 
 =item *
@@ -59,6 +63,7 @@ File::Path
 =cut
 
 use App::020::_init; # data standard 0
+use App::301::_init;
 use App::501::_init;
 use App::510::functions;
 use File::Copy;
