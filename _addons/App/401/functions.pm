@@ -58,6 +58,7 @@ Add new article (uploading new content)
    'article_content.mimetype' => '',
    'article_content.abstract' => '',
    'article_content.body' => '',
+   #'article_content.keywords' => '',
    'article_content.lng' => '',
  );
 
@@ -99,7 +100,7 @@ sub article_add
 			'columns' => {'*'=>1}
 		);
 		$env{'article_attrs.lng'}=$article_cat{'lng'};
-		main::_log("setting lng='$env{'article_attrs.lng'}' from article_attrs.ID_category");
+		main::_log("setting lng='$env{'article_attrs.lng'}' from article_attrs.ID_category='$env{'article_attrs.ID_category'}'");
 	}
 	
 	
@@ -253,14 +254,27 @@ sub article_add
 			'-journalize' => 1,
 		);
 	}
+	if ($env{'article_attrs.ID'} && !$article_attrs{'ID_category'})
+	{
+		%article_attrs=App::020::SQL::functions::get_ID(
+			'ID' => $env{'article_attrs.ID'},
+			'db_h' => "main",
+			'db_name' => $App::401::db_name,
+			'tb_name' => "a401_article_attrs",
+			'columns' => {'*'=>1}
+		);
+	}
 	if ($env{'article_attrs.ID'} &&
 	(
-		$env{'article_attrs.name'}
+		$env{'article_attrs.name'} ||
+		($env{'article_attrs.ID_category'} ne $article_attrs{'ID_category'})
 	))
 	{
 		my %columns;
 		$columns{'name'}="'".TOM::Security::form::sql_escape($env{'article_attrs.name'})."'"
 			if $env{'article_attrs.name'};
+		$columns{'ID_category'}=$env{'article_attrs.ID_category'}
+			if $env{'article_attrs.ID_category'} ne $article_attrs{'ID_category'};
 		$columns{'name_url'}="'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'article_attrs.name'}))."'"
 			if $env{'article_attrs.name'};
 		App::020::SQL::functions::update(
@@ -272,8 +286,6 @@ sub article_add
 			'-journalize' => 1
 		);
 	}
-	
-	
 	
 	my %article_content;
 	if (!$env{'article_content.ID'})
@@ -310,11 +322,27 @@ sub article_add
 			'-journalize' => 1,
 		);
 	}
+	if (
+		!$env{'article_content.keywords'} &&
+		(
+			$env{'article_content.abstract'} ||
+			$env{'article_content.body'}
+		)
+	)
+	{
+		my %keywords=article_content_extract_keywords(%env);
+		foreach (keys %keywords)
+		{
+			$env{'article_content.keywords'}.=", ".$_;
+		}
+		$env{'article_content.keywords'}=~s|^, ||;
+	}
 	if ($env{'article_content.ID'} &&
 	(
 		$env{'article_content.subtitle'} ||
 		$env{'article_content.mimetype'} ||
 		$env{'article_content.abstract'} ||
+		$env{'article_content.keywords'} ||
 		$env{'article_content.body'}
 	))
 	{
@@ -326,6 +354,8 @@ sub article_add
 			if $env{'article_content.mimetype'};
 		$columns{'abstract'}="'".TOM::Security::form::sql_escape($env{'article_content.abstract'})."'"
 			if $env{'article_content.abstract'};
+		$columns{'keywords'}="'".TOM::Security::form::sql_escape($env{'article_content.keywords'})."'"
+			if $env{'article_content.keywords'};
 		$columns{'body'}="'".TOM::Security::form::sql_escape($env{'article_content.body'})."'"
 			if $env{'article_content.body'};
 		
@@ -393,6 +423,45 @@ sub article_add
 	
 	$t->close();
 	return %env;
+}
+
+
+
+=head2 article_content_extract_keywords()
+
+Extracts keywords from article_content.abstract/body
+
+ article_content_extract_keywords
+ (
+   'article_content.mimetype' => '',
+   'article_content.abstract' => '',
+   'article_content.body' => '',
+ );
+
+=cut
+
+sub article_content_extract_keywords
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::article_content_extract_keywords()");
+	$env{'article_content.mimetype'}="plain/text" unless $env{'article_content.mimetype'};
+	
+	my %keywords;
+	
+	if ($env{'article_content.mimetype'}="text/html")
+	{
+		%keywords=App::401::keywords::html_extract($env{'article_content.body'});
+	}
+	
+	
+	foreach (keys %keywords)
+	{
+		#main::_log("key $_");
+	}
+	
+	
+	$t->close();
+	return %keywords;
 }
 
 

@@ -111,6 +111,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content` (
   `mimetype` varchar(50) character set ascii NOT NULL default 'text/html',
   `abstract` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -132,10 +133,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content_j` (
   `mimetype` varchar(50) character set ascii NOT NULL default 'text/html',
   `abstract` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
+  PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -232,6 +233,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 		article_content.mimetype,
 		article_content.abstract,
 		article_content.body,
+		article_content.keywords,
 		article_content.lng,
 		
 --		article.status AS status_article,

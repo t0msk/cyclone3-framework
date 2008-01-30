@@ -37,7 +37,11 @@ L<App::020::_init|app/"020/_init.pm">
 
 =item *
 
-L<App::300::_init|app/"300/_init.pm">
+L<App::301::_init|app/"301/_init.pm">
+
+=item *
+
+L<App::821::_init|app/"821/_init.pm">
 
 =item *
 
@@ -47,14 +51,20 @@ L<App::401::mimetypes|app/"401/mimetypes.pm">
 
 L<App::401::functions|app/"401/functions.pm">
 
+=item *
+
+L<App::401::keywords::html_extract|app/"401/keywords/html_extract.pm">
+
 =back
 
 =cut
 
 use App::020::_init; # data standard 0
-use App::300::_init;
+use App::301::_init;
+use App::821::_init;
 use App::401::mimetypes;
 use App::401::functions;
+use App::401::keywords;
 
 
 =head1 CONFIGURATION
@@ -66,10 +76,138 @@ use App::401::functions;
 
 =cut
 
+# level number 1 is TOP level
+# any higher number is higher level
+# level number NULL is none level
+
 our $db_name=$App::401::db_name || $TOM::DB{'main'}{'name'};
 our $priority_A_level=$App::401::priority_A_level || 1;
 our $priority_B_level=$App::401::priority_B_level || undef;
 our $priority_C_level=$App::401::priority_C_level || undef;
+
+
+if ($tom::H_cookie)
+{
+	# author is group for authors
+	# publisher is group for publishers
+	foreach my $group('author','publisher')
+	{
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				TOM.a301_user_group
+			WHERE
+				hostname='$tom::H_cookie' AND
+				name='$group'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		if (!$db0_line{'ID'})
+		{
+			App::020::SQL::functions::tree::new(
+				'db_h' => "main",
+				'db_name' => "TOM",
+				'tb_name' => "a301_user_group",
+				'columns' =>
+				{
+					'name' => "'".$group."'",
+					'hostname' => "'".$tom::H_cookie."'",
+					'status' => "'L'"
+				},
+				'-journalize' => 1
+			);
+		}
+		elsif ($db0_line{'status'} ne "L")
+		{
+			App::020::SQL::functions::update(
+				'ID' => $db0_line{'ID'},
+				'db_h' => "main",
+				'db_name' => "TOM",
+				'tb_name' => "a301_user_group",
+				'columns' =>
+				{
+					'status' => "'L'"
+				},
+				'-journalize' => 1
+			);
+		}
+	}
+}
+
+
+
+# check relation to a821
+our $forum_ID_entity;
+our %forum;
+
+# find any category;
+my $sql="
+	SELECT
+		ID, ID_entity
+	FROM
+		`$App::821::db_name`.`a821_discussion_forum`
+	WHERE
+		name='article forums' AND
+		lng IN ('".(join "','",@TOM::LNG_accept)."')
+	LIMIT 1
+";
+my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+if (my %db0_line=$sth0{'sth'}->fetchhash())
+{
+	$forum_ID_entity=$db0_line{'ID_entity'} unless $forum_ID_entity;
+}
+else
+{
+	$forum_ID_entity=App::020::SQL::functions::tree::new(
+		'db_h' => "main",
+		'db_name' => $App::821::db_name,
+		'tb_name' => "a821_discussion_forum",
+		'columns' => {
+			'name' => "'article forums'",
+			'lng' => "'$tom::LNG'",
+			'status' => "'L'"
+		},
+		'-journalize' => 1
+	);
+}
+
+foreach my $lng(@TOM::LNG_accept)
+{
+	#main::_log("check related category $lng");
+	my $sql=qq{
+		SELECT
+			ID, ID_entity
+		FROM
+			`$App::821::db_name`.`a821_discussion_forum`
+		WHERE
+			ID_entity=$forum_ID_entity AND
+			lng='$lng'
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$forum{$lng}=$db0_line{'ID'};
+	}
+	else
+	{
+		#main::_log("creating related category");
+		$forum{$lng}=App::020::SQL::functions::tree::new(
+			'db_h' => "main",
+			'db_name' => $App::821::db_name,
+			'tb_name' => "a821_discussion_forum",
+			'columns' => {
+				'ID_entity' => $forum_ID_entity,
+				'name' => "'article forums'",
+				'lng' => "'$lng'",
+				'status' => "'L'"
+			},
+			'-journalize' => 1
+		);
+	}
+}
 
 
 
