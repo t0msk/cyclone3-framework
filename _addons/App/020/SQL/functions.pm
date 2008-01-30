@@ -327,6 +327,12 @@ sub get_ID_entity(%env)
 		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
+	if (!$env{'ID_entity'})
+	{
+		$t->close() if $debug;
+		return undef;
+	}
+	
 	my $SQL=qq{
 		SELECT
 			ID

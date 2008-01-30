@@ -37,5 +37,6 @@ L<App::020::SQL::functions|app/"020/SQL/functions.pm">
 
 use App::020::_init;
 use App::020::SQL::functions;
+use TOM::Security::form;
 
 1;
