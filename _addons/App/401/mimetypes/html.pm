@@ -103,7 +103,20 @@ sub start
 	{
 		$attr->{'alt'}='' unless exists $attr->{'alt'};
 		$attr->{'align'}='left' unless exists $attr->{'align'};
-		if ($attr->{'id'}=~/^a501_image:(.*)$/)
+		if ($attr->{'id'}=~/^a010_(.*?):(.*)$/)
+		{
+			my $type=$1;
+			my %vars=_parse_id($2);
+			
+			# override default tag representation
+			$out_full=$self->{'entity'}{'a010_'.$type}
+				|| $tpl->{'entity'}{'parser.a010_'.$type}
+				|| $out_full;
+			
+			$out_full=~s|<%var_(.*?)%>|$vars{$1}|g;
+			
+		}
+		elsif ($attr->{'id'}=~/^a501_image:(.*)$/)
 		{
 			use App::501::_init;
 			my %vars=_parse_id($1);
