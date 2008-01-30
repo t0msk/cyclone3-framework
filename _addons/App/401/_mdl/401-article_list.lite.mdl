@@ -72,6 +72,10 @@ B<TMP> - default
 
 =item *
 
+B<TMP_failure_no-data> - if defined, replaces TMP for empty database output
+
+=item *
+
 B<#item#> - gateway to article item
 
 =item *
@@ -117,7 +121,6 @@ sub execute
 	
 	my $execution_success=1;
 	
-	
 	my $sql=qq{
 		SELECT
 			*
@@ -160,7 +163,7 @@ sub execute
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
 		
-		my %author=App::300::authors::get_author($db0_line{'posix_author'});
+		my %author=App::301::authors::get_author($db0_line{'posix_author'});
 		foreach(keys %author)
 		{
 			$item=~s|<%author_$_%>|$author{$_}|g;
@@ -256,6 +259,13 @@ sub execute
 		$XSGN{'TMP'}=~s|<#item#>|$item|;
 	}
 	
+	if(!$item_counter)
+	{
+		if($XSGN{'TMP_failure_no-data'})
+		{
+			$XSGN{'TMP'} = $XSGN{'TMP_failure_no-data'};
+		}
+	}
 	
 	return 1;
 }
