@@ -46,6 +46,7 @@ BEGIN
 	
 }
 
+our $db_name=$App::541::db_name || $TOM::DB{'main'}{'name'};
 
 
 =head1 DEPENDS

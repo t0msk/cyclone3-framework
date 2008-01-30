@@ -41,7 +41,7 @@ sub execute
 		# get this ID
 		my %data=App::020::SQL::functions::get_ID(
 			'db_h'    => 'main',
-			'db_name' => $TOM::DB{'main'}{'name'},
+			'db_name' => $App::541::db_name,
 			'tb_name' => 'a541_file_dir',
 			'ID'      => $ID,
 			'columns' => 
@@ -56,7 +56,7 @@ sub execute
 			SELECT
 				ID, ID_entity, ID_charindex
 			FROM
-				a541_file_dir
+				`$App::541::db_name`.a541_file_dir
 			WHERE
 				ID_charindex LIKE '$data{'ID_charindex'}%'
 				AND status IN ('Y','N')
@@ -74,7 +74,7 @@ sub execute
 				SELECT
 					ID, ID_entity
 				FROM
-					a541_file
+					`$App::541::db_name`.a541_file
 				WHERE
 					ID_category='$db0_line{'ID_entity'}'
 					AND lng='$data{'lng'}'
@@ -87,7 +87,7 @@ sub execute
 				(
 					'ID' => $db1_line{'ID'},
 					'db_h' => 'main',
-					'db_name' => $TOM::DB{'main'}{'name'},
+					'db_name' => $App::541::db_name,
 					'tb_name' => 'a541_file',
 					'-journalize' => 1,
 				);
@@ -97,7 +97,7 @@ sub execute
 			(
 				'ID' => $db0_line{'ID'},
 				'db_h' => 'main',
-				'db_name' => $TOM::DB{'main'}{'name'},
+				'db_name' => $App::541::db_name,
 				'tb_name' => 'a541_file_dir',
 				'-journalize' => 1,
 			);

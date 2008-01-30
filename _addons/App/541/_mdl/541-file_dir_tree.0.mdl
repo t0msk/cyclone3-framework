@@ -408,6 +408,30 @@ $where
 			$XSGN{'NULL'}=~s|<%status%>|$entity->{'status'}|g;
 			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
 			
+			if ($env{'itemcount'})
+			{
+				# count of items
+				
+				my $sql=qq{
+					SELECT COUNT(ID) AS itemcount
+					FROM
+						`$App::541::db_name`.`a541_file`
+					WHERE
+						ID_category = $entity->{'ID'}
+						AND status IN ('Y','N')
+				};
+				my %sth1=TOM::Database::SQL::execute($sql);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					$XSGN{'NULL'}=~s|<%itemcount%>|$db1_line{'itemcount'}|g;
+				}
+				else
+				{
+					$XSGN{'NULL'}=~s|<%itemcount%>|0|g;
+				}
+				
+			}
+			
 			if ($env{'tree'})
 			{
 				if ($level_next<$level)
