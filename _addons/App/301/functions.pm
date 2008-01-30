@@ -42,9 +42,10 @@ use App::301::_init;
 =head2 user_add
 
  my %user=user_add(
-  'login' => "userName",
-  'pass' => "password",
-  #'status' => "N"
+  'user.login' => "userName",
+  'user.pass' => "password",
+  #'user.hostname' => "",
+  #'user.status' => "N"
  );
 
 =cut
@@ -56,7 +57,7 @@ sub user_add
 	
 	foreach (sort keys %env)
 	{
-		if ($_ eq "pass")
+		if ($_ eq "user.pass")
 		{
 			main::_log("output $_='".('*' x length($env{$_}))."'");
 			next;
@@ -65,31 +66,31 @@ sub user_add
 	}
 	my %data;
 	
-	$env{'hostname'}=$tom::H_cookie unless $env{'hostname'};
+	$env{'user.hostname'}=$tom::H_cookie unless $env{'user.hostname'};
 	
-	if ($env{'pass'})
+	if ($env{'user.pass'})
 	{
-		if ($env{'pass'}=~/^(MD5|SHA1):/)
+		if ($env{'user.pass'}=~/^(MD5|SHA1):/)
 		{
 			
 		}
 		else
 		{
-			$env{'pass'}='MD5:'.Digest::MD5::md5_hex(Encode::encode_utf8($env{'pass'}));
+			$env{'user.pass'}='MD5:'.Digest::MD5::md5_hex(Encode::encode_utf8($env{'user.pass'}));
 		}
 	}
 	
-	if ($env{'login'}){$env{'login'}="'".$env{'login'}."'";}
-	else {$env{'login'}='NULL';}
+	if ($env{'user.login'}){$env{'user.login'}="'".$env{'user.login'}."'";}
+	else {$env{'user.login'}='NULL';}
 	
-	if ($env{'pass'}){$env{'pass'}="'".$env{'pass'}."'";}
-	else {$env{'pass'}='NULL';}
+	if ($env{'user.pass'}){$env{'user.pass'}="'".$env{'user.pass'}."'";}
+	else {$env{'user.pass'}='NULL';}
 	
-	$env{'autolog'}="N" unless $env{'autolog'};
-	$env{'status'}="N" unless $env{'status'};
+	$env{'user.autolog'}="N" unless $env{'user.autolog'};
+	$env{'user.status'}="N" unless $env{'user.status'};
 	
 	
-	if ($env{'login'} ne 'NULL')
+	if ($env{'user.login'} ne 'NULL')
 	{
 		# try to find this user first
 		my $sql=qq{
@@ -98,8 +99,8 @@ sub user_add
 			FROM
 				TOM.a301_user
 			WHERE
-				hostname='$env{'hostname'}' AND
-				login=$env{'login'}
+				hostname='$env{'user.hostname'}' AND
+				login=$env{'user.login'}
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
@@ -110,7 +111,7 @@ sub user_add
 		}
 	}
 	
-	$env{'ID_user'}=$data{'ID_user'}=user_newhash();
+	$env{'user.ID_user'}=$data{'user.ID_user'}=$data{'ID_user'}=user_newhash();
 	
 	TOM::Database::SQL::execute(qq{
 		INSERT INTO TOM.a301_user
@@ -125,13 +126,13 @@ sub user_add
 		)
 		VALUES
 		(
-			'$env{ID_user}',
-			$env{login},
-			$env{pass},
-			'$env{autolog}',
-			'$env{hostname}',
+			'$env{'user.ID_user'}',
+			$env{'user.login'},
+			$env{'user.pass'},
+			'$env{'user.autolog'}',
+			'$env{'user.hostname'}',
 			NOW(),
-			'$env{status}'
+			'$env{'user.status'}'
 		)
 	}) || die "can't insert user into TOM.a301_user";
 	

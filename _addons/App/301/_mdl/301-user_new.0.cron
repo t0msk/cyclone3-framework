@@ -46,9 +46,9 @@ sub execute
 	
 	my %user=App::301::functions::user_add
 	(
-		'login' => $env{'login'},
-		'pass' => $env{'pass'},
-		'status' => 'Y'
+		'user.login' => $env{'login'},
+		'user.pass' => $env{'pass'},
+		'user.status' => 'Y'
 	);
 	
 	

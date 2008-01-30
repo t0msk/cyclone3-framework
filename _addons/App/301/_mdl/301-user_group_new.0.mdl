@@ -1,0 +1,112 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+301-user_group_new.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Create new user group
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	delete $env{'ID_charindex'};
+	
+	my $from;
+	
+	if (!$env{'name'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|name|g;
+		return 1;
+	}
+	
+	# prepare 'name' for SQL's
+	$env{'name'}=~s|\'|\\'|;
+	
+	# find parent to check childs
+	my %parent;
+	my %parent=App::020::SQL::functions::get_ID(
+		'ID' => $env{'ID_parent'},
+		'db_h' => "main",
+		'db_name' => 'TOM',
+		'tb_name' => "a301_user_group",
+		'columns' =>
+		{
+			'ID_charindex' => 1
+		}
+	) if $env{'ID_parent'};
+	
+	$parent{'ID_charindex'}.=":" if $parent{'ID_charindex'};
+	
+	# find category with same name in this ID_parent
+	my $sql=qq{
+		SELECT
+			ID,
+			ID_charindex
+		FROM
+			`TOM`.a301_user_group
+		WHERE
+			ID_charindex LIKE '$parent{'ID_charindex'}___'
+			AND name='$env{'name'}'
+			AND hostname='$tom::H_cookie'
+			AND status IN ('Y','N','L')
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_same_name'};
+		return 1;
+	}
+	
+	my $ID=App::020::SQL::functions::tree::new(
+		'db_h' => "main",
+		'db_name' => 'TOM',
+		'tb_name' => "a301_user_group",
+		'-journalize' => 1,
+		'parent_ID'   => $env{'ID_parent'},
+		'columns' =>
+		{
+			'name' => "'$env{'name'}'",
+			'hostname' => "'".$tom::H_cookie."'",
+			'status'  => "'N'",
+		}
+	);
+	
+	if ($ID)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		$XSGN{'TMP'}=~s|<%ID%>|$ID|g;
+	}
+	else
+	{
+		
+	}
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
