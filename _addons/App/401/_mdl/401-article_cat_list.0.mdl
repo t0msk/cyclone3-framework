@@ -257,7 +257,7 @@ sub execute
 	my $level_prev;
 	my $level_next;
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
 	if ($sth0{'sth'})
 	{
 		# naplnim si @tree s polozkami zo stromu preto aby som mohol v dalsom
@@ -319,7 +319,7 @@ sub execute
 			datetime_create DESC
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
 	if ($sth0{'sth'})
 	{
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
