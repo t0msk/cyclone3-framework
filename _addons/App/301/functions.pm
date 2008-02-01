@@ -55,6 +55,161 @@ sub user_add
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::user_add()");
 	
+	$env{'user.hostname'}=$tom::H_cookie unless $env{'user.hostname'};
+	main::_log("hostname=$env{'user.hostname'}");
+	
+	my %user;
+	if ($env{'user.ID_user'})
+	{
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`TOM`.a301_user
+			WHERE
+				ID_user='$env{'user.ID_user'}'
+			LIMIT 1;
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		%user=$sth0{'sth'}->fetchhash();
+	}
+	
+	if ($env{'user.login'} && !$env{'user.ID_user'})
+	{
+		main::_log("search user by login='$env{'user.login'}'");
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`TOM`.a301_user
+			WHERE
+				login='$env{'user.login'}' AND
+				hostname='$env{'user.hostname'}'
+			LIMIT 1;
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		%user=$sth0{'sth'}->fetchhash();
+		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
+	}
+	
+	if (!$env{'user.ID_user'})
+	{
+		main::_log("!user.ID_user, create new");
+		
+		$env{'user.ID_user'}=user_newhash();
+		
+		TOM::Database::SQL::execute(qq{
+			INSERT INTO `TOM`.a301_user
+			(
+				ID_user,
+				hostname,
+				datetime_register
+			)
+			VALUES
+			(
+				'$env{'user.ID_user'}',
+				'$env{'user.hostname'}',
+				NOW()
+			)
+		},'quiet'=>1) || return undef;
+	}
+	
+	if (
+		$env{'user.ID_user'} &&
+		(
+			$env{'user.login'} ||
+			$env{'user.pass'} ||
+			$env{'user.email'} ||
+			$env{'user.email_verified'}
+		)
+	)
+	{
+		my $set;
+		# login
+		$set.=",login='$env{'user.login'}'"
+			if $env{'user.login'};
+		# pass
+		$set.=",pass='$env{'user.pass'}'"
+			if $env{'user.pass'};
+		# email
+		$set.=",email='$env{'user.email'}'"
+			if $env{'user.email'};
+		# email_verified
+		$set.=",email_verified='$env{'user.email_verified'}'"
+			if $env{'user.email_verified'};
+		
+		TOM::Database::SQL::execute(qq{
+			UPDATE `TOM`.a301_user
+			SET
+				ID_user='$env{'user.ID_user'}'
+				$set
+			WHERE
+				ID_user='$env{'user.ID_user'}'
+			LIMIT 1
+		},'quiet'=>1) || return undef;
+		
+	}
+	else
+	{
+		return undef
+	}
+	
+	foreach my $group(@{$env{'groups'}})
+	{
+		next unless $group;
+		main::_log("add to group '$group'");
+		
+		my $sql=qq{
+			SELECT
+				ID
+			FROM
+				TOM.a301_user_group
+			WHERE
+				name = '$group' AND
+				hostname = '$env{'user.hostname'}'
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			my $sql=qq{
+				REPLACE INTO TOM.a301_user_rel_group
+				(
+					ID_user,
+					ID_group
+				)
+				VALUES
+				(
+					'$env{'user.ID_user'}',
+					'$db0_line{'ID'}'
+				)
+			};
+			TOM::Database::SQL::execute($sql,'quiet'=>1);
+		}
+		
+	}
+	
+	$t->close();
+	return %env;
+}
+
+
+
+=head2 user_new
+
+ my %user=user_new(
+  'user.login' => "userName",
+  'user.pass' => "password",
+  #'user.hostname' => "",
+  #'user.status' => "N"
+ );
+
+=cut
+
+sub user_new
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::user_new()");
+	
 	foreach (sort keys %env)
 	{
 		if ($_ eq "user.pass")
