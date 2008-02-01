@@ -38,7 +38,8 @@ L<TOM::Security::form|lib/"TOM/Security/form.pm">
 use App::401::_init;
 use TOM::Security::form;
 
-
+our $debug=0;
+our $quiet;$quiet=1 unless $debug;
 
 =head2 article_add()
 
@@ -214,6 +215,7 @@ sub article_add
 	}
 	
 	
+	# ARTICLE_ATTRS
 	
 	my %article_attrs;
 	if (!$env{'article_attrs.ID'})
@@ -264,19 +266,22 @@ sub article_add
 			'columns' => {'*'=>1}
 		);
 	}
+	# update if necessary
 	if ($env{'article_attrs.ID'} &&
 	(
-		$env{'article_attrs.name'} ||
-		($env{'article_attrs.ID_category'} ne $article_attrs{'ID_category'})
+		# name
+		($env{'article_attrs.name'} && ($env{'article_attrs.name'} ne $article_attrs{'name'})) ||
+		# ID_category
+		($env{'article_attrs.ID_category'} && ($env{'article_attrs.ID_category'} ne $article_attrs{'ID_category'}))
 	))
 	{
 		my %columns;
 		$columns{'name'}="'".TOM::Security::form::sql_escape($env{'article_attrs.name'})."'"
-			if $env{'article_attrs.name'};
+			if ($env{'article_attrs.name'} && ($env{'article_attrs.name'} ne $article_attrs{'name'}));
 		$columns{'ID_category'}=$env{'article_attrs.ID_category'}
-			if $env{'article_attrs.ID_category'} ne $article_attrs{'ID_category'};
+			if ($env{'article_attrs.ID_category'} && ($env{'article_attrs.ID_category'} ne $article_attrs{'ID_category'}));
 		$columns{'name_url'}="'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'article_attrs.name'}))."'"
-			if $env{'article_attrs.name'};
+			if ($env{'article_attrs.ID_category'} && ($env{'article_attrs.ID_category'} ne $article_attrs{'ID_category'}));
 		App::020::SQL::functions::update(
 			'ID' => $env{'article_attrs.ID'},
 			'db_h' => "main",
@@ -286,6 +291,8 @@ sub article_add
 			'-journalize' => 1
 		);
 	}
+	
+	# ARTICLE_CONTENT
 	
 	my %article_content;
 	if (!$env{'article_content.ID'})
@@ -322,43 +329,54 @@ sub article_add
 			'-journalize' => 1,
 		);
 	}
-	if (
-		!$env{'article_content.keywords'} &&
-		(
-			$env{'article_content.abstract'} ||
-			$env{'article_content.body'}
-		)
-	)
+	# generate keywords
+	if (!$env{'article_content.keywords'} &&
+		( $env{'article_content.abstract'} || $env{'article_content.body'}))
 	{
 		my %keywords=article_content_extract_keywords(%env);
 		foreach (keys %keywords)
-		{
-			$env{'article_content.keywords'}.=", ".$_;
-		}
+		{$env{'article_content.keywords'}.=", ".$_;}
 		$env{'article_content.keywords'}=~s|^, ||;
 	}
+	# get article_content
+	if ($env{'article_content.ID'} && !$article_content{'body'})
+	{
+		%article_content=App::020::SQL::functions::get_ID(
+			'ID' => $env{'article_content.ID'},
+			'db_h' => "main",
+			'db_name' => $App::401::db_name,
+			'tb_name' => "a401_article_content",
+			'columns' => {'*'=>1}
+		);
+	}
+	# update if necessary
 	if ($env{'article_content.ID'} &&
 	(
-		$env{'article_content.subtitle'} ||
-		$env{'article_content.mimetype'} ||
-		$env{'article_content.abstract'} ||
-		$env{'article_content.keywords'} ||
-		$env{'article_content.body'}
+		# subtitle
+		($env{'article_content.subtitle'} && ($env{'article_content.subtitle'} ne $article_content{'subtitle'})) ||
+		# mimetype
+		($env{'article_content.mimetype'} && ($env{'article_content.mimetype'} ne $article_content{'mimetype'})) ||
+		# abstract
+		($env{'article_content.abstract'} && ($env{'article_content.abstract'} ne $article_content{'abstract'})) ||
+		# keywords
+		($env{'article_content.keywords'} && ($env{'article_content.keywords'} ne $article_content{'keywords'})) ||
+		# body
+		($env{'article_content.body'} && ($env{'article_content.body'} ne $article_content{'body'}))
 	))
 	{
 		my %columns;
-		
 		$columns{'subtitle'}="'".TOM::Security::form::sql_escape($env{'article_content.subtitle'})."'"
-			if $env{'article_content.subtitle'};
+			if ($env{'article_content.subtitle'} && ($env{'article_content.subtitle'} ne $article_content{'subtitle'}));
 		$columns{'mimetype'}="'".TOM::Security::form::sql_escape($env{'article_content.mimetype'})."'"
-			if $env{'article_content.mimetype'};
+			if ($env{'article_content.mimetype'} && ($env{'article_content.mimetype'} ne $article_content{'mimetype'}));
 		$columns{'abstract'}="'".TOM::Security::form::sql_escape($env{'article_content.abstract'})."'"
-			if $env{'article_content.abstract'};
+			if ($env{'article_content.abstract'} && ($env{'article_content.abstract'} ne $article_content{'abstract'}));
 		$columns{'keywords'}="'".TOM::Security::form::sql_escape($env{'article_content.keywords'})."'"
-			if $env{'article_content.keywords'};
+			if ($env{'article_content.keywords'} && ($env{'article_content.keywords'} ne $article_content{'keywords'}));
 		$columns{'body'}="'".TOM::Security::form::sql_escape($env{'article_content.body'})."'"
-			if $env{'article_content.body'};
-		
+			if ($env{'article_content.body'} && ($env{'article_content.body'} ne $article_content{'body'}));
+		$env{'article_content.ID_editor'}=$main::USRM{'ID_user'} unless $env{'article_content.ID_editor'};
+		$columns{'ID_editor'}="'".$env{'article_content.ID_editor'}."'";
 		App::020::SQL::functions::update(
 			'ID' => $env{'article_content.ID'},
 			'db_h' => "main",
@@ -369,7 +387,7 @@ sub article_add
 		);
 	}
 	
-	
+	# ARTICLE_ENT
 	
 	my %article_ent;
 	if (!$env{'article_ent.ID_entity'})
@@ -404,15 +422,30 @@ sub article_add
 			'-journalize' => 1,
 		);
 	}
-	if ($env{'article_ent.ID_entity'} &&
+	# get article_ent
+	if ($env{'article_ent.ID_entity'} && !$article_ent{'ID_author'})
+	{
+		%article_ent=%{(App::020::SQL::functions::get_ID_entity(
+			'ID_entity' => $env{'article_ent.ID_entity'},
+			'db_h' => 'main',
+			'db_name' => $App::401::db_name,
+			'tb_name' => 'a401_article_ent',
+			'columns' => {'*' => 1}
+		))[0]};
+		$env{'article_ent.ID'}=$article_ent{'ID'} if $article_ent{'ID'};
+	}
+	# update if necessary
+	if ($env{'article_ent.ID'} &&
 	(
-		$env{'article_ent.ID_author'}
+		# ID_author
+		($env{'article_ent.ID_author'} && ($env{'article_ent.ID_author'} ne $article_ent{'ID_author'}))
 	))
 	{
 		my %columns;
-		$columns{'ID_author'}="'".$env{'article_ent.ID_author'}."'" if $env{'article_ent.ID_author'};
+		$columns{'ID_author'}="'".$env{'article_ent.ID_author'}."'"
+			if ($env{'article_ent.ID_author'} && ($env{'article_ent.ID_author'} ne $article_ent{'ID_author'}));
 		App::020::SQL::functions::update(
-			'ID' => $env{'article_ent.ID_entity'},
+			'ID' => $env{'article_ent.ID'},
 			'db_h' => "main",
 			'db_name' => $App::401::db_name,
 			'tb_name' => "a401_article_ent",
@@ -443,7 +476,7 @@ Extracts keywords from article_content.abstract/body
 sub article_content_extract_keywords
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::article_content_extract_keywords()");
+	my $t=track TOM::Debug(__PACKAGE__."::article_content_extract_keywords()") if $debug;
 	$env{'article_content.mimetype'}="plain/text" unless $env{'article_content.mimetype'};
 	
 	my %keywords;
@@ -460,7 +493,7 @@ sub article_content_extract_keywords
 	}
 	
 	
-	$t->close();
+	$t->close() if $debug;
 	return %keywords;
 }
 
