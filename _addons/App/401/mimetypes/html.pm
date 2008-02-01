@@ -94,13 +94,21 @@ sub start
 {
 	my ($self, $tag, $attr, $attrseq, $origtext) = @_;
 	
-	main::_log("tag=$tag origtext=$origtext");
+	if (not $tag=~/^(br|strong|em)$/) # don't display info about not important tags
+	{
+		main::_log("tag='$tag' origtext='$origtext'");
+	}
 	
 	my $out_full="<#tag#>";
+	
+	my $out_tag;
+	my $out_cnt;
 	
 	# modify
 	if ($tag eq "img")
 	{
+		$self->{'count'}->{'img'}++;
+		$out_cnt=$self->{'count'}->{'img'};$out_tag='img';
 		$attr->{'alt'}='' unless exists $attr->{'alt'};
 		$attr->{'align'}='left' unless exists $attr->{'align'};
 		if ($attr->{'id'}=~/^a010_(.*?):(.*)$/)
@@ -120,10 +128,15 @@ sub start
 		{
 			use App::501::_init;
 			my %vars=_parse_id($1);
-			$vars{'format'}=$App::501::image_format_thumbnail_ID unless $vars{'format'};
+			$vars{'format'}=
+				$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
+				|| $self->{'config'}->{'a501_image_file.ID_format'}
+				|| $vars{'format'}
+				|| $App::501::image_format_thumbnail_ID;
+			#$vars{'format'}=$App::501::image_format_thumbnail_ID unless $vars{'format'};
 			if ($vars{'ID'})
 			{
-				main::_log("find a501_image ID='$vars{'ID'}'");
+				main::_log("find a501_image ID='$vars{'ID'}' ID_format='$vars{'format'}'");
 				my $sql=qq{
 					SELECT
 						*
@@ -144,7 +157,10 @@ sub start
 					$attr->{'height'}=$db0_line{'image_height'};
 					
 					# override default tag representation
-					$out_full=$self->{'entity'}{'a501_image'}
+					$out_full=
+						$self->{'entity'}{'a501_image.'.$out_cnt}
+						|| $self->{'entity'}{'a501_image'}
+						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
 						|| $tpl->{'entity'}{'parser.a501_image'}
 						|| $out_full;
 					
@@ -159,6 +175,7 @@ sub start
 					}
 				}
 			}
+			$self->{'out_var'}->{'img.'.$out_cnt.'.src'}=$attr->{'src'};
 		}
 		elsif ($attr->{'id'}=~/^a510_video_part:(.*)$/)
 		{
@@ -289,7 +306,21 @@ sub start
 	my $rand=int(rand(10000));
 	$out_full=~s|<%rand%>|$rand|ge;
 	
-	$self->{'out'}.=$out_full;
+	if ($out_tag && $out_cnt && ($self->{'ignore'}->{$out_tag} || $self->{'ignore'}->{$out_tag.'.'.$out_cnt}))
+	{
+		main::_log("ignore placing '$out_tag.$out_cnt'");
+	}
+	else
+	{
+		$self->{'out'}.=$out_full;
+	}
+	
+	if ($out_tag)
+	{
+		main::_log("added to out_tag $out_tag.$out_cnt");
+		$self->{'out_tag'}->{$out_tag.'.'.$out_cnt}=$out_full;
+	}
+	
 	#print $origtext;
 }
 
