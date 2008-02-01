@@ -42,11 +42,47 @@ B<db_name> - database name
 
 =item *
 
-B<sql_status> - required status (default 'Y')
+B<article.ID> || B<ID> - ID of article
 
 =item *
 
-B<sql_lng> - required language (default is current)
+B<article.ID_entity> || B<ID_entity> - ID of article
+
+=item *
+
+B<article.ID_category> || B<ID_category> - category ID of article
+
+=item *
+
+B<article_attrs.status> - required status (default 'Y')
+
+=item *
+
+B<article_content.lng> - required language (default is current)
+
+=item *
+
+B<ignore.img> - ignore all img's in output (this output tag is not placed into document)
+
+=item *
+
+B<ignore.img.1> - ignores first img in output
+
+=item *
+
+B<body.ignore.img.1> - ignores first img in article_content.body output
+
+=item *
+
+B<a501_image.ID_format> - changes ID_format for all a501_image
+
+=item *
+
+B<a501_image.ID_format.1> - changes ID_format for first a501_image
+
+=item *
+
+B<body.a501_image.ID_format.1> - changes ID_format for first a501_image in article_content.body
 
 =back
 
@@ -66,6 +102,22 @@ B<TMP> - article item
 
 B<%db_*%> - article database variables
 
+=item *
+
+B<%out.img.1.*%> - first img variables
+
+=item *
+
+B<#out.img.1#> - first img entry
+
+=item *
+
+B<a501_image> - image item to replace
+
+=item *
+
+B<a501_image.1> - first image item to replace
+
 =back
 
 =cut
@@ -79,8 +131,25 @@ sub execute
 	
 	$env{'db_name'}=$App::401::db_name unless $env{'db_name'};
 	
-	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
-	$env{'sql_status'}='Y' unless $env{'sql_status'};
+	$env{'article_content.lng'}=$env{'lng'} unless $env{'article_content.lng'};
+	$env{'article_attrs.status'}='Y' unless $env{'article_attrs.status'};
+	
+	$env{'article.ID'}=$env{'ID'} unless $env{'article.ID'};
+	$env{'article.ID_entity'}=$env{'ID_entity'} unless $env{'article.ID_entity'};
+	
+	my $sql_where;
+	
+	# ID_entity
+	$sql_where.="AND article.ID_entity_article=$env{'article.ID_entity'}"
+		if $env{'article.ID_entity'};
+	
+	# ID
+	$sql_where.="AND article.ID_article=$env{'article.ID'}"
+		if $env{'article.ID'};
+	
+	# ID_category
+	$sql_where.="AND article.ID_category IN ($env{'article.ID_category'})"
+		if $env{'article.ID_category'};
 	
 	my $sql=qq{
 		SELECT
@@ -88,11 +157,14 @@ sub execute
 		FROM
 			`$env{'db_name'}`.a401_article_view AS article
 		WHERE
-			article.lng='$env{'sql_lng'}' AND
-			article.status IN ('$env{'sql_status'}')
+			article.lng='$env{'article_content.lng'}' AND
+			article.status IN ('$env{'article_attrs.status'}')
+			$sql_where
 		LIMIT 1
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
@@ -100,13 +172,53 @@ sub execute
 		# process body
 		my $p=new App::401::mimetypes::html;
 		
-		$p->{'entity'}{'a501_image'}=$XSGN{'a501_image'} if $XSGN{'a501_image'};
-		$p->{'entity'}{'a510_video_part'}=$XSGN{'a510_video_part'} if $XSGN{'a510_video_part'};
+		# img
+		$p->{'ignore'}{'img'}=
+			$env{'body.ignore.img'}
+			|| $env{'ignore.img'}
+			|| undef;
 		
+		$p->{'ignore'}{'img.1'}=
+			$env{'body.ignore.img.1'}
+			|| $env{'ignore.img.1'}
+			|| undef;
+		
+		# a501_image
+		$p->{'config'}->{'a501_image_file.ID_format'}=
+			$env{'body.a501_image_file.ID_format'}
+			|| $env{'a501_image_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.1'}=
+			$env{'body.a501_image_file.ID_format.1'}
+			|| $env{'a501_image_file.ID_format.1'}
+			|| undef;
+		$p->{'entity'}->{'a501_image'}=
+			$XSGN{'body.a501_image'}
+			|| $XSGN{'a501_image'}
+			|| undef;
+		$p->{'entity'}->{'a501_image.1'}=
+			$XSGN{'body.a501_image.1'}
+			|| $XSGN{'a501_image.1'}
+			|| undef;
+		
+		# a510_video
+		$p->{'entity'}{'a510_video_part'}=
+			$XSGN{'body.a510_video_part'}
+			|| $XSGN{'a510_video_part'}
+			|| undef;
+		
+		# a010
+		foreach (keys %XSGN){if ($_=~/^a010/){$p->{'entity'}{$_}=$XSGN{$_};}}
+		
+		# PARSE !!!
 		$p->parse($db0_line{'body'});
 		$p->eof();
 		my $body_html=$p->{'out'};
+		
 		$XSGN{'TMP'}=~s|<%body%>|$body_html|;
+		
+		$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+		$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
 		
 	}
 	
