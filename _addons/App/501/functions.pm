@@ -33,6 +33,10 @@ L<App::541::mimetypes|app/"541/mimetypes.pm">
 
 =item *
 
+L<TOM::Security::form|lib/"TOM/Security/form.pm">
+
+=item *
+
 Image::Magick
 
 =item *
@@ -57,6 +61,7 @@ File::Type
 
 use App::501::_init;
 use App::541::mimetypes;
+use TOM::Security::form;
 use Image::Magick;
 use File::Path;
 use Digest::MD5  qw(md5 md5_hex md5_base64);
@@ -533,6 +538,24 @@ sub image_add
 	
 	$env{'image_format.ID'}=$App::501::image_format_original_ID unless $env{'image_format.ID'};
 	
+	if ($env{'file'})
+	{
+		if (! -e $env{'file'})
+		{
+			main::_log("file is missing or can't be read",1);
+			$t->close();
+			return undef;
+		}
+		my $file_size=(stat($env{'file'}))[7];
+		main::_log("file size='$file_size'");
+		if (!$file_size)
+		{
+			main::_log("file is empty",1);
+			$t->close();
+			return undef;
+		}
+	}
+	
 	my %category;
 	if ($env{'image_attrs.ID_category'})
 	{
@@ -705,21 +728,43 @@ sub image_add
 	}
 	
 	
+	if ($env{'image_attrs.ID'})
+	{
+		# detect language
+		%image_attrs=App::020::SQL::functions::get_ID(
+			'ID' => $env{'image_attrs.ID'},
+			'db_h' => "main",
+			'db_name' => $App::501::db_name,
+			'tb_name' => "a501_image_attrs",
+			'columns' => {'*'=>1}
+		);
+	}
 	if ($env{'image_attrs.ID'} &&
 	(
-		$env{'image_attrs.name'} ||
-		$env{'image_attrs.description'} ||
-		$env{'image_attrs.ID_category'} ||
-		$env{'image_attrs.status'}
+		# name
+		($env{'image_attrs.name'} && ($env{'image_attrs.name'} ne $image_attrs{'name'})) ||
+		# description
+		($env{'image_attrs.description'} && ($env{'image_attrs.description'} ne $image_attrs{'description'})) ||
+		# keywords
+		($env{'image_attrs.keywords'} && ($env{'image_attrs.keywords'} ne $image_attrs{'keywords'})) ||
+		# ID_category
+		($env{'image_attrs.ID_category'} && ($env{'image_attrs.ID_category'} ne $image_attrs{'ID_category'})) ||
+		# status
+		($env{'image_attrs.status'} && ($env{'image_attrs.status'} ne $image_attrs{'status'}))
 	))
 	{
 		my %columns;
 		
-		$columns{'ID_category'}=$env{'image_attrs.ID_category'} if $env{'image_attrs.ID_category'};
-		$columns{'name'}="'".$env{'image_attrs.name'}."'" if $env{'image_attrs.name'};
-		$columns{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'image_attrs.name'})."'" if $env{'image_attrs.name'};
-		$columns{'description'}="'".$env{'image_attrs.description'}."'" if $env{'image_attrs.description'};
-		$columns{'status'}="'".$env{'image_attrs.status'}."'" if $env{'image_attrs.status'};
+		$columns{'name'}="'".TOM::Security::form::sql_escape($env{'image_attrs.name'})."'"
+			if ($env{'image_attrs.name'} && ($env{'image_attrs.name'} ne $image_attrs{'name'}));
+		$columns{'description'}="'".TOM::Security::form::sql_escape($env{'image_attrs.description'})."'"
+			if ($env{'image_attrs.description'} && ($env{'image_attrs.description'} ne $image_attrs{'description'}));
+		$columns{'keywords'}="'".TOM::Security::form::sql_escape($env{'image_attrs.keywords'})."'"
+			if ($env{'image_attrs.keywords'} && ($env{'image_attrs.keywords'} ne $image_attrs{'keywords'}));
+		$columns{'ID_category'}=$env{'image_attrs.ID_category'}
+			if ($env{'image_attrs.ID_category'} && ($env{'image_attrs.ID_category'} ne $image_attrs{'ID_category'}));
+		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'image_attrs.status'})."'"
+			if ($env{'image_attrs.status'} && ($env{'image_attrs.status'} ne $image_attrs{'status'}));
 		
 		App::020::SQL::functions::update(
 			'ID' => $env{'image_attrs.ID'},
@@ -746,7 +791,7 @@ Remove image from gallery
 sub image_del
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::image_del()");
+	my $t=track TOM::Debug(__PACKAGE__."::image_del($env{'image.ID_entity'})");
 	
 	my $tr=new TOM::Database::SQL::transaction('db_h'=>"main");
 	

@@ -39,6 +39,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_attrs` (
   `datetime_create` datetime NOT NULL,
   `order_id` int(10) unsigned NOT NULL,
   `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `keywords` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -56,6 +57,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_attrs_j` (
   `datetime_create` datetime NOT NULL,
   `order_id` int(10) unsigned NOT NULL,
   `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `keywords` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -190,6 +192,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_view` AS (
 		image_format.name AS ID_format_name,
 		image_file.ID AS ID_file,
 		
+		image_attrs.datetime_create,
 		image_attrs.ID_category,
 		image_cat.name AS ID_category_name,
 		
@@ -199,6 +202,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_view` AS (
 		
 		image_attrs.name,
 		image_attrs.description,
+		image_attrs.keywords,
 		image_attrs.order_id,
 		image_attrs.lng,
 		
@@ -217,6 +221,8 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_view` AS (
 			 'Y', 'U'
 		) AS processed,
 		
+		image_attrs.status,
+		
 		IF
 		(
 			(
@@ -226,7 +232,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_view` AS (
 				image_file.status LIKE 'Y'
 			),
 			 'Y', 'U'
-		) AS status
+		) AS status_all
 		
 	FROM
 		`/*db_name*/`.`/*addon*/_image` AS image

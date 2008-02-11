@@ -46,6 +46,10 @@ L<App::501::functions|app/"501/functions.pm">
 
 =item *
 
+L<App::501::a160|app/"501/a160.pm">
+
+=item *
+
 File::Copy
 
 =item *
@@ -59,6 +63,7 @@ File::Path
 use App::020::_init; # data standard 0
 use App::301::_init;
 use App::501::functions;
+use App::501::a160;
 use File::Copy;
 use File::Path;
 
