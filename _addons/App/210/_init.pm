@@ -19,4 +19,6 @@ use App::020::_init; # data standard 0
 use App::210::SQL;
 use App::210::a160;
 
+our $db_name=$App::210::db_name || $TOM::DB{'main'}{'name'};
+
 1;

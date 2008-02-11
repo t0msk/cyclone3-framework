@@ -86,6 +86,9 @@ sub execute
 		return 1;
 	}
 	
+	# if I'm as RPC service
+	foreach my $kk (keys %{$main::RPC}){$main::FORM{$kk}=$main::RPC->{$kk};}
+	
 	my %a210=App::020::SQL::functions::get_ID(
 		'db_h' => "main",
 		'db_name' => $TOM::DB{'main'}{'name'},
