@@ -194,7 +194,21 @@ sub new_initialize
 		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
-	my $SQL="UPDATE `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=NOW(), ID_entity=ID WHERE ";
+	# this is not very secure, but...
+	# Error 1093 (ER_UPDATE_TABLE_USED)
+	# SQLSTATE = HY000
+	# Message = "You can't specify target table 'x'
+	# for update in FROM clause"
+	my $ID_entity='ID';
+	if (!$env{'ID_entity'} && $env{'ID'})
+	{
+		my $sql=qq{SELECT MAX(ID_entity)+1 AS ID FROM `$env{'db_name'}`.`$env{'tb_name'}`};
+		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		if ($db0_line{'ID'} > 1){$ID_entity=$db0_line{'ID'};}
+	}
+	
+	my $SQL="UPDATE `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=NOW(), ";
 	
 	if ($env{'ID_entity'} && $env{'ID'})
 	{
@@ -202,11 +216,11 @@ sub new_initialize
 	}
 	elsif ($env{'ID'})
 	{
-		$SQL.="ID=$env{'ID'} AND ID_entity IS NULL";
+		$SQL.="ID_entity=$ID_entity WHERE ID=$env{'ID'} AND ID_entity IS NULL";
 	}
 	else
 	{
-		$SQL.="ID_entity IS NULL";
+		$SQL.="ID_entity=$ID_entity WHERE ID_entity IS NULL";
 	}
 	
 	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
