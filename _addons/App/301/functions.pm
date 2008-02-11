@@ -114,6 +114,98 @@ sub user_add
 		},'quiet'=>1) || return undef;
 	}
 	
+	my %user_profile;
+	if (!$env{'user_profile.ID_entity'} && $env{'user.ID_user'})
+	{
+		main::_log("search user_profile by login='$env{'user.login'}'");
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`TOM`.a301_user_profile
+			WHERE
+				ID_entity='$env{'user.ID_user'}'
+			LIMIT 1;
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		%user_profile=$sth0{'sth'}->fetchhash();
+		$env{'user_profile.ID_entity'}=$user_profile{'ID_entity'} if $user_profile{'ID_entity'};
+		$env{'user_profile.ID'}=$user_profile{'ID'} if $user_profile{'ID'};
+		
+		if (!$env{'user_profile.ID_entity'})
+		{
+			$env{'user_profile.ID'}=App::020::SQL::functions::new(
+				'db_h' => "main",
+				'db_name' => 'TOM',
+				'tb_name' => "a301_user_profile",
+				'columns' =>
+				{
+					'ID_entity' => "'$env{'user.ID_user'}'",
+				},
+				'-journalize' => 1,
+			);
+			$env{'user_profile.ID_entity'}=$env{'user.ID_user'} if $env{'user_profile.ID'};
+		}
+		
+	}
+	if ($env{'user_profile.ID'} && (
+		# firstname
+		($env{'user_profile.firstname'} && ($env{'user_profile.firstname'} ne $user_profile{'firstname'}))||
+		# surname
+		($env{'user_profile.surname'} && ($env{'user_profile.surname'} ne $user_profile{'surname'}))||
+		# city
+		($env{'user_profile.city'} && ($env{'user_profile.city'} ne $user_profile{'city'}))||
+		# street
+		($env{'user_profile.street'} && ($env{'user_profile.street'} ne $user_profile{'street'}))||
+		# ZIP
+		($env{'user_profile.ZIP'} && ($env{'user_profile.ZIP'} ne $user_profile{'ZIP'}))||
+		# sex
+		($env{'user_profile.sex'} && ($env{'user_profile.sex'} ne $user_profile{'sex'}))||
+		# education
+		($env{'user_profile.education'} && ($env{'user_profile.education'} ne $user_profile{'education'}))||
+		# phone
+		($env{'user_profile.phone'} && ($env{'user_profile.phone'} ne $user_profile{'phone'}))||
+		# phone_mobile
+		($env{'user_profile.phone_mobile'} && ($env{'user_profile.phone_mobile'} ne $user_profile{'phone_mobile'}))||
+		# date_birth
+		($env{'user_profile.date_birth'} && ($env{'user_profile.date_birth'} ne $user_profile{'date_birth'}))||
+		# about_me
+		($env{'user_profile.about_me'} && ($env{'user_profile.about_me'} ne $user_profile{'about_me'}))
+	))
+	{
+		my %columns;
+		$columns{'firstname'}="'".TOM::Security::form::sql_escape($env{'user_profile.firstname'})."'"
+			if ($env{'user_profile.firstname'} && ($env{'user_profile.firstname'} ne $user_profile{'firstname'}));
+		$columns{'surname'}="'".TOM::Security::form::sql_escape($env{'user_profile.surname'})."'"
+			if ($env{'user_profile.surname'} && ($env{'user_profile.surname'} ne $user_profile{'surname'}));
+		$columns{'city'}="'".TOM::Security::form::sql_escape($env{'user_profile.city'})."'"
+			if ($env{'user_profile.city'} && ($env{'user_profile.city'} ne $user_profile{'city'}));
+		$columns{'street'}="'".TOM::Security::form::sql_escape($env{'user_profile.street'})."'"
+			if ($env{'user_profile.street'} && ($env{'user_profile.street'} ne $user_profile{'street'}));
+		$columns{'ZIP'}="'".TOM::Security::form::sql_escape($env{'user_profile.ZIP'})."'"
+			if ($env{'user_profile.ZIP'} && ($env{'user_profile.ZIP'} ne $user_profile{'ZIP'}));
+		$columns{'sex'}="'".TOM::Security::form::sql_escape($env{'user_profile.sex'})."'"
+			if ($env{'user_profile.sex'} && ($env{'user_profile.sex'} ne $user_profile{'sex'}));
+		$columns{'education'}="'".TOM::Security::form::sql_escape($env{'user_profile.education'})."'"
+			if ($env{'user_profile.education'} && ($env{'user_profile.education'} ne $user_profile{'education'}));
+		$columns{'phone'}="'".TOM::Security::form::sql_escape($env{'user_profile.phone'})."'"
+			if ($env{'user_profile.phone'} && ($env{'user_profile.phone'} ne $user_profile{'phone'}));
+		$columns{'phone_mobile'}="'".TOM::Security::form::sql_escape($env{'user_profile.phone_mobile'})."'"
+			if ($env{'user_profile.phone_mobile'} && ($env{'user_profile.phone_mobile'} ne $user_profile{'phone_mobile'}));
+		$columns{'date_birth'}="'".TOM::Security::form::sql_escape($env{'user_profile.date_birth'})."'"
+			if ($env{'user_profile.date_birth'} && ($env{'user_profile.date_birth'} ne $user_profile{'date_birth'}));
+		$columns{'about_me'}="'".TOM::Security::form::sql_escape($env{'user_profile.about_me'})."'"
+			if ($env{'user_profile.about_,e'} && ($env{'user_profile.about_me'} ne $user_profile{'about_me'}));
+		App::020::SQL::functions::update(
+			'ID' => $env{'user_profile.ID'},
+			'db_h' => "main",
+			'db_name' => 'TOM',
+			'tb_name' => "a301_user_profile",
+			'columns' => {%columns},
+			'-journalize' => 1
+		);
+	}
+	
 	if (
 		$env{'user.ID_user'} &&
 		(

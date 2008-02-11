@@ -1,0 +1,141 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+=head1 NAME
+
+301-user_group_move_to_trash.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Remove user management group from domain
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID of group
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default error
+
+=item *
+
+B<RESULT_success> - without error
+
+=item *
+
+B<RESULT_failure_no_input> - failure - no input
+
+=item *
+
+B<RESULT_failure_set> - failure to set
+
+=item *
+
+B<&lt;%ID%&gt;> - ID
+
+=item *
+
+B<&lt;%missing_parameter%&gt;> - missing param
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	my $from;
+	
+	if (!$env{'ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		return 1;
+	}
+	
+	# check if this group is not locked
+	my $sql=qq{
+		SELECT
+			status,
+			name,
+			ID
+		FROM
+			TOM.a301_user_group
+		WHERE
+			ID='$env{'ID'}' AND
+			hostname='$tom::H_cookie'
+		LIMIT 1;
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		if ($db0_line{'status'} eq "L")
+		{
+			$XSGN{'TMP'}=$XSGN{'RESULT_failure_insert'};
+			return 1;
+		}
+		
+		my $name=$db0_line{'name'}."_".$db0_line{'ID'};
+		
+		App::020::SQL::functions::tree::rename(
+			$name,
+			'ID' => $env{'ID'},
+			'db_h' => "main",
+			'db_name' => 'TOM',
+			'tb_name' => "a301_user_group",
+		);
+		
+		App::020::SQL::functions::to_trash(
+			'ID' => $env{'ID'},
+			'db_h' => "main",
+			'db_name' => 'TOM',
+			'tb_name' => "a301_user_group",
+			'-journalize' => 1
+		);
+		
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		
+	}
+	else
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_insert'};
+		return 1;
+	}
+	
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

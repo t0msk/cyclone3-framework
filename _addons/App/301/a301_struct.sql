@@ -52,6 +52,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_profile` (
   `ZIP` varchar(16) character set ascii default NULL,
   `street` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `street_num` varchar(12) character set ascii default NULL,
+  `education` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `phone` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `phone_mobile` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `about_me` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -62,7 +66,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_profile` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_user_profile_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_entity` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
+  `ID_entity` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel _user.ID_user
   `datetime_create` datetime NOT NULL,
   `firstname` varchar(32) character set utf8 collate utf8_bin default NULL,
   `surname` varchar(64) character set utf8 collate utf8_bin default NULL,
@@ -74,6 +78,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_profile_j` (
   `ZIP` varchar(16) character set ascii default NULL,
   `street` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `street_num` varchar(12) character set ascii default NULL,
+  `education` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `phone` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `phone_mobile` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `about_me` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
