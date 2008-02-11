@@ -39,6 +39,32 @@ sub execute
 	alarm(0);
 	
 	
+	main::_log("remove all old generated video_part_file_j items in video_part_file_j table");
+	my $sql=qq{
+		SELECT
+			*,
+			CONCAT(ID_format,'/',SUBSTR(ID,1,4),'/',name,'.',file_ext) AS file_path
+		FROM
+			`$App::510::db_name`.a510_video_part_file_j
+		WHERE
+			file_alt_src IS NULL AND
+			from_parent = 'Y' AND
+			datetime_create <= DATE_SUB(CURDATE(),INTERVAL 7 DAY)
+		ORDER BY
+			ID
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $file=$tom::P.'/!media/a510/video/part/file_j/'.$db0_line{'file_path'};
+		if (-e $file)
+		{
+			main::_log("remove file video_part_file_j.ID=$db0_line{'ID'} $file");
+			# very blind function!!! not controls if file is used by another entry in video_part_file_j table
+			my $out=unlink $file;
+			if (!$out){main::_log("can't remove: $!",1);}
+		}
+	}
 	
 	
 	# find video_part with missing 'original' format
@@ -161,7 +187,7 @@ sub execute
 		
 		if (!-e $tom::P.'/!media/a510/video/part/file/'.$db0_line{'file_path'})
 		{
-			main::_log("file $db0_line{'file_path'} not exists",1);
+			main::_log("file of video_part_file $db0_line{'file_path'} not exists",1);
 			TOM::Database::SQL::execute(qq{
 				DELETE FROM `$App::510::db_name`.`a510_video_part_file`
 				WHERE ID=$db0_line{'ID'} LIMIT 1
@@ -279,7 +305,7 @@ sub execute
 			}
 			else
 			{
-				main::_log("file $db0_line{'file_path'} not exists",1);
+				main::_log("file of video_part_file_j $db0_line{'file_path'} not exists",1);
 				TOM::Database::SQL::execute(qq{
 					DELETE FROM `$App::510::db_name`.`a510_video_part_file_j`
 					WHERE
@@ -293,33 +319,6 @@ sub execute
 		}
 		
 		
-	}
-	
-	
-	
-	main::_log("remove all old generated video_part_file_j items in video_part_file_j table");
-	my $sql=qq{
-		SELECT
-			*,
-			CONCAT(ID_format,'/',SUBSTR(ID,1,4),'/',name,'.',file_ext) AS file_path
-		FROM
-			`$App::510::db_name`.a510_video_part_file
-		WHERE
-			file_alt_src IS NULL AND
-			from_parent = 'Y' AND
-			datetime_create <= DATE_SUB(CURDATE(),INTERVAL 1 DAY)
-		ORDER BY
-			ID
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-	while (my %db0_line=$sth0{'sth'}->fetchhash())
-	{
-		my $file=$tom::P.'/!media/a510/video/part/file_j/'.$db0_line{'file_path'};
-		if (-e $file)
-		{
-			main::_log("remove file video_part_file_j.ID=$db0_line{'ID'} $file");
-			unlink $file;
-		}
 	}
 	
 	

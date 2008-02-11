@@ -1208,6 +1208,11 @@ sub video_part_file_add
 		
 		if ($rel)
 		{
+			my $image_name=
+				$env{'video_part_attrs.name'} ||
+				$env{'video_attrs.name'} ||
+				'video_part #'.$env{'video_part.ID'};
+				
 			# find if already exists relation to any thumbnail in a501
 			my $relation=(App::160::SQL::get_relations(
 				'l_prefix' => 'a510',
@@ -1226,8 +1231,8 @@ sub video_part_file_add
 				main::_log("adding image");
 				my %image=App::501::functions::image_add(
 					'file' => $tmpjpeg->{'filename'},
-					'image_attrs.ID_category' => $App::501::thumbnail_cat{$tom::LNG},
-					'image_attrs.name' => 'video_part #'.$env{'video_part.ID'},
+					'image_attrs.ID_category' => $App::510::thumbnail_cat{$tom::LNG},
+					'image_attrs.name' => $image_name,
 					'image_attrs.status' => 'Y',
 	#				'image_attrs.description' => $desc
 				);
@@ -1256,7 +1261,7 @@ sub video_part_file_add
 					'image.ID_entity' => $relation->{'r_ID_entity'},
 					'file' => $tmpjpeg->{'filename'},
 					'image_attrs.ID_category' => $App::510::thumbnail_cat{$tom::LNG},
-					'image_attrs.name' => 'video_part #'.$env{'video_part.ID'},
+					'image_attrs.name' => $image_name,
 				);
 			}
 		}
