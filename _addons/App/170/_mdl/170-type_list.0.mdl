@@ -10,9 +10,9 @@ sub execute
 	
 	local %tom::type_c;
 	
-	TOM::TypeID::read_conf($tom::Pm.'/type.conf');
+	TOM::TypeID::read_conf('../../type.conf');
 	
-	foreach (keys %tom::type_c)
+	foreach (sort keys %tom::type_c)
 	{
 		$XSGN{'NULL'}=$XSGN{'ITEM'};
 		$XSGN{'NULL'}=~s|<%type%>|$_|g;
