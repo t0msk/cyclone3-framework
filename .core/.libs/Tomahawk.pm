@@ -12,6 +12,7 @@ Tomahawk - core library
 
 # DEFINUJEM PREMENNE V OBLASTI MODULOV
 package Tomahawk::module;
+use Encode;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
@@ -359,7 +360,7 @@ sub module
 			main::_log("input '$_'='$var'");
 		}
 =cut
-		#main::_log("input '$_'='$mdl_env{$_}'");
+		main::_log("input '$_'='$mdl_env{$_}'");
 		/^-/ && do {$mdl_C{$_}=$mdl_env{$_};delete $mdl_env{$_};}
 	}
 	
@@ -399,7 +400,8 @@ sub module
 		foreach (sort keys %mdl_env){$_=~/^[^_]/ && do{$null.=$_."=\"".$mdl_env{$_}."\"\n";}}
 		foreach (sort keys %mdl_C){$null.=$_."=\"".$mdl_C{$_}."\"\n";}
 		
-		$mdl_C{-md5}=md5_hex(Int::charsets::encode::UTF8_ASCII($null));
+		#$mdl_C{-md5}=md5_hex(Int::charsets::encode::UTF8_ASCII($null));
+		$mdl_C{-md5}=md5_hex(Encode::encode_utf8($null));
 		main::_log("cache md5='".$mdl_C{-md5}."'");
 		
 		
@@ -460,6 +462,7 @@ sub module
 							'namespace' => "mcache",
 							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5},
 							'value' => $cache
+#							'expiration' => $mdl_C{-cache_time}
 						))
 					{
 						main::_log("memcached: saved record from db");
@@ -755,7 +758,8 @@ sub module
 			$Ext::CacheMemcache::cache->set(
 				'namespace' => "mcache_parallel",
 				'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
-				'value' => 1
+				'value' => 1,
+				'expiration' => '600S' # safe time to not parallel caching
 			);
 		}
 		
@@ -841,7 +845,8 @@ sub module
 					if ($Ext::CacheMemcache::cache->set(
 							'namespace' => "mcache",
 							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5},
-							'value' => $cache
+							'value' => $cache,
+							'expiration' => $CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}.'S'
 						)
 					)
 					{
