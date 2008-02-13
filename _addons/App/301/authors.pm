@@ -68,6 +68,8 @@ sub get_author
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		
 		%{$authors{$ID_user}}=$sth0{'sth'}->fetchhash();
+		$authors{$ID_user}{'firstname'}=$authors{$ID_user}{'login'}
+			unless $authors{$ID_user}{'firstname'};
 		
 	}
 	
