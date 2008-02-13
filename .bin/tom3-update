@@ -40,14 +40,13 @@ if ($FORM{'xuladmin'})
 			{
 				if (opendir (DIR1,$TOM::P."/".$file)){foreach (readdir DIR1){if (($_ ne ".")&&($_ ne "..")){push @files,$file."/".$_;}}}
 			}
-			if ($file=~s/\/local.conf$// && $file=~/\/\!cyclone$/)
+			
+			if (-e $TOM::P.'/'.$file.'/local.conf' && $file=~/\/(!cyclone|rpc)$/)
 			{
 				main::_log_stdout($file);
 				chdir $TOM::P.'/'.$file;
 				system("svn up >/dev/null");
-				#$CRON::hosts{file2domain($file)}=$file;
 			}
-			
 		}
 	}
 	
