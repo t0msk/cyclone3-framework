@@ -183,11 +183,12 @@ sub remove
 #my ($count,$pcount);
 
 #my $start;
+use Cwd;
+my $this=Cwd::cwd();
+#my $this=$main::ENV{'PWD'};
+print "pwd:$this\n";
 
-my $this=$main::ENV{'PWD'};
-print "-$this\n";
-
-if ($FORM{t} || $FORM{r})
+if ($FORM{'t'} || $FORM{'r'})
 {
 	&exit unless $this=~/^$P/;
 	$plus=($this=~/$P\/(.*)/)[0];
