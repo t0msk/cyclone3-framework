@@ -177,8 +177,8 @@ sub compare_create_table
 			$count++;
 		}
 		
-		if (not $tbl=~/_attrs(_arch|)$/)
-		{
+#		if (not $tbl=~/_attrs(_arch|)$/)
+#		{
 			foreach my $key(keys %fields1h)
 			{
 				if (!$fields0h{$key})
@@ -190,7 +190,7 @@ sub compare_create_table
 					next;
 				}
 			}
-		}
+#		}
 		
 		@fields1a=@fields0a;
 		$t_fields->close();

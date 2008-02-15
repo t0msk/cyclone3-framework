@@ -16,10 +16,12 @@ use TOM::Database::connect;
 use TOM::Database::SQL::file;
 use TOM::Database::SQL::compare;
 use TOM::Database::SQL::transaction;
+use TOM::Database::SQL::cache;
 
 our $debug=0;
 our $logquery=1;
 our $logquery_long=5;
+our $query_long_autocache=0.01; # less availability than Memcached
 
 =head1 FUNCTIONS
 
@@ -108,8 +110,10 @@ Executes SQL query and return hash with variables
    'db_h' => "main",
    'slave' => 1 # is safe to execute this SQL query on slave server?
                 # other queries than SELECT will be executed on master
-   'cache' => 1 # is safe to cache this SQL query
-                # when another number than 1 is used, represents seconds in cache
+   'cache' => 1 # cache this SQL query
+                # number represents seconds in cache
+   'cache_auto' => 1 # cache this SQL query when Memcached availability is higher than MySQL query cache
+                     # number represents seconds in cache
  );
  # %sth={'sth', 'rows', 'info', 'err'};
  while (my %db_line=$sth{'sth'}->fetchhash())
@@ -166,6 +170,26 @@ sub execute
 		main::_log("{$env{'db_h'}} $SQL_",3,"sql");
 	}
 	
+	my $cache_key=$env{'db_name'}.'::'.$SQL_;
+	if (($env{'cache'} || $env{'cache_auto'}) && $TOM::CACHE && $TOM::CACHE_memcached && $SQL_=~/^SELECT/)
+	{
+		main::_log("try to read from cache") if $env{'log'};
+		my $cache=new TOM::Database::SQL::cache(
+			'id' => $cache_key
+		);
+		if ($cache)
+		{
+			main::_log("readed from cache") if $env{'log'};
+			$output{'sth'}=$cache;
+			$output{'info'}=$cache->{'value'}->{'info'};
+			$output{'err'}=$cache->{'value'}->{'err'};
+			$output{'rows'}=$cache->{'value'}->{'rows'};
+			$t->close();
+			return %output;
+		}
+	}
+	
+	
 	#main::_log("Query $env{'db_h'}");
 	$output{'sth'}=$main::DB{$env{'db_h'}}->Query($SQL);
 	#main::_log("after Query");
@@ -200,6 +224,25 @@ sub execute
 	main::_log("output info=".$output{'info'}) unless $env{'quiet'};
 	
 	$t->close();
+	
+	if ($env{'cache_auto'} && $SQL_=~/^SELECT/ && $t->{'time'}{'req'}{'duration'} >= $query_long_autocache)
+	{
+		main::_log("SQL: cache_auto used to cache, because query long") if $env{'log'};
+		$env{'cache'} = $env{'cache_auto'};
+	}
+	if ($env{'cache'} && $TOM::CACHE && $TOM::CACHE_memcached && $SQL_=~/^SELECT/)
+	{
+		#main::_log("try to save to cache") if $env{'log'};
+		main::_log("SQL: saving to cache") if $env{'log'};
+		$output{'sth'}=new TOM::Database::SQL::cache(
+			'sth'=> $output{'sth'}, # we are saving output from STH
+			'err'=> $output{'err'},
+			'info'=> $output{'info'},
+			'rows'=> $output{'rows'},
+			'expire' => $env{'cache'},
+			'id'=> $cache_key
+		);
+	}
 	
 	if ($logquery_long && ($t->{'time'}{'req'}{'duration'} > $logquery_long))
 	{
