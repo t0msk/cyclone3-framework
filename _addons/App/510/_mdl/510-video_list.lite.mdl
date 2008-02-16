@@ -42,23 +42,23 @@ B<db_name> - database name
 
 =item *
 
-B<ID_format> - ID of video format to display (image_format.ID)
+B<video_attrs.status> - required status (default 'Y')
 
 =item *
 
-B<format_name> - name of video format to display (image_format.name)
+B<video_attrs.lng> - required language (default is current)
+
+=item *
+
+B<video_file.ID_format> - ID of video format to display (image_format.ID)
+
+=item *
+
+B<video_format.name> - name of video format to display (image_format.name)
 
 =item *
 
 B<sql_limit> - limit to display (default '1')
-
-=item *
-
-B<sql_status> - required status (default 'Y')
-
-=item *
-
-B<sql_lng> - required language (default is current)
 
 =back
 
@@ -107,23 +107,23 @@ sub execute
 	
 	$env{'db_name'}=$App::510::db_name unless $env{'db_name'};
 	
-	if (!$env{'ID_format'} && !$env{'format_name'})
+	if (!$env{'video_file.ID_format'} && !$env{'video_format.name'})
 	{
-		$env{'format_name'}='thumbnail';
+		$env{'video_format.name'}='thumbnail';
 	}
 	
-	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
+	$env{'video_attrs.lng'}=$env{'lng'} unless $env{'video_attrs.lng'};
+	$env{'video_attrs.status'}='Y' unless $env{'video_attrs.status'};
 	$env{'sql_limit'}='1' unless $env{'sql_limit'};
-	$env{'sql_status'}='Y' unless $env{'sql_status'};
 	
 	#$env{'ID_format'}
-	if ($env{'ID_format'})
+	if ($env{'video_file.ID_format'})
 	{
-		$env{'sql_where'}.=" AND video.ID_format=$env{'ID_format'}";
+		$env{'sql_where'}.=" AND video.ID_format=$env{'video_file.ID_format'}";
 	}
-	if ($env{'format_name'})
+	if ($env{'video_format.name'})
 	{
-		$env{'sql_where'}.=" AND video.ID_format_name='$env{'format_name'}'";
+		$env{'sql_where'}.=" AND video.ID_format_name='$env{'video_format.name'}'";
 	}
 	
 	
@@ -131,10 +131,10 @@ sub execute
 		SELECT
 			*
 		FROM
-			`$env{'db_name'}`.a510_video_view AS video
+			`$App::510::db_name`.a510_video_view AS video
 		WHERE
-			video.status IN ('$env{'sql_status'}') AND
-			video.lng='$env{'sql_lng'}'
+			video.status IN ('$env{'video_attrs.status'}') AND
+			video.lng='$env{'video_attrs.lng'}'
 			$env{'sql_where'}
 		ORDER BY
 			video.order_id ASC
