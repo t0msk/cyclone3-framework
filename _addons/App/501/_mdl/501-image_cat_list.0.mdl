@@ -1,0 +1,321 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::501::_init;
+
+=head1 NAME
+
+501-image_cat_list.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+List of folders and items
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<image_cat.ID> - ID of image_cat
+
+=item *
+
+B<keywords> - filter by defined keywords
+
+=item *
+
+B<status> - default 'Y'
+
+=item *
+
+B<sql_order_by> - default 'ID_charindex'
+
+=item *
+
+B<sql_limit> - SQL limit
+
+=back
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	delete $env{'ID_charindex'};
+	$env{'sql_limit'}=500 unless $env{'sql_limit'};
+	$env{'sql_order_by'}='name ASC' unless $env{'sql_order_by'};
+	
+	my $from;
+	my $sql_where;
+	
+	# language
+	$sql_where.="lng='$env{'lng'}' ";
+	
+	# status
+	if ($env{'status'})
+	{
+		$XSGN{'TMP'}=~s|<%required_status%>|$env{'status'}|g;
+		$sql_where.="AND status IN ('".(join "','", split('',$env{'status'}))."') ";
+	}
+	else
+	{
+		$sql_where.="AND status='Y' ";
+	}
+	
+	
+	# find ID LIKE *
+	if ($env{'image_cat.ID'}=~s/\*$//)
+	{
+		my $cat_sql=qq{
+					SELECT
+						ID_charindex
+					FROM
+						`$App::501::db_name`.a501_image_cat
+					WHERE
+						ID=$env{'image_cat.ID'}
+					LIMIT 1
+		};
+		$env{'image_cat.ID*'} = qq{
+			SELECT
+				ID
+			FROM
+				`$App::501::db_name`.a501_image_cat
+			WHERE
+				ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+				lng='$env{'lng'}' AND
+				status IN ('Y','N','L')
+		};
+		#TOM::Database::SQL::execute($cat_sql,'log'=>1);
+	}
+	
+	
+	if ($env{'image_cat.ID'})
+	{
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'image_cat.ID'}|g;
+		
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h'    => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image_cat',
+			'ID'      => $env{'image_cat.ID'},
+			'columns' => 
+			{
+				'ID_charindex' => 1
+			}
+		);
+		if ($data{'ID'})
+		{
+			$env{'ID_charindex'}=$data{'ID_charindex'}.':';
+		}
+		else
+		{
+			main::_log("can't find image_cat.ID='$data{'ID'}'",1);
+			return undef;
+		}
+		
+		my $path_;
+		foreach my $node (App::020::SQL::functions::tree::get_path(
+			$env{'image_cat.ID'},
+			'db_h'    => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image_cat'
+		))
+		{$path_.='/'.$node->{'name'};}
+		$path_=~s|^/||;
+		
+		$XSGN{'TMP'}=~s|<%location%>|$path_|g;
+		
+		if (!$env{'image_cat.ID*'})
+		{
+			# add parent as first folder item :))
+			my %db0_line=App::020::SQL::functions::tree::get_parent_ID
+			(
+				'ID' => $env{'image_cat.ID'},
+				'db_h' => 'main',
+				'db_name' => $App::501::db_name,
+				'tb_name' => 'a501_image_cat',
+				'columns' => {'*' => 1,}
+			);
+			if ($db0_line{'ID'})
+			{
+				main::_log('adding parent');
+				$XSGN{'NULL'}=$XSGN{'ITEM'};
+				
+				$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID'}|g;
+				$XSGN{'NULL'}=~s|<%db_name%>|..|g;
+				$XSGN{'NULL'}=~s|<%folder%>|P|g;
+				
+				$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+			}
+			else
+			{
+				$XSGN{'NULL'}=$XSGN{'ITEM'};
+				
+				$XSGN{'NULL'}=~s|<%ID%>||g;
+				$XSGN{'NULL'}=~s|<%db_name%>|..|g;
+				$XSGN{'NULL'}=~s|<%folder%>|P|g;
+				
+				$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+			}
+		}
+	}
+	
+	
+	
+	
+	#
+	# LISTING OF FOLDERS
+	#
+	
+	
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			a501_image_cat
+		WHERE
+			$sql_where AND
+			ID_charindex LIKE '$env{'ID_charindex'}___'
+		ORDER BY
+			ID_charindex
+	};
+	
+	my @path;
+	my @path_url;
+	
+	my %charindex_ID;
+	
+	my $level;
+	my $level_prev;
+	my $level_next;
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+	if ($sth0{'sth'} && !$env{'image_cat.ID*'})
+	{
+		
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$charindex_ID{$db0_line{'ID_charindex'}}=$db0_line{'ID'};
+			my $dbg=$db0_line{'ID_charindex'};
+			$dbg=~s|^(.*?)(.{0,4})$|\1|;
+			$db0_line{'ID_parent'}=$charindex_ID{$dbg};
+			
+			$XSGN{'NULL'}=$XSGN{'ITEM'};
+			
+			$XSGN{'NULL'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+			
+			$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID'}|g;
+			$XSGN{'NULL'}=~s|<%ID_entity%>|$db0_line{'ID_entity'}|g;
+			$XSGN{'NULL'}=~s|<%ID_parent%>|$db0_line{'ID_parent'}|g;
+			$XSGN{'NULL'}=~s|<%folder%>|Y|g;
+			
+			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+		}
+		
+	}
+	else
+	{
+		main::_log("can't select");
+	}
+	
+	
+	
+	#
+	# LISTING OF ITEMS
+	#
+	
+	if ($env{'keywords'})
+	{
+		$sql_where.=" AND (";
+		foreach (split(' ',$env{'keywords'}))
+		{
+			next unless $_;
+			$sql_where.="name LIKE '%$_%' AND ";
+		}
+		$sql_where=~s|AND $||;
+		$sql_where.=") ";
+	}
+	
+	# WHERE CATEGORY
+	my $where_category;
+	$where_category="AND ID_category='$env{'image_cat.ID'}'" if $env{'image_cat.ID'};
+	$where_category="AND ID_category IN ($env{'image_cat.ID*'})" if $env{'image_cat.ID*'};
+	$where_category="" unless $env{'image_cat.ID'};
+	if (!$env{'image_cat.ID'} && !$env{'image_cat.ID*'}){$where_category="AND ID_category=0";}
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			a501_image_view
+		WHERE
+			(
+				ID_format=$App::501::image_format_thumbnail_ID
+				OR ID_format IS NULL
+			) AND
+			$sql_where
+			$where_category
+		ORDER BY
+			$env{'sql_order_by'}
+		LIMIT
+			$env{'sql_limit'}
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+	if ($sth0{'sth'})
+	{
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$XSGN{'NULL'}=$XSGN{'ITEM'};
+			
+			$XSGN{'NULL'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+			$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID_image'}|g;
+			$XSGN{'NULL'}=~s|<%ID_entity%>|$db0_line{'ID_entity_image'}|g;
+			
+			my $thumbnail="$tom::H_a501/image/file/$db0_line{'file_path'}";
+			main::_log("thumbnail='$thumbnail'");
+			$XSGN{'NULL'}=~s|<%thumbnail%>|$thumbnail|g;
+			
+#			my %author=App::301::authors::get_author($db0_line{'posix_author'});
+#			$XSGN{'NULL'}=~s|<%author_(.*?)%>|$author{$1}|g;
+#			my %editor=App::301::authors::get_author($db0_line{'posix_editor'});
+#			$XSGN{'NULL'}=~s|<%editor_(.*?)%>|$editor{$1}|g;
+			
+			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+		}
+		
+	}
+	else
+	{
+		main::_log("can't select");
+	}
+	
+	
+	
+	return 1;
+}
+
+our $authors="roman.fordinal\@comsultia.com";
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

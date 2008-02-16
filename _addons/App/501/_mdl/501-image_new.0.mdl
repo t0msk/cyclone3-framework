@@ -1,0 +1,71 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::501::_init;
+
+=head1 NAME
+
+501-image_new.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Create new image item
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	delete $env{'ID_charindex'};
+	
+	my $from;
+	
+	if (!$env{'image_attrs.name'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|name|g;
+		return 1;
+	}
+	
+	
+	my %image=App::501::functions::image_add(
+		'image_attrs.name' => $env{'image_attrs.name'},
+		'image_attrs.ID_category' => $env{'image_attrs.ID_category'},
+		#'file' => $tom::P.'/_data/image.png'
+	);
+	
+	
+	if ($image{'image.ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		$XSGN{'TMP'}=~s|<%ID%>|$image{'image.ID'}|g;
+		$XSGN{'TMP'}=~s|<%ID_entity%>|$image{'image.ID_entity'}|g;
+		$XSGN{'TMP'}=~s|<%ID_category%>|$image{'image_attrs.ID_category'}|g;
+	}
+	else
+	{
+		
+	}
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

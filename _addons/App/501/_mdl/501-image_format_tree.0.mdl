@@ -10,13 +10,13 @@ use App::020::_init;
 
 =head1 NAME
 
-501-image_cat_tree.0.mdl
+501-image_format_tree.0.mdl
 
 =cut
 
 =head1 DESCRIPTION
 
-Display tree of image categories (folders)
+Display tree of image formats
 
 =cut
 
@@ -123,7 +123,6 @@ Listing mode:
    <name_url><%name_url%></name_url>
    <path><%path%></path>
    <datetime_create><%datetime_create%></datetime_create>
-   <lng><%lng%></lng>
    <status><%status%></status>
   </item>
   <#item#>
@@ -150,7 +149,7 @@ sub execute
 		my %data=App::020::SQL::functions::get_ID(
 			'db_h'    => 'main',
 			'db_name' => $App::501::db_name,
-			'tb_name' => 'a501_image_cat',
+			'tb_name' => 'a501_image_format',
 			'ID'      => $env{'ID'},
 			'columns' => 
 			{
@@ -216,10 +215,7 @@ sub execute
 		}
 	}
 	
-	my $where;
-	
-	# language
-	$where.="lng='$env{'lng'}' ";
+	my $where="lng='xx' ";
 	
 	# status
 	if ($env{'status'})
@@ -246,7 +242,7 @@ sub execute
 			SELECT
 				ID
 			FROM
-				a501_image_cat
+				`$App::501::db_name`.a501_image_format
 			WHERE $where AND ID_charindex LIKE '$from%'
 		};
 		my %sth0=TOM::Database::SQL::execute($sql);
@@ -301,10 +297,9 @@ sub execute
 			datetime_create,
 			name,
 			name_url,
-			lng,
 			status
 		FROM
-			a501_image_cat
+			`$App::501::db_name`.a501_image_format
 $where
 		ORDER BY
 			$env{'db_order'}
@@ -364,7 +359,7 @@ $where
 				}
 			}
 			
-			main::_log("$level($level_next) $entity->{'ID_charindex'} $entity->{'name'} $entity->{'lng'}");
+			main::_log("$level($level_next) $entity->{'ID_charindex'} $entity->{'name'}");
 			
 			for ($level..$level_prev+1)
 			{
@@ -378,10 +373,10 @@ $where
 				$entity->{'ID'},
 				'db_h'    => 'main',
 				'db_name' => $App::501::db_name,
-				'tb_name' => 'a501_image_cat'
+				'tb_name' => 'a501_image_format'
 			))
 			{
-				$path_.='/'.$node->{'name_url'};
+				$path_.='/'.$node->{'name'};
 			}
 			$path_=~s|^/||;
 			main::_log("path_='$path_'");
@@ -405,31 +400,6 @@ $where
 			$XSGN{'NULL'}=~s|<%datetime_create%>|$entity->{'datetime_create'}|g;
 			$XSGN{'NULL'}=~s|<%status%>|$entity->{'status'}|g;
 			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
-			
-			if ($env{'itemcount'})
-			{
-				# count of items
-				
-				my $sql=qq{
-					SELECT COUNT(ID) AS itemcount
-					FROM
-						`$App::501::db_name`.`a501_image_attrs`
-					WHERE
-						ID_category = $entity->{'ID'}
-						AND status IN ('Y','N')
-				};
-				my %sth1=TOM::Database::SQL::execute($sql);
-				if (my %db1_line=$sth1{'sth'}->fetchhash())
-				{
-					$db1_line{'itemcount'}='' unless $db1_line{'itemcount'};
-					$XSGN{'NULL'}=~s|<%itemcount%>|$db1_line{'itemcount'}|g;
-				}
-				else
-				{
-					$XSGN{'NULL'}=~s|<%itemcount%>||g;
-				}
-				
-			}
 			
 			if ($env{'tree'})
 			{

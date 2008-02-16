@@ -1,0 +1,116 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::501::_init;
+
+=head1 NAME
+
+501-image_move_to.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Move image item into another image_cat
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<image.ID> - ID of item
+
+=item *
+
+B<image_attrs.ID_category> - New ID_category
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default error
+
+=item *
+
+B<RESULT_success> - without error
+
+=item *
+
+B<RESULT_failure_no_input> - invalid input
+
+=item *
+
+B<RESULT_failure_set> - can't be executed
+
+=item *
+
+B<%ID%> - ID
+
+=item *
+
+B<%missing_parameter%> - missing param
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'image.ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|image.ID|g;
+		return 1;
+	}
+	
+	if (!$env{'image_attrs.ID_category'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|image_attrs.ID_category|g;
+		return 1;
+	}
+	
+	foreach my $ID(split(';',$env{'image.ID'}))
+	{
+		next unless $ID;
+		
+		my %attrs=App::501::functions::image_add(
+			'image.ID' => $ID,
+			'image_attrs.ID_category'   => $env{'image_attrs.ID_category'}
+		);
+		
+	}
+	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	$XSGN{'TMP'}=~s|<%ID%>|$env{'image.ID'}|g;
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

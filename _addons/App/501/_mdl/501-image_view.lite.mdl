@@ -1,0 +1,137 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+=head1 NAME
+
+501-image_view.lite.mdl
+
+=head1 DESCRIPTION
+
+Lite view of image
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::501::_init|app/"501/_init.pm">
+
+=back
+
+=cut
+
+use App::501::_init;
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<image.ID> || B<ID> - ID of image
+
+=item *
+
+B<image.ID_entity> || B<ID_entity> - ID_entity of image
+
+=item *
+
+B<image_attrs.status> - required status (default 'Y')
+
+=item *
+
+B<image_file.ID_format> - required format (default is fullsize)
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - image item
+
+=item *
+
+B<%db_*%> - image database variables
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	$env{'db_name'}=$App::501::db_name unless $env{'db_name'};
+	
+	$env{'image_file.ID_format'}=$App::501::image_format_fullsize_ID unless $env{'image_file.ID_format'};
+	$env{'image_attrs.status'}='Y' unless $env{'image_attrs.status'};
+		my $sql_status=join "','", split('',$env{'image_attrs.status'});
+	
+	$env{'image.ID'}=$env{'ID'} unless $env{'image.ID'};
+	$env{'image.ID_entity'}=$env{'ID_entity'} unless $env{'image.ID_entity'};
+	
+	my $sql_where;
+	
+	# ID_entity
+	$sql_where.="AND image.ID_entity_image=$env{'image.ID_entity'}"
+		if $env{'image.ID_entity'};
+	
+	# ID
+	$sql_where.="AND image.ID_image=$env{'image.ID'}"
+		if $env{'image.ID'};
+	
+	my $sql=qq{
+		SELECT
+			image.*
+		FROM
+			`$env{'db_name'}`.a501_image_view AS image
+		WHERE
+			image.ID_format='$env{'image_file.ID_format'}' AND
+			image.status IN ('$sql_status')
+			$sql_where
+		LIMIT 1
+	};
+	
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		$main::H->add_DOC_title($db0_line{'name'});
+		
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
