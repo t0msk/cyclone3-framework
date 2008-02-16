@@ -94,7 +94,7 @@ sub start
 {
 	my ($self, $tag, $attr, $attrseq, $origtext) = @_;
 	
-	if (not $tag=~/^(br|strong|em)$/) # don't display info about not important tags
+	if (not $tag=~/^(br|strong|em|i|u|b)$/) # don't display info about not important tags
 	{
 		main::_log("tag='$tag' origtext='$origtext'");
 	}
