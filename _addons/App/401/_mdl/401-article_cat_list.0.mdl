@@ -6,7 +6,8 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-use App::020::_init;
+use App::401::_init;
+use TOM::Text::format;
 
 =head1 NAME
 
@@ -110,43 +111,64 @@ sub execute
 {
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
-	delete $env{'ID_charindex'};
 	
-	$env{'tree'}=1 unless exists $env{'tree'};
+	delete $env{'ID_charindex'};
+	$env{'sql_limit'}=100 unless $env{'sql_limit'};
+	$env{'sql_order_by'}='datetime_start DESC' unless $env{'sql_order_by'};
 	
 	my $from;
-	
-	my $where;
+	my $sql_where;
 	
 	# language
-	$where.="lng='$env{'lng'}' ";
+	$sql_where.="lng='$env{'lng'}' ";
 	
 	# status
 	if ($env{'status'})
 	{
 		$XSGN{'TMP'}=~s|<%required_status%>|$env{'status'}|g;
-		$where.="AND (";
-		foreach (split('',$env{'status'}))
-		{
-			$where.="status='$_' OR ";
-		}
-		$where=~s|OR $||;
-		$where.=")";
+		$sql_where.="AND status IN ('".(join "','", split('',$env{'status'}))."') ";
 	}
 	else
 	{
-		$where.="AND status='Y' ";
+		$sql_where.="AND status='Y' ";
 	}
 	
-	if ($env{'ID'})
+	
+	# find ID LIKE *
+	if ($env{'article_cat.ID'}=~s/\*$//)
 	{
-		$XSGN{'TMP'}=~s|<%ID%>|$env{'ID'}|g;
+		my $cat_sql=qq{
+					SELECT
+						ID_charindex
+					FROM
+						`$App::401::db_name`.a401_article_cat
+					WHERE
+						ID=$env{'article_cat.ID'}
+					LIMIT 1
+		};
+		$env{'article_cat.ID*'} = qq{
+			SELECT
+				ID
+			FROM
+				`$App::401::db_name`.a401_article_cat
+			WHERE
+				ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+				lng='$env{'lng'}' AND
+				status IN ('Y','N','L')
+		};
+		#TOM::Database::SQL::execute($cat_sql,'log'=>1);
+	}
+	
+	
+	if ($env{'article_cat.ID'})
+	{
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'article_cat.ID'}|g;
 		
 		my %data=App::020::SQL::functions::get_ID(
 			'db_h'    => 'main',
-			'db_name' => $TOM::DB{'main'}{'name'},
+			'db_name' => $App::401::db_name,
 			'tb_name' => 'a401_article_cat',
-			'ID'      => $env{'ID'},
+			'ID'      => $env{'article_cat.ID'},
 			'columns' => 
 			{
 				'ID_charindex' => 1
@@ -158,69 +180,56 @@ sub execute
 		}
 		else
 		{
-			main::_log("can't find ID='$data{'ID'}'",1);
+			main::_log("can't find article_cat.ID='$data{'ID'}'",1);
 			return undef;
 		}
 		
 		my $path_;
 		foreach my $node (App::020::SQL::functions::tree::get_path(
-			$env{'ID'},
+			$env{'article_cat.ID'},
 			'db_h'    => 'main',
-			'db_name' => $TOM::DB{'main'}{'name'},
+			'db_name' => $App::401::db_name,
 			'tb_name' => 'a401_article_cat'
 		))
-		{
-			$path_.='/'.$node->{'name_url'};
-		}
+		{$path_.='/'.$node->{'name'};}
 		$path_=~s|^/||;
 		
 		$XSGN{'TMP'}=~s|<%location%>|$path_|g;
 		
-		
-		# add at first parent :))
-		$env{'ID_charindex_parent'}=$env{'ID_charindex'};
-		$env{'ID_charindex_parent'}=~s|:$||;
-		$env{'ID_charindex_parent'}=~s|...$||;
-		$env{'ID_charindex_parent'}=~s|:$||;
-		if ($env{'ID_charindex_parent'})
+		if (!$env{'article_cat.ID*'})
 		{
-			main::_log('finding parent');
-			# exist parent?
-			my $sql=qq{
-				SELECT
-					ID
-				FROM
-					a401_article_cat
-				WHERE $where AND ID_charindex = '$env{'ID_charindex_parent'}'
-				LIMIT 1
-			};
-			my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
-			if (my %db0_line=$sth0{'sth'}->fetchhash())
+			# add parent as first folder item :))
+			my %db0_line=App::020::SQL::functions::tree::get_parent_ID
+			(
+				'ID' => $env{'article_cat.ID'},
+				'db_h' => 'main',
+				'db_name' => $App::401::db_name,
+				'tb_name' => 'a401_article_cat',
+				'columns' => {'*' => 1,}
+			);
+			if ($db0_line{'ID'})
 			{
 				main::_log('adding parent');
 				$XSGN{'NULL'}=$XSGN{'ITEM'};
 				
 				$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID'}|g;
-				$XSGN{'NULL'}=~s|<%name%>|..|g;
-				$XSGN{'NULL'}=~s|<%folder%>|Y|g;
+				$XSGN{'NULL'}=~s|<%db_name%>|..|g;
+				$XSGN{'NULL'}=~s|<%folder%>|P|g;
+				
+				$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+			}
+			else
+			{
+				$XSGN{'NULL'}=$XSGN{'ITEM'};
+				
+				$XSGN{'NULL'}=~s|<%ID%>||g;
+				$XSGN{'NULL'}=~s|<%db_name%>|..|g;
+				$XSGN{'NULL'}=~s|<%folder%>|P|g;
 				
 				$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
 			}
 		}
-		else
-		{
-			$XSGN{'NULL'}=$XSGN{'ITEM'};
-			
-			$XSGN{'NULL'}=~s|<%ID%>||g;
-			$XSGN{'NULL'}=~s|<%name%>|..|g;
-			$XSGN{'NULL'}=~s|<%folder%>|Y|g;
-			
-			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
-		}
 	}
-	
-	
-	$env{'db_order'}="ID_charindex" unless $env{'db_order'};
 	
 	
 	
@@ -233,19 +242,14 @@ sub execute
 	
 	my $sql=qq{
 		SELECT
-			ID,
-			ID_entity,
-			ID_charindex,
-			datetime_create,
-			name,
-			name_url,
-			lng,
-			status
+			*
 		FROM
 			a401_article_cat
-		WHERE $where AND ID_charindex LIKE '$env{'ID_charindex'}___'
+		WHERE
+			$sql_where AND
+			ID_charindex LIKE '$env{'ID_charindex'}___'
 		ORDER BY
-			$env{'db_order'}
+			ID_charindex
 	};
 	
 	my @path;
@@ -258,32 +262,24 @@ sub execute
 	my $level_next;
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
-	if ($sth0{'sth'})
+	if ($sth0{'sth'} && !$env{'article_cat.ID*'})
 	{
-		# naplnim si @tree s polozkami zo stromu preto aby som mohol v dalsom
-		# cykle pracovat ako s predchadzajucimi tak i s buducimi polozkami
-		my @tree;
+		
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			$charindex_ID{$db0_line{'ID_charindex'}}=$db0_line{'ID'};
-			
 			my $dbg=$db0_line{'ID_charindex'};
 			$dbg=~s|^(.*?)(.{0,4})$|\1|;
-			
 			$db0_line{'ID_parent'}=$charindex_ID{$dbg};
 			
 			$XSGN{'NULL'}=$XSGN{'ITEM'};
 			
+			$XSGN{'NULL'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+			
 			$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID'}|g;
 			$XSGN{'NULL'}=~s|<%ID_entity%>|$db0_line{'ID_entity'}|g;
 			$XSGN{'NULL'}=~s|<%ID_parent%>|$db0_line{'ID_parent'}|g;
-			$XSGN{'NULL'}=~s|<%name%>|$db0_line{'name'}|g;
-			$XSGN{'NULL'}=~s|<%name_url%>|$db0_line{'name_url'}|g;
-			$XSGN{'NULL'}=~s|<%datetime_create%>|$db0_line{'datetime_create'}|g;
-			$XSGN{'NULL'}=~s|<%status%>|$db0_line{'status'}|g;
-			$XSGN{'NULL'}=~s|<%lng%>|$db0_line{'lng'}|g;
 			$XSGN{'NULL'}=~s|<%folder%>|Y|g;
-			#$XSGN{'NULL'}=~s|<%path%>|$path_|g;
 			
 			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
 		}
@@ -300,23 +296,51 @@ sub execute
 	# LISTING OF ITEMS
 	#
 	
+	if ($env{'keywords'})
+	{
+		$sql_where.=" AND (";
+		foreach (split(' ',$env{'keywords'}))
+		{
+			next unless $_;
+			$sql_where.="(name LIKE '%$_%' OR abstract LIKE '%$_%' OR body LIKE '%$_%' OR keywords LIKE '%$_%') AND ";
+		}
+		$sql_where=~s|AND $||;
+		$sql_where.=") ";
+	}
 	
-	my $where_category="AND ID_category='$env{'ID'}'";
-	$where_category="AND ID_category IS NULL" unless $env{'ID'};
+	# WHERE CATEGORY
+	my $where_category;
+	$where_category="AND ID_category='$env{'article_cat.ID'}'" if $env{'article_cat.ID'};
+	$where_category="AND ID_category IN ($env{'article_cat.ID*'})" if $env{'article_cat.ID*'};
+	$where_category="" unless $env{'article_cat.ID'};
+	if (!$env{'article_cat.ID'} && !$env{'article_cat.ID*'}){$where_category="AND ID_category=0";}
+	
 	my $sql=qq{
 		SELECT
-			ID,
-			ID_entity,
-			datetime_create,
-			name,
-			name_url,
-			lng,
-			status
+			view.*,
+			IF
+			(
+				(SELECT COUNT(*) FROM a401_article_view WHERE ID_entity_article=view.ID_entity_article AND status IN ('Y','N')) > 1,
+				'Y','N'
+			) AS symlink,
+			IF
+			(
+				(
+					status LIKE 'Y' AND
+					NOW() >= datetime_start AND
+					(datetime_stop IS NULL OR NOW() <= datetime_stop)
+				),
+			 	'Y', 'N'
+			) AS datetime_status
 		FROM
-			a401_article
-		WHERE $where $where_category
+			a401_article_view AS view
+		WHERE
+			$sql_where
+			$where_category
 		ORDER BY
-			datetime_create DESC
+			$env{'sql_order_by'}
+		LIMIT
+			$env{'sql_limit'}
 	};
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
@@ -326,13 +350,54 @@ sub execute
 		{
 			$XSGN{'NULL'}=$XSGN{'ITEM'};
 			
-			$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID'}|g;
-			$XSGN{'NULL'}=~s|<%ID_entity%>|$db0_line{'ID_entity'}|g;
-			$XSGN{'NULL'}=~s|<%name%>|$db0_line{'name'}|g;
-			$XSGN{'NULL'}=~s|<%name_url%>|$db0_line{'name_url'}|g;
-			$XSGN{'NULL'}=~s|<%datetime_create%>|$db0_line{'datetime_create'}|g;
-			$XSGN{'NULL'}=~s|<%status%>|$db0_line{'status'}|g;
-			$XSGN{'NULL'}=~s|<%lng%>|$db0_line{'lng'}|g;
+			$XSGN{'NULL'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+			$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID_article'}|g;
+			$XSGN{'NULL'}=~s|<%ID_entity%>|$db0_line{'ID_entity_article'}|g;
+			
+			my %author=App::301::authors::get_author($db0_line{'posix_author'});
+			$XSGN{'NULL'}=~s|<%author_(.*?)%>|$author{$1}|g;
+			my %editor=App::301::authors::get_author($db0_line{'posix_editor'});
+			$XSGN{'NULL'}=~s|<%editor_(.*?)%>|$editor{$1}|g;
+			
+			# check relations
+			my $relation=(App::160::SQL::get_relations(
+				'db_name' => $App::401::db_name,
+				'l_prefix' => 'a401',
+				'l_table' => 'article',
+				'l_ID_entity' => $db0_line{'ID_entity_article'},
+#				'rel_type' => $env{'rel_type'},
+#				'r_prefix' => "a501",
+#				'r_table' => "image",
+				'status' => "Y"
+				))[0];
+			if ($relation->{'ID'})
+			{
+				$XSGN{'NULL'}=~s|<%relation_status%>|Y|g;
+			}
+			
+			# check relations
+			my $relation=(App::160::SQL::get_relations(
+				'db_name' => $App::401::db_name,
+				'l_prefix' => 'a401',
+				'l_table' => 'article',
+				'l_ID_entity' => $db0_line{'ID_entity_article'},
+#				'rel_type' => $env{'rel_type'},
+				'r_prefix' => "a541",
+				'r_table' => "file",
+				'status' => "Y"
+				))[0];
+			if ($relation->{'ID'})
+			{
+				$XSGN{'NULL'}=~s|<%attachment_status%>|Y|g;
+			}
+			
+			# check relations
+			if ($db0_line{'keywords'})
+			{
+				$XSGN{'NULL'}=~s|<%keywords_status%>|Y|g;
+			}
+			
+			$XSGN{'NULL'}=~s|<%size%>|TOM::Text::format::bytes(length($db0_line{'body'}))|ge;
 			
 			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
 		}

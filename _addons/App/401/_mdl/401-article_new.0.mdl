@@ -1,0 +1,70 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::401::_init;
+
+=head1 NAME
+
+401-article_new.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Create new article item
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	delete $env{'ID_charindex'};
+	
+	my $from;
+	
+	if (!$env{'article_attrs.name'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|name|g;
+		return 1;
+	}
+	
+	
+	my %article=App::401::functions::article_add(
+		'article_attrs.name' => $env{'article_attrs.name'},
+		'article_attrs.ID_category' => $env{'article_attrs.ID_category'}
+	);
+	
+	
+	if ($article{'article.ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		$XSGN{'TMP'}=~s|<%ID%>|$article{'article.ID'}|g;
+		$XSGN{'TMP'}=~s|<%ID_entity%>|$article{'article.ID_entity'}|g;
+		$XSGN{'TMP'}=~s|<%ID_category%>|$article{'article_attrs.ID_category'}|g;
+	}
+	else
+	{
+		
+	}
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

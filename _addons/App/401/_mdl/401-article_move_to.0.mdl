@@ -1,0 +1,147 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::401::_init;
+
+=head1 NAME
+
+401-article_move_to.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Move article item into another article_cat
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<article.ID> - ID of item
+
+=item *
+
+B<article_attrs.ID_category> - New ID_category
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default error
+
+=item *
+
+B<RESULT_success> - without error
+
+=item *
+
+B<RESULT_failure_no_input> - invalid input
+
+=item *
+
+B<RESULT_failure_set> - can't be executed
+
+=item *
+
+B<%ID%> - ID
+
+=item *
+
+B<%missing_parameter%> - missing param
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'article.ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|article.ID|g;
+		return 1;
+	}
+	
+	if (!$env{'article_attrs.ID_category'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|article_attrs.ID_category|g;
+		return 1;
+	}
+	
+	foreach my $ID(split(';',$env{'article.ID'}))
+	{
+		next unless $ID;
+		
+=head1
+		my $sql=qq{
+			SELECT
+				ID_attrs,
+				ID_category
+			FROM
+				`$App::401::db_name`.a401_article_view
+			WHERE
+				ID_article = $env{'article.ID'} AND
+				ID_category = $env{'article_attrs.ID_category'}
+				AND status IN ('Y','N')
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql);
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			
+			App::020::SQL::functions::update(
+				'ID' => $db0_line{'ID_attrs'},
+				'db_h' => 'main',
+				'db_name' => $App::401::db_name,
+				'tb_name' => 'a401_article_attrs',
+				'columns' => {
+					'ID_category' => $env{'article_attrs.ID_category'}
+				},
+				'-journalize' => 1
+			)
+			
+		}
+=cut
+		
+		my %attrs=App::401::functions::article_add(
+			'article.ID' => $ID,
+			'article_attrs.ID_category'   => $env{'article_attrs.ID_category'}
+		);
+		
+	}
+	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	$XSGN{'TMP'}=~s|<%ID%>|$env{'article.ID'}|g;
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

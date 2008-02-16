@@ -149,7 +149,7 @@ sub execute
 	{
 		my %data=App::020::SQL::functions::get_ID(
 			'db_h'    => 'main',
-			'db_name' => $TOM::DB{'main'}{'name'},
+			'db_name' => $App::401::db_name,
 			'tb_name' => 'a401_article_cat',
 			'ID'      => $env{'ID'},
 			'columns' => 
@@ -246,7 +246,7 @@ sub execute
 			SELECT
 				ID
 			FROM
-				a401_article_cat
+				`$App::401::db_name`.a401_article_cat
 			WHERE $where AND ID_charindex LIKE '$from%'
 		};
 		my %sth0=TOM::Database::SQL::execute($sql);
@@ -304,7 +304,7 @@ sub execute
 			lng,
 			status
 		FROM
-			a401_article_cat
+			`$App::401::db_name`.a401_article_cat
 $where
 		ORDER BY
 			$env{'db_order'}
@@ -377,7 +377,7 @@ $where
 			foreach my $node (App::020::SQL::functions::tree::get_path(
 				$entity->{'ID'},
 				'db_h'    => 'main',
-				'db_name' => $TOM::DB{'main'}{'name'},
+				'db_name' => $App::401::db_name,
 				'tb_name' => 'a401_article_cat'
 			))
 			{
@@ -413,7 +413,7 @@ $where
 				my $sql=qq{
 					SELECT COUNT(ID) AS itemcount
 					FROM
-						`$TOM::DB{'main'}{'name'}`.`a401_article_attrs`
+						`$App::401::db_name`.`a401_article_attrs`
 					WHERE
 						ID_category = $entity->{'ID'}
 						AND status IN ('Y','N')

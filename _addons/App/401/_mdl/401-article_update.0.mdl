@@ -1,0 +1,284 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::401::_init;
+use Int::charsets::encode;
+
+=head1 NAME
+
+401-article_update.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Update article item
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<article.ID> - ID of item
+
+=item *
+
+B<article_attrs.ID_category> - ID_category
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default error
+
+=item *
+
+B<RESULT_success> - without error
+
+=item *
+
+B<RESULT_failure_no_input> - invalid input
+
+=item *
+
+B<RESULT_failure_set> - can't be executed
+
+=item *
+
+B<%ID%> - ID
+
+=item *
+
+B<%missing_parameter%> - missing param
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'article.ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|article.ID|g;
+		return 1;
+	}
+	
+	if (!$env{'article_attrs.ID_category'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|article_attrs.ID_category|g;
+		return 1;
+	}
+	
+	my %columns;
+	
+	$columns{'article_ent.ID_author'}='';
+	
+	if ($main::RPC->{'author_login'})
+	{
+		
+		
+		
+	}
+	elsif ($main::RPC->{'author_firstname'})
+	{
+		if ($main::RPC->{'author_surname'})
+		{
+			my $sql=qq{
+				SELECT
+					*
+				FROM
+					TOM.a301_user_profile_view AS profile
+				WHERE
+					profile.hostname='$tom::H_cookie' AND
+					profile.firstname LIKE '$main::RPC->{'author_firstname'}' AND
+					profile.surname LIKE '$main::RPC->{'author_surname'}'
+				LIMIT 1
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+			if ($sth0{'rows'})
+			{
+				my %author=$sth0{'sth'}->fetchhash();
+				main::_log("found user ID_user='$author{'ID_user'}' login='$author{'login'}'");
+				my %groups=App::301::functions::user_groups($author{'ID_user'});
+				if ($groups{'author'})
+				{
+					$columns{'article_ent.ID_author'}=$author{'ID_user'};
+				}
+				elsif ($groups{'editor'} || $groups{'admin'})
+				{
+					main::_log("adding user into group 'author'");
+					App::301::functions::user_add(
+						'user.ID_user' => $author{'ID_user'},
+						'groups' => ['author']
+					);
+					$columns{'article_ent.ID_author'}=$author{'ID_user'};
+				}
+			}
+			if (!$columns{'article_ent.ID_author'})
+			{
+				$main::RPC->{'author_login'}=Int::charsets::encode::UTF8_ASCII(
+					$main::RPC->{'author_firstname'}." ".$main::RPC->{'author_surname'}
+				);
+				my $sql=qq{
+					SELECT
+						*
+					FROM
+						TOM.a301_user
+					WHERE
+						hostname='$tom::H_cookie' AND
+						login='$main::RPC->{'author_login'}'
+					LIMIT 1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+				if (!$sth0{'rows'})
+				{
+					main::_log("creating new author");
+					my %user=App::301::functions::user_add(
+						'user.login' => $main::RPC->{'author_login'},
+						'user_profile.firstname' => $main::RPC->{'author_firstname'},
+						'user_profile.surname' => $main::RPC->{'author_surname'},
+						'groups' => ['author']
+					);
+					$columns{'article_ent.ID_author'}=$user{'user.ID_user'};
+				}
+				else
+				{
+					# conflict!!! - this login already exist
+				}
+			}
+		}
+		else
+		{
+			my $sql=qq{
+				SELECT
+					*
+				FROM
+					TOM.a301_user_profile_view AS profile
+				WHERE
+					profile.hostname='$tom::H_cookie' AND
+					profile.firstname LIKE '$main::RPC->{'author_firstname'}' AND
+					profile.surname IS NULL
+				LIMIT 1
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+			if ($sth0{'rows'})
+			{
+				my %author=$sth0{'sth'}->fetchhash();
+				my %groups=App::301::functions::user_groups($author{'ID_user'});
+				if ($groups{'author'})
+				{
+					$columns{'article_ent.ID_author'}=$author{'ID_user'};
+				}
+				elsif ($groups{'editor'} || $groups{'admin'})
+				{
+					main::_log("adding user into group 'author'");
+					App::301::functions::user_add(
+						'user.ID_user' => $author{'ID_user'},
+						'groups' => ['author']
+					);
+					$columns{'article_ent.ID_author'}=$author{'ID_user'};
+				}
+			}
+			if (!$columns{'article_ent.ID_author'})
+			{
+				$main::RPC->{'author_login'}=Int::charsets::encode::UTF8_ASCII(
+					$main::RPC->{'author_firstname'}
+				);
+				my $sql=qq{
+					SELECT
+						*
+					FROM
+						TOM.a301_user
+					WHERE
+						hostname='$tom::H_cookie' AND
+						login='$main::RPC->{'author_login'}'
+					LIMIT 1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql);
+				if (!$sth0{'rows'})
+				{
+					main::_log("creating new author");
+					my %user=App::301::functions::user_add(
+						'user.login' => $main::RPC->{'author_login'},
+						'user_profile.firstname' => $main::RPC->{'author_firstname'},
+						'groups' => ['author']
+					);
+					$columns{'article_ent.ID_author'}=$user{'user.ID_user'};
+				}
+				else
+				{
+					# conflict!!! - this login already exist
+				}
+			}
+		}
+	}
+	
+	
+	$columns{'article_attrs.name'}=$main::RPC->{'article_attrs.name'}
+		if $main::RPC->{'article_attrs.name'};
+	$columns{'article_content.subtitle'}=$main::RPC->{'article_content.subtitle'}
+		if $main::RPC->{'article_content.subtitle'};
+		
+		
+	$columns{'article_attrs.datetime_start'}=$main::RPC->{'article_attrs.datetime_start'}
+		if exists $main::RPC->{'article_attrs.datetime_start'};
+	$columns{'article_attrs.datetime_stop'}=$main::RPC->{'article_attrs.datetime_stop'}
+		if exists $main::RPC->{'article_attrs.datetime_stop'};
+	
+	if ($main::RPC->{'article_content.abstract_body'})
+	{
+		(
+			$main::RPC->{'article_content.abstract'},
+			$main::RPC->{'article_content.body'}
+		) = split('<hr/?>',$main::RPC->{'article_content.abstract_body'},2);
+	}
+	$columns{'article_content.abstract'}=$main::RPC->{'article_content.abstract'}
+		if exists $main::RPC->{'article_content.abstract'};
+	$columns{'article_content.body'}=$main::RPC->{'article_content.body'}
+		if exists $main::RPC->{'article_content.body'};
+	
+#	$columns{'article_attrs.keywords'}=$main::RPC->{'article_attrs.keywords'}
+#		if $main::RPC->{'article_attrs.keywords'};
+	
+	my %article=App::401::functions::article_add(
+		'article.ID' => $env{'article.ID'},
+		'article_attrs.ID_category'  => $env{'article_attrs.ID_category'},
+#		'article_content.ID_editor'  => $main::USRM{'ID_user'},
+		%columns
+	);
+	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	$XSGN{'TMP'}=~s|<%ID%>|$env{'article.ID'}|g;
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

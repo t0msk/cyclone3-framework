@@ -44,7 +44,7 @@ sub execute
 	my %parent=App::020::SQL::functions::get_ID(
 		'ID' => $env{'ID_parent'},
 		'db_h' => "main",
-		'db_name' => $TOM::DB{'main'}{'name'},
+		'db_name' => $App::401::db_name,
 		'tb_name' => "a401_article_cat",
 		'columns' =>
 		{
@@ -66,7 +66,7 @@ sub execute
 			ID,
 			ID_charindex
 		FROM
-			a401_article_cat
+			`$App::401::db_name`.a401_article_cat
 		WHERE
 			ID_charindex LIKE '$parent{'ID_charindex'}___'
 			AND lng='$env{'lng'}'
@@ -82,7 +82,7 @@ sub execute
 	
 	my $ID=App::020::SQL::functions::tree::new(
 		'db_h' => "main",
-		'db_name' => $TOM::DB{'main'}{'name'},
+		'db_name' => $App::401::db_name,
 		'tb_name' => "a401_article_cat",
 		'-journalize' => 1,
 		'parent_ID'   => $env{'ID_parent'},

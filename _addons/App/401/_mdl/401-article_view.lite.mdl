@@ -133,6 +133,7 @@ sub execute
 	
 	$env{'article_content.lng'}=$env{'lng'} unless $env{'article_content.lng'};
 	$env{'article_attrs.status'}='Y' unless $env{'article_attrs.status'};
+		my $sql_status=join "','", split('',$env{'article_attrs.status'});
 	
 	$env{'article.ID'}=$env{'ID'} unless $env{'article.ID'};
 	$env{'article.ID_entity'}=$env{'ID_entity'} unless $env{'article.ID_entity'};
@@ -148,8 +149,8 @@ sub execute
 		if $env{'article.ID'};
 	
 	# ID_category
-	$sql_where.="AND article.ID_category IN ($env{'article.ID_category'})"
-		if $env{'article.ID_category'};
+	$sql_where.="AND article.ID_category IN ($env{'article_attrs.ID_category'})"
+		if $env{'article_attrs.ID_category'};
 	
 	my $sql=qq{
 		SELECT
@@ -158,7 +159,7 @@ sub execute
 			`$env{'db_name'}`.a401_article_view AS article
 		WHERE
 			article.lng='$env{'article_content.lng'}' AND
-			article.status IN ('$env{'article_attrs.status'}')
+			article.status IN ('$sql_status')
 			$sql_where
 		LIMIT 1
 	};
@@ -168,6 +169,18 @@ sub execute
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		my %author=App::301::authors::get_author($db0_line{'posix_author'});
+		foreach(keys %author)
+		{
+			$XSGN{'TMP'}=~s|<%author_$_%>|$author{$_}|g;
+		}
+		
+		my %editor=App::301::authors::get_author($db0_line{'posix_editor'});
+		foreach(keys %editor)
+		{
+			$XSGN{'TMP'}=~s|<%editor_$_%>|$editor{$_}|g;
+		}
 		
 		# process body
 		my $p=new App::401::mimetypes::html;
@@ -219,6 +232,31 @@ sub execute
 		
 		$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
 		$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+		
+		
+		
+		# check if here is a related image gallery
+		my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::401::db_name,
+			'l_prefix' => 'a401',
+			'l_table' => 'article',
+			'l_ID_entity' => $db0_line{'ID_entity_article'},
+			'rel_type' => 'gallery',
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y"
+			))[0];
+		if ($relation->{'ID'})
+		{
+			$XSGN{'TMP'}=~s|<#a501.gallery#>|$XSGN{'a501.gallery'}|g;
+		}
+		
+		
+		
+		$XSGN{'TMP'}=~s|<%article\.db_(.*?)%>|$db0_line{$1}|g;
+		
+		$main::H->add_DOC_title($db0_line{'name'});
+		
 		
 	}
 	

@@ -42,19 +42,23 @@ B<db_name> - database name
 
 =item *
 
+B<article_attrs.ID_category> - select articles from ID_category (can be set with * suffix to select all subcategories)
+
+=item *
+
+B<article_attrs.status> - required status, nonseparated values (default 'Y')
+
+=item *
+
+B<article_content.lng> - required language (default is current)
+
+=item *
+
+B<article_content.mimetype> - required content mimetype (default is 'text/html')
+
+=item *
+
 B<sql_limit> - limit to display (default '1')
-
-=item *
-
-B<sql_status> - required status, nonseparated values (default 'Y')
-
-=item *
-
-B<sql_lng> - required language (default is current)
-
-=item *
-
-B<sql_mimetype> - required mimetype (default 'text/html')
 
 =back
 
@@ -81,6 +85,10 @@ B<#item#> - gateway to article item
 =item *
 
 B<item> - article item
+
+=item *
+
+B<item.1> - first article item
 
 =item *
 
@@ -113,13 +121,49 @@ sub execute
 	
 	$env{'db_name'}=$App::401::db_name unless $env{'db_name'};
 	
-	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
+	$env{'article_content.lng'}=$env{'lng'} unless $env{'article_content.lng'};
 	$env{'sql_limit'}='1' unless $env{'sql_limit'};
-	$env{'sql_status'}='Y' unless $env{'sql_status'};
-		my $status_sql=join "','", split('',$env{'sql_status'});
-	$env{'sql_mimetype'}='text/html' unless $env{'sql_mimetype'};
+	$env{'article_attrs.status'}='Y' unless $env{'article_attrs.status'};
+		my $status_sql=join "','", split('',$env{'article_attrs.status'});
+	
+	$env{'article_content.mimetype'}='text/html' unless $env{'article_content.mimetype'};
 	
 	my $execution_success=1;
+	
+	my $sql_where;
+	
+	# find ID_category LIKE *
+	if ($env{'article_attrs.ID_category'}=~s/\*$//)
+	{
+		my $cat_sql=qq{
+					SELECT
+						ID_charindex
+					FROM
+						`$App::401::db_name`.a401_article_cat
+					WHERE
+						ID=$env{'article_attrs.ID_category'}
+					LIMIT 1
+		};
+		$env{'article_attrs.ID_category'} = qq{
+			SELECT
+				ID
+			FROM
+				`$App::401::db_name`.a401_article_cat
+			WHERE
+				ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+				lng='$env{'article_content.lng'}' AND
+				status IN ('$status_sql')
+		};
+	}
+	
+	
+	$sql_where.="AND article.ID_category IN ($env{'article_attrs.ID_category'})"
+		if $env{'article_attrs.ID_category'};
+	
+	if ($env{'sql_where'})
+	{
+		$sql_where.=" AND ".$env{'sql_where'};
+	}
 	
 	my $sql=qq{
 		SELECT
@@ -128,13 +172,18 @@ sub execute
 			`$env{'db_name'}`.a401_article_view AS article
 		WHERE
 			article.status IN ('$status_sql') AND
-			article.lng='$env{'sql_lng'}' AND
-			article.mimetype='$env{'sql_mimetype'}'
+			article.lng='$env{'article_content.lng'}' AND
+			article.mimetype='$env{'article_content.mimetype'}'
+			$sql_where
 		ORDER BY
 			article.datetime_start DESC
 		LIMIT $env{'sql_limit'}
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	
+	#$XSGN{'TMP'}=$sql;
+	#return 1;
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
 	
 	if(!$sth0{'sth'})
 	{
@@ -156,8 +205,13 @@ sub execute
 	
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		my $item=$XSGN{'item'};
 		$item_counter++;
+		
+		main::_log("article[$item_counter] article_attrs.name='$db0_line{'name'}'");
+		
+		my $item=
+			$XSGN{'item.'.$item_counter}
+			|| $XSGN{'item'};
 		
 		# fill raw data into $XSGN{'item'}
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
@@ -169,14 +223,61 @@ sub execute
 			$item=~s|<%author_$_%>|$author{$_}|g;
 		}
 		
+		my %editor=App::301::authors::get_author($db0_line{'posix_editor'});
+		foreach(keys %editor)
+		{
+			$item=~s|<%editor_$_%>|$editor{$_}|g;
+		}
 		
-		# process body
+		
+		# process abstract
 		my $p=new App::401::mimetypes::html;
+		
+		# img
+		$p->{'ignore'}{'img'}=
+			$env{'body.ignore.img'}
+			|| $env{'ignore.img'}
+			|| undef;
+		
+		$p->{'ignore'}{'img.1'}=
+			$env{'abstract.ignore.img.1'}
+			|| $env{'ignore.img.1'}
+			|| undef;
+		
+		# a501_image
+		$p->{'config'}->{'a501_image_file.ID_format'}=
+			$env{'abstract.a501_image_file.ID_format'}
+			|| $env{'a501_image_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.1'}=
+			$env{'abstract.a501_image_file.ID_format.1'}
+			|| $env{'a501_image_file.ID_format.1'}
+			|| undef;
+		$p->{'entity'}->{'a501_image'}=
+			$XSGN{'abstract.a501_image'}
+			|| $XSGN{'a501_image'}
+			|| undef;
+		$p->{'entity'}->{'a501_image.1'}=
+			$XSGN{'abstract.a501_image.1'}
+			|| $XSGN{'a501_image.1'}
+			|| undef;
+		
+		# a510_video
+		$p->{'entity'}{'a510_video_part'}=
+			$XSGN{'abstract.a510_video_part'}
+			|| $XSGN{'a510_video_part'}
+			|| undef;
+		
 		$p->parse($db0_line{'abstract'});
-		$p->eof();
+		#$p->eof();
 		my $abstract_html=$p->{'out'};
 		$item=~s|<%abstract%>|$abstract_html|;
 		
+		# find alternate attributes (for thumbnail image for example)
+		$p->parse($db0_line{'body'}) unless $p->{'out_tag'}->{'img.1'};
+		
+		$item=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+		$item=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
 		
 		# Transforming datetime fields
 		
@@ -256,7 +357,14 @@ sub execute
 		
 		$item=~s|<%name%>|$db0_line{'name'}|;
 		
-		$XSGN{'TMP'}=~s|<#item#>|$item|;
+		if($XSGN{'TMP'}=~/<#item.$item_counter#>/)
+		{
+			$XSGN{'TMP'}=~s|<#item.$item_counter#>|$item|;
+		}
+		else
+		{
+			$XSGN{'TMP'}=~s|<#item#>|$item|;
+		}
 	}
 	
 	if(!$item_counter)

@@ -1,0 +1,131 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::401::_init;
+
+=head1 NAME
+
+401-article_priority.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Changes priority_* of article_attrs
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'article.ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|article.ID|g;
+		return 1;
+	}
+	
+	if (!$env{'article_attrs.ID_category'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|article_attrs.ID_category|g;
+		return 1;
+	}
+	
+	if (!$env{'priority'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|priority|g;
+		return 1;
+	}
+	
+	$env{'priority'}=~/_(.)$/;my $character=$1;
+	# don't allow set priority
+	main::_log("max priority_$character is $App::401::priority{$character}");
+	#return 1 unless $App::401::priority{$character};
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$App::401::db_name`.a401_article_view
+		WHERE
+			ID_article = $env{'article.ID'} AND
+			ID_category = $env{'article_attrs.ID_category'}
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	my %db0_line=$sth0{'sth'}->fetchhash();
+	if ($db0_line{'ID_attrs'})
+	{
+		my $priority=$db0_line{$env{'priority'}};
+		
+		main::_log("actual priority is $priority");
+		
+		# fix invalid nuber
+		if ($priority > $App::401::priority{$character})
+		{
+			$priority = $App::401::priority{$character};
+		}
+		
+		# decrease
+		if (!$priority)
+		{
+			$priority = $App::401::priority{$character};
+		}
+		elsif ($priority == 1)
+		{
+			$priority = "NULL";
+		}
+		else
+		{
+			$priority--;
+		}
+		
+		# fix invalid nuber
+		if ($priority > $App::401::priority{$character})
+		{
+			$priority = $App::401::priority{$character};
+		}
+		# fix empty number
+		if (!$priority)
+		{
+			$priority = "NULL";
+		}
+		
+		main::_log("set priority to '$priority'");
+		
+		App::020::SQL::functions::update(
+			'ID' => $db0_line{'ID_attrs'},
+			'db_h' => "main",
+			'db_name' => $App::401::db_name,
+			'tb_name' => 'a401_article_attrs',
+			'-journalize' => 1,
+			'columns' => {
+				"$env{'priority'}" => $priority
+			}
+		);
+	}
+	
+	return 1;
+}
+
+
+our $authors='open@comsultia.com';
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
