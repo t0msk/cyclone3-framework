@@ -55,6 +55,10 @@ L<App::401::functions|app/"401/functions.pm">
 
 L<App::401::keywords::html_extract|app/"401/keywords/html_extract.pm">
 
+=item *
+
+L<App::401::a160|app/"401/a160.pm">
+
 =back
 
 =cut
@@ -65,6 +69,7 @@ use App::821::_init;
 use App::401::mimetypes;
 use App::401::functions;
 use App::401::keywords;
+use App::401::a160;
 
 
 =head1 CONFIGURATION
@@ -81,10 +86,12 @@ use App::401::keywords;
 # level number NULL is none level
 
 our $db_name=$App::401::db_name || $TOM::DB{'main'}{'name'};
-our $priority_A_level=$App::401::priority_A_level || 1;
-our $priority_B_level=$App::401::priority_B_level || undef;
-our $priority_C_level=$App::401::priority_C_level || undef;
+our %priority;
+$priority{'A'}=$App::401::priority{'A'} || 1;
+$priority{'B'}=$App::401::priority{'B'} || undef;
+$priority{'C'}=$App::401::priority{'C'} || undef;
 
+our %a301_user_group;
 
 if ($tom::H_cookie)
 {
@@ -106,7 +113,7 @@ if ($tom::H_cookie)
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		if (!$db0_line{'ID'})
 		{
-			App::020::SQL::functions::tree::new(
+			$db0_line{'ID'}=App::020::SQL::functions::tree::new(
 				'db_h' => "main",
 				'db_name' => "TOM",
 				'tb_name' => "a301_user_group",
@@ -133,6 +140,7 @@ if ($tom::H_cookie)
 				'-journalize' => 1
 			);
 		}
+		$a301_user_group{$group}=$db0_line{'ID'};
 	}
 }
 
