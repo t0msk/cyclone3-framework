@@ -71,10 +71,92 @@ use File::Type;
 
 =head1 FUNCTIONS
 
+=head2 image_regenerate()
+
+ image_regenerate
+ (
+   'image.ID_entity' => '' # related image.ID_entity
+   'image.ID' => '' # related image.ID
+ )
+
+=cut
+
+
+sub image_regenerate
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::image_regenerate()");
+	
+	# get info about image
+	my %image;
+	$image{'ID'}=$env{'image.ID'};
+	$image{'ID_entity'}=$env{'image.ID_entity'};
+	if ($env{'image.ID_entity'} && !$env{'image.ID'})
+	{
+		%image=%{(App::020::SQL::functions::get_ID_entity(
+			'ID_entity' => $env{'image.ID_entity'},
+			'db_h' => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image',
+			'columns' =>
+			{
+				'status' => 1,
+			}
+		))[0]};
+	}
+	elsif ($env{'image.ID'})
+	{
+		%image=App::020::SQL::functions::get_ID(
+			'ID' => $env{'image.ID'},
+			'db_h' => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image',
+			'columns' =>
+			{
+				'status' => 1,
+			}
+		);
+	}
+	
+	main::_log("image ID='$image{'ID'}' ID_entity='$image{'ID_entity'}' status='$image{'status'}'");
+	
+	if ($image{'status'} ne "Y" && $image{'status'} ne "N")
+	{
+		main::_log("image is not available",1);
+		$t->close();
+		return undef;
+	}
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$App::501::db_name`.a501_image_format
+		WHERE
+			status IN ('Y','L') AND
+			required LIKE 'Y' AND
+			name NOT LIKE 'original'
+		ORDER BY
+			ID_charindex
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		App::501::functions::image_file_generate(
+			'image.ID' => $image{'ID'},
+			'image_format.ID' => $db0_line{'ID'}
+		);
+	}
+	
+	$t->close();
+	return 1;
+}
+
 =head2 image_file_generate()
 
  image_file_generate
  (
+   'image.ID' => '' # related image.ID
    'image.ID_entity' => '' # related image.ID_entity
    'image_format.ID' => '' # related image_format.ID
    #'image_format.name' => '' # realted image_format.name
@@ -91,16 +173,35 @@ sub image_file_generate
 		($env{'image_format.ID'}||$env{'image_format.name'}).")");
 	
 	# get info about image
-	my %image=%{(App::020::SQL::functions::get_ID_entity(
-		'ID_entity' => $env{'image.ID_entity'},
-		'db_h' => 'main',
-		'db_name' => $App::501::db_name,
-		'tb_name' => 'a501_image',
-		'columns' =>
-		{
-			'status' => 1,
-		}
-	))[0]};
+	my %image;
+	$image{'ID'}=$env{'image.ID'};
+	$image{'ID_entity'}=$env{'image.ID_entity'};
+	if ($env{'image.ID_entity'} && !$env{'image.ID'})
+	{
+		%image=%{(App::020::SQL::functions::get_ID_entity(
+			'ID_entity' => $env{'image.ID_entity'},
+			'db_h' => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image',
+			'columns' =>
+			{
+				'status' => 1,
+			}
+		))[0]};
+	}
+	elsif ($env{'image.ID'})
+	{
+		%image=App::020::SQL::functions::get_ID(
+			'ID' => $env{'image.ID'},
+			'db_h' => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image',
+			'columns' =>
+			{
+				'status' => 1,
+			}
+		);
+	}
 	
 	main::_log("image ID='$image{'ID'}' ID_entity='$image{'ID_entity'}' status='$image{'status'}'");
 	
@@ -223,7 +324,13 @@ sub _image_file_genpath
 	my $name=shift;
 	my $ext=shift;
 	$ID=~s|^(....).*$|\1|;
-	File::Path::mkpath($tom::P.'/!media/a501/image/file/'.$format.'/'.$ID);
+	
+	my $path=$tom::P.'/!media/a501/image/file/'.$format.'/'.$ID;
+	if (!-e $path)
+	{
+		File::Path::mkpath($path);
+		chmod (0777,$path);
+	}
 	return "$format/$ID/$name.$ext";
 };
 
@@ -744,9 +851,9 @@ sub image_add
 		# name
 		($env{'image_attrs.name'} && ($env{'image_attrs.name'} ne $image_attrs{'name'})) ||
 		# description
-		($env{'image_attrs.description'} && ($env{'image_attrs.description'} ne $image_attrs{'description'})) ||
+		(exists $env{'image_attrs.description'} && ($env{'image_attrs.description'} ne $image_attrs{'description'})) ||
 		# keywords
-		($env{'image_attrs.keywords'} && ($env{'image_attrs.keywords'} ne $image_attrs{'keywords'})) ||
+		(exists $env{'image_attrs.keywords'} && ($env{'image_attrs.keywords'} ne $image_attrs{'keywords'})) ||
 		# ID_category
 		($env{'image_attrs.ID_category'} && ($env{'image_attrs.ID_category'} ne $image_attrs{'ID_category'})) ||
 		# status
@@ -758,9 +865,9 @@ sub image_add
 		$columns{'name'}="'".TOM::Security::form::sql_escape($env{'image_attrs.name'})."'"
 			if ($env{'image_attrs.name'} && ($env{'image_attrs.name'} ne $image_attrs{'name'}));
 		$columns{'description'}="'".TOM::Security::form::sql_escape($env{'image_attrs.description'})."'"
-			if ($env{'image_attrs.description'} && ($env{'image_attrs.description'} ne $image_attrs{'description'}));
+			if (exists $env{'image_attrs.description'} && ($env{'image_attrs.description'} ne $image_attrs{'description'}));
 		$columns{'keywords'}="'".TOM::Security::form::sql_escape($env{'image_attrs.keywords'})."'"
-			if ($env{'image_attrs.keywords'} && ($env{'image_attrs.keywords'} ne $image_attrs{'keywords'}));
+			if (exists $env{'image_attrs.keywords'} && ($env{'image_attrs.keywords'} ne $image_attrs{'keywords'}));
 		$columns{'ID_category'}=$env{'image_attrs.ID_category'}
 			if ($env{'image_attrs.ID_category'} && ($env{'image_attrs.ID_category'} ne $image_attrs{'ID_category'}));
 		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'image_attrs.status'})."'"
