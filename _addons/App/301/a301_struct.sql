@@ -22,7 +22,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user` (
   `saved_session` blob NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID_user`),
-  UNIQUE KEY `UNI_0` (`hostname`,`login`)
+  UNIQUE KEY `UNI_0` (`hostname`,`login`),
+  KEY `login` (`login`),
+  KEY `hostname` (`hostname`),
+  KEY `email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -59,7 +62,11 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_profile` (
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`)
+  UNIQUE KEY `UNI_0` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `firstname` (`firstname`),
+  KEY `surname` (`surname`),
+  KEY `sex` (`sex`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -93,6 +100,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_user_profile_view` AS (
 	SELECT
 		
 		user.hostname,
+		user.ID_user,
 		user.login,
 		user.email,
 		user.email_verified,

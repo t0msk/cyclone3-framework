@@ -60,14 +60,29 @@ sub get_author
 			SELECT
 				*
 			FROM
-				`TOM`.`a301_user`
+				`TOM`.`a301_user_profile_view`
 			WHERE
 				ID_user='$ID_user'
 			LIMIT 1;
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-		
 		%{$authors{$ID_user}}=$sth0{'sth'}->fetchhash();
+		
+		if (!$authors{$ID_user}{'ID'})
+		{
+			my $sql=qq{
+				SELECT
+					*
+				FROM
+					`TOM`.`a301_user`
+				WHERE
+					ID_user='$ID_user'
+				LIMIT 1;
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+			%{$authors{$ID_user}}=$sth0{'sth'}->fetchhash();
+		}
+		
 		$authors{$ID_user}{'firstname'}=$authors{$ID_user}{'login'}
 			unless $authors{$ID_user}{'firstname'};
 		
