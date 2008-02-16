@@ -203,11 +203,13 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
-	$env{'r_db_name'}=$main::FORM{'r_db_name'} if not exists $env{'r_db_name'};
-	$env{'l_table'}=$main::FORM{'l_table'} if not exists $env{'l_table'};
-	$env{'r_table'}=$main::FORM{'r_table'} if not exists $env{'r_table'};
+	# list of values which can be undefined
+	# when value is undefined then is not collected in SQL WHERE query
+	$env{'r_db_name'}=$main::FORM{'r_db_name'} || $main::RPC->{'r_db_name'} if not exists $env{'r_db_name'};
+	$env{'l_table'}=$main::FORM{'l_table'} || $main::RPC->{'l_table'} if not exists $env{'l_table'};
+	$env{'r_table'}=$main::FORM{'r_table'} || $main::RPC->{'r_table'} if not exists $env{'r_table'};
 	
-	$env{'get_name'}=$main::FORM{'get_name'} unless $env{'get_name'};
+	$env{'get_name'}=$main::FORM{'get_name'} || $main::RPC->{'get_name'}  unless $env{'get_name'};
 	
 	foreach (keys %env)
 	{
@@ -215,16 +217,16 @@ sub execute
 	}
 	
 	foreach my $relation (App::160::SQL::get_relations(
-		'ID' => $env{'ID'} || $main::FORM{'ID'},
-		'ID_entity' => $env{'ID_entity'} || $main::FORM{'ID_entity'},
-		'l_prefix' => $env{'l_prefix'} || $main::FORM{'l_prefix'},
+		'ID' => $env{'ID'} || $main::FORM{'ID'} || $main::RPC->{'ID'},
+		'ID_entity' => $env{'ID_entity'} || $main::FORM{'ID_entity'} || $main::RPC->{'ID_entity'},
+		'l_prefix' => $env{'l_prefix'} || $main::FORM{'l_prefix'} || $main::RPC->{'l_prefix'},
 		'l_table' => $env{'l_table'}, # this value can be send as undefined
-		'l_ID_entity' => $env{'l_ID_entity'} || $main::FORM{'l_ID_entity'},
+		'l_ID_entity' => $env{'l_ID_entity'} || $main::FORM{'l_ID_entity'} || $main::RPC->{'l_ID_entity'},
 		'r_db_name' => $env{'r_db_name'}, # this value can be send as undefined
-		'r_prefix' => $env{'r_prefix'} || $main::FORM{'r_prefix'},
+		'r_prefix' => $env{'r_prefix'} || $main::FORM{'r_prefix'} || $main::RPC->{'r_prefix'},
 		'r_table' => $env{'r_table'}, # this value can be send as undefined
-		'r_ID_entity' => $env{'r_ID_entity'} || $main::FORM{'r_ID_entity'},
-		'status' => $env{'status'} || $main::FORM{'status'}
+		'r_ID_entity' => $env{'r_ID_entity'} || $main::FORM{'r_ID_entity'} || $main::RPC->{'r_ID_entity'},
+		'status' => $env{'status'} || $main::FORM{'status'} || $main::RPC->{'status'}
 		))
 	{
 		my $null=$XSGN{'ITEM'};
@@ -236,10 +238,14 @@ sub execute
 				'r_prefix' => $relation->{'r_prefix'},
 				'r_table' => $relation->{'r_table'},
 				'r_ID_entity' => $relation->{'r_ID_entity'},
-				#'lng' => 'en'
+				'lng' => $env{'lng'}
 			);
 			$null=~s|<%name%>|$item{'name'}|g;
 			$null=~s|<%type_name%>|$item{'type_name'}|g;
+			# extended attributes
+			$null=~s|<%r_ID%>|$item{'ID'}|g;
+			$null=~s|<%r_ID_category%>|$item{'ID_category'}|g;
+			$null=~s|<%r_lng%>|$item{'lng'}|g;
 		}
 		
 		XSGN_load_hash(\$null,$relation);

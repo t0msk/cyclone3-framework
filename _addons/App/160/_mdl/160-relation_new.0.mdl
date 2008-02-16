@@ -81,14 +81,16 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
-	$env{'r_db_name'}=$main::FORM{'r_db_name'} if not exists $env{'r_db_name'};
-	$env{'l_table'}=$main::FORM{'l_table'} if not exists $env{'l_table'};
-	$env{'r_table'}=$main::FORM{'r_table'} if not exists $env{'r_table'};
+	$env{'r_db_name'}=$main::FORM{'r_db_name'} || $main::RPC->{'r_db_name'} if not exists $env{'r_db_name'};
+	$env{'l_table'}=$main::FORM{'l_table'} || $main::RPC->{'l_table'} if not exists $env{'l_table'};
+	$env{'r_table'}=$main::FORM{'r_table'} || $main::RPC->{'r_table'} if not exists $env{'r_table'};
 	
-	$env{'l_prefix'}=$main::FORM{'l_prefix'} unless $env{'l_prefix'};
-	$env{'l_ID_entity'}=$main::FORM{'l_ID_entity'} unless $env{'l_ID_entity'};
-	$env{'r_prefix'}=$main::FORM{'r_prefix'} unless $env{'r_prefix'};
-	$env{'r_ID_entity'}=$main::FORM{'r_ID_entity'} unless $env{'r_ID_entity'};
+	$env{'l_prefix'}=$main::FORM{'l_prefix'} || $main::RPC->{'l_prefix'} unless $env{'l_prefix'};
+	$env{'l_ID_entity'}=$main::FORM{'l_ID_entity'} || $main::RPC->{'l_ID_entity'} unless $env{'l_ID_entity'};
+	$env{'r_prefix'}=$main::FORM{'r_prefix'} || $main::RPC->{'r_prefix'} unless $env{'r_prefix'};
+	$env{'r_ID_entity'}=$main::FORM{'r_ID_entity'} || $main::RPC->{'r_ID_entity'} unless $env{'r_ID_entity'};
+	
+	$env{'rel_type'}=$main::FORM{'rel_type'} || $main::RPC->{'rel_type'} if not exists $env{'rel_type'};
 	
 	foreach (keys %env)
 	{
@@ -124,10 +126,12 @@ sub execute
 		'l_prefix' => $env{'l_prefix'},
 		'l_table' => $env{'l_table'}, # this value can be send as undefined
 		'l_ID_entity' => $env{'l_ID_entity'},
+		'rel_type' => $env{'rel_type'},
 		'r_db_name' => $env{'r_db_name'}, # this value can be send as undefined
 		'r_prefix' => $env{'r_prefix'},
 		'r_table' => $env{'r_table'}, # this value can be send as undefined
 		'r_ID_entity' => $env{'r_ID_entity'},
+		'status' => $env{'status'},
 	);
 	
 	return 1;

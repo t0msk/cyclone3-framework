@@ -1,0 +1,68 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+160-relation_status.0.mdl
+
+=head1 DESCRIPTION
+
+Changes status of relation
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::160::_init|app/"160/_init.pm">
+
+=back
+
+=cut
+
+use App::160::_init;
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID of a relation
+
+=item *
+
+B<status> - required status
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	my $out=App::160::SQL::relation_change_status(
+		'ID' => $env{'ID'},
+		'status' => $env{'status'}
+	);
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
