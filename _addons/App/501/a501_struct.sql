@@ -255,9 +255,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_view` AS (
 	
 	WHERE
 		image.ID AND
-		image_attrs.ID AND
-		image_format.ID AND
-		image_file.ID
+		image_attrs.ID
 )
 
 -- --------------------------------------------------
