@@ -62,12 +62,12 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_j` (
 CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- rel 
-  `ID_category` bigint(20) unsigned default NULL,
+  `ID_category` bigint(20) unsigned default NULL, -- rel article_cat.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
   `datetime_start` datetime NOT NULL,
-  `datetime_end` datetime default NULL,
+  `datetime_stop` datetime default NULL,
   `priority_A` tinyint(3) unsigned default NULL,
   `priority_B` tinyint(3) unsigned default NULL,
   `priority_C` tinyint(3) unsigned default NULL,
@@ -86,13 +86,13 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_entity` bigint(20) unsigned default NULL,
-  `ID_category` bigint(20) unsigned default NULL,
+  `ID_entity` bigint(20) unsigned default NULL, -- rel 
+  `ID_category` bigint(20) unsigned default NULL, -- rel article_cat.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
   `datetime_start` datetime NOT NULL,
-  `datetime_end` datetime default NULL,
+  `datetime_stop` datetime default NULL,
   `priority_A` tinyint(3) unsigned default NULL,
   `priority_B` tinyint(3) unsigned default NULL,
   `priority_C` tinyint(3) unsigned default NULL,
@@ -218,12 +218,14 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 --		) AS posix_group_name,
 		article.posix_perms,
 		article_ent.ID_author AS posix_author,
+		article_content.ID_editor AS posix_editor,
 --		IF (article_ent.ID_author,
 --			(SELECT login FROM TOM.a300_users_view WHERE IDhash=article_ent.ID_author LIMIT 1), NULL
 --		) AS posix_author_name,
 		
+		article_content.datetime_create,
 		article_attrs.datetime_start,
-		article_attrs.datetime_end,
+		article_attrs.datetime_stop,
 		
 		article_attrs.priority_A,
 		article_attrs.priority_B,
@@ -242,6 +244,8 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 --		article_attrs.status AS status_attrs,
 --		article_content.status AS status_content,
 		
+		article_attrs.status,
+		
 		IF
 		(
 			(
@@ -250,7 +254,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 				article_content.status LIKE 'Y'
 			),
 			 'Y', 'U'
-		) AS status
+		) AS status_all
 		
 	FROM
 		`/*db_name*/`.`/*app*/_article` AS article
