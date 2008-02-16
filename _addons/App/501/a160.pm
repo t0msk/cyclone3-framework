@@ -69,7 +69,10 @@ sub get_relation_iteminfo
 	{
 		my $sql=qq{
 			SELECT
-				*
+				ID_image,
+				ID_category,
+				name,
+				lng
 			FROM
 				`$env{'r_db_name'}`.a501_image_view
 			WHERE
@@ -81,6 +84,9 @@ sub get_relation_iteminfo
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			$info{'name'}=$db0_line{'name'};
+			$info{'ID'}=$db0_line{'ID_image'};
+			$info{'ID_category'}=$db0_line{'ID_category'};
+			$info{'lng'}=$db0_line{'lng'};
 			main::_log("returning name='$info{'name'}'");
 			$t->close();
 			return %info;
@@ -91,7 +97,9 @@ sub get_relation_iteminfo
 	{
 		my $sql=qq{
 			SELECT
-				*
+				ID,
+				name,
+				lng
 			FROM
 				`$env{'r_db_name'}`.a501_image_cat
 			WHERE
@@ -103,6 +111,8 @@ sub get_relation_iteminfo
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			$info{'name'}=$db0_line{'name'};
+			$info{'ID'}=$db0_line{'ID'};
+			$info{'lng'}=$db0_line{'lng'};
 			main::_log("returning name='$info{'name'}'");
 			$t->close();
 			return %info;
