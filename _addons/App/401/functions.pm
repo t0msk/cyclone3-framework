@@ -55,6 +55,7 @@ Add new article (uploading new content)
    'article_attrs.ID_category' => '',
    'article_attrs.name' => '',
    'article_attrs.lng' => '',
+   'article_content.ID_editor' => '',
    'article_content.subtitle' => '',
    'article_content.mimetype' => '',
    'article_content.abstract' => '',
@@ -86,7 +87,7 @@ sub article_add
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::article_add()");
 	
-	$env{'article_content.mimetype'}="plain/text" unless $env{'article_content.mimetype'};
+	$env{'article_content.mimetype'}="text/html" unless $env{'article_content.mimetype'};
 	
 	# detect language
 	my %article_cat;
@@ -239,7 +240,7 @@ sub article_add
 		# create one language representation of article in content structure
 		my %columns;
 		$columns{'ID_category'}=$env{'article_attrs.ID_category'} if $env{'article_attrs.ID_category'};
-		$columns{'datetime_start'}=$env{'article_attrs.datetime_start'} if $env{'article_attrs.datetime_start'};
+		$columns{'datetime_start'}="'".$env{'article_attrs.datetime_start'}."'" if $env{'article_attrs.datetime_start'};
 		$columns{'datetime_start'}="NOW()" unless $columns{'datetime_start'};
 		
 		$env{'article_attrs.ID'}=App::020::SQL::functions::new(
@@ -272,16 +273,39 @@ sub article_add
 		# name
 		($env{'article_attrs.name'} && ($env{'article_attrs.name'} ne $article_attrs{'name'})) ||
 		# ID_category
-		($env{'article_attrs.ID_category'} && ($env{'article_attrs.ID_category'} ne $article_attrs{'ID_category'}))
+		($env{'article_attrs.ID_category'} && ($env{'article_attrs.ID_category'} ne $article_attrs{'ID_category'})) ||
+		# datetime_start
+		($env{'article_attrs.datetime_start'} && ($env{'article_attrs.datetime_start'} ne $article_attrs{'datetime_start'})) ||
+		# datetime_stop
+		(exists $env{'article_attrs.datetime_stop'} && ($env{'article_attrs.datetime_stop'} ne $article_attrs{'datetime_stop'}))
 	))
 	{
 		my %columns;
+		# name
 		$columns{'name'}="'".TOM::Security::form::sql_escape($env{'article_attrs.name'})."'"
 			if ($env{'article_attrs.name'} && ($env{'article_attrs.name'} ne $article_attrs{'name'}));
+		# name_url
+		$columns{'name_url'}="'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'article_attrs.name'}))."'"
+			if ($env{'article_attrs.name'} && ($env{'article_attrs.name'} ne $article_attrs{'name'}));
+		# ID_category
 		$columns{'ID_category'}=$env{'article_attrs.ID_category'}
 			if ($env{'article_attrs.ID_category'} && ($env{'article_attrs.ID_category'} ne $article_attrs{'ID_category'}));
-		$columns{'name_url'}="'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'article_attrs.name'}))."'"
-			if ($env{'article_attrs.ID_category'} && ($env{'article_attrs.ID_category'} ne $article_attrs{'ID_category'}));
+		# datetime_start
+		$columns{'datetime_start'}="'".$env{'article_attrs.datetime_start'}."'"
+			if ($env{'article_attrs.datetime_start'} && ($env{'article_attrs.datetime_start'} ne $article_attrs{'datetime_start'}));
+		# datetime_stop
+		if (exists $env{'article_attrs.datetime_stop'} && ($env{'article_attrs.datetime_stop'} ne $article_attrs{'datetime_stop'}))
+		{
+			if (!$env{'article_attrs.datetime_stop'})
+			{
+				$columns{'datetime_stop'}="NULL";
+			}
+			else
+			{
+				$columns{'datetime_stop'}="'".$env{'article_attrs.datetime_stop'}."'";
+			}
+		}
+		
 		App::020::SQL::functions::update(
 			'ID' => $env{'article_attrs.ID'},
 			'db_h' => "main",
@@ -477,7 +501,7 @@ sub article_content_extract_keywords
 {
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::article_content_extract_keywords()") if $debug;
-	$env{'article_content.mimetype'}="plain/text" unless $env{'article_content.mimetype'};
+	$env{'article_content.mimetype'}="text/html" unless $env{'article_content.mimetype'};
 	
 	my %keywords;
 	
