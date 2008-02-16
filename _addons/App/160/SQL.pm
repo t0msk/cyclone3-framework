@@ -40,6 +40,8 @@ use App::160::_init;
 
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
+our $CACHE=1; # sorry not well tested caching
+our $cache_expire=600; # 5 minutes - better is less time, when anything is cached wrong
 
 =head1 FUNCTIONS
 
@@ -70,6 +72,7 @@ sub new_relation
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
+	$env{'status'}='Y' unless $env{'status'};
 	
 	foreach (keys %env)
 	{
@@ -104,14 +107,14 @@ sub new_relation
 			'tb_name' => 'a160_relation',
 			'columns' =>
 			{
-				'status' => "'Y'",
+				'status' => "'$env{'status'}'",
 			},
 		);
 		
-		if ($TOM::CACHE_memcached)
+		if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 		{
 			# save info about changed set of relations
-			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time());
+			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
 		}
 		
 		$t->close();
@@ -121,7 +124,7 @@ sub new_relation
 	# find if this relation has ID_entity
 	my $relation=(get_relations(
 		%env,
-		'rel_type' => undef,
+		'rel_type' => -1,
 		'r_db_name' => undef,
 		'r_prefix' => undef,
 		'r_table' => undef,
@@ -145,16 +148,17 @@ sub new_relation
 				'r_prefix' => "'$env{'r_prefix'}'",
 				'r_table' => "'$env{'r_table'}'",
 				'r_ID_entity' => "'$env{'r_ID_entity'}'",
-				'status' => "'Y'",
+				'rel_type' => "'$env{'rel_type'}'",
+				'status' => "'$env{'status'}'",
 			},
 		);
 		
 		main::_log("clone with ID='$ID'");
 		
-		if ($TOM::CACHE_memcached)
+		if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 		{
 			# save info about changed set of relations
-			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time());
+			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
 		}
 		
 		$t->close();
@@ -177,14 +181,14 @@ sub new_relation
 			'r_prefix' => "'$env{'r_prefix'}'",
 			'r_table' => "'$env{'r_table'}'",
 			'r_ID_entity' => "'$env{'r_ID_entity'}'",
-			'status' => "'Y'",
+			'status' => "'$env{'status'}'",
 		},
 	);
 	
-	if ($TOM::CACHE_memcached)
+	if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 	{
 		# save info about changed set of relations
-		$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time());
+		$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
 	}
 	
 	$t->close();
@@ -234,13 +238,14 @@ sub remove_relation
 				'db_h' => $env{'db_h'},
 				'db_name' => $env{'db_name'},
 				'tb_name' => 'a160_relation',
+				'-journalize' => 1,
 			);
 			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'
 				.$relation->{'l_prefix'}.'/'.$relation->{'l_table'};
-			if ($TOM::CACHE_memcached)
+			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 			{
 				# save info about changed set of relations
-				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time());
+				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
 			}
 			$t->close();
 			return 1;
@@ -257,6 +262,79 @@ sub remove_relation
 	$t->close();
 	return 1;
 }
+
+
+
+=head2 relation_change_status()
+
+Changes relation status
+
+ my $output=relation_change_status(
+   'ID' => $ID,
+   'status' => 'Y'
+ );
+
+=cut
+
+sub relation_change_status
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::relation_change_status()");
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'");
+	}
+	
+	# check if this relation already exists
+	my $relation=(get_relations(
+		'ID' => $env{'ID'},
+		'status' => 'YN',
+		'limit' => '0,1'
+	))[0];
+	if ($relation)
+	{
+		main::_log("this relation exists with status='$relation->{'status'}'");
+		# when it exists, check if is enabled or disabled
+#		if ($relation->{'status'} ne $env{'status'})
+#		{
+			main::_log("also updating status");
+			App::020::SQL::functions::update(
+				'ID' => $relation->{'ID'},
+				'db_h' => $env{'db_h'},
+				'db_name' => $env{'db_name'},
+				'tb_name' => 'a160_relation',
+				'columns' => {
+					'status' => "'".$env{'status'}."'"
+				},
+				'-journalize' => 1,
+			);
+			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'
+				.$relation->{'l_prefix'}.'/'.$relation->{'l_table'};
+			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
+			{
+				# save info about changed set of relations
+				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
+			}
+			$t->close();
+			return 1;
+#		}
+#		else
+#		{
+			# this relation has already this status
+#		}
+		
+	}
+	
+	# this relation not exists
+	
+	$t->close();
+	return 1;
+}
+
 
 
 
@@ -322,11 +400,12 @@ sub get_relations
 		next unless defined $env{$_};
 		if ($_=~/^(l|r)_/ || $_=~/^ID/){ $where.="AND $_='$env{$_}' ";}
 	}
-	if (exists $env{'rel_type'}){$where.="AND rel_type='$env{rel_type}' ";}
+	if ($env{'rel_type'} == -1){}
+	elsif (exists $env{'rel_type'}){$where.="AND rel_type='$env{rel_type}' ";}
 	
 	my @relations;
 	
-	if ($TOM::CACHE_memcached)
+	if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 	{
 		my $cache_change=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_change_key);
 		my $cache=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_key);
@@ -349,7 +428,7 @@ sub get_relations
 		WHERE
 			$where
 		ORDER BY
-			r_db_name, r_prefix, r_table, r_ID_entity
+			rel_type, r_db_name, r_prefix, r_table, r_ID_entity
 		LIMIT
 			$env{'limit'};
 	};
@@ -362,7 +441,7 @@ sub get_relations
 		$i++;
 	}
 	
-	if ($TOM::CACHE_memcached)
+	if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 	{
 		$Ext::CacheMemcache::cache->set
 		(
@@ -372,7 +451,8 @@ sub get_relations
 			{
 				'time' => time(),
 				'data' => [@relations]
-			}
+			},
+			'expiration'=>$cache_expire.'S'
 		);
 	}
 	
