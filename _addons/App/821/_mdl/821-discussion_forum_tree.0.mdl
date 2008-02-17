@@ -1,0 +1,481 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+821-discussion_forum_tree.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Display tree of discussion forums
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID parent of category item
+
+=item *
+
+B<tree> - default '1' - display as tree or listing
+
+=item *
+
+B<parent> - default '0' - display items including parent B<ID>
+
+=item *
+
+B<depth> - default '' - depth of tree
+
+=item *
+
+B<level> - default '' - from which level display elements
+
+=item *
+
+B<check_sub> - default '' - if none sub elements is available, display siblings
+
+=item *
+
+B<status> - default 'Y' - display only items where status is IN ( example. 'YNT' )
+
+=item *
+
+B<db_order> - default 'ID_charindex' - order item by SQL
+
+=item *
+
+B<current_ID> - current ID of item (to highlight)
+
+=item *
+
+B<current_path_url> - current path_url (to highlight)
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default
+
+=item *
+
+B<ITEM> - item of tree
+
+=item *
+
+B<ITEM-current> - current item of tree when param B<current_*>='' is used
+
+=item *
+
+B<SUB> - in 'tree' mode used for creating sub-tree entry
+
+=item *
+
+B<#tree#> - entry for sub-tree
+
+=item *
+
+B<#item#> - entry for ITEM
+
+=item *
+
+B<%path%> - ID
+
+=item *
+
+B<%name%> - name of item
+
+=back
+
+Listing mode:
+
+ <XML_DESIGN_DEFINITION>
+ 
+ <DEFINITION id="TMP">
+  <#item#>
+ </DEFINITION>
+ 
+ <DEFINITION id="ITEM">
+  <item IDitem="<%ID%>">
+   <ID><%ID%></ID>
+   <ID_entity><%ID_entity%></ID_entity>
+   <ID_parent><%ID_parent%></ID_parent>
+   <name><%name%></name>
+   <name_url><%name_url%></name_url>
+   <path><%path%></path>
+   <datetime_create><%datetime_create%></datetime_create>
+   <lng><%lng%></lng>
+   <status><%status%></status>
+  </item>
+  <#item#>
+ </DEFINITION>
+ 
+ </XML_DESIGN_DEFINITION>
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	delete $env{'ID_charindex'};
+	
+	$env{'tree'}=1 unless exists $env{'tree'};
+	
+	my $from;
+	
+	# ak idem vykreslovat strom od nejakeho ID
+	if ($env{'ID'})
+	{
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h'    => 'main',
+			'db_name' => $App::821::db_name,
+			'tb_name' => 'a821_discussion_forum',
+			'ID'      => $env{'ID'},
+			'columns' => 
+			{
+				'ID_charindex' => 1
+			}
+		);
+		if ($data{'ID'})
+		{
+			$env{'ID_charindex'}=$data{'ID_charindex'};
+		}
+		else
+		{
+			main::_log("can't find ID='$data{'ID'}'",1);
+			return undef;
+		}
+		
+	}
+	
+	my @ID_charindex_plus;
+	
+	# ak chcem zobrazit levely nad current levelom
+	if ($env{'level'}<0)
+	{
+		my $reg='(.{0,'.(abs($env{'level'})*4).'})';
+		$env{'ID_charindex'}=~s|^(.*?)$reg$|\1|;
+		main::_log("ID_charindex=$env{'ID_charindex'} reg='$reg'");
+	}
+	# start output in level
+	elsif ($env{'level'})
+	{
+		main::_log("adding all ID's from level='$env{'level'}'");
+		my $ID_charindex=$env{'ID_charindex'};$ID_charindex=~s|:$||;
+		
+		my $level=$env{'level'}+1;
+		while ($level>$env{'level'})
+		{
+			# level count
+			my $dbg_level=$ID_charindex;$dbg_level=~s|:||g;
+			my $level=(length($dbg_level)/3)+1;
+			main::_log("I'm in level='$level' with charindex='$ID_charindex' max level='$env{level}'");
+			last if $level<$env{'level'};
+			my $out=$ID_charindex=~s|(...)$||;$ID_charindex=~s|:$||;
+			last unless $out;
+			main::_log("adding ID_charindex='$ID_charindex'");
+			push @ID_charindex_plus, $ID_charindex;
+		}
+		
+		#my $reg=('.' x ($env{'level'}*4));
+		#$env{'ID_charindex2'}=$env{'ID_charindex'};
+		#$env{'ID_charindex2'}=~s|^($reg)(.*)$|$1|;
+		#$env{'ID_charindex2'}=~s|:$||;
+		#main::_log("ID_charindex2='$env{'ID_charindex'}'->'$env{'ID_charindex2'}'");
+	}
+	
+	# vykreslujem od urciteho levelu
+	if ($env{'ID_charindex'})
+	{
+		$from=$env{'ID_charindex'};
+		# zobrazit parent element daneho levelu alebo nie
+		if (!$env{'parent'})
+		{
+			$from.=':';
+		}
+	}
+	
+	my $where;
+	
+	# language
+	$where.="lng='$env{'lng'}' ";
+	
+	# status
+	if ($env{'status'})
+	{
+		$XSGN{'TMP'}=~s|<%required_status%>|$env{'status'}|g;
+		$where.="AND (";
+		foreach (split('',$env{'status'}))
+		{
+			$where.="status='$_' OR ";
+		}
+		$where=~s|OR $||;
+		$where.=")";
+	}
+	else
+	{
+		$where.="AND status='Y' ";
+	}
+	
+	
+	if ($env{'check_sub'})
+	{
+		main::_log("checking if ID_charindex='$from' has subs");
+		my $sql=qq{
+			SELECT
+				ID
+			FROM
+				`$App::821::db_name`.a821_discussion_forum
+			WHERE $where AND ID_charindex LIKE '$from%'
+		};
+		my %sth0=TOM::Database::SQL::execute($sql);
+		if ($sth0{'rows'}==1)
+		{
+			my $ID_charindex=$env{'ID_charindex'};$ID_charindex=~s|:$||;
+			$ID_charindex=~s|...$||;
+			$ID_charindex=~s|:$||;
+			push @ID_charindex_plus, $ID_charindex.'____';
+			if ($env{'parent'})
+			{
+				push @ID_charindex_plus, $ID_charindex;
+			}
+		}
+	}
+	
+	
+	# charindex
+	if (@ID_charindex_plus)
+	{
+		$where.="AND (ID_charindex LIKE '$from%'";
+		foreach (@ID_charindex_plus)
+		{
+			$where.=" OR ID_charindex LIKE '$_'";
+		}
+		$where.=") ";
+	}
+	else
+	{
+		$where.="AND ID_charindex LIKE '$from%' ";
+	}
+	
+	
+	# s akou hlbkou ziskavam data
+	if ($env{'depth'})
+	{
+		my $chars=length($from)+$env{'depth'}*4;
+		$where.="AND length(ID_charindex)<".($chars)." ";
+	}
+	
+	$where="WHERE ".$where if $where;
+	
+	
+	$env{'db_order'}="ID_charindex" unless $env{'db_order'};
+	
+	
+	my $sql=qq{
+		SELECT
+			ID,
+			ID_entity,
+			ID_charindex,
+			datetime_create,
+			name,
+			name_url,
+			lng,
+			status
+		FROM
+			`$App::821::db_name`.a821_discussion_forum
+$where
+		ORDER BY
+			$env{'db_order'}
+	};
+	
+	my @path;
+	my @path_url;
+	
+	my %charindex_ID;
+	
+	my $level;
+	my $level_prev;
+	my $level_next;
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	if ($sth0{'sth'})
+	{
+		# naplnim si @tree s polozkami zo stromu preto aby som mohol v dalsom
+		# cykle pracovat ako s predchadzajucimi tak i s buducimi polozkami
+		my @tree;
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$charindex_ID{$db0_line{'ID_charindex'}}=$db0_line{'ID'};
+			
+			my $dbg=$db0_line{'ID_charindex'};
+			$dbg=~s|^(.*?)(.{0,4})$|\1|;
+			
+			$db0_line{'ID_parent'}=$charindex_ID{$dbg};
+			
+			push @tree, {%db0_line};
+		}
+		
+		my $i=0;
+		
+		foreach my $entity(@tree)
+		{
+			
+			my $dbg_level=$entity->{'ID_charindex'};$dbg_level=~s|:||g;
+			$level=(length($dbg_level)/3)+1;
+			
+			if ($tree[$i+1])
+			{
+				my $dbg_level=$tree[$i+1]->{'ID_charindex'};$dbg_level=~s|:||g;
+				$level_next=(length($dbg_level)/3)+1;
+			}
+			else
+			{
+				$level_next=0;
+			}
+			
+			if ($env{'tree'})
+			{
+				if ($level>$level_prev)
+				{
+					my $rec=$XSGN{'TMP'}=~s|<#tree#>|$XSGN{'SUB'}|;
+					main::_log("inserted tree ($rec) for level $level");
+				}
+			}
+			
+			main::_log("$level($level_next) $entity->{'ID_charindex'} $entity->{'name'} $entity->{'lng'}");
+			
+			for ($level..$level_prev+1)
+			{
+				delete $path[$_];
+			}
+			
+			$path[$level]=$entity->{'name_url'};
+			
+			my $path_;
+			foreach my $node (App::020::SQL::functions::tree::get_path(
+				$entity->{'ID'},
+				'db_h'    => 'main',
+				'db_name' => $App::821::db_name,
+				'tb_name' => 'a821_discussion_forum'
+			))
+			{
+				$path_.='/'.$node->{'name_url'};
+			}
+			$path_=~s|^/||;
+			main::_log("path_='$path_'");
+			
+			$XSGN{'NULL'}=$XSGN{'ITEM'};
+			
+			if (
+					(($env{'current_ID'} eq $entity->{'ID'})
+					|| ($env{'current_path_url'} eq $path_))
+					&& $XSGN{'ITEM-current'}
+			)
+			{
+				$XSGN{'NULL'}=$XSGN{'ITEM-current'};
+			}
+			
+			$XSGN{'NULL'}=~s|<%ID%>|$entity->{'ID'}|g;
+			$XSGN{'NULL'}=~s|<%ID_entity%>|$entity->{'ID_entity'}|g;
+			$XSGN{'NULL'}=~s|<%ID_parent%>|$entity->{'ID_parent'}|g;
+			$XSGN{'NULL'}=~s|<%name%>|$entity->{'name'}|g;
+			$XSGN{'NULL'}=~s|<%name_url%>|$entity->{'name_url'}|g;
+			$XSGN{'NULL'}=~s|<%datetime_create%>|$entity->{'datetime_create'}|g;
+			$XSGN{'NULL'}=~s|<%status%>|$entity->{'status'}|g;
+			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
+			
+			if ($env{'itemcount'})
+			{
+				# count of items
+				
+				my $sql=qq{
+					SELECT COUNT(ID) AS itemcount
+					FROM
+						`$App::821::db_name`.`a821_discussion`
+					WHERE
+						ID_category = $entity->{'ID'}
+						AND status IN ('Y','N','L')
+				};
+				my %sth1=TOM::Database::SQL::execute($sql);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					$XSGN{'NULL'}=~s|<%itemcount%>|$db1_line{'itemcount'}|g;
+				}
+				else
+				{
+					$XSGN{'NULL'}=~s|<%itemcount%>|0|g;
+				}
+				
+			}
+			
+			if ($env{'tree'})
+			{
+				if ($level_next<$level)
+				{
+					$XSGN{'NULL'}=~s|<#item#>||g;
+				}
+				if ($level_next<=$level)
+				{
+					$XSGN{'NULL'}=~s|<#tree#>||g;
+				}
+			}
+			
+			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+			
+			if ($env{'tree'})
+			{
+				for ($level_next..$level-2)
+				{
+					$XSGN{'TMP'}=~s|<#item#>||;
+				}
+				for ($level_next..$level-1)
+				{
+					$XSGN{'TMP'}=~s|<#tree#>||;
+				}
+			}
+			
+			$level_prev=$level;
+			$i++;
+		}
+		
+	}
+	else
+	{
+		main::_log("can't select");
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
