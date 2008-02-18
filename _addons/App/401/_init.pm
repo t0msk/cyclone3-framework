@@ -173,7 +173,7 @@ else
 		'db_name' => $App::821::db_name,
 		'tb_name' => "a821_discussion_forum",
 		'columns' => {
-			'name' => "'article forums'",
+			'name' => "'article discussions'",
 			'lng' => "'$tom::LNG'",
 			'status' => "'L'"
 		},
@@ -208,7 +208,7 @@ foreach my $lng(@TOM::LNG_accept)
 			'tb_name' => "a821_discussion_forum",
 			'columns' => {
 				'ID_entity' => $forum_ID_entity,
-				'name' => "'article forums'",
+				'name' => "'article discussions'",
 				'lng' => "'$lng'",
 				'status' => "'L'"
 			},

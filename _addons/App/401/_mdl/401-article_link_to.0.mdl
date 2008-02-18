@@ -11,13 +11,13 @@ use App::401::_init;
 
 =head1 NAME
 
-401-article_move_to.0.mdl
+401-article_link_to.0.mdl
 
 =cut
 
 =head1 DESCRIPTION
 
-Move article item into another article_cat
+Link article item into another article_cat
 
 =cut
 
@@ -27,7 +27,7 @@ Move article item into another article_cat
 
 =item *
 
-B<article.ID> - ID of item
+B<article.ID_entity> - ID_entity of article
 
 =item *
 
@@ -74,10 +74,10 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
-	if (!$env{'article.ID'})
+	if (!$env{'article.ID_entity'})
 	{
 		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
-		$XSGN{'TMP'}=~s|<%missing_parameter%>|article.ID|g;
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|article.ID_entity|g;
 		return 1;
 	}
 	
@@ -88,19 +88,20 @@ sub execute
 		return 1;
 	}
 	
-	foreach my $ID(split(';',$env{'article.ID'}))
+	foreach my $ID_entity(split(';',$env{'article.ID_entity'}))
 	{
-		next unless $ID;
+		next unless $ID_entity;
 		
 		my %attrs=App::401::functions::article_add(
-			'article.ID' => $ID,
-			'article_attrs.ID_category'   => $env{'article_attrs.ID_category'}
+			'article.ID_entity' => $ID_entity,
+			'article_attrs.name' => $env{'article_attrs.name'},
+			'article_attrs.ID_category' => $env{'article_attrs.ID_category'}
 		);
 		
 	}
 	
 	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
-	$XSGN{'TMP'}=~s|<%ID%>|$env{'article.ID'}|g;
+	$XSGN{'TMP'}=~s|<%ID_entity%>|$env{'article.ID_entity'}|g;
 	
 	return 1;
 }

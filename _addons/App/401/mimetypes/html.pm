@@ -128,15 +128,15 @@ sub start
 		{
 			use App::501::_init;
 			my %vars=_parse_id($1);
-			$vars{'format'}=
+			$vars{'ID_format'}=
 				$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
 				|| $self->{'config'}->{'a501_image_file.ID_format'}
-				|| $vars{'format'}
+				|| $vars{'ID_format'}
 				|| $App::501::image_format_thumbnail_ID;
 			#$vars{'format'}=$App::501::image_format_thumbnail_ID unless $vars{'format'};
 			if ($vars{'ID'})
 			{
-				main::_log("find a501_image ID='$vars{'ID'}' ID_format='$vars{'format'}'");
+				main::_log("find a501_image ID='$vars{'ID'}' ID_format='$vars{'ID_format'}'");
 				my $sql=qq{
 					SELECT
 						*
@@ -144,7 +144,7 @@ sub start
 						`$App::501::db_name`.`a501_image_view`
 					WHERE
 						ID_image=$vars{'ID'} AND
-						ID_format=$vars{'format'}
+						ID_format=$vars{'ID_format'}
 					LIMIT 1
 				};
 				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
@@ -153,8 +153,8 @@ sub start
 				{
 					$attr->{'src'}=$tom::H_media.'/a501/image/file/'.$db0_line{'file_path'};
 					$attr->{'alt'}=$db0_line{'name'};
-					$attr->{'width'}=$db0_line{'image_width'};
-					$attr->{'height'}=$db0_line{'image_height'};
+					$attr->{'width'}=$db0_line{'image_width'} unless $attr->{'width'};
+					$attr->{'height'}=$db0_line{'image_height'} unless $attr->{'height'};
 					
 					# override default tag representation
 					$out_full=
@@ -181,7 +181,7 @@ sub start
 		{
 			use App::510::_init;
 			my %vars=_parse_id($1);
-			$vars{'format'}=$App::510::video_format_full_ID unless $vars{'format'};
+			$vars{'ID_format'}=$App::510::video_format_full_ID unless $vars{'ID_format'};
 			
 			if ($vars{'ID'})
 			{
@@ -194,7 +194,7 @@ sub start
 						`$App::510::db_name`.`a510_video_view`
 					WHERE
 						ID_part=$vars{'ID'} AND
-						ID_format=$vars{'format'} AND
+						ID_format=$vars{'ID_format'} AND
 						lng='$tom::lng'
 					LIMIT 1
 				};
