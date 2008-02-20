@@ -38,6 +38,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   `ID_entity` bigint(20) unsigned default NULL, -- rel article.ID_entity
   `datetime_create` datetime NOT NULL,
   `ID_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `visits` int(10) unsigned NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   KEY `ID_entity` (`ID_entity`),
@@ -53,6 +54,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_j` (
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
   `ID_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `visits` int(10) unsigned NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -243,6 +245,8 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 --		article.status AS status_article,
 --		article_attrs.status AS status_attrs,
 --		article_content.status AS status_content,
+		
+		article_ent.visits,
 		
 		article_attrs.status,
 		
