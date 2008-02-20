@@ -7,11 +7,11 @@ use strict;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-our $debug=1;
+our $debug=0;
 our $serialize=1;
 our $IDsession;
 our $session_save;
-our $performance=0;
+our $performance=1;
 
 sub TIEHASH
 {
@@ -32,7 +32,7 @@ sub DESTROY
 	# nikam neulozi
 	return undef unless $IDsession;
 	
-		main::_log("TIE-serializing '$IDsession'") if $debug;
+		main::_log("TIE-serializing session '$IDsession'") if $debug;
 		my $cvml=CVML::structure::serialize(%{$self});
 		
 		return undef if (($cvml eq $session_save) && $performance);
@@ -49,7 +49,7 @@ sub DESTROY
 			WHERE
 				ID_session='$IDsession'
 			LIMIT 1
-		});
+		},'quiet'=>1);
 		
 		main::_log("TIE-serialized") if $debug;
 	
