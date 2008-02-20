@@ -418,6 +418,7 @@ sub article_add
 	{
 		my $sql=qq{
 			SELECT
+				ID,
 				ID_entity
 			FROM
 				`$App::401::db_name`.`a401_article_ent`
@@ -428,13 +429,14 @@ sub article_add
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		%article_ent=$sth0{'sth'}->fetchhash();
 		$env{'article_ent.ID_entity'}=$article_ent{'ID_entity'};
+		$env{'article_ent.ID'}=$article_ent{'ID'};
 	}
 	if (!$env{'article_ent.ID_entity'})
 	{
 		# create one entity representation of article
 		my %columns;
 		
-		$env{'article_ent.ID_entity'}=App::020::SQL::functions::new(
+		$env{'article_ent.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
 			'db_name' => $App::401::db_name,
 			'tb_name' => "a401_article_ent",
@@ -445,18 +447,6 @@ sub article_add
 			},
 			'-journalize' => 1,
 		);
-	}
-	# get article_ent
-	if ($env{'article_ent.ID_entity'} && !$article_ent{'ID_author'})
-	{
-		%article_ent=%{(App::020::SQL::functions::get_ID_entity(
-			'ID_entity' => $env{'article_ent.ID_entity'},
-			'db_h' => 'main',
-			'db_name' => $App::401::db_name,
-			'tb_name' => 'a401_article_ent',
-			'columns' => {'*' => 1}
-		))[0]};
-		$env{'article_ent.ID'}=$article_ent{'ID'} if $article_ent{'ID'};
 	}
 	# update if necessary
 	if ($env{'article_ent.ID'} &&
