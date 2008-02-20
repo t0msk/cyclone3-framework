@@ -377,7 +377,7 @@ sub get_relations
 	# Memcached key
 	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.
 		$env{'l_prefix'}.'/'.$env{'l_table'};
-	my $cache_key='a160_relation::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.
+	my $cache_key='a160_relation::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'status'}.'::'.
 		$env{'ID'}.'/'.
 		$env{'ID_entity'}.'/'.
 		$env{'l_prefix'}.'/'.
@@ -433,7 +433,7 @@ sub get_relations
 			$env{'limit'};
 	};
 	my $i=0;
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>$debug,'quiet'=>$quiet);
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>$debug,'quiet'=>$quiet,'slave'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		main::_log("relation[$i] rel_type='$db0_line{'rel_type'}' r_db_name='$db0_line{'r_db_name'}' r_prefix='$db0_line{'r_prefix'}' r_table='$db0_line{'r_table'}' r_ID_entity='$db0_line{'r_ID_entity'}'") if $debug;
