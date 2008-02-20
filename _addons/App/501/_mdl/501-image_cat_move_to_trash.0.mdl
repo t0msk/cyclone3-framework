@@ -76,7 +76,7 @@ sub execute
 				FROM
 					`$App::501::db_name`.a501_image_attrs
 				WHERE
-					ID_category='$db0_line{'ID_entity'}'
+					ID_category='$db0_line{'ID'}'
 					AND lng='$data{'lng'}'
 					AND status IN ('Y','N')
 			};

@@ -76,7 +76,7 @@ sub execute
 				FROM
 					`$App::541::db_name`.a541_file
 				WHERE
-					ID_category='$db0_line{'ID_entity'}'
+					ID_category='$db0_line{'ID'}'
 					AND lng='$data{'lng'}'
 					AND status IN ('Y','N')
 			};
