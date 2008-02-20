@@ -83,10 +83,18 @@ sub new
 	
 	my $ID_charindex_new=find_new_child(
 		$parent_ID_charindex,
-		'db_h' => $env{'db_h'},
-		'db_name' => $env{'db_name'},
-		'tb_name' => $env{'tb_name'},
+#		'db_h' => $env{'db_h'},
+#		'db_name' => $env{'db_name'},
+#		'tb_name' => $env{'tb_name'},
+		%env
 	);
+	
+	if ($env{'test'})
+	{
+		main::_log("just test, exiting");
+		$t->close();
+		return undef;
+	}
 	
 	$env{'columns'}{'ID_charindex'}="'".$ID_charindex_new."'";
 	my $ID=App::020::SQL::functions::new(%env);
@@ -868,6 +876,9 @@ sub find_new_child
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
+	# extend WHERE
+	$env{'where'}="AND ".$env{'where'} if $env{'where'};
+	
 	foreach (keys %env)
 	{
 		main::_log("input '$_'='$env{$_}'");
@@ -887,10 +898,11 @@ sub find_new_child
 	FROM `$env{'db_name'}`.`$env{'tb_name'}`
 	WHERE
 		ID_charindex LIKE '$ID_charindex_\___'
+		$env{'where'}
 	ORDER BY ID_charindex DESC
 	LIMIT 1
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'log'=>1);
 	if (!$sth0{'sth'})
 	{
 		$t->close();
