@@ -1071,7 +1071,7 @@ while ($main::CGI=new CGI::Fast())
 							'db_h' => "main",
 							'db_name' => $TOM::DB{'main'}{'name'},
 							'tb_name' => "a210_page",
-							'ID'      => $ID,
+							'ID'      => "'$ID'",
 							'columns' => { '*' => 1 }
 						);
 						# musim vygenerovat default path pre automaticky 301 code
