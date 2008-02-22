@@ -1,0 +1,169 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::821::_init;
+
+=head1 NAME
+
+821-discussion_message_status.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Change status of discussion_message
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<discussion_message.ID> - ID of item
+
+=item *
+
+B<discussion_message.status> - new status
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default error
+
+=item *
+
+B<RESULT_success> - without error
+
+=item *
+
+B<RESULT_failure_no_input> - bad input
+
+=item *
+
+B<RESULT_failure_set> - can't be changed
+
+=item *
+
+B<%ID%> - ID
+
+=item *
+
+B<%missing_parameter%> - missing param
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'discussion_message.ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|discussion_message.ID|g;
+		main::_log("!discussion_message.ID",1);
+		return 1;
+	}
+	
+	if (!$env{'discussion_message.status'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|discussion_message.status|g;
+		main::_log("!discussion_message.status",1);
+		return 1;
+	}
+	
+	main::_log("!discussion_message.status",1);
+	
+	my $tb_name='a821_discussion_message';
+	
+	my $out;
+	
+	if ($env{'discussion_message.status'} eq "Y")
+	{
+		main::_log('enable');
+		$out=App::020::SQL::functions::enable(
+			'db_h' => "main",
+			'db_name' => $App::821::db_name,
+			'tb_name' => $tb_name,
+			'-journalize' => 1,
+			'ID'   => $env{'discussion_message.ID'},
+		);
+	}
+	elsif ($env{'discussion_message.status'} eq "N")
+	{
+		main::_log('disable');
+		$out=App::020::SQL::functions::disable(
+			'db_h' => "main",
+			'db_name' => $App::821::db_name,
+			'tb_name' => $tb_name,
+			'-journalize' => 1,
+			'ID'   => $env{'discussion_message.ID'},
+		);
+	}
+	else
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_set'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'discussion_message.ID'}|g;
+		return 1;
+	}
+	
+	main::_log("out=$out");
+	
+	if ($out)
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'discussion_message.ID'}|g;
+		
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h' => "main",
+			'db_name' => $App::821::db_name,
+			'tb_name' => $tb_name,
+			'-journalize' => 1,
+			'columns'=>
+			{
+				'status' => 1
+			},
+			'ID'   => $env{'discussion_message.ID'}
+		);
+		
+		$XSGN{'TMP'}=~s|<%status%>|$data{'status'}|g;
+		
+	}
+	else
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_set'};
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'discussion_message.ID'}|g;
+		return 1;
+	}
+	
+	return 1;
+}
+
+
+
+our $authors='open@comsultia.com';
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;

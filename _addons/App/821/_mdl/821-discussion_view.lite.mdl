@@ -1,0 +1,230 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+=head1 NAME
+
+821-discussion_view.lite.mdl
+
+=head1 DESCRIPTION
+
+Lite view of discussion
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::821::_init|app/"821/_init.pm">
+
+=back
+
+=cut
+
+use App::401::_init;
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<db_name> - database name
+
+=item *
+
+B<discussion.ID> || B<ID> - ID of discussion
+
+=item *
+
+B<discussion.ID_entity> || B<ID_entity> - ID_entity of discussion
+
+=item *
+
+B<discussion.status> - required status (default 'Y')
+
+=item *
+
+B<discussion.lng> - required language (default is current)
+
+=item *
+
+B<ignore.img> - ignore all img's in output (this output tag is not placed into document)
+
+=item *
+
+B<ignore.img.1> - ignores first img in output
+
+=item *
+
+B<a501_image.ID_format> - changes ID_format for all a501_image
+
+=item *
+
+B<a501_image.ID_format.1> - changes ID_format for first a501_image
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - discussion item
+
+=item *
+
+B<%db_*%> - discussion database variables
+
+=item *
+
+B<%out.img.1.*%> - first img variables
+
+=item *
+
+B<#out.img.1#> - first img entry
+
+=item *
+
+B<a501_image> - image item to replace
+
+=item *
+
+B<a501_image.1> - first image item to replace
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	$env{'db_name'}=$App::821::db_name unless $env{'db_name'};
+	
+	$env{'discussion.lng'}=$env{'lng'} unless $env{'discussion.lng'};
+	$env{'discussion.status'}='Y' unless $env{'discussion.status'};
+		my $sql_status=join "','", split('',$env{'discussion.status'});
+	
+	$env{'discussion.ID'}=$env{'ID'} unless $env{'discussion.ID'};
+	$env{'discussion.ID_entity'}=$env{'ID_entity'} unless $env{'discussion.ID_entity'};
+	
+	my $sql_where;
+	
+	# ID_entity
+	$sql_where.="AND discussion.ID_entity=$env{'discussion.ID_entity'}"
+		if $env{'discussion.ID_entity'};
+	
+	# ID
+	$sql_where.="AND discussion.ID=$env{'discussion.ID'}"
+		if $env{'discussion.ID'};
+	
+	# ID_forum
+	$sql_where.="AND discussion.ID_forum IN ($env{'discussion.ID_forum'})"
+		if $env{'discussion.ID_forum'};
+	
+	my $sql=qq{
+		SELECT
+			discussion.*
+		FROM
+			`$env{'db_name'}`.a821_discussion AS discussion
+		WHERE
+			discussion.lng='$env{'discussion.lng'}' AND
+			discussion.status IN ('$sql_status')
+			$sql_where
+		LIMIT 1
+	};
+	
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		# process description
+		my $p=new App::401::mimetypes::html;
+		
+		# img
+		$p->{'ignore'}{'img'}=
+			$env{'body.ignore.img'}
+			|| $env{'ignore.img'}
+			|| undef;
+		
+		$p->{'ignore'}{'img.1'}=
+			$env{'body.ignore.img.1'}
+			|| $env{'ignore.img.1'}
+			|| undef;
+		
+		# a501_image
+		$p->{'config'}->{'a501_image_file.ID_format'}=
+			$env{'body.a501_image_file.ID_format'}
+			|| $env{'a501_image_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.1'}=
+			$env{'body.a501_image_file.ID_format.1'}
+			|| $env{'a501_image_file.ID_format.1'}
+			|| undef;
+		$p->{'entity'}->{'a501_image'}=
+			$XSGN{'body.a501_image'}
+			|| $XSGN{'a501_image'}
+			|| undef;
+		$p->{'entity'}->{'a501_image.1'}=
+			$XSGN{'body.a501_image.1'}
+			|| $XSGN{'a501_image.1'}
+			|| undef;
+		
+		# a510_video
+		$p->{'entity'}{'a510_video_part'}=
+			$XSGN{'body.a510_video_part'}
+			|| $XSGN{'a510_video_part'}
+			|| undef;
+		
+		# a010
+		foreach (keys %XSGN){if ($_=~/^a010/){$p->{'entity'}{$_}=$XSGN{$_};}}
+		
+		# PARSE !!!
+		$p->parse($db0_line{'description'});
+		$p->eof();
+		my $description_html=$p->{'out'};
+		
+		$XSGN{'TMP'}=~s|<%description%>|$description_html|;
+		
+		$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+		$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+		
+		
+		$XSGN{'TMP'}=~s|<%discussion\.db_(.*?)%>|$db0_line{$1}|g;
+		
+		$main::H->add_DOC_title($db0_line{'name'});
+		
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;

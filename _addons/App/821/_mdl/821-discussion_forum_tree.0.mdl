@@ -415,7 +415,7 @@ $where
 					FROM
 						`$App::821::db_name`.`a821_discussion`
 					WHERE
-						ID_category = $entity->{'ID'}
+						ID_forum = $entity->{'ID'}
 						AND status IN ('Y','N','L')
 				};
 				my %sth1=TOM::Database::SQL::execute($sql);

@@ -1,0 +1,149 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::160::_init;
+use App::821::_init;
+use TOM::Text::format;
+
+=head1 NAME
+
+821-discussion_message_new.user.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Add new messages to discussion by regular user
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<discussion.ID> || B<discussion.ID_entity>  - ID of discussion_forum
+
+=back
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	
+	if ($main::USRM{'logged'} eq "Y")
+	{
+		$XSGN{'TMP'}=~s|<#user#>|$XSGN{'user-logged'}|;
+	}
+	else
+	{
+		$XSGN{'TMP'}=~s|<#user#>|$XSGN{'user-anonymous'}|;
+	}
+	
+	
+	my $sql_where;
+	
+	# language
+	$sql_where.="lng='$env{'lng'}' ";
+	
+	# status
+	if ($env{'status'})
+	{
+		$XSGN{'TMP'}=~s|<%required_status%>|$env{'status'}|g;
+		$sql_where.="AND status IN ('".(join "','", split('',$env{'status'}))."') ";
+	}
+	else
+	{
+		$sql_where.="AND status='Y' ";
+	}
+	
+	if ($env{'discussion.ID_entity'})
+	{
+		my $sql=qq{
+			SELECT
+				ID,
+				ID_entity
+			FROM
+				`$App::821::db_name`.a821_discussion
+			WHERE
+				ID_entity=$env{'discussion.ID_entity'} AND
+				$sql_where
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'slave'=>1,'log'=>1);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		$env{'discussion.ID'} = $db0_line{'ID'};
+	}
+	
+	if (!$env{'discussion.ID'})
+	{
+		return 1;
+	}
+	
+	#
+	# LISTING OF ITEMS
+	#
+	
+	if ($main::FORM{'name'} && $main::FORM{'user'} && $main::FORM{'message'})
+	{
+		# check last comment from this user
+		
+		
+		my %columns;
+		
+		if ($main::USRM{'logged'} eq "Y")
+		{
+			$columns{'posix_owner'}="'".$main::USRM{'ID_user'}."'";
+		}
+		else
+		{
+			$columns{'owner_anonymous_name'}="'".(TOM::Security::form::sql_escape($main::FORM{'user'}))."'";
+		}
+		
+		my $ID=App::020::SQL::functions::tree::new(
+			'db_h' => "main",
+			'db_name' => $App::821::db_name,
+			'tb_name' => "a821_discussion_message",
+			'-journalize' => 1,
+			#'parent_ID'   => $env{'ID_parent'},
+			'columns' =>
+			{
+				'name' => "'".(TOM::Security::form::sql_escape($main::FORM{'name'}))."'",
+				'body' => "'".(TOM::Security::form::sql_escape($main::FORM{'message'}))."'",
+				'owner_IP' => "'".$main::ENV{'REMOTE_ADDR'}."'",
+				'ID_discussion' => $env{'discussion.ID'},
+				'datetime_post' => 'NOW()',
+				'lng'  => "'$env{'lng'}'",
+				'status'  => "'Y'",
+				%columns
+			},
+			'where' => "ID_category='$env{'discussion.ID'}'",
+			#'stop' => 1,
+		);
+		
+		$XSGN{'TMP'}=$XSGN{'commited'};
+	}
+	
+	return 1;
+}
+
+our $authors="roman.fordinal\@comsultia.com";
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
