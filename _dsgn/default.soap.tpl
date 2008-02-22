@@ -23,7 +23,7 @@
 			<faultcode>SOAP-ENV:Server</faultcode>
 			<faultstring>Server error</faultstring>
 			<detail>
-				<message><%message%></message>
+				<message><![CDATA[[<%message%>]]&gt;</message>
 			</detail>
 		</SOAP-ENV:Fault>
 	</SOAP-ENV:Body>
@@ -50,7 +50,7 @@
 			<faultcode>SOAP-ENV:Client</faultcode>
 			<faultstring>Client error</faultstring>
 			<detail>
-				<message><%message%></message>
+				<message><![CDATA[[<%message%>]]&gt;</message>
 			</detail>
 		</SOAP-ENV:Fault>
 	</SOAP-ENV:Body>
@@ -74,7 +74,7 @@
 	<faultcode>SOAP-ENV:Server</faultcode>
 	<faultstring>Server error</faultstring>
 	<detail>
-		<message><%MODULE%> <$(This service is currently not available)>. <%ERROR%> <%PLUS%></message>
+		<message><![CDATA[<%MODULE%> <$(This service is currently not available)>. <%ERROR%> <%PLUS%>]]&gt;</message>
 	</detail>
 </SOAP-ENV:Fault>
 ]]></entity>
