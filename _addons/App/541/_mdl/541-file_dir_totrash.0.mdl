@@ -26,15 +26,15 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
-	if (!$env{'ID'})
+	if (!$env{'file_dir.ID'})
 	{
 		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
-		$XSGN{'TMP'}=~s|<%missing_parameter%>|ID|g;
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|file_dir.ID|g;
 		return 1;
 	}
 	
 	$env{'ID'}.=';';
-	foreach my $ID(split(';',$env{'ID'}))
+	foreach my $ID(split(';',$env{'file_dir.ID'}))
 	{
 		next unless $ID;
 		
