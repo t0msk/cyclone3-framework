@@ -166,17 +166,105 @@ sub start
 					
 					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 					
-					if (!$self->{'thumbnail'})
-					{
-						$self->{'thumbnail'}->{'src'}=$tom::H_media.'/a501/image/file/'.$db0_line{'file_path'};
-						$self->{'thumbnail'}->{'alt'}=$db0_line{'name'};
-						$self->{'thumbnail'}->{'width'}=$db0_line{'image_width'};
-						$self->{'thumbnail'}->{'height'}=$db0_line{'image_height'};
-					}
 				}
 			}
 			$self->{'out_var'}->{'img.'.$out_cnt.'.src'}=$attr->{'src'};
 		}
+		elsif ($attr->{'id'}=~/^a510_video:(.*)$/)
+		{
+			use App::510::_init;
+			my %vars=_parse_id($1);
+			$vars{'ID_format'}=$App::510::video_format_full_ID unless $vars{'ID_format'};
+			
+			if ($vars{'ID_entity'})
+			{
+				main::_log("find a510_video ID_entity='$vars{'ID_entity'}'");
+				
+				my $sql=qq{
+					SELECT
+						*
+					FROM
+						`$App::510::db_name`.`a510_video_view`
+					WHERE
+						ID_entity_video=$vars{'ID_entity'} AND
+						part_id=1 AND
+						ID_format=$vars{'ID_format'} AND
+						lng='$tom::lng'
+					LIMIT 1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+				my %db0_line=$sth0{'sth'}->fetchhash();
+				if ($db0_line{'ID'})
+				{
+					$attr->{'src'}='video';
+					$attr->{'width'}=$db0_line{'video_width'} unless $attr->{'width'};
+					$attr->{'height'}=$db0_line{'video_height'} unless $attr->{'height'};
+					if (!$attr->{'alt'})
+					{
+						$attr->{'alt'}=$db0_line{'part_name'} || $db0_line{'name'};
+					}
+					
+					# find thumbnail image to first part
+					my $relation=(App::160::SQL::get_relations(
+						'l_prefix' => 'a510',
+						'l_table' => 'video_part',
+						'l_ID_entity' => $db0_line{'ID_part'},
+						'rel_type' => 'thumbnail',
+						'r_db_name' => $App::501::db_name,
+						'r_prefix' => 'a501',
+						'r_table' => 'image',
+						'limit' => 1
+					))[0];
+					if ($relation->{'ID'})
+					{
+						main::_log("find a501_image ID='$relation->{'r_ID_entity'}'");
+						
+						my $img_ID_format=
+							$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
+							|| $self->{'config'}->{'a501_image_file.ID_format'}
+							|| $App::501::image_format_thumbnail_ID;
+						
+						my $sql=qq{
+							SELECT
+								*
+							FROM
+								`$App::501::db_name`.`a501_image_view`
+							WHERE
+								ID_entity_image=$relation->{'r_ID_entity'} AND
+								ID_format=$img_ID_format
+							LIMIT 1
+						};
+						my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+						my %db1_line=$sth1{'sth'}->fetchhash();
+						if ($db1_line{'ID'})
+						{
+							$attr->{'src'}=$tom::H_media.'/a501/image/file/'.$db1_line{'file_path'};
+						}
+						
+						# override default tag representation
+						$out_full=
+							$self->{'entity'}{'a510_video.'.$out_cnt}
+							|| $self->{'entity'}{'a510_video'}
+							|| $tpl->{'entity'}{'parser.a510_video.'.$out_cnt}
+							|| $tpl->{'entity'}{'parser.a510_video'}
+							# or as image
+							|| $self->{'entity'}{'a501_image.'.$out_cnt}
+							|| $self->{'entity'}{'a501_image'}
+							|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
+							|| $tpl->{'entity'}{'parser.a501_image'}
+							|| $out_full;
+						
+						$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+						$out_full=~s|<%db_img_(.*?)%>|$db1_line{$1}|g;
+						$out_full=~s|<%attr_height_plus%>|$attr->{'height'}+60|eg;
+						
+					}
+					
+				}
+				
+			}
+			
+		} # if $attr->{'id'}=~/
 		elsif ($attr->{'id'}=~/^a510_video_part:(.*)$/)
 		{
 			use App::510::_init;
@@ -202,10 +290,13 @@ sub start
 				my %db0_line=$sth0{'sth'}->fetchhash();
 				if ($db0_line{'ID'})
 				{
-					$attr->{'src'}='video';
-					$attr->{'width'}=$db0_line{'video_width'};
-					$attr->{'height'}=$db0_line{'video_height'};
-					$attr->{'alt'}=$db0_line{'part_name'} || $db0_line{'name'};
+					$attr->{'src'}='video_part';
+					$attr->{'width'}=$db0_line{'video_width'} unless $attr->{'width'};
+					$attr->{'height'}=$db0_line{'video_height'} unless $attr->{'height'};
+					if (!$attr->{'alt'})
+					{
+						$attr->{'alt'}=$db0_line{'part_name'} || $db0_line{'name'};
+					}
 					
 					my $relation=(App::160::SQL::get_relations(
 						'l_prefix' => 'a510',
@@ -220,6 +311,12 @@ sub start
 					if ($relation->{'ID'})
 					{
 						main::_log("find a501_image ID='$relation->{'r_ID_entity'}'");
+						
+						my $img_ID_format=
+							$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
+							|| $self->{'config'}->{'a501_image_file.ID_format'}
+							|| $App::501::image_format_thumbnail_ID;
+						
 						my $sql=qq{
 							SELECT
 								*
@@ -227,7 +324,7 @@ sub start
 								`$App::501::db_name`.`a501_image_view`
 							WHERE
 								ID_entity_image=$relation->{'r_ID_entity'} AND
-								ID_format=$App::501::image_format_fullsize_ID
+								ID_format=$img_ID_format
 							LIMIT 1
 						};
 						my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
@@ -237,39 +334,22 @@ sub start
 							$attr->{'src'}=$tom::H_media.'/a501/image/file/'.$db1_line{'file_path'};
 						}
 						
-						$out_full= $self->{'entity'}{'a510_video_part'}
+						# override default tag representation
+						$out_full=
+							$self->{'entity'}{'a510_video_part.'.$out_cnt}
+							|| $self->{'entity'}{'a510_video_part'}
+							|| $tpl->{'entity'}{'parser.a510_video_part.'.$out_cnt}
 							|| $tpl->{'entity'}{'parser.a510_video_part'}
+							# or as image
+							|| $self->{'entity'}{'a501_image.'.$out_cnt}
 							|| $self->{'entity'}{'a501_image'}
+							|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
 							|| $tpl->{'entity'}{'parser.a501_image'}
 							|| $out_full;
 						
 						$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 						$out_full=~s|<%db_img_(.*?)%>|$db1_line{$1}|g;
 						$out_full=~s|<%attr_height_plus%>|$db0_line{'video_height'}+20|eg;
-						
-						# thumbnail
-						my $sql=qq{
-							SELECT
-								*
-							FROM
-								`$App::501::db_name`.`a501_image_view`
-							WHERE
-								ID_entity_image=$relation->{'r_ID_entity'} AND
-								ID_format=$App::501::image_format_thumbnail_ID
-							LIMIT 1
-						};
-						my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
-						my %db1_line=$sth1{'sth'}->fetchhash();
-						if ($db1_line{'ID'})
-						{
-							if (!$self->{'thumbnail'})
-							{
-								$self->{'thumbnail'}->{'src'}=$tom::H_media.'/a501/image/file/'.$db1_line{'file_path'};
-								$self->{'thumbnail'}->{'alt'}=$db0_line{'part_name'} || $db0_line{'name'};
-								$self->{'thumbnail'}->{'width'}=$db1_line{'image_width'};
-								$self->{'thumbnail'}->{'height'}=$db1_line{'image_height'};
-							}
-						}
 						
 					}
 					
