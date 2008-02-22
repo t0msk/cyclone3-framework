@@ -135,7 +135,7 @@ sub execute
 					UPDATE
 						TOM.a301_user_online
 					SET
-						active='N'
+						status='N'
 					WHERE
 						ID_user='$main::COOKIES{'_ID_user'}'
 					LIMIT 1
