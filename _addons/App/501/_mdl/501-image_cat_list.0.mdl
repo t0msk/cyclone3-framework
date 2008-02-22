@@ -189,7 +189,7 @@ sub execute
 		SELECT
 			*
 		FROM
-			a501_image_cat
+			`$App::501::db_name`.a501_image_cat
 		WHERE
 			$sql_where AND
 			ID_charindex LIKE '$env{'ID_charindex'}___'
@@ -247,7 +247,7 @@ sub execute
 		foreach (split(' ',$env{'keywords'}))
 		{
 			next unless $_;
-			$sql_where.="name LIKE '%$_%' AND ";
+			$sql_where.="(name LIKE '%$_%' OR description LIKE '%$_%' OR keywords LIKE '%$_%') AND ";
 		}
 		$sql_where=~s|AND $||;
 		$sql_where.=") ";
@@ -264,7 +264,7 @@ sub execute
 		SELECT
 			*
 		FROM
-			a501_image_view
+			`$App::501::db_name`.a501_image_view
 		WHERE
 			(
 				ID_format=$App::501::image_format_thumbnail_ID

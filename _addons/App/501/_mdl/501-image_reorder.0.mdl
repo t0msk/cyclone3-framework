@@ -60,7 +60,8 @@ sub execute
 		WHERE
 			ID_category=$env{'ID_category'} AND
 			ID_format=$App::501::image_format_original_ID AND
-			ID_image=$env{'ID'}
+			ID_image=$env{'ID'} AND
+			status IN ('Y','N','L')
 		LIMIT 1
 	};
 	my %sth0=TOM::Database::SQL::execute($sql);
@@ -79,7 +80,8 @@ sub execute
 			`$App::501::db_name`.a501_image_view
 		WHERE
 			ID_category=$env{'ID_category'} AND
-			ID_format=$App::501::image_format_original_ID
+			ID_format=$App::501::image_format_original_ID AND
+			status IN ('Y','N','L')
 		ORDER BY
 			order_id ASC, datetime_create DESC
 		LIMIT 500

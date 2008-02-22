@@ -679,6 +679,11 @@ sub image_add
 	}
 	
 	
+	$env{'image_attrs.lng'}=$tom::lng unless $env{'image_attrs.lng'};
+	main::_log("lng='$env{'image_attrs.lng'}'");
+	
+	# IMAGE
+	
 	my %image;
 	my %image_attrs;
 	if ($env{'image.ID'})
@@ -694,15 +699,10 @@ sub image_add
 		$env{'image.ID_entity'}=$image{'ID_entity'} unless $env{'image.ID_entity'};
 	}
 	
-	
-	if (!$env{'image.ID'})
-	{
-		$env{'image.ID'}=$image{'ID'} if $image{'ID'};
-	}
-	
-	
-	$env{'image_attrs.lng'}=$tom::lng unless $env{'image_attrs.lng'};
-	main::_log("lng='$env{'image_attrs.lng'}'");
+#	if (!$env{'image.ID'})
+#	{
+#		$env{'image.ID'}=$image{'ID'} if $image{'ID'};
+#	}
 	
 	
 	# check if this symlink with same ID_category not exists
