@@ -723,6 +723,7 @@ our %path_cache=();
 sub get_path
 {
 	my $ID=shift;
+	return undef unless $ID;
 	my @path;
 	my %env=@_;
 	my $debug=1;
