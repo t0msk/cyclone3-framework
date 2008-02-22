@@ -1,0 +1,224 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::160::_init;
+use App::510::_init;
+use TOM::Text::format;
+
+=head1 NAME
+
+510-video_part_list.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+List of parts for one video.ID
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<video.ID> - ID of video
+
+=item *
+
+B<status> - default 'Y'
+
+=item *
+
+B<sql_order_by> - default 'part_id'
+
+=item *
+
+B<sql_limit> - SQL limit
+
+=back
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	delete $env{'ID_charindex'};
+	$env{'sql_limit'}=500 unless $env{'sql_limit'};
+	$env{'sql_order_by'}='part_id ASC' unless $env{'sql_order_by'};
+	
+	my $from;
+	my $sql_where;
+	
+	# language
+	$sql_where.="lng='$env{'lng'}' ";
+	
+	# status
+	if ($env{'status'})
+	{
+		$XSGN{'TMP'}=~s|<%required_status%>|$env{'status'}|g;
+		$sql_where.="AND status IN ('".(join "','", split('',$env{'status'}))."') ";
+	}
+	else
+	{
+		$sql_where.="AND status='Y' ";
+	}
+	
+	
+	#
+	# LISTING OF ITEMS
+	#
+	
+	if ($env{'keywords'}=~/^\d\d\d\d-\d\d-\d\d$/)
+	{
+		$sql_where.=" AND DATE(datetime_rec_start)='$env{keywords}' ";
+	}
+	elsif ($env{'keywords'}=~/^\d\d\d\d-\d\d$/)
+	{
+		$sql_where.=" AND DATE(datetime_rec_start) LIKE '$env{keywords}%' ";
+	}
+	elsif ($env{'keywords'})
+	{
+		$sql_where.=" AND (";
+		foreach (split(' ',$env{'keywords'}))
+		{
+			next unless $_;
+			$sql_where.="name LIKE '%$_%' AND ";
+		}
+		$sql_where=~s|AND $||;
+		$sql_where.=") ";
+	}
+	
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$App::510::db_name`.a510_video_view
+		WHERE
+			ID_video=$env{'video.ID'} AND
+			(
+				ID_format=$App::510::video_format_original_ID
+			) AND
+			$sql_where
+		ORDER BY
+			$env{'sql_order_by'}, datetime_rec_start DESC, datetime_create DESC
+		LIMIT
+			$env{'sql_limit'}
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+	if ($sth0{'sth'})
+	{
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$XSGN{'NULL'}=$XSGN{'ITEM'};
+			
+			
+			$db0_line{'length'} = '' if $db0_line{'length'} eq "00:00:00";
+			$db0_line{'ID_entity_part'} = $db0_line{'ID_video'};
+			$XSGN{'NULL'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+			
+			$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID_part'}|g;
+			$XSGN{'NULL'}=~s|<%ID_entity%>|$db0_line{'ID_entity_part'}|g;
+			
+			# check relations
+			my $relation=(App::160::SQL::get_relations(
+				'db_name' => $App::510::db_name,
+				'l_prefix' => 'a510',
+				'l_table' => 'video_part',
+				'l_ID_entity' => $db0_line{'ID_part'}, # not related to entity, but to ID
+				'status' => "Y"
+				))[0];
+			if ($relation->{'ID'})
+			{
+				$XSGN{'NULL'}=~s|<%relation_status%>|Y|g;
+			}
+			
+			my $relation=(App::160::SQL::get_relations(
+				'db_name' => $App::510::db_name,
+				'l_prefix' => 'a510',
+				'l_table' => 'video_part',
+				'l_ID_entity' => $db0_line{'ID_part'},
+				'rel_type' => 'thumbnail',
+				'r_db_name' => $App::501::db_name,
+				'r_prefix' => 'a501',
+				'r_table' => 'image',
+				'limit' => 1
+			))[0];
+			if ($relation->{'ID'})
+			{
+				$XSGN{'NULL'}=~s|<%image.ID%>|$relation->{'r_ID_entity'}|g;
+				
+				my $sql=qq{
+					SELECT
+						*
+					FROM
+						`$App::501::db_name`.a501_image_view AS image
+					WHERE
+						image.ID_entity_image = $relation->{'r_ID_entity'} AND
+						image.status='Y' AND
+						image.ID_format = '$App::501::image_format_thumbnail_ID'
+					LIMIT 1
+				};
+				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					$XSGN{'NULL'}=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;
+				}
+				
+				my $sql=qq{
+					SELECT
+						*
+					FROM
+						`$App::501::db_name`.a501_image_view AS image
+					WHERE
+						image.ID_entity_image = $relation->{'r_ID_entity'} AND
+						image.status='Y' AND
+						image.ID_format = '$App::501::image_format_original_ID'
+					LIMIT 1
+				};
+				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					$XSGN{'NULL'}=~s|<%image.original.db_(.*?)%>|$db1_line{$1}|g;
+				}
+				
+			}
+			
+			$XSGN{'NULL'}=~s|<%dimensions%>|$db0_line{'video_width'}x$db0_line{'video_height'}|g;
+			
+			
+			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+			
+		}
+		
+	}
+	else
+	{
+		main::_log("can't select");
+	}
+	
+	
+	return 1;
+}
+
+our $authors="roman.fordinal\@comsultia.com";
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

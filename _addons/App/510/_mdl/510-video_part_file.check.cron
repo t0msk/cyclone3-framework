@@ -38,6 +38,11 @@ sub execute
 	
 	alarm(0);
 	
+#			App::501::functions::image_regenerate(
+#			'image.ID' => '42058'
+#		);
+		
+#	return 1;
 	
 	main::_log("remove all old generated video_part_file_j items in video_part_file_j table");
 	my $sql=qq{
@@ -61,12 +66,13 @@ sub execute
 		{
 			main::_log("remove file video_part_file_j.ID=$db0_line{'ID'} $file");
 			# very blind function!!! not controls if file is used by another entry in video_part_file_j table
+			# but not critical, because is not deleting files in production use
 			my $out=unlink $file;
 			if (!$out){main::_log("can't remove: $!",1);}
 		}
 	}
 	
-	
+=head1
 	# find video_part with missing 'original' format
 	# and delete it
 	main::_log("checking for empty video_part items");
@@ -118,7 +124,7 @@ sub execute
 		);
 		
 	}
-	
+=cut
 	
 	# find all video_part's with missing thumbnail
 	main::_log("check video_part items for missing a501_image");
@@ -149,7 +155,7 @@ sub execute
 		))[0];
 		if (!$relation->{'ID'})
 		{
-			main::_log("missing thumbnail image for video_part.ID='$db0_line{'ID'}'");
+			main::_log("missing thumbnail image for video_part.ID='$db0_line{'ID'}'",1);
 			
 			# unlock thumbnail regeneration
 			App::020::SQL::functions::update(
@@ -164,8 +170,47 @@ sub execute
 				'-journalize' => 1
 			);
 		}
+		else
+		{
+			use App::501::_init;
+			# check if that image really exists
+			my $sql=qq{
+				SELECT
+					*
+				FROM
+					`$App::501::db_name`.a501_image_view
+				WHERE
+					ID_entity_image=$relation->{'r_ID_entity'} AND
+					ID_format=$App::501::image_format_original_ID AND
+					status IN ('Y','N')
+				LIMIT 1
+			};
+			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+			if (!$sth1{'rows'})
+			{
+				main::_log("missing thumbnail image for video_part.ID='$db0_line{'ID'}'",1);
+				
+				App::020::SQL::functions::update(
+					'ID' => $db0_line{'ID'},
+					'db_h' => "main",
+					'db_name' => $App::510::db_name,
+					'tb_name' => "a510_video_part",
+					'columns' =>
+					{
+						'thumbnail_lock' => "'N'"
+					},
+					'-journalize' => 1
+				);
+				
+				my $out=App::160::SQL::remove_relation(
+					'ID' => $relation->{'ID'}
+				);
+				
+			}
+		}
 	}
 	
+	return 1;
 	
 	# find missing files
 	main::_log("checking video_part_file items in video_part_file table");
@@ -188,10 +233,10 @@ sub execute
 		if (!-e $tom::P.'/!media/a510/video/part/file/'.$db0_line{'file_path'})
 		{
 			main::_log("file of video_part_file $db0_line{'file_path'} not exists",1);
-			TOM::Database::SQL::execute(qq{
-				DELETE FROM `$App::510::db_name`.`a510_video_part_file`
-				WHERE ID=$db0_line{'ID'} LIMIT 1
-			},'quiet'=>1);
+#			TOM::Database::SQL::execute(qq{
+#				DELETE FROM `$App::510::db_name`.`a510_video_part_file`
+#				WHERE ID=$db0_line{'ID'} LIMIT 1
+#			},'quiet'=>1);
 			next;
 		}
 		
@@ -306,14 +351,14 @@ sub execute
 			else
 			{
 				main::_log("file of video_part_file_j $db0_line{'file_path'} not exists",1);
-				TOM::Database::SQL::execute(qq{
-					DELETE FROM `$App::510::db_name`.`a510_video_part_file_j`
-					WHERE
-						ID=$db0_line{'ID'} AND
-						name='$db0_line{'name'}' AND
-						datetime_create='$db0_line{'datetime_create'}'
-					LIMIT 1
-				},'quiet'=>1);
+#				TOM::Database::SQL::execute(qq{
+#					DELETE FROM `$App::510::db_name`.`a510_video_part_file_j`
+#					WHERE
+#						ID=$db0_line{'ID'} AND
+#						name='$db0_line{'name'}' AND
+#						datetime_create='$db0_line{'datetime_create'}'
+#					LIMIT 1
+#				},'quiet'=>1);
 			}
 			
 		}

@@ -1,0 +1,81 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::510::_init;
+
+=head1 NAME
+
+510-video_move_to_trash.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Remove video from category
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'video.ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|video.ID|g;
+		return 1;
+	}
+	
+	if (!$env{'video_attrs.ID_category'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|video_attrs.ID_category|g;
+		return 1;
+	}
+	
+	my $sql=qq{
+		SELECT
+			ID_attrs
+		FROM
+			`$App::510::db_name`.a510_video_view
+		WHERE
+			ID_video = $env{'video.ID'} AND
+			ID_category = $env{'video_attrs.ID_category'}
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	my %db0_line=$sth0{'sth'}->fetchhash();
+	
+	if ($db0_line{'ID_attrs'})
+	{
+		App::020::SQL::functions::to_trash
+		(
+			'ID' => $db0_line{'ID_attrs'},
+			'db_h' => 'main',
+			'db_name' => $App::510::db_name,
+			'tb_name' => 'a510_video_attrs',
+			'-journalize' => 1,
+		);
+		$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	}
+	
+	return 1;
+}
+
+
+our $authors='open@comsultia.com';
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
