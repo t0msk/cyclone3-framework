@@ -37,6 +37,7 @@ L<Int::charsets::encode|source-doc/".core/.libs/Int/charsets/encode.pm">
 
 
 use Int::charsets::encode;
+use TOM::Text::format;
 
 =head1 FUNCTIONS
 
@@ -110,6 +111,10 @@ our %replace_functions=
 	'hive' =>
 	{
 		function => 'TOM::Security::form::html_input_value_escape($text)',
+	},
+	'html2text' =>
+	{
+		function => 'TOM::Text::format::xml2plain($text)',
 	},
 );
 
@@ -279,7 +284,7 @@ sub replace_comment
 			$_=~s|<!TMP-$TMP!>|$value|;
 		}
 		
-		while ($_=~s|<#@([a-zA-Z0-9_\-:]+)>(.*?)</#?@\1>|<!TMP-$TMP!>|)
+		while ($_=~s|<#@([a-zA-Z0-9_\-:]+)>(.*?)</#?@\1>|<!TMP-$TMP!>|s)
 		{
 			my $function=$1;
 			my $text=$2;
