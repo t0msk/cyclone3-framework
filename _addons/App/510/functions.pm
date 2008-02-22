@@ -610,6 +610,11 @@ sub video_add
 		main::_log("setting lng='$env{'video_attrs.lng'}' from video_attrs.ID_category");
 	}
 	
+	$env{'video_attrs.lng'}=$tom::lng unless $env{'video_attrs.lng'};
+	main::_log("lng='$env{'video_attrs.lng'}'");
+	
+	
+	# VIDEO
 	
 	my %video;
 	my %video_attrs;
@@ -624,17 +629,39 @@ sub video_add
 			'columns' => {'*'=>1}
 		);
 		$env{'video.ID_entity'}=$video{'ID_entity'} unless $env{'video.ID_entity'};
+		#$env{'video.ID'}=$video{'ID'} if $video{'ID'};
 	}
 	
+#	if (!$env{'video.ID'})
+#	{
+#		$env{'video.ID'}=$video{'ID'} if $video{'ID'};
+#	}
 	
-	if (!$env{'video.ID'})
+	
+	# check if this symlink with same ID_category not exists
+	# and video.ID is unknown
+	if ($env{'video_attrs.ID_category'} && !$env{'video.ID'} && $env{'video.ID_entity'})
 	{
-		$env{'video.ID'}=$video{'ID'} if $video{'ID'};
+		main::_log("search for ID");
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`$App::510::db_name`.`a510_video_view`
+			WHERE
+				ID_entity_video=$env{'video.ID_entity'} AND
+				( ID_category = $env{'video_attrs.ID_category'} OR ID_category IS NULL )
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		if ($db0_line{'ID'})
+		{
+			$env{'video.ID'}=$db0_line{'ID_video'};
+			$env{'video_attrs.ID'}=$db0_line{'ID_attrs'};
+			main::_log("setup video.ID='$db0_line{'ID_video'}'");
+		}
 	}
-	
-	
-	$env{'video_attrs.lng'}=$tom::lng unless $env{'video_attrs.lng'};
-	main::_log("lng='$env{'video_attrs.lng'}'");
 	
 	
 	if (!$env{'video.ID'})
@@ -643,6 +670,7 @@ sub video_add
 		main::_log("adding new video");
 		
 		my %columns;
+		
 		$columns{'ID_entity'}=$env{'video.ID_entity'} if $env{'video.ID_entity'};
 		if ($env{'video.datetime_rec_start'})
 		{
@@ -651,6 +679,14 @@ sub video_add
 			else {$columns{'datetime_rec_start'}="'".$env{'video.datetime_rec_start'}."'"}
 		}
 		$columns{'datetime_rec_start'}="NOW()" unless $columns{'datetime_rec_start'};
+		
+		if ($env{'video.datetime_rec_stop'})
+		{
+			if ($env{'video.datetime_rec_stop'}=~/^FROM/)
+			{$columns{'datetime_rec_stop'}=$env{'video.datetime_rec_stop'};}
+			else {$columns{'datetime_rec_stop'}="'".$env{'video.datetime_rec_stop'}."'"}
+		}
+		#$columns{'datetime_rec_stop'}="NOW()" unless $columns{'datetime_rec_stop'};
 		
 		$env{'video.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
@@ -687,6 +723,39 @@ sub video_add
 		{
 			die "ufff\n";
 		}
+	}
+	
+	# update if necessary
+	if ($video{'ID'} &&
+	(
+		# datetime_rec_start
+		($env{'video.datetime_rec_start'} && ($env{'video.datetime_rec_start'} ne $video{'datetime_rec_start'})) ||
+		# datetime_rec_stop
+		(exists $env{'video.datetime_rec_stop'} && ($env{'video.datetime_rec_stop'} ne $video{'datetime_rec_stop'}))
+	))
+	{
+		my %columns;
+		
+		# datetime_rec_start
+		$columns{'datetime_rec_start'}="'".$env{'video.datetime_rec_start'}."'"
+			if ($env{'video.datetime_rec_start'} && ($env{'video.datetime_rec_start'} ne $video{'datetime_rec_start'}));
+		# datetime_rec_stop
+		if (exists $env{'video.datetime_rec_stop'} && ($env{'video.datetime_rec_stop'} ne $video{'datetime_rec_stop'}))
+		{
+			if (!$env{'video.datetime_rec_stop'})
+			{$columns{'datetime_rec_stop'}="NULL";}
+			else
+			{$columns{'datetime_rec_stop'}="'".$env{'video.datetime_rec_stop'}."'";}
+		}
+		
+		App::020::SQL::functions::update(
+			'ID' => $video{'ID'},
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_video",
+			'columns' => {%columns},
+			'-journalize' => 1
+		);
 	}
 	
 	

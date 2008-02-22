@@ -52,6 +52,10 @@ L<App::510::functions|app/"510/functions.pm">
 
 =item *
 
+L<App::510::a160|app/"510/a160.pm">
+
+=item *
+
 File::Copy
 
 =item *
@@ -66,6 +70,7 @@ use App::020::_init; # data standard 0
 use App::301::_init;
 use App::501::_init;
 use App::510::functions;
+use App::510::a160;
 use File::Copy;
 use File::Path;
 
@@ -117,7 +122,7 @@ our $video_format_ext_default=$App::510::video_format_ext_default || 'avi';
 
 our $video_format_original_ID;
 our $video_format_full_ID;
-our $video_format_preview_ID;
+#our $video_format_preview_ID;
 
 
 my $sql=qq{
@@ -177,7 +182,7 @@ if ($video_format_original_ID)
 	{
 		$video_format_full_ID=$db0_line{'ID'};
 	}
-	
+=head1
 	my $sql=qq{
 		SELECT ID
 		FROM `$db_name`.a510_video_format
@@ -206,6 +211,7 @@ if ($video_format_original_ID)
 	{
 		$video_format_preview_ID=$db0_line{'ID'};
 	}
+=cut
 }
 
 

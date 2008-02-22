@@ -12,7 +12,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video` (
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
   `datetime_rec_start` datetime default NULL,
-  `datetime_rec_end` datetime default NULL,
+  `datetime_rec_stop` datetime default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   KEY `ID_entity` (`ID_entity`),
@@ -30,7 +30,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_j` (
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
   `datetime_rec_start` datetime default NULL,
-  `datetime_rec_end` datetime default NULL,
+  `datetime_rec_stop` datetime default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -92,12 +92,25 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part` (
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*app*/_video_part_j` (
+  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
+  `part_id` mediumint(8) unsigned NOT NULL default '0',
+  `datetime_create` datetime NOT NULL,
+  `process_lock` char(1) character set ascii NOT NULL default 'N',
+  `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*app*/_video_part_caption` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
   `datetime_create` datetime NOT NULL,
   `time_start` time NOT NULL,
-  `time_end` time NOT NULL,
+  `time_stop` time NOT NULL,
   `caption` varchar(128) NOT NULL default '',
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -107,13 +120,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_caption` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part_j` (
+CREATE TABLE `/*db_name*/`.`/*app*/_video_part_caption_j` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
-  `part_id` mediumint(8) unsigned NOT NULL default '0',
+  `ID_entity` mediumint(8) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
-  `process_lock` char(1) character set ascii NOT NULL default 'N',
-  `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
+  `time_start` time NOT NULL,
+  `time_stop` time NOT NULL,
+  `caption` varchar(128) NOT NULL default '',
+  `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -409,7 +423,9 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 		video_part_file.ID AS ID_part_file,
 		
 		video.datetime_rec_start,
+		video_attrs.datetime_create,
 		DATE(video.datetime_rec_start) AS date_recorded,
+		video.datetime_rec_stop,
 		
 		video_attrs.ID_category,
 		video_cat.name AS ID_category_name,
@@ -437,6 +453,9 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 		
 		CONCAT(video_format.ID,'/',SUBSTR(video_part_file.ID,1,4),'/',video_part_file.name,'.',video_part_file.file_ext) AS file_part_path,
 		
+		video_attrs.status,
+		video_part.status AS status_part,
+		
 		IF
 		(
 			(
@@ -447,7 +466,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 				video_part_file.status LIKE 'Y'
 			),
 			 'Y', 'U'
-		) AS status
+		) AS status_all
 		
 	FROM
 		`/*db_name*/`.`/*app*/_video` AS video
@@ -479,11 +498,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 	
 	WHERE
 		video.ID AND
-		video_attrs.ID AND
-		video_part_attrs.ID AND
-		video_format.ID AND
-		video_part.ID AND
-		video_part_file.ID
+		video_attrs.ID
 )
 
 -- --------------------------------------------------
@@ -515,6 +530,8 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view_lite` AS (
 		video_part_attrs.description AS part_description,
 		video_part.part_id AS part_id,
 		
+		video_attrs.status,
+		
 		IF
 		(
 			(
@@ -523,7 +540,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view_lite` AS (
 				video_part.status LIKE 'Y'
 			),
 			 'Y', 'U'
-		) AS status
+		) AS status_all
 		
 	FROM
 		`/*db_name*/`.`/*app*/_video` AS video
@@ -544,9 +561,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view_lite` AS (
 	
 	WHERE
 		video.ID AND
-		video_attrs.ID AND
-		video_part_attrs.ID AND
-		video_part.ID
+		video_attrs.ID
 )
 
 -- --------------------------------------------------
