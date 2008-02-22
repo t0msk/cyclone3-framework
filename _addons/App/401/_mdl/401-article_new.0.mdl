@@ -40,7 +40,8 @@ sub execute
 	
 	my %article=App::401::functions::article_add(
 		'article_attrs.name' => $env{'article_attrs.name'},
-		'article_attrs.ID_category' => $env{'article_attrs.ID_category'}
+		'article_attrs.ID_category' => $env{'article_attrs.ID_category'},
+		'article_ent.ID_author' => $main::USRM{'ID_user'}
 	);
 	
 	

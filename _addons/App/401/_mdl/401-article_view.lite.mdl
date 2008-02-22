@@ -171,16 +171,9 @@ sub execute
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
 		my %author=App::301::authors::get_author($db0_line{'posix_author'});
-		foreach(keys %author)
-		{
-			$XSGN{'TMP'}=~s|<%author_$_%>|$author{$_}|g;
-		}
-		
+		$XSGN{'TMP'}=~s|<%author_(.*?)%>|$author{$1}|g;
 		my %editor=App::301::authors::get_author($db0_line{'posix_editor'});
-		foreach(keys %editor)
-		{
-			$XSGN{'TMP'}=~s|<%editor_$_%>|$editor{$_}|g;
-		}
+		$XSGN{'TMP'}=~s|<%editor_(.*?)%>|$editor{$1}|g;
 		
 		# process body
 		my $p=new App::401::mimetypes::html;
@@ -215,9 +208,23 @@ sub execute
 			|| undef;
 		
 		# a510_video
+		$p->{'entity'}{'a510_video'}=
+			$XSGN{'body.a510_video'}
+			|| $XSGN{'a510_video'}
+			|| undef;
+		$p->{'entity'}{'a510_video.1'}=
+			$XSGN{'body.a510_video.1'}
+			|| $XSGN{'a510_video.1'}
+			|| undef;
+		
+		# a510_video_part
 		$p->{'entity'}{'a510_video_part'}=
 			$XSGN{'body.a510_video_part'}
 			|| $XSGN{'a510_video_part'}
+			|| undef;
+		$p->{'entity'}{'a510_video_part.1'}=
+			$XSGN{'body.a510_video_part.1'}
+			|| $XSGN{'a510_video_part.1'}
 			|| undef;
 		
 		# a010

@@ -105,6 +105,10 @@ sub article_add
 		main::_log("setting lng='$env{'article_attrs.lng'}' from article_attrs.ID_category='$env{'article_attrs.ID_category'}'");
 	}
 	
+	$env{'article_attrs.lng'}=$tom::lng unless $env{'article_attrs.lng'};
+	main::_log("lng='$env{'article_attrs.lng'}'");
+	
+	# ARTICLE
 	
 	my %article;
 	if ($env{'article.ID'})
@@ -120,14 +124,10 @@ sub article_add
 		$env{'article.ID_entity'}=$article{'ID_entity'} if $article{'ID_entity'};
 	}
 	
-	if (!$env{'article.ID'})
-	{
-		$env{'article.ID'}=$article{'ID'} if $article{'ID'};
-	}
-	
-	
-	$env{'article_attrs.lng'}=$tom::lng unless $env{'article_attrs.lng'};
-	main::_log("lng='$env{'article_attrs.lng'}'");
+#	if (!$env{'article.ID'})
+#	{
+#		$env{'article.ID'}=$article{'ID'} if $article{'ID'};
+#	}
 	
 	
 	# check if this symlink with same ID_category not exists
