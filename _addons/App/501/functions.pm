@@ -532,7 +532,7 @@ sub image_file_process
 				}
 				else
 				{
-					$y-=(($height-$nheight)/2)*0.25;
+					#$y-=(($height-$nheight)/2)*0.25;
 				}
 			}
 			$y=0 if $y<0;
@@ -542,7 +542,7 @@ sub image_file_process
 				main::_log("horizontal moving");
 				if ($env{'green_area'}{'x1'})
 				{
-					$y=$env{'green_area'}{'x1'}+(($env{'green_area'}{'x2'}-$env{'green_area'}{'x1'})/2)-($nwidth/2);
+					$x=$env{'green_area'}{'x1'}+(($env{'green_area'}{'x2'}-$env{'green_area'}{'x1'})/2)-($nwidth/2);
 				}
 				else
 				{
@@ -707,7 +707,7 @@ sub image_add
 	
 	# check if this symlink with same ID_category not exists
 	# and image.ID is unknown
-	if ($env{'image_attrs.ID_category'} && !$env{'image.ID'} && $env{'image.ID_entity'})
+	if ($env{'image_attrs.ID_category'} && !$env{'image.ID'} && $env{'image.ID_entity'} && !$env{'forcesymlink'})
 	{
 		main::_log("search for ID");
 		my $sql=qq{
@@ -717,7 +717,8 @@ sub image_add
 				`$App::501::db_name`.`a501_image_view`
 			WHERE
 				ID_entity_image=$env{'image.ID_entity'} AND
-				( ID_category = $env{'image_attrs.ID_category'} OR ID_category IS NULL )
+				( ID_category = $env{'image_attrs.ID_category'} OR ID_category IS NULL ) AND
+				status IN ('Y','N','L')
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);

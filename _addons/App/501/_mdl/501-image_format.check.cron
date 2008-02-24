@@ -57,11 +57,15 @@ sub execute
 {
 	my %env=@_;
 	
+	# Check
+	if (!$tom::addons{'a501'} || ($TOM::DB{'main'}{'name'} ne $App::501::db_name))
+	{main::_log("not enabled, or set for another domain service");return 1;}
+	
 	my $lock=new TOM::lock("a501:image_format.check") || return 1;
 	
 	alarm(0);
 	$env{'time_max'}=60*4 unless $env{'time_max'};
-	$env{'sql_limit'}='1000';
+	$env{'sql_limit'}='100';
 	
 	# check directory of formats
 	
@@ -87,7 +91,7 @@ sub execute
 			required LIKE 'Y' AND
 			name NOT LIKE 'original'
 		ORDER BY
-			ID_charindex
+			RAND()
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
@@ -121,6 +125,8 @@ sub execute
 				)
 			GROUP BY
 				image.ID_entity
+			ORDER BY
+				image.ID_entity DESC
 			LIMIT
 				$env{'sql_limit'}
 		};
@@ -177,6 +183,8 @@ sub execute
 					file1.status='Y' AND
 					file2.status='Y' AND
 					file1.datetime_create > file2.datetime_create
+				ORDER BY
+					image.ID_entity DESC
 				LIMIT
 					$env{'sql_limit'}
 			};

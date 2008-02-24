@@ -43,6 +43,10 @@ sub execute
 {
 	my %env=@_;
 	
+	# Check
+	if (!$tom::addons{'a501'} || ($TOM::DB{'main'}{'name'} ne $App::501::db_name))
+	{main::_log("not enabled, or set for another domain service");return 1;}
+	
 	alarm(0);
 	
 	
