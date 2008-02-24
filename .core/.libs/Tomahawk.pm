@@ -360,7 +360,7 @@ sub module
 			main::_log("input '$_'='$var'");
 		}
 =cut
-		main::_log("input '$_'='$mdl_env{$_}'");
+#		main::_log("input '$_'='$mdl_env{$_}'");
 		/^-/ && do {$mdl_C{$_}=$mdl_env{$_};delete $mdl_env{$_};}
 	}
 	
