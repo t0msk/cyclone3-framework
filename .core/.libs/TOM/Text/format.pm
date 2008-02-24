@@ -94,6 +94,15 @@ sub bytes
 
 
 
+sub CDATA
+{
+	my $text=shift;
+	
+	return '<![CDATA['.$text.']]>';
+}
+
+
+
 use TOM::Net::URI::URL;
 use Net::HTTP::CGI;
 use MIME::Base64;
