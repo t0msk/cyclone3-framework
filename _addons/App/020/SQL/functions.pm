@@ -289,7 +289,14 @@ sub get_ID(%env)
 		LIMIT 1
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
+	my %sth0=TOM::Database::SQL::execute(
+		$SQL,
+		'db_h' => $env{'db_h'},
+		'log' => $debug,
+		'quiet' => $quiet,
+		'cache' => $env{'cache'}
+	);
+	
 	if ($sth0{'rows'})
 	{
 		main::_log("returned row") if $debug;

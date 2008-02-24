@@ -726,7 +726,7 @@ sub get_path
 	return undef unless $ID;
 	my @path;
 	my %env=@_;
-	my $debug=1;
+	#my $debug=1;
 	my $t=track TOM::Debug(__PACKAGE__."::get_path('$ID')") if $debug;
 	
 	my %data=App::020::SQL::functions::get_ID(
@@ -1175,6 +1175,51 @@ sub rename
 		$t->close();
 		return undef;
 	}
+	
+	# end track
+	$t->close();
+	return 1;
+}
+
+
+
+=head2 update()
+
+Update entry
+
+=cut
+
+sub update
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::update()");
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'");
+	}
+	
+	if ($env{'columns'}{'name'})
+	{
+		$env{'columns'}{'name'}=~s|^'||;
+		$env{'columns'}{'name'}=~s|'$||;
+		$env{'columns'}{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'columns'}{'name'})."'";
+		$env{'columns'}{'name'}="'".$env{'columns'}{'name'}."'";
+	}
+	
+	App::020::SQL::functions::update(
+		'db_h' => $env{'db_h'},
+		'db_name' => $env{'db_name'},
+		'tb_name' => $env{'tb_name'},
+		'ID' => $env{'ID'},
+		'-journalize' => $env{'-journalize'},
+		'columns' =>
+		{
+			%{$env{'columns'}}
+		}
+	);
 	
 	# end track
 	$t->close();
