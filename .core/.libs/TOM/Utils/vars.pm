@@ -116,6 +116,10 @@ our %replace_functions=
 	{
 		function => 'TOM::Text::format::xml2plain($text)',
 	},
+	'CDATA' =>
+	{
+		function => 'TOM::Text::format::CDATA($text)',
+	},
 );
 
 
