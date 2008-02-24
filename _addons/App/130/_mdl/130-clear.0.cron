@@ -3,7 +3,6 @@
 package CRON::module;
 use strict;
 
-# asldfjasl;fjas;df
 
 sub execute
 {
@@ -12,23 +11,36 @@ sub execute
 	my $var=$cron::time_current-(31*86400);
 	my $var2=$cron::time_current-(7*86400);
 	
-	$main::DBH->Query("
-		DELETE FROM TOM.a130_send
-		WHERE sendtime<$var
-		ORDER BY sendtime");
-		
-#=head1
-	$main::DBH->Query("
-		UPDATE TOM.a130_send
-		SET body='-[body deleted]-'
-		WHERE sendtime<$var2");
-#=cut
 	
-	$main::DBH->Query("
-		DELETE FROM TOM.a130_received
-		WHERE rectime<$var
-		ORDER BY rectime");
-
- return 1}
+	TOM::Database::SQL::execute(qq{
+		DELETE FROM
+			TOM.a130_send
+		WHERE
+			sendtime<$var
+		ORDER BY
+			sendtime
+	});
+		
+	TOM::Database::SQL::execute(qq{
+		UPDATE
+			TOM.a130_send
+		SET
+			body='-[body deleted]-'
+		WHERE
+			sendtime<$var2
+	});
+	
+	TOM::Database::SQL::execute(qq{
+		DELETE FROM
+			TOM.a130_received
+		WHERE
+			rectime<$var
+		ORDER BY
+			rectime
+	});
+	
+	
+	return 1
+}
 
 1;
