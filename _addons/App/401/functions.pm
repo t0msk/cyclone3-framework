@@ -132,9 +132,9 @@ sub article_add
 	
 	# check if this symlink with same ID_category not exists
 	# and article.ID is unknown
-	if ($env{'article_attrs.ID_category'} && !$env{'article.ID'} && $env{'article.ID_entity'})
+	if ($env{'article_attrs.ID_category'} && !$env{'article.ID'} && $env{'article.ID_entity'} && !$env{'forcesymlink'})
 	{
-		main::_log("search for ID");
+		main::_log("\$env{'article_attrs.ID_category'} && !\$env{'article.ID'} && \$env{'article.ID_entity'} -> search for article.ID");
 		my $sql=qq{
 			SELECT
 				*
@@ -142,7 +142,8 @@ sub article_add
 				`$App::401::db_name`.`a401_article_view`
 			WHERE
 				ID_entity_article=$env{'article.ID_entity'} AND
-				( ID_category = $env{'article_attrs.ID_category'} OR ID_category IS NULL )
+				( ID_category = $env{'article_attrs.ID_category'} OR ID_category IS NULL ) AND
+				status IN ('Y','N','L')
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
@@ -221,6 +222,7 @@ sub article_add
 	my %article_attrs;
 	if (!$env{'article_attrs.ID'})
 	{
+		main::_log("!\$env{'article_attrs.ID'} -> SELECT");
 		my $sql=qq{
 			SELECT
 				ID
@@ -237,6 +239,7 @@ sub article_add
 	}
 	if (!$env{'article_attrs.ID'})
 	{
+		main::_log("!\$env{'article_attrs.ID'} -> new()");
 		# create one language representation of article in content structure
 		my %columns;
 		$columns{'ID_category'}=$env{'article_attrs.ID_category'} if $env{'article_attrs.ID_category'};
@@ -259,6 +262,7 @@ sub article_add
 	}
 	if ($env{'article_attrs.ID'} && !$article_attrs{'ID_category'})
 	{
+		main::_log("\$env{'article_attrs.ID'} && !\$article_attrs{'ID_category'} -> get_ID()");
 		%article_attrs=App::020::SQL::functions::get_ID(
 			'ID' => $env{'article_attrs.ID'},
 			'db_h' => "main",

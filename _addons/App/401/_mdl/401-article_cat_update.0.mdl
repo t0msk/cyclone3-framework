@@ -1,0 +1,116 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::401::_init;
+use Int::charsets::encode;
+
+=head1 NAME
+
+401-article_cat_update.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Update article_cat item
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<article_cat.ID> - ID of item
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default error
+
+=item *
+
+B<RESULT_success> - without error
+
+=item *
+
+B<RESULT_failure_no_input> - invalid input
+
+=item *
+
+B<RESULT_failure_set> - can't be executed
+
+=item *
+
+B<%ID%> - ID
+
+=item *
+
+B<%missing_parameter%> - missing param
+
+=back
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'article_cat.ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|article_cat.ID|g;
+		return 1;
+	}
+	
+	my %columns;
+	
+	$columns{'name'}="'".TOM::Security::form::sql_escape($main::RPC->{'name'})."'"
+		if $main::RPC->{'name'};
+	$columns{'alias_url'}="'".TOM::Security::form::sql_escape($main::RPC->{'alias_url'})."'"
+		if exists $main::RPC->{'alias_url'};
+	
+	
+	
+	my %article_cat=App::020::SQL::functions::tree::update(
+		'db_h' => 'main',
+		'db_name' => $App::401::db_name,
+		'tb_name' => 'a401_article_cat',
+		'ID' => $env{'article_cat.ID'},
+		'columns' =>
+		{
+			%columns
+		},
+		'-journalize' => 1
+	);
+	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	$XSGN{'TMP'}=~s|<%ID%>|$env{'article.ID'}|g;
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinál (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

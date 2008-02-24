@@ -279,6 +279,39 @@ sub execute
 		$item=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
 		$item=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
 		
+		
+		# check alternate url
+		my $ID_category=$db0_line{'ID_category'};
+		my $alias_url;
+		my %data=App::020::SQL::functions::get_ID(
+			'ID' => $ID_category,
+			'db_h' => 'main',
+			'db_name' => $App::401::db_name,
+			'tb_name' => 'a401_article_cat',
+			'columns' => {'*' => 1},
+			'cache' => 600,
+		);
+		$alias_url=$data{'alias_url'} if $data{'alias_url'};
+		while ($ID_category && !$alias_url)
+		{
+			my %data=App::020::SQL::functions::tree::get_parent_ID(
+				'ID' => $ID_category,
+				'db_h' => 'main',
+				'db_name' => $App::401::db_name,
+				'tb_name' => 'a401_article_cat',
+				'columns' => {'*' => 1},
+				'cache' => 600,
+			);
+			$ID_category=$data{'ID'};
+			if ($data{'alias_url'})
+			{
+				$alias_url=$data{'alias_url'};
+				last;
+			}
+		}
+		
+		$item=~s|<%alias_url%>|$alias_url|g;
+		
 		# Transforming datetime fields
 		
 		# FUJ!!! TOTO TU BYT NEMOZE, TO MUSI IST CEZ FUNKCIE. NECHUTNE

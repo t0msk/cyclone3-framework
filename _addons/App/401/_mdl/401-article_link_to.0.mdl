@@ -6,7 +6,6 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-use App::020::_init;
 use App::401::_init;
 
 =head1 NAME
@@ -92,10 +91,28 @@ sub execute
 	{
 		next unless $ID_entity;
 		
+		my $name=$env{'article_attrs.name'};
+		
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`$App::401::db_name`.a401_article_view
+			WHERE
+				ID_entity_article = $ID_entity AND
+				lng = '$env{'lng'}' AND
+				status IN ('Y','N')
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		$name=$db0_line{'name'} if $db0_line{'name'};
+		
 		my %attrs=App::401::functions::article_add(
 			'article.ID_entity' => $ID_entity,
-			'article_attrs.name' => $env{'article_attrs.name'},
-			'article_attrs.ID_category' => $env{'article_attrs.ID_category'}
+			'article_attrs.name' => $name,
+			'article_attrs.ID_category' => $env{'article_attrs.ID_category'},
+			'forcesymlink' => 1,
 		);
 		
 	}
