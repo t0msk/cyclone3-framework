@@ -1,0 +1,112 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+=head1 NAME
+
+510-video_part_detail.0.mdl
+
+=head1 DESCRIPTION
+
+Detail info about video_part
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::510::_init|app/"510/_init.pm">
+
+=back
+
+=cut
+
+use App::510::_init;
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<video_part.ID> - ID of video_part
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - video-part item
+
+=item *
+
+B<%db_*%> - video_part database variables
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if (!$env{'video_part.ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|video.ID|g;
+		return 1;
+	}
+	
+	my $sql=qq{
+		SELECT
+			video.*
+		FROM
+			`$App::510::db_name`.a510_video_view AS video
+		WHERE
+			video.ID_part = $env{'video_part.ID'} AND
+			(video.ID_format = $App::510::video_format_original_ID
+			 OR video.ID_format IS NULL
+			) AND
+			video.lng = '$env{'lng'}'
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		
+		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;

@@ -36,6 +36,11 @@ sub execute
 {
 	my %env=@_;
 	
+	# Check
+	if (!$tom::addons{'a510'} || ($TOM::DB{'main'}{'name'} ne $App::510::db_name))
+	{main::_log("not enabled, or set for another domain service");return 1;}
+	
+	
 	alarm(0);
 	
 #			App::501::functions::image_regenerate(
@@ -210,7 +215,6 @@ sub execute
 		}
 	}
 	
-	return 1;
 	
 	# find missing files
 	main::_log("checking video_part_file items in video_part_file table");

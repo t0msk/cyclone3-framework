@@ -66,6 +66,10 @@ sub execute
 {
 	my %env=@_;
 	
+	# Check
+	if (!$tom::addons{'a510'} || ($TOM::DB{'main'}{'name'} ne $App::510::db_name))
+	{main::_log("not enabled, or set for another domain service");return 1;}
+	
 	alarm(0);
 	$env{'time_max'}=60*10 unless $env{'time_max'};
 	my $encode_max=$env{'parallel'}; # max parallel processes

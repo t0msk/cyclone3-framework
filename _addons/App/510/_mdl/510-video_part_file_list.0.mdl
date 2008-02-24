@@ -1,0 +1,134 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::160::_init;
+use App::510::_init;
+use TOM::Text::format;
+
+=head1 NAME
+
+510-video_part_file_list.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+List of part files
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<video_part.ID> - ID of video_part
+
+=item *
+
+B<status> - default 'Y'
+
+=item *
+
+B<sql_order_by> - default 'part_id'
+
+=item *
+
+B<sql_limit> - SQL limit
+
+=back
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	$env{'sql_limit'}=500 unless $env{'sql_limit'};
+	$env{'sql_order_by'}='file.ID_format ASC' unless $env{'sql_order_by'};
+	
+	my $from;
+	my $sql_where;
+	
+	# language
+	#$sql_where.="lng='$env{'lng'}' ";
+	
+	# status
+	if ($env{'status'})
+	{
+		$XSGN{'TMP'}=~s|<%required_status%>|$env{'status'}|g;
+		$sql_where.="AND file.status IN ('".(join "','", split('',$env{'status'}))."') ";
+	}
+	else
+	{
+		$sql_where.="AND file.status='Y' ";
+	}
+	
+	
+	#
+	# LISTING OF ITEMS
+	#
+	
+	my $sql=qq{
+		SELECT
+			file.*,
+			format.name AS format
+		FROM
+			`$App::510::db_name`.a510_video_part_file AS file
+		LEFT JOIN `$App::510::db_name`.a510_video_format AS format ON
+		(
+			format.ID = file.ID_format
+		)
+		WHERE
+			file.ID_entity=$env{'video_part.ID'}
+			$sql_where
+		ORDER BY
+			$env{'sql_order_by'}, file.datetime_create DESC
+		LIMIT
+			$env{'sql_limit'}
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+	if ($sth0{'sth'})
+	{
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			my $item=$XSGN{'ITEM'};
+			
+			$db0_line{'length'} = '' if $db0_line{'length'} eq "00:00:00";
+			
+			$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+			$item=~s|<%size%>|TOM::Text::format::bytes($db0_line{'file_size'})|ge;
+			$item=~s/<%src%>/$db0_line{'file_alt_src'} || $db0_line{'name'}/ge;
+			
+			$XSGN{'TMP'}=~s|<#item#>|$item|;
+		}
+		
+	}
+	else
+	{
+		main::_log("can't select");
+	}
+	
+	
+	return 1;
+}
+
+our $authors="roman.fordinal\@comsultia.com";
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

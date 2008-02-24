@@ -106,10 +106,13 @@ sub execute
 		FROM
 			`$App::510::db_name`.a510_video_view
 		WHERE
-			ID_video=$env{'video.ID'} AND
+			ID_entity_video=$env{'video.ID_entity'} AND
 			(
-				ID_format=$App::510::video_format_original_ID
+				ID_format=$App::510::video_format_original_ID OR
+				ID_format IS NULL
 			) AND
+			ID_part IS NOT NULL AND
+			status_part IN ('Y','N','L') AND
 			$sql_where
 		ORDER BY
 			$env{'sql_order_by'}, datetime_rec_start DESC, datetime_create DESC
@@ -196,7 +199,7 @@ sub execute
 				
 			}
 			
-			$XSGN{'NULL'}=~s|<%dimensions%>|$db0_line{'video_width'}x$db0_line{'video_height'}|g;
+			$XSGN{'NULL'}=~s|<%dimensions%>|$db0_line{'video_width'}x$db0_line{'video_height'}|g if $db0_line{'video_width'};
 			
 			
 			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;

@@ -476,7 +476,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 	)
 	LEFT JOIN `/*db_name*/`.`/*app*/_video_part` AS video_part ON
 	(
-		video_part.ID_entity = video.ID
+		video_part.ID_entity = video.ID_entity
 	)
 	LEFT JOIN `/*db_name*/`.`/*app*/_video_part_attrs` AS video_part_attrs ON
 	(
@@ -550,7 +550,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view_lite` AS (
 	)
 	LEFT JOIN `/*db_name*/`.`/*app*/_video_part` AS video_part ON
 	(
-		video_part.ID_entity = video.ID AND
+		video_part.ID_entity = video.ID_entity AND
 		video_part.part_id = 1
 	)
 	LEFT JOIN `/*db_name*/`.`/*app*/_video_part_attrs` AS video_part_attrs ON

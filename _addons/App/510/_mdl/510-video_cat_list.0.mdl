@@ -325,53 +325,58 @@ sub execute
 				$XSGN{'NULL'}=~s|<%keywords_status%>|Y|g;
 			}
 			
-			my $relation=(App::160::SQL::get_relations(
-				'db_name' => $App::510::db_name,
-				'l_prefix' => 'a510',
-				'l_table' => 'video_part',
-				'l_ID_entity' => $db0_line{'ID_part'},
-				'rel_type' => 'thumbnail',
-				'r_db_name' => $App::501::db_name,
-				'r_prefix' => 'a501',
-				'r_table' => 'image',
-				'limit' => 1
-			))[0];
-			if ($relation->{'ID'})
+			if ($db0_line{'ID_part'})
 			{
-				$XSGN{'NULL'}=~s|<%image.ID%>|$relation->{'r_ID_entity'}|g;
 				
-				my $sql=qq{
-					SELECT
-						*
-					FROM
-						`$App::501::db_name`.a501_image_view AS image
-					WHERE
-						image.ID_entity_image = $relation->{'r_ID_entity'} AND
-						image.status='Y' AND
-						image.ID_format = '$App::501::image_format_thumbnail_ID'
-					LIMIT 1
-				};
-				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
-				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				my $relation=(App::160::SQL::get_relations(
+					'db_name' => $App::510::db_name,
+					'l_prefix' => 'a510',
+					'l_table' => 'video_part',
+					'l_ID_entity' => $db0_line{'ID_part'},
+					'rel_type' => 'thumbnail',
+					'r_db_name' => $App::501::db_name,
+					'r_prefix' => 'a501',
+					'r_table' => 'image',
+					'limit' => 1
+				))[0];
+				if ($relation->{'ID'})
 				{
-					$XSGN{'NULL'}=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;
-				}
-				
-				my $sql=qq{
-					SELECT
-						*
-					FROM
-						`$App::501::db_name`.a501_image_view AS image
-					WHERE
-						image.ID_entity_image = $relation->{'r_ID_entity'} AND
-						image.status='Y' AND
-						image.ID_format = '$App::501::image_format_original_ID'
-					LIMIT 1
-				};
-				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
-				if (my %db1_line=$sth1{'sth'}->fetchhash())
-				{
-					$XSGN{'NULL'}=~s|<%image.original.db_(.*?)%>|$db1_line{$1}|g;
+					$XSGN{'NULL'}=~s|<%image.ID%>|$relation->{'r_ID_entity'}|g;
+					
+					my $sql=qq{
+						SELECT
+							*
+						FROM
+							`$App::501::db_name`.a501_image_view AS image
+						WHERE
+							image.ID_entity_image = $relation->{'r_ID_entity'} AND
+							image.status='Y' AND
+							image.ID_format = '$App::501::image_format_thumbnail_ID'
+						LIMIT 1
+					};
+					my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+					if (my %db1_line=$sth1{'sth'}->fetchhash())
+					{
+						$XSGN{'NULL'}=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;
+					}
+					
+					my $sql=qq{
+						SELECT
+							*
+						FROM
+							`$App::501::db_name`.a501_image_view AS image
+						WHERE
+							image.ID_entity_image = $relation->{'r_ID_entity'} AND
+							image.status='Y' AND
+							image.ID_format = '$App::501::image_format_original_ID'
+						LIMIT 1
+					};
+					my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+					if (my %db1_line=$sth1{'sth'}->fetchhash())
+					{
+						$XSGN{'NULL'}=~s|<%image.original.db_(.*?)%>|$db1_line{$1}|g;
+					}
+					
 				}
 				
 			}
@@ -383,7 +388,8 @@ sub execute
 				FROM
 					`$App::510::db_name`.a510_video_part
 				WHERE
-					ID_entity = $db0_line{'ID_entity_video'}
+					ID_entity = $db0_line{'ID_entity_video'} AND
+					status IN ('Y','N','L')
 			};
 			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
 			my %db1_line=$sth1{'sth'}->fetchhash();
@@ -402,7 +408,8 @@ sub execute
 					file.ID_format = $App::510::video_format_full_ID
 				)
 				WHERE
-					video_part.ID_entity = $db0_line{'ID_entity_video'}
+					video_part.ID_entity = $db0_line{'ID_entity_video'} AND
+					video_part.status IN ('Y','N','L')
 			};
 			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
 			my %db1_line=$sth1{'sth'}->fetchhash();

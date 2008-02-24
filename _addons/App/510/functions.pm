@@ -578,6 +578,7 @@ sub video_add
 	my $tr=new TOM::Database::SQL::transaction('db_h'=>"main");
 	
 	$env{'video_format.ID'}=$App::510::video_format_original_ID unless $env{'video_format.ID'};
+	$env{'video_part.part_id'}=1 unless $env{'video_part.part_id'};
 	
 	# check if thumbnail file is correct
 	if ($env{'file_thumbnail'})
@@ -614,6 +615,31 @@ sub video_add
 	main::_log("lng='$env{'video_attrs.lng'}'");
 	
 	
+	# if only video_part.ID is defined, not video.ID or video.ID_entity
+	my %video_part;
+	if ($env{'video_part.ID'} && !$env{'video.ID'} && !$env{'video.ID_entity'})
+	{
+		main::_log("\$env{'video_part.ID'} && !\$env{'video.ID'} && !\$env{'video.ID_entity'} -> search");
+		%video_part=App::020::SQL::functions::get_ID(
+			'ID' => $env{'video_part.ID'},
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_video_part",
+			'columns' => {'*'=>1}
+		);
+		if ($video_part{'ID_entity'})
+		{
+			$env{'video.ID_entity'}=$video_part{'ID_entity'};
+			main::_log("found video.ID_entity=$env{'video.ID_entity'}");
+		}
+		else
+		{
+			return undef;
+		}
+	}
+	
+	
+	
 	# VIDEO
 	
 	my %video;
@@ -637,10 +663,10 @@ sub video_add
 #		$env{'video.ID'}=$video{'ID'} if $video{'ID'};
 #	}
 	
-	
+=head1
 	# check if this symlink with same ID_category not exists
 	# and video.ID is unknown
-	if ($env{'video_attrs.ID_category'} && !$env{'video.ID'} && $env{'video.ID_entity'})
+	if ($env{'video_attrs.ID_category'} && !$env{'video.ID'} && $env{'video.ID_entity'} && !$env{'forcesymlink'})
 	{
 		main::_log("search for ID");
 		my $sql=qq{
@@ -650,7 +676,8 @@ sub video_add
 				`$App::510::db_name`.`a510_video_view`
 			WHERE
 				ID_entity_video=$env{'video.ID_entity'} AND
-				( ID_category = $env{'video_attrs.ID_category'} OR ID_category IS NULL )
+				( ID_category = $env{'video_attrs.ID_category'} OR ID_category IS NULL ) AND
+				status IN ('Y','N','L')
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
@@ -662,7 +689,7 @@ sub video_add
 			main::_log("setup video.ID='$db0_line{'ID_video'}'");
 		}
 	}
-	
+=cut
 	
 	if (!$env{'video.ID'})
 	{
@@ -672,20 +699,20 @@ sub video_add
 		my %columns;
 		
 		$columns{'ID_entity'}=$env{'video.ID_entity'} if $env{'video.ID_entity'};
-		if ($env{'video.datetime_rec_start'})
-		{
-			if ($env{'video.datetime_rec_start'}=~/^FROM/)
-			{$columns{'datetime_rec_start'}=$env{'video.datetime_rec_start'};}
-			else {$columns{'datetime_rec_start'}="'".$env{'video.datetime_rec_start'}."'"}
-		}
+#		if ($env{'video.datetime_rec_start'})
+#		{
+#			if ($env{'video.datetime_rec_start'}=~/^FROM/)
+#			{$columns{'datetime_rec_start'}=$env{'video.datetime_rec_start'};}
+#			else {$columns{'datetime_rec_start'}="'".$env{'video.datetime_rec_start'}."'"}
+#		}
 		$columns{'datetime_rec_start'}="NOW()" unless $columns{'datetime_rec_start'};
 		
-		if ($env{'video.datetime_rec_stop'})
-		{
-			if ($env{'video.datetime_rec_stop'}=~/^FROM/)
-			{$columns{'datetime_rec_stop'}=$env{'video.datetime_rec_stop'};}
-			else {$columns{'datetime_rec_stop'}="'".$env{'video.datetime_rec_stop'}."'"}
-		}
+#		if ($env{'video.datetime_rec_stop'})
+#		{
+#			if ($env{'video.datetime_rec_stop'}=~/^FROM/)
+#			{$columns{'datetime_rec_stop'}=$env{'video.datetime_rec_stop'};}
+#			else {$columns{'datetime_rec_stop'}="'".$env{'video.datetime_rec_stop'}."'"}
+#		}
 		#$columns{'datetime_rec_stop'}="NOW()" unless $columns{'datetime_rec_stop'};
 		
 		$env{'video.ID'}=App::020::SQL::functions::new(
@@ -739,6 +766,8 @@ sub video_add
 		# datetime_rec_start
 		$columns{'datetime_rec_start'}="'".$env{'video.datetime_rec_start'}."'"
 			if ($env{'video.datetime_rec_start'} && ($env{'video.datetime_rec_start'} ne $video{'datetime_rec_start'}));
+		$columns{'datetime_rec_start'}=$env{'video.datetime_rec_start'}
+			if ($env{'video.datetime_rec_start'}=~/^FROM/ && ($env{'video.datetime_rec_start'} ne $video{'datetime_rec_start'}));
 		# datetime_rec_stop
 		if (exists $env{'video.datetime_rec_stop'} && ($env{'video.datetime_rec_stop'} ne $video{'datetime_rec_stop'}))
 		{
@@ -806,7 +835,7 @@ sub video_add
 		);
 	}
 	
-	$env{'video_part.ID'}=video_part_add
+	my %env0=video_part_add
 	(
 		'file' => $env{'file'},
 		'file_nocopy' => $env{'file_nocopy'},
@@ -821,6 +850,7 @@ sub video_add
 		'video_part_attrs.name' => $env{'video_part_attrs.name'},
 		'video_part_attrs.description' => $env{'video_part_attrs.description'},
 	);
+	$env{'video_part.ID'} = $env0{'video_part.ID'} if $env0{'video_part.ID'};
 	if (!$env{'video_part.ID'})
 	{
 		$t->close();
@@ -922,10 +952,10 @@ sub video_part_add
 		$env{'video.ID'}=$video{'ID'} if $video{'ID'};
 	}
 	
-	if (!$env{'video_part.ID'} && !$env{'video_part.part_id'} && !$env{'file'})
-	{
-		$env{'video_part.part_id'}=1;
-	}
+#	if (!$env{'video_part.ID'} && !$env{'video_part.part_id'} && !$env{'file'})
+#	{
+#		$env{'video_part.part_id'}=1;
+#	}
 	
 	$env{'video_part_attrs.lng'}=$tom::lng unless $env{'video_part_attrs.lng'};
 	main::_log("lng='$env{'video_part_attrs.lng'}'");
@@ -1072,14 +1102,14 @@ sub video_part_add
 	if ($env{'video_part_attrs.ID'} &&
 	(
 		$env{'video_part_attrs.name'} ||
-		$env{'video_part_attrs.description'}
+		exists $env{'video_part_attrs.description'}
 	))
 	{
 		my %columns;
 		
 		$columns{'name'}="'".$env{'video_part_attrs.name'}."'" if $env{'video_part_attrs.name'};
 		$columns{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'video_part_attrs.name'})."'" if $env{'video_part_attrs.name'};
-		$columns{'description'}="'".$env{'video_part_attrs.description'}."'" if $env{'video_part_attrs.description'};
+		$columns{'description'}="'".$env{'video_part_attrs.description'}."'" if exists $env{'video_part_attrs.description'};
 		
 		App::020::SQL::functions::update(
 			'ID' => $env{'video_part_attrs.ID'},
@@ -1094,7 +1124,7 @@ sub video_part_add
 	main::_log("video_part.ID='$env{'video_part.ID'}' added");
 	
 	$t->close();
-	return 1;
+	return %env;
 }
 
 
