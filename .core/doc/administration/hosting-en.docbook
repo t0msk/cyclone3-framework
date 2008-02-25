@@ -26,7 +26,7 @@
   role="bold">framework</emphasis>.</para>
 
   <para>Cyclone3 Framework is an application that runs on Linux/BSD server.
-  This means that to use Plone, you've got to be able to run standard
+  This means that to use Cyclone3, you've got to be able to run standard
   applications on that server. Unfortunately, most low-end web hosting
   providers don't support Cyclone3, choosing instead to optimize their
   webservers for hosting lots and lots of small MySQL/PHP sites.</para>
