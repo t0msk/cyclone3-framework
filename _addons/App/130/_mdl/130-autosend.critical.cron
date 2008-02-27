@@ -41,6 +41,9 @@ sub execute
 			$mailer->open({'From' => $from,'To' => $to,'Subject' => $subject,});
 			print $mailer $body;
 			$mailer->close();
+			
+			unlink $file || main::_log("can't unlink $!",1);
+			
 			next;
 		}
 		
@@ -111,7 +114,7 @@ sub execute
 		
 		$smtp->quit;
 		
-		unlink $file;
+		unlink $file || main::_log("can't unlink $!",1);
 		
 		next;
 		
