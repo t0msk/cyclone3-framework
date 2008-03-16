@@ -165,7 +165,7 @@ sub execute
 	};
 	
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
@@ -176,86 +176,141 @@ sub execute
 		$XSGN{'TMP'}=~s|<%editor_(.*?)%>|$editor{$1}|g;
 		
 		# process body
-		my $p=new App::401::mimetypes::html;
 		
-		# img
-		$p->{'ignore'}{'img'}=
-			$env{'body.ignore.img'}
-			|| $env{'ignore.img'}
-			|| undef;
+		foreach my $part('body','abstract')
+		{
+			
+			my $p=new App::401::mimetypes::html;
+			
+			# img
+			$p->{'ignore'}{'img'}=
+				$env{'body.ignore.img'}
+				|| $env{'ignore.img'}
+				|| undef;
+			
+			$p->{'ignore'}{'img.1'}=
+				$env{'body.ignore.img.1'}
+				|| $env{'ignore.img.1'}
+				|| undef;
+			
+			# a501_image
+			$p->{'config'}->{'a501_image_file.ID_format'}=
+				$env{'body.a501_image_file.ID_format'}
+				|| $env{'a501_image_file.ID_format'}
+				|| undef;
+			$p->{'config'}->{'a501_image_file.ID_format.1'}=
+				$env{'body.a501_image_file.ID_format.1'}
+				|| $env{'a501_image_file.ID_format.1'}
+				|| undef;
+			$p->{'entity'}->{'a501_image'}=
+				$XSGN{'body.a501_image'}
+				|| $XSGN{'a501_image'}
+				|| undef;
+			$p->{'entity'}->{'a501_image.1'}=
+				$XSGN{'body.a501_image.1'}
+				|| $XSGN{'a501_image.1'}
+				|| undef;
+			
+			# a510_video
+			$p->{'entity'}{'a510_video'}=
+				$XSGN{'body.a510_video'}
+				|| $XSGN{'a510_video'}
+				|| undef;
+			$p->{'entity'}{'a510_video.1'}=
+				$XSGN{'body.a510_video.1'}
+				|| $XSGN{'a510_video.1'}
+				|| undef;
+			
+			# a510_video_part
+			$p->{'entity'}{'a510_video_part'}=
+				$XSGN{'body.a510_video_part'}
+				|| $XSGN{'a510_video_part'}
+				|| undef;
+			$p->{'entity'}{'a510_video_part.1'}=
+				$XSGN{'body.a510_video_part.1'}
+				|| $XSGN{'a510_video_part.1'}
+				|| undef;
+			
+			# a010
+			foreach (keys %XSGN){if ($_=~/^a010/){$p->{'entity'}{$_}=$XSGN{$_};}}
+			
+			# PARSE !!!
+			$p->parse($db0_line{$part});
+			$p->eof();
+			my $part_html=$p->{'out'};
+			
+			$XSGN{'TMP'}=~s|<%$part%>|$part_html|;
+			
+			$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+			$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+			
+		}
 		
-		$p->{'ignore'}{'img.1'}=
-			$env{'body.ignore.img.1'}
-			|| $env{'ignore.img.1'}
-			|| undef;
+		# add banner
+#		if ($env{'ad'}){$body_html=~s|^(.{400,}?)<br>|$1<br><!TMP-a401-BANNER!><br>|s;}
 		
-		# a501_image
-		$p->{'config'}->{'a501_image_file.ID_format'}=
-			$env{'body.a501_image_file.ID_format'}
-			|| $env{'a501_image_file.ID_format'}
-			|| undef;
-		$p->{'config'}->{'a501_image_file.ID_format.1'}=
-			$env{'body.a501_image_file.ID_format.1'}
-			|| $env{'a501_image_file.ID_format.1'}
-			|| undef;
-		$p->{'entity'}->{'a501_image'}=
-			$XSGN{'body.a501_image'}
-			|| $XSGN{'a501_image'}
-			|| undef;
-		$p->{'entity'}->{'a501_image.1'}=
-			$XSGN{'body.a501_image.1'}
-			|| $XSGN{'a501_image.1'}
-			|| undef;
+#		$XSGN{'TMP'}=~s|<%body%>|$body_html|;
 		
-		# a510_video
-		$p->{'entity'}{'a510_video'}=
-			$XSGN{'body.a510_video'}
-			|| $XSGN{'a510_video'}
-			|| undef;
-		$p->{'entity'}{'a510_video.1'}=
-			$XSGN{'body.a510_video.1'}
-			|| $XSGN{'a510_video.1'}
-			|| undef;
+#		$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+#		$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
 		
-		# a510_video_part
-		$p->{'entity'}{'a510_video_part'}=
-			$XSGN{'body.a510_video_part'}
-			|| $XSGN{'a510_video_part'}
-			|| undef;
-		$p->{'entity'}{'a510_video_part.1'}=
-			$XSGN{'body.a510_video_part.1'}
-			|| $XSGN{'a510_video_part.1'}
-			|| undef;
-		
-		# a010
-		foreach (keys %XSGN){if ($_=~/^a010/){$p->{'entity'}{$_}=$XSGN{$_};}}
 		
 		# PARSE !!!
-		$p->parse($db0_line{'body'});
-		$p->eof();
-		my $body_html=$p->{'out'};
+#		$p->parse($db0_line{'abstract'});
+#		$p->eof();
+#		my $abstract_html=$p->{'out'};
 		
-		$XSGN{'TMP'}=~s|<%body%>|$body_html|;
-		
-		$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
-		$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
-		
+#		$XSGN{'TMP'}=~s|<%abstract%>|$abstract_html|;
 		
 		
 		# check if here is a related image gallery
-		my $relation=(App::160::SQL::get_relations(
+		my $i;
+		foreach my $relation(App::160::SQL::get_relations(
 			'db_name' => $App::401::db_name,
 			'l_prefix' => 'a401',
 			'l_table' => 'article',
 			'l_ID_entity' => $db0_line{'ID_entity_article'},
-			'rel_type' => 'gallery',
+			#'rel_type' => 'gallery',
 			'r_prefix' => "a501",
 			'r_table' => "image",
 			'status' => "Y"
-			))[0];
-		if ($relation->{'ID'})
+			))
 		{
-			$XSGN{'TMP'}=~s|<#a501.gallery#>|$XSGN{'a501.gallery'}|g;
+			$i++;
+			
+			my $item=$XSGN{'a501.gallery.'.$i} || $XSGN{'a501.gallery'};
+			
+			my $sql=qq{
+				SELECT
+					*
+				FROM
+					`$App::501::db_name`.a501_image_view
+				WHERE
+					ID_entity_image=$relation->{'r_ID_entity'} AND
+					ID_format=$App::501::image_format_fullsize_ID AND
+					status IN ('Y','L')
+				LIMIT 1
+			};
+			my %sth1=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache'=>60);
+			if (my %db1_line=$sth1{'sth'}->fetchhash())
+			{
+				$item=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;
+			}
+			
+			if ($XSGN{'TMP'}=~s|<#a501.gallery.$i#>|$item|)
+			{
+				
+			}
+			else
+			{
+				$XSGN{'TMP'}=~s|<#a501.gallery#>|$item|;
+			}
+			
+#			$XSGN{'TMP'}=~s|<#a501.gallery#>|$item|g if $XSGN{'TMP'}=~/<#a501.gallery#>/;
+			
+#			if ($XSGN{'TMP'}=~/<#a501.gallery.#>/)
+#			{
+#			}
 		}
 		
 		
