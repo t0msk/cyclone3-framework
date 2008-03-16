@@ -1,0 +1,170 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::160::_init;
+use App::501::_init;
+use TOM::Text::format;
+
+=head1 NAME
+
+501-image_cat_list.web.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+List of folders
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<image_cat.ID> - ID of image_cat
+
+=item *
+
+B<status> - default 'Y'
+
+=item *
+
+B<sql_order_by> - default 'ID_charindex'
+
+=item *
+
+B<sql_limit> - SQL limit
+
+=back
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	delete $env{'ID_charindex'};
+	$env{'sql_limit'}=500 unless $env{'sql_limit'};
+	$env{'sql_order_by'}='ID_charindex ASC' unless $env{'sql_order_by'};
+	
+	$env{'image_file.ID_format'}=$App::501::image_format_thumbnail_ID unless $env{'image_file.ID_format'};
+	
+	my $from;
+	my $sql_where;
+	
+	# language
+	$sql_where.="lng='$env{'lng'}' ";
+	
+	# status
+	if ($env{'status'})
+	{
+		$XSGN{'TMP'}=~s|<%required_status%>|$env{'status'}|g;
+		$sql_where.="AND status IN ('".(join "','", split('',$env{'status'}))."') ";
+	}
+	else
+	{
+		$sql_where.="AND status='Y' ";
+	}
+	
+	
+	if ($env{'image_cat.ID'})
+	{
+		
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'image_cat.ID'}|g;
+		
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h'    => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image_cat',
+			'ID'      => $env{'image_cat.ID'},
+			'columns' => 
+			{
+				'ID_charindex' => 1
+			}
+		);
+		if ($data{'ID'})
+		{
+			$env{'ID_charindex'}=$data{'ID_charindex'}.':';
+		}
+		else
+		{
+			main::_log("can't find image_cat.ID='$data{'ID'}'",1);
+			return undef;
+		}
+		
+	}
+	
+	
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$App::501::db_name`.a501_image_cat
+		WHERE
+			$sql_where AND
+			ID_charindex LIKE '$env{'ID_charindex'}___'
+		ORDER BY
+			$env{'sql_order_by'}
+	};
+	
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		
+		my $item=$XSGN{'item'};
+		
+		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		$item=~s|<%ID%>|$db0_line{'ID'}|g;
+		$item=~s|<%ID_entity%>|$db0_line{'ID_entity'}|g;
+		$item=~s|<%ID_parent%>|$db0_line{'ID_parent'}|g;
+		$item=~s|<%folder%>|Y|g;
+		
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`$App::501::db_name`.a501_image_view
+			WHERE
+				ID_category=$db0_line{'ID'} AND
+				ID_format='$env{'image_file.ID_format'}' AND
+				status IN ('Y','L')
+			ORDER BY
+				order_id, datetime_create DESC
+			LIMIT
+				1
+		};
+		my %sth1=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+		if (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			$item=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;
+		}
+		
+		$XSGN{'TMP'}=~s|<#item#>|$item|;
+		
+	}
+	
+	return 1;
+}
+
+our $authors="roman.fordinal\@comsultia.com";
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
