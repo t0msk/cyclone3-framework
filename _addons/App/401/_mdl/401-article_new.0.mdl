@@ -51,6 +51,53 @@ sub execute
 		$XSGN{'TMP'}=~s|<%ID%>|$article{'article.ID'}|g;
 		$XSGN{'TMP'}=~s|<%ID_entity%>|$article{'article.ID_entity'}|g;
 		$XSGN{'TMP'}=~s|<%ID_category%>|$article{'article_attrs.ID_category'}|g;
+		
+		if ($env{'discussion'} eq "true" || $env{'discussion'} eq "y")
+		{
+			use App::821::_init;
+			
+			my $ID=App::020::SQL::functions::new(
+				'db_h' => 'main',
+				'db_name' => $App::821::db_name,
+				'tb_name' => 'a821_discussion',
+				'columns' => 
+				{
+					'name' => "'".TOM::Security::form::sql_escape($env{'article_attrs.name'})."'",
+					'name_url' => "'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'article_attrs.name'}))."'",
+					'ID_forum' => $App::401::forum{$env{'lng'}},
+					'lng' => "'".$env{'lng'}."'"
+				},
+				'-journalize' => 1
+			);
+			
+			my %discussion=App::020::SQL::functions::get_ID
+			(
+				'ID' => $ID,
+				'db_h' => 'main',
+				'db_name' => $App::821::db_name,
+				'tb_name' => 'a821_discussion',
+				'columns' =>{}
+			);
+			
+			if ($discussion{'ID_entity'} && $article{'article.ID_entity'})
+			{
+				use App::160::_init;
+				my ($rel_ID_entity,$rel_ID)=App::160::SQL::new_relation(
+					'db_name' => $App::401::db_name,
+					'l_prefix' => 'a401',
+					'l_table' => 'article',
+					'l_ID_entity' => $article{'article.ID_entity'},
+					#'rel_type' => '',
+					'r_db_name' => $App::821::db_name,
+					'r_prefix' => 'a821',
+					'r_table' => 'discussion',
+					'r_ID_entity' => $discussion{'ID_entity'},
+					'status' => 'Y',
+				);
+			}
+			
+		}
+		
 	}
 	else
 	{
