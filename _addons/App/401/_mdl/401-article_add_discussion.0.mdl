@@ -1,0 +1,134 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::160::_init;
+use App::401::_init;
+use App::821::_init;
+
+=head1 NAME
+
+401-article_add_discussion.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Create new discussion to article item
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	delete $env{'ID_charindex'};
+	
+	my $from;
+	
+	if (!$env{'article.ID'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|article.ID|g;
+		return 1;
+	}
+	
+	if (!$env{'article_attrs.ID_category'})
+	{
+		$XSGN{'TMP'}=$XSGN{'RESULT_failure_no_input'};
+		$XSGN{'TMP'}=~s|<%missing_parameter%>|article_attrs.ID_category|g;
+		return 1;
+	}
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$App::401::db_name`.a401_article_view
+		WHERE
+			ID_article = $env{'article.ID'} AND
+			ID_category = $env{'article_attrs.ID_category'} AND
+			status IN ('Y','N','L')
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'-slave'=>1);
+	if (!$sth0{'rows'})
+	{
+		return 1;
+	}
+	my %article=$sth0{'sth'}->fetchhash();
+	
+	# find if not already relatd discussion
+	my $relation=(App::160::SQL::get_relations(
+		'db_name' => $App::401::db_name,
+		'l_prefix' => 'a401',
+		'l_table' => 'article',
+		'l_ID_entity' => $env{'article.ID_entity'},
+		'r_db_name' => $App::821::db_name,
+		'r_prefix' => 'a821',
+		'r_table' => 'discussion',
+	))[0];
+	if ($relation->{'ID'})
+	{
+		return 1;
+	}
+	
+	my $ID=App::020::SQL::functions::new(
+		'db_h' => 'main',
+		'db_name' => $App::821::db_name,
+		'tb_name' => 'a821_discussion',
+		'columns' =>
+		{
+			'name' => "'".TOM::Security::form::sql_escape($article{'name'})."'",
+			'name_url' => "'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($article{'name'}))."'",
+			'ID_forum' => $App::401::forum{$article{'lng'}},
+			'lng' => "'".$article{'lng'}."'"
+		},
+		'-journalize' => 1
+	);
+	
+	my %discussion=App::020::SQL::functions::get_ID
+	(
+		'ID' => $ID,
+		'db_h' => 'main',
+		'db_name' => $App::821::db_name,
+		'tb_name' => 'a821_discussion',
+		'columns' =>{}
+	);
+	
+	if ($discussion{'ID_entity'} && $article{'ID_entity_article'})
+	{
+		my ($rel_ID_entity,$rel_ID)=App::160::SQL::new_relation(
+			'db_name' => $App::401::db_name,
+			'l_prefix' => 'a401',
+			'l_table' => 'article',
+			'l_ID_entity' => $article{'ID_entity_article'},
+			#'rel_type' => '',
+			'r_db_name' => $App::821::db_name,
+			'r_prefix' => 'a821',
+			'r_table' => 'discussion',
+			'r_ID_entity' => $discussion{'ID_entity'},
+			'status' => 'Y',
+		);
+	}
+	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
