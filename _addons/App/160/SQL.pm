@@ -386,7 +386,8 @@ sub get_relations
 		$env{'r_db_name'}.'/'.
 		$env{'r_prefix'}.'/'.
 		$env{'r_table'}.'/'.
-		$env{'r_ID_entity'};
+		$env{'r_ID_entity'}.'::'.
+		$env{'limit'};
 	
 	my $where;
 	
@@ -398,7 +399,11 @@ sub get_relations
 	foreach (keys %env)
 	{
 		next unless defined $env{$_};
-		if ($_=~/^(l|r)_/ || $_=~/^ID/){ $where.="AND $_='$env{$_}' ";}
+		if ($_=~/^(l|r)_/ || $_=~/^ID/)
+		{
+			if ($_ eq "r_db_name"){$where.="AND r_db_name IN ('$env{$_}','') ";}
+			else {$where.="AND $_='$env{$_}' ";}
+		}
 	}
 	if ($env{'rel_type'} == -1){}
 	elsif (exists $env{'rel_type'}){$where.="AND rel_type='$env{rel_type}' ";}
