@@ -243,8 +243,8 @@
 		<div id="page-i">
 			
 			<h1><$(Page not found)></h1>
-			<h2><$main::ENV{'REQUEST_URI'}></h2>
-			<h2><$(Service)> '<$main::FORM{'TID'}>'</h2>
+			<h2><@xmlescape><$main::ENV{'REQUEST_URI'}></@xmlescape></h2>
+				<h2><$(Service)> '<@xmlescape><$main::FORM{'TID'}></@xmlescape>'</h2>
 			<p>
 				<strong><$(The page or service type cannot be found)>.</strong>
 			</p>
