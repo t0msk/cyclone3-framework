@@ -495,6 +495,11 @@ sub image_file_process
 			my $width=$image1->Get('width');
 			my $height=$image1->Get('height');
 			
+			my $scale_new=$params[0]/$params[1];
+			my $scale_old=$width/$height;
+			
+			main::_log("w=$width h=$height $scale_old -> $scale_new");
+			
 			my $scale='1:1';
 			my $scale_x=$params[0];
 			my $scale_y=$params[1];
@@ -504,7 +509,8 @@ sub image_file_process
 			
 			my $scl;
 			
-			if ($scale_y>$scale_x)
+			if ($scale_old>$scale_new)
+			#if ($scale_y>$scale_x)
 			{
 				$scl=$height/$scale_y;
 				$nwidth=$scale_x*$scl;
@@ -512,10 +518,13 @@ sub image_file_process
 			}
 			else
 			{
+				#main::_log("scale_x=$scale_x");
 				$scl=$width/$scale_x;
 				$nwidth=$scale_x*$scl;
 				$nheight=$scale_y*$scl;
 			}
+			
+			main::_log("w=$nwidth h=$nheight");
 			
 			my $x;
 			my $y;
