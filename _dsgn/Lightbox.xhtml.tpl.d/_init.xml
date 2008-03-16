@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	<header>
+		<extend level="auto" name="Scriptaculous"/>
+		<extract>
+			<file location="lightbox.css" dest="lightbox/" />
+			<file location="lightbox.js" dest="lightbox/" />
+			
+			<file location="blank.gif" dest="lightbox/" />
+			<file location="close.gif" dest="lightbox/" />
+			<file location="closelabel.gif" dest="lightbox/" />
+			<file location="image-1.jpg" dest="lightbox/" />
+			<file location="loading.gif" dest="lightbox/" />
+			<file location="next.gif" dest="lightbox/" />
+			<file location="nextlabel.gif" dest="lightbox/" />
+			<file location="prev.gif" dest="lightbox/" />
+			<file location="prevlabel.gif" dest="lightbox/" />
+			<file location="thumb-1.jpg" dest="lightbox/" />
+			
+		</extract>
+	</header>
+	
+</template>
