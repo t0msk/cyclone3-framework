@@ -12,7 +12,10 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image` (
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  PRIMARY KEY  (`ID`,`datetime_create`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -43,7 +46,13 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_attrs` (
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
+  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `ID_category` (`ID_category`),
+  KEY `name` (`name`),
+  KEY `lng` (`lng`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -79,7 +88,12 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_file` (
   `from_parent` char(1) character set ascii NOT NULL default 'Y', -- is this file generated from parent image_file?
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`ID_format`)
+  UNIQUE KEY `UNI_0` (`ID_entity`,`ID_format`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `ID_format` (`ID_format`),
+  KEY `name` (`name`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -97,7 +111,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_file_j` (
   `file_ext` varchar(120) character set ascii NOT NULL,
   `from_parent` char(1) character set ascii NOT NULL default 'Y',
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  PRIMARY KEY  (`ID`,`datetime_create`),
+  KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -125,7 +140,12 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_cat` (
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
-  UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`)
+  UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `name` (`name`),
+  KEY `lng` (`lng`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -160,7 +180,12 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_format` (
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
-  UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`)
+  UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `name` (`name`),
+  KEY `lng` (`lng`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
