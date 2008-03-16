@@ -98,6 +98,14 @@ B<%ID_entity%> - image ID_entity
 
 B<%name%> - image name
 
+=item *
+
+B<%db_*%> - database variables
+
+=item *
+
+B<%fullsize.db_*%> - database variables of fullsize image
+
 =back
 
 =cut
@@ -121,15 +129,64 @@ sub execute
 	$env{'sql_status'}='Y' unless $env{'sql_status'};
 	$env{'sql_order'}='image.order_id DESC' unless $env{'sql_order'};
 	
+	my $sql_where;
+	
 	#$env{'ID_format'}
 	if ($env{'ID_format'})
 	{
-		$env{'sql_where'}.=" AND image.ID_format=$env{'ID_format'}";
+		$sql_where.=" AND image.ID_format=$env{'ID_format'}";
 	}
-	if ($env{'format_name'})
+	elsif ($env{'format_name'})
 	{
-		$env{'sql_where'}.=" AND image.ID_format_name='$env{'format_name'}'";
+		$sql_where.=" AND image.ID_format_name='$env{'format_name'}'";
 	}
+	elsif ($env{'image_file.ID_format'})
+	{
+		$sql_where.=" AND image.ID_format='$env{'image_file.ID_format'}'";
+	}
+	else
+	{
+		$sql_where.=" AND image.ID_format_name='thumbnail'";
+	}
+	
+	# find ID_category LIKE *
+	if ($env{'image_attrs.ID_category'}=~s/\*$//)
+	{
+		my $cat_sql=qq{
+					SELECT
+						ID_charindex
+					FROM
+						`$App::501::db_name`.a501_image_cat
+					WHERE
+						ID=$env{'image_attrs.ID_category'}
+					LIMIT 1
+		};
+		$env{'image_attrs.ID_category'} = qq{
+			SELECT
+				ID
+			FROM
+				`$App::501::db_name`.a501_image_cat
+			WHERE
+				ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+				lng='$env{'lng'}' AND
+				status IN ('$env{'sql_status'}')
+		};
+	}
+	elsif ($env{'image_attrs.ID_category'})
+	{
+		
+	}
+	
+	if ($env{'image.ID_entity'})
+	{
+		$sql_where.=" AND image.ID_entity_image IN ('".
+			(join "','", split(';',$env{'image.ID_entity'})).
+			"')";
+	}
+	
+	$sql_where.=" AND image.ID_category IN ($env{'image_attrs.ID_category'})"
+		if $env{'image_attrs.ID_category'};
+	
 	
 	
 	my $sql=qq{
@@ -140,17 +197,36 @@ sub execute
 		WHERE
 			image.status IN ('$env{'sql_status'}') AND
 			image.lng='$env{'sql_lng'}'
-			$env{'sql_where'}
+			$sql_where
 		ORDER BY
 			$env{'sql_order'}
 		LIMIT $env{'sql_limit'}
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		my $item=$XSGN{'item'};
 		
+		$XSGN{'TMP'}=~s|<%name%>|$db0_line{'ID_category_name'}|g;
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`$env{'db_name'}`.a501_image_view AS image
+			WHERE
+				image.ID_entity_image = $db0_line{'ID_entity_image'} AND
+				image.status IN ('$env{'sql_status'}') AND
+				image.lng='$env{'sql_lng'}' AND
+				image.ID_format=$App::501::image_format_fullsize_ID
+			LIMIT 1
+		};
+		my %sth1=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
+		if (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			$item=~s|<%fullsize.db_(.*?)%>|$db1_line{$1}|g;
+		}
 		
 #		foreach(keys %db0_line){
 #			$item=~s|<%$_%>|$db0_line{$_}|g;
