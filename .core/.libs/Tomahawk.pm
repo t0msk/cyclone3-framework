@@ -360,7 +360,7 @@ sub module
 			main::_log("input '$_'='$var'");
 		}
 =cut
-#		main::_log("input '$_'='$mdl_env{$_}'");
+		main::_log("input '$_'='$mdl_env{$_}'");
 		/^-/ && do {$mdl_C{$_}=$mdl_env{$_};delete $mdl_env{$_};}
 	}
 	
@@ -429,8 +429,12 @@ sub module
 			}
 			else
 			{
-				main::_log("memcached: daemon is not running");
+				main::_log("memcached: daemon is not running",4);
 			}
+		}
+		else
+		{
+			main::_log("memcached: not available (lower performance)");
 		}
 		
 		if ($cache)
@@ -440,7 +444,7 @@ sub module
 		else
 		{
 			main::_log("sqlcache: reading");
-			my $db0=$main::DB{sys}->Query("
+			my %sth0=TOM::Database::SQL::execute(qq{
 				SELECT *
 				FROM TOM.a150_cache
 				WHERE
@@ -450,8 +454,8 @@ sub module
 						AND Cid_md5='$mdl_C{-md5}'
 				ORDER BY ID DESC
 				LIMIT 1
-			");
-			my %db0_line=$db0->fetchhash();
+			},'db_h'=>'sys','slave'=>1,'quiet'=>1);
+			my %db0_line=$sth0{'sth'}->fetchhash();
 			if (%db0_line)
 			{
 				$cache = \%db0_line;
@@ -1114,7 +1118,10 @@ sub supermodule
  {
 	local $SIG{ALRM} = sub {die "Timeout ".$TOM::ALRM_smdl." sec.\n"};
 	alarm $TOM::ALRM_smdl;
-	do $smdl_env{P_MODULE};
+	
+	if (not do $smdl_env{'P_MODULE'}){$tom::ERR="$@ $!";die "pre-compilation error: $@ $!\n";}
+	
+#	do $smdl_env{P_MODULE};
 	if (Tomahawk::module::execute(%smdl_env))
 	{
 	}
