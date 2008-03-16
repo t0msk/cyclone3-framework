@@ -6,7 +6,7 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-use App::020::_init;
+use App::501::_init;
 
 =head1 NAME
 
@@ -246,7 +246,7 @@ sub execute
 			SELECT
 				ID
 			FROM
-				a501_image_cat
+				`$App::501::db_name`.a501_image_cat
 			WHERE $where AND ID_charindex LIKE '$from%'
 		};
 		my %sth0=TOM::Database::SQL::execute($sql);
@@ -304,7 +304,7 @@ sub execute
 			lng,
 			status
 		FROM
-			a501_image_cat
+			`$App::501::db_name`.a501_image_cat
 $where
 		ORDER BY
 			$env{'db_order'}
