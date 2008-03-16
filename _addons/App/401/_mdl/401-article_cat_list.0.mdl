@@ -173,7 +173,8 @@ sub execute
 			'columns' => 
 			{
 				'ID_charindex' => 1
-			}
+			},
+			'-slave' => 1
 		);
 		if ($data{'ID'})
 		{
@@ -190,7 +191,8 @@ sub execute
 			$env{'article_cat.ID'},
 			'db_h'    => 'main',
 			'db_name' => $App::401::db_name,
-			'tb_name' => 'a401_article_cat'
+			'tb_name' => 'a401_article_cat',
+			'-slave' => 1
 		))
 		{$path_.='/'.$node->{'name'};}
 		$path_=~s|^/||;
@@ -206,7 +208,8 @@ sub execute
 				'db_h' => 'main',
 				'db_name' => $App::401::db_name,
 				'tb_name' => 'a401_article_cat',
-				'columns' => {'*' => 1,}
+				'columns' => {'*' => 1,},
+				'-slave' => 1
 			);
 			if ($db0_line{'ID'})
 			{
@@ -245,7 +248,7 @@ sub execute
 		SELECT
 			*
 		FROM
-			a401_article_cat
+			`$App::401::db_name`.a401_article_cat
 		WHERE
 			$sql_where AND
 			ID_charindex LIKE '$env{'ID_charindex'}___'
@@ -297,7 +300,26 @@ sub execute
 	# LISTING OF ITEMS
 	#
 	
-	if ($env{'keywords'})
+	if ($env{'keywords'}=~/^\d\d\d\d-\d\d-\d\d$/)
+	{
+		$sql_where.=" AND DATE(datetime_start)='$env{keywords}' ";
+	}
+	elsif ($env{'keywords'}=~/^\d\d\d\d-\d\d$/)
+	{
+		$sql_where.=" AND DATE(datetime_start) LIKE '$env{keywords}%' ";
+	}
+	elsif ($env{'keywords'}=~s/^\^//)
+	{
+		$sql_where.=" AND (";
+		foreach (split(' ',$env{'keywords'}))
+		{
+			next unless $_;
+			$sql_where.="(name LIKE '$_%') AND ";
+		}
+		$sql_where=~s|AND $||;
+		$sql_where.=") ";
+	}
+	elsif ($env{'keywords'})
 	{
 		$sql_where.=" AND (";
 		foreach (split(' ',$env{'keywords'}))
@@ -316,12 +338,15 @@ sub execute
 	$where_category="" unless $env{'article_cat.ID'};
 	if (!$env{'article_cat.ID'} && !$env{'article_cat.ID*'}){$where_category="AND ID_category=0";}
 	
+	$env{'sql_order_by'}=" ".$env{'sql_order_by'}." ";
+	$env{'sql_order_by'}=~s/ ID_entity / ID_entity_article /;
+	
 	my $sql=qq{
 		SELECT
 			view.*,
 			IF
 			(
-				(SELECT COUNT(*) FROM a401_article_view WHERE ID_entity_article=view.ID_entity_article AND status IN ('Y','N')) > 1,
+				(SELECT COUNT(*) FROM `$App::401::db_name`.a401_article_view WHERE ID_entity_article=view.ID_entity_article AND status IN ('Y','N')) > 1,
 				'Y','N'
 			) AS symlink,
 			IF
@@ -334,7 +359,7 @@ sub execute
 			 	'Y', 'N'
 			) AS datetime_status
 		FROM
-			a401_article_view AS view
+			`$App::401::db_name`.a401_article_view AS view
 		WHERE
 			$sql_where
 			$where_category
@@ -343,6 +368,7 @@ sub execute
 		LIMIT
 			$env{'sql_limit'}
 	};
+	
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
 	if ($sth0{'sth'})
@@ -361,7 +387,7 @@ sub execute
 			$XSGN{'NULL'}=~s|<%editor_(.*?)%>|$editor{$1}|g;
 			
 			# check relations
-			my $relation=(App::160::SQL::get_relations(
+			foreach my $relation (App::160::SQL::get_relations(
 				'db_name' => $App::401::db_name,
 				'l_prefix' => 'a401',
 				'l_table' => 'article',
@@ -370,26 +396,13 @@ sub execute
 #				'r_prefix' => "a501",
 #				'r_table' => "image",
 				'status' => "Y"
-				))[0];
-			if ($relation->{'ID'})
+			))
 			{
 				$XSGN{'NULL'}=~s|<%relation_status%>|Y|g;
-			}
-			
-			# check relations
-			my $relation=(App::160::SQL::get_relations(
-				'db_name' => $App::401::db_name,
-				'l_prefix' => 'a401',
-				'l_table' => 'article',
-				'l_ID_entity' => $db0_line{'ID_entity_article'},
-#				'rel_type' => $env{'rel_type'},
-				'r_prefix' => "a541",
-				'r_table' => "file",
-				'status' => "Y"
-				))[0];
-			if ($relation->{'ID'})
-			{
-				$XSGN{'NULL'}=~s|<%attachment_status%>|Y|g;
+				if ($relation->{'r_prefix'} eq "a541" && $relation->{'r_table'} eq "file")
+				{$XSGN{'NULL'}=~s|<%attachment_status%>|Y|g;}
+				if ($relation->{'r_prefix'} eq "a821" && $relation->{'r_table'} eq "discussion")
+				{$XSGN{'NULL'}=~s|<%discussion_status%>|Y|g;}
 			}
 			
 			# check relations
@@ -398,7 +411,7 @@ sub execute
 				$XSGN{'NULL'}=~s|<%keywords_status%>|Y|g;
 			}
 			
-			$XSGN{'NULL'}=~s|<%size%>|TOM::Text::format::bytes(length($db0_line{'body'}))|ge;
+			$XSGN{'NULL'}=~s|<%size%>|TOM::Text::format::bytes(length($db0_line{'abstract'}.$db0_line{'body'}))|ge;
 			
 			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
 		}
