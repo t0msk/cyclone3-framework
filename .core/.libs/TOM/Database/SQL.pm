@@ -20,7 +20,7 @@ use TOM::Database::SQL::cache;
 
 our $debug=0;
 our $logquery=1;
-our $logquery_long=5;
+our $logquery_long=2;
 our $query_long_autocache=0.01; # less availability than Memcached
 
 =head1 FUNCTIONS
@@ -128,6 +128,13 @@ sub execute
 	my $SQL=shift;
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::execute()",'namespace'=>"SQL",'quiet' => $env{'quiet'});
+	
+	# when I'm sometimes really wrong ;)
+	$env{'slave'}=$env{'slave'} || $env{'-slave'};
+	$env{'cache'}=$env{'cache'} || $env{'-cache'};
+	$env{'cache_auto'}=$env{'cache_auto'} || $env{'-cache_auto'};
+	# no, TOM::Database::SQL::cache, changes 1s to default value
+	#if ($env{'cache'} == 1){$env{'cache'}=60}; # default is 60 seconds
 	
 	my %output;
 	
