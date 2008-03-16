@@ -50,7 +50,7 @@ print HND_weblog <<"HEAD";
  <domain>$host</domain>
  <domain_sub>$tom::H</domain_sub>
  <IP>$main::ENV{REMOTE_ADDR}</IP>
-HEAD;
+HEAD
 
 print HND_weblog "
  <IDhash>".($main::USRM{'ID_user'} || $main::USRM{'IDhash'})."</IDhash>
