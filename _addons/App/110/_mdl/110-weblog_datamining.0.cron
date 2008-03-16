@@ -209,7 +209,7 @@ sub execute
 								WHERE
 									ID='$ID'
 								LIMIT 1
-							});
+							},'quiet'=>1);
 							
 						}
 						
