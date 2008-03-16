@@ -226,7 +226,8 @@ sub execute
 		'r_prefix' => $env{'r_prefix'} || $main::FORM{'r_prefix'} || $main::RPC->{'r_prefix'},
 		'r_table' => $env{'r_table'}, # this value can be send as undefined
 		'r_ID_entity' => $env{'r_ID_entity'} || $main::FORM{'r_ID_entity'} || $main::RPC->{'r_ID_entity'},
-		'status' => $env{'status'} || $main::FORM{'status'} || $main::RPC->{'status'}
+		'status' => $env{'status'} || $main::FORM{'status'} || $main::RPC->{'status'},
+		'limit' => 1000
 		))
 	{
 		my $null=$XSGN{'ITEM'};
