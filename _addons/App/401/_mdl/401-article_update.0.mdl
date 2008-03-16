@@ -167,6 +167,7 @@ sub execute
 				}
 			}
 		}
+		# only firstname defined
 		else
 		{
 			my $sql=qq{
@@ -228,6 +229,8 @@ sub execute
 				else
 				{
 					# conflict!!! - this login already exist
+					my %db0_line=$sth0{'sth'}->fetchhash();
+					$columns{'article_ent.ID_author'}=$db0_line{'ID_user'};
 				}
 			}
 		}
@@ -237,7 +240,7 @@ sub execute
 	$columns{'article_attrs.name'}=$main::RPC->{'article_attrs.name'}
 		if $main::RPC->{'article_attrs.name'};
 	$columns{'article_content.subtitle'}=$main::RPC->{'article_content.subtitle'}
-		if $main::RPC->{'article_content.subtitle'};
+		if exists $main::RPC->{'article_content.subtitle'};
 		
 		
 	$columns{'article_attrs.datetime_start'}=$main::RPC->{'article_attrs.datetime_start'}
@@ -269,6 +272,14 @@ sub execute
 	
 	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
 	$XSGN{'TMP'}=~s|<%ID%>|$env{'article.ID'}|g;
+	
+	my %data=App::401::functions::article_item_info(
+		'article.ID' => $env{'article.ID'},
+		'article_attrs.ID_category' => $env{'article_attrs.ID_category'}
+	);
+	my $item=$XSGN{'item'};
+	$item=~s|<%(.*?)%>|$data{$1}|g;
+	$XSGN{'TMP'}=~s|<#item#>|$item|;
 	
 	return 1;
 }
