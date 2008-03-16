@@ -232,25 +232,51 @@ sub get_QUERY_STRING
 	{
 		next unless $_;
 		my ($name,$value)=split('=',$_);
+		
+		# NAME
+		
+		utf8::encode($name);
+		utf8::decode($name);
+		# su tu UTF-8 sekvencie
+		if ($name=~/%(C3|C4|C5)%([0-9A-Fa-f]{2})/i)
+		{
+			main::_log("utf-8 sequence") unless $env{'quiet'};
+			utf8::encode($name);
+			TOM::Net::URI::URL::url_decode_($name);
+			utf8::decode($name);
+		}
+		# su tu ISO-8859-2 sekvencie
+		elsif ($name=~/%([0-9A-Fa-f]{2})/)
+		{
+			main::_log("iso-8859-2 sequence") unless $env{'quiet'};
+			utf8::encode($name);
+			TOM::Net::URI::URL::url_decode_($name);
+			$name = $ISO2_UTF->convert($name);
+			utf8::decode($name);
+		}
+		else
+		{
+			# decode only '+'
+			$name=~s|\+| |g;
+		}
+		
+		# VALUE
+		
 		utf8::encode($value);
 		utf8::decode($value);
-		
 		# su tu UTF-8 sekvencie
 		if ($value=~/%(C3|C4|C5)%([0-9A-Fa-f]{2})/i)
 		{
 			main::_log("utf-8 sequence") unless $env{'quiet'};
 			utf8::encode($value);
-			#$value=~s/%([0-9A-Fa-f]{2})/pack("C",hex($1))/eg;
 			TOM::Net::URI::URL::url_decode_($value);
 			utf8::decode($value);
 		}
-		
 		# su tu ISO-8859-2 sekvencie
 		elsif ($value=~/%([0-9A-Fa-f]{2})/)
 		{
 			main::_log("iso-8859-2 sequence") unless $env{'quiet'};
 			utf8::encode($value);
-			#$value=~s/%([0-9A-Fa-f]{2})/pack("C",hex($1))/eg;
 			TOM::Net::URI::URL::url_decode_($value);
 			$value = $ISO2_UTF->convert($value);
 			utf8::decode($value);
