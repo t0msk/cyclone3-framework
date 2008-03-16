@@ -34,7 +34,7 @@ while(1)
 		my $host;
 		$p->{'cmndline'}=~/pwd=(.*)/;
 		my $pwd=$1;
-			$pwd=~s|^/www/TOM/||;
+			$pwd=~s|^.*?/TOM/||;
 			$pwd=~s| $||g;
 		
 		foreach (split('/',$pwd))
