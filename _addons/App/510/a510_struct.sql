@@ -17,7 +17,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video` (
   PRIMARY KEY  (`ID`,`datetime_create`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID` (`ID`),
-  KEY `datetime_rec_start` (`datetime_rec_start`)
+  KEY `datetime_rec_start` (`datetime_rec_start`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -51,9 +52,11 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_attrs` (
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   KEY `ID_entity` (`ID_entity`),
+  KEY `ID_category` (`ID_category`),
   KEY `ID` (`ID`),
   KEY `name` (`name`),
   KEY `lng` (`lng`),
+  KEY `order_id` (`order_id`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -80,12 +83,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part` (
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
   `part_id` mediumint(8) unsigned NOT NULL default '0',
   `datetime_create` datetime NOT NULL,
+  `visits` int(10) unsigned NOT NULL,
   `process_lock` char(1) character set ascii NOT NULL default 'N',
   `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID` (`ID`),
+  KEY `visits` (`visits`),
   KEY `part_id` (`part_id`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -97,6 +102,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_j` (
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
   `part_id` mediumint(8) unsigned NOT NULL default '0',
   `datetime_create` datetime NOT NULL,
+  `visits` int(10) unsigned NOT NULL,
   `process_lock` char(1) character set ascii NOT NULL default 'N',
   `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -435,6 +441,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 		video.posix_perms,
 		
 		video_attrs.name,
+		video_attrs.name_url,
 		video_attrs.description,
 		video_attrs.order_id,
 		video_attrs.lng,
@@ -442,6 +449,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 		video_part_attrs.name AS part_name,
 		video_part_attrs.description AS part_description,
 		video_part.part_id AS part_id,
+		video_part.visits,
 		video_part_attrs.lng AS part_lng,
 		
 		video_part_file.video_width,
@@ -450,6 +458,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 		video_part_file.length,
 		video_part_file.file_size,
 		video_part_file.file_ext,
+		video_part_file.file_alt_src,
 		
 		CONCAT(video_format.ID,'/',SUBSTR(video_part_file.ID,1,4),'/',video_part_file.name,'.',video_part_file.file_ext) AS file_part_path,
 		
