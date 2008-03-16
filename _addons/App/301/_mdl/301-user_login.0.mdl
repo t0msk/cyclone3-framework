@@ -264,6 +264,17 @@ sub execute
 	if ($main::USRM{'logged'} eq "Y" && $env{'url'})
 	{
 		$main::location=$env{'url'};
+		if ($env{'url_session'})
+		{
+			if ($main::location=~/\/$/)
+			{
+				$main::location.='?ID_session='.$main::USRM{'ID_session'}.'&ID_user='.$main::USRM{'ID_user'};
+			}
+			else
+			{
+				$main::location.='&ID_session='.$main::USRM{'ID_session'}.'&ID_user='.$main::USRM{'ID_user'};
+			}
+		}
 	}
 	
 	return 1
