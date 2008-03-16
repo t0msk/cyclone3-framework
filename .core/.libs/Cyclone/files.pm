@@ -130,6 +130,8 @@ our @setit_F=
 (
 	['\.svn'                           ,".svn files"                  ,"444",""],
 	
+	['fdetect'                         ,".svn files"                  ,"777",""],
+	
 	['^_temp/_Inline'                  ,"global Inline"               ,"777","$user_www:$group"],
 	['^_temp'                          ,"global _temp"                ,"",""],
 	
