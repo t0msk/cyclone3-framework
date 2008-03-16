@@ -149,7 +149,7 @@ sub execute
 	{
 		my %data=App::020::SQL::functions::get_ID(
 			'db_h'    => 'main',
-			'db_name' => $TOM::DB{'main'}{'name'},
+			'db_name' => $App::510::db_name,
 			'tb_name' => 'a510_video_cat',
 			'ID'      => $env{'ID'},
 			'columns' => 
@@ -246,7 +246,7 @@ sub execute
 			SELECT
 				ID
 			FROM
-				a510_video_cat
+				`$App::510::db_name`.a510_video_cat
 			WHERE $where AND ID_charindex LIKE '$from%'
 		};
 		my %sth0=TOM::Database::SQL::execute($sql);
@@ -304,7 +304,7 @@ sub execute
 			lng,
 			status
 		FROM
-			a510_video_cat
+			`$App::510::db_name`.a510_video_cat
 $where
 		ORDER BY
 			$env{'db_order'}
@@ -377,7 +377,7 @@ $where
 			foreach my $node (App::020::SQL::functions::tree::get_path(
 				$entity->{'ID'},
 				'db_h'    => 'main',
-				'db_name' => $TOM::DB{'main'}{'name'},
+				'db_name' => $App::510::db_name,
 				'tb_name' => 'a510_video_cat'
 			))
 			{
@@ -421,6 +421,7 @@ $where
 				my %sth1=TOM::Database::SQL::execute($sql);
 				if (my %db1_line=$sth1{'sth'}->fetchhash())
 				{
+					$XSGN{'NULL'}=~s|<%itemcount%>||g unless $db1_line{'itemcount'};
 					$XSGN{'NULL'}=~s|<%itemcount%>|$db1_line{'itemcount'}|g;
 				}
 				else
