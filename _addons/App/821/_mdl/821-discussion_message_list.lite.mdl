@@ -102,6 +102,10 @@ sub execute
 	my $where;
 	$where="AND ID_discussion='$env{'discussion.ID'}'" if $env{'discussion.ID'};
 	$where="" unless $env{'discussion.ID'};
+	if (!$env{'discussion.ID'})
+	{
+		return 1;
+	}
 	
 	if ($env{'keywords'})
 	{
@@ -130,6 +134,11 @@ sub execute
 	};
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+	
+	$XSGN{'TMP'}=~s|<%count%>|$sth0{'rows'}|g;
+	
+	my $sql_failure=0;
+	
 	if ($sth0{'sth'})
 	{
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
@@ -159,10 +168,35 @@ sub execute
 	}
 	else
 	{
+		$sql_failure=1;
 		main::_log("can't select");
 	}
 	
-	
+	if(!$sth0{'rows'})
+	{
+		if($sql_failure)
+		{
+			if($XSGN{'TMP_failure_no-data'})
+			{
+				$XSGN{'TMP'} = $XSGN{'TMP_failure_no-data'};
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		else
+		{
+			if($XSGN{'TMP_no-data'})
+			{
+				$XSGN{'TMP'} = $XSGN{'TMP_no-data'};
+			}
+			else
+			{
+				return 0;
+			}
+		}
+	}
 	
 	return 1;
 }

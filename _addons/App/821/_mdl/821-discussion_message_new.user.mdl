@@ -46,9 +46,13 @@ sub execute
 	{
 		$XSGN{'TMP'}=~s|<#user#>|$XSGN{'user-logged'}|;
 	}
-	else
+	elsif ($main::USRM{'ID_user'})
 	{
 		$XSGN{'TMP'}=~s|<#user#>|$XSGN{'user-anonymous'}|;
+	}
+	else
+	{
+		$XSGN{'TMP'}=~s|<#user#>|$XSGN{'user-none'}|;
 	}
 	
 	
@@ -102,13 +106,55 @@ sub execute
 		
 		my %columns;
 		
+		my $user=TOM::Security::form::sql_escape($main::FORM{'user'});
+		
 		if ($main::USRM{'logged'} eq "Y")
 		{
 			$columns{'posix_owner'}="'".$main::USRM{'ID_user'}."'";
 		}
 		else
 		{
-			$columns{'owner_anonymous_name'}="'".(TOM::Security::form::sql_escape($main::FORM{'user'}))."'";
+			$columns{'owner_anonymous_name'}="'".($user)."'";
+		}
+		
+		my $name=TOM::Security::form::sql_escape($main::FORM{'name'});
+		my $body=TOM::Security::form::sql_escape($main::FORM{'message'});
+		
+		my $sql=qq{
+			SELECT
+				ID
+			FROM
+				`$App::821::db_name`.a821_discussion_message
+			WHERE
+				name LIKE '$name' AND
+				body LIKE '$body' AND
+				ID_discussion = '$env{'discussion.ID'}'
+			LIMIT 1;
+		};
+		my %sth0=TOM::Database::SQL::execute($sql);
+		if ($sth0{'rows'})
+		{
+			return 1;
+		}
+		
+		if ($main::USRM{'logged'} ne 'Y')
+		{
+			my $sql=qq{
+				SELECT
+					ID
+				FROM
+					`$App::821::db_name`.a821_discussion_message
+				WHERE
+					owner_anonymous_name='$user' AND
+					ID_discussion = '$env{'discussion.ID'}' AND
+					datetime_post >= DATE_SUB(NOW(), INTERVAL 3 MINUTE)
+				LIMIT 1;
+			};
+			my %sth0=TOM::Database::SQL::execute($sql);
+			if ($sth0{'rows'})
+			{
+				return 1;
+			}
 		}
 		
 		my $ID=App::020::SQL::functions::tree::new(
@@ -119,8 +165,8 @@ sub execute
 			#'parent_ID'   => $env{'ID_parent'},
 			'columns' =>
 			{
-				'name' => "'".(TOM::Security::form::sql_escape($main::FORM{'name'}))."'",
-				'body' => "'".(TOM::Security::form::sql_escape($main::FORM{'message'}))."'",
+				'name' => "'".($name)."'",
+				'body' => "'".($body)."'",
 				'owner_IP' => "'".$main::ENV{'REMOTE_ADDR'}."'",
 				'ID_discussion' => $env{'discussion.ID'},
 				'datetime_post' => 'NOW()',

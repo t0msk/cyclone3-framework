@@ -318,6 +318,7 @@ sub execute
 			};
 			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
 			my %db1_line=$sth1{'sth'}->fetchhash();
+			$db1_line{'cnt'}='' unless $db1_line{'cnt'};
 			$XSGN{'NULL'}=~s|<%messages%>|$db1_line{'cnt'}|g;
 			
 			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
