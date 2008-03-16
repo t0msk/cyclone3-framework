@@ -6,7 +6,7 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-use App::020::_init;
+use App::401::_init;
 
 =head1 NAME
 
@@ -319,7 +319,7 @@ $where
 	my $level_prev;
 	my $level_next;
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
 	if ($sth0{'sth'})
 	{
 		# naplnim si @tree s polozkami zo stromu preto aby som mohol v dalsom
@@ -373,24 +373,25 @@ $where
 			
 			$path[$level]=$entity->{'name_url'};
 			
-			my $path_;
-			foreach my $node (App::020::SQL::functions::tree::get_path(
-				$entity->{'ID'},
-				'db_h'    => 'main',
-				'db_name' => $App::401::db_name,
-				'tb_name' => 'a401_article_cat'
-			))
-			{
-				$path_.='/'.$node->{'name_url'};
-			}
-			$path_=~s|^/||;
-			main::_log("path_='$path_'");
+#			my $path_;
+#			foreach my $node (App::020::SQL::functions::tree::get_path(
+#				$entity->{'ID'},
+#				'db_h'    => 'main',
+#				'db_name' => $App::401::db_name,
+#				'tb_name' => 'a401_article_cat'
+#			))
+#			{
+#				$path_.='/'.$node->{'name_url'};
+#			}
+#			$path_=~s|^/||;
+#			main::_log("path_='$path_'");
 			
 			$XSGN{'NULL'}=$XSGN{'ITEM'};
 			
 			if (
 					(($env{'current_ID'} eq $entity->{'ID'})
-					|| ($env{'current_path_url'} eq $path_))
+#					|| ($env{'current_path_url'} eq $path_)
+					)
 					&& $XSGN{'ITEM-current'}
 			)
 			{
@@ -404,7 +405,7 @@ $where
 			$XSGN{'NULL'}=~s|<%name_url%>|$entity->{'name_url'}|g;
 			$XSGN{'NULL'}=~s|<%datetime_create%>|$entity->{'datetime_create'}|g;
 			$XSGN{'NULL'}=~s|<%status%>|$entity->{'status'}|g;
-			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
+#			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
 			
 			if ($env{'itemcount'})
 			{
@@ -418,14 +419,15 @@ $where
 						ID_category = $entity->{'ID'}
 						AND status IN ('Y','N')
 				};
-				my %sth1=TOM::Database::SQL::execute($sql);
+				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'_cache'=>30);
 				if (my %db1_line=$sth1{'sth'}->fetchhash())
 				{
+					$XSGN{'NULL'}=~s|<%itemcount%>||g unless $db1_line{'itemcount'};
 					$XSGN{'NULL'}=~s|<%itemcount%>|$db1_line{'itemcount'}|g;
 				}
 				else
 				{
-					$XSGN{'NULL'}=~s|<%itemcount%>|0|g;
+					$XSGN{'NULL'}=~s|<%itemcount%>||g;
 				}
 				
 			}
