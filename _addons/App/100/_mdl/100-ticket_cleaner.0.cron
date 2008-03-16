@@ -51,11 +51,11 @@ sub execute
 				TOM.a100_ticket_event
 			WHERE
 				ID_ticket=$db0_line{'ID'}
-				AND datetime_create>FROM_UNIXTIME($long)
+				AND datetime_create > DATE_SUB(NOW(),INTERVAL 2 WEEK)
 				AND status='Y'
 			LIMIT 1
 		};
-		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
 		
 		if ($sth1{'sth'}->fetchhash())
 		{
@@ -71,7 +71,7 @@ sub execute
 		
 	}
 	
-	
+#	return 1;
 	# remove old closed events
 	
 	my $long=$main::time_current-86400*31*3;
@@ -82,7 +82,7 @@ sub execute
 		FROM
 			TOM.a100_ticket_event
 		WHERE
-			datetime_create<FROM_UNIXTIME($long)
+			datetime_create < DATE_SUB(NOW(),INTERVAL 3 MONTH)
 			AND status='N'
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
@@ -108,7 +108,7 @@ sub execute
 		FROM
 			TOM.a100_ticket
 		WHERE
-			datetime_create<FROM_UNIXTIME($long)
+			datetime_create < DATE_SUB(NOW(),INTERVAL 1 YEAR)
 			AND status='N'
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
