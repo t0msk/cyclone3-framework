@@ -38,6 +38,7 @@ HTML::Parser
 use App::401::_init;
 use base "HTML::Parser";
 
+our $cache=60;
 our $tpl=new TOM::Template(
 	'level' => "auto",
 	'addon' => "a401",
@@ -147,12 +148,17 @@ sub start
 						ID_format=$vars{'ID_format'}
 					LIMIT 1
 				};
-				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto'=>$cache);
 				my %db0_line=$sth0{'sth'}->fetchhash();
 				if ($db0_line{'ID'})
 				{
-					$attr->{'src'}=$tom::H_media.'/a501/image/file/'.$db0_line{'file_path'};
+					$attr->{'src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
+					main::_log("found image src='$attr->{'src'}'");
 					$attr->{'alt'}=$db0_line{'name'};
+					
+					$attr->{'width_forced'}=$attr->{'width'};
+					$attr->{'height_forced'}=$attr->{'height'};
+					
 					$attr->{'width'}=$db0_line{'image_width'} unless $attr->{'width'};
 					$attr->{'height'}=$db0_line{'image_height'} unless $attr->{'height'};
 					
@@ -172,6 +178,7 @@ sub start
 		}
 		elsif ($attr->{'id'}=~/^a510_video:(.*)$/)
 		{
+			$self->{'count'}->{'video'}++;
 			use App::510::_init;
 			my %vars=_parse_id($1);
 			$vars{'ID_format'}=$App::510::video_format_full_ID unless $vars{'ID_format'};
@@ -192,17 +199,33 @@ sub start
 						lng='$tom::lng'
 					LIMIT 1
 				};
-				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto'=>$cache);
 				my %db0_line=$sth0{'sth'}->fetchhash();
 				if ($db0_line{'ID'})
 				{
 					$attr->{'src'}='video';
-					$attr->{'width'}=$db0_line{'video_width'} unless $attr->{'width'};
-					$attr->{'height'}=$db0_line{'video_height'} unless $attr->{'height'};
+					#$attr->{'width'}=$db0_line{'video_width'} unless $attr->{'width'};
+					#$attr->{'height'}=$db0_line{'video_height'} unless $attr->{'height'};
 					if (!$attr->{'alt'})
 					{
 						$attr->{'alt'}=$db0_line{'part_name'} || $db0_line{'name'};
 					}
+					
+					# override default tag representation
+					$out_full=
+						$self->{'entity'}{'a510_video.'.$out_cnt}
+						|| $self->{'entity'}{'a510_video'}
+						|| $tpl->{'entity'}{'parser.a510_video.'.$out_cnt}
+						|| $tpl->{'entity'}{'parser.a510_video'}
+						# or as image
+						|| $self->{'entity'}{'a501_image.'.$out_cnt}
+						|| $self->{'entity'}{'a501_image'}
+						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
+						|| $tpl->{'entity'}{'parser.a501_image'}
+						|| $out_full;
+					
+					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+					$out_full=~s|<%attr_height_plus%>|$attr->{'height'}+60|eg;
 					
 					# find thumbnail image to first part
 					my $relation=(App::160::SQL::get_relations(
@@ -234,39 +257,24 @@ sub start
 								ID_format=$img_ID_format
 							LIMIT 1
 						};
-						my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+						my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto'=>$cache);
 						my %db1_line=$sth1{'sth'}->fetchhash();
 						if ($db1_line{'ID'})
 						{
-							$attr->{'src'}=$tom::H_media.'/a501/image/file/'.$db1_line{'file_path'};
+							$attr->{'src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+							$out_full=~s|<%img\.db_(.*?)%>|$db1_line{$1}|g;
 						}
-						
-						# override default tag representation
-						$out_full=
-							$self->{'entity'}{'a510_video.'.$out_cnt}
-							|| $self->{'entity'}{'a510_video'}
-							|| $tpl->{'entity'}{'parser.a510_video.'.$out_cnt}
-							|| $tpl->{'entity'}{'parser.a510_video'}
-							# or as image
-							|| $self->{'entity'}{'a501_image.'.$out_cnt}
-							|| $self->{'entity'}{'a501_image'}
-							|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
-							|| $tpl->{'entity'}{'parser.a501_image'}
-							|| $out_full;
-						
-						$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
-						$out_full=~s|<%db_img_(.*?)%>|$db1_line{$1}|g;
-						$out_full=~s|<%attr_height_plus%>|$attr->{'height'}+60|eg;
 						
 					}
 					
 				}
 				
 			}
-			
+			$self->{'out_var'}->{'img.'.$out_cnt.'.src'}=$attr->{'src'};
 		} # if $attr->{'id'}=~/
 		elsif ($attr->{'id'}=~/^a510_video_part:(.*)$/)
 		{
+			$self->{'count'}->{'video'}++;
 			use App::510::_init;
 			my %vars=_parse_id($1);
 			$vars{'ID_format'}=$App::510::video_format_full_ID unless $vars{'ID_format'};
@@ -286,10 +294,11 @@ sub start
 						lng='$tom::lng'
 					LIMIT 1
 				};
-				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto'=>$cache);
 				my %db0_line=$sth0{'sth'}->fetchhash();
 				if ($db0_line{'ID'})
 				{
+					main::_log("found video_part");
 					$attr->{'src'}='video_part';
 					$attr->{'width'}=$db0_line{'video_width'} unless $attr->{'width'};
 					$attr->{'height'}=$db0_line{'video_height'} unless $attr->{'height'};
@@ -297,6 +306,22 @@ sub start
 					{
 						$attr->{'alt'}=$db0_line{'part_name'} || $db0_line{'name'};
 					}
+					
+					# override default tag representation
+					$out_full=
+						$self->{'entity'}{'a510_video_part.'.$out_cnt}
+						|| $self->{'entity'}{'a510_video_part'}
+						|| $tpl->{'entity'}{'parser.a510_video_part.'.$out_cnt}
+						|| $tpl->{'entity'}{'parser.a510_video_part'}
+						# or as image
+						|| $self->{'entity'}{'a501_image.'.$out_cnt}
+						|| $self->{'entity'}{'a501_image'}
+						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
+						|| $tpl->{'entity'}{'parser.a501_image'}
+						|| $out_full;
+					
+					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+					$out_full=~s|<%attr_height_plus%>|$db0_line{'video_height'}+20|eg;
 					
 					my $relation=(App::160::SQL::get_relations(
 						'l_prefix' => 'a510',
@@ -310,12 +335,13 @@ sub start
 					))[0];
 					if ($relation->{'ID'})
 					{
-						main::_log("find a501_image ID='$relation->{'r_ID_entity'}'");
 						
 						my $img_ID_format=
 							$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
 							|| $self->{'config'}->{'a501_image_file.ID_format'}
 							|| $App::501::image_format_thumbnail_ID;
+							
+						main::_log("find a501_image ID_entity='$relation->{'r_ID_entity'}' ID_format='$img_ID_format'");
 						
 						my $sql=qq{
 							SELECT
@@ -327,36 +353,25 @@ sub start
 								ID_format=$img_ID_format
 							LIMIT 1
 						};
-						my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+						my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto'=>1);
 						my %db1_line=$sth1{'sth'}->fetchhash();
 						if ($db1_line{'ID'})
 						{
-							$attr->{'src'}=$tom::H_media.'/a501/image/file/'.$db1_line{'file_path'};
+							$attr->{'src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+							main::_log("found thumbnail image src=".$attr->{'src'});
+							$out_full=~s|<%img\.db_(.*?)%>|$db1_line{$1}|g;
 						}
-						
-						# override default tag representation
-						$out_full=
-							$self->{'entity'}{'a510_video_part.'.$out_cnt}
-							|| $self->{'entity'}{'a510_video_part'}
-							|| $tpl->{'entity'}{'parser.a510_video_part.'.$out_cnt}
-							|| $tpl->{'entity'}{'parser.a510_video_part'}
-							# or as image
-							|| $self->{'entity'}{'a501_image.'.$out_cnt}
-							|| $self->{'entity'}{'a501_image'}
-							|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
-							|| $tpl->{'entity'}{'parser.a501_image'}
-							|| $out_full;
-						
-						$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
-						$out_full=~s|<%db_img_(.*?)%>|$db1_line{$1}|g;
-						$out_full=~s|<%attr_height_plus%>|$db0_line{'video_height'}+20|eg;
+						else
+						{
+							main::_log("not found thumbnail image",1);
+						}
 						
 					}
 					
 				}
 				
 			}
-			
+			$self->{'out_var'}->{'img.'.$out_cnt.'.src'}=$attr->{'src'};
 		} # if $attr->{'id'}=~/
 	
 	} # if tag=''
@@ -397,7 +412,7 @@ sub start
 	
 	if ($out_tag)
 	{
-		main::_log("added to out_tag $out_tag.$out_cnt");
+		main::_log("added to out_tag '$out_tag.$out_cnt'");
 		$self->{'out_tag'}->{$out_tag.'.'.$out_cnt}=$out_full;
 	}
 	
