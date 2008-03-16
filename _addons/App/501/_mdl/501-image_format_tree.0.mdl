@@ -64,6 +64,10 @@ B<current_ID> - current ID of item (to highlight)
 
 B<current_path_url> - current path_url (to highlight)
 
+=item *
+
+B<name_ignore> - skip item with this name
+
 =back
 
 =cut
@@ -413,7 +417,13 @@ $where
 				}
 			}
 			
-			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+			if ($entity->{'name'} eq $env{'name_ignore'})
+			{
+			}
+			else
+			{
+				$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
+			}
 			
 			if ($env{'tree'})
 			{
