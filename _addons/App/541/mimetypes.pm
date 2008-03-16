@@ -66,6 +66,7 @@ our %mime=(
 
 our @filetype_ext=
 (
+	['Apple QuickTime movie' => 'mov'],
 	['Macromedia Flash Video' => 'flv'],
 	['setgid sticky Microsoft ASF' => 'wmv'],
 	['ISO Media, MPEG v4 system, version 1' => 'mp4'],
