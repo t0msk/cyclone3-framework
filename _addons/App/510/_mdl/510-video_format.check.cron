@@ -129,11 +129,24 @@ sub execute
 			FROM
 				`$App::510::db_name`.a510_video_part AS video_part
 			LEFT JOIN `$App::510::db_name`.a510_video_part_file AS file ON
-			(video_part.ID = file.ID_entity AND file.ID_format = $db0_line{'ID'})
+			(
+				video_part.ID = file.ID_entity AND file.ID_format = $db0_line{'ID'}
+			)
+			LEFT JOIN `$App::510::db_name`.a510_video AS video ON
+			(
+				video.ID_entity = video_part.ID_entity
+			)
+			LEFT JOIN `$App::510::db_name`.a510_video_attrs AS video_attrs ON
+			(
+				video_attrs.ID_entity = video.ID_entity
+			)
 			LEFT JOIN `$App::510::db_name`.a510_video_format AS format ON
-			(format.ID_entity = $db0_line{'ID'})
+			(
+				format.ID_entity = $db0_line{'ID'}
+			)
 			WHERE
-				video_part.status IN ('Y','N') AND
+				video_part.status IN ('Y','N','W') AND
+				video_attrs.status IN ('Y','N','W') AND
 				video_part.process_lock = 'N' AND
 				(file.ID IS NULL OR (format.datetime_create > file.datetime_create))
 			ORDER BY
@@ -144,7 +157,7 @@ sub execute
 		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		while (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
-			main::_log("video_part ID='$db1_line{'video_part_ID'}' with missing format '$db0_line{'name'}'");
+			main::_log("video_part ID='$db1_line{'video_part_ID'}' with missing/old format '$db0_line{'name'}'");
 			
 			# check this file again if is not already processed by parallel process
 			my $sql=qq{
@@ -158,7 +171,7 @@ sub execute
 				(format.ID_entity = $db0_line{'ID'})
 				WHERE
 					video_part.ID = $db1_line{'video_part_ID'} AND
-					video_part.status IN ('Y','N') AND
+					video_part.status IN ('Y','N','W') AND
 					(file.ID IS NULL OR (format.datetime_create > file.datetime_create))
 				LIMIT
 					1
@@ -168,7 +181,7 @@ sub execute
 			if (!$db2_line{'ID'}){main::_log("this video_part_file.ID='' is already processed");next;}
 			
 			# lock this file encoding
-			my $lock=new TOM::lock("a510:encode video_part.ID=$db1_line{'video_part_ID'} video_format.ID=$db0_line{'ID'}")
+			my $lock=new TOM::lock( $App::510::db_name . "::a510:encode video_part.ID=$db1_line{'video_part_ID'} video_format.ID=$db0_line{'ID'}")
 			|| do {main::_log("this video_part_file.ID='$db1_line{'video_part_ID'}' is already processing");next};
 			
 			App::510::functions::video_part_file_generate(
@@ -177,8 +190,6 @@ sub execute
 			);
 			
 		}
-		
-		next;
 		
 		# find parrent format
 		my %format_parent=App::020::SQL::functions::tree::get_parent_ID(
@@ -211,7 +222,7 @@ sub execute
 					file2.ID_format = $db0_line{'ID'}
 				)
 				WHERE
-					video_part.status IN ('Y','N') AND
+					video_part.status IN ('Y','N','W') AND
 					file1.status='Y' AND
 					file2.status='Y' AND
 					file1.datetime_create > file2.datetime_create
@@ -224,7 +235,7 @@ sub execute
 				main::_log("parent of video_file ID='$db1_line{'file2_ID'}' has been changed");
 				
 				# lock this file encoding
-				my $lock=new TOM::lock("a510:encode video_part.ID=$db1_line{'video_part_ID'} video_format.ID=$db0_line{'ID'}") 
+				my $lock=new TOM::lock($App::510::db_name."::a510:encode video_part.ID=$db1_line{'video_part_ID'} video_format.ID=$db0_line{'ID'}") 
 				|| do {
 					$encode++;
 					return 1 if $encode_max<=$encode;
@@ -236,7 +247,7 @@ sub execute
 					'video_format.ID' => $db0_line{'ID'}
 				);
 				
-				return 1;
+#				return 1;
 				
 			}
 			
