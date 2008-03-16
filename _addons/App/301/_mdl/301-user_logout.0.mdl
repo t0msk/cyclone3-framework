@@ -1,0 +1,136 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+301-user_logout.0.mdl
+
+=head1 DESCRIPTION
+
+Logout user from USRM
+
+=cut
+
+use App::301::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
+	
+	$env{'return'}=$tom::H_www unless $env{'return'};
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			TOM.a301_user_online
+		WHERE
+			ID_user='$main::USRM{'ID_user'}' AND
+			ID_session='$main::USRM{'ID_session'}'
+		LIMIT 1
+	},'log'=>1);
+	if (my %user=$sth0{'sth'}->fetchhash)
+	{
+		
+		if ($user{'logged'} eq "Y")
+		{
+			# MAM 2 MOZNOSTI :)
+			# BUD NASTAVIM LEN USERA NA offline, ale potom sa neprenesu statistiky,
+			# alebo to proste spravim sam, ze usera prenesiem :)
+			# ak ho prenesiem sam a zmazem z online a on je autolog, potom
+			# sa automaticky zas logne hned po refreshi :))
+			
+#			my %user0;
+#			$user0{'cookies'}="";
+#			
+#			my $cvml=new CVML(data=>$user{'cookies'});
+#			foreach (keys %{$cvml->{'hash'}})
+#			{
+#				$user0{'cookies'}{$_}=$cvml->{'hash'}{$_} if $_=~/^_/;
+#			}
+#			
+#			my %user0=&App::301::UserFind('ID_user'=>$main::USRM{'ID_user'});
+#			
+#			# get session data and store ich as cookies_system->{session}
+#			my $session=new CVML(data=>$user{'session'});
+#			my $cookies_system=new CVML(data=>$user0{'cookies_system'});
+#			%{$cookies_system->{'hash'}{'session'}}=%{$session->{'hash'}};
+#			my $cvml=CVML::structure::serialize(%{$cookies_system->{'hash'}});
+#			$cvml=~s|\'|\\'|g;
+			
+			TOM::Database::SQL::execute(qq{
+				UPDATE
+					TOM.a301_user
+				SET
+					datetime_last_login = '$user{datetime_login}',
+					requests_all = requests_all + $user{requests},
+					saved_cookies = '$user{cookies}',
+					saved_session = '$user{session}',
+					autolog = 'N'
+				WHERE
+					ID_user='$user{'ID_user'}' AND
+					domain='$tom::H_cookie'
+				LIMIT 1
+			});
+			
+			TOM::Database::SQL::execute(qq{
+				UPDATE
+					TOM.a301_user_online
+				SET
+					logged='N'
+				WHERE
+					ID_user='$user{'ID_user'}'
+				LIMIT 1
+			});
+			
+			# changing session
+			# not changing session, session is the same! I'm continue browsing the page
+			# undef $main::COOKIES{'_IDsession'};
+			
+			# destroy hidden variables of logged user
+			foreach (keys %{$main::USRM{'session'}})
+			{
+				delete $main::USRM{'session'}{$_};
+			}
+			$main::USRM{'logged'}='N';
+			
+			$XSGN{'TMP'}=$XSGN{'logout'};
+			
+			$main::H->rh("<!REFRESH!>","0; url=$env{'return'}");
+			$XSGN{TMP}=~s|<%LINK%>|$env{'return'}|g;
+			
+			if ($env{'relocate'})
+			{
+				$main::location=$env{'return'};
+			}
+		}
+		else
+		{
+			# ako sa chcem odhlasit ked niesom prihlaseny? :-o
+			$XSGN{'TMP'}=$XSGN{'notlogged'};
+			$main::H->rh("<!REFRESH!>","0; url=$env{'return'}");
+			$XSGN{TMP}=~s|<%LINK%>|$env{'return'}|g;
+		}
+	}
+	else
+	{
+	
+	}
+	
+	return 1
+}
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
