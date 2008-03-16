@@ -88,6 +88,8 @@ sub execute
 		return 1;
 	}
 	
+	alarm(0);
+	
 	my %columns;
 	
 	$columns{'video_attrs.name'}=$main::RPC->{'video_attrs.name'}
