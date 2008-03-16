@@ -98,7 +98,24 @@ sub CDATA
 {
 	my $text=shift;
 	
+	$text=~s|]]>|]]&gt;|g;
+	
 	return '<![CDATA['.$text.']]>';
+}
+
+
+sub html2jsvalue
+{
+	my $text=shift;
+	
+	$text=~s|\\|\\\\|gs;
+	$text=~s|"|\\"|gs;
+	$text=~s|\n| |gs;
+	$text=~s|\r| |gs;
+	#$text=~s|\015\012| |gs;
+	#$text=~s|\x0A| |gs;
+	
+	return '"'.$text.'"';
 }
 
 
