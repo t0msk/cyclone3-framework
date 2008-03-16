@@ -91,6 +91,14 @@ sub html_input_value_escape
 	return $val;
 }
 
+sub xml_escape
+{
+	my $val=shift;
+	$val=~s|<|&lt;|g;
+	$val=~s|>|&gt;|g;
+	return $val;
+}
+
 sub sql_escape
 {
 	my $sql=shift;

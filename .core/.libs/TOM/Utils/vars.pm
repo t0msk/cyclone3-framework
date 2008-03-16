@@ -108,6 +108,10 @@ our %replace_functions=
 	{
 		function => 'Int::charsets::encode::UTF8_ASCII($text)',
 	},
+	'xmlescape' =>
+	{
+		function => 'TOM::Security::form::xml_escape($text)',
+	},
 	'hive' =>
 	{
 		function => 'TOM::Security::form::html_input_value_escape($text)',
@@ -115,6 +119,10 @@ our %replace_functions=
 	'html2text' =>
 	{
 		function => 'TOM::Text::format::xml2plain($text)',
+	},
+	'html2jsvalue' =>
+	{
+		function => 'TOM::Text::format::html2jsvalue($text)',
 	},
 	'CDATA' =>
 	{
@@ -210,7 +218,7 @@ sub replace
 			$_=~s|<!TMP-$TMP!>|$value|;
 		}
 		
-		while ($_=~s|<@([a-zA-Z0-9_\-:]+)>(.*?)</@\1>|<!TMP-$TMP!>|)
+		while ($_=~s|<@([a-zA-Z0-9_\-:]+)>(.*?)</@\1>|<!TMP-$TMP!>|s)
 		{
 			my $function=$1;
 			my $text=$2;
@@ -218,7 +226,7 @@ sub replace
 			
 			my $cmd="\$text=".$replace_functions{$function}{'function'};
 			
-			main::_log("calling '$cmd'");
+			main::_log("calling '$cmd'") if $debug;
 			
 			eval $cmd;
 			
@@ -348,7 +356,8 @@ sub replace_sec
 			main::_log("[$tom::H] replacing variable '\$$var'",4,'secure',1);
 		}
 		
-		if ($var=~/(sub\{|do\{|&|\+|\*|\/|=|"|\||;)/)
+#		if ($var=~/(sub\{|do\{|&|\+|\*|\/|=|"|\||;)/)
+		if ($var=~/(sub\{|do\{|&|=|"|\||;)/)
 		{
 			main::_log("Unsecure variable replacement \"".
 			$var.
