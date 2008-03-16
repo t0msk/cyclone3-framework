@@ -355,14 +355,17 @@ sub execute
 			else
 			{
 				main::_log("file of video_part_file_j $db0_line{'file_path'} not exists",1);
-#				TOM::Database::SQL::execute(qq{
-#					DELETE FROM `$App::510::db_name`.`a510_video_part_file_j`
-#					WHERE
-#						ID=$db0_line{'ID'} AND
-#						name='$db0_line{'name'}' AND
-#						datetime_create='$db0_line{'datetime_create'}'
-#					LIMIT 1
-#				},'quiet'=>1);
+				if ($env{'delete'})
+				{
+					TOM::Database::SQL::execute(qq{
+						DELETE FROM `$App::510::db_name`.`a510_video_part_file_j`
+						WHERE
+							ID=$db0_line{'ID'} AND
+							name='$db0_line{'name'}' AND
+							datetime_create='$db0_line{'datetime_create'}'
+						LIMIT 1
+					},'quiet'=>1);
+				}
 			}
 			
 		}

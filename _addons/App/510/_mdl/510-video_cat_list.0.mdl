@@ -255,7 +255,7 @@ sub execute
 		foreach (split(' ',$env{'keywords'}))
 		{
 			next unless $_;
-			$sql_where.="name LIKE '%$_%' AND ";
+			$sql_where.="(name LIKE '%$_%' OR part_name LIKE '%$_%') AND ";
 		}
 		$sql_where=~s|AND $||;
 		$sql_where.=") ";
@@ -275,15 +275,13 @@ sub execute
 			`$App::510::db_name`.a510_video_view
 		WHERE
 			(
-				part_id=1 OR
-				part_id IS NULL
-			) AND
-			(
 				ID_format=$App::510::video_format_original_ID
 				OR ID_format IS NULL
 			) AND
 			$sql_where
 			$where_category
+		GROUP BY
+			ID_entity_video
 		ORDER BY
 			$env{'sql_order_by'}, datetime_rec_start DESC, datetime_create DESC
 		LIMIT
