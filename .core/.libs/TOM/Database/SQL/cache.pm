@@ -27,6 +27,8 @@ our $expiration=60;
 
 Cache constructor
 
+Nothing special, look into TOM::Database::SQL::execute() function
+
 =cut
 
 sub new
