@@ -10,6 +10,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_page` (
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
+  `alias_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `t_name` varchar(64) character set ascii NOT NULL default '',
   `t_keys` text NOT NULL, -- kluce uchovavane ako CVML
@@ -30,6 +31,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_page_j` (
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
+  `alias_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `t_name` varchar(64) character set ascii NOT NULL default '',
   `t_keys` text NOT NULL,

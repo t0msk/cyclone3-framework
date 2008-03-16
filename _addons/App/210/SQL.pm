@@ -171,7 +171,7 @@ sub page_get_default_ID
 		$where
 	LIMIT 1
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1,'slave'=>1);
 	if (!$sth0{'sth'})
 	{
 		main::_log("error",1);

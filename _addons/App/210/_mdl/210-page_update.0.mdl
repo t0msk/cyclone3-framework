@@ -140,6 +140,16 @@ sub execute
 		main::_log("set t_name=$columns{'t_name'}");
 	}
 	
+	if ($main::FORM{'name'})
+	{
+		$columns{'name'}="'".TOM::Security::form::sql_escape($main::FORM{'name'})."'";
+	}
+	
+	if (exists $main::FORM{'alias_url'})
+	{
+		$columns{'alias_url'}="'".TOM::Security::form::sql_escape($main::FORM{'alias_url'})."'";
+	}
+	
 	my $update=keys %columns;
 	
 	# nic nieje na update
@@ -150,7 +160,7 @@ sub execute
 		return 1;
 	}
 	
-	my $out=App::020::SQL::functions::update(
+	my $out=App::020::SQL::functions::tree::update(
 		'db_h' => "main",
 		'db_name' => $TOM::DB{'main'}{'name'},
 		'tb_name' => "a210_page",
