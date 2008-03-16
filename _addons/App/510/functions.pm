@@ -225,6 +225,7 @@ sub video_part_file_generate
 		'video_part.ID' => $video_part{'ID'},
 		'video_format.ID' => $format{'ID'},
 		'from_parent' => "Y",
+		'thumbnail_lock_ignore' => $env{'thumbnail_lock_ignore'}
 	) || do {$t->close();return undef};
 	
 	$t->close();
@@ -431,7 +432,9 @@ sub video_part_file_process
 			
 			
 			#main::_log("encoding to file '$temp_video->{'filename'}'");
-			my $cmd="/usr/bin/mencoder ".$env{'video1'}." -o ".($env{'o'} || $temp_video->{'filename'});
+			my $ff=$env{'video1'};
+			$ff=~s| |\\ |g;
+			my $cmd="/usr/bin/mencoder ".$ff." -o ".($env{'o'} || $temp_video->{'filename'});
 			$cmd="cd /www/TOM/_temp;/usr/bin/ffmpeg -y -i ".$env{'video1'} if $env{'encoder'} eq "ffmpeg";
 			
 			foreach (@encoder_env){$cmd.=" $_";}
@@ -860,7 +863,7 @@ sub video_add
 	if ($env{'video_attrs.ID'} &&
 	(
 		$env{'video_attrs.name'} ||
-		$env{'video_attrs.description'} ||
+		exists $env{'video_attrs.description'} ||
 		$env{'video_attrs.ID_category'}
 	))
 	{
@@ -869,7 +872,7 @@ sub video_add
 		$columns{'ID_category'}=$env{'video_attrs.ID_category'} if $env{'video_attrs.ID_category'};
 		$columns{'name'}="'".$env{'video_attrs.name'}."'" if $env{'video_attrs.name'};
 		$columns{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'video_attrs.name'})."'" if $env{'video_attrs.name'};
-		$columns{'description'}="'".$env{'video_attrs.description'}."'" if $env{'video_attrs.description'};
+		$columns{'description'}="'".$env{'video_attrs.description'}."'" if exists $env{'video_attrs.description'};
 		
 		App::020::SQL::functions::update(
 			'ID' => $env{'video_attrs.ID'},
@@ -1145,7 +1148,7 @@ Adds new file to video, or updates old
    'file' => '/path/to/file',
    'video_part.ID' => '',
    'video_format.ID' => '',
-   ''
+#   'thumbnail_lock_ignore' => 1 # regenerate thumbnail when locked
  )
 
 =cut
@@ -1203,9 +1206,9 @@ sub video_part_file_add
 			video.ID_format=$App::510::video_format_original_ID
 		LIMIT 1
 	};
-	my %sth0=TOM::Database::SQL::execute($sql);
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	my %video_db=$sth0{'sth'}->fetchhash();
-	main::_log("video.ID='$video_db{'ID'}' video.name='$video_db{'name'}'");
+	main::_log("video.ID='$video_db{'ID_video'}' video.name='$video_db{'name'}'");
 	$env{'from_parent'}='N' unless $env{'from_parent'};
 	
 	
@@ -1258,7 +1261,7 @@ sub video_part_file_add
 	# generate new unique hash
 	my $optimal_hash=
 		($env{'video.datetime_rec_start'} || $video_db{'datetime_rec_start'})
-		."-".($env{'video_attrs.name'} || $video_db{'name'} || $video_db{'ID'})
+		."-".($env{'video_attrs.name'} || $video_db{'name'} || $video_db{'ID_video'})
 		."-".$video_db{'part_id'}
 		."-".($env{'video_part_attrs.name'} || $video_db{'part_name'})
 		."-".$video_db{'ID_format'}
@@ -1277,10 +1280,11 @@ sub video_part_file_add
 	{
 		# generate thumbnail from full
 		my $rel;
-		
+		main::_log("checking if generate thumbnail");
 		my $tmpjpeg=new TOM::Temp::file('ext'=>'jpeg');
 		
-		if (!$env{'file_thumbnail'} && ($part{'thumbnail_lock'} eq 'N' ))
+		if (!$env{'file_thumbnail'} &&
+			($part{'thumbnail_lock'} eq 'N' || $env{'thumbnail_lock_ignore'}))
 		{
 			main::_log("generate thumbnail from 'full' video_format.name");
 			_video_part_file_thumbnail(
@@ -1355,13 +1359,30 @@ sub video_part_file_add
 			else
 			{
 				# updating related image
-				main::_log("updating related image $relation->{'r_ID_entity'} to category '$App::510::thumbnail_cat{$tom::LNG}'");
-				my %image=App::501::functions::image_add(
-					'image.ID_entity' => $relation->{'r_ID_entity'},
-					'file' => $tmpjpeg->{'filename'},
-					'image_attrs.ID_category' => $App::510::thumbnail_cat{$tom::LNG},
-					'image_attrs.name' => $image_name,
-				);
+#				main::_log("updating related image $relation->{'r_ID_entity'} to category '$App::510::thumbnail_cat{$tom::LNG}'");
+#				main::_log("updating related image $relation->{'r_ID_entity'} to category '$App::510::thumbnail_cat{$tom::LNG}'");
+				main::_log("can't update already generated image $relation->{'r_ID_entity'}");
+				
+				
+				if ($env{'thumbnail_lock_ignore'})
+				{
+					my %image=App::501::functions::image_add(
+						'image.ID_entity' => $relation->{'r_ID_entity'},
+						'file' => $tmpjpeg->{'filename'},
+						'image_attrs.ID_category' => $App::510::thumbnail_cat{$tom::LNG},
+						'image_attrs.name' => $image_name,
+					);
+				}
+				
+				# add here check if this image is another category than $App::510::thumbnail_cat{$tom::LNG}
+				# don't update it
+				
+#				my %image=App::501::functions::image_add(
+#					'image.ID_entity' => $relation->{'r_ID_entity'},
+#					'file' => $tmpjpeg->{'filename'},
+#					'image_attrs.ID_category' => $App::510::thumbnail_cat{$tom::LNG},
+#					'image_attrs.name' => $image_name,
+#				);
 			}
 		}
 		
@@ -1381,14 +1402,24 @@ sub video_part_file_add
 			ID_format=$env{'video_format.ID'}
 		LIMIT 1
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);	
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	if (my %db0_line=$sth0{'sth'}->fetchhash)
 	{
 		# file updating
 		main::_log("check for update video_part_file");
+		main::_log("checkum in database = '$db0_line{'file_checksum'}'");
+		main::_log("checkum from file = '$checksum_method:$checksum'");
 		if ($db0_line{'file_checksum'} eq "$checksum_method:$checksum")
 		{
 			main::_log("same checksum, just enabling file when disabled");
+			
+			my %columns;
+			
+			if ($env{'file_nocopy'})
+			{$columns{'file_alt_src'}="'".$env{'file'}."'";}
+			else
+			{$columns{'file_alt_src'}='NULL';}
+			
 			App::020::SQL::functions::update(
 				'ID' => $db0_line{'ID'},
 				'db_h' => 'main',
@@ -1408,6 +1439,7 @@ sub video_part_file_add
 					'from_parent' => "'$env{'from_parent'}'",
 					'regen' => "'N'",
 					'status' => "'Y'",
+					%columns
 				},
 				'-journalize' => 1,
 			);
@@ -1417,6 +1449,13 @@ sub video_part_file_add
 		else
 		{
 			main::_log("checksum differs");
+			my %columns;
+			
+			if ($env{'file_nocopy'})
+			{$columns{'file_alt_src'}="'".$env{'file'}."'";}
+			else
+			{$columns{'file_alt_src'}='NULL';}
+			
 			App::020::SQL::functions::update(
 				'ID' => $db0_line{'ID'},
 				'db_h' => 'main',
@@ -1439,6 +1478,7 @@ sub video_part_file_add
 					'from_parent' => "'$env{'from_parent'}'",
 					'regen' => "'N'",
 					'status' => "'Y'",
+					%columns
 				},
 				'-journalize' => 1,
 			);
