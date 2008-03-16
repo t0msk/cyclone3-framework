@@ -205,7 +205,8 @@ sub new_initialize
 		my $sql=qq{SELECT MAX(ID_entity)+1 AS ID FROM `$env{'db_name'}`.`$env{'tb_name'}`};
 		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
 		my %db0_line=$sth0{'sth'}->fetchhash();
-		if ($db0_line{'ID'} > 1){$ID_entity=$db0_line{'ID'};}
+		if ($db0_line{'ID'} < $env{'ID'}){$ID_entity=$env{'ID'};}
+		elsif ($db0_line{'ID'} > 1){$ID_entity=$db0_line{'ID'};}
 	}
 	
 	my $SQL="UPDATE `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=NOW(), ";
@@ -245,6 +246,7 @@ Function returns one row in %hash from main table ( also actual row, not journal
    'column1' => 1, # return value of this column
    'column2' => 1, # same
   }
+  '-slave' => 1, # select data from slave servers
  )
 
 Into 'columns' is automatically added ID, ID_entity, datetime_create and status.
@@ -294,7 +296,8 @@ sub get_ID(%env)
 		'db_h' => $env{'db_h'},
 		'log' => $debug,
 		'quiet' => $quiet,
-		'cache' => $env{'cache'}
+		'-cache' => $env{'-cache'},
+		'-slave' => $env{'-slave'}
 	);
 	
 	if ($sth0{'rows'})
@@ -367,7 +370,14 @@ sub get_ID_entity(%env)
 	
 	my @data;
 	
-	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
+	my %sth0=TOM::Database::SQL::execute(
+		$SQL,
+		'db_h'=>$env{'db_h'},
+		'log'=>$debug,
+		'quiet'=>$quiet,
+		'-cache'=>$env{'-cache'},
+		'-slave'=>$env{'-slave'},
+	);
 	
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
@@ -375,7 +385,8 @@ sub get_ID_entity(%env)
 		
 		push @data, {get_ID(
 			%env,
-			'ID' => $db0_line{'ID'}
+			'ID' => $db0_line{'ID'},
+			'cache' => $env{'-cache'}
 		)};
 		
 	}
@@ -866,13 +877,13 @@ Only rows with status T can be restored
 sub trash_restore
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::trash_restore()");
+	my $t=track TOM::Debug(__PACKAGE__."::trash_restore()") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	foreach (keys %env)
 	{
-		main::_log("input '$_'='$env{$_}'");
+		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
 	my %columns=get_ID(
@@ -884,15 +895,15 @@ sub trash_restore
 	
 	if (!$columns{'ID'})
 	{
-		main::_log("this ID not exists!",1);
-		$t->close();
+		main::_log("this ID not exists!",1) if $debug;
+		$t->close() if $debug;
 		return undef;
 	}
 	
 	if ($columns{'status'} ne "T")
 	{
-		main::_log("this ID is previously restored");
-		$t->close();
+		main::_log("this ID is previously restored") if $debug;
+		$t->close() if $debug;
 		return 1;
 	}
 	
@@ -907,7 +918,7 @@ sub trash_restore
 		}
 	);
 	
-	$t->close();
+	$t->close() if $debug;
 	return 1;
 }
 
@@ -1213,7 +1224,7 @@ sub disable
 	{
 		main::_log("this ID not exists!",1) if $debug;
 		main::_log("<={SQL:$env{'db_h'}} can't update ID='$columns{'ID'}' in '$env{'db_name'}'.'$env{'tb_name'}' because ID not exists",1) unless $debug;
-		$t->close();
+		$t->close() if $debug;
 		return undef;
 	}
 	
@@ -1221,14 +1232,14 @@ sub disable
 	{
 		main::_log("this ID is already disabled") if $debug;
 		main::_log("<={SQL:$env{'db_h'}} '$env{'db_name'}'.'$env{'tb_name'}' ID='$columns{'ID'}' already disabled") unless $debug;
-		$t->close();
+		$t->close() if $debug;
 		return 1;
 	}
 	
 	if ($columns{'status'} ne "Y")
 	{
 		main::_log("only ID with status 'N' can be disabled, not status='$columns{'status'}'") if $debug;
-		$t->close();
+		$t->close() if $debug;
 		return undef;
 	}
 	
