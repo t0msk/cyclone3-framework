@@ -44,6 +44,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   KEY `ID_entity` (`ID_entity`),
   KEY `ID` (`ID`),
   KEY `ID_author` (`ID_author`),
+  KEY `visits` (`visits`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -77,9 +78,17 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  KEY `SEL_0` (`status`,`lng`,`datetime_start`),
+  KEY `SEL_1` (`datetime_start`,`datetime_stop`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID` (`ID`),
+  KEY `ID_category` (`ID_category`),
   KEY `name` (`name`),
+  KEY `datetime_start` (`datetime_start`),
+  KEY `datetime_stop` (`datetime_stop`),
+  KEY `priority_A` (`priority_A`),
+  KEY `priority_B` (`priority_B`),
+  KEY `priority_C` (`priority_C`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -122,6 +131,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content` (
   KEY `ID_entity` (`ID_entity`),
   KEY `ID` (`ID`),
   KEY `subtitle` (`subtitle`),
+  KEY `mimetype` (`mimetype`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -209,6 +219,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 		
 		article_attrs.ID_category,
 		article_cat.name AS ID_category_name,
+		article_cat.name_url AS ID_category_name_url,
 --		(SELECT name FROM `/*db_name*/`.`/*app*/_article_cat` WHERE ID=article_attrs.ID_category LIMIT 1) AS ID_category_name,
 		
 		article.posix_owner,
@@ -286,6 +297,8 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 		article_ent.ID AND
 		article_attrs.ID AND
 		article_content.ID
+	ORDER BY
+		article_attrs.datetime_start DESC
 )
 
 -- --------------------------------------------------
