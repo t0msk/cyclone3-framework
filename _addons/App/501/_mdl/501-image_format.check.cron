@@ -61,10 +61,10 @@ sub execute
 	if (!$tom::addons{'a501'} || ($TOM::DB{'main'}{'name'} ne $App::501::db_name))
 	{main::_log("not enabled, or set for another domain service");return 1;}
 	
-	my $lock=new TOM::lock("a501:image_format.check") || return 1;
+	my $lock=new TOM::lock($App::501::db_name."::a501:image_format.check") || return 1;
 	
 	alarm(0);
-	$env{'time_max'}=60*4 unless $env{'time_max'};
+	$env{'time_max'}=60*1 unless $env{'time_max'};
 	$env{'sql_limit'}='100';
 	
 	# check directory of formats
