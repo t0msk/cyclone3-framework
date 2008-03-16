@@ -77,13 +77,14 @@ sub user_add
 	if ($env{'user.login'} && !$env{'user.ID_user'})
 	{
 		main::_log("search user by login='$env{'user.login'}'");
+		my $login=TOM::Security::form::sql_escape($env{'user.login'});
 		my $sql=qq{
 			SELECT
 				*
 			FROM
 				`TOM`.a301_user
 			WHERE
-				login='$env{'user.login'}' AND
+				login='$login' AND
 				hostname='$env{'user.hostname'}'
 			LIMIT 1;
 		};
@@ -117,7 +118,7 @@ sub user_add
 	my %user_profile;
 	if (!$env{'user_profile.ID_entity'} && $env{'user.ID_user'})
 	{
-		main::_log("search user_profile by login='$env{'user.login'}'");
+		main::_log("search user_profile by ID_user='$env{'user.ID_user'}'");
 		my $sql=qq{
 			SELECT
 				*
@@ -141,6 +142,7 @@ sub user_add
 				'columns' =>
 				{
 					'ID_entity' => "'$env{'user.ID_user'}'",
+					'status' => "'Y'"
 				},
 				'-journalize' => 1,
 			);
@@ -206,6 +208,18 @@ sub user_add
 		);
 	}
 	
+	if ($env{'user.pass'})
+	{
+		if ($env{'user.pass'}=~/^(MD5|SHA1):/)
+		{
+			
+		}
+		else
+		{
+			$env{'user.pass'}='MD5:'.Digest::MD5::md5_hex(Encode::encode_utf8($env{'user.pass'}));
+		}
+	}
+	
 	if (
 		$env{'user.ID_user'} &&
 		(
@@ -218,13 +232,13 @@ sub user_add
 	{
 		my $set;
 		# login
-		$set.=",login='$env{'user.login'}'"
+		$set.=",login='".TOM::Security::form::sql_escape($env{'user.login'})."'"
 			if $env{'user.login'};
 		# pass
 		$set.=",pass='$env{'user.pass'}'"
 			if $env{'user.pass'};
 		# email
-		$set.=",email='$env{'user.email'}'"
+		$set.=",email='".TOM::Security::form::sql_escape($env{'user.email'})."'"
 			if $env{'user.email'};
 		# email_verified
 		$set.=",email_verified='$env{'user.email_verified'}'"
@@ -243,7 +257,7 @@ sub user_add
 	}
 	else
 	{
-		return undef
+#		return undef
 	}
 	
 	foreach my $group(@{$env{'groups'}})
