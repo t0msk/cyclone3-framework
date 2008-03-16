@@ -281,7 +281,9 @@ sub article_add
 		# datetime_start
 		($env{'article_attrs.datetime_start'} && ($env{'article_attrs.datetime_start'} ne $article_attrs{'datetime_start'})) ||
 		# datetime_stop
-		(exists $env{'article_attrs.datetime_stop'} && ($env{'article_attrs.datetime_stop'} ne $article_attrs{'datetime_stop'}))
+		(exists $env{'article_attrs.datetime_stop'} && ($env{'article_attrs.datetime_stop'} ne $article_attrs{'datetime_stop'})) ||
+		# status
+		($env{'article_attrs.status'} && ($env{'article_attrs.status'} ne $article_attrs{'status'}))
 	))
 	{
 		my %columns;
@@ -309,6 +311,9 @@ sub article_add
 				$columns{'datetime_stop'}="'".$env{'article_attrs.datetime_stop'}."'";
 			}
 		}
+		# status
+		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'article_attrs.status'})."'"
+			if ($env{'article_attrs.status'} && ($env{'article_attrs.status'} ne $article_attrs{'status'}));
 		
 		App::020::SQL::functions::update(
 			'ID' => $env{'article_attrs.ID'},
@@ -381,7 +386,7 @@ sub article_add
 	if ($env{'article_content.ID'} &&
 	(
 		# subtitle
-		($env{'article_content.subtitle'} && ($env{'article_content.subtitle'} ne $article_content{'subtitle'})) ||
+		(exists $env{'article_content.subtitle'} && ($env{'article_content.subtitle'} ne $article_content{'subtitle'})) ||
 		# mimetype
 		($env{'article_content.mimetype'} && ($env{'article_content.mimetype'} ne $article_content{'mimetype'})) ||
 		# abstract
@@ -394,7 +399,7 @@ sub article_add
 	{
 		my %columns;
 		$columns{'subtitle'}="'".TOM::Security::form::sql_escape($env{'article_content.subtitle'})."'"
-			if ($env{'article_content.subtitle'} && ($env{'article_content.subtitle'} ne $article_content{'subtitle'}));
+			if (exists $env{'article_content.subtitle'} && ($env{'article_content.subtitle'} ne $article_content{'subtitle'}));
 		$columns{'mimetype'}="'".TOM::Security::form::sql_escape($env{'article_content.mimetype'})."'"
 			if ($env{'article_content.mimetype'} && ($env{'article_content.mimetype'} ne $article_content{'mimetype'}));
 		$columns{'abstract'}="'".TOM::Security::form::sql_escape($env{'article_content.abstract'})."'"
@@ -516,6 +521,91 @@ sub article_content_extract_keywords
 }
 
 
+sub article_item_info
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::article_item_info()");
+	
+	my $sql=qq{
+		SELECT
+			view.*,
+			IF
+			(
+				(SELECT COUNT(*) FROM `$App::401::db_name`.a401_article_view WHERE ID_entity_article=view.ID_entity_article AND status IN ('Y','N')) > 1,
+				'Y','N'
+			) AS symlink,
+			IF
+			(
+				(
+					status LIKE 'Y' AND
+					NOW() >= datetime_start AND
+					(datetime_stop IS NULL OR NOW() <= datetime_stop)
+				),
+			 	'Y', 'N'
+			) AS datetime_status
+		FROM
+			`$App::401::db_name`.a401_article_view AS view
+		WHERE
+			ID_article = '$env{'article.ID'}' AND
+			ID_category = '$env{'article_attrs.ID_category'}'
+		LIMIT
+			1
+	};
+	
+	my %data;
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	if ($sth0{'sth'})
+	{
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			
+			foreach (keys %db0_line){$data{'db_'.$_}=$db0_line{$_};}
+			
+			$data{'ID'}=$db0_line{'ID_article'};
+			$data{'ID_entity'}=$db0_line{'ID_entity_article'};
+			
+			my %author=App::301::authors::get_author($db0_line{'posix_author'});
+			foreach (keys %author){$data{'author_'.$_}=$author{$_};}
+			
+			my %editor=App::301::authors::get_author($db0_line{'posix_editor'});
+			foreach (keys %editor){$data{'editor_'.$_}=$editor{$_};}
+			
+			# check relations
+			foreach my $relation (App::160::SQL::get_relations(
+				'db_name' => $App::401::db_name,
+				'l_prefix' => 'a401',
+				'l_table' => 'article',
+				'l_ID_entity' => $db0_line{'ID_entity_article'},
+#				'rel_type' => $env{'rel_type'},
+#				'r_prefix' => "a501",
+#				'r_table' => "image",
+				'status' => "Y"
+			))
+			{
+				$data{'relation_status'}='Y';
+				if ($relation->{'r_prefix'} eq "a541" && $relation->{'r_table'} eq "file")
+				{$data{'attachment_status'}='Y'};
+				if ($relation->{'r_prefix'} eq "a821" && $relation->{'r_table'} eq "discussion")
+				{$data{'discussion_status'}='Y'};
+			}
+			
+			# check relations
+			if ($db0_line{'keywords'}){$data{'keywords_status'}='Y';}
+			
+			$data{'size'}=TOM::Text::format::bytes(length($db0_line{'abstract'}.$db0_line{'body'}));
+			
+		}
+		
+	}
+	else
+	{
+		main::_log("can't select",1);
+	}
+	
+	$t->close();
+	return %data;
+}
 
 =head1 AUTHORS
 
