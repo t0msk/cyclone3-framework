@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	<header>
+		<extend level="auto" name="JSPrototype"/>
+		<extract>
+			<file location="effects.js" dest="scriptaculous/" />
+			<file location="scriptaculous.js" dest="scriptaculous/" />
+		</extract>
+	</header>
+	
+</template>
