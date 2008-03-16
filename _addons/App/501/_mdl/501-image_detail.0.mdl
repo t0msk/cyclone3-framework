@@ -70,6 +70,14 @@ B<TMP> - image item
 
 B<%db_*%> - image database variables
 
+=item *
+
+B<%original.db_*%> - original image database variables
+
+=item *
+
+B<%fullsize.db_*%> - fullsize image database variables
+
 =back
 
 =cut
@@ -104,6 +112,11 @@ sub execute
 		if ($db0_line{'ID_format'} eq $App::501::image_format_original_ID)
 		{
 			$XSGN{'TMP'}=~s|<%original.db_(.*?)%>|$db0_line{$1}|g;
+		}
+		
+		if ($db0_line{'ID_format'} eq $App::501::image_format_fullsize_ID)
+		{
+			$XSGN{'TMP'}=~s|<%fullsize.db_(.*?)%>|$db0_line{$1}|g;
 		}
 		
 		my $format=$XSGN{'format'};
