@@ -90,6 +90,179 @@ sub get_author
 
 
 
+sub add_author
+{
+	my %env=@_;
+	
+	my %columns;
+	
+	if ($env{'author_login'})
+	{
+		
+		
+		
+	}
+	elsif ($env{'author_firstname'})
+	{
+		if ($env{'author_surname'})
+		{
+			my $sql=qq{
+				SELECT
+					
+					user.hostname,
+					user.ID_user,
+					user.login,
+					user.email,
+					user.email_verified,
+					user_profile.*
+					
+				FROM
+					`TOM`.`a301_user` AS user
+				LEFT JOIN `TOM`.`a301_user_profile` AS user_profile ON
+				(
+					user.ID_user = user_profile.ID_entity
+				)
+				WHERE
+					user.hostname='$tom::H_cookie' AND
+					user_profile.firstname LIKE '$env{'author_firstname'}' AND
+					user_profile.surname LIKE '$env{'author_surname'}'
+				LIMIT 1
+			};
+			
+			my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+			if ($sth0{'rows'})
+			{
+				my %author=$sth0{'sth'}->fetchhash();
+				main::_log("found user ID_user='$author{'ID_user'}' login='$author{'login'}'");
+				my %groups=App::301::functions::user_groups($author{'ID_user'});
+				if ($groups{'author'})
+				{
+					$columns{'ID_author'}=$author{'ID_user'};
+				}
+				elsif ($groups{'editor'} || $groups{'admin'})
+				{
+					main::_log("adding user into group 'author'");
+					App::301::functions::user_add(
+						'user.ID_user' => $author{'ID_user'},
+						'groups' => ['author']
+					);
+					$columns{'ID_author'}=$author{'ID_user'};
+				}
+			}
+			if (!$columns{'ID_author'})
+			{
+				$env{'author_login'}=Int::charsets::encode::UTF8_ASCII(
+					$env{'author_firstname'}." ".$env{'author_surname'}
+				);
+				my $sql=qq{
+					SELECT
+						*
+					FROM
+						TOM.a301_user
+					WHERE
+						hostname='$tom::H_cookie' AND
+						login='$env{'author_login'}'
+					LIMIT 1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+				if (!$sth0{'rows'})
+				{
+					main::_log("creating new author");
+					my %user=App::301::functions::user_add(
+						'user.login' => $env{'author_login'},
+						'user_profile.firstname' => $env{'author_firstname'},
+						'user_profile.surname' => $env{'author_surname'},
+						'groups' => ['author']
+					);
+					$columns{'ID_author'}=$user{'user.ID_user'};
+				}
+				else
+				{
+					# conflict!!! - this login already exist
+				}
+			}
+		}
+		# only firstname defined
+		else
+		{
+			my $sql=qq{
+				SELECT
+					user.hostname,
+					user.ID_user,
+					user.login,
+					user.email,
+					user.email_verified,
+					user_profile.*
+				FROM
+					`TOM`.`a301_user` AS user
+				LEFT JOIN `TOM`.`a301_user_profile` AS user_profile ON
+				(
+					user.ID_user = user_profile.ID_entity
+				)
+				WHERE
+					user.hostname='$tom::H_cookie' AND
+					user_profile.firstname LIKE '$env{'author_firstname'}' AND
+					user_profile.surname IS NULL
+				LIMIT 1
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+			if ($sth0{'rows'})
+			{
+				my %author=$sth0{'sth'}->fetchhash();
+				my %groups=App::301::functions::user_groups($author{'ID_user'});
+				if ($groups{'author'})
+				{
+					$columns{'ID_author'}=$author{'ID_user'};
+				}
+				elsif ($groups{'editor'} || $groups{'admin'})
+				{
+					main::_log("adding user into group 'author'");
+					App::301::functions::user_add(
+						'user.ID_user' => $author{'ID_user'},
+						'groups' => ['author']
+					);
+					$columns{'ID_author'}=$author{'ID_user'};
+				}
+			}
+			if (!$columns{'ID_author'})
+			{
+				$env{'author_login'}=Int::charsets::encode::UTF8_ASCII(
+					$env{'author_firstname'}
+				);
+				my $sql=qq{
+					SELECT
+						*
+					FROM
+						TOM.a301_user
+					WHERE
+						hostname='$tom::H_cookie' AND
+						login='$env{'author_login'}'
+					LIMIT 1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql);
+				if (!$sth0{'rows'})
+				{
+					main::_log("creating new author");
+					my %user=App::301::functions::user_add(
+						'user.login' => $env{'author_login'},
+						'user_profile.firstname' => $env{'author_firstname'},
+						'groups' => ['author']
+					);
+					$columns{'ID_author'}=$user{'user.ID_user'};
+				}
+				else
+				{
+					# conflict!!! - this login already exist
+					my %db0_line=$sth0{'sth'}->fetchhash();
+					$columns{'ID_author'}=$db0_line{'ID_user'};
+				}
+			}
+		}
+	}
+	
+	return %columns;
+	
+}
 
 
 

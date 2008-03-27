@@ -63,6 +63,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_profile` (
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
+  KEY `SEL_0` (`firstname`,`surname`),
   KEY `ID` (`ID`),
   KEY `firstname` (`firstname`),
   KEY `surname` (`surname`),
