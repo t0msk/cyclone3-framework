@@ -297,7 +297,7 @@ sub video_part_file_process
 		my $function_params=$2;
 		
 		my @params;
-		foreach my $param (split(',',$function_params))
+		foreach my $param (split(',',$function_params,2))
 		{
 			if ($param=~/^'.*'$/){$param=~s|^'||;$param=~s|'$||;}
 			if ($param=~/^".*"$/){$param=~s|^"||;$param=~s|"$||;}
@@ -442,7 +442,7 @@ sub video_part_file_process
 			main::_log("cmd=$cmd");
 			
 			my $out=system("$cmd");main::_log("out=$out");
-			if ($out){$t->close();return undef}
+			if ($out && $out != 11){$t->close();return undef}
 			
 			$procs++;
 			next;

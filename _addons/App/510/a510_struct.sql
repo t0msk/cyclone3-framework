@@ -144,14 +144,17 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo` ( -- experimental EMO charac
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
   `datetime_create` datetime NOT NULL,
+  `emo_sad` int(10) unsigned NOT NULL default '0',
   `emo_angry` int(10) unsigned NOT NULL default '0',
   `emo_confused` int(10) unsigned NOT NULL default '0',
-  `emo_cry` int(10) unsigned NOT NULL default '0',
+  `emo_love` int(10) unsigned NOT NULL default '0',
   `emo_omg` int(10) unsigned NOT NULL default '0',
   `emo_smile` int(10) unsigned NOT NULL default '0',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`)
+  UNIQUE KEY `UNI_0` (`ID_entity`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -169,19 +172,24 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_callback` (
 CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_part_emo_view` AS (
 	SELECT
 		emo.ID,
-		(emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_smile) AS emo_all,
-		(emo.emo_angry/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_smile)/100))
+      emo.ID_entity,
+		(emo.emo_sad + emo.emo_angry + emo.emo_confused + emo.emo_love + emo.emo_omg + emo.emo_smile) AS emo_all,
+      (emo.emo_sad/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
+			AS emo_sad_perc,
+		(emo.emo_angry/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
 			AS emo_angry_perc,
-		(emo.emo_confused/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_smile)/100))
+		(emo.emo_confused/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
 			AS emo_confused_perc,
-		(emo.emo_cry/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_smile)/100))
-			AS emo_cry_perc,
-		(emo.emo_omg/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_smile)/100))
+		(emo.emo_love/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
+			AS emo_love_perc,
+		(emo.emo_omg/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
 			AS emo_omg_perc,
-		(emo.emo_smile/((emo.emo_angry + emo.emo_confused + emo.emo_cry + emo.emo_omg + emo.emo_smile)/100))
+		(emo.emo_smile/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
 			AS emo_smile_perc
 	FROM
 		`/*db_name*/`.`/*app*/_video_part_emo` AS emo
+	WHERE
+		(emo.emo_sad + emo.emo_angry + emo.emo_confused + emo.emo_love + emo.emo_omg + emo.emo_smile) > 5
 )
 
 -- --------------------------------------------------
@@ -190,27 +198,27 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_part_emo_viewEQ` AS (
 	SELECT
 		emo1.ID AS emo1_ID,
 		emo2.ID AS emo2_ID,
+      ABS(emo1.emo_sad_perc - emo2.emo_sad_perc) AS emo_sad_diff,
 		ABS(emo1.emo_angry_perc - emo2.emo_angry_perc) AS emo_angry_diff,
 		ABS(emo1.emo_confused_perc - emo2.emo_confused_perc) AS emo_confused_diff,
-		ABS(emo1.emo_cry_perc - emo2.emo_cry_perc) AS emo_cry_diff,
+		ABS(emo1.emo_love_perc - emo2.emo_love_perc) AS emo_love_diff,
 		ABS(emo1.emo_omg_perc - emo2.emo_omg_perc) AS emo_omg_diff,
 		ABS(emo1.emo_smile_perc - emo2.emo_smile_perc) AS emo_smile_diff,
 		(100-((
+			ABS(emo1.emo_sad_perc - emo2.emo_sad_perc) +
 			ABS(emo1.emo_angry_perc - emo2.emo_angry_perc) +
 			ABS(emo1.emo_confused_perc - emo2.emo_confused_perc) +
-			ABS(emo1.emo_cry_perc - emo2.emo_cry_perc) +
+			ABS(emo1.emo_love_perc - emo2.emo_love_perc) +
 			ABS(emo1.emo_omg_perc - emo2.emo_omg_perc) +
 			ABS(emo1.emo_smile_perc - emo2.emo_smile_perc)
-		)/5)) AS EQ
+		)/6)) AS EQ
 	FROM
 		`/*db_name*/`.`/*app*/_video_part_emo_view` AS emo1,
 		`/*db_name*/`.`/*app*/_video_part_emo_view` AS emo2
 	WHERE
 		emo1.ID <> emo2.ID AND
-		emo2.emo_all > emo1.emo_all/100 AND
-		emo1.emo_all > emo2.emo_all/100 AND
-		emo2.emo_all > 1 AND
-		emo1.emo_all > 1
+      emo1.emo_all > 100 AND
+      emo2.emo_all > 100
 )
 
 -- --------------------------------------------------
@@ -221,7 +229,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo_j` (
   `datetime_create` datetime NOT NULL,
   `emo_angry` int(10) unsigned NOT NULL default '0',
   `emo_confused` int(10) unsigned NOT NULL default '0',
-  `emo_cry` int(10) unsigned NOT NULL default '0',
+  `emo_love` int(10) unsigned NOT NULL default '0',
   `emo_omg` int(10) unsigned NOT NULL default '0',
   `emo_sad` int(10) unsigned NOT NULL default '0',
   `emo_smile` int(10) unsigned NOT NULL default '0',
