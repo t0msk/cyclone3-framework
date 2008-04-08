@@ -61,7 +61,6 @@ File::Path
 =cut
 
 use App::020::_init; # data standard 0
-use App::301::_init;
 use App::501::functions;
 use App::501::a160;
 use File::Copy;
@@ -110,6 +109,7 @@ BEGIN
 
 
 our $db_name=$App::501::db_name || $TOM::DB{'main'}{'name'};
+main::_log("db_name=$db_name");
 our $image_format_ext_default=$App::501::image_format_ext_default || 'jpg';
 
 

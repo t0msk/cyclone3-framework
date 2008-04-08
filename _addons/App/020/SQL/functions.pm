@@ -267,6 +267,12 @@ sub get_ID(%env)
 		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
+	if (!$env{'ID'})
+	{
+		$t->close() if $debug;
+		return undef;
+	}
+	
 	my %data;
 	my @columns=
 	(

@@ -64,7 +64,6 @@ Digest::MD5
 use App::301::functions;
 use App::301::session;
 use App::301::authors;
-use App::501::_init;
 use CVML;
 use Digest::MD5;
 
@@ -144,6 +143,7 @@ if ($tom::H_cookie)
 
 
 # check relation to a501
+require App::501::_init;
 our $photo_cat_ID_entity;
 our %photo_cat;
 
