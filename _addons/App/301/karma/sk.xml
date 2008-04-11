@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<karma>
+	<dictionary>
+		
+		
+		
+		<!-- vulgarne vyrazy alebo ine nevhodne vyrazy -->
+		
+		<rule><regexp source="lowascii">kokot</regexp><regexp source="lowascii">keket</regexp><value>-100</value></rule>
+		<rule><regexp source="lowascii">cikula</regexp><value>-80</value></rule>
+		<rule><regexp source="lowascii">cicina</regexp><value>-70</value></rule>
+		<rule><regexp>pič[aeoi]</regexp><regexp>pitcho</regexp><regexp source="lowascii">[^o]pic[oa]</regexp><value>-100</value></rule>
+		<rule><regexp source="lowascii">kur[wv]a</regexp><value>-100</value></rule>
+		<rule><regexp source="lowascii">jeb[ae]?</regexp><value>-100</value></rule>
+		<rule><regexp source="lowascii">kl[iy]toris</regexp><value>-50</value></rule>
+		<rule><regexp source="lowascii">vyhoncova</regexp><value>-20</value></rule>
+		<rule><regexp source="lowascii">vyser</regexp><value>-20</value></rule>
+		<rule><regexp source="lowascii">narusen[ayi]</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">hybrid</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">humus</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">hovadin[ay]</regexp><value>-5</value></rule>
+		<rule><regexp source="lowascii">chudak</regexp><value>-5</value></rule>
+		<rule><regexp source="lowascii">volovina</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">cecka</regexp><value>-30</value></rule>
+		<rule><regexp source="lowascii">prs</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">cecek</regexp><value>-30</value></rule>
+		<rule><regexp source="lowascii">trtka</regexp><value>-20</value></rule>
+		<rule><regexp source="lowascii">drbe</regexp><value>-80</value></rule>
+		<rule><regexp source="lowascii">suka</regexp><value>-30</value></rule>
+		<rule><regexp source="lowascii">dement</regexp><value>-90</value></rule>
+		<rule><regexp source="lowascii">idiot</regexp><value>-40</value></rule>
+		<rule><regexp source="lowascii">debil</regexp><value>-40</value></rule>
+		<rule><regexp source="lowascii">anal</regexp><value>-30</value></rule>
+		<rule><regexp source="lowascii">blbost</regexp><value>-20</value></rule>
+		<rule><regexp source="lowascii">muzatka</regexp><value>-20</value></rule>
+		
+		
+		
+		<!-- agresia, ignorancia,... -->
+		
+		<rule><regexp source="lowascii">je to chore</regexp><value>-5</value></rule>
+		<rule><regexp source="lowascii">nechutne</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">zastrelte (ju|ho)</regexp><value>-30</value></rule>
+		<rule><regexp source="lowascii">obycajny psycho</regexp><value>-30</value></rule>
+		<rule><regexp source="lowascii">haved jedna</regexp><value>-5</value></rule>
+		<rule><regexp source="lowascii">trapn[eyi]</regexp><value>-15</value></rule>
+		<rule><regexp source="lowascii">sa strapn</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">neznasam</regexp><value>-5</value></rule>
+		<rule><regexp source="lowascii">hnus</regexp><value>-15</value></rule>
+		<rule><regexp source="lowascii">sa mi hnusi</regexp><value>-25</value></rule>
+		<rule><regexp source="lowascii">padnut[yi] na hlavu</regexp><value>-5</value></rule>
+		<rule><regexp source="lowascii">tupa hlava</regexp><value>-20</value></rule>
+		<rule><regexp source="lowascii">bullšit</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">netrep</regexp><value>-20</value></rule>
+		<rule><regexp source="lowascii">j[e]+zis</regexp><value>-5</value></rule>
+		<rule><regexp source="lowascii">otras</regexp><value>-5</value></rule>
+		
+		
+		
+		<!-- infantilne zdrobneniny -->
+		
+		<rule source="lowascii"><regexp>usmevik</regexp><value>-0.5</value></rule>
+		
+		
+		
+		<!-- neznalost jazyka -->
+		
+		<rule><regexp source="lowascii">vydno</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">higien</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">jeto</regexp><value>-4</value></rule>
+		<rule><regexp source="lowascii">prachy</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">furt</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">cavte</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">kebi</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">vypada</regexp><value>-3</value></rule>
+		<rule><regexp source="lowascii">zenska</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">thake</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">clowek</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">wec</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">sprawit</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">doziwot</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">uwedomi</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">sak nech</regexp><value>-4</value></rule>
+		<rule><regexp source="lowascii">samyx</regexp><value>-4</value></rule>
+		<rule><regexp source="lowascii">nenexat</regexp><value>-4</value></rule>
+		<rule><regexp source="lowascii">zapasi </regexp><value>-7</value></rule>
+		<rule><regexp source="lowascii">kuka[mt]</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">jake ma</regexp><value>-5</value></rule>
+		<rule><regexp source="lowascii">nemisli</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">vihra</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">kidat</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">fakt</regexp><value>-5</value></rule>
+		<rule><regexp source="lowascii">hociak</regexp><value>-15</value></rule>
+		
+		
+		
+		<!-- vyrazy ktore su "in" -->
+		
+		<rule><regexp source="lowascii">pls</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">plis</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">level</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">supern[ay]</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">live</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">omg</regexp><value>-3</value></rule>
+		<rule><regexp source="lowascii">lam[ao]</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">wow</regexp><value>-3</value></rule>
+		
+		
+	</dictionary>
+	
+</karma>

@@ -7,6 +7,7 @@
 
 CREATE TABLE `/*db_name*/`.`/*app*/_user` (
   `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
+--  `secure_hash` varchar(16) character set utf8 collate utf8_bin NOT NULL default '',
   `login` varchar(32) character set ascii default NULL,
   `pass` varchar(256) character set ascii collate ascii_bin default NULL,
   `autolog` char(1) character set ascii NOT NULL default 'N',
@@ -14,19 +15,38 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user` (
   `datetime_register` datetime NOT NULL,
   `datetime_last_login` datetime default NULL,
   `requests_all` smallint(5) unsigned NOT NULL default '0',
-  `email` varchar(64) character set ascii default NULL,
+  `email` varchar(64) character set ascii default NULL, -- internal email
   `email_verified` char(1) character set ascii NOT NULL default 'N',
---  `email_alt` varchar(64) character set ascii default NULL,
---  `email_alt_verified` char(1) character set ascii NOT NULL default 'N',
   `saved_cookies` blob NOT NULL,
   `saved_session` blob NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID_user`),
   UNIQUE KEY `UNI_0` (`hostname`,`login`),
+  KEY `secure_hash` (`secure_hash`),
   KEY `login` (`login`),
   KEY `hostname` (`hostname`),
   KEY `email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_user_inactive` (
+  `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
+--  `secure_hash` varchar(16) character set utf8 collate utf8_bin NOT NULL default '',
+  `login` varchar(32) character set ascii default NULL,
+  `pass` varchar(256) character set ascii collate ascii_bin default NULL,
+  `autolog` char(1) character set ascii NOT NULL default 'N',
+  `hostname` varchar(64) character set ascii NOT NULL,
+  `datetime_register` datetime NOT NULL,
+  `datetime_last_login` datetime default NULL,
+  `requests_all` smallint(5) unsigned NOT NULL default '0',
+  `email` varchar(64) character set ascii default NULL, -- internal email
+  `email_verified` char(1) character set ascii NOT NULL default 'N',
+  `saved_cookies` blob NOT NULL,
+  `saved_session` blob NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID_user`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -47,9 +67,12 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_profile` (
   `datetime_create` datetime NOT NULL,
   `firstname` varchar(32) character set utf8 collate utf8_bin default NULL,
   `surname` varchar(64) character set utf8 collate utf8_bin default NULL,
+  `name_prefix` varchar(16) character set utf8 collate utf8_bin default NULL,
+  `name_suffix` varchar(16) character set utf8 collate utf8_bin default NULL,
   `sex` char(1) character set ascii default NULL,
   `date_birth` date default NULL,
   `country` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `country_code` char(3) character set ascii default NULL,
   `state` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `city` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `ZIP` varchar(16) character set ascii default NULL,
@@ -58,12 +81,17 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_profile` (
   `education` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `phone` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `phone_mobile` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
-  `about_me` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `phone_office` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `phone_home` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `email_public` varchar(64) character set ascii default NULL,
+  `email_office` varchar(64) character set ascii default NULL,
+  `about_me` text character set utf8 collate utf8_unicode_ci,
   `lng` char(2) character set ascii NOT NULL default 'xx',
-  `status` char(1) character set ascii NOT NULL default 'N',
+  `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
   KEY `SEL_0` (`firstname`,`surname`),
+  KEY `ID_entity` (`ID_entity`),
   KEY `ID` (`ID`),
   KEY `firstname` (`firstname`),
   KEY `surname` (`surname`),
@@ -78,9 +106,12 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_profile_j` (
   `datetime_create` datetime NOT NULL,
   `firstname` varchar(32) character set utf8 collate utf8_bin default NULL,
   `surname` varchar(64) character set utf8 collate utf8_bin default NULL,
+  `name_prefix` varchar(16) character set utf8 collate utf8_bin default NULL,
+  `name_suffix` varchar(16) character set utf8 collate utf8_bin default NULL,
   `sex` char(1) character set ascii default NULL,
   `date_birth` date default NULL,
   `country` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `country_code` char(3) character set ascii default NULL,
   `state` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `city` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `ZIP` varchar(16) character set ascii default NULL,
@@ -89,7 +120,11 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_profile_j` (
   `education` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `phone` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `phone_mobile` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
-  `about_me` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `phone_office` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `phone_home` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `email_public` varchar(64) character set ascii default NULL,
+  `email_office` varchar(64) character set ascii default NULL,
+  `about_me` text character set utf8 collate utf8_unicode_ci,
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -117,6 +152,30 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_user_profile_view` AS (
 		user.login IS NOT NULL AND
 		user_profile.ID_entity IS NOT NULL
 )
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_user_profile_karma` (
+  `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel _user.ID_user
+  `date_event` date NOT NULL,
+  `karma` double default NULL,
+  PRIMARY KEY  (`ID_user`,`date_event`),
+  KEY `date_event` (`date_event`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_user_profile_emo` ( -- experimental EMO characteristics
+  `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel _user.ID_user
+  `date_event` date NOT NULL,
+  `emo_sad` int(10) unsigned NOT NULL default '0',
+  `emo_angry` int(10) unsigned NOT NULL default '0',
+  `emo_confused` int(10) unsigned NOT NULL default '0',
+  `emo_love` int(10) unsigned NOT NULL default '0',
+  `emo_omg` int(10) unsigned NOT NULL default '0',
+  `emo_smile` int(10) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`ID_user`,`date_event`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -179,7 +238,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_group` (
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
   UNIQUE KEY `UNI_1` (`ID_charindex`),
-  UNIQUE KEY `UNI_2` (`hostname`,`name`)
+  UNIQUE KEY `UNI_2` (`hostname`,`name`),
+  KEY `ID` (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -202,7 +262,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_group_j` (
 CREATE TABLE `/*db_name*/`.`/*app*/_user_rel_group` (
   `ID_group` int(10) unsigned NOT NULL auto_increment,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
-  PRIMARY KEY  (`ID_group`,`ID_user`)
+  PRIMARY KEY  (`ID_group`,`ID_user`),
+  KEY `ID_user` (`ID_user`),
+  KEY `ID_group` (`ID_group`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------

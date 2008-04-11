@@ -271,7 +271,7 @@ sub user_add
 			FROM
 				TOM.a301_user_group
 			WHERE
-				name = '$group' AND
+				(name = '$group' OR ID='$group') AND
 				hostname = '$env{'user.hostname'}'
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
@@ -477,7 +477,119 @@ sub user_groups
 
 
 
+sub user_active
+{
+	my $ID_user=shift;
+#	my $t=track TOM::Debug(__PACKAGE__."::user_inactive($ID_user)");
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		INSERT INTO TOM.a301_user
+			SELECT
+				*
+			FROM TOM.a301_user_inactive
+			WHERE
+				ID_user='$ID_user'
+			LIMIT 1
+	},'quiet'=>1);
+	if ($sth0{'rows'})
+	{
+		main::_log("inserted user '$ID_user' into active table");
+		TOM::Database::SQL::execute(qq{
+			DELETE FROM TOM.a301_user_inactive
+			WHERE
+				ID_user='$ID_user'
+			LIMIT 1;
+		},'quiet'=>1);
+		main::_log("deleted user '$ID_user' from inactive table");
+		#$t->close();
+		return 1;
+	}
+	
+#	$t->close();
+	return undef;
+}
 
+
+
+sub user_inactive
+{
+	my $ID_user=shift;
+#	my $t=track TOM::Debug(__PACKAGE__."::user_inactive($ID_user)");
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		INSERT INTO TOM.a301_user_inactive
+			SELECT
+				*
+			FROM TOM.a301_user
+			WHERE
+				ID_user='$ID_user'
+			LIMIT 1
+	},'quiet'=>1);
+	if ($sth0{'rows'})
+	{
+		main::_log("inserted user '$ID_user' into inactive table");
+		TOM::Database::SQL::execute(qq{
+			DELETE FROM TOM.a301_user
+			WHERE
+				ID_user='$ID_user'
+			LIMIT 1;
+		},'quiet'=>1);
+		main::_log("deleted user '$ID_user' from active table");
+		#$t->close();
+		return 1;
+	}
+	
+#	$t->close();
+	return undef;
+}
+
+
+sub user_get
+{
+	my $ID_user=shift;
+	my %data;
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			TOM.a301_user
+		WHERE
+			ID_user='$ID_user'
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	if (%data=$sth0{'sth'}->fetchhash)
+	{
+		main::_log("user '$ID_user' found in active table");
+	}
+	else
+	{
+		main::_log("user '$ID_user' not found in active table, trying inactive");
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				TOM.a301_user_inactive
+			WHERE
+				ID_user='$ID_user'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		if (%data=$sth0{'sth'}->fetchhash)
+		{
+			main::_log("user found in inactive table");
+			user_active($ID_user);
+		}
+		else
+		{
+			main::_log("user '$ID_user' not found in archive table",1);
+			return undef;
+		}
+	}
+	
+	return %data;
+}
 
 
 

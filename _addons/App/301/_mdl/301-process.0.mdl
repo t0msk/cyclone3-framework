@@ -75,7 +75,7 @@ sub execute
 					hostname='$tom::H_cookie'
 				LIMIT 1
 			};
-			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
 			if (%main::USRM=$sth0{'sth'}->fetchhash()) # yes, user is online
 			{
 				main::_log("user '$main::COOKIES{_ID_user}' is online");
@@ -87,7 +87,7 @@ sub execute
 				$ref[1]=~s|^(.*)\.(\d+)$|$1|;
 				if (
 					($main::USRM{'ID_session'} eq $main::COOKIES{'_ID_session'})
-					&&($ref[0] eq $ref[1])
+#					&&($ref[0] eq $ref[1])
 #					&&($main::USRM{HTTP_USER_AGENT} eq $main::ENV{HTTP_USER_AGENT})
 				)
 				{
@@ -152,6 +152,10 @@ sub execute
 			{
 				main::_log("I'm not online, finding in user table");
 				
+				# activize user when deactivated
+#				do "/www/TOM/_addons/App/301/functions.pm";
+				App::301::functions::user_get($main::COOKIES{_ID_user});
+				
 				my $sql=qq{
 					SELECT
 						*
@@ -162,7 +166,7 @@ sub execute
 						hostname='$tom::H_cookie'
 					LIMIT 1
 				};
-				my %sth_u=TOM::Database::SQL::execute($sql,'log'=>1);
+				my %sth_u=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
 				%main::USRM=$sth_u{'sth'}->fetchhash();
 				
 				if ($main::USRM{'ID_user'})

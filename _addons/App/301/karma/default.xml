@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<karma>
+	<dictionary>
+		
+		<rule>
+			<regexp source="ascii">[\w]+</regexp>
+			<value>0.2</value>
+		</rule>
+		
+		<!-- uppercase word -->
+		<rule>
+			<regexp source="ascii">[A-Z]{4}</regexp>
+			<value>-5</value>
+		</rule>
+		
+		<rule> <!-- repeating characters -->
+			<regexp source="lowascii">[?!]{3}</regexp>
+			<value>-0.2</value>
+		</rule>
+		<rule> <!-- repeating characters -->
+			<regexp source="lowascii">[.]{4}</regexp>
+			<value>-0.2</value>
+		</rule>
+		
+		<rule> <!-- long words -->
+			<regexp source="lowascii">[\w]{20,}</regexp>
+			<value>-15</value>
+		</rule>
+		<rule> <!-- long words -->
+			<regexp source="lowascii">[\w]{35,}</regexp>
+			<value>-25</value>
+		</rule>
+		
+	</dictionary>
+	
+</karma>
