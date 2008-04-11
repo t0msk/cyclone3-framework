@@ -1,62 +1,75 @@
 #!/usr/bin/perl
-#use encoding 'utf8';
-#use Encode qw(encode_utf8);
-use utf8;
-# ÁÉÍÓÚ - USE UTF-8!!!
 
-# BEGIN COMPILATION
+
 BEGIN
 {
-	# -END-
-	$tom::P=`pwd` unless $ENV{SCRIPT_FILENAME} && do
-	{$tom::P=$ENV{SCRIPT_FILENAME};$tom::P=~s|(.*)/.*?/||;$tom::P=$1;};
-	$tom::P=~s|(.*)/.*?\n$|\1|;
-	$tom::SCRIPT_NAME=$0;
-	$tom::fastcgi=1 if $tom::SCRIPT_NAME=~/(tom|fcgi|fpl)$/; # zistujem ci som fastcgi script
-	die "cannot search TOM directory /var/www/TOM/???" unless $TOM::P=`ls -l $tom::SCRIPT_NAME`;
-	$TOM::P=~s|.* (.*)/.*?/(.*)\n|\1|;$TOM::SCRIPT_NAME=$2;
-	#push @INC,$TOM::P."/.core/.libs"; # na koniec
-	unshift @INC,$TOM::P."/_mdl"; # na zaciatok
-	unshift @INC,$TOM::P."/.core/.libs"; # na zaciatok
-	sub _log{return};sub _applog{return};
+	$TOM::engine='wc';
+	$main::debug=1;# if $ENV{'TERM'};
+	#print "Content-Type: text/html\n\n";
+	require "/www/TOM/.core/.libs/TOM.pm";
 }
 
-# START SCRIPT
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8; # encode = fromutf8, decode=toutf8
 use strict; # scrict code
-use Inline (Config => DIRECTORY => "$TOM::P/.core/.libs/_Inline");
+use CGI::Fast qw(:standard);
 
-# PERL MODULES
-use FCGI;
-require $TOM::P."/.core/_config/TOM.conf";
-require $TOM::P."/_config/TOM.conf";
-#use Tomahawk::error;
+use enc3;
+use iconv;
 
-# SYSTEM MODULES
-use Mysql;
-use TOM;
-use TOM::Debug::logs;
+my $t=track TOM::Debug("TOM engine '$TOM::engine' initializing...");
+
 use TOM::Database::connect;
-use Time::Local; # pre opacnu konverziu casu
-use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
-use Net::HTTP::CGI;
+use TOM::Database::SQL;
+use TOM::Net::HTTP::CGI;
 
+#eval
+#{
+#	my $t=track TOM::Debug('requiring TOM::Engine::pub');
+#	require TOM::Engine::pub;
+#	$t->close();
+#};
+#if ($@)
+#{
+#	my @ERR=("Error occured during initialization");
+#	push @ERR,$@;
+#	TOM::Error::engine(@ERR);
+#	exit(0);
+#}
 
-# CORE CONFIGURE MODULES
-require $tom::P."/local.conf";
+$t->close();
 
-
-TOM::Database::connect::all('stats') || do
+my $t_domain=track TOM::Debug("'$TOM::engine' domain initialization");
+eval
 {
-	print "Location: http://media.webcom.sk/grf/t.gif\n\n";
-	print "can't connect\n";
+	
+	# Load domain configuration
+	main::_log('require local.conf');
+	require $tom::P."/local.conf";
+	
+	TOM::Database::connect::multi('stats')
+		|| die "Error during connection request to database server\n";
+	
+	$TOM::engine_ready=1;
 };
 
-my $req=FCGI::Request();
-while ($req->Accept() >= 0)
+if ($@)
 {
-	my %env;
+	my @ERR=("Error occured during domain initialization");
+	push @ERR,$@;
+	main::_log("request in domain initialization error",1);
+	TOM::Error::engine(@ERR);
+	exit(0);
+}
+
+$t_domain->close;
+
+our $CGI;
+while ($main::CGI=new CGI::Fast())
+{
 	
-	my %FORM=GetQuery_h2($ENV{'QUERY_STRING'});
+	my %FORM=TOM::Net::HTTP::CGI::get_QUERY_STRING($ENV{'QUERY_STRING'});
 	
 	my $sql=qq{
 		INSERT INTO TOM.a110_webclick_log
@@ -83,11 +96,9 @@ while ($req->Accept() >= 0)
 		)
 	};
 	
-	open(CLK,'>/www/TOM/clk.log');
-	print CLK $sql;
-	close CLK;
-	$main::DB{'stats'}->Query($sql);
+	TOM::Database::SQL::execute($sql,'db_h'=>'stats');
 	
 	print "Location: http://media.webcom.sk/grf/t.gif\n\n";
 	
 }
+
