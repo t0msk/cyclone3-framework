@@ -10,6 +10,7 @@
 			<file location="omg.png" dest="emoticons/" />
 			<file location="sad.png" dest="emoticons/" />
 			<file location="smile.png" dest="emoticons/" />
+			<file location="love.png" dest="emoticons/" />
 			
 		</extract>
 		
