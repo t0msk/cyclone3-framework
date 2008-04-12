@@ -67,7 +67,8 @@ sub send
 	{
 		my %sth0=TOM::Database::SQL::execute("SELECT ID FROM TOM.a130_send LIMIT 1",'quiet'=>1);
 		my %db0_line=$sth0{'sth'}->fetchhash();
-		die "can't select ID from a130_send" unless $db0_line{'ID'};
+#		main::_log("");
+#		die "can't select ID from a130_send" unless $db0_line{'ID'};
 	};
 	
 	if (!$@)
