@@ -58,6 +58,7 @@ sub execute
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
 	delete $env{'ID_charindex'};
+	$env{'sql_limit'}=~s|^,|0,|;$env{'sql_limit'}=~s|,$|,10|;
 	$env{'sql_limit'}=500 unless $env{'sql_limit'};
 	$env{'sql_order_by'}='name ASC' unless $env{'sql_order_by'};
 	

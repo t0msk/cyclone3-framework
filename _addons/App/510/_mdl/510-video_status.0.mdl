@@ -90,6 +90,8 @@ sub execute
 		}
 	}
 	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	$XSGN{'TMP'}=~s|<%ID%>|$env{'video.ID'}|g;
 	return 1;
 }
 
