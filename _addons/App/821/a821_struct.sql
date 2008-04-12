@@ -93,6 +93,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_discussion_message` (
   `owner_anonymous_name` varchar(64) default NULL,
   `owner_IP` varchar(16) NOT NULL,
   `body` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `karma` float default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -114,6 +115,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_discussion_message_j` (
   `owner_anonymous_name` varchar(64) default NULL,
   `owner_IP` varchar(16) NOT NULL,
   `body` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `karma` float default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)

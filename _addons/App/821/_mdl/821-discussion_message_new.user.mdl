@@ -8,6 +8,7 @@ use strict;
 
 use App::020::_init;
 use App::160::_init;
+use App::301::_init;
 use App::821::_init;
 use TOM::Text::format;
 
@@ -108,11 +109,12 @@ sub execute
 		
 		my $user=TOM::Security::form::sql_escape($main::FORM{'user'});
 		
-		if ($main::USRM{'logged'} eq "Y")
+		if ($main::USRM{'ID_user'})
 		{
 			$columns{'posix_owner'}="'".$main::USRM{'ID_user'}."'";
 		}
-		else
+		
+		if ($main::USRM{'logged'} ne "Y")
 		{
 			$columns{'owner_anonymous_name'}="'".($user)."'";
 		}
@@ -157,6 +159,9 @@ sub execute
 			}
 		}
 		
+		use App::301::karma;
+		my $karma=App::301::karma::dictionary::analyze_text($name.' '.$body);
+		
 		my $ID=App::020::SQL::functions::tree::new(
 			'db_h' => "main",
 			'db_name' => $App::821::db_name,
@@ -170,6 +175,7 @@ sub execute
 				'owner_IP' => "'".$main::ENV{'REMOTE_ADDR'}."'",
 				'ID_discussion' => $env{'discussion.ID'},
 				'datetime_post' => 'NOW()',
+				'karma' => $karma,
 				'lng'  => "'$env{'lng'}'",
 				'status'  => "'Y'",
 				%columns
@@ -178,17 +184,25 @@ sub execute
 			#'stop' => 1,
 		);
 		
+		if ($main::USRM{'ID_user'})
+		{
+			App::301::karma::increase(
+				'ID_user' => $main::USRM{'ID_user'},
+				'karma' => $karma
+			);
+		}
+		
 		$XSGN{'TMP'}=$XSGN{'commited'};
 	}
 	
 	return 1;
 }
 
-our $authors="roman.fordinal\@comsultia.com";
+our $authors="open\@comsultia.com";
 
 =head1 AUTHORS
 
-Roman Fordinal (roman.fordinal@comsultia.com)
+Comsultia, Ltd. (open@comsultia.com)
 
 =cut
 

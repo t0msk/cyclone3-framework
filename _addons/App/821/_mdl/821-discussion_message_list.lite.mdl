@@ -145,6 +145,10 @@ sub execute
 		{
 			my $item=$XSGN{'item'};
 			
+			if ($db0_line{'karma'}<-50)
+			{
+				$item=$XSGN{'item_lowkarma'};
+			}
 			
 			$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 			$item=~s|<%ID%>|$db0_line{'ID'}|g;
