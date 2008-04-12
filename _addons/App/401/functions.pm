@@ -584,7 +584,7 @@ sub article_item_info
 			))
 			{
 				$data{'relation_status'}='Y';
-				if ($relation->{'r_prefix'} eq "a541" && $relation->{'r_table'} eq "file")
+				if ($relation->{'r_prefix'} eq "a542" && $relation->{'r_table'} eq "file")
 				{$data{'attachment_status'}='Y'};
 				if ($relation->{'r_prefix'} eq "a821" && $relation->{'r_table'} eq "discussion")
 				{$data{'discussion_status'}='Y'};
