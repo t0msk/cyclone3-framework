@@ -203,7 +203,7 @@ sub start
 				my %db0_line=$sth0{'sth'}->fetchhash();
 				if ($db0_line{'ID'})
 				{
-					$attr->{'src'}='video';
+					$attr->{'src'}='';
 					#$attr->{'width'}=$db0_line{'video_width'} unless $attr->{'width'};
 					#$attr->{'height'}=$db0_line{'video_height'} unless $attr->{'height'};
 					if (!$attr->{'alt'})
@@ -299,7 +299,7 @@ sub start
 				if ($db0_line{'ID'})
 				{
 					main::_log("found video_part");
-					$attr->{'src'}='video_part';
+					$attr->{'src'}='';
 					$attr->{'width'}=$db0_line{'video_width'} unless $attr->{'width'};
 					$attr->{'height'}=$db0_line{'video_height'} unless $attr->{'height'};
 					if (!$attr->{'alt'})
