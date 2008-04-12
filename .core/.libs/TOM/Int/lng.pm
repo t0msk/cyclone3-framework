@@ -6,11 +6,15 @@ use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 our $GEOIP;
+our $gi;
 
 BEGIN
 {
 	eval "use Geo::IP";
-	if ($@){main::_log("can't find Geo::IP",1)}else{$GEOIP=1}
+	if ($@){main::_log("can't find Geo::IP",1)}else{
+		$GEOIP=1;
+		$gi = Geo::IP->new();
+	}
 }
 
 our @ISA=("ISO::639");
@@ -61,7 +65,6 @@ sub browser_autodetect
 	if ($GEOIP)
 	{
 		
-		my $gi = Geo::IP->new();
 		my $country = $gi->country_code_by_addr($ENV{'REMOTE_ADDR'});$country="\L$country";
 		
 		main::_log("Geoip $ENV{'REMOTE_ADDR'} country: '$country'");
