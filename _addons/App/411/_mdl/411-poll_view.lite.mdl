@@ -66,7 +66,7 @@ B<ANSWER> - answer
 
 =item *
 
-B<%db_*%> - article database variables
+B<%db_*%> - poll database variables
 
 =back
 
@@ -86,53 +86,108 @@ sub execute
 	
 	my $no_data=1;
 
+	my $sql_cat = "`poll`.`ID_category` IN ('$env{'ID_category'}') AND" if($env{'ID_category'});
+	my $sql_entity = "`poll`.`ID_entity` IN ('$env{'ID_entity'}') AND" if($env{'ID_entity'});
+
 	my $sql=qq{
 		SELECT
 			`poll`.*
 		FROM
-			`$env{'db_name'}`.`a411_poll_view` AS `poll`
+			`$env{'db_name'}`.`a411_poll` AS `poll`
 		WHERE
+			$sql_cat
+			$sql_entity
 			`poll`.`lng`='$env{'sql_lng'}' AND
 			`poll`.`status` IN ('$env{'sql_status'}')
+		LIMIT 1
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
-
-	if(!$sth0{'sth'})
+	if(!$sth0{'rows'} && $XSGN{'TMP_no-data'})
 	{
-		main::_log("err: SQL can't be executed",1);
+		$XSGN{'TMP'}=$XSGN{'TMP_no-data'};
+		return 1;
 	}
-
-	if($sth0{'rows'})
+	elsif (!$sth0{'rows'})
 	{
-		$no_data=0;
-	}else{
-		main::_log("warn: no data for given attributes");
+		die "can't select poll with this attributes\n";
 	}
-
-	if($no_data)
-	{
-		if(exists $XSGN{'TMP_no-data'})
-		{
-			$XSGN{'TMP'}=$XSGN{'TMP_no-data'};
-		}else{
-			return 0;
-		}
-	}
-
-	main::_log("received ".$sth0{'rows'}." rows");
-
-	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	my %db0_line=$sth0{'sth'}->fetchhash();
+	
+	# select answers
+	my $sql=qq{
+		SELECT
+			`poll_answer`.*,
+			(
+				SELECT COUNT(*)
+				FROM `$env{'db_name'}`.`a411_poll_vote`
+				WHERE ID_answer=`poll_answer`.ID_entity
+			) AS vote_count
+		FROM
+			`$env{'db_name'}`.`a411_poll_answer` AS `poll_answer`
+		WHERE
+			`poll_answer`.`ID_poll`='$db0_line{'ID_entity'}' AND
+			`poll_answer`.`lng`='$env{'sql_lng'}' AND
+			`poll_answer`.`status` IN ('$env{'sql_status'}')
+		ORDER BY
+			`poll_answer`.ID_entity
+	};
+	my %sth1=TOM::Database::SQL::execute($sql,'log'=>1);
+	
+	my $votes_total;
+	my @percentages;
+	my @votes;
+	
+	my $counter = 0;
+	
+	while (my %db1_line=$sth1{'sth'}->fetchhash())
 	{
 		my $answer=$XSGN{'answer'};
-
-		$XSGN{'TMP'}=~s|<%db_question%>|$db0_line{'question'}|g;
-		$XSGN{'TMP'}=~s|<%db_description%>|$db0_line{'description'}|g;
-		$XSGN{'TMP'}=~s|<%db_ID_entity_poll%>|$db0_line{'ID_entity_poll'}|g;
-
-		$answer=~s|<%db_(.*?)%>|$db0_line{$1}|g;
-
+		
+		$votes_total+=$db1_line{'vote_count'};
+		$votes[$counter] = $db1_line{'vote_count'};
+		
+		$answer=~s|<%db_vote_count_percent%>|<%vote_count_percent_$counter%>|g;
+		
+		$answer=~s|<%poll_db_(.*?)%>|$db0_line{$1}|g;
+		$answer=~s|<%db_(.*?)%>|$db1_line{$1}|g;
+		
+		$counter++;
+		
+		$answer=~s|<%counter%>|$counter|g;
+		
 		$XSGN{'TMP'}=~s|<#answer#>|$answer|;
 	}
+	
+	my $total_percent=0;
+	
+	for(my $tmp=0; $tmp<scalar(@votes); $tmp++)
+	{
+		my $var = 0;
+		$var=int($votes[$tmp]/($votes_total/100)) if ($votes[$tmp]>0);
+		$percentages[$tmp] = $var;
+		$total_percent += $var;
+	}
+	
+	if(($total_percent>0) && ($total_percent<100))
+	{
+ 		my $highest=0;
+
+ 		for(my $tmp=0; $tmp<scalar(@percentages); $tmp++)
+ 		{
+ 			if($percentages[$tmp]>$percentages[$highest])
+ 			{
+ 				$highest=$tmp;
+ 			}
+ 		}
+ 		$percentages[$highest] += (100-$total_percent);
+	}
+	
+	for(my $tmp=0; $tmp<scalar(@votes); $tmp++)
+	{
+		$XSGN{'TMP'}=~s|<%vote_count_percent_$tmp%>|$percentages[$tmp]|g;
+	}
+	
+	$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 	
 	return 1;
 }

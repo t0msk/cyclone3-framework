@@ -8,11 +8,11 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_category` bigint(20) unsigned default NULL,
-  `question` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
   `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL,
   `datetime_start` datetime NOT NULL,
-  `datetime_end` datetime default NULL,
+  `datetime_stop` datetime default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -21,16 +21,47 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll` (
 
 -- --------------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*app*/_poll_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `ID_category` bigint(20) unsigned default NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `datetime_create` datetime NOT NULL,
+  `datetime_start` datetime NOT NULL,
+  `datetime_stop` datetime default NULL,
+  `lng` char(2) character set ascii NOT NULL default '',
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*app*/_poll_answer` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_poll` bigint(20) unsigned NOT NULL, -- rel _poll.ID_entity
-  `answer` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_poll_answer_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `ID_poll` bigint(20) unsigned NOT NULL, -- rel _poll.ID_entity
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `datetime_create` datetime NOT NULL,
+  `lng` char(2) character set ascii NOT NULL default '',
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -60,6 +91,20 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll_cat` (
 
 -- --------------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*app*/_poll_cat_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `datetime_create` datetime NOT NULL,
+  `lng` char(2) character set ascii NOT NULL default '',
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
 CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_poll_view` AS (
 	SELECT
 		
@@ -68,9 +113,9 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_poll_view` AS (
 		poll_answer.ID_entity AS ID_entity_answer,
 		poll_answer.ID AS ID_answer,
 		
-		poll.question,
+		poll.name AS question,
 		poll.description,
-		poll_answer.answer,
+		poll_answer.name AS answer,
 		
 		poll.lng,
 		
