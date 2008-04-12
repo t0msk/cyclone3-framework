@@ -22,7 +22,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user` (
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID_user`),
   UNIQUE KEY `UNI_0` (`hostname`,`login`),
-  KEY `secure_hash` (`secure_hash`),
+--  KEY `secure_hash` (`secure_hash`),
   KEY `login` (`login`),
   KEY `hostname` (`hostname`),
   KEY `email` (`email`)
@@ -95,7 +95,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_profile` (
   KEY `ID` (`ID`),
   KEY `firstname` (`firstname`),
   KEY `surname` (`surname`),
-  KEY `sex` (`sex`)
+  KEY `gender` (`gender`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
