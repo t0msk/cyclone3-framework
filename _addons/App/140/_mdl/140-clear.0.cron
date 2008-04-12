@@ -26,6 +26,7 @@ sub execute
 			next if $file =~/!media/;
 			next if $file =~/!www/;
 			next if $file =~/_data/;
+			next if $file =~/_addons/;
 			next if $file =~/_debug/;
 			next if $file =~/\.svn/;
 			next if $file =~/_type/;
@@ -79,6 +80,9 @@ sub execute
 		}
 		
 		my $count=@files;
+		
+		main::_log("dir_step=$dir_step count=$count");
+		
 		if (!$dir_step && $count==1)
 		{
 			main::_log("opening second '$TOM::path_log'");
