@@ -114,6 +114,7 @@ sub execute
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
 	delete $env{'ID_charindex'};
+   $env{'sql_limit'}=~s|^,|0,|;$env{'sql_limit'}=~s|,$|,10|;
 	$env{'sql_limit'}=100 unless $env{'sql_limit'};
 	$env{'sql_order_by'}='datetime_start DESC' unless $env{'sql_order_by'};
 	
@@ -399,7 +400,7 @@ sub execute
 			))
 			{
 				$XSGN{'NULL'}=~s|<%relation_status%>|Y|g;
-				if ($relation->{'r_prefix'} eq "a541" && $relation->{'r_table'} eq "file")
+				if ($relation->{'r_prefix'} eq "a542" && $relation->{'r_table'} eq "file")
 				{$XSGN{'NULL'}=~s|<%attachment_status%>|Y|g;}
 				if ($relation->{'r_prefix'} eq "a821" && $relation->{'r_table'} eq "discussion")
 				{$XSGN{'NULL'}=~s|<%discussion_status%>|Y|g;}

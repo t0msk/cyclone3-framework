@@ -351,16 +351,28 @@ sub execute
 	# Line counter
 	my $item_counter=0;
 	
+   my %IDs_entity;
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		$item_counter++;
-		
+      next if $IDs_entity{$db0_line{'ID_entity_article'}};
+      $IDs_entity{$db0_line{'ID_entity_article'}}++;
+      
+      $item_counter++;
+     
 		main::_log("article[$item_counter] article_attrs.name='$db0_line{'name'}'");
 		
 		my $item=
 			$XSGN{'item.'.$item_counter}
 			|| $XSGN{'item'};
 		
+      my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
+      $db0_line{'datetime_start.year'}=$datetime{'year'};
+      $db0_line{'datetime_start.month'}=$datetime{'month'};
+      $db0_line{'datetime_start.mday'}=$datetime{'mday'};
+      $db0_line{'datetime_start.hour'}=$datetime{'hour'};
+      $db0_line{'datetime_start.min'}=$datetime{'min'};
+      $db0_line{'datetime_start.sec'}=$datetime{'sec'};
+      
 		# fill raw data into $XSGN{'item'}
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		

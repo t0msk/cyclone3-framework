@@ -168,6 +168,15 @@ sub execute
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
+    
+		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
+		$db0_line{'datetime_start.year'}=$datetime{'year'};
+		$db0_line{'datetime_start.month'}=$datetime{'month'};
+		$db0_line{'datetime_start.mday'}=$datetime{'mday'};
+		$db0_line{'datetime_start.hour'}=$datetime{'hour'};
+		$db0_line{'datetime_start.min'}=$datetime{'min'};
+		$db0_line{'datetime_start.sec'}=$datetime{'sec'};
+        
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
 		my %author=App::301::authors::get_author($db0_line{'posix_author'});
@@ -239,28 +248,14 @@ sub execute
 			$p->eof();
 			my $part_html=$p->{'out'};
 			
+			if ($env{'ad'} && $part eq "body"){$part_html=~s|^(.{400,}?)<br>|$1<br><!TMP-a401-BANNER!><br>|s;}
+			
 			$XSGN{'TMP'}=~s|<%$part%>|$part_html|;
 			
 			$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
 			$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
 			
 		}
-		
-		# add banner
-#		if ($env{'ad'}){$body_html=~s|^(.{400,}?)<br>|$1<br><!TMP-a401-BANNER!><br>|s;}
-		
-#		$XSGN{'TMP'}=~s|<%body%>|$body_html|;
-		
-#		$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
-#		$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
-		
-		
-		# PARSE !!!
-#		$p->parse($db0_line{'abstract'});
-#		$p->eof();
-#		my $abstract_html=$p->{'out'};
-		
-#		$XSGN{'TMP'}=~s|<%abstract%>|$abstract_html|;
 		
 		
 		# check if here is a related image gallery

@@ -81,7 +81,7 @@ sub execute
 	
 	$out=App::020::SQL::functions::tree::move_down(
 		'db_h' => "main",
-		'db_name' => $TOM::DB{'main'}{'name'},
+		'db_name' => $App::401::db_name,
 		'tb_name' => $tb_name,
 		'-journalize' => 1,
 		'ID'   => $env{'ID'}
