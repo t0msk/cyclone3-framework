@@ -90,10 +90,12 @@ sub _log_lite
 		" ".(" " x $get[0]).$ref[$get[2]].$get[1];
 	
 	
-	open (HND_LOG,">>".$filename) || return undef;
-	chmod (0666,$filename);
-	print HND_LOG $msg."\n";
-	close HND_LOG;
+	open (HND_LOG,">>".$filename) && do
+	{
+		chmod (0666,$filename);
+		print HND_LOG $msg."\n";
+		close HND_LOG;
+	};
 	
 	print $msg."\n" if $main::debug;
 	
