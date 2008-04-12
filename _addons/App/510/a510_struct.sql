@@ -159,12 +159,41 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo` ( -- experimental EMO charac
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo_j` (
+  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `ID_entity` mediumint(8) unsigned default NULL,
+  `datetime_create` datetime NOT NULL,
+  `emo_angry` int(10) unsigned NOT NULL default '0',
+  `emo_confused` int(10) unsigned NOT NULL default '0',
+  `emo_love` int(10) unsigned NOT NULL default '0',
+  `emo_omg` int(10) unsigned NOT NULL default '0',
+  `emo_sad` int(10) unsigned NOT NULL default '0',
+  `emo_smile` int(10) unsigned NOT NULL default '0',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo_vote` (
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_part` mediumint(8) unsigned NOT NULL,
+  `datetime_event` datetime NOT NULL,
+  `emo` varchar(8) character set ascii NOT NULL default ''
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*app*/_video_part_callback` (
   `ID_part` mediumint(8) unsigned NOT NULL,
   `datetime_create` datetime NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `IP` varchar(15) character set ascii default NULL,
+  `country_code` char(3) character set ascii default NULL,
   `duration` int(10) unsigned NOT NULL default '0',
-  `state` varchar(10) character set ascii collate ascii_bin NOT NULL
+  `state` varchar(10) character set ascii collate ascii_bin NOT NULL,
+  KEY `datetime_create` (`datetime_create`),
+  KEY `country_code` (`country_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -223,22 +252,6 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_part_emo_viewEQ` AS (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo_j` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL,
-  `datetime_create` datetime NOT NULL,
-  `emo_angry` int(10) unsigned NOT NULL default '0',
-  `emo_confused` int(10) unsigned NOT NULL default '0',
-  `emo_love` int(10) unsigned NOT NULL default '0',
-  `emo_omg` int(10) unsigned NOT NULL default '0',
-  `emo_sad` int(10) unsigned NOT NULL default '0',
-  `emo_smile` int(10) unsigned NOT NULL default '0',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------
-
 CREATE TABLE `/*db_name*/`.`/*app*/_video_part_attrs` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
@@ -270,6 +283,16 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_attrs_j` (
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_video_part_dist` (
+  `datetime_create` datetime NOT NULL,
+  `ID_part` bigint(20) NOT NULL,
+  `country_code` char(3) character set ascii NOT NULL,
+  `distname` varchar(16) character set ascii NOT NULL,
+  PRIMARY KEY  (`ID_part`,`country_code`,`distname`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
