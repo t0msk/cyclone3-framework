@@ -186,7 +186,7 @@ sub video_part_file_generate
 	);
 	
 	main::_log("path to parent video_part_file='$video1_path'");
-	my $video2=new TOM::Temp::file();
+	my $video2=new TOM::Temp::file('dir'=>$main::ENV{'TMP'});
 	
 	my $out=video_part_file_process(
 		'video1' => $video1_path,
@@ -421,11 +421,11 @@ sub video_part_file_process
 				}
 				else
 				{
-					$temp_video=new TOM::Temp::file('ext'=>$ext);
+					$temp_video=new TOM::Temp::file('ext'=>$ext,'dir'=>$main::ENV{'TMP'});
 					$files_key{'pass'}=$temp_video;
 				}
 			}
-			$temp_video=new TOM::Temp::file('ext'=>$ext) unless $temp_video;
+			$temp_video=new TOM::Temp::file('ext'=>$ext,'dir'=>$main::ENV{'TMP'}) unless $temp_video;
 			# don't erase files after partial encode()
 			push @files, $temp_video;
 			$files_key{$env{'o_key'}}=$temp_video if $env{'o_key'};
@@ -435,7 +435,7 @@ sub video_part_file_process
 			my $ff=$env{'video1'};
 			$ff=~s| |\\ |g;
 			my $cmd="/usr/bin/mencoder ".$ff." -o ".($env{'o'} || $temp_video->{'filename'});
-			$cmd="cd /www/TOM/_temp;/usr/bin/ffmpeg -y -i ".$env{'video1'} if $env{'encoder'} eq "ffmpeg";
+			$cmd="cd $main::ENV{'TMP'};/usr/bin/ffmpeg -y -i ".$env{'video1'} if $env{'encoder'} eq "ffmpeg";
 			
 			foreach (@encoder_env){$cmd.=" $_";}
 			$cmd.=" ".($env{'o'} || $temp_video->{'filename'}) if $env{'encoder'} eq "ffmpeg";
@@ -452,12 +452,12 @@ sub video_part_file_process
 		{
 			main::_log("exec $function_name()");
 			
-			my $temp_video=new TOM::Temp::file('ext'=>'mp4','nocreate'=>1);
+			my $temp_video=new TOM::Temp::file('ext'=>'mp4','nocreate'=>1,'dir'=>$main::ENV{'TMP'});
 			
 			if ($files_key{'video'})
 			{
 				main::_log("adding m4v");
-				my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.$files_key{'video'}->{'filename'}.'#video '.$temp_video->{'filename'};
+				my $cmd='cd '.$main::ENV{'TMP'}.';/usr/bin/MP4Box -add '.$files_key{'video'}->{'filename'}.'#video '.$temp_video->{'filename'};
 				main::_log("cmd=$cmd");
 				my $out=system("$cmd");main::_log("out=$out");
 				if ($out){$t->close();return undef}
@@ -465,7 +465,7 @@ sub video_part_file_process
 				if ($files_key{'audio'})
 				{
 					main::_log("adding m4a");
-					my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.$files_key{'audio'}->{'filename'}.'#audio '.$temp_video->{'filename'};
+					my $cmd='cd '.$main::ENV{'TMP'}.';/usr/bin/MP4Box -add '.$files_key{'audio'}->{'filename'}.'#audio '.$temp_video->{'filename'};
 					main::_log("cmd=$cmd");
 					my $out=system("$cmd");main::_log("out=$out");
 					if ($out){$t->close();return undef}
@@ -475,16 +475,16 @@ sub video_part_file_process
 			elsif ($files_key{'audiovideo'})
 			{
 				
-				my $temp_video_input=new TOM::Temp::file('ext'=>'mp4','nocreate'=>1);
+				my $temp_video_input=new TOM::Temp::file('ext'=>'mp4','nocreate'=>1,'dir'=>$main::ENV{'TMP'});
 				
 				main::_log("adding m4v");
-				my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.$files_key{'audiovideo'}->{'filename'}.'#video '.$temp_video->{'filename'};
+				my $cmd='cd '.$main::ENV{'TMP'}.';/usr/bin/MP4Box -add '.$files_key{'audiovideo'}->{'filename'}.'#video '.$temp_video->{'filename'};
 				main::_log("cmd=$cmd");
 				my $out=system("$cmd");main::_log("out=$out");
 				if ($out){$t->close();return undef}
 				
 				main::_log("adding m4a");
-				my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.$files_key{'audiovideo'}->{'filename'}.'#audio '.$temp_video->{'filename'};
+				my $cmd='cd '.$main::ENV{'TMP'}.';/usr/bin/MP4Box -add '.$files_key{'audiovideo'}->{'filename'}.'#audio '.$temp_video->{'filename'};
 				main::_log("cmd=$cmd");
 				my $out=system("$cmd");main::_log("out=$out");
 				if ($out){$t->close();return undef}
@@ -492,7 +492,7 @@ sub video_part_file_process
 			elsif ($files_key{'all'})
 			{
 				main::_log("adding a+v");
-				my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.$files_key{'all'}->{'filename'}.' '.$temp_video->{'filename'};
+				my $cmd='cd '.$main::ENV{'TMP'}.';/usr/bin/MP4Box -add '.$files_key{'all'}->{'filename'}.' '.$temp_video->{'filename'};
 				main::_log("cmd=$cmd");
 				my $out=system("$cmd");main::_log("out=$out");
 				if ($out){$t->close();return undef}
@@ -500,7 +500,7 @@ sub video_part_file_process
 			else
 			{
 				main::_log("adding a+v last");
-				my $cmd='cd /www/TOM/_temp;/usr/bin/MP4Box -add '.($files[@files-1]->{'filename'}).' '.$temp_video->{'filename'};
+				my $cmd='cd '.$main::ENV{'TMP'}.';/usr/bin/MP4Box -add '.($files[@files-1]->{'filename'}).' '.$temp_video->{'filename'};
 				main::_log("cmd=$cmd");
 				my $out=system("$cmd");main::_log("out=$out");
 				if ($out){$t->close();return undef}
@@ -1243,7 +1243,7 @@ sub video_part_file_add
 	
 	# file must be copied to have correct extension
 	# if (not already has it)
-	my $file3=new TOM::Temp::file('ext'=>$file_ext);
+	my $file3=new TOM::Temp::file('ext'=>$file_ext,'dir'=>$main::ENV{'TMP'});
 	my %video;
 	if (not $env{'file'}=~/\.$file_ext$/)
 	{
@@ -1281,7 +1281,7 @@ sub video_part_file_add
 		# generate thumbnail from full
 		my $rel;
 		main::_log("checking if generate thumbnail");
-		my $tmpjpeg=new TOM::Temp::file('ext'=>'jpeg');
+		my $tmpjpeg=new TOM::Temp::file('ext'=>'jpeg','dir'=>$main::ENV{'TMP'});
 		
 		if (!$env{'file_thumbnail'} &&
 			($part{'thumbnail_lock'} eq 'N' || $env{'thumbnail_lock_ignore'}))
