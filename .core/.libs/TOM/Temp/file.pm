@@ -19,7 +19,17 @@ sub new
 	loop_file:
 	
 	$self->{'unique'}=TOM::Utils::vars::genhash(32);
-	$self->{'filename'}=$TOM::P.'/_temp/tmp-'.$self->{'unique'};
+	
+#	$main::ENV{'TMP'}
+	if ($env{'dir'})
+	{
+		$self->{'filename'}=$env{'dir'}.'/Cyclone3TMP-'.$self->{'unique'};
+	}
+	else
+	{
+		$self->{'filename'}=$TOM::P.'/_temp/tmp-'.$self->{'unique'};	
+	}
+	
 	$self->{'filename'}.='.'.$env{'ext'} if $env{'ext'};
 	$self->{'unlink'}=1;
 	
