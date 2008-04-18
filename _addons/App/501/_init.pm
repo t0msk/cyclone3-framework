@@ -72,6 +72,7 @@ BEGIN
 {
 	eval
 	{
+		return unless $tom::H_cookie;
 		alarm 1; # when media directory is a freezed network filesystem
 		my $htaccess_j=qq{
 		# safe data
@@ -80,7 +81,8 @@ BEGIN
 		};
 		
 		# check media directory
-		if ($tom::P)
+		my $check;
+		if ($tom::P && $check)
 		{
 			
 			if (!-e $tom::P.'/!media/a501/image/file')
@@ -116,7 +118,9 @@ our $image_format_ext_default=$App::501::image_format_ext_default || 'jpg';
 our $image_format_original_ID;
 our $image_format_fullsize_ID;
 our $image_format_thumbnail_ID;
+our $image_format_ico_ID;
 
+if ($tom::H_cookie){
 
 my $sql=qq{
 	SELECT ID
@@ -195,7 +199,9 @@ if ($image_format_original_ID)
 			'columns' =>
 			{
 				'name' => "'thumbnail'",
-				'process' => "'scale(80,80)'",
+				'process' => "'set_env(\\'ext\\',\\'jpg\\')
+set_env(\\'quality\\',\\'75\\')
+thumbnail(100,100)'",
 				'status' => "'L'"
 			}
 		);
@@ -204,7 +210,44 @@ if ($image_format_original_ID)
 	{
 		$image_format_thumbnail_ID=$db0_line{'ID'};
 	}
+	
+#=head1
+	if ($image_format_thumbnail_ID)
+	{
+		my $sql=qq{
+			SELECT ID
+			FROM `$db_name`.a501_image_format
+			WHERE name='ico'
+			LIMIT 1;
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		if (!$db0_line{'ID'})
+		{
+			$image_format_thumbnail_ID=App::020::SQL::functions::tree::new(
+				'parent_ID' => $image_format_thumbnail_ID,
+				'db_h' => 'main',
+				'db_name' => $db_name,
+				'tb_name' => 'a501_image_format',
+				'columns' =>
+				{
+					'name' => "'ico'",
+					'process' => "'set_env(\\'ext\\',\\'gif\\')
+set_env(\\'quality\\',\\'75\\')
+thumbnail(16,16)'",
+					'status' => "'L'"
+				}
+			);
+		}
+		else
+		{
+			$image_format_ico_ID=$db0_line{'ID'};
+		}
+	}
+#=cut
+	
 }
 
+}
 
 1;
