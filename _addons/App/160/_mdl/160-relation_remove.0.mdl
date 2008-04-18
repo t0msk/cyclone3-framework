@@ -46,6 +46,7 @@ sub execute
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
 	my $out=App::160::SQL::remove_relation(
+		'l_prefix' => $env{'l_prefix'},
 		'ID' => $env{'ID'}
 	);
 	

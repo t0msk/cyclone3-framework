@@ -38,7 +38,7 @@ L<App::160::_init|app/"160/_init.pm">
 use App::020::_init;
 use App::160::_init;
 
-our $debug=0;
+our $debug=1;
 our $quiet;$quiet=1 unless $debug;
 our $CACHE=1; # sorry not well tested caching
 our $cache_expire=600; # 5 minutes - better is less time, when anything is cached wrong
@@ -62,6 +62,24 @@ Creates a new relation and return ID_entity, ID
 
 =cut
 
+sub _detect_db_name
+{
+	my $prefix=shift;
+	
+	main::_log("detect db_name with '$prefix' addon");
+	# at first check if this addon is available
+	$prefix=~s|^a|App::|;
+	$prefix=~s|^e|Ext::|;
+	# load this addon if not available
+	eval "use $prefix".'::_init;' unless $prefix->VERSION;
+	# read db_name from this library
+	my $db_name;eval '$db_name=$'.$prefix.'::db_name;';
+	main::_log("detected db_name=$db_name");
+	# setup when found
+	return $db_name if $db_name;
+	return undef;
+}
+
 sub new_relation
 {
 	my %env=@_;
@@ -71,6 +89,11 @@ sub new_relation
 	delete $env{'ID_entity'} if exists $env{'ID_entity'};
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	# detect db_name - where a160 is stored
+	if ($env{'l_prefix'} && !$env{'db_name'})
+	{$env{'db_name'}=_detect_db_name($env{'l_prefix'})}
+	
 	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	$env{'status'}='Y' unless $env{'status'};
 	
@@ -213,6 +236,11 @@ sub remove_relation
 	my $t=track TOM::Debug(__PACKAGE__."::remove_relation()");
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	# detect db_name - where a160 is stored
+	if ($env{'l_prefix'} && !$env{'db_name'})
+	{$env{'db_name'}=_detect_db_name($env{'l_prefix'})}
+	
 	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	
 	foreach (keys %env)
@@ -223,8 +251,10 @@ sub remove_relation
 	# check if this relation already exists
 	my $relation=(get_relations(
 		'ID'=>$env{'ID'},
+		'l_prefix' => $env{'l_prefix'},
+		'db_name' => $env{'db_name'},
 		'status' => 'YNT',
-		'limit' => '0,1'
+		'limit' => '1'
 	))[0];
 	if ($relation)
 	{
@@ -282,6 +312,11 @@ sub relation_change_status
 	my $t=track TOM::Debug(__PACKAGE__."::relation_change_status()");
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	# detect db_name - where a160 is stored
+	if ($env{'l_prefix'} && !$env{'db_name'})
+	{$env{'db_name'}=_detect_db_name($env{'l_prefix'})}
+	
 	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	
 	foreach (keys %env)
@@ -292,8 +327,10 @@ sub relation_change_status
 	# check if this relation already exists
 	my $relation=(get_relations(
 		'ID' => $env{'ID'},
+		'l_prefix' => $env{'l_prefix'},
+		'db_name' => $env{'db_name'},
 		'status' => 'YN',
-		'limit' => '0,1'
+		'limit' => '1'
 	))[0];
 	if ($relation)
 	{
@@ -316,6 +353,7 @@ sub relation_change_status
 				.$relation->{'l_prefix'}.'/'.$relation->{'l_table'};
 			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 			{
+				main::_log("save ($cache_change_key)=".(time())."") if $debug;
 				# save info about changed set of relations
 				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
 			}
@@ -368,8 +406,13 @@ sub get_relations
 	my $t=track TOM::Debug(__PACKAGE__."::get_relation()") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	# detect db_name - where a160 is stored
+	if ($env{'l_prefix'} && !$env{'db_name'})
+	{$env{'db_name'}=_detect_db_name($env{'l_prefix'})}
+	
 	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
-	$env{'limit'}="0,100" unless $env{'limit'};
+	$env{'limit'}="100" unless $env{'limit'};
 	
 	# list of input
 	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_} && $debug};
@@ -415,7 +458,7 @@ sub get_relations
 		my $cache_change=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_change_key);
 		my $cache=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_key);
 		
-		#main::_log("cache-time='".$cache->{'time'}."' cache_change='".$cache_change."'");
+		main::_log("cache-time='".$cache->{'time'}."' cache_change='".$cache_change."' ($cache_change_key)") if $debug;
 		
 		if ($cache->{'time'} && ($cache->{'time'} > $cache_change))
 		{
@@ -489,7 +532,16 @@ sub get_relation_iteminfo
 	my $t=track TOM::Debug(__PACKAGE__."::get_relation_iteminfo()");
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
-	$env{'r_db_name'}=$App::160::db_name unless $env{'r_db_name'};
+	
+	# detect db_name - where a160 is stored
+	if ($env{'l_prefix'} && !$env{'db_name'})
+	{$env{'db_name'}=_detect_db_name($env{'l_prefix'})}
+	
+#	$env{'r_db_name'}=$App::160::db_name unless $env{'r_db_name'};
+	
+	# detect r_db_name - where dest App is stored
+	if ($env{'r_prefix'} && !$env{'r_db_name'})
+	{$env{'r_db_name'}=_detect_db_name($env{'r_prefix'})}
 	
 	# list of input
 	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_}};
@@ -537,7 +589,7 @@ sub get_relation_iteminfo
 
 =head1 AUTHORS
 
-Roman Fordinal (roman.fordinal@comsultia.com)
+Comsultia, Ltd. (open@comsultia.com)
 
 =cut
 
