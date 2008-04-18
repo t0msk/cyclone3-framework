@@ -66,6 +66,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_profile` (
   `ID_entity` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel _user.ID_user
   `datetime_create` datetime NOT NULL,
   `firstname` varchar(32) character set utf8 collate utf8_bin default NULL,
+  `middlename` varchar(64) character set utf8 collate utf8_bin default NULL,
   `surname` varchar(64) character set utf8 collate utf8_bin default NULL,
   `name_prefix` varchar(16) character set utf8 collate utf8_bin default NULL,
   `name_suffix` varchar(16) character set utf8 collate utf8_bin default NULL,
@@ -105,6 +106,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_profile_j` (
   `ID_entity` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel _user.ID_user
   `datetime_create` datetime NOT NULL,
   `firstname` varchar(32) character set utf8 collate utf8_bin default NULL,
+  `middlename` varchar(64) character set utf8 collate utf8_bin default NULL,
   `surname` varchar(64) character set utf8 collate utf8_bin default NULL,
   `name_prefix` varchar(16) character set utf8 collate utf8_bin default NULL,
   `name_suffix` varchar(16) character set utf8 collate utf8_bin default NULL,
@@ -260,7 +262,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_user_group_j` (
 -- --------------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_user_rel_group` (
-  `ID_group` int(10) unsigned NOT NULL auto_increment,
+  `ID_group` int(10) unsigned NOT NULL auto_increment, -- rel _user_group.ID
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   PRIMARY KEY  (`ID_group`,`ID_user`),
   KEY `ID_user` (`ID_user`),
