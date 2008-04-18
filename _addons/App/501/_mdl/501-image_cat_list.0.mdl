@@ -58,7 +58,8 @@ sub execute
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
 	delete $env{'ID_charindex'};
-	$env{'sql_limit'}=500 unless $env{'sql_limit'};
+   $env{'sql_limit'}=~s|^,|0,|;$env{'sql_limit'}=~s|,$|,10|;
+	$env{'sql_limit'}=100 unless $env{'sql_limit'};
 	$env{'sql_order_by'}='name ASC' unless $env{'sql_order_by'};
 	
 	my $from;
@@ -330,7 +331,7 @@ sub execute
 					ID_format=$App::501::image_format_fullsize_ID
 				LIMIT 1
 			};
-			my %sth1=TOM::Database::SQL::execute($sql);
+			my %sth1=TOM::Database::SQL::execute($sql,'slave'=>1);
 			if (my %db1_line=$sth1{'sth'}->fetchhash())
 			{
 				
@@ -338,6 +339,23 @@ sub execute
 				$XSGN{'NULL'}=~s|<%image_width%>|$db1_line{'image_width'}|g;
 				$XSGN{'NULL'}=~s|<%image_height%>|$db1_line{'image_height'}|g;
 				$XSGN{'NULL'}=~s|<%dimensions%>|$db1_line{'image_width'}x$db1_line{'image_height'}|g;
+			}
+			
+			my $sql=qq{
+				SELECT
+					*
+				FROM
+					`$App::501::db_name`.a501_image_view
+				WHERE
+					ID_entity_image = $db0_line{'ID_entity_image'} AND
+					ID_format=$App::501::image_format_ico_ID
+				LIMIT 1
+			};
+			my %sth1=TOM::Database::SQL::execute($sql,'slave'=>1);
+			if (my %db1_line=$sth1{'sth'}->fetchhash())
+			{
+				my $uri=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+				$XSGN{'NULL'}=~s|<%ico%>|$uri|;
 			}
 			
 			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;

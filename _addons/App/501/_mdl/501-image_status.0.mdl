@@ -85,10 +85,13 @@ sub execute
 		else
 		{
 			$XSGN{'TMP'}=$XSGN{'RESULT_failure_set'};
-			$XSGN{'TMP'}=~s|<%ID%>|$env{'article.ID'}|g;
+			$XSGN{'TMP'}=~s|<%ID%>|$env{'image.ID'}|g;
 			return 1;
 		}
 	}
+	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	$XSGN{'TMP'}=~s|<%ID%>|$env{'image.ID'}|g;
 	
 	return 1;
 }
