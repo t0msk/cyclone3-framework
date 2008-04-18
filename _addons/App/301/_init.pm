@@ -67,7 +67,7 @@ use App::301::authors;
 use CVML;
 use Digest::MD5;
 
-
+our $db_name='TOM';
 
 sub CookieClean
 {
