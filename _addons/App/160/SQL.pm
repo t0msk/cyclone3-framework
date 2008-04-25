@@ -38,7 +38,7 @@ L<App::160::_init|app/"160/_init.pm">
 use App::020::_init;
 use App::160::_init;
 
-our $debug=1;
+our $debug=0;
 our $quiet;$quiet=1 unless $debug;
 our $CACHE=1; # sorry not well tested caching
 our $cache_expire=600; # 5 minutes - better is less time, when anything is cached wrong
@@ -66,7 +66,7 @@ sub _detect_db_name
 {
 	my $prefix=shift;
 	
-	main::_log("detect db_name with '$prefix' addon");
+	main::_log("detect db_name with '$prefix' addon") if $debug;
 	# at first check if this addon is available
 	$prefix=~s|^a|App::|;
 	$prefix=~s|^e|Ext::|;
@@ -74,7 +74,7 @@ sub _detect_db_name
 	eval "use $prefix".'::_init;' unless $prefix->VERSION;
 	# read db_name from this library
 	my $db_name;eval '$db_name=$'.$prefix.'::db_name;';
-	main::_log("detected db_name=$db_name");
+	main::_log("detected db_name=$db_name") if $debug;
 	# setup when found
 	return $db_name if $db_name;
 	return undef;
