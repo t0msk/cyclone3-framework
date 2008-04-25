@@ -46,6 +46,10 @@ L<App::301::authors|app/"301/authors.pm">
 
 =item *
 
+L<App::301::perm|app/"301/perm.pm">
+
+=item *
+
 L<App::501::_init|app/"501/_init.pm">
 
 =item *
@@ -64,6 +68,7 @@ Digest::MD5
 use App::301::functions;
 use App::301::session;
 use App::301::authors;
+use App::301::perm;
 use CVML;
 use Digest::MD5;
 
@@ -73,20 +78,28 @@ sub CookieClean
 {
 	my $t=track TOM::Debug(__PACKAGE__."::CookieClean()");
 	
-	opendir DIR, '../_data/USRM/';
+	opendir DIR, $tom::P.'/_data/USRM/';
+	my $files=0;
+	my $deleted=0;
 	foreach my $file(readdir DIR)
 	{
 		next unless $file=~/cookie/;
-		my $old=$main::time_current-(stat "../_data/USRM/".$file)[9];
-		main::_log("file '$file' old='$old'");
-		unlink "../_data/USRM/".$file if $old>3600;
+		$files++;
+		my $old=$main::time_current-(stat $tom::P."/_data/USRM/".$file)[9];
+		if ($old>3600)
+		{
+			unlink $tom::P."/_data/USRM/".$file;
+			$deleted++;
+		};
 	}
+	
+	main::_log("processed $files files, $deleted removed");
 	
 	$t->close();
 }
 
 
-CookieClean();
+CookieClean() if $tom::H;
 
 
 if ($tom::H_cookie)
