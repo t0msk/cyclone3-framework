@@ -124,6 +124,10 @@ our %replace_functions=
 	{
 		function => 'TOM::Text::format::html2jsvalue($text)',
 	},
+	'wordwrap' =>
+	{
+		function => 'TOM::Text::format::wordwrap($text)',
+	},
 	'CDATA' =>
 	{
 		function => 'TOM::Text::format::CDATA($text)',
@@ -138,9 +142,9 @@ Replaces variables in given string. Variables are represented by this syntax: <$
 
  TOM::Utils::vars::replace($string)
 
-Can execute functions which is represented in this library by syntax:
+Can execute functions which is represented in this library with syntax:
 
- <@function></@function>
+ <@function></@function> or <#@function></#@function> (to execute at last)
 
 List of available functions is in %replace_functions hash;
 
@@ -472,7 +476,7 @@ sub s_sort
 
 =head1 AUTHORS
 
-Roman Fordinal (roman.fordinal@comsultia.com)
+Comsultia, Ltd. (open@comsultia.com)
 
 =cut
 

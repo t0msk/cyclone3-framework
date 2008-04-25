@@ -119,6 +119,23 @@ sub html2jsvalue
 }
 
 
+sub wordwrap
+{
+	my $text=shift;
+	
+	my @ref=split(',',$text,2);
+	
+	if (length($ref[1])>$ref[0])
+	{
+		$ref[1]=substr($ref[1],0,$ref[0]);
+		$ref[1]=~s|^(.*)[\s,\.].*$|$1|;
+		$ref[1].='...';
+	}
+	
+	return $ref[1];
+}
+
+
 
 use TOM::Net::URI::URL;
 use Net::HTTP::CGI;
