@@ -103,17 +103,91 @@ sub user_add
 			INSERT INTO `TOM`.a301_user
 			(
 				ID_user,
+				posix_owner,
 				hostname,
 				datetime_register
 			)
 			VALUES
 			(
 				'$env{'user.ID_user'}',
+				'$main::USRM{'ID_user'}',
 				'$env{'user.hostname'}',
 				NOW()
 			)
 		},'quiet'=>1) || return undef;
 	}
+	
+	
+	# AVATAR
+	
+	if ($env{'avatar'} && -e $env{'avatar'} && not -d $env{'avatar'})
+	{
+		
+		if (my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::301::db_name,
+			'l_prefix' => 'a301',
+			'l_table' => 'user',
+			'l_ID_entity' => $env{'user.ID_user'},
+			'rel_type' => 'avatar',
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y",
+			'limit' => 1
+		))[0])
+		{
+			
+			my %image=App::501::functions::image_add(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_attrs.name' => $env{'user.ID_user'} || $env{'avatar'},
+				'file' => $env{'avatar'}
+			);
+			
+			if ($image{'image.ID'})
+			{
+				App::501::functions::image_regenerate(
+					'image.ID' => $image{'image.ID'}
+				);
+			}
+			
+		}
+		else
+		{
+			
+			my %image=App::501::functions::image_add(
+				'image_attrs.name' => $env{'user.ID_user'} || $env{'avatar'},
+				'image_attrs.ID_category' => $App::301::photo_cat{$tom::lng},
+				'image_attrs.name' => $env{'user.ID_user'},
+				'image_attrs.status' => 'Y',
+				'file' => $env{'avatar'}
+			);
+			
+			if ($image{'image.ID'})
+			{
+				
+				App::501::functions::image_regenerate(
+					'image.ID' => $image{'image.ID'}
+				);
+				
+				my ($ID_entity,$ID)=App::160::SQL::new_relation(
+					'l_prefix' => 'a301',
+					'l_table' => 'user',
+					'l_ID_entity' => $env{'user.ID_user'},
+					'rel_type' => 'avatar',
+					'r_db_name' => $App::501::db_name,
+					'r_prefix' => 'a501',
+					'r_table' => 'image',
+					'r_ID_entity' => $image{'image.ID_entity'},
+					'status' => 'Y',
+				);
+				
+			}
+			
+		}
+		
+	}
+	
+	
+	# PROFILE
 	
 	my %user_profile;
 	if (!$env{'user_profile.ID_entity'} && $env{'user.ID_user'})
@@ -151,6 +225,8 @@ sub user_add
 		
 	}
 	if ($env{'user_profile.ID'} && (
+		# gender
+		($env{'user_profile.gender'} && ($env{'user_profile.gender'} ne $user_profile{'gender'}))||
 		# firstname
 		(exists $env{'user_profile.firstname'} && ($env{'user_profile.firstname'} ne $user_profile{'firstname'}))||
       # middlename
@@ -161,6 +237,10 @@ sub user_add
 		(exists $env{'user_profile.name_prefix'} && ($env{'user_profile.name_prefix'} ne $user_profile{'name_prefix'}))||
 		# name_suffix
 		(exists $env{'user_profile.name_suffix'} && ($env{'user_profile.name_suffix'} ne $user_profile{'name_suffix'}))||
+		# date_birth
+		($env{'user_profile.date_birth'} && ($env{'user_profile.date_birth'} ne $user_profile{'date_birth'}))||
+		# pin
+		($env{'user_profile.pin'} && ($env{'user_profile.pin'} ne $user_profile{'pin'}))||
 		
 		# street
 		($env{'user_profile.street'} && ($env{'user_profile.street'} ne $user_profile{'street'}))||
@@ -173,22 +253,32 @@ sub user_add
 		# country_code
 		($env{'user_profile.country_code'} && ($env{'user_profile.country_code'} ne $user_profile{'country_code'}))||
 		
-		# gender
-		($env{'user_profile.gender'} && ($env{'user_profile.gender'} ne $user_profile{'gender'}))||
-		# education
-		($env{'user_profile.education'} && ($env{'user_profile.education'} ne $user_profile{'education'}))||
+		# email_public
+		(exists $env{'user_profile.email_public'} && ($env{'user_profile.email_public'} ne $user_profile{'email_public'}))||
+		# email_office
+		(exists $env{'user_profile.email_office'} && ($env{'user_profile.email_office'} ne $user_profile{'email_office'}))||
+		
 		# phone
-		($env{'user_profile.phone'} && ($env{'user_profile.phone'} ne $user_profile{'phone'}))||
+		(exists $env{'user_profile.phone'} && ($env{'user_profile.phone'} ne $user_profile{'phone'}))||
+		# phone_office
+		(exists $env{'user_profile.phone_office'} && ($env{'user_profile.phone_office'} ne $user_profile{'phone_office'}))||
+		# phone_home
+		(exists $env{'user_profile.phone_home'} && ($env{'user_profile.phone_home'} ne $user_profile{'phone_home'}))||
 		# phone_mobile
-		($env{'user_profile.phone_mobile'} && ($env{'user_profile.phone_mobile'} ne $user_profile{'phone_mobile'}))||
-		# date_birth
-		($env{'user_profile.date_birth'} && ($env{'user_profile.date_birth'} ne $user_profile{'date_birth'}))||
+		(exists $env{'user_profile.phone_mobile'} && ($env{'user_profile.phone_mobile'} ne $user_profile{'phone_mobile'}))||
+		
+		# address_current
+		(exists $env{'user_profile.address_current'} && ($env{'user_profile.address_current'} ne $user_profile{'address_current'}))||
+		# address_postal
+		(exists $env{'user_profile.address_postal'} && ($env{'user_profile.address_postal'} ne $user_profile{'address_postal'}))||
 		
 		# about_me
 		(exists $env{'user_profile.about_me'} && ($env{'user_profile.about_me'} ne $user_profile{'about_me'}))
 	))
 	{
 		my %columns;
+		$columns{'gender'}="'".TOM::Security::form::sql_escape($env{'user_profile.gender'})."'"
+			if ($env{'user_profile.gender'} && ($env{'user_profile.gender'} ne $user_profile{'gender'}));
 		$columns{'firstname'}="'".TOM::Security::form::sql_escape($env{'user_profile.firstname'})."'"
 			if (exists $env{'user_profile.firstname'} && ($env{'user_profile.firstname'} ne $user_profile{'firstname'}));
 		$columns{'middlename'}="'".TOM::Security::form::sql_escape($env{'user_profile.middlename'})."'"
@@ -199,6 +289,10 @@ sub user_add
 			if (exists $env{'user_profile.name_prefix'} && ($env{'user_profile.name_prefix'} ne $user_profile{'name_prefix'}));
 		$columns{'name_suffix'}="'".TOM::Security::form::sql_escape($env{'user_profile.name_suffix'})."'"
 			if (exists $env{'user_profile.name_suffix'} && ($env{'user_profile.name_suffix'} ne $user_profile{'name_suffix'}));
+		$columns{'date_birth'}="'".TOM::Security::form::sql_escape($env{'user_profile.date_birth'})."'"
+			if ($env{'user_profile.date_birth'} && ($env{'user_profile.date_birth'} ne $user_profile{'date_birth'}));
+		$columns{'pin'}="'".TOM::Security::form::sql_escape($env{'user_profile.pin'})."'"
+			if ($env{'user_profile.pin'} && ($env{'user_profile.pin'} ne $user_profile{'pin'}));
 		
 		$columns{'street'}="'".TOM::Security::form::sql_escape($env{'user_profile.street'})."'"
 			if ($env{'user_profile.street'} && ($env{'user_profile.street'} ne $user_profile{'street'}));
@@ -211,19 +305,29 @@ sub user_add
 		$columns{'country_code'}="'".TOM::Security::form::sql_escape($env{'user_profile.country_code'})."'"
 			if ($env{'user_profile.country_code'} && ($env{'user_profile.country_code'} ne $user_profile{'country_code'}));
 		
-		$columns{'gender'}="'".TOM::Security::form::sql_escape($env{'user_profile.gender'})."'"
-			if ($env{'user_profile.gender'} && ($env{'user_profile.gender'} ne $user_profile{'gender'}));
-		$columns{'education'}="'".TOM::Security::form::sql_escape($env{'user_profile.education'})."'"
-			if ($env{'user_profile.education'} && ($env{'user_profile.education'} ne $user_profile{'education'}));
+		$columns{'email_public'}="'".TOM::Security::form::sql_escape($env{'user_profile.email_public'})."'"
+			if (exists $env{'user_profile.email_public'} && ($env{'user_profile.email_public'} ne $user_profile{'email_public'}));
+		$columns{'email_office'}="'".TOM::Security::form::sql_escape($env{'user_profile.email_office'})."'"
+			if (exists $env{'user_profile.email_office'} && ($env{'user_profile.email_office'} ne $user_profile{'email_office'}));
+		
 		$columns{'phone'}="'".TOM::Security::form::sql_escape($env{'user_profile.phone'})."'"
-			if ($env{'user_profile.phone'} && ($env{'user_profile.phone'} ne $user_profile{'phone'}));
+			if (exists $env{'user_profile.phone'} && ($env{'user_profile.phone'} ne $user_profile{'phone'}));
+		$columns{'phone_office'}="'".TOM::Security::form::sql_escape($env{'user_profile.phone_office'})."'"
+			if (exists $env{'user_profile.phone_office'} && ($env{'user_profile.phone_office'} ne $user_profile{'phone_office'}));
+		$columns{'phone_home'}="'".TOM::Security::form::sql_escape($env{'user_profile.phone_home'})."'"
+			if (exists $env{'user_profile.phone_home'} && ($env{'user_profile.phone_home'} ne $user_profile{'phone_home'}));
 		$columns{'phone_mobile'}="'".TOM::Security::form::sql_escape($env{'user_profile.phone_mobile'})."'"
-			if ($env{'user_profile.phone_mobile'} && ($env{'user_profile.phone_mobile'} ne $user_profile{'phone_mobile'}));
-		$columns{'date_birth'}="'".TOM::Security::form::sql_escape($env{'user_profile.date_birth'})."'"
-			if ($env{'user_profile.date_birth'} && ($env{'user_profile.date_birth'} ne $user_profile{'date_birth'}));
+			if (exists $env{'user_profile.phone_mobile'} && ($env{'user_profile.phone_mobile'} ne $user_profile{'phone_mobile'}));
+		
+		$columns{'address_current'}="'".TOM::Security::form::sql_escape($env{'user_profile.address_current'})."'"
+			if (exists $env{'user_profile.address_current'} && ($env{'user_profile.address_current'} ne $user_profile{'address_current'}));
+		$columns{'address_postal'}="'".TOM::Security::form::sql_escape($env{'user_profile.address_postal'})."'"
+			if (exists $env{'user_profile.address_postal'} && ($env{'user_profile.address_postal'} ne $user_profile{'address_postal'}));
 		
 		$columns{'about_me'}="'".TOM::Security::form::sql_escape($env{'user_profile.about_me'})."'"
 			if (exists $env{'user_profile.about_me'} && ($env{'user_profile.about_me'} ne $user_profile{'about_me'}));
+			
+		$columns{'posix_modified'}="'".$main::USRM{'ID_user'}."'";
          
 		App::020::SQL::functions::update(
 			'ID' => $env{'user_profile.ID'},
@@ -457,9 +561,10 @@ sub user_newhash
 	{
 		$var=TOM::Utils::vars::genhash(8);
 		main::_log("trying '$var'");
-		my %sth0=TOM::Database::SQL::execute(
-			qq{SELECT ID_user FROM TOM.a301_user WHERE ID_user='$var' LIMIT 1}
-		,'quiet'=>1);
+		my %sth0=TOM::Database::SQL::execute(qq{
+			(SELECT ID_user FROM TOM.a301_user WHERE ID_user='$var' LIMIT 1) UNION ALL
+			(SELECT ID_user FROM TOM.a301_user_inactive WHERE ID_user='$var' LIMIT 1)
+		},'quiet'=>1);
 		if ($sth0{'rows'}){next}
 		last;
 	}
@@ -545,7 +650,7 @@ sub user_inactive
 #	my $t=track TOM::Debug(__PACKAGE__."::user_inactive($ID_user)");
 	
 	my %sth0=TOM::Database::SQL::execute(qq{
-		INSERT INTO TOM.a301_user_inactive
+		REPLACE INTO TOM.a301_user_inactive
 			SELECT
 				*
 			FROM TOM.a301_user
