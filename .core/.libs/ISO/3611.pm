@@ -9,7 +9,9 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 our %code_a2;
 our %code_a3;
+our %code_rev;
 our %code_lng;
+our %code_lng_rev;
 #our $P=($TOM::P || $CRON::P);
 
 -e $TOM::P."/.core/.libs/ISO/3611/a3.txt" && do
@@ -23,6 +25,10 @@ our %code_lng;
 		my @ref=split(';',$line);
 		$code_a2{$ref[1]}=$ref[0];
 		$code_a3{$ref[2]}=$ref[0];
+		$code_rev{$ref[0]}={
+			'a2'	=> $ref[1],
+			'a3'	=> $ref[2]
+		};
 	};
 };
 
@@ -41,6 +47,7 @@ sub lng_load
    $line=~s|[\n\r]||g;  
    my @ref=split(';',$line);
    $code_lng{$_[0]}{$ref[0]}=$ref[1];
+	$code_lng_rev{$_[0]}{$ref[1]}=$ref[0];
   };
  };  
 }
