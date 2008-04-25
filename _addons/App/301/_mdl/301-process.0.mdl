@@ -15,6 +15,7 @@ sub execute
 {
 	
 	my $debug=0;
+#	return 1;
 	
 =head1
 	G - generated new user
@@ -75,7 +76,7 @@ sub execute
 					hostname='$tom::H_cookie'
 				LIMIT 1
 			};
-			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
+			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>0);
 			if (%main::USRM=$sth0{'sth'}->fetchhash()) # yes, user is online
 			{
 				main::_log("user '$main::COOKIES{_ID_user}' is online");
@@ -166,7 +167,7 @@ sub execute
 						hostname='$tom::H_cookie'
 					LIMIT 1
 				};
-				my %sth_u=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
+				my %sth_u=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>0);
 				%main::USRM=$sth_u{'sth'}->fetchhash();
 				
 				if ($main::USRM{'ID_user'})
@@ -340,6 +341,7 @@ sub execute
 				INSERT INTO TOM.a301_user
 				(
 					ID_user,
+					posix_owner,
 					hostname,
 					datetime_register,
 					datetime_last_login,
@@ -347,6 +349,7 @@ sub execute
 				)
 				VALUES
 				(
+					'$var',
 					'$var',
 					'$tom::H_cookie',
 					FROM_UNIXTIME($main::time_current),
