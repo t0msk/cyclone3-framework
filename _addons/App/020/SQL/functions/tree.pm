@@ -192,6 +192,7 @@ sub move_up
 	}
 	
 	$t->close();
+	return 1;
 }
 
 
@@ -282,6 +283,7 @@ sub move_down
 	}
 	
 	$t->close();
+	return 1;
 }
 
 
