@@ -59,10 +59,15 @@ L<App::401::keywords::html_extract|app/"401/keywords/html_extract.pm">
 
 L<App::401::a160|app/"401/a160.pm">
 
+=item *
+
+L<App::401::a301|app/"401/a301.pm">
+
 =back
 
 =cut
 
+use TOM::Template;
 use App::020::_init; # data standard 0
 use App::301::_init;
 use App::821::_init;
@@ -70,6 +75,7 @@ use App::401::mimetypes;
 use App::401::functions;
 use App::401::keywords;
 use App::401::a160;
+use App::401::a301;
 
 
 =head1 CONFIGURATION
