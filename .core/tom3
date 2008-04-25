@@ -101,8 +101,8 @@ eval
 {
 	
 	# Load domain configuration
-	main::_log('require local.conf');
-	require $tom::P."/local.conf";
+#	main::_log('require local.conf');
+#	require $tom::P."/local.conf";
 	
 	# import Content-Type library
 	main::_log("use Content-Type library type='$pub::DOC'");
