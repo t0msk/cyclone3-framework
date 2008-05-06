@@ -453,11 +453,11 @@ sub image_file_process
 				my $width=$x2-$x1;
 				my $height=$y2-$y1;
 				
-				$y1=$y1-($height/6);
-				$y2=$y2+($height/3);
+				$y1=int($y1-($height/6));
+				$y2=int($y2+($height/3));
 				
-				$x1=$x1-($width/8);
-				$x2=$x2+($width/8);
+				$x1=int($x1-($width/8));
+				$x2=int($x2+($width/8));
 				
 				$env{'green_area'}{'x1'} = $x1 if ($env{'green_area'}{'x1'} > $x1 || !$env{'green_area'}{'x1'});
 				$env{'green_area'}{'y1'} = $y1 if ($env{'green_area'}{'y1'} > $y1 || !$env{'green_area'}{'y1'});
@@ -495,8 +495,8 @@ sub image_file_process
 			my $width=$image1->Get('width');
 			my $height=$image1->Get('height');
 			
-			my $scale_new=$params[0]/$params[1];
-			my $scale_old=$width/$height;
+			my $scale_new=int(($params[0]/$params[1])*100)/100;
+			my $scale_old=int(($width/$height)*100)/100;
 			
 			main::_log("w=$width h=$height $scale_old -> $scale_new");
 			
@@ -892,6 +892,75 @@ sub image_add
 			'-journalize' => 1
 		);
 	}
+	
+	
+	# IMAGE_ENT
+	
+	my %image_ent;
+	if (!$env{'image_ent.ID_entity'})
+	{
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`$App::501::db_name`.`a501_image_ent`
+			WHERE
+				ID_entity='$env{'image.ID_entity'}'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		%image_ent=$sth0{'sth'}->fetchhash();
+		$env{'image_ent.ID_entity'}=$image_ent{'ID_entity'};
+		$env{'image_ent.ID'}=$image_ent{'ID'};
+	}
+	if (!$env{'image_ent.ID_entity'})
+	{
+		# create one entity representation of image
+		my %columns;
+		
+		$env{'image_ent.ID'}=App::020::SQL::functions::new(
+			'db_h' => "main",
+			'db_name' => $App::501::db_name,
+			'tb_name' => "a501_image_ent",
+			'columns' =>
+			{
+				%columns,
+				'ID_entity' => $env{'image.ID_entity'},
+			},
+			'-journalize' => 1,
+		);
+	}
+	
+	if (!$image_ent{'posix_owner'} && !$env{'image_ent.posix_owner'})
+	{
+		$env{'image_ent.posix_owner'}=$main::USRM{'ID_user'};
+	}
+	
+	# update if necessary
+	if ($env{'image_ent.ID'} &&
+	(
+		# ID_author
+		($env{'image_ent.posix_author'} && ($env{'image_ent.posix_author'} ne $image_ent{'posix_author'})) ||
+		# posix_owner
+		($env{'image_ent.posix_owner'} && ($env{'image_ent.posix_owner'} ne $image_ent{'posix_owner'}))
+	))
+	{
+		my %columns;
+		$columns{'posix_author'}="'".$env{'image_ent.posix_author'}."'"
+			if ($env{'image_ent.posix_author'} && ($env{'image_ent.posix_author'} ne $image_ent{'posix_author'}));
+		$columns{'posix_owner'}="'".TOM::Security::form::sql_escape($env{'image_ent.posix_owner'})."'"
+			if ($env{'image_ent.posix_owner'} && ($env{'image_ent.posix_owner'} ne $image_ent{'posix_owner'}));
+		App::020::SQL::functions::update(
+			'ID' => $env{'image_ent.ID'},
+			'db_h' => "main",
+			'db_name' => $App::501::db_name,
+			'tb_name' => "a501_image_ent",
+			'columns' => {%columns},
+			'-journalize' => 1
+		);
+	}
+	
+	
 	
 	$t->close();
 	return %env;

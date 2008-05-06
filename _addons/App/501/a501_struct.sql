@@ -7,9 +7,6 @@
 CREATE TABLE `/*db_name*/`.`/*addon*/_image` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
-  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `posix_group` int(10) unsigned NOT NULL,
-  `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -23,10 +20,37 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image` (
 CREATE TABLE `/*db_name*/`.`/*addon*/_image_j` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
-  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `posix_group` int(10) unsigned NOT NULL,
-  `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL, -- rel image.ID_entity
+  `datetime_create` datetime NOT NULL,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `visits` int(10) unsigned NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `visits` (`visits`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `datetime_create` datetime NOT NULL,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `visits` int(10) unsigned NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -123,6 +147,105 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_visit` (
   `ID_image` bigint(20) NOT NULL,
   PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_image`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_emo` ( -- experimental EMO characteristics
+  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `ID_entity` mediumint(8) unsigned default NULL, -- rel _image.ID_entity
+  `datetime_create` datetime NOT NULL,
+  `emo_sad` int(10) unsigned NOT NULL default '0',
+  `emo_angry` int(10) unsigned NOT NULL default '0',
+  `emo_confused` int(10) unsigned NOT NULL default '0',
+  `emo_love` int(10) unsigned NOT NULL default '0',
+  `emo_omg` int(10) unsigned NOT NULL default '0',
+  `emo_smile` int(10) unsigned NOT NULL default '0',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`),
+  UNIQUE KEY `UNI_0` (`ID_entity`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_emo_j` (
+  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `ID_entity` mediumint(8) unsigned default NULL,
+  `datetime_create` datetime NOT NULL,
+  `emo_angry` int(10) unsigned NOT NULL default '0',
+  `emo_confused` int(10) unsigned NOT NULL default '0',
+  `emo_love` int(10) unsigned NOT NULL default '0',
+  `emo_omg` int(10) unsigned NOT NULL default '0',
+  `emo_sad` int(10) unsigned NOT NULL default '0',
+  `emo_smile` int(10) unsigned NOT NULL default '0',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_emo_vote` (
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_part` mediumint(8) unsigned NOT NULL,
+  `datetime_event` datetime NOT NULL,
+  `emo` varchar(8) character set ascii NOT NULL default ''
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_emo_view` AS (
+	SELECT
+		emo.ID,
+      emo.ID_entity,
+		(emo.emo_sad + emo.emo_angry + emo.emo_confused + emo.emo_love + emo.emo_omg + emo.emo_smile) AS emo_all,
+      (emo.emo_sad/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
+			AS emo_sad_perc,
+		(emo.emo_angry/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
+			AS emo_angry_perc,
+		(emo.emo_confused/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
+			AS emo_confused_perc,
+		(emo.emo_love/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
+			AS emo_love_perc,
+		(emo.emo_omg/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
+			AS emo_omg_perc,
+		(emo.emo_smile/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
+			AS emo_smile_perc
+	FROM
+		`/*db_name*/`.`/*addon*/_image_emo` AS emo
+	WHERE
+		(emo.emo_sad + emo.emo_angry + emo.emo_confused + emo.emo_love + emo.emo_omg + emo.emo_smile) > 5
+)
+
+-- --------------------------------------------------
+
+CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_emo_viewEQ` AS (
+	SELECT
+		emo1.ID AS emo1_ID,
+		emo2.ID AS emo2_ID,
+      ABS(emo1.emo_sad_perc - emo2.emo_sad_perc) AS emo_sad_diff,
+		ABS(emo1.emo_angry_perc - emo2.emo_angry_perc) AS emo_angry_diff,
+		ABS(emo1.emo_confused_perc - emo2.emo_confused_perc) AS emo_confused_diff,
+		ABS(emo1.emo_love_perc - emo2.emo_love_perc) AS emo_love_diff,
+		ABS(emo1.emo_omg_perc - emo2.emo_omg_perc) AS emo_omg_diff,
+		ABS(emo1.emo_smile_perc - emo2.emo_smile_perc) AS emo_smile_diff,
+		(100-((
+			ABS(emo1.emo_sad_perc - emo2.emo_sad_perc) +
+			ABS(emo1.emo_angry_perc - emo2.emo_angry_perc) +
+			ABS(emo1.emo_confused_perc - emo2.emo_confused_perc) +
+			ABS(emo1.emo_love_perc - emo2.emo_love_perc) +
+			ABS(emo1.emo_omg_perc - emo2.emo_omg_perc) +
+			ABS(emo1.emo_smile_perc - emo2.emo_smile_perc)
+		)/6)) AS EQ
+	FROM
+		`/*db_name*/`.`/*addon*/_image_emo_view` AS emo1,
+		`/*db_name*/`.`/*addon*/_image_emo_view` AS emo2
+	WHERE
+		emo1.ID <> emo2.ID AND
+      emo1.emo_all > 100 AND
+      emo2.emo_all > 100
+)
 
 -- --------------------------------------------------
 
@@ -221,9 +344,8 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_view` AS (
 		image_attrs.ID_category,
 		image_cat.name AS ID_category_name,
 		
-		image.posix_owner,
-		image.posix_group,
-		image.posix_perms,
+		image_ent.posix_owner,
+		image_ent.posix_author,
 		
 		image_attrs.name,
 		image_attrs.description,
@@ -261,6 +383,10 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_view` AS (
 		
 	FROM
 		`/*db_name*/`.`/*addon*/_image` AS image
+	LEFT JOIN `/*db_name*/`.`/*addon*/_image_ent` AS image_ent ON
+	(
+		image_ent.ID_entity = image.ID_entity
+	)
 	LEFT JOIN `/*db_name*/`.`/*addon*/_image_attrs` AS image_attrs ON
 	(
 		image_attrs.ID_entity = image.ID
