@@ -327,7 +327,7 @@ sub user_add
 		$columns{'about_me'}="'".TOM::Security::form::sql_escape($env{'user_profile.about_me'})."'"
 			if (exists $env{'user_profile.about_me'} && ($env{'user_profile.about_me'} ne $user_profile{'about_me'}));
 			
-		$columns{'posix_modified'}="'".$main::USRM{'ID_user'}."'";
+#		$columns{'posix_modified'}="'".$main::USRM{'ID_user'}."'";
          
 		App::020::SQL::functions::update(
 			'ID' => $env{'user_profile.ID'},
@@ -335,7 +335,8 @@ sub user_add
 			'db_name' => 'TOM',
 			'tb_name' => "a301_user_profile",
 			'columns' => {%columns},
-			'-journalize' => 1
+			'-journalize' => 1,
+			'-posix' => 1
 		);
       
 	}

@@ -255,6 +255,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_group` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `hostname` varchar(64) character set ascii NOT NULL default '',
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
@@ -276,6 +278,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_group_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `hostname` varchar(64) character set ascii NOT NULL default '',
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
@@ -298,12 +302,14 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_rel_group` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user` ( -- table is stored where addon defined in r_prefix
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` varchar(8) character set ascii collate ascii_bin NOT NULL default '', -- rel _user.ID_user
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
-  `functions` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `roles` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
   `r_prefix` varchar(32) character set ascii collate ascii_bin NOT NULL,
   `r_table` varchar(64) character set ascii collate ascii_bin NOT NULL,
   `r_ID_entity` varchar(16) character set utf8 collate utf8_unicode_ci NOT NULL,
@@ -311,18 +317,20 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user` ( -- table is stored where addon
   `perm_W` char(1) character set ascii NOT NULL default 'N',
   `perm_X` char(1) character set ascii NOT NULL default 'N',
   `perm_roles_override` blob,
-  `status` char(1) character set ascii NOT NULL default 'N',
+  `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`r_prefix`,`r_table`,`r_ID_entity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
+-- db_name=local
 
-CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_group` ( -- table is stored where addon defined in r_prefix
+CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_entity` bigint(20) unsigned NOT NULL, -- rel _user_group.ID
+  `ID_entity` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
-  `functions` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `roles` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
   `r_prefix` varchar(32) character set ascii collate ascii_bin NOT NULL,
   `r_table` varchar(64) character set ascii collate ascii_bin NOT NULL,
   `r_ID_entity` varchar(16) character set utf8 collate utf8_unicode_ci NOT NULL,
@@ -330,9 +338,49 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_group` ( -- table is stored where
   `perm_W` char(1) character set ascii NOT NULL default 'N',
   `perm_X` char(1) character set ascii NOT NULL default 'N',
   `perm_roles_override` blob,
-  `status` char(1) character set ascii NOT NULL default 'N',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+-- db_name=local
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_group` ( -- table is stored where addon defined in r_prefix
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned NOT NULL, -- rel _user_group.ID
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `roles` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `r_prefix` varchar(32) character set ascii collate ascii_bin NOT NULL,
+  `r_table` varchar(64) character set ascii collate ascii_bin NOT NULL,
+  `r_ID_entity` varchar(16) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `perm_R` char(1) character set ascii NOT NULL default 'N',
+  `perm_W` char(1) character set ascii NOT NULL default 'N',
+  `perm_X` char(1) character set ascii NOT NULL default 'N',
+  `perm_roles_override` blob,
+  `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`r_prefix`,`r_table`,`r_ID_entity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+-- db_name=local
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_group_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned NOT NULL,
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `roles` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `r_prefix` varchar(32) character set ascii collate ascii_bin NOT NULL,
+  `r_table` varchar(64) character set ascii collate ascii_bin NOT NULL,
+  `r_ID_entity` varchar(16) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `perm_R` char(1) character set ascii NOT NULL default 'N',
+  `perm_W` char(1) character set ascii NOT NULL default 'N',
+  `perm_X` char(1) character set ascii NOT NULL default 'N',
+  `perm_roles_override` blob,
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------

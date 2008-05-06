@@ -35,9 +35,15 @@ L<App::301::_init|app/"301/_init.pm">
 
 use App::301::_init;
 
+
 our %groups;
 our %roles;
+our %ACL_roles;
 our %functions;
+
+=head2 FUNCTIONS
+
+=cut
 
 
 sub register
@@ -116,6 +122,32 @@ sub register
 			
 		}
 	}
+	
+	
+	if ($env{'ACL_roles'})
+	{
+		foreach my $ACL_role(sort keys %{$env{'ACL_roles'}})
+		{
+			main::_log("ACL_role '$ACL_role'");
+			if (!$ACL_roles{$ACL_role})
+			{
+				$ACL_roles{$ACL_role}={};
+			}
+			
+			foreach my $role(keys %{$env{'ACL_roles'}->{$ACL_role}})
+			{
+				# register role to ACL_roles
+				my $perm=$env{'ACL_roles'}->{$ACL_role}{$role};
+				my $perm_;
+				
+				$ACL_roles{$ACL_role}{$env{'addon'}.'.'.$role}=$perm;
+				
+				main::_log("->RL_$env{'addon'}.$role '$perm'");
+			}
+			
+		}
+	}
+	
 	
 	$t->close();
 	return 1;
@@ -312,11 +344,748 @@ sub get_roles
 		$perm[1]='-' if (!$perm[1] || $perm[1] eq ' ');
 		$perm[2]='-' if (!$perm[2] || $perm[2] eq ' ');
 		$roles{$_}=join '',@perm;
-		main::_log("RL_$_ '$roles{$_}'");
+		main::_log(" RL_$_ '$roles{$_}'");
 	}
 	
 	$t->close();
 	return %roles;
+}
+
+
+=head2 get_ACL_roles
+
+Get list of roles from ACL and ACL_role
+
+=cut
+
+sub get_ACL_roles
+{
+	my %env=@_;
+	my %roles;
+	my $permstrip;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::get_ACL_roles()");
+	
+	main::_log("ID_user='$env{'ID_user'}' ID_group='$env{'ID_group'}' r_prefix='$env{'r_prefix'}' r_table='$env{'r_table'}' r_prefix='$env{'r_ID_entity'}'");
+	
+	# get full ACL from this entity and filter it after
+	my @ACL=get_ACL(
+		'r_prefix' => $env{'r_prefix'},
+		'r_table' => $env{'r_table'},
+		'r_ID_entity' => $env{'r_ID_entity'},
+	);
+
+	foreach my $ACL_item(@ACL)
+	{
+		if (($env{'ID_user'} && !$ACL_item->{'folder'} && $ACL_item->{'ID'} eq $env{'ID_user'}) ||
+		($env{'ID_group'} && $ACL_item->{'folder'} && $ACL_item->{'ID'} eq $env{'ID_group'}))
+		{
+			main::_log("override by ACL_role roles");
+			my %my_roles;
+			foreach my $ACL_role(split(',',$ACL_item->{'roles'}))
+			{
+				main::_log("ACL_role '$ACL_role'");
+				foreach my $role(keys %{$App::301::perm::ACL_roles{$ACL_role}})
+				{
+					my $perm=perm_inc($my_roles{$role},$App::301::perm::ACL_roles{$ACL_role}{$role});
+					main::_log(" RL_$role '$my_roles{$role}'+'$App::301::perm::ACL_roles{$ACL_role}{$role}'='$perm'");
+					$my_roles{$role}=$perm;
+				}
+			}
+			main::_log("override by ACL_role roles (apply)");
+			foreach my $role(keys %my_roles)
+			{
+				my $perm=perm_sum($roles{$role},$my_roles{$role});
+				main::_log(" RL_$role '$roles{$role}'*'$my_roles{$role}'='$perm'");
+				$roles{$role}=$perm;
+			}
+			
+			main::_log("override by group/user override def");
+			foreach my $role(split('\n',$ACL_item->{'override'}))
+			{
+				my @role_def=split(':',$role,2);$role_def[1]=~tr/rwx\-/RWX_/;
+				my $perm=perm_sum($roles{$role_def[0]},$role_def[1]);
+				main::_log(" RL_$role_def[0] '$roles{$role_def[0]}'*'$role_def[1]'='$perm'");
+				$roles{$role_def[0]}=$perm;
+			}
+			
+			# strip
+			main::_log("strip by '$ACL_item->{'perm_R'}$ACL_item->{'perm_W'}$ACL_item->{'perm_X'}'");
+			$permstrip=$ACL_item->{'perm_R'}.$ACL_item->{'perm_W'}.$ACL_item->{'perm_X'};
+#			$permstrip=~tr/RWXrwx_/      -/;
+#			main::_log("strip string '$permstrip'");
+#			foreach my $role(keys %roles)
+#			{
+#				my $perm=perm_sum($roles{$role},$permstrip);
+#				main::_log(" RL_$role '$roles{$role}'*'$permstrip'='$perm'");
+#				$roles{$role}=$perm;
+#			}
+			
+			last;
+		}
+	}
+	
+#	main::_log("permstrip=$permstrip");
+	$t->close();
+	return ({%roles},$permstrip);
+}
+
+
+
+
+=head2 get_entity_roles
+
+Get list of roles in one entity for user and groups
+
+=cut
+
+sub get_entity_roles
+{
+	my %env=@_;
+	my %roles;
+	my $permstrip;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::get_entity_roles()");
+	
+	main::_log("r_prefix='$env{'r_prefix'}' r_table='$env{'r_table'}' r_prefix='$env{'r_ID_entity'}'");
+	
+	my @ACL=get_ACL
+	(
+		'r_prefix' => $env{'r_prefix'},
+		'r_table' => $env{'r_table'},
+		'r_ID_entity' => $env{'r_ID_entity'}
+	);
+	
+	my %grp;
+	foreach (@{$env{'groups'}}){$grp{$_}++;}
+	
+	main::_log("get permissions from groups");
+	my %groups_roles;
+	my %strip_perms;
+	foreach my $ACL_item(@ACL)
+	{
+		if ($ACL_item->{'folder'} && $grp{$ACL_item->{'ID'}}) # this is group
+		{
+			main::_log("I'm in this group $ACL_item->{'ID'}");
+			
+			# get basic group roles
+			main::_log("load basic group roles");
+			my %local_roles=get_roles(
+				'ID_group' => "$ACL_item->{'ID'}"
+			);
+			
+			# override it byt ACL_roles
+			main::_log("override by ACL_role roles");
+			my %my_roles;
+			foreach my $ACL_role(split(',',$ACL_item->{'roles'}))
+			{
+				main::_log("ACL_role '$ACL_role'");
+				foreach my $role(keys %{$App::301::perm::ACL_roles{$ACL_role}})
+				{
+					my $perm=perm_inc($my_roles{$role},$App::301::perm::ACL_roles{$ACL_role}{$role});
+					main::_log(" RL_$role '$my_roles{$role}'+'$App::301::perm::ACL_roles{$ACL_role}{$role}'='$perm'");
+					$my_roles{$role}=$perm;
+				}
+			}
+			main::_log("override by ACL_role roles (apply)");
+			foreach my $role(keys %my_roles)
+			{
+				my $perm=perm_sum($local_roles{$role},$my_roles{$role});
+				main::_log(" RL_$role '$local_roles{$role}'*'$my_roles{$role}'='$perm'");
+				$local_roles{$role}=$perm;
+			}
+			
+			main::_log("override by group/user override def");
+			foreach my $role(split('\n',$ACL_item->{'override'}))
+			{
+				my @role_def=split(':',$role,2);$role_def[1]=~tr/rwx\-/RWX_/;
+				my $perm=perm_sum($local_roles{$role_def[0]},$role_def[1]);
+				main::_log(" RL_$role_def[0] '$local_roles{$role_def[0]}'*'$role_def[1]'='$perm'");
+				$local_roles{$role_def[0]}=$perm;
+			}
+			
+			# strip
+			main::_log("strip by '$ACL_item->{'perm_R'}$ACL_item->{'perm_W'}$ACL_item->{'perm_X'}'");
+			my $permstrip=$ACL_item->{'perm_R'}.$ACL_item->{'perm_W'}.$ACL_item->{'perm_X'};
+			$strip_perms{'perm_R'}=$ACL_item->{'perm_R'} if $ACL_item->{'perm_R'} ne ' ';
+			$strip_perms{'perm_W'}=$ACL_item->{'perm_W'} if $ACL_item->{'perm_W'} ne ' ';
+			$strip_perms{'perm_X'}=$ACL_item->{'perm_X'} if $ACL_item->{'perm_X'} ne ' ';
+			$permstrip=~tr/RWXrwx_/      -/;
+			main::_log("strip string '$permstrip'");
+			foreach my $role(keys %local_roles)
+			{
+				my $perm=perm_sum($local_roles{$role},$permstrip);
+				main::_log(" RL_$role '$local_roles{$role}'*'$permstrip'='$perm'");
+				$local_roles{$role}=$perm;
+			}
+			
+			
+			# compare %local_roles to %groups_roles
+			main::_log("group '$ACL_item->{'ID'}' roles (apply)");
+			foreach my $role(keys %local_roles)
+			{
+				my $perm=perm_inc($groups_roles{$role},$local_roles{$role});
+				main::_log(" RL_$role '$groups_roles{$role}'+'$local_roles{$role}'='$perm'");
+				$groups_roles{$role}=$perm;
+			}
+			
+			
+		}
+		
+		
+		
+	}
+	
+	# strip
+	main::_log("strip all by '$strip_perms{'perm_R'}$strip_perms{'perm_W'}$strip_perms{'perm_X'}'");
+	
+	
+	$t->close();
+	return ({%roles},$permstrip);
+}
+
+
+=head2 get_entity_sum_roles
+
+Get list of roles in entity and depends for user
+
+=cut
+
+sub get_entity_sum_roles
+{
+	my %env=@_;
+	my %roles;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::get_entity_sum_roles()");
+	
+	main::_log("ID_user='$env{'ID_user'}' r_prefix='$env{'r_prefix'}' r_table='$env{'r_table'}' r_prefix='$env{'r_ID_entity'}'");
+	
+	# get ID_user global roles (defined by groups and ID_user)
+	my %roles_global=get_roles(
+		'ID_user'=>$env{'ID_user'},
+		'ID_group'=>'*'
+	);
+	
+	my @groups=(0);
+	my %grp=App::301::functions::user_groups($env{'ID_user'});
+	foreach (keys %grp){push @groups, $grp{$_}{'ID'};}
+	
+	# get list of this entity parents
+	
+	
+	# get special roles of this entity
+	my $roles_entity=get_entity_roles(
+		'r_prefix' => $env{'r_prefix'},
+		'r_table' => $env{'r_table'},
+		'r_ID_entity' => $env{'r_ID_entity'},
+		'ID_user' => $env{'ID_user'},
+		'groups' => [@groups]
+	);
+	
+	# and combine this all :)
+	
+	$t->close();
+	return undef;
+}
+
+
+
+sub get_owner
+{
+	my $t=track TOM::Debug(__PACKAGE__."::get_owner()");
+	my %env=@_;
+	my $owner;
+	
+	# at first check if this addon is available
+	my $r_prefix=$env{'r_prefix'};
+		$r_prefix=~s|^a|App::|;
+		$r_prefix=~s|^e|Ext::|;
+	eval "use $r_prefix".'::a301;' unless $r_prefix->VERSION;
+	
+	# check if a301 enhancement of this application is available
+	my $pckg=$r_prefix."::a301";
+	if ($pckg->VERSION)
+	{
+		main::_log("trying get_owner() from package '$pckg'");
+		$owner=$pckg->get_owner(
+			'r_table' => $env{'r_table'},
+			'r_ID_entity' => $env{'r_ID_entity'}
+		);
+		main::_log("owner='$owner'");
+		$t->close();
+		return $owner;
+	}
+	else
+	{
+		main::_log("blind get_owner()");
+		my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'});
+		
+		my $sql=qq{
+			SELECT
+				posix_owner
+			FROM
+				`$db_name`.$env{'r_prefix'}_$env{'r_table'}
+			WHERE
+				ID_entity='$env{'r_ID_entity'}'
+			LIMIT 1;
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		$owner=$db0_line{'posix_owner'};
+	}
+	
+	main::_log("owner='$owner'");
+	$t->close();
+	return $owner;
+};
+
+
+sub set_owner
+{
+	my $t=track TOM::Debug(__PACKAGE__."::set_owner()");
+	my %env=@_;
+	
+	# at first check if this addon is available
+	my $r_prefix=$env{'r_prefix'};
+		$r_prefix=~s|^a|App::|;
+		$r_prefix=~s|^e|Ext::|;
+	eval "use $r_prefix".'::a301;' unless $r_prefix->VERSION;
+	
+	# check if a301 enhancement of this application is available
+	my $pckg=$r_prefix."::a301";
+	if ($pckg->VERSION)
+	{
+		main::_log("trying set_owner() from package '$pckg'");
+		my $out=$pckg->set_owner(
+			'r_table' => $env{'r_table'},
+			'r_ID_entity' => $env{'r_ID_entity'},
+			'posix_owner' => $env{'posix_owner'}
+		);
+		$t->close();
+		return $out;
+	}
+	else
+	{
+		$t->close();
+		return undef;
+	}
+	
+	$t->close();
+	return undef;
+};
+
+
+
+
+sub get_ACL
+{
+	my $t=track TOM::Debug(__PACKAGE__."::get_ACL()");
+	my %env=@_;
+	my @ACL;
+	
+   my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+   
+	
+	my $world;
+	my $sql=qq{
+	SELECT
+		acl.*,
+		grp.name
+	FROM
+		`$db_name`.a301_ACL_user_group AS acl,
+		`TOM`.a301_user_group AS grp
+	WHERE
+		acl.r_prefix='$env{'r_prefix'}' AND
+		acl.r_table='$env{'r_table'}' AND
+		acl.r_ID_entity='$env{'r_ID_entity'}' AND
+		acl.ID_entity = grp.ID_entity
+	ORDER BY
+		acl.ID_entity ASC
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my %item;
+		
+		if ($db0_line{'ID_entity'} ne "0" && !$world) # world override not available
+		{
+			$world=1;
+			my %item;
+			main::_log("->{world} 'r--'");
+			$item{'ID'}='0';
+			$item{'folder'}='Y';
+			$item{'roles'}='';
+			$item{'perm_R'}='r';
+			$item{'perm_W'}='-';
+			$item{'perm_X'}='-';
+			$item{'status'}='L';
+			$item{'name'}='world';
+			push @ACL, {%item};
+		}
+		
+		$db0_line{'perm_R'}=~tr/YN/R_/;
+		$db0_line{'perm_W'}=~tr/YN/W_/;
+		$db0_line{'perm_X'}=~tr/YN/X_/;
+		
+		main::_log("->{user_group} ID='$db0_line{'ID_entity'}' name='$db0_line{'name'}' roles='$db0_line{'roles'}' '$db0_line{'perm_R'}$db0_line{'perm_W'}$db0_line{'perm_X'}'");
+		$item{'ID'}=$db0_line{'ID_entity'};
+		$item{'folder'}='Y';
+		$item{'roles'}=$db0_line{'roles'};
+		$item{'perm_R'}=$db0_line{'perm_R'};
+		$item{'perm_W'}=$db0_line{'perm_W'};
+		$item{'perm_X'}=$db0_line{'perm_X'};
+		$item{'status'}=$db0_line{'status'};
+		$item{'override'}=$db0_line{'perm_roles_override'};
+		$item{'name'}=$db0_line{'name'};
+		
+		push @ACL, {%item};
+	}
+	
+	
+	if (!$world) # world override not available
+	{
+		$world=1;
+		my %item;
+		main::_log("->{world} 'r--'");
+		$item{'ID'}='0';
+		$item{'folder'}='Y';
+		$item{'roles'}='';
+		$item{'perm_R'}='r';
+		$item{'perm_W'}='-';
+		$item{'perm_X'}='-';
+		$item{'status'}='L';
+		$item{'name'}='world';
+		push @ACL, {%item};
+	}
+	
+   # get owner
+   my $owner=App::301::perm::get_owner(
+		'r_prefix' => $env{'r_prefix'},
+		'r_table' => $env{'r_table'},
+		'r_ID_entity' => $env{'r_ID_entity'}
+	);
+   if ($owner)
+	{
+		my %item;
+		
+		my %author=App::301::authors::get_author($owner);
+		
+		main::_log("->{owner} ID='$owner' name='$author{'login'}' 'rwx'");
+		$item{'ID'}=$owner;
+		$item{'folder'}='';
+		$item{'roles'}='owner';
+		$item{'perm_R'}='r';
+		$item{'perm_W'}='w';
+		$item{'perm_X'}='x';
+		$item{'status'}='L';
+		$item{'name'}=$author{'login'};
+		
+		push @ACL, {%item};
+   }
+   
+	my $sql=qq{
+	SELECT
+		acl.*,
+		usr.login AS name,
+		usr.login
+	FROM
+		`$db_name`.a301_ACL_user AS acl,
+		`TOM`.a301_user AS usr
+	WHERE
+		acl.r_prefix='$env{'r_prefix'}' AND
+		acl.r_table='$env{'r_table'}' AND
+		acl.r_ID_entity='$env{'r_ID_entity'}' AND
+		acl.ID_entity = usr.ID_user
+	ORDER BY
+		acl.ID_entity ASC
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my %item;
+		
+		$db0_line{'perm_R'}=~tr/YN/R_/;
+		$db0_line{'perm_W'}=~tr/YN/W_/;
+		$db0_line{'perm_X'}=~tr/YN/X_/;
+		
+		if ($db0_line{'ID_entity'} eq $owner)
+		{
+			main::_log("->{owner/user} '$db0_line{'perm_R'}$db0_line{'perm_W'}$db0_line{'perm_X'}'");
+			$ACL[0]{'perm_R'}=$db0_line{'perm_R'};
+			$ACL[0]{'perm_W'}=$db0_line{'perm_W'};
+			$ACL[0]{'perm_X'}=$db0_line{'perm_X'};
+			next;
+		}
+		
+		main::_log("->{user} ID='$db0_line{'ID_entity'}' name='$db0_line{'login'}' roles='$db0_line{'roles'}' '$db0_line{'perm_R'}$db0_line{'perm_W'}$db0_line{'perm_X'}'");
+		$item{'ID'}=$db0_line{'ID_entity'};
+		$item{'folder'}='';
+		$item{'roles'}=$db0_line{'roles'};
+		$item{'perm_R'}=$db0_line{'perm_R'};
+		$item{'perm_W'}=$db0_line{'perm_W'};
+		$item{'perm_X'}=$db0_line{'perm_X'};
+		$item{'status'}=$db0_line{'status'};
+		$item{'override'}=$db0_line{'perm_roles_override'};
+		$item{'name'}=$db0_line{'login'};
+		
+		push @ACL, {%item};
+	}
+	
+	$t->close();
+	return @ACL;
+}
+
+
+
+sub ACL_user_group_update
+{
+	my $t=track TOM::Debug(__PACKAGE__."::ACL_user_group_update()");
+	my %env=@_;
+	
+   my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+	
+	if ($env{'roles'})
+	{
+		$env{'roles'}=~s|owner||g;
+		my @roles=split('[,;]',$env{'roles'});
+		$env{'roles'}=join ",", @roles;
+		1 while ($env{'roles'}=~s|,,|,|g);
+		$env{'roles'}=~s|^,||;
+		$env{'roles'}=~s|,$||;
+	}
+	
+	my $sql=qq{
+		SELECT
+			ID,
+			ID_entity
+		FROM
+			`$db_name`.a301_ACL_user_group
+		WHERE
+			ID_entity='$env{'ID'}' AND
+			r_prefix='$env{'r_prefix'}' AND
+			r_table='$env{'r_table'}' AND
+			r_ID_entity='$env{'r_ID_entity'}'
+		LIMIT 1;
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	
+	if ($sth0{'rows'})
+	{
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		my %columns;
+		$columns{'perm_R'} = "'".$env{'perm_R'}."'" if $env{'perm_R'};
+		$columns{'perm_W'} = "'".$env{'perm_W'}."'" if $env{'perm_W'};
+		$columns{'perm_X'} = "'".$env{'perm_X'}."'" if $env{'perm_X'};
+		$columns{'roles'} = "'".$env{'roles'}."'" if $env{'roles'};
+		App::020::SQL::functions::update(
+			'ID' => $db0_line{'ID'},
+			'db_h' => 'main',
+			'db_name' => $db_name,
+			'tb_name' => 'a301_ACL_user_group',
+			'columns' =>
+			{
+				%columns,
+			},
+			'-journalize' => 1,
+			'-posix' => 1,
+		);
+		$t->close();
+		return 1;
+	}
+	else
+	{
+		App::020::SQL::functions::new(
+			'db_h' => 'main',
+			'db_name' => $db_name,
+			'tb_name' => 'a301_ACL_user_group',
+			'columns' =>
+			{
+				'ID_entity' => "'".$env{'ID'}."'",
+				'r_prefix' => "'".$env{'r_prefix'}."'",
+				'r_table' => "'".$env{'r_table'}."'",
+				'r_ID_entity' => "'".$env{'r_ID_entity'}."'",
+				'perm_R' => "'Y'",
+				'perm_W' => "'Y'",
+				'perm_X' => "'Y'",
+				'roles' => "'".$env{'roles'}."'"
+			},
+			'-journalize' => 1,
+			'-posix' => 1,
+		);
+		$t->close();
+		return 1;
+	}
+	
+	$t->close();
+	return undef;
+}
+
+
+sub ACL_user_group_remove
+{
+	my $t=track TOM::Debug(__PACKAGE__."::ACL_user_group_remove()");
+	my %env=@_;
+	
+   my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+	
+	my $sql=qq{
+		SELECT
+			ID,
+			ID_entity
+		FROM
+			`$db_name`.a301_ACL_user_group
+		WHERE
+			ID_entity='$env{'ID'}' AND
+			r_prefix='$env{'r_prefix'}' AND
+			r_table='$env{'r_table'}' AND
+			r_ID_entity='$env{'r_ID_entity'}'
+		LIMIT 1;
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	
+	if ($sth0{'rows'})
+	{
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		App::020::SQL::functions::delete(
+			'ID' => $db0_line{'ID'},
+			'db_h' => 'main',
+			'db_name' => $db_name,
+			'tb_name' => 'a301_ACL_user_group',
+			'-journalize' => 1,
+			'-posix' => 1,
+		);
+		$t->close();
+		return 1;
+	}
+	
+	$t->close();
+	return undef;
+}
+
+
+sub ACL_user_update
+{
+	my $t=track TOM::Debug(__PACKAGE__."::ACL_user_update()");
+	my %env=@_;
+	
+   my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+	
+	if ($env{'roles'})
+	{
+		$env{'roles'}=~s|owner||g;
+		my @roles=split('[,;]',$env{'roles'});
+		$env{'roles'}=join ",", @roles;
+		1 while ($env{'roles'}=~s|,,|,|g);
+		$env{'roles'}=~s|^,||;
+		$env{'roles'}=~s|,$||;
+	}
+	
+	my $sql=qq{
+		SELECT
+			ID,
+			ID_entity
+		FROM
+			`$db_name`.a301_ACL_user
+		WHERE
+			ID_entity='$env{'ID'}' AND
+			r_prefix='$env{'r_prefix'}' AND
+			r_table='$env{'r_table'}' AND
+			r_ID_entity='$env{'r_ID_entity'}'
+		LIMIT 1;
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	
+	if ($sth0{'rows'})
+	{
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		my %columns;
+		$columns{'perm_R'} = "'".$env{'perm_R'}."'" if $env{'perm_R'};
+		$columns{'perm_W'} = "'".$env{'perm_W'}."'" if $env{'perm_W'};
+		$columns{'perm_X'} = "'".$env{'perm_X'}."'" if $env{'perm_X'};
+		$columns{'roles'} = "'".$env{'roles'}."'" if $env{'roles'};
+		App::020::SQL::functions::update(
+			'ID' => $db0_line{'ID'},
+			'db_h' => 'main',
+			'db_name' => $db_name,
+			'tb_name' => 'a301_ACL_user',
+			'columns' =>
+			{
+				%columns,
+			},
+			'-journalize' => 1,
+			'-posix' => 1,
+		);
+		$t->close();
+		return 1;
+	}
+	else
+	{
+		App::020::SQL::functions::new(
+			'db_h' => 'main',
+			'db_name' => $db_name,
+			'tb_name' => 'a301_ACL_user',
+			'columns' =>
+			{
+				'ID_entity' => "'".$env{'ID'}."'",
+				'r_prefix' => "'".$env{'r_prefix'}."'",
+				'r_table' => "'".$env{'r_table'}."'",
+				'r_ID_entity' => "'".$env{'r_ID_entity'}."'",
+				'perm_R' => "'Y'",
+				'perm_W' => "'Y'",
+				'perm_X' => "'Y'",
+				'roles' => "'".$env{'roles'}."'"
+			},
+			'-journalize' => 1,
+			'-posix' => 1,
+		);
+		$t->close();
+		return 1;
+	}
+	
+	$t->close();
+	return undef;
+}
+
+
+sub ACL_user_remove
+{
+	my $t=track TOM::Debug(__PACKAGE__."::ACL_user_remove()");
+	my %env=@_;
+	
+   my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+	
+	my $sql=qq{
+		SELECT
+			ID,
+			ID_entity
+		FROM
+			`$db_name`.a301_ACL_user
+		WHERE
+			ID_entity='$env{'ID'}' AND
+			r_prefix='$env{'r_prefix'}' AND
+			r_table='$env{'r_table'}' AND
+			r_ID_entity='$env{'r_ID_entity'}'
+		LIMIT 1;
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	
+	if ($sth0{'rows'})
+	{
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		App::020::SQL::functions::delete(
+			'ID' => $db0_line{'ID'},
+			'db_h' => 'main',
+			'db_name' => $db_name,
+			'tb_name' => 'a301_ACL_user',
+			'-journalize' => 1,
+			'-posix' => 1,
+		);
+		$t->close();
+		return 1;
+	}
+	
+	$t->close();
+	return undef;
 }
 
 

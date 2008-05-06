@@ -50,6 +50,10 @@ L<App::301::perm|app/"301/perm.pm">
 
 =item *
 
+L<App::301::a301|app/"301/a301.pm">
+
+=item *
+
 L<App::501::_init|app/"501/_init.pm">
 
 =item *
@@ -69,6 +73,7 @@ use App::301::functions;
 use App::301::session;
 use App::301::authors;
 use App::301::perm;
+use App::301::a301;
 use CVML;
 use Digest::MD5;
 
