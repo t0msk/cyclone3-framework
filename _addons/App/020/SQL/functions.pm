@@ -102,6 +102,7 @@ sub new
 	my $sel_values;
 	my @columns;
 	my @values;
+	$env{'columns'}{'posix_modified'}="'".$main::USRM{'ID_user'}."'" if $env{'-posix'};
 	foreach (sort keys %{$env{'columns'}})
 	{
 #		next unless $env{'columns'}{$_};
@@ -418,6 +419,7 @@ Updates one row ( also one ID ) in main table.
    'column2' => "number", # same
   },
   '-journalize' => 1, # create journal copy of this update
+  '-posix' => 1, # posix enhanced table (set posix_modified to $main::USRM{'ID_user'})
  )
 
 Please do not set column datetime_create. datetime_create is updatet automatically.
@@ -437,6 +439,7 @@ sub update
 	}
 	
 	$env{'columns'}{'datetime_create'} = "NOW()";
+	$env{'columns'}{'posix_modified'}="'".$main::USRM{'ID_user'}."'" if $env{'-posix'};
 	
 	my $sel_set;
 	foreach (sort keys %{$env{'columns'}})
