@@ -70,8 +70,13 @@ sub _sqlheader_process
 		my @var=split("=",$line,2);
 		next if $var[0]=~/^--/;
 		
+		if ($var[0] eq "db_name" && $var[1] eq "local")
+		{
+			$var[1]=$TOM::DB{'main'}{'name'};
+		}
 		$header->{$var[0]}=$var[1];
 		main::_log("set '$var[0]'='$header->{$var[0]}'");;
+		
 		if ($var[0] eq "addon" && $tom::H)
 		{
 			# try to override db_name, when addon is installed into another domain
