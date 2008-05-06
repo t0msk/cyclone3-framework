@@ -111,6 +111,8 @@ sub execute
 		return 1;
 	}
 	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	
 	return 1;
 }
 
