@@ -49,7 +49,7 @@ sub engine_pub
 	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4,"$TOM::engine.err",2) if ($tom::H ne $tom::Hm);
 	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4,"$TOM::engine.err",1);
 	
-	my $URI_base=$tom::H_www;$URI_base=~s|$tom::rewrite_RewriteBase$||;
+	my $URI_base=$tom::H_www;my $request_uri=$main::ENV{'REQUEST_URI'};$request_uri=~s|^$tom::rewrite_RewriteBase||;
 	
 	# poslem email co najskor
 	my $date=TOM::Utils::datetime::mail_current();
@@ -68,7 +68,7 @@ sub engine_pub
 		'Date'    => $date,
 		'From'    => "Cyclone3 ('$tom::H' at '$TOM::hostname') <$TOM::contact{'from'}>",
 		'To'      => TOM::Net::email::convert_TO($email_addr),
-		'Subject' => "[ERR][$TOM::engine][URI::$main::ENV{REQUEST_URI}]"
+		'Subject' => "[ERR][$TOM::engine][URI::$request_uri]"
 	);
 	
 	my $email=$engine_email || $TOM::Error::engine_email_lite;
@@ -89,7 +89,7 @@ sub engine_pub
 	
 	$email=~s|<%uri-parsed%>|$tom::H_www/?$main::ENV{'QUERY_STRING_FULL'}|g;
 	
-	$email=~s|<%uri-orig%>|$URI_base$main::ENV{'REQUEST_URI'}|g;
+	$email=~s|<%uri-orig%>|$URI_base$request_uri|g;
 	$email=~s|<%uri-referer%>|$main::ENV{'HTTP_REFERER'}|g;
 	#$email=~s|<%page_code%>|$main::request_code|g;
 	
@@ -136,8 +136,10 @@ sub engine_pub
 			'ENV' => { %main::ENV },
 			'ERROR' => { 'text' => $var },
 			'Cyclone' => {
+				'domain'=>"$tom::H_www",
+				'request_URI'=>$main::ENV{'REQUEST_URI'},
 				'parsed_URI'=>"$tom::H_www/?$main::ENV{'QUERY_STRING_FULL'}",
-				'orig_URI'=>"$URI_base$main::ENV{'REQUEST_URI'}",
+				'orig_URI'=>"$URI_base$request_uri",
 				'referer_URI'=>"$main::ENV{'HTTP_REFERER'}",
 				'request_number'=>"$tom::count/$TOM::max_count",
 				'unique_hash'=>$main::request_code,
@@ -158,7 +160,11 @@ sub engine_pub
 		);
 	}
 
-	if ($TOM::ERROR_email || !$ticket_ok)
+	if (
+			($TOM::ERROR_email && $_[0]!=~/^silent/) # this is page generation error
+			|| ($TOM::ERROR_page_email && $_[0]=~/^silent/) # page silent error (page not found)
+			|| !$ticket_ok # ticket can't be created
+		)
 	{
 		$msg->attach
 		(
@@ -173,15 +179,6 @@ sub engine_pub
 			'body'=>$email_body,
 		);
 	}
-	
-	
-#	my $tpl=new TOM::Template(
-#		'level' => "auto",
-#		'name' => "default",
-#		'content-type' => $Net::DOC::type
-#	);
-#	my $page=$tpl->{'entity'}{'page.error'};
-	
 	
 	# aky kod budem vypluvat?
 	# stihol som uz nacitat?
@@ -397,7 +394,7 @@ sub module_pub
 	main::_log("[$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}",4,"pub.err",2) if ($tom::H ne $tom::Hm); #master
 	App::100::SQL::ircbot_msg_new("[ERR][$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}");
 	
-	my $URI_base=$tom::H_www;$URI_base=~s|$tom::rewrite_RewriteBase$||;
+	my $URI_base=$tom::H_www;my $request_uri=$main::ENV{'REQUEST_URI'};$request_uri=~s|^$tom::rewrite_RewriteBase||;
 	
 	my $ticket_ok = 1;
 	
@@ -429,8 +426,9 @@ sub module_pub
 				'plus' => $env{'-PLUS'},
 			},
 			'Cyclone' => {
+				'request_URI'=>$main::ENV{'REQUEST_URI'},
 				'parsed_URI'=>"$tom::H_www/?$main::ENV{'QUERY_STRING_FULL'}",
-				'orig_URI'=>"$URI_base$main::ENV{'REQUEST_URI'}",
+				'orig_URI'=>"$URI_base$request_uri",
 				'referer_URI'=>"$main::ENV{'HTTP_REFERER'}",
 				'request_number'=>"$tom::count/$TOM::max_count",
 				'unique_hash'=>$main::request_code,
@@ -498,7 +496,7 @@ sub module_pub
 		
 		$email=~s|<%uri-parsed%>|$tom::H_www/?$main::ENV{QUERY_STRING_FULL}|g;
 		
-		$email=~s|<%uri-orig%>|$URI_base$main::ENV{REQUEST_URI}|g;
+		$email=~s|<%uri-orig%>|$URI_base$request_uri|g;
 		$email=~s|<%uri-referer%>|$main::ENV{HTTP_REFERER}|g;
 		
 		foreach (sort keys %main::ENV)
