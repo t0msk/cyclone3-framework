@@ -188,7 +188,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_emo_j` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_image_emo_vote` (
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `ID_part` mediumint(8) unsigned NOT NULL,
+  `ID_image` mediumint(8) unsigned NOT NULL, -- rel _image.ID_entity
   `datetime_event` datetime NOT NULL,
   `emo` varchar(8) character set ascii NOT NULL default ''
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

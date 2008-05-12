@@ -129,6 +129,12 @@ sub execute
 	$env{'sql_status'}='Y' unless $env{'sql_status'};
 	$env{'sql_order'}='image.order_id DESC' unless $env{'sql_order'};
 	
+	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
+	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
+	{
+		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
+	}
+	
 	my $sql_where;
 	
 	#$env{'ID_format'}
