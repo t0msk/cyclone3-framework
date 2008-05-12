@@ -24,7 +24,7 @@ Lite view of poll
 
 =cut
 
-
+use App::401::mimetypes::html;
 
 =head1 INPUTS
 
@@ -84,6 +84,8 @@ sub execute
 	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
 	$env{'sql_status'}='Y' unless $env{'sql_status'};
 	
+	$env{'sql_order_by'}='datetime_start DESC' unless $env{'sql_order_by'};
+	
 	my $no_data=1;
 
 	my $sql_cat = "`poll`.`ID_category` IN ('$env{'ID_category'}') AND" if($env{'ID_category'});
@@ -97,8 +99,12 @@ sub execute
 		WHERE
 			$sql_cat
 			$sql_entity
+			`poll`.`datetime_start` <= NOW() AND
+			(`poll`.`datetime_stop` IS NULL OR `poll`.`datetime_stop` >= NOW()) AND
 			`poll`.`lng`='$env{'sql_lng'}' AND
 			`poll`.`status` IN ('$env{'sql_status'}')
+		ORDER BY
+			$env{'sql_order_by'}
 		LIMIT 1
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
@@ -109,7 +115,9 @@ sub execute
 	}
 	elsif (!$sth0{'rows'})
 	{
-		die "can't select poll with this attributes\n";
+#		die "can't select poll with this attributes\n";
+		$XSGN{'TMP'}=$XSGN{'TMP_no-data'};
+		return 1;
 	}
 	my %db0_line=$sth0{'sth'}->fetchhash();
 	
@@ -149,6 +157,31 @@ sub execute
 		$answer=~s|<%db_vote_count_percent%>|<%vote_count_percent_$counter%>|g;
 		
 		$answer=~s|<%poll_db_(.*?)%>|$db0_line{$1}|g;
+		
+		my $p=new App::401::mimetypes::html;
+		
+		# a510_video
+		$p->{'entity'}{'a510_video'}=
+			$XSGN{'answer.a510_video'}
+			|| $XSGN{'a510_video'}
+			|| undef;
+		
+		# a510_video_part
+		$p->{'entity'}{'a510_video_part'}=
+			$XSGN{'answer.a510_video_part'}
+			|| $XSGN{'a510_video_part'}
+			|| undef;
+		
+		# PARSE !!!
+		$p->parse($db1_line{'description'});
+		$p->eof();
+		my $description_html=$p->{'out'};
+		
+		$answer=~s|<%db_description%>|$description_html|;
+		
+		$answer=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+		$answer=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+		
 		$answer=~s|<%db_(.*?)%>|$db1_line{$1}|g;
 		
 		$counter++;
@@ -187,7 +220,34 @@ sub execute
 		$XSGN{'TMP'}=~s|<%vote_count_percent_$tmp%>|$percentages[$tmp]|g;
 	}
 	
+	my $p=new App::401::mimetypes::html;
+	
+	# a510_video
+	$p->{'entity'}{'a510_video'}=
+		$XSGN{'answer.a510_video'}
+		|| $XSGN{'a510_video'}
+		|| undef;
+	
+	# a510_video_part
+	$p->{'entity'}{'a510_video_part'}=
+		$XSGN{'answer.a510_video_part'}
+		|| $XSGN{'a510_video_part'}
+		|| undef;
+	
+	# PARSE !!!
+	$p->parse($db0_line{'description'});
+	$p->eof();
+	my $description_html=$p->{'out'};
+	
+	$XSGN{'TMP'}=~s|<%db_description%>|$description_html|;
+	
+	$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+	$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+	
 	$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+
+	$XSGN{'TMP'}=~s|<%votes_all%>|$votes_total|g; #deprecated
+	$XSGN{'TMP'}=~s|<%votes_total%>|$votes_total|g;
 	
 	return 1;
 }
