@@ -69,14 +69,15 @@ sub get_relation_iteminfo
 	{
 		my $sql=qq{
 			SELECT
-				ID_poll,
+				ID,
+				ID_entity,
 				name,
 				ID_category,
 				lng
 			FROM
-				`$env{'r_db_name'}`.a411_poll_view
+				`$env{'r_db_name'}`.a411_poll
 			WHERE
-				ID_entity_poll=$env{'r_ID_entity'}
+				ID_entity=$env{'r_ID_entity'}
 				$lng_in
 			LIMIT 1
 		};
@@ -84,7 +85,7 @@ sub get_relation_iteminfo
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			$info{'name'}=$db0_line{'name'};
-			$info{'ID'}=$db0_line{'ID_poll'};
+			$info{'ID'}=$db0_line{'ID'};
 			$info{'ID_category'}=$db0_line{'ID_category'};
 			$info{'lng'}=$db0_line{'lng'};
 			main::_log("returning name='$info{'name'}'");
