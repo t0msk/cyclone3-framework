@@ -237,10 +237,10 @@ sub execute
 		if (!-e $tom::P.'/!media/a510/video/part/file/'.$db0_line{'file_path'})
 		{
 			main::_log("file of video_part_file $db0_line{'file_path'} not exists",1);
-#			TOM::Database::SQL::execute(qq{
-#				DELETE FROM `$App::510::db_name`.`a510_video_part_file`
-#				WHERE ID=$db0_line{'ID'} LIMIT 1
-#			},'quiet'=>1);
+			TOM::Database::SQL::execute(qq{
+				DELETE FROM `$App::510::db_name`.`a510_video_part_file`
+				WHERE ID=$db0_line{'ID'} LIMIT 1
+			},'quiet'=>1) if $env{'delete'};
 			next;
 		}
 		
