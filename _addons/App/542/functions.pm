@@ -322,6 +322,7 @@ sub file_add
 						%columns
 					},
 					'-journalize' => 1,
+					'-posix' => 1,
 				);
 			}
 			else
@@ -344,6 +345,7 @@ sub file_add
 						%columns
 					},
 					'-journalize' => 1,
+					'-posix' => 1,
 				);
 				my $path=$tom::P.'/!media/a542/file/item/'._file_item_genpath
 				(
@@ -379,7 +381,8 @@ sub file_add
 					'lng' => "'$env{'file_attrs.lng'}'",
 					%columns
 				},
-				'-journalize' => 1
+				'-journalize' => 1,
+				'-posix' =>1
 			);
 			if (!$ID)
 			{
@@ -446,6 +449,7 @@ sub file_add
 				'lng' => "'$env{'file_attrs.lng'}'",
 			},
 			'-journalize' => 1,
+			'-posix' => 1,
 		);
 		%file_attrs=App::020::SQL::functions::get_ID(
 			'ID' => $env{'file_attrs.ID'},
@@ -488,7 +492,8 @@ sub file_add
 			'db_name' => $App::542::db_name,
 			'tb_name' => "a542_file_attrs",
 			'columns' => {%columns},
-			'-journalize' => 1
+			'-journalize' => 1,
+			'-posix' => 1,
 		);
 	}
 	
@@ -500,8 +505,7 @@ sub file_add
 	{
 		my $sql=qq{
 			SELECT
-				ID,
-				ID_entity
+				*
 			FROM
 				`$App::542::db_name`.`a542_file_ent`
 			WHERE
@@ -528,25 +532,37 @@ sub file_add
 				'ID_entity' => $env{'file.ID_entity'},
 			},
 			'-journalize' => 1,
+			'-posix' => 1,
 		);
 	}
+	
+	if (!$file_ent{'posix_owner'} && !$env{'file_ent.posix_owner'})
+	{
+		$env{'file_ent.posix_owner'}=$main::USRM{'ID_user'};
+	}
+	
 	# update if necessary
 	if ($env{'file_ent.ID'} &&
 	(
-		# ID_author
-		($env{'file_ent.ID_author'} && ($env{'file_ent.ID_author'} ne $file_ent{'ID_author'}))
+		# posix_author
+		($env{'file_ent.posix_author'} && ($env{'file_ent.posix_author'} ne $file_ent{'posix_author'})) ||
+		# posix_owner
+		($env{'file_ent.posix_owner'} && ($env{'file_ent.posix_owner'} ne $file_ent{'posix_owner'}))
 	))
 	{
 		my %columns;
-		$columns{'ID_author'}="'".$env{'file_ent.ID_author'}."'"
-			if ($env{'file_ent.ID_author'} && ($env{'file_ent.ID_author'} ne $file_ent{'ID_author'}));
+		$columns{'posix_author'}="'".$env{'file_ent.posix_author'}."'"
+			if ($env{'file_ent.posix_author'} && ($env{'file_ent.posix_author'} ne $file_ent{'posix_author'}));
+		$columns{'posix_owner'}="'".$env{'file_ent.posix_owner'}."'"
+			if ($env{'file_ent.posix_owner'} && ($env{'file_ent.posix_owner'} ne $file_ent{'posix_owner'}));
 		App::020::SQL::functions::update(
 			'ID' => $env{'file_ent.ID'},
 			'db_h' => "main",
 			'db_name' => $App::542::db_name,
 			'tb_name' => "a542_file_ent",
 			'columns' => {%columns},
-			'-journalize' => 1
+			'-journalize' => 1,
+			'-posix' => 1,
 		);
 	}
 	
