@@ -12,7 +12,7 @@ use strict;
 
 =head1 DESCRIPTION
 
-Clean user table from unused or old users
+Clean USRM tables from unused or old entries (old karma, old EMO)
 
 =cut
 
@@ -21,22 +21,23 @@ sub execute
 {
 	my %env=@_;
 	
-	my %sth=TOM::Database::SQL::execute(qq{
-		SELECT
-			*
-		FROM TOM.a301_user
-		WHERE
-			datetime_register <= DATE_SUB(NOW(),INTERVAL 7 DAY)
-			AND status='N'
-	},'quiet'=>1);
-	while (my %user=$sth{'sth'}->fetchhash)
-	{
-		
-		#main::_log("kick user.ID_user='$user{'ID_user'}'");
-		
-		
-		
-	}
+	main::_log("removing old karma");
+	TOM::Database::SQL::execute(qq{
+		DELETE
+		FROM TOM.a301_user_profile_karma
+		WHERE date_event <= DATE_SUB(NOW(),INTERVAL 31 DAY)
+		}
+	,'quiet_'=>1);
+	
+	
+	main::_log("removing old emo");
+	TOM::Database::SQL::execute(qq{
+		DELETE
+		FROM TOM.a301_user_profile_emo
+		WHERE date_event <= DATE_SUB(NOW(),INTERVAL 31 DAY)
+		}
+	,'quiet_'=>1);
+	
 	
 	return 1;
 }
