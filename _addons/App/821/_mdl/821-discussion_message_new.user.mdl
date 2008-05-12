@@ -102,6 +102,23 @@ sub execute
 	
 	if ($main::FORM{'name'} && $main::FORM{'user'} && $main::FORM{'message'})
 	{
+		# check karma of this user
+		my $sql=qq{
+			SELECT
+				SUM(karma) AS karma
+			FROM
+				`$App::301::db_name`.a301_user_profile_karma
+			WHERE
+				ID_user='$main::USRM{'ID_user'}'
+		};
+		my %sth0=TOM::Database::SQL::execute($sql);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		if ($db0_line{'karma'} < -500)
+		{
+			$XSGN{'TMP'}=$XSGN{'low_karma'};
+			return 1;
+		}
+		
 		# check last comment from this user
 		
 		
