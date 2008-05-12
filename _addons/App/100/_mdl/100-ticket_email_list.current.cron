@@ -1,0 +1,230 @@
+#!/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use Encode;
+use encoding 'utf8';
+use utf8;
+use strict; # scrict code
+
+=head1 NAME
+
+100-ticket_email_list.current.cron
+
+=head1 DESCRIPTION
+
+Send list of new error tickets
+
+=cut
+
+use TOM::Database::SQL;
+
+sub execute
+{
+	my %env=@_;
+	
+	my $time_durration=6; # minutes
+	my $time_from=$main::time_current-($time_durration*60);
+	
+	my $number = 100;
+	
+	my $sql = qq{
+		SELECT
+			emails
+		FROM
+			TOM.a100_ticket
+		WHERE
+			status='Y' AND
+			datetime_create >= DATE_SUB(NOW(), INTERVAL $time_durration MINUTE)
+	};
+	
+	my %sth0 = TOM::Database::SQL::execute($sql);
+	
+	if ($sth0{'rows'})
+	{
+		my %emaillist;
+		while (my %db0_line=$sth0{'sth'}->fetchhash)
+		{
+			my @emails=($db0_line{'emails'}=~/([^<>;]+\@[^<>;]+)/g);
+			foreach (@emails){$emaillist{$_}=1;}
+		}
+		
+		foreach my $email ( keys %emaillist )
+		{
+			
+			my $tpl=new TOM::Template(
+				'level' => "auto",
+				'name' => "email-stats",
+				'content-type' => "xhtml"
+			);
+			
+			# DESIGN
+			$tpl->{'entity'}{'email.xhtml'}=~s|<%main-title%>|New/open tickets notification|g;
+			$tpl->{'entity'}{'email.xhtml'}=~s|<%main-desc%>|This email shows list of new unsolved tickets where you are assigned person. It is ordered by count of detected events.|g;
+			
+		
+			# vykreslim hlavicku
+			$tpl->{'entity'}{'email.table'} =~ s|<%title%>|Table of new active tickets|g;
+			$tpl->{'entity'}{'email.table'} =~ s|<%main-term%>||g;
+			$tpl->{'entity'}{'email.table'} =~ s|<%colscount%>|5|g;
+			
+			foreach my $col_name ( 'ID','domain','name','count','lastevent' )
+			{
+				my $col = $tpl->{'entity'}{'email.table.col.name'};
+				$col =~ s|<%name%>|$col_name|g;
+				$tpl->{'entity'}{'email.table'}=~s|<#email.table.col.name#>|$col|g;
+			}
+			
+			my $sql = qq{
+				SELECT
+					t.ID,
+					t.domain,
+					t.name,
+					count(e.ID) as count,
+					max(e.datetime_create) as last_err,
+					e.cvml,
+					t.emails
+				FROM
+					TOM.a100_ticket as t
+				LEFT JOIN TOM.a100_ticket_event as e ON
+				(
+					t.ID = e.ID_ticket
+					AND e.status = 'Y'
+--					AND e.datetime_create >= DATE_SUB(NOW(),INTERVAL $time_durration MINUTE)
+				)
+				WHERE
+					t.emails like '%$email%'
+					AND t.status = 'Y' AND e.status = 'Y'
+					AND t.datetime_create >= DATE_SUB(NOW(),INTERVAL $time_durration MINUTE)
+				GROUP BY
+					t.ID
+				ORDER BY
+					count desc
+				LIMIT $number
+			};
+			my $tickets;
+			my $events;
+			my %sth1=TOM::Database::SQL::execute($sql);
+			while (my %db1_line=$sth1{'sth'}->fetchhash)
+			{
+				$tickets++;
+				$events+=$db1_line{'count'};
+				
+				my $line = $tpl->{'entity'}{'email.table.line'};
+				
+				my $col = $tpl->{'entity'}{'email.table.col.value'};
+					$col =~ s|<%value%>|$db1_line{'ID'}|g;
+					$line =~ s|<#email.table.col.value#>|$col|g;
+					
+				my $col = $tpl->{'entity'}{'email.table.col.value'};
+					$col =~ s/<%value%>/$db1_line{'domain'} || 'global'/ge;
+					$line =~ s|<#email.table.col.value#>|$col|g;
+					
+				my $col = $tpl->{'entity'}{'email.table.col.value'};
+					$col =~ s|<%value%>|<strong>$db1_line{'name'}</strong>|g;
+					$line =~ s|<#email.table.col.value#>|$col|g;
+					
+				my $col = $tpl->{'entity'}{'email.table.col.value'};
+					$col =~ s|<%value%>|$db1_line{'count'}|g;
+					$line =~ s|<#email.table.col.value#>|$col|g;
+					
+				my $col = $tpl->{'entity'}{'email.table.col.value'};
+					$col =~ s|<%value%>|$db1_line{'last_err'}|g;
+					$line =~ s|<#email.table.col.value#>|$col|g;
+					
+				$tpl->{'entity'}{'email.table'} =~ s|<#email.table.line#>|$line|g;
+				
+				
+				my $sql = qq{
+					SELECT
+						e.cvml
+					FROM
+						TOM.a100_ticket_event as e
+					WHERE
+						e.ID_ticket=$db1_line{'ID'}
+					ORDER BY
+						e.datetime_create DESC
+					LIMIT 1
+				};
+				my %sth2=TOM::Database::SQL::execute($sql);
+				my %db2_line=$sth2{'sth'}->fetchhash;
+				my $cvml = new CVML( data => $db2_line{'cvml'} );
+				my %cvml_hash = %{$cvml->{'hash'}};
+				
+				# detail
+				my $line = $tpl->{'entity'}{'email.table.line'};
+				
+				my $col = $tpl->{'entity'}{'email.table.col.value'};
+					$col =~ s|<%value%>||g;
+					$line =~ s|<#email.table.col.value#>|$col|g;
+					
+				my $col = $tpl->{'entity'}{'email.table.col.value_span'};
+					$col =~ s|<%span%>|4|g;
+					my $emails=$db1_line{'emails'};$emails=~s|<||g;$emails=~s|>||g;$emails=~s|;|, |g;
+					my $msg=qq{
+<strong>message: </strong>$cvml_hash{'ERROR'}{'text'}<br/>
+<strong>uri: </strong>$cvml_hash{'Cyclone'}{'orig_URI'}<br/>
+<strong>request uri: </strong>$cvml_hash{'Cyclone'}{'request_URI'}<br/>
+<strong>full uri: </strong>$cvml_hash{'Cyclone'}{'parsed_URI'}<br/>
+<strong>referer: </strong>$cvml_hash{'Cyclone'}{'referer_URI'}<br/>
+<strong>assigned: </strong>$emails
+};
+					$col =~ s|<%value%>|$msg|g;
+					$line =~ s|<#email.table.col.value#>|$col|g;
+					
+				$tpl->{'entity'}{'email.table'} =~ s|<#email.table.line#>|$line|g;
+				
+				
+			}
+			
+			
+			# nalejem do HTML
+			$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$tpl->{'entity'}{'email.table'}|;
+			
+			# cleaning
+			$tpl->{'entity'}{'email.xhtml'} =~ s|<#.*?#>||gs;
+			$tpl->{'entity'}{'email.xhtml'} =~ s|<%.*?%>||gs;
+			
+			#----------------------------------------------------------------
+			# Completing mail
+			my $db_email = TOM::Utils::vars::unique_split($email);#$db_email='roman.fordinal@comsultia.com';
+			my $date = TOM::Utils::datetime::mail_current();
+			
+			my $ent = MIME::Entity->build
+			(
+				'Type'    => 'multipart/related',
+				'From'    => '"Cyclone3 ('.$TOM::hostname.')" <'.$TOM::contact{'from'}.'>',
+				'To'      => TOM::Net::email::convert_TO($db_email),
+				'Subject' => "Opened ".($tickets)." error tickets (summary ".($events)." events)",
+				'Date'    => $date,
+			);
+			
+			$ent->attach
+			(
+				'Data' => $tpl->{'entity'}{'email.xhtml'},
+				'Type' => "text/html;charset=\"UTF-8\"",
+				'Encoding' => "8bit",
+			);
+			
+			$ent->attach
+			(
+				'Path'       => $tpl->{'file'}{'cyclone3-150x44.png'}{'dst'},
+				'Type'       => "image/gif",
+				'Content-ID' => "<logo\@cyclone3.org>",
+				'Encoding'   => "base64"
+			);
+			
+			TOM::Net::email::send
+			(
+				'to' => $db_email,
+				'body' => $ent->as_string()
+			);
+			
+		}
+	}
+
+	
+	
+	return 1;
+}
+
+1;
