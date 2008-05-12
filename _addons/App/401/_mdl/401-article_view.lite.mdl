@@ -163,8 +163,7 @@ sub execute
 			$sql_where
 		LIMIT 1
 	};
-	
-	
+
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
@@ -183,7 +182,6 @@ sub execute
 		$XSGN{'TMP'}=~s|<%author_(.*?)%>|$author{$1}|g;
 		my %editor=App::301::authors::get_author($db0_line{'posix_editor'});
 		$XSGN{'TMP'}=~s|<%editor_(.*?)%>|$editor{$1}|g;
-		
 		# process body
 		
 		foreach my $part('body','abstract')
@@ -200,6 +198,26 @@ sub execute
 			$p->{'ignore'}{'img.1'}=
 				$env{'body.ignore.img.1'}
 				|| $env{'ignore.img.1'}
+				|| undef;
+			
+			if ($XSGN{'a030_youtube'})
+			{
+				main::_log("a030_youtube defined",undef,"debug");
+			}
+			else
+			{
+				main::_log("a030_youtube not defined",undef,"debug");
+			}
+			
+			# a030_youtube
+			$p->{'entity'}{'a030_youtube'}=
+				$XSGN{'body.a030_youtube'}
+				|| $XSGN{'a030_youtube'}
+				|| undef;
+				
+			$p->{'entity'}{'a030_youtube.1'}=
+				$XSGN{'body.a030_youtube.1'}
+				|| $XSGN{'a030_youtube.1'}
 				|| undef;
 			
 			# a501_image
@@ -312,7 +330,7 @@ sub execute
 		
 		$XSGN{'TMP'}=~s|<%article\.db_(.*?)%>|$db0_line{$1}|g;
 		
-		$main::H->add_DOC_title($db0_line{'name'});
+#		$main::H->add_DOC_title($db0_line{'name'});
 		
 		
 	}

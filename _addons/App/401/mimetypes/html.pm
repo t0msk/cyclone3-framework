@@ -125,6 +125,29 @@ sub start
 			$out_full=~s|<%var_(.*?)%>|$vars{$1}|g;
 			
 		}
+		elsif ($attr->{'id'}=~/^a030_youtube:(.*)$/)
+		{
+			$self->{'count'}->{'video'}++;
+			my $type=$1;
+			my %vars=_parse_id($1);
+			
+			$attr->{'width_forced'}=$attr->{'width'};
+			$attr->{'height_forced'}=$attr->{'height'};
+			
+			$attr->{'width'}='425' unless $attr->{'width'};
+			$attr->{'height'}='355' unless $attr->{'height'};
+			
+			# override default tag representation
+			$out_full=
+				$self->{'entity'}{'a030_youtube.'.$out_cnt}
+				|| $self->{'entity'}{'a030_youtube'}
+				|| $tpl->{'entity'}{'parser.a030_youtube.'.$out_cnt}
+				|| $tpl->{'entity'}{'parser.a030_youtube'}
+				|| $out_full;
+			
+			$out_full=~s|<%var_(.*?)%>|$vars{$1}|g;
+			
+		}
 		elsif ($attr->{'id'}=~/^a501_image:(.*)$/)
 		{
 			use App::501::_init;
@@ -245,7 +268,7 @@ sub start
 						my $img_ID_format=
 							$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
 							|| $self->{'config'}->{'a501_image_file.ID_format'}
-							|| $App::501::image_format_thumbnail_ID;
+							|| $App::501::image_format_fullsize_ID;
 						
 						my $sql=qq{
 							SELECT
@@ -339,7 +362,7 @@ sub start
 						my $img_ID_format=
 							$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
 							|| $self->{'config'}->{'a501_image_file.ID_format'}
-							|| $App::501::image_format_thumbnail_ID;
+							|| $App::501::image_format_fullsize_ID;
 							
 						main::_log("find a501_image ID_entity='$relation->{'r_ID_entity'}' ID_format='$img_ID_format'");
 						

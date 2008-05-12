@@ -260,9 +260,7 @@ sub execute
 			article_cat.name AS ID_category_name,
 			article_cat.name_url AS ID_category_name_url,
 			
-			article.posix_owner,
-			article.posix_group,
-			article.posix_perms,
+			article_ent.posix_owner,
 			article_ent.ID_author AS posix_author,
 			article_content.ID_editor AS posix_editor,
 			
@@ -331,7 +329,7 @@ sub execute
 			$env{'sql_limit'}
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache_auto'=>60);
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache_auto_'=>60);
 	
 	if(!$sth0{'sth'})
 	{

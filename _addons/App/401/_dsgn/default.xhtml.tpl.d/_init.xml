@@ -20,6 +20,21 @@
 	</header>
 	
 	
+	<entity id="parser.a030_youtube" replace_variables="false"><![CDATA[
+<object width="<%attr_width%>" height="<%attr_height%>">
+	<param name="movie" value="http://www.youtube.com/v/<%var_ID%>&hl=en"></param>
+	<param name="wmode" value="transparent"></param>
+	<embed
+		src="http://www.youtube.com/v/<%var_ID%>&hl=en"
+		type="application/x-shockwave-flash"
+		wmode="transparent"
+		width="<%attr_width%>"
+		height="<%attr_height%>"></embed>
+</object>
+	]]>
+	</entity>
+	
+	
 	<entity id="parser.a501_image" replace_variables="false"><![CDATA[
 	<div class="img_<%attr_align%>" style="margin: 2px; padding: 2px;background:gray; float: left">
 		<#tag_#>
