@@ -1,0 +1,55 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+401-article.clean.cron
+
+=head1 DESCRIPTION
+
+Clean article tables from unused or old entries
+
+=cut
+
+use App::401::_init;
+
+sub execute
+{
+	my %env=@_;
+	
+	# Check
+	if (!$tom::addons{'a401'} || ($TOM::DB{'main'}{'name'} ne $App::401::db_name))
+	{main::_log("not enabled, or set for another domain service");return 1;}
+	
+	main::_log("removing old visits");
+	TOM::Database::SQL::execute(qq{
+		DELETE
+		FROM `$App::401::db_name`.a401_article_visit
+		WHERE datetime_event <= DATE_SUB(CURDATE(),INTERVAL 31 DAY)
+	}
+	,'quiet_'=>1);
+	
+	
+	main::_log("removing old EMO's");
+	TOM::Database::SQL::execute(qq{
+		DELETE
+		FROM `$App::401::db_name`.a401_article_emo_vote
+		WHERE datetime_event <= DATE_SUB(CURDATE(),INTERVAL 31 DAY)
+	}
+	,'quiet_'=>1);
+	
+	return 1;
+}
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
