@@ -7,9 +7,6 @@
 CREATE TABLE `/*db_name*/`.`/*app*/_article` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
-  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `posix_group` int(10) unsigned NOT NULL,
-  `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -23,9 +20,6 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article` (
 CREATE TABLE `/*db_name*/`.`/*app*/_article_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
-  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `posix_group` int(10) unsigned NOT NULL,
-  `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -37,6 +31,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- rel article.ID_entity
   `datetime_create` datetime NOT NULL,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `ID_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `visits` int(10) unsigned NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -54,6 +50,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `ID_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `visits` int(10) unsigned NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -64,7 +62,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_j` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_entity` bigint(20) unsigned default NULL, -- rel 
+  `ID_entity` bigint(20) unsigned default NULL, -- rel _article.ID
   `ID_category` bigint(20) unsigned default NULL, -- rel article_cat.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
@@ -171,9 +169,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat` (
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `alias_url` varchar(128) character set ascii NOT NULL default '',
-  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `posix_group` int(10) unsigned NOT NULL,
-  `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
+  `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
@@ -197,9 +194,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat_j` (
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `alias_url` varchar(128) character set ascii NOT NULL default '',
-  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `posix_group` int(10) unsigned NOT NULL,
-  `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
+  `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
@@ -318,23 +314,10 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 		article_attrs.ID_category,
 		article_cat.name AS ID_category_name,
 		article_cat.name_url AS ID_category_name_url,
---		(SELECT name FROM `/*db_name*/`.`/*app*/_article_cat` WHERE ID=article_attrs.ID_category LIMIT 1) AS ID_category_name,
 		
-		article.posix_owner,
---		(SELECT login FROM TOM.a300_users_view WHERE IDhash=article.posix_owner LIMIT 1) AS posix_owner_name,
---		IF (article.posix_owner,
---			(SELECT login FROM TOM.a300_users_view WHERE IDhash=article.posix_owner LIMIT 1), NULL
---		) AS posix_owner_name,
-		article.posix_group,
---		IF (article.posix_group>0,
---			(SELECT name FROM TOM.a300_users_group WHERE ID=article.posix_group LIMIT 1), NULL
---		) AS posix_group_name,
-		article.posix_perms,
+		article_ent.posix_owner, -- first editor
+		article_content.ID_editor AS posix_editor, -- last editor
 		article_ent.ID_author AS posix_author,
-		article_content.ID_editor AS posix_editor,
---		IF (article_ent.ID_author,
---			(SELECT login FROM TOM.a300_users_view WHERE IDhash=article_ent.ID_author LIMIT 1), NULL
---		) AS posix_author_name,
 		
 		article_content.datetime_create,
 		article_attrs.datetime_start,
