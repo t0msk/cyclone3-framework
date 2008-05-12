@@ -24,7 +24,7 @@ $FORM{'db_h'}='main' unless $FORM{'db_h'};
 
 #################################################################################################
 
-$TOM::DB{'main'}{'name'}="TOM";
+#$TOM::DB{'main'}{'name'}="TOM" unless ;
 TOM::Database::connect::multi($FORM{'db_h'}) || die "can't connect";
 
 main::_log_stdout "connected '$FORM{'db_h'}' database handler";
@@ -32,7 +32,11 @@ main::_log_stdout "connected '$FORM{'db_h'}' database handler";
 
 if ($FORM{'domain'})
 {
-	require $tom::P."/local.conf";
+#	main::_log("name=$TOM::DB{'main'}{'name'} $@");
+}
+else
+{
+	$TOM::DB{'main'}{'name'}="TOM";
 }
 
 print color 'reset bold yellow';

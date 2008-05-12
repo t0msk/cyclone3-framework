@@ -26,7 +26,7 @@ $FORM{'db_h'}='main' unless $FORM{'db_h'};
 
 #################################################################################################
 
-$TOM::DB{'main'}{'name'}="TOM";
+$TOM::DB{'main'}{'name'}="TOM" unless $TOM::DB{'main'}{'name'};
 TOM::Database::connect::multi($FORM{'db_h'}) || die "can't connect";
 
 print "connected '$FORM{'db_h'}' database handler\n";

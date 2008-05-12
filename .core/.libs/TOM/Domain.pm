@@ -8,6 +8,11 @@ TOM::Domain
 
 Initialize domain service if available
 
+require TOM::Domain only if you want to initialize domain session for engine.
+local.conf and dependencies are automatically in initialization loaded.
+If $tom::addons_init is true, all configured addons defined in %tom::addons are initalized.
+$tom::addons_init is enabled by default only in 'pub' engine.
+
 =cut
 
 use open ':utf8', ':std';
@@ -21,34 +26,38 @@ BEGIN
 {
 	unshift @INC,$tom::P."/.libs" if $tom::P;
 	unshift @INC,$tom::P."/_addons" if $tom::P;
+	
+	main::_log("tom::P=$tom::P");
+	
 	if ($tom::P)
 	{
 		mkdir $tom::P.'/_logs' if (! -e $tom::P.'/_logs');
 		chmod 0777,$tom::P.'/_logs';
 		
-		# load configured applications
-		#main::_log("load addons");
+		# load configured addons
 		if ($tom::P ne $TOM::P)
 		{
 			main::_log("require $tom::P/local.conf");
 			require $tom::P."/local.conf";
 			
-			main::_log("load configured addons");
-			foreach my $addon(sort keys %tom::addons)
+			if ($tom::addons_init) # load all addons only if required by engine
 			{
-				my $addon_path;
-				if ($addon=~s/^a//)
+				main::_log("load configured addons");
+				foreach my $addon(sort keys %tom::addons)
 				{
-					$addon_path='App::'.$addon.'::_init';
+					my $addon_path;
+					if ($addon=~s/^a//)
+					{
+						$addon_path='App::'.$addon.'::_init';
+					}
+					elsif ($addon=~s/^e//)
+					{
+						$addon_path='Ext::'.$addon.'::_init';
+					}
+					main::_log("<={ADDON} '$addon_path'");
+					eval "use $addon_path;";
+					if ($@){main::_log("can't load addon '$addon_path' $@ $!",1)}
 				}
-				elsif ($addon=~s/^e//)
-				{
-					$addon_path='Ext::'.$addon.'::_init';
-				}
-				main::_log("<={ADDON} '$addon_path'");
-				eval "use $addon_path;";
-				if ($@){main::_log("can't load addon '$addon_path' $@ $!",1)}
-				#require 
 			}
 		}
 		

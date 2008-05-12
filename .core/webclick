@@ -5,7 +5,6 @@ BEGIN
 {
 	$TOM::engine='wc';
 	$main::debug=1;# if $ENV{'TERM'};
-	#print "Content-Type: text/html\n\n";
 	require "/www/TOM/.core/.libs/TOM.pm";
 }
 
@@ -24,33 +23,13 @@ use TOM::Database::connect;
 use TOM::Database::SQL;
 use TOM::Net::HTTP::CGI;
 
-#eval
-#{
-#	my $t=track TOM::Debug('requiring TOM::Engine::pub');
-#	require TOM::Engine::pub;
-#	$t->close();
-#};
-#if ($@)
-#{
-#	my @ERR=("Error occured during initialization");
-#	push @ERR,$@;
-#	TOM::Error::engine(@ERR);
-#	exit(0);
-#}
-
 $t->close();
 
-my $t_domain=track TOM::Debug("'$TOM::engine' domain initialization");
+my $t_domain=track TOM::Debug("Domain initialization");
 eval
 {
-	
 	# Load domain configuration
-	main::_log('require local.conf');
-	require $tom::P."/local.conf";
-	
-	TOM::Database::connect::multi('stats')
-		|| die "Error during connection request to database server\n";
-	
+	require TOM::Domain;	
 	$TOM::engine_ready=1;
 };
 

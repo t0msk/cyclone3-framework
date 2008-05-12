@@ -2200,6 +2200,9 @@ while ($main::CGI=new CGI::Fast())
 				(my $rewrite=TOM::Net::URI::rewrite::parse_hash(\%form))
 			)
 			{
+				# REWRITE TREBA DECODOVAT!!!
+				$rewrite=TOM::Net::URI::URL::url_encode($rewrite);
+				$rewrite=~s|%2F|/|g;
 				$prefix.=$rewrite;
 			}
 			
@@ -2252,7 +2255,7 @@ while ($main::CGI=new CGI::Fast())
 							'$tom::time_current'
 						)
 					");
-					TOM::Net::URI::URL::url_decode_($prefix);
+					#TOM::Net::URI::URL::url_decode_($prefix);
 					main::_log("output URL '$prefix?__$link_md5$end'") if $debug_url;
 					main::_log("URL '$prefix?__$link_md5$end'") unless $debug_url;
 					#$url_cache{$cache_key}="$prefix?__$link_md5";
@@ -2263,7 +2266,7 @@ while ($main::CGI=new CGI::Fast())
 					# tomu http://null/ uz vobec nerozumiem
 					$prefix="" if ($prefix eq "http://null/");
 					my $link_hash=TOM::Net::URI::URL::hash_encode($var);
-					TOM::Net::URI::URL::url_decode_($prefix);
+					#TOM::Net::URI::URL::url_decode_($prefix);
 					main::_log("output URL '$prefix?$link_hash$end'") if $debug_url;
 					main::_log("URL '$prefix?$link_hash$end'") unless $debug_url;
 					#$url_cache{$cache_key}="$prefix?$link_hash";
@@ -2279,7 +2282,8 @@ while ($main::CGI=new CGI::Fast())
 			# v HTML kode ako &amp; (je to tak podla standardov)
 			$var=~s|&|&amp;|g unless $TOM::type_code;
 			$prefix="" if ($prefix eq "http://null/");
-			TOM::Net::URI::URL::url_decode_($prefix);
+			#main::_log("prefix='$prefix' var='$var'",4,"spec");
+			#TOM::Net::URI::URL::url_decode_($prefix);
 			
 			if ($tom::rewrite && !$var) # nechcem zbytocne vypisovat ?
 			{

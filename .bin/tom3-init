@@ -133,6 +133,8 @@ if ($main::FORM{domain})
 	print "p:".$main::p."\n";
 	print "h:".$main::h."\n";
 	
+	require TOM::Domain;
+	
 	$tom::P=$main::p;
 	$TOM::P=$main::P;
 	

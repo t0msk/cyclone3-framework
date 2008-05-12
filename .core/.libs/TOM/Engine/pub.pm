@@ -12,6 +12,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	BEGIN
 	{
 		$TOM::Engine='pub';
+		$tom::addons_init=1;
 		
 		# data adresar
 		mkdir $tom::P."/_data" if (! -e $tom::P."/_data");
@@ -39,6 +40,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	
 	
 	# CORE Engine kniznice
+	use TOM::Domain; # all addons will be initialized because $tom::addons_init is in true state
 	use TOM::Engine::pub::SIG;
 	use TOM::Engine::pub::cookies;
 	use TOM::Engine::pub::IAdm;
