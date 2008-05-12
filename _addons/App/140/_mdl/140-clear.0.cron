@@ -21,6 +21,20 @@ sub execute
 	while (my $file=shift @files)
 	{
 		
+		my $count=@files;
+		
+#		main::_log("dir_step=$dir_step count=$count");
+		
+		if (!$dir_step && $count==0)
+		{
+			main::_log("opening second '$TOM::path_log'");
+			opendir (DIR2, $TOM::path_log);
+			push @files, readdir DIR2;
+			$dir=$TOM::path_log;
+			$dir_step++;
+			next;
+		}
+		
 		if (($file ne ".")&&($file ne ".."))
 		{
 			next if $file =~/!media/;
@@ -79,18 +93,6 @@ sub execute
 			}
 		}
 		
-		my $count=@files;
-		
-		main::_log("dir_step=$dir_step count=$count");
-		
-		if (!$dir_step && $count==1)
-		{
-			main::_log("opening second '$TOM::path_log'");
-			opendir (DIR2, $TOM::path_log);
-			push @files, readdir DIR2;
-			$dir=$TOM::path_log;
-			$dir_step++;
-		}
 		
 	}
 	
