@@ -1261,6 +1261,17 @@ our @table=
 		USRM_disable	=>	1,
 		messages		=>	["Your UserAgent requests bad URLs"],
 	},
+	{name=>'Etarget',
+		regexp		=>	[
+						'ZoohooBot'
+						],
+		agent_type	=>	"robot",
+		engine_disable	=>	1,
+		recache_disable	=>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+		messages		=>	["Your UserAgent requests bad URLs"],
+	},
 	{name=>'bad_robot',
 		regexp		=>	[
 						'^DA ',
