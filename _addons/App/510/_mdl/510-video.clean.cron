@@ -1,0 +1,54 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+510-video.clean.cron
+
+=head1 DESCRIPTION
+
+Clean video tables from unused or old entries
+
+=cut
+
+use App::510::_init;
+
+sub execute
+{
+	my %env=@_;
+	
+	# Check
+	if (!$tom::addons{'a510'} || ($TOM::DB{'main'}{'name'} ne $App::510::db_name))
+	{main::_log("not enabled, or set for another domain service");return 1;}
+	
+	main::_log("removing old callback's");
+	TOM::Database::SQL::execute(qq{
+		DELETE
+		FROM `$App::510::db_name`.a510_video_part_callback
+		WHERE datetime_create <= DATE_SUB(CURDATE(),INTERVAL 31 DAY)
+	}
+	,'quiet_'=>1);
+	
+	main::_log("removing old EMO's");
+	TOM::Database::SQL::execute(qq{
+		DELETE
+		FROM `$App::510::db_name`.a510_video_part_emo_vote
+		WHERE datetime_event <= DATE_SUB(CURDATE(),INTERVAL 31 DAY)
+	}
+	,'quiet_'=>1);
+	
+	return 1;
+}
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
