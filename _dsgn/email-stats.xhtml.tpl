@@ -138,6 +138,12 @@
 	]]>
 	</entity>
 	
+	<entity id="email.table.col.value_span">
+	<![CDATA[
+		<td colspan="<%span%>"><%value%></td>
+		<#email.table.col.value#>
+	]]>
+	</entity>
 	
 	<entity id="email.table.col.value_sum">
 	<![CDATA[
