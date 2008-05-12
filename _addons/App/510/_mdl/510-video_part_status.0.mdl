@@ -63,6 +63,9 @@ sub execute
 				'-journalize' => 1,
 				'ID' => $db0_line{'ID'},
 			);
+			$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+			$XSGN{'TMP'}=~s|<%ID%>|$env{'video.ID'}|g;
+			return 1;
 		}
 		elsif ($env{'video_part.status'} eq "N")
 		{
@@ -73,6 +76,9 @@ sub execute
 				'-journalize' => 1,
 				'ID' => $db0_line{'ID'},
 			);
+			$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+			$XSGN{'TMP'}=~s|<%ID%>|$env{'video.ID'}|g;
+			return 1;
 		}
 		else
 		{
