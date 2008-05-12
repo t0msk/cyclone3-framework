@@ -40,6 +40,7 @@ BEGIN {shift @INC;}
 
 our $cache;
 #our $cache_available;
+our $debug=0;
 our $memory_part=1/5;
 our $memory_minimal=1024;
 our $memory_maximal=512000;
@@ -63,7 +64,7 @@ sub memcached_start
 	}
 	else
 	{
-		main::_log("memcached is not running",1);
+		main::_log("none local memcached is running",1);
 		my $i=0;
 		foreach (@{$TOM::CACHE_memcached_servers})
 		{
@@ -94,27 +95,27 @@ Check if daemon is running
 
 sub memcached_check
 {
-	my $t=track TOM::Debug(__PACKAGE__."::memcached_check()");
+	my $t=track TOM::Debug(__PACKAGE__."::memcached_check()") if $debug;
 	
 	my $i=0;
 	foreach (@{$TOM::CACHE_memcached_servers})
 	{
-		main::_log("server[$i]='$_'");
+		main::_log("server[$i]='$_'") if $debug;
 		my @def=split(':',$_);
 		my @processes=TOM::System::process::find(
 			regex=>['memcached','-l '.$def[0],'-p '.$def[1]]
-		);
+		) if $def[0] eq "127.0.0.1";
 		
 		if ($processes[0])
 		{
-			$t->close();
+			$t->close() if $debug;
 			return 1;
 		}
 		
 		$i++;
 	}
 	
-	$t->close();
+	$t->close() if $debug;
 	return undef;
 }
 
