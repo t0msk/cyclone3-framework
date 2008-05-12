@@ -1,15 +1,12 @@
 -- db_h=main
--- app=a510
+-- addon=a510
 -- version=5.0
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
-  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `posix_group` int(10) unsigned NOT NULL,
-  `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
   `datetime_rec_start` datetime default NULL,
   `datetime_rec_stop` datetime default NULL,
@@ -23,12 +20,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_j` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
-  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `posix_group` int(10) unsigned NOT NULL,
-  `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
   `datetime_rec_start` datetime default NULL,
   `datetime_rec_stop` datetime default NULL,
@@ -38,9 +32,36 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_j` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_attrs` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL, -- rel image.ID_entity
+  `datetime_create` datetime NOT NULL,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `ID` (`ID`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `datetime_create` datetime NOT NULL,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL,
+  `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID
   `ID_category` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
@@ -62,7 +83,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_attrs` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_attrs_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs_j` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
   `ID_category` bigint(20) unsigned default NULL,
@@ -78,7 +99,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_attrs_j` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
   `part_id` mediumint(8) unsigned NOT NULL default '0',
@@ -97,7 +118,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_j` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
   `part_id` mediumint(8) unsigned NOT NULL default '0',
@@ -111,7 +132,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_j` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part_caption` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_caption` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
   `datetime_create` datetime NOT NULL,
@@ -126,7 +147,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_caption` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part_caption_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_caption_j` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
@@ -140,7 +161,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_caption_j` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo` ( -- experimental EMO characteristics
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_emo` ( -- experimental EMO characteristics
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
   `datetime_create` datetime NOT NULL,
@@ -159,7 +180,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo` ( -- experimental EMO charac
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_emo_j` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
@@ -175,7 +196,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo_j` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo_vote` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_emo_vote` (
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_part` mediumint(8) unsigned NOT NULL,
   `datetime_event` datetime NOT NULL,
@@ -184,7 +205,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_emo_vote` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part_callback` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_callback` (
   `ID_part` mediumint(8) unsigned NOT NULL,
   `datetime_create` datetime NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
@@ -193,12 +214,13 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_callback` (
   `duration` int(10) unsigned NOT NULL default '0',
   `state` varchar(10) character set ascii collate ascii_bin NOT NULL,
   KEY `datetime_create` (`datetime_create`),
-  KEY `country_code` (`country_code`)
+  KEY `country_code` (`country_code`),
+  KEY `SEL_0` (`ID_user`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
-CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_part_emo_view` AS (
+CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_part_emo_view` AS (
 	SELECT
 		emo.ID,
       emo.ID_entity,
@@ -216,14 +238,14 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_part_emo_view` AS (
 		(emo.emo_smile/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
 			AS emo_smile_perc
 	FROM
-		`/*db_name*/`.`/*app*/_video_part_emo` AS emo
+		`/*db_name*/`.`/*addon*/_video_part_emo` AS emo
 	WHERE
 		(emo.emo_sad + emo.emo_angry + emo.emo_confused + emo.emo_love + emo.emo_omg + emo.emo_smile) > 5
 )
 
 -- --------------------------------------------------
 
-CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_part_emo_viewEQ` AS (
+CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_part_emo_viewEQ` AS (
 	SELECT
 		emo1.ID AS emo1_ID,
 		emo2.ID AS emo2_ID,
@@ -242,8 +264,8 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_part_emo_viewEQ` AS (
 			ABS(emo1.emo_smile_perc - emo2.emo_smile_perc)
 		)/6)) AS EQ
 	FROM
-		`/*db_name*/`.`/*app*/_video_part_emo_view` AS emo1,
-		`/*db_name*/`.`/*app*/_video_part_emo_view` AS emo2
+		`/*db_name*/`.`/*addon*/_video_part_emo_view` AS emo1,
+		`/*db_name*/`.`/*addon*/_video_part_emo_view` AS emo2
 	WHERE
 		emo1.ID <> emo2.ID AND
       emo1.emo_all > 100 AND
@@ -252,7 +274,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_part_emo_viewEQ` AS (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part_attrs` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_attrs` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
@@ -272,7 +294,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_attrs` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part_attrs_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_attrs_j` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
@@ -286,7 +308,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_attrs_j` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part_dist` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_dist` (
   `datetime_create` datetime NOT NULL,
   `ID_part` bigint(20) NOT NULL,
   `country_code` char(3) character set ascii NOT NULL,
@@ -296,7 +318,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_dist` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part_file` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file` (
   `ID` mediumint(8) unsigned zerofill NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
   `ID_format` bigint(20) unsigned NOT NULL,
@@ -329,7 +351,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_file` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_part_file_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file_j` (
   `ID` mediumint(8) unsigned zerofill NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
   `ID_format` bigint(20) unsigned NOT NULL,
@@ -355,7 +377,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_part_file_j` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_visit` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_visit` (
   `datetime_event` datetime NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_video` bigint(20) NOT NULL,
@@ -364,7 +386,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_visit` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_cat` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
@@ -389,7 +411,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_cat` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_cat_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
@@ -406,7 +428,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_cat_j` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_format` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_format` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
@@ -430,7 +452,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_format` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_video_format_j` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_format_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
@@ -446,7 +468,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_video_format_j` (
 
 -- --------------------------------------------------
 
-CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
+CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_view` AS (
 	SELECT
 		CONCAT(video.ID_entity,'_',video.ID,'_',video_attrs.lng,'_',video_format.ID) AS ID,
 		
@@ -467,9 +489,10 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 		video_attrs.ID_category,
 		video_cat.name AS ID_category_name,
 		
-		video.posix_owner,
-		video.posix_group,
-		video.posix_perms,
+		video_ent.posix_owner,
+		video_ent.posix_author,
+--		video.posix_group,
+--		video.posix_perms,
 		
 		video_attrs.name,
 		video_attrs.name_url,
@@ -509,29 +532,33 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 		) AS status_all
 		
 	FROM
-		`/*db_name*/`.`/*app*/_video` AS video
-	LEFT JOIN `/*db_name*/`.`/*app*/_video_attrs` AS video_attrs ON
+		`/*db_name*/`.`/*addon*/_video` AS video
+	LEFT JOIN `/*db_name*/`.`/*addon*/_video_ent` AS video_ent ON
+	(
+		video_ent.ID_entity = video.ID_entity
+	)
+	LEFT JOIN `/*db_name*/`.`/*addon*/_video_attrs` AS video_attrs ON
 	(
 		video_attrs.ID_entity = video.ID
 	)
-	LEFT JOIN `/*db_name*/`.`/*app*/_video_part` AS video_part ON
+	LEFT JOIN `/*db_name*/`.`/*addon*/_video_part` AS video_part ON
 	(
 		video_part.ID_entity = video.ID_entity
 	)
-	LEFT JOIN `/*db_name*/`.`/*app*/_video_part_attrs` AS video_part_attrs ON
+	LEFT JOIN `/*db_name*/`.`/*addon*/_video_part_attrs` AS video_part_attrs ON
 	(
 		video_part_attrs.ID_entity = video_part.ID AND
 		video_part_attrs.lng = video_attrs.lng
 	)
-	LEFT JOIN `/*db_name*/`.`/*app*/_video_part_file` AS video_part_file ON
+	LEFT JOIN `/*db_name*/`.`/*addon*/_video_part_file` AS video_part_file ON
 	(
 		video_part_file.ID_entity = video_part.ID
 	)
-	LEFT JOIN `/*db_name*/`.`/*app*/_video_format` AS video_format ON
+	LEFT JOIN `/*db_name*/`.`/*addon*/_video_format` AS video_format ON
 	(
 		video_format.ID_entity = video_part_file.ID_format
 	)
-	LEFT JOIN `/*db_name*/`.`/*app*/_video_cat` AS video_cat ON
+	LEFT JOIN `/*db_name*/`.`/*addon*/_video_cat` AS video_cat ON
 	(
 		video_cat.ID = video_attrs.ID_category
 	)
@@ -543,7 +570,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view` AS (
 
 -- --------------------------------------------------
 
-CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view_lite` AS (
+CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_view_lite` AS (
 	SELECT
 		
 		video.ID_entity AS ID_entity_video,
@@ -557,9 +584,9 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view_lite` AS (
 		
 		video_attrs.ID_category,
 		
-		video.posix_owner,
-		video.posix_group,
-		video.posix_perms,
+--		video.posix_owner,
+--		video.posix_group,
+--		video.posix_perms,
 		
 		video_attrs.name,
 		video_attrs.description,
@@ -583,17 +610,17 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_video_view_lite` AS (
 		) AS status_all
 		
 	FROM
-		`/*db_name*/`.`/*app*/_video` AS video
-	LEFT JOIN `/*db_name*/`.`/*app*/_video_attrs` AS video_attrs ON
+		`/*db_name*/`.`/*addon*/_video` AS video
+	LEFT JOIN `/*db_name*/`.`/*addon*/_video_attrs` AS video_attrs ON
 	(
 		video_attrs.ID_entity = video.ID
 	)
-	LEFT JOIN `/*db_name*/`.`/*app*/_video_part` AS video_part ON
+	LEFT JOIN `/*db_name*/`.`/*addon*/_video_part` AS video_part ON
 	(
 		video_part.ID_entity = video.ID_entity AND
 		video_part.part_id = 1
 	)
-	LEFT JOIN `/*db_name*/`.`/*app*/_video_part_attrs` AS video_part_attrs ON
+	LEFT JOIN `/*db_name*/`.`/*addon*/_video_part_attrs` AS video_part_attrs ON
 	(
 		video_part_attrs.ID_entity = video_part.ID AND
 		video_part_attrs.lng = video_attrs.lng
