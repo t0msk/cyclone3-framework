@@ -161,6 +161,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_user_profile_view` AS (
 		user.email,
 		user.email_verified,
       user.datetime_register,
+		YEAR(CURRENT_DATE()) - YEAR(user_profile.date_birth) - (RIGHT(CURRENT_DATE(),5) < RIGHT(user_profile.date_birth,5)) AS age,
 		user_profile.*
 		
 	FROM
