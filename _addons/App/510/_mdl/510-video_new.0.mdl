@@ -44,10 +44,17 @@ sub execute
 		return 1;
 	}
 	
+	my %columns;
+	
+	if ($env{'file'} && -e $env{'file'} && not -d $env{'file'})
+	{
+		$columns{'file'}=$env{'file'};
+	}
+	
 	my %video=App::510::functions::video_add(
 		'video_attrs.name' => $env{'video_attrs.name'},
 		'video_attrs.ID_category' => $env{'video_attrs.ID_category'},
-		#'file' => $tom::P.'/_data/image.png'
+		%columns,
 	);
 	
 	
