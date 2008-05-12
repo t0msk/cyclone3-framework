@@ -367,6 +367,24 @@ sub execute
 						WHERE
 							image.ID_entity_image = $relation->{'r_ID_entity'} AND
 							image.status='Y' AND
+							image.ID_format = '$App::501::image_format_ico_ID'
+						LIMIT 1
+					};
+					my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+					if (my %db1_line=$sth1{'sth'}->fetchhash())
+					{
+						my $uri=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+						$XSGN{'NULL'}=~s|<%ico%>|$uri|;
+					}
+					
+					my $sql=qq{
+						SELECT
+							*
+						FROM
+							`$App::501::db_name`.a501_image_view AS image
+						WHERE
+							image.ID_entity_image = $relation->{'r_ID_entity'} AND
+							image.status='Y' AND
 							image.ID_format = '$App::501::image_format_original_ID'
 						LIMIT 1
 					};
@@ -414,6 +432,20 @@ sub execute
 			my %db1_line=$sth1{'sth'}->fetchhash();
 			$db1_line{'length'}='' if $db1_line{'length'} eq "00:00:00";
 			$XSGN{'NULL'}=~s|<%length%>|$db1_line{'length'}|g;
+			
+			
+			# count parts visits
+			my $sql=qq{
+				SELECT
+					SUM(visits) AS visits
+				FROM
+					`$App::510::db_name`.a510_video_part AS video_part
+				WHERE
+					video_part.ID_entity = $db0_line{'ID_entity_video'}
+			};
+			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+			my %db1_line=$sth1{'sth'}->fetchhash();
+			$XSGN{'NULL'}=~s|<%visits%>|$db1_line{'visits'}|g;
 			
 			
 			$XSGN{'NULL'}=~s|<%dimensions%>|$db0_line{'video_width'}x$db0_line{'video_height'}|g;
