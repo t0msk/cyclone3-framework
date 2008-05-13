@@ -103,3 +103,14 @@
 	<VAR id="-category" value="300" />
 	<VAR id="-name" value="cleaner" />
 </MODULE>
+
+
+
+# a301 - USRM
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="301" />
+	<VAR id="-name" value="user" />
+	<VAR id="-version" value="clean" />
+</MODULE>
