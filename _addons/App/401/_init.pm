@@ -163,7 +163,7 @@ my $sql="
 	FROM
 		`$App::821::db_name`.`a821_discussion_forum`
 	WHERE
-		name='article forums' AND
+		name='article discussions' AND
 		lng IN ('".(join "','",@TOM::LNG_accept)."')
 	LIMIT 1
 ";
