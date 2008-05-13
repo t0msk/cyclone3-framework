@@ -681,7 +681,6 @@ while ($main::CGI=new CGI::Fast())
 				main::_log("code $1 on REQUEST_URI='$ENV{'REQUEST_URI'}'",1);
 				
 				$t_301->close();
-				$t_querystring->close();
 				$t_preprocess->close();
 				$t_eval->close();
 				$t_request->close();
@@ -705,7 +704,6 @@ while ($main::CGI=new CGI::Fast())
 				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out' (301.conf)");
 				
 				$t_301->close();
-				$t_querystring->close();
 				$t_preprocess->close();
 				$t_eval->close();
 				$t_request->close();
@@ -786,7 +784,6 @@ while ($main::CGI=new CGI::Fast())
 				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)");
 				
 				$t_301->close();
-				$t_querystring->close();
 				$t_preprocess->close();
 				$t_eval->close();
 				$t_request->close();
@@ -796,7 +793,25 @@ while ($main::CGI=new CGI::Fast())
 				next;
 			}
 			
+			my $link=$out;
+			
+			my $URI_base=$tom::H_www;
+				$URI_base=~s|$tom::rewrite_RewriteBase$||;
+			my $URI_enh="$tom::rewrite_RewriteBase$link";
+			$URI_base.='/' unless $URI_enh=~/^\//;
+			
+			main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)",3,"301",1);
+			main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)",3,"301");
+			main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)");
+			
 			$t_301->close();
+			$t_preprocess->close();
+			$t_eval->close();
+			$t_request->close();
+			print "Status: 301 Moved permanently\n";
+			print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
+			
+			next;
 		}
 		
 		
