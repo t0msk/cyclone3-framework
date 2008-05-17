@@ -58,16 +58,16 @@ sub execute
 			);
 			
 			# DESIGN
-			$tpl->{'entity'}{'email.xhtml'}=~s|<%main-title%>|New/open tickets notification|g;
-			$tpl->{'entity'}{'email.xhtml'}=~s|<%main-desc%>|This email shows list of new unsolved tickets where you are assigned person. It is ordered by count of detected events.|g;
+			$tpl->{'entity'}{'email.xhtml'}=~s|<%main-title%>|(Re)opened error tickets|g;
+			$tpl->{'entity'}{'email.xhtml'}=~s|<%main-desc%>|This notification email shows you list of active unsolved tickets where you are assigned person from last $time_durration minutes. Count of events are not only from last $time_durration minutes|g;
 			
 		
 			# vykreslim hlavicku
-			$tpl->{'entity'}{'email.table'} =~ s|<%title%>|Table of new active tickets|g;
+			$tpl->{'entity'}{'email.table'} =~ s|<%title%>|Table of active tickets|g;
 			$tpl->{'entity'}{'email.table'} =~ s|<%main-term%>||g;
 			$tpl->{'entity'}{'email.table'} =~ s|<%colscount%>|5|g;
 			
-			foreach my $col_name ( 'ID','domain','name','count','lastevent' )
+			foreach my $col_name ( 'ID','Domain','Ticket name','Events','Opened' )
 			{
 				my $col = $tpl->{'entity'}{'email.table.col.name'};
 				$col =~ s|<%name%>|$col_name|g;
@@ -81,7 +81,6 @@ sub execute
 					t.name,
 					count(e.ID) as count,
 					max(e.datetime_create) as last_err,
-					e.cvml,
 					t.emails
 				FROM
 					TOM.a100_ticket as t
@@ -103,11 +102,26 @@ sub execute
 			};
 			my $tickets;
 			my $events;
+			my $events_current;
 			my %sth1=TOM::Database::SQL::execute($sql);
 			while (my %db1_line=$sth1{'sth'}->fetchhash)
 			{
 				$tickets++;
 				$events+=$db1_line{'count'};
+				
+				my $sql = qq{
+					SELECT
+						COUNT(*) AS cnt
+					FROM
+						TOM.a100_ticket_event as e
+					WHERE
+						e.ID_ticket=$db1_line{'ID'} AND
+						e.status='Y' AND
+						e.datetime_create >= DATE_SUB(NOW(),INTERVAL $time_durration MINUTE)
+				};
+				my %sth2=TOM::Database::SQL::execute($sql);
+				my %db2_line=$sth2{'sth'}->fetchhash;
+				$events_current+=$db2_line{'cnt'};
 				
 				my $line = $tpl->{'entity'}{'email.table.line'};
 				
@@ -124,7 +138,7 @@ sub execute
 					$line =~ s|<#email.table.col.value#>|$col|g;
 					
 				my $col = $tpl->{'entity'}{'email.table.col.value'};
-					$col =~ s|<%value%>|$db1_line{'count'}|g;
+					$col =~ s|<%value%>|$db2_line{'cnt'} / $db1_line{'count'}|g;
 					$line =~ s|<#email.table.col.value#>|$col|g;
 					
 				my $col = $tpl->{'entity'}{'email.table.col.value'};
@@ -145,9 +159,9 @@ sub execute
 						e.datetime_create DESC
 					LIMIT 1
 				};
-				my %sth2=TOM::Database::SQL::execute($sql);
-				my %db2_line=$sth2{'sth'}->fetchhash;
-				my $cvml = new CVML( data => $db2_line{'cvml'} );
+				my %sth3=TOM::Database::SQL::execute($sql);
+				my %db3_line=$sth3{'sth'}->fetchhash;
+				my $cvml = new CVML( data => $db3_line{'cvml'} );
 				my %cvml_hash = %{$cvml->{'hash'}};
 				
 				# detail
@@ -194,7 +208,7 @@ sub execute
 				'Type'    => 'multipart/related',
 				'From'    => '"Cyclone3 ('.$TOM::hostname.')" <'.$TOM::contact{'from'}.'>',
 				'To'      => TOM::Net::email::convert_TO($db_email),
-				'Subject' => "Opened ".($tickets)." error tickets (summary ".($events)." events)",
+				'Subject' => "Opened ".($tickets)." error tickets (current ".($events_current).", summary ".($events)." events)",
 				'Date'    => $date,
 			);
 			
