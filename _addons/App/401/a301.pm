@@ -89,7 +89,7 @@ our %roles=(
 # default groups related to addon roles with defined permissions
 our %groups=(
 	'world' => {
-		'article.content' => 'r--'
+		'article.content' => 'r  '
 	},
 	'editor' => {
 		'article.content' => 'rwx',
