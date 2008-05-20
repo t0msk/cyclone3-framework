@@ -275,22 +275,22 @@ sub get_roles
 			}
 			
 			main::_log("group 'editor' overrides");
-			foreach my $role(keys %roles_local)
+			foreach my $role(sort keys %roles_local)
 			{
-				my $perm=perm_inc($roles{$role},$roles_local{$role});
-				main::_log(" RL_$role '$roles{$role}'+'$roles_local{$role}'='$perm'");
+				my $perm=perm_sum($roles{$role},$roles_local{$role});
+				main::_log(" RL_$role '$roles{$role}'*'$roles_local{$role}'='$perm'");
 				$roles{$role}=$perm;
 			}
 			
-			main::_log(" RL_login '--x'");
-			$roles{'login'}='--x';
+			main::_log(" RL_login 'rw '");
+			$roles{'login'}='rw ';
 			
 			delete $groups{$_};
 		}
 	}
 	
 	# check other groups
-	foreach my $group(keys %groups)
+	foreach my $group(sort keys %groups)
 	{
 		my $sql=qq{
 			SELECT *
@@ -301,12 +301,13 @@ sub get_roles
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
-			main::_log("group '$db0_line{'name'}' permissions");
+			main::_log("group '$db0_line{'name'}' overrides");
 			foreach my $role(split('\n',$db0_line{'perm_roles_override'}))
 			{
 				my @role_def=split(':',$role,2);
-				my $perm=perm_inc($roles{$role_def[0]},$role_def[1]);
-				main::_log("RL_$role_def[0] '$roles{$role_def[0]}'+'$role_def[1]'='$perm'");
+				my $perm=perm_sum($roles{$role_def[0]},$role_def[1]);
+				#$perm=~s| |-|g;
+				main::_log("RL_$role_def[0] '$roles{$role_def[0]}'*'$role_def[1]'='$perm'");
 				$roles{$role_def[0]}=$perm;
 			}
 		}
@@ -314,7 +315,7 @@ sub get_roles
 	
 	
 	# user overrides
-	if ($env{'ID_group'} eq $env{'ID_user'} || $env{'ID_group'} eq "*")
+	if ($env{'ID_group'} eq $env{'ID_user'} || $env{'ID_group'} eq "*" || ($env{'ID_user'} && !$env{'ID_group'}))
 	{
 		main::_log("user overrides");
 		foreach my $role(split('\n',$user{'perm_roles_override'}))
@@ -333,16 +334,19 @@ sub get_roles
 	
 	if ($roles{'unlimited'})
 	{
-		%roles=('unlimited'=>'rwx','login'=>'--x');
+		%roles=('unlimited'=>'rwx','login'=>'rw ');
 	}
 	
 	main::_log("send to output:");
 	foreach (sort keys %roles)
 	{
 		my @perm=split('',$roles{$_});
-		$perm[0]='-' if (!$perm[0] || $perm[0] eq ' ');
-		$perm[1]='-' if (!$perm[1] || $perm[1] eq ' ');
-		$perm[2]='-' if (!$perm[2] || $perm[2] eq ' ');
+#		$perm[0]='-' unless $perm[0];
+#		$perm[1]='-' unless $perm[1];
+#		$perm[2]='-' unless $perm[2];
+		$perm[0]=' ' if (!$perm[0] || $perm[0] eq ' ');
+		$perm[1]=' ' if (!$perm[1] || $perm[1] eq ' ');
+		$perm[2]=' ' if (!$perm[2] || $perm[2] eq ' ');
 		$roles{$_}=join '',@perm;
 		main::_log(" RL_$_ '$roles{$_}'");
 	}
@@ -437,6 +441,17 @@ sub get_ACL_roles
 
 Get list of roles in one entity for user and groups
 
+Gets everyone group listen in ACL and where the present use is contained - for example:
+world - 'r  '
+editor - 'rwx'
+another - 'r--'
+The output are roles with 'r  ' privileges from 'world' group, roles from editor with 'rwx' privileges, etc...
+All privileges are in output stripped by optimistic permissions from all groups 'r  '+'rwx'+'r--' = 'rwx',
+for example 'r  '+'r--'+'-w-' = 'rw-'
+
+After this gets roles from user if are present in this ACL list. Defined permissions overrides group permissions.
+for example 'rw-'+'rwx'='rwx'. Warning! - only defined roles in user ACL list definition overrides other roles. 
+
 =cut
 
 sub get_entity_roles
@@ -466,7 +481,7 @@ sub get_entity_roles
 	{
 		if ($ACL_item->{'folder'} && $grp{$ACL_item->{'ID'}}) # this is group
 		{
-			main::_log("I'm in this group $ACL_item->{'ID'}");
+			main::_log("User in this group '$ACL_item->{'ID'}'");
 			
 			# get basic group roles
 			main::_log("load basic group roles");
@@ -495,7 +510,7 @@ sub get_entity_roles
 				$local_roles{$role}=$perm;
 			}
 			
-			main::_log("override by group/user override def");
+			main::_log("override by group override def");
 			foreach my $role(split('\n',$ACL_item->{'override'}))
 			{
 				my @role_def=split(':',$role,2);$role_def[1]=~tr/rwx\-/RWX_/;
@@ -504,7 +519,7 @@ sub get_entity_roles
 				$local_roles{$role_def[0]}=$perm;
 			}
 			
-			# strip
+			# strip (optimistic)
 			main::_log("strip by '$ACL_item->{'perm_R'}$ACL_item->{'perm_W'}$ACL_item->{'perm_X'}'");
 			my $permstrip=$ACL_item->{'perm_R'}.$ACL_item->{'perm_W'}.$ACL_item->{'perm_X'};
 			$strip_perms{'perm_R'}=$ACL_item->{'perm_R'} if $ACL_item->{'perm_R'} ne ' ';
@@ -536,9 +551,88 @@ sub get_entity_roles
 		
 	}
 	
-	# strip
-	main::_log("strip all by '$strip_perms{'perm_R'}$strip_perms{'perm_W'}$strip_perms{'perm_X'}'");
 	
+	my %user_roles;
+	foreach my $ACL_item(@ACL)
+	{
+		if (!$ACL_item->{'folder'} && $ACL_item->{'ID'} eq $env{'ID_user'}) # this is group
+		{
+			main::_log("get permissions from user");
+			
+			# get basic user roles (is okay to load these roles to override? - no)
+#			main::_log("load basic user roles");
+#			%user_roles=get_roles(
+#				'ID_user' => "$ACL_item->{'ID'}",
+#			);
+			
+			# override it by ACL_roles
+			main::_log("override by ACL_role roles");
+			foreach my $ACL_role(split(',',$ACL_item->{'roles'}))
+			{
+				main::_log("ACL_role '$ACL_role'");
+				foreach my $role(keys %{$App::301::perm::ACL_roles{$ACL_role}})
+				{
+					my $perm=perm_sum($user_roles{$role},$App::301::perm::ACL_roles{$ACL_role}{$role});
+					main::_log(" RL_$role '$user_roles{$role}'*'$App::301::perm::ACL_roles{$ACL_role}{$role}'='$perm'");
+					$user_roles{$role}=$perm;
+				}
+			}
+			
+			main::_log("override by user override def");
+			foreach my $role(split('\n',$ACL_item->{'override'}))
+			{
+				my @role_def=split(':',$role,2);$role_def[1]=~tr/rwx\-/RWX_/;
+				my $perm=perm_sum($user_roles{$role_def[0]},$role_def[1]);
+				main::_log(" RL_$role_def[0] '$user_roles{$role_def[0]}'*'$role_def[1]'='$perm'");
+				$user_roles{$role_def[0]}=$perm;
+			}
+			
+			# strip (pesimistic - override)
+			main::_log("strip by '$ACL_item->{'perm_R'}$ACL_item->{'perm_W'}$ACL_item->{'perm_X'}'");
+			my $permstrip=$ACL_item->{'perm_R'}.$ACL_item->{'perm_W'}.$ACL_item->{'perm_X'};
+			$strip_perms{'perm_R'}=$ACL_item->{'perm_R'} if $ACL_item->{'perm_R'} ne ' ';
+			$strip_perms{'perm_W'}=$ACL_item->{'perm_W'} if $ACL_item->{'perm_W'} ne ' ';
+			$strip_perms{'perm_X'}=$ACL_item->{'perm_X'} if $ACL_item->{'perm_X'} ne ' ';
+			$permstrip=~tr/RWXrwx_/      -/;
+			main::_log("strip string '$permstrip'");
+			foreach my $role(keys %user_roles)
+			{
+				my $perm=perm_sum($user_roles{$role},$permstrip);
+				main::_log(" RL_$role '$user_roles{$role}'*'$permstrip'='$perm'");
+				$user_roles{$role}=$perm;
+			}
+			
+			main::_log("override group roles by user roles");
+			foreach my $role(keys %user_roles)
+			{
+				my $perm=perm_sum($groups_roles{$role},$user_roles{$role});
+				main::_log(" RL_$role '$groups_roles{$role}'*'$user_roles{$role}'='$perm'");
+				$groups_roles{$role}=$perm;
+			}
+			
+		}
+	}
+	
+	
+	# strip
+	my $permstrip=$strip_perms{'perm_R'}.$strip_perms{'perm_W'}.$strip_perms{'perm_X'};
+	$permstrip=~tr/RWXrwx_/      -/;
+	main::_log("strip all by '$strip_perms{'perm_R'}$strip_perms{'perm_W'}$strip_perms{'perm_X'}'");
+	main::_log("strip string '$permstrip'");
+	foreach my $role(sort keys %groups_roles)
+	{
+		my $perm=perm_sum($groups_roles{$role},$permstrip);
+		main::_log(" RL_$role '$groups_roles{$role}'*'$permstrip'='$perm'");
+		$groups_roles{$role}=$perm;
+	}
+	
+	main::_log("output (only prefix!):");
+	foreach my $role(sort keys %groups_roles)
+	{
+		delete $groups_roles{$role} unless $role=~/^$env{'r_prefix'}\./;
+		next unless $role=~/^$env{'r_prefix'}\./;
+		main::_log(" RL_$role '$groups_roles{$role}'");
+	}
 	
 	$t->close();
 	return ({%roles},$permstrip);
@@ -692,17 +786,19 @@ sub get_ACL
 		acl.*,
 		grp.name
 	FROM
-		`$db_name`.a301_ACL_user_group AS acl,
-		`TOM`.a301_user_group AS grp
+		`$db_name`.a301_ACL_user_group AS acl
+	LEFT JOIN `TOM`.a301_user_group AS grp ON
+	(
+		acl.ID_entity = grp.ID_entity
+	)
 	WHERE
 		acl.r_prefix='$env{'r_prefix'}' AND
 		acl.r_table='$env{'r_table'}' AND
-		acl.r_ID_entity='$env{'r_ID_entity'}' AND
-		acl.ID_entity = grp.ID_entity
+		acl.r_ID_entity='$env{'r_ID_entity'}'
 	ORDER BY
 		acl.ID_entity ASC
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		my %item;
@@ -711,16 +807,22 @@ sub get_ACL
 		{
 			$world=1;
 			my %item;
-			main::_log("->{world} 'r--'");
+			main::_log("->{world} 'r  '");
 			$item{'ID'}='0';
 			$item{'folder'}='Y';
 			$item{'roles'}='';
 			$item{'perm_R'}='r';
-			$item{'perm_W'}='-';
-			$item{'perm_X'}='-';
+			$item{'perm_W'}=' ';
+			$item{'perm_X'}=' ';
 			$item{'status'}='L';
 			$item{'name'}='world';
 			push @ACL, {%item};
+		}
+		else
+		{
+			$world=1;
+			$db0_line{'status'}='L';
+			$db0_line{'name'}='world';
 		}
 		
 		$db0_line{'perm_R'}=~tr/YN/R_/;
@@ -746,13 +848,13 @@ sub get_ACL
 	{
 		$world=1;
 		my %item;
-		main::_log("->{world} 'r--'");
+		main::_log("->{world} 'r  '");
 		$item{'ID'}='0';
 		$item{'folder'}='Y';
 		$item{'roles'}='';
 		$item{'perm_R'}='r';
-		$item{'perm_W'}='-';
-		$item{'perm_X'}='-';
+		$item{'perm_W'}=' ';
+		$item{'perm_X'}=' ';
 		$item{'status'}='L';
 		$item{'name'}='world';
 		push @ACL, {%item};
@@ -1090,7 +1192,7 @@ sub ACL_user_remove
 
 
 
-sub perm_inc # only accept higher permissions '-w-'+'r-x'='rwx'
+sub perm_inc # optimistic - only accept higher permissions '-w-'+'r-x'='rwx'
 {
 	my $from=shift;
 	my $to=shift;
@@ -1109,7 +1211,7 @@ sub perm_inc # only accept higher permissions '-w-'+'r-x'='rwx'
 	return $to;
 }
 
-sub perm_sum # accept every permission (higher or lower) 'rw-'*' -x'='r-x'
+sub perm_sum # pesimistic - accept every permission (higher or lower) 'rw-'*' -x'='r-x'
 {
 	my $from=shift;
 	my $to=shift;

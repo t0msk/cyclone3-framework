@@ -105,7 +105,7 @@ our %roles=(
 # default groups related to addon roles with defined permissions
 our %groups=(
 	'world' => {
-		'user_group' => 'r--'
+		'user_group' => 'r  '
 	},
 	'editor' => {
 		'user_group' => 'rwx',
@@ -125,7 +125,7 @@ our %ACL_roles=(
 		'user_group' => 'rwx',
 	},
 	'guest' => {
-		'user.public_data' => 'r--',
+		'user.public_data' => 'r  ',
 	},
 	'manager' => {
 		'user.private_data' => 'rwx',

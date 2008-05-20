@@ -598,11 +598,12 @@ sub user_groups
 			`group`.group_name
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($sql);
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$groups{$db0_line{'group_name'}}{'ID'} = $db0_line{'ID_group'};
-		#$groups{$db0_line{'group_name'}}{'status'} = $db0_line{'status'};
+		main::_log("group '$db0_line{'ID_group'}' named '$db0_line{'group_name'}' status='$db0_line{'status'}'");
+		$groups{$db0_line{'group_name'}}{'status'} = $db0_line{'status'};
 	}
 	
 	$t->close();
