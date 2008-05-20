@@ -84,6 +84,10 @@ B<a501_image.ID_format.1> - changes ID_format for first a501_image
 
 B<body.a501_image.ID_format.1> - changes ID_format for first a501_image in article_content.body
 
+=item *
+
+B<gallery.thumbnail.ID_format> - changes ID_format for gallery images
+
 =back
 
 =cut
@@ -305,10 +309,21 @@ sub execute
 				LIMIT 1
 			};
 			my %sth1=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache'=>60);
-			if (my %db1_line=$sth1{'sth'}->fetchhash())
-			{
-				$item=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;
-			}
+			if (my %db1_line=$sth1{'sth'}->fetchhash()){$item=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;}
+			my $ID_format=$env{'gallery.thumbnail.ID_format'} || $App::501::image_format_thumbnail_ID;
+			my $sql=qq{
+				SELECT
+					*
+				FROM
+					`$App::501::db_name`.a501_image_view
+				WHERE
+					ID_entity_image=$relation->{'r_ID_entity'} AND
+					ID_format=$ID_format AND
+					status IN ('Y','L')
+				LIMIT 1
+			};
+			my %sth1=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache'=>60);
+			if (my %db1_line=$sth1{'sth'}->fetchhash()){$item=~s|<%image.thumbnail.db_(.*?)%>|$db1_line{$1}|g;}
 			
 			if ($XSGN{'TMP'}=~s|<#a501.gallery.$i#>|$item|)
 			{
