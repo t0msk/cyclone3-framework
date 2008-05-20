@@ -40,7 +40,7 @@ sub execute
 	alarm 0;
 	$env{'max'}=10000 unless $env{'max'};
 	
-	$env{'max_days'}=3 unless $env{'max_days'};
+	$env{'max_days'}=7 unless $env{'max_days'};
 	
 	my $sql=qq{
 		SELECT
