@@ -51,7 +51,7 @@ while ($main::CGI=new CGI::Fast())
 	my %FORM=TOM::Net::HTTP::CGI::get_QUERY_STRING($ENV{'QUERY_STRING'});
 	
 	my $sql=qq{
-		INSERT INTO TOM.a110_webclick_log
+		INSERT DELAYED INTO TOM.a110_webclick_log
 		(
 			domain,
 			domain_sub,
