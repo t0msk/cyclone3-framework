@@ -17,12 +17,12 @@ sub _log
 	return undef if $TOM::DEBUG_log_file==-1;
 	return _log_lite(@_) unless $TOM::engine_ready;
 	# spetna kompatibilita, toto sa neskor vyhodi!
-	if ($_[0]=~/^\d+$/ && $_[1])
-	{
-		shift @_;
-		my ($package, $filename, $line) = caller;
-		return _deprecated("calling _log(number,text) in deprecated format with message '".$_[0]."' from $filename:$line");
-	}
+#	if ($_[0]=~/^\d+$/ && $_[1])
+#	{
+#		shift @_;
+#		my ($package, $filename, $line) = caller;
+#		return _deprecated("calling _log(number,text) in deprecated format with message '".$_[0]."' from $filename:$line");
+#	}
 	unshift @_, $TOM::Debug::track_level;
 	
 	my ($package, $filename, $line) = caller;
@@ -62,28 +62,7 @@ sub _log
 	
 	my %date=Utils::datetime::ctodatetime(time,format=>1);
 	
-	
-	my $file;
-	if ($TOM::path_log)
-	{
-		$file=$TOM::path_log;
-		if ($get[4]==1) {} # global
-		elsif ($tom::Pm && $get[4]==2) {$file.='/'.$tom::Hm} # master
-		elsif ($tom::H) {$file.='/'.$tom::H} # local
-		$file.='/'; # global
-		if (! -e $file){mkdir $file;chmod (0777,$file)}
-	}
-	else
-	{
-		$file=$TOM::P."/_logs/";
-		$file=$tom::P."/_logs/" if $tom::P;
-		$file=$tom::Pm."/_logs/" if ($tom::Pm && $get[4]==2);
-		$file=$TOM::P."/_logs/" if $get[4]==1;
-	}
-	
-	$file.="[".$TOM::hostname."]"."$date{year}-$date{mom}-$date{mday}";
-	$file.="-$date{hour}" if $TOM::DEBUG_log_file_frag; # rozlisenie na hodiny
-	
+	my $msec;
 	my $msec='0.'.(Time::HiRes::gettimeofday)[1];
 		$msec=int($msec*1000);
 		#$msec=~s|^(.....).*|\1|;
@@ -94,27 +73,10 @@ sub _log
 		"[$date{hour}:$date{min}:$date{sec}.".sprintf("%03d",$msec)."]".
 		"[".sprintf("%02d",$get[0])."]".
 		" ".(" " x $get[0]).$ref[$get[2]].$get[1];
-	if (length($msg)>2048)
+	if (length($msg)>8048)
 	{
-		$msg=substr($msg,1,2048);
+		$msg=substr($msg,1,8048);
 		$msg.="...";
-	}
-	
-	
-	if (
-			($TOM::DEBUG_log_file>=$get[0])||
-			($get[2])||
-			($main::ITst)||
-			($main::IAdm)||
-			($main::debug)
-		) # logujem v pripade ze som v ramci levelu alebo ide o ERROR
-	{
-		$get[0]=0 unless $get[0];
-		open (HND_LOG,">>".$file.".".$get[3].".log");
-#			|| die "System can't write into logfile ".$file.".".$get[3].".log"."\n";
-		chmod (0666,$file.".".$get[3].".log");
-		print HND_LOG $msg."\n";
-		close HND_LOG; # TODO: [Aben] uzavretie HND mozno zrusit
 	}
 	
 	if (
@@ -128,6 +90,49 @@ sub _log
 		print color 'red' if $ref[$get[2]] eq '-';
 		print $msg."\n";
 		print color 'reset';
+		return 1;
+	}
+	
+	if (
+			($TOM::DEBUG_log_file>=$get[0])||
+			($get[2])||
+			($main::ITst)||
+			($main::IAdm)||
+			($main::debug)
+		) # logujem v pripade ze som v ramci levelu alebo ide o ERROR
+	{
+		
+		my $file;
+		if ($TOM::path_log)
+		{
+			$file=$TOM::path_log;
+			if ($get[4]==1) {} # global
+			elsif ($tom::Pm && $get[4]==2) {$file.='/'.$tom::Hm} # master
+			elsif ($tom::H) {$file.='/'.$tom::H} # local
+			$file.='/'; # global
+	#		print "file = $file\n";
+			if (! -e $file){mkdir $file;chmod (0777,$file)}
+		}
+		else
+		{
+			$file=$TOM::P."/_logs/";
+			$file=$tom::P."/_logs/" if $tom::P;
+			$file=$tom::Pm."/_logs/" if ($tom::Pm && $get[4]==2);
+			$file=$TOM::P."/_logs/" if $get[4]==1;
+		}
+		
+		$file.="[".$TOM::hostname."]";
+		$file.="$date{year}-$date{mom}-$date{mday}";
+		$file.="-$date{hour}" if $TOM::DEBUG_log_file_frag; # rozlisenie na hodiny
+		
+		#print "file = $file\n";
+		
+		$get[0]=0 unless $get[0];
+		open (HND_LOG,">>".$file.".".$get[3].".log") || print STDERR "System can't write into logfile $file $!";
+#			|| die "System can't write into logfile ".$file.".".$get[3].".log"."\n";
+		chmod (0666,$file.".".$get[3].".log");
+		print HND_LOG $msg."\n";
+		close HND_LOG; # TODO: [Aben] uzavretie HND mozno zrusit
 	}
 	
 	if (($main::IAdm)&&($main::FORM{__IAdm_log})&&($pub::output_log))
