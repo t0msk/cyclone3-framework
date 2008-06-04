@@ -169,12 +169,14 @@ sub execute
 		}
 	}
 	
+	my ($package, $filename, $line) = caller;
+	
 	my $SQL_=$SQL;
 	$SQL_=~s|[\n\t\r]+| |g;
 	$SQL_=~s|^[ ]+||;
 	if ($logquery)
 	{
-		main::_log("{$env{'db_h'}} $SQL_",3,"sql");
+		#main::_log("{$env{'db_h'}} '$SQL_' from '$filename:$line'",3,"sql");
 	}
 	
 	my $cache_key=$env{'db_name'}.'::'.$SQL_;
@@ -187,6 +189,7 @@ sub execute
 		if ($cache)
 		{
 			main::_log("readed from cache") if $env{'log'};
+			main::_log("{$env{'db_h'}:cache} '$SQL_' from '$filename:$line'",3,"sql") if $logquery;
 			$output{'sth'}=$cache;
 			$output{'info'}=$cache->{'value'}->{'info'};
 			$output{'err'}=$cache->{'value'}->{'err'};
@@ -196,6 +199,7 @@ sub execute
 		}
 	}
 	
+	main::_log("{$env{'db_h'}:exec} '$SQL_' from '$filename:$line'",3,"sql") if $logquery;
 	
 	#main::_log("Query $env{'db_h'}");
 	$output{'sth'}=$main::DB{$env{'db_h'}}->Query($SQL);
@@ -208,7 +212,7 @@ sub execute
 	{
 		if ($output{'err'})
 		{
-			my ($package, $filename, $line) = caller;
+			#my ($package, $filename, $line) = caller;
 			main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
 			main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
 			main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
@@ -222,7 +226,7 @@ sub execute
 	
 	if ($output{'err'})
 	{
-		my ($package, $filename, $line) = caller;
+		#my ($package, $filename, $line) = caller;
 		main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
 		main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
 		main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1);
@@ -253,7 +257,6 @@ sub execute
 	
 	if ($logquery_long && ($t->{'time'}{'req'}{'duration'} > $logquery_long))
 	{
-		my ($package, $filename, $line) = caller;
 		main::_log("{$env{'db_h'}} executed ".($t->{'time'}{'req'}{'duration'})."s query",1);
 		main::_log("{$env{'db_h'}} duration:".($t->{'time'}{'req'}{'duration'})."s SQL='$SQL_' from $package:$filename:$line",4,"sql.long");
 		main::_log("[$tom::H] {$env{'db_h'}} duration:".($t->{'time'}{'req'}{'duration'})."s SQL='$SQL_' from $package:$filename:$line",4,"sql.long",1) if $tom::H;
