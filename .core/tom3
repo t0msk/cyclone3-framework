@@ -238,7 +238,7 @@ while ($main::CGI=new CGI::Fast())
 	}
 	$main::request_code=Utils::vars::genhash(8);
 	TOM::Debug::clear_namespaces();
-	my $t_request=track TOM::Debug("request [".($tom::count+1)."/$TOM::max_count] at $TOM::hostname");
+	my $t_request=track TOM::Debug("request [".($tom::count+1)."/$TOM::max_count] at $TOM::hostname",'timer'=>1);
 	my $t_preeval=track TOM::Debug("preeval");
 	
 	if (!$tom::count)
@@ -301,8 +301,8 @@ while ($main::CGI=new CGI::Fast())
 	$t_preeval->close();
 	eval
 	{
-		my $t_eval=track TOM::Debug("eval");
-		my $t_preprocess=track TOM::Debug("preprocess");
+		my $t_eval=track TOM::Debug("eval",'timer'=>1);
+		my $t_preprocess=track TOM::Debug("preprocess",'timer'=>1);
 		
 		main::_log("redirecting SIG{ALRM} to die");
 		local $SIG{ALRM} = sub {die "Timed out during page sending! limit $TOM::ALRM sec.\n"};
@@ -1277,7 +1277,7 @@ while ($main::CGI=new CGI::Fast())
 		###################################################################
 		
 		$pub::output_log=1;
-		my $t_process=track TOM::Debug("processing TypeID='$FORM{TID}'");
+		my $t_process=track TOM::Debug("processing TypeID='$FORM{TID}','timer'=>1");
 		
 		
 		my $t_TypeID=track TOM::Debug("TypeID '$FORM{TID}'");
@@ -2052,7 +2052,7 @@ while ($main::CGI=new CGI::Fast())
 		
 		
 		$pub::output_log=0;
-		my $t_postprocess=track TOM::Debug("postprocess");
+		my $t_postprocess=track TOM::Debug("postprocess",'timer'=>1);
 		
 		
 		if (!$COOKIES{_lng} && $TOM::LNG_autodetect)
@@ -2343,6 +2343,13 @@ while ($main::CGI=new CGI::Fast())
 		{
 			$main::H->change_DOC_robots("noindex,noarchive");
 		}
+		
+		# calculate semi-speed
+		#$t_eval->{'time'}{proc}{duration},
+		#$t_eval->{'time'}{req}{duration}
+		#$t_eval->semiclose();
+		$t_eval->semiclose();
+		$H->{'OUT'}{'HEADER'}=~s/<%META-Cyclone3%>/req_load='$t_eval->{'time'}{req}{duration}';proc_load='$t_eval->{'time'}{proc}{duration}'/;
 		
 		my $DOC_output;
 		$H->prepare_last(result=>$result);
