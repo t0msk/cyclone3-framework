@@ -60,7 +60,11 @@ sub parse
 		if ($block)
 		{
 			print " +block\n" if $debug;
-			if (not $data=~s|^(.*?)<\[$head_in\]>||s){die "  -not parsed (.*?)<\[$head_in\]> $data\n";}
+			if (not $data=~s|^(.*?)<\[$head_in\]>||s)
+			{
+				#die "  -not parsed (.*?)<\[$head_in\]> $data\n";
+				return undef;
+			}
 			my $data_in=$1;
 			next if $com eq "#";
 			
