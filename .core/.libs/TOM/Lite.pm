@@ -249,6 +249,7 @@ sub track
 	$self->{'name'}=shift;
 	my %env=@_;
 	$self->{'quiet'}=$env{'quiet'} if $env{'quiet'};
+	$self->{'timer'}=$env{'timer'} if $env{'timer'};
 	
 	main::_log("<$self->{name}>") unless $self->{'quiet'};
 	
@@ -263,8 +264,11 @@ sub track
 	
 	$self->{'namespace'}=$env{'namespace'};
 	
-	$self->{'time'}{req}{start}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
-	$self->{'time'}{proc}{start}=(times)[0];
+	if ($self->{'timer'})
+	{
+		$self->{'time'}{req}{start}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+		$self->{'time'}{proc}{start}=(times)[0];
+	}
 	
 	$tracks_obj[$track_level]=bless $self, $class;
 	return $tracks_obj[$track_level];
@@ -283,6 +287,19 @@ sub DESTROY
 		$self->close();
 	}
 }
+
+
+sub semiclose
+{
+	my $self=shift;
+	$self->{'time'}{'req'}{'end'}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+	$self->{'time'}{'proc'}{'end'}=(times)[0];
+	$self->{'time'}{'req'}{'duration'}=$self->{'time'}{req}{end}-$self->{'time'}{req}{start};
+	$self->{'time'}{'proc'}{'duration'}=$self->{'time'}{proc}{end}-$self->{'time'}{proc}{start};
+	$self->{'time'}{'req'}{'duration'}=int($self->{'time'}{req}{duration}*1000)/1000;
+	$self->{'time'}{'proc'}{'duration'}=int($self->{'time'}{proc}{duration}*1000)/1000;
+}
+
 
 sub close
 {
@@ -306,17 +323,19 @@ sub close
 	
 	$track_level--;# unless $self->{'quiet'};
 	
-	$self->{'time'}{'req'}{'end'}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
-	$self->{'time'}{'proc'}{'end'}=(times)[0];
-	$self->{'time'}{'req'}{'duration'}=$self->{'time'}{req}{end}-$self->{'time'}{req}{start};
-	$self->{'time'}{'proc'}{'duration'}=$self->{'time'}{proc}{end}-$self->{'time'}{proc}{start};
-	$self->{'time'}{'req'}{'duration'}=int($self->{'time'}{req}{duration}*1000)/1000;
-	$self->{'time'}{'proc'}{'duration'}=int($self->{'time'}{proc}{duration}*1000)/1000;
-	
+	if ($self->{'timer'})
+	{
+		$self->{'time'}{'req'}{'end'}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+		$self->{'time'}{'proc'}{'end'}=(times)[0];
+		$self->{'time'}{'req'}{'duration'}=$self->{'time'}{req}{end}-$self->{'time'}{req}{start};
+		$self->{'time'}{'proc'}{'duration'}=$self->{'time'}{proc}{end}-$self->{'time'}{proc}{start};
+		$self->{'time'}{'req'}{'duration'}=int($self->{'time'}{req}{duration}*1000)/1000;
+		$self->{'time'}{'proc'}{'duration'}=int($self->{'time'}{proc}{duration}*1000)/1000;
+	}
 	
 	if ($self->{'namespace'})
 	{
-		if ($tracks_obj[$track_level]->{'namespace'} ne $self->{'namespace'})
+		if ($tracks_obj[$track_level]->{'namespace'} ne $self->{'namespace'} && $self->{'timer'})
 		{
 			#main::_log("collect namespace '".$self->{'namespace'}."'");
 			$namespace{$self->{'namespace'}}{'time'}{'req'}{'duration'}+=$self->{'time'}{'req'}{'duration'};
@@ -328,9 +347,17 @@ sub close
 	$self->{'DESTROY'}=1;
 	($self->{'DESTROY_package'}, $self->{'DESTROY_filename'}, $self->{'DESTROY_line'}) = caller;
 	
-	main::_log("</$self->{name}> (req:".($self->{'time'}{req}{duration})." proc:".($self->{'time'}{proc}{duration}).")")
-		unless $self->{'quiet'};
-	
+	if (!$self->{'quiet'})
+	{
+		if ($self->{'timer'})
+		{
+			main::_log("</$self->{name}> (req:".($self->{'time'}{req}{duration})." proc:".($self->{'time'}{proc}{duration}).")")
+		}
+		else
+		{
+			main::_log("</$self->{name}>")
+		}
+	}
 }
 
 
