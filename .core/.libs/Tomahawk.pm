@@ -441,7 +441,7 @@ sub module
 		{
 			main::_log("memcached: readed");
 		}
-		else
+		elsif (!$memcached) # try to read from sql only when memcached is not available (not when can't be cache found)
 		{
 			main::_log("sqlcache: reading");
 			my %sth0=TOM::Database::SQL::execute(qq{
