@@ -69,7 +69,9 @@ sub change_DOC_title
 sub add_DOC_title
 {
 	my $self=shift;
-	$self->{env}{DOC_title}.=" - ".shift;
+	my $text=shift;
+#	$self->{env}{DOC_title}.=" - ".shift;
+	$self->{'env'}{'DOC_title'}=$text . " - " . $self->{'env'}{'DOC_title'};
 	return 1;
 }
 
@@ -205,6 +207,9 @@ sub prepare
 	$TOM::core_build." (r$TOM::core_revision) at ".$TOM::hostname.
 	" [".$$.";<%PAGE-CODE%>]".
 	"\" />\n" unless $self->{ENV}{head}{meta}{generator};
+	
+	$self->{'OUT'}{'HEADER'} .=
+	" <meta name=\"Cyclone3\" content=\"<%META-Cyclone3%>\" />\n" unless $self->{'ENV'}{'head'}{'meta'}{'Cyclone3'};
 	
 	foreach (sort keys %{$self->{ENV}{head}{meta}})
 	{$self->{OUT}{HEADER} .= " <meta name=\"" . $_ . "\" content=\"" . $self->{ENV}{head}{meta}{$_} . "\" />\n";}
