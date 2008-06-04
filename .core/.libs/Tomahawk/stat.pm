@@ -8,36 +8,99 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 sub rqs
 {
- #return 1;
- return undef if $main::IAdm;
- return undef if $App::110::IP_exclude{$main::ENV{'REMOTE_ADDR'}};
- return undef if $main::FORM{'_rc'}; # if this page is only request to recache content
- return undef unless $TOM::STAT;
- 
- my %env=@_;
- my $null;$null="C" if $TOM::DB_name_TOM eq $TOM::DB_name_STAT;
-
- my $var="$tom::Fyear-$tom::Fmom-$tom::Fmday $tom::Fhour:$tom::Fmin:$tom::Fsec";
- my $reqtype="B";
-
- $reqtype="R" if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type} eq "robot");
-
- # zistim pod ktory host vlastne patrim...
- my $host=$tom::Hm; # moj host je moj master
-    $host=$tom::H_cookie unless $host; # ak nemam mastera, moj host je moj cookiehost
-    $host=$tom::H unless $host; # ak nemam cookiehost tak moj host je default host v local configu
+	#return 1;
+	#main::_log("rqs $TOM::STAT $App::110::direct_sql");
+	return undef if $main::IAdm;
+	return undef if $App::110::IP_exclude{$main::ENV{'REMOTE_ADDR'}};
+	return undef if $main::FORM{'_rc'}; # if this page is only request to recache content
+	return undef unless $TOM::STAT;
+	
+	my %env=@_;
+	my $null;$null="C" if $TOM::DB_name_TOM eq $TOM::DB_name_STAT;
+	
+	my $var="$tom::Fyear-$tom::Fmom-$tom::Fmday $tom::Fhour:$tom::Fmin:$tom::Fsec";
+	
+	my $reqtype="B";
+	
+	$reqtype="R" if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type} eq "robot");
+	
+	# zistim pod ktory host vlastne patrim...
+	my $host=$tom::Hm; # moj host je moj master
+		$host=$tom::H_cookie unless $host; # ak nemam mastera, moj host je moj cookiehost
+		$host=$tom::H unless $host; # ak nemam cookiehost tak moj host je default host v local configu
 
 my $filename="$TOM::P/_logs/weblog/weblog.$tom::Fyear-$tom::Fmom-$tom::Fmday.$tom::Fhour.$tom::Fmin.".$$.".log";
-
-open HND_weblog, ">>".$filename;
-chmod (0666,$filename);
-
 
 my $URL=$tom::H_www;$URL=~s/\/$//;
 $URL=~s|$tom::rewrite_RewriteBase$||;
 $URL.='/' unless $main::ENV{'REQUEST_URI'}=~/^\//; # adding '/' if link si like 'http://example.tld'
 $URL.=$main::ENV{'REQUEST_URI'};
 
+	if ($App::110::sql_direct)
+	{
+		
+		my $DELAYED;
+		$DELAYED='DELAYED' if $TOM::DB{'stats'}{'delayed'};
+		
+		my $sql="
+			INSERT $DELAYED INTO TOM.a110_weblog_rqs
+			(
+				page_code,
+				page_code_referer,
+				HTTP_unique_id,
+				reqtime,
+				reqdatetime,
+				host,
+				domain,
+				domain_sub,
+				IP,
+				IDhash,
+				IDsession,
+				logged,
+				USRM_flag,
+				query_string,
+				query_TID,
+				query_URL,
+				referer,
+				user_agent,
+				load_proc,
+				load_req,
+				result,
+				lng
+			)
+			VALUES
+			(
+				'".$main::request_code."',
+				'".$main::COOKIES_save{'lh'}."',
+				'".$main::ENV{UNIQUE_ID}."',
+				'".$main::time_current."',
+				'".$var."',
+				'".$TOM::hostname."',
+				'".$host."',
+				'".$tom::H."',
+				'".$main::ENV{REMOTE_ADDR}."',
+				'".($main::USRM{'ID_user'} || $main::USRM{'IDhash'})."',
+				'".($main::USRM{'ID_session'} || $main::USRM{'IDsession'})."',
+				'".$main::USRM{logged}."',
+				'".$main::USRM_flag."',
+				'".TOM::Security::form::sql_escape($main::ENV{QUERY_STRING_FULL})."',
+				'".$main::FORM{TID}."',
+				'".TOM::Security::form::sql_escape($URL)."',
+				'".TOM::Security::form::sql_escape($main::ENV{HTTP_REFERER})."',
+				'".TOM::Security::form::sql_escape($main::ENV{HTTP_USER_AGENT})."',
+				'".$env{proc}."',
+				'".$env{req}."',
+				'".$main::result."',
+				'".$tom::lng."'
+			)
+		";
+		TOM::Database::SQL::execute($sql,'quiet'=>1,'db_h'=>'stats');
+		
+		return 1;
+	}
+
+open HND_weblog, ">>".$filename;
+chmod (0666,$filename);
 
 print HND_weblog <<"HEAD";
 <request>
