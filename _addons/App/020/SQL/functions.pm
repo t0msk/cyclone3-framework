@@ -298,13 +298,16 @@ sub get_ID(%env)
 		LIMIT 1
 	};
 	
+	my %cache;
+	$cache{'-cache_changetime'} = App::020::SQL::functions::_get_changetime(\%env) if ($env{'-cache'} && !$cache{'-cache_changetime'});
 	my %sth0=TOM::Database::SQL::execute(
 		$SQL,
 		'db_h' => $env{'db_h'},
 		'log' => $debug,
 		'quiet' => $quiet,
 		'-cache' => $env{'-cache'},
-		'-slave' => $env{'-slave'}
+		'-slave' => $env{'-slave'},
+		%cache
 	);
 	
 	if ($sth0{'rows'})
@@ -1355,13 +1358,13 @@ sub _get_changetime
 	
 	if (!$TOM::CACHE_memcached)
 	{
-		# when memcached is not enabled, return 1 = database is changed
+		# when memcached is not enabled, return 1 = database is always changed
 		return time();
 	}
 	
 	my $key=$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'tb_name'};
 	
-	#main::_log("get key $key");
+	#main::_log("aben get key $key");
 	
 	my $changetime=$Ext::CacheMemcache::cache->get
 	(

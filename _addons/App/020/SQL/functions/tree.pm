@@ -731,6 +731,10 @@ sub get_path
 	#my $debug=1;
 	my $t=track TOM::Debug(__PACKAGE__."::get_path('$ID')") if $debug;
 	
+	my %cache;
+	$cache{'-cache'}=$env{'-cache'} if $env{'-cache'};
+	$cache{'-cache_changetime'} = App::020::SQL::functions::_get_changetime(\%env) if $env{'-cache'};
+	
 	my %data=App::020::SQL::functions::get_ID(
 		'ID'	=> $ID,
 		'db_h' => $env{'db_h'},
@@ -744,7 +748,7 @@ sub get_path
 			'lng' => 1,
 		},
 		'-slave' => $env{'-slave'},
-#		'-cache' => $env{'-cache'}
+		'-cache' => $env{'-cache'}
 	);
 	
 	if (!$data{'ID'})
@@ -778,7 +782,7 @@ sub get_path
 				AND lng='$data{'lng'}'
 			LIMIT 1
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1,'-slave' => $env{'-slave'});
+		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1,'-slave' => $env{'-slave'},%cache);
 		if ($sth0{'rows'})
 		{
 			my %data2=$sth0{'sth'}->fetchhash();
@@ -858,12 +862,15 @@ sub get_parent_ID
 			$where
 		LIMIT 1
 	};
+	my %cache;
+	$cache{'-cache_changetime'} = App::020::SQL::functions::_get_changetime(\%env) if $env{'-cache'};
 	my %sth0=TOM::Database::SQL::execute(
 		$sql,
 		'log'=>$debug,
 		'quiet'=>$quiet,
 		'-slave'=>$env{'-slave'},
-		'-cache'=>$env{'-cache'}
+		'-cache'=>$env{'-cache'},
+		%cache
 	);
 	my %parent=$sth0{'sth'}->fetchhash();
 	
@@ -978,6 +985,7 @@ sub find_path_url
 	
 	if ($env{'-cache'} && $TOM::CACHE_memcached)
 	{
+		
 		$cache_changetime=App::020::SQL::functions::_get_changetime(\%env);
 		
 		my $cache=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_key);
