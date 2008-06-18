@@ -88,7 +88,8 @@ BEGIN
 		};
 		
 		# check media directory
-		if ($tom::P)
+		my $check=0;
+		if ($tom::P && $check)
 		{
 			main::_log("checking a510 media directory");
 			if (!-e $tom::P.'/!media/a510/video/part/file')
@@ -114,9 +115,37 @@ BEGIN
 	alarm 0;
 }
 
+# main is automatically added
+our %dist=(
+	'main' =>
+	{
+		'country' => ['*'],
+		'weight' => 100,
+	}
+);
+
+
+
+#$dist{'abc'}=
+#{
+#	'hostname' => 'http://www.example.tld/flv',
+#	'remote_hostname' => 'server.example.tld',
+#	'remote_path' => '/home/example/a510',
+#	'remote_user' => 'example',
+#	'remote_pass' => 'nbusr123',
+#	'country' => ['CZ','GB'],
+#	'weight' => 10000,
+#	'limits' =>
+#	{
+#		'size_MB' => 50000, # 50GB
+#		'traffic_GB_day' => 1000, # 1TB
+#	}
+#};
 
 
 our $db_name=$App::510::db_name || $TOM::DB{'main'}{'name'};
+$tom::H_a510=$tom::H_media."/a510" if (!$tom::H_a510 && $tom::H_media);
+main::_log("db_name='$db_name' H_a510='$tom::H_a510'");
 our $video_format_ext_default=$App::510::video_format_ext_default || 'avi';
 
 
@@ -172,7 +201,18 @@ if ($video_format_original_ID)
 			'columns' =>
 			{
 				'name' => "'full'",
-				'process' => "'scale(320,240)'",
+				'process' => "'set_env(\\'encoder\\',\\'ffmpeg\\')
+set_env(\\'f\\',\\'flv\\')
+set_env(\\'vcodec\\',\\'flv\\')
+set_env(\\'b\\',\\'450k\\')
+set_env(\\'acodec\\',\\'mp3\\')
+set_env(\\'ar\\',\\'22050\\')
+set_env(\\'ab\\',\\'48k\\')
+set_env(\\'s_height\\',\\'240\\')
+set_env(\\'r\\',\\'20\\')
+set_env(\\'ac\\',\\'1\\')
+set_env(\\'ar\\',\\'22050\\')
+encode()'",
 				'status' => "'L'"
 			},
 			'-journalize' => 1
