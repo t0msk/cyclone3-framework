@@ -37,11 +37,15 @@ sub convert
 	};
 	
 	
-	
+	my $size_1=-s $file1;
 	if (-x '/usr/bin/inkscape')
 	{
-		main::_log("converting svg to png with inkscape");
-		system("/usr/bin/inkscape $file1 -e=$file2 >/dev/null 2>/dev/null");
+		main::_log("converting svg ($size_1) to png with inkscape");
+		#my $out=system("/usr/bin/inkscape $file1 -e=$file2");
+		my $out=`/usr/bin/inkscape $file1 -e=$file2`;
+		#my $out=system("/usr/bin/inkscape $file1 -e=$file2 >/dev/null 2>/dev/null");
+		my $size_2=-s $file2;
+		main::_log("output($out) $file2 ($size_2)");
 		return 1;
 	}
 	
