@@ -73,8 +73,8 @@ sub execute
 	alarm(0);
 	$env{'time_max'}=60*10 unless $env{'time_max'};
 	my $encode_max=$env{'parallel'}; # max parallel processes
-		$encode_max=4 unless $encode_max;
-	$env{'sql_limit'}=$encode_max*4; # find max files to encode
+		$encode_max=2 unless $encode_max;
+	$env{'sql_limit'}=$encode_max+1; # find max files to encode
 	
 	
 	# check directory of formats
