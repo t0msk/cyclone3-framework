@@ -598,7 +598,7 @@ sub user_groups
 			`group`.group_name
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$groups{$db0_line{'group_name'}}{'ID'} = $db0_line{'ID_group'};
@@ -693,7 +693,7 @@ sub user_get
 			ID_user='$ID_user'
 		LIMIT 1
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
 	if (%data=$sth0{'sth'}->fetchhash)
 	{
 		main::_log("user '$ID_user' found in active table");
@@ -714,6 +714,7 @@ sub user_get
 		if (%data=$sth0{'sth'}->fetchhash)
 		{
 			main::_log("user found in inactive table");
+			main::_log("reactivating user '$data{'ID_user'}' from '$data{'datetime_last_login'}' with '$data{'requests_all'}' requests",3,"a301",2);
 			user_active($ID_user);
 		}
 		else
