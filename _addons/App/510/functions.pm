@@ -259,7 +259,7 @@ sub video_part_file_process
 	main::_log("video1='$env{'video1'}'");
 	main::_log("video2='$env{'video2'}'");
 	
-	my $temp_passlog=new TOM::Temp::file('ext'=>'log','dir'=>$main::ENV{'TMP'});
+	my $temp_passlog=new TOM::Temp::file('unlink_ext'=>'-0.log','ext'=>'log','dir'=>$main::ENV{'TMP'});
 	
 	my $procs; # how many changes have been made in video2 file
 	
@@ -282,10 +282,13 @@ sub video_part_file_process
 	
 	my @files;
 	my %files_key;
+	$env{'process'}=~s|\r\n|\n|g;
 	$env{'process'}=~s|\s+$||m;
 	$env{'process'}.="\nencode()" unless $env{'process'}=~/encode\(\)$/m;
 	
 	if (-e 'frameno.avi'){main::_log("removing frameno.avi");unlink 'frameno.avi'}
+	
+#	print "$env{'process'}";exit;
 	
 	foreach my $function(split('\n',$env{'process'}))
 	{
@@ -447,7 +450,7 @@ sub video_part_file_process
 				if ($env{'b'}){push @encoder_env, '-b '.$env{'b'};}
 				if ($env{'s_width'})
 					{$env{'s'}=$env{'s_width'}.'x'.(int($movie1_info{'height'}/($movie1_info{'width'}/$env{'s_width'})/2)*2);}
-				if ($env{'s_height'})
+				if ($env{'s_height'} && $movie1_info{'height'})
 					{$env{'s'}=(int($movie1_info{'width'}/($movie1_info{'height'}/$env{'s_height'})/2)*2).'x'.$env{'s_height'};}
 				if ($env{'s'}){push @encoder_env, '-s '.$env{'s'};}
 				if ($env{'r'}){push @encoder_env, '-r '.$env{'r'};}
@@ -560,6 +563,21 @@ sub video_part_file_process
 			$procs++;
 			next;
 		}
+		
+		
+		if ($function_name eq "onMetaTag")
+		{
+			main::_log("exec $function_name()");
+			
+			my $cmd='cd '.$main::ENV{'TMP'}.';/usr/bin/flvtool2 -U '.($files[@files-1]->{'filename'});
+			main::_log("cmd=$cmd");
+			my $out=system("$cmd");main::_log("out=$out");
+			if ($out){$t->close();return undef}
+			
+			$procs++;
+			next;
+		}
+		
 		
 		main::_log("unknown '$function'",1);
 		$t->close();
@@ -1464,6 +1482,9 @@ sub video_part_file_add
 					return undef;
 				};
 				main::_log("added image $image{'image.ID_entity'}");
+				App::501::functions::image_regenerate(
+					'image.ID' => $image{'image.ID'}
+				);
 				App::160::SQL::new_relation(
 					'l_prefix' => 'a510',
 					'l_table' => 'video_part',
