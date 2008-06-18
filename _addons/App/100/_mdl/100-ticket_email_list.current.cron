@@ -180,6 +180,7 @@ sub execute
 <strong>request uri: </strong>$cvml_hash{'Cyclone'}{'request_URI'}<br/>
 <strong>full uri: </strong>$cvml_hash{'Cyclone'}{'parsed_URI'}<br/>
 <strong>referer: </strong>$cvml_hash{'Cyclone'}{'referer_URI'}<br/>
+<strong>user_agent: </strong>$cvml_hash{'ENV'}{'HTTP_USER_AGENT'}<br/>
 <strong>assigned: </strong>$emails
 };
 					$col =~ s|<%value%>|$msg|g;

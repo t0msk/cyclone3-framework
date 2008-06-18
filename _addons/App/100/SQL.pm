@@ -20,6 +20,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 =cut
 
 use App::100::_init;
+use TOM::Security::form;
 
 our $debug=0;
 our $quiet=0;$quiet=1 unless $debug;
@@ -103,7 +104,7 @@ sub ticket_event_new
 	
 	return 0 unless $ID_ticket;
 	
-	$env{'cvml'} =~ s|'|\\'|g;
+#	$env{'cvml'} =~ s|'|\\'|g;
 	
 	# Vytvaram ticket event
 	my $ID_ticket_event = App::020::SQL::functions::new(
@@ -112,7 +113,7 @@ sub ticket_event_new
 		'tb_name' => "a100_ticket_event",
 		'columns' => {
 			'ID_ticket' => $ID_ticket,
-			'cvml' => "'$env{'cvml'}'",
+			'cvml' => "'".TOM::Security::form::sql_escape($env{'cvml'})."'",
 			'status' => "'Y'",
 		},
 	);
