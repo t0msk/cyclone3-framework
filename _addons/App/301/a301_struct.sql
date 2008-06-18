@@ -63,7 +63,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_emailverify` (
   `hash` varchar(16) character set ascii collate ascii_bin default NULL,
   PRIMARY KEY  (`ID_user`),
   UNIQUE KEY `UNI_0` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 -- db_name=TOM
@@ -114,7 +114,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile` (
 -- db_name=TOM
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_j` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel _user.ID_user
   `datetime_create` datetime NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
@@ -144,9 +144,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_j` (
   `address_postal` text character set utf8 collate utf8_unicode_ci,
   `about_me` text character set utf8 collate utf8_unicode_ci,
   `lng` char(2) character set ascii NOT NULL default 'xx',
-  `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'N'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 -- db_name=TOM
@@ -184,7 +183,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_karma` (
   `karma` double default NULL,
   PRIMARY KEY  (`ID_user`,`date_event`),
   KEY `date_event` (`date_event`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 -- db_name=TOM
@@ -199,7 +198,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_emo` ( -- experimental EMO ch
   `emo_omg` int(10) unsigned NOT NULL default '0',
   `emo_smile` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`ID_user`,`date_event`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- db_name=TOM
@@ -270,13 +269,13 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_group` (
   UNIQUE KEY `UNI_1` (`ID_charindex`),
   UNIQUE KEY `UNI_2` (`hostname`,`name`),
   KEY `ID` (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 -- db_name=TOM
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_group_j` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
@@ -287,9 +286,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_group_j` (
   `datetime_create` datetime NOT NULL,
   `perm_roles_override` blob,
   `lng` char(2) character set ascii NOT NULL default 'xx',
-  `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'N'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- db_name=TOM
@@ -300,7 +298,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_rel_group` (
   PRIMARY KEY  (`ID_group`,`ID_user`),
   KEY `ID_user` (`ID_user`),
   KEY `ID_group` (`ID_group`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- db_name=local
@@ -321,13 +319,13 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user` ( -- table is stored where addon
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`r_prefix`,`r_table`,`r_ID_entity`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_j` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
@@ -339,9 +337,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_j` (
   `perm_W` char(1) character set ascii NOT NULL default 'N',
   `perm_X` char(1) character set ascii NOT NULL default 'N',
   `perm_roles_override` blob,
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- db_name=local
@@ -362,13 +359,13 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_group` ( -- table is stored where
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`r_prefix`,`r_table`,`r_ID_entity`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_group_j` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned NOT NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
@@ -380,9 +377,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_group_j` (
   `perm_W` char(1) character set ascii NOT NULL default 'N',
   `perm_X` char(1) character set ascii NOT NULL default 'N',
   `perm_roles_override` blob,
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 -- db_name=TOM
