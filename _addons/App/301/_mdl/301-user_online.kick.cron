@@ -50,6 +50,18 @@ sub execute
 			main::_log("anonymous") if (!$user0{'login'});
 			main::_log("authorized") if ($user0{'login'});
 			
+			if ($TOM::CACHE_memcached)
+			{
+				# actualize data
+				
+				
+				# delete if data are old
+				$Ext::CacheMemcache::cache->delete(
+					'namespace' => "a301_online",
+					'key' => $tom::H_cookie.':'.$main::COOKIES{_ID_user},
+				);
+			}
+			
 			if (
 					(($user{'logged'} eq "Y")&&($user0{'login'}))
 					||(($user{'logged'} ne "Y")&&(!$user0{'login'}))

@@ -26,6 +26,20 @@ sub execute
 	
 	$env{'return'}=$tom::H_www unless $env{'return'};
 	
+	
+	if ($TOM::CACHE_memcached)
+	{
+		# check for actual data in memcached
+		# if yes, use it
+		
+		# delete this data, use only database for next operations
+		$Ext::CacheMemcache::cache->delete(
+			'namespace' => "a301_online",
+			'key' => $tom::H_cookie.':'.$main::USRM{'ID_user'},
+		);
+	}
+	
+	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			*

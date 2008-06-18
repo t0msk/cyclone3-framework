@@ -78,6 +78,18 @@ sub execute
 	{
 		main::_log("login and password equals");
 		
+		if ($TOM::CACHE_memcached)
+		{
+			# check for actual data in memcached
+			# if yes, use it
+			
+			# delete this data, use only database
+			$Ext::CacheMemcache::cache->delete(
+				'namespace' => "a301_online",
+				'key' => $tom::H_cookie.':'.$main::USRM{'ID_user'},
+			);
+		}
+		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				*

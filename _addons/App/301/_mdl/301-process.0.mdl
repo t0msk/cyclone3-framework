@@ -17,6 +17,8 @@ sub execute
 	my $debug=0;
 #	return 1;
 	
+	my $memcached=0;
+	
 =head1
 	G - generated new user
 	R - registered new user
@@ -65,19 +67,33 @@ sub execute
 		if ($main::COOKIES{'_ID_user'}) # MAM HASH? (ak ano, tak som zjavne zucastneny v USRM)
 		{
 			
-			# finding if the user is in online table
-			my $sql=qq{
-				SELECT
-					*
-				FROM
-					TOM.a301_user_online_view
-				WHERE
-					ID_user='$main::COOKIES{_ID_user}' AND
-					hostname='$tom::H_cookie'
-				LIMIT 1
-			};
-			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>0);
-			if (%main::USRM=$sth0{'sth'}->fetchhash()) # yes, user is online
+			# check if user is in memcached
+			
+			if ($TOM::CACHE_memcached && $memcached)
+			{
+				my $cache=$Ext::CacheMemcache::cache->get(
+					'namespace' => "a301_online",
+					'key' => $tom::H_cookie.':'.$main::COOKIES{_ID_user}
+				);
+				%main::USRM=%{$cache} if $cache;
+			}
+			# or check if the user is in online table
+			if (!$main::USRM{'ID_user'})
+			{
+				my $sql=qq{
+					SELECT
+						*
+					FROM
+						TOM.a301_user_online_view
+					WHERE
+						ID_user='$main::COOKIES{_ID_user}' AND
+						hostname='$tom::H_cookie'
+					LIMIT 1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>0);
+				%main::USRM=$sth0{'sth'}->fetchhash();
+			}
+			if ($main::USRM{'ID_user'}) # yes, user is online
 			{
 				main::_log("user '$main::COOKIES{_ID_user}' is online");
 				$main::USRM{'ID_user'}=$main::COOKIES{'_ID_user'} unless $main::USRM{'ID_user'};
@@ -100,21 +116,42 @@ sub execute
 					$main::USRM{'cookies'}=CVML::structure::serialize(%hash);
 					$main::USRM{'cookies'}=~s|\'|\\'|g;
 					
-					# UPDATE online
-					TOM::Database::SQL::execute(qq{
-						UPDATE
-							TOM.a301_user_online
-						SET
-							domain='$tom::H',
-							datetime_request=FROM_UNIXTIME($main::time_current),
-							cookies='$main::USRM{'cookies'}',
-							user_agent='$main::ENV{'HTTP_USER_AGENT'}',
-							requests=requests+1,
-							status='Y'
-						WHERE
-							ID_user='$main::COOKIES{'_ID_user'}'
-						LIMIT 1
-					},'quiet'=>1);
+					if ($TOM::CACHE_memcached)
+					{
+						$Ext::CacheMemcache::cache->set(
+							'namespace' => "a301_online",
+							'key' => $tom::H_cookie.':'.$main::COOKIES{_ID_user},
+							'value' => {
+								%main::USRM,
+								'domain' => $tom::H,
+								'datetime_request' => $main::time_current,
+								'cookies' => $main::USRM{'cookies'},
+								'user_agent' => $main::ENV{'HTTP_USER_AGENT'},
+								'requests' => $main::USRM{'requests'}+1,
+								'status' => 'Y'
+							},
+							'expiration' => '1H'
+						);
+					}
+					
+					if (!$TOM::CACHE_memcached || !$memcached)
+					{
+						# UPDATE online
+						TOM::Database::SQL::execute(qq{
+							UPDATE
+								TOM.a301_user_online
+							SET
+								domain='$tom::H',
+								datetime_request=FROM_UNIXTIME($main::time_current),
+								cookies='$main::USRM{'cookies'}',
+								user_agent='$main::ENV{'HTTP_USER_AGENT'}',
+								requests=requests+1,
+								status='Y'
+							WHERE
+								ID_user='$main::COOKIES{'_ID_user'}'
+							LIMIT 1
+						},'quiet'=>1);
+					}
 				}
 				else # NIEKTO SA MI SEM NABURAL
 				{
@@ -154,7 +191,6 @@ sub execute
 				main::_log("I'm not online, finding in user table");
 				
 				# activize user when deactivated
-#				do "/www/TOM/_addons/App/301/functions.pm";
 				App::301::functions::user_get($main::COOKIES{_ID_user});
 				
 				my $sql=qq{
@@ -167,12 +203,27 @@ sub execute
 						hostname='$tom::H_cookie'
 					LIMIT 1
 				};
-				my %sth_u=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>0);
+				my %sth_u=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
 				%main::USRM=$sth_u{'sth'}->fetchhash();
 				
 				if ($main::USRM{'ID_user'})
 				{
 					main::_log("I'm in users");
+					
+					use DateTime;
+					my $dt_now=DateTime->now;
+					$main::USRM{'datetime_last_login'}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)$/;
+					my $dt_old=DateTime->new(
+						year   => $1,
+						month  => $2,
+						day    => $3,
+						hour   => $4,
+						minute => $5
+					);
+					#my $dt_diff=$dt_now-$dt_old;
+					
+					#main::_log("go online user '$main::USRM{'ID_user'}' from '$main::USRM{'datetime_last_login'}' (".($dt_diff->year)."-".($dt_diff->month).") with '$main::USRM{'requests_all'}' requests",3,"a301",2);
+					main::_log("go online user '$main::USRM{'ID_user'}' from '$main::USRM{'datetime_last_login'}' with '$main::USRM{'requests_all'}' requests",3,"a301",2);
 					##############################################################
 					if ($main::USRM{'autolog'} eq "Y") # lognutie iba ak ide o autolog
 					{
@@ -281,6 +332,8 @@ sub execute
 				else # NENASIEL SOM SA ANI V OLD
 				{
 					main::_log("this user not exists");
+					main::_log("user '$main::COOKIES{_ID_user}' not exists",4,"a301",2);
+					
 					$main::USRM_flag="O";
 					# ok, falosny users zaznam, nasleduje destrukcia cookies
 					# staci vyprazdnit, tomahawk sa uz o DELETE postara sam
@@ -413,16 +466,16 @@ sub execute
 	
 	
 	
-	# get session datas from online table in CVM
+	# get session datas from online table in CVML
 	my $cvml=new CVML(data=>$main::USRM{'session'});
 	$main::USRM{'session_save'}=$main::USRM{'session'};
 	undef $main::USRM{'session'};
 	
 	# control CVML session datas as object
 	tie %{$main::USRM{'session'}}, 'App::301::session';
-	$App::300::session::serialize=0;
+	$App::301::session::serialize=0;
 	%{$main::USRM{'session'}}=%{$cvml->{'hash'}};
-	$App::300::session::serialize=1;
+	$App::301::session::serialize=1;
 	
 	foreach (keys %main::USRM)
 	{
