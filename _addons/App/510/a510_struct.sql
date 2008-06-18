@@ -21,14 +21,13 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_j` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `ID` mediumint(8) unsigned NOT NULL,
   `ID_entity` mediumint(8) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
   `datetime_rec_start` datetime default NULL,
   `datetime_rec_stop` datetime default NULL,
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -48,14 +47,13 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent_j` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -84,7 +82,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs_j` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `ID` mediumint(8) unsigned NOT NULL,
   `ID_entity` mediumint(8) unsigned default NULL,
   `ID_category` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
@@ -93,9 +91,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs_j` (
   `order_id` int(10) unsigned NOT NULL,
   `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'N'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -119,16 +116,15 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_j` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `ID` mediumint(8) unsigned NOT NULL,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
   `part_id` mediumint(8) unsigned NOT NULL default '0',
   `datetime_create` datetime NOT NULL,
   `visits` int(10) unsigned NOT NULL,
   `process_lock` char(1) character set ascii NOT NULL default 'N',
   `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -148,16 +144,15 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_caption` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_caption_j` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `ID` mediumint(8) unsigned NOT NULL,
   `ID_entity` mediumint(8) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
   `time_start` time NOT NULL,
   `time_stop` time NOT NULL,
   `caption` varchar(128) NOT NULL default '',
   `lng` char(2) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -176,12 +171,12 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_emo` ( -- experimental EMO char
   UNIQUE KEY `UNI_0` (`ID_entity`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID` (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_emo_j` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `ID` mediumint(8) unsigned NOT NULL,
   `ID_entity` mediumint(8) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
   `emo_angry` int(10) unsigned NOT NULL default '0',
@@ -190,9 +185,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_emo_j` (
   `emo_omg` int(10) unsigned NOT NULL default '0',
   `emo_sad` int(10) unsigned NOT NULL default '0',
   `emo_smile` int(10) unsigned NOT NULL default '0',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -201,7 +195,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_emo_vote` (
   `ID_part` mediumint(8) unsigned NOT NULL,
   `datetime_event` datetime NOT NULL,
   `emo` varchar(8) character set ascii NOT NULL default ''
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -216,7 +210,19 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_callback` (
   KEY `datetime_create` (`datetime_create`),
   KEY `country_code` (`country_code`),
   KEY `SEL_0` (`ID_user`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_callback_arch` (
+  `ID_part` mediumint(8) unsigned NOT NULL,
+  `datetime_create` datetime NOT NULL,
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `IP` varchar(15) character set ascii default NULL,
+  `country_code` char(3) character set ascii default NULL,
+  `duration` int(10) unsigned NOT NULL default '0',
+  `state` varchar(10) character set ascii collate ascii_bin NOT NULL
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -295,16 +301,15 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_attrs` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_attrs_j` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `ID` mediumint(8) unsigned NOT NULL,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
   `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -314,7 +319,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_dist` (
   `country_code` char(3) character set ascii NOT NULL,
   `distname` varchar(16) character set ascii NOT NULL,
   PRIMARY KEY  (`ID_part`,`country_code`,`distname`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -412,7 +417,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat_j` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
@@ -422,9 +427,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat_j` (
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'N'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -453,7 +457,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_format` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_format_j` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
@@ -462,9 +466,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_format_j` (
   `process` text character set ascii NOT NULL,
   `required` char(1) NOT NULL default 'Y',
   `lng` char(2) character set ascii NOT NULL default 'xx',
-  `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'N'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
