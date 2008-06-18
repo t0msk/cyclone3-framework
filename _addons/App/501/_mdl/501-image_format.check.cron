@@ -64,8 +64,8 @@ sub execute
 	my $lock=new TOM::lock($App::501::db_name."::a501:image_format.check") || return 1;
 	
 	alarm(0);
-	$env{'time_max'}=60*1 unless $env{'time_max'};
-	$env{'sql_limit'}='100';
+	$env{'time_max'}=60*5 unless $env{'time_max'};
+	$env{'sql_limit'}='1000';
 	
 	# check directory of formats
 	
@@ -91,7 +91,9 @@ sub execute
 			required LIKE 'Y' AND
 			name NOT LIKE 'original'
 		ORDER BY
-			RAND()
+--			RAND()
+			ID_charindex ASC
+--		LIMIT 1
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())

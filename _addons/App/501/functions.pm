@@ -287,12 +287,13 @@ sub image_file_generate
 	);
 	
 	main::_log("path to parent image_file='$image1_path'");
-	my $image2=new TOM::Temp::file();
+	my $image2=new TOM::Temp::file('dir'=>$main::ENV{'TMP'});
 	
 	my ($out,$ext)=image_file_process(
 		'image1' => $tom::P.'/!media/a501/image/file/'.$image1_path,
 		'image2' => $image2->{'filename'},
-		'process' => $format{'process'}
+		'process' => $format{'process'},
+		'unlink' => 1,
 	);
 	
 	main::_log("out=$out, ext=$ext");
@@ -354,12 +355,21 @@ sub image_file_process
 	# read the first image
 	use Image::Magick;
 	main::_log("reading file '$env{'image1'}'");
+	
+	if (!-e $env{'image1'})
+	{
+		main::_log("image file not exists",1);
+		$t->close();
+		return undef;
+	}
+	
 	my $image1 = new Image::Magick;
 	my $out=$image1->Read($env{'image1'});
 	
 	if ($out)
 	{
 		main::_log("$out",1);
+		unlink $env{'image1'} if $env{'unlink'};
 		$t->close();
 		return undef;
 	}
@@ -425,7 +435,7 @@ sub image_file_process
 		{
 			main::_log("exec facedetection() over $function_name()");
 			
-			my $tmpfile=new TOM::Temp::file('ext'=>'jpg');
+			my $tmpfile=new TOM::Temp::file('ext'=>'jpg','dir'=>$main::ENV{'TMP'});
 			$image1->Write('jpg:'.$tmpfile->{'filename'});
 			my $out=`cd /www/TOM/_addons/App/501/FaceDetect/;./fdetect $tmpfile->{'filename'}`;
 			
