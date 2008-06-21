@@ -41,7 +41,7 @@ use App::160::_init;
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
 our $CACHE=1; # sorry not well tested caching
-our $cache_expire=600; # 5 minutes - better is less time, when anything is cached wrong
+our $cache_expire=86400; # 5 minutes - better is less time, when anything is cached wrong
 
 =head1 FUNCTIONS
 
