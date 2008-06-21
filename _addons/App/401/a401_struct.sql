@@ -18,12 +18,11 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_article_j` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -47,16 +46,15 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_j` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `ID_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `visits` int(10) unsigned NOT NULL,
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -94,7 +92,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs_j` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL, -- rel 
   `ID_category` bigint(20) unsigned default NULL, -- rel article_cat.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
@@ -106,9 +104,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs_j` (
   `priority_B` tinyint(3) unsigned default NULL,
   `priority_C` tinyint(3) unsigned default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'N'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -137,7 +134,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_article_content_j` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
   `ID_editor` varchar(8) character set ascii collate ascii_bin NOT NULL,
@@ -147,9 +144,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content_j` (
   `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -159,6 +155,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_visit` (
   `ID_article` bigint(20) NOT NULL, -- rel to article.ID_entity
   PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_article`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_article_visit_arch` (
+  `datetime_event` datetime NOT NULL,
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_article` bigint(20) NOT NULL
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -188,7 +192,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_article_cat_j` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
@@ -198,9 +202,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat_j` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'N'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -224,7 +227,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_emo` ( -- experimental EMO character
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_article_emo_j` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `ID` mediumint(8) unsigned NOT NULL,
   `ID_entity` mediumint(8) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
   `emo_sad` int(10) unsigned NOT NULL default '0',
@@ -233,9 +236,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_emo_j` (
   `emo_love` int(10) unsigned NOT NULL default '0',
   `emo_omg` int(10) unsigned NOT NULL default '0',
   `emo_smile` int(10) unsigned NOT NULL default '0',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y'
+) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -244,7 +246,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_emo_vote` (
   `ID_part` mediumint(8) unsigned NOT NULL,
   `datetime_event` datetime NOT NULL,
   `emo` varchar(8) character set ascii NOT NULL default ''
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
