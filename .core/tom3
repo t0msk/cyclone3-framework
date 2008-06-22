@@ -1086,6 +1086,7 @@ while ($main::CGI=new CGI::Fast())
 				if ($tom::a210)
 				{
 					my $t_a210=track TOM::Debug('a210:'.$main::FORM{'a210_path'});
+					my %sql_def=('db_h' => "main",'db_name' => $TOM::DB{'main'}{'name'},'tb_name' => "a210_page");
 					# ziskanie dat o Sitemap node
 					# toto len v pripade ak uz nieje nastavene type z GET na nieco ine ako 'default' type
 					if (!$main::FORM{'a210_path'} && (!$main::FORM{'type'} || $main::FORM{'type'} eq "default"))
@@ -1093,22 +1094,20 @@ while ($main::CGI=new CGI::Fast())
 						main::_log("finding default");
 						my $ID=App::210::SQL::page_get_default_ID('lng'=>$main::FORM{'__lng'});
 						%a210=App::020::SQL::functions::get_ID(
-							'db_h' => "main",
-							'db_name' => $TOM::DB{'main'}{'name'},
-							'tb_name' => "a210_page",
+							%sql_def,
 							'ID'      => "'$ID'",
 							'columns' => { '*' => 1 },
 							'-slave' => 1,
-#							'-cache' => 60
+							'-cache' => 3600,
+							'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%sql_def)
 						);
 						# musim vygenerovat default path pre automaticky 301 code
 						foreach my $p(
 							App::020::SQL::functions::tree::get_path(
 								$ID,
-								'db_h' => "main",
-								'db_name' => $TOM::DB{'main'}{'name'},
-								'tb_name' => "a210_page",
-								'-slave' => 1
+								%sql_def,
+								'-slave' => 1,
+								'-cache' => 3600
 							)
 						)
 						{
@@ -1135,7 +1134,7 @@ while ($main::CGI=new CGI::Fast())
 							'db_name' => $TOM::DB{'main'}{'name'},
 							'tb_name' => "a210_page",
 							'lng'     => $main::FORM{'__lng'},
-							'-cache' => 600,
+							'-cache' => 3600,
 							'-slave' => 1
 						);
 						foreach my $p(
@@ -1144,7 +1143,7 @@ while ($main::CGI=new CGI::Fast())
 								'db_h' => "main",
 								'db_name' => $TOM::DB{'main'}{'name'},
 								'tb_name' => "a210_page",
-#								'-cache' => 600,
+								'-cache' => 3600,
 								'-slave' => 1
 							)
 						)
@@ -2105,7 +2104,7 @@ while ($main::CGI=new CGI::Fast())
 		
 		
 		
-		my $t_urlreplace=track TOM::Debug('url replace');
+		my $t_urlreplace=track TOM::Debug('url replace','timer'=>1);
 		#my $time_urlreplace=TOM::Debug::breakpoints->new();$time_urlreplace->start();
 		my $url_count;
 		
@@ -2272,7 +2271,7 @@ while ($main::CGI=new CGI::Fast())
 					");
 					#TOM::Net::URI::URL::url_decode_($prefix);
 					main::_log("output URL '$prefix?__$link_md5$end'") if $debug_url;
-					main::_log("URL '$prefix?__$link_md5$end'") unless $debug_url;
+#					main::_log("URL '$prefix?__$link_md5$end'") unless $debug_url;
 					#$url_cache{$cache_key}="$prefix?__$link_md5";
 					$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?__$link_md5$end/;
 				}
@@ -2283,7 +2282,7 @@ while ($main::CGI=new CGI::Fast())
 					my $link_hash=TOM::Net::URI::URL::hash_encode($var);
 					#TOM::Net::URI::URL::url_decode_($prefix);
 					main::_log("output URL '$prefix?$link_hash$end'") if $debug_url;
-					main::_log("URL '$prefix?$link_hash$end'") unless $debug_url;
+#					main::_log("URL '$prefix?$link_hash$end'") unless $debug_url;
 					#$url_cache{$cache_key}="$prefix?$link_hash";
 					$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?$link_hash$end/;
 				}
@@ -2303,14 +2302,14 @@ while ($main::CGI=new CGI::Fast())
 			if ($tom::rewrite && !$var) # nechcem zbytocne vypisovat ?
 			{
 				main::_log("output URL '$prefix$end'") if $debug_url;
-				main::_log("URL '$prefix$end'") unless $debug_url;
+#				main::_log("URL '$prefix$end'") unless $debug_url;
 				#$url_cache{$cache_key}="$prefix";
 				$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix$end/;
 			}
 			else
 			{
 				main::_log("output URL '$prefix?$var$end'") if $debug_url;
-				main::_log("URL '$prefix?$var$end'") unless $debug_url;
+#				main::_log("URL '$prefix?$var$end'") unless $debug_url;
 				#$url_cache{$cache_key}="$prefix?$hash";
 				#main::_log("caching $cache_key = $url_cache{$cache_key}");
 				$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?$var$end/;
@@ -2349,7 +2348,7 @@ while ($main::CGI=new CGI::Fast())
 		#$t_eval->{'time'}{req}{duration}
 		#$t_eval->semiclose();
 		$t_eval->semiclose();
-		$H->{'OUT'}{'HEADER'}=~s/<%META-Cyclone3%>/req_load='$t_eval->{'time'}{req}{duration}';proc_load='$t_eval->{'time'}{proc}{duration}'/;
+		$H->{'OUT'}{'HEADER'}=~s/<%META-Cyclone3%>/req_load='$t_eval->{'time'}{req}{duration}';proc_load='$t_eval->{'time'}{proc}{duration}';ID_user='$main::USRM{'ID_user'}';request='$main::request_code';host='$TOM::hostname';proc='$$'/;
 		
 		my $DOC_output;
 		$H->prepare_last(result=>$result);
