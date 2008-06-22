@@ -204,8 +204,8 @@ sub prepare
 	$self->{OUT}{HEADER} .=
 	" <meta name=\"generator\" content=\"Cyclone".
 	$TOM::core_version.".".
-	$TOM::core_build." (r$TOM::core_revision) at ".$TOM::hostname.
-	" [".$$.";<%PAGE-CODE%>]".
+	$TOM::core_build." (r$TOM::core_revision)".
+#	" [".$$.";<%PAGE-CODE%>]".
 	"\" />\n" unless $self->{ENV}{head}{meta}{generator};
 	
 	$self->{'OUT'}{'HEADER'} .=
