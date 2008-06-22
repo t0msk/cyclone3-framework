@@ -61,7 +61,7 @@ sub execute
 		(Time::Local::timelocal(undef,1,1,$day,$month-1,$year-1900,undef,undef,undef)+86400),format=>1);
 	$date_collect="$date{year}-$date{mom}-$date{mday}";
 	
-	main::_log("data collecting starting in day \"$date_collect\"");
+	main::_log("data collecting starting from day \"$date_collect\"");
 	
 	
 	
@@ -72,7 +72,7 @@ sub execute
 	if ($last_request{'reqdate'})
 	{
 		$datetime_max=$last_request{'reqtime'};
-		main::_log("last active row TOM.a110_weblog_rqs has time ='$datetime_max'");
+		main::_log("last active row TOM.a110_weblog_rqs has time '$datetime_max', datetime '$last_request{'reqdatetime'}'");
 	}
 	else
 	{
@@ -84,7 +84,7 @@ sub execute
 	my %date=Utils::datetime::ctodatetime($datetime_max-86400,format=>1);
 	my $date_max=$date{'year'}.'-'.$date{'mom'}.'-'.$date{'mday'};
 	
-	main::_log("collecting from='$date_collect' gt? max='$date_max'");
+	main::_log("collecting for date '$date_collect', last day with prepared datas to collect '$date_max'");
 	
 	if ($date_collect gt $date_max)
 	{

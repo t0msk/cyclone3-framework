@@ -41,7 +41,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_obsolete_log` (
   `func_line` int(10) unsigned NOT NULL default '0',
   `func` varchar(100) NOT NULL default '',
   PRIMARY KEY  (`ID`)
-) TYPE=InnoDB;
+) TYPE=MyISAM;
 
 -- --------------------------------------------------------
 -- version=5.0
@@ -58,7 +58,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_sitemap` (
   `weight` float NOT NULL default '0',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `domain` (`domain`,`domain_sub`,`url`)
-) TYPE=InnoDB DEFAULT CHARSET=utf8;
+) TYPE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- version=5.0
@@ -94,7 +94,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_webclick_log` (
   PRIMARY KEY  (`ID`),
   KEY `domain` (`domain`,`domain_sub`),
   KEY `domain_2` (`domain`,`domain_sub`,`TID`,`datetime_insert`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- version=5.0
@@ -139,11 +139,55 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_rqs` (
   KEY `referer_SE` (`referer_SE`),
   KEY `page_code_referer` (`page_code_referer`),
   KEY `HTTP_unique_ID` (`HTTP_unique_ID`),
-  KEY `docasne` (`user_agent`,`IP`,`domain`,`reqdatetime`,`reqtime`),
   KEY `USRM_flag` (`USRM_flag`),
   KEY `lng` (`lng`),
   KEY `result` (`result`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+-- version=5.0
+
+CREATE TABLE `/*db_name*/`.`/*app*/_weblog_rqslite` (
+  `page_code` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
+  `page_code_referer` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
+  `reqdatetime` datetime NOT NULL,
+  `reqtype` char(1) character set ascii collate ascii_bin default NULL,
+  `host` varchar(50) character set ascii NOT NULL default '',
+  `domain` varchar(100) character set ascii NOT NULL default '',
+  `domain_sub` varchar(150) character set ascii NOT NULL default '',
+  `IP` varchar(50) character set ascii NOT NULL default '',
+  `IDhash` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
+  `IDsession` varchar(32) character set ascii collate ascii_bin NOT NULL default '',
+  `logged` char(1) character set ascii NOT NULL default 'N',
+  `USRM_flag` char(1) character set ascii collate ascii_bin NOT NULL default '',
+  `query_string` varchar(255) character set ascii collate ascii_bin NOT NULL default '',
+  `query_TID` varchar(25) character set ascii collate ascii_bin NOT NULL default '',
+  `query_URL` varchar(255) character set ascii collate ascii_bin NOT NULL default '',
+  `referer` varchar(255) character set ascii collate ascii_bin NOT NULL default '',
+  `referer_SE` varchar(100) character set ascii default NULL,
+  `user_agent` varchar(250) character set ascii collate ascii_bin NOT NULL default '',
+  `user_agent_name` varchar(50) character set ascii collate ascii_bin default NULL,
+  `load_proc` float unsigned NOT NULL default '0',
+  `load_req` float unsigned NOT NULL default '0',
+  `result` varchar(10) character set ascii NOT NULL default '',
+  `lng` char(2) character set ascii NOT NULL default '',
+  `active` char(1) character set ascii NOT NULL default 'N',
+  KEY `reqdatetime` (`reqdatetime`),
+  KEY `domain` (`domain`),
+  KEY `domain_sub` (`domain_sub`),
+  KEY `query_TID` (`query_TID`),
+  KEY `page_code` (`page_code`),
+  KEY `active` (`active`),
+  KEY `IP` (`IP`),
+  KEY `user_agent_name` (`user_agent_name`),
+  KEY `IDhash` (`IDhash`),
+  KEY `IDsession` (`IDsession`),
+  KEY `referer_SE` (`referer_SE`),
+  KEY `page_code_referer` (`page_code_referer`),
+  KEY `USRM_flag` (`USRM_flag`),
+  KEY `lng` (`lng`),
+  KEY `result` (`result`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- version=5.0
@@ -165,7 +209,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_hour` (
   `load_req` float unsigned NOT NULL default '0',
   PRIMARY KEY  (`reqdatetime`,`domain`,`domain_sub`),
   KEY `reqdatetime` (`reqdatetime`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- version=5.0
@@ -187,7 +231,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_day` (
   `load_req` float unsigned NOT NULL default '0',
   PRIMARY KEY  (`reqdatetime`,`domain`,`domain_sub`),
   KEY `reqdatetime` (`reqdatetime`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -208,4 +252,4 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_week` (
   `load_req` float unsigned NOT NULL default '0',
   PRIMARY KEY  (`reqdatetime`,`domain`,`domain_sub`),
   KEY `reqdatetime` (`reqdatetime`)
-) TYPE=MyISAM;
+) TYPE=InnoDB;

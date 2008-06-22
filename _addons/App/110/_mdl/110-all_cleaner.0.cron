@@ -23,17 +23,17 @@ sub execute
 	my %date=Utils::datetime::ctodatetime(($main::time_current-(86400*8)),format=>1);
 	my $reqdatetime="$date{year}-$date{mom}-$date{mday} 00:00:00";
 	
-	main::_log("cleaning TOM.a110_weblog_min by reqdatetime");
-	$main::DB{stats}->Query("
-		DELETE FROM TOM.a110_weblog_min
-		WHERE reqdatetime<'$reqdatetime'
-	");
+#	main::_log("cleaning TOM.a110_weblog_min by reqdatetime");
+#	$main::DB{stats}->Query("
+#		DELETE FROM TOM.a110_weblog_min
+#		WHERE reqdatetime<'$reqdatetime'
+#	");
 	
-	main::_log("cleaning TOM.a110_weblog_min by reqtime");
-	$main::DB{stats}->Query("
-		DELETE FROM TOM.a110_load_min
-		WHERE reqtime<".($main::time_current-(86400*7))
-	);
+#	main::_log("cleaning TOM.a110_weblog_min by reqtime");
+#	$main::DB{stats}->Query("
+#		DELETE FROM TOM.a110_load_min
+#		WHERE reqtime<".($main::time_current-(86400*7))
+#	);
 	
 	my %date = Utils::datetime::ctodatetime(($main::time_current-((86400*31)*12)),format=>1);
 	my $reqdatetime="$date{year}-$date{mom}-$date{mday} 00:00:00";
@@ -47,7 +47,7 @@ sub execute
 	main::_log("cleaning TOM.a110_weblog_rqs");
 	$main::DB{stats}->Query("
 		DELETE FROM TOM.a110_weblog_rqs
-		WHERE reqtime<$long
+		WHERE reqdatetime<=DATE_SUB(NOW(), INTERVAL 32 DAY)
 	");
 	
 	main::_log("cleaning TOM.a110_sitemap_day");
@@ -56,18 +56,18 @@ sub execute
 		WHERE date_create<FROM_UNIXTIME($long)
 	");
 	
-	main::_log("cleaning TOM.a110_sitemap");
-	$main::DB{stats}->Query("
-		DELETE FROM TOM.a110_sitemap
-		WHERE time_use<$long
-	");
+#	main::_log("cleaning TOM.a110_sitemap");
+#	$main::DB{stats}->Query("
+#		DELETE FROM TOM.a110_sitemap
+#		WHERE time_use<$long
+#	");
 	
 	# WEBCLICK
-	main::_log("cleaning TOM.a110_webclick_log");
-	$main::DB{stats}->Query("
-		DELETE FROM TOM.a110_webclick_log
-		WHERE time_insert<$long
-	");
+#	main::_log("cleaning TOM.a110_webclick_log");
+#	$main::DB{stats}->Query("
+#		DELETE FROM TOM.a110_webclick_log
+#		WHERE time_insert<$long
+#	");
 	
 	main::_log("cleaning TOM.a110_mdl_log");
 	$main::DB{stats}->Query("
@@ -85,14 +85,14 @@ sub execute
 	{
 		next unless $TOM::a110_domain{$domain}{'expire'};
 		main::_log("cleaning TOM.a110_weblog_rqs domain '$domain' (max $TOM::a110_domain{$domain}{'expire'} days old)");
-		$main::DB{stats}->Query("
+		TOM::Database::SQL::execute(qq{
 			DELETE
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqtime<".($main::time_current-($TOM::a110_domain{$domain}{'expire'}*86400))."
+				reqdatetime <= DATE_SUB(NOW(), INTERVAL ".($TOM::a110_domain{$domain}{'expire'})." DAY)
 				AND domain='$domain'
-		");
+		},'db_h'=>'stats');
 	}
 	
 	

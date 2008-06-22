@@ -28,8 +28,18 @@ sub rqs
 	my $host=$tom::Hm; # moj host je moj master
 		$host=$tom::H_cookie unless $host; # ak nemam mastera, moj host je moj cookiehost
 		$host=$tom::H unless $host; # ak nemam cookiehost tak moj host je default host v local configu
-
-my $filename="$TOM::P/_logs/weblog/weblog.$tom::Fyear-$tom::Fmom-$tom::Fmday.$tom::Fhour.$tom::Fmin.".$$.".log";
+	
+	my $filedir=$TOM::P."/_logs/weblog/".$tom::Fyear."-".$tom::Fmom."-".$tom::Fmday.".".$tom::Fhour;
+	main::_log("checking $filedir");
+	if (!-e $filedir)
+	{
+		use File::Path;
+		File::Path::mkpath $filedir;
+		chmod (0777,$filedir);
+	}
+	
+	#my $filename="$TOM::P/_logs/weblog/weblog.$tom::Fyear-$tom::Fmom-$tom::Fmday.$tom::Fhour.$tom::Fmin.".$$.".log";
+	my $filename=$filedir."/".$tom::Fmin.".".$$.".log";
 
 my $URL=$tom::H_www;$URL=~s/\/$//;
 $URL=~s|$tom::rewrite_RewriteBase$||;

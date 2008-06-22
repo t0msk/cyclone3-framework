@@ -53,7 +53,7 @@ sub execute
 	
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
-	my $lock=new TOM::lock("weblog datamining") || return 1;
+	my $lock=new TOM::lock("weblog datamining - fix") || return 1;
 	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
@@ -154,7 +154,7 @@ sub execute
 						AND reqdatetime='$db0_line{reqdatetime}'
 					LIMIT 1
 				};
-				TOM::Database::SQL::execute($sql,'db_h'=>'stats') || die "can't update";
+				TOM::Database::SQL::execute($sql,'quiet'=>1,'db_h'=>'stats') || die "can't update";
 				
 			}
 		}
@@ -183,11 +183,11 @@ sub execute
 				referer_SE=$referer_SE,
 				active='Y'
 			WHERE
-					page_code='$db0_line{page_code}'
-					AND reqdatetime='$db0_line{reqdatetime}'
+				page_code='$db0_line{page_code}'
+				AND reqdatetime='$db0_line{reqdatetime}'
 			LIMIT 1
 		};
-		TOM::Database::SQL::execute($sql,'db_h'=>'stats') || die "can't update";
+		TOM::Database::SQL::execute($sql,'quiet'=>1,'db_h'=>'stats') || die "can't update";
 		
 		next;
 		
