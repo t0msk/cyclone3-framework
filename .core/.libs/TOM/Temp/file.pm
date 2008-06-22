@@ -31,6 +31,7 @@ sub new
 	}
 	
 	$self->{'filename'}.='.'.$env{'ext'} if $env{'ext'};
+	$self->{'unlink_ext'}=$env{'unlink_ext'} if $env{'unlink_ext'};
 	$self->{'unlink'}=1;
 	
 	if (-e $self->{'filename'}){goto loop_file;}
@@ -80,6 +81,10 @@ sub DESTROY
 	{
 		main::_log("destroying tempfile $self->{'filename'} (if exists)");
 		unlink $self->{'filename'};
+		if ($self->{'unlink_ext'})
+		{
+			unlink $self->{'filename'}.$self->{'unlink_ext'};
+		}
 	}
 	
 	return undef;
