@@ -131,6 +131,8 @@ sub page_set_as_default
 	# stop transakcie
 	$tr->close();
 	
+	
+	
 	$t->close();
 	return 1;
 }
@@ -153,6 +155,7 @@ sub page_get_default_ID
 	{
 		main::_log("input '$_'='$env{$_}'");
 	}
+	$env{'tb_name'}='a210_page';
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
@@ -171,7 +174,13 @@ sub page_get_default_ID
 		$where
 	LIMIT 1
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1,'slave'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,
+		'db_h' => $env{'db_h'},
+		'quiet' => 1,
+		'slave' => 1,
+		'-cache' => 3600,
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%env),
+	);
 	if (!$sth0{'sth'})
 	{
 		main::_log("error",1);
