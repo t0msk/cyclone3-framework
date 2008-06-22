@@ -127,7 +127,7 @@ sub execute
 {
 	my $SQL=shift;
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::execute()",'namespace'=>"SQL",'quiet' => $env{'quiet'});
+	my $t=track TOM::Debug(__PACKAGE__."::execute()",'namespace'=>"SQL",'quiet' => $env{'quiet'},'timer'=>1);
 	
 	# when I'm sometimes really wrong ;)
 	$env{'slave'}=$env{'slave'} || $env{'-slave'};
@@ -174,26 +174,28 @@ sub execute
 	my $SQL_=$SQL;
 	$SQL_=~s|[\n\t\r]+| |g;
 	$SQL_=~s|^[ ]+||;
-	if ($logquery)
-	{
-		#main::_log("{$env{'db_h'}} '$SQL_' from '$filename:$line'",3,"sql");
-	}
 	
 	my $cache_key=$env{'db_name'}.'::'.$SQL_;
-	if (($env{'cache'} || $env{'cache_auto'}) && $TOM::CACHE && $TOM::CACHE_memcached && $SQL_=~/^SELECT/)
+	if (($env{'cache'} || $env{'cache_auto'}) && $TOM::CACHE && $TOM::CACHE_memcached && $SQL_=~/^SELECT/ && $main::FORM{'_rc'}!=-2)
 	{
-		main::_log("try to read from cache") if $env{'log'};
+		main::_log("SQL: try to read from cache") if $env{'log'};
 		my $cache=new TOM::Database::SQL::cache(
 			'id' => $cache_key
 		);
-		if ($cache)
+		
+		if ($cache && $env{'-cache_changetime'} && ($env{'-cache_changetime'})>$cache->{'value'}->{'time'})
 		{
-			main::_log("readed from cache") if $env{'log'};
+			#undef $cache;
+		}
+		elsif ($cache)
+		{
+			main::_log("SQL: readed from cache (".(time()-$cache->{'value'}->{'time'})."s)") if $env{'log'};
 			main::_log("{$env{'db_h'}:cache} '$SQL_' from '$filename:$line'",3,"sql") if $logquery;
 			$output{'sth'}=$cache;
 			$output{'info'}=$cache->{'value'}->{'info'};
 			$output{'err'}=$cache->{'value'}->{'err'};
 			$output{'rows'}=$cache->{'value'}->{'rows'};
+			$output{'time'}=$cache->{'value'}->{'time'};
 			$t->close();
 			return %output;
 		}
@@ -201,18 +203,16 @@ sub execute
 	
 	main::_log("{$env{'db_h'}:exec} '$SQL_' from '$filename:$line'",3,"sql") if $logquery;
 	
-	#main::_log("Query $env{'db_h'}");
 	$output{'sth'}=$main::DB{$env{'db_h'}}->Query($SQL);
-	#main::_log("after Query");
 	
 	$output{'info'}=$main::DB{$env{'db_h'}}->info();
 	$output{'err'}=$main::DB{$env{'db_h'}}->errmsg();
+	$output{'time'}=time();
 	
 	if (not $output{'sth'})
 	{
 		if ($output{'err'})
 		{
-			#my ($package, $filename, $line) = caller;
 			main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
 			main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
 			main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
@@ -226,7 +226,6 @@ sub execute
 	
 	if ($output{'err'})
 	{
-		#my ($package, $filename, $line) = caller;
 		main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
 		main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
 		main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1);
@@ -243,7 +242,6 @@ sub execute
 	}
 	if ($env{'cache'} && $TOM::CACHE && $TOM::CACHE_memcached && $SQL_=~/^SELECT/)
 	{
-		#main::_log("try to save to cache") if $env{'log'};
 		main::_log("SQL: saving to cache") if $env{'log'};
 		$output{'sth'}=new TOM::Database::SQL::cache(
 			'sth'=> $output{'sth'}, # we are saving output from STH
@@ -251,6 +249,7 @@ sub execute
 			'info'=> $output{'info'},
 			'rows'=> $output{'rows'},
 			'expire' => $env{'cache'},
+			'time' => $output{'time'},
 			'id'=> $cache_key
 		);
 	}

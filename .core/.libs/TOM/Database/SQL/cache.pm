@@ -47,7 +47,7 @@ sub new
 		$self->{'value'}->{'err'}=$env{'err'} if $env{'err'};
 		$self->{'value'}->{'info'}=$env{'info'} if $env{'info'};
 		$self->{'value'}->{'rows'}=$env{'rows'} if $env{'rows'};
-		$self->{'value'}->{'saved'}=time();
+		$self->{'value'}->{'time'}=$env{'time'} || time();
 		if (!$env{'err'})
 		{
 			#main::_log("so fetch all data");
