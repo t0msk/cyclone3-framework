@@ -288,9 +288,8 @@ sub GetCACHE_CONF
 
 sub module
 {
-	my $t=track TOM::Debug(__PACKAGE__."::module()");
-	
 	local %mdl_env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::module(".$mdl_env{-category}."-".$mdl_env{-name}."/".$mdl_env{-version}."/".$mdl_env{-global}.")");
 	local %mdl_C;
 	local $tom::ERR;
 	local $tom::ERR_plus;
@@ -338,7 +337,7 @@ sub module
 	
 	#my $time_module=TOM::Debug::breakpoints->new();$time_module->start();
 	
-	main::_log("adding module ".$mdl_env{-category}."-".$mdl_env{-name}."/".$mdl_env{-version}."/".$mdl_env{-global});
+	#main::_log("adding module ".$mdl_env{-category}."-".$mdl_env{-name}."/".$mdl_env{-version}."/".$mdl_env{-global});
 	
 	# rusim CACHOVANIE pokial som IAdm
 	delete $mdl_env{-cache_id}
@@ -348,19 +347,10 @@ sub module
 	
 	
 	# SPRACOVANIE PREMENNYCH
+	my $debug=1 if $mdl_env{'-debug'};
 	foreach (sort keys %mdl_env)
 	{
-=head1
-		if ($main::IAdm)
-		{
-			my $var=$mdl_env{$_};$var=~s|[\n\r]| |g;
-			#if (length($var)>50){$var=substr($var,0,50)."..."}
-			$var=substr($var,0,50)."..." if length($var)>50;
-			#main::_log(1,"input (".$_.")=".$var);
-			main::_log("input '$_'='$var'");
-		}
-=cut
-		main::_log("input '$_'='$mdl_env{$_}'");
+		main::_log("input '$_'='$mdl_env{$_}'") if $debug;
 		/^-/ && do {$mdl_C{$_}=$mdl_env{$_};delete $mdl_env{$_};}
 	}
 	
@@ -402,7 +392,7 @@ sub module
 		
 		#$mdl_C{-md5}=md5_hex(Int::charsets::encode::UTF8_ASCII($null));
 		$mdl_C{-md5}=md5_hex(Encode::encode_utf8($null));
-		main::_log("cache md5='".$mdl_C{-md5}."'");
+		main::_log("cache md5='".$mdl_C{-md5}."'") if $debug;
 		
 		
 		# NAZOV PRE TYP CACHE V KONFIGURAKU
@@ -414,7 +404,7 @@ sub module
 		if ($TOM::CACHE_memcached)
 		{
 			$memcached=Ext::CacheMemcache::check();
-			main::_log("memcached: reading");
+			main::_log("memcached: reading") if $debug;
 			if ($memcached)
 			{
 				$cache=$Ext::CacheMemcache::cache->get(
@@ -439,7 +429,7 @@ sub module
 		
 		if ($cache)
 		{
-			main::_log("memcached: readed");
+			main::_log("memcached: readed") if $debug;
 		}
 		elsif (!$memcached) # try to read from sql only when memcached is not available (not when can't be cache found)
 		{
@@ -567,7 +557,7 @@ sub module
 		
 		
 		
-		main::_log("cache info md5:$mdl_C{-md5} old:$mdl_C{-cache_old} duration:$mdl_C{-cache_duration} from:$mdl_C{-cache_from} to:$mdl_C{-cache_to}");
+		main::_log("cache info md5:$mdl_C{-md5} old:$mdl_C{-cache_old} duration:$mdl_C{-cache_duration} from:$mdl_C{-cache_from} to:$mdl_C{-cache_to}") if $debug;
 		
 		if(
 			(
@@ -921,18 +911,23 @@ sub module
 						#main::_log("bad");
 					}
 					
-					$main::DB{sys}->Query("
-						UPDATE TOM.a150_config
-						SET		time_use='$main::time_current'
-						WHERE	domain='$CACHE{$mdl_C{T_CACHE}}{-domain}'
-								AND domain_sub='$CACHE{$mdl_C{T_CACHE}}{-domain_sub}'
-								AND engine='pub'
-								AND Capp='$mdl_C{-category}'
-								AND Cmodule='$mdl_C{-name}'
-								AND Cid='$mdl_C{-cache_id}'
-						LIMIT 1
-					");
 				}
+				
+#				TOM::Database::SQL::execute(qq{
+#					UPDATE
+#						TOM.a150_config
+#					SET
+#						time_use='$main::time_current'
+#					WHERE
+#						domain='$CACHE{$mdl_C{T_CACHE}}{-domain}' AND
+#						domain_sub='$CACHE{$mdl_C{T_CACHE}}{-domain_sub}' AND
+#						engine='pub' AND
+#						Capp='$mdl_C{-category}' AND
+#						Cmodule='$mdl_C{-name}' AND
+#						Cid='$mdl_C{-cache_id}'
+#					LIMIT 1
+#				},'db_h'=>'sys','quiet'=>1);
+				
 			}
 			
 			undef &Tomahawk::module::execute;
