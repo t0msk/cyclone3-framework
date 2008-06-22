@@ -62,6 +62,12 @@
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="110" />
+	<VAR id="-name" value="weblog_email_farm" />
+</MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="110" />
 	<VAR id="-name" value="all_cleaner" />
 </MODULE>
 

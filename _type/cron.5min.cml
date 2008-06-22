@@ -1,18 +1,21 @@
 <!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
 
+# a100
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="100" />
+	<VAR id="-name" value="ticket_email_list" />
+	<VAR id="-version" value="current" />
+</MODULE>
+
+# a300
+
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="300" />
 	<VAR id="-name" value="autokick" />
 		<VAR id="max_online" value="1800" />
-</MODULE>
-
-<MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="301" />
-	<VAR id="-name" value="user_online" />
-	<VAR id="-version" value="kick" />
-		<VAR id="max_online" value="40" />
 </MODULE>
 
 <MODULE>
@@ -24,15 +27,20 @@
 		<VAR id="db_300" value="TOM" />
 </MODULE>
 
+# a301
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="301" />
+	<VAR id="-name" value="user_online" />
+	<VAR id="-version" value="kick" />
+		<VAR id="max_online" value="40" />
+</MODULE>
+
+# a150
+
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="150" />
 	<VAR id="-name" value="cleaner" />
-</MODULE>
-
-<MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="100" />
-	<VAR id="-name" value="ticket_email_list" />
-	<VAR id="-version" value="current" />
 </MODULE>
