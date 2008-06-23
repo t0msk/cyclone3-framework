@@ -51,7 +51,7 @@ sub execute
 	
 	my $DELAYED;
 	my $INSERT="INSERT";
-	my $multi=100;
+	my $multi=500;
 	my $multilite=10;
 #	$INSERT="REPLACE";
 #	$DELAYED="DELAYED" if $TOM::DB{'stats'}{'delayed'};
@@ -59,6 +59,13 @@ sub execute
 	TOM::Database::connect::multi('stats') || die "cannot connect all databases";
 	
 	my $lock=new TOM::lock("weblog datamining") || return 1;
+	
+	main::_log("locking tables");
+	TOM::Database::SQL::execute("UNLOCK TABLES",'db_h'=>'stats','log'=>1);
+	TOM::Database::SQL::execute("LOCK TABLES TOM.a110_weblog_rqs WRITE, TOM.a110_weblog_rqslite WRITE",'db_h'=>'stats','log'=>1);
+#	TOM::Database::SQL::execute("LOCK TABLES TOM.a110_weblog_rqslite WRITE",'db_h'=>'stats');
+	main::_log("tables locked");
+	
 	
 #	return 1;
 	
@@ -410,6 +417,7 @@ sub execute
 					}
 					
 					main::_log("this job is running too long, exiting",1);
+					TOM::Database::SQL::execute("UNLOCK TABLES",'db_h'=>'stats','quiet'=>1);
 					return 1;
 				}
 				
@@ -417,6 +425,10 @@ sub execute
 			
 		}
 	}
+	
+	main::_log("unlocking tables");
+	TOM::Database::SQL::execute("UNLOCK TABLES",'db_h'=>'stats','quiet'=>1);
+	main::_log("unlocked tables");
 	
 	$lock->close();
 	
