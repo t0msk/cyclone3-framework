@@ -931,18 +931,22 @@ while ($main::CGI=new CGI::Fast())
 				# hack for Google AdWords (to save 'gclid' in QUERY_STRING)
 				if ($FORM{'gclid'})
 				{if ($link_hash){$link.="&gclid=".$FORM{'gclid'}."&ref=adwords";}
-				else{$link.="?gclid=".$FORM{'gclid'}."&ref=adwords";}}
+				else{$link.="?gclid=".$FORM{'gclid'}."&ref=adwords";$link_hash=1;}}
 				
 				# hack for another campaings (to save 'ref' in QUERY_STRING)
 				if ($FORM{'ref'})
 				{if ($link_hash){$link.="&ref=".$FORM{'ref'};}
-				else{$link.="?ref=".$FORM{'ref'}}}
+				else{$link.="?ref=".$FORM{'ref'};$link_hash=1;}}
+				
+#				if ($link_hash){$link.="&c=1";}
+#				else {$link.="?c=1";}
 				
 				my $URL=$tom::H_www.$link;
 				
-				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"301",1);
-				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"301");
-				main::_log("301 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'");
+				main::_log("302 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"301",1);
+				main::_log("302 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"301");
+				main::_log("302 to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'");
+				print "Status: 302 Found\n";
 				print "Location: $URL\n\n";
 				
 				$t_cookies->close();
@@ -2348,7 +2352,8 @@ while ($main::CGI=new CGI::Fast())
 		#$t_eval->{'time'}{req}{duration}
 		#$t_eval->semiclose();
 		$t_eval->semiclose();
-		$H->{'OUT'}{'HEADER'}=~s/<%META-Cyclone3%>/req_load='$t_eval->{'time'}{req}{duration}';proc_load='$t_eval->{'time'}{proc}{duration}';ID_user='$main::USRM{'ID_user'}';request='$main::request_code';host='$TOM::hostname';proc='$$'/;
+		my $ID_user=$main::USRM{'ID_user'} || $main::USRM{'IDhash'};
+		$H->{'OUT'}{'HEADER'}=~s/<%META-Cyclone3%>/req_load='$t_eval->{'time'}{req}{duration}';proc_load='$t_eval->{'time'}{proc}{duration}';ID_user='$ID_user';request='$main::request_code';host='$TOM::hostname';proc='$$'/;
 		
 		my $DOC_output;
 		$H->prepare_last(result=>$result);
