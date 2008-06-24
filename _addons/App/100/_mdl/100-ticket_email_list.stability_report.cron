@@ -1,0 +1,201 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use TOM;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+100-ticket_email_list.stability_report.cron
+
+=head1 DESCRIPTION
+
+This cron sends information about stability of all services
+
+=cut
+
+use App::100::_init;
+use TOM::Net::HTTP;
+use TOM::Net::HTTP::referer;
+use TOM::Net::HTTP::CGI;
+use TOM::Utils::datetime;
+use Ext::EmailGraph::_init;
+use Ext::SVGraph::_init;
+use Ext::SVG2PNG::_init;
+
+sub execute
+{
+	alarm(3600);
+	my %env=@_;
+	
+	my $tpl=new TOM::Template(
+		'level' => "auto",
+		'name' => "email-stats",
+		'content-type' => "xhtml"
+	);
+	
+	my $days=14;
+	
+	$env{'to_email'} = $TOM::contact{'stats'}.";".$TOM::contact{'TOM_farm'};
+	$env{'to_email'} = $TOM::contact{'TOM_farm'};
+	$env{'to_email'}=TOM::Utils::vars::unique_split($env{'to_email'});
+	
+	
+	# DESIGN
+	$tpl->{'entity'}{'email.xhtml'}=~s|<%main-title%>|Stability report|g;
+	$tpl->{'entity'}{'email.xhtml'}=~s|<%main-desc%>|This is report of last $days days with error events data|g;
+#	$tpl->{'entity'}{'email.xhtml'}=~s|<%main-term%>|$firstday - $lastday|g;
+	
+	my $date = TOM::Utils::datetime::mail_current();
+	
+	my $msg = MIME::Entity->build
+	(
+		'Type'    => "multipart/related",
+		'List-Id' => "Cyclone3",
+		'Date'    => $date,
+		'From'    => "$TOM::hostname <$TOM::contact{'from'}>",
+		'To'      => TOM::Net::email::convert_TO($env{'to_email'}),
+		'Subject' => "Cyclone3: Stability report for last $days days"
+	);
+	
+	my @img;
+	my $i;
+	
+	my $points;
+	my $graf=SVGraph::2D::lines->new(
+		'title' => "Not solved ticket events in time",
+		'title.color' => $tpl->{'entity'}{'color.h1'},
+		#'type' => "overlap",
+		'x' => 450,
+		'y' => 250,
+		'show_legend' => 1,
+		'show_grid_x' => 1,
+		'grid_y_scale_minimum' => 0,
+#		'grid_y_scale_maximum' => $db0_line{'maximum'},
+		'show_lines_smooth' => 1,
+		#'show_label_textsize' => 10,
+	);
+	$points=1;
+	my %columns;
+	
+	$columns{'events'}=$graf->addColumn('title'=>"Events",'color'=>'blue','show_points' => 1);
+	
+	
+	my %data;
+	my %sum;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			DATE(datetime_create) AS date_events,
+			COUNT(*) AS events
+		FROM
+			TOM.a100_ticket_event
+		WHERE
+			status = 'Y'
+		GROUP BY
+			DATE(datetime_create)
+		HAVING
+			date_events >= DATE_SUB(CURDATE(),INTERVAL $days DAY)
+		ORDER BY
+			DATE(datetime_create) ASC
+	},'db_h'=>'main');
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		#$db0_line{'reqdatetime'}=~s/^\d\d\d\d\-\d\d\-\d\d (\d\d).*$/$1/;
+		my $day=$db0_line{'date_events'};
+		
+		$graf->addRowLabel($day);
+		
+		main::_log("date=$db0_line{'date_events'}");
+		
+		$db0_line{'date_events'}=~/(\d+)-(\d+)-(\d+)/;
+		my $dt = DateTime->new(
+			'year'   => $1,
+			'month'  => $2,
+			'day'    => $3
+		);
+		if ($dt->day_of_week == 1)
+		{
+			$dt->subtract('days'=>2);
+			my $from_date=$dt->year().'-'.(sprintf('%02d',$dt->month())).'-'.(sprintf('%02d',$dt->day()));
+			
+			main::_log("weekend from $from_date to $day");
+			
+			$graf->addRowMarkArea(
+				$from_date,
+				'color' => 'red',
+				#'show_label_text'=>'MON',
+				'end'=>$day
+			);
+		}
+		
+		$columns{'events'}->addData($day,$db0_line{'events'});
+		
+	}
+	
+	# generate graph
+	my $graf_svg=new TOM::Temp::file('ext'=>'svg');
+	push @img, new TOM::Temp::file('ext'=>'png');
+	$graf->save($graf_svg->{'filename'});
+	Ext::SVG2PNG::convert($graf_svg->{'filename'},$img[-1]->{'filename'});
+	# add graph
+	$tpl->{'entity'}{'email.xhtml'}=~s|<#email.content#>|<img class="graph" src="cid:$i\@graf"/><br/><#email.content#>|;
+	$i++;
+	
+	# add table
+#	$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$table<#email.content#>|;
+	
+	
+	# cleaning
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<#.*?#>||gs;
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<%.*?%>||gs;
+	
+	$msg->attach
+	(
+		'Data' => $tpl->{'entity'}{'email.xhtml'},
+		'Type' => "text/html;charset=\"UTF-8\"",
+		'Encoding' => "8bit",
+	);
+	
+	my $i;
+	foreach (@img)
+	{
+		$msg->attach
+		(
+			'Path'       => $img[$i]->{'filename'},
+			'Type'       => "image/png",
+			'Content-ID' => '<'.$i.'@graf>',
+			'Encoding'   => "base64"
+		);
+		$i++;
+	}
+	
+	$msg->attach
+	(
+		'Path'       => $tpl->{'file'}{'cyclone3-150x44.png'}{'dst'},
+		'Type'       => "image/gif",
+		'Content-ID' => "<logo\@cyclone3.org>",
+		'Encoding'   => "base64"
+	);
+	
+	TOM::Net::email::send
+	(
+		'to' => $env{'to_email'},
+		'body' => $msg->as_string()
+	);
+	
+	return 1;
+}
+
+
+our $authors = 'open@comsultia.com';
+
+=head1 AUTHOR
+
+Comsultia, Ltd (open@comsultia.com)
+
+=cut
+
+1;
