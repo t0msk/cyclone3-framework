@@ -13,7 +13,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_message` (
   `posix_recipient` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `datetime_create` datetime NOT NULL, -- last modifytime
   `datetime_sent` datetime NOT NULL,
-  `datetime_readed` datetime default NULL,
+  `datetime_read` datetime default NULL,
   `body` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -37,7 +37,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_message_j` (
   `posix_recipient` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `datetime_create` datetime NOT NULL,
   `datetime_sent` datetime NOT NULL,
-  `datetime_readed` datetime default NULL,
+  `datetime_read` datetime default NULL,
   `body` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
