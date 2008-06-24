@@ -98,8 +98,18 @@ sub execute
 	$env{'sql_status'}='Y' unless $env{'sql_status'};
 		my $status_sql=join "','" split('',$env{'sql_status'});
 	
-	my $execution_success=1;
+	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
+	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
+	{
+		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
+	}
 	
+	my $sql_where;
+	
+	if ($env{'sql_where'})
+	{
+		$sql_where.=" AND ".$env{'sql_where'};
+	}
 	
 	my $sql=qq{
 		SELECT
@@ -109,23 +119,12 @@ sub execute
 		WHERE
 			message.status IN ('$status_sql') AND
 			message.lng='$env{'sql_lng'}'
+			$sql_where
 		ORDER BY
-			message.datetime_send DESC
+			message.datetime_sent DESC
 		LIMIT $env{'sql_limit'}
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
-	
-	if(!$sth0{'sth'})
-	{
-		main::log("SQL can't be executed",1);
-	}
-	
-	if(!$sth0{'rows'})
-	{
-		main::log("err: could not fetch articles");
-	}
-	
-	main::_log("received ".$sth0{'rows'}." rows");
 	
 	# Line counter
 	my $item_counter=0;
@@ -138,11 +137,10 @@ sub execute
 		# fill raw data into $XSGN{'item'}
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
-		
-		my %author=App::300::authors::get_author($db0_line{'posix_author'});
-		foreach(keys %author)
+		my %owner=App::301::authors::get_author($db0_line{'posix_owner'});
+		foreach(keys %owner)
 		{
-			$item=~s|<%author_$_%>|$author{$_}|g;
+			$item=~s|<%owner_$_%>|$owner{$_}|g;
 		}
 		
 		$item=~s|<%item_number%>|$item_counter|;
@@ -150,6 +148,47 @@ sub execute
 		$item=~s|<%name%>|$db0_line{'name'}|;
 		
 		$XSGN{'TMP'}=~s|<#item#>|$item|;
+	}
+	
+	
+	
+	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
+	{
+		$env{'offset'}=$1;
+		$env{'count'}=$2;
+	}
+	else
+	{
+		$env{'count'}=$env{'sql_limit'};
+	}
+	
+	
+	# offset
+	if ($env{'count'} && $item_counter >= $env{'count'}) # count
+	{
+		$XSGN{'next'}=~s|<%offset%>|$env{'offset'}+$env{'count'}|ge;
+		$XSGN{'TMP'}=~s|<#next#>|$XSGN{'next'}|g;
+	}
+	if ($env{'offset'}-$env{'sql_limit_start'})
+	{
+		if ($env{'offset'}-$env{'count'}-$env{'sql_limit_start'}>0)
+		{
+			$XSGN{'previous'}=~s|<%offset%>|$env{'offset'}-$env{'count'}|ge;
+		}
+		else
+		{
+			$XSGN{'previous'}=~s|<%offset%>||ge;
+		}
+		$XSGN{'TMP'}=~s|<#previous#>|$XSGN{'previous'}|g;
+	}
+	
+	
+	if(!$item_counter)
+	{
+		if($XSGN{'TMP_failure_no-data'})
+		{
+			$XSGN{'TMP'} = $XSGN{'TMP_failure_no-data'};
+		}
 	}
 	
 	
