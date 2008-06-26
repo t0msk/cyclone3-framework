@@ -27,13 +27,20 @@ sub execute
 	{main::_log("not enabled, or set for another domain service");return 1;}
 	
 	main::_log("removing old visits");
+	# archive
+	TOM::Database::SQL::execute(qq{
+		INSERT DELAYED INTO `$App::401::db_name`.a401_article_visit_arch
+		SELECT * FROM `$App::401::db_name`.a401_article_visit
+		WHERE datetime_event <= DATE_SUB(CURDATE(),INTERVAL 31 DAY)
+	}
+	,'quiet_'=>1);
+	# delete
 	TOM::Database::SQL::execute(qq{
 		DELETE
 		FROM `$App::401::db_name`.a401_article_visit
 		WHERE datetime_event <= DATE_SUB(CURDATE(),INTERVAL 31 DAY)
 	}
 	,'quiet_'=>1);
-	
 	
 	main::_log("removing old EMO's");
 	TOM::Database::SQL::execute(qq{
