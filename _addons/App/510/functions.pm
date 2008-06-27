@@ -376,6 +376,7 @@ sub video_part_file_process
 				if ($env{'lavfopts'}){push @encoder_env, '-lavfopts '.$env{'lavfopts'};}
 				if ($env{'vf'}){push @encoder_env, '-vf '.$env{'vf'};}
 				if ($env{'fps'}){push @encoder_env, '-fps '.$env{'fps'};}
+				if ($env{'demuxer'}){push @encoder_env, '-demuxer '.$env{'demuxer'};}
 				if ($env{'ofps_max'})
 				{
 					main::_log("checking -ofps for max value $env{'ofps_max'}");
@@ -393,6 +394,7 @@ sub video_part_file_process
 				$ext='mp4' if $env{'x264encopts'};
 				$ext='avi' if $env{'lavfopts'}=~/format=avi/;
 				$ext='flv' if $env{'lavfopts'}=~/format=flv/;
+				$ext='wmv' if $env{'lavfopts'}=~/format=wmv/;
 				$ext='264' if ($env{'x264encopts'} && exists $env{'nosound'});
 			}
 			elsif ($env{'encoder'} eq "ffmpeg")
