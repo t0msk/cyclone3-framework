@@ -33,7 +33,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_j` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_entity` bigint(20) unsigned default NULL, -- rel image.ID_entity
+  `ID_entity` bigint(20) unsigned default NULL, -- ref _video.ID_entity
   `datetime_create` datetime NOT NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
