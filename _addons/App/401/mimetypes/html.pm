@@ -38,7 +38,7 @@ HTML::Parser
 use App::401::_init;
 use base "HTML::Parser";
 
-our $cache=60;
+our $cache=300;
 our $tpl=new TOM::Template(
 	'level' => "auto",
 	'addon' => "a401",
