@@ -81,7 +81,8 @@ sub execute
 	my $sql=qq{
 		SELECT
 			file.*,
-			format.name AS format
+			format.name AS format,
+			CONCAT(format.ID,'/',SUBSTR(file.ID,1,4),'/',file.name,'.',file.file_ext) AS file_part_path
 		FROM
 			`$App::510::db_name`.a510_video_part_file AS file
 		LEFT JOIN `$App::510::db_name`.a510_video_format AS format ON
