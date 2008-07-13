@@ -305,6 +305,9 @@ sub execute
 			$XSGN{'NULL'}=~s|<%ID_entity%>|$db0_line{'ID_entity_video'}|g;
 			$XSGN{'NULL'}=~s|<%datetime_rec_start%>|$datetime_rec_start|g;
 			
+			my %owner=App::301::authors::get_author($db0_line{'posix_owner'});
+			$XSGN{'NULL'}=~s|<%owner_(.*?)%>|$owner{$1}|g;
+			
 			# check relations
 			my $relation=(App::160::SQL::get_relations(
 				'db_name' => $App::510::db_name,
