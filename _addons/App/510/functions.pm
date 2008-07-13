@@ -617,19 +617,17 @@ Add new video (uploading new original sized video)
  %video=video_add
  (
    'file' => '/path/to/file',
-#   'video.ID' => '',
-#   'video.ID_entity' => '',
-#   'video_format.ID' => '',
-#   'video_attrs.ID_category' => '',
-#   'video_attrs.name' => '',
-#   'video_attrs.description' => '',
-
-#   'video_part.ID' => '',
-#   'video_part.part_id' => '',
-
-#   'video_part_attrs.ID_category' => '',
-#   'video_part_attrs.name' => '',
-#   'video_part_attrs.description' => '',
+ # 'video.ID' => '',
+ # 'video.ID_entity' => '',
+ # 'video_format.ID' => '',
+ # 'video_attrs.ID_category' => '',
+ # 'video_attrs.name' => '',
+ # 'video_attrs.description' => '',
+ # 'video_part.ID' => '',
+ # 'video_part.part_id' => '',
+ # 'video_part_attrs.ID_category' => '',
+ # 'video_part_attrs.name' => '',
+ # 'video_part_attrs.description' => '',
  );
 
 Add new part of video
@@ -731,38 +729,6 @@ sub video_add
 		#$env{'video.ID'}=$video{'ID'} if $video{'ID'};
 	}
 	
-#	if (!$env{'video.ID'})
-#	{
-#		$env{'video.ID'}=$video{'ID'} if $video{'ID'};
-#	}
-	
-=head1
-	# check if this symlink with same ID_category not exists
-	# and video.ID is unknown
-	if ($env{'video_attrs.ID_category'} && !$env{'video.ID'} && $env{'video.ID_entity'} && !$env{'forcesymlink'})
-	{
-		main::_log("search for ID");
-		my $sql=qq{
-			SELECT
-				*
-			FROM
-				`$App::510::db_name`.`a510_video_view`
-			WHERE
-				ID_entity_video=$env{'video.ID_entity'} AND
-				( ID_category = $env{'video_attrs.ID_category'} OR ID_category IS NULL ) AND
-				status IN ('Y','N','L')
-			LIMIT 1
-		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-		my %db0_line=$sth0{'sth'}->fetchhash();
-		if ($db0_line{'ID'})
-		{
-			$env{'video.ID'}=$db0_line{'ID_video'};
-			$env{'video_attrs.ID'}=$db0_line{'ID_attrs'};
-			main::_log("setup video.ID='$db0_line{'ID_video'}'");
-		}
-	}
-=cut
 	
 	if (!$env{'video.ID'})
 	{
@@ -1046,22 +1012,17 @@ Add new video-part (uploading new original sized video)
  (
    'file' => '/path/to/file',
    'video.ID_entity' => '',
-   
-#   'video_part_attrs.lng' => 'en',
-   
-#   'video.ID_entity' => '',
-#   'video_format.ID' => '',
-#   'video_attrs.ID_category' => '',
-#   'video_attrs.name' => '',
-#   'video_attrs.description' => '',
-
-#   'video_part.ID' => '',
-#   'video_part.part_id' => '',
-
-#   'video_part_attrs.ID_category' => '',
-#   'video_part_attrs.name' => '',
-#   'video_part_attrs.description' => '',
-
+ # 'video_part_attrs.lng' => 'en',
+ # 'video.ID_entity' => '',
+ # 'video_format.ID' => '',
+ # 'video_attrs.ID_category' => '',
+ # 'video_attrs.name' => '',
+ # 'video_attrs.description' => '',
+ # 'video_part.ID' => '',
+ # 'video_part.part_id' => '',
+ # 'video_part_attrs.ID_category' => '',
+ # 'video_part_attrs.name' => '',
+ # 'video_part_attrs.description' => '',
  );
 
 =cut
@@ -1287,7 +1248,7 @@ Adds new file to video, or updates old
    'file' => '/path/to/file',
    'video_part.ID' => '',
    'video_format.ID' => '',
-#   'thumbnail_lock_ignore' => 1 # regenerate thumbnail when locked
+ # 'thumbnail_lock_ignore' => 1 # regenerate thumbnail when locked
  )
 
 =cut
