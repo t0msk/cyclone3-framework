@@ -37,6 +37,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
   `datetime_create` datetime NOT NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   KEY `ID_entity` (`ID_entity`),
@@ -52,6 +53,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent_j` (
   `datetime_create` datetime NOT NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y'
 ) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
