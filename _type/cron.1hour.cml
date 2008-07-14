@@ -1,5 +1,14 @@
 <!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
 
+# a100
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="100" />
+	<VAR id="-name" value="ticket_email_list" />
+	<VAR id="-version" value="current" />
+</MODULE>
+
 # a110
 
 <MODULE>

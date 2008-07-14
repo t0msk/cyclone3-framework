@@ -22,7 +22,7 @@ sub execute
 {
 	my %env=@_;
 	
-	my $time_durration=6; # minutes
+	my $time_durration=65; # minutes
 	my $time_from=$main::time_current-($time_durration*60);
 	
 	my $number = 100;
@@ -176,6 +176,7 @@ sub execute
 					my $emails=$db1_line{'emails'};$emails=~s|<||g;$emails=~s|>||g;$emails=~s|;|, |g;
 					my $msg=qq{
 <strong>message: </strong>$cvml_hash{'ERROR'}{'text'}<br/>
+<strong>hostname: </strong>$cvml_hash{'Cyclone'}{'hostname'}<br/>
 <strong>uri: </strong>$cvml_hash{'Cyclone'}{'orig_URI'}<br/>
 <strong>request uri: </strong>$cvml_hash{'Cyclone'}{'request_URI'}<br/>
 <strong>full uri: </strong>$cvml_hash{'Cyclone'}{'parsed_URI'}<br/>
