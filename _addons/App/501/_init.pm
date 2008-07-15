@@ -81,7 +81,7 @@ BEGIN
 		};
 		
 		# check media directory
-		my $check;
+		my $check=1;
 		if ($tom::P && $check)
 		{
 			
