@@ -133,6 +133,13 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
 	$env{'db_name'}=$App::401::db_name unless $env{'db_name'};
 	
 	$env{'article_content.lng'}=$env{'lng'} unless $env{'article_content.lng'};
