@@ -423,6 +423,26 @@ sub user_add
 				)
 			};
 			TOM::Database::SQL::execute($sql,'quiet'=>1);
+			
+			my $sql=qq{
+				INSERT INTO TOM.a301_user_rel_group_l
+				(
+					ID_user,
+					ID_group,
+					datetime_event,
+					posix_modified,
+					action
+				)
+				VALUES
+				(
+					'$env{'user.ID_user'}',
+					'$db0_line{'ID'}',
+					NOW(),
+					'$main::USRM{'ID_user'}',
+					'A'
+				)
+			};
+			TOM::Database::SQL::execute($sql,'quiet'=>1);
 		}
 		
 	}

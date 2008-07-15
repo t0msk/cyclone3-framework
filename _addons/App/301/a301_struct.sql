@@ -301,6 +301,21 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_rel_group` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
+-- db_name=TOM
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_user_rel_group_l` (
+  `datetime_event` datetime NOT NULL default '0000-00-00 00:00:00',
+  `ID_group` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `action` char(1) character set ascii NOT NULL default 'A', -- A (added)/R (removed)
+  KEY `SEL_0` (`ID_user`,`datetime_event`),
+  KEY `datetime_event` (`datetime_event`),
+  KEY `ID_group` (`ID_group`),
+  KEY `ID_user` (`ID_user`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
 -- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user` ( -- table is stored where addon defined in r_prefix
