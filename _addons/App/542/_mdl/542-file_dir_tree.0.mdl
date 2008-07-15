@@ -138,6 +138,14 @@ sub execute
 {
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
 	delete $env{'ID_charindex'};
 	
 	$env{'tree'}=1 unless exists $env{'tree'};
