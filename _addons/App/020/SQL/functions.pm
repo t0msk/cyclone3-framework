@@ -65,7 +65,7 @@ Function creates new row into main table and initializes it ( creates ID and ID_
 
 This function makes automatically journalization copy of every created new row, when -journalize is enabled (table with suffix '_j' must exists).
 
- my $ID=new
+ my $ID=App::020::SQL::functions::new
  (
   'db_h' => 'main', # name of database handler
   'db_name' => 'domain_tld', # name of database
@@ -77,6 +77,7 @@ This function makes automatically journalization copy of every created new row, 
    'column3' => "NULL"
   },
   '-journalize' => 1,
+  '-posix' => 1,
   '-replace' => 0 # use REPLACE INTO instead of INSERT INTO
  )
 
@@ -174,7 +175,7 @@ This function is called from new() function. Finds all rows where ID_entity IS N
 
 Function can be called with one param - ID;
 
- new_initialize(
+ App::020::SQL::functions::new_initialize(
   ID => $ID, # or undef
   'db_h' => 'main', # name of database handler
   'db_name' => 'domain_tld', # name of database
@@ -236,7 +237,7 @@ sub new_initialize
 
 Function returns one row in %hash from main table ( also actual row, not journalized ).
 
- my %hash=get_ID
+ my %hash=App::020::SQL::functions::get_ID
  (
   ID => $ID, # must be defined
   'db_h' => 'main', # name of database handler
@@ -330,7 +331,7 @@ sub get_ID(%env)
 
 Function returns list of get_ID()'s used by one ID_entity
 
- my @IDs=get_ID_entity
+ my @IDs=App::020::SQL::functions::get_ID_entity
  (
   ID_entity => $ID_entity, # must be defined
   'db_h' => 'main', # name of database handler
@@ -346,6 +347,23 @@ Function returns list of get_ID()'s used by one ID_entity
 Into 'columns' is automatically added ID, ID_entity, datetime_create and status.
 
 Into 'columns' you are able set '*' => 1
+
+Get unique ID when you know only ID_entity
+
+ my %hash=(
+   App::020::SQL::functions::get_ID_entity
+   (
+    ID_entity => $ID_entity, # must be defined
+    'db_h' => 'main', # name of database handler
+    'db_name' => 'domain_tld', # name of database
+    'tb_name' => 'a020_object', # name of main table
+    'columns' =>
+    {
+     'column1' => 1, # return value of this column
+     'column2' => 1, # same
+    }
+   )
+ )[0];
 
 =cut
 
@@ -411,7 +429,7 @@ sub get_ID_entity(%env)
 
 Updates one row ( also one ID ) in main table.
 
- my $retcode=update(
+ my $retcode=App::020::SQL::functions::update(
   'ID' => $ID, # must be defined
   'db_h' => 'main', # name of database handler
   'db_name' => 'domain_tld', # name of database
@@ -510,7 +528,7 @@ $sel_set
 
 Copies actual row from main table into journal table.
 
- journalize
+ App::020::SQL::functions::journalize
  (
   'ID' => $ID, # must be defined
   'db_h' => 'main', # name of database handler
@@ -596,7 +614,7 @@ Makes copy of given ID, into new ID, but with same ID_entity. Also makes new ver
 
 For example, when ID_entity is like 'article', and one ID is language version of this article, then making clones is as making new language version of this article.
 
- my $new_ID=clone
+ my $new_ID=App::020::SQL::functions::clone
  (
   'ID' => $ID, # must be defined
   'db_h' => 'main', # name of database handler
@@ -698,7 +716,7 @@ sub clone
 
 Makes copy of given ID, into new ID and new ID_entity. Also makes new entity
 
- my $new_ID=copy
+ my $new_ID=App::020::SQL::functions::copy
  (
   'ID' => $ID, # must be defined
   'db_h' => 'main', # name of database handler
@@ -807,7 +825,7 @@ sub copy_entity
 
 Moves one row ( also ID ) into trash. Physically only changes status of this row to 'T'.
 
- my $retcode=to_trash
+ my $retcode=App::020::SQL::functions::to_trash
  (
   'ID' => $ID, # must be defined
   'db_h' => 'main', # name of database handler
@@ -873,7 +891,7 @@ sub to_trash
 
 Restores one row ( also ID ) from trash. Physically only changes status of this row to 'N'.
 
- my $retcode=trash_restore
+ my $retcode=App::020::SQL::functions::trash_restore
  (
   'ID' => $ID, # must be defined
   'db_h' => 'main', # name of database handler
@@ -939,7 +957,7 @@ sub trash_restore
 
 Delete one row ( also ID ) from trash. Physically only changes status of this row to 'D' and moves it from main table into journal table ( when journalize is enabled ).
 
- my $retcode=trash_delete
+ my $retcode=App::020::SQL::functions::trash_delete
  (
   'ID' => $ID, # must be defined
   'db_h' => 'main', # name of database handler
@@ -1014,7 +1032,7 @@ sub trash_delete
 
 Empty trash with all trashed ID's. Use carefully. When journalize is not enabled, all this rows is gone and can't be returned.
 
- my $retcode=trash_empty
+ my $retcode=App::020::SQL::functions::trash_empty
  (
   'db_h' => 'main', # name of database handler
   'db_name' => 'domain_tld', # name of database
@@ -1086,7 +1104,7 @@ sub trash_empty
 
 Deletes one row ( also ID ) from main table. Physically only changes status of this row to 'D' and moves it into journal table ( if enabled ).
 
- my $retcode=delete
+ my $retcode=App::020::SQL::functions::delete
  (
   'ID' => $ID, # must be defined
   'db_h' => 'main', # name of database handler
@@ -1200,7 +1218,7 @@ sub _remove
 
 Sets one row ( also ID ) as disabled ( not active ). Physically only changes status of this row to 'N'.
 
- my $retcode=disable
+ my $retcode=App::020::SQL::functions::disable
  (
   'ID' => $ID, # must be defined
   'db_h' => 'main', # name of database handler
@@ -1275,7 +1293,7 @@ sub disable
 
 Sets one row ( also ID ) as enabled ( active ). Physically only changes status of this row to 'Y'.
 
- my $retcode=enable
+ my $retcode=App::020::SQL::functions::enable
  (
   'ID' => $ID, # must be defined
   'db_h' => 'main', # name of database handler
