@@ -255,6 +255,9 @@ sub file_add
 	# tu pridat file item
 	if ($env{'file'} && -e $env{'file'})
 	{
+		# create new secure hash
+		my $hash_secure=TOM::Utils::vars::genhash(32);
+		
 		# file must be analyzed
 		
 		# size
@@ -318,6 +321,7 @@ sub file_add
 					'columns' =>
 					{
 						'mimetype' => "'$mimetype'",
+						'hash_secure' => "'$hash_secure'",
 						'status' => "'Y'",
 						%columns
 					},
@@ -338,6 +342,7 @@ sub file_add
 					{
 						'name' => "'$name'",
 						'mimetype' => "'$mimetype'",
+						'hash_secure' => "'$hash_secure'",
 						'file_size' => "'$file_size'",
 						'file_checksum' => "'$checksum_method:$checksum'",
 						'file_ext' => "'$env{'file_attrs.name_ext'}'",
@@ -374,6 +379,7 @@ sub file_add
 					'ID_entity' => $env{'file.ID_entity'},
 					'name' => "'$name'",
 					'mimetype' => "'$mimetype'",
+					'hash_secure' => "'$hash_secure'",
 					'file_size' => "'$file_size'",
 					'file_checksum' => "'$checksum_method:$checksum'",
 					'file_ext' => "'$env{'file_attrs.name_ext'}'",

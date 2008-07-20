@@ -110,6 +110,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_item` (
   `file_size` bigint(20) unsigned default NULL,
   `file_checksum` varchar(128) character set ascii collate ascii_bin NOT NULL,
   `file_ext` varchar(120) character set ascii NOT NULL, -- only for storage
+  `hash_secure` varchar(32) character set ascii collate ascii_bin NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -135,6 +136,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_item_j` (
   `file_size` bigint(20) unsigned default NULL,
   `file_checksum` varchar(128) character set ascii collate ascii_bin NOT NULL,
   `file_ext` varchar(120) character set ascii NOT NULL,
+  `hash_secure` varchar(32) character set ascii collate ascii_bin NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -145,7 +147,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_item_j` (
 CREATE TABLE `/*db_name*/`.`/*app*/_file_download` (
   `datetime_event` datetime NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `ID_file` bigint(20) NOT NULL,
+  `ID_file` bigint(20) NOT NULL, -- ref _file.ID_entity
   PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_file`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -209,6 +211,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_file_view` AS (
 		file_ent.posix_owner,
 		file_ent.posix_author,
 		
+		file_item.hash_secure,
 		file_item.datetime_create,
 		
 		file_attrs.name,

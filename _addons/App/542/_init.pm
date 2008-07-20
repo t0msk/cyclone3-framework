@@ -120,7 +120,7 @@ BEGIN
 
 
 our $db_name=$App::542::db_name || $TOM::DB{'main'}{'name'};
-$tom::H_a542=$tom::H_media."/a542" if ($tom::H_a542 && $tom::H_media);
+$tom::H_a542=$tom::H_media."/a542" if (!$tom::H_a542 && $tom::H_media);
 
 
 1;
