@@ -1,0 +1,102 @@
+#!/usr/bin/perl
+
+
+BEGIN
+{
+	$TOM::engine='download';
+	$main::debug=1 if $ENV{'TERM'};
+	require "/www/TOM/.core/.libs/TOM.pm";
+}
+
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8; # encode = fromutf8, decode=toutf8
+use strict; # scrict code
+use CGI::Fast qw(:standard);
+
+use enc3;
+use iconv;
+
+my $t=track TOM::Debug("TOM engine '$TOM::engine' initializing...");
+
+use TOM::Database::connect;
+use TOM::Database::SQL;
+use TOM::Net::HTTP::CGI;
+
+$t->close();
+
+my $t_domain=track TOM::Debug("Domain initialization");
+eval
+{
+	# Load domain configuration
+	require TOM::Domain;	
+	$TOM::engine_ready=1;
+	require App::542::_init;
+};
+
+if ($@)
+{
+	my @ERR=("Error occured during domain initialization");
+	push @ERR,$@;
+	main::_log("request in domain initialization error",1);
+	TOM::Error::engine(@ERR);
+	exit(0);
+}
+
+$t_domain->close;
+
+our $CGI;
+while ($main::CGI=new CGI::Fast())
+{
+	
+	my %FORM=TOM::Net::HTTP::CGI::get_QUERY_STRING($ENV{'QUERY_STRING'});
+	
+	main::_log("request for ID='$FORM{'ID'}' hash='$FORM{'hash'}'");
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			$App::542::db_name.a542_file_view
+		WHERE
+			ID_entity_file='$FORM{'ID'}' AND
+			hash_secure='$FORM{'hash'}'
+		LIMIT 1;
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'-slave'=>1);
+	if ($sth0{'rows'})
+	{
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		
+		main::_log("path='$tom::H_a542/file/item/$db0_line{'file_path'}'");
+		print "Location: $tom::H_a542/file/item/$db0_line{'file_path'}\n\n";
+		
+		my $sql=qq{
+			INSERT DELAYED INTO $App::542::db_name.a542_file_download
+			(
+				datetime_event,
+				ID_file,
+				ID_user
+			)
+			VALUES
+			(
+				NOW(),
+				$FORM{'ID'},
+				''
+			)
+		};
+		
+		TOM::Database::SQL::execute($sql,'db_h'=>'stats');
+		
+	}
+	else
+	{
+		print "Status: 404 Not Found\n";
+		print "Content-Type: text/html; charset=UTF-8\n";
+		print "\n";
+		
+		print "<HTML><HEAD></HEAD><BODY><H1>404 Not Found</H1></BODY></HTML>\n";
+	}
+	
+}
+
