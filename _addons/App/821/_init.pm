@@ -38,13 +38,13 @@ L<App::301::_init|app/"301/_init.pm">
 
 =item *
 
-L<App::401::a160|app/"401/a160.pm">
+L<App::821::a160|app/"821/a160.pm">
 
 =back
 
 =cut
 
-use App::401::a160;
+use App::821::a160;
 use App::301::_init;
 
 
