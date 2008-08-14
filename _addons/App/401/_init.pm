@@ -96,6 +96,9 @@ our %priority;
 $priority{'A'}=$App::401::priority{'A'} || 1;
 $priority{'B'}=$App::401::priority{'B'} || undef;
 $priority{'C'}=$App::401::priority{'C'} || undef;
+$priority{'D'}=$App::401::priority{'D'} || undef;
+$priority{'E'}=$App::401::priority{'E'} || undef;
+$priority{'F'}=$App::401::priority{'F'} || undef;
 
 our %a301_user_group;
 

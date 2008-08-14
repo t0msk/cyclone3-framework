@@ -34,6 +34,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `ID_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `visits` int(10) unsigned NOT NULL,
+  `rating_score` int(10) unsigned NOT NULL,
+  `rating_votes` int(10) unsigned NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   KEY `ID_entity` (`ID_entity`),
@@ -53,8 +55,19 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_j` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `ID_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `visits` int(10) unsigned NOT NULL,
+  `rating_score` int(10) unsigned NOT NULL,
+  `rating_votes` int(10) unsigned NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y'
 ) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_article_rating_vote` (
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_article` mediumint(8) unsigned NOT NULL, -- ref _article.ID_entity
+  `datetime_event` datetime NOT NULL,
+  `score` int(10) unsigned NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -70,6 +83,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   `priority_A` tinyint(3) unsigned default NULL,
   `priority_B` tinyint(3) unsigned default NULL,
   `priority_C` tinyint(3) unsigned default NULL,
+  `priority_D` tinyint(3) unsigned default NULL,
+  `priority_E` tinyint(3) unsigned default NULL,
+  `priority_F` tinyint(3) unsigned default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -85,6 +101,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   KEY `priority_A` (`priority_A`),
   KEY `priority_B` (`priority_B`),
   KEY `priority_C` (`priority_C`),
+  KEY `priority_D` (`priority_D`),
+  KEY `priority_E` (`priority_E`),
+  KEY `priority_F` (`priority_F`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -103,6 +122,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs_j` (
   `priority_A` tinyint(3) unsigned default NULL,
   `priority_B` tinyint(3) unsigned default NULL,
   `priority_C` tinyint(3) unsigned default NULL,
+  `priority_D` tinyint(3) unsigned default NULL,
+  `priority_E` tinyint(3) unsigned default NULL,
+  `priority_F` tinyint(3) unsigned default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N'
 ) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
@@ -328,6 +350,9 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 		article_attrs.priority_A,
 		article_attrs.priority_B,
 		article_attrs.priority_C,
+		article_attrs.priority_D,
+		article_attrs.priority_E,
+		article_attrs.priority_F,
 		
 		article_attrs.name,
 		article_attrs.name_url,
