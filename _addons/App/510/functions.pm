@@ -898,7 +898,7 @@ sub video_add
 	{
 		# create one entity representation of video
 		my %columns;
-		
+		$columns{'datetime_rec_start'}="NOW()" unless $columns{'datetime_rec_start'};
 		$env{'video_ent.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
 			'db_name' => $App::510::db_name,
@@ -923,7 +923,13 @@ sub video_add
 		# ID_author
 		($env{'video_ent.posix_author'} && ($env{'video_ent.posix_author'} ne $video_ent{'posix_author'})) ||
 		# posix_owner
-		($env{'video_ent.posix_owner'} && ($env{'video_ent.posix_owner'} ne $video_ent{'posix_owner'}))
+		($env{'video_ent.posix_owner'} && ($env{'video_ent.posix_owner'} ne $video_ent{'posix_owner'})) ||
+		# datetime_rec_start
+		($env{'video_ent.datetime_rec_start'} && ($env{'video_ent.datetime_rec_start'} ne $video_ent{'datetime_rec_start'})) ||
+		# datetime_rec_stop
+		(exists $env{'video_ent.datetime_rec_stop'} && ($env{'video_ent.datetime_rec_stop'} ne $video_ent{'datetime_rec_stop'})) ||
+		# keywords
+		(exists $env{'video_ent.keywords'} && ($env{'video_ent.keywords'} ne $video_ent{'keywords'}))
 	))
 	{
 		my %columns;
@@ -931,6 +937,22 @@ sub video_add
 			if ($env{'video_ent.posix_author'} && ($env{'video_ent.posix_author'} ne $video_ent{'posix_author'}));
 		$columns{'posix_owner'}="'".TOM::Security::form::sql_escape($env{'video_ent.posix_owner'})."'"
 			if ($env{'video_ent.posix_owner'} && ($env{'video_ent.posix_owner'} ne $video_ent{'posix_owner'}));
+		# datetime_rec_start
+		$columns{'datetime_rec_start'}="'".$env{'video_ent.datetime_rec_start'}."'"
+			if ($env{'video_ent.datetime_rec_start'} && ($env{'video_ent.datetime_rec_start'} ne $video_ent{'datetime_rec_start'}));
+		$columns{'datetime_rec_start'}=$env{'video_ent.datetime_rec_start'}
+			if ($env{'video_ent.datetime_rec_start'}=~/^FROM/ && ($env{'video_ent.datetime_rec_start'} ne $video_ent{'datetime_rec_start'}));
+		# datetime_rec_stop
+		if (exists $env{'video_ent.datetime_rec_stop'} && ($env{'video_ent.datetime_rec_stop'} ne $video_ent{'datetime_rec_stop'}))
+		{
+			if (!$env{'video_ent.datetime_rec_stop'})
+			{$columns{'datetime_rec_stop'}="NULL";}
+			else
+			{$columns{'datetime_rec_stop'}="'".$env{'video_ent.datetime_rec_stop'}."'";}
+		}
+		$columns{'keywords'}="'".TOM::Security::form::sql_escape($env{'video_ent.keywords'})."'"
+			if (exists $env{'video_ent.keywords'} && ($env{'video_ent.keywords'} ne $video_ent{'keywords'}));
+		
 		App::020::SQL::functions::update(
 			'ID' => $env{'video_ent.ID'},
 			'db_h' => "main",

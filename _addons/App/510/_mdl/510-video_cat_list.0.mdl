@@ -298,8 +298,11 @@ sub execute
 			
 			$XSGN{'NULL'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 			
+			my $rating5=int(($db0_line{'rating'}/20)+0.5);
+			$XSGN{'NULL'}=~s|<%rating5%>|$rating5|g;
+			
 			my $datetime_rec_start=$db0_line{'datetime_rec_start'};
-				$datetime_rec_start=~s|:\d\d$||;
+#				$datetime_rec_start=~s|:\d\d$||;
 			
 			$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID_video'}|g;
 			$XSGN{'NULL'}=~s|<%ID_entity%>|$db0_line{'ID_entity_video'}|g;
@@ -322,7 +325,7 @@ sub execute
 			}
 			
 			# check relations
-			if ($db0_line{'keywords'})
+			if ($db0_line{'video_keywords'})
 			{
 				$XSGN{'NULL'}=~s|<%keywords_status%>|Y|g;
 			}

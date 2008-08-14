@@ -8,8 +8,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
-  `datetime_rec_start` datetime default NULL,
-  `datetime_rec_stop` datetime default NULL,
+  `datetime_rec_start` datetime default NULL, -- obsolete
+  `datetime_rec_stop` datetime default NULL, -- obsolete
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   KEY `ID_entity` (`ID_entity`),
@@ -35,9 +35,12 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- ref _video.ID_entity
   `datetime_create` datetime NOT NULL,
+  `datetime_rec_start` datetime default NULL,
+  `datetime_rec_stop` datetime default NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   KEY `ID_entity` (`ID_entity`),
@@ -51,9 +54,12 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
+  `datetime_rec_start` datetime default NULL,
+  `datetime_rec_stop` datetime default NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y'
 ) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
@@ -104,6 +110,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
   `part_id` mediumint(8) unsigned NOT NULL default '0',
   `datetime_create` datetime NOT NULL,
   `visits` int(10) unsigned NOT NULL,
+  `rating_score` int(10) unsigned NOT NULL,
+  `rating_votes` int(10) unsigned NOT NULL,
   `process_lock` char(1) character set ascii NOT NULL default 'N',
   `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -123,10 +131,21 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_j` (
   `part_id` mediumint(8) unsigned NOT NULL default '0',
   `datetime_create` datetime NOT NULL,
   `visits` int(10) unsigned NOT NULL,
+  `rating_score` int(10) unsigned NOT NULL,
+  `rating_votes` int(10) unsigned NOT NULL,
   `process_lock` char(1) character set ascii NOT NULL default 'N',
   `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y'
 ) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_rating_vote` (
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_part` mediumint(8) unsigned NOT NULL,
+  `datetime_event` datetime NOT NULL,
+  `score` int(10) unsigned NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -486,16 +505,17 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_view` AS (
 		video_part_attrs.ID AS ID_part_attrs,
 		video_part_file.ID AS ID_part_file,
 		
-		video.datetime_rec_start,
-		video_attrs.datetime_create,
+		DATE_FORMAT(video.datetime_rec_start, '%Y-%m-%d %H:%i') AS datetime_rec_start,
+		DATE_FORMAT(video_attrs.datetime_create, '%Y-%m-%d %H:%i') AS datetime_create,
 		DATE(video.datetime_rec_start) AS date_recorded,
-		video.datetime_rec_stop,
+		DATE_FORMAT(video.datetime_rec_stop, '%Y-%m-%d %H:%i') AS datetime_rec_stop,
 		
 		video_attrs.ID_category,
 		video_cat.name AS ID_category_name,
 		
 		video_ent.posix_owner,
 		video_ent.posix_author,
+		video_ent.keywords AS video_keywords,
 --		video.posix_group,
 --		video.posix_perms,
 		
@@ -518,6 +538,10 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_view` AS (
 		video_part_file.file_size,
 		video_part_file.file_ext,
 		video_part_file.file_alt_src,
+		
+		video_part.rating_score,
+		video_part.rating_votes,
+		(video_part.rating_score/video_part.rating_votes) AS rating,
 		
 		CONCAT(video_format.ID,'/',SUBSTR(video_part_file.ID,1,4),'/',video_part_file.name,'.',video_part_file.file_ext) AS file_part_path,
 		

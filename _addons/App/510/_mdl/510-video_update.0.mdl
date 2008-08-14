@@ -96,6 +96,8 @@ sub execute
 		if $main::RPC->{'video_attrs.name'};
 	$columns{'video_attrs.description'}=$main::RPC->{'video_attrs.description'}
 		if exists $main::RPC->{'video_attrs.description'};
+	$columns{'video_ent.keywords'}=$main::RPC->{'video_ent.keywords'}
+		if exists $main::RPC->{'video_ent.keywords'};
 	
 	$columns{'video.datetime_rec_start'}=$main::RPC->{'video.datetime_rec_start'}
 		if exists $main::RPC->{'video.datetime_rec_start'};
