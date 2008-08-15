@@ -97,7 +97,8 @@ sub execute
 		GROUP BY
 			DATE(datetime_create)
 		HAVING
-			date_events >= DATE_SUB(CURDATE(),INTERVAL $days DAY)
+			date_events >= DATE_SUB(CURDATE(),INTERVAL $days DAY) AND
+			date_event < CURDATE()
 		ORDER BY
 			DATE(datetime_create) ASC
 	},'db_h'=>'main');
