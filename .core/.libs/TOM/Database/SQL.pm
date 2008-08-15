@@ -149,7 +149,7 @@ sub execute
 	
 	if ($env{'slave'} && $TOM::DB{$env{'db_h'}}{'slaves'} && $SQL=~/^SELECT/)
 	{
-		my $slave=int(rand($TOM::DB{$env{'db_h'}}{'slaves'}+1));
+		my $slave=int(rand($TOM::DB{$env{'db_h'}}{'slaves'}))+1;
 		if ($TOM::DB{$env{'db_h'}.':'.$slave})
 		{
 			main::_log("using slave:$slave") unless $env{'quiet'};
