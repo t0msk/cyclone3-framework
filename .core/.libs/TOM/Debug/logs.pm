@@ -128,7 +128,7 @@ sub _log
 		#print "file = $file\n";
 		
 		$get[0]=0 unless $get[0];
-		open (HND_LOG,">>".$file.".".$get[3].".log") || print STDERR "System can't write into logfile $file $!";
+		open (HND_LOG,">>".$file.".".$get[3].".log") || print STDERR "System can't write into logfile $file $!\n";
 #			|| die "System can't write into logfile ".$file.".".$get[3].".log"."\n";
 		chmod (0666,$file.".".$get[3].".log");
 		print HND_LOG $msg."\n";
