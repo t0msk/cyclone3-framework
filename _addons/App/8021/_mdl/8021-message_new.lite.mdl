@@ -1,0 +1,191 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+=head1 NAME
+
+8021-message_new.lite.mdl
+
+=head1 DESCRIPTION
+
+Lite creation of message
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::8021::_init|app/"8021/_init.pm">
+
+=back
+
+=cut
+
+use App::8021::_init;
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<db_name> - database name
+
+=item *
+
+B<sql_limit> - limit to display (default '1')
+
+=item *
+
+B<message.status> - required status, nonseparated values (default 'Y')
+
+=item *
+
+B<message.lng> - required language (default is current)
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default
+
+=item *
+
+B<#item#> - gateway to message item
+
+=item *
+
+B<item> - message item
+
+=item *
+
+B<%db_*%> - message database values
+
+B<%db_name%>, B<%db_body%>,...
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if($main::USRM{'logged'} ne 'Y'){
+		$XSGN{'TMP'}=$XSGN{'TMP_unlogged'};
+		return 1;
+	}
+	
+	$env{'db_name'}=$App::8021::db_name unless $env{'db_name'};
+	
+	$env{'message.lng'}=$env{'lng'} unless $env{'message.lng'};
+	
+	my $recipient_hash;
+	
+	if(
+		(!$env{'message.recipient'}) && (!$env{'message.name'}) && (!$env{'message.body'})
+	){
+		return 1;
+	}
+	
+	my $sql_recipient=qq{
+		SELECT
+			ID_user
+		FROM
+			`TOM`.a301_user
+		WHERE
+			login='$env{'message.recipient'}'
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql_recipient,'log'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$recipient_hash = $db0_line{'ID_user'};
+	}
+	
+	if(
+		(!$recipient_hash) || (!$env{'message.name'}) || (!$env{'message.body'})
+	){
+		if(!$recipient_hash){
+			$XSGN{'TMP'}=~s|<#failure#>|$XSGN{'failure_nouser'}|;
+		}else{
+			$XSGN{'TMP'}=~s|<#failure#>|$XSGN{'failure_nodata'}|;
+		}
+		$XSGN{'TMP'}=~s|<%name%>|$env{'message.name'}|g;
+		$XSGN{'TMP'}=~s|<%recipient%>|$env{'message.recipient'}|g;
+		$XSGN{'TMP'}=~s|<%body%>|$env{'message.body'}|g;
+		return 1;
+	}
+	
+	App::020::SQL::functions::new(
+		'db_h' => "main",
+		'db_name' => $env{'db_name'},
+		'tb_name' => "a8021_message",
+		'columns' =>
+		{
+			'datetime_sent' => "NOW()",
+			'posix_owner' => "'".TOM::Security::form::sql_escape($main::USRM{'ID_user'})."'",
+			'posix_recipient' => "'".TOM::Security::form::sql_escape($recipient_hash)."'",
+			'name' => "'".TOM::Security::form::sql_escape($env{'message.name'})."'",
+			'body' => "'".TOM::Security::form::sql_escape($env{'message.body'})."'",
+			'lng' => "'".TOM::Security::form::sql_escape($env{'message.lng'})."'",
+			'status' => "'Y'"
+		},
+		'-journalize' => 1,
+	);
+	
+=head1
+	my $sql=qq{
+		INSERT INTO
+			`$env{'db_name'}`.a8021_message
+		SET
+			datetime_sent=NOW(),
+			datetime_create=NOW(),
+			posix_owner='$main::USRM{'ID_user'}',
+			posix_recipient='$recipient_hash',
+			name='$env{'message.name'}',
+			body='$env{'message.body'}',
+			lng='$env{'message.lng'}',
+			status='Y'
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+=cut
+	
+	$XSGN{'TMP'}=$XSGN{'RESULT_success'};
+	$XSGN{'TMP'}=~s|<%name%>|$env{'message.name'}|g;
+	$XSGN{'TMP'}=~s|<%recipient%>|$env{'message.recipient'}|g;
+	$XSGN{'TMP'}=~s|<%body%>|$env{'message.body'}|g;
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;

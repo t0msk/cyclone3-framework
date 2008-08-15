@@ -46,11 +46,11 @@ B<sql_limit> - limit to display (default '1')
 
 =item *
 
-B<sql_status> - required status, nonseparated values (default 'Y')
+B<message.status> - required status, nonseparated values (default 'Y')
 
 =item *
 
-B<sql_lng> - required language (default is current)
+B<message.lng> - required language (default is current)
 
 =back
 
@@ -78,7 +78,7 @@ B<item> - message item
 
 B<%db_*%> - message database values
 
-B<%db_ID_category%>, B<%db_ID_category_name%>, B<%db_name%>, B<%db_name_url%>, B<%db_subtitle%>
+B<%db_name%>, B<%db_body%>,...
 
 =back
 
@@ -91,12 +91,18 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
+	if($main::USRM{'logged'} ne 'Y'){
+		$XSGN{'TMP'}=$XSGN{'TMP_unlogged'};
+		return 1;
+	}
+	
 	$env{'db_name'}=$App::8021::db_name unless $env{'db_name'};
 	
-	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
+	$env{'message.lng'}=$env{'lng'} unless $env{'message.lng'};
 	$env{'sql_limit'}='10' unless $env{'sql_limit'};
-	$env{'sql_status'}='Y' unless $env{'sql_status'};
-		my $status_sql=join "','" split('',$env{'sql_status'});
+	
+	$env{'message.status'}='Y' unless $env{'message.status'};
+		my $status_sql=join "','", split('',$env{'message.status'});
 	
 	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
 	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
@@ -118,7 +124,7 @@ sub execute
 			`$env{'db_name'}`.a8021_message AS message
 		WHERE
 			message.status IN ('$status_sql') AND
-			message.lng='$env{'sql_lng'}'
+			message.lng='$env{'message.lng'}'
 			$sql_where
 		ORDER BY
 			message.datetime_sent DESC
@@ -132,10 +138,40 @@ sub execute
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		my $item=$XSGN{'item'};
+		
+		if(!$db0_line{'datetime_read'}){
+			$item=$XSGN{'item_unread'};
+		}
+		else
+		{
+			my $sql1=qq{
+				SELECT
+					*
+				FROM
+					`$env{'db_name'}`.a8021_message AS message
+				WHERE
+					message.status IN ('$status_sql') AND
+					message.lng='$env{'message.lng'}' AND
+					ID_reply='$db0_line{'ID_entity'}'
+				LIMIT 1
+			};
+			my %sth1=TOM::Database::SQL::execute($sql1,'log'=>1);
+			if(my %db1_line=$sth1{'sth'}->fetchhash())
+			{
+				$item=$XSGN{'item_replied'};
+			}
+		}
+		
 		$item_counter++;
 		
 		# fill raw data into $XSGN{'item'}
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		my %recipient=App::301::authors::get_author($db0_line{'posix_recipient'});
+		foreach(keys %recipient)
+		{
+			$item=~s|<%recipient_$_%>|$recipient{$_}|g;
+		}
 		
 		my %owner=App::301::authors::get_author($db0_line{'posix_owner'});
 		foreach(keys %owner)
