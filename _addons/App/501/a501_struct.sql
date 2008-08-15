@@ -34,6 +34,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `visits` int(10) unsigned NOT NULL,
+  `rating_score` int(10) unsigned NOT NULL,
+  `rating_votes` int(10) unsigned NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   KEY `ID_entity` (`ID_entity`),
@@ -51,9 +53,20 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `visits` int(10) unsigned NOT NULL,
+  `rating_score` int(10) unsigned NOT NULL,
+  `rating_votes` int(10) unsigned NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_image_rating_vote` (
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_image` mediumint(8) unsigned NOT NULL, -- ref _image.ID_entity
+  `datetime_event` datetime NOT NULL,
+  `score` int(10) unsigned NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
