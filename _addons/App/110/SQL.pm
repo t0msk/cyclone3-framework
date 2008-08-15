@@ -63,8 +63,8 @@ sub get_last_active_request()
 			DATE(reqdatetime) as reqdate
 		FROM
 			TOM.a110_weblog_rqs
-		WHERE
-			active='Y'
+--		WHERE
+--			active='Y'
 		ORDER BY
 			reqdatetime DESC
 		LIMIT 1
