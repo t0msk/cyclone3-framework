@@ -53,6 +53,7 @@ sub execute
 	my $INSERT="INSERT";
 	my $multi=500;
 	my $multilite=10;
+	my $LOCK=0;
 #	$INSERT="REPLACE";
 #	$DELAYED="DELAYED" if $TOM::DB{'stats'}{'delayed'};
 	
@@ -60,11 +61,41 @@ sub execute
 	
 	my $lock=new TOM::lock("weblog datamining") || return 1;
 	
-	main::_log("locking tables");
-	TOM::Database::SQL::execute("UNLOCK TABLES",'db_h'=>'stats','log'=>1);
-	TOM::Database::SQL::execute("LOCK TABLES TOM.a110_weblog_rqs WRITE, TOM.a110_weblog_rqslite WRITE",'db_h'=>'stats','log'=>1);
+	
+	my %last_request=App::110::SQL::get_last_active_request();
+	
+	if ($last_request{'reqtime'}+(3600*3) > time())
+	{
+		$DELAYED="DELAYED";
+		main::_log("enabling DELAYED inserts");
+	}
+	
+	if ($last_request{'reqtime'}+(3600*24) < time())
+	{
+		$LOCK=1;
+		main::_log("enabling LOCK inserts");
+	}
+	
+#	return 1;
+	
+#	if ($last_request{'reqtime'})
+#	{
+#		$time_to=$last_request{'reqtime'}-3600;
+#		main::_log("last active row TOM.a110_weblog_rqs has time ='$time_to'");
+#	}
+#	else
+#	{
+#		main::_log("none rows in TOM.a110_weblog_rqs - can't create statistics...");
+#		return 1;
+#	}
+	
+	
+	
+	main::_log("locking tables") if $LOCK;
+	TOM::Database::SQL::execute("UNLOCK TABLES",'db_h'=>'stats','log'=>1) if $LOCK;
+	TOM::Database::SQL::execute("LOCK TABLES TOM.a110_weblog_rqs WRITE, TOM.a110_weblog_rqslite WRITE",'db_h'=>'stats','log'=>1) if $LOCK;
 #	TOM::Database::SQL::execute("LOCK TABLES TOM.a110_weblog_rqslite WRITE",'db_h'=>'stats');
-	main::_log("tables locked");
+	main::_log("tables locked") if $LOCK;
 	
 	
 #	return 1;
@@ -426,9 +457,9 @@ sub execute
 		}
 	}
 	
-	main::_log("unlocking tables");
-	TOM::Database::SQL::execute("UNLOCK TABLES",'db_h'=>'stats','quiet'=>1);
-	main::_log("unlocked tables");
+	main::_log("unlocking tables") if $LOCK;
+	TOM::Database::SQL::execute("UNLOCK TABLES",'db_h'=>'stats','quiet'=>1) if $LOCK;
+	main::_log("unlocked tables") if $LOCK;
 	
 	$lock->close();
 	
