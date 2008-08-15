@@ -29,11 +29,21 @@ Write email to database or to email. Cron system module L<a130|source-doc/".core
 
 =item *
 
-B<from> - only information ( not saved to email header )
+B<from> - DEPRECATED only information ( not saved to email header )
+B<from_email> - only information ( not saved to email header )
 
 =item *
 
-B<to> - real email adresses ( not saved to email header )
+B<from_name> - sender name
+
+=item *
+
+B<to> - DEPRECATED real email adresses ( not saved to email header )
+B<to_email> - real email adresses ( not saved to email header )
+
+=item *
+
+B<to_name> - recipient name
 
 =item *
 
@@ -54,10 +64,19 @@ sub send
 	
 	$env{'time'}=time() unless $env{'time'};
 	$env{'priority'}=1 unless $env{'priority'};
-	$env{'from'}=$TOM::contact{'from'} unless $env{'from'};
+	
+	$env{'from_service'}='Cyclone3' unless $env{'from_service'};
+	
+	$env{'from_email'}=$env{'from'} unless $env{'from_email'}; #covering deprecated calls
+	$env{'from_email'}=$TOM::contact{'from'} unless $env{'from_email'};
+	
+	$env{'from_name'}="Cyclone3" unless $env{'from_name'};
+	
+	$env{'to_email'}=$env{'to'} unless $env{'to_email'}; #covering deprecated calls
+
 	
 	# spracovanie duplikatov emailovych adries
-	$env{to}=TOM::Utils::vars::unique_split($env{to});
+	$env{'to_email'}=TOM::Utils::vars::unique_split($env{'to_email'});
 	
 	#
 	# najprv zistim ci mozem tento email zapisovat do databazy, potom
@@ -73,9 +92,9 @@ sub send
 	
 	if (!$@)
 	{
-		main::_log("sending email over a130 to '$env{to}'");
+		main::_log("sending email over a130 to '$env{'to_email'}'");
 		
-		$env{body}=~s|'|\\'|g;
+		$env{'body'}=~s|'|\\'|g;
 		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			INSERT INTO TOM.a130_send
@@ -93,15 +112,15 @@ sub send
 			)
 			VALUES
 			(
-				'$env{md5}',
-				'$env{time}',
-				'$env{priority}',
-				'Cyclone3',
-				'$env{from}',
+				'$env{'md5'}',
+				'$env{'time'}',
+				'$env{'priority'}',
+				'$env{'from_name'}',
+				'$env{'from_email'}',
 				'$tom::H',
-				'Cyclone3',
-				'$env{to_name}',
-				'$env{to}',
+				'$env{'from_service'}',
+				'$env{'to_name'}',
+				'$env{'to_email'}',
 				'$env{body}'
 			)
 		},'quiet'=>1);
@@ -115,11 +134,11 @@ sub send
 	#
 	# zapisanie emailu ako file je az ako posledna moznost
 	#
-	main::_log("sending email over file '$ID' to to '$env{to}'");
+	main::_log("sending email over file '$ID' to '$env{'to_email'}'");
 	
 	open(HND_mail,">".$TOM::P."/_temp/_email-".$ID) || die "can't send email over file!\n";
-	print HND_mail "$env{'from'}\n";
-	print HND_mail "$env{'to'}\n";
+	print HND_mail "$env{'from_email'}\n";
+	print HND_mail "$env{'to_email'}\n";
 	#print HND_mail "---\n";
 	print HND_mail $env{'body'}."\n";
 	#print HND_mail "---\n";
