@@ -54,6 +54,7 @@ sub execute
 	else
 	{
 		$XSGN{'TMP'}=~s|<#user#>|$XSGN{'user-none'}|;
+		return 1;
 	}
 	
 	
@@ -86,7 +87,7 @@ sub execute
 				$sql_where
 			LIMIT 1
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'slave'=>1,'log'=>1);
+		my %sth0=TOM::Database::SQL::execute($sql,'slave'=>1,'log'=>1,'-cache'=>3600);
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		$env{'discussion.ID'} = $db0_line{'ID'};
 	}
@@ -113,7 +114,12 @@ sub execute
 		};
 		my %sth0=TOM::Database::SQL::execute($sql);
 		my %db0_line=$sth0{'sth'}->fetchhash();
-		if ($db0_line{'karma'} < -500)
+		if (
+				$db0_line{'karma'} < -500 ||
+				# and check stopwords
+				$main::FORM{'message'}=~/url=http/ ||
+				$main::FORM{'message'}=~/VIDE\-[0O]N/i
+		)
 		{
 			$XSGN{'TMP'}=$XSGN{'low_karma'};
 			return 1;
@@ -199,6 +205,17 @@ sub execute
 			},
 			'where' => "ID_category='$env{'discussion.ID'}'",
 			#'stop' => 1,
+		);
+		
+		App::020::SQL::functions::update(
+			'ID' => $env{'discussion.ID'},
+			'db_h' => "main",
+			'db_name' => $App::821::db_name,
+			'tb_name' => "a821_discussion",
+			'columns' =>
+			{
+				'datetime_lastpost' => 'NOW()',
+			},
 		);
 		
 		if ($main::USRM{'ID_user'})

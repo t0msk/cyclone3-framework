@@ -113,11 +113,28 @@ sub execute
 		foreach (split(' ',$env{'keywords'}))
 		{
 			next unless $_;
-			$where.="(name LIKE '%$_%' OR body LIKE '%$_%') AND ";
+			$where.="(name LIKE '%$_%' OR body LIKE '%$_%' OR owner_anonymous_name LIKE '%$_%') AND ";
 		}
 		$where=~s|AND $||;
 		$where.=") ";
 	}
+	
+	# get total count, not only limited messages
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$App::821::db_name`.a821_discussion_message
+		WHERE
+			$sql_where
+			$where
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+	
+
+	$XSGN{'TMP'}=~s|<%count%>|$sth0{'rows'}|g;
+	$env{'vox_count'}=$sth0{'rows'};
 	
 	my $sql=qq{
 		SELECT
@@ -135,8 +152,6 @@ sub execute
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
 	
-	$XSGN{'TMP'}=~s|<%count%>|$sth0{'rows'}|g;
-	
 	my $sql_failure=0;
 	
 	if ($sth0{'sth'})
@@ -147,7 +162,7 @@ sub execute
 			
 			if ($db0_line{'karma'}<-50)
 			{
-				$item=$XSGN{'item_lowkarma'};
+				$item=$XSGN{'item_lowkarma'} if $XSGN{'item_lowkarma'};
 			}
 			
 			$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
