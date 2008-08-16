@@ -109,7 +109,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users` (
   KEY `host` (`host`),
   KEY `lng` (`lng`),
   KEY `active` (`active`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- version=5.0
@@ -138,7 +138,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_arch` (
   KEY `host` (`host`),
   KEY `lng` (`lng`),
   KEY `active` (`active`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -147,10 +147,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_attrs` (
   `favorities` text NOT NULL,
   `friends` text NOT NULL,
   `settings` text NOT NULL,
-  `email` varchar(50) NOT NULL default '',
+  `email` varchar(128) NOT NULL default '',
   `email_verify` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`IDhash`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -159,10 +159,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_attrs_arch` (
   `favorities` text NOT NULL,
   `friends` text NOT NULL,
   `settings` text NOT NULL,
-  `email` varchar(50) NOT NULL default '',
+  `email` varchar(128) NOT NULL default '',
   `email_verify` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`IDhash`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -173,7 +173,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_group` (
   `status` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`host`,`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -181,7 +181,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_rel_group` (
   `IDgroup` int(10) unsigned NOT NULL auto_increment,
   `IDuser` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   PRIMARY KEY  (`IDgroup`,`IDuser`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- version=5.0
