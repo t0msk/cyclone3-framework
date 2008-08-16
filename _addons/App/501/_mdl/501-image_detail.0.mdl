@@ -101,8 +101,8 @@ sub execute
 			`$env{'db_name'}`.a501_image_view AS image
 		WHERE
 			image.ID_image = $env{'image.ID'} AND
-			image.ID_category = $env{'image_attrs.ID_category'} AND
-			image.lng = '$env{'lng'}'
+			image.ID_category = $env{'image_attrs.ID_category'}
+--			AND image.lng = '$env{'lng'}'
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
