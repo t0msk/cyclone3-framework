@@ -189,10 +189,18 @@ sub execute
 	
 	$env{'sql_order_by'}='article_attrs.datetime_start DESC' unless $env{'sql_order_by'};
 	
+	if (not $env{'sql_limit'}=~/,/){$env{'sql_limit'}="0,".$env{'sql_limit'}}
 	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
 	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
 	{
 		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
+	}
+	
+	my $count_max;#=$env{'sql_limit'};
+	if ($env{'sql_limit'}=~/,(\d+)/)
+	{
+		$count_max=$1;
+		$env{'sql_limit'}=~s/,(\d+)/",".($1+1)/e;
 	}
 	
 	my $execution_success=1;
@@ -344,6 +352,7 @@ sub execute
 			$env{'sql_limit'}
 	};
 	
+	
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache_auto_'=>60);
 	
 	if(!$sth0{'sth'})
@@ -371,7 +380,9 @@ sub execute
       $IDs_entity{$db0_line{'ID_entity_article'}}++;
       
       $item_counter++;
-     
+		
+		last if $count_max<$item_counter;
+		
 		main::_log("article[$item_counter] article_attrs.name='$db0_line{'name'}'");
 		
 		my $item=
@@ -545,25 +556,26 @@ sub execute
 	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
 	{
 		$env{'offset'}=$1;
-		$env{'count'}=$2;
+		#$env{'count'}=$2;
 	}
 	else
 	{
-		$env{'count'}=$env{'sql_limit'};
+		#$env{'count'}=$env{'sql_limit'};
 	}
+	#$env{'count'}=$count_max;
 	
 	
 	# offset
-	if ($env{'count'} && $item_counter >= $env{'count'}) # count
+	if ($count_max && $item_counter >= $count_max && $count_max < $sth0{'rows'}) # count
 	{
-		$XSGN{'next'}=~s|<%offset%>|$env{'offset'}+$env{'count'}|ge;
+		$XSGN{'next'}=~s|<%offset%>|$env{'offset'}+$count_max|ge;
 		$XSGN{'TMP'}=~s|<#next#>|$XSGN{'next'}|g;
 	}
 	if ($env{'offset'}-$env{'sql_limit_start'})
 	{
-		if ($env{'offset'}-$env{'count'}-$env{'sql_limit_start'}>0)
+		if ($env{'offset'} - $count_max - $env{'sql_limit_start'}>0)
 		{
-			$XSGN{'previous'}=~s|<%offset%>|$env{'offset'}-$env{'count'}|ge;
+			$XSGN{'previous'}=~s|<%offset%>|$env{'offset'}-$count_max|ge;
 		}
 		else
 		{
