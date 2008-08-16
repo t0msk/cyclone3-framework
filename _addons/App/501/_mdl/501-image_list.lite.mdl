@@ -42,11 +42,15 @@ B<db_name> - database name
 
 =item *
 
-B<ID_format> - ID of image format to display (image_format.ID)
+B<image.ID_format> - ID of image format to display (image_format.ID)
 
 =item *
 
-B<format_name> - name of image format to display (image_format.name)
+B<image_attrs.ID_category> - comma separated list of articles ID_category (can be set with * suffix to select all subcategories - 5;2*;3;7)
+
+=item *
+
+B<image_format.name> - name of image format to display (image_format.name)
 
 =item *
 
@@ -54,15 +58,11 @@ B<sql_limit> - limit to display (default '1')
 
 =item *
 
-B<sql_status> - required status (default 'Y')
+B<sql_limit_start> - at start skip defined items
 
 =item *
 
-B<sql_lng> - required language (default is current)
-
-=item *
-
-B<sql_order> - sql syntax to order by (default image.order_id DESC)
+B<sql_order_by> - sql syntax to order by (default image.order_id DESC)
 
 =back
 
@@ -77,6 +77,18 @@ B<sql_order> - sql syntax to order by (default image.order_id DESC)
 =item *
 
 B<TMP> - default
+
+=item *
+
+B<#previous#> B<#next#> - to skip to another offset
+
+=item *
+
+B<previous> B<next> - include into <#previous#> <#next#>
+
+=item *
+
+B<%offset%> - offset value (calculated from sql_limit input param)
 
 =item *
 
@@ -106,6 +118,10 @@ B<%db_*%> - database variables
 
 B<%fullsize.db_*%> - database variables of fullsize image
 
+=item *
+
+B<TMP_failure_no-data> - if defined, replaces TMP for empty database output
+
 =back
 
 =cut
@@ -119,15 +135,15 @@ sub execute
 	
 	$env{'db_name'}=$App::501::db_name unless $env{'db_name'};
 	
-	if (!$env{'ID_format'} && !$env{'format_name'})
+	if (!$env{'image.ID_format'} && !$env{'image_file.ID_format'} && !$env{'image_format.name'})
 	{
-		$env{'format_name'}='thumbnail';
+		$env{'image_format.name'}='thumbnail';
 	}
 	
-	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
+	$env{'image_attrs.lng'}=$env{'lng'} unless $env{'image_attrs.lng'};
+	$env{'image_attrs.status'}='Y' unless $env{'image_attrs.status'};
 	$env{'sql_limit'}='1' unless $env{'sql_limit'};
-	$env{'sql_status'}='Y' unless $env{'sql_status'};
-	$env{'sql_order'}='image.order_id DESC' unless $env{'sql_order'};
+	$env{'sql_order_by'}=$env{'sql_order'} || 'image.order_id DESC' unless $env{'sql_order_by'};
 	
 	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
 	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
@@ -138,14 +154,18 @@ sub execute
 	my $sql_where;
 	
 	#$env{'ID_format'}
-	if ($env{'ID_format'})
+	if ($env{'image.ID_format'})
 	{
-		$sql_where.=" AND image.ID_format=$env{'ID_format'}";
+		$sql_where.=" AND image.ID_format=$env{'image.ID_format'}";
 	}
-	elsif ($env{'format_name'})
+	elsif ($env{'image_format.name'})
 	{
-		$sql_where.=" AND image.ID_format_name='$env{'format_name'}'";
+		$sql_where.=" AND image.ID_format_name='$env{'image_format.name'}'";
 	}
+#	elsif ($env{'format_name'})
+#	{
+#		$sql_where.=" AND image.ID_format_name='$env{'format.name'}'";
+#	}
 	elsif ($env{'image_file.ID_format'})
 	{
 		$sql_where.=" AND image.ID_format='$env{'image_file.ID_format'}'";
@@ -174,8 +194,8 @@ sub execute
 				`$App::501::db_name`.a501_image_cat
 			WHERE
 				ID_charindex LIKE CONCAT(($cat_sql),"%") AND
-				lng='$env{'lng'}' AND
-				status IN ('$env{'sql_status'}')
+				lng='$env{'image_attrs.lng'}' AND
+				status IN ('$env{'image_attrs.status'}')
 		};
 	}
 	elsif ($env{'image_attrs.ID_category'})
@@ -201,17 +221,35 @@ sub execute
 		FROM
 			`$env{'db_name'}`.a501_image_view AS image
 		WHERE
-			image.status IN ('$env{'sql_status'}') AND
-			image.lng='$env{'sql_lng'}'
+			image.status IN ('$env{'image_attrs.status'}') AND
+			image.lng='$env{'image_attrs.lng'}'
 			$sql_where
 		ORDER BY
-			$env{'sql_order'}
+			$env{'sql_order_by'}
 		LIMIT $env{'sql_limit'}
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
+	
+	if(!$sth0{'sth'})
+	{
+		main::_log("SQL can't be executed",1);
+	}
+	
+	if(!$sth0{'rows'})
+	{
+		main::_log("err: could not fetch images");
+	}
+	
+	main::_log("received ".$sth0{'rows'}." rows");
+	
+	# Line counter
+	my $item_counter=0;
+	
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		my $item=$XSGN{'item'};
+		
+      $item_counter++;
 		
 		$XSGN{'TMP'}=~s|<%name%>|$db0_line{'ID_category_name'}|g;
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
@@ -238,7 +276,56 @@ sub execute
 #			$item=~s|<%$_%>|$db0_line{$_}|g;
 #		}
 		
-		$XSGN{'TMP'}=~s|<#item#>|$item|;
+		if($XSGN{'TMP'}=~/<#item.$item_counter#>/)
+		{
+			$XSGN{'TMP'}=~s|<#item.$item_counter#>|$item|;
+		}
+		else
+		{
+			$XSGN{'TMP'}=~s|<#item#>|$item|;
+		}
+		
+	}
+	
+	$XSGN{'TMP'}=~s|<%total_count%>|$item_counter|g;
+	
+	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
+	{
+		$env{'offset'}=$1;
+		$env{'count'}=$2;
+	}
+	else
+	{
+		$env{'count'}=$env{'sql_limit'};
+	}
+	
+	
+	# offset
+	if ($env{'count'} && $item_counter >= $env{'count'}) # count
+	{
+		$XSGN{'next'}=~s|<%offset%>|$env{'offset'}+$env{'count'}|ge;
+		$XSGN{'TMP'}=~s|<#next#>|$XSGN{'next'}|g;
+	}
+	if ($env{'offset'}-$env{'sql_limit_start'})
+	{
+		if ($env{'offset'}-$env{'count'}-$env{'sql_limit_start'}>0)
+		{
+			$XSGN{'previous'}=~s|<%offset%>|$env{'offset'}-$env{'count'}|ge;
+		}
+		else
+		{
+			$XSGN{'previous'}=~s|<%offset%>||ge;
+		}
+		$XSGN{'TMP'}=~s|<#previous#>|$XSGN{'previous'}|g;
+	}
+	
+	
+	if(!$item_counter)
+	{
+		if($XSGN{'TMP_failure_no-data'})
+		{
+			$XSGN{'TMP'} = $XSGN{'TMP_failure_no-data'};
+		}
 	}
 	
 	return 1;
