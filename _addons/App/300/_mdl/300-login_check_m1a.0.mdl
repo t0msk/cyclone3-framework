@@ -40,6 +40,7 @@ sub execute
 	}
 	else
 	{
+		main::_log("user is not logged in",1);
 		$XSGN{'TMP'} = $XSGN{'TMP_unlogged'};
 		$main::action="stop";
 	}

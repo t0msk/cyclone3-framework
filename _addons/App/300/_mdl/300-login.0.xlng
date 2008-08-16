@@ -1,5 +1,5 @@
 # OPEN ONLY AS UTF-8!!!
-<XML_LANGUAGE_DEFINITION lngs="sk,en">
+<XML_LANGUAGE_DEFINITION lngs="sk,en,hu">
 
  <VALUE lng="sk" id="logged">
 	<strong>Si úspešne prihlásený!</strong><br /><br />
@@ -11,23 +11,34 @@
 	Táto stránka sa automaticky presmeruje v priebehu jednej sekundy.<br />
 	Pokiaľ tvoj prehliadač nepodporuje automatické presmerovanie, prosím klikni na túto linku:
  </VALUE>
+<VALUE lng="hu" id="logged">
+	<strong>Si úspešne prihlásený!</strong><br /><br />
+	Táto stránka sa automaticky presmeruje v priebehu jednej sekundy.<br />
+	Pokiaľ tvoj prehliadač nepodporuje automatické presmerovanie, prosím klikni na túto linku:
+ </VALUE>
 
  <VALUE lng="sk" id="err">Neúspešne prihlásenie!</VALUE>
  <VALUE lng="en" id="err">Neúspešne prihlásenie!</VALUE>
+ <VALUE lng="hu" id="err">Neúspešne prihlásenie!</VALUE>
 
  <VALUE lng="sk" id="missed">Nevložil si prihlasovacie meno alebo heslo.</VALUE>
  <VALUE lng="en" id="missed">Nevložil si prihlasovacie meno alebo heslo.</VALUE>
+ <VALUE lng="hu" id="missed">Nevložil si prihlasovacie meno alebo heslo.</VALUE>
 
  <VALUE lng="sk" id="badpassoruser">Vložil si nesprávne meno alebo heslo.</VALUE>
  <VALUE lng="en" id="badpassoruser">Vložil si nesprávne meno alebo heslo.</VALUE>
+ <VALUE lng="hu" id="badpassoruser">Vložil si nesprávne meno alebo heslo.</VALUE>
 
  <VALUE lng="sk" id="errlogged">Už si prihlásený na inom počítači!</VALUE>
  <VALUE lng="en" id="errlogged">Už si prihlásený na inom počítači!</VALUE>
+ <VALUE lng="hu" id="errlogged">Už si prihlásený na inom počítači!</VALUE>
 
  <VALUE lng="sk" id="back">Späť</VALUE>
  <VALUE lng="en" id="back">Späť</VALUE>
+ <VALUE lng="hu" id="back">Späť</VALUE>
 
  <VALUE lng="sk" id="next">Pokračovať</VALUE>
  <VALUE lng="en" id="next">Pokračovať</VALUE>
+ <VALUE lng="hu" id="next">Pokračovať</VALUE>
 
 </XML_LANGUAGE_DEFINITION>

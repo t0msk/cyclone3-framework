@@ -1,24 +1,29 @@
 # OPEN ONLY AS UTF-8!!!
-<XML_LANGUAGE_DEFINITION lngs="sk,en,de">
+<XML_LANGUAGE_DEFINITION lngs="sk,en,de,hu">
 
 	<VALUE lng="sk" id="logged">Úspešné prihlásenie</VALUE>
 	<VALUE lng="en" id="logged">You have successfully logged in</VALUE>
 	<VALUE lng="de" id="logged">You have successfully logged in</VALUE>
+	<VALUE lng="hu" id="logged">You have successfully logged in</VALUE>
 
 	<VALUE lng="sk" id="err">Neúspešné prihlásenie!</VALUE>
 	<VALUE lng="en" id="err">Could not log you in</VALUE>
 	<VALUE lng="de" id="logged">Could not log you in</VALUE>
+	<VALUE lng="hu" id="logged">Could not log you in</VALUE>
 	
 	<VALUE lng="sk" id="missed">Nevložili ste prihlasovacie meno alebo heslo</VALUE>
 	<VALUE lng="en" id="missed">You did not enter an user name or password</VALUE>
 	<VALUE lng="de" id="missed">You did not enter an user name or password</VALUE>
+	<VALUE lng="hu" id="missed">You did not enter an user name or password</VALUE>
 	
 	<VALUE lng="sk" id="badpassoruser">Vložili ste nesprávne meno alebo heslo</VALUE>
 	<VALUE lng="en" id="badpassoruser">You did not enter a valid user name or password</VALUE>
 	<VALUE lng="de" id="badpassoruser">You did not enter a valid user name or password</VALUE>
+	<VALUE lng="hu" id="badpassoruser">You did not enter a valid user name or password</VALUE>
 	
 	<VALUE lng="sk" id="errlogged">Už ste prihlásený na inom počítači</VALUE>
 	<VALUE lng="en" id="errlogged">You are already logged in from another location</VALUE>
 	<VALUE lng="de" id="errlogged">You are already logged in from another location</VALUE>
+	<VALUE lng="hu" id="errlogged">You are already logged in from another location</VALUE>
 	
 </XML_LANGUAGE_DEFINITION>
