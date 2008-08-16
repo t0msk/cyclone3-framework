@@ -18,5 +18,5 @@
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="130" />
 	<VAR id="-name" value="autosend" />
-		<VAR id="max" value="100" />
+		<VAR id="max" value="50" />
 </MODULE>
