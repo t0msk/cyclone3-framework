@@ -1576,6 +1576,7 @@ while ($main::CGI=new CGI::Fast())
 			if ($env0{id} eq "title_")
 			{
 				_log("Add to DOC::title to ".$env0{value});
+				next if ($env0{'lang'} && $env0{'lang'} ne $tom::lng);
 				$H->add_DOC_title($env0{value});
 				next;
 			}
