@@ -1,0 +1,220 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+=head1 NAME
+
+542-file_list.lite.mdl
+
+=head1 DESCRIPTION
+
+Lite list of files.
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::542::_init|app/"542/_init.pm">
+
+=back
+
+=cut
+
+use App::542::_init;
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<db_name> - database name
+
+=item *
+
+B<sql_limit> - limit to display (default '1')
+
+=item *
+
+B<sql_status> - required status (default 'Y')
+
+=item *
+
+B<sql_lng> - required language (default is current)
+
+=item *
+
+B<sql_order> - sql syntax to order by (default file_attrs.name, file_attrs.name_ext ASC)
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default
+
+=item *
+
+B<#item#> - gateway to file item
+
+=item *
+
+B<item> - file item
+
+=item *
+
+B<%ID%> - file ID
+
+=item *
+
+B<%ID_entity%> - file ID_entity
+
+=item *
+
+B<%name%> - file name
+
+=item *
+
+B<%db_*%> - database variables
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
+	$env{'db_name'}=$App::542::db_name unless $env{'db_name'};
+	
+	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
+	$env{'sql_limit'}='1' unless $env{'sql_limit'};
+	$env{'sql_status'}='Y' unless $env{'sql_status'};
+	$env{'sql_order'}='file.name, file.name_ext ASC' unless $env{'sql_order'};
+	
+	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
+	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
+	{
+		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
+	}
+	
+	my $sql_where;
+	
+	
+	
+	# find ID_category LIKE *
+	if ($env{'file_attrs.ID_category'}=~s/\*$//)
+	{
+		my $cat_sql=qq{
+					SELECT
+						ID_charindex
+					FROM
+						`$App::542::db_name`.a542_file_dir
+					WHERE
+						ID=$env{'file_attrs.ID_category'}
+					LIMIT 1
+		};
+		$env{'file_attrs.ID_category'} = qq{
+			SELECT
+				ID
+			FROM
+				`$App::542::db_name`.a542_file_dir
+			WHERE
+				ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+				lng='$env{'lng'}' AND
+				status IN ('$env{'sql_status'}')
+		};
+	}
+	elsif ($env{'file_attrs.ID_category'})
+	{
+		
+	}
+	
+	if ($env{'file.ID_entity'})
+	{
+		$sql_where.=" AND file.ID_entity_file IN ('".
+			(join "','", split(';',$env{'file.ID_entity'})).
+			"')";
+	}
+	
+	$sql_where.=" AND file.ID_category IN ($env{'file_attrs.ID_category'})"
+		if $env{'file_attrs.ID_category'};
+	
+	# Line counter
+	my $item_counter=0;
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$env{'db_name'}`.a542_file_view AS file
+		WHERE
+			file.status IN ('$env{'sql_status'}') AND
+			file.lng='$env{'sql_lng'}'
+			$sql_where
+		ORDER BY
+			$env{'sql_order'}
+		LIMIT $env{'sql_limit'}
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>0,'-slave'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+      $item_counter++;
+		
+		my $item=
+			$XSGN{'item.'.$item_counter}
+			|| $XSGN{'item'};
+		
+		$XSGN{'TMP'}=~s|<%name%>|$db0_line{'ID_category_name'}|g;
+		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		if($XSGN{'TMP'}=~/<#item.$item_counter#>/)
+		{
+			$XSGN{'TMP'}=~s|<#item.$item_counter#>|$item|;
+		}
+		else
+		{
+			$XSGN{'TMP'}=~s|<#item#>|$item|;
+		}
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
