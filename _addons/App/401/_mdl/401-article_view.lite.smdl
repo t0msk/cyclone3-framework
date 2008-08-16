@@ -1,0 +1,229 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::401::_init;
+use App::160::_init;
+
+sub execute
+{
+	my %env=@_;
+	
+	my $sql_where;
+	my $sql_order;
+	
+	$sql_order="datetime_start DESC";
+	
+	$sql_where.="AND ID_entity_article=$env{'article.ID_entity'} "
+		if $env{'article.ID_entity'};
+	
+	$sql_where.="AND ID_category IN ($env{'article_attrs.ID_category'}) "
+		if $env{'article_attrs.ID_category'};
+	
+	if ($env{'sql_where'})
+	{
+		$sql_where.="AND ".$env{'sql_where'};
+	}
+	
+	if(!$sql_where)
+	{
+		main::_log('no ID_entity or ID_category specified!!!', 1);
+#		die "none sql defined\n" unless $sql_where;
+#		return undef unless $sql_where;
+		return 1;
+	}
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$App::401::db_name`.a401_article_view
+		WHERE
+			status='Y' AND
+			datetime_start <= NOW() AND
+			(datetime_stop IS NULL OR datetime_stop >= NOW())
+			$sql_where
+		ORDER BY
+			$sql_order
+		LIMIT 1;
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'-slave'=>1,'-cache_'=>300);
+	my %article=$sth0{'sth'}->fetchhash();
+	
+	if (!$article{'ID_article'})
+	{
+		return 1;
+	}
+	
+	$main::env{'a401.article.name'}.=$article{'name'} if $article{'name'};
+	$main::env{'a401.article.posix_owner'}=$article{'posix_owner'} if $article{'posix_owner'};
+	$main::env{'keywords'}.=", ".$article{'keywords'} if $article{'keywords'};
+	$main::env{'a401.article_cat.name'}=$article{'ID_category_name'} if $article{'ID_category_name'};
+	$main::env{'a401.article_cat.ID'}=$article{'ID_category'} if $article{'ID_category'};
+	
+	
+	$main::H->add_DOC_title($article{'name'}) unless $env{'DOC_title.disable'};
+	$main::H->add_DOC_keywords($article{'keywords'});
+	$main::H->add_DOC_description($article{'name'}.". ".TOM::Text::format::xml2plain($article{'abstract'}));
+	
+	my $sql=qq{
+		UPDATE
+			`$App::401::db_name`.a401_article_ent
+		SET
+			visits=visits+1
+		WHERE
+			ID_entity=$article{'ID_entity_article'}
+		LIMIT 1
+	};
+	TOM::Database::SQL::execute($sql,'quiet'=>1);
+	
+	if ($main::USRM{'ID_user'})
+	{
+		# collect data to personalize
+		my $sql=qq{
+			INSERT DELAYED INTO
+				`$App::401::db_name`.a401_article_visit
+			(
+				datetime_event,
+				ID_user,
+				ID_article
+			)
+			VALUES
+			(
+				NOW(),
+				'$main::USRM{'ID_user'}',
+				'$article{'ID_entity_article'}'
+			)
+		};
+		TOM::Database::SQL::execute($sql,'quiet'=>1);
+	}
+	
+	Tomahawk::module(
+		'-type' => "mdl",
+		'-category' => "401",
+		'-name' => "article_view",
+		'-version' => "lite",
+		'-global' => 1,
+		'-xsgn' => $env{'view_xsgn'},
+		'-xsgn_global' => $env{'view_xsgn_global'},
+		'-xlng_load' => $env{'view_xlng_load'},
+		'-cache_id' => 'default',
+		'-cache_changed' => $article{'datetime_create'},
+		'-TMP' =>	$env{'view_TMP'},
+			'article.ID' => $article{'ID_article'},
+#			'article_attrs.ID_category' => ${'ID_article'},
+			'a501_image_file.ID_format' => $env{'a501_image_file.ID_format'},
+			'a501_image_file.ID_format.1' => $env{'a501_image_file.ID_format.1'},
+#			'gallery.thumbnail.ID_format' => '6',
+#			'ignore.img.1' => 1,
+#			'ad' => '1',
+	) if (exists $env{'view_TMP'});
+	
+	
+	
+	# discussion
+	if (exists $env{'discussion_TMP'})
+	{
+		my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::401::db_name,
+			'l_prefix' => 'a401',
+			'l_table' => 'article',
+			'l_ID_entity' => $article{'ID_entity_article'},
+			'r_prefix' => "a821",
+			'r_table' => "discussion",
+			'status' => "Y"
+			))[0];
+			
+		if ($relation && $relation->{'ID'})
+		{
+			$env{'discussion_xsgn_global'}=$env{'view_xsgn_global'} unless $env{'discussion_xsgn_global'};
+			Tomahawk::module(
+				'-type' => "mdl",
+				'-category' => "821",
+				'-name' => "discussion_message_new",
+				'-version' => "user",
+				'-global' => 1,
+				'-TMP' => $env{'discussion_add_TMP'},
+				'-TMP_check' => 1,
+				'-xsgn' => $env{'discussion_xsgn'},
+				'-xsgn_global' => $env{'discussion_xsgn_global'},
+					'discussion.ID_entity' => $relation->{'r_ID_entity'},
+			);
+			my $sql=qq{
+				SELECT
+					*
+				FROM
+					`$App::821::db_name`.a821_discussion
+				WHERE
+					ID_entity='$relation->{'r_ID_entity'}'
+				LIMIT 1;
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'-slave'=>1,'-cache_'=>10);
+			my %discussion=$sth0{'sth'}->fetchhash();
+			
+			$env{'discussion_add_xsgn'}=$env{'discussion_xsgn'} unless $env{'discussion_add_xsgn'};
+			$env{'discussion_add_xsgn_global'}=$env{'discussion_xsgn_global'} unless $env{'discussion_add_xsgn_global'};
+			
+			Tomahawk::module(
+				'-type' => "mdl",
+				'-category' => "821",
+				'-name' => "discussion_message_list",
+				'-version' => "lite",
+				'-global' => 1,
+				'-TMP' => $env{'discussion_TMP'},
+				'-TMP_check' => 1,
+				'-xsgn' => $env{'discussion_add_xsgn'},
+				'-xsgn_global' => $env{'discussion_add_xsgn_global'},
+				'-cache_id' => "default",
+					'discussion.lastpost' => $discussion{'datetime_lastpost'},
+					'discussion.ID' => $discussion{'ID'},
+			);
+		}
+	}
+	
+	# articles
+	if (exists $env{'related_TMP'})
+	{
+		my $relations;
+		foreach my $relation(App::160::SQL::get_relations(
+			'db_name' => $App::401::db_name,
+			'l_prefix' => 'a401',
+			'l_table' => 'article',
+			'l_ID_entity' => $article{'ID_entity_article'},
+			'r_prefix' => "a401",
+			'r_table' => "article",
+			'status' => "Y"
+		))
+		{
+			$relations.=";".$relation->{'r_ID_entity'};
+		}
+		
+		main::_log("related articles = $relations");
+		
+		if ($relations)
+		{
+			Tomahawk::module(
+				'-type' => "mdl",
+				'-category' => "401",
+				'-name' => "article_list",
+				'-version' => "lite",
+				'-global' => 1,
+				'-TMP' => $env{'related_TMP'},
+				'-TMP_check' => 1,
+				'-cache_id' => 'related',
+				'-xsgn' => $env{'related_xsgn'},
+				'-xsgn_global' => $env{'related_xsgn_global'},
+					'article.ID_entity' => $relations,
+					'sql_limit' => 10,
+			);
+		}
+	}
+	
+	return 1;
+}
+
+1;
