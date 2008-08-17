@@ -79,9 +79,9 @@
 	</entity>
 	
 	
-	<entity id="email.table">
+	<entity id="email.table" replace_variables="true">
 	<![CDATA[
-		<table width="100%" cellpadding="0" cellspacing="0">
+		<table width="<$tpl::entity{'content.width'}>" cellpadding="0" cellspacing="0">
 			<thead>
 				<tr>
 					<th colspan="<%colscount%>"><%title%></th>
@@ -98,7 +98,7 @@
 			<tbody>
 				<#email.table.line#>
 			</tbody>
-		</table>
+		</table><br/>
 	]]>
 	</entity>
 	
