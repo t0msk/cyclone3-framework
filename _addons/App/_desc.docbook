@@ -315,13 +315,17 @@
       </listitem>
 
       <listitem>
-        <para><emphasis role="bold">9</emphasis> - Marketing</para>
+        <para><emphasis role="bold">9</emphasis> - E-Commerce</para>
 
         <itemizedlist>
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=900/">900</ulink></emphasis> - Bridge
             to banner system <emphasis>obsolete</emphasis></para>
+          </listitem>
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=910/">910</ulink></emphasis> - Product catalog <emphasis>obsolete</emphasis></para>
           </listitem>
         </itemizedlist>
       </listitem>
