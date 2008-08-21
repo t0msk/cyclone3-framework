@@ -58,14 +58,6 @@
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=app&amp;file=120/">120</ulink></emphasis> -
-            Sources (editors)</para>
-
-            <para>Management of sources like editors and authors.</para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=130/">130</ulink></emphasis> -
             Internal mailsystem</para>
 
@@ -95,7 +87,7 @@
             Xrelated <action>[in progress]</action></para>
 
             <para>This application allow to create relations between entities
-            in other applications ( forum to article, ect... )</para>
+            in other applications ( article to discussion, ect... )</para>
           </listitem>
 
           <listitem>
@@ -177,8 +169,8 @@
 
         <itemizedlist>
           <listitem>
-            <para><ulink url="?|?section=app&amp;file=300/"><emphasis
-            role="bold">300</emphasis></ulink> - Domain USRM ( User Management
+            <para><ulink url="?|?section=app&amp;file=3001/"><emphasis
+            role="bold">301</emphasis></ulink> - Domain USRM ( User Management
             )</para>
 
             <para>Allow to logging users, registering, special sections of
@@ -191,28 +183,17 @@
         <para><emphasis role="bold">4</emphasis> - Content</para>
 
         <itemizedlist>
-          <listitem>
-            <para><emphasis role="bold"><ulink
-            url="?|?section=app&amp;file=400/">400</ulink></emphasis> -
-            Articles (html)</para>
-          </listitem>
 
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=401/">401</ulink></emphasis> -
-            Articles (rewrite) <action>[in progress]</action></para>
-          </listitem>
-
-          <listitem>
-            <para><emphasis role="bold"><ulink
-            url="?|?section=app&amp;file=410/">410</ulink></emphasis> -
-            Polls</para>
+            Articles</para>
           </listitem>
 
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=411/">411</ulink></emphasis> - Polls
-            (rewrite) <action>[in progress]</action></para>
+            (rewrite)</para>
           </listitem>
 
           <listitem>
@@ -227,24 +208,24 @@
         storages</para>
 
         <itemizedlist>
-          <listitem>
-            <para><emphasis role="bold"><ulink
-            url="?|?section=app&amp;file=500/">500</ulink></emphasis> -
-            Images</para>
-
-            <para>Storage for jpeg images and formats ( original, thumbnail,
-            etc.. )</para>
-          </listitem>
 
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=501/">501</ulink></emphasis> - Images
-            (rewrite) <action>[in progress]</action></para>
+            </para>
 
             <para>Storage for images and formats ( original, thumbnail, etc..
             ), automatical conversions</para>
           </listitem>
 
+          <listitem>
+            <para><ulink url="?|?section=app&amp;file=510/"><emphasis
+            role="bold">510</emphasis></ulink> - Videos</para>
+
+            <para>Video storage with auto-conversion to many formats, captions, splitted to parts.</para>
+          </listitem>
+        </itemizedlist>
+			 
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=520/">520</ulink></emphasis> -
@@ -254,17 +235,8 @@
           </listitem>
 
           <listitem>
-            <para><ulink url="?|?section=app&amp;file=540/"><emphasis
-            role="bold">540</emphasis></ulink> - Files</para>
-
-            <para>Uploading, Downloading and management of file
-            storage.</para>
-          </listitem>
-
-          <listitem>
-            <para><ulink url="?|?section=app&amp;file=541/"><emphasis
-            role="bold">541</emphasis></ulink> - Files (rewrite) <action>[in
-            progress]</action></para>
+            <para><ulink url="?|?section=app&amp;file=542/"><emphasis
+            role="bold">542</emphasis></ulink> - Files</para>
 
             <para>Uploading, Downloading and management of file
             storage.</para>
@@ -279,7 +251,7 @@
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=700/">700</ulink></emphasis> -
-            Workgroup <action>[in progress]</action></para>
+            Workgroup <action>[planning]</action></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -308,8 +280,8 @@
 
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=app&amp;file=820/">820</ulink></emphasis> -
-            Forum</para>
+            url="?|?section=app&amp;file=821/">821</ulink></emphasis> -
+            Discussions</para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -321,7 +293,7 @@
           <listitem>
             <para><emphasis role="bold"><ulink
             url="?|?section=app&amp;file=900/">900</ulink></emphasis> - Bridge
-            to banner system <action>[in progress]</action></para>
+            to banner system <action>[planning]</action></para>
           </listitem>
           <listitem>
             <para><emphasis role="bold"><ulink
