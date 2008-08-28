@@ -223,6 +223,7 @@ sub execute
 				)
 				WHERE
 					video_part.status IN ('Y','N','W') AND
+					video_part.process_lock = 'N' AND
 					file1.status='Y' AND
 					file2.status='Y' AND
 					file1.datetime_create > file2.datetime_create
