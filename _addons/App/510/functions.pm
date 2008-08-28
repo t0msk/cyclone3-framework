@@ -177,6 +177,31 @@ sub video_part_file_generate
 		return undef;
 	}
 	
+	
+	my $sql=qq{
+		INSERT INTO `$App::510::db_name`.`a510_video_part_file_process`
+		(
+			`ID_part`,
+			`ID_format`,
+			`hostname`,
+			`hostname_PID`,
+			`process`,
+			`datetime_start`
+		)
+		VALUES
+		(
+			'$video_part{'ID'}',
+			'$format{'ID'}',
+			'$TOM::hostname',
+			'$$',
+			'',
+			NOW()
+		)
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	my $process_ID=$sth0{'sth'}->insertid();
+	
+	
 	my $video1_path=$file_parent{'file_alt_src'} || $tom::P.'/!media/a510/video/part/file/'._video_part_file_genpath
 	(
 		$format_parent{'ID'},
@@ -200,6 +225,14 @@ sub video_part_file_generate
 	{
 		main::_log("parent video_part_file can't be processed",1);
 		
+		my $sql=qq{
+			UPDATE `$App::510::db_name`.`a510_video_part_file_process`
+			SET datetime_stop=NOW(), status='N'
+			WHERE ID=$process_ID
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		
 		if ($file_parent{'ID_format'} == $App::510::video_format_original_ID && ($out <=> 512))
 		{
 			main::_log("lock processing of video_part.ID='$env{'video_part.ID'}'",1);
@@ -218,6 +251,14 @@ sub video_part_file_generate
 		$t->close();
 		return undef;
 	}
+	
+	my $sql=qq{
+		UPDATE `$App::510::db_name`.`a510_video_part_file_process`
+		SET datetime_stop=NOW(), status='Y'
+		WHERE ID=$process_ID
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	
 	video_part_file_add
 	(
@@ -395,6 +436,7 @@ sub video_part_file_process
 				$ext='avi' if $env{'lavfopts'}=~/format=avi/;
 				$ext='flv' if $env{'lavfopts'}=~/format=flv/;
 				$ext='wmv' if $env{'lavfopts'}=~/format=wmv/;
+				$ext='wmv' if $env{'lavcopts'}=~/vcodec=wmv2/;
 				$ext='264' if ($env{'x264encopts'} && exists $env{'nosound'});
 			}
 			elsif ($env{'encoder'} eq "ffmpeg")
@@ -1707,7 +1749,7 @@ sub _video_part_file_thumbnail
 	
 	if (!$env{'timestamps'})
 	{
-		$env{'timestamps'}=[300,120,60,30,20,10,5,1];
+		$env{'timestamps'}=[300,120,60,30,20,10,5,1,0];
 	}
 	
 	my $out2;

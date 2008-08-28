@@ -43,10 +43,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
+  FULLTEXT KEY `keywords` (`keywords`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID` (`ID`),
   KEY `status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -400,6 +401,22 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file_j` (
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file_process` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_part` mediumint(8) unsigned default NULL, -- rel _video_part.ID
+  `ID_format` bigint(20) unsigned NOT NULL, -- rel _video_format.ID_entity
+  `hostname` varchar(128) character set ascii collate ascii_bin NOT NULL,
+  `hostname_PID` varchar(128) character set ascii collate ascii_bin NOT NULL,
+  `process` text character set ascii NOT NULL,
+  `process_output` text character set ascii NOT NULL,
+  `datetime_start` datetime NOT NULL,
+  `datetime_stop` datetime default NULL,
+  `status` char(1) character set ascii NOT NULL default 'W',
+  PRIMARY KEY  (`ID`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
