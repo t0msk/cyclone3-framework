@@ -1299,6 +1299,11 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("access to:".$tom::Ptype."/_type/".($FORM{TID}).".pub.type");
 			local $/;$file_data=<TYPE>;
 		}
+		elsif (($main::page_statuscode eq "200")&&($main::FORM{'TID'}=~/^[lmg]_a(.*?)_/)&&(open (TYPE,"<".$tom::Ptype."/_addons/App/".$1."/_type/".($FORM{TID}).".pub.type")))
+		{
+			main::_log("access to:".$tom::Ptype."/_addons/App/".$1."/_type/".($FORM{TID}).".pub.type");
+			local $/;$file_data=<TYPE>;
+		}
 		elsif (($main::page_statuscode eq "200")&&($main::FORM{TID} =~/default/)&&(open (TYPE,"<".$tom::P."/_type/l_0000.pub.type")))
 		{
 			main::_deprecated("using bad TypeID file, $tom::P/_type/l_0000.pub.type");
@@ -2255,7 +2260,7 @@ while ($main::CGI=new CGI::Fast())
 				)
 			{
 				if (
-						($IAdm)||($ITst)
+						($IAdm)||($ITst)||($main::ENV{'HTTP_USER_AGENT'}=~/wget/i)
 					)
 				{
 					main::_log("convert string '$var'",1,"lib.err",1);
