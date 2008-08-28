@@ -290,6 +290,16 @@ sub execute
 			$XSGN{'NULL'}=~s|<%ID%>|$db0_line{'ID_image'}|g;
 			$XSGN{'NULL'}=~s|<%ID_entity%>|$db0_line{'ID_entity_image'}|g;
 			
+			my %owner=App::301::authors::get_author($db0_line{'posix_owner'});
+			$XSGN{'NULL'}=~s|<%owner_(.*?)%>|$owner{$1}|g;
+			my %author=App::301::authors::get_author($db0_line{'posix_author'});
+			$XSGN{'NULL'}=~s|<%author_(.*?)%>|$author{$1}|g;
+			my %editor=App::301::authors::get_author($db0_line{'posix_editor'});
+			$XSGN{'NULL'}=~s|<%editor_(.*?)%>|$editor{$1}|g;
+			
+			my $rating5=int(($db0_line{'rating'}/20)+0.5);
+			$XSGN{'NULL'}=~s|<%rating5%>|$rating5|g;
+			
 			my $thumbnail="$tom::H_a501/image/file/$db0_line{'file_path'}";
 			main::_log("thumbnail='$thumbnail'");
 			$XSGN{'NULL'}=~s|<%thumbnail%>|$thumbnail|g;

@@ -373,6 +373,10 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_view` AS (
 		image_file.file_size,
 		image_file.file_ext,
 		
+		image_ent.rating_score,
+		image_ent.rating_votes,
+		(image_ent.rating_score/image_ent.rating_votes) AS rating,
+		
 		CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path,
 		
 		IF
