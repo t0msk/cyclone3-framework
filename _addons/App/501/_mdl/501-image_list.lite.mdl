@@ -261,8 +261,8 @@ sub execute
 				`$env{'db_name'}`.a501_image_view AS image
 			WHERE
 				image.ID_entity_image = $db0_line{'ID_entity_image'} AND
-				image.status IN ('$env{'sql_status'}') AND
-				image.lng='$env{'sql_lng'}' AND
+				image.status IN ('$env{'image_attrs.status'}') AND
+				image.lng='$env{'image_attrs.lng'}' AND
 				image.ID_format=$App::501::image_format_fullsize_ID
 			LIMIT 1
 		};
