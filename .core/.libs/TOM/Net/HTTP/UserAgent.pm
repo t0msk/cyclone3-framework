@@ -185,14 +185,29 @@ our @table=
 		USRM_disable => 1,
 		messages => ["Accessing this service using anonymizer is not allowed","Your browser does not identify itself with any user agent information. Please use at least \"Mozilla/3.0 (compatible;)\".","For more information, please refer to RFC2616 chapter 3.8.,14.43 and turn on your browser identification."],
 	},
-
-
-
-
-
+	
+	
+	
+	
+	
 	# OPERA - operu este pred MSIE, kvoli tomuto:
 	# Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; en) Opera 8.54
 	# je tam id Opera a i MSIE
+	{name=>'Opera 12.X',
+		regexp		=>	['Opera.12'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Opera",
+	},
+	{name=>'Opera 11.X',
+		regexp		=>	['Opera.11'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Opera",
+	},
+	{name=>'Opera 10.X',
+		regexp		=>	['Opera.10'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Opera",
+	},
 	{name=>'Opera 9.X',
 		regexp		=>	['Opera.9'],
 		agent_type	=>	"browser",
@@ -345,6 +360,13 @@ our @table=
 	# --------------------------------------------------------------------
 	
 	# MOZILLA
+	{name=>'Mozilla Firefox 3.1',
+		regexp		=>	['Firefox/3.1'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Mozilla.org",
+		xmlhttp => 1,
+#		log	=>	1,
+	},
 	{name=>'Mozilla Firefox 3.0',
 		regexp		=>	['Firefox/3.0','Minefield/3','GranParadiso/3'],
 		agent_type	=>	"browser",
@@ -357,38 +379,21 @@ our @table=
 		agent_type	=>	"browser",
 		agent_group	=>	"Mozilla.org",
 		xmlhttp => 1,
+		old	=>	0,
 #		log	=>	1,
 	},
 	{name=>'Mozilla Firefox 1.5',
 		regexp		=>	['Firefox/1.5'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Mozilla.org",
-		old			=>	0,
+		old			=>	1,
 #		log	=>	1,
 	},
-#	{name=>'Mozilla Firefox 1.4',
-#		regexp		=>	['Firefox/1.4'],
-#		agent_type	=>	"browser",
-#		agent_group	=>	"Mozilla.org",
-#		log	=>	1,
-#	},
-#	{name=>'Mozilla Firefox 1.3',
-#		regexp		=>	['Firefox/1.3'],
-#		agent_type	=>	"browser",
-#		agent_group	=>	"Mozilla.org",
-#		log	=>	1,
-#	},
-#	{name=>'Mozilla Firefox 1.2',
-#		regexp		=>	['Firefox/1.2'],
-#		agent_type	=>	"browser",
-#		agent_group	=>	"Mozilla.org",
-#		log	=>	1,
-#	},
 	{name=>'Mozilla Firefox 1.1',
 		regexp		=>	['Firefox/1.1'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Mozilla.org",
-		old			=>	1,
+		old			=>	2,
 #		log	=>	1,
 	},
 	{name=>'Mozilla Firefox 1.0',
@@ -396,38 +401,44 @@ our @table=
 		agent_type	=>	"browser",
 		agent_group	=>	"Mozilla.org",
 #		log	=>	1,
-		old			=>	2,
+		old			=>	3,
 	},
 	{name=>'Mozilla Firefox 0.10',
 		regexp		=>	['Firefox/0\.10'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Mozilla.org",
 #		log	=>	1,
-		old			=>	3,
+		old			=>	4,
 	},
 	{name=>'Mozilla Firefox 0.9',
 		regexp		=>	['Firefox/0\.9'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Mozilla.org",
 #		log	=>	1,
-		old			=>	4,
+		old			=>	5,
 	},
 	{name=>'Mozilla Firefox 0.8',
 		regexp		=>	['Firefox/0\.8'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Mozilla.org",
-		old			=>	4,
+		old			=>	5,
 	},
 	{name=>'Mozilla Firefox 0.7',
 		regexp		=>	['Firefox/0\.7'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Mozilla.org",
-		old			=>	5,
+		old			=>	6,
 	},
 	
 	
 	# --------------------------------------------------------------------
 	
+	{name=>'Mozilla Thunderbird 3.x',
+		regexp		=>	['Thunderbird/3\.'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Mozilla.org",
+#		old			=>	1,
+	},
 	{name=>'Mozilla Thunderbird 2.x',
 		regexp		=>	['Thunderbird/2\.'],
 		agent_type	=>	"browser",
@@ -466,6 +477,21 @@ our @table=
 		agent_type	=>	"browser",
 		agent_group	=>	"Mozilla.org",
 		old			=>	3,
+	},
+	
+	# --------------------------------------------------------------------
+	
+	# Google Chrome
+	{name=>'Google Chrome 0.2',
+		regexp		=>	['Chrome/0.2'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Google",
+	},
+	# Google Chrome
+	{name=>'Google Chrome ???',
+		regexp		=>	['Chrome/'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Google",
 	},
 	
 	# --------------------------------------------------------------------
