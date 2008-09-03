@@ -47,7 +47,7 @@ sub execute
 	main::_log("cleaning TOM.a110_weblog_rqs");
 	$main::DB{stats}->Query("
 		DELETE FROM TOM.a110_weblog_rqs
-		WHERE reqdatetime<=DATE_SUB(NOW(), INTERVAL 32 DAY)
+		WHERE reqdatetime<=DATE_SUB(CURDATE(), INTERVAL 32 DAY)
 	");
 	
 	main::_log("cleaning TOM.a110_sitemap_day");
@@ -90,7 +90,7 @@ sub execute
 			FROM
 				TOM.a110_weblog_rqs
 			WHERE
-				reqdatetime <= DATE_SUB(NOW(), INTERVAL ".($TOM::a110_domain{$domain}{'expire'})." DAY)
+				reqdatetime <= DATE_SUB(CURDATE(), INTERVAL $TOM::a110_domain{$domain}{'expire'} DAY)
 				AND domain='$domain'
 		},'db_h'=>'stats');
 	}
