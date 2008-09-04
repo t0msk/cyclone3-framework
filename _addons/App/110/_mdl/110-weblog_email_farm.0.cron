@@ -1,0 +1,581 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use TOM;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+use App::110::_init;
+use TOM::Net::HTTP;
+use TOM::Net::HTTP::referer;
+use TOM::Net::HTTP::CGI;
+use TOM::Utils::datetime;
+use Ext::EmailGraph::_init;
+use Ext::SVGraph::_init;
+use Ext::SVG2PNG::_init;
+
+sub execute
+{
+	alarm(3600);
+	my %env=@_;
+	
+	$env{'days'}=31 unless $env{'days'};
+#	my $post="days";
+	
+	my $tpl=new TOM::Template(
+		'level' => "auto",
+		'name' => "email-stats",
+		'content-type' => "xhtml"
+	);
+	
+	$env{'to_email'} = $TOM::contact{'TOM_farm'}.";".$TOM::contact{'TECH_farm'}.";".$TOM::contact{'DEV_farm'};
+	$env{'to_email'}=TOM::Utils::vars::unique_split($env{'to_email'});
+	
+	my %data=App::110::SQL::get_last_collected_day();
+	my $lastday=$data{'reqdate'};
+	
+	my $date = DateTime->now()->subtract( days => $env{'days'} );
+	my $firstday=$date->year().'-'.(sprintf('%02d',$date->month())).'-'.(sprintf('%02d',$date->day()));
+	
+	
+	main::_log("from $firstday to $lastday");
+	
+	#return 1;
+	
+	
+	# DESIGN
+	$tpl->{'entity'}{'email.xhtml'}=~s|<%main-title%>|Farm availability|g;
+	$tpl->{'entity'}{'email.xhtml'}=~s|<%main-desc%>|This statistic is last $env{'days'} days availability of server farm|g;
+	$tpl->{'entity'}{'email.xhtml'}=~s|<%main-term%>|$firstday - $lastday|g;
+	
+	my $date = TOM::Utils::datetime::mail_current();
+	
+	my $msg = MIME::Entity->build
+	(
+		'Type'    => "multipart/related",
+		'List-Id' => "Cyclone3",
+		'Date'    => $date,
+		'From'    => "$tom::H ($TOM::hostname) <$TOM::contact{'from'}>",
+		'To'      => TOM::Net::email::convert_TO($env{'to_email'}),
+		'Subject' => "Cyclone3 Stats: Farm availability of last $env{'days'} days"
+	);
+	
+	my @img;
+	my $i;
+	
+	
+	my $graf=SVGraph::2D::lines->new(
+		'title' => "Availability of generated pages (lower is better)",
+#		'title' => "Visitors",
+		'title.color' => $tpl->{'entity'}{'color.h1'},
+		'type' => "stacked",
+		'x' => 450,
+		'y' => 250,
+		'show_legend' => 1,
+		'show_grid_x' => 1,
+		'grid_y_scale_minimum' => 0,
+#		'grid_y_scale_maximum' => $db0_line{'maximum'},
+		'show_lines_smooth' => 1,
+		#'show_label_textsize' => 10,
+	);
+	my $points;
+	my %columns;
+	
+	$columns{'wait'}=$graf->addColumn('title'=>"WAIT",'color'=>'blue','show_points'=>1,'show_area'=>0);
+	$columns{'proc'}=$graf->addColumn('title'=>"PROC",'color'=>'sapphire','show_points'=>0,'show_area'=>1,'show_area_opacity'=>0.5);
+	
+	
+	# table
+	my $table=$tpl->{'entity'}{'email.table'};
+	$table =~ s|<%title%>|Table of days|g;
+	$table =~ s|<%colscount%>|4|g;
+	# list of columns
+	foreach my $col_name ( 'Day', 'PROC', 'WAIT', 'Sum' )
+	{
+		my $col = $tpl->{'entity'}{'email.table.col.name'};
+		$col =~ s|<%name%>|$col_name|g;
+		$table=~s|<#email.table.col.name#>|$col|g;
+	}
+	
+	my %data;
+	my %sum;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			AVG(load_proc)*1000 AS proc,
+			AVG(load_req-load_proc)*1000 AS wait,
+			reqdatetime
+		FROM
+			TOM.a110_weblog_day
+		WHERE
+			domain_sub='' AND
+			DATE(reqdatetime) >= '$firstday' AND
+			DATE(reqdatetime) <= '$lastday'
+		GROUP BY
+			reqdatetime
+		ORDER BY
+			reqdatetime
+	},'db_h'=>'stats');
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$db0_line{'proc'}=int($db0_line{'proc'});
+		$db0_line{'wait'}=int($db0_line{'wait'});
+		
+		
+		#$db0_line{'reqdatetime'}=~s/^\d\d\d\d\-\d\d\-\d\d (\d\d).*$/$1/;
+		my $day=$db0_line{'reqdatetime'};
+		
+		$graf->addRowLabel($day);
+		
+		$db0_line{'reqdatetime'}=~/(\d+)-(\d+)-(\d+)/;
+		main::_log("day='$db0_line{'reqdatetime'}' proc='$db0_line{'proc'}' wait='$db0_line{'wait'}'");
+		my $dt = DateTime->new(
+			'year'   => $1,
+			'month'  => $2,
+			'day'    => $3
+		);
+		if ($dt->day_of_week == 1)
+		{
+			# add mark to monday
+			#$graf->addRowMark($db0_line{'reqdatetime'},'show_label_text'=>'MON');
+			
+			$dt->subtract('days'=>2);
+			my $from_date=$dt->year().'-'.(sprintf('%02d',$dt->month())).'-'.(sprintf('%02d',$dt->day()));
+			
+#			main::_log("from $from_date to $db0_line{'reqdatetime'}");
+			
+			$graf->addRowMarkArea(
+				$from_date,
+				'color' => 'red',
+				#'show_label_text'=>'MON',
+				'end'=>$db0_line{'reqdatetime'}
+			);
+		}
+		
+		$columns{'proc'}->addData($day,$db0_line{'proc'});
+		$columns{'wait'}->addData($day,$db0_line{'wait'});
+		#$columns{'pages'}->addData($hour,$data{$hour}{'visits'});
+		
+		my $line = $tpl->{'entity'}{'email.table.line'};
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$day || '&nbsp;'/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'proc'} || '&nbsp;'/e;
+			$sum{'visits'}+=$db0_line{'visits'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'wait'} || '&nbsp;'/e;
+			$sum{'IDhashs'}+=$db0_line{'IDhashs'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$db0_line{'wait'}+$db0_line{'proc'} || '&nbsp;'/e;
+			$sum{'IDhashs'}+=$db0_line{'IDhashs'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		$table =~ s|<#email.table.line#>|$line|g;
+		
+	}
+	
+	
+	# generate graph
+	my $graf_svg=new TOM::Temp::file('ext'=>'svg');
+	push @img, new TOM::Temp::file('ext'=>'png');
+	$graf->save($graf_svg->{'filename'});
+	Ext::SVG2PNG::convert($graf_svg->{'filename'},$img[-1]->{'filename'});
+	# add graf
+	$tpl->{'entity'}{'email.xhtml'}=~s|<#email.content#>|<img class="graph" src="cid:$i\@graf"/><br/><#email.content#>|;
+	$i++;
+	
+	# add table
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$table<#email.content#>|;
+	
+	
+	
+	
+	
+	
+	
+	
+	my $graf=SVGraph::2D::lines->new(
+		'title' => "Ammount of generated pages",
+		'title.color' => $tpl->{'entity'}{'color.h1'},
+		'type' => "stacked",
+		'x' => 450,
+		'y' => 250,
+#		'show_legend' => 1,
+		'show_grid_x' => 1,
+		'grid_y_scale_minimum' => 0,
+		'show_lines_smooth' => 1,
+	);
+	my %columns;
+	
+	$columns{'pages'}=$graf->addColumn('title'=>"pages",'color'=>'sapphire','show_points'=>0,'show_area'=>1,'show_area_opacity'=>0.5);
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			SUM(visits_all) AS pages,
+			reqdatetime
+		FROM
+			TOM.a110_weblog_day
+		WHERE
+			domain_sub='' AND
+			DATE(reqdatetime) >= '$firstday' AND
+			DATE(reqdatetime) <= '$lastday'
+		GROUP BY
+			reqdatetime
+		ORDER BY
+			reqdatetime
+	},'db_h'=>'stats');
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $day=$db0_line{'reqdatetime'};
+		$graf->addRowLabel($day);
+		$db0_line{'reqdatetime'}=~/(\d+)-(\d+)-(\d+)/;
+		main::_log("day='$db0_line{'reqdatetime'}' pages='$db0_line{'pages'}'");
+		my $dt = DateTime->new(
+			'year'   => $1,
+			'month'  => $2,
+			'day'    => $3
+		);
+		if ($dt->day_of_week == 1)
+		{
+			$dt->subtract('days'=>2);
+			my $from_date=$dt->year().'-'.(sprintf('%02d',$dt->month())).'-'.(sprintf('%02d',$dt->day()));
+			$graf->addRowMarkArea(
+				$from_date,
+				'color' => 'red',
+				'end'=>$db0_line{'reqdatetime'}
+			);
+		}
+		$columns{'pages'}->addData($day,$db0_line{'pages'});
+	}
+	# generate graph
+	my $graf_svg=new TOM::Temp::file('ext'=>'svg');
+	push @img, new TOM::Temp::file('ext'=>'png');
+	$graf->save($graf_svg->{'filename'});
+	Ext::SVG2PNG::convert($graf_svg->{'filename'},$img[-1]->{'filename'});
+	# add graf
+	$tpl->{'entity'}{'email.xhtml'}=~s|<#email.content#>|<img class="graph" src="cid:$i\@graf"/><br/><#email.content#>|;
+	$i++;
+	
+	
+	
+	
+	
+	my $graf=SVGraph::2D::lines->new(
+		'title' => "Amount of active domains",
+		'title.color' => $tpl->{'entity'}{'color.h1'},
+		'type' => "stacked",
+		'x' => 450,
+		'y' => 250,
+#		'show_legend' => 1,
+		'show_grid_x' => 1,
+		'grid_y_scale_minimum' => 0,
+		'show_lines_smooth' => 1,
+	);
+	my %columns;
+	
+	$columns{'domains'}=$graf->addColumn('title'=>"domains",'color'=>'sapphire','show_points'=>0,'show_area'=>1,'show_area_opacity'=>0.5);
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			COUNT(*) AS domains,
+			reqdatetime
+		FROM
+			TOM.a110_weblog_day
+		WHERE
+			domain_sub != '' AND
+			DATE(reqdatetime) >= '$firstday' AND
+			DATE(reqdatetime) <= '$lastday'
+		GROUP BY
+			reqdatetime
+		ORDER BY
+			reqdatetime
+	},'db_h'=>'stats');
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $day=$db0_line{'reqdatetime'};
+		$graf->addRowLabel($day);
+		$db0_line{'reqdatetime'}=~/(\d+)-(\d+)-(\d+)/;
+		main::_log("day='$db0_line{'reqdatetime'}' pages='$db0_line{'domains'}'");
+		my $dt = DateTime->new(
+			'year'   => $1,
+			'month'  => $2,
+			'day'    => $3
+		);
+		if ($dt->day_of_week == 1)
+		{
+			$dt->subtract('days'=>2);
+			my $from_date=$dt->year().'-'.(sprintf('%02d',$dt->month())).'-'.(sprintf('%02d',$dt->day()));
+			$graf->addRowMarkArea(
+				$from_date,
+				'color' => 'red',
+				'end'=>$db0_line{'reqdatetime'}
+			);
+		}
+		$columns{'domains'}->addData($day,$db0_line{'domains'});
+	}
+	# generate graph
+	my $graf_svg=new TOM::Temp::file('ext'=>'svg');
+	push @img, new TOM::Temp::file('ext'=>'png');
+	$graf->save($graf_svg->{'filename'});
+	Ext::SVG2PNG::convert($graf_svg->{'filename'},$img[-1]->{'filename'});
+	# add graf
+	$tpl->{'entity'}{'email.xhtml'}=~s|<#email.content#>|<img class="graph" src="cid:$i\@graf"/><br/><#email.content#>|;
+	$i++;
+	
+	
+	
+	
+	
+	
+	
+	main::_log("Availability of hosts (last day)");
+	# table
+	my $table=$tpl->{'entity'}{'email.table'};
+	$table =~ s|<%title%>|Availability of hosts (last day)|g;
+	$table =~ s|<%colscount%>|5|g;
+	# list of columns
+	foreach my $col_name ( 'Host', 'Requests', 'PROC', 'WAIT', 'Sum' )
+	{
+		my $col = $tpl->{'entity'}{'email.table.col.name'};
+		$col =~ s|<%name%>|$col_name|g;
+		$table=~s|<#email.table.col.name#>|$col|g;
+	}
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			host,
+			COUNT(*) as cnt,
+			AVG(load_proc)*1000 AS proc,
+			AVG(load_req-load_proc)*1000 AS wait
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			DATE(reqdatetime) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+		GROUP BY
+			host
+		ORDER BY
+			host ASC
+	},'db_h'=>'stats');
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$db0_line{'proc'}=int($db0_line{'proc'});
+		$db0_line{'wait'}=int($db0_line{'wait'});
+		
+		main::_log(" $db0_line{'host'} $db0_line{'proc'}/$db0_line{'wait'}");
+		
+		my $line = $tpl->{'entity'}{'email.table.line'};
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$db0_line{'host'} || '&nbsp;'/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'cnt'} || '&nbsp;'/e;
+			$sum{'visits'}+=$db0_line{'visits'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'proc'} || '&nbsp;'/e;
+			$sum{'visits'}+=$db0_line{'visits'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'wait'} || '&nbsp;'/e;
+			$sum{'IDhashs'}+=$db0_line{'IDhashs'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$db0_line{'wait'}+$db0_line{'proc'} || '&nbsp;'/e;
+			$sum{'IDhashs'}+=$db0_line{'IDhashs'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		$table =~ s|<#email.table.line#>|$line|g;
+		
+	}
+	
+	# add table
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$table<#email.content#>|;
+	
+	
+	main::_log("20 domains with lowest availability (last 7 days)");
+	# table
+	my $table=$tpl->{'entity'}{'email.table'};
+	$table =~ s|<%title%>|20 domains with lowest availability (last 7 days)|g;
+	$table =~ s|<%colscount%>|5|g;
+	# list of columns
+	foreach my $col_name ( 'Domain', 'Requests', 'PROC', 'WAIT', 'Sum' )
+	{
+		my $col = $tpl->{'entity'}{'email.table.col.name'};
+		$col =~ s|<%name%>|$col_name|g;
+		$table=~s|<#email.table.col.name#>|$col|g;
+	}
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			SUM(visits_all) as cnt,
+			domain,
+			domain_sub,
+			AVG(load_proc)*1000 AS proc,
+			AVG(load_req-load_proc)*1000 AS wait
+		FROM
+			TOM.a110_weblog_day
+		WHERE
+			DATE(reqdatetime) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND
+			domain_sub != ''
+		GROUP BY
+			domain_sub
+		ORDER BY
+			AVG(load_req) DESC
+		LIMIT 20
+	},'db_h'=>'stats');
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$db0_line{'proc'}=int($db0_line{'proc'});
+		$db0_line{'wait'}=int($db0_line{'wait'});
+		
+		my $line = $tpl->{'entity'}{'email.table.line'};
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$db0_line{'domain_sub'} || $db0_line{'domain'} || '&nbsp;'/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'cnt'} || '&nbsp;'/e;
+			$sum{'visits'}+=$db0_line{'visits'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'proc'} || '&nbsp;'/e;
+			$sum{'visits'}+=$db0_line{'visits'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'wait'} || '&nbsp;'/e;
+			$sum{'IDhashs'}+=$db0_line{'IDhashs'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$db0_line{'wait'}+$db0_line{'proc'} || '&nbsp;'/e;
+			$sum{'IDhashs'}+=$db0_line{'IDhashs'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		$table =~ s|<#email.table.line#>|$line|g;
+		
+	}
+	
+	# add table
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$table<#email.content#>|;
+	
+	
+	# table
+	my $table=$tpl->{'entity'}{'email.table'};
+	$table =~ s|<%title%>|20 Type of services with lowest availability (last day)|g;
+	$table =~ s|<%colscount%>|6|g;
+	# list of columns
+	foreach my $col_name ( 'TypeID', 'Domain', 'Requests', 'PROC', 'WAIT', 'Sum' )
+	{
+		my $col = $tpl->{'entity'}{'email.table.col.name'};
+		$col =~ s|<%name%>|$col_name|g;
+		$table=~s|<#email.table.col.name#>|$col|g;
+	}
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			COUNT(*) as cnt,
+			query_TID,
+			domain,
+			domain_sub,
+			AVG(load_proc)*1000 AS proc,
+			AVG(load_req-load_proc)*1000 AS wait
+		FROM
+			TOM.a110_weblog_rqs
+		WHERE
+			DATE(reqdatetime) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+		GROUP BY
+			query_TID
+		ORDER BY
+			AVG(load_req) DESC
+		LIMIT 20
+	},'db_h'=>'stats');
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$db0_line{'proc'}=int($db0_line{'proc'});
+		$db0_line{'wait'}=int($db0_line{'wait'});
+		
+		my $line = $tpl->{'entity'}{'email.table.line'};
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$db0_line{'query_TID'} || '&nbsp;'/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'domain_sub'} || $db0_line{'domain'} || '&nbsp;'/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'cnt'} || '&nbsp;'/e;
+			$sum{'visits'}+=$db0_line{'visits'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'proc'} || '&nbsp;'/e;
+			$sum{'visits'}+=$db0_line{'visits'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'wait'} || '&nbsp;'/e;
+			$sum{'IDhashs'}+=$db0_line{'IDhashs'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$db0_line{'wait'}+$db0_line{'proc'} || '&nbsp;'/e;
+			$sum{'IDhashs'}+=$db0_line{'IDhashs'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		$table =~ s|<#email.table.line#>|$line|g;
+		
+	}
+	
+	# add table
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$table<#email.content#>|;
+	
+	
+	# cleaning
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<#.*?#>||gs;
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<%.*?%>||gs;
+	
+	$msg->attach
+	(
+		'Data' => $tpl->{'entity'}{'email.xhtml'},
+		'Type' => "text/html;charset=\"UTF-8\"",
+		'Encoding' => "8bit",
+	);
+	
+	my $i;
+	foreach (@img)
+	{
+		$msg->attach
+		(
+			'Path'       => $img[$i]->{'filename'},
+			'Type'       => "image/png",
+			'Content-ID' => '<'.$i.'@graf>',
+			'Encoding'   => "base64"
+		);
+		$i++;
+	}
+	
+	$msg->attach
+	(
+		'Path'       => $tpl->{'file'}{'cyclone3-150x44.png'}{'dst'},
+		'Type'       => "image/gif",
+		'Content-ID' => "<logo\@cyclone3.org>",
+		'Encoding'   => "base64"
+	);
+	
+	TOM::Net::email::send
+	(
+		'to' => $env{'to_email'},
+		'body' => $msg->as_string()
+	);
+	
+	return 1;
+}
+
+
+our $authors = 'info@webom.sk';
+
+=head1 AUTHOR
+
+WebCom, s.r.o (info@webcom.sk)
+
+=cut
+
+1;
