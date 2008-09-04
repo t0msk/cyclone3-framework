@@ -63,17 +63,17 @@ sub execute
 #	");
 	
 	# WEBCLICK
-#	main::_log("cleaning TOM.a110_webclick_log");
-#	$main::DB{stats}->Query("
-#		DELETE FROM TOM.a110_webclick_log
-#		WHERE time_insert<$long
-#	");
+	main::_log("cleaning TOM.a110_webclick_log");
+	TOM::Database::SQL::execute(qq{
+		DELETE FROM TOM.a110_webclick_log
+		WHERE datetime_insert < DATE_SUB(CURDATE(),INTERVAL 31 DAY)
+	},'db_h'=>'stats');
 	
 	main::_log("cleaning TOM.a110_mdl_log");
-	$main::DB{stats}->Query("
+	TOM::Database::SQL::execute(qq{
 		DELETE FROM TOM.a110_mdl_log
 		WHERE reqtime<$long
-	");
+	},'db_h'=>'stats');
 	
 	main::_log("cleaning TOM.a110_obsolete_log");
 	$main::DB{stats}->Query("
