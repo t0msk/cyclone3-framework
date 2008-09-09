@@ -239,8 +239,8 @@ sub user_add
 		(exists $env{'user_profile.name_suffix'} && ($env{'user_profile.name_suffix'} ne $user_profile{'name_suffix'}))||
 		# date_birth
 		($env{'user_profile.date_birth'} && ($env{'user_profile.date_birth'} ne $user_profile{'date_birth'}))||
-		# pin
-		($env{'user_profile.pin'} && ($env{'user_profile.pin'} ne $user_profile{'pin'}))||
+		# PIN
+		($env{'user_profile.PIN'} && ($env{'user_profile.PIN'} ne $user_profile{'PIN'}))||
 		
 		# street
 		($env{'user_profile.street'} && ($env{'user_profile.street'} ne $user_profile{'street'}))||
@@ -291,8 +291,8 @@ sub user_add
 			if (exists $env{'user_profile.name_suffix'} && ($env{'user_profile.name_suffix'} ne $user_profile{'name_suffix'}));
 		$columns{'date_birth'}="'".TOM::Security::form::sql_escape($env{'user_profile.date_birth'})."'"
 			if ($env{'user_profile.date_birth'} && ($env{'user_profile.date_birth'} ne $user_profile{'date_birth'}));
-		$columns{'pin'}="'".TOM::Security::form::sql_escape($env{'user_profile.pin'})."'"
-			if ($env{'user_profile.pin'} && ($env{'user_profile.pin'} ne $user_profile{'pin'}));
+		$columns{'PIN'}="'".TOM::Security::form::sql_escape($env{'user_profile.PIN'})."'"
+			if ($env{'user_profile.PIN'} && ($env{'user_profile.PIN'} ne $user_profile{'PIN'}));
 		
 		$columns{'street'}="'".TOM::Security::form::sql_escape($env{'user_profile.street'})."'"
 			if ($env{'user_profile.street'} && ($env{'user_profile.street'} ne $user_profile{'street'}));
@@ -359,6 +359,7 @@ sub user_add
 			$env{'user.login'} ||
 			exists $env{'user.pass'} ||
 			exists $env{'user.email'} ||
+			$env{'user.status'} ||
 			$env{'user.email_verified'}
 		)
 	)
@@ -376,6 +377,9 @@ sub user_add
 		# email_verified
 		$set.=",email_verified='$env{'user.email_verified'}'"
 			if $env{'user.email_verified'};
+		# status
+		$set.=",status='$env{'user.status'}'"
+			if $env{'user.status'};
 		
 		TOM::Database::SQL::execute(qq{
 			UPDATE `TOM`.a301_user
