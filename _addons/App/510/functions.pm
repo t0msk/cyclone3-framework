@@ -233,21 +233,94 @@ sub video_part_file_generate
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		
-		if ($file_parent{'ID_format'} == $App::510::video_format_original_ID && ($out <=> 512))
-		{
-			main::_log("lock processing of video_part.ID='$env{'video_part.ID'}'",1);
-			App::020::SQL::functions::update(
-				'ID' => $env{'video_part.ID'},
-				'db_h' => "main",
-				'db_name' => $App::510::db_name,
-				'tb_name' => "a510_video_part",
-				'columns' =>
-				{
-					'process_lock' => "'E'"
-				},
-				'-journalize' => 1
-			);
-		}
+#		if ($file_parent{'ID_format'} == $App::510::video_format_original_ID && ($out <=> 512))
+#		{
+#			main::_log("lock processing of video_part.ID='$env{'video_part.ID'}'",1);
+#			App::020::SQL::functions::update(
+#				'ID' => $env{'video_part.ID'},
+#				'db_h' => "main",
+#				'db_name' => $App::510::db_name,
+#				'tb_name' => "a510_video_part",
+#				'columns' =>
+#				{
+#					'process_lock' => "'E'"
+#				},
+#				'-journalize' => 1
+#			);
+			
+			# create empty video_part_file
+			# Check if video_part_file for this format exists
+			my $sql=qq{
+				SELECT
+					*
+				FROM
+					`$App::510::db_name`.`a510_video_part_file`
+				WHERE
+					ID_entity=$env{'video_part.ID'} AND
+					ID_format=$format{'ID'}
+				LIMIT 1
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+			if (my %db0_line=$sth0{'sth'}->fetchhash)
+			{
+				App::020::SQL::functions::update(
+					'ID' => $db0_line{'ID'},
+					'db_h' => 'main',
+					'db_name' => $App::510::db_name,
+					'tb_name' => 'a510_video_part_file',
+					'columns' =>
+					{
+						'name' => "''",
+						'video_width' => "''",
+						'video_height' => "''",
+						'video_codec' => "''",
+						'video_fps' => "''",
+						'video_bitrate' => "''",
+						'audio_codec' => "''",
+						'audio_bitrate' => "''",
+						'length' => "''",
+						'file_alt_src' => "''",
+						'file_size' => "''",
+						'file_checksum' => "''",
+						'file_ext' => "''",
+						'from_parent' => "'Y'",
+						'regen' => "'N'",
+						'status' => "'E'",
+					},
+					'-journalize' => 1,
+				);
+			}
+			else
+			{
+				my $ID=App::020::SQL::functions::new(
+					'db_h' => "main",
+					'db_name' => $App::510::db_name,
+					'tb_name' => "a510_video_part_file",
+					'columns' =>
+					{
+						'ID_entity' => $env{'video_part.ID'},
+						'ID_format' => $format{'ID'},
+						'name' => "''",
+						'video_width' => "''",
+						'video_height' => "''",
+						'video_codec' => "''",
+						'video_fps' => "''",
+						'video_bitrate' => "''",
+						'audio_codec' => "''",
+						'audio_bitrate' => "''",
+						'length' => "''",
+						'file_alt_src' => "''",
+						'file_size' => "''",
+						'file_checksum' => "''",
+						'file_ext' => "''",
+						'from_parent' => "'Y'",
+						'regen' => "'N'",
+						'status' => "'E'",
+					},
+					'-journalize' => 1
+				);
+			}
+#		}
 		$t->close();
 		return undef;
 	}
@@ -661,11 +734,13 @@ Add new video (uploading new original sized video)
    'file' => '/path/to/file',
  # 'video.ID' => '',
  # 'video.ID_entity' => '',
+ # 'video_en.keywords' => '',
  # 'video_format.ID' => '',
  # 'video_attrs.ID_category' => '',
  # 'video_attrs.name' => '',
  # 'video_attrs.description' => '',
  # 'video_part.ID' => '',
+ # 'video_part.keywords' => '',
  # 'video_part.part_id' => '',
  # 'video_part_attrs.ID_category' => '',
  # 'video_part_attrs.name' => '',
@@ -1017,6 +1092,7 @@ sub video_add
 		'video_attrs.name' => $video_attrs{'name'},
 		'video_format.ID' => $env{'video_format.ID'},
 		'video_part.ID' => $env{'video_part.ID'},
+		'video_part.keywords' => $env{'video_part.keywords'},
 		'video_part.part_id' => $env{'video_part.part_id'},
 		'video_part_attrs.lng' => $env{'video_attrs.lng'},
 		'video_part_attrs.name' => $env{'video_part_attrs.name'},
@@ -1029,6 +1105,7 @@ sub video_add
 		return undef
 	};
 	
+	# MUST be rewrited - update only if necessary
 	if ($env{'video_attrs.ID'} &&
 	(
 		$env{'video_attrs.name'} ||
@@ -1083,6 +1160,7 @@ Add new video-part (uploading new original sized video)
  # 'video_attrs.name' => '',
  # 'video_attrs.description' => '',
  # 'video_part.ID' => '',
+ # 'video_part.keywords' => '',
  # 'video_part.part_id' => '',
  # 'video_part_attrs.ID_category' => '',
  # 'video_part_attrs.name' => '',
@@ -1186,6 +1264,7 @@ sub video_part_add
 		main::_log("adding new video_part");
 		my %columns;
 		$columns{'ID_entity'}=$env{'video.ID_entity'};
+		$columns{'keywords'}=$env{'video_part.keywords'} if $env{'video_part.keywords'};
 		$columns{'part_id'}=$env{'video_part.part_id'} if $env{'video_part.part_id'};
 		$columns{'thumbnail_lock'}="'Y'" if $env{'file_thumbnail'};
 		$env{'video_part.ID'}=App::020::SQL::functions::new(
@@ -1201,6 +1280,25 @@ sub video_part_add
 		main::_log("generated video_part ID='$env{'video_part.ID'}'");
 	}
 	
+	# update if necessary
+	if ($env{'video_part.ID'} &&
+	(
+		# keywords
+		(exists $env{'video_part.keywords'} && ($env{'video_part.keywords'} ne $video_part{'keywords'}))
+	))
+	{
+		my %columns;
+		$columns{'keywords'}="'".$env{'video_part.keywords'}."'"
+			if (exists $env{'video_part.keywords'} && ($env{'video_part.keywords'} ne $video_part{'keywords'}));
+		App::020::SQL::functions::update(
+			'ID' => $env{'video_part.ID'},
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_video_part",
+			'columns' => {%columns},
+			'-journalize' => 1
+		);
+	}
 	
 	if (!$env{'video_part_attrs.ID'})
 	{

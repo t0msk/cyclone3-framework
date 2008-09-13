@@ -113,16 +113,18 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
   `visits` int(10) unsigned NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
+  `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `process_lock` char(1) character set ascii NOT NULL default 'N',
   `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
+  FULLTEXT KEY `keywords` (`keywords`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID` (`ID`),
   KEY `visits` (`visits`),
   KEY `part_id` (`part_id`),
   KEY `status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -134,6 +136,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_j` (
   `visits` int(10) unsigned NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
+  `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `process_lock` char(1) character set ascii NOT NULL default 'N',
   `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y'
@@ -545,6 +548,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_view` AS (
 		video_part_attrs.name AS part_name,
 		video_part_attrs.description AS part_description,
 		video_part.part_id AS part_id,
+		video_part.keywords AS part_keywords,
 		video_part.visits,
 		video_part_attrs.lng AS part_lng,
 		
