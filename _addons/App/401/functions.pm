@@ -367,16 +367,37 @@ sub article_add
 			'-journalize' => 1,
 		);
 	}
+	
 	# generate keywords
-	if (!$env{'article_content.keywords'} &&
-		( $env{'article_content.abstract'} || $env{'article_content.body'}))
+	
+	if ($env{'article_content.keywords'})
 	{
-		$env{'article_content.keywords'}='';
+		my @ref=split(' # ',$article_content{'keywords'});
+		$ref[1]=$env{'article_content.keywords'};
+		$env{'article_content.keywords'}=$ref[0].' # '.$ref[1];
+	}
+	else {$env{'article_content.keywords'}=$article_content{'keywords'};}
+	if ( $env{'article_content.abstract'} || $env{'article_content.body'})
+	{
+		my @ref=split(' # ',$env{'article_content.keywords'});
+		$ref[0]='';
 		my %keywords=article_content_extract_keywords(%env);
 		foreach (keys %keywords)
-		{$env{'article_content.keywords'}.=", ".$_;}
-		$env{'article_content.keywords'}=~s|^, ||;
+		{$ref[0].=", ".$_;}
+		$ref[0]=~s|^, ||;
+		$env{'article_content.keywords'}=$ref[0].' # '.$ref[1];
 	}
+	
+#	if (!$env{'article_content.keywords'} &&
+#		( $env{'article_content.abstract'} || $env{'article_content.body'}))
+#	{
+#		$env{'article_content.keywords'}='';
+#		my %keywords=article_content_extract_keywords(%env);
+#		foreach (keys %keywords)
+#		{$env{'article_content.keywords'}.=", ".$_;}
+#		$env{'article_content.keywords'}=~s|^, ||;
+#	}
+	
 	# get article_content
 	if ($env{'article_content.ID'} && !$article_content{'body'})
 	{
@@ -600,11 +621,11 @@ sub article_item_info
 				'status' => "Y"
 			))
 			{
-				$data{'relation_status'}='Y';
 				if ($relation->{'r_prefix'} eq "a542" && $relation->{'r_table'} eq "file")
-				{$data{'attachment_status'}='Y'};
+				{$data{'attachment_status'}='Y';next};
 				if ($relation->{'r_prefix'} eq "a821" && $relation->{'r_table'} eq "discussion")
-				{$data{'discussion_status'}='Y'};
+				{$data{'discussion_status'}='Y';next};
+				$data{'relation_status'}='Y';
 			}
 			
 			# check relations
