@@ -64,6 +64,14 @@ B<sql_limit> - limit to display (default '1')
 
 B<sql_limit_start> - at start skip defined items
 
+=item *
+
+B<sql_order_by> - order by in SQL
+
+=item *
+
+B<sql_where> - where in SQL
+
 =back
 
 =cut
@@ -97,10 +105,6 @@ B<%sql_limit%> - SQL limit
 =item *
 
 B<%sql_limit_start%> - start SQL limit from value
-
-=item *
-
-B<TMP_failure_no-data> - if defined, replaces TMP for empty database output
 
 =item *
 
@@ -159,6 +163,10 @@ B<#gallery_mark#> - gateway to gallery mark
 =item *
 
 B<gallery_mark> - gallery mark
+
+=item *
+
+B<TMP_failure_no-data> - if defined, replaces TMP for empty database output
 
 =back
 
