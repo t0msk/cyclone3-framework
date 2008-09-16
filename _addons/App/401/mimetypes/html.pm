@@ -39,6 +39,7 @@ use App::401::_init;
 use base "HTML::Parser";
 
 our $cache=300;
+our $debug=0;
 our $tpl=new TOM::Template(
 	'level' => "auto",
 	'addon' => "a401",
@@ -97,12 +98,13 @@ sub start
 	
 	if (not $tag=~/^(br|strong|em|i|u|b)$/) # don't display info about not important tags
 	{
-		main::_log("tag='$tag' origtext='$origtext'");
+		main::_log("tag='$tag' origtext='$origtext'") if $debug;
 	}
 	
 	my $out_full="<#tag#>";
 	
 	my $out_tag;
+	my $out_addon_type;
 	my $out_cnt;
 	
 	# modify
@@ -160,7 +162,7 @@ sub start
 			#$vars{'format'}=$App::501::image_format_thumbnail_ID unless $vars{'format'};
 			if ($vars{'ID'})
 			{
-				main::_log("find a501_image ID='$vars{'ID'}' ID_format='$vars{'ID_format'}'");
+				main::_log("find a501_image ID='$vars{'ID'}' ID_format='$vars{'ID_format'}'") if $debug;
 				my $sql=qq{
 					SELECT
 						*
@@ -176,7 +178,7 @@ sub start
 				if ($db0_line{'ID'})
 				{
 					$attr->{'src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
-					main::_log("found image src='$attr->{'src'}'");
+					main::_log("found image src='$attr->{'src'}'") if $debug;
 					$attr->{'alt'}=$db0_line{'name'};
 					
 					$attr->{'width_forced'}=$attr->{'width'};
@@ -202,13 +204,15 @@ sub start
 		elsif ($attr->{'id'}=~/^a510_video:(.*)$/)
 		{
 			$self->{'count'}->{'video'}++;
+			$self->{'count'}->{'a510_video'}++;my $addon_cnt=$self->{'count'}->{'a510_video'};
+			$self->{'count'}->{'a510_video_part'}++;my $addon_part_cnt=$self->{'count'}->{'a510_video_part'};
 			use App::510::_init;
 			my %vars=_parse_id($1);
 			$vars{'ID_format'}=$App::510::video_format_full_ID unless $vars{'ID_format'};
 			
 			if ($vars{'ID_entity'})
 			{
-				main::_log("find a510_video ID_entity='$vars{'ID_entity'}'");
+				main::_log("find a510_video ID_entity='$vars{'ID_entity'}'") if $debug;
 				
 				my $sql=qq{
 					SELECT
@@ -233,6 +237,9 @@ sub start
 					{
 						$attr->{'alt'}=$db0_line{'part_name'} || $db0_line{'name'};
 					}
+					
+					$self->{'out_addon'}->{'a510_video_part'}[$addon_part_cnt]{'ID_part'}=$db0_line{'ID_part'};
+					$self->{'out_addon'}->{'a510_video_part'}[$addon_part_cnt]{'src'}=$tom::H_a510.'/video/part/file/'.$db0_line{'file_part_path'};
 					
 					# override default tag representation
 					$out_full=
@@ -263,7 +270,7 @@ sub start
 					))[0];
 					if ($relation->{'ID'})
 					{
-						main::_log("find a501_image ID='$relation->{'r_ID_entity'}'");
+						main::_log("find a501_image ID='$relation->{'r_ID_entity'}'") if $debug;
 						
 						my $img_ID_format=
 							$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
@@ -286,6 +293,8 @@ sub start
 						{
 							$attr->{'src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
 							$out_full=~s|<%img\.db_(.*?)%>|$db1_line{$1}|g;
+							$self->{'out_addon'}->{'a510_video_part'}[$addon_part_cnt]{'img.src'}=$attr->{'src'};
+							$self->{'out_addon'}->{'a510_video_part'}[$addon_part_cnt]{'ID_image'}=$db1_line{'ID_image'};
 						}
 						
 					}
@@ -298,13 +307,14 @@ sub start
 		elsif ($attr->{'id'}=~/^a510_video_part:(.*)$/)
 		{
 			$self->{'count'}->{'video'}++;
+			$self->{'count'}->{'a510_video_part'}++;my $addon_cnt=$self->{'count'}->{'a510_video_part'};
 			use App::510::_init;
 			my %vars=_parse_id($1);
 			$vars{'ID_format'}=$App::510::video_format_full_ID unless $vars{'ID_format'};
 			
 			if ($vars{'ID'})
 			{
-				main::_log("find a510_video_part ID='$vars{'ID'}'");
+				main::_log("find a510_video_part ID='$vars{'ID'}'") if $debug;
 				
 				my $sql=qq{
 					SELECT
@@ -321,7 +331,7 @@ sub start
 				my %db0_line=$sth0{'sth'}->fetchhash();
 				if ($db0_line{'ID'})
 				{
-					main::_log("found video_part");
+					main::_log("found video_part") if $debug;
 					$attr->{'src'}='';
 					$attr->{'width'}=$db0_line{'video_width'} unless $attr->{'width'};
 					$attr->{'height'}=$db0_line{'video_height'} unless $attr->{'height'};
@@ -329,6 +339,9 @@ sub start
 					{
 						$attr->{'alt'}=$db0_line{'part_name'} || $db0_line{'name'};
 					}
+					
+					$self->{'out_addon'}->{'a510_video_part'}[$addon_cnt]{'ID_part'}=$db0_line{'ID_part'};
+					$self->{'out_addon'}->{'a510_video_part'}[$addon_cnt]{'src'}=$tom::H_a510.'/video/part/file/'.$db0_line{'file_part_path'};
 					
 					# override default tag representation
 					$out_full=
@@ -364,7 +377,7 @@ sub start
 							|| $self->{'config'}->{'a501_image_file.ID_format'}
 							|| $App::501::image_format_fullsize_ID;
 							
-						main::_log("find a501_image ID_entity='$relation->{'r_ID_entity'}' ID_format='$img_ID_format'");
+						main::_log("find a501_image ID_entity='$relation->{'r_ID_entity'}' ID_format='$img_ID_format'") if $debug;
 						
 						my $sql=qq{
 							SELECT
@@ -381,12 +394,14 @@ sub start
 						if ($db1_line{'ID'})
 						{
 							$attr->{'src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
-							main::_log("found thumbnail image src=".$attr->{'src'});
+							main::_log("found thumbnail image src=".$attr->{'src'}) if $debug;
 							$out_full=~s|<%img\.db_(.*?)%>|$db1_line{$1}|g;
+							$self->{'out_addon'}->{'a510_video_part'}[$addon_cnt]{'img.src'}=$attr->{'src'};
+							$self->{'out_addon'}->{'a510_video_part'}[$addon_cnt]{'ID_image'}=$db1_line{'ID_image'};
 						}
 						else
 						{
-							main::_log("not found thumbnail image",1);
+							main::_log("not found thumbnail image",1) if $debug;
 						}
 						
 					}
@@ -394,6 +409,7 @@ sub start
 				}
 				
 			}
+			
 			$self->{'out_var'}->{'img.'.$out_cnt.'.src'}=$attr->{'src'};
 		} # if $attr->{'id'}=~/
 	
@@ -426,7 +442,7 @@ sub start
 	
 	if ($out_tag && $out_cnt && ($self->{'ignore'}->{$out_tag} || $self->{'ignore'}->{$out_tag.'.'.$out_cnt}))
 	{
-		main::_log("ignore placing '$out_tag.$out_cnt'");
+		main::_log("ignore placing '$out_tag.$out_cnt'") if $debug;
 	}
 	else
 	{
@@ -435,7 +451,7 @@ sub start
 	
 	if ($out_tag)
 	{
-		main::_log("added to out_tag '$out_tag.$out_cnt'");
+		main::_log("added to out_tag '$out_tag.$out_cnt'") if $debug;
 		$self->{'out_tag'}->{$out_tag.'.'.$out_cnt}=$out_full;
 	}
 	
