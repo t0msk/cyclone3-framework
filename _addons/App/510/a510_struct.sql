@@ -75,6 +75,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs` (
   `datetime_create` datetime NOT NULL,
   `order_id` int(10) unsigned NOT NULL,
   `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `priority_A` tinyint(3) unsigned default NULL,
+  `priority_B` tinyint(3) unsigned default NULL,
+  `priority_C` tinyint(3) unsigned default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -85,6 +88,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs` (
   KEY `name` (`name`),
   KEY `lng` (`lng`),
   KEY `order_id` (`order_id`),
+  KEY `priority_A` (`priority_A`),
+  KEY `priority_B` (`priority_B`),
+  KEY `priority_C` (`priority_C`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -99,6 +105,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs_j` (
   `datetime_create` datetime NOT NULL,
   `order_id` int(10) unsigned NOT NULL,
   `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `priority_A` tinyint(3) unsigned default NULL,
+  `priority_B` tinyint(3) unsigned default NULL,
+  `priority_C` tinyint(3) unsigned default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N'
 ) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
@@ -543,6 +552,9 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_view` AS (
 		video_attrs.name_url,
 		video_attrs.description,
 		video_attrs.order_id,
+		video_attrs.priority_A,
+		video_attrs.priority_B,
+		video_attrs.priority_C,
 		video_attrs.lng,
 		
 		video_part_attrs.name AS part_name,

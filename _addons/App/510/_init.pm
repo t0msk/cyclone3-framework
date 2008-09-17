@@ -158,6 +158,10 @@ $tom::H_a510=$tom::H_media."/a510" if (!$tom::H_a510 && $tom::H_media);
 main::_log("db_name='$db_name' H_a510='$tom::H_a510'");
 our $video_format_ext_default=$App::510::video_format_ext_default || 'avi';
 
+our %priority;
+$priority{'A'}=$App::401::priority{'A'} || 1;
+$priority{'B'}=$App::401::priority{'B'} || undef;
+$priority{'C'}=$App::401::priority{'C'} || undef;
 
 our $video_format_original_ID;
 our $video_format_full_ID;
