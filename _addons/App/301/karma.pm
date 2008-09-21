@@ -50,7 +50,7 @@ sub increase
    return undef unless $env{'ID_user'};
    return undef unless $env{'karma'};
    
-   $env{'date'}='NOW()';
+   $env{'date'}='CURDATE()';
    
    my $sql=qq{
       SELECT
@@ -59,13 +59,13 @@ sub increase
          TOM.a301_user_profile_karma
       WHERE
          ID_user='$env{'ID_user'}' AND
-         date_event=DATE($env{'date'})
+         date_event=$env{'date'}
       LIMIT 1;
    };
    my %sth0=TOM::Database::SQL::execute($sql,'quiet_'=>1,'-slave'=>1);
    my %db0_line=$sth0{'sth'}->fetchhash();
    
-   my $karma=$db0_line{'karma'}+=$env{'karma'};
+   my $karma=$db0_line{'karma'}+$env{'karma'};
    
    my $sql=qq{
       REPLACE INTO
