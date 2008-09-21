@@ -145,13 +145,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content` (
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  FULLTEXT KEY `FULL_0` (`subtitle`,`abstract`,`body`,`keywords`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID` (`ID`),
   KEY `subtitle` (`subtitle`),
   KEY `mimetype` (`mimetype`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -343,9 +344,9 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 		article_content.ID_editor AS posix_editor, -- last editor
 		article_ent.ID_author AS posix_author,
 		
-		article_content.datetime_create,
-		article_attrs.datetime_start,
-		article_attrs.datetime_stop,
+		DATE_FORMAT(article_content.datetime_create, '%Y-%m-%d %H:%i') AS datetime_create,
+		DATE_FORMAT(article_attrs.datetime_start, '%Y-%m-%d %H:%i') AS datetime_start,
+		DATE_FORMAT(article_attrs.datetime_stop, '%Y-%m-%d %H:%i') AS datetime_stop,
 		
 		article_attrs.priority_A,
 		article_attrs.priority_B,
