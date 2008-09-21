@@ -368,8 +368,19 @@ sub article_add
 		);
 	}
 	
-	# generate keywords
+	# get article_content
+	if ($env{'article_content.ID'} && !$article_content{'body'})
+	{
+		%article_content=App::020::SQL::functions::get_ID(
+			'ID' => $env{'article_content.ID'},
+			'db_h' => "main",
+			'db_name' => $App::401::db_name,
+			'tb_name' => "a401_article_content",
+			'columns' => {'*'=>1}
+		);
+	}
 	
+	# generate keywords
 	if ($env{'article_content.keywords'})
 	{
 		my @ref=split(' # ',$article_content{'keywords'});
@@ -387,28 +398,8 @@ sub article_add
 		$ref[0]=~s|^, ||;
 		$env{'article_content.keywords'}=$ref[0].' # '.$ref[1];
 	}
+	$env{'article_content.keywords'}='' if ($env{'article_content.keywords'} eq ' # ');
 	
-#	if (!$env{'article_content.keywords'} &&
-#		( $env{'article_content.abstract'} || $env{'article_content.body'}))
-#	{
-#		$env{'article_content.keywords'}='';
-#		my %keywords=article_content_extract_keywords(%env);
-#		foreach (keys %keywords)
-#		{$env{'article_content.keywords'}.=", ".$_;}
-#		$env{'article_content.keywords'}=~s|^, ||;
-#	}
-	
-	# get article_content
-	if ($env{'article_content.ID'} && !$article_content{'body'})
-	{
-		%article_content=App::020::SQL::functions::get_ID(
-			'ID' => $env{'article_content.ID'},
-			'db_h' => "main",
-			'db_name' => $App::401::db_name,
-			'tb_name' => "a401_article_content",
-			'columns' => {'*'=>1}
-		);
-	}
 	# update if necessary
 	if ($env{'article_content.ID'} &&
 	(
