@@ -82,6 +82,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs` (
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  FULLTEXT KEY `FULL_0` (`name`,`description`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID_category` (`ID_category`),
   KEY `ID` (`ID`),
@@ -92,7 +93,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs` (
   KEY `priority_B` (`priority_B`),
   KEY `priority_C` (`priority_C`),
   KEY `status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -127,7 +128,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
   `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
-  FULLTEXT KEY `keywords` (`keywords`),
+  FULLTEXT KEY `FULL_0` (`keywords`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID` (`ID`),
   KEY `visits` (`visits`),
@@ -172,8 +173,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_caption` (
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
+  FULLTEXT KEY `FULL_0` (`caption`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`time_start`,`lng`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -325,12 +327,13 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_attrs` (
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  FULLTEXT KEY `FULL_0` (`name`,`description`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID` (`ID`),
   KEY `name` (`name`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -490,6 +493,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_format` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
   `process` text character set ascii NOT NULL,
+  `definition` text character set ascii default NULL,
   `required` char(1) NOT NULL default 'Y',
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
@@ -514,6 +518,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_format_j` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
   `process` text character set ascii NOT NULL,
+  `definition` text character set ascii default NULL,
   `required` char(1) NOT NULL default 'Y',
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N'

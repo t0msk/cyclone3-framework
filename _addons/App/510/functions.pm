@@ -123,6 +123,7 @@ sub video_part_file_generate
 			{
 				'name' => 1,
 				'process' => 1,
+				'definition' => 1,
 			}
 		);
 		$env{'video_format.name'}=$format{'name'};
@@ -216,7 +217,8 @@ sub video_part_file_generate
 	my $out=video_part_file_process(
 		'video1' => $video1_path,
 		'video2' => $video2->{'filename'},
-		'process' => $env{'process'} || $format{'process'}
+		'process' => $env{'process'} || $format{'process'},
+		'definition' => $format{'definition'}
 	);
 	
 	main::_log("out=$out");
@@ -390,6 +392,27 @@ sub video_part_file_process
 	foreach (keys %movie1_info)
 	{
 		main::_log("key $_='$movie1_info{$_}'");
+	}
+	
+	my $target_is_same=0;
+	foreach my $line(split('\n',$env{'definition'}))
+	{
+		$line=~s|\r||;
+		next unless $line;
+		my @ref=split('=',$line);
+		main::_log("target definition key $ref[0]='$ref[1]'");
+		
+		if ($movie1_info{$ref[0]} ne $ref[1]){$target_is_same=0;last;}
+		$target_is_same=1;
+	}
+	
+	if ($target_is_same)
+	{
+		main::_log("target video is the same as source");
+		main::_log("copying the file...");
+		File::Copy::copy($env{'video1'}, $env{'video2'});
+		$t->close();
+		return 1;
 	}
 	
 	$env{'fps'}=$movie1_info{'fps'} if $movie1_info{'fps'};
