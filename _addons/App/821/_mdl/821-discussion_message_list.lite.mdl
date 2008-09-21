@@ -63,6 +63,22 @@ sub execute
 	# language
 	$sql_where.="lng='$env{'lng'}' ";
 	
+	my $isAdmin;
+	
+	if ($main::USRM{'logged'} eq "Y")
+	{
+		my %groups=App::301::functions::user_groups($main::USRM{'ID_user'});
+		if($groups{'admin'})
+		{
+			$isAdmin=1;
+		}
+	}
+	
+	if($isAdmin && $XSGN{'TMP_adminmode'})
+	{
+		$XSGN{'TMP'}=$XSGN{'TMP_adminmode'};
+	}
+	
 	# status
 	if ($env{'status'})
 	{
@@ -163,6 +179,11 @@ sub execute
 			if ($db0_line{'karma'}<-50)
 			{
 				$item=$XSGN{'item_lowkarma'} if $XSGN{'item_lowkarma'};
+			}
+			
+			if($isAdmin && $XSGN{'item_adminmode'})
+			{
+				$item=$XSGN{'item_adminmode'};
 			}
 			
 			$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
