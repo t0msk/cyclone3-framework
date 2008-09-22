@@ -72,6 +72,11 @@ our %table=
 		'uri' => ['awstats\.pl']
 	},
 	
+	'Inktomi' =>
+	{
+		'uri' => ['mod_ssl:error']
+	},
+	
 	'unknown-php'=> # all unknown php attacks
 	{
 		'uri' => ['\.php\?']
