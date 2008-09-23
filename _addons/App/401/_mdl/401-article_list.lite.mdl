@@ -36,6 +36,8 @@ use App::401::_init;
 
 =over
 
+=item *
+
 B<-xlng_load> - load template internationalization file
 
 =item *
