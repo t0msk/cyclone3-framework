@@ -26,6 +26,10 @@ Display full path of one Entity - used for displaying navigation path on webpage
 
 =item *
 
+B<-xlng_load> - load template internationalization file
+
+=item *
+
 B<ID> - ID of record
 
 =back
@@ -86,7 +90,7 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 
-	if ($env{'xt_xlng'})
+	if ($env{'xt_xlng'} || $Tomahawk::mdl_C{'-xlng_load'})
 	{
 		main::_log("using xlng transformation");
 		Tomahawk::GetXLNG() || return undef; # retrieve language xml
