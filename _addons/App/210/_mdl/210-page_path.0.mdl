@@ -43,11 +43,15 @@ B<TMP> - default output
 
 =item *
 
-B<#item#> - place for one of item
+B<#item#> - placeholder for one item
 
 =item *
 
-B<ITEM> - one of item
+B<ITEM> - item template
+
+=item *
+
+B<ITEM-last> - last item template
 
 =item *
 
@@ -68,6 +72,10 @@ B<%name%>
 =item *
 
 B<%name_url%>
+
+=item *
+
+B<RESULT_failure_no_input> - output overriding TMP if no ID specified
 
 =back
 
