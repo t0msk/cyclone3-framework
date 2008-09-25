@@ -44,6 +44,7 @@ sub new
 	if ($env{'sth'} && $env{'id'})
 	{
 		main::_log("SQL::cache: created cache object to save data '$env{'id'}' expiration=$env{'expire'}") if $debug;
+		$self->{'value'}->{'type'}=$env{'type'} if $env{'type'};
 		$self->{'value'}->{'err'}=$env{'err'} if $env{'err'};
 		$self->{'value'}->{'info'}=$env{'info'} if $env{'info'};
 		$self->{'value'}->{'rows'}=$env{'rows'} if $env{'rows'};
@@ -51,12 +52,23 @@ sub new
 		if (!$env{'err'})
 		{
 			#main::_log("so fetch all data");
-			my $line;
-			while (my %db0_line=$env{'sth'}->fetchhash())
+			if ($env{'type'} eq "DBI")
 			{
-				$line++;
-				#main::_log("fetched line [$line]");
-				push @{$self->{'value'}->{'fetch'}}, {%db0_line};
+				my $line;
+				while (my $db0_line=$env{'sth'}->fetchrow_hashref())
+				{
+					$line++;
+					push @{$self->{'value'}->{'fetch'}}, {%{$db0_line}};
+				}
+			}
+			else
+			{
+				my $line;
+				while (my %db0_line=$env{'sth'}->fetchhash)
+				{
+					$line++;
+					push @{$self->{'value'}->{'fetch'}}, {%db0_line};
+				}
 			}
 		}
 		# save data
@@ -98,6 +110,27 @@ sub fetchhash()
 	my $self=shift;
 	my $data=shift @{$self->{'value'}->{'fetch'}};
 	return %{$data} if $data;
+	return
+}
+
+sub fetchrow_hashref()
+{
+	my $self=shift;
+	my $data=shift @{$self->{'value'}->{'fetch'}};
+	return $data if $data;
+	return
+}
+
+sub fetch()
+{
+	my $self=shift;
+	my $data=shift @{$self->{'value'}->{'fetch'}};
+	my @arr;
+	foreach (keys %{$data})
+	{
+		push @arr,$data->{$_};
+	}
+	return \@arr if @arr;
 	return
 }
 

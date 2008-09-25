@@ -203,27 +203,56 @@ sub execute
 	
 	main::_log("{$env{'db_h'}:exec} '$SQL_' from '$filename:$line'",3,"sql") if $logquery;
 	
-	$output{'sth'}=$main::DB{$env{'db_h'}}->Query($SQL);
-	
-	$output{'info'}=$main::DB{$env{'db_h'}}->info();
-	$output{'err'}=$main::DB{$env{'db_h'}}->errmsg();
-	$output{'time'}=time();
-	
-	if (not $output{'sth'})
+	if ($TOM::DB{$env{'db_h'}}{'type'} eq "DBI")
 	{
-		if ($output{'err'})
+		$output{'type'} = "DBI";
+		$output{'sth'} = $main::DB{$env{'db_h'}}->prepare($SQL);
+		#$output{'err'} = $DBI::errstr unless $output{'sth'};
+		$output{'err'}=$main::DB{$env{'db_h'}}->errstr();
+		
+		if (not $output{'sth'})
 		{
-			main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
-			main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
-			main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
+			if ($output{'err'})
+			{
+				my ($package, $filename, $line) = caller;
+				main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
+				main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
+				main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
+			}
+			main::_log("output info=".$output{'info'}) unless $env{'quiet'};
+			$t->close();
+			return %output;
 		}
-		main::_log("output info=".$output{'info'}) unless $env{'quiet'};
-		$t->close();
-		return %output;
+		
+		$output{'sth'}->execute();
+		$output{'rows'}=$output{'sth'}->rows;
+#		main::_log("rows = $output{'rows'}");
+	}
+	else
+	{
+		$output{'sth'}=$main::DB{$env{'db_h'}}->Query($SQL);
+		#main::_log("after Query");
+		$output{'info'}=$main::DB{$env{'db_h'}}->info();
+		$output{'err'}=$main::DB{$env{'db_h'}}->errmsg();
+		
+		if (not $output{'sth'})
+		{
+			if ($output{'err'})
+			{
+				my ($package, $filename, $line) = caller;
+				main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
+				main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
+				main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
+			}
+			main::_log("output info=".$output{'info'}) unless $env{'quiet'};
+			$t->close();
+			return %output;
+		}
+		
+		$output{'rows'}=$output{'sth'}->affectedrows();
 	}
 	
-	$output{'rows'}=$output{'sth'}->affectedrows();
-	
+	# error in output
 	if ($output{'err'})
 	{
 		main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
@@ -246,6 +275,7 @@ sub execute
 		$output{'sth'}=new TOM::Database::SQL::cache(
 			'sth'=> $output{'sth'}, # we are saving output from STH
 			'err'=> $output{'err'},
+			'type'=> $output{'type'},
 			'info'=> $output{'info'},
 			'rows'=> $output{'rows'},
 			'expire' => $env{'cache'},
