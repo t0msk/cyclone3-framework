@@ -1,0 +1,35 @@
+%HEADER=(
+'head'	=>
+{
+	'title'	=>	"Cyclone3",
+	
+	'meta'	=>
+	{
+		'pragma'		=>	"no-cache",
+		'expires'		=>	"0"
+	},
+	
+	'link'	=>
+	[
+		{
+			'href'     =>	"$tom::H_css/main.css",
+			'rel'      =>	"stylesheet",
+			'type'     =>	"text/css",
+			'media'    =>	"screen, tv, projection",
+		},
+		
+		{
+			'href'     =>	"$tom::H_css/main.pda.css",
+			'rel'      =>	"stylesheet",
+			'type'     =>	"text/css",
+			'media'    =>	"handheld",
+		},
+		
+	]
+
+},
+
+'body'	=>	{}
+);
+
+1;

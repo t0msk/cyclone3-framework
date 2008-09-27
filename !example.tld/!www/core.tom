@@ -1,0 +1,3 @@
+#!/bin/sh
+/www/TOM/.core/tom3 pwd=$PWD;
+
