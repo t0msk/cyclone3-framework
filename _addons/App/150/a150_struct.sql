@@ -1,10 +1,10 @@
 -- db_h=sys
 -- db_name=TOM
--- app=a150
+-- addon=a150
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_cache` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_cache` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_config` int(10) unsigned NOT NULL default '0',
   `domain` varchar(32) character set ascii NOT NULL default '',
@@ -32,7 +32,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_cache` (
 
 -- --------------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_config` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_config` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `domain` varchar(32) character set ascii NOT NULL default '',
   `domain_sub` varchar(64) character set ascii NOT NULL default '',
@@ -54,7 +54,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_config` (
 
 -- --------------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_debug` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_debug` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `domain` varchar(32) character set ascii NOT NULL default '',
   `domain_sub` varchar(64) character set ascii NOT NULL default '',
@@ -69,3 +69,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_debug` (
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `domain` (`domain`,`domain_sub`,`engine`,`Capp`,`Cmodule`,`Cid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+-- version=5.0
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_sql` (
+  `ID` char(32) character set ascii NOT NULL default '',
+  `cache_duration` time NOT NULL,
+  `datetime_executed` datetime default NULL,
+  PRIMARY KEY  (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+

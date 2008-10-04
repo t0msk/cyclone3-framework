@@ -20,3 +20,10 @@
 	<VAR id="-name" value="autosend" />
 		<VAR id="max" value="50" />
 </MODULE>
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="150" />
+	<VAR id="-name" value="sql" />
+	<VAR id="-version" value="process" />
+</MODULE>
