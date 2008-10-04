@@ -1,0 +1,99 @@
+#!/usr/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+150-sql.process.cron
+
+=cut
+
+=head1 DESCRIPTION
+
+Automatically checks last cached SQL queries, execute it againt and fullfill cache
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	alarm 0;
+	# lock this file encoding
+	my $lock=new TOM::lock("a150_sql.process")
+	|| return 1;
+	
+	my $sql=qq{
+		SELECT
+			*,
+			(NOW() - datetime_executed - cache_duration) AS overtime,
+			TIME_TO_SEC(cache_duration) AS cache_duration	
+		FROM
+			a150_sql
+		WHERE
+			datetime_executed IS NULL OR
+			((NOW() - datetime_executed) > cache_duration)
+		ORDER BY
+			(NOW() - cache_duration) ASC
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'sys','quiet'=>1);
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("cache id='$db0_line{'ID'}' duration='$db0_line{'cache_duration'}' overtime='$db0_line{'overtime'}'s");
+		
+		my $cache_use=$Ext::CacheMemcache::cache->get(
+			'namespace' => "db_cache_SQL:use",
+			'key' => $db0_line{'ID'}
+		);
+		my $cache=$Ext::CacheMemcache::cache->get(
+			'namespace' => "db_cache_SQL",
+			'key' => $db0_line{'ID'}
+		);
+		if (!$cache_use || !$cache)
+		{
+			main::_log("cache not longer required (is not in active use), also deleting from job list");
+			TOM::Database::SQL::execute(
+				qq{DELETE FROM TOM.a150_sql WHERE ID='$db0_line{'ID'}' LIMIT 1},
+				'db_h'=>'sys',
+				'quiet'=>1
+			);
+			next;
+		}
+		
+		main::_log("used before=".(time()-$cache_use)."s sql=$cache->{'sql'}");
+		
+		# recache
+		TOM::Database::SQL::execute(
+			$cache->{'sql'},
+			'-cache' => $db0_line{'cache_duration'},#*10,
+			'-schedule' => 1, # re-schedule
+			'-recache' => 1, # don't check if cache us available, just re-execute SQL and cache it
+			'db_h'=>$cache->{'db_h'},
+			'log'=>1,
+		);
+		
+#		TOM::Database::SQL::execute(
+#			qq{UPDATE TOM.a150_sql SET datetime_executed=NOW() WHERE ID='$db0_line{'ID'}' LIMIT 1},
+#			'db_h'=>'sys',
+#			'quiet'=>1
+#		);
+	}
+	
+	
+	
+	return 1
+}
+
+
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
