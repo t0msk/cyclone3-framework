@@ -108,11 +108,13 @@ Executes SQL query and return hash with variables
  %sth=TOM::Database::SQL::execute(
    $SQL,
    'db_h' => "main",
-   'slave' => 1 # is safe to execute this SQL query on slave server?
+   '-slave' => 1 # is safe to execute this SQL query on slave server?
                 # other queries than SELECT will be executed on master
-   'cache' => 1 # cache this SQL query
+   '-cache' => 1 # cache this SQL query
                 # number represents seconds in cache
-   'cache_auto' => 1 # cache this SQL query when Memcached availability is higher than MySQL query cache
+   '-schedule' => 1 # schedule this cache query to backend execution
+   '-recache' => 1 # re-cache force this query
+   '-cache_auto' => 1 # cache this SQL query when Memcached availability is higher than MySQL query cache
                      # number represents seconds in cache
  );
  # %sth={'sth', 'rows', 'info', 'err'};
@@ -187,9 +189,13 @@ sub execute
 		{
 			#undef $cache;
 		}
+		elsif ($env{'-recache'})
+		{
+			main::_log("SQL: don't use this cache, -recache is enabled") if $env{'log'};
+		}
 		elsif ($cache)
 		{
-			main::_log("SQL: readed from cache (".(time()-$cache->{'value'}->{'time'})."s)") if $env{'log'};
+			main::_log("SQL: readed from cache (".(time()-$cache->{'value'}->{'time'})."s old)") if $env{'log'};
 			main::_log("{$env{'db_h'}:cache} '$SQL_' from '$filename:$line'",3,"sql") if $logquery;
 			$output{'sth'}=$cache;
 			$output{'info'}=$cache->{'value'}->{'info'};
@@ -279,6 +285,10 @@ sub execute
 			'info'=> $output{'info'},
 			'rows'=> $output{'rows'},
 			'expire' => $env{'cache'},
+			'schedule' => $env{'-schedule'},
+			'recache' => $env{'-recache'},
+			'sql' => $SQL,
+			'db_h' => $env{'db_h'},
 			'time' => $output{'time'},
 			'id'=> $cache_key
 		);

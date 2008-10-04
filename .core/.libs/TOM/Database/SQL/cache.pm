@@ -44,6 +44,21 @@ sub new
 	if ($env{'sth'} && $env{'id'})
 	{
 		main::_log("SQL::cache: created cache object to save data '$env{'id'}' expiration=$env{'expire'}") if $debug;
+		$self->{'value'}->{'expire'}=$env{'expire'};
+		if ($env{'schedule'})
+		{
+			$env{'expire_original'}=$env{'expire'};
+			$env{'expire'}*=10;
+			main::_log("SQL::cache: schedule expiration=$env{'expire'}") if $debug;
+			$self->{'value'}->{'schedule'}=$env{'schedule'};
+			my $sql=qq{
+				REPLACE INTO TOM.a150_sql(ID,cache_duration,datetime_executed)
+				VALUES ('$env{'id'}','$env{'expire_original'}',NOW())
+			};
+			TOM::Database::SQL::execute($sql,'db_h'=>'sys','quiet'=>1);
+		}
+		$self->{'value'}->{'db_h'}=$env{'db_h'} if $env{'db_h'};
+		$self->{'value'}->{'sql'}=$env{'sql'} if $env{'sql'};
 		$self->{'value'}->{'type'}=$env{'type'} if $env{'type'};
 		$self->{'value'}->{'err'}=$env{'err'} if $env{'err'};
 		$self->{'value'}->{'info'}=$env{'info'} if $env{'info'};
@@ -81,6 +96,12 @@ sub new
 		if ($cache)
 		{
 			main::_log("SQL::cache: saved to cache") if $debug;
+			my $cache_use=$Ext::CacheMemcache::cache->set(
+				'namespace' => "db_cache_SQL:use",
+				'key' => $env{'id'},
+				'value' => time(),
+				'expiration' => ($self->{'value'}->{'expire'}*10).'S',
+			) unless $env{'recache'}; # don't save last use when only recaching
 		}
 	}
 	else
@@ -94,6 +115,12 @@ sub new
 		if ($self->{'value'})
 		{
 			main::_log("SQL::cache: readed from cache") if $debug;
+			my $cache_use=$Ext::CacheMemcache::cache->set(
+				'namespace' => "db_cache_SQL:use",
+				'key' => $env{'id'},
+				'value' => time(),
+				'expiration' => ($self->{'value'}->{'expire'}*10).'S',
+			) unless $env{'recache'}; # don't save last use when only recaching
 		}
 		else
 		{
