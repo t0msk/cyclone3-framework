@@ -172,7 +172,7 @@ if ($image_format_original_ID)
 			'columns' =>
 			{
 				'name' => "'fullsize'",
-				'process' => "'scale(640,480)'",
+				'process' => "'downscale(640,640)'",
 				'status' => "'L'"
 			}
 		);
