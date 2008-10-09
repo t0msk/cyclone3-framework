@@ -19,9 +19,13 @@ BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 
 our $debug=0;
 
+# short format language code (639-2?) -> long format language code
 our %trans=(
 	'en' => 'en-US',
-	'sk' => 'sk-SK'
+	'sk' => 'sk-SK',
+	'de' => 'de-DE',
+	'it' => 'it-IT',
+	'uk' => 'uk-UA'
 );
 
 sub trans
