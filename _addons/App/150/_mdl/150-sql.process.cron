@@ -38,13 +38,15 @@ sub execute
 			((NOW() - datetime_executed) > cache_duration)
 		ORDER BY
 			(NOW() - cache_duration) ASC
+		LIMIT 100
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'sys','quiet'=>1);
 	
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		main::_log("cache id='$db0_line{'ID'}' duration='$db0_line{'cache_duration'}' overtime='$db0_line{'overtime'}'s");
-		
+		main::_log("cache id='$db0_line{'ID'}' group='$db0_line{'group_ID'}' duration='$db0_line{'cache_duration'}' overtime='$db0_line{'overtime'}'s");
+		$db0_line{'cache_duration'}=600 unless $db0_line{'cache_duration'};
+#		next;
 		my $cache_use=$Ext::CacheMemcache::cache->get(
 			'namespace' => "db_cache_SQL:use",
 			'key' => $db0_line{'ID'}
@@ -69,11 +71,12 @@ sub execute
 		# recache
 		TOM::Database::SQL::execute(
 			$cache->{'sql'},
-			'-cache' => $db0_line{'cache_duration'},#*10,
+			'-cache' => $cache->{'expire'},#*10,
 			'-schedule' => 1, # re-schedule
+			'-schedule_group' => $cache->{'schedule_group'},
 			'-recache' => 1, # don't check if cache us available, just re-execute SQL and cache it
-			'db_h'=>$cache->{'db_h'},
-			'log'=>1,
+			'db_h' => $cache->{'db_h'},
+			'quiet' => 1,
 		);
 		
 #		TOM::Database::SQL::execute(

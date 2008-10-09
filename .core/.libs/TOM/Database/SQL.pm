@@ -286,6 +286,8 @@ sub execute
 			'rows'=> $output{'rows'},
 			'expire' => $env{'cache'},
 			'schedule' => $env{'-schedule'},
+			'schedule_group' => $env{'-schedule_group'},
+#			'from' => "$package:$filename:$line",
 			'recache' => $env{'-recache'},
 			'sql' => $SQL,
 			'db_h' => $env{'db_h'},

@@ -75,6 +75,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_debug` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_sql` (
   `ID` char(32) character set ascii NOT NULL default '',
+  `group_ID` char(64) character set ascii default NULL,
   `cache_duration` time NOT NULL,
   `datetime_executed` datetime default NULL,
   PRIMARY KEY  (`ID`)
