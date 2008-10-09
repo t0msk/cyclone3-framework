@@ -1611,7 +1611,8 @@ sub video_part_file_add
 				'r_prefix' => 'a501',
 				'r_table' => 'image',
 	#			'r_ID_entity' => '2'
-				'limit' => 1
+				'limit' => 1,
+				'status' => 'Y'
 			))[0];
 			if (!$relation->{'ID'})
 			{
@@ -1641,7 +1642,8 @@ sub video_part_file_add
 					'r_db_name' => $App::501::db_name,
 					'r_prefix' => 'a501',
 					'r_table' => 'image',
-					'r_ID_entity' => $image{'image.ID_entity'}
+					'r_ID_entity' => $image{'image.ID_entity'},
+					'status' => 'Y'
 				);
 			}
 			else
@@ -1978,6 +1980,80 @@ sub video_part_file_newhash
 	}
 	
 	return $hash;
+}
+
+
+
+=head2 video_part_visit()
+
+Increase number of video_part visits
+
+=cut
+
+sub video_part_visit
+{
+	my $ID_part=shift;
+	
+	# check if this visit is in video_part
+	my $cache=$Ext::CacheMemcache::cache->get(
+		'namespace' => $App::510::db_name.".a510_video_part.visit",
+		'key' => $ID_part
+	);
+	
+	if (!$cache)
+	{
+		$cache->{'visits'}=0;
+		$Ext::CacheMemcache::cache->set
+		(
+			'namespace' => $App::510::db_name.".a510_video_part.visit",
+			'key' => $ID_part,
+			'value' =>
+			{
+				'time' => time(),
+				'visits' => $cache->{'visits'}
+			},
+			'expiration' => "604800S"
+		);
+		# update SQL
+		TOM::Database::SQL::execute(qq{
+			UPDATE `$App::510::db_name`.a510_video_part
+			SET visits=visits+1
+			WHERE ID=$ID_part
+			LIMIT 1
+		},'-quiet'=>1);
+		return 1;
+	}
+	
+	$cache->{'visits'}++;
+	
+	my $old=time()-$cache->{'time'};
+	
+	if ($old > 3600)
+	{
+		# update database
+		TOM::Database::SQL::execute(qq{
+			UPDATE `$App::510::db_name`.a510_video_part
+			SET visits=visits+$cache->{'visits'}
+			WHERE ID=$ID_part
+			LIMIT 1
+		},'-quiet'=>1);
+		$cache->{'visits'}=0;
+		$cache->{'time'}=time();
+	}
+	
+	$Ext::CacheMemcache::cache->set
+	(
+		'namespace' => $App::510::db_name.".a510_video_part.visit",
+		'key' => $ID_part,
+		'value' =>
+		{
+			'time' => $cache->{'time'},
+			'visits' => $cache->{'visits'}
+		},
+		'expiration' => "604800S"
+	);
+	
+	return 1;
 }
 
 
