@@ -202,11 +202,10 @@ sub prepare
 	$self->{ENV}{head}{meta}{robots}="<%HEADER-ROBOTS%>";
 	
 	$self->{OUT}{HEADER} .=
-	" <meta name=\"generator\" content=\"Cyclone".
+	" <meta name=\"generator\" content=\"Cyclone3 ".
 	$TOM::core_version.".".
-	$TOM::core_build." (r$TOM::core_revision)".
-#	" [".$$.";<%PAGE-CODE%>]".
-	"\" />\n" unless $self->{ENV}{head}{meta}{generator};
+	$TOM::core_build.
+	" \" />\n" unless $self->{ENV}{head}{meta}{generator};
 	
 	$self->{'OUT'}{'HEADER'} .=
 	" <meta name=\"Cyclone3\" content=\"<%META-Cyclone3%>\" />\n" unless $self->{'ENV'}{'head'}{'meta'}{'Cyclone3'};
