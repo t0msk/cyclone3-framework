@@ -105,51 +105,253 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
-	$env{'db_name'}=$App::510::db_name unless $env{'db_name'};
-	
-	if (!$env{'video_file.ID_format'} && !$env{'video_format.name'})
+	if (!$env{'video_file.ID_format'})# && !$env{'format_name'})
 	{
-		$env{'video_format.name'}='thumbnail';
+		$env{'video_format.name'}='full';
+	}
+
+	$env{'video.ID_category'}=1 unless exists $env{'video.ID_category'};
+	
+	if ($env{'video.ID_category'} == 0)
+	{
+		delete $env{'video.ID_category'};
 	}
 	
+	$env{'image_format.name'}="thumbnail" unless $env{'image_format.name'};
+
 	$env{'video_attrs.lng'}=$env{'lng'} unless $env{'video_attrs.lng'};
 	$env{'video_attrs.status'}='Y' unless $env{'video_attrs.status'};
 	$env{'sql_limit'}='1' unless $env{'sql_limit'};
+
+	$env{'sql_order_by'}='video.datetime_rec_start DESC, video.ID_entity_video DESC' unless $env{'sql_order_by'};
+
+	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
+	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
+	{
+		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
+	}
+
+	my $sql_where;
 	
-	#$env{'ID_format'}
+	if ($env{'video.ID_category'}=~/^([\d,]+)$/)
+	{
+		$sql_where.=" AND video.ID_category IN ('".
+			(join "','", split(',',$env{'video.ID_category'})).
+			"')";
+	}
+	
 	if ($env{'video_file.ID_format'})
 	{
-		$env{'sql_where'}.=" AND video.ID_format=$env{'video_file.ID_format'}";
+		$sql_where.=" AND video.ID_format=$env{'video_file.ID_format'}";
 	}
-	if ($env{'video_format.name'})
+	elsif ($env{'video_format.name'})
 	{
-		$env{'sql_where'}.=" AND video.ID_format_name='$env{'video_format.name'}'";
+		$sql_where.=" AND video.ID_format_name='$env{'video_format.name'}'";
+	}
+	else
+	{
+		$sql_where.=" AND video.ID_format_name='full'";
 	}
 	
 	
+	
+	if ($env{'video.ID_entity'})
+	{
+		
+		if ($env{'video.ID_entity'}=~/^(\d+)$/)
+		{
+			my $sql=qq{
+				SELECT
+					*
+				FROM
+					`$App::510::db_name`.a510_video_view AS video
+				WHERE
+					video.status IN ('$env{'video_attrs.status'}') AND
+					video.ID_entity_video = $env{'video.ID_entity'} AND
+					video.part_id = 1 AND
+					video.lng='$env{'video_attrs.lng'}'
+				LIMIT 1
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+			if (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				main::_log("added video.name='$db0_line{'name'}'");
+				$sql_where.=" AND video.name='".TOM::Security::form::sql_escape($db0_line{'name'})."'";
+			}
+		}
+		elsif ($env{'video.ID_entity'}=~/^([\d,]+)$/)
+		{
+			$sql_where.=" AND ID_entity_video IN ('".
+				(join "','", split(',',$env{'video.ID_entity'})).
+				"')";
+		}
+		else
+		{
+			$XSGN{'TMP'}='';return 1;
+		}
+		
+	}
+	elsif ($env{'video.name'})
+	{
+		main::_log("added video.name LIKE '$env{'video.name'}'");
+		$sql_where.=" AND video.name LIKE '".TOM::Security::form::sql_escape($env{'video.name'})."'";
+	}
+	elsif ($env{'video.name_url'})
+	{
+		main::_log("added video.name_url LIKE '$env{'video.name_url'}'");
+		$sql_where.=" AND video.name_url LIKE '".TOM::Security::form::sql_escape($env{'video.name_url'})."'";
+	}
+
+	if ($env{'sql_where'})
+	{
+		$sql_where.=" AND ".$env{'sql_where'};
+	}
+
 	my $sql=qq{
 		SELECT
+--			DISTINCT(ID_entity_video),
 			*
 		FROM
 			`$App::510::db_name`.a510_video_view AS video
 		WHERE
 			video.status IN ('$env{'video_attrs.status'}') AND
+			video.part_id = 1 AND
 			video.lng='$env{'video_attrs.lng'}'
-			$env{'sql_where'}
+			$sql_where
+		GROUP BY
+			ID_entity_video
 		ORDER BY
-			video.order_id ASC
+			$env{'sql_order_by'}
 		LIMIT $env{'sql_limit'}
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	
+
+	my $item_counter=0;
+
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		my $item=$XSGN{'item'};
-		foreach(keys %db0_line)
+		$item_counter++;
+
+		my $item=
+			$XSGN{'item.'.$item_counter}
+			|| $XSGN{'item'};
+
+		$db0_line{'datetime_recorded'}=$db0_line{'datetime_rec_start'};
+		$db0_line{'datetime_recorded'}=~s|^(.*):\d\d$|$1|;
+
+		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_rec_start'});
+		$db0_line{'datetime_rec_start.year'}=$db0_line{'date_recorded.year'}=$datetime{'year'};
+		$db0_line{'datetime_rec_start.month'}=$db0_line{'date_recorded.month'}=$datetime{'month'};
+		$db0_line{'datetime_rec_start.mday'}=$db0_line{'date_recorded.mday'}=$datetime{'mday'};
+		$db0_line{'datetime_rec_start.hour'}=$datetime{'hour'};
+		$db0_line{'datetime_rec_start.min'}=$datetime{'min'};
+		$db0_line{'datetime_rec_start.sec'}=$datetime{'sec'};
+
+		# video owner in result list
+		my %owner=App::301::authors::get_author($db0_line{'posix_owner'});
+		$item=~s|<%owner_(.*?)%>|$owner{$1}|g;
+
+		# count parts visits
+		my $sql=qq{
+			SELECT
+				SUM(visits) AS visits
+			FROM
+				`$App::510::db_name`.a510_video_part AS video_part
+			WHERE
+				video_part.ID_entity = $db0_line{'ID_entity_video'}
+		};
+		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		$db0_line{'visits'}=$db1_line{'visits'};
+
+
+		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+
+#		next;
+
+		my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::510::db_name,
+			'l_prefix' => 'a510',
+			'l_table' => 'video_part',
+			'l_ID_entity' => $db0_line{'ID_part'},
+			'rel_type' => 'thumbnail',
+			'r_db_name' => $App::501::db_name,
+			'r_prefix' => 'a501',
+			'r_table' => 'image',
+	#		'r_ID_entity' => '2'
+			'limit' => 1
+		))[0];
+		if ($relation->{'ID'})
 		{
-			$item=~s|<%$_%>|$db0_line{$_}|g;
+
+			$item=~s|<%image.ID%>|$relation->{'r_ID_entity'}|g;
+
+			my $sql=qq{
+				SELECT
+					*
+				FROM
+					`$App::501::db_name`.a501_image_view AS image
+				WHERE
+					image.ID_entity_image = $relation->{'r_ID_entity'} AND
+					image.status='Y' AND
+					image.ID_format_name = '$env{'image_format.name'}'
+				LIMIT 1
+			};
+			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+			if (my %db1_line=$sth1{'sth'}->fetchhash())
+			{
+
+				$item=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;
+			}
+
 		}
-		
-		$XSGN{'TMP'}=~s|<#item#>|$item|;
+
+		$item=~s|<%item_number%>|$item_counter|g;
+
+		if($XSGN{'TMP'}=~/<#item.$item_counter#>/)
+		{
+			$XSGN{'TMP'}=~s|<#item.$item_counter#>|$item|;
+		}
+		else
+		{
+			$XSGN{'TMP'}=~s|<#item#>|$item|;
+		}
+	}
+
+	if (!$item_counter)
+	{
+		$XSGN{'TMP'}=$XSGN{'TMP-empty'};
+	}
+
+	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
+	{
+		$env{'offset'}=$1;
+		$env{'count'}=$2;
+	}
+	else
+	{
+		$env{'count'}=$env{'sql_limit'};
+	}
+
+
+	# offset
+	if ($env{'count'} && $item_counter >= $env{'count'}) # count
+	{
+		$XSGN{'next'}=~s|<%offset%>|$env{'offset'}+$env{'count'}|ge;
+		$XSGN{'TMP'}=~s|<#next#>|$XSGN{'next'}|g;
+	}
+	if ($env{'offset'}-$env{'sql_limit_start'})
+	{
+		if ($env{'offset'}-$env{'count'}-$env{'sql_limit_start'}>0)
+		{
+			$XSGN{'previous'}=~s|<%offset%>|$env{'offset'}-$env{'count'}|ge;
+		}
+		else
+		{
+			$XSGN{'previous'}=~s|<%offset%>||ge;
+		}
+		$XSGN{'TMP'}=~s|<#previous#>|$XSGN{'previous'}|g;
 	}
 	
 	return 1;
