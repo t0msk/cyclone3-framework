@@ -1,5 +1,5 @@
 #!/bin/perl
-package App::401::mimetypes::html;
+package App::401::mimetypes;
 
 =head1 NAME
 
