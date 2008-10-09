@@ -217,6 +217,8 @@ our %table=
 	
 	'8230' => "...", # ... tri bodky na jednom znaku
 	
+	'8224' => "+", # '†' kriz
+	
 	'8364' => "(E)", # euro
 	
 	'8482' =>	"(tm)", # 'tm' trademark
