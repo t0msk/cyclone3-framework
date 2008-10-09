@@ -237,6 +237,11 @@ sub prepare
 		$self->{OUT}{HEADER} .= " <script type=\"text/javascript\">\n".$self->{ENV}{head}{script}." </script>\n";
 	}
 	
+	if ($self->{ENV}{head}{comment})
+	{
+		$self->{OUT}{HEADER} .= "<!--".$self->{ENV}{head}{comment}."-->\n";
+	}
+	
 	$self->{OUT}{HEADER} .= "</head>\n";
 	
 	# BODY
