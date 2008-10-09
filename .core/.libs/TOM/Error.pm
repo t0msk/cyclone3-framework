@@ -137,6 +137,7 @@ sub engine_pub
 			'ERROR' => { 'text' => $var },
 			'Cyclone' => {
 				'domain'=>"$tom::H_www",
+				'hostname'=>"$TOM::hostname",
 				'request_URI'=>$main::ENV{'REQUEST_URI'},
 				'parsed_URI'=>"$tom::H_www/?$main::ENV{'QUERY_STRING_FULL'}",
 				'orig_URI'=>"$URI_base$request_uri",
@@ -320,6 +321,7 @@ sub engine_cron
 			'ENV' => { %main::ENV },
 			'ERROR' => { 'text' => $var },
 			'Cyclone' => {
+				'hostname'=>"$TOM::hostname",
 				'unique_hash'=>$main::request_code,
 				'TypeID'=>$main::FORM{'TID'},
 				'IAdm'=>$main::IAdm,
@@ -384,8 +386,8 @@ sub module_pub
 	TOM::Utils::vars::replace($box);
 	
 	$box=~s|<%MODULE%>|$env{-MODULE}|;
-	$box=~s|<%ERROR%>|$env{-ERROR}| if $main::IAdm;
-	$box=~s|<%PLUS%>|$env{-PLUS}| if $main::IAdm;
+	$box=~s|<%ERROR%>|$env{-ERROR}| if ($main::IAdm || $tom::debug);
+	$box=~s|<%PLUS%>|$env{-PLUS}| if ($main::IAdm || $tom::debug);
 	$box=~s|<%.*?%>||g;
 	
 	main::_log("$env{-ERROR} $env{-PLUS}",1); #local
@@ -426,6 +428,7 @@ sub module_pub
 				'plus' => $env{'-PLUS'},
 			},
 			'Cyclone' => {
+				'hostname'=>"$TOM::hostname",
 				'request_URI'=>$main::ENV{'REQUEST_URI'},
 				'parsed_URI'=>"$tom::H_www/?$main::ENV{'QUERY_STRING_FULL'}",
 				'orig_URI'=>"$URI_base$request_uri",
@@ -579,6 +582,7 @@ sub module_cron
 				'plus' => $env{'-PLUS'},
 			},
 			'Cyclone' => {
+				'hostname'=>"$TOM::hostname",
 				'request_number'=>"$tom::count/$TOM::max_count",
 				'unique_hash'=>$main::request_code,
 				'TypeID'=>$main::FORM{'TID'},
