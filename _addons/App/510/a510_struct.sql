@@ -485,7 +485,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_format` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
   `process` text character set ascii NOT NULL,
-  `definition` text character set ascii default NULL,
+  `definition` text character set ascii,
   `required` char(1) NOT NULL default 'Y',
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
@@ -509,7 +509,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_format_j` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
   `process` text character set ascii NOT NULL,
-  `definition` text character set ascii default NULL,
+  `definition` text character set ascii,
   `required` char(1) NOT NULL default 'Y',
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N'
