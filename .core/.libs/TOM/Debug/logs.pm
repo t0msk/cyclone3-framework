@@ -53,10 +53,11 @@ sub _log
 	);
 	
 	$get[3]=$TOM::engine unless $get[3];
-	#$get[1]=~s|([\n\r\t]| |g;
-	$get[1]=~s|\n|\\n|g;
-	$get[1]=~s|\r|\\r|g;
-	$get[1]=~s|\t|\\t|g;
+	$get[1]=~s|[\n\r\t]| |g;
+	
+#	$get[1]=~s|\n|\\n|g;
+#	$get[1]=~s|\r|\\r|g;
+#	$get[1]=~s|\t|\\t|g;
 	
 	my @ref=("+","-","+","+","-");
 	
