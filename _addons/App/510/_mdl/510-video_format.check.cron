@@ -43,8 +43,8 @@ Proc::ProcessTable
 
 =cut
 
-use App::510::_init;
-use App::501::_init;
+#use App::510::_init;
+#use App::501::_init;
 use Proc::ProcessTable;
 
 
@@ -67,8 +67,12 @@ sub execute
 	my %env=@_;
 	
 	# Check
+	require App::510::_init if $tom::addons{'a510'};
 	if (!$tom::addons{'a510'} || ($TOM::DB{'main'}{'name'} ne $App::510::db_name))
 	{main::_log("not enabled, or set for another domain service");return 1;}
+	
+	require App::510::_init;
+	require App::501::_init;
 	
 	alarm(0);
 	$env{'time_max'}=60*10 unless $env{'time_max'};
