@@ -159,73 +159,75 @@ if ($tom::H_cookie)
 our $forum_ID_entity;
 our %forum;
 
-# find any category;
-my $sql="
-	SELECT
-		ID, ID_entity
-	FROM
-		`$App::821::db_name`.`a821_discussion_forum`
-	WHERE
-		name='article discussions' AND
-		lng IN ('".(join "','",@TOM::LNG_accept)."')
-	LIMIT 1
-";
-my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-if (my %db0_line=$sth0{'sth'}->fetchhash())
+if ($tom::addons{'a821'})
 {
-	$forum_ID_entity=$db0_line{'ID_entity'} unless $forum_ID_entity;
-}
-else
-{
-	$forum_ID_entity=App::020::SQL::functions::tree::new(
-		'db_h' => "main",
-		'db_name' => $App::821::db_name,
-		'tb_name' => "a821_discussion_forum",
-		'columns' => {
-			'name' => "'article discussions'",
-			'lng' => "'$tom::LNG'",
-			'status' => "'L'"
-		},
-		'-journalize' => 1
-	);
-}
-
-foreach my $lng(@TOM::LNG_accept)
-{
-	#main::_log("check related category $lng");
-	my $sql=qq{
+	# find any category;
+	my $sql="
 		SELECT
 			ID, ID_entity
 		FROM
 			`$App::821::db_name`.`a821_discussion_forum`
 		WHERE
-			ID_entity=$forum_ID_entity AND
-			lng='$lng'
+			name='article discussions' AND
+			lng IN ('".(join "','",@TOM::LNG_accept)."')
 		LIMIT 1
-	};
+	";
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		$forum{$lng}=$db0_line{'ID'};
+		$forum_ID_entity=$db0_line{'ID_entity'} unless $forum_ID_entity;
 	}
 	else
 	{
-		#main::_log("creating related category");
-		$forum{$lng}=App::020::SQL::functions::tree::new(
+		$forum_ID_entity=App::020::SQL::functions::tree::new(
 			'db_h' => "main",
 			'db_name' => $App::821::db_name,
 			'tb_name' => "a821_discussion_forum",
 			'columns' => {
-				'ID_entity' => $forum_ID_entity,
 				'name' => "'article discussions'",
-				'lng' => "'$lng'",
+				'lng' => "'$tom::LNG'",
 				'status' => "'L'"
 			},
 			'-journalize' => 1
 		);
 	}
+	
+	foreach my $lng(@TOM::LNG_accept)
+	{
+		#main::_log("check related category $lng");
+		my $sql=qq{
+			SELECT
+				ID, ID_entity
+			FROM
+				`$App::821::db_name`.`a821_discussion_forum`
+			WHERE
+				ID_entity=$forum_ID_entity AND
+				lng='$lng'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$forum{$lng}=$db0_line{'ID'};
+		}
+		else
+		{
+			#main::_log("creating related category");
+			$forum{$lng}=App::020::SQL::functions::tree::new(
+				'db_h' => "main",
+				'db_name' => $App::821::db_name,
+				'tb_name' => "a821_discussion_forum",
+				'columns' => {
+					'ID_entity' => $forum_ID_entity,
+					'name' => "'article discussions'",
+					'lng' => "'$lng'",
+					'status' => "'L'"
+				},
+				'-journalize' => 1
+			);
+		}
+	}
 }
-
 
 
 =head1 AUTHOR
