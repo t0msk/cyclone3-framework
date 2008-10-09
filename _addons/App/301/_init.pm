@@ -107,7 +107,7 @@ sub CookieClean
 CookieClean() if $tom::H;
 
 
-if ($tom::H_cookie)
+if ($tom::H_cookie && $tom::addons{'a510'})
 {
 	# admin is group for administrators
 	# editor is group with access into rpc services
@@ -161,7 +161,7 @@ if ($tom::H_cookie)
 
 
 # check relation to a501 if domain defined
-if ($tom::H)
+if ($tom::H && $tom::addons{'a501'})
 {
 	require App::501::_init;
 	our $photo_cat_ID_entity;
