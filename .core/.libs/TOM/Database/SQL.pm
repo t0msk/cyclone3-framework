@@ -19,7 +19,7 @@ use TOM::Database::SQL::transaction;
 use TOM::Database::SQL::cache;
 
 our $debug=0;
-our $logquery=1;
+our $logquery=0;
 our $logquery_long=2;
 our $query_long_autocache=0.01; # less availability than Memcached
 
