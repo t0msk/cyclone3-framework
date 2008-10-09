@@ -289,6 +289,7 @@ sub GetCACHE_CONF
 sub module
 {
 	local %mdl_env=@_;
+	$mdl_env{'-cache'} if $mdl_env{'-cache_id'};
 	my $t=track TOM::Debug(__PACKAGE__."::module(".$mdl_env{-category}."-".$mdl_env{-name}."/".$mdl_env{-version}."/".$mdl_env{-global}.")");
 	local %mdl_C;
 	local $tom::ERR;
@@ -347,7 +348,9 @@ sub module
 	
 	
 	# SPRACOVANIE PREMENNYCH
+	my $debug;
 	my $debug=1 if $mdl_env{'-debug'};
+	
 	foreach (sort keys %mdl_env)
 	{
 		main::_log("input '$_'='$mdl_env{$_}'") if $debug;
@@ -913,20 +916,25 @@ sub module
 					
 				}
 				
-#				TOM::Database::SQL::execute(qq{
-#					UPDATE
-#						TOM.a150_config
-#					SET
-#						time_use='$main::time_current'
-#					WHERE
-#						domain='$CACHE{$mdl_C{T_CACHE}}{-domain}' AND
-#						domain_sub='$CACHE{$mdl_C{T_CACHE}}{-domain_sub}' AND
-#						engine='pub' AND
-#						Capp='$mdl_C{-category}' AND
-#						Cmodule='$mdl_C{-name}' AND
-#						Cid='$mdl_C{-cache_id}'
-#					LIMIT 1
-#				},'db_h'=>'sys','quiet'=>1);
+				my $dbg;
+				if ($dbg)
+				{
+					main::_log("save debug TOM.a150_config domain='$CACHE{$mdl_C{T_CACHE}}{-domain}' domain_sub='$CACHE{$mdl_C{T_CACHE}}{-domain_sub}'");
+					TOM::Database::SQL::execute(qq{
+						UPDATE
+							TOM.a150_config
+						SET
+							time_use='$main::time_current'
+						WHERE
+							domain='$CACHE{$mdl_C{T_CACHE}}{-domain}' AND
+							domain_sub='$CACHE{$mdl_C{T_CACHE}}{-domain_sub}' AND
+							engine='pub' AND
+							Capp='$mdl_C{-category}' AND
+							Cmodule='$mdl_C{-name}' AND
+							Cid='$mdl_C{-cache_id}'
+						LIMIT 1
+					},'db_h'=>'sys','quiet'=>1);
+				}
 				
 			}
 			
