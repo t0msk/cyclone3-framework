@@ -32,21 +32,27 @@ our %table=
 	'158'	=>	"z", # 'z' s makcenom
 	
 	'161'	=>	"i", # 'i' divne
+	'162'	=>	"c", # '¢'
 	
 	'164'	=>	"'", # napriklad v slove "don't"
 	'165'	=>	"¥", # yen - mena
 	
 	'167'	=>	"§", # paragraf
+	'168'	=>	"", # '¨'
 	'169'	=>	"S", # 'S' s makcenom
+	
+	'171'	=>	"<", # '«'
 	
 	'173'	=>	"-", # pomlcka
 	'174'	=>	"z", # 'z' s makcenom
 	
 	'176'	=>	" ", # pevna medzera
-	
+	'177'	=>	"plusminus", # ±
+
 	'180'	=>	"'", # napriklad v slove "don't"
 	'181'	=>	"l", # 'l' s makcenom
 	
+	'184'	=>	"", # '¸'
 	'185'	=>	"s", # 's' s makcenom
 	'186'	=>	"º", # stupne - ºC
 	
@@ -56,31 +62,35 @@ our %table=
 	'189'	=>	"½", # 1/2
 	'190'	=>	"Z", # 'Z' s makcenom
 	'191'	=>	"¿", # obrateny otaznik
-	
+	'192'	=>	"A", # 'À'
 	'193'	=>	"A", # 'A' s dlznom
 	'194'	=>	"A", # 'A' s kruzkom
 	'195'	=>	"A", # 'A' s ~
 	'196'	=> "A", # 'A' s dvojbodkou
 	'197'	=> "A", # 'A' s makcenom
-	
+	'198'	=> "Ae", # 'Æ'
+	'199'	=> "C", # 'Ç'
 	'200'	=> "E", # 'E' s opacnym dlznom
 	'201'	=> "E", # 'E' s dlznom na konci
-	
+	'202'	=> "E", # 'Ê'
+
 	'203'	=> "E", # 'E' s dvoma dlznami
-	
-	'205'	=>	"I", # 'I' s dlznom
+	'204'	=> "I", # 'Ì' s dvoma dlznami
+	'205'	=>	"I", # 'Í' s dlznom
 	
 	'207'	=>	"I", # 'I' s dvojbodkou
-	
-	'211'	=> "U", # 'U' s dvomi dlznami
-	'212'	=> "U", # 'U' so strieskou
-	
+	'208'	=>	"D", # 'Ð'
+	'209'	=>	"N", # 'Ñ'
+	'210'	=>	"O", # 'Ò'
+	'211'	=> "O", # 'Ó'
+	'212'	=> "O", # 'Ô'
+	'213'	=> "O", # 'Õ'
 	'214'	=>	"O", # 'O' s dvojbodkou
 	
 	'216'	=>	"O", # 'O' preskrtnute
-	
-	'218'	=>	"U", # 'U' s dlznom
-	
+	'217'	=>	"U", # 'Ù'
+	'218'	=>	"U", # 'Ú'
+	'219'	=>	"U", # 'Û'
 	'220'	=>	"U", # 'U' s dvomi dlznami
 	
 	'221'	=> "Y", # 'Y' s dlznom na konci
@@ -92,7 +102,7 @@ our %table=
 	'227'	=> "a", # 'a' s vlnovkou
 	'228' =>	"a", # 'a' s dvojbodkou
 	'229' =>	"a", # 'a' s kruzkom
-	
+	'230' =>	"ae", # 'æ'
 	'231'	=>	"c", # 'c' s chvostikom
 	'232'	=>	"c", # 'c' s makcenom
 	'233'	=>	"e", # 'e' s dlznom
@@ -100,75 +110,112 @@ our %table=
 	'235'	=> "e", # 'e' s dvojbodkou
 	'236'	=> "i", # 'i' s opacnym dlznom
 	'237'	=> "i",
-	
+	'238'	=> "i", # 'î'
 	'239'	=> "i", # 'i' s dvojbodkou
-	
+	'240'	=> "eth", # 'ð'
 	'241'	=>	"n", # 'n' s dvomi dlznami
 	'242'	=>	"n", # 'n' s makcenom
 	'243'	=>	"o", # 'o' s dlznom
 	'244'	=>	"o", # 'o' s hacikom
-	
+	'245'	=>	"o", # 'õ'
 	'246'	=>	"o", # 'o' s dvojbodkou
 	
 	'248'	=>	"o", # 'o' preskrtnute
 	'249'	=>	"u", # 'o' s opacnym dlznom
 	'250'	=>	"u", # 'u' s dlznom
-	
+	'251'	=>	"u", # 'û' s dlznom
 	'252'	=>	"u", # 'u' s dvojdlznom
 	'253'	=>	"y",
+
+	'255'	=> "y", # 'ÿ'
+	'256'	=> "A", # 'Ā'
+	'257'	=> "a", # 'ā'
+	'258'	=> "A", # 'Ă'
 	
-	'259'	=>	"a", # 'a' s hacikom
+	'259'	=>	"a", # 'ă'
 	
-	'261'	=> "a", # 'c' s chvostikom
-	
-	'263'	=> "c", # 'c' s dlzdnom
+	'260'	=> "A", # 'Ą'
+	'261'	=> "a", # 'ą'
+	'262'	=> "C", # 'Ć'
+	'263'	=> "c", # 'c'
 	
 	'268'	=>	"C", # 'C' s makcenom
 	'269'	=>	"c", # 'c' s makcenom
-	'270'	=>	"D", # 'D' s makcenom
-	'271'	=>	"d", # 'd' s makcenom
-	'272'	=> "D", # 'D' presktnute
+	'270'	=>	"D", # 'Ď' s makcenom
+	'271'	=>	"d", # 'ď' s makcenom
+	'272'	=> "D", # 'Đ' presktnute
+	'273'	=> "d", # 'đ' presktnute
+
+	'274'	=> "E", # 'Ē'
+	'275'	=> "e", # 'ē'
+	'277'	=> "e", # 'ĕ'
+	'278'	=> "E", # 'Ė'
+	'279'	=> "e", # 'ė'
+	'280'	=> "E", # 'Ę'
+	'281'	=> "e", # 'ę'
 	
-	'282'	=>	"E", # 'E' s makcenom
-	'283'	=>	"e", # 'e' s makcenom
+	'282'	=>	"E", # 'Ě' s makcenom
+	'283'	=>	"e", # 'ě' s makcenom
 	
+	'290'	=>	"G", # 'Ģ
+	'291'	=>	"g", # 'ģ
+	'298'	=>	"I", # 'Ī
+	'299'	=>	"i", # 'ī
+	'302'	=>	"I", # 'Į
+	'303'	=>	"i", # 'į
 	'304' => "I", # 'I' s ciarkou
+
+	'310'	=>	"K", # 'Ķ
+	'311'	=>	"k", # 'ķ
 	
-	'313'	=>	"L", # 'L' s dlznom
-	'314'	=>	"l", # 'l' s dlznom
+	'313'	=>	"L", # 'Ĺ' s dlznom
+	'314'	=>	"l", # 'ĺ' s dlznom
+	'315'	=>	"L", # 'Ļ'
+	'316'	=>	"l", # 'ļ'
+	'317'	=>	"L", # 'Ľ' s makcenom
+	'318'	=>	"l", # 'ľ' s makcenom
+	'321'	=> "L", # 'Ł' preskrtnute
+	'322'	=> "l", # 'ł' preskrtnute
+	'323'	=> "N", # 'Ń'
+	'324'	=> "n", # 'ń'
+	'325'	=> "N", # 'Ņ'
+	'326'	=> "n", # 'ņ'
+	'327'	=>	"N", # 'Ň'
+	'328'	=>	"n", # 'ň'
 	
-	'317'	=>	"L", # 'L' s makcenom
-	'318'	=>	"l", # 'l' s makcenom
-	
-	'322'	=> "l", # 'l' preskrtnute
-	'323'	=> "N", # 'N' s dlznom
-	'324'	=> "n", # 'n' s dlznom
-	
-	'327'	=>	"N", # 'N' s makcenom
-	'328'	=>	"n", # 'n' s makcenom
+	'332'	=>	"O", # 'Ō'
+	'333'	=>	"o", # 'ō'
 	
 	'336'	=>	"O", # 'o' s vlnovkou
-	'337'	=>	"o", # 'o' s dlznom
-	
+	'337'	=>	"o", # 'ó'
+	'338'	=>	"Oe", # 'Œ'
+	'339'	=>	"oe", # 'œ'
+
 	'341'	=>	"r", # 'r' s dlznom
+	'342'	=>	"R", # 'Ŗ'
+	'343'	=>	"r", # 'ŗ'
+	'344'	=>	"R", # 'Ř'
+	'345'	=>	"r", # 'ř'
+	'346'	=> "S", # 'Ś'
+	'347'	=> "s", # 'ś'
 	
-	'344'	=>	"R",
-	'345'	=>	"r",
-	
-	'347'	=> "s", # 's' s dlznom
-	
-	'350'	=>	"S", # 'S' s chvostikom
-	'351'	=>	"s", # 'S' s chvostikom
-	'352'	=>	"S", # 'S' s makcenom
-	'353'	=>	"s", # 's' s makcenom
-	
-	'356'	=>	"T", # 'T' s makcenom
-	'357'	=>	"t", # 't' s makcenom
+	'350'	=>	"S", # 'Ş' s chvostikom
+	'351'	=>	"s", # 'ş' s chvostikom
+	'352'	=>	"S", # 'Š' s makcenom
+	'353'	=>	"s", # 'š' s makcenom
+	'354'	=>	"T", # 'Ţ'
+	'355'	=>	"t", # 'ţ'
+	'356'	=>	"T", # 'Ť' s makcenom
+	'357'	=>	"t", # 'ť' s makcenom
 	
 	'366'	=>	"U", # 'U' s kruzkom
 	'367'	=> "u", # 'u' s kruzkom
+	'368'	=> "U", # 'Ű' s dvomi dlznami
+	'369'	=> "u", # 'u' s dvomi dlznami
 	
-	'369'	=> "u", # 'u' s dvomi dlzdnami
+	'370'	=> "U", # 'Ų'
+	'371'	=> "u", # 'ų'
+	'376'	=> "Y", # 'Ÿ'
 	
 	'377'	=> "Z", # 'Z' na konci s dlznom
 	'378'	=>	"z", # 'z' s dlznom
@@ -184,22 +231,76 @@ our %table=
 	
 	'733'	=>	"\"", # dva horne apostrofy
 	
+	'1028'	=> "Є", # 'E' v azbuke
+	
+	'1030'	=> "I", # 'І' v azbuke
+	'1031'	=> "J", # 'Ї' v azbuke
+	
+	'1040'	=> "A", # 'А' v azbuke
 	'1041'	=> "B", # 'Б' v azbuke
+	'1042'	=> "V", # 'В' v azbuke
+	'1043'	=> 'G', # 'Г' v azbuke
+	'1044'	=> "D", # 'Д' v azbuke
+	'1045'	=> "E", # 'Е' v azbuke
 	
-	'1053'	=> "N", # 'Н'  v azbuke
+	'1047'	=> "Z", # 'З' v azbuke
+	'1048'	=> "I", # 'И' v azbuke
+	'1049'	=> "J", # 'Й' v azbuke
+	'1050'	=> "K", # 'К' v azbuke
+	'1051'	=> "L", # 'Л' v azbuke
+	'1052'	=> "M", # 'М' v azbuke
+	'1053'	=> "N", # 'Н' v azbuke
+	'1054'	=> "O", # 'О' v azbuke
+	'1055'	=> "P", # 'П' v azbuke
+	'1056'	=> "R", # 'Р' v azbuke
+	'1057'	=> "S", # 'С' v azbuke
+	'1058'	=> "T", # 'Т' v azbuke
+	'1059'	=> "U", # 'U' v azbuke
+	'1060'	=> "F", # 'Ф' v azbuke
+	'1061'	=> "CH", # 'Х' v azbuke
+	'1062'	=> "C", # 'Ц' v azbuke
+	'1063'	=> "C", # 'Ч' v azbuke
+	'1064'	=> "S", # 'Ш' v azbuke
 	
-	'1072'	=> "а", # 'а'  v azbuke
+	'1068'	=> "ˇ", # 'Ь' v azbuke
 	
-	'1076'	=> "d", # 'д'  v azbuke
-	'1077'	=> "e", # 'е'  v azbuke
+	'1070'	=> "JU", # 'Ю' v azbuke
+	'1071'	=> "JA", # 'Я' v azbuke
+	'1072'	=> "a", # 'а' v azbuke
+	'1073'	=> "b", # 'б' v azbuke
+	'1074'	=> "v", # 'в' v azbuke
+	'1075'	=> "g", # 'г' v azbuke
+	'1076'	=> "d", # 'д' v azbuke
+	'1077'	=> "e", # 'е' v azbuke
+	'1078'	=> "z", # 'ж' v azbuke
+	'1079'	=> "z", # 'з' v azbuke
+	'1080'	=> "i", # 'и' v azbuke
+	'1081'	=> "j", # 'й' v azbuke
+	'1082'	=> "k", # 'к' v azbuke
+	'1083'	=> "l", # 'л' v azbuke
+	'1084'	=> "m", # 'м' v azbuke
+	'1085'	=> "n", # 'н' v azbuke
+	'1086'	=> "o", # 'о' v azbuke
+	'1087'	=> "p", # 'п' v azbuke
+	'1088'	=> "r", # 'р' v azbuke
+	'1089'	=> "s", # 'с' v azbuke
+	'1090'	=> "t", # 'т' v azbuke
+	'1091'	=> "u", # 'у' v azbuke
+	'1092'	=> "f", # 'ф' v azbuke
+	'1093'	=> "ch", # 'х' v azbuke
+	'1094'	=> "c", # 'ц' v azbuke
+	'1095'	=> "c", # 'ч' v azbuke
 	
-	'1085'	=> "n", # 'н'  v azbuke
+	'1103'	=> "ja", # 'я' v azbuke	
 	
-	'1089'	=> "s", # 'с'  v azbuke
-	'1090'	=> "t", # 'т'  v azbuke
+	'1108'	=> "e", # 'є' v azbuke
 	
-	'1103'	=> "ja", # 'я'  v azbuke	
+	'1100'	=> "ˇ", # 'ь' v azbuke
 	
+	'1102'	=> "ju", # 'ю' v azbuke
+	
+	'1110'	=> "i", # 'і' v azbuke
+	'1111'	=> "i", # 'ї' v azbuke
 	
 #	'711'	=>	"", #
 	
