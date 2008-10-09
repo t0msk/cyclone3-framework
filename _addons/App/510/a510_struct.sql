@@ -11,9 +11,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video` (
   `datetime_rec_start` datetime default NULL, -- obsolete
   `datetime_rec_stop` datetime default NULL, -- obsolete
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
   KEY `datetime_rec_start` (`datetime_rec_start`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -42,10 +41,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   FULLTEXT KEY `keywords` (`keywords`),
   KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
   KEY `status` (`status`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -80,12 +78,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs` (
   `priority_C` tinyint(3) unsigned default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   FULLTEXT KEY `FULL_0` (`name`,`description`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID_category` (`ID_category`),
-  KEY `ID` (`ID`),
   KEY `name` (`name`),
   KEY `lng` (`lng`),
   KEY `order_id` (`order_id`),
@@ -127,10 +124,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
   `process_lock` char(1) character set ascii NOT NULL default 'N',
   `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   FULLTEXT KEY `FULL_0` (`keywords`),
   KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
   KEY `visits` (`visits`),
   KEY `part_id` (`part_id`),
   KEY `status` (`status`)
@@ -172,7 +168,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_caption` (
   `caption` varchar(128) NOT NULL default '',
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   FULLTEXT KEY `FULL_0` (`caption`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`time_start`,`lng`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -203,10 +199,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_emo` ( -- experimental EMO char
   `emo_omg` int(10) unsigned NOT NULL default '0',
   `emo_smile` int(10) unsigned NOT NULL default '0',
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
-  KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`)
+  KEY `ID_entity` (`ID_entity`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -325,11 +320,10 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_attrs` (
   `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   FULLTEXT KEY `FULL_0` (`name`,`description`),
   KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
   KEY `name` (`name`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
@@ -381,11 +375,10 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file` (
   `from_parent` char(1) character set ascii NOT NULL default 'N', -- is this file generated from parent video_part_file?
   `regen` char(1) character set ascii NOT NULL default 'N', -- regenerate this video_part_file?
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`ID_format`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID_format` (`ID_format`),
-  KEY `ID` (`ID`),
   KEY `name` (`name`),
   KEY `regen` (`regen`),
   KEY `status` (`status`)
@@ -456,12 +449,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat` (
   `datetime_create` datetime NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID_charindex` (`ID_charindex`),
-  KEY `ID` (`ID`),
   KEY `name` (`name`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
@@ -497,12 +489,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_format` (
   `required` char(1) NOT NULL default 'Y',
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID_charindex` (`ID_charindex`),
-  KEY `ID` (`ID`),
   KEY `name` (`name`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
