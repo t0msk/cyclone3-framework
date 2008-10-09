@@ -20,7 +20,7 @@
 
 
 # a300 - USRM - check consistence of datas
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="300" />
 	<VAR id="-name" value="check" />
