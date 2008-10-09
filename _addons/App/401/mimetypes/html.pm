@@ -152,7 +152,7 @@ sub start
 		}
 		elsif ($attr->{'id'}=~/^a501_image:(.*)$/)
 		{
-			use App::501::_init;
+			require App::501::_init;
 			my %vars=_parse_id($1);
 			$vars{'ID_format'}=
 				$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
@@ -206,7 +206,7 @@ sub start
 			$self->{'count'}->{'video'}++;
 			$self->{'count'}->{'a510_video'}++;my $addon_cnt=$self->{'count'}->{'a510_video'};
 			$self->{'count'}->{'a510_video_part'}++;my $addon_part_cnt=$self->{'count'}->{'a510_video_part'};
-			use App::510::_init;
+			require App::510::_init;
 			my %vars=_parse_id($1);
 			$vars{'ID_format'}=$App::510::video_format_full_ID unless $vars{'ID_format'};
 			
@@ -308,7 +308,7 @@ sub start
 		{
 			$self->{'count'}->{'video'}++;
 			$self->{'count'}->{'a510_video_part'}++;my $addon_cnt=$self->{'count'}->{'a510_video_part'};
-			use App::510::_init;
+			require App::510::_init;
 			my %vars=_parse_id($1);
 			$vars{'ID_format'}=$App::510::video_format_full_ID unless $vars{'ID_format'};
 			
