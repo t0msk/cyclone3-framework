@@ -401,6 +401,15 @@ sub execute
 			$XSGN{'item.'.$item_counter}
 			|| $XSGN{'item'};
 		
+		if ($XSGN{'item-empty'} && (!$db0_line{'abstract'} || $db0_line{'abstract'} eq "<p>&nbsp;&nbsp;</p>") && (!$db0_line{'body'} || $db0_line{'body'} eq "<p>&nbsp;&nbsp;</p>"))
+		{
+			$item=$XSGN{'item-empty'};
+		}
+		elsif ($XSGN{'item-emptybody'} && (!$db0_line{'body'} || $db0_line{'body'} eq "<p>&nbsp;&nbsp;</p>"))
+		{
+			$item=$XSGN{'item-emptybody'};
+		}
+		
       my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
       $db0_line{'datetime_start.year'}=$datetime{'year'};
       $db0_line{'datetime_start.month'}=$datetime{'month'};
