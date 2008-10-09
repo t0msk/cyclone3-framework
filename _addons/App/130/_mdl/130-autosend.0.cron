@@ -53,9 +53,15 @@ sub execute
 	while (my %env0=$sth0{'sth'}->fetchhash)
 	{
 		$emails++;
-		if ($env0{from_email} ne $TOM::contact{'from'})
+#		if ($env0{from_email} ne $TOM::contact{'from'})
+#		{
+#			main::_log("DEPRECATED from_email (not from $TOM::contact{'from'}) used in table a130_send, email ID $env0{ID}",1,"pub.warn",1);
+#			$env0{'from_email'}=$TOM::contact{'from'};
+#		};
+		
+		if (!$env0{'from_email'})
 		{
-			main::_log("DEPRECATED from_email (not from $TOM::contact{'from'}) used in table a130_send, email ID $env0{ID}",1,"pub.warn",1);
+#			main::_log("DEPRECATED from_email (not from $TOM::contact{'from'}) used in table a130_send, email ID $env0{ID}",1,"pub.warn",1);
 			$env0{'from_email'}=$TOM::contact{'from'};
 		};
 		
