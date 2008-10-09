@@ -70,16 +70,7 @@ sub execute
 	$main::H->add_DOC_keywords($article{'keywords'});
 	$main::H->add_DOC_description($article{'name'}.". ".TOM::Text::format::xml2plain($article{'abstract'}));
 	
-	my $sql=qq{
-		UPDATE
-			`$App::401::db_name`.a401_article_ent
-		SET
-			visits=visits+1
-		WHERE
-			ID_entity=$article{'ID_entity_article'}
-		LIMIT 1
-	};
-	TOM::Database::SQL::execute($sql,'quiet'=>1);
+	App::401::functions::article_visit($article{'ID_entity_article'});
 	
 	if ($main::USRM{'ID_user'})
 	{

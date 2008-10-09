@@ -639,6 +639,80 @@ sub article_item_info
 	return %data;
 }
 
+
+
+=head2 article_visit()
+
+Increase number of article visits
+
+=cut
+
+sub article_visit
+{
+	my $ID_entity=shift;
+	
+	# check if this visit is in article
+	my $cache=$Ext::CacheMemcache::cache->get(
+		'namespace' => $App::401::db_name.".a401_article_ent.visit",
+		'key' => $ID_entity
+	);
+	
+	if (!$cache)
+	{
+		$cache->{'visits'}=0;
+		$Ext::CacheMemcache::cache->set
+		(
+			'namespace' => $App::401::db_name.".a401_article_ent.visit",
+			'key' => $ID_entity,
+			'value' =>
+			{
+				'time' => time(),
+				'visits' => $cache->{'visits'}
+			},
+			'expiration' => "604800S"
+		);
+		# update SQL
+		TOM::Database::SQL::execute(qq{
+			UPDATE `$App::401::db_name`.a401_article_ent
+			SET visits=visits+1
+			WHERE ID=$ID_entity
+			LIMIT 1
+		},'-quiet'=>1);
+		return 1;
+	}
+	
+	$cache->{'visits'}++;
+	
+	my $old=time()-$cache->{'time'};
+	
+	if ($old > 3600)
+	{
+		# update database
+		TOM::Database::SQL::execute(qq{
+			UPDATE `$App::401::db_name`.a401_article_ent
+			SET visits=visits+$cache->{'visits'}
+			WHERE ID=$ID_entity
+			LIMIT 1
+		},'-quiet'=>1);
+		$cache->{'visits'}=0;
+		$cache->{'time'}=time();
+	}
+	
+	$Ext::CacheMemcache::cache->set
+	(
+		'namespace' => $App::401::db_name.".a401_article_ent.visit",
+		'key' => $ID_entity,
+		'value' =>
+		{
+			'time' => $cache->{'time'},
+			'visits' => $cache->{'visits'}
+		},
+		'expiration' => "604800S"
+	);
+	
+	return 1;
+}
+
 =head1 AUTHORS
 
 Comsultia, Ltd. (open@comsultia.com)
