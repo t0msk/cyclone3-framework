@@ -93,7 +93,7 @@ sub execute
 	$table =~ s|<%title%>|Table of days|g;
 	$table =~ s|<%colscount%>|4|g;
 	# list of columns
-	foreach my $col_name ( 'Day', 'PROC', 'WAIT', 'Sum' )
+	foreach my $col_name ( 'Day', 'PROC (ms)', 'WAIT (ms)', 'Sum (ms)' )
 	{
 		my $col = $tpl->{'entity'}{'email.table.col.name'};
 		$col =~ s|<%name%>|$col_name|g;
@@ -102,6 +102,7 @@ sub execute
 	
 	my %data;
 	my %sum;
+	my $i0;
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			AVG(load_proc)*1000 AS proc,
@@ -120,6 +121,7 @@ sub execute
 	},'db_h'=>'stats');
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
+		$i0++;
 		$db0_line{'proc'}=int($db0_line{'proc'});
 		$db0_line{'wait'}=int($db0_line{'wait'});
 		
@@ -174,6 +176,8 @@ sub execute
 			$col =~ s/<%value%>/$db0_line{'wait'}+$db0_line{'proc'} || '&nbsp;'/e;
 			$sum{'IDhashs'}+=$db0_line{'IDhashs'};
 			$line =~ s|<#email.table.col.value#>|$col|g;
+		
+		next if ($env{'days'}-7 >= $i0); # add table only from last 7 days;
 		$table =~ s|<#email.table.line#>|$line|g;
 		
 	}
@@ -396,7 +400,7 @@ sub execute
 	$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$table<#email.content#>|;
 	
 	
-	main::_log("20 domains with lowest availability (last 7 days)");
+	main::_log("10 domains with lowest availability (last 7 days)");
 	# table
 	my $table=$tpl->{'entity'}{'email.table'};
 	$table =~ s|<%title%>|20 domains with lowest availability (last 7 days)|g;
@@ -425,7 +429,7 @@ sub execute
 			domain_sub
 		ORDER BY
 			AVG(load_req) DESC
-		LIMIT 20
+		LIMIT 10
 	},'db_h'=>'stats');
 	
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
@@ -463,7 +467,7 @@ sub execute
 	
 	# table
 	my $table=$tpl->{'entity'}{'email.table'};
-	$table =~ s|<%title%>|20 Type of services with lowest availability (last day)|g;
+	$table =~ s|<%title%>|10 Type of services with lowest availability (last day)|g;
 	$table =~ s|<%colscount%>|6|g;
 	# list of columns
 	foreach my $col_name ( 'TypeID', 'Domain', 'Requests', 'PROC', 'WAIT', 'Sum' )
@@ -489,7 +493,7 @@ sub execute
 			query_TID
 		ORDER BY
 			AVG(load_req) DESC
-		LIMIT 20
+		LIMIT 10
 	},'db_h'=>'stats');
 	
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
@@ -526,6 +530,74 @@ sub execute
 	
 	# add table
 	$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$table<#email.content#>|;
+	
+	
+	
+	
+	my $graf=SVGraph::2D::columns->new(
+		'title' => "Usage of memcached hosts",
+		'title.color' => $tpl->{'entity'}{'color.h1'},
+		'type' => "stacked",
+		'x' => 450,
+		'y' => 250,
+		'show_legend' => 1,
+		'show_grid_x' => 1,
+		'grid_y_scale_minimum' => 0,
+#		'show_lines_smooth' => 1,
+	);
+	my %columns;
+	$columns{'max_bytes'}=$graf->addColumn('title'=>"free Mb");
+	$columns{'bytes'}=$graf->addColumn('title'=>"used Mb");
+	my $out=$Ext::CacheMemcache::cache->stats();
+	foreach my $server(sort keys %{$out})
+	{
+		main::_log("server '$server'");
+		$graf->addRowLabel($server);
+		$columns{'bytes'}->addData($server,int($out->{$server}->{'bytes'}/1024/1024));
+		$columns{'max_bytes'}->addData($server,int(($out->{$server}->{'limit_maxbytes'}-$out->{$server}->{'bytes'})/1024/1024));
+	}
+	# generate graph
+	my $graf_svg=new TOM::Temp::file('ext'=>'svg');
+	push @img, new TOM::Temp::file('ext'=>'png');
+	$graf->save($graf_svg->{'filename'});
+	Ext::SVG2PNG::convert($graf_svg->{'filename'},$img[-1]->{'filename'});
+	# add graf
+	$tpl->{'entity'}{'email.xhtml'}=~s|<#email.content#>|<img class="graph" src="cid:$i\@graf"/><br/><#email.content#>|;
+	$i++;
+	
+	
+	
+	my $graf=SVGraph::2D::columns->new(
+		'title' => "Hits efectivity of memcached hosts (bigger is better)",
+		'title.color' => $tpl->{'entity'}{'color.h1'},
+		'type' => "stacked",
+		'x' => 450,
+		'y' => 250,
+#		'show_legend' => 1,
+		'show_grid_x' => 1,
+		'grid_y_scale_minimum' => 0,
+#		'show_lines_smooth' => 1,
+	);
+	my %columns;
+	$columns{'hits'}=$graf->addColumn('title'=>"hits");
+	my $out=$Ext::CacheMemcache::cache->stats();
+	foreach my $server(sort keys %{$out})
+	{
+		main::_log("server '$server'");
+		$graf->addRowLabel($server);
+		$columns{'hits'}->addData($server,int(($out->{$server}->{'get_hits'}/$out->{$server}->{'get_misses'})*10)/10);
+	}
+	# generate graph
+	my $graf_svg=new TOM::Temp::file('ext'=>'svg');
+	push @img, new TOM::Temp::file('ext'=>'png');
+	$graf->save($graf_svg->{'filename'});
+	Ext::SVG2PNG::convert($graf_svg->{'filename'},$img[-1]->{'filename'});
+	# add graf
+	$tpl->{'entity'}{'email.xhtml'}=~s|<#email.content#>|<img class="graph" src="cid:$i\@graf"/><br/><#email.content#>|;
+	$i++;
+	
+	
+	
 	
 	
 	# cleaning
