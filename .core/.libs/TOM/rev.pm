@@ -19,10 +19,11 @@ our $svn_info=`/usr/local/bin/svn info $TOM::P/.core` || `/usr/bin/svn info $TOM
 if ($svn_info=~/Revision: (\d+)/)
 {
 	$TOM::core_revision=$1;
-	if ($svn_info=~/Last Changed Date: (\d\d\d\d)-(\d\d)-(\d\d)/)
-	{
-		$TOM::core_build=$1.$2.$3;
-	}
+	$TOM::core_build=$1;
+#	if ($svn_info=~/Last Changed Date: (\d\d\d\d)-(\d\d)-(\d\d)/)
+#	{
+#		$TOM::core_build=$1.$2.$3;
+#	}
 	
 	main::_log("SVN Revision='$TOM::core_revision' Date='$TOM::core_build'");
 }
