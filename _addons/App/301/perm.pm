@@ -35,7 +35,7 @@ L<App::301::_init|app/"301/_init.pm">
 
 use App::301::_init;
 
-
+our $debug=0;
 our %groups;
 our %roles;
 our %ACL_roles;
@@ -50,21 +50,23 @@ sub register
 {
 	my %env=@_;
 	
-	my $t=track TOM::Debug(__PACKAGE__."::register()");
+	my $t=track TOM::Debug(__PACKAGE__."::register()") if $debug;
 	
 	if (!$env{'addon'})
 	{
-		main::_log("addon not defined",1);
+		main::_log("App::301::register() addon not defined",1) unless $debug;
+		main::_log("addon not defined",1) if $debug;
 		$t->close();return undef;
 	}
 	
-	main::_log("addon='$env{'addon'}'");
+	main::_log("App::301::register($env{'addon'})") unless $debug;
+	main::_log("addon=$env{'addon'}") if $debug;
 	
 	if ($env{'functions'})
 	{
 		foreach (sort keys %{$env{'functions'}})
 		{
-			main::_log("FNC_$env{'addon'}.$_");
+			main::_log("FNC_$env{'addon'}.$_") if $debug;
 			$functions{$env{'addon'}.'.'.$_}=$env{'functions'}->{$_};
 		}
 	}
@@ -73,7 +75,7 @@ sub register
 	{
 		foreach my $role(sort keys %{$env{'roles'}})
 		{
-			main::_log("RL_$env{'addon'}.$role");
+			main::_log("RL_$env{'addon'}.$role") if $debug;
 			if (!$roles{$env{'addon'}.'.'.$role})
 			{
 				$roles{$env{'addon'}.'.'.$role}={};
@@ -81,7 +83,7 @@ sub register
 			foreach my $fnc(@{$env{'roles'}->{$role}})
 			{
 				# register function to role
-				main::_log("->FNC_$env{'addon'}.$fnc");
+				main::_log("->FNC_$env{'addon'}.$fnc") if $debug;
 				$roles{$env{'addon'}.'.'.$role}{$env{'addon'}.'.'.$fnc}=1;
 			}
 		}
@@ -91,7 +93,7 @@ sub register
 	{
 		foreach my $group(sort keys %{$env{'groups'}})
 		{
-			main::_log("group '$group'");
+			main::_log("group '$group'") if $debug;
 			if (!$groups{$group})
 			{
 				$groups{$group}={};
@@ -116,7 +118,7 @@ sub register
 #					my @perms_=split('',$env{groups}{$env{'addon'}.'.'.$role},3);
 #				}
 				
-				main::_log("->RL_$env{'addon'}.$role '$perm'");
+				main::_log("->RL_$env{'addon'}.$role '$perm'") if $debug;
 #				$roles{$env{'addon'}.'.'.$role}{$env{'addon'}.'.'.$_}=1;
 			}
 			
@@ -128,7 +130,7 @@ sub register
 	{
 		foreach my $ACL_role(sort keys %{$env{'ACL_roles'}})
 		{
-			main::_log("ACL_role '$ACL_role'");
+			main::_log("ACL_role '$ACL_role'") if $debug;
 			if (!$ACL_roles{$ACL_role})
 			{
 				$ACL_roles{$ACL_role}={};
@@ -142,14 +144,14 @@ sub register
 				
 				$ACL_roles{$ACL_role}{$env{'addon'}.'.'.$role}=$perm;
 				
-				main::_log("->RL_$env{'addon'}.$role '$perm'");
+				main::_log("->RL_$env{'addon'}.$role '$perm'") if $debug;
 			}
 			
 		}
 	}
 	
 	
-	$t->close();
+	$t->close() if $debug;
 	return 1;
 };
 
