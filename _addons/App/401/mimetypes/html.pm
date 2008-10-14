@@ -39,6 +39,7 @@ use App::401::_init;
 use base "HTML::Parser";
 
 our $cache=300;
+#our $cache=0;
 our $debug=0;
 our $tpl=new TOM::Template(
 	'level' => "auto",
@@ -173,7 +174,7 @@ sub start
 						ID_format=$vars{'ID_format'}
 					LIMIT 1
 				};
-				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto'=>$cache);
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
 				my %db0_line=$sth0{'sth'}->fetchhash();
 				if ($db0_line{'ID'})
 				{
@@ -226,7 +227,7 @@ sub start
 						lng='$tom::lng'
 					LIMIT 1
 				};
-				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto'=>$cache);
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
 				my %db0_line=$sth0{'sth'}->fetchhash();
 				if ($db0_line{'ID'})
 				{
@@ -279,17 +280,41 @@ sub start
 						
 						my $sql=qq{
 							SELECT
-								*
+								image.ID_entity AS ID_entity_image,
+								image.ID AS ID_image,
+								image_file.ID_format AS ID_format,
+								image_file.ID AS ID_file,
+								image_ent.posix_owner,
+								image_ent.posix_author,
+								image_attrs.name,
+								image_file.image_width,
+								image_file.image_height,
+								image_file.file_size,
+								image_file.file_ext,
+								CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
 							FROM
-								`$App::501::db_name`.`a501_image_view`
+								`$App::501::db_name`.`a501_image` AS image
+							LEFT JOIN `$App::501::db_name`.`a501_image_ent` AS image_ent ON
+							(
+								image_ent.ID_entity = image.ID_entity
+							)
+							LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
+							(
+								image_attrs.ID_entity = image.ID
+							)
+							LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
+							(
+								image_file.ID_entity = image.ID_entity
+							)
 							WHERE
-								ID_entity_image=$relation->{'r_ID_entity'} AND
-								ID_format=$img_ID_format
+								image.ID_entity=$relation->{'r_ID_entity'} AND
+								image_file.ID_format=$img_ID_format
 							LIMIT 1
 						};
-						my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto'=>$cache);
+						
+						my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
 						my %db1_line=$sth1{'sth'}->fetchhash();
-						if ($db1_line{'ID'})
+						if ($db1_line{'file_path'})
 						{
 							$attr->{'src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
 							$out_full=~s|<%img\.db_(.*?)%>|$db1_line{$1}|g;
@@ -327,7 +352,7 @@ sub start
 						lng='$tom::lng'
 					LIMIT 1
 				};
-				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto'=>$cache);
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
 				my %db0_line=$sth0{'sth'}->fetchhash();
 				if ($db0_line{'ID'})
 				{
@@ -381,17 +406,40 @@ sub start
 						
 						my $sql=qq{
 							SELECT
-								*
+								image.ID_entity AS ID_entity_image,
+								image.ID AS ID_image,
+								image_file.ID_format AS ID_format,
+								image_file.ID AS ID_file,
+								image_ent.posix_owner,
+								image_ent.posix_author,
+								image_attrs.name,
+								image_file.image_width,
+								image_file.image_height,
+								image_file.file_size,
+								image_file.file_ext,
+								CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
 							FROM
-								`$App::501::db_name`.`a501_image_view`
+								`$App::501::db_name`.`a501_image` AS image
+							LEFT JOIN `$App::501::db_name`.`a501_image_ent` AS image_ent ON
+							(
+								image_ent.ID_entity = image.ID_entity
+							)
+							LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
+							(
+								image_attrs.ID_entity = image.ID
+							)
+							LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
+							(
+								image_file.ID_entity = image.ID_entity
+							)
 							WHERE
-								ID_entity_image=$relation->{'r_ID_entity'} AND
-								ID_format=$img_ID_format
+								image.ID_entity=$relation->{'r_ID_entity'} AND
+								image_file.ID_format=$img_ID_format
 							LIMIT 1
 						};
-						my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto'=>1);
+						my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
 						my %db1_line=$sth1{'sth'}->fetchhash();
-						if ($db1_line{'ID'})
+						if ($db1_line{'file_path'})
 						{
 							$attr->{'src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
 							main::_log("found thumbnail image src=".$attr->{'src'}) if $debug;
