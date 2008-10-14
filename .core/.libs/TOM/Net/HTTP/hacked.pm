@@ -35,7 +35,6 @@ our %table=
 		'uri' => ['/lanai-cms']
 	},
 	
-	
 	'phpbb'=> # PHPBB
 	{
 		'uri' => ['^/phpbb']
@@ -62,6 +61,11 @@ our %table=
 		'uri' => ['^/horde\-']
 	},
 	
+#	'XSS'=>
+#	{
+#		'uri' => ['>alert\(']
+#	},
+	
 	'crossxml'=>
 	{
 		'uri' => ['^/cross\*\*\*\*in\.xml']
@@ -70,6 +74,11 @@ our %table=
 	'awstats'=>
 	{
 		'uri' => ['awstats\.pl']
+	},
+	
+	'MSA-945713'=> # Microsoft Security Advisory (945713) - Vulnerability in Web Proxy Auto-Discovery (WPAD) Could Allow Information Disclosure
+	{
+		'uri' => ['wpad\.dat']
 	},
 	
 	'Inktomi' =>
