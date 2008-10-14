@@ -9,9 +9,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article` (
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -37,9 +36,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
   KEY `ID_author` (`ID_author`),
   KEY `visits` (`visits`),
   KEY `status` (`status`)
@@ -88,14 +86,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   `priority_F` tinyint(3) unsigned default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   KEY `SEL_0` (`status`,`lng`,`datetime_start`),
   KEY `SEL_1` (`datetime_start`,`datetime_stop`),
   KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
   KEY `ID_category` (`ID_category`),
   KEY `name` (`name`),
+  KEY `name_url` (`name_url`),
   KEY `datetime_start` (`datetime_start`),
   KEY `datetime_stop` (`datetime_stop`),
   KEY `priority_A` (`priority_A`),
@@ -143,11 +141,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content` (
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   FULLTEXT KEY `FULL_0` (`subtitle`,`abstract`,`body`,`keywords`),
   KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
   KEY `subtitle` (`subtitle`),
   KEY `mimetype` (`mimetype`),
   KEY `lng` (`lng`),
@@ -184,8 +181,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_visit` (
 CREATE TABLE `/*db_name*/`.`/*app*/_article_visit_arch` (
   `datetime_event` datetime NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `ID_article` bigint(20) NOT NULL
-) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+  `ID_article` bigint(20) NOT NULL,
+  KEY `datetime_event` (`datetime_event`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -201,12 +199,11 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat` (
   `datetime_create` datetime NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID_charindex` (`ID_charindex`),
-  KEY `ID` (`ID`),
   KEY `name` (`name`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
@@ -241,10 +238,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_emo` ( -- experimental EMO character
   `emo_omg` int(10) unsigned NOT NULL default '0',
   `emo_smile` int(10) unsigned NOT NULL default '0',
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
-  KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`)
+  KEY `ID_entity` (`ID_entity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
