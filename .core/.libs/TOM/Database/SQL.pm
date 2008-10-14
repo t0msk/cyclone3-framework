@@ -19,7 +19,8 @@ use TOM::Database::SQL::transaction;
 use TOM::Database::SQL::cache;
 
 our $debug=0;
-our $logquery=0;
+our $logcachequery=0;
+our $logquery=1;
 our $logquery_long=2;
 our $query_long_autocache=0.01; # less availability than Memcached
 
@@ -196,7 +197,7 @@ sub execute
 		elsif ($cache)
 		{
 			main::_log("SQL: readed from cache (".(time()-$cache->{'value'}->{'time'})."s old)") if $env{'log'};
-			main::_log("{$env{'db_h'}:cache} '$SQL_' from '$filename:$line'",3,"sql") if $logquery;
+			main::_log("{$env{'db_h'}:cache} '$SQL_' from '$filename:$line'",3,"sql") if $logcachequery;
 			$output{'sth'}=$cache;
 			$output{'info'}=$cache->{'value'}->{'info'};
 			$output{'err'}=$cache->{'value'}->{'err'};
@@ -207,7 +208,7 @@ sub execute
 		}
 	}
 	
-	main::_log("{$env{'db_h'}:exec} '$SQL_' from '$filename:$line'",3,"sql") if $logquery;
+	#main::_log("{$env{'db_h'}:exec} '$SQL_' from '$filename:$line'",3,"sql") if $logquery;
 	
 	if ($TOM::DB{$env{'db_h'}}{'type'} eq "DBI")
 	{
@@ -295,6 +296,8 @@ sub execute
 			'id'=> $cache_key
 		);
 	}
+	
+	main::_log("{$env{'db_h'}:exec:".($t->{'time'}{'req'}{'duration'})."s} '$SQL_' from '$filename:$line'",3,"sql") if $logquery;
 	
 	if ($logquery_long && ($t->{'time'}{'req'}{'duration'} > $logquery_long))
 	{
