@@ -197,6 +197,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
@@ -221,6 +222,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N'
 ) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
@@ -239,8 +241,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_emo` ( -- experimental EMO character
   `emo_smile` int(10) unsigned NOT NULL default '0',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
-  UNIQUE KEY `UNI_0` (`ID_entity`),
-  KEY `ID_entity` (`ID_entity`)
+  UNIQUE KEY `UNI_0` (`ID_entity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -340,7 +341,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 		article_content.ID_editor AS posix_editor, -- last editor
 		article_ent.ID_author AS posix_author,
 		
-		DATE_FORMAT(article_content.datetime_create, '%Y-%m-%d %H:%i') AS datetime_create,
+		article_content.datetime_create,
 		DATE_FORMAT(article_attrs.datetime_start, '%Y-%m-%d %H:%i') AS datetime_start,
 		DATE_FORMAT(article_attrs.datetime_stop, '%Y-%m-%d %H:%i') AS datetime_stop,
 		
