@@ -131,23 +131,23 @@ sub get_owner
 	
 	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_}};
 	
-#	if ($env{'r_table'} eq "product")
-#	{
-#		my $sql=qq{
-#			SELECT
-#				posix_owner
-#			FROM
-#				`$App::401::db_name`.a401_article_ent
-#			WHERE
-#				ID_entity='$env{'r_ID_entity'}'
-#			LIMIT 1
-#		};
-#		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'main','quiet'=>1,'-slave'=>0);
-#		my %db0_line=$sth0{'sth'}->fetchhash();
-#		$t->close();
-#		return $db0_line{'posix_owner'};
-#	}
-	if ($env{'r_table'} eq "product_cat")
+	if ($env{'r_table'} eq "product")
+	{
+		my $sql=qq{
+			SELECT
+				posix_owner
+			FROM
+				`$App::910::db_name`.a910_product_ent
+			WHERE
+				ID_entity='$env{'r_ID_entity'}'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'main','quiet'=>1,'-slave'=>0);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		$t->close();
+		return $db0_line{'posix_owner'};
+	}
+	elsif ($env{'r_table'} eq "product_cat")
 	{
 		my $sql=qq{
 			SELECT
@@ -194,33 +194,33 @@ sub set_owner
 		$t->close();
 		return 1;
 	}
-#	elsif ($env{'r_table'} eq "article")
-#	 {
-#		  my @IDs=App::020::SQL::functions::get_ID_entity
-#		  (
-#				'ID_entity' => $env{'r_ID_entity'},
-#				'db_h' => 'main',
-#				'db_name' => $App::401::db_name,
-#				'tb_name' => 'a401_article_ent',
-#		  );
-#		  if ($IDs[0]->{'ID'})
-#		  {
-#				App::020::SQL::functions::update(
-#					 'ID' => $IDs[0]->{'ID'},
-#					 'db_h' => 'main',
-#					 'db_name' => $App::401::db_name,
-#					 'tb_name' => 'a401_article_ent',
-#					 'columns' =>
-#					 {
-#						  'posix_owner' => "'".$env{'posix_owner'}."'"
-#					 },
-#					 '-journalize' => 1,
-#					 '-posix' => 1
-#				);
-#				$t->close();
-#				return 1;
-#		  }
-#	 }
+	elsif ($env{'r_table'} eq "product")
+	{
+		my @IDs=App::020::SQL::functions::get_ID_entity
+		(
+			'ID_entity' => $env{'r_ID_entity'},
+			'db_h' => 'main',
+			'db_name' => $App::910::db_name,
+			'tb_name' => 'a910_product_ent',
+		);
+		if ($IDs[0]->{'ID'})
+		{
+			App::020::SQL::functions::update(
+				'ID' => $IDs[0]->{'ID'},
+				'db_h' => 'main',
+				'db_name' => $App::910::db_name,
+				'tb_name' => 'a910_product_ent',
+				'columns' =>
+				{
+					'posix_owner' => "'".$env{'posix_owner'}."'"
+				},
+				'-journalize' => 1,
+				'-posix' => 1
+			);
+			$t->close();
+			return 1;
+		}
+	}
 	
 	$t->close();
 	return undef;

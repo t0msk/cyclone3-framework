@@ -51,6 +51,10 @@ L<App::910::a160|app/"910/a160.pm">
 
 L<App::910::a301|app/"910/a301.pm">
 
+=item *
+
+L<App::910::functions|app/"910/functions.pm">
+
 =back
 
 =cut
@@ -62,6 +66,7 @@ use App::301::_init;
 use App::401::mimetypes;
 use App::910::a160;
 use App::910::a301;
+use App::910::functions;
 
 
 

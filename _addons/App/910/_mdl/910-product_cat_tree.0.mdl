@@ -407,17 +407,16 @@ $where
 			$XSGN{'NULL'}=~s|<%status%>|$entity->{'status'}|g;
 #			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
 			
-			if ($env{'itemcount_'})
+			if ($env{'itemcount'})
 			{
 				# count of items
 				
 				my $sql=qq{
 					SELECT COUNT(ID) AS itemcount
 					FROM
-						`$App::401::db_name`.`a401_article_attrs`
+						`$App::910::db_name`.`a910_product_sym`
 					WHERE
-						ID_category = $entity->{'ID'}
-						AND status IN ('Y','N')
+						ID = $entity->{'ID_entity'}
 				};
 				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'_cache'=>30);
 				if (my %db1_line=$sth1{'sth'}->fetchhash())
