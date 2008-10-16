@@ -80,6 +80,82 @@ use App::910::functions;
 our $currency=$App::910::currency || 'EUR';
 our $db_name=$App::401::db_name || $TOM::DB{'main'}{'name'};
 
+
+
+# check relation to a501
+use App::501::_init;
+our $thumbnail_cat_ID_entity;
+our %thumbnail_cat;
+
+# find any category;
+my $sql="
+	SELECT
+		ID, ID_entity
+	FROM
+		`$App::501::db_name`.`a501_image_cat`
+	WHERE
+		name='product thumbnails' AND
+		lng IN ('".(join "','",@TOM::LNG_accept)."')
+	LIMIT 1
+";
+my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+if (my %db0_line=$sth0{'sth'}->fetchhash())
+{
+	$thumbnail_cat_ID_entity=$db0_line{'ID_entity'} unless $thumbnail_cat_ID_entity;
+}
+else
+{
+	$thumbnail_cat_ID_entity=App::020::SQL::functions::tree::new(
+		'db_h' => "main",
+		'db_name' => $App::501::db_name,
+		'tb_name' => "a501_image_cat",
+		'columns' => {
+			'name' => "'product thumbnails'",
+			'lng' => "'$tom::LNG'",
+			'status' => "'L'"
+		},
+		'-journalize' => 1
+	);
+}
+
+foreach my $lng(@TOM::LNG_accept)
+{
+	#main::_log("check related category $lng");
+	my $sql=qq{
+		SELECT
+			ID, ID_entity
+		FROM
+			`$App::501::db_name`.`a501_image_cat`
+		WHERE
+			ID_entity=$thumbnail_cat_ID_entity AND
+			lng='$lng'
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$thumbnail_cat{$lng}=$db0_line{'ID'};
+	}
+	else
+	{
+		#main::_log("creating related category");
+		$thumbnail_cat{$lng}=App::020::SQL::functions::tree::new(
+			'db_h' => "main",
+			'db_name' => $App::501::db_name,
+			'tb_name' => "a501_image_cat",
+			'columns' => {
+				'ID_entity' => $thumbnail_cat_ID_entity,
+				'name' => "'product thumbnails'",
+				'lng' => "'$lng'",
+				'status' => "'L'"
+			},
+			'-journalize' => 1
+		);
+	}
+}
+
+
+
 =head1 AUTHOR
 
 Comsultia, Ltd. (open@comsultia.com)

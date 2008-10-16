@@ -103,6 +103,7 @@ sub product_add
 	# PRODUCT AND PRODUCT MODIFICATION
 	
 	my %product;
+	
 	if ($env{'product.ID'})
 	{
 		undef $env{'product.ID_entity'}; # ID_entity has lower priority as ID
@@ -126,6 +127,12 @@ sub product_add
 			main::_log("not found product.ID, undef",1);
 			undef $env{'product.ID'};
 		}
+	}
+	
+	# find product by product_number
+	if (!$env{'product.ID'} && $env{'product.product_number'})
+	{
+		
 	}
 	
 	if (!$env{'product.ID'}) # if modification not defined, create a new
@@ -164,6 +171,28 @@ sub product_add
 	# price
 	$columns{'price'}="'".TOM::Security::form::sql_escape($env{'product.price'})."'"
 		if (exists $env{'product.price'} && ($env{'product.price'} ne $product{'price'}));
+	# price_currency
+	$columns{'price_currency'}="'".TOM::Security::form::sql_escape($env{'product.price_currency'})."'"
+		if ($env{'product.price_currency'} && ($env{'product.price_currency'} ne $product{'price_currency'}));
+	# metadata
+	$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'product.metadata'})."'"
+		if (exists $env{'product.metadata'} && ($env{'product.metadata'} ne $product{'metadata'}));
+	
+	if ($env{'product.product_number'} && ($env{'product.product_number'} ne $product{'product_number'}))
+	{
+		# check if this product_number not already used by another product
+		my $sql=qq{
+			SELECT
+				ID
+			FROM
+				`$App::910::db_name`.product
+			WHERE
+				product_number='$env{'product.product_number'}'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		$columns{'product_number'}="'".TOM::Security::form::sql_escape($env{'product.product_number'})."'" unless $sth0{'rows'};
+	}
 	
 	if (keys %columns)
 	{
@@ -319,6 +348,15 @@ sub product_add
 		if ($env{'product_lng.name'} && ($env{'product_lng.name'} ne $product_lng{'name'}));
 	$columns{'name_url'}="'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'product_lng.name'}))."'"
 		if ($env{'product_lng.name'} && ($env{'product_lng.name'} ne $product_lng{'name'}));
+	# name_long
+	$columns{'name_long'}="'".TOM::Security::form::sql_escape($env{'product_lng.name_long'})."'"
+		if ($env{'product_lng.name_long'} && ($env{'product_lng.name_long'} ne $product_lng{'name_long'}));
+	# description_short
+	$columns{'description_short'}="'".TOM::Security::form::sql_escape($env{'product_lng.description_short'})."'"
+		if ($env{'product_lng.description_short'} && ($env{'product_lng.description_short'} ne $product_lng{'description_short'}));
+	# description
+	$columns{'description'}="'".TOM::Security::form::sql_escape($env{'product_lng.description'})."'"
+		if ($env{'product_lng.description'} && ($env{'product_lng.description'} ne $product_lng{'description'}));
 	
 	if (keys %columns)
 	{
@@ -365,6 +403,74 @@ sub product_add
 	}
 	
 	main::_log("product_sym.ID='$env{'product_sym.ID'}'");
+	
+	
+	# THUMBNAIL
+	
+	if ($env{'thumbnail'} && -e $env{'thumbnail'} && not -d $env{'thumbnail'})
+	{
+		
+		if (my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::910::db_name,
+			'l_prefix' => 'a910',
+			'l_table' => 'product',
+			'l_ID_entity' => $env{'product.ID'},
+			'rel_type' => 'thumbnail',
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y",
+			'limit' => 1
+		))[0])
+		{
+			
+			my %image=App::501::functions::image_add(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_attrs.name' => $env{'product.product_number'} || $env{'product.ID'} || $env{'thumbnail'},
+				'file' => $env{'thumbnail'}
+			);
+			
+			if ($image{'image.ID'})
+			{
+				App::501::functions::image_regenerate(
+					'image.ID' => $image{'image.ID'}
+				);
+			}
+			
+		}
+		else
+		{
+			
+			my %image=App::501::functions::image_add(
+				'image_attrs.name' => $env{'product.product_number'} || $env{'product.ID'} || $env{'thumbnail'},
+				'image_attrs.ID_category' => $App::910::thumbnail_cat{$env{'product_lng.lng'}},
+				'image_attrs.status' => 'Y',
+				'file' => $env{'thumbnail'}
+			);
+			
+			if ($image{'image.ID'})
+			{
+				
+				App::501::functions::image_regenerate(
+					'image.ID' => $image{'image.ID'}
+				);
+				
+				my ($ID_entity,$ID)=App::160::SQL::new_relation(
+					'l_prefix' => 'a910',
+					'l_table' => 'product',
+					'l_ID_entity' => $env{'product.ID'},
+					'rel_type' => 'thumbnail',
+					'r_db_name' => $App::501::db_name,
+					'r_prefix' => 'a501',
+					'r_table' => 'image',
+					'r_ID_entity' => $image{'image.ID_entity'},
+					'status' => 'Y',
+				);
+				
+			}
+			
+		}
+		
+	}
 	
 	
 	$t->close();

@@ -14,6 +14,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `price` float default NULL, -- different modifications, different prices
   `price_currency` varchar(3) character set ascii default 'EUR',
   `price_EUR` float default NULL, -- price in EUR
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`product_number`),
@@ -33,6 +34,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `price` float default NULL,
   `price_currency` varchar(3) character set ascii default 'EUR',
   `price_EUR` float default NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
