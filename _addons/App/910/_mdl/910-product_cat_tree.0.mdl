@@ -412,11 +412,16 @@ $where
 				# count of items
 				
 				my $sql=qq{
-					SELECT COUNT(ID) AS itemcount
+					SELECT COUNT(sym.ID_entity) AS itemcount
 					FROM
-						`$App::910::db_name`.`a910_product_sym`
+						`$App::910::db_name`.`a910_product_sym` AS sym
+					LEFT JOIN `$App::910::db_name`.`a910_product` AS product ON
+					(
+						sym.ID_entity = product.ID_entity
+					)
 					WHERE
-						ID = $entity->{'ID_entity'}
+						product.status IN ('Y','N') AND
+						sym.ID = $entity->{'ID_entity'}
 				};
 				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'_cache'=>30);
 				if (my %db1_line=$sth1{'sth'}->fetchhash())

@@ -114,8 +114,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_sym` ( -- list of product symlinks
   `ID_entity` bigint(20) unsigned default NULL, -- rel _product.ID_entity
   `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`),
-  KEY `ID_entity` (`ID_entity`),
+  PRIMARY KEY  (`ID`,`ID_entity`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -126,7 +125,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_sym_j` (
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  PRIMARY KEY  (`ID`,`ID_entity`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
