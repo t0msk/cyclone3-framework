@@ -612,14 +612,22 @@ sub user_groups
 	
 	my $sql=qq{
 		SELECT
-			`group`.group_name,
-			`group`.ID_group
+			user_group.ID AS ID_group,
+			user_group.name AS group_name
 		FROM
-			TOM.a301_user_rel_group_view AS `group`
+			`TOM`.`a301_user_rel_group` AS rel
+		LEFT JOIN `TOM`.`a301_user` AS user ON
+		(
+			user.ID_user = rel.ID_user
+		)
+		LEFT JOIN `TOM`.`a301_user_group` AS user_group ON
+		(
+			user_group.ID = rel.ID_group
+		)
 		WHERE
-			`group`.ID_user = '$ID_user'
+			rel.ID_user = '$ID_user'
 		ORDER BY
-			`group`.group_name
+			user_group.name
 	};
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
@@ -658,7 +666,7 @@ sub user_active
 			WHERE
 				ID_user='$ID_user'
 			LIMIT 1;
-		},'quiet'=>1);
+		},'quiet'=>1,'-backend'=>1);
 		main::_log("deleted user '$ID_user' from inactive table");
 		#$t->close();
 		return 1;
@@ -692,7 +700,7 @@ sub user_inactive
 			WHERE
 				ID_user='$ID_user'
 			LIMIT 1;
-		},'quiet'=>1);
+		},'quiet'=>1,'-backend'=>1);
 		main::_log("deleted user '$ID_user' from active table");
 		#$t->close();
 		return 1;

@@ -82,12 +82,25 @@ sub execute
 			{
 				my $sql=qq{
 					SELECT
-						*
+						user_online.ID_session,
+						user_online.logged,
+						user_online.datetime_login,
+						user_online.datetime_request,
+						user_online.requests,
+						user_online.IP,
+						user_online.domain,
+						user_online.user_agent,
+						user_online.cookies,
+						user_online.session,
+						user.*
 					FROM
-						TOM.a301_user_online_view
+						`TOM`.`a301_user_online` AS user_online
+					LEFT JOIN `TOM`.`a301_user` AS user ON
+					(
+						user.ID_user = user_online.ID_user
+					)
 					WHERE
-						ID_user='$main::COOKIES{_ID_user}' AND
-						hostname='$tom::H_cookie'
+						user_online.ID_user='$main::COOKIES{_ID_user}'
 					LIMIT 1
 				};
 				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>0);
@@ -203,7 +216,7 @@ sub execute
 						hostname='$tom::H_cookie'
 					LIMIT 1
 				};
-				my %sth_u=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
+				my %sth_u=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>0);
 				%main::USRM=$sth_u{'sth'}->fetchhash();
 				
 				if ($main::USRM{'ID_user'})
@@ -272,7 +285,7 @@ sub execute
 						$main::USRM{'session'}=$main::USRM{'saved_session'};
 						
 						TOM::Database::SQL::execute(qq{
-							INSERT INTO TOM.a301_user_online
+							REPLACE INTO TOM.a301_user_online
 							(
 								ID_user,
 								ID_session,
@@ -303,7 +316,7 @@ sub execute
 					else
 					{
 						TOM::Database::SQL::execute(qq{
-							INSERT INTO TOM.a301_user_online
+							REPLACE INTO TOM.a301_user_online
 							(
 								ID_user,
 								ID_session,

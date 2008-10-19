@@ -51,8 +51,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_inactive` (
   `perm_roles_override` blob,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID_user`),
-  KEY `datetime_last_login` (`datetime_last_login`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  KEY `SEL_0` (`datetime_last_login`,`requests_all`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8; -- don't change to MyISAM
 
 -- --------------------------------------------------
 -- db_name=TOM

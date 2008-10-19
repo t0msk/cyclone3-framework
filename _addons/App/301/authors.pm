@@ -57,14 +57,26 @@ sub get_author
 	
 	my $sql=qq{
 		SELECT
-			*
+			user.hostname,
+			user.ID_user,
+			user.posix_owner,
+			user.login,
+			user.email,
+			user.email_verified,
+			user.datetime_register,
+			YEAR(CURRENT_DATE()) - YEAR(user_profile.date_birth) - (RIGHT(CURRENT_DATE(),5) < RIGHT(user_profile.date_birth,5)) AS age,
+			user_profile.*
 		FROM
-			`TOM`.`a301_user_profile_view`
+			`TOM`.`a301_user` AS user
+		LEFT JOIN `TOM`.`a301_user_profile` AS user_profile ON
+		(
+			user.ID_user = user_profile.ID_entity
+		)
 		WHERE
-			ID_user='$ID_user'
-		LIMIT 1;
+			user.ID_user='$ID_user'
+		LIMIT 1
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1,'cache'=>600);
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>600);
 	%{$authors{$ID_user}}=$sth0{'sth'}->fetchhash();
 	
 	if (!$authors{$ID_user}{'ID'})
@@ -78,7 +90,7 @@ sub get_author
 				ID_user='$ID_user'
 			LIMIT 1;
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1,'cache'=>600);
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>600);
 		%{$authors{$ID_user}}=$sth0{'sth'}->fetchhash();
 	}
 	

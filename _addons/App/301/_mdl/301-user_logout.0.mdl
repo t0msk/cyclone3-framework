@@ -89,8 +89,7 @@ sub execute
 					saved_session = '$user{session}',
 					autolog = 'N'
 				WHERE
-					ID_user='$user{'ID_user'}' AND
-					domain='$tom::H_cookie'
+					ID_user='$user{'ID_user'}'
 				LIMIT 1
 			});
 			

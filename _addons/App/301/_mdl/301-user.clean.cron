@@ -23,7 +23,6 @@ sub execute
 	
 	alarm 0;
 	
-	
 	main::_log("removing old karma");
 	my %sth0=TOM::Database::SQL::execute(qq{
 		DELETE
@@ -44,39 +43,79 @@ sub execute
 	main::_log(" removed $sth0{'rows'} items");
 	
 	
-	main::_log("removing deadway anonymous users (7 days inactive, less 2 requests)");
-	my %sth0=TOM::Database::SQL::execute(qq{
-		DELETE
-		FROM TOM.a301_user_inactive
-		WHERE
-			datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 7 DAY) AND
-			requests_all<=2
-	}
-	,'quiet'=>1);
-	main::_log(" removed $sth0{'rows'} items");
-	
-	
-	main::_log("removing inactive anonymous users (1 month inactive, less 10 requests)");
-	my %sth0=TOM::Database::SQL::execute(qq{
-		DELETE
-		FROM TOM.a301_user_inactive
-		WHERE
-			datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 1 MONTH) AND
-			requests_all<10
-	}
-	,'quiet'=>1);
-	main::_log(" removed $sth0{'rows'} items");
-	
-	
-	main::_log("removing expired anonymous users (3 months inactive)");
-	my %sth0=TOM::Database::SQL::execute(qq{
-		DELETE
-		FROM TOM.a301_user_inactive
-		WHERE
-			datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 3 MONTH)
-	}
-	,'quiet'=>1);
-	main::_log(" removed $sth0{'rows'} items");
+	my $tr=new TOM::Database::SQL::transaction('db_h'=>'main');
+		
+		main::_log("removing expired anonymous users (3 months inactive)");
+		my $est=1;
+		while ($est)
+		{
+			my %sth0=TOM::Database::SQL::execute(qq{
+				DELETE
+				FROM TOM.a301_user_inactive
+				WHERE
+					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 3 MONTH)
+				LIMIT 100
+			}
+			,'quiet'=>1);
+			main::_log(" removed $sth0{'rows'} items");
+			$est=$sth0{'rows'};
+		}
+		
+		main::_log("removing deadway anonymous users (7 days inactive, less 2 requests)");
+		my $est=1;
+		while ($est)
+		{
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					ID_user,
+					requests_all
+				FROM TOM.a301_user_inactive
+				WHERE
+					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 7 DAY)
+					AND requests_all<=2
+				LIMIT 1000
+			}
+			,'quiet'=>1);
+			$est=$sth0{'rows'};
+			main::_log(" removing $sth0{'rows'} items");
+			while (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				TOM::Database::SQL::execute(qq{
+					DELETE FROM TOM.a301_user_inactive
+					WHERE ID_user='$db0_line{'ID_user'}'
+					LIMIT 1;
+				},'quiet'=>1,'-backend_'=>1);
+			}
+		}
+		
+		main::_log("removing inactive anonymous users (1 month inactive, less 10 requests)");
+		my $est=1;
+		while ($est)
+		{
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					ID_user,
+					requests_all
+				FROM TOM.a301_user_inactive
+				WHERE
+					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 1 MONTH)
+					AND requests_all<=10
+				LIMIT 1000
+			}
+			,'quiet'=>1);
+			$est=$sth0{'rows'};
+			main::_log(" removing $sth0{'rows'} items");
+			while (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				TOM::Database::SQL::execute(qq{
+					DELETE FROM TOM.a301_user_inactive
+					WHERE ID_user='$db0_line{'ID_user'}'
+					LIMIT 1;
+				},'quiet'=>1,'-backend_'=>1);
+			}
+		}
+		
+	$tr->close();
 	
 	
 	return 1;
