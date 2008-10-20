@@ -99,15 +99,13 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile` (
   `address_current` text character set utf8 collate utf8_unicode_ci,
   `address_postal` text character set utf8 collate utf8_unicode_ci,
   `about_me` text character set utf8 collate utf8_unicode_ci,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
-  KEY `SEL_0` (`firstname`,`surname`),
-  KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
+  KEY `SEL_0` (`surname`,`firstname`),
   KEY `firstname` (`firstname`),
-  KEY `surname` (`surname`),
   KEY `gender` (`gender`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -144,9 +142,49 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_j` (
   `address_current` text character set utf8 collate utf8_unicode_ci,
   `address_postal` text character set utf8 collate utf8_unicode_ci,
   `about_me` text character set utf8 collate utf8_unicode_ci,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N'
 ) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+-- db_name=TOM
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_h` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
+  `datetime_create` datetime NOT NULL,
+  `datetime_valid` datetime NOT NULL, -- valid to this datetime
+  `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `firstname` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `middlename` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `surname` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `name_prefix` varchar(16) character set utf8 collate utf8_bin default NULL,
+  `name_suffix` varchar(16) character set utf8 collate utf8_bin default NULL,
+  `gender` char(1) character set ascii default NULL,
+  `date_birth` date default NULL,
+  `PIN` varchar(64) character set utf8 collate utf8_bin default NULL,
+  `country` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `country_code` char(3) character set ascii default NULL,
+  `state` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `city` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `ZIP` varchar(16) character set ascii default NULL,
+  `street` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `street_num` varchar(12) character set ascii default NULL,
+  `education` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `phone` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `phone_mobile` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `phone_office` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `phone_home` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `email_public` varchar(64) character set ascii default NULL,
+  `email_office` varchar(64) character set ascii default NULL,
+  `address_current` text character set utf8 collate utf8_unicode_ci,
+  `address_postal` text character set utf8 collate utf8_unicode_ci,
+  `about_me` text character set utf8 collate utf8_unicode_ci,
+  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_valid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 -- db_name=TOM

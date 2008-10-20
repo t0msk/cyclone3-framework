@@ -156,7 +156,6 @@ sub user_add
 			my %image=App::501::functions::image_add(
 				'image_attrs.name' => $env{'user.ID_user'} || $env{'avatar'},
 				'image_attrs.ID_category' => $App::301::photo_cat{$tom::lng},
-				'image_attrs.name' => $env{'user.ID_user'},
 				'image_attrs.status' => 'Y',
 				'file' => $env{'avatar'}
 			);
@@ -273,7 +272,10 @@ sub user_add
 		(exists $env{'user_profile.address_postal'} && ($env{'user_profile.address_postal'} ne $user_profile{'address_postal'}))||
 		
 		# about_me
-		(exists $env{'user_profile.about_me'} && ($env{'user_profile.about_me'} ne $user_profile{'about_me'}))
+		(exists $env{'user_profile.about_me'} && ($env{'user_profile.about_me'} ne $user_profile{'about_me'}))||
+		
+		# metadata
+		(exists $env{'user_profile.metadata'} && ($env{'user_profile.metadata'} ne $user_profile{'metadata'}))
 	))
 	{
 		my %columns;
@@ -326,6 +328,9 @@ sub user_add
 		
 		$columns{'about_me'}="'".TOM::Security::form::sql_escape($env{'user_profile.about_me'})."'"
 			if (exists $env{'user_profile.about_me'} && ($env{'user_profile.about_me'} ne $user_profile{'about_me'}));
+			
+		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'user_profile.metadata'})."'"
+			if (exists $env{'user_profile.metadata'} && ($env{'user_profile.metadata'} ne $user_profile{'metadata'}));
 			
 #		$columns{'posix_modified'}="'".$main::USRM{'ID_user'}."'";
          
