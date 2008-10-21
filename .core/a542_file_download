@@ -81,7 +81,7 @@ while ($main::CGI=new CGI::Fast())
 			VALUES
 			(
 				NOW(),
-				$FORM{'ID'},
+				$db0_line{'ID_entity_file'},
 				''
 			)
 		};
