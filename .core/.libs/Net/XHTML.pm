@@ -94,9 +94,9 @@ sub change_DOC_description
 	my $self=shift;
 	my $text=shift;
 	my %env=@_;
-	$env{lang}="null" unless $env{lang};
+	$env{lng}="null" unless $env{lng};
 	main::_log("change_DOC_description='$text'");
-	$self->{env}{DOC_description}{$env{lang}}=$text;
+	$self->{env}{DOC_description}{$env{lng}}=$text;
 	return 1;
 }
 
@@ -105,9 +105,9 @@ sub add_DOC_description
 	my $self=shift;
 	my $text=shift;
 	my %env=@_;
-	$env{lang}="null" unless $env{lang};
+	$env{lng}="null" unless $env{lng};
 	main::_log("add_DOC_description='$text'");
-	$self->{env}{DOC_description}{$env{lang}}.=$text;
+	$self->{env}{DOC_description}{$env{lng}}.=$text;
 	return 1;
 }
 

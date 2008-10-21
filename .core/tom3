@@ -1581,7 +1581,7 @@ while ($main::CGI=new CGI::Fast())
 			if ($env0{id} eq "title_")
 			{
 				_log("Add to DOC::title to ".$env0{value});
-				next if ($env0{'lang'} && $env0{'lang'} ne $tom::lng);
+				next if ($env0{'lng'} && $env0{'lng'} ne $tom::lng);
 				$H->add_DOC_title($env0{value});
 				next;
 			}
@@ -1589,6 +1589,7 @@ while ($main::CGI=new CGI::Fast())
 			if ($env0{id} eq "keywords")
 			{
 				_log("Change DOC::keywords to ".$env0{value});
+				next if ($env0{'lng'} && $env0{'lng'} ne $tom::lng);
 				$H->change_DOC_keywords($env0{value});
 				next;
 			}
@@ -1596,6 +1597,7 @@ while ($main::CGI=new CGI::Fast())
 			if ($env0{id} eq "keywords_")
 			{
 				_log("Add DOC::keywords to ".$env0{value});
+				next if ($env0{'lng'} && $env0{'lng'} ne $tom::lng);
 				$H->add_DOC_keywords($env0{value});
 				next;
 			}
@@ -1603,14 +1605,16 @@ while ($main::CGI=new CGI::Fast())
 			if ($env0{id} eq "description")
 			{
 				_log("Change DOC::description to ".$env0{value});
-				$H->change_DOC_description($env0{value},lang=>"$env0{lang}");
+				next if ($env0{'lng'} && $env0{'lng'} ne $tom::lng);
+				$H->change_DOC_description($env0{value},lng=>"$env0{lng}");
 				next;
 			}
 			
 			if ($env0{id} eq "description_")
 			{
 				_log("Add DOC::description to ".$env0{value});
-				$H->add_DOC_description($env0{value},lang=>"$env0{lang}");
+				next if ($env0{'lng'} && $env0{'lng'} ne $tom::lng);
+				$H->add_DOC_description($env0{value},lng=>"$env0{lng}");
 				next;
 			}
 			
