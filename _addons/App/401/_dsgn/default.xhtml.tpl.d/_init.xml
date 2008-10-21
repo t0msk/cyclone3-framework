@@ -35,6 +35,17 @@
 	</entity>
 	
 	
+	<entity id="parser.a030_vimeo" replace_variables="false"><![CDATA[
+<object width="<%attr_width%>" height="<%attr_height%>">
+	<param name="allowfullscreen" value="true" />
+	<param name="allowscriptaccess" value="always" />
+	<param name="movie" value="http://vimeo.com/moogaloop.swf?clip_id=<%var_ID%>&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=0&amp;color=&amp;fullscreen=1" />
+	<embed src="http://vimeo.com/moogaloop.swf?clip_id=<%var_ID%>&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=0&amp;color=&amp;fullscreen=1" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="<%attr_width%>" height="<%attr_height%>"></embed>
+</object>
+	]]>
+	</entity>
+	
+	
 	<entity id="parser.a501_image" replace_variables="false"><![CDATA[
 	<div class="img_<%attr_align%>" style="margin: 2px; padding: 2px;background:gray; float: left">
 		<#tag_#>

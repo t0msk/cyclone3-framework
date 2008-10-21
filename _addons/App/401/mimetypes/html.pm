@@ -40,7 +40,7 @@ use base "HTML::Parser";
 
 our $cache=300;
 #our $cache=0;
-our $debug=0;
+our $debug=1;
 our $tpl=new TOM::Template(
 	'level' => "auto",
 	'addon' => "a401",
@@ -146,6 +146,29 @@ sub start
 				|| $self->{'entity'}{'a030_youtube'}
 				|| $tpl->{'entity'}{'parser.a030_youtube.'.$out_cnt}
 				|| $tpl->{'entity'}{'parser.a030_youtube'}
+				|| $out_full;
+			
+			$out_full=~s|<%var_(.*?)%>|$vars{$1}|g;
+			
+		}
+		elsif ($attr->{'id'}=~/^a030_vimeo:(.*)$/)
+		{
+			$self->{'count'}->{'video'}++;
+			my $type=$1;
+			my %vars=_parse_id($1);
+			
+			$attr->{'width_forced'}=$attr->{'width'};
+			$attr->{'height_forced'}=$attr->{'height'};
+			
+			$attr->{'width'}='400' unless $attr->{'width'};
+			$attr->{'height'}='302' unless $attr->{'height'};
+			
+			# override default tag representation
+			$out_full=
+				$self->{'entity'}{'a030_vimeo.'.$out_cnt}
+				|| $self->{'entity'}{'a030_vimeo'}
+				|| $tpl->{'entity'}{'parser.a030_vimeo.'.$out_cnt}
+				|| $tpl->{'entity'}{'parser.a030_vimeo'}
 				|| $out_full;
 			
 			$out_full=~s|<%var_(.*?)%>|$vars{$1}|g;
