@@ -192,7 +192,8 @@ sub execute
 			$XSGN{'item.'.$item_counter}
 			|| $XSGN{'item'};
 		
-		$XSGN{'TMP'}=~s|<%name%>|$db0_line{'ID_category_name'}|g;
+		$XSGN{'TMP'}=~s|<%name%>|$db0_line{'ID_dir_name'}|g;
+		#$XSGN{'TMP'}=~s|<%name%>|$db0_line{'ID_category_name'}|g;
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
 		if($XSGN{'TMP'}=~/<#item.$item_counter#>/)
