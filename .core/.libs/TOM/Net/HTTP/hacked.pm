@@ -61,6 +61,11 @@ our %table=
 		'uri' => ['^/horde\-']
 	},
 	
+	'weblin.com'=>
+	{
+		'uri' => ['_vpi\.xml']
+	},
+	
 #	'XSS'=>
 #	{
 #		'uri' => ['>alert\(']
