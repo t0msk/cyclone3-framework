@@ -141,7 +141,7 @@ HEADER
 			'Date'    => $date,
 			'From'    => "Cyclone3 ('$TOM::hostname') <$TOM::contact{'from'}>",
 			'To'      => TOM::Net::email::convert_TO($to),
-			'Subject' => "Cyclone3 updated r$revision->r$TOM::core_revision at $TOM::hostname"
+			'Subject' => "Cyclone3 was updated from r$revision to r$TOM::core_revision at server $TOM::hostname"
 		);
 		
 		my $cmd="svn -v --xml -r".($revision+1).":$TOM::core_revision log .";
