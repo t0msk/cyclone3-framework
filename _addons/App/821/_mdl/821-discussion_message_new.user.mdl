@@ -203,7 +203,7 @@ sub execute
 				'status'  => "'Y'",
 				%columns
 			},
-			'where' => "ID_category='$env{'discussion.ID'}'",
+			'where' => "ID_discussion='$env{'discussion.ID'}'",
 			#'stop' => 1,
 		);
 		
