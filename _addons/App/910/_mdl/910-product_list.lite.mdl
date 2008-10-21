@@ -1,0 +1,569 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+=head1 NAME
+
+910-product_list.lite.mdl
+
+=head1 DESCRIPTION
+
+Lite list of products (without modifications)
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::910::_init|app/"910/_init.pm">
+
+=item *
+
+L<App::401::_init|app/"401/_init.pm">
+
+=item *
+
+L<App::501::_init|app/"501/_init.pm">
+
+=back
+
+=cut
+
+use App::910::_init;
+use App::401::_init;
+use App::501::_init;
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<-xlng_load> - load template internationalization file
+
+=item *
+
+B<db_name> - database name
+
+=item *
+
+B<product_cat.ID_entity> - comma separated list of product ID_category (can be set with * suffix to select all subcategories - 5;2*;3;7)
+
+=item *
+
+B<product.status> - required status, nonseparated values (default 'Y')
+
+=item *
+
+B<product_lng.lng> - required language (default is current)
+
+=item *
+
+B<image_format.ID> - format of thumbnail image
+
+=item *
+
+B<sql_limit> - limit to display (default '1')
+
+=item *
+
+B<sql_limit_start> - at start skip defined items
+
+=item *
+
+B<sql_order_by> - order by in SQL
+
+=item *
+
+B<sql_where> - where in SQL
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default
+
+=item *
+
+B<#previous#> B<#next#> - to skip to another offset
+
+=item *
+
+B<previous> B<next> - include into <#previous#> <#next#>
+
+=item *
+
+B<%offset%> - offset value (calculated from sql_limit input param)
+
+=item *
+
+B<%sql_limit%> - SQL limit
+
+=item *
+
+B<%sql_limit_start%> - start SQL limit from value
+
+=item *
+
+B<#item#> - gateway to product item
+
+=item *
+
+B<item> - product item
+
+=item *
+
+B<item.1> - first product item
+
+=item *
+
+B<%db_*%> - product database items
+
+B<%db_ID_category%>, B<%db_ID_category_name%>, B<%db_name%>, B<%db_name_url%>, B<%db_name_long%>, B<%db_product_number%>
+
+=item *
+
+B<%ID%> - product ID
+
+=item *
+
+B<%ID_entity%> - product ID_entity
+
+=item *
+
+B<%description_short%> - short description, like article abstract
+
+=item *
+
+B<%description_short_plain%> - short description as plaintext
+
+=item *
+
+B<%description%> - description, like article body
+
+=item *
+
+B<%alias_url%> - alias_url
+
+=item *
+
+B<%thumbnail.src%> - url to thumbnail image if available
+
+=item *
+
+B<TMP_failure_no-data> - if defined, replaces TMP for empty database output
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
+	$env{'db_name'}=$App::910::db_name unless $env{'db_name'};
+	
+	$env{'product_lng.lng'}=$env{'lng'} unless $env{'product_lng.lng'};
+	$env{'image_format.ID'}=$App::501::image_format_thumbnail_ID unless $env{'image_format.ID'};
+	$env{'sql_limit'}='1' unless $env{'sql_limit'};
+	$env{'product.status'}='Y' unless $env{'product.status'};
+		my $status_sql=join "','", split('',$env{'product.status'});
+	
+	$env{'sql_order_by'}='product_lng.name ASC' unless $env{'sql_order_by'};
+	
+	if (not $env{'sql_limit'}=~/,/){$env{'sql_limit'}="0,".$env{'sql_limit'}}
+	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
+	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
+	{
+		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
+	}
+	
+	my $count_max;#=$env{'sql_limit'};
+	if ($env{'sql_limit'}=~/,(\d+)/)
+	{
+		$count_max=$1;
+		$env{'sql_limit'}=~s/,(\d+)/",".($1+1)/e;
+	}
+	
+	my $execution_success=1;
+	
+	my $sql_where;
+	
+	my $sql_cat;
+	foreach my $ID_category(split(';',$env{'product_cat.ID_entity'}))
+	{
+		next unless $ID_category;
+		if ($ID_category=~s/\*$//)
+		{
+			my $cat_sql=qq{
+						SELECT
+							ID_charindex
+						FROM
+							`$App::910::db_name`.a910_product_cat
+						WHERE
+							ID_entity=$ID_category
+						LIMIT 1
+			};
+			$ID_category=qq{
+				SELECT
+					ID_entity
+				FROM
+					`$App::910::db_name`.a910_product_cat
+				WHERE
+					ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+					lng='$env{'product_lng.lng'}' AND
+					status IN ('$status_sql')
+			};
+		}
+		$sql_cat.=" OR product_sym.ID IN ($ID_category)";
+		$sql_cat=~s/^ OR //;
+	}
+	if ($sql_cat)
+	{
+		$sql_where.=" AND (".$sql_cat.") ";
+	}
+	
+	
+	if ($env{'product.ID_entity'})
+	{
+		$sql_where.=" AND product.ID_entity IN ('".
+			(join "','", split(';',$env{'product.ID_entity'})).
+			"')";
+	}
+	
+	if ($env{'sql_where'})
+	{
+		$sql_where.=" AND ".$env{'sql_where'};
+	}
+	
+	
+	my $sql=qq{
+		SELECT
+			DISTINCT(product.ID_entity) AS ID_entity_product,
+			product.ID AS ID_product,
+			product_sym.ID AS ID_category,
+			product_cat.ID_entity AS ID_entity_category,
+			product_lng.ID AS ID_lng,
+			product_lng.lng,
+			
+			product.price,
+			product.price_currency,
+			product.price_EUR,
+			product.amount,
+			product.amount_availability,
+			product.product_number,
+			
+			product_cat.name AS ID_category_name,
+			product_cat.name_url AS ID_category_name_url,
+			
+			product_lng.name,
+			product_lng.name_url,
+			product_lng.name_long,
+			
+			product_ent.rating_score,
+			product_ent.rating_votes,
+			(product_ent.rating_score/product_ent.rating_votes) AS rating,
+			
+			product.status
+			
+		FROM
+			`$App::910::db_name`.`a910_product` AS product
+		LEFT JOIN `$App::910::db_name`.`a910_product_ent` AS product_ent ON
+		(
+			product_ent.ID_entity = product.ID_entity
+		)
+		LEFT JOIN `$App::910::db_name`.`a910_product_lng` AS product_lng ON
+		(
+			product_lng.ID_entity = product.ID
+		)
+		LEFT JOIN `$App::910::db_name`.`a910_product_sym` AS product_sym ON
+		(
+			product_sym.ID_entity = product.ID_entity
+		)
+		LEFT JOIN `$App::910::db_name`.`a910_product_cat` AS product_cat ON
+		(
+			product_cat.ID_entity = product_sym.ID AND
+			product_cat.lng = product_lng.lng AND
+			product_cat.status IN ('$status_sql')
+		)
+		WHERE
+			product.status IN ('$status_sql') AND
+			product_sym.ID AND
+			product_lng.lng='$env{'product_lng.lng'}'
+			$sql_where
+		ORDER BY
+			$env{'sql_order_by'}
+		LIMIT
+			$env{'sql_limit'}
+	};
+	
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache_auto_'=>60);
+	
+	if(!$sth0{'sth'})
+	{
+		main::_log("SQL can't be executed",1);
+	}
+	
+	if(!$sth0{'rows'})
+	{
+		main::_log("err: could not fetch articles");
+	}
+	
+	main::_log("received ".$sth0{'rows'}." rows");
+	
+	
+	# Line counter
+	my $item_counter=0;
+	
+   my %IDs_entity;
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+#      next if $IDs_entity{$db0_line{'ID_entity_article'}};
+ #     $IDs_entity{$db0_line{'ID_entity_article'}}++;
+      
+      $item_counter++;
+		
+		last if $count_max<$item_counter;
+		
+		main::_log("product[$item_counter] product_lng.name='$db0_line{'name'}'");
+		
+		my $item=
+			$XSGN{'item.'.$item_counter}
+			|| $XSGN{'item'};
+		
+#      my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
+#      $db0_line{'datetime_start.year'}=$datetime{'year'};
+#      $db0_line{'datetime_start.month'}=$datetime{'month'};
+#      $db0_line{'datetime_start.mday'}=$datetime{'mday'};
+#      $db0_line{'datetime_start.hour'}=$datetime{'hour'};
+#      $db0_line{'datetime_start.min'}=$datetime{'min'};
+#      $db0_line{'datetime_start.sec'}=$datetime{'sec'};
+      
+		# fill raw data into $XSGN{'item'}
+
+		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		
+		# process description_short
+		my $p=new App::401::mimetypes::html;
+		
+		# img
+		$p->{'ignore'}{'img'}=
+			$env{'body.ignore.img'}
+			|| $env{'ignore.img'}
+			|| undef;
+		
+		$p->{'ignore'}{'img.1'}=
+			$env{'abstract.ignore.img.1'}
+			|| $env{'ignore.img.1'}
+			|| undef;
+		
+		# a501_image
+		$p->{'config'}->{'a501_image_file.ID_format'}=
+			$env{'article.'.$item_counter.'.abstract.a501_image_file.ID_format'}
+			|| $env{'article.'.$item_counter.'.a501_image_file.ID_format'}
+			|| $env{'abstract.a501_image_file.ID_format'}
+			|| $env{'a501_image_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.1'}=
+			$env{'article.'.$item_counter.'.abstract.a501_image_file.ID_format.1'}
+			|| $env{'article.'.$item_counter.'.a501_image_file.ID_format.1'}
+			|| $env{'abstract.a501_image_file.ID_format.1'}
+			|| $env{'a501_image_file.ID_format.1'}
+			|| undef;
+		$p->{'entity'}->{'a501_image'}=
+			$XSGN{'abstract.a501_image'}
+			|| $XSGN{'a501_image'}
+			|| undef;
+		$p->{'entity'}->{'a501_image.1'}=
+			$XSGN{'abstract.a501_image.1'}
+			|| $XSGN{'a501_image.1'}
+			|| undef;
+		
+		# a510_video
+		$p->{'entity'}{'a510_video_part'}=
+			$XSGN{'abstract.a510_video_part'}
+			|| $XSGN{'a510_video_part'}
+			|| undef;
+		
+		$p->parse($db0_line{'description_short'});
+		#$p->eof();
+		my $description_short_html=$p->{'out'};
+		$item=~s|<%description_short%>|$description_short_html|;
+		
+		my $description_short_plain=TOM::Text::format::xml2plain($db0_line{'description_short'});
+		$item=~s|<%description_short_plain%>|$description_short_plain|;
+		
+		$item=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+		$item=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+		
+		foreach my $relation (App::160::SQL::get_relations(
+			'db_name' => $App::910::db_name,
+			'l_prefix' => 'a910',
+			'l_table' => 'product',
+			'l_ID_entity' => $db0_line{'ID_product'},
+			'status' => "Y"
+		))
+		{
+			if (
+					$relation->{'r_prefix'} eq "a501" &&
+					$relation->{'r_table'} eq "image" &&
+					$relation->{'rel_type'} eq "thumbnail"
+			)
+			{
+				my $sql=qq{
+					SELECT
+						*
+					FROM
+						`$App::501::db_name`.a501_image_view AS image
+					WHERE
+						image.ID_entity_image = $relation->{'r_ID_entity'} AND
+						image.status='Y' AND
+						image.ID_format = '$env{'image_format.ID'}'
+					LIMIT 1
+				};
+				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					my $uri=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+					$XSGN{'NULL'}=~s|<%thumbnail.src%>|$uri|;
+				}
+			}
+		}
+		
+		
+		# check alternate url
+		my $ID_category=$db0_line{'ID_category'};
+		main::_log("finding alias_url from ID_category='$ID_category'");
+		my $alias_url;
+		my %data=App::020::SQL::functions::get_ID(
+			'ID' => $ID_category,
+			'db_h' => 'main',
+			'db_name' => $App::910::db_name,
+			'tb_name' => 'a910_product_cat',
+			'columns' => {'*' => 1},
+			'-cache' => 3600,
+			'-slave' => 1,
+		);
+		$alias_url=$data{'alias_url'} if $data{'alias_url'};
+		main::_log("setup alias_url='$alias_url' in ID_category='$ID_category'") if $alias_url;
+		while ($ID_category && !$alias_url)
+		{
+			my %data=App::020::SQL::functions::tree::get_parent_ID(
+				'ID' => $ID_category,
+				'db_h' => 'main',
+				'db_name' => $App::910::db_name,
+				'tb_name' => 'a910_product_cat',
+				'columns' => {'*' => 1},
+				'-cache' => 3600,
+				'-slave' => 1,
+			);
+			$ID_category=$data{'ID'};
+			if ($data{'alias_url'})
+			{
+				$alias_url=$data{'alias_url'};
+				main::_log("setup alias_url='$alias_url' in ID_category='$ID_category'");
+				last;
+			}
+		}
+		main::_log("can't find alias_url") unless $alias_url;
+		
+		$item=~s|<%alias_url%>|$alias_url|g if $alias_url;
+		$item=~s|<%alias_url%>|$tom::H_www|g unless $alias_url;
+		
+		$item=~s|<%item_number%>|$item_counter|g;
+		
+		$item=~s|<%name%>|$db0_line{'name'}|;
+		
+		if($XSGN{'TMP'}=~/<#item.$item_counter#>/)
+		{
+			$XSGN{'TMP'}=~s|<#item.$item_counter#>|$item|;
+		}
+		else
+		{
+			$XSGN{'TMP'}=~s|<#item#>|$item|;
+		}
+	}
+	
+	$XSGN{'TMP'}=~s|<%total_count%>|$item_counter|g;
+	
+	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
+	{
+		$env{'offset'}=$1;
+		#$env{'count'}=$2;
+	}
+	else
+	{
+		#$env{'count'}=$env{'sql_limit'};
+	}
+	#$env{'count'}=$count_max;
+	
+	
+	# offset
+	if ($count_max && $item_counter >= $count_max && $count_max < $sth0{'rows'}) # count
+	{
+		$XSGN{'next'}=~s|<%offset%>|$env{'offset'}+$count_max|ge;
+		$XSGN{'TMP'}=~s|<#next#>|$XSGN{'next'}|g;
+	}
+	if ($env{'offset'}-$env{'sql_limit_start'})
+	{
+		if ($env{'offset'} - $count_max - $env{'sql_limit_start'}>0)
+		{
+			$XSGN{'previous'}=~s|<%offset%>|$env{'offset'}-$count_max|ge;
+		}
+		else
+		{
+			$XSGN{'previous'}=~s|<%offset%>||ge;
+		}
+		$XSGN{'TMP'}=~s|<#previous#>|$XSGN{'previous'}|g;
+	}
+	
+	
+	if(!$item_counter)
+	{
+		if($XSGN{'TMP_failure_no-data'})
+		{
+			$XSGN{'TMP'} = $XSGN{'TMP_failure_no-data'};
+		}
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
