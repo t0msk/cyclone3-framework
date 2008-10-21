@@ -55,7 +55,7 @@ sub execute
 	
 	delete $env{'ID_charindex'};
 	$env{'sql_limit'}=500 unless $env{'sql_limit'};
-	$env{'sql_order_by'}='datetime_create DESC' unless $env{'sql_order_by'};
+	$env{'sql_order_by'}='datetime_post DESC' unless $env{'sql_order_by'};
 	
 	my $from;
 	my $sql_where;
@@ -138,19 +138,18 @@ sub execute
 	# get total count, not only limited messages
 	my $sql=qq{
 		SELECT
-			*
+			COUNT(*) AS cnt
 		FROM
 			`$App::821::db_name`.a821_discussion_message
 		WHERE
 			$sql_where
 			$where
 	};
-	
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+	my %db0_line=$sth0{'sth'}->fetchhash();
 	
-
-	$XSGN{'TMP'}=~s|<%count%>|$sth0{'rows'}|g;
-	$env{'vox_count'}=$sth0{'rows'};
+	$env{'vox_count'}=$db0_line{'cnt'};
+	$XSGN{'TMP'}=~s|<%count%>|$env{'vox_count'}|g;
 	
 	my $sql=qq{
 		SELECT
