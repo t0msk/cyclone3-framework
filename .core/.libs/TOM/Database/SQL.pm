@@ -114,6 +114,7 @@ Executes SQL query and return hash with variables
    '-cache' => 1 # cache this SQL query
                 # number represents seconds in cache
    '-schedule' => 1 # schedule this cache query to backend execution
+	'-long' => 2 # log this query when longer than 2s
    '-recache' => 1 # re-cache force this query
    '-cache_auto' => 1 # cache this SQL query when Memcached availability is higher than MySQL query cache
                      # number represents seconds in cache
@@ -136,6 +137,7 @@ sub execute
 	$env{'slave'}=$env{'slave'} || $env{'-slave'};
 	$env{'cache'}=$env{'cache'} || $env{'-cache'};
 	$env{'cache_auto'}=$env{'cache_auto'} || $env{'-cache_auto'};
+	$env{'-long'}=$logquery_long unless $env{'-long'};
 	# no, TOM::Database::SQL::cache, changes 1s to default value
 	#if ($env{'cache'} == 1){$env{'cache'}=60}; # default is 60 seconds
 	
@@ -299,7 +301,7 @@ sub execute
 	
 	main::_log("{$env{'db_h'}:exec:".($t->{'time'}{'req'}{'duration'})."s} '$SQL_' from '$filename:$line'",3,"sql") if $logquery;
 	
-	if ($logquery_long && ($t->{'time'}{'req'}{'duration'} > $logquery_long))
+	if ($logquery_long && ($t->{'time'}{'req'}{'duration'} > $env{'-long'}))
 	{
 		main::_log("{$env{'db_h'}} executed ".($t->{'time'}{'req'}{'duration'})."s query",1);
 		main::_log("{$env{'db_h'}} duration:".($t->{'time'}{'req'}{'duration'})."s SQL='$SQL_' from $package:$filename:$line",4,"sql.long");
