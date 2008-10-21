@@ -38,7 +38,7 @@ L<TOM::Security::form|lib/"TOM/Security/form.pm">
 use App::910::_init;
 use TOM::Security::form;
 
-our $debug=0;
+our $debug=1;
 our $quiet;$quiet=1 unless $debug;
 
 =head2 product_add()
@@ -165,12 +165,34 @@ sub product_add
 	# amount
 	$columns{'amount'}="'".TOM::Security::form::sql_escape($env{'product.amount'})."'"
 		if (exists $env{'product.amount'} && ($env{'product.amount'} ne $product{'amount'}));
+	# amount_unit
+	$columns{'amount_unit'}="'".TOM::Security::form::sql_escape($env{'product.amount_unit'})."'"
+		if (exists $env{'product.amount_unit'} && ($env{'product.amount_unit'} ne $product{'amount_unit'}));
 	# amount_availability
-	$columns{'amount_availability'}="'".TOM::Security::form::sql_escape($env{'product.amount'})."'"
+	$columns{'amount_availability'}="'".TOM::Security::form::sql_escape($env{'product.amount_availability'})."'"
 		if (exists $env{'product.amount_availability'} && ($env{'product.amount_availability'} ne $product{'amount_availability'}));
+	# amount_limit
+	$columns{'amount_limit'}="'".TOM::Security::form::sql_escape($env{'product.amount_limit'})."'"
+		if (exists $env{'product.amount_limit'} && ($env{'product.amount_limit'} ne $product{'amount_limit'}));
+	# amount_order_min
+	$columns{'amount_order_min'}="'".TOM::Security::form::sql_escape($env{'product.amount_order_min'})."'"
+		if ($env{'product.amount_order_min'} && ($env{'product.amount_order_min'} ne $product{'amount_order_min'}));
+	# amount_order_max
+	$columns{'amount_order_max'}="'".TOM::Security::form::sql_escape($env{'product.amount_order_max'})."'"
+		if (exists $env{'product.amount_order_max'} && ($env{'product.amount_order_max'} ne $product{'amount_order_max'}));
+	# amount_order_div
+	$columns{'amount_order_div'}="'".TOM::Security::form::sql_escape($env{'product.amount_order_div'})."'"
+		if (exists $env{'product.amount_order_div'} && ($env{'product.amount_order_div'} ne $product{'amount_order_div'}));
 	# price
+	$env{'product.price'}='' if $env{'product.price'} eq "0.000";
 	$columns{'price'}="'".TOM::Security::form::sql_escape($env{'product.price'})."'"
 		if (exists $env{'product.price'} && ($env{'product.price'} ne $product{'price'}));
+	$columns{'price'}='NULL' if $columns{'price'} eq "''";
+	# price_max
+	$env{'product.price_max'}='' if $env{'product.price_max'} eq "0.000";
+	$columns{'price_max'}="'".TOM::Security::form::sql_escape($env{'product.price_max'})."'"
+		if (exists $env{'product.price_max'} && ($env{'product.price_max'} ne $product{'price_max'}));
+	$columns{'price_max'}='NULL' if $columns{'price_max'} eq "''";
 	# price_currency
 	$columns{'price_currency'}="'".TOM::Security::form::sql_escape($env{'product.price_currency'})."'"
 		if ($env{'product.price_currency'} && ($env{'product.price_currency'} ne $product{'price_currency'}));
@@ -254,6 +276,36 @@ sub product_add
 	
 	# update only if necessary
 	my %columns;
+	# brand
+	if ($env{'product_brand.name'})
+	{
+		my $sql=qq{
+			SELECT
+				ID,ID_entity
+			FROM
+				`$App::910::db_name`.a910_product_brand
+			WHERE
+				name='$env{'product_brand.name'}'
+		};
+		my %sth0=TOM::Database::SQL::execute($sql);
+		my %product_brand=$sth0{'sth'}->fetchhash();
+		$env{'product_brand.ID'}=$product_brand{'ID'};
+		if (!$product_brand{'ID'})
+		{
+			$env{'product_brand.ID'}=App::020::SQL::functions::new(
+				'db_h' => "main",
+				'db_name' => $App::910::db_name,
+				'tb_name' => "a910_product_brand",
+				'columns' => {
+					'name' => "'".TOM::Security::form::sql_escape($env{'product_brand.name'})."'",
+					'name_url' => "'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'product_brand.name'}))."'"
+				},
+				'-journalize' => 1,
+			);
+		}
+	}
+	$columns{'ID_brand'}="'".TOM::Security::form::sql_escape($env{'product_brand.ID'})."'"
+		if (exists $env{'product_brand.ID'} && ($env{'product_brand.ID'} ne $product_ent{'ID_brand'}));
 	# posix_owner
 	$columns{'posix_owner'}="'".TOM::Security::form::sql_escape($env{'product_ent.posix_owner'})."'"
 		if (exists $env{'product_ent.posix_owner'} && ($env{'product_ent.posix_owner'} ne $product_ent{'posix_owner'}));
@@ -351,6 +403,9 @@ sub product_add
 	# name_long
 	$columns{'name_long'}="'".TOM::Security::form::sql_escape($env{'product_lng.name_long'})."'"
 		if ($env{'product_lng.name_long'} && ($env{'product_lng.name_long'} ne $product_lng{'name_long'}));
+	# name_label
+	$columns{'name_label'}="'".TOM::Security::form::sql_escape($env{'product_lng.name_label'})."'"
+		if ($env{'product_lng.name_label'} && ($env{'product_lng.name_label'} ne $product_lng{'name_label'}));
 	# description_short
 	$columns{'description_short'}="'".TOM::Security::form::sql_escape($env{'product_lng.description_short'})."'"
 		if ($env{'product_lng.description_short'} && ($env{'product_lng.description_short'} ne $product_lng{'description_short'}));

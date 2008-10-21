@@ -9,9 +9,15 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `ID_entity` bigint(20) unsigned default NULL,
   `product_number` varchar(32) character set ascii default NULL, -- unique for every modification
   `datetime_create` datetime NOT NULL,
-  `amount` bigint(20) unsigned NOT NULL,
+  `amount` int(10) unsigned NOT NULL,
+  `amount_unit` varchar(8) character set ascii default 'pcs',
   `amount_availability` varchar(32) NOT NULL,
-  `price` float default NULL, -- different modifications, different prices
+  `amount_limit` int(10) default '0',
+  `amount_order_min` int(10) unsigned default '1',
+  `amount_order_max` int(10) unsigned default NULL,
+  `amount_order_div` int(10) unsigned default '1',
+  `price` decimal(12,3) default NULL, -- different modifications, different prices
+  `price_max` decimal(12,3) default NULL,
   `price_currency` varchar(3) character set ascii default 'EUR',
   `price_EUR` float default NULL, -- price in EUR
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
@@ -29,9 +35,15 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `ID_entity` bigint(20) unsigned default NULL,
   `product_number` varchar(32) character set ascii default NULL,
   `datetime_create` datetime NOT NULL,
-  `amount` bigint(20) unsigned NOT NULL,
+  `amount` int(10) unsigned NOT NULL,
+  `amount_unit` varchar(8) character set ascii default 'pcs',
   `amount_availability` varchar(32) NOT NULL,
-  `price` float default NULL,
+  `amount_limit` int(10) default '0',
+  `amount_order_min` int(10) unsigned default '1',
+  `amount_order_max` int(10) unsigned default NULL,
+  `amount_order_div` int(10) unsigned default '1',
+  `price` decimal(12,3) default NULL,
+  `price_max` decimal(12,3) default NULL,
   `price_currency` varchar(3) character set ascii default 'EUR',
   `price_EUR` float default NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
@@ -80,6 +92,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_lng` ( -- language versions of produ
   `datetime_create` datetime NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `name_long` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `name_label` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
   `description_short` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
@@ -93,13 +106,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_lng` ( -- language versions of produ
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_product_lng_j` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `name_long` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `name_label` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
   `description_short` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
@@ -111,7 +125,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_lng_j` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_product_sym` ( -- list of product symlinks
   `ID` bigint(20) unsigned NOT NULL auto_increment, -- rel _product_cat.ID_entity
-  `ID_entity` bigint(20) unsigned default NULL, -- rel _product.ID_entity
+  `ID_entity` bigint(20) unsigned NOT NULL, -- rel _product.ID_entity
   `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`ID_entity`),
@@ -121,8 +135,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_sym` ( -- list of product symlinks
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_product_sym_j` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_entity` bigint(20) unsigned default NULL,
+  `ID` bigint(20) unsigned NOT NULL,
+  `ID_entity` bigint(20) unsigned NOT NULL,
   `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`ID_entity`,`datetime_create`)
@@ -134,6 +148,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_brand` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
@@ -146,6 +161,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_brand_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
