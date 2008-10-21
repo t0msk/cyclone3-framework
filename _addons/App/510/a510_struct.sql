@@ -252,8 +252,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_callback_arch` (
   `IP` varchar(15) character set ascii default NULL,
   `country_code` char(3) character set ascii default NULL,
   `duration` int(10) unsigned NOT NULL default '0',
-  `state` varchar(10) character set ascii collate ascii_bin NOT NULL
-) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+  `state` varchar(10) character set ascii collate ascii_bin NOT NULL,
+  KEY `datetime_create` (`datetime_create`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
