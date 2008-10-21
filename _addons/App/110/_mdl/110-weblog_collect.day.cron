@@ -133,7 +133,7 @@ sub execute
 				TOM.a110_weblog_rqs
 			WHERE
 				DATE(reqdatetime)='$date_collect' AND
-				query_TID IN ('l_default','l_0000','m_default','g_default') AND
+				query_TID IN ('l_default','m_default','g_default') AND
 				reqtype IN ('B','m','w') AND
 				domain_sub='$db0_line[2]'
 		");
@@ -245,14 +245,14 @@ sub execute
 	
 	my $sql=qq{
 		SELECT
-				reqdatetime,
-				domain,
-				COUNT(*),
-				COUNT(DISTINCT(IDhash)),
-				COUNT(DISTINCT(IDsession)),
-				COUNT(DISTINCT(IP)),
-				AVG(load_proc),
-				AVG(load_req)
+			reqdatetime,
+			domain,
+			COUNT(*),
+			COUNT(DISTINCT(IDhash)),
+			COUNT(DISTINCT(IDsession)),
+			COUNT(DISTINCT(IP)),
+			AVG(load_proc),
+			AVG(load_req)
 		FROM
 			TOM.a110_weblog_rqs
 		WHERE
@@ -279,7 +279,7 @@ sub execute
 				TOM.a110_weblog_rqs
 			WHERE
 				DATE(reqdatetime)='$date_collect' AND
-				query_TID IN ('l_default','l_0000','m_default','g_default') AND
+				query_TID IN ('l_default','m_default','g_default') AND
 				reqtype IN ('B','m','w') AND
 				domain='$db0_line[1]'
 		");
