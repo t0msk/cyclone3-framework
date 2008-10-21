@@ -61,7 +61,7 @@ sub execute
 	
 	my $lock=new TOM::lock("weblog datamining") || return 1;
 	
-	
+	TOM::Database::SQL::execute("UNLOCK TABLES",'db_h'=>'stats','quiet'=>1);
 	my %last_request=App::110::SQL::get_last_active_request();
 	
 	if ($last_request{'reqtime'}+(3600*3) > time())
@@ -70,13 +70,12 @@ sub execute
 		main::_log("enabling DELAYED inserts");
 	}
 	
-	if ($last_request{'reqtime'}+(3600*24) < time())
+	if ($last_request{'reqtime'}+(3600*12) < time())
 	{
 		$LOCK=1;
 		main::_log("enabling LOCK inserts");
 	}
 	
-#	return 1;
 	
 #	if ($last_request{'reqtime'})
 #	{
@@ -212,7 +211,7 @@ sub execute
 								if ($items >= $multi)
 								{
 									$sql=~s|^,||;
-									main::_log(" inserting $items rows");
+									main::_log(" inserting $items rows ($DELAYED LOCK=$LOCK)");
 									my %sth0=TOM::Database::SQL::execute(qq{
 										$INSERT $DELAYED INTO TOM.a110_weblog_rqs
 										(
@@ -253,7 +252,7 @@ sub execute
 								if ($itemslite >= $multilite)
 								{
 									$sqllite=~s|^,||;
-									main::_log(" inserting $items literows");
+									main::_log(" inserting $items literows ($DELAYED LOCK=$LOCK)");
 									my %sth0=TOM::Database::SQL::execute(qq{
 										$INSERT $DELAYED INTO TOM.a110_weblog_rqslite
 										(
@@ -371,7 +370,7 @@ sub execute
 					if ($items)
 					{
 						$sql=~s|^,||;
-						main::_log(" inserting $itemslite rows");
+						main::_log(" inserting $itemslite rows ($DELAYED LOCK=$LOCK)");
 						my %sth0=TOM::Database::SQL::execute(qq{
 							$INSERT $DELAYED INTO TOM.a110_weblog_rqs
 							(
@@ -411,7 +410,7 @@ sub execute
 					if ($itemslite)
 					{
 						$sqllite=~s|^,||;
-						main::_log(" inserting $itemslite literows");
+						main::_log(" inserting $itemslite literows ($DELAYED LOCK=$LOCK)");
 						my %sth0=TOM::Database::SQL::execute(qq{
 							$INSERT $DELAYED INTO TOM.a110_weblog_rqslite
 							(
