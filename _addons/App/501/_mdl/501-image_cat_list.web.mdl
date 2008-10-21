@@ -57,6 +57,12 @@ sub execute
 	$env{'sql_limit'}=500 unless $env{'sql_limit'};
 	$env{'sql_order_by'}='ID_charindex ASC' unless $env{'sql_order_by'};
 	
+	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
+	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
+	{
+		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
+	}
+	
 	$env{'image_file.ID_format'}=$App::501::image_format_thumbnail_ID unless $env{'image_file.ID_format'};
 	
 	my $from;
@@ -116,14 +122,18 @@ sub execute
 			ID_charindex LIKE '$env{'ID_charindex'}___'
 		ORDER BY
 			$env{'sql_order_by'}
+		LIMIT
+			$env{'sql_limit'}
 	};
 	
+	my $item_counter=0;
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		
 		my $item=$XSGN{'item'};
+		
+      $item_counter++;
 		
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
@@ -154,6 +164,47 @@ sub execute
 		
 		$XSGN{'TMP'}=~s|<#item#>|$item|;
 		
+	}
+	
+	$XSGN{'TMP'}=~s|<%total_count%>|$item_counter|g;
+	
+	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
+	{
+		$env{'offset'}=$1;
+		$env{'count'}=$2;
+	}
+	else
+	{
+		$env{'count'}=$env{'sql_limit'};
+	}
+	
+	
+	# offset
+	if ($env{'count'} && $item_counter >= $env{'count'}) # count
+	{
+		$XSGN{'next'}=~s|<%offset%>|$env{'offset'}+$env{'count'}|ge;
+		$XSGN{'TMP'}=~s|<#next#>|$XSGN{'next'}|g;
+	}
+	if ($env{'offset'}-$env{'sql_limit_start'})
+	{
+		if ($env{'offset'}-$env{'count'}-$env{'sql_limit_start'}>0)
+		{
+			$XSGN{'previous'}=~s|<%offset%>|$env{'offset'}-$env{'count'}|ge;
+		}
+		else
+		{
+			$XSGN{'previous'}=~s|<%offset%>||ge;
+		}
+		$XSGN{'TMP'}=~s|<#previous#>|$XSGN{'previous'}|g;
+	}
+	
+	
+	if(!$item_counter)
+	{
+		if($XSGN{'TMP_failure_no-data'})
+		{
+			$XSGN{'TMP'} = $XSGN{'TMP_failure_no-data'};
+		}
 	}
 	
 	return 1;
