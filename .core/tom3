@@ -639,7 +639,7 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		# when I'm running publisher from commandline replace QUERY_STRING by params
-		$ENV{'QUERY_STRING'}=$ARGV[0] if $ENV{USER} eq "apache";
+		#$ENV{'QUERY_STRING'}=$ARGV[0] if $ENV{USER} eq "apache";
 		
 		# add to %FORM sended data in POST and GET (in this order)
 		my %FORM_get=TOM::Net::HTTP::CGI::get_CGI($ENV{'QUERY_STRING'});
@@ -823,6 +823,12 @@ while ($main::CGI=new CGI::Fast())
 		#############################################################################
 		###### DOKONCENA PRACA S QUERY STRINGOM
 		#############################################################################
+		
+		foreach (keys %FORM)
+		{
+#			$FORM{$_}=~s/<#?\$(.*?)>//;
+		}
+		
 		
 		# chcem log do outputu (ak budu splnene dalsie podmienky)
 		
@@ -1280,7 +1286,7 @@ while ($main::CGI=new CGI::Fast())
 		###################################################################
 		
 		$pub::output_log=1;
-		my $t_process=track TOM::Debug("processing TypeID='$FORM{TID}','timer'=>1");
+		my $t_process=track TOM::Debug("processing TypeID='$FORM{TID}'",'timer'=>1);
 		
 		
 		my $t_TypeID=track TOM::Debug("TypeID '$FORM{TID}'");
@@ -2489,7 +2495,7 @@ while ($main::CGI=new CGI::Fast())
 			my $tmp_html=TOM::Temp::file->new('ext'=>'html');
 			$tmp_html->save_content($DOC_output);
 			my $tmp_pdf=TOM::Temp::file->new('ext'=>'pdf');
-			my $cmd="/usr/local/bin/htmldoc --quiet --jpeg --charset $charset --webpage $main::env{'htmldoc'} $tmp_html->{'filename'} -f $tmp_pdf->{'filename'} 2>/www/TOM/_temp/stderr.log";
+			my $cmd="/usr/bin/htmldoc --quiet --jpeg --charset $charset --webpage $main::env{'htmldoc'} $tmp_html->{'filename'} -f $tmp_pdf->{'filename'} 2>/www/TOM/_temp/stderr.log";
 			main::_log($cmd);
 			system($cmd);
 			
@@ -2590,20 +2596,23 @@ while ($main::CGI=new CGI::Fast())
 			my $e_r=$t_eval->{'time'}{req}{duration};
 			main::_log("[$tom::H]".
 				" ".
-				"eval:".$e_p."/".$e_r.
+				"eval:".$e_r."/".$e_p.
 				" ".
 				"(".
 					"pre_process:".
-						TOM::Math::percentage($e_p,$t_preprocess->{'time'}{proc}{duration})."%/".
-						TOM::Math::percentage($e_r,$t_preprocess->{'time'}{req}{duration})."%".
+						$t_preprocess->{'time'}{req}{duration}.'/'.$t_preprocess->{'time'}{proc}{duration}.' '.
+						TOM::Math::percentage($e_r,$t_preprocess->{'time'}{req}{duration})."%/".
+						TOM::Math::percentage($e_p,$t_preprocess->{'time'}{proc}{duration})."%".
 					" ".
 					"process:".
-						TOM::Math::percentage($e_p,$t_process->{'time'}{proc}{duration})."%/".
-						TOM::Math::percentage($e_r,$t_process->{'time'}{req}{duration})."%".
+						$t_process->{'time'}{req}{duration}.'/'.$t_process->{'time'}{proc}{duration}.' '.
+						TOM::Math::percentage($e_r,$t_process->{'time'}{req}{duration})."%/".
+						TOM::Math::percentage($e_p,$t_process->{'time'}{proc}{duration})."%".
 					" ".
 					"post_process:".
-						TOM::Math::percentage($e_p,$t_postprocess->{'time'}{proc}{duration})."%/".
-						TOM::Math::percentage($e_r,$t_postprocess->{'time'}{req}{duration})."%".
+						$t_postprocess->{'time'}{req}{duration}.'/'.$t_postprocess->{'time'}{proc}{duration}.' '.
+						TOM::Math::percentage($e_r,$t_postprocess->{'time'}{req}{duration})."%/".
+						TOM::Math::percentage($e_p,$t_postprocess->{'time'}{proc}{duration})."%".
 				")".
 				"",3,"pub.bench",1) if $TOM::DEBUG_benchmark;
 				
