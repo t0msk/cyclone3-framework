@@ -158,7 +158,7 @@ sub execute
 			LIMIT
 				$env{'sql_limit'}
 		};
-		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-long'=>10);
 		while (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
 			main::_log("video_part ID='$db1_line{'video_part_ID'}' with missing/old format '$db0_line{'name'}'");
@@ -234,7 +234,7 @@ sub execute
 				LIMIT
 					$env{'sql_limit'}
 			};
-			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-long'=>10);
 			while (my %db1_line=$sth1{'sth'}->fetchhash())
 			{
 				main::_log("parent of video_file ID='$db1_line{'file2_ID'}' has been changed");
