@@ -68,6 +68,13 @@ sub execute
 		
 		main::_log("used before=".(time()-$cache_use)."s sql=$cache->{'sql'}");
 		
+		TOM::Database::SQL::execute(qq{
+			INSERT INTO TOM.a150_sql_log
+				(ID,datetime_executed)
+			VALUES
+				('$db0_line{'ID'}',NOW())
+		},'db_h'=>'sys');
+		
 		# recache
 		TOM::Database::SQL::execute(
 			$cache->{'sql'},

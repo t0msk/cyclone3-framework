@@ -81,3 +81,14 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_sql` (
   PRIMARY KEY  (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+
+-- --------------------------------------------------
+-- version=5.0
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_sql_log` (
+  `ID` char(32) character set ascii NOT NULL default '',
+  `datetime_executed` datetime default NULL,
+  KEY `ID` (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
