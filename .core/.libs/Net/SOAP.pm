@@ -61,7 +61,7 @@ sub prepare
 	xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" 
 	SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
 	<SOAP-ENV:Header>
-		<generator>Cyclone$TOM::core_version.$TOM::core_build (r$TOM::core_revision)</generator>
+		<generator>Cyclone3 $TOM::core_version.$TOM::core_build</generator>
 		<hostname>$TOM::hostname</hostname>
 		<domain>$tom::H</domain>
 		<process>$$</process>
