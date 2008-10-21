@@ -33,7 +33,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_online` (
   KEY `IDsession` (`IDsession`),
   KEY `login` (`login`),
   KEY `SEL0` (`IDhash`,`host`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -109,7 +109,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users` (
   KEY `host` (`host`),
   KEY `lng` (`lng`),
   KEY `active` (`active`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- version=5.0
@@ -138,7 +138,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_arch` (
   KEY `host` (`host`),
   KEY `lng` (`lng`),
   KEY `active` (`active`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -150,7 +150,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_attrs` (
   `email` varchar(128) NOT NULL default '',
   `email_verify` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`IDhash`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -162,7 +162,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_users_attrs_arch` (
   `email` varchar(128) NOT NULL default '',
   `email_verify` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`IDhash`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
