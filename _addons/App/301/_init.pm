@@ -107,7 +107,7 @@ sub CookieClean
 CookieClean() if $tom::H;
 
 
-if ($tom::H_cookie && $tom::addons{'a510'})
+if ($tom::H_cookie)
 {
 	# admin is group for administrators
 	# editor is group with access into rpc services
