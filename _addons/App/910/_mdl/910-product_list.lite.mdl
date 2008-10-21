@@ -285,6 +285,7 @@ sub execute
 			product_lng.name,
 			product_lng.name_url,
 			product_lng.name_long,
+			product_lng.description_short,
 			
 			product_ent.rating_score,
 			product_ent.rating_votes,
@@ -453,7 +454,7 @@ sub execute
 				if (my %db1_line=$sth1{'sth'}->fetchhash())
 				{
 					my $uri=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
-					$XSGN{'NULL'}=~s|<%thumbnail.src%>|$uri|;
+					$item=~s|<%thumbnail.src%>|$uri|;
 				}
 			}
 		}

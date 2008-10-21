@@ -95,13 +95,15 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_lng` ( -- language versions of produ
   `name_label` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
   `description_short` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  FULLTEXT KEY `FULL_0` (`name`,`name_long`,`name_label`,`description_short`,`description`,`keywords`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -116,6 +118,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_lng_j` (
   `name_label` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
   `description_short` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)

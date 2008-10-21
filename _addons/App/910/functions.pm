@@ -346,7 +346,6 @@ sub product_add
 	main::_log("lng='$env{'product_lng.lng'}'");
 	
 	
-	
 	# PRODUCT_LNG
 	
 	my %product_lng;
@@ -393,6 +392,26 @@ sub product_add
 	
 	main::_log("product_lng.ID='$product_lng{'ID'}' product_lng.ID_entity='$product_lng{'ID_entity'}'");
 	
+	# generate keywords
+	if ($env{'product_lng.keywords'})
+	{
+		my @ref=split(' # ',$product_lng{'keywords'});
+		$ref[1]=$env{'product_lng.keywords'};
+		$env{'product_lng.keywords'}=$ref[0].' # '.$ref[1];
+	}
+	else {$env{'product_lng.keywords'}=$product_lng{'keywords'};}
+	if ( $env{'product_lng.description_short'} || $env{'product_lng.description'})
+	{
+		my @ref=split(' # ',$env{'product_lng.keywords'});
+		$ref[0]='';
+		my %keywords=App::401::keywords::html_extract($env{'product_lng.description_short'}.' '.$env{'product_lng.description'});
+		foreach (keys %keywords)
+		{$ref[0].=", ".$_;}
+		$ref[0]=~s|^, ||;
+		$env{'product_lng.keywords'}=$ref[0].' # '.$ref[1];
+	}
+	$env{'product_lng.keywords'}='' if ($env{'product_lng.keywords'} eq ' # ');
+	
 	# update only if necessary
 	my %columns;
 	# name
@@ -412,6 +431,9 @@ sub product_add
 	# description
 	$columns{'description'}="'".TOM::Security::form::sql_escape($env{'product_lng.description'})."'"
 		if ($env{'product_lng.description'} && ($env{'product_lng.description'} ne $product_lng{'description'}));
+	# keywords
+	$columns{'keywords'}="'".TOM::Security::form::sql_escape($env{'product_lng.keywords'})."'"
+		if ($env{'product_lng.keywords'} && ($env{'product_lng.keywords'} ne $product_lng{'keywords'}));
 	
 	if (keys %columns)
 	{
@@ -531,10 +553,6 @@ sub product_add
 	$t->close();
 	return %env;
 }
-
-
-
-
 
 
 
