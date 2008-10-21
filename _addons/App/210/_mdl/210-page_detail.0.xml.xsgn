@@ -18,6 +18,9 @@
 	<datetime_create><![CDATA[<%datetime_create%>]]></datetime_create>
 	<t_name><![CDATA[<%t_name%>]]></t_name>
 	<is_default><![CDATA[<%is_default%>]]></is_default>
+	<metadata>
+<%metadata%>
+	</metadata>
 	<lng><![CDATA[<%lng%>]]></lng>
 	<status><![CDATA[<%status%>]]></status>
 	<keys>

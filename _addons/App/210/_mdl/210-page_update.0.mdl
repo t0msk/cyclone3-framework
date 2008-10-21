@@ -150,6 +150,9 @@ sub execute
 		$columns{'alias_url'}="'".TOM::Security::form::sql_escape($main::FORM{'alias_url'})."'";
 	}
 	
+	$columns{'metadata'}="'".TOM::Security::form::sql_escape($main::RPC->{'metadata'})."'"
+		if exists $main::RPC->{'metadata'};
+	
 	my $update=keys %columns;
 	
 	# nic nieje na update
