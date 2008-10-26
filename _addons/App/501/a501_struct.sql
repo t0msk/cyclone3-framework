@@ -9,9 +9,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image` (
   `ID_entity` mediumint(8) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -37,9 +36,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent` (
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
   KEY `visits` (`visits`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -82,10 +80,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_attrs` (
   `keywords` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
-  KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
+  KEY `datetime_create` (`datetime_create`),
   KEY `ID_category` (`ID_category`),
   KEY `name` (`name`),
   KEY `lng` (`lng`),
@@ -125,10 +122,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_file` (
   `file_ext` varchar(120) character set ascii NOT NULL,
   `from_parent` char(1) character set ascii NOT NULL default 'Y', -- is this file generated from parent image_file?
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`ID_format`),
-  KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
   KEY `ID_format` (`ID_format`),
   KEY `name` (`name`),
   KEY `status` (`status`)
@@ -177,10 +172,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_emo` ( -- experimental EMO character
   `emo_omg` int(10) unsigned NOT NULL default '0',
   `emo_smile` int(10) unsigned NOT NULL default '0',
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`),
-  KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`)
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -276,11 +269,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_cat` (
   `datetime_create` datetime NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
-  KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
   KEY `name` (`name`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
@@ -316,11 +307,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_format` (
   `required` char(1) NOT NULL default 'Y',
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
-  KEY `ID_entity` (`ID_entity`),
-  KEY `ID` (`ID`),
   KEY `name` (`name`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
@@ -420,12 +409,13 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_view` AS (
 	)
 	LEFT JOIN `/*db_name*/`.`/*addon*/_image_cat` AS image_cat ON
 	(
-		image_cat.ID = image_attrs.ID_category
+		image_cat.ID_entity = image_attrs.ID_category AND
+		image_cat.lng = image_attrs.lng
 	)
-	
 	WHERE
-		image.ID AND
-		image_attrs.ID
+		image_ent.ID AND
+		image_attrs.ID AND
+		image_cat.ID
 )
 
 -- --------------------------------------------------

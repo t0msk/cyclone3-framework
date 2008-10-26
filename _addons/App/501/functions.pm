@@ -662,6 +662,11 @@ sub image_add
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::image_add()");
 	
+	foreach (sort keys %env)
+	{
+		main::_log("input $_='$env{$_}'");
+	}
+	
 	$env{'image_format.ID'}=$App::501::image_format_original_ID unless $env{'image_format.ID'};
 	
 	if ($env{'file'})
@@ -683,23 +688,26 @@ sub image_add
 	}
 	
 	my %category;
-	if ($env{'image_attrs.ID_category'})
+	if ($env{'image_cat.ID'} && $env{'image_cat.ID'} ne 'NULL')
 	{
 		# detect language
 		%category=App::020::SQL::functions::get_ID(
-			'ID' => $env{'image_attrs.ID_category'},
+			'ID' => $env{'image_cat.ID'},
 			'db_h' => "main",
 			'db_name' => $App::501::db_name,
 			'tb_name' => "a501_image_cat",
 			'columns' => {'*'=>1}
 		);
 		$env{'image_attrs.lng'}=$category{'lng'};
-		main::_log("setting lng='$env{'image_attrs.lng'}' from image_attrs.ID_category");
+		$env{'image_attrs.ID_category'}=$category{'ID_entity'};
+		main::_log("setting lng='$env{'image_attrs.lng'}' from image_cat.ID='$env{'image_cat.ID'}'");
+		main::_log("setting image_attrs.ID_category='$env{'image_attrs.ID_category'}' from image_cat.ID='$env{'image_cat.ID'}'");
 	}
-	
+	$env{'image_attrs.ID_category'}='NULL' if $env{'image_cat.ID'} eq 'NULL';
 	
 	$env{'image_attrs.lng'}=$tom::lng unless $env{'image_attrs.lng'};
 	main::_log("lng='$env{'image_attrs.lng'}'");
+	
 	
 	# IMAGE
 	
@@ -707,7 +715,6 @@ sub image_add
 	my %image_attrs;
 	if ($env{'image.ID'})
 	{
-		# detect language
 		%image=App::020::SQL::functions::get_ID(
 			'ID' => $env{'image.ID'},
 			'db_h' => "main",
@@ -724,29 +731,32 @@ sub image_add
 #	}
 	
 	
-	# check if this symlink with same ID_category not exists
+	# check if this symlink with same ID_category not already exists
 	# and image.ID is unknown
 	if ($env{'image_attrs.ID_category'} && !$env{'image.ID'} && $env{'image.ID_entity'} && !$env{'forcesymlink'})
 	{
-		main::_log("search for ID");
+		main::_log("search for image.ID by image_attrs.ID_category='$env{'image_attrs.ID_category'}' and image.ID_entity='$env{'image.ID_entity'}'");
 		my $sql=qq{
 			SELECT
-				*
+				image.ID AS ID_image,
+				image_attrs.ID AS ID_attrs
 			FROM
-				`$App::501::db_name`.`a501_image_view`
+				`$App::501::db_name`.a501_image AS image
+			LEFT JOIN `$App::501::db_name`.a501_image_attrs AS image_attrs
+				ON ( image.ID = image_attrs.ID_entity )
 			WHERE
-				ID_entity_image=$env{'image.ID_entity'} AND
-				( ID_category = $env{'image_attrs.ID_category'} OR ID_category IS NULL ) AND
-				status IN ('Y','N','L')
+				image.ID_entity=$env{'image.ID_entity'} AND
+				( image_attrs.ID_category = $env{'image_attrs.ID_category'} OR ID_category IS NULL ) AND
+				image_attrs.status IN ('Y','N','L')
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		my %db0_line=$sth0{'sth'}->fetchhash();
-		if ($db0_line{'ID'})
+		if ($db0_line{'ID_image'})
 		{
 			$env{'image.ID'}=$db0_line{'ID_image'};
 			$env{'image_attrs.ID'}=$db0_line{'ID_attrs'};
-			main::_log("setup image.ID='$db0_line{'ID_image'}'");
+			main::_log("setup image.ID='$db0_line{'ID_image'}' image_attrs.ID='$env{'image_attrs.ID'}'");
 		}
 	}
 	
@@ -770,7 +780,7 @@ sub image_add
 			'-journalize' => 1,
 		);
 		
-		main::_log("generated image ID='$env{'image.ID'}'");
+		main::_log("generated image.ID='$env{'image.ID'}'");
 	}
 	
 	
@@ -804,6 +814,7 @@ sub image_add
 	
 	if (!$env{'image_attrs.ID'})
 	{
+		main::_log("finding image_attrs.ID by image.ID=$env{'image.ID'} and image_attrs.lng='$env{'image_attrs.lng'}'");
 		my $sql=qq{
 			SELECT
 				ID
@@ -817,8 +828,27 @@ sub image_add
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		$env{'image_attrs.ID'}=$db0_line{'ID'};
+		main::_log("image_attrs.ID='$env{'image_attrs.ID'}'");
 	}
 	
+	if (!$env{'image_attrs.ID'} && !$env{'image_attrs.ID_category'} && $env{'image.ID'})
+	{ # find target ID_category if not defined
+		main::_log("finding image_attrs.ID_category by image.ID=$env{'image.ID'}");
+		my $sql=qq{
+			SELECT
+				ID_category
+			FROM
+				`$App::501::db_name`.`a501_image_attrs`
+			WHERE
+				ID_entity='$env{'image.ID'}' AND
+				status IN ('Y','N','L')
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		$env{'image_attrs.ID_category'}=$db0_line{'ID_category'};# if $sth0{'rows'};
+		main::_log("image_attrs.ID_category='$env{'image_attrs.ID_category'}'");
+	}
 	
 	if (!$env{'image_attrs.ID'})
 	{
@@ -826,7 +856,6 @@ sub image_add
 		my %columns;
 		$columns{'ID_category'}=$env{'image_attrs.ID_category'} if $env{'image_attrs.ID_category'};
 		#$columns{'status'}="'".$env{'image_attrs.status'}."'" if $env{'image_attrs.status'};
-		
 		$env{'image_attrs.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
 			'db_name' => $App::501::db_name,
@@ -840,6 +869,7 @@ sub image_add
 			},
 			'-journalize' => 1,
 		);
+		main::_log("created new image_attrs.ID='$env{'image_attrs.ID'}'");
 	}
 	
 	
@@ -865,7 +895,44 @@ sub image_add
 			'tb_name' => "a501_image_attrs",
 			'columns' => {'*'=>1}
 		);
+		main::_log("loaded %image_attrs image_attrs.ID='$image_attrs{'ID'}' image_attrs.ID_category='$image_attrs{'ID_category'}'");
 	}
+	
+	main::_log("image_attrs.ID='$env{'image_attrs.ID'}' image_attrs.ID_category='$env{'image_attrs.ID_category'}' image_attrs{ID_category}='$image_attrs{'ID_category'}'");
+	if ($env{'image_attrs.ID'} &&
+	(
+		# ID_category
+		($env{'image_attrs.ID_category'} && ($env{'image_attrs.ID_category'} ne $image_attrs{'ID_category'}))
+	))
+	{
+		my %columns;
+		main::_log("image_attrs.ID='$image_attrs{'ID'}' image_attrs.status='$image_attrs{'status'}'");
+		$columns{'ID_category'}=$env{'image_attrs.ID_category'};
+		my $sql=qq{
+			SELECT
+				ID
+			FROM
+				`$App::501::db_name`.a501_image_attrs
+			WHERE
+				ID_entity=$image_attrs{'ID_entity'} AND
+				status IN ('Y','N','L')
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+#			main::_log("update image_attrs.ID='$db0_line{'ID'}'");
+			App::020::SQL::functions::update(
+				'ID' => $db0_line{'ID'},
+				'db_h' => "main",
+				'db_name' => $App::501::db_name,
+				'tb_name' => "a501_image_attrs",
+				'columns' => {%columns},
+				'-journalize' => 1
+			);
+		}
+		
+	}
+	
 	if ($env{'image_attrs.ID'} &&
 	(
 		# name
@@ -875,7 +942,7 @@ sub image_add
 		# keywords
 		(exists $env{'image_attrs.keywords'} && ($env{'image_attrs.keywords'} ne $image_attrs{'keywords'})) ||
 		# ID_category
-		($env{'image_attrs.ID_category'} && ($env{'image_attrs.ID_category'} ne $image_attrs{'ID_category'})) ||
+#		($env{'image_attrs.ID_category'} && ($env{'image_attrs.ID_category'} ne $image_attrs{'ID_category'})) ||
 		# status
 		($env{'image_attrs.status'} && ($env{'image_attrs.status'} ne $image_attrs{'status'}))
 	))
@@ -888,8 +955,8 @@ sub image_add
 			if (exists $env{'image_attrs.description'} && ($env{'image_attrs.description'} ne $image_attrs{'description'}));
 		$columns{'keywords'}="'".TOM::Security::form::sql_escape($env{'image_attrs.keywords'})."'"
 			if (exists $env{'image_attrs.keywords'} && ($env{'image_attrs.keywords'} ne $image_attrs{'keywords'}));
-		$columns{'ID_category'}=$env{'image_attrs.ID_category'}
-			if ($env{'image_attrs.ID_category'} && ($env{'image_attrs.ID_category'} ne $image_attrs{'ID_category'}));
+#		$columns{'ID_category'}=$env{'image_attrs.ID_category'}
+#			if ($env{'image_attrs.ID_category'} && ($env{'image_attrs.ID_category'} ne $image_attrs{'ID_category'}));
 		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'image_attrs.status'})."'"
 			if ($env{'image_attrs.status'} && ($env{'image_attrs.status'} ne $image_attrs{'status'}));
 		
