@@ -155,7 +155,7 @@ sub user_add
 			
 			my %image=App::501::functions::image_add(
 				'image_attrs.name' => $env{'user.ID_user'} || $env{'avatar'},
-				'image_attrs.ID_category' => $App::301::photo_cat{$tom::lng},
+				'image_attrs.ID_category' => $App::301::photo_cat_ID_entity,
 				'image_attrs.status' => 'Y',
 				'file' => $env{'avatar'}
 			);
