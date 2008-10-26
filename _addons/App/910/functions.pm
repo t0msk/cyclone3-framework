@@ -519,7 +519,7 @@ sub product_add
 			
 			my %image=App::501::functions::image_add(
 				'image_attrs.name' => $env{'product.product_number'} || $env{'product.ID'} || $env{'thumbnail'},
-				'image_attrs.ID_category' => $App::910::thumbnail_cat{$env{'product_lng.lng'}},
+				'image_attrs.ID_category' => $App::910::thumbnail_cat_ID_entity,
 				'image_attrs.status' => 'Y',
 				'file' => $env{'thumbnail'}
 			);
