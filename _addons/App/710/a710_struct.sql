@@ -39,6 +39,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
   `web` varchar(64) character set ascii default NULL,
   
   `about` text character set utf8 collate utf8_unicode_ci,
+  `note` text character set utf8 collate utf8_unicode_ci,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -81,6 +83,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org_j` (
   `web` varchar(64) character set ascii default NULL,
   
   `about` text character set utf8 collate utf8_unicode_ci,
+  `note` text character set utf8 collate utf8_unicode_ci,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   
   `status` char(1) character set ascii NOT NULL default 'Y'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
