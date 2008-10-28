@@ -233,6 +233,80 @@ if ($tom::H && $tom::addons{'a501'})
 			);
 		}
 	}
+	
+	
+	
+	# Autogram
+	our $autogram_cat_ID_entity;
+	our %autogram_cat;
+	# find any category;
+	my $sql="
+		SELECT
+			ID, ID_entity
+		FROM
+			`$App::501::db_name`.`a501_image_cat`
+		WHERE
+			name='user autogram' AND
+			lng IN ('".(join "','",@TOM::LNG_accept)."')
+		LIMIT 1
+	";
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$autogram_cat_ID_entity=$db0_line{'ID_entity'} unless $autogram_cat_ID_entity;
+	}
+	else
+	{
+		$autogram_cat_ID_entity=App::020::SQL::functions::tree::new(
+			'db_h' => "main",
+			'db_name' => $App::501::db_name,
+			'tb_name' => "a501_image_cat",
+			'parent_ID'   => $photo_cat{$tom::LNG},
+			'columns' => {
+				'name' => "'user autogram'",
+				'lng' => "'$tom::LNG'",
+				'status' => "'L'"
+			},
+			'-journalize' => 1
+		);
+	}
+	
+	foreach my $lng(@TOM::LNG_accept)
+	{
+		#main::_log("check related category $lng");
+		my $sql=qq{
+			SELECT
+				ID, ID_entity
+			FROM
+				`$App::501::db_name`.`a501_image_cat`
+			WHERE
+				ID_entity=$autogram_cat_ID_entity AND
+				lng='$lng'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$autogram_cat{$lng}=$db0_line{'ID'};
+		}
+		else
+		{
+			$autogram_cat{$lng}=App::020::SQL::functions::tree::new(
+				'db_h' => "main",
+				'db_name' => $App::501::db_name,
+				'tb_name' => "a501_image_cat",
+				'parent_ID'   => $photo_cat{$lng},
+				'columns' => {
+					'ID_entity' => $autogram_cat_ID_entity,
+					'name' => "'user autogram'",
+					'lng' => "'$lng'",
+					'status' => "'L'"
+				},
+				'-journalize' => 1
+			);
+		}
+	}
+	
 }
 
 

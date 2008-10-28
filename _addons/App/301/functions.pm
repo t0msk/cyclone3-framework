@@ -186,6 +186,76 @@ sub user_add
 	}
 	
 	
+	
+	# AUTOGRAM
+	
+	if ($env{'autogram'} && -e $env{'autogram'} && not -d $env{'autogram'})
+	{
+		
+		if (my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::301::db_name,
+			'l_prefix' => 'a301',
+			'l_table' => 'user',
+			'l_ID_entity' => $env{'user.ID_user'},
+			'rel_type' => 'autogram',
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y",
+			'limit' => 1
+		))[0])
+		{
+			
+			my %image=App::501::functions::image_add(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_attrs.name' => $env{'user.ID_user'} || $env{'autogram'},
+				'file' => $env{'autogram'}
+			);
+			
+			if ($image{'image.ID'})
+			{
+				App::501::functions::image_regenerate(
+					'image.ID' => $image{'image.ID'}
+				);
+			}
+			
+		}
+		else
+		{
+			
+			my %image=App::501::functions::image_add(
+				'image_attrs.name' => $env{'user.ID_user'} || $env{'autogram'},
+				'image_attrs.ID_category' => $App::301::autogram_cat_ID_entity,
+				'image_attrs.status' => 'Y',
+				'file' => $env{'autogram'}
+			);
+			
+			if ($image{'image.ID'})
+			{
+				
+				App::501::functions::image_regenerate(
+					'image.ID' => $image{'image.ID'}
+				);
+				
+				my ($ID_entity,$ID)=App::160::SQL::new_relation(
+					'l_prefix' => 'a301',
+					'l_table' => 'user',
+					'l_ID_entity' => $env{'user.ID_user'},
+					'rel_type' => 'autogram',
+					'r_db_name' => $App::501::db_name,
+					'r_prefix' => 'a501',
+					'r_table' => 'image',
+					'r_ID_entity' => $image{'image.ID_entity'},
+					'status' => 'Y',
+				);
+				
+			}
+			
+		}
+		
+	}
+	
+	
+	
 	# PROFILE
 	
 	my %user_profile;
