@@ -420,7 +420,7 @@ sub get_relations
 	# Memcached key
 	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.
 		$env{'l_prefix'}.'/'.$env{'l_table'};
-	my $cache_key='a160_relation::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'status'}.'::'.
+	my $cache_key='a160_relation::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'status'}.'::'.$env{'rel_type'}.'::'.
 		$env{'ID'}.'/'.
 		$env{'ID_entity'}.'/'.
 		$env{'l_prefix'}.'/'.
