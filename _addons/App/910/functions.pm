@@ -100,6 +100,8 @@ sub product_add
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::product_add()");
 	
+	$env{'product_sym.ID'} = $env{'product_cat.ID_entity'} if $env{'product_cat.ID_entity'};
+	
 	# PRODUCT AND PRODUCT MODIFICATION
 	
 	my %product;
@@ -132,7 +134,29 @@ sub product_add
 	# find product by product_number
 	if (!$env{'product.ID'} && $env{'product.product_number'})
 	{
-		
+		# check if this product_number not already used by another product
+		my $sql=qq{
+			SELECT
+				ID,
+				ID_entity
+			FROM
+				`$App::910::db_name`.a910_product
+			WHERE
+				product_number='$env{'product.product_number'}'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		$env{'product.ID'} = $db0_line{'ID'} if $db0_line{'ID'};
+		$env{'product.ID_entity'} = $db0_line{'ID_entity'} if $db0_line{'ID_entity'};
+		%product=App::020::SQL::functions::get_ID(
+			'ID' => $env{'product.ID'},
+			'db_h' => "main",
+			'db_name' => $App::910::db_name,
+			'tb_name' => "a910_product",
+			'columns' => {'*'=>1}
+		);
+		main::_log("found product.ID='$env{'product.ID'}'");
 	}
 	
 	if (!$env{'product.ID'}) # if modification not defined, create a new
@@ -199,6 +223,51 @@ sub product_add
 	# metadata
 	$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'product.metadata'})."'"
 		if (exists $env{'product.metadata'} && ($env{'product.metadata'} ne $product{'metadata'}));
+	if ($env{'product.metadata'})
+	{
+		my $metaindex=$env{'product.metadata'};
+		# metaindex update
+		TOM::Database::SQL::execute(qq{
+			UPDATE `$App::910::db_name`.a910_product_metaindex
+			SET status='N' WHERE ID_product='$env{'product.ID'}'
+		},'quiet'=>1);
+		while ($metaindex=~s|<section name="(.*?)">(.*?)</section>||s)
+		{
+			my $section_name=$1;
+			my $section_metaindex=$2;
+			main::_log("section_name='$section_name'");
+			while ($section_metaindex=~s|<variable name="(.*?)">(.*?)</variable>||s)
+			{
+				my $variable_name=$1;
+				my $variable_value=$2;
+				main::_log("variable_name='$variable_name' variable_value='$variable_value'");
+				TOM::Database::SQL::execute(qq{
+					REPLACE INTO `$App::910::db_name`.a910_product_metaindex
+					(
+						ID_product,
+						meta_section,
+						meta_variable,
+						meta_value,
+						status
+					)
+					VALUES
+					(
+						$env{'product.ID'},
+						'$section_name',
+						'$variable_name',
+						'$variable_value',
+						'Y'
+					)
+				},'quiet'=>1);
+				
+			}
+		}
+		# metaindex cleaning
+		TOM::Database::SQL::execute(qq{
+			DELETE FROM `$App::910::db_name`.a910_product_metaindex
+			WHERE status='N'
+		},'quiet'=>1);
+	}
 	
 	if ($env{'product.product_number'} && ($env{'product.product_number'} ne $product{'product_number'}))
 	{
@@ -207,7 +276,7 @@ sub product_add
 			SELECT
 				ID
 			FROM
-				`$App::910::db_name`.product
+				`$App::910::db_name`.a910_product
 			WHERE
 				product_number='$env{'product.product_number'}'
 			LIMIT 1
@@ -306,9 +375,42 @@ sub product_add
 	}
 	$columns{'ID_brand'}="'".TOM::Security::form::sql_escape($env{'product_brand.ID'})."'"
 		if (exists $env{'product_brand.ID'} && ($env{'product_brand.ID'} ne $product_ent{'ID_brand'}));
+	# family
+	if ($env{'product_family.name'})
+	{
+		my $sql=qq{
+			SELECT
+				ID,ID_entity
+			FROM
+				`$App::910::db_name`.a910_product_family
+			WHERE
+				name='$env{'product_family.name'}'
+		};
+		my %sth0=TOM::Database::SQL::execute($sql);
+		my %product_family=$sth0{'sth'}->fetchhash();
+		$env{'product_family.ID'}=$product_family{'ID'};
+		if (!$product_family{'ID'})
+		{
+			$env{'product_family.ID'}=App::020::SQL::functions::new(
+				'db_h' => "main",
+				'db_name' => $App::910::db_name,
+				'tb_name' => "a910_product_family",
+				'columns' => {
+					'name' => "'".TOM::Security::form::sql_escape($env{'product_family.name'})."'",
+					'name_url' => "'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'product_family.name'}))."'"
+				},
+				'-journalize' => 1,
+			);
+		}
+	}
+	$columns{'ID_family'}="'".TOM::Security::form::sql_escape($env{'product_family.ID'})."'"
+		if (exists $env{'product_family.ID'} && ($env{'product_family.ID'} ne $product_ent{'ID_family'}));
 	# posix_owner
 	$columns{'posix_owner'}="'".TOM::Security::form::sql_escape($env{'product_ent.posix_owner'})."'"
 		if (exists $env{'product_ent.posix_owner'} && ($env{'product_ent.posix_owner'} ne $product_ent{'posix_owner'}));
+	# VAT
+	$columns{'VAT'}="'".TOM::Security::form::sql_escape($env{'product_ent.VAT'})."'"
+		if (exists $env{'product_ent.VAT'} && ($env{'product_ent.VAT'} ne $product_ent{'VAT'}));
 	
 	if (keys %columns)
 	{

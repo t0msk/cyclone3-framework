@@ -19,7 +19,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `price` decimal(12,3) default NULL, -- different modifications, different prices
   `price_max` decimal(12,3) default NULL,
   `price_currency` varchar(3) character set ascii default 'EUR',
-  `price_EUR` float default NULL, -- price in EUR
+  `price_EUR` decimal(12,3) default NULL, -- price in EUR
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
@@ -45,10 +45,23 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `price` decimal(12,3) default NULL,
   `price_max` decimal(12,3) default NULL,
   `price_currency` varchar(3) character set ascii default 'EUR',
-  `price_EUR` float default NULL,
+  `price_EUR` decimal(12,3) default NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_product_metaindex` (
+  `ID_product` bigint(20) unsigned NOT NULL, -- ref _product.ID
+  `meta_section` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_variable` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_value` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID_product`,`meta_section`,`meta_variable`),
+  KEY `SEL_0` (`meta_section`,`meta_variable`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -59,6 +72,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_ent` ( -- summary table for product 
   `datetime_create` datetime NOT NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_brand` bigint(20) unsigned NOT NULL, -- rel product_brand.ID_entity
+  `ID_family` bigint(20) unsigned NOT NULL, -- rel product_family.ID_entity
   `VAT` float NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
@@ -75,6 +89,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_ent_j` (
   `datetime_create` datetime NOT NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_brand` bigint(20) unsigned NOT NULL,
+  `ID_family` bigint(20) unsigned NOT NULL,
   `VAT` float NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
@@ -161,6 +176,31 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_brand` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_product_brand_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_product_family` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_product_family_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
