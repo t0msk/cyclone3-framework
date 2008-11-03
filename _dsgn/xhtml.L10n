@@ -29,8 +29,8 @@
 	</string>
 	
 	<string id="Powered by Cyclone3">
-		<en-US><![CDATA[Powered by <a href="http://www.cyclone3.org" alt="Cyclone3 - Open Perl/XUL CMS Framework">Cyclone3 (<$TOM::core_version>)</a>]]></en-US>
-		<sk-SK><![CDATA[Generuje <a href="http://www.cyclone3.org" alt="Cyclone3 - Open Perl/XUL CMS Framework">Cyclone3 (<$TOM::core_version>)</a>]]></sk-SK>
+		<en-US><![CDATA[Powered by <a href="http://www.cyclone3.org" alt="Cyclone3 - Open Perl/XUL CMS Framework">Cyclone3 (<$TOM::core_version>.<$TOM::core_build>)</a>]]></en-US>
+		<sk-SK><![CDATA[Generuje <a href="http://www.cyclone3.org" alt="Cyclone3 - Open Perl/XUL CMS Framework">Cyclone3 (<$TOM::core_version>.<$TOM::core_build>)</a>]]></sk-SK>
 	</string>
 	
 	<string>
