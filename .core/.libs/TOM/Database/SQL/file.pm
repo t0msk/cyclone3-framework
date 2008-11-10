@@ -85,7 +85,7 @@ sub _sqlheader_process
 				my $db_name;
 				eval "\$db_name=\$App::".$var[1]."::db_name || \$TOM::DB{'main'}{'name'}";
 				$header->{'db_name'}=$db_name;
-				main::_log("re-set 'db_name'='$db_name'");
+				main::_log_stdout("re-set 'db_name'='$db_name'");
 			}
 		}
 	}
