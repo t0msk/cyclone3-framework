@@ -531,10 +531,10 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_view` AS (
 		video_part_attrs.ID AS ID_part_attrs,
 		video_part_file.ID AS ID_part_file,
 		
-		DATE_FORMAT(video.datetime_rec_start, '%Y-%m-%d %H:%i') AS datetime_rec_start,
-		DATE_FORMAT(video_attrs.datetime_create, '%Y-%m-%d %H:%i') AS datetime_create,
-		DATE(video.datetime_rec_start) AS date_recorded,
-		DATE_FORMAT(video.datetime_rec_stop, '%Y-%m-%d %H:%i') AS datetime_rec_stop,
+		LEFT(video.datetime_rec_start, 18) AS datetime_rec_start,
+		LEFT(video_attrs.datetime_create, 18) AS datetime_create,
+		LEFT(video.datetime_rec_start,10) AS date_recorded,
+		LEFT(video.datetime_rec_stop, 18) AS datetime_rec_stop,
 		
 		video_attrs.ID_category,
 		video_cat.name AS ID_category_name,
