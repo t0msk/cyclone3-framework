@@ -37,7 +37,7 @@ BEGIN
 		# load configured addons
 		if ($tom::P ne $TOM::P)
 		{
-			main::_log("require $tom::P/local.conf");
+			main::_log_stdout("require $tom::P/local.conf");
 			require $tom::P."/local.conf";
 			
 			if ($tom::addons_init) # load all addons only if required by engine
