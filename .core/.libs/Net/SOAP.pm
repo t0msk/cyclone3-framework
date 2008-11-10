@@ -66,6 +66,7 @@ sub prepare
 		<domain>$tom::H</domain>
 		<process>$$</process>
 		<request_code><\$main::request_code></request_code>
+		<request_time><\$main::time_current></request_time>
 		<method><\$main::FORM{'type'}></method>
 		<TypeID><\$main::FORM{'TID'}></TypeID>
 	</SOAP-ENV:Header>
