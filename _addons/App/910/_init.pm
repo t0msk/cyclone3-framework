@@ -78,8 +78,12 @@ use App::910::functions;
 =cut
 
 our $currency=$App::910::currency || 'EUR';
-our $db_name=$App::401::db_name || $TOM::DB{'main'}{'name'};
-
+our $db_name=$App::910::db_name || $TOM::DB{'main'}{'name'};
+our $metadata_default=$App::910::metadata_default || qq{
+<metatree>
+	<section name="Others"></section>
+</metatree>
+};
 
 
 # check relation to a501

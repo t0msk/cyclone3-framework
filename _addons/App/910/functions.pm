@@ -37,6 +37,7 @@ L<TOM::Security::form|lib/"TOM/Security/form.pm">
 
 use App::910::_init;
 use TOM::Security::form;
+use App::160::SQL;
 
 our $debug=1;
 our $quiet;$quiet=1 unless $debug;
@@ -221,52 +222,19 @@ sub product_add
 	$columns{'price_currency'}="'".TOM::Security::form::sql_escape($env{'product.price_currency'})."'"
 		if ($env{'product.price_currency'} && ($env{'product.price_currency'} ne $product{'price_currency'}));
 	# metadata
+	if ((not exists $env{'product.metadata'}) && (!$product{'metadata'})){$env{'product.metadata'}=$App::910::metadata_default;}
 	$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'product.metadata'})."'"
 		if (exists $env{'product.metadata'} && ($env{'product.metadata'} ne $product{'metadata'}));
-	if ($env{'product.metadata'})
+	#if ($env{'product.metadata'})
+	if ($columns{'metadata'})
 	{
-		my $metaindex=$env{'product.metadata'};
-		# metaindex update
-		TOM::Database::SQL::execute(qq{
-			UPDATE `$App::910::db_name`.a910_product_metaindex
-			SET status='N' WHERE ID_product='$env{'product.ID'}'
-		},'quiet'=>1);
-		while ($metaindex=~s|<section name="(.*?)">(.*?)</section>||s)
-		{
-			my $section_name=$1;
-			my $section_metaindex=$2;
-			main::_log("section_name='$section_name'");
-			while ($section_metaindex=~s|<variable name="(.*?)">(.*?)</variable>||s)
-			{
-				my $variable_name=$1;
-				my $variable_value=$2;
-				main::_log("variable_name='$variable_name' variable_value='$variable_value'");
-				TOM::Database::SQL::execute(qq{
-					REPLACE INTO `$App::910::db_name`.a910_product_metaindex
-					(
-						ID_product,
-						meta_section,
-						meta_variable,
-						meta_value,
-						status
-					)
-					VALUES
-					(
-						$env{'product.ID'},
-						'$section_name',
-						'$variable_name',
-						'$variable_value',
-						'Y'
-					)
-				},'quiet'=>1);
-				
-			}
-		}
-		# metaindex cleaning
-		TOM::Database::SQL::execute(qq{
-			DELETE FROM `$App::910::db_name`.a910_product_metaindex
-			WHERE status='N'
-		},'quiet'=>1);
+		App::020::functions::metadata::metaindex_set(
+			'db_h' => 'main',
+			'db_name' => $App::910::db_name,
+			'tb_name' => 'a910_product',
+			'ID' => $env{'product.ID'},
+			'metadata' => {App::020::functions::metadata::parse($env{'product.metadata'})}
+		);
 	}
 	
 	if ($env{'product.product_number'} && ($env{'product.product_number'} ne $product{'product_number'}))
@@ -356,7 +324,7 @@ sub product_add
 			WHERE
 				name='$env{'product_brand.name'}'
 		};
-		my %sth0=TOM::Database::SQL::execute($sql);
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		my %product_brand=$sth0{'sth'}->fetchhash();
 		$env{'product_brand.ID'}=$product_brand{'ID'};
 		if (!$product_brand{'ID'})
@@ -386,7 +354,7 @@ sub product_add
 			WHERE
 				name='$env{'product_family.name'}'
 		};
-		my %sth0=TOM::Database::SQL::execute($sql);
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		my %product_family=$sth0{'sth'}->fetchhash();
 		$env{'product_family.ID'}=$product_family{'ID'};
 		if (!$product_family{'ID'})

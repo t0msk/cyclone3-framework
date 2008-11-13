@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use LWP::Simple;
+
+sub execute
+{
+	
+	my $content=get('http://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml');
+	
+	while ($content=~s/<Cube currency='(.*?)' rate='(.*?)'//)
+	{
+		my $currency=$1;
+		my $rate=$2;
+		main::_log("currency='$currency' rate='$2'");
+		TOM::Database::SQL::execute(qq{
+			REPLACE INTO `TOM`.`a910_currency_rate`
+			(
+				currency1,
+				currency2,
+				rate
+			)
+			VALUES
+			(
+				'EUR',
+				'$currency',
+				$rate
+			)
+		},'quiet_'=>1);
+	}
+	
+	return 1}
+
+
+
+1;

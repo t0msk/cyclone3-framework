@@ -259,6 +259,7 @@ sub execute
 	
 	if ($env{'sql_where'})
 	{
+		$env{'sql_where'}=~s|\(metadata::(.*?)::(.*?)\)|(SELECT meta_value FROM a910_product_metaindex WHERE ID=product.ID_entity AND meta_section='$1' AND meta_variable='$2' LIMIT 1)|g;
 		$sql_where.=" AND ".$env{'sql_where'};
 	}
 	
@@ -274,7 +275,8 @@ sub execute
 			
 			product.price,
 			product.price_currency,
-			product.price_EUR,
+			product.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=product.price_currency LIMIT 1) AS price_EUR,
+			
 			product.amount,
 			product.amount_availability,
 			product.product_number,
@@ -369,8 +371,15 @@ sub execute
       
 		# fill raw data into $XSGN{'item'}
 
-		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		my $price=TOM::Utils::currency::format_EUR($db0_line{'price_EUR'});
 		
+		$item=~s|<%price_EUR%>|$price|g;
+		
+		$price=TOM::Utils::currency::format($db0_line{'price'});
+		
+		$item=~s|<%price%>|$price|g;
+		
+		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
 		# process description_short
 		my $p=new App::401::mimetypes::html;

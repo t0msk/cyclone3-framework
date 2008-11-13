@@ -54,12 +54,12 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_product_metaindex` (
-  `ID_product` bigint(20) unsigned NOT NULL, -- ref _product.ID
+  `ID` bigint(20) unsigned NOT NULL, -- ref _product.ID
   `meta_section` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
   `meta_variable` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
   `meta_value` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID_product`,`meta_section`,`meta_variable`),
+  PRIMARY KEY  (`ID`,`meta_section`,`meta_variable`),
   KEY `SEL_0` (`meta_section`,`meta_variable`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -147,6 +147,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_sym` ( -- list of product symlinks
   `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`ID_entity`),
+  KEY `ID_entity` (`ID_entity`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -298,5 +299,15 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_product_view` AS (
 	ORDER BY
 		product.ID ASC
 )
+
+-- --------------------------------------------------
+-- db_name=TOM
+
+CREATE TABLE `/*db_name*/`.`/*app*/_currency_rate` (
+  `currency1` char(4) character set ascii NOT NULL,
+  `currency2` char(4) character set ascii NOT NULL,
+  `rate` decimal(12,5) default NULL,
+  PRIMARY KEY  (`currency1`,`currency2`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
