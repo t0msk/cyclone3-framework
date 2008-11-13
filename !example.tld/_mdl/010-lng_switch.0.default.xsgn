@@ -1,0 +1,18 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+<#lng#>
+</DEFINITION>
+
+<DEFINITION id="lng">
+<span class="flag">
+	<a href="?|?__lng=<%lng%>">
+		<img src="<$tom::H_grf>/flags/<%lng%>.png" alt="<%lng%>">
+	</a>
+</span>
+<#lng#>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

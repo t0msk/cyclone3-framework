@@ -1,7 +1,11 @@
+# this is a document header file - also document constructor
+# loaded once, used many times
+
 %HEADER=(
+
 'head'	=>
 {
-	'title'	=>	"Cyclone3",
+	'title'	=>	"Example Cyclone3.org",
 	
 	'meta'	=>
 	{
@@ -17,14 +21,6 @@
 			'type'     =>	"text/css",
 			'media'    =>	"screen, tv, projection",
 		},
-		
-		{
-			'href'     =>	"$tom::H_css/main.pda.css",
-			'rel'      =>	"stylesheet",
-			'type'     =>	"text/css",
-			'media'    =>	"handheld",
-		},
-		
 	]
 
 },

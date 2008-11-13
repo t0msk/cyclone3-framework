@@ -1,0 +1,25 @@
+<!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
+
+# CONFIG KEYS (configurable via sitemap)
+<CONF_KEY name="ID" description="ID of article" select="a401_article.ID_entity" default="<$main::FORM{'ID'}>" />
+
+# CONFIG
+<CONF_VAR id="xlng" value="<$tom::lng_>" />
+<CONF_VAR id="body" value="default" />
+<CONF_VAR id="layers" value="default" />
+<CONF_VAR id="tpl" value="JW_Media_Player" />
+
+# SITEMAP
+<CONF_VAR id="sitemap" value="1" />
+<CONF_VAR id="weight" value="1.0" />
+
+# insert supermodule of article
+<MODULE>
+	<VAR id="-type" value="smdl" />
+	<VAR id="-category" value="401" />
+	<VAR id="-name" value="article_view" />
+	<VAR id="-version" value="lite" />
+	<VAR id="-global" value="1" />
+		<VAR id="view_TMP" value="CONTENT" />
+		<VAR id="article.ID_entity" value="<$main::key{'ID'}>" />
+</MODULE>

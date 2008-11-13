@@ -1,0 +1,22 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+<#item#>
+</DEFINITION>
+
+
+<DEFINITION id="item">
+<h1><%db_name%></h1>
+<p style="display:none" class="data">Published <strong><%db_datetime_start.year%>-<%db_datetime_start.month%>-<%db_datetime_start.mday%></strong> in <strong><%db_category_name%></strong> by <strong><%author_nickname%></strong></p>
+<div id="cnt-content-in" style="text-align:justify;">
+	<%abstract%>
+</div>
+</DEFINITION>
+
+<DEFINITION id="a501_image">
+	<img src="<%attr_src%>" alt="<%attr_name%>" title="<%attr_name%>" align="left" />
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

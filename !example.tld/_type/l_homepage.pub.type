@@ -1,0 +1,46 @@
+<!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
+
+# CONFIG KEYS (configurable via sitemap)
+<CONF_KEY name="ID_category" description="News category" select="a401_article_cat.ID_entity" default="" />
+<CONF_KEY name="news_limit" description="News count" select="*" default="5" />
+
+# CONFIG
+<CONF_VAR id="xlng" value="<$tom::lng_>" />
+<CONF_VAR id="body" value="default" />
+<CONF_VAR id="layers" value="default" />
+
+<MODULE>
+	<VAR id="-type" value="dmdl" />
+	<VAR id="-category" value="010" />
+	<VAR id="-name" value="content_default" />
+	<VAR id="-TMP" value="CONTENT" />
+	<VAR id="-xlng" value="en" />
+</MODULE>
+
+# insert module with 1 TOP article
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-category" value="401" />
+	<VAR id="-name" value="article_list" />
+	<VAR id="-version" value="lite" />
+	<VAR id="-global" value="1" />
+	<VAR id="-xsgn" value="home" />
+	<VAR id="-TMP" value="CONTENT" />
+		<VAR id="article_attrs.ID_category" value="<$main::key{'ID_category'}>" />
+		<VAR id="sql_where" value="article_attrs.priority_A='1'" />
+		<VAR id="sql_limit" value="1" />
+</MODULE>
+
+# insert module with 5 other articles
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-category" value="401" />
+	<VAR id="-name" value="article_list" />
+	<VAR id="-version" value="lite" />
+	<VAR id="-global" value="1" />
+	<VAR id="-xsgn" value="default" />
+	<VAR id="-TMP" value="CONTENT" />
+		<VAR id="article_attrs.ID_category" value="<$main::key{'ID_category'}>" />
+		<VAR id="sql_where" value="article_attrs.priority_A IS NULL" />
+		<VAR id="sql_limit" value="<$main::key{'news_limit'}>" />
+</MODULE>

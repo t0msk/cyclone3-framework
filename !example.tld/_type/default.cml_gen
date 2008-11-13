@@ -1,0 +1,21 @@
+
+<!-- insert module to switch between languages -->
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-category" value="010" />
+	<VAR id="-name" value="lng_switch" />
+	<VAR id="-TMP" value="MENU" />
+</MODULE>
+
+<!-- insert module to display tree menu --->
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-category" value="210" />
+	<VAR id="-name" value="page_tree" />
+	<VAR id="-global" value="1" />
+	<VAR id="-xsgn" value="main" />
+	<VAR id="-TMP" value="MENU" />
+		<VAR id="current_ID" value="<$main::a210{'ID'}>" />
+		<VAR id="depth" value="2" />
+</MODULE>
+

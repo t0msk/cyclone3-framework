@@ -1,0 +1,6 @@
+<h1>This is default service message.</h1>
+
+<div id="cnt-content-in">
+<p>In sitemap (a210) is not defined service type, also default service without any application and content is used.<p>
+<p>You can use one from list of existing service types like 'display article', 'display listing of articles', 'play video' or some complex services when you can define in *.pub.type files.</p>
+</div>

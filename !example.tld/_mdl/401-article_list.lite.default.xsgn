@@ -1,0 +1,24 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+<div id="cnt-content-in" style="text-align:justify;">
+<#item#>
+</div>
+</DEFINITION>
+
+
+<DEFINITION id="item">
+
+<h2 class="headline"><a href="?|?type=article&ID=<%db_ID_entity_article%>&name=<%db_name_url%>"><%db_datetime_start.year%>-<%db_datetime_start.month%>-<%db_datetime_start.mday%>: <%db_name%></a></h2>
+<p><%abstract%></p>
+
+<#item#>
+</DEFINITION>
+
+<DEFINITION id="a501_image">
+	<img src="<%attr_src%>" alt="<%attr_name%>" title="<%attr_name%>" align="left" />
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>

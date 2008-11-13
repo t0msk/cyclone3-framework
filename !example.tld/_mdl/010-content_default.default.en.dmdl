@@ -1,0 +1,16 @@
+<img class="banner" src="<$tom::H_grf>/banner.png" alt="docbook2odf" />
+
+<!TMP-ARTICLE!>
+	
+<!TMP-NEWS!>
+	
+<!--
+	<h2 class="headline">2007-06-18: Docbook2odf-0.244 released</h2>
+	<p>Added support to subscript, superscript, commnad, guimenu, guilabel, guibutton, keycal, accel, variablelist, varlistentry, term, sidebar, bibliography, biblioentry, .... More ways how to handle xsl conversion in docbook2odf script, added some new params. Fixed utf-8 problems and few other problems in xsl. Changed some of styles (tables, document types)</p>
+
+	<h2 class="headline">2006-05-03: OpenDocument Format Passes ISO Voting</h2>
+	<p>
+		The OpenDocument Format has unanimously passed, with a few abstentions, voting in the ISO standard process. While there are a few more formalities that need to happen in the ISO process, for all intents and purposes it is an ISO standard. Congratulations to everyone who worked hard on getting the standard created and approved in the ISO process.
+		<span class="more"><a href="http://www.consortiuminfo.org/standardsblog/article.php?story=20060503080915835">read more</a>&gt;&gt;&gt;</span>
+	</p>
+-->
