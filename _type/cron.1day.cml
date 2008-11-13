@@ -92,7 +92,7 @@
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="140" />
 	<VAR id="-name" value="clear" />
-		<VAR id="max_days" value="7" />
+		<VAR id="max_days" value="3" />
 </MODULE>
 
 
