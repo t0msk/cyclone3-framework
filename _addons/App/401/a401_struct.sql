@@ -401,8 +401,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 	
 	WHERE
 		article_ent.ID AND
-		article_attrs.ID AND
-		article_content.ID
+		article_attrs.ID
 	ORDER BY
 		article_attrs.datetime_start DESC
 )
