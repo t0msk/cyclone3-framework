@@ -95,5 +95,29 @@ sub format
 }
 
 
+sub format_EUR
+{
+	my $currency=shift;
+	my $delimiter=".";
+	
+	$currency=sprintf("%01.3f", $currency);
+	$currency=~s|\.|,|g;
+	
+	# delimite
+	my @cur=split(',',$currency);
+	my @a = ();
+	while($cur[0] =~ /\d\d\d\d/)
+	{
+		$cur[0] =~ s/(\d\d\d)$//;
+		unshift @a,$1;
+	}
+	unshift @a,$cur[0];
+	$currency = (join $delimiter,@a) . "," . $cur[1];
+	
+	$currency=~s|,000|,---|g;
+	$currency="---" if $currency eq "0,---";
+	return $currency;
+}
+
 
 1;
