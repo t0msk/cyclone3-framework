@@ -70,6 +70,10 @@ L<App::020::SQL::functions|app/"020/SQL/functions.pm">
 
 L<App::020::a160|app/"020/a160.pm">
 
+=item *
+
+L<App::020::functions::metadata|app/"020/functions/metadata.pm">
+
 =back
 
 =cut
@@ -77,6 +81,7 @@ L<App::020::a160|app/"020/a160.pm">
 use App::020::SQL;
 use App::020::SQL::functions;
 use App::020::a160;
+use App::020::functions::metadata;
 
 our $VERSION='$Rev$';
 
@@ -102,7 +107,7 @@ L<a020 database structure|app/"020/a020_struct.sql">
 
 =head1 AUTHORS
 
-Roman Fordinal (roman.fordinal@comsultia.com)
+Comsultia, Ltd. (open@comsultia.com)
 
 =cut
 
