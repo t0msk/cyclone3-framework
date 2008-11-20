@@ -82,9 +82,10 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile` (
   `gender` char(1) character set ascii default NULL,
   `date_birth` date default NULL,
   `PIN` varchar(64) character set utf8 collate utf8_bin default NULL,
-  `country` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `country_code` char(3) character set ascii default NULL,
   `state` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `county` varchar(64) character set utf8 collate utf8_unicode_ci default NULL, -- kraj
+  `district` varchar(64) character set utf8 collate utf8_unicode_ci default NULL, -- okres
   `city` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `ZIP` varchar(16) character set ascii default NULL,
   `street` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
@@ -125,9 +126,10 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_j` (
   `gender` char(1) character set ascii default NULL,
   `date_birth` date default NULL,
   `PIN` varchar(64) character set utf8 collate utf8_bin default NULL,
-  `country` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `country_code` char(3) character set ascii default NULL,
   `state` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `county` varchar(64) character set utf8 collate utf8_unicode_ci default NULL, -- kraj
+  `district` varchar(64) character set utf8 collate utf8_unicode_ci default NULL, -- okres
   `city` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `ZIP` varchar(16) character set ascii default NULL,
   `street` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
@@ -164,9 +166,10 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_h` (
   `gender` char(1) character set ascii default NULL,
   `date_birth` date default NULL,
   `PIN` varchar(64) character set utf8 collate utf8_bin default NULL,
-  `country` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `country_code` char(3) character set ascii default NULL,
   `state` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `county` varchar(64) character set utf8 collate utf8_unicode_ci default NULL, -- kraj
+  `district` varchar(64) character set utf8 collate utf8_unicode_ci default NULL, -- okres
   `city` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `ZIP` varchar(16) character set ascii default NULL,
   `street` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,

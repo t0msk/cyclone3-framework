@@ -374,6 +374,12 @@ sub user_add
 			if ($env{'user_profile.city'} && ($env{'user_profile.city'} ne $user_profile{'city'}));
 		$columns{'ZIP'}="'".TOM::Security::form::sql_escape($env{'user_profile.ZIP'})."'"
 			if ($env{'user_profile.ZIP'} && ($env{'user_profile.ZIP'} ne $user_profile{'ZIP'}));
+		$columns{'district'}="'".TOM::Security::form::sql_escape($env{'user_profile.district'})."'"
+			if ($env{'user_profile.district'} && ($env{'user_profile.district'} ne $user_profile{'district'}));
+		$columns{'county'}="'".TOM::Security::form::sql_escape($env{'user_profile.county'})."'"
+			if ($env{'user_profile.county'} && ($env{'user_profile.county'} ne $user_profile{'county'}));
+		$columns{'state'}="'".TOM::Security::form::sql_escape($env{'user_profile.state'})."'"
+			if ($env{'user_profile.state'} && ($env{'user_profile.state'} ne $user_profile{'state'}));
 		$columns{'country_code'}="'".TOM::Security::form::sql_escape($env{'user_profile.country_code'})."'"
 			if ($env{'user_profile.country_code'} && ($env{'user_profile.country_code'} ne $user_profile{'country_code'}));
 		
