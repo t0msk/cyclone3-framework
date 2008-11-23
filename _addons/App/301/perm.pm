@@ -1106,7 +1106,7 @@ sub ACL_user_update
 		$columns{'perm_R'} = "'".$env{'perm_R'}."'" if $env{'perm_R'};
 		$columns{'perm_W'} = "'".$env{'perm_W'}."'" if $env{'perm_W'};
 		$columns{'perm_X'} = "'".$env{'perm_X'}."'" if $env{'perm_X'};
-		$columns{'roles'} = "'".$env{'roles'}."'" if $env{'roles'};
+		$columns{'roles'} = "'".$env{'roles'}."'" if exists $env{'roles'};
 		App::020::SQL::functions::update(
 			'ID' => $db0_line{'ID'},
 			'db_h' => 'main',
