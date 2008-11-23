@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<L10n>
+	<header>
+		<extend level="auto" name="default"/>
+	</header>
+	
+	<string id="Organization">
+		<sk-SK>Organizácia</sk-SK>
+	</string>
+	
+</L10n>
