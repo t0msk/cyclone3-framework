@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<L10n>
+	<header>
+		<extend level="auto" name="default" addon="a301"/>
+		<extend level="auto" name="default" addon="a710"/>
+	</header>
+	
+	<string id="Please enter">
+		<sk-SK>Prosím vložte údaj:</sk-SK>
+	</string>
+	
+	<string id="Please enter correct">
+		<sk-SK>Prosím vložte korektný údaj:</sk-SK>
+	</string>
+	
+	<string id="Login already used">
+		<en-US>This username is already used, try to type another.</en-US>
+		<sk-SK>Toto užívateľské meno je už použité, prosím skúste iné.</sk-SK>
+	</string>
+	
+	<string id="Email already used">
+		<en-US>This email is already used.</en-US>
+	</string>
+	
+	<string id="email.verify.subject">
+		<en-US>registration</en-US>
+		<sk-SK>potvrdenie registrácie</sk-SK>
+	</string>
+	
+	<string id="captcha">
+		<en-US>captcha code</en-US>
+		<sk-SK>captcha kód</sk-SK>
+	</string>
+	
+	<string id="login_rules">
+		<en-US>characters a-Z_.-0-9</en-US>
+		<sk-SK>znaky a-Z_.-0-9</sk-SK>
+	</string>
+	
+	<string id="password_rules">
+		<en-US>minimal 6 characters a-Z_.-0-9</en-US>
+		<sk-SK>minimálne 6 znakov a-Z_.-0-9</sk-SK>
+	</string>
+	
+	<string id="org_name">
+		<en-US>organization name</en-US>
+		<sk-SK>názov organizácie</sk-SK>
+	</string>
+	
+	<string id="org_name_rules">
+		<en-US>max 64 characters</en-US>
+		<sk-SK>&lt;64 znakov</sk-SK>
+	</string>
+	
+	<string id="ID_org">
+		<en-US>Organization Identification Number</en-US>
+		<sk-SK>IČO</sk-SK>
+	</string>
+	
+	<string id="ID_org_rules">
+		<en-US>max 32 characters</en-US>
+		<sk-SK>&lt;32 znakov</sk-SK>
+	</string>
+	
+	<string id="VAT_number">
+		<en-US>VAT number</en-US>
+		<sk-SK>IČ DPH</sk-SK>
+	</string>
+	
+	<string id="VAT_number_rules">
+		<en-US>max 32 characters</en-US>
+		<sk-SK>&lt;32 znakov</sk-SK>
+	</string>
+	
+</L10n>

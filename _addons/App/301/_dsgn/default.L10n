@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<L10n>
+	<header>
+		<extend level="auto" name="default"/>
+	</header>
+	
+	<string id="login">
+		<en-US>username</en-US>
+		<sk-SK>užívateľké meno</sk-SK>
+	</string>
+	
+	<string id="password">
+		<sk-SK>heslo</sk-SK>
+	</string>
+	
+	<string id="firstname">
+		<sk-SK>meno</sk-SK>
+	</string>
+	
+	<string id="surname">
+		<sk-SK>priezvisko</sk-SK>
+	</string>
+	
+	<string id="email">
+		<sk-SK>email</sk-SK>
+	</string>
+	
+	<string id="User">
+		<sk-SK>Užívateľ</sk-SK>
+	</string>
+	
+</L10n>
