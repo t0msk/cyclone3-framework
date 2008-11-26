@@ -59,7 +59,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent_j` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*app*/_image_rating_vote` (
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_rating_vote` (
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_image` mediumint(8) unsigned NOT NULL, -- ref _image.ID_entity
   `datetime_event` datetime NOT NULL,
@@ -92,7 +92,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_attrs` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_image_attrs_j` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `ID` mediumint(8) unsigned NOT NULL,
   `ID_entity` mediumint(8) unsigned default NULL,
   `ID_category` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
