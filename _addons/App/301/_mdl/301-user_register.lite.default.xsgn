@@ -1,0 +1,215 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+	
+	<h1>Sign Up</h1>
+	
+	<div id="cnt-content-in" style="text-align:justify;">
+		
+		<p><strong>It's free!</strong> You just need to spend a few seconds setting up your account.<br/>
+		* = Required field</p>
+		
+<#ERROR#>
+		
+		<script language="Javascript" type="text/javascript">
+			function switchRegType()
+			{
+				var regForm=document.getElementById('regform')
+				var orgSelected = true
+				
+				if(document.getElementById("regform-type").selectedIndex>0){
+					orgSelected=false
+				}
+				
+				var trs = regForm.getElementsByTagName("tr")
+				for (var i = 0; i < trs.length; i++)
+				{
+					if(trs[i].className){
+						var classids = trs[i].className.split(' ')
+						for (var j = 0; j < classids.length; j++)
+						{
+							if(classids[j]=="nodisp"){
+								delete classids[j]
+							}
+						}
+						if(orgSelected){
+							if(trs[i].className.indexOf('reg_ORG')!=-1)
+							{
+								classids.push('nodisp')
+							}
+							trs[i].className=classids.join(' ')
+						}else{
+							if(trs[i].className.indexOf('reg_USR')!=-1)
+							{
+								classids.push('nodisp')
+							}
+							trs[i].className=classids.join(' ')
+						}
+					}
+				}
+			}
+		</script>
+		
+		<form action="?|?type=<$main::FORM{'type'}>" method="POST" enctype="multipart/form" id="regform">
+			
+			<h2>Login Information</h2>
+			
+			<table cellspacing="0" cellpadding="2" border="0" summary="">
+				<tr>
+					<td>
+						Account type:
+					</td>
+					<td>
+						<select name="regtype" id="regform-type" onchange="switchRegType()">
+							<option value="USR">Regular user</option>
+							<option value="ORG">Organization</option>
+						</select>
+					</td>
+				</tr>
+				
+				<tr>
+					<td>
+						* Username:
+					</td>
+					<td class="<%class_login%>">
+						<input type="text" name="login" value="<#@hive><$main::FORM{'login'}></@hive>">
+					</td>
+				</tr>
+				
+				<tr>
+					<td>
+						* Password:
+					</td>
+					<td class="<%class_password%>">
+						<input type="password" name="pass1" value="<#@hive><$main::FORM{'pass1'}></@hive>">
+					</td>
+				</tr>
+				
+				<tr>
+					<td>
+						* Confirm Password:
+					</td>
+					<td class="<%class_password%>">
+						<input type="password" name="pass2" value="<#@hive><$main::FORM{'pass2'}></@hive>">
+					</td>
+				</tr>
+				
+			</table>
+			
+			<h2>Contact Information</h2>
+			
+			<p>In the event that you forget your password, or if we detect that somebody is abusing your website, we need a way to get in touch.</p>
+			
+			<table cellspacing="0" cellpadding="2" border="0" summary="">
+				
+				<tr>
+					<td>
+						* E-mail:
+					</td>
+					<td class="<%class_email%>">
+						<input type="text" name="email" value="<#@hive><$main::FORM{'email'}></@hive>">
+					</td>
+				</tr>
+				
+				<tr>
+					<td>
+						* First Name:
+					</td>
+					<td class="<%class_firstname%>">
+						<input type="text" name="firstname" value="<#@hive><$main::FORM{'firstname'}></@hive>">
+					</td>
+				</tr>
+				
+				<tr>
+					<td>
+						* Last Name:
+					</td>
+					<td class="<%class_surname%>">
+						<input type="text" name="surname" value="<#@hive><$main::FORM{'surname'}></@hive>">
+					</td>
+				</tr>
+				
+				<tr class="reg_ORG <%class_ORG%>">
+					<td>
+						* Organization name:
+					</td>
+					<td class="<%class_org_name%>">
+						<input type="text" name="org_name" value="<#@hive><$main::FORM{'org_name'}></@hive>">
+					</td>
+				</tr>
+				
+				<tr class="reg_ORG <%class_ORG%>">
+					<td>Organization Identification Number:</td>
+					<td class="<%class_ID_org%>">
+						<input maxlength="8" type="text" name="ID_org" value="<#@hive><$main::FORM{'ID_org'}></@hive>">
+					</td>
+				</tr>
+
+				<tr class="reg_ORG <%class_ORG%>">
+					<td>VAT number:</td>
+					<td class="<%class_VAT_number%>">
+						<input maxlength="12" type="text" name="VAT_number" value="<#@hive><$main::FORM{'VAT_number'}></@hive>">
+					</td>
+				</tr>
+				
+			</table>
+			
+			<h2>Are you a human?</h2>
+			
+			<#reCAPTCHA#>
+			
+			<h2>Terms of Service</h2>
+			
+			<p>
+			<textarea style="width:95%" rows="8">
+reCAPTCHA improves the process of digitizing books by sending words that cannot be read by computers to the Web in the form of CAPTCHAs for humans to decipher. More specifically, each word that cannot be read correctly by OCR is placed on an image and used as a CAPTCHA. This is possible because most OCR programs alert you when a word cannot be read correctly.
+			</textarea>
+			</p>
+			
+			<input type="submit" name="submit" class="submit" value="Register"/>
+			
+			
+		</form>
+		
+		<script language="Javascript" type="text/javascript">
+			if ('ORG' == '<$main::FORM{'regtype'}>'){document.getElementById("regform-type").selectedIndex=1;}
+			switchRegType();
+		</script>
+	
+	</div>
+	
+</DEFINITION>
+
+
+
+<DEFINITION id="registered_USR">	
+	<h1>Registered</h1>
+	<div id="cnt-content-in" style="text-align:justify;">
+		<p>You are sucessfully registered</p>
+	</div>
+</DEFINITION>
+
+
+
+
+<DEFINITION id="ERROR">
+	<div class="errorbox">
+		<strong>Fields, that are not correctly filled</strong><br/>
+		<br/>
+		<ul>
+<#message#>
+		</ul>
+	</div>
+</DEFINITION>
+
+
+<DEFINITION id="ERROR-MESSAGE">
+			<li><%message%></li>
+<#message#>
+</DEFINITION>
+
+
+
+</XML_DESIGN_DEFINITION>

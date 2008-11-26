@@ -1,0 +1,501 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!! (tekelem)
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+use App::710::_init;
+use App::301::_init;
+use Captcha::reCAPTCHA;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
+	
+	my %L10n=%{new TOM::L10n('addon' => 'a301', 'name'=>'user_registration', 'lng' => $env{'lng'})->{'string'}};
+	my %tpl=%{new TOM::Template('addon' => 'a301', 'name'=>'user_registration', 'content-type' => 'xhtml')->{'entity'}};
+	
+	my $c = Captcha::reCAPTCHA->new;
+	
+	if ($main::FORM{'submit'})
+	{
+		# checking
+		my $box_err=$XSGN{'ERROR'};
+		
+		my $user_reuse;
+		my $org_reuse;
+		
+		# login
+		my $login_ok;
+		if ($main::FORM{'login'})
+		{
+			if (length($main::FORM{'login'})<32 && $main::FORM{'login'}=~/^[a-zA-Z_\-\. 0-9]*$/)
+			{
+				$login_ok=1;
+				
+				# check login in this USRM domain
+				my $sql=qq{
+					SELECT
+						ID_user,
+						status
+					FROM
+						TOM.a301_user
+					WHERE
+						login='$main::FORM{'login'}' AND
+						hostname='$tom::H_cookie'
+					LIMIT 1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql);
+				my %db0_line=$sth0{'sth'}->fetchhash();
+				$user_reuse=$db0_line{'ID_user'} if $db0_line{'ID_user'};
+				if ($db0_line{'status'}=~/[YN]/)
+				{
+					# this login already used by another user
+					my $err=$XSGN{'ERROR-MESSAGE'};
+					$err=~s|<%message%>|$L10n{'Login already used'}|;
+					$box_err=~s|<#message#>|$err<#message#>|;
+					$login_ok=0;
+				}
+				
+			}
+			else
+			{
+				my $err=$XSGN{'ERROR-MESSAGE'};
+				$err=~s|<%message%>|$L10n{'Please enter correct'} $L10n{'login'} ($L10n{'login_rules'})|;
+				$box_err=~s|<#message#>|$err<#message#>|;
+			}
+		}
+		else
+		{
+			my $err=$XSGN{'ERROR-MESSAGE'};
+			$err=~s|<%message%>|$L10n{'Please enter'} $L10n{'login'}|;
+			$box_err=~s|<#message#>|$err<#message#>|;
+		}
+		
+		# password
+		my $password_ok;
+		if ($main::FORM{'pass2'} && $main::FORM{'pass2'})
+		{
+			if (
+				(length($main::FORM{'pass1'})>5 && $main::FORM{'pass1'}=~/^[a-zA-Z_\-\. 0-9]*$/) &&
+				(length($main::FORM{'pass2'})>5 && $main::FORM{'pass2'}=~/^[a-zA-Z_\-\. 0-9]*$/) &&
+				($main::FORM{'pass1'} eq $main::FORM{'pass2'})
+			)
+			{
+				$password_ok=1;
+			}
+			else
+			{
+				my $err=$XSGN{'ERROR-MESSAGE'};
+				$err=~s|<%message%>|$L10n{'Please enter correct'} $L10n{'password'} ($L10n{'password_rules'})|;
+				$box_err=~s|<#message#>|$err<#message#>|;
+			}
+		}
+		else
+		{
+			my $err=$XSGN{'ERROR-MESSAGE'};
+			$err=~s|<%message%>|$L10n{'Please enter'} $L10n{'password'}|;
+			$box_err=~s|<#message#>|$err<#message#>|;
+		}
+		
+		# firstname
+		my $firstname_ok;
+		if ($main::FORM{'firstname'})
+		{
+			if (length($main::FORM{'firstname'})<32)
+			{
+				$firstname_ok=1;
+			}
+			else
+			{
+				my $err=$XSGN{'ERROR-MESSAGE'};
+				$err=~s|<%message%>|$L10n{'Please enter correct'} $L10n{'firstname'}|;
+				$box_err=~s|<#message#>|$err<#message#>|;
+			}
+		}
+		else
+		{
+			my $err=$XSGN{'ERROR-MESSAGE'};
+			$err=~s|<%message%>|$L10n{'Please enter'} $L10n{'firstname'}|;
+			$box_err=~s|<#message#>|$err<#message#>|;
+		}
+		
+		# surname
+		my $surname_ok;
+		if ($main::FORM{'surname'})
+		{
+			if (length($main::FORM{'surname'})<64)
+			{
+				$surname_ok=1;
+			}
+			else
+			{
+				my $err=$XSGN{'ERROR-MESSAGE'};
+				$err=~s|<%message%>|$L10n{'Please enter correct'} $L10n{'surname'}|;
+				$box_err=~s|<#message#>|$err<#message#>|;
+			}
+		}
+		else
+		{
+			my $err=$XSGN{'ERROR-MESSAGE'};
+			$err=~s|<%message%>|$L10n{'Please enter'} $L10n{'surname'}|;
+			$box_err=~s|<#message#>|$err<#message#>|;
+		}
+		
+		# email
+		my $email_ok;
+		if ($main::FORM{'email'})
+		{
+			if (TOM::Security::form::check_email($main::FORM{'email'}))
+			{
+				$email_ok=1;
+				# check login in this USRM domain
+				my $sql=qq{
+					SELECT
+						ID_user,
+						status
+					FROM
+						TOM.a301_user
+					WHERE
+						email='$main::FORM{'email'}' AND
+						hostname='$tom::H_cookie'
+					LIMIT 1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql);
+				my %db0_line=$sth0{'sth'}->fetchhash();
+				if ($db0_line{'status'}=~/[YN]/)
+				{
+					# this login already used by another user
+					my $err=$XSGN{'ERROR-MESSAGE'};
+					$err=~s|<%message%>|$L10n{'Email already used'}|;
+					$box_err=~s|<#message#>|$err<#message#>|;
+					$email_ok=0;
+				}
+			}
+			else
+			{
+				my $err=$XSGN{'ERROR-MESSAGE'};
+				$err=~s|<%message%>|$L10n{'Please enter correct'} $L10n{'email'}|;
+				$box_err=~s|<#message#>|$err<#message#>|;
+			}
+		}
+		else
+		{
+			my $err=$XSGN{'ERROR-MESSAGE'};
+			$err=~s|<%message%>|$L10n{'Please enter'} $L10n{'email'}|;
+			$box_err=~s|<#message#>|$err<#message#>|;
+		}
+		
+		# captcha
+		my $captcha_ok;
+		my $result = $c->check_answer(
+			$env{'recaptcha_key_private'},
+			$main::ENV{'REMOTE_ADDR'},
+			$main::FORM{'recaptcha_challenge_field'},
+			$main::FORM{'recaptcha_response_field'}
+		);
+		if ($result->{'is_valid'})
+		{
+			$captcha_ok=1;
+		}
+		else
+		{
+			my $err=$XSGN{'ERROR-MESSAGE'};
+			$err=~s|<%message%>|$L10n{'Please enter correct'} $L10n{'captcha'}|;
+			$box_err=~s|<#message#>|$err<#message#>|;
+		}
+		
+		my $org_name_ok;
+		my $ID_org_ok=1;
+		my $VAT_number_ok=1;
+		if ($main::FORM{'regtype'} eq "ORG")
+		{
+			# org_name
+			if ($main::FORM{'org_name'})
+			{
+				if (length($main::FORM{'org_name'})<64)
+				{
+					$org_name_ok=1;
+					
+					# check name in this ORG domain
+					my $sql=qq{
+						SELECT
+							ID,
+							ID_entity,
+							status
+						FROM
+							`$App::710::db_name`.a710_org
+						WHERE
+							name='$main::FORM{'org_name'}' AND
+							status='W'
+						LIMIT 1
+					};
+					my %sth0=TOM::Database::SQL::execute($sql);
+					my %db0_line=$sth0{'sth'}->fetchhash();
+					if ($db0_line{'status'}=~/[W]/)
+					{
+						$org_reuse=$db0_line{'ID'} if $db0_line{'ID'};
+					}
+					else
+					{
+						# this organization is already in evidence
+						# but new organization with same name can be used
+						#
+						# my $err=$XSGN{'ERROR-MESSAGE'};
+						# $err=~s|<%message%>|$L10n{'Organization already used'}|;
+						# $box_err=~s|<#message#>|$err<#message#>|;
+						# $login_ok=0;
+					}
+					
+				}
+				else
+				{
+					my $err=$XSGN{'ERROR-MESSAGE'};
+					$err=~s|<%message%>|$L10n{'Please enter correct'} $L10n{'org_name'} ($L10n{'org_name_rules'})|;
+					$box_err=~s|<#message#>|$err<#message#>|;
+				}
+			}
+			else
+			{
+				my $err=$XSGN{'ERROR-MESSAGE'};
+				$err=~s|<%message%>|$L10n{'Please enter'} $L10n{'org_name'}|;
+				$box_err=~s|<#message#>|$err<#message#>|;
+			}
+			
+			# ID_org
+			if ($main::FORM{'ID_org'})
+			{
+				if (length($main::FORM{'ID_org'})<32)
+				{
+					$ID_org_ok=1;
+					
+					# check name in this ORG domain
+					my $sql=qq{
+						SELECT
+							ID,
+							ID_entity,
+							status
+						FROM
+							`$App::710::db_name`.a710_org
+						WHERE
+							ID_org='$main::FORM{'ID_org'}'
+						LIMIT 1
+					};
+					my %sth0=TOM::Database::SQL::execute($sql);
+					my %db0_line=$sth0{'sth'}->fetchhash();
+					if ($db0_line{'status'}=~/[YN]/)
+					{
+						# this organization is already in evidence
+						my $err=$XSGN{'ERROR-MESSAGE'};
+						$err=~s|<%message%>|$L10n{'Organization already used'}|;
+						$box_err=~s|<#message#>|$err<#message#>|;
+						$ID_org_ok=0;
+					}
+					else
+					{
+						$org_reuse=$db0_line{'ID'} if $db0_line{'ID'};
+					}
+					
+				}
+				else
+				{
+					my $err=$XSGN{'ERROR-MESSAGE'};
+					$err=~s|<%message%>|$L10n{'Please enter correct'} $L10n{'ID_org'} ($L10n{'ID_org_rules'})|;
+					$box_err=~s|<#message#>|$err<#message#>|;
+					$ID_org_ok=0;
+				}
+			}
+			
+			# VAT_number
+			if ($main::FORM{'VAT_number'})
+			{
+				if (length($main::FORM{'VAT_number'})<32)
+				{
+					$VAT_number_ok=1;
+					
+					# check name in this ORG domain
+					my $sql=qq{
+						SELECT
+							ID,
+							ID_entity,
+							status
+						FROM
+							`$App::710::db_name`.a710_org
+						WHERE
+							VAT_number='$main::FORM{'VAT_number'}'
+						LIMIT 1
+					};
+					my %sth0=TOM::Database::SQL::execute($sql);
+					my %db0_line=$sth0{'sth'}->fetchhash();
+					if ($db0_line{'status'}=~/[YN]/)
+					{
+						# this organization is already in evidence
+						my $err=$XSGN{'ERROR-MESSAGE'};
+						$err=~s|<%message%>|$L10n{'Organization already used'}|;
+						$box_err=~s|<#message#>|$err<#message#>|;
+						$VAT_number_ok=0;
+					}
+					else
+					{
+						$org_reuse=$db0_line{'ID'} if $db0_line{'ID'};
+					}
+					
+				}
+				else
+				{
+					my $err=$XSGN{'ERROR-MESSAGE'};
+					$err=~s|<%message%>|$L10n{'Please enter correct'} $L10n{'VAT_number'} ($L10n{'VAT_number_rules'})|;
+					$box_err=~s|<#message#>|$err<#message#>|;
+					$VAT_number_ok=0;
+				}
+			}
+			
+		}
+		
+		
+		
+		
+		# START REGISTRATION
+		
+		my $reg_ok;
+		if ($login_ok && $password_ok && $firstname_ok && $surname_ok && $email_ok && $captcha_ok)
+		{
+			
+			# register user
+			#$db0_line{'ID_user'}
+			my %user=App::301::functions::user_add(
+				'user.ID_user' => $user_reuse,
+				'user.login' => $main::FORM{'login'},
+				'user.status' => 'W', # wait status
+				'user.pass' => $main::FORM{'pass1'},
+				'user_profile.firstname' => $main::FORM{'firstname'},
+				'user_profile.surname' => $main::FORM{'surname'},
+				'user.email' => $main::FORM{'email'},
+				'user.email_verified' => 'N',
+			);
+			
+			if ($main::FORM{'regtype'} eq "USR")
+			{
+				
+				$XSGN{'TMP'}=$XSGN{'registered_USR'};
+				$reg_ok=1;
+				
+			}
+			elsif ($main::FORM{'regtype'} eq "ORG")
+			{
+				# register organization
+				
+				if ($org_name_ok && $ID_org_ok && $VAT_number_ok)
+				{
+					# starting ORGANIZATION registration method
+					
+					# reset all organizations with this user
+					
+					my %columns;
+					$columns{'name'}="'".TOM::Security::form::sql_escape($main::FORM{'org_name'})."'";
+					$columns{'name_url'}="'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($main::FORM{'org_name'}))."'";
+					$columns{'ID_org'}="'".TOM::Security::form::sql_escape($main::FORM{'ID_org'})."'"
+						if $main::FORM{'ID_org'};
+					$columns{'VAT_number'}="'".TOM::Security::form::sql_escape($main::FORM{'VAT_number'})."'"
+						if $main::FORM{'VAT_number'};
+					$columns{'posix_owner'}="'".$user{'user.ID_user'}."'";
+					$columns{'status'}="'W'";
+					
+					if ($org_reuse)
+					{
+						App::020::SQL::functions::update(
+							'ID' => $org_reuse,
+							'db_h' => "main",
+							'db_name' => $App::710::db_name,
+							'tb_name' => "a710_org",
+							'columns' =>
+							{
+								%columns
+							},
+							'-journalize' => 1,
+							'-posix' => 1,
+						);
+					}
+					else
+					{
+						App::020::SQL::functions::new(
+							'db_h' => "main",
+							'db_name' => $App::710::db_name,
+							'tb_name' => "a710_org",
+							'columns' =>
+							{
+								%columns
+							},
+							'-journalize' => 1,
+							'-posix' => 1,
+						);
+					}
+					
+					$XSGN{'TMP'}=$XSGN{'registered_ORG'};
+					$reg_ok=1;
+				}
+				else
+				{
+					$XSGN{'TMP'}=~s|<#ERROR#>|$box_err|;
+				}
+				
+			}
+			
+			if ($reg_ok)
+			{
+				# send email
+				my $date = TOM::Utils::datetime::mail_current();
+				my $from = $env{'from'} || $TOM::contact{'from'};
+				my $body = $tpl{'email.body'};
+				
+				$body=~s|<%username%>|$user{'user.login'}|g;
+				$body=~s|<%email%>|$user{'user.email'}|g;
+				$body=~s|<%ID_user%>|$user{'user.ID_user'}|g;
+				
+				my $ent = MIME::Entity->build
+				(
+					'Date' => $date,
+					'Type' => 'multipart/related',
+					'From' => $from,
+					'Reply-To' => $from,
+					'Return-Path' => $from,
+					'To' => TOM::Net::email::convert_TO($main::FORM{'email'}),
+					'Subject' => $tom::H.' - '.$L10n{'email.verify.subject'}
+				);
+				
+				$ent->attach(
+					Type    => 'text/html',
+					Charset => 'UTF-8',
+					Data    => $body
+				);
+				
+				TOM::Net::email::send(
+					'to'   => $main::FORM{'email'},
+					'from' => $from,
+					'body' => $ent->as_string
+				);
+			}
+			
+		}
+		else
+		{
+			$XSGN{'TMP'}=~s|<#ERROR#>|$box_err|;
+		}
+		
+		
+	}
+	
+	my $captcha_html=$c->get_html( $env{'recaptcha_key_public'} );
+	$XSGN{'TMP'}=~s|<#reCAPTCHA#>|$captcha_html|g;
+	
+	return 1;
+}
+
+
+
+
+1;
