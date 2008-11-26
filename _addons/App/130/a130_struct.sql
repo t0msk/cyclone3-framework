@@ -44,8 +44,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_send` (
   `lng` char(2) character set ascii NOT NULL,
   `active` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
-  KEY `ID_md5` (`ID_md5`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  KEY `ID_md5` (`ID_md5`),
+  KEY `SEL_0` (`sendtime`,`active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
