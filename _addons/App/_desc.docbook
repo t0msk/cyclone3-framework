@@ -252,6 +252,16 @@
             url="?|?section=app&amp;file=700/">700</ulink></emphasis> -
             Workgroup <action>[planning]</action></para>
           </listitem>
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=710/">710</ulink></emphasis> -
+            Organizations</para>
+          </listitem>
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=720/">720</ulink></emphasis> -
+            Contracts</para>
+          </listitem>
         </itemizedlist>
       </listitem>
 
@@ -296,7 +306,11 @@
           </listitem>
           <listitem>
             <para><emphasis role="bold"><ulink
-            url="?|?section=app&amp;file=910/">910</ulink></emphasis> - Product catalog <action>[in progress]</action></para>
+            url="?|?section=app&amp;file=910/">910</ulink></emphasis> - Product catalog</para>
+          </listitem>
+          <listitem>
+            <para><emphasis role="bold"><ulink
+            url="?|?section=app&amp;file=920/">920</ulink></emphasis> - Orders</para>
           </listitem>
         </itemizedlist>
       </listitem>
