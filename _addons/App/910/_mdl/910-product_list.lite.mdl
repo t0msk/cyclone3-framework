@@ -280,6 +280,7 @@ sub execute
 			product.amount,
 			product.amount_availability,
 			product.product_number,
+			product.metadata,
 			
 			product_cat.name AS ID_category_name,
 			product_cat.name_url AS ID_category_name_url,
@@ -511,6 +512,9 @@ sub execute
 		$item=~s|<%item_number%>|$item_counter|g;
 		
 		$item=~s|<%name%>|$db0_line{'name'}|;
+		
+		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
+		foreach my $sec(keys %metadata){foreach (keys %{$metadata{$sec}}){$item=~s/<%$sec\::$_%>/$metadata{$sec}{$_}/g;}}
 		
 		if($XSGN{'TMP'}=~/<#item.$item_counter#>/)
 		{
