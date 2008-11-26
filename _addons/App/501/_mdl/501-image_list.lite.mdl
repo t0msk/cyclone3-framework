@@ -38,6 +38,10 @@ use App::501::_init;
 
 =item *
 
+B<-xlng_load> - load template internationalization file
+
+=item *
+
 B<db_name> - database name
 
 =item *
@@ -133,6 +137,13 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
 	$env{'db_name'}=$App::501::db_name unless $env{'db_name'};
 	
 	if (!$env{'image.ID_format'} && !$env{'image_file.ID_format'} && !$env{'image_format.name'})
@@ -213,7 +224,16 @@ sub execute
 	$sql_where.=" AND image.ID_category IN ($env{'image_attrs.ID_category'})"
 		if $env{'image_attrs.ID_category'};
 	
-	
+	if($env{'keywords'}){
+		$env{'keywords'}=~s|,| |g;
+		my @arr_keywords = split(/ /, $env{'keywords'});
+		
+		$sql_where.=" AND (";
+		foreach(@arr_keywords){
+			$sql_where.="image.keywords LIKE '%".TOM::Security::form::sql_escape($_)."%' ";
+		}
+		$sql_where.=")"
+	}
 	
 	my $sql=qq{
 		SELECT
