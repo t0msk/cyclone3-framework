@@ -35,6 +35,30 @@ sub execute
 		
 		main::_log("kick user.ID_user='$user{'ID_user'}'");
 		
+		
+		# save session
+		TOM::Database::SQL::execute(qq{
+			INSERT INTO TOM.a301_user_session
+			(
+				ID_user,
+				datetime_session_begin,
+				datetime_session_end,
+				requests_all,
+				saved_cookies,
+				saved_session
+			)
+			VALUES
+			(
+				'$user{'ID_user'}',
+				'$user{'datetime_login'}',
+				'$user{'datetime_request'}',
+				'$user{'requests'}',
+				'$user{'cookies'}',
+				'$user{'session'}'
+			)
+		},'quiet'=>1);
+		
+		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				*

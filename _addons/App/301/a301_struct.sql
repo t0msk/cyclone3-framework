@@ -33,6 +33,20 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
 -- --------------------------------------------------
 -- db_name=TOM
 
+CREATE TABLE `/*db_name*/`.`/*addon*/_user_session` (
+  `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
+  `datetime_session_begin` datetime NOT NULL,
+  `datetime_session_end` datetime NOT NULL,
+  `requests_all` smallint(5) unsigned NOT NULL default '0',
+  `saved_cookies` blob NOT NULL,
+  `saved_session` blob NOT NULL,
+  PRIMARY KEY  (`ID_user`),
+  KEY `SEL_0` (`ID_user`,`datetime_session_begin`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+-- db_name=TOM
+
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_inactive` (
   `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
 --  `secure_hash` varchar(16) character set utf8 collate utf8_bin NOT NULL default '',
