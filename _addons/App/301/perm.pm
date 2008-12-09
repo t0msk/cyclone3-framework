@@ -13,7 +13,7 @@ App::301::perm
 
 =head1 DESCRIPTION
 
-Basic permissions storage and management
+Basic permissions storage and management (ACL tables)
 
 =cut
 
@@ -156,6 +156,9 @@ sub register
 };
 
 
+=head2 get_roles()
+
+=cut
 
 sub get_roles
 {
@@ -358,9 +361,19 @@ sub get_roles
 }
 
 
+
 =head2 get_ACL_roles
 
 Get list of roles from ACL and ACL_role
+
+Return list of roles and permissions computed from users and user_groups
+(organizations has only informal, not executive character in ACL)
+
+ my (%roles,$perm)=App::301::perm::get_ACL_roles(
+   'r_prefix' => 
+	'r_table' => 
+	'r_ID_entity' => 
+ )
 
 =cut
 
@@ -439,7 +452,7 @@ sub get_ACL_roles
 
 
 
-=head2 get_entity_roles
+=head2 get_entity_roles()
 
 Get list of roles in one entity for user and groups
 
@@ -641,6 +654,7 @@ sub get_entity_roles
 }
 
 
+
 =head2 get_entity_sum_roles
 
 Get list of roles in entity and depends for user
@@ -685,6 +699,19 @@ sub get_entity_sum_roles
 }
 
 
+
+=head2 get_owner()
+
+Read owner from entity, users external function in format App::aXX::a301::get_owner() when defined,
+otherwise own blind function (reads posix_owner from table).
+
+ my $owner=App::301::perm::get_owner(
+  'r_prefix' =>
+  'r_table' =>
+  'r_ID_entity' =>
+ );
+
+=cut
 
 sub get_owner
 {
@@ -772,6 +799,17 @@ sub set_owner
 
 
 
+=head2 get_ACL
+
+Returns ACL (users, user_groups and organizations) from entity
+
+ my @ACL=App::301::perm::get_ACL(
+  'r_prefix' =>
+  'r_table' =>
+  'r_ID_entity' =>
+ );
+
+=cut
 
 sub get_ACL
 {
@@ -780,7 +818,6 @@ sub get_ACL
 	my @ACL;
 	
    my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
-   
 	
 	my $world;
 	my $sql=qq{
@@ -846,7 +883,7 @@ sub get_ACL
 	}
 	
 	
-	if (!$world) # world override not available
+	if (!$world) # if world in ACL (overriding) is not available
 	{
 		$world=1;
 		my %item;
@@ -861,6 +898,53 @@ sub get_ACL
 		$item{'name'}='world';
 		push @ACL, {%item};
 	}
+	
+	
+	if ($App::710::db_name) # a710 enabled because db_name defined
+	{
+		
+		my $sql=qq{
+		SELECT
+			acl.*,
+			org.name
+		FROM
+			`$db_name`.a301_ACL_org AS acl
+		LEFT JOIN `$App::710::db_name`.a710_org AS org ON
+		(
+			acl.ID_entity = org.ID_entity
+		)
+		WHERE
+			acl.r_prefix='$env{'r_prefix'}' AND
+			acl.r_table='$env{'r_table'}' AND
+			acl.r_ID_entity='$env{'r_ID_entity'}'
+		ORDER BY
+			acl.ID_entity ASC
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			my %item;
+			
+			$db0_line{'perm_R'}=~tr/YN/R_/;
+			$db0_line{'perm_W'}=~tr/YN/W_/;
+			$db0_line{'perm_X'}=~tr/YN/X_/;
+			
+			main::_log("->{org} ID='$db0_line{'ID_entity'}' name='$db0_line{'name'}' roles='$db0_line{'roles'}' '$db0_line{'perm_R'}$db0_line{'perm_W'}$db0_line{'perm_X'}'");
+			$item{'ID'}=$db0_line{'ID_entity'};
+			$item{'folder'}='O';
+			$item{'roles'}=$db0_line{'roles'};
+			$item{'perm_R'}=$db0_line{'perm_R'};
+			$item{'perm_W'}=$db0_line{'perm_W'};
+			$item{'perm_X'}=$db0_line{'perm_X'};
+			$item{'status'}=$db0_line{'status'};
+			$item{'override'}=$db0_line{'perm_roles_override'};
+			$item{'name'}=$db0_line{'name'};
+			
+			push @ACL, {%item};
+		}
+		
+	}
+	
 	
    # get owner
    my $owner=App::301::perm::get_owner(
@@ -937,6 +1021,160 @@ sub get_ACL
 	
 	$t->close();
 	return @ACL;
+}
+
+
+
+=head2 ACL_org_update
+
+Update or add organization (a710_org) into entity ACL
+
+ App::301::perm::ACL_org_update(
+   'ID' => # ref a710_org.ID_entity
+	'r_prefix' => 
+	'r_table' => 
+	'r_ID_entity' => 
+ )
+
+=cut
+
+sub ACL_org_update
+{
+	my $t=track TOM::Debug(__PACKAGE__."::ACL_org_update()");
+	my %env=@_;
+	
+   my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+	
+	if ($env{'roles'})
+	{
+		$env{'roles'}=~s|owner||g;
+		my @roles=split('[,;]',$env{'roles'});
+		$env{'roles'}=join ",", @roles;
+		1 while ($env{'roles'}=~s|,,|,|g);
+		$env{'roles'}=~s|^,||;
+		$env{'roles'}=~s|,$||;
+	}
+	
+	my $sql=qq{
+		SELECT
+			ID,
+			ID_entity
+		FROM
+			`$db_name`.a301_ACL_org
+		WHERE
+			ID_entity='$env{'ID'}' AND
+			r_prefix='$env{'r_prefix'}' AND
+			r_table='$env{'r_table'}' AND
+			r_ID_entity='$env{'r_ID_entity'}'
+		LIMIT 1;
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	
+	if ($sth0{'rows'})
+	{
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		my %columns;
+		$columns{'perm_R'} = "'".$env{'perm_R'}."'" if $env{'perm_R'};
+		$columns{'perm_W'} = "'".$env{'perm_W'}."'" if $env{'perm_W'};
+		$columns{'perm_X'} = "'".$env{'perm_X'}."'" if $env{'perm_X'};
+		$columns{'roles'} = "'".$env{'roles'}."'" if $env{'roles'};
+		App::020::SQL::functions::update(
+			'ID' => $db0_line{'ID'},
+			'db_h' => 'main',
+			'db_name' => $db_name,
+			'tb_name' => 'a301_ACL_org',
+			'columns' =>
+			{
+				%columns,
+			},
+			'-journalize' => 1,
+			'-posix' => 1,
+		);
+		$t->close();
+		return 1;
+	}
+	else
+	{
+		App::020::SQL::functions::new(
+			'db_h' => 'main',
+			'db_name' => $db_name,
+			'tb_name' => 'a301_ACL_org',
+			'columns' =>
+			{
+				'ID_entity' => "'".$env{'ID'}."'",
+				'r_prefix' => "'".$env{'r_prefix'}."'",
+				'r_table' => "'".$env{'r_table'}."'",
+				'r_ID_entity' => "'".$env{'r_ID_entity'}."'",
+				'perm_R' => "'Y'",
+				'perm_W' => "'Y'",
+				'perm_X' => "'Y'",
+				'roles' => "'".$env{'roles'}."'"
+			},
+			'-journalize' => 1,
+			'-posix' => 1,
+		);
+		$t->close();
+		return 1;
+	}
+	
+	$t->close();
+	return undef;
+}
+
+
+
+=head2 ACL_org_remove
+
+Remove organization (a710_org) from entity ACL
+
+ App::301::perm::ACL_org_remove(
+   'ID' => # ref a710_org.ID_entity
+	'r_prefix' => 
+	'r_table' => 
+	'r_ID_entity' => 
+ )
+
+=cut
+
+sub ACL_org_remove
+{
+	my $t=track TOM::Debug(__PACKAGE__."::ACL_org_remove()");
+	my %env=@_;
+	
+   my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+	
+	my $sql=qq{
+		SELECT
+			ID,
+			ID_entity
+		FROM
+			`$db_name`.a301_ACL_org
+		WHERE
+			ID_entity='$env{'ID'}' AND
+			r_prefix='$env{'r_prefix'}' AND
+			r_table='$env{'r_table'}' AND
+			r_ID_entity='$env{'r_ID_entity'}'
+		LIMIT 1;
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	
+	if ($sth0{'rows'})
+	{
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		App::020::SQL::functions::delete(
+			'ID' => $db0_line{'ID'},
+			'db_h' => 'main',
+			'db_name' => $db_name,
+			'tb_name' => 'a301_ACL_org',
+			'-journalize' => 1,
+			'-posix' => 1,
+		);
+		$t->close();
+		return 1;
+	}
+	
+	$t->close();
+	return undef;
 }
 
 
