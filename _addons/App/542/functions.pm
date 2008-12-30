@@ -503,6 +503,7 @@ sub file_add
 		);
 	}
 	
+#	$env{'file_attrs.ID_category'}=$file_attrs{'ID_category'};
 	
 	# FILE ENT
 	
@@ -669,6 +670,10 @@ sub file_item_info
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::file_item_info()");
 	
+	my $sql_where;
+	if ($env{'file_attrs.ID_category'} eq 'NULL' || !$env{'file_attrs.ID_category'}){$sql_where='ID_category IS NULL';}
+	else {$sql_where="ID_category = $env{'file_attrs.ID_category'}";}
+	
 	my $sql=qq{
 		SELECT
 			view.*,
@@ -681,7 +686,7 @@ sub file_item_info
 			`$App::542::db_name`.a542_file_view AS view
 		WHERE
 			ID_file = '$env{'file.ID'}' AND
-			ID_category = '$env{'file_attrs.ID_category'}'
+			$sql_where
 		LIMIT
 			1
 	};
