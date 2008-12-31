@@ -198,9 +198,9 @@ sub add_author
 			}
 			if (!$columns{'ID_author'})
 			{
-				$env{'author_login'}=Int::charsets::encode::UTF8_ASCII(
-					$env{'author_firstname'}." ".$env{'author_surname'}
-				);
+#				$env{'author_login'}=Int::charsets::encode::UTF8_ASCII(
+#					$env{'author_firstname'}." ".$env{'author_surname'}
+#				);
 				my $sql=qq{
 					SELECT
 						*
@@ -216,7 +216,7 @@ sub add_author
 				{
 					main::_log("creating new author");
 					my %user=App::301::functions::user_add(
-						'user.login' => $env{'author_login'},
+#						'user.login' => $env{'author_login'},
 						'user_profile.firstname' => $env{'author_firstname'},
 						'user_profile.surname' => $env{'author_surname'},
 						'groups' => ['author']
