@@ -320,12 +320,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_group` (
   `perm_roles_override` blob,
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`),
+  PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
   UNIQUE KEY `UNI_1` (`ID_charindex`),
-  UNIQUE KEY `UNI_2` (`hostname`,`name`),
-  KEY `ID` (`ID`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  UNIQUE KEY `UNI_2` (`hostname`,`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 -- db_name=TOM
@@ -342,14 +341,15 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_group_j` (
   `datetime_create` datetime NOT NULL,
   `perm_roles_override` blob,
   `lng` char(2) character set ascii NOT NULL default 'xx',
-  `status` char(1) character set ascii NOT NULL default 'N'
-) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- db_name=TOM
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_rel_group` (
-  `ID_group` bigint(20) unsigned NOT NULL auto_increment, -- rel _user_group.ID
+  `ID_group` bigint(20) unsigned NOT NULL auto_increment, -- rel _user_group.ID_entity
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   PRIMARY KEY  (`ID_group`,`ID_user`),
   KEY `ID_user` (`ID_user`),
@@ -416,7 +416,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_j` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_group` ( -- table is stored where addon defined in r_prefix
   `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_entity` bigint(20) unsigned NOT NULL, -- rel _user_group.ID
+  `ID_entity` bigint(20) unsigned NOT NULL, -- rel _user_group.ID_entity
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `roles` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
@@ -498,7 +498,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_user_rel_group_view` AS (
 	SELECT
 		
 		user.hostname,
-		user_group.ID AS ID_group,
+		user_group.ID_entity AS ID_group,
 		user_group.name AS group_name,
 		user.ID_user AS ID_user,
 		user.login AS user_login
