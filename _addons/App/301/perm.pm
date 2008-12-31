@@ -203,7 +203,7 @@ sub get_roles
 			FROM
 				TOM.a301_user_group AS `group`
 			WHERE
-				`group`.ID = $env{'ID_group'} AND
+				`group`.ID_entity = $env{'ID_group'} AND
 				`group`.status IN ($status)
 			LIMIT 1
 		};
@@ -223,13 +223,13 @@ sub get_roles
 				TOM.a301_user_group AS `group`
 			WHERE
 				rel.ID_user='$env{'ID_user'}' AND
-				rel.ID_group = `group`.ID AND
+				rel.ID_group = `group`.ID_entity AND
 				`group`.status IN ($status)
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
-			$groups{$db0_line{'ID'}}=$db0_line{'name'};
+			$groups{$db0_line{'ID_entity'}}=$db0_line{'name'};
 		}
 	}
 	
@@ -263,7 +263,7 @@ sub get_roles
 			my $sql=qq{
 				SELECT *
 				FROM TOM.a301_user_group
-				WHERE ID=$_ AND status IN ($status)
+				WHERE ID_entity=$_ AND status IN ($status)
 				LIMIT 1
 			};
 			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
@@ -300,7 +300,7 @@ sub get_roles
 		my $sql=qq{
 			SELECT *
 			FROM TOM.a301_user_group
-			WHERE ID=$group AND status IN ($status)
+			WHERE ID_entity=$group AND status IN ($status)
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
@@ -878,6 +878,7 @@ sub get_ACL
 		$item{'status'}=$db0_line{'status'};
 		$item{'override'}=$db0_line{'perm_roles_override'};
 		$item{'name'}=$db0_line{'name'};
+		$item{'name_short'}=$db0_line{'name'};
 		
 		push @ACL, {%item};
 	}
@@ -896,17 +897,21 @@ sub get_ACL
 		$item{'perm_X'}=' ';
 		$item{'status'}='L';
 		$item{'name'}='world';
+		$item{'name_short'}='world';
+		
 		push @ACL, {%item};
 	}
 	
 	
-	if ($App::710::db_name) # a710 enabled because db_name defined
+	if ($App::710::db_name) # a710 enabled because db_name is defined
 	{
 		
 		my $sql=qq{
 		SELECT
 			acl.*,
-			org.name
+			org.name,
+			org.ID_org,
+			org.city
 		FROM
 			`$db_name`.a301_ACL_org AS acl
 		LEFT JOIN `$App::710::db_name`.a710_org AS org ON
@@ -939,6 +944,9 @@ sub get_ACL
 			$item{'status'}=$db0_line{'status'};
 			$item{'override'}=$db0_line{'perm_roles_override'};
 			$item{'name'}=$db0_line{'name'};
+			$item{'name_short'}=$db0_line{'name'};
+			if ($db0_line{'ID_org'}){$item{'name'}.=" (".$db0_line{'ID_org'}.")";}
+			elsif ($db0_line{'city'}){$item{'name'}.=" (".$db0_line{'city'}.")";}
 			
 			push @ACL, {%item};
 		}
@@ -967,6 +975,7 @@ sub get_ACL
 		$item{'perm_X'}='x';
 		$item{'status'}='L';
 		$item{'name'}=$author{'login'};
+		$item{'name_short'}=$author{'login'};
 		
 		push @ACL, {%item};
    }
@@ -975,15 +984,20 @@ sub get_ACL
 	SELECT
 		acl.*,
 		usr.login AS name,
-		usr.login
+		usr.login,
+		YEAR(profile.date_birth) AS year_birth,
+		profile.firstname,
+		profile.surname
 	FROM
 		`$db_name`.a301_ACL_user AS acl,
-		`TOM`.a301_user AS usr
+		`TOM`.a301_user AS usr,
+		`TOM`.a301_user_profile AS profile
 	WHERE
 		acl.r_prefix='$env{'r_prefix'}' AND
 		acl.r_table='$env{'r_table'}' AND
 		acl.r_ID_entity='$env{'r_ID_entity'}' AND
-		acl.ID_entity = usr.ID_user
+		acl.ID_entity = usr.ID_user AND
+		usr.ID_user = profile.ID_entity
 	ORDER BY
 		acl.ID_entity ASC
 	};
@@ -1015,6 +1029,23 @@ sub get_ACL
 		$item{'status'}=$db0_line{'status'};
 		$item{'override'}=$db0_line{'perm_roles_override'};
 		$item{'name'}=$db0_line{'login'};
+		$item{'name_short'}=$db0_line{'login'};
+		if ($db0_line{'firstname'} && $db0_line{'surname'})
+		{
+			$item{'name_short'}=$db0_line{'surname'}.', '.$db0_line{'firstname'};
+			if ($db0_line{'year_birth'})
+			{
+				$item{'name'}=$db0_line{'surname'}.', '.$db0_line{'firstname'}.' ('.$db0_line{'year_birth'}.')';
+			}
+			else
+			{
+				$item{'name'}=$db0_line{'surname'}.', '.$db0_line{'firstname'}.' (#'.$db0_line{'login'}.')';
+			}
+		}
+		elsif ($db0_line{'year_birth'})
+		{
+			$item{'name'}=$db0_line{'login'}.' ('.$db0_line{'year_birth'}.')';
+		}
 		
 		push @ACL, {%item};
 	}
@@ -1077,7 +1108,7 @@ sub ACL_org_update
 		$columns{'perm_R'} = "'".$env{'perm_R'}."'" if $env{'perm_R'};
 		$columns{'perm_W'} = "'".$env{'perm_W'}."'" if $env{'perm_W'};
 		$columns{'perm_X'} = "'".$env{'perm_X'}."'" if $env{'perm_X'};
-		$columns{'roles'} = "'".$env{'roles'}."'" if $env{'roles'};
+		$columns{'roles'} = "'".$env{'roles'}."'" if exists $env{'roles'};
 		App::020::SQL::functions::update(
 			'ID' => $db0_line{'ID'},
 			'db_h' => 'main',
