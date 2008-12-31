@@ -216,6 +216,12 @@ sub execute
 		main::_log("parsed input '$_'='$env{$_}'");
 	}
 	
+	my %get_plus;
+	
+	$get_plus{'rel_type'}=$main::RPC->{'rel_type'} if $main::RPC->{'rel_type'};
+	$get_plus{'rel_type'}=$main::FORM{'rel_type'} if $main::FORM{'rel_type'};
+	$get_plus{'rel_type'}=$env{'rel_type'} if $env{'rel_type'};
+	
 	foreach my $relation (App::160::SQL::get_relations(
 		'ID' => $env{'ID'} || $main::FORM{'ID'} || $main::RPC->{'ID'},
 		'ID_entity' => $env{'ID_entity'} || $main::FORM{'ID_entity'} || $main::RPC->{'ID_entity'},
@@ -227,6 +233,7 @@ sub execute
 		'r_table' => $env{'r_table'}, # this value can be send as undefined
 		'r_ID_entity' => $env{'r_ID_entity'} || $main::FORM{'r_ID_entity'} || $main::RPC->{'r_ID_entity'},
 		'status' => $env{'status'} || $main::FORM{'status'} || $main::RPC->{'status'},
+		%get_plus,
 		'limit' => 1000
 		))
 	{
