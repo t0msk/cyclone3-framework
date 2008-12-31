@@ -22,16 +22,30 @@ sub execute
 			(
 				currency1,
 				currency2,
-				rate
+				rate,
+				datetime_create
 			)
 			VALUES
 			(
 				'EUR',
 				'$currency',
-				$rate
+				$rate,
+				NOW()
 			)
-		},'quiet_'=>1);
+		},'quiet'=>1);
 	}
+	
+	TOM::Database::SQL::execute(qq{
+		REPLACE INTO `TOM`.`a910_currency_rate`
+		(currency1,currency2,rate,datetime_create)
+		VALUES ('EUR','SKK','30.126',NOW())
+	},'quiet'=>1);
+	
+	TOM::Database::SQL::execute(qq{
+		REPLACE INTO `TOM`.`a910_currency_rate`
+		(currency1,currency2,rate,datetime_create)
+		VALUES ('SKK','EUR',(1/30.126),NOW())
+	},'quiet'=>1);
 	
 	return 1}
 
