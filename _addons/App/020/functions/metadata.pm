@@ -31,6 +31,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 sub parse
 {
 	my $metaindex=shift;
+	utf8::decode($metaindex) unless utf8::is_utf8($metaindex);
 	my %hash;
 	
 	while ($metaindex=~s|<section name="(.*?)">(.*?)</section>||s)
