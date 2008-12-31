@@ -1019,7 +1019,9 @@ sub image_add
 		# ID_author
 		($env{'image_ent.posix_author'} && ($env{'image_ent.posix_author'} ne $image_ent{'posix_author'})) ||
 		# posix_owner
-		($env{'image_ent.posix_owner'} && ($env{'image_ent.posix_owner'} ne $image_ent{'posix_owner'}))
+		($env{'image_ent.posix_owner'} && ($env{'image_ent.posix_owner'} ne $image_ent{'posix_owner'})) ||
+		# datetime_produce
+		(exists $env{'image_ent.datetime_produce'} && ($env{'image_ent.datetime_produce'} ne $image_ent{'datetime_produce'}))
 	))
 	{
 		my %columns;
@@ -1027,6 +1029,8 @@ sub image_add
 			if ($env{'image_ent.posix_author'} && ($env{'image_ent.posix_author'} ne $image_ent{'posix_author'}));
 		$columns{'posix_owner'}="'".TOM::Security::form::sql_escape($env{'image_ent.posix_owner'})."'"
 			if ($env{'image_ent.posix_owner'} && ($env{'image_ent.posix_owner'} ne $image_ent{'posix_owner'}));
+		$columns{'datetime_produce'}="'".TOM::Security::form::sql_escape($env{'image_ent.datetime_produce'})."'"
+			if (exists $env{'image_ent.datetime_produce'} && ($env{'image_ent.datetime_produce'} ne $image_ent{'datetime_produce'}));
 		App::020::SQL::functions::update(
 			'ID' => $env{'image_ent.ID'},
 			'db_h' => "main",

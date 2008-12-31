@@ -30,6 +30,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- rel image.ID_entity
   `datetime_create` datetime NOT NULL,
+  `datetime_produce` datetime default NULL, -- when was image/photo produced/taken
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `visits` int(10) unsigned NOT NULL,
@@ -48,6 +49,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
+  `datetime_produce` datetime default NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `visits` int(10) unsigned NOT NULL,
