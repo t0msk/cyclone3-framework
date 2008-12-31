@@ -307,6 +307,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_currency_rate` (
   `currency1` char(4) character set ascii NOT NULL,
   `currency2` char(4) character set ascii NOT NULL,
   `rate` decimal(12,5) default NULL,
+  `datetime_create` datetime default NULL,
   PRIMARY KEY  (`currency1`,`currency2`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
