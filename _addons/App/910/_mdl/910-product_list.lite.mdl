@@ -263,6 +263,20 @@ sub execute
 		$sql_where.=" AND ".$env{'sql_where'};
 	}
 	
+	if ($env{'keywords'})
+	{
+		
+		$sql_where.=" AND (";
+		foreach (split(' ',$env{'keywords'}))
+		{
+			next unless $_;
+			$sql_where.="(product_lng.name LIKE '%$_%' OR product_lng.description LIKE '%$_%') AND ";
+		}
+		$sql_where=~s|AND $||;
+		$sql_where.=") ";
+		
+	}
+	
 	
 	my $sql=qq{
 		SELECT
