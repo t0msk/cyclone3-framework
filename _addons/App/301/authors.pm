@@ -101,6 +101,76 @@ sub get_author
 }
 
 
+sub get_fullname
+{
+	my %env=@_;
+	my $fullname;
+	my $shortname;
+	
+	if ($env{'firstname'} && $env{'surname'})
+	{
+		$shortname=$env{'surname'}.', '.$env{'firstname'};
+		if ($env{'year_birth'})
+		{
+			$fullname=$env{'surname'}.', '.$env{'firstname'}.' ('.$env{'year_birth'}.')';
+		}
+		elsif ($env{'login'})
+		{
+			$fullname=$env{'surname'}.', '.$env{'firstname'}.' (#'.$env{'login'}.')';
+		}
+		else
+		{
+			$fullname=$env{'surname'}.', '.$env{'firstname'};
+		}
+	}
+	elsif ($env{'surname'})
+	{
+		$shortname=$env{'surname'};
+		if ($env{'year_birth'})
+		{
+			$fullname=$env{'surname'}.' ('.$env{'year_birth'}.')';
+		}
+		elsif ($env{'login'})
+		{
+			$fullname=$env{'surname'}.' (#'.$env{'login'}.')';
+		}
+		else
+		{
+			$fullname=$env{'surname'};
+		}
+	}
+	elsif ($env{'firstname'})
+	{
+		$shortname=$env{'firstname'};
+		if ($env{'year_birth'})
+		{
+			$fullname=$env{'firstname'}.' ('.$env{'year_birth'}.')';
+		}
+		elsif ($env{'login'})
+		{
+			$fullname=$env{'firstname'}.' (#'.$env{'login'}.')';
+		}
+		else
+		{
+			$fullname=$env{'firstname'};
+		}
+	}
+	elsif ($env{'login'})
+	{
+		$shortname=$env{'login'};
+		if ($env{'year_birth'})
+		{
+			$fullname=$env{'login'}.' ('.$env{'year_birth'}.')';
+		}
+		else
+		{
+			$fullname=$env{'login'}.' ('.$env{'year_birth'}.')';
+		}
+	}
+	
+	return ($fullname,$shortname);
+}
+
 
 sub add_author
 {
@@ -170,6 +240,7 @@ sub add_author
 					user.ID_user = user_profile.ID_entity
 				)
 				WHERE
+					user.status IN ('Y','N','L','W') AND
 					user.hostname='$tom::H_cookie' AND
 					user_profile.firstname LIKE '$env{'author_firstname'}' AND
 					user_profile.surname LIKE '$env{'author_surname'}'
@@ -207,6 +278,7 @@ sub add_author
 					FROM
 						TOM.a301_user
 					WHERE
+						status IN ('Y','N','L','W') AND
 						hostname='$tom::H_cookie' AND
 						login='$env{'author_login'}'
 					LIMIT 1
@@ -247,6 +319,7 @@ sub add_author
 					user.ID_user = user_profile.ID_entity
 				)
 				WHERE
+					user.status IN ('Y','N','L','W') AND
 					user.hostname='$tom::H_cookie' AND
 					user_profile.firstname LIKE '$env{'author_firstname'}' AND
 					user_profile.surname IS NULL
@@ -282,6 +355,7 @@ sub add_author
 					FROM
 						TOM.a301_user
 					WHERE
+						status IN ('Y','N','L','W') AND
 						hostname='$tom::H_cookie' AND
 						login='$env{'author_login'}'
 					LIMIT 1
