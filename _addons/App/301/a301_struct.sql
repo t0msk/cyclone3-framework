@@ -225,9 +225,6 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_user_profile_view` AS (
 	(
 		user.ID_user = user_profile.ID_entity
 	)
-	WHERE
-		user.login IS NOT NULL AND
-		user_profile.ID_entity IS NOT NULL
 )
 
 -- --------------------------------------------------
