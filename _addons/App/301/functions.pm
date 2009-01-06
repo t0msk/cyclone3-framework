@@ -437,7 +437,7 @@ sub user_add
 	if (
 		$env{'user.ID_user'} &&
 		(
-			$env{'user.login'} ||
+			exists $env{'user.login'} ||
 			exists $env{'user.pass'} ||
 			exists $env{'user.email'} ||
 			$env{'user.status'} ||
@@ -447,8 +447,14 @@ sub user_add
 	{
 		my $set;
 		# login
-		$set.=",login='".TOM::Security::form::sql_escape($env{'user.login'})."'"
-			if $env{'user.login'};
+		if ($env{'user.login'})
+		{
+			$set.=",login='".TOM::Security::form::sql_escape($env{'user.login'})."'";
+		}
+		elsif (exists $env{'user.login'})
+		{
+			$set.=",login=NULL";
+		}
 		# pass
 		$set.=",pass='$env{'user.pass'}'"
 			if exists $env{'user.pass'};
