@@ -976,6 +976,7 @@ sub get_ACL
 		$item{'status'}='L';
 		$item{'name'}=$author{'login'};
 		$item{'name_short'}=$author{'login'};
+		($item{'name'},$item{'name_short'})=App::301::authors::get_fullname(%author);
 		
 		push @ACL, {%item};
    }
@@ -1030,22 +1031,7 @@ sub get_ACL
 		$item{'override'}=$db0_line{'perm_roles_override'};
 		$item{'name'}=$db0_line{'login'};
 		$item{'name_short'}=$db0_line{'login'};
-		if ($db0_line{'firstname'} && $db0_line{'surname'})
-		{
-			$item{'name_short'}=$db0_line{'surname'}.', '.$db0_line{'firstname'};
-			if ($db0_line{'year_birth'})
-			{
-				$item{'name'}=$db0_line{'surname'}.', '.$db0_line{'firstname'}.' ('.$db0_line{'year_birth'}.')';
-			}
-			else
-			{
-				$item{'name'}=$db0_line{'surname'}.', '.$db0_line{'firstname'}.' (#'.$db0_line{'login'}.')';
-			}
-		}
-		elsif ($db0_line{'year_birth'})
-		{
-			$item{'name'}=$db0_line{'login'}.' ('.$db0_line{'year_birth'}.')';
-		}
+		($item{'name'},$item{'name_short'})=App::301::authors::get_fullname(%db0_line);
 		
 		push @ACL, {%item};
 	}
