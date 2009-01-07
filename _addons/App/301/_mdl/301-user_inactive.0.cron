@@ -42,23 +42,27 @@ sub execute
 	
 	$env{'max_days'}=5 unless $env{'max_days'};
 	
-	my $sql=qq{
-		SELECT
-			*
-		FROM
-			TOM.a301_user
-		WHERE
-			datetime_last_login < DATE_SUB(CURDATE(),INTERVAL $env{'max_days'} DAY) AND
-			login IS NULL
-		LIMIT $env{'max'}
-	};
-	my %sth0=TOM::Database::SQL::execute($sql);
-	
-	my $i;
-	while (my %user=$sth0{'sth'}->fetchhash)
+	my $est=1;
+	while ($est)
 	{
-		main::_log("ID_user='$user{'ID_user'}' to inactive");
-		App::301::functions::user_inactive($user{'ID_user'});
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				TOM.a301_user
+			WHERE
+				login IS NULL AND
+				datetime_last_login < DATE_SUB(CURDATE(),INTERVAL $env{'max_days'} DAY)
+			LIMIT 100
+		};
+		my %sth0=TOM::Database::SQL::execute($sql);
+		$est=$sth0{'rows'};
+		my $i;
+		while (my %user=$sth0{'sth'}->fetchhash)
+		{
+			main::_log("ID_user='$user{'ID_user'}' to inactive");
+			App::301::functions::user_inactive($user{'ID_user'});
+		}
 	}
 	
 	return 1;
