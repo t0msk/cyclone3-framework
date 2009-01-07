@@ -31,6 +31,15 @@
 			<value>-25</value>
 		</rule>
 		
+		<!-- trying to hacking -->
+		
+		<rule>
+			<regexp source="lowascii">alert\(</regexp>
+			<regexp source="lowascii">&lt;script</regexp>
+			<value>-50</value>
+		</rule>
+		
+		
 	</dictionary>
 	
 </karma>
