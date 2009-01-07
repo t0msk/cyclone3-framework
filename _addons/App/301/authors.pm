@@ -183,27 +183,45 @@ sub add_author
 	{
 		main::_log("input string='$env{'string'}'");
 		
-		my @keys=split(',',$env{'string'},2);
-		$keys[1]=~s/^ //;
-		if ($keys[1] && not $keys[1]=~/[, ]/)
+		# try to find this string in firstname
+		my $sql=qq{
+			SELECT
+				user_profile.ID_entity
+			FROM
+				`TOM`.`a301_user_profile` AS user_profile
+			WHERE
+				user_profile.firstname LIKE '$env{'string'}'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		if ($sth0{'rows'})
 		{
-			# surname, name
-			$env{'author_surname'}=$keys[0];
-			$env{'author_firstname'}=$keys[1];
+			$env{'author_firstname'}=$env{'string'};
 		}
 		else
 		{
-			my @keys2=split(' ',$env{'string'},2);
-			$keys2[1]=~s/^ //;
-			if ($keys2[1] && not $keys2[1]=~/[, ]/)
+			my @keys=split(',',$env{'string'},2);
+			$keys[1]=~s/^ //;
+			if ($keys[1] && not $keys[1]=~/[, ]/)
 			{
-				$env{'author_surname'}=$keys2[1];
-				$env{'author_firstname'}=$keys2[0];
+				# surname, name
+				$env{'author_surname'}=$keys[0];
+				$env{'author_firstname'}=$keys[1];
 			}
 			else
 			{
-				$keys2[0]=~s|,$||;
-				$env{'author_firstname'}=$env{'string'};
+				my @keys2=split(' ',$env{'string'},2);
+				$keys2[1]=~s/^ //;
+				if ($keys2[1] && not $keys2[1]=~/[, ]/)
+				{
+					$env{'author_surname'}=$keys2[1];
+					$env{'author_firstname'}=$keys2[0];
+				}
+				else
+				{
+					$keys2[0]=~s|,$||;
+					$env{'author_firstname'}=$env{'string'};
+				}
 			}
 		}
 		
