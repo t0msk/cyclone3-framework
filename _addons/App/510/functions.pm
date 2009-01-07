@@ -1506,7 +1506,7 @@ sub video_part_file_add
 	# checksum
 	open(CHKSUM,'<'.$env{'file'});
 	my $ctx = Digest::SHA1->new;
-	$ctx->addfile(*CHKSUM);
+	$ctx->addfile(*CHKSUM); # when script hangs here, check file permissions
 	my $checksum = $ctx->hexdigest;
 	my $checksum_method = 'SHA1';
 	main::_log("file checksum $checksum_method:$checksum");
