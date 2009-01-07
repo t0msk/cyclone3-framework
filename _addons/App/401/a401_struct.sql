@@ -366,6 +366,9 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 --		article_content.status AS status_content,
 		
 		article_ent.visits,
+		article_ent.rating_score,
+		article_ent.rating_votes,
+		(article_ent.rating_score/article_ent.rating_votes) AS rating,
 		
 		article_attrs.status,
 		
