@@ -598,9 +598,11 @@ sub article_item_info
 			$data{'ID_entity'}=$db0_line{'ID_entity_article'};
 			
 			my %author=App::301::authors::get_author($db0_line{'posix_author'});
+			($author{'fullname'},$author{'shortname'})=App::301::authors::get_fullname(%author);
 			foreach (keys %author){$data{'author_'.$_}=$author{$_};}
 			
 			my %editor=App::301::authors::get_author($db0_line{'posix_editor'});
+			($editor{'fullname'},$editor{'shortname'})=App::301::authors::get_fullname(%editor);
 			foreach (keys %editor){$data{'editor_'.$_}=$editor{$_};}
 			
 			# check relations
