@@ -293,60 +293,7 @@ sub user_add
 		}
 		
 	}
-	if ($env{'user_profile.ID'} && (
-		# gender
-		($env{'user_profile.gender'} && ($env{'user_profile.gender'} ne $user_profile{'gender'}))||
-		# firstname
-		(exists $env{'user_profile.firstname'} && ($env{'user_profile.firstname'} ne $user_profile{'firstname'}))||
-      # middlename
-		(exists $env{'user_profile.middlename'} && ($env{'user_profile.middlename'} ne $user_profile{'middlename'}))||
-		# surname
-		(exists $env{'user_profile.surname'} && ($env{'user_profile.surname'} ne $user_profile{'surname'}))||
-		# name_prefix
-		(exists $env{'user_profile.name_prefix'} && ($env{'user_profile.name_prefix'} ne $user_profile{'name_prefix'}))||
-		# name_suffix
-		(exists $env{'user_profile.name_suffix'} && ($env{'user_profile.name_suffix'} ne $user_profile{'name_suffix'}))||
-		# date_birth
-		($env{'user_profile.date_birth'} && ($env{'user_profile.date_birth'} ne $user_profile{'date_birth'}))||
-		# PIN
-		($env{'user_profile.PIN'} && ($env{'user_profile.PIN'} ne $user_profile{'PIN'}))||
-		
-		# street
-		($env{'user_profile.street'} && ($env{'user_profile.street'} ne $user_profile{'street'}))||
-		# street_num
-		($env{'user_profile.street_num'} && ($env{'user_profile.street_num'} ne $user_profile{'street_num'}))||
-		# city
-		($env{'user_profile.city'} && ($env{'user_profile.city'} ne $user_profile{'city'}))||
-		# ZIP
-		($env{'user_profile.ZIP'} && ($env{'user_profile.ZIP'} ne $user_profile{'ZIP'}))||
-		# country_code
-		($env{'user_profile.country_code'} && ($env{'user_profile.country_code'} ne $user_profile{'country_code'}))||
-		
-		# email_public
-		(exists $env{'user_profile.email_public'} && ($env{'user_profile.email_public'} ne $user_profile{'email_public'}))||
-		# email_office
-		(exists $env{'user_profile.email_office'} && ($env{'user_profile.email_office'} ne $user_profile{'email_office'}))||
-		
-		# phone
-		(exists $env{'user_profile.phone'} && ($env{'user_profile.phone'} ne $user_profile{'phone'}))||
-		# phone_office
-		(exists $env{'user_profile.phone_office'} && ($env{'user_profile.phone_office'} ne $user_profile{'phone_office'}))||
-		# phone_home
-		(exists $env{'user_profile.phone_home'} && ($env{'user_profile.phone_home'} ne $user_profile{'phone_home'}))||
-		# phone_mobile
-		(exists $env{'user_profile.phone_mobile'} && ($env{'user_profile.phone_mobile'} ne $user_profile{'phone_mobile'}))||
-		
-		# address_current
-		(exists $env{'user_profile.address_current'} && ($env{'user_profile.address_current'} ne $user_profile{'address_current'}))||
-		# address_postal
-		(exists $env{'user_profile.address_postal'} && ($env{'user_profile.address_postal'} ne $user_profile{'address_postal'}))||
-		
-		# about_me
-		(exists $env{'user_profile.about_me'} && ($env{'user_profile.about_me'} ne $user_profile{'about_me'}))||
-		
-		# metadata
-		(exists $env{'user_profile.metadata'} && ($env{'user_profile.metadata'} ne $user_profile{'metadata'}))
-	))
+	if ($env{'user_profile.ID'})
 	{
 		my %columns;
 		$columns{'gender'}="'".TOM::Security::form::sql_escape($env{'user_profile.gender'})."'"
@@ -357,6 +304,8 @@ sub user_add
 			if (exists $env{'user_profile.middlename'} && ($env{'user_profile.middlename'} ne $user_profile{'middlename'}));
 		$columns{'surname'}="'".TOM::Security::form::sql_escape($env{'user_profile.surname'})."'"
 			if (exists $env{'user_profile.surname'} && ($env{'user_profile.surname'} ne $user_profile{'surname'}));
+		$columns{'maidenname'}="'".TOM::Security::form::sql_escape($env{'user_profile.maidenname'})."'"
+			if (exists $env{'user_profile.maidenname'} && ($env{'user_profile.maidenname'} ne $user_profile{'maidenname'}));
 		$columns{'name_prefix'}="'".TOM::Security::form::sql_escape($env{'user_profile.name_prefix'})."'"
 			if (exists $env{'user_profile.name_prefix'} && ($env{'user_profile.name_prefix'} ne $user_profile{'name_prefix'}));
 		$columns{'name_suffix'}="'".TOM::Security::form::sql_escape($env{'user_profile.name_suffix'})."'"
@@ -407,19 +356,19 @@ sub user_add
 			
 		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'user_profile.metadata'})."'"
 			if (exists $env{'user_profile.metadata'} && ($env{'user_profile.metadata'} ne $user_profile{'metadata'}));
-			
-#		$columns{'posix_modified'}="'".$main::USRM{'ID_user'}."'";
-         
-		App::020::SQL::functions::update(
-			'ID' => $env{'user_profile.ID'},
-			'db_h' => "main",
-			'db_name' => 'TOM',
-			'tb_name' => "a301_user_profile",
-			'columns' => {%columns},
-			'-journalize' => 1,
-			'-posix' => 1
-		);
       
+		if (keys %columns)
+		{
+			App::020::SQL::functions::update(
+				'ID' => $env{'user_profile.ID'},
+				'db_h' => "main",
+				'db_name' => 'TOM',
+				'tb_name' => "a301_user_profile",
+				'columns' => {%columns},
+				'-journalize' => 1,
+				'-posix' => 1
+			);
+      }
 	}
 	
 	if ($env{'user.pass'})

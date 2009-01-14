@@ -91,6 +91,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile` (
   `firstname` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `middlename` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `surname` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `maidenname` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `name_prefix` varchar(16) character set utf8 collate utf8_bin default NULL,
   `name_suffix` varchar(16) character set utf8 collate utf8_bin default NULL,
   `gender` char(1) character set ascii default NULL,
@@ -135,6 +136,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_j` (
   `firstname` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `middlename` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `surname` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `maidenname` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `name_prefix` varchar(16) character set utf8 collate utf8_bin default NULL,
   `name_suffix` varchar(16) character set utf8 collate utf8_bin default NULL,
   `gender` char(1) character set ascii default NULL,
@@ -160,8 +162,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_j` (
   `about_me` text character set utf8 collate utf8_unicode_ci,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default 'xx',
-  `status` char(1) character set ascii NOT NULL default 'N'
-) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 -- db_name=TOM
@@ -175,6 +178,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_h` (
   `firstname` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `middlename` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `surname` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  `maidenname` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `name_prefix` varchar(16) character set utf8 collate utf8_bin default NULL,
   `name_suffix` varchar(16) character set utf8 collate utf8_bin default NULL,
   `gender` char(1) character set ascii default NULL,
