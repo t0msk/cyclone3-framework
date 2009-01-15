@@ -47,12 +47,17 @@ sub execute
 	{
 		my $sql=qq{
 			SELECT
-				*
+				user.*
 			FROM
-				TOM.a301_user
+				TOM.a301_user AS user
+			LEFT JOIN TOM.a301_user_profile AS user_profile ON
+			(
+				user.ID_user = user_profile.ID_entity
+			)
 			WHERE
-				login IS NULL AND
-				datetime_last_login < DATE_SUB(CURDATE(),INTERVAL $env{'max_days'} DAY)
+				user.login IS NULL AND
+				user_profile.ID_entity IS NULL AND
+				user.datetime_last_login < DATE_SUB(CURDATE(),INTERVAL $env{'max_days'} DAY)
 			LIMIT 100
 		};
 		my %sth0=TOM::Database::SQL::execute($sql);
