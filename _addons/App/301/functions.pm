@@ -351,6 +351,11 @@ sub user_add
 		$columns{'address_postal'}="'".TOM::Security::form::sql_escape($env{'user_profile.address_postal'})."'"
 			if (exists $env{'user_profile.address_postal'} && ($env{'user_profile.address_postal'} ne $user_profile{'address_postal'}));
 		
+		$columns{'phys_weight'}="'".TOM::Security::form::sql_escape($env{'user_profile.phys_weight'})."'"
+			if (exists $env{'user_profile.phys_weight'} && ($env{'user_profile.phys_weight'} ne $user_profile{'phys_weight'}));
+		$columns{'phys_height'}="'".TOM::Security::form::sql_escape($env{'user_profile.phys_height'})."'"
+			if (exists $env{'user_profile.phys_height'} && ($env{'user_profile.phys_height'} ne $user_profile{'phys_height'}));
+		
 		$columns{'about_me'}="'".TOM::Security::form::sql_escape($env{'user_profile.about_me'})."'"
 			if (exists $env{'user_profile.about_me'} && ($env{'user_profile.about_me'} ne $user_profile{'about_me'}));
 			
