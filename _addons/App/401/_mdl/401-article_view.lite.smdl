@@ -93,6 +93,12 @@ sub execute
 		TOM::Database::SQL::execute($sql,'quiet'=>1);
 	}
 	
+	my %params;
+	
+	$params{'ignore.img.1'}=1 if $env{'ignore.img.1'};
+	
+	#main::_log("lng=$env{'lng'}");
+	
 	Tomahawk::module(
 		'-type' => "mdl",
 		'-category' => "401",
@@ -112,6 +118,7 @@ sub execute
 #			'gallery.thumbnail.ID_format' => '6',
 #			'ignore.img.1' => 1,
 #			'ad' => '1',
+			%params
 	) if (exists $env{'view_TMP'});
 	
 	
