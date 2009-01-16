@@ -236,6 +236,9 @@ sub product_add
 			'metadata' => {App::020::functions::metadata::parse($env{'product.metadata'})}
 		);
 	}
+	# status
+	$columns{'status'}="'".TOM::Security::form::sql_escape($env{'product.status'})."'"
+		if ($env{'product.status'} && ($env{'product.status'} ne $product{'status'}));
 	
 	if ($env{'product.product_number'} && ($env{'product.product_number'} ne $product{'product_number'}))
 	{
