@@ -320,7 +320,7 @@ our %table=
 	
 	'8224' => "+", # '†' kriz
 	
-	'8364' => "(E)", # euro
+	'8364' => "(EUR)", # euro
 	
 	'8482' =>	"(tm)", # 'tm' trademark
 	
