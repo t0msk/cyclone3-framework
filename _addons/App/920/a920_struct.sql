@@ -13,6 +13,13 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL, -- who last modified this order
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL, -- rel a301_user.ID_user
   `ID_org` bigint(20) unsigned default NULL, -- a710_org.ID_entity
+  `contact_name` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `contact_email` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `contact_phone` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `billing_service` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `billing_status` char(1) character set ascii NOT NULL default 'N',
+  `delivery_service` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `delivery_address` text character set utf8 collate utf8_unicode_ci,
   `notes` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N', -- N=new order Y=accepted T=canceled
   PRIMARY KEY  (`ID`),
@@ -32,6 +39,13 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order_j` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_org` bigint(20) unsigned default NULL,
+  `contact_name` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `contact_email` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `contact_phone` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `billing_service` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `billing_status` char(1) character set ascii NOT NULL default 'N',
+  `delivery_service` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `delivery_address` text character set utf8 collate utf8_unicode_ci,
   `notes` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -44,10 +58,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order_product` (
   `ID_entity` bigint(20) unsigned default NULL, -- rel _order.ID_entity
   `datetime_create` datetime NOT NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `ID_product` bigint(20) unsigned NOT NULL, -- rel a710_product.ID
+  `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_product` bigint(20) unsigned default NULL, -- rel a710_product.ID
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `type` char(1) character set ascii NOT NULL default 'P',
   `VAT` float NOT NULL, -- VAT percentage
-  `price_unit` decimal(12,3) default NULL, -- price per unit
-  `price` decimal(12,3) default NULL, -- full price (without VAT)
+  `price_unit` decimal(12,2) default NULL, -- price per unit
+  `price` decimal(12,2) default NULL, -- full price (without VAT)
+  `price_incl_VAT` decimal(12,2) default NULL, -- full price with VAT
   `price_currency` varchar(3) character set ascii default 'EUR', -- currency
   `amount` int(10) unsigned NOT NULL,
   `amount_unit` varchar(8) character set ascii default 'pcs',
