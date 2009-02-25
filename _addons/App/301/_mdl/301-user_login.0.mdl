@@ -18,7 +18,7 @@ sub execute
 	$env{'login'}=$env{'login'} || $main::FORM{'login'} || $main::RPC->{'login'};
 	$env{'pass'}=$env{'pass'} || $main::FORM{'pass'} || $main::RPC->{'pass'};
 	
-	if ((!$env{'login'})||(!$env{'pass'})||(not $env{'login'}=~/^[a-zA-Z0-9_\.\-]{3,20}$/))
+	if ((!$env{'login'})||(!$env{'pass'})||(not $env{'login'}=~/^[a-zA-Z0-9_\@\.\-]{3,64}$/))
 	{
 		$XSGN{'TMP'}=$XSGN{'ERR_no-credentials'};
 		return 1
@@ -42,7 +42,7 @@ sub execute
 		FROM
 			TOM.a301_user
 		WHERE
-			login='$env{'login'}' AND
+			(login='$env{'login'}' OR email='$env{'login'}') AND
 			hostname='$tom::H_cookie' AND
 			status='Y'
 		LIMIT 1
