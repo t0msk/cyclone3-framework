@@ -230,9 +230,16 @@ sub execute
 		
 		$sql_where.=" AND (";
 		foreach(@arr_keywords){
-			$sql_where.="image.keywords LIKE '%".TOM::Security::form::sql_escape($_)."%' ";
+			$sql_where.="image.keywords LIKE '%".TOM::Security::form::sql_escape($_)."%' OR ";
 		}
-		$sql_where.=")"
+		main::_log($sql_where);
+		$sql_where=~s| OR $||;
+		$sql_where.=")";
+	}
+	
+	if ($env{'sql_where'})
+	{
+		$sql_where.=" AND ".$env{'sql_where'};
 	}
 	
 	my $sql=qq{
