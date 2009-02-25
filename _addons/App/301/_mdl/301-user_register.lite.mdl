@@ -21,6 +21,13 @@ sub execute
 	
 	my $c = Captcha::reCAPTCHA->new;
 	
+	
+	if ($env{'loginisemail'})
+	{
+		$main::FORM{'login'}=$main::FORM{'email'};
+	}
+	
+	
 	if ($main::FORM{'submit'})
 	{
 		# checking
@@ -33,7 +40,7 @@ sub execute
 		my $login_ok;
 		if ($main::FORM{'login'})
 		{
-			if (length($main::FORM{'login'})<32 && $main::FORM{'login'}=~/^[a-zA-Z_\-\. 0-9]*$/)
+			if (length($main::FORM{'login'})<64 && $main::FORM{'login'}=~/^[a-zA-Z_\@\-\. 0-9]*$/)
 			{
 				$login_ok=1;
 				
@@ -69,7 +76,7 @@ sub execute
 				$box_err=~s|<#message#>|$err<#message#>|;
 			}
 		}
-		else
+		elsif (!$env{'loginisemail'})
 		{
 			my $err=$XSGN{'ERROR-MESSAGE'};
 			$err=~s|<%message%>|$L10n{'Please enter'} $L10n{'login'}|;
@@ -78,7 +85,7 @@ sub execute
 		
 		# password
 		my $password_ok;
-		if ($main::FORM{'pass2'} && $main::FORM{'pass2'})
+		if ($main::FORM{'pass1'} && $main::FORM{'pass2'})
 		{
 			if (
 				(length($main::FORM{'pass1'})>5 && $main::FORM{'pass1'}=~/^[a-zA-Z_\-\. 0-9]*$/) &&
