@@ -146,6 +146,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_item_j` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_file_download` (
   `datetime_event` datetime NOT NULL,
+  `IP` varchar(15) character set ascii default NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_file` bigint(20) NOT NULL, -- ref _file.ID_entity
   PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_file`)
