@@ -1031,6 +1031,7 @@ sub image_add
 			if ($env{'image_ent.posix_owner'} && ($env{'image_ent.posix_owner'} ne $image_ent{'posix_owner'}));
 		$columns{'datetime_produce'}="'".TOM::Security::form::sql_escape($env{'image_ent.datetime_produce'})."'"
 			if (exists $env{'image_ent.datetime_produce'} && ($env{'image_ent.datetime_produce'} ne $image_ent{'datetime_produce'}));
+		$columns{'datetime_produce'}='NULL' if $columns{'datetime_produce'} eq "''";
 		App::020::SQL::functions::update(
 			'ID' => $env{'image_ent.ID'},
 			'db_h' => "main",

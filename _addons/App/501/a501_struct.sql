@@ -352,6 +352,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_view` AS (
 		
 		image_ent.posix_owner,
 		image_ent.posix_author,
+		image_ent.datetime_produce,
 		
 		image_attrs.name,
 		image_attrs.description,
