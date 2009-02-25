@@ -63,7 +63,75 @@ use App::920::a301;
 our $db_name=$App::920::db_name || $TOM::DB{'main'}{'name'};
 
 
+# check relation to a542
+use App::542::_init;
+our $file_dir_ID_entity;
+our %file_dir;
 
+# find any category;
+my $sql="
+	SELECT
+		ID, ID_entity
+	FROM
+		`$App::542::db_name`.`a542_file_dir`
+	WHERE
+		name='orders' AND
+		lng IN ('".(join "','",@TOM::LNG_accept)."')
+	LIMIT 1
+";
+my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+if (my %db0_line=$sth0{'sth'}->fetchhash())
+{
+	$file_dir_ID_entity=$db0_line{'ID_entity'} unless $file_dir_ID_entity;
+}
+else
+{
+	$file_dir_ID_entity=App::020::SQL::functions::tree::new(
+		'db_h' => "main",
+		'db_name' => $App::542::db_name,
+		'tb_name' => "a542_file_dir",
+		'columns' => {
+			'name' => "'orders'",
+			'lng' => "'$tom::LNG'",
+			'status' => "'L'"
+		},
+		'-journalize' => 1
+	);
+}
+
+foreach my $lng(@TOM::LNG_accept)
+{
+	my $sql=qq{
+		SELECT
+			ID, ID_entity
+		FROM
+			`$App::542::db_name`.`a542_file_dir`
+		WHERE
+			ID_entity=$file_dir_ID_entity AND
+			lng='$lng'
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$file_dir{$lng}=$db0_line{'ID'};
+	}
+	else
+	{
+		$file_dir{$lng}=App::020::SQL::functions::tree::new(
+			'db_h' => "main",
+			'db_name' => $App::542::db_name,
+			'tb_name' => "a542_file_dir",
+			'columns' => {
+				'ID_entity' => $file_dir_ID_entity,
+				'name' => "'orders'",
+				'lng' => "'$lng'",
+				'status' => "'L'"
+			},
+			'-journalize' => 1
+		);
+	}
+}
 
 
 =head1 AUTHOR
