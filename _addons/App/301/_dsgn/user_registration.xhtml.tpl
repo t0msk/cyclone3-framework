@@ -19,7 +19,7 @@
 <p><$tom::H> received a request to registration of username '<%username%>' to <%email%>.</p>
 <br/>
 Accept this subscription follow this link:<br/>
-<$tom::H>/subscribe?code=<%ID_user%></br>
+<$tom::H_www>/user/activation?code=<%ID_user%></br>
 <br/>
 Thanks,<br/>
 <$tom::H> Team<br/>

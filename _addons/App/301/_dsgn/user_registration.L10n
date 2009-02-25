@@ -20,6 +20,7 @@
 	
 	<string id="Email already used">
 		<en-US>This email is already used.</en-US>
+		<sk-SK>Tento email je už použitý, prosím skúste iný.</sk-SK>
 	</string>
 	
 	<string id="email.verify.subject">
