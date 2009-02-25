@@ -1,0 +1,302 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use TOM;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+542-file_downloads.email_stats.cron
+
+=cut
+
+use App::542::_init;
+use TOM::Net::HTTP;
+use TOM::Net::HTTP::referer;
+use TOM::Net::HTTP::CGI;
+use TOM::Utils::datetime;
+use Ext::EmailGraph::_init;
+use Ext::SVGraph::_init;
+use Ext::SVG2PNG::_init;
+
+sub execute
+{
+	alarm(3600);
+	my %env=@_;
+	
+	$env{'days'}=7 unless $env{'days'};
+	my $post="days";
+	
+	my $tpl=new TOM::Template(
+		'level' => "auto",
+		'name' => "email-stats",
+		'content-type' => "xhtml"
+	);
+	
+	$env{'to_email'} = $TOM::contact{'stats'}.";".$TOM::contact{'TOM_farm'};
+	#$env{'to_email'} = $TOM::contact{'TOM_farm'};
+	#$env{'to_email'} = 'roman.fordinal@comsultia.com';
+	$env{'to_email'}=TOM::Utils::vars::unique_split($env{'to_email'});
+	
+	my $IP_exclude="'" . (join "','", keys %App::110::IP_exclude) . "'";
+	
+	my $date = DateTime->now('time_zone'=>'local')->subtract( days => 1 );
+	my $lastday=$date->year().'-'.(sprintf('%02d',$date->month())).'-'.(sprintf('%02d',$date->day()));
+	if ($env{'from'})
+	{
+		$env{'from'}=~/^(\d+)-(\d+)-(\d+)/;
+		#main::_log("$1 $2 $3");
+		
+		my $date = DateTime->new(
+			year   => $1,
+			month  => $2,
+			day    => $3,
+      )->add( days => $env{'days'}-1 );
+		$lastday=$date->year().'-'.(sprintf('%02d',$date->month())).'-'.(sprintf('%02d',$date->day()));
+		
+#		return 1;
+	}
+	
+	my $date = DateTime->now('time_zone'=>'local')->subtract( days => $env{'days'} );
+	my $firstday=$date->year().'-'.(sprintf('%02d',$date->month())).'-'.(sprintf('%02d',$date->day()));
+	$firstday=$env{'from'} if $env{'from'};
+	
+	if ($env{'days'} eq "month")
+	{
+		$env{'months'}=1 unless $env{'months'};
+		$post="";
+		$date = DateTime->now('time_zone'=>'local')->subtract( months => $env{'months'} );
+		$firstday=$date->year().'-'.(sprintf('%02d',$date->month())).'-01';
+		$date = DateTime->now('time_zone'=>'local')->subtract( months => ($env{'months'}-1), days => $date->day() );
+		$lastday=$date->year().'-'.(sprintf('%02d',$date->month())).'-'.(sprintf('%02d',$date->day()));
+		#$lastday=~s|..$|01|;
+		main::_log("month");
+	}
+	
+	main::_log("from $firstday to $lastday");
+	
+	#return 1;
+	
+	# DESIGN
+	$tpl->{'entity'}{'email.xhtml'}=~s|<%main-title%>|Last $env{'days'}$post summary of $tom::H|g;
+	$tpl->{'entity'}{'email.xhtml'}=~s|<%main-desc%>|This statistic is last $env{'days'}$post summary of domain $tom::H|g;
+	$tpl->{'entity'}{'email.xhtml'}=~s|<%main-term%>|$firstday - $lastday|g;
+	
+	my $date = TOM::Utils::datetime::mail_current();
+	
+	my $msg = MIME::Entity->build
+	(
+		'Type'    => "multipart/related",
+		'List-Id' => "Cyclone3",
+		'Date'    => $date,
+		'From'    => "$tom::H ($TOM::hostname) <$TOM::contact{'from'}>",
+		'To'      => TOM::Net::email::convert_TO($env{'to_email'}),
+		'Subject' => "Cyclone3 Stats: Downloads ($firstday - $lastday) at '$tom::H'"
+	);
+	
+	my @img;
+	my $i;
+	
+	# find max value of downloads in last 31 days
+	my $maximum;
+	my %sth0=TOM::Database::SQL::execute(
+		qq{
+			SELECT
+				COUNT(*) AS maximum
+			FROM
+				`$App::542::db_name`.a542_file_download
+			WHERE
+				DATE(datetime_event)>(DATE_SUB(CURDATE(),INTERVAL 3 MONTH))
+			GROUP BY
+				DATE(datetime_event)
+		},
+		'log'=>1);
+	while(my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$maximum=$db0_line{'maximum'} if ($db0_line{'maximum'}>$maximum);
+	}
+	main::_log("maximum=$maximum");
+	
+	
+	my $graf=SVGraph::2D::columns->new(
+		'title' => "Downloads on $tom::H",
+#		'title' => "Visitors",
+		'title.color' => $tpl->{'entity'}{'color.h1'},
+		'type' => "overlap",
+		'x' => 450,
+		'y' => 250,
+		'show_legend' => 1,
+		'show_grid_x' => 1,
+		'grid_y_scale_minimum' => 0,
+		'grid_y_scale_maximum' => $maximum,
+		#'show_lines_smooth' => 1,
+		#'show_label_textsize' => 10,
+	);
+	my $points;
+	if ($env{'days'}>14 || $env{'days'} eq "month")
+	{
+		$graf=SVGraph::2D::lines->new(
+			'title' => "Downloads on $tom::H",
+			'title.color' => $tpl->{'entity'}{'color.h1'},
+			#'type' => "overlap",
+			'x' => 450,
+			'y' => 250,
+			'show_legend' => 1,
+			'show_grid_x' => 1,
+			'grid_y_scale_minimum' => 0,
+			'grid_y_scale_maximum' => $maximum,
+			'show_lines_smooth' => 1,
+			#'show_label_textsize' => 10,
+		);
+		if ($env{'days'}<32 || $env{'days'} eq "month")
+		{
+			$points=1;
+		}
+	}
+	my %columns;
+	
+	$columns{'downloads'}=$graf->addColumn('title'=>"Downloads",'color'=>'blue');
+	
+	
+	# table
+	my $table=$tpl->{'entity'}{'email.table'};
+	$table =~ s|<%title%>|Table of days|g;
+	$table =~ s|<%colscount%>|2|g;
+	# list of columns
+	foreach my $col_name ( 'Day', 'Downloads' )
+	{
+		my $col = $tpl->{'entity'}{'email.table.col.name'};
+		$col =~ s|<%name%>|$col_name|g;
+		$table=~s|<#email.table.col.name#>|$col|g;
+	}
+	
+	my %data;
+	my %sum;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			COUNT(*) AS downloads,
+			DATE(datetime_event) AS datetime_event
+		FROM
+			`$App::542::db_name`.a542_file_download
+		WHERE
+			DATE(datetime_event) >= '$firstday' AND
+			DATE(datetime_event) <= '$lastday' AND
+			(IP NOT IN ($IP_exclude) OR IP IS NULL)
+		GROUP BY
+			DATE(datetime_event)
+		ORDER BY
+			datetime_event
+	},'log'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		#$db0_line{'reqdatetime'}=~s/^\d\d\d\d\-\d\d\-\d\d (\d\d).*$/$1/;
+		my $day=$db0_line{'datetime_event'};
+		
+		$graf->addRowLabel($day);
+		
+		$db0_line{'datetime_event'}=~/(\d+)-(\d+)-(\d+)/;
+		my $dt = DateTime->new(
+			'year'   => $1,
+			'month'  => $2,
+			'day'    => $3
+		);
+		if ($dt->day_of_week == 1)
+		{
+			$dt->subtract('days'=>2);
+			my $from_date=$dt->year().'-'.(sprintf('%02d',$dt->month())).'-'.(sprintf('%02d',$dt->day()));
+			main::_log("weekend from $from_date to $db0_line{'datetime_event'}");
+			$graf->addRowMarkArea(
+				$from_date,
+				'color' => 'red',
+				#'show_label_text'=>'MON',
+				'end'=>$db0_line{'datetime_event'}
+			);
+		}
+		
+		$columns{'downloads'}->addData($day,$db0_line{'downloads'});
+		#$columns{'pages'}->addData($hour,$data{$hour}{'visits'});
+		
+		my $line = $tpl->{'entity'}{'email.table.line'};
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$day || '&nbsp;'/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'downloads'} || '&nbsp;'/e;
+			$sum{'downloads'}+=$db0_line{'downloads'};
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		$table =~ s|<#email.table.line#>|$line|g;
+		
+	}
+		
+		# add summary line into previous table
+		my $line = $tpl->{'entity'}{'email.table.line'};
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/'SUM'/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$sum{'downloads'} || '&nbsp;'/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		$table =~ s|<#email.table.line#>|$line|g;
+		
+	
+	
+	
+	# generate graph
+	my $graf_svg=new TOM::Temp::file('ext'=>'svg');
+	push @img, new TOM::Temp::file('ext'=>'png');
+	$graf->save($graf_svg->{'filename'});
+	Ext::SVG2PNG::convert($graf_svg->{'filename'},$img[-1]->{'filename'});
+	# add graf
+	$tpl->{'entity'}{'email.xhtml'}=~s|<#email.content#>|<img class="graph" src="cid:$i\@graf"/><br/><#email.content#>|;
+	$i++;
+	
+	# add table
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$table<#email.content#>|;
+	
+	
+	# cleaning
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<#.*?#>||gs;
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<%.*?%>||gs;
+	
+	$msg->attach
+	(
+		'Data' => $tpl->{'entity'}{'email.xhtml'},
+		'Type' => "text/html;charset=\"UTF-8\"",
+		'Encoding' => "8bit",
+	);
+	
+	my $i;
+	foreach (@img)
+	{
+		$msg->attach
+		(
+			'Path'       => $img[$i]->{'filename'},
+			'Type'       => "image/png",
+			'Content-ID' => '<'.$i.'@graf>',
+			'Encoding'   => "base64"
+		);
+		$i++;
+	}
+	
+	$msg->attach
+	(
+		'Path'       => $tpl->{'file'}{'cyclone3-150x44.png'}{'dst'},
+		'Type'       => "image/gif",
+		'Content-ID' => "<logo\@cyclone3.org>",
+		'Encoding'   => "base64"
+	);
+	
+	TOM::Net::email::send
+	(
+		'to' => $env{'to_email'},
+		'body' => $msg->as_string()
+	);
+	
+	return 1;
+}
+
+
+1;
