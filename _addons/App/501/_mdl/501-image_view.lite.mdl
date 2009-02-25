@@ -38,6 +38,10 @@ use App::501::_init;
 
 =item *
 
+B<-xlng_load> - load template internationalization file
+
+=item *
+
 B<image.ID> || B<ID> - ID of image
 
 =item *
@@ -81,9 +85,17 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
 	$env{'db_name'}=$App::501::db_name unless $env{'db_name'};
 	
 	$env{'image_file.ID_format'}=$App::501::image_format_fullsize_ID unless $env{'image_file.ID_format'};
+	$env{'image_attrs.lng'}=$env{'lng'} unless $env{'image_attrs.lng'};
 	$env{'image_attrs.status'}='Y' unless $env{'image_attrs.status'};
 		my $sql_status=join "','", split('',$env{'image_attrs.status'});
 	
@@ -107,6 +119,7 @@ sub execute
 			`$env{'db_name'}`.a501_image_view AS image
 		WHERE
 			image.ID_format='$env{'image_file.ID_format'}' AND
+			image.lng='$env{'image_attrs.lng'}' AND
 			image.status IN ('$sql_status')
 			$sql_where
 		LIMIT 1
