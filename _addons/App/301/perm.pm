@@ -872,6 +872,7 @@ sub get_ACL
 		$item{'ID'}=$db0_line{'ID_entity'};
 		$item{'folder'}='Y';
 		$item{'roles'}=$db0_line{'roles'};
+			utf8::decode($item{'roles'});
 		$item{'perm_R'}=$db0_line{'perm_R'};
 		$item{'perm_W'}=$db0_line{'perm_W'};
 		$item{'perm_X'}=$db0_line{'perm_X'};
@@ -938,6 +939,7 @@ sub get_ACL
 			$item{'ID'}=$db0_line{'ID_entity'};
 			$item{'folder'}='O';
 			$item{'roles'}=$db0_line{'roles'};
+				utf8::decode($item{'roles'});
 			$item{'perm_R'}=$db0_line{'perm_R'};
 			$item{'perm_W'}=$db0_line{'perm_W'};
 			$item{'perm_X'}=$db0_line{'perm_X'};
@@ -1024,6 +1026,7 @@ sub get_ACL
 		$item{'ID'}=$db0_line{'ID_entity'};
 		$item{'folder'}='';
 		$item{'roles'}=$db0_line{'roles'};
+			utf8::decode($item{'roles'});
 		$item{'perm_R'}=$db0_line{'perm_R'};
 		$item{'perm_W'}=$db0_line{'perm_W'};
 		$item{'perm_X'}=$db0_line{'perm_X'};
