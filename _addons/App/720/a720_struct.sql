@@ -17,12 +17,18 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contract` (
   `contract_date_start` date default NULL, -- contract starts
   `contract_date_end` date default NULL, -- contract ends
   `datetime_evidence` datetime default NULL, -- added into evidence
+  `amendment1_date_evidence` date default NULL,
   `amendment1_date_start` date default NULL,
   `amendment1_date_end` date default NULL,
+  `amendment1_note` text character set utf8 collate utf8_unicode_ci,
+  `amendment2_date_evidence` date default NULL,
   `amendment2_date_start` date default NULL,
   `amendment2_date_end` date default NULL,
+  `amendment2_note` text character set utf8 collate utf8_unicode_ci,
+  `amendment3_date_evidence` date default NULL,
   `amendment3_date_start` date default NULL,
   `amendment3_date_end` date default NULL,
+  `amendment3_note` text character set utf8 collate utf8_unicode_ci,
   `description` text character set utf8 collate utf8_unicode_ci, -- contract description
   `notes` text character set utf8 collate utf8_unicode_ci, -- note of editor
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
@@ -45,12 +51,18 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contract_j` (
   `contract_date_start` date default NULL,
   `contract_date_end` date default NULL,
   `datetime_evidence` datetime default NULL,
+  `amendment1_date_evidence` date default NULL,
   `amendment1_date_start` date default NULL,
   `amendment1_date_end` date default NULL,
+  `amendment1_note` text character set utf8 collate utf8_unicode_ci,
+  `amendment2_date_evidence` date default NULL,
   `amendment2_date_start` date default NULL,
   `amendment2_date_end` date default NULL,
+  `amendment2_note` text character set utf8 collate utf8_unicode_ci,
+  `amendment3_date_evidence` date default NULL,
   `amendment3_date_start` date default NULL,
   `amendment3_date_end` date default NULL,
+  `amendment3_note` text character set utf8 collate utf8_unicode_ci,
   `description` text character set utf8 collate utf8_unicode_ci,
   `notes` text character set utf8 collate utf8_unicode_ci,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
