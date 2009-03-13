@@ -275,7 +275,8 @@ sub add_author
 				{
 					$columns{'ID_author'}=$author{'ID_user'};
 				}
-				elsif ($groups{'editor'} || $groups{'admin'})
+				#elsif ($groups{'editor'} || $groups{'admin'})
+				else
 				{
 					main::_log("adding user into group 'author'");
 					App::301::functions::user_add(
@@ -352,7 +353,8 @@ sub add_author
 				{
 					$columns{'ID_author'}=$author{'ID_user'};
 				}
-				elsif ($groups{'editor'} || $groups{'admin'})
+				#elsif ($groups{'editor'} || $groups{'admin'})
+				else
 				{
 					main::_log("adding user into group 'author'");
 					App::301::functions::user_add(
@@ -364,9 +366,9 @@ sub add_author
 			}
 			if (!$columns{'ID_author'})
 			{
-				$env{'author_login'}=Int::charsets::encode::UTF8_ASCII(
-					$env{'author_firstname'}
-				);
+#				$env{'author_login'}=Int::charsets::encode::UTF8_ASCII(
+#					$env{'author_firstname'}
+#				);
 				my $sql=qq{
 					SELECT
 						*
