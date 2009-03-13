@@ -18,7 +18,7 @@
 		<rule><regexp source="lowascii">curac</regexp><value>-70</value></rule>
 		<rule><regexp source="lowascii">cecky</regexp><value>-60</value></rule>
 		<rule><regexp source="lowascii">kozy</regexp><value>-25</value></rule>
-		<rule><regexp>pič[aeoi]</regexp><regexp>pitcho</regexp><regexp source="lowascii">[^o]pic[oa]</regexp><value>-100</value></rule>
+		<rule><regexp>pič[aeoi]</regexp><regexp>pitcho</regexp><regexp source="lowascii">[^os]pic[oa]</regexp><value>-100</value></rule>
 		<rule><regexp source="lowascii">kur[wv]a</regexp><value>-100</value></rule>
 		<rule><regexp source="lowascii">jeb[ae]?</regexp><value>-100</value></rule>
 		<rule><regexp source="lowascii">kl[iy]toris</regexp><value>-50</value></rule>
@@ -28,7 +28,7 @@
 		<rule><regexp source="lowascii">hybrid</regexp><value>-10</value></rule>
 		<rule><regexp source="lowascii">humus</regexp><value>-10</value></rule>
 		<rule><regexp source="lowascii">hovadin[ay]</regexp><value>-5</value></rule>
-		<rule><regexp source="lowascii">chudak</regexp><value>-5</value></rule>
+		<rule><regexp source="lowascii">chuda[kc]</regexp><value>-5</value></rule>
 		<rule><regexp source="lowascii">volovina</regexp><value>-10</value></rule>
 		<rule><regexp source="lowascii">cecka</regexp><value>-30</value></rule>
 		<rule><regexp source="lowascii">prs</regexp><value>-10</value></rule>
@@ -47,7 +47,7 @@
 		<rule><regexp source="lowascii">tepl[uo]s</regexp><value>-30</value></rule>
 		<rule><regexp source="lowascii">uchyl</regexp><value>-30</value></rule>
 		<rule><regexp source="lowascii">blbec</regexp><value>-15</value></rule>
-		<rule><regexp source="lowascii">anal</regexp><value>-30</value></rule>
+		<!--<rule><regexp source="lowascii">anal</regexp><value>-30</value></rule>-->
 		<rule><regexp source="lowascii">blbost</regexp><value>-20</value></rule>
 		<rule><regexp source="lowascii">muzatka</regexp><value>-20</value></rule>
 		<rule><regexp source="lowascii">hajz[e]?l[i]?</regexp><value>-40</value></rule>
@@ -57,6 +57,13 @@
 		<rule><regexp source="lowascii">prasa[ck]</regexp><value>-20</value></rule>
 		<rule><regexp source="lowascii">sasci</regexp><value>-25</value></rule>
 		<rule><regexp source="lowascii">ocasy</regexp><value>-45</value></rule>
+		<rule><regexp source="lowascii">trubka</regexp><value>-5</value></rule>
+		<rule><regexp source="lowascii">zmrd</regexp><value>-15</value></rule>
+		<rule><regexp source="lowascii">srack[ya]</regexp><value>-25</value></rule>
+		<rule><regexp source="lowascii">traposniak</regexp><value>-15</value></rule>
+		<rule><regexp source="lowascii">homos[^e]</regexp><value>-25</value></rule>
+		<rule><regexp source="lowascii">chamrad</regexp><value>-10</value></rule>
+		
 		
 		
 		<!-- agresia, ignorancia,... -->
@@ -66,7 +73,7 @@
 		<rule><regexp source="lowascii">zastrelte (ju|ho)</regexp><value>-30</value></rule>
 		<rule><regexp source="lowascii">obycajny psycho</regexp><value>-30</value></rule>
 		<rule><regexp source="lowascii">haved jedna</regexp><value>-5</value></rule>
-		<rule><regexp source="lowascii">trapn[eyi]</regexp><value>-15</value></rule>
+		<rule><regexp source="lowascii">trapn[aeyi]</regexp><value>-15</value></rule>
 		<rule><regexp source="lowascii">dat vypchat</regexp><value>-25</value></rule>
 		<rule><regexp source="lowascii">sa strapn</regexp><value>-10</value></rule>
 		<rule><regexp source="lowascii">neznasam</regexp><value>-5</value></rule>
@@ -95,6 +102,24 @@
 		<rule><regexp source="lowascii">kydaj</regexp><value>-25</value></rule>
 		<rule><regexp source="lowascii">prasarn</regexp><value>-25</value></rule>
 		<rule><regexp source="lowascii">fuj</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">vypotil</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">z huby</regexp><value>-8</value></rule>
+		<rule><regexp source="lowascii">zakomplexovan</regexp><value>-25</value></rule>
+		<rule><regexp source="lowascii">sa uvedom</regexp><value>-15</value></rule>
+		<rule><regexp source="lowascii">chod liecit</regexp><value>-20</value></rule>
+		<rule><regexp source="lowascii">daj liecit</regexp><value>-20</value></rule>
+		<rule><regexp source="lowascii">tupec</regexp><value>-20</value></rule>
+		<rule><regexp source="lowascii">vymlety</regexp><value>-15</value></rule>
+		<rule><regexp source="lowascii">blb</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">hnup</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">uboh[eyi]</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">sasovia</regexp><value>-10</value></rule>
+		<rule><regexp source="lowascii">stupid</regexp><value>-25</value></rule>
+		<rule><regexp source="lowascii">gulkou do hlavy</regexp><value>-25</value></rule>
+		<rule><regexp source="lowascii">hlupucka</regexp><value>-15</value></rule>
+		<rule><regexp source="lowascii">haha</regexp><value>-1</value></rule>
+		<rule><regexp source="lowascii">skap</regexp><value>-5</value></rule>
+		
 		
 		
 		<!-- infantilne zdrobneniny -->
