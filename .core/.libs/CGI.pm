@@ -527,7 +527,7 @@ sub init {
     $self->charset('ISO-8859-1');
 
   METHOD: {
-		#main::_log("method=$ENV{'CONTENT_TYPE'}");
+		main::_log("CGI method=$ENV{'CONTENT_TYPE'}");
       # avoid unreasonably large postings
       if (($POST_MAX > 0) && ($content_length > $POST_MAX)) {
 	#discard the post, unread
@@ -539,15 +539,16 @@ sub init {
       # not defined.
       if (
 			$meth eq 'POST'
-	  	&& defined($ENV{'CONTENT_TYPE'})
-	  && ( $ENV{'CONTENT_TYPE'}=~m/^multipart\/form-data/ )
-	  && !defined($initializer)
-	  ) {
-	  my($boundary) = $ENV{'CONTENT_TYPE'} =~ /boundary=\"?([^\";,]+)\"?/;
-	  $self->read_multipart($boundary,$content_length);
-	  last METHOD;
-      } 
-
+			&& defined($ENV{'CONTENT_TYPE'})
+			&& ( $ENV{'CONTENT_TYPE'}=~m/^multipart\/form-data/ )
+			&& !defined($initializer))
+		{
+			main::_log("CGI start to multipart read length=$content_length");
+			my($boundary) = $ENV{'CONTENT_TYPE'} =~ /boundary=\"?([^\";,]+)\"?/;
+			$self->read_multipart($boundary,$content_length);
+			last METHOD;
+		} 
+		
       # Process XForms postings. We know that we have XForms in the
       # following cases:
       # method eq 'POST' && content-type eq 'application/xml'
@@ -3364,101 +3365,115 @@ END_OF_FUNC
 #####
 'read_multipart' => <<'END_OF_FUNC',
 sub read_multipart {
-    my($self,$boundary,$length) = @_;
-    my($buffer) = $self->new_MultipartBuffer($boundary,$length);
-    return unless $buffer;
-    my(%header,$body);
-    my $filenumber = 0;
-    while (!$buffer->eof) {
-	%header = $buffer->readHeader;
-
-	unless (%header) {
-	    $self->cgi_error("400 Bad request (malformed multipart POST)");
-	    return;
-	}
-
-	my($param)= $header{'Content-Disposition'}=~/ name="([^"]*)"/;
-        $param .= $TAINTED;
-
-	# Bug:  Netscape doesn't escape quotation marks in file names!!!
-	my($filename) = $header{'Content-Disposition'}=~/ filename="([^"]*)"/;
-	# Test for Opera's multiple upload feature
-	my($multipart) = ( defined( $header{'Content-Type'} ) &&
-		$header{'Content-Type'} =~ /multipart\/mixed/ ) ?
-		1 : 0;
-
-	# add this parameter to our list
-	$self->add_parameter($param);
-
-	# If no filename specified, then just read the data and assign it
-	# to our parameter list.
-	if ( ( !defined($filename) || $filename eq '' ) && !$multipart ) {
-	    my($value) = $buffer->readBody;
-            $value .= $TAINTED;
-	    push(@{$self->{$param}},$value);
-	    next;
-	}
-
-	my ($tmpfile,$tmp,$filehandle);
+	my($self,$boundary,$length) = @_;
+	my($buffer) = $self->new_MultipartBuffer($boundary,$length);
+	#main::_log("CGI setup buffer to $buffer");
+	return unless $buffer;
+	my(%header,$body);
+	my $filenumber = 0;
+	while (!$buffer->eof)
+	{
+		%header = $buffer->readHeader;
+		unless (%header)
+		{
+			main::_log("CGI multipart header not defined",1);
+			$self->cgi_error("400 Bad request (malformed multipart POST)");
+			return;
+		}
+		
+		my($param)= $header{'Content-Disposition'}=~/ name="([^"]*)"/;
+		$param .= $TAINTED;
+		
+		# Bug:  Netscape doesn't escape quotation marks in file names!!!
+		my($filename) = $header{'Content-Disposition'}=~/ filename="([^"]*)"/;
+		# Test for Opera's multiple upload feature
+		my($multipart) = ( defined( $header{'Content-Type'} ) &&
+			$header{'Content-Type'} =~ /multipart\/mixed/ ) ?
+			1 : 0;
+		
+		# add this parameter to our list
+		$self->add_parameter($param);
+		
+		# If no filename specified, then just read the data and assign it
+		# to our parameter list.
+		if ( ( !defined($filename) || $filename eq '' ) && !$multipart )
+		{
+			main::_log("CGI read param $param");
+			my($value) = $buffer->readBody;
+			$value .= $TAINTED;
+			push(@{$self->{$param}},$value);
+			next;
+		}
+		
+		my ($tmpfile,$tmp,$filehandle);
       UPLOADS: {
-	  # If we get here, then we are dealing with a potentially large
-	  # uploaded form.  Save the data to a temporary file, then open
-	  # the file for reading.
-
-	  # skip the file if uploads disabled
-	  if ($DISABLE_UPLOADS) {
-	      while (defined($data = $buffer->read)) { }
-	      last UPLOADS;
-	  }
-
-	  # set the filename to some recognizable value
-          if ( ( !defined($filename) || $filename eq '' ) && $multipart ) {
-              $filename = "multipart/mixed";
-          }
-
-	  # choose a relatively unpredictable tmpfile sequence number
-          my $seqno = unpack("%16C*",join('',localtime,grep {defined $_} values %ENV));
-          for (my $cnt=10;$cnt>0;$cnt--) {
-	    next unless $tmpfile = new CGITempFile($seqno);
-	    $tmp = $tmpfile->as_string;
-	    last if defined($filehandle = Fh->new($filename,$tmp,$PRIVATE_TEMPFILES));
-            $seqno += int rand(100);
-          }
-          die "CGI open of tmpfile: $!\n" unless defined $filehandle;
-	  $CGI::DefaultClass->binmode($filehandle) if $CGI::needs_binmode 
-                     && defined fileno($filehandle);
-
-	  # if this is an multipart/mixed attachment, save the header
-	  # together with the body for later parsing with an external
-	  # MIME parser module
-	  if ( $multipart ) {
-	      foreach ( keys %header ) {
-		  print $filehandle "$_: $header{$_}${CRLF}";
-	      }
-	      print $filehandle "${CRLF}";
-	  }
-
-	  my ($data);
-	  local($\) = '';
-          my $totalbytes;
-          while (defined($data = $buffer->read)) {
-              if (defined $self->{'.upload_hook'})
-               {
-                  $totalbytes += length($data);
-                   &{$self->{'.upload_hook'}}($filename ,$data, $totalbytes, $self->{'.upload_data'});
-              }
-              print $filehandle $data if ($self->{'use_tempfile'});
-          }
-
-	  # back up to beginning of file
-	  seek($filehandle,0,0);
-
-      ## Close the filehandle if requested this allows a multipart MIME
-      ## upload to contain many files, and we won't die due to too many
-      ## open file handles. The user can access the files using the hash
-      ## below.
-      close $filehandle if $CLOSE_UPLOAD_FILES;
-	  $CGI::DefaultClass->binmode($filehandle) if $CGI::needs_binmode;
+			# If we get here, then we are dealing with a potentially large
+			# uploaded form.  Save the data to a temporary file, then open
+			# the file for reading.
+			
+			# skip the file if uploads disabled
+			if ($DISABLE_UPLOADS)
+			{
+				while (defined($data = $buffer->read)) { }
+				last UPLOADS;
+			}
+			
+			# set the filename to some recognizable value
+			if ( ( !defined($filename) || $filename eq '' ) && $multipart )
+			{
+				$filename = "multipart/mixed";
+			}
+			
+			# choose a relatively unpredictable tmpfile sequence number
+			my $seqno = unpack("%16C*",join('',localtime,grep {defined $_} values %ENV));
+			for (my $cnt=10;$cnt>0;$cnt--)
+			{
+				next unless $tmpfile = new CGITempFile($seqno);
+				$tmp = $tmpfile->as_string;
+				last if defined($filehandle = Fh->new($filename,$tmp,$PRIVATE_TEMPFILES));
+				$seqno += int rand(100);
+			}
+			die "CGI open of tmpfile: $!\n" unless defined $filehandle;
+			$CGI::DefaultClass->binmode($filehandle) if $CGI::needs_binmode 
+				&& defined fileno($filehandle);
+			
+			# if this is an multipart/mixed attachment, save the header
+			# together with the body for later parsing with an external
+			# MIME parser module
+			if ( $multipart )
+			{
+				foreach ( keys %header )
+				{
+					print $filehandle "$_: $header{$_}${CRLF}";
+				}
+				print $filehandle "${CRLF}";
+			}
+			
+			my ($data);
+			local($\) = '';
+			my $totalbytes;
+			my $i;
+			while (defined($data = $buffer->read))
+			{
+				$i++;
+				$totalbytes += length($data);
+				main::_log("readed ".int($totalbytes/1024)."kbytes") if (int($i/100) == $i/100);
+				if (defined $self->{'.upload_hook'})
+				{
+					&{$self->{'.upload_hook'}}($filename ,$data, $totalbytes, $self->{'.upload_data'});
+				}
+				print $filehandle $data if ($self->{'use_tempfile'});
+			}
+			
+			# back up to beginning of file
+			seek($filehandle,0,0);
+			
+			## Close the filehandle if requested this allows a multipart MIME
+			## upload to contain many files, and we won't die due to too many
+			## open file handles. The user can access the files using the hash
+			## below.
+			close $filehandle if $CLOSE_UPLOAD_FILES;
+			$CGI::DefaultClass->binmode($filehandle) if $CGI::needs_binmode;
 
 	  # Save some information about the uploaded file where we can get
 	  # at it later.
@@ -3546,6 +3561,7 @@ sub read_multipart_related {
           while (defined($data = $buffer->read)) {
               if (defined $self->{'.upload_hook'})
                {
+						main::_log("reading $totalbytes");
                   $totalbytes += length($data);
                    &{$self->{'.upload_hook'}}($param ,$data, $totalbytes, $self->{'.upload_data'});
               }
@@ -3896,8 +3912,15 @@ sub read {
     warn "boundary=$self->{BOUNDARY} length=$self->{LENGTH} start=$start\n" if DEBUG;
 
     # protect against malformed multipart POST operations
-    die "Malformed multipart POST\n" unless $self->{CHUNKED} || ($start >= 0 || $self->{LENGTH} > 0);
-
+    # die "Malformed multipart POST\n" unless $self->{CHUNKED} || ($start >= 0 || $self->{LENGTH} > 0);
+	
+	 if (not($self->{CHUNKED} || ($start >= 0 || $self->{LENGTH} > 0)))
+	 {
+		main::_log("CHUNKED=".$self->{CHUNKED}." start=".$start." LENGTH=".$self->{LENGTH},1);
+		die "Malformed multipart POST\n"
+	 }
+	
+	
     #EBCDIC NOTE: want to translate boundary search into ASCII here.
 
     # If the boundary begins the data, then skip past it
