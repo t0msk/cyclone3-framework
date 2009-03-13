@@ -14,7 +14,19 @@ sub handler_exit
 	{
 		print "Location: http://$main::ENV{'HTTP_HOST'}$main::ENV{'REQUEST_URI'}\n\n";
 	}
-	main::_log("SIG '$signame' [EXIT] (timeout $TOM::fcgi_timeout secs, lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
+	if ($signame eq "ALRM")
+	{
+		main::_log("SIG '$signame' [EXIT] (timeout $TOM::fcgi_timeout secs, lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
+	}
+	elsif ($signame eq "PIPE")
+	{
+		main::_log("SIG '$signame' [EXIT] (lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H ($!)",3,"pub.mng",1);
+		#foreach (keys %main::ENV){main::_log("key '$_'='$main::ENV{$_}'",3,"pub.mng",1);}
+	}
+	else
+	{
+		main::_log("SIG '$signame' [EXIT] (lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H ($!)",3,"pub.mng",1);
+	}
 	exit(0);
 }
 
@@ -48,7 +60,7 @@ sub handler_ignore
 	{
 		print "Location: http://$main::ENV{'HTTP_HOST'}$main::ENV{'REQUEST_URI'}\n\n";
 	}
-	main::_log("SIG '$signame' [IGNORE] (timeout $TOM::fcgi_timeout secs, lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
+	main::_log("SIG '$signame' [IGNORE] (living ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
 }
 
 
@@ -113,8 +125,12 @@ When TERM is not executed if apache restarts, then process lost connection to ap
 main::_log("registering SIG{TERM} action to CHECK");
 POSIX::sigaction(&POSIX::SIGTERM, $action_check);
 
-main::_log("registering SIG{SIGPIPE} action to EXIT");
-POSIX::sigaction(&POSIX::SIGPIPE, $action_exit);
+#main::_log("registering SIG{SIGPIPE} action to EXIT");
+#POSIX::sigaction(&POSIX::SIGPIPE, $action_exit);
+#main::_log("registering SIG{SIGPIPE} action to CHECK");
+#POSIX::sigaction(&POSIX::SIGPIPE, $action_check);
+main::_log("registering SIG{SIGPIPE} action to IGNORE");
+POSIX::sigaction(&POSIX::SIGPIPE, $action_ignore);
 
 main::_log("registering SIG{SIGUSR1} action to CHECK");
 POSIX::sigaction(&POSIX::SIGUSR1, $action_check);
