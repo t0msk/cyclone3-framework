@@ -48,6 +48,7 @@ use XML::XPath::XMLParser;
 
 our %sources;
 our %rules;
+our $debug=0;
 
 sub load
 {
@@ -139,7 +140,7 @@ sub analyze_text
 				my $text=$text_src{$regexp->{'source'}};
 				if (my $out=($text=~s/$regexp->{'value'}//gm))
 				{
-					main::_log("match [$lng][$i] /$regexp->{'value'}/ $rules{$lng}[$i]{'value'}*$out=".($rules{$lng}[$i]{'value'}*$out));
+					main::_log("match [$lng][$i] /$regexp->{'value'}/ $rules{$lng}[$i]{'value'}*$out=".($rules{$lng}[$i]{'value'}*$out)) if $debug;
 					$karma+=($rules{$lng}[$i]{'value'}*$out);
 					last;
 				}
@@ -149,7 +150,7 @@ sub analyze_text
 			$i++;
 		}
 	}
-	main::_log("karma=$karma");
+	main::_log("karma=$karma") if $debug;
 	return $karma;
 }
 
