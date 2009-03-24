@@ -582,7 +582,8 @@ sub module
 				(
 					# ak iny proces sa snazi prave naplnit tuto cache
 					# pouzijem proste tu cache ktoru mam
-					$cache_parallel == 1
+					$cache_parallel == 1 && $mdl_C{-cache_from}
+					
 				)
 			)
 			# A
