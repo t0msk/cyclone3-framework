@@ -95,7 +95,7 @@ sub execute
 			ID_charindex ASC
 --		LIMIT 1
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-long'=>10);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		main::_log("check image_files in image_format ID='$db0_line{'ID'}' name='$db0_line{'name'}'");
@@ -132,7 +132,7 @@ sub execute
 			LIMIT
 				$env{'sql_limit'}
 		};
-		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-long'=>10);
 		while (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
 			main::_log("image ID_entity='$db1_line{'image_ID_entity'}' with missing format '$db0_line{'name'}'");
@@ -190,7 +190,7 @@ sub execute
 				LIMIT
 					$env{'sql_limit'}
 			};
-			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-long'=>10);
 			while (my %db1_line=$sth1{'sth'}->fetchhash())
 			{
 				main::_log("parent of image_file ID='$db1_line{'file2_ID'}' has been changed");
@@ -209,7 +209,6 @@ sub execute
 			}
 			
 		}
-		
 		
 	}
 	
