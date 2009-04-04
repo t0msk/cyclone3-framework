@@ -302,6 +302,7 @@ sub execute
 			article_content.datetime_create,
 			article_attrs.datetime_start,
 			article_attrs.datetime_stop,
+                        
 			
 			article_attrs.priority_A,
 			article_attrs.priority_B,
@@ -316,6 +317,12 @@ sub execute
 			article_content.keywords,
 			article_content.lng,
 			
+                        IF(
+                            round((`article_ent`.rating_score / `article_ent`.rating_votes),2),
+                            round((`article_ent`.rating_score / `article_ent`.rating_votes),2), '0.00'
+                        ) as rating,
+                        
+                        
 			article_ent.visits,
 			
 			article_attrs.status,
@@ -480,17 +487,75 @@ sub execute
 		my $abstract_plain=TOM::Text::format::xml2plain($db0_line{'abstract'});
 		$item=~s|<%abstract_plain%>|$abstract_plain|;
 		
+		
+		# BODY
 		if ($env{'article_content.body'})
 		{
+			
+			# process abstract
+			my $p=new App::401::mimetypes::html;
+			
+			# img
+			$p->{'ignore'}{'img'}=
+				$env{'body.ignore.img'}
+				|| $env{'ignore.img'}
+				|| undef;
+			
+			$p->{'ignore'}{'img.1'}=
+				$env{'body.ignore.img.1'}
+				|| $env{'ignore.img.1'}
+				|| undef;
+			
+			# a501_image
+			$p->{'config'}->{'a501_image_file.ID_format'}=
+				$env{'article.'.$item_counter.'.abstract.a501_image_file.ID_format'}
+				|| $env{'article.'.$item_counter.'.a501_image_file.ID_format'}
+				|| $env{'abstract.a501_image_file.ID_format'}
+				|| $env{'a501_image_file.ID_format'}
+				|| undef;
+			$p->{'config'}->{'a501_image_file.ID_format.1'}=
+				$env{'article.'.$item_counter.'.abstract.a501_image_file.ID_format.1'}
+				|| $env{'article.'.$item_counter.'.a501_image_file.ID_format.1'}
+				|| $env{'abstract.a501_image_file.ID_format.1'}
+				|| $env{'a501_image_file.ID_format.1'}
+				|| undef;
+			$p->{'entity'}->{'a501_image'}=
+				$XSGN{'abstract.a501_image'}
+				|| $XSGN{'a501_image'}
+				|| undef;
+			$p->{'entity'}->{'a501_image.1'}=
+				$XSGN{'abstract.a501_image.1'}
+				|| $XSGN{'a501_image.1'}
+				|| undef;
+			
+			# a510_video
+			$p->{'entity'}{'a510_video_part'}=
+				$XSGN{'abstract.a510_video_part'}
+				|| $XSGN{'a510_video_part'}
+				|| undef;
+			
 			$p->parse($db0_line{'body'});
+			
+			$item=~s|<%out\.body\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+			$item=~s|<#out\.body\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+			
 			my $body_html=$p->{'out'};
 			$item=~s|<%body%>|$body_html|;
 			
 			if ($p->{'count'}->{'video'})
 			{
-				$item=~s|<#video_mark#>|$XSGN{'video_mark'}|g;
+            $item=~s|<#video_mark#>|$XSGN{'video_mark'}|g;
 			}
+			
 		}
+		
+		
+		# find alternate attributes (for thumbnail image for example)
+		$p->parse($db0_line{'body'}) unless $p->{'out_tag'}->{'img.1'};
+		
+		$item=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+		$item=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+		
 		
 		if ($env{'relation'})
 		{
@@ -511,13 +576,6 @@ sub execute
 #				{$XSGN{'NULL'}=~s|<%discussion_status%>|Y|g;}
 			}
 		}
-		
-		# find alternate attributes (for thumbnail image for example)
-		$p->parse($db0_line{'body'}) unless $p->{'out_tag'}->{'img.1'};
-		
-		$item=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
-		$item=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
-		
 		
 		# check alternate url
 		my $ID_category=$db0_line{'ID_category'};
