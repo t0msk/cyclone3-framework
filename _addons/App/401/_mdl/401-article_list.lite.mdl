@@ -475,7 +475,7 @@ sub execute
 		$p->parse($db0_line{'abstract'});
 		#$p->eof();
 		my $abstract_html=$p->{'out'};
-		$item=~s|<%abstract%>|$abstract_html|;
+		$item=~s|<%abstract%>|$abstract_html|g;
 		
 		my $abstract_plain=TOM::Text::format::xml2plain($db0_line{'abstract'});
 		$item=~s|<%abstract_plain%>|$abstract_plain|;
