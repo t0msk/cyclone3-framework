@@ -151,7 +151,7 @@ our @setit_F=
 	['_logs\/'                         ,"_logs cron .log"             ,"",""],
 	
 	
-	['\.pm'                            ,"perl library"                ,"460","$user_www:$group"],
+	['\.pm'                            ,"perl library"                ,"660","$user_www:$group"],
 	['_addons'                         ,"addons file"                 ,"460","$user_www:$group"],
 	
 	
