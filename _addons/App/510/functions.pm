@@ -402,7 +402,12 @@ sub video_part_file_process
 		my @ref=split('=',$line);
 		main::_log("target definition key $ref[0]='$ref[1]'");
 		
-		if ($movie1_info{$ref[0]} ne $ref[1]){$target_is_same=0;last;}
+#		if ($movie1_info{$ref[0]} ne $ref[1]){$target_is_same=0;last;}
+		
+		my $ref1_same=0;
+		foreach (split(';',$ref[1])){$ref1_same=1 if $movie1_info{$ref[0]} eq $_};
+		if (!$ref1_same){$target_is_same=0;last;}
+		
 		$target_is_same=1;
 	}
 	
@@ -1572,6 +1577,7 @@ sub video_part_file_add
 			($part{'thumbnail_lock'} eq 'N' || $env{'thumbnail_lock_ignore'}))
 		{
 			main::_log("generate thumbnail from 'full' video_format.name");
+			$rel=1;
 			_video_part_file_thumbnail(
 				'file' => $env{'file'},
 				'file2' => $tmpjpeg->{'filename'},
@@ -1580,8 +1586,11 @@ sub video_part_file_add
 	#				'10',
 	#				'15'
 #				]
-			) || do {$t->close();return undef};
-			$rel=1;
+			) || do
+			{
+				$rel=0;#$t->close();return undef
+			};
+#			$rel=1;
 		}
 		elsif ($env{'file_thumbnail'})
 		{
