@@ -97,12 +97,13 @@ CREATE TABLE `/*db_name*/`.`/*app*/_discussion_message` (
   `body` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `karma` float default NULL,
   `karma_label` varchar(8) character set ascii default NULL,
+  `karma_label_editor` varchar(8) character set ascii default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
   KEY `SEL_0` (`ID_discussion`,`lng`,`status`,`datetime_post`),
-  KEY `ID_discussion` (`ID_discussion`)
+  KEY `SEL_1` (`ID_discussion`,`ID_charindex`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -122,6 +123,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_discussion_message_j` (
   `body` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `karma` float default NULL,
   `karma_label` varchar(8) character set ascii default NULL,
+  `karma_label_editor` varchar(8) character set ascii default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
