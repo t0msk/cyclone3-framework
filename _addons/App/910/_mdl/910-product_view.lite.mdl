@@ -230,10 +230,17 @@ sub execute
 			product_cat.name AS ID_category_name,
 			product_cat.name_url AS ID_category_name_url,
 			
+			product_brand.name as brand_name,
+			product_brand.name_url as brand_name_url,
+			
+			product_family.name as family_name,
+			product_family.name_url as family_name_url,
+			
 			product_lng.name,
 			product_lng.name_url,
 			product_lng.name_long,
 			product_lng.description_short,
+			product_lng.description,
 			
 			product_ent.rating_score,
 			product_ent.rating_votes,
@@ -254,6 +261,14 @@ sub execute
 		LEFT JOIN `$App::910::db_name`.`a910_product_sym` AS product_sym ON
 		(
 			product_sym.ID_entity = product.ID_entity
+		)
+		LEFT JOIN `$App::910::db_name`.`a910_product_brand` AS product_brand ON
+		(
+			product_brand.ID_entity = product_ent.ID_brand
+		)
+		LEFT JOIN `$App::910::db_name`.`a910_product_family` AS product_family ON
+		(
+			product_family.ID_entity = product_ent.ID_family
 		)
 		LEFT JOIN `$App::910::db_name`.`a910_product_cat` AS product_cat ON
 		(
@@ -463,7 +478,7 @@ sub execute
 						image.lng='$env{'product_lng.lng'}'
 					LIMIT 1
 				};
-				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+				my %sth1=TOM::Database::SQL::execute($sql,'slave'=>1);
 				if (my %db1_line=$sth1{'sth'}->fetchhash())
 				{
 					my $uri=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
@@ -497,6 +512,24 @@ sub execute
 		# replace metadata
 		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
 		foreach my $sec(keys %metadata){foreach (keys %{$metadata{$sec}}){$XSGN{'TMP'}=~s/<%$sec\::$_%>/$metadata{$sec}{$_}/g;}}
+		
+		my $keys;
+		foreach my $sec(keys %metadata)
+		{
+			my $null_section=$XSGN{'metadata_section'};
+			$null_section=~s|<%name%>|$sec|g;
+			foreach (keys %{$metadata{$sec}})
+			{
+				$keys++;
+				my $null=$XSGN{'metadata_variable'};
+				$null=~s|<%variable%>|$_|g;
+				$null=~s|<%value%>|$metadata{$sec}{$_}|g;
+				$null_section=~s|<#metadata_variable#>|$null|;
+			}
+			
+			$XSGN{'metadata'}=~s|<#metadata_section#>|$null_section|;
+		}
+		$XSGN{'TMP'}=~s|<#metadata#>|$XSGN{'metadata'}| if $keys;
 		
 #		$main::H->add_DOC_title($db0_line{'name'});
 		
