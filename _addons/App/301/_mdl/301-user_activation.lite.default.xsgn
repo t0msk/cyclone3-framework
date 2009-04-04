@@ -1,0 +1,21 @@
+# UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+
+<DEFINITION id="TMP">
+	
+	Sorry you are not activated
+	
+</DEFINITION>
+
+
+
+<DEFINITION id="activated">
+	<h1>Activated</h1>
+	
+	Your account is activated
+	
+</DEFINITION>
+
+
+</XML_DESIGN_DEFINITION>
