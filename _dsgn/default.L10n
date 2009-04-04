@@ -36,4 +36,29 @@
 		<uk-UA>У даний час ми намагаємося встановити проблему та вибачаємося за будь-які незручності</uk-UA>
 	</string>
 	
+	
+	<!-- translate default database variables -->
+	
+	<string id="variable.status">
+		<sk-SK>stav</sk-SK>
+	</string>
+	
+	<string id="variable.posix_owner">
+		<en-EN>owner</en-EN>
+		<sk-SK>majiteľ</sk-SK>
+	</string>
+	
+	<string id="variable.country_code">
+		<en-EN>country</en-EN>
+		<sk-SK>krajina</sk-SK>
+	</string>
+	
+	<string id="variable.about">
+		<sk-SK>popis</sk-SK>
+	</string>
+	
+	<string id="variable.name_code">
+		<sk-SK>kód</sk-SK>
+	</string>
+	
 </L10n>
