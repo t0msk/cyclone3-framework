@@ -215,6 +215,23 @@ sub execute
 	
 	my $sql_where;
 	
+	if($env{'product_cat.path'})
+	{
+		if($env{'product_cat.path'}=~s/\*$//){
+			$env{'product_cat.ID_entity'}='*';
+		}
+		my %product_cat=App::020::SQL::functions::tree::find_path_url(
+			$env{'product_cat.path'},
+			'db_h' => "main",
+			'db_name' => $TOM::DB{'main'}{'name'},
+			'tb_name' => "a910_product_cat",
+			'lng' => $env{'lng'},
+			'-cache' => 3600,
+			'-slave' => 1
+		);
+		$env{'product_cat.ID_entity'}=$product_cat{'ID_entity'}.$env{'product_cat.ID_entity'};
+	}
+	
 	my $sql_cat;
 	foreach my $ID_category(split(';',$env{'product_cat.ID_entity'}))
 	{
@@ -282,8 +299,8 @@ sub execute
 		SELECT
 			DISTINCT(product.ID_entity) AS ID_entity_product,
 			product.ID AS ID_product,
-			product_sym.ID AS ID_category,
-			product_cat.ID_entity AS ID_entity_category,
+			product_cat.ID AS ID_category,
+			product_sym.ID AS ID_entity_category,
 			product_lng.ID AS ID_lng,
 			product_lng.lng,
 			
@@ -298,6 +315,12 @@ sub execute
 			
 			product_cat.name AS ID_category_name,
 			product_cat.name_url AS ID_category_name_url,
+			
+			product_brand.name as brand_name,
+			product_brand.name_url as brand_name_url,
+			
+			product_family.name as family_name,
+			product_family.name_url as family_name_url,
 			
 			product_lng.name,
 			product_lng.name_url,
@@ -324,6 +347,14 @@ sub execute
 		(
 			product_sym.ID_entity = product.ID_entity
 		)
+		LEFT JOIN `$App::910::db_name`.`a910_product_brand` AS product_brand ON
+		(
+			product_brand.ID_entity = product_ent.ID_brand
+		)
+		LEFT JOIN `$App::910::db_name`.`a910_product_family` AS product_family ON
+		(
+			product_family.ID_entity = product_ent.ID_family
+		)
 		LEFT JOIN `$App::910::db_name`.`a910_product_cat` AS product_cat ON
 		(
 			product_cat.ID_entity = product_sym.ID AND
@@ -332,6 +363,8 @@ sub execute
 		)
 		WHERE
 			product.status IN ('$status_sql') AND
+			product.price IS NOT NULL AND
+			product.product_number IS NOT NULL AND
 			product_sym.ID AND
 			product_lng.lng='$env{'product_lng.lng'}'
 			$sql_where
@@ -526,6 +559,25 @@ sub execute
 		$item=~s|<%item_number%>|$item_counter|g;
 		
 		$item=~s|<%name%>|$db0_line{'name'}|;
+		
+		if ($item=~/<%path/)
+		{
+			my $path_url_;
+			my $path_;
+			foreach my $node (App::020::SQL::functions::tree::get_path(
+				$db0_line{'ID_category'},
+				'db_h'    => 'main',
+				'db_name' => $App::910::db_name,
+				'tb_name' => 'a910_product_cat',
+			))
+			{
+				$path_.='/'.$node->{'name'};
+				$path_url_.='/'.$node->{'name_url'};
+			}
+			$path_=~s|^/||;$path_url_=~s|^/||;
+			$item=~s|<%path%>|$path_|g;
+			$item=~s|<%path_url%>|$path_url_|g;
+		}
 		
 		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
 		foreach my $sec(keys %metadata){foreach (keys %{$metadata{$sec}}){$item=~s/<%$sec\::$_%>/$metadata{$sec}{$_}/g;}}
