@@ -191,6 +191,7 @@ sub execute
 		$XSGN{'TMP'}=~s|<#answer#>|$answer|;
 	}
 	
+	$XSGN{'TMP'}=~s|<%answers_count%>|$counter|g;
 	my $total_percent=0;
 	
 	for(my $tmp=0; $tmp<scalar(@votes); $tmp++)
