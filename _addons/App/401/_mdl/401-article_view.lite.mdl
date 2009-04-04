@@ -178,7 +178,7 @@ sub execute
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-    
+#		$XSGN{'TMP'}.="<!-- changed:$db0_line{'datetime_create'} -->";
 		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
 		$db0_line{'datetime_start.year'}=$datetime{'year'};
 		$db0_line{'datetime_start.month'}=$datetime{'month'};
@@ -202,12 +202,12 @@ sub execute
 			
 			# img
 			$p->{'ignore'}{'img'}=
-				$env{'body.ignore.img'}
+				$env{$part.'.ignore.img'}
 				|| $env{'ignore.img'}
 				|| undef;
 			
 			$p->{'ignore'}{'img.1'}=
-				$env{'body.ignore.img.1'}
+				$env{$part.'.ignore.img.1'}
 				|| $env{'ignore.img.1'}
 				|| undef;
 			
