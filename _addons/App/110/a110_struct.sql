@@ -172,21 +172,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_rqslite` (
   `result` varchar(10) character set ascii NOT NULL default '',
   `lng` char(2) character set ascii NOT NULL default '',
   `active` char(1) character set ascii NOT NULL default 'N',
-  KEY `reqdatetime` (`reqdatetime`),
-  KEY `domain` (`domain`),
-  KEY `domain_sub` (`domain_sub`),
-  KEY `query_TID` (`query_TID`),
-  KEY `page_code` (`page_code`),
-  KEY `active` (`active`),
-  KEY `IP` (`IP`),
-  KEY `user_agent_name` (`user_agent_name`),
-  KEY `IDhash` (`IDhash`),
-  KEY `IDsession` (`IDsession`),
-  KEY `referer_SE` (`referer_SE`),
-  KEY `page_code_referer` (`page_code_referer`),
-  KEY `USRM_flag` (`USRM_flag`),
-  KEY `lng` (`lng`),
-  KEY `result` (`result`)
+  KEY `SEL_0` (`reqdatetime`,`reqtype`),
+  KEY `SEL_1` (`reqdatetime`,`domain`),
+  KEY `SEL_2` (`reqdatetime`,`domain_sub`),
+  KEY `reqdatetime` (`reqdatetime`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
