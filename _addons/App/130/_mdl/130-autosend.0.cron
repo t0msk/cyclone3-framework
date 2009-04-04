@@ -48,8 +48,9 @@ sub execute
 			priority DESC,
 			sendtime
 		LIMIT
-			$env{max}
-	});
+			$env{'max'}
+	},'quiet'=>1);
+	main::_log("$sth0{'rows'} mails in queue (max $env{'max'})");
 	while (my %env0=$sth0{'sth'}->fetchhash)
 	{
 		$emails++;
@@ -95,7 +96,7 @@ sub execute
 				}) or die "Can't open: $!\n";
 			print $mailer $env0{'body'};
 			$mailer->close();
-			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET active='Y' WHERE ID='$env0{ID}' LIMIT 1");
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET active='Y' WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
 			next;
 		}
 		
@@ -121,7 +122,7 @@ sub execute
 			$smtp = Net::SMTP->new($TOM::smtp_host);
 			if ($TOM::smtp_user)
 			{
-				main::_log("authentification with user '$TOM::smtp_user'");
+				main::_log("authentification with user '$TOM::smtp_user' at '$TOM::smtp_host'");
 				if (not $smtp->auth($TOM::smtp_user,$TOM::smtp_pass))
 				{
 					main::_log("Authentification not works (SSL or TLS?)",1);
@@ -135,7 +136,7 @@ sub execute
 		if (not $smtp->mail($env0{from_email}))
 		{
 			main::_log("can't send, not accepted sender ".$smtp->status,1);
-			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
 			next;
 		}
 		
@@ -151,34 +152,34 @@ sub execute
 		}
 		if (!$rcpt_count)
 		{
-			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-10 WHERE ID='$env0{ID}' LIMIT 1");
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-10 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
 			next;
 		}
 		
 		if (not $smtp->data())
 		{
 			main::_log("can't accept DATA",1);
-			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);     
 			next;
 		}
 		
 		if (not $smtp->datasend($env0{body}))
 		{
 			main::_log("can't accept DATASEND",1);
-			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
 			next;
 		}
 		
 		if (not $smtp->dataend())
 		{
 			main::_log("can't accept DATAEND",1);
-			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1");     
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
 			next;
 		}
 		
 		$smtp->quit;
 		
-		TOM::Database::SQL::execute("UPDATE TOM.a130_send SET active='Y' WHERE ID='$env0{ID}' LIMIT 1");
+		TOM::Database::SQL::execute("UPDATE TOM.a130_send SET active='Y' WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
 		
 		next;
 		
@@ -194,7 +195,7 @@ sub execute
 	if ($emails == $env{'max'})
 	{
 		# inform about quota
-		App::100::SQL::ircbot_msg_new("quota of sended messages reaged: $emails");
+		App::100::SQL::ircbot_msg_new("quota of sended messages reached: $emails");
 	}
 	
 	return 1;
