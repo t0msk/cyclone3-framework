@@ -26,7 +26,7 @@ sub execute
 	
 	my $max=86400;
 	
-	opendir (DIR, $TOM::P.'/_temp');
+	opendir (DIR, ($tom::P || $TOM::P).'/_temp');
 	foreach my $file (readdir DIR)
 	{
 		
@@ -34,7 +34,7 @@ sub execute
 		next if $file=~/^\./;
 		
 		#main::_log("file:$file");
-		my $filename=$TOM::P."/_temp/".$file;
+		my $filename=($tom::P || $TOM::P)."/_temp/".$file;
 		
 		if (-f $filename)
 		{
