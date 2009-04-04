@@ -418,6 +418,10 @@ sub install_table
 		}
 		
 	}
+	elsif ($sth0{'err'})
+	{
+		main::_log_stdout("error $sth0{'err'} in '$SQL'",4);
+	}
 	
 	$t->close();
 	return %output;
