@@ -336,7 +336,21 @@ sub user_add
 			if (exists $env{'user_profile.email_public'} && ($env{'user_profile.email_public'} ne $user_profile{'email_public'}));
 		$columns{'email_office'}="'".TOM::Security::form::sql_escape($env{'user_profile.email_office'})."'"
 			if (exists $env{'user_profile.email_office'} && ($env{'user_profile.email_office'} ne $user_profile{'email_office'}));
+
+
 		
+		$columns{'idcard_num'}="'".TOM::Security::form::sql_escape($env{'user_profile.idcard_num'})."'"
+			if (exists $env{'user_profile.idcard_num'} && ($env{'user_profile.idcard_num'} ne $user_profile{'idcard_num'}));
+		
+		$columns{'passport_num'}="'".TOM::Security::form::sql_escape($env{'user_profile.passport_num'})."'"
+			if (exists $env{'user_profile.passport_num'} && ($env{'user_profile.passport_num'} ne $user_profile{'passport_num'}));
+		
+		$columns{'bank_contact'}="'".TOM::Security::form::sql_escape($env{'user_profile.bank_contact'})."'"
+			if (exists $env{'user_profile.bank_contact'} && ($env{'user_profile.bank_contact'} ne $user_profile{'bank_contact'}));
+
+		$columns{'birth_place'}="'".TOM::Security::form::sql_escape($env{'user_profile.birth_place'})."'"
+			if (exists $env{'user_profile.birth_place'} && ($env{'user_profile.birth_place'} ne $user_profile{'birth_place'}));
+
 		$columns{'phone'}="'".TOM::Security::form::sql_escape($env{'user_profile.phone'})."'"
 			if (exists $env{'user_profile.phone'} && ($env{'user_profile.phone'} ne $user_profile{'phone'}));
 		$columns{'phone_office'}="'".TOM::Security::form::sql_escape($env{'user_profile.phone_office'})."'"
@@ -359,6 +373,9 @@ sub user_add
 		$columns{'about_me'}="'".TOM::Security::form::sql_escape($env{'user_profile.about_me'})."'"
 			if (exists $env{'user_profile.about_me'} && ($env{'user_profile.about_me'} ne $user_profile{'about_me'}));
 			
+		$columns{'note'}="'".TOM::Security::form::sql_escape($env{'user_profile.note'})."'"
+			if (exists $env{'user_profile.note'} && ($env{'user_profile.note'} ne $user_profile{'note'}));
+
 		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'user_profile.metadata'})."'"
 			if (exists $env{'user_profile.metadata'} && ($env{'user_profile.metadata'} ne $user_profile{'metadata'}));
       
