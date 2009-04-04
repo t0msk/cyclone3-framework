@@ -527,7 +527,7 @@ sub init {
     $self->charset('ISO-8859-1');
 
   METHOD: {
-		main::_log("CGI method=$ENV{'CONTENT_TYPE'}");
+		main::_log("CGI method=$ENV{'CONTENT_TYPE'}") if $ENV{'CONTENT_TYPE'};
       # avoid unreasonably large postings
       if (($POST_MAX > 0) && ($content_length > $POST_MAX)) {
 	#discard the post, unread
