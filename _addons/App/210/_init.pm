@@ -21,5 +21,10 @@ use App::210::a160;
 
 our $db_name=$App::210::db_name || $TOM::DB{'main'}{'name'};
 main::_log("db_name='$db_name'");
+our $metadata_default=$App::210::metadata_default || qq{
+<metatree>
+	<section name="Others"></section>
+</metatree>
+};
 
 1;
