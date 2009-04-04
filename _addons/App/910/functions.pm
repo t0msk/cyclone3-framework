@@ -382,6 +382,18 @@ sub product_add
 	# VAT
 	$columns{'VAT'}="'".TOM::Security::form::sql_escape($env{'product_ent.VAT'})."'"
 		if (exists $env{'product_ent.VAT'} && ($env{'product_ent.VAT'} ne $product_ent{'VAT'}));
+	# priority_A
+	$columns{'priority_A'}="'".TOM::Security::form::sql_escape($env{'product_ent.priority_A'})."'"
+		if (exists $env{'product_ent.priority_A'} && ($env{'product_ent.priority_A'} ne $product_ent{'priority_A'}));
+		$columns{'priority_A'}='NULL' if $columns{'priority_A'} eq "''";
+	# priority_B
+	$columns{'priority_B'}="'".TOM::Security::form::sql_escape($env{'product_ent.priority_B'})."'"
+		if (exists $env{'product_ent.priority_B'} && ($env{'product_ent.priority_B'} ne $product_ent{'priority_B'}));
+		$columns{'priority_B'}='NULL' if $columns{'priority_B'} eq "''";
+	# priority_C
+	$columns{'priority_C'}="'".TOM::Security::form::sql_escape($env{'product_ent.priority_C'})."'"
+		if (exists $env{'product_ent.priority_C'} && ($env{'product_ent.priority_C'} ne $product_ent{'priority_C'}));
+		$columns{'priority_C'}='NULL' if $columns{'priority_C'} eq "''";
 	
 	if (keys %columns)
 	{
