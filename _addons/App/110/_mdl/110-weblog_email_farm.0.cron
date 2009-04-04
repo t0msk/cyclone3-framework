@@ -32,7 +32,7 @@ sub execute
 	);
 	
 	$env{'to_email'} = $TOM::contact{'TOM_farm'}.";".$TOM::contact{'TECH_farm'}.";".$TOM::contact{'DEV_farm'};
-	$env{'to_email'}=TOM::Utils::vars::unique_split($env{'to_email'});
+	$env{'to_email'} = TOM::Utils::vars::unique_split($env{'to_email'});
 	
 	my %data=App::110::SQL::get_last_collected_day();
 	my $lastday=$data{'reqdate'};
@@ -201,7 +201,7 @@ sub execute
 	
 	
 	
-	
+	my $pages;
 	my $graf=SVGraph::2D::lines->new(
 		'title' => "Ammount of generated pages",
 		'title.color' => $tpl->{'entity'}{'color.h1'},
@@ -254,6 +254,7 @@ sub execute
 			);
 		}
 		$columns{'pages'}->addData($day,$db0_line{'pages'});
+		$pages+=$db0_line{'pages'};
 	}
 	# generate graph
 	my $graf_svg=new TOM::Temp::file('ext'=>'svg');
@@ -267,7 +268,7 @@ sub execute
 	
 	
 	
-	
+	my $domains;
 	my $graf=SVGraph::2D::lines->new(
 		'title' => "Amount of active domains",
 		'title.color' => $tpl->{'entity'}{'color.h1'},
@@ -320,6 +321,7 @@ sub execute
 			);
 		}
 		$columns{'domains'}->addData($day,$db0_line{'domains'});
+		$domains=$db0_line{'domains'} if $db0_line{'domains'}>$domains;
 	}
 	# generate graph
 	my $graf_svg=new TOM::Temp::file('ext'=>'svg');
@@ -400,10 +402,25 @@ sub execute
 	$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$table<#email.content#>|;
 	
 	
-	main::_log("10 domains with lowest availability (last 7 days)");
+	
+	
+	# pocet vsetkych requestov za mesiac
+	# $pages
+	# pocet vsetkych domen za tyzden
+	# $domains
+	my $pages_relevant=int((($pages/31)*7)/$domains/10); # 1/10 priemeru jednej domeny
+	my $pages_type_relevant=int(($pages/31)/1000); # 0.1% denneho objemu
+	
+	main::_log("7days minimal pages setup to $pages_relevant (for type $pages_type_relevant)");
+	
+#	return 1;
+	
+	
+	
+	main::_log("15 domains with lowest availability (last 7 days)");
 	# table
 	my $table=$tpl->{'entity'}{'email.table'};
-	$table =~ s|<%title%>|20 domains with lowest availability (last 7 days)|g;
+	$table =~ s|<%title%>|15 domains with lowest availability (last 7 days)|g;
 	$table =~ s|<%colscount%>|5|g;
 	# list of columns
 	foreach my $col_name ( 'Domain', 'Requests', 'PROC', 'WAIT', 'Sum' )
@@ -427,9 +444,11 @@ sub execute
 			domain_sub != ''
 		GROUP BY
 			domain_sub
+		HAVING
+			SUM(visits_all) >= $pages_relevant
 		ORDER BY
 			AVG(load_req) DESC
-		LIMIT 10
+		LIMIT 15
 	},'db_h'=>'stats');
 	
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
@@ -467,7 +486,7 @@ sub execute
 	
 	# table
 	my $table=$tpl->{'entity'}{'email.table'};
-	$table =~ s|<%title%>|10 Type of services with lowest availability (last day)|g;
+	$table =~ s|<%title%>|20 Type of services with lowest availability (last day)|g;
 	$table =~ s|<%colscount%>|6|g;
 	# list of columns
 	foreach my $col_name ( 'TypeID', 'Domain', 'Requests', 'PROC', 'WAIT', 'Sum' )
@@ -491,9 +510,11 @@ sub execute
 			DATE(reqdatetime) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
 		GROUP BY
 			query_TID
+		HAVING
+			COUNT(*) >= $pages_type_relevant
 		ORDER BY
 			AVG(load_req) DESC
-		LIMIT 10
+		LIMIT 20
 	},'db_h'=>'stats');
 	
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
