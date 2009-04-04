@@ -414,7 +414,7 @@ sub get_ID_entity(%env)
 		push @data, {get_ID(
 			%env,
 			'ID' => $db0_line{'ID'},
-			'cache' => $env{'-cache'}
+			'-cache' => $env{'-cache'}
 		)};
 		
 	}
@@ -440,6 +440,7 @@ Updates one row ( also one ID ) in main table.
    'column2' => "number", # same
   },
   '-journalize' => 1, # create journal copy of this update
+  '-historical' => 'datetime', # update historical version of data
   '-posix' => 1, # posix enhanced table (set posix_modified to $main::USRM{'ID_user'})
  )
 
@@ -451,6 +452,9 @@ sub update
 {
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::update()") if $debug;
+	my $transaction;
+	$transaction=1 if $env{'-journalize'};
+	$transaction=1 if $env{'-historical'};
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
@@ -469,7 +473,7 @@ sub update
 	}
 	$sel_set=~s|,\n$||;
 	
-	my $tr=new TOM::Database::SQL::transaction('db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
+	my $tr=new TOM::Database::SQL::transaction('db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $transaction;
 	
 	my $SQL=qq{
 		UPDATE `$env{'db_name'}`.`$env{'tb_name'}`
@@ -478,6 +482,21 @@ $sel_set
 		WHERE ID=$env{'ID'}
 		LIMIT 1
 	};
+	if ($env{'-historical'})
+	{
+		main::_log("requiring historical '$env{'-historical'}'") if $debug;
+		# check if this history label not already exists
+		# if not exists, find older label from this and update it.
+		# 
+		# 
+#		my $SQL=qq{
+#			UPDATE `$env{'db_name'}`.`$env{'tb_name'}_h`
+#			SET
+#$sel_set
+#			WHERE ID=$env{'ID'} AND datetime_valid='$env{'-historical'}'
+#			LIMIT 1
+#		};
+	}
 	
 	my $clmns=join "','", keys %{$env{'columns'}};
 	
@@ -499,7 +518,7 @@ $sel_set
 			if (!$out)
 			{
 				main::_log("can't journalize, rollback",1) if $debug;
-				$tr->rollback();
+				$tr->rollback() if $transaction;
 				$t->close() if $debug;
 				return undef;
 			}
@@ -512,12 +531,12 @@ $sel_set
 	else
 	{
 		main::_log("can't update, rollback",1) if $debug;
-		$tr->rollback();
+		$tr->rollback() if $transaction;
 		$t->close() if $debug;
 		return undef;
 	}
 	
-	$tr->close();
+	$tr->close() if $transaction;
 	$t->close() if $debug;
 	return 1;
 }
