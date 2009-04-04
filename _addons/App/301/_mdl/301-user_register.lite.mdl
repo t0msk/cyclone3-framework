@@ -19,7 +19,14 @@ sub execute
 	my %L10n=%{new TOM::L10n('addon' => 'a301', 'name'=>'user_registration', 'lng' => $env{'lng'})->{'string'}};
 	my %tpl=%{new TOM::Template('addon' => 'a301', 'name'=>'user_registration', 'content-type' => 'xhtml')->{'entity'}};
 	
-	my $c = Captcha::reCAPTCHA->new;
+	# placeholder for later created recaptcha object
+	# if no $env{'recaptcha_key_public'} is defined, recaptcha is ignored in the process
+	my $c;
+	
+	if($env{'recaptcha_key_public'})
+	{
+		$c = Captcha::reCAPTCHA->new;
+	}
 	
 	
 	if ($env{'loginisemail'})
@@ -198,22 +205,28 @@ sub execute
 		}
 		
 		# captcha
-		my $captcha_ok;
-		my $result = $c->check_answer(
-			$env{'recaptcha_key_private'},
-			$main::ENV{'REMOTE_ADDR'},
-			$main::FORM{'recaptcha_challenge_field'},
-			$main::FORM{'recaptcha_response_field'}
-		);
-		if ($result->{'is_valid'})
+		# in case $env{'recaptcha_key_public'} is not defined, we assume recaptcha is not used, thus for later checks, captcha ok is 1
+		my $captcha_ok=1;
+		
+		if($env{'recaptcha_key_public'})
 		{
-			$captcha_ok=1;
-		}
-		else
-		{
-			my $err=$XSGN{'ERROR-MESSAGE'};
-			$err=~s|<%message%>|$L10n{'Please enter correct'} $L10n{'captcha'}|;
-			$box_err=~s|<#message#>|$err<#message#>|;
+			my $result = $c->check_answer(
+				$env{'recaptcha_key_private'},
+				$main::ENV{'REMOTE_ADDR'},
+				$main::FORM{'recaptcha_challenge_field'},
+				$main::FORM{'recaptcha_response_field'}
+			);
+			if ($result->{'is_valid'})
+			{
+				$captcha_ok=1;
+			}
+			else
+			{
+				$captcha_ok=1;
+				my $err=$XSGN{'ERROR-MESSAGE'};
+				$err=~s|<%message%>|$L10n{'Please enter correct'} $L10n{'captcha'}|;
+				$box_err=~s|<#message#>|$err<#message#>|;
+			}
 		}
 		
 		my $org_name_ok;
@@ -496,8 +509,11 @@ sub execute
 		
 	}
 	
-	my $captcha_html=$c->get_html( $env{'recaptcha_key_public'} );
-	$XSGN{'TMP'}=~s|<#reCAPTCHA#>|$captcha_html|g;
+	if($env{'recaptcha_key_public'})
+	{
+		my $captcha_html=$c->get_html( $env{'recaptcha_key_public'} );
+		$XSGN{'TMP'}=~s|<#reCAPTCHA#>|$captcha_html|g;
+	}
 	
 	return 1;
 }
