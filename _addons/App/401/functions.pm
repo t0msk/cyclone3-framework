@@ -381,7 +381,7 @@ sub article_add
 	}
 	
 	# generate keywords
-	if ($env{'article_content.keywords'})
+	if (exists $env{'article_content.keywords'})
 	{
 		my @ref=split(' # ',$article_content{'keywords'});
 		$ref[1]=$env{'article_content.keywords'};
