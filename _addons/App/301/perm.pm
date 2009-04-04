@@ -29,11 +29,16 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 L<App::301::_init|app/"301/_init.pm">
 
+=item *
+
+L<App::160::_init|app/"160/_init.pm">
+
 =back
 
 =cut
 
 use App::301::_init;
+use App::160::_init;
 
 our $debug=0;
 our %groups;
