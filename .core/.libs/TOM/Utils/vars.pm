@@ -204,12 +204,13 @@ sub replace
 			
 			eval "\$value=\$$var;";
 			
-			if ('<$'.$var.'>' eq $value)
-			{
-				main::_log("neverending",1);
-				$value=~s|^<||;
-				$value=~s|>$||;
-			}
+			$value=~s|<\$(.*?)>|&lt;\$\1&gt;|g;
+#			if ('<$'.$var.'>' eq $value)
+#			{
+#				main::_log("neverending",1);
+#				$value=~s|^<||;
+#				$value=~s|>$||;
+#			}
 
 			
 			if ($@)
@@ -282,12 +283,13 @@ sub replace_comment
 			
 			eval "\$value=\$$var;";
 			
-			if ('<$'.$var.'>' eq $value)
-			{
-				main::_log("neverending",1);
-				$value=~s|^<||;
-				$value=~s|>$||;
-			}
+			$value=~s|<(#?\$.*?)>|&lt;\1&gt;|g;
+#			if ('<$'.$var.'>' eq $value)
+#			{
+#				main::_log("neverending",1);
+#				$value=~s|^<||;
+#				$value=~s|>$||;
+#			}
 
 			
 			if ($@)
