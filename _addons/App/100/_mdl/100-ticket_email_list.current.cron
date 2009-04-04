@@ -103,7 +103,7 @@ sub execute
 			my $tickets;
 			my $events;
 			my $events_current;
-			my %sth1=TOM::Database::SQL::execute($sql);
+			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
 			while (my %db1_line=$sth1{'sth'}->fetchhash)
 			{
 				$tickets++;
@@ -119,7 +119,7 @@ sub execute
 						e.status='Y' AND
 						e.datetime_create >= DATE_SUB(NOW(),INTERVAL $time_durration MINUTE)
 				};
-				my %sth2=TOM::Database::SQL::execute($sql);
+				my %sth2=TOM::Database::SQL::execute($sql,'quiet'=>1);
 				my %db2_line=$sth2{'sth'}->fetchhash;
 				$events_current+=$db2_line{'cnt'};
 				
@@ -159,7 +159,7 @@ sub execute
 						e.datetime_create DESC
 					LIMIT 1
 				};
-				my %sth3=TOM::Database::SQL::execute($sql);
+				my %sth3=TOM::Database::SQL::execute($sql,'quiet'=>1);
 				my %db3_line=$sth3{'sth'}->fetchhash;
 				my $cvml = new CVML( data => $db3_line{'cvml'} );
 				my %cvml_hash = %{$cvml->{'hash'}};
@@ -181,6 +181,7 @@ sub execute
 <strong>request uri: </strong>$cvml_hash{'Cyclone'}{'request_URI'}<br/>
 <strong>full uri: </strong>$cvml_hash{'Cyclone'}{'parsed_URI'}<br/>
 <strong>referer: </strong>$cvml_hash{'Cyclone'}{'referer_URI'}<br/>
+<strong>service type: </strong>$cvml_hash{'Cyclone'}{'TypeID'}<br/>
 <strong>user_agent: </strong>$cvml_hash{'ENV'}{'HTTP_USER_AGENT'}<br/>
 <strong>assigned: </strong>$emails
 };
