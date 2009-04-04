@@ -40,7 +40,7 @@ use base "HTML::Parser";
 
 our $cache=300;
 #our $cache=0;
-our $debug=1;
+our $debug=0;
 our $tpl=new TOM::Template(
 	'level' => "auto",
 	'addon' => "a401",
@@ -221,6 +221,23 @@ sub start
 					
 					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 					
+				}
+				# fullsize
+				my $sql=qq{
+					SELECT
+						*
+					FROM
+						`$App::501::db_name`.`a501_image_view`
+					WHERE
+						ID_image=$vars{'ID'} AND
+						ID_format=$App::501::image_format_fullsize_ID
+					LIMIT 1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
+				my %db0_line=$sth0{'sth'}->fetchhash();
+				if ($db0_line{'ID'})
+				{
+					$attr->{'fullsize.src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
 				}
 			}
 			$self->{'out_var'}->{'img.'.$out_cnt.'.src'}=$attr->{'src'};
@@ -405,7 +422,7 @@ sub start
 						|| $out_full;
 					
 					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
-					$out_full=~s|<%attr_height_plus%>|$db0_line{'video_height'}+20|eg;
+					$out_full=~s|<%attr_height_plus%>|$attr->{'height'}+20|eg;
 					
 					my $relation=(App::160::SQL::get_relations(
 						'l_prefix' => 'a510',
