@@ -33,7 +33,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contract` (
   `notes` text character set utf8 collate utf8_unicode_ci, -- note of editor
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`)
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`),
+  KEY `SEL_0` (`ID_entity`,`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
