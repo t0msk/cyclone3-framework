@@ -43,7 +43,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
