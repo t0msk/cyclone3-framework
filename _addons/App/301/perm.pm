@@ -1035,6 +1035,10 @@ sub get_ACL
 		$item{'perm_R'}=$db0_line{'perm_R'};
 		$item{'perm_W'}=$db0_line{'perm_W'};
 		$item{'perm_X'}=$db0_line{'perm_X'};
+		$item{'perm_1'}=$db0_line{'perm_1'};
+		$item{'perm_2'}=$db0_line{'perm_2'};
+		$item{'perm_3'}=$db0_line{'perm_3'};
+		$item{'perm_4'}=$db0_line{'perm_4'};
 		$item{'status'}=$db0_line{'status'};
 		$item{'override'}=$db0_line{'perm_roles_override'};
 		$item{'name'}=$db0_line{'login'};
@@ -1369,6 +1373,10 @@ sub ACL_user_update
 		$columns{'perm_R'} = "'".$env{'perm_R'}."'" if $env{'perm_R'};
 		$columns{'perm_W'} = "'".$env{'perm_W'}."'" if $env{'perm_W'};
 		$columns{'perm_X'} = "'".$env{'perm_X'}."'" if $env{'perm_X'};
+		$columns{'perm_1'} = "'".$env{'perm_1'}."'" if $env{'perm_1'};
+		$columns{'perm_2'} = "'".$env{'perm_2'}."'" if $env{'perm_2'};
+		$columns{'perm_3'} = "'".$env{'perm_3'}."'" if $env{'perm_3'};
+		$columns{'perm_4'} = "'".$env{'perm_4'}."'" if $env{'perm_4'};
 		$columns{'roles'} = "'".$env{'roles'}."'" if exists $env{'roles'};
 		App::020::SQL::functions::update(
 			'ID' => $db0_line{'ID'},

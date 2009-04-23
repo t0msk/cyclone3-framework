@@ -408,6 +408,10 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user` ( -- table is stored where addon
   `perm_R` char(1) character set ascii NOT NULL default 'N',
   `perm_W` char(1) character set ascii NOT NULL default 'N',
   `perm_X` char(1) character set ascii NOT NULL default 'N',
+  `perm_1` char(1) character set ascii NOT NULL default 'N',
+  `perm_2` char(1) character set ascii NOT NULL default 'N',
+  `perm_3` char(1) character set ascii NOT NULL default 'N',
+  `perm_4` char(1) character set ascii NOT NULL default 'N',
   `perm_roles_override` blob,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -429,6 +433,10 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_j` (
   `perm_R` char(1) character set ascii NOT NULL default 'N',
   `perm_W` char(1) character set ascii NOT NULL default 'N',
   `perm_X` char(1) character set ascii NOT NULL default 'N',
+  `perm_1` char(1) character set ascii NOT NULL default 'N',
+  `perm_2` char(1) character set ascii NOT NULL default 'N',
+  `perm_3` char(1) character set ascii NOT NULL default 'N',
+  `perm_4` char(1) character set ascii NOT NULL default 'N',
   `perm_roles_override` blob,
   `status` char(1) character set ascii NOT NULL default 'Y'
 ) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
