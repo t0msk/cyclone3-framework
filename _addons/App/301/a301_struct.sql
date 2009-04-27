@@ -393,6 +393,74 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_rel_group_l` (
   KEY `ID_user` (`ID_user`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+
+-- --------------------------------------------------
+-- db_name=TOM
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_contact_cat` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `hostname` varchar(64) character set ascii NOT NULL default '',
+  `datetime_create` datetime NOT NULL,
+  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
+  KEY `name` (`name`),
+  KEY `lng` (`lng`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+-- db_name=TOM
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_contact_cat_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `hostname` varchar(64) character set ascii NOT NULL default '',
+  `datetime_create` datetime NOT NULL,
+  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+-- db_name=TOM
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_contact_rel_cat` (
+  `ID_category` bigint(20) unsigned NOT NULL auto_increment, -- rel _contact_cat.ID
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
+  PRIMARY KEY  (`ID_category`,`ID_user`),
+  KEY `ID_user` (`ID_user`),
+  KEY `ID_category` (`ID_category`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+-- db_name=TOM
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_contact_rel_cat_l` (
+  `datetime_event` datetime NOT NULL default '0000-00-00 00:00:00',
+  `ID_category` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `action` char(1) character set ascii NOT NULL default 'A', -- A (added)/R (removed)
+  KEY `SEL_0` (`ID_user`,`datetime_event`),
+  KEY `datetime_event` (`datetime_event`),
+  KEY `ID_category` (`ID_category`),
+  KEY `ID_user` (`ID_user`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
 -- --------------------------------------------------------
 -- db_name=local
 
