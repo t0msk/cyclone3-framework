@@ -122,6 +122,9 @@ sub move_up
 		main::_log("input '$_'='$env{$_}'");
 	}
 	
+	# extend WHERE
+	$env{'where'}="AND ".$env{'where'} if $env{'where'};
+	
 	# vyberiem si tento zaznam z databazy
 	my %data=App::020::SQL::functions::get_ID(
 		'db_h' => $env{'db_h'},
@@ -163,6 +166,7 @@ sub move_up
 			AND ID_charindex LIKE '$ID_charindex_\___'
 			AND status IN ('Y','N','L')
 			$where_lng
+			$env{'where'}
 		ORDER BY
 			ID_charindex DESC
 		LIMIT 1
@@ -214,6 +218,9 @@ sub move_down
 		main::_log("input '$_'='$env{$_}'");
 	}
 	
+	# extend WHERE
+	$env{'where'}="AND ".$env{'where'} if $env{'where'};
+	
 	# vyberiem si tento zaznam z databazy
 	my %data=App::020::SQL::functions::get_ID(
 		'db_h' => $env{'db_h'},
@@ -255,6 +262,7 @@ sub move_down
 			AND ID_charindex LIKE '$ID_charindex_\___'
 			AND status IN ('Y','N','L')
 			$where_lng
+			$env{'where'}
 		ORDER BY
 			ID_charindex ASC
 		LIMIT 1
