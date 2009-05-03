@@ -312,6 +312,8 @@ sub user_add
 			if (exists $env{'user_profile.name_suffix'} && ($env{'user_profile.name_suffix'} ne $user_profile{'name_suffix'}));
 		$columns{'date_birth'}="'".TOM::Security::form::sql_escape($env{'user_profile.date_birth'})."'"
 			if ($env{'user_profile.date_birth'} && ($env{'user_profile.date_birth'} ne $user_profile{'date_birth'}));
+		$columns{'birth_country_code'}="'".TOM::Security::form::sql_escape($env{'user_profile.birth_country_code'})."'"
+			if (exists $env{'user_profile.birth_country_code'} && ($env{'user_profile.birth_country_code'} ne $user_profile{'birth_country_code'}));
 		$columns{'PIN'}="'".TOM::Security::form::sql_escape($env{'user_profile.PIN'})."'"
 			if ($env{'user_profile.PIN'} && ($env{'user_profile.PIN'} ne $user_profile{'PIN'}));
 		
