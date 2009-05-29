@@ -109,27 +109,26 @@ sub execute
 				
 				$main::USRM{'logged'}="Y";
 				# just empty
-				foreach (keys %main::COOKIES){next if $_ eq "key";$main::COOKIES{$_}=""}; 
-				$main::USRM{'ID_session'}=$main::COOKIES{'_ID_session'}=TOM::Utils::vars::genhash(32);
-				$main::COOKIES{'_ID_user'}=$main::USRM{'ID_user'};
-				
-				$main::USRM{'cookies'}=$main::USRM{'saved_cookies'};
-				$main::USRM{'session'}=$main::USRM{'saved_session'};
+				foreach (keys %main::COOKIES){next if $_ eq "key";$main::COOKIES{$_}=""};
 				
 				main::_log("login and pass equals, logging again",undef,2);
+				
+				# enter into authorized session
+				$main::USRM{'ID_session'}=$main::COOKIES{'_ID_session'}=$user{'ID_session'};
+				
+				$main::COOKIES{'_ID_user'}=$main::USRM{'ID_user'};
+				$main::USRM{'cookies'}=$user{'saved_cookies'};
+				$main::USRM{'session'}=$user{'saved_session'}; # use session variables from authorized session
 				
 				TOM::Database::SQL::execute(qq{
 					UPDATE
 						TOM.a301_user_online
 					SET
-						ID_session='$main::USRM{'ID_session'}',
 						domain='$tom::H',
 						logged='Y',
 						datetime_request=FROM_UNIXTIME($main::time_current),
 						IP='$main::ENV{'REMOTE_ADDR'}',
 						user_agent='$main::ENV{'HTTP_USER_AGENT'}',
-						cookies='$main::USRM{'saved_cookies'}',
-						session='$main::USRM{'saved_session'}',
 						status='Y'
 					WHERE
 						ID_user='$main::COOKIES{'_ID_user'}'
