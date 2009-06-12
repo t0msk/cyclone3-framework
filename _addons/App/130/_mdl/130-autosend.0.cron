@@ -35,6 +35,36 @@ sub execute
 	my $lock=new TOM::lock("a130 - autosend") || return 1;
 	
 	my $emails;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			COUNT(ID)
+		FROM
+			TOM.a130_send
+		WHERE
+			sendtime<$main::time_current AND
+			active='N' AND
+			priority>-120 $var
+	},'quiet'=>1);
+	main::_log("$sth0{'rows'} mails in queue (max $env{'max'})");
+	if (!$sth0{'rows'})
+	{
+		$lock->close();
+		return 1;
+	}
+	
+	my $sql_order;
+	if ($sth0{'rows'} > $env{'max'})
+	{
+		$sql_order=qq{
+		ORDER BY
+			priority DESC,
+			sendtime
+		LIMIT
+			$env{'max'}
+		};
+	}
+	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			*
@@ -44,13 +74,9 @@ sub execute
 			sendtime<$main::time_current AND
 			active='N' AND
 			priority>-120 $var
-		ORDER BY
-			priority DESC,
-			sendtime
-		LIMIT
-			$env{'max'}
-	},'quiet'=>1);
-	main::_log("$sth0{'rows'} mails in queue (max $env{'max'})");
+		$sql_order
+	},'log'=>1);
+#	main::_log("$sth0{'rows'} mails in queue (max $env{'max'})");
 	while (my %env0=$sth0{'sth'}->fetchhash)
 	{
 		$emails++;
