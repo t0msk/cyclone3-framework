@@ -163,7 +163,8 @@ eval
 			$data.=$line;
 		}
 		TOM::Net::URI::rewrite::get($data);close(KEY);$tom::rewrite=1;#$/="\n";
-		$url_regexp=qr'(http[s]?:\/\/[a-zA-Z0-9\-\/\._:]{0,150}|)\?\|\?(.*?)(["\'#])';
+#		$url_regexp=qr'(http[s]?:\/\/[a-zA-Z0-9\-\/\._:]{0,150}|)\?\|\?(.*?)(["\'#])';
+		$url_regexp=qr'(.)\?\|\?(.*?)(["\'#])';
 		$tom::rewrite_time=time;
 	}
 	else
@@ -223,7 +224,7 @@ $t_domain->close;
 ######################################################################################
 ######################################################################################
 
-
+my %url_cache;
 #my $req=FCGI::Request();
 main::_log("START FCGI PID:$$ domain:$tom::H",3,"pub.mng",1);
 
@@ -1878,8 +1879,6 @@ while ($main::CGI=new CGI::Fast())
 		{
 			last if $main::action eq "stop";
 			
-			my $t_module=track TOM::Debug('module');
-			
 			my $data=$1;
 			
 			# tu som pridal novu konverziu :)
@@ -1904,9 +1903,11 @@ while ($main::CGI=new CGI::Fast())
 				(($ITst)&&($mdl_env{-ITst}==-1))
 			)
 			{
-				$t_module->close();
+#				$t_module->close();
 				next;
 			}
+			
+			my $t_module=track TOM::Debug('module','attrs'=>$mdl_env{'-type'}.':'.$mdl_env{'-category'}.'-'.$mdl_env{'-name'}.' TMP:'.$mdl_env{'-TMP'},'timer'=>1);
 			
 			$mdl_env{-type}=~/^mdl/ && do
 			{
@@ -2131,7 +2132,7 @@ while ($main::CGI=new CGI::Fast())
 		# AUTOMATICKA ZAMENA LINKOV
 		# CHCELO BY TO TROCHU DOLADIT!!!! RYCHLEJSI ALGORITMUS!!!
 		my $link;
-		my $hash=Utils::vars::genhash(8);
+		my $hash=Utils::vars::genhash(3);
 		
 		if (!$tom::rewrite)
 		{
@@ -2139,14 +2140,16 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		my $debug_url=0;
-		my %url_cache=();
+		my $url_cache_enabled=0;
+#		my %url_cache=();
 		
-		
-		while ($H->{OUT}{BODY}=~s/$url_regexp/<!TMP-$hash!>/)
+		my %pp=TOM::Net::HTTP::CGI::get_QUERY_STRING($main::ENV{'QUERY_STRING_FULL'},'quiet'=>1);
+		while ($H->{OUT}{BODY}=~s/$url_regexp/URL$hash/)
 		{
 			$url_count++;
 			my $t_link=track TOM::Debug("URL '$url_count'") if $debug_url;
 			
+			my $www_pre;
 			my $www;
 			my $var;
 			my $end;
@@ -2154,10 +2157,14 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($tom::rewrite)
 			{
-				$www=$1 || $tom::H_www;
+#				$www=$1 || $tom::H_www;
+#				$www=$tom::H_www;
+				$www_pre=$1; # ked je www_pre='/', tak to znamena ze linkujem na iny portal
+				$www=$www_pre.$tom::H_www;
+				$www='' if $www_pre eq "/";
 				$var=$2;
 				$end=$3;
-				main::_log("URL www='$1' var='$2' end='$3'") if $debug_url;
+				main::_log("URL www='$www' var='$var' end='$end'") if $debug_url;
 				$prefix=$www."/";$prefix=~s|//$|/|g;
 			}
 			else
@@ -2170,12 +2177,11 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("URL '$prefix' '$var' '$end'") if $debug_url;
 			
 			my $cache_key="$prefix".'/'."$var";
-			if ($url_cache{$cache_key} && not $cache_key=~/\|$/)
+			if ($url_cache{$cache_key} && not $var=~/^\|/)
 			{
 				main::_log("URL cached for key '$cache_key'") if $debug_url;
 				main::_log("output URL '$url_cache{$cache_key}$end'") if $debug_url;
-				#main::_log("URL '$url_cache{$cache_key}$end'") unless $debug_url;
-				$H->{'OUT'}{'BODY'}=~s/<!TMP-$hash!>/$url_cache{$cache_key}$end/;
+				$H->{'OUT'}{'BODY'}=~s/URL$hash/$url_cache{$cache_key}$end/;
 				$t_link->close() if $debug_url;
 				next;
 			}
@@ -2195,7 +2201,7 @@ while ($main::CGI=new CGI::Fast())
 			if ($var=~s/^\|//)
 			{
 				main::_log("first pipe, adding QUERY_STRING_FULL") if $debug_url;
-				my %pp=TOM::Net::HTTP::CGI::get_QUERY_STRING($main::ENV{'QUERY_STRING_FULL'});
+#				my %pp=TOM::Net::HTTP::CGI::get_QUERY_STRING($main::ENV{'QUERY_STRING_FULL'},'quiet'=>1);
 				foreach my $cc (keys %pp)
 				{
 					$form{$cc}=$pp{$cc};
@@ -2289,22 +2295,18 @@ while ($main::CGI=new CGI::Fast())
 							'$tom::time_current'
 						)
 					");
-					#TOM::Net::URI::URL::url_decode_($prefix);
 					main::_log("output URL '$prefix?__$link_md5$end'") if $debug_url;
-#					main::_log("URL '$prefix?__$link_md5$end'") unless $debug_url;
-					#$url_cache{$cache_key}="$prefix?__$link_md5";
-					$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?__$link_md5$end/;
+					$url_cache{$cache_key}="$prefix?__$link_md5" if $url_cache_enabled;
+					$H->{OUT}{BODY}=~s/URL$hash/$prefix?__$link_md5$end/;
 				}
 				else  # klasicke kodovanie
 				{
 					# tomu http://null/ uz vobec nerozumiem
 					$prefix="" if ($prefix eq "http://null/");
 					my $link_hash=TOM::Net::URI::URL::hash_encode($var);
-					#TOM::Net::URI::URL::url_decode_($prefix);
 					main::_log("output URL '$prefix?$link_hash$end'") if $debug_url;
-#					main::_log("URL '$prefix?$link_hash$end'") unless $debug_url;
-					#$url_cache{$cache_key}="$prefix?$link_hash";
-					$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?$link_hash$end/;
+					$url_cache{$cache_key}="$prefix?$link_hash" if $url_cache_enabled;
+					$H->{OUT}{BODY}=~s/URL$hash/$prefix?$link_hash$end/;
 				}
 				$t_link->close() if $debug_url;
 				next;
@@ -2316,23 +2318,18 @@ while ($main::CGI=new CGI::Fast())
 			# v HTML kode ako &amp; (je to tak podla standardov)
 			$var=~s|&|&amp;|g unless $TOM::type_code;
 			$prefix="" if ($prefix eq "http://null/");
-			#main::_log("prefix='$prefix' var='$var'",4,"spec");
-			#TOM::Net::URI::URL::url_decode_($prefix);
 			
 			if ($tom::rewrite && !$var) # nechcem zbytocne vypisovat ?
 			{
 				main::_log("output URL '$prefix$end'") if $debug_url;
-#				main::_log("URL '$prefix$end'") unless $debug_url;
-				#$url_cache{$cache_key}="$prefix";
-				$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix$end/;
+				$url_cache{$cache_key}="$prefix" if $url_cache_enabled;
+				$H->{OUT}{BODY}=~s/URL$hash/$prefix$end/;
 			}
 			else
 			{
 				main::_log("output URL '$prefix?$var$end'") if $debug_url;
-#				main::_log("URL '$prefix?$var$end'") unless $debug_url;
-				#$url_cache{$cache_key}="$prefix?$hash";
-				#main::_log("caching $cache_key = $url_cache{$cache_key}");
-				$H->{OUT}{BODY}=~s/<!TMP-$hash!>/$prefix?$var$end/;
+				$url_cache{$cache_key}="$prefix?$var" if $url_cache_enabled;
+				$H->{OUT}{BODY}=~s/URL$hash/$prefix?$var$end/;
 			}
 			
 			$t_link->close() if $debug_url;
