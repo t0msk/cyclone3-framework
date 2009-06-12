@@ -251,7 +251,15 @@ sub track
 	$self->{'quiet'}=$env{'quiet'} if $env{'quiet'};
 	$self->{'timer'}=$env{'timer'} if $env{'timer'};
 	
-	main::_log("<$self->{name}>") unless $self->{'quiet'};
+	if ($env{'attrs'})
+	{
+		main::_log("<$self->{name} $env{'attrs'}>") unless $self->{'quiet'};
+	}
+	else
+	{
+		main::_log("<$self->{name}>") unless $self->{'quiet'};
+	}
+#	$self->{'name'}=~s|^(.*?) (.*)$|$1|;
 	
 	$track_level++;# unless $self->{'quiet'};
 	$self->{'level'}=$track_level;
