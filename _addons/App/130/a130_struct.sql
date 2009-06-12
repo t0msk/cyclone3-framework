@@ -45,7 +45,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_send` (
   `active` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   KEY `ID_md5` (`ID_md5`),
-  KEY `SEL_0` (`sendtime`,`active`)
+  KEY `SEL_0` (`sendtime`,`active`),
+  KEY `SEL_1` (`active`,`priority`,`sendtime`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
