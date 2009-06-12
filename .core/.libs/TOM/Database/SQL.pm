@@ -20,7 +20,7 @@ use TOM::Database::SQL::cache;
 
 our $debug=0;
 our $logcachequery=0;
-our $logquery=1;
+our $logquery=0;
 our $logquery_long=2;
 our $query_long_autocache=0.01; # less availability than Memcached
 
@@ -215,7 +215,7 @@ sub execute
 	if ($TOM::DB{$env{'db_h'}}{'type'} eq "DBI")
 	{
 		$output{'type'} = "DBI";
-		$output{'sth'} = $main::DB{$env{'db_h'}}->prepare($SQL);
+		$output{'sth'} = $main::DB{$env{'db_h'}}->prepare($SQL,{'ora_auto_lob'=>0});
 		#$output{'err'} = $DBI::errstr unless $output{'sth'};
 		$output{'err'}=$main::DB{$env{'db_h'}}->errstr();
 		
