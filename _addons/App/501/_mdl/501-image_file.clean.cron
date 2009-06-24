@@ -1,0 +1,267 @@
+#!/usr/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+501-image_file.clean.cron
+
+=cut
+
+=head1 DESCRIPTION
+
+Automatically cleans from disk all trashed and old journaled image_file items.
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::501::_init|app/"501/_init.pm">
+
+=back
+
+=cut
+
+use App::501::_init;
+
+
+
+=head1 INPUTS
+
+
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	
+	# Check
+	if (!$tom::addons{'a501'} || ($TOM::DB{'main'}{'name'} ne $App::501::db_name))
+	{main::_log("not enabled, or set for another domain service");return 1;}
+	
+	my $delete=1;
+	alarm(0);
+	
+	my $sql=qq{
+		SELECT
+			ID,
+			ID_entity
+		FROM
+			`$App::501::db_name`.a501_image_ent
+--		WHERE ID_entity=6211
+		ORDER BY
+			ID_entity ASC
+--		LIMIT 1000
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	my $i;
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		main::_log("[$i/$sth0{'rows'}] image $db0_line{'ID_entity'}");
+		
+		# try to find any functional (not trashed) link
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				image.ID
+			FROM
+				`$App::501::db_name`.a501_image AS image
+			INNER JOIN `$App::501::db_name`.a501_image_attrs AS attrs ON
+			(
+				attrs.ID_entity=image.ID AND
+				attrs.status != 'T'
+			)
+			WHERE
+				image.ID_entity=$db0_line{'ID_entity'}
+			ORDER BY
+				image.ID
+		},'quiet'=>1);
+		next if $sth1{'rows'};
+		main::_log(" ready to delete!");
+		next unless $delete;
+		# remove files!
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				*,
+				CONCAT(ID_format,'/',SUBSTR(ID,1,4),'/',name,'.',file_ext) AS file_path
+			FROM
+				`$App::501::db_name`.a501_image_file
+			WHERE
+				ID_entity=$db0_line{'ID_entity'}
+			ORDER BY
+				ID
+		},'quiet'=>1);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			my $filename=$tom::P.'/!media/a501/image/file/'.$db1_line{'file_path'};
+			main::_log(" remove file '$db1_line{'ID'}' '$filename' size=$db1_line{'file_size'}");
+			if (! -e $filename){main::_log("file already not exists!",1);}
+			else {unlink $filename;}
+			# to trash
+			App::020::SQL::functions::to_trash
+			(
+				'ID' => $db1_line{'ID'},
+				'db_h' => 'main',
+				'db_name' => $App::501::db_name,
+				'tb_name' => 'a501_image_file',
+				'-journalize' => 1,
+			);
+			# delete from trash
+			App::020::SQL::functions::trash_delete
+			(
+				'ID' => $db1_line{'ID'},
+				'db_h' => 'main',
+				'db_name' => $App::501::db_name,
+				'tb_name' => 'a501_image_file',
+				'-journalize' => 1,
+			);
+		}
+		
+		# remove attrs!
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				ID
+			FROM
+				`$App::501::db_name`.a501_image_attrs
+			WHERE
+				ID_entity=$db0_line{'ID_entity'}
+			ORDER BY
+				ID
+		},'quiet'=>1);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			main::_log(" remove attrs '$db1_line{'ID'}'");
+			# to trash
+			App::020::SQL::functions::to_trash
+			(
+				'ID' => $db1_line{'ID'},
+				'db_h' => 'main',
+				'db_name' => $App::501::db_name,
+				'tb_name' => 'a501_image_attrs',
+				'-journalize' => 1,
+			);
+			# delete from trash
+			App::020::SQL::functions::trash_delete
+			(
+				'ID' => $db1_line{'ID'},
+				'db_h' => 'main',
+				'db_name' => $App::501::db_name,
+				'tb_name' => 'a501_image_attrs',
+				'-journalize' => 1,
+			);
+		}
+		
+		# remove image_emo
+		my %sth1=TOM::Database::SQL::execute(qq{
+			DELETE
+			FROM
+				`$App::501::db_name`.a501_image_emo
+			WHERE
+				ID_entity=$db0_line{'ID_entity'}
+		},'quiet'=>1);
+		
+		# remove image_emo_vote
+		my %sth1=TOM::Database::SQL::execute(qq{
+			DELETE
+			FROM
+				`$App::501::db_name`.a501_image_emo_vote
+			WHERE
+				ID_image=$db0_line{'ID_entity'}
+		},'quiet'=>1);
+		
+		# remove image_visit
+		my %sth1=TOM::Database::SQL::execute(qq{
+			DELETE
+			FROM
+				`$App::501::db_name`.a501_image_visit
+			WHERE
+				ID_image=$db0_line{'ID_entity'}
+		},'quiet'=>1);
+		
+		# remove image_rating_vote
+		my %sth1=TOM::Database::SQL::execute(qq{
+			DELETE
+			FROM
+				`$App::501::db_name`.a501_image_rating_vote
+			WHERE
+				ID_image=$db0_line{'ID_entity'}
+		},'quiet'=>1);
+		
+		# remove image
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				ID
+			FROM
+				`$App::501::db_name`.a501_image
+			WHERE
+				ID_entity=$db0_line{'ID_entity'}
+			ORDER BY
+				ID
+		},'quiet'=>1);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			main::_log(" remove image '$db1_line{'ID'}'");
+			# to trash
+			App::020::SQL::functions::to_trash
+			(
+				'ID' => $db1_line{'ID'},
+				'db_h' => 'main',
+				'db_name' => $App::501::db_name,
+				'tb_name' => 'a501_image',
+				'-journalize' => 1,
+			);
+			# delete from trash
+			App::020::SQL::functions::trash_delete
+			(
+				'ID' => $db1_line{'ID'},
+				'db_h' => 'main',
+				'db_name' => $App::501::db_name,
+				'tb_name' => 'a501_image',
+				'-journalize' => 1,
+			);
+		}
+		
+		# remove image_ent
+		main::_log(" remove image_ent '$db0_line{'ID'}'");
+		# to trash
+		App::020::SQL::functions::to_trash
+		(
+			'ID' => $db0_line{'ID'},
+			'db_h' => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image_ent',
+			'-journalize' => 1,
+		);
+		# delete from trash
+		App::020::SQL::functions::trash_delete
+		(
+			'ID' => $db0_line{'ID'},
+			'db_h' => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image_ent',
+			'-journalize' => 1,
+		);
+		
+		
+	}
+	
+	return 1
+}
+
+
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
