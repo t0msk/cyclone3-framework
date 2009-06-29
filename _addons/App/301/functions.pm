@@ -413,6 +413,8 @@ sub user_add
 			exists $env{'user.login'} ||
 			exists $env{'user.pass'} ||
 			exists $env{'user.email'} ||
+			exists $env{'user.saved_cookies'} ||
+			exists $env{'user.saved_session'} ||
 			$env{'user.status'} ||
 			$env{'user.email_verified'}
 		)
@@ -437,6 +439,12 @@ sub user_add
 		# email_verified
 		$set.=",email_verified='$env{'user.email_verified'}'"
 			if $env{'user.email_verified'};
+		# saved_cookies
+		$set.=",saved_cookies='".TOM::Security::form::sql_escape($env{'user.saved_cookies'})."'"
+			if exists $env{'user.saved_cookies'};
+		# saved_session
+		$set.=",saved_session='".TOM::Security::form::sql_escape($env{'user.saved_session'})."'"
+			if exists $env{'user.saved_session'};
 		# status
 		$set.=",status='$env{'user.status'}'"
 			if $env{'user.status'};
