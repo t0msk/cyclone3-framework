@@ -474,7 +474,9 @@ sub file_add
 		# name_ext
 		($env{'file_attrs.name_ext'} && ($env{'file_attrs.name_ext'} ne $file_attrs{'name_ext'})) ||
 		# ID_category
-		($env{'file_attrs.ID_category'} && ($env{'file_attrs.ID_category'} ne $file_attrs{'ID_category'}))
+		($env{'file_attrs.ID_category'} && ($env{'file_attrs.ID_category'} ne $file_attrs{'ID_category'})) ||
+		# status
+		($env{'file_attrs.status'} && ($env{'file_attrs.status'} ne $file_attrs{'status'}))
 	))
 	{
 		my %columns;
@@ -491,6 +493,9 @@ sub file_add
 		# ID_category
 		$columns{'ID_category'}="'".TOM::Security::form::sql_escape($env{'file_attrs.ID_category'})."'"
 			if ($env{'file_attrs.ID_category'} && ($env{'file_attrs.ID_category'} ne $file_attrs{'ID_category'}));
+		# status
+		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'file_attrs.status'})."'"
+			if ($env{'file_attrs.status'} && ($env{'file_attrs.status'} ne $file_attrs{'status'}));
 		
 		App::020::SQL::functions::update(
 			'ID' => $file_attrs{'ID'},
