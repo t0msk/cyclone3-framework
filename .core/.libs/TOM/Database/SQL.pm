@@ -224,7 +224,7 @@ sub execute
 			if ($output{'err'})
 			{
 				my ($package, $filename, $line) = caller;
-				main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
+				main::_log("SQL: err=".$output{'err'},1);# unless $env{'quiet'};
 				main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
 				main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
 			}
@@ -249,7 +249,7 @@ sub execute
 			if ($output{'err'})
 			{
 				my ($package, $filename, $line) = caller;
-				main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
+				main::_log("SQL: err=".$output{'err'},1);# unless $env{'quiet'};
 				main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
 				main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
 			}
@@ -264,12 +264,16 @@ sub execute
 	# error in output
 	if ($output{'err'})
 	{
-		main::_log("output errmsg=".$output{'err'},1) unless $env{'quiet'};
+		main::_log("SQL: err=".$output{'err'},1);# unless $env{'quiet'};
 		main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
 		main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1);
 	}
-	main::_log("output affectedrows=".$output{'rows'}) unless $env{'quiet'};
-	main::_log("output info=".$output{'info'}) unless $env{'quiet'};
+	
+	if ($TOM::DB{$env{'db_h'}}{'type'} ne "DBI")
+	{
+		main::_log("output affectedrows=".$output{'rows'}) unless $env{'quiet'};
+		main::_log("output info=".$output{'info'}) unless $env{'quiet'};
+	}
 	
 	$t->close();
 	
