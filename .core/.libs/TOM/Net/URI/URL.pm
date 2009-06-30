@@ -174,7 +174,7 @@ sub genGET
 		next if $_ eq "multipart";
 		next if $_=~/_file$/;
 		
-		next unless $form{$_};
+		next if (!$form{$_} && $form{$_} ne "0");
 		next if length($form{$_})>1024;
 		$GET.="$_=".url_encode($form{$_})."&";
 	}
