@@ -444,8 +444,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contact_rel_cat` (
   `ID_category` bigint(20) unsigned NOT NULL auto_increment, -- rel _contact_cat.ID
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   PRIMARY KEY  (`ID_category`,`ID_user`),
-  KEY `ID_user` (`ID_user`),
-  KEY `ID_category` (`ID_category`)
+  KEY `ID_user` (`ID_user`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
