@@ -175,7 +175,7 @@ sub execute
 		LIMIT 1
 	};
 
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 #		$XSGN{'TMP'}.="<!-- changed:$db0_line{'datetime_create'} -->";
