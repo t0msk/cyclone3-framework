@@ -128,7 +128,6 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_rqs` (
   `active` char(1) character set ascii NOT NULL default 'N',
   KEY `reqdatetime` (`reqdatetime`),
   KEY `domain` (`domain`),
-  KEY `domain_sub` (`domain_sub`),
   KEY `query_TID` (`query_TID`),
   KEY `page_code` (`page_code`),
   KEY `active` (`active`),
@@ -141,7 +140,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_rqs` (
   KEY `HTTP_unique_ID` (`HTTP_unique_ID`),
   KEY `USRM_flag` (`USRM_flag`),
   KEY `lng` (`lng`),
-  KEY `result` (`result`)
+  KEY `result` (`result`),
+  KEY `SEL_0` (`domain_sub`,`reqdatetime`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
