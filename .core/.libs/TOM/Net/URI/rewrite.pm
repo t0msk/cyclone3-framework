@@ -261,7 +261,8 @@ sub parse_hash
 			else
 			{
 				main::_log("[$rule] proc key '$kluc' requested any value") if $debug;
-				if (defined $hash->{$kluc})
+#				if (defined $hash->{$kluc})
+				if ($hash->{$kluc})
 				{
 					next;
 				}
