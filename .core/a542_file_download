@@ -14,16 +14,17 @@ use utf8; # encode = fromutf8, decode=toutf8
 use strict; # scrict code
 use CGI::Fast qw(:standard);
 
+our $sig_term=1;
+
 use enc3;
 use iconv;
 
-my $t=track TOM::Debug("TOM engine '$TOM::engine' initializing...");
-
-use TOM::Database::connect;
-use TOM::Database::SQL;
-use TOM::Net::HTTP::CGI;
-
-$t->close();
+eval
+{
+	my $t=track TOM::Debug('requiring TOM::Engine::download');
+	require TOM::Engine::download;
+	$t->close();
+};
 
 my $t_domain=track TOM::Debug("Domain initialization");
 eval
@@ -48,55 +49,81 @@ $t_domain->close;
 our $CGI;
 while ($main::CGI=new CGI::Fast())
 {
-	
-	my %FORM=TOM::Net::HTTP::CGI::get_QUERY_STRING($ENV{'QUERY_STRING'});
-	
-	main::_log("request for ID='$FORM{'ID'}' hash='$FORM{'hash'}'");
-	
-	my $sql=qq{
-		SELECT
-			*
-		FROM
-			$App::542::db_name.a542_file_view
-		WHERE
-			ID_entity_file='$FORM{'ID'}' AND
-			hash_secure='$FORM{'hash'}'
-		LIMIT 1;
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'-slave'=>1);
-	if ($sth0{'rows'})
+	alarm($TOM::fcgi_timeout); # zacnem pocitat X sekund kym nezbehne request
+	local $sig_term=0; # ignorujem TERM pocas behu requestu, povoleny je len pocas cakania na dalsi request
+	eval
 	{
-		my %db0_line=$sth0{'sth'}->fetchhash();
+		main::_log("redirecting SIG{ALRM} to die");
+		local $SIG{'ALRM'} = sub {die "Timed out during page sending! limit $TOM::ALRM sec.\n"};
 		
-		main::_log("path='$tom::H_a542/file/item/$db0_line{'file_path'}'");
-		print "Location: $tom::H_a542/file/item/$db0_line{'file_path'}\n\n";
+		my %FORM=TOM::Net::HTTP::CGI::get_QUERY_STRING($ENV{'QUERY_STRING'});
+		
+		main::_log("request for ID='$FORM{'ID'}' hash='$FORM{'hash'}'");
 		
 		my $sql=qq{
-			INSERT DELAYED INTO $App::542::db_name.a542_file_download
-			(
-				datetime_event,
-				ID_file,
-				ID_user
-			)
-			VALUES
-			(
-				NOW(),
-				$db0_line{'ID_entity_file'},
-				''
-			)
+			SELECT
+				*
+			FROM
+				$App::542::db_name.a542_file_view
+			WHERE
+				ID_entity_file='$FORM{'ID'}' AND
+				hash_secure='$FORM{'hash'}'
+			LIMIT 1;
 		};
-		
-		TOM::Database::SQL::execute($sql,'db_h'=>'stats');
-		
-	}
-	else
+		my %sth0=TOM::Database::SQL::execute($sql,'-slave'=>1);
+		if ($sth0{'rows'})
+		{
+			my %db0_line=$sth0{'sth'}->fetchhash();
+			
+			main::_log("path='$tom::H_a542/file/item/$db0_line{'file_path'}'");
+			print "Location: $tom::H_a542/file/item/$db0_line{'file_path'}\n\n";
+			
+			my $sql=qq{
+				INSERT DELAYED INTO $App::542::db_name.a542_file_download
+				(
+					datetime_event,
+					ID_file,
+					ID_user
+				)
+				VALUES
+				(
+					NOW(),
+					$db0_line{'ID_entity_file'},
+					''
+				)
+			};
+			
+			TOM::Database::SQL::execute($sql,'db_h'=>'stats');
+			
+		}
+		else
+		{
+			print "Status: 404 Not Found\n";
+			print "Content-Type: text/html; charset=UTF-8\n";
+			print "\n";
+			
+			print "<HTML><HEAD></HEAD><BODY><H1>404 Not Found</H1></BODY></HTML>\n";
+		}
+	};
+	
+	if ($@)
 	{
-		print "Status: 404 Not Found\n";
-		print "Content-Type: text/html; charset=UTF-8\n";
-		print "\n";
-		
-		print "<HTML><HEAD></HEAD><BODY><H1>404 Not Found</H1></BODY></HTML>\n";
+		my @ERR=("Error occured during request execution");
+		push @ERR,$@;
+		TOM::Error::engine(@ERR);
 	}
 	
+	if (
+			($tom::HUP) ||
+			($tom::HUP == 2)
+		)
+	{
+#		main::_log("SHUTDOWN (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
+#		Tomahawk::shutdown();
+		exit;
+	}
+	
+	POSIX::sigaction(&POSIX::SIGALRM, $TOM::Engine::pub::SIG::action_exit);
+	alarm($TOM::fcgi_timeout);
 }
 
