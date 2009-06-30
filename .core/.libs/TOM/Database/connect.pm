@@ -59,7 +59,7 @@ sub all
 		die "Connection to MySQL database not established: ".Mysql->errmsg()."\n";
 	}
 	
-	$main::DB{'main'}->{'dbh'}->{'mysql_auto_reconnect'}=0;
+	$main::DB{'main'}->{'dbh'}->{'mysql_auto_reconnect'}=$TOM::DB_mysql_auto_reconnect;
 	$main::DB{'main'}->{'dbh'}->{'mysql_enable_utf8'} = 1;
 	#$self->{_dbh}->{mysql_enable_utf8} = 1;
 	
@@ -161,7 +161,7 @@ sub multi
 				die "Connection to MySQL database not established: ".Mysql->errmsg()."\n";
 			}
 			
-			$main::DB{$handler}->{'dbh'}->{'mysql_auto_reconnect'}=0;
+			$main::DB{$handler}->{'dbh'}->{'mysql_auto_reconnect'}=$TOM::DB_mysql_auto_reconnect;
 			$main::DB{$handler}->{'dbh'}->{'mysql_enable_utf8'} = 1;
 			
 			foreach my $sql(@{$TOM::DB{$handler}{'sql'}})
