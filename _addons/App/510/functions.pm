@@ -33,7 +33,7 @@ L<App::160::_init|app/"160/_init.pm">
 
 =item *
 
-L<App::541::mimetypes|app/"541/mimetypes.pm">
+L<App::542::mimetypes|app/"542/mimetypes.pm">
 
 =item *
 
@@ -61,13 +61,20 @@ Movie::Info
 
 use App::510::_init;
 use App::160::_init;
-use App::541::mimetypes;
+use App::542::mimetypes;
 use File::Path;
 use Digest::MD5  qw(md5 md5_hex md5_base64);
 use Digest::SHA1  qw(sha1 sha1_hex sha1_base64);
 use File::Type;
 use Movie::Info;
+use File::Which qw(where);
 
+
+our $ffmpeg_exec = (where('ffmpeg'))[0];main::_log("ffmpeg in '$ffmpeg_exec'");
+our $mencoder_exec = (where('mencoder'))[0];main::_log("mencoder in '$mencoder_exec'");
+our $mplayer_exec = (where('mplayer'))[0];main::_log("mplayer in '$mplayer_exec'");
+our $flvtool2_exec = (where('flvtool2'))[0];main::_log("flvtool2 in '$flvtool2_exec'");
+our $MP4Box_exec = (where('MP4Box'))[0];main::_log("MP4Box in '$MP4Box_exec'");
 
 
 =head1 FUNCTIONS
@@ -214,16 +221,16 @@ sub video_part_file_generate
 	main::_log("path to parent video_part_file='$video1_path'");
 	my $video2=new TOM::Temp::file('dir'=>$main::ENV{'TMP'});
 	
-	my $out=video_part_file_process(
+	my %out=video_part_file_process(
 		'video1' => $video1_path,
 		'video2' => $video2->{'filename'},
 		'process' => $env{'process'} || $format{'process'},
 		'definition' => $format{'definition'}
 	);
 	
-	main::_log("out=$out");
-		
-	if (!$out)
+	main::_log("return=$out{'return'}");
+	
+	if (!$out{'return'})
 	{
 		main::_log("parent video_part_file can't be processed",1);
 		
@@ -338,6 +345,7 @@ sub video_part_file_generate
 	video_part_file_add
 	(
 		'file' => $video2->{'filename'},
+		'ext' => $out{'ext'},
 		'video_part.ID' => $video_part{'ID'},
 		'video_format.ID' => $format{'ID'},
 		'from_parent' => "Y",
@@ -371,6 +379,7 @@ sub _video_part_file_genpath
 sub video_part_file_process
 {
 	my %env=@_;
+	my %outret;
 	my $t=track TOM::Debug(__PACKAGE__."::video_part_file_process()");
 	main::_log("video1='$env{'video1'}'");
 	main::_log("video2='$env{'video2'}'");
@@ -417,7 +426,8 @@ sub video_part_file_process
 		main::_log("copying the file...");
 		File::Copy::copy($env{'video1'}, $env{'video2'});
 		$t->close();
-		return 1;
+		$outret{'return'}=1;
+		return %outret;
 	}
 	
 	$env{'fps'}=$movie1_info{'fps'} if $movie1_info{'fps'};
@@ -482,10 +492,10 @@ sub video_part_file_process
 			
 			main::_log($env{'video1'}."->".$files[-1]->{'filename'});
 			
-			my $cmd='/usr/bin/mencoder '.$env{'video1'}.' -ovc x264 -af volnorm=1 -oac mp3lame -lameopts cbr:br=128 -o '.$files[-1]->{'filename'};
+			my $cmd=$mencoder_exec.' '.$env{'video1'}.' -ovc x264 -af volnorm=1 -oac mp3lame -lameopts cbr:br=128 -o '.$files[-1]->{'filename'};
 			main::_log("cmd=$cmd");
-			my $out=system("$cmd");main::_log("out=$out");
-			if ($out){$t->close();return undef}
+			$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
+			if ($outret{'return'}){$t->close();return %outret}
 			
 			$env{'video1'}=$files[-1]->{'filename'};
 			
@@ -592,6 +602,7 @@ sub video_part_file_process
 				if ($env{'qmax'}){push @encoder_env, '-qmax '.$env{'qmax'};}
 				if ($env{'qdiff'}){push @encoder_env, '-qdiff '.$env{'qdiff'};}
 				if ($env{'vcodec'}){push @encoder_env, '-vcodec '.$env{'vcodec'};}
+				if (exists $env{'threads'}){push @encoder_env, '-threads '.$env{'threads'};}
 				if ($env{'b'}){push @encoder_env, '-b '.$env{'b'};}
 				if ($env{'s_width'})
 					{$env{'s'}=$env{'s_width'}.'x'.(int($movie1_info{'height'}/($movie1_info{'width'}/$env{'s_width'})/2)*2);}
@@ -608,6 +619,8 @@ sub video_part_file_process
 				$ext='mp4' if $env{'f'} eq "mp4";
 				$ext='flv' if $env{'f'} eq "flv";
 			}
+			
+			$outret{'ext'}=$ext;
 			
 			my $temp_video;
 			if ($env{'pass'})
@@ -633,14 +646,15 @@ sub video_part_file_process
 			my $ff=$env{'video1'};
 			$ff=~s| |\\ |g;
 			my $cmd="/usr/bin/mencoder ".$ff." -o ".($env{'o'} || $temp_video->{'filename'});
-			$cmd="cd $main::ENV{'TMP'};/usr/bin/ffmpeg -y -i ".$ff if $env{'encoder'} eq "ffmpeg";
+			
+			$cmd="cd $main::ENV{'TMP'};$ffmpeg_exec -y -i ".$ff if $env{'encoder'} eq "ffmpeg";
 			
 			foreach (@encoder_env){$cmd.=" $_";}
 			$cmd.=" ".($env{'o'} || $temp_video->{'filename'}) if $env{'encoder'} eq "ffmpeg";
 			main::_log("cmd=$cmd");
 			
-			my $out=system("$cmd");main::_log("out=$out");
-			if ($out && $out != 11){$t->close();return undef}
+			$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
+			if ($outret{'return'} && $outret{'return'} != 11){$t->close();return %outret}
 			
 			$procs++;
 			next;
@@ -655,18 +669,18 @@ sub video_part_file_process
 			if ($files_key{'video'})
 			{
 				main::_log("adding m4v");
-				my $cmd='cd '.$main::ENV{'TMP'}.';/usr/bin/MP4Box -add '.$files_key{'video'}->{'filename'}.'#video '.$temp_video->{'filename'};
+				my $cmd='cd '.$main::ENV{'TMP'}.';'.$MP4Box_exec.' -add '.$files_key{'video'}->{'filename'}.'#video '.$temp_video->{'filename'};
 				main::_log("cmd=$cmd");
-				my $out=system("$cmd");main::_log("out=$out");
-				if ($out){$t->close();return undef}
+				$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
+				if ($outret{'return'}){$t->close();return %outret}
 				
 				if ($files_key{'audio'})
 				{
 					main::_log("adding m4a");
-					my $cmd='cd '.$main::ENV{'TMP'}.';/usr/bin/MP4Box -add '.$files_key{'audio'}->{'filename'}.'#audio '.$temp_video->{'filename'};
+					my $cmd='cd '.$main::ENV{'TMP'}.';'.$MP4Box_exec.' -add '.$files_key{'audio'}->{'filename'}.'#audio '.$temp_video->{'filename'};
 					main::_log("cmd=$cmd");
-					my $out=system("$cmd");main::_log("out=$out");
-					if ($out){$t->close();return undef}
+					$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
+					if ($outret{'return'}){$t->close();return %outret}
 				}
 				
 			}
@@ -676,32 +690,32 @@ sub video_part_file_process
 				my $temp_video_input=new TOM::Temp::file('ext'=>'mp4','nocreate'=>1,'dir'=>$main::ENV{'TMP'});
 				
 				main::_log("adding m4v");
-				my $cmd='cd '.$main::ENV{'TMP'}.';/usr/bin/MP4Box -add '.$files_key{'audiovideo'}->{'filename'}.'#video '.$temp_video->{'filename'};
+				my $cmd='cd '.$main::ENV{'TMP'}.';'.$MP4Box_exec.' -add '.$files_key{'audiovideo'}->{'filename'}.'#video '.$temp_video->{'filename'};
 				main::_log("cmd=$cmd");
-				my $out=system("$cmd");main::_log("out=$out");
-				if ($out){$t->close();return undef}
+				$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
+				if ($outret{'return'}){$t->close();return %outret}
 				
 				main::_log("adding m4a");
-				my $cmd='cd '.$main::ENV{'TMP'}.';/usr/bin/MP4Box -add '.$files_key{'audiovideo'}->{'filename'}.'#audio '.$temp_video->{'filename'};
+				my $cmd='cd '.$main::ENV{'TMP'}.';'.$MP4Box_exec.' -add '.$files_key{'audiovideo'}->{'filename'}.'#audio '.$temp_video->{'filename'};
 				main::_log("cmd=$cmd");
-				my $out=system("$cmd");main::_log("out=$out");
-				if ($out){$t->close();return undef}
+				$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
+				if ($outret{'return'}){$t->close();return %outret}
 			}
 			elsif ($files_key{'all'})
 			{
 				main::_log("adding a+v");
-				my $cmd='cd '.$main::ENV{'TMP'}.';/usr/bin/MP4Box -add '.$files_key{'all'}->{'filename'}.' '.$temp_video->{'filename'};
+				my $cmd='cd '.$main::ENV{'TMP'}.';'.$MP4Box_exec.' -add '.$files_key{'all'}->{'filename'}.' '.$temp_video->{'filename'};
 				main::_log("cmd=$cmd");
-				my $out=system("$cmd");main::_log("out=$out");
-				if ($out){$t->close();return undef}
+				$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
+				if ($outret{'return'}){$t->close();return %outret}
 			}
 			else
 			{
 				main::_log("adding a+v last");
-				my $cmd='cd '.$main::ENV{'TMP'}.';/usr/bin/MP4Box -add '.($files[@files-1]->{'filename'}).' '.$temp_video->{'filename'};
+				my $cmd='cd '.$main::ENV{'TMP'}.';'.$MP4Box_exec.' -add '.($files[@files-1]->{'filename'}).' '.$temp_video->{'filename'};
 				main::_log("cmd=$cmd");
-				my $out=system("$cmd");main::_log("out=$out");
-				if ($out){$t->close();return undef}
+				$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
+				if ($outret{'return'}){$t->close();return %outret}
 			}
 			
 			push @files, $temp_video;
@@ -714,10 +728,10 @@ sub video_part_file_process
 		{
 			main::_log("exec $function_name()");
 			
-			my $cmd='cd '.$main::ENV{'TMP'}.';/usr/bin/flvtool2 -U '.($files[@files-1]->{'filename'});
+			my $cmd='cd '.$main::ENV{'TMP'}.';'.$flvtool2_exec.' -U '.($files[@files-1]->{'filename'});
 			main::_log("cmd=$cmd");
-			my $out=system("$cmd");main::_log("out=$out");
-			if ($out){$t->close();return undef}
+			$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
+			if ($outret{'return'}){$t->close();return %outret}
 			
 			$procs++;
 			next;
@@ -726,7 +740,7 @@ sub video_part_file_process
 		
 		main::_log("unknown '$function'",1);
 		$t->close();
-		return undef;
+		return %outret;
 		
 	}
 	
@@ -735,18 +749,18 @@ sub video_part_file_process
 		main::_log("copying last processed file '$files[-1]->{'filename'}' ext='$env{'ext'}'");
 		File::Copy::copy($files[-1]->{'filename'}, $env{'video2'});
 		$t->close();
-		return 1;
+		$outret{'return'}=1;return %outret;
 	}
 	else
 	{
 		main::_log("copying same file '$env{'video2'}' ext='$env{'ext'}'");
 		File::Copy::copy($env{'video1'}, $env{'video2'});
 		$t->close();
-		return 1;
+		$outret{'return'}=1;return %outret;
 	}
 	
 	$t->close();
-	return undef;
+	return %outret;
 }
 
 
@@ -1516,15 +1530,17 @@ sub video_part_file_add
 	my $checksum_method = 'SHA1';
 	main::_log("file checksum $checksum_method:$checksum");
 	
-	my $out=`file -b $env{'file'}`;chomp($out);
+	my $out;
+	if ($^O eq 'linux'){$out=`file -b $env{'file'}`;chomp($out);}
 	my $file_ext;#
 	
 	# find if this file type exists
-	foreach my $reg (@App::541::mimetypes::filetype_ext)
+	foreach my $reg (@App::542::mimetypes::filetype_ext)
 	{
 		if ($out=~/$reg->[0]/){$file_ext=$reg->[1];last;}
 	}
 	$file_ext='avi' unless $file_ext;
+	$file_ext=$env{'ext'} if $env{'ext'};
 	
 	main::_log("type='$out' ext='$file_ext'");
 	
@@ -1542,11 +1558,15 @@ sub video_part_file_add
 	}
 	else {%video = $vd->info($env{'file'});}
 	
-	# play video
+	# output video info
 	foreach (keys %video)
 	{
 		main::_log("key $_='$video{$_}'");
 	}
+	
+	# override extension by videofile metadata
+	$file_ext='flv' if $video{'ID_VIDEO_FORMAT'} eq "1FLV";
+	
 	
 	# generate new unique hash
 	my $optimal_hash=
@@ -1895,7 +1915,7 @@ sub _video_part_file_thumbnail
 		#my $out=system("$cmd >/dev/null 2>/dev/null");
 		#last if $out;
 		
-		my $cmd2="/usr/bin/ffmpeg -y -i $env{'file'} -ss $timestamp -t 0.001 -f mjpeg -an $env{'file2'}";
+		my $cmd2="$ffmpeg_exec -y -i $env{'file'} -ss $timestamp -t 0.001 -f mjpeg -an $env{'file2'}";
 		main::_log("$cmd2");system("$cmd2 >/dev/null 2>/dev/null");
 		
 		my $size=-s $env{'file2'};
@@ -1913,7 +1933,7 @@ sub _video_part_file_thumbnail
 		return undef;
 	}
 	
-	File::Copy::copy($env{'file2'},'/www/TOM/test.jpg');
+	#File::Copy::copy($env{'file2'},'/www/TOM/test.jpg');
 	
 	my $image1 = new Image::Magick;
 	$image1->Read($env{'file2'});
