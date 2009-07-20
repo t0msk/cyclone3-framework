@@ -97,7 +97,7 @@ sub start
 {
 	my ($self, $tag, $attr, $attrseq, $origtext) = @_;
 	
-	if (not $tag=~/^(br|strong|em|i|u|b)$/) # don't display info about not important tags
+	if (not $tag=~/^(br|strong|em|i|u|b|font|div|object|param|a|embed)$/) # don't display info about not important tags
 	{
 		main::_log("tag='$tag' origtext='$origtext'") if $debug;
 	}
@@ -189,17 +189,40 @@ sub start
 				main::_log("find a501_image ID='$vars{'ID'}' ID_format='$vars{'ID_format'}'") if $debug;
 				my $sql=qq{
 					SELECT
-						*
+						image.ID_entity AS ID_entity_image,
+						image.ID AS ID_image,
+						image_file.ID_format AS ID_format,
+						image_file.ID AS ID_file,
+						image_ent.posix_owner,
+						image_ent.posix_author,
+						image_attrs.name,
+						image_file.image_width,
+						image_file.image_height,
+						image_file.file_size,
+						image_file.file_ext,
+						CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
 					FROM
-						`$App::501::db_name`.`a501_image_view`
+						`$App::501::db_name`.`a501_image` AS image
+					LEFT JOIN `$App::501::db_name`.`a501_image_ent` AS image_ent ON
+					(
+						image_ent.ID_entity = image.ID_entity
+					)
+					LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
+					(
+						image_attrs.ID_entity = image.ID
+					)
+					LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
+					(
+						image_file.ID_entity = image.ID_entity
+					)
 					WHERE
-						ID_image=$vars{'ID'} AND
-						ID_format=$vars{'ID_format'}
+						image.ID=$vars{'ID'} AND
+						image_file.ID_format=$vars{'ID_format'}
 					LIMIT 1
 				};
 				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
 				my %db0_line=$sth0{'sth'}->fetchhash();
-				if ($db0_line{'ID'})
+				if ($db0_line{'ID_image'})
 				{
 					$attr->{'src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
 					main::_log("found image src='$attr->{'src'}'") if $debug;
@@ -225,17 +248,142 @@ sub start
 				# fullsize
 				my $sql=qq{
 					SELECT
-						*
+						image.ID_entity AS ID_entity_image,
+						image.ID AS ID_image,
+						image_file.ID_format AS ID_format,
+						image_file.ID AS ID_file,
+						image_ent.posix_owner,
+						image_ent.posix_author,
+						image_attrs.name,
+						image_file.image_width,
+						image_file.image_height,
+						image_file.file_size,
+						image_file.file_ext,
+						CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
 					FROM
-						`$App::501::db_name`.`a501_image_view`
+						`$App::501::db_name`.`a501_image` AS image
+					LEFT JOIN `$App::501::db_name`.`a501_image_ent` AS image_ent ON
+					(
+						image_ent.ID_entity = image.ID_entity
+					)
+					LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
+					(
+						image_attrs.ID_entity = image.ID
+					)
+					LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
+					(
+						image_file.ID_entity = image.ID_entity
+					)
 					WHERE
-						ID_image=$vars{'ID'} AND
-						ID_format=$App::501::image_format_fullsize_ID
+						image.ID=$vars{'ID'} AND
+						image_file.ID_format=$App::501::image_format_fullsize_ID
 					LIMIT 1
 				};
 				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
 				my %db0_line=$sth0{'sth'}->fetchhash();
-				if ($db0_line{'ID'})
+				if ($db0_line{'ID_image'})
+				{
+					$attr->{'fullsize.src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
+				}
+			}
+			elsif ($vars{'ID_entity'})
+			{
+				main::_log("find a501_image ID_entity='$vars{'ID_entity'}' ID_format='$vars{'ID_format'}'") if $debug;
+				my $sql=qq{
+					SELECT
+						image.ID_entity AS ID_entity_image,
+						image.ID AS ID_image,
+						image_file.ID_format AS ID_format,
+						image_file.ID AS ID_file,
+						image_ent.posix_owner,
+						image_ent.posix_author,
+						image_attrs.name,
+						image_file.image_width,
+						image_file.image_height,
+						image_file.file_size,
+						image_file.file_ext,
+						CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
+					FROM
+						`$App::501::db_name`.`a501_image` AS image
+					LEFT JOIN `$App::501::db_name`.`a501_image_ent` AS image_ent ON
+					(
+						image_ent.ID_entity = image.ID_entity
+					)
+					LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
+					(
+						image_attrs.ID_entity = image.ID
+					)
+					LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
+					(
+						image_file.ID_entity = image.ID_entity
+					)
+					WHERE
+						image.ID_entity='$vars{'ID_entity'}' AND
+						image_file.ID_format=$vars{'ID_format'}
+					LIMIT 1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
+				my %db0_line=$sth0{'sth'}->fetchhash();
+				if ($db0_line{'ID_image'})
+				{
+					$attr->{'src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
+					main::_log("found image src='$attr->{'src'}'") if $debug;
+					$attr->{'alt'}=$db0_line{'name'};
+					
+					$attr->{'width_forced'}=$attr->{'width'};
+					$attr->{'height_forced'}=$attr->{'height'};
+					
+					$attr->{'width'}=$db0_line{'image_width'} unless $attr->{'width'};
+					$attr->{'height'}=$db0_line{'image_height'} unless $attr->{'height'};
+					
+					# override default tag representation
+					$out_full=
+						$self->{'entity'}{'a501_image.'.$out_cnt}
+						|| $self->{'entity'}{'a501_image'}
+						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
+						|| $tpl->{'entity'}{'parser.a501_image'}
+						|| $out_full;
+					
+					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+					
+				}
+				# fullsize
+				my $sql=qq{
+					SELECT
+						image.ID_entity AS ID_entity_image,
+						image.ID AS ID_image,
+						image_file.ID_format AS ID_format,
+						image_file.ID AS ID_file,
+						image_ent.posix_owner,
+						image_ent.posix_author,
+						image_attrs.name,
+						image_file.image_width,
+						image_file.image_height,
+						image_file.file_size,
+						image_file.file_ext,
+						CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
+					FROM
+						`$App::501::db_name`.`a501_image` AS image
+					LEFT JOIN `$App::501::db_name`.`a501_image_ent` AS image_ent ON
+					(
+						image_ent.ID_entity = image.ID_entity
+					)
+					LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
+					(
+						image_attrs.ID_entity = image.ID
+					)
+					LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
+					(
+						image_file.ID_entity = image.ID_entity
+					)
+					WHERE
+						image.ID_entity='$vars{'ID_entity'}' AND
+						image_file.ID_format=$App::501::image_format_fullsize_ID
+					LIMIT 1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
+				my %db0_line=$sth0{'sth'}->fetchhash();
+				if ($db0_line{'ID_image'})
 				{
 					$attr->{'fullsize.src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
 				}
@@ -502,6 +650,12 @@ sub start
 		} # if $attr->{'id'}=~/
 	
 	} # if tag=''
+	
+	# fix not closed tags
+	if ($tag=~/^hr|br|img$/)
+	{
+		$attr->{'/'}='/';
+	}
 	
 	# rebuild a tag
 	my %attrs_;
