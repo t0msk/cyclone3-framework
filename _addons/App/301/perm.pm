@@ -728,7 +728,7 @@ sub get_owner
 	my $r_prefix=$env{'r_prefix'};
 		$r_prefix=~s|^a|App::|;
 		$r_prefix=~s|^e|Ext::|;
-	if (!$r_prefix->VERSION)
+	if (not defined $r_prefix->VERSION)
 	{
 		eval "use $r_prefix".'::a301;';
 		main::_log("err:$@",1) if $@;
@@ -736,7 +736,7 @@ sub get_owner
 	
 	# check if a301 enhancement of this application is available
 	my $pckg=$r_prefix."::a301";
-	if ($pckg->VERSION)
+	if (defined $pckg->VERSION)
 	{
 		main::_log("trying get_owner() from package '$pckg'");
 		$owner=$pckg->get_owner(
@@ -784,11 +784,15 @@ sub set_owner
 	my $r_prefix=$env{'r_prefix'};
 		$r_prefix=~s|^a|App::|;
 		$r_prefix=~s|^e|Ext::|;
-	eval "use $r_prefix".'::a301;' unless $r_prefix->VERSION;
+	if (not defined $r_prefix->VERSION)
+	{
+		eval "use $r_prefix".'::a301;';
+		main::_log("err:$@",1) if $@;
+	}
 	
 	# check if a301 enhancement of this application is available
 	my $pckg=$r_prefix."::a301";
-	if ($pckg->VERSION)
+	if (defined $pckg->VERSION)
 	{
 		main::_log("trying set_owner() from package '$pckg'");
 		my $out=$pckg->set_owner(

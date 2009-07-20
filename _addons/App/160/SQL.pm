@@ -62,6 +62,8 @@ Creates a new relation and return ID_entity, ID
 
 =cut
 
+our %db_names;
+
 sub _detect_db_name
 {
 	my $prefix=shift;
@@ -71,11 +73,22 @@ sub _detect_db_name
 	$prefix=~s|^a|App::|;
 	$prefix=~s|^e|Ext::|;
 	# load this addon if not available
-	eval "use $prefix".'::_init;' unless $prefix->VERSION;
+	if (not defined $prefix->VERSION)
+	{
+		eval "use $prefix".'::_init;';
+		main::_log("err:$@",1) if $@;
+		return undef;
+	}
 	# read db_name from this library
+	if ($db_names{$prefix})
+	{
+		main::_log("get cached db_name=$db_names{$prefix}") if $debug;
+		return $db_names{$prefix};
+	}
 	my $db_name;eval '$db_name=$'.$prefix.'::db_name;';
 	main::_log("detected db_name=$db_name") if $debug;
 	# setup when found
+	$db_names{$prefix}=$db_name;
 	return $db_name if $db_name;
 	return undef;
 }
@@ -559,11 +572,15 @@ sub get_relation_iteminfo
 	my $r_prefix=$env{'r_prefix'};
 		$r_prefix=~s|^a|App::|;
 		$r_prefix=~s|^e|Ext::|;
-	eval "use $r_prefix".'::a160;' unless $r_prefix->VERSION;
+	if (not defined $r_prefix->VERSION)
+	{
+		eval "use $r_prefix".'::a160;';
+		main::_log("err:$@",1) if $@;
+	}
 	
 	# check if a160 enhancement of this application is available
 	my $pckg=$r_prefix."::a160";
-	if ($pckg->VERSION)
+	if (defined $pckg->VERSION)
 	{
 		main::_log("trying get_relation_iteminfo() from package '$pckg'");
 		%info=$pckg->get_relation_iteminfo(
