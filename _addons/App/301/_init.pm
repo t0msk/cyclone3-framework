@@ -174,7 +174,7 @@ if ($tom::H && $tom::addons{'a501'})
 		FROM
 			`$App::501::db_name`.`a501_image_cat`
 		WHERE
-			name='user photo' AND
+			name='user avatars' AND
 			lng IN ('".(join "','",@TOM::LNG_accept)."')
 		LIMIT 1
 	";
@@ -190,7 +190,7 @@ if ($tom::H && $tom::addons{'a501'})
 			'db_name' => $App::501::db_name,
 			'tb_name' => "a501_image_cat",
 			'columns' => {
-				'name' => "'user photo'",
+				'name' => "'user avatars'",
 				'lng' => "'$tom::LNG'",
 				'status' => "'L'"
 			},
@@ -225,7 +225,7 @@ if ($tom::H && $tom::addons{'a501'})
 				'tb_name' => "a501_image_cat",
 				'columns' => {
 					'ID_entity' => $photo_cat_ID_entity,
-					'name' => "'user photo'",
+					'name' => "'user avatars'",
 					'lng' => "'$lng'",
 					'status' => "'L'"
 				},
