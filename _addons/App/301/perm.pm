@@ -728,7 +728,11 @@ sub get_owner
 	my $r_prefix=$env{'r_prefix'};
 		$r_prefix=~s|^a|App::|;
 		$r_prefix=~s|^e|Ext::|;
-	eval "use $r_prefix".'::a301;' unless $r_prefix->VERSION;
+	if (!$r_prefix->VERSION)
+	{
+		eval "use $r_prefix".'::a301;';
+		main::_log("err:$@",1) if $@;
+	}
 	
 	# check if a301 enhancement of this application is available
 	my $pckg=$r_prefix."::a301";
@@ -758,8 +762,11 @@ sub get_owner
 			LIMIT 1;
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-		my %db0_line=$sth0{'sth'}->fetchhash();
-		$owner=$db0_line{'posix_owner'};
+		if ($sth0{'rows'})
+		{
+			my %db0_line=$sth0{'sth'}->fetchhash();
+			$owner=$db0_line{'posix_owner'};
+		}
 	}
 	
 	main::_log("owner='$owner'");
