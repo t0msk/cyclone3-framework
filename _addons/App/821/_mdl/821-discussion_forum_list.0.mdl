@@ -142,7 +142,7 @@ sub execute
 		
 		$XSGN{'TMP'}=~s|<%location%>|$path_|g;
 		
-		if (!$env{'discussion_forum.ID*'})
+		if (!$env{'discussion_forum.ID*'} && $env{'sql_limit'}=~/^0/ && !$env{'keywords'} && $env{'folders'} ne "false")
 		{
 			# add parent as first folder item :))
 			my %db0_line=App::020::SQL::functions::tree::get_parent_ID
@@ -207,10 +207,10 @@ sub execute
 	my $level_prev;
 	my $level_next;
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
-	if ($sth0{'sth'} && !$env{'image_cat.ID*'})
+	
+	if (!$env{'image_cat.ID*'} && $env{'sql_limit'}=~/^0/ && !$env{'keywords'} && $env{'folders'} ne "false")
 	{
-		
+		my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			$charindex_ID{$db0_line{'ID_charindex'}}=$db0_line{'ID'};
