@@ -2,17 +2,20 @@ package Cache::Memcached::Managed::Inactive;
 
 # Make sure we have version info for this module
 
-$VERSION = '0.15';
+$VERSION = '0.20';
 
-#--------------------------------------------------------------------------
-# No, we're NOT using strict here.  There are several reasons, the most
-# important is that we're doing a lot of nasty stuff here.
-# If you _do_ want stricture as a developer of load.pm, simply activate the
-# line below here
 #--------------------------------------------------------------------------
 BEGIN { # We're fooling the Kwalitee checker into thinking we're strict
 use strict;
 }
+
+#--------------------------------------------------------------------------
+# No, we're NOT using strict here.  There are several reasons, the most
+# important is that we're doing a lot of nasty stuff here.
+# If you _do_ want stricture as a developer of this module, simply activate
+# the line below here
+#--------------------------------------------------------------------------
+#use strict;
 
 # Singleton object
 
@@ -119,7 +122,8 @@ Provides the same API as L<Cache::Memcached::Managed>, but doesn't do anything.
 
 =head1 COPYRIGHT
 
-(C) 2005 BOOKINGS
+(C) 2005 - 2006 BOOKINGS
+(C) 2007 BOOKING.COM
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

@@ -1,4 +1,4 @@
-# $Id: Memcached.pm 294 2006-06-28 05:59:57Z bradfitz $
+# $Id: Memcached.pm 811 2009-05-05 01:32:37Z bradfitz $
 #
 # Copyright (c) 2003, 2004  Brad Fitzpatrick <brad@danga.com>
 #
@@ -8,20 +8,23 @@
 package Cache::Memcached;
 
 use strict;
+use warnings;
+
 no strict 'refs';
 use Storable ();
-use Socket qw( MSG_NOSIGNAL PF_INET IPPROTO_TCP SOCK_STREAM );
+use Socket qw( MSG_NOSIGNAL PF_INET PF_UNIX IPPROTO_TCP SOCK_STREAM );
 use IO::Handle ();
 use Time::HiRes ();
 use String::CRC32;
 use Errno qw( EINPROGRESS EWOULDBLOCK EISCONN );
-
+use Cache::Memcached::GetParser;
 use fields qw{
     debug no_rehash stats compress_threshold compress_enable stat_callback
     readonly select_timeout namespace namespace_len servers active buckets
     pref_ip
     bucketcount _single_sock _stime
     connect_timeout cb_connect_fail
+    parser_class
 };
 
 # flag definitions
@@ -32,10 +35,18 @@ use constant F_COMPRESS => 2;
 use constant COMPRESS_SAVINGS => 0.20; # percent
 
 use vars qw($VERSION $HAVE_ZLIB $FLAG_NOSIGNAL);
-$VERSION = "1.18";
+$VERSION = "1.26";
 
 BEGIN {
     $HAVE_ZLIB = eval "use Compress::Zlib (); 1;";
+}
+
+my $HAVE_XS = eval "use Cache::Memcached::GetParserXS; 1;";
+$HAVE_XS = 0 if $ENV{NO_XS};
+
+my $parser_class = $HAVE_XS ? "Cache::Memcached::GetParserXS" : "Cache::Memcached::GetParser";
+if ($ENV{XS_DEBUG}) {
+    print "using parser: $parser_class\n";
 }
 
 $FLAG_NOSIGNAL = 0;
@@ -43,6 +54,7 @@ eval { $FLAG_NOSIGNAL = MSG_NOSIGNAL; };
 
 my %host_dead;   # host -> unixtime marked dead until
 my %cache_sock;  # host -> socket
+my @buck2sock;   # bucket number -> $sock
 
 my $PROTO_TCP;
 
@@ -52,7 +64,7 @@ sub new {
     my Cache::Memcached $self = shift;
     $self = fields::new( $self ) unless ref $self;
 
-    my ($args) = @_;
+    my $args = (@_ == 1) ? shift : { @_ };  # hashref-ify args
 
     $self->set_servers($args->{'servers'});
     $self->{'debug'} = $args->{'debug'} || 0;
@@ -63,6 +75,7 @@ sub new {
     $self->{'compress_enable'}    = 1;
     $self->{'stat_callback'} = $args->{'stat_callback'} || undef;
     $self->{'readonly'} = $args->{'readonly'};
+    $self->{'parser_class'} = $args->{'parser_class'} || $parser_class;
 
     # TODO: undocumented
     $self->{'connect_timeout'} = $args->{'connect_timeout'} || 0.25;
@@ -85,6 +98,8 @@ sub set_servers {
     $self->{'active'} = scalar @{$self->{'servers'}};
     $self->{'buckets'} = undef;
     $self->{'bucketcount'} = 0;
+    $self->init_buckets;
+    @buck2sock = ();
 
     $self->{'_single_sock'} = undef;
     if (@{$self->{'servers'}} == 1) {
@@ -136,6 +151,7 @@ sub enable_compress {
 
 sub forget_dead_hosts {
     %host_dead = ();
+    @buck2sock = ();
 }
 
 sub set_stat_callback {
@@ -144,27 +160,29 @@ sub set_stat_callback {
     $self->{'stat_callback'} = $stat_callback;
 }
 
+my %sock_map;  # stringified-$sock -> "$ip:$port"
+
 sub _dead_sock {
     my ($sock, $ret, $dead_for) = @_;
-    if ($sock =~ /^Sock_(.+?):(\d+)$/) {
+    if (my $ipport = $sock_map{$sock}) {
         my $now = time();
-        my ($ip, $port) = ($1, $2);
-        my $host = "$ip:$port";
-        $host_dead{$host} = $now + $dead_for
+        $host_dead{$ipport} = $now + $dead_for
             if $dead_for;
-        delete $cache_sock{$host};
+        delete $cache_sock{$ipport};
+        delete $sock_map{$sock};
     }
+    @buck2sock = ();
     return $ret;  # 0 or undef, probably, depending on what caller wants
 }
 
 sub _close_sock {
     my ($sock) = @_;
-    if ($sock =~ /^Sock_(.+?):(\d+)$/) {
-        my ($ip, $port) = ($1, $2);
-        my $host = "$ip:$port";
+    if (my $ipport = $sock_map{$sock}) {
         close $sock;
-        delete $cache_sock{$host};
+        delete $cache_sock{$ipport};
+        delete $sock_map{$sock};
     }
+    @buck2sock = ();
 }
 
 sub _connect_sock { # sock, sin, timeout
@@ -215,35 +233,50 @@ sub sock_to_host { # (host)
     my ($ip, $port) = $host =~ /(.*):(\d+)/;
     return undef if
         $host_dead{$host} && $host_dead{$host} > $now;
-    my $sock = "Sock_$host";
+    my $sock;
 
     my $connected = 0;
     my $sin;
     my $proto = $PROTO_TCP ||= getprotobyname('tcp');
 
-    # if a preferred IP is known, try that first.
-    if ($self && $self->{pref_ip}{$ip}) {
-        socket($sock, PF_INET, SOCK_STREAM, $proto);
-        my $prefip = $self->{pref_ip}{$ip};
-        $sin = Socket::sockaddr_in($port,Socket::inet_aton($prefip));
-        if (_connect_sock($sock,$sin,$self->{connect_timeout})) {
-            $connected = 1;
-        } else {
-            if (my $cb = $self->{cb_connect_fail}) {
-                $cb->($prefip);
+    if ( index($host, '/') != 0 )
+    {
+        # if a preferred IP is known, try that first.
+        if ($self && $self->{pref_ip}{$ip}) {
+            socket($sock, PF_INET, SOCK_STREAM, $proto);
+            $sock_map{$sock} = $host;
+            my $prefip = $self->{pref_ip}{$ip};
+            $sin = Socket::sockaddr_in($port,Socket::inet_aton($prefip));
+            if (_connect_sock($sock,$sin,$self->{connect_timeout})) {
+                $connected = 1;
+            } else {
+                if (my $cb = $self->{cb_connect_fail}) {
+                    $cb->($prefip);
+                }
+                close $sock;
             }
-            close $sock;
         }
-    }
 
-    # normal path, or fallback path if preferred IP failed
-    unless ($connected) {
-        socket($sock, PF_INET, SOCK_STREAM, $proto);
-        $sin = Socket::sockaddr_in($port,Socket::inet_aton($ip));
+        # normal path, or fallback path if preferred IP failed
+        unless ($connected) {
+            socket($sock, PF_INET, SOCK_STREAM, $proto);
+            $sock_map{$sock} = $host;
+            $sin = Socket::sockaddr_in($port,Socket::inet_aton($ip));
+            my $timeout = $self ? $self->{connect_timeout} : 0.25;
+            unless (_connect_sock($sock,$sin,$timeout)) {
+                my $cb = $self ? $self->{cb_connect_fail} : undef;
+                $cb->($ip) if $cb;
+                return _dead_sock($sock, undef, 20 + int(rand(10)));
+            }
+        }
+    } else { # it's a unix domain/local socket
+        socket($sock, PF_UNIX, SOCK_STREAM, 0);
+        $sock_map{$sock} = $host;
+        $sin = Socket::sockaddr_un($host);
         my $timeout = $self ? $self->{connect_timeout} : 0.25;
         unless (_connect_sock($sock,$sin,$timeout)) {
             my $cb = $self ? $self->{cb_connect_fail} : undef;
-            $cb->($ip) if $cb;
+            $cb->($host) if $cb;
             return _dead_sock($sock, undef, 20 + int(rand(10)));
         }
     }
@@ -253,17 +286,17 @@ sub sock_to_host { # (host)
     $| = 1;
     select($old);
 
-    return $cache_sock{$host} = $sock;
+    $cache_sock{$host} = $sock;
+
+    return $sock;
 }
 
 sub get_sock { # (key)
-    my Cache::Memcached $self = shift;
-    my ($key) = @_;
+    my Cache::Memcached $self = $_[0];
+    my $key = $_[1];
     return $self->sock_to_host($self->{'_single_sock'}) if $self->{'_single_sock'};
     return undef unless $self->{'active'};
     my $hv = ref $key ? int($key->[0]) : _hashfunc($key);
-
-    $self->init_buckets() unless $self->{'buckets'};
 
     my $real_key = ref $key ? $key->[1] : $key;
     my $tries = 0;
@@ -297,6 +330,7 @@ sub disconnect_all {
         close $sock;
     }
     %cache_sock = ();
+    @buck2sock = ();
 }
 
 # writes a line, then reads result.  by default stops reading after a
@@ -371,7 +405,6 @@ sub _write_and_read {
     return $ret;
 }
 
-
 sub delete {
     my Cache::Memcached $self = shift;
     my ($key, $time) = @_;
@@ -391,8 +424,9 @@ sub delete {
         $self->{'stat_callback'}->($stime, $etime, $sock, 'delete');
     }
 
-    return $res eq "DELETED\r\n";
+    return defined $res && $res eq "DELETED\r\n";
 }
+*remove = \&delete;
 
 sub add {
     _set("add", @_);
@@ -422,9 +456,11 @@ sub _set {
     $key = ref $key ? $key->[1] : $key;
 
     if (ref $val) {
+        local $Carp::CarpLevel = 2;
         $val = Storable::nfreeze($val);
         $flags |= F_STORABLE;
     }
+    warn "value for memkey:$key is not defined" unless defined $val;
 
     my $len = length($val);
 
@@ -459,7 +495,7 @@ sub _set {
         $self->{'stat_callback'}->($stime, $etime, $sock, $cmdname);
     }
 
-    return $res eq "STORED\r\n";
+    return defined $res && $res eq "STORED\r\n";
 }
 
 sub incr {
@@ -490,13 +526,13 @@ sub _incrdecr {
         $self->{'stat_callback'}->($stime, $etime, $sock, $cmdname);
     }
 
-    return undef unless $res =~ /^(\d+)/;
+    return undef unless defined $res && $res =~ /^(\d+)/;
     return $1;
 }
 
 sub get {
-    my Cache::Memcached $self = shift;
-    my ($key) = @_;
+    my Cache::Memcached $self = $_[0];
+    my $key = $_[1];
 
     # TODO: make a fast path for this?  or just keep using get_multi?
     my $r = $self->get_multi($key);
@@ -506,19 +542,55 @@ sub get {
 
 sub get_multi {
     my Cache::Memcached $self = shift;
-    return undef unless $self->{'active'};
+    return {} unless $self->{'active'};
     $self->{'_stime'} = Time::HiRes::time() if $self->{'stat_callback'};
     $self->{'stats'}->{"get_multi"}++;
+
     my %val;        # what we'll be returning a reference to (realkey -> value)
     my %sock_keys;  # sockref_as_scalar -> [ realkeys ]
     my $sock;
 
-    foreach my $key (@_) {
-        $sock = $self->get_sock($key);
-        next unless $sock;
-        my $kval = ref $key ? $key->[1] : $key;
-        push @{$sock_keys{$sock}}, $kval;
+    if ($self->{'_single_sock'}) {
+        $sock = $self->sock_to_host($self->{'_single_sock'});
+        unless ($sock) {
+            return {};
+        }
+        foreach my $key (@_) {
+            my $kval = ref $key ? $key->[1] : $key;
+            push @{$sock_keys{$sock}}, $kval;
+        }
+    } else {
+        my $bcount = $self->{'bucketcount'};
+        my $sock;
+      KEY:
+        foreach my $key (@_) {
+            my ($hv, $real_key) = ref $key ?
+                (int($key->[0]),               $key->[1]) :
+                ((crc32($key) >> 16) & 0x7fff, $key);
+
+            my $tries;
+            while (1) {
+                my $bucket = $hv % $bcount;
+
+                # this segfaults perl 5.8.4 (and others?) if sock_to_host returns undef... wtf?
+                #$sock = $buck2sock[$bucket] ||= $self->sock_to_host($self->{buckets}[ $bucket ])
+                #    and last;
+
+                # but this variant doesn't crash:
+                $sock = $buck2sock[$bucket] || $self->sock_to_host($self->{buckets}[ $bucket ]);
+                if ($sock) {
+                    $buck2sock[$bucket] = $sock;
+                    last;
+                }
+
+                next KEY if $tries++ >= 20;
+                $hv += _hashfunc($tries . $real_key);
+            }
+
+            push @{$sock_keys{$sock}}, $real_key;
+        }
     }
+
     $self->{'stats'}->{"get_keys"} += @_;
     $self->{'stats'}->{"get_socks"} += keys %sock_keys;
 
@@ -536,24 +608,17 @@ sub get_multi {
 
 sub _load_multi {
     use bytes; # return bytes from length()
-    my Cache::Memcached $self = shift;
-    my ($sock_keys, $ret) = @_;
+    my Cache::Memcached $self;
+    my ($sock_keys, $ret);
 
-    # all keyed by a $sock:
-    my %reading; # bool, whether we're reading from this socket
-    my %writing; # bool, whether we're writing into this socket
-    my %state;   # reading state:
-                 # 0 = waiting for a line, N = reading N bytes
-    my %buf;     # buffers
-    my %offset;  # offsets to read into buffers
-    my %key;     # current key per socket
-    my %flags;   # flags per socket
+    ($self, $sock_keys, $ret) = @_;
 
-    foreach (keys %$sock_keys) {
-        print STDERR "processing socket $_\n" if $self->{'debug'} >= 2;
-        $writing{$_} = 1;
-        $buf{$_} = "get ". join(" ", map { "$self->{namespace}$_" } @{$sock_keys->{$_}}) . "\r\n";
-    }
+    # all keyed by $sockstr:
+    my %reading; # $sockstr -> $sock.  bool, whether we're reading from this socket
+    my %writing; # $sockstr -> $sock.  bool, whether we're writing to this socket
+    my %buf;     # buffers, for writing
+
+    my %parser;  # $sockstr -> Cache::Memcached::GetParser
 
     my $active_changed = 1; # force rebuilding of select sets
 
@@ -562,8 +627,11 @@ sub _load_multi {
         print STDERR "killing socket $sock\n" if $self->{'debug'} >= 2;
         delete $reading{$sock};
         delete $writing{$sock};
-        delete $ret->{$key{$sock}}
-            if $key{$sock};
+
+        if (my $p = $parser{$sock}) {
+            my $key = $p->current_key;
+            delete $ret->{$key} if $key;
+        }
 
         if ($self->{'stat_callback'}) {
             my $etime = Time::HiRes::time();
@@ -572,157 +640,88 @@ sub _load_multi {
 
         close $sock;
         _dead_sock($sock);
-        $active_changed = 1;
     };
 
+    # $finalize->($key, $flags)
+    # $finalize->({ $key => $flags, $key => $flags });
     my $finalize = sub {
-        my $sock = shift;
-        my $k = $key{$sock};
+        my $map = $_[0];
+        $map = {@_} unless ref $map;
 
-        # remove trailing \r\n
-        chop $ret->{$k}; chop $ret->{$k};
+        while (my ($k, $flags) = each %$map) {
 
-        unless (length($ret->{$k}) == $state{$sock}-2) {
-            $dead->($sock);
-            return;
-        }
+            # remove trailing \r\n
+            chop $ret->{$k}; chop $ret->{$k};
 
-        $ret->{$k} = Compress::Zlib::memGunzip($ret->{$k})
-            if $HAVE_ZLIB && $flags{$sock} & F_COMPRESS;
-        if ($flags{$sock} & F_STORABLE) {
-            # wrapped in eval in case a perl 5.6 Storable tries to
-            # unthaw data from a perl 5.8 Storable.  (5.6 is stupid
-            # and dies if the version number changes at all.  in 5.8
-            # they made it only die if it unencounters a new feature)
-            eval {
-                $ret->{$k} = Storable::thaw($ret->{$k});
-            };
-            # so if there was a problem, just treat it as a cache miss.
-            if ($@) {
-                delete $ret->{$k};
+            $ret->{$k} = Compress::Zlib::memGunzip($ret->{$k})
+                if $HAVE_ZLIB && $flags & F_COMPRESS;
+            if ($flags & F_STORABLE) {
+                # wrapped in eval in case a perl 5.6 Storable tries to
+                # unthaw data from a perl 5.8 Storable.  (5.6 is stupid
+                # and dies if the version number changes at all.  in 5.8
+                # they made it only die if it unencounters a new feature)
+                eval {
+                    $ret->{$k} = Storable::thaw($ret->{$k});
+                };
+                # so if there was a problem, just treat it as a cache miss.
+                if ($@) {
+                    delete $ret->{$k};
+                }
             }
         }
     };
+
+    foreach (keys %$sock_keys) {
+        my $ipport = $sock_map{$_}        or die "No map found matching for $_";
+        my $sock   = $cache_sock{$ipport} or die "No sock found for $ipport";
+        print STDERR "processing socket $_\n" if $self->{'debug'} >= 2;
+        $writing{$_} = $sock;
+        if ($self->{namespace}) {
+            $buf{$_} = join(" ", 'get', (map { "$self->{namespace}$_" } @{$sock_keys->{$_}}), "\r\n");
+        } else {
+            $buf{$_} = join(" ", 'get', @{$sock_keys->{$_}}, "\r\n");
+        }
+
+        $parser{$_} = $self->{parser_class}->new($ret, $self->{namespace_len}, $finalize);
+    }
 
     my $read = sub {
-        my $sock = shift;
-        my $res;
-
-        # where are we reading into?
-        if ($state{$sock}) { # reading value into $ret
-            $res = sysread($sock, $ret->{$key{$sock}},
-                           $state{$sock} - $offset{$sock},
-                           $offset{$sock});
-            return
-                if !defined($res) and $!==EWOULDBLOCK;
-            if ($res == 0) { # catches 0=conn closed or undef=error
-                $dead->($sock);
-                return;
-            }
-            $offset{$sock} += $res;
-            if ($offset{$sock} == $state{$sock}) { # finished reading
-                $finalize->($sock);
-                $state{$sock} = 0; # wait for another VALUE line or END
-                $offset{$sock} = 0;
-            }
-            return;
+        my $sockstr = "$_[0]";  # $sock is $_[0];
+        my $p = $parser{$sockstr} or die;
+        my $rv = $p->parse_from_sock($_[0]);
+        if ($rv > 0) {
+            # okay, finished with this socket
+            delete $reading{$sockstr};
+        } elsif ($rv < 0) {
+            $dead->($_[0]);
         }
-
-        # we're reading a single line.
-        # first, read whatever's there, but be satisfied with 2048 bytes
-        $res = sysread($sock, $buf{$sock},
-                       2048, $offset{$sock});
-        return
-            if !defined($res) and $!==EWOULDBLOCK;
-        if ($res == 0) {
-            $dead->($sock);
-            return;
-        }
-        $offset{$sock} += $res;
-
-
-        # Below is a hot path.  In preparation for rewriting it in Perl/C,
-        # here are some notes.
-        #
-        # The while(1) below uses:
-        #   %buf
-        #   %reading
-        #   $active_changed
-        #   %key, %flags, %state, %offset
-        #   $finalize (CV)
-        #   $self->{namespace_len}
-
-      SEARCH:
-        while(1) { # may have to search many times
-            # do we have a complete END line?
-            if ($buf{$sock} =~ /^END\r\n/) {
-                # okay, finished with this socket
-                delete $reading{$sock};
-                $active_changed = 1;
-                return;
-            }
-
-            # do we have a complete VALUE line?
-            if ($buf{$sock} =~ /^VALUE (\S+) (\d+) (\d+)\r\n/) {
-                ($key{$sock}, $flags{$sock}, $state{$sock}) =
-                    (substr($1, $self->{namespace_len}), int($2), $3+2);
-                # Note: we use $+[0] and not pos($buf{$sock}) because pos()
-                # seems to have problems under perl's taint mode.  nobody
-                # on the list discovered why, but this seems a reasonable
-                # work-around:
-                my $p = $+[0];
-                my $len = length($buf{$sock});
-                my $copy = $len-$p > $state{$sock} ? $state{$sock} : $len-$p;
-                $ret->{$key{$sock}} = substr($buf{$sock}, $p, $copy)
-                    if $copy;
-                $offset{$sock} = $copy;
-                substr($buf{$sock}, 0, $p+$copy, ''); # delete the stuff we used
-                if ($offset{$sock} == $state{$sock}) { # have it all?
-                    $finalize->($sock);
-                    $state{$sock} = 0; # wait for another VALUE line or END
-                    $offset{$sock} = 0;
-                    next SEARCH; # look again
-                }
-                last SEARCH; # buffer is empty now
-            }
-
-            # if we're here probably means we only have a partial VALUE
-            # or END line in the buffer. Could happen with multi-get,
-            # though probably very rarely. Exit the loop and let it read
-            # more.
-
-            # but first, make sure subsequent reads don't destroy our
-            # partial VALUE/END line.
-            $offset{$sock} = length($buf{$sock});
-            last SEARCH;
-        }
-
-        # we don't have a complete line, wait and read more when ready
-        return;
+        return $rv;
     };
 
+    # returns 1 when it's done, for success or error.  0 if still working.
     my $write = sub {
-        my $sock = shift;
+        my ($sock, $sockstr) = ($_[0], "$_[0]");
         my $res;
 
-        $res = send($sock, $buf{$sock}, $FLAG_NOSIGNAL);
-        return
+        $res = send($sock, $buf{$sockstr}, $FLAG_NOSIGNAL);
+
+        return 0
             if not defined $res and $!==EWOULDBLOCK;
         unless ($res > 0) {
             $dead->($sock);
-            return;
+            return 1;
         }
-        if ($res == length($buf{$sock})) { # all sent
-            $buf{$sock} = "";
-            $offset{$sock} = $state{$sock} = 0;
-            # switch the socket from writing state to reading state
-            delete $writing{$sock};
-            $reading{$sock} = 1;
-            $active_changed = 1;
+        if ($res == length($buf{$sockstr})) { # all sent
+            $buf{$sockstr} = "";
+
+            # switch the socket from writing to reading
+            delete $writing{$sockstr};
+            $reading{$sockstr} = $sock;
+            return 1;
         } else { # we only succeeded in sending some of it
-            substr($buf{$sock}, 0, $res, ''); # delete the part we sent
+            substr($buf{$sockstr}, 0, $res, ''); # delete the part we sent
         }
-        return;
+        return 0;
     };
 
     # the bitsets for select
@@ -734,15 +733,16 @@ sub _load_multi {
         if ($active_changed) {
             last unless %reading or %writing; # no sockets left?
             ($rin, $win) = ('', '');
-            foreach (keys %reading) {
+            foreach (values %reading) {
                 vec($rin, fileno($_), 1) = 1;
             }
-            foreach (keys %writing) {
+            foreach (values %writing) {
                 vec($win, fileno($_), 1) = 1;
             }
             $active_changed = 0;
         }
         # TODO: more intelligent cumulative timeout?
+        # TODO: select is interruptible w/ ptrace attach, signal, etc. should note that.
         $nfound = select($rout=$rin, $wout=$win, undef,
                          $self->{'select_timeout'});
         last unless $nfound;
@@ -751,23 +751,23 @@ sub _load_multi {
         # writing sockets for reading also, and raise hell if they're
         # ready (input unread from last time, etc.)
         # maybe do that on the first loop only?
-        foreach (keys %writing) {
+        foreach (values %writing) {
             if (vec($wout, fileno($_), 1)) {
-                $write->($_);
+                $active_changed = 1 if $write->($_);
             }
         }
-        foreach (keys %reading) {
+        foreach (values %reading) {
             if (vec($rout, fileno($_), 1)) {
-                $read->($_);
+                $active_changed = 1 if $read->($_);
             }
         }
     }
 
     # if there're active sockets left, they need to die
-    foreach (keys %writing) {
+    foreach (values %writing) {
         $dead->($_);
     }
-    foreach (keys %reading) {
+    foreach (values %reading) {
         $dead->($_);
     }
 
@@ -775,7 +775,7 @@ sub _load_multi {
 }
 
 sub _hashfunc {
-    return (crc32(shift) >> 16) & 0x7fff;
+    return (crc32($_[0]) >> 16) & 0x7fff;
 }
 
 sub flush_all {
@@ -783,12 +783,11 @@ sub flush_all {
 
     my $success = 1;
 
-    $self->init_buckets() unless $self->{'buckets'};
     my @hosts = @{$self->{'buckets'}};
     foreach my $host (@hosts) {
         my $sock = $self->sock_to_host($host);
         my @res = $self->run_command($sock, "flush_all\r\n");
-        $success = 0 unless (@res);
+        $success = 0 unless (scalar @res == 1 && (($res[0] || "") eq "OK\r\n"));
     }
 
     return $success;
@@ -803,8 +802,8 @@ sub run_command {
     my $line = $cmd;
     while (my $res = _write_and_read($self, $sock, $line)) {
         undef $line;
-    $ret .= $res;
-        last if $ret =~ /(?:END|ERROR)\r\n$/;
+        $ret .= $res;
+        last if $ret =~ /(?:OK|END|ERROR)\r\n$/;
     }
     chop $ret; chop $ret;
     return map { "$_\r\n" } split(/\r\n/, $ret);
@@ -820,14 +819,14 @@ sub stats {
             # I don't much care what the default is, it should just
             # be something reasonable.  Obviously "reset" should not
             # be on the list :) but other types that might go in here
-            # include maps, cachedump, slabs, or items.
-            $types = [ qw( misc malloc sizes self ) ];
+            # include maps, cachedump, slabs, or items.  Note that
+            # this does NOT include 'sizes' anymore, as that can freeze
+            # bug servers for a couple seconds.
+            $types = [ qw( misc malloc self ) ];
         } else {
             $types = [ $types ];
         }
     }
-
-    $self->init_buckets() unless $self->{'buckets'};
 
     my $stats_hr = { };
 
@@ -837,9 +836,15 @@ sub stats {
         $stats_hr->{'self'} = \%{ $self->{'stats'} };
     }
 
+    my %misc_keys = map { $_ => 1 }
+      qw/ bytes bytes_read bytes_written
+          cmd_get cmd_set connection_structures curr_items
+          get_hits get_misses
+          total_connections total_items
+        /;
+
     # Now handle the other types, passing each type to each host server.
     my @hosts = @{$self->{'buckets'}};
-    my %malloc_keys = ( );
   HOST: foreach my $host (@hosts) {
         my $sock = $self->sock_to_host($host);
       TYPE: foreach my $typename (grep !/^self$/, @$types) {
@@ -865,11 +870,14 @@ sub stats {
             if ($typename =~ /^(malloc|sizes|misc)$/) {
                 # This stat is key-value.
                 foreach my $line (@lines) {
-                    my($key, $value) = $line =~ /^(?:STAT )?(\w+)\s(.*)/;
+                    my ($key, $value) = $line =~ /^(?:STAT )?(\w+)\s(.*)/;
                     if ($key) {
                         $stats_hr->{'hosts'}{$host}{$typename}{$key} = $value;
                     }
-                    $malloc_keys{$key} = 1 if $typename eq 'malloc';
+                    $stats_hr->{'total'}{$key} += $value
+                        if $typename eq 'misc' && $key && $misc_keys{$key};
+                    $stats_hr->{'total'}{"malloc_$key"} += $value
+                        if $typename eq 'malloc' && $key;
                 }
             } else {
                 # This stat is not key-value so just pull it
@@ -881,29 +889,6 @@ sub stats {
         }
     }
 
-    # Now get the sum total of applicable values.  First the misc values.
-    foreach my $stat (qw(
-        bytes bytes_read bytes_written
-        cmd_get cmd_set connection_structures curr_items
-        get_hits get_misses
-        total_connections total_items
-        )) {
-        $stats_hr->{'total'}{$stat} = 0;
-        foreach my $host (@hosts) {
-            $stats_hr->{'total'}{$stat} +=
-                $stats_hr->{'hosts'}{$host}{'misc'}{$stat};
-        }
-    }
-
-    # Then all the malloc values, if any.
-    foreach my $malloc_stat (keys %malloc_keys) {
-        $stats_hr->{'total'}{"malloc_$malloc_stat"} = 0;
-        foreach my $host (@hosts) {
-            $stats_hr->{'total'}{"malloc_$malloc_stat"} +=
-                $stats_hr->{'hosts'}{$host}{'malloc'}{$malloc_stat};
-        }
-    }
-
     return $stats_hr;
 }
 
@@ -912,19 +897,15 @@ sub stats_reset {
     my ($types) = @_;
     return 0 unless $self->{'active'};
 
-    $self->init_buckets() unless $self->{'buckets'};
-
   HOST: foreach my $host (@{$self->{'buckets'}}) {
         my $sock = $self->sock_to_host($host);
         my $ok = _write_and_read($self, $sock, "stats reset");
-        unless ($ok eq "RESET\r\n") {
+        unless (defined $ok && $ok eq "RESET\r\n") {
             _dead_sock($sock);
         }
     }
     return 1;
 }
-
-
 
 1;
 __END__
@@ -938,7 +919,7 @@ Cache::Memcached - client library for memcached (memory cache daemon)
   use Cache::Memcached;
 
   $memd = new Cache::Memcached {
-    'servers' => [ "10.0.0.15:11211", "10.0.0.15:11212",
+    'servers' => [ "10.0.0.15:11211", "10.0.0.15:11212", "/var/sock/memcached",
                    "10.0.0.17:11211", [ "10.0.0.17:11211", 3 ] ],
     'debug' => 0,
     'compress_threshold' => 10_000,
@@ -1093,6 +1074,9 @@ Deletes a key.  You may optionally provide an integer time value (in seconds) to
 tell the memcached server to block new writes to this key for that many seconds.
 (Sometimes useful as a hacky means to prevent races.)  Returns true if key
 was found and deleted, and false otherwise.
+
+You may also use the alternate method name B<remove>, so
+Cache::Memcached looks like the L<Cache::Cache> API.
 
 =item C<incr>
 
