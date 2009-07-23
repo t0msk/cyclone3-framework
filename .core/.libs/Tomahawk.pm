@@ -403,13 +403,13 @@ sub module
 		
 		my $cache;
 		my $cache_parallel;
-		my $memcached;
+#		my $memcached;
 		if ($TOM::CACHE_memcached)
 		{
-			$memcached=Ext::CacheMemcache::check();
+#			$memcached=Ext::CacheMemcache::check();
 			main::_log("memcached: reading") if $debug;
-			if ($memcached)
-			{
+#			if ($memcached)
+#			{
 				$cache=$Ext::CacheMemcache::cache->get(
 					'namespace' => "mcache",
 					'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
@@ -419,22 +419,22 @@ sub module
 					'namespace' => "mcache_parallel",
 					'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
 				);
-			}
-			else
-			{
-				main::_log("memcached: daemon is not running",4);
-			}
+#			}
+#			else
+#			{
+#				main::_log("memcached: daemon is not running",4);
+#			}
 		}
 		else
 		{
-			main::_log("memcached: not available (lower performance)");
+			main::_log("memcached: not available (lower performance)") if $debug;
 		}
 		
 		if ($cache)
 		{
 			main::_log("memcached: readed") if $debug;
 		}
-		elsif (!$memcached) # try to read from sql only when memcached is not available (not when can't be cache found)
+		elsif (!$TOM::CACHE_memcached) # try to read from sql only when memcached dissabled (not when can't be cache found)
 		{
 			main::_log("sqlcache: reading");
 			my %sth0=TOM::Database::SQL::execute(qq{
@@ -452,23 +452,6 @@ sub module
 			if (%db0_line)
 			{
 				$cache = \%db0_line;
-				
-				if ($TOM::CACHE_memcached)
-				{
-					if ($Ext::CacheMemcache::cache->set(
-							'namespace' => "mcache",
-							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5},
-							'value' => $cache
-#							'expiration' => $mdl_C{-cache_time}
-						))
-					{
-						main::_log("memcached: saved record from db");
-					}
-					else
-					{
-						main::_log("memcached: can't save record from db");
-					}
-				}
 			}
 		}
 		# AND time_to>=$main::time_current
@@ -757,7 +740,7 @@ sub module
 				'namespace' => "mcache_parallel",
 				'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
 				'value' => 1,
-				'expiration' => '600S' # safe time to not parallel caching
+				'expiration' => '60S' # safe time to not parallel caching
 			);
 		}
 		
@@ -857,7 +840,10 @@ sub module
 							'value' => 0
 						);
 					}
-					else {main::_log("memcached: can't save record");}
+					else
+					{
+						main::_log("memcached: can't save record",1);
+					}
 				}
 				
 				if (!$memcached)
