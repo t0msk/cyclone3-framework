@@ -115,7 +115,7 @@ sub new_relation
 		main::_log("input '$_'='$env{$_}'");
 	}
 	
-	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'l_prefix'}.'/'.$env{'l_table'};
+	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'l_prefix'}.'::'.$env{'l_table'};
 	
 	# check if this relation already exists
 	my $relation=(get_relations(
@@ -150,6 +150,7 @@ sub new_relation
 		if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 		{
 			# save info about changed set of relations
+			main::_log("[cache_change_key] set '$cache_change_key'=".(time())."") if $debug;
 			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
 		}
 		
@@ -194,6 +195,7 @@ sub new_relation
 		if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 		{
 			# save info about changed set of relations
+			main::_log("[cache_change_key] set '$cache_change_key'=".(time())."") if $debug;
 			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
 		}
 		
@@ -224,6 +226,7 @@ sub new_relation
 	if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 	{
 		# save info about changed set of relations
+		main::_log("[cache_change_key] set '$cache_change_key'=".(time())."") if $debug;
 		$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
 	}
 	
@@ -283,11 +286,11 @@ sub remove_relation
 				'tb_name' => 'a160_relation',
 				'-journalize' => 1,
 			);
-			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'
-				.$relation->{'l_prefix'}.'/'.$relation->{'l_table'};
+			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$relation->{'l_prefix'}.'::'.$relation->{'l_table'};
 			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 			{
 				# save info about changed set of relations
+				main::_log("[cache_change_key] set '$cache_change_key'=".(time())."") if $debug;
 				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
 			}
 			$t->close();
@@ -362,12 +365,11 @@ sub relation_change_status
 				},
 				'-journalize' => 1,
 			);
-			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'
-				.$relation->{'l_prefix'}.'/'.$relation->{'l_table'};
+			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$relation->{'l_prefix'}.'::'.$relation->{'l_table'};
 			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 			{
-				main::_log("save ($cache_change_key)=".(time())."") if $debug;
 				# save info about changed set of relations
+				main::_log("[cache_change_key] set '$cache_change_key'=".(time())."") if $debug;
 				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
 			}
 			$t->close();
@@ -431,8 +433,7 @@ sub get_relations
 	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_} && $debug};
 	
 	# Memcached key
-	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.
-		$env{'l_prefix'}.'/'.$env{'l_table'};
+	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'l_prefix'}.'::'.$env{'l_table'};
 	my $cache_key='a160_relation::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'status'}.'::'.$env{'rel_type'}.'::'.
 		$env{'ID'}.'/'.
 		$env{'ID_entity'}.'/'.
@@ -444,6 +445,7 @@ sub get_relations
 		$env{'r_table'}.'/'.
 		$env{'r_ID_entity'}.'::'.
 		$env{'limit'};
+	my $cache_change;
 	
 	my $where;
 	
@@ -468,12 +470,13 @@ sub get_relations
 	
 	if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 	{
-		my $cache_change=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_change_key);
+		$cache_change=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_change_key);
 		my $cache=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_key);
 		
-		main::_log("cache-time='".$cache->{'time'}."' cache_change='".$cache_change."' ($cache_change_key)") if $debug;
+#		main::_log("cache-time='".$cache->{'time'}."' cache_change='".$cache_change."' ($cache_change_key)") if $debug;
+		main::_log("[cache_change_key] get '$cache_change_key'=$cache_change") if $debug;
 		
-		if ($cache->{'time'} && ($cache->{'time'} > $cache_change))
+		if ($cache->{'time'} && (($cache->{'time'} > $cache_change) && $cache_change))
 		{
 			main::_log("found in cache") if $debug;
 			$t->close() if $debug;
@@ -504,6 +507,11 @@ sub get_relations
 	
 	if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 	{
+		if (!$cache_change)
+		{
+			main::_log("[cache_change_key] set '$cache_change_key'=".(time())."") if $debug;
+			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
+		}
 		$Ext::CacheMemcache::cache->set
 		(
 			'namespace' => "db_cache",
