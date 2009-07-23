@@ -60,11 +60,11 @@ sub memcached_start
 	
 	if (memcached_check())
 	{
-		main::_log("memcached is running");
+		main::_log("found memcached running at localhost");
 	}
 	else
 	{
-		main::_log("none local memcached is running",1);
+		main::_log("no memcached at localhost found",1);
 		my $i=0;
 		foreach (@{$TOM::CACHE_memcached_servers})
 		{
@@ -72,12 +72,13 @@ sub memcached_start
 			my @def=split(':',$_);
 			if ($def[0] eq '127.0.0.1') # we can run localhost
 			{
+				main::_log("starting memcached server...");
 				my $pid=TOM::System::process::start(
 					'memcached -d -m 10024 -l '.$def[0].' -p '.$def[1]
 				);
 				$pid++;
 				sleep 1; # waiting to $pid available
-				main::_log("real pid='$pid'");
+				main::_log("memcached real pid='$pid'");
 			}
 			$i++;
 		}
@@ -97,23 +98,33 @@ sub memcached_check
 {
 	my $t=track TOM::Debug(__PACKAGE__."::memcached_check()") if $debug;
 	
-	my $i=0;
-	foreach (@{$TOM::CACHE_memcached_servers})
+	my @processes=TOM::System::process::find(
+		regex=>['memcached']
+	);
+	
+	if ($processes[0])
 	{
-		main::_log("server[$i]='$_'") if $debug;
-		my @def=split(':',$_);
-		my @processes=TOM::System::process::find(
-			regex=>['memcached','-l '.$def[0],'-p '.$def[1]]
-		) if $def[0] eq "127.0.0.1";
-		
-		if ($processes[0])
-		{
-			$t->close() if $debug;
-			return 1;
-		}
-		
-		$i++;
+		$t->close() if $debug;
+		return 1;
 	}
+	
+#	my $i=0;
+#	foreach (@{$TOM::CACHE_memcached_servers})
+#	{
+#		main::_log("server[$i]='$_'") if $debug;
+#		my @def=split(':',$_);
+#		my @processes=TOM::System::process::find(
+#			regex=>['memcached','-l '.$def[0],'-p '.$def[1]]
+#		) if $def[0] eq "127.0.0.1";
+#		
+#		if ($processes[0])
+#		{
+#			$t->close() if $debug;
+#			return 1;
+#		}
+#		
+#		$i++;
+#	}
 	
 	$t->close() if $debug;
 	return undef;
@@ -133,6 +144,15 @@ sub check
 		'key'=>"test_key",
 		'value'=>"test_value"
 	);
+	my $test=1;
+	for (1..10)
+	{
+		my $k='1' x $_;
+		$cache->set('key' => $k,'value'=>time());
+		if (!$cache->get('key' => $k)){main::_log("memcached with incorrect response (key $_)",1);$test=0;last;}
+	}
+	return undef unless $test;
+	return 1;
 }
 
 =head2 connect()
@@ -163,12 +183,12 @@ sub connect
 		return undef;
 	}
 	
-	main::_log("cache connecting,...");
+	main::_log("connecting to memcached servers");
 	$cache = Cache::Memcached::Managed->new($TOM::CACHE_memcached_servers);
 	
 	if ($cache)
 	{
-		main::_log("cache connected");
+		main::_log("sucessfully connected");
 		foreach my $server(keys %{$cache->dead})
 		{
 			main::_log("dead server: $server", 1);
@@ -192,7 +212,8 @@ sub connect
 	}
 	else
 	{
-		main::_log("memcached is not responding (try memcached_start() when service is off)",1);
+		main::_log("memcached is not responding (try memcached_start() when service is off), disabling",1);
+		$TOM::CACHE_memcached=0;
 		$t->close();
 		return undef;
 	}
