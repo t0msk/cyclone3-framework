@@ -147,9 +147,9 @@ sub check
 	my $test=1;
 	for (1..10)
 	{
-		my $k='1' x $_;
-		$cache->set('key' => $k,'value'=>time());
-		if (!$cache->get('key' => $k)){main::_log("memcached with incorrect response (key $_)",1);$test=0;last;}
+		my $k='X' x $_;
+		$cache->set('namespace'=>'test_namespace','key' => 'test_key_'.$k,'value'=>"test_value",'expiration'=>'1H');
+		if (!$cache->get('namespace'=>'test_namespace','key' => 'test_key_'.$k)){main::_log("memcached with incorrect response (key '$k')",1);$test=0;last;}
 	}
 	return undef unless $test;
 	return 1;
@@ -169,12 +169,12 @@ sub connect
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::connect()");
 	
-	if (check())
-	{
-		main::_log("service is already running and connected");
-		$t->close();
-		return 1;
-	}
+#	if (check())
+#	{
+#		main::_log("service is already running and connected");
+#		$t->close();
+#		return 1;
+#	}
 	
 	if (!$TOM::CACHE_memcached)
 	{
@@ -185,6 +185,7 @@ sub connect
 	
 	main::_log("connecting to memcached servers");
 	$cache = Cache::Memcached::Managed->new($TOM::CACHE_memcached_servers);
+	$cache->{'debug'}=$debug;
 	
 	if ($cache)
 	{
