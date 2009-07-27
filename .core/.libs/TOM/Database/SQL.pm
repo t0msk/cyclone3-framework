@@ -151,6 +151,7 @@ sub execute
 	}
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
+	$env{'db_h_orig'}=$env{'db_h'};
 	
 	if ($env{'slave'} && $TOM::DB{$env{'db_h'}}{'slaves'} && $SQL=~/^SELECT/)
 	{
@@ -180,7 +181,11 @@ sub execute
 	$SQL_=~s|[\n\t\r]+| |g;
 	$SQL_=~s|^[ ]+||;
 	
-	my $cache_key=$env{'db_name'}.'::'.$SQL_;
+	my $cache_key=$TOM::DB{$env{'db_h_orig'}}{'host'};
+	$cache_key.='::'.$TOM::DB{$env{'db_h_orig'}}{'name'}.':'.$TOM::DB{$env{'db_h_orig'}}{'uri'}
+		if $TOM::DB{$env{'db_h_orig'}}{'type'} eq "DBI";
+	$cache_key.='::'.$env{'db_name'}.'::'.$SQL_;
+	
 	if (($env{'cache'} || $env{'cache_auto'}) && $TOM::CACHE && $TOM::CACHE_memcached && $SQL_=~/^SELECT/ && $main::FORM{'_rc'}!=-2)
 	{
 		main::_log("SQL: try to read from cache") if $env{'log'};
