@@ -199,6 +199,8 @@ sub execute
 	
 	$env{'article_content.mimetype'}='text/html' unless $env{'article_content.mimetype'};
 	
+	$env{'world_status'}='Y' unless $env{'world_status'};
+	
 	$env{'sql_order_by'}='article_attrs.datetime_start DESC' unless $env{'sql_order_by'};
 	
 	if (not $env{'sql_limit'}=~/,/){$env{'sql_limit'}="0,".$env{'sql_limit'}}
@@ -261,27 +263,26 @@ sub execute
 			"')";
 	}
 	
+	if ($env{'article.ID'})
+	{
+		$sql_where.=" AND article.ID IN ('".
+			(join "','", split(';',$env{'article.ID'})).
+			"')";
+	}
+	
+	if ($env{'world_status'} eq 'Y')
+	{
+		$sql_where.=" AND (ACL_world.perm_R='Y' OR ACL_world.perm_R IS NULL) ";
+	}
+	else
+	{
+		$sql_where.=" AND ACL_world.perm_R='N' ";
+	}
+	
 	if ($env{'sql_where'})
 	{
 		$sql_where.=" AND ".$env{'sql_where'};
 	}
-	
-	my $sql=qq{
-		SELECT
-			*
-		FROM
-			`$env{'db_name'}`.a401_article_view AS article
-		WHERE
-			article.status IN ('$status_sql') AND
-			article.lng='$env{'article_content.lng'}' AND
-			article.datetime_start <= NOW() AND
-			(article.datetime_stop IS NULL OR article.datetime_stop >= NOW()) AND
-			article.mimetype='$env{'article_content.mimetype'}'
-			$sql_where
-		ORDER BY
-			$env{'sql_order_by'}
-		LIMIT $env{'sql_limit'}
-	};
 	
 	my $sql=qq{
 		SELECT
@@ -302,7 +303,7 @@ sub execute
 			article_content.datetime_create,
 			article_attrs.datetime_start,
 			article_attrs.datetime_stop,
-                        
+         
 			
 			article_attrs.priority_A,
 			article_attrs.priority_B,
@@ -317,12 +318,11 @@ sub execute
 			article_content.keywords,
 			article_content.lng,
 			
-                        IF(
-                            round((`article_ent`.rating_score / `article_ent`.rating_votes),2),
-                            round((`article_ent`.rating_score / `article_ent`.rating_votes),2), '0.00'
-                        ) as rating,
-                        
-                        
+			IF(
+				round((`article_ent`.rating_score / `article_ent`.rating_votes),2),
+				round((`article_ent`.rating_score / `article_ent`.rating_votes),2), '0.00'
+			) as rating,
+			
 			article_ent.visits,
 			
 			article_attrs.status,
@@ -355,7 +355,14 @@ sub execute
 		(
 			article_cat.ID = article_attrs.ID_category
 		)
-
+		LEFT JOIN `$env{'db_name'}`.`a301_ACL_user_group` AS ACL_world ON
+		(
+			ACL_world.ID_entity = 0 AND
+			r_prefix = 'a401' AND
+			r_table = 'article' AND
+			r_ID_entity = article.ID_entity
+		)
+		
 		WHERE
 			article_attrs.status IN ('$status_sql') AND
 			article_attrs.lng='$env{'article_content.lng'}' AND
@@ -363,7 +370,7 @@ sub execute
 			(article_attrs.datetime_stop IS NULL OR article_attrs.datetime_stop >= NOW()) AND
 			article_content.mimetype='$env{'article_content.mimetype'}'
 			$sql_where
-		
+			
 		ORDER BY
 			$env{'sql_order_by'}
 			
@@ -372,7 +379,7 @@ sub execute
 	};
 	
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache_auto_'=>60);
+	my %sth0=TOM::Database::SQL::execute($sql,'log_'=>1,'-slave'=>1,'-cache_auto_'=>60);
 	
 	if(!$sth0{'sth'})
 	{
@@ -474,9 +481,33 @@ sub execute
 			|| undef;
 		
 		# a510_video
+		$p->{'config'}->{'a510_video_part_file.ID_format'}=
+			$env{'article.'.$item_counter.'.abstract.a510_video_part_file.ID_format'}
+			|| $env{'article.'.$item_counter.'.a510_video_part_file.ID_format'}
+			|| $env{'abstract.a510_video_part_file.ID_format'}
+			|| $env{'a510_video_part_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a510_video_part_file.ID_format.1'}=
+			$env{'article.'.$item_counter.'.abstract.a510_video_part_file.ID_format.1'}
+			|| $env{'article.'.$item_counter.'.a510_video_part_file.ID_format.1'}
+			|| $env{'abstract.a510_video_part_file.ID_format.1'}
+			|| $env{'a510_video_part_file.ID_format.1'}
+			|| undef;
+		$p->{'entity'}{'a510_video'}=
+			$XSGN{'abstract.a510_video'}
+			|| $XSGN{'a510_video'}
+			|| undef;
+		$p->{'entity'}{'a510_video.1'}=
+			$XSGN{'abstract.a510_video.1'}
+			|| $XSGN{'a510_video.1'}
+			|| undef;
 		$p->{'entity'}{'a510_video_part'}=
 			$XSGN{'abstract.a510_video_part'}
 			|| $XSGN{'a510_video_part'}
+			|| undef;
+		$p->{'entity'}{'a510_video_part.1'}=
+			$XSGN{'abstract.a510_video_part.1'}
+			|| $XSGN{'a510_video_part.1'}
 			|| undef;
 		
 		$p->parse($db0_line{'abstract'});
@@ -529,9 +560,33 @@ sub execute
 				|| undef;
 			
 			# a510_video
+			$p->{'config'}->{'a510_video_part_file.ID_format'}=
+				$env{'article.'.$item_counter.'.abstract.a510_video_part_file.ID_format'}
+				|| $env{'article.'.$item_counter.'.a510_video_part_file.ID_format'}
+				|| $env{'abstract.a510_video_part_file.ID_format'}
+				|| $env{'a510_video_part_file.ID_format'}
+				|| undef;
+			$p->{'config'}->{'a510_video_part_file.ID_format.1'}=
+				$env{'article.'.$item_counter.'.abstract.a510_video_part_file.ID_format.1'}
+				|| $env{'article.'.$item_counter.'.a510_video_part_file.ID_format.1'}
+				|| $env{'abstract.a510_video_part_file.ID_format.1'}
+				|| $env{'a510_video_part_file.ID_format.1'}
+				|| undef;
+			$p->{'entity'}{'a510_video'}=
+				$XSGN{'abstract.a510_video'}
+				|| $XSGN{'a510_video'}
+				|| undef;
+			$p->{'entity'}{'a510_video.1'}=
+				$XSGN{'abstract.a510_video.1'}
+				|| $XSGN{'a510_video.1'}
+				|| undef;
 			$p->{'entity'}{'a510_video_part'}=
 				$XSGN{'abstract.a510_video_part'}
 				|| $XSGN{'a510_video_part'}
+				|| undef;
+			$p->{'entity'}{'a510_video_part.1'}=
+				$XSGN{'abstract.a510_video_part.1'}
+				|| $XSGN{'a510_video_part.1'}
 				|| undef;
 			
 			$p->parse($db0_line{'body'});
@@ -572,6 +627,55 @@ sub execute
 			{
 				if ($relation->{'r_prefix'} eq "a501" && $relation->{'r_table'} eq "image")
 				{$item=~s|<#gallery_mark#>|$XSGN{'gallery_mark'}|g;}
+				if ($relation->{'r_prefix'} eq "a401" && $relation->{'r_table'} eq "article" && $XSGN{'related_article'})
+				{
+					my $item_article=$XSGN{'related_article'};
+					my $sql=qq{
+						SELECT
+							article.ID_entity,
+							article.ID,
+							article_attrs.ID_category,
+							article_cat.name AS ID_category_name,
+							article_cat.name_url AS ID_category_name_url,
+							article_attrs.name,
+							article_attrs.datetime_start,
+							article_attrs.name_url
+						FROM `$env{'db_name'}`.a401_article AS article
+						LEFT JOIN `$env{'db_name'}`.a401_article_attrs AS article_attrs ON
+						(
+							article_attrs.ID_entity = article.ID
+						)
+						LEFT JOIN `$env{'db_name'}`.`a401_article_ent` AS article_ent ON
+						(
+							article_ent.ID_entity = article.ID_entity
+						)
+						LEFT JOIN `$env{'db_name'}`.`a401_article_cat` AS article_cat ON
+						(
+							article_cat.ID = article_attrs.ID_category
+						)
+						WHERE
+							article.ID_entity='$relation->{'r_ID_entity'}' AND
+							article_attrs.status='Y' AND
+							article_attrs.lng='$env{'article_content.lng'}' AND
+							article_attrs.datetime_start <= NOW() AND
+							(article_attrs.datetime_stop IS NULL OR article_attrs.datetime_stop >= NOW())
+						ORDER BY
+							article_attrs.datetime_start DESC
+						LIMIT
+							1
+					};
+					my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>600);
+					my %db1_line=$sth1{'sth'}->fetchhash();
+			      my %datetime=TOM::Utils::datetime::datetime_collapse($db1_line{'datetime_start'});
+			      $db1_line{'datetime_start.year'}=$datetime{'year'};
+			      $db1_line{'datetime_start.month'}=$datetime{'month'};
+			      $db1_line{'datetime_start.mday'}=$datetime{'mday'};
+			      $db1_line{'datetime_start.hour'}=$datetime{'hour'};
+			      $db1_line{'datetime_start.min'}=$datetime{'min'};
+			      $db1_line{'datetime_start.sec'}=$datetime{'sec'};
+					$item_article=~s|<%db_(.*?)%>|$db1_line{$1}|g;
+					$item=~s|<#related_article#>|$item_article|g;
+				}
 #				if ($relation->{'r_prefix'} eq "a821" && $relation->{'r_table'} eq "discussion")
 #				{$XSGN{'NULL'}=~s|<%discussion_status%>|Y|g;}
 			}
@@ -615,6 +719,7 @@ sub execute
 		
 		$item=~s|<%alias_url%>|$alias_url|g if $alias_url;
 		$item=~s|<%alias_url%>|$tom::H_www|g unless $alias_url;
+		$item=~s|<%alias_url_db%>|$alias_url|g;
 		
 		$item=~s|<%item_number%>|$item_counter|g;
 		
