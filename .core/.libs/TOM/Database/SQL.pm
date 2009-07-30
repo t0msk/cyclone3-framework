@@ -19,10 +19,10 @@ use TOM::Database::SQL::transaction;
 use TOM::Database::SQL::cache;
 
 our $debug=0;
-our $logcachequery=0;
-our $logquery=0;
-our $logquery_long=2;
-our $query_long_autocache=0.01; # less availability than Memcached
+our $logcachequery=$TOM::Database::SQL::logcachequery || 0;
+our $logquery=$TOM::Database::SQL::logquery || 0;
+our $logquery_long=$TOM::Database::SQL::logquery_long || 2;
+our $query_long_autocache=$TOM::Database::SQL::query_long_autocache || 0.01; # less availability than Memcached
 
 =head1 FUNCTIONS
 
@@ -102,6 +102,42 @@ sub show_create_table
 }
 
 
+
+=head2 show_slave_status($db_h)
+
+
+
+=cut
+
+our %slave_status;
+sub get_slave_status
+{
+	my $db_h=shift;
+	
+	# check only on every 60 seconds
+	if ($slave_status{$db_h} && ($slave_status{$db_h}{'time'}-time()<60))
+	{
+		return %{$slave_status{$db_h}{'hash'}};
+	}
+	main::_log("get show slave status");
+	TOM::Database::connect::multi($db_h) unless $main::DB{$db_h};
+	my $db0=$main::DB{$db_h}->Query("SHOW SLAVE STATUS");
+	my %db0_line=$db0->fetchhash();
+	
+	if ($db0_line{'Seconds_Behind_Master'}>60)
+	{
+		main::_log("SQL: Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",1);
+		main::_log("{$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err");
+		main::_log("[$tom::H] {$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err",1) if $tom::H;
+	}
+	
+	$slave_status{$db_h}{'time'}=time();
+	%{$slave_status{$db_h}{'hash'}}=%db0_line;
+	return %db0_line;
+}
+
+
+
 =head2 execute($SQL,'db_h'=>'main')
 
 Executes SQL query and return hash with variables
@@ -158,8 +194,17 @@ sub execute
 		my $slave=int(rand($TOM::DB{$env{'db_h'}}{'slaves'}))+1;
 		if ($TOM::DB{$env{'db_h'}.':'.$slave})
 		{
-			main::_log("using slave:$slave") unless $env{'quiet'};
-			$env{'db_h'}=$env{'db_h'}.':'.$slave;
+			# check quality of this slave
+			my %slave_quality=get_slave_status($env{'db_h'}.':'.$slave);
+			if ($slave_quality{'Seconds_Behind_Master'}>300) # 5min
+			{
+				main::_log("slave '$slave' is outdated (behind master:$slave_quality{'Seconds_Behind_Master'}s), using master",1);
+			}
+			else
+			{
+				main::_log("using slave '$slave' (behind master:$slave_quality{'Seconds_Behind_Master'}s)") unless $env{'quiet'};
+				$env{'db_h'}=$env{'db_h'}.':'.$slave;
+			}
 		}
 	}
 	
@@ -204,7 +249,7 @@ sub execute
 		elsif ($cache)
 		{
 			main::_log("SQL: readed from cache (".(time()-$cache->{'value'}->{'time'})."s old)") if $env{'log'};
-			main::_log("{$env{'db_h'}:cache} '$SQL_' from '$filename:$line'",3,"sql") if $logcachequery;
+			main::_log("{$env{'db_h_orig'}:cache} '$SQL_' from '$filename:$line'",3,"sql") if $logcachequery;
 			$output{'sth'}=$cache;
 			$output{'info'}=$cache->{'value'}->{'info'};
 			$output{'err'}=$cache->{'value'}->{'err'};
@@ -233,7 +278,7 @@ sub execute
 				main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
 				main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
 			}
-			main::_log("output info=".$output{'info'}) unless $env{'quiet'};
+			main::_log("output info=".$output{'info'}) if (!$env{'quiet'} && $output{'info'});
 			$t->close();
 			return %output;
 		}
@@ -258,7 +303,7 @@ sub execute
 				main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
 				main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
 			}
-			main::_log("output info=".$output{'info'}) unless $env{'quiet'};
+			main::_log("output info=".$output{'info'}) if (!$env{'quiet'} && $output{'info'});
 			$t->close();
 			return %output;
 		}
@@ -276,8 +321,8 @@ sub execute
 	
 	if ($TOM::DB{$env{'db_h'}}{'type'} ne "DBI")
 	{
-		main::_log("output affectedrows=".$output{'rows'}) unless $env{'quiet'};
-		main::_log("output info=".$output{'info'}) unless $env{'quiet'};
+		main::_log("affectedrows='".$output{'rows'}."'") unless $env{'quiet'};
+		main::_log("output info=".$output{'info'}) if (!$env{'quiet'} && $output{'info'});
 	}
 	
 	$t->close();
