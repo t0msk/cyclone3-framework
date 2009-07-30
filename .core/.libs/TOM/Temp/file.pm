@@ -79,7 +79,8 @@ sub DESTROY
 	
 	if ($self->{'unlink'})
 	{
-		main::_log("destroying tempfile $self->{'filename'} (if exists)");
+		my $size=(stat $self->{'filename'})[7];
+		main::_log("destroying tempfile $self->{'filename'} size=".$size."b");
 		unlink $self->{'filename'};
 		if ($self->{'unlink_ext'})
 		{
