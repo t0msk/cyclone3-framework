@@ -274,6 +274,11 @@ sub image_file_generate
 	if ($file_parent{'status'} ne "Y")
 	{
 		main::_log("parent image_file is disabled or not available",1);
+		image_file_add_error
+		(
+			'image.ID_entity' => $image{'ID_entity'},
+			'image_format.ID' => $format{'ID'}
+		);
 		$t->close();
 		return undef;
 	}
@@ -300,7 +305,12 @@ sub image_file_generate
 	
 	if (!$out)
 	{
-		main::_log("parent image_file can't be processed",1);
+		main::_log("parent image_file can't be processed into format '$format{'ID'}', inserting 'E' status",1);
+		image_file_add_error
+		(
+			'image.ID_entity' => $image{'ID_entity'},
+			'image_format.ID' => $format{'ID'}
+		);
 		$t->close();
 		return undef;
 	}
@@ -374,6 +384,9 @@ sub image_file_process
 		return undef;
 	}
 	
+	# GIF magick
+	$image1=$image1->[0] if $image1->Get('magick') eq 'GIF';
+	
 	foreach my $function(split('\n',$env{'process'}))
 	{
 		$function=~s|\s+$||g;
@@ -437,7 +450,11 @@ sub image_file_process
 			
 			my $tmpfile=new TOM::Temp::file('ext'=>'jpg','dir'=>$main::ENV{'TMP'});
 			$image1->Write('jpg:'.$tmpfile->{'filename'});
-			my $out=`cd /www/TOM/_addons/App/501/FaceDetect/;./fdetect $tmpfile->{'filename'}`;
+			my $out;
+			if (-x '/www/TOM/_addons/App/501/FaceDetect/fdetect')
+			{
+				$out=`cd /www/TOM/_addons/App/501/FaceDetect/;./fdetect $tmpfile->{'filename'}`;
+			}
 			
 			$env{'red_area'}={};
 			$env{'green_area'}={};
@@ -619,7 +636,15 @@ sub image_file_process
 		main::_log("writing file '$env{'image2'}' ext='$env{'ext'}'");
 		$out[1]=$env{'ext'};
 		$out[0]=$image1->Write($env{'ext'}.':'.$env{'image2'});
-		if ($out[0]){$out[0]=undef;}else{$out[0]=1}
+		if ($out[0])
+		{
+			main::_log("error in writing",1);
+			$out[0]=undef;
+		}
+		else
+		{
+			$out[0]=1;
+		}
 	}
 	else
 	{
@@ -1148,28 +1173,28 @@ sub image_file_add
 	# check if image_file already not exists
 	if (!$env{'file'})
 	{
-		main::_log("missing param file",1);
+		main::_log("missing param 'file' to proceed",1);
 		$t->close();
 		return undef;
 	}
 	
 	if (! -e $env{'file'})
 	{
-		main::_log("file is missing or can't be read",1);
+		main::_log("file '$env{'file'}' is missing or can't be read",1);
 		$t->close();
 		return undef;
 	}
 	
 	if (!$env{'image.ID_entity'})
 	{
-		main::_log("missing param image.ID_entity",1);
+		main::_log("missing param image.ID_entity to proceed",1);
 		$t->close();
 		return undef;
 	}
 	
 	if (!$env{'image_format.ID'})
 	{
-		main::_log("missing param image_format.ID",1);
+		main::_log("missing param image_format.ID to proceed",1);
 		$t->close();
 		return undef;
 	}
@@ -1177,11 +1202,11 @@ sub image_file_add
 	# file must be analyzed
 	
 	# size
-	my $file_size=(stat($env{'file'}))[7];
+	my $file_size=(stat $env{'file'})[7];
 	main::_log("file size='$file_size'");
 	if (!$file_size)
 	{
-		main::_log("image_file is empty",1);
+		main::_log("image_file '$env{'file'}' is empty",1);
 		$t->close();
 		return undef;
 	}
@@ -1326,6 +1351,58 @@ sub image_file_add
 	$t->close();
 	return 1;
 }
+
+
+sub image_file_add_error
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::image_file_add_error()");
+	
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`$App::501::db_name`.`a501_image_file`
+			WHERE
+				ID_entity=$env{'image.ID_entity'} AND
+				ID_format=$env{'image_format.ID'}
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);	
+		if (my %db0_line=$sth0{'sth'}->fetchhash)
+		{
+			# file updating
+			App::020::SQL::functions::update(
+				'ID' => $db0_line{'ID'},
+				'db_h' => 'main',
+				'db_name' => $App::501::db_name,
+				'tb_name' => 'a501_image_file',
+				'columns' =>
+				{
+					'status' => "'Y'",
+				},
+			);
+		}
+		else
+		{
+			my $ID=App::020::SQL::functions::new(
+				'db_h' => "main",
+				'db_name' => $App::501::db_name,
+				'tb_name' => "a501_image_file",
+				'columns' =>
+				{
+					'ID_entity' => $env{'image.ID_entity'},
+					'ID_format' => $env{'image_format.ID'},
+					'status' => "'E'"
+				},
+				'-journalize' => 1
+			);
+		}
+	
+	$t->close();
+	return 1;
+}
+
 
 
 
