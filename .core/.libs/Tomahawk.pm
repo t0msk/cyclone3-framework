@@ -290,7 +290,8 @@ sub module
 {
 	local %mdl_env=@_;
 	$mdl_env{'-cache'} if $mdl_env{'-cache_id'};
-	my $t=track TOM::Debug(__PACKAGE__."::module(".$mdl_env{-category}."-".$mdl_env{-name}."/".$mdl_env{-version}."/".$mdl_env{-global}.")");
+	#my $t=track TOM::Debug(__PACKAGE__."::module(".$mdl_env{-category}."-".$mdl_env{-name}."/".$mdl_env{-version}."/".$mdl_env{-global}.")");
+	my $t=track TOM::Debug("module",'attrs'=>"(".$mdl_env{-category}."-".$mdl_env{-name}.")",'timer'=>1);
 	local %mdl_C;
 	local $tom::ERR;
 	local $tom::ERR_plus;
@@ -581,10 +582,10 @@ sub module
 		)
 		# TAK TUTO CACHE POUZIJEM
 		{
-			main::_log("using cache domain:$cache_domain from:$mdl_C{-cache_from} old:$mdl_C{-cache_old} ".
-				"max: ".$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}." ".
-				"remain:".($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}-$mdl_C{'-cache_old'})." ".
-				"parallel: ".$cache_parallel
+			main::_log("using cache domain:$cache_domain from:$mdl_C{-cache_from}S old:$mdl_C{-cache_old}S ".
+				"max:".$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}."S ".
+				"remain:".($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}-$mdl_C{'-cache_old'})."S ".
+				"parallel?:".$cache_parallel
 				);
 				
 			# NATIAHNEM HTML KOD :))
@@ -751,7 +752,7 @@ sub module
 		local %Tomahawk::module::XSGN;
 		local %Tomahawk::module::XLNG;
 		
-		my $t_execute=track TOM::Debug("Tomahawk::module::execute()");
+		my $t_execute=track TOM::Debug("exec");
 		$return_code=Tomahawk::module::execute(%mdl_env);
 		$t_execute->close();
 		
@@ -831,7 +832,7 @@ sub module
 						)
 					)
 					{
-						main::_log("memcached: saved record");
+						main::_log("saved to mcache");
 						$memcached=1;
 						# filling cache stopped
 						$Ext::CacheMemcache::cache->set(
@@ -1008,50 +1009,48 @@ sub module
 
 sub supermodule
 {
- local %smdl_env=@_;
- local $app=$smdl_env{-category};
- $Tomahawk::module::authors=""; # vyprazdnim zoznam authorov
-
- #my $time_start=(times)[0];
- #my $time_start=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
- # SPRACOVANIE PREMMENNYCH
- $smdl_env{-category}=0 unless $smdl_env{-category};
- $smdl_env{-version}="0" unless $smdl_env{-version}; # NEBUDEM SE S NIKYM SRAAAT BEZ DUUVODU!...
- $smdl_env{-xsgn}=$tom::dsgn unless $smdl_env{-xsgn}; # SAJRAJT
- $smdl_env{-xlng}=$tom::lng unless $smdl_env{-xlng};
-
- main::_log("adding supermodule ".$smdl_env{-category}."-".$smdl_env{-name}."/".$smdl_env{-version}."/".$smdl_env{-global});
- foreach (sort keys %smdl_env)
- {
-  my $var=$smdl_env{$_};$var=~s|[\n\r]||g;
-  if (length($var)>50){$var=substr($var,0,50)."..."}
-  main::_log("input (".$_.")=".$var);
- }
-
- my $file_data;
-
- # definujem rec pre modul aby ju mohol prijat ako $env{lng}
- # AK NIEJE ZADANA NATVRDO CEZ module (-xlng), tak vezmem language
- # tejto session. predam do $env{lng}
- #if (!$smdl_env{lng}){$smdl_env{lng}=$tom::lng;$smdl_env{lng}=$smdl_env{-xlng} if $smdl_env{-xlng};}
- $smdl_env{lng}=$smdl_env{-xlng};
-
- # definujem design pre modul aby ju mohol prijat ako $env{dsgn}
- # AK NIEJE ZADANA NATVRDO CEZ module (-xsgn), tak vezmem design
- # tejto session. predam do $env{lng}
- #if (!$smdl_env{dsgn}){$smdl_env{dsgn}=$tom::dsgn;$smdl_env{dsgn}=$smdl_env{-xsgn} if $smdl_env{-xsgn};}
- $smdl_env{dsgn}=$smdl_env{-xsgn};
-
- # AK JE DEFINOVANA POZIADAVKA NA CACHOVANIE A JE DEFINOVANA
- # POZIADAVKA NA NA VOBEC CACHOVANIE, TAK SA TOMU VENUJEM
-
- main::_log("executing");
-
- # KDE JE MODUL?
-# $smdl_env{P_MODULE}="/_mdl/".$smdl_env{-category}."-".$smdl_env{-name}.".".$smdl_env{-version}.".smdl";
-# if ($smdl_env{-global}){$smdl_env{P_MODULE}=$TOM::P.$smdl_env{P_MODULE}}
-# else{$smdl_env{P_MODULE}=$tom::P.$smdl_env{P_MODULE}}
-
+	local %smdl_env=@_;
+	local $app=$smdl_env{-category};
+	$Tomahawk::module::authors="";
+	
+	# SPRACOVANIE PREMMENNYCH
+	$smdl_env{-category}=0 unless $smdl_env{-category};
+	$smdl_env{-version}="0" unless $smdl_env{-version}; # NEBUDEM SE S NIKYM SRAAAT BEZ DUUVODU!...
+	$smdl_env{-xsgn}=$tom::dsgn unless $smdl_env{-xsgn}; # SAJRAJT
+	$smdl_env{-xlng}=$tom::lng unless $smdl_env{-xlng};
+	
+	# main::_log("adding supermodule ".$smdl_env{-category}."-".$smdl_env{-name}."/".$smdl_env{-version}."/".$smdl_env{-global});
+	my $t=track TOM::Debug("supermodule",'attrs'=>"(".$smdl_env{-category}."-".$smdl_env{-name}.")",'timer'=>1);
+	
+	foreach (sort keys %smdl_env)
+	{
+#		my $var=$smdl_env{$_};$var=~s|[\n\r]||g;
+#		if (length($var)>50){$var=substr($var,0,50)."..."}
+#		main::_log("input (".$_.")=".$var);
+	}
+	
+	my $file_data;
+	
+	# definujem rec pre modul aby ju mohol prijat ako $env{lng}
+	# AK NIEJE ZADANA NATVRDO CEZ module (-xlng), tak vezmem language
+	# tejto session. predam do $env{lng}
+	#if (!$smdl_env{lng}){$smdl_env{lng}=$tom::lng;$smdl_env{lng}=$smdl_env{-xlng} if $smdl_env{-xlng};}
+	$smdl_env{lng}=$smdl_env{-xlng};
+	
+	# definujem design pre modul aby ju mohol prijat ako $env{dsgn}
+	# AK NIEJE ZADANA NATVRDO CEZ module (-xsgn), tak vezmem design
+	# tejto session. predam do $env{lng}
+	#if (!$smdl_env{dsgn}){$smdl_env{dsgn}=$tom::dsgn;$smdl_env{dsgn}=$smdl_env{-xsgn} if $smdl_env{-xsgn};}
+	$smdl_env{dsgn}=$smdl_env{-xsgn};
+	
+	# AK JE DEFINOVANA POZIADAVKA NA CACHOVANIE A JE DEFINOVANA
+	# POZIADAVKA NA NA VOBEC CACHOVANIE, TAK SA TOMU VENUJEM
+	
+	# KDE JE MODUL?
+	# $smdl_env{P_MODULE}="/_mdl/".$smdl_env{-category}."-".$smdl_env{-name}.".".$smdl_env{-version}.".smdl";
+	# if ($smdl_env{-global}){$smdl_env{P_MODULE}=$TOM::P.$smdl_env{P_MODULE}}
+	# else{$smdl_env{P_MODULE}=$tom::P.$smdl_env{P_MODULE}}
+	
 	if (($smdl_env{-global}==2)&&($tom::Pm))
 	{
 		my $addon_path=
@@ -1096,69 +1095,44 @@ sub supermodule
 		}
 	}
 
- # AK MODUL NEEXISTUJE
- if (not -e $smdl_env{P_MODULE})
- {TOM::Error::module(
-	-MODULE	=>	"[SMDL::".$smdl_env{-category}."-".$smdl_env{-name}."]",
-	-ERROR	=>	$!);return undef;}
-
-
- # V EVALKU OSETRIM CHYBU RYCHLOSTI A SPATNEHO MODULU
- eval
- {
-	local $SIG{ALRM} = sub {die "Timeout ".$TOM::ALRM_smdl." sec.\n"};
-	alarm $TOM::ALRM_smdl;
-	
-	if (not do $smdl_env{'P_MODULE'}){$tom::ERR="$@ $!";die "pre-compilation error: $@ $!\n";}
-	
-#	do $smdl_env{P_MODULE};
-	if (Tomahawk::module::execute(%smdl_env))
-	{
-	}
-	else
-	{
-		TOM::Error::module(
+	# AK MODUL NEEXISTUJE
+	if (not -e $smdl_env{P_MODULE})
+	{TOM::Error::module(
 		-MODULE	=>	"[SMDL::".$smdl_env{-category}."-".$smdl_env{-name}."]",
-		-ERROR	=>	$tom::ERR);
+		-ERROR	=>	$!);$t->close();return undef;}
+	
+	
+	# V EVALKU OSETRIM CHYBU RYCHLOSTI A SPATNEHO MODULU
+	eval
+	{
+		local $SIG{ALRM} = sub {die "Timeout ".$TOM::ALRM_smdl." sec.\n"};
+		alarm $TOM::ALRM_smdl;
+		
+		if (not do $smdl_env{'P_MODULE'}){$tom::ERR="$@ $!";die "pre-compilation error: $@ $!\n";}
+		
+		if (Tomahawk::module::execute(%smdl_env))
+		{
+		}
+		else
+		{
+			TOM::Error::module(
+			-MODULE	=>	"[SMDL::".$smdl_env{-category}."-".$smdl_env{-name}."]",
+			-ERROR	=>	$tom::ERR);
+			alarm 0;
+			$t->close();
+			return undef;
+		}
 		alarm 0;
-		return undef;
-	}
-	alarm 0;
- };
- #alarm 0;
- 
- 
-#=head1
- if ($@){TOM::Error::module( # toto je syntakticka chyba zistitelna az pri behu
-  	-TMP	=>	$mdl_C{-TMP},
-	-MODULE	=>	"[SMDL::".$smdl_env{-category}."-".$smdl_env{-name}."]",
-	-ERROR	=>	$@,
-	-PLUS	=>	$@." ".$!." ".$tom::ERR
+	};
+	
+	if ($@){TOM::Error::module( # toto je syntakticka chyba zistitelna az pri behu
+		-TMP	=>	$mdl_C{-TMP},
+		-MODULE	=>	"[SMDL::".$smdl_env{-category}."-".$smdl_env{-name}."]",
+		-ERROR	=>	$@,
+		-PLUS	=>	$@." ".$!." ".$tom::ERR
   	)};
-#=cut
-=head1
- if ($@){Tomahawk::error::module(
-	-MODULE	=>	$smdl_env{-category}."-".$smdl_env{-name},
-	-ERROR	=>	$@);return undef;}
-=cut
-
-# my $time_end=(((Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000))-$time_start);
-# Tomahawk::debug::module_load(
-#	-type		=>	$mdl_C{-type},
-#	-category		=>	$mdl_C{-category},
-#	-name		=>	$mdl_C{-name},
-#	-load_req		=>	$time_load_req,
-#	-load_proc		=>	$time_load_proc
-# ) if ($TOM::DEBUG_cache && exists $Tomahawk::CACHE{$Tomahawk::mdl_C{T_CACHE}});
-
-
- #my $time_end=(((Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000))-$time_start);
- #Tomahawk::debug::module_load(
-#	-type		=>	$smdl_env{-type},
-#	-category	=>	$smdl_env{-category},
-#	-name		=>	$smdl_env{-name},
-#	-load		=>	$time_end
-# );
+	$t->close();
+	return 1;
 }
 
 

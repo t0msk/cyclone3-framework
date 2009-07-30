@@ -1889,13 +1889,11 @@ while ($main::CGI=new CGI::Fast())
 			# v module ako -xlng pouzijem default $tom::lng
 			
 			my %mdl_env;
-			#while ($data=~s|<VAR id="(.*?)" value="(.*?)" />||s)
 			while ($data=~s|<VAR id="(.{1,150}?)" value="(.*?)" />||s)
 			{
 				next if not defined $2;
 				$mdl_env{$1}=$2;
 				$mdl_env{$1}=~s|\"|"|g;
-				#main::_log("input '$1'='$mdl_env{$1}'");
 			}
 			
 			if (
@@ -1905,35 +1903,30 @@ while ($main::CGI=new CGI::Fast())
 				(($ITst)&&($mdl_env{-ITst}==-1))
 			)
 			{
-#				$t_module->close();
 				next;
 			}
 			
-			my $t_module=track TOM::Debug('module','attrs'=>$mdl_env{'-type'}.':'.$mdl_env{'-category'}.'-'.$mdl_env{'-name'}.' TMP:'.$mdl_env{'-TMP'},'timer'=>1);
+			main::_log("<={MODULE} ".$mdl_env{'-type'}.':'.$mdl_env{'-category'}.'-'.$mdl_env{'-name'}.' TMP:'.$mdl_env{'-TMP'});
 			
 			$mdl_env{-type}=~/^mdl/ && do
 			{
 				module(%mdl_env);
-				$t_module->close();
 				next;
 			};
 			
 			$mdl_env{-type}=~/^smdl/ && do
 			{
 				supermodule(%mdl_env);
-				$t_module->close();
 				next;
 			};
 			$mdl_env{-type}=~/^dmdl/ && do
 			{
 				designmodule(%mdl_env);
-				$t_module->close();
 				next;
 			};
 			$mdl_env{-type}=~/^dget/ && do
 			{
 				module(%mdl_env);
-				$t_module->close();
 				next;
 			};
 		}
@@ -2551,7 +2544,7 @@ while ($main::CGI=new CGI::Fast())
 		
 		if (($tom::HUP) && (($main::time_current-$TOM::time_start)<30))
 		{
-			main::_log("HUP (waiting 30 seconds) (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
+			main::_log("HUP (waiting to 30 seconds) (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
 		}
 		
 		# NASTAVENIE PADU
