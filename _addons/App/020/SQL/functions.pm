@@ -53,6 +53,7 @@ L<App::020|app/"020/_init.pm">
 use TOM::Database::SQL;
 use Ext::CacheMemcache::_init;
 use App::020::SQL::functions::tree;
+use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
@@ -585,7 +586,7 @@ sub journalize
 	# error
 	if ($sth0{'err'})
 	{
-		$t->close();
+		$t->close() if $debug;
 		return undef;
 	}
 	
@@ -1396,12 +1397,16 @@ sub _get_changetime
 	if (!$TOM::CACHE_memcached)
 	{
 		# when memcached is not enabled, return 1 = database is always changed
-		return time();
+		return Time::HiRes::time();
 	}
 	
 	my $key=$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'tb_name'};
 	
-	#main::_log("aben get key $key");
+	if ($main::env{'cache'}{'db_changed'}{$key})
+	{
+		# don't check twice on this request
+		return $main::env{'cache'}{'db_changed'}{$key};
+	}
 	
 	my $changetime=$Ext::CacheMemcache::cache->get
 	(
@@ -1409,12 +1414,14 @@ sub _get_changetime
 		'key' => $key
 	);
 	
+	$main::env{'cache'}{'db_changed'}{$key}=$changetime;
+	
 	if (!$changetime)
 	{
 		_save_changetime(\%env);
 	}
 	
-	return $changetime || time();
+	return $changetime || Time::HiRes::time();
 }
 
 
@@ -1433,13 +1440,14 @@ sub _save_changetime
 	
 	my $key=$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'tb_name'};
 	
-	#main::_log("set key $key");
+	my $tt=Time::HiRes::time();
+	$main::env{'cache'}{'db_changed'}{$key}=$tt;
 	
 	$Ext::CacheMemcache::cache->set
 	(
 		'namespace' => "db_changed",
 		'key' => $key,
-		'value' => time(),
+		'value' => $tt,
 	);
 	
 	return 1;
