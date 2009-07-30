@@ -72,6 +72,10 @@ sub which {
     }
 
     my @path = File::Spec->path();
+	 foreach (@path)
+	 {
+		main::_log("finding $exec in $_");
+	 }
     unshift @path, File::Spec->curdir if $Is_DOSish or $Is_VMS or $Is_MacOS;
 
     for my $base (map { File::Spec->catfile($_, $exec) } @path) {
