@@ -37,6 +37,7 @@ L<App::160::_init|app/"160/_init.pm">
 
 use App::020::_init;
 use App::160::_init;
+use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
@@ -150,8 +151,9 @@ sub new_relation
 		if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 		{
 			# save info about changed set of relations
-			main::_log("[cache_change_key] set '$cache_change_key'=".(time())."") if $debug;
-			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
+			my $tt=Time::HiRes::time();
+			main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
+			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
 		}
 		
 		$t->close();
@@ -195,8 +197,9 @@ sub new_relation
 		if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 		{
 			# save info about changed set of relations
-			main::_log("[cache_change_key] set '$cache_change_key'=".(time())."") if $debug;
-			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
+			my $tt=Time::HiRes::time();
+			main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
+			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
 		}
 		
 		$t->close();
@@ -226,8 +229,9 @@ sub new_relation
 	if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 	{
 		# save info about changed set of relations
-		main::_log("[cache_change_key] set '$cache_change_key'=".(time())."") if $debug;
-		$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
+		my $tt=Time::HiRes::time();
+		main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
+		$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
 	}
 	
 	$t->close();
@@ -290,8 +294,9 @@ sub remove_relation
 			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 			{
 				# save info about changed set of relations
-				main::_log("[cache_change_key] set '$cache_change_key'=".(time())."") if $debug;
-				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
+				my $tt=Time::HiRes::time();
+				main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
+				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
 			}
 			$t->close();
 			return 1;
@@ -369,8 +374,9 @@ sub relation_change_status
 			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 			{
 				# save info about changed set of relations
-				main::_log("[cache_change_key] set '$cache_change_key'=".(time())."") if $debug;
-				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
+				my $tt=Time::HiRes::time();
+				main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
+				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
 			}
 			$t->close();
 			return 1;
@@ -509,8 +515,9 @@ sub get_relations
 	{
 		if (!$cache_change)
 		{
-			main::_log("[cache_change_key] set '$cache_change_key'=".(time())."") if $debug;
-			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>time(), 'expiration'=>$cache_expire.'S');
+			my $tt=Time::HiRes::time();
+			main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
+			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
 		}
 		$Ext::CacheMemcache::cache->set
 		(
@@ -518,7 +525,7 @@ sub get_relations
 			'key' => $cache_key,
 			'value' =>
 			{
-				'time' => time(),
+				'time' => Time::HiRes::time(),
 				'data' => [@relations]
 			},
 			'expiration'=>$cache_expire.'S'
