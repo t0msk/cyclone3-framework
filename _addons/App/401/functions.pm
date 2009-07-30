@@ -85,9 +85,11 @@ Move article to another directory (new ID of category for symlink defined)
 sub article_add
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::article_add()");
+	my $t=track TOM::Debug(__PACKAGE__."::article_add()",'timer'=>1);
 	
 	$env{'article_content.mimetype'}="text/html" unless $env{'article_content.mimetype'};
+	
+	my $content_updated=0; # boolean if important content attributes was updated
 	
 	# detect language
 	my %article_cat;
@@ -185,6 +187,7 @@ sub article_add
 		);
 		
 		main::_log("generated article ID='$env{'article.ID'}'");
+		$content_updated=1;
 	}
 	
 	
@@ -259,6 +262,7 @@ sub article_add
 			},
 			'-journalize' => 1,
 		);
+		$content_updated=1;
 	}
 	if ($env{'article_attrs.ID'} && !$article_attrs{'ID_category'})
 	{
@@ -328,6 +332,7 @@ sub article_add
 			'columns' => {%columns},
 			'-journalize' => 1
 		);
+		$content_updated=1;
 	}
 	
 	# ARTICLE_CONTENT
@@ -366,6 +371,7 @@ sub article_add
 			},
 			'-journalize' => 1,
 		);
+		$content_updated=1;
 	}
 	
 	# get article_content
@@ -436,6 +442,7 @@ sub article_add
 			'columns' => {%columns},
 			'-journalize' => 1
 		);
+		$content_updated=1;
 	}
 	
 	# ARTICLE_ENT
@@ -504,6 +511,11 @@ sub article_add
 			'columns' => {%columns},
 			'-journalize' => 1
 		);
+	}
+	
+	if ($content_updated)
+	{
+		App::020::SQL::functions::_save_changetime({'db_h'=>'main','db_name'=>$App::401::db_name,'tb_name'=>'a401_article'});
 	}
 	
 	$t->close();
@@ -653,14 +665,18 @@ sub article_visit
 	my $ID_entity=shift;
 	
 	# check if this visit is in article
-	my $cache=$Ext::CacheMemcache::cache->get(
-		'namespace' => $App::401::db_name.".a401_article_ent.visit",
-		'key' => $ID_entity
-	);
-	main::_log("article.ID_entity='$ID_entity' visits incresed to ".($cache->{'visits'}+1));
-	if (!$cache)
+	my $cache={};
+	if ($TOM::CACHE_memcached)
 	{
-		$cache->{'visits'}=0;
+		$cache=$Ext::CacheMemcache::cache->get(
+			'namespace' => $App::401::db_name.".a401_article_ent.visit",
+			'key' => $ID_entity
+		);
+	}
+	main::_log("article.ID_entity='$ID_entity' visits increased to ".($cache->{'visits'}+1));
+	if (!$cache->{'visits'})
+	{
+		$cache->{'visits'}=1;
 		$Ext::CacheMemcache::cache->set
 		(
 			'namespace' => $App::401::db_name.".a401_article_ent.visit",
@@ -671,16 +687,19 @@ sub article_visit
 				'visits' => $cache->{'visits'}
 			},
 			'expiration' => "604800S"
-		);
+		) if $TOM::CACHE_memcached;
 		# update SQL
 		TOM::Database::SQL::execute(qq{
 			UPDATE `$App::401::db_name`.a401_article_ent
 			SET visits=visits+1
 			WHERE ID_entity=$ID_entity
 			LIMIT 1
-		},'-quiet'=>1);
+		},'quiet'=>1);
 		return 1;
 	}
+	
+	# return unless memcached available
+	return 1 unless $TOM::CACHE_memcached;
 	
 	$cache->{'visits'}++;
 	
@@ -691,10 +710,10 @@ sub article_visit
 		# update database
 		TOM::Database::SQL::execute(qq{
 			UPDATE `$App::401::db_name`.a401_article_ent
-			SET visits=visits+$cache->{'visits'}
+			SET visits=visits+$cache->{'visits'}-1
 			WHERE ID_entity=$ID_entity
 			LIMIT 1
-		},'-quiet'=>1);
+		},'quiet'=>1);
 		$cache->{'visits'}=0;
 		$cache->{'time'}=time();
 	}
