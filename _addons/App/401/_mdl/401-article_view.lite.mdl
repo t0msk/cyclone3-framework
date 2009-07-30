@@ -152,29 +152,104 @@ sub execute
 	my $sql_where;
 	
 	# ID_entity
-	$sql_where.="AND article.ID_entity_article=$env{'article.ID_entity'}"
+	$sql_where.="AND article.ID_entity=$env{'article.ID_entity'}"
 		if $env{'article.ID_entity'};
 	
 	# ID
-	$sql_where.="AND article.ID_article=$env{'article.ID'}"
+	$sql_where.="AND article.ID=$env{'article.ID'}"
 		if $env{'article.ID'};
 	
 	# ID_category
-	$sql_where.="AND article.ID_category IN ($env{'article_attrs.ID_category'})"
+	$sql_where.="AND article_attrs.ID_category IN ($env{'article_attrs.ID_category'})"
 		if $env{'article_attrs.ID_category'};
+	
+	$env{'world_status'}="Y" unless $env{'world_status'};
+	
+	if ($env{'world_status'} eq 'Y')
+	{
+		$sql_where.=" AND (ACL_world.perm_R='Y' OR ACL_world.perm_R IS NULL) ";
+	}
+	else
+	{
+		$sql_where.=" AND ACL_world.perm_R='N' ";
+	}
 	
 	my $sql=qq{
 		SELECT
-			article.*
+			article.ID_entity,
+			article.ID,
+			article.ID_entity AS ID_entity_article,
+			article.ID AS ID_article,
+			
+			article_attrs.ID_category,
+			article_cat.name AS ID_category_name,
+			article_cat.name_url AS ID_category_name_url,
+			
+			article_ent.posix_owner,
+			article_content.ID_editor AS posix_editor,
+			article_ent.ID_author AS posix_author,
+			
+			article_content.datetime_create,
+			DATE_FORMAT(article_attrs.datetime_start, '%Y-%m-%d %H:%i') AS datetime_start,
+			DATE_FORMAT(article_attrs.datetime_stop, '%Y-%m-%d %H:%i') AS datetime_stop,
+			
+			article_attrs.priority_A,
+			article_attrs.priority_B,
+			article_attrs.priority_C,
+			article_attrs.priority_D,
+			article_attrs.priority_E,
+			article_attrs.priority_F,
+			
+			article_attrs.name,
+			article_attrs.name_url,
+			article_content.subtitle,
+			article_content.mimetype,
+			article_content.abstract,
+			article_content.body,
+			article_content.keywords,
+			article_content.lng,
+			
+			article_ent.visits,
+			article_ent.rating_score,
+			article_ent.rating_votes,
+			(article_ent.rating_score/article_ent.rating_votes) AS rating,
+			
+			article_attrs.status
+			
 		FROM
-			`$env{'db_name'}`.a401_article_view AS article
+			$env{'db_name'}.a401_article AS article
+		LEFT JOIN $env{'db_name'}.a401_article_ent AS article_ent ON
+		(
+			article_ent.ID_entity = article.ID_entity
+		)
+		LEFT JOIN $env{'db_name'}.a401_article_attrs AS article_attrs ON
+		(
+			article_attrs.ID_entity = article.ID
+		)
+		LEFT JOIN $env{'db_name'}.a401_article_content AS article_content ON
+		(
+			article_content.ID_entity = article.ID_entity AND
+			article_content.lng = article_attrs.lng
+		)
+		LEFT JOIN $env{'db_name'}.a401_article_cat AS article_cat ON
+		(
+			article_cat.ID = article_attrs.ID_category
+		)
+		LEFT JOIN $env{'db_name'}.a301_ACL_user_group AS ACL_world ON
+		(
+			ACL_world.ID_entity = 0 AND
+			r_prefix = 'a401' AND
+			r_table = 'article' AND
+			r_ID_entity = article.ID_entity
+		)
 		WHERE
-			article.lng='$env{'article_content.lng'}' AND
-			article.status IN ('$sql_status')
+			article_content.lng='$env{'article_content.lng'}' AND
+			article_attrs.status IN ('$sql_status')
 			$sql_where
 		LIMIT 1
 	};
-
+	
+	
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
