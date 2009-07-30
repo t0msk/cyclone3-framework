@@ -55,11 +55,9 @@ sub execute
 			ID,
 			ID_entity
 		FROM
-			`$App::501::db_name`.a501_image_ent
---		WHERE ID_entity=6211
+			`$App::501::db_name`.a501_image
 		ORDER BY
 			ID_entity ASC
---		LIMIT 1000
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	my $i;
