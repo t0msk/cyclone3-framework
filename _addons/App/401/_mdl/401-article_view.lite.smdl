@@ -18,10 +18,10 @@ sub execute
 	
 	$sql_order="datetime_start DESC";
 	
-	$sql_where.="AND ID_entity_article=$env{'article.ID_entity'} "
+	$sql_where.="AND article.ID_entity=$env{'article.ID_entity'} "
 		if $env{'article.ID_entity'};
 	
-	$sql_where.="AND ID_category IN ($env{'article_attrs.ID_category'}) "
+	$sql_where.="AND article_attrs.ID_category IN ($env{'article_attrs.ID_category'}) "
 		if $env{'article_attrs.ID_category'};
 	
 	if ($env{'sql_where'})
@@ -37,24 +37,68 @@ sub execute
 		return 1;
 	}
 	
-	my $sql=qq{
+	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
-			*
-		FROM
-			`$App::401::db_name`.a401_article_view
+			article.ID,
+			article.ID_entity,
+			
+			article_attrs.ID_category,
+			article_attrs.datetime_start,
+			article_attrs.priority_A,
+			article_attrs.priority_B,
+			article_attrs.priority_C,
+			article_attrs.name,
+			article_attrs.status,
+			
+			article_content.subtitle,
+			article_content.mimetype,
+			article_content.abstract,
+			article_content.keywords,
+			article_content.lng,
+			article_content.datetime_create,
+			
+			article_ent.posix_owner,
+			
+			article_cat.name AS ID_category_name
+			
+		FROM $App::401::db_name.a401_article AS article
+		LEFT JOIN $App::401::db_name.a401_article_attrs AS article_attrs ON
+		(
+			article_attrs.ID_entity = article.ID
+		)
+		LEFT JOIN $App::401::db_name.a401_article_ent AS article_ent ON
+		(
+			article_ent.ID_entity = article.ID_entity
+		)
+		LEFT JOIN $App::401::db_name.a401_article_content AS article_content ON
+		(
+			article_content.ID_entity = article.ID_entity AND
+			article_content.lng = article_attrs.lng
+		)
+		LEFT JOIN $App::401::db_name.a401_article_cat AS article_cat ON
+		(
+			article_cat.ID = article_attrs.ID_category
+		)
 		WHERE
-			status='Y' AND
-			datetime_start <= NOW() AND
-			(datetime_stop IS NULL OR datetime_stop >= NOW())
+			article_attrs.status='Y' AND
+			article_attrs.lng='$env{'lng'}' AND
+			article_attrs.datetime_start <= NOW() AND
+			(article_attrs.datetime_stop IS NULL OR article_attrs.datetime_stop >= NOW())
 			$sql_where
 		ORDER BY
-			$sql_order
-		LIMIT 1;
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'-slave'=>1,'-cache_'=>300);
+			article_attrs.datetime_start DESC
+		LIMIT
+			1
+	},'quiet_'=>1,'-slave'=>1,
+		'-cache'=>1200,
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+			'db_h'=>"main",'db_name'=>$App::401::db_name,'tb_name'=>"a401_article"
+		})
+	);
+	
 	my %article=$sth0{'sth'}->fetchhash();
 	
-	if (!$article{'ID_article'})
+	if (!$article{'ID'})
 	{
 		return 1;
 	}
@@ -70,7 +114,7 @@ sub execute
 	$main::H->add_DOC_keywords($article{'keywords'});
 	$main::H->add_DOC_description($article{'name'}.". ".TOM::Text::format::xml2plain($article{'abstract'}));
 	
-	App::401::functions::article_visit($article{'ID_entity_article'});
+	App::401::functions::article_visit($article{'ID_entity'});
 	
 	if ($main::USRM{'ID_user'})
 	{
@@ -87,7 +131,7 @@ sub execute
 			(
 				NOW(),
 				'$main::USRM{'ID_user'}',
-				'$article{'ID_entity_article'}'
+				'$article{'ID_entity'}'
 			)
 		};
 		TOM::Database::SQL::execute($sql,'quiet'=>1);
@@ -111,7 +155,7 @@ sub execute
 		'-cache_id' => 'default',
 		'-cache_changed' => $article{'datetime_create'},
 		'-TMP' =>	$env{'view_TMP'},
-			'article.ID' => $article{'ID_article'},
+			'article.ID' => $article{'ID'},
 #			'article_attrs.ID_category' => ${'ID_article'},
 			'a501_image_file.ID_format' => $env{'a501_image_file.ID_format'},
 			'a501_image_file.ID_format.1' => $env{'a501_image_file.ID_format.1'},
@@ -130,10 +174,11 @@ sub execute
 			'db_name' => $App::401::db_name,
 			'l_prefix' => 'a401',
 			'l_table' => 'article',
-			'l_ID_entity' => $article{'ID_entity_article'},
+			'l_ID_entity' => $article{'ID_entity'},
 			'r_prefix' => "a821",
 			'r_table' => "discussion",
-			'status' => "Y"
+			'status' => "Y",
+			'limit' => 1,
 			))[0];
 			
 		if ($relation && $relation->{'ID'})
@@ -160,7 +205,7 @@ sub execute
 					ID_entity='$relation->{'r_ID_entity'}'
 				LIMIT 1;
 			};
-			my %sth0=TOM::Database::SQL::execute($sql,'-slave'=>1,'-cache_'=>10);
+			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_'=>10);
 			my %discussion=$sth0{'sth'}->fetchhash();
 			
 			$env{'discussion_add_xsgn'}=$env{'discussion_xsgn'} unless $env{'discussion_add_xsgn'};
@@ -191,7 +236,7 @@ sub execute
 			'db_name' => $App::401::db_name,
 			'l_prefix' => 'a401',
 			'l_table' => 'article',
-			'l_ID_entity' => $article{'ID_entity_article'},
+			'l_ID_entity' => $article{'ID_entity'},
 			'r_prefix' => "a401",
 			'r_table' => "article",
 			'status' => "Y"
