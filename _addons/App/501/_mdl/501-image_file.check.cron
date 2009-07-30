@@ -60,7 +60,8 @@ sub execute
 		FROM
 			`$App::501::db_name`.a501_image_file
 		WHERE
-			datetime_check <= DATE_SUB(NOW(),INTERVAL 3 DAY) OR datetime_check IS NULL
+			datetime_check <= DATE_SUB(NOW(),INTERVAL 3 DAY) OR datetime_check IS NULL AND
+			status IN ('Y','N','T','L')
 		ORDER BY
 			datetime_check
 		LIMIT
