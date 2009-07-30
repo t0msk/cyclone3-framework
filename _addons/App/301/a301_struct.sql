@@ -548,7 +548,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_group_j` (
   `perm_X` char(1) character set ascii NOT NULL default 'N',
   `perm_roles_override` blob,
   `status` char(1) character set ascii NOT NULL default 'Y'
-) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- db_name=local
