@@ -17,6 +17,7 @@ sub execute
 		my $currency=$1;
 		my $rate=$2;
 		main::_log("currency='$currency' rate='$2'");
+		
 		TOM::Database::SQL::execute(qq{
 			REPLACE INTO `TOM`.`a910_currency_rate`
 			(
@@ -33,7 +34,37 @@ sub execute
 				NOW()
 			)
 		},'quiet'=>1);
+		
+		TOM::Database::SQL::execute(qq{
+			REPLACE INTO `TOM`.`a910_currency_rate`
+			(
+				currency1,
+				currency2,
+				rate,
+				datetime_create
+			)
+			VALUES
+			(
+				'$currency',
+				'EUR',
+				(1/$rate),
+				NOW()
+			)
+		},'quiet'=>1);
+		
+		TOM::Database::SQL::execute(qq{
+			REPLACE INTO `TOM`.`a910_currency_rate`
+			(currency1,currency2,rate,datetime_create)
+			VALUES ('$currency','$currency',1,NOW())
+		},'quiet'=>1);
+		
 	}
+	
+	TOM::Database::SQL::execute(qq{
+		REPLACE INTO `TOM`.`a910_currency_rate`
+		(currency1,currency2,rate,datetime_create)
+		VALUES ('EUR','EUR',1,NOW())
+	},'quiet'=>1);
 	
 	TOM::Database::SQL::execute(qq{
 		REPLACE INTO `TOM`.`a910_currency_rate`
