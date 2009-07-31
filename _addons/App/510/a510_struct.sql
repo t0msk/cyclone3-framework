@@ -8,8 +8,6 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
-  `datetime_rec_start` datetime default NULL, -- obsolete
-  `datetime_rec_stop` datetime default NULL, -- obsolete
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   KEY `ID_entity` (`ID_entity`),
@@ -23,8 +21,6 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_j` (
   `ID` mediumint(8) unsigned NOT NULL,
   `ID_entity` mediumint(8) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
-  `datetime_rec_start` datetime default NULL,
-  `datetime_rec_stop` datetime default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y'
 ) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
 
@@ -531,10 +527,10 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_view` AS (
 		video_part_attrs.ID AS ID_part_attrs,
 		video_part_file.ID AS ID_part_file,
 		
-		LEFT(video.datetime_rec_start, 18) AS datetime_rec_start,
+		LEFT(video_ent.datetime_rec_start, 18) AS datetime_rec_start,
 		LEFT(video_attrs.datetime_create, 18) AS datetime_create,
-		LEFT(video.datetime_rec_start,10) AS date_recorded,
-		LEFT(video.datetime_rec_stop, 18) AS datetime_rec_stop,
+		LEFT(video_ent.datetime_rec_start,10) AS date_recorded,
+		LEFT(video_ent.datetime_rec_stop, 18) AS datetime_rec_stop,
 		
 		video_attrs.ID_category,
 		video_cat.name AS ID_category_name,
@@ -638,8 +634,8 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_view_lite` AS (
 		video_part.ID AS ID_part,
 		video_part_attrs.ID AS ID_part_attrs,
 		
-		video.datetime_rec_start,
-		DATE(video.datetime_rec_start) AS date_recorded,
+		video_ent.datetime_rec_start,
+		DATE(video_ent.datetime_rec_start) AS date_recorded,
 		
 		video_attrs.ID_category,
 		
