@@ -210,6 +210,10 @@ sub execute
 	$sql_where.="AND product.ID_product=$env{'product.ID'}"
 		if $env{'product.ID'};
 		
+	# product code
+	$sql_where.="AND product.product_number='$env{'product.product_number'}'"
+		if $env{'product.product_number'};
+		
 	my $sql=qq{
 		SELECT
 			DISTINCT(product.ID_entity) AS ID_entity_product,
@@ -220,8 +224,9 @@ sub execute
 			product_lng.lng,
 			
 			product.price,
+			(product.price*((100+product_ent.VAT)/100)) AS price_incl_VAT,
 			product.price_currency,
-			product.price_EUR,
+			product.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=product.price_currency LIMIT 1) AS price_EUR,
 			product.amount,
 			product.amount_availability,
 			product.product_number,
@@ -290,7 +295,13 @@ sub execute
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);####************
 	if (my %db0_line=$sth0{'sth'}->fetchhash())####************
 	{
-            
+      
+		my $price=TOM::Utils::currency::format($db0_line{'price'});
+		$XSGN{'TMP'}=~s|<%price%>|$price|g;
+		
+		$price=TOM::Utils::currency::format($db0_line{'price_incl_VAT'});
+		$XSGN{'TMP'}=~s|<%price_incl_VAT%>|$price|g;
+		
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
 		my %author=App::301::authors::get_author($db0_line{'posix_author'});

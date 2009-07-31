@@ -305,6 +305,7 @@ sub execute
 			product_lng.lng,
 			
 			product.price,
+			(product.price*((100+product_ent.VAT)/100)) AS price_incl_VAT,
 			product.price_currency,
 			product.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=product.price_currency LIMIT 1) AS price_EUR,
 			
@@ -409,23 +410,13 @@ sub execute
 			$XSGN{'item.'.$item_counter}
 			|| $XSGN{'item'};
 		
-#      my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
-#      $db0_line{'datetime_start.year'}=$datetime{'year'};
-#      $db0_line{'datetime_start.month'}=$datetime{'month'};
-#      $db0_line{'datetime_start.mday'}=$datetime{'mday'};
-#      $db0_line{'datetime_start.hour'}=$datetime{'hour'};
-#      $db0_line{'datetime_start.min'}=$datetime{'min'};
-#      $db0_line{'datetime_start.sec'}=$datetime{'sec'};
-      
-		# fill raw data into $XSGN{'item'}
-
-		my $price=TOM::Utils::currency::format_EUR($db0_line{'price_EUR'});
-		
-		$item=~s|<%price_EUR%>|$price|g;
-		
-		$price=TOM::Utils::currency::format($db0_line{'price'});
-		
+		my $price=TOM::Utils::currency::format($db0_line{'price'});
 		$item=~s|<%price%>|$price|g;
+		
+		$price=TOM::Utils::currency::format($db0_line{'price_incl_VAT'});
+		$item=~s|<%price_incl_VAT%>|$price|g;
+		
+		# fill raw data into $XSGN{'item'}
 		
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
