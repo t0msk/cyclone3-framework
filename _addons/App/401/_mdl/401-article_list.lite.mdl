@@ -735,6 +735,28 @@ sub execute
 		}
 	}
 	
+	if($env{'article_attrs.ID_category'}=~/^[0-9]*?$/){
+		my $sql=qq{
+			SELECT
+				name
+			FROM
+				`$App::401::db_name`.a401_article_cat
+			WHERE
+				ID_entity='$env{'article_attrs.ID_category'}' AND
+				lng='$env{'article_content.lng'}' AND
+				status IN ('$status_sql')
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache_auto_'=>60);
+	
+		if($sth0{'sth'})
+		{
+			if (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				$XSGN{'TMP'}=~s|<%category_name%>|$db0_line{'name'}|g;
+			}
+		}
+	}
+	
 	$XSGN{'TMP'}=~s|<%total_count%>|$item_counter|g;
 	
 	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
