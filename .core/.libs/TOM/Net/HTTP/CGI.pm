@@ -238,7 +238,7 @@ sub get_QUERY_STRING
 		utf8::encode($name);
 		utf8::decode($name);
 		# su tu UTF-8 sekvencie
-		if ($name=~/%(C3|C4|C5)%([0-9A-Fa-f]{2})/i)
+		if ($name=~/%(D0|D1|C3|C4|C5)%([0-9A-Fa-f]{2})/i)
 		{
 			main::_log("utf-8 sequence") unless $env{'quiet'};
 			utf8::encode($name);
@@ -265,7 +265,7 @@ sub get_QUERY_STRING
 		utf8::encode($value);
 		utf8::decode($value);
 		# su tu UTF-8 sekvencie
-		if ($value=~/%(C3|C4|C5)%([0-9A-Fa-f]{2})/i)
+		if ($value=~/%(D0|D1|C3|C4|C5)%([0-9A-Fa-f]{2})/i)
 		{
 			main::_log("utf-8 sequence") unless $env{'quiet'};
 			utf8::encode($value);
@@ -383,15 +383,16 @@ sub get_CGI
 		
 	}
 	
-	# process SOAP data
+	
 	if ($form{'POSTDATA'})
 	{
+		# process SOAP data
 		if ($Net::DOC::type eq "soap")
 		{
 			main::_log("received SOAP POSTDATA, parsing");
 			
 			require SOAP::Lite;
-			
+			main::_log($form{'POSTDATA'});
 			my $som = SOAP::Deserializer->deserialize($form{'POSTDATA'});
 			my $body = $som->body;
 			
@@ -409,7 +410,7 @@ sub get_CGI
 				}
 				elsif ($body->{$form{'type'}}->{'c-gensym6'})
 				{
-					main::_log("SOAP parse ugly perl c-gensym3");
+					main::_log("SOAP parse ugly perl c-gensym6");
 					%{$main::RPC}=%{$body->{$form{'type'}}->{'c-gensym6'}};
 				}
 				else
@@ -418,6 +419,7 @@ sub get_CGI
 				}
 			}
 		}
+		# process XML-RPC data
 		elsif ($Net::DOC::type eq "xmlrpc")
 		{
 			main::_log("received XML-RPC POSTDATA, parsing");
