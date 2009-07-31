@@ -123,4 +123,59 @@ our $db_name=$App::542::db_name || $TOM::DB{'main'}{'name'};
 $tom::H_a542=$tom::H_media."/a542" if (!$tom::H_a542 && $tom::H_media);
 
 
+# check attachments category
+our $attachment_dir_ID_entity;
+our %attachment_dir;
+# find any category;
+my $sql="
+	SELECT ID, ID_entity
+	FROM `$App::542::db_name`.`a542_file_dir`
+	WHERE name='Attachments' AND lng IN ('".(join "','",@TOM::LNG_accept)."')
+	LIMIT 1 ";
+my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+if (my %db0_line=$sth0{'sth'}->fetchhash())
+{$attachment_dir_ID_entity=$db0_line{'ID_entity'} unless $attachment_dir_ID_entity;}
+else
+{
+	$attachment_dir_ID_entity=App::020::SQL::functions::tree::new(
+		'db_h' => "main",
+		'db_name' => $App::542::db_name,
+		'tb_name' => "a542_file_dir",
+		'columns' => {
+			'name' => "'Attachments'",
+			'lng' => "'$tom::LNG'",
+			'status' => "'L'"
+		},
+		'-journalize' => 1
+	);
+}
+foreach my $lng(@TOM::LNG_accept)
+{
+	my $sql=qq{
+		SELECT ID, ID_entity
+		FROM `$App::542::db_name`.`a542_file_dir`
+		WHERE ID_entity=$attachment_dir_ID_entity AND lng='$lng'
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{$attachment_dir{$lng}=$db0_line{'ID'};}
+	else
+	{
+		$attachment_dir{$lng}=App::020::SQL::functions::tree::new(
+			'db_h' => "main",
+			'db_name' => $App::542::db_name,
+			'tb_name' => "a542_file_dir",
+			'columns' => {
+				'ID_entity' => $attachment_dir_ID_entity,
+				'name' => "'Attachments'",
+				'lng' => "'$lng'",
+				'status' => "'L'"
+			},
+			'-journalize' => 1
+		);
+	}
+}
+
+
 1;

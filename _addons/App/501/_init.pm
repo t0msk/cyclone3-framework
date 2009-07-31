@@ -173,6 +173,61 @@ foreach my $lng(@TOM::LNG_accept)
 }
 
 
+# check attachments category
+our $attachment_cat_ID_entity;
+our %attachment_cat;
+# find any category;
+my $sql="
+	SELECT ID, ID_entity
+	FROM `$App::501::db_name`.`a501_image_cat`
+	WHERE name='Attachments' AND lng IN ('".(join "','",@TOM::LNG_accept)."')
+	LIMIT 1 ";
+my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+if (my %db0_line=$sth0{'sth'}->fetchhash())
+{$attachment_cat_ID_entity=$db0_line{'ID_entity'} unless $attachment_cat_ID_entity;}
+else
+{
+	$attachment_cat_ID_entity=App::020::SQL::functions::tree::new(
+		'db_h' => "main",
+		'db_name' => $App::501::db_name,
+		'tb_name' => "a501_image_cat",
+		'columns' => {
+			'name' => "'Attachments'",
+			'lng' => "'$tom::LNG'",
+			'status' => "'L'"
+		},
+		'-journalize' => 1
+	);
+}
+foreach my $lng(@TOM::LNG_accept)
+{
+	my $sql=qq{
+		SELECT ID, ID_entity
+		FROM `$App::501::db_name`.`a501_image_cat`
+		WHERE ID_entity=$attachment_cat_ID_entity AND lng='$lng'
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{$attachment_cat{$lng}=$db0_line{'ID'};}
+	else
+	{
+		$attachment_cat{$lng}=App::020::SQL::functions::tree::new(
+			'db_h' => "main",
+			'db_name' => $App::501::db_name,
+			'tb_name' => "a501_image_cat",
+			'columns' => {
+				'ID_entity' => $attachment_cat_ID_entity,
+				'name' => "'Attachments'",
+				'lng' => "'$lng'",
+				'status' => "'L'"
+			},
+			'-journalize' => 1
+		);
+	}
+}
+
+
 
 our $image_format_original_ID;
 our $image_format_fullsize_ID;
