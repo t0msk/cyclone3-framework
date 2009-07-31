@@ -171,6 +171,12 @@ sub execute
 	
 	if ($env{'xt_xlng'})
 	{
+		main::_log("calling deprecated parameter 'xt_xlng', please use '-xlng_load' instead.");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	elsif ($Tomahawk::mdl_C{'-xlng_load'})
+	{
 		main::_log("using xlng transformation");
 		Tomahawk::GetXLNG() || return undef; # retrieve language xml
 		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
@@ -360,7 +366,7 @@ $where
 	my $level_prev;
 	my $level_next;
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	if ($sth0{'sth'})
 	{
 		# naplnim si @tree s polozkami zo stromu preto aby som mohol v dalsom
