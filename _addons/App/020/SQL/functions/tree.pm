@@ -550,7 +550,7 @@ sub move_to
 			`$env{'db_name'}`.`$env{'tb_name'}`
 		WHERE
 			ID_charindex LIKE '$data{ID_charindex}%'
-			AND (status='Y' OR status='N')
+			AND status IN ('Y','N','L')
 		ORDER BY
 			ID_charindex
 	};
