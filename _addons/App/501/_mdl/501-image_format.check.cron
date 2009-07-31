@@ -91,9 +91,7 @@ sub execute
 			required LIKE 'Y' AND
 			name NOT LIKE 'original'
 		ORDER BY
---			RAND()
 			ID_charindex ASC
---		LIMIT 1
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-long'=>10);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
