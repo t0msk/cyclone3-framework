@@ -189,6 +189,7 @@ if ($tom::H && $tom::addons{'a501'})
 			'db_h' => "main",
 			'db_name' => $App::501::db_name,
 			'tb_name' => "a501_image_cat",
+			'parent_ID' => $App::501::system_cat{$tom::LNG},
 			'columns' => {
 				'name' => "'user avatars'",
 				'lng' => "'$tom::LNG'",
@@ -223,6 +224,7 @@ if ($tom::H && $tom::addons{'a501'})
 				'db_h' => "main",
 				'db_name' => $App::501::db_name,
 				'tb_name' => "a501_image_cat",
+				'parent_ID' => $App::501::system_cat{$lng},
 				'columns' => {
 					'ID_entity' => $photo_cat_ID_entity,
 					'name' => "'user avatars'",
@@ -261,7 +263,7 @@ if ($tom::H && $tom::addons{'a501'})
 			'db_h' => "main",
 			'db_name' => $App::501::db_name,
 			'tb_name' => "a501_image_cat",
-			'parent_ID'   => $photo_cat{$tom::LNG},
+			'parent_ID' => $App::501::system_cat{$tom::LNG},
 			'columns' => {
 				'name' => "'user autograph'",
 				'lng' => "'$tom::LNG'",
@@ -295,7 +297,7 @@ if ($tom::H && $tom::addons{'a501'})
 				'db_h' => "main",
 				'db_name' => $App::501::db_name,
 				'tb_name' => "a501_image_cat",
-				'parent_ID'   => $photo_cat{$lng},
+				'parent_ID'   => $App::501::system_cat{$lng},
 				'columns' => {
 					'ID_entity' => $autograph_cat_ID_entity,
 					'name' => "'user autograph'",

@@ -99,6 +99,7 @@ else
 		'db_h' => "main",
 		'db_name' => $App::501::db_name,
 		'tb_name' => "a501_image_cat",
+		'parent_ID' => $App::501::system_cat{$tom::LNG},
 		'columns' => {
 			'name' => "'organization avatars'",
 			'lng' => "'$tom::LNG'",
@@ -133,6 +134,7 @@ foreach my $lng(@TOM::LNG_accept)
 			'db_h' => "main",
 			'db_name' => $App::501::db_name,
 			'tb_name' => "a501_image_cat",
+			'parent_ID' => $App::501::system_cat{$lng},
 			'columns' => {
 				'ID_entity' => $avatar_cat_ID_entity,
 				'name' => "'organization avatars'",

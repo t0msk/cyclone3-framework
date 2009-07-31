@@ -117,12 +117,69 @@ our $image_format_ext_default=$App::501::image_format_ext_default || 'jpg';
 our $status_default=$App::501::status_default || 'Y';
 
 
+
+# check system category
+our $system_cat_ID_entity;
+our %system_cat;
+# find any category;
+my $sql="
+	SELECT ID, ID_entity
+	FROM `$App::501::db_name`.`a501_image_cat`
+	WHERE name='System' AND lng IN ('".(join "','",@TOM::LNG_accept)."')
+	LIMIT 1 ";
+my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+if (my %db0_line=$sth0{'sth'}->fetchhash())
+{$system_cat_ID_entity=$db0_line{'ID_entity'} unless $system_cat_ID_entity;}
+else
+{
+	$system_cat_ID_entity=App::020::SQL::functions::tree::new(
+		'db_h' => "main",
+		'db_name' => $App::501::db_name,
+		'tb_name' => "a501_image_cat",
+		'columns' => {
+			'name' => "'system'",
+			'lng' => "'$tom::LNG'",
+			'status' => "'L'"
+		},
+		'-journalize' => 1
+	);
+}
+foreach my $lng(@TOM::LNG_accept)
+{
+	my $sql=qq{
+		SELECT ID, ID_entity
+		FROM `$App::501::db_name`.`a501_image_cat`
+		WHERE ID_entity=$system_cat_ID_entity AND lng='$lng'
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{$system_cat{$lng}=$db0_line{'ID'};}
+	else
+	{
+		$system_cat{$lng}=App::020::SQL::functions::tree::new(
+			'db_h' => "main",
+			'db_name' => $App::501::db_name,
+			'tb_name' => "a501_image_cat",
+			'columns' => {
+				'ID_entity' => $system_cat_ID_entity,
+				'name' => "'System'",
+				'lng' => "'$lng'",
+				'status' => "'L'"
+			},
+			'-journalize' => 1
+		);
+	}
+}
+
+
+
 our $image_format_original_ID;
 our $image_format_fullsize_ID;
 our $image_format_thumbnail_ID;
 our $image_format_ico_ID;
 
-if ($tom::H_cookie){
+#if ($tom::H_cookie){
 
 my $sql=qq{
 	SELECT ID
@@ -213,7 +270,7 @@ thumbnail(100,100)'",
 		$image_format_thumbnail_ID=$db0_line{'ID'};
 	}
 	
-#=head1
+	
 	if ($image_format_thumbnail_ID)
 	{
 		my $sql=qq{
@@ -246,10 +303,9 @@ thumbnail(16,16)'",
 			$image_format_ico_ID=$db0_line{'ID'};
 		}
 	}
-#=cut
 	
 }
 
-}
+#}
 
 1;
