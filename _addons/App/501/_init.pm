@@ -114,7 +114,7 @@ our $db_name=$App::501::db_name || $TOM::DB{'main'}{'name'};
 $tom::H_a501=$tom::H_media."/a501" if (!$tom::H_a501 && $tom::H_media);
 main::_log("db_name='$db_name' H_a501='$tom::H_a501'");
 our $image_format_ext_default=$App::501::image_format_ext_default || 'jpg';
-our $status_default=$App::501::status_default || 'N';
+our $status_default=$App::501::status_default || 'Y';
 
 
 our $image_format_original_ID;
