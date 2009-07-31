@@ -12,7 +12,7 @@ use App::160::_init;
 sub execute
 {
 	my %env=@_;
-	
+
 	my $sql_where;
 	my $sql_order;
 	
@@ -265,6 +265,47 @@ sub execute
 			);
 		}
 	}
+	
+	
+	# attachments
+	if (exists $env{'attachments_TMP'})
+	{
+		my $relations;
+		foreach my $relation(App::160::SQL::get_relations(
+			'db_name' => $App::401::db_name,
+			'l_prefix' => 'a401',
+			'l_table' => 'article',
+			'l_ID_entity' => $article{'ID_entity'},
+			'r_prefix' => "a542",
+			'rel_type' => "attachment",
+			'r_table' => "file",
+			'status' => "Y"
+		))
+		{
+			$relations.=";".$relation->{'r_ID_entity'};
+		}
+		
+		main::_log("related articles = $relations");
+		
+		if ($relations)
+		{
+			Tomahawk::module(
+				'-type' => "mdl",
+				'-category' => "542",
+				'-name' => "file_list",
+				'-version' => "lite",
+				'-global' => 1,
+				'-TMP' => $env{'attachments_TMP'},
+				'-TMP_check' => 1,
+				'-cache_id' => 'attachments',
+				'-xsgn' => $env{'attachments_xsgn'},
+				'-xsgn_global' => $env{'attachments_xsgn_global'},
+					'file.ID_entity' => $relations,
+					'sql_limit' => 10,
+			);
+		}
+	}
+	
 	
 	return 1;
 }
