@@ -217,25 +217,25 @@ sub execute
 			article_attrs.status
 			
 		FROM
-			$env{'db_name'}.a401_article AS article
-		LEFT JOIN $env{'db_name'}.a401_article_ent AS article_ent ON
+			`$env{'db_name'}`.a401_article AS article
+		LEFT JOIN `$env{'db_name'}`.a401_article_ent AS article_ent ON
 		(
 			article_ent.ID_entity = article.ID_entity
 		)
-		LEFT JOIN $env{'db_name'}.a401_article_attrs AS article_attrs ON
+		LEFT JOIN `$env{'db_name'}`.a401_article_attrs AS article_attrs ON
 		(
 			article_attrs.ID_entity = article.ID
 		)
-		LEFT JOIN $env{'db_name'}.a401_article_content AS article_content ON
+		LEFT JOIN `$env{'db_name'}`.a401_article_content AS article_content ON
 		(
 			article_content.ID_entity = article.ID_entity AND
 			article_content.lng = article_attrs.lng
 		)
-		LEFT JOIN $env{'db_name'}.a401_article_cat AS article_cat ON
+		LEFT JOIN `$env{'db_name'}`.a401_article_cat AS article_cat ON
 		(
 			article_cat.ID = article_attrs.ID_category
 		)
-		LEFT JOIN $env{'db_name'}.a301_ACL_user_group AS ACL_world ON
+		LEFT JOIN `$env{'db_name'}`.a301_ACL_user_group AS ACL_world ON
 		(
 			ACL_world.ID_entity = 0 AND
 			r_prefix = 'a401' AND

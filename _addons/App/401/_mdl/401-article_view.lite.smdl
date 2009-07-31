@@ -61,21 +61,21 @@ sub execute
 			
 			article_cat.name AS ID_category_name
 			
-		FROM $App::401::db_name.a401_article AS article
-		LEFT JOIN $App::401::db_name.a401_article_attrs AS article_attrs ON
+		FROM `$App::401::db_name`.a401_article AS article
+		LEFT JOIN `$App::401::db_name`.a401_article_attrs AS article_attrs ON
 		(
 			article_attrs.ID_entity = article.ID
 		)
-		LEFT JOIN $App::401::db_name.a401_article_ent AS article_ent ON
+		LEFT JOIN `$App::401::db_name`.a401_article_ent AS article_ent ON
 		(
 			article_ent.ID_entity = article.ID_entity
 		)
-		LEFT JOIN $App::401::db_name.a401_article_content AS article_content ON
+		LEFT JOIN `$App::401::db_name`.a401_article_content AS article_content ON
 		(
 			article_content.ID_entity = article.ID_entity AND
 			article_content.lng = article_attrs.lng
 		)
-		LEFT JOIN $App::401::db_name.a401_article_cat AS article_cat ON
+		LEFT JOIN `$App::401::db_name`.a401_article_cat AS article_cat ON
 		(
 			article_cat.ID = article_attrs.ID_category
 		)
