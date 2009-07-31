@@ -73,7 +73,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_rating_vote` (
 CREATE TABLE `/*db_name*/`.`/*addon*/_image_attrs` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel image.ID
-  `ID_category` bigint(20) unsigned default NULL,
+  `ID_category` bigint(20) unsigned default NULL, -- rel image_cat.ID_entity
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
