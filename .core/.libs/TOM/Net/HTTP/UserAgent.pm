@@ -13,6 +13,8 @@ TOM::Net::HTTP::UserAgent
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
+our $debug=0;
+
 =head1 DESCRIPTION
 
 List of known UserAgents.
@@ -2096,27 +2098,104 @@ our %table_IP=
 
 =cut
 
+our %cache_IP;
+our %cache_UserAgent;
 sub analyze
 {
 	my $user_agent=shift @_;
 	return undef unless $user_agent;
 	my %env=@_;
 	
-	# hladanie vandalizatora
-	if ($env{IP})
+=head1
+	# find vandalizer
+	if ($env{'IP'})
 	{
+		if ($cache_IP{$env{'IP'}})
+		{
+			return ($cache_IP{$env{'IP'}}{'ID'},$cache_IP{$env{'IP'}}{'table'});
+		}
+		if ($TOM::CACHE_memcached)
+		{
+			my $values=$Ext::CacheMemcache::cache->get(
+				'namespace' => "UserAgent::IP",
+				'key' => $env{'IP'}
+			);
+			if ($values->{'ID'})
+			{
+#				main::_log("found IP in memcache");
+				$cache_IP{$env{'IP'}}{'ID'}=$values->{'ID'};
+				$cache_IP{$env{'IP'}}{'table'}=$values->{'table'};
+				return ($values->{'ID'},$values->{'table'});
+			}
+		}
 		foreach my $k(sort keys %table_IP)
 		{
-			return (&getIDbyName($table_IP{$k}),$table[&getIDbyName($table_IP{$k})]{name}) if $env{IP}=~/^$k/;
+			if ($env{IP}=~/^$k/)
+			{
+				if ($TOM::CACHE_memcached)
+				{
+					$Ext::CacheMemcache::cache->set(
+						'namespace' => "UserAgent::IP",
+						'key' => $env{'IP'},
+						'value' => {
+							'IP' => &getIDbyName($table_IP{$k}),
+							'table' => $table[&getIDbyName($table_IP{$k})]{'name'}
+						},
+						'expiration' => '86400S'
+					);
+				}
+				$cache_IP{$env{'IP'}}{'ID'}=&getIDbyName($table_IP{$k});
+				$cache_IP{$env{'IP'}}{'table'}=$table[&getIDbyName($table_IP{$k})]{'name'};
+				return (&getIDbyName($table_IP{$k}),$table[&getIDbyName($table_IP{$k})]{name});
+			}
+		}
+	}
+=cut
+	
+	if ($cache_UserAgent{$user_agent})
+	{
+		main::_log("found in local cache") if $debug;
+		return ($cache_UserAgent{$user_agent}{'ID'},$cache_UserAgent{$user_agent}{'name'});
+	}
+	
+	if ($TOM::CACHE_memcached)
+	{
+		my $values=$Ext::CacheMemcache::cache->get(
+			'namespace' => "UserAgent",
+			'key' => $user_agent
+		);
+		if ($values->{'ID'})
+		{
+			main::_log("found in memcache") if $debug;
+			$cache_UserAgent{$user_agent}{'ID'}=$values->{'ID'};
+			$cache_UserAgent{$user_agent}{'name'}=$values->{'name'};
+			return ($values->{'ID'},$values->{'name'});
 		}
 	}
 	
-	# my $var=0;
 	foreach my $i(1..@table-1)
 	{
-		foreach my $regexp (@{$table[$i]{regexp}})
+		foreach my $regexp (@{$table[$i]{'regexp'}})
 		{
-			return ($i,$table[$i]{name}) if $user_agent=~/$regexp/i;
+#			main::_log("checking '$user_agent' to $regexp");
+			if ($user_agent=~/$regexp/i)
+			{
+				if ($TOM::CACHE_memcached)
+				{
+					$Ext::CacheMemcache::cache->set(
+						'namespace' => "UserAgent",
+						'key' => $user_agent,
+						'value' => {
+							'IP' => $i,
+							'name' => $table[$i]{'name'}
+						},
+						'expiration' => '86400S'
+					);
+				}
+				$cache_UserAgent{$user_agent}{'ID'}=$i;
+				$cache_UserAgent{$user_agent}{'name'}=$table[$i]{'name'};
+				return ($i,$table[$i]{'name'});
+			}
 		}
 	}
 	return undef;
