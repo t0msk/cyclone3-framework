@@ -291,6 +291,10 @@ our %table=
 	'1094'	=> "c", # 'ц' v azbuke
 	'1095'	=> "c", # 'ч' v azbuke
 	
+	'1097'	=> "s", # 'Щ' v azbuke
+	
+	'1099'	=> "y", # 'ы' v azbuke
+	
 	'1103'	=> "ja", # 'я' v azbuke	
 	
 	'1108'	=> "e", # 'є' v azbuke
