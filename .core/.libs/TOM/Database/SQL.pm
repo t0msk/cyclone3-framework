@@ -189,7 +189,7 @@ sub execute
 	$env{'db_h'}='main' unless $env{'db_h'};
 	$env{'db_h_orig'}=$env{'db_h'};
 	
-	if ($env{'slave'} && $TOM::DB{$env{'db_h'}}{'slaves'} && $SQL=~/^SELECT/)
+	if ($env{'slave'} && $TOM::DB{$env{'db_h'}}{'slaves'} && $SQL=~/^(\(\s+SELECT|SELECT)/)
 	{
 		my $slave=int(rand($TOM::DB{$env{'db_h'}}{'slaves'}))+1;
 		if ($TOM::DB{$env{'db_h'}.':'.$slave})
