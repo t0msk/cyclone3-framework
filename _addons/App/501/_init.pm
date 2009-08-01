@@ -137,7 +137,7 @@ else
 		'db_name' => $App::501::db_name,
 		'tb_name' => "a501_image_cat",
 		'columns' => {
-			'name' => "'system'",
+			'name' => "'System'",
 			'lng' => "'$tom::LNG'",
 			'status' => "'L'"
 		},
