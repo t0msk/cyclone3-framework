@@ -6,7 +6,7 @@ use strict;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-#our $debug=1;
+our $debug=0;
 #our $strict=1;
 #our $s="  ";
 our $s="\t";
@@ -32,7 +32,7 @@ sub serialize_data
  my %ret;
  
  #print "=>$env{level},$env{data}\n" if $debug;
- print "".(" " x ($env{level}))."=>input:!$env{data}!\n" if $main::debug;
+ print "".(" " x ($env{level}))."=>input:!$env{data}!\n" if $debug;
  
  $ret{level}=$env{level};
  $env{level}++;
@@ -40,7 +40,7 @@ sub serialize_data
  if (ref($env{data}) eq "HASH")
 # if (%{$env{data}})
  {
-  print "".(" " x ($env{level}-1))."->hash\n" if $main::debug;
+  print "".(" " x ($env{level}-1))."->hash\n" if $debug;
   #print "->hash\n" if $debug;
     
   $ret{type}="block";
@@ -55,7 +55,7 @@ sub serialize_data
   foreach (sort keys %{$env{data}})
   {
 	$full++ if $_;
-	print "".(" " x ($env{level}-1))."+serialize: !".(${$env{data}}{$_})."!\n" if $main::debug;
+	print "".(" " x ($env{level}-1))."+serialize: !".(${$env{data}}{$_})."!\n" if $debug;
 	
 	my %in=serialize_data(level=>$env{level},data=>${$env{data}}{$_},from=>"HASH",strict=>$env{strict});
 	$in{name}=$_;
@@ -92,7 +92,7 @@ sub serialize_data
  elsif (ref($env{data}) eq "ARRAY")
  {
 #	print "->array\n" if $debug;
-	print "".(" " x ($env{level}-1))."->array\n" if $main::debug;
+	print "".(" " x ($env{level}-1))."->array\n" if $debug;
 #  my $cvml;
   	$ret{type}="block";
 	my @arr;
@@ -103,11 +103,11 @@ sub serialize_data
 	my $i=1;
 	foreach (@{$env{data}})
 	{
-		print "".(" " x ($env{level}-1))."+serialize: !".($_)."!\n" if $main::debug;
+		print "".(" " x ($env{level}-1))."+serialize: !".($_)."!\n" if $debug;
 		my %in=serialize_data(level=>$env{level},data=>$_,from=>"ARRAY",strict=>$env{strict});
 #		$ret{type}="block" if ($in{type} ne "varchar");
 #		push @arr,{%in};
-		print "".(" " x ($env{level}-1))."+add type: !".($ret{type})."!\n" if $main::debug;
+		print "".(" " x ($env{level}-1))."+add type: !".($ret{type})."!\n" if $debug;
 		
 #		$ret{data}.=("\t" x $env{level})."<item>".$in{data}."</item>\n";
 		
@@ -135,7 +135,7 @@ sub serialize_data
 #=cut
  else
  {
-  	print "".(" " x ($env{level}-1))."->text:!$env{data}!\n" if $main::debug;
+  	print "".(" " x ($env{level}-1))."->text:!$env{data}!\n" if $debug;
 	
 	#$ret{data}=~s|\r||g;
 	$ret{type}="varchar";
@@ -153,7 +153,7 @@ sub serialize_data
  
  $ret{data}=~s|\r||g; # \r v CVML niesu povolene
  #$ret{type}="varchar" unless $ret{type};
- print "".(" " x ($env{level}-1))."<-return:!$ret{data}!$ret{type}!\n" if $main::debug;
+ print "".(" " x ($env{level}-1))."<-return:!$ret{data}!$ret{type}!\n" if $debug;
  #print "co je\n";
  return %ret;
 }
