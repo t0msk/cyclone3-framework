@@ -225,6 +225,7 @@ sub video_part_file_generate
 		'video1' => $video1_path,
 		'video2' => $video2->{'filename'},
 		'process' => $env{'process'} || $format{'process'},
+		'process_force' => $env{'process_force'},
 		'definition' => $format{'definition'}
 	);
 	
@@ -419,6 +420,8 @@ sub video_part_file_process
 		
 		$target_is_same=1;
 	}
+	
+	$target_is_same=0 if $env{'process_force'};
 	
 	if ($target_is_same)
 	{
@@ -885,7 +888,6 @@ sub video_add
 			'columns' => {'*'=>1}
 		);
 		$env{'video.ID_entity'}=$video{'ID_entity'} unless $env{'video.ID_entity'};
-		#$env{'video.ID'}=$video{'ID'} if $video{'ID'};
 	}
 	
 	
@@ -897,21 +899,6 @@ sub video_add
 		my %columns;
 		
 		$columns{'ID_entity'}=$env{'video.ID_entity'} if $env{'video.ID_entity'};
-#		if ($env{'video.datetime_rec_start'})
-#		{
-#			if ($env{'video.datetime_rec_start'}=~/^FROM/)
-#			{$columns{'datetime_rec_start'}=$env{'video.datetime_rec_start'};}
-#			else {$columns{'datetime_rec_start'}="'".$env{'video.datetime_rec_start'}."'"}
-#		}
-		$columns{'datetime_rec_start'}="NOW()" unless $columns{'datetime_rec_start'};
-		
-#		if ($env{'video.datetime_rec_stop'})
-#		{
-#			if ($env{'video.datetime_rec_stop'}=~/^FROM/)
-#			{$columns{'datetime_rec_stop'}=$env{'video.datetime_rec_stop'};}
-#			else {$columns{'datetime_rec_stop'}="'".$env{'video.datetime_rec_stop'}."'"}
-#		}
-		#$columns{'datetime_rec_stop'}="NOW()" unless $columns{'datetime_rec_stop'};
 		
 		$env{'video.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
@@ -951,39 +938,21 @@ sub video_add
 	}
 	
 	# update if necessary
-	if ($video{'ID'} &&
-	(
-		# datetime_rec_start
-		($env{'video.datetime_rec_start'} && ($env{'video.datetime_rec_start'} ne $video{'datetime_rec_start'})) ||
-		# datetime_rec_stop
-		(exists $env{'video.datetime_rec_stop'} && ($env{'video.datetime_rec_stop'} ne $video{'datetime_rec_stop'}))
-	))
-	{
-		my %columns;
-		
-		# datetime_rec_start
-		$columns{'datetime_rec_start'}="'".$env{'video.datetime_rec_start'}."'"
-			if ($env{'video.datetime_rec_start'} && ($env{'video.datetime_rec_start'} ne $video{'datetime_rec_start'}));
-		$columns{'datetime_rec_start'}=$env{'video.datetime_rec_start'}
-			if ($env{'video.datetime_rec_start'}=~/^FROM/ && ($env{'video.datetime_rec_start'} ne $video{'datetime_rec_start'}));
-		# datetime_rec_stop
-		if (exists $env{'video.datetime_rec_stop'} && ($env{'video.datetime_rec_stop'} ne $video{'datetime_rec_stop'}))
-		{
-			if (!$env{'video.datetime_rec_stop'})
-			{$columns{'datetime_rec_stop'}="NULL";}
-			else
-			{$columns{'datetime_rec_stop'}="'".$env{'video.datetime_rec_stop'}."'";}
-		}
-		
-		App::020::SQL::functions::update(
-			'ID' => $video{'ID'},
-			'db_h' => "main",
-			'db_name' => $App::510::db_name,
-			'tb_name' => "a510_video",
-			'columns' => {%columns},
-			'-journalize' => 1
-		);
-	}
+#	if ($video{'ID'} &&
+#	(
+#	))
+#	{
+#		my %columns;
+#		
+#		App::020::SQL::functions::update(
+#			'ID' => $video{'ID'},
+#			'db_h' => "main",
+#			'db_name' => $App::510::db_name,
+#			'tb_name' => "a510_video",
+#			'columns' => {%columns},
+#			'-journalize' => 1
+#		);
+#	}
 	
 	
 	if (!$env{'video_attrs.ID'})
