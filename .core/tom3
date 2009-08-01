@@ -2575,7 +2575,7 @@ while ($main::CGI=new CGI::Fast())
 		$t_postprocess->close();
 		$t_eval->close();
 		
-		main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' ",3,'pub.track');
+		main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' ",3,'pub.track');
 		
 		Tomahawk::stat::rqs(
 			proc => $t_eval->{'time'}{proc}{duration},
