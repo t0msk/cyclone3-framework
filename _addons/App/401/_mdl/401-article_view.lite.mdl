@@ -372,10 +372,12 @@ sub execute
 			#'rel_type' => 'gallery',
 			'r_prefix' => "a501",
 			'r_table' => "image",
-			'status' => "Y"
+			'status' => "Y",
 			))
 		{
 			$i++;
+			
+			next unless $relation->{'r_ID_entity'};
 			
 			my $item=$XSGN{'a501.gallery.'.$i} || $XSGN{'a501.gallery'};
 			
@@ -390,6 +392,7 @@ sub execute
 					status IN ('Y','L')
 				LIMIT 1
 			};
+			
 			my %sth1=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache'=>60);
 			if (my %db1_line=$sth1{'sth'}->fetchhash()){$item=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;}
 			my $ID_format=$env{'gallery.thumbnail.ID_format'} || $App::501::image_format_thumbnail_ID;
