@@ -64,9 +64,12 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent_j` (
 CREATE TABLE `/*db_name*/`.`/*addon*/_image_rating_vote` (
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_image` mediumint(8) unsigned NOT NULL, -- ref _image.ID_entity
+  `IP` varchar(20) NOT NULL default '',
   `datetime_event` datetime NOT NULL,
-  `score` int(10) unsigned NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  `score` int(10) unsigned NOT NULL,
+  KEY `SEL_0` (`ID_user`,`ID_image`),
+  KEY `SEL_1` (`IP`,`ID_image`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
