@@ -2144,39 +2144,34 @@ while ($main::CGI=new CGI::Fast())
 			$url_count++;
 			my $t_link=track TOM::Debug("URL '$url_count'") if $debug_url;
 			
-			my $www_pre;
-			my $www;
-			my $var;
-			my $end;
-			my $prefix;
+			my $link_begin; # character before ?|?
+			my $link; # link
+			my $link_end; # character after link
+			
+			my $newlink_prefix;
 			
 			if ($tom::rewrite)
 			{
-#				$www=$1 || $tom::H_www;
-#				$www=$tom::H_www;
-				$www_pre=$1; # ked je www_pre='/', tak to znamena ze linkujem na iny portal
-				$www=$www_pre.$tom::H_www;
-				$www='' if $www_pre eq "/";
-				$var=$2;
-				$end=$3;
-				main::_log("URL www='$www' var='$var' end='$end'") if $debug_url;
-				$prefix=$www."/";$prefix=~s|//$|/|g;
+				$link_begin=$1; # ked je www_pre='/', tak to znamena ze linkujem na iny portal
+				$link=$2;
+				$link_end=$3;
+				$newlink_prefix=$tom::H_www."/" if $link_begin=~/['"]/;
+				main::_log("URL link_begin='$link_begin' link='$link' link_end='$link_end'") if $debug_url;
 			}
 			else
 			{
-				$var=$1;
-				$end=$2;
+				$link=$1;
+				$link_end=$2;
 			}
 			
+			main::_log("URL newlink_prefix='$newlink_prefix'") if $debug_url;
 			
-			main::_log("URL '$prefix' '$var' '$end'") if $debug_url;
-			
-			my $cache_key="$prefix".'/'."$var";
-			if ($url_cache{$cache_key} && not $var=~/^\|/)
+			my $cache_key="$newlink_prefix".'/'."$link";
+			if ($url_cache{$cache_key} && not $link=~/^\|/)
 			{
 				main::_log("URL cached for key '$cache_key'") if $debug_url;
-				main::_log("output URL '$url_cache{$cache_key}$end'") if $debug_url;
-				$H->{'OUT'}{'BODY'}=~s/URL$hash/$url_cache{$cache_key}$end/;
+				main::_log("output URL '$url_cache{$cache_key}$link_end'") if $debug_url;
+				$H->{'OUT'}{'BODY'}=~s/URL$hash/$link_begin$url_cache{$cache_key}$link_end/;
 				$t_link->close() if $debug_url;
 				next;
 			}
@@ -2185,18 +2180,17 @@ while ($main::CGI=new CGI::Fast())
 			# zapisal do XSGN alebo DSGN
 			# ide o linku v zapise ?ahoj=nieco&amp;ahoj2=nieco2&amp;...
 			# ide o standardny zapis i ked my ho nepouzivame ( zatial )
-			$var=~s|&amp;|&|g;
+			$link=~s|&amp;|&|g;
 			
 			my %form;
 			# pridam systemovo posielane premenne __nieco
 			foreach (keys %FORM){$_=~/^__/ && do{$form{$_}=$FORM{$_};};}
 			#foreach (keys %form){main::_log("key $_")};
-			# parsing $var to %form
+			# parsing $link to %form
 			
-			if ($var=~s/^\|//)
+			if ($link=~s/^\|//)
 			{
 				main::_log("first pipe, adding QUERY_STRING_FULL") if $debug_url;
-#				my %pp=TOM::Net::HTTP::CGI::get_QUERY_STRING($main::ENV{'QUERY_STRING_FULL'},'quiet'=>1);
 				foreach my $cc (keys %pp)
 				{
 					$form{$cc}=$pp{$cc};
@@ -2204,7 +2198,7 @@ while ($main::CGI=new CGI::Fast())
 				}
 			}
 			
-			foreach my $cc(split('&',$var))
+			foreach my $cc(split('&',$link))
 			{
 				my @ref=split('=',$cc);
 				if (not $cc=~/=/)
@@ -2230,7 +2224,7 @@ while ($main::CGI=new CGI::Fast())
 			# nadbytocne veci
 			if
 			(
-				($prefix ne "http://null/")&&
+				($newlink_prefix ne "http://null/")&&
 				($tom::rewrite)&&
 				(my $rewrite=TOM::Net::URI::rewrite::parse_hash(\%form))
 			)
@@ -2238,14 +2232,14 @@ while ($main::CGI=new CGI::Fast())
 				# REWRITE TREBA DECODOVAT!!!
 				$rewrite=TOM::Net::URI::URL::url_encode($rewrite);
 				$rewrite=~s|%2F|/|g;
-				$prefix.=$rewrite;
+				$newlink_prefix.=$rewrite;
 			}
 			
 			# vygenerujem z %hash string
-			$var='';
+			$link='';
 			if (keys %form > 0)
 			{
-				$var=TOM::Net::URI::URL::genGET(%form);
+				$link=TOM::Net::URI::URL::genGET(%form);
 			}
 			
 			# nasleduje spracovanie stringu
@@ -2255,7 +2249,7 @@ while ($main::CGI=new CGI::Fast())
 				(
 					($TOM::type_code) # kodujem
 					&&
-					($var) # vo var vobec nieco je?
+					($link) # v link vobec nieco je?
 					&&
 					(
 						($IAdm && !$FORM{_IAdm_decode})
@@ -2274,8 +2268,7 @@ while ($main::CGI=new CGI::Fast())
 						($IAdm)||($ITst)||($main::ENV{'HTTP_USER_AGENT'}=~/wget/i)
 					)
 				{
-					main::_log("convert string '$var'",1,"lib.err",1);
-					my $link_md5=Digest::MD5::md5_hex(Encode::encode_utf8($var));
+					my $link_md5=Digest::MD5::md5_hex(Encode::encode_utf8($link));
 					$main::DB{sys}->Query("
 						REPLACE INTO TOM._url
 						(
@@ -2286,22 +2279,22 @@ while ($main::CGI=new CGI::Fast())
 						VALUES
 						(
 							'$link_md5',
-							'$var',
+							'$link',
 							'$tom::time_current'
 						)
 					");
-					main::_log("output URL '$prefix?__$link_md5$end'") if $debug_url;
-					$url_cache{$cache_key}="$prefix?__$link_md5" if $url_cache_enabled;
-					$H->{OUT}{BODY}=~s/URL$hash/$prefix?__$link_md5$end/;
+					main::_log("output URL '$newlink_prefix?__$link_md5$link_end'") if $debug_url;
+					$url_cache{$cache_key}="$newlink_prefix?__$link_md5" if $url_cache_enabled;
+					$H->{OUT}{BODY}=~s/URL$hash/$link_begin$newlink_prefix?__$link_md5$link_end/;
 				}
 				else  # klasicke kodovanie
 				{
 					# tomu http://null/ uz vobec nerozumiem
-					$prefix="" if ($prefix eq "http://null/");
-					my $link_hash=TOM::Net::URI::URL::hash_encode($var);
-					main::_log("output URL '$prefix?$link_hash$end'") if $debug_url;
-					$url_cache{$cache_key}="$prefix?$link_hash" if $url_cache_enabled;
-					$H->{OUT}{BODY}=~s/URL$hash/$prefix?$link_hash$end/;
+					$newlink_prefix="" if ($newlink_prefix eq "http://null/");
+					my $link_hash=TOM::Net::URI::URL::hash_encode($link);
+					main::_log("output URL '$newlink_prefix?$link_hash$link_end'") if $debug_url;
+					$url_cache{$cache_key}="$newlink_prefix?$link_hash" if $url_cache_enabled;
+					$H->{OUT}{BODY}=~s/URL$hash/$link_begin$newlink_prefix?$link_hash$link_end/;
 				}
 				$t_link->close() if $debug_url;
 				next;
@@ -2311,20 +2304,20 @@ while ($main::CGI=new CGI::Fast())
 			
 			# pokial nekodujem linku, tak oddelovace premennych '&' musia byt v linke
 			# v HTML kode ako &amp; (je to tak podla standardov)
-			$var=~s|&|&amp;|g unless $TOM::type_code;
-			$prefix="" if ($prefix eq "http://null/");
+			$link=~s|&|&amp;|g unless $TOM::type_code;
+			$newlink_prefix="" if ($newlink_prefix eq "http://null/");
 			
-			if ($tom::rewrite && !$var) # nechcem zbytocne vypisovat ?
+			if ($tom::rewrite && !$link) # nechcem zbytocne vypisovat ?
 			{
-				main::_log("output URL '$prefix$end'") if $debug_url;
-				$url_cache{$cache_key}="$prefix" if $url_cache_enabled;
-				$H->{OUT}{BODY}=~s/URL$hash/$prefix$end/;
+				main::_log("output URL '$newlink_prefix$link_end'") if $debug_url;
+				$url_cache{$cache_key}="$newlink_prefix" if $url_cache_enabled;
+				$H->{OUT}{BODY}=~s/URL$hash/$link_begin$newlink_prefix$link_end/;
 			}
 			else
 			{
-				main::_log("output URL '$prefix?$var$end'") if $debug_url;
-				$url_cache{$cache_key}="$prefix?$var" if $url_cache_enabled;
-				$H->{OUT}{BODY}=~s/URL$hash/$prefix?$var$end/;
+				main::_log("output URL '$newlink_prefix?$link$link_end'") if $debug_url;
+				$url_cache{$cache_key}="$newlink_prefix?$link" if $url_cache_enabled;
+				$H->{OUT}{BODY}=~s/URL$hash/$link_begin$newlink_prefix?$link$link_end/;
 			}
 			
 			$t_link->close() if $debug_url;
