@@ -8,9 +8,12 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
+  `datetime_rec_start` datetime default NULL,
+  `datetime_rec_stop` datetime default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   KEY `ID_entity` (`ID_entity`),
+  KEY `datetime_rec_start` (`datetime_rec_start`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -20,6 +23,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_j` (
   `ID` mediumint(8) unsigned NOT NULL,
   `ID_entity` mediumint(8) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
+  `datetime_rec_start` datetime default NULL,
+  `datetime_rec_stop` datetime default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -30,8 +35,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- ref _video.ID_entity
   `datetime_create` datetime NOT NULL,
-  `datetime_rec_start` datetime default NULL,
-  `datetime_rec_stop` datetime default NULL,
+  `datetime_rec_start` datetime default NULL, -- slow and obsolete
+  `datetime_rec_stop` datetime default NULL, -- slow and obsolete
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
@@ -40,6 +45,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
   PRIMARY KEY  (`ID`),
   FULLTEXT KEY `keywords` (`keywords`),
   KEY `ID_entity` (`ID_entity`),
+  KEY `datetime_rec_start` (`datetime_rec_start`),
   KEY `status` (`status`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -78,8 +84,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs` (
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   FULLTEXT KEY `FULL_0` (`name`,`description`),
-  KEY `ID_entity` (`ID_entity`),
-  KEY `ID_category` (`ID_category`),
+  KEY `SEL_0` (`ID_category`,`lng`,`status`),
   KEY `name` (`name`),
   KEY `lng` (`lng`),
   KEY `order_id` (`order_id`),
@@ -535,10 +540,10 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_view` AS (
 		video_part_attrs.ID AS ID_part_attrs,
 		video_part_file.ID AS ID_part_file,
 		
-		LEFT(video_ent.datetime_rec_start, 18) AS datetime_rec_start,
+		LEFT(video.datetime_rec_start, 18) AS datetime_rec_start,
 		LEFT(video_attrs.datetime_create, 18) AS datetime_create,
-		LEFT(video_ent.datetime_rec_start,10) AS date_recorded,
-		LEFT(video_ent.datetime_rec_stop, 18) AS datetime_rec_stop,
+		LEFT(video.datetime_rec_start,10) AS date_recorded,
+		LEFT(video.datetime_rec_stop, 18) AS datetime_rec_stop,
 		
 		video_attrs.ID_category,
 		video_cat.name AS ID_category_name,
