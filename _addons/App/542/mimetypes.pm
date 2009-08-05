@@ -19,22 +19,6 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 
 
-=head1 DEPENDS
-
-=over
-
-=item *
-
-L<App::542::_init|app/"542/_init.pm">
-
-=back
-
-=cut
-
-use App::542::_init;
-
-
-
 =head1 VARIABLES
 
 =head2 %ext
