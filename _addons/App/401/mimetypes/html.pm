@@ -405,79 +405,15 @@ sub start
 			if ($vars{'ID_entity'})
 			{
 				main::_log("find a510_video ID_entity='$vars{'ID_entity'}'") if $debug;
-				my $sql=qq{
-					SELECT
-						video.ID_entity AS ID_entity_video,
-						video.ID AS ID_video,
-						video_attrs.ID AS ID_attrs,
-						video_part.ID AS ID_part,
-						video_part_attrs.ID AS ID_part_attrs,
-						
-						LEFT(video.datetime_rec_start, 18) AS datetime_rec_start,
-						LEFT(video_attrs.datetime_create, 18) AS datetime_create,
-						LEFT(video.datetime_rec_start,10) AS date_recorded,
-						LEFT(video_ent.datetime_rec_stop, 18) AS datetime_rec_stop,
-						
-						video_attrs.ID_category,
---						video_cat.name AS ID_category_name,
-						
-						video_attrs.name,
-						video_attrs.name_url,
-						
-						video_part_attrs.name AS part_name,
-						video_part_attrs.description AS part_description,
-						video_part.keywords AS part_keywords,
-						
-						video_part_file.video_width,
-						video_part_file.video_height,
-						video_part_file.video_bitrate,
-						video_part_file.length,
-						video_part_file.file_size,
-						video_part_file.file_ext,
-						video_part_file.file_alt_src,
-						
-						CONCAT(video_part_file.ID_format,'/',SUBSTR(video_part_file.ID,1,4),'/',video_part_file.name,'.',video_part_file.file_ext) AS file_part_path
-						
-					FROM
-						`$App::510::db_name`.`a510_video` AS video
-					LEFT JOIN `$App::510::db_name`.`a510_video_ent` AS video_ent ON
-					(
-						video_ent.ID_entity = video.ID_entity
-					)
-					LEFT JOIN `$App::510::db_name`.`a510_video_attrs` AS video_attrs ON
-					(
-						video_attrs.ID_entity = video.ID
-					)
-					LEFT JOIN `$App::510::db_name`.`a510_video_part` AS video_part ON
-					(
-						video_part.ID_entity = video.ID_entity
-					)
-					LEFT JOIN `$App::510::db_name`.`a510_video_part_attrs` AS video_part_attrs ON
-					(
-						video_part_attrs.ID_entity = video_part.ID AND
-						video_part_attrs.lng = video_attrs.lng
-					)
-					LEFT JOIN `$App::510::db_name`.`a510_video_part_file` AS video_part_file ON
-					(
-						video_part_file.ID_entity = video_part.ID
-					)
---					LEFT JOIN `$App::510::db_name`.`a510_video_format` AS video_format ON
---					(
---						video_format.ID_entity = video_part_file.ID_format
---					)
---					LEFT JOIN `$App::510::db_name`.`a510_video_cat` AS video_cat ON
---					(
---						video_cat.ID = video_attrs.ID_category
---					)
-					WHERE
-						video.ID_entity=$vars{'ID_entity'} AND
-						video_part.part_id=1 AND
-						video_part_file.ID_format=$vars{'ID_format'} AND
-						video_attrs.lng='$tom::lng'
-					LIMIT 1
-				};
-				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
-				my %db0_line=$sth0{'sth'}->fetchhash();
+				
+				my %db0_line=App::510::functions::get_video_part_file
+				(
+					'video.ID_entity' => $vars{'ID_entity'},
+					'video_part.part_id' => 1,
+					'video_part_file.ID_format' => $vars{'ID_format'},
+					'video_attrs.lng' => $tom::lng
+				);
+				
 				if ($db0_line{'ID_entity_video'})
 				{
 					$attr->{'src'}='';
@@ -593,79 +529,14 @@ sub start
 			if ($vars{'ID'})
 			{
 				main::_log("find a510_video_part ID='$vars{'ID'}'") if $debug;
-				my $sql=qq{
-					SELECT
-						video.ID_entity AS ID_entity_video,
-						video.ID AS ID_video,
-						video_attrs.ID AS ID_attrs,
-						video_part.ID AS ID_part,
-						video_part_attrs.ID AS ID_part_attrs,
-						
-						LEFT(video.datetime_rec_start, 18) AS datetime_rec_start,
-						LEFT(video_attrs.datetime_create, 18) AS datetime_create,
-						LEFT(video.datetime_rec_start,10) AS date_recorded,
-						LEFT(video.datetime_rec_stop, 18) AS datetime_rec_stop,
-						
-						video_attrs.ID_category,
-						video_cat.name AS ID_category_name,
-						
-						video_attrs.name,
-						video_attrs.name_url,
-						
-						video_part_attrs.name AS part_name,
-						video_part_attrs.description AS part_description,
-						video_part.keywords AS part_keywords,
-						
-						video_part_file.video_width,
-						video_part_file.video_height,
-						video_part_file.video_bitrate,
-						video_part_file.length,
-						video_part_file.file_size,
-						video_part_file.file_ext,
-						video_part_file.file_alt_src,
-						
-						CONCAT(video_format.ID,'/',SUBSTR(video_part_file.ID,1,4),'/',video_part_file.name,'.',video_part_file.file_ext) AS file_part_path
-						
-					FROM
-						`$App::510::db_name`.`a510_video` AS video
-					LEFT JOIN `$App::510::db_name`.`a510_video_ent` AS video_ent ON
-					(
-						video_ent.ID_entity = video.ID_entity
-					)
-					LEFT JOIN `$App::510::db_name`.`a510_video_attrs` AS video_attrs ON
-					(
-						video_attrs.ID_entity = video.ID
-					)
-					LEFT JOIN `$App::510::db_name`.`a510_video_part` AS video_part ON
-					(
-						video_part.ID_entity = video.ID_entity
-					)
-					LEFT JOIN `$App::510::db_name`.`a510_video_part_attrs` AS video_part_attrs ON
-					(
-						video_part_attrs.ID_entity = video_part.ID AND
-						video_part_attrs.lng = video_attrs.lng
-					)
-					LEFT JOIN `$App::510::db_name`.`a510_video_part_file` AS video_part_file ON
-					(
-						video_part_file.ID_entity = video_part.ID
-					)
-					LEFT JOIN `$App::510::db_name`.`a510_video_format` AS video_format ON
-					(
-						video_format.ID_entity = video_part_file.ID_format
-					)
-					LEFT JOIN `$App::510::db_name`.`a510_video_cat` AS video_cat ON
-					(
-						video_cat.ID = video_attrs.ID_category
-					)
-					WHERE
-						video_part.ID=$vars{'ID'} AND
-						video_part.part_id=1 AND
-						video_part_file.ID_format=$vars{'ID_format'} AND
-						video_attrs.lng='$tom::lng'
-					LIMIT 1
-				};
-				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
-				my %db0_line=$sth0{'sth'}->fetchhash();
+				
+				my %db0_line=App::510::functions::get_video_part_file
+				(
+					'video_part.ID' => $vars{'ID'},
+					'video_part_file.ID_format' => $vars{'ID_format'},
+					'video_attrs.lng' => $tom::lng
+				);
+				
 				if ($db0_line{'ID_entity_video'})
 				{
 					main::_log("found video_part") if $debug;

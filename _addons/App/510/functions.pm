@@ -813,6 +813,8 @@ sub video_add
 	$env{'video_format.ID'}=$App::510::video_format_original_ID unless $env{'video_format.ID'};
 	$env{'video_part.part_id'}=1 unless $env{'video_part.part_id'};
 	
+	my $content_updated=0;
+	
 	# check if thumbnail file is correct
 	if ($env{'file_thumbnail'})
 	{
@@ -912,6 +914,7 @@ sub video_add
 			'-journalize' => 1,
 		);
 		main::_log("generated video.ID='$env{'video.ID'}'");
+		$content_updated=1;
 	}
 	
 	
@@ -971,6 +974,8 @@ sub video_add
 			'columns' => {%columns},
 		'-journalize' => 1
 		);
+		
+		$content_updated=1;
 	}
 	
 	
@@ -1019,6 +1024,8 @@ sub video_add
 			'tb_name' => "a510_video_attrs",
 			'columns' => {'*'=>1}
 		);
+		
+		$content_updated=1;
 	}
 	
 	
@@ -1057,6 +1064,7 @@ sub video_add
 			},
 			'-journalize' => 1,
 		);
+		$content_updated=1;
 	}
 	
 	if (!$video_ent{'posix_owner'} && !$env{'video_ent.posix_owner'})
@@ -1108,6 +1116,7 @@ sub video_add
 			'columns' => {%columns},
 			'-journalize' => 1
 		);
+		$content_updated=1;
 	}
 	
 	
@@ -1158,9 +1167,15 @@ sub video_add
 			'columns' => {%columns},
 			'-journalize' => 1
 		);
+		$content_updated=1;
 	}
 	
-	main::_log("video.ID='$env{'video.ID'}' added");
+	main::_log("video.ID='$env{'video.ID'}' added/updated");
+	
+	if ($content_updated)
+	{
+		App::020::SQL::functions::_save_changetime({'db_h'=>'main','db_name'=>$App::510::db_name,'tb_name'=>'a510_video'});
+	}
 	
 	$tr->close(); # commit transaction
 	$t->close();
@@ -1206,6 +1221,7 @@ sub video_part_add
 	
 	$env{'video_format.ID'}=$App::510::video_format_original_ID unless $env{'video_format.ID'};
 	
+	my $content_updated=0;
 	
 	# get video informations
 	
@@ -1270,6 +1286,7 @@ sub video_part_add
 				},
 				'-journalize' => 1
 			);
+			$content_updated=1;
 		}
 		
 	}
@@ -1308,6 +1325,7 @@ sub video_part_add
 			'-journalize' => 1,
 		);
 		main::_log("generated video_part ID='$env{'video_part.ID'}'");
+		$content_updated=1;
 	}
 	
 	# update if necessary
@@ -1328,6 +1346,7 @@ sub video_part_add
 			'columns' => {%columns},
 			'-journalize' => 1
 		);
+		$content_updated=1;
 	}
 	
 	if (!$env{'video_part_attrs.ID'})
@@ -1367,6 +1386,7 @@ sub video_part_add
 			},
 			'-journalize' => 1,
 		);
+		$content_updated=1;
 	}
 	
 	
@@ -1414,9 +1434,15 @@ sub video_part_add
 			'columns' => {%columns},
 			'-journalize' => 1
 		);
+		$content_updated=1;
 	}
 	
-	main::_log("video_part.ID='$env{'video_part.ID'}' added");
+	main::_log("video_part.ID='$env{'video_part.ID'}' added/updated");
+	
+	if ($content_updated)
+	{
+		App::020::SQL::functions::_save_changetime({'db_h'=>'main','db_name'=>$App::510::db_name,'tb_name'=>'a510_video'});
+	}
 	
 	$t->close();
 	return %env;
@@ -1449,6 +1475,8 @@ sub video_part_file_add
 {
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::video_part_file_add()");
+	
+	my $content_updated=0; # not yet implemented
 	
 	# check if video_part_file already not exists
 	if (!$env{'file'})
@@ -2076,6 +2104,165 @@ sub video_part_visit
 	
 	return 1;
 }
+
+
+
+=head2 get_video_part_file()
+
+Return video_part_file columns. This is the fastest way (optimized SQL) to get informations about file in video_part. Informations are cached in memcached and cache is monitored by information of last change of a510_video.
+
+	my %video_part_file=get_video_part_file(
+		'video.ID_entity' => 1 or 'video_part.ID' = > 1
+		'video_part.part_id' => 1 # default for video.ID_entity
+		'video_part_file.ID_format' => 1 # default
+		'video_attrs.lng' => $tom::lng # default
+		''
+	)
+
+=cut
+
+sub get_video_part_file
+{
+	my %env=@_;
+	
+	if (!$env{'video.ID_entity'} && !$env{'video_part.ID'})
+	{
+		return undef;
+	}
+	
+	$env{'video_part_file.ID_format'} = $App::510::video_format_full_ID unless $env{'video_part_file.ID_format'};
+	$env{'video_attrs.lng'}=$tom::lng unless $env{'video_attrs.lng'};
+	
+	my $sql=qq{
+		SELECT
+			video.ID_entity,
+			video.ID,
+			
+			video.ID_entity AS ID_entity_video,
+			video.ID AS ID_video,
+			video_attrs.ID AS ID_attrs,
+			video_part.ID AS ID_part,
+			video_part_attrs.ID AS ID_part_attrs,
+			
+			LEFT(video.datetime_rec_start, 18) AS datetime_rec_start,
+			LEFT(video_attrs.datetime_create, 18) AS datetime_create,
+			LEFT(video.datetime_rec_start,10) AS date_recorded,
+			LEFT(video_ent.datetime_rec_stop, 18) AS datetime_rec_stop,
+			
+			video_attrs.ID_category,
+			video_cat.name AS ID_category_name,
+			
+			video_attrs.name,
+			video_attrs.name_url,
+			
+			video_part_attrs.name AS part_name,
+			video_part_attrs.description AS part_description,
+			video_part.keywords AS part_keywords,
+			
+			video_part_file.video_width,
+			video_part_file.video_height,
+			video_part_file.video_bitrate,
+			video_part_file.length,
+			video_part_file.file_size,
+			video_part_file.file_ext,
+			video_part_file.file_alt_src,
+			
+			CONCAT(video_part_file.ID_format,'/',SUBSTR(video_part_file.ID,1,4),'/',video_part_file.name,'.',video_part_file.file_ext) AS file_part_path
+	};
+
+	
+	if ($env{'video.ID_entity'})
+	{
+		$env{'video_part.part_id'} = 1 unless $env{'video_part.part_id'};
+		$sql.=qq{
+		FROM
+			`$App::510::db_name`.`a510_video` AS video
+		LEFT JOIN `$App::510::db_name`.`a510_video_ent` AS video_ent ON
+		(
+			video_ent.ID_entity = video.ID_entity
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_attrs` AS video_attrs ON
+		(
+			video_attrs.ID_entity = video.ID
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part` AS video_part ON
+		(
+			video_part.ID_entity = video.ID_entity
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part_attrs` AS video_part_attrs ON
+		(
+			video_part_attrs.ID_entity = video_part.ID AND
+			video_part_attrs.lng = video_attrs.lng
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part_file` AS video_part_file ON
+		(
+			video_part_file.ID_entity = video_part.ID
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_cat` AS video_cat ON
+		(
+			video_cat.ID = video_attrs.ID_category
+		)
+		WHERE
+			video.ID_entity=$env{'video.ID_entity'} AND
+			video_part.part_id=$env{'video_part.part_id'} AND
+			video_part_file.ID_format=$env{'video_part_file.ID_format'} AND
+			video_attrs.lng='$env{'video_attrs.lng'}'
+		LIMIT 1
+		};
+	}
+	else
+	{
+		$sql.=qq{
+		FROM
+			`$App::510::db_name`.`a510_video_part` AS video_part
+		LEFT JOIN `$App::510::db_name`.`a510_video` AS video ON
+		(
+			video_part.ID_entity = video.ID_entity
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_ent` AS video_ent ON
+		(
+			video_ent.ID_entity = video.ID_entity
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_attrs` AS video_attrs ON
+		(
+			video_attrs.ID_entity = video.ID
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part_attrs` AS video_part_attrs ON
+		(
+			video_part_attrs.ID_entity = video_part.ID AND
+			video_part_attrs.lng = video_attrs.lng
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part_file` AS video_part_file ON
+		(
+			video_part_file.ID_entity = video_part.ID
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_cat` AS video_cat ON
+		(
+			video_cat.ID = video_attrs.ID_category
+		)
+		WHERE
+			video_part.ID=$env{'video_part.ID'} AND
+			video_part_file.ID_format=$env{'video_part_file.ID_format'} AND
+			video_attrs.lng='$env{'video_attrs.lng'}'
+		LIMIT 1
+		};
+	}
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,
+		'-cache' => 3600,
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+			'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video"
+		})
+	);
+	if ($sth0{'rows'})
+	{
+		return $sth0{'sth'}->fetchhash();
+	}
+	
+	return 1;
+}
+
+
 
 
 =head1 AUTHORS
