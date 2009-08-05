@@ -657,7 +657,7 @@ sub user_newhash
 		my %sth0=TOM::Database::SQL::execute(qq{
 			(SELECT ID_user FROM TOM.a301_user WHERE ID_user='$var' LIMIT 1) UNION ALL
 			(SELECT ID_user FROM TOM.a301_user_inactive WHERE ID_user='$var' LIMIT 1)
-		},'quiet'=>1);
+		},'quiet'=>1,'-slave'=>1);
 		if ($sth0{'rows'}){next}
 		last;
 	}
@@ -793,7 +793,7 @@ sub user_get
 			ID_user='$ID_user'
 		LIMIT 1
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
 	if (%data=$sth0{'sth'}->fetchhash)
 	{
 		main::_log("user '$ID_user' found in active table");
@@ -810,7 +810,7 @@ sub user_get
 				ID_user='$ID_user'
 			LIMIT 1
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
 		if (%data=$sth0{'sth'}->fetchhash)
 		{
 			main::_log("user found in inactive table");
