@@ -413,13 +413,13 @@ sub start
 						video_part.ID AS ID_part,
 						video_part_attrs.ID AS ID_part_attrs,
 						
-						LEFT(video_ent.datetime_rec_start, 18) AS datetime_rec_start,
+						LEFT(video.datetime_rec_start, 18) AS datetime_rec_start,
 						LEFT(video_attrs.datetime_create, 18) AS datetime_create,
-						LEFT(video_ent.datetime_rec_start,10) AS date_recorded,
+						LEFT(video.datetime_rec_start,10) AS date_recorded,
 						LEFT(video_ent.datetime_rec_stop, 18) AS datetime_rec_stop,
 						
 						video_attrs.ID_category,
-						video_cat.name AS ID_category_name,
+--						video_cat.name AS ID_category_name,
 						
 						video_attrs.name,
 						video_attrs.name_url,
@@ -436,7 +436,7 @@ sub start
 						video_part_file.file_ext,
 						video_part_file.file_alt_src,
 						
-						CONCAT(video_format.ID,'/',SUBSTR(video_part_file.ID,1,4),'/',video_part_file.name,'.',video_part_file.file_ext) AS file_part_path
+						CONCAT(video_part_file.ID_format,'/',SUBSTR(video_part_file.ID,1,4),'/',video_part_file.name,'.',video_part_file.file_ext) AS file_part_path
 						
 					FROM
 						`$App::510::db_name`.`a510_video` AS video
@@ -461,14 +461,14 @@ sub start
 					(
 						video_part_file.ID_entity = video_part.ID
 					)
-					LEFT JOIN `$App::510::db_name`.`a510_video_format` AS video_format ON
-					(
-						video_format.ID_entity = video_part_file.ID_format
-					)
-					LEFT JOIN `$App::510::db_name`.`a510_video_cat` AS video_cat ON
-					(
-						video_cat.ID = video_attrs.ID_category
-					)
+--					LEFT JOIN `$App::510::db_name`.`a510_video_format` AS video_format ON
+--					(
+--						video_format.ID_entity = video_part_file.ID_format
+--					)
+--					LEFT JOIN `$App::510::db_name`.`a510_video_cat` AS video_cat ON
+--					(
+--						video_cat.ID = video_attrs.ID_category
+--					)
 					WHERE
 						video.ID_entity=$vars{'ID_entity'} AND
 						video_part.part_id=1 AND
@@ -601,10 +601,10 @@ sub start
 						video_part.ID AS ID_part,
 						video_part_attrs.ID AS ID_part_attrs,
 						
-						LEFT(video_ent.datetime_rec_start, 18) AS datetime_rec_start,
+						LEFT(video.datetime_rec_start, 18) AS datetime_rec_start,
 						LEFT(video_attrs.datetime_create, 18) AS datetime_create,
-						LEFT(video_ent.datetime_rec_start,10) AS date_recorded,
-						LEFT(video_ent.datetime_rec_stop, 18) AS datetime_rec_stop,
+						LEFT(video.datetime_rec_start,10) AS date_recorded,
+						LEFT(video.datetime_rec_stop, 18) AS datetime_rec_stop,
 						
 						video_attrs.ID_category,
 						video_cat.name AS ID_category_name,
