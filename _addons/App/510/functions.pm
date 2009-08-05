@@ -2012,14 +2012,15 @@ sub video_part_visit
 	my $ID_part=shift;
 	
 	# check if this visit is in video_part
-	my $cache=$Ext::CacheMemcache::cache->get(
+	my $cache={};
+	$cache=$Ext::CacheMemcache::cache->get(
 		'namespace' => $App::510::db_name.".a510_video_part.visit",
 		'key' => $ID_part
-	);
+	) if $TOM::CACHE_memcached;
 	
-	if (!$cache)
+	if (!$cache->{'visits'})
 	{
-		$cache->{'visits'}=0;
+		$cache->{'visits'}=1;
 		$Ext::CacheMemcache::cache->set
 		(
 			'namespace' => $App::510::db_name.".a510_video_part.visit",
@@ -2030,22 +2031,25 @@ sub video_part_visit
 				'visits' => $cache->{'visits'}
 			},
 			'expiration' => "604800S"
-		);
+		) if $TOM::CACHE_memcached;
 		# update SQL
 		TOM::Database::SQL::execute(qq{
 			UPDATE `$App::510::db_name`.a510_video_part
 			SET visits=visits+1
 			WHERE ID=$ID_part
 			LIMIT 1
-		},'-quiet'=>1);
+		},'-quiet'=>1) unless $TOM::CACHE_memcached;
 		return 1;
 	}
+	
+	# return unless memcached available
+	return 1 unless $TOM::CACHE_memcached;
 	
 	$cache->{'visits'}++;
 	
 	my $old=time()-$cache->{'time'};
 	
-	if ($old > 3600)
+	if ($old > (3600*6))
 	{
 		# update database
 		TOM::Database::SQL::execute(qq{
@@ -2068,7 +2072,7 @@ sub video_part_visit
 			'visits' => $cache->{'visits'}
 		},
 		'expiration' => "604800S"
-	);
+	) if $TOM::CACHE_memcached;
 	
 	return 1;
 }

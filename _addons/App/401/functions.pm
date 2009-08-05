@@ -666,14 +666,11 @@ sub article_visit
 	
 	# check if this visit is in article
 	my $cache={};
-	if ($TOM::CACHE_memcached)
-	{
-		$cache=$Ext::CacheMemcache::cache->get(
-			'namespace' => $App::401::db_name.".a401_article_ent.visit",
-			'key' => $ID_entity
-		);
-	}
-	main::_log("article.ID_entity='$ID_entity' visits increased to ".($cache->{'visits'}+1));
+	$cache=$Ext::CacheMemcache::cache->get(
+		'namespace' => $App::401::db_name.".a401_article_ent.visit",
+		'key' => $ID_entity
+	) if $TOM::CACHE_memcached;
+	
 	if (!$cache->{'visits'})
 	{
 		$cache->{'visits'}=1;
@@ -694,7 +691,7 @@ sub article_visit
 			SET visits=visits+1
 			WHERE ID_entity=$ID_entity
 			LIMIT 1
-		},'quiet'=>1);
+		},'quiet'=>1) unless $TOM::CACHE_memcached;
 		return 1;
 	}
 	
@@ -705,12 +702,12 @@ sub article_visit
 	
 	my $old=time()-$cache->{'time'};
 	
-	if ($old > 3600)
+	if ($old > (3600*6))
 	{
 		# update database
 		TOM::Database::SQL::execute(qq{
 			UPDATE `$App::401::db_name`.a401_article_ent
-			SET visits=visits+$cache->{'visits'}-1
+			SET visits=visits+$cache->{'visits'}
 			WHERE ID_entity=$ID_entity
 			LIMIT 1
 		},'quiet'=>1);
@@ -728,7 +725,7 @@ sub article_visit
 			'visits' => $cache->{'visits'}
 		},
 		'expiration' => "604800S"
-	);
+	) if $TOM::CACHE_memcached;
 	
 	return 1;
 }
