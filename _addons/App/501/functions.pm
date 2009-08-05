@@ -29,7 +29,7 @@ L<App::501::_init|app/"501/_init.pm">
 
 =item *
 
-L<App::541::mimetypes|app/"541/mimetypes.pm">
+L<App::542::mimetypes|app/"542/mimetypes.pm">
 
 =item *
 
@@ -60,7 +60,7 @@ File::Type
 =cut
 
 use App::501::_init;
-use App::541::mimetypes;
+use App::542::mimetypes;
 use TOM::Security::form;
 use Image::Magick;
 use File::Path;
@@ -1214,7 +1214,7 @@ sub image_file_add
 	# file mimetype
 	my $ft = File::Type->new();
 	my $type_from_file = $ft->checktype_filename($env{'file'});
-	my $file_ext = $App::541::mimetypes::mime{$type_from_file};
+	my $file_ext = $App::542::mimetypes::mime{$type_from_file};
 	main::_log("file mimetype='$type_from_file'");
 	
 	# optional file ext
