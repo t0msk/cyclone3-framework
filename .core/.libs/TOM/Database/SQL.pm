@@ -20,6 +20,7 @@ use TOM::Database::SQL::cache;
 
 our $debug=0;
 our $logcachequery=$TOM::Database::SQL::logcachequery || 0;
+our $lognonselectquery=$TOM::Database::SQL::lognonselectquery || 1;
 our $logquery=$TOM::Database::SQL::logquery || 0;
 our $logquery_long=$TOM::Database::SQL::logquery_long || 2;
 our $query_long_autocache=$TOM::Database::SQL::query_long_autocache || 0.01; # less availability than Memcached
@@ -124,7 +125,7 @@ sub get_slave_status
 	my $db0=$main::DB{$db_h}->Query("SHOW SLAVE STATUS");
 	my %db0_line=$db0->fetchhash();
 	
-	if ($db0_line{'Seconds_Behind_Master'}>60)
+	if ($db0_line{'Seconds_Behind_Master'}>120)
 	{
 		main::_log("SQL: Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",1);
 		main::_log("{$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err");
@@ -170,6 +171,7 @@ sub execute
 	my $t=track TOM::Debug(__PACKAGE__."::execute()",'namespace'=>"SQL",'quiet' => $env{'quiet'},'timer'=>1);
 	
 	# when I'm sometimes really wrong ;)
+	my $typeselect=0; # select query?
 	$env{'slave'}=$env{'slave'} || $env{'-slave'};
 	$env{'cache'}=$env{'cache'} || $env{'-cache'};
 	$env{'cache_auto'}=$env{'cache_auto'} || $env{'-cache_auto'};
@@ -189,14 +191,16 @@ sub execute
 	$env{'db_h'}='main' unless $env{'db_h'};
 	$env{'db_h_orig'}=$env{'db_h'};
 	
-	if ($env{'slave'} && $TOM::DB{$env{'db_h'}}{'slaves'} && $SQL=~/^(\(\s+SELECT|SELECT)/)
+	$typeselect=1 if $SQL=~/^(\(\s+SELECT|SELECT)/;
+	
+	if ($env{'slave'} && $TOM::DB{$env{'db_h'}}{'slaves'} && $typeselect)
 	{
 		my $slave=int(rand($TOM::DB{$env{'db_h'}}{'slaves'}))+1;
 		if ($TOM::DB{$env{'db_h'}.':'.$slave})
 		{
 			# check quality of this slave
 			my %slave_quality=get_slave_status($env{'db_h'}.':'.$slave);
-			if ($slave_quality{'Seconds_Behind_Master'}>300) # 5min
+			if ($slave_quality{'Seconds_Behind_Master'}>600) # 6min
 			{
 				main::_log("slave '$slave' is outdated (behind master:$slave_quality{'Seconds_Behind_Master'}s), using master",1);
 			}
@@ -229,9 +233,14 @@ sub execute
 	my $cache_key=$TOM::DB{$env{'db_h_orig'}}{'host'};
 	$cache_key.='::'.$TOM::DB{$env{'db_h_orig'}}{'name'}.':'.$TOM::DB{$env{'db_h_orig'}}{'uri'}
 		if $TOM::DB{$env{'db_h_orig'}}{'type'} eq "DBI";
-	$cache_key.='::'.$env{'db_name'}.'::'.$SQL_;
+#	$cache_key.='::'.$env{'db_name'}.'::'.$SQL_;
+	$cache_key.='::'.$SQL_;
 	
-	if (($env{'cache'} || $env{'cache_auto'}) && $TOM::CACHE && $TOM::CACHE_memcached && $SQL_=~/^SELECT/ && $main::FORM{'_rc'}!=-2)
+#	main::_log("cache_key='$cache_key'") if $env{'log'};
+	
+	$typeselect=1 if $SQL_=~/^(\(\s+SELECT|SELECT)/;
+	
+	if (($env{'cache'} || $env{'cache_auto'}) && $TOM::CACHE && $TOM::CACHE_memcached && $typeselect && $main::FORM{'_rc'}!=-2)
 	{
 		main::_log("SQL: try to read from cache") if $env{'log'};
 		my $cache=new TOM::Database::SQL::cache(
@@ -327,12 +336,12 @@ sub execute
 	
 	$t->close();
 	
-	if ($env{'cache_auto'} && $SQL_=~/^SELECT/ && $t->{'time'}{'req'}{'duration'} >= $query_long_autocache)
+	if ($env{'cache_auto'} && $typeselect && $t->{'time'}{'req'}{'duration'} >= $query_long_autocache)
 	{
 		main::_log("SQL: cache_auto used to cache, because query long") if $env{'log'};
 		$env{'cache'} = $env{'cache_auto'};
 	}
-	if ($env{'cache'} && $TOM::CACHE && $TOM::CACHE_memcached && $SQL_=~/^SELECT/)
+	if ($env{'cache'} && $TOM::CACHE && $TOM::CACHE_memcached && $typeselect)
 	{
 		main::_log("SQL: saving to cache") if $env{'log'};
 		$output{'sth'}=new TOM::Database::SQL::cache(
@@ -353,7 +362,10 @@ sub execute
 		);
 	}
 	
-	main::_log("{$env{'db_h'}:exec:".($t->{'time'}{'req'}{'duration'})."s} '$SQL_' from '$filename:$line'",3,"sql") if $logquery;
+	if ($logquery || (!$typeselect && $lognonselectquery))
+	{
+		main::_log("{$env{'db_h'}:exec:".($t->{'time'}{'req'}{'duration'})."s} '$SQL_' from '$filename:$line'",3,"sql");
+	}
 	
 	if ($logquery_long && ($t->{'time'}{'req'}{'duration'} > $env{'-long'}))
 	{
