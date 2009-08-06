@@ -231,8 +231,8 @@ sub compare_create_table
 			}
 		}
 		
-		if (not $tbl=~/_attrs(_arch|)$/)
-		{
+#		if (not $tbl=~/_attrs(_arch|)$/)
+#		{
 			foreach my $key(keys %keys1h)
 			{
 				if (!$keys0h{$key})
@@ -244,7 +244,7 @@ sub compare_create_table
 					next;
 				}
 			}
-		}
+#		}
 		
 		$t_keys->close();
 		
