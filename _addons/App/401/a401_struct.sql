@@ -90,11 +90,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   KEY `SEL_0` (`status`,`lng`,`datetime_start`),
   KEY `SEL_1` (`datetime_start`,`datetime_stop`),
-  KEY `ID_entity` (`ID_entity`),
-  KEY `ID_category` (`ID_category`),
+  KEY `SEL_2` (`ID_category`,`status`,`lng`),
   KEY `name` (`name`),
   KEY `name_url` (`name_url`),
-  KEY `datetime_start` (`datetime_start`),
   KEY `datetime_stop` (`datetime_stop`),
   KEY `priority_A` (`priority_A`),
   KEY `priority_B` (`priority_B`),
@@ -102,8 +100,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   KEY `priority_D` (`priority_D`),
   KEY `priority_E` (`priority_E`),
   KEY `priority_F` (`priority_F`),
-  KEY `lng` (`lng`),
-  KEY `status` (`status`)
+  KEY `lng` (`lng`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
