@@ -197,7 +197,7 @@ sub execute
 	$env{'article_attrs.status'}='Y' unless $env{'article_attrs.status'};
 		my $status_sql=join "','", split('',$env{'article_attrs.status'});
 	
-	$env{'article_content.mimetype'}='text/html' unless $env{'article_content.mimetype'};
+#	$env{'article_content.mimetype'}='text/html' unless $env{'article_content.mimetype'};
 	
 	$env{'world_status'}='Y' unless $env{'world_status'};
 	
@@ -337,8 +337,8 @@ sub execute
 				'Y', 'U'
 			) AS status_all
 			
-		FROM `$env{'db_name'}`.a401_article AS article
-		LEFT JOIN `$env{'db_name'}`.a401_article_attrs AS article_attrs ON
+		FROM `$env{'db_name'}`.a401_article_attrs AS article_attrs
+		LEFT JOIN `$env{'db_name'}`.a401_article AS article ON
 		(
 			article_attrs.ID_entity = article.ID
 		)
@@ -367,8 +367,7 @@ sub execute
 			article_attrs.status IN ('$status_sql') AND
 			article_attrs.lng='$env{'article_content.lng'}' AND
 			article_attrs.datetime_start <= NOW() AND
-			(article_attrs.datetime_stop IS NULL OR article_attrs.datetime_stop >= NOW()) AND
-			article_content.mimetype='$env{'article_content.mimetype'}'
+			(article_attrs.datetime_stop IS NULL OR article_attrs.datetime_stop >= NOW())
 			$sql_where
 			
 		ORDER BY
