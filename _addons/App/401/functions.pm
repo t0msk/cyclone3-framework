@@ -37,6 +37,7 @@ L<TOM::Security::form|lib/"TOM/Security/form.pm">
 
 use App::401::_init;
 use TOM::Security::form;
+use Time::HiRes qw(usleep);
 
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
