@@ -670,8 +670,16 @@ sub article_visit
 		'namespace' => $App::401::db_name.".a401_article_ent.visit",
 		'key' => $ID_entity
 	) if $TOM::CACHE_memcached;
+	if (!$cache->{'time'} && $TOM::CACHE_memcached)# try again when memcached sends empty key (bug)
+	{
+		usleep(3000); # 3 miliseconds
+		$cache=$Ext::CacheMemcache::cache->get(
+			'namespace' => $App::401::db_name.".a401_article_ent.visit",
+			'key' => $ID_entity
+		);
+	}
 	
-	if (!$cache->{'visits'})
+	if (!$cache->{'time'})
 	{
 		$cache->{'visits'}=1;
 		$Ext::CacheMemcache::cache->set
@@ -683,7 +691,7 @@ sub article_visit
 				'time' => time(),
 				'visits' => $cache->{'visits'}
 			},
-			'expiration' => "604800S"
+			'expiration' => "24H"
 		) if $TOM::CACHE_memcached;
 		# update SQL
 		TOM::Database::SQL::execute(qq{
@@ -702,7 +710,7 @@ sub article_visit
 	
 	my $old=time()-$cache->{'time'};
 	
-	if ($old > (3600*6))
+	if ($old > (60*10))
 	{
 		# update database
 		TOM::Database::SQL::execute(qq{
@@ -724,7 +732,7 @@ sub article_visit
 			'time' => $cache->{'time'},
 			'visits' => $cache->{'visits'}
 		},
-		'expiration' => "604800S"
+		'expiration' => "24H"
 	) if $TOM::CACHE_memcached;
 	
 	return 1;
