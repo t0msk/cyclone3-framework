@@ -67,7 +67,8 @@ while ($main::CGI=new CGI::Fast())
 				$App::542::db_name.a542_file_view
 			WHERE
 				ID_entity_file='$FORM{'ID'}' AND
-				hash_secure='$FORM{'hash'}'
+				hash_secure='$FORM{'hash'}' AND
+				status_all='Y'
 			LIMIT 1;
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'-slave'=>1);
@@ -93,7 +94,7 @@ while ($main::CGI=new CGI::Fast())
 				)
 			};
 			
-			TOM::Database::SQL::execute($sql,'db_h'=>'stats');
+			TOM::Database::SQL::execute($sql,'db_h'=>'stats','quiet'=>1);
 			
 		}
 		else
