@@ -68,7 +68,7 @@ use Digest::SHA1  qw(sha1 sha1_hex sha1_base64);
 use File::Type;
 use Movie::Info;
 use File::Which qw(where);
-
+use Time::HiRes qw(usleep);
 
 our $ffmpeg_exec = (where('ffmpeg'))[0];main::_log("ffmpeg in '$ffmpeg_exec'");
 our $mencoder_exec = (where('mencoder'))[0];main::_log("mencoder in '$mencoder_exec'");
@@ -1724,8 +1724,6 @@ sub video_part_file_add
 	}
 	
 	
-	
-	
 	# Check if video_part_file for this format exists
 	my $sql=qq{
 		SELECT
@@ -1769,7 +1767,7 @@ sub video_part_file_add
 					'video_bitrate' => "'$video{'bitrate'}'",
 					'audio_codec' => "'$video{'audio_codec'}'",
 					'audio_bitrate' => "'$video{'audio_bitrate'}'",
-					'length' => "'".int($video{'length'})."'",
+					'length' => "SEC_TO_TIME(".int($video{'length'}).")",
 					'file_size' => "'$file_size'",
 					'from_parent' => "'$env{'from_parent'}'",
 					'regen' => "'N'",
@@ -1806,7 +1804,7 @@ sub video_part_file_add
 					'video_bitrate' => "'$video{'bitrate'}'",
 					'audio_codec' => "'$video{'audio_codec'}'",
 					'audio_bitrate' => "'$video{'audio_bitrate'}'",
-					'length' => "'".int($video{'length'})."'",
+					'length' => "SEC_TO_TIME(".int($video{'length'}).")",
 					'file_size' => "'$file_size'",
 					'file_checksum' => "'$checksum_method:$checksum'",
 					'file_ext' => "'$file_ext'",
@@ -1856,7 +1854,7 @@ sub video_part_file_add
 				'video_bitrate' => "'$video{'bitrate'}'",
 				'audio_codec' => "'$video{'audio_codec'}'",
 				'audio_bitrate' => "'$video{'audio_bitrate'}'",
-				'length' => "'".int($video{'length'})."'",
+				'length' => "SEC_TO_TIME(".int($video{'length'}).")",
 				'file_size' => "'$file_size'",
 				'file_checksum' => "'$checksum_method:$checksum'",
 				'file_ext' => "'$file_ext'",
@@ -2045,8 +2043,16 @@ sub video_part_visit
 		'namespace' => $App::510::db_name.".a510_video_part.visit",
 		'key' => $ID_part
 	) if $TOM::CACHE_memcached;
+	if (!$cache->{'time'} && $TOM::CACHE_memcached)# try again when memcached sends empty key (bug)
+	{
+		usleep(3000); # 3 miliseconds
+		$cache=$Ext::CacheMemcache::cache->get(
+			'namespace' => $App::510::db_name.".a510_video_part.visit",
+			'key' => $ID_part
+		)
+	}
 	
-	if (!$cache->{'visits'})
+	if (!$cache->{'time'})
 	{
 		$cache->{'visits'}=1;
 		$Ext::CacheMemcache::cache->set
@@ -2058,7 +2064,7 @@ sub video_part_visit
 				'time' => time(),
 				'visits' => $cache->{'visits'}
 			},
-			'expiration' => "604800S"
+			'expiration' => "24H"
 		) if $TOM::CACHE_memcached;
 		# update SQL
 		TOM::Database::SQL::execute(qq{
@@ -2066,7 +2072,7 @@ sub video_part_visit
 			SET visits=visits+1
 			WHERE ID=$ID_part
 			LIMIT 1
-		},'-quiet'=>1) unless $TOM::CACHE_memcached;
+		},'quiet'=>1) unless $TOM::CACHE_memcached;
 		return 1;
 	}
 	
@@ -2077,7 +2083,7 @@ sub video_part_visit
 	
 	my $old=time()-$cache->{'time'};
 	
-	if ($old > (3600*6))
+	if ($old > (60*10))
 	{
 		# update database
 		TOM::Database::SQL::execute(qq{
@@ -2085,7 +2091,7 @@ sub video_part_visit
 			SET visits=visits+$cache->{'visits'}
 			WHERE ID=$ID_part
 			LIMIT 1
-		},'-quiet'=>1);
+		},'quiet'=>1);
 		$cache->{'visits'}=0;
 		$cache->{'time'}=time();
 	}
@@ -2099,7 +2105,7 @@ sub video_part_visit
 			'time' => $cache->{'time'},
 			'visits' => $cache->{'visits'}
 		},
-		'expiration' => "604800S"
+		'expiration' => "24H"
 	) if $TOM::CACHE_memcached;
 	
 	return 1;
