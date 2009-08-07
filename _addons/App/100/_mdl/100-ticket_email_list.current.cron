@@ -25,7 +25,7 @@ sub execute
 	my $time_durration=65; # minutes
 	my $time_from=$main::time_current-($time_durration*60);
 	
-	my $number = 100;
+	my $number = 10;
 	
 	my $sql = qq{
 		SELECT
