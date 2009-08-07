@@ -138,6 +138,7 @@ sub execute
 							$file_data.=$line;
 							if ($file_data=~s/<request>(.*?)<\/request>//s)
 							{
+#								main::_log("  request");
 								my $data=$1;
 								my %hash;
 								while ($data=~s|<(.*?)>(.*?)</\1>||)
@@ -454,6 +455,88 @@ sub execute
 			}
 			
 		}
+		
+		
+		if ($items)
+		{
+			$sql=~s|^,||;
+			main::_log(" inserting $itemslite rows ($DELAYED LOCK=$LOCK)");
+			my %sth0=TOM::Database::SQL::execute(qq{
+				$INSERT $DELAYED INTO TOM.a110_weblog_rqs
+				(
+					page_code,
+					page_code_referer,
+					HTTP_unique_id,
+					reqtime,
+					reqdatetime,
+					host,
+					domain,
+					domain_sub,
+					IP,
+					IDhash,
+					IDsession,
+					logged,
+					USRM_flag,
+					query_string,
+					query_TID,
+					query_URL,
+					referer,
+					user_agent,
+					load_proc,
+					load_req,
+					result,
+					lng,
+					reqtype,
+					referer_SE,
+					user_agent_name,
+					active
+				)
+				VALUES
+			}.$sql,'log'=>0,'db_h'=>'stats');
+			if ($sth0{'err'})
+			{die "can't insert $sql\n";}
+			$items=0;
+		}
+		if ($itemslite)
+		{
+			$sqllite=~s|^,||;
+			main::_log(" inserting $itemslite literows ($DELAYED LOCK=$LOCK)");
+			my %sth0=TOM::Database::SQL::execute(qq{
+				$INSERT $DELAYED INTO TOM.a110_weblog_rqslite
+				(
+					page_code,
+					page_code_referer,
+					reqdatetime,
+					host,
+					domain,
+					domain_sub,
+					IP,
+					IDhash,
+					IDsession,
+					logged,
+					USRM_flag,
+					query_string,
+					query_TID,
+					query_URL,
+					referer,
+					user_agent,
+					load_proc,
+					load_req,
+					result,
+					lng,
+					reqtype,
+					referer_SE,
+					user_agent_name,
+					active
+				)
+				VALUES
+			}.$sqllite,'log'=>0,'db_h'=>'stats');
+			if ($sth0{'err'}){die "can't insert $sth0{'err'}\n";}
+			$itemslite=0;
+			$sqllite='';
+		}
+		
+		
 	}
 	
 	main::_log("unlocking tables") if $LOCK;
