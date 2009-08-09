@@ -26,6 +26,11 @@ sub execute
 	my $lock=new TOM::lock("a150_sql.process")
 	|| return 1;
 	
+	TOM::Database::SQL::execute(qq{
+		DELETE FROM TOM.a150_sql_log
+		WHERE datetime_executed<=DATE_SUB(NOW(), INTERVAL 7 DAY)
+	});
+	
 	my $sql=qq{
 		SELECT
 			*,
