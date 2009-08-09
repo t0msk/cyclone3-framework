@@ -617,6 +617,9 @@ sub video_part_file_process
 				if ($env{'ab'}){push @encoder_env, '-ab '.$env{'ab'};}
 				if ($env{'ar'}){push @encoder_env, '-ar '.$env{'ar'};}
 				if ($env{'ac'}){push @encoder_env, '-ac '.$env{'ac'};}
+				if ($env{'fs'}){push @encoder_env, '-fs '.$env{'fs'};}
+				if ($env{'ss'}){push @encoder_env, '-ss '.$env{'ss'};}
+				if ($env{'t'}){push @encoder_env, '-t '.$env{'t'};}
 				
 				# suggest extension
 				$ext='mp4' if $env{'f'} eq "mp4";
@@ -942,13 +945,7 @@ sub video_add
 	}
 	
 	# update if necessary
-	if ($video{'ID'} &&
-	(
-		# datetime_rec_start
-		($env{'video.datetime_rec_start'} && ($env{'video.datetime_rec_start'} ne $video{'datetime_rec_start'})) ||
-		# datetime_rec_stop
-		(exists $env{'video.datetime_rec_stop'} && ($env{'video.datetime_rec_stop'} ne $video{'datetime_rec_stop'}))
-	))
+	if ($video{'ID'})
 	{
 		my %columns;
 		
@@ -966,16 +963,18 @@ sub video_add
 			{$columns{'datetime_rec_stop'}="'".$env{'video.datetime_rec_stop'}."'";}
 		}
 		
-		App::020::SQL::functions::update(
-			'ID' => $video{'ID'},
-			'db_h' => "main",
-			'db_name' => $App::510::db_name,
-			'tb_name' => "a510_video",
-			'columns' => {%columns},
-		'-journalize' => 1
-		);
-		
-		$content_updated=1;
+		if (keys %columns)
+		{
+			App::020::SQL::functions::update(
+				'ID' => $video{'ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_video",
+				'columns' => {%columns},
+				'-journalize' => 1
+			);
+			$content_updated=1;
+		}
 	}
 	
 	
@@ -1073,50 +1072,28 @@ sub video_add
 	}
 	
 	# update if necessary
-	if ($env{'video_ent.ID'} &&
-	(
-		# ID_author
-		($env{'video_ent.posix_author'} && ($env{'video_ent.posix_author'} ne $video_ent{'posix_author'})) ||
-		# posix_owner
-		($env{'video_ent.posix_owner'} && ($env{'video_ent.posix_owner'} ne $video_ent{'posix_owner'})) ||
-#		# datetime_rec_start
-#		($env{'video_ent.datetime_rec_start'} && ($env{'video_ent.datetime_rec_start'} ne $video_ent{'datetime_rec_start'})) ||
-#		# datetime_rec_stop
-#		(exists $env{'video_ent.datetime_rec_stop'} && ($env{'video_ent.datetime_rec_stop'} ne $video_ent{'datetime_rec_stop'})) ||
-		# keywords
-		(exists $env{'video_ent.keywords'} && ($env{'video_ent.keywords'} ne $video_ent{'keywords'}))
-	))
+	if ($env{'video_ent.ID'})
 	{
 		my %columns;
 		$columns{'posix_author'}="'".$env{'video_ent.posix_author'}."'"
 			if ($env{'video_ent.posix_author'} && ($env{'video_ent.posix_author'} ne $video_ent{'posix_author'}));
 		$columns{'posix_owner'}="'".TOM::Security::form::sql_escape($env{'video_ent.posix_owner'})."'"
 			if ($env{'video_ent.posix_owner'} && ($env{'video_ent.posix_owner'} ne $video_ent{'posix_owner'}));
-#		# datetime_rec_start
-#		$columns{'datetime_rec_start'}="'".$env{'video_ent.datetime_rec_start'}."'"
-#			if ($env{'video_ent.datetime_rec_start'} && ($env{'video_ent.datetime_rec_start'} ne $video_ent{'datetime_rec_start'}));
-#		$columns{'datetime_rec_start'}=$env{'video_ent.datetime_rec_start'}
-#			if ($env{'video_ent.datetime_rec_start'}=~/^FROM/ && ($env{'video_ent.datetime_rec_start'} ne $video_ent{'datetime_rec_start'}));
-#		# datetime_rec_stop
-#		if (exists $env{'video_ent.datetime_rec_stop'} && ($env{'video_ent.datetime_rec_stop'} ne $video_ent{'datetime_rec_stop'}))
-#		{
-#			if (!$env{'video_ent.datetime_rec_stop'})
-#			{$columns{'datetime_rec_stop'}="NULL";}
-#			else
-#			{$columns{'datetime_rec_stop'}="'".$env{'video_ent.datetime_rec_stop'}."'";}
-#		}
 		$columns{'keywords'}="'".TOM::Security::form::sql_escape($env{'video_ent.keywords'})."'"
 			if (exists $env{'video_ent.keywords'} && ($env{'video_ent.keywords'} ne $video_ent{'keywords'}));
 		
-		App::020::SQL::functions::update(
-			'ID' => $env{'video_ent.ID'},
-			'db_h' => "main",
-			'db_name' => $App::510::db_name,
-			'tb_name' => "a510_video_ent",
-			'columns' => {%columns},
-			'-journalize' => 1
-		);
-		$content_updated=1;
+		if (keys %columns)
+		{
+			App::020::SQL::functions::update(
+				'ID' => $env{'video_ent.ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_video_ent",
+				'columns' => {%columns},
+				'-journalize' => 1
+			);
+			$content_updated=1;
+		}
 	}
 	
 	
@@ -1145,29 +1122,31 @@ sub video_add
 	};
 	
 	# MUST be rewrited - update only if necessary
-	if ($env{'video_attrs.ID'} &&
-	(
-		$env{'video_attrs.name'} ||
-		exists $env{'video_attrs.description'} ||
-		$env{'video_attrs.ID_category'}
-	))
+	if ($env{'video_attrs.ID'})
 	{
 		my %columns;
 		
-		$columns{'ID_category'}=$env{'video_attrs.ID_category'} if $env{'video_attrs.ID_category'};
-		$columns{'name'}="'".TOM::Security::form::sql_escape($env{'video_attrs.name'})."'" if $env{'video_attrs.name'};
-		$columns{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'video_attrs.name'})."'" if $env{'video_attrs.name'};
-		$columns{'description'}="'".$env{'video_attrs.description'}."'" if exists $env{'video_attrs.description'};
+		$columns{'ID_category'}=$env{'video_attrs.ID_category'}
+			if ($env{'video_attrs.ID_category'} && ($env{'video_attrs.ID_category'} ne $video_attrs{'ID_category'}));
+		$columns{'name'}="'".TOM::Security::form::sql_escape($env{'video_attrs.name'})."'"
+			if ($env{'video_attrs.name'} && ($env{'video_attrs.name'} ne $video_attrs{'name'}));
+		$columns{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'video_attrs.name'})."'"
+			if ($env{'video_attrs.name'} && ($env{'video_attrs.name'} ne $video_attrs{'name'}));
+		$columns{'description'}="'".TOM::Security::form::sql_escape($env{'video_attrs.description'})."'"
+			if (exists $env{'video_attrs.description'} && ($env{'video_attrs.description'} ne $video_attrs{'description'}));
 		
-		App::020::SQL::functions::update(
-			'ID' => $env{'video_attrs.ID'},
-			'db_h' => "main",
-			'db_name' => $App::510::db_name,
-			'tb_name' => "a510_video_attrs",
-			'columns' => {%columns},
-			'-journalize' => 1
-		);
-		$content_updated=1;
+		if (keys %columns)
+		{
+			App::020::SQL::functions::update(
+				'ID' => $env{'video_attrs.ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_video_attrs",
+				'columns' => {%columns},
+				'-journalize' => 1
+			);
+			$content_updated=1;
+		}
 	}
 	
 	main::_log("video.ID='$env{'video.ID'}' added/updated");
@@ -1329,32 +1308,33 @@ sub video_part_add
 	}
 	
 	# update if necessary
-	if ($env{'video_part.ID'} &&
-	(
-		# keywords
-		(exists $env{'video_part.keywords'} && ($env{'video_part.keywords'} ne $video_part{'keywords'}))
-	))
+	if ($env{'video_part.ID'})
 	{
 		my %columns;
 		$columns{'keywords'}="'".$env{'video_part.keywords'}."'"
 			if (exists $env{'video_part.keywords'} && ($env{'video_part.keywords'} ne $video_part{'keywords'}));
-		App::020::SQL::functions::update(
-			'ID' => $env{'video_part.ID'},
-			'db_h' => "main",
-			'db_name' => $App::510::db_name,
-			'tb_name' => "a510_video_part",
-			'columns' => {%columns},
-			'-journalize' => 1
-		);
-		$content_updated=1;
+		
+		if (keys %columns)
+		{
+			App::020::SQL::functions::update(
+				'ID' => $env{'video_part.ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_video_part",
+				'columns' => {%columns},
+				'-journalize' => 1
+			);
+			$content_updated=1;
+		}
 	}
 	
+	my %video_part_attrs;
 	if (!$env{'video_part_attrs.ID'})
 	{
 		main::_log("finding video_part_attrs.ID");
 		my $sql=qq{
 			SELECT
-				ID
+				*
 			FROM
 				`$App::510::db_name`.`a510_video_part_attrs`
 			WHERE
@@ -1363,8 +1343,8 @@ sub video_part_add
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-		my %db0_line=$sth0{'sth'}->fetchhash();
-		$env{'video_part_attrs.ID'}=$db0_line{'ID'};
+		%video_part_attrs=$sth0{'sth'}->fetchhash();
+		$env{'video_part_attrs.ID'}=$video_part_attrs{'ID'};
 		main::_log("video_part_attrs.ID=$env{'video_part_attrs.ID'}");
 	}
 	
@@ -1414,27 +1394,29 @@ sub video_part_add
 		}
 	}
 	
-	if ($env{'video_part_attrs.ID'} &&
-	(
-		$env{'video_part_attrs.name'} ||
-		exists $env{'video_part_attrs.description'}
-	))
+	if ($env{'video_part_attrs.ID'})
 	{
 		my %columns;
 		
-		$columns{'name'}="'".TOM::Security::form::sql_escape($env{'video_part_attrs.name'})."'" if $env{'video_part_attrs.name'};
-		$columns{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'video_part_attrs.name'})."'" if $env{'video_part_attrs.name'};
-		$columns{'description'}="'".$env{'video_part_attrs.description'}."'" if exists $env{'video_part_attrs.description'};
+		$columns{'name'}="'".TOM::Security::form::sql_escape($env{'video_part_attrs.name'})."'"
+			if ($env{'video_part_attrs.name'} && ($env{'video_part_attrs.name'} ne $video_part_attrs{'name'}));
+		$columns{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'video_part_attrs.name'})."'"
+			if ($env{'video_part_attrs.name'} && ($env{'video_part_attrs.name'} ne $video_part_attrs{'name'}));
+		$columns{'description'}="'".TOM::Security::form::sql_escape($env{'video_part_attrs.description'})."'"
+			if (exists $env{'video_part_attrs.description'} && ($env{'video_part_attrs.description'} ne $video_part_attrs{'description'}));
 		
-		App::020::SQL::functions::update(
-			'ID' => $env{'video_part_attrs.ID'},
-			'db_h' => "main",
-			'db_name' => $App::510::db_name,
-			'tb_name' => "a510_video_part_attrs",
-			'columns' => {%columns},
-			'-journalize' => 1
-		);
-		$content_updated=1;
+		if (keys %columns)
+		{
+			App::020::SQL::functions::update(
+				'ID' => $env{'video_part_attrs.ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_video_part_attrs",
+				'columns' => {%columns},
+				'-journalize' => 1
+			);
+			$content_updated=1;
+		}
 	}
 	
 	main::_log("video_part.ID='$env{'video_part.ID'}' added/updated");
