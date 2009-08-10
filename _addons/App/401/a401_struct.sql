@@ -32,6 +32,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `ID_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `sources` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `visits` int(10) unsigned NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
@@ -52,6 +53,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `ID_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `sources` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `visits` int(10) unsigned NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
@@ -337,6 +339,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 		article_ent.posix_owner, -- first editor
 		article_content.ID_editor AS posix_editor, -- last editor
 		article_ent.ID_author AS posix_author,
+		article_ent.sources,
 		
 		article_content.datetime_create,
 		DATE_FORMAT(article_attrs.datetime_start, '%Y-%m-%d %H:%i') AS datetime_start,
