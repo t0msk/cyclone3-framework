@@ -140,6 +140,8 @@ sub start
 			$attr->{'width'}='425' unless $attr->{'width'};
 			$attr->{'height'}='355' unless $attr->{'height'};
 			
+			$attr->{'src'}='http://img.youtube.com/vi/'.$vars{'ID'}.'/0.jpg';
+			
 			# override default tag representation
 			$out_full=
 				$self->{'entity'}{'a030_youtube.'.$out_cnt}
@@ -417,6 +419,8 @@ sub start
 				if ($db0_line{'ID_entity_video'})
 				{
 					$attr->{'src'}='';
+					$attr->{'width'}=$db0_line{'video_width'} unless $attr->{'width'};
+					$attr->{'height'}=$db0_line{'video_height'} unless $attr->{'height'};
 					$attr->{'video'}=$tom::H_a510.'/video/part/file/'.$db0_line{'file_part_path'};
 					
 					if (!$attr->{'alt'})
@@ -461,7 +465,7 @@ sub start
 						my $img_ID_format=
 							$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
 							|| $self->{'config'}->{'a501_image_file.ID_format'}
-							|| $App::501::image_format_thumbnail_ID;
+							|| $App::501::image_format_fullsize_ID;
 						
 						my $sql=qq{
 							SELECT
@@ -543,6 +547,7 @@ sub start
 					$attr->{'src'}='';
 					$attr->{'width'}=$db0_line{'video_width'} unless $attr->{'width'};
 					$attr->{'height'}=$db0_line{'video_height'} unless $attr->{'height'};
+					$attr->{'video'}=$tom::H_a510.'/video/part/file/'.$db0_line{'file_part_path'};
 					if (!$attr->{'alt'})
 					{
 						$attr->{'alt'}=$db0_line{'part_name'} || $db0_line{'name'};
@@ -583,7 +588,7 @@ sub start
 						my $img_ID_format=
 							$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
 							|| $self->{'config'}->{'a501_image_file.ID_format'}
-							|| $App::501::image_format_thumbnail_ID;
+							|| $App::501::image_format_fullsize_ID;
 							
 						main::_log("find a501_image ID_entity='$relation->{'r_ID_entity'}' ID_format='$img_ID_format'") if $debug;
 						
