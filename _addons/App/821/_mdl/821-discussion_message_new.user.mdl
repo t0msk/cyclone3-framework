@@ -79,7 +79,8 @@ sub execute
 		my $sql=qq{
 			SELECT
 				ID,
-				ID_entity
+				ID_entity,
+				name
 			FROM
 				`$App::821::db_name`.a821_discussion
 			WHERE
@@ -90,6 +91,7 @@ sub execute
 		my %sth0=TOM::Database::SQL::execute($sql,'slave'=>1,'log'=>1,'-cache'=>3600);
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		$env{'discussion.ID'} = $db0_line{'ID'};
+		$env{'discussion.name'} = $db0_line{'name'};
 	}
 	
 	if (!$env{'discussion.ID'})
@@ -137,7 +139,9 @@ sub execute
 			$columns{'posix_owner'}="'".$main::USRM{'ID_user'}."'";
 		}
 		
-		if ($main::USRM{'logged'} ne "Y")
+		#
+#		if ($main::USRM{'logged'} ne "Y" && !$user)
+		if ($user)
 		{
 			$columns{'owner_anonymous_name'}="'".($user)."'";
 		}
@@ -224,6 +228,76 @@ sub execute
 				'ID_user' => $main::USRM{'ID_user'},
 				'karma' => $karma
 			);
+		}
+		
+		if ($env{'notify_email'})
+		{
+			
+			my $sql=qq{
+				SELECT
+					ID,
+					ID_entity,
+					name
+				FROM
+					`$App::821::db_name`.a821_discussion
+				WHERE
+					ID=$env{'discussion.ID'}
+				LIMIT 1
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'slave'=>1,'log'=>1,'-cache'=>3600);
+			my %db0_line=$sth0{'sth'}->fetchhash();
+			
+			use TOM::Utils::datetime;
+			use MIME::Entity;
+			my $date = TOM::Utils::datetime::mail_current();
+			my $tpl=new TOM::Template(
+				'level' => "auto",
+				'name' => "email-stats",
+				'content-type' => "xhtml"
+			);
+			my $email_body=$tpl->{'entity'}{'email.xhtml'};
+			$email_body=~s|<%main-title%>|New post in discussion|g;
+			$email_body=~s|<%main-desc%>|New post in discussion #$env{'discussion.ID'} named '$db0_line{'name'}'|g;
+			my $email_content=qq{
+Post named: $name<br/>
+Post body:<br/>
+$body<br/>
+			};
+			$email_body=~s|<#email.content#>|$email_content|g;
+			$email_body=~s|<#.*?#>||g;
+			$email_body=~s|<%.*?%>||g;
+			
+			my $msg = MIME::Entity->build
+			(
+				'Type'    => "multipart/related",
+				'List-Id' => "Cyclone3",
+				'Date'    => $date,
+				'From'    => "$tom::H <info\@$tom::H>",
+				'To'      => TOM::Net::email::convert_TO($TOM::contact{'CONT'}),
+				'Subject' => "New post in discussion"
+			);
+			
+			$msg->attach
+			(
+				'Data' => $email_body,
+				'Type' => "text/html;charset=\"UTF-8\"",
+				'Encoding' => "8bit",
+			);
+			
+			$msg->attach
+			(
+				'Path'       => $tpl->{'file'}{'cyclone3-150x44.png'}{'dst'},
+				'Type'       => "image/gif",
+				'Content-ID' => "<logo\@cyclone3.org>",
+				'Encoding'   => "base64"
+			);
+			
+			TOM::Net::email::send
+			(
+				to => $TOM::contact{'CONT'},
+				body => $msg->as_string()
+			);
+		
 		}
 		
 		$XSGN{'TMP'}=$XSGN{'commited'};
