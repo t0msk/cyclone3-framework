@@ -77,8 +77,11 @@ sub _detect_db_name
 	if (not defined $prefix->VERSION)
 	{
 		eval "use $prefix".'::_init;';
-		main::_log("err:$@",1) if $@;
-		return undef;
+		if ($@)
+		{
+			main::_log("err:$@",1);
+			return undef;
+		}
 	}
 	# read db_name from this library
 	if ($db_names{$prefix})
@@ -93,6 +96,7 @@ sub _detect_db_name
 	return $db_name if $db_name;
 	return undef;
 }
+
 
 sub new_relation
 {
