@@ -1482,6 +1482,132 @@ sub image_file_newhash
 }
 
 
+
+=head2 get_image_file()
+
+Return image_file columns. This is the fastest way (optimized SQL) to get informations about file in image. Informations are cached in memcached and cache is monitored by information of last change of a501_image.
+
+	my %image_file=get_image_file(
+		'image.ID_entity' => 1 or 'image.ID' = > 1
+		'image_file.ID_format' => 1 # default
+		'image_attrs.lng' => $tom::lng # default
+		''
+	)
+
+=cut
+
+sub get_image_file
+{
+	my %env=@_;
+	
+	if (!$env{'image.ID_entity'} && !$env{'image.ID'})
+	{
+		return undef;
+	}
+	
+	$env{'image_file.ID_format'} = $App::501::image_format_fullsize_ID unless $env{'image_file.ID_format'};
+	$env{'image_attrs.lng'}=$tom::lng unless $env{'image_attrs.lng'};
+	
+	my $sql=qq{
+		SELECT
+			image.ID_entity AS ID_entity_image,
+			image.ID AS ID_image,
+			image_file.ID_format AS ID_format,
+			image_file.ID AS ID_file,
+			image_ent.posix_owner,
+			image_ent.posix_author,
+			image_attrs.name,
+			image_file.image_width,
+			image_file.image_height,
+			image_file.file_size,
+			image_file.file_ext,
+			CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
+	};
+
+	
+	if ($env{'image.ID_entity'})
+	{
+		$sql.=qq{
+		FROM
+			`$App::501::db_name`.`a501_image` AS image
+		LEFT JOIN `$App::501::db_name`.`a501_image_ent` AS image_ent ON
+		(
+			image_ent.ID_entity = image.ID_entity
+		)
+		LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
+		(
+			image_attrs.ID_entity = image.ID AND
+			image_attrs.lng='$env{'image_attrs.lng'}'
+		)
+		LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
+		(
+			image_file.ID_entity = image.ID_entity AND
+			image_file.ID_format=$env{'image_file.ID_format'} AND
+			image_file.status IN ('Y','N','L','E')
+		)
+		WHERE
+			image.ID_entity='$env{'image.ID_entity'}'
+		LIMIT 1
+		};
+	}
+	else
+	{
+		$sql.=qq{
+		FROM
+			`$App::501::db_name`.`a501_image` AS image
+		LEFT JOIN `$App::501::db_name`.`a501_image_ent` AS image_ent ON
+		(
+			image_ent.ID_entity = image.ID_entity
+		)
+		LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
+		(
+			image_attrs.ID_entity = image.ID AND
+			image_attrs.lng='$env{'image_attrs.lng'}'
+		)
+		LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
+		(
+			image_file.ID_entity = image.ID_entity AND
+			image_file.ID_format=$env{'image_file.ID_format'} AND
+			image_file.status IN ('Y','N','L','E')
+		)
+		WHERE
+			image.ID='$env{'image.ID'}'
+		LIMIT 1
+		};
+	}
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,
+		'-cache' => 3600,
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+			'db_h'=>"main",'db_name'=>$App::501::db_name,'tb_name'=>"a501_image"
+		}),
+		'-recache' => $env{'-recache'}
+	);
+	if ($sth0{'rows'})
+	{
+		my %image=$sth0{'sth'}->fetchhash();
+		if (!$image{'ID_file'})
+		{
+			main::_log("this image does not have format '$env{'image_file.ID_format'}'");
+			# trying to regenerate (slow down...)
+			App::501::functions::image_file_generate(
+				'image.ID_entity' => $image{'ID_entity_image'},
+				'image_format.ID' => $env{'image_file.ID_format'}
+			);
+			if (!$env{'-recursive'}) # don't run again
+			{
+				return get_image_file(%env,'-recache'=>1,'-recursive'=>1);
+			}
+		}
+		return %image;
+	}
+	
+	return 1;
+}
+
+
+
+
 =head1 AUTHORS
 
 Comsultia, Ltd. (open@comsultia.com)
