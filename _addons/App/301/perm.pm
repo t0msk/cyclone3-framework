@@ -1276,6 +1276,10 @@ sub ACL_user_group_update
 	}
 	else
 	{
+		my %columns;
+		$columns{'perm_R'} = "'".$env{'perm_R'}."'" if $env{'perm_R'};
+		$columns{'perm_W'} = "'".$env{'perm_W'}."'" if $env{'perm_W'};
+		$columns{'perm_X'} = "'".$env{'perm_X'}."'" if $env{'perm_X'};
 		App::020::SQL::functions::new(
 			'db_h' => 'main',
 			'db_name' => $db_name,
@@ -1286,10 +1290,8 @@ sub ACL_user_group_update
 				'r_prefix' => "'".$env{'r_prefix'}."'",
 				'r_table' => "'".$env{'r_table'}."'",
 				'r_ID_entity' => "'".$env{'r_ID_entity'}."'",
-				'perm_R' => "'Y'",
-				'perm_W' => "'Y'",
-				'perm_X' => "'Y'",
-				'roles' => "'".$env{'roles'}."'"
+				'roles' => "'".$env{'roles'}."'",
+				%columns
 			},
 			'-journalize' => 1,
 			'-posix' => 1,
