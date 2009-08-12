@@ -78,6 +78,7 @@ use CVML;
 use Digest::MD5;
 
 our $db_name='TOM';
+our $VERSION=0;
 
 sub CookieClean
 {
