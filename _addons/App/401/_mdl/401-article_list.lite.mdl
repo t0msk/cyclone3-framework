@@ -470,6 +470,9 @@ sub execute
 			|| $env{'abstract.a501_image_file.ID_format.1'}
 			|| $env{'a501_image_file.ID_format.1'}
 			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.extra'}=
+			$env{'a501_image_file.ID_format.extra'}
+			|| undef;
 		$p->{'entity'}->{'a501_image'}=
 			$XSGN{'abstract.a501_image'}
 			|| $XSGN{'a501_image'}
@@ -548,6 +551,9 @@ sub execute
 				|| $env{'article.'.$item_counter.'.a501_image_file.ID_format.1'}
 				|| $env{'abstract.a501_image_file.ID_format.1'}
 				|| $env{'a501_image_file.ID_format.1'}
+				|| undef;
+			$p->{'config'}->{'a501_image_file.ID_format.extra'}=
+				$env{'a501_image_file.ID_format.extra'}
 				|| undef;
 			$p->{'entity'}->{'a501_image'}=
 				$XSGN{'abstract.a501_image'}
