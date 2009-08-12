@@ -408,7 +408,7 @@ sub module
 		if ($TOM::CACHE_memcached)
 		{
 #			$memcached=Ext::CacheMemcache::check();
-			main::_log("memcached: reading") if $debug;
+			main::_log("memcached: reading '".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}."'") if $debug;
 #			if ($memcached)
 #			{
 				$cache=$Ext::CacheMemcache::cache->get(
@@ -428,7 +428,7 @@ sub module
 		}
 		else
 		{
-			main::_log("memcached: not available (lower performance)") if $debug;
+			main::_log("memcached: not available (lower performance)",1) if $debug;
 		}
 		
 		if ($cache)
@@ -472,7 +472,7 @@ sub module
 			$mdl_C{-cache_from}=$cache->{time_from};
 			$mdl_C{-cache_duration}=$cache->{time_duration};
 			$file_data=$cache->{body};
-
+			
 			$return_code=$cache->{return_code};
 			$return_code=1 if $return_code<1; # osetrenie pre stare caches
 		}
@@ -832,7 +832,7 @@ sub module
 						)
 					)
 					{
-						main::_log("saved to mcache");
+						main::_log("saved to mcache '".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5}."'");
 						$memcached=1;
 						# filling cache stopped
 						$Ext::CacheMemcache::cache->set(
