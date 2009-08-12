@@ -189,46 +189,16 @@ sub start
 			if ($vars{'ID'})
 			{
 				main::_log("find a501_image ID='$vars{'ID'}' ID_format='$vars{'ID_format'}'") if $debug;
-				my $sql=qq{
-					SELECT
-						image.ID_entity AS ID_entity_image,
-						image.ID AS ID_image,
-						image_file.ID_format AS ID_format,
-						image_file.ID AS ID_file,
-						image_ent.posix_owner,
-						image_ent.posix_author,
-						image_attrs.name,
-						image_file.image_width,
-						image_file.image_height,
-						image_file.file_size,
-						image_file.file_ext,
-						CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
-					FROM
-						`$App::501::db_name`.`a501_image` AS image
-					LEFT JOIN `$App::501::db_name`.`a501_image_ent` AS image_ent ON
-					(
-						image_ent.ID_entity = image.ID_entity
-					)
-					LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
-					(
-						image_attrs.ID_entity = image.ID
-					)
-					LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
-					(
-						image_file.ID_entity = image.ID_entity
-					)
-					WHERE
-						image.ID=$vars{'ID'} AND
-						image_file.ID_format=$vars{'ID_format'}
-					LIMIT 1
-				};
-				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
-				my %db0_line=$sth0{'sth'}->fetchhash();
+				my %db0_line=App::501::functions::get_image_file(
+					'image.ID' => $vars{'ID'},
+					'image_file.ID_format' => $vars{'ID_format'},
+					'image_attrs.lng' => $tom::lng
+				);
 				if ($db0_line{'ID_image'})
 				{
 					$attr->{'src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
 					main::_log("found image src='$attr->{'src'}'") if $debug;
-					$attr->{'alt'}=$db0_line{'name'};
+					$attr->{'alt'}=$db0_line{'name'} unless $attr->{'alt'};
 					
 					$attr->{'width_forced'}=$attr->{'width'};
 					$attr->{'height_forced'}=$attr->{'height'};
@@ -248,89 +218,42 @@ sub start
 					
 				}
 				# fullsize
-				my $sql=qq{
-					SELECT
-						image.ID_entity AS ID_entity_image,
-						image.ID AS ID_image,
-						image_file.ID_format AS ID_format,
-						image_file.ID AS ID_file,
-						image_ent.posix_owner,
-						image_ent.posix_author,
-						image_attrs.name,
-						image_file.image_width,
-						image_file.image_height,
-						image_file.file_size,
-						image_file.file_ext,
-						CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
-					FROM
-						`$App::501::db_name`.`a501_image` AS image
-					LEFT JOIN `$App::501::db_name`.`a501_image_ent` AS image_ent ON
-					(
-						image_ent.ID_entity = image.ID_entity
-					)
-					LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
-					(
-						image_attrs.ID_entity = image.ID
-					)
-					LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
-					(
-						image_file.ID_entity = image.ID_entity
-					)
-					WHERE
-						image.ID=$vars{'ID'} AND
-						image_file.ID_format=$App::501::image_format_fullsize_ID
-					LIMIT 1
-				};
-				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
-				my %db0_line=$sth0{'sth'}->fetchhash();
+				my %db0_line=App::501::functions::get_image_file(
+					'image.ID' => $vars{'ID'},
+					'image_file.ID_format' => $App::501::image_format_fullsize_ID,
+					'image_attrs.lng' => $tom::lng
+				);
 				if ($db0_line{'ID_image'})
 				{
 					$attr->{'fullsize.src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
+				}
+				# extra format
+				if ($self->{'config'}->{'a501_image_file.ID_format.extra'})
+				{
+					my %db0_line=App::501::functions::get_image_file(
+						'image.ID' => $vars{'ID'},
+						'image_file.ID_format' => $self->{'config'}->{'a501_image_file.ID_format.extra'},
+						'image_attrs.lng' => $tom::lng
+					);
+					if ($db0_line{'ID_image'})
+					{
+						$attr->{'extra.src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
+					}
 				}
 			}
 			elsif ($vars{'ID_entity'})
 			{
 				main::_log("find a501_image ID_entity='$vars{'ID_entity'}' ID_format='$vars{'ID_format'}'") if $debug;
-				my $sql=qq{
-					SELECT
-						image.ID_entity AS ID_entity_image,
-						image.ID AS ID_image,
-						image_file.ID_format AS ID_format,
-						image_file.ID AS ID_file,
-						image_ent.posix_owner,
-						image_ent.posix_author,
-						image_attrs.name,
-						image_file.image_width,
-						image_file.image_height,
-						image_file.file_size,
-						image_file.file_ext,
-						CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
-					FROM
-						`$App::501::db_name`.`a501_image` AS image
-					LEFT JOIN `$App::501::db_name`.`a501_image_ent` AS image_ent ON
-					(
-						image_ent.ID_entity = image.ID_entity
-					)
-					LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
-					(
-						image_attrs.ID_entity = image.ID
-					)
-					LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
-					(
-						image_file.ID_entity = image.ID_entity
-					)
-					WHERE
-						image.ID_entity='$vars{'ID_entity'}' AND
-						image_file.ID_format=$vars{'ID_format'}
-					LIMIT 1
-				};
-				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
-				my %db0_line=$sth0{'sth'}->fetchhash();
+				my %db0_line=App::501::functions::get_image_file(
+					'image.ID_entity' => $vars{'ID_entity'},
+					'image_file.ID_format' => $vars{'ID_format'},
+					'image_attrs.lng' => $tom::lng
+				);
 				if ($db0_line{'ID_image'})
 				{
 					$attr->{'src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
 					main::_log("found image src='$attr->{'src'}'") if $debug;
-					$attr->{'alt'}=$db0_line{'name'};
+					$attr->{'alt'}=$db0_line{'name'} unless $attr->{'alt'};
 					
 					$attr->{'width_forced'}=$attr->{'width'};
 					$attr->{'height_forced'}=$attr->{'height'};
@@ -350,47 +273,31 @@ sub start
 					
 				}
 				# fullsize
-				my $sql=qq{
-					SELECT
-						image.ID_entity AS ID_entity_image,
-						image.ID AS ID_image,
-						image_file.ID_format AS ID_format,
-						image_file.ID AS ID_file,
-						image_ent.posix_owner,
-						image_ent.posix_author,
-						image_attrs.name,
-						image_file.image_width,
-						image_file.image_height,
-						image_file.file_size,
-						image_file.file_ext,
-						CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
-					FROM
-						`$App::501::db_name`.`a501_image` AS image
-					LEFT JOIN `$App::501::db_name`.`a501_image_ent` AS image_ent ON
-					(
-						image_ent.ID_entity = image.ID_entity
-					)
-					LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
-					(
-						image_attrs.ID_entity = image.ID
-					)
-					LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
-					(
-						image_file.ID_entity = image.ID_entity
-					)
-					WHERE
-						image.ID_entity='$vars{'ID_entity'}' AND
-						image_file.ID_format=$App::501::image_format_fullsize_ID
-					LIMIT 1
-				};
-				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
-				my %db0_line=$sth0{'sth'}->fetchhash();
+				my %db0_line=App::501::functions::get_image_file(
+					'image.ID_entity' => $vars{'ID_entity'},
+					'image_file.ID_format' => $App::501::image_format_fullsize_ID,
+					'image_attrs.lng' => $tom::lng
+				);
 				if ($db0_line{'ID_image'})
 				{
 					$attr->{'fullsize.src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
 				}
+				# extra format
+				if ($self->{'config'}->{'a501_image_file.ID_format.extra'})
+				{
+					my %db0_line=App::501::functions::get_image_file(
+						'image.ID_entity' => $vars{'ID_entity'},
+						'image_file.ID_format' => $self->{'config'}->{'a501_image_file.ID_format.extra'},
+						'image_attrs.lng' => $tom::lng
+					);
+					if ($db0_line{'ID_image'})
+					{
+						$attr->{'extra.src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
+					}
+				}
 			}
 			$self->{'out_var'}->{'img.'.$out_cnt.'.src'}=$attr->{'src'};
+			$self->{'out_var'}->{'img.'.$out_cnt.'.extra.src'}=$attr->{'extra.src'} if $attr->{'extra.src'};
 		}
 		elsif ($attr->{'id'}=~/^a510_video:(.*)$/)
 		{
@@ -467,42 +374,11 @@ sub start
 							|| $self->{'config'}->{'a501_image_file.ID_format'}
 							|| $App::501::image_format_fullsize_ID;
 						
-						my $sql=qq{
-							SELECT
-								image.ID_entity AS ID_entity_image,
-								image.ID AS ID_image,
-								image_file.ID_format AS ID_format,
-								image_file.ID AS ID_file,
-								image_ent.posix_owner,
-								image_ent.posix_author,
-								image_attrs.name,
-								image_file.image_width,
-								image_file.image_height,
-								image_file.file_size,
-								image_file.file_ext,
-								CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
-							FROM
-								`$App::501::db_name`.`a501_image` AS image
-							LEFT JOIN `$App::501::db_name`.`a501_image_ent` AS image_ent ON
-							(
-								image_ent.ID_entity = image.ID_entity
-							)
-							LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
-							(
-								image_attrs.ID_entity = image.ID
-							)
-							LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
-							(
-								image_file.ID_entity = image.ID_entity
-							)
-							WHERE
-								image.ID_entity=$relation->{'r_ID_entity'} AND
-								image_file.ID_format=$img_ID_format
-							LIMIT 1
-						};
-						
-						my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
-						my %db1_line=$sth1{'sth'}->fetchhash();
+						my %db1_line=App::501::functions::get_image_file(
+							'image.ID_entity' => $relation->{'r_ID_entity'},
+							'image_file.ID_format' => $img_ID_format,
+							'image_attrs.lng' => $tom::lng
+						);
 						if ($db1_line{'file_path'})
 						{
 							$attr->{'src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
@@ -510,13 +386,26 @@ sub start
 							$self->{'out_addon'}->{'a510_video_part'}[$addon_part_cnt]{'img.src'}=$attr->{'src'};
 							$self->{'out_addon'}->{'a510_video_part'}[$addon_part_cnt]{'ID_image'}=$db1_line{'ID_image'};
 						}
-						
+						# extra format
+						if ($self->{'config'}->{'a501_image_file.ID_format.extra'})
+						{
+							my %db1_line=App::501::functions::get_image_file(
+								'image.ID_entity' => $relation->{'r_ID_entity'},
+								'image_file.ID_format' => $self->{'config'}->{'a501_image_file.ID_format.extra'},
+								'image_attrs.lng' => $tom::lng
+							);
+							if ($db1_line{'ID_image'})
+							{
+								$attr->{'extra.src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+							}
+						}
 					}
 					
 				}
 				
 			}
 			$self->{'out_var'}->{'img.'.$out_cnt.'.src'}=$attr->{'src'};
+			$self->{'out_var'}->{'img.'.$out_cnt.'.extra.src'}=$attr->{'extra.src'} if $attr->{'extra.src'};
 		} # if $attr->{'id'}=~/
 		elsif ($attr->{'id'}=~/^a510_video_part:(.*)$/)
 		{
@@ -592,41 +481,11 @@ sub start
 							
 						main::_log("find a501_image ID_entity='$relation->{'r_ID_entity'}' ID_format='$img_ID_format'") if $debug;
 						
-						my $sql=qq{
-							SELECT
-								image.ID_entity AS ID_entity_image,
-								image.ID AS ID_image,
-								image_file.ID_format AS ID_format,
-								image_file.ID AS ID_file,
-								image_ent.posix_owner,
-								image_ent.posix_author,
-								image_attrs.name,
-								image_file.image_width,
-								image_file.image_height,
-								image_file.file_size,
-								image_file.file_ext,
-								CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
-							FROM
-								`$App::501::db_name`.`a501_image` AS image
-							LEFT JOIN `$App::501::db_name`.`a501_image_ent` AS image_ent ON
-							(
-								image_ent.ID_entity = image.ID_entity
-							)
-							LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
-							(
-								image_attrs.ID_entity = image.ID
-							)
-							LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
-							(
-								image_file.ID_entity = image.ID_entity
-							)
-							WHERE
-								image.ID_entity=$relation->{'r_ID_entity'} AND
-								image_file.ID_format=$img_ID_format
-							LIMIT 1
-						};
-						my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>$cache);
-						my %db1_line=$sth1{'sth'}->fetchhash();
+						my %db1_line=App::501::functions::get_image_file(
+							'image.ID_entity' => $relation->{'r_ID_entity'},
+							'image_file.ID_format' => $img_ID_format,
+							'image_attrs.lng' => $tom::lng
+						);
 						if ($db1_line{'file_path'})
 						{
 							$attr->{'src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
@@ -639,7 +498,19 @@ sub start
 						{
 							main::_log("not found thumbnail image",1) if $debug;
 						}
-						
+						# extra format
+						if ($self->{'config'}->{'a501_image_file.ID_format.extra'})
+						{
+							my %db1_line=App::501::functions::get_image_file(
+								'image.ID_entity' => $relation->{'r_ID_entity'},
+								'image_file.ID_format' => $self->{'config'}->{'a501_image_file.ID_format.extra'},
+								'image_attrs.lng' => $tom::lng
+							);
+							if ($db1_line{'ID_image'})
+							{
+								$attr->{'extra.src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+							}
+						}
 					}
 					
 				}
@@ -647,6 +518,7 @@ sub start
 			}
 			
 			$self->{'out_var'}->{'img.'.$out_cnt.'.src'}=$attr->{'src'};
+			$self->{'out_var'}->{'img.'.$out_cnt.'.extra.src'}=$attr->{'extra.src'} if $attr->{'extra.src'};
 		} # if $attr->{'id'}=~/
 	
 	} # if tag=''
