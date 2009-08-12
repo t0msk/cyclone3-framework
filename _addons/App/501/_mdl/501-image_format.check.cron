@@ -67,6 +67,13 @@ sub execute
 	$env{'time_max'}=60*5 unless $env{'time_max'};
 	$env{'sql_limit'}='1000';
 	
+	# remove old E statuses
+	main::_log("remove old image_file with status E");
+	my %sth0=TOM::Database::SQL::execute(qq{
+		DELETE FROM `$App::501::db_name`.a501_image_file
+		WHERE datetime_create<DATE_SUB(NOW(),INTERVAL 7 DAY) AND status='E'
+	});
+	
 	# check directory of formats
 	
 	
@@ -159,7 +166,7 @@ sub execute
 		if ($format_parent{'ID'})
 		{
 			# find images which parent has been changed
-			
+			main::_log(" check image_files for parent image_format ID='$format_parent{'ID'}' name='$format_parent{'name'}'");
 			my $sql=qq{
 				SELECT
 					image.ID AS image_ID,
@@ -180,8 +187,8 @@ sub execute
 				)
 				WHERE
 					image.status IN ('Y','N') AND
-					file1.status='Y' AND
-					file2.status='Y' AND
+					file1.status='Y' AND -- parent status
+					file2.status IN ('Y','E') AND -- current status
 					file1.datetime_create > file2.datetime_create
 				ORDER BY
 					image.ID_entity DESC
