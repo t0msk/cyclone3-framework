@@ -182,8 +182,8 @@ sub execute
 			article.ID AS ID_article,
 			
 			article_attrs.ID_category,
-			article_cat.name AS ID_category_name,
-			article_cat.name_url AS ID_category_name_url,
+			article_cat.name AS category_name,
+			article_cat.name_url AS category_name_url,
 			
 			article_ent.posix_owner,
 			article_content.ID_editor AS posix_editor,
@@ -213,6 +213,7 @@ sub execute
 			article_ent.rating_score,
 			article_ent.rating_votes,
 			(article_ent.rating_score/article_ent.rating_votes) AS rating,
+			article_ent.sources,
 			
 			article_attrs.status
 			
@@ -369,7 +370,7 @@ sub execute
 			'l_prefix' => 'a401',
 			'l_table' => 'article',
 			'l_ID_entity' => $db0_line{'ID_entity_article'},
-			#'rel_type' => 'gallery',
+			'rel_type' => 'gallery',
 			'r_prefix' => "a501",
 			'r_table' => "image",
 			'status' => "Y",
@@ -377,60 +378,88 @@ sub execute
 		{
 			$i++;
 			
+			if ($i==1 && $XSGN{'a501.gallery.box'})
+			{
+				$XSGN{'TMP'}=~s|<#a501\.gallery#>|$XSGN{'a501.gallery.box'}|g;
+			}
+			
 			next unless $relation->{'r_ID_entity'};
 			
 			my $item=$XSGN{'a501.gallery.'.$i} || $XSGN{'a501.gallery'};
 			
-			my $sql=qq{
-				SELECT
-					*
-				FROM
-					`$App::501::db_name`.a501_image_view
-				WHERE
-					ID_entity_image=$relation->{'r_ID_entity'} AND
-					ID_format=$App::501::image_format_fullsize_ID AND
-					status IN ('Y','L')
-				LIMIT 1
-			};
+			if (my %db1_line=App::501::functions::get_image_file
+				(
+					'image.ID_entity' => $relation->{'r_ID_entity'},
+					'image_file.ID_format' => $App::501::image_format_fullsize_ID,
+					'video_attrs.lng' => $env{'lng'}
+				)
+			)
+			{
+				$item=~s|<%image\.db_(.*?)%>|$db1_line{$1}|g;
+			}
 			
-			my %sth1=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache'=>60);
-			if (my %db1_line=$sth1{'sth'}->fetchhash()){$item=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;}
 			my $ID_format=$env{'gallery.thumbnail.ID_format'} || $App::501::image_format_thumbnail_ID;
-			my $sql=qq{
-				SELECT
-					*
-				FROM
-					`$App::501::db_name`.a501_image_view
-				WHERE
-					ID_entity_image=$relation->{'r_ID_entity'} AND
-					ID_format=$ID_format AND
-					status IN ('Y','L')
-				LIMIT 1
-			};
-			my %sth1=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache'=>60);
-			if (my %db1_line=$sth1{'sth'}->fetchhash()){$item=~s|<%image.thumbnail.db_(.*?)%>|$db1_line{$1}|g;}
+			if (my %db1_line=App::501::functions::get_image_file
+				(
+					'image.ID_entity' => $relation->{'r_ID_entity'},
+					'image_file.ID_format' => $ID_format,
+					'video_attrs.lng' => $env{'lng'}
+				)
+			)
+			{
+				$item=~s|<%image\.thumbnail\.db_(.*?)%>|$db1_line{$1}|g;
+			}
 			
-			if ($XSGN{'TMP'}=~s|<#a501.gallery.$i#>|$item|)
+			if ($XSGN{'TMP'}=~s|<#a501\.gallery\.$i#>|$item|)
 			{
 				
 			}
 			else
 			{
-				$XSGN{'TMP'}=~s|<#a501.gallery#>|$item|;
+				$XSGN{'TMP'}=~s|<#a501\.gallery#>|$item|;
 			}
 			
-#			$XSGN{'TMP'}=~s|<#a501.gallery#>|$item|g if $XSGN{'TMP'}=~/<#a501.gallery#>/;
-			
-#			if ($XSGN{'TMP'}=~/<#a501.gallery.#>/)
-#			{
-#			}
 		}
 		
+		# check author
+		if ($author{'ID_user'} && $XSGN{'author'} && length($author{'about_me'})>20)
+		{
+			# get author avatar
+			if (my $relation=(App::160::SQL::get_relations(
+				'db_name' => $App::301::db_name,
+				'l_prefix' => 'a301',
+				'l_table' => 'user',
+				'l_ID_entity' => $author{'ID_user'},
+				'rel_type' => 'avatar',
+				'r_prefix' => "a501",
+				'r_table' => "image",
+				'status' => "Y",
+				'limit' => 1
+			))[0])
+			{
+				if (my %image=App::501::functions::get_image_file
+					(
+						'image.ID_entity' => $relation->{'r_ID_entity'},
+						'image_file.ID_format' => $App::501::image_format_thumbnail_ID,
+						'video_attrs.lng' => $env{'lng'}
+					)
+				)
+				{
+					$XSGN{'author'}=~s|<%avatar\.db_(.*?)%>|$image{$1}|g;
+				}
+			}
+			$XSGN{'author'}=~s|<%(.*?)%>|$author{$1}|g;
+			$XSGN{'TMP'}=~s|<#author#>|$XSGN{'author'}|g;
+		}
 		
+		if ($db0_line{'sources'} && $XSGN{'sources'})
+		{
+			$XSGN{'sources'}=~s|<%sources%>|$db0_line{'sources'}|g;
+			$XSGN{'TMP'}=~s|<#sources#>|$XSGN{'sources'}|g;
+		}
 		
 		$XSGN{'TMP'}=~s|<%article\.db_(.*?)%>|$db0_line{$1}|g;
 		
-#		$main::H->add_DOC_title($db0_line{'name'});
 		
 		
 	}
