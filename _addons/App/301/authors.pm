@@ -182,6 +182,8 @@ sub add_author
 	if ($env{'string'})
 	{
 		main::_log("input string='$env{'string'}'");
+		1 while ($env{'string'}=~s|^ ||);
+		1 while ($env{'string'}=~s| $||);
 		
 		# try to find this string in firstname
 		my $sql=qq{
@@ -265,7 +267,7 @@ sub add_author
 				LIMIT 1
 			};
 			
-			my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 			if ($sth0{'rows'})
 			{
 				my %author=$sth0{'sth'}->fetchhash();
@@ -302,7 +304,7 @@ sub add_author
 						login='$env{'author_login'}'
 					LIMIT 1
 				};
-				my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 				if (!$sth0{'rows'})
 				{
 					main::_log("creating new author");
@@ -344,7 +346,7 @@ sub add_author
 					user_profile.surname IS NULL
 				LIMIT 1
 			};
-			my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 			if ($sth0{'rows'})
 			{
 				my %author=$sth0{'sth'}->fetchhash();
@@ -380,7 +382,7 @@ sub add_author
 						login='$env{'author_login'}'
 					LIMIT 1
 				};
-				my %sth0=TOM::Database::SQL::execute($sql);
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 				if (!$sth0{'rows'})
 				{
 					main::_log("creating new author");
