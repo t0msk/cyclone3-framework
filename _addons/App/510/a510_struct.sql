@@ -70,7 +70,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent_j` (
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID
-  `ID_category` bigint(20) unsigned default NULL,
+  `ID_category` bigint(20) unsigned default NULL, -- rel _video_cat.ID_entity
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
@@ -628,7 +628,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_view` AS (
 	)
 	LEFT JOIN `/*db_name*/`.`/*addon*/_video_cat` AS video_cat ON
 	(
-		video_cat.ID = video_attrs.ID_category
+		video_cat.ID_entity = video_attrs.ID_category
 	)
 	
 	WHERE

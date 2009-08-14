@@ -835,7 +835,7 @@ sub video_add
 	}
 	
 	my %category;
-	if ($env{'video_attrs.ID_category'})
+	if ($env{'video_attrs.ID_category'} && $env{'video_attrs.ID_category'} ne 'NULL')
 	{
 		# detect language
 		%category=App::020::SQL::functions::get_ID(
@@ -2188,7 +2188,7 @@ sub get_video_part_file
 		)
 		LEFT JOIN `$App::510::db_name`.`a510_video_cat` AS video_cat ON
 		(
-			video_cat.ID = video_attrs.ID_category
+			video_cat.ID_entity = video_attrs.ID_category
 		)
 		WHERE
 			video.ID_entity=$env{'video.ID_entity'} AND
@@ -2226,7 +2226,7 @@ sub get_video_part_file
 		)
 		LEFT JOIN `$App::510::db_name`.`a510_video_cat` AS video_cat ON
 		(
-			video_cat.ID = video_attrs.ID_category
+			video_cat.ID_entity = video_attrs.ID_category
 		)
 		WHERE
 			video_part.ID=$env{'video_part.ID'} AND

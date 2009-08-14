@@ -286,7 +286,12 @@ sub execute
 		{
 
 			$item=~s|<%image.ID%>|$relation->{'r_ID_entity'}|g;
-
+			
+#			my %db1_line=App::501::functions::get_image_file(
+#				'image.ID_entity' => $relation->{'r_ID_entity'},
+#				'image_file.ID_format' => $img_ID_format,
+#				'image_attrs.lng' => $env{'lng'}
+#			);
 			my $sql=qq{
 				SELECT
 					*
