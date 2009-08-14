@@ -62,7 +62,7 @@ sub text
 {
 	my ($self, $text) = @_;
 	# just print out the original text
-	
+#	main::_log("text=$text") if $debug;
 	$self->{'out'}.=$text;
 	
 	#print $text;
@@ -97,7 +97,7 @@ sub start
 {
 	my ($self, $tag, $attr, $attrseq, $origtext) = @_;
 	
-	if (not $tag=~/^(br|strong|em|i|u|b|font|div|object|param|a|embed)$/) # don't display info about not important tags
+	if (not $tag=~/^(br|strong|em|i|u|b|font|div|object|param|embed)$/) # don't display info about not important tags
 	{
 		main::_log("tag='$tag' origtext='$origtext'") if $debug;
 	}
@@ -520,8 +520,94 @@ sub start
 			$self->{'out_var'}->{'img.'.$out_cnt.'.src'}=$attr->{'src'};
 			$self->{'out_var'}->{'img.'.$out_cnt.'.extra.src'}=$attr->{'extra.src'} if $attr->{'extra.src'};
 		} # if $attr->{'id'}=~/
-	
 	} # if tag=''
+	elsif ($tag eq "a")
+	{
+		if ($attr->{'id'}=~/^a542_file:(.*)$/)
+		{
+			require App::542::_init;
+			my %vars=_parse_id($1);
+			
+			if ($vars{'ID_entity'})
+			{
+				main::_log("find a542_file ID_entity='$vars{'ID_entity'}'") if $debug;
+				my %sth0=TOM::Database::SQL::execute(qq{
+					SELECT
+						file.ID_entity AS ID_entity_file,
+						file.ID AS ID_file,
+						file_attrs.ID AS ID_attrs,
+						file_item.ID AS ID_item,
+						
+						file_attrs.ID_category,
+						file_dir.name AS ID_dir_name,
+						file_dir.name_url AS ID_dir_name_url,
+						
+						file_ent.posix_owner,
+						file_ent.posix_author,
+						
+						file_item.hash_secure,
+						file_item.datetime_create,
+						
+						file_attrs.name,
+						file_attrs.name_url,
+						file_attrs.name_ext,
+						
+						file_item.mimetype,
+						file_item.file_ext,
+						file_item.file_size,
+						file_item.lng,
+						
+						file_ent.downloads,
+						
+						file_attrs.status,
+						
+						CONCAT(file_item.lng,'/',SUBSTR(file_item.ID,1,4),'/',file_item.name,'.',file_attrs.name_ext) AS file_path
+						
+					FROM
+						`$App::542::db_name`.`a542_file` AS file
+					LEFT JOIN `$App::542::db_name`.`a542_file_ent` AS file_ent ON
+					(
+						file_ent.ID_entity = file.ID_entity
+					)
+					LEFT JOIN `$App::542::db_name`.`a542_file_attrs` AS file_attrs ON
+					(
+						file_attrs.ID_entity = file.ID
+					)
+					LEFT JOIN `$App::542::db_name`.`a542_file_item` AS file_item ON
+					(
+						file_item.ID_entity = file.ID_entity AND
+						file_item.lng = file_attrs.lng
+					)
+					LEFT JOIN `$App::542::db_name`.`a542_file_dir` AS file_dir ON
+					(
+						file_dir.ID = file_attrs.ID_category
+					)
+					WHERE
+						file.ID_entity=$vars{'ID_entity'} AND
+						file_attrs.lng='$tom::lng'
+					LIMIT 1;
+				},'quiet'=>1,'-cache'=>$cache);
+				my %db0_line=$sth0{'sth'}->fetchhash();
+				if ($db0_line{'ID_entity_file'})
+				{
+#					$attr->{'src'}=$tom::H_a542.'/file/item/'.$db0_line{'file_path'};
+					$attr->{'href'}=$tom::H_www.'/download.tom?ID='.$db0_line{'ID_entity_file'}.'&hash='.$db0_line{'hash_secure'};
+					main::_log("found file src='$attr->{'src'}'") if $debug;
+					$attr->{'alt'}=$db0_line{'name'} unless $attr->{'alt'};
+					
+					# override default tag representation
+					$out_full=
+						$self->{'entity'}{'a542_file.'.$out_cnt}
+						|| $self->{'entity'}{'a542_file'}
+						|| $tpl->{'entity'}{'parser.a542_file.'.$out_cnt}
+						|| $tpl->{'entity'}{'parser.a542_file'}
+						|| $out_full;
+					
+					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+				}
+			}
+		}
+	}
 	
 	# fix not closed tags
 	if ($tag=~/^hr|br|img$/)
@@ -578,6 +664,7 @@ sub end
 {
 	my ($self, $tag, $origtext) = @_;
 	# print out original text
+#	main::_log("end tag=$tag text=$origtext") if $debug;
 	$self->{'out'}.=$origtext;
 	#print $origtext;
 }
