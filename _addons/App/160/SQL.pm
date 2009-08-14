@@ -496,7 +496,19 @@ sub get_relations
 	
 	my $sql=qq{
 		SELECT
-			*
+			ID,
+			ID_entity,
+			datetime_create,
+			LEFT(datetime_create,16) AS datetime_create_short,
+			l_prefix,
+			l_table,
+			l_ID_entity,
+			rel_type,
+			r_db_name,
+			r_prefix,
+			r_table,
+			r_ID_entity,
+			status
 		FROM
 			`$env{'db_name'}`.`a160_relation`
 		WHERE
