@@ -18,7 +18,7 @@ use TOM::Database::SQL::compare;
 use TOM::Database::SQL::transaction;
 use TOM::Database::SQL::cache;
 
-our $debug=0;
+our $debug=$TOM::Database::SQL::debug || 0;
 our $logcachequery=$TOM::Database::SQL::logcachequery || 0;
 our $lognonselectquery=$TOM::Database::SQL::lognonselectquery || 1;
 our $logquery=$TOM::Database::SQL::logquery || 0;
@@ -247,9 +247,14 @@ sub execute
 			'id' => $cache_key
 		);
 		
-		if ($cache && $env{'-cache_changetime'} && ($env{'-cache_changetime'})>$cache->{'value'}->{'time'})
+		if ($env{'-cache_changetime'})
 		{
-			#undef $cache;
+			main::_log("SQL: db changed before ".int(time()-$env{'-cache_changetime'})."s cache created ".int($cache->{'value'}->{'time'}-$env{'-cache_changetime'})."s after db changes (min old:$env{'-cache_min'}s)") if $env{'log'};
+		}
+		
+		if ($cache && $env{'-cache_changetime'} && ($env{'-cache_changetime'})>$cache->{'value'}->{'time'} && ((time()-$cache->{'value'}->{'time'})>$env{'-cache_min'}) )
+		{
+			main::_log("SQL: don't use this cache, data changed") if $env{'log'};
 		}
 		elsif ($env{'-recache'})
 		{
@@ -266,6 +271,10 @@ sub execute
 			$output{'time'}=$cache->{'value'}->{'time'};
 			$t->close();
 			return %output;
+		}
+		else
+		{
+			main::_log("SQL: not available cache") if $env{'log'};
 		}
 	}
 	
