@@ -2200,6 +2200,11 @@ sub get_video_part_file
 	}
 	else
 	{
+		# get ID_entity for cache
+		my %sth0=TOM::Database::SQL::execute(qq{SELECT ID_entity FROM `$App::510::db_name`.`a510_video` WHERE ID='$env{'video.ID'}' LIMIT 1},'quiet'=>1,'-slave'=>1,'-cache'=>3600);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		$env{'video.ID_entity'}=$db0_line{'ID_entity'};
+		
 		$sql.=qq{
 		FROM
 			`$App::510::db_name`.`a510_video_part` AS video_part
@@ -2237,9 +2242,11 @@ sub get_video_part_file
 	}
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,
-		'-cache' => 3600,
+		'-cache' => 86400, #24H max
+		'-cache_min' => 600, # when changetime before this limit 10min
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
-			'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video"
+			'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video",
+			'ID_entity' => $env{'video.ID_entity'}
 		})
 	);
 	if ($sth0{'rows'})

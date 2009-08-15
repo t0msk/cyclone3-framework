@@ -687,10 +687,12 @@ sub image_add
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::image_add()");
 	
-	foreach (sort keys %env)
-	{
-		main::_log("input $_='$env{$_}'");
-	}
+#	foreach (sort keys %env)
+#	{
+#		main::_log("input $_='$env{$_}'");
+#	}
+	
+	my $content_updated=0;
 	
 	$env{'image_format.ID'}=$App::501::image_format_original_ID unless $env{'image_format.ID'};
 	
@@ -804,6 +806,7 @@ sub image_add
 			},
 			'-journalize' => 1,
 		);
+		$content_updated=1;
 		
 		main::_log("generated image.ID='$env{'image.ID'}'");
 	}
@@ -894,6 +897,7 @@ sub image_add
 			},
 			'-journalize' => 1,
 		);
+		$content_updated=1;
 		main::_log("created new image_attrs.ID='$env{'image_attrs.ID'}'");
 	}
 	
@@ -954,23 +958,12 @@ sub image_add
 				'columns' => {%columns},
 				'-journalize' => 1
 			);
+			$content_updated=1;
 		}
 		
 	}
 	
-	if ($env{'image_attrs.ID'} &&
-	(
-		# name
-		($env{'image_attrs.name'} && ($env{'image_attrs.name'} ne $image_attrs{'name'})) ||
-		# description
-		(exists $env{'image_attrs.description'} && ($env{'image_attrs.description'} ne $image_attrs{'description'})) ||
-		# keywords
-		(exists $env{'image_attrs.keywords'} && ($env{'image_attrs.keywords'} ne $image_attrs{'keywords'})) ||
-		# ID_category
-#		($env{'image_attrs.ID_category'} && ($env{'image_attrs.ID_category'} ne $image_attrs{'ID_category'})) ||
-		# status
-		($env{'image_attrs.status'} && ($env{'image_attrs.status'} ne $image_attrs{'status'}))
-	))
+	if ($env{'image_attrs.ID'})
 	{
 		my %columns;
 		
@@ -985,14 +978,18 @@ sub image_add
 		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'image_attrs.status'})."'"
 			if ($env{'image_attrs.status'} && ($env{'image_attrs.status'} ne $image_attrs{'status'}));
 		
-		App::020::SQL::functions::update(
-			'ID' => $env{'image_attrs.ID'},
-			'db_h' => "main",
-			'db_name' => $App::501::db_name,
-			'tb_name' => "a501_image_attrs",
-			'columns' => {%columns},
-			'-journalize' => 1
-		);
+		if (keys %columns)
+		{
+			App::020::SQL::functions::update(
+				'ID' => $env{'image_attrs.ID'},
+				'db_h' => "main",
+				'db_name' => $App::501::db_name,
+				'tb_name' => "a501_image_attrs",
+				'columns' => {%columns},
+				'-journalize' => 1
+			);
+			$content_updated=1;
+		}
 	}
 	
 	
@@ -1031,6 +1028,7 @@ sub image_add
 			},
 			'-journalize' => 1,
 		);
+		$content_updated=1;
 	}
 	
 	if (!$image_ent{'posix_owner'} && !$env{'image_ent.posix_owner'})
@@ -1039,15 +1037,7 @@ sub image_add
 	}
 	
 	# update if necessary
-	if ($env{'image_ent.ID'} &&
-	(
-		# ID_author
-		($env{'image_ent.posix_author'} && ($env{'image_ent.posix_author'} ne $image_ent{'posix_author'})) ||
-		# posix_owner
-		($env{'image_ent.posix_owner'} && ($env{'image_ent.posix_owner'} ne $image_ent{'posix_owner'})) ||
-		# datetime_produce
-		(exists $env{'image_ent.datetime_produce'} && ($env{'image_ent.datetime_produce'} ne $image_ent{'datetime_produce'}))
-	))
+	if ($env{'image_ent.ID'})
 	{
 		my %columns;
 		$columns{'posix_author'}="'".$env{'image_ent.posix_author'}."'"
@@ -1057,17 +1047,25 @@ sub image_add
 		$columns{'datetime_produce'}="'".TOM::Security::form::sql_escape($env{'image_ent.datetime_produce'})."'"
 			if (exists $env{'image_ent.datetime_produce'} && ($env{'image_ent.datetime_produce'} ne $image_ent{'datetime_produce'}));
 		$columns{'datetime_produce'}='NULL' if $columns{'datetime_produce'} eq "''";
-		App::020::SQL::functions::update(
-			'ID' => $env{'image_ent.ID'},
-			'db_h' => "main",
-			'db_name' => $App::501::db_name,
-			'tb_name' => "a501_image_ent",
-			'columns' => {%columns},
-			'-journalize' => 1
-		);
+		
+		if (keys %columns)
+		{
+			App::020::SQL::functions::update(
+				'ID' => $env{'image_ent.ID'},
+				'db_h' => "main",
+				'db_name' => $App::501::db_name,
+				'tb_name' => "a501_image_ent",
+				'columns' => {%columns},
+				'-journalize' => 1
+			);
+			$content_updated=1;
+		}
 	}
 	
-	
+	if ($content_updated)
+	{
+		App::020::SQL::functions::_save_changetime({'db_h'=>'main','db_name'=>$App::501::db_name,'tb_name'=>'a501_image','ID_entity'=>$env{'image.ID_entity'}});
+	}
 	
 	$t->close();
 	return %env;
@@ -1552,6 +1550,12 @@ sub get_image_file
 	}
 	else
 	{
+		# get ID_entity for cache
+		my %sth0=TOM::Database::SQL::execute(qq{SELECT ID_entity FROM `$App::501::db_name`.`a501_image` WHERE ID='$env{'image.ID'}' LIMIT 1},'quiet'=>1,'-slave'=>1,'-cache'=>3600);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		$env{'image.ID_entity'}=$db0_line{'ID_entity'};
+		main::_log("ID_entity=$env{'image.ID_entity'}");
+		
 		$sql.=qq{
 		FROM
 			`$App::501::db_name`.`a501_image` AS image
@@ -1577,9 +1581,11 @@ sub get_image_file
 	}
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,
-		'-cache' => 3600,
+		'-cache' => 86400, #24H max
+		'-cache_min' => 600, # when changetime before this limit 10min
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
-			'db_h'=>"main",'db_name'=>$App::501::db_name,'tb_name'=>"a501_image"
+			'db_h'=>"main",'db_name'=>$App::501::db_name,'tb_name'=>"a501_image",
+			'ID_entity' => $env{'image.ID_entity'}
 		}),
 		'-recache' => $env{'-recache'}
 	);
@@ -1589,7 +1595,7 @@ sub get_image_file
 		if (!$image{'ID_file'})
 		{
 			main::_log("this image does not have format '$env{'image_file.ID_format'}'");
-			# trying to regenerate (slow down...)
+			# trying to regenerate (can be very slow...)
 			App::501::functions::image_file_generate(
 				'image.ID_entity' => $image{'ID_entity_image'},
 				'image_format.ID' => $env{'image_file.ID_format'}
