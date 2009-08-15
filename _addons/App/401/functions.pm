@@ -507,7 +507,7 @@ sub article_add
 	
 	if ($content_updated)
 	{
-		App::020::SQL::functions::_save_changetime({'db_h'=>'main','db_name'=>$App::401::db_name,'tb_name'=>'a401_article'});
+		App::020::SQL::functions::_save_changetime({'db_h'=>'main','db_name'=>$App::401::db_name,'tb_name'=>'a401_article','ID_entity'=>$env{'article.ID_entity'}});
 	}
 	
 	$t->close();
