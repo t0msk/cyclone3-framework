@@ -82,7 +82,7 @@ This function makes automatically journalization copy of every created new row, 
   '-replace' => 0 # use REPLACE INTO instead of INSERT INTO
  )
 
-Please never try over this function setting columns named ID, ID_entity and datetime_create.
+Please don't forget that this funcion is low-level, also is not escaping column values, that's your work!
 
 Function returns ID, which is in new() same as ID_entity!
 
@@ -441,11 +441,11 @@ Updates one row ( also one ID ) in main table.
    'column2' => "number", # same
   },
   '-journalize' => 1, # create journal copy of this update
-  '-historical' => 'datetime', # update historical version of data
+  '-historical' => 'datetime', # update historical version of data (not yet implemented)
   '-posix' => 1, # posix enhanced table (set posix_modified to $main::USRM{'ID_user'})
  )
 
-Please do not set column datetime_create. datetime_create is updatet automatically.
+Please do not set column datetime_create. datetime_create is updated automatically.
 
 =cut
 
@@ -525,6 +525,11 @@ $sel_set
 			}
 			
 		}
+		
+		# get ID_entity
+		my %sth1=TOM::Database::SQL::execute(qq{SELECT ID_entity FROM `$env{'db_name'}`.`$env{'tb_name'}` WHERE ID=$env{'ID'} LIMIT 1},'db_h'=>$env{'db_h'},'quiet'=>1);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		$env{'ID_entity'}=$db1_line{'ID_entity'};
 		
 		_save_changetime(\%env);
 		
@@ -1401,6 +1406,7 @@ sub _get_changetime
 	}
 	
 	my $key=$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'tb_name'};
+		$key.='::'.$env{'ID_entity'} if $env{'ID_entity'};
 	
 	if ($main::env{'cache'}{'db_changed'}{$key})
 	{
@@ -1439,14 +1445,23 @@ sub _save_changetime
 	}
 	
 	my $key=$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'tb_name'};
+	my $key_entity=$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'tb_name'}.'::'.$env{'ID_entity'};
 	
 	my $tt=Time::HiRes::time();
 	$main::env{'cache'}{'db_changed'}{$key}=$tt;
+	$main::env{'cache'}{'db_changed'}{$key_entity}=$tt;
 	
 	$Ext::CacheMemcache::cache->set
 	(
 		'namespace' => "db_changed",
 		'key' => $key,
+		'value' => $tt,
+	);
+	
+	$Ext::CacheMemcache::cache->set
+	(
+		'namespace' => "db_changed",
+		'key' => $key_entity,
 		'value' => $tt,
 	);
 	
