@@ -109,7 +109,7 @@ sub execute
 	{
 		$env{'video_format.name'}='full';
 	}
-
+	
 	$env{'video.ID_category'}=1 unless exists $env{'video.ID_category'};
 	
 	if ($env{'video.ID_category'} == 0)
@@ -118,19 +118,19 @@ sub execute
 	}
 	
 	$env{'image_format.name'}="thumbnail" unless $env{'image_format.name'};
-
+	
 	$env{'video_attrs.lng'}=$env{'lng'} unless $env{'video_attrs.lng'};
 	$env{'video_attrs.status'}='Y' unless $env{'video_attrs.status'};
 	$env{'sql_limit'}='1' unless $env{'sql_limit'};
-
+	
 	$env{'sql_order_by'}='video.datetime_rec_start DESC, video.ID_entity_video DESC' unless $env{'sql_order_by'};
-
+	
 	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
 	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
 	{
 		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
 	}
-
+	
 	my $sql_where;
 	
 	if ($env{'video.ID_category'}=~/^([\d,]+)$/)
@@ -201,12 +201,12 @@ sub execute
 		main::_log("added video.name_url LIKE '$env{'video.name_url'}'");
 		$sql_where.=" AND video.name_url LIKE '".TOM::Security::form::sql_escape($env{'video.name_url'})."'";
 	}
-
+	
 	if ($env{'sql_where'})
 	{
 		$sql_where.=" AND ".$env{'sql_where'};
 	}
-
+	
 	my $sql=qq{
 		SELECT
 --			DISTINCT(ID_entity_video),
@@ -225,21 +225,21 @@ sub execute
 		LIMIT $env{'sql_limit'}
 	};
 	
-
+	
 	my $item_counter=0;
-
+	
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$item_counter++;
-
+		
 		my $item=
 			$XSGN{'item.'.$item_counter}
 			|| $XSGN{'item'};
-
+		
 		$db0_line{'datetime_recorded'}=$db0_line{'datetime_rec_start'};
 		$db0_line{'datetime_recorded'}=~s|^(.*):\d\d$|$1|;
-
+		
 		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_rec_start'});
 		$db0_line{'datetime_rec_start.year'}=$db0_line{'date_recorded.year'}=$datetime{'year'};
 		$db0_line{'datetime_rec_start.month'}=$db0_line{'date_recorded.month'}=$datetime{'month'};
@@ -247,11 +247,11 @@ sub execute
 		$db0_line{'datetime_rec_start.hour'}=$datetime{'hour'};
 		$db0_line{'datetime_rec_start.min'}=$datetime{'min'};
 		$db0_line{'datetime_rec_start.sec'}=$datetime{'sec'};
-
+		
 		# video owner in result list
 		my %owner=App::301::authors::get_author($db0_line{'posix_owner'});
 		$item=~s|<%owner_(.*?)%>|$owner{$1}|g;
-
+		
 		# count parts visits
 		my $sql=qq{
 			SELECT
@@ -264,12 +264,10 @@ sub execute
 		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
 		my %db1_line=$sth1{'sth'}->fetchhash();
 		$db0_line{'visits'}=$db1_line{'visits'};
-
-
+		
+		
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
-
-#		next;
-
+		
 		my $relation=(App::160::SQL::get_relations(
 			'db_name' => $App::510::db_name,
 			'l_prefix' => 'a510',
@@ -279,12 +277,11 @@ sub execute
 			'r_db_name' => $App::501::db_name,
 			'r_prefix' => 'a501',
 			'r_table' => 'image',
-	#		'r_ID_entity' => '2'
 			'limit' => 1
 		))[0];
 		if ($relation->{'ID'})
 		{
-
+			
 			$item=~s|<%image.ID%>|$relation->{'r_ID_entity'}|g;
 			
 #			my %db1_line=App::501::functions::get_image_file(
@@ -306,14 +303,14 @@ sub execute
 			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
 			if (my %db1_line=$sth1{'sth'}->fetchhash())
 			{
-
+				
 				$item=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;
 			}
-
+			
 		}
-
+		
 		$item=~s|<%item_number%>|$item_counter|g;
-
+		
 		if($XSGN{'TMP'}=~/<#item.$item_counter#>/)
 		{
 			$XSGN{'TMP'}=~s|<#item.$item_counter#>|$item|;
@@ -323,12 +320,12 @@ sub execute
 			$XSGN{'TMP'}=~s|<#item#>|$item|;
 		}
 	}
-
+	
 	if (!$item_counter)
 	{
 		$XSGN{'TMP'}=$XSGN{'TMP-empty'};
 	}
-
+	
 	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
 	{
 		$env{'offset'}=$1;
@@ -338,8 +335,8 @@ sub execute
 	{
 		$env{'count'}=$env{'sql_limit'};
 	}
-
-
+	
+	
 	# offset
 	if ($env{'count'} && $item_counter >= $env{'count'}) # count
 	{
