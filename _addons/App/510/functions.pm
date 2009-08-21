@@ -566,7 +566,7 @@ sub video_part_file_process
 				if ($env{'map0'}){push @encoder_env, '-map '.$env{'map0'};}
 				if ($env{'map1'}){push @encoder_env, '-map '.$env{'map1'};}
 				if ($env{'map2'}){push @encoder_env, '-map '.$env{'map2'};}
-				if (exists $env{'an'}){push @encoder_env, '-an'}
+				if (exists $env{'an'} && !$env{'acodec'}){push @encoder_env, '-an'}
 				if (exists $env{'sameq'}){push @encoder_env, '-sameq '}
 				if (exists $env{'deinterlace'}){push @encoder_env, '-deinterlace '}
 				if ($env{'flags'}){push @encoder_env, '-flags '.$env{'flags'};}
@@ -662,6 +662,16 @@ sub video_part_file_process
 			$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
 			if ($outret{'return'} && $outret{'return'} != 11){$t->close();return %outret}
 			
+			$procs++;
+			next;
+		}
+		
+		if ($function_name eq "MP4Box")
+		{
+			main::_log("exec $function_name()");
+			my $cmd='cd '.$main::ENV{'TMP'}.';'.$MP4Box_exec.' '.$files[@files-1]->{'filename'};
+			main::_log("cmd=$cmd");
+			$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
 			$procs++;
 			next;
 		}
@@ -1519,6 +1529,12 @@ sub video_part_file_add
 	# size
 	my $file_size=(stat($env{'file'}))[7];
 	main::_log("file size='$file_size'");
+	
+	if (!$file_size)
+	{
+		$t->close();
+		return undef;
+	}
 	
 	# checksum
 	open(CHKSUM,'<'.$env{'file'});
