@@ -369,6 +369,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_view` AS (
 		image_attrs.order_id,
 		image_attrs.lng,
 		
+		image_file.datetime_create AS file_datetime_create,
 		image_file.image_width,
 		image_file.image_height,
 		image_file.file_size,
