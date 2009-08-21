@@ -120,7 +120,7 @@ sub new_relation
 		main::_log("input '$_'='$env{$_}'");
 	}
 	
-	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'l_prefix'}.'::'.$env{'l_table'};
+	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'l_prefix'}.'::'.$env{'l_table'}.'::'.$env{'l_ID_entity'};
 	
 	# check if this relation already exists
 	my $relation=(get_relations(
@@ -294,7 +294,7 @@ sub remove_relation
 				'tb_name' => 'a160_relation',
 				'-journalize' => 1,
 			);
-			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$relation->{'l_prefix'}.'::'.$relation->{'l_table'};
+			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$relation->{'l_prefix'}.'::'.$relation->{'l_table'}.'::'.$relation->{'l_ID_entity'};
 			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 			{
 				# save info about changed set of relations
@@ -374,7 +374,7 @@ sub relation_change_status
 				},
 				'-journalize' => 1,
 			);
-			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$relation->{'l_prefix'}.'::'.$relation->{'l_table'};
+			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$relation->{'l_prefix'}.'::'.$relation->{'l_table'}..'::'.$relation->{'l_ID_entity'};
 			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 			{
 				# save info about changed set of relations
@@ -443,7 +443,7 @@ sub get_relations
 	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_} && $debug};
 	
 	# Memcached key
-	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'l_prefix'}.'::'.$env{'l_table'};
+	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'l_prefix'}.'::'.$env{'l_table'}.'::'.$env{'l_ID_entity'};
 	my $cache_key='a160_relation::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'status'}.'::'.$env{'rel_type'}.'::'.
 		$env{'ID'}.'/'.
 		$env{'ID_entity'}.'/'.
