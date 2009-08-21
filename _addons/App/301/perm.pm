@@ -1097,8 +1097,7 @@ sub ACL_org_update
 	
 	my $sql=qq{
 		SELECT
-			ID,
-			ID_entity
+			*
 		FROM
 			`$db_name`.a301_ACL_org
 		WHERE
@@ -1114,22 +1113,31 @@ sub ACL_org_update
 	{
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		my %columns;
-		$columns{'perm_R'} = "'".$env{'perm_R'}."'" if $env{'perm_R'};
-		$columns{'perm_W'} = "'".$env{'perm_W'}."'" if $env{'perm_W'};
-		$columns{'perm_X'} = "'".$env{'perm_X'}."'" if $env{'perm_X'};
-		$columns{'roles'} = "'".$env{'roles'}."'" if exists $env{'roles'};
-		App::020::SQL::functions::update(
-			'ID' => $db0_line{'ID'},
-			'db_h' => 'main',
-			'db_name' => $db_name,
-			'tb_name' => 'a301_ACL_org',
-			'columns' =>
-			{
-				%columns,
-			},
-			'-journalize' => 1,
-			'-posix' => 1,
-		);
+		
+		$columns{'perm_R'} = "'".$env{'perm_R'}."'"
+			if ($env{'perm_R'} && $env{'perm_R'} ne $db0_line{'perm_R'});
+		$columns{'perm_W'} = "'".$env{'perm_W'}."'"
+			if ($env{'perm_W'} && $env{'perm_W'} ne $db0_line{'perm_W'});
+		$columns{'perm_X'} = "'".$env{'perm_X'}."'"
+			if ($env{'perm_X'} && $env{'perm_X'} ne $db0_line{'perm_X'});
+		$columns{'roles'} = "'".$env{'roles'}."'"
+			if (exists $env{'roles'} && $env{'roles'} ne $db0_line{'roles'});
+		
+		if (keys %columns)
+		{
+			App::020::SQL::functions::update(
+				'ID' => $db0_line{'ID'},
+				'db_h' => 'main',
+				'db_name' => $db_name,
+				'tb_name' => 'a301_ACL_org',
+				'columns' =>
+				{
+					%columns,
+				},
+				'-journalize' => 1,
+				'-posix' => 1,
+			);
+		}
 		$t->close();
 		return 1;
 	}
