@@ -274,13 +274,52 @@ sub image_file_generate
 	if ($file_parent{'status'} ne "Y")
 	{
 		main::_log("parent image_file is disabled or not available",1);
-		image_file_add_error
-		(
-			'image.ID_entity' => $image{'ID_entity'},
-			'image_format.ID' => $format{'ID'}
-		);
-		$t->close();
-		return undef;
+		if ($file_parent{'status'} ne "E" && $format_parent{'ID'} ne $App::501::image_format_original_ID )
+		{
+			main::_log("try to generate parent");
+			my $out=image_file_generate(
+				'image.ID_entity' => $image{'ID_entity'},
+				'image_format.ID' => $format_parent{'ID'}
+			);
+			if ($out)
+			{
+				main::_log("parent generated, try to reload");
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+				%file_parent=$sth0{'sth'}->fetchhash();
+				if ($file_parent{'status'} ne "Y")
+				{
+					main::_log("file info can't be reloaded",1);
+					image_file_add_error
+					(
+						'image.ID_entity' => $image{'ID_entity'},
+						'image_format.ID' => $format{'ID'}
+					);
+					$t->close();
+					return undef;
+				}
+			}
+			else
+			{
+				main::_log("parent can't be generated",1);
+				image_file_add_error
+				(
+					'image.ID_entity' => $image{'ID_entity'},
+					'image_format.ID' => $format{'ID'}
+				);
+				$t->close();
+				return undef;
+			}
+		}
+		else
+		{
+			image_file_add_error
+			(
+				'image.ID_entity' => $image{'ID_entity'},
+				'image_format.ID' => $format{'ID'}
+			);
+			$t->close();
+			return undef;
+		}
 	}
 		
 	my $image1_path=_image_file_genpath
@@ -1519,6 +1558,7 @@ sub get_image_file
 			image_file.image_height,
 			image_file.file_size,
 			image_file.file_ext,
+			image_file.status AS file_status,
 			CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
 	};
 
@@ -1596,6 +1636,18 @@ sub get_image_file
 		{
 			main::_log("this image does not have format '$env{'image_file.ID_format'}'");
 			# trying to regenerate (can be very slow...)
+			App::501::functions::image_file_generate(
+				'image.ID_entity' => $image{'ID_entity_image'},
+				'image_format.ID' => $env{'image_file.ID_format'}
+			);
+			if (!$env{'-recursive'}) # don't run again
+			{
+				return get_image_file(%env,'-recache'=>1,'-recursive'=>1);
+			}
+		}
+		main::_log("received image_file with status='$image{'file_status'}'");
+		if ($env{'-regenerate'})
+		{
 			App::501::functions::image_file_generate(
 				'image.ID_entity' => $image{'ID_entity_image'},
 				'image_format.ID' => $env{'image_file.ID_format'}
