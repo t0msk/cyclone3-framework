@@ -266,6 +266,77 @@ encode()'",
 
 
 
+# commercial
+our $commercial_cat_ID_entity;
+our %commercial_cat;
+
+# find any category;
+my $sql="
+	SELECT
+		ID, ID_entity
+	FROM
+		`$App::510::db_name`.`a510_video_cat`
+	WHERE
+		name='Commercials' AND
+		lng IN ('".(join "','",@TOM::LNG_accept)."')
+	LIMIT 1
+";
+my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+if (my %db0_line=$sth0{'sth'}->fetchhash())
+{
+	$commercial_cat_ID_entity=$db0_line{'ID_entity'} unless $commercial_cat_ID_entity;
+}
+else
+{
+	$commercial_cat_ID_entity=App::020::SQL::functions::tree::new(
+		'db_h' => "main",
+		'db_name' => $App::510::db_name,
+		'tb_name' => "a510_video_cat",
+		'parent_ID' => $App::510::system_cat{$tom::LNG},
+		'columns' => {
+			'name' => "'Commercials'",
+			'lng' => "'$tom::LNG'",
+			'status' => "'L'"
+		},
+		'-journalize' => 1
+	);
+}
+foreach my $lng(@TOM::LNG_accept)
+{
+	my $sql=qq{
+		SELECT
+			ID, ID_entity
+		FROM
+			`$App::510::db_name`.`a510_video_cat`
+		WHERE
+			ID_entity=$commercial_cat_ID_entity AND
+			lng='$lng'
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$commercial_cat{$lng}=$db0_line{'ID'};
+	}
+	else
+	{
+		$commercial_cat{$lng}=App::020::SQL::functions::tree::new(
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_video_cat",
+			'parent_ID' => $App::510::system_cat{$lng},
+			'columns' => {
+				'ID_entity' => $commercial_cat_ID_entity,
+				'name' => "'Commercials'",
+				'lng' => "'$lng'",
+				'status' => "'L'"
+			},
+			'-journalize' => 1
+		);
+	}
+}
+
+
 
 # check relation to a501
 our $thumbnail_cat_ID_entity;
