@@ -77,7 +77,7 @@ sub execute
 	alarm(0);
 	$env{'time_max'}=60*10 unless $env{'time_max'};
 	my $encode_max=$env{'parallel'}; # max parallel processes
-		$encode_max=4 unless $encode_max;
+		$encode_max=2 unless $encode_max;
 	$env{'sql_limit'}=$encode_max+1; # find max files to encode
 	
 	
@@ -96,7 +96,7 @@ sub execute
 		next if $p->{'cmndline'}=~/sh -c/;
 		$encode++;
 	}
-	main::_log("mencoders running - $encode");
+	main::_log("encoders running - $encode");
 	
 	if ($encode >= $encode_max)
 	{
