@@ -1770,6 +1770,7 @@ sub video_part_file_add
 					'from_parent' => "'$env{'from_parent'}'",
 					'regen' => "'N'",
 					'status' => "'Y'",
+					'datetime_create' => "FROM_UNIXTIME($main::time_current)", # hack
 					%columns
 				},
 				'-journalize' => 1,
@@ -1809,6 +1810,7 @@ sub video_part_file_add
 					'from_parent' => "'$env{'from_parent'}'",
 					'regen' => "'N'",
 					'status' => "'Y'",
+					'datetime_create' => "FROM_UNIXTIME($main::time_current)", # hack
 					%columns
 				},
 				'-journalize' => 1,
@@ -1858,6 +1860,7 @@ sub video_part_file_add
 				'file_ext' => "'$file_ext'",
 				'from_parent' => "'$env{'from_parent'}'",
 				'status' => "'Y'",
+				'datetime_create' => "FROM_UNIXTIME($main::time_current)", # hack
 				%columns
 			},
 			'-journalize' => 1
@@ -2274,6 +2277,137 @@ sub get_video_part_file
 }
 
 
+=head2 get_video_part_file_process_front()
+
+Returns front of video_part_file's to process by encoder.
+
+	foreach my $video_part_file=(get_video_part_file_process_front(
+		'limit' => 10
+	);
+
+=cut
+
+
+sub get_video_part_file_process_front
+{
+	my %env=@_;
+	$env{'limit'}=10 unless $env{'limit'};
+	
+	my @data;
+	my $sql=qq{
+		SELECT
+			video_part.ID_entity AS ID_entity_video,
+			video_part.ID AS ID_part,
+			video_format.ID_entity AS ID_entity_format,
+			video_format.datetime_create AS format_datetime_create,
+			video_format_p.ID_entity AS ID_entity_format_p,
+			video_part_file.ID AS ID_file,
+			video_part_file.datetime_create AS file_datetime_create,
+			video_part_file.status AS file_status,
+			video_part_file_process.status AS process
+		FROM
+			`$App::510::db_name`.a510_video_part AS video_part
+		
+		
+		LEFT JOIN `$App::510::db_name`.a510_video AS video ON
+		(
+			video_part.ID_entity = video.ID_entity
+		)
+		LEFT JOIN `$App::510::db_name`.a510_video_attrs AS video_attrs ON
+		(
+			video_attrs.ID_entity = video.ID
+		)
+		
+		
+		LEFT JOIN `$App::510::db_name`.a510_video_format AS video_format ON
+		(
+			video_format.status IN ('Y','L') AND
+			video_format.name NOT LIKE 'original'
+		)
+		LEFT JOIN `$App::510::db_name`.a510_video_part_file AS video_part_file ON
+		(
+			video_part.ID = video_part_file.ID_entity AND video_part_file.ID_format = video_format.ID_entity
+		)
+		LEFT JOIN `$App::510::db_name`.a510_video_part_file_process AS video_part_file_process ON
+		(
+			video_part_file_process.ID_part = video_part.ID AND
+			video_part_file_process.ID_format = video_format.ID_entity AND
+			video_part_file_process.datetime_start >= video_format.datetime_create AND
+			video_part_file_process.datetime_start <= NOW() AND
+			video_part_file_process.datetime_stop IS NULL
+		)
+		
+		/* join parent format */
+		LEFT JOIN `$App::510::db_name`.a510_video_format AS video_format_p ON
+		(
+			video_format_p.status IN ('Y','L') AND
+			video_format_p.ID_charindex LIKE LEFT(video_format.ID_charindex,LENGTH(video_format.ID_charindex)-4)
+		)
+		LEFT JOIN `$App::510::db_name`.a510_video_part_file AS video_part_file_p ON
+		(
+			video_part.ID = video_part_file_p.ID_entity AND video_part_file_p.ID_format = video_format_p.ID_entity
+		)
+		LEFT JOIN `$App::510::db_name`.a510_video_part_file_process AS video_part_file_process_p ON
+		(
+			video_part_file_process_p.ID_part = video_part.ID AND
+			video_part_file_process_p.ID_format = video_format_p.ID_entity AND
+			video_part_file_process_p.datetime_start >= video_format_p.datetime_create AND
+			video_part_file_process_p.datetime_start <= NOW() AND
+			video_part_file_process_p.datetime_stop IS NULL
+		)
+		
+		WHERE
+			/* only not trashed video parts */
+			video_part.status IN ('Y','N') AND
+			/* only not trashed videos */
+			video.status IN ('Y','N') AND
+			/* only not trashed video_attrs */
+			video_attrs.status IN ('Y','N') AND
+			/* skip videos locked */
+			video_part.process_lock = 'N'
+			/* skip videos in processing */
+			AND video_part_file_process.ID IS NULL
+			AND video_part_file_process_p.ID IS NULL
+			/* parent video must exists */
+			AND video_part_file_p.ID
+			AND video_part_file_p.status='Y'
+			AND
+			(
+				(
+					/* video_part_file is missing, but required */
+					video_part_file.ID IS NULL AND
+					video_format.required='Y'
+				)
+				OR
+				(
+					/* can be in error state, but the error state is older than new video format definition */
+					video_part_file.ID IS NOT NULL AND
+					video_format.datetime_create > video_part_file.datetime_create
+				)
+				OR
+				(
+					/* or parent file has been changed */
+					video_part_file.ID IS NOT NULL AND
+					video_part_file.datetime_create <= video_part_file_p.datetime_create
+				)
+			)
+		GROUP BY
+			video_part.ID, video_format.ID
+		ORDER BY
+			video_format.ID_charindex, video_part.datetime_create DESC
+		LIMIT $env{'limit'}
+	};
+	my $i;
+	my %sth0=TOM::Database::SQL::execute($sql);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		main::_log("[$i/$sth0{'rows'}] video.ID_entity=$db0_line{'ID_entity_video'} video_part.ID=$db0_line{'ID_part'} video_format.ID_entity='$db0_line{'ID_entity_format'}' video_format.datetime_create='$db0_line{'format_datetime_create'}' video_part_file.ID=$db0_line{'ID_file'} video_part_file.datetime_create='$db0_line{'file_datetime_create'}' video_part_file.status='$db0_line{'file_status'}' video_format_p.ID_entity='$db0_line{'ID_entity_format_p'}'");
+		push @data,{%db0_line};
+	}
+	
+	return @data;
+}
 
 
 =head1 AUTHORS
