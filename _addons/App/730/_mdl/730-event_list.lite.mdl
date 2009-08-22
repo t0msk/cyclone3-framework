@@ -1,0 +1,505 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+=head1 NAME
+
+730-event_list.lite.mdl
+
+=head1 DESCRIPTION
+
+Lite list of events (default for upcoming)
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::730::_init|app/"730/_init.pm">
+
+=back
+
+=cut
+
+use App::730::_init;
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<-xlng_load> - load template internationalization file
+
+=item *
+
+B<db_name> - database name
+
+=item *
+
+B<sql_limit> - limit to display (default '1')
+
+=item *
+
+B<sql_limit_start> - at start skip defined items
+
+=item *
+
+B<sql_order_by> - order by in SQL
+
+=item *
+
+B<sql_where> - where in SQL
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default
+
+=item *
+
+B<#previous#> B<#next#> - to skip to another offset
+
+=item *
+
+B<previous> B<next> - include into <#previous#> <#next#>
+
+=item *
+
+B<%offset%> - offset value (calculated from sql_limit input param)
+
+=item *
+
+B<%sql_limit%> - SQL limit
+
+=item *
+
+B<%sql_limit_start%> - start SQL limit from value
+
+=item *
+
+B<#item#> - gateway to evemt item
+
+=item *
+
+B<item> - event item
+
+=item *
+
+B<item.1> - first event item
+
+=item *
+
+B<%db_*%> - event database items
+
+B<%db_name%>, B<%db_name_url%>, ...
+
+=item *
+
+B<%ID%> - event ID
+
+=item *
+
+B<%ID_entity%> - event ID_entity
+
+=item *
+
+B<%name%> - event name
+
+=item *
+
+B<TMP_failure_no-data> - if defined, replaces TMP for empty database output
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
+	$env{'db_name'}=$App::730::db_name unless $env{'db_name'};
+	
+	$env{'thumbnail.image_format.ID'}=$App::501::image_format_thumbnail_ID unless $env{'thumbnail.image_format.ID'};
+	
+	$env{'event_lng.lng'}=$env{'lng'} unless $env{'event_lng.lng'};
+	$env{'sql_limit'}='10' unless $env{'sql_limit'};
+	$env{'event.status'}='Y' unless $env{'event.status'};
+		my $status_sql=join "','", split('',$env{'event.status'});
+	
+	$env{'sql_order_by'}='event.datetime_start ASC' unless $env{'sql_order_by'};
+	
+	if (not $env{'sql_limit'}=~/,/){$env{'sql_limit'}="0,".$env{'sql_limit'}}
+	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
+	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
+	{
+		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
+	}
+	
+	my $count_max;#=$env{'sql_limit'};
+	if ($env{'sql_limit'}=~/,(\d+)/)
+	{
+		$count_max=$1;
+		$env{'sql_limit'}=~s/,(\d+)/",".($1+1)/e;
+	}
+	
+	my $execution_success=1;
+	
+	my $sql_where;
+	
+	if ($env{'sql_where'})
+	{
+		$sql_where.=" AND ".$env{'sql_where'};
+	}
+	
+	my $sql=qq{
+		SELECT
+			
+			event.ID_entity AS ID_entity_event,
+			event.ID AS ID_event,
+			
+			event.name,
+			event.name_url,
+			event.datetime_start, -- event starts
+			event.datetime_finish, -- event ends
+			event.datetime_publish_start,
+			event.datetime_publish_stop,
+			event.link,
+			event.location,
+			event.metadata,
+			event.status,
+			
+			event_lng.name_long,
+			event_lng.description_short,
+			event_lng.lng
+			
+		FROM `$env{'db_name'}`.a730_event AS event
+		LEFT JOIN `$env{'db_name'}`.a730_event_lng AS event_lng ON
+		(
+			event_lng.ID_entity = event.ID_entity AND
+			event_lng.lng = '$env{'lng'}'
+		)
+		
+		WHERE
+			event.status IN ('$status_sql') AND
+			event.datetime_start >= NOW() AND
+			event.datetime_publish_start <= NOW() AND
+			(event.datetime_publish_stop IS NULL OR event.datetime_publish_stop >= NOW())
+			$sql_where
+			
+		ORDER BY
+			$env{'sql_order_by'}
+			
+		LIMIT
+			$env{'sql_limit'}
+	};
+	
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log_'=>1,'-slave'=>1);
+	
+	if(!$sth0{'sth'})
+	{
+		main::_log("SQL can't be executed",1);
+	}
+	
+	if(!$sth0{'rows'})
+	{
+		main::_log("err: could not fetch events");
+	}
+	
+	main::_log("received ".$sth0{'rows'}." rows");
+	
+	# Line counter
+	my $item_counter=0;
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+      $item_counter++;
+		
+		last if $count_max<$item_counter;
+		
+		my $item=
+			$XSGN{'item.'.$item_counter}
+			|| $XSGN{'item'};
+		
+      my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
+      $db0_line{'datetime_start.year'}=$datetime{'year'};
+      $db0_line{'datetime_start.month'}=$datetime{'month'};
+      $db0_line{'datetime_start.mday'}=$datetime{'mday'};
+      $db0_line{'datetime_start.hour'}=$datetime{'hour'};
+      $db0_line{'datetime_start.min'}=$datetime{'min'};
+      $db0_line{'datetime_start.sec'}=$datetime{'sec'};
+      
+		$item=~s|<#link#>|$XSGN{'link'}|g if $db0_line{'link'};
+		
+		# fill raw data into $XSGN{'item'}
+		
+		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		
+		# process description_short
+		my $p=new App::401::mimetypes::html;
+		
+		# img
+		$p->{'ignore'}{'img'}=
+			$env{'body.ignore.img'}
+			|| $env{'ignore.img'}
+			|| undef;
+		
+		$p->{'ignore'}{'img.1'}=
+			$env{'description_short.ignore.img.1'}
+			|| $env{'ignore.img.1'}
+			|| undef;
+		
+		# a501_image
+		$p->{'config'}->{'a501_image_file.ID_format'}=
+			$env{'event.'.$item_counter.'.description_short.a501_image_file.ID_format'}
+			|| $env{'event.'.$item_counter.'.a501_image_file.ID_format'}
+			|| $env{'description_short.a501_image_file.ID_format'}
+			|| $env{'a501_image_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.1'}=
+			$env{'event.'.$item_counter.'.description_short.a501_image_file.ID_format.1'}
+			|| $env{'event.'.$item_counter.'.a501_image_file.ID_format.1'}
+			|| $env{'description_short.a501_image_file.ID_format.1'}
+			|| $env{'a501_image_file.ID_format.1'}
+			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.extra'}=
+			$env{'a501_image_file.ID_format.extra'}
+			|| undef;
+		$p->{'entity'}->{'a501_image'}=
+			$XSGN{'description_short.a501_image'}
+			|| $XSGN{'a501_image'}
+			|| undef;
+		$p->{'entity'}->{'a501_image.1'}=
+			$XSGN{'description_short.a501_image.1'}
+			|| $XSGN{'a501_image.1'}
+			|| undef;
+		
+		# a510_video
+		$p->{'config'}->{'a510_video_part_file.ID_format'}=
+			$env{'event.'.$item_counter.'.description_short.a510_video_part_file.ID_format'}
+			|| $env{'event.'.$item_counter.'.a510_video_part_file.ID_format'}
+			|| $env{'description_short.a510_video_part_file.ID_format'}
+			|| $env{'a510_video_part_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a510_video_part_file.ID_format.1'}=
+			$env{'event.'.$item_counter.'.description_short.a510_video_part_file.ID_format.1'}
+			|| $env{'event.'.$item_counter.'.a510_video_part_file.ID_format.1'}
+			|| $env{'description_short.a510_video_part_file.ID_format.1'}
+			|| $env{'a510_video_part_file.ID_format.1'}
+			|| undef;
+		$p->{'entity'}{'a510_video'}=
+			$XSGN{'description_short.a510_video'}
+			|| $XSGN{'a510_video'}
+			|| undef;
+		$p->{'entity'}{'a510_video.1'}=
+			$XSGN{'description_short.a510_video.1'}
+			|| $XSGN{'a510_video.1'}
+			|| undef;
+		$p->{'entity'}{'a510_video_part'}=
+			$XSGN{'description_short.a510_video_part'}
+			|| $XSGN{'a510_video_part'}
+			|| undef;
+		$p->{'entity'}{'a510_video_part.1'}=
+			$XSGN{'description_short.a510_video_part.1'}
+			|| $XSGN{'a510_video_part.1'}
+			|| undef;
+		
+		$p->parse($db0_line{'description_short'});
+		#$p->eof();
+		my $description_short_html=$p->{'out'};
+		$item=~s|<%description_short%>|$description_short_html|g;
+		
+		my $description_short_plain=TOM::Text::format::xml2plain($db0_line{'description_short'});
+		$item=~s|<%description_short_plain%>|$description_short_plain|;
+		
+#		# find alternate attributes (for thumbnail image for example)
+#		$p->parse($db0_line{'body'}) unless $p->{'out_tag'}->{'img.1'};
+		
+		
+		# finding thumbnail to event
+		my $thumbnail;
+		use App::501::_init;
+		my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::730::db_name,
+			'l_prefix' => 'a730',
+			'l_table' => 'event',
+			'l_ID_entity' => $db0_line{'ID_entity_event'},
+			'rel_type' => 'thumbnail',
+			'r_db_name' => $App::501::db_name,
+			'r_prefix' => 'a501',
+			'r_table' => 'image',
+			'status' => 'Y',
+			'limit' => 1
+		))[0];
+		if ($relation->{'ID'})
+		{
+			my %image=App::501::functions::get_image_file(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_file.ID_format' => $env{'thumbnail.image_format.ID'},
+				'image_attrs.lng' => $tom::lng
+			);
+			if ($image{'ID_entity_image'})
+			{
+				$thumbnail=1;
+				my $item_thumbnail=$XSGN{'thumbnail'};
+				$item_thumbnail=~s|<%db_(.*?)%>|$image{$1}|g;
+				$item=~s|<#thumbnail#>|$item_thumbnail|g;
+			}
+		}
+		
+		my @ACL=App::301::perm::get_ACL(
+			'r_prefix' => 'a730',
+			'r_table' => 'event',
+			'r_ID_entity' => $db0_line{'ID_entity_event'}
+		);
+		
+		my $organizers;
+		foreach my $acl_item (@ACL)
+		{
+			foreach my $role(split(',',$acl_item->{'roles'}))
+			{
+				next unless $role=~/^organizer/;
+				if (length($organizers) > 0){ $organizers .= '; '; } 
+				$organizers .= $acl_item->{'name_short'} . ' ';
+				if (!$thumbnail)
+				{
+					if ($acl_item->{'folder'} eq "O")
+					{
+						require App::710::_init;
+						my $relation=(App::160::SQL::get_relations(
+							'db_name' => $App::710::db_name,
+							'l_prefix' => 'a710',
+							'l_table' => 'org',
+							'l_ID_entity' => $acl_item->{'ID'},
+							'rel_type' => 'avatar',
+							'r_db_name' => $App::501::db_name,
+							'r_prefix' => 'a501',
+							'r_table' => 'image',
+							'status' => 'Y',
+							'limit' => 1
+						))[0];
+						if ($relation->{'ID'})
+						{
+							my %image=App::501::functions::get_image_file(
+								'image.ID_entity' => $relation->{'r_ID_entity'},
+								'image_file.ID_format' => $env{'thumbnail.image_format.ID'},
+								'image_attrs.lng' => $tom::lng
+							);
+							if ($image{'ID_entity_image'})
+							{
+								$thumbnail=1;
+								my $item_thumbnail=$XSGN{'thumbnail'};
+								$item_thumbnail=~s|<%db_(.*?)%>|$image{$1}|g;
+								$item=~s|<#thumbnail#>|$item_thumbnail|g;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		$item=~s|<%organizers%>|$organizers|g;
+		
+		
+		$item=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+		$item=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+		
+		$item=~s|<%item_number%>|$item_counter|g;
+		
+		$item=~s|<%name%>|$db0_line{'name'}|;
+		
+		if($XSGN{'TMP'}=~/<#item.$item_counter#>/)
+		{
+			$XSGN{'TMP'}=~s|<#item.$item_counter#>|$item|;
+		}
+		else
+		{
+			$XSGN{'TMP'}=~s|<#item#>|$item|;
+		}
+	}
+	
+	$XSGN{'TMP'}=~s|<%total_count%>|$item_counter|g;
+	
+	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
+	{
+		$env{'offset'}=$1;
+		#$env{'count'}=$2;
+	}
+	else
+	{
+		#$env{'count'}=$env{'sql_limit'};
+	}
+	#$env{'count'}=$count_max;
+	
+	
+	# offset
+	if ($count_max && $item_counter >= $count_max && $count_max < $sth0{'rows'}) # count
+	{
+		$XSGN{'next'}=~s|<%offset%>|$env{'offset'}+$count_max|ge;
+		$XSGN{'TMP'}=~s|<#next#>|$XSGN{'next'}|g;
+	}
+	if ($env{'offset'}-$env{'sql_limit_start'})
+	{
+		if ($env{'offset'} - $count_max - $env{'sql_limit_start'}>0)
+		{
+			$XSGN{'previous'}=~s|<%offset%>|$env{'offset'}-$count_max|ge;
+		}
+		else
+		{
+			$XSGN{'previous'}=~s|<%offset%>||ge;
+		}
+		$XSGN{'TMP'}=~s|<#previous#>|$XSGN{'previous'}|g;
+	}
+	
+	
+	if(!$item_counter)
+	{
+		if($XSGN{'TMP_failure_no-data'})
+		{
+			$XSGN{'TMP'} = $XSGN{'TMP_failure_no-data'};
+		}
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
