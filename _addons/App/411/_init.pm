@@ -47,6 +47,10 @@ L<App::411::functions|app/"411/functions.pm">
 
 L<App::411::a160|app/"411/a160.pm">
 
+=item *
+
+L<App::411::a301|app/"411/a301.pm">
+
 =back
 
 =cut
@@ -55,6 +59,7 @@ use App::020::_init; # data standard 0
 use App::301::_init;
 use App::411::functions;
 use App::411::a160;
+use App::411::a301;
 
 
 =head1 CONFIGURATION

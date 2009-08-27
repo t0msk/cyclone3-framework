@@ -49,94 +49,25 @@ our $VERSION='$Rev$';
 
 # addon functions
 our %functions=(
-	# user data
-	'data.file_dir.tree' => 1,
-	
-	'data.file.list' => 1,
-	
-	'data.file.item' => 1,
-	'data.file.properties' => 1,
-	
-	# actions
-	'action.file.create' => 1,
-	'action.file.enable' => 1,
-	'action.file.move' => 1,
-	'action.file.trash' => 1,
-	'action.file.convert' => 1,
-	
-	'action.file_dir.create' => 1,
-	'action.file_dir.enable' => 1,
-	'action.file_dir.trash' => 1,
+	'addon' => 1,
 );
 
 
 # addon roles
 our %roles=(
-	
-	'file_dir' => [
-		'data.file_dir.tree',
-		'action.file_dir.trash',
+	'addon' => [
+		'addon'
 	],
-	
-	'file_dir.enable' => [
-		'action.file_dir.enable',
-	],
-	
-	'file_dir.create' => [
-		'data.file_dir.tree',
-		'action.file_dir.create',
-	],
-	
-	'file' => [
-		'data.file.list',
-		'data.file.properties',
-	],
-	
-	'file.item' => [
-		'data.file.item',
-	],
-	
-	'file.create' => [
-		'action.file.create'
-	],
-	
-	'file.enable' => [
-		'action.file.enable'
-	],
-	
-	'file.move' => [
-		'action.file.move'
-	],
-	
-	'file.trash' => [
-		'action.file.trash'
-	],
-	
-	'file.convert' => [
-		'action.file.convert'
-	],
-	
 );
 
 
 # default groups related to addon roles with defined permissions
 our %groups=(
 	'world' => {
-		'file_dir' => 'r--',
-		'file' => 'r--',
-		'file.item' => 'r--'
+#		'poll' => 'r  '
 	},
 	'editor' => {
-		'file_dir' => 'rwx',
-		'file_dir.create' => 'rwx',
-		'file_dir.enable' => 'rwx',
-		'file' => 'rwx',
-		'file.item' => 'rwx',
-		'file.create' => 'rwx',
-		'file.enable' => 'rwx',
-		'file.move' => 'rwx',
-		'file.trash' => 'rwx',
-		'file.convert' => 'rwx',
+		'addon' => 'rwx',
 	}
 );
 
@@ -144,24 +75,7 @@ our %groups=(
 # ACL role override
 our %ACL_roles=(
 	'owner' => {
-		'file_dir' => 'rwx',
-		'file' => 'rwx',
-		'file.item' => 'rwx',
-		'file.create' => 'rwx',
-		'file.move' => 'rwx',
-		'file.trash' => 'rwx',
-		'file.convert' => 'rwx',
-	},
-	'guest' => {
-		'file' => 'r  ',
-		'file.item' => 'r  ',
-	},
-	'manager' => {
-		'file_dir' => 'r  ',
-		'file' => 'r  ',
-		'file.enable' => 'rwx',
-		'file.item' => 'r  ',
-		'file_dir.enable' => 'rwx',
+#		'poll' => 'rwx',
 	},
 );
 

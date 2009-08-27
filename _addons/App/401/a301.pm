@@ -50,51 +50,55 @@ our $VERSION='$Rev$';
 # addon functions
 our %functions=(
 	# article data
-	'data.article.visits' => 1,
-	'data.article.title' => 1,
-	'data.article.datetime_start' => 1,
-	'data.article.datetime_stop' => 1,
-	'data.article.priority_A' => 1,
-	'data.article.priority_B' => 1,
-	'data.article.priority_C' => 1,
-	'data.article.editor' => 1,
-	'data.article.subtitle' => 1,
-	'data.article.content' => 1,
+	'addon' => 1,
+#	'data.article.visits' => 1,
+#	'data.article.title' => 1,
+#	'data.article.datetime_start' => 1,
+#	'data.article.datetime_stop' => 1,
+#	'data.article.priority_A' => 1,
+#	'data.article.priority_B' => 1,
+#	'data.article.priority_C' => 1,
+#	'data.article.editor' => 1,
+#	'data.article.subtitle' => 1,
+#	'data.article.content' => 1,
 	
 	# actions
-	'action.article.enable' => 1,
+#	'action.article.enable' => 1,
 );
 
 
 # addon roles
 our %roles=(
-	'article.content' => [
-		'data.article.title',
-		'data.article.subtitle',
-		'data.article.content',
+	'addon' => [
+		'addon'
 	],
-	'article.planning' => [
-		'data.article.datetime_start',
-		'data.article.datetime_stop',
-		'data.article.priority_A',
-		'data.article.priority_B',
-		'data.article.priority_C'
-	],
-	'article.publishing' => [
-		'action.article.enable'
-	],
+#	'article.content' => [
+#		'data.article.title',
+#		'data.article.subtitle',
+#		'data.article.content',
+#	],
+#	'article.planning' => [
+#		'data.article.datetime_start',
+#		'data.article.datetime_stop',
+#		'data.article.priority_A',
+#		'data.article.priority_B',
+#		'data.article.priority_C'
+#	],
+#	'article.publishing' => [
+#		'action.article.enable'
+#	],
 );
 
 
 # default groups related to addon roles with defined permissions
 our %groups=(
 	'world' => {
-		'article.content' => 'r  '
+#		'article' => 'r  '
 	},
 	'editor' => {
-		'article.content' => 'rwx',
-		'article.planning' => 'rwx',
-		'article.publishing' => 'rwx'
+		'addon' => 'rwx',
+#		'article.planning' => 'rwx',
+#		'article.publishing' => 'rwx'
 	}
 );
 
@@ -102,12 +106,13 @@ our %groups=(
 # ACL role override
 our %ACL_roles=(
 	'owner' => {
-		'article.content' => 'rwx',
-		'article.planning' => 'rwx',
+#		'article' => 'rwx',
+#		'article.content' => 'rwx',
+#		'article.planning' => 'rwx',
 	},
-	'manager' => {
-		'article.planning' => 'r x',
-	},
+#	'manager' => {
+#		'article.planning' => 'r x',
+#	},
 );
 
 

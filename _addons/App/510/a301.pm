@@ -49,65 +49,34 @@ our $VERSION='$Rev$';
 
 # addon functions
 our %functions=(
-	# video data
-#	'data.article.visits' => 1,
-#	'data.article.title' => 1,
-#	'data.article.datetime_start' => 1,
-#	'data.article.datetime_stop' => 1,
-#	'data.article.priority_A' => 1,
-#	'data.article.priority_B' => 1,
-#	'data.article.priority_C' => 1,
-#	'data.article.editor' => 1,
-#	'data.article.subtitle' => 1,
-#	'data.article.content' => 1,
-	
-	# actions
-#	'action.article.enable' => 1,
+	'addon' => 1,
 );
 
 
 # addon roles
 our %roles=(
-#	'article.content' => [
-#		'data.article.title',
-#		'data.article.subtitle',
-#		'data.article.content',
-#	],
-#	'article.planning' => [
-#		'data.article.datetime_start',
-#		'data.article.datetime_stop',
-#		'data.article.priority_A',
-#		'data.article.priority_B',
-#		'data.article.priority_C'
-#	],
-#	'article.publishing' => [
-#		'action.article.enable'
-#	],
+	'addon' => [
+		'addon'
+	],
 );
 
 
 # default groups related to addon roles with defined permissions
 our %groups=(
-#	'world' => {
-#		'article.content' => 'r  '
-#	},
-#	'editor' => {
-#		'article.content' => 'rwx',
-#		'article.planning' => 'rwx',
-#		'article.publishing' => 'rwx'
-#	}
+	'world' => {
+#		'poll' => 'r  '
+	},
+	'editor' => {
+		'addon' => 'rwx',
+	}
 );
 
 
 # ACL role override
 our %ACL_roles=(
-#	'owner' => {
-#		'article.content' => 'rwx',
-#		'article.planning' => 'rwx',
-#	},
-#	'manager' => {
-#		'article.planning' => 'r x',
-#	},
+	'owner' => {
+#		'poll' => 'rwx',
+	},
 );
 
 

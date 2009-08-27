@@ -49,55 +49,65 @@ our $VERSION='$Rev$';
 
 # addon functions
 our %functions=(
-	# user data
-	'data.user_group.tree' => 1,
 	
-	'data.user.tree' => 1,
+	'addon' => 1,
+#	'data.user_group' => 1,
+	
+	# user data
+#	'data.user_group.tree' => 1,
+	
+#	'data.user.tree' => 1,
 	
 	# actions
-	'action.user_group.create' => 1,
-	'action.user_group.enable' => 1,
-	'action.user_group.trash' => 1,
+#	'action.user_group.create' => 1,
+#	'action.user_group.enable' => 1,
+#	'action.user_group.trash' => 1,
 	
-	'action.user.enable' => 1,
+#	'action.user.enable' => 1,
 	
-	'action.user.create' => 1,
+#	'action.user.create' => 1,
 );
 
 
 # addon roles
 our %roles=(
 	
-	'user_group' => [
-		'data.user_group.tree',
-		'action.user_group.enable',
-		'action.user_group.trash',
+	'addon' => [
+		'addon',
+#		'action.user_group.enable',
+#		'action.user_group.trash',
 	],
 	
-	'user_group.create' => [
-		'data.user_group.tree',
-		'action.user_group.create',
-	],
+#	'user_group' => [
+#		'data.user_group',
+#		'action.user_group.enable',
+#		'action.user_group.trash',
+#	],
 	
-	'user.create' => [
-		'data.user_group.tree',
-		'action.user.create'
-	],
+#	'user_group.create' => [
+#		'data.user_group.tree',
+#		'action.user_group.create',
+#	],
 	
-	'user.public_data' => [
-		'data.user_group.tree',
-		'action.user.create'
-	],
+#	'user.create' => [
+#		'data.user_group.tree',
+#		'action.user.create'
+#	],
 	
-	'user.private_data' => [
-		'data.user_group.tree',
-		'action.user.create'
-	],
+#	'user.public_data' => [
+#		'data.user_group.tree',
+#		'action.user.create'
+#	],
 	
-	'user.other_contacts' => [
-		'data.user_group.tree',
-		'action.user.create'
-	],
+#	'user.private_data' => [
+#		'data.user_group.tree',
+#		'action.user.create'
+#	],
+	
+#	'user.other_contacts' => [
+#		'data.user_group.tree',
+#		'action.user.create'
+#	],
 	
 );
 
@@ -105,31 +115,32 @@ our %roles=(
 # default groups related to addon roles with defined permissions
 our %groups=(
 	'world' => {
-		'user_group' => 'r  '
+#		'user' => 'r  '
+#		'user_group' => 'r  '
 	},
 	'editor' => {
-		'user_group' => 'rwx',
-		'user.create' => 'rwx',
-		'user.public_data' => 'rwx',
-		'user.private_data' => 'rwx',
-		'user.other_contacts' => 'rwx',
+		'addon' => 'rwx',
+#		'user' => 'r  ',
+#		'user.public_data' => 'rwx',
+#		'user.private_data' => 'rwx',
+#		'user.other_contacts' => 'rwx',
 	}
 );
 
 
 # ACL role override
 our %ACL_roles=(
-	'owner' => {
-		'user.public_data' => 'rwx',
-		'user.private_data' => 'rwx',
-		'user_group' => 'rwx',
-	},
-	'guest' => {
-		'user.public_data' => 'r  ',
-	},
-	'manager' => {
-		'user.private_data' => 'rwx',
-	},
+#	'owner' => {
+#		'user.public_data' => 'rwx',
+#		'user.private_data' => 'rwx',
+#		'user_group' => 'rwx',
+#	},
+#	'guest' => {
+#		'user.public_data' => 'r  ',
+#	},
+#	'manager' => {
+#		'user.private_data' => 'rwx',
+#	},
 );
 
 

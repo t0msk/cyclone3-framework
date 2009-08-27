@@ -1,9 +1,9 @@
 #!/bin/perl
-package App::910::a301;
+package App::730::a301;
 
 =head1 NAME
 
-App::910::a301
+App::821::a301
 
 =cut
 use open ':utf8', ':std';
@@ -15,7 +15,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 =head1 DESCRIPTION
 
-a301 enhancement to a910
+a301 enhancement to a821
 
 =cut
 
@@ -25,7 +25,7 @@ a301 enhancement to a910
 
 =item *
 
-L<App::910::_init|app/"910/_init.pm">
+L<App::821::_init|app/"821/_init.pm">
 
 =item *
 
@@ -39,7 +39,7 @@ L<App::020::_init|app/"020/_init.pm">
 
 =cut
 
-use App::910::_init;
+use App::821::_init;
 use App::301::perm;
 use App::020::_init;
 
@@ -83,7 +83,7 @@ our %ACL_roles=(
 # register this definition
 
 App::301::perm::register(
-	'addon' => 'a910',
+	'addon' => 'a821',
 	'functions' => \%functions,
 	'roles' => \%roles,
 	'ACL_roles' => \%ACL_roles,
@@ -100,31 +100,15 @@ sub get_owner
 	
 	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_}};
 	
-	if ($env{'r_table'} eq "product")
+	if ($env{'r_table'} eq "event")
 	{
 		my $sql=qq{
 			SELECT
 				posix_owner
 			FROM
-				`$App::910::db_name`.a910_product_ent
+				`$App::821::db_name`.a821_discussion
 			WHERE
 				ID_entity='$env{'r_ID_entity'}'
-			LIMIT 1
-		};
-		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'main','quiet'=>1,'-slave'=>0);
-		my %db0_line=$sth0{'sth'}->fetchhash();
-		$t->close();
-		return $db0_line{'posix_owner'};
-	}
-	elsif ($env{'r_table'} eq "product_cat")
-	{
-		my $sql=qq{
-			SELECT
-				posix_owner
-			FROM
-				`$App::910::db_name`.a910_product_cat
-			WHERE
-				ID='$env{'r_ID_entity'}'
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'main','quiet'=>1,'-slave'=>0);
@@ -146,39 +130,22 @@ sub set_owner
 	
 	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_}};
 	
-	if ($env{'r_table'} eq "product_cat")
-	{
-		App::020::SQL::functions::update(
-			'ID' => $env{'r_ID_entity'},
-			'db_h' => 'main',
-			'db_name' => $App::910::db_name,
-			'tb_name' => 'a910_product_cat',
-			'columns' =>
-			{
-				'posix_owner' => "'".$env{'posix_owner'}."'"
-			},
-			'-journalize' => 1,
-			'-posix' => 1
-		);
-		$t->close();
-		return 1;
-	}
-	elsif ($env{'r_table'} eq "product")
+	if ($env{'r_table'} eq "discussion")
 	{
 		my @IDs=App::020::SQL::functions::get_ID_entity
 		(
 			'ID_entity' => $env{'r_ID_entity'},
 			'db_h' => 'main',
-			'db_name' => $App::910::db_name,
-			'tb_name' => 'a910_product_ent',
+			'db_name' => $App::821::db_name,
+			'tb_name' => 'a821_discussion',
 		);
 		if ($IDs[0]->{'ID'})
 		{
 			App::020::SQL::functions::update(
 				'ID' => $IDs[0]->{'ID'},
 				'db_h' => 'main',
-				'db_name' => $App::910::db_name,
-				'tb_name' => 'a910_product_ent',
+				'db_name' => $App::821::db_name,
+				'tb_name' => 'a821_discussion',
 				'columns' =>
 				{
 					'posix_owner' => "'".$env{'posix_owner'}."'"
