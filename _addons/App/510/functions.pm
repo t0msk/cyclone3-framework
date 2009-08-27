@@ -231,13 +231,13 @@ sub video_part_file_generate
 	
 	main::_log("return=$out{'return'}");
 	
-	if (!$out{'return'})
+	if ($out{'return'})
 	{
 		main::_log("parent video_part_file can't be processed",1);
 		
 		my $sql=qq{
 			UPDATE `$App::510::db_name`.`a510_video_part_file_process`
-			SET datetime_stop=NOW(), status='N'
+			SET datetime_stop=NOW(), status='E'
 			WHERE ID=$process_ID
 			LIMIT 1
 		};
@@ -429,7 +429,7 @@ sub video_part_file_process
 		main::_log("copying the file...");
 		File::Copy::copy($env{'video1'}, $env{'video2'});
 		$t->close();
-		$outret{'return'}=1;
+		$outret{'return'}=0;
 		return %outret;
 	}
 	
@@ -660,6 +660,7 @@ sub video_part_file_process
 			main::_log("cmd=$cmd");
 			
 			$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
+#			$outret{'return'}=undef if $outret{'return'}==256;
 			if ($outret{'return'} && $outret{'return'} != 11){$t->close();return %outret}
 			
 			$procs++;
@@ -765,14 +766,14 @@ sub video_part_file_process
 		main::_log("copying last processed file '$files[-1]->{'filename'}' ext='$env{'ext'}'");
 		File::Copy::copy($files[-1]->{'filename'}, $env{'video2'});
 		$t->close();
-		$outret{'return'}=1;return %outret;
+		$outret{'return'}=0;return %outret;
 	}
 	else
 	{
 		main::_log("copying same file '$env{'video2'}' ext='$env{'ext'}'");
 		File::Copy::copy($env{'video1'}, $env{'video2'});
 		$t->close();
-		$outret{'return'}=1;return %outret;
+		$outret{'return'}=0;return %outret;
 	}
 	
 	$t->close();
@@ -1825,7 +1826,15 @@ sub video_part_file_add
 					$file_ext
 				);
 				main::_log("copy to $path");
-				File::Copy::copy($env{'file'},$path);
+				if (File::Copy::copy($env{'file'},$path))
+				{
+				}
+				else
+				{
+					main::_log("file can't be copied: $!",1);
+					$t->close();
+					return undef;
+				}
 			}
 			$t->close();
 			return $db0_line{'ID'};
@@ -1883,10 +1892,12 @@ sub video_part_file_add
 				$file_ext
 			);
 			main::_log("copy to $path");
-			my $out=File::Copy::copy($env{'file'},$path);
-			if (!$out)
+			if (File::Copy::copy($env{'file'},$path))
 			{
-				main::_log("can't copy file $!",1);
+			}
+			else
+			{
+				main::_log("file can't be copied: $!",1);
 				$t->close();
 				return undef;
 			}
@@ -2326,7 +2337,9 @@ sub get_video_part_file_process_front
 		)
 		LEFT JOIN `$App::510::db_name`.a510_video_part_file AS video_part_file ON
 		(
-			video_part.ID = video_part_file.ID_entity AND video_part_file.ID_format = video_format.ID_entity
+			video_part.ID = video_part_file.ID_entity AND
+			video_part_file.ID_format = video_format.ID_entity AND
+			video_part_file.status IN ('Y','E')
 		)
 		LEFT JOIN `$App::510::db_name`.a510_video_part_file_process AS video_part_file_process ON
 		(
@@ -2334,6 +2347,7 @@ sub get_video_part_file_process_front
 			video_part_file_process.ID_format = video_format.ID_entity AND
 			video_part_file_process.datetime_start >= video_format.datetime_create AND
 			video_part_file_process.datetime_start <= NOW() AND
+			video_part_file_process.status = 'W' AND
 			video_part_file_process.datetime_stop IS NULL
 		)
 		
@@ -2345,7 +2359,9 @@ sub get_video_part_file_process_front
 		)
 		LEFT JOIN `$App::510::db_name`.a510_video_part_file AS video_part_file_p ON
 		(
-			video_part.ID = video_part_file_p.ID_entity AND video_part_file_p.ID_format = video_format_p.ID_entity
+			video_part.ID = video_part_file_p.ID_entity AND
+			video_part_file_p.ID_format = video_format_p.ID_entity AND
+			video_part_file_p.status IN ('Y','E')
 		)
 		LEFT JOIN `$App::510::db_name`.a510_video_part_file_process AS video_part_file_process_p ON
 		(
@@ -2353,24 +2369,32 @@ sub get_video_part_file_process_front
 			video_part_file_process_p.ID_format = video_format_p.ID_entity AND
 			video_part_file_process_p.datetime_start >= video_format_p.datetime_create AND
 			video_part_file_process_p.datetime_start <= NOW() AND
+			video_part_file_process_p.status = 'W' AND
 			video_part_file_process_p.datetime_stop IS NULL
 		)
 		
 		WHERE
 			/* only not trashed video parts */
 			video_part.status IN ('Y','N') AND
+			
 			/* only not trashed videos */
 			video.status IN ('Y','N') AND
+			
 			/* only not trashed video_attrs */
 			video_attrs.status IN ('Y','N') AND
+			
 			/* skip videos locked */
 			video_part.process_lock = 'N'
+			
 			/* skip videos in processing */
 			AND video_part_file_process.ID IS NULL
 			AND video_part_file_process_p.ID IS NULL
+			
 			/* parent video must exists */
 			AND video_part_file_p.ID
 			AND video_part_file_p.status='Y'
+			
+			/* cases when video_part_file must be re-encoded */
 			AND
 			(
 				(
@@ -2391,10 +2415,13 @@ sub get_video_part_file_process_front
 					video_part_file.datetime_create <= video_part_file_p.datetime_create
 				)
 			)
+		
 		GROUP BY
 			video_part.ID, video_format.ID
+			
 		ORDER BY
 			video_format.ID_charindex, video_part.datetime_create DESC
+			
 		LIMIT $env{'limit'}
 	};
 	my $i;

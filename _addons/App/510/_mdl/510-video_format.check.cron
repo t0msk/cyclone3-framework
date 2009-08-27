@@ -108,6 +108,7 @@ sub execute
 	
 	
 	my $video_part_file=(App::510::functions::get_video_part_file_process_front('limit'=>$env{'limit'}))[0];
+	return 1 unless $video_part_file->{'ID_part'};
 #	{
 		my $lock=new TOM::lock($App::510::db_name."::a510:encode video_part.ID=".$video_part_file->{'ID_part'}." video_format.ID_entity=".$video_part_file->{'ID_entity_format'}) 
 		|| do {
