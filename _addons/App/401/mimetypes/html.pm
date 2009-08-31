@@ -107,6 +107,7 @@ sub start
 	my $out_tag;
 	my $out_addon_type;
 	my $out_cnt;
+	my %vars;
 	
 	# modify
 	if ($tag eq "img")
@@ -114,11 +115,11 @@ sub start
 		$self->{'count'}->{'img'}++;
 		$out_cnt=$self->{'count'}->{'img'};$out_tag='img';
 		$attr->{'alt'}='' unless exists $attr->{'alt'};
-		$attr->{'align'}='left' unless exists $attr->{'align'};
+		#$attr->{'align'}='left' unless exists $attr->{'align'};
 		if ($attr->{'id'}=~/^a010_(.*?):(.*)$/)
 		{
 			my $type=$1;
-			my %vars=_parse_id($2);
+			%vars=_parse_id($2);
 			
 			# override default tag representation
 			$out_full=$self->{'entity'}{'a010_'.$type}
@@ -132,7 +133,7 @@ sub start
 		{
 			$self->{'count'}->{'video'}++;
 			my $type=$1;
-			my %vars=_parse_id($1);
+			%vars=_parse_id($1);
 			
 			$attr->{'width_forced'}=$attr->{'width'};
 			$attr->{'height_forced'}=$attr->{'height'};
@@ -157,7 +158,7 @@ sub start
 		{
 			$self->{'count'}->{'video'}++;
 			my $type=$1;
-			my %vars=_parse_id($1);
+			%vars=_parse_id($1);
 			
 			$attr->{'width_forced'}=$attr->{'width'};
 			$attr->{'height_forced'}=$attr->{'height'};
@@ -179,12 +180,22 @@ sub start
 		elsif ($attr->{'id'}=~/^a501_image:(.*)$/)
 		{
 			require App::501::_init;
-			my %vars=_parse_id($1);
-			$vars{'ID_format'}=
-				$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
-				|| $self->{'config'}->{'a501_image_file.ID_format'}
-				|| $vars{'ID_format'}
-				|| $App::501::image_format_thumbnail_ID;
+			%vars=_parse_id($1);
+			if ($vars{'important'} eq "1")
+			{
+				$vars{'ID_format'}=
+					$vars{'ID_format'}
+					|| $self->{'config'}->{'a501_image_file.ID_format'}
+					|| $App::501::image_format_thumbnail_ID;
+			}
+			else
+			{
+				$vars{'ID_format'}=
+					$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
+					|| $self->{'config'}->{'a501_image_file.ID_format'}
+					|| $vars{'ID_format'}
+					|| $App::501::image_format_thumbnail_ID;
+			}
 			#$vars{'format'}=$App::501::image_format_thumbnail_ID unless $vars{'format'};
 			if ($vars{'ID'})
 			{
@@ -305,7 +316,7 @@ sub start
 			$self->{'count'}->{'a510_video'}++;my $addon_cnt=$self->{'count'}->{'a510_video'};
 			$self->{'count'}->{'a510_video_part'}++;my $addon_part_cnt=$self->{'count'}->{'a510_video_part'};
 			require App::510::_init;
-			my %vars=_parse_id($1);
+			%vars=_parse_id($1);
 			$vars{'ID_format'}=
 				$self->{'config'}->{'a510_video_part_file.ID_format.'.$out_cnt}
 				|| $self->{'config'}->{'a510_video_part_file.ID_format'}
@@ -412,7 +423,7 @@ sub start
 			$self->{'count'}->{'video'}++;
 			$self->{'count'}->{'a510_video_part'}++;my $addon_cnt=$self->{'count'}->{'a510_video_part'};
 			require App::510::_init;
-			my %vars=_parse_id($1);
+			%vars=_parse_id($1);
 			$vars{'ID_format'}=
 				$self->{'config'}->{'a510_video_part_file.ID_format.'.$out_cnt}
 				|| $self->{'config'}->{'a510_video_part_file.ID_format'}
@@ -526,7 +537,7 @@ sub start
 		if ($attr->{'id'}=~/^a542_file:(.*)$/)
 		{
 			require App::542::_init;
-			my %vars=_parse_id($1);
+			%vars=_parse_id($1);
 			
 			if ($vars{'ID_entity'})
 			{
@@ -640,7 +651,7 @@ sub start
 	my $rand=int(rand(10000));
 	$out_full=~s|<%rand%>|$rand|ge;
 	
-	if ($out_tag && $out_cnt && ($self->{'ignore'}->{$out_tag} || $self->{'ignore'}->{$out_tag.'.'.$out_cnt}))
+	if ($vars{'important'} ne "1" && $out_tag && $out_cnt && ($self->{'ignore'}->{$out_tag} || $self->{'ignore'}->{$out_tag.'.'.$out_cnt}))
 	{
 		main::_log("ignore placing '$out_tag.$out_cnt'") if $debug;
 	}
