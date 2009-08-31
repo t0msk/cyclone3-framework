@@ -37,7 +37,7 @@ L<App::160::_init|app/"160/_init.pm">
 
 =cut
 
-use App::301::_init;
+#use App::301::_init;
 use App::160::_init;
 
 our $debug=0;
@@ -853,7 +853,7 @@ sub get_ACL
 	ORDER BY
 		acl.ID_entity ASC
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		my %item;
@@ -942,7 +942,7 @@ sub get_ACL
 		ORDER BY
 			acl.ID_entity ASC
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			my %item;
