@@ -70,8 +70,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_lng` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `name_long` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
-  `description_short` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
-  `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `description_short` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
@@ -87,8 +87,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_lng_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `name_long` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
-  `description_short` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
-  `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `description_short` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -140,7 +140,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_cat_j` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_event_rel_cat` (
   `ID_cat` bigint(20) unsigned NOT NULL auto_increment, -- rel _event_cat.ID_entity
-  `ID_event` bigint(20) unsigned NOT NULL -- rel _event.ID_entity,
+  `ID_event` bigint(20) unsigned NOT NULL, -- rel _event.ID_entity,
   PRIMARY KEY  (`ID_cat`,`ID_event`),
   KEY `ID_user` (`ID_event`),
   KEY `ID_group` (`ID_cat`)
