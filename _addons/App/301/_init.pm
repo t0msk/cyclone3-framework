@@ -162,9 +162,9 @@ if ($tom::H_cookie)
 
 
 # check relation to a501 if domain defined
-if ($tom::H && $tom::addons{'a501'})
+require App::501::_init if $tom::addons{'a501'};
+if ($tom::H && $tom::addons{'a501'} && $App::501::db_name)
 {
-	require App::501::_init;
 	our $photo_cat_ID_entity;
 	our %photo_cat;
 	
