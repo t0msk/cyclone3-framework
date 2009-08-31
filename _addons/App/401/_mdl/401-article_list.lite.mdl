@@ -294,7 +294,9 @@ sub execute
 			
 			article_attrs.ID_category,
 			article_cat.name AS ID_category_name,
+			article_cat.name AS cat_name,
 			article_cat.name_url AS ID_category_name_url,
+			article_cat.name_url AS cat_name_url,
 			
 			article_ent.posix_owner,
 			article_ent.ID_author AS posix_author,
@@ -607,11 +609,10 @@ sub execute
             $item=~s|<#video_mark#>|$XSGN{'video_mark'}|g;
 			}
 			
+			# find alternate attributes (for thumbnail image for example)
+			$p->parse($db0_line{'body'}) unless $p->{'out_tag'}->{'img.1'};
+			
 		}
-		
-		
-		# find alternate attributes (for thumbnail image for example)
-		$p->parse($db0_line{'body'}) unless $p->{'out_tag'}->{'img.1'};
 		
 		$item=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
 		$item=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
@@ -751,7 +752,7 @@ sub execute
 				lng='$env{'article_content.lng'}' AND
 				status IN ('$status_sql')
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache_auto_'=>60);
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto_'=>60);
 	
 		if($sth0{'sth'})
 		{
