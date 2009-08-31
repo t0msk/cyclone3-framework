@@ -232,11 +232,11 @@ while ($main::CGI=new CGI::Fast())
 {
 	alarm($TOM::fcgi_timeout); # zacnem pocitat X sekund kym nezbehne request
 	local $sig_term=0; # ignorujem TERM pocas behu requestu, povoleny je len pocas cakania na dalsi request
-	if ($main::ENV{'HTTP_X_FORWARDED_FOR'}=~/([\d+\.]+)/)
-	{
-		$main::ENV{'REMOTE_ADDR_ORIGINAL'}=$main::ENV{'REMOTE_ADDR'};
-		$main::ENV{'REMOTE_ADDR'}=$1;
-	}
+#	if ($main::ENV{'HTTP_X_FORWARDED_FOR'}=~/([\d+\.]+)/)
+#	{
+#		$main::ENV{'REMOTE_ADDR_ORIGINAL'}=$main::ENV{'REMOTE_ADDR'};
+#		$main::ENV{'REMOTE_ADDR'}=$1;
+#	}
 	$main::request_code=Utils::vars::genhash(8);
 	TOM::Debug::clear_namespaces();
 	my $t_request=track TOM::Debug("request [".($tom::count+1)."/$TOM::max_count] at $TOM::hostname",'timer'=>1);
@@ -349,7 +349,7 @@ while ($main::CGI=new CGI::Fast())
 		local $Net::DOC::content_type=$Net::DOC::content_type;
 		
 		
-		main::_log("request from IP='$main::ENV{'REMOTE_ADDR'}'");
+		main::_log("request from IP='$main::ENV{'REMOTE_ADDR'}' FORWARDED_FOR='$main::ENV{'HTTP_X_FORWARDED_FOR'}'");
 		$main::ENV{'REMOTE_COUNTRY_CODE'}='';
 		if ($TOM::Int::lng::GEOIP)
 		{
@@ -1301,6 +1301,7 @@ while ($main::CGI=new CGI::Fast())
 		};
 		
 		# najprv hladam subor so spravnym TYPE
+		
 		if (($main::page_statuscode eq "200")&&(open (TYPE,"<".$tom::Ptype."/_type/".($FORM{TID}).".pub.type")))
 		{
 			main::_log("access to:".$tom::Ptype."/_type/".($FORM{TID}).".pub.type");
@@ -1896,6 +1897,8 @@ while ($main::CGI=new CGI::Fast())
 				$mdl_env{$1}=~s|\"|"|g;
 			}
 			
+			main::_log("<={MODULE} ".$mdl_env{'-type'}.':'.$mdl_env{'-category'}.'-'.$mdl_env{'-name'}.' TMP:'.$mdl_env{'-TMP'});
+			
 			if (
 				((!$IAdm)&&($mdl_env{-IAdm}==1)) ||
 				(($IAdm)&&($mdl_env{-IAdm}==-1)) ||
@@ -1903,10 +1906,21 @@ while ($main::CGI=new CGI::Fast())
 				(($ITst)&&($mdl_env{-ITst}==-1))
 			)
 			{
+				main::_log("can't load module in this mode");
 				next;
 			}
 			
-			main::_log("<={MODULE} ".$mdl_env{'-type'}.':'.$mdl_env{'-category'}.'-'.$mdl_env{'-name'}.' TMP:'.$mdl_env{'-TMP'});
+			if (exists $mdl_env{'-enabled'} && !$mdl_env{'-enabled'})
+			{
+				main::_log("module not enabled");
+				next;
+			}
+			
+			if ($mdl_env{'-disabled'} == 1)
+			{
+				main::_log("module disabled");
+				next;
+			}
 			
 			$mdl_env{-type}=~/^mdl/ && do
 			{
