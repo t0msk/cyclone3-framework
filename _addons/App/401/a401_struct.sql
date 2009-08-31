@@ -20,8 +20,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
-  `status` char(1) character set ascii NOT NULL default 'Y'
-) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -57,8 +58,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_j` (
   `visits` int(10) unsigned NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
-  `status` char(1) character set ascii NOT NULL default 'Y'
-) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -123,8 +125,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs_j` (
   `priority_E` tinyint(3) unsigned default NULL,
   `priority_F` tinyint(3) unsigned default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'N'
-) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -163,8 +166,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content_j` (
   `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'Y'
-) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -223,8 +227,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat_j` (
   `datetime_create` datetime NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'N'
-) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -255,8 +260,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_emo_j` (
   `emo_love` int(10) unsigned NOT NULL default '0',
   `emo_omg` int(10) unsigned NOT NULL default '0',
   `emo_smile` int(10) unsigned NOT NULL default '0',
-  `status` char(1) character set ascii NOT NULL default 'Y'
-) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
