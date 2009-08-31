@@ -114,7 +114,7 @@ sub execute
 		|| do {
 			$encode++;
 			return 1 if $encode_max<=$encode;
-			next
+			return 1;
 		}; # when this video is noew already encoding, skip to next video
 		App::510::functions::video_part_file_generate(
 			'video_part.ID' => $video_part_file->{'ID_part'},
