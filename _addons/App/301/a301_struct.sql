@@ -484,7 +484,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user` ( -- table is stored where addon
   `perm_roles_override` blob,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`r_prefix`,`r_table`,`r_ID_entity`)
+  UNIQUE KEY `UNI_0` (`ID_entity`,`r_prefix`,`r_table`,`r_ID_entity`),
+  KEY `SEL_0` (`r_prefix`,`r_table`,`r_ID_entity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -528,7 +529,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_group` ( -- table is stored where
   `perm_roles_override` blob,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`r_prefix`,`r_table`,`r_ID_entity`)
+  UNIQUE KEY `UNI_0` (`ID_entity`,`r_prefix`,`r_table`,`r_ID_entity`),
+  KEY `SEL_0` (`r_prefix`,`r_table`,`r_ID_entity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -568,7 +570,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_org` ( -- table is stored where addon 
   `perm_roles_override` blob,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`r_prefix`,`r_table`,`r_ID_entity`)
+  UNIQUE KEY `UNI_0` (`ID_entity`,`r_prefix`,`r_table`,`r_ID_entity`),
+  KEY `SEL_0` (`r_prefix`,`r_table`,`r_ID_entity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
