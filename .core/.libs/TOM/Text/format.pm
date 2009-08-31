@@ -14,7 +14,8 @@ sub xml2plain
 	$text=~s|<html.*?<body.*?>||s;
 	
 	# remove double enter
-	$text=~s|[\r\n]||g;
+	$text=~s|\r||g;
+	$text=~s|\n| |g;
 	#$text=~s|<p[ ]?[/]?>\n|\n|gsi;
 	#$text=~s|<br[ ]?[/]?>\n|\n|gsi;
 	
@@ -23,15 +24,21 @@ sub xml2plain
 	$text=~s|<p[ ]?[/]?>|\n|gsi;
 	$text=~s|<br[ ]?[/]?>|\n|gsi;
 	
-	# remove triple enter
-	1 while ($text=~s|\n\n\n|\n\n|g);
+#	# remove triple enter
+#	1 while ($text=~s|\n\n\n|\n\n|g);
 	
-	1 while ($text=~s|^\n||g);
+#	1 while ($text=~s|^\n||g);
 	
-	1 while ($text=~s|\n\n$|\n|g);
+#	1 while ($text=~s|\n\n$|\n|g);
+	
+	# remove comments
+	$text=~s|<!--.*?-->||gs;
 	
 	# vyhodime XML tagy
 	$text=~s|<.*?>||gs;
+	
+	1 while ($text=~s|^ ||);
+	1 while ($text=~s| $||);
 	
 	return $text;
 }
