@@ -1323,7 +1323,7 @@ sub GetXSGN
 	
 	main::_log("loading XSGN -category='$mdl_C{-category}' -name='$mdl_C{-name}' -version='$mdl_C{-version}' -xsgn='$mdl_C{-xsgn}'");
 	$mdl_C{P_XSGN}=$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".".$mdl_C{-xsgn}.".xsgn";
-	main::_log("P_XSGN='$mdl_C{P_XSGN}'");
+#	main::_log("P_XSGN='$mdl_C{P_XSGN}'");
  
 	if (!$mdl_C{-name})
 	{
@@ -1359,7 +1359,7 @@ sub GetXSGN
 	{
 		$mdl_C{-xsgn_global}=0;
 		my $addon_path=$tom::P."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XSGN};
-		main::_log("addon_path='$addon_path'");
+#		main::_log("addon_path='$addon_path'");
 		if (-e $addon_path){$mdl_C{P_XSGN}=$addon_path;}
 		else {$mdl_C{P_XSGN}=$tom::P."/_mdl/".$mdl_C{P_XSGN};}
 	}
@@ -1377,7 +1377,7 @@ sub GetXSGN
 				.$mdl_C{'P_XSGN'};
 			if (-e $file){$addon_path=$file;last;}
 		}
-		main::_log("addon_path='$addon_path'");
+#		main::_log("addon_path='$addon_path'");
 		if (-e $addon_path){$mdl_C{P_XSGN}=$addon_path;}
 		else {$mdl_C{P_XSGN}=$TOM::P."/_mdl/".$mdl_C{-category}."/".$mdl_C{P_XSGN}}
 	}
@@ -1386,7 +1386,7 @@ sub GetXSGN
 	{
 		$mdl_C{-xsgn_global}=2;
 		my $addon_path=$tom::Pm."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XSGN};
-		main::_log("addon_path='$addon_path'");
+#		main::_log("addon_path='$addon_path'");
 		if (-e $addon_path){$mdl_C{P_XSGN}=$addon_path;}
 		else {$mdl_C{P_XSGN}=$tom::Pm."/_mdl/".$mdl_C{P_XSGN};}
 	}
@@ -1394,12 +1394,12 @@ sub GetXSGN
 	{
 		$mdl_C{-xsgn_global}=0;
 		my $addon_path=$tom::P."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XSGN};
-		main::_log("addon_path='$addon_path'");
+#		main::_log("addon_path='$addon_path'");
 		if (-e $addon_path){$mdl_C{P_XSGN}=$addon_path;}
 		else {$mdl_C{P_XSGN}=$tom::P."/_mdl/".$mdl_C{P_XSGN};}
 	}
 	
-	main::_log("P_XSGN='$mdl_C{P_XSGN}'");
+#	main::_log("P_XSGN='$mdl_C{P_XSGN}'");
 	
 	# open file with xsgn
 	open (HND,"<".$mdl_C{P_XSGN}) || do
