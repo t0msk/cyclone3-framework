@@ -138,7 +138,8 @@ sub new
 			'db_name' => $env{'db_name'},
 			'tb_name' => $env{'tb_name'},
 			'ID' => $ID,
-			'ID_entity' => $env{'columns'}{'ID_entity'}
+			'ID_entity' => $env{'columns'}{'ID_entity'},
+			'datetime_create' => $env{'columns'}{'datetime_create'},
 		);
 		
 		if ($env{'-journalize'})
@@ -197,6 +198,8 @@ sub new_initialize
 		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
+	$env{'datetime_create'}="NOW()" unless $env{'datetime_create'};
+	
 	# this is not very secure, but...
 	# Error 1093 (ER_UPDATE_TABLE_USED)
 	# SQLSTATE = HY000
@@ -212,11 +215,11 @@ sub new_initialize
 		elsif ($db0_line{'ID'} > 1){$ID_entity=$db0_line{'ID'};}
 	}
 	
-	my $SQL="UPDATE `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=NOW(), ";
+	my $SQL="UPDATE `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=$env{'datetime_create'}, ";
 	
 	if ($env{'ID_entity'} && $env{'ID'})
 	{
-		$SQL="UPDATE `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=NOW() WHERE ID=$env{'ID'}";
+		$SQL="UPDATE `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=$env{'datetime_create'} WHERE ID=$env{'ID'}";
 	}
 	elsif ($env{'ID'})
 	{
@@ -464,7 +467,7 @@ sub update
 		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
-	$env{'columns'}{'datetime_create'} = "NOW()";
+	$env{'columns'}{'datetime_create'} = "NOW()" unless $env{'datetime_create'};
 	$env{'columns'}{'posix_modified'}="'".$main::USRM{'ID_user'}."'" if $env{'-posix'};
 	
 	my $sel_set;
