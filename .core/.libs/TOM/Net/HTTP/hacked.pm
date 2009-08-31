@@ -91,10 +91,10 @@ our %table=
 		'uri' => ['mod_ssl:error']
 	},
 	
-	'unknown-php'=> # all unknown php attacks
-	{
-		'uri' => ['\.php\?']
-	},
+#	'unknown-php'=> # all unknown php attacks
+#	{
+#		'uri' => ['\.php\?']
+#	},
 	'unknown-asp'=> # all unknown asp attacks
 	{
 		'uri' => ['\.asp\?']
