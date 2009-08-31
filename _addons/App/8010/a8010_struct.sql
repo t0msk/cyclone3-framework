@@ -22,7 +22,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_cache` (
 CREATE TABLE `/*db_name*/`.`/*app*/_users` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `IDuser` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
-  `IDuser_email` varchar(60) default NULL,
+  `IDuser_email` varchar(128) default NULL,
   `domain` varchar(32) NOT NULL default '',
   `domain_sub` varchar(64) NOT NULL default '',
   `time_insert` int(10) unsigned NOT NULL default '0',
