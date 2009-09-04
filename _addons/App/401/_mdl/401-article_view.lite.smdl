@@ -223,7 +223,7 @@ sub execute
 				'-xsgn_global' => $env{'discussion_add_xsgn_global'},
 				'-cache_id' => "default",
 					'discussion.lastpost' => $discussion{'datetime_lastpost'},
-					'discussion.ID' => $discussion{'ID'},
+					'discussion.ID_entity' => $discussion{'ID_entity'},
 			);
 		}
 	}
