@@ -74,7 +74,7 @@ sub execute
 		$sql_where.="AND status='Y' ";
 	}
 	
-	if ($env{'discussion.ID_entity'})
+	if ($env{'discussion.ID'})
 	{
 		my $sql=qq{
 			SELECT
@@ -84,17 +84,17 @@ sub execute
 			FROM
 				`$App::821::db_name`.a821_discussion
 			WHERE
-				ID_entity=$env{'discussion.ID_entity'} AND
+				ID=$env{'discussion.ID'} AND
 				$sql_where
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'slave'=>1,'log'=>1,'-cache'=>3600);
 		my %db0_line=$sth0{'sth'}->fetchhash();
-		$env{'discussion.ID'} = $db0_line{'ID'};
+		$env{'discussion.ID_entity'} = $db0_line{'ID_entity'};
 		$env{'discussion.name'} = $db0_line{'name'};
 	}
 	
-	if (!$env{'discussion.ID'})
+	if (!$env{'discussion.ID_entity'})
 	{
 		return 1;
 	}
@@ -157,7 +157,7 @@ sub execute
 			WHERE
 				name LIKE '$name' AND
 				body LIKE '$body' AND
-				ID_discussion = '$env{'discussion.ID'}'
+				ID_discussion = '$env{'discussion.ID_entity'}'
 			LIMIT 1;
 		};
 		my %sth0=TOM::Database::SQL::execute($sql);
@@ -175,7 +175,7 @@ sub execute
 					`$App::821::db_name`.a821_discussion_message
 				WHERE
 					owner_anonymous_name='$user' AND
-					ID_discussion = '$env{'discussion.ID'}' AND
+					ID_discussion = '$env{'discussion.ID_entity'}' AND
 					datetime_post >= DATE_SUB(NOW(), INTERVAL 3 MINUTE)
 				LIMIT 1;
 			};
@@ -200,7 +200,7 @@ sub execute
 				'name' => "'".($name)."'",
 				'body' => "'".($body)."'",
 				'owner_IP' => "'".$main::ENV{'REMOTE_ADDR'}."'",
-				'ID_discussion' => $env{'discussion.ID'},
+				'ID_discussion' => $env{'discussion.ID_entity'},
 				'datetime_post' => 'NOW()',
 				'karma' => $karma,
 				'lng'  => "'$env{'lng'}'",
@@ -241,7 +241,7 @@ sub execute
 				FROM
 					`$App::821::db_name`.a821_discussion
 				WHERE
-					ID=$env{'discussion.ID'}
+					ID_entity=$env{'discussion.ID_entity'}
 				LIMIT 1
 			};
 			my %sth0=TOM::Database::SQL::execute($sql,'slave'=>1,'log'=>1,'-cache'=>3600);

@@ -86,7 +86,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_discussion_message` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `ID_entity` mediumint(8) unsigned default NULL,
   `ID_charindex` varchar(250) character set ascii collate ascii_bin default NULL,
-  `ID_discussion` bigint(20) unsigned default NULL, -- rel discussion.ID
+  `ID_discussion` bigint(20) unsigned default NULL, -- rel discussion.ID_entity
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,

@@ -90,7 +90,7 @@ sub execute
 		$sql_where.="AND status='Y' ";
 	}
 	
-	if ($env{'discussion.ID_entity'})
+	if ($env{'discussion.ID'})
 	{
 		my $sql=qq{
 			SELECT
@@ -99,13 +99,13 @@ sub execute
 			FROM
 				`$App::821::db_name`.a821_discussion
 			WHERE
-				ID_entity=$env{'discussion.ID_entity'} AND
+				ID=$env{'discussion.ID'} AND
 				$sql_where
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'slave'=>1,'log'=>1);
 		my %db0_line=$sth0{'sth'}->fetchhash();
-		$env{'discussion.ID'} = $db0_line{'ID'};
+		$env{'discussion.ID_entity'} = $db0_line{'ID_entity'};
 	}
 	
 	
@@ -116,9 +116,9 @@ sub execute
 	
 	# WHERE DISCUSSION
 	my $where;
-	$where="AND ID_discussion='$env{'discussion.ID'}'" if $env{'discussion.ID'};
-	$where="" unless $env{'discussion.ID'};
-	if (!$env{'discussion.ID'})
+	$where="AND ID_discussion='$env{'discussion.ID_entity'}'" if $env{'discussion.ID_entity'};
+	$where="" unless $env{'discussion.ID_entity'};
+	if (!$env{'discussion.ID_entity'})
 	{
 		return 1;
 	}
@@ -150,6 +150,7 @@ sub execute
 	
 	$env{'vox_count'}=$db0_line{'cnt'};
 	$XSGN{'TMP'}=~s|<%count%>|$env{'vox_count'}|g;
+	$XSGN{'TMP'}=~s|<%discussion.ID%>|$env{'discussion.ID'}|g;
 	
 	my $sql=qq{
 		SELECT

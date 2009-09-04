@@ -314,7 +314,7 @@ sub execute
 				FROM
 					`$App::821::db_name`.a821_discussion_message
 				WHERE
-					ID_discussion=$db0_line{'ID'} AND
+					ID_discussion=$db0_line{'ID_entity'} AND
 					status IN ('Y','N','L')
 			};
 			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
