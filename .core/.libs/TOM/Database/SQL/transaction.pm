@@ -16,6 +16,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 our %handler;
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
+our $disabled=1; # disabled for speed reasons
 
 =head1 FUNCTIONS
 
@@ -44,15 +45,16 @@ sub new
 	{
 		
 		$self->{'version'}=TOM::Database::SQL::get_database_version($self->{'db_h'});
-		$self->{'supported'}=1 if $self->{'version'} gt '4.0';
+		$self->{'enabled'}=1 if $self->{'version'} gt '4.0';
+		$self->{'enabled'}=0 if $disabled == 1;
 		
-		main::_log("<={SQL:$self->{'db_h'}} START TRANSACTION");
+		main::_log("<={SQL:$self->{'db_h'}} START TRANSACTION") if $self->{'enabled'};
 		
 		my $SQL="SET AUTOCOMMIT=0";
-		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'supported'};
+		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'enabled'};
 		
 		my $SQL="START TRANSACTION";
-		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'supported'};
+		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'enabled'};
 		
 	}
 	
@@ -68,7 +70,7 @@ sub close
 	
 	if (!$handler{$self->{'db_h'}})
 	{
-		main::_log("<={SQL:$self->{'db_h'}} CANCEL ENDING TRANSACTION");
+		main::_log("<={SQL:$self->{'db_h'}} CANCEL ENDING TRANSACTION") if $self->{'enabled'};
 		delete $self->{'db_h'};
 		return undef;
 	}
@@ -77,9 +79,9 @@ sub close
 	
 	if (!$handler{$self->{'db_h'}})
 	{
-		main::_log("<={SQL:$self->{'db_h'}} END TRANSACTION");
+		main::_log("<={SQL:$self->{'db_h'}} END TRANSACTION") if $self->{'enabled'};
 		my $SQL="SET AUTOCOMMIT=1";
-		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'supported'};
+		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'enabled'};
 	}
 	else
 	{
@@ -94,15 +96,15 @@ sub close
 sub rollback
 {
 	my $self=shift;
-	main::_log("<={SQL:$self->{'db_h'}} ROLLBACK",1);
+	main::_log("<={SQL:$self->{'db_h'}} ROLLBACK",1) if $self->{'enabled'};
 	
 	undef $handler{$self->{'db_h'}};
 	
 	my $SQL="ROLLBACK";
-	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'supported'};
+	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'enabled'};
 	
 	my $SQL="SET AUTOCOMMIT=1";
-	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'supported'};
+	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'enabled'};
 	
 	delete $self->{'db_h'};
 	return undef;
@@ -117,13 +119,13 @@ sub DESTROY
 	
 	undef $handler{$self->{'db_h'}};
 	
-	main::_log("<={SQL:$self->{'db_h'}} DESTROY TRANSACTION",1);
+	main::_log("<={SQL:$self->{'db_h'}} DESTROY TRANSACTION",1) if $self->{'enabled'};
 	
 	my $SQL="ROLLBACK";
-	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'supported'};
+	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'enabled'};
 	
 	my $SQL="SET AUTOCOMMIT=1";
-	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'supported'};
+	my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'enabled'};
 	
  	die "Not ended transaction on handler '$self->{'db_h'}'.";
 	
