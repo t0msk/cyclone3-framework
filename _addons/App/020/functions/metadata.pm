@@ -100,6 +100,24 @@ sub metaindex_set
 	
 }
 
-
+sub serialize
+{
+	my %metadata=@_;
+	my $text="<metatree>\n";
+	
+	foreach my $section (keys %metadata)
+	{
+		$text.="<section name=\"$section\">\n";
+		foreach my $variable(keys %{$metadata{$section}})
+		{
+			$text.="<variable name=\"$variable\">$metadata{$section}{$variable}</variable>\n";
+		}
+		$text.="</section>";
+	}
+	
+	$text.="</metatree>";
+	
+	return $text;
+}
 
 1;
