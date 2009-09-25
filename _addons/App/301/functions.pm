@@ -139,6 +139,7 @@ sub user_add
 			my %image=App::501::functions::image_add(
 				'image.ID_entity' => $relation->{'r_ID_entity'},
 				'image_attrs.name' => $env{'user.ID_user'} || $env{'avatar'},
+				'image_attrs.ID_category' => $App::301::photo_cat_ID_entity,
 				'file' => $env{'avatar'}
 			);
 			
@@ -572,6 +573,9 @@ sub user_new
 	if ($env{'user.pass'}){$env{'user.pass'}="'".$env{'user.pass'}."'";}
 	else {$env{'user.pass'}='NULL';}
 	
+	if ($env{'user.email'}){$env{'user.email'}="'".$env{'user.email'}."'";}
+	else {$env{'user.email'}='NULL';}
+	
 	$env{'user.autolog'}="N" unless $env{'user.autolog'};
 	$env{'user.status'}="N" unless $env{'user.status'};
 	
@@ -605,6 +609,7 @@ sub user_new
 			ID_user,
 			login,
 			pass,
+			email,
 			autolog,
 			hostname,
 			datetime_register,
@@ -615,6 +620,7 @@ sub user_new
 			'$env{'user.ID_user'}',
 			$env{'user.login'},
 			$env{'user.pass'},
+			$env{'user.email'},
 			'$env{'user.autolog'}',
 			'$env{'user.hostname'}',
 			NOW(),
