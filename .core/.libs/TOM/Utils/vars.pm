@@ -303,7 +303,7 @@ sub replace_comment
 			
 			my $cmd="\$text=".$replace_functions{$function}{'function'};
 			
-			main::_log("calling '$cmd'");
+			main::_log("calling '$cmd'") if $debug;
 			
 			eval $cmd;
 			
