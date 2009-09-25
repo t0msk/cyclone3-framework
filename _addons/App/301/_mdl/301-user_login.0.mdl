@@ -20,7 +20,10 @@ sub execute
 	
 	if ((!$env{'login'})||(!$env{'pass'})||(not $env{'login'}=~/^[a-zA-Z0-9_\@\.\-]{3,64}$/))
 	{
-		$XSGN{'TMP'}=$XSGN{'ERR_no-credentials'};
+		if (exists $main::FORM{'submit'})
+		{
+			$XSGN{'TMP'}=$XSGN{'ERR_no-credentials'};
+		}
 		return 1
 	}
 	
