@@ -2149,10 +2149,17 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		my $debug_url=0;
-		my $url_cache_enabled=0;
+#		my $url_cache_enabled=0;
 #		my %url_cache=();
 		
-		my %pp=TOM::Net::HTTP::CGI::get_QUERY_STRING($main::ENV{'QUERY_STRING_FULL'},'quiet'=>1);
+#		open(TST,'>/www/TOM/test.out');
+#		print TST $H->{OUT}{BODY};
+#		close (TST);
+		%main::url_cache=();
+		%main::pp=TOM::Net::HTTP::CGI::get_QUERY_STRING($main::ENV{'QUERY_STRING_FULL'},'quiet'=>1);
+		
+		$H->{OUT}{BODY}=~s/$url_regexp/Net::DOC::base::url_replace($1,$2,$3)/eg;
+=head1
 		while ($H->{OUT}{BODY}=~s/$url_regexp/URL$hash/)
 		{
 			$url_count++;
@@ -2336,16 +2343,17 @@ while ($main::CGI=new CGI::Fast())
 			
 			$t_link->close() if $debug_url;
 		}
+=cut
 		
 		$t_urlreplace->close();
 		
-		if ($url_count)
-		{
-			main::_log("url_replace performance ($url_count) req:".
-				($t_urlreplace->{'time'}{req}{duration}/$url_count).
-				" proc:".
-				($t_urlreplace->{'time'}{proc}{duration}/$url_count));
-		}
+#		if ($url_count)
+#		{
+#			main::_log("url_replace performance ($url_count) req:".
+#				($t_urlreplace->{'time'}{req}{duration}/$url_count).
+#				" proc:".
+#				($t_urlreplace->{'time'}{proc}{duration}/$url_count));
+#		}
 		
 		#my $t_doc_output=track TOM::Debug("output");
 		
@@ -2461,7 +2469,7 @@ while ($main::CGI=new CGI::Fast())
 			
 #		$t->close();};
 		
-		my $t_send=track TOM::Debug("send");
+		my $t_send=track TOM::Debug("send",'timer'=>1);
 		
 		# codepage pouzity pre tuto page;
 		$main::LNG_cp_this=$COOKIES{cp};
