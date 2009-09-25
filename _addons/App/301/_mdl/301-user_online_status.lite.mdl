@@ -18,6 +18,36 @@ sub execute
 	if ($main::USRM{'logged'} eq "Y")
 	{
 		$XSGN{'TMP'}=$XSGN{'logged'};
+		# get cached data about full username and avatar
+		my %user = App::301::authors::get_author($main::USRM{'ID_user'});
+		
+		my $fullname=$user{'login'};
+		$fullname=$user{'firstname'}.' '.$user{'surname'} if ($user{'firstname'} && $user{'surname'});
+		
+		$XSGN{'TMP'}=~s|<%fullname%>|$fullname|g;
+		
+		if (my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::301::db_name,
+			'l_prefix' => 'a301',
+			'l_table' => 'user',
+			'l_ID_entity' => $main::USRM{'ID_user'},
+			'rel_type' => 'avatar',
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y",
+			'limit' => 1
+		))[0])
+		{
+			use App::501::_init;
+			my %db1_line=App::501::functions::get_image_file(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_file.ID_format' => $env{'image_format.ID'} || $App::501::image_format_thumbnail_ID,
+				'image_attrs.lng' => $env{'lng'}
+			);
+			my $uri=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+			$XSGN{'avatar'}=~s|<%uri%>|$uri|;
+			$XSGN{'TMP'}=~s|<#avatar#>|$XSGN{'avatar'}|;
+		}
 	}
 	
 	$XSGN{'TMP'}=~s|<%user_(.*?)%>|$main::USRM{$1}|g;
