@@ -370,10 +370,23 @@ sub get_CGI
 		else
 		{
 			# classical variable
-			$form{$name}=$main::CGI->param($name);
+			if ($name=~/\[\]$/)
+			{
+#				main::_log("get array $name");
+				foreach my $param($main::CGI->param($name))
+				{
+					utf8::decode($param);
+					push @{$form{$name}},$param;
+				}
+			}
+			else
+			{
+				$form{$name}=$main::CGI->param($name);
+				utf8::decode($form{$name});
+			}
 			
 #			utf8::encode($value);
-			utf8::decode($form{$name});
+#			utf8::decode($form{$name});
 			
 		}
 		
