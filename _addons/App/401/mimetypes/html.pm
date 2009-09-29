@@ -197,10 +197,11 @@ sub start
 					|| $App::501::image_format_thumbnail_ID;
 			}
 			#$vars{'format'}=$App::501::image_format_thumbnail_ID unless $vars{'format'};
-			if ($vars{'ID'})
+			if ($vars{'ID'} || $vars{'ID_entity'})
 			{
-				main::_log("find a501_image ID='$vars{'ID'}' ID_format='$vars{'ID_format'}'") if $debug;
+				main::_log("find a501_image ID_entity='$vars{'ID_entity'} 'ID='$vars{'ID'}' ID_format='$vars{'ID_format'}'") if $debug;
 				my %db0_line=App::501::functions::get_image_file(
+					'image.ID_entity' => $vars{'ID_entity'},
 					'image.ID' => $vars{'ID'},
 					'image_file.ID_format' => $vars{'ID_format'},
 					'image_attrs.lng' => $tom::lng
@@ -217,96 +218,58 @@ sub start
 					$attr->{'width'}=$db0_line{'image_width'} unless $attr->{'width'};
 					$attr->{'height'}=$db0_line{'image_height'} unless $attr->{'height'};
 					
-					# override default tag representation
-					$out_full=
-						$self->{'entity'}{'a501_image.'.$out_cnt}
-						|| $self->{'entity'}{'a501_image'}
-						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
-						|| $tpl->{'entity'}{'parser.a501_image'}
-						|| $out_full;
-					
-					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
-					
 				}
 				# fullsize
-				my %db0_line=App::501::functions::get_image_file(
+				my %db1_line=App::501::functions::get_image_file(
+					'image.ID_entity' => $vars{'ID_entity'},
 					'image.ID' => $vars{'ID'},
 					'image_file.ID_format' => $App::501::image_format_fullsize_ID,
 					'image_attrs.lng' => $tom::lng
 				);
-				if ($db0_line{'ID_image'})
+				if ($db1_line{'ID_image'})
 				{
-					$attr->{'fullsize.src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
+					$attr->{'fullsize.src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
 				}
 				# extra format
 				if ($self->{'config'}->{'a501_image_file.ID_format.extra'})
 				{
-					my %db0_line=App::501::functions::get_image_file(
+					my %db2_line=App::501::functions::get_image_file(
+						'image.ID_entity' => $vars{'ID_entity'},
 						'image.ID' => $vars{'ID'},
 						'image_file.ID_format' => $self->{'config'}->{'a501_image_file.ID_format.extra'},
 						'image_attrs.lng' => $tom::lng
 					);
-					if ($db0_line{'ID_image'})
+					if ($db2_line{'ID_image'})
 					{
-						$attr->{'extra.src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
+						$attr->{'extra.src'}=$tom::H_a501.'/image/file/'.$db2_line{'file_path'};
 					}
 				}
-			}
-			elsif ($vars{'ID_entity'})
-			{
-				main::_log("find a501_image ID_entity='$vars{'ID_entity'}' ID_format='$vars{'ID_format'}'") if $debug;
-				my %db0_line=App::501::functions::get_image_file(
-					'image.ID_entity' => $vars{'ID_entity'},
-					'image_file.ID_format' => $vars{'ID_format'},
-					'image_attrs.lng' => $tom::lng
-				);
-				if ($db0_line{'ID_image'})
+				
+				# override default tag representation
+				if ($db1_line{'image_width'}<=($db0_line{'image_width'}*1.2))
+				{ # fullsize is not better quality than this image_format
+					$out_full=
+						$self->{'entity'}{'a501_image.'.$out_cnt}
+						|| $self->{'entity'}{'a501_image.nofullsize'}
+						|| $self->{'entity'}{'a501_image'}
+						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
+						|| $tpl->{'entity'}{'parser.a501_image'}
+						|| $out_full;
+				}
+				else
 				{
-					$attr->{'src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
-					main::_log("found image src='$attr->{'src'}'") if $debug;
-					$attr->{'alt'}=$db0_line{'name'} unless $attr->{'alt'};
-					
-					$attr->{'width_forced'}=$attr->{'width'};
-					$attr->{'height_forced'}=$attr->{'height'};
-					
-					$attr->{'width'}=$db0_line{'image_width'} unless $attr->{'width'};
-					$attr->{'height'}=$db0_line{'image_height'} unless $attr->{'height'};
-					
-					# override default tag representation
 					$out_full=
 						$self->{'entity'}{'a501_image.'.$out_cnt}
 						|| $self->{'entity'}{'a501_image'}
 						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
 						|| $tpl->{'entity'}{'parser.a501_image'}
 						|| $out_full;
-					
-					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
-					
 				}
-				# fullsize
-				my %db0_line=App::501::functions::get_image_file(
-					'image.ID_entity' => $vars{'ID_entity'},
-					'image_file.ID_format' => $App::501::image_format_fullsize_ID,
-					'image_attrs.lng' => $tom::lng
-				);
-				if ($db0_line{'ID_image'})
-				{
-					$attr->{'fullsize.src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
-				}
-				# extra format
-				if ($self->{'config'}->{'a501_image_file.ID_format.extra'})
-				{
-					my %db0_line=App::501::functions::get_image_file(
-						'image.ID_entity' => $vars{'ID_entity'},
-						'image_file.ID_format' => $self->{'config'}->{'a501_image_file.ID_format.extra'},
-						'image_attrs.lng' => $tom::lng
-					);
-					if ($db0_line{'ID_image'})
-					{
-						$attr->{'extra.src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
-					}
-				}
+				
+				$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+				
 			}
+			
 			$self->{'out_var'}->{'img.'.$out_cnt.'.src'}=$attr->{'src'};
 			$self->{'out_var'}->{'img.'.$out_cnt.'.extra.src'}=$attr->{'extra.src'} if $attr->{'extra.src'};
 		}
@@ -618,6 +581,176 @@ sub start
 				}
 			}
 		}
+		elsif ($attr->{'id'}=~/^a210_page:(.*)$/)
+		{
+			require App::210::_init;
+			%vars=_parse_id($1);
+			
+			if ($vars{'ID'})
+			{
+				main::_log("find a210_page ID='$vars{'ID'}'") if $debug;
+				my %sql_def=('db_h' => "main",'db_name' => $TOM::DB{'main'}{'name'},'tb_name' => "a210_page");
+				my %a210=App::020::SQL::functions::get_ID(
+					%sql_def,
+					'ID'      => "'$vars{'ID'}'",
+					'columns' => { '*' => 1 },
+					'-slave' => 1,
+					'-cache' => 3600,
+					'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%sql_def)
+				);
+				my $a210_path;
+				# musim vygenerovat default path pre automaticky 301 code
+				foreach my $p(
+					App::020::SQL::functions::tree::get_path(
+						$vars{'ID'},
+						%sql_def,
+						'-slave' => 1,
+						'-cache' => 3600
+					)
+				)
+				{
+					push @{$a210{'IDs'}}, $p->{'ID'};
+					$a210_path.="/".$p->{'name_url'};
+				}
+				$a210_path=~s|^/||;
+				
+				if ($TOM::LNG_permanent)
+				{
+					$attr->{'href'}=$tom::H_www.'/?|?a210_path='.$a210_path;
+				}
+				else
+				{
+					$attr->{'href'}=$tom::H_www.'/?|?a210_path='.$a210_path.'&__lng='.$a210{'lng'};
+				}
+				
+				# override default tag representation
+				$out_full=
+					$self->{'entity'}{'a210_page.'.$out_cnt}
+					|| $self->{'entity'}{'a210_page'}
+					|| $tpl->{'entity'}{'parser.a210_page.'.$out_cnt}
+					|| $tpl->{'entity'}{'parser.a210_page'}
+					|| $out_full;
+				
+				$out_full=~s|<%db_(.*?)%>|$a210{$1}|g;
+			}
+			
+		}
+		elsif ($attr->{'id'}=~/^a401_article:(.*)$/)
+		{
+			%vars=_parse_id($1);
+			
+			my $sql=qq{
+				SELECT
+					article.ID_entity,
+					article.ID,
+					article_attrs.ID_category,
+					article_cat.name AS ID_category_name,
+					article_cat.name_url AS ID_category_name_url,
+					article_attrs.name,
+					article_attrs.datetime_start,
+					article_attrs.name_url
+				FROM `$App::401::db_name`.a401_article AS article
+				LEFT JOIN `$App::401::db_name`.a401_article_attrs AS article_attrs ON
+				(
+					article_attrs.ID_entity = article.ID
+				)
+				LEFT JOIN `$App::401::db_name`.`a401_article_ent` AS article_ent ON
+				(
+					article_ent.ID_entity = article.ID_entity
+				)
+				LEFT JOIN `$App::401::db_name`.`a401_article_cat` AS article_cat ON
+				(
+					article_cat.ID = article_attrs.ID_category
+				)
+				WHERE
+			};
+			
+			if ($vars{'ID'} && $vars{'ID_entity'})
+			{
+				$sql.=qq{
+					article.ID=$vars{'ID'} OR
+					article.ID_entity=$vars{'ID_entity'}
+				};
+			}
+			elsif ($vars{'ID'})
+			{
+				$sql.=qq{
+					article.ID=$vars{'ID'}
+				};
+			}
+			else
+			{
+				$sql.=qq{
+					article.ID='$vars{'ID_entity'}'
+				};
+			}
+			
+			$sql.=qq{
+				ORDER BY
+					article_attrs.datetime_start DESC
+				LIMIT
+					1
+			};
+			
+			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>600);
+			my %db0_line=$sth0{'sth'}->fetchhash();
+			if ($db0_line{'ID_entity'})
+			{
+		      my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
+		      $db0_line{'datetime_start.year'}=$datetime{'year'};
+		      $db0_line{'datetime_start.month'}=$datetime{'month'};
+		      $db0_line{'datetime_start.mday'}=$datetime{'mday'};
+		      $db0_line{'datetime_start.hour'}=$datetime{'hour'};
+		      $db0_line{'datetime_start.min'}=$datetime{'min'};
+		      $db0_line{'datetime_start.sec'}=$datetime{'sec'};
+				
+				my $ID_category=$db0_line{'ID_category'};
+				my $alias_url;
+				my %data=App::020::SQL::functions::get_ID(
+					'ID' => $ID_category,
+					'db_h' => 'main',
+					'db_name' => $App::401::db_name,
+					'tb_name' => 'a401_article_cat',
+					'columns' => {'*' => 1},
+					'-cache' => 3600,
+					'-slave' => 1,
+				);
+				$alias_url=$data{'alias_url'} if $data{'alias_url'};
+				while ($ID_category && !$alias_url)
+				{
+					my %data=App::020::SQL::functions::tree::get_parent_ID(
+						'ID' => $ID_category,
+						'db_h' => 'main',
+						'db_name' => $App::401::db_name,
+						'tb_name' => 'a401_article_cat',
+						'columns' => {'*' => 1},
+						'-cache' => 3600,
+						'-slave' => 1,
+					);
+					$ID_category=$data{'ID'};
+					if ($data{'alias_url'}){$alias_url=$data{'alias_url'};last;}
+				}
+				
+				if ($alias_url){$db0_line{'alias_url'}=$alias_url;}
+				else {$db0_line{'alias_url'}=$tom::H_www;}
+				
+				$db0_line{'alias_url_orig'}=$alias_url;
+				
+				# override default tag representation
+				$out_full=
+					$self->{'entity'}{'a401_article.'.$out_cnt}
+					|| $self->{'entity'}{'a401_article'}
+					|| $tpl->{'entity'}{'parser.a401_article.'.$out_cnt}
+					|| $tpl->{'entity'}{'parser.a401_article'}
+					|| $out_full;
+				
+				$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+				
+			}
+			
+		}
+		
+		
 	}
 	
 	# fix not closed tags
