@@ -276,7 +276,17 @@ sub execute
 	}
 	else
 	{
-		$sql_where.=" AND ACL_world.perm_R='N' ";
+#		$sql_where.=" AND ACL_world.perm_R='N' ";
+	}
+	
+	my $sql_select;
+	
+	if ($env{'sql_order_by'}=~s|:visits_(.*?):|:VISITS:|)
+	{
+		my $dur=$1;
+		my $sql_visits=qq{(SELECT COUNT(ID_article) FROM $App::401::db_name.a401_article_visit AS visit WHERE visit.ID_article=article.ID_entity AND datetime_event >= DATE_SUB(NOW(),INTERVAL $dur))};
+		$env{'sql_order_by'}=~s|:VISITS:|$sql_visits|;
+		$sql_select=", $sql_visits AS visits_dur ";
 	}
 	
 	if ($env{'sql_where'})
@@ -338,6 +348,7 @@ sub execute
 				),
 				'Y', 'U'
 			) AS status_all
+			$sql_select
 			
 		FROM `$env{'db_name'}`.a401_article_attrs AS article_attrs
 		LEFT JOIN `$env{'db_name'}`.a401_article AS article ON
@@ -380,7 +391,7 @@ sub execute
 	};
 	
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'log_'=>1,'-slave'=>1,'-cache_auto_'=>60);
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto_'=>60);
 	
 	if(!$sth0{'sth'})
 	{
@@ -457,6 +468,18 @@ sub execute
 		$p->{'ignore'}{'img.1'}=
 			$env{'abstract.ignore.img.1'}
 			|| $env{'ignore.img.1'}
+			|| undef;
+		
+		# a210_page
+		$p->{'entity'}{'a210_page'}=
+			$XSGN{'abstract.a210_page'}
+			|| $XSGN{'a210_page'}
+			|| undef;
+			
+		# a401_article
+		$p->{'entity'}{'a401_article'}=
+			$XSGN{'abstract.a401_article'}
+			|| $XSGN{'a401_article'}
 			|| undef;
 		
 		# a501_image
@@ -541,6 +564,18 @@ sub execute
 				|| $env{'ignore.img.1'}
 				|| undef;
 			
+			# a210_page
+			$p->{'entity'}{'a210_page'}=
+				$XSGN{'body.a210_page'}
+				|| $XSGN{'a210_page'}
+				|| undef;
+			
+			# a401_article
+			$p->{'entity'}{'a401_article'}=
+				$XSGN{'body.a401_article'}
+				|| $XSGN{'a401_article'}
+				|| undef;
+			
 			# a501_image
 			$p->{'config'}->{'a501_image_file.ID_format'}=
 				$env{'article.'.$item_counter.'.abstract.a501_image_file.ID_format'}
@@ -620,6 +655,7 @@ sub execute
 		
 		if ($env{'relation'})
 		{
+			my $related_article;
 			foreach my $relation (App::160::SQL::get_relations(
 				'db_name' => $App::401::db_name,
 				'l_prefix' => 'a401',
@@ -633,9 +669,11 @@ sub execute
 			{
 				if ($relation->{'r_prefix'} eq "a501" && $relation->{'r_table'} eq "image")
 				{$item=~s|<#gallery_mark#>|$XSGN{'gallery_mark'}|g;}
-				if ($relation->{'r_prefix'} eq "a401" && $relation->{'r_table'} eq "article" && $XSGN{'related_article'})
+				if ($relation->{'r_prefix'} eq "a401" && $relation->{'r_table'} eq "article" && $relation->{'rel_type'} eq "link" && $XSGN{'related_article'})
 				{
-					my $item_article=$XSGN{'related_article'};
+					$related_article++;
+					my $item_article=$XSGN{'related_article.'.$related_article} || $XSGN{'related_article'};
+					next unless $item_article;
 					my $sql=qq{
 						SELECT
 							article.ID_entity,
@@ -672,6 +710,11 @@ sub execute
 					};
 					my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache'=>600);
 					my %db1_line=$sth1{'sth'}->fetchhash();
+					if (!$db1_line{'ID_entity'})
+					{
+						$related_article--;
+						next;
+					}
 			      my %datetime=TOM::Utils::datetime::datetime_collapse($db1_line{'datetime_start'});
 			      $db1_line{'datetime_start.year'}=$datetime{'year'};
 			      $db1_line{'datetime_start.month'}=$datetime{'month'};
@@ -680,6 +723,37 @@ sub execute
 			      $db1_line{'datetime_start.min'}=$datetime{'min'};
 			      $db1_line{'datetime_start.sec'}=$datetime{'sec'};
 					$item_article=~s|<%db_(.*?)%>|$db1_line{$1}|g;
+					
+					my $ID_category=$db1_line{'ID_category'};
+					my $alias_url;
+					my %data=App::020::SQL::functions::get_ID(
+						'ID' => $ID_category,
+						'db_h' => 'main',
+						'db_name' => $App::401::db_name,
+						'tb_name' => 'a401_article_cat',
+						'columns' => {'*' => 1},
+						'-cache' => 3600,
+						'-slave' => 1,
+					);
+					$alias_url=$data{'alias_url'} if $data{'alias_url'};
+					while ($ID_category && !$alias_url)
+					{
+						my %data=App::020::SQL::functions::tree::get_parent_ID(
+							'ID' => $ID_category,
+							'db_h' => 'main',
+							'db_name' => $App::401::db_name,
+							'tb_name' => 'a401_article_cat',
+							'columns' => {'*' => 1},
+							'-cache' => 3600,
+							'-slave' => 1,
+						);
+						$ID_category=$data{'ID'};
+						if ($data{'alias_url'}){$alias_url=$data{'alias_url'};last;}
+					}
+					$item_article=~s|<%alias_url%>|$alias_url|g if $alias_url;
+					$item_article=~s|<%alias_url%>|$tom::H_www|g unless $alias_url;
+					$item_article=~s|<%alias_url_db%>|$alias_url|g;
+					
 					$item=~s|<#related_article#>|$item_article|g;
 				}
 #				if ($relation->{'r_prefix'} eq "a821" && $relation->{'r_table'} eq "discussion")
@@ -741,7 +815,9 @@ sub execute
 		}
 	}
 	
-	if($env{'article_attrs.ID_category'}=~/^[0-9]*?$/){
+	if($env{'article_attrs.ID_category'}=~/^([0-9]*)\*?$/)
+	{
+		my $ID_category=$1;
 		my $sql=qq{
 			SELECT
 				name
