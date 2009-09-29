@@ -241,6 +241,11 @@ sub prepare
 		$self->{OUT}{HEADER} .= "<!--".$self->{ENV}{head}{comment}."-->\n";
 	}
 	
+	if ($self->{ENV}{head}{inline})
+	{
+		$self->{OUT}{HEADER} .= $self->{ENV}{head}{inline}."\n";
+	}
+	
 	$self->{OUT}{HEADER} .= "</head>\n";
 	
 	# BODY
