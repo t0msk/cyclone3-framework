@@ -105,25 +105,24 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
-	if (!$env{'video_file.ID_format'})# && !$env{'format_name'})
+	if (!$env{'video_file.ID_format'})
 	{
-		$env{'video_format.name'}='full';
+		$env{'video_file.ID_format'}=$App::510::video_format_full_ID;
 	}
 	
-	$env{'video.ID_category'}=1 unless exists $env{'video.ID_category'};
+#	$env{'video.ID_category'}=1 unless exists $env{'video.ID_category'};
+#	if ($env{'video.ID_category'} == 0)
+#	{
+#		delete $env{'video.ID_category'};
+#	}
 	
-	if ($env{'video.ID_category'} == 0)
-	{
-		delete $env{'video.ID_category'};
-	}
-	
-	$env{'image_format.name'}="thumbnail" unless $env{'image_format.name'};
+#	$env{'image_format.name'}="thumbnail" unless $env{'image_format.name'};
 	
 	$env{'video_attrs.lng'}=$env{'lng'} unless $env{'video_attrs.lng'};
 	$env{'video_attrs.status'}='Y' unless $env{'video_attrs.status'};
-	$env{'sql_limit'}='1' unless $env{'sql_limit'};
+	$env{'sql_limit'}='10' unless $env{'sql_limit'};
 	
-	$env{'sql_order_by'}='video.datetime_rec_start DESC, video.ID_entity_video DESC' unless $env{'sql_order_by'};
+	$env{'sql_order_by'}='video.datetime_rec_start DESC' unless $env{'sql_order_by'};
 	
 	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
 	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
@@ -133,28 +132,49 @@ sub execute
 	
 	my $sql_where;
 	
-	if ($env{'video.ID_category'}=~/^([\d,]+)$/)
+	my $sql_cat;
+	foreach my $ID_category(split(';',$env{'video_attrs.ID_category'}))
 	{
-		$sql_where.=" AND video.ID_category IN ('".
-			(join "','", split(',',$env{'video.ID_category'})).
-			"')";
+		next unless $ID_category;
+		if ($ID_category=~s/\*$//)
+		{
+			my $cat_sql=qq{
+						SELECT
+							ID_charindex
+						FROM
+							`$App::510::db_name`.a510_video_cat
+						WHERE
+							ID_entity=$ID_category AND
+							lng='$env{'video_attrs.lng'}' AND
+							status IN ('Y','L')
+						LIMIT 1
+			};
+			$ID_category=qq{
+				SELECT
+					ID_entity
+				FROM
+					`$App::510::db_name`.a510_video_cat
+				WHERE
+					ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+					lng='$env{'video_attrs.lng'}' AND
+					status IN ('Y','L')
+			};
+		}
+		$sql_cat.=" OR video_attrs.ID_category IN ($ID_category)";
+		$sql_cat=~s/^ OR //;
+	}
+	if ($sql_cat)
+	{
+		$sql_where.=" AND (".$sql_cat.") ";
 	}
 	
-	if ($env{'video_file.ID_format'})
-	{
-		$sql_where.=" AND video.ID_format=$env{'video_file.ID_format'}";
-	}
-	elsif ($env{'video_format.name'})
-	{
-		$sql_where.=" AND video.ID_format_name='$env{'video_format.name'}'";
-	}
-	else
-	{
-		$sql_where.=" AND video.ID_format_name='full'";
-	}
+#	if ($env{'video_file.ID_format'})
+#	{
+#		$sql_where.=" AND video_file.ID_format=$env{'video_file.ID_format'}";
+#	}
 	
 	
-	
+=head1
 	if ($env{'video.ID_entity'})
 	{
 		
@@ -201,6 +221,17 @@ sub execute
 		main::_log("added video.name_url LIKE '$env{'video.name_url'}'");
 		$sql_where.=" AND video.name_url LIKE '".TOM::Security::form::sql_escape($env{'video.name_url'})."'";
 	}
+=cut
+	
+	my $sql_select;
+	
+	if ($env{'sql_order_by'}=~s|:visits_(.*?):|:VISITS:|)
+	{
+		my $dur=$1;
+		my $sql_visits=qq{(SELECT COUNT(ID_part) FROM $App::510::db_name.a510_video_part_callback AS visit WHERE visit.ID_part=video_part.ID AND datetime_create >= DATE_SUB(NOW(),INTERVAL $dur))};
+		$env{'sql_order_by'}=~s|:VISITS:|$sql_visits|;
+		$sql_select=", $sql_visits AS visits_dur ";
+	}
 	
 	if ($env{'sql_where'})
 	{
@@ -209,26 +240,81 @@ sub execute
 	
 	my $sql=qq{
 		SELECT
---			DISTINCT(ID_entity_video),
-			*
+			video.ID_entity AS ID_entity_video,
+			video.ID AS ID_video,
+			video_attrs.ID AS ID_attrs,
+			video_part.ID AS ID_part,
+			
+			LEFT(video.datetime_rec_start, 16) AS datetime_rec_start,
+			LEFT(video_attrs.datetime_create, 16) AS datetime_create,
+			LEFT(video.datetime_rec_start,10) AS date_recorded,
+			LEFT(video.datetime_rec_stop, 16) AS datetime_rec_stop,
+			
+			video_attrs.ID_category,
+			
+			video_ent.posix_owner,
+			video_ent.posix_author,
+			video_ent.keywords AS video_keywords,
+			
+			video_attrs.name,
+			video_attrs.name_url,
+			video_attrs.description,
+			video_attrs.order_id,
+			video_attrs.priority_A,
+			video_attrs.priority_B,
+			video_attrs.priority_C,
+			video_attrs.lng,
+			
+			video_part.part_id AS part_id,
+			video_part.keywords AS part_keywords,
+			
+			video_part_attrs.name AS part_name,
+			video_part_attrs.description AS part_description,
+			
+			video_attrs.status,
+			
+			video_cat.name AS ID_category_name,
+			video_cat.name_url AS cat_name_url
+			$sql_select
+			
 		FROM
-			`$App::510::db_name`.a510_video_view AS video
+			`$App::510::db_name`.`a510_video` AS video
+		LEFT JOIN `$App::510::db_name`.`a510_video_ent` AS video_ent ON
+		(
+			video_ent.ID_entity = video.ID_entity
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_attrs` AS video_attrs ON
+		(
+			video_attrs.ID_entity = video.ID
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part` AS video_part ON
+		(
+			video_part.ID_entity = video.ID_entity AND
+			video_part.part_id=1
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part_attrs` AS video_part_attrs ON
+		(
+			video_part_attrs.ID_entity = video_part.ID AND
+			video_part_attrs.lng = video_attrs.lng
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_cat` AS video_cat ON
+		(
+			video_attrs.ID_category = video_cat.ID_entity AND
+			video_cat.lng = video_attrs.lng
+		)
 		WHERE
-			video.status IN ('$env{'video_attrs.status'}') AND
-			video.part_id = 1 AND
-			video.lng='$env{'video_attrs.lng'}'
+			video_attrs.lng='$env{'video_attrs.lng'}' AND
+			video_attrs.status='$env{'video_attrs.status'}'
 			$sql_where
-		GROUP BY
-			ID_entity_video
 		ORDER BY
 			$env{'sql_order_by'}
-		LIMIT $env{'sql_limit'}
+		LIMIT
+			$env{'sql_limit'}
 	};
-	
 	
 	my $item_counter=0;
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$item_counter++;
@@ -252,6 +338,7 @@ sub execute
 		my %owner=App::301::authors::get_author($db0_line{'posix_owner'});
 		$item=~s|<%owner_(.*?)%>|$owner{$1}|g;
 		
+=head1
 		# count parts visits
 		my $sql=qq{
 			SELECT
@@ -264,7 +351,7 @@ sub execute
 		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
 		my %db1_line=$sth1{'sth'}->fetchhash();
 		$db0_line{'visits'}=$db1_line{'visits'};
-		
+=cut
 		
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
@@ -284,30 +371,41 @@ sub execute
 			
 			$item=~s|<%image.ID%>|$relation->{'r_ID_entity'}|g;
 			
-#			my %db1_line=App::501::functions::get_image_file(
-#				'image.ID_entity' => $relation->{'r_ID_entity'},
-#				'image_file.ID_format' => $img_ID_format,
-#				'image_attrs.lng' => $env{'lng'}
-#			);
-			my $sql=qq{
-				SELECT
-					*
-				FROM
-					`$App::501::db_name`.a501_image_view AS image
-				WHERE
-					image.ID_entity_image = $relation->{'r_ID_entity'} AND
-					image.status='Y' AND
-					image.ID_format_name = '$env{'image_format.name'}'
-				LIMIT 1
-			};
-			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
-			if (my %db1_line=$sth1{'sth'}->fetchhash())
-			{
-				
-				$item=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;
-			}
+			my %db1_line=App::501::functions::get_image_file(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_file.ID_format' => $env{'image_format.ID'} || $App::501::image_format_thumbnail_ID,
+				'image_attrs.lng' => $env{'lng'}
+			);
+			$item=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;
 			
 		}
+		
+		
+		# count parts length and ratings
+		my $sql=qq{
+			SELECT
+				SEC_TO_TIME(SUM(file.length)) AS length,
+				AVG(video_part.rating_score/video_part.rating_votes) AS rating
+			FROM
+				`$App::510::db_name`.a510_video_part AS video_part
+			LEFT JOIN `$App::510::db_name`.a510_video_part_file AS file ON
+			(
+				file.ID_entity = video_part.ID AND
+				file.ID_format = $App::510::video_format_original_ID
+			)
+			WHERE
+				video_part.ID_entity = $db0_line{'ID_entity_video'} AND
+				video_part.status IN ('Y','N','L')
+		};
+		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		$db1_line{'length'}='' if $db1_line{'length'} eq "00:00:00";
+		$item=~s|<%length%>|$db1_line{'length'}|g;
+		# rating5
+		my $rating5=int(($db1_line{'rating'}/20)+0.5);
+		$item=~s|<%rating5%>|$rating5|g;
+		my $rating55=int($db1_line{'rating'}/20*2)/2;
+		$item=~s|<%rating55%>|$rating55|g;
 		
 		$item=~s|<%item_number%>|$item_counter|g;
 		
