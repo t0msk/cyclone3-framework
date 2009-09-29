@@ -751,6 +751,7 @@ sub image_add
 			$t->close();
 			return undef;
 		}
+		$content_updated=1;
 	}
 	
 	my %category;
@@ -950,6 +951,7 @@ sub image_add
 			'image.ID_entity' => $env{'image.ID_entity'},
 			'image_format.ID' => $env{'image_format.ID'}
 		);
+		$content_updated=1;
 	}
 	
 	
@@ -1594,7 +1596,7 @@ sub get_image_file
 		my %sth0=TOM::Database::SQL::execute(qq{SELECT ID_entity FROM `$App::501::db_name`.`a501_image` WHERE ID='$env{'image.ID'}' LIMIT 1},'quiet'=>1,'-slave'=>1,'-cache'=>3600);
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		$env{'image.ID_entity'}=$db0_line{'ID_entity'};
-		main::_log("ID_entity=$env{'image.ID_entity'}");
+		#main::_log("ID_entity=$env{'image.ID_entity'}");
 		
 		$sql.=qq{
 		FROM
@@ -1622,7 +1624,7 @@ sub get_image_file
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,
 		'-cache' => 86400, #24H max
-		'-cache_min' => 600, # when changetime before this limit 10min
+#		'-cache_min' => 600, # when changetime before this limit 10min
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
 			'db_h'=>"main",'db_name'=>$App::501::db_name,'tb_name'=>"a501_image",
 			'ID_entity' => $env{'image.ID_entity'}
@@ -1645,7 +1647,7 @@ sub get_image_file
 				return get_image_file(%env,'-recache'=>1,'-recursive'=>1);
 			}
 		}
-		main::_log("received image_file with status='$image{'file_status'}'");
+#		main::_log("received image_file with status='$image{'file_status'}'");
 		if ($env{'-regenerate'})
 		{
 			App::501::functions::image_file_generate(
