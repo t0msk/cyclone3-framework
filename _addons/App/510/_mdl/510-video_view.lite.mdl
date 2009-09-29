@@ -1,0 +1,225 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+=head1 NAME
+
+510-video_view.0.mdl
+
+=head1 DESCRIPTION
+
+Detail info about video
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::510::_init|app/"510/_init.pm">
+
+=back
+
+=cut
+
+use App::510::_init;
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<video.ID> - ID of video
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - video item
+
+=item *
+
+B<%db_*%> - video database variables
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	my $sql_where;
+	
+	if ($env{'video.ID'})
+	{
+		$sql_where.=" AND video.ID = $env{'video.ID'} ";
+	}
+	
+	if ($env{'video.ID_entity'})
+	{
+		$sql_where.=" AND video.ID_entity = $env{'video.ID_entity'} ";
+	}
+	
+	my $sql=qq{
+		SELECT
+			video.ID_entity,
+			video.ID,
+			
+			video.ID_entity AS ID_entity_video,
+			video.ID AS ID_video,
+			video_attrs.ID AS ID_attrs,
+			
+			LEFT(video.datetime_rec_start, 18) AS datetime_rec_start,
+			LEFT(video_attrs.datetime_create, 18) AS datetime_create,
+			LEFT(video.datetime_rec_start,10) AS date_recorded,
+			LEFT(video_ent.datetime_rec_stop, 18) AS datetime_rec_stop,
+			
+			video_attrs.ID_category,
+			
+			video_attrs.name,
+			video_attrs.name_url,
+			video_attrs.description,
+			video_ent.keywords,
+			video_ent.posix_author,
+			
+			video_part.ID AS ID_part
+			
+		FROM
+			`$App::510::db_name`.`a510_video` AS video
+		LEFT JOIN `$App::510::db_name`.`a510_video_ent` AS video_ent ON
+		(
+			video_ent.ID_entity = video.ID_entity
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_attrs` AS video_attrs ON
+		(
+			video_attrs.ID_entity = video.ID
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part` AS video_part ON
+		(
+			video_part.ID_entity = video.ID_entity AND
+			video_part.part_id = 1
+		)
+		WHERE
+			video_attrs.lng = '$env{'lng'}' AND
+			video_attrs.status = 'Y'
+			$sql_where
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1,'-cache'=>1200,
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+			'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video",'ID_entity'=>$env{'video.ID_entity'}
+		})
+	);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		
+		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_rec_start'});
+      $db0_line{'datetime_rec_start.year'}=$datetime{'year'};
+      $db0_line{'datetime_rec_start.month'}=$datetime{'month'};
+      $db0_line{'datetime_rec_start.mday'}=$datetime{'mday'};
+      $db0_line{'datetime_rec_start.hour'}=$datetime{'hour'};
+      $db0_line{'datetime_rec_start.min'}=$datetime{'min'};
+      $db0_line{'datetime_rec_start.sec'}=$datetime{'sec'};
+		
+		my %author=App::301::authors::get_author($db0_line{'posix_author'});
+		$XSGN{'TMP'}=~s|<%author_(.*?)%>|$author{$1}|g;
+		
+		# count parts length and ratings
+		my $sql=qq{
+			SELECT
+				SEC_TO_TIME(SUM(file.length)) AS length,
+				AVG(video_part.rating_score/video_part.rating_votes) AS rating
+			FROM
+				`$App::510::db_name`.a510_video_part AS video_part
+			LEFT JOIN `$App::510::db_name`.a510_video_part_file AS file ON
+			(
+				file.ID_entity = video_part.ID AND
+				file.ID_format = $App::510::video_format_original_ID
+			)
+			WHERE
+				video_part.ID_entity = $db0_line{'ID_entity'} AND
+				video_part.status IN ('Y','N','L')
+		};
+		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1,'-cache'=>3600);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		$db1_line{'length'}='' if $db1_line{'length'} eq "00:00:00";
+		$XSGN{'TMP'}=~s|<%length%>|$db1_line{'length'}|g;
+		
+		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		my $p=new App::401::mimetypes::html;
+		$p->parse($db0_line{'description'});
+		$p->eof();
+		$XSGN{'TMP'}=~s|<%description%>|$p->{'out'}|;
+		
+		
+		my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::510::db_name,
+			'l_prefix' => 'a510',
+			'l_table' => 'video_part',
+			'l_ID_entity' => $db0_line{'ID_part'},
+			'rel_type' => 'thumbnail',
+			'r_db_name' => $App::501::db_name,
+			'r_prefix' => 'a501',
+			'r_table' => 'image',
+			'limit' => 1
+		))[0];
+		if ($relation->{'ID'})
+		{
+			$XSGN{'TMP'}=~s|<%image.ID%>|$relation->{'r_ID_entity'}|g;
+			my %db1_line=App::501::functions::get_image_file(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_file.ID_format' => $env{'image_format.ID'} || $App::501::image_format_thumbnail_ID,
+				'image_attrs.lng' => $env{'lng'}
+			);
+			$XSGN{'TMP'}=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;
+		}
+		
+		
+		$main::H->add_DOC_title($db0_line{'name'}) unless $env{'DOC_title.disable'};
+		$main::H->add_DOC_keywords($db0_line{'keywords'});
+		if ($db0_line{'description'})
+		{
+			$main::H->add_DOC_description(TOM::Text::format::xml2plain($db0_line{'description'}));
+		}
+		else
+		{
+			$main::H->add_DOC_description($db0_line{'name'}.". ".TOM::Text::format::xml2plain($db0_line{'description'}));
+		}
+		
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
