@@ -151,6 +151,7 @@ sub execute
 	$env{'vox_count'}=$db0_line{'cnt'};
 	$XSGN{'TMP'}=~s|<%count%>|$env{'vox_count'}|g;
 	$XSGN{'TMP'}=~s|<%discussion.ID%>|$env{'discussion.ID'}|g;
+	$XSGN{'TMP'}=~s|<%discussion.ID_entity%>|$env{'discussion.ID_entity'}|g;
 	
 	my $sql=qq{
 		SELECT
