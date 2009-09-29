@@ -13,6 +13,6 @@ use App::110::SQL;
 
 our $sql_rqs=1;
 our $sql_rqslite=100; # every 100-st request will be writed into this table
-
+our $sql_direct=$App::110::sql_direct || 0;
 
 1;
