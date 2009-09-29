@@ -16,9 +16,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_relation` (
   `r_table` varchar(64) character set ascii collate ascii_bin NOT NULL,
   `r_ID_entity` varchar(16) character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`l_prefix`,`l_table`,`l_ID_entity`,`rel_type`,`r_db_name`,`r_prefix`,`r_table`,`r_ID_entity`),
-  UNIQUE KEY `UNI_1` (`ID`,`datetime_create`,`l_prefix`,`l_table`,`l_ID_entity`)
+  PRIMARY KEY  (`ID`),
+  KEY `SEL_0` (`l_prefix`,`l_table`,`l_ID_entity`),
+  KEY `SEL_1` (`r_prefix`,`r_table`,`r_ID_entity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
