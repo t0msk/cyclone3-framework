@@ -112,8 +112,6 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_cat` (
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
-  KEY `ID_entity` (`ID_entity`),
-  KEY `ID_charindex` (`ID_charindex`),
   KEY `name` (`name`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
@@ -133,17 +131,16 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_cat_j` (
   `datetime_create` datetime NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'N'
-) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_event_rel_cat` (
-  `ID_cat` bigint(20) unsigned NOT NULL auto_increment, -- rel _event_cat.ID_entity
+  `ID_category` bigint(20) unsigned NOT NULL auto_increment, -- rel _event_cat.ID_entity
   `ID_event` bigint(20) unsigned NOT NULL, -- rel _event.ID_entity,
-  PRIMARY KEY  (`ID_cat`,`ID_event`),
-  KEY `ID_user` (`ID_event`),
-  KEY `ID_group` (`ID_cat`)
+  PRIMARY KEY  (`ID_category`,`ID_event`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
