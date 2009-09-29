@@ -123,6 +123,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
   `visits` int(10) unsigned NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
+  `rating` int(10) unsigned NOT NULL,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `process_lock` char(1) character set ascii NOT NULL default 'N',
   `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
@@ -131,6 +132,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
   FULLTEXT KEY `FULL_0` (`keywords`),
   KEY `ID_entity` (`ID_entity`),
   KEY `visits` (`visits`),
+  KEY `rating` (`rating`),
   KEY `part_id` (`part_id`),
   KEY `status` (`status`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -145,6 +147,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_j` (
   `visits` int(10) unsigned NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
+  `rating` int(10) unsigned NOT NULL,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `process_lock` char(1) character set ascii NOT NULL default 'N',
   `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
