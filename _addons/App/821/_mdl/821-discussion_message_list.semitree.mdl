@@ -1,0 +1,361 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::160::_init;
+use App::821::_init;
+use TOM::Text::format;
+
+=head1 NAME
+
+821-discussion_message_list.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+List messages from discussion
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<discussion.ID> || B<discussion.ID_entity>  - ID of discussion_forum
+
+=item *
+
+B<status> - default 'Y'
+
+=item *
+
+B<sql_order_by> - default 'datetime_create DESC'
+
+=item *
+
+B<sql_limit> - SQL limit
+
+=back
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	delete $env{'ID_charindex'};
+	$env{'sql_limit'}=500 unless $env{'sql_limit'};
+	$env{'sql_order_by'}='datetime_post DESC' unless $env{'sql_order_by'};
+	
+	my $from;
+	my $sql_where;
+	
+	if ($env{'discussion.ID'})
+	{
+		my $sql=qq{
+			SELECT
+				ID,
+				ID_entity
+			FROM
+				`$App::821::db_name`.a821_discussion
+			WHERE
+				ID=$env{'discussion.ID'} AND
+				$sql_where
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'slave'=>1,'log'=>1);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		$env{'discussion.ID_entity'} = $db0_line{'ID_entity'};
+	}
+	
+	my $username;
+	if ($main::USRM{'logged'} eq "Y")
+	{
+		my %owner=App::301::authors::get_author($main::USRM{'ID_user'});
+		$username=$owner{'login'};
+		$username=$owner{'firstname'}." ".$owner{'surname'} if ($owner{'firstname'} || $owner{'surname'});
+		$XSGN{'TMP'}=~s|<%user%>|$username|g;
+	}
+	else
+	{
+		$XSGN{'TMP'}=~s|<%user%>||g;
+	}
+	
+	#
+	# LISTING OF ITEMS
+	#
+	
+	
+	# WHERE DISCUSSION
+	$sql_where="AND ID_discussion='$env{'discussion.ID_entity'}'" if $env{'discussion.ID_entity'};
+	if (!$env{'discussion.ID_entity'})
+	{
+		return 1;
+	}
+	
+	# get total count, not only limited messages
+	my $sql=qq{
+		SELECT
+			COUNT(*) AS cnt
+		FROM
+			`$App::821::db_name`.a821_discussion_message
+		WHERE
+			status = 'Y' AND
+			lng = '$env{'lng'}'
+			$sql_where
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+	my %db0_line=$sth0{'sth'}->fetchhash();
+	main::_log("found $db0_line{'cnt'} messages");
+	$env{'vox_count'}=$db0_line{'cnt'};
+	$XSGN{'TMP'}=~s|<%count%>|$env{'vox_count'}|g;
+	$XSGN{'TMP'}=~s|<%discussion.ID%>|$env{'discussion.ID'}|g;
+	$XSGN{'TMP'}=~s|<%discussion.ID_entity%>|$env{'discussion.ID_entity'}|g;
+	
+	my $long=512;
+	
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$App::821::db_name`.a821_discussion_message
+		WHERE
+			ID_charindex LIKE '___' AND
+			status = 'Y' AND
+			lng = '$env{'lng'}'
+			$sql_where
+		ORDER BY
+			$env{'sql_order_by'}, datetime_create DESC
+		LIMIT
+			$env{'sql_limit'}
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $item=$XSGN{'item'};
+		
+		if ($db0_line{'karma'}<-50)
+		{
+			$item=$XSGN{'item_lowkarma'};# if $XSGN{'item_lowkarma'};
+		}
+		
+		# find all subs
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`$App::821::db_name`.a821_discussion_message
+			WHERE
+				ID_charindex LIKE '$db0_line{'ID_charindex'}:%' AND
+				status = 'Y' AND
+				lng = '$env{'lng'}'
+				$sql_where
+			ORDER BY
+				datetime_post ASC
+			LIMIT
+				$env{'sql_limit'}
+		};
+		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+		if ($sth1{'rows'})
+		{
+			$item=$XSGN{'item.parent'} if $XSGN{'item.parent'};
+			if ($db0_line{'karma'}<-50)
+			{
+				$item=$XSGN{'item.parent.lowkarma'} if $XSGN{'item.parent.lowkarma'};
+			}
+			$item=~s|<#sub#>|$XSGN{'sub'}|g;
+		}
+		
+		my $body=$db0_line{'body'};
+			$body=~s|<.*?>||g;
+			$body=~s|\n|<br/>|g;
+		$item=~s|<%body%>|$body|g;
+		
+		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_post'});
+		$db0_line{'datetime_post.year'}=$datetime{'year'};
+		$db0_line{'datetime_post.month'}=$datetime{'month'};
+		$db0_line{'datetime_post.mday'}=$datetime{'mday'};
+		$db0_line{'datetime_post.hour'}=$datetime{'hour'};
+		$db0_line{'datetime_post.min'}=$datetime{'min'};
+		$db0_line{'datetime_post.sec'}=$datetime{'sec'};
+		
+		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		$item=~s|<%ID%>|$db0_line{'ID'}|g;
+		$item=~s|<%ID_entity%>|$db0_line{'ID_entity'}|g;
+		
+		$item=~s|<%user%>|$username|g;
+		
+		# display author (owner) of message
+		if ($db0_line{'owner_anonymous_name'})
+		{
+			$item=~s|<%owner%>|$db0_line{'owner_anonymous_name'}|g;
+			$item=~s|<%owner_type%>|anonymous|g;
+			$item=~s|<#avatar#>|$XSGN{'avatar.anonymous'}|g;
+		}
+		else
+		{
+			my %owner=App::301::authors::get_author($db0_line{'posix_owner'});
+			$item=~s|<%owner%>|$owner{'firstname'} $owner{'surname'}|g;
+			$item=~s|<%owner_type%>|authorized|g;
+			# try to get avatar
+			my $avatar=$XSGN{'avatar.registered'};
+			if (my $relation=(App::160::SQL::get_relations(
+				'db_name' => $App::301::db_name,
+				'l_prefix' => 'a301',
+				'l_table' => 'user',
+				'l_ID_entity' => $db0_line{'posix_owner'},
+				'rel_type' => 'avatar',
+				'r_prefix' => "a501",
+				'r_table' => "image",
+				'status' => "Y",
+				'limit' => 1
+			))[0])
+			{
+				use App::501::_init;
+				my %db1_line=App::501::functions::get_image_file(
+					'image.ID_entity' => $relation->{'r_ID_entity'},
+					'image_file.ID_format' => $App::501::image_format_thumbnail_ID,
+					'image_attrs.lng' => $env{'lng'}
+				);
+				my $uri=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+				$avatar=~s|<%uri%>|$uri|;
+			}
+			else
+			{
+				$item=~s|<#avatar#>|$XSGN{'avatar.anonymous'}|g;
+			}
+			$item=~s|<#avatar#>|$avatar|g;
+		}
+		
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			my $item0=$XSGN{'item.level2'};
+			
+			my $body=$db1_line{'body'};
+				$body=~s|<.*?>||g;
+				$body=~s|\n|<br/>|g;
+			
+			my $body_extended;
+			
+			if (length($body)>$long)
+			{
+				my $fullbody=$body;
+				$body=substr($body,0,$long);
+				$body=~s|^(.*)([\s,\.].*)$|$1|;
+				
+				$body_extended=$fullbody;
+				my $body_length=length($body);
+				$body_extended=~s|^.{$body_length}||;
+				
+				#$body.='...';
+				$item0=$XSGN{'item.level2.long'}
+			}
+			
+			$item0=~s|<%body%>|$body|g;
+			$item0=~s|<%body_extended%>|$body_extended|g;
+			
+			my %datetime=TOM::Utils::datetime::datetime_collapse($db1_line{'datetime_post'});
+			$db1_line{'datetime_post.year'}=$datetime{'year'};
+			$db1_line{'datetime_post.month'}=$datetime{'month'};
+			$db1_line{'datetime_post.mday'}=$datetime{'mday'};
+			$db1_line{'datetime_post.hour'}=$datetime{'hour'};
+			$db1_line{'datetime_post.min'}=$datetime{'min'};
+			$db1_line{'datetime_post.sec'}=$datetime{'sec'};
+			
+			$item0=~s|<%db_(.*?)%>|$db1_line{$1}|g;
+			$item0=~s|<%ID%>|$db1_line{'ID'}|g;
+			$item0=~s|<%ID_entity%>|$db1_line{'ID_entity'}|g;
+			
+			$item0=~s|<%user%>|$username|g;
+			
+			# display author (owner) of message
+			if ($db1_line{'owner_anonymous_name'})
+			{
+				$item0=~s|<%owner%>|$db1_line{'owner_anonymous_name'}|g;
+				$item0=~s|<%owner_type%>|anonymous|g;
+				$item0=~s|<#avatar#>|$XSGN{'avatar.anonymous'}|g;
+			}
+			else
+			{
+				my %owner=App::301::authors::get_author($db1_line{'posix_owner'});
+				$item0=~s|<%owner%>|$owner{'firstname'} $owner{'surname'}|g;
+				$item0=~s|<%owner_type%>|authorized|g;
+				# try to get avatar
+				my $avatar=$XSGN{'avatar.registered'};
+				if (my $relation=(App::160::SQL::get_relations(
+					'db_name' => $App::301::db_name,
+					'l_prefix' => 'a301',
+					'l_table' => 'user',
+					'l_ID_entity' => $db1_line{'posix_owner'},
+					'rel_type' => 'avatar',
+					'r_prefix' => "a501",
+					'r_table' => "image",
+					'status' => "Y",
+					'limit' => 1
+				))[0])
+				{
+					use App::501::_init;
+					my %db2_line=App::501::functions::get_image_file(
+						'image.ID_entity' => $relation->{'r_ID_entity'},
+						'image_file.ID_format' => $env{'image_format.ID'} || $App::501::image_format_thumbnail_ID,
+						'image_attrs.lng' => $env{'lng'}
+					);
+					my $uri=$tom::H_a501.'/image/file/'.$db2_line{'file_path'};
+					$avatar=~s|<%uri%>|$uri|;
+				}
+				else
+				{
+					$item0=~s|<#avatar#>|$XSGN{'avatar.anonymous'}|g;
+				}
+				$item0=~s|<#avatar#>|$avatar|g;
+			}
+			
+			$item=~s|<#item#>|$item0|;
+		}
+		if ($sth1{'rows'})
+		{
+			# remove 1 item
+			$item=~s|<#item#>||;
+			$item=~s|<#sub#>||;
+		}
+		
+		$XSGN{'TMP'}=~s|<#item#>|$item|;
+	}
+	
+	if(!$sth0{'rows'})
+	{
+		if($XSGN{'TMP_no-data'})
+		{
+			$XSGN{'TMP'} = $XSGN{'TMP_no-data'};
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	
+	return 1;
+}
+
+our $authors="roman.fordinal\@comsultia.com";
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
