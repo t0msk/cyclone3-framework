@@ -169,6 +169,10 @@ sub execute
 	{
 		$sql_where.=" AND (ACL_world.perm_R='Y' OR ACL_world.perm_R IS NULL) ";
 	}
+	elsif ($env{'world_status'} eq 'YN')
+	{
+		
+	}
 	else
 	{
 		$sql_where.=" AND ACL_world.perm_R='N' ";
@@ -276,6 +280,8 @@ sub execute
 		
 		my $rating5=int(($db0_line{'rating'}/20)+0.5);
 		$XSGN{'TMP'}=~s|<%rating5%>|$rating5|g;
+		my $rating55=int($db0_line{'rating'}/20*2)/2;
+		$XSGN{'TMP'}=~s|<%rating55%>|$rating55|g;
 		
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
@@ -321,6 +327,18 @@ sub execute
 				|| $XSGN{'a030_youtube.1'}
 				|| undef;
 			
+			# a210_page
+			$p->{'entity'}{'a210_page'}=
+				$XSGN{'body.a210_page'}
+				|| $XSGN{'a210_page'}
+				|| undef;
+			
+			# a401_article
+			$p->{'entity'}{'a401_article'}=
+				$XSGN{'body.a401_article'}
+				|| $XSGN{'a401_article'}
+				|| undef;
+			
 			# a501_image
 			$p->{'config'}->{'a501_image_file.ID_format'}=
 				$env{'body.a501_image_file.ID_format'}
@@ -333,6 +351,10 @@ sub execute
 			$p->{'entity'}->{'a501_image'}=
 				$XSGN{'body.a501_image'}
 				|| $XSGN{'a501_image'}
+				|| undef;
+			$p->{'entity'}->{'a501_image.nofullsize'}=
+				$XSGN{'body.a501_image.nofullsize'}
+				|| $XSGN{'a501_image.nofullsize'}
 				|| undef;
 			$p->{'entity'}->{'a501_image.1'}=
 				$XSGN{'body.a501_image.1'}
