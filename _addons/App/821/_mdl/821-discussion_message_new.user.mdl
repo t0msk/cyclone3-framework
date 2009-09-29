@@ -45,14 +45,21 @@ sub execute
 	
 	if ($main::USRM{'logged'} eq "Y")
 	{
+		main::_log("preparing design for registered user");
 		$XSGN{'TMP'}=~s|<#user#>|$XSGN{'user-logged'}|;
+		my %owner=App::301::authors::get_author($main::USRM{'ID_user'});
+		my $username=$owner{'login'};
+		$username=$owner{'firstname'}." ".$owner{'surname'} if ($owner{'firstname'} || $owner{'surname'});
+		$XSGN{'TMP'}=~s|<%user%>|$username|g;
 	}
 	elsif ($main::USRM{'ID_user'})
 	{
+		main::_log("preparing design for anonymous user");
 		$XSGN{'TMP'}=~s|<#user#>|$XSGN{'user-anonymous'}|;
 	}
 	else
 	{
+		main::_log("preparing design for no user");
 		$XSGN{'TMP'}=~s|<#user#>|$XSGN{'user-none'}|;
 		return 1;
 	}
@@ -88,7 +95,7 @@ sub execute
 				$sql_where
 			LIMIT 1
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'slave'=>1,'log'=>1,'-cache'=>3600);
+		my %sth0=TOM::Database::SQL::execute($sql,'slave'=>1,'quiet'=>1,'-cache'=>3600);
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		$env{'discussion.ID_entity'} = $db0_line{'ID_entity'};
 		$env{'discussion.name'} = $db0_line{'name'};
@@ -96,15 +103,73 @@ sub execute
 	
 	if (!$env{'discussion.ID_entity'})
 	{
+		main::_log("missing param discussion.ID_entity",1);
 		return 1;
 	}
 	
-	#
-	# LISTING OF ITEMS
-	#
-	
-	if ($main::FORM{'name'} && $main::FORM{'user'} && $main::FORM{'message'})
+	if (!$env{'discussion.ID'})
 	{
+		my $sql=qq{
+			SELECT
+				ID,
+				ID_entity,
+				name
+			FROM
+				`$App::821::db_name`.a821_discussion
+			WHERE
+				ID_entity=$env{'discussion.ID_entity'}
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'slave'=>1,'quiet'=>1,'-cache'=>3600);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		$env{'discussion.ID'} = $db0_line{'ID'};
+	}
+	
+	$XSGN{'TMP'}=~s|<%discussion.ID_entity%>|$env{'discussion.ID_entity'}|g;
+	
+	my $avatar_url;
+	if ($main::USRM{'logged'} eq "Y")
+	{
+		main::_log("loading avatar info from db");
+		my $avatar=$XSGN{'avatar.registered'};
+		if (my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::301::db_name,
+			'l_prefix' => 'a301',
+			'l_table' => 'user',
+			'l_ID_entity' => $main::USRM{'ID_user'},
+			'rel_type' => 'avatar',
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y",
+			'limit' => 1
+		))[0])
+		{
+			use App::501::_init;
+			my %db2_line=App::501::functions::get_image_file(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_file.ID_format' => $env{'image_format.ID'} || $App::501::image_format_thumbnail_ID,
+				'image_attrs.lng' => $env{'lng'}
+			);
+			my $uri=$tom::H_a501.'/image/file/'.$db2_line{'file_path'};
+			$avatar_url=$uri;
+			$avatar=~s|<%uri%>|$uri|;
+			$XSGN{'TMP'}=~s|<#avatar#>|$avatar|g;
+		}
+		else
+		{
+			$XSGN{'TMP'}=~s|<#avatar#>|$XSGN{'avatar.anonymous'}|g;
+		}
+	}
+	else
+	{
+		$XSGN{'TMP'}=~s|<#avatar#>|$XSGN{'avatar.anonymous'}|g;
+	}
+	
+#	if ($main::FORM{'name'} && $main::FORM{'user'} && $main::FORM{'message'})
+	if (($main::USRM{'logged'} eq "Y" && $main::FORM{'message'})
+		|| ($main::FORM{'message'} && $main::FORM{'user'}))
+	{
+		main::_log("loading karma info");
 		# check karma of this user
 		my $sql=qq{
 			SELECT
@@ -114,15 +179,13 @@ sub execute
 			WHERE
 				ID_user='$main::USRM{'ID_user'}'
 		};
-		my %sth0=TOM::Database::SQL::execute($sql);
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		if (
-				$db0_line{'karma'} < -500 ||
-				# and check stopwords
-				$main::FORM{'message'}=~/url=http/ ||
-				$main::FORM{'message'}=~/VIDE\-[0O]N/i
+				$db0_line{'karma'} < -500
 		)
 		{
+			main::_log("too low karma, aborted",1);
 			$XSGN{'TMP'}=$XSGN{'low_karma'};
 			return 1;
 		}
@@ -141,7 +204,7 @@ sub execute
 		
 		#
 #		if ($main::USRM{'logged'} ne "Y" && !$user)
-		if ($user)
+		if ($user && $main::USRM{'logged'} ne "Y")
 		{
 			$columns{'owner_anonymous_name'}="'".($user)."'";
 		}
@@ -160,9 +223,10 @@ sub execute
 				ID_discussion = '$env{'discussion.ID_entity'}'
 			LIMIT 1;
 		};
-		my %sth0=TOM::Database::SQL::execute($sql);
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		if ($sth0{'rows'})
 		{
+			main::_log("same message already entered",1);
 			return 1;
 		}
 		
@@ -176,12 +240,13 @@ sub execute
 				WHERE
 					owner_anonymous_name='$user' AND
 					ID_discussion = '$env{'discussion.ID_entity'}' AND
-					datetime_post >= DATE_SUB(NOW(), INTERVAL 3 MINUTE)
+					datetime_post >= DATE_SUB(NOW(), INTERVAL 30 SECOND)
 				LIMIT 1;
 			};
-			my %sth0=TOM::Database::SQL::execute($sql);
+			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 			if ($sth0{'rows'})
 			{
+				main::_log("too much messages from same user",1);
 				return 1;
 			}
 		}
@@ -194,7 +259,7 @@ sub execute
 			'db_name' => $App::821::db_name,
 			'tb_name' => "a821_discussion_message",
 			'-journalize' => 1,
-			#'parent_ID'   => $env{'ID_parent'},
+			'parent_ID'   => $main::FORM{'reply_to'},
 			'columns' =>
 			{
 				'name' => "'".($name)."'",
@@ -232,6 +297,58 @@ sub execute
 		
 		if ($env{'notify_email'})
 		{
+			my $to_email=$TOM::contact{'a821.message_new'} || $TOM::contact{'CONT'};
+			
+			if ($env{'notify_author_email'})
+			{
+				# what is related to this discussion?
+				my %sth0=TOM::Database::SQL::execute(qq{
+					SELECT
+						*
+					FROM
+						`$App::821::db_name`.`a160_relation`
+					WHERE
+						r_prefix='a821' AND
+						r_table='discussion' AND
+						r_ID_entity='$env{'discussion.ID_entity'}' AND
+						rel_type='discussion' AND
+						status='Y'
+					LIMIT
+						1
+				},'quiet'=>1);
+				my %db0_line=$sth0{'sth'}->fetchhash();
+				my $posix_author;
+				if ($db0_line{'l_prefix'} eq "a401" && $db0_line{'l_table'} eq "article")
+				{
+					require App::401::_init;
+					my %sth1=TOM::Database::SQL::execute(qq{
+						SELECT
+							ID_author
+						FROM
+							`$App::401::db_name`.`a401_article_ent`
+						WHERE
+							ID_entity='$db0_line{'l_ID_entity'}'
+						LIMIT 1
+					});
+					my %db1_line=$sth1{'sth'}->fetchhash();
+					$posix_author=$db1_line{'ID_author'};
+				}
+				#
+				if ($posix_author)
+				{
+					# check author group (if is in editor group)
+					my %groups=App::301::functions::user_groups($posix_author);
+					if ($groups{'editor'})
+					{
+						# check author info (if has email address)
+						my %user=App::301::functions::user_get($posix_author);
+						if ($user{'email'})
+						{
+							$to_email.=";".$user{'email'};
+						}
+					}
+				}
+			}
 			
 			my $sql=qq{
 				SELECT
@@ -257,12 +374,12 @@ sub execute
 			);
 			my $email_body=$tpl->{'entity'}{'email.xhtml'};
 			$email_body=~s|<%main-title%>|New post in discussion|g;
-			$email_body=~s|<%main-desc%>|New post in discussion #$env{'discussion.ID'} named '$db0_line{'name'}'|g;
-			my $email_content=qq{
-Post named: $name<br/>
-Post body:<br/>
-$body<br/>
-			};
+			$email_body=~s|<%main-desc%>|New post in discussion #$env{'discussion.ID'} "$db0_line{'name'}"|g;
+			my $email_content;
+			$name=~s|<|&lt;|g;$name=~s|>|&gt;|g;
+			$email_content.="Post named: $name<br/>\n" if $name;
+			$body=~s|<|&lt;|g;$body=~s|>|&gt;|g;
+			$email_content.="<strong>Post body</strong>: $body<br/>\n" if $body;
 			$email_body=~s|<#email.content#>|$email_content|g;
 			$email_body=~s|<#.*?#>||g;
 			$email_body=~s|<%.*?%>||g;
@@ -272,8 +389,8 @@ $body<br/>
 				'Type'    => "multipart/related",
 				'List-Id' => "Cyclone3",
 				'Date'    => $date,
-				'From'    => "$tom::H <info\@$tom::H>",
-				'To'      => TOM::Net::email::convert_TO($TOM::contact{'CONT'}),
+				'From'    => "\"Cyclone3 at $tom::H\" <info\@$tom::H>",
+				'To'      => TOM::Net::email::convert_TO($to_email),
 				'Subject' => "New post in discussion"
 			);
 			
@@ -294,13 +411,52 @@ $body<br/>
 			
 			TOM::Net::email::send
 			(
-				to => $TOM::contact{'CONT'},
+				to => $to_email,
 				body => $msg->as_string()
 			);
-		
+			
 		}
 		
 		$XSGN{'TMP'}=$XSGN{'commited'};
+		
+		# display commited message
+		
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`$App::821::db_name`.a821_discussion_message
+			WHERE
+				ID=$ID
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_post'});
+		$db0_line{'datetime_post.year'}=$datetime{'year'};
+		$db0_line{'datetime_post.month'}=$datetime{'month'};
+		$db0_line{'datetime_post.mday'}=$datetime{'mday'};
+		$db0_line{'datetime_post.hour'}=$datetime{'hour'};
+		$db0_line{'datetime_post.min'}=$datetime{'min'};
+		$db0_line{'datetime_post.sec'}=$datetime{'sec'};
+		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		$XSGN{'TMP'}=~s|<%avatar_url%>|$avatar_url|g;
+		
+		if ($db0_line{'owner_anonymous_name'})
+		{
+			$XSGN{'TMP'}=~s|<%author%>|$db0_line{'owner_anonymous_name'}|g;
+		}
+		else
+		{
+			my %owner=App::301::authors::get_author($db0_line{'posix_owner'});
+			$XSGN{'TMP'}=~s|<%author%>|$owner{'firstname'} $owner{'surname'}|g;
+		}
+		
+	}
+	else
+	{
+		main::_log("this message cann't be saved, because not all required params available",1);
 	}
 	
 	return 1;
