@@ -175,6 +175,7 @@ sub execute
 			'l_prefix' => 'a401',
 			'l_table' => 'article',
 			'l_ID_entity' => $article{'ID_entity'},
+			'rel_type' => 'discussion',
 			'r_prefix' => "a821",
 			'r_table' => "discussion",
 			'status' => "Y",
@@ -237,6 +238,7 @@ sub execute
 			'l_prefix' => 'a401',
 			'l_table' => 'article',
 			'l_ID_entity' => $article{'ID_entity'},
+			'rel_type' => 'link',
 			'r_prefix' => "a401",
 			'r_table' => "article",
 			'status' => "Y"
