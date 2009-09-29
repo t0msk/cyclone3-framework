@@ -319,7 +319,7 @@ if ($image_format_original_ID)
 			{
 				'name' => "'thumbnail'",
 				'process' => "'set_env(\\'ext\\',\\'jpg\\')
-set_env(\\'quality\\',\\'75\\')
+set_env(\\'quality\\',\\'85\\')
 thumbnail(100,100)'",
 				'status' => "'L'"
 			}
