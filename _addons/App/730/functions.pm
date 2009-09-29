@@ -228,6 +228,50 @@ sub event_add
 		}
 	}
 	
+	# EVENT_CAT
+
+	if ($env{'category'})
+	{
+		
+		main::_log("add to cat '$env{'category'}'");
+		
+		my $sql=qq{
+			SELECT
+				ID, ID_entity
+			FROM
+				`$App::730::db_name`.a730_event_cat
+			WHERE
+				name = '$env{'category'}' OR ID=$env{'category'}
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			if ($db0_line{'ID_entity'})
+			{
+				main::_log("adding event to category...ID_entity: ".$db0_line{'ID_entity'});
+				my $sql=qq{
+					REPLACE INTO `$App::730::db_name`.a730_event_rel_cat
+					(
+						ID_event,
+						ID_category
+					)
+					VALUES
+					(
+						$env{'event.ID_entity'},
+						$db0_line{'ID_entity'}
+					)
+				};
+				TOM::Database::SQL::execute($sql,'quiet'=>1);
+				
+			}
+			else
+			{
+				main::_log("cannot add to nonexistent category");
+			}
+		}
+		
+	}
+	
 	
 	# EVENT_LNG
 	
