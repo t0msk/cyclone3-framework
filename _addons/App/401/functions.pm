@@ -314,6 +314,10 @@ sub article_add
 		$columns{'priority_A'}="'".$env{'article_attrs.priority_A'}."'"
 			if (exists $env{'article_attrs.priority_A'} && ($env{'article_attrs.priority_A'} ne $article_attrs{'priority_A'}));
 		$columns{'priority_A'}="NULL" if $columns{'priority_A'} eq "''";
+		# priority_B
+		$columns{'priority_B'}="'".$env{'article_attrs.priority_B'}."'"
+			if (exists $env{'article_attrs.priority_B'} && ($env{'article_attrs.priority_B'} ne $article_attrs{'priority_B'}));
+		$columns{'priority_B'}="NULL" if $columns{'priority_B'} eq "''";
 		
 		if (keys %columns)
 		{
@@ -492,6 +496,14 @@ sub article_add
 			if ($env{'article_ent.posix_owner'} && ($env{'article_ent.posix_owner'} ne $article_ent{'posix_owner'}));
 		$columns{'sources'}="'".TOM::Security::form::sql_escape($env{'article_ent.sources'})."'"
 			if (exists $env{'article_ent.sources'} && ($env{'article_ent.sources'} ne $article_ent{'sources'}));
+		$columns{'visits'}="'".TOM::Security::form::sql_escape($env{'article_ent.visits'})."'"
+			if (exists $env{'article_ent.visits'} && ($env{'article_ent.visits'} ne $article_ent{'visits'}));
+		$columns{'rating_score'}="'".TOM::Security::form::sql_escape($env{'article_ent.rating_score'})."'"
+			if (exists $env{'article_ent.rating_score'} && ($env{'article_ent.rating_score'} ne $article_ent{'rating_score'}));
+		$columns{'rating_votes'}="'".TOM::Security::form::sql_escape($env{'article_ent.rating_votes'})."'"
+			if (exists $env{'article_ent.rating_votes'} && ($env{'article_ent.rating_votes'} ne $article_ent{'rating_votes'}));
+		$columns{'rating'}="'".TOM::Security::form::sql_escape($env{'article_ent.rating'})."'"
+			if (exists $env{'article_ent.rating'} && ($env{'article_ent.rating'} ne $article_ent{'rating'}));
 		if (keys %columns)
 		{
 			App::020::SQL::functions::update(
@@ -621,9 +633,9 @@ sub article_item_info
 				'status' => "Y"
 			))
 			{
-				if ($relation->{'r_prefix'} eq "a542" && $relation->{'r_table'} eq "file")
+				if ($relation->{'r_prefix'} eq "a542" && $relation->{'r_table'} eq "file" && $relation->{'rel_type'} eq "attachment")
 				{$data{'attachment_status'}='Y';next};
-				if ($relation->{'r_prefix'} eq "a821" && $relation->{'r_table'} eq "discussion")
+				if ($relation->{'r_prefix'} eq "a821" && $relation->{'r_table'} eq "discussion" && $relation->{'rel_type'} eq "discussion")
 				{$data{'discussion_status'}='Y';next};
 				$data{'relation_status'}='Y';
 			}
