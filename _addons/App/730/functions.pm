@@ -166,15 +166,37 @@ sub event_add
 		# name_url
 		$columns{'name_url'}="'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'event.name'}))."'"
 			if ($env{'event.name'} && ($env{'event.name'} ne $event{'name'}));
+		
 		# datetime_start
-		$columns{'datetime_start'}="'".$env{'event.datetime_start'}."'"
-			if ($env{'event.datetime_start'} && ($env{'event.datetime_start'} ne $event{'datetime_start'}));
+		if (exists $env{'event.datetime_start'} && ($env{'event.datetime_start'} ne $event{'datetime_start'}))
+		{
+			if (!$env{'event.datetime_start'})
+			{
+				$columns{'datetime_start'}="NULL";
+			}
+			else
+			{
+				$columns{'datetime_start'}="'".$env{'event.datetime_start'}."'";
+			}
+		}
+
 		# datetime_finish
-		$columns{'datetime_finish'}="'".$env{'event.datetime_finish'}."'"
-			if ($env{'event.datetime_finish'} && ($env{'event.datetime_finish'} ne $event{'datetime_finish'}));
+		if (exists $env{'event.datetime_finish'} && ($env{'event.datetime_finish'} ne $event{'datetime_finish'}))
+		{
+			if (!$env{'event.datetime_finish'})
+			{
+				$columns{'datetime_finish'}="NULL";
+			}
+			else
+			{
+				$columns{'datetime_finish'}="'".$env{'event.datetime_finish'}."'";
+			}
+		}
+
 		# datetime_publish_start
 		$columns{'datetime_publish_start'}="'".$env{'event.datetime_publish_start'}."'"
 			if ($env{'event.datetime_publish_start'} && ($env{'event.datetime_publish_start'} ne $event{'datetime_publish_start'}));
+
 		# datetime_publish_stop
 		if (exists $env{'event.datetime_publish_stop'} && ($env{'event.datetime_publish_stop'} ne $event{'datetime_publish_stop'}))
 		{
