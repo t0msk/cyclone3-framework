@@ -19,6 +19,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event` (
   `link` varchar(128) character set ascii default NULL,
   `location` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
   `priority_A` tinyint(3) unsigned default NULL,
+  `price` decimal(12,3) default NULL, -- different modifications, different prices
+  `price_max` decimal(12,3) default NULL,
+  `price_currency` varchar(3) character set ascii default 'EUR',
+  `price_EUR` decimal(12,3) default NULL, -- price in EUR
+  `VAT` float NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
@@ -43,6 +48,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_j` (
   `link` varchar(128) character set ascii default NULL,
   `location` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
   `priority_A` tinyint(3) unsigned default NULL,
+  `price` decimal(12,3) default NULL, -- different modifications, different prices
+  `price_max` decimal(12,3) default NULL,
+  `price_currency` varchar(3) character set ascii default 'EUR',
+  `price_EUR` decimal(12,3) default NULL, -- price in EUR
+  `VAT` float NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)

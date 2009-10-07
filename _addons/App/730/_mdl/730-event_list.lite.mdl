@@ -192,6 +192,44 @@ sub execute
 		
 	}
 	
+	my $sql_cat;
+	foreach my $ID_category(split(';',$env{'event_cat.ID_entity'}))
+	{
+		next unless $ID_category;
+		if ($ID_category=~s/\*$//)
+		{
+			next unless $ID_category;
+			my $cat_sql=qq{
+						SELECT
+							ID_charindex
+						FROM
+							`$App::730::db_name`.a730_event_cat
+						WHERE
+							ID_entity=$ID_category AND
+							lng='$env{'lng'}' AND
+							status='Y'
+						LIMIT 1
+			};
+			$ID_category=qq{
+				SELECT
+					ID_entity
+				FROM
+					`$App::730::db_name`.a730_event_cat
+				WHERE
+					ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+					lng='$env{'lng'}' AND
+					status='Y'
+			};
+		}
+		$sql_cat.=" OR event_rel_cat.ID_category IN ($ID_category)";
+		$sql_cat=~s/^ OR //;
+	}
+	
+	if ($sql_cat)
+	{
+		$sql_where.=" AND (".$sql_cat.") ";
+	}
+	
 	$env{'mode'}="future" unless $env{'mode'};
 	if ($env{'mode'} eq "future")
 	{
@@ -224,16 +262,27 @@ sub execute
 			event.status,
 			event.priority_A,
 			
+			event.price,
+			(event.price*((100+event.VAT)/100)) AS price_incl_VAT,
+			event.price_currency,
+			event.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=event.price_currency LIMIT 1) AS price_EUR,
+			
 			event_lng.name_long,
 			event_lng.description_short,
 			event_lng.description,
 			event_lng.lng
 			
 		FROM `$env{'db_name'}`.a730_event AS event
+		
 		LEFT JOIN `$env{'db_name'}`.a730_event_lng AS event_lng ON
 		(
 			event_lng.ID_entity = event.ID_entity AND
 			event_lng.lng = '$env{'lng'}'
+		)
+		
+		LEFT JOIN `$env{'db_name'}`.a730_event_rel_cat AS event_rel_cat ON
+		(
+			event_rel_cat.ID_event=event.ID_entity
 		)
 		
 		WHERE
@@ -288,6 +337,12 @@ sub execute
 		$item=~s|<#link#>|$XSGN{'link'}|g if $db0_line{'link'};
 		
 		# fill raw data into $XSGN{'item'}
+		
+		my $price=TOM::Utils::currency::format($db0_line{'price'});
+		$item=~s|<%price%>|$price|g;
+		
+		$price=TOM::Utils::currency::format($db0_line{'price_incl_VAT'});
+		$item=~s|<%price_incl_VAT%>|$price|g;
 		
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;

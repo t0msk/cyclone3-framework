@@ -235,7 +235,27 @@ sub event_add
 		# priority_A
 		$columns{'priority_A'}="'".TOM::Security::form::sql_escape($env{'event.priority_A'})."'"
 			if ($env{'event.priority_A'} && ($env{'event.priority_A'} ne $event{'priority_A'}));
+
+
+		# prices
+
+		# price
+		$env{'event.price'}='' if $env{'event.price'} eq "0.000";
+		$columns{'price'}="'".TOM::Security::form::sql_escape($env{'event.price'})."'"
+			if (exists $env{'event.price'} && ($env{'event.price'} ne $event{'price'}));
+		$columns{'price'}='NULL' if $columns{'price'} eq "''";
+		# price_max
+		$env{'event.price_max'}='' if $env{'event.price_max'} eq "0.000";
+		$columns{'price_max'}="'".TOM::Security::form::sql_escape($env{'event.price_max'})."'"
+			if (exists $env{'event.price_max'} && ($env{'event.price_max'} ne $event{'price_max'}));
+		$columns{'price_max'}='NULL' if $columns{'price_max'} eq "''";
+		# price_currency
+		$columns{'price_currency'}="'".TOM::Security::form::sql_escape($env{'event.price_currency'})."'"
+		if ($env{'event.price_currency'} && ($env{'event.price_currency'} ne $event{'price_currency'}));
 		
+		$columns{'VAT'}="'".TOM::Security::form::sql_escape($env{'event.VAT'})."'"
+		if (exists $env{'event.VAT'} && ($env{'event.VAT'} ne $event{'VAT'}));
+
 		if (keys %columns)
 		{
 			App::020::SQL::functions::update(
