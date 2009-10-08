@@ -44,7 +44,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   KEY `ID_author` (`ID_author`),
   KEY `visits` (`visits`),
   KEY `rating` (`rating`),
-  KEY `status` (`status`)
+  KEY `status` (`status`),
+  KEY `datetime_create` (`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -151,6 +152,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content` (
   FULLTEXT KEY `FULL_0` (`subtitle`,`abstract`,`body`,`keywords`),
   KEY `ID_entity` (`ID_entity`),
   KEY `subtitle` (`subtitle`),
+  KEY `datetime_create` (`datetime_create`),
   KEY `mimetype` (`mimetype`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
@@ -179,8 +181,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_visit` (
   `datetime_event` datetime NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_article` bigint(20) NOT NULL, -- rel to article.ID_entity
-  PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_article`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_article`),
+  KEY `SEL_0` (`ID_article`,`datetime_event`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8; -- must be myisam because inserting with insert delayed
 
 -- --------------------------------------------------
 
