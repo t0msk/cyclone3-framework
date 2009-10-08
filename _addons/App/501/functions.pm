@@ -361,6 +361,8 @@ sub image_file_generate
 		'image_format.ID' => $format{'ID'}
 	);
 	
+	App::020::SQL::functions::_save_changetime({'db_h'=>'main','db_name'=>$App::501::db_name,'tb_name'=>'a501_image','ID_entity'=>$image{'ID_entity'}});
+	
 	$t->close();
 	return 1;
 }
@@ -1274,7 +1276,7 @@ sub image_file_add
 	my $image_width=$image->Get('width');
 	my $image_height=$image->Get('height');
 	main::_log("image width=$image_width height=$image_height");
-		
+	
 	# generate new unique hash
 	my $name=image_file_newhash();
 	
@@ -1293,8 +1295,12 @@ sub image_file_add
 	if (my %db0_line=$sth0{'sth'}->fetchhash)
 	{
 		# file updating
-		main::_log("check for update image_file");
-		if ($db0_line{'file_checksum'} eq "$checksum_method:$checksum")
+		my $filename_old=$tom::P.'/!media/a501/image/file/'
+			.$db0_line{'ID_format'}.'/'
+			.substr($db0_line{'ID'},0,4).'/'
+			.$db0_line{'name'}.'.'.$db0_line{'file_ext'};
+		main::_log("check for update image_file $filename_old");
+		if ($db0_line{'file_checksum'} eq "$checksum_method:$checksum" && -e $filename_old)
 		{
 			main::_log("same checksum, just enabling file when disabled");
 			App::020::SQL::functions::update(
