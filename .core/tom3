@@ -763,15 +763,14 @@ while ($main::CGI=new CGI::Fast())
 					
 					my $link_hash=TOM::Net::URI::URL::hash_encode($var,$key);
 					
+					$rewrite=~s|&|&amp;|g unless $TOM::type_code;
 					$link="$rewrite?$link_hash";
 				}
 				else
 				{
+					$rewrite=~s|&|&amp;|g unless $TOM::type_code;
 					$link="$rewrite";
 				}
-				
-				# nekodovana linka
-				$link=~s|&|&amp;|g unless $TOM::type_code;
 				
 				main::_log("URL='$link'");
 				
@@ -1801,16 +1800,15 @@ while ($main::CGI=new CGI::Fast())
 				
 				my $link_hash=TOM::Net::URI::URL::hash_encode($var,$key);
 				
+				$rewrite=~s|&|&amp;|g unless $TOM::type_code;
 				$link="$rewrite?$link_hash";
 			}
 			else
 			{
-				$link="$rewrite";
+				$rewrite=~s|&|&amp;|g unless $TOM::type_code;
+				$link=$rewrite;
 				$link.="?".$var if $var;
 			}
-			
-			# nekodovana linka
-			$link=~s|&|&amp;|g unless $TOM::type_code;
 			
 			main::_log("link_old='$link_old' link='$link'");
 			main::_log("rewrite_old='$rewrite_old' rewrite='$rewrite'");
