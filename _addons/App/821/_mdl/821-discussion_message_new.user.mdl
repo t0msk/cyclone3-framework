@@ -65,6 +65,12 @@ sub execute
 	}
 	
 	
+	if ($main::FORM{'dontfill'})
+	{
+		return 1;
+	}
+	
+	
 	my $sql_where;
 	
 	# language
@@ -182,7 +188,9 @@ sub execute
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		if (
-				$db0_line{'karma'} < -500
+				$db0_line{'karma'} < -500 ||
+				$main::FORM{'message'} =~/\[url/i ||
+				$main::FORM{'message'} =~/a href/i
 		)
 		{
 			main::_log("too low karma, aborted",1);
@@ -210,6 +218,7 @@ sub execute
 		}
 		
 		my $name=TOM::Security::form::sql_escape($main::FORM{'name'});
+			$name='' if $env{'notuse_name'};
 		my $body=TOM::Security::form::sql_escape($main::FORM{'message'});
 		
 		my $sql=qq{
@@ -376,6 +385,7 @@ sub execute
 			$email_body=~s|<%main-title%>|New post in discussion|g;
 			$email_body=~s|<%main-desc%>|New post in discussion #$env{'discussion.ID'} "$db0_line{'name'}"|g;
 			my $email_content;
+			$email_content.="<strong>Referrer</strong>: <a href=\"$main::ENV{'HTTP_REFERER'}\">$main::ENV{'HTTP_REFERER'}</a><br/>\n" if $main::ENV{'HTTP_REFERER'};
 			$name=~s|<|&lt;|g;$name=~s|>|&gt;|g;
 			$email_content.="Post named: $name<br/>\n" if $name;
 			$body=~s|<|&lt;|g;$body=~s|>|&gt;|g;
@@ -456,7 +466,8 @@ sub execute
 	}
 	else
 	{
-		main::_log("this message cann't be saved, because not all required params available",1);
+		main::_log("none message send to save");
+#		main::_log("this message cann't be saved, because not all required params available",1);
 	}
 	
 	return 1;
