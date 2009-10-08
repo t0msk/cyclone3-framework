@@ -206,7 +206,7 @@ our @table=
 		agent_group	=>	"Opera",
 	},
 	{name=>'Opera 10.X',
-		regexp		=>	['Opera.10'],
+		regexp		=>	['Opera.*?Version/10'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Opera",
 	},
