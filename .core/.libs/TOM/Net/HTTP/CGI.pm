@@ -416,16 +416,23 @@ sub get_CGI
 			if (ref($body->{$form{'type'}}) eq "HASH")
 			{
 				main::_log("SOAP parse HASH");
-				if ($body->{$form{'type'}}->{'c-gensym3'})
+				
+				my $gensym;
+				foreach (keys %{$body->{$form{'type'}}})
 				{
-					main::_log("SOAP parse ugly perl c-gensym3");
-					%{$main::RPC}=%{$body->{$form{'type'}}->{'c-gensym3'}};
+					if ($_=~/^c\-gensym/)
+					{
+						$gensym=$_;
+						last;
+					}
 				}
-				elsif ($body->{$form{'type'}}->{'c-gensym6'})
+				
+				if ($gensym)
 				{
-					main::_log("SOAP parse ugly perl c-gensym6");
-					%{$main::RPC}=%{$body->{$form{'type'}}->{'c-gensym6'}};
+					main::_log("SOAP parse ugly perl $gensym");
+					%{$main::RPC}=%{$body->{$form{'type'}}->{$gensym}};
 				}
+				
 				else
 				{
 					%{$main::RPC}=%{$body->{$form{'type'}}};
