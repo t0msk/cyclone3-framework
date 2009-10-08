@@ -42,8 +42,16 @@ sub convert
 	{
 		main::_log("converting svg ($size_1) to png with inkscape");
 		#my $out=system("/usr/bin/inkscape $file1 -e=$file2");
-		my $out=`/usr/bin/inkscape $file1 -e=$file2`;
+		my $out=`/usr/bin/inkscape $file1 -e=$file2 >/dev/null 2>/dev/null`;
 		#my $out=system("/usr/bin/inkscape $file1 -e=$file2 >/dev/null 2>/dev/null");
+		my $size_2=-s $file2;
+		main::_log("output($out) $file2 ($size_2)");
+		return 1;
+	}
+	elsif (-x '/usr/bin/convert')
+	{
+		main::_log("converting svg ($size_1) to png with ImageMagick");
+		my $out=`/usr/bin/convert $file1 $file2`;
 		my $size_2=-s $file2;
 		main::_log("output($out) $file2 ($size_2)");
 		return 1;
