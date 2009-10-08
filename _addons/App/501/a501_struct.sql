@@ -87,11 +87,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_attrs` (
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  KEY `SEL_0` (`status`,`order_id`),
   KEY `datetime_create` (`datetime_create`),
   KEY `ID_category` (`ID_category`),
   KEY `name` (`name`),
-  KEY `lng` (`lng`),
-  KEY `status` (`status`)
+  KEY `lng` (`lng`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
