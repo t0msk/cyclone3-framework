@@ -94,7 +94,7 @@ while ($main::CGI=new CGI::Fast())
 				)
 			};
 			
-			TOM::Database::SQL::execute($sql,'db_h'=>'stats','quiet'=>1);
+			TOM::Database::SQL::execute($sql,'db_h'=>'main','quiet'=>1);
 			
 		}
 		else
