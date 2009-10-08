@@ -508,8 +508,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_j` (
   `perm_3` char(1) character set ascii NOT NULL default 'N',
   `perm_4` char(1) character set ascii NOT NULL default 'N',
   `perm_roles_override` blob,
-  `status` char(1) character set ascii NOT NULL default 'Y'
-) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- db_name=local
@@ -549,8 +550,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_group_j` (
   `perm_W` char(1) character set ascii NOT NULL default 'N',
   `perm_X` char(1) character set ascii NOT NULL default 'N',
   `perm_roles_override` blob,
-  `status` char(1) character set ascii NOT NULL default 'Y'
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- db_name=local
@@ -590,8 +592,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_org_j` (
   `perm_W` char(1) character set ascii NOT NULL default 'N',
   `perm_X` char(1) character set ascii NOT NULL default 'N',
   `perm_roles_override` blob,
-  `status` char(1) character set ascii NOT NULL default 'Y'
-) ENGINE=ARCHIVE DEFAULT CHARSET=utf8;
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 -- db_name=TOM
