@@ -107,7 +107,7 @@ sub execute
 			$env{'sql_order_by'}
 		LIMIT 1
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'log_'=>1,'-slave'=>1);
 	if(!$sth0{'rows'} && $XSGN{'TMP_no-data'})
 	{
 		$XSGN{'TMP'}=$XSGN{'TMP_no-data'};
@@ -139,7 +139,7 @@ sub execute
 		ORDER BY
 			`poll_answer`.ID_entity
 	};
-	my %sth1=TOM::Database::SQL::execute($sql,'log'=>1);
+	my %sth1=TOM::Database::SQL::execute($sql,'log_'=>1,'-slave'=>1);
 	
 	my $votes_total;
 	my @percentages;
