@@ -249,7 +249,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_callback` (
   `state` varchar(10) character set ascii collate ascii_bin NOT NULL,
   KEY `datetime_create` (`datetime_create`),
   KEY `country_code` (`country_code`),
-  KEY `SEL_0` (`ID_user`,`datetime_create`)
+  KEY `SEL_0` (`ID_user`,`datetime_create`),
+  KEY `SEL_1` (`ID_part`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
