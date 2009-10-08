@@ -55,15 +55,15 @@ sub ticket_event_new
 	my $ID_ticket;
 
 	# Ak existuje tiket z danym nazvom, tak
-	my $sql = qq/
-	SELECT
-		ID, emails, status
-	FROM
-		TOM.a100_ticket
-	WHERE
-		domain='$env{'domain'}' AND
-		name='$env{'name'}'
-	/;
+	my $sql = qq{
+		SELECT
+			ID, emails, status
+		FROM
+			TOM.a100_ticket
+		WHERE
+			domain='$env{'domain'}' AND
+			name='}.TOM::Security::form::sql_escape($env{'name'}).qq{'
+	};
 	my %sth0 = TOM::Database::SQL::execute( $sql, 'db_h'=>$env{'db_h'}, 'quiet'=>$quiet, 'log'=>$debug);
 	
 	if ( !$sth0{'rows'} )
@@ -75,7 +75,7 @@ sub ticket_event_new
 			'tb_name' => "a100_ticket",
 			'columns' => {
 				'domain' => "'$env{'domain'}'",
-				'name' => "'$env{'name'}'",
+				'name' => "'".TOM::Security::form::sql_escape($env{'name'})."'",
 				'emails' => "'$env{'emails'}'",
 				'status' => "'Y'",
 			},
