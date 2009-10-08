@@ -39,7 +39,7 @@ use App::020::_init;
 use App::160::_init;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 
-our $debug=1;
+our $debug=0;
 our $quiet;$quiet=1 unless $debug;
 our $CACHE=1;
 our $cache_expire=86400; # 5 minutes - better is less time, when anything is cached wrong
