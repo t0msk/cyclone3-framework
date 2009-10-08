@@ -103,7 +103,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_discussion_message` (
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
   KEY `SEL_0` (`ID_discussion`,`lng`,`status`,`datetime_post`),
-  KEY `SEL_1` (`ID_discussion`,`ID_charindex`)
+  KEY `SEL_1` (`ID_discussion`,`ID_charindex`),
+  KEY `SEL_2` (`datetime_post`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
