@@ -427,6 +427,7 @@ sub image_file_process
 	
 	# GIF magick
 	$image1=$image1->[0] if $image1->Get('magick') eq 'GIF';
+	$image1->Set(colorspace=>'RGB') if $image1->Get('colorspace') eq "CMYK";
 	
 	foreach my $function(split('\n',$env{'process'}))
 	{
@@ -1562,6 +1563,7 @@ sub get_image_file
 			image_ent.posix_owner,
 			image_ent.posix_author,
 			image_attrs.name,
+			image_attrs.description,
 			image_file.image_width,
 			image_file.image_height,
 			image_file.file_size,
