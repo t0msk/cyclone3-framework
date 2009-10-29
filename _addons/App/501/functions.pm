@@ -407,7 +407,7 @@ sub image_file_process
 	use Image::Magick;
 	main::_log("reading file '$env{'image1'}'");
 	
-	if (!-e $env{'image1'})
+	if (!-e $env{'image1'} || -d $env{'image1'})
 	{
 		main::_log("image file not exists",1);
 		$t->close();
