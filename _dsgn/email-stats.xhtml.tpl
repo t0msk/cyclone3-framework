@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--<!DOCTYPE template PUBLIC "-//Cyclone3//DTD Template XML V1.0//EN"
-"/www/TOM/_data/dtd/template.dtd">-->
 <template>
 	<header>
-		<extend level="global" name="default"/>
+		<extend level="global" name="default" />
 		<!--
 		<extend level="global" addon="a400" name="default" content-type="xml"/>
 		-->
@@ -12,7 +10,8 @@
 	</header>
 	
 	<entity id="color.h1">#90bf56</entity>
-	<entity id="content.width">450</entity>
+	<entity id="color.h2">#90bf56</entity>
+	<entity id="content.width">555</entity>
 	
 	<entity id="email.xhtml" replace_variables="true">
 		<![CDATA[
@@ -25,6 +24,7 @@
 			body { font-family: Arial, Verdana; font-size: 14px;}
 			#page { width: <$tpl::entity{'content.width'}>px; }
 			h1 { color: <$tpl::entity{'color.h1'}>; clear: left; }
+			h2 { color: <$tpl::entity{'color.h2'}>; clear: left; }
 			.main-logo { float: left; margin: 0 15px 15px 0; }
 			.main-title { font-size: 0.65em; font-weight: bold; }
 			.main-term { font-size: 0.4em; font-weight: normal; }
