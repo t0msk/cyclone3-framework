@@ -95,4 +95,510 @@ sub NEXTKEY
 	return scalar each %$self;
 }
 
+
+# proces request in pub
+sub process
+{
+	return 1 if $main::USRM{'logged'};
+	
+	my $t=track TOM::Debug(__PACKAGE__."::process()");
+	
+	my $debug=0;
+#	return 1;
+	
+	my $memcached=0;
+	
+=head1
+	G - generated new user
+	R - registered new user
+	L - logged old user
+	I - incoming old user
+=cut
+	
+	main::_log("last request hash='$main::COOKIES{'_lh'}' ID_user=$main::COOKIES{'_ID_user'} ID_session='$main::COOKIES{'_ID_session'}'");
+	undef $main::COOKIES{'_lh'};
+	
+	my %env=@_;
+	
+	my $max_cnt=10;
+	
+	if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'USRM_disable'})
+	{
+		main::_log("this is robot, deleting USRM from COOKIES, deleting USRM");
+		%main::USRM=();
+		undef $main::COOKIES{'_ID_user'} if $main::COOKIES{'_ID_user'};
+		undef $main::COOKIES{'_ID_session'} if $main::COOKIES{'_ID_session'};
+		$t->close();
+		return 1;
+	}
+	
+	main::_log("USRM configured for hostname='$tom::H_cookie' in domain='$tom::H'");
+ 
+	# toto je priznak toho ze pouzivam USRM, pokial je niekde v logu
+	# prazdne miesto, znamena to ze nebezi USRM
+	$main::USRM{'logged'}="N";
+	
+	my $loc;
+ 
+	# DAVAT SI POZOR NA TO ZE DATA
+	# $main::USRM{reqtime}
+	# $main::USRM{host_sub}
+	# $main::USRM{rqs}
+	# sa netykaju sucasneho requestu ale toho posledneho
+	
+	#foreach (sort keys %main::COOKIES){main::_log("C:$_=".$main::COOKIES{$_});}
+	#foreach (sort keys %main::USRM){if ($_ ne "xdata"){main::_log("U:$_=".$main::USRM{$_})}}
+	
+	#if ((keys %main::COOKIES) != 0)
+	#if (((keys %main::COOKIES) != 0) && ($main::FORM{cookies} ne "GET"))
+	if ($main::COOKIES{'_lt'})
+	{
+		main::_log("here is standard cookies supported");
+		if ($main::COOKIES{'_ID_user'}) # MAM HASH? (ak ano, tak som zjavne zucastneny v USRM)
+		{
+			
+			# check if user is in memcached
+			
+			if ($TOM::CACHE_memcached && $memcached)
+			{
+				my $cache=$Ext::CacheMemcache::cache->get(
+					'namespace' => "a301_online",
+					'key' => $tom::H_cookie.':'.$main::COOKIES{_ID_user}
+				);
+				%main::USRM=%{$cache} if $cache;
+			}
+			# or check if the user is in online table
+			if (!$main::USRM{'ID_user'})
+			{
+				my $sql=qq{
+					SELECT
+						user_online.ID_session,
+						user_online.logged,
+						user_online.datetime_login,
+						user_online.datetime_request,
+						user_online.requests,
+						user_online.IP,
+						user_online.domain,
+						user_online.user_agent,
+						user_online.cookies,
+						user_online.session,
+						user.*
+					FROM
+						`TOM`.`a301_user_online` AS user_online
+					LEFT JOIN `TOM`.`a301_user` AS user ON
+					(
+						user.ID_user = user_online.ID_user
+					)
+					WHERE
+						user_online.ID_user='$main::COOKIES{_ID_user}'
+					LIMIT 1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>0);
+				%main::USRM=$sth0{'sth'}->fetchhash();
+			}
+			if ($main::USRM{'ID_user'}) # yes, user is online
+			{
+				main::_log("user '$main::COOKIES{_ID_user}' is online");
+				$main::USRM{'ID_user'}=$main::COOKIES{'_ID_user'} unless $main::USRM{'ID_user'};
+				
+				# overenie pravosti prihlasenia
+				my @ref=($main::USRM{'IP'},$main::ENV{'REMOTE_ADDR'});
+				$ref[0]=~s|^(.*)\.(\d+)$|$1|;
+				$ref[1]=~s|^(.*)\.(\d+)$|$1|;
+				if (
+					($main::USRM{'ID_session'} eq $main::COOKIES{'_ID_session'})
+#					&&($ref[0] eq $ref[1])
+#					&&($main::USRM{HTTP_USER_AGENT} eq $main::ENV{HTTP_USER_AGENT})
+				)
+				{
+					
+					main::_log("verified '$main::USRM{'ID_session'}' '$main::USRM{'IP'}'='$ref[0].*'");
+					
+					# naplnim obsah USRM{cookies}
+					my %hash;foreach (sort keys %main::COOKIES){$_=~/^_/ && do {$hash{$_}=$main::COOKIES{$_};next}};
+					$main::USRM{'cookies'}=CVML::structure::serialize(%hash);
+					$main::USRM{'cookies'}=~s|\'|\\'|g;
+					
+					if ($TOM::CACHE_memcached)
+					{
+						$Ext::CacheMemcache::cache->set(
+							'namespace' => "a301_online",
+							'key' => $tom::H_cookie.':'.$main::COOKIES{_ID_user},
+							'value' => {
+								%main::USRM,
+								'domain' => $tom::H,
+								'datetime_request' => $main::time_current,
+								'cookies' => $main::USRM{'cookies'},
+								'user_agent' => $main::ENV{'HTTP_USER_AGENT'},
+								'requests' => $main::USRM{'requests'}+1,
+								'status' => 'Y'
+							},
+							'expiration' => '1H'
+						);
+					}
+					
+					if (!$TOM::CACHE_memcached || !$memcached)
+					{
+						# UPDATE online
+						TOM::Database::SQL::execute(qq{
+							UPDATE
+								TOM.a301_user_online
+							SET
+								domain='$tom::H',
+								datetime_request=FROM_UNIXTIME($main::time_current),
+								cookies='$main::USRM{'cookies'}',
+								user_agent='$main::ENV{'HTTP_USER_AGENT'}',
+								requests=requests+1,
+								status='Y'
+							WHERE
+								ID_user='$main::COOKIES{'_ID_user'}'
+							LIMIT 1
+						},'quiet'=>1);
+					}
+				}
+				else # NIEKTO SA MI SEM NABURAL
+				{
+					my $var;
+					my $bad;
+					if ($main::USRM{'ID_session'} ne $main::COOKIES{'_ID_session'}){$var.=" ID_session:( "}
+					if ($main::USRM{'user_agent'} ne $main::ENV{'HTTP_USER_AGENT'}){$var.=" AGENT:( ";$bad=1;}
+					if ($ref[0] ne $ref[1]){$var.=" IP:( ";$bad=1;}
+					
+					# pokial sa len nerovna ID_session, tak overim ci ide o logovaneho usera, alebo nie
+					if (($main::USRM{logged} eq "Y")||($bad))
+					{
+						main::_log("not verified ID_user='$main::COOKIES{_ID_user}' '$var'");
+						# ZNICIM JEHO COOKIES!!!
+						# (mozno slo len o dvojity request/2requesty v tom istom case)
+						if (($main::USRM{reqtime}+5) < $tom::time_current)
+						{
+							# staci vyprazdnit, tomahawk sa uz o DELETE postara sam
+							foreach (keys %main::COOKIES){$main::COOKIES{$_}=""}; 
+						}
+						%main::USRM=(); # vyprazdnenie
+					}
+					else
+					{
+						
+					}
+					
+					
+					
+				}
+			}
+			
+			# user prisiel na stranku po nejakom case, toto je teda jeho request
+			# bez platnej session, uz nieje v online tabulke
+			else
+			{
+				main::_log("I'm not online, finding in user table");
+				
+				# activize user when deactivated
+				App::301::functions::user_get($main::COOKIES{_ID_user});
+				
+				my $sql=qq{
+					SELECT
+						*
+					FROM
+						TOM.a301_user
+					WHERE
+						ID_user='$main::COOKIES{_ID_user}' AND
+						hostname='$tom::H_cookie'
+					LIMIT 1
+				};
+				my %sth_u=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>0);
+				%main::USRM=$sth_u{'sth'}->fetchhash();
+				
+				if ($main::USRM{'ID_user'})
+				{
+					main::_log("I'm in users");
+					
+					use DateTime;
+					my $dt_now=DateTime->now;
+					$main::USRM{'datetime_last_login'}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)$/;
+					my $dt_old=DateTime->new(
+						year   => $1,
+						month  => $2,
+						day    => $3,
+						hour   => $4,
+						minute => $5
+					);
+					#my $dt_diff=$dt_now-$dt_old;
+					
+					#main::_log("go online user '$main::USRM{'ID_user'}' from '$main::USRM{'datetime_last_login'}' (".($dt_diff->year)."-".($dt_diff->month).") with '$main::USRM{'requests_all'}' requests",3,"a301",2);
+					main::_log("go online user '$main::USRM{'ID_user'}' from '$main::USRM{'datetime_last_login'}' with '$main::USRM{'requests_all'}' requests",3,"a301",2);
+					##############################################################
+					if ($main::USRM{'autolog'} eq "Y") # lognutie iba ak ide o autolog
+					{
+						$main::USRM{'logged'}="Y";
+						$main::USRM_flag="L";
+					}
+					else
+					{
+						$main::USRM{'logged'}="N";
+						$main::USRM_flag="I";
+					}
+					
+					##############################################################
+					$main::USRM{'ID_session'}=TOM::Utils::vars::genhash(32);# vygenerujem hash session
+					$main::COOKIES{'_ID_session'}=$main::USRM{'ID_session'}; # a priradim ho
+					
+					# PRIPRAVA DAT PRE $main::USRM
+					$main::USRM{'cookies'}="";
+					
+					# vypraznim page_code posledneho requestu
+					# pretoze toto je nova session
+					undef $main::COOKIES_save{'lh'};
+					
+#					foreach (sort keys %main::COOKIES)
+#					{$_=~/^_/ && do {$main::USRM{'cookies'}.="<VAR id=\"".$_."\">".$main::COOKIES{$_}."</VAR>\n";next}}
+					
+					# INSERT DO ONLINE
+					main::_log("insert into user_online");
+					
+					TOM::Database::SQL::execute(qq{
+						UPDATE
+							TOM.a301_user
+						SET
+							datetime_last_login = FROM_UNIXTIME($main::time_current)
+						WHERE
+							ID_user='$main::COOKIES{_ID_user}'
+							AND hostname='$tom::H_cookie'
+						LIMIT 1
+					});
+					
+					if (!$main::USRM{'login'})
+					{
+						main::_log("move saved cookies and session");
+						
+						$main::USRM{'cookies'}=$main::USRM{'saved_cookies'};
+						$main::USRM{'session'}=$main::USRM{'saved_session'};
+						
+						TOM::Database::SQL::execute(qq{
+							REPLACE INTO TOM.a301_user_online
+							(
+								ID_user,
+								ID_session,
+								domain,
+								logged,
+								datetime_login,
+								datetime_request,
+								requests,
+								IP,
+								cookies,
+								session
+							)
+							VALUES
+							(
+								'$main::COOKIES{_ID_user}',
+								'$main::COOKIES{_ID_session}',
+								'$tom::H',
+								'$main::USRM{logged}',
+								FROM_UNIXTIME($main::time_current),
+								FROM_UNIXTIME($main::time_current),
+								'1',
+								'$main::ENV{'REMOTE_ADDR'}',
+								'$main::USRM{'saved_cookies'}',
+								'$main::USRM{'saved_session'}'
+							)
+						});
+					}
+					else
+					{
+						TOM::Database::SQL::execute(qq{
+							REPLACE INTO TOM.a301_user_online
+							(
+								ID_user,
+								ID_session,
+								domain,
+								logged,
+								datetime_login,
+								datetime_request,
+								requests,
+								IP
+							)
+							VALUES
+							(
+								'$main::COOKIES{_ID_user}',
+								'$main::COOKIES{_ID_session}',
+								'$tom::H',
+								'$main::USRM{logged}',
+								FROM_UNIXTIME($main::time_current),
+								FROM_UNIXTIME($main::time_current),
+								'1',
+								'$main::ENV{'REMOTE_ADDR'}'
+							)
+						});
+					}
+					
+				}
+				else # NENASIEL SOM SA ANI V OLD
+				{
+					main::_log("this user not exists");
+					main::_log("user '$main::COOKIES{_ID_user}' not exists",4,"a301",2);
+					
+					$main::USRM_flag="O";
+					# ok, falosny users zaznam, nasleduje destrukcia cookies
+					# staci vyprazdnit, tomahawk sa uz o DELETE postara sam
+					foreach (keys %main::COOKIES){$main::COOKIES{$_}=""};
+					%main::USRM=();
+					# IDEM VYTVARAT NOVEHO USERA, ALEBO TO TERAZ NECHAM TAK?
+					# ZATIAL NECHAVAM TAK. POKIAL NEJDE O ZASKODNIKA TAK PRI DALSOM REQUESTE SA VYTVORI NOVY USER UPLNE V PORIADKU
+					# TATO SITUACIA BY PRAKTICKY NEMALA NIKDY NASTAT
+				}
+				
+			}
+		}
+		else # mam cookies, ale nemam ID_user, idem sa registrovat
+		{
+			main::_log("missing ID_user");
+			
+			# NAJPRV SA POZRIEM CI TENTO USER SA NEPOKUSA OPAKOVANE
+			# ZISKAVAT ID_user. AK ANO, ZAMEDZIME TOMU
+			
+=head1
+			my $db0=$main::DB{'main'}->Query("
+				SELECT COUNT(*) AS cnt
+				FROM TOM.a300_online
+				WHERE
+					host='$tom::H_cookie'
+					AND rqs=1
+					AND IP='$ENV{REMOTE_ADDR}'
+					AND HTTP_USER_AGENT='$ENV{HTTP_USER_AGENT}'
+					AND logtime>".($main::time_current-600)."
+			");
+			if (my %db0_line=$db0->fetchhash())
+			{
+				if ($db0_line{cnt}>=$max_cnt)
+				{
+					my $msg="Too many ($db0_line{cnt}>=$max_cnt) identical registered users from IP='$ENV{REMOTE_ADDR}' HTTP_USER_AGENT='$ENV{HTTP_USER_AGENT}' in last 10 minutes. Potentially robot grabber";
+					# pub.log ako error
+					main::_log("$msg",1);
+					# pub.warn.log local
+					main::_log("$msg",4,"pub.warn");
+					# pub.warn.log master
+					main::_log("[$tom::H]$msg",4,"pub.warn",2) if ($tom::H ne $tom::Hm);
+					# pub.warn.log global
+					main::_log("[$tom::H]$msg",4,"pub.warn",1);
+					$t->close();
+					return 1;
+				}
+			}
+=cut
+			
+			# GENERUJEM NOVY HASH A OVERUJEM CI UZ NEEXISTUJE
+			my $var=App::301::functions::user_newhash();
+			$main::COOKIES{'_ID_user'}=$var;
+			
+			# OK, VYTVORIL SOM NOVY HASH, ZAPISUJEM
+			# TOTO JE TEDA AUTOREGISTRACIA NOVEHO USERA
+			main::_log("generujem ID_user=".$var." a zapisujem do users");
+			
+			TOM::Database::SQL::execute(qq{
+				INSERT INTO TOM.a301_user
+				(
+					ID_user,
+					posix_owner,
+					hostname,
+					datetime_register,
+					datetime_last_login,
+					status
+				)
+				VALUES
+				(
+					'$var',
+					'$var',
+					'$tom::H_cookie',
+					FROM_UNIXTIME($main::time_current),
+					FROM_UNIXTIME($main::time_current),
+					'Y'
+				)
+			},'quiet'=>1);
+			
+			$main::COOKIES{'_ID_session'}=TOM::Utils::vars::genhash(32); # vygenerujem hash session
+			main::_log("insert into online ID_session:$main::COOKIES{'_ID_session'}");
+			
+			$main::USRM{'cookies'}=CVML::structure::serialize(%main::COOKIES);
+			$main::USRM{'cookies'}=~s|\'|\\'|g;
+			
+			TOM::Database::SQL::execute(qq{
+				INSERT INTO TOM.a301_user_online
+				(
+					ID_user,
+					ID_session,
+					domain,
+					logged,
+					datetime_login,
+					datetime_request,
+					requests,
+					IP,
+					user_agent,
+					cookies,
+					session
+				)
+				VALUES
+				(
+					'$main::COOKIES{_ID_user}',
+					'$main::COOKIES{_ID_session}',
+					'$tom::H',
+					'$main::USRM{logged}',
+					FROM_UNIXTIME($main::time_current),
+					FROM_UNIXTIME($main::time_current),
+					'1',
+					'$main::ENV{'REMOTE_ADDR'}',
+					'$main::ENV{'HTTP_USER_AGENT'}',
+					'$main::USRM{'cookies'}',
+					''
+				)
+			},'quiet'=>1);
+			
+			# PRIDAT EXPORT DO $main::USRM
+			# je to tu vobec potreba?
+			# v tomto pripade urcite nebude user logged, budem potom
+			# teda priamo v tomto requeste potrebovat data $main::USRM???
+			##############################################################
+			$main::USRM{'ID_user'}=$main::COOKIES{'_ID_user'}; # ID_user usera
+			$main::USRM{'ID_session'}=$main::COOKIES{'_ID_session'}; # Idhash pre session usera
+			$main::USRM_flag="G";
+			##############################################################
+		}
+	}
+	else
+	{
+		main::_log("none cookies IP:$main::ENV{REMOTE_ADDR} agent=$main::ENV{HTTP_USER_AGENT} cookies=$main::ENV{HTTP_COOKIE}");
+	}
+	
+	
+	
+	# get session datas from online table in CVML
+	my $cvml=new CVML(data=>$main::USRM{'session'});
+	$main::USRM{'session_save'}=$main::USRM{'session'};
+	undef $main::USRM{'session'};
+	
+	# control CVML session datas as object
+	tie %{$main::USRM{'session'}}, 'App::301::session';
+	$App::301::session::serialize=0;
+	%{$main::USRM{'session'}}=%{$cvml->{'hash'}};
+	$App::301::session::serialize=1;
+	
+	foreach (keys %main::USRM)
+	{
+		main::_log("USRM $_='$main::USRM{$_}'") if $debug;
+	};
+	
+	foreach (keys %main::COOKIES)
+	{
+		main::_log("COOKIES $_='$main::COOKIES{$_}'") if $debug;
+	}
+	
+	foreach (keys %{$main::USRM{'session'}})
+	{
+		main::_log("USRM-SESSION $_='".$main::USRM{'session'}{$_}."'") if $debug;
+	}
+	
+	main::_log("main::USRM_flag='$main::USRM_flag'");
+	$t->close();
+	return 1;
+}
+
 1;
