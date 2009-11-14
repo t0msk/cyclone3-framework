@@ -1343,6 +1343,11 @@ while ($main::CGI=new CGI::Fast())
 		$t_TypeID->close();
 		
 		
+		# USRM check
+		if ($tom::addons{'a301'} || $App::301::db_name)
+		{
+			App::301::session::process();
+		}
 		
 		# CITANIE HLAVICKY
 		# PRIPRAVA TELA
@@ -1503,7 +1508,7 @@ while ($main::CGI=new CGI::Fast())
 						$env0{'id'} eq "tpl"
 						|| $env0{'id'} eq "template"
 					)
-					 && ($env0{'name'} || $env0{'value'})
+					&& ($env0{'name'} || $env0{'value'})
 				)
 			{
 				main::_log("Loading template $env0{'value'}");
