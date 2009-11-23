@@ -278,9 +278,11 @@ sub execute
 		$db0_line{'datetime_create.min'}=$datetime{'min'};
 		$db0_line{'datetime_create.sec'}=$datetime{'sec'};
 		
-		my $rating5=int(($db0_line{'rating'}/20)+0.5);
+		my $rating5=int($db0_line{'rating'}/20);
+			$rating5=3 if $db0_line{'rating_votes'} < 5;
 		$XSGN{'TMP'}=~s|<%rating5%>|$rating5|g;
 		my $rating55=int($db0_line{'rating'}/20*2)/2;
+			$rating55=2.5 if $db0_line{'rating_votes'} < 5;
 		$XSGN{'TMP'}=~s|<%rating55%>|$rating55|g;
 		
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
@@ -428,7 +430,7 @@ sub execute
 				(
 					'image.ID_entity' => $relation->{'r_ID_entity'},
 					'image_file.ID_format' => $App::501::image_format_fullsize_ID,
-					'video_attrs.lng' => $env{'lng'}
+					'image_attrs.lng' => $env{'lng'}
 				)
 			)
 			{
@@ -440,7 +442,7 @@ sub execute
 				(
 					'image.ID_entity' => $relation->{'r_ID_entity'},
 					'image_file.ID_format' => $ID_format,
-					'video_attrs.lng' => $env{'lng'}
+					'image_attrs.lng' => $env{'lng'}
 				)
 			)
 			{
@@ -500,6 +502,13 @@ sub execute
 		
 		
 		
+	}
+	else
+	{
+		if(exists $XSGN{'TMP_failure_no-data'})
+		{
+			$XSGN{'TMP'}=$XSGN{'TMP_failure_no-data'};
+		}
 	}
 	
 	return 1;
