@@ -181,6 +181,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_visit` (
   `datetime_event` datetime NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_article` bigint(20) NOT NULL, -- rel to article.ID_entity
+  `visit_ref` varchar(20) character set ascii NOT NULL default '',
+  `page_code` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_article`),
   KEY `SEL_0` (`ID_article`,`datetime_event`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8; -- must be myisam because inserting with insert delayed
@@ -191,6 +193,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_visit_arch` (
   `datetime_event` datetime NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_article` bigint(20) NOT NULL,
+  `visit_ref` varchar(20) character set ascii NOT NULL default '',
+  `page_code` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   KEY `datetime_event` (`datetime_event`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
