@@ -134,6 +134,7 @@ sub start
 			$self->{'count'}->{'video'}++;
 			my $type=$1;
 			%vars=_parse_id($1);
+			$vars{'ID'}=~s|^(.*?)\&.*$|$1|;
 			
 			$attr->{'width_forced'}=$attr->{'width'};
 			$attr->{'height_forced'}=$attr->{'height'};
