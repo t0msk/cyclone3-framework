@@ -213,6 +213,11 @@ sub product_add
 	$columns{'price'}="'".TOM::Security::form::sql_escape($env{'product.price'})."'"
 		if (exists $env{'product.price'} && ($env{'product.price'} ne $product{'price'}));
 	$columns{'price'}='NULL' if $columns{'price'} eq "''";
+	# price_old
+	$env{'product.price_old'}='' if $env{'product.price_old'} eq "0.000";
+	$columns{'price_old'}="'".TOM::Security::form::sql_escape($env{'product.price_old'})."'"
+		if (exists $env{'product.price_old'} && ($env{'product.price_old'} ne $product{'price_old'}));
+	$columns{'price_old'}='NULL' if $columns{'price_old'} eq "''";
 	# price_max
 	$env{'product.price_max'}='' if $env{'product.price_max'} eq "0.000";
 	$columns{'price_max'}="'".TOM::Security::form::sql_escape($env{'product.price_max'})."'"
