@@ -53,8 +53,10 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	
 	# TOM libraries
 	use TOM::Net::email;
+	use TOM::Net::HTTP;
 	use TOM::Net::HTTP::UserAgent; # detekcia a praca s UserAgentami
 	use TOM::Net::HTTP::Media; # detekcia media
+	use TOM::Net::HTTP::referer; # detekcia a praca s refererom
 	use TOM::Net::URI::URL; # praca s URLckami
 	use TOM::Net::URI::rewrite; # praca s rewrite URI
 	use TOM::Net::URI::301; # praca s automatickým redirektovaním 301
