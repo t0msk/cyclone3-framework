@@ -95,18 +95,18 @@ our %table=
 #	{
 #		'uri' => ['\.php\?']
 #	},
-	'unknown-asp'=> # all unknown asp attacks
-	{
-		'uri' => ['\.asp\?']
-	},
-	'unknown-asp'=> # all unknown aspx attacks
-	{
-		'uri' => ['\.aspx\?']
-	},
-	'unknown-dll'=> # all unknown dll attacks
-	{
-		'uri' => ['\.dll\?']
-	},
+#	'unknown-asp'=> # all unknown asp attacks
+#	{
+#		'uri' => ['\.asp\?']
+#	},
+#	'unknown-asp'=> # all unknown aspx attacks
+#	{
+#		'uri' => ['\.aspx\?']
+#	},
+#	'unknown-dll'=> # all unknown dll attacks
+#	{
+#		'uri' => ['\.dll\?']
+#	},
 );
 
 
