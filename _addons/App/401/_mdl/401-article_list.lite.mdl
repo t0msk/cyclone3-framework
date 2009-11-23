@@ -217,6 +217,11 @@ sub execute
 		$env{'sql_limit'}=~s/,(\d+)/",".($1+1)/e;
 	}
 	
+	if (not $env{'sql_limit'}=~/^(\d+),(\d+)$/)
+	{
+		$env{'sql_limit'}='1';
+	}
+	
 	my $execution_success=1;
 	
 	my $sql_where;
@@ -310,6 +315,7 @@ sub execute
 			
 			article_ent.posix_owner,
 			article_ent.ID_author AS posix_author,
+			article_ent.visits,
 			article_content.ID_editor AS posix_editor,
 			
 			article_content.datetime_create,
@@ -334,6 +340,8 @@ sub execute
 				round((`article_ent`.rating_score / `article_ent`.rating_votes),2),
 				round((`article_ent`.rating_score / `article_ent`.rating_votes),2), '0.00'
 			) as rating,
+			rating_score,
+			rating_votes,
 			
 			article_ent.visits,
 			
@@ -653,6 +661,12 @@ sub execute
 		$item=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
 		
 		
+		if ($db0_line{'rating_votes'} >= 5 && $db0_line{'rating'}>=4.0)
+		{
+			$item=~s|<#rating_top_mark#>|$XSGN{'rating_top_mark'}|g;
+		}
+		
+		
 		if ($env{'relation'})
 		{
 			my $related_article;
@@ -756,8 +770,23 @@ sub execute
 					
 					$item=~s|<#related_article#>|$item_article|g;
 				}
-#				if ($relation->{'r_prefix'} eq "a821" && $relation->{'r_table'} eq "discussion")
-#				{$XSGN{'NULL'}=~s|<%discussion_status%>|Y|g;}
+				if ($relation->{'r_prefix'} eq "a821" && $relation->{'rel_type'} eq "discussion" && $relation->{'r_table'} eq "discussion")
+				{
+					require App::821::_init;
+					$item=~s|<%discussion_status%>|Y|g;
+					my $sql=qq{
+						SELECT
+							COUNT(*) AS cnt
+						FROM
+							`$App::821::db_name`.a821_discussion_message
+						WHERE
+							ID_discussion='$relation->{'r_ID_entity'}'
+							AND status = 'Y'
+					};
+					my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
+					my %db1_line=$sth1{'sth'}->fetchhash();
+					$item=~s|<%discussion_messages%>|$db1_line{'cnt'}|g;
+				}
 			}
 		}
 		
@@ -815,30 +844,6 @@ sub execute
 		}
 	}
 	
-	if($env{'article_attrs.ID_category'}=~/^([0-9]*)\*?$/)
-	{
-		my $ID_category=$1;
-		my $sql=qq{
-			SELECT
-				name
-			FROM
-				`$App::401::db_name`.a401_article_cat
-			WHERE
-				ID_entity='$env{'article_attrs.ID_category'}' AND
-				lng='$env{'article_content.lng'}' AND
-				status IN ('$status_sql')
-		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto_'=>60);
-	
-		if($sth0{'sth'})
-		{
-			if (my %db0_line=$sth0{'sth'}->fetchhash())
-			{
-				$XSGN{'TMP'}=~s|<%category_name%>|$db0_line{'name'}|g;
-			}
-		}
-	}
-	
 	$XSGN{'TMP'}=~s|<%total_count%>|$item_counter|g;
 	
 	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
@@ -878,6 +883,30 @@ sub execute
 		if($XSGN{'TMP_failure_no-data'})
 		{
 			$XSGN{'TMP'} = $XSGN{'TMP_failure_no-data'};
+		}
+	}
+	
+	if($env{'article_attrs.ID_category'}=~/^([0-9]*)\*?$/)
+	{
+		my $ID_category=$1;
+		my $sql=qq{
+			SELECT
+				name
+			FROM
+				`$App::401::db_name`.a401_article_cat
+			WHERE
+				ID_entity='$env{'article_attrs.ID_category'}' AND
+				lng='$env{'article_content.lng'}' AND
+				status IN ('$status_sql')
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto_'=>60);
+		
+		if($sth0{'sth'})
+		{
+			if (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				$XSGN{'TMP'}=~s|<%category_name%>|$db0_line{'name'}|g;
+			}
 		}
 	}
 	
