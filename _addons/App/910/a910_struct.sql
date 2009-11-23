@@ -17,7 +17,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `amount_order_max` int(10) unsigned default NULL,
   `amount_order_div` int(10) unsigned default '1',
   `price` decimal(12,3) default NULL, -- different modifications, different prices
-  `price_old` decimal(12,3) default NULL,
+  `price_previous` decimal(12,3) default NULL,
   `price_max` decimal(12,3) default NULL,
   `price_currency` varchar(3) character set ascii default 'EUR',
   `price_EUR` decimal(12,3) default NULL, -- price in EUR
@@ -44,7 +44,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `amount_order_max` int(10) unsigned default NULL,
   `amount_order_div` int(10) unsigned default '1',
   `price` decimal(12,3) default NULL,
-  `price_old` decimal(12,3) default NULL,
+  `price_previous` decimal(12,3) default NULL,
   `price_max` decimal(12,3) default NULL,
   `price_currency` varchar(3) character set ascii default 'EUR',
   `price_EUR` decimal(12,3) default NULL,
