@@ -176,7 +176,20 @@ sub genGET
 		
 		next if (!$form{$_} && $form{$_} ne "0");
 		next if length($form{$_})>1024;
-		$GET.="$_=".url_encode($form{$_})."&";
+		
+		if ($_=~/\[\]$/ && ref($form{$_}) eq "ARRAY")
+		{
+			foreach my $arr_val(@{$form{$_}})
+			{
+				next if (!$arr_val && $arr_val ne "0");
+				next if length($arr_val)>1024;
+				$GET.="$_=".url_encode($arr_val)."&";
+			}
+		}
+		else
+		{
+			$GET.="$_=".url_encode($form{$_})."&";
+		}
 	}
 	$GET=~s|&$||;
 	

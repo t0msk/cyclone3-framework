@@ -174,6 +174,7 @@ sub url_replace
 		}
 	}
 	
+	my %form_array; # only statuses
 	foreach my $cc(split('&',$link))
 	{
 		my @ref=split('=',$cc);
@@ -182,7 +183,17 @@ sub url_replace
 			delete $form{$ref[0]};
 			next;
 		}
-		$form{$ref[0]}=$ref[1];
+		if ($ref[0]=~/\[\]$/)
+		{
+			delete $form{$ref[0]} unless $form_array{$ref[0]};
+			$form_array{$ref[0]}++;
+			push @{$form{$ref[0]}},$ref[1];
+		}
+		else
+		{
+			$form{$ref[0]}=$ref[1];
+		}
+#		$form{$ref[0]}=$ref[1];
 	}
 	
 	# ochrana proti ukazaniu IAdm kluca ked dekodujem stranku v IAdm mode
