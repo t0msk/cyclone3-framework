@@ -125,13 +125,17 @@ sub execute
 			(
 				datetime_event,
 				ID_user,
-				ID_article
+				ID_article,
+				visit_ref,
+				page_code
 			)
 			VALUES
 			(
 				NOW(),
 				'$main::USRM{'ID_user'}',
-				'$article{'ID_entity'}'
+				'$article{'ID_entity'}',
+				'$main::ENV{'REF_TYPE'}',
+				'$main::request_code'
 			)
 		};
 		TOM::Database::SQL::execute($sql,'quiet'=>1);
