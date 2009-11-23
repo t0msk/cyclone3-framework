@@ -54,9 +54,10 @@ google.com
 =cut
 $table{'google.com'}=
 {
- urls => ["google\."],
- domain_type => 'search engine',
- keywords_param => 'q',
+	urls => ["google\."],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'q',
 };
 
 
@@ -71,9 +72,10 @@ msn.com
 =cut
 $table{'msn.com'}=
 {
- urls => ["msn\."],
- domain_type => 'search engine',
- keywords_param => 'q',
+	urls => ["msn\."],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'q',
 };
 
 
@@ -90,9 +92,10 @@ added: 2007-04-12
 =cut
 $table{'live.com'}=
 {
- urls => ["live\.com"],
- domain_type => 'search engine',
- keywords_param => 'q',
+	urls => ["live\.com"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'q',
 };
 
 
@@ -107,9 +110,10 @@ yahoo.com
 =cut
 $table{'yahoo.com'}=
 {
- urls => ["yahoo\."],
- domain_type => 'search engine',
- keywords_param => 'p',
+	urls => ["yahoo\."],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'p',
 };
 
 
@@ -124,9 +128,10 @@ aolsearch
 =cut
 $table{'aolsearch'}=
 {
- urls => ["aolsearch\.aol\.co\.uk"],
- domain_type => 'search engine',
- keywords_param => 'query',
+	urls => ["aolsearch\.aol\.co\.uk"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'query',
 };
 
 
@@ -141,9 +146,10 @@ search.netscape
 =cut
 $table{'search.netscape'}=
 {
- urls => ["netscape\.com"],
- domain_type => 'search engine',
- keywords_param => 'query',
+	urls => ["netscape\.com"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'query',
 };
 
 
@@ -158,9 +164,10 @@ mywebsearch.com
 =cut
 $table{'mywebsearch.com'}=
 {
- urls => ["mywebsearch\.com"],
- domain_type => 'search engine',
- keywords_param => 'searchfor',
+	urls => ["mywebsearch\.com"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'searchfor',
 };
 
 
@@ -175,9 +182,10 @@ freshmeat.net/search
 =cut
 $table{'freshmeat.net/search'}=
 {
- urls => ["freshmeat\.net/search/"],
- domain_type => 'search engine',
- keywords_param => 'q',
+	urls => ["freshmeat\.net/search/"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'q',
 };
 
 
@@ -194,9 +202,10 @@ added: 2007-04-12
 =cut
 $table{'search.bearshare.com'}=
 {
- urls => ["search\.bearshare\.com"],
- domain_type => 'search engine',
- keywords_param => 'q',
+	urls => ["search\.bearshare\.com"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'q',
 };
 
 
@@ -213,9 +222,10 @@ added: 2007-04-12
 =cut
 $table{'ask.com'}=
 {
- urls => ["ask\.com"],
- domain_type => 'search engine',
- keywords_param => 'q',
+	urls => ["ask\.com"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'q',
 };
 
 
@@ -232,9 +242,10 @@ added: 2007-04-12
 =cut
 $table{'search.imesh.com'}=
 {
- urls => ["search\.imesh\.com"],
- domain_type => 'search engine',
- keywords_param => 'q',
+	urls => ["search\.imesh\.com"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'q',
 };
 
 
@@ -251,10 +262,31 @@ added: 2007-04-12
 =cut
 $table{'search.myway.com'}=
 {
- urls => ["search\.myway\.com"],
- domain_type => 'search engine',
- keywords_param => 'searchfor',
+	urls => ["search\.myway\.com"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'searchfor',
 };
+
+
+=item *
+
+facebook.com
+
+added: 2009-10-20
+
+ urls => ["facebook\.com"],
+ domain_type => 'social portal',
+ ref_type => 'social',
+
+=cut
+$table{'facebook.com'}=
+{
+	urls => ["facebook\.com"],
+	domain_type => 'social portal',
+	ref_type => 'social',
+};
+
 
 
 
@@ -278,9 +310,10 @@ seznam.cz
 =cut
 $table{'seznam.cz'}=
 {
- urls => ["seznam\.cz"],
- domain_type => 'search engine',
- keywords_param => 'q',
+	urls => ["seznam\.cz"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'q',
 };
 
 
@@ -305,9 +338,10 @@ zoznam.sk
 =cut
 $table{'zoznam.sk'}=
 {
- urls => ["zoznam\.sk"],
- domain_type => 'search engine',
- keywords_param => 's',
+	urls => ["zoznam\.sk"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 's',
 };
 
 
@@ -322,9 +356,10 @@ search.centrum.sk
 =cut
 $table{'search.centrum.sk'}=
 {
- urls => ["search.*?\.centrum\.sk"],
- domain_type => 'search engine',
- keywords_param => 'q',
+	urls => ["search.*?\.centrum\.sk"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'q',
 };
 
 
@@ -339,9 +374,10 @@ hladaj.atlas.sk
 =cut
 $table{'hladaj.atlas.sk'}=
 {
- urls => ["hladaj\.atlas\.sk"],
- domain_type => 'search engine',
- keywords_param => 'phrase',
+	urls => ["hladaj\.atlas\.sk"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'phrase',
 };
 
 
@@ -356,9 +392,10 @@ search.szm.sk
 =cut
 $table{'search.szm.sk'}=
 {
- urls => ["search\.szm\.sk"],
- domain_type => 'search engine',
- keywords_param => 'WS',
+	urls => ["search\.szm\.sk"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'WS',
 };
 
 
@@ -373,9 +410,10 @@ zoohoo.sk
 =cut
 $table{'zoohoo.sk'}=
 {
- urls => ["zoohoo\.sk"],
- domain_type => 'search engine',
- keywords_param => 'q',
+	urls => ["zoohoo\.sk"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'q',
 };
 
 
@@ -391,8 +429,9 @@ added: 2007-04-12
 =cut
 $table{'best.sk'}=
 {
- urls => ["best\.sk"],
- domain_type => 'search engine',
+	urls => ["best\.sk"],
+	domain_type => 'search engine',
+	ref_type => 'search',
 };
 
 
@@ -409,9 +448,10 @@ added: 2007-04-12
 =cut
 $table{'azet.sk'}=
 {
- urls => ["azet\.sk"],
- domain_type => 'search engine',
- keywords_param => 'sq',
+	urls => ["azet\.sk"],
+	domain_type => 'search engine',
+	ref_type => 'search',
+	keywords_param => 'sq',
 };
 
 
@@ -440,7 +480,7 @@ sub analyze
 	return undef unless $_[0];
 	foreach (keys %table)
 	{
-		foreach my $url (@{$table{$_}{urls}})
+		foreach my $url (@{$table{$_}{'urls'}})
 		{
 			return $_ if $_[0]=~/$url/;
 		}
@@ -454,7 +494,7 @@ sub analyze
 
 Analyzes referer and extract keywords when referer is from known search engine
 
- my %data=TOM::Net::HTTP::referer::extrac_keywords('http://www.google.sk/search?hl=sk&q=cyclone3');
+ my %data=TOM::Net::HTTP::referer::extract_keywords('http://www.google.sk/search?hl=sk&q=cyclone3');
  # $data{'phrase'}
  # %{$data{'keywords'}}
 
@@ -463,6 +503,7 @@ Analyzes referer and extract keywords when referer is from known search engine
 sub extract_keywords
 {
 	my $referer=shift;
+	return undef unless $referer;
 	
 	my %data;
 	
