@@ -8,17 +8,18 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 sub domain_clear
 {
- my $domain=shift;
- 
- $domain=~s|^http[s]?://||;
- $domain=~s|^(.*?)\?(.*)$|$1|;
- my $query=$2;
- $domain=~s|^(.*)/.*$|$1|;
- $domain=~s|/.*$||;
- $domain=~s|^www\.||;
- $domain=~tr/A-Z/a-z/;
- 
- return ($domain,$query);
+	my $domain=shift;
+	return undef unless $domain;
+	
+	$domain=~s|^http[s]?://||;
+	$domain=~s|^(.*?)\?(.*)$|$1|;
+	my $query=$2;
+	$domain=~s|^(.*)/.*$|$1|;
+	$domain=~s|/.*$||;
+	$domain=~s|^www\.||;
+	$domain=~tr/A-Z/a-z/;
+	
+	return ($domain,$query);
 }
 
 
