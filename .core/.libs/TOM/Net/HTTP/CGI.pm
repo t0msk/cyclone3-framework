@@ -287,7 +287,7 @@ sub get_QUERY_STRING
 			$value=~s|\+| |g;
 		}
 		
-		if ($name=~s/\[\]$//){push @{$form{$name}},$value;}else{$form{$name}=$value;}
+		if ($name=~/\[\]$/){push @{$form{$name}},$value;}else{$form{$name}=$value;}
 		
 		main::_log("'$name'='".$value."'") unless $env{'quiet'};
 	}
