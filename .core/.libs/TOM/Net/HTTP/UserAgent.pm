@@ -2015,70 +2015,29 @@ our @table=
 #		old			=>	5,
 		messages		=>	["Detected shell. In shell, is this only preview!!!"],
 	},
-
-
-# IPs, false useragents
 	
-	{name=>'Internet For Learning',
-		agent_type	=>	"vandaliser",
-		home_url=>"http://www.biocrawler.com/encyclopedia/Biocrawler:Vandalism_in_progress",
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-	},
-	{name=>'161.53.50.60',
-		agent_type	=>	"robot",
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-	},
-	{name=>'194.106.164.177',
+	
+	# IPs, false useragents
+	
+	{name=>'vandaliser',
 		agent_type	=>	"vandaliser",
 		recache_disable =>	1,
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
 	},
-	{name=>'70.68.139.169', # Shaw Communications Inc. (Canada)
+	{name=>'hacked', # UserAgent for hacked computer (request from trojan, virus,...)
+		# hacked computer is detected by type of request and processed from library TOM::Net::HTTP::hacked
 		agent_type	=>	"vandaliser",
 		recache_disable =>	1,
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
 	},
-	{name=>'USAMITC',
+	{name=>'spambot', # UserAgent for hacked computer (request from trojan, virus,...)
 		agent_type	=>	"vandaliser",
 		recache_disable =>	1,
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
-	},
-	{name=>'PUBNETPLUS',
-		agent_type	=>	"vandaliser",
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-	},
-	{name=>'ARBINET-SYNETRIX',
-		agent_type	=>	"vandaliser",
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-	},
-	{name=>'WSZ_PLOCK',
-		agent_type	=>	"vandaliser",
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-	},
-	{name=>'JPNIC-NET-JP', # Japan Network Information Center
-		agent_type	=>	"vandaliser",
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-	},
-	{name=>'hacked',
-		agent_type	=>	"vandaliser",
-		recache_disable =>	1,
-		cookies_disable	=>	0,
-		USRM_disable	=>	0,
+#		engine_disable => 1,
 	},
 );
 
@@ -2087,28 +2046,51 @@ our @table=
 
 our %table_IP=
 (
-	'62\.171\.194\.' => 'Internet For Learning', # 2006-01-27
-	'161\.53\.50\.60' => '161.53.50.60',         # 2006-01-27
-	'194\.106\.164\.177' => '194.106.164.177',   # 2006-02-06 Beotel Beograd
+	'62\.171\.194\.' => 'vandaliser', # 2006-01-27
+	'161\.53\.50\.60' => 'vandaliser',         # 2006-01-27
+	'194\.106\.164\.177' => 'vandaliser',   # 2006-02-06 Beotel Beograd
 	# 2006-02-21 - Shaw Communications Inc. (Canada)
 	# velmi kvalitny vandalizer, podporuje cookies, chova sa ako MSIE 6.0, avsak neposiela ziadne
 	# referery a probi privela requestov na obycajneho usera :)
 	# 9900 requestov za jednu session
-	'70\.68\.139\.169' => '70.68.139.169',
+	'70\.68\.139\.169' => 'vandaliser',
 	# 2006-03-21
 	# nekorektny bot spravodajskej sluzby USA ARMY
-	'192\.138\.77\.36' => 'USAMITC',
+	'192\.138\.77\.36' => 'vandaliser',
 	# 2006-03-21
 	# korejsky bot - neznamy ucel
-	'125\.248\.131\.130' => 'PUBNETPLUS',
+	'125\.248\.131\.130' => 'vandaliser',
 	# 2006-03-27
 	# niekto neprijemny z velkej britanie
-	'213\.232\.79\.' => 'ARBINET-SYNETRIX',
+	'213\.232\.79\.' => 'vandaliser',
 	# 2006-04-03
 	# podozrivy bot z polskej vojenskej nemocnice
-	'217\.28\.152\.148' => 'WSZ_PLOCK',
+	'217\.28\.152\.148' => 'vandaliser',
 	# 2006-04-03 - Japan Network Information Center
-	'219\.117\.215\.202' => 'JPNIC-NET-JP',
+	'219\.117\.215\.202' => 'vandaliser',
+	
+	# list of IP's spambots
+	'61\.153\.149\.205' => 'spambot', # 2009-11-23
+	'65\.33\.111\.127' => 'spambot', # 2009-11-23
+	'69\.14\.143\.150' => 'spambot', # 2009-11-23
+	'79\.171\.81\.42' => 'spambot', # 2009-10-10
+	'79\.171\.81\.47' => 'spambot', # 2009-10-10
+	'79\.171\.81\.53' => 'spambot', # 2009-10-10
+	'79\.171\.81\.58' => 'spambot', # 2009-10-10
+	'79\.171\.81\.67' => 'spambot', # 2009-10-10
+	'83\.206\.55\.41' => 'spambot', # 2009-11-23
+	'89\.149\.202\.152' => 'spambot', # 2009-11-23
+	'89\.248\.172\.98' => 'spambot', # 2009-11-23
+	'92\.241\.168\.99' => 'spambot', # 2009-10-10
+	'94\.23\.238\.142' => 'spambot', # 2009-11-23
+	'94\.142\.134\.131' => 'spambot', # 2009-11-23
+	'208\.53\.183\.9' => 'spambot', # 2009-11-23
+	'212\.95\.58\.208' => 'spambot', # 2009-11-23
+	'212\.108\.202\.139' => 'spambot', # 2009-11-23
+	'212\.235\.107\.14' => 'spambot', # 2009-10-14
+	'212\.235\.107\.200' => 'spambot', # 2009-11-23
+	'212\.235\.107\.115' => 'spambot', # 2009-11-23
+	'212\.235\.107\.45' => 'spambot', # 2009-11-23
 	
 	
 	# list of anonymizers
@@ -2130,51 +2112,17 @@ sub analyze
 	return undef unless $user_agent;
 	my %env=@_;
 	
-=head1
-	# find vandalizer
+	# at first detect UserAgent by IP (source IP of profane robots, etc..)
 	if ($env{'IP'})
 	{
-		if ($cache_IP{$env{'IP'}})
-		{
-			return ($cache_IP{$env{'IP'}}{'ID'},$cache_IP{$env{'IP'}}{'table'});
-		}
-		if ($TOM::CACHE_memcached)
-		{
-			my $values=$Ext::CacheMemcache::cache->get(
-				'namespace' => "UserAgent::IP",
-				'key' => $env{'IP'}
-			);
-			if ($values->{'ID'})
-			{
-#				main::_log("found IP in memcache");
-				$cache_IP{$env{'IP'}}{'ID'}=$values->{'ID'};
-				$cache_IP{$env{'IP'}}{'table'}=$values->{'table'};
-				return ($values->{'ID'},$values->{'table'});
-			}
-		}
 		foreach my $k(sort keys %table_IP)
 		{
-			if ($env{IP}=~/^$k/)
+			if ($env{'IP'}=~/^$k/)
 			{
-				if ($TOM::CACHE_memcached)
-				{
-					$Ext::CacheMemcache::cache->set(
-						'namespace' => "UserAgent::IP",
-						'key' => $env{'IP'},
-						'value' => {
-							'IP' => &getIDbyName($table_IP{$k}),
-							'table' => $table[&getIDbyName($table_IP{$k})]{'name'}
-						},
-						'expiration' => '86400S'
-					);
-				}
-				$cache_IP{$env{'IP'}}{'ID'}=&getIDbyName($table_IP{$k});
-				$cache_IP{$env{'IP'}}{'table'}=$table[&getIDbyName($table_IP{$k})]{'name'};
-				return (&getIDbyName($table_IP{$k}),$table[&getIDbyName($table_IP{$k})]{name});
+				return (&getIDbyName($table_IP{$k}),$table[&getIDbyName($table_IP{$k})]{'name'});
 			}
 		}
 	}
-=cut
 	
 	if ($cache_UserAgent{$user_agent})
 	{
