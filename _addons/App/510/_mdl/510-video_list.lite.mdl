@@ -121,6 +121,7 @@ sub execute
 	$env{'video_attrs.lng'}=$env{'lng'} unless $env{'video_attrs.lng'};
 	$env{'video_attrs.status'}='Y' unless $env{'video_attrs.status'};
 	$env{'sql_limit'}='10' unless $env{'sql_limit'};
+	$env{'video_part_callback.state'}='completed' unless $env{'video_part_callback.state'};
 	
 	$env{'sql_order_by'}='video.datetime_rec_start DESC' unless $env{'sql_order_by'};
 	
@@ -228,7 +229,7 @@ sub execute
 	if ($env{'sql_order_by'}=~s|:visits_(.*?):|:VISITS:|)
 	{
 		my $dur=$1;
-		my $sql_visits=qq{(SELECT COUNT(ID_part) FROM $App::510::db_name.a510_video_part_callback AS visit WHERE visit.ID_part=video_part.ID AND datetime_create >= DATE_SUB(NOW(),INTERVAL $dur))};
+		my $sql_visits=qq{(SELECT COUNT(ID_part) FROM $App::510::db_name.a510_video_part_callback AS visit WHERE visit.ID_part=video_part.ID AND datetime_create >= DATE_SUB(NOW(),INTERVAL $dur) AND state='$env{'video_part_callback.state'}')};
 		$env{'sql_order_by'}=~s|:VISITS:|$sql_visits|;
 		$sql_select=", $sql_visits AS visits_dur ";
 	}
