@@ -22,6 +22,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `price_currency` varchar(3) character set ascii default 'EUR',
   `price_EUR` decimal(12,3) default NULL, -- price in EUR
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `supplier_org` bigint(20) unsigned default NULL, -- rel 710_org.ID_entity
+  `supplier_person` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel 301.user_ID
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`product_number`),
@@ -49,6 +51,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `price_currency` varchar(3) character set ascii default 'EUR',
   `price_EUR` decimal(12,3) default NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `supplier_org` bigint(20) unsigned default NULL, -- rel 710_org.ID_entity
+  `supplier_person` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel 301.user_ID
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -226,6 +226,16 @@ sub product_add
 	# price_currency
 	$columns{'price_currency'}="'".TOM::Security::form::sql_escape($env{'product.price_currency'})."'"
 		if ($env{'product.price_currency'} && ($env{'product.price_currency'} ne $product{'price_currency'}));
+
+	# supplier_org
+	$columns{'supplier_org'}="'".TOM::Security::form::sql_escape($env{'product.supplier_org'})."'"
+		if (exists $env{'product.supplier_org'} && ($env{'product.supplier_org'} ne $product{'supplier_org'}));
+	$columns{'supplier_org'}='NULL' if $columns{'supplier_org'} eq "''";
+
+	# supplier_person
+	$columns{'supplier_person'}="'".TOM::Security::form::sql_escape($env{'product.supplier_person'})."'"
+		if (exists $env{'product.supplier_person'} && ($env{'product.supplier_person'} ne $product{'supplier_person'}));
+
 	# metadata
 	if ((not exists $env{'product.metadata'}) && (!$product{'metadata'})){$env{'product.metadata'}=$App::910::metadata_default;}
 	$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'product.metadata'})."'"
