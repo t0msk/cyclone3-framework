@@ -24,6 +24,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `supplier_org` bigint(20) unsigned default NULL, -- rel 710_org.ID_entity
   `supplier_person` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel 301.user_ID
+  `status_new` char(1) character set ascii NOT NULL default 'N',
+  `status_sale` char(1) character set ascii NOT NULL default 'N',
+  `status_special` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`product_number`),
@@ -53,6 +56,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `supplier_org` bigint(20) unsigned default NULL, -- rel 710_org.ID_entity
   `supplier_person` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel 301.user_ID
+  `status_new` char(1) character set ascii NOT NULL default 'N',
+  `status_sale` char(1) character set ascii NOT NULL default 'N',
+  `status_special` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

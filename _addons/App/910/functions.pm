@@ -251,6 +251,16 @@ sub product_add
 			'metadata' => {App::020::functions::metadata::parse($env{'product.metadata'})}
 		);
 	}
+	# status_new
+	$columns{'status_new'}="'".TOM::Security::form::sql_escape($env{'product.status_new'})."'"
+		if ($env{'product.status_new'} && ($env{'product.status_new'} ne $product{'status_new'}));
+	# status_sale
+	$columns{'status_sale'}="'".TOM::Security::form::sql_escape($env{'product.status_sale'})."'"
+		if ($env{'product.status_sale'} && ($env{'product.status_sale'} ne $product{'status_sale'}));
+	# status_special
+	$columns{'status_special'}="'".TOM::Security::form::sql_escape($env{'product.status_special'})."'"
+		if ($env{'product.status_special'} && ($env{'product.status_special'} ne $product{'status_special'}));
+
 	# status
 	$columns{'status'}="'".TOM::Security::form::sql_escape($env{'product.status'})."'"
 		if ($env{'product.status'} && ($env{'product.status'} ne $product{'status'}));
