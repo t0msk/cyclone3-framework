@@ -9,6 +9,12 @@
 	<VAR id="-version" value="current" />
 </MODULE>
 
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="100" />
+	<VAR id="-name" value="check_activity" />
+</MODULE>
+
 # a300
 
 <MODULE>
