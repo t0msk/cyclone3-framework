@@ -139,7 +139,7 @@ sub execute
 			);
 			if (not $smtp->auth($TOM::smtp_user,$TOM::smtp_pass))
 			{
-				main::_log("SSL Authentification not works",1);
+				main::_log("SSL Authentification not works $! $@",1);
 				return 1;
 			}
 		}
