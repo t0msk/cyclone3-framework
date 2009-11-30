@@ -151,7 +151,7 @@ eval
 	$TOM::IAdm_key='';
 	$TOM::ITst_key='';
 	
-	TOM::Engine::pub::IAdm::load();
+#	TOM::Engine::pub::IAdm::load();
 	
 	# aktivizovanie mod_rewrite 0.136
 	main::_log("loading rewrite.conf");
@@ -749,17 +749,17 @@ while ($main::CGI=new CGI::Fast())
 						($TOM::type_code) # kodujem
 						&&
 						($var) # vo var vobec nieco je
-						&&
-						(
-							($IAdm && !$FORM{_IAdm_decode})
-							||
-							(!$IAdm)
-						)
-						&&
-						(
-							($ITst && !$FORM{_ITst_decode})
-							||(!$ITst)
-						)
+#						&&
+#						(
+#							($IAdm && !$FORM{_IAdm_decode})
+#							||
+#							(!$IAdm)
+#						)
+#						&&
+#						(
+#							($ITst && !$FORM{_ITst_decode})
+#							||(!$ITst)
+#						)
 					)
 				{
 					# defaultne lubovolny key
@@ -846,30 +846,30 @@ while ($main::CGI=new CGI::Fast())
 		# chcem log do outputu (ak budu splnene dalsie podmienky)
 		
 		# skusanie kluca IAdm_key
-		if ($FORM{__key})
-		{
-			$FORM{__key}=~s|[\n\r]||g;
-			if ($FORM{__key} eq $TOM::IAdm_key)
-			{
-				$IAdm=1;
-				main::_log("now I'am in IAdm mode");
-			}
-			elsif ($FORM{__key} eq $TOM::ITst_key)
-			{
-				$ITst=1;
-				main::_log("now I'am in ITst mode");
-			}
-			else
-			{
-				# zmazem kluc aby ked je neplatny, nebol noseny v query dalej
-				main::_log("FORM{__key} and TOM::IAdm_key not equals");
-				main::_log("FORM{__key}='$FORM{__key}'");
-				main::_log("TOM::IAdm_key='$TOM::IAdm_key'");
-				delete $FORM{__key};
-				delete $FORM{__key_file};
-				delete $FORM{__IAdm_log};
-			};
-		}
+#		if ($FORM{__key})
+#		{
+#			$FORM{__key}=~s|[\n\r]||g;
+#			if ($FORM{__key} eq $TOM::IAdm_key)
+#			{
+#				$IAdm=1;
+#				main::_log("now I'am in IAdm mode");
+#			}
+#			elsif ($FORM{__key} eq $TOM::ITst_key)
+#			{
+#				$ITst=1;
+#				main::_log("now I'am in ITst mode");
+#			}
+#			else
+#			{
+#				# zmazem kluc aby ked je neplatny, nebol noseny v query dalej
+#				main::_log("FORM{__key} and TOM::IAdm_key not equals");
+#				main::_log("FORM{__key}='$FORM{__key}'");
+#				main::_log("TOM::IAdm_key='$TOM::IAdm_key'");
+#				delete $FORM{__key};
+#				delete $FORM{__key_file};
+#				delete $FORM{__IAdm_log};
+#			};
+#		}
 		
 		
 		
@@ -995,35 +995,35 @@ while ($main::CGI=new CGI::Fast())
 		$t_cookies->close();
 		
 		# PREVERENIE IAdm a ITst module
-		if
-		(
-			(
-				($IAdm) || ($ITst)
-			)
-			&&
-			(
-				($main::FORM{__key_} ne $main::COOKIES{key})
-				||(!$main::FORM{__key_})
-			)
-		)
-		{
-			# hups, prienik!
-			main::_log("session key not equals form:'$main::FORM{__key_}' ne cookies:'$main::COOKIES{key}'");
-			undef $main::COOKIES{key};
-			undef $main::IAdm;
-			undef $main::ITst;
-		}
-		elsif
-		(
-			(
-				($IAdm) || ($ITst)
-			)
-			&&
-			($main::FORM{__key_} eq $main::COOKIES{key})
-		)
-		{
-			main::_log("session key equals $main::FORM{__key_} == $main::COOKIES{key}");
-		}
+#		if
+#		(
+#			(
+#				($IAdm) || ($ITst)
+#			)
+#			&&
+#			(
+#				($main::FORM{__key_} ne $main::COOKIES{key})
+#				||(!$main::FORM{__key_})
+#			)
+#		)
+#		{
+#			# hups, prienik!
+#			main::_log("session key not equals form:'$main::FORM{__key_}' ne cookies:'$main::COOKIES{key}'");
+#			undef $main::COOKIES{key};
+#			undef $main::IAdm;
+#			undef $main::ITst;
+#		}
+#		elsif
+#		(
+#			(
+#				($IAdm) || ($ITst)
+#			)
+#			&&
+#			($main::FORM{__key_} eq $main::COOKIES{key})
+#		)
+#		{
+#			main::_log("session key equals $main::FORM{__key_} == $main::COOKIES{key}");
+#		}
 		
 		
 		# LOKALIZUJEM PROSTREDIE pre KAZDY REQUEST
@@ -1370,9 +1370,9 @@ while ($main::CGI=new CGI::Fast())
 		# CITANIE HLAVICKY
 		# PRIPRAVA TELA
 		
-		# PRIDAVAM IAdm layer
-		$file_data="<CONF_VAR id=\"layers\" value=\"g0\" global=\"1\" />\n".$file_data if $IAdm;
-		$file_data="<CONF_VAR id=\"layers\" value=\"g1\" global=\"1\" />\n".$file_data if $ITst;
+#		# PRIDAVAM IAdm layer
+#		$file_data="<CONF_VAR id=\"layers\" value=\"g0\" global=\"1\" />\n".$file_data if $IAdm;
+#		$file_data="<CONF_VAR id=\"layers\" value=\"g1\" global=\"1\" />\n".$file_data if $ITst;
 		
 		
 		#$TOM::type_pre=0;
@@ -1789,17 +1789,17 @@ while ($main::CGI=new CGI::Fast())
 					($TOM::type_code) # kodujem
 					&&
 					($var) # vo var vobec nieco je
-					&&
-					(
-						($IAdm && !$FORM{_IAdm_decode})
-						||
-						(!$IAdm)
-					)
-					&&
-					(
-						($ITst && !$FORM{_ITst_decode})
-						||(!$ITst)
-					)
+#					&&
+#					(
+#						($IAdm && !$FORM{_IAdm_decode})
+#						||
+#						(!$IAdm)
+#					)
+#					&&
+#					(
+#						($ITst && !$FORM{_ITst_decode})
+#						||(!$ITst)
+#					)
 					&&
 					(
 						# encodovat cast URI s premennymi len ak je v linke hashovana cast
@@ -1875,8 +1875,6 @@ while ($main::CGI=new CGI::Fast())
 		
 		
 		
-		
-		
 		# NEW LAYERS
 		while ($file_data=~s|<ADDLAYER (.*?)/>|<!TMP!>|)
 		{
@@ -1892,9 +1890,17 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		
+		# LOAD CACHE
+		if ($main::env{'cache'} eq "dynamic")
+		{
+			# load cache if available
+		}
+		
+		
 		# Replace all variables available in document
 		TOM::Utils::vars::replace($main::H->{'OUT'}{'HEADER'});
 		TOM::Utils::vars::replace($main::H->{'OUT'}{'BODY'});
+		
 		
 		
 		my $var_replace;
@@ -2034,17 +2040,17 @@ while ($main::CGI=new CGI::Fast())
 						($TOM::type_code) # kodujem
 						&&
 						($var) # vo var vobec nieco je
-						&&
-						(
-							($IAdm && !$FORM{_IAdm_decode})
-							||
-							(!$IAdm)
-						)
-						&&
-						(
-							($ITst && !$FORM{_ITst_decode})
-							||(!$ITst)
-						)
+#						&&
+#						(
+#							($IAdm && !$FORM{_IAdm_decode})
+#							||
+#							(!$IAdm)
+#						)
+#						&&
+#						(
+#							($ITst && !$FORM{_ITst_decode})
+#							||(!$ITst)
+#						)
 					)
 				{
 					# defaultne lubovolny key
@@ -2116,274 +2122,50 @@ while ($main::CGI=new CGI::Fast())
 		
 		
 		# mazem kluc pokial niesom v IAdm
-		if (
-			(
-				(!$ITst)&&
-				(!$IAdm)&&
-				(!$env{admin})&&
-				(!$env{test})
-			)
-			&& ($main::COOKIES{key} || $main::FORM{__key_} || $main::FORM{__key})
-		)
-		{
-			main::_log("deleted COOKIE{key} ITst:$ITst IAdm:$IAdm env{admin}:$env{admin} env{test}:$env{test}",0,"IAdm");
-			$main::COOKIES{key}="";
-			delete $main::FORM{__key_};
-			delete $main::FORM{__key};
-			delete $main::FORM{__key_file};
-			delete $main::FORM{__IAdm_log};
-		}
-		
-		
-		# ak mam GET cookies, tak prazdne data jednoducho cez FORM neposielam
-		if ($FORM{cookies} eq "GET")
-		{
-			foreach (keys %COOKIES)
-			{
-				if (!$COOKIES{$_})
-				{
-					main::_log("empty ".$_);delete $COOKIES{$_};next;
-				}
-			}
-		}
-		else # ak nemam GET cookies ale normalne, tak zmazem vsetky ich priznaky vo FORM
-		{
-			foreach (grep {$_=/^_c_/} keys %FORM)
-			{
-				delete $FORM{$_};
-			}
-		}
+#		if (
+#			(
+#				(!$ITst)&&
+#				(!$IAdm)&&
+#				(!$env{admin})&&
+#				(!$env{test})
+#			)
+#			&& ($main::COOKIES{key} || $main::FORM{__key_} || $main::FORM{__key})
+#		)
+#		{
+#			main::_log("deleted COOKIE{key} ITst:$ITst IAdm:$IAdm env{admin}:$env{admin} env{test}:$env{test}",0,"IAdm");
+#			$main::COOKIES{key}="";
+#			delete $main::FORM{__key_};
+#			delete $main::FORM{__key};
+#			delete $main::FORM{__key_file};
+#			delete $main::FORM{__IAdm_log};
+#		}
 		
 		
 		
 		
 		
 		my $t_urlreplace=track TOM::Debug('url replace','timer'=>1);
-		#my $time_urlreplace=TOM::Debug::breakpoints->new();$time_urlreplace->start();
 		my $url_count;
-		
 		# AUTOMATICKA ZAMENA LINKOV
-		# CHCELO BY TO TROCHU DOLADIT!!!! RYCHLEJSI ALGORITMUS!!!
 		my $link;
 		my $hash=Utils::vars::genhash(3);
-		
 		if (!$tom::rewrite)
 		{
 			$H->{OUT}{BODY}=~s/http:\/\/null\///g;
 		}
-		
 		my $debug_url=0;
-#		my $url_cache_enabled=0;
-#		my %url_cache=();
-		
-#		open(TST,'>/www/TOM/test.out');
-#		print TST $H->{OUT}{BODY};
-#		close (TST);
 		%main::url_cache=();
 		%main::pp=TOM::Net::HTTP::CGI::get_QUERY_STRING($main::ENV{'QUERY_STRING_FULL'},'quiet'=>1);
-		
+#		foreach (keys %main::FORM)
+#		{
+#			$main::pp{$_}=$main::FORM{$_};
+#		}
 		$H->{OUT}{BODY}=~s/$url_regexp/Net::DOC::base::url_replace($1,$2,$3)/eg;
-=head1
-		while ($H->{OUT}{BODY}=~s/$url_regexp/URL$hash/)
-		{
-			$url_count++;
-			my $t_link=track TOM::Debug("URL '$url_count'") if $debug_url;
-			
-			my $link_begin; # character before ?|?
-			my $link; # link
-			my $link_end; # character after link
-			
-			my $newlink_prefix;
-			
-			if ($tom::rewrite)
-			{
-				$link_begin=$1; # ked je www_pre='/', tak to znamena ze linkujem na iny portal
-				$link=$2;
-				$link_end=$3;
-				$newlink_prefix=$tom::H_www."/" if $link_begin=~/['"]/;
-				main::_log("URL link_begin='$link_begin' link='$link' link_end='$link_end'") if $debug_url;
-			}
-			else
-			{
-				$link=$1;
-				$link_end=$2;
-			}
-			
-			main::_log("URL newlink_prefix='$newlink_prefix'") if $debug_url;
-			
-			my $cache_key="$newlink_prefix".'/'."$link";
-			if ($url_cache{$cache_key} && not $link=~/^\|/)
-			{
-				main::_log("URL cached for key '$cache_key'") if $debug_url;
-				main::_log("output URL '$url_cache{$cache_key}$link_end'") if $debug_url;
-				$H->{'OUT'}{'BODY'}=~s/URL$hash/$link_begin$url_cache{$cache_key}$link_end/;
-				$t_link->close() if $debug_url;
-				next;
-			}
-			
-			# neviem odkial by sa tu vzali &amp;, ale pre istotu keby to niekto tymto stylom
-			# zapisal do XSGN alebo DSGN
-			# ide o linku v zapise ?ahoj=nieco&amp;ahoj2=nieco2&amp;...
-			# ide o standardny zapis i ked my ho nepouzivame ( zatial )
-			$link=~s|&amp;|&|g;
-			
-			my %form;
-			# pridam systemovo posielane premenne __nieco
-			foreach (keys %FORM){$_=~/^__/ && do{$form{$_}=$FORM{$_};};}
-			#foreach (keys %form){main::_log("key $_")};
-			# parsing $link to %form
-			
-			if ($link=~s/^\|//)
-			{
-				main::_log("first pipe, adding QUERY_STRING_FULL") if $debug_url;
-				foreach my $cc (keys %pp)
-				{
-					$form{$cc}=$pp{$cc};
-					main::_log("set '$cc' = '$form{$cc}'") if $debug_url;
-				}
-			}
-			
-			foreach my $cc(split('&',$link))
-			{
-				my @ref=split('=',$cc);
-				if (not $cc=~/=/)
-				{
-					delete $form{$ref[0]};
-					next;
-				}
-				$form{$ref[0]}=$ref[1];
-			}
-			
-			# ochrana proti ukazaniu IAdm kluca ked dekodujem stranku v IAdm mode
-			delete $form{__key} if (($IAdm)&&($FORM{_IAdm_decode}));
-			delete $form{__key_} if (($IAdm)&&($FORM{_IAdm_decode}));
-			delete $form{__key_file} if (($IAdm)&&($FORM{_IAdm_decode}));
-			delete $form{__key} if (($ITst)&&($FORM{_ITst_decode}));
-			delete $form{__key_} if (($ITst)&&($FORM{_ITst_decode}));
-			delete $form{__key_file} if (($ITst)&&($FORM{_ITst_decode}));
-			
-			# POSLEDNE UPRAVY
-			delete $form{_dsgn} if $form{_dsgn} eq $tom::dsgn_;
-			delete $form{_lng} if $form{_lng} eq $tom::lng_;
-			# spracujem %form este cez rewrite a mozno z %form budu este vyhodne
-			# nadbytocne veci
-			if
-			(
-				($newlink_prefix ne "http://null/")&&
-				($tom::rewrite)&&
-				(my $rewrite=TOM::Net::URI::rewrite::parse_hash(\%form))
-			)
-			{
-				# REWRITE TREBA DECODOVAT!!!
-				$rewrite=TOM::Net::URI::URL::url_encode($rewrite);
-				$rewrite=~s|%2F|/|g;
-				$newlink_prefix.=$rewrite;
-			}
-			
-			# vygenerujem z %hash string
-			$link='';
-			if (keys %form > 0)
-			{
-				$link=TOM::Net::URI::URL::genGET(%form);
-			}
-			
-			# nasleduje spracovanie stringu
-			# aby som ho mal v zakodovanej podobe
-			# idem teda kodovat
-			if
-				(
-					($TOM::type_code) # kodujem
-					&&
-					($link) # v link vobec nieco je?
-					&&
-					(
-						($IAdm && !$FORM{_IAdm_decode})
-						||
-						(!$IAdm)
-					)
-					&&
-					(
-						($ITst && !$FORM{_ITst_decode})
-						||
-						(!$ITst)
-					)
-				)
-			{
-				if (
-						($IAdm)||($ITst)||($main::ENV{'HTTP_USER_AGENT'}=~/wget/i)
-					)
-				{
-					my $link_md5=Digest::MD5::md5_hex(Encode::encode_utf8($link));
-					$main::DB{sys}->Query("
-						REPLACE INTO TOM._url
-						(
-							hash,
-							url,
-							inserttime
-						)
-						VALUES
-						(
-							'$link_md5',
-							'$link',
-							'$tom::time_current'
-						)
-					");
-					main::_log("output URL '$newlink_prefix?__$link_md5$link_end'") if $debug_url;
-					$url_cache{$cache_key}="$newlink_prefix?__$link_md5" if $url_cache_enabled;
-					$H->{OUT}{BODY}=~s/URL$hash/$link_begin$newlink_prefix?__$link_md5$link_end/;
-				}
-				else  # klasicke kodovanie
-				{
-					# tomu http://null/ uz vobec nerozumiem
-					$newlink_prefix="" if ($newlink_prefix eq "http://null/");
-					my $link_hash=TOM::Net::URI::URL::hash_encode($link);
-					main::_log("output URL '$newlink_prefix?$link_hash$link_end'") if $debug_url;
-					$url_cache{$cache_key}="$newlink_prefix?$link_hash" if $url_cache_enabled;
-					$H->{OUT}{BODY}=~s/URL$hash/$link_begin$newlink_prefix?$link_hash$link_end/;
-				}
-				$t_link->close() if $debug_url;
-				next;
-			}
-			
-			
-			
-			# pokial nekodujem linku, tak oddelovace premennych '&' musia byt v linke
-			# v HTML kode ako &amp; (je to tak podla standardov)
-			$link=~s|&|&amp;|g unless $TOM::type_code;
-			$newlink_prefix="" if ($newlink_prefix eq "http://null/");
-			
-			if ($tom::rewrite && !$link) # nechcem zbytocne vypisovat ?
-			{
-				main::_log("output URL '$newlink_prefix$link_end'") if $debug_url;
-				$url_cache{$cache_key}="$newlink_prefix" if $url_cache_enabled;
-				$H->{OUT}{BODY}=~s/URL$hash/$link_begin$newlink_prefix$link_end/;
-			}
-			else
-			{
-				main::_log("output URL '$newlink_prefix?$link$link_end'") if $debug_url;
-				$url_cache{$cache_key}="$newlink_prefix?$link" if $url_cache_enabled;
-				$H->{OUT}{BODY}=~s/URL$hash/$link_begin$newlink_prefix?$link$link_end/;
-			}
-			
-			$t_link->close() if $debug_url;
-		}
-=cut
-		
 		$t_urlreplace->close();
 		
-#		if ($url_count)
-#		{
-#			main::_log("url_replace performance ($url_count) req:".
-#				($t_urlreplace->{'time'}{req}{duration}/$url_count).
-#				" proc:".
-#				($t_urlreplace->{'time'}{proc}{duration}/$url_count));
-#		}
 		
-		#my $t_doc_output=track TOM::Debug("output");
-		
-		# vpisujem log :)
-		if (($IAdm)&&($FORM{__IAdm_log})){$H->r("<!TMP-IAdm-LOG!>",$IAdm_log);}
-		
+#		# vpisujem log :)
+#		if (($IAdm)&&($FORM{__IAdm_log})){$H->r("<!TMP-IAdm-LOG!>",$IAdm_log);}
 		
 		if ($main::page_statuscode eq "404")
 		{
@@ -2395,9 +2177,6 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		# calculate semi-speed
-		#$t_eval->{'time'}{proc}{duration},
-		#$t_eval->{'time'}{req}{duration}
-		#$t_eval->semiclose();
 		$t_eval->semiclose();
 		my $ID_user=$main::USRM{'ID_user'} || $main::USRM{'IDhash'};
 		$H->{'OUT'}{'HEADER'}=~s/<%META-Cyclone3%>/req_load='$t_eval->{'time'}{req}{duration}';proc_load='$t_eval->{'time'}{proc}{duration}';ID_user='$ID_user';request='$main::request_code';host='$TOM::hostname';proc='$$'/;
@@ -2602,7 +2381,6 @@ while ($main::CGI=new CGI::Fast())
 		)
 		{
 			main::_log("SHUTDOWN (".$tom::count."reqs ".($main::time_current-$TOM::time_start)."secs) PID:$$ domain:$tom::H HUP:$tom::HUP",3,"pub.mng",1);
-			#_log(0,"Shutdown & End request [$tom::count/$TOM::max_count]");
 			$t_send->close();
 			$t_postprocess->close();
 			$t_eval->close();
@@ -2619,7 +2397,7 @@ while ($main::CGI=new CGI::Fast())
 		Tomahawk::stat::rqs(
 			proc => $t_eval->{'time'}{proc}{duration},
 			req => $t_eval->{'time'}{req}{duration}
-		) if (!$main::ITst && !$main::IAdm); # pouzivam statistiky;
+		);# if (!$main::ITst && !$main::IAdm); # pouzivam statistiky;
 		
 		do
 		{
