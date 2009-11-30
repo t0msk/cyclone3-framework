@@ -306,7 +306,7 @@ sub process
 						hostname='$tom::H_cookie'
 					LIMIT 1
 				};
-				my %sth_u=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>0);
+				my %sth_u=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
 				%main::USRM=$sth_u{'sth'}->fetchhash();
 				
 				if ($main::USRM{'ID_user'})
@@ -365,7 +365,7 @@ sub process
 							ID_user='$main::COOKIES{_ID_user}'
 							AND hostname='$tom::H_cookie'
 						LIMIT 1
-					});
+					},'quiet'=>1,'-slave'=>1);
 					
 					if (!$main::USRM{'login'})
 					{
@@ -435,7 +435,7 @@ sub process
 				else # NENASIEL SOM SA ANI V OLD
 				{
 					main::_log("this user not exists");
-					main::_log("user '$main::COOKIES{_ID_user}' not exists",4,"a301",2);
+					main::_log("user '$main::COOKIES{_ID_user}' not exists, cleaning cookies",4,"a301",2);
 					
 					$main::USRM_flag="O";
 					# ok, falosny users zaznam, nasleduje destrukcia cookies
@@ -517,6 +517,8 @@ sub process
 			
 			$main::COOKIES{'_ID_session'}=TOM::Utils::vars::genhash(32); # vygenerujem hash session
 			main::_log("insert into online ID_session:$main::COOKIES{'_ID_session'}");
+			
+			main::_log("new user '$var' with session '$main::COOKIES{'_ID_session'}' (IP='$main::ENV{'REMOTE_ADDR'}' UserAgent='$main::UserAgent_name')",3,"a301",2);
 			
 			$main::USRM{'cookies'}=CVML::structure::serialize(%main::COOKIES);
 			$main::USRM{'cookies'}=~s|\'|\\'|g;
