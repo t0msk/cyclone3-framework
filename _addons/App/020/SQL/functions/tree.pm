@@ -32,13 +32,13 @@ Vytvori novy zaznam v tabulke
 sub new
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::new()");
+	my $t=track TOM::Debug(__PACKAGE__."::new()") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	foreach (keys %env)
 	{
-		main::_log("input '$_'='$env{$_}'");
+		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
 	# automaticka zamena name na name_url
@@ -48,7 +48,7 @@ sub new
 		$env{'columns'}{'name'}=~s|'$||;
 		$env{'columns'}{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'columns'}{'name'})."'";
 		$env{'columns'}{'name'}="'".$env{'columns'}{'name'}."'";
-		main::_log("create 'columns'->'name_url'='$env{'columns'}{'name_url'}'");
+		main::_log("create 'columns'->'name_url'='$env{'columns'}{'name_url'}'") if $debug;
 	}
 	
 	# najdem volny ID_charindex
@@ -71,7 +71,7 @@ sub new
 		if ($data{'ID'})
 		{
 			$parent_ID_charindex=$data{'ID_charindex'};
-			main::_log("parent_ID_charindex='$parent_ID_charindex'");
+			main::_log("parent_ID_charindex='$parent_ID_charindex'") if $debug;
 		}
 		else
 		{
@@ -91,15 +91,15 @@ sub new
 	
 	if ($env{'test'})
 	{
-		main::_log("just test, exiting");
-		$t->close();
+		main::_log("just test, exiting") if $debug;
+		$t->close() if $debug;
 		return undef;
 	}
 	
 	$env{'columns'}{'ID_charindex'}="'".$ID_charindex_new."'";
 	my $ID=App::020::SQL::functions::new(%env);
 	
-	$t->close();
+	$t->close() if $debug;
 	return $ID;
 }
 
@@ -897,7 +897,7 @@ sub find_new_child
 {
 	my $ID_charindex=shift;
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::find_new_child('$ID_charindex')");
+	my $t=track TOM::Debug(__PACKAGE__."::find_new_child('$ID_charindex')") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
@@ -906,7 +906,7 @@ sub find_new_child
 	
 	foreach (keys %env)
 	{
-		main::_log("input '$_'='$env{$_}'");
+		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
 	# ID_charindex_ - base pre novy ID_charindex
@@ -927,7 +927,7 @@ sub find_new_child
 	ORDER BY ID_charindex DESC
 	LIMIT 1
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'log'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>$quiet);
 	if (!$sth0{'sth'})
 	{
 		$t->close();
@@ -937,14 +937,14 @@ sub find_new_child
 	{
 		# idem vyratavat novy ID_charindex, pretoze tento nod ma child/y
 		my %db0_line=$sth0{'sth'}->fetchhash();
-		main::_log("last child of parent ID_charindex='$db0_line{ID_charindex}'");
+		main::_log("last child of parent ID_charindex='$db0_line{ID_charindex}'") if $debug;
 		$db0_line{'ID_charindex'}=~/(...)$/;
 		my $sub=$1;
-		main::_log("ID_charindex chunk '$sub'++");
+		main::_log("ID_charindex chunk '$sub'++") if $debug;
 		# ratanie dalsieho ID_charindex
 		my $idx=new App::020::functions::charindex('from'=>$sub);
 		my $sub_increased=$idx->increase();
-		main::_log("ID_charindex chunk '$sub_increased'");
+		main::_log("ID_charindex chunk '$sub_increased'") if $debug;
 		$ID_charindex_new.=$sub_increased;
 	}
 	else
@@ -953,9 +953,9 @@ sub find_new_child
 		$ID_charindex_new.='000';
 	}
 	$ID_charindex_new=~s|:$||;
-	main::_log("new ID_charindex='$ID_charindex_new'");
+	main::_log("new ID_charindex='$ID_charindex_new'") if $debug;
 	
-	$t->close();
+	$t->close() if $debug;
 	return $ID_charindex_new;
 }
 
