@@ -49,7 +49,20 @@ sub execute
 	
 	alarm(0);
 	
-	my $check_files=10000;
+	my $sql=qq{
+		SELECT
+			COUNT(*) AS cnt
+		FROM
+			`$App::501::db_name`.a501_image_file
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+	my %db0_line=$sth0{'sth'}->fetchhash();
+	my $rows=$db0_line{'cnt'};
+	
+	main::_log("total files=$rows");
+	my $check_files=int($rows/10);
+		$check_files=10000 if $check_files>10000;
+	
 	
 	# find missing file
 	main::_log("checking image_file items in image_file table");
@@ -60,7 +73,7 @@ sub execute
 		FROM
 			`$App::501::db_name`.a501_image_file
 		WHERE
-			datetime_check <= DATE_SUB(NOW(),INTERVAL 3 DAY) OR datetime_check IS NULL AND
+			datetime_check <= DATE_SUB(NOW(),INTERVAL 7 DAY) OR datetime_check IS NULL AND
 			status IN ('Y','N','T','L')
 		ORDER BY
 			datetime_check
@@ -102,7 +115,7 @@ sub execute
 		FROM
 			`$App::501::db_name`.a501_image_file_j
 		WHERE
-			datetime_check <= DATE_SUB(NOW(),INTERVAL 3 DAY) OR datetime_check IS NULL
+			datetime_check <= DATE_SUB(NOW(),INTERVAL 7 DAY) OR datetime_check IS NULL
 		ORDER BY
 			datetime_check
 		LIMIT
