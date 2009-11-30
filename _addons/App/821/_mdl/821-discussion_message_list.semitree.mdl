@@ -149,7 +149,7 @@ sub execute
 		
 		if ($db0_line{'karma'}<-50)
 		{
-			$item=$XSGN{'item_lowkarma'};# if $XSGN{'item_lowkarma'};
+			$item=$XSGN{'item_lowkarma'} if $XSGN{'item_lowkarma'};
 		}
 		
 		# find all subs
