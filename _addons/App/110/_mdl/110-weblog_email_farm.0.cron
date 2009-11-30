@@ -72,7 +72,7 @@ sub execute
 #		'title' => "Visitors",
 		'title.color' => $tpl->{'entity'}{'color.h1'},
 		'type' => "stacked",
-		'x' => 450,
+		'x' => $tpl->{'entity'}{'content.width'},
 		'y' => 250,
 		'show_legend' => 1,
 		'show_grid_x' => 1,
@@ -138,12 +138,12 @@ sub execute
 			'month'  => $2,
 			'day'    => $3
 		);
-		if ($dt->day_of_week == 1)
+		if ($dt->day_of_week == 7)
 		{
 			# add mark to monday
 			#$graf->addRowMark($db0_line{'reqdatetime'},'show_label_text'=>'MON');
 			
-			$dt->subtract('days'=>2);
+			$dt->subtract('days'=>1);
 			my $from_date=$dt->year().'-'.(sprintf('%02d',$dt->month())).'-'.(sprintf('%02d',$dt->day()));
 			
 #			main::_log("from $from_date to $db0_line{'reqdatetime'}");
@@ -206,7 +206,7 @@ sub execute
 		'title' => "Ammount of generated pages",
 		'title.color' => $tpl->{'entity'}{'color.h1'},
 		'type' => "stacked",
-		'x' => 450,
+		'x' => $tpl->{'entity'}{'content.width'},
 		'y' => 250,
 #		'show_legend' => 1,
 		'show_grid_x' => 1,
@@ -243,9 +243,9 @@ sub execute
 			'month'  => $2,
 			'day'    => $3
 		);
-		if ($dt->day_of_week == 1)
+		if ($dt->day_of_week == 7)
 		{
-			$dt->subtract('days'=>2);
+			$dt->subtract('days'=>1);
 			my $from_date=$dt->year().'-'.(sprintf('%02d',$dt->month())).'-'.(sprintf('%02d',$dt->day()));
 			$graf->addRowMarkArea(
 				$from_date,
@@ -273,7 +273,7 @@ sub execute
 		'title' => "Amount of active domains",
 		'title.color' => $tpl->{'entity'}{'color.h1'},
 		'type' => "stacked",
-		'x' => 450,
+		'x' => $tpl->{'entity'}{'content.width'},
 		'y' => 250,
 #		'show_legend' => 1,
 		'show_grid_x' => 1,
@@ -310,9 +310,9 @@ sub execute
 			'month'  => $2,
 			'day'    => $3
 		);
-		if ($dt->day_of_week == 1)
+		if ($dt->day_of_week == 7)
 		{
-			$dt->subtract('days'=>2);
+			$dt->subtract('days'=>1);
 			my $from_date=$dt->year().'-'.(sprintf('%02d',$dt->month())).'-'.(sprintf('%02d',$dt->day()));
 			$graf->addRowMarkArea(
 				$from_date,
@@ -559,7 +559,7 @@ sub execute
 		'title' => "Usage of memcached hosts",
 		'title.color' => $tpl->{'entity'}{'color.h1'},
 		'type' => "stacked",
-		'x' => 450,
+		'x' => $tpl->{'entity'}{'content.width'},
 		'y' => 250,
 		'show_legend' => 1,
 		'show_grid_x' => 1,
@@ -592,7 +592,7 @@ sub execute
 		'title' => "Hits efectivity of memcached hosts (bigger is better)",
 		'title.color' => $tpl->{'entity'}{'color.h1'},
 		'type' => "stacked",
-		'x' => 450,
+		'x' => $tpl->{'entity'}{'content.width'},
 		'y' => 250,
 #		'show_legend' => 1,
 		'show_grid_x' => 1,
