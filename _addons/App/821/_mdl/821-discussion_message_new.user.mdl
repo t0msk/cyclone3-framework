@@ -307,9 +307,10 @@ sub execute
 		if ($env{'notify_email'})
 		{
 			my $to_email=$TOM::contact{'a821.message_new'} || $TOM::contact{'CONT'};
-			
+			main::_log("notify_email is enabled");
 			if ($env{'notify_author_email'})
 			{
+				main::_log("notify_author_email is enabled");
 				# what is related to this discussion?
 				my %sth0=TOM::Database::SQL::execute(qq{
 					SELECT
@@ -329,6 +330,7 @@ sub execute
 				my $posix_author;
 				if ($db0_line{'l_prefix'} eq "a401" && $db0_line{'l_table'} eq "article")
 				{
+					main::_log("article related to this discussion");
 					require App::401::_init;
 					my %sth1=TOM::Database::SQL::execute(qq{
 						SELECT
@@ -341,6 +343,24 @@ sub execute
 					});
 					my %db1_line=$sth1{'sth'}->fetchhash();
 					$posix_author=$db1_line{'ID_author'};
+					main::_log("posix_author=$posix_author");
+				}
+				elsif ($db0_line{'l_prefix'} eq "a510" && $db0_line{'l_table'} eq "video")
+				{
+					main::_log("video related to this discussion");
+					require App::510::_init;
+					my %sth1=TOM::Database::SQL::execute(qq{
+						SELECT
+							posix_author
+						FROM
+							`$App::510::db_name`.`a510_video_ent`
+						WHERE
+							ID_entity='$db0_line{'l_ID_entity'}'
+						LIMIT 1
+					});
+					my %db1_line=$sth1{'sth'}->fetchhash();
+					$posix_author=$db1_line{'posix_author'};
+					main::_log("posix_author=$posix_author");
 				}
 				#
 				if ($posix_author)
@@ -377,19 +397,21 @@ sub execute
 			use MIME::Entity;
 			my $date = TOM::Utils::datetime::mail_current();
 			my $tpl=new TOM::Template(
+				'addon' => "a821",
 				'level' => "auto",
-				'name' => "email-stats",
-				'content-type' => "xhtml"
+				'name' => "email-post",
+				'content-type' => "text"
 			);
-			my $email_body=$tpl->{'entity'}{'email.xhtml'};
+			my $email_body=$tpl->{'entity'}{'email.plain'};
 			$email_body=~s|<%main-title%>|New post in discussion|g;
 			$email_body=~s|<%main-desc%>|New post in discussion #$env{'discussion.ID'} "$db0_line{'name'}"|g;
 			my $email_content;
-			$email_content.="<strong>Referrer</strong>: <a href=\"$main::ENV{'HTTP_REFERER'}\">$main::ENV{'HTTP_REFERER'}</a><br/>\n" if $main::ENV{'HTTP_REFERER'};
+			$email_content.="IP: $main::ENV{'REMOTE_ADDR'}\n";
+			$email_content.="Referrer: $main::ENV{'HTTP_REFERER'}\n" if $main::ENV{'HTTP_REFERER'};
 			$name=~s|<|&lt;|g;$name=~s|>|&gt;|g;
-			$email_content.="Post named: $name<br/>\n" if $name;
+			$email_content.="Post named: $name\n" if $name;
 			$body=~s|<|&lt;|g;$body=~s|>|&gt;|g;
-			$email_content.="<strong>Post body</strong>: $body<br/>\n" if $body;
+			$email_content.="Post body: $body\n" if $body;
 			$email_body=~s|<#email.content#>|$email_content|g;
 			$email_body=~s|<#.*?#>||g;
 			$email_body=~s|<%.*?%>||g;
@@ -407,17 +429,17 @@ sub execute
 			$msg->attach
 			(
 				'Data' => $email_body,
-				'Type' => "text/html;charset=\"UTF-8\"",
+				'Type' => "text/plain;charset=\"UTF-8\"",
 				'Encoding' => "8bit",
 			);
 			
-			$msg->attach
-			(
-				'Path'       => $tpl->{'file'}{'cyclone3-150x44.png'}{'dst'},
-				'Type'       => "image/gif",
-				'Content-ID' => "<logo\@cyclone3.org>",
-				'Encoding'   => "base64"
-			);
+#			$msg->attach
+#			(
+#				'Path'       => $tpl->{'file'}{'cyclone3-150x44.png'}{'dst'},
+#				'Type'       => "image/gif",
+#				'Content-ID' => "<logo\@cyclone3.org>",
+#				'Encoding'   => "base64"
+#			);
 			
 			TOM::Net::email::send
 			(
