@@ -37,11 +37,13 @@ sub execute
 {
 	my %env=@_;
 	
-	alarm 0;
+	alarm(0);
 	$env{'max'}=10000 unless $env{'max'};
+	$env{'time_max'}=60*20 unless $env{'time_max'};
 	
 	$env{'max_days'}=5 unless $env{'max_days'};
 	
+	my $time_start=time();
 	my $est=1;
 	while ($est)
 	{
@@ -68,6 +70,7 @@ sub execute
 		{
 			main::_log("ID_user='$user{'ID_user'}' to inactive");
 			App::301::functions::user_inactive($user{'ID_user'});
+			return 1 if time()-$env{'time_max'}>$time_start;
 		}
 	}
 	
