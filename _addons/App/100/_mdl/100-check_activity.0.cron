@@ -1,0 +1,75 @@
+#!/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use Encode;
+use encoding 'utf8';
+use utf8;
+use strict; # scrict code
+
+
+use TOM::Utils::datetime;
+use TOM::Net::email;
+use MIME::Entity;
+use App::100::_init;
+
+sub execute
+{
+	my %env=@_;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT IP, COUNT(*) AS cnt, user_agent
+		FROM
+			`TOM`.`a301_user_online` 
+		GROUP BY
+			IP, user_agent
+		HAVING
+			cnt>=5
+		ORDER BY
+			cnt DESC 
+		LIMIT
+			0,5
+	});
+	if ($sth0{'rows'})
+	{
+		use TOM::Utils::datetime;
+		use MIME::Entity;
+		my $date = TOM::Utils::datetime::mail_current();
+		my $tpl=new TOM::Template(
+			'level' => "auto",
+			'name' => "email",
+			'content-type' => "text"
+		);
+		my $email_body=$tpl->{'entity'}{'email.plain'};
+		$email_body=~s|<%main-title%>|Suspected activity at $TOM::hostname|g;
+		$email_body=~s|<%main-desc%>|List of IP adresses with higher activity - new registered users|g;
+		my $email_content;
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$email_content.="IP: $db0_line{'IP'} new users: $db0_line{'cnt'} useragent: $db0_line{'user_agent'}\n";
+		}
+		$email_body=~s|<#email.content#>|$email_content|g;
+		$email_body=~s|<#.*?#>||g;
+		$email_body=~s|<%.*?%>||g;
+		my $msg = MIME::Entity->build
+		(
+#			'Type'    => "multipart/related",
+			'List-Id' => "Cyclone3",
+			'Date'    => $date,
+			'From'    => "Cyclone3 ('$TOM::hostname') <$TOM::contact{'from'}>",
+			'To'      => TOM::Net::email::convert_TO($TOM::contact{'TOM_farm'}),
+			'Subject' => "Suspected activity at $TOM::hostname",
+			
+			'Type' => "text/plain;charset=\"UTF-8\"",
+			'Encoding' => "8bit",
+			'Data' => $email_body
+		);
+		TOM::Net::email::send
+		(
+			to => $TOM::contact{'TOM_farm'},
+			body => $msg->as_string()
+		);
+	}
+	
+return 1}
+
+1;
