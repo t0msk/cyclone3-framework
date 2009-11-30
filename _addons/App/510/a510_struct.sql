@@ -435,7 +435,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file_process` (
   `datetime_start` datetime NOT NULL,
   `datetime_stop` datetime default NULL,
   `status` char(1) character set ascii NOT NULL default 'W',
-  PRIMARY KEY  (`ID`)
+  PRIMARY KEY  (`ID`),
+  KEY `SEL_0` (`ID_part`,`ID_format`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
