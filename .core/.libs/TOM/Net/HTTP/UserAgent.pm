@@ -143,17 +143,17 @@ our @table=
 #		regexp=>[''],
 #		agent_type	=>	"browser",
 #		agent_group	=>	"",
-		utf8_disable	=>	1,
-		cookies_disable	=>	1,
-		notfinished		=> 1,
-#		USRM_disable	=>	1,
+#		utf8_disable	=>	1,
+		cookies_disable => 1,
+		notfinished => 1,
+		USRM_disable => 1,
 	},
 	{name=>'empty',
-		regexp=>['^[\- ]$','^unknown',],
+		regexp=>['^[\- ]$','^unknown','^$'],
 #		agent_type	=>	"browser",
 #		agent_group	=>	"",
 #		engine_disable	=>	1,
-		utf8_disable	=>	1,
+#		utf8_disable	=>	1,
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
 		messages		=>	["Your browser does not identify itself with any user agent information. Please use at least \"Mozilla/3.0 (compatible;)\".","For more information, please refer to RFC2616 chapter 3.8.,14.43 and turn on your browser identification."],
@@ -1293,6 +1293,15 @@ our @table=
 		USRM_disable	=> 1,
 #		engine_disable	=> 1,
 	},
+	{name=>'Facebook API',
+		regexp		=>	['^facebookexternalhit'],
+		agent_type	=>	"library",
+#		utf8_disable	=> 1,
+		recache_disable=> 1,
+		cookies_disable=> 1,
+		USRM_disable	=> 1,
+#		engine_disable	=> 1,
+	},
 
 
 
@@ -2032,7 +2041,14 @@ our @table=
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
 	},
-	{name=>'spambot', # UserAgent for hacked computer (request from trojan, virus,...)
+	{name=>'spambot', # UserAgent from hacked computer (request from trojan, virus,...)
+		agent_type	=>	"vandaliser",
+		recache_disable =>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+#		engine_disable => 1,
+	},
+	{name=>'badbot', # bot with bad USRM support
 		agent_type	=>	"vandaliser",
 		recache_disable =>	1,
 		cookies_disable	=>	1,
@@ -2081,17 +2097,24 @@ our %table_IP=
 	'83\.206\.55\.41' => 'spambot', # 2009-11-23
 	'89\.149\.202\.152' => 'spambot', # 2009-11-23
 	'89\.248\.172\.98' => 'spambot', # 2009-11-23
+	'92\.114\.149\.154' => 'spambot', # 2009-11-25
 	'92\.241\.168\.99' => 'spambot', # 2009-10-10
 	'94\.23\.238\.142' => 'spambot', # 2009-11-23
+	'94\.102\.51\.196' =>  'spambot', # 2009-11-23
 	'94\.142\.134\.131' => 'spambot', # 2009-11-23
+	'95\.215\.1\.3' => 'spambot', # 2009-11-25
+	'173\.212\.13\.198' => 'spambot', # 2009-11-28
 	'208\.53\.183\.9' => 'spambot', # 2009-11-23
 	'212\.95\.58\.208' => 'spambot', # 2009-11-23
 	'212\.108\.202\.139' => 'spambot', # 2009-11-23
 	'212\.235\.107\.14' => 'spambot', # 2009-10-14
-	'212\.235\.107\.200' => 'spambot', # 2009-11-23
-	'212\.235\.107\.115' => 'spambot', # 2009-11-23
 	'212\.235\.107\.45' => 'spambot', # 2009-11-23
+	'212\.235\.107\.115' => 'spambot', # 2009-11-23
+	'212\.235\.107\.200' => 'spambot', # 2009-11-23
+	'212\.235\.107\.234' => 'spambot', # 2009-11-24
 	
+	
+	'91\.210\.181\.94' => 'badbot', # 2009-11-29 - Digmia checker
 	
 	# list of anonymizers
 	#'91\.127\.103\.156' => 'anonymizer',
@@ -2161,7 +2184,7 @@ sub analyze
 							'IP' => $i,
 							'name' => $table[$i]{'name'}
 						},
-						'expiration' => '86400S'
+						'expiration' => '600S'
 					);
 				}
 				$cache_UserAgent{$user_agent}{'ID'}=$i;
