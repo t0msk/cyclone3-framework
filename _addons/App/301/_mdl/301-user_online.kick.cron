@@ -20,20 +20,24 @@ This cron module moves users with expired session into user table
 sub execute
 {
 	my %env=@_;
-	
+	alarm 0;
+#	return 1;
 	if (!$env{'max_online'}){$env{'max_online'}=20};
 
 	my %sth=TOM::Database::SQL::execute(qq{
 		SELECT
 			*
-		FROM TOM.a301_user_online_view
+		FROM
+			TOM.a301_user_online
 		WHERE
 			datetime_request <= DATE_SUB(NOW(),INTERVAL $env{'max_online'} MINUTE)
+		LIMIT 500
 	},'quiet'=>0);
+	my $i;
 	while (my %user=$sth{'sth'}->fetchhash)
 	{
-		
-		main::_log("kick user.ID_user='$user{'ID_user'}'");
+		$i++;
+		main::_log("[$i/$sth{'rows'}] kick user.ID_user='$user{'ID_user'}'");
 		
 		
 		# save session
@@ -41,6 +45,7 @@ sub execute
 			INSERT INTO TOM.a301_user_session
 			(
 				ID_user,
+				IP,
 				datetime_session_begin,
 				datetime_session_end,
 				requests_all,
@@ -50,6 +55,7 @@ sub execute
 			VALUES
 			(
 				'$user{'ID_user'}',
+				'$user{'IP'}',
 				'$user{'datetime_login'}',
 				'$user{'datetime_request'}',
 				'$user{'requests'}',
@@ -92,7 +98,7 @@ sub execute
 				)
 			{
 				
-				main::_log("save data into users table");
+				main::_log(" save data into users table");
 				
 				TOM::Database::SQL::execute(qq{
 					UPDATE
@@ -118,7 +124,7 @@ sub execute
 			}
 			else
 			{
-				main::_log("just delete from online");
+				main::_log(" just delete from online");
 				TOM::Database::SQL::execute(qq{
 					DELETE FROM
 						TOM.a301_user_online
@@ -130,8 +136,8 @@ sub execute
 		}
 		else
 		{
-			main::_log("user not exists in users table",1);
-			main::_log("just delete from online");
+			main::_log(" user not exists in users table",1);
+			main::_log(" just delete from online");
 			TOM::Database::SQL::execute(qq{
 				DELETE FROM
 					TOM.a301_user_online
