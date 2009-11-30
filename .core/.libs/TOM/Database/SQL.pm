@@ -200,7 +200,7 @@ sub execute
 		{
 			# check quality of this slave
 			my %slave_quality=get_slave_status($env{'db_h'}.':'.$slave);
-			if ($slave_quality{'Seconds_Behind_Master'}>600) # 6min
+			if ($slave_quality{'Seconds_Behind_Master'} > $TOM::DB_mysql_seconds_behind_master_max)
 			{
 				main::_log("slave '$slave' is outdated (behind master:$slave_quality{'Seconds_Behind_Master'}s), using master",1);
 			}
