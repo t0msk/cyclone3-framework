@@ -35,13 +35,15 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_session` (
   `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
+  `IP` varchar(15) NOT NULL default '',
   `datetime_session_begin` datetime NOT NULL,
   `datetime_session_end` datetime NOT NULL,
   `requests_all` smallint(5) unsigned NOT NULL default '0',
   `saved_cookies` blob NOT NULL,
   `saved_session` blob NOT NULL,
-  PRIMARY KEY  (`ID_user`),
-  KEY `SEL_0` (`ID_user`,`datetime_session_begin`)
+  PRIMARY KEY  (`ID_user`,`datetime_session_begin`),
+  KEY `datetime_session_begin` (`datetime_session_begin`),
+  KEY `IP` (`IP`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -291,7 +293,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_online` (
   `datetime_login` datetime NOT NULL,
   `datetime_request` datetime NOT NULL,
   `requests` smallint(5) unsigned NOT NULL default '0',
-  `IP` varchar(20) NOT NULL default '',
+  `IP` varchar(15) NOT NULL default '',
   `user_agent` varchar(200) NOT NULL default '',
   `cookies` blob NOT NULL,
   `session` blob NOT NULL,
