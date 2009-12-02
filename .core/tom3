@@ -930,7 +930,6 @@ while ($main::CGI=new CGI::Fast())
 				print USRM "trying to setup cookies\n";
 				close(USRM);
 				
-				#$COOKIES{'_lt'}=$main::request_code;
 				$COOKIES{'_lt'}=$main::time_current;
 				Net::HTTP::cookies::SetCookies
 				(
@@ -950,19 +949,21 @@ while ($main::CGI=new CGI::Fast())
 				
 				# hack for Google AdWords (to save 'gclid' in QUERY_STRING)
 				if ($FORM{'gclid'})
-				{if ($link_hash){$link.="&gclid=".$FORM{'gclid'}."&ref=adwords";}
+				{if ($link=~/\?/){$link.="&gclid=".$FORM{'gclid'}."&ref=adwords";}
 				else{$link.="?gclid=".$FORM{'gclid'}."&ref=adwords";$link_hash=1;}}
 				
 				# hack for another campaings (to save 'ref' in QUERY_STRING)
 				if ($FORM{'ref'})
-				{if ($link_hash){$link.="&ref=".$FORM{'ref'};}
+				{if ($link=~/\?/){$link.="&ref=".$FORM{'ref'};}
 				else{$link.="?ref=".$FORM{'ref'};$link_hash=1;}}
 				
-#				if ($link_hash){$link.="&c=1";}
-#				else {$link.="?c=1";}
+				$link="" if $link eq "/";
 				
 				my $URL_orig=$tom::H_www;
-					my $rq_uri=$main::ENV{'REQUEST_URI'};$rq_uri=~s|$tom::rewrite_RewriteBase||;$rq_uri=~s|^/||;
+					my $rq_uri=$main::ENV{'REQUEST_URI'};
+						$rq_uri=~s|^(.*?)[\?&].*$|$1|;
+						$rq_uri=~s|$tom::rewrite_RewriteBase||;
+						$rq_uri=~s|^/||;
 					$URL_orig.='/'.$rq_uri if $rq_uri;
 					$URL_orig.='?'.$main::ENV{'QUERY_STRING'} if $main::ENV{'QUERY_STRING'};
 				my $URL=$tom::H_www.$link;
@@ -971,7 +972,7 @@ while ($main::CGI=new CGI::Fast())
 				main::_log("302 '$URL_orig' to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"301");
 				main::_log("302 '$URL_orig' to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'");
 				print "Status: 302 Found\n";
-				print "Location: $URL_orig\n\n";
+				print "Location: $URL\n\n";
 				
 				$t_cookies->close();
 				$t_preprocess->close();
