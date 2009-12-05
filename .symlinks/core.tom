@@ -1,3 +1,3 @@
 #!/bin/sh
-/www/TOM/.core/tom3 pwd=$PWD;
+/www/TOM/.core/tom3 pwd=$PWD "$1";
 
