@@ -230,6 +230,7 @@ main::_log("START FCGI PID:$$ domain:$tom::H",3,"pub.mng",1);
 
 while ($main::CGI=new CGI::Fast())
 {
+	$ENV{'QUERY_STRING'}=$ARGV[1] if $ENV{'TERM'};
 	alarm($TOM::fcgi_timeout); # zacnem pocitat X sekund kym nezbehne request
 	local $sig_term=0; # ignorujem TERM pocas behu requestu, povoleny je len pocas cakania na dalsi request
 #	if ($main::ENV{'HTTP_X_FORWARDED_FOR'}=~/([\d+\.]+)/)
@@ -380,9 +381,9 @@ while ($main::CGI=new CGI::Fast())
 		
 		#my $t_agent=track TOM::Debug("HTTP_USER_AGENT '$main::ENV{'HTTP_USER_AGENT'}'");
 		my $t_agent=track TOM::Debug("UserAgent");
-			
-			$main::ENV{'HTTP_USER_AGENT'}=$main::ENV{SHELL} if $main::ENV{SHELL};
-			$main::ENV{'HTTP_USER_AGENT'}=" " unless $main::ENV{'HTTP_USER_AGENT'};
+			$main::ENV{'HTTP_USER_AGENT'}=$main::ENV{'SHELL'} if $main::ENV{'SHELL'};
+			$main::ENV{'HTTP_USER_AGENT'}=$main::ENV{'TERM'} if $main::ENV{'TERM'};
+#			$main::ENV{'HTTP_USER_AGENT'}=" " unless $main::ENV{'HTTP_USER_AGENT'};
 			
 			($main::UserAgent,$main::UserAgent_name)= TOM::Net::HTTP::UserAgent::analyze($main::ENV{'HTTP_USER_AGENT'},IP=>$main::ENV{'REMOTE_ADDR'});
 			main::_log("detected UserAgent='$main::UserAgent' UserAgent_name='$main::UserAgent_name' UserAgent_type='".($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'})."'");
