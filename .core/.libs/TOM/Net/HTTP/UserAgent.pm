@@ -2013,7 +2013,7 @@ our @table=
 
 	# SHELLS
 	{name=>'shell',
-		regexp		=>	['^/bin/sh'],
+		regexp		=>	['^/bin/sh','^xterm'],
 #		agent_type	=>	"browser",
 		agent_type	=>	"shell",
 		utf8_disable	=>	1,
@@ -2102,17 +2102,21 @@ our %table_IP=
 	'94\.23\.238\.142' => 'spambot', # 2009-11-23
 	'94\.102\.51\.196' =>  'spambot', # 2009-11-23
 	'94\.142\.134\.131' => 'spambot', # 2009-11-23
+	'95\.215\.0\.9' => 'spambot', # 2009-12-05
 	'95\.215\.1\.3' => 'spambot', # 2009-11-25
 	'173\.212\.13\.198' => 'spambot', # 2009-11-28
+	'188\.92\.76\.233' => 'spambot', # 2009-12-02
+	'188\.92\.77\.101' => 'spambot', # 2009-12-02
 	'208\.53\.183\.9' => 'spambot', # 2009-11-23
 	'212\.95\.58\.208' => 'spambot', # 2009-11-23
 	'212\.108\.202\.139' => 'spambot', # 2009-11-23
+	'212\.178\.15\.216' => 'spambot', # 2009-11-30
 	'212\.235\.107\.14' => 'spambot', # 2009-10-14
 	'212\.235\.107\.45' => 'spambot', # 2009-11-23
 	'212\.235\.107\.115' => 'spambot', # 2009-11-23
 	'212\.235\.107\.200' => 'spambot', # 2009-11-23
 	'212\.235\.107\.234' => 'spambot', # 2009-11-24
-	
+	'213\.186\.60\.84' => 'spambot', # 2009-12-02
 	
 	'91\.210\.181\.94' => 'badbot', # 2009-11-29 - Digmia checker
 	
@@ -2132,7 +2136,7 @@ our %cache_UserAgent;
 sub analyze
 {
 	my $user_agent=shift @_;
-	return undef unless $user_agent;
+	#return undef unless $user_agent;
 	my %env=@_;
 	
 	# at first detect UserAgent by IP (source IP of profane robots, etc..)
