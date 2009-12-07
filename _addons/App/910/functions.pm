@@ -172,6 +172,13 @@ sub product_add
 			'columns' => {%columns},
 			'-journalize' => 1,
 		);
+		App::020::SQL::functions::update(
+			'ID' => $env{'product.ID'},
+			'db_h' => "main",
+			'db_name' => $App::910::db_name,
+			'tb_name' => "a910_product",
+			'columns' => {'product_number'=>"'NEW-".$env{'product.ID'}."'"},
+		);
 		%product=App::020::SQL::functions::get_ID(
 			'ID' => $env{'product.ID'},
 			'db_h' => "main",
