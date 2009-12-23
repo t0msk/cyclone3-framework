@@ -23,7 +23,7 @@ sub execute
 		GROUP BY
 			IP, user_agent
 		HAVING
-			cnt>=5
+			cnt>=30
 		ORDER BY
 			cnt DESC 
 		LIMIT
