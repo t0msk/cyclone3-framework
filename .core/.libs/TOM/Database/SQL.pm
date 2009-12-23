@@ -19,10 +19,12 @@ use TOM::Database::SQL::transaction;
 use TOM::Database::SQL::cache;
 
 our $debug=$TOM::Database::SQL::debug || 0;
+our $save_error=$TOM::Database::SQL::save_error || 1;
 our $logcachequery=$TOM::Database::SQL::logcachequery || 0;
 our $lognonselectquery=$TOM::Database::SQL::lognonselectquery || 1;
 our $logquery=$TOM::Database::SQL::logquery || 0;
-our $logquery_long=$TOM::Database::SQL::logquery_long || 2;
+our $logquery_long=$TOM::Database::SQL::logquery_long || 2; # in seconds
+
 our $query_long_autocache=$TOM::Database::SQL::query_long_autocache || 0.01; # less availability than Memcached
 
 =head1 FUNCTIONS
@@ -308,7 +310,6 @@ sub execute
 	else
 	{
 		$output{'sth'}=$main::DB{$env{'db_h'}}->Query($SQL);
-		#main::_log("after Query");
 		$output{'info'}=$main::DB{$env{'db_h'}}->info();
 		$output{'err'}=$main::DB{$env{'db_h'}}->errmsg();
 		
@@ -320,6 +321,26 @@ sub execute
 				main::_log("SQL: err=".$output{'err'},1);# unless $env{'quiet'};
 				main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
 				main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
+				if ($save_error)
+				{
+					my %date=Utils::datetime::ctodatetime(time,format=>1);
+					open(SUSP,">".$TOM::P."/_logs/_debug/".$date{'hour'}.":".$date{'min'}.":".$date{'sec'}."-".$$.".sql.err.event");
+					print SUSP "domain: $tom::H\n";
+					print SUSP "db_h: $env{'db_h'}\n";
+					print SUSP "from:\n";
+					my $i;
+					while (my ($package, $filename, $line) = caller($i))
+					{
+						last unless $filename;
+						print SUSP "\t$package:$filename:$line\n";
+						$i++;
+					}
+					print SUSP "err: $output{'err'}\n";
+					print SUSP "---\n";
+					print SUSP $SQL."\n";
+					print SUSP "---\n";
+					close(SUSP);
+				}
 			}
 			main::_log("output info=".$output{'info'}) if (!$env{'quiet'} && $output{'info'});
 			$t->close();
