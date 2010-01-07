@@ -15,12 +15,19 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
 	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
 	$env{'login'}=$env{'login'} || $main::FORM{'login'} || $main::RPC->{'login'};
 	$env{'pass'}=$env{'pass'} || $main::FORM{'pass'} || $main::RPC->{'pass'};
 	
 	if ((!$env{'login'})||(!$env{'pass'})||(not $env{'login'}=~/^[a-zA-Z0-9_\@\.\-]{3,64}$/))
 	{
-		if (exists $main::FORM{'submit'})
+		if (exists $main::FORM{'submit'} || $env{'login'} || $env{'pass'})
 		{
 			$XSGN{'TMP'}=$XSGN{'ERR_no-credentials'};
 		}
