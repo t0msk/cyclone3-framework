@@ -26,24 +26,32 @@ sub execute
 	my $sql=qq{
 		SELECT
 			ID_user,
+			email,
 			status
 		FROM
 			TOM.a301_user
 		WHERE
 			ID_user='$env{'code'}' AND
-			hostname='$tom::H_cookie' AND
-			status='W'
+			hostname='$tom::H_cookie'
 		LIMIT 1
 	};
 	my %sth0=TOM::Database::SQL::execute($sql);
 	my %db0_line=$sth0{'sth'}->fetchhash();
 	if (!$db0_line{'ID_user'})
 	{
-		$XSGN{'TMP'}=$XSGN{'activated'};
+		# bad code
 		return 1;
 	}
 	
-	TOM::Database::SQL::execute(qq{
+	if ($db0_line{'status'} ne "W")
+	{
+		# user already activated
+		$XSGN{'TMP'}=$XSGN{'activated'};
+		$XSGN{'TMP'}=~s|<%email%>|$db0_line{'email'}|g;
+		return 1;
+	}
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
 		UPDATE
 			TOM.a301_user
 		SET
@@ -52,6 +60,9 @@ sub execute
 			ID_user='$env{'code'}'
 		LIMIT 1
 	});
+	# user successfully activated
+	$XSGN{'TMP'}=$XSGN{'activated'} if $sth0{'rows'};
+	$XSGN{'TMP'}=~s|<%email%>|$db0_line{'email'}|g;
 	
 	# find related organization in status W (only last!)
 	my %sth0=TOM::Database::SQL::execute(qq{
@@ -87,8 +98,6 @@ sub execute
 			LIMIT 1
 		});
 	}
-	
-	$XSGN{'TMP'}=$XSGN{'activated'};
 	
 	return 1;
 }
