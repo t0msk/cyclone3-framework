@@ -14,10 +14,15 @@ use Captcha::reCAPTCHA;
 sub execute
 {
 	my %env=@_;
-	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
 	
 	my %L10n=%{new TOM::L10n('addon' => 'a301', 'name'=>'user_registration', 'lng' => $env{'lng'})->{'string'}};
 	my %tpl=%{new TOM::Template('addon' => 'a301', 'name'=>'user_registration', 'content-type' => 'xhtml')->{'entity'}};
+	
+	$main::FORM{'firstname'}=$L10n{'firstname'} if (!$main::FORM{'firstname'} && $env{'firstname_default'});
+	$main::FORM{'surname'}=$L10n{'surname'} if (!$main::FORM{'surname'} && $env{'surname_default'});
+	$main::FORM{'regtype'}="USR" unless $main::FORM{'regtype'};
+	
+	Tomahawk::GetXSGN(-convertvars=>1) || return undef;
 	
 	# placeholder for later created recaptcha object
 	# if no $env{'recaptcha_key_public'} is defined, recaptcha is ignored in the process
@@ -34,9 +39,15 @@ sub execute
 		$main::FORM{'login'}=$main::FORM{'email'};
 	}
 	
-	
-	if ($main::FORM{'submit'})
+	if ($main::FORM{'submit'} || $main::FORM{'login'} || $main::FORM{'email'})
 	{
+		main::_log("submit request received");
+		if(exists $env{'newsletter'})
+		{
+			main::_log('newsletter registration activated by using \'newsletter\' var in type, checking the field by default');
+			$XSGN{'TMP'}=~s|<#newsletter_checked#>|checked="checked"|;
+		}
+		
 		# checking
 		my $box_err=$XSGN{'ERROR'};
 		
@@ -47,6 +58,7 @@ sub execute
 		my $login_ok;
 		if ($main::FORM{'login'})
 		{
+			main::_log("login present");
 			if (length($main::FORM{'login'})<64 && $main::FORM{'login'}=~/^[a-zA-Z_\@\-\. 0-9]*$/)
 			{
 				$login_ok=1;
@@ -391,6 +403,10 @@ sub execute
 		my $reg_ok;
 		if ($login_ok && $password_ok && $firstname_ok && $surname_ok && $email_ok && $captcha_ok)
 		{
+			my %columns;
+			$columns{'groups'}=['newsletter'] if $env{'newsletter'} eq 'true';
+			main::_log('newsletter value:'.$env{'newsletter'});
+			main::_log('adding user to the newsletter group') if $env{'newsletter'} eq 'true';
 			
 			# register user
 			#$db0_line{'ID_user'}
@@ -403,6 +419,7 @@ sub execute
 				'user_profile.surname' => $main::FORM{'surname'},
 				'user.email' => $main::FORM{'email'},
 				'user.email_verified' => 'N',
+				%columns,
 			);
 			
 			if ($main::FORM{'regtype'} eq "USR")
@@ -491,7 +508,7 @@ sub execute
 					'Reply-To' => $from,
 					'Return-Path' => $from,
 					'To' => TOM::Net::email::convert_TO($main::FORM{'email'}),
-					'Subject' => $tom::H.' - '.$L10n{'email.verify.subject'}
+					'Subject' => Int::charsets::encode::UTF8_ASCII($tom::H.' - '.$L10n{'email.verify.subject'})
 				);
 				
 				$ent->attach(
@@ -514,6 +531,11 @@ sub execute
 		}
 		
 		
+	}
+	else
+	{
+		main::_log("submit request not received");
+		$XSGN{'TMP'}=~s|<#newsletter_checked#>|checked="checked"|;
 	}
 	
 	if($env{'recaptcha_key_public'})
