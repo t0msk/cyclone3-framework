@@ -51,6 +51,7 @@ our $VERSION='$Rev$';
 our %functions=(
 	
 	'addon' => 1,
+	'contact.addon' => 1,
 #	'data.user_group' => 1,
 	
 	# user data
@@ -76,6 +77,10 @@ our %roles=(
 		'addon',
 #		'action.user_group.enable',
 #		'action.user_group.trash',
+	],
+	
+	'contact.addon' => [
+		'contact.addon',
 	],
 	
 #	'user_group' => [
@@ -119,7 +124,8 @@ our %groups=(
 #		'user_group' => 'r  '
 	},
 	'editor' => {
-		'addon' => 'rwx',
+		'addon' => 'r  ',
+		'contact.addon' => 'rwx',
 #		'user' => 'r  ',
 #		'user.public_data' => 'rwx',
 #		'user.private_data' => 'rwx',
