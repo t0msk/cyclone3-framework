@@ -15,6 +15,13 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
 	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
 	if ($main::USRM{'logged'} eq "Y")
 	{
 		$XSGN{'TMP'}=$XSGN{'logged'};
