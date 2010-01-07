@@ -336,7 +336,7 @@ sub image_file_generate
 	my ($out,$ext)=image_file_process(
 		'image1' => $tom::P.'/!media/a501/image/file/'.$image1_path,
 		'image2' => $image2->{'filename'},
-		'process' => $format{'process'},
+		'process' => $env{'process'} || $format{'process'},
 		'unlink' => 1,
 	);
 	
@@ -469,9 +469,10 @@ sub image_file_process
 			main::_log("check exec $function_name($params[0],$params[1]) from (".$image1->Get('width').",".$image1->Get('height').")");
 			if ($image1->Get('width') > $params[0] || $image1->Get('height') > $params[1])
 			{
-				main::_log("exec $function_name($params[0],$params[1])");
+				main::_log(" exec $function_name($params[0],$params[1])");
+				main::_log(" width=".($image1->Get('width'))." height=".($image1->Get('height')));
 				$image1->Resize('geometry'=>$params[0].'x'.$params[1]);
-				main::_log("width=".($image1->Get('width'))." height=".($image1->Get('height')));
+				main::_log(" new width=".($image1->Get('width'))." height=".($image1->Get('height')));
 				$procs++;
 			}
 			next;
@@ -482,6 +483,103 @@ sub image_file_process
 			main::_log("exec $function_name($params[0],$params[1])");
 			$image1->Resize('geometry'=>$params[0].'x'.$params[1]);
 			main::_log("width=".($image1->Get('width'))." height=".($image1->Get('height')));
+			$procs++;
+			next;
+		}
+		
+		if ($function_name eq "trim")
+		{
+			main::_log("exec $function_name($params[0])");
+			$params[0]=0.09 unless $params[0]; # set default tolerance
+			main::_log(" width=".($image1->Get('width'))." height=".($image1->Get('height')));
+			# find points colors
+			my $pixel_rt=($image1->GetPixel('x'=>$image1->Get('width'),'y'=>1))[0];
+			main::_log(" pixel_rt=$pixel_rt");
+			my $pixel_rb=($image1->GetPixel('x'=>$image1->Get('width'),'y'=>$image1->Get('height')))[0];
+			main::_log(" pixel_rb=$pixel_rb");
+			my $pixel_lt=($image1->GetPixel('x'=>1,'y'=>1))[0];
+			main::_log(" pixel_lt=$pixel_lt");
+			my $pixel_lb=($image1->GetPixel('x'=>1,'y'=>$image1->Get('height')))[0];
+			main::_log(" pixel_lb=$pixel_lb");
+			# check if we can start trimming (corner pixel in tolerance)
+			my $tol=abs($pixel_lt-$pixel_rt);main::_log(" tolerance lt-rt=$tol");
+			if ($tol>$params[0]){main::_log(" out of tolerance, skip function");next;};
+			my $tol=abs($pixel_lt-$pixel_lb);main::_log(" tolerance lt-lb=$tol");
+			if ($tol>$params[0]){main::_log(" out of tolerance, skip function");next;};
+			my $tol=abs($pixel_lt-$pixel_rb);main::_log(" tolerance lt-rb=$tol");
+			if ($tol>$params[0]){main::_log(" out of tolerance, skip function");next;};
+			# find left crop
+			my $tol_boolean;
+			my $pixel_l;
+			for my $x (1..int($image1->Get('width')/2)-1)
+			{
+				$pixel_l=$x;
+				for my $y (1..$image1->Get('height'))
+				{
+					my $px=($image1->GetPixel('x'=>$x,'y'=>$y))[0];
+					my $tol=abs($pixel_lt-$px);
+					if ($tol>$params[0]){main::_log(" out of tolerance at l=$x");$tol_boolean=1;last;};
+				}
+				last if $tol_boolean;
+			}
+			# find right crop
+			my $tol_boolean;
+			my $pixel_r;
+			for my $x (1..int($image1->Get('width')/2)-1)
+			{
+				$pixel_r=$image1->Get('width')-$x;
+				for my $y (1..$image1->Get('height'))
+				{
+					my $px=($image1->GetPixel('x'=>$image1->Get('width')-$x,'y'=>$y))[0];
+					my $tol=abs($pixel_lt-$px);
+					if ($tol>$params[0]){main::_log(" out of tolerance at r=$pixel_r");$tol_boolean=1;last;};
+				}
+				last if $tol_boolean;
+			}
+			# find top crop
+			my $tol_boolean;
+			my $pixel_t;
+			for my $y (1..int($image1->Get('height')/2)-1)
+			{
+				$pixel_t=$y;
+				for my $x (1..$image1->Get('width'))
+				{
+					my $px=($image1->GetPixel('x'=>$x,'y'=>$y))[0];
+					my $tol=abs($pixel_lt-$px);
+					if ($tol>$params[0]){main::_log(" out of tolerance at t=$y");$tol_boolean=1;last;};
+				}
+				last if $tol_boolean;
+			}
+			# find bottom crop
+			my $tol_boolean;
+			my $pixel_b;
+			for my $y (1..int($image1->Get('height')/2)-1)
+			{
+				$pixel_b=$image1->Get('height')-$y;
+				for my $x (1..$image1->Get('width'))
+				{
+					my $px=($image1->GetPixel('x'=>$x,'y'=>$image1->Get('height')-$y))[0];
+					my $tol=abs($pixel_lt-$px);
+					if ($tol>$params[0]){main::_log(" out of tolerance at b=$pixel_b");$tol_boolean=1;last;};
+				}
+				last if $tol_boolean;
+			}
+			# setup border
+			my $border=int(($pixel_r-$pixel_l+$pixel_b-$pixel_t)/2*0.05);
+			main::_log(" setup border to $border px");
+			$pixel_l-=$border;
+			$pixel_l=1 if $pixel_l<1;
+			$pixel_t-=$border;
+			$pixel_t=1 if $pixel_t<1;
+			$pixel_r+=$border;
+			$pixel_r=$image1->Get('width') if $pixel_r>$image1->Get('width');
+			$pixel_b+=$border;
+			$pixel_b=$image1->Get('height') if $pixel_b>$image1->Get('height');
+			# execute crop
+			$image1->Crop('x'=>$pixel_l,'y'=>$pixel_t,'width'=>$pixel_r-$pixel_l,'height'=>$pixel_b-$pixel_t);
+			
+#			$image1->Trim();
+			main::_log(" new width=".($image1->Get('width'))." height=".($image1->Get('height')));
 			$procs++;
 			next;
 		}
