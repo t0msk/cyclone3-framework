@@ -45,6 +45,7 @@ use App::020::_init;
 
 
 our $VERSION='$Rev$';
+our $debug=0;
 
 
 # addon functions
@@ -132,9 +133,12 @@ sub get_owner
 {
 	shift;
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::get_owner()");
+	my $t=track TOM::Debug(__PACKAGE__."::get_owner()") if $debug;
 	
-	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_}};
+	if ($debug)
+	{
+		foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_}};
+	}
 	
 	if ($env{'r_table'} eq "article")
 	{
@@ -149,7 +153,7 @@ sub get_owner
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'main','quiet'=>1,'-slave'=>0);
 		my %db0_line=$sth0{'sth'}->fetchhash();
-		$t->close();
+		$t->close() if $debug;
 		return $db0_line{'posix_owner'};
 	}
 	elsif ($env{'r_table'} eq "article_cat")
@@ -165,11 +169,11 @@ sub get_owner
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'main','quiet'=>1,'-slave'=>0);
 		my %db0_line=$sth0{'sth'}->fetchhash();
-		$t->close();
+		$t->close() if $debug;
 		return $db0_line{'posix_owner'};
 	}
 	
-	$t->close();
+	$t->close() if $debug;
 	return undef;
 }
 
