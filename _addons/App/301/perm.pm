@@ -720,7 +720,7 @@ otherwise own blind function (reads posix_owner from table).
 
 sub get_owner
 {
-	my $t=track TOM::Debug(__PACKAGE__."::get_owner()");
+	my $t=track TOM::Debug(__PACKAGE__."::get_owner()") if $debug;
 	my %env=@_;
 	my $owner;
 	
@@ -738,18 +738,18 @@ sub get_owner
 	my $pckg=$r_prefix."::a301";
 	if (defined $pckg->VERSION)
 	{
-		main::_log("trying get_owner() from package '$pckg'");
+		main::_log("trying get_owner() from package '$pckg'") if $debug;
 		$owner=$pckg->get_owner(
 			'r_table' => $env{'r_table'},
 			'r_ID_entity' => $env{'r_ID_entity'}
 		);
-		main::_log("owner='$owner'");
-		$t->close();
+		main::_log("owner='$owner'") if $debug;
+		$t->close() if $debug;
 		return $owner;
 	}
 	else
 	{
-		main::_log("blind get_owner()");
+		main::_log("blind get_owner()") if $debug;
 		my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'});
 		
 		my $sql=qq{
@@ -769,8 +769,8 @@ sub get_owner
 		}
 	}
 	
-	main::_log("owner='$owner'");
-	$t->close();
+	main::_log("owner='$owner'") if $debug;
+	$t->close() if $debug;
 	return $owner;
 };
 
@@ -823,17 +823,18 @@ Returns ACL (users, user_groups and organizations) from entity
   'r_prefix' =>
   'r_table' =>
   'r_ID_entity' =>
+  'role' => # only entities with this role
  );
 
 =cut
 
 sub get_ACL
 {
-	my $t=track TOM::Debug(__PACKAGE__."::get_ACL()");
+	my $t=track TOM::Debug(__PACKAGE__."::get_ACL()") if $debug;
 	my %env=@_;
 	my @ACL;
 	
-   my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+	my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
 	
 	my $world;
 	my $sql=qq{
@@ -862,7 +863,7 @@ sub get_ACL
 		{
 			$world=1;
 			my %item;
-			main::_log("->{world} 'r  '");
+			main::_log("->{world} 'r  '") if $debug;
 			$item{'ID'}='0';
 			$item{'folder'}='Y';
 			$item{'roles'}='';
@@ -884,7 +885,7 @@ sub get_ACL
 		$db0_line{'perm_W'}=~tr/YN/W_/;
 		$db0_line{'perm_X'}=~tr/YN/X_/;
 		
-		main::_log("->{user_group} ID='$db0_line{'ID_entity'}' name='$db0_line{'name'}' roles='$db0_line{'roles'}' '$db0_line{'perm_R'}$db0_line{'perm_W'}$db0_line{'perm_X'}'");
+		main::_log("->{user_group} ID='$db0_line{'ID_entity'}' name='$db0_line{'name'}' roles='$db0_line{'roles'}' '$db0_line{'perm_R'}$db0_line{'perm_W'}$db0_line{'perm_X'}'") if $debug;
 		$item{'ID'}=$db0_line{'ID_entity'};
 		$item{'folder'}='Y';
 		$item{'roles'}=$db0_line{'roles'};
@@ -905,7 +906,7 @@ sub get_ACL
 	{
 		$world=1;
 		my %item;
-		main::_log("->{world} 'r  '");
+		main::_log("->{world} 'r  '") if $debug;
 		$item{'ID'}='0';
 		$item{'folder'}='Y';
 		$item{'roles'}='';
@@ -951,7 +952,7 @@ sub get_ACL
 			$db0_line{'perm_W'}=~tr/YN/W_/;
 			$db0_line{'perm_X'}=~tr/YN/X_/;
 			
-			main::_log("->{org} ID='$db0_line{'ID_entity'}' name='$db0_line{'name'}' roles='$db0_line{'roles'}' '$db0_line{'perm_R'}$db0_line{'perm_W'}$db0_line{'perm_X'}'");
+			main::_log("->{org} ID='$db0_line{'ID_entity'}' name='$db0_line{'name'}' roles='$db0_line{'roles'}' '$db0_line{'perm_R'}$db0_line{'perm_W'}$db0_line{'perm_X'}'") if $debug;
 			$item{'ID'}=$db0_line{'ID_entity'};
 			$item{'folder'}='O';
 			$item{'roles'}=$db0_line{'roles'};
@@ -984,7 +985,7 @@ sub get_ACL
 		
 		my %author=App::301::authors::get_author($owner);
 		
-		main::_log("->{owner} ID='$owner' name='$author{'login'}' 'rwx'");
+		main::_log("->{owner} ID='$owner' name='$author{'login'}' 'rwx'") if $debug;
 		$item{'ID'}=$owner;
 		$item{'folder'}='';
 		$item{'roles'}='owner';
@@ -1031,14 +1032,14 @@ sub get_ACL
 		
 		if ($db0_line{'ID_entity'} eq $owner)
 		{
-			main::_log("->{owner/user} '$db0_line{'perm_R'}$db0_line{'perm_W'}$db0_line{'perm_X'}'");
+			main::_log("->{owner/user} '$db0_line{'perm_R'}$db0_line{'perm_W'}$db0_line{'perm_X'}'") if $debug;
 			$ACL[0]{'perm_R'}=$db0_line{'perm_R'};
 			$ACL[0]{'perm_W'}=$db0_line{'perm_W'};
 			$ACL[0]{'perm_X'}=$db0_line{'perm_X'};
 			next;
 		}
 		
-		main::_log("->{user} ID='$db0_line{'ID_entity'}' name='$db0_line{'login'}' roles='$db0_line{'roles'}' '$db0_line{'perm_R'}$db0_line{'perm_W'}$db0_line{'perm_X'}'");
+		main::_log("->{user} ID='$db0_line{'ID_entity'}' name='$db0_line{'login'}' roles='$db0_line{'roles'}' '$db0_line{'perm_R'}$db0_line{'perm_W'}$db0_line{'perm_X'}'") if $debug;
 		$item{'ID'}=$db0_line{'ID_entity'};
 		$item{'folder'}='';
 		$item{'roles'}=$db0_line{'roles'};
@@ -1059,11 +1060,166 @@ sub get_ACL
 		push @ACL, {%item};
 	}
 	
-	$t->close();
+	if ($env{'role'})
+	{
+		my @ACL_;
+		foreach my $acl_entity (@ACL)
+		{
+#			main::_log("$_");
+			my $has_role;
+			foreach my $role (split(',',$acl_entity->{'roles'}))
+			{
+				$has_role=1 if $role eq $env{'role'};
+			}
+			push @ACL_,$acl_entity if $has_role;
+		}
+		@ACL=@ACL_;
+#		foreach (@ACL)
+#		{
+#			main::_log("ID=$_->{'ID'}");
+#		}
+	}
+	
+	$t->close() if $debug;
 	return @ACL;
 }
 
 
+
+=head2 set_ACL
+
+Sets ACL (users, user_groups and organizations) for entity
+
+ App::301::perm::set_ACL(
+  'r_prefix' =>
+  'r_table' =>
+  'r_ID_entity' =>
+  'role' => # set this role to all entities
+  'ACL' => (
+    {'ID' => 'xxxxxx', folder => ''}, # user
+    {'ID' => 2, 'folder' => 'Y'}, # group
+    {'ID' => 3, 'folder' => 'O'}, # org
+  )
+ );
+
+=cut
+
+sub set_ACL
+{
+	my $t=track TOM::Debug(__PACKAGE__."::set_ACL()");
+	my %env=@_;
+	my @ACL_set=@{$env{'ACL'}};
+	
+	my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+	
+	my @ACL_orig=App::301::perm::get_ACL('r_prefix' => $env{'r_prefix'},'r_table' => $env{'r_table'},'r_ID_entity' => $env{'r_ID_entity'});
+	my @ACL_new=App::301::perm::get_ACL('r_prefix' => $env{'r_prefix'},'r_table' => $env{'r_table'},'r_ID_entity' => $env{'r_ID_entity'});
+	
+	foreach (@ACL_orig)
+	{
+		main::_log("ID='$_->{'ID'}' folder='$_->{'folder'}' roles='$_->{'roles'}'");
+	}
+	
+	# reset role from ACL
+	foreach (@ACL_new)
+	{
+#		main::_log("1) ID='$_->{'ID'}' $_->{'roles'}");
+		my $has_role;
+		# exclude role from roles only when entity not in ACL_set
+		foreach my $acl_entity (@ACL_set)
+		{
+#			main::_log("11) ID='$acl_entity->{'ID'}' $acl_entity->{'roles'}");
+			if ($acl_entity->{'ID'} eq $_->{'ID'} && $acl_entity->{'ID'} eq $_->{'ID'})
+			{
+#				main::_log("found in ACL_set");
+				$has_role=1;last;
+			}
+		}
+		_role_exclude($_->{'roles'}, $env{'role'}) unless $has_role;
+#		main::_log("1) ID='$_->{'ID'}' $_->{'roles'}");
+	}
+	
+	
+	# add role from ACL
+	foreach my $acl_entity (@ACL_set)
+	{
+		my $entity_found;
+		foreach (@ACL_new)
+		{
+			if ($acl_entity->{'ID'} eq $_->{'ID'} && $acl_entity->{'ID'} eq $_->{'ID'})
+			{
+				_role_add($_->{'roles'}, $env{'role'});
+				$entity_found=1;
+				last;
+			}
+		}
+		# add entity
+		if (!$entity_found)
+		{
+			push @ACL_new,{'ID'=>$acl_entity->{'ID'},'folder'=>$acl_entity->{'folder'},'roles'=>$env{'role'}};
+		}
+	}
+	
+	
+	# compare
+	my $i=0;
+	foreach (@ACL_new)
+	{
+		if ($ACL_orig[$i]->{'roles'} ne $_->{'roles'})
+		{
+			main::_log("changed ID='$_->{'ID'}' folder='$_->{'folder'}' roles='$ACL_orig[$i]->{'roles'}'->'$_->{'roles'}'");
+			if ($_->{'folder'} eq "Y")
+			{
+			}
+			else
+			{
+				App::301::perm::ACL_user_update(
+					'r_prefix' => $env{'r_prefix'},'r_table' => $env{'r_table'},'r_ID_entity' => $env{'r_ID_entity'},
+					'ID' => $_->{'ID'},
+					'roles' => $_->{'roles'}
+				);
+			}
+		}
+		$i++;
+	}
+	
+	
+	foreach (@ACL_new)
+	{
+#		main::_log("ID='$_->{'ID'}' folder='$_->{'folder'}' roles='$_->{'roles'}'");
+	}
+	
+	$t->close();
+	return @ACL_new;
+#	return @ACL;
+}
+
+
+sub _role_exclude
+{
+	my $roles_new;
+	foreach (split(',',$_[0]))
+	{
+		next if $_ eq $_[1];
+		$roles_new.=",".$_;
+	}
+	$roles_new=~s|^,||;
+	$_[0]=$roles_new;
+}
+
+sub _role_add
+{
+	my $roles_new;
+	my $role_has;
+	foreach (split(',',$_[0]))
+	{
+		$role_has=1 if $_ eq $_[1];
+		$roles_new.=",".$_;
+	}
+	$roles_new.=",".$_[1] unless $role_has;
+	$roles_new=~s|^,||;
+	$_[0]=$roles_new;
+}
 
 =head2 ACL_org_update
 
