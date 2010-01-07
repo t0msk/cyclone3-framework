@@ -1717,7 +1717,7 @@ while ($main::CGI=new CGI::Fast())
 			}
 		}
 		
-		
+		$main::H->change_DOC_robots("noindex") if $main::FORM{'_rc'};
 		
 		
 		
