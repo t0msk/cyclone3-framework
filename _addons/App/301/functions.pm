@@ -325,7 +325,7 @@ sub user_add
 		$columns{'city'}="'".TOM::Security::form::sql_escape($env{'user_profile.city'})."'"
 			if ($env{'user_profile.city'} && ($env{'user_profile.city'} ne $user_profile{'city'}));
 		$columns{'ZIP'}="'".TOM::Security::form::sql_escape($env{'user_profile.ZIP'})."'"
-			if ($env{'user_profile.ZIP'} && ($env{'user_profile.ZIP'} ne $user_profile{'ZIP'}));
+			if (exists $env{'user_profile.ZIP'} && ($env{'user_profile.ZIP'} ne $user_profile{'ZIP'}));
 		$columns{'district'}="'".TOM::Security::form::sql_escape($env{'user_profile.district'})."'"
 			if ($env{'user_profile.district'} && ($env{'user_profile.district'} ne $user_profile{'district'}));
 		$columns{'county'}="'".TOM::Security::form::sql_escape($env{'user_profile.county'})."'"
