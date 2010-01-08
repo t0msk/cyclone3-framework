@@ -42,7 +42,11 @@ BEGIN
 			
 			if ($tom::addons_init) # load all addons only if required by engine
 			{
-				main::_log("load configured addons");
+				foreach my $addon(keys %tom::addons)
+				{
+					delete $tom::addons{$addon} unless $tom::addons{$addon};
+				}
+				main::_log("load configured addons ".join(";",keys %tom::addons));
 				foreach my $addon(sort keys %tom::addons)
 				{
 					my $addon_path;
