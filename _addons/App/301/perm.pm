@@ -46,6 +46,9 @@ our %roles;
 our %ACL_roles;
 our %functions;
 
+# default role with function
+$roles{'login'}{'a301.addon'}=1;
+
 =head2 FUNCTIONS
 
 =cut
@@ -162,6 +165,15 @@ sub register
 
 
 =head2 get_roles()
+
+Get list of roles with permissions of user, or group
+This is not list of roles setup on entity!
+
+ my %roles=App::301::perm::get_roles(
+   'ID_user' => $main::USRM{'ID_user'},
+   'ID_group' => '*',
+   'enhanced' => 1,
+ );
 
 =cut
 
@@ -292,8 +304,8 @@ sub get_roles
 				$roles{$role}=$perm;
 			}
 			
-			main::_log(" RL_login 'rw '");
-			$roles{'login'}='rw ';
+			main::_log(" RL_login 'r  '");
+			$roles{'login'}='r  ';
 			
 			delete $groups{$_};
 		}
@@ -344,7 +356,7 @@ sub get_roles
 	
 	if ($roles{'unlimited'})
 	{
-		%roles=('unlimited'=>'rwx','login'=>'rw ');
+		%roles=('unlimited'=>'rwx','login'=>'r  ');
 	}
 	
 	main::_log("send to output:");
@@ -363,6 +375,49 @@ sub get_roles
 	
 	$t->close();
 	return %roles;
+}
+
+
+=head2 _get_functions_from_roles
+
+Converts %roles into %functions
+
+ my %functions 
+
+=cut
+
+sub _get_functions_from_roles
+{
+	my %roles=@_;
+	my %functions;
+	my $t=track TOM::Debug(__PACKAGE__."::get_functions_from_roles()");
+	
+	foreach my $role(keys %roles)
+	{
+#		main::_log("RL_$role=$roles{$role}");
+		foreach my $fnc(keys %{$App::301::perm::roles{$role}})
+		{
+#			main::_log(" FNC_$fnc");
+			if ($functions{$fnc})
+			{
+				$functions{$fnc}=perm_sum($functions{$fnc},$roles{$role});
+			}
+			else
+			{
+				$functions{$fnc}=$roles{$role};
+			}
+#			main::_log(" FNC_$fnc=$functions{$fnc}");
+#			my $perm=perm_sum($roles{$role_def[0]},$role_def[1]);
+		}
+	}
+	
+	foreach (sort keys %functions)
+	{
+		main::_log("FNC_$_=$functions{$_}");
+	}
+	
+	$t->close();
+	return %functions;
 }
 
 
