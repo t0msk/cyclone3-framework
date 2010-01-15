@@ -404,7 +404,8 @@ sub user_add
 		}
 		else
 		{
-			$env{'user.pass'}='MD5:'.Digest::MD5::md5_hex(Encode::encode_utf8($env{'user.pass'}));
+			#$env{'user.pass'}='MD5:'.Digest::MD5::md5_hex(Encode::encode_utf8($env{'user.pass'}));
+			$env{'user.pass'}='SHA1:'.Digest::SHA1::sha1_hex(Encode::encode_utf8($env{'user.pass'}));
 		}
 	}
 	

@@ -64,6 +64,10 @@ CVML
 
 Digest::MD5
 
+=item *
+
+Digest::SHA1
+
 =back
 
 =cut
@@ -76,6 +80,7 @@ use App::301::perm;
 use App::301::a301;
 use CVML;
 use Digest::MD5;
+use Digest::SHA1;
 
 our $db_name='TOM';
 our $VERSION=0;

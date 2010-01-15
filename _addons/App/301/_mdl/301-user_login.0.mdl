@@ -7,6 +7,7 @@ use encoding 'utf8';
 use utf8;
 use strict;
 use Digest::MD5  qw(md5 md5_hex md5_base64);
+use Digest::SHA1  qw(sha1 sha1_hex sha1_base64);
 
 use App::301::_init;
 
@@ -66,6 +67,11 @@ sub execute
 		if ($pass=~/^MD5:/)
 		{
 			$env{'pass'}='MD5:'.md5_hex(Encode::encode_utf8($env{'pass'}));
+			main::_log("pass='$env{'pass'}'");
+		}
+		elsif ($pass=~/^SHA1:/)
+		{
+			$env{'pass'}='SHA1:'.sha1_hex(Encode::encode_utf8($env{'pass'}));
 			main::_log("pass='$env{'pass'}'");
 		}
 		
