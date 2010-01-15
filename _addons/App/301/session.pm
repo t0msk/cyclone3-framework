@@ -190,7 +190,7 @@ sub process
 						user.ID_user = user_online.ID_user
 					)
 					WHERE
-						user_online.ID_user='$main::COOKIES{_ID_user}'
+						user_online.ID_user='}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_user'}).qq{'
 					LIMIT 1
 				};
 				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>0);
@@ -246,8 +246,8 @@ sub process
 							SET
 								domain='$tom::H',
 								datetime_request=FROM_UNIXTIME($main::time_current),
-								cookies='$main::USRM{'cookies'}',
-								user_agent='$main::ENV{'HTTP_USER_AGENT'}',
+								cookies='}.TOM::Security::form::sql_escape($main::USRM{'cookies'}).qq{',
+								user_agent='}.TOM::Security::form::sql_escape($main::ENV{'HTTP_USER_AGENT'}).qq{',
 								requests=requests+1,
 								status='Y'
 							WHERE
@@ -302,7 +302,7 @@ sub process
 					FROM
 						TOM.a301_user
 					WHERE
-						ID_user='$main::COOKIES{_ID_user}' AND
+						ID_user='}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_user'}).qq{' AND
 						hostname='$tom::H_cookie'
 					LIMIT 1
 				};
@@ -390,16 +390,16 @@ sub process
 							)
 							VALUES
 							(
-								'$main::COOKIES{_ID_user}',
-								'$main::COOKIES{_ID_session}',
-								'$tom::H',
-								'$main::USRM{logged}',
+								'}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_user'}).qq{',
+								'}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_session'}).qq{',
+								'}.TOM::Security::form::sql_escape($tom::H).qq{',
+								'}.TOM::Security::form::sql_escape($main::USRM{'logged'}).qq{',
 								FROM_UNIXTIME($main::time_current),
 								FROM_UNIXTIME($main::time_current),
 								'1',
-								'$main::ENV{'REMOTE_ADDR'}',
-								'$main::USRM{'saved_cookies'}',
-								'$main::USRM{'saved_session'}'
+								'}.TOM::Security::form::sql_escape($main::ENV{'REMOTE_ADDR'}).qq{',
+								'}.TOM::Security::form::sql_escape($main::USRM{'saved_cookies'}).qq{',
+								'}.TOM::Security::form::sql_escape($main::USRM{'saved_session'}).qq{'
 							)
 						});
 					}
@@ -419,14 +419,14 @@ sub process
 							)
 							VALUES
 							(
-								'$main::COOKIES{_ID_user}',
-								'$main::COOKIES{_ID_session}',
-								'$tom::H',
-								'$main::USRM{logged}',
+								'}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_user'}).qq{',
+								'}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_session'}).qq{',
+								'}.TOM::Security::form::sql_escape($tom::H).qq{',
+								'}.TOM::Security::form::sql_escape($main::USRM{'logged'}).qq{',
 								FROM_UNIXTIME($main::time_current),
 								FROM_UNIXTIME($main::time_current),
 								'1',
-								'$main::ENV{'REMOTE_ADDR'}'
+								'}.TOM::Security::form::sql_escape($main::ENV{'REMOTE_ADDR'}).qq{'
 							)
 						});
 					}
@@ -540,16 +540,16 @@ sub process
 				)
 				VALUES
 				(
-					'$main::COOKIES{_ID_user}',
-					'$main::COOKIES{_ID_session}',
-					'$tom::H',
-					'$main::USRM{logged}',
+					'}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_user'}).qq{',
+					'}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_session'}).qq{',
+					'}.TOM::Security::form::sql_escape($tom::H).qq{',
+					'}.TOM::Security::form::sql_escape($main::USRM{'logged'}).qq{',
 					FROM_UNIXTIME($main::time_current),
 					FROM_UNIXTIME($main::time_current),
 					'1',
-					'$main::ENV{'REMOTE_ADDR'}',
-					'$main::ENV{'HTTP_USER_AGENT'}',
-					'$main::USRM{'cookies'}',
+					'}.TOM::Security::form::sql_escape($main::ENV{'REMOTE_ADDR'}).qq{',
+					'}.TOM::Security::form::sql_escape($main::ENV{'HTTP_USER_AGENT'}).qq{',
+					'}.TOM::Security::form::sql_escape($main::USRM{'cookies'}).qq{',
 					''
 				)
 			},'quiet'=>1);
