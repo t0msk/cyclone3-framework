@@ -138,7 +138,7 @@ sub new
 	# check if same location is already loaded in another object
 	# (location is unique identification of template)
 	# when no, proceed parsing this tpl source
-	if (!$objects{$obj->{'location'}})
+	if ($obj->{'location'} && !$objects{$obj->{'location'}})
 	{
 		# add this object into global $TOM::Template::objects{} hash
 		$objects{$obj->{'location'}}=$obj;
@@ -157,14 +157,20 @@ sub new
 	my $obj_return=bless {}, $class;
 		$obj_return->{'location'}=$obj->{'location'};
 		%{$obj_return->{'ENV'}}=%env;
-		%{$obj_return->{'entity'}}=%{$objects{$obj->{'location'}}{'entity'}};
-		%{$obj_return->{'entity_'}}=%{$objects{$obj->{'location'}}{'entity_'}};
-		%tpl::entity=%{$objects{$obj->{'location'}}{'entity'}};
-		%{$obj_return->{'L10n'}}=%{$objects{$obj->{'location'}}{'L10n'}};
+		if ($obj->{'location'})
+		{
+			%{$obj_return->{'entity'}}=%{$objects{$obj->{'location'}}{'entity'}};
+			%{$obj_return->{'entity_'}}=%{$objects{$obj->{'location'}}{'entity_'}};
+			%tpl::entity=%{$objects{$obj->{'location'}}{'entity'}};
+			%{$obj_return->{'L10n'}}=%{$objects{$obj->{'location'}}{'L10n'}};
+		}
 		# replace_variables only in root level of Template not in templates called by <extend*>
 		$obj_return->process_entity() if (caller)[0] ne "TOM::Template";
-		%{$obj_return->{'file'}}=%{$objects{$obj->{'location'}}{'file'}};
-		%{$obj_return->{'file_'}}=%{$objects{$obj->{'location'}}{'file_'}};
+		if ($obj->{'location'})
+		{
+			%{$obj_return->{'file'}}=%{$objects{$obj->{'location'}}{'file'}};
+			%{$obj_return->{'file_'}}=%{$objects{$obj->{'location'}}{'file_'}};
+		}
 	$t->close();
 	return $obj_return;
 }
@@ -218,7 +224,7 @@ sub prepare_location
 	
 	if (!$self->{'location'})
 	{
-		main::_log("this Template not exists",1);
+		main::_log("can't find location for template",1);
 	}
 	else
 	{
@@ -540,7 +546,7 @@ sub get_tpl_xml
 	foreach my $ext(".tpl.d/_init.xml",".ztpl",".tpl")
 	{
 		my $filename="$env{'dir'}/$env{'filename'}$ext";
-		#main::_log("find $env{'dir'}/$env{'filename'}$ext");
+		main::_log(" finding in '$env{'dir'}/$env{'filename'}$ext'") if $debug;
 		
 		# if checking ztpl, unpack them into _temp .tpl.d extension
 		# (check if not alredy actual exists) and return included xml
