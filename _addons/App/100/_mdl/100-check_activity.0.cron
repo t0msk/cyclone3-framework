@@ -16,6 +16,101 @@ sub execute
 {
 	my %env=@_;
 	
+	# check sql errors
+	my $tpl=new TOM::Template(
+		'level' => "auto",
+		'name' => "email",
+		'content-type' => "xhtml"
+	);
+	# DESIGN
+	$tpl->{'entity'}{'email.xhtml'}=~s|<%main-title%>|SQL errors|g;
+	$tpl->{'entity'}{'email.xhtml'}=~s|<%main-desc%>|This notification ...|g;
+	
+	# vykreslim hlavicku
+	$tpl->{'entity'}{'email.table'} =~ s|<%title%>|Table of new SQL errors|g;
+	$tpl->{'entity'}{'email.table'} =~ s|<%main-term%>||g;
+	$tpl->{'entity'}{'email.table'} =~ s|<%colscount%>|1|g;
+	
+	my $i;
+	if (opendir (DIR, $TOM::P."/_logs/_debug"))
+	{
+		foreach my $file(sort readdir DIR)
+		{
+#			main::_log("file=$file");next;
+			next if -d $TOM::P."/_logs/_debug/".$file;
+			next unless $file=~/sql\.err\.event$/;
+			
+			local $/;
+			open(HND,'<'.$TOM::P."/_logs/_debug/".$file);
+			my $data=<HND>;
+			$data=~s|\n|<br/>|gms;
+			$data=~s|\t|     |gms;
+			$data=~s| |&nbsp;|gms;
+			
+			$i++;
+			
+			my $line = $tpl->{'entity'}{'email.table.line'};
+			my $col = $tpl->{'entity'}{'email.table.col.value'};
+				$col =~ s|<%value%>|$data|g;
+				$line =~ s|<#email.table.col.value#>|$col|g;
+			$tpl->{'entity'}{'email.table'} =~ s|<#email.table.line#>|$line|g;
+			
+			last if $i == 5;
+			
+			unlink $TOM::P."/_logs/_debug/".$file;
+			
+		}
+	}
+	
+	if ($i)
+	{
+		# nalejem do HTML
+		$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$tpl->{'entity'}{'email.table'}|;
+		
+		# cleaning
+		$tpl->{'entity'}{'email.xhtml'} =~ s|<#.*?#>||gs;
+		$tpl->{'entity'}{'email.xhtml'} =~ s|<%.*?%>||gs;
+		
+		#----------------------------------------------------------------
+		# Completing mail
+		my $db_email = TOM::Utils::vars::unique_split($TOM::contact{'TOM_farm'});#$db_email='roman.fordinal@comsultia.com';
+		my $date = TOM::Utils::datetime::mail_current();
+		
+		my $ent = MIME::Entity->build
+		(
+			 'Type'    => 'multipart/related',
+			 'From'    => '"Cyclone3 ('.$TOM::hostname.')" <'.$TOM::contact{'from'}.'>',
+			 'To'      => TOM::Net::email::convert_TO($db_email),
+			 'Subject' => "Suspected SQL activity at $TOM::hostname",
+			 'Date'    => $date,
+		);
+		
+		$ent->attach
+		(
+			 'Data' => $tpl->{'entity'}{'email.xhtml'},
+			 'Type' => "text/html;charset=\"UTF-8\"",
+			 'Encoding' => "8bit",
+		);
+		
+		$ent->attach
+		(
+			 'Path'       => $tpl->{'file'}{'cyclone3-150x44.png'}{'dst'},
+			 'Type'       => "image/gif",
+			 'Content-ID' => "<logo\@cyclone3.org>",
+			 'Encoding'   => "base64"
+		);
+		
+		TOM::Net::email::send
+		(
+			 'to' => $db_email,
+			 'body' => $ent->as_string()
+		);
+		
+	}
+	
+#	return 1;
+	
+	# check new users creating
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT IP, COUNT(*) AS cnt, user_agent
 		FROM
