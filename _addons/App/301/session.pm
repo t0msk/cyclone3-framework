@@ -37,19 +37,17 @@ sub DESTROY
 		
 		return undef if (($cvml eq $session_save) && $performance);
 		
-		$cvml=~s|\'|\\'|g;
-		
 		main::_log("TIE-cvml:='$cvml'") if $debug;
 		
 		TOM::Database::SQL::execute(qq{
 			UPDATE
 				TOM.a301_user_online
 			SET
-				session='$cvml'
+				session=?
 			WHERE
-				ID_session='$IDsession'
+				ID_session=?
 			LIMIT 1
-		},'quiet'=>1);
+		},'quiet'=>1,'bind'=>[$cvml,$IDsession]);
 		
 		main::_log("TIE-serialized") if $debug;
 	
@@ -100,6 +98,12 @@ sub NEXTKEY
 sub process
 {
 	return 1 if $main::USRM{'logged'};
+	
+	if (not $main::COOKIES{'_ID_user'}=~/^[a-zA-Z0-9]{8}$/)
+	{
+		# check for invalid ID_user
+		return 1;
+	}
 	
 	my $t=track TOM::Debug(__PACKAGE__."::process()");
 	
@@ -190,10 +194,10 @@ sub process
 						user.ID_user = user_online.ID_user
 					)
 					WHERE
-						user_online.ID_user='}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_user'}).qq{'
+						user_online.ID_user=?
 					LIMIT 1
 				};
-				my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>0);
+				my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[$main::COOKIES{'_ID_user'}],'quiet'=>1,'-slave'=>0);
 				%main::USRM=$sth0{'sth'}->fetchhash();
 			}
 			if ($main::USRM{'ID_user'}) # yes, user is online
@@ -217,7 +221,6 @@ sub process
 					# naplnim obsah USRM{cookies}
 					my %hash;foreach (sort keys %main::COOKIES){$_=~/^_/ && do {$hash{$_}=$main::COOKIES{$_};next}};
 					$main::USRM{'cookies'}=CVML::structure::serialize(%hash);
-					$main::USRM{'cookies'}=~s|\'|\\'|g;
 					
 					if ($TOM::CACHE_memcached)
 					{
@@ -244,16 +247,17 @@ sub process
 							UPDATE
 								TOM.a301_user_online
 							SET
-								domain='$tom::H',
+								domain=?,
 								datetime_request=FROM_UNIXTIME($main::time_current),
-								cookies='}.TOM::Security::form::sql_escape($main::USRM{'cookies'}).qq{',
-								user_agent='}.TOM::Security::form::sql_escape($main::ENV{'HTTP_USER_AGENT'}).qq{',
+								cookies=?,
+								user_agent=?,
 								requests=requests+1,
 								status='Y'
 							WHERE
-								ID_user='$main::COOKIES{'_ID_user'}'
+								ID_user=?
 							LIMIT 1
-						},'quiet'=>1);
+						},'quiet'=>1,
+						'bind'=>[$tom::H,$main::USRM{'cookies'},$main::ENV{'HTTP_USER_AGENT'},$main::COOKIES{'_ID_user'}]);
 					}
 				}
 				else # NIEKTO SA MI SEM NABURAL
@@ -302,11 +306,11 @@ sub process
 					FROM
 						TOM.a301_user
 					WHERE
-						ID_user='}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_user'}).qq{' AND
-						hostname='$tom::H_cookie'
+						ID_user=? AND
+						hostname=?
 					LIMIT 1
 				};
-				my %sth_u=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
+				my %sth_u=TOM::Database::SQL::execute($sql,'bind'=>[$main::COOKIES{'_ID_user'},$tom::H_cookie],'quiet'=>1,'-slave'=>1);
 				%main::USRM=$sth_u{'sth'}->fetchhash();
 				
 				if ($main::USRM{'ID_user'})
@@ -326,7 +330,7 @@ sub process
 					#my $dt_diff=$dt_now-$dt_old;
 					
 					#main::_log("go online user '$main::USRM{'ID_user'}' from '$main::USRM{'datetime_last_login'}' (".($dt_diff->year)."-".($dt_diff->month).") with '$main::USRM{'requests_all'}' requests",3,"a301",2);
-					main::_log("go online user '$main::USRM{'ID_user'}' from '$main::USRM{'datetime_last_login'}' with '$main::USRM{'requests_all'}' requests",3,"a301",2);
+					main::_log("returned user '$main::USRM{'ID_user'}' last logged '$main::USRM{'datetime_last_login'}' with '$main::USRM{'requests_all'}' requests",3,"a301",2);
 					##############################################################
 					if ($main::USRM{'autolog'} eq "Y") # lognutie iba ak ide o autolog
 					{
@@ -362,10 +366,10 @@ sub process
 						SET
 							datetime_last_login = FROM_UNIXTIME($main::time_current)
 						WHERE
-							ID_user='$main::COOKIES{_ID_user}'
-							AND hostname='$tom::H_cookie'
+							ID_user=?
+							AND hostname=?
 						LIMIT 1
-					},'quiet'=>1,'-slave'=>1);
+					},'bind'=>[$main::COOKIES{'_ID_user'},$tom::H_cookie],'quiet'=>1,'-slave'=>1);
 					
 					if (!$main::USRM{'login'})
 					{
@@ -390,18 +394,26 @@ sub process
 							)
 							VALUES
 							(
-								'}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_user'}).qq{',
-								'}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_session'}).qq{',
-								'}.TOM::Security::form::sql_escape($tom::H).qq{',
-								'}.TOM::Security::form::sql_escape($main::USRM{'logged'}).qq{',
+								?,
+								?,
+								?,
+								?,
 								FROM_UNIXTIME($main::time_current),
 								FROM_UNIXTIME($main::time_current),
 								'1',
-								'}.TOM::Security::form::sql_escape($main::ENV{'REMOTE_ADDR'}).qq{',
-								'}.TOM::Security::form::sql_escape($main::USRM{'saved_cookies'}).qq{',
-								'}.TOM::Security::form::sql_escape($main::USRM{'saved_session'}).qq{'
+								?,
+								?,
+								?
 							)
-						});
+						},'bind'=>[
+							$main::COOKIES{'_ID_user'},
+							$main::COOKIES{'_ID_session'},
+							$tom::H,
+							$main::USRM{'logged'},
+							$main::ENV{'REMOTE_ADDR'},
+							$main::USRM{'saved_cookies'},
+							$main::USRM{'saved_session'}
+						]);
 					}
 					else
 					{
@@ -419,16 +431,22 @@ sub process
 							)
 							VALUES
 							(
-								'}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_user'}).qq{',
-								'}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_session'}).qq{',
-								'}.TOM::Security::form::sql_escape($tom::H).qq{',
-								'}.TOM::Security::form::sql_escape($main::USRM{'logged'}).qq{',
+								?,
+								?,
+								?,
+								?,
 								FROM_UNIXTIME($main::time_current),
 								FROM_UNIXTIME($main::time_current),
 								'1',
-								'}.TOM::Security::form::sql_escape($main::ENV{'REMOTE_ADDR'}).qq{'
+								?
 							)
-						});
+						},'bind'=>[
+							$main::COOKIES{'_ID_user'},
+							$main::COOKIES{'_ID_session'},
+							$tom::H,
+							$main::USRM{'logged'},
+							$main::ENV{'REMOTE_ADDR'}
+						]);
 					}
 					
 				}
@@ -506,22 +524,37 @@ sub process
 				)
 				VALUES
 				(
-					'$var',
-					'$var',
-					'$tom::H_cookie',
+					?,
+					?,
+					?,
 					FROM_UNIXTIME($main::time_current),
 					FROM_UNIXTIME($main::time_current),
 					'Y'
 				)
-			},'quiet'=>1);
+			},'bind'=>[$var,$var,$tom::H_cookie],'quiet'=>1);
 			
 			$main::COOKIES{'_ID_session'}=TOM::Utils::vars::genhash(32); # vygenerujem hash session
 			main::_log("insert into online ID_session:$main::COOKIES{'_ID_session'}");
 			
-			main::_log("new user '$var' with session '$main::COOKIES{'_ID_session'}' (IP='$main::ENV{'REMOTE_ADDR'}' UserAgent='$main::UserAgent_name')",3,"a301",2);
+			main::_log("new user '$var' with session '$main::COOKIES{'_ID_session'}' (IP='$main::ENV{'REMOTE_ADDR'}' UserAgent='$main::UserAgent_name' referer='$main::ENV{'HTTP_REFERER'}' ref_type='$main::ENV{'REF_TYPE'}' query_string='$main::ENV{'QUERY_STRING_FULL'}')",3,"a301",2);
 			
 			$main::USRM{'cookies'}=CVML::structure::serialize(%main::COOKIES);
-			$main::USRM{'cookies'}=~s|\'|\\'|g;
+			
+			# save info about new user registration (from where is comming?)
+			$main::USRM{'session'}=CVML::structure::serialize(
+				'USRM_G' =>
+				{
+					'ref_type' => $main::ENV{'REF_TYPE'},
+					'referer' => $main::ENV{'HTTP_REFERER'},
+					'time' => $main::time_current,
+					# utm sources
+					'utm_medium' => $main::ENV{'REF_TYPE'},
+					'utm_source' => $main::FORM{'utm_source'},
+					'utm_campaign' => $main::FORM{'utm_campaign'},
+					'utm_content' => $main::FORM{'utm_content'},
+					'utm_term' => $main::FORM{'utm_term'},
+				}
+			);
 			
 			TOM::Database::SQL::execute(qq{
 				INSERT INTO TOM.a301_user_online
@@ -540,19 +573,38 @@ sub process
 				)
 				VALUES
 				(
-					'}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_user'}).qq{',
-					'}.TOM::Security::form::sql_escape($main::COOKIES{'_ID_session'}).qq{',
-					'}.TOM::Security::form::sql_escape($tom::H).qq{',
-					'}.TOM::Security::form::sql_escape($main::USRM{'logged'}).qq{',
+					?,
+					?,
+					?,
+					?,
 					FROM_UNIXTIME($main::time_current),
 					FROM_UNIXTIME($main::time_current),
 					'1',
-					'}.TOM::Security::form::sql_escape($main::ENV{'REMOTE_ADDR'}).qq{',
-					'}.TOM::Security::form::sql_escape($main::ENV{'HTTP_USER_AGENT'}).qq{',
-					'}.TOM::Security::form::sql_escape($main::USRM{'cookies'}).qq{',
-					''
+					?,
+					?,
+					?,
+					?
 				)
-			},'quiet'=>1);
+			},'bind'=>[
+				$main::COOKIES{'_ID_user'},
+				$main::COOKIES{'_ID_session'},
+				$tom::H,
+				$main::USRM{'logged'},
+				$main::ENV{'REMOTE_ADDR'},
+				$main::ENV{'HTTP_USER_AGENT'},
+				$main::USRM{'cookies'},
+				$main::USRM{'session'}
+			],'quiet'=>1);
+			
+			
+			TOM::Database::SQL::execute(qq{
+				UPDATE TOM.a301_user
+				SET
+					saved_session=?
+				WHERE
+					ID_user=?
+				LIMIT 1
+			},'bind'=>[$main::USRM{'session'},$main::COOKIES{'_ID_user'}],'quiet'=>1);
 			
 			# PRIDAT EXPORT DO $main::USRM
 			# je to tu vobec potreba?
@@ -573,13 +625,16 @@ sub process
 	
 	
 	# get session datas from online table in CVML
+	# save it into cvml object
 	my $cvml=new CVML(data=>$main::USRM{'session'});
+	# save backup copy of session, to compare it at end of request
 	$main::USRM{'session_save'}=$main::USRM{'session'};
+	# remove all session data
 	undef $main::USRM{'session'};
-	
 	# control CVML session datas as object
 	tie %{$main::USRM{'session'}}, 'App::301::session';
-	$App::301::session::serialize=0;
+	$App::301::session::serialize=0; # don't serialize into database now!
+	# fill session hash with datas from CVML
 	%{$main::USRM{'session'}}=%{$cvml->{'hash'}};
 	$App::301::session::serialize=1;
 	
