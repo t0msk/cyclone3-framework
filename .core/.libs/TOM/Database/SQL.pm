@@ -147,6 +147,7 @@ Executes SQL query and return hash with variables
 
  %sth=TOM::Database::SQL::execute(
    $SQL,
+   'bind' => ["value1","value2"],
    'db_h' => "main",
    '-slave' => 1 # is safe to execute this SQL query on slave server?
                 # other queries than SELECT will be executed on master
@@ -163,6 +164,20 @@ Executes SQL query and return hash with variables
  {
    # parsing data
  }
+
+Example of binding params into SQL
+
+ my %sth0=TOM::Database::SQL::execute(qq{
+     SELECT
+       *
+     FROM
+       TOM.a301_user
+     WHERE
+       ID_user LIKE ? OR ID_user LIKE ?
+     LIMIT 1
+   },
+   'bind' => ["c%","b%"]
+ );
 
 =cut
 
@@ -237,6 +252,10 @@ sub execute
 		if $TOM::DB{$env{'db_h_orig'}}{'type'} eq "DBI";
 #	$cache_key.='::'.$env{'db_name'}.'::'.$SQL_;
 	$cache_key.='::'.$SQL_;
+	foreach (@{$env{'bind'}})
+	{
+		$cache_key.="::".$_;
+	}
 	
 #	main::_log("cache_key='$cache_key'") if $env{'log'};
 	
@@ -309,7 +328,9 @@ sub execute
 	}
 	else
 	{
-		$output{'sth'}=$main::DB{$env{'db_h'}}->Query($SQL);
+		$output{'sth'}=$main::DB{$env{'db_h'}}{'dbh'}->prepare($SQL);
+		if ($env{'bind'}){$output{'sth'}->execute(@{$env{'bind'}});}
+		else {$output{'sth'}->execute();}
 		$output{'info'}=$main::DB{$env{'db_h'}}->info();
 		$output{'err'}=$main::DB{$env{'db_h'}}->errmsg();
 		
