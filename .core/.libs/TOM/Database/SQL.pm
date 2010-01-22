@@ -328,11 +328,15 @@ sub execute
 	}
 	else
 	{
+		my $result;
 		$output{'sth'}=$main::DB{$env{'db_h'}}{'dbh'}->prepare($SQL);
-		if ($env{'bind'}){$output{'sth'}->execute(@{$env{'bind'}});}
-		else {$output{'sth'}->execute();}
+		if ($env{'bind'}){$result=$output{'sth'}->execute(@{$env{'bind'}});}
+		else {$result=$output{'sth'}->execute();}
+		
 		$output{'info'}=$main::DB{$env{'db_h'}}->info();
 		$output{'err'}=$main::DB{$env{'db_h'}}->errmsg();
+		
+		undef $output{'sth'} unless $result; # backward compatibility
 		
 		if (not $output{'sth'})
 		{
