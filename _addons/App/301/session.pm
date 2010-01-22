@@ -16,7 +16,8 @@ our $performance=1;
 sub TIEHASH
 {
 	my $class = shift;
-	main::_log("TIE-TIEHASH a301::session") if $debug;
+	my ($package, $filename, $line) = caller;
+	main::_log("TIE-TIEHASH a301::session from $filename:$line") if $debug;
 	$IDsession=$main::USRM{'ID_session'};
 	$session_save=$main::USRM{'session_save'};
 	return bless {}, $class;
@@ -25,21 +26,30 @@ sub TIEHASH
 sub DESTROY
 {
 	my $self = shift;
-	main::_log("TIE-DESTROY a301::session") if $debug;
+	my ($package, $filename, $line) = caller;
+	main::_log("TIE-DESTROY a301::session from $filename:$line") if $debug;
 	
 	# pokial nemam jednoznacny identifikator danej session je
 	# zbytocne nieco serializovat a ukladat to, ked sa to vlastne
 	# nikam neulozi
 	return undef unless $IDsession;
+	if (!$App::301::session::serialize)
+	{
+		# nebudem serializovat do databazy ak to nemam dovolene
+		# toto moze nastat len v pripade ked je object poskodeny
+		# a serializovat by sa nemal, takze to dost agresivne zalogujem
+		main::_log("TIE-DESTROY trying to serialize unavailable object from $filename:$line",4,"pub.err");
+		return undef;
+	}
 	
-		main::_log("TIE-serializing session '$IDsession'") if $debug;
+		main::_log("TIE-DESTROY a301::session='$IDsession'") if $debug;
 		my $cvml=CVML::structure::serialize(%{$self});
 		
 		return undef if (($cvml eq $session_save) && $performance);
 		
 		main::_log("TIE-cvml:='$cvml'") if $debug;
 		
-		TOM::Database::SQL::execute(qq{
+		my %sth0=TOM::Database::SQL::execute(qq{
 			UPDATE
 				TOM.a301_user_online
 			SET
@@ -48,8 +58,8 @@ sub DESTROY
 				ID_session=?
 			LIMIT 1
 		},'quiet'=>1,'bind'=>[$cvml,$IDsession]);
-		
-		main::_log("TIE-serialized") if $debug;
+		main::_log("TIE-serialized in $sth0{'rows'} a301_user_online rows") if ($debug && $sth0{'rows'});
+#		main::_log("TIE-serialized") if $debug;
 	
 	return undef;
 }
@@ -70,7 +80,8 @@ sub DELETE
 sub STORE
 {
 	my ($self,$key,$value)=@_;
-	main::_log("TIE-STORE a301::session change key '$key' to value '$value'") if $debug;
+	my ($package, $filename, $line) = caller;
+	main::_log("TIE-STORE a301::session change key '$key' to value '$value' from $filename:$line") if $debug;
 	$self->{$key}=$value;
 }
 
@@ -107,7 +118,7 @@ sub process
 	
 	my $t=track TOM::Debug(__PACKAGE__."::process()");
 	
-	my $debug=0;
+#	my $debug=0;
 #	return 1;
 	
 	my $memcached=0;
@@ -260,22 +271,23 @@ sub process
 						'bind'=>[$tom::H,$main::USRM{'cookies'},$main::ENV{'HTTP_USER_AGENT'},$main::COOKIES{'_ID_user'}]);
 					}
 				}
-				else # NIEKTO SA MI SEM NABURAL
+				else # divna ID_session ktora nesuhlasi
 				{
 					my $var;
 					my $bad;
-					if ($main::USRM{'ID_session'} ne $main::COOKIES{'_ID_session'}){$var.=" ID_session:( "}
+					if ($main::USRM{'ID_session'} ne $main::COOKIES{'_ID_session'}){$var.=" ID_session:( "};
 					if ($main::USRM{'user_agent'} ne $main::ENV{'HTTP_USER_AGENT'}){$var.=" AGENT:( ";$bad=1;}
 					if ($ref[0] ne $ref[1]){$var.=" IP:( ";$bad=1;}
 					
-					# pokial sa len nerovna ID_session, tak overim ci ide o logovaneho usera, alebo nie
-					if (($main::USRM{logged} eq "Y")||($bad))
+					if (($main::USRM{'logged'} eq "Y")||($bad))
 					{
 						main::_log("not verified ID_user='$main::COOKIES{_ID_user}' '$var'");
 						# ZNICIM JEHO COOKIES!!!
 						# (mozno slo len o dvojity request/2requesty v tom istom case)
+						$main::USRM_flag="O";
 						if (($main::USRM{reqtime}+5) < $tom::time_current)
 						{
+							main::_log("destroy cookies");
 							# staci vyprazdnit, tomahawk sa uz o DELETE postara sam
 							foreach (keys %main::COOKIES){$main::COOKIES{$_}=""}; 
 						}
@@ -285,9 +297,6 @@ sub process
 					{
 						
 					}
-					
-					
-					
 				}
 			}
 			
@@ -627,15 +636,16 @@ sub process
 	# get session datas from online table in CVML
 	# save it into cvml object
 	my $cvml=new CVML(data=>$main::USRM{'session'});
+	main::_log("loading session='$main::USRM{'session'}'") if $debug;
 	# save backup copy of session, to compare it at end of request
 	$main::USRM{'session_save'}=$main::USRM{'session'};
 	# remove all session data
 	undef $main::USRM{'session'};
 	# control CVML session datas as object
-	tie %{$main::USRM{'session'}}, 'App::301::session';
 	$App::301::session::serialize=0; # don't serialize into database now!
 	# fill session hash with datas from CVML
-	%{$main::USRM{'session'}}=%{$cvml->{'hash'}};
+	tie %{$main::USRM{'session'}}, 'App::301::session'; # create empty tie hash
+	%{$main::USRM{'session'}}=%{$cvml->{'hash'}}; # fill tie hash
 	$App::301::session::serialize=1;
 	
 	foreach (keys %main::USRM)
