@@ -95,10 +95,11 @@ our @setit_D=
 	['^_dsgn\/'                        ,"global _dsgn"                ,"570","$user_www:$group"],
 	['^_type$'                         ,"global _type"                ,"570","$user_www:$group"],
 	['^\.bin$'                         ,"global .bin"                 ,"770","$user:$group"],
-	['^_logs'                          ,"global _logs"                ,"770","$user_www:$group"],
+	['^_logs'                          ,"global _logs"                ,"777","$user_www:$group"],
 	['^!media'                         ,"global !media"               ,"775","$mediasrv_user:$mediasrv_group"],
 	
 	# local
+	['\/_temp'                         ,"local _temp"                 ,"770","$user_www:$group"],
 	['\/_addons'                       ,"local _addons"               ,"570","$user_www:$group"],
 	['\/_mdl$'                         ,"local _mdl"                  ,"570","$user_www:$group"],
 	['\/\.libs'                        ,"local libraries"             ,"570","$user_www:$group"],
@@ -107,7 +108,7 @@ our @setit_D=
 	['\/!www$'                         ,"local !www"                  ,"770","$user_www:$group"],
 	['\/_type$'                        ,"local _type"                 ,"770","$user_www:$group"],
 	['\/_data'                         ,"local _data"                 ,"770","$user_www:$group"],
-	['\/_logs'                         ,"local _logs"                 ,"770","$user_www:$group"],
+	['\/_logs'                         ,"local _logs"                 ,"777","$user_www:$group"],
 	['\/!media'                        ,"local !media"                ,"770","$user_www:$group"],
 	
 	['![\w\.\-]+$'                     ,"domain"                      ,"770","$user_www:$group"],
@@ -223,6 +224,8 @@ our @setit_F=
 	['^version$'                       ,"version"                     ,"660","$user_www:$group"],
 	
 	['\.key$'                          ,"key file"                    ,"660","$user_www:$group"],
+	
+	['\.pl$'                           ,"*.pl"                        ,"570","$user_www:$group"],
 	
 	['_overlays'                       ,"overlay file"                ,"660","$user_www:$group"],
 	
