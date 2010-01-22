@@ -99,7 +99,7 @@ sub process
 {
 	return 1 if $main::USRM{'logged'};
 	
-	if (not $main::COOKIES{'_ID_user'}=~/^[a-zA-Z0-9]{8}$/)
+	if ($main::COOKIES{'_ID_user'} && (not $main::COOKIES{'_ID_user'}=~/^[a-zA-Z0-9]{8}$/))
 	{
 		# check for invalid ID_user
 		return 1;
