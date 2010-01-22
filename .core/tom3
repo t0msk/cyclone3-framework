@@ -526,8 +526,8 @@ while ($main::CGI=new CGI::Fast())
 		$ENV{'QUERY_STRING_orig'}=$ENV{'QUERY_STRING'};
 		
 		# secure kodovanie url
-		$env{admin}="request" if $ENV{'QUERY_STRING'}=~s|^admin||;
-		$env{test}="request" if $ENV{'QUERY_STRING'}=~s|^test||; # ITst mode
+#		$env{admin}="request" if $ENV{'QUERY_STRING'}=~s|^admin||;
+#		$env{test}="request" if $ENV{'QUERY_STRING'}=~s|^test||; # ITst mode
 		
 		
 		if ($TOM::type_code && $ENV{'QUERY_STRING'})
@@ -671,10 +671,16 @@ while ($main::CGI=new CGI::Fast())
 		
 		# DEFINE REF_TYPE when not detected by HTTP_REFERER in TOM::Net::HTTP::referer
 		if ($main::ENV{'HTTP_REFERER'} && !$main::ENV{'REF_TYPE'}){$main::ENV{'REF_TYPE'}="web";}
+		$main::ENV{'REF_TYPE'}="cpc" if $FORM{'gclid'}; # adwords campaing hack
+		$main::ENV{'REF_TYPE'}=$FORM{'utm_medium'} if $FORM{'utm_medium'}; # other campaings hack
 		$main::ENV{'REF_TYPE'}=$FORM{'ref'} if $FORM{'ref'};
-		$main::ENV{'REF_TYPE'}='onsite' if $main::ENV{'HTTP_REFERER'}=~/^$tom::H_www/;
+		$main::ENV{'REF_TYPE'}='onsite' if $main::ENV{'HTTP_REFERER'}=~/$tom::H/;
+		$main::ENV{'REF_TYPE'}='onsite' if ($tom::Hm && $main::ENV{'HTTP_REFERER'}=~/$tom::Hm/);
 		$main::ENV{'REF_TYPE'}='direct' unless $main::ENV{'REF_TYPE'};
+		# fixes
+		$main::ENV{'REF_TYPE'}='feed' if $main::ENV{'REF_TYPE'} eq "rss";
 		
+		main::_log("referer='$main::ENV{'HTTP_REFERER'}' ref_type='$main::ENV{'REF_TYPE'}'",3,"pub.ref",2);
 		
 		# only browser can recache content of a page
 		# when another useragent type uses URL with _rc, then is redirected by code 301
@@ -722,6 +728,7 @@ while ($main::CGI=new CGI::Fast())
 				$t_preprocess->close();
 				$t_eval->close();
 				$t_request->close();
+				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
 				print "Status: 301 Moved permanently\n";
 				print "Location: $out\n\n";
 				next;
@@ -801,6 +808,7 @@ while ($main::CGI=new CGI::Fast())
 				$t_preprocess->close();
 				$t_eval->close();
 				$t_request->close();
+				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
 				print "Status: 301 Moved permanently\n";
 				print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 				
@@ -822,6 +830,7 @@ while ($main::CGI=new CGI::Fast())
 			$t_preprocess->close();
 			$t_eval->close();
 			$t_request->close();
+			Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
 			print "Status: 301 Moved permanently\n";
 			print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 			
@@ -950,8 +959,8 @@ while ($main::CGI=new CGI::Fast())
 				
 				# hack for Google AdWords (to save 'gclid' in QUERY_STRING)
 				if ($FORM{'gclid'})
-				{if ($link=~/\?/){$link.="&gclid=".$FORM{'gclid'}."&ref=adwords";}
-				else{$link.="?gclid=".$FORM{'gclid'}."&ref=adwords";$link_hash=1;}}
+				{if ($link=~/\?/){$link.="&gclid=".$FORM{'gclid'}."&ref=cpc";}
+				else{$link.="?gclid=".$FORM{'gclid'}."&ref=cpc";$link_hash=1;}}
 				
 				# hack for another campaings (to save 'ref' in QUERY_STRING)
 				if ($FORM{'ref'})
@@ -972,14 +981,13 @@ while ($main::CGI=new CGI::Fast())
 				main::_log("302 '$URL_orig' to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"301",1);
 				main::_log("302 '$URL_orig' to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"301");
 				main::_log("302 '$URL_orig' to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'");
-				print "Status: 302 Found\n";
-				print "Location: $URL\n\n";
-				
 				$t_cookies->close();
 				$t_preprocess->close();
 				$t_eval->close();
 				$t_request->close();
-				
+				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
+				print "Status: 302 Found\n";
+				print "Location: $URL\n\n";
 				next;
 			}
 			else
@@ -1288,8 +1296,8 @@ while ($main::CGI=new CGI::Fast())
 		{
 			$FORM{TID}="l_default" unless $FORM{TID}=~/^[lmg]_[0-9_\-a-zA-Z]{0,64}$/;
 		}
-		if ($env{admin} eq "request"){$FORM{TID}="g_admin";}
-		if ($env{test} eq "request"){$FORM{TID}="g_test";}
+#		if ($env{admin} eq "request"){$FORM{TID}="g_admin";}
+#		if ($env{test} eq "request"){$FORM{TID}="g_test";}
 		main::_log("type='$main::FORM{type}' TID='$main::FORM{TID}'($main::page_statuscode)");
 		
 		
@@ -1853,6 +1861,8 @@ while ($main::CGI=new CGI::Fast())
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
+				# save stat
+				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
 				print "Status: 301 Moved permanently\n";
 				print "Location: $tom::H_www$link\n\n";
 				
@@ -2013,6 +2023,7 @@ while ($main::CGI=new CGI::Fast())
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
+				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
 				print "Status: 301 Moved permanently\n";
 				print "Location: $out\n\n";
 				next;
@@ -2089,6 +2100,7 @@ while ($main::CGI=new CGI::Fast())
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
+				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
 				print "Status: 301 Moved permanently\n";
 				print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 				next;
