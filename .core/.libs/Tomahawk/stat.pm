@@ -72,6 +72,7 @@ $URL.=$main::ENV{'REQUEST_URI'};
 				query_TID,
 				query_URL,
 				referer,
+				referer_SE,
 				user_agent,
 				load_proc,
 				load_req,
@@ -82,24 +83,25 @@ $URL.=$main::ENV{'REQUEST_URI'};
 			(
 				'".$main::request_code."',
 				'".$main::COOKIES_save{'lh'}."',
-				'".$main::ENV{UNIQUE_ID}."',
+				'".$main::ENV{'UNIQUE_ID'}."',
 				'".$main::time_current."',
 				'".$var."',
 				'".$TOM::hostname."',
 				'".$host."',
 				'".$tom::H."',
-				'".$main::ENV{REMOTE_ADDR}."',
+				'".$main::ENV{'REMOTE_ADDR'}."',
 				'".($main::USRM{'ID_user'} || $main::USRM{'IDhash'})."',
 				'".($main::USRM{'ID_session'} || $main::USRM{'IDsession'})."',
-				'".$main::USRM{logged}."',
+				'".$main::USRM{'logged'}."',
 				'".$main::USRM_flag."',
-				'".TOM::Security::form::sql_escape($main::ENV{QUERY_STRING_FULL})."',
-				'".$main::FORM{TID}."',
+				'".TOM::Security::form::sql_escape($main::ENV{'QUERY_STRING_FULL'})."',
+				'".$main::FORM{'TID'}."',
 				'".TOM::Security::form::sql_escape($URL)."',
-				'".TOM::Security::form::sql_escape($main::ENV{HTTP_REFERER})."',
-				'".TOM::Security::form::sql_escape($main::ENV{HTTP_USER_AGENT})."',
-				'".$env{proc}."',
-				'".$env{req}."',
+				'".TOM::Security::form::sql_escape($main::ENV{'HTTP_REFERER'})."',
+				'".TOM::Security::form::sql_escape($main::ENV{'REF_TYPE'})."',
+				'".TOM::Security::form::sql_escape($main::ENV{'HTTP_USER_AGENT'})."',
+				'".$env{'proc'}."',
+				'".$env{'req'}."',
 				'".$main::result."',
 				'".$tom::lng."'
 			)
@@ -122,7 +124,7 @@ print HND_weblog <<"HEAD";
  <host>$TOM::hostname</host>
  <domain>$host</domain>
  <domain_sub>$tom::H</domain_sub>
- <IP>$main::ENV{REMOTE_ADDR}</IP>
+ <IP>$main::ENV{'REMOTE_ADDR'}</IP>
 HEAD
 
 print HND_weblog "
@@ -131,16 +133,17 @@ print HND_weblog "
 ";
 
 print HND_weblog <<"HEAD";
- <logged>$main::USRM{logged}</logged>
+ <logged>$main::USRM{'logged'}</logged>
  <USRM_flag>$main::USRM_flag</USRM_flag>
- <query_string>$main::ENV{QUERY_STRING_FULL}</query_string>
- <query_TID>$main::FORM{TID}</query_TID>
+ <query_string>$main::ENV{'QUERY_STRING_FULL'}</query_string>
+ <query_TID>$main::FORM{'TID'}</query_TID>
  <query_URL>$URL</query_URL>
- <referer>$main::ENV{HTTP_REFERER}</referer>
- <user_agent>$main::ENV{HTTP_USER_AGENT}</user_agent>
- <unique_id>$main::ENV{UNIQUE_ID}</unique_id>
- <load_proc>$env{proc}</load_proc>
- <load_req>$env{req}</load_req>
+ <referer>$main::ENV{'HTTP_REFERER'}</referer>
+ <ref_type>$main::ENV{'REF_TYPE'}</ref_type>
+ <user_agent>$main::ENV{'HTTP_USER_AGENT'}</user_agent>
+ <unique_id>$main::ENV{'UNIQUE_ID'}</unique_id>
+ <load_proc>$env{'proc'}</load_proc>
+ <load_req>$env{'req'}</load_req>
  <lng>$tom::lng</lng>
  <result>$main::result</result>
  <lastmod>$main::env{'lastmod'}</lastmod>
