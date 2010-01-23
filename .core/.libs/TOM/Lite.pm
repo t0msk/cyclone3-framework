@@ -78,7 +78,8 @@ sub _log_lite
 		$filename=$TOM::P."/_logs/" if $get[4]==1;
 	}
 	
-	$filename.="[".$TOM::hostname."]"."$date{year}-$date{mom}-$date{mday}";
+	$filename.="[".$TOM::hostname."]" if $TOM::serverfarm;
+	$filename.="$date{year}-$date{mom}-$date{mday}";
 	$filename.=".".$get[3].".log";
 	
 	$get[0]=0 unless $get[0];

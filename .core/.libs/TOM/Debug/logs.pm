@@ -122,7 +122,7 @@ sub _log
 			$file=$TOM::P."/_logs/" if $get[4]==1;
 		}
 		
-		$file.="[".$TOM::hostname."]";
+		$file.="[".$TOM::hostname."]" if $TOM::serverfarm;
 		$file.="$date{year}-$date{mom}-$date{mday}";
 		$file.="-$date{hour}" if $TOM::DEBUG_log_file_frag; # rozlisenie na hodiny
 		
