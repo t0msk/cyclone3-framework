@@ -16,6 +16,7 @@ This cron module moves users with expired session into user table
 
 =cut
 
+use TOM::Security::form;
 
 sub execute
 {
@@ -54,13 +55,13 @@ sub execute
 			)
 			VALUES
 			(
-				'$user{'ID_user'}',
-				'$user{'IP'}',
-				'$user{'datetime_login'}',
-				'$user{'datetime_request'}',
-				'$user{'requests'}',
-				'$user{'cookies'}',
-				'$user{'session'}'
+				'}.TOM::Security::form::sql_escape($user{'ID_user'}).qq{',
+				'}.TOM::Security::form::sql_escape($user{'IP'}).qq{',
+				'}.TOM::Security::form::sql_escape($user{'datetime_login'}).qq{',
+				'}.TOM::Security::form::sql_escape($user{'datetime_request'}).qq{',
+				'}.TOM::Security::form::sql_escape($user{'requests'}).qq{',
+				'}.TOM::Security::form::sql_escape($user{'cookies'}).qq{',
+				'}.TOM::Security::form::sql_escape($user{'session'}).qq{'
 			)
 		},'quiet'=>1);
 		
@@ -106,8 +107,8 @@ sub execute
 					SET
 						datetime_last_login = '$user{datetime_login}',
 						requests_all = requests_all + $user{requests},
-						saved_cookies = '$user{cookies}',
-						saved_session = '$user{session}'
+						saved_cookies = '}.TOM::Security::form::sql_escape($user{'cookies'}).qq{',
+						saved_session = '}.TOM::Security::form::sql_escape($user{'session'}).qq{'
 					WHERE
 						ID_user='$user{ID_user}'
 					LIMIT 1
