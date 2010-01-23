@@ -61,34 +61,36 @@ sub user_add
 	my %user;
 	if ($env{'user.ID_user'})
 	{
-		my $sql=qq{
+		if (not $env{'user.ID_user'}=~/^[a-zA-Z0-9]{8}$/)
+		{
+			$t->close();
+			return undef;
+		}
+		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				*
 			FROM
 				`TOM`.a301_user
 			WHERE
-				ID_user='$env{'user.ID_user'}'
+				ID_user=?
 			LIMIT 1;
-		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		},'bind'=>[$env{'user.ID_user'}],'quiet'=>1);
 		%user=$sth0{'sth'}->fetchhash();
 	}
 	
 	if ($env{'user.login'} && !$env{'user.ID_user'})
 	{
 		main::_log("search user by login='$env{'user.login'}'");
-		my $login=TOM::Security::form::sql_escape($env{'user.login'});
-		my $sql=qq{
+		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				*
 			FROM
 				`TOM`.a301_user
 			WHERE
-				login='$login' AND
-				hostname='$env{'user.hostname'}'
+				login=? AND
+				hostname=?
 			LIMIT 1;
-		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		},'bind'=>[$env{'user.login'},$env{'user.hostname'}],'quiet'=>1);
 		%user=$sth0{'sth'}->fetchhash();
 		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
 	}
@@ -96,9 +98,7 @@ sub user_add
 	if (!$env{'user.ID_user'})
 	{
 		main::_log("!user.ID_user, create new");
-		
 		$env{'user.ID_user'}=user_newhash();
-		
 		TOM::Database::SQL::execute(qq{
 			INSERT INTO `TOM`.a301_user
 			(
@@ -109,12 +109,12 @@ sub user_add
 			)
 			VALUES
 			(
-				'$env{'user.ID_user'}',
-				'$main::USRM{'ID_user'}',
-				'$env{'user.hostname'}',
+				?,
+				?,
+				?,
 				NOW()
 			)
-		},'quiet'=>1) || return undef;
+		},'bind'=>[$env{'user.ID_user'},$main::USRM{'ID_user'},$env{'user.hostname'}],'quiet'=>1) || return undef;
 	}
 	
 	
@@ -263,16 +263,15 @@ sub user_add
 	if (!$env{'user_profile.ID_entity'} && $env{'user.ID_user'})
 	{
 		main::_log("search user_profile by ID_user='$env{'user.ID_user'}'");
-		my $sql=qq{
+		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				*
 			FROM
 				`TOM`.a301_user_profile
 			WHERE
-				ID_entity='$env{'user.ID_user'}'
-			LIMIT 1;
-		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+				ID_entity=?
+			LIMIT 1
+		},'bind'=>[$env{'user.ID_user'}],'quiet'=>1);
 		%user_profile=$sth0{'sth'}->fetchhash();
 		$env{'user_profile.ID_entity'}=$user_profile{'ID_entity'} if $user_profile{'ID_entity'};
 		$env{'user_profile.ID'}=$user_profile{'ID'} if $user_profile{'ID'};
@@ -454,12 +453,12 @@ sub user_add
 		TOM::Database::SQL::execute(qq{
 			UPDATE `TOM`.a301_user
 			SET
-				ID_user='$env{'user.ID_user'}'
+				ID_user=?
 				$set
 			WHERE
-				ID_user='$env{'user.ID_user'}'
+				ID_user=?
 			LIMIT 1
-		},'quiet'=>1) || return undef;
+		},'bind'=>[$env{'user.ID_user'},$env{'user.ID_user'}],'quiet'=>1) || return undef;
 		
 	}
 	else
@@ -471,20 +470,18 @@ sub user_add
 	{
 		next unless $group;
 		main::_log("add to group '$group'");
-		
-		my $sql=qq{
+		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				ID
 			FROM
 				TOM.a301_user_group
 			WHERE
-				(name = '$group' OR ID='$group') AND
-				hostname = '$env{'user.hostname'}'
-		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+				(name = ? OR ID = ?) AND
+				hostname = ?
+		},'bind'=>[$group,$group,$env{'user.hostname'}],'quiet'=>1);
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
-			my $sql=qq{
+			TOM::Database::SQL::execute(qq{
 				REPLACE INTO TOM.a301_user_rel_group
 				(
 					ID_user,
@@ -492,13 +489,11 @@ sub user_add
 				)
 				VALUES
 				(
-					'$env{'user.ID_user'}',
-					'$db0_line{'ID'}'
+					?,
+					?
 				)
-			};
-			TOM::Database::SQL::execute($sql,'quiet'=>1);
-			
-			my $sql=qq{
+			},'bind'=>[$env{'user.ID_user'},$db0_line{'ID'}],'quiet'=>1);
+			TOM::Database::SQL::execute(qq{
 				INSERT INTO TOM.a301_user_rel_group_l
 				(
 					ID_user,
@@ -509,14 +504,13 @@ sub user_add
 				)
 				VALUES
 				(
-					'$env{'user.ID_user'}',
-					'$db0_line{'ID'}',
+					?,
+					?,
 					NOW(),
-					'$main::USRM{'ID_user'}',
+					?,
 					'A'
 				)
-			};
-			TOM::Database::SQL::execute($sql,'quiet'=>1);
+			},'bind'=>[$env{'user.ID_user'},$db0_line{'ID'},$main::USRM{'ID_user'}],'quiet'=>1);
 		}
 		
 	}
@@ -584,7 +578,7 @@ sub user_new
 	if ($env{'user.login'} ne 'NULL')
 	{
 		# try to find this user first
-		my $sql=qq{
+		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				*
 			FROM
@@ -593,8 +587,7 @@ sub user_new
 				hostname='$env{'user.hostname'}' AND
 				login=$env{'user.login'}
 			LIMIT 1
-		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		},'quiet'=>1);
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			$t->close();
@@ -662,9 +655,9 @@ sub user_newhash
 		$var=TOM::Utils::vars::genhash(8);
 		main::_log("trying '$var'");
 		my %sth0=TOM::Database::SQL::execute(qq{
-			(SELECT ID_user FROM TOM.a301_user WHERE ID_user='$var' LIMIT 1) UNION ALL
-			(SELECT ID_user FROM TOM.a301_user_inactive WHERE ID_user='$var' LIMIT 1)
-		},'quiet'=>1,'-slave'=>1);
+			(SELECT ID_user FROM TOM.a301_user WHERE ID_user=? LIMIT 1) UNION ALL
+			(SELECT ID_user FROM TOM.a301_user_inactive WHERE ID_user=? LIMIT 1)
+		},'bind'=>[$var,$var],'quiet'=>1,'-slave'=>1);
 		if ($sth0{'rows'}){next}
 		last;
 	}
@@ -679,13 +672,17 @@ sub user_newhash
 sub user_groups
 {
 	my $ID_user=shift;
+	if (not $ID_user=~/^[a-zA-Z0-9]{8}$/)
+	{
+		return undef;
+	}
 	my $t=track TOM::Debug(__PACKAGE__."::user_groups($ID_user)");
 	
 	my %env=@_;
 	
 	my %groups;
 	
-	my $sql=qq{
+	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			user_group.ID AS ID_group,
 			user_group.name AS group_name
@@ -700,12 +697,10 @@ sub user_groups
 			user_group.ID = rel.ID_group
 		)
 		WHERE
-			rel.ID_user = '$ID_user'
+			rel.ID_user = ?
 		ORDER BY
 			user_group.name
-	};
-	
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
+	},'bind'=>[$ID_user],'quiet'=>1,'slave'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$groups{$db0_line{'group_name'}}{'ID'} = $db0_line{'ID_group'};
@@ -722,7 +717,10 @@ sub user_groups
 sub user_active
 {
 	my $ID_user=shift;
-#	my $t=track TOM::Debug(__PACKAGE__."::user_inactive($ID_user)");
+	if (not $ID_user=~/^[a-zA-Z0-9]{8}$/)
+	{
+		return undef;
+	}
 	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		INSERT INTO TOM.a301_user
@@ -730,18 +728,18 @@ sub user_active
 				*
 			FROM TOM.a301_user_inactive
 			WHERE
-				ID_user='$ID_user'
+				ID_user=?
 			LIMIT 1
-	},'quiet'=>1);
+	},'bind'=>[$ID_user],'quiet'=>1);
 	if ($sth0{'rows'})
 	{
 		main::_log("inserted user '$ID_user' into active table");
 		TOM::Database::SQL::execute(qq{
 			DELETE FROM TOM.a301_user_inactive
 			WHERE
-				ID_user='$ID_user'
+				ID_user=?
 			LIMIT 1;
-		},'quiet'=>1,'-backend'=>1);
+		},'bind'=>[$ID_user],'quiet'=>1,'-backend'=>1);
 		main::_log("deleted user '$ID_user' from inactive table");
 		#$t->close();
 		return 1;
@@ -756,7 +754,10 @@ sub user_active
 sub user_inactive
 {
 	my $ID_user=shift;
-#	my $t=track TOM::Debug(__PACKAGE__."::user_inactive($ID_user)");
+	if (not $ID_user=~/^[a-zA-Z0-9]{8}$/)
+	{
+		return undef;
+	}
 	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		REPLACE INTO TOM.a301_user_inactive
@@ -764,18 +765,18 @@ sub user_inactive
 				*
 			FROM TOM.a301_user
 			WHERE
-				ID_user='$ID_user'
+				ID_user=?
 			LIMIT 1
-	},'quiet'=>1);
+	},'bind'=>[$ID_user],'quiet'=>1);
 	if ($sth0{'rows'})
 	{
 		main::_log("inserted user '$ID_user' into inactive table");
 		TOM::Database::SQL::execute(qq{
 			DELETE FROM TOM.a301_user
 			WHERE
-				ID_user='$ID_user'
+				ID_user=?
 			LIMIT 1;
-		},'quiet'=>1,'-backend'=>1);
+		},'bind'=>[$ID_user],'quiet'=>1,'-backend'=>1);
 		main::_log("deleted user '$ID_user' from active table");
 		#$t->close();
 		return 1;
@@ -789,18 +790,21 @@ sub user_inactive
 sub user_get
 {
 	my $ID_user=shift;
+	if (not $ID_user=~/^[a-zA-Z0-9]{8}$/)
+	{
+		return undef;
+	}
 	my %data;
 	
-	my $sql=qq{
+	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			*
 		FROM
 			TOM.a301_user
 		WHERE
-			ID_user='$ID_user'
+			ID_user=?
 		LIMIT 1
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
+	},'bind'=>[$ID_user],'quiet'=>1,'-slave'=>1);
 	if (%data=$sth0{'sth'}->fetchhash)
 	{
 		main::_log("user '$ID_user' found in active table");
@@ -808,16 +812,15 @@ sub user_get
 	else
 	{
 		main::_log("user '$ID_user' not found in active table, trying inactive");
-		my $sql=qq{
+		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				*
 			FROM
 				TOM.a301_user_inactive
 			WHERE
-				ID_user='$ID_user'
+				ID_user=?
 			LIMIT 1
-		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
+		},'bind'=>[$ID_user],'quiet'=>1,'-slave'=>1);
 		if (%data=$sth0{'sth'}->fetchhash)
 		{
 			main::_log("user found in inactive table");
