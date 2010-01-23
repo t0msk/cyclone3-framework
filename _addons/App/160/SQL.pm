@@ -69,6 +69,8 @@ sub _detect_db_name
 {
 	my $prefix=shift;
 	
+	return undef unless $prefix=~/^[a-zA-Z0-9_\-:]+$/;
+	
 	main::_log("detect db_name with '$prefix' addon") if $debug;
 	# at first check if this addon is available
 	$prefix=~s|^a|App::|;
@@ -186,13 +188,13 @@ sub new_relation
 			'tb_name' => 'a160_relation',
 			'columns' =>
 			{
-				'rel_type' => "'$env{'rel_type'}'",
-				'r_db_name' => "'$env{'r_db_name'}'",
-				'r_prefix' => "'$env{'r_prefix'}'",
-				'r_table' => "'$env{'r_table'}'",
-				'r_ID_entity' => "'$env{'r_ID_entity'}'",
-				'rel_type' => "'$env{'rel_type'}'",
-				'status' => "'$env{'status'}'",
+				'rel_type' => "'".TOM::Security::form::sql_escape($env{'rel_type'})."'",
+				'r_db_name' => "'".TOM::Security::form::sql_escape($env{'r_db_name'})."'",
+				'r_prefix' => "'".TOM::Security::form::sql_escape($env{'r_prefix'})."'",
+				'r_table' => "'".TOM::Security::form::sql_escape($env{'r_table'})."'",
+				'r_ID_entity' => "'".TOM::Security::form::sql_escape($env{'r_ID_entity'})."'",
+				'rel_type' => "'".TOM::Security::form::sql_escape($env{'rel_type'})."'",
+				'status' => "'".TOM::Security::form::sql_escape($env{'status'})."'",
 			},
 		);
 		
@@ -218,15 +220,15 @@ sub new_relation
 		'tb_name' => 'a160_relation',
 		'columns' =>
 		{
-			'l_prefix' => "'$env{'l_prefix'}'",
-			'l_table' => "'$env{'l_table'}'",
-			'l_ID_entity' => "'$env{'l_ID_entity'}'",
-			'rel_type' => "'$env{'rel_type'}'",
-			'r_db_name' => "'$env{'r_db_name'}'",
-			'r_prefix' => "'$env{'r_prefix'}'",
-			'r_table' => "'$env{'r_table'}'",
-			'r_ID_entity' => "'$env{'r_ID_entity'}'",
-			'status' => "'$env{'status'}'",
+			'l_prefix' => "'".TOM::Security::form::sql_escape($env{'l_prefix'})."'",
+			'l_table' => "'".TOM::Security::form::sql_escape($env{'l_table'})."'",
+			'l_ID_entity' => "'".TOM::Security::form::sql_escape($env{'l_ID_entity'})."'",
+			'rel_type' => "'".TOM::Security::form::sql_escape($env{'rel_type'})."'",
+			'r_db_name' => "'".TOM::Security::form::sql_escape($env{'r_db_name'})."'",
+			'r_prefix' => "'".TOM::Security::form::sql_escape($env{'r_prefix'})."'",
+			'r_table' => "'".TOM::Security::form::sql_escape($env{'r_table'})."'",
+			'r_ID_entity' => "'".TOM::Security::form::sql_escape($env{'r_ID_entity'})."'",
+			'status' => "'".TOM::Security::form::sql_escape($env{'status'})."'",
 		},
 	);
 	
@@ -503,6 +505,7 @@ sub get_relations
 	
 	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	$env{'limit'}="100" unless $env{'limit'};
+	return undef unless $env{'limit'}=~/^[0-9,]+$/;
 	
 	# list of input
 	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_} && $debug};
@@ -540,12 +543,12 @@ sub get_relations
 		next unless defined $env{$_};
 		if ($_=~/^(l|r)_/ || $_=~/^ID/)
 		{
-			if ($_ eq "r_db_name"){$where.="AND r_db_name IN ('$env{$_}','') ";}
-			else {$where.="AND $_='$env{$_}' ";}
+			if ($_ eq "r_db_name"){$where.="AND r_db_name IN ('".TOM::Security::form::sql_escape($env{$_})."','') ";}
+			else {$where.="AND $_='".TOM::Security::form::sql_escape($env{$_})."' ";}
 		}
 	}
 	if ($env{'rel_type'} == -1){}
-	elsif (exists $env{'rel_type'}){$where.="AND rel_type='$env{rel_type}' ";}
+	elsif (exists $env{'rel_type'}){$where.="AND rel_type='".TOM::Security::form::sql_escape($env{'rel_type'})."' ";}
 	
 	my @relations;
 	
