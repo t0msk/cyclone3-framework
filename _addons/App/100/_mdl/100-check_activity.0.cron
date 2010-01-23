@@ -36,28 +36,37 @@ sub execute
 	{
 		foreach my $file(sort readdir DIR)
 		{
-#			main::_log("file=$file");next;
 			next if -d $TOM::P."/_logs/_debug/".$file;
 			next unless $file=~/sql\.err\.event$/;
 			
 			local $/;
 			open(HND,'<'.$TOM::P."/_logs/_debug/".$file);
 			my $data=<HND>;
+			$data=~s|<|&lt;|gms;
+			$data=~s|>|&gt;|gms;
 			$data=~s|\n|<br/>|gms;
 			$data=~s|\t|     |gms;
-			$data=~s| |&nbsp;|gms;
+			$data=~s|  |&nbsp;&nbsp;|gms;
+			
+			unlink $TOM::P."/_logs/_debug/".$file;
+			
+			# check if this sql is suspected
+			my $suspected;
+			$suspected=1 if $data=~/waitfor/;
+			$suspected=1 if $data=~/ping/;
+			$suspected=1 if $data=~/\.\.\\\.\.\\/;
+			$suspected=1 if $data=~/echo/;
+#			next unless $suspected;
 			
 			$i++;
 			
 			my $line = $tpl->{'entity'}{'email.table.line'};
 			my $col = $tpl->{'entity'}{'email.table.col.value'};
-				$col =~ s|<%value%>|$data|g;
+				$col =~ s|<%value%>|<pre>$data</pre>|g;
 				$line =~ s|<#email.table.col.value#>|$col|g;
 			$tpl->{'entity'}{'email.table'} =~ s|<#email.table.line#>|$line|g;
 			
 			last if $i == 5;
-			
-			unlink $TOM::P."/_logs/_debug/".$file;
 			
 		}
 	}
