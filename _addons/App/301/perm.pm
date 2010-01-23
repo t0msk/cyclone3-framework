@@ -195,6 +195,11 @@ sub get_roles
 	my %user;
 	if ($env{'ID_user'})
 	{
+		if (not $env{'ID_user'}=~/^[a-zA-Z0-9]{8}$/)
+		{
+			$t->close();
+			return undef;
+		}
 		%user=App::301::functions::user_get($env{'ID_user'});
 	}
 	
