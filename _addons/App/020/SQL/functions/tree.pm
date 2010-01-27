@@ -1035,7 +1035,7 @@ sub find_path_url
 			my $t_way=track TOM::Debug("way-$i0") if $debug;
 			main::_log("ID_charindex='$way'") if $debug;
 			
-			my $sql=qq{
+			my %sth0=TOM::Database::SQL::execute(qq{
 				SELECT
 					ID,
 					ID_charindex
@@ -1043,13 +1043,14 @@ sub find_path_url
 					`$env{'db_name'}`.`$env{'tb_name'}`
 				WHERE
 					ID_charindex LIKE '$ID_charindex\___'
-					AND name_url='$level[$i]'
+					AND name_url=?
 					AND lng='$env{'lng'}'
 					AND status='Y'
 				ORDER BY
 					ID_charindex
-			};
-			my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1,'-slave'=>$env{'-slave'});
+			},'bind'=>[
+				$level[$i]
+			],'db_h'=>$env{'db_h'},'quiet'=>1,'-slave'=>$env{'-slave'});
 			if (!$sth0{'sth'})
 			{
 				return undef;
