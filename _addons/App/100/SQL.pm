@@ -79,7 +79,8 @@ sub ticket_event_new
 				'emails' => "'$env{'emails'}'",
 				'status' => "'Y'",
 			},
-			'-journalize' => 1
+			'-journalize' => 1,
+			'-replace' => 1
 		);
 	}
 	else
