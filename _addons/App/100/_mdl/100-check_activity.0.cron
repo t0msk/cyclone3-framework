@@ -34,7 +34,7 @@ sub execute
 	my $i;
 	if (opendir (DIR, $TOM::P."/_logs/_debug"))
 	{
-		foreach my $file(sort readdir DIR)
+		foreach my $file(reverse sort readdir DIR)
 		{
 			next if -d $TOM::P."/_logs/_debug/".$file;
 			next unless $file=~/sql\.err\.event$/;
