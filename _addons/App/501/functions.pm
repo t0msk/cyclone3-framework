@@ -1474,7 +1474,8 @@ sub image_file_add
 				'file_ext' => "'$file_ext'",
 				'status' => "'Y'"
 			},
-			'-journalize' => 1
+			'-journalize' => 1,
+			'-replace' => 1,
 		);
 		$ID=sprintf("%08d",$ID);
 		main::_log("ID='$ID'");
