@@ -356,6 +356,7 @@ while ($main::CGI=new CGI::Fast())
 		{
 			$main::ENV{'REMOTE_COUNTRY_CODE'} = $TOM::Int::lng::gi->country_code_by_addr($main::ENV{'REMOTE_ADDR'});
 			main::_log("country_code='$main::ENV{'REMOTE_COUNTRY_CODE'}'");
+			main::_log("[$tom::H] IP='$main::ENV{'REMOTE_ADDR'}' country_code='$main::ENV{'REMOTE_COUNTRY_CODE'}'",3,"geoip",1);
 		}
 		
 		if ($main::ENV{'REQUEST_URI'}=~s/^\/core.pl/\//)
