@@ -73,7 +73,6 @@ sub send
 	$env{'from_name'}="Cyclone3" unless $env{'from_name'};
 	
 	$env{'to_email'}=$env{'to'} unless $env{'to_email'}; #covering deprecated calls
-
 	
 	# spracovanie duplikatov emailovych adries
 	$env{'to_email'}=TOM::Utils::vars::unique_split($env{'to_email'});
@@ -86,44 +85,27 @@ sub send
 	{
 		my %sth0=TOM::Database::SQL::execute("SELECT ID FROM TOM.a130_send LIMIT 1",'quiet'=>1);
 		my %db0_line=$sth0{'sth'}->fetchhash();
-#		main::_log("");
-#		die "can't select ID from a130_send" unless $db0_line{'ID'};
 	};
 	
 	if (!$@)
 	{
 		main::_log("sending email over a130 to '$env{'to_email'}'");
-		
-		$env{'body'}=~s|'|\\'|g;
-		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			INSERT INTO TOM.a130_send
-			(
-				ID_md5,
-				sendtime,
-				priority,
-				from_name,
-				from_email,
-				from_host,
-				from_service,
-				to_name,
-				to_email,
-				body
-			)
+			(ID_md5,sendtime,priority,from_name,from_email,from_host,from_service,to_name,to_email,body)
 			VALUES
-			(
-				'$env{'md5'}',
-				'$env{'time'}',
-				'$env{'priority'}',
-				'$env{'from_name'}',
-				'$env{'from_email'}',
-				'$tom::H',
-				'$env{'from_service'}',
-				'$env{'to_name'}',
-				'$env{'to_email'}',
-				'$env{body}'
-			)
-		},'quiet'=>1);
+			('$env{'md5'}',?,?,?,?,?,?,?,?,?)
+		},'bind'=>[
+			$env{'time'},
+			$env{'priority'},
+			($env{'from_name'} || ''),
+			($env{'from_email'} || ''),
+			($tom::H || ''),
+			($env{'from_service'} || ''),
+			($env{'to_name'} || ''),
+			($env{'to_email'} || ''),
+			($env{'body'} || '')
+		],'quiet'=>1);
 		if ($sth0{'rows'})
 		{
 			main::_log(" sended");
