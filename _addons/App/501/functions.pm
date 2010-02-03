@@ -246,6 +246,17 @@ sub image_file_generate
 		'db_name' => $App::501::db_name,
 		'tb_name' => 'a501_image_format'
 	);
+	if ($format{'ID'} == $App::501::image_format_original_ID && ($env{'process'} || $format{'process'}))
+	{
+		# generate from itself
+		%format_parent=App::020::SQL::functions::get_ID(
+			'ID' => $format{'ID'},
+			'db_h' => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image_format',
+			'columns' => {'*'=>1}
+		);
+	}
 	
 	if ($format_parent{'status'} ne "Y" &&  $format_parent{'status'} ne "L")
 	{
@@ -330,7 +341,7 @@ sub image_file_generate
 		$file_parent{'file_ext'}
 	);
 	
-	main::_log("path to parent image_file='$image1_path'");
+	main::_log("path to parent image_file='$image1_path' size=".((stat($tom::P.'/!media/a501/image/file/'.$image1_path))[7])."b");
 	my $image2=new TOM::Temp::file('dir'=>$main::ENV{'TMP'});
 	
 	my ($out,$ext)=image_file_process(
@@ -852,6 +863,74 @@ sub image_add
 			$t->close();
 			return undef;
 		}
+		
+		# okay, adding new original
+		# 1 - check if for original is not required processing
+		# 2 - use that processed file
+		my %format=App::020::SQL::functions::get_ID(
+			'ID' => $App::501::image_format_original_ID,
+			'db_h' => "main",
+			'db_name' => $App::501::db_name,
+			'tb_name' => "a501_image_format",
+			'columns' => {'*'=>1}
+		);
+		if ($format{'process'})
+		{
+			$env{'file_temp'}=new TOM::Temp::file('dir'=>$main::ENV{'TMP'});
+			my ($out,$ext)=image_file_process(
+				'image1' => $env{'file'},
+				'image2' => $env{'file_temp'}->{'filename'},
+				'process' => $format{'process'},
+			);
+			$env{'file'}=$env{'file_temp'}->{'filename'};
+		}
+		
+		# check if same image not already inserted
+		if (!$env{'image.ID_entity'} && !$env{'image.ID'})
+		{
+			# calculate sha1
+			open(CHKSUM,'<'.$env{'file'});
+			my $ctx = Digest::SHA1->new;
+			$ctx->addfile(*CHKSUM);
+			my $checksum = $ctx->hexdigest;
+			my $checksum_method = 'SHA1';
+			main::_log("file checksum $checksum_method:$checksum");
+			if ($checksum)
+			{
+				# find same checksum
+				my %sth0=TOM::Database::SQL::execute(qq{
+					SELECT
+						a501_image.*
+					FROM
+						`$App::501::db_name`.a501_image_file
+					INNER JOIN `$App::501::db_name`.a501_image ON
+					(
+						    a501_image.ID_entity = a501_image_file.ID_entity
+						AND a501_image.status IN ('Y','N')
+					)
+					INNER JOIN `$App::501::db_name`.a501_image_ent ON
+					(
+						    a501_image_ent.ID_entity = a501_image_file.ID_entity
+						AND a501_image_ent.status IN ('Y','N')
+					)
+					WHERE
+						    a501_image_file.file_checksum="$checksum_method:$checksum"
+						AND a501_image_file.status='Y'
+					LIMIT 1
+				},'quiet'=>1);
+				if (my %db0_line=$sth0{'sth'}->fetchhash())
+				{
+					main::_log("same image already in database with ID_entity=$db0_line{'ID_entity'}");
+					$env{'image.ID_entity'}=$db0_line{'ID_entity'};
+					if (!$env{'image_attrs.ID_category'})
+					{
+						$env{'image.ID'}=$db0_line{'ID'};
+					}
+					undef $env{'file'};
+				}
+			}
+		}
+		
 		$content_updated=1;
 	}
 	
@@ -1670,7 +1749,6 @@ sub get_image_file
 			image_file.status AS file_status,
 			CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
 	};
-
 	
 	if ($env{'image.ID_entity'})
 	{
