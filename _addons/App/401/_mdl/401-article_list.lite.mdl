@@ -545,7 +545,7 @@ sub execute
 			|| $XSGN{'a510_video_part.1'}
 			|| undef;
 		
-		$p->parse($db0_line{'abstract'});
+		$p->parse($db0_line{'abstract'}."\n");
 		#$p->eof();
 		my $abstract_html=$p->{'out'};
 		$item=~s|<%abstract%>|$abstract_html|g;

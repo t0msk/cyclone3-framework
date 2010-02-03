@@ -287,8 +287,30 @@ sub execute
 		
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
+		# primary author
 		my %author=App::301::authors::get_author($db0_line{'posix_author'});
 		$XSGN{'TMP'}=~s|<%author_(.*?)%>|$author{$1}|g;
+		# secondary authors
+		if ($XSGN{'TMP'}=~/<#authorgroup#>/)
+		{
+			my @ACL=App::301::perm::get_ACL(
+				'r_prefix' => 'a401',
+				'r_table' => 'article',
+				'r_ID_entity' => $db0_line{'ID_entity'},
+				'role' => 'author'
+			);
+			foreach my $acl_item (@ACL)
+			{
+				if ($acl_item->{'ID'} && !$acl_item->{'folder'})
+				{
+					my $authorgroup_item=$XSGN{'authorgroup_item'};
+					my %author=App::301::authors::get_author($acl_item->{'ID'});
+					$authorgroup_item=~s|<%author_(.*?)%>|$author{$1}|g;
+					$XSGN{'TMP'}=~s|<#authorgroup#>|$authorgroup_item|;
+				}
+			}
+		}
+		
 		my %editor=App::301::authors::get_author($db0_line{'posix_editor'});
 		$XSGN{'TMP'}=~s|<%editor_(.*?)%>|$editor{$1}|g;
 		# process body
