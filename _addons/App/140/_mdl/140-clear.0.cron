@@ -74,7 +74,7 @@ sub execute
 			{
 				$file =~ /^.*\d\.(.*?)\.log(\.gz|\.bz2|)$/; my $log_type = $1;
 				
-#				main::_log("file=$file");
+				my $filename=$dir.'/'.$file;
 				
 				my $max_days = $env{'max_days'};
 				if ($log_type && $TOM::DEBUG_log_type{$log_type}{'max_days'})
@@ -83,22 +83,22 @@ sub execute
 				}
 				my $max_secs = $max_days*86400;
 				
-				my $var=(stat $dir."/".$file)[9];
+				my $var=(stat $filename)[9];
 				
 				if (($main::time_current-$var)>$max_secs)
 				{
 					main::_log("$file removing...");
-					unlink $dir."/".$file;
+					unlink $filename;
 				}
 				elsif ($file=~/\.log$/ && (not $file=~/$tom::Fyear\-$tom::Fmom\-$tom::Fmday/) && -x '/bin/bzip2')
 				{
 					main::_log("$file bzip2ing...");
-					system("/bin/bzip2","--best",$dir.'/'.$file);
+					system("/bin/bzip2","--best",$filename);
 				}
 				elsif ($file=~/\.log$/ && (not $file=~/$tom::Fyear\-$tom::Fmom\-$tom::Fmday/) && -x '/bin/gzip')
 				{
 					main::_log("$file gzipping...");
-					system("/bin/gzip","--best",$dir.'/'.$file);
+					system("/bin/gzip","--best",$filename);
 				}
 			}
 		}
