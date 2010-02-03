@@ -307,7 +307,7 @@ sub process
 				main::_log("I'm not online, finding in user table");
 				
 				# activize user when deactivated
-				App::301::functions::user_get($main::COOKIES{_ID_user});
+				App::301::functions::user_get($main::COOKIES{'_ID_user'});
 				
 				my $sql=qq{
 					SELECT
