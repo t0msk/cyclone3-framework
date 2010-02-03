@@ -293,15 +293,15 @@ sub get_ID(%env)
 	
 	my $sel_columns=join ",",@columns;
 	
-	my $SQL=qq{
+	my $SQL="
 		SELECT
 			$sel_columns
 		FROM
 			`$env{'db_name'}`.`$env{'tb_name'}`
 		WHERE
-			ID=$env{'ID'}
+			ID='".TOM::Security::form::sql_escape($env{'ID'})."'
 		LIMIT 1
-	};
+	";
 	
 	my %cache;
 	$cache{'-cache_changetime'} = App::020::SQL::functions::_get_changetime(\%env) if ($env{'-cache'} && !$cache{'-cache_changetime'});
