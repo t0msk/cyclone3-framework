@@ -723,7 +723,7 @@ sub user_active
 	}
 	
 	my %sth0=TOM::Database::SQL::execute(qq{
-		INSERT INTO TOM.a301_user
+		REPLACE INTO TOM.a301_user
 			SELECT
 				*
 			FROM TOM.a301_user_inactive
