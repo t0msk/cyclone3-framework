@@ -67,6 +67,88 @@ sub execute
 	my $i;
 	
 	
+	
+	
+	my $points;
+	my $graf=SVGraph::2D::lines->new(
+		'title' => "Stability of serverfarm (lower is better)",
+		'title.color' => $tpl->{'entity'}{'color.h1'},
+		#'type' => "overlap",
+		'x' => $tpl->{'entity'}{'content.width'},
+		'y' => 250,
+		'show_legend' => 1,
+		'show_grid_x' => 1,
+		'grid_y_scale_minimum' => 0,
+#		'grid_y_scale_maximum' => $db0_line{'maximum'},
+		'show_lines_smooth' => 1,
+		#'show_label_textsize' => 10,
+	);
+	$points=1;
+	my %columns;
+	
+	$columns{'events'}=$graf->addColumn('title'=>"Errors",'color'=>'red','show_points' => 1);
+	
+	
+	my %data;
+	my %sum;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			DATE(datetime_create) AS date_events,
+			COUNT(*) AS events
+		FROM
+			TOM.a100_ticket_event
+		WHERE
+			status = 'Y'
+		GROUP BY
+			DATE(datetime_create)
+		HAVING
+			date_events >= DATE_SUB(CURDATE(),INTERVAL 31 DAY) AND
+			date_events < CURDATE()
+		ORDER BY
+			DATE(datetime_create) ASC
+	},'db_h'=>'main');
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $day=$db0_line{'date_events'};
+		$graf->addRowLabel($day);
+		main::_log("date=$db0_line{'date_events'}");
+		$db0_line{'date_events'}=~/(\d+)-(\d+)-(\d+)/;
+		my $dt = DateTime->new(
+			'year'   => $1,
+			'month'  => $2,
+			'day'    => $3
+		);
+		if ($dt->day_of_week == 7)
+		{
+			$dt->subtract('days'=>1);
+			my $from_date=$dt->year().'-'.(sprintf('%02d',$dt->month())).'-'.(sprintf('%02d',$dt->day()));
+			$graf->addRowMarkArea(
+				$from_date,
+				'color' => 'red',
+				'end' => $day
+			);
+		}
+		$columns{'events'}->addData($day,$db0_line{'events'});
+	}
+	
+	# generate graph
+	my $graf_svg=new TOM::Temp::file('ext'=>'svg');
+	push @img, new TOM::Temp::file('ext'=>'png');
+	$graf->save($graf_svg->{'filename'});
+	Ext::SVG2PNG::convert($graf_svg->{'filename'},$img[-1]->{'filename'});
+	# add graf
+	$tpl->{'entity'}{'email.xhtml'}=~s|<#email.content#>|<img class="graph" src="cid:$i\@graf"/><br/><#email.content#>|;
+	$i++;
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	my $graf=SVGraph::2D::lines->new(
 		'title' => "Availability of generated pages (lower is better)",
 #		'title' => "Visitors",
