@@ -92,48 +92,20 @@ sub execute
 		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
 	}
 	
-	$env{'db_name'}=$App::501::db_name unless $env{'db_name'};
-	
 	$env{'image_file.ID_format'}=$App::501::image_format_fullsize_ID unless $env{'image_file.ID_format'};
 	$env{'image_attrs.lng'}=$env{'lng'} unless $env{'image_attrs.lng'};
-	$env{'image_attrs.status'}='Y' unless $env{'image_attrs.status'};
-		my $sql_status=join "','", split('',$env{'image_attrs.status'});
-	
 	$env{'image.ID'}=$env{'ID'} unless $env{'image.ID'};
 	$env{'image.ID_entity'}=$env{'ID_entity'} unless $env{'image.ID_entity'};
 	
-	my $sql_where;
+	my %db0_line=App::501::functions::get_image_file(
+		'image.ID_entity' => $env{'image.ID_entity'},
+		'image.ID' => $env{'image.ID'},
+		'image_file.ID_format' => $env{'image_file.ID_format'} || $App::501::image_format_thumbnail_ID,
+		'image_attrs.lng' => $env{'image_attrs.lng'}
+	);
 	
-	# ID_entity
-	$sql_where.="AND image.ID_entity_image=$env{'image.ID_entity'}"
-		if $env{'image.ID_entity'};
-	
-	# ID
-	$sql_where.="AND image.ID_image=$env{'image.ID'}"
-		if $env{'image.ID'};
-	
-	my $sql=qq{
-		SELECT
-			image.*
-		FROM
-			`$env{'db_name'}`.a501_image_view AS image
-		WHERE
-			image.ID_format='$env{'image_file.ID_format'}' AND
-			image.lng='$env{'image_attrs.lng'}' AND
-			image.status IN ('$sql_status')
-			$sql_where
-		LIMIT 1
-	};
-	
-	
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1);
-	if (my %db0_line=$sth0{'sth'}->fetchhash())
-	{
-		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
-		
-		$main::H->add_DOC_title($db0_line{'name'});
-		
-	}
+	$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+	$main::H->add_DOC_title($db0_line{'name'});
 	
 	return 1;
 }
