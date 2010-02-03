@@ -63,7 +63,7 @@ sub new
 		$self->{'value'}->{'type'}=$env{'type'} if $env{'type'};
 		$self->{'value'}->{'err'}=$env{'err'} if $env{'err'};
 		$self->{'value'}->{'info'}=$env{'info'} if $env{'info'};
-		$self->{'value'}->{'rows'}=$env{'rows'} if $env{'rows'};
+		$self->{'value'}->{'rows'}=$env{'rows'};# if $env{'rows'};
 		$self->{'value'}->{'time'}=$env{'time'} || time();
 		if (!$env{'err'})
 		{
