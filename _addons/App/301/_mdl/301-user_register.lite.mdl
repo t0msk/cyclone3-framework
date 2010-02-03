@@ -408,6 +408,10 @@ sub execute
 			main::_log('newsletter value:'.$env{'newsletter'});
 			main::_log('adding user to the newsletter group') if $env{'newsletter'} eq 'true';
 			
+			my %session;$session{'USRM_G'}=$main::USRM{'session'}{'USRM_G'};
+			my $cvml=CVML::structure::serialize(%session);
+			$columns{'user.saved_session'}=$cvml;
+			
 			# register user
 			#$db0_line{'ID_user'}
 			my %user=App::301::functions::user_add(
