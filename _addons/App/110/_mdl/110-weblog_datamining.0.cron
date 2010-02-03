@@ -320,7 +320,7 @@ sub execute
 									else
 									{
 										my %sth0=TOM::Database::SQL::execute(qq{
-											INSERT INTO TOM.a110_sitemap_day
+											REPLACE INTO TOM.a110_sitemap_day
 											(
 												domain,
 												domain_sub,
