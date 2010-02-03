@@ -39,7 +39,18 @@ sub rqs
 	}
 	
 	#my $filename="$TOM::P/_logs/weblog/weblog.$tom::Fyear-$tom::Fmom-$tom::Fmday.$tom::Fhour.$tom::Fmin.".$$.".log";
-	my $filename=$filedir."/".$tom::Fmin.".".$$.".log";
+	#my $filename=$filedir."/".$tom::Fmin.".".$$.".log";
+	my $filename=$filedir."/";
+	if ($TOM::serverfarm)
+	{
+		$filename.="[".$TOM::hostname."]";
+#		$filename.=$$;
+	}
+	else
+	{
+		$filename.="default";
+	}
+	$filename.=".log";
 
 my $URL=$tom::H_www;$URL=~s/\/$//;
 $URL=~s|$tom::rewrite_RewriteBase$||;
