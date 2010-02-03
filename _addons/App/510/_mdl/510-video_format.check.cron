@@ -81,6 +81,43 @@ sub execute
 	$env{'limit'}=$encode_max+1; # find max files to encode
 	
 	
+	# check files without info (W status)
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`$App::510::db_name`.a510_video_part_file
+		WHERE
+			status='W'
+	});
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $vd = Movie::Info->new || die "Couldn't find an mplayer to use\n";
+		my $filename=$tom::P.'/!media/a510/video/part/file/'.$db0_line{'ID_format'}.'/'.substr($db0_line{'ID'},0,4).'/'.$db0_line{'name'}.'.'.$db0_line{'file_ext'};
+		main::_log("filename=$filename");
+		my %video = $vd->info($filename);
+		App::020::SQL::functions::update(
+			'ID' => $db0_line{'ID'},
+			'db_h' => 'main',
+			'db_name' => $App::510::db_name,
+			'tb_name' => 'a510_video_part_file',
+			'columns' =>
+			{
+				'video_width' => "'$video{'width'}'",
+				'video_height' => "'$video{'height'}'",
+				'video_codec' => "'$video{'codec'}'",
+				'video_fps' => "'$video{'fps'}'",
+				'video_bitrate' => "'$video{'bitrate'}'",
+				'audio_codec' => "'$video{'audio_codec'}'",
+				'audio_bitrate' => "'$video{'audio_bitrate'}'",
+				'length' => "SEC_TO_TIME(".int($video{'length'}).")",
+				'status' => "'Y'",
+			},
+			'-journalize' => 1,
+		);
+	}
+	
+	
 	# check directory of formats
 	
 	

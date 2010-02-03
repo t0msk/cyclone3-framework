@@ -1114,6 +1114,7 @@ sub video_add
 		'file' => $env{'file'},
 		'file_nocopy' => $env{'file_nocopy'},
 		'file_thumbnail' => $env{'file_thumbnail'},
+		'file_dontcheck' => $env{'file_dontcheck'},
 		'video.ID_entity' => $env{'video.ID_entity'},
 		'video.datetime_rec_start' => $video{'datetime_rec_start'},
 		'video_attrs.name' => $video_attrs{'name'},
@@ -1390,6 +1391,7 @@ sub video_part_add
 			'file' => $env{'file'},
 			'file_nocopy' => $env{'file_nocopy'},
 			'file_thumbnail' => $env{'file_thumbnail'},
+			'file_dontcheck' => $env{'file_dontcheck'},
 			'video_part.ID' => $env{'video_part.ID'},
 			'video_format.ID' => $env{'video_format.ID'},
 			'from_parent' => "N",
@@ -1566,12 +1568,23 @@ sub video_part_file_add
 	# if (not already has it)
 	my $file3=new TOM::Temp::file('ext'=>$file_ext,'dir'=>$main::ENV{'TMP'});
 	my %video;
-	if (not $env{'file'}=~/\.$file_ext$/)
+	if ((not $env{'file'}=~/\.$file_ext$/) && (!$env{'file_dontcheck'}))
 	{
+		# this can be very very slow
+		main::_log("copying and detecting filetype");
 		File::Copy::copy($env{'file'},$file3->{'filename'});
 		%video = $vd->info($file3->{'filename'});
 	}
-	else {%video = $vd->info($env{'file'});}
+	elsif (!$env{'file_dontcheck'})
+	{
+		# this can be very slow
+		main::_log("detecting filetype");
+		%video = $vd->info($env{'file'});
+	}
+	else
+	{
+		
+	}
 	
 	# output video info
 	foreach (keys %video)
@@ -1847,6 +1860,9 @@ sub video_part_file_add
 		my %columns;
 		$columns{'file_alt_src'}="'$env{'file'}'" if $env{'file_nocopy'};
 		
+		$columns{'status'}="'Y'";
+		$columns{'status'}="'W'" if $env{'file_dontcheck'};
+		
 		my $ID=App::020::SQL::functions::new(
 			'db_h' => "main",
 			'db_name' => $App::510::db_name,
@@ -1868,7 +1884,7 @@ sub video_part_file_add
 				'file_checksum' => "'$checksum_method:$checksum'",
 				'file_ext' => "'$file_ext'",
 				'from_parent' => "'$env{'from_parent'}'",
-				'status' => "'Y'",
+#				'status' => "'Y'",
 				'datetime_create' => "FROM_UNIXTIME($main::time_current)", # hack
 				%columns
 			},
