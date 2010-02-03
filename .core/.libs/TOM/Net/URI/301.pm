@@ -105,7 +105,7 @@ sub get
 		}
 		else
 		{
-			@ref=split('=',$line,2);
+			@ref=split(' = ',$line,2);
 		}
 		
 		1 while ($ref[0]=~s|^\s||g);
