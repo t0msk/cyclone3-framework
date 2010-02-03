@@ -127,9 +127,22 @@ sub execute
 					foreach my $file1 (sort readdir DIR1)
 					{
 						
-						open (HND_IN, "<".$TOM::P."/_logs/weblog/".$file."/".$file1) || next;
 						next if $file1 eq ".";
 						next if $file1 eq "..";
+						
+						main::_log("<".$TOM::P."/_logs/weblog/".$file."/".$file1);
+#						return 1;
+						
+						if ($file1=~/\.bz2$/)
+						{
+							my $filename=$TOM::P."/_logs/weblog/".$file."/".$file1;
+							# read from pipeline
+							open (HND_IN, "/bin/bzcat ".$filename."|") || next;
+						}
+						else
+						{
+							open (HND_IN, "<".$TOM::P."/_logs/weblog/".$file."/".$file1) || next;
+						}
 						main::_log(" found file $file/$file1");
 						my $file_data;
 						
@@ -190,8 +203,6 @@ sub execute
 #										$referer_SE="'".$dom."'";
 #									}
 #								}
-								
-#								$hash{ref_type}
 								
 								foreach (keys %hash)
 								{
@@ -291,7 +302,7 @@ sub execute
 									$sqllite='';
 								}
 								
-								if ($hash{'sitemap'} && $hash{'result'} eq "ok" && $sitemap)
+								if ($hash{'sitemap'} && $hash{'result'} eq "ok" && $sitemap && !$LOCK)
 								{
 									main::_log("this is sitemap request ($hash{'domain_sub'}/$hash{'query_TID'})");
 									my $URL=$hash{'query_URL'};
