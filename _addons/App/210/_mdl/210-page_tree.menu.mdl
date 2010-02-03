@@ -188,14 +188,16 @@ $where
 	my $level_prev;
 	my $level_next;
 	
+	main::_log("quering for data from a210_page");
 	my %sth0=TOM::Database::SQL::execute(
 		$sql,
-		'quiet'=>1,
-		'-cache' => 3600,
+		'log'=>1,
+		'-cache' => 300,
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime({'db_h'=>"main",'db_name' => $TOM::DB{'main'}{'name'},'tb_name' => "a210_page"})
 	);
 	if ($sth0{'sth'})
 	{
+		main::_log("received $sth0{'rows'} page nodes");
 		# naplnim si @tree s polozkami zo stromu preto aby som mohol v dalsom
 		# cykle pracovat ako s predchadzajucimi tak i s buducimi polozkami
 		my @tree;
@@ -223,8 +225,8 @@ $where
 			my $dbg_level=$entity->{'ID_charindex'};$dbg_level=~s|:||g;
 			$level=(length($dbg_level)/3)+1;
 			
-			if($entity->{'visible'} eq 'N'){
-#				main::_log($entity->{'ID_charindex'}.":".$entity->{'name'}." (invisible, removing)");
+			if($entity->{'visible'} eq 'N')
+			{
 				$parent_invisible[$level]=1;
 				splice(@tree, $i, 1);
 				$i--;
@@ -247,17 +249,17 @@ $where
 				
 				if($deleteme)
 				{
-#					main::_log($entity->{'ID_charindex'}.":".$entity->{'name'}." (parent invisible, removing)");
 					splice(@tree, $i, 1);
 					$i--;
 					next;
 				}
 				else
 				{
-#					main::_log($entity->{'ID_charindex'}.":".$entity->{'name'}." (ok)");
+					
 				}
 			}
 		}
+		
 		
 		$i=0;
 		
@@ -282,11 +284,8 @@ $where
 				if ($level>$level_prev)
 				{
 					my $rec=$XSGN{'TMP'}=~s|<#tree#>|$XSGN{'SUB'}|;
-#					main::_log("inserted tree ($rec) for level $level");
 				}
 			}
-			
-#			main::_log("$level($level_next) $entity->{'ID_charindex'} $entity->{'name'} $entity->{'lng'}");
 			
 			for ($level..$level_prev+1)
 			{
@@ -307,17 +306,20 @@ $where
 				$path_.='/'.$node->{'name_url'};
 			}
 			$path_=~s|^/||;
-#			main::_log("path_='$path_'");
 			
-			$XSGN{'NULL'}=$XSGN{'ITEM'};
+			
+			$XSGN{'NULL'}=$XSGN{'item'} if $XSGN{'item'};
+			$XSGN{'NULL'}=$XSGN{'ITEM'} if $XSGN{'ITEM'};
 			
 			if (
 					(($env{'current_ID'} eq $entity->{'ID'})
-					|| ($env{'current_path_url'} eq $path_))
-					&& $XSGN{'ITEM-current'}
+					|| ($main::FORM{'a210_path'}=~/$path_/))
+					&&
+					($XSGN{'item.current'} || $XSGN{'ITEM-current'})
 			)
 			{
-				$XSGN{'NULL'}=$XSGN{'ITEM-current'};
+				$XSGN{'NULL'}=$XSGN{'item.current'} if $XSGN{'item.current'};
+				$XSGN{'NULL'}=$XSGN{'ITEM-current'} if $XSGN{'ITEM-current'};
 			}
 			
 			$XSGN{'NULL'}=~s|<%ID%>|$entity->{'ID'}|g;
@@ -365,17 +367,17 @@ $where
 	}
 	else
 	{
-		main::_log("can't select");
+		main::_log("not received any nodes");
 	}
 	
 	return 1;
 }
 
-our $authors="roman.fordinal\@comsultia.com";
+our $authors="open\@comsultia.com";
 
 =head1 AUTHORS
 
-Roman Fordinál (roman.fordinal@comsultia.com)
+Comsultia, Ltd. (open@comsultia.com)
 
 =cut
 
