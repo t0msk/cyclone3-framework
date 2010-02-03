@@ -346,7 +346,11 @@ sub execute
 				main::_log("SQL: err=".$output{'err'},1);# unless $env{'quiet'};
 				main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
 				main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
-				if ($save_error)
+				if ($save_error && 
+					(
+						$output{'err'} ne "MySQL server has gone away"
+					)
+				)
 				{
 					my %date=Utils::datetime::ctodatetime(time,format=>1);
 					open(SUSP,">".$TOM::P."/_logs/_debug/".$date{'hour'}.":".$date{'min'}.":".$date{'sec'}."-".$$.".sql.err.event");
