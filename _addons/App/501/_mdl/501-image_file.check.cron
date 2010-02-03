@@ -62,6 +62,10 @@ sub execute
 	main::_log("total files=$rows");
 	my $check_files=int($rows/10);
 		$check_files=10000 if $check_files>10000;
+	$check_files=$rows*2 if $env{'all'};
+	
+	$env{'check_days'}=7 unless $env{'check_days'};
+	$env{'check_days'}=0 if $env{'all'};
 	
 	
 	# find missing file
@@ -73,7 +77,7 @@ sub execute
 		FROM
 			`$App::501::db_name`.a501_image_file
 		WHERE
-			datetime_check <= DATE_SUB(NOW(),INTERVAL 7 DAY) OR datetime_check IS NULL AND
+			datetime_check <= DATE_SUB(NOW(),INTERVAL $env{'check_days'} DAY) OR datetime_check IS NULL AND
 			status IN ('Y','N','T','L')
 		ORDER BY
 			datetime_check
@@ -108,6 +112,7 @@ sub execute
 	
 	# find missing files in file_j
 	main::_log("checking image_file items in image_file_j table");
+	my $i;
 	my $sql=qq{
 		SELECT
 			*,
@@ -115,7 +120,7 @@ sub execute
 		FROM
 			`$App::501::db_name`.a501_image_file_j
 		WHERE
-			datetime_check <= DATE_SUB(NOW(),INTERVAL 7 DAY) OR datetime_check IS NULL
+			datetime_check <= DATE_SUB(NOW(),INTERVAL $env{'check_days'} DAY) OR datetime_check IS NULL
 		ORDER BY
 			datetime_check
 		LIMIT
@@ -125,7 +130,9 @@ sub execute
 	main::_log("checking $sth0{'rows'} files");
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		#main::_log("check image_file $db0_line{'ID'} in $db0_line{'file_path'}");
+		$i++;
+		
+		main::_log("[$i/$sth0{'rows'}] checked") if ($i/100 == int($i/100));
 		
 		my $pth=$tom::P.'/!media/a501/image/file_j/'.$db0_line{'file_path'};
 		$pth=~s|/$db0_line{'name'}\.$db0_line{'file_ext'}$||;
@@ -144,13 +151,16 @@ sub execute
 		
 		if (!-e $tom::P.'/!media/a501/image/file_j/'.$db0_line{'file_path'})
 		{
+			# file_j/ not exists
 			if (-e $tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'})
 			{
+				# file/ exists
 				
-				# check if this file is not required in not journalized table
+				# check if this file is not required in file/
 				my $sql=qq{
 					SELECT
-						ID
+						ID,
+						ID_format
 					FROM
 						`$App::501::db_name`.a501_image_file
 					WHERE
@@ -161,19 +171,16 @@ sub execute
 				my %db1_line=$sth1{'sth'}->fetchhash();
 				if ($db1_line{'ID'})
 				{
-					main::_log("copy file '$db0_line{'file_path'}'");
-					# so, copy to journal archive
-					my $out=File::Copy::copy($tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'},
-						$tom::P.'/!media/a501/image/file_j/'.$db0_line{'file_path'});
-					if (!$out)
-					{
-						main::_log("can't copy: $!",1);
-					}
+					# i need this file in file/ directory, and in file_j/ is copy not required
+					next;
 				}
-				else
+				elsif ($db0_line{'ID_format'} == $App::501::image_format_original_ID)
 				{
-					# so, move to journal archive
-					main::_log("move file '$db0_line{'file_path'}'");
+					# this file in file/ is not longer required
+					#
+					# into journal only move original files
+					# so, move to journal archive if journal of file is enabled
+					main::_log("[$i/$sth0{'rows'}] move file/->file_j/ '$db0_line{'file_path'}'");
 					my $out=File::Copy::move($tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'},
 						$tom::P.'/!media/a501/image/file_j/'.$db0_line{'file_path'});
 					if (!$out)
@@ -181,11 +188,19 @@ sub execute
 						main::_log("can't move: $!",1);
 					}
 				}
+				else
+				{
+					# this file in file/ is not longer required
+					# don't backup this file, remove it
+					main::_log("[$i/$sth0{'rows'}] remove file/ '$db0_line{'file_path'}' (not found in image_file)");
+					unlink $tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'};
+				}
 				
 			}
-			else
+			elsif ($db0_line{'ID_format'} == $App::501::image_format_original_ID)
 			{
-				main::_log("file_j $db0_line{'file_path'} not exists",1);
+				# don't remove backup of original if not required by --delete param
+				main::_log("[$i/$sth0{'rows'}] file_j $db0_line{'file_path'} not exists (not mounted partition?)",1);
 				TOM::Database::SQL::execute(qq{
 					DELETE FROM `$App::501::db_name`.`a501_image_file_j`
 					WHERE
@@ -195,12 +210,23 @@ sub execute
 					LIMIT 1
 				},'quiet'=>1) if $env{'delete'};
 			}
+			else
+			{
+				main::_log("[$i/$sth0{'rows'}] file_j $db0_line{'file_path'} not exists, removing from db");
+				TOM::Database::SQL::execute(qq{
+					DELETE FROM `$App::501::db_name`.`a501_image_file_j`
+					WHERE
+						ID=$db0_line{'ID'} AND
+						name='$db0_line{'name'}' AND
+						datetime_create='$db0_line{'datetime_create'}'
+					LIMIT 1
+				},'quiet'=>1);
+			}
 			
 		}
 		
 		
 	}
-	
 	
 	
 	main::_log("remove all old generated image_file items in image_file_j table");
@@ -212,7 +238,8 @@ sub execute
 			`$App::501::db_name`.a501_image_file_j
 		WHERE
 			from_parent = 'Y' AND
-			datetime_create <= DATE_SUB(CURDATE(),INTERVAL 7 DAY)
+			ID_format <> $App::501::image_format_original_ID AND
+			datetime_create <= DATE_SUB(CURDATE(),INTERVAL $env{'check_days'} DAY)
 		ORDER BY
 			datetime_create
 		LIMIT
@@ -221,8 +248,21 @@ sub execute
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
+		
 		my $file=$tom::P.'/!media/a501/image/file_j/'.$db0_line{'file_path'};
-		if (-e $file)
+		
+		if (!$db0_line{'name'})
+		{
+			TOM::Database::SQL::execute(qq{
+				DELETE FROM `$App::501::db_name`.`a501_image_file_j`
+				WHERE
+					ID=$db0_line{'ID'} AND
+					name='$db0_line{'name'}' AND
+					datetime_create='$db0_line{'datetime_create'}'
+				LIMIT 1
+			},'quiet'=>1);
+		}
+		elsif (-e $file)
 		{
 			main::_log("remove file image_file_j.ID=$db0_line{'ID'} from='$db0_line{'datetime_create'}'");
 			# very blind function!!! not controls if file is used by another entry in video_part_file_j table
@@ -242,231 +282,57 @@ sub execute
 		}
 	}
 	
-=head1
-	# find image with missing 'original' format
-	# and delete it
-	main::_log("checking for empty images");
-	my $sql=qq{
-		SELECT
-			image.ID_entity
-		FROM
-			`$App::501::db_name`.a501_image AS image
-		LEFT JOIN `$App::501::db_name`.a501_image_file AS image_file ON
-		(
-			image_file.ID_entity = image.ID_entity AND
-			image_file.status IN ('Y','N') AND
-			image_file.ID_format=$App::501::image_format_original_ID
-		)
-		WHERE
-			image.status IN ('Y','N') AND
-			image_file.ID IS NULL
-		GROUP BY
-			image.ID_entity
-		ORDER BY
-			image.ID_entity
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-	while (my %db0_line=$sth0{'sth'}->fetchhash())
-	{
-		main::_log("delete empty image.ID_entity='$db0_line{'ID_entity'}'");
-		
-		App::501::functions::image_del(
-			'image.ID_entity' => $db0_line{'ID_entity'}
-		);
-		
-	}
 	
-	# find image_attrs without image
-	# and alert!!!
-	main::_log("checking for image_attrs.ID_entity items without image.ID and alert");
+	main::_log("remove all old generated image_file items in image_file table");
 	my $sql=qq{
 		SELECT
-			image_attrs.ID_entity,
-			image_attrs.ID
+			a501_image_file.*,
+			CONCAT(a501_image_file.ID_format,'/',SUBSTR(a501_image_file.ID,1,4),'/',a501_image_file.name,'.',a501_image_file.file_ext) AS file_path
 		FROM
-			`$App::501::db_name`.a501_image_attrs AS image_attrs
-		LEFT JOIN `$App::501::db_name`.a501_image AS image ON
+			`$App::501::db_name`.a501_image_file
+		INNER JOIN `$App::501::db_name`.a501_image_format ON
 		(
-			image_attrs.ID_entity = image.ID
+			a501_image_file.ID_format = a501_image_format.ID
 		)
 		WHERE
-			image.ID IS NULL
+			a501_image_file.from_parent = 'Y' AND
+			a501_image_file.ID_format <> $App::501::image_format_original_ID AND
+			a501_image_file.datetime_create <= DATE_SUB(CURDATE(),INTERVAL 31 DAY) AND
+			(a501_image_format.required = "N" OR a501_image_format.status = "N" )
 		ORDER BY
-			image_attrs.ID
+			a501_image_file.datetime_create
+		LIMIT
+			$check_files
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		main::_log("add image to image_attrs.ID='$db0_line{'ID'}'");
 		
-		App::020::SQL::functions::new(
-			'db_h' => "main",
-			'db_name' => $App::501::db_name,
-			'tb_name' => "a501_image",
-			'columns' =>
+		my $file=$tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'};
+		
+		if (!$db0_line{'name'})
+		{
+			next
+		}
+		elsif (-e $file)
+		{
+			main::_log("remove file image_file.ID=$db0_line{'ID'} from='$db0_line{'datetime_create'}'");
+			my $out=unlink $file;
+			if (!$out){main::_log("can't remove: $!",1);}
+			else
 			{
-				'ID' => $db0_line{'ID_entity'}
-			},
-			'-journalize' => 1
-		);
-		
-	}	
-	
-	# find image with missing image_attrs and fix it
-	main::_log("checking for image.ID items without image_attrs and fix");
-	my $sql=qq{
-		SELECT
-			image.ID_entity,
-			image.ID
-		FROM
-			`$App::501::db_name`.a501_image AS image
-		LEFT JOIN `$App::501::db_name`.a501_image_attrs AS image_attrs ON
-		(
-			image_attrs.ID_entity = image.ID
-		)
-		WHERE
-			image_attrs.ID IS NULL
-		ORDER BY
-			image.ID
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-	while (my %db0_line=$sth0{'sth'}->fetchhash())
-	{
-		
-		# check if this image.ID has note more symlinks
-		# when yes, remove image.ID otherwise add image_attrs.ID
-		main::_log("check image.ID_entity='$db0_line{'ID_entity'}'");
-		my $sql=qq{
-			SELECT
-				*
-			FROM
-				`$App::501::db_name`.a501_image
-			WHERE
-				ID_entity = $db0_line{'ID_entity'}
-		};
-		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
-		if ($sth1{'rows'} > 1)
-		{
-			main::_log("remove image.ID='$db0_line{'ID'}'");
-			App::020::SQL::functions::delete(
-				'ID' => $db0_line{'ID'},
-				'db_h' => "main",
-				'db_name' => $App::501::db_name,
-				'tb_name' => "a501_image",
-				'-journalize' => 1
-			);
-		}
-		else
-		{
-			main::_log("add image_attrs to image.ID='$db0_line{'ID'}'");
-			App::020::SQL::functions::new(
-				'db_h' => "main",
-				'db_name' => $App::501::db_name,
-				'tb_name' => "a501_image_attrs",
-				'columns' =>
-				{
-					'ID_entity' => $db0_line{'ID'}
-				},
-				'-journalize' => 1
-			);
-		}
-	}
-		
-	# find duplicated image_attrs
-	main::_log("checking for duplicated image_attrs items");
-	my $tr=new TOM::Database::SQL::transaction('db_h'=>"main");
-	my $sql=qq{
-		SELECT
-			image_attrs.ID_entity,
-			image_attrs.ID,
-			image_attrs.ID_category,
-			COUNT(*) AS cnt
-		FROM
-			`$App::501::db_name`.a501_image AS image
-		LEFT JOIN `$App::501::db_name`.a501_image_attrs AS image_attrs ON
-		(
-			image_attrs.ID_entity = image.ID AND
-			image_attrs.status IN ('Y','N')
-		)
-		WHERE
-			image.status IN ('Y','N') AND
-			image_attrs.ID
-		GROUP BY
-			image.ID_entity, image_attrs.ID_category
-		HAVING cnt>1
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-	while (my %db0_line=$sth0{'sth'}->fetchhash())
-	{
-		main::_log("image.ID='$db0_line{'ID_entity'}' image_attrs.ID='$db0_line{'ID'}' ID_category='$db0_line{'ID_category'}'");
-		
-		App::020::SQL::functions::delete(
-			'ID' => $db0_line{'ID_entity'},
-			'db_h' => "main",
-			'db_name' => $App::501::db_name,
-			'tb_name' => "a501_image",
-			'-journalize' => 1
-		);
-		
-		App::020::SQL::functions::delete(
-			'ID' => $db0_line{'ID'},
-			'db_h' => "main",
-			'db_name' => $App::501::db_name,
-			'tb_name' => "a501_image_attrs",
-			'-journalize' => 1
-		);
-		
-	}
-	main::_log("checking for NULL image_attrs items when exists correct image_attrs");
-	
-	my $sql=qq{
-		SELECT
-			ID_image,
-			ID_entity_image,
-			COUNT(*) AS cnt
-		FROM
-			`$App::501::db_name`.a501_image_view AS image
-		WHERE
-			image.ID_format=$App::501::image_format_original_ID
-		GROUP BY
-			image.ID_entity_image
-		HAVING cnt>1
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-	while (my %db0_line=$sth0{'sth'}->fetchhash())
-	{
-		#main::_log("check symlinked image.ID_entity=$db0_line{'ID_entity_image'}");
-		
-		my $sql=qq{
-			SELECT
-				ID_image,
-				ID_entity_image,
-				ID_attrs
-			FROM
-				`$App::501::db_name`.a501_image_view AS image
-			WHERE
-				image.ID_entity_image = $db0_line{'ID_entity_image'} AND
-				image.ID_format=$App::501::image_format_original_ID AND
-				image.ID_category IS NULL
-			LIMIT 10
-		};
-		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
-		if (my %db1_line=$sth1{'sth'}->fetchhash())
-		{
-			main::_log("remove not necessary image_attrs.ID='$db1_line{'ID_attrs'}'");
-			App::020::SQL::functions::delete(
-				'ID' => $db1_line{'ID_attrs'},
-				'db_h' => "main",
-				'db_name' => $App::501::db_name,
-				'tb_name' => "a501_image_attrs",
-				'-journalize' => 1
-			);
+				TOM::Database::SQL::execute(qq{
+					DELETE FROM `$App::501::db_name`.`a501_image_file`
+					WHERE
+						ID=$db0_line{'ID'} AND
+						name='$db0_line{'name'}' AND
+						datetime_create='$db0_line{'datetime_create'}'
+					LIMIT 1
+				},'quiet'=>1);
+			}
 		}
 	}
 	
-	$tr->close();
-	
-=cut
 	
 	return 1
 }
