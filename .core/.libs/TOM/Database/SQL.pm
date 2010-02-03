@@ -21,9 +21,9 @@ use TOM::Database::SQL::cache;
 our $debug=$TOM::Database::SQL::debug || 0;
 our $save_error=$TOM::Database::SQL::save_error || 1;
 our $logcachequery=$TOM::Database::SQL::logcachequery || 0;
-our $lognonselectquery=$TOM::Database::SQL::lognonselectquery || 1;
+our $lognonselectquery=$TOM::Database::SQL::lognonselectquery || 0;
 our $logquery=$TOM::Database::SQL::logquery || 0;
-our $logquery_long=$TOM::Database::SQL::logquery_long || 2; # in seconds
+our $logquery_long=$TOM::Database::SQL::logquery_long || 5; # in seconds
 
 our $query_long_autocache=$TOM::Database::SQL::query_long_autocache || 0.01; # less availability than Memcached
 
@@ -270,7 +270,7 @@ sub execute
 		
 		if ($env{'-cache_changetime'})
 		{
-			main::_log("SQL: db changed before ".int(time()-$env{'-cache_changetime'})."s cache created ".int($cache->{'value'}->{'time'}-$env{'-cache_changetime'})."s after db changes (min old:$env{'-cache_min'}s)") if $env{'log'};
+			main::_log("SQL: db changed before ".int(time()-$env{'-cache_changetime'})."s. cache created ".int($cache->{'value'}->{'time'}-$env{'-cache_changetime'})."s after db changes (min old:$env{'-cache_min'}s)") if $env{'log'};
 		}
 		
 		if ($cache && $env{'-cache_changetime'} && ($env{'-cache_changetime'})>$cache->{'value'}->{'time'} && ((time()-$cache->{'value'}->{'time'})>$env{'-cache_min'}) )
@@ -283,7 +283,7 @@ sub execute
 		}
 		elsif ($cache)
 		{
-			main::_log("SQL: readed from cache (".(time()-$cache->{'value'}->{'time'})."s old)") if $env{'log'};
+			main::_log("SQL: readed from cache '".($cache->{'value'}->{'rows'})."' rows (".(time()-$cache->{'value'}->{'time'})."s old)") if $env{'log'};
 			main::_log("{$env{'db_h_orig'}:cache} '$SQL_' from '$filename:$line'",3,"sql") if $logcachequery;
 			$output{'sth'}=$cache;
 			$output{'info'}=$cache->{'value'}->{'info'};
