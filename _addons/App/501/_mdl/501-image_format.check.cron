@@ -61,6 +61,8 @@ sub execute
 	if (!$tom::addons{'a501'} || ($TOM::DB{'main'}{'name'} ne $App::501::db_name))
 	{main::_log("not enabled, or set for another domain service");return 1;}
 	
+#	return 1 unless $env{'test'};
+	
 	my $lock=new TOM::lock($App::501::db_name."::a501:image_format.check") || return 1;
 	
 	alarm(0);
@@ -82,10 +84,40 @@ sub execute
 	
 	
 	
-	
-	
-	
 	my $time_start=time();
+	
+	
+	# check original images, if original images must to be resized
+	my $sql=qq{
+		SELECT
+			file.ID_entity AS image_ID_entity,
+			file.ID AS file_ID
+		FROM
+			`$App::501::db_name`.a501_image_file AS file
+		INNER JOIN `$App::501::db_name`.a501_image_format AS format ON
+		(
+			format.ID = $App::501::image_format_original_ID
+		)
+		WHERE
+			file.ID_format = $App::501::image_format_original_ID AND
+			format.datetime_create > file.datetime_create
+		ORDER BY
+			file.ID_entity DESC
+		LIMIT
+			$env{'sql_limit'}
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-long'=>10);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("changing original image_file for image_ID_entity='$db0_line{'image_ID_entity'}'");
+		
+		App::501::functions::image_file_generate(
+			'image.ID_entity' => $db0_line{'image_ID_entity'},
+			'image_format.ID' => $App::501::image_format_original_ID,
+		);
+		
+	}
+	
 	
 	# find missing formats
 	my $sql=qq{
