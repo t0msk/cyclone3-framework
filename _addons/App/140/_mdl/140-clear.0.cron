@@ -11,6 +11,8 @@ sub execute
 	
 	if (!$env{'max_days'}){$cron::ERR="not defined max_days old logs";return undef;}
 	
+	alarm(3600);
+	
 	my $dir_step;
 	
 	my @files;
