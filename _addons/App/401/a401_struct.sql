@@ -38,6 +38,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
   `rating` int(10) unsigned NOT NULL, -- helps indexing
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   KEY `ID_entity` (`ID_entity`),
@@ -62,9 +63,23 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_j` (
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
   `rating` int(10) unsigned NOT NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_metaindex` (
+  `ID` bigint(20) unsigned NOT NULL, -- ref _article_ent.ID
+  `meta_section` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_variable` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_value` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`meta_section`,`meta_variable`),
+  KEY `SEL_0` (`meta_section`,`meta_variable`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -386,6 +401,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 		article_ent.visits,
 		article_ent.rating_score,
 		article_ent.rating_votes,
+		article_ent.metadata,
 		(article_ent.rating_score/article_ent.rating_votes) AS rating,
 		
 		article_attrs.status,

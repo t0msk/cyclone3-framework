@@ -504,6 +504,24 @@ sub article_add
 			if (exists $env{'article_ent.rating_votes'} && ($env{'article_ent.rating_votes'} ne $article_ent{'rating_votes'}));
 		$columns{'rating'}="'".TOM::Security::form::sql_escape($env{'article_ent.rating'})."'"
 			if (exists $env{'article_ent.rating'} && ($env{'article_ent.rating'} ne $article_ent{'rating'}));
+
+		# metadata
+		if ((not exists $env{'article_ent.metadata'}) && (!$article_ent{'metadata'})){$env{'article_ent.metadata'}=$App::401::metadata_default;}
+		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'article_ent.metadata'})."'"
+		if (exists $env{'article_ent.metadata'} && ($env{'article_ent.metadata'} ne $article_ent{'metadata'}));
+
+
+		if ($columns{'metadata'})
+		{
+			App::020::functions::metadata::metaindex_set(
+				'db_h' => 'main',
+				'db_name' => $App::910::db_name,
+				'tb_name' => 'a401_article_ent',
+				'ID' => $env{'article_ent.ID'},
+				'metadata' => {App::020::functions::metadata::parse($env{'article_ent.metadata'})}
+			);
+		}
+
 		if (keys %columns)
 		{
 			App::020::SQL::functions::update(
@@ -701,9 +719,9 @@ sub article_visit
 		TOM::Database::SQL::execute(qq{
 			UPDATE `$App::401::db_name`.a401_article_ent
 			SET visits=visits+1
-			WHERE ID_entity=$ID_entity
+			WHERE ID_entity=?
 			LIMIT 1
-		},'quiet'=>1) unless $TOM::CACHE_memcached;
+		},'bind'=>[$ID_entity],'quiet'=>1) unless $TOM::CACHE_memcached;
 		return 1;
 	}
 	
