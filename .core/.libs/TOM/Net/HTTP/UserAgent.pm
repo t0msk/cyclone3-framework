@@ -2161,6 +2161,7 @@ our %table_IP=
 	'213\.21\.47\.51' => 'spambot', # 2009-12-19
 	'213\.186\.60\.84' => 'spambot', # 2009-12-02
 	
+	'91\.210\.181\.94' => 'badbot', # 2010-02-11 - Digmia checker
 	'91\.210\.182\.23' => 'badbot', # 2009-11-29 - Digmia checker
 	
 	# list of anonymizers
