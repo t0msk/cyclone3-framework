@@ -370,6 +370,7 @@ sub get_CGI
 		else
 		{
 			# classical variable
+#			main::_log("reading $name");
 			if ($name=~/\[\]$/)
 			{
 #				main::_log("get array $name");

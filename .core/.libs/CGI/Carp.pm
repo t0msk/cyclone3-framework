@@ -425,24 +425,18 @@ sub die {
 
   &$DIE_HANDLER($arg,@rest) if $DIE_HANDLER;
 
-  # if $arg is a reference, give it a chance to
-  # be stringified
-  $arg = "$arg" if ref $arg;
+  # if called as die( $object, 'string' ),
+  # all is stringified, just like with
+  # the real 'die'
+  $arg = join '' => "$arg", @rest if @rest;
 
-  $arg = join '' => $arg, @rest ;
-  
+  $arg ||= 'Died';
+
   my($file,$line,$id) = id(1);
 
-  if ( ineval() )  {
+  $arg .= " at $file line $line.\n" unless ref $arg or $arg=~/\n$/;
 
-    $arg ||= 'Died';
-
-    $arg .= " at $file line $line.\n" unless $arg=~/\n$/;
-
-    realdie($arg);
-  }
-
-  $arg .= " at $file line $line." unless $arg=~/\n$/;
+  realdie $arg           if ineval();
   &fatalsToBrowser($arg) if $WRAP;
 
   $arg=~s/^/ stamp() /gme if $arg =~ /\n$/ or not exists $ENV{MOD_PERL};
@@ -500,11 +494,15 @@ sub warningsToBrowser {
 
 # headers
 sub fatalsToBrowser {
-  my($msg) = @_;
+  my $msg = shift;
+
+  $msg = "$msg" if ref $msg;
+
   $msg=~s/&/&amp;/g;
   $msg=~s/>/&gt;/g;
   $msg=~s/</&lt;/g;
-  $msg=~s/\"/&quot;/g;
+  $msg=~s/"/&quot;/g;
+
   my($wm) = $ENV{SERVER_ADMIN} ? 
     qq[the webmaster (<a href="mailto:$ENV{SERVER_ADMIN}">$ENV{SERVER_ADMIN}</a>)] :
       "this site's webmaster";
