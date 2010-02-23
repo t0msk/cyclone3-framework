@@ -44,6 +44,7 @@ sub prepare
 {
 	my $self=shift;
 	$self->{OUT}{HEADER} = "<?xml version=\"1.0\" encoding=\"<%CODEPAGE%>\"?>";
+	$self->{'OUT'}{'BODY'} = qq{<!TMP-CONTENT!>} unless $self->{'OUT'}{'BODY'};
 	return 1;
 }
 
