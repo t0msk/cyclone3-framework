@@ -45,7 +45,7 @@ sub execute
 	
 	my $tr=new TOM::Database::SQL::transaction('db_h'=>'main');
 		
-		main::_log("removing expired anonymous users (3 months inactive)");
+		main::_log("removing expired anonymous users (12 months inactive)");
 		my $est=1;
 		while ($est)
 		{
@@ -53,7 +53,7 @@ sub execute
 				DELETE
 				FROM TOM.a301_user_inactive
 				WHERE
-					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 3 MONTH)
+					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 12 MONTH)
 				LIMIT 100
 			}
 			,'quiet'=>1);
@@ -61,7 +61,7 @@ sub execute
 			$est=$sth0{'rows'};
 		}
 		
-		main::_log("removing deadway anonymous users (7 days inactive, less 2 requests)");
+		main::_log("removing deadway anonymous users (1 month inactive, less 2 requests)");
 		my $est=1;
 		while ($est)
 		{
@@ -71,7 +71,7 @@ sub execute
 					requests_all
 				FROM TOM.a301_user_inactive
 				WHERE
-					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 7 DAY)
+					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 1 MONTH)
 					AND requests_all<=2
 				LIMIT 1000
 			}
@@ -88,7 +88,7 @@ sub execute
 			}
 		}
 		
-		main::_log("removing inactive anonymous users (1 month inactive, less 10 requests)");
+		main::_log("removing inactive anonymous users (6 month inactive, less 10 requests)");
 		my $est=1;
 		while ($est)
 		{
@@ -98,7 +98,7 @@ sub execute
 					requests_all
 				FROM TOM.a301_user_inactive
 				WHERE
-					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 1 MONTH)
+					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 6 MONTH)
 					AND requests_all<=10
 				LIMIT 1000
 			}
