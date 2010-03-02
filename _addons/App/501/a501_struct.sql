@@ -315,7 +315,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_format` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
   `process` tinytext character set ascii NOT NULL,
-  `required` char(1) NOT NULL default 'Y',
+  `required` char(1) NOT NULL default 'N',
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
@@ -336,7 +336,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_format_j` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
   `process` tinytext character set ascii NOT NULL,
-  `required` char(1) NOT NULL default 'Y',
+  `required` char(1) NOT NULL default 'N',
   `lng` char(2) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
