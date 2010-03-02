@@ -258,6 +258,7 @@ if (!$db0_line{'ID'})
 		'columns' =>
 		{
 			'name' => "'original'",
+			'required' => "'Y'",
 			'status' => "'L'"
 		}
 	);
@@ -289,6 +290,7 @@ if ($image_format_original_ID)
 			'columns' =>
 			{
 				'name' => "'fullsize'",
+				'required' => "'Y'",
 				'process' => "'downscale(640,640)'",
 				'status' => "'L'"
 			}
