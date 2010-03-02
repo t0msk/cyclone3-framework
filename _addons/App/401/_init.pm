@@ -99,6 +99,10 @@ $priority{'C'}=$App::401::priority{'C'} || undef;
 $priority{'D'}=$App::401::priority{'D'} || undef;
 $priority{'E'}=$App::401::priority{'E'} || undef;
 $priority{'F'}=$App::401::priority{'F'} || undef;
+our $metadata_default=$App::401::metadata_default || qq{
+<metatree>
+</metatree>
+};
 
 our %a301_user_group;
 
