@@ -237,6 +237,7 @@ sub execute
 		foreach my $line(split("\n",$SQL))
 		{
 			$line=~s|\t|   |g;
+			$line=~s|[\t ]+$||g;
 			main::_log($line) unless $env{'quiet'};
 		}
 	}
@@ -244,8 +245,9 @@ sub execute
 	my ($package, $filename, $line) = caller;
 	
 	my $SQL_=$SQL;
-	$SQL_=~s|[\n\t\r]+| |g;
+	$SQL_=~s|[\n\t\r]+| |gms;
 	$SQL_=~s|^[ ]+||;
+	$SQL_=~s|[ ]+$||;
 	
 	my $cache_key=$TOM::DB{$env{'db_h_orig'}}{'host'};
 	$cache_key.='::'.$TOM::DB{$env{'db_h_orig'}}{'name'}.':'.$TOM::DB{$env{'db_h_orig'}}{'uri'}
