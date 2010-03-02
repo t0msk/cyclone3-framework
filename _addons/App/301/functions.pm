@@ -790,6 +790,8 @@ sub user_inactive
 sub user_get
 {
 	my $ID_user=shift;
+	my %env=@_;
+	
 	if (not $ID_user=~/^[a-zA-Z0-9]{8}$/)
 	{
 		return undef;
@@ -824,8 +826,11 @@ sub user_get
 		if (%data=$sth0{'sth'}->fetchhash)
 		{
 			main::_log("user found in inactive table");
-			main::_log("reactivating user '$data{'ID_user'}' from '$data{'datetime_last_login'}' with '$data{'requests_all'}' requests",3,"a301",2);
-			user_active($ID_user);
+			if (!$env{'dontactive'})
+			{
+				main::_log("reactivating user '$data{'ID_user'}' from '$data{'datetime_last_login'}' with '$data{'requests_all'}' requests",3,"a301",2);
+				user_active($ID_user);
+			}
 		}
 		else
 		{
