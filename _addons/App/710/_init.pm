@@ -147,6 +147,41 @@ foreach my $lng(@TOM::LNG_accept)
 }
 
 
+# autocreate 'My Company'
+our $mycompany_ID_entity;
+our $mycompany_ID;
+my %sth0=TOM::Database::SQL::execute(qq{
+	SELECT
+		ID,
+		ID_entity
+	FROM
+		`$db_name`.a710_org
+	WHERE
+		status='L'
+	LIMIT 1;
+},'quiet'=>1);
+my %db0_line=$sth0{'sth'}->fetchhash();
+if (!$db0_line{'ID'})
+{
+	$mycompany_ID_entity=App::020::SQL::functions::new(
+		'db_h' => 'main',
+		'db_name' => $db_name,
+		'tb_name' => 'a710_org',
+		'columns' =>
+		{
+			'name' => "'My Company'",
+			'name_url' => "'my-company'",
+			'status' => "'L'"
+		}
+	);
+	$mycompany_ID=$mycompany_ID_entity;
+}
+else
+{
+	$mycompany_ID=$db0_line{'ID'};
+	$mycompany_ID_entity=$db0_line{'ID_entity'};
+}
+
 
 =head1 AUTHOR
 
