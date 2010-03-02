@@ -67,9 +67,9 @@ sub execute
 	$env{'check_days'}=7 unless $env{'check_days'};
 	$env{'check_days'}=0 if $env{'all'};
 	
-	
 	# find missing file
 	main::_log("checking image_file items in image_file table");
+	my $i;
 	my $sql=qq{
 		SELECT
 			*,
@@ -88,7 +88,8 @@ sub execute
 	main::_log("checking $sth0{'rows'} files");
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		#main::_log("check image_file $db0_line{'ID'} in $db0_line{'file_path'}");
+		$i++;
+		main::_log("[$i/$sth0{'rows'}] checked") if ($i/100 == int($i/100));
 		
 		if (!-e $tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'})
 		{
@@ -131,7 +132,6 @@ sub execute
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$i++;
-		
 		main::_log("[$i/$sth0{'rows'}] checked") if ($i/100 == int($i/100));
 		
 		my $pth=$tom::P.'/!media/a501/image/file_j/'.$db0_line{'file_path'};
@@ -281,7 +281,6 @@ sub execute
 			}
 		}
 	}
-	
 	
 	main::_log("remove all old generated image_file items in image_file table");
 	my $sql=qq{
