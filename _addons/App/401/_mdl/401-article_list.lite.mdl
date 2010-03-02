@@ -214,7 +214,7 @@ sub execute
 	if ($env{'sql_limit'}=~/,(\d+)/)
 	{
 		$count_max=$1;
-		$env{'sql_limit'}=~s/,(\d+)/",".($1+1)/e;
+		$env{'sql_limit'}=~s/,(\d+)/",".($1+10)/e;
 	}
 	
 	if (not $env{'sql_limit'}=~/^(\d+),(\d+)$/)
@@ -422,10 +422,10 @@ sub execute
    my %IDs_entity;
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-      next if $IDs_entity{$db0_line{'ID_entity_article'}};
-      $IDs_entity{$db0_line{'ID_entity_article'}}++;
-      
-      $item_counter++;
+		next if $IDs_entity{$db0_line{'ID_entity_article'}};
+		$IDs_entity{$db0_line{'ID_entity_article'}}++;
+		
+		$item_counter++;
 		
 		last if $count_max<$item_counter;
 		
