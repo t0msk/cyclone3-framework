@@ -550,6 +550,7 @@ sub process
 			$main::USRM{'cookies'}=CVML::structure::serialize(%main::COOKIES);
 			
 			# save info about new user registration (from where is comming?)
+			$main::ENV{'REF_TYPE'}='direct' if $main::ENV{'REF_TYPE'} eq "onsite"; # ugly hotfix
 			$main::USRM{'session'}=CVML::structure::serialize(
 				'USRM_G' =>
 				{
@@ -646,6 +647,12 @@ sub process
 	# fill session hash with datas from CVML
 	tie %{$main::USRM{'session'}}, 'App::301::session'; # create empty tie hash
 	%{$main::USRM{'session'}}=%{$cvml->{'hash'}}; # fill tie hash
+	# setup AB testing if not set already
+	if (!$main::USRM{'session'}{'AB'})
+	{
+		my @ab=('A','B');
+		$main::USRM{'session'}{'AB'}=$ab[int(rand(2))];
+	}
 	$App::301::session::serialize=1;
 	
 	foreach (keys %main::USRM)
