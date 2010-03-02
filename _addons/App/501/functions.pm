@@ -438,7 +438,10 @@ sub image_file_process
 	
 	# GIF magick
 	$image1=$image1->[0] if $image1->Get('magick') eq 'GIF';
+	# CMYK magick
 	$image1->Set(colorspace=>'RGB') if $image1->Get('colorspace') eq "CMYK";
+	# Profile magick (reduces size)
+	$image1->Profile('profile'=>'');
 	
 	foreach my $function(split('\n',$env{'process'}))
 	{
@@ -764,6 +767,51 @@ sub image_file_process
 		
 		if ($function_name eq "face_debug")
 		{
+			next;
+		}
+		
+		if ($function_name eq "copyright")
+		{
+			main::_log("exec $function_name()");
+			
+			my $image_composite = new Image::Magick;
+			$image_composite->Read($tom::P.'/!media/a501/copyright.png');
+			my $max=0.8;
+			my $downscale_width=$image_composite->Get('width');
+				if ($downscale_width>$image1->Get('width')*$max)
+				{
+					$downscale_width=int($image1->Get('width')*$max);
+				}
+			my $downscale_height=$image_composite->Get('height');
+				if ($downscale_height>$image1->Get('height')*$max)
+				{
+					$downscale_height=int($image1->Get('height')*$max);
+				}
+			
+			my $image_composite_points=$image_composite->Get('width')*$image_composite->Get('height');
+			my $image1_points=$image1->Get('width')*$image1->Get('height');
+			
+			my $max=0.02;
+			if (($image_composite_points/$image1_points)>$max) # max 5%
+			{
+				my $downscale_width2=int($image_composite->Get('width')*(1- ( ($image_composite_points/$image1_points)-$max ) ));
+					$downscale_width=$downscale_width2 if $downscale_width>$downscale_width2;
+				my $downscale_height2=int($image_composite->Get('height')*(1- ( ($image_composite_points/$image1_points)-$max ) ));
+					$downscale_height=$downscale_height2 if $downscale_height>$downscale_height2;
+			}
+			
+			main::_log("composite max_geometry=$downscale_width x $downscale_height");
+			
+			$image_composite->Resize('geometry'=>$downscale_width.'x'.$downscale_height);
+			
+			$image1->Composite(
+				'image'=>$image_composite,
+#				'compose'=>'Difference',
+				'x' => 1,
+				'y' => $image1->Get('height')-$image_composite->Get('height'),
+			);
+			
+			$procs++;
 			next;
 		}
 		
@@ -1821,6 +1869,7 @@ sub get_image_file
 		my %image=$sth0{'sth'}->fetchhash();
 		if (!$image{'ID_file'})
 		{
+			undef $image{'file_path'};
 			main::_log("this image does not have format '$env{'image_file.ID_format'}'");
 			# trying to regenerate (can be very slow...)
 			App::501::functions::image_file_generate(
