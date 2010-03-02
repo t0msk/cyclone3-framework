@@ -131,6 +131,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_file` (
   UNIQUE KEY `UNI_0` (`ID_entity`,`ID_format`),
   KEY `ID_format` (`ID_format`),
   KEY `name` (`name`),
+  KEY `file_checksum` (`file_checksum`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
