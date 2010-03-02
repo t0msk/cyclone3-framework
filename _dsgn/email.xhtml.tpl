@@ -133,7 +133,7 @@
 	
 	<entity id="email.table.col.value">
 	<![CDATA[
-		<td><%value%></td>
+		<td align="<%align%>"><%value%></td>
 		<#email.table.col.value#>
 	]]>
 	</entity>
