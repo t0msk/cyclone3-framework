@@ -290,8 +290,10 @@ sub execute
 			SELECT
 				ID
 			FROM
-				a210_page
-			WHERE $where AND ID_charindex LIKE '$from%'
+				`$TOM::DB{'main'}{'name'}`.`a210_page`
+			WHERE
+				$where
+				AND ID_charindex LIKE '$from%'
 		};
 		my %sth0=TOM::Database::SQL::execute($sql);
 		if ($sth0{'rows'}==1)
@@ -351,7 +353,7 @@ sub execute
 			visible,
 			is_default
 		FROM
-			a210_page
+			`$TOM::DB{'main'}{'name'}`.`a210_page`
 $where
 		ORDER BY
 			$env{'db_order'}

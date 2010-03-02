@@ -109,12 +109,18 @@ sub execute
 			SELECT
 				ID
 			FROM
-				a210_page
+				`$TOM::DB{'main'}{'name'}`.`a210_page`
 			WHERE $where AND ID_charindex LIKE '$from%'
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,
 			'-cache' => 3600,
-			'-cache_changetime' => App::020::SQL::functions::_get_changetime({'db_h'=>"main",'db_name' => $TOM::DB{'main'}{'name'},'tb_name' => "a210_page"})
+			'-cache_changetime' => App::020::SQL::functions::_get_changetime(
+				{
+					'db_h'=>"main",
+					'db_name' => $TOM::DB{'main'}{'name'},
+					'tb_name' => "a210_page"
+				}
+			)
 		);
 		if ($sth0{'rows'}==1)
 		{
@@ -173,7 +179,7 @@ sub execute
 			visible,
 			is_default
 		FROM
-			a210_page
+			`$TOM::DB{'main'}{'name'}`.`a210_page`
 $where
 		ORDER BY
 			$env{'db_order'}
@@ -193,7 +199,13 @@ $where
 		$sql,
 		'log'=>1,
 		'-cache' => 300,
-		'-cache_changetime' => App::020::SQL::functions::_get_changetime({'db_h'=>"main",'db_name' => $TOM::DB{'main'}{'name'},'tb_name' => "a210_page"})
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $TOM::DB{'main'}{'name'},
+				'tb_name' => "a210_page"
+			}
+		)
 	);
 	if ($sth0{'sth'})
 	{
