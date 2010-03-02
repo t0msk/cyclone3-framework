@@ -419,33 +419,20 @@ sub execute
 			
 			my $item=$XSGN{'a501.gallery.'.$i} || $XSGN{'a501.gallery'};
 			
-			my $sql=qq{
-				SELECT
-					*
-				FROM
-					`$App::501::db_name`.a501_image_view
-				WHERE
-					ID_entity_image=$relation->{'r_ID_entity'} AND
-					ID_format=$App::501::image_format_fullsize_ID AND
-					status IN ('Y','L')
-				LIMIT 1
-			};
-			my %sth1=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache'=>60);
-			if (my %db1_line=$sth1{'sth'}->fetchhash()){$item=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;}
+			my %db1_line=App::501::functions::get_image_file(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_file.ID_format' => $App::501::image_format_fullsize_ID,
+				'image_attrs.lng' => $env{'lng'}
+			);
+			$item=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;
+			
 			my $ID_format=$env{'gallery.thumbnail.ID_format'} || $App::501::image_format_thumbnail_ID;
-			my $sql=qq{
-				SELECT
-					*
-				FROM
-					`$App::501::db_name`.a501_image_view
-				WHERE
-					ID_entity_image=$relation->{'r_ID_entity'} AND
-					ID_format=$ID_format AND
-					status IN ('Y','L')
-				LIMIT 1
-			};
-			my %sth1=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache'=>60);
-			if (my %db1_line=$sth1{'sth'}->fetchhash()){$item=~s|<%image.thumbnail.db_(.*?)%>|$db1_line{$1}|g;}
+			my %db1_line=App::501::functions::get_image_file(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_file.ID_format' => $ID_format,
+				'image_attrs.lng' => $env{'lng'}
+			);
+			$item=~s|<%image.thumbnail.db_(.*?)%>|$db1_line{$1}|g;
 			
 			if ($XSGN{'TMP'}=~s|<#a501.gallery.$i#>|$item|)
 			{
@@ -477,39 +464,23 @@ sub execute
 					$relation->{'rel_type'} eq "thumbnail"
 			)
 			{
-				my $sql=qq{
-					SELECT
-						*
-					FROM
-						`$App::501::db_name`.a501_image_view AS image
-					WHERE
-						image.ID_entity_image = $relation->{'r_ID_entity'} AND
-						image.status='Y' AND
-						image.ID_format = '$env{'image_format.ID'}' AND
-						image.lng='$env{'product_lng.lng'}'
-					LIMIT 1
-				};
-				my %sth1=TOM::Database::SQL::execute($sql,'slave'=>1);
-				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				my %db1_line=App::501::functions::get_image_file(
+					'image.ID_entity' => $relation->{'r_ID_entity'},
+					'image_file.ID_format' => $env{'image_format.ID'},
+					'image_attrs.lng' => $env{'lng'}
+				);
+				if ($db1_line{'ID_entity_image'})
 				{
 					my $uri=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
 					$XSGN{'TMP'}=~s|<%thumbnail.src%>|$uri|;
 				}
 				
-				my $sql=qq{
-					SELECT
-						*
-					FROM
-						`$App::501::db_name`.a501_image_view AS image
-					WHERE
-						image.ID_entity_image = $relation->{'r_ID_entity'} AND
-						image.status='Y' AND
-						image.ID_format = '$env{'image_format_fullsize.ID'}' AND
-						image.lng='$env{'product_lng.lng'}'
-					LIMIT 1
-				};
-				my %sth1=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
-				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				my %db1_line=App::501::functions::get_image_file(
+					'image.ID_entity' => $relation->{'r_ID_entity'},
+					'image_file.ID_format' => $env{'image_format_fullsize.ID'},
+					'image_attrs.lng' => $env{'lng'}
+				);
+				if ($db1_line{'ID_entity_image'})
 				{
 					my $uri=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
 					#$item=~s|<%fullsize.db_(.*?)%>|$db1_line{$1}|g;
@@ -542,7 +513,20 @@ sub execute
 		}
 		$XSGN{'TMP'}=~s|<#metadata#>|$XSGN{'metadata'}| if $keys;
 		
-#		$main::H->add_DOC_title($db0_line{'name'});
+		
+		$main::H->add_DOC_title($db0_line{'name'}) if $env{'title'};
+		if ($env{'description'})
+		{
+			my $desc=$db0_line{'description_short'};
+			$desc=~s|<.*?>||g;$desc=~s|&nbsp;| |g;
+			$main::H->add_DOC_description($desc);
+		};
+		if ($env{'keywords'})
+		{
+			$main::H->add_DOC_keywords($db0_line{'name'});
+			$main::H->add_DOC_keywords($db0_line{'keywords'});
+		}
+		$main::H->add_DOC_title($price.' '.$db0_line{'price_currency'}) if $env{'title_price'};
 		
 	}
 	

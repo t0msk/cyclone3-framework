@@ -187,6 +187,11 @@ sub execute
 		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
 	}
 	
+	foreach (keys %env)
+	{
+		main::_log("key $_=$env{$_}");
+	}
+	
 	$env{'db_name'}=$App::910::db_name unless $env{'db_name'};
 	
 	$env{'product_lng.lng'}=$env{'lng'} unless $env{'product_lng.lng'};
@@ -204,10 +209,11 @@ sub execute
 		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
 	}
 	
-	my $count_max;#=$env{'sql_limit'};
-	if ($env{'sql_limit'}=~/,(\d+)/)
+	my $count_max;
+	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
 	{
-		$count_max=$1;
+		$env{'offset'}=$1;
+		$count_max=$2;
 		$env{'sql_limit'}=~s/,(\d+)/",".($1+1)/e;
 	}
 	
@@ -217,7 +223,8 @@ sub execute
 	
 	if($env{'product_cat.path'})
 	{
-		if($env{'product_cat.path'}=~s/\*$//){
+		if($env{'product_cat.path'}=~s/\*$//)
+		{
 			$env{'product_cat.ID_entity'}='*';
 		}
 		my %product_cat=App::020::SQL::functions::tree::find_path_url(
@@ -229,6 +236,19 @@ sub execute
 			'-cache' => 3600,
 			'-slave' => 1
 		);
+		if ($env{'title'})
+		{
+			my $title=$product_cat{'name'};
+			my $page=$env{'offset'}/$count_max;
+			$title.=" (".($page+1).")" if $page;
+			$title.='<%price%>';
+			$main::H->add_DOC_title($title);
+		}
+		if (!$product_cat{'ID_entity'})
+		{
+			$main::page_statuscode="404";
+			return 1;
+		}
 		$env{'product_cat.ID_entity'}=$product_cat{'ID_entity'}.$env{'product_cat.ID_entity'};
 	}
 	
@@ -236,8 +256,23 @@ sub execute
 	foreach my $ID_category(split(';',$env{'product_cat.ID_entity'}))
 	{
 		next unless $ID_category;
-		if ($ID_category=~s/\*$//)
+		main::_log("select by ID_category=$ID_category");
+		if ($ID_category=~s/^\*$//)
 		{
+			main::_log("all categories");
+			$ID_category=qq{
+				SELECT
+					ID_entity
+				FROM
+					`$App::910::db_name`.a910_product_cat
+				WHERE
+					lng='$env{'product_lng.lng'}' AND
+					status IN ('$status_sql')
+			};
+		}
+		elsif ($ID_category=~s/\*$//)
+		{
+			main::_log("ID_category=$ID_category");
 			my $cat_sql=qq{
 						SELECT
 							ID_charindex
@@ -332,6 +367,22 @@ sub execute
 			product_ent.rating_votes,
 			(product_ent.rating_score/product_ent.rating_votes) AS rating,
 			
+			IF (
+				supplier_org.name IS NOT NULL,
+				supplier_org.name,
+				IF (
+						supplier_person.firstname IS NOT NULL,
+						CONCAT(supplier_person.surname,', ',supplier_person.firstname),
+						NULL
+					)
+			) AS supplier_name,
+			
+			supplier_org.ID_entity AS supplier_org_ID_entity,
+			supplier_org.name AS supplier_org_name,
+			supplier_org.name_url AS supplier_org_name_url,
+			supplier_person.firstname AS supplier_person_firstname,
+			supplier_person.surname AS supplier_person_surname,
+			
 			product.status
 			
 		FROM
@@ -356,6 +407,18 @@ sub execute
 		(
 			product_family.ID_entity = product_ent.ID_family
 		)
+		LEFT JOIN `$App::710::db_name`.`a710_org` AS supplier_org ON
+		(
+			supplier_org.ID_entity = product.supplier_org
+		)
+--		LEFT JOIN `$App::301::db_name`.`a301_user` AS user ON
+--		(
+--			user.ID_user = product.supplier_person
+--		)
+		LEFT JOIN `$App::301::db_name`.`a301_user_profile` AS supplier_person ON
+		(
+			supplier_person.ID_entity = product.supplier_person
+		)
 		LEFT JOIN `$App::910::db_name`.`a910_product_cat` AS product_cat ON
 		(
 			product_cat.ID_entity = product_sym.ID AND
@@ -365,6 +428,7 @@ sub execute
 		WHERE
 			product.status IN ('$status_sql') AND
 			product.price IS NOT NULL AND
+			product.price > 0 AND
 			product.product_number IS NOT NULL AND
 			product_sym.ID AND
 			product_lng.lng='$env{'product_lng.lng'}'
@@ -393,22 +457,39 @@ sub execute
 	
 	# Line counter
 	my $item_counter=0;
-	
+	my $description;
+	my $description_full;
+	my $price_lowest;
+	my $name_last;
    my %IDs_entity;
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-#      next if $IDs_entity{$db0_line{'ID_entity_article'}};
- #     $IDs_entity{$db0_line{'ID_entity_article'}}++;
-      
-      $item_counter++;
+		if (!$item_counter)
+		{
+			# first product
+		}
+		
+		$item_counter++;
 		
 		last if $count_max<$item_counter;
 		
-		main::_log("product[$item_counter] product_lng.name='$db0_line{'name'}'");
+		main::_log("product[$item_counter] product_lng.name='$db0_line{'name'}' $db0_line{'supplier_name'}");
+		
+		if ($name_last ne $db0_line{'name'})
+		{
+			$description.=$db0_line{'name'}.", ";
+		}
+		$description_full.=$db0_line{'name'}.", ";
+		$description_full.=$db0_line{'description_short'}.", ";
 		
 		my $item=
 			$XSGN{'item.'.$item_counter}
 			|| $XSGN{'item'};
+		
+		if (!$price_lowest || $db0_line{'price_incl_VAT'}<$price_lowest)
+		{
+			$price_lowest=$db0_line{'price_incl_VAT'};
+		}
 		
 		my $price=TOM::Utils::currency::format($db0_line{'price'});
 		$item=~s|<%price%>|$price|g;
@@ -417,7 +498,7 @@ sub execute
 		$item=~s|<%price_incl_VAT%>|$price|g;
 		
 		# fill raw data into $XSGN{'item'}
-		
+		$db0_line{'supplier_name_url'}=TOM::Net::URI::rewrite::convert($db0_line{'supplier_name'});
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
 		# process description_short
@@ -487,19 +568,12 @@ sub execute
 					$relation->{'rel_type'} eq "thumbnail"
 			)
 			{
-				my $sql=qq{
-					SELECT
-						*
-					FROM
-						`$App::501::db_name`.a501_image_view AS image
-					WHERE
-						image.ID_entity_image = $relation->{'r_ID_entity'} AND
-						image.status='Y' AND
-						image.ID_format = '$env{'image_format.ID'}'
-					LIMIT 1
-				};
-				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1);
-				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				my %db1_line=App::501::functions::get_image_file(
+					'image.ID_entity' => $relation->{'r_ID_entity'},
+					'image_file.ID_format' => $env{'image_format.ID'},
+					'image_attrs.lng' => $env{'lng'}
+				);
+				if ($db1_line{'ID_entity_image'})
 				{
 					my $uri=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
 					$item=~s|<%thumbnail.src%>|$uri|;
@@ -581,20 +655,35 @@ sub execute
 		{
 			$XSGN{'TMP'}=~s|<#item#>|$item|;
 		}
+		
+		$name_last=$db0_line{'name'};
+	}
+	
+	$main::H->add_DOC_description($description) if $env{'description'};
+	if ($env{'set_keywords'})
+	{
+		my %keywords;
+		$description_full=~s|<.*?>||g;
+		$description_full=~s|[\.\-]||g;
+		$description_full=~s|&nbsp;||g;
+		$description_full=lc($description_full);
+		foreach my $word(split('[ ,]',$description_full))
+		{
+			$word=~s|^\s+||g;
+			$word=~s|\s+$||g;
+			next if length($word)<4;
+			$keywords{$word}++;
+		}
+		$description_full = join (",",reverse sort keys %keywords);
+		$main::H->add_DOC_keywords($description_full);
+	}
+	if ($env{'title'})
+	{
+		my $price=TOM::Utils::currency::format($price_lowest);
+		$main::H->{'env'}{'DOC_title'}=~s|<%price%>| od $price €|;
 	}
 	
 	$XSGN{'TMP'}=~s|<%total_count%>|$item_counter|g;
-	
-	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
-	{
-		$env{'offset'}=$1;
-		#$env{'count'}=$2;
-	}
-	else
-	{
-		#$env{'count'}=$env{'sql_limit'};
-	}
-	#$env{'count'}=$count_max;
 	
 	
 	# offset
