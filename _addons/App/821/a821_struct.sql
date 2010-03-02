@@ -103,6 +103,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_discussion_message` (
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
+  KEY `karma_label` (`karma_label`),
   KEY `SEL_0` (`ID_discussion`,`lng`,`status`,`datetime_post`),
   KEY `SEL_1` (`ID_discussion`,`ID_charindex`),
   KEY `SEL_2` (`datetime_post`,`status`)
