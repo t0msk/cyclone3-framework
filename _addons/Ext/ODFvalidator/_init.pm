@@ -263,7 +263,7 @@ sub process
 		$self->xmlvalidate(
 			'file' => 'manifest.xml',
 			'xml' => $self->{'tmpdir'}.'/META-INF/manifest.xml',
-			'rng' => $DIR.'/OpenDocument-manifest-schema-v'.'1.0'.'.rng'
+			'rng' => $DIR.'/OpenDocument-manifest-schema-v'.$self->{'version'}.'.rng'
 		);
 	}
 	
