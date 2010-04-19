@@ -259,6 +259,9 @@ if (!$db0_line{'ID'})
 		{
 			'name' => "'original'",
 			'required' => "'Y'",
+			'process' => "'set_env(\\'ext\\',\\'jpg\\')
+set_env(\\'quality\\',\\'90\\')
+downscale(1024,1024)'",
 			'status' => "'L'"
 		}
 	);
@@ -291,7 +294,9 @@ if ($image_format_original_ID)
 			{
 				'name' => "'fullsize'",
 				'required' => "'Y'",
-				'process' => "'downscale(640,640)'",
+				'process' => "'set_env(\\'ext\\',\\'jpg\\')
+set_env(\\'quality\\',\\'85\\')
+downscale(640,640)'",
 				'status' => "'L'"
 			}
 		);
