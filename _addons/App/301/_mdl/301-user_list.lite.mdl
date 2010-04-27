@@ -1,0 +1,315 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::160::_init;
+use App::301::_init;
+use TOM::Text::format;
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	delete $env{'ID_charindex'};
+	$env{'sql_limit'}=~s|^,|0,|;$env{'sql_limit'}=~s|,$|,10|;
+	$env{'sql_limit'}=50 unless $env{'sql_limit'};
+	
+	$env{'sql_order_by'}='login ASC' unless $env{'sql_order_by'};
+	$env{'sql_order_by'}=' '.$env{'sql_order_by'};
+	
+	my $from;
+	my $sql_where;
+	
+	# language
+	$sql_where.="user.hostname='$tom::H_cookie' ";
+	
+	# status
+	if ($env{'status'})
+	{
+		$XSGN{'TMP'}=~s|<%required_status%>|$env{'status'}|g;
+		$sql_where.="AND user.status IN ('".(join "','", split('',$env{'status'}))."') ";
+	}
+	else
+	{
+		$sql_where.="AND user.status='Y' ";
+	}
+	
+	# find ID LIKE *
+	if ($env{'user_group.ID'}=~s/\*$//)
+	{
+		my $cat_sql=qq{
+					SELECT
+						ID_charindex
+					FROM
+						TOM.a301_user_group
+					WHERE
+						ID=$env{'user_group.ID'}
+					LIMIT 1
+		};
+		$env{'user_group.ID*'} = qq{
+			SELECT
+				ID
+			FROM
+				TOM.a301_user_group
+			WHERE
+				ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+				lng='$env{'lng'}' AND
+				status IN ('Y','N','L')
+		};
+		#TOM::Database::SQL::execute($cat_sql,'log'=>1);
+	}
+	
+	
+	if ($env{'user_group.ID'})
+	{
+		$XSGN{'TMP'}=~s|<%ID%>|$env{'user_group.ID'}|g;
+		
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h'    => 'main',
+			'db_name' => 'TOM',
+			'tb_name' => 'a301_user_group',
+			'ID'      => $env{'user_group.ID'},
+			'columns' => 
+			{
+				'ID_charindex' => 1
+			}
+		);
+		if ($data{'ID'})
+		{
+			$env{'ID_charindex'}=$data{'ID_charindex'}.':';
+		}
+		else
+		{
+			main::_log("can't find user_group.ID='$data{'ID'}'",1);
+			return undef;
+		}
+		
+	}
+	
+	
+	# WHERE CATEGORY
+	my $where_category;
+	$where_category="AND ID_group='$env{'user_group.ID'}'" if $env{'user_group.ID'};
+	$where_category="AND ID_group IN ($env{'user_group.ID*'})" if $env{'user_group.ID*'};
+	$where_category="" unless $env{'user_group.ID'};
+	
+	$sql_where .= ' AND '.$env{'sql_where'} if $env{'sql_where'}; 
+
+	# abc
+	$sql_where.=" AND user_profile.surname LIKE '".$env{'abc'}."%'" if $env{'abc'};
+	
+
+	my $sql=qq{
+		SELECT
+			user.hostname,
+			user_group.ID_entity AS ID_group,
+			user_group.name AS group_name,
+			user.ID_user AS ID_user,
+			user.login,
+			user.pass,
+			user.email,
+			user.status,
+			user.datetime_register,
+			user.datetime_last_login,
+			user_profile.datetime_create,
+			user_profile.firstname,
+			user_profile.surname,
+			user_profile.gender,
+			user_profile.country_code,
+			user_profile.date_birth,
+			user_profile.city,
+			user_profile.ZIP,
+			user_profile.street,
+			user_profile.street_num,
+			user_profile.address_postal,
+			user_profile.note
+		FROM
+			TOM.a301_user AS user
+		LEFT JOIN TOM.a301_user_rel_group AS rel ON
+		(
+			user.ID_user = rel.ID_user
+		)
+--		LEFT JOIN TOM.a301_user AS user ON
+--		(
+--			user.ID_user = rel.ID_user
+--		)
+		LEFT JOIN TOM.a301_user_group AS user_group ON
+		(
+			user_group.ID = rel.ID_group
+		)
+		LEFT JOIN TOM.a301_user_profile AS user_profile ON
+		(
+			user_profile.ID_entity = user.ID_user
+		)
+		WHERE
+			(user.login IS NOT NULL OR user_profile.ID IS NOT NULL OR user.email IS NOT NULL) AND
+			$sql_where
+			$where_category
+		ORDER BY
+			$env{'sql_order_by'}
+		LIMIT
+			$env{'sql_limit'}
+	};
+	
+	if (!$env{'user_group.ID'})
+	{
+#		$where_category="AND ID_group=0";
+		$sql=qq{
+			SELECT
+				user.hostname,
+				user.ID_user AS ID_user,
+				user.login,
+				user.pass,
+				user.email,
+				user.status,
+				user.datetime_register,
+				user.datetime_last_login,
+				user_profile.datetime_create,
+				user_profile.firstname,
+				user_profile.surname,
+				user_profile.gender,
+				user_profile.country_code,
+				user_profile.date_birth,
+				user_profile.city,
+				user_profile.ZIP,
+				user_profile.street,
+				user_profile.street_num,
+				user_profile.address_postal,
+				user_profile.note,
+				YEAR(user_profile.date_birth) AS year_birth
+			FROM
+				TOM.a301_user AS user
+			LEFT JOIN TOM.a301_user_profile AS user_profile ON
+			(
+				user_profile.ID_entity = user.ID_user
+			)
+			WHERE
+				(user.login IS NOT NULL OR user_profile.ID IS NOT NULL OR user.email IS NOT NULL) AND
+				$sql_where
+			ORDER BY
+				$env{'sql_order_by'}
+			LIMIT
+				$env{'sql_limit'}
+		};
+	}
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>0);
+	if ($sth0{'sth'})
+	{
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			my $item=$XSGN{'item'};
+			
+			$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+			
+			my $fullname;
+			my $shortname;
+			
+			($fullname,$shortname)=App::301::authors::get_fullname(%db0_line);
+			
+			$item=~s|<%fullname%>|$fullname|g;
+			$item=~s|<%shortname%>|$shortname|g;
+			
+			$item=~s|<%ID%>|$db0_line{'ID_user'}|g;
+			$item=~s|<%ID_entity%>|$db0_line{'ID_user'}|g;
+			
+			# check relations
+			foreach my $relation (App::160::SQL::get_relations(
+				'db_name' => $App::301::db_name,
+				'l_prefix' => 'a301',
+				'l_table' => 'user',
+				'l_ID_entity' => $db0_line{'ID_user'},
+				'status' => "Y"
+				))
+			{
+				next if ($relation->{'rel_type'} eq "avatar");
+				next if ($relation->{'rel_type'} eq "autogram");
+				$item=~s|<%relation_status%>|Y|g;
+			}
+			
+			if (my $relation=(App::160::SQL::get_relations(
+				'db_name' => $App::301::db_name,
+				'l_prefix' => 'a301',
+				'l_table' => 'user',
+				'l_ID_entity' => $db0_line{'ID_user'},
+				'rel_type' => 'avatar',
+				'r_prefix' => "a501",
+				'r_table' => "image",
+				'status' => "Y",
+				'limit' => 1
+			))[0])
+			{
+				use App::501::_init;
+
+				my %image=App::501::functions::get_image_file(
+					'image.ID_entity' => $relation->{'r_ID_entity'},
+					'image_file.ID_format' => $App::501::image_format_ico_ID
+				);
+
+				if (%image)
+				{
+					my $uri=$tom::H_a501.'/image/file/'.$image{'file_path'};
+					$item=~s|<%ico%>|$uri|;
+				}
+				
+			}
+			
+			
+			if ($App::710::db_name)
+			{
+				my $organizations;
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						`org`.name
+					FROM
+						`$App::710::db_name`.a301_ACL_user AS `user`
+					INNER JOIN `$App::710::db_name`.a710_org AS `org` ON
+					(
+						`user`.r_ID_entity = `org`.ID_entity
+					)
+					WHERE
+						`user`.ID_entity='$db0_line{'ID_user'}' AND
+						`user`.r_prefix = 'a710' AND
+						`user`.r_table = 'org'
+					ORDER BY
+						`user`.datetime_create
+				});
+				while (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					$organizations.=$db1_line{'name'}."; ";
+				}
+				$organizations=~s|; $||;
+				$item=~s|<%organizations%>|$organizations|g;
+			}
+			
+			$XSGN{'TMP'}=~s|<#item#>|$XSGN{'item'}|;
+			
+		}
+		
+	}
+	else
+	{
+		main::_log("can't select");
+	}
+	
+	
+	
+	return 1;
+}
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
