@@ -1,0 +1,190 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::160::_init;
+use App::401::_init;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	$env{'sql_limit'}=10 unless $env{'sql_limit'};
+	$env{'sql_order_by'}='ID_charindex ASC' unless $env{'sql_order_by'};
+	
+	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
+	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
+	{
+		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
+	}
+	
+	my $from;
+	my $sql_where;
+	
+	# status
+	if ($env{'status'})
+	{
+		$sql_where.="status IN ('".(join "','", split('',$env{'status'}))."') ";
+	}
+	else
+	{
+		$sql_where.="status='Y' ";
+	}
+	
+	
+	if ($env{'article_cat.ID'})
+	{
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h'    => 'main',
+			'db_name' => $App::401::db_name,
+			'tb_name' => 'a401_article_cat',
+			'ID'      => $env{'article_cat.ID'},
+			'columns' => 
+			{
+				'*' => 1
+			}
+		);
+		if ($data{'ID'})
+		{
+			$env{'ID_charindex'}=$data{'ID_charindex'}.':';
+			$XSGN{'TMP'}=~s|<%db_(.*?)%>|$data{$1}|g;
+		}
+		else
+		{
+			main::_log("can't find article_cat.ID='$data{'ID'}'",1);
+			return undef;
+		}
+		
+	}
+	
+	
+	
+	my $item_counter=0;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`$App::401::db_name`.a401_article_cat
+		WHERE
+			$sql_where AND
+			ID_charindex LIKE '$env{'ID_charindex'}___'
+		ORDER BY
+			$env{'sql_order_by'}
+		LIMIT
+			$env{'sql_limit'}
+	},'quiet'=>1,'slave'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $item=$XSGN{'item'};
+		$item_counter++;
+		
+		
+		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		
+		# process abstract
+		my $p=new App::401::mimetypes::html;
+		
+		# img
+		$p->{'ignore'}{'img'}=
+			$env{'ignore.img'}
+			|| undef;
+		
+		$p->{'ignore'}{'img.1'}=
+			$env{'ignore.img.1'}
+			|| undef;
+		
+		# a210_page
+		$p->{'entity'}{'a210_page'}=
+			$XSGN{'a210_page'}
+			|| undef;
+			
+		# a401_article
+		$p->{'entity'}{'a401_article'}=
+			$XSGN{'a401_article'}
+			|| undef;
+		
+		# a501_image
+		$p->{'config'}->{'a501_image_file.ID_format'}=
+			$env{'article_cat.'.$item_counter.'.a501_image_file.ID_format'}
+			|| $env{'a501_image_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.1'}=
+			$env{'article_cat.'.$item_counter.'.a501_image_file.ID_format.1'}
+			|| $env{'a501_image_file.ID_format.1'}
+			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.extra'}=
+			$env{'a501_image_file.ID_format.extra'}
+			|| undef;
+		$p->{'entity'}->{'a501_image'}=
+			$XSGN{'a501_image'}
+			|| undef;
+		$p->{'entity'}->{'a501_image.1'}=
+			$XSGN{'a501_image.1'}
+			|| undef;
+		
+		# a510_video
+		$p->{'config'}->{'a510_video_part_file.ID_format'}=
+			$env{'article_cat.'.$item_counter.'.a510_video_part_file.ID_format'}
+			|| $env{'a510_video_part_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a510_video_part_file.ID_format.1'}=
+			$env{'article_cat.'.$item_counter.'.a510_video_part_file.ID_format.1'}
+			|| $env{'a510_video_part_file.ID_format.1'}
+			|| undef;
+		$p->{'entity'}{'a510_video'}=
+			$XSGN{'a510_video'}
+			|| undef;
+		$p->{'entity'}{'a510_video.1'}=
+			$XSGN{'a510_video.1'}
+			|| undef;
+		$p->{'entity'}{'a510_video_part'}=
+			$XSGN{'a510_video_part'}
+			|| undef;
+		$p->{'entity'}{'a510_video_part.1'}=
+			$XSGN{'a510_video_part.1'}
+			|| undef;
+		
+		$p->parse($db0_line{'description'});
+		#$p->eof();
+		my $description_html=$p->{'out'};
+		$item=~s|<%description%>|$description_html|g;
+		
+		my $description_plain=TOM::Text::format::xml2plain($db0_line{'description'});
+		$item=~s|<%description_plain%>|$description_plain|;
+		
+		
+		$XSGN{'TMP'}=~s|<#item#>|$item|;
+	}
+	
+	$XSGN{'TMP'}=~s|<%total_count%>|$item_counter|g;
+	
+	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
+	{
+		$env{'offset'}=$1;
+		$env{'count'}=$2;
+	}
+	else
+	{
+		$env{'count'}=$env{'sql_limit'};
+	}
+	
+	
+	return 1;
+}
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
