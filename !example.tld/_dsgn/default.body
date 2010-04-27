@@ -1,6 +1,6 @@
 <!-- This is document body file which is loaded into every request -->
 
-<div id="page">
+<div class="page">
 	<div id="cnt">
 		
 		<div id="header">

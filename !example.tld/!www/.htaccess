@@ -10,6 +10,6 @@ RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^.*$ - [S=35]
 
-RewriteRule ^favicon\.ico$ favicon.ico [L,QSA]
+RewriteRule favicon\.ico$ favicon.ico [L,QSA]
 RewriteRule ^robots\.txt$ robots.txt [L,QSA]
 RewriteRule ^.*$ core.tom [L,QSA]
