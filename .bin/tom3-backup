@@ -1,0 +1,132 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+BEGIN {require "/www/TOM/.bin/tom3-init";}
+use Mysql;
+use TOM::Database::connect;
+use Utils::datetime;
+
+$main::time_current=time;
+
+%form=
+(
+	'--domain'	=>	"backup domain (eg. localhost.com)",
+	'-v' => "verbose all"
+);
+if (($FORM{'h'})||($FORM{'help'})){&help();}
+if (!$FORM{'domain'}){&help();}
+
+if (not -e $p."/local.conf")
+{
+	print color 'reset bold yellow';
+	print "domain $main::h not exists\n";
+	&exit();
+}
+
+require $p."/local.conf";
+
+$main::debug=1;
+
+TOM::Database::connect::all('main','sys','stats');
+
+# backup domain scripts
+# backup domain databases
+# backup domain TOM databases
+
+print "backuping TOM.a110_weblog_week\n";
+my %sth0=TOM::Database::SQL::execute(qq{
+	SELECT
+		*
+	INTO OUTFILE '/tmp/c3db_TOM_a110_weblog_week.dump'
+		FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
+		LINES TERMINATED BY '\n'
+	FROM
+		TOM.a110_weblog_week
+	WHERE
+		domain_sub='$tom::H'
+},'db_h'=>'stats','log'=>0);
+
+print "backuping TOM.a110_weblog_day\n";
+my %sth0=TOM::Database::SQL::execute(qq{
+	SELECT
+		*
+	INTO OUTFILE '/tmp/c3db_TOM_a110_weblog_day.dump'
+		FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
+		LINES TERMINATED BY '\n'
+	FROM
+		TOM.a110_weblog_day
+	WHERE
+		domain_sub='$tom::H'
+},'db_h'=>'stats','log'=>0);
+
+print "backuping TOM.a110_weblog_hour\n";
+my %sth0=TOM::Database::SQL::execute(qq{
+	SELECT
+		*
+	INTO OUTFILE '/tmp/c3db_TOM_a110_weblog_hour.dump'
+		FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
+		LINES TERMINATED BY '\n'
+	FROM
+		TOM.a110_weblog_hour
+	WHERE
+		domain_sub='$tom::H'
+},'db_h'=>'stats','log'=>0);
+
+print "backuping TOM.a110_weblog_rqs\n";
+my %sth0=TOM::Database::SQL::execute(qq{
+	SELECT
+		*
+	INTO OUTFILE '/tmp/c3db_TOM_a110_weblog_rqs.dump'
+		FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
+		LINES TERMINATED BY '\n'
+	FROM
+		TOM.a110_weblog_rqs
+	WHERE
+		domain_sub='$tom::H'
+},'db_h'=>'stats','log'=>0);
+
+print "backuping TOM.a301_user\n";
+my %sth0=TOM::Database::SQL::execute(qq{
+	SELECT
+		*
+	INTO OUTFILE '/tmp/c3db_TOM_a301_user.dump'
+		FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
+		LINES TERMINATED BY '\n'
+	FROM
+		TOM.a301_user
+	WHERE
+		hostname='$tom::H_cookie'
+},'db_h'=>'stats','log'=>0);
+
+print "backuping TOM.a301_user_inactive\n";
+my %sth0=TOM::Database::SQL::execute(qq{
+	SELECT
+		*
+	INTO OUTFILE '/tmp/c3db_TOM_a301_user_inactive.dump'
+		FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
+		LINES TERMINATED BY '\n'
+	FROM
+		TOM.a301_user_inactive
+	WHERE
+		hostname='$tom::H_cookie'
+},'db_h'=>'stats','log'=>0);
+
+=head1
+while (my @db0_line=$sth0{'sth'}->fetchrow())
+{
+	my $values;
+	foreach my $value (@db0_line)
+	{
+		if (defined $value)
+		{
+			$values.=",'".$value."'";
+		}
+		else
+		{
+			$values.=",NULL";
+		}
+	}
+	print "$values\n";
+#	print "".(join ",",sort keys %db0_line)."\n";
+}
+=cut
+
