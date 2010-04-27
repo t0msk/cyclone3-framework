@@ -178,6 +178,10 @@ sub execute
 		$sql_where.=" AND ACL_world.perm_R='N' ";
 	}
 	
+	my $sql_order="article.ID_entity DESC";
+		$sql_order=$env{'sql_order'} if $env{'sql_order'};
+		$sql_order=$env{'sql_order_by'} if $env{'sql_order_by'};
+	
 	my $sql=qq{
 		SELECT
 			article.ID_entity,
@@ -254,6 +258,8 @@ sub execute
 			article_content.lng='$env{'article_content.lng'}' AND
 			article_attrs.status IN ('$sql_status')
 			$sql_where
+		ORDER BY
+			$sql_order
 		LIMIT 1
 	};
 	
