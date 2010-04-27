@@ -43,7 +43,7 @@ sub execute
 
 	if($env{db_ID})
 	{
-		main::_log("we are updating image ID: ".$env{db_ID});
+		main::_log("updating existing image: ".$env{db_ID});
 		
 		my $db=$main::DB{main}->Query("
 			SELECT
@@ -65,7 +65,7 @@ sub execute
 	}
 	else
 	{
-		main::_log("we are creating a new image:");
+		main::_log("creating new image:");
 		main::_log("
 			SELECT
 				DISTINCT ID
@@ -126,7 +126,7 @@ sub execute
 	}
 
 	if(!$env{'db_IDeditor'}){
-		main::_log("hladam editora");
+		main::_log("searching editor ID");
 	
 		my $db0=$main::DB{main}->Query("
 			SELECT
@@ -138,7 +138,7 @@ sub execute
 		");
 		if (my %db0_line=$db0->FetchHash())
 		{
-			main::_log('editor found! ID: '.$db0_line{ID});
+			main::_log('   found - ID: '.$db0_line{ID});
 			$env{db_IDeditor}=$db0_line{ID};
 		}
 	}
@@ -174,7 +174,7 @@ sub execute
 	foreach my $formVar (keys %main::FORM)
 	{
 		if($formVar=~/file_(.?)_data/){
-			main::_log("we have file data for format: ".$1);
+			main::_log("file data for format: ".$1);
 
 			my $tmpFormat=$1;
 

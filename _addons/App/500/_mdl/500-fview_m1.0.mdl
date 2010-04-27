@@ -77,6 +77,7 @@ sub execute
 	else
 	{ main::_log("format $env{db_format} is NOT hashed (500-".$env{db_format}."_hash value loaded from _config at db '$env{db_500}')"); }
 	
+	$env{'db_where'}=1 unless $env{'db_where'};
 
 	main::_log("
 		SELECT
@@ -84,7 +85,8 @@ sub execute
 		FROM $env{db_500}.a500 AS a500
 		LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.IDattrs=a500_attrs.ID
 		WHERE
-			a500.ID='$env{db_ID}'
+			$env{'db_where'}
+			AND a500.ID='$env{db_ID}'
 			AND a500.format='$env{db_format}'
 		LIMIT 1");
 	#AND (a500.lng='$env{lng}' OR a500.lng='')
@@ -96,7 +98,8 @@ sub execute
 		FROM $env{db_500}.a500 AS a500
 		LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.IDattrs=a500_attrs.ID
 		WHERE
-			a500.ID='$env{db_ID}'
+			$env{'db_where'}
+			AND a500.ID='$env{db_ID}'
 			AND a500.format='$env{db_format}'
 		LIMIT 1");
 	#AND (a500.lng='$env{lng}' OR a500.lng='')
@@ -106,6 +109,8 @@ sub execute
 	{
 		$db_line{ID}=~/^(....)/;
 		$db_line{ID_dir}=$1;
+
+		$main::env{'a500_IDcategory'}=$db_line{'IDcategory'} if $db_line{'IDcategory'};
 
 		# updating visits
 		#main::_log("updating visits $db_line{IDattrs} && $env{visits}");
@@ -134,6 +139,9 @@ sub execute
 			FROM $env{db_500}.a500_category
 			WHERE
 				ID='$db_line{IDcategory}'
+				AND (lng='$env{lng}' OR lng='')
+			ORDER BY
+				lng ASC
 			LIMIT 1
 		");
 		if (my %db0_line=$db0->fetchHash)

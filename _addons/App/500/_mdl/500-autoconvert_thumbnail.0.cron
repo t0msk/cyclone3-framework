@@ -1,0 +1,241 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	
+	
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			a500_attrs
+		ORDER BY
+			ID
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				a500
+			WHERE
+				ID=$db0_line{'ID'}
+				AND format='t'
+			LIMIT 1
+		};
+		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		if (!$sth1{'rows'})
+		{
+			main::_log("ID '$db0_line{'ID'}' missing 't'");
+			
+			my $sql=qq{SELECT * FROM a500 WHERE ID=$db0_line{'ID'} AND format='o' LIMIT 1};
+			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+			if (!$sth1{'rows'})
+			{
+				main::_log("ID '$db0_line{'ID'}' missing 'o'");
+				
+				
+				# vyrobim si 'o' z 'f' ak existuje
+				my $sql=qq{SELECT * FROM a500 WHERE ID=$db0_line{'ID'} AND format='f' LIMIT 1};
+				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+				if (!$sth1{'rows'})
+				{
+					main::_log("ID '$db0_line{'ID'}' missing 'f'");
+					next;
+				}
+				my %db1_line=$sth1{'sth'}->fetchhash();
+				
+				my $dir=sprintf('%07d',$db1_line{'ID'});
+				$dir=~s|^(....).*$|\1|;
+				my $filename="$dir/$db1_line{'hash'}-f.jpg";
+				my $hash=TOM::Utils::vars::genhash(16);
+				
+				use File::Copy;
+				File::Copy::copy($tom::P.'/!media/500/'.$filename,$tom::P.'/!media/500/'.$dir.'/'.$hash.'-o.jpg');
+				
+				my $sql=qq{
+					INSERT INTO a500
+					(
+						ID,
+						IDattrs,
+						hash,
+						IDcategory,
+						IDeditor,
+						format,
+						changetime,
+						size,
+						lng,
+						active
+					)
+					VALUES
+					(
+						$db1_line{'ID'},
+						$db1_line{'ID'},
+						'$hash',
+						'$db1_line{'IDcategory'}',
+						'$db1_line{'IDeditor'}',
+						'o',
+						'$main::time_current',
+						'',
+						'sk',
+						'Y'
+					)
+				};
+				TOM::Database::SQL::execute($sql,'quiet'=>1);
+				
+				
+				next;
+			}
+			my %db1_line=$sth1{'sth'}->fetchhash();
+			
+			# convert 't' from 'o'
+			use Image::Magick;
+			my $img = new Image::Magick;
+			
+			my $dir=sprintf('%07d',$db1_line{'ID'});
+			$dir=~s|^(....).*$|\1|;
+			my $filename="$dir/$db1_line{'hash'}-o.jpg";
+			if (!-e $tom::P.'/!media/500/'.$filename)
+			{
+				main::_log("pruser",1);
+				next;
+			}
+			
+			$img->Read($tom::P.'/!media/500/'.$filename);
+			$img->Thumbnail('geometry'=>"120x120");
+			
+			my $hash=TOM::Utils::vars::genhash(16);
+			
+			main::_log("hash $hash");
+			
+			$img->Write($tom::P.'/!media/500/'.$dir.'/'.$hash.'-t.jpg');
+			
+			my $sql=qq{
+				INSERT INTO a500
+				(
+					ID,
+					IDattrs,
+					hash,
+					IDcategory,
+					IDeditor,
+					format,
+					changetime,
+					size,
+					lng,
+					active
+				)
+				VALUES
+				(
+					$db1_line{'ID'},
+					$db1_line{'ID'},
+					'$hash',
+					'$db1_line{'IDcategory'}',
+					'$db1_line{'IDeditor'}',
+					't',
+					'$main::time_current',
+					'',
+					'sk',
+					'Y'
+				)
+			};
+			TOM::Database::SQL::execute($sql,'quiet'=>1);
+			
+		}
+		
+	}
+	
+	return 1;
+	
+#=head1
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_500}.a500
+	ORDER BY ID
+	");
+ while (my %db0_line=$db0->fetchhash)
+ {
+  my $db1=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_500}.a500_attrs
+	WHERE ID=$db0_line{ID}
+	LIMIT 1
+	");
+  if (my %db1_line=$db1->fetchhash)
+  {
+   #$main::DBH->Query("UPDATE $env{db_500}.a500_attrs SET IDcategory='$db0_line{IDcategory}' WHERE ID='$db0_line{ID}' LIMIT 1");
+   #print "$db0_line{ID}\n";
+  }
+  else
+  {
+   print "nemam attrs $db0_line{ID}\n";
+#   $main::DBH->Query("INSERT INTO $env{db_500}.a500_attrs(ID,IDcategory) VALUES('$db0_line{ID}','$db0_line{IDcategory}')");
+  }
+  #$main::DBH->Query("UPDATE $env{db_500}.a500_attrs SET IDattrs=ID LIMIT 1");
+ }
+#=cut
+
+
+
+ my $db0=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_500}.a500_attrs
+	ORDER BY ID
+	");
+ while (my %db0_line=$db0->fetchhash)
+ {
+  my $db1=$main::DBH->Query("
+	SELECT *
+	FROM $env{db_500}.a500
+	WHERE ID=$db0_line{ID}
+	LIMIT 1
+	");
+  if (my %db1_line=$db1->fetchhash)
+  {
+   #$main::DBH->Query("UPDATE $env{db_500}.a500_attrs SET IDcategory='$db0_line{IDcategory}' WHERE ID='$db0_line{ID}' LIMIT 1");
+   #print "$db0_line{ID}\n";
+  }
+  else
+  {
+   print "nemam formaty $db0_line{ID}\n";
+#   $main::DBH->Query("DELETE FROM $env{db_500}.a500_attrs WHERE ID='$db0_line{ID}' LIMIT 1");
+  }
+  #$main::DBH->Query("UPDATE $env{db_500}.a500_attrs SET IDattrs=ID LIMIT 1");
+ }
+
+
+
+
+ return 1}
+
+
+
+1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -488,7 +488,7 @@ sub execute
 			a500_category.name
 		FROM $env{db_500}.a500 AS a500
 		LEFT JOIN $env{db_500}.a500_attrs AS a500_attrs ON a500.ID=a500_attrs.ID
-		LEFT JOIN  $env{db_500}.a500_category AS a500_category ON a500.IDcategory=a500_category.ID
+		LEFT JOIN  $env{db_500}.a500_category AS a500_category ON ((a500.IDcategory=a500_category.ID) AND(a500_category.lng='' OR a500_category.lng='$env{'lng'}'))
 		WHERE
 			$env{db_where}
 			a500.format='$env{db_format}'
@@ -550,6 +550,7 @@ sub execute
 				FROM $env{db_500}.a500_category
 				WHERE
 					ID='$tmpID'
+					AND lng='$env{'lng'}'
 				LIMIT 1
 			");
 			if (my %db0_line=$db0->fetchHash)
@@ -684,18 +685,21 @@ sub execute
 
 			my $db0=$main::DB{main}->Query("
 				SELECT
-					name
+					name, IDname
 				FROM $env{db_500}.a500_category
 				WHERE
 					ID='$db_line{IDcategory}'
+					AND lng='$env{lng}'
 				LIMIT 1
 			");
 			if (my %db0_line=$db0->fetchHash)
 			{
 				$db_line{IDcategory_name}=$db0_line{name};
+				$db_line{IDcategory_IDname}=$db0_line{IDname};
 			}
 
 			$XSGN{NULL}=~s|<%IDcategory_name%>|$db_line{IDcategory_name}|g;
+			$XSGN{NULL}=~s|<%IDcategory_IDname%>|$db_line{IDcategory_IDname}|g;
 				
 			# display date and time
 			if ($env{datetime_allow})

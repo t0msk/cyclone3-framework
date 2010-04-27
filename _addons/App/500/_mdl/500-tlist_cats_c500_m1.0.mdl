@@ -61,7 +61,7 @@ sub execute
 
 		my $db0=$main::DBH->Query("
 		SELECT
-			ID,name
+			ID,name,IDname
 		FROM $env{db_500}.a500_category
 		WHERE
 			$select
@@ -129,7 +129,7 @@ sub execute
 
   my $db0=$main::DBH->Query("
 	SELECT
-		ID, name
+		ID, name, IDname
 	FROM
 	     $env{db_500}.a500_category
 	WHERE
@@ -159,6 +159,7 @@ sub execute
 
    $XSGN{TMP}=~s|<#ID#>|$db0_line{ID}|;
    $XSGN{TMP}=~s|<%NAME%>|$db0_line{name}|g;
+   $XSGN{TMP}=~s|<%IDname%>|$db0_line{IDname}|g;
 
    my $db1=$main::DBH->Query("
 	SELECT
