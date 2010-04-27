@@ -342,6 +342,8 @@ sub execute
 				return_null	=>	$env{fview_return_null},
 				xt_xlng				=>	$env{fview_xt_xlng},
 				
+				'fix_piped-links' => 1,
+				
 				a500_fetch_originals	=>	$env{fview_a500_fetch_originals}
 			) if (exists $env{fview_TMP});
 
@@ -658,6 +660,7 @@ sub execute
 			-lng				=>	$env{lng},
 			return_no_data	=>	1,
 			xt_xlng => $env{fview_xt_xlng},
+			'fix_piped-links' => 1,
 		) if (exists $env{fview_TMP});
 	}
 }

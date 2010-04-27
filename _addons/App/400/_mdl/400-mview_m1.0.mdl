@@ -231,6 +231,7 @@ sub execute
 			# fetching all other xrelated
 			if ($env{xrelated})
 			{
+				main::_log($db_line{xrelated});
 				my %already_related;
 				while ($db_line{xrelated}=~s|<VAR id="(.*?)" value="(.*?)" />||si)
 				{
@@ -264,6 +265,105 @@ sub execute
 							main::_log($db0->errstr());
 						}
 						next;
+					};
+
+					main::_log("article ID: $db_line{'ID'}");
+
+					my @attachments=App::160::SQL::get_relations
+					(
+						'l_prefix' => 'a400',
+						'l_table' => '',
+						'l_ID_entity' => $db_line{'ID'},
+						#'r_db_name' => 'example_tld',
+						'r_prefix' => 'a540',
+						#'r_table' => 'file',
+					);
+					if (@attachments)
+					{
+						foreach (@attachments){
+							$XSGN{NULL0}=$XSGN{a540};
+	
+							use App::540::_init;
+							use App::540::file;
+	
+							my $null = $_->{'r_ID_entity'};
+	
+							main::_log($null);
+	
+
+							my @db0_line = App::540::file::get( ID => $null);
+	
+							main::_log("hash: $db0_line[0]{hash}");
+							
+							$null =~ s|^[0]*||;
+							$XSGN{NULL0} =~s|<%ID%>|$db0_line[0]{ID}|g;
+							$XSGN{NULL0} =~s|<%hash%>|$db0_line[0]{hash}|g;
+							$XSGN{NULL0} =~s|<%name%>|$db0_line[0]{name}|g;
+							$XSGN{NULL0} =~s|<%filename%>|$null-$db0_line[0]{hash}|g;
+							$XSGN{NULL0} =~s|<%mime%>|$db0_line[0]{mime}|g;
+							$XSGN{NULL0} =~s|<%size%>|$db0_line[0]{size}|g;
+							$XSGN{NULL0} =~s|<%comment%>|$db0_line[0]{comment}|g;
+							$XSGN{NULL0} =~s|<%owner%>|$db0_line[0]{owner}|g;
+	
+							my %env0=Utils::datetime::ctodatetime($db0_line[0]{time},format=>1);
+	
+							$XSGN{NULL0}=~s|<%inserttime_day%>|$env0{mday}|g;
+							$XSGN{NULL0}=~s|<%inserttime_month%>|$env0{mom}|g;
+							$XSGN{NULL0}=~s|<%inserttime_year%>|$env0{year}|g;
+							$XSGN{NULL0}=~s|<%inserttime_hour%>|$env0{hour}|g;
+							$XSGN{NULL0}=~s|<%inserttime_minute%>|$env0{min}|g;
+							$XSGN{NULL0}=~s|<%inserttime_second%>|$env0{sec}|g;
+	
+							$XSGN{NULL0}=~s|<%inserttime_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+							$XSGN{NULL0}=~s|<%inserttime_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+							$XSGN{NULL0}=~s|<%inserttime_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+							$XSGN{NULL0}=~s|<%inserttime_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+	
+							main::_log("bzuu: $XSGN{NULL0}");
+	
+							$XSGN{TMP}=~s|<#a540#>|$XSGN{NULL0}|g;
+						}
+					}
+
+					$var=~/^a540$/ && $XSGN{a540} && do
+					{
+						next if $already_related{a540}{$null};
+						main::_log("related file ID: $null");
+
+						$XSGN{NULL0}=$XSGN{a540};
+
+						use App::540::_init;
+						use App::540::file;
+
+						my @db0_line = App::540::file::get( ID => $null);
+
+						main::_log("hash: $db0_line[0]{hash}");
+						$null =~ s|^[0]*||;
+						$XSGN{NULL0} =~s|<%ID%>|$db0_line[0]{ID}|g;
+						$XSGN{NULL0} =~s|<%hash%>|$db0_line[0]{hash}|g;
+						$XSGN{NULL0} =~s|<%name%>|$db0_line[0]{name}|g;
+						$XSGN{NULL0} =~s|<%filename%>|$null-$db0_line[0]{hash}|g;
+						$XSGN{NULL0} =~s|<%mime%>|$db0_line[0]{mime}|g;
+						$XSGN{NULL0} =~s|<%size%>|$db0_line[0]{size}|g;
+						$XSGN{NULL0} =~s|<%comment%>|$db0_line[0]{comment}|g;
+						$XSGN{NULL0} =~s|<%owner%>|$db0_line[0]{owner}|g;
+
+						my %env0=Utils::datetime::ctodatetime($db0_line[0]{time},format=>1);
+
+						$XSGN{NULL0}=~s|<%inserttime_day%>|$env0{mday}|g;
+						$XSGN{NULL0}=~s|<%inserttime_month%>|$env0{mom}|g;
+						$XSGN{NULL0}=~s|<%inserttime_year%>|$env0{year}|g;
+						$XSGN{NULL0}=~s|<%inserttime_hour%>|$env0{hour}|g;
+						$XSGN{NULL0}=~s|<%inserttime_minute%>|$env0{min}|g;
+						$XSGN{NULL0}=~s|<%inserttime_second%>|$env0{sec}|g;
+
+						$XSGN{NULL0}=~s|<%inserttime_day_name%>|$Utils::datetime::DAYS{$env{lng}}[$env0{wday}]|g;
+						$XSGN{NULL0}=~s|<%inserttime_day_name_long%>|$Utils::datetime::DAYS_L{$env{lng}}[$env0{wday}]|g;
+						$XSGN{NULL0}=~s|<%inserttime_month_name%>|$Utils::datetime::MONTHS{$env{lng}}[$env0{mom}-1]|g;
+						$XSGN{NULL0}=~s|<%inserttime_month_name_long%>|$Utils::datetime::MONTHS_L{$env{lng}}[$env0{mom}-1]|g;
+
+						$XSGN{TMP}=~s|<#a540#>|$XSGN{NULL0}|g;
+						$already_related{a540}{$db0_line[0]{ID}}=1;
 					};
 
 					$var=~/^a820$/ && $XSGN{a820} && do

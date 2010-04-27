@@ -235,7 +235,7 @@ sub execute
 		#Tomahawk::debug::log(9,"!$zeroid!$var!");
 		if ($env{$env0{format}.'_hash'})
 		{
-			#Tomahawk::debug::log(6,"find hash");
+			main::_log("find hash in ID=$zeroid and format=$env0{'format'}");
 =head1
 			main::_log("
 				SELECT
@@ -258,8 +258,6 @@ sub execute
 				WHERE
 					a.ID='$zeroid'
 					AND a.format='$env0{format}'
-					AND (a.lng='$env{lng}' OR a.lng='')
-					AND a.active='Y'
 				LIMIT 1
 			");
 			if (my %db0_line=$db0->FetchHash)
@@ -267,6 +265,9 @@ sub execute
 				$zeroid=$db0_line{hash};
 				$env0{alt}=$db0_line{about};
 				$env0{keywords}=$db0_line{keywords};
+				
+				main::_log("found hash $zeroid");
+				
 			}
 			else
 			{
@@ -283,7 +284,6 @@ sub execute
 					WHERE
 						a.ID='$zeroid_original'
 						AND a.format='o'
-						AND (a.lng='$env{lng}' OR a.lng='')
 						AND a.active='Y'
 					LIMIT 1
 				");
@@ -623,6 +623,11 @@ sub execute
 			$env{'_a400_editor'}=$db0_line{fullname};
 			$env{'_a400_editor_nick'}=$db0_line{nickname};
 		}
+	}
+
+	#replacing incorrect ?|? in full text (admin saves this as html entity - ?%7C?)
+	if($env{'fix_piped-links'}){
+		$pages[$env{page}]=~s|\?\%7C\?|\?\|\?|g;
 	}
 
 	#new way of replacing
