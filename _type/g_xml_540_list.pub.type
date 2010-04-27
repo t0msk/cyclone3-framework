@@ -16,4 +16,5 @@
 		<VAR id="lang" value="<$main::FORM{lng}>" />
 		<VAR id="page" value="<$main::FORM{page}>" />
 		<VAR id="order" value="<$main::FORM{order_by}>" />
+		<VAR id="active" value="*" />
 </MODULE>
