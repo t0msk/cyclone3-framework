@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	<header>
+		<extend level="auto" name="SWFObject"/>
+		<extract>
+			<file location="jwmediaplayer4.swf" />
+		</extract>
+	</header>
+	
+</template>
