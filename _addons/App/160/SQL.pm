@@ -708,6 +708,140 @@ sub get_relation_iteminfo
 	return %info;
 }
 
+=head2 new_historization
+
+=cut
+
+
+sub new_historization
+{
+	my %env = @_;
+	$env{'db_h'}='main' unless $env{'db_h'};
+
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'") if $debug;
+	}
+
+	my %columns;
+
+	$columns{'l_prefix'} = "'".$env{'l_prefix'}."'" if ($env{'l_prefix'});
+	$columns{'l_table'} = "'".$env{'l_table'}."'" if ($env{'l_table'});
+	$columns{'l_column'} = "'".$env{'l_column'}."'" if ($env{'l_column'});
+	$columns{'l_ID_entity'} = "'".$env{'l_ID_entity'}."'" if ($env{'l_ID_entity'});
+	$columns{'value'} = "'".$env{'value'}."'" if ($env{'value'});
+	$columns{'datetime_valid'} = "'".$env{'datetime_valid'}."'" if ($env{'datetime_valid'});
+
+	my $historization_ID;
+
+	if ($env{'ID'})
+	{
+		App::020::SQL::functions::update(
+			'ID' => $env{'ID'},
+			'db_h' => $env{'db_h'},
+			'db_name' => $env{'db_name'},
+			'tb_name' => "a160_historization",
+			'columns' => {%columns},
+			'-journalize' => 1,
+			'-posix' => 1
+		);
+
+		return $env{'ID'};
+
+	} else
+	{
+		$historization_ID=App::020::SQL::functions::new(
+			'db_h' => $env{'db_h'},
+			'db_name' => $env{'db_name'},
+				'tb_name' => "a160_historization",
+				'columns' =>
+				{
+					%columns,
+					'status' => "'Y'"
+				},
+				'-journalize' => 1,
+				'-posix' => 1,
+			);
+
+		return $historization_ID;
+	}
+}
+
+=head2 get_historization
+
+=cut
+
+sub get_historization
+{
+	my %env = @_;
+	
+
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'") if $debug;
+	}
+
+	return unless (	$env{'datetime_valid'} && 
+			$env{'db_name'} && 
+			$env{'l_prefix'} &&
+			$env{'l_table'}  &&
+			$env{'l_column'}  &&
+			$env{'l_ID_entity'}
+			);
+
+	my $where;	
+
+	$where = qq{
+		datetime_valid > '$env{'datetime_valid'}' AND
+		l_prefix = '$env{'l_prefix'}' AND
+		l_table = '$env{'l_table'}' AND
+		l_column = '$env{'l_column'}' AND
+		l_ID_entity=  '$env{'l_ID_entity'}' AND
+		status NOT IN ('T')
+		};
+
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$env{'db_name'}`.`a160_historization`
+		WHERE
+			$where
+		ORDER BY
+			datetime_valid ASC
+		LIMIT
+			1;
+	};
+
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>$debug,'quiet'=>$quiet,'slave'=>1);
+
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		return { %db0_line };
+	}
+	
+}
+
+=head2 trash_historization
+
+=cut
+
+sub trash_historization
+{
+	my %env = @_;
+
+	return 0 unless $env{'ID'};
+	$env{'db_h'}='main' unless $env{'db_h'};
+
+	App::020::SQL::functions::to_trash
+	(
+			'ID' => $env{'ID'},
+			'db_h' => $env{'db_h'},
+			'db_name' => $env{'db_name'},
+			'tb_name' => 'a160_historization',
+			'-journalize' => 1,
+	);
+}
 
 =head1 AUTHORS
 
