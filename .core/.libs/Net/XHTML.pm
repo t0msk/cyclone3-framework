@@ -119,6 +119,14 @@ sub add_DOC_css_link
 	return 1;
 }
 
+sub add_DOC_meta
+{
+	my $self=shift;
+	my %env=@_; 
+	push @{$self->{'env'}{'DOC_meta'}},{%env};
+	return 1;
+}
+
 sub change_DOC_robots
 {
 	my $self=shift;
@@ -134,7 +142,7 @@ sub prepare
  
 	$self->{'ENV'}{'DOCTYPE'} =
 		"<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">"
-		unless $self->{ENV}{DOCTYPE};
+		unless $self->{'ENV'}{'DOCTYPE'};
 	
 	$self->{'OUT'}{'HEADER'} .= $self->{'ENV'}{'DOCTYPE'}."\n";
 	
@@ -147,117 +155,107 @@ sub prepare
 	# TITLE
 	$self->{'OUT'}{'HEADER'} .= ' <title><%HEADER-TITLE%></title>'."\n";
  
-	$self->{env}{DOC_title}=$self->{ENV}{'head'}{'title'};
-	$self->{env}{DOC_title}=$tom::H unless $self->{env}{DOC_title};
+	$self->{'env'}{'DOC_title'}=$self->{'ENV'}{'head'}{'title'};
+	$self->{'env'}{'DOC_title'}=$tom::H unless $self->{'env'}{'DOC_title'};
 	
 	# STYLE
-	if ($self->{ENV}{head}{style})
+	if ($self->{'ENV'}{'head'}{'style'})
 	{
-		$self->{OUT}{HEADER} .= " <style type=\"text/css\">\n <!--\n";
-		if (ref($self->{ENV}{head}{style}) eq "HASH")
+		$self->{'OUT'}{'HEADER'} .= " <style type=\"text/css\">\n <!--\n";
+		if (ref($self->{'ENV'}{'head'}{'style'}) eq "HASH")
 		{
-			foreach (keys %{$self->{ENV}{head}{style}})
+			foreach (keys %{$self->{'ENV'}{'head'}{'style'}})
 			{
-				$self->{OUT}{HEADER} .= "  " . $_ . " {" . $self->{ENV}{head}{style}{$_} . "}\n";
+				$self->{'OUT'}{'HEADER'} .= "  " . $_ . " {" . $self->{'ENV'}{'head'}{'style'}{$_} . "}\n";
 			}
 		}
 		else
 		{
-			$self->{OUT}{HEADER} .= $self->{ENV}{head}{style}."\n";
+			$self->{'OUT'}{'HEADER'} .= $self->{'ENV'}{'head'}{'style'}."\n";
 		}
-		$self->{OUT}{HEADER} .= " -->\n </style>\n";
+		$self->{'OUT'}{'HEADER'} .= " -->\n </style>\n";
 	}
- 
-	$self->{OUT}{HEADER} .= '<%KEYWORDS%>';
-	$self->{env}{DOC_keywords}=$self->{ENV}{head}{meta}{keywords};
-	delete $self->{ENV}{head}{meta}{Keywords};
-	delete $self->{ENV}{head}{meta}{keywords};
- 
 	
-	$self->{OUT}{HEADER} .= '<%DESCRIPTION%>';
-	$self->{env}{DOC_description}=$self->{ENV}{head}{meta}{description};
-	delete $self->{ENV}{head}{meta}{description};
+	$self->{'env'}{'DOC_keywords'}=$self->{'ENV'}{'head'}{'meta'}{'keywords'};
+	delete $self->{'ENV'}{'head'}{'meta'}{'Keywords'};
+	delete $self->{'ENV'}{'head'}{'meta'}{'keywords'};
 	
- 
+	$self->{'env'}{'DOC_description'}=$self->{'ENV'}{'head'}{'meta'}{'description'};
+	delete $self->{'ENV'}{'head'}{'meta'}{'description'};
+	
+	
 	# META
- 
-	$self->{OUT}{HEADER} .= " <meta http-equiv=\"content-language\" content=\"<%HEADER-LNG%>\" />\n";
-	$self->{OUT}{HEADER} .= " <meta http-equiv=\"cache-control\" content=\"no-cache\" />\n";
-	$self->{OUT}{HEADER} .= " <meta http-equiv=\"content-type\" content=\"text/html; charset=<%CODEPAGE%>\" />\n"
-	unless $self->{ENV}{head}{meta}{'content-type'};
+	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-language\" content=\"<%HEADER-LNG%>\" />\n";
+	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"cache-control\" content=\"<%HEADER-cache-control%>\" />\n";
+	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-type\" content=\"text/html; charset=<%CODEPAGE%>\" />\n"
+	unless $self->{'ENV'}{'head'}{'meta'}{'content-type'};
 	
+	$self->{'ENV'}{'head'}{'meta'}{'refresh'}=$self->{'ENV'}{'head'}{'meta'}{'Refresh'} if $self->{'ENV'}{'head'}{'meta'}{'Refresh'};
+	delete $self->{'ENV'}{'head'}{'meta'}{'Refresh'};
 	
-	$self->{ENV}{head}{meta}{refresh}=$self->{ENV}{head}{meta}{Refresh} if $self->{ENV}{head}{meta}{Refresh};
-	delete $self->{ENV}{head}{meta}{Refresh};
+	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"refresh\" content=\"$self->{'ENV'}{'head'}{'meta'}{'refresh'}\" />\n"
+	if $self->{'ENV'}{'head'}{'meta'}{'refresh'};delete $self->{'ENV'}{'head'}{'meta'}{'refresh'};
 	
-	$self->{OUT}{HEADER} .= " <meta http-equiv=\"refresh\" content=\"$self->{ENV}{head}{meta}{refresh}\" />\n"
-	if $self->{ENV}{head}{meta}{refresh};delete $self->{ENV}{head}{meta}{refresh};
+	$self->{'OUT'}{'HEADER'} .=
+	" <meta name=\"copyright\" content=\"".$self->{'ENV'}{'head'}{'meta'}{'copyright'}."\" />\n"
+	if $self->{'ENV'}{'head'}{'meta'}{'copyright'};delete $self->{'ENV'}{'head'}{'meta'}{'copyright'};
 	
-	$self->{OUT}{HEADER} .=
-	" <meta name=\"copyright\" content=\"".$self->{ENV}{head}{meta}{copyright}."\" />\n"
-	if $self->{ENV}{head}{meta}{copyright};delete $self->{ENV}{head}{meta}{copyright};
+	$self->{'ENV'}{'head'}{'meta'}{'robots'}="index,follow" unless $self->{'ENV'}{'head'}{'meta'}{'robots'};
+	$self->{'env'}{'DOC_robots'}=$self->{'ENV'}{'head'}{'meta'}{'robots'};
+	$self->{'ENV'}{'head'}{'meta'}{'robots'}="<%HEADER-ROBOTS%>";
 	
-	$self->{ENV}{head}{meta}{robots}="index,follow" unless $self->{ENV}{head}{meta}{robots};
-	$self->{env}{DOC_robots}=$self->{ENV}{head}{meta}{robots};
-	$self->{ENV}{head}{meta}{robots}="<%HEADER-ROBOTS%>";
-	
-	$self->{OUT}{HEADER} .=
+	$self->{'OUT'}{'HEADER'} .=
 	" <meta name=\"generator\" content=\"Cyclone3 ".
 	$TOM::core_version.".".
 	$TOM::core_build.
-	" \" />\n" unless $self->{ENV}{head}{meta}{generator};
+	" \" />\n" unless $self->{'ENV'}{'head'}{'meta'}{'generator'};
 	
 	$self->{'OUT'}{'HEADER'} .=
 	" <meta name=\"Cyclone3\" content=\"<%META-Cyclone3%>\" />\n" unless $self->{'ENV'}{'head'}{'meta'}{'Cyclone3'};
 	
-	foreach (sort keys %{$self->{ENV}{head}{meta}})
-	{$self->{OUT}{HEADER} .= " <meta name=\"" . $_ . "\" content=\"" . $self->{ENV}{head}{meta}{$_} . "\" />\n";}
-	
-	$self->{OUT}{HEADER} .= " <meta name=\"domain\" content=\"<%domain%>\" />\n";
-	
-	foreach my $hash(@{$self->{ENV}{head}{link}})
+	foreach (sort keys %{$self->{'ENV'}{'head'}{'meta'}})
 	{
-		$self->{OUT}{HEADER} .= " <link";
-		foreach (sort keys %{$hash}){$self->{OUT}{HEADER} .= " ".$_ . "=\"".$$hash{$_}."\"";}
-		$self->{OUT}{HEADER} .= " />\n";
+		next if $_ eq "pragma";
+		next if $_ eq "expires";
+		$self->{'OUT'}{'HEADER'} .= " <meta name=\"" . $_ . "\" content=\"" . $self->{'ENV'}{'head'}{'meta'}{$_} . "\" />\n";
 	}
- 
-	if (ref($self->{ENV}{head}{script}) eq "ARRAY")
+	
+	$self->{'OUT'}{'HEADER'} .= " <meta name=\"domain\" content=\"<%domain%>\" />\n";
+	
+	foreach my $hash(@{$self->{'ENV'}{'head'}{'link'}})
 	{
-		foreach my $hash(@{$self->{ENV}{head}{script}})
+		$self->{'OUT'}{'HEADER'} .= " <link";
+		foreach (sort keys %{$hash}){$self->{'OUT'}{'HEADER'} .= " ".$_ . "=\"".$$hash{$_}."\"";}
+		$self->{'OUT'}{'HEADER'} .= " />\n";
+	}
+	
+	if (ref($self->{'ENV'}{'head'}{'script'}) eq "ARRAY")
+	{
+		foreach my $hash(@{$self->{'ENV'}{'head'}{'script'}})
 		{
-			$self->{OUT}{HEADER} .= " <script";
-			foreach (sort keys %{$hash}){$self->{OUT}{HEADER} .= " ".$_ . "=\"".$$hash{$_}."\"";}
-			$self->{OUT}{HEADER} .= "></script>\n";
+			$self->{'OUT'}{'HEADER'} .= " <script";
+			foreach (sort keys %{$hash}){$self->{'OUT'}{'HEADER'} .= " ".$_ . "=\"".$$hash{$_}."\"";}
+			$self->{'OUT'}{'HEADER'} .= "></script>\n";
 		}
 	}
-	elsif ($self->{ENV}{head}{script})
+	elsif ($self->{'ENV'}{'head'}{'script'})
 	{
-		$self->{OUT}{HEADER} .= " <script type=\"text/javascript\">\n".$self->{ENV}{head}{script}." </script>\n";
+		$self->{'OUT'}{'HEADER'} .= " <script type=\"text/javascript\">\n".$self->{'ENV'}{'head'}{'script'}." </script>\n";
 	}
 	
-	if ($self->{ENV}{head}{comment})
+	if ($self->{'ENV'}{'head'}{'comment'})
 	{
-		$self->{OUT}{HEADER} .= "<!--".$self->{ENV}{head}{comment}."-->\n";
+		$self->{'OUT'}{'HEADER'} .= "<!--".$self->{'ENV'}{'head'}{'comment'}."-->\n";
 	}
 	
-	if ($self->{ENV}{head}{inline})
+	if ($self->{'ENV'}{'head'}{'inline'})
 	{
-		$self->{OUT}{HEADER} .= $self->{ENV}{head}{inline}."\n";
+		$self->{'OUT'}{'HEADER'} .= $self->{'ENV'}{'head'}{'inline'}."\n";
 	}
-	
-	$self->{OUT}{HEADER} .= "</head>\n";
-	
-	# BODY
-	$self->{OUT}{HEADER} .= "<body";
-	
-	foreach (keys %{$self->{ENV}{body}})
-	{$self->{OUT}{HEADER} .= "\n " . $_ . "=" . "\"" . $self->{ENV}{body}{$_} . "\"";}
-	$self->{OUT}{HEADER} .= ">\n";
 	
 	# FOOTER
 	
-	$self->{OUT}{FOOTER} = "</body>\n</html>\n";
+	$self->{'OUT'}{'FOOTER'} = "</body>\n</html>\n";
 	
  return 1;
 }
@@ -271,10 +269,14 @@ sub prepare_last
 	my %env=@_;
  
 	# aplikujem title
-	$self->{OUT}{HEADER}=~s|<%HEADER-TITLE%>|$self->{env}{DOC_title}|;
-	$self->{OUT}{HEADER}=~s|<%HEADER-ROBOTS%>|$self->{env}{DOC_robots}|;
-	$self->{OUT}{HEADER}=~s|<%HEADER-LNG%>|$tom::lng|g;
-	$self->{OUT}{HEADER}=~s|<%PAGE-CODE%>|$main::request_code|;
+	$self->{'env'}{'DOC_title'}=~s|<.*?>||g;
+	$self->{'env'}{'DOC_title'}=~s|<|&lt;|g;
+	$self->{'env'}{'DOC_title'}=~s|>|&gt;|g;
+	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-TITLE%>|$self->{env}{DOC_title}|;
+	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-ROBOTS%>|$self->{env}{DOC_robots}|;
+	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-LNG%>|$tom::lng|g;
+	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-cache-control%>|$main::ENV{'Cache-Control'}|g;
+	$self->{'OUT'}{'HEADER'}=~s|<%PAGE-CODE%>|$main::request_code|;
  
 	if ($self->{env}{DOC_keywords})
 	{
@@ -296,46 +298,62 @@ sub prepare_last
 		
 		$self->{env}{DOC_keywords}=~s|^, ||;
 		
-		$self->{OUT}{HEADER}=~s|<%KEYWORDS%>| <meta name="keywords" content="$self->{env}{DOC_keywords}" />\n|;
+		$self->{'OUT'}{'HEADER'}.=" <meta name=\"keywords\" content=\"$self->{env}{DOC_keywords}\" />\n";
 	}
 	
-	foreach my $key (keys %{$self->{env}{DOC_description}})
+	foreach my $key (keys %{$self->{'env'}{'DOC_description'}})
 	{
-		$self->{env}{DOC_description}{$key}=~s|^\. ||g;
-		$self->{env}{DOC_description}{$key}=~s|^\s+||;
-		$self->{env}{DOC_description}{$key}=~s|[\t\n\r]| |g;
-		1 while ($self->{env}{DOC_description}{$key}=~s|  | |g);
-		$self->{env}{DOC_description}{$key}=~s|"|'|g;
-		if (length ($self->{env}{DOC_description}{$key})>250)
+		$self->{'env'}{'DOC_description'}{$key}=~s|^\. ||g;
+		$self->{'env'}{'DOC_description'}{$key}=~s|^\s+||;
+		$self->{'env'}{'DOC_description'}{$key}=~s|[\t\n\r]| |g;
+		1 while ($self->{'env'}{'DOC_description'}{$key}=~s|  | |g);
+		$self->{'env'}{'DOC_description'}{$key}=~s|"|'|g;
+		if (length ($self->{'env'}{'DOC_description'}{$key})>250)
 		{
-			$self->{env}{DOC_description}{$key}=~/^(.{250})/;
-			$self->{env}{DOC_description}{$key}=$1;
+			$self->{'env'}{'DOC_description'}{$key}=~/^(.{250})/;
+			$self->{'env'}{'DOC_description'}{$key}=$1;
 		}
 		
-		next unless $self->{env}{DOC_description}{$key};
+		next unless $self->{'env'}{'DOC_description'}{$key};
 		
 		if ($key eq "null")
 		{
-			$self->{OUT}{HEADER}=~s|<%DESCRIPTION%>| <meta name="description" content="$self->{env}{DOC_description}{$key}" />\n<%DESCRIPTION%>|;
+			$self->{'OUT'}{'HEADER'}.=" <meta name=\"description\" content=\"$self->{'env'}{'DOC_description'}{$key}\" />\n";
 		}
 		else
 		{
-			$self->{OUT}{HEADER}=~s|<%DESCRIPTION%>| <meta name="description" lang="$key" content="$self->{env}{DOC_description}{$key}" />\n<%DESCRIPTION%>|;
+			$self->{'OUT'}{'HEADER'}.=" <meta name=\"description\" lang=\"$key\" content=\"$self->{'env'}{'DOC_description'}{$key}\" />\n";
 		}
 	}
 	
 	# DOC_css_link
-	my $DOC_css_link;
 	foreach my $hash(@{$self->{env}{DOC_css_link}})
 	{
-		$DOC_css_link .= " <link";
-		foreach (sort keys %{$hash}){$DOC_css_link .= " ".$_ . "=\"".$$hash{$_}."\"";}
-		$DOC_css_link .= " />\n";
+		$self->{'OUT'}{'HEADER'} .= " <link";
+		foreach (sort keys %{$hash}){$self->{'OUT'}{'HEADER'} .= " ".$_ . "=\"".$$hash{$_}."\"";}
+		$self->{'OUT'}{'HEADER'} .= " />\n";
 	}
 	
-	$self->{OUT}{HEADER}=~s|\n</head>|\n$DOC_css_link</head>| if $DOC_css_link;
+	# DOC_meta
+	foreach my $hash(@{$self->{'env'}{'DOC_meta'}})
+	{
+		$self->{'OUT'}{'HEADER'} .= " <meta";
+		foreach (keys %{$hash}){$self->{'OUT'}{'HEADER'} .= " ".$_ . "=\"".$$hash{$_}."\"";}
+		$self->{'OUT'}{'HEADER'} .= " />\n";
+	}
 	
-	$self->{OUT}{HEADER}=~s|<%domain%>|$tom::H#$env{result}|;
+	$self->{'OUT'}{'HEADER'}.=" <meta name=\"pragma\" content=\"$main::ENV{'Pragma'}\" />\n" if $main::ENV{'Pragma'};
+	$self->{'OUT'}{'HEADER'}.=" <meta name=\"expires\" content=\"$main::ENV{'Expires'}\" />\n" if exists $main::ENV{'Expires'};
+	
+	$self->{'OUT'}{'HEADER'}=~s|<%domain%>|$tom::H#$env{result}|;
+	
+	$self->{'OUT'}{'HEADER'}.="</head>\n";
+	
+	# BODY begin
+	$self->{'OUT'}{'HEADER'} .= "<body";
+	foreach (keys %{$self->{'ENV'}{'body'}})
+	{$self->{'OUT'}{'HEADER'} .= "\n " . $_ . "=" . "\"" . $self->{'ENV'}{'body'}{$_} . "\"";}
+	$self->{'OUT'}{'HEADER'} .= ">\n";
 	
 	
  return 1;
