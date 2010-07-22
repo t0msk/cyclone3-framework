@@ -29,7 +29,9 @@ while(1)
 	my $t = new Proc::ProcessTable;
 	foreach my $p (@{$t->table})
 	{
-		next unless $p->{'cmndline'}=~/\.core\/tom3/;
+		next unless $p->{'cmndline'}=~/^.*\/perl .*?\/\.core\/(.*?) pwd=(.*)/;
+		my $engine=$1;
+		#next unless $cmd=~/^.*\/perl .*?\/\.core\/(.*?) pwd=(.*)/;
 		
 		my $host;
 		$p->{'cmndline'}=~/pwd=(.*)/;
@@ -48,8 +50,15 @@ while(1)
 		}
 		$host=~s|^www\.||;
 		
+#		foreach (keys %{$p})
+#		{
+#			print $_ . " = ". $p->{$_} . "\n";
+#		}
+#		exit;
 		push @{$hosts{$host}},{
+			'engine'=>$engine,
 			'size'=>$p->{'size'},
+			'rss'=>$p->{'rss'},
 			'pctcpu'=>$p->{'pctcpu'},
 			'state'=>$p->{'state'},
 			'start'=>$p->{'start'},
@@ -59,6 +68,8 @@ while(1)
 		
 	}
 	
+#	exit;
+	
 		my $l;
 		foreach my $host(sort keys %hosts)
 		{
@@ -67,13 +78,17 @@ while(1)
 	
 		&Clear();
 		print color 'reset bold cyan';
-		print "[HOST".(" " x ($l-4))."][STAT ][P ][CPU  ][MEM   ][START][TIME ]\n";
+		print "[HOST".(" " x ($l-4))."][ENGINE][STAT ][P ][CPU  ][RSS  ][START][TIME ]\n";
 		print color 'reset cyan';
 		
+		my $processes;
+		my $cpu;
+		my $rss;
 		foreach my $host(sort keys %hosts)
 		{
 			for (0..@{$hosts{$host}}-1)
 			{
+				$processes++;
 				my $setcolor;
 				if ($hosts{$host}[$_]{'state'} eq "run"){$setcolor = 'reset bold cyan';}
 				else {$setcolor = 'reset cyan';}
@@ -81,6 +96,10 @@ while(1)
 				
 				# host
 				if (!$_){print "[".sprintf("%-".$l."s",$host)."]";}else {print (" " x ($l+2));}
+				
+				# engine
+				$hosts{$host}[$_]{'engine'}=substr($hosts{$host}[$_]{'engine'},0,6);
+				print "[".sprintf("%-6s",$hosts{$host}[$_]{'engine'})."]";
 				
 				# STAT
 				print "[";
@@ -92,21 +111,29 @@ while(1)
 				
 				# CPU
 				print "[";
+				if ($hosts{$host}[$_]{'pctcpu'} > 1){print color 'bold cyan'}
 				if ($hosts{$host}[$_]{'pctcpu'} > 10){print color 'yellow'}
 				if ($hosts{$host}[$_]{'pctcpu'} > 30){print color 'bold red'}
-				print sprintf("%5s",$hosts{$host}[$_]{'pctcpu'});print color $setcolor;print "]";
+				print sprintf('%5s',sprintf('%-2.2f',$hosts{$host}[$_]{'pctcpu'}));print color $setcolor;print "]";
+				$cpu+=$hosts{$host}[$_]{'pctcpu'};
 				
 				# MEM
-				$hosts{$host}[$_]{'size'}=int($hosts{$host}[$_]{'size'}/1024);
+				$hosts{$host}[$_]{'rss'}=int($hosts{$host}[$_]{'rss'}/1024/1024);
 				print "[";
-				if ($hosts{$host}[$_]{'size'} > 50000){print color 'yellow'}
-				if ($hosts{$host}[$_]{'size'} > 100000){print color 'bold red'}
-				print sprintf("%6d",$hosts{$host}[$_]{'size'});print color $setcolor;print "]";
+				if ($hosts{$host}[$_]{'rss'} > 50){print color 'yellow'}
+				if ($hosts{$host}[$_]{'rss'} > 100){print color 'bold red'}
+				print sprintf("%4d",$hosts{$host}[$_]{'rss'});print color $setcolor;print "M]";
+				$rss+=$hosts{$host}[$_]{'rss'};
 				
-				my $dt = DateTime->from_epoch( epoch => $hosts{$host}[$_]{'start'} );
+				my $dt = DateTime->from_epoch( epoch => $hosts{$host}[$_]{'start'}+(3600*2));
 				print "[".sprintf('%02d',$dt->hour).":".sprintf('%02d',$dt->min)."]";
 				
-				print "[".sprintf('%5s',time()-$hosts{$host}[$_]{'start'})."]";
+				print "[";
+				if ((time()-$hosts{$host}[$_]{'start'}) > 1200){print color 'yellow'};
+				if ((time()-$hosts{$host}[$_]{'start'}) > 1800){print color 'bold red'};
+				print sprintf('%5s',time()-$hosts{$host}[$_]{'start'});
+				print color $setcolor;
+				print "]";
 				
 				print " #".$hosts{$host}[$_]{'pid'};
 				
@@ -117,9 +144,14 @@ while(1)
 			
 		}
 		
-		#print color 'reset bold cyan';print "*";print "\n";
-		Time::HiRes::sleep(5);
+		print color 'reset cyan';
+		print "[TOTAL".(" " x ($l-5))."]               [". sprintf('%2d',$processes)."][". sprintf('%2.2f',$cpu) ."][" .sprintf('%4s',$rss). "M]\n";
+		print color 'reset cyan';
 		
+		
+		#print color 'reset bold cyan';print "*";print "\n";
+		Time::HiRes::sleep(3);
+#		exit;
 	
 }
 
