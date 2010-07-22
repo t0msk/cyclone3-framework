@@ -934,7 +934,7 @@ sub image_add
 		}
 		
 		# check if same image not already inserted
-		if (!$env{'image.ID_entity'} && !$env{'image.ID'})
+		if (!$env{'image.ID_entity'} && !$env{'image.ID'} && $env{'check_duplicity'})
 		{
 			# calculate sha1
 			open(CHKSUM,'<'.$env{'file'});
@@ -976,6 +976,22 @@ sub image_add
 					}
 					undef $env{'file'};
 				}
+			}
+		}
+		
+		# new image without ID (try to extract EXIF data)
+		if (!$env{'image.ID_entity'} && !$env{'image.ID'})
+		{
+			my $image = Image::Magick->new();
+			$image->Read($env{'file'});
+			my $exif = $image->Get('format', '%[EXIF:*]');
+			foreach (split(/[\r\n]/, $exif))
+			{
+				main::_log($_);
+			}
+			if ($exif=~/exif:DateTime=(.*)/ && !$env{'image_ent.datetime_produce'})
+			{
+				$env{'image_ent.datetime_produce'}=$1;
 			}
 		}
 		
