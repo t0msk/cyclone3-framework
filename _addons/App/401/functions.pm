@@ -248,6 +248,7 @@ sub article_add
 		my %columns;
 		$columns{'ID_category'}=$env{'article_attrs.ID_category'} if $env{'article_attrs.ID_category'};
 		$columns{'datetime_start'}="'".$env{'article_attrs.datetime_start'}."'" if $env{'article_attrs.datetime_start'};
+		$columns{'datetime_start'}=$env{'article_attrs.datetime_start'} if ($env{'article_attrs.datetime_start'} && (not $env{'article_attrs.datetime_start'}=~/^\d/));
 		$columns{'datetime_start'}="NOW()" unless $columns{'datetime_start'};
 		
 		$env{'article_attrs.ID'}=App::020::SQL::functions::new(
@@ -295,6 +296,9 @@ sub article_add
 		# datetime_start
 		$columns{'datetime_start'}="'".$env{'article_attrs.datetime_start'}."'"
 			if ($env{'article_attrs.datetime_start'} && ($env{'article_attrs.datetime_start'} ne $article_attrs{'datetime_start'}));
+		$columns{'datetime_start'}=$env{'article_attrs.datetime_start'}
+			if (($env{'article_attrs.datetime_start'} && ($env{'article_attrs.datetime_start'} ne $article_attrs{'datetime_start'})) && (not $env{'article_attrs.datetime_start'}=~/^\d/));
+			
 		# datetime_stop
 		if (exists $env{'article_attrs.datetime_stop'} && ($env{'article_attrs.datetime_stop'} ne $article_attrs{'datetime_stop'}))
 		{
