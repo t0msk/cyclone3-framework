@@ -272,6 +272,7 @@ sub start
 			}
 			
 			$self->{'out_var'}->{'img.'.$out_cnt.'.src'}=$attr->{'src'};
+			$self->{'out_var'}->{'img.'.$out_cnt.'.fullsize.src'}=$attr->{'fullsize.src'} if $attr->{'fullsize.src'};
 			$self->{'out_var'}->{'img.'.$out_cnt.'.extra.src'}=$attr->{'extra.src'} if $attr->{'extra.src'};
 		}
 		elsif ($attr->{'id'}=~/^a510_video:(.*)$/)
