@@ -81,76 +81,52 @@
 	
 	<entity id="email.table" replace_variables="true">
 	<![CDATA[
-		<table width="<$tpl::entity{'content.width'}>" cellpadding="0" cellspacing="0">
-			<thead>
-				<tr>
-					<th colspan="<%colscount%>"><%title%></th>
-				</tr>
-				<!--
-				<tr>
-					<th colspan="<%colscount%>"><%subtitle%></th>
-				</tr>
-				-->
-				<tr>
-					<#email.table.col.name#>
-				</tr>
-			</thead>
-			<tbody>
-				<#email.table.line#>
-			</tbody>
-		</table><br/>
+<table width="<$tpl::entity{'content.width'}>" cellpadding="0" cellspacing="0">
+ <thead>
+  <tr>
+   <th colspan="<%colscount%>"><%title%></th>
+  </tr>
+<!--
+  <tr>
+   <th colspan="<%colscount%>"><%subtitle%></th>
+  </tr>
+-->
+  <tr>
+<#email.table.col.name#>
+  </tr>
+ </thead>
+ <tbody>
+<#email.table.line#>
+ </tbody>
+</table><br/>
 	]]>
 	</entity>
 	
 	
-	<entity id="email.table.line">
-	<![CDATA[
-		<tr>
-			<#email.table.col.value#>
-		</tr>
-		<#email.table.line#>
-	]]>
-	</entity>
+	<entity id="email.table.line"><![CDATA[
+  <tr><#email.table.col.value#>
+  </tr><#email.table.line#>]]></entity>
 	
 	
-	<entity id="email.table.line_sum">
-	<![CDATA[
-		<tr class="sum">
-			<#email.table.col.value#>
-		</tr>
-		<#email.table.line#>
-	]]>
-	</entity>
+	<entity id="email.table.line_sum"><![CDATA[
+  <tr class="sum"><#email.table.col.value#>
+  </tr><#email.table.line#>]]></entity>
 	
 	
-	<entity id="email.table.col.name">
-	<![CDATA[
-		<th><%name%></th>
-		<#email.table.col.name#>
-	]]>
-	</entity>
+	<entity id="email.table.col.name"><![CDATA[
+   <th><%name%></th><#email.table.col.name#>]]></entity>
 	
+	<entity id="email.table.col.name_span"><![CDATA[
+   <th colspan="<%span%>"><%name%></th><#email.table.col.name#>]]></entity>
 	
-	<entity id="email.table.col.value">
-	<![CDATA[
-		<td align="<%align%>"><%value%></td>
-		<#email.table.col.value#>
-	]]>
-	</entity>
+	<entity id="email.table.col.value"><![CDATA[
+   <td align="<%align%>"><%value%></td><#email.table.col.value#>]]></entity>
 	
-	<entity id="email.table.col.value_span">
-	<![CDATA[
-		<td colspan="<%span%>"><%value%></td>
-		<#email.table.col.value#>
-	]]>
-	</entity>
+	<entity id="email.table.col.value_span"><![CDATA[
+   <td colspan="<%span%>"><%value%></td><#email.table.col.value#>]]></entity>
 	
-	<entity id="email.table.col.value_sum">
-	<![CDATA[
-		<td class="sum"><%value%></td>
-		<#email.table.col.value#>
-	]]>
-	</entity>
+	<entity id="email.table.col.value_sum"><![CDATA[
+   <td class="sum"><%value%></td><#email.table.col.value#>]]></entity>
 	
 	
 </template>
