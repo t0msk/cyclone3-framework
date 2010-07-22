@@ -407,38 +407,40 @@ sub get_CGI
 			
 			require SOAP::Lite;
 			main::_log($form{'POSTDATA'});
-			my $som = SOAP::Deserializer->deserialize($form{'POSTDATA'});
-			my $body = $som->body;
-			
-			$form{'type'}=(keys %{$body})[0];
-			
-			main::_log("SOAP type='$form{'type'}'");
-			
-			if (ref($body->{$form{'type'}}) eq "HASH")
-			{
-				main::_log("SOAP parse HASH");
+			eval {
+				my $som = SOAP::Deserializer->deserialize($form{'POSTDATA'});
+				my $body = $som->body;
 				
-				my $gensym;
-				foreach (keys %{$body->{$form{'type'}}})
+				$form{'type'}=(keys %{$body})[0];
+				
+				main::_log("SOAP type='$form{'type'}'");
+				
+				if (ref($body->{$form{'type'}}) eq "HASH")
 				{
-					if ($_=~/^c\-gensym/)
+					main::_log("SOAP parse HASH");
+					
+					my $gensym;
+					foreach (keys %{$body->{$form{'type'}}})
 					{
-						$gensym=$_;
-						last;
+						if ($_=~/^c\-gensym/)
+						{
+							$gensym=$_;
+							last;
+						}
+					}
+					
+					if ($gensym)
+					{
+						main::_log("SOAP parse ugly perl $gensym");
+						%{$main::RPC}=%{$body->{$form{'type'}}->{$gensym}};
+					}
+					
+					else
+					{
+						%{$main::RPC}=%{$body->{$form{'type'}}};
 					}
 				}
-				
-				if ($gensym)
-				{
-					main::_log("SOAP parse ugly perl $gensym");
-					%{$main::RPC}=%{$body->{$form{'type'}}->{$gensym}};
-				}
-				
-				else
-				{
-					%{$main::RPC}=%{$body->{$form{'type'}}};
-				}
-			}
+			};
 		}
 		# process XML-RPC data
 		elsif ($Net::DOC::type eq "xmlrpc")
