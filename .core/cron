@@ -99,7 +99,7 @@ local (
 $TOM::engine_ready=1;
 $TOM::engine='cron.'.$type;
 
-my $var=rand(1);
+my $var=10;#rand(1);
 main::_log("starting cron, sleeping $var secs.");
 
 
