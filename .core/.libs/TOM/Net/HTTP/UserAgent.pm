@@ -206,9 +206,11 @@ our @table=
 		agent_group	=>	"Opera",
 	},
 	{name=>'Opera 10.X',
-		regexp		=>	['Opera.*?Version/10'],
-		agent_type	=>	"browser",
-		agent_group	=>	"Opera",
+		'regexp' => ['Opera.*?Version/10'],
+		'agent_type' => "browser",
+		'agent_group' => "Opera",
+			'xmlhttp' => 1,
+			'html5' => 1,
 	},
 	{name=>'Opera 9.X',
 		regexp		=>	['Opera.9'],
@@ -247,32 +249,37 @@ our @table=
 		regexp		=>	['MSIE 9'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Microsoft",
-		xmlhttp => 1,
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
 	},
 	{name=>'MSIE 8.X',
 		regexp		=>	['MSIE 8'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Microsoft",
-		xmlhttp => 1,
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+		'old' => 0,
 	},
 	{name=>'MSIE 7.X',
 		regexp		=>	['MSIE 7'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Microsoft",
 		xmlhttp => 1,
-		old			=>	1,
+		old => 1,
 	},
 	{name=>'MSIE 6.X',
 		regexp		=>	['MSIE 6'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Microsoft",
-		old			=>	2,
+		old => 2,
 	},
 	{name=>'MSIE 5.5',
 		regexp		=>	['MSIE 5\.5'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Microsoft",
-		old			=>	4,
+		old => 4,
 	},
 	{name=>'MSIE 5.0',
 		regexp		=>	['MSIE 5'],
@@ -380,22 +387,37 @@ our @table=
 		regexp		=>	['Firefox/4.0'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Mozilla.org",
-		xmlhttp => 1,
+			'html5' => 1,
+			'video_ogg' => 1,
+			'xmlhttp' => 1,
+#		log	=>	1,
+	},
+	{name=>'Mozilla Firefox 3.7',
+		'regexp' => ['Firefox/3.7'],
+		'agent_type' => "browser",
+		'agent_group' => "Mozilla.org",
+			'html5' => 1,
+			'video_ogg' => 1,
+			'xmlhttp' => 1,
 #		log	=>	1,
 	},
 	{name=>'Mozilla Firefox 3.6',
 		regexp		=>	['Firefox/3.6'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Mozilla.org",
-		xmlhttp => 1,
+			'html5' => 1,
+			'video_ogg' => 1,
+			'xmlhttp' => 1,
 #		log	=>	1,
 	},
 	{name=>'Mozilla Firefox 3.5',
 		regexp		=>	['Firefox/3.5'],
 		agent_type	=>	"browser",
 		agent_group	=>	"Mozilla.org",
-		old => 0,
-		xmlhttp => 1,
+			'old' => 0,
+			'html5' => 1,
+			'video_ogg' => 1,
+			'xmlhttp' => 1,
 #		log	=>	1,
 	},
 	{name=>'Mozilla Firefox 3.1',
@@ -523,53 +545,86 @@ our @table=
 	
 	# Google Chrome
 	{name=>'Google Chrome 6.X',
-		regexp		=>	['Chrome/6'],
-		agent_type	=>	"browser",
-		agent_group	=>	"Google",
+		'regexp' => ['Chrome/6'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
 	},
 	{name=>'Google Chrome 5.X',
-		regexp		=>	['Chrome/5'],
-		agent_type	=>	"browser",
-		agent_group	=>	"Google",
+		'regexp' => ['Chrome/5'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
 	},
 	{name=>'Google Chrome 4.X',
-		regexp		=>	['Chrome/4'],
-		agent_type	=>	"browser",
-		agent_group	=>	"Google",
+		'regexp' => ['Chrome/4'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
 	},
 	{name=>'Google Chrome 3.X',
-		regexp		=>	['Chrome/3'],
-		agent_type	=>	"browser",
-		agent_group	=>	"Google",
+		'regexp' => ['Chrome/3'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
 	},
 	{name=>'Google Chrome 2.X',
-		regexp		=>	['Chrome/2'],
-		agent_type	=>	"browser",
-		agent_group	=>	"Google",
-		old			=>	0,
+		'regexp' => ['Chrome/2'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'old' => 0,
 	},
 	{name=>'Google Chrome 1.X',
-		regexp		=>	['Chrome/1'],
-		agent_type	=>	"browser",
-		agent_group	=>	"Google",
-		old			=>	1,
+		'regexp' => ['Chrome/1'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'old' => 1,
 	},
 	{name=>'Google Chrome 0.2',
-		regexp		=>	['Chrome/0.2'],
-		agent_type	=>	"browser",
-		agent_group	=>	"Google",
-		old			=>	2,
+		'regexp' => ['Chrome/0.2'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'old' => 2,
 	},
 	{name=>'Google Chrome ???',
-		regexp		=>	['Chrome/'],
-		agent_type	=>	"browser",
-		agent_group	=>	"Google",
-		old			=>	3,
+		'regexp' => ['Chrome/'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'old' => 3,
 	},
 	
 	# --------------------------------------------------------------------
 	
 	# SAFARI
+	{'name'=>'Safari iPad 53X',
+		'regexp' => ['iPad.*?Safari.53'],
+		'media_type' => "tablet",
+		'media_group' => "iPad",
+		'agent_type' => "browser",
+		'agent_group' => "Apple",
+			'html5' => 1,
+			'xmlhttp' => 1,
+			'flash_disabled' => 0,
+	},
+	{'name'=>'Safari 53X',
+		'regexp' => ['Safari.53'],
+		'agent_type' => "browser",
+		'agent_group' => "Apple",
+			'html5' => 1,
+			'xmlhttp' => 1,
+	},
 	{name=>'Safari 52X',
 		regexp		=>	['Safari.52'],
 		agent_type	=>	"browser",
@@ -2201,20 +2256,20 @@ sub analyze
 		return ($cache_UserAgent{$user_agent}{'ID'},$cache_UserAgent{$user_agent}{'name'});
 	}
 	
-	if ($TOM::CACHE_memcached)
-	{
-		my $values=$Ext::CacheMemcache::cache->get(
-			'namespace' => "UserAgent",
-			'key' => $user_agent
-		);
-		if ($values->{'ID'})
-		{
-			main::_log("found in memcache") if $debug;
-			$cache_UserAgent{$user_agent}{'ID'}=$values->{'ID'};
-			$cache_UserAgent{$user_agent}{'name'}=$values->{'name'};
-			return ($values->{'ID'},$values->{'name'});
-		}
-	}
+#	if ($TOM::CACHE_memcached)
+#	{
+#		my $values=$Ext::CacheMemcache::cache->get(
+#			'namespace' => "UserAgent",
+#			'key' => $user_agent
+#		);
+#		if ($values->{'ID'})
+#		{
+#			main::_log("found in memcache") if $debug;
+#			$cache_UserAgent{$user_agent}{'ID'}=$values->{'ID'};
+#			$cache_UserAgent{$user_agent}{'name'}=$values->{'name'};
+#			return ($values->{'ID'},$values->{'name'});
+#		}
+#	}
 	
 	foreach my $i(1..@table-1)
 	{
@@ -2223,18 +2278,18 @@ sub analyze
 #			main::_log("checking '$user_agent' to $regexp");
 			if ($user_agent=~/$regexp/i)
 			{
-				if ($TOM::CACHE_memcached)
-				{
-					$Ext::CacheMemcache::cache->set(
-						'namespace' => "UserAgent",
-						'key' => $user_agent,
-						'value' => {
-							'IP' => $i,
-							'name' => $table[$i]{'name'}
-						},
-						'expiration' => '600S'
-					);
-				}
+#				if ($TOM::CACHE_memcached)
+#				{
+#					$Ext::CacheMemcache::cache->set(
+#						'namespace' => "UserAgent",
+#						'key' => $user_agent,
+#						'value' => {
+#							'IP' => $i,
+#							'name' => $table[$i]{'name'}
+#						},
+#						'expiration' => '600S'
+#					);
+#				}
 				$cache_UserAgent{$user_agent}{'ID'}=$i;
 				$cache_UserAgent{$user_agent}{'name'}=$table[$i]{'name'};
 				return ($i,$table[$i]{'name'});
