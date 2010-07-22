@@ -135,6 +135,24 @@ POSIX::sigaction(&POSIX::SIGPIPE, $action_ignore);
 main::_log("registering SIG{SIGUSR1} action to CHECK");
 POSIX::sigaction(&POSIX::SIGUSR1, $action_check);
 
+main::_log("registering SIG{SIGUSR2} action to CHECK");
+POSIX::sigaction(&POSIX::SIGUSR2, $action_check);
+
+main::_log("registering SIG{SIGCHLD} action to CHECK");
+POSIX::sigaction(&POSIX::SIGCHLD, $action_check);
+
+main::_log("registering SIG{SIGKILL} action to CHECK");
+POSIX::sigaction(&POSIX::SIGKILL, $action_check);
+
+main::_log("registering SIG{SIGTSTP} action to CHECK");
+POSIX::sigaction(&POSIX::SIGTSTP, $action_check);
+
+main::_log("registering SIG{SIGINT} action to IGNORE");
+POSIX::sigaction(&POSIX::SIGINT, $action_ignore);
+
+main::_log("registering SIG{SIGQUIT} action to IGNORE");
+POSIX::sigaction(&POSIX::SIGQUIT, $action_ignore);
+
 main::_log("start counting timeout $TOM::fcgi_timeout");
 alarm($TOM::fcgi_timeout); # zacnem pocitat X sekund kym nedostanem request
 
