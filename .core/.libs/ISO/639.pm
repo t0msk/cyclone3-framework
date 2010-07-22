@@ -155,7 +155,10 @@ $table{$table_C{$_}}=$_ foreach(keys %table_C);
 
 
 
-
+our %table_native=(
+	'sk' => 'Slovensky',
+	'en' => 'English'
+);
 
 
 
