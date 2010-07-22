@@ -275,6 +275,10 @@ while ($main::CGI=new CGI::Fast())
 	$result="ok";
 	$page_statuscode="200";
 	$pub::output_log=0;
+#	$main::ENV{'Expires'}="Mon, 1 Jan 1990 23:00:00 GMT";
+	$main::ENV{'Expires'}="0";
+	$main::ENV{'Cache-Control'}="no-cache";
+	$main::ENV{'Pragma'}="no-cache";
 	
 	
 #	main::_log('DOS control');
@@ -1376,7 +1380,17 @@ while ($main::CGI=new CGI::Fast())
 		# USRM check
 		if ($tom::addons{'a301'} || $App::301::db_name)
 		{
-			App::301::session::process();
+#			main::_log("[$tom::H] '$tom::addons{'a301'}' '$App::301::db_name'",3,"a301",2);
+#			main::_log("[$tom::H] enabled",3,"a301",2) if $tom::addons{'a301'};
+			if ($tom::addons{'a301'}==-1) # negative mode
+			{
+				# hardtyped into *.conf $tom::addons{'a301'} = -1;
+				# negative mode not dissables a301 usage, but dissables USRM for all requests
+			}
+			else
+			{
+				App::301::session::process();
+			}
 		}
 		
 		# CITANIE HLAVICKY
@@ -1688,6 +1702,45 @@ while ($main::CGI=new CGI::Fast())
 			{
 				$Net::DOC::content_type=$env0{value};
 				_log("Change Net::DOC::content_type to ".$env0{value});
+				next;
+			}
+			
+			if ($env0{'id'} eq "Expires")
+			{
+				if ($env0{'value'}=~/^\+(\d+)([DHS])$/)
+				{
+					my $date = DateTime->now('time_zone' => 'local');#->subtract( days => $env{'days'} );
+					if ($2 eq "D")
+					{
+						$date->add('days' => $1);
+					}
+					if ($2 eq "H")
+					{
+						$date->add('hours' => $1);
+					}
+					if ($2 eq "S")
+					{
+						$date->add('seconds' => $1);
+					}
+					
+					$main::ENV{'Expires'} = $date->strftime("%a, %d %b %Y %H:%M:%S %Z"); 
+					
+					_log("Change Expires to ".$main::ENV{'Expires'});
+					next;
+				}
+			}
+			
+			if ($env0{'id'} eq "Cache-Control")
+			{
+				$main::ENV{'Cache-Control'}=$env0{'value'};
+				_log("Change Cache-Control to ".$env0{'value'});
+				next;
+			}
+			
+			if ($env0{'id'} eq "Pragma")
+			{
+				$main::ENV{'Pragma'}=$env0{'value'};
+				_log("Change Pragma to ".$env0{'value'});
 				next;
 			}
 			
@@ -2338,9 +2391,21 @@ while ($main::CGI=new CGI::Fast())
 		}
 		else
 		{
-			print "Expires: Mon, 1 Jan 1990 23:00:00 GMT\n";
-			print "Cache-control: no-cache\n";
-			print "Pragma: no-cache\n";
+			if ($main::ENV{'Expires'})
+			{
+				main::_log("Expires: ".$main::ENV{'Expires'});
+				print "Expires: ".$main::ENV{'Expires'}."\n";
+			}
+			if ($main::ENV{'Cache-Control'})
+			{
+				main::_log("Cache-Control: ".$main::ENV{'Cache-Control'});
+				print "Cache-Control: ".$main::ENV{'Cache-Control'}."\n";
+			}
+			if ($main::ENV{'Pragma'})
+			{
+				main::_log("Pragma: ".$main::ENV{'Pragma'});
+				print "Pragma: ".$main::ENV{'Pragma'}."\n";
+			}
 			print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n";
 			
 			
@@ -2388,11 +2453,7 @@ while ($main::CGI=new CGI::Fast())
 			(
 				(($tom::HUP) && (($main::time_current-$TOM::time_start)>30)) || # bol request na HUP
 				($tom::count>=$TOM::max_count) || # pocet requestov je privysoky
-				(($main::time_current-$TOM::time_start)>=$TOM::max_time) || # som v pamati uz pridlho
-				( # som si vyziadal restart
-					(Tomahawk::Getvar('restart')>$TOM::time_start) &&
-					(Tomahawk::Getvar('restart')<$tom::time_current)
-				)
+				(($main::time_current-$TOM::time_start)>=$TOM::max_time) # som v pamati uz pridlho
 			)
 		)
 		{
@@ -2484,7 +2545,7 @@ while ($main::CGI=new CGI::Fast())
 	$main::request_code="00000000";
 	# re-registering ALARM
 	POSIX::sigaction(&POSIX::SIGALRM, $TOM::Engine::pub::SIG::action_exit);
-	alarm($TOM::fcgi_timeout);
+	alarm($TOM::fcgi_sleep_timeout);
 } # end of while
 ######################################################################################
 ######################################################################################
