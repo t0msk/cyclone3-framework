@@ -93,6 +93,40 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org_j` (
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*addon*/_org_lng` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL, -- related _org.ID_entity
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00', -- last change
+  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL, -- changed by user
+  `name_short` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `about` text character set utf8 collate utf8_unicode_ci,
+  `lng` char(2) character set ascii NOT NULL default '',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`, `lng`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_org_lng_j` (
+  `ID` bigint(20) unsigned NOT NULL,
+  `ID_entity` bigint(20) unsigned default NULL, -- main id
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00', -- last change
+  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL, -- changed by user
+  `name_short` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `about` text character set utf8 collate utf8_unicode_ci,
+  `lng` char(2) character set ascii NOT NULL default '',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`, `lng`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*addon*/_org_cat` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
