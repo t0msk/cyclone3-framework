@@ -9,7 +9,7 @@ require "/www/TOM/.bin/tom3-init";
 
 
 if (($FORM{h})||($FORM{help})||($ENV{USER} ne "root")){print "\n[PLEASE USE SUDO]\n\n";&help();}
-if ((!$FORM{domain})&&(!$FORM{a})){&help();}
+if ((!$FORM{domain})&&(!$FORM{a})&&(!$FORM{'zombie'})){&help();}
 
 my $time_current=time;
 
@@ -22,11 +22,11 @@ use Proc::ProcessTable;
 
 print "restart DOMAIN: $FORM{domain}\n";
 
-$FORM{SIG}=HUP unless $FORM{SIG};
+$FORM{'SIG'}=HUP unless $FORM{'SIG'};
 
-$FORM{SIG}=HUP if $FORM{SIG} eq "HUP";
-$FORM{SIG}=HUP if $FORM{SIG} eq "-HUP";
-$FORM{SIG}=KILL if $FORM{SIG} eq "-9";
+$FORM{'SIG'}=HUP if $FORM{'SIG'} eq "HUP";
+$FORM{'SIG'}=HUP if $FORM{'SIG'} eq "-HUP";
+$FORM{'SIG'}=KILL if $FORM{'SIG'} eq "-9";
 
 $main::p=~s|^.*/www/TOM/||;
 
@@ -35,20 +35,25 @@ foreach my $p (@{$t->table})
 {
 	my $cmd=$p->cmndline;
 	
-	next unless $cmd=~/^.*\/perl .*?tom3 pwd=(.*)/;
-	my $domain=$1;
+	next unless $cmd=~/^.*\/perl .*?\/\.core\/(.*?) pwd=(.*)/;
+	my $engine=$1;
+	my $domain=$2;
 	$domain=~s|^.*/www/TOM/||;
 	$domain=~s|/!www\s?$||;
 	
-	next if ((not $domain eq $main::p)&&(!$FORM{a}));
+	next if ((not $domain eq $main::p)&&(!$FORM{'a'})&&(!$FORM{'zombie'}));
+	if ($FORM{'zombie'})
+	{
+		next if ((time()-$p->{'start'}) < 3600);
+	}
 	
 	$domain=~s|^.*TOM/||;
 	
 	print color 'reset bold yellow';
-	print " Send $FORM{SIG} to ($core) PID:".$p->pid." ($domain) =";
+	print " Send $FORM{SIG} to ($engine) PID:".$p->pid." ($domain) =";
 	print color 'reset bold red';
 	
-	my $out=kill $FORM{SIG}, $p->pid;
+	my $out=kill $FORM{'SIG'}, $p->pid;
 	print " $out\n";
 	
 }
