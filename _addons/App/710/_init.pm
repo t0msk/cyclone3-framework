@@ -71,6 +71,7 @@ use App::710::a301;
 
 our $db_name=$App::710::db_name || $TOM::DB{'main'}{'name'};
 
+our $metadata_default=$App::710::metadata_default || '';
 
 # check relation to a501
 use App::501::_init;
