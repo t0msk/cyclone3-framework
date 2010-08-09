@@ -59,7 +59,7 @@ sub new
 	$env{'lng'}="en-US" unless $env{'lng'};
 	$env{'level'}="auto" unless $env{'level'};
 	$env{'name'}="default" unless $env{'name'};
-	my $t=track TOM::Debug(__PACKAGE__."->new($env{'level'}/$env{'addon'}/$env{'name'}.$env{'lng'})");
+	my $t=track TOM::Debug(__PACKAGE__."->new($env{'level'}/$env{'addon'}/$env{'name'}.$env{'lng'})") if $debug;
 	
 	my $obj=bless {}, $class;
 	
@@ -116,7 +116,7 @@ sub new
 			$L10n::num{'#'.$obj->{'id'}}{$_}=$i;
 			$L10n::obj{'#'.$obj->{'id'}.'#'.$i}=$L10n::string{$_};
 		}
-	$t->close();
+	$t->close() if $debug;
 	return $obj_return;
 }
 
@@ -172,7 +172,8 @@ sub prepare_location
 	}
 	else
 	{
-		main::_log("XML '$self->{'location'}'");# if $debug;
+#		main::_log("XML '$self->{'location'}'");# if $debug;
+		main::_log("<={L10n} '$self->{'location'}'");# if $debug;
 	}
 	
 	return $self->{'location'};
@@ -286,7 +287,7 @@ sub parse_string
 		push @strs, $id;
 	}
 	
-	main::_log("strings '".(join "','",@strs)."'") unless $debug;
+#	main::_log("strings '".(join "','",@strs)."'") unless $debug;
 	
 }
 
