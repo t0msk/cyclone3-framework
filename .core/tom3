@@ -2538,6 +2538,7 @@ while ($main::CGI=new CGI::Fast())
 			($TOM::max_time <= ($main::time_current-$TOM::time_start))
 		)
 	{
+		main::_log("SHUTDOWN (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3);
 		main::_log("SHUTDOWN (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
 		Tomahawk::shutdown();
 	}
