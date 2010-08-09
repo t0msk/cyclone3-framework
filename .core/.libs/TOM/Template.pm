@@ -110,7 +110,7 @@ sub new
 	my $class=shift;
 	my %env=@_;
 	
-	my $t=track TOM::Debug(__PACKAGE__."->new($env{'level'}/$env{'addon'}/$env{'name'}.$env{'content-type'})");
+	my $t=track TOM::Debug(__PACKAGE__."->new($env{'level'}/$env{'addon'}/$env{'name'}.$env{'content-type'})") if $debug;
 	
 	my $obj=bless {}, $class;
 	
@@ -171,7 +171,7 @@ sub new
 			%{$obj_return->{'file'}}=%{$objects{$obj->{'location'}}{'file'}};
 			%{$obj_return->{'file_'}}=%{$objects{$obj->{'location'}}{'file_'}};
 		}
-	$t->close();
+	$t->close() if $debug;
 	return $obj_return;
 }
 
@@ -228,7 +228,8 @@ sub prepare_location
 	}
 	else
 	{
-		main::_log("XML '$self->{'location'}'");# if $debug;
+#		main::_log("XML '$self->{'location'}'");# if $debug;
+		main::_log("<={Template} '$self->{'location'}'");# if $debug;
 	}
 	
 	
@@ -416,7 +417,7 @@ sub parse_entity
 		push @ents, $id;
 	}
 	
-	main::_log("entities '".(join "','",@ents)."'") unless $debug;
+#	main::_log("entities '".(join "','",@ents)."'") unless $debug;
 	
 }
 
@@ -431,7 +432,7 @@ sub process_entity
 		my $lng=$self->{'L10n'}{'lng'};
 		if (!$lng || $lng eq "auto")
 		{
-			main::_log("$tom::lng $tom::LNG $TOM::LNG");
+#			main::_log("$tom::lng $tom::LNG $TOM::LNG");
 			$lng=$tom::lng;
 			$lng=$tom::LNG unless $lng;
 			$lng=$TOM::LNG unless $lng;
