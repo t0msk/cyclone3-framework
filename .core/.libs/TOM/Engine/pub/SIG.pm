@@ -138,8 +138,8 @@ POSIX::sigaction(&POSIX::SIGUSR1, $action_check);
 main::_log("registering SIG{SIGUSR2} action to CHECK");
 POSIX::sigaction(&POSIX::SIGUSR2, $action_check);
 
-main::_log("registering SIG{SIGCHLD} action to CHECK");
-POSIX::sigaction(&POSIX::SIGCHLD, $action_check);
+#main::_log("registering SIG{SIGCHLD} action to CHECK");
+#POSIX::sigaction(&POSIX::SIGCHLD, $action_check);
 
 main::_log("registering SIG{SIGKILL} action to CHECK");
 POSIX::sigaction(&POSIX::SIGKILL, $action_check);
