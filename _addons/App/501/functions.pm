@@ -1332,6 +1332,10 @@ sub image_add
 		$columns{'datetime_produce'}="'".TOM::Security::form::sql_escape($env{'image_ent.datetime_produce'})."'"
 			if (exists $env{'image_ent.datetime_produce'} && ($env{'image_ent.datetime_produce'} ne $image_ent{'datetime_produce'}));
 		$columns{'datetime_produce'}='NULL' if $columns{'datetime_produce'} eq "''";
+
+      		if ((not exists $env{'image_ent.metadata'}) && (!$image_ent{'metadata'})){$env{'image_ent.metadata'}=$App::501::metadata_default;}
+		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'image_ent.metadata'})."'"
+                if (exists $env{'image_ent.metadata'} && ($env{'image_ent.metadata'} ne $image_ent{'metadata'}));
 		
 		if (keys %columns)
 		{

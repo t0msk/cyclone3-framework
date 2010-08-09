@@ -36,6 +36,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent` (
   `visits` int(10) unsigned NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   KEY `ID_entity` (`ID_entity`),
@@ -55,6 +56,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent_j` (
   `visits` int(10) unsigned NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
