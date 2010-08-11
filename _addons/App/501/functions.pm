@@ -985,14 +985,29 @@ sub image_add
 			my $image = Image::Magick->new();
 			$image->Read($env{'file'});
 			my $exif = $image->Get('format', '%[EXIF:*]');
+
+
+			my %exifdata = ( "EXIF" => {} );
+
 			foreach (split(/[\r\n]/, $exif))
 			{
 				main::_log($_);
+                		
+				if ( /exif:([^=]+)=(.*)$/ )
+                		{
+                        		$exifdata{'EXIF'} -> {$1} = $2;
+                		}
 			}
 			if ($exif=~/exif:DateTime=(.*)/ && !$env{'image_ent.datetime_produce'})
 			{
 				$env{'image_ent.datetime_produce'}=$1;
 			}
+
+			if (!$env{'image_ent.metadata'})
+			{
+			        $env{'image_ent.metadata'} = App::020::functions::metadata::serialize(%exifdata);	
+			}
+
 		}
 		
 		$content_updated=1;
