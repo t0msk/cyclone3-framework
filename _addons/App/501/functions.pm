@@ -987,7 +987,7 @@ sub image_add
 			my $exif = $image->Get('format', '%[EXIF:*]');
 
 
-			my %exifdata = ( "EXIF" => {} );
+			my %exifdata;
 
 			foreach (split(/[\r\n]/, $exif))
 			{
@@ -995,17 +995,17 @@ sub image_add
                 		
 				if ( /exif:([^=]+)=(.*)$/ )
                 		{
-                        		$exifdata{'EXIF'} -> {$1} = $2;
+                        		$exifdata{$1} = $2;
                 		}
 			}
-			if ($exif=~/exif:DateTime=(.*)/ && !$env{'image_ent.datetime_produce'})
+			if ($exifdata{'DateTime'} && !$env{'image_ent.datetime_produce'})
 			{
-				$env{'image_ent.datetime_produce'}=$1;
+				$env{'image_ent.datetime_produce'}=$exifdata{'DateTime'};
 			}
 
 			if (!$env{'image_ent.metadata'})
 			{
-			        $env{'image_ent.metadata'} = App::020::functions::metadata::serialize(%exifdata);	
+			        $env{'image_ent.metadata'} = App::020::functions::metadata::serialize('EXIF' => { %exifdata });	
 			}
 
 		}
