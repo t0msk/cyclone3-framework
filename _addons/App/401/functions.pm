@@ -340,6 +340,7 @@ sub article_add
 	# ARTICLE_CONTENT
 	
 	my %article_content;
+	$env{'article_content.lng'} = $env{'article_attrs.lng'} unless $env{'article_content.lng'};
 	if (!$env{'article_content.ID'})
 	{
 		my $sql=qq{
@@ -349,12 +350,13 @@ sub article_add
 				`$App::401::db_name`.`a401_article_content`
 			WHERE
 				ID_entity='$env{'article.ID_entity'}' AND
-				lng='$env{'article_attrs.lng'}'
+				lng='$env{'article_content.lng'}'
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		%article_content=$sth0{'sth'}->fetchhash();
 		$env{'article_content.ID'}=$article_content{'ID'};
+#		$env{'article_content.lng'}=$article_content{'lng'};
 	}
 	if (!$env{'article_content.ID'})
 	{
@@ -369,7 +371,7 @@ sub article_add
 			{
 				%columns,
 				'ID_entity' => $env{'article.ID_entity'},
-				'lng' => "'$env{'article_attrs.lng'}'",
+				'lng' => "'$env{'article_content.lng'}'",
 			},
 			'-journalize' => 1,
 		);
