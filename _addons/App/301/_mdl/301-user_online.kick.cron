@@ -17,6 +17,8 @@ This cron module moves users with expired session into user table
 =cut
 
 use TOM::Security::form;
+use App::301::_init;
+use App::301::session;
 
 sub execute
 {
@@ -24,129 +26,110 @@ sub execute
 	alarm 0;
 #	return 1;
 	if (!$env{'max_online'}){$env{'max_online'}=20};
-
-	my %sth=TOM::Database::SQL::execute(qq{
-		SELECT
-			*
-		FROM
-			TOM.a301_user_online
-		WHERE
-			datetime_request <= DATE_SUB(NOW(),INTERVAL $env{'max_online'} MINUTE)
-		LIMIT 500
-	},'quiet'=>0);
-	my $i;
-	while (my %user=$sth{'sth'}->fetchhash)
+	
+	for my $looper (1..1000)
 	{
-		$i++;
-		main::_log("[$i/$sth{'rows'}] kick user.ID_user='$user{'ID_user'}'");
-		
-		
-		# save session
-		TOM::Database::SQL::execute(qq{
-			INSERT INTO TOM.a301_user_session
-			(
-				ID_user,
-				IP,
-				datetime_session_begin,
-				datetime_session_end,
-				requests_all,
-				saved_cookies,
-				saved_session
-			)
-			VALUES
-			(
-				'}.TOM::Security::form::sql_escape($user{'ID_user'}).qq{',
-				'}.TOM::Security::form::sql_escape($user{'IP'}).qq{',
-				'}.TOM::Security::form::sql_escape($user{'datetime_login'}).qq{',
-				'}.TOM::Security::form::sql_escape($user{'datetime_request'}).qq{',
-				'}.TOM::Security::form::sql_escape($user{'requests'}).qq{',
-				'}.TOM::Security::form::sql_escape($user{'cookies'}).qq{',
-				'}.TOM::Security::form::sql_escape($user{'session'}).qq{'
-			)
-		},'quiet'=>1);
-		
-		
-		my %sth0=TOM::Database::SQL::execute(qq{
+		my %sth=TOM::Database::SQL::execute(qq{
 			SELECT
 				*
-			FROM TOM.a301_user
+			FROM
+				TOM.a301_user_online
 			WHERE
-				ID_user='$user{'ID_user'}'
-			LIMIT 1
-		},'quiet'=>1);
-		if (my %user0=$sth0{'sth'}->fetchhash)
+				datetime_request <= DATE_SUB(NOW(),INTERVAL $env{'max_online'} MINUTE)
+			LIMIT 100
+		},'quiet'=>0);
+		my $i;
+		while (my %user=$sth{'sth'}->fetchhash)
 		{
-			main::_log("is logged") if ($user{'logged'} eq "Y");
-			main::_log("not logged") if ($user{'logged'} ne "Y");
-			main::_log("anonymous") if (!$user0{'login'});
-			main::_log("authorized") if ($user0{'login'});
+			$i++;
+			main::_log("[$looper/1000][$i/$sth{'rows'}] kick user.ID_user='$user{'ID_user'}'");
 			
-			if ($TOM::CACHE_memcached)
-			{
-				# actualize data
-				
-				
-				# delete if data are old
-				$Ext::CacheMemcache::cache->delete(
-					'namespace' => "a301_online",
-					'key' => $tom::H_cookie.':'.$main::COOKIES{_ID_user},
-				);
-			}
+			# save session
+			App::301::session::archive($user{'ID_user'});
 			
-			if (
-					(($user{'logged'} eq "Y")&&($user0{'login'}))
-					||(($user{'logged'} ne "Y")&&(!$user0{'login'}))
-				)
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					*
+				FROM TOM.a301_user
+				WHERE
+					ID_user='$user{'ID_user'}'
+				LIMIT 1
+			},'quiet'=>1);
+			if (my %user0=$sth0{'sth'}->fetchhash)
 			{
+				main::_log("is logged") if ($user{'logged'} eq "Y");
+				main::_log("not logged") if ($user{'logged'} ne "Y");
+				main::_log("anonymous") if (!$user0{'login'});
+				main::_log("authorized") if ($user0{'login'});
 				
-				main::_log(" save data into users table");
+				if ($TOM::CACHE_memcached)
+				{
+					# actualize data
+					
+					
+					# delete if data are old
+					$Ext::CacheMemcache::cache->delete(
+						'namespace' => "a301_online",
+						'key' => $tom::H_cookie.':'.$main::COOKIES{_ID_user},
+					);
+				}
 				
-				TOM::Database::SQL::execute(qq{
-					UPDATE
-						TOM.a301_user
-					SET
-						datetime_last_login = '$user{datetime_login}',
-						requests_all = requests_all + $user{requests},
-						saved_cookies = '}.TOM::Security::form::sql_escape($user{'cookies'}).qq{',
-						saved_session = '}.TOM::Security::form::sql_escape($user{'session'}).qq{'
-					WHERE
-						ID_user='$user{ID_user}'
-					LIMIT 1
-				},'quiet'=>1);
-				
-				TOM::Database::SQL::execute(qq{
-					DELETE FROM
-						TOM.a301_user_online
-					WHERE
-						ID_user='$user{'ID_user'}'
-					LIMIT 1
-				},'quiet'=>1);
-				
+				if (
+						(($user{'logged'} eq "Y")&&($user0{'login'}))
+						||(($user{'logged'} ne "Y")&&(!$user0{'login'}))
+					)
+				{
+					
+					main::_log(" save data into users table");
+					
+					TOM::Database::SQL::execute(qq{
+						UPDATE
+							TOM.a301_user
+						SET
+							datetime_last_login = '$user{datetime_login}',
+							requests_all = requests_all + $user{requests},
+							saved_cookies = '}.TOM::Security::form::sql_escape($user{'cookies'}).qq{',
+							saved_session = '}.TOM::Security::form::sql_escape($user{'session'}).qq{'
+						WHERE
+							ID_user='$user{ID_user}'
+						LIMIT 1
+					},'quiet'=>1);
+					
+					TOM::Database::SQL::execute(qq{
+						DELETE FROM
+							TOM.a301_user_online
+						WHERE
+							ID_user='$user{'ID_user'}'
+						LIMIT 1
+					},'quiet'=>1);
+					
+				}
+				else
+				{
+					main::_log(" just delete from online");
+					TOM::Database::SQL::execute(qq{
+						DELETE FROM
+							TOM.a301_user_online
+						WHERE
+							ID_user='$user{'ID_user'}'
+						LIMIT 1
+					},'quiet'=>1);
+				}
 			}
 			else
 			{
+				main::_log(" user not exists in users table",1);
 				main::_log(" just delete from online");
 				TOM::Database::SQL::execute(qq{
 					DELETE FROM
 						TOM.a301_user_online
 					WHERE
-						ID_user='$user{'ID_user'}'
+						ID_session='$user{'ID_session'}'
 					LIMIT 1
 				},'quiet'=>1);
 			}
 		}
-		else
-		{
-			main::_log(" user not exists in users table",1);
-			main::_log(" just delete from online");
-			TOM::Database::SQL::execute(qq{
-				DELETE FROM
-					TOM.a301_user_online
-				WHERE
-					ID_session='$user{'ID_session'}'
-				LIMIT 1
-			},'quiet'=>1);
-		}
+		return 1 unless $i;
 	}
 	
 	return 1;
