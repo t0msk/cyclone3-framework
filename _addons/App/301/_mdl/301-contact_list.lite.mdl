@@ -130,7 +130,8 @@ sub execute
 			user_profile.street_num,
 			user_profile.address_postal,
 			user_profile.about_me,
-			user_profile.note
+			user_profile.note,
+			user_profile.metadata
 		FROM
 			TOM.a301_user AS user
 		LEFT JOIN TOM.a301_contact_rel_cat AS rel ON
@@ -185,6 +186,7 @@ sub execute
 				user_profile.address_postal,
 				user_profile.about_me,
 				user_profile.note,
+				user_profile.metadata,
 				YEAR(user_profile.date_birth) AS year_birth
 			FROM
 				TOM.a301_user AS user
@@ -217,10 +219,33 @@ sub execute
 			($fullname,$shortname)=App::301::authors::get_fullname(%db0_line);
 			
 			$item=~s|<%fullname%>|$fullname|g;
+			$item=~s|<%fullname_url%>|TOM::Net::URI::rewrite::convert($fullname)|ge;
 			$item=~s|<%shortname%>|$shortname|g;
 			
 			$item=~s|<%ID%>|$db0_line{'ID_user'}|g;
 			$item=~s|<%ID_entity%>|$db0_line{'ID_user'}|g;
+			
+			
+			# replace metadata
+			my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
+			foreach my $sec(keys %metadata){foreach (keys %{$metadata{$sec}}){$item=~s/<%$sec\::$_%>/$metadata{$sec}{$_}/g;}}
+			my $keys;
+			foreach my $sec(keys %metadata)
+			{
+#				my $null_section=$XSGN{'metadata_section'};
+#				$null_section=~s|<%name%>|$sec|g;
+				foreach (keys %{$metadata{$sec}})
+				{
+					$keys++;
+#					my $null=$XSGN{'metadata_variable'};
+#					$null=~s|<%variable%>|$_|g;
+#					$null=~s|<%value%>|$metadata{$sec}{$_}|g;
+#					$null_section=~s|<#metadata_variable#>|$null|;
+				}
+				
+#				$XSGN{'metadata'}=~s|<#metadata_section#>|$null_section|;
+			}
+#			$XSGN{'TMP'}=~s|<#metadata#>|$XSGN{'metadata'}| if $keys;
 			
 			if (my $relation=(App::160::SQL::get_relations(
 				'db_name' => $App::301::db_name,
