@@ -103,13 +103,18 @@ sub execute
 				LIMIT 1
 			});
 			
+			# save session
+			App::301::session::archive($user{'ID_user'},'reset'=>1);
+			
 			# changing session
-			# not changing session, session is the same! I'm continue browsing the page
+			# not changing session, session is the same! I'm continuing browsing the page
 			# undef $main::COOKIES{'_IDsession'};
 			
 			# destroy hidden variables of logged user
 			foreach (keys %{$main::USRM{'session'}})
 			{
+				next if $_ eq "USRM_G";
+				next if $_ eq "USRM_S";
 				delete $main::USRM{'session'}{$_};
 			}
 			$main::USRM{'logged'}='N';

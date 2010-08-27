@@ -30,6 +30,7 @@ sub execute
 	{
 		if (exists $main::FORM{'submit'} || $env{'login'} || $env{'pass'})
 		{
+			main::_log('no credentials!');
 			$XSGN{'TMP'}=$XSGN{'ERR_no-credentials'};
 		}
 		return 1
@@ -38,6 +39,7 @@ sub execute
 	# cookies are dissabled
 	if ((keys %main::COOKIES_save) == 0)
 	{
+		main::_log('no cookie support!');
 		$XSGN{'TMP'}=$XSGN{'ERR_cookies'};
 		return 1;
 	}
@@ -46,6 +48,8 @@ sub execute
 	
 	main::_log("ID_user='$main::USRM{ID_user}' ID_session='$main::USRM{ID_session}' IP='$main::ENV{REMOTE_ADDR}' AGENT='$main::ENV{HTTP_USER_AGENT}'");
 	
+	# continue with current USRM_S session data
+	my %USRM_S;if ($main::USRM{'session'}{'USRM_S'}){%USRM_S=%{$main::USRM{'session'}{'USRM_S'}};}
 	
 	my $sql=qq{
 		SELECT
@@ -118,6 +122,10 @@ sub execute
 		if (my %user=$sth0{'sth'}->fetchhash())
 		{
 			main::_log("I'm already online");
+			
+			# archive old session
+			App::301::session::archive($user{'ID_user'},'reset'=>1);
+			
 			if ($user{'logged'} eq "Y")
 			{
 				main::_log("I'm online, and logged in, also reset session");
