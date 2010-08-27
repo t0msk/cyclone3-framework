@@ -45,7 +45,7 @@ sub execute
 	
 	my $tr=new TOM::Database::SQL::transaction('db_h'=>'main');
 		
-		main::_log("removing expired anonymous users (12 months inactive)");
+		main::_log("removing expired anonymous users (6 months inactive)");
 		my $est=1;
 		while ($est)
 		{
@@ -53,7 +53,7 @@ sub execute
 				DELETE
 				FROM TOM.a301_user_inactive
 				WHERE
-					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 12 MONTH)
+					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 6 MONTH)
 				LIMIT 100
 			}
 			,'quiet'=>1);
@@ -61,7 +61,7 @@ sub execute
 			$est=$sth0{'rows'};
 		}
 		
-		main::_log("removing deadway anonymous users (1 month inactive, less 2 requests)");
+		main::_log("removing deadway anonymous users (3 days inactive, <=2 requests)");
 		my $est=1;
 		while ($est)
 		{
@@ -71,7 +71,7 @@ sub execute
 					requests_all
 				FROM TOM.a301_user_inactive
 				WHERE
-					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 1 MONTH)
+					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 3 DAY)
 					AND requests_all<=2
 				LIMIT 1000
 			}
@@ -88,7 +88,7 @@ sub execute
 			}
 		}
 		
-		main::_log("removing inactive anonymous users (6 month inactive, less 10 requests)");
+		main::_log("removing inactive anonymous users (1 month inactive, <=10 requests)");
 		my $est=1;
 		while ($est)
 		{
@@ -98,7 +98,7 @@ sub execute
 					requests_all
 				FROM TOM.a301_user_inactive
 				WHERE
-					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 6 MONTH)
+					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 1 MONTH)
 					AND requests_all<=10
 				LIMIT 1000
 			}
@@ -115,8 +115,50 @@ sub execute
 			}
 		}
 		
+		main::_log("removing old sessions 6 months");
+		my %sth0=TOM::Database::SQL::execute(qq{
+			DELETE
+			FROM TOM.a301_user_session
+			WHERE datetime_session_begin <= DATE_SUB(NOW(),INTERVAL 6 MONTH)
+		}
+		,'quiet'=>1);
+		main::_log(" removed $sth0{'rows'} items");
+		
+		main::_log("removing sessions of removed users");
+		my $est=1;
+		while ($est)
+		{
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					session.ID_user
+				FROM
+					TOM.a301_user_session AS session
+				LEFT JOIN TOM.a301_user AS user_orig ON
+				(
+					session.ID_user = user_orig.ID_user
+				)
+				LEFT JOIN TOM.a301_user_inactive AS user_inactive ON
+				(
+					session.ID_user = user_inactive.ID_user
+				)
+				WHERE
+					user_orig.ID_user IS NULL AND
+					user_inactive.ID_user IS NULL
+				LIMIT 1000
+			}
+			,'quiet'=>1);
+			$est=$sth0{'rows'};
+			main::_log(" removing $sth0{'rows'} items");
+			while (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				TOM::Database::SQL::execute(qq{
+					DELETE FROM TOM.a301_user_session
+					WHERE ID_user='$db0_line{'ID_user'}'
+				},'quiet'=>1,'-backend_'=>1);
+			}
+		}
+		
 	$tr->close();
-	
 	
 	return 1;
 }
