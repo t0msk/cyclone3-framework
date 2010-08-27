@@ -397,6 +397,34 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_rel_group_l` (
   KEY `ID_user` (`ID_user`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------
+-- db_name=TOM
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_contact_lng` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- ref _user.ID_user
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `lng` char(2) character set ascii NOT NULL default '',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+-- db_name=TOM
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_contact_lng_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `lng` char(2) character set ascii NOT NULL default '',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 -- db_name=TOM
