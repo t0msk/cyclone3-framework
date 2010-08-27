@@ -339,7 +339,7 @@ sub process
 					#my $dt_diff=$dt_now-$dt_old;
 					
 					#main::_log("go online user '$main::USRM{'ID_user'}' from '$main::USRM{'datetime_last_login'}' (".($dt_diff->year)."-".($dt_diff->month).") with '$main::USRM{'requests_all'}' requests",3,"a301",2);
-					main::_log("returned user '$main::USRM{'ID_user'}' last logged '$main::USRM{'datetime_last_login'}' with '$main::USRM{'requests_all'}' requests",3,"a301",2);
+					main::_log("[$tom::H] returned user '$main::USRM{'ID_user'}' last logged '$main::USRM{'datetime_last_login'}' with '$main::USRM{'requests_all'}' requests",3,"a301",2);
 					##############################################################
 					if ($main::USRM{'autolog'} eq "Y") # lognutie iba ak ide o autolog
 					{
@@ -398,6 +398,7 @@ sub process
 								datetime_request,
 								requests,
 								IP,
+								user_agent,
 								cookies,
 								session
 							)
@@ -412,6 +413,7 @@ sub process
 								'1',
 								?,
 								?,
+								?,
 								?
 							)
 						},'bind'=>[
@@ -420,6 +422,7 @@ sub process
 							$tom::H,
 							$main::USRM{'logged'},
 							$main::ENV{'REMOTE_ADDR'},
+							$main::ENV{'HTTP_USER_AGENT'},
 							$main::USRM{'saved_cookies'},
 							$main::USRM{'saved_session'}
 						]);
@@ -436,7 +439,8 @@ sub process
 								datetime_login,
 								datetime_request,
 								requests,
-								IP
+								IP,
+								user_agent
 							)
 							VALUES
 							(
@@ -447,6 +451,7 @@ sub process
 								FROM_UNIXTIME($main::time_current),
 								FROM_UNIXTIME($main::time_current),
 								'1',
+								?,
 								?
 							)
 						},'bind'=>[
@@ -454,7 +459,8 @@ sub process
 							$main::COOKIES{'_ID_session'},
 							$tom::H,
 							$main::USRM{'logged'},
-							$main::ENV{'REMOTE_ADDR'}
+							$main::ENV{'REMOTE_ADDR'},
+							$main::ENV{'HTTP_USER_AGENT'}
 						]);
 					}
 					
@@ -563,6 +569,18 @@ sub process
 					'utm_campaign' => $main::FORM{'utm_campaign'},
 					'utm_content' => $main::FORM{'utm_content'},
 					'utm_term' => $main::FORM{'utm_term'},
+				},
+				'USRM_S' =>
+				{
+					'ref_type' => $main::ENV{'REF_TYPE'},
+					'referer' => $main::ENV{'HTTP_REFERER'},
+					'time' => $main::time_current,
+					# utm sources
+					'utm_medium' => $main::ENV{'REF_TYPE'},
+					'utm_source' => $main::FORM{'utm_source'},
+					'utm_campaign' => $main::FORM{'utm_campaign'},
+					'utm_content' => $main::FORM{'utm_content'},
+					'utm_term' => $main::FORM{'utm_term'},
 				}
 			);
 			
@@ -653,6 +671,31 @@ sub process
 		my @ab=('A','B');
 		$main::USRM{'session'}{'AB'}=$ab[int(rand(2))];
 	}
+	# create new session referer info
+	if ($main::USRM_flag eq "G")
+	{
+#		%{$main::USRM{'session'}{'USRM_S'}}=%{$main::USRM{'session'}{'USRM_G'}};
+	}
+	elsif ($main::USRM_flag eq "L" || $main::USRM_flag eq "I")
+	{
+		$main::USRM{'session'}{'USRM_S'}={};
+		$main::USRM{'session'}{'USRM_S'}{'ref_type'} = $main::ENV{'REF_TYPE'};
+		$main::USRM{'session'}{'USRM_S'}{'referer'} = $main::ENV{'HTTP_REFERER'};
+		$main::USRM{'session'}{'USRM_S'}{'time'} = $main::time_current;
+	}
+	# override session referer info
+	if ($main::FORM{'utm_medium'} || $main::FORM{'ref'})
+	{
+		# setup override incoming info for this session (for example clicked to banner in already existing session)
+		$main::USRM{'session'}{'USRM_S'}{'ref_type'} = $main::ENV{'REF_TYPE'};
+		$main::USRM{'session'}{'USRM_S'}{'referer'} = $main::ENV{'HTTP_REFERER'};
+		$main::USRM{'session'}{'USRM_S'}{'time'} = $main::time_current;
+		$main::USRM{'session'}{'USRM_S'}{'utm_medium'} = $main::FORM{'utm_medium'} || $main::FORM{'ref'};
+		$main::USRM{'session'}{'USRM_S'}{'utm_source'} = $main::FORM{'utm_source'};
+		$main::USRM{'session'}{'USRM_S'}{'utm_campaign'} = $main::FORM{'utm_campaign'};
+		$main::USRM{'session'}{'USRM_S'}{'utm_content'} = $main::FORM{'utm_content'};
+		$main::USRM{'session'}{'USRM_S'}{'utm_term'} = $main::FORM{'utm_term'};
+	}
 	$App::301::session::serialize=1;
 	
 	foreach (keys %main::USRM)
@@ -674,5 +717,58 @@ sub process
 	$t->close();
 	return 1;
 }
+
+
+
+sub archive
+{
+	my $ID_user=shift;
+	my %env=@_;
+	return undef unless $ID_user;
+	
+	TOM::Database::SQL::execute(qq{
+		INSERT IGNORE INTO TOM.a301_user_session
+		(
+			ID_user,
+			IP,
+			datetime_session_begin,
+			datetime_session_end,
+			requests_all,
+			saved_cookies,
+			saved_session
+		)
+		SELECT
+			ID_user,
+			IP,
+			datetime_login,
+			datetime_request,
+			requests,
+			cookies,
+			session
+		FROM
+			TOM.a301_user_online
+		WHERE
+			ID_user='$ID_user'
+		LIMIT 1
+	},'quiet'=>1);
+	
+	if ($env{'reset'})
+	{
+		TOM::Database::SQL::execute(qq{
+			UPDATE
+				TOM.a301_user_online
+			SET
+				datetime_login=datetime_request,
+				requests=0
+			WHERE
+				ID_user='$ID_user'
+			LIMIT 1
+		},'quiet'=>1);
+	}
+	
+	return 1;
+}
+
+
 
 1;
