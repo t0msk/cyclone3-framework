@@ -41,9 +41,17 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
   `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `movie_release_year` varchar(4) character set ascii default NULL,
+  `movie_release_date` date default NULL,
+  `movie_country_code` char(3) character set ascii default NULL,
+  `movie_imdb` varchar(9) character set ascii default NULL,
+  `movie_catalog_number` varchar(16) character set ascii collate ascii_bin default NULL,
+  `movie_length` time default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   FULLTEXT KEY `keywords` (`keywords`),
+  UNIQUE KEY `UNI_0` (`movie_imdb`),
+  UNIQUE KEY `UNI_1` (`movie_catalog_number`),
   KEY `ID_entity` (`ID_entity`),
   KEY `datetime_rec_start` (`datetime_rec_start`),
   KEY `status` (`status`)
@@ -61,6 +69,12 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent_j` (
   `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `movie_release_year` varchar(4) character set ascii default NULL,
+  `movie_release_date` date default NULL,
+  `movie_country_code` char(3) character set ascii default NULL,
+  `movie_imdb` varchar(9) character set ascii default NULL,
+  `movie_catalog_number` varchar(16) character set ascii collate ascii_bin default NULL,
+  `movie_length` time default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -633,7 +647,8 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_view` AS (
 	)
 	LEFT JOIN `/*db_name*/`.`/*addon*/_video_cat` AS video_cat ON
 	(
-		video_cat.ID_entity = video_attrs.ID_category
+		video_cat.ID_entity = video_attrs.ID_category AND
+		video_cat.lng = video_attrs.lng
 	)
 	
 	WHERE
