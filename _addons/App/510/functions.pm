@@ -827,6 +827,8 @@ sub video_add
 	$env{'video_format.ID'}=$App::510::video_format_original_ID unless $env{'video_format.ID'};
 	$env{'video_part.part_id'}=1 unless $env{'video_part.part_id'};
 	
+	$env{'video.ID_entity'}=$env{'video_ent.ID_entity'} if $env{'video_ent.ID_entity'};
+	
 	my $content_updated=0;
 	
 	# check if thumbnail file is correct
@@ -846,19 +848,22 @@ sub video_add
 	}
 	
 	my %category;
-	if ($env{'video_attrs.ID_category'} && $env{'video_attrs.ID_category'} ne 'NULL')
+	if ($env{'video_cat.ID'} && $env{'video_cat.ID'} ne 'NULL')
 	{
 		# detect language
 		%category=App::020::SQL::functions::get_ID(
-			'ID' => $env{'video_attrs.ID_category'},
+			'ID' => $env{'video_cat.ID'},
 			'db_h' => "main",
 			'db_name' => $App::510::db_name,
 			'tb_name' => "a510_video_cat",
 			'columns' => {'*'=>1}
 		);
 		$env{'video_attrs.lng'}=$category{'lng'};
+		$env{'video_attrs.ID_category'}=$category{'ID_entity'};
 		main::_log("setting lng='$env{'video_attrs.lng'}' from video_attrs.ID_category");
+		main::_log("setting video_attrs.ID_category='$env{'video_attrs.ID_category'}' from video_cat.ID='$env{'video_cat.ID'}'");
 	}
+	$env{'video_attrs.ID_category'}='NULL' if $env{'video_cat.ID'} eq 'NULL';
 	
 	$env{'video_attrs.lng'}=$tom::lng unless $env{'video_attrs.lng'};
 	main::_log("lng='$env{'video_attrs.lng'}'");
@@ -906,6 +911,34 @@ sub video_add
 		$env{'video.ID_entity'}=$video{'ID_entity'} unless $env{'video.ID_entity'};
 	}
 	
+	# check if this symlink with same ID_category not already exists
+	# and video.ID is unknown
+	if ($env{'video_attrs.ID_category'} && !$env{'video.ID'} && $env{'video.ID_entity'} && !$env{'forcesymlink'})
+	{
+		main::_log("search for video.ID by video_attrs.ID_category='$env{'video_attrs.ID_category'}' and video.ID_entity='$env{'video.ID_entity'}'");
+		my $sql=qq{
+			SELECT
+				video.ID AS ID_video,
+				video_attrs.ID AS ID_attrs
+			FROM
+				`$App::510::db_name`.a510_video AS video
+			LEFT JOIN `$App::510::db_name`.a510_video_attrs AS video_attrs
+				ON ( video.ID = video_attrs.ID_entity )
+			WHERE
+				video.ID_entity=$env{'video.ID_entity'} AND
+				( video_attrs.ID_category = $env{'video_attrs.ID_category'} OR ID_category IS NULL ) AND
+				video_attrs.status IN ('Y','N','L')
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		if ($db0_line{'ID_video'})
+		{
+			$env{'video.ID'}=$db0_line{'ID_video'};
+			$env{'video_attrs.ID'}=$db0_line{'ID_attrs'};
+			main::_log("setup video.ID='$db0_line{'ID_video'}' video_attrs.ID='$env{'video_attrs.ID'}'");
+		}
+	}
 	
 	if (!$env{'video.ID'})
 	{
@@ -991,6 +1024,7 @@ sub video_add
 	
 	if (!$env{'video_attrs.ID'})
 	{
+		main::_log("finding video_attrs.ID by video.ID=$env{'video.ID'} and video_attrs.lng='$env{'video_attrs.lng'}'");
 		my $sql=qq{
 			SELECT
 				*
@@ -1004,16 +1038,34 @@ sub video_add
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		%video_attrs=$sth0{'sth'}->fetchhash();
 		$env{'video_attrs.ID'}=$video_attrs{'ID'};
+		main::_log("video_attrs.ID='$env{'video_attrs.ID'}'");
 	}
 	
+	if (!$env{'video_attrs.ID'} && !$env{'video_attrs.ID_category'} && $env{'video.ID'})
+	{ # find target ID_category if not defined
+		main::_log("finding video_attrs.ID_category by video.ID=$env{'video.ID'}");
+		my $sql=qq{
+			SELECT
+				ID_category
+			FROM
+				`$App::510::db_name`.`a510_video_attrs`
+			WHERE
+				ID_entity='$env{'video.ID'}' AND
+				status IN ('Y','N','L')
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		$env{'video_attrs.ID_category'}=$db0_line{'ID_category'};# if $sth0{'rows'};
+		main::_log("video_attrs.ID_category='$env{'video_attrs.ID_category'}'");
+	}
 	
 	if (!$env{'video_attrs.ID'})
 	{
 		# create one language representation of video
 		my %columns;
 		$columns{'ID_category'}=$env{'video_attrs.ID_category'} if $env{'video_attrs.ID_category'};
-		$columns{'status'}="'$env{'video_attrs.status'}'" if $env{'video_attrs.status'};
-		
+		#$columns{'status'}="'$env{'video_attrs.status'}'" if $env{'video_attrs.status'};
 		$env{'video_attrs.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
 			'db_name' => $App::510::db_name,
@@ -1027,14 +1079,13 @@ sub video_add
 			},
 			'-journalize' => 1,
 		);
-		%video_attrs=App::020::SQL::functions::get_ID(
-			'ID' => $env{'video_attrs.ID'},
-			'db_h' => "main",
-			'db_name' => $App::510::db_name,
-			'tb_name' => "a510_video_attrs",
-			'columns' => {'*'=>1}
-		);
-		
+#		%video_attrs=App::020::SQL::functions::get_ID(
+#			'ID' => $env{'video_attrs.ID'},
+#			'db_h' => "main",
+#			'db_name' => $App::510::db_name,
+#			'tb_name' => "a510_video_attrs",
+#			'columns' => {'*'=>1}
+#		);
 		$content_updated=1;
 	}
 	
@@ -1093,6 +1144,19 @@ sub video_add
 		$columns{'keywords'}="'".TOM::Security::form::sql_escape($env{'video_ent.keywords'})."'"
 			if (exists $env{'video_ent.keywords'} && ($env{'video_ent.keywords'} ne $video_ent{'keywords'}));
 		
+		$columns{'movie_release_year'}="'".TOM::Security::form::sql_escape($env{'video_ent.movie_release_year'})."'"
+			if (exists $env{'video_ent.movie_release_year'} && ($env{'video_ent.movie_release_year'} ne $video_ent{'movie_release_year'}));
+		$columns{'movie_release_date'}="'".TOM::Security::form::sql_escape($env{'video_ent.movie_release_date'})."'"
+			if (exists $env{'video_ent.movie_release_date'} && ($env{'video_ent.movie_release_date'} ne $video_ent{'movie_release_date'}));
+		$columns{'movie_country_code'}="'".TOM::Security::form::sql_escape($env{'video_ent.movie_country_code'})."'"
+			if (exists $env{'video_ent.movie_country_code'} && ($env{'video_ent.movie_country_code'} ne $video_ent{'movie_country_code'}));
+		$columns{'movie_imdb'}="'".TOM::Security::form::sql_escape($env{'video_ent.movie_imdb'})."'"
+			if (exists $env{'video_ent.movie_imdb'} && ($env{'video_ent.movie_imdb'} ne $video_ent{'movie_imdb'}));
+		$columns{'movie_catalog_number'}="'".TOM::Security::form::sql_escape($env{'video_ent.movie_catalog_number'})."'"
+			if (exists $env{'video_ent.movie_catalog_number'} && ($env{'video_ent.movie_catalog_number'} ne $video_ent{'movie_catalog_number'}));
+		$columns{'movie_length'}="'".TOM::Security::form::sql_escape($env{'video_ent.movie_length'})."'"
+			if (exists $env{'video_ent.movie_length'} && ($env{'video_ent.movie_length'} ne $video_ent{'movie_length'}));
+		
 		if (keys %columns)
 		{
 			App::020::SQL::functions::update(
@@ -1133,19 +1197,70 @@ sub video_add
 		return undef
 	};
 	
+	if ($env{'video_attrs.ID'})
+	{
+		# detect language
+		%video_attrs=App::020::SQL::functions::get_ID(
+			'ID' => $env{'video_attrs.ID'},
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_video_attrs",
+			'columns' => {'*'=>1}
+		);
+		main::_log("loaded %video_attrs video_attrs.ID='$video_attrs{'ID'}' video_attrs.ID_category='$video_attrs{'ID_category'}'");
+	}
+	
+	main::_log("video_attrs.ID='$env{'video_attrs.ID'}' video_attrs.ID_category='$env{'video_attrs.ID_category'}' video_attrs{ID_category}='$video_attrs{'ID_category'}'");
+	if ($env{'video_attrs.ID'} &&
+	(
+		# ID_category
+		($env{'video_attrs.ID_category'} && ($env{'video_attrs.ID_category'} ne $video_attrs{'ID_category'}))
+	))
+	{
+		my %columns;
+		main::_log("video_attrs.ID='$video_attrs{'ID'}' video_attrs.status='$video_attrs{'status'}'");
+		$columns{'ID_category'}=$env{'video_attrs.ID_category'};
+		my $sql=qq{
+			SELECT
+				ID
+			FROM
+				`$App::510::db_name`.a510_video_attrs
+			WHERE
+				ID_entity=$video_attrs{'ID_entity'} AND
+				status IN ('Y','N','L')
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+#			main::_log("update video_attrs.ID='$db0_line{'ID'}'");
+			App::020::SQL::functions::update(
+				'ID' => $db0_line{'ID'},
+				'db_h' => "main",
+				'db_name' => $App::501::db_name,
+				'tb_name' => "a510_video_attrs",
+				'columns' => {%columns},
+				'-journalize' => 1
+			);
+			$content_updated=1;
+		}
+		
+	}
+	
 	# MUST be rewrited - update only if necessary
 	if ($env{'video_attrs.ID'})
 	{
 		my %columns;
 		
-		$columns{'ID_category'}=$env{'video_attrs.ID_category'}
-			if ($env{'video_attrs.ID_category'} && ($env{'video_attrs.ID_category'} ne $video_attrs{'ID_category'}));
+#		$columns{'ID_category'}=$env{'video_attrs.ID_category'}
+#			if ($env{'video_attrs.ID_category'} && ($env{'video_attrs.ID_category'} ne $video_attrs{'ID_category'}));
 		$columns{'name'}="'".TOM::Security::form::sql_escape($env{'video_attrs.name'})."'"
 			if ($env{'video_attrs.name'} && ($env{'video_attrs.name'} ne $video_attrs{'name'}));
 		$columns{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'video_attrs.name'})."'"
 			if ($env{'video_attrs.name'} && ($env{'video_attrs.name'} ne $video_attrs{'name'}));
 		$columns{'description'}="'".TOM::Security::form::sql_escape($env{'video_attrs.description'})."'"
 			if (exists $env{'video_attrs.description'} && ($env{'video_attrs.description'} ne $video_attrs{'description'}));
+		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'video_attrs.status'})."'"
+			if ($env{'video_attrs.status'} && ($env{'video_attrs.status'} ne $video_attrs{'status'}));
 		
 		if (keys %columns)
 		{
@@ -2355,7 +2470,7 @@ sub get_video_part_file_process_front
 		(
 			video_part.ID = video_part_file.ID_entity AND
 			video_part_file.ID_format = video_format.ID_entity AND
-			video_part_file.status IN ('Y','E','W')
+			video_part_file.status IN ('Y','N','E','W')
 		)
 		LEFT JOIN `$App::510::db_name`.a510_video_part_file_process AS video_part_file_process ON
 		(
