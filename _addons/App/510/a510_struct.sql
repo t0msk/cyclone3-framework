@@ -47,6 +47,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
   `movie_imdb` varchar(9) character set ascii default NULL,
   `movie_catalog_number` varchar(16) character set ascii collate ascii_bin default NULL,
   `movie_length` time default NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   FULLTEXT KEY `keywords` (`keywords`),
@@ -75,8 +76,22 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent_j` (
   `movie_imdb` varchar(9) character set ascii default NULL,
   `movie_catalog_number` varchar(16) character set ascii collate ascii_bin default NULL,
   `movie_length` time default NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent_metaindex` (
+  `ID` bigint(20) unsigned NOT NULL, -- ref _article_ent.ID
+  `meta_section` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_variable` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_value` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`meta_section`,`meta_variable`),
+  KEY `SEL_0` (`meta_section`,`meta_variable`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------

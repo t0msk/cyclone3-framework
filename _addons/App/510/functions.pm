@@ -1157,6 +1157,21 @@ sub video_add
 		$columns{'movie_length'}="'".TOM::Security::form::sql_escape($env{'video_ent.movie_length'})."'"
 			if (exists $env{'video_ent.movie_length'} && ($env{'video_ent.movie_length'} ne $video_ent{'movie_length'}));
 		
+		if ((not exists $env{'video_ent.metadata'}) && (!$video_ent{'metadata'})){$env{'video_ent.metadata'}=$App::510::metadata_default;}
+		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'video_ent.metadata'})."'"
+			if (exists $env{'video_ent.metadata'} && ($env{'video_ent.metadata'} ne $video_ent{'metadata'}));
+		
+		if ($columns{'metadata'})
+		{
+			App::020::functions::metadata::metaindex_set(
+				'db_h' => 'main',
+				'db_name' => $App::510::db_name,
+				'tb_name' => 'a510_video_ent',
+				'ID' => $env{'video_ent.ID'},
+				'metadata' => {App::020::functions::metadata::parse($env{'video_ent.metadata'})}
+			);
+		}
+		
 		if (keys %columns)
 		{
 			App::020::SQL::functions::update(
