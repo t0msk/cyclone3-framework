@@ -63,6 +63,19 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent_j` (
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent_metaindex` (
+  `ID` bigint(20) unsigned NOT NULL, -- ref _article_ent.ID
+  `meta_section` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_variable` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_value` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`meta_section`,`meta_variable`),
+  KEY `SEL_0` (`meta_section`,`meta_variable`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*addon*/_image_rating_vote` (
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_image` mediumint(8) unsigned NOT NULL, -- ref _image.ID_entity
