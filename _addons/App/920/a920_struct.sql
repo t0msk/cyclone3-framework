@@ -78,3 +78,27 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order_product` (
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*app*/_order_product_j` (
+  `ID` bigint(20) unsigned NOT NULL,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `datetime_create` datetime NOT NULL,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_product` bigint(20) unsigned default NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `type` char(1) character set ascii NOT NULL default 'P',
+  `VAT` float NOT NULL,
+  `price_unit` decimal(12,2) default NULL,
+  `price` decimal(12,2) default NULL,
+  `price_incl_VAT` decimal(12,2) default NULL,
+  `price_currency` varchar(3) character set ascii default 'EUR',
+  `amount` int(10) unsigned NOT NULL,
+  `amount_unit` varchar(8) character set ascii default 'pcs',
+  `amount_accepted` int(10) unsigned NOT NULL,
+  `amount_supplied` int(10) unsigned NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'N',
+   PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
