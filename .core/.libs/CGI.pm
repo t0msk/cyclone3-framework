@@ -714,8 +714,8 @@ sub init {
 	if ($query_string =~ /[&=;]/) {
 	    $self->parse_params($query_string);
 	} else {
-	    $self->add_parameter('keywords');
-	    $self->{param}{'keywords'} = [$self->parse_keywordlist($query_string)];
+#	    $self->add_parameter('keywords');
+#	    $self->{param}{'keywords'} = [$self->parse_keywordlist($query_string)];
 	}
     }
 
@@ -1126,9 +1126,9 @@ END_OF_FUNC
 sub keywords {
     my($self,@values) = self_or_default(@_);
     # If values is provided, then we set it.
-    $self->{param}{'keywords'}=[@values] if @values;
-    my(@result) = defined($self->{param}{'keywords'}) ? @{$self->{param}{'keywords'}} : ();
-    @result;
+#    $self->{param}{'keywords'}=[@values] if @values;
+#    my(@result) = defined($self->{param}{'keywords'}) ? @{$self->{param}{'keywords'}} : ();
+#    @result;
 }
 END_OF_FUNC
 
@@ -1352,8 +1352,8 @@ sub url_param {
 		push(@{$self->{'.url_param'}->{$param}},$value);
 	    }
 	} else {
-        my @keywords = $self->parse_keywordlist($ENV{QUERY_STRING});
-	    $self->{'.url_param'}{'keywords'} = \@keywords if @keywords;
+#        my @keywords = $self->parse_keywordlist($ENV{QUERY_STRING});
+#	    $self->{'.url_param'}{'keywords'} = \@keywords if @keywords;
 	}
     }
     return keys %{$self->{'.url_param'}} unless defined($name);
