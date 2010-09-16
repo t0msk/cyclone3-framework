@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	<header>
+		<extract>
+			<file location="blank.gif" dest="jquery/fancybox/" />
+			<file location="fancy_close.png" dest="jquery/fancybox/" />
+			<file location="fancy_nav_left.png" dest="jquery/fancybox/" />
+			<file location="fancy_nav_right.png" dest="jquery/fancybox/" />
+			<file location="fancy_shadow_e.png" dest="jquery/fancybox/" />
+			<file location="fancy_shadow_n.png" dest="jquery/fancybox/" />
+			<file location="fancy_shadow_ne.png" dest="jquery/fancybox/" />
+			<file location="fancy_shadow_nw.png" dest="jquery/fancybox/" />
+			<file location="fancy_shadow_s.png" dest="jquery/fancybox/" />
+			<file location="fancy_shadow_se.png" dest="jquery/fancybox/" />
+			<file location="fancy_shadow_sw.png" dest="jquery/fancybox/" />
+			<file location="fancy_shadow_w.png" dest="jquery/fancybox/" />
+			<file location="fancy_title_left.png" dest="jquery/fancybox/" />
+			<file location="fancy_title_main.png" dest="jquery/fancybox/" />
+			<file location="fancy_title_over.png" dest="jquery/fancybox/" />
+			<file location="fancy_title_right.png" dest="jquery/fancybox/" />
+			<file location="fancybox-x.png" dest="jquery/fancybox/" />
+			<file location="fancybox-y.png" dest="jquery/fancybox/" />
+			<file location="fancybox.png" dest="jquery/fancybox/" />
+			<file location="jquery.fancybox.css" dest="jquery/fancybox/" />
+			<file location="jquery.fancybox.js" dest="jquery/fancybox/" />
+			<file location="jquery.fancybox.pack.js" dest="jquery/fancybox/" />
+		</extract>
+	</header>
+</template>
