@@ -121,7 +121,8 @@ sub execute
 		FROM
 			`$App::501::db_name`.a501_image_file_j
 		WHERE
-			datetime_check <= DATE_SUB(NOW(),INTERVAL $env{'check_days'} DAY) OR datetime_check IS NULL
+			(datetime_check <= DATE_SUB(NOW(),INTERVAL $env{'check_days'} DAY) OR datetime_check IS NULL) AND
+			datetime_create <= DATE_SUB(NOW(),INTERVAL 3 DAY) -- don't check files moved today in journal 
 		ORDER BY
 			datetime_check
 		LIMIT
@@ -140,7 +141,7 @@ sub execute
 		TOM::Database::SQL::execute(qq{
 			UPDATE `$App::501::db_name`.`a501_image_file_j`
 			SET datetime_check=NOW()
-			WHERE ID=$db0_line{'ID'} LIMIT 1
+			WHERE ID=$db0_line{'ID'} AND datetime_create='$db0_line{'datetime_create'}' LIMIT 1
 		},'quiet'=>1);
 		
 		if (!-d $pth)
@@ -282,6 +283,7 @@ sub execute
 		}
 	}
 	
+	$check_files=100 if $check_files>100; # don't remove more than 100 files
 	main::_log("remove all old generated image_file items in image_file table");
 	my $sql=qq{
 		SELECT
@@ -296,7 +298,7 @@ sub execute
 		WHERE
 			a501_image_file.from_parent = 'Y' AND
 			a501_image_file.ID_format <> $App::501::image_format_original_ID AND
-			a501_image_file.datetime_create <= DATE_SUB(CURDATE(),INTERVAL 31 DAY) AND
+			a501_image_file.datetime_create <= DATE_SUB(CURDATE(),INTERVAL 1 MONTH) AND
 			(a501_image_format.required = "N" OR a501_image_format.status = "N" )
 		ORDER BY
 			a501_image_file.datetime_create
@@ -316,6 +318,26 @@ sub execute
 		elsif (-e $file)
 		{
 			main::_log("remove file image_file.ID=$db0_line{'ID'} from='$db0_line{'datetime_create'}'");
+			# remove db entry to this image_file, allow to re-create it
+			# file on disk will be removed in one of next executions by removing old files from image_file_j
+			App::020::SQL::functions::update(
+				'db_h' => $env{'db_h'},
+				'db_name' => $App::501::db_name,
+				'tb_name' => 'a501_image_file',
+				'ID' => $db0_line{'ID'},
+				'columns' => {
+					'status' => "'D'",
+				},
+				'-journalize' => 1
+			);
+			# zmazem z hlavnej tabulky zmazany zaznam
+			App::020::SQL::functions::_remove(
+				'db_h' => $env{'db_h'},
+				'db_name' => $App::501::db_name,
+				'tb_name' => 'a501_image_file',
+				'ID' => $db0_line{'ID'},
+			);
+=head1 the old way of removing files
 			my $out=unlink $file;
 			if (!$out){main::_log("can't remove: $!",1);}
 			else
@@ -329,6 +351,7 @@ sub execute
 					LIMIT 1
 				},'quiet'=>1);
 			}
+=cut
 		}
 	}
 	
