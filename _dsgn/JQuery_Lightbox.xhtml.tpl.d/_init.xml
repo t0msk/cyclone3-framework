@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	<header>
+		<extract>
+			<file location="lightbox-blank.gif" dest="jquery/lightbox/" />
+			<file location="lightbox-btn-close.gif" dest="jquery/lightbox/" />
+			<file location="lightbox-btn-next.gif" dest="jquery/lightbox/" />
+			<file location="lightbox-btn-prev.gif" dest="jquery/lightbox/" />
+			<file location="lightbox-ico-loading.gif" dest="jquery/lightbox/" />
+			<file location="jquery.lightbox.css" dest="jquery/lightbox/" />
+			<file location="jquery.lightbox.js" dest="jquery/lightbox/" />
+			<file location="jquery.lightbox.min.js" dest="jquery/lightbox/" />
+			<file location="jquery.lightbox.pack.js" dest="jquery/lightbox/" />
+		</extract>
+	</header>
+</template>
