@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	<header>
+		<extract>
+			<file location="jquery.cycle.all.min.js" dest="jquery/cycle/" />
+			<file location="jquery.cycle.lite.min.js" dest="jquery/cycle/" />
+			<file location="jquery.cycle.min.js" dest="jquery/cycle/" />
+		</extract>
+	</header>
+</template>
