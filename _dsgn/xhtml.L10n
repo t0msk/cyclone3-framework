@@ -44,8 +44,8 @@
 	</string>
 	
 	<string id="You can contact administrator of this page">
-		<en-US><![CDATA[If the problem persist, you can contact administrator of this page at <a href="mailto:<$TOM::contact{'TECH'}>"><$TOM::contact{'TECH'}></a>]]></en-US>
-		<sk-SK><![CDATA[Ak problém pretrváva, môžete kontaktovať správcu týchto stránok na adrese <a href="mailto:<$TOM::contact{'TECH'}>"><$TOM::contact{'TECH'}></a>]]></sk-SK>
+		<en-US><![CDATA[If the problem persist, you can contact administrator of this page at <a href="mailto:<$TOM::contact{'techsupport'}>"><$TOM::contact{'techsupport'}></a>]]></en-US>
+		<sk-SK><![CDATA[Ak problém pretrváva, môžete kontaktovať správcu týchto stránok na adrese <a href="mailto:<$TOM::contact{'techsupport'}>"><$TOM::contact{'techsupport'}></a>]]></sk-SK>
 	</string>
 	
 </L10n>
