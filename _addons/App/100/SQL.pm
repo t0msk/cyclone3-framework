@@ -172,7 +172,7 @@ Function return true or false
 sub ircbot_msg_new
 {
 	my $message=shift;
-	my $t=track TOM::Debug(__PACKAGE__."::ircbot_msg_new()");
+	my $t=track TOM::Debug(__PACKAGE__."::ircbot_msg_new()") if $debug;
 	
 	$message=TOM::Database::SQL::escape($message);
 	
@@ -189,7 +189,7 @@ sub ircbot_msg_new
 		);
 	
 	return 0 unless $ID;
-	$t->close();
+	$t->close() if $debug;
 	return 1;
 }
 
