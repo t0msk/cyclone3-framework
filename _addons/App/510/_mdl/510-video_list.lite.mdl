@@ -339,6 +339,10 @@ sub execute
 		my %owner=App::301::authors::get_author($db0_line{'posix_owner'});
 		$item=~s|<%owner_(.*?)%>|$owner{$1}|g;
 		
+		# video author in result list
+		my %author=App::301::authors::get_author($db0_line{'posix_author'});
+		$item=~s|<%author_(.*?)%>|$author{$1}|g;
+		
 =head1
 		# count parts visits
 		my $sql=qq{
