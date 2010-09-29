@@ -26,6 +26,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event` (
   `VAT` float NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
+  `mode` char(1) character set ascii NOT NULL default 'M',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
   KEY `SEL_0` (`ID_entity`,`ID`)
@@ -55,6 +56,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_j` (
   `VAT` float NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
+  `mode` char(1) character set ascii NOT NULL default 'M',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
