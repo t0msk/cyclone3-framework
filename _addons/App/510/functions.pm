@@ -1156,6 +1156,8 @@ sub video_add
 			if (exists $env{'video_ent.movie_catalog_number'} && ($env{'video_ent.movie_catalog_number'} ne $video_ent{'movie_catalog_number'}));
 		$columns{'movie_length'}="'".TOM::Security::form::sql_escape($env{'video_ent.movie_length'})."'"
 			if (exists $env{'video_ent.movie_length'} && ($env{'video_ent.movie_length'} ne $video_ent{'movie_length'}));
+		$columns{'movie_note'}="'".TOM::Security::form::sql_escape($env{'video_ent.movie_note'})."'"
+			if (exists $env{'video_ent.movie_note'} && ($env{'video_ent.movie_note'} ne $video_ent{'movie_note'}));
 		
 		if ((not exists $env{'video_ent.metadata'}) && (!$video_ent{'metadata'})){$env{'video_ent.metadata'}=$App::510::metadata_default;}
 		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'video_ent.metadata'})."'"

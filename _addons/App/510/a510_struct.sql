@@ -47,6 +47,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
   `movie_imdb` varchar(9) character set ascii default NULL,
   `movie_catalog_number` varchar(16) character set ascii collate ascii_bin default NULL,
   `movie_length` time default NULL,
+  `movie_note` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
@@ -76,6 +77,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent_j` (
   `movie_imdb` varchar(9) character set ascii default NULL,
   `movie_catalog_number` varchar(16) character set ascii collate ascii_bin default NULL,
   `movie_length` time default NULL,
+  `movie_note` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
