@@ -117,6 +117,7 @@ sub event_add
 		
 		my %columns;
 		$columns{'ID_entity'}=$env{'event.ID_entity'} if $env{'event.ID_entity'};
+		$columns{'mode'}="'".TOM::Security::form::sql_escape($env{'event.mode'})."'" if $env{'event.mode'};
 		
 		$columns{'datetime_start'}='NOW()';
 		$columns{'datetime_finish'}='NOW()';
@@ -231,6 +232,11 @@ sub event_add
 		# status
 		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'event.status'})."'"
 			if ($env{'event.status'} && ($env{'event.status'} ne $event{'status'}));
+
+		# mode
+		$columns{'mode'}="'".TOM::Security::form::sql_escape($env{'event.mode'})."'"
+			if ($env{'event.mode'} && ($env{'event.mode'} ne $event{'mode'}));
+
 
 		# priority_A
 		$columns{'priority_A'}="'".TOM::Security::form::sql_escape($env{'event.priority_A'})."'"
