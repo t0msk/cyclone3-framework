@@ -238,21 +238,21 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_h` (
 CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_user_profile_view` AS (
 	SELECT
 		
-		user.hostname,
-		user.ID_user,
-      user.posix_owner,
-		user.login,
-		user.email,
-		user.email_verified,
-      user.datetime_register,
+		`user`.hostname,
+		`user`.ID_user,
+      `user`.posix_owner,
+		`user`.`login`,
+		`user`.`email`,
+		`user`.email_verified,
+      `user`.datetime_register,
 		YEAR(CURRENT_DATE()) - YEAR(user_profile.date_birth) - (RIGHT(CURRENT_DATE(),5) < RIGHT(user_profile.date_birth,5)) AS age,
 		user_profile.*
 		
 	FROM
-		`/*db_name*/`.`/*addon*/_user` AS user
+		`/*db_name*/`.`/*addon*/_user` AS `user`
 	LEFT JOIN `/*db_name*/`.`/*addon*/_user_profile` AS user_profile ON
 	(
-		user.ID_user = user_profile.ID_entity
+		`user`.ID_user = user_profile.ID_entity
 	)
 )
 
@@ -314,18 +314,18 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_user_online_view` AS (
 		user_online.datetime_request,
 		user_online.requests,
 		user_online.IP,
-		user_online.domain,
+		user_online.`domain`,
 		user_online.user_agent,
 		user_online.cookies,
-		user_online.session,
+		user_online.`session`,
 		
-		user.*
+		`user`.*
 		
 	FROM
 		`/*db_name*/`.`/*addon*/_user_online` AS user_online
-	LEFT JOIN `/*db_name*/`.`/*addon*/_user` AS user ON
+	LEFT JOIN `/*db_name*/`.`/*addon*/_user` AS `user` ON
 	(
-		user.ID_user = user_online.ID_user
+		`user`.ID_user = user_online.ID_user
 	)
 	
 )
@@ -632,17 +632,17 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_org_j` (
 CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_user_rel_group_view` AS (
 	SELECT
 		
-		user.hostname,
+		`user`.`hostname`,
 		user_group.ID_entity AS ID_group,
 		user_group.name AS group_name,
-		user.ID_user AS ID_user,
-		user.login AS user_login
+		`user`.ID_user AS ID_user,
+		`user`.`login` AS user_login
 		
 	FROM
 		`/*db_name*/`.`/*addon*/_user_rel_group` AS rel
 	LEFT JOIN `/*db_name*/`.`/*addon*/_user` AS user ON
 	(
-		user.ID_user = rel.ID_user
+		`user`.ID_user = rel.ID_user
 	)
 	LEFT JOIN `/*db_name*/`.`/*addon*/_user_group` AS user_group ON
 	(
