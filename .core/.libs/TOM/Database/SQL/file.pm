@@ -300,9 +300,19 @@ sub _chunk_prepare
 	
 	TOM::Database::connect::multi($header->{'db_h'}) unless $main::DB{$header->{'db_h'}};
 	
-	my $version=$main::DB{$header->{'db_h'}}->getserverinfo();
-		$version=~s|^([\d]+)\.([\d]+)\.(.*)$|\1.\2|;
-	main::_log("MySQL version on handler '$header->{'db_h'}'='$version'");
+	my $version;
+	if ($main::DB{$header->{'db_h'}}->{Driver}->{Name} eq 'ODBC')
+	{
+		if ($main::DB{$header->{'db_h'}}->{Name} =~ /driver=\{SQL Server\}/)
+		{
+			$version = 'MSSQL';
+		}
+	} else
+	{
+		$version=$main::DB{$header->{'db_h'}}->getserverinfo();
+			$version=~s|^([\d]+)\.([\d]+)\.(.*)$|\1.\2|;
+		main::_log("MySQL version on handler '$header->{'db_h'}'='$version'");
+	}
 	
 	# upgrade na vyssie verzie
 	
