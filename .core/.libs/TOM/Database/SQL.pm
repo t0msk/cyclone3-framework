@@ -97,10 +97,17 @@ sub show_create_table
 	my $table=shift;
 	my $SQL;
 	
-	my $db0=$main::DB{$handler}->Query("SHOW CREATE TABLE `$database`.`$table`");
-	my $SQL=($db0->fetchrow())[1];
-	$SQL=~s|TABLE `.*?` \(|TABLE `$database`.`$table` (|;
-	
+	if ($main::DB{$handler}->{Driver}->{Name} eq 'ODBC')
+	{
+    # for now leave this empty - here we should get an alternative to SHOW CREATE TABLE for a particular database server
+    # ODBC driver does not support ->Query anyway
+    $SQL = '';
+  } else
+	{
+    my $db0=$main::DB{$handler}->Query("SHOW CREATE TABLE `$database`.`$table`");
+    my $SQL=($db0->fetchrow())[1];  
+    $SQL=~s|TABLE `.*?` \(|TABLE `$database`.`$table` (|;
+	}
 	return $SQL;
 }
 
