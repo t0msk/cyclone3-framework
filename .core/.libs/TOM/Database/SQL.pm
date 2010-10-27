@@ -194,6 +194,16 @@ sub execute
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::execute()",'namespace'=>"SQL",'quiet' => $env{'quiet'},'timer'=>1);
 	
+	if ($TOM::DB{$env{'db_h'}}{'subtype'})
+	{
+    if ($env{$TOM::DB{$env{'db_h'}}{'subtype'}})
+    {	 
+      # if there is an %env variable with the name of subtype, use it as SQL 
+      $SQL = $env{$TOM::DB{$env{'db_h'}}{'subtype'}};
+	  }
+  }
+  
+	
 	# when I'm sometimes really wrong ;)
 	my $typeselect=0; # select query?
 	$env{'slave'}=$env{'slave'} || $env{'-slave'};

@@ -123,6 +123,11 @@ sub multi
 		
 		if ($TOM::DB{$handler}{'type'} eq "DBI")
 		{
+		  if  ($TOM::DB{$handler}{uri} =~ /dbi:ODBC:driver=\{SQL Server\}/i)
+		  {
+		    $TOM::DB{$handler}{'subtype'} = 'mssql';
+		  }
+		  
 			main::_log("DBI connecting '$handler' ('$TOM::DB{$handler}{uri}' '$TOM::DB{$handler}{user}' '****')");
 			
 			return undef unless $main::DB{$handler} = DBI->connect
