@@ -314,59 +314,143 @@ sub _chunk_prepare
 		main::_log("MySQL version on handler '$header->{'db_h'}'='$version'");
 	}
 	
-	# upgrade na vyssie verzie
-	
-	# 4.0 -> 4.1
-	if ($header->{'version'} eq "4.0" && $version > $header->{'version'})
+	if ($version eq 'MSSQL')
 	{
-		main::_log("converting SQL $header->{'version'} to 4.1");
-		$header->{'version'}="4.1";
+	 main::_log("converting SQL $header->{'version'} to MSSQL");
+	 
+
+  	# CREATE TABLE IF NOT EXISTS
+			my @db_table = $$chunk =~ /CREATE TABLE IF NOT EXISTS `([^`]+)`.`([^`]+)`/i;
+			
+			if ($db_table[0] && $db_table[1])
+			{
+				my $add_code = qq{
+					IF NOT EXISTS (
+						SELECT * FROM sysobjects WHERE id = object_id(N'[$db_table[0]].[$db_table[1]]')
+						AND OBJECTPROPERTY(id, N'IsUserTable') = 1
+					) CREATE TABLE [$db_table[0]].[$db_table[1]] };
+				$$chunk =~ s/CREATE TABLE IF NOT EXISTS `([^`]+)`.`([^`]+)`/$add_code/i;
+			}
+  
+      $$chunk =~ s/CREATE OR REPLACE VIEW/CREATE VIEW/gi;
+		
+			# FIX ENCODINGS
+			# ASCII
+			$$chunk =~ s/(var)?char\((\d+)\) character set ascii( collate ascii_bin)?/\1char\(\2\)/gi;
+			# UTF8
+			$$chunk =~ s/(var)?char\((\d+)\) character set utf8( collate utf8_bin| collate utf8_unicode_ci)?/n\1char\(\2\)/gi;
+			# TEXT
+			$$chunk =~ s/ (long|tiny)?text character set.*unicode_ci/ ntext/gi;
+			$$chunk =~ s/(tiny)?text character set ascii( collate ascii_bin)?/text/gi;
+			
+			# AUTO INCREMENT
+			$$chunk =~ s/auto_increment/IDENTITY(1,1)/gi;
+			
+			# ZEROFILL - select statements will have to format manually
+			$$chunk =~ s/ zerofill / /gi;
+			
+			# ESCAPE CHARACTERS
+			$$chunk =~ s/`/"/g;
+			
+			# NUMERIC TYPES, UNSIGNED - not supported by SQL server
+			$$chunk =~ s/(smallint|tinyint)(\(\d+\)?) unsigned/int/gi;
+			$$chunk =~ s/ (big|medium)?int(\(\d+\)?) unsigned/ bigint/gi;
+			$$chunk =~ s/\bdouble\b/real/gi;
+			$$chunk =~ s/bigint\(\d+\)/bigint/gi;
+			
+			# UNIQUE KEY - also prepend table prefix to unique key name
+			$$chunk =~ s/UNIQUE KEY "([^"]+)" \(([^)]+)\)/CONSTRAINT "$db_table[1]\1" UNIQUE (\2)/gi;
+			
+			# BLOB
+			$$chunk =~ s/("[^"]+") blob/\1 varbinary(max)/gi;
+			
+			# KEY INDEX - ignore for now
+			$$chunk =~ s/(FULLTEXT )?KEY +"[^"]+" +\([^\)]+\) *,? *\n//gi;
+			
+			# REMOVE MYSQL-SPECIFIC ENGINE DIRECTIVES
+			$$chunk =~ s/ENGINE=(InnoDb|MyIsam)[^;]+//gi;
+			
+			# CONCAT MySQL=CONCAT(a,b,c) MSSQL=a+b+c
+			$$chunk =~ /CONCAT\ *\(([^\)]+)\)/;
+			if ($1)
+			{
+				my $operands = $1;
+				$operands =~ s/,/+/g;
+				$$chunk =~ s/CONCAT\ *\(([^\)]+)\)/$operands/;
+			}
+			
+			# SUBSTR
+			$$chunk =~ s/\bSUBSTR\b/SUBSTRING/gi;
+	
+			# FUNCTIONS
+			
+			$$chunk =~ s/CURRENT_DATE\(\)/GETDATE()/gi;
+		
+  }else
+  {
+	
+	 # upgrade na vyssie verzie
+	
+	 # 4.0 -> 4.1
+	 if ($header->{'version'} eq "4.0" && $version > $header->{'version'})
+	 {
+	 	 main::_log("converting SQL $header->{'version'} to 4.1");
+	 	 $header->{'version'}="4.1";
+	 }
+	
+	 # 4.1 -> 5.0
+	 if ($header->{'version'} eq "4.1" && $version > $header->{'version'})
+	 {
+		  main::_log("converting SQL $header->{'version'} to 5.0");
+		  $header->{'version'}="5.0";
+	 }
+	
+	 # 5.0 -> 5.1
+	 if ($header->{'version'} eq "5.0" && $version > $header->{'version'})
+	 {
+		  main::_log("converting SQL $header->{'version'} to 5.1");
+		  $$chunk=~s|collate|COLLATE|g;
+		  $$chunk=~s|character set|CHARACTER SET|g;
+		  $$chunk=~s|default|DEFAULT|g;
+		  $$chunk=~s|auto_increment|AUTO_INCREMENT|g;
+		  $$chunk=~s|PRIMARY KEY  |PRIMARY KEY |g;
+		  $$chunk=~s|(int\(\d+\).*?) NOT NULL,|$1 NOT NULL DEFAULT '0',|g;
+		  $$chunk=~s|(float.*?) NOT NULL,|$1 NOT NULL DEFAULT '0',|g;
+		  $$chunk=~s|( datetime) NOT NULL,|$1 NOT NULL DEFAULT '2000-01-01 00:00:00',|g;
+		  $$chunk=~s|( date) NOT NULL,|$1 NOT NULL DEFAULT '2000-01-01',|g;
+		  $$chunk=~s|( time) NOT NULL,|$1 NOT NULL DEFAULT '00:00:00',|g;
+		  $$chunk=~s|NOT NULL,|NOT NULL DEFAULT '',|g;
+		  $$chunk=~s| (text\|tinytext\|blob)( .*?)NOT NULL DEFAULT '',| $1$2NOT NULL,|g;
+		  $header->{'version'}="5.1";
+	 }
+
+	
+	 # downgrade na nizsie verzie
+	
+	 # 5.0 -> 4.1
+	 if ($header->{'version'} eq "5.0" && $version < $header->{'version'})
+	 {
+		  my $to='4.1';
+		  main::_log("converting SQL $header->{'version'} to $to");
+		  $header->{'version'}=$to;
+	 }
+	
+  	# 4.1 -> 4.0
+	 if ($header->{'version'} eq "4.1" && $version eq "4.0")
+	 {
+		  main::_log("converting SQL $header->{'version'} to $version");
+		  $$chunk=~s|ENGINE=|TYPE=|;
+		  $$chunk=~s|TYPE=InnoDB|TYPE=MyISAM|;
+		  $$chunk=~s|character set (.*?) ||g;
+		  $$chunk=~s|collate (.*?)_bin|binary|g;
+		  $$chunk=~s|collate (.*?) ||g;
+		  $$chunk=~s| DEFAULT CHARSET=(utf8\|ascii)||;
+		  $$chunk=~s|varchar\((.*?)NOT NULL,|varchar(\1NOT NULL default '',|g;
+		  $$chunk=~s|int\((.*?)NOT NULL,|int(\1NOT NULL default '0',|g;
+		  $header->{'version'}=$version;
+	 }
 	}
 	
-	# 4.1 -> 5.0
-	if ($header->{'version'} eq "4.1" && $version > $header->{'version'})
-	{
-		main::_log("converting SQL $header->{'version'} to 5.0");
-		$header->{'version'}="5.0";
-	}
-	
-	# 5.0 -> 5.1
-	if ($header->{'version'} eq "5.0" && $version > $header->{'version'})
-	{
-		main::_log("converting SQL $header->{'version'} to 5.1");
-		$$chunk=~s|collate|COLLATE|g;
-		$$chunk=~s|character set|CHARACTER SET|g;
-		$$chunk=~s|default|DEFAULT|g;
-		$$chunk=~s|auto_increment|AUTO_INCREMENT|g;
-		$header->{'version'}="5.1";
-	}
-	
-	
-	# downgrade na nizsie verzie
-	
-	
-	# 5.0 -> 4.1
-	if ($header->{'version'} eq "5.0" && $version < $header->{'version'})
-	{
-		my $to='4.1';
-		main::_log("converting SQL $header->{'version'} to $to");
-		$header->{'version'}=$to;
-	}
-	
-	# 4.1 -> 4.0
-	if ($header->{'version'} eq "4.1" && $version eq "4.0")
-	{
-		main::_log("converting SQL $header->{'version'} to $version");
-		$$chunk=~s|ENGINE=|TYPE=|;
-		$$chunk=~s|TYPE=InnoDB|TYPE=MyISAM|;
-		$$chunk=~s|character set (.*?) ||g;
-		$$chunk=~s|collate (.*?)_bin|binary|g;
-		$$chunk=~s|collate (.*?) ||g;
-		$$chunk=~s| DEFAULT CHARSET=(utf8\|ascii)||;
-		$$chunk=~s|varchar\((.*?)NOT NULL,|varchar(\1NOT NULL default '',|g;
-		$$chunk=~s|int\((.*?)NOT NULL,|int(\1NOT NULL default '0',|g;
-		$header->{'version'}=$version;
-	}
 	
 	$t->close();
 	return 1;
@@ -389,7 +473,7 @@ sub install_table
 	my %env=@_;
 	my %output;
 	
-	$SQL=~/(TABLE|VIEW)(.*?) `(.*?)`.`(.*?)`/ || do
+	$SQL=~/(TABLE|VIEW)(.*?) [`\[](.*?)[`\]].[`\[](.*?)[`\]]/ || do
 	{
 		main::_log("this chunk is not a table or view",1);
 		$t->close();
