@@ -192,18 +192,9 @@ sub execute
 {
 	my $SQL=shift;
 	my %env=@_;
+  	
 	my $t=track TOM::Debug(__PACKAGE__."::execute()",'namespace'=>"SQL",'quiet' => $env{'quiet'},'timer'=>1);
-	
-	if ($TOM::DB{$env{'db_h'}}{'subtype'})
-	{
-    if ($env{$TOM::DB{$env{'db_h'}}{'subtype'}})
-    {	 
-      # if there is an %env variable with the name of subtype, use it as SQL 
-      $SQL = $env{$TOM::DB{$env{'db_h'}}{'subtype'}};
-	  }
-  }
-  
-	
+	  
 	# when I'm sometimes really wrong ;)
 	my $typeselect=0; # select query?
 	$env{'slave'}=$env{'slave'} || $env{'-slave'};
@@ -248,6 +239,17 @@ sub execute
 	
 	TOM::Database::connect::multi($env{'db_h'}) unless $main::DB{$env{'db_h'}};
 	
+	my $subtype;	
+	
+	$subtype = $TOM::DB{$env{'db_h'}}{'subtype'};
+	if ($subtype)
+	{
+   if ($env{$subtype})
+   {
+      $SQL = $env{$subtype};
+   } 
+  }
+		
 	main::_log("db_h='$env{'db_h'}'") unless $env{'quiet'};
 	if ($env{'log'})
 	{
@@ -323,6 +325,7 @@ sub execute
 	if ($TOM::DB{$env{'db_h'}}{'type'} eq "DBI")
 	{
 		$output{'type'} = "DBI";
+	  
 		$output{'sth'} = $main::DB{$env{'db_h'}}->prepare($SQL,{'ora_auto_lob'=>0});
 		#$output{'err'} = $DBI::errstr unless $output{'sth'};
 		$output{'err'}=$main::DB{$env{'db_h'}}->errstr();
@@ -538,3 +541,57 @@ Aktualizovat aplikacie vo vsetkych databazach
 =cut
 
 1;
+
+
+package DBI::st;
+# provide methods fetchhash and insertid if missing
+
+sub AUTOLOAD
+{
+  (my $method = our $AUTOLOAD) =~ s/.*:://;
+  my $self = shift;
+  
+  return if ($method eq 'DESTROY');
+  
+  # fetchhash (from Mysql)
+  if ($method eq 'fetchhash')
+  {
+    my %outhash;
+  
+    my $hashref = $self -> fetchrow_hashref();
+  
+    if ($hashref)
+    {
+     foreach my $item (%{$hashref})
+     {
+       $outhash{$item} = $hashref -> {$item};
+     }  
+     return %outhash;
+    
+    } else
+    {
+     return;
+    }
+  }
+  
+  # insertid (from Mysql))
+  elsif ($method eq 'insertid')
+  {
+    my $dbh = $self -> {Database}; # reference to my parent database handle
+  
+    # SELECT last inserted autoincrement column - MS SQL
+    my $sth = $dbh -> prepare('SELECT @@IDENTITY;');
+    $sth -> execute();
+    my @results = $sth -> fetchrow_array();
+  
+    return $results[0] if (@results); 
+  }
+  else
+  {
+    die("DBI::st::$method is undefined and could not be autloaded.");
+  }
+
+}
+
+1;
+
