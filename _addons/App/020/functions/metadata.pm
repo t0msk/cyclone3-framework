@@ -50,6 +50,54 @@ sub parse
 	return %hash;
 }
 
+=head2 parse_array
+
+ $metadata=qq{
+  <metatree>
+   <section name="section">
+	 <variable name="variable">value</variable>
+	</section>
+  </metatree>
+ };
+ @list=App::020::functions::metadata::parse_array($metadata);
+
+
+@list = ( {'name' => 'section_name', 'variables' => [ {'name' => 'variable_name', 'value' => 'variable_value'}, ... ] )
+
+=cut
+
+sub parse_array
+{
+	my $metaindex=shift;
+	utf8::decode($metaindex) unless utf8::is_utf8($metaindex);
+	my @list;
+	
+	while ($metaindex=~s|<section name="(.*?)">(.*?)</section>||s)
+	{
+		my $section_name=$1;
+		my $section_metaindex=$2;
+
+		my $section = {'name' => $section_name};
+
+		my @variables;
+
+		while ($section_metaindex=~s|<variable name="(.*?)">(.*?)</variable>||s)
+		{
+			my $variable_name=$1;
+			my $variable_value=$2;
+
+			push(@variables, { 'name' => $variable_name, 'value' => $variable_value});
+		}
+
+		$section -> {'variables'} = [ @variables ];
+
+		push(@list, $section);
+	}
+	
+	return @list;
+}
+
+
 
 sub metaindex_set
 {
