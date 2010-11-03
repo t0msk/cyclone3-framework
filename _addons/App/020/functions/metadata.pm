@@ -33,20 +33,33 @@ sub parse
 	my $metaindex=shift;
 	utf8::decode($metaindex) unless utf8::is_utf8($metaindex);
 	my %hash;
-	
-	while ($metaindex=~s|<section name="(.*?)">(.*?)</section>||s)
+
+	while ($metaindex =~ /<section name="(.*?)"\ ?(\/?)>/)
 	{
 		my $section_name=$1;
-		my $section_metaindex=$2;
-		while ($section_metaindex=~s|<variable name="(.*?)">(.*?)</variable>||s)
+		$hash{$section_name} = {};
+
+		if ($2)
+		{	
+			# empty section
+			$metaindex =~ s/<section name="(.*?)"\ ?\/>//;	
+		} else
 		{
-			my $variable_name=$1;
-			my $variable_value=$2;
-#			main::_log("$section_name :: variable_name='$variable_name' variable_value='$variable_value'");
-			$hash{$section_name}{$variable_name}=$variable_value;
+			# section with vars
+			$metaindex=~s|<section name="(.*?)">(.*?)</section>||s;
+			
+			my $section_metaindex = $2;
+
+			while ($section_metaindex=~s/<variable name="(.*?)" ?\/?>([^<]*)(<\/variable>)?//s)
+			{
+				my $variable_name=$1;	
+				my $variable_value=$2;
+				$variable_value = undef if (!$3);
+	
+				$hash{$section_name}{$variable_name}=$variable_value;
+			}
 		}
 	}
-	
 	return %hash;
 }
 
@@ -72,31 +85,39 @@ sub parse_array
 	utf8::decode($metaindex) unless utf8::is_utf8($metaindex);
 	my @list;
 	
-	while ($metaindex=~s|<section name="(.*?)">(.*?)</section>||s)
+	while ($metaindex =~ /<section name="(.*?)"\ ?(\/?)>/)
 	{
 		my $section_name=$1;
-		my $section_metaindex=$2;
-
 		my $section = {'name' => $section_name};
 
-		my @variables;
-
-		while ($section_metaindex=~s|<variable name="(.*?)">(.*?)</variable>||s)
+		if ($2)
+		{	
+			# empty section
+			$metaindex =~ s/<section name="(.*?)"\ ?\/>//;	
+		} else
 		{
-			my $variable_name=$1;
-			my $variable_value=$2;
+			# section with vars
+			$metaindex=~s|<section name="(.*?)">(.*?)</section>||s;
+			
+			my $section_metaindex = $2;
+			
+			my @variables;
 
-			push(@variables, { 'name' => $variable_name, 'value' => $variable_value});
+			while ($section_metaindex=~s/<variable name="(.*?)" ?\/?>([^<]*)(<\/variable>)?//s)
+			{
+				my $variable_name=$1;	
+				my $variable_value=$2;
+				$variable_value = undef if (!$3);
+	
+				push(@variables, { 'name' => $variable_name, 'value' => $variable_value});
+			}
+
+			$section ->{'variables'} = [ @variables ];
 		}
-
-		$section -> {'variables'} = [ @variables ];
-
 		push(@list, $section);
 	}
-	
 	return @list;
 }
-
 
 
 sub metaindex_set
