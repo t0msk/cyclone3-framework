@@ -72,6 +72,7 @@ use App::720::a301;
 our $db_name=$App::720::db_name || $TOM::DB{'main'}{'name'};
 main::_log("db_name=$db_name");
 
+our $metadata_default=$App::720::metadata_default || '';
 
 # check relation to a542
 our $file_ID_entity;
