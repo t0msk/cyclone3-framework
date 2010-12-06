@@ -19,4 +19,7 @@ Initial library of generic local application L<010|app/"010/">.
 
 =cut
 
+our $db_name=$App::010::db_name || $TOM::DB{'main'}{'name'};
+main::_log("db_name=$db_name");
+
 1;
