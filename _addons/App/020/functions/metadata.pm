@@ -153,12 +153,18 @@ sub metaindex_set
 				VALUES
 				(
 					'$env{'ID'}',
-					'$section_name',
-					'$variable_name',
-					'$metadata{$section_name}{$variable_name}',
+					?,
+					?,
+					?,
 					'Y'
 				)
-			},'quiet'=>1,'db_h'=>$env{'db_h'});
+			},
+			'bind' => [
+				$section_name,
+				$variable_name,
+				$metadata{$section_name}{$variable_name}
+			],
+			'quiet'=>1,'db_h'=>$env{'db_h'});
 		}
 	}
 	
