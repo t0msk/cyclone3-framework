@@ -21,8 +21,12 @@ BEGIN
 {
 	$TOM::engine='pub';
 	$main::debug=1 if $ENV{'TERM'};
-	#print "Content-Type: text/html\n\n";
-	require "/www/TOM/.core/.libs/TOM.pm";
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
 }
 
 use open ':utf8', ':std';

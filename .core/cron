@@ -4,7 +4,12 @@ BEGIN
 {
 	$TOM::engine='cron';
 	$main::debug=1 if $ENV{'TERM'};
-	require "/www/TOM/.core/.libs/TOM.pm";
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
 	$CRON::P=$TOM::P;
 	#$CRON::P=`pwd`;
 	#$CRON::P=~s|(.*)/.*?\n$|\1|;
@@ -31,7 +36,7 @@ use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Parallel::ForkManager;
 use Proc::ProcessTable;
 
-require "/www/TOM/.core/_config/cron.conf";
+require $TOM::P."/.core/_config/cron.conf";
 
 our $type=$ARGV[0];
 exit(0) unless $type;
