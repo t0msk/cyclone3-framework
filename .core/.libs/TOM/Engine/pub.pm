@@ -24,10 +24,10 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 		mkdir $tom::P."/_logs/_debug" if (! -e $tom::P."/_logs/_debug");
 		
 		# temp grf directory
-		if (! -e $tom::P.'/!media/grf/temp')
+		if (! -e $tom::P_media.'/grf/temp')
 		{
-			mkdir $tom::P.'/!media/grf/temp';
-			chmod(0777,$tom::P.'/!media/grf/temp');
+			mkdir $tom::P_media.'/grf/temp';
+			chmod(0777,$tom::P_media.'/grf/temp');
 		}
 	}
 	

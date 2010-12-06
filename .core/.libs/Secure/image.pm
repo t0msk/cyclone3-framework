@@ -18,7 +18,7 @@ sub genimagehash
 	$size=4 unless $size;
 	$width=90 unless $width;
 	$height=30 unless $height;
-	$path='../!media/grf/temp' unless $path;
+	$path=$tom::P_media.'/grf/temp' unless $path;
 	
 	my $image = Image::Magick->new;
 	$image->Set(size=>$width.'x'.$height);
@@ -57,7 +57,7 @@ sub genimagehash_ng
 	$env{size}=4 unless $env{size};
 	$env{width}=90 unless $env{width};
 	$env{height}=30 unless $env{height};
-	$env{path}='../!media/grf/temp' unless $env{path};
+	$env{path}=$tom::P_media.'/grf/temp' unless $env{path};
 	
 	$env{color_bg}='gray' unless $env{color_bg};
 	$env{color_font}='black' unless $env{color_font};

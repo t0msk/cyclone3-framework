@@ -26,16 +26,16 @@ use TOM::Template::contenttypes;
 
 BEGIN
 {
-	if (!-e $tom::P.'/!media/tpl' && -e $tom::P.'/local.conf')
+	if (!-e $tom::P_media.'/tpl' && -e $tom::P.'/local.conf')
 	{
-		main::_log("mkpath '$tom::P/!media/tpl'");
-		File::Path::mkpath $tom::P.'/!media/tpl';
-		chmod (0777, $tom::P.'/!media/tpl');
+		main::_log("mkpath '$tom::P_media/tpl'");
+		File::Path::mkpath $tom::P_media.'/tpl';
+		chmod (0777, $tom::P_media.'/tpl');
 	}
-	elsif (!-e $TOM::P.'/!media/tpl')
+	elsif (!-e $TOM::P_media.'/tpl')
 	{
-		File::Path::mkpath $TOM::P.'/!media/tpl';
-		chmod (0777, $TOM::P.'/!media/tpl');
+		File::Path::mkpath $TOM::P_media.'/tpl';
+		chmod (0777, $TOM::P_media.'/tpl');
 	}
 }
 
@@ -331,7 +331,7 @@ sub parse_header
 				my $destination=$node->getAttribute('dest') || $node->getAttribute('destination');
 					$destination.=$location if $destination=~/\/$/;
 					$destination.=$location unless $destination;
-				my $destination_dir=$tom::P.'/!media/tpl/'.$destination;
+				my $destination_dir=$tom::P_media.'/tpl/'.$destination;
 					$destination_dir=~s|^(.*)/(.*?)$|$1|;
 				my $destination_file=$2;
 					

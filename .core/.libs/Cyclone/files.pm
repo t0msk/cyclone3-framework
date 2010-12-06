@@ -109,7 +109,7 @@ our @setit_D=
 	['\/_type$'                        ,"local _type"                 ,"770","$user_www:$group"],
 	['\/_data'                         ,"local _data"                 ,"770","$user_www:$group"],
 	['\/_logs'                         ,"local _logs"                 ,"777","$user_www:$group"],
-	['\/!media'                        ,"local !media"                ,"770","$user_www:$group"],
+	['\/!?media'                        ,"local !media"                ,"770","$user_www:$group"],
 	
 	['![\w\.\-]+$'                     ,"domain"                      ,"770","$user_www:$group"],
 	['\/!www'                          ,"document roots"              ,"770","$user_www:$group"],
@@ -144,7 +144,7 @@ our @setit_F=
 	# www:$mediasrv_group ak media su cez NFS na inom serveri
 	['^!media\/'                       ,"!media"                      ,"664","$mediasrv_user:$mediasrv_group"],
 	# $user_www:cyclone3 ak media su normalne lokalne
-	['!media\/'                        ,"!media domain"               ,"664","$user_www:$group"],
+	['/!?media\/'                        ,"!media domain"               ,"664","$user_www:$group"],
 	['\.htaccess$'                     ,".htaccess"                   ,"460","$user_www:$group"],
 	
 	['_logs\/.*\.log$'                 ,"_logs cron .log"             ,"",""],
