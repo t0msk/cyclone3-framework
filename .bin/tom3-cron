@@ -6,8 +6,10 @@ use Term::ANSIColor;
 
 BEGIN
 {
-	require "/www/TOM/.bin/tom3-init";$main::debug=1;
-	use Inline (Config => DIRECTORY => "/www/TOM/.core/.libs/_Inline");
+	if (!$ENV{'CYCLONE3PATH'}){$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";}
+	require $ENV{'CYCLONE3PATH'}."/.bin/tom3-init";
+	$main::debug=1;
+	use Inline (Config => DIRECTORY => $ENV{'CYCLONE3PATH'}."/.core/.libs/_Inline");
 }
 
 use TOM;
@@ -37,13 +39,13 @@ if ((!$FORM{-name}) || ($FORM{h})||($FORM{help})){&help();}
 
 print color 'reset bold blue';
 
-require "/www/TOM/.core/_config/cron.conf";
+require $ENV{'CYCLONE3PATH'}."/.core/_config/cron.conf";
 
 	$cron::P=$CRON::P;
 	
 	$TOM::engine="cron";
 	
-	$CRON::P="/www/TOM";
+	$CRON::P=$ENV{'CYCLONE3PATH'};
 	$cron::P=$CRON::P;
 	
 	if ($FORM{domain})
