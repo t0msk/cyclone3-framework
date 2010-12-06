@@ -1332,7 +1332,7 @@ while ($main::CGI=new CGI::Fast())
 		my $file_data;my $file_line;
 		$tom::Ptype=do 
 		{
-			(($FORM{TID}=~/^(.)/)[0]) eq "g" ? "/www/TOM" :
+			(($FORM{TID}=~/^(.)/)[0]) eq "g" ? $TOM::P :
 			(($FORM{TID}=~/^(.)/)[0]) eq "m" ? $tom::Pm  :
 			$tom::P ;
 		};

@@ -40,6 +40,16 @@ BEGIN
 			main::_log_stdout("require $tom::P/local.conf");
 			require $tom::P."/local.conf";
 			
+			if ($tom::Pm)
+			{
+				shift @INC;
+				shift @INC;
+				unshift @INC,$tom::Pm."/.libs";
+				unshift @INC,$tom::Pm."/_addons";
+				unshift @INC,$tom::P."/.libs";
+				unshift @INC,$tom::P."/_addons";
+			}
+			
 			if ($tom::addons_init) # load all addons only if required by engine
 			{
 				foreach my $addon(keys %tom::addons)
@@ -66,6 +76,7 @@ BEGIN
 		}
 		
 	}
+	
 }
 
 1;
