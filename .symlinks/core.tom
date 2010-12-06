@@ -1,3 +1,4 @@
 #!/usr/bin/perl
 if (!$ENV{'CYCLONE3PATH'}){if (-d '/Cyclone3'){$ENV{'CYCLONE3PATH'}="/Cyclone3";}elsif (-d '/www/TOM'){$ENV{'CYCLONE3PATH'}="/www/TOM";}}
 do $ENV{'CYCLONE3PATH'}."/.core/tom3";
+END {use Inline;$SIG{__WARN__} = sub {};}
