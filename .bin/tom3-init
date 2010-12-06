@@ -10,7 +10,7 @@ BEGIN
 	$main::debug=0;
 	$main::stdout=1;
 	$TOM::engine="bin";
-	require "/www/TOM/.core/.libs/TOM.pm";
+	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
 	$TOM::engine_ready=1;
 	$TOM::core_uname_n=$TOM::hostname;
 	$CRON::core_uname_n=$TOM::hostname;

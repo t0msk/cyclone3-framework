@@ -1,7 +1,10 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
 use Time::HiRes;
-BEGIN {require "/www/TOM/.bin/tom3-init";}
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'}){$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";}
+	require $ENV{'CYCLONE3PATH'}."/.bin/tom3-init";
+}
 use Term::InKey;
 %form=
 (
@@ -29,14 +32,14 @@ while(1)
 	my $t = new Proc::ProcessTable;
 	foreach my $p (@{$t->table})
 	{
-		next unless $p->{'cmndline'}=~/^.*\/perl .*?\/\.core\/(.*?) pwd=(.*)/;
+#		print $p->{'cmndline'}."\n";
+		next unless $p->{'cmndline'}=~/^.*\/perl $TOM::P\/[^ ]*\/(.*?) /;
 		my $engine=$1;
-		#next unless $cmd=~/^.*\/perl .*?\/\.core\/(.*?) pwd=(.*)/;
 		
 		my $host;
-		$p->{'cmndline'}=~/pwd=(.*)/;
+		$p->{'cmndline'}=~/$TOM::P\/(.*)\/(.*?) /;
 		my $pwd=$1;
-			$pwd=~s|^.*?/TOM/||;
+#			$pwd=~s|^.*?/TOM/||;
 			$pwd=~s| $||g;
 		
 		foreach (split('/',$pwd))
