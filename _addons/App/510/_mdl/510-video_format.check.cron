@@ -93,7 +93,7 @@ sub execute
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		my $vd = Movie::Info->new || die "Couldn't find an mplayer to use\n";
-		my $filename=$tom::P.'/!media/a510/video/part/file/'.$db0_line{'ID_format'}.'/'.substr($db0_line{'ID'},0,4).'/'.$db0_line{'name'}.'.'.$db0_line{'file_ext'};
+		my $filename=$tom::P_media.'/a510/video/part/file/'.$db0_line{'ID_format'}.'/'.substr($db0_line{'ID'},0,4).'/'.$db0_line{'name'}.'.'.$db0_line{'file_ext'};
 		main::_log("filename=$filename");
 		my %video = $vd->info($filename);
 		App::020::SQL::functions::update(

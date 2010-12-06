@@ -352,7 +352,7 @@ sub file_add
 					'-journalize' => 1,
 					'-posix' => 1,
 				);
-				my $path=$tom::P.'/!media/a542/file/item/'._file_item_genpath
+				my $path=$tom::P_media.'/a542/file/item/'._file_item_genpath
 				(
 					$env{'file_attrs.lng'},
 					$db0_line{'ID'},
@@ -398,7 +398,7 @@ sub file_add
 			$ID=sprintf("%08d",$ID);
 			main::_log("ID='$ID'");
 			
-			my $path=$tom::P.'/!media/a542/file/item/'._file_item_genpath
+			my $path=$tom::P_media.'/a542/file/item/'._file_item_genpath
 			(
 				$env{'file_attrs.lng'},
 				$ID,
@@ -659,10 +659,10 @@ sub _file_item_genpath
 	my $ext=shift;
 	$ID=~s|^(....).*$|\1|;
 	
-	my $pth=$tom::P.'/!media/a542/file/item/'.$language.'/'.$ID;
+	my $pth=$tom::P_media.'/a542/file/item/'.$language.'/'.$ID;
 	if (!-d $pth)
 	{
-		File::Path::mkpath($tom::P.'/!media/a542/file/item/'.$language.'/'.$ID);
+		File::Path::mkpath($tom::P_media.'/a542/file/item/'.$language.'/'.$ID);
 	}
 	return "$language/$ID/$name.$ext";
 };

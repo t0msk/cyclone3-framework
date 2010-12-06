@@ -38,6 +38,7 @@ sub execute
 		if (($file ne ".")&&($file ne ".."))
 		{
 			next if $file =~/!media/;
+			next if $file =~/media/;
 			next if $file =~/!www/;
 			next if $file =~/_data/;
 			next if $file =~/_addons/;

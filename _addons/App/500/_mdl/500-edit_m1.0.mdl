@@ -247,15 +247,15 @@ sub execute
 			$env{db_ID}=~/^(....)/i;
 			my $diskSubDir=$1;
 			
-			my $diskPath="../!media/500/$diskSubDir/";
+			my $diskPath="$tom::P_media/500/$diskSubDir/";
 			main::_log("creating directory '$diskPath' from '".`pwd`."' ");
 			
-			if (! -e '../!media/500')
+			if (! -e $tom::P_media.'/500')
 			{
-				die "can't create media directory '../!media/500' $!" unless mkdir '../!media/500';
+				die "can't create media directory '$tom::P_media/500' $!" unless mkdir $tom::P_media.'/500';
 			}
 			
-			chmod(0777,'../!media/500');
+			chmod(0777,$tom::P_media.'/500');
 			
 			if (! -e $diskPath)
 			{
@@ -327,7 +327,7 @@ sub execute
 			#write the file to disk and append to database
 =head1
 				#main::_log("file_data exists");
-				my $path_a500="../!media/500";
+				my $path_a500=$tom::P_media."/500";
 				system ("mkdir $path_a500/uptest");
 				my $filename = $path_a500."/uptest/" . $main::FORM{file_name};
 				#main::_log("filename: " . $filename);

@@ -91,7 +91,7 @@ sub execute
 		$i++;
 		main::_log("[$i/$sth0{'rows'}] checked") if ($i/100 == int($i/100));
 		
-		if (!-e $tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'})
+		if (!-e $tom::P_media.'/a501/image/file/'.$db0_line{'file_path'})
 		{
 			main::_log("file $db0_line{'file_path'} not exists (created at $db0_line{'datetime_create'})",1);
 			TOM::Database::SQL::execute(qq{
@@ -135,7 +135,7 @@ sub execute
 		$i++;
 		main::_log("[$i/$sth0{'rows'}] checked") if ($i/100 == int($i/100));
 		
-		my $pth=$tom::P.'/!media/a501/image/file_j/'.$db0_line{'file_path'};
+		my $pth=$tom::P_media.'/a501/image/file_j/'.$db0_line{'file_path'};
 		$pth=~s|/$db0_line{'name'}\.$db0_line{'file_ext'}$||;
 		
 		TOM::Database::SQL::execute(qq{
@@ -150,10 +150,10 @@ sub execute
 			main::_log("creating directory '$pth'");
 		}
 		
-		if (!-e $tom::P.'/!media/a501/image/file_j/'.$db0_line{'file_path'})
+		if (!-e $tom::P_media.'/a501/image/file_j/'.$db0_line{'file_path'})
 		{
 			# file_j/ not exists
-			if (-e $tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'})
+			if (-e $tom::P_media.'/a501/image/file/'.$db0_line{'file_path'})
 			{
 				# file/ exists
 				
@@ -182,8 +182,8 @@ sub execute
 					# into journal only move original files
 					# so, move to journal archive if journal of file is enabled
 					main::_log("[$i/$sth0{'rows'}] move file/->file_j/ '$db0_line{'file_path'}'");
-					my $out=File::Copy::move($tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'},
-						$tom::P.'/!media/a501/image/file_j/'.$db0_line{'file_path'});
+					my $out=File::Copy::move($tom::P_media.'/a501/image/file/'.$db0_line{'file_path'},
+						$tom::P_media.'/a501/image/file_j/'.$db0_line{'file_path'});
 					if (!$out)
 					{
 						main::_log("can't move: $!",1);
@@ -194,7 +194,7 @@ sub execute
 					# this file in file/ is not longer required
 					# don't backup this file, remove it
 					main::_log("[$i/$sth0{'rows'}] remove file/ '$db0_line{'file_path'}' (not found in image_file)");
-					unlink $tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'};
+					unlink $tom::P_media.'/a501/image/file/'.$db0_line{'file_path'};
 				}
 				
 			}
@@ -250,7 +250,7 @@ sub execute
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		
-		my $file=$tom::P.'/!media/a501/image/file_j/'.$db0_line{'file_path'};
+		my $file=$tom::P_media.'/a501/image/file_j/'.$db0_line{'file_path'};
 		
 		if (!$db0_line{'name'})
 		{
@@ -309,7 +309,7 @@ sub execute
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		
-		my $file=$tom::P.'/!media/a501/image/file/'.$db0_line{'file_path'};
+		my $file=$tom::P_media.'/a501/image/file/'.$db0_line{'file_path'};
 		
 		if (!$db0_line{'name'})
 		{

@@ -84,7 +84,7 @@ sub execute
 		'translate_images' =>
 		{
 			'dir_from' => $TOM::P.'/_addons/Ext/XULadmin/help',
-			'dir_to' => $tom::P.'/!media/grf/temp',
+			'dir_to' => $tom::P_media.'/grf/temp',
 			'uri' => $tom::H_grf.'/temp',
 		}
 	);

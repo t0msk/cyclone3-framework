@@ -99,7 +99,7 @@ sub execute
 		},'quiet'=>1);
 		while (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
-			my $filename=$tom::P.'/!media/a501/image/file/'.$db1_line{'file_path'};
+			my $filename=$tom::P_media.'/a501/image/file/'.$db1_line{'file_path'};
 			main::_log(" remove file '$db1_line{'ID'}' '$filename' size=$db1_line{'file_size'}");
 			if (! -e $filename){main::_log("file already not exists!",1);}
 			else {unlink $filename;}

@@ -37,7 +37,7 @@ sub get
 	for (my $i=0;$i<$filec;$i++)
 	{
 		$files[$i]{ID}=~/^(....)/i;
-		$files[$i]{fullpath} = "../!media/540/$1/".$files[$i]{hash};
+		$files[$i]{fullpath} = $tom::P_media."/540/$1/".$files[$i]{hash};
 	}
 # Return
 	return @files;
@@ -159,9 +159,9 @@ sub new
 # Prepare filename
 	my $zero_id = sprintf ('%07d', $id);
 	$zero_id=~/^(....)/i;
-	my $dir = "../!media/540/$1";
+	my $dir = $tom::P_media."/540/$1";
 # Make directory
-	mkdir("../!media/540");
+	mkdir("$tom::P_media/540");
 	mkdir($dir);
 	my $filename = "$dir/$args{hash}";
 
@@ -264,9 +264,9 @@ sub new2
 # Prepare filename
 	my $zero_id = sprintf ('%07d', $id);
 	$zero_id=~/^(....)/i;
-	my $dir = "../!media/540/$1";
+	my $dir = $tom::P_media."/540/$1";
 # Make directory
-	mkdir("../!media/540");
+	mkdir("$tom::P_media/540");
 	mkdir($dir);
 	my $filename = "$dir/$args{hash}";
 

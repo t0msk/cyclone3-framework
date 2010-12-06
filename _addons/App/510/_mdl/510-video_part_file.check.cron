@@ -66,7 +66,7 @@ sub execute
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		my $file=$tom::P.'/!media/a510/video/part/file_j/'.$db0_line{'file_path'};
+		my $file=$tom::P_media.'/a510/video/part/file_j/'.$db0_line{'file_path'};
 		if (-e $file)
 		{
 			main::_log("remove file video_part_file_j.ID=$db0_line{'ID'} $file");
@@ -234,7 +234,7 @@ sub execute
 	{
 		#main::_log("check image_file $db0_line{'ID'} in $db0_line{'file_path'}");
 		
-		if (!-e $tom::P.'/!media/a510/video/part/file/'.$db0_line{'file_path'})
+		if (!-e $tom::P_media.'/a510/video/part/file/'.$db0_line{'file_path'})
 		{
 			main::_log("file of video_part_file $db0_line{'file_path'} not exists",1);
 			TOM::Database::SQL::execute(qq{
@@ -309,7 +309,7 @@ sub execute
 	{
 		#main::_log("check image_file $db0_line{'ID'} in $db0_line{'file_path'}");
 		
-		my $pth=$tom::P.'/!media/a510/video/part/file_j/'.$db0_line{'file_path'};
+		my $pth=$tom::P_media.'/a510/video/part/file_j/'.$db0_line{'file_path'};
 		$pth=~s|/$db0_line{'name'}\.$db0_line{'file_ext'}$||;
 		
 		if (!-d $pth)
@@ -318,9 +318,9 @@ sub execute
 			File::Path::mkpath($pth);
 		}
 		
-		if (!-e $tom::P.'/!media/a510/video/part/file_j/'.$db0_line{'file_path'})
+		if (!-e $tom::P_media.'/a510/video/part/file_j/'.$db0_line{'file_path'})
 		{
-			if (-e $tom::P.'/!media/a510/video/part/file/'.$db0_line{'file_path'})
+			if (-e $tom::P_media.'/a510/video/part/file/'.$db0_line{'file_path'})
 			{
 				
 				# check if this file is not required in main table
@@ -340,15 +340,15 @@ sub execute
 					#main::_log("don't copy file '$db0_line{'file_path'}'");
 					next;
 					# so, copy to journal archive
-					File::Copy::copy($tom::P.'/!media/a510/video/part/file/'.$db0_line{'file_path'},
-						$tom::P.'/!media/a510/video/part/file_j/'.$db0_line{'file_path'});
+					File::Copy::copy($tom::P_media.'/a510/video/part/file/'.$db0_line{'file_path'},
+						$tom::P_media.'/a510/video/part/file_j/'.$db0_line{'file_path'});
 				}
 				else
 				{
 					# so, move to journal archive
 					main::_log("move file '$db0_line{'file_path'}'");
-					File::Copy::move($tom::P.'/!media/a510/video/part/file/'.$db0_line{'file_path'},
-						$tom::P.'/!media/a510/video/part/file_j/'.$db0_line{'file_path'}) || main::_log("file can't be moved $!",1);
+					File::Copy::move($tom::P_media.'/a510/video/part/file/'.$db0_line{'file_path'},
+						$tom::P_media.'/a510/video/part/file_j/'.$db0_line{'file_path'}) || main::_log("file can't be moved $!",1);
 				}
 				
 			}

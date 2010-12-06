@@ -57,7 +57,7 @@ sub execute
 				my $hash=TOM::Utils::vars::genhash(16);
 				
 				use File::Copy;
-				File::Copy::copy($tom::P.'/!media/500/'.$filename,$tom::P.'/!media/500/'.$dir.'/'.$hash.'-o.jpg');
+				File::Copy::copy($tom::P_media.'/500/'.$filename,$tom::P_media.'/500/'.$dir.'/'.$hash.'-o.jpg');
 				
 				my $sql=qq{
 					INSERT INTO a500
@@ -101,20 +101,20 @@ sub execute
 			my $dir=sprintf('%07d',$db1_line{'ID'});
 			$dir=~s|^(....).*$|\1|;
 			my $filename="$dir/$db1_line{'hash'}-o.jpg";
-			if (!-e $tom::P.'/!media/500/'.$filename)
+			if (!-e $tom::P_media.'/500/'.$filename)
 			{
 				main::_log("pruser",1);
 				next;
 			}
 			
-			$img->Read($tom::P.'/!media/500/'.$filename);
+			$img->Read($tom::P_media.'/500/'.$filename);
 			$img->Thumbnail('geometry'=>"120x120");
 			
 			my $hash=TOM::Utils::vars::genhash(16);
 			
 			main::_log("hash $hash");
 			
-			$img->Write($tom::P.'/!media/500/'.$dir.'/'.$hash.'-t.jpg');
+			$img->Write($tom::P_media.'/500/'.$dir.'/'.$hash.'-t.jpg');
 			
 			my $sql=qq{
 				INSERT INTO a500

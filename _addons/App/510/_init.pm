@@ -98,20 +98,20 @@ BEGIN
 		if ($tom::P && $check)
 		{
 			main::_log("checking a510 media directory");
-			if (!-e $tom::P.'/!media/a510/video/part/file')
+			if (!-e $tom::P_media.'/a510/video/part/file')
 			{
-				File::Path::mkpath $tom::P.'/!media/a510/video/part/file';
+				File::Path::mkpath $tom::P_media.'/a510/video/part/file';
 			}
 			
-			if (!-e $tom::P.'/!media/a510/video/part/file_j')
+			if (!-e $tom::P_media.'/a510/video/part/file_j')
 			{
-				main::_log("creating path $tom::P/!media/a510/video/part/file_j");
-				File::Path::mkpath $tom::P.'/!media/a510/video/part/file_j';
+				main::_log("creating path $tom::P_media/a510/video/part/file_j");
+				File::Path::mkpath $tom::P_media.'/a510/video/part/file_j';
 			}
 			
-			if (!-e $tom::P.'/!media/a510/video/part/file_j/.htaccess')
+			if (!-e $tom::P_media.'/a510/video/part/file_j/.htaccess')
 			{
-				open (HND,'>'.$tom::P.'/!media/a510/video/part/file_j/.htaccess');
+				open (HND,'>'.$tom::P_media.'/a510/video/part/file_j/.htaccess');
 				print HND $htaccess_j;
 				close HND;
 			}

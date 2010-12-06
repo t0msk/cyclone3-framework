@@ -91,7 +91,7 @@ sub execute
 	
 	$env{'file'}='editor' unless $env{'file'};
 	
-	open (CSS,'<'.$tom::P.'/!media/css/'.$env{'file'}.'.css') || do
+	open (CSS,'<'.$tom::P_media.'/css/'.$env{'file'}.'.css') || do
 	{
 		$XSGN{'TMP'}=$XSGN{'TMP_failure'};
 		$XSGN{'TMP'}=~s|<%file%>|$env{'file'}|g;

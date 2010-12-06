@@ -49,7 +49,7 @@ sub execute
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		main::_log("$db0_line{'file_part_path'}");
-		`rm $tom::P/!media/a510/video/part/file/$db0_line{'file_part_path'}`;
+		`rm $tom::P_media/a510/video/part/file/$db0_line{'file_part_path'}`;
 	}
 	
 	my $sql=qq{
@@ -64,8 +64,8 @@ sub execute
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		main::_log("$db0_line{'file_part_path'}");
-		`rm $tom::P/!media/a510/video/part/file_j/$db0_line{'file_part_path'}`;
-		`rm $tom::P/!media/a510/video/part/file/$db0_line{'file_part_path'}`;
+		`rm $tom::P_media/a510/video/part/file_j/$db0_line{'file_part_path'}`;
+		`rm $tom::P_media/a510/video/part/file/$db0_line{'file_part_path'}`;
 	}
 	
 	return 1

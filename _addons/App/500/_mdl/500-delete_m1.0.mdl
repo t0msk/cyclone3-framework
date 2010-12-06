@@ -39,7 +39,7 @@ sub execute
 		$env{db_ID}=~/^(....)/i;
 		my $diskSubDir=$1;
 
-		my $diskPath="../../!media/500/$diskSubDir/";
+		my $diskPath=$tom::P_media."/500/$diskSubDir/";
 
 		my $tmplng;
 		#$tmplng="AND lng LIKE '$env{lng}'" if(exists($env{lng}));

@@ -82,7 +82,7 @@ sub execute
 	$ad='1/0000/2uwWX76o.jpg'; # dlha postava
 	
 	
-	my $file=$tom::P.'/!media/a501/image/file/'.$ad;
+	my $file=$tom::P_media.'/a501/image/file/'.$ad;
 	
 	my $out=`cd /www/TOM/_addons/App/501/FaceDetect/;./fdetect $file`;
 	
@@ -138,7 +138,7 @@ sub execute
 	return 1;
 	
 	
-	open (HND,'<:encoding(cp1250)',$tom::P.'/!media/new/leticia.portal.sk/export/markiza.imgs/index.html') || die "$!";
+	open (HND,'<:encoding(cp1250)',$tom::P_media.'/new/leticia.portal.sk/export/markiza.imgs/index.html') || die "$!";
 	
 	while (my $line=<HND>)
 	{

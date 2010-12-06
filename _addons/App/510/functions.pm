@@ -210,7 +210,7 @@ sub video_part_file_generate
 	my $process_ID=$sth0{'sth'}->insertid();
 	
 	
-	my $video1_path=$file_parent{'file_alt_src'} || $tom::P.'/!media/a510/video/part/file/'._video_part_file_genpath
+	my $video1_path=$file_parent{'file_alt_src'} || $tom::P_media.'/a510/video/part/file/'._video_part_file_genpath
 	(
 		$format_parent{'ID'},
 		$file_parent{'ID'},
@@ -367,10 +367,10 @@ sub _video_part_file_genpath
 	my $ext=shift;
 	$ID=~s|^(....).*$|\1|;
 	
-	my $pth=$tom::P.'/!media/a510/video/part/file/'.$format.'/'.$ID;
+	my $pth=$tom::P_media.'/a510/video/part/file/'.$format.'/'.$ID;
 	if (!-d $pth)
 	{
-		File::Path::mkpath($tom::P.'/!media/a510/video/part/file/'.$format.'/'.$ID);
+		File::Path::mkpath($tom::P_media.'/a510/video/part/file/'.$format.'/'.$ID);
 	}
 	return "$format/$ID/$name.$ext";
 };
@@ -1963,7 +1963,7 @@ sub video_part_file_add
 			);
 			if (!$env{'file_nocopy'})
 			{
-				my $path=$tom::P.'/!media/a510/video/part/file/'._video_part_file_genpath
+				my $path=$tom::P_media.'/a510/video/part/file/'._video_part_file_genpath
 				(
 					$env{'video_format.ID'},
 					$db0_line{'ID'},
@@ -2032,7 +2032,7 @@ sub video_part_file_add
 		
 		if (!$env{'file_nocopy'})
 		{
-			my $path=$tom::P.'/!media/a510/video/part/file/'._video_part_file_genpath
+			my $path=$tom::P_media.'/a510/video/part/file/'._video_part_file_genpath
 			(
 				$env{'video_format.ID'},
 				$ID,

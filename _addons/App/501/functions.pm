@@ -341,11 +341,11 @@ sub image_file_generate
 		$file_parent{'file_ext'}
 	);
 	
-	main::_log("path to parent image_file='$image1_path' size=".((stat($tom::P.'/!media/a501/image/file/'.$image1_path))[7])."b");
+	main::_log("path to parent image_file='$image1_path' size=".((stat($tom::P_media.'/a501/image/file/'.$image1_path))[7])."b");
 	my $image2=new TOM::Temp::file('dir'=>$main::ENV{'TMP'});
 	
 	my ($out,$ext)=image_file_process(
-		'image1' => $tom::P.'/!media/a501/image/file/'.$image1_path,
+		'image1' => $tom::P_media.'/a501/image/file/'.$image1_path,
 		'image2' => $image2->{'filename'},
 		'process' => $env{'process'} || $format{'process'},
 		'unlink' => 1,
@@ -388,7 +388,7 @@ sub _image_file_genpath
 	my $ext=shift;
 	$ID=~s|^(....).*$|\1|;
 	
-	my $path=$tom::P.'/!media/a501/image/file/'.$format.'/'.$ID;
+	my $path=$tom::P_media.'/a501/image/file/'.$format.'/'.$ID;
 	if (!-e $path)
 	{
 		File::Path::mkpath($path);
@@ -775,7 +775,7 @@ sub image_file_process
 			main::_log("exec $function_name()");
 			
 			my $image_composite = new Image::Magick;
-			$image_composite->Read($tom::P.'/!media/a501/copyright.png');
+			$image_composite->Read($tom::P_media.'/a501/copyright.png');
 			my $max=0.8;
 			my $downscale_width=$image_composite->Get('width');
 				if ($downscale_width>$image1->Get('width')*$max)
@@ -1567,7 +1567,7 @@ sub image_file_add
 	if (my %db0_line=$sth0{'sth'}->fetchhash)
 	{
 		# file updating
-		my $filename_old=$tom::P.'/!media/a501/image/file/'
+		my $filename_old=$tom::P_media.'/a501/image/file/'
 			.$db0_line{'ID_format'}.'/'
 			.substr($db0_line{'ID'},0,4).'/'
 			.$db0_line{'name'}.'.'.$db0_line{'file_ext'};
@@ -1613,7 +1613,7 @@ sub image_file_add
 				},
 				'-journalize' => 1,
 			);
-			my $path=$tom::P.'/!media/a501/image/file/'._image_file_genpath
+			my $path=$tom::P_media.'/a501/image/file/'._image_file_genpath
 			(
 				$env{'image_format.ID'},
 				$db0_line{'ID'},
@@ -1653,7 +1653,7 @@ sub image_file_add
 		$ID=sprintf("%08d",$ID);
 		main::_log("ID='$ID'");
 		
-		my $path=$tom::P.'/!media/a501/image/file/'._image_file_genpath
+		my $path=$tom::P_media.'/a501/image/file/'._image_file_genpath
 		(
 			$env{'image_format.ID'},
 			$ID,

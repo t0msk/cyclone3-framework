@@ -209,7 +209,7 @@ sub execute
 	
 	my $subdir=sprintf('%010d',int($ID/1000));
 	
-	my $path_to=$tom::P.'/!media/a541/files/'.$subdir;
+	my $path_to=$tom::P_media.'/a541/files/'.$subdir;
 	File::Path::mkpath $path_to;
 	my $file_to=$path_to.'/'.$hash;
 	main::_log("copy file to '$file_to'");

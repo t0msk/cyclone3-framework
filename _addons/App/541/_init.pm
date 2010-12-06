@@ -30,14 +30,14 @@ BEGIN
 	if ($tom::P)
 	{
 		
-		if (!-e $tom::P.'/!media/a541/files')
+		if (!-e $tom::P_media.'/a541/files')
 		{
-			File::Path::mkpath $tom::P.'/!media/a541/files';
+			File::Path::mkpath $tom::P_media.'/a541/files';
 		}
 		
-		if (!-e $tom::P.'/!media/a541/.htaccess')
+		if (!-e $tom::P_media.'/a541/.htaccess')
 		{
-			open (HND,'>'.$tom::P.'/!media/a541/.htaccess');
+			open (HND,'>'.$tom::P_media.'/a541/.htaccess');
 			print HND $htaccess;
 			close HND;
 		}

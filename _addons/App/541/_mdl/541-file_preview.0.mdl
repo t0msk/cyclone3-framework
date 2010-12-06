@@ -45,7 +45,7 @@ sub execute
 	);
 	
 	my $subdir=sprintf('%010d',int($env{'ID'}/1000));
-	my $path=$tom::P.'/!media/a541/files/'.$subdir;
+	my $path=$tom::P_media.'/a541/files/'.$subdir;
 	my $filename=$path.'/'.$file{'name_hash'};
 	
 	

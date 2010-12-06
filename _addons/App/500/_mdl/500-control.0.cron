@@ -90,7 +90,7 @@ sub execute
   my $nullid=sprintf("%07d",$db0_line[0]);
   $nullid=~/^(....)/;my $var=$1;
   $nullid=$db0_line[1] if $db0_line[1];
-  if (not -e $cron::P."/!media/500/".$var."/$nullid-".$db0_line[2].".jpg")
+  if (not -e $cron::P_media."/500/".$var."/$nullid-".$db0_line[2].".jpg")
   {
    main::_log("not exist ID:$db0_line[0] IDhash:$db0_line[1] format:$db0_line[2] file /".$var."/$nullid-".$db0_line[2].".jpg",1);
   }
@@ -100,16 +100,16 @@ sub execute
  #######################################################################################################
  my $count;
  my $count0;
- if (opendir (DIR,$cron::P."/!media/500"))
+ if (opendir (DIR,$cron::P_media."/500"))
  {
   my @files=readdir DIR;
   foreach my $file(@files)
   {
    if (($file ne ".")&&($file ne "..")&&($file ne "_trash"))
    {
-    if (-d $cron::P."/!media/500/".$file)
+    if (-d $cron::P_media."/500/".$file)
     {
-     if (opendir (DIR1,$cron::P."/!media/500/".$file)){foreach (readdir DIR1){if (($_ ne ".")&&($_ ne "..")){push @files,$file."/".$_;}}}
+     if (opendir (DIR1,$cron::P_media."/500/".$file)){foreach (readdir DIR1){if (($_ ne ".")&&($_ ne "..")){push @files,$file."/".$_;}}}
     }
     if ($file=~/\.jpg$/)
     {
@@ -126,7 +126,7 @@ sub execute
 	 $count++;
 	 #main::_log("[$count] a500_attrs:ID:$db0_line[0] has no pictures",1);
 	 main::_log("[$count] file $file has no entry in database",1);
-	 system ("mv $cron::P/!media/500/$file $cron::P/!media/500/_trash/");
+	 system ("mv $cron::P_media/500/$file $cron::P_media/500/_trash/");
 	}
 
      #print "$file\n";
