@@ -1,0 +1,738 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+=head1 NAME
+
+730-event_list.lite.mdl
+
+=head1 DESCRIPTION
+
+Lite list of events (default for upcoming)
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::730::_init|app/"730/_init.pm">
+
+=back
+
+=cut
+
+use App::730::_init;
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<-xlng_load> - load template internationalization file
+
+=item *
+
+B<db_name> - database name
+
+=item *
+
+B<sql_order_by> - order by in SQL
+
+=item *
+
+B<sql_where> - where in SQL
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default
+
+=item *
+
+B<#previous#> B<#next#> - to skip to another offset
+
+=item *
+
+B<previous> B<next> - include into <#previous#> <#next#>
+
+=item *
+
+B<#item#> - gateway to evemt item
+
+=item *
+
+B<item> - event item
+
+=item *
+
+B<item.1> - first event item
+
+=item *
+
+B<%db_*%> - event database items
+
+B<%db_name%>, B<%db_name_url%>, ...
+
+=item *
+
+B<%ID%> - event ID
+
+=item *
+
+B<%ID_entity%> - event ID_entity
+
+=item *
+
+B<%name%> - event name
+
+=item *
+
+B<TMP_failure_no-data> - if defined, replaces TMP for empty database output
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
+	$env{'db_name'}=$App::730::db_name unless $env{'db_name'};
+	
+	$env{'thumbnail.image_format.ID'}=$App::501::image_format_thumbnail_ID unless $env{'thumbnail.image_format.ID'};
+	
+	$env{'event_lng.lng'}=$env{'lng'} unless $env{'event_lng.lng'};
+	$env{'event.status'}='Y' unless $env{'event.status'};
+		my $status_sql=join "','", split('',$env{'event.status'});
+	
+	$env{'sql_order_by'}='event.datetime_start ASC' unless $env{'sql_order_by'};
+	
+	my $execution_success=1;
+	
+	my $sql_where;
+	
+	if ($env{'event.ID'})
+	{
+		$sql_where.=" AND event.ID IN ('".
+			(join "','", split(';',$env{'event.ID'})).
+			"')";
+	}
+	
+	if ($env{'date'})
+	{
+		$sql_where.="AND (DATE(event.datetime_start)<='$env{'date'}' AND DATE(event.datetime_finish)>='$env{'date'}') ";
+		
+		my %datetime=TOM::Utils::datetime::datetime_collapse($env{'date'});
+		$datetime{'month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$datetime{'month'}-1];
+		$XSGN{'TMP'}=~s|<%date_(.*?)%>|$datetime{$1}|g;
+		
+	}
+	
+	my $sql_cat;
+	foreach my $ID_category(split(';',$env{'event_cat.ID_entity'}))
+	{
+		next unless $ID_category;
+		if ($ID_category=~s/\*$//)
+		{
+			next unless $ID_category;
+			my $cat_sql=qq{
+						SELECT
+							ID_charindex
+						FROM
+							`$App::730::db_name`.a730_event_cat
+						WHERE
+							ID_entity=$ID_category AND
+							lng='$env{'lng'}' AND
+							status='Y'
+						LIMIT 1
+			};
+			$ID_category=qq{
+				SELECT
+					ID_entity
+				FROM
+					`$App::730::db_name`.a730_event_cat
+				WHERE
+					ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+					lng='$env{'lng'}' AND
+					status='Y'
+			};
+		}
+		$sql_cat.=" OR event_rel_cat.ID_category IN ($ID_category)";
+		$sql_cat=~s/^ OR //;
+	}
+	
+	if ($sql_cat)
+	{
+		$sql_where.=" AND (".$sql_cat.") ";
+	}
+	
+	$env{'mode'}="future" unless $env{'mode'};
+	if ($env{'mode'} eq "future")
+	{
+		$sql_where.="AND (event.datetime_start >= NOW() OR (event.datetime_start <= NOW() AND event.datetime_finish >= NOW())) ";
+	}
+	elsif ($env{'mode'} eq "all")
+	{
+	}
+	
+	if ($env{'sql_where'})
+	{
+		$sql_where.=" AND ".$env{'sql_where'};
+	}
+	
+	my $sql=qq{
+		SELECT
+			
+			event.ID_entity AS ID_entity_event,
+			event.ID AS ID_event,
+			
+			event.name,
+			event.name_url,
+			event.datetime_start, -- event starts
+			event.datetime_finish, -- event ends
+			event.datetime_publish_start,
+			event.datetime_publish_stop,
+			event.link,
+			event.location,
+			event.metadata,
+			event.status,
+			event.priority_A,
+			
+			event.price,
+			(event.price*((100+event.VAT)/100)) AS price_incl_VAT,
+			event.price_currency,
+			event.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=event.price_currency LIMIT 1) AS price_EUR,
+			
+			event_lng.name_long,
+			event_lng.description_short,
+			event_lng.description,
+			event_lng.lng
+			
+		FROM `$env{'db_name'}`.a730_event AS event
+		
+		LEFT JOIN `$env{'db_name'}`.a730_event_lng AS event_lng ON
+		(
+			event_lng.ID_entity = event.ID_entity AND
+			event_lng.lng = '$env{'lng'}'
+		)
+		
+		LEFT JOIN `$env{'db_name'}`.a730_event_rel_cat AS event_rel_cat ON
+		(
+			event_rel_cat.ID_event=event.ID_entity
+		)
+		
+		WHERE
+			event.status IN ('$status_sql') AND
+			event.datetime_publish_start <= NOW() AND
+			(event.datetime_publish_stop IS NULL OR event.datetime_publish_stop >= NOW())
+			$sql_where
+		ORDER BY
+			$env{'sql_order_by'}
+			
+		LIMIT
+			1
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
+	
+	if(!$sth0{'sth'})
+	{
+		main::_log("SQL can't be executed",1);
+	}
+	
+	if(!$sth0{'rows'})
+	{
+		main::_log("err: could not fetch events");
+	}
+	
+	main::_log("received ".$sth0{'rows'}." rows");
+	
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$main::env{'a730_event.ID'}=$db0_line{'ID_event'};
+		
+		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
+		$db0_line{'datetime_start.year'}=$datetime{'year'};
+		$db0_line{'datetime_start.month'}=$datetime{'month'};
+		$db0_line{'datetime_start.month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_start.month'}-1];
+#		$db0_line{'datetime_start.month_name'}="$db0_line{'datetime_start.month_name'}";
+		$db0_line{'datetime_start.mday'}=$datetime{'mday'};
+		$db0_line{'datetime_start.hour'}=$datetime{'hour'};
+		$db0_line{'datetime_start.min'}=$datetime{'min'};
+		$db0_line{'datetime_start.sec'}=$datetime{'sec'};
+		
+		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_finish'});
+		$db0_line{'datetime_finish.year'}=$datetime{'year'};
+		$db0_line{'datetime_finish.month'}=$datetime{'month'};
+		$db0_line{'datetime_finish.month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_finish.month'}-1];
+#		$db0_line{'datetime_finish.month_name'}="$db0_line{'datetime_finish.month_name'}";
+		$db0_line{'datetime_finish.mday'}=$datetime{'mday'};
+		$db0_line{'datetime_finish.hour'}=$datetime{'hour'};
+		$db0_line{'datetime_finish.min'}=$datetime{'min'};
+		$db0_line{'datetime_finish.sec'}=$datetime{'sec'};
+		
+		$XSGN{'TMP'}=~s|<#link#>|$XSGN{'link'}|g if $db0_line{'link'};
+		
+		# fill raw data into $XSGN{'item'}
+		
+		my $price=TOM::Utils::currency::format($db0_line{'price'});
+		$XSGN{'TMP'}=~s|<%price%>|$price|g;
+		
+		$price=TOM::Utils::currency::format($db0_line{'price_incl_VAT'});
+		$XSGN{'TMP'}=~s|<%price_incl_VAT%>|$price|g;
+		
+		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		# replace metadata
+		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
+		foreach my $sec(keys %metadata){foreach (keys %{$metadata{$sec}}){$XSGN{'TMP'}=~s/<%$sec\::$_%>/$metadata{$sec}{$_}/g;}}
+		my $keys;
+		foreach my $sec(keys %metadata)
+		{
+#			my $null_section=$XSGN{'metadata_section'};
+#			$null_section=~s|<%name%>|$sec|g;
+			foreach (keys %{$metadata{$sec}})
+			{
+				$keys++;
+#				my $null=$XSGN{'metadata_variable'};
+#				$null=~s|<%variable%>|$_|g;
+#				$null=~s|<%value%>|$metadata{$sec}{$_}|g;
+#				$null_section=~s|<#metadata_variable#>|$null|;
+			}
+			
+#			$XSGN{'metadata'}=~s|<#metadata_section#>|$null_section|;
+		}
+#		$XSGN{'TMP'}=~s|<#metadata#>|$XSGN{'metadata'}| if $keys;
+		
+		# process description_short
+		my $p=new App::401::mimetypes::html;
+		
+		# img
+		$p->{'ignore'}{'img'}=
+			$env{'body.ignore.img'}
+			|| $env{'ignore.img'}
+			|| undef;
+		
+		$p->{'ignore'}{'img.1'}=
+			$env{'description_short.ignore.img.1'}
+			|| $env{'ignore.img.1'}
+			|| undef;
+		
+		if ($XSGN{'a030_youtube'})
+		{
+			main::_log("a030_youtube defined",undef,"debug");
+		}
+		else
+		{
+			main::_log("a030_youtube not defined",undef,"debug");
+		}
+		
+		# a030_youtube
+		$p->{'entity'}{'a030_youtube'}=
+			$XSGN{'body.a030_youtube'}
+			|| $XSGN{'a030_youtube'}
+			|| undef;
+			
+		$p->{'entity'}{'a030_youtube.1'}=
+			$XSGN{'body.a030_youtube.1'}
+			|| $XSGN{'a030_youtube.1'}
+			|| undef;
+		
+		# a210_page
+		$p->{'entity'}{'a210_page'}=
+			$XSGN{'description_short.a210_page'}
+			|| $XSGN{'a210_page'}
+			|| undef;
+		
+		# a401_article
+		$p->{'entity'}{'a401_article'}=
+			$XSGN{'description_short.link.a401_article'}
+			|| $XSGN{'description_short.a401_article'}
+			|| $XSGN{'link.a401_article'}
+			|| $XSGN{'a401_article'}
+			|| undef;
+		
+		# a501_image
+		$p->{'config'}->{'a501_image_file.ID_format'}=
+			$env{'description_short.a501_image_file.ID_format'}
+			|| $env{'a501_image_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.1'}=
+			$env{'description_short.a501_image_file.ID_format.1'}
+			|| $env{'a501_image_file.ID_format.1'}
+			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.extra'}=
+			$env{'a501_image_file.ID_format.extra'}
+			|| undef;
+		$p->{'entity'}->{'a501_image'}=
+			$XSGN{'description_short.a501_image'}
+			|| $XSGN{'a501_image'}
+			|| undef;
+		$p->{'entity'}->{'a501_image.1'}=
+			$XSGN{'description_short.a501_image.1'}
+			|| $XSGN{'a501_image.1'}
+			|| undef;
+		$p->{'entity'}->{'link.a501_image'}=
+			$XSGN{'description_short.link.a501_image'}
+			|| $XSGN{'link.a501_image'}
+			|| undef;
+		
+		# a510_video
+		$p->{'config'}->{'a510_video_part_file.ID_format'}=
+			$env{'description_short.a510_video_part_file.ID_format'}
+			|| $env{'a510_video_part_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a510_video_part_file.ID_format.1'}=
+			$env{'description_short.a510_video_part_file.ID_format.1'}
+			|| $env{'a510_video_part_file.ID_format.1'}
+			|| undef;
+		$p->{'entity'}{'a510_video'}=
+			$XSGN{'description_short.a510_video'}
+			|| $XSGN{'a510_video'}
+			|| undef;
+		$p->{'entity'}{'a510_video.1'}=
+			$XSGN{'description_short.a510_video.1'}
+			|| $XSGN{'a510_video.1'}
+			|| undef;
+		$p->{'entity'}{'a510_video_part'}=
+			$XSGN{'description_short.a510_video_part'}
+			|| $XSGN{'a510_video_part'}
+			|| undef;
+		$p->{'entity'}{'a510_video_part.1'}=
+			$XSGN{'description_short.a510_video_part.1'}
+			|| $XSGN{'a510_video_part.1'}
+			|| undef;
+			
+		$p->{'entity'}->{'link.a542_file'}=
+			$XSGN{'description_short.link.a542_file'}
+			|| $XSGN{'link.a542_file'}
+			|| undef;
+		
+		$p->parse($db0_line{'description_short'});
+		$p->eof();
+		my $description_short_html=$p->{'out'};
+		$XSGN{'TMP'}=~s|<%description_short%>|$description_short_html|g;
+		
+		my $description_short_plain=TOM::Text::format::xml2plain($db0_line{'description_short'});
+		$XSGN{'TMP'}=~s|<%description_short_plain%>|$description_short_plain|;
+		
+		
+		
+		# process description
+		my $p=new App::401::mimetypes::html;
+		
+		# img
+		$p->{'ignore'}{'img'}=
+			$env{'body.ignore.img'}
+			|| $env{'ignore.img'}
+			|| undef;
+		
+		$p->{'ignore'}{'img.1'}=
+			$env{'description.ignore.img.1'}
+			|| $env{'ignore.img.1'}
+			|| undef;
+		
+		if ($XSGN{'a030_youtube'})
+		{
+			main::_log("a030_youtube defined",undef,"debug");
+		}
+		else
+		{
+			main::_log("a030_youtube not defined",undef,"debug");
+		}
+		
+		# a030_youtube
+		$p->{'entity'}{'a030_youtube'}=
+			$XSGN{'body.a030_youtube'}
+			|| $XSGN{'a030_youtube'}
+			|| undef;
+			
+		$p->{'entity'}{'a030_youtube.1'}=
+			$XSGN{'body.a030_youtube.1'}
+			|| $XSGN{'a030_youtube.1'}
+			|| undef;
+		
+		# a210_page
+		$p->{'entity'}{'a210_page'}=
+			$XSGN{'description.a210_page'}
+			|| $XSGN{'a210_page'}
+			|| undef;
+		
+		# a401_article
+		$p->{'entity'}{'a401_article'}=
+			$XSGN{'description.link.a401_article'}
+			|| $XSGN{'description.a401_article'}
+			|| $XSGN{'link.a401_article'}
+			|| $XSGN{'a401_article'}
+			|| undef;
+		
+		# a501_image
+		$p->{'config'}->{'a501_image_file.ID_format'}=
+			$env{'description.a501_image_file.ID_format'}
+			|| $env{'a501_image_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.1'}=
+			$env{'description.a501_image_file.ID_format.1'}
+			|| $env{'a501_image_file.ID_format.1'}
+			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.extra'}=
+			$env{'a501_image_file.ID_format.extra'}
+			|| undef;
+		$p->{'entity'}->{'a501_image'}=
+			$XSGN{'description.a501_image'}
+			|| $XSGN{'a501_image'}
+			|| undef;
+		$p->{'entity'}->{'a501_image.1'}=
+			$XSGN{'description.a501_image.1'}
+			|| $XSGN{'a501_image.1'}
+			|| undef;
+		$p->{'entity'}->{'link.a501_image'}=
+			$XSGN{'description.link.a501_image'}
+			|| $XSGN{'link.a501_image'}
+			|| undef;
+		
+		# a510_video
+		$p->{'config'}->{'a510_video_part_file.ID_format'}=
+			$env{'description.a510_video_part_file.ID_format'}
+			|| $env{'a510_video_part_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a510_video_part_file.ID_format.1'}=
+			$env{'description.a510_video_part_file.ID_format.1'}
+			|| $env{'a510_video_part_file.ID_format.1'}
+			|| undef;
+		$p->{'entity'}{'a510_video'}=
+			$XSGN{'description.a510_video'}
+			|| $XSGN{'a510_video'}
+			|| undef;
+		$p->{'entity'}{'a510_video.1'}=
+			$XSGN{'description.a510_video.1'}
+			|| $XSGN{'a510_video.1'}
+			|| undef;
+		$p->{'entity'}{'a510_video_part'}=
+			$XSGN{'description.a510_video_part'}
+			|| $XSGN{'a510_video_part'}
+			|| undef;
+		$p->{'entity'}{'a510_video_part.1'}=
+			$XSGN{'description.a510_video_part.1'}
+			|| $XSGN{'a510_video_part.1'}
+			|| undef;
+			
+		$p->{'entity'}->{'link.a542_file'}=
+			$XSGN{'description.link.a542_file'}
+			|| $XSGN{'link.a542_file'}
+			|| undef;
+		
+		$p->parse($db0_line{'description'});
+		$p->eof();
+		my $description_html=$p->{'out'};
+		$XSGN{'TMP'}=~s|<%description%>|$description_html|g;
+		
+		my $description_plain=TOM::Text::format::xml2plain($db0_line{'description'});
+		$XSGN{'TMP'}=~s|<%description_plain%>|$description_plain|;
+		
+		
+		
+#		# find alternate attributes (for thumbnail image for example)
+#		$p->parse($db0_line{'body'}) unless $p->{'out_tag'}->{'img.1'};
+		
+		
+		# finding thumbnail to event
+		my $thumbnail;
+		use App::501::_init;
+		my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::730::db_name,
+			'l_prefix' => 'a730',
+			'l_table' => 'event',
+			'l_ID_entity' => $db0_line{'ID_entity_event'},
+			'rel_type' => 'thumbnail',
+			'r_db_name' => $App::501::db_name,
+			'r_prefix' => 'a501',
+			'r_table' => 'image',
+			'status' => 'Y',
+			'limit' => 1
+		))[0];
+		if ($relation->{'ID'})
+		{
+			my %image=App::501::functions::get_image_file(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_file.ID_format' => $env{'thumbnail.image_format.ID'},
+				'image_attrs.lng' => $tom::lng
+			);
+			if ($image{'ID_entity_image'})
+			{
+				$thumbnail=1;
+				my $thumbnail=$XSGN{'thumbnail'};
+				$thumbnail=~s|<%db_(.*?)%>|$image{$1}|g;
+				$XSGN{'TMP'}=~s|<#thumbnail#>|$thumbnail|g;
+			}
+		}
+		
+		# check if here is a related image gallery
+		my $i;
+		foreach my $relation(App::160::SQL::get_relations(
+			'db_name' => $App::401::db_name,
+			'l_prefix' => 'a730',
+			'l_table' => 'event',
+			'l_ID_entity' => $db0_line{'ID_entity_event'},
+			'rel_type' => 'gallery',
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y",
+			))
+		{
+			$i++;
+			
+			if ($i==1 && $XSGN{'a501.gallery.box'})
+			{
+				$XSGN{'TMP'}=~s|<#a501\.gallery#>|$XSGN{'a501.gallery.box'}|g;
+			}
+			
+			next unless $relation->{'r_ID_entity'};
+			
+			my $item=$XSGN{'a501.gallery.'.$i} || $XSGN{'a501.gallery'};
+			
+			if (my %db1_line=App::501::functions::get_image_file
+				(
+					'image.ID_entity' => $relation->{'r_ID_entity'},
+					'image_file.ID_format' => $App::501::image_format_fullsize_ID,
+					'image_attrs.lng' => $env{'lng'}
+				)
+			)
+			{
+				$item=~s|<%image\.db_(.*?)%>|$db1_line{$1}|g;
+			}
+			
+			my $ID_format=$env{'gallery.thumbnail.ID_format'} || $App::501::image_format_thumbnail_ID;
+			if (my %db1_line=App::501::functions::get_image_file
+				(
+					'image.ID_entity' => $relation->{'r_ID_entity'},
+					'image_file.ID_format' => $ID_format,
+					'image_attrs.lng' => $env{'lng'}
+				)
+			)
+			{
+				$item=~s|<%image\.thumbnail\.db_(.*?)%>|$db1_line{$1}|g;
+			}
+			
+			if ($XSGN{'TMP'}=~s|<#a501\.gallery\.$i#>|$item|)
+			{
+				
+			}
+			else
+			{
+				$XSGN{'TMP'}=~s|<#a501\.gallery#>|$item|;
+			}
+			
+		}
+		
+		my @ACL=App::301::perm::get_ACL(
+			'r_prefix' => 'a730',
+			'r_table' => 'event',
+			'r_ID_entity' => $db0_line{'ID_entity_event'}
+		);
+		
+		my $organizers;
+		foreach my $acl_item (@ACL)
+		{
+			foreach my $role(split(',',$acl_item->{'roles'}))
+			{
+				next unless $role=~/^organizer/;
+				if (length($organizers) > 0){ $organizers .= '; '; } 
+				$organizers .= $acl_item->{'name_short'} . ' ';
+				if (!$thumbnail)
+				{
+					if ($acl_item->{'folder'} eq "O")
+					{
+						require App::710::_init;
+						my $relation=(App::160::SQL::get_relations(
+							'db_name' => $App::710::db_name,
+							'l_prefix' => 'a710',
+							'l_table' => 'org',
+							'l_ID_entity' => $acl_item->{'ID'},
+							'rel_type' => 'avatar',
+							'r_db_name' => $App::501::db_name,
+							'r_prefix' => 'a501',
+							'r_table' => 'image',
+							'status' => 'Y',
+							'limit' => 1
+						))[0];
+						if ($relation->{'ID'})
+						{
+							my %image=App::501::functions::get_image_file(
+								'image.ID_entity' => $relation->{'r_ID_entity'},
+								'image_file.ID_format' => $env{'thumbnail.image_format.ID'},
+								'image_attrs.lng' => $tom::lng
+							);
+							if ($image{'ID_entity_image'})
+							{
+								$thumbnail=1;
+								my $thumbnail=$XSGN{'thumbnail'};
+								$thumbnail=~s|<%db_(.*?)%>|$image{$1}|g;
+								$XSGN{'TMP'}=~s|<#thumbnail#>|$thumbnail|g;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		$XSGN{'TMP'}=~s|<%organizers%>|$organizers|g;
+		
+		
+		$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+		$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+		
+		$XSGN{'TMP'}=~s|<%name%>|$db0_line{'name'}|;
+		
+		$main::H->add_DOC_title($db0_line{'name'}) if $env{'DOC_title'};
+	}
+	else
+	{
+		if($XSGN{'TMP_failure_no-data'})
+		{
+			$XSGN{'TMP'} = $XSGN{'TMP_failure_no-data'};
+		}
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
