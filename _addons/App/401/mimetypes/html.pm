@@ -573,11 +573,19 @@ sub start
 					
 					# override default tag representation
 					$out_full=
-						$self->{'entity'}{'a542_file.'.$out_cnt}
+						$self->{'entity'}{'link.a542_file.'.$out_cnt}
+						|| $self->{'entity'}{'link.a542_file'}
+						|| $tpl->{'entity'}{'parser.link.a542_file.'.$out_cnt}
+						|| $tpl->{'entity'}{'parser.link.a542_file'}
+						|| $self->{'entity'}{'a542_file.'.$out_cnt}
 						|| $self->{'entity'}{'a542_file'}
 						|| $tpl->{'entity'}{'parser.a542_file.'.$out_cnt}
 						|| $tpl->{'entity'}{'parser.a542_file'}
 						|| $out_full;
+					
+					$db0_line{'file_size.gb'}=sprintf("%0.2f", ($db0_line{'file_size'} / (1024 * 1024 * 1024)));
+					$db0_line{'file_size.mb'}=sprintf("%0.2f", ($db0_line{'file_size'} / (1024 * 1024)));
+					$db0_line{'file_size.kb'}=sprintf("%0.2f", ($db0_line{'file_size'} / 1024));
 					
 					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 				}
@@ -648,6 +656,8 @@ sub start
 					article_attrs.ID_category,
 					article_cat.name AS ID_category_name,
 					article_cat.name_url AS ID_category_name_url,
+					article_cat.alias_url AS ID_category_alias_url,
+					article_cat.alias_url AS alias_url,
 					article_attrs.name,
 					article_attrs.datetime_start,
 					article_attrs.name_url
@@ -740,7 +750,11 @@ sub start
 				
 				# override default tag representation
 				$out_full=
-					$self->{'entity'}{'a401_article.'.$out_cnt}
+					$self->{'entity'}{'link.a401_article.'.$out_cnt}
+					|| $self->{'entity'}{'link.a401_article'}
+					|| $tpl->{'entity'}{'parser.link.a401_article.'.$out_cnt}
+					|| $tpl->{'entity'}{'parser.link.a401_article'}
+					|| $self->{'entity'}{'a401_article.'.$out_cnt}
 					|| $self->{'entity'}{'a401_article'}
 					|| $tpl->{'entity'}{'parser.a401_article.'.$out_cnt}
 					|| $tpl->{'entity'}{'parser.a401_article'}
@@ -750,6 +764,112 @@ sub start
 				
 			}
 			
+		}
+		elsif ($attr->{'id'}=~/^a501_image:(.*)$/)
+		{
+			require App::501::_init;
+			%vars=_parse_id($1);
+			if ($vars{'important'} eq "1")
+			{
+				$vars{'ID_format'}=
+					$vars{'ID_format'}
+					|| $self->{'config'}->{'a501_image_file.ID_format'}
+					|| $App::501::image_format_thumbnail_ID;
+			}
+			else
+			{
+				$vars{'ID_format'}=
+					$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
+					|| $self->{'config'}->{'a501_image_file.ID_format'}
+					|| $vars{'ID_format'}
+					|| $App::501::image_format_thumbnail_ID;
+			}
+			#$vars{'format'}=$App::501::image_format_thumbnail_ID unless $vars{'format'};
+			if ($vars{'ID'} || $vars{'ID_entity'})
+			{
+				main::_log("find a501_image ID_entity='$vars{'ID_entity'} 'ID='$vars{'ID'}' ID_format='$vars{'ID_format'}'") if $debug;
+				my %db0_line=App::501::functions::get_image_file(
+					'image.ID_entity' => $vars{'ID_entity'},
+					'image.ID' => $vars{'ID'},
+					'image_file.ID_format' => $vars{'ID_format'},
+					'image_attrs.lng' => $tom::lng
+				);
+				if ($db0_line{'ID_image'})
+				{
+					$attr->{'src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
+					main::_log("found image src='$attr->{'src'}'") if $debug;
+					$attr->{'alt'}=$db0_line{'name'} unless $attr->{'alt'};
+					
+					$attr->{'width_forced'}=$attr->{'width'};
+					$attr->{'height_forced'}=$attr->{'height'};
+					
+					$attr->{'width'}=$db0_line{'image_width'} unless $attr->{'width'};
+					$attr->{'height'}=$db0_line{'image_height'} unless $attr->{'height'};
+					
+				}
+				# fullsize
+				my %db1_line=App::501::functions::get_image_file(
+					'image.ID_entity' => $vars{'ID_entity'},
+					'image.ID' => $vars{'ID'},
+					'image_file.ID_format' => $App::501::image_format_fullsize_ID,
+					'image_attrs.lng' => $tom::lng
+				);
+				if ($db1_line{'ID_image'})
+				{
+					$attr->{'fullsize.src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+				}
+				# extra format
+				if ($self->{'config'}->{'a501_image_file.ID_format.extra'})
+				{
+					my %db2_line=App::501::functions::get_image_file(
+						'image.ID_entity' => $vars{'ID_entity'},
+						'image.ID' => $vars{'ID'},
+						'image_file.ID_format' => $self->{'config'}->{'a501_image_file.ID_format.extra'},
+						'image_attrs.lng' => $tom::lng
+					);
+					if ($db2_line{'ID_image'})
+					{
+						$attr->{'extra.src'}=$tom::H_a501.'/image/file/'.$db2_line{'file_path'};
+					}
+				}
+				
+				# override default tag representation
+				if ($db1_line{'image_width'}<=($db0_line{'image_width'}*1.2))
+				{ # fullsize is not better quality than this image_format
+					$out_full=
+						$self->{'entity'}{'link.a501_image.'.$out_cnt}
+						|| $self->{'entity'}{'link.a501_image.nofullsize'}
+						|| $self->{'entity'}{'link.a501_image'}
+						|| $tpl->{'entity'}{'parser.link.a501_image.'.$out_cnt}
+						|| $tpl->{'entity'}{'parser.link.a501_image'}
+						|| $self->{'entity'}{'a501_image.'.$out_cnt}
+						|| $self->{'entity'}{'a501_image.nofullsize'}
+						|| $self->{'entity'}{'a501_image'}
+						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
+						|| $tpl->{'entity'}{'parser.a501_image'}
+						|| $out_full;
+				}
+				else
+				{
+					$out_full=
+						$self->{'entity'}{'link.a501_image.'.$out_cnt}
+						|| $self->{'entity'}{'link.a501_image'}
+						|| $tpl->{'entity'}{'parser.link.a501_image.'.$out_cnt}
+						|| $tpl->{'entity'}{'parser.link.a501_image'}
+						|| $self->{'entity'}{'a501_image.'.$out_cnt}
+						|| $self->{'entity'}{'a501_image'}
+						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
+						|| $tpl->{'entity'}{'parser.a501_image'}
+						|| $out_full;
+				}
+				
+				$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+				
+			}
+			
+			$self->{'out_var'}->{'link.'.$out_cnt.'.src'}=$attr->{'src'};
+			$self->{'out_var'}->{'link.'.$out_cnt.'.fullsize.src'}=$attr->{'fullsize.src'} if $attr->{'fullsize.src'};
+			$self->{'out_var'}->{'link.'.$out_cnt.'.extra.src'}=$attr->{'extra.src'} if $attr->{'extra.src'};
 		}
 		
 		
