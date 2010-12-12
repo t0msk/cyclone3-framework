@@ -147,7 +147,7 @@ sub prepare
 	$self->{'OUT'}{'HEADER'} .= $self->{'ENV'}{'DOCTYPE'}."\n";
 	
 	$self->{'OUT'}{'HEADER'} .=
-		'<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<%HEADER-LNG%>" lang="<%HEADER-LNG%>">'."\n";
+		'<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xml:lang="<%HEADER-LNG%>" lang="<%HEADER-LNG%>">'."\n";
 	
 	$self->{'OUT'}{'HEADER'} .= '<head>'."\n"; 
 	
@@ -217,6 +217,7 @@ sub prepare
 	{
 		next if $_ eq "pragma";
 		next if $_ eq "expires";
+#		$self->{'ENV'}{'head'}{'meta'}{$_}=~s|\"|\\"|g;
 		$self->{'OUT'}{'HEADER'} .= " <meta name=\"" . $_ . "\" content=\"" . $self->{'ENV'}{'head'}{'meta'}{$_} . "\" />\n";
 	}
 	
@@ -305,6 +306,8 @@ sub prepare_last
 	{
 		$self->{'env'}{'DOC_description'}{$key}=~s|^\. ||g;
 		$self->{'env'}{'DOC_description'}{$key}=~s|^\s+||;
+		$self->{'env'}{'DOC_description'}{$key}=~s|<|&lt;|g;
+		$self->{'env'}{'DOC_description'}{$key}=~s|>|&gt;|g;
 		$self->{'env'}{'DOC_description'}{$key}=~s|[\t\n\r]| |g;
 		1 while ($self->{'env'}{'DOC_description'}{$key}=~s|  | |g);
 		$self->{'env'}{'DOC_description'}{$key}=~s|"|'|g;
@@ -338,7 +341,7 @@ sub prepare_last
 	foreach my $hash(@{$self->{'env'}{'DOC_meta'}})
 	{
 		$self->{'OUT'}{'HEADER'} .= " <meta";
-		foreach (keys %{$hash}){$self->{'OUT'}{'HEADER'} .= " ".$_ . "=\"".$$hash{$_}."\"";}
+		foreach (keys %{$hash}){$$hash{$_}=~s|"|'|g;$self->{'OUT'}{'HEADER'} .= " ".$_ . "=\"".$$hash{$_}."\"";}
 		$self->{'OUT'}{'HEADER'} .= " />\n";
 	}
 	
