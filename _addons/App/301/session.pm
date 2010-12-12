@@ -10,6 +10,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 our $debug=0;
 our $serialize=1;
 our $IDsession;
+our $IDuser;
 our $session_save;
 our $performance=1;
 
@@ -19,6 +20,7 @@ sub TIEHASH
 	my ($package, $filename, $line) = caller;
 	main::_log("TIE-TIEHASH a301::session from $filename:$line") if $debug;
 	$IDsession=$main::USRM{'ID_session'};
+	$IDuser=$main::USRM{'ID_user'};
 	$session_save=$main::USRM{'session_save'};
 	return bless {}, $class;
 }
@@ -56,8 +58,9 @@ sub DESTROY
 				session=?
 			WHERE
 				ID_session=?
+				AND ID_user=?
 			LIMIT 1
-		},'quiet'=>1,'bind'=>[$cvml,$IDsession]);
+		},'quiet'=>1,'bind'=>[$cvml,$IDsession,$IDuser]);
 		main::_log("TIE-serialized in $sth0{'rows'} a301_user_online rows") if ($debug && $sth0{'rows'});
 #		main::_log("TIE-serialized") if $debug;
 	
@@ -654,7 +657,7 @@ sub process
 	
 	# get session datas from online table in CVML
 	# save it into cvml object
-	my $cvml=new CVML(data=>$main::USRM{'session'});
+	my $cvml=new CVML('data'=>$main::USRM{'session'});
 	main::_log("loading session='$main::USRM{'session'}'") if $debug;
 	# save backup copy of session, to compare it at end of request
 	$main::USRM{'session_save'}=$main::USRM{'session'};
@@ -769,6 +772,53 @@ sub archive
 	return 1;
 }
 
+
+sub online_clone
+{
+	my $ID_user=shift;
+	my $ID_user2=shift;
+	my %env=@_;
+	return undef unless $ID_user;
+	return undef unless $ID_user2;
+	
+	TOM::Database::SQL::execute(qq{
+		INSERT IGNORE INTO TOM.a301_user_online
+		(
+			ID_user,
+			ID_session,
+			domain,
+			logged,
+			datetime_login,
+			datetime_request,
+			requests,
+			IP,
+			user_agent,
+			cookies,
+			session,
+			status
+		)
+		SELECT
+			'$ID_user2',
+			ID_session,
+			domain,
+			logged,
+			datetime_login,
+			datetime_request,
+			requests,
+			IP,
+			user_agent,
+			cookies,
+			session,
+			status
+		FROM
+			TOM.a301_user_online
+		WHERE
+			ID_user='$ID_user'
+		LIMIT 1
+	},'quiet'=>1);
+	
+	return 1;
+}
 
 
 1;
