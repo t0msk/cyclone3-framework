@@ -35,12 +35,15 @@ sub execute
 			'ID'      => $env{'ID'},
 			'columns' => 
 			{
-				'ID_charindex' => 1
+				'ID_charindex' => 1,
+				'name' => 1,
+				'name_url' => 1
 			}
 		);
 		if ($data{'ID'})
 		{
 			$env{'ID_charindex'}=$data{'ID_charindex'};
+			$XSGN{'TMP'}=~s|<%db_(.*?)%>|$data{$1}|g;
 		}
 		else
 		{
@@ -122,7 +125,12 @@ sub execute
 				}
 			)
 		);
-		if ($sth0{'rows'}==1)
+		if($sth0{'rows'}==0){
+			if(exists $XSGN{'TMP.empty'}){
+				$XSGN{'TMP'}=$XSGN{'TMP.empty'};
+			}
+		}
+		elsif ($sth0{'rows'}==1)
 		{
 			my $ID_charindex=$env{'ID_charindex'};$ID_charindex=~s|:$||;
 			$ID_charindex=~s|...$||;
@@ -295,7 +303,8 @@ $where
 			{
 				if ($level>$level_prev)
 				{
-					my $rec=$XSGN{'TMP'}=~s|<#tree#>|$XSGN{'SUB'}|;
+					my $subtree = $XSGN{'SUB.'.($level-1)} || $XSGN{'SUB'};
+					my $rec=$XSGN{'TMP'}=~s|<#tree#>|$subtree|;
 				}
 			}
 			
@@ -345,6 +354,7 @@ $where
 			$XSGN{'NULL'}=~s|<%visible%>|$entity->{'visible'}|g;
 			$XSGN{'NULL'}=~s|<%is_default%>|$entity->{'is_default'}|g;
 			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
+			$XSGN{'NULL'}=~s|<%level%>|$level|g;
 			
 			if ($env{'tree'})
 			{
