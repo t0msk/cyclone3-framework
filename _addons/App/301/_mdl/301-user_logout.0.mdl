@@ -83,15 +83,19 @@ sub execute
 				UPDATE
 					TOM.a301_user
 				SET
-					datetime_last_login = '$user{datetime_login}',
+					datetime_last_login = ?,
 					requests_all = requests_all + $user{requests},
-					saved_cookies = '$user{cookies}',
-					saved_session = '$user{session}',
+					saved_cookies = ?,
+					saved_session = ?,
 					autolog = 'N'
 				WHERE
 					ID_user='$user{'ID_user'}'
 				LIMIT 1
-			});
+			},'bind'=>[
+				$user{'datetime_login'},
+				$user{'cookies'},
+				$user{'session'}
+			]);
 			
 			TOM::Database::SQL::execute(qq{
 				UPDATE
@@ -124,6 +128,11 @@ sub execute
 			$main::H->rh("<!REFRESH!>","0; url=$env{'return'}");
 			$XSGN{TMP}=~s|<%LINK%>|$env{'return'}|g;
 			
+#			if ($App::301::fb_app && $main::COOKIES_all{'fbs_'.$App::301::fb_app})
+#			{
+#				undef $main::COOKIES_all{'fbs_'.$App::301::fb_app};
+#			}
+			
 			if ($env{'relocate'})
 			{
 				$main::location=$env{'return'};
@@ -131,6 +140,11 @@ sub execute
 		}
 		else
 		{
+#			if ($App::301::fb_app && $main::COOKIES_all{'fbs_'.$App::301::fb_app})
+#			{
+#				undef $main::COOKIES_all{'fbs_'.$App::301::fb_app};
+#			}
+			
 			# ako sa chcem odhlasit ked niesom prihlaseny? :-o
 			$XSGN{'TMP'}=$XSGN{'notlogged'};
 			$main::H->rh("<!REFRESH!>","0; url=$env{'return'}");
