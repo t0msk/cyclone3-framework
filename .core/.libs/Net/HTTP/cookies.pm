@@ -31,6 +31,25 @@ sub GetCookies
 	return %cookie;
 }
 
+sub GetAllCookies
+{
+	my $t=track TOM::Debug(__PACKAGE__."::GetCookies()") if $debug;
+	my %cookie;
+	
+	main::_log("COOKIES=$ENV{'HTTP_COOKIE'}");
+	
+	foreach (split(/; /, $ENV{'HTTP_COOKIE'}))
+	{
+		s/\+/ /g;
+		my ($chip, $val) = split(/=/,$_,2);
+		$chip =~ s/%([A-Fa-f0-9]{2})/pack("c",hex($1))/ge;#url kodovanie do normal. kodovanie
+		$val =~ s/%([A-Fa-f0-9]{2})/pack("c",hex($1))/ge;
+		#main::_log("'$chip'='$val'");
+		$cookie{$chip} = $val;
+	}
+	$t->close() if $debug;
+	return %cookie;
+}
 
 sub SetCookies
 {
