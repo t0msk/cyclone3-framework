@@ -31,6 +31,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_send` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `ID_md5` varchar(32) character set ascii collate ascii_bin NOT NULL,
   `sendtime` int(10) unsigned NOT NULL default '0',
+  `datetime_create` datetime default NULL,
   `priority` tinyint(4) NOT NULL default '0',
   `from_name` varchar(20) character set utf8 collate utf8_unicode_ci NOT NULL,
   `from_email` varchar(50) character set ascii NOT NULL,
