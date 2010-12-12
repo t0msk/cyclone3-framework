@@ -431,9 +431,9 @@ sub execute
 		
 		main::_log("article[$item_counter] article_attrs.name='$db0_line{'name'}'");
 		
-		my $item=
-			$XSGN{'item.'.$item_counter}
-			|| $XSGN{'item'};
+		my $item = $XSGN{'item'};
+		$item = $XSGN{'item.odd'} if ((not $item_counter % 2) && (exists $XSGN{'item.odd'}));
+		$item = $XSGN{'item.'.$item_counter} if $XSGN{'item.'.$item_counter};
 		
 		if ($XSGN{'item-empty'} && (!$db0_line{'abstract'} || $db0_line{'abstract'} eq "<p>&nbsp;&nbsp;</p>") && (!$db0_line{'body'} || $db0_line{'body'} eq "<p>&nbsp;&nbsp;</p>"))
 		{
@@ -447,11 +447,15 @@ sub execute
       my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
       $db0_line{'datetime_start.year'}=$datetime{'year'};
       $db0_line{'datetime_start.month'}=$datetime{'month'};
+      $db0_line{'datetime_start.month_'}=$datetime{'month'}-1+1;
       $db0_line{'datetime_start.mday'}=$datetime{'mday'};
       $db0_line{'datetime_start.hour'}=$datetime{'hour'};
       $db0_line{'datetime_start.min'}=$datetime{'min'};
       $db0_line{'datetime_start.sec'}=$datetime{'sec'};
       
+		$db0_line{'datetime_start.month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$datetime{'month'}-1];
+		$db0_line{'datetime_start.month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$datetime{'month'}-1];
+		
 		# fill raw data into $XSGN{'item'}
 
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
@@ -845,6 +849,10 @@ sub execute
 	}
 	
 	$XSGN{'TMP'}=~s|<%total_count%>|$item_counter|g;
+	if ($env{'env.counter'})
+	{
+		$main::env{'count'}+=$item_counter
+	}
 	
 	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
 	{
@@ -886,18 +894,18 @@ sub execute
 		}
 	}
 	
-	if($env{'article_attrs.ID_category'}=~/^([0-9]*)\*?$/)
+	if($env{'article_attrs.ID_category'}=~/^([0-9]+)\*?$/)
 	{
 		my $ID_category=$1;
 		my $sql=qq{
 			SELECT
 				name
 			FROM
-				`$App::401::db_name`.a401_article_cat
+				`$App::401::db_name`.`a401_article_cat`
 			WHERE
-				ID_entity='$env{'article_attrs.ID_category'}' AND
-				lng='$env{'article_content.lng'}' AND
-				status IN ('$status_sql')
+						ID_entity=$ID_category
+				AND	lng='$env{'article_content.lng'}'
+				AND	status IN ('$status_sql')
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto_'=>60);
 		
