@@ -77,6 +77,9 @@ while ($main::CGI=new CGI::Fast())
 			my %db0_line=$sth0{'sth'}->fetchhash();
 			
 			main::_log("path='$tom::H_a542/file/item/$db0_line{'file_path'}'");
+			print "Connection: close\n";
+#			print "Content-Type: application/pdf\n";
+			print "Content-Disposition: attachment; filename = ".$db0_line{'name_url'}.".".$db0_line{'name_ext'}."\n";
 			print "Location: $tom::H_a542/file/item/$db0_line{'file_path'}\n\n";
 			
 			my $sql=qq{
