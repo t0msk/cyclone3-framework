@@ -1,0 +1,306 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::160::_init;
+use App::301::_init;
+use TOM::Text::format;
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	my $sql_where;
+	
+	# domain
+	$sql_where.="user.hostname='$tom::H_cookie' ";
+	
+	$sql_where.="AND user.ID_user='$env{'user.ID_user'}' " if $env{'user.ID_user'};
+	$sql_where.="AND user_profile.ID='$env{'user_profile.ID'}' " if $env{'user_profile.ID'};
+	
+	# status
+	if ($env{'status'})
+	{
+		$XSGN{'TMP'}=~s|<%required_status%>|$env{'status'}|g;
+		$sql_where.="AND user.status IN ('".(join "','", split('',$env{'status'}))."') ";
+	}
+	else
+	{
+		$sql_where.="AND user.status='Y' ";
+	}
+	
+	my $sql=qq{
+		SELECT
+			user.hostname,
+			contact_cat.ID_entity AS ID_category,
+			contact_cat.name AS cat_name,
+			user.ID_user AS ID_user,
+			user.login,
+			user.pass,
+			user.email,
+			user.status,
+			user.datetime_register,
+			user.datetime_last_login,
+			user_profile.datetime_create,
+			user_profile.firstname,
+			user_profile.surname,
+			user_profile.gender,
+			user_profile.country_code,
+			user_profile.date_birth,
+			user_profile.city,
+			user_profile.ZIP,
+			user_profile.street,
+			user_profile.street_num,
+			user_profile.address_postal,
+			user_profile.about_me,
+			user_profile.note,
+			user_profile.metadata,
+			
+			contact_lng.description
+			
+		FROM
+			TOM.a301_user AS user
+		LEFT JOIN TOM.a301_contact_rel_cat AS rel ON
+		(
+			user.ID_user = rel.ID_user
+		)
+--		LEFT JOIN TOM.a301_user AS user ON
+--		(
+--			user.ID_user = rel.ID_user
+--		)
+		LEFT JOIN TOM.a301_contact_cat AS contact_cat ON
+		(
+			contact_cat.ID = rel.ID_category
+		)
+		LEFT JOIN TOM.a301_user_profile AS user_profile ON
+		(
+			user_profile.ID_entity = user.ID_user
+		)
+		LEFT JOIN TOM.a301_contact_lng AS contact_lng ON
+		(
+			user.ID_user = contact_lng.ID_entity
+			AND contact_lng.lng = '$env{'lng'}'
+		)
+		WHERE
+			(user.login IS NOT NULL OR user_profile.ID IS NOT NULL OR user.email IS NOT NULL)
+			AND $sql_where
+		LIMIT
+			1
+	};
+	
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>0);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		my $fullname;
+		my $shortname;
+		
+		($fullname,$shortname)=App::301::authors::get_fullname(%db0_line);
+		
+		$main::H->add_DOC_title($fullname) unless $env{'DOC_title.disable'};
+		
+		$XSGN{'TMP'}=~s|<%fullname%>|$fullname|g;
+		$XSGN{'TMP'}=~s|<%fullname_url%>|TOM::Net::URI::rewrite::convert($fullname)|ge;
+		$XSGN{'TMP'}=~s|<%shortname%>|$shortname|g;
+		
+		$XSGN{'TMP'}=~s|<%ID%>|$db0_line{'ID_user'}|g;
+		$XSGN{'TMP'}=~s|<%ID_entity%>|$db0_line{'ID_user'}|g;
+		
+		
+		# render about_me and desc
+			my $p=new App::401::mimetypes::html;
+			
+			# img
+			$p->{'ignore'}{'img'}=
+				$env{'ignore.img'}
+				|| undef;
+			
+			$p->{'ignore'}{'img.1'}=
+				$env{'ignore.img.1'}
+				|| undef;
+			
+			# a030_youtube
+			$p->{'entity'}{'a030_youtube'}=
+				$XSGN{'a030_youtube'}
+				|| undef;
+				
+			$p->{'entity'}{'a030_youtube.1'}=
+				$XSGN{'a030_youtube.1'}
+				|| undef;
+			
+			# a210_page
+			$p->{'entity'}{'a210_page'}=
+				$XSGN{'a210_page'}
+				|| undef;
+			
+			# a401_article
+			$p->{'entity'}{'a401_article'}=
+				$XSGN{'a401_article'}
+				|| undef;
+			
+			# a501_image
+			$p->{'config'}->{'a501_image_file.ID_format'}=
+				$env{'a501_image_file.ID_format'}
+				|| undef;
+			$p->{'config'}->{'a501_image_file.ID_format.1'}=
+				$env{'a501_image_file.ID_format.1'}
+				|| undef;
+			$p->{'entity'}->{'a501_image'}=
+				$XSGN{'a501_image'}
+				|| undef;
+			$p->{'entity'}->{'a501_image.nofullsize'}=
+				$XSGN{'a501_image.nofullsize'}
+				|| undef;
+			$p->{'entity'}->{'a501_image.1'}=
+				$XSGN{'a501_image.1'}
+				|| undef;
+			
+			# a510_video
+			$p->{'entity'}{'a510_video'}=
+				$XSGN{'a510_video'}
+				|| undef;
+			$p->{'entity'}{'a510_video.1'}=
+				$XSGN{'a510_video.1'}
+				|| undef;
+			
+			# a510_video_part
+			$p->{'entity'}{'a510_video_part'}=
+				$XSGN{'a510_video_part'}
+				|| undef;
+			$p->{'entity'}{'a510_video_part.1'}=
+				$XSGN{'a510_video_part.1'}
+				|| undef;
+			
+			# a010
+			foreach (keys %XSGN){if ($_=~/^a010/){$p->{'entity'}{$_}=$XSGN{$_};}}
+			
+			if ($db0_line{'about_me'}=~/<br/)
+			{
+				# PARSE !!!
+				$p->parse($db0_line{'about_me'});
+				$p->eof();
+				my $part_html=$p->{'out'};
+				
+				$XSGN{'TMP'}=~s|<%about_me%>|$part_html|;
+				my @parts=split('<hr />',$part_html);
+				$XSGN{'TMP'}=~s|<%about_me%>|$part_html|;
+				$XSGN{'TMP'}=~s|<%about_me_(\d+)%>|$parts[$1]|;
+				$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+				$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+			}
+			
+			$p->parse($db0_line{'description'});
+			$p->eof();
+			my $description_html=$p->{'out'};
+			$XSGN{'TMP'}=~s|<%description%>|$description_html|;
+			my @parts=split('<hr />',$description_html);
+			$XSGN{'TMP'}=~s|<%description%>|$description_html|;
+			$XSGN{'TMP'}=~s|<%description_(\d+)%>|$parts[$1]|;
+			$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+			$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+			
+		# replace metadata
+		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
+		foreach my $sec(keys %metadata){foreach (keys %{$metadata{$sec}}){$XSGN{'TMP'}=~s/<%$sec\::$_%>/$metadata{$sec}{$_}/g;}}
+		my $keys;
+		foreach my $sec(keys %metadata)
+		{
+#				my $null_section=$XSGN{'metadata_section'};
+#				$null_section=~s|<%name%>|$sec|g;
+			foreach (keys %{$metadata{$sec}})
+			{
+				$keys++;
+#					my $null=$XSGN{'metadata_variable'};
+#					$null=~s|<%variable%>|$_|g;
+#					$null=~s|<%value%>|$metadata{$sec}{$_}|g;
+#					$null_section=~s|<#metadata_variable#>|$null|;
+			}
+			
+#				$XSGN{'metadata'}=~s|<#metadata_section#>|$null_section|;
+		}
+#			$XSGN{'TMP'}=~s|<#metadata#>|$XSGN{'metadata'}| if $keys;
+		
+		if (my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::301::db_name,
+			'l_prefix' => 'a301',
+			'l_table' => 'user',
+			'l_ID_entity' => $db0_line{'ID_user'},
+			'rel_type' => 'avatar',
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y",
+			'limit' => 1
+		))[0])
+		{
+			use App::501::_init;
+			
+			my %image=App::501::functions::get_image_file(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_file.ID_format' => $env{'image_format.ID'} || $App::501::image_format_ico_ID
+			);
+			
+			if (%image)
+			{
+				my $uri=$tom::H_a501.'/image/file/'.$image{'file_path'};
+				my $item_avatar=$XSGN{'avatar'};
+				$item_avatar=~s|<%uri%>|$uri|;
+				$XSGN{'TMP'}=~s|<#avatar#>|$item_avatar|;
+			}
+			
+		}
+		else
+		{
+			my $item_avatar=$XSGN{'avatar.missing'};
+			$XSGN{'TMP'}=~s|<#avatar#>|$item_avatar|;
+		}
+		
+		if ($App::710::db_name)
+		{
+			my $organizations;
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					`org`.name
+				FROM
+					`$App::710::db_name`.a301_ACL_user AS `user`
+				INNER JOIN `$App::710::db_name`.a710_org AS `org` ON
+				(
+					`user`.r_ID_entity = `org`.ID_entity
+				)
+				WHERE
+					`user`.ID_entity='$db0_line{'ID_user'}' AND
+					`user`.r_prefix = 'a710' AND
+					`user`.r_table = 'org'
+				ORDER BY
+					`user`.datetime_create
+			});
+			while (my %db1_line=$sth1{'sth'}->fetchhash())
+			{
+				$organizations.=$db1_line{'name'}."; ";
+			}
+			$organizations=~s|; $||;
+			$XSGN{'TMP'}=~s|<%organizations%>|$organizations|g;
+		}
+		
+	}
+	
+	return 1;
+}
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
