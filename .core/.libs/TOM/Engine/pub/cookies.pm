@@ -56,6 +56,17 @@ sub send
 		'cookies' => {%main::COOKIES}
 	) unless $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'cookies_disable'};
 	
+	# if requested to remove one of original cookie
+	foreach (keys %main::COOKIES_all_save)
+	{
+		if (!$main::COOKIES_all{$_})
+		{
+			my $var="Set-Cookie: $_=deleted; expires=Thu, 01-Jan-1970 00:00:00 GMT; path\=$tom::P_cookie; domain\=.$main::tom::H_cookie;\n";
+			main::_log("$var");
+			print $var;
+		}
+	}
+	
 	$t_cookies->close() if $debug;
 	
 }
