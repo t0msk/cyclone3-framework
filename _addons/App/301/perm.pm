@@ -934,7 +934,7 @@ sub get_ACL
 			$item{'name'}='world';
 			push @ACL, {%item};
 		}
-		else
+		elsif (!$world)
 		{
 			$world=1;
 			$db0_line{'status'}='L';
