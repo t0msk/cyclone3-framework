@@ -38,11 +38,12 @@ sub execute
 	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
-			COUNT(ID)
+			ID
 		FROM
 			TOM.a130_send
 		WHERE
 			sendtime<$main::time_current AND
+			length(body) > 64 AND
 			active='N' AND
 			priority>-120 $var
 	},'quiet'=>1);
@@ -72,6 +73,7 @@ sub execute
 			TOM.a130_send
 		WHERE
 			sendtime<$main::time_current AND
+			length(body) > 64 AND
 			active='N' AND
 			priority>-120 $var
 		$sql_order
