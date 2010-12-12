@@ -47,7 +47,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_historization` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL, 
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
-  `datetime_valid` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_valid` datetime NOT NULL default '0000-00-00 00:00:00', -- valid to
   `l_prefix` varchar(32) character set ascii collate ascii_bin NOT NULL,
   `l_table` varchar(64) character set ascii collate ascii_bin NOT NULL,
   `l_ID_entity` varchar(16) character set utf8 collate utf8_unicode_ci NOT NULL,
