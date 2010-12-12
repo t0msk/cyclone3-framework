@@ -10,22 +10,27 @@
 	</string>
 	
 	<string id="password">
+		<en-US>password</en-US>
 		<sk-SK>heslo</sk-SK>
 	</string>
 	
 	<string id="firstname">
+		<en-US>firstname</en-US>
 		<sk-SK>meno</sk-SK>
 	</string>
 	
 	<string id="surname">
+		<en-US>surname</en-US>
 		<sk-SK>priezvisko</sk-SK>
 	</string>
 	
 	<string id="email">
-		<sk-SK>email</sk-SK>
+		<en-US>e-mail</en-US>
+		<sk-SK>e-mail</sk-SK>
 	</string>
 	
 	<string id="User">
+		<en-US>User</en-US>
 		<sk-SK>Užívateľ</sk-SK>
 	</string>
 	

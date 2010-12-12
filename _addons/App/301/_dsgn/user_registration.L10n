@@ -6,10 +6,12 @@
 	</header>
 	
 	<string id="Please enter">
+		<en-US>Pleas enter value:</en-US>
 		<sk-SK>Prosím vložte údaj:</sk-SK>
 	</string>
 	
 	<string id="Please enter correct">
+		<en-US>Pleas enter correct value:</en-US>
 		<sk-SK>Prosím vložte korektný údaj:</sk-SK>
 	</string>
 	
