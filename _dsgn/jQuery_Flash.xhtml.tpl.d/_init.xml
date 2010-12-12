@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	<header>
+		<extract>
+			<file location="jquery.flash.js" dest="jquery/flash/" />
+			<file location="jquery.flash.min.js" dest="jquery/flash/" />
+		</extract>
+	</header>
+	
+</template>
