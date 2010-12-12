@@ -55,6 +55,22 @@
 	]]>
 	</entity>
 	
+	<!--
+	<entity id="parser.link.a542_file" replace_variables="false"><![CDATA[
+	<a href="<%attr_href%>"
+		id="<%attr_id%>"
+		title="<%attr_title%>"
+		target="<%attr_target%>"
+		class="a542_file" />
+	]]>
+	</entity>
+	-->
+	
+	<entity id="parser.link.a501_image" replace_variables="false"><![CDATA[
+	<a class="a501_image img_<%attr_align%>" id="<%attr_id%>" src="<%attr_src%>" alt="<%attr_alt%>" target="<%attr_target%>">
+	]]>
+	</entity>
+	
 	
 	<entity id="parser.a510_video_part" replace_variables="true"><![CDATA[
 		<script type="text/javascript" src="<$tom::H_media>/tpl/swfobject.js"></script>
