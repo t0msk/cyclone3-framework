@@ -115,6 +115,7 @@ sub user_add
 				NOW()
 			)
 		},'bind'=>[$env{'user.ID_user'},($main::USRM{'ID_user'} || ""),$env{'user.hostname'}],'quiet'=>1) || return undef;
+		$env{'new'}=1;
 	}
 	
 	
