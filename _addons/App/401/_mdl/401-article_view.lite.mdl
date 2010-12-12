@@ -29,6 +29,9 @@ L<App::401::_init|app/"401/_init.pm">
 =cut
 
 use App::401::_init;
+use App::020::_init;
+use App::160::_init;
+use TOM::Text::format;
 
 
 
@@ -225,6 +228,7 @@ sub execute
 				round((`article_ent`.rating_score / `article_ent`.rating_votes),2), '0.00'
 			) as rating,
 			article_ent.sources,
+			article_ent.metadata,
 			
 			article_attrs.status
 			
@@ -292,6 +296,33 @@ sub execute
 		$XSGN{'TMP'}=~s|<%rating55%>|$rating55|g;
 		
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+			# replace metadata
+			my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
+			foreach my $sec(keys %metadata)
+			{
+				foreach (keys %{$metadata{$sec}})
+				{
+					$XSGN{'TMP'}=~s/<%$sec\::$_%>/$metadata{$sec}{$_}/g;
+				}
+			}
+			my $keys;
+			foreach my $sec(keys %metadata)
+			{
+#				my $null_section=$XSGN{'metadata_section'};
+#				$null_section=~s|<%name%>|$sec|g;
+				foreach (keys %{$metadata{$sec}})
+				{
+					$keys++;
+#					my $null=$XSGN{'metadata_variable'};
+#					$null=~s|<%variable%>|$_|g;
+#					$null=~s|<%value%>|$metadata{$sec}{$_}|g;
+#					$null_section=~s|<#metadata_variable#>|$null|;
+				}
+				
+#				$XSGN{'metadata'}=~s|<#metadata_section#>|$null_section|;
+			}
+#			$XSGN{'TMP'}=~s|<#metadata#>|$XSGN{'metadata'}| if $keys;
 		
 		# primary author
 		my %author=App::301::authors::get_author($db0_line{'posix_author'});
@@ -365,7 +396,9 @@ sub execute
 			
 			# a401_article
 			$p->{'entity'}{'a401_article'}=
-				$XSGN{'body.a401_article'}
+				$XSGN{'body.link.a401_article'}
+				|| $XSGN{'body.a401_article'}
+				|| $XSGN{'link.a401_article'}
 				|| $XSGN{'a401_article'}
 				|| undef;
 			
@@ -390,6 +423,10 @@ sub execute
 				$XSGN{'body.a501_image.1'}
 				|| $XSGN{'a501_image.1'}
 				|| undef;
+			$p->{'entity'}->{'link.a501_image'}=
+				$XSGN{'body.link.a501_image'}
+				|| $XSGN{'link.a501_image'}
+				|| undef;
 			
 			# a510_video
 			$p->{'entity'}{'a510_video'}=
@@ -411,8 +448,18 @@ sub execute
 				|| $XSGN{'a510_video_part.1'}
 				|| undef;
 			
+			$p->{'entity'}->{'link.a542_file'}=
+				$XSGN{'body.link.a542_file'}
+				|| $XSGN{'link.a542_file'}
+				|| undef;
+			
 			# a010
 			foreach (keys %XSGN){if ($_=~/^a010/){$p->{'entity'}{$_}=$XSGN{$_};}}
+			
+			#removing unwanted paging
+			if($part eq 'body'){
+				$db0_line{$part}=~s|<hr>||g;
+			}
 			
 			# PARSE !!!
 			$p->parse($db0_line{$part});
@@ -423,6 +470,9 @@ sub execute
 			
 			$XSGN{'TMP'}=~s|<%$part%>|$part_html|;
 			$XSGN{'TMP'}=~s|<%$part\_plain%>|TOM::Text::format::xml2plain($part_html)|ge;
+			
+			#$XSGN{'TMP'}=~s|<%$part\.out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+			$XSGN{'TMP'}=~s|<#$part\.out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
 			
 			$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
 			$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
