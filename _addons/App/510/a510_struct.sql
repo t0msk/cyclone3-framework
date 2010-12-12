@@ -53,7 +53,6 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
   PRIMARY KEY  (`ID`),
   FULLTEXT KEY `keywords` (`keywords`),
   UNIQUE KEY `UNI_0` (`movie_imdb`),
-  UNIQUE KEY `UNI_1` (`movie_catalog_number`),
   KEY `ID_entity` (`ID_entity`),
   KEY `datetime_rec_start` (`datetime_rec_start`),
   KEY `status` (`status`)
