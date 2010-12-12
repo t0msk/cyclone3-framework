@@ -233,10 +233,15 @@ sub execute
 	$env{'mode'}="future" unless $env{'mode'};
 	if ($env{'mode'} eq "future")
 	{
-		$sql_where.="AND event.datetime_start >= NOW() ";
+		$sql_where.="AND (event.datetime_start >= NOW() OR (event.datetime_start <= NOW() AND event.datetime_finish >= NOW())) ";
 	}
 	elsif ($env{'mode'} eq "all")
 	{
+	}
+	
+	if ($env{'sql_where.name'})
+	{
+		$sql_where.=" AND event.name LIKE '".TOM::Security::form::sql_escape($env{'sql_where.name'})."%' ";
 	}
 	
 	if ($env{'sql_where'})
@@ -324,16 +329,26 @@ sub execute
 			$XSGN{'item.'.$item_counter}
 			|| $XSGN{'item'};
 		
-      my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
-      $db0_line{'datetime_start.year'}=$datetime{'year'};
-      $db0_line{'datetime_start.month'}=$datetime{'month'};
+		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
+		$db0_line{'datetime_start.year'}=$datetime{'year'};
+		$db0_line{'datetime_start.month'}=$datetime{'month'};
 		$db0_line{'datetime_start.month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_start.month'}-1];
 #		$db0_line{'datetime_start.month_name'}="$db0_line{'datetime_start.month_name'}";
-      $db0_line{'datetime_start.mday'}=$datetime{'mday'};
-      $db0_line{'datetime_start.hour'}=$datetime{'hour'};
-      $db0_line{'datetime_start.min'}=$datetime{'min'};
-      $db0_line{'datetime_start.sec'}=$datetime{'sec'};
-      
+		$db0_line{'datetime_start.mday'}=$datetime{'mday'};
+		$db0_line{'datetime_start.hour'}=$datetime{'hour'};
+		$db0_line{'datetime_start.min'}=$datetime{'min'};
+		$db0_line{'datetime_start.sec'}=$datetime{'sec'};
+		
+		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_finish'});
+		$db0_line{'datetime_finish.year'}=$datetime{'year'};
+		$db0_line{'datetime_finish.month'}=$datetime{'month'};
+		$db0_line{'datetime_finish.month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_finish.month'}-1];
+#		$db0_line{'datetime_finish.month_name'}="$db0_line{'datetime_finish.month_name'}";
+		$db0_line{'datetime_finish.mday'}=$datetime{'mday'};
+		$db0_line{'datetime_finish.hour'}=$datetime{'hour'};
+		$db0_line{'datetime_finish.min'}=$datetime{'min'};
+		$db0_line{'datetime_finish.sec'}=$datetime{'sec'};
+		
 		$item=~s|<#link#>|$XSGN{'link'}|g if $db0_line{'link'};
 		
 		# fill raw data into $XSGN{'item'}
@@ -347,6 +362,26 @@ sub execute
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
+		# replace metadata
+		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
+		foreach my $sec(keys %metadata){foreach (keys %{$metadata{$sec}}){$item=~s/<%$sec\::$_%>/$metadata{$sec}{$_}/g;}}
+		my $keys;
+		foreach my $sec(keys %metadata)
+		{
+#			my $null_section=$XSGN{'metadata_section'};
+#			$null_section=~s|<%name%>|$sec|g;
+			foreach (keys %{$metadata{$sec}})
+			{
+				$keys++;
+#				my $null=$XSGN{'metadata_variable'};
+#				$null=~s|<%variable%>|$_|g;
+#				$null=~s|<%value%>|$metadata{$sec}{$_}|g;
+#				$null_section=~s|<#metadata_variable#>|$null|;
+			}
+			
+#			$XSGN{'metadata'}=~s|<#metadata_section#>|$null_section|;
+		}
+#		$XSGN{'TMP'}=~s|<#metadata#>|$XSGN{'metadata'}| if $keys;
 		
 		# process description_short
 		my $p=new App::401::mimetypes::html;
