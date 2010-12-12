@@ -106,6 +106,7 @@ sub execute
 	
 	if (!$article{'ID'})
 	{
+		main::_log('no ID_entity or ID_category specified!!!');
 		return undef;
 	}
 	
@@ -118,7 +119,7 @@ sub execute
 	
 	$main::H->add_DOC_title($article{'name'}) unless $env{'DOC_title.disable'};
 	$main::H->add_DOC_keywords($article{'keywords'});
-	$main::H->add_DOC_description($article{'name'}.". ".TOM::Text::format::xml2plain($article{'abstract'}));
+	$main::H->add_DOC_description($article{'name'}.". ".TOM::Text::format::xml2plain($article{'abstract'})) unless $env{'DOC_title.disable'};
 	
 	App::401::functions::article_visit($article{'ID_entity'});
 	
@@ -153,11 +154,18 @@ sub execute
 	
 	#main::_log("lng=$env{'lng'}");
 	
+	if (exists $env{'page'}){
+		$params{'page'}=$env{'page'};
+		$params{'page'}=1 unless $params{'page'};
+	}
+	
+	$env{'view_version'}="lite" unless $env{'view_version'};
+	
 	Tomahawk::module(
 		'-type' => "mdl",
 		'-category' => "401",
 		'-name' => "article_view",
-		'-version' => "lite",
+		'-version' => $env{'view_version'},
 		'-global' => 1,
 		'-xsgn' => $env{'view_xsgn'},
 		'-xsgn_global' => $env{'view_xsgn_global'},
@@ -169,7 +177,7 @@ sub execute
 #			'article_attrs.ID_category' => ${'ID_article'},
 			'a501_image_file.ID_format' => $env{'a501_image_file.ID_format'},
 			'a501_image_file.ID_format.1' => $env{'a501_image_file.ID_format.1'},
-#			'gallery.thumbnail.ID_format' => '6',
+			'gallery.thumbnail.ID_format' => $env{'gallery.thumbnail.ID_format'},
 #			'ignore.img.1' => 1,
 #			'ad' => '1',
 			%params
@@ -297,7 +305,7 @@ sub execute
 			$relations.=";".$relation->{'r_ID_entity'};
 		}
 		
-		main::_log("related articles = $relations");
+		main::_log("related attachments = $relations");
 		
 		if ($relations)
 		{
@@ -312,6 +320,7 @@ sub execute
 				'-cache_id' => 'attachments',
 				'-xsgn' => $env{'attachments_xsgn'},
 				'-xsgn_global' => $env{'attachments_xsgn_global'},
+				'-xlng_load' => $env{'attachments_xlng_load'},
 					'file.ID_entity' => $relations,
 					'sql_limit' => 10,
 			);
