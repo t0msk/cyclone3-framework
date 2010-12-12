@@ -44,7 +44,9 @@ use vars qw/
 	%DOC_HEADER
 	$TPL
 	%COOKIES
+	%COOKIES_all
 	%COOKIES_save
+	%COOKIES_all_save
 	%USRM
 	%env
 	$IAdm
@@ -909,12 +911,14 @@ while ($main::CGI=new CGI::Fast())
 		
 		#  local %COOKIES;
 		%main::COOKIES=();
+		%main::COOKIES_all=();
 		
 		%main::COOKIES=&Net::HTTP::cookies::GetCookies if !$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{cookies_disable};
+		%main::COOKIES_all=&Net::HTTP::cookies::GetAllCookies if !$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{cookies_disable};
 		
-		foreach (keys %main::COOKIES)
+		foreach (keys %main::COOKIES_all)
 		{
-			main::_log("key $_='$main::COOKIES{$_}'");
+			main::_log("key $_='$main::COOKIES_all{$_}'");
 		}
 		
 		# nedostal som ziadne cookies (mozno je toto moj prvy request)
@@ -958,8 +962,8 @@ while ($main::CGI=new CGI::Fast())
 				);
 				
 				my %form=TOM::Net::HTTP::CGI::get_CGI($main::ENV{'QUERY_STRING_FULL'});
-				delete $form{'gclid'} if $form{'gclid'}; # remove AdWords
-				delete $form{'ref'} if $form{'ref'}; # remove other campaings
+				foreach ('ref','gclid','utm_medium','utm_source','utm_campaign','utm_content','utm_term')
+				{delete $form{$_};}
 				my $rewrite="/";
 				$rewrite.=TOM::Net::URI::rewrite::parse_hash(\%form) if $tom::rewrite;
 				my $var=TOM::Net::URI::URL::genGET(%form);
@@ -968,14 +972,14 @@ while ($main::CGI=new CGI::Fast())
 				my $link="$rewrite";$link.="?".$link_hash if $link_hash;
 				
 				# hack for Google AdWords (to save 'gclid' in QUERY_STRING)
-				if ($FORM{'gclid'})
-				{if ($link=~/\?/){$link.="&gclid=".$FORM{'gclid'}."&ref=cpc";}
-				else{$link.="?gclid=".$FORM{'gclid'}."&ref=cpc";$link_hash=1;}}
-				
 				# hack for another campaings (to save 'ref' in QUERY_STRING)
-				if ($FORM{'ref'})
-				{if ($link=~/\?/){$link.="&ref=".$FORM{'ref'};}
-				else{$link.="?ref=".$FORM{'ref'};$link_hash=1;}}
+				if ($FORM{'ref'}){$FORM{'utm_medium'}=$FORM{'ref'};delete $FORM{'ref'}};
+				foreach ('gclid','utm_medium','utm_source','utm_campaign','utm_content','utm_term')
+				{
+					if ($FORM{$_})
+					{if ($link=~/\?/){$link.="&".$_."=".$FORM{$_};}
+					else{$link.="?".$_."=".$FORM{$_};$link_hash=1;}};
+				}
 				
 				$link="" if $link eq "/";
 				
@@ -1011,6 +1015,7 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		%COOKIES_save=%COOKIES;
+		%COOKIES_all_save=%COOKIES_all;
 		
 		$t_cookies->close();
 		
@@ -1338,7 +1343,7 @@ while ($main::CGI=new CGI::Fast())
 		};
 		
 		# najprv hladam subor so spravnym TYPE
-		
+#		main::_log("Ptype=$tom::Ptype");
 		if (($main::page_statuscode eq "200")&&(open (TYPE,"<".$tom::Ptype."/_type/".($FORM{TID}).".pub.type")))
 		{
 			main::_log("access to:".$tom::Ptype."/_type/".($FORM{TID}).".pub.type");
