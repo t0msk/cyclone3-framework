@@ -1838,6 +1838,7 @@ sub get_image_file
 			image_attrs.description,
 			image_file.image_width,
 			image_file.image_height,
+			image_file.name AS file_name,
 			image_file.file_size,
 			image_file.file_ext,
 			image_file.status AS file_status,
