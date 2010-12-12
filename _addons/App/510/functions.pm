@@ -940,6 +940,68 @@ sub video_add
 		}
 	}
 	
+=head1
+	if ($env{'video_attrs.ID_category'} && $env{'video.ID_entity'} && $env{'video_attrs.lng'} && !$env{'video_attrs.ID'} && !$env{'video.ID'} && $env{'forcesymlink'})
+	{
+		main::_log("finding compatible video_attrs.ID_entity (also video.ID)");
+		
+		my $sql=qq{
+			SELECT
+				video.ID AS ID_video,
+				video_attrs.ID AS ID_attrs
+			FROM
+				`$App::510::db_name`.a510_video AS video
+			LEFT JOIN `$App::510::db_name`.a510_video_attrs AS video_attrs
+				ON ( video.ID = video_attrs.ID_entity )
+			WHERE
+				video.ID_entity=$env{'video.ID_entity'} AND
+				video_attrs.ID_category = $env{'video_attrs.ID_category'} AND
+				video_attrs.lng != '$env{'video_attrs.lng'}' AND
+				video_attrs.status IN ('Y','N','L')
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		if ($db0_line{'ID_video'})
+		{
+			$env{'video.ID'}=$db0_line{'ID_video'};
+			$env{'video_attrs.ID'}=$db0_line{'ID_attrs'};
+			main::_log("setup video.ID='$db0_line{'ID_video'}' video_attrs.ID='$env{'video_attrs.ID'}'");
+		}
+		
+	}
+=cut
+	
+=head1
+	# check if this lng mutation of video_attrs exists
+	if ($env{'video_attrs.ID'} && $env{'video_attrs.lng'} && $env{'video.ID'})
+	{
+		main::_log("check if lng='$env{'video_attrs.lng'}' of video.ID='$env{'video.ID'}' exists");
+		my $sql=qq{
+			SELECT
+				ID
+			FROM
+				`$App::510::db_name`.a510_video_attrs
+			WHERE
+				ID_entity=? AND
+				lng=?
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[$env{'video.ID'},$env{'video_attrs.lng'}],'quiet'=>1);
+		if (!$sth0{'rows'})
+		{
+			main::_log("not exists, also reset video_attrs.ID");
+			undef $env{'video_attrs.ID'};
+		}
+		else
+		{
+			
+		}
+		# if not remove video_attrs.ID
+	}
+=cut
+	
+	
 	if (!$env{'video.ID'})
 	{
 		# generating new video!
