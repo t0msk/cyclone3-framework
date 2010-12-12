@@ -81,6 +81,13 @@ sub execute
 		$sql_where.=" AND video.ID_entity = $env{'video.ID_entity'} ";
 	}
 	
+	if ($env{'video_attrs.name'})
+	{
+		$sql_where.=" AND video_attrs.name = '". TOM::Security::form::sql_escape($env{'video_attrs.name'}) ."' ";
+	}
+	
+	$env{'video_part_file.ID_format'}=$App::510::video_format_full_ID unless $env{'video_part_file.ID_format'};
+	
 	my $sql=qq{
 		SELECT
 			video.ID_entity,
@@ -100,10 +107,23 @@ sub execute
 			video_attrs.name,
 			video_attrs.name_url,
 			video_attrs.description,
+			
 			video_ent.keywords,
 			video_ent.posix_author,
 			
-			video_part.ID AS ID_part
+			video_ent.movie_catalog_number,
+			video_ent.movie_country_code,
+			video_ent.movie_imdb,
+			video_ent.movie_length,
+			video_ent.movie_note,
+			video_ent.movie_release_date,
+			video_ent.movie_release_year,
+			
+			video_part.ID AS ID_part,
+			
+			video_part_attrs.name AS part_name,
+			
+			CONCAT(video_part_file.ID_format,'/',SUBSTR(video_part_file.ID,1,4),'/',video_part_file.name,'.',video_part_file.file_ext) AS file_part_path
 			
 		FROM
 			`$App::510::db_name`.`a510_video` AS video
@@ -120,30 +140,72 @@ sub execute
 			video_part.ID_entity = video.ID_entity AND
 			video_part.part_id = 1
 		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part_attrs` AS video_part_attrs ON
+		(
+			video_part_attrs.ID_entity = video_part.ID AND
+			video_part_attrs.lng = video_attrs.lng
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part_file` AS video_part_file ON
+		(
+			video_part_file.ID_entity = video_part.ID
+			AND video_part_file.ID_format = $env{'video_part_file.ID_format'}
+		)
 		WHERE
 			video_attrs.lng = '$env{'lng'}' AND
 			video_attrs.status = 'Y'
 			$sql_where
 		LIMIT 1
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'slave'=>1,'-cache'=>1200,
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'slave'=>1,'-cache'=>1200,
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
 			'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video",'ID_entity'=>$env{'video.ID_entity'}
 		})
 	);
-	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	if ($sth0{'rows'})
 	{
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		if ($db0_line{'file_part_path'})
+		{
+			$XSGN{'TMP'}=~s|<#media#>|$XSGN{'video'}|g;
+		}
 		
 		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_rec_start'});
-      $db0_line{'datetime_rec_start.year'}=$datetime{'year'};
-      $db0_line{'datetime_rec_start.month'}=$datetime{'month'};
-      $db0_line{'datetime_rec_start.mday'}=$datetime{'mday'};
-      $db0_line{'datetime_rec_start.hour'}=$datetime{'hour'};
-      $db0_line{'datetime_rec_start.min'}=$datetime{'min'};
-      $db0_line{'datetime_rec_start.sec'}=$datetime{'sec'};
+		$db0_line{'datetime_rec_start.year'}=$datetime{'year'};
+		$db0_line{'datetime_rec_start.month'}=$datetime{'month'};
+		$db0_line{'datetime_rec_start.mday'}=$datetime{'mday'};
+		$db0_line{'datetime_rec_start.hour'}=$datetime{'hour'};
+		$db0_line{'datetime_rec_start.min'}=$datetime{'min'};
+		$db0_line{'datetime_rec_start.sec'}=$datetime{'sec'};
 		
 		my %author=App::301::authors::get_author($db0_line{'posix_author'});
+		$author{'fullname'}=$author{'surname'};
+		$author{'fullname'}=$author{'firstname'}.' '.$author{'fullname'} if $author{'firstname'};
+		$author{'fullname_url'}=TOM::Net::URI::rewrite::convert($author{'fullname'});
 		$XSGN{'TMP'}=~s|<%author_(.*?)%>|$author{$1}|g;
+		
+		# secondary authors
+		if ($XSGN{'TMP'}=~/<#authorgroup#>/)
+		{
+			my @ACL=App::301::perm::get_ACL(
+				'r_prefix' => 'a510',
+				'r_table' => 'video',
+				'r_ID_entity' => $db0_line{'ID_entity_video'},
+				'role' => 'author'
+			);
+			foreach my $acl_item (@ACL)
+			{
+				if ($acl_item->{'ID'} && !$acl_item->{'folder'})
+				{
+					my $authorgroup_item=$XSGN{'authorgroup_item'};
+					my %author=App::301::authors::get_author($acl_item->{'ID'});
+					$author{'fullname'}=$author{'surname'};
+					$author{'fullname'}=$author{'firstname'}.' '.$author{'fullname'} if $author{'firstname'};
+					$author{'fullname_url'}=TOM::Net::URI::rewrite::convert($author{'fullname'});
+					$authorgroup_item=~s|<%author_(.*?)%>|$author{$1}|g;
+					$XSGN{'TMP'}=~s|<#authorgroup#>|$authorgroup_item|;
+				}
+			}
+		}
 		
 		# count parts length and ratings
 		my $sql=qq{
@@ -166,6 +228,13 @@ sub execute
 		$db1_line{'length'}='' if $db1_line{'length'} eq "00:00:00";
 		$XSGN{'TMP'}=~s|<%length%>|$db1_line{'length'}|g;
 		
+		if ($db0_line{'movie_country_code'})
+		{
+			use ISO::3611;
+			$db0_line{'movie_country'}=$ISO::3611::code_a2{"\U".$db0_line{'movie_country_code'}};
+#			$db0_line{'movie_country'}=$db0_line{'movie_country_code'};
+		}
+		
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
 		my $p=new App::401::mimetypes::html;
@@ -187,6 +256,7 @@ sub execute
 		))[0];
 		if ($relation->{'ID'})
 		{
+			$XSGN{'TMP'}=~s|<#media#>|$XSGN{'thumbnail'}|g;
 			$XSGN{'TMP'}=~s|<%image.ID%>|$relation->{'r_ID_entity'}|g;
 			my %db1_line=App::501::functions::get_image_file(
 				'image.ID_entity' => $relation->{'r_ID_entity'},
@@ -208,6 +278,10 @@ sub execute
 			$main::H->add_DOC_description($db0_line{'name'}.". ".TOM::Text::format::xml2plain($db0_line{'description'}));
 		}
 		
+	}
+	else
+	{
+		$XSGN{'TMP'}=$XSGN{'TMP.empty'};
 	}
 	
 	return 1;
