@@ -92,9 +92,9 @@ sub send
 		main::_log("sending email over a130 to '$env{'to_email'}'");
 		my %sth0=TOM::Database::SQL::execute(qq{
 			INSERT INTO TOM.a130_send
-			(ID_md5,sendtime,priority,from_name,from_email,from_host,from_service,to_name,to_email,body)
+			(ID_md5,sendtime,priority,from_name,from_email,from_host,from_service,to_name,to_email,body,datetime_create)
 			VALUES
-			('$env{'md5'}',?,?,?,?,?,?,?,?,?)
+			('$env{'md5'}',?,?,?,?,?,?,?,?,?,NOW())
 		},'bind'=>[
 			$env{'time'},
 			$env{'priority'},
