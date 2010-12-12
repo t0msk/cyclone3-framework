@@ -257,6 +257,13 @@ sub execute
 			video_ent.posix_author,
 			video_ent.keywords AS video_keywords,
 			
+			video_ent.movie_catalog_number,
+			video_ent.movie_country_code,
+			video_ent.movie_imdb,
+			video_ent.movie_length,
+			video_ent.movie_release_date,
+			video_ent.movie_release_year,
+			
 			video_attrs.name,
 			video_attrs.name_url,
 			video_attrs.description,
@@ -341,6 +348,9 @@ sub execute
 		
 		# video author in result list
 		my %author=App::301::authors::get_author($db0_line{'posix_author'});
+		$author{'fullname'}=$author{'surname'};
+		$author{'fullname'}=$author{'firstname'}.' '.$author{'fullname'} if $author{'firstname'};
+		$author{'fullname_url'}=TOM::Net::URI::rewrite::convert($author{'fullname'});
 		$item=~s|<%author_(.*?)%>|$author{$1}|g;
 		
 =head1
@@ -358,6 +368,44 @@ sub execute
 		$db0_line{'visits'}=$db1_line{'visits'};
 =cut
 		
+		if ($db0_line{'movie_country_code'})
+		{
+			use ISO::3611;
+			$db0_line{'movie_country'}=$ISO::3611::code_a2{"\U".$db0_line{'movie_country_code'}};
+#			$db0_line{'movie_country'}=$db0_line{'movie_country_code'};
+		}
+		
+		if($item=~/<%db_file_part_path%>/)
+		{
+			my %db1_line=App::510::functions::get_video_part_file
+			(
+				'video.ID_entity' => $db0_line{'ID_entity_video'},
+				'video_part.part_id' => 1,
+				'video_part_file.ID_format' => $env{'video_file.ID_format'},
+				'video_attrs.lng' => $env{'video_attrs.lng'}
+			);
+			$item=~s|<%db_file_part_path%>|$db1_line{'file_part_path'}|g;
+			
+		}
+		
+		if($item=~/<%db_original_file_part_path%>/)
+		{
+			my %db1_line=App::510::functions::get_video_part_file
+			(
+				'video.ID_entity' => $db0_line{'ID_entity_video'},
+				'video_part.part_id' => 1,
+				'video_part_file.ID_format' => 1,
+				'video_attrs.lng' => $env{'video_attrs.lng'}
+			);
+			$item=~s|<%db_original_file_part_path%>|$db1_line{'file_part_path'}|g;
+			$db1_line{'file_size.gb'}=sprintf("%0.2f", ($db1_line{'file_size'} / (1024 * 1024 * 1024)));
+			$db1_line{'file_size.mb'}=sprintf("%0.2f", ($db1_line{'file_size'} / (1024 * 1024)));
+			$db1_line{'file_size.kb'}=sprintf("%0.2f", ($db1_line{'file_size'} / 1024));
+			$item=~s|<%db_original_file_size.gb%>|$db1_line{'file_size.gb'}|g;
+			$item=~s|<%db_original_file_size.mb%>|$db1_line{'file_size.mb'}|g;
+			$item=~s|<%db_original_file_size.kb%>|$db1_line{'file_size.kb'}|g;
+		}
+		
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
 		my $relation=(App::160::SQL::get_relations(
@@ -373,16 +421,14 @@ sub execute
 		))[0];
 		if ($relation->{'ID'})
 		{
-			
+			$item=~s|<#media#>|$XSGN{'thumbnail'}|g;
 			$item=~s|<%image.ID%>|$relation->{'r_ID_entity'}|g;
-			
 			my %db1_line=App::501::functions::get_image_file(
 				'image.ID_entity' => $relation->{'r_ID_entity'},
 				'image_file.ID_format' => $env{'image_format.ID'} || $App::501::image_format_thumbnail_ID,
 				'image_attrs.lng' => $env{'lng'}
 			);
 			$item=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;
-			
 		}
 		
 		
@@ -439,6 +485,8 @@ sub execute
 		$env{'count'}=$env{'sql_limit'};
 	}
 	
+	$env{'page'}=($env{'offset'}/$env{'count'})+1;
+	$XSGN{'TMP'}=~s|<%page%>|$env{'page'}|g;
 	
 	# offset
 	if ($env{'count'} && $item_counter >= $env{'count'}) # count
