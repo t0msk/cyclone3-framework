@@ -256,12 +256,9 @@ foreach (sort keys %CRON::hosts)
 		$tom::P=$cron::P;
 		$TOM::P=$CRON::P;
 		
-		unshift @INC, $tom::P."/.libs";
-		unshift @INC, $tom::P."/_addons";
-		
 		main::_log("start forked cron on path='$cron::P'");
 		CRON::waitload($CRON::LOADAVG);
-		require $cron::P."/local.conf";
+		require TOM::Domain;
 		$TOM::DEBUG_log_file=98;
 		
 		my $file_data;
