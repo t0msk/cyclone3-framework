@@ -56,6 +56,51 @@ if ($FORM{'xuladmin'})
 }
 
 
+if ($FORM{'core'})
+{
+	print "Updating all core files in domain services\n";
+	
+	if (opendir (DIR,$TOM::P))
+	{
+		my @files=readdir DIR;
+		foreach my $file(@files)
+		{
+			next if $file=~/^(\.|\.\.)$/;
+			if (
+					(-d $TOM::P."/".$file) &&
+					($file=~/^([^_\.][!\w\.\-]+|.*\/[^_\.][!\w\.]+)$/) &&
+					(not $file=~/(!media|!www)/)
+				)
+			{
+				if (opendir (DIR1,$TOM::P."/".$file)){foreach (readdir DIR1){if (($_ ne ".")&&($_ ne "..")){push @files,$file."/".$_;}}}
+			}
+			
+			if (-e $TOM::P.'/'.$file.'/core.tom')
+			{
+				next if $file eq ".symlinks";
+				main::_log_stdout("update ".$file);
+				use File::Copy;
+#				print "to ".$TOM::P.'/'.$file.'/core.tom'."\n";
+				if (-l $TOM::P.'/'.$file.'/core.tom')
+				{
+					print " symlink\n";
+					if (unlink $TOM::P.'/'.$file.'/core.tom')
+					{
+						copy($TOM::P."/.symlinks/core.tom",$TOM::P.'/'.$file.'/core.tom');
+					}
+				}
+				else
+				{
+					copy($TOM::P."/.symlinks/core.tom",$TOM::P.'/'.$file.'/core.tom');
+				}
+			}
+		}
+	}
+	
+	&exit();
+}
+
+
 # check current version;
 print "Cyclone3 Framework current: r$TOM::core_revision\n";
 
