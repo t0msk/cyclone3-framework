@@ -69,10 +69,6 @@ use vars qw/
 	/;
 our $sig_term=1;
 
-# C kniznice /* musia byt tu, aby sa dali pouzivat -> musia byt zavedene pri kompilacii */
-use enc3;
-use iconv;
-
 
 ######################################################################################
 ######################################################################################
@@ -547,7 +543,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			# oprava pipe na zaciatok pre ludi so zlym browserom
 			$ENV{'QUERY_STRING'}=~s|^(%7C%7C\|%7c%7c\|__)|\|\||g;
-			# FIXME: [Aben] vyhodit spetnu kompatibilitu s %7C%7C a ||
+			# FIXME: vyhodit spetnu kompatibilitu s %7C%7C a ||
 			if ($ENV{'QUERY_STRING'}=~s/^\|\|//) #
 			{
 				main::_log("query is with two pipes (or '__')");
@@ -555,41 +551,24 @@ while ($main::CGI=new CGI::Fast())
 				{
 					main::_log("splitted by '-' to hash and key name");
 					
-#					if ($ENV{'QUERY_STRING'}=~s/^(.*)\?(.*?)$/$1/)
-#					{
-#						$ENV{'QUERY_STRING_CUT'}=$2;
-#						main::_log("cut string after '?' into QUERY_STRING_CUT");
-#					}
-					
-					if ($ENV{'QUERY_STRING'}=~s/^(.*)-(.*?)-v(\d)$//) #
+					if ($ENV{'QUERY_STRING'}=~s/^(.*?)-v4$//) #
 					{
-						main::_log("query is encoded string '$1' by key named '$2' version '$3'");
-						if (($3 eq "3") && ($tom::code_keys{$2}{key}))
-						{
-							main::_log("version 3 decoding");
-							#
-							# FIXME: [Aben] tuto sa teoreticky v QUERY_STRING mozu vyskutnut znaky na ktore by som mal pouzit url_decode
-							#
-							my $var=$1;
-							my $key=$tom::code_keys{$2}{key};
-							#while ($var=~/%([0-9A-Fa-f]{2})/){$var=TOM::Net::URI::URL::url_decode($var)};
-							#if ($var=~/%([0-9A-Fa-f]{2})/){$var=TOM::Net::URI::URL::url_decode($var)};
-							# dekodujem %?? ktore sa nachadzaju v zakodovanej linke cez base64
-							$var=TOM::Net::URI::URL::url_decode($var);
-							$var=MIME::Base64::decode_base64($var."==");
-							$ENV{'QUERY_STRING'}=enc3::xor($var,$key);
-							main::_log("output QUERY_STRING='$ENV{'QUERY_STRING'}'");
-						}
-						else
-						{
-							# tuto linku otestujem a spravim relokaciu podla kodu 301
-							$rewrite_301=1;
-						}
+						main::_log("query is encoded string '$1'");
+						my $var=$1;
+						$var=TOM::Net::URI::URL::url_decode($var);
+						$ENV{'QUERY_STRING'}=MIME::Base64::decode_base64($var."==");
+						main::_log("output QUERY_STRING='$ENV{'QUERY_STRING'}'");
+					}
+					elsif ($ENV{'QUERY_STRING'}=~s/^(.*)-(.*?)-v(\d)$//) #
+					{
+						main::_log("deprecated encoding v3");
+						$ENV{'QUERY_STRING'}="";
+						$main::page_statuscode=404;
 					}
 					else
 					{
 						$ENV{'QUERY_STRING_CUT'}=$ENV{'QUERY_STRING'};$ENV{'QUERY_STRING'}="";
-					} # hups, niekto hackuje, vyprazdnime :)
+					}
 				}
 				else
 				{
@@ -769,17 +748,6 @@ while ($main::CGI=new CGI::Fast())
 						($TOM::type_code) # kodujem
 						&&
 						($var) # vo var vobec nieco je
-#						&&
-#						(
-#							($IAdm && !$FORM{_IAdm_decode})
-#							||
-#							(!$IAdm)
-#						)
-#						&&
-#						(
-#							($ITst && !$FORM{_ITst_decode})
-#							||(!$ITst)
-#						)
 					)
 				{
 					# defaultne lubovolny key
@@ -2295,7 +2263,9 @@ while ($main::CGI=new CGI::Fast())
 				}
 				else
 				{
-					$DOC_output=iconv::convert($DOC_output, $TOM::LNG_cp_default, $main::LNG_cp);
+					use Encode;
+					$DOC_output = encode_utf8($DOC_output);
+					Encode::from_to($DOC_output, $TOM::LNG_cp_default, $main::LNG_cp);
 				}
 				main::_log("output document converted to codepage '$main::LNG_cp' succesfully length=(".(length($DOC_output)).")");
 			}
@@ -2316,13 +2286,9 @@ while ($main::CGI=new CGI::Fast())
 				}
 				else
 				{
-					#use encoding $main::LNG_cp;
-					#utf8::downgrade($DOC_output);
-					#utf8::decode($DOC_output);
-					#my $converter = Text::Iconv->new($TOM::LNG_cp_default, $main::LNG_cp);
-					#$DOC_output = $converter->convert($DOC_output);
-					#utf8::encode($DOC_output);
-					$DOC_output=iconv::convert($DOC_output, $TOM::LNG_cp_default, $main::LNG_cp);
+					use Encode;
+					$DOC_output = encode_utf8($DOC_output);
+					Encode::from_to($DOC_output, $TOM::LNG_cp_default, $main::LNG_cp);
 				}
 			}
 			elsif (

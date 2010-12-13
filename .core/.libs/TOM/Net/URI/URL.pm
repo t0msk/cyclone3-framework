@@ -13,7 +13,6 @@ URL functions
 use open ':utf8', ':std';
 use encoding 'utf8';
 use Encode;
-use enc3;
 use bytes;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
@@ -117,6 +116,7 @@ sub hash_encode
 	my $link=shift;
 	my $key_name=shift;
 	
+=head1
 	if ($key_name && $tom::code_keys{$key_name}{key})
 	{
 		# okay, nechavam si keyname co som si poslal natvrdo
@@ -140,15 +140,17 @@ sub hash_encode
 		#$key_name=$tom::code_keys{$tom::code_key_root}{key};
 		$key_name=$tom::code_key_root;
 	}
+=cut
 	
 	if ($link)
 	{
-		$link=enc3::xor($link,$tom::code_keys{$key_name}{key});
+#		$link=enc3::xor($link,$tom::code_keys{$key_name}{key});
 		$link=MIME::Base64::encode_base64($link);
 		$link=~s|[\n\r]||;
 		$link=~s|==$||;
 		$link=TOM::Net::URI::URL::url_encode($link) if $link; # hex encoding
-		$link="__".$link."-".$key_name."-v3";
+#		$link="__".$link."-".$key_name."-v3";
+		$link="__".$link."-v4";
 	}
 	
 	return $link;
