@@ -14,7 +14,21 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 		$TOM::Engine='pub';
 		$tom::addons_init=1;
 		$tom::templates_init=1;
-		
+	}
+	
+	use Mysql; # 3.5MB
+	use Text::Iconv;
+	use Compress::Zlib;
+	use MIME::Base64;
+	use File::Type;
+	#use Image::Magick; # 2.8MB
+	
+	
+	# CORE Engine kniznice
+	use TOM::Domain; # all addons will be initialized because $tom::addons_init is in true state
+	
+	BEGIN
+	{
 		# data adresar
 		mkdir $tom::P."/_data" if (! -e $tom::P."/_data");
 		
@@ -32,16 +46,6 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 		}
 	}
 	
-	use Mysql; # 3.5MB
-	use Text::Iconv;
-	use Compress::Zlib;
-	use MIME::Base64;
-	use File::Type;
-	#use Image::Magick; # 2.8MB
-	
-	
-	# CORE Engine kniznice
-	use TOM::Domain; # all addons will be initialized because $tom::addons_init is in true state
 	use TOM::Engine::pub::SIG;
 	use TOM::Engine::pub::cookies;
 	use TOM::Engine::pub::IAdm;
@@ -68,7 +72,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 	use TOM::Math;
 	use TOM::Int::lng;
 	use TOM::Utils::datetime;
-	use TOM::Template; # is called already from TOM::Engine
+	use TOM::Template; # is called already from TOM::Domain
 	
 	
 	# default addons

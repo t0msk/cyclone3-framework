@@ -76,6 +76,7 @@ BEGIN
 				}
 			}
 			
+			require TOM::Template;
 			if ($tom::templates_init) # load all templates only if required by engine
 			{
 				foreach my $template(keys %tom::templates)

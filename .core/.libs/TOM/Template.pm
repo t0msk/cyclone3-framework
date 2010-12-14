@@ -26,16 +26,23 @@ use TOM::Template::contenttypes;
 
 BEGIN
 {
-	if (!-e $tom::P_media.'/tpl' && -e $tom::P.'/local.conf')
+	if ($tom::P_media)
 	{
-		main::_log("mkpath '$tom::P_media/tpl'");
-		File::Path::mkpath $tom::P_media.'/tpl';
-		chmod (0777, $tom::P_media.'/tpl');
+		if (!-e $tom::P_media.'/tpl' && -e $tom::P.'/local.conf')
+		{
+			main::_log("mkpath '$tom::P_media/tpl'");
+			File::Path::mkpath $tom::P_media.'/tpl';
+			chmod (0777, $tom::P_media.'/tpl');
+		}
+		elsif (!-e $TOM::P_media.'/tpl')
+		{
+			File::Path::mkpath $TOM::P_media.'/tpl';
+			chmod (0777, $TOM::P_media.'/tpl');
+		}
 	}
-	elsif (!-e $TOM::P_media.'/tpl')
+	else
 	{
-		File::Path::mkpath $TOM::P_media.'/tpl';
-		chmod (0777, $TOM::P_media.'/tpl');
+		main::_log("\$tom::P_media is not defined in TOM::Template (loaded without TOM::Domain?)",1);
 	}
 }
 
@@ -315,7 +322,7 @@ sub parse_header
 	}
 	
 	
-	if ($self->{'dir'})
+	if ($self->{'dir'} && $tom::P_media) # extract only in domain service with defined P_media
 	{
 		# proceed extracting files only when tpl is a tpl.d/ type
 		
