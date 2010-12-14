@@ -122,6 +122,7 @@ BEGIN
 	$tom::P=~s|^(.*)/!www$|\1|;
 	# undef $tom::P if here is not domain service
 	$tom::P=$TOM::P unless -e $tom::P.'/local.conf';
+	$tom::P_media=$tom::P."/!media" unless $tom::P_media;
 	
 	# paths libs
 	unshift @INC,$TOM::P."/.core/.libs"; # to beginning

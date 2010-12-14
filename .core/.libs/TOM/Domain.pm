@@ -40,8 +40,6 @@ BEGIN
 			main::_log_stdout("require $tom::P/local.conf");
 			require $tom::P."/local.conf";
 			
-			$tom::P_media=$tom::P.'/!media' unless $tom::P_media;
-			
 			if ($tom::Pm)
 			{
 				shift @INC;
