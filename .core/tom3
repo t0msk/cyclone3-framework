@@ -1568,11 +1568,11 @@ while ($main::CGI=new CGI::Fast())
 				next;
 			}
 			
-			if ($env0{id} eq "title")
+			if ($env0{'id'} eq "title" && $env0{'value'})
 			{
 				if ($env0{'lng'}){next if $env0{'lng'} ne $tom::lng;}
-				_log("Change DOC::title to ".$env0{value});
-				$H->change_DOC_title($env0{value});
+				_log("Change DOC::title to ".$env0{'value'});
+				$H->change_DOC_title($env0{'value'});
 				next;
 			}
 			
@@ -1611,11 +1611,11 @@ while ($main::CGI=new CGI::Fast())
 				next;
 			}
 			
-			if ($env0{id} eq "title_")
+			if ($env0{'id'} eq "title_" && $env0{'value'})
 			{
-				_log("Add to DOC::title to ".$env0{value});
+				_log("Add to DOC::title to ".$env0{'value'});
 				next if ($env0{'lng'} && $env0{'lng'} ne $tom::lng);
-				$H->add_DOC_title($env0{value});
+				$H->add_DOC_title($env0{'value'});
 				next;
 			}
 			
@@ -1686,7 +1686,7 @@ while ($main::CGI=new CGI::Fast())
 			{
 				if ($env0{'value'}=~/^\+(\d+)([DHS])$/)
 				{
-					my $date = DateTime->now('time_zone' => 'local');#->subtract( days => $env{'days'} );
+					my $date = DateTime->now('time_zone' => 'GMT');#->subtract( days => $env{'days'} );
 					if ($2 eq "D")
 					{
 						$date->add('days' => $1);
