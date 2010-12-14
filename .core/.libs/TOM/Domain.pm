@@ -75,6 +75,30 @@ BEGIN
 					if ($@){main::_log("can't load addon '$addon_path' $@ $!",1)}
 				}
 			}
+			
+			if ($tom::templates_init) # load all templates only if required by engine
+			{
+				foreach my $template(keys %tom::templates)
+				{
+					delete $tom::templates{$template} unless $tom::templates{$template};
+				}
+				main::_log("load configured templates ".join(";",keys %tom::templates));
+				foreach my $template(sort keys %tom::templates)
+				{
+					my %tpl_set;
+					if (ref($tom::templates{$template}) eq "HASH")
+					{
+						%tpl_set=%{$tom::templates{$template}};
+					}
+					main::_log("<={TPL} '$template'");
+					new TOM::Template(
+						'name' => $template,
+						'content-type' => "xhtml",
+						%tpl_set
+					);
+				}
+			}
+			
 		}
 		
 	}

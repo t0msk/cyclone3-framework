@@ -4,7 +4,7 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
+BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 
 	use TOM;
@@ -13,6 +13,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	{
 		$TOM::Engine='pub';
 		$tom::addons_init=1;
+		$tom::templates_init=1;
 		
 		# data adresar
 		mkdir $tom::P."/_data" if (! -e $tom::P."/_data");
@@ -67,6 +68,8 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__.'{$Id$}');};}
 	use TOM::Math;
 	use TOM::Int::lng;
 	use TOM::Utils::datetime;
+	use TOM::Template; # is called already from TOM::Engine
+	
 	
 	# default addons
 	use App::020::_init; # standard 0
