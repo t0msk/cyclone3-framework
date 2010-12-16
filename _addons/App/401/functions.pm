@@ -595,8 +595,20 @@ sub article_item_info
 	my $t=track TOM::Debug(__PACKAGE__."::article_item_info()");
 	
 	my $sql_where;
-	if ($env{'article_attrs.ID_category'} eq 'NULL'){$sql_where='ID_category IS NULL';}
-	else {$sql_where="ID_category = $env{'article_attrs.ID_category'}";}
+	if ($env{'article_attrs.ID_category'})
+	{
+		if ($env{'article_attrs.ID_category'} eq 'NULL')
+		{
+			$sql_where='ID_category IS NULL';
+		} else
+		{
+			$sql_where="ID_category = $env{'article_attrs.ID_category'}";
+		}
+	}
+	else {
+		$sql_where='ID_category IS NULL';
+	}
+
 	my $sql=qq{
 		SELECT
 			view.*,
