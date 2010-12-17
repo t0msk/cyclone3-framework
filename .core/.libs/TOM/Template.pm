@@ -34,10 +34,10 @@ BEGIN
 			File::Path::mkpath $tom::P_media.'/tpl';
 			chmod (0777, $tom::P_media.'/tpl');
 		}
-		elsif (!-e $TOM::P_media.'/tpl')
+		elsif (!-e $tom::P_media.'/tpl')
 		{
-			File::Path::mkpath $TOM::P_media.'/tpl';
-			chmod (0777, $TOM::P_media.'/tpl');
+			File::Path::mkpath $tom::P_media.'/tpl';
+			chmod (0777, $tom::P_media.'/tpl');
 		}
 	}
 	else
