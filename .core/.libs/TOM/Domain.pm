@@ -34,9 +34,10 @@ BEGIN
 		mkdir $tom::P.'/_logs' if (! -e $tom::P.'/_logs');
 		chmod 0777,$tom::P.'/_logs';
 		
-		# load configured addons
+		# load configation
 		if ($tom::P ne $TOM::P)
 		{
+			$tom::P_media=$tom::P."/!media"; # redefine P_media
 			main::_log_stdout("require $tom::P/local.conf");
 			require $tom::P."/local.conf";
 			
