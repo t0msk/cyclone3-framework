@@ -70,6 +70,7 @@ File::Path
 
 use App::020::_init; # data standard 0
 use App::301::_init;
+use App::501::_init;
 use App::542::mimetypes;
 use App::542::functions;
 use App::542::a160;
@@ -175,6 +176,44 @@ foreach my $lng(@TOM::LNG_accept)
 			'-journalize' => 1
 		);
 	}
+}
+
+
+# file thumbnails
+
+our $thumbnail_cat_ID_entity;
+our %thumbnail_cat;
+
+# find any category;
+my $sql="
+	SELECT
+		ID, ID_entity
+	FROM
+		`$App::501::db_name`.`a501_image_cat`
+	WHERE
+		name='file thumbnails' AND
+		lng IN ('".(join "','",@TOM::LNG_accept)."')
+	LIMIT 1
+";
+my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+if (my %db0_line=$sth0{'sth'}->fetchhash())
+{
+	$thumbnail_cat_ID_entity=$db0_line{'ID_entity'} unless $thumbnail_cat_ID_entity;
+}
+else
+{
+	$thumbnail_cat_ID_entity=App::020::SQL::functions::tree::new(
+		'db_h' => "main",
+		'db_name' => $App::501::db_name,
+		'tb_name' => "a501_image_cat",
+		'parent_ID' => $App::501::system_cat{$tom::LNG},
+		'columns' => {
+			'name' => "'file thumbnails'",
+			'lng' => "'$tom::LNG'",
+			'status' => "'L'"
+		},
+		'-journalize' => 1
+	);
 }
 
 
