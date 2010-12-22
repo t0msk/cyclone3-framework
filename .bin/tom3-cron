@@ -9,12 +9,9 @@ BEGIN
 	if (!$ENV{'CYCLONE3PATH'}){$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";}
 	require $ENV{'CYCLONE3PATH'}."/.bin/tom3-init";
 	$main::debug=1;
-	use Inline (Config => DIRECTORY => $ENV{'CYCLONE3PATH'}."/.core/.libs/_Inline");
 }
 
 use TOM;
-use enc3;
-use iconv;
 use Mysql;
 use TOM::Database::connect;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
@@ -48,23 +45,22 @@ require $ENV{'CYCLONE3PATH'}."/.core/_config/cron.conf";
 	$CRON::P=$ENV{'CYCLONE3PATH'};
 	$cron::P=$CRON::P;
 	
-	if ($FORM{domain})
+	if ($FORM{'domain'})
 	{
-		main::_log("loading $main::p/local.conf");
-		require $main::p."/local.conf";
+#		require $main::p."/local.conf"; # local.conf already loaded
 		$cron::P=$main::p;
 		$tom::P=$main::p;
+		main::_log("main db=$TOM::DB{'main'}{'name'}");
 	}
 	else
 	{
 		$TOM::DB{'main'}{'name'}="TOM";
 	}
 	
-	TOM::Database::connect::multi('main');
+	TOM::Database::connect::all('main');
 	
 	print "";
 	
 	module(%FORM);
-	
 	
 	&exit();

@@ -115,7 +115,7 @@ $main::time_current=$cron::time_current=$tom::time_current=time;
 	$main::Fyear_sub=~s/^..//;
 	
 	
-if ($main::FORM{domain})
+if ($main::FORM{'domain'})
 {
 	$main::FORM{domain}=~s|^www\.||i;
 	$main::h=$main::FORM{domain};$main::h=~s|\.|_|g;$main::h=~s|/|__|g;
@@ -133,10 +133,10 @@ if ($main::FORM{domain})
 	print "p:".$main::p."\n";
 	print "h:".$main::h."\n";
 	
-	require TOM::Domain;
-	
 	$tom::P=$main::p;
 	$TOM::P=$main::P;
+	
+	require TOM::Domain;
 	
 	unshift @INC,$tom::P."/.libs";
 	unshift @INC,$tom::P."/_addons";
