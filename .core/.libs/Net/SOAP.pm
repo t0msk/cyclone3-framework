@@ -57,6 +57,9 @@ sub prepare
 	my $self=shift;
 	
 	$self->{'OUT'}{'HEADER'} = qq{<?xml version="1.0" encoding="<%CODEPAGE%>"?>
+<!--
+$Net::DOC::base::copyright
+-->
 <SOAP-ENV:Envelope
 	xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" 
 	SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">

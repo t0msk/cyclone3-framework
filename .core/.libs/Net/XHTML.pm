@@ -149,6 +149,11 @@ sub prepare
 	$self->{'OUT'}{'HEADER'} .=
 		'<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xml:lang="<%HEADER-LNG%>" lang="<%HEADER-LNG%>">'."\n";
 	
+	$self->{'OUT'}{'HEADER'} .= qq{<!--
+$Net::DOC::base::copyright
+-->
+};
+	
 	$self->{'OUT'}{'HEADER'} .= '<head>'."\n"; 
 	
 	
@@ -256,7 +261,7 @@ sub prepare
 	
 	# FOOTER
 	
-	$self->{'OUT'}{'FOOTER'} = "</body>\n</html>\n";
+	$self->{'OUT'}{'FOOTER'} = "\n\n</body>\n</html>\n";
 	
  return 1;
 }
