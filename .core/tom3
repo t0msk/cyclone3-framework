@@ -2232,12 +2232,12 @@ while ($main::CGI=new CGI::Fast())
 		
 		
 		
-		main::_log("Document nieje v utf8",1) unless utf8::is_utf8($H->{OUT}{BODY});
-		main::_log("Document nieje v UTF-8",1,"pub.err") unless utf8::is_utf8($H->{OUT}{BODY});
+		main::_log("Document not in UTF-8",1) unless utf8::is_utf8($H->{'OUT'}{'BODY'});
+		main::_log("Document not in UTF-8",1,"pub.err") unless utf8::is_utf8($H->{'OUT'}{'BODY'});
 		
 		
 		
-		$main::H->message("This page has been optimized for detected UserAgent: ".$main::UserAgent_name);
+		$main::H->message("This document has been generated as needed for User agent \"".$main::UserAgent_name."\"");
 		
 		# ak je browser stary
 		$main::H->message($TOM::Net::HTTP::UserAgent::messages{old}[$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{old}])if exists $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{old};
