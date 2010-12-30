@@ -1,6 +1,10 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
-BEGIN {$main::debug=0;require "/www/TOM/.bin/tom3-init";}
+BEGIN {
+	$main::debug=0;
+	if (!$ENV{'CYCLONE3PATH'}){$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";};
+	require $ENV{'CYCLONE3PATH'}."/.bin/tom3-init";
+}
 
 use SVN::Ra;
 use SVN::Log;
