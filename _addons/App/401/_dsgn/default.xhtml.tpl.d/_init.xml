@@ -67,7 +67,7 @@
 	-->
 	
 	<entity id="parser.link.a501_image" replace_variables="false"><![CDATA[
-	<a class="a501_image img_<%attr_align%>" id="<%attr_id%>" src="<%attr_src%>" alt="<%attr_alt%>" target="<%attr_target%>">
+	<a class="a501_image" id="<%attr_id%>" href="<%attr_src%>" alt="<%attr_alt%>" target="<%attr_target%>">
 	]]>
 	</entity>
 	
