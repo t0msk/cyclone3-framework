@@ -665,8 +665,8 @@ while ($main::CGI=new CGI::Fast())
 		$main::ENV{'REF_TYPE'}="cpc" if $FORM{'gclid'}; # adwords campaing hack
 		$main::ENV{'REF_TYPE'}=$FORM{'utm_medium'} if $FORM{'utm_medium'}; # other campaings hack
 		$main::ENV{'REF_TYPE'}=$FORM{'ref'} if $FORM{'ref'};
-		$main::ENV{'REF_TYPE'}='onsite' if $main::ENV{'HTTP_REFERER'}=~/^[.]{1,20}$tom::H/;
-		$main::ENV{'REF_TYPE'}='onsite' if ($tom::Hm && ($main::ENV{'HTTP_REFERER'}=~/^[.]{1,20}$tom::Hm/));
+		$main::ENV{'REF_TYPE'}='onsite' if $main::ENV{'HTTP_REFERER'}=~/^http[s]?:\/\/[a-z\.]*?$tom::H/;
+		$main::ENV{'REF_TYPE'}='onsite' if ($tom::Hm && ($main::ENV{'HTTP_REFERER'}=~/^http[s]?:\/\/[a-z\.]*?$tom::Hm/));
 		$main::ENV{'REF_TYPE'}='direct' unless $main::ENV{'REF_TYPE'};
 		# fixes
 		$main::ENV{'REF_TYPE'}='feed' if $main::ENV{'REF_TYPE'} eq "rss";
