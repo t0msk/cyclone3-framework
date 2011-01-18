@@ -874,6 +874,22 @@ sub start
 		
 		
 	}
+	elsif ($tag eq "span")
+	{
+		if ($attr->{'class'}=~/^a420_keyword$/)
+		{
+			$out_full=
+				$self->{'entity'}{'inline.a420_keyword.'.$out_cnt}
+				|| $self->{'entity'}{'inline.a420_keyword'}
+				|| $tpl->{'entity'}{'parser.inline.a420_keyword.'.$out_cnt}
+				|| $tpl->{'entity'}{'parser.inline.a420_keyword'}
+				|| $self->{'entity'}{'a420_keyword.'.$out_cnt}
+				|| $self->{'entity'}{'a420_keyword'}
+				|| $tpl->{'entity'}{'inline.a420_keyword.'.$out_cnt}
+				|| $tpl->{'entity'}{'inline.a420_keyword'}
+				|| $out_full;
+		}
+	}
 	
 	# fix not closed tags
 	if ($tag=~/^hr|br|img$/)
