@@ -98,6 +98,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   `ID_category` bigint(20) unsigned default NULL, -- rel article_cat.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
+  `name_hyphens` varchar(200) character set ascii default NULL,
   `datetime_create` datetime NOT NULL,
   `datetime_start` datetime NOT NULL,
   `datetime_stop` datetime default NULL,
@@ -134,6 +135,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs_j` (
   `ID_category` bigint(20) unsigned default NULL, -- rel article_cat.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
+  `name_hyphens` varchar(200) character set ascii default NULL,
   `datetime_create` datetime NOT NULL,
   `datetime_start` datetime NOT NULL,
   `datetime_stop` datetime default NULL,
@@ -154,20 +156,26 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
+  `datetime_check` datetime default NULL,
   `ID_editor` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `subtitle` varchar(250) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `subtitle_hyphens` text character set ascii default NULL,
   `mimetype` varchar(50) character set ascii NOT NULL default 'text/html',
   `abstract` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `abstract_hyphens` text character set ascii default NULL,
   `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `body_hyphens` longtext character set ascii default NULL,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   FULLTEXT KEY `FULL_0` (`subtitle`,`abstract`,`body`,`keywords`),
+  FULLTEXT KEY `FULL_1` (`keywords`),
   KEY `ID_entity` (`ID_entity`),
   KEY `subtitle` (`subtitle`),
   KEY `datetime_create` (`datetime_create`),
+  KEY `datetime_check` (`datetime_check`),
   KEY `mimetype` (`mimetype`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
@@ -179,11 +187,15 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
+  `datetime_check` datetime default NULL,
   `ID_editor` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `subtitle` varchar(250) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `subtitle_hyphens` text character set ascii default NULL,
   `mimetype` varchar(50) character set ascii NOT NULL default 'text/html',
   `abstract` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `abstract_hyphens` text character set ascii default NULL,
   `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `body_hyphens` longtext character set ascii default NULL,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -197,6 +209,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_visit` (
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_article` bigint(20) NOT NULL, -- rel to article.ID_entity
   `visit_ref` varchar(20) character set ascii NOT NULL default '',
+--  `visit_ref_full` varchar(128) character set ascii NOT NULL default '',
   `page_code` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_article`),
   KEY `SEL_0` (`ID_article`,`datetime_event`)
@@ -209,9 +222,22 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_visit_arch` (
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_article` bigint(20) NOT NULL,
   `visit_ref` varchar(20) character set ascii NOT NULL default '',
+--  `visit_ref_full` varchar(128) character set ascii NOT NULL default '',
   `page_code` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   KEY `datetime_event` (`datetime_event`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_article_keyword_income` (
+  `datetime_event` datetime NOT NULL,
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_article` bigint(20) NOT NULL, -- rel to article.ID_entity
+  `keyword` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `page_code` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
+  PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_article`,`keyword`),
+  KEY `SEL_0` (`ID_article`,`datetime_event`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8; -- must be myisam because inserting with insert delayed
 
 -- --------------------------------------------------
 
@@ -257,6 +283,19 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat_j` (
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_article_cat_metaindex` (
+  `ID` bigint(20) unsigned NOT NULL, -- ref _article_cat.ID
+  `meta_section` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_variable` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_value` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`meta_section`,`meta_variable`),
+  KEY `SEL_0` (`meta_section`,`meta_variable`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
