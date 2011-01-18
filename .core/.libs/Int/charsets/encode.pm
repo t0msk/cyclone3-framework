@@ -43,7 +43,7 @@ our %table=
 	
 	'171'	=>	"<", # '«'
 	
-	'173'	=>	"-", # pomlcka
+	'173'	=>	"", # soft hyphen (don't display!)
 	'174'	=>	"z", # 'z' s makcenom
 	
 	'176'	=>	" ", # pevna medzera
@@ -418,7 +418,7 @@ our %table_string=
 
 sub UTF8_ASCII_
 {
-	return $table{ord($_[0])} if $table{ord($_[0])};
+	return $table{ord($_[0])} if exists $table{ord($_[0])};
 	
 	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require) = caller(1);
 	main::_log("Int::charsets::encode::* ASCII from UTF-8 \\$_[0] {".(ord($_[0]))."} - unknown from ($package/$filename/$line)",1,"lib.err",1) if (ord($_[0])>127);
@@ -444,5 +444,16 @@ sub UTF8_ASCII
 	return $text;
 }
 
+sub UTF8_ASCII_lite
+{
+	my $text=shift;
+	# enable utf8 flag unless enabled
+	# only utf8 string can be converted
+	utf8::decode($text) unless utf8::is_utf8($text);
+	
+	$text=~tr/áéíóúôäýžčšťľďňČŽ/aeiouoayzcstldnCZ/;
+	
+	return $text;
+}
 
 1;
