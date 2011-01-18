@@ -12,6 +12,7 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
+use charnames ':full';
 
 use Digest::MD5  qw(md5 md5_hex md5_base64);
 use Int::charsets::encode;
@@ -624,6 +625,7 @@ sub convert
 	# convert znakov ktore chcem zachovat v kontexte
 	$URL=~s|;|-|g;
 	$URL=~s|[/]|-|g;
+	$URL=~s|\N{NO-BREAK SPACE}| |g;
 	$URL=~s|[/\(\) ]|-|g;
 	
 	# uplne odstranenie nevhodnych znakov
