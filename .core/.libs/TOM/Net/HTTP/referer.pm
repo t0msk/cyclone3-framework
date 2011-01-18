@@ -526,6 +526,7 @@ sub extract_keywords
 			
 			# don't analyze queries from google cache
 			next if $FORM{$keyword_param}=~/^cache/;
+			next if $FORM{$keyword_param}=~/^site:/;
 			next unless $FORM{$keyword_param};
 			
 			# convert keywords to ASCII
@@ -549,7 +550,7 @@ sub extract_keywords
 			#@{$data{'keywords'}}=split ';',$FORM{$keyword_param};
 			foreach my $word(split ';',$FORM{$keyword_param})
 			{
-				next if ((length($word)<4) && (not $word=~/^[A-Z0-9]$/));
+				next if ((length($word)<3) && (not $word=~/^[A-Z0-9]$/));
 				$word=~tr/A-Z/a-z/;
 				push @{$data{'keywords'}},$word;
 			}
