@@ -163,8 +163,15 @@ zh 	Chinese 	zu 	Zulu
 );
 
 
+our %PUBLISHED=
+(
+	'sk' => ["pred","teraz","dnes","včera","hodinou","hodinami","dňom","dňami","týžňom","týžňami","mesiacom","mesiacmi","rokom","rokmi"]
+);
 
-
+our %PUBLISHED_OLD=
+(
+	'sk' => ["teraz","dnes","včera","min.","min.","min.","hod.","hod.","hod.","deň","dni","dní","týždeň","týždne","týždňov","mesiac","mesiace","mesiacov","rok","roky","rokov"]
+);
 
 
 
