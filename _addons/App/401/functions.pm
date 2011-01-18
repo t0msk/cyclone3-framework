@@ -38,6 +38,7 @@ L<TOM::Security::form|lib/"TOM/Security/form.pm">
 use App::401::_init;
 use TOM::Security::form;
 use Time::HiRes qw(usleep);
+use Ext::TextHyphen::_init;
 
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
@@ -285,11 +286,12 @@ sub article_add
 	{
 		my %columns;
 		# name
-		$columns{'name'}="'".TOM::Security::form::sql_escape($env{'article_attrs.name'})."'"
-			if ($env{'article_attrs.name'} && ($env{'article_attrs.name'} ne $article_attrs{'name'}));
-		# name_url
-		$columns{'name_url'}="'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'article_attrs.name'}))."'"
-			if ($env{'article_attrs.name'} && ($env{'article_attrs.name'} ne $article_attrs{'name'}));
+		if ($env{'article_attrs.name'} && ($env{'article_attrs.name'} ne $article_attrs{'name'}))
+		{
+			$columns{'name'}="'".TOM::Security::form::sql_escape($env{'article_attrs.name'})."'";
+			$columns{'name_url'}="'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'article_attrs.name'}))."'";
+			$columns{'name_hyphens'}="'". TOM::Security::form::sql_escape(join(",",Ext::TextHyphen::get_hyphens($env{'article_attrs.name'},'lng'=>$article_attrs{'lng'}))) ."'";
+		}
 		# ID_category
 		$columns{'ID_category'}=$env{'article_attrs.ID_category'}
 			if ($env{'article_attrs.ID_category'} && ($env{'article_attrs.ID_category'} ne $article_attrs{'ID_category'}));
@@ -421,16 +423,30 @@ sub article_add
 	if ($env{'article_content.ID'})
 	{
 		my %columns;
-		$columns{'subtitle'}="'".TOM::Security::form::sql_escape($env{'article_content.subtitle'})."'"
-			if (exists $env{'article_content.subtitle'} && ($env{'article_content.subtitle'} ne $article_content{'subtitle'}));
+		
+		if (exists $env{'article_content.subtitle'} && ($env{'article_content.subtitle'} ne $article_content{'subtitle'}))
+		{
+			$columns{'subtitle'}="'".TOM::Security::form::sql_escape($env{'article_content.subtitle'})."'";
+			$columns{'subtitle_hyphens'}="'". TOM::Security::form::sql_escape(join(",",Ext::TextHyphen::get_hyphens($env{'article_content.subtitle'},'lng'=>$article_attrs{'lng'}))) ."'";
+		}
 		$columns{'mimetype'}="'".TOM::Security::form::sql_escape($env{'article_content.mimetype'})."'"
 			if ($env{'article_content.mimetype'} && ($env{'article_content.mimetype'} ne $article_content{'mimetype'}));
-		$columns{'abstract'}="'".TOM::Security::form::sql_escape($env{'article_content.abstract'})."'"
-			if ($env{'article_content.abstract'} && ($env{'article_content.abstract'} ne $article_content{'abstract'}));
+		if ($env{'article_content.abstract'} && ($env{'article_content.abstract'} ne $article_content{'abstract'}))
+		{
+			$columns{'abstract'}="'".TOM::Security::form::sql_escape($env{'article_content.abstract'})."'";
+			my $text_plain=$env{'article_content.abstract'};
+				$text_plain=~s/<(.*?)>/"<" . "*" x length($1) . ">"/ge;;
+			$columns{'abstract_hyphens'}="'". TOM::Security::form::sql_escape(join(",",Ext::TextHyphen::get_hyphens($text_plain,'lng'=>$article_attrs{'lng'}))) ."'";
+		}
 		$columns{'keywords'}="'".TOM::Security::form::sql_escape($env{'article_content.keywords'})."'"
 			if (exists $env{'article_content.keywords'} && ($env{'article_content.keywords'} ne $article_content{'keywords'}));
-		$columns{'body'}="'".TOM::Security::form::sql_escape($env{'article_content.body'})."'"
-			if ($env{'article_content.body'} && ($env{'article_content.body'} ne $article_content{'body'}));
+		if ($env{'article_content.body'} && ($env{'article_content.body'} ne $article_content{'body'}))
+		{
+			$columns{'body'}="'".TOM::Security::form::sql_escape($env{'article_content.body'})."'";
+			my $text_plain=$env{'article_content.body'};
+				$text_plain=~s/<(.*?)>/"<" . "*" x length($1) . ">"/ge;;
+			$columns{'body_hyphens'}="'". TOM::Security::form::sql_escape(join(",",Ext::TextHyphen::get_hyphens($text_plain,'lng'=>$article_attrs{'lng'}))) ."'";
+		}
 			
 		if (keys %columns)
 		{
