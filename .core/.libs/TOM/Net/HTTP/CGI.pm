@@ -87,7 +87,7 @@ sub GetQuery
 		#$value =~tr/+/ /;
 		
 		# su tu UTF-8 sekvencie
-		if ($value=~/%(C3|C4|C5)%([0-9A-Fa-f]{2})/i)
+		if ($value=~/%(C2|C3|C4|C5)%([0-9A-Fa-f]{2})/i)
 		{
 			main::_log("utf-8 sequence");
 			utf8::encode($value);
@@ -238,7 +238,7 @@ sub get_QUERY_STRING
 		utf8::encode($name);
 		utf8::decode($name);
 		# su tu UTF-8 sekvencie
-		if ($name=~/%(D0|D1|C3|C4|C5)%([0-9A-Fa-f]{2})/i)
+		if ($name=~/%(D0|D1|C2|C3|C4|C5)%([0-9A-Fa-f]{2})/i)
 		{
 			main::_log("utf-8 sequence") unless $env{'quiet'};
 			utf8::encode($name);
@@ -265,7 +265,7 @@ sub get_QUERY_STRING
 		utf8::encode($value);
 		utf8::decode($value);
 		# su tu UTF-8 sekvencie
-		if ($value=~/%(D0|D1|C3|C4|C5)%([0-9A-Fa-f]{2})/i)
+		if ($value=~/%(D0|D1|C2|C3|C4|C5)%([0-9A-Fa-f]{2})/i)
 		{
 			main::_log("utf-8 sequence") unless $env{'quiet'};
 			utf8::encode($value);
