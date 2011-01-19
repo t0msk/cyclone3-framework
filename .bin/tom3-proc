@@ -33,11 +33,11 @@ while(1)
 	foreach my $p (@{$t->table})
 	{
 #		print $p->{'cmndline'}."\n";
-		next unless $p->{'cmndline'}=~/^.*\/perl $TOM::P\/[^ ]*\/(.*?) /;
+		next unless $p->{'cmndline'}=~/^.*\/perl $TOM::P\/[^ ]*\/(.*?)$/;
 		my $engine=$1;
 		
 		my $host;
-		$p->{'cmndline'}=~/$TOM::P\/(.*)\/(.*?) /;
+		$p->{'cmndline'}=~/$TOM::P\/(.*)\/(.*?)$/;
 		my $pwd=$1;
 #			$pwd=~s|^.*?/TOM/||;
 			$pwd=~s| $||g;
