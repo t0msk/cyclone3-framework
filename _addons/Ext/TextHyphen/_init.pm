@@ -24,7 +24,7 @@ use charnames ':full';
 our $soft_hyphen="\N{SOFT HYPHEN}";
 our $nbsp="\N{NO-BREAK SPACE}";
 
-use Ext::TextHyphen::rules::sk;
+#use Ext::TextHyphen::rules::sk;
 
 sub get_hyphens
 {
