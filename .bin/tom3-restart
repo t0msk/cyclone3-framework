@@ -38,7 +38,8 @@ foreach my $p (@{$t->table})
 {
 	my $cmd=$p->cmndline;
 	
-	next unless $p->{'cmndline'}=~/^.*\/perl $TOM::P\/([^ ]*)\/(.*?) /;
+	next unless $p->{'cmndline'}=~/^.*\/perl $TOM::P\/([^ ]*)\/(.*?)$/;
+	
 	my $engine=$2;
 	my $domain=$1;
 	$domain=~s|/!www\s?$||;
