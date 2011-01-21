@@ -890,6 +890,13 @@ sub start
 				|| $out_full;
 		}
 	}
+	elsif ($tag eq "p")
+	{
+		if (!$attr->{'id'} && $attr->{'entity_part'} && $self->{'config'}->{'editable'})
+		{
+			$attr->{'rel'}="editable";
+		}
+	}
 	
 	# fix not closed tags
 	if ($tag=~/^hr|br|img$/)
@@ -951,6 +958,138 @@ sub end
 	#print $origtext;
 }
 
+
+sub config
+{
+	my $self=shift;
+	my %config=@_;
+	
+	my $name=$config{'name'};
+	my $env=$config{'env'};
+	my $entity=$config{'entity'};
+	my $counter=$config{'counter'} || "1";
+	my $prefix=$config{'prefix'} || "item";
+	
+	$self->{'config'}->{'editable'}=$env->{'editable'};
+	
+	# img
+	$self->{'ignore'}{'img'}=
+		$env->{$name.'.ignore.img'}
+		|| $env->{'ignore.img'}
+		|| undef;
+	
+	$self->{'ignore'}{'img.1'}=
+		$env->{$name.'.ignore.img.1'}
+		|| $env->{'ignore.img.1'}
+		|| undef;
+	
+	# a030_youtube
+	$self->{'entity'}{'a030_youtube'}=
+		$entity->{$name.'.a030_youtube'}
+		|| $entity->{'a030_youtube'}
+		|| undef;
+		
+	$self->{'entity'}{'a030_youtube.1'}=
+		$entity->{$name.'.a030_youtube.1'}
+		|| $entity->{'a030_youtube.1'}
+		|| undef;
+	
+	# a210_page
+	$self->{'entity'}{'a210_page'}=
+		$entity->{$name.'.a210_page'}
+		|| $entity->{'a210_page'}
+		|| undef;
+	
+	# a401_article
+	$self->{'entity'}{'a401_article'}=
+		$entity->{$name.'.link.a401_article'}
+		|| $entity->{$name.'.a401_article'}
+		|| $entity->{'link.a401_article'}
+		|| $entity->{'a401_article'}
+		|| undef;
+	
+	# a420_keyword
+	$self->{'entity'}{'a420_keyword'}=
+		$entity->{$name.'.inline.a420_keyword'}
+		|| $entity->{$name.'.a420_keyword'}
+		|| $entity->{'inline.a420_keyword'}
+		|| $entity->{'a420_keyword'}
+		|| undef;
+	
+	# a501_image
+	$self->{'config'}->{'a501_image_file.ID_format'}=
+		$env->{$prefix.'.'.$counter.'.'.$name.'.a501_image_file.ID_format'}
+		|| $env->{$prefix.'.'.$counter.'.a501_image_file.ID_format'}
+		|| $env->{$name.'.a501_image_file.ID_format'}
+		|| $env->{'a501_image_file.ID_format'}
+		|| undef;
+	$self->{'config'}->{'a501_image_file.ID_format.1'}=
+		$env->{$prefix.'.'.$counter.'.'.$name.'.a501_image_file.ID_format.1'}
+		|| $env->{$prefix.'.'.$counter.'.a501_image_file.ID_format.1'}
+		|| $env->{$name.'.a501_image_file.ID_format.1'}
+		|| $env->{'a501_image_file.ID_format.1'}
+		|| undef;
+	$self->{'config'}->{'a501_image_file.ID_format.extra'}=
+			$self->{'a501_image_file.ID_format.extra'}
+			|| undef;
+	$self->{'entity'}->{'a501_image'}=
+		$entity->{$name.'.a501_image'}
+		|| $entity->{'a501_image'}
+		|| undef;
+	$self->{'entity'}->{'a501_image.nofullsize'}=
+		$entity->{$name.'.a501_image.nofullsize'}
+		|| $entity->{'a501_image.nofullsize'}
+		|| undef;
+	$self->{'entity'}->{'a501_image.1'}=
+		$entity->{$name.'.a501_image.1'}
+		|| $entity->{'a501_image.1'}
+		|| undef;
+	$self->{'entity'}->{'link.a501_image'}=
+		$entity->{$name.'.link.a501_image'}
+		|| $entity->{'link.a501_image'}
+		|| undef;
+	
+	# a510_video
+	$self->{'entity'}{'a510_video'}=
+		$entity->{$name.'.a510_video'}
+		|| $entity->{'a510_video'}
+		|| undef;
+	$self->{'entity'}{'a510_video.1'}=
+		$entity->{$name.'.a510_video.1'}
+		|| $entity->{'a510_video.1'}
+		|| undef;
+	
+	# a510_video_part
+	$self->{'config'}->{'a510_video_part_file.ID_format'}=
+			$env->{$prefix.'.'.$counter.'.'.$name.'.a510_video_part_file.ID_format'}
+			|| $env->{$prefix.'.'.$counter.'.a510_video_part_file.ID_format'}
+			|| $env->{$name.'.a510_video_part_file.ID_format'}
+			|| $env->{'a510_video_part_file.ID_format'}
+			|| undef;
+	$self->{'config'}->{'a510_video_part_file.ID_format.1'}=
+			$env->{$prefix.'.'.$counter.'.'.$name.'.a510_video_part_file.ID_format.1'}
+			|| $env->{$prefix.'.'.$counter.'.a510_video_part_file.ID_format.1'}
+			|| $env->{$name.'.a510_video_part_file.ID_format.1'}
+			|| $env->{'a510_video_part_file.ID_format.1'}
+			|| undef;
+	$self->{'entity'}{'a510_video_part'}=
+		$entity->{$name.'.a510_video_part'}
+		|| $entity->{'a510_video_part'}
+		|| undef;
+	$self->{'entity'}{'a510_video_part.1'}=
+		$entity->{$name.'.a510_video_part.1'}
+		|| $entity->{'a510_video_part.1'}
+		|| undef;
+	
+	# a542
+	$self->{'entity'}->{'link.a542_file'}=
+		$entity->{$name.'.link.a542_file'}
+		|| $entity->{'link.a542_file'}
+		|| undef;
+	
+	foreach (keys %{$entity}){if ($_=~/^a010/){$self->{'entity'}{$_}=$entity->{$_};}}
+	
+}
 
 =head1 AUTHORS
 
