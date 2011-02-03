@@ -48,7 +48,7 @@ use XML::XPath::XMLParser;
 
 our %sources;
 our %rules;
-our $debug=0;
+our $debug=$App::301::karma::dictionary::debug || 0;
 
 sub load
 {

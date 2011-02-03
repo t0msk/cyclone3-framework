@@ -4,31 +4,31 @@
 		
 		<rule>
 			<regexp source="ascii">[\w]+</regexp>
-			<value>0.2</value>
+			<value>0.20</value>
 		</rule>
 		
 		<!-- uppercase word -->
 		<rule>
 			<regexp source="ascii">[A-Z]{4}</regexp>
-			<value>-5</value>
+			<value>-3</value>
 		</rule>
 		
 		<rule> <!-- repeating characters -->
-			<regexp source="lowascii">[?!]{3}</regexp>
-			<value>-0.2</value>
+			<regexp source="lowascii">[?!]{2}</regexp>
+			<value>-0.4</value>
 		</rule>
 		<rule> <!-- repeating characters -->
-			<regexp source="lowascii">[.]{4}</regexp>
-			<value>-0.2</value>
+			<regexp source="lowascii">(.)\1{2}</regexp>
+			<value>-0.6</value>
 		</rule>
 		
 		<rule> <!-- long words -->
 			<regexp source="lowascii">[\w]{20,}</regexp>
-			<value>-15</value>
+			<value>-5</value>
 		</rule>
 		<rule> <!-- long words -->
 			<regexp source="lowascii">[\w]{35,}</regexp>
-			<value>-25</value>
+			<value>-5</value>
 		</rule>
 		
 		<!-- trying to hacking -->
@@ -39,6 +39,12 @@
 			<value>-50</value>
 		</rule>
 		
+		<!-- spam words -->
+		<rule><regexp source="lowascii">penis</regexp><value>-2</value></rule>
+		<rule><regexp source="lowascii">http</regexp><value>-0.3</value></rule>
+		<rule><regexp source="lowascii">\.html</regexp><value>-0.3</value></rule>
+		<rule><regexp source="lowascii">www</regexp><value>-0.3</value></rule>
+		<rule><regexp source="lowascii">enlarge</regexp><value>-2</value></rule>
 		
 	</dictionary>
 	
