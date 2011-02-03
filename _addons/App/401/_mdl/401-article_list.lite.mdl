@@ -29,7 +29,7 @@ L<App::401::_init|app/"401/_init.pm">
 =cut
 
 use App::401::_init;
-
+use Ext::TextHyphen::_init;
 
 
 =head1 INPUTS
@@ -222,6 +222,15 @@ sub execute
 		$env{'sql_limit'}='1';
 	}
 	
+	my %hyphen;
+	if ($env{'hyphen'})
+	{
+		foreach(split('[,;]',$env{'hyphen'}))
+		{
+			$hyphen{$_}=1;
+		}
+	}
+	
 	my $execution_success=1;
 	
 	my $sql_where;
@@ -329,10 +338,14 @@ sub execute
 			
 			article_attrs.name,
 			article_attrs.name_url,
+			article_attrs.name_hyphens,
 			article_content.subtitle,
+			article_content.subtitle_hyphens,
 			article_content.mimetype,
 			article_content.abstract,
+			article_content.abstract_hyphens,
 			article_content.body,
+			article_content.body_hyphens,
 			article_content.keywords,
 			article_content.lng,
 			
@@ -444,21 +457,134 @@ sub execute
 			$item=$XSGN{'item-emptybody'};
 		}
 		
-      my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
-      $db0_line{'datetime_start.year'}=$datetime{'year'};
-      $db0_line{'datetime_start.month'}=$datetime{'month'};
-      $db0_line{'datetime_start.month_'}=$datetime{'month'}-1+1;
-      $db0_line{'datetime_start.mday'}=$datetime{'mday'};
-      $db0_line{'datetime_start.hour'}=$datetime{'hour'};
-      $db0_line{'datetime_start.min'}=$datetime{'min'};
-      $db0_line{'datetime_start.sec'}=$datetime{'sec'};
-      
+		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
+		$db0_line{'datetime_start.year'}=$datetime{'year'};
+		$db0_line{'datetime_start.month'}=$datetime{'month'};
+		$db0_line{'datetime_start.month_'}=$datetime{'month'}-1+1;
+		$db0_line{'datetime_start.mday'}=$datetime{'mday'};
+		$db0_line{'datetime_start.hour'}=$datetime{'hour'};
+		$db0_line{'datetime_start.min'}=$datetime{'min'};
+		$db0_line{'datetime_start.sec'}=$datetime{'sec'};
+		
 		$db0_line{'datetime_start.month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$datetime{'month'}-1];
 		$db0_line{'datetime_start.month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$datetime{'month'}-1];
 		
+		use DateTime;
+		my $dt = DateTime->now();
+		my $dt_to = DateTime->new(
+			'year' => $datetime{'year'},
+			'month' => $datetime{'month'},
+			'day' => $datetime{'mday'},
+			'hour' => $datetime{'hour'}
+		);
+		my $dt_dur=$dt_to-$dt;
+		
+		my $dur_string;
+		if ($dt_dur->years() >= 2)
+		{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$dt_dur->years()." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[13];}
+		elsif ($dt_dur->years() >= 1)
+		{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[12];}
+		else
+		{
+			if ($dt_dur->months() >= 2)
+			{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$dt_dur->months()." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[11];}
+			elsif ($dt_dur->months() >= 1)
+			{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[10];}
+			else
+			{
+				if ($dt_dur->weeks() >= 2)
+				{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$dt_dur->weeks()." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[9];}
+				elsif ($dt_dur->weeks() >= 1)
+				{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[8];}
+				else
+				{
+					if ($dt_dur->days() >= 2)
+					{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$dt_dur->days()." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[7];}
+					elsif ($dt_dur->days() >= 1)
+					{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$dt_dur->days()." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[6];}
+					else
+					{
+						if ($dt_dur->hours() >= 2)
+						{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$dt_dur->hours()." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[5];}
+						elsif ($dt_dur->hours() >= 1)
+						{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$dt_dur->hours()." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[4];}
+#						if ($dt_dur->hours() >= 1)
+#						{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[2];}
+						else
+						{
+							$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[1];
+						}
+					}
+				}
+			}
+		}
+		$item=~s|<%published%>|$dur_string|g;
+		
+		
+		my $dur_string;
+		if ($dt_dur->years() >= 5)
+		{$dur_string=$dt_dur->years()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[20];}
+		elsif ($dt_dur->years() >= 2)
+		{$dur_string=$dt_dur->years()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[19];}
+		elsif ($dt_dur->years() >= 1)
+		{$dur_string=$dt_dur->years()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[18];}
+		else
+		{
+			if ($dt_dur->months() >= 5)
+			{$dur_string=$dt_dur->months()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[17];}
+			elsif ($dt_dur->months() >= 2)
+			{$dur_string=$dt_dur->months()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[16];}
+			elsif ($dt_dur->months() >= 1)
+			{$dur_string=$dt_dur->months()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[15];}
+			else
+			{
+				if ($dt_dur->weeks() >= 5)
+				{$dur_string=$dt_dur->weeks()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[14];}
+				elsif ($dt_dur->weeks() >= 2)
+				{$dur_string=$dt_dur->weeks()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[13];}
+				elsif ($dt_dur->weeks() >= 1)
+				{$dur_string=$dt_dur->weeks()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[12];}
+				else
+				{
+					if ($dt_dur->days() >= 5)
+					{$dur_string=$dt_dur->days()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[11];}
+					elsif ($dt_dur->days() >= 2)
+					{$dur_string=$dt_dur->days()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[10];}
+					elsif ($dt_dur->days() >= 1)
+					{$dur_string=$dt_dur->days()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[9];}
+					else
+					{
+						if ($dt_dur->hours() >= 5)
+						{$dur_string=$dt_dur->hours()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[8];}
+						elsif ($dt_dur->hours() >= 2)
+						{$dur_string=$dt_dur->hours()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[7];}
+						elsif ($dt_dur->hours() >= 1)
+						{$dur_string=$dt_dur->hours()." ".$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[6];}
+#						if ($dt_dur->hours() >= 1)
+#						{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[2];}
+						else
+						{
+							$dur_string.=$Utils::datetime::PUBLISHED_OLD{$env{'lng'}}[0];
+						}
+					}
+				}
+			}
+		}
+		$item=~s|<%published_old%>|$dur_string|g;
+		
+		# hyphen
+		foreach (keys %hyphen)
+		{
+			if ($db0_line{$_} && $db0_line{$_.'_hyphens'})
+			{
+				$db0_line{$_}=Ext::TextHyphen::add_hyphens($db0_line{$_},split(',',$db0_line{$_.'_hyphens'}));
+			}
+		}
+		
 		# fill raw data into $XSGN{'item'}
-
+		
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		$XSGN{'TMP'}=~s|<%db_item_(.*?)%>|$db0_line{$1}|g;
 		
 		
 		my %author=App::301::authors::get_author($db0_line{'posix_author'});
@@ -471,6 +597,9 @@ sub execute
 		# process abstract
 		my $p=new App::401::mimetypes::html;
 		
+		$p->config('name'=>'abstract','env'=>\%env,'entity'=>\%XSGN,'counter'=>$item_counter,'prefix'=>'article');
+		
+=head1
 		# img
 		$p->{'ignore'}{'img'}=
 			$env{'body.ignore.img'}
@@ -548,6 +677,7 @@ sub execute
 			$XSGN{'abstract.a510_video_part.1'}
 			|| $XSGN{'a510_video_part.1'}
 			|| undef;
+=cut
 		
 		$p->parse($db0_line{'abstract'}."\n");
 		#$p->eof();
@@ -565,6 +695,9 @@ sub execute
 			# process abstract
 			my $p=new App::401::mimetypes::html;
 			
+			$p->config('name'=>'body','env'=>\%env,'entity'=>\%XSGN,'counter'=>$item_counter,'prefix'=>'article');
+			
+=head1
 			# img
 			$p->{'ignore'}{'img'}=
 				$env{'body.ignore.img'}
@@ -642,18 +775,22 @@ sub execute
 				$XSGN{'abstract.a510_video_part.1'}
 				|| $XSGN{'a510_video_part.1'}
 				|| undef;
+=cut
 			
 			$p->parse($db0_line{'body'});
 			
 			$item=~s|<%out\.body\.(.*?)%>|$p->{'out_var'}->{$1}|g;
 			$item=~s|<#out\.body\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
 			
+			$XSGN{'TMP'}=~s|<%item\.$item_counter\.out\.body\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+			$XSGN{'TMP'}=~s|<#item\.$item_counter\.out\.body\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+			
 			my $body_html=$p->{'out'};
 			$item=~s|<%body%>|$body_html|;
 			
 			if ($p->{'count'}->{'video'})
 			{
-            $item=~s|<#video_mark#>|$XSGN{'video_mark'}|g;
+				$item=~s|<#video_mark#>|$XSGN{'video_mark'}|g;
 			}
 			
 			# find alternate attributes (for thumbnail image for example)
@@ -664,8 +801,10 @@ sub execute
 		$item=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
 		$item=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
 		
+		$XSGN{'TMP'}=~s|<%item\.$item_counter\.out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+		$XSGN{'TMP'}=~s|<#item\.$item_counter\.out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
 		
-		if ($db0_line{'rating_votes'} >= 5 && $db0_line{'rating'}>=4.0)
+		if ($db0_line{'rating_votes'} >= 5 && $db0_line{'rating'}>=4.5)
 		{
 			$item=~s|<#rating_top_mark#>|$XSGN{'rating_top_mark'}|g;
 		}
@@ -685,9 +824,16 @@ sub execute
 				'status' => "Y"
 			))
 			{
+				my %related_articles;
 				if ($relation->{'r_prefix'} eq "a501" && $relation->{'r_table'} eq "image")
 				{$item=~s|<#gallery_mark#>|$XSGN{'gallery_mark'}|g;}
-				if ($relation->{'r_prefix'} eq "a401" && $relation->{'r_table'} eq "article" && $relation->{'rel_type'} eq "link" && $XSGN{'related_article'})
+				if (
+					$relation->{'r_prefix'} eq "a401" && 
+					$relation->{'r_table'} eq "article" && 
+					($relation->{'rel_type'} eq "link" || $relation->{'rel_type'} eq "autolink") && 
+					!$related_articles{$relation->{'r_ID_entity'}} &&
+					$XSGN{'related_article'}
+				)
 				{
 					$related_article++;
 					my $item_article=$XSGN{'related_article.'.$related_article} || $XSGN{'related_article'};
@@ -733,13 +879,16 @@ sub execute
 						$related_article--;
 						next;
 					}
-			      my %datetime=TOM::Utils::datetime::datetime_collapse($db1_line{'datetime_start'});
-			      $db1_line{'datetime_start.year'}=$datetime{'year'};
-			      $db1_line{'datetime_start.month'}=$datetime{'month'};
-			      $db1_line{'datetime_start.mday'}=$datetime{'mday'};
-			      $db1_line{'datetime_start.hour'}=$datetime{'hour'};
-			      $db1_line{'datetime_start.min'}=$datetime{'min'};
-			      $db1_line{'datetime_start.sec'}=$datetime{'sec'};
+					
+					$related_articles{$db1_line{'ID_entity'}}++;
+					
+					my %datetime=TOM::Utils::datetime::datetime_collapse($db1_line{'datetime_start'});
+					$db1_line{'datetime_start.year'}=$datetime{'year'};
+					$db1_line{'datetime_start.month'}=$datetime{'month'};
+					$db1_line{'datetime_start.mday'}=$datetime{'mday'};
+					$db1_line{'datetime_start.hour'}=$datetime{'hour'};
+					$db1_line{'datetime_start.min'}=$datetime{'min'};
+					$db1_line{'datetime_start.sec'}=$datetime{'sec'};
 					$item_article=~s|<%db_(.*?)%>|$db1_line{$1}|g;
 					
 					my $ID_category=$db1_line{'ID_category'};
