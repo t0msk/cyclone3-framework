@@ -290,7 +290,6 @@ sub module
 {
 	local %mdl_env=@_;
 	$mdl_env{'-cache'} if $mdl_env{'-cache_id'};
-	#my $t=track TOM::Debug(__PACKAGE__."::module(".$mdl_env{-category}."-".$mdl_env{-name}."/".$mdl_env{-version}."/".$mdl_env{-global}.")");
 	my $t=track TOM::Debug("module",'attrs'=>"(".$mdl_env{-category}."-".$mdl_env{-name}.")",'timer'=>1);
 	local %mdl_C;
 	local $tom::ERR;
@@ -298,55 +297,20 @@ sub module
 	local $app=$mdl_env{-category};
 	my $cache_domain;
 	my $return_code;
-
-=head1 RETURN
-0 - error
-
-1 - OK
-
-10 - TMP_check -> TMP not found
-120 - not runned -> IAdm || ITst
-121 - not runned -> IAdm
-122 - not runned -> ITst
-
-130 - readed from cache <- zatial nepouzivam a tusim ani nechcem pouzit
-
-2XX - user
-
-=cut
-
+	my %return_data;
+	
 	# najpv si ocheckujem ci nechcem zistovat pritomnost TMP
 	# zaroven pritomnost TMP zistim
-	if ($mdl_env{-TMP_check})
+	if ($mdl_env{'-TMP_check'})
 	{
 		main::_log("-TMP_check enabled");
-		if (not $main::H->{OUT}{BODY}=~/<!TMP-$mdl_env{-TMP}!>/)
+		if (not $main::H->{'OUT'}{'BODY'}=~/<!TMP-$mdl_env{-TMP}!>/)
 		{
 			main::_log("return 10, TMP '$mdl_env{-TMP}' not exists in BODY");
 			$t->close();
 			return 10;
 		}
 	}
-	
-	# rusim modul pokial je setovany ako IAdm
-	# neviem preco to tu robim, ak to mam uz nastavene vonku :-o priamo v core?
-	if (($main::IAdm && $mdl_env{-IAdm}==-1)
-	||(!$main::IAdm && $mdl_env{-IAdm}==1))
-	{
-		main::_log("return 120, -IAdm");
-		return 120;
-	}
-	
-	#my $time_module=TOM::Debug::breakpoints->new();$time_module->start();
-	
-	#main::_log("adding module ".$mdl_env{-category}."-".$mdl_env{-name}."/".$mdl_env{-version}."/".$mdl_env{-global});
-	
-	# rusim CACHOVANIE pokial som IAdm
-	delete $mdl_env{-cache_id}
-		if (($main::IAdm && $main::FORM{__IAdm_uncache})
-		||($main::ITst && $main::FORM{__ITst_uncache}));
-	
-	
 	
 	# SPRACOVANIE PREMENNYCH
 	my $debug;
@@ -358,36 +322,35 @@ sub module
 		/^-/ && do {$mdl_C{$_}=$mdl_env{$_};delete $mdl_env{$_};}
 	}
 	
-	$mdl_C{-category}="0" unless $mdl_C{-category};
-	$mdl_C{-version}="0" unless $mdl_C{-version}; # NEBUDEM SE S NIKYM SRAAAT BEZ DUUVODU!...
-	$mdl_C{-xsgn}=$tom::dsgn unless $mdl_C{-xsgn}; # SAJRAJT
-	$mdl_C{-xsgn_global}=0 unless $mdl_C{-xsgn_global};
-	$mdl_C{-xlng}=$tom::lng unless $mdl_C{-xlng};
-	$mdl_C{-xlng_global}=0 unless $mdl_C{-xlng_global};
+	$mdl_C{'-category'}="0" unless $mdl_C{'-category'};
+	$mdl_C{'-version'}="0" unless $mdl_C{'-version'}; # NEBUDEM SE S NIKYM SRAAAT BEZ DUUVODU!...
+	$mdl_C{'-xsgn'}=$tom::dsgn unless $mdl_C{'-xsgn'}; # SAJRAJT
+	$mdl_C{'-xsgn_global'}=0 unless $mdl_C{'-xsgn_global'};
+	$mdl_C{'-xlng'}=$tom::lng unless $mdl_C{'-xlng'};
+	$mdl_C{'-xlng_global'}=0 unless $mdl_C{'-xlng_global'};
 	# nastavit default alarmu ak nevyzadujem zmenu alebo nieje povolena zmena
-	$mdl_C{-ALRM}=$TOM::ALRM_mdl if ((not exists $mdl_C{-ALRM})||(!$TOM::ALRM_change));
-	if ((exists $mdl_C{-cache_id})&&(!$mdl_C{-cache_id})){$mdl_C{-cache_id}="0"}
-		
+	$mdl_C{'-ALRM'}=$TOM::ALRM_mdl if ((not exists $mdl_C{'-ALRM'})||(!$TOM::ALRM_change));
+	if ((exists $mdl_C{'-cache_id'})&&(!$mdl_C{'-cache_id'})){$mdl_C{'-cache_id'}="0"}
 	
 	my $file_data;
 	
 	# definujem rec pre modul aby ju mohol prijat ako $env{lng}
 	# AK NIEJE ZADANA NATVRDO CEZ module (-xlng), tak vezmem language
 	# tejto session. predam do $env{lng}
-	$mdl_env{lng}=$mdl_C{-xlng};
+	$mdl_env{'lng'}=$mdl_C{'-xlng'};
 	
 	# definujem design pre modul aby ju mohol prijat ako $env{dsgn}
 	# AK NIEJE ZADANA NATVRDO CEZ module (-xsgn), tak vezmem design
 	# tejto session. predam do $env{lng}
-	$mdl_env{dsgn}=$mdl_C{-xsgn};
+	$mdl_env{'dsgn'}=$mdl_C{'-xsgn'};
 	
 	# AK JE DEFINOVANA POZIADAVKA NA CACHOVANIE A JE DEFINOVANA
 	# POZIADAVKA NA VOBEC CACHOVANIE, TAK SA TOMU VENUJEM
 	if ((exists $mdl_C{'-cache_id'})&&($TOM::CACHE))
 	{
-		$mdl_C{-cache_id_sub}="0" unless $mdl_C{-cache_id_sub};
-		$mdl_C{-cahe_id}="0" unless $mdl_C{-cache_id}; # ak je vstup s cache_id ale nieje 0
-		$cache_domain=$tom::H unless $mdl_C{-cache_master};
+		$mdl_C{'-cache_id_sub'}="0" unless $mdl_C{'-cache_id_sub'};
+		$mdl_C{'-cahe_id'}="0" unless $mdl_C{'-cache_id'}; # ak je vstup s cache_id ale nieje 0
+		$cache_domain=$tom::H unless $mdl_C{'-cache_master'};
 		
 		# Tomahawk::debug::log(3,"cache defined");
 		my $null;
@@ -395,36 +358,25 @@ sub module
 		foreach (sort keys %mdl_C){$null.=$_."=\"".$mdl_C{$_}."\"\n";}
 		
 		#$mdl_C{-md5}=md5_hex(Int::charsets::encode::UTF8_ASCII($null));
-		$mdl_C{-md5}=md5_hex(Encode::encode_utf8($null));
-		main::_log("cache md5='".$mdl_C{-md5}."'") if $debug;
-		
+		$mdl_C{'-md5'}=md5_hex(Encode::encode_utf8($null));
+		main::_log("cache md5='".$mdl_C{'-md5'}."'") if $debug;
 		
 		# NAZOV PRE TYP CACHE V KONFIGURAKU
-		$mdl_C{T_CACHE}=$mdl_C{-category}."-".$mdl_C{-name}."-".$mdl_C{-cache_id};
+		$mdl_C{'T_CACHE'}=$mdl_C{'-category'}."-".$mdl_C{'-name'}."-".$mdl_C{'-cache_id'};
 		
 		my $cache;
 		my $cache_parallel;
-#		my $memcached;
 		if ($TOM::CACHE_memcached)
 		{
-#			$memcached=Ext::CacheMemcache::check();
 			main::_log("memcached: reading '".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}."'") if $debug;
-#			if ($memcached)
-#			{
-				$cache=$Ext::CacheMemcache::cache->get(
-					'namespace' => "mcache",
-					'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
-				);
-				# get info if this cache is already filling in parallel process
-				$cache_parallel=$Ext::CacheMemcache::cache->get(
-					'namespace' => "mcache_parallel",
-					'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
-				);
-#			}
-#			else
-#			{
-#				main::_log("memcached: daemon is not running",4);
-#			}
+			$cache=$Ext::CacheMemcache::cache->get(
+				'namespace' => "mcache",
+				'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
+			);
+			$cache_parallel=$Ext::CacheMemcache::cache->get(
+				'namespace' => "mcache_parallel",
+				'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
+			);
 		}
 		else
 		{
@@ -437,23 +389,7 @@ sub module
 		}
 		elsif (!$TOM::CACHE_memcached) # try to read from sql only when memcached dissabled (not when can't be cache found)
 		{
-			main::_log("sqlcache: reading");
-			my %sth0=TOM::Database::SQL::execute(qq{
-				SELECT *
-				FROM TOM.a150_cache
-				WHERE
-						domain='$tom::Hm'
-						AND domain_sub='$cache_domain'
-						AND engine='pub'
-						AND Cid_md5='$mdl_C{-md5}'
-				ORDER BY ID DESC
-				LIMIT 1
-			},'db_h'=>'sys','slave'=>1,'quiet'=>1);
-			my %db0_line=$sth0{'sth'}->fetchhash();
-			if (%db0_line)
-			{
-				$cache = \%db0_line;
-			}
+			# sql cache removed
 		}
 		# AND time_to>=$main::time_current
 		#
@@ -468,12 +404,17 @@ sub module
 		#
 		if ($cache)
 		{
-			$mdl_C{N_IDcache}=$cache->{ID};
-			$mdl_C{-cache_from}=$cache->{time_from};
-			$mdl_C{-cache_duration}=$cache->{time_duration};
-			$file_data=$cache->{body};
+			$mdl_C{'N_IDcache'}=$cache->{'ID'};
+			$mdl_C{'-cache_from'}=$cache->{'time_from'};
+			$mdl_C{'-cache_duration'}=$cache->{'time_duration'};
+			$file_data=$cache->{'body'};
 			
-			$return_code=$cache->{return_code};
+			$return_code=$cache->{'return_code'};
+			if (ref($cache->{'return_data'}) eq "HASH")
+			{
+				%return_data=%{$cache->{'return_data'}};
+			}
+			
 			$return_code=1 if $return_code<1; # osetrenie pre stare caches
 		}
 		else
@@ -487,24 +428,22 @@ sub module
 		}
 		
 		# VYPOCITAM STARIE CACHE
-		$mdl_C{-cache_old}=$tom::time_current-$mdl_C{-cache_from};
+		$mdl_C{'-cache_old'}=$tom::time_current-$mdl_C{'-cache_from'};
 		
 		# nevlozil uz nahodou data o tejto cache druhy proces?
-		if (not exists $CACHE{$mdl_C{T_CACHE}}){GetCACHE_CONF();}
-		
-		
+		if (not exists $CACHE{$mdl_C{'T_CACHE'}}){GetCACHE_CONF();}
 		
 		
 		# nie nevlozil, ide sa na tooooo! :))
-		if (not exists $CACHE{$mdl_C{T_CACHE}})
+		if (not exists $CACHE{$mdl_C{'T_CACHE'}})
 		{
-			$mdl_C{-cache_time}=$TOM::CACHE_time unless $mdl_C{-cache_time};
-			$CACHE{$mdl_C{T_CACHE}}{-cache_time}=$mdl_C{-cache_time};
+			$mdl_C{'-cache_time'}=$TOM::CACHE_time unless $mdl_C{'-cache_time'};
+			$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}=$mdl_C{'-cache_time'};
 			
 			# TERAZ SPRAVIM INSERT DO DATABAZY   
 			main::_log("sqlcache: insert config $mdl_C{T_CACHE} s -cache_time $mdl_C{-cache_time}",0,"pub.cache");
 			
-			$main::DB{sys}->Query("
+			$main::DB{'sys'}->Query("
 				INSERT INTO TOM.a150_config
 				(
 					domain,
@@ -534,15 +473,12 @@ sub module
 			");
 		}
 		
-		
 		# AK SOM STLACIL RECACHE TAK SKRATIM DURATION
 		if ($main::FORM{'_rc'})
 		{
 			main::_log("skracujem duration cache (request na recache)");
 			$mdl_C{'-cache_duration'}=$mdl_C{'-cache_old'};
 		}
-		
-		
 		
 		main::_log("cache info md5:$mdl_C{-md5} old:$mdl_C{-cache_old} duration:$mdl_C{-cache_duration} from:$mdl_C{-cache_from} to:$mdl_C{-cache_to}") if $debug;
 		
@@ -595,27 +531,11 @@ sub module
 			# zvysujem counter vyuzitia tejto cache
 			Tomahawk::debug::cache_conf_opt_plus();
 			
-=head1
-			if (not utf8::is_utf8($file_data))
-			{
-				$main::page_save=1; # tuto stranku si radsej ulozim
-				main::_log("cache_data '$mdl_C{T_CACHE}' nieje v UTF-8!",1);
-				#utf8::decode($file_data);
-			}
-=cut
-			
 			$main::H->r_("<!TMP-".$mdl_C{-TMP}."!>",$file_data);
 			
-			
-			
-			#my $time_load_req=(((Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000))-$time_start_req);
-			#my $time_load_proc=((times)[0]-$time_start_proc);
-			#main::_log("end of cached module req:".$time_load_req." proc:".$time_load_proc." ret:".$return_code);
-			
-			#$time_module->end();$time_module->duration();
-			#main::_log("end of cached module req:".($time_module->{time}{req}{duration})." proc:".($time_module->{time}{proc}{duration})." ret:".$return_code);
 			$t->close();
-			return $return_code;
+			module_process_return_data(%return_data);
+			return $return_code,%return_data;
 		}
 		else # CACHE JE STARY, SPRACUJEM DATA O CACHE
 		{
@@ -636,37 +556,24 @@ sub module
 	
 	#NECACHUJEM, LEBO VYPRSALA CACHE
 	
-	
-	
-	#ide o dget? :)
-#	if ($mdl_C{-type} eq "dget")
-#	{
-#		main::_log("downloading");
-#		return 1;
-#	}
-	
-	
-	
-
-	
 	# Where is the modul?
-	if (($mdl_C{-global}==2)&&($tom::Pm))
+	if (($mdl_C{'-global'}==2)&&($tom::Pm))
 	{
 		# at first try addons directory
-		my $addon_path = $tom::Pm . "/_addons/App/" . $mdl_C{-category} . "/_mdl/" . $mdl_C{-category} . "-" . $mdl_C{-name} . "." . $mdl_C{-version} . ".mdl";
+		my $addon_path = $tom::Pm . "/_addons/App/" . $mdl_C{'-category'} . "/_mdl/" . $mdl_C{'-category'} . "-" . $mdl_C{'-name'} . "." . $mdl_C{'-version'} . ".mdl";
 		if (-e $addon_path)
 		{
-			$mdl_C{P_MODULE}=$addon_path;
+			$mdl_C{'P_MODULE'}=$addon_path;
 		}
 		else
 		{
-			$mdl_C{P_MODULE}=$tom::Pm."/_mdl/".$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".mdl";
+			$mdl_C{'P_MODULE'}=$tom::Pm."/_mdl/".$mdl_C{'-category'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
 		}
 	}
-	elsif ($mdl_C{-global})
+	elsif ($mdl_C{'-global'})
 	{
-		$mdl_C{-global}=1;
-		my $addon_path = $TOM::P . "/_addons/App/" . $mdl_C{-category} . "/_mdl/" . $mdl_C{-category} . "-" . $mdl_C{-name} . "." . $mdl_C{-version} . ".mdl";
+		$mdl_C{'-global'}=1;
+		my $addon_path = $TOM::P . "/_addons/App/" . $mdl_C{'-category'} . "/_mdl/" . $mdl_C{'-category'} . "-" . $mdl_C{'-name'} . "." . $mdl_C{'-version'} . ".mdl";
 		# find in overlays
 		foreach my $item(@TOM::Overlays::item)
 		{
@@ -679,46 +586,38 @@ sub module
 		# at first try addons directory
 		if (-e $addon_path)
 		{
-			$mdl_C{P_MODULE}=$addon_path;
+			$mdl_C{'P_MODULE'}=$addon_path;
 		}
 		else
 		{
-			$mdl_C{P_MODULE}=$TOM::P."/_mdl/".$mdl_C{-category}."/".$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".mdl";
+			$mdl_C{'P_MODULE'}=$TOM::P."/_mdl/".$mdl_C{'-category'}."/".$mdl_C{'-category'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
 		}
 	}
 	else
 	{
-		my $addon_path = $tom::P . "/_addons/App/" . $mdl_C{-category} . "/_mdl/" . $mdl_C{-category} . "-" . $mdl_C{-name} . "." . $mdl_C{-version} . ".mdl";
+		my $addon_path = $tom::P . "/_addons/App/" . $mdl_C{'-category'} . "/_mdl/" . $mdl_C{'-category'} . "-" . $mdl_C{'-name'} . "." . $mdl_C{'-version'} . ".mdl";
 		# at first try addons directory
 		if (-e $addon_path)
 		{
-			$mdl_C{P_MODULE}=$addon_path;
+			$mdl_C{'P_MODULE'}=$addon_path;
 		}
 		else
 		{
-			$mdl_C{P_MODULE}=$tom::P."/_mdl/".$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".mdl";
+			$mdl_C{'P_MODULE'}=$tom::P."/_mdl/".$mdl_C{'-category'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
 		}
 	}
 	
-	
-	
-	
 	# AK MODUL NEEXISTUJE
-	if (not -e $mdl_C{P_MODULE})
+	if (not -e $mdl_C{'P_MODULE'})
 	{
 		main::_log("not exist",1);
 		TOM::Error::module(
-			-TMP	=>	$mdl_C{-TMP},
-			-MODULE	=>	"[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."]",
-			-ERROR	=>	"module does not exist!"#.$!
+			'-TMP' => $mdl_C{'-TMP'},
+			'-MODULE' => "[MDL::".$mdl_C{'-category'}."-".$mdl_C{'-name'}."]",
+			'-ERROR' => "module does not exist!"#.$!
 		);
 		return undef;
 	}
-	
-	
-	
-	#main::_log("executing module ".$mdl_C{-name}."/".$mdl_C{-version}."/".$mdl_C{-global});
-	#main::_log("start eval");
 	
 	# zapinam defaultne debug, ktory mozem v module vypnut
 	$Tomahawk::module::debug_disable=0;
@@ -745,41 +644,22 @@ sub module
 			);
 		}
 		
-		#my $t_do=track TOM::Debug("do");
-		if (not do $mdl_C{P_MODULE}){$tom::ERR="$@ $!";die "pre-compilation error: $@ $!\n";}#- $! $@\n";
-		#$t_do->close();
+		if (not do $mdl_C{'P_MODULE'}){$tom::ERR="$@ $!";die "pre-compilation error: $@ $!\n";}#- $! $@\n";
 		
 		local %Tomahawk::module::XSGN;
 		local %Tomahawk::module::XLNG;
 		
 		my $t_execute=track TOM::Debug("exec");
-		$return_code=Tomahawk::module::execute(%mdl_env);
+		($return_code,%return_data)=Tomahawk::module::execute(%mdl_env);
 		$t_execute->close();
 		
 		if ($return_code)
 		{
-			#main::_log("replacing");
 			TOM::Utils::vars::replace_comment($Tomahawk::module::XSGN{'TMP'});
 			
 			$Tomahawk::module::XSGN{'TMP'}=~s|<#.*?#>||g;
 			$Tomahawk::module::XSGN{'TMP'}=~s|<%.*?%>||g;
 			
-			# preco som toto robil?
-			# rusim pretoze chcem ten isty vystup ako mam vstup
-			#1 while ($Tomahawk::module::XSGN{TMP}=~s|\n\n|\n|g);
-			
-#			if ($Tomahawk::module::XSGN{'TMP'})
-#			{
-#				if (not utf8::is_utf8($Tomahawk::module::XSGN{'TMP'}))
-#				{
-#					$main::page_save=1; # tuto stranku si radsej ulozim
-#					main::_log("XSGN{TMP} nieje v UTF-8!",1);
-#					main::_log("[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."/".$mdl_C{-version}."/".$mdl_C{-global}." XSGN{TMP} nieje v UTF-8",1,"pub.err");
-#					utf8::decode($Tomahawk::module::XSGN{'TMP'});
-#				}
-#			}
-			
-			#main::_log("inserting");
 			if (($Tomahawk::module::XSGN{'TMP'})
 				&&(not $main::H->r_("<!TMP-".$mdl_C{'-TMP'}."!>",$Tomahawk::module::XSGN{'TMP'})))
 			{
@@ -793,10 +673,7 @@ sub module
 				return undef;
 			};
 			
-			#main::_log("caching");
-			# IDEME NACACHOVAT - VERY VERY VERY SPEEEEEDY! BUAAAh!:))
-			# BUD DO FILESU ALEBO DO DB :))
-			# if ((defined $mdl_C{-cache_id})&&($TOM::CACHE))
+			# IDEME NACACHOVAT
 			if ((exists $mdl_C{'-cache_id'})&&($TOM::CACHE))
 			{
 				my $ID_config=$CACHE{$mdl_C{'T_CACHE'}}{'-ID_config'};
@@ -821,18 +698,19 @@ sub module
 						'time_from' => $main::time_current,
 						'time_duration' => $CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'},
 						'time_to' => ($main::time_current+$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}),
-						'return_code' => $return_code
+						'return_code' => $return_code,
+						'return_data' => {%return_data}
 					};
 					
 					if ($Ext::CacheMemcache::cache->set(
 							'namespace' => "mcache",
-							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5},
+							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
 							'value' => $cache,
 							'expiration' => $CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}.'S'
 						)
 					)
 					{
-						main::_log("saved to mcache '".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{-md5}."'");
+						main::_log("saved to mcache '".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}."'");
 						$memcached=1;
 						# filling cache stopped
 						$Ext::CacheMemcache::cache->set(
@@ -849,79 +727,34 @@ sub module
 				
 				if (!$memcached)
 				{
-					main::_log("sqlcache: saving '$tom::Hm', '$cache_domain', 'pub', '$mdl_C{-category}', '$mdl_C{-name}', '$mdl_C{-cache_id}', '$mdl_C{-md5}', '$mdl_C{-cache_id_sub}', '$mdl_env{dsgn}', '$mdl_env{lng}', '$main::time_current', '".$CACHE{$mdl_C{T_CACHE}}{-cache_time}."'");  #
-					
-					$Tomahawk::module::XSGN{TMP}=~s|'|\\'|g;
-					
-					my $sql="
-					REPLACE INTO $TOM::DB_name_TOM.a150_cache
-					(
-						ID_config,
-						domain,
-						domain_sub,
-						engine,
-						Capp,
-						Cmodule,
-						Cid,
-						Cid_md5,
-						C_id_sub,
-						C_xsgn,
-						C_xlng,
-						body,
-						time_from,
-						time_duration,
-						time_to,
-						return_code
-						)
-					VALUES
-					(
-						'$ID_config',
-						'$tom::Hm',
-						'$cache_domain',
-						'pub',
-						'$mdl_C{-category}',
-						'$mdl_C{-name}',
-						'$mdl_C{-cache_id}',
-						'$mdl_C{-md5}',
-						'$mdl_C{-cache_id_sub}',
-						'$mdl_env{dsgn}',
-						'$mdl_env{lng}',
-						'".$Tomahawk::module::XSGN{TMP}."',
-						'$main::time_current',
-						'$CACHE{$mdl_C{T_CACHE}}{-cache_time}',
-						'".($main::time_current+$CACHE{$mdl_C{T_CACHE}}{-cache_time})."',
-						'$return_code'
-						)
-					";
-					if (my $null=$main::DB{sys}->Query($sql))
-					{
-						#main::_log("ok");
-					}
-					else
-					{
-						#main::_log("bad");
-					}
-					
+					# sql cache removed
 				}
 				
 				my $dbg;
 				if ($dbg)
 				{
-					main::_log("save debug TOM.a150_config domain='$CACHE{$mdl_C{T_CACHE}}{-domain}' domain_sub='$CACHE{$mdl_C{T_CACHE}}{-domain_sub}'");
+					main::_log("save debug TOM.a150_config domain='$CACHE{$mdl_C{'T_CACHE'}}{'-domain'}' domain_sub='$CACHE{$mdl_C{'T_CACHE'}}{'-domain_sub'}'");
 					TOM::Database::SQL::execute(qq{
 						UPDATE
 							TOM.a150_config
 						SET
-							time_use='$main::time_current'
+							time_use=?
 						WHERE
-							domain='$CACHE{$mdl_C{T_CACHE}}{-domain}' AND
-							domain_sub='$CACHE{$mdl_C{T_CACHE}}{-domain_sub}' AND
+							domain=? AND
+							domain_sub=? AND
 							engine='pub' AND
-							Capp='$mdl_C{-category}' AND
-							Cmodule='$mdl_C{-name}' AND
-							Cid='$mdl_C{-cache_id}'
+							Capp=? AND
+							Cmodule=? AND
+							Cid=?
 						LIMIT 1
-					},'db_h'=>'sys','quiet'=>1);
+					},'db_h'=>'sys','quiet'=>1,'bind'=>[
+						$main::time_current,
+						$CACHE{$mdl_C{'T_CACHE'}}{'-domain'},
+						$CACHE{$mdl_C{'T_CACHE'}}{'-domain_sub'},
+						$mdl_C{'-category'},
+						$mdl_C{'-name'},
+						$mdl_C{'-cache_id'}
+					]);
 				}
 				
 			}
@@ -941,19 +774,15 @@ sub module
 				);
 			}
 			TOM::Error::module(
-				-TMP	=>	$mdl_C{-TMP},
-				-MODULE	=>	"[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."]",
-				-ERROR	=>	$tom::ERR,
-				-PLUS	=>	$tom::ERR_plus,
+				'-TMP' => $mdl_C{'-TMP'},
+				'-MODULE' => "[MDL::".$mdl_C{'-category'}."-".$mdl_C{'-name'}."]",
+				'-ERROR' => $tom::ERR,
+				'-PLUS' => $tom::ERR_plus,
 			)
 		};
 		Time::HiRes::alarm(0);
 	};
-	#$main::time_modules->end();
-	#$main::time_modules->duration_plus();
 	Time::HiRes::alarm(0);
-	
-	#main::_log("end of secure eval");
 	
 	if ($@)
 	{
@@ -968,12 +797,11 @@ sub module
 		}
 		TOM::Error::module
 		(
-			-TMP	=>	$mdl_C{-TMP},
-			-MODULE	=>	"[MDL::".$mdl_C{-category}."-".$mdl_C{-name}."]",
-			-ERROR	=>	$@,
+			'-TMP' => $mdl_C{'-TMP'},
+			'-MODULE' => "[MDL::".$mdl_C{'-category'}."-".$mdl_C{'-name'}."]",
+			'-ERROR' => $@,
 		);# unless $mdl_C{-noerror_run};
 	};
-	
 	
 	$t->close();
 	
@@ -988,13 +816,28 @@ sub module
 		'-load_proc' => $t->{'time'}{'proc'}{'duration'}
 	) unless $Tomahawk::module::debug_disable==0;
 	
-	#$t->close();
-	return $return_code;
+	module_process_return_data(%return_data);
+	return $return_code,%return_data;
 }
 
 
 
-
+sub module_process_return_data
+{
+	my %return_data=@_;
+	
+	if ($return_data{'call'})
+	{
+		if ($return_data{'call'}{'H'})
+		{
+			foreach my $env0(@{$return_data{'call'}{'H'}{'add_DOC_meta'}})
+			{
+				$main::H->add_DOC_meta(%{$env0});
+			}
+		}
+	}
+	
+}
 
 
 
