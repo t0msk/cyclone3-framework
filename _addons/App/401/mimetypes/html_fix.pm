@@ -42,6 +42,17 @@ sub start
 			}
 		}
 	}
+	elsif ($tag eq "img")
+	{
+		if ($attr->{'style'}=~s|width:[ ]?(\d+)px[;]?[ ]?||)
+		{
+			$attr->{'width'}=$1.'px';
+		}
+		if ($attr->{'style'}=~s|height:[ ]?(\d+)px[;]?[ ]?||)
+		{
+			$attr->{'height'}=$1.'px';
+		}
+	}
 	
 	# rebuild a tag
 	my %attrs_;
