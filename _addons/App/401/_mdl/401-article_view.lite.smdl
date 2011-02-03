@@ -178,6 +178,7 @@ sub execute
 			'a501_image_file.ID_format' => $env{'a501_image_file.ID_format'},
 			'a501_image_file.ID_format.1' => $env{'a501_image_file.ID_format.1'},
 			'gallery.thumbnail.ID_format' => $env{'gallery.thumbnail.ID_format'},
+			'hyphen' => $env{'hyphen'},
 #			'ignore.img.1' => 1,
 #			'ad' => '1',
 			%params
