@@ -67,6 +67,7 @@ B<%db_*%> - video database variables
 sub execute
 {
 	my %env=@_;
+	my %env_out;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
 	my $sql_where;
@@ -242,6 +243,13 @@ sub execute
 		$p->eof();
 		$XSGN{'TMP'}=~s|<%description%>|$p->{'out'}|;
 		
+		my %video_part_file=App::510::functions::get_video_part_file(
+			'video.ID_entity' => $db0_line{'ID_entity'},
+			'video_part.part_id' => 1,
+			'video_part_file.ID_format' => $env{'video_format.ID'} || $App::510::video_format_full_ID,
+			'video_attrs.lng' => $env{'lng'}
+		);
+		$XSGN{'TMP'}=~s|<%video_part_file.db_(.*?)%>|$video_part_file{$1}|g;
 		
 		my $relation=(App::160::SQL::get_relations(
 			'db_name' => $App::510::db_name,
@@ -264,8 +272,23 @@ sub execute
 				'image_attrs.lng' => $env{'lng'}
 			);
 			$XSGN{'TMP'}=~s|<%image.db_(.*?)%>|$db1_line{$1}|g;
+			
+			push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=>$tom::H_a501.'/image/file/'.$db1_line{'file_path'}};
+			
 		}
 		
+		if ($XSGN{'og:video'})
+		{
+			$XSGN{'og:video'}=~s|<%db_ID_entity%>|$db0_line{'ID_entity_video'}|g;
+			
+			push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video','content'=>$XSGN{'og:video'}};
+			
+			push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:type','content'=>"application/x-shockwave-flash"};
+			
+			push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:width','content'=>"430"};
+			push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:height','content'=>"280"};
+			
+		}
 		
 		$main::H->add_DOC_title($db0_line{'name'}) unless $env{'DOC_title.disable'};
 		$main::H->add_DOC_keywords($db0_line{'keywords'});
@@ -284,7 +307,7 @@ sub execute
 		$XSGN{'TMP'}=$XSGN{'TMP.empty'};
 	}
 	
-	return 1;
+	return 1,%env_out;
 }
 
 
