@@ -311,6 +311,9 @@ sub start
 						$attr->{'alt'}=$db0_line{'part_name'} || $db0_line{'name'};
 					}
 					
+					$self->{'out_addon'}->{'a510_video'}[$addon_cnt]{'ID_entity'}=$db0_line{'ID_entity_video'};
+					
+					$self->{'out_addon'}->{'a510_video_part'}[$addon_part_cnt]{'video.ID_entity'}=$db0_line{'ID_entity_video'};
 					$self->{'out_addon'}->{'a510_video_part'}[$addon_part_cnt]{'ID_part'}=$db0_line{'ID_part'};
 					$self->{'out_addon'}->{'a510_video_part'}[$addon_part_cnt]{'src'}=$tom::H_a510.'/video/part/file/'.$db0_line{'file_part_path'};
 					
@@ -418,6 +421,7 @@ sub start
 						$attr->{'alt'}=$db0_line{'part_name'} || $db0_line{'name'};
 					}
 					
+					$self->{'out_addon'}->{'a510_video_part'}[$addon_cnt]{'video.ID_entity'}=$db0_line{'ID_entity_video'};
 					$self->{'out_addon'}->{'a510_video_part'}[$addon_cnt]{'ID_part'}=$db0_line{'ID_part'};
 					$self->{'out_addon'}->{'a510_video_part'}[$addon_cnt]{'src'}=$tom::H_a510.'/video/part/file/'.$db0_line{'file_part_path'};
 					
@@ -890,6 +894,35 @@ sub start
 				|| $out_full;
 		}
 	}
+	elsif ($tag eq "div")
+	{
+		if ($attr->{'id'}=~/^a401_article:(.*)$/)
+		{
+			require App::501::_init;
+			%vars=_parse_id($1);
+			if ($vars{'ID_entity'})
+			{
+				main::_log("include article");
+				
+				my $p=new App::401::mimetypes::html;
+#				$p->config('name'=>$part,'env'=>\%env,'entity'=>\%XSGN);
+				$p->config_from($self);
+				$p->parse(qq{<img id="a501_image:ID=48861:ID_format=6" />});
+				$p->eof();
+				
+				$out_full=
+					$self->{'entity'}{'a401_article'}
+					|| $self->{'entity'}{'div.a401_article'}
+					|| $out_full;
+				
+#				my $part_html=$p->{'out'};
+				
+#				$out_full=$part_html;
+				
+				$self->config_from($p);
+			}
+		}
+	}
 	elsif ($tag eq "p")
 	{
 		if (!$attr->{'id'} && $attr->{'entity_part'} && $self->{'config'}->{'editable'})
@@ -958,6 +991,42 @@ sub end
 	#print $origtext;
 }
 
+sub config_from
+{
+	my $self=shift; # new object
+	my $self_old=shift; # old object
+	
+	foreach (keys %{$self_old->{'entity'}})
+	{
+		$self->{'entity'}{$_}=$self_old->{'entity'}{$_};
+	}
+	
+	foreach (keys %{$self_old->{'config'}})
+	{
+		$self->{'config'}->{$_}=$self_old->{'config'}->{$_};
+	}
+	
+	foreach (keys %{$self_old->{'count'}})
+	{
+		$self->{'count'}->{$_}=$self_old->{'count'}->{$_};
+	}
+	
+	foreach (keys %{$self_old->{'out_var'}})
+	{
+		$self->{'out_var'}->{$_}=$self_old->{'out_var'}->{$_};
+	}
+	
+	foreach (keys %{$self_old->{'out_addon'}})
+	{
+		$self->{'out_addon'}->{$_}=$self_old->{'out_addon'}->{$_};
+	}
+	
+	foreach (keys %{$self_old->{'out_tag'}})
+	{
+		$self->{'out_tag'}->{$_}=$self_old->{'out_tag'}->{$_};
+	}
+	
+}
 
 sub config
 {
@@ -1030,7 +1099,7 @@ sub config
 		|| $env->{'a501_image_file.ID_format.1'}
 		|| undef;
 	$self->{'config'}->{'a501_image_file.ID_format.extra'}=
-			$self->{'a501_image_file.ID_format.extra'}
+			$env->{'a501_image_file.ID_format.extra'}
 			|| undef;
 	$self->{'entity'}->{'a501_image'}=
 		$entity->{$name.'.a501_image'}
