@@ -32,8 +32,7 @@ use App::401::_init;
 use App::020::_init;
 use App::160::_init;
 use TOM::Text::format;
-
-
+use Ext::TextHyphen::_init;
 
 =head1 INPUTS
 
@@ -134,6 +133,7 @@ B<a501_image.1> - first image item to replace
 sub execute
 {
 	my %env=@_;
+	my %env_out;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
 	if ($Tomahawk::mdl_C{'-xlng_load'})
@@ -185,6 +185,15 @@ sub execute
 		$sql_order=$env{'sql_order'} if $env{'sql_order'};
 		$sql_order=$env{'sql_order_by'} if $env{'sql_order_by'};
 	
+	my %hyphen;
+	if ($env{'hyphen'})
+	{
+		foreach(split('[,;]',$env{'hyphen'}))
+		{
+			$hyphen{$_}=1;
+		}
+	}
+	
 	my $sql=qq{
 		SELECT
 			article.ID_entity,
@@ -213,10 +222,14 @@ sub execute
 			
 			article_attrs.name,
 			article_attrs.name_url,
+			article_attrs.name_hyphens,
 			article_content.subtitle,
+			article_content.subtitle_hyphens,
 			article_content.mimetype,
 			article_content.abstract,
+			article_content.abstract_hyphens,
 			article_content.body,
+			article_content.body_hyphens,
 			article_content.keywords,
 			article_content.lng,
 			
@@ -271,6 +284,18 @@ sub execute
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
+		
+		my $cache_visits=$Ext::CacheMemcache::cache->get(
+			'namespace' => $App::401::db_name.".a401_article_ent.visit",
+			'key' => $db0_line{'ID_entity_article'}
+		);
+		$db0_line{'visits'}+=$cache_visits->{'visits'} if $cache_visits->{'visits'};
+		
+		# size of article body in 
+#		my $size_root_square=int(sqrt(length($db0_line{'body'})));
+		my $size_root_square=int(length(TOM::Text::format::xml2plain($db0_line{'body'}))/512);
+		$XSGN{'TMP'}=~s|<%size_sqrt%>|$size_root_square|g;
+		
 #		$XSGN{'TMP'}.="<!-- changed:$db0_line{'datetime_create'} -->";
 		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
 		$db0_line{'datetime_start.year'}=$datetime{'year'};
@@ -279,7 +304,55 @@ sub execute
 		$db0_line{'datetime_start.hour'}=$datetime{'hour'};
 		$db0_line{'datetime_start.min'}=$datetime{'min'};
 		$db0_line{'datetime_start.sec'}=$datetime{'sec'};
-      
+		
+		
+		use DateTime;
+		my $dt = DateTime->now();
+		my $dt_to = DateTime->new(
+			'year' => $datetime{'year'},
+			'month' => $datetime{'month'},
+			'day' => $datetime{'mday'},
+		);
+		my $dt_dur=$dt_to-$dt;
+		my $dur_string;
+		
+		if ($dt_dur->years() >= 2)
+		{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$dt_dur->years()." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[13];}
+		elsif ($dt_dur->years() >= 1)
+		{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[12];}
+		else
+		{
+			if ($dt_dur->months() >= 2)
+			{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$dt_dur->months()." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[11];}
+			elsif ($dt_dur->months() >= 1)
+			{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[10];}
+			else
+			{
+				if ($dt_dur->weeks() >= 2)
+				{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$dt_dur->weeks()." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[9];}
+				elsif ($dt_dur->weeks() >= 1)
+				{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[8];}
+				else
+				{
+					if ($dt_dur->days() >= 2)
+					{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$dt_dur->days()." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[7];}
+					elsif ($dt_dur->days() >= 1)
+					{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[0]." ".$dt_dur->days()." ".$Utils::datetime::PUBLISHED{$env{'lng'}}[6];}
+					else
+					{
+						if ($dt_dur->hours() >= 1)
+						{$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[2];}
+						else
+						{
+							$dur_string.=$Utils::datetime::PUBLISHED{$env{'lng'}}[1];
+						}
+					}
+				}
+			}
+		}
+		
+		$XSGN{'TMP'}=~s|<%published%>|$dur_string|g;
+		
 		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_create'});
 		$db0_line{'datetime_create.year'}=$datetime{'year'};
 		$db0_line{'datetime_create.month'}=$datetime{'month'};
@@ -292,8 +365,18 @@ sub execute
 			$rating5=3 if $db0_line{'rating_votes'} < 5;
 		$XSGN{'TMP'}=~s|<%rating5%>|$rating5|g;
 		my $rating55=int($db0_line{'rating'}/20*2)/2;
-			$rating55=2.5 if $db0_line{'rating_votes'} < 5;
+#			$rating55=2.5 if $db0_line{'rating_votes'} < 5;
+			$rating55=0 if $db0_line{'rating_votes'} < 5;
 		$XSGN{'TMP'}=~s|<%rating55%>|$rating55|g;
+		
+		# hyphen
+		foreach (keys %hyphen)
+		{
+			if ($db0_line{$_} && $db0_line{$_.'_hyphens'})
+			{
+				$db0_line{$_}=Ext::TextHyphen::add_hyphens($db0_line{$_},split(',',$db0_line{$_.'_hyphens'}));
+			}
+		}
 		
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
@@ -352,10 +435,16 @@ sub execute
 		$XSGN{'TMP'}=~s|<%editor_(.*?)%>|$editor{$1}|g;
 		# process body
 		
+		my $og_image_set;
 		foreach my $part('body','abstract')
 		{
 			
 			my $p=new App::401::mimetypes::html;
+			
+			$p->config('name'=>$part,'env'=>\%env,'entity'=>\%XSGN);
+			
+=head1
+			$p->{'config'}->{'editable'}=$env{'editable'};
 			
 			# img
 			$p->{'ignore'}{'img'}=
@@ -400,6 +489,14 @@ sub execute
 				|| $XSGN{'body.a401_article'}
 				|| $XSGN{'link.a401_article'}
 				|| $XSGN{'a401_article'}
+				|| undef;
+			
+			# a420_keyword
+			$p->{'entity'}{'a420_keyword'}=
+				$XSGN{'body.inline.a420_keyword'}
+				|| $XSGN{'body.a420_keyword'}
+				|| $XSGN{'inline.a420_keyword'}
+				|| $XSGN{'a420_keyword'}
 				|| undef;
 			
 			# a501_image
@@ -455,6 +552,7 @@ sub execute
 			
 			# a010
 			foreach (keys %XSGN){if ($_=~/^a010/){$p->{'entity'}{$_}=$XSGN{$_};}}
+=cut
 			
 			#removing unwanted paging
 			if($part eq 'body'){
@@ -467,6 +565,25 @@ sub execute
 			my $part_html=$p->{'out'};
 			
 			if ($env{'ad'} && $part eq "body"){$part_html=~s|^(.{400,}?)<br>|$1<br><!TMP-a401-BANNER!><br>|s;}
+			
+			if ($p->{'out_var'}->{'img.1.src'} && !$og_image_set)
+			{
+				push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=>$p->{'out_var'}->{'img.1.src'}};
+				
+				if ($p->{'out_addon'}->{'a510_video_part'}[1]{'video.ID_entity'} && $XSGN{'og:video'})
+				{
+					$XSGN{'og:video'}=~s|<%video\.ID_entity%>|$p->{'out_addon'}->{'a510_video_part'}[1]{'video.ID_entity'}|g;
+					
+					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video','content'=>$XSGN{'og:video'}};
+					
+					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:type','content'=>"application/x-shockwave-flash"};
+					
+					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:width','content'=>"430"};
+					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:height','content'=>"280"};
+					
+				}
+				$og_image_set=1;
+			}
 			
 			$XSGN{'TMP'}=~s|<%$part%>|$part_html|;
 			$XSGN{'TMP'}=~s|<%$part\_plain%>|TOM::Text::format::xml2plain($part_html)|ge;
@@ -589,7 +706,7 @@ sub execute
 		}
 	}
 	
-	return 1;
+	return 1,%env_out;
 }
 
 
