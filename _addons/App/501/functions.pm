@@ -1948,6 +1948,78 @@ sub get_image_file
 
 
 
+sub image_file_resize
+{
+	my %env=@_;
+	
+	if (!$env{'image_file.ID'})
+	{
+		return undef;
+	}
+	
+	return undef unless $env{'width'};
+	return undef unless $env{'height'};
+	$env{'method'}="resize" unless $env{'method'};
+	$env{'method'}="resize" if $env{'method'} eq "auto";
+	$env{'method'}="resize" if $env{'method'} eq "true";
+	
+	# najprv najdem dany file
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*,
+			CONCAT(ID_format,'/',SUBSTR(ID,1,4)) AS file_dir,
+			CONCAT(ID_format,'/',SUBSTR(ID,1,4),'/',name,'.',file_ext) AS file_path
+		FROM
+			`$App::501::db_name`.a501_image_file
+		WHERE
+			ID=?
+	},'quiet'=>1,'bind'=>[$env{'image_file.ID'}]);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $new_file_path=$env{'method'}.'/'.$db0_line{'file_dir'};
+		#my $new_file=$db0_line{'name'}."_".$env{'width'}."_".$env{'height'}.'.'.$db0_line{'file_ext'};
+		my $new_file=$db0_line{'name'}."_".$env{'width'}.'.'.$db0_line{'file_ext'};
+		if (-e $tom::P_media.'/a501/image/file_p/'.$new_file_path.'/'.$new_file)
+		{
+			# this resized file already exists
+			$env{'file_path'}=$new_file_path.'/'.$new_file;
+			return %env;
+		}
+		
+		# not exists, also resizing
+		# at first create directory
+		if (!-e $tom::P_media.'/a501/image/file_p/'.$new_file_path)
+		{
+			File::Path::mkpath($tom::P_media.'/a501/image/file_p/'.$new_file_path) || return undef;
+			chmod (0777,$tom::P_media.'/a501/image/file_p/'.$new_file_path) || return undef;
+		}
+		
+		if (!-e $tom::P_media.'/a501/image/file/'.$db0_line{'file_path'})
+		{
+			# original file not exists
+			return undef;
+		}
+		
+		main::_log("resizing file to width='$env{'width'}'");
+		
+		my ($out,$ext)=image_file_process(
+			'image1' => $tom::P_media.'/a501/image/file/'.$db0_line{'file_path'},
+			'image2' => $tom::P_media.'/a501/image/file_p/'.$new_file_path.'/'.$new_file,
+			'process' => qq{scale($env{'width'},)}
+		);
+		
+		if ($out)
+		{
+			$env{'file_path'}=$new_file_path.'/'.$new_file;
+			return %env;
+		}
+		
+	}
+	
+	return undef;
+}
+
+
 
 =head1 AUTHORS
 
