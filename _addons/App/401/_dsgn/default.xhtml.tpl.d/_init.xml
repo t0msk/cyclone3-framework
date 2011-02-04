@@ -49,7 +49,7 @@
 	<entity id="parser.a501_image" replace_variables="false"><![CDATA[
 	<div class="img_<%attr_align%>" style="margin: 2px; padding: 2px;background:gray; float: <%attr_align%>">
 		<#tag_#>
-		<img src="<%attr_src%>" alt="<%attr_alt%>" width="<%db_width%>" height="<%attr_height%>" />
+		<img src="<%attr_src%>" alt="<%attr_alt%>" width="<%attr_width%>" height="<%attr_height%>" />
 		<p><%db_name%></p>
 	</div>
 	]]>

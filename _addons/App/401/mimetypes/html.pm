@@ -213,12 +213,32 @@ sub start
 					main::_log("found image src='$attr->{'src'}'") if $debug;
 					$attr->{'alt'}=$db0_line{'name'} unless $attr->{'alt'};
 					
+					$attr->{'width'}=~s|[^0-9]+||g;
+					$attr->{'height'}=~s|[^0-9]+||g;
+					
 					$attr->{'width_forced'}=$attr->{'width'};
 					$attr->{'height_forced'}=$attr->{'height'};
 					
 					$attr->{'width'}=$db0_line{'image_width'} unless $attr->{'width'};
 					$attr->{'height'}=$db0_line{'image_height'} unless $attr->{'height'};
 					
+					if ($db0_line{'image_width'} ne $attr->{'width'} || $db0_line{'image_height'} ne $attr->{'height'})
+					{
+						main::_log("post resize image_file.ID=$db0_line{'ID_file'}");
+						my %image_resized=App::501::functions::image_file_resize(
+							'image_file.ID' => $db0_line{'ID_file'},
+							'width' => $attr->{'width'},
+							'height' => $attr->{'height'},
+							'method' => 'auto',
+						);
+						if ($image_resized{'file_path'})
+						{
+							$attr->{'src'}=$tom::H_a501.'/image/file_p/'.$image_resized{'file_path'};
+							main::_log("change image src='$attr->{'src'}'") if $debug;
+							$attr->{'width'}=$image_resized{'width'};
+							$attr->{'height'}=undef;
+						}
+					}
 				}
 				# fullsize
 				my %db1_line=App::501::functions::get_image_file(
