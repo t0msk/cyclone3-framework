@@ -182,6 +182,7 @@ sub start
 		{
 			require App::501::_init;
 			%vars=_parse_id($1);
+			$vars{'ID_format_orig'}=$vars{'ID_format'};
 			if ($vars{'important'} eq "1")
 			{
 				$vars{'ID_format'}=
@@ -222,7 +223,14 @@ sub start
 					$attr->{'width'}=$db0_line{'image_width'} unless $attr->{'width'};
 					$attr->{'height'}=$db0_line{'image_height'} unless $attr->{'height'};
 					
-					if ($db0_line{'image_width'} ne $attr->{'width'} || $db0_line{'image_height'} ne $attr->{'height'})
+					if (
+						($db0_line{'image_width'} ne $attr->{'width'} || $db0_line{'image_height'} ne $attr->{'height'})
+						&&
+						(
+							# resize only when request same format as saved in html code
+							$vars{'ID_format'} eq $vars{'ID_format_orig'}
+						)
+					)
 					{
 						main::_log("post resize image_file.ID=$db0_line{'ID_file'}");
 						my %image_resized=App::501::functions::image_file_resize(
@@ -237,6 +245,8 @@ sub start
 							main::_log("change image src='$attr->{'src'}'") if $debug;
 							$attr->{'width'}=$image_resized{'width'};
 							$attr->{'height'}=undef;
+							$attr->{'width_forced'}=$attr->{'width'};
+							$attr->{'height_forced'}=$attr->{'height'};
 						}
 					}
 				}

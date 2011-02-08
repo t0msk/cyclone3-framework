@@ -61,7 +61,7 @@
 		id="<%attr_id%>"
 		title="<%attr_title%>"
 		target="<%attr_target%>"
-		class="a542_file" />
+		class="a542_file">
 	]]>
 	</entity>
 	-->
