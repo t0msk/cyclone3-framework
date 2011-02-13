@@ -916,34 +916,12 @@ sub start
 				}
 				
 				# override default tag representation
-				if ($db1_line{'image_width'}<=($db0_line{'image_width'}*1.2))
-				{ # fullsize is not better quality than this image_format
-					$out_full=
-						$self->{'entity'}{'link.a501_image.'.$out_cnt}
-						|| $self->{'entity'}{'link.a501_image.nofullsize'}
-						|| $self->{'entity'}{'link.a501_image'}
-						|| $tpl->{'entity'}{'parser.link.a501_image.'.$out_cnt}
-						|| $tpl->{'entity'}{'parser.link.a501_image'}
-						|| $self->{'entity'}{'a501_image.'.$out_cnt}
-						|| $self->{'entity'}{'a501_image.nofullsize'}
-						|| $self->{'entity'}{'a501_image'}
-						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
-						|| $tpl->{'entity'}{'parser.a501_image'}
-						|| $out_full;
-				}
-				else
-				{
-					$out_full=
-						$self->{'entity'}{'link.a501_image.'.$out_cnt}
-						|| $self->{'entity'}{'link.a501_image'}
-						|| $tpl->{'entity'}{'parser.link.a501_image.'.$out_cnt}
-						|| $tpl->{'entity'}{'parser.link.a501_image'}
-						|| $self->{'entity'}{'a501_image.'.$out_cnt}
-						|| $self->{'entity'}{'a501_image'}
-						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
-						|| $tpl->{'entity'}{'parser.a501_image'}
-						|| $out_full;
-				}
+				$out_full=
+					$self->{'entity'}{'link.a501_image.'.$out_cnt}
+					|| $self->{'entity'}{'link.a501_image'}
+					|| $tpl->{'entity'}{'parser.link.a501_image.'.$out_cnt}
+					|| $tpl->{'entity'}{'parser.link.a501_image'}
+					|| $out_full;
 				
 				$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 				
