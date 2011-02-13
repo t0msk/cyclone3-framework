@@ -61,11 +61,17 @@ our $tpl=new TOM::Template(
 sub text
 {
 	my ($self, $text) = @_;
-	# just print out the original text
-#	main::_log("text=$text") if $debug;
-	$self->{'out'}.=$text;
 	
-	#print $text;
+#	main::_log("test=$text");
+	
+	if ($self->{'level.ignore'} && $self->{'level.ignore'} <= $self->{'level'})
+	{
+#		main::_log(" ignore");
+		return;
+	}
+	
+	# just print out the original text
+	$self->{'out'}.=$text;
 }
 
 
@@ -74,7 +80,6 @@ sub comment
 {
 	my ($self, $comment) = @_;
 	# print out original text with comment marker
-	#print "";
 }
 
 
@@ -97,12 +102,32 @@ sub start
 {
 	my ($self, $tag, $attr, $attrseq, $origtext) = @_;
 	
+	$self->{'level'}++;
+	
+	# fix not closed tags
+	if ($tag=~/^hr|br|img$/)
+	{
+		$attr->{'/'}='/';
+	}
+	
+	if ($self->{'level.ignore'} && $self->{'level.ignore'} < $self->{'level'})
+	{
+		if ($attr->{'/'})
+		{
+			$self->{'level'}--;
+		}
+		return;
+	}
+	
+#	main::_log((" " x $self->{'level'})."<$tag:$self->{'level'}>");
+	
 	if (not $tag=~/^(br|strong|em|i|u|b|font|div|object|param|embed)$/) # don't display info about not important tags
 	{
 		main::_log("tag='$tag' origtext='$origtext'") if $debug;
 	}
 	
 	my $out_full="<#tag#>";
+	my $out_full_plus;
 	
 	my $out_tag;
 	my $out_addon_type;
@@ -277,11 +302,34 @@ sub start
 				}
 				
 				# override default tag representation
-				if ($db1_line{'image_width'}<=($db0_line{'image_width'}*1.2))
+				if ($db1_line{'image_width'}<=($db0_line{'image_width'}*1.2) && (!$attr->{'event'} || $attr->{'event'} eq "auto"))
 				{ # fullsize is not better quality than this image_format
 					$out_full=
-						$self->{'entity'}{'a501_image.'.$out_cnt}
+						$self->{'entity'}{'a501_image.'.$out_cnt.'.nofullsize'}
+						|| $self->{'entity'}{'a501_image.'.$out_cnt}
 						|| $self->{'entity'}{'a501_image.nofullsize'}
+						|| $self->{'entity'}{'a501_image'}
+						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
+						|| $tpl->{'entity'}{'parser.a501_image'}
+						|| $out_full;
+				}
+				elsif ($attr->{'event'} eq "fullsize")
+				{
+					$out_full=
+						   $self->{'entity'}{'a501_image.'.$out_cnt.'.fullsize'}
+						|| $self->{'entity'}{'a501_image.fullsize'}
+						|| $self->{'entity'}{'a501_image.'.$out_cnt}
+						|| $self->{'entity'}{'a501_image'}
+						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
+						|| $tpl->{'entity'}{'parser.a501_image'}
+						|| $out_full;
+				}
+				elsif ($attr->{'event'} eq "nothing") # do nothing
+				{
+					$out_full=
+						   $self->{'entity'}{'a501_image.'.$out_cnt.'.nofullsize'}
+						|| $self->{'entity'}{'a501_image.nofullsize'}
+						|| $self->{'entity'}{'a501_image.'.$out_cnt}
 						|| $self->{'entity'}{'a501_image'}
 						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
 						|| $tpl->{'entity'}{'parser.a501_image'}
@@ -928,16 +976,58 @@ sub start
 	{
 		if ($attr->{'id'}=~/^a401_article:(.*)$/)
 		{
+			$self->{'level.ignore'}=$self->{'level'};
 			require App::501::_init;
 			%vars=_parse_id($1);
-			if ($vars{'ID_entity'})
+			if ($vars{'ID'})
 			{
 				main::_log("include article");
 				
+				
+				my $sql=qq{
+					SELECT
+						article.ID_entity,
+						article.ID,
+						article_content.body
+					FROM
+						`$App::401::db_name`.a401_article AS article
+					LEFT JOIN `$App::401::db_name`.a401_article_ent AS article_ent ON
+					(
+						article_ent.ID_entity = article.ID_entity
+					)
+					LEFT JOIN `$App::401::db_name`.a401_article_attrs AS article_attrs ON
+					(
+						article_attrs.ID_entity = article.ID
+					)
+					LEFT JOIN `$App::401::db_name`.a401_article_content AS article_content ON
+					(
+						article_content.ID_entity = article.ID_entity AND
+						article_content.lng = article_attrs.lng
+					)
+					LEFT JOIN `$App::401::db_name`.a401_article_cat AS article_cat ON
+					(
+						article_cat.ID = article_attrs.ID_category
+					)
+					LEFT JOIN `$App::401::db_name`.a301_ACL_user_group AS ACL_world ON
+					(
+						ACL_world.ID_entity = 0 AND
+						r_prefix = 'a401' AND
+						r_table = 'article' AND
+						r_ID_entity = article.ID_entity
+					)
+					WHERE
+						article.ID=?
+					ORDER BY
+						article_attrs.datetime_start DESC
+					LIMIT 1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[$vars{'ID'}],'quiet'=>1,'-slave'=>1);
+				my %db0_line=$sth0{'sth'}->fetchhash();
+				
 				my $p=new App::401::mimetypes::html;
-#				$p->config('name'=>$part,'env'=>\%env,'entity'=>\%XSGN);
 				$p->config_from($self);
-				$p->parse(qq{<img id="a501_image:ID=48861:ID_format=6" />});
+				delete $p->{'config'}->{'editable'};
+				$p->parse($db0_line{'body'});
 				$p->eof();
 				
 				$out_full=
@@ -945,9 +1035,7 @@ sub start
 					|| $self->{'entity'}{'div.a401_article'}
 					|| $out_full;
 				
-#				my $part_html=$p->{'out'};
-				
-#				$out_full=$part_html;
+				$out_full_plus=$p->{'out'};
 				
 				$self->config_from($p);
 			}
@@ -959,12 +1047,12 @@ sub start
 		{
 			$attr->{'rel'}="editable";
 		}
-	}
-	
-	# fix not closed tags
-	if ($tag=~/^hr|br|img$/)
-	{
-		$attr->{'/'}='/';
+		
+		if (!$self->{'config'}->{'editable'})
+		{
+			delete $attr->{'entity_part'};
+		}
+		
 	}
 	
 	# rebuild a tag
@@ -986,6 +1074,11 @@ sub start
 	$out.=" /" if $attr->{'/'};
 	$out.=">";
 	
+	if ($attr->{'/'})
+	{
+		$self->{'level'}--;
+	}
+	
 	# fill into out_full
 	$out_full=~s|<#tag#>|$out|g;
 	$out_full=~s|<%attr_(.*?)%>|$attr->{$1}|g;
@@ -999,6 +1092,11 @@ sub start
 	else
 	{
 		$self->{'out'}.=$out_full;
+	}
+	
+	if ($out_full_plus)
+	{
+		$self->{'out'}.=$out_full_plus;
 	}
 	
 	if ($out_tag)
@@ -1015,11 +1113,29 @@ sub start
 sub end
 {
 	my ($self, $tag, $origtext) = @_;
+	
+#	main::_log("</$tag> level=$self->{'level'} level.ignore=$self->{'level.ignore'}");
+	
+	if ($self->{'level.ignore'} && ($self->{'level.ignore'} < $self->{'level'}))
+	{
+		$self->{'level'}--;
+		return;
+	}
+	elsif ($self->{'level.ignore'} == $self->{'level'})
+	{
+#		main::_log("closing level.ignore");
+		delete $self->{'level.ignore'};
+	}
+	
+#	main::_log((" " x $self->{'level'})."</$tag:$self->{'level'}>");
+	
+	$self->{'level'}--;
+	
 	# print out original text
-#	main::_log("end tag=$tag text=$origtext") if $debug;
 	$self->{'out'}.=$origtext;
-	#print $origtext;
 }
+
+
 
 sub config_from
 {
@@ -1057,6 +1173,8 @@ sub config_from
 	}
 	
 }
+
+
 
 sub config
 {
@@ -1143,6 +1261,10 @@ sub config
 		$entity->{$name.'.a501_image.1'}
 		|| $entity->{'a501_image.1'}
 		|| undef;
+#	$self->{'entity'}->{'a501_image.fullsize'}=
+#		$entity->{$name.'.a501_image.fullsize'}
+#		|| $entity->{'a501_image.fullsize'}
+#		|| undef;
 	$self->{'entity'}->{'link.a501_image'}=
 		$entity->{$name.'.link.a501_image'}
 		|| $entity->{'link.a501_image'}
