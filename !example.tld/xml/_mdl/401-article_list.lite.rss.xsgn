@@ -1,0 +1,53 @@
+# áéíóú - UTF-8!!!
+<XML_DESIGN_DEFINITION>
+
+<DEFINITION id="TMP">
+<rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:admin="http://webns.net/mvcb/"
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+	
+	<channel>
+		<title><$Tomahawk::mdl_env{'title'}></title>
+		<link><$Tomahawk::mdl_env{'link'}></link>
+		<description></description>
+		<generator>Cyclone3</generator>
+		<dc:language>en</dc:language>
+		<dc:creator></dc:creator>
+		<sy:updatePeriod>hourly</sy:updatePeriod>
+		<sy:updateFrequency>1</sy:updateFrequency>
+<#item#>
+	</channel>
+</rss>
+</DEFINITION>
+
+
+
+<DEFINITION id="item">
+	<item>
+		<title><![CDATA[<%db_name%>]]></title>
+		<link><![CDATA[<$tom::Hm_www>/<%alias_url_db%>/<%db_datetime_start.year%>-<%db_datetime_start.month%>-<%db_datetime_start.mday%>/c<%db_ID_article%>-<%db_name_url%>?utm_medium=rss&amp;utm_source=feedreader]]></link>
+		<description><![CDATA[<%abstract%>]]></description>
+		<pubDate><%db_datetime_start%></pubDate>
+		<dc:subject><%db_ID_category_name%></dc:subject>
+		<guid><![CDATA[<$tom::Hm_www>/<%alias_url_db%>/<%db_datetime_start.year%>-<%db_datetime_start.month%>-<%db_datetime_start.mday%>/c<%db_ID_article%>-<%db_name_url%>?utm_medium=rss&amp;utm_source=feedreader]]></guid>
+	</item>
+<#item#>
+</DEFINITION>
+
+
+<DEFINITION id="a501_image">
+<img src="<%attr_src%>" align="left"/>
+</DEFINITION>
+
+<DEFINITION id="a510_video_part">
+<img src="<%attr_src%>" align="left"/>
+</DEFINITION>
+
+<DEFINITION id="a510_video">
+<img src="<%attr_src%>" align="left"/>
+</DEFINITION>
+
+</XML_DESIGN_DEFINITION>
