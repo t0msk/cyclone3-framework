@@ -11,7 +11,7 @@
 	<VAR id="-name" value="article_list" />
 	<VAR id="-version" value="lite" />
 	<VAR id="-xsgn" value="rss" />
-	<VAR id="-TMP" value="BASE" />
+	<VAR id="-TMP" value="CONTENT" />
 	<VAR id="-debug" value="1" />
 	<VAR id="-cache_id" value="rss" />
 		
