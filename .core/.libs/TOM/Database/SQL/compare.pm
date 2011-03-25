@@ -61,7 +61,7 @@ sub compare_create_table
 	# Get Table Name
 	$create1 =~ /CREATE TABLE `(.*?)`\.`(.*?)`/;
 	my $database=$1;
-	my $tbl  =$2;
+	my $tbl=$2;
 	
 	main::_log("database='$database' table='$tbl'");
 	
@@ -159,7 +159,7 @@ sub compare_create_table
 			}
 			if ($fields1h{$field} ne $fields0h{$field})
 			{
-				main::_log("not equals");
+				main::_log_stdout("not equals db:'$fields1h{$field}'<=>struct:'$fields0h{$field}'");
 				if ($fields1h{$field}=~/character set/ && (not $fields0h{$field}=~/character set/)
 					&& $fields0h{$field}=~/(char|text)/)
 				{
@@ -177,8 +177,8 @@ sub compare_create_table
 			$count++;
 		}
 		
-#		if (not $tbl=~/_attrs(_arch|)$/)
-#		{
+		if (not $tbl=~/(a400|a500)_attrs(_arch|)$/)
+		{
 			foreach my $key(keys %fields1h)
 			{
 				if (!$fields0h{$key})
@@ -190,7 +190,7 @@ sub compare_create_table
 					next;
 				}
 			}
-#		}
+		}
 		
 		@fields1a=@fields0a;
 		$t_fields->close();

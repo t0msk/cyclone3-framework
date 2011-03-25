@@ -406,23 +406,25 @@ sub _chunk_prepare
 	 }
 	
 	 # 5.0 -> 5.1
-	 if ($header->{'version'} eq "5.0" && $version > $header->{'version'})
-	 {
-		  main::_log("converting SQL $header->{'version'} to 5.1");
-		  $$chunk=~s|collate|COLLATE|g;
-		  $$chunk=~s|character set|CHARACTER SET|g;
-		  $$chunk=~s|default|DEFAULT|g;
-		  $$chunk=~s|auto_increment|AUTO_INCREMENT|g;
-		  $$chunk=~s|PRIMARY KEY  |PRIMARY KEY |g;
-		  $$chunk=~s|(int\(\d+\).*?) NOT NULL,|$1 NOT NULL DEFAULT '0',|g;
-		  $$chunk=~s|(float.*?) NOT NULL,|$1 NOT NULL DEFAULT '0',|g;
-		  $$chunk=~s|( datetime) NOT NULL,|$1 NOT NULL DEFAULT '2000-01-01 00:00:00',|g;
-		  $$chunk=~s|( date) NOT NULL,|$1 NOT NULL DEFAULT '2000-01-01',|g;
-		  $$chunk=~s|( time) NOT NULL,|$1 NOT NULL DEFAULT '00:00:00',|g;
-		  $$chunk=~s|NOT NULL,|NOT NULL DEFAULT '',|g;
-		  $$chunk=~s| (text\|tinytext\|blob)( .*?)NOT NULL DEFAULT '',| $1$2NOT NULL,|g;
-		  $header->{'version'}="5.1";
-	 }
+	if ($header->{'version'} eq "5.0" && $version > $header->{'version'})
+	{
+		main::_log("converting SQL $header->{'version'} to 5.1");
+		$$chunk=~s|collate|COLLATE|g;
+		$$chunk=~s|character set|CHARACTER SET|g;
+		$$chunk=~s| default| DEFAULT|g;
+		$$chunk=~s|auto_increment|AUTO_INCREMENT|g;
+		$$chunk=~s|PRIMARY KEY  |PRIMARY KEY |g;
+#		  $$chunk=~s|(int\(\d+\).*?) NOT NULL,|$1 NOT NULL DEFAULT '0',|g;
+#		  $$chunk=~s|(float.*?) NOT NULL,|$1 NOT NULL DEFAULT '0',|g;
+#		  $$chunk=~s|( datetime) NOT NULL,|$1 NOT NULL DEFAULT '2000-01-01 00:00:00',|g;
+#		  $$chunk=~s|( date) NOT NULL,|$1 NOT NULL DEFAULT '2000-01-01',|g;
+#		  $$chunk=~s|( time) NOT NULL,|$1 NOT NULL DEFAULT '00:00:00',|g;
+#		  $$chunk=~s|NOT NULL,|NOT NULL DEFAULT '',|g;
+		$$chunk=~s|tinyint |tinyint(3) |g;
+		$$chunk=~s| (text\|longtext)( .*?) DEFAULT NULL,| $1$2,|g;
+		$$chunk=~s| (text\|tinytext\|blob)( .*?)NOT NULL DEFAULT '',| $1$2NOT NULL,|g;
+		$header->{'version'}="5.1";
+	}
 
 	
 	 # downgrade na nizsie verzie
