@@ -12,22 +12,23 @@
 -- &DROP `/*db_name*/`.`/*app*/_weblog_min`
 
 -- --------------------------------------------------------
+-- version=5.0
 
 CREATE TABLE `/*db_name*/`.`/*app*/_mdl_log` (
   `ID` int(10) unsigned NOT NULL auto_increment,
   `reqtime` int(10) unsigned NOT NULL default '0',
-  `reqdatetime` /*reqdatetime*/,
-  `domain` /*domain*/,
-  `domain_sub` /*domain_sub*/,
-  `Ctype` varchar(8) NOT NULL default '',
-  `Capp` varchar(16) binary NOT NULL default '',
-  `Cmodule` varchar(50) NOT NULL default '',
+  `reqdatetime` varchar(19) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `domain` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `domain_sub` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `Ctype` varchar(8) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `Capp` varchar(16) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `Cmodule` varchar(50) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `load_proc` float NOT NULL default '0',
   `load_req` float NOT NULL default '0',
   PRIMARY KEY  (`ID`),
   KEY `reqdatetime` (`reqdatetime`),
   KEY `domain` (`domain`,`domain_sub`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
