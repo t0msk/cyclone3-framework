@@ -1457,6 +1457,12 @@ while ($main::CGI=new CGI::Fast())
 				next;
 			}
 			
+			if ($env0{'id'} eq "meta")
+			{
+				delete $env0{'id'};
+				$main::H->add_DOC_meta(%env0);
+				next;
+			}
 			
 			next if (not defined $env0{'value'} && not defined $env0{'name'});
 			# PODMIENKY
