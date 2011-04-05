@@ -98,6 +98,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   `ID_category` bigint(20) unsigned default NULL, -- rel article_cat.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
+  `alias_url` varchar(128) character set ascii NOT NULL default '',
   `name_hyphens` varchar(200) character set ascii default NULL,
   `datetime_create` datetime NOT NULL,
   `datetime_start` datetime NOT NULL,
@@ -135,6 +136,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs_j` (
   `ID_category` bigint(20) unsigned default NULL, -- rel article_cat.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
+  `alias_url` varchar(128) character set ascii NOT NULL default '',
   `name_hyphens` varchar(200) character set ascii default NULL,
   `datetime_create` datetime NOT NULL,
   `datetime_start` datetime NOT NULL,
@@ -426,6 +428,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 		
 		article_attrs.name,
 		article_attrs.name_url,
+		article_attrs.alias_url,
 		article_content.subtitle,
 		article_content.mimetype,
 		article_content.abstract,

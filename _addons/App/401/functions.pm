@@ -316,6 +316,11 @@ sub article_add
 		# status
 		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'article_attrs.status'})."'"
 			if ($env{'article_attrs.status'} && ($env{'article_attrs.status'} ne $article_attrs{'status'}));
+
+		# alias_url		
+		$columns{'alias_url'}="'".TOM::Security::form::sql_escape($env{'article_attrs.alias_url'})."'"
+			if ($env{'article_attrs.alias_url'} && ($env{'article_attrs.alias_url'} ne $article_attrs{'alias_url'}));
+
 		# priority_A
 		$columns{'priority_A'}="'".$env{'article_attrs.priority_A'}."'"
 			if (exists $env{'article_attrs.priority_A'} && ($env{'article_attrs.priority_A'} ne $article_attrs{'priority_A'}));
