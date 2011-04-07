@@ -15,6 +15,7 @@ sub execute
 
 	my $sql_where;
 	my $sql_order;
+	$env{'sql_limit'}='1' unless $env{'sql_limit'};
 	
 	$sql_order="datetime_start DESC";
 	
@@ -37,7 +38,7 @@ sub execute
 	
 	if(!$sql_where)
 	{
-		main::_log('no ID_entity or ID_category specified!!!', 1);
+		main::_log('no ID, ID_entity, ID_category, name_url or sql_where specified!!!', 1);
 #		die "none sql defined\n" unless $sql_where;
 #		return undef unless $sql_where;
 		return 1;
@@ -94,7 +95,7 @@ sub execute
 		ORDER BY
 			article_attrs.datetime_start DESC
 		LIMIT
-			1
+			$env{'sql_limit'}
 	},'quiet_'=>1,'-slave'=>1,
 		'-cache'=>1200,
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
@@ -106,10 +107,13 @@ sub execute
 	
 	if (!$article{'ID'})
 	{
-		main::_log('no ID_entity or ID_category specified!!!');
+		main::_log('could not fetch article!!!');
+		$tom::ERR="could not fetch article from db!";
 		return undef;
 	}
 	
+	$main::env{'a401.article.ID'}=$article{'ID'} if $article{'ID'};
+	$main::env{'a401.article.ID_entity'}=$article{'ID_entity'} if $article{'ID_entity'};
 	$main::env{'a401.article.name'}.=$article{'name'} if $article{'name'};
 	$main::env{'a401.article.posix_owner'}=$article{'posix_owner'} if $article{'posix_owner'};
 	$main::env{'keywords'}.=", ".$article{'keywords'} if $article{'keywords'};
@@ -214,6 +218,7 @@ sub execute
 				'-TMP_check' => 1,
 				'-xsgn' => $env{'discussion_xsgn'},
 				'-xsgn_global' => $env{'discussion_xsgn_global'},
+				'-xlng_load' => $env{'discussion_xlng_load'},
 					'discussion.ID_entity' => $relation->{'r_ID_entity'},
 			);
 			my $sql=qq{
@@ -241,6 +246,7 @@ sub execute
 				'-TMP_check' => 1,
 				'-xsgn' => $env{'discussion_add_xsgn'},
 				'-xsgn_global' => $env{'discussion_add_xsgn_global'},
+				'-xlng_load' => $env{'discussion_add_xlng_load'},
 				'-cache_id' => "default",
 					'discussion.lastpost' => $discussion{'datetime_lastpost'},
 					'discussion.ID_entity' => $discussion{'ID_entity'},
