@@ -531,6 +531,8 @@ sub article_add
 			if (exists $env{'article_ent.rating_votes'} && ($env{'article_ent.rating_votes'} ne $article_ent{'rating_votes'}));
 		$columns{'rating'}="'".TOM::Security::form::sql_escape($env{'article_ent.rating'})."'"
 			if (exists $env{'article_ent.rating'} && ($env{'article_ent.rating'} ne $article_ent{'rating'}));
+		$columns{'published_mark'}="'".TOM::Security::form::sql_escape($env{'article_ent.published_mark'})."'"
+			if (exists $env{'article_ent.published_mark'} && ($env{'article_ent.published_mark'} ne $article_ent{'published_mark'}));
 		
 		# metadata
 		if ((not exists $env{'article_ent.metadata'}) && (!$article_ent{'metadata'})){$env{'article_ent.metadata'}=$App::401::metadata_default;}
