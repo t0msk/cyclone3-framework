@@ -1048,7 +1048,7 @@ sub execute
 		my $ID_category=$1;
 		my $sql=qq{
 			SELECT
-				name
+				name, name_url
 			FROM
 				`$App::401::db_name`.`a401_article_cat`
 			WHERE
@@ -1063,6 +1063,7 @@ sub execute
 			if (my %db0_line=$sth0{'sth'}->fetchhash())
 			{
 				$XSGN{'TMP'}=~s|<%category_name%>|$db0_line{'name'}|g;
+				$XSGN{'TMP'}=~s|<%category_name_url%>|$db0_line{'name_url'}|g;
 			}
 		}
 	}
