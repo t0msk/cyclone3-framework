@@ -10,6 +10,13 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 use App::401::_init;
 use base "HTML::Parser";
 
+sub _escape_attr
+{
+	my $attr=shift;
+	$attr=~s|"|'|g;
+	return $attr;
+}
+
 sub text
 {
 	my ($self, $text) = @_;
@@ -54,6 +61,8 @@ sub start
 		}
 	}
 	
+	delete $attr->{'style'} unless $attr->{'style'};
+	
 	# rebuild a tag
 	my %attrs_;
 	my $out="<$tag";
@@ -61,14 +70,14 @@ sub start
 	{
 		next if $_ eq '/';
 		next unless exists $attr->{$_};
-		$out.=' '.$_.'="'.$attr->{$_}.'"';
+		$out.=' '.$_.'="'.(_escape_attr($attr->{$_})).'"';
 		$attrs_{$_}=1;
 	}
 	foreach (keys %{$attr})
 	{
 		next if $_ eq '/';
 		next if $attrs_{$_};
-		$out.=' '.$_.'="'.$attr->{$_}.'"';
+		$out.=' '.$_.'="'.(_escape_attr($attr->{$_})).'"';
 	}
 	$out.=" /" if $attr->{'/'};
 	$out.=">";

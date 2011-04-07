@@ -96,7 +96,42 @@ sub _parse_id
 	return %env;
 }
 
+sub _parse_style
+{
+	my $style=shift;
+	my %env;
+	foreach my $part (split(';',$style))
+	{
+		my ($name,$value)=split(':',$part,2);
+		$name=~s|^[ ]+||;
+		$name=~s|[ ]+$||;
+		$value=~s|^[ ]+||;
+		$value=~s|[ ]+$||;
+		$env{$name}=$value;
+	}
+	return %env;
+}
 
+sub _gen_style
+{
+	my %env=@_;
+	my $style;
+	foreach (sort keys %env)
+	{
+		$style.="; ".$_.": ".$env{$_};
+	}
+	$style=~s|"|'|g;
+	$style=~s|^; ||;
+	return $style;
+}
+
+sub _escape_attr
+{
+	my $attr=shift;
+	$attr=~s|"|'|g;
+	$attr=~s|&|&amp;|g;
+	return $attr;
+}
 
 sub start
 {
@@ -108,6 +143,22 @@ sub start
 	if ($tag=~/^hr|br|img$/)
 	{
 		$attr->{'/'}='/';
+	}
+	
+	# fix style attribute
+	if ($attr->{'style'})
+	{
+		my %style=_parse_style($attr->{'style'});
+		if ($tag=~/^p|span|div$/)
+		{
+			delete $style{'color'};
+			delete $style{'font-size'};
+			delete $style{'font-family'};
+			delete $style{'background'};
+			delete $style{'background-color'};
+		}
+		$attr->{'style'}=_gen_style(%style);
+		delete $attr->{'style'} unless $attr->{'style'};
 	}
 	
 	if ($self->{'level.ignore'} && $self->{'level.ignore'} < $self->{'level'})
@@ -1040,14 +1091,14 @@ sub start
 	{
 		next if $_ eq '/';
 		next unless exists $attr->{$_};
-		$out.=' '.$_.'="'.$attr->{$_}.'"';
+		$out.=' '.$_.'="'._escape_attr($attr->{$_}).'"';
 		$attrs_{$_}=1;
 	}
 	foreach (keys %{$attr})
 	{
 		next if $_ eq '/';
 		next if $attrs_{$_};
-		$out.=' '.$_.'="'.$attr->{$_}.'"';
+		$out.=' '.$_.'="'._escape_attr($attr->{$_}).'"';
 	}
 	$out.=" /" if $attr->{'/'};
 	$out.=">";
