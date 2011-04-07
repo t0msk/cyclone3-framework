@@ -343,6 +343,22 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_emo_vote` (
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_rel_published` (
+  `ID_ent` bigint(20) unsigned NOT NULL, -- rel article_ent.ID
+  `ID_published` mediumint(8) unsigned NOT NULL, -- rel article_published.ID
+  UNIQUE KEY `UNI_0` (`ID_ent`,`ID_published`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_article_published` (
+  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `name` varchar(256) character set utf8 collate utf8_unicode_ci NOT NULL,
+  PRIMARY KEY  (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
 CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_emo_view` AS (
 	SELECT
 		emo.ID,
