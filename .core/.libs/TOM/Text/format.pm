@@ -105,7 +105,7 @@ sub CDATA
 {
 	my $text=shift;
 	
-	$text=~s|]]>|]]&gt;|g;
+	$text=~s|]]>|]]]]><![CDATA[>|g;
 	
 	return '<![CDATA['.$text.']]>';
 }
