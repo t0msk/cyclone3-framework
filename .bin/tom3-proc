@@ -32,11 +32,13 @@ while(1)
 	my $t = new Proc::ProcessTable;
 	foreach my $p (@{$t->table})
 	{
+#		next unless $p->{'cmndline'}=~/(\.core\/tom3|perl.*core\.tom)/;
 #		print $p->{'cmndline'}."\n";
 		next unless $p->{'cmndline'}=~/^.*\/perl $TOM::P\/[^ ]*\/(.*?)$/;
 		my $engine=$1;
 		
 		my $host;
+		$p->{'cmndline'}=~s| pwd=.*$||;
 		$p->{'cmndline'}=~/$TOM::P\/(.*)\/(.*?)$/;
 		my $pwd=$1;
 #			$pwd=~s|^.*?/TOM/||;
@@ -52,6 +54,7 @@ while(1)
 			$host.="/".$_;
 		}
 		$host=~s|^www\.||;
+		$host=~s|/core\.tom$||;
 		
 #		foreach (keys %{$p})
 #		{
@@ -93,7 +96,9 @@ while(1)
 			{
 				$processes++;
 				my $setcolor;
+				$hosts{$host}[$_]{'state'}="proc" if $hosts{$host}[$_]{'state'} eq "onprocessor";
 				if ($hosts{$host}[$_]{'state'} eq "run"){$setcolor = 'reset bold cyan';}
+				if ($hosts{$host}[$_]{'state'} eq "proc"){$setcolor = 'reset bold cyan';}
 				else {$setcolor = 'reset cyan';}
 				print color $setcolor;
 				
