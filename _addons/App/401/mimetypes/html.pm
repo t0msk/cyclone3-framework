@@ -62,16 +62,29 @@ sub text
 {
 	my ($self, $text) = @_;
 	
-#	main::_log("test=$text");
+	$self->{'text.length'}+=length($text);
 	
 	if ($self->{'level.ignore'} && $self->{'level.ignore'} <= $self->{'level'})
 	{
-#		main::_log(" ignore");
+		return;
+	}
+	
+	if ($self->{'stop'})
+	{
 		return;
 	}
 	
 	# just print out the original text
 	$self->{'out'}.=$text;
+	
+	if ($self->{'config'}->{'length.stop'} && (!$self->{'stop'}))
+	{
+		if ($self->{'config'}->{'length.stop'} <= $self->{'text.length'})
+		{
+			$self->{'stop'}=1;
+			$self->{'stop.level'}=$self->{'level'};
+		}
+	}
 }
 
 
@@ -136,13 +149,17 @@ sub _escape_attr
 sub start
 {
 	my ($self, $tag, $attr, $attrseq, $origtext) = @_;
+	$tag=~s|/$||;
 	
 	$self->{'level'}++;
 	
 	# fix not closed tags
-	if ($tag=~/^hr|br|img$/)
+	$attr->{'/'}='/' if $tag=~/^hr|br|img$/;
+	
+	if ($self->{'stop'} && $self->{'stop.level'} <= $self->{'level'})
 	{
-		$attr->{'/'}='/';
+		$self->{'level'}-- if $attr->{'/'};
+		return;
 	}
 	
 	# fix style attribute
@@ -169,8 +186,6 @@ sub start
 		}
 		return;
 	}
-	
-#	main::_log((" " x $self->{'level'})."<$tag:$self->{'level'}>");
 	
 	if (not $tag=~/^(br|strong|em|i|u|b|font|div|object|param|embed)$/) # don't display info about not important tags
 	{
@@ -1143,7 +1158,18 @@ sub end
 {
 	my ($self, $tag, $origtext) = @_;
 	
-#	main::_log("</$tag> level=$self->{'level'} level.ignore=$self->{'level.ignore'}");
+	if ($self->{'stop'})
+	{
+		if ($self->{'stop.level'} < $self->{'level'})
+		{
+			$self->{'level'}--;
+			return;
+		}
+		elsif ($self->{'stop.level'} == $self->{'level'})
+		{
+			$self->{'stop.level'}--;
+		}
+	}
 	
 	if ($self->{'level.ignore'} && ($self->{'level.ignore'} < $self->{'level'}))
 	{
@@ -1152,11 +1178,8 @@ sub end
 	}
 	elsif ($self->{'level.ignore'} == $self->{'level'})
 	{
-#		main::_log("closing level.ignore");
 		delete $self->{'level.ignore'};
 	}
-	
-#	main::_log((" " x $self->{'level'})."</$tag:$self->{'level'}>");
 	
 	$self->{'level'}--;
 	
