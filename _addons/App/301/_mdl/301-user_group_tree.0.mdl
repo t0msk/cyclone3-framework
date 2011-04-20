@@ -65,7 +65,7 @@ sub execute
 			count(user.ID_user) AS total_count
 		FROM
 			TOM.a301_user AS user
-			LEFT JOIN TOM.a301_user_profile AS user_profile ON
+			INNER JOIN TOM.a301_user_profile AS user_profile ON
 			( user_profile.ID_entity = user.ID_user )
 		WHERE
 			(user.login IS NOT NULL OR user_profile.ID IS NOT NULL OR user.email IS NOT NULL) AND
