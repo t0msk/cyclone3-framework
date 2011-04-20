@@ -62,13 +62,15 @@ sub execute
 
 	my $sql=qq{
 		SELECT
-			count(ID_user) AS total_count
+			count(user.ID_user) AS total_count
 		FROM
-			TOM.a301_user
+			TOM.a301_user AS user
+			LEFT JOIN TOM.a301_user_profile AS user_profile ON
+			( user_profile.ID_entity = user.ID_user )
 		WHERE
-			(login IS NOT NULL OR email IS NOT NULL)
-			AND hostname=?
-			AND status IN ('Y','N','L')
+			(user.login IS NOT NULL OR user_profile.ID IS NOT NULL OR user.email IS NOT NULL) AND
+			hostname=? AND
+			user.status IN ('Y','N','L')
 	};
 	my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1, 'bind' => [ $tom::H_cookie ] );
 
