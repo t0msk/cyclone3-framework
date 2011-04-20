@@ -59,6 +59,23 @@ sub execute
 		
 		$XSGN{'TMP'}=~s|<#item#>|$XSGN{'NULL'}|;
 	}
+
+	my $sql=qq{
+		SELECT
+			count(ID_user) AS total_count
+		FROM
+			TOM.a301_user
+		WHERE
+			hostname=?
+			AND status IN ('Y','N','L')
+	};
+	my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1, 'bind' => [ $tom::H_cookie ] );
+
+	if (my %db0_line=$sth1{'sth'}->fetchhash())
+	{
+		$XSGN{'TMP'}=~s|<%total_count%>|$db0_line{'total_count'}|g;
+	}
+
 	
 	return 1;
 }
