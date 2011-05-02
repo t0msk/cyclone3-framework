@@ -123,7 +123,18 @@ sub execute
 	
 	$main::H->add_DOC_title($article{'name'}) unless $env{'DOC_title.disable'};
 	$main::H->add_DOC_keywords($article{'keywords'});
-	$main::H->add_DOC_description($article{'name'}.". ".TOM::Text::format::xml2plain($article{'abstract'})) unless $env{'DOC_title.disable'};
+	
+	if (!$env{'DOC_title.disable'})
+	{
+		if (!$article{'abstract'})
+		{
+			$main::H->add_DOC_description($article{'name'});
+		}
+		else
+		{
+			$main::H->add_DOC_description(TOM::Text::format::xml2plain($article{'abstract'}));
+		}
+	}
 	
 	App::401::functions::article_visit($article{'ID_entity'});
 	
