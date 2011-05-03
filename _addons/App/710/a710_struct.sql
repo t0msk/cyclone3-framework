@@ -29,6 +29,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
   `ZIP` varchar(16) character set ascii default NULL,
   `street` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `street_num` varchar(12) character set ascii default NULL,
+
+  `latitude_decimal` float(10,6) default NULL,
+  `longitude_decimal` float(10,6) default NULL,
   
   `address_postal` text character set utf8 collate utf8_unicode_ci,
   
