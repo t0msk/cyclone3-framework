@@ -216,6 +216,15 @@ sub event_add
 		# location
 		$columns{'location'}="'".TOM::Security::form::sql_escape($env{'event.location'})."'"
 			if (exists $env{'event.location'} && ($env{'event.location'} ne $event{'location'}));
+
+		# latitude_decimal
+		$columns{'latitude_decimal'}="'".TOM::Security::form::sql_escape($env{'event.latitude_decimal'})."'"
+			if (exists $env{'event.latitude_decimal'} && ($env{'event.latitude_decimal'} ne $event{'latitude_decimal'}));
+
+		# longitude_decimal
+		$columns{'longitude_decimal'}="'".TOM::Security::form::sql_escape($env{'event.longitude_decimal'})."'"
+			if (exists $env{'event.longitude_decimal'} && ($env{'event.longitude_decimal'} ne $event{'longitude_decimal'}));
+
 		# metadata
 		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'event.metadata'})."'"
 			if (exists $env{'event.metadata'} && ($env{'event.metadata'} ne $event{'metadata'}));

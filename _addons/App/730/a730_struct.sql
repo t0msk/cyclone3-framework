@@ -18,6 +18,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event` (
   `datetime_publish_stop` datetime default NULL,
   `link` varchar(128) character set ascii default NULL,
   `location` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `latitude_decimal` float(10,6) default NULL,
+  `longitude_decimal` float(10,6) default NULL,
   `priority_A` tinyint(3) unsigned default NULL,
   `price` decimal(12,3) default NULL, -- different modifications, different prices
   `price_max` decimal(12,3) default NULL,
@@ -48,6 +50,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_j` (
   `datetime_publish_stop` datetime default NULL,
   `link` varchar(128) character set ascii default NULL,
   `location` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `latitude_decimal` float(10,6) default NULL,
+  `longitude_decimal` float(10,6) default NULL,
   `priority_A` tinyint(3) unsigned default NULL,
   `price` decimal(12,3) default NULL, -- different modifications, different prices
   `price_max` decimal(12,3) default NULL,
