@@ -422,7 +422,7 @@ sub _chunk_prepare
 #		  $$chunk=~s|NOT NULL,|NOT NULL DEFAULT '',|g;
 		$$chunk=~s|tinyint |tinyint(3) |g;
 		$$chunk=~s| (text\|longtext)( .*?) DEFAULT NULL,| $1$2,|g;
-		$$chunk=~s| (text\|tinytext\|blob)( .*?)NOT NULL DEFAULT '',| $1$2NOT NULL,|g;
+		$$chunk=~s| (text\|tinytext\|longtext\|blob)( .*?)NOT NULL DEFAULT '',| $1$2NOT NULL,|g;
 		$header->{'version'}="5.1";
 	}
 
