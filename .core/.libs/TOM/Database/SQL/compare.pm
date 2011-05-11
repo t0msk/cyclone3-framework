@@ -159,7 +159,7 @@ sub compare_create_table
 			}
 			if ($fields1h{$field} ne $fields0h{$field})
 			{
-				main::_log_stdout("not equals db:'$fields1h{$field}'<=>struct:'$fields0h{$field}'");
+				main::_log_stdout("not equals db:'$fields1h{$field}'<=>struct:'$fields0h{$field}'",1);
 				if ($fields1h{$field}=~/character set/ && (not $fields0h{$field}=~/character set/)
 					&& $fields0h{$field}=~/(char|text)/)
 				{

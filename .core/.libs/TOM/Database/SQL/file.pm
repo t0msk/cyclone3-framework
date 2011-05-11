@@ -85,7 +85,7 @@ sub _sqlheader_process
 				my $db_name;
 				eval "\$db_name=\$App::".$var[1]."::db_name || \$TOM::DB{'main'}{'name'}";
 				$header->{'db_name'}=$db_name;
-				main::_log_stdout("re-set 'db_name'='$db_name'");
+				main::_log("re-set 'db_name'='$db_name'");
 			}
 		}
 	}
@@ -485,13 +485,13 @@ sub install_table
 	my $database=$3;
 	my $table=$4;
 	main::_log("database='$database' table='$table' in db_h='$header->{'db_h'}'");
-	#main::_log_stdout("installing database='$database' table='$table' in db_h='$header->{'db_h'}'");
+	main::_log_stdout("check $database.$table \@$header->{'db_h'}",3);
 	
 	TOM::Database::connect::multi($header->{'db_h'}) unless $main::DB{$header->{'db_h'}};
 	
 	if ($debug){foreach my $line(split('\n',$SQL)){main::_log("$line");}}
 	
-	main::_log_stdout("(re)installing view `$database`.`$table`",3) if $SQL=~/ VIEW /;
+	main::_log("(re)installing view `$database`.`$table`",3) if $SQL=~/ VIEW /;
 	
 	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$header->{'db_h'});
 	
