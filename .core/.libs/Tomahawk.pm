@@ -556,6 +556,13 @@ sub module
 	
 	#NECACHUJEM, LEBO VYPRSALA CACHE
 	
+	if ($mdl_C{'-level'})
+	{
+		if ($mdl_C{'-level'} eq "global"){$mdl_C{'-global'} = 1;}
+		elsif ($mdl_C{'-level'} eq "master"){$mdl_C{'-global'} = 2;}
+		elsif ($mdl_C{'-level'} eq "local"){$mdl_C{'-global'} = 0;}
+	}
+	
 	# Where is the modul?
 	if (($mdl_C{'-global'}==2)&&($tom::Pm))
 	{
@@ -894,6 +901,13 @@ sub supermodule
 	# if ($smdl_env{-global}){$smdl_env{P_MODULE}=$TOM::P.$smdl_env{P_MODULE}}
 	# else{$smdl_env{P_MODULE}=$tom::P.$smdl_env{P_MODULE}}
 	
+	if ($smdl_env{'-level'})
+	{
+		if ($smdl_env{'-level'} eq "global"){$smdl_env{'-global'} = 1;}
+		elsif ($smdl_env{'-level'} eq "master"){$smdl_env{'-global'} = 2;}
+		elsif ($smdl_env{'-level'} eq "local"){$smdl_env{'-global'} = 0;}
+	}
+	
 	if (($smdl_env{-global}==2)&&($tom::Pm))
 	{
 		my $addon_path=
@@ -1036,6 +1050,13 @@ sub designmodule
 	# $mdl_env{P_MODULE}="/_mdl/".$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
 	# if ($mdl_env{-global}){$mdl_env{P_MODULE}=$TOM::P.$mdl_env{P_MODULE}}
 	# else{$mdl_env{P_MODULE}=$tom::P.$mdl_env{P_MODULE}}
+	
+	if ($mdl_env{'-level'})
+	{
+		if ($mdl_env{'-level'} eq "global"){$mdl_env{'-global'} = 1;}
+		elsif ($mdl_env{'-level'} eq "master"){$mdl_env{'-global'} = 2;}
+		elsif ($mdl_env{'-level'} eq "local"){$mdl_env{'-global'} = 0;}
+	}
 	
 	$mdl_env{'MODULE'}=$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng};
 	
