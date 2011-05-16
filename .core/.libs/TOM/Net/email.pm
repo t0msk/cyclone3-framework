@@ -87,14 +87,21 @@ sub send
 		my %db0_line=$sth0{'sth'}->fetchhash();
 	};
 	
+	my $subject;
+	if ($env{'body'}=~/Subject: (.*?)\n/)
+	{
+		$subject=$1;
+	}
+	
 	if (!$@)
 	{
-		main::_log("sending email over a130 to '$env{'to_email'}'");
+		main::_log("creating email over a130 to '$env{'to_email'}'");
+		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			INSERT INTO TOM.a130_send
-			(ID_md5,sendtime,priority,from_name,from_email,from_host,from_service,to_name,to_email,body,datetime_create)
+			(ID_md5,sendtime,priority,from_name,from_email,from_host,from_service,to_name,to_email,datetime_create)
 			VALUES
-			('$env{'md5'}',?,?,?,?,?,?,?,?,?,NOW())
+			('$env{'md5'}',?,?,?,?,?,?,?,?,NOW())
 		},'bind'=>[
 			$env{'time'},
 			$env{'priority'},
@@ -103,12 +110,21 @@ sub send
 			($tom::H || ''),
 			($env{'from_service'} || ''),
 			($env{'to_name'} || ''),
-			($env{'to_email'} || ''),
-			($env{'body'} || '')
+			($env{'to_email'} || '')
 		],'quiet'=>1);
 		if ($sth0{'rows'})
 		{
-			main::_log(" sended");
+			my $ID=$sth0{'sth'}->insertid();
+			# save body into file
+			open(EMAILBODY,'>'.$TOM::P.'/_data/email/body_'.$ID.'.eml');
+			binmode(EMAILBODY);
+			print EMAILBODY $env{'body'};
+			close(EMAILBODY);
+			chmod 0666, $TOM::P.'/_data/email/body_'.$ID.'.eml';
+			
+			main::_log(" created ID='$ID'");
+			main::_log("created email ID='$ID' from='$env{'from_email'}' to='$env{'to_email'}' priority='$env{'priority'}' subject='$subject' domain='$tom::H'",3,"email",1);
+			
 			return 1;
 		}
 	}
