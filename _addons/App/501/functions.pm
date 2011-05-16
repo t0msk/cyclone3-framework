@@ -410,8 +410,16 @@ sub image_file_process
 	
 	if (!$env{'ext'})
 	{
-		$env{'ext'}=$App::501::image_format_ext_default;
-		$procs++;
+		if ($env{'image1'}=~/\.(.*?)$/)
+		{
+			# save the format of original image by default
+			$env{'ext'}=$1;
+		}
+		else
+		{
+			$env{'ext'}=$App::501::image_format_ext_default;
+			$procs++;
+		}
 	}
 	
 	# read the first image
@@ -669,6 +677,21 @@ sub image_file_process
 			#next;
 		}
 		
+		if ($function_name eq "autoalpha")
+		{
+			main::_log("exec $function_name($params[0])");
+			
+			$image1->Write($env{'ext'}.':'.$env{'image2'});
+			
+			system("/usr/bin/convert \"$env{'image2'}\" -bordercolor white -border 1x1 -alpha set -channel RGBA -fuzz ".$params[0]."% -fill none -floodfill +0+0 white -shave 1x1 \"$env{'image2'}\"");
+			main::_log("failed? $?");
+			
+			$image1->Read($env{'image2'});
+			
+			$procs++;
+			next;
+		}
+		
 		if ($function_name eq "dimensions")
 		{
 			main::_log("exec $function_name($params[0],$params[1])");
@@ -761,6 +784,14 @@ sub image_file_process
 		{
 			main::_log("exec $function_name()");
 			my $out=$image1->Thumbnail('width'=>$image1->Get('width'),'x'=>$image1->Get('height'));
+			$procs++;
+			next;
+		}
+		
+		if ($function_name eq "rotate")
+		{
+			main::_log("exec $function_name()");
+			my $out=$image1->Rotate('degrees'=>$params[0]);
 			$procs++;
 			next;
 		}
@@ -1530,7 +1561,7 @@ sub image_file_add
 	my $file_ext = $App::542::mimetypes::mime{$type_from_file};
 	main::_log("file mimetype='$type_from_file'");
 	
-	# optional file ext
+	# optional default file ext
 	$file_ext='jpg' unless $file_ext;
 	main::_log("file ext='$file_ext'");
 	
@@ -1551,6 +1582,34 @@ sub image_file_add
 	
 	# generate new unique hash
 	my $name=image_file_newhash();
+	# add asciied name of image
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			a501_image_attrs.name
+		FROM
+			`$App::501::db_name`.`a501_image`
+		INNER JOIN `$App::501::db_name`.`a501_image_attrs` ON
+		(
+			a501_image_attrs.ID_entity = a501_image.ID AND
+			a501_image_attrs.status IN ('Y','N')
+		)
+		WHERE
+			a501_image.ID_entity=$env{'image.ID_entity'}
+		LIMIT 1
+	}); # language is not relevant
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $optimal_hash=Int::charsets::encode::UTF8_ASCII($db0_line{'name'});
+		$optimal_hash=~tr/[A-Z]/[a-z]/;
+		$optimal_hash=~s|[^a-z0-9]|_|g;
+		1 while ($optimal_hash=~s|__|_|g);
+		my $max=110;
+		if (length($optimal_hash)>$max)
+		{
+			$optimal_hash=substr($optimal_hash,0,$max);
+		}
+		$name.=".".$optimal_hash;
+	}
 	
 	# Check if image_file for this format exists
 	my $sql=qq{
@@ -1767,7 +1826,7 @@ sub image_file_newhash
 	while (!$okay)
 	{
 		
-		$hash=TOM::Utils::vars::genhash(8);
+		$hash=TOM::Utils::vars::genhash(4);
 		
 		my $sql=qq{
 			(
@@ -1775,7 +1834,7 @@ sub image_file_newhash
 				FROM
 					`$App::501::db_name`.a501_image_file
 				WHERE
-					name LIKE '$hash'
+					name LIKE '$hash%'
 				LIMIT 1
 			)
 			UNION ALL
@@ -1784,7 +1843,7 @@ sub image_file_newhash
 				FROM
 					`$App::501::db_name`.a501_image_file_j
 				WHERE
-					name LIKE '$hash'
+					name LIKE '$hash%'
 				LIMIT 1
 			)
 			LIMIT 1
