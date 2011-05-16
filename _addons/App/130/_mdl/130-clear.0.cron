@@ -8,37 +8,43 @@ sub execute
 {
 	my %env=@_;
 	
-	my $var=$cron::time_current-(31*86400);
-	my $var2=$cron::time_current-(7*86400);
-	
-	
-	TOM::Database::SQL::execute(qq{
-		DELETE FROM
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			ID
+		FROM
 			TOM.a130_send
 		WHERE
-			sendtime<$var
+			datetime_create <= DATE_SUB(NOW(),INTERVAL 7 DAY)
 		ORDER BY
-			sendtime
+			datetime_create
 	});
-		
-	TOM::Database::SQL::execute(qq{
-		UPDATE
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		if (-e $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml')
+		{
+			unlink $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml';
+		}
+	}
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			ID
+		FROM
 			TOM.a130_send
-		SET
-			body='-[body deleted]-'
 		WHERE
-			sendtime<$var2
-	});
-	
-	TOM::Database::SQL::execute(qq{
-		DELETE FROM
-			TOM.a130_received
-		WHERE
-			rectime<$var
+			datetime_create <= DATE_SUB(NOW(),INTERVAL 31 DAY)
 		ORDER BY
-			rectime
+			datetime_create
 	});
-	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("removing email ID=$db0_line{'ID'}");
+		if (-e $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml')
+		{
+			unlink $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml';
+		}
+		TOM::Database::SQL::execute(qq{DELETE FROM TOM.a130_send WHERE ID=?},'bind'=>[$db0_line{'ID'}],'quiet'=>1);
+	}
 	
 	return 1
 }
