@@ -219,6 +219,9 @@ sub process
 				main::_log("user '$main::COOKIES{_ID_user}' is online");
 				$main::USRM{'ID_user'}=$main::COOKIES{'_ID_user'} unless $main::USRM{'ID_user'};
 				
+				# fix unicode in session
+				utf8::decode($main::USRM{'session'}) unless utf8::is_utf8($main::USRM{'session'});
+				
 				# overenie pravosti prihlasenia
 				my @ref=($main::USRM{'IP'},$main::ENV{'REMOTE_ADDR'});
 				$ref[0]=~s|^(.*)\.(\d+)$|$1|;
