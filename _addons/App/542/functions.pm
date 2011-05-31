@@ -29,6 +29,10 @@ L<App::542::_init|app/"542/_init.pm">
 
 =item *
 
+L<App::501::functions|app/"501/functions.pm">
+
+=item *
+
 L<App::160::_init|app/"160/_init.pm">
 
 =item *
@@ -60,8 +64,10 @@ Movie::Info
 =cut
 
 use App::542::_init;
+use App::501::functions;
 use App::160::_init;
 use App::542::mimetypes;
+use App::542::previews;
 use File::Path;
 use Digest::MD5  qw(md5 md5_hex md5_base64);
 use Digest::SHA1  qw(sha1 sha1_hex sha1_base64);
@@ -250,175 +256,6 @@ sub file_add
 	
 	
 	
-	# FILE ITEM
-	
-	# tu pridat file item
-	if ($env{'file'} && -e $env{'file'})
-	{
-		# create new secure hash
-		my $hash_secure=TOM::Utils::vars::genhash(32);
-		
-		# file must be analyzed
-		
-		# size
-		my $file_size=(stat($env{'file'}))[7];
-		main::_log("file size='$file_size'");
-		
-		# checksum
-		open(CHKSUM,'<'.$env{'file'});
-		my $ctx = Digest::SHA1->new;
-		$ctx->addfile(*CHKSUM);
-		my $checksum = $ctx->hexdigest;
-		my $checksum_method = 'SHA1';
-		main::_log("file checksum $checksum_method:$checksum");
-		
-		my $out=`file -b $env{'file'}`;chomp($out);
-		main::_log("file -b = '$out'");
-#		my $file_ext=$env{'file_attrs.name_ext'};#
-		
-		# find if this file type exists
-		foreach my $reg (@App::542::mimetypes::filetype_ext)
-		{
-			next if $env{'file_attrs.name_ext'};
-			if ($out=~/$reg->[0]/){$env{'file_attrs.name_ext'}=$reg->[1];last;}
-		}
-		$env{'file_attrs.name_ext'}='bin' unless $env{'file_attrs.name_ext'};
-		
-		my $mimetype=$App::542::mimetypes::ext{$env{'file_attrs.name_ext'}};
-		
-		main::_log("type='$out' ext='$env{'file_attrs.name_ext'}' mimetype='$mimetype'");
-		
-		my $name=file_newhash();
-		
-		
-		# Check if file_item if exists
-		my $sql=qq{
-			SELECT
-				*
-			FROM
-				`$App::542::db_name`.`a542_file_item`
-			WHERE
-				ID_entity='$env{'file.ID_entity'}' AND
-				lng='$env{'file_attrs.lng'}'
-			LIMIT 1
-		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-		if (my %db0_line=$sth0{'sth'}->fetchhash)
-		{
-			# file updating
-			main::_log("check for update file_item");
-			main::_log("checkum in database = '$db0_line{'file_checksum'}'");
-			main::_log("checkum from file = '$checksum_method:$checksum'");
-			if ($db0_line{'file_checksum'} eq "$checksum_method:$checksum")
-			{
-				main::_log("same checksum, just enabling file when disabled");
-				my %columns;
-				App::020::SQL::functions::update(
-					'ID' => $db0_line{'ID'},
-					'db_h' => 'main',
-					'db_name' => $App::542::db_name,
-					'tb_name' => 'a542_file_item',
-					'columns' =>
-					{
-						'mimetype' => "'$mimetype'",
-						'hash_secure' => "'$hash_secure'",
-						'status' => "'Y'",
-						%columns
-					},
-					'-journalize' => 1,
-					'-posix' => 1,
-				);
-			}
-			else
-			{
-				main::_log("checksum differs");
-				my %columns;
-				App::020::SQL::functions::update(
-					'ID' => $db0_line{'ID'},
-					'db_h' => 'main',
-					'db_name' => $App::542::db_name,
-					'tb_name' => 'a542_file_item',
-					'columns' =>
-					{
-						'name' => "'$name'",
-						'mimetype' => "'$mimetype'",
-						'hash_secure' => "'$hash_secure'",
-						'file_size' => "'$file_size'",
-						'file_checksum' => "'$checksum_method:$checksum'",
-						'file_ext' => "'$env{'file_attrs.name_ext'}'",
-						'status' => "'Y'",
-						%columns
-					},
-					'-journalize' => 1,
-					'-posix' => 1,
-				);
-				my $path=$tom::P_media.'/a542/file/item/'._file_item_genpath
-				(
-					$env{'file_attrs.lng'},
-					$db0_line{'ID'},
-					$name,
-					$env{'file_attrs.name_ext'}
-				);
-				main::_log("copy to $path");
-				File::Copy::copy($env{'file'},$path);
-			}
-		}
-		else
-		{
-			# file creating
-			main::_log("creating file_item");
-			my %columns;
-#			$columns{'file_alt_src'}="'$env{'file'}'" if $env{'file_nocopy'};
-			
-			my $ID=App::020::SQL::functions::new(
-				'db_h' => "main",
-				'db_name' => $App::542::db_name,
-				'tb_name' => "a542_file_item",
-				'columns' =>
-				{
-					'ID_entity' => $env{'file.ID_entity'},
-					'name' => "'$name'",
-					'mimetype' => "'$mimetype'",
-					'hash_secure' => "'$hash_secure'",
-					'file_size' => "'$file_size'",
-					'file_checksum' => "'$checksum_method:$checksum'",
-					'file_ext' => "'$env{'file_attrs.name_ext'}'",
-					'status' => "'Y'",
-					'lng' => "'$env{'file_attrs.lng'}'",
-					%columns
-				},
-				'-journalize' => 1,
-				'-posix' =>1
-			);
-			if (!$ID)
-			{
-				$t->close();
-				return undef
-			};
-			$ID=sprintf("%08d",$ID);
-			main::_log("ID='$ID'");
-			
-			my $path=$tom::P_media.'/a542/file/item/'._file_item_genpath
-			(
-				$env{'file_attrs.lng'},
-				$ID,
-				$name,
-				$env{'file_attrs.name_ext'}
-			);
-			main::_log("copy to $path");
-			my $out=File::Copy::copy($env{'file'},$path);
-			if (!$out)
-			{
-				main::_log("can't copy file $!",1);
-				$t->close();
-				return undef;
-			}
-		}
-		
-	}
-	
-	
-	
 	# FILE ATTRS
 	
 	if (!$env{'file_attrs.ID'})
@@ -443,6 +280,7 @@ sub file_add
 		my %columns;
 		$columns{'ID_category'}=$env{'file_attrs.ID_category'} if $env{'file_attrs.ID_category'};
 		$columns{'status'}="'$env{'file_attrs.status'}'" if $env{'file_attrs.status'};
+		$columns{'name'}="'".TOM::Security::form::sql_escape($env{'file_attrs.name'})."'" if $env{'file_attrs.name'};
 		
 		$env{'file_attrs.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
@@ -578,10 +416,243 @@ sub file_add
 		);
 	}
 	
-	main::_log("file.ID='$env{'file.ID'}' added");
 	
+	
+	# FILE ITEM
+	
+	# tu pridat file item
+	if ($env{'file'} && -e $env{'file'})
+	{
+		# create new secure hash
+		my $hash_secure=TOM::Utils::vars::genhash(32);
+		
+		# file must be analyzed
+		
+		# size
+		my $file_size=(stat($env{'file'}))[7];
+		main::_log("file size='$file_size'");
+		
+		# checksum
+		open(CHKSUM,'<'.$env{'file'});
+		my $ctx = Digest::SHA1->new;
+		$ctx->addfile(*CHKSUM);
+		my $checksum = $ctx->hexdigest;
+		my $checksum_method = 'SHA1';
+		main::_log("file checksum $checksum_method:$checksum");
+		
+		my $out=`file -b "$env{'file'}"`;chomp($out);
+		main::_log("file -b = '$out'");
+#		my $file_ext=$env{'file_attrs.name_ext'};#
+		
+		# find if this file type exists
+		foreach my $reg (@App::542::mimetypes::filetype_ext)
+		{
+			next if $env{'file_attrs.name_ext'};
+			if ($out=~/$reg->[0]/){$env{'file_attrs.name_ext'}=$reg->[1];last;}
+		}
+		$env{'file_attrs.name_ext'}='bin' unless $env{'file_attrs.name_ext'};
+		
+		my $mimetype=$App::542::mimetypes::ext{$env{'file_attrs.name_ext'}};
+		
+		main::_log("type='$out' ext='$env{'file_attrs.name_ext'}' mimetype='$mimetype'");
+		
+		my $name=file_newhash();
+		
+		my $optimal_hash=Int::charsets::encode::UTF8_ASCII($file_attrs{'name'});
+		$optimal_hash=~tr/[A-Z]/[a-z]/;
+		$optimal_hash=~s|[^a-z0-9]|_|g;
+		1 while ($optimal_hash=~s|__|_|g);
+		my $max=110;
+		if (length($optimal_hash)>$max)
+		{
+			$optimal_hash=substr($optimal_hash,0,$max);
+		}
+		$name=$optimal_hash.".".$name if $optimal_hash;
+		
+		
+		# Check if file_item if exists
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`$App::542::db_name`.`a542_file_item`
+			WHERE
+				ID_entity='$env{'file.ID_entity'}' AND
+				lng='$env{'file_attrs.lng'}'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		if (my %db0_line=$sth0{'sth'}->fetchhash)
+		{
+			# file updating
+			main::_log("check for update file_item");
+			main::_log("checkum in database = '$db0_line{'file_checksum'}'");
+			main::_log("checkum from file = '$checksum_method:$checksum'");
+			if ($db0_line{'file_checksum'} eq "$checksum_method:$checksum")
+			{
+				main::_log("same checksum, just enabling file when disabled");
+				my %columns;
+				App::020::SQL::functions::update(
+					'ID' => $db0_line{'ID'},
+					'db_h' => 'main',
+					'db_name' => $App::542::db_name,
+					'tb_name' => 'a542_file_item',
+					'columns' =>
+					{
+						'mimetype' => "'$mimetype'",
+						'hash_secure' => "'$hash_secure'",
+						'status' => "'Y'",
+						%columns
+					},
+					'-journalize' => 1,
+					'-posix' => 1,
+				);
+			}
+			else
+			{
+				main::_log("checksum differs");
+				my %columns;
+				App::020::SQL::functions::update(
+					'ID' => $db0_line{'ID'},
+					'db_h' => 'main',
+					'db_name' => $App::542::db_name,
+					'tb_name' => 'a542_file_item',
+					'columns' =>
+					{
+						'name' => "'$name'",
+						'mimetype' => "'$mimetype'",
+						'hash_secure' => "'$hash_secure'",
+						'file_size' => "'$file_size'",
+						'file_checksum' => "'$checksum_method:$checksum'",
+						'file_ext' => "'$env{'file_attrs.name_ext'}'",
+						'status' => "'Y'",
+						%columns
+					},
+					'-journalize' => 1,
+					'-posix' => 1,
+				);
+				my $path=$tom::P_media.'/a542/file/item/'._file_item_genpath
+				(
+					$env{'file_attrs.lng'},
+					$db0_line{'ID'},
+					$name,
+					$env{'file_attrs.name_ext'}
+				);
+				main::_log("copy to $path");
+				File::Copy::copy($env{'file'},$path);
+			}
+		}
+		else
+		{
+			# file creating
+			main::_log("creating file_item");
+			my %columns;
+#			$columns{'file_alt_src'}="'$env{'file'}'" if $env{'file_nocopy'};
+			
+			my $ID=App::020::SQL::functions::new(
+				'db_h' => "main",
+				'db_name' => $App::542::db_name,
+				'tb_name' => "a542_file_item",
+				'columns' =>
+				{
+					'ID_entity' => $env{'file.ID_entity'},
+					'name' => "'$name'",
+					'mimetype' => "'$mimetype'",
+					'hash_secure' => "'$hash_secure'",
+					'file_size' => "'$file_size'",
+					'file_checksum' => "'$checksum_method:$checksum'",
+					'file_ext' => "'$env{'file_attrs.name_ext'}'",
+					'status' => "'Y'",
+					'lng' => "'$env{'file_attrs.lng'}'",
+					%columns
+				},
+				'-journalize' => 1,
+				'-posix' =>1
+			);
+			if (!$ID)
+			{
+				$t->close();
+				return undef
+			};
+			$ID=sprintf("%08d",$ID);
+			main::_log("ID='$ID'");
+			
+			my $path=$tom::P_media.'/a542/file/item/'._file_item_genpath
+			(
+				$env{'file_attrs.lng'},
+				$ID,
+				$name,
+				$env{'file_attrs.name_ext'}
+			);
+			main::_log("copy to $path");
+			my $out=File::Copy::copy($env{'file'},$path);
+			if (!$out)
+			{
+				main::_log("can't copy file $!",1);
+				$t->close();
+				return undef;
+			}
+			
+			$env{'file_item.path'} = $path unless ($env{'file_item.path'});
+			$env{'regenerate_preview'} = 1 unless (exists $env{'regenerate_preview'});
+			$env{'file_item.ID'} = $ID unless ($env{'file_item.ID'});
+			$env{'file_item.name'} = $name unless ($env{'file_item.name'});
+		}
+		
+	}
+	
+	
+	# generate a preview for file item
+	
+	if ($env{'regenerate_preview'})
+	{
+		main::_log('media dir='.$tom::P_media);
+	
+		my $targetfile = App::542::previews::generate_preview_for_file('file' => $env{'file_item.path'});
+	
+		if ($targetfile)
+		{
+			main::_log('Preview generated. Adding a 501 image and creating a 160 relation...');
+			main::_log('targetfile: '.$targetfile ->{'filename'});
+	
+			my %image=App::501::functions::image_add(
+				'image_attrs.name' => $env{'file_item.ID'} || $env{'file_item.name'},
+				'image_attrs.ID_category' => $App::542::thumbnail_cat_ID_entity,
+				'image_attrs.status' => 'Y',
+				'file' => $targetfile ->{'filename'}
+			);
+			
+			if ($image{'image.ID'})
+			{
+				
+				App::501::functions::image_regenerate(
+					'image.ID' => $image{'image.ID'}
+				);
+				
+				my ($ID_entity,$ID)=App::160::SQL::new_relation(
+					'l_prefix' => 'a542',
+					'l_table' => 'file_item',
+					'l_ID_entity' => $env{'file_item.ID'},
+					'rel_type' => 'thumbnail',
+					'r_db_name' => $App::501::db_name,
+					'r_prefix' => 'a501',
+					'r_table' => 'image',
+					'r_ID_entity' => $image{'image.ID_entity'},
+					'status' => 'Y',
+				);
+				
+			}
+		} else
+		{
+			main::_log('Could not generate preview.');
+		}
+	}
+
+	main::_log("file.ID='$env{'file.ID'}' added");
+
 	$tr->close(); # commit transaction
 	$t->close();
+
 	return %env;
 }
 
@@ -594,20 +665,20 @@ Find new unique hash for file
 
 sub file_newhash
 {
-	my $optimal_hash=shift;
-	if ($optimal_hash)
-	{
-		$optimal_hash=Int::charsets::encode::UTF8_ASCII($optimal_hash);
-		$optimal_hash=~tr/[A-Z]/[a-z]/;
-		$optimal_hash=~s|[^a-z0-9]|_|g;
-		1 while ($optimal_hash=~s|__|_|g);
-		my $max=120;
-		if (length($optimal_hash)>$max)
-		{
-			$optimal_hash=substr($optimal_hash,0,$max);
-		}
-		main::_log("optimal_hash='$optimal_hash'");
-	}
+	my $optimal_hash;#=shift;
+#	if ($optimal_hash)
+#	{
+#		$optimal_hash=Int::charsets::encode::UTF8_ASCII($optimal_hash);
+#		$optimal_hash=~tr/[A-Z]/[a-z]/;
+#		$optimal_hash=~s|[^a-z0-9]|_|g;
+#		1 while ($optimal_hash=~s|__|_|g);
+#		my $max=120;
+#		if (length($optimal_hash)>$max)
+#		{
+#			$optimal_hash=substr($optimal_hash,0,$max);
+#		}
+#		main::_log("optimal_hash='$optimal_hash'");
+#	}
 	
 	my $okay=0;
 	my $hash;
@@ -615,7 +686,7 @@ sub file_newhash
 	while (!$okay)
 	{
 		
-		$hash=$optimal_hash || TOM::Utils::vars::genhash(8);
+		$hash=$optimal_hash || TOM::Utils::vars::genhash(4);
 		main::_log("testing hash='$hash'");
 		my $sql=qq{
 			(
@@ -623,7 +694,7 @@ sub file_newhash
 				FROM
 					`$App::542::db_name`.a542_file_item
 				WHERE
-					name LIKE '$hash'
+					name LIKE '%$hash%'
 				LIMIT 1
 			)
 			UNION ALL
@@ -632,7 +703,7 @@ sub file_newhash
 				FROM
 					`$App::542::db_name`.a542_file_item_j
 				WHERE
-					name LIKE '$hash'
+					name LIKE '%$hash%'
 				LIMIT 1
 			)
 			LIMIT 1
