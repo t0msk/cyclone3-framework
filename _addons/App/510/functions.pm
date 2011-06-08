@@ -620,6 +620,7 @@ sub video_part_file_process
 				if ($env{'fs'}){push @encoder_env, '-fs '.$env{'fs'};}
 				if ($env{'ss'}){push @encoder_env, '-ss '.$env{'ss'};}
 				if ($env{'t'}){push @encoder_env, '-t '.$env{'t'};}
+				if ($env{'async'}){push @encoder_env, '-async '.$env{'async'};}
 				
 				# suggest extension
 				$ext='mp4' if $env{'f'} eq "mp4";
@@ -913,8 +914,9 @@ sub video_add
 	
 	# check if this symlink with same ID_category not already exists
 	# and video.ID is unknown
-	if ($env{'video_attrs.ID_category'} && !$env{'video.ID'} && $env{'video.ID_entity'} && !$env{'forcesymlink'})
+	if (!$env{'video.ID'} && $env{'video.ID_entity'} && !$env{'forcesymlink'})
 	{
+		$env{'video_attrs.ID_category'}=0 unless $env{'video_attrs.ID_category'};
 		main::_log("search for video.ID by video_attrs.ID_category='$env{'video_attrs.ID_category'}' and video.ID_entity='$env{'video.ID_entity'}'");
 		my $sql=qq{
 			SELECT
