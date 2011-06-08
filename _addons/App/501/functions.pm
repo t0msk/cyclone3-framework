@@ -410,7 +410,7 @@ sub image_file_process
 	
 	if (!$env{'ext'})
 	{
-		if ($env{'image1'}=~/\.(.*?)$/)
+		if ($env{'image1'}=~/^.*\.(.*?)$/)
 		{
 			# save the format of original image by default
 			$env{'ext'}=$1;
@@ -1090,8 +1090,10 @@ sub image_add
 	
 	# check if this symlink with same ID_category not already exists
 	# and image.ID is unknown
-	if ($env{'image_attrs.ID_category'} && !$env{'image.ID'} && $env{'image.ID_entity'} && !$env{'forcesymlink'})
+	if (!$env{'image.ID'} && $env{'image.ID_entity'} && !$env{'forcesymlink'})
 	{
+		$env{'image_attrs.ID_category'}='0' unless $env{'image_attrs.ID_category'};
+		
 		main::_log("search for image.ID by image_attrs.ID_category='$env{'image_attrs.ID_category'}' and image.ID_entity='$env{'image.ID_entity'}'");
 		my $sql=qq{
 			SELECT
@@ -1396,6 +1398,7 @@ sub image_add
 		
 		if (keys %columns)
 		{
+			main::_log("trying update");
 			App::020::SQL::functions::update(
 				'ID' => $env{'image_ent.ID'},
 				'db_h' => "main",
@@ -1608,7 +1611,7 @@ sub image_file_add
 		{
 			$optimal_hash=substr($optimal_hash,0,$max);
 		}
-		$name.=".".$optimal_hash;
+		$name.=".".$optimal_hash if $optimal_hash;
 	}
 	
 	# Check if image_file for this format exists
