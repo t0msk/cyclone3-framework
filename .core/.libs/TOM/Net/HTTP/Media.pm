@@ -11,10 +11,11 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 our %type=
 (
-	'mobile'   => 'm',
-	'pda'      => 'p',
-	'screen'   => 's',
-	'unknown'  => 'X',
+	'mobile' => 'm',
+	'smartphone' => 'p',
+	'tablet' => 't',
+	'screen' => 's',
+	'unknown' => 'X',
 );
 
 
@@ -37,14 +38,39 @@ our @table=
 #		USRM_disable	=>	1,
 	},
 	
-	{name=>'PocketPC MSIE 4.X',
-		regexp		=>	['MSIE 4.*PPC'],
-		media_type	=>	"pda",
+	{name=>'iPad',
+		regexp => ['iPad'],
+		media_type => "tablet",
+	},
+	
+	{name=>'iPhone',
+		regexp => ['iPhone'],
+		media_type => "smartphone",
+	},
+	
+	{name=>'PocketPC',
+		regexp => ['MSIE .*PPC'],
+		media_type => "smartphone",
+	},
+	
+	{name=>'NetFront',
+		regexp => ['NetFront'],
+		media_type => "mobile",
+	},
+	
+	{name=>'Android',
+		regexp => ['Android.*Mobile Safari'],
+		media_type => "smartphone",
+	},
+	
+	{name=>'Mobile (unknown)',
+		regexp => ['Mobile'],
+		media_type => "mobile",
 	},
 	
 	{name=>'MSIE',
-		regexp		=>	['MSIE'],
-		media_type	=>	"screen",
+		regexp => ['MSIE'],
+		media_type => "screen",
 	},
 	
 	
@@ -62,9 +88,9 @@ sub analyze
 	# my $var=0;
 	foreach my $i(1..@table-1)
 	{
-		foreach my $regexp (@{$table[$i]{regexp}})
+		foreach my $regexp (@{$table[$i]{'regexp'}})
 		{
-			return ($i,$table[$i]{name}) if $user_agent=~/$regexp/i;
+			return ($i,$table[$i]{'name'},$table[$i]{'media_type'}) if $user_agent=~/$regexp/i;
 		}
 	}
 	return undef;
