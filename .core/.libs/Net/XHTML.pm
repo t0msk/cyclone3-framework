@@ -115,7 +115,23 @@ sub add_DOC_css_link
 {
 	my $self=shift;
 	my %env=@_; 
-	push @{$self->{env}{DOC_css_link}},{%env};
+	push @{$self->{'env'}{'DOC_css_link'}},{%env};
+	return 1;
+}
+
+sub add_DOC_link
+{
+	my $self=shift;
+	my %env=@_; 
+	push @{$self->{'env'}{'DOC_css_link'}},{%env};
+	return 1;
+}
+
+sub add_DOC_script
+{
+	my $self=shift;
+	my %env=@_; 
+	push @{$self->{'env'}{'DOC_script'}},{%env};
 	return 1;
 }
 
@@ -335,11 +351,19 @@ sub prepare_last
 	}
 	
 	# DOC_css_link
-	foreach my $hash(@{$self->{env}{DOC_css_link}})
+	foreach my $hash(@{$self->{'env'}{'DOC_css_link'}})
 	{
 		$self->{'OUT'}{'HEADER'} .= " <link";
 		foreach (sort keys %{$hash}){$self->{'OUT'}{'HEADER'} .= " ".$_ . "=\"".$$hash{$_}."\"";}
 		$self->{'OUT'}{'HEADER'} .= " />\n";
+	}
+	
+	# DOC_script
+	foreach my $hash(@{$self->{'env'}{'DOC_script'}})
+	{
+		$self->{'OUT'}{'HEADER'} .= " <script";
+		foreach (sort keys %{$hash}){$self->{'OUT'}{'HEADER'} .= " ".$_ . "=\"".$$hash{$_}."\"";}
+		$self->{'OUT'}{'HEADER'} .= "></script>\n";
 	}
 	
 	# DOC_meta
