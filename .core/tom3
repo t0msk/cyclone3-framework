@@ -395,8 +395,8 @@ while ($main::CGI=new CGI::Fast())
 			($main::UserAgent,$main::UserAgent_name)= TOM::Net::HTTP::UserAgent::analyze($main::ENV{'HTTP_USER_AGENT'},IP=>$main::ENV{'REMOTE_ADDR'});
 			main::_log("detected UserAgent='$main::UserAgent' UserAgent_name='$main::UserAgent_name' UserAgent_type='".($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'})."'");
 			
-#			($main::Media,$main::Media_name)= TOM::Net::HTTP::Media::analyze($main::ENV{'HTTP_USER_AGENT'});
-#			main::_log("detected Media='$main::Media' Media_name='$main::Media_name'");
+			($main::Media,$main::Media_name,$main::Media_type)= TOM::Net::HTTP::Media::analyze($main::ENV{'HTTP_USER_AGENT'});
+			main::_log("detected Media='$main::Media' Media_name='$main::Media_name' Media_type='$main::Media_type'");
 			
 			# logovanie pre UserAgentov, ktori maju specialne zapnute logovanie;
 			local $TOM::DEBUG_log_file=$TOM::DEBUG_log_file;
