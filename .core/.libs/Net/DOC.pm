@@ -45,7 +45,8 @@ sub r # replace
 {
 	my $self=shift;
 	return undef unless my $what=shift;
-	return undef unless my $code=shift;
+	#return undef unless 
+	my $code=shift;
 	return undef unless $self->{OUT}{BODY}=~s|$what|$code|g;
 	return 1;
 }
