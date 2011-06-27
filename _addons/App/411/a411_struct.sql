@@ -74,6 +74,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll_vote` (
   `datetime_event` datetime NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_answer` bigint(20) NOT NULL, -- rel poll_answer.ID_entity
+  `IP` varchar(15) NOT NULL default '',
+  `email` varchar(64) character set ascii default NULL,
   PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_answer`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
