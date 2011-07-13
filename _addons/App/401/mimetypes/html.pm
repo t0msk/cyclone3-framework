@@ -1095,6 +1095,7 @@ sub start
 		if (!$self->{'config'}->{'editable'})
 		{
 			delete $attr->{'entity_part'};
+			delete $attr->{'rel'};
 		}
 		
 	}
