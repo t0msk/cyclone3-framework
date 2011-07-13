@@ -15,6 +15,8 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
+use charnames ':full';
+our $soft_hyphen="\N{SOFT HYPHEN}";
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 
@@ -286,6 +288,7 @@ sub article_add
 	{
 		my %columns;
 		# name
+		$env{'article_attrs.name'}=~s|$soft_hyphen||g;
 		if ($env{'article_attrs.name'} && ($env{'article_attrs.name'} ne $article_attrs{'name'}))
 		{
 			$columns{'name'}="'".TOM::Security::form::sql_escape($env{'article_attrs.name'})."'";
@@ -428,7 +431,7 @@ sub article_add
 	if ($env{'article_content.ID'})
 	{
 		my %columns;
-		
+		$env{'article_content.subtitle'}=~s|$soft_hyphen||g;
 		if (exists $env{'article_content.subtitle'} && ($env{'article_content.subtitle'} ne $article_content{'subtitle'}))
 		{
 			$columns{'subtitle'}="'".TOM::Security::form::sql_escape($env{'article_content.subtitle'})."'";
@@ -436,6 +439,7 @@ sub article_add
 		}
 		$columns{'mimetype'}="'".TOM::Security::form::sql_escape($env{'article_content.mimetype'})."'"
 			if ($env{'article_content.mimetype'} && ($env{'article_content.mimetype'} ne $article_content{'mimetype'}));
+		$env{'article_content.abstract'}=~s|$soft_hyphen||g;
 		if ($env{'article_content.abstract'} && ($env{'article_content.abstract'} ne $article_content{'abstract'}))
 		{
 			$columns{'abstract'}="'".TOM::Security::form::sql_escape($env{'article_content.abstract'})."'";
@@ -445,6 +449,7 @@ sub article_add
 		}
 		$columns{'keywords'}="'".TOM::Security::form::sql_escape($env{'article_content.keywords'})."'"
 			if (exists $env{'article_content.keywords'} && ($env{'article_content.keywords'} ne $article_content{'keywords'}));
+		$env{'article_content.body'}=~s|$soft_hyphen||g;
 		if ($env{'article_content.body'} && ($env{'article_content.body'} ne $article_content{'body'}))
 		{
 			$columns{'body'}="'".TOM::Security::form::sql_escape($env{'article_content.body'})."'";
