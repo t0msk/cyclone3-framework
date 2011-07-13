@@ -62,7 +62,7 @@ sub text
 {
 	my ($self, $text) = @_;
 	
-	$self->{'text.length'}+=length($text);
+	$self->{'count'}->{'text.length'}+=length($text);
 	
 	if ($self->{'level.ignore'} && $self->{'level.ignore'} <= $self->{'level'})
 	{
@@ -79,7 +79,7 @@ sub text
 	
 	if ($self->{'config'}->{'length.stop'} && (!$self->{'stop'}))
 	{
-		if ($self->{'config'}->{'length.stop'} <= $self->{'text.length'})
+		if ($self->{'config'}->{'length.stop'} <= $self->{'count'}->{'text.length'})
 		{
 			$self->{'stop'}=1;
 			$self->{'stop.level'}=$self->{'level'};
@@ -1075,8 +1075,8 @@ sub start
 				$p->eof();
 				
 				$out_full=
-					$self->{'entity'}{'a401_article'}
-					|| $self->{'entity'}{'div.a401_article'}
+					$self->{'entity'}{'div.a401_article'}
+#					|| $self->{'entity'}{'a401_article'}
 					|| $out_full;
 				
 				$out_full_plus=$p->{'out'};
@@ -1271,10 +1271,18 @@ sub config
 	
 	# a401_article
 	$self->{'entity'}{'a401_article'}=
-		$entity->{$name.'.link.a401_article'}
-		|| $entity->{$name.'.a401_article'}
-		|| $entity->{'link.a401_article'}
+		$entity->{$name.'.a401_article'}
 		|| $entity->{'a401_article'}
+		|| undef;
+	
+	$self->{'entity'}{'div.a401_article'}=
+		$entity->{$name.'.div.a401_article'}
+		|| $entity->{'div.a401_article'}
+		|| undef;
+	
+	$self->{'entity'}{'link.a401_article'}=
+		$entity->{$name.'.link.a401_article'}
+		|| $entity->{'link.a401_article'}
 		|| undef;
 	
 	# a420_keyword
