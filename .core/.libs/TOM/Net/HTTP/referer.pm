@@ -45,6 +45,24 @@ our %table;
 
 =item *
 
+plus.google.com
+
+added: 2011-07-14
+
+ urls => ["plus\.google\.com"],
+ domain_type => 'social portal',
+ ref_type => 'social',
+
+=cut
+$table{'plus.google.com'}=
+{
+	urls => ["plus\.google\.com"],
+	domain_type => 'social portal',
+	ref_type => 'social',
+};
+
+=item *
+
 google.com
 
  urls => ["google\."]
