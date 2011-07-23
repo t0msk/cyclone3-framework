@@ -525,16 +525,16 @@ sub extract_keywords
 			my %FORM=TOM::Net::HTTP::CGI::get_QUERY_STRING($query,'quiet'=>1);
 			
 			# don't analyze queries from google cache
-			next if $FORM{$keyword_param}=~/^cache/;
-			next if $FORM{$keyword_param}=~/^site:/;
-			next unless $FORM{$keyword_param};
+			return undef if $FORM{$keyword_param}=~/^cache/;
+			return undef if $FORM{$keyword_param}=~/^site:/;
+			return undef unless $FORM{$keyword_param};
 			
 			# convert keywords to ASCII
 			$FORM{$keyword_param}=Int::charsets::encode::UTF8_ASCII($FORM{$keyword_param});
 			#main::_log("phrase '$FORM{$keyword_param}'");
 			
 			# this is a corrupted encoding (i can't say why)
-			next if $FORM{$keyword_param}=~/\\utf\{65533\}/;
+			return undef if $FORM{$keyword_param}=~/\\utf\{65533\}/;
 			
 			# convert to lowercase
 			#$FORM{$keyword_param}=~tr/A-Z/a-z/;
