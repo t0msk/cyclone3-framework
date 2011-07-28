@@ -552,7 +552,7 @@ sub get_relations
 	
 	my @relations;
 	
-	if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE && $use_cache)
+	if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE && $use_cache && $main::FORM{'_rc'}!=-2)
 	{
 		$cache_change=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_change_key);
 		my $cache=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_key);
