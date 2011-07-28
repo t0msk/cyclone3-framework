@@ -16,7 +16,14 @@ sub handler_exit
 	}
 	if ($signame eq "ALRM")
 	{
-		main::_log("SIG '$signame' [EXIT] (timeout $TOM::fcgi_timeout secs, lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
+		if ($main::sig_term)
+		{
+			main::_log("SIG '$signame' [EXIT] (timeout $TOM::fcgi_sleep_timeout secs in wait mode, lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
+		}
+		else
+		{
+			main::_log("SIG '$signame' [EXIT] (timeout $TOM::fcgi_timeout secs, lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
+		}
 	}
 	elsif ($signame eq "PIPE")
 	{
