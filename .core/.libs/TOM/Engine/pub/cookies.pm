@@ -67,6 +67,21 @@ sub send
 		}
 	}
 	
+	# change original cookies
+	my $time_=($main::time_current+(86400*31*6)); # na 6 mesiacov dopredu
+	my %date=Utils::datetime::ctodatetime($time_,'format'=>1);
+	my $expires = "expires\=$Utils::datetime::DAYS{en}[$date{wday}], $date{mday}-$Utils::datetime::MONTHS{en}[$date{mon}-1]-$date{year} 00:00:00 GMT";
+	
+	foreach (keys %main::COOKIES_all)
+	{
+		if ($main::COOKIES_all{$_} && ($main::COOKIES_all_save{$_} ne $main::COOKIES_all{$_}))
+		{
+			my $var="Set-Cookie: $_\=$main::COOKIES_all{$_}; $expires; path\=$tom::P_cookie; domain\=$main::tom::H_cookie;\n";
+			main::_log("$var");
+			print $var;
+		}
+	}
+	
 	$t_cookies->close() if $debug;
 	
 }
