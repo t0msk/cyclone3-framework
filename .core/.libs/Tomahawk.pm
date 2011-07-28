@@ -349,7 +349,7 @@ sub module
 	if ((exists $mdl_C{'-cache_id'})&&($TOM::CACHE))
 	{
 		$mdl_C{'-cache_id_sub'}="0" unless $mdl_C{'-cache_id_sub'};
-		$mdl_C{'-cahe_id'}="0" unless $mdl_C{'-cache_id'}; # ak je vstup s cache_id ale nieje 0
+		$mdl_C{'-cache_id'}="0" unless $mdl_C{'-cache_id'}; # ak je vstup s cache_id ale nieje 0
 		$cache_domain=$tom::H unless $mdl_C{'-cache_master'};
 		
 		# Tomahawk::debug::log(3,"cache defined");
