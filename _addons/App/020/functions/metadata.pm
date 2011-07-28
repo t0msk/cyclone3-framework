@@ -138,7 +138,7 @@ sub metaindex_set
 	{
 		foreach my $variable_name (keys %{$metadata{$section_name}})
 		{
-			next unless $metadata{$section_name}{$variable_name};
+			next if ((!$metadata{$section_name}{$variable_name})&&($metadata{$section_name}{$variable_name} ne "0"));
 			main::_log("re-set '$section_name\::$variable_name'='$metadata{$section_name}{$variable_name}'");
 			#next;
 			TOM::Database::SQL::execute(qq{
