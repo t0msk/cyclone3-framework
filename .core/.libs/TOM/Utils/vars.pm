@@ -74,11 +74,48 @@ sub genhashN
 	my $var;
 	for (1..$_[0])
 	{
-		$var.=$NCHAR[int(rand(9))];
+		$var.=$NCHAR[int(rand(25))];
 	}
 	return $var;
 }
 
+
+=head2 genhashU()
+
+Return random hash from characters A-Z
+
+ my $hash=TOM::Utils::vars::genhashU(25);
+
+=cut
+
+sub genhashU
+{
+	my $var;
+	for (1..$_[0])
+	{
+		$var.=$UCHAR[int(rand(25))];
+	}
+	return $var;
+}
+
+
+=head2 genhashNU()
+
+Return random hash from characters 0-9A-Z
+
+ my $hash=TOM::Utils::vars::genhashNU(25);
+
+=cut
+
+sub genhashNU
+{
+	my $var;
+	for (1..$_[0])
+	{
+		$var.=$NUCHAR[int(rand(34))];
+	}
+	return $var;
+}
 
 
 =head2 unique_split()
