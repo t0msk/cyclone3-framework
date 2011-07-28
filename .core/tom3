@@ -1447,7 +1447,7 @@ while ($main::CGI=new CGI::Fast())
 			next unless $env0{id};
 			
 			
-			if ($env0{id} eq "link")
+			if ($env0{'id'} eq "link")
 			{
 				if ($env0{'lng'}){next if $env0{'lng'} ne $tom::lng;}
 				_log("Add to DOC::link");
@@ -2119,7 +2119,8 @@ while ($main::CGI=new CGI::Fast())
 				}
 				else
 				{
-					$link="$rewrite";
+					$link=$rewrite;
+					$link.="?".$var if $var;
 				}
 				
 				my $URI_base=$tom::H_www;
