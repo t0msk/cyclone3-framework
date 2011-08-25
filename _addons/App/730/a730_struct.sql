@@ -26,6 +26,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event` (
   `price_currency` varchar(3) character set ascii default 'EUR',
   `price_EUR` decimal(12,3) default NULL, -- price in EUR
   `VAT` float NOT NULL,
+  `max_attendees` smallint unsigned default NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   `mode` char(1) character set ascii NOT NULL default 'M',
@@ -58,6 +59,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_j` (
   `price_currency` varchar(3) character set ascii default 'EUR',
   `price_EUR` decimal(12,3) default NULL, -- price in EUR
   `VAT` float NOT NULL,
+  `max_attendees` smallint unsigned default NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   `mode` char(1) character set ascii NOT NULL default 'M',
