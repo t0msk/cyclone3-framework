@@ -210,6 +210,23 @@ sub event_add
 				$columns{'datetime_publish_stop'}="'".$env{'event.datetime_publish_stop'}."'";
 			}
 		}
+
+		# max_attendees
+		if (exists $env{'event.max_attendees'} && ($env{'event.max_attendees'} ne $event{'max_attendees'}))
+		{
+			if (!$env{'event.max_attendees'})
+			{
+				if ($env{'event.max_attendees'} eq '0') { $columns{'max_attendees'}="'".$env{'event.max_attendees'}."'"; } else
+				{
+					$columns{'max_attendees'}="NULL";
+				}
+			}
+			else
+			{
+				$columns{'max_attendees'}="'".$env{'event.max_attendees'}."'";
+			}
+		}
+
 		# link
 		$columns{'link'}="'".TOM::Security::form::sql_escape($env{'event.link'})."'"
 			if (exists $env{'event.link'} && ($env{'event.link'} ne $event{'link'}));
