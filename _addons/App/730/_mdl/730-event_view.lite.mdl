@@ -223,9 +223,12 @@ sub execute
 			event.datetime_publish_stop,
 			event.link,
 			event.location,
+			event.longitude_decimal,
+			event.latitude_decimal,
 			event.metadata,
 			event.status,
 			event.priority_A,
+			event.max_attendees,
 			
 			event.price,
 			(event.price*((100+event.VAT)/100)) AS price_incl_VAT,
@@ -717,9 +720,10 @@ sub execute
 	}
 	else
 	{
-		if($XSGN{'TMP_failure_no-data'})
+		$XSGN{'TMP.empty'}=$XSGN{'TMP_failure_no-data'} if $XSGN{'TMP_failure_no-data'};
+		if($XSGN{'TMP.empty'})
 		{
-			$XSGN{'TMP'} = $XSGN{'TMP_failure_no-data'};
+			$XSGN{'TMP'} = $XSGN{'TMP.empty'};
 		}
 	}
 	

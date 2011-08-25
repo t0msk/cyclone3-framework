@@ -5,7 +5,7 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
-
+use DateTime;
 
 
 =head1 NAME
@@ -148,14 +148,7 @@ sub execute
 	
 	$env{'db_name'}=$App::730::db_name unless $env{'db_name'};
 	
-	$env{'thumbnail.image_format.ID'}=$App::501::image_format_thumbnail_ID unless $env{'thumbnail.image_format.ID'};
-	
-	$env{'event_lng.lng'}=$env{'lng'} unless $env{'event_lng.lng'};
-	$env{'sql_limit'}='10' unless $env{'sql_limit'};
-	$env{'event.status'}='Y' unless $env{'event.status'};
-		my $status_sql=join "','", split('',$env{'event.status'});
-	
-	$env{'sql_order_by'}='event.datetime_start ASC' unless $env{'sql_order_by'};
+	$env{'sql_limit'}='1' unless $env{'sql_limit'};
 	
 	if (not $env{'sql_limit'}=~/,/){$env{'sql_limit'}="0,".$env{'sql_limit'}}
 	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
@@ -164,33 +157,30 @@ sub execute
 		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
 	}
 	
-	my $count_max;#=$env{'sql_limit'};
+	my $count_max;
 	if ($env{'sql_limit'}=~/,(\d+)/)
 	{
 		$count_max=$1;
 		$env{'sql_limit'}=~s/,(\d+)/",".($1+1)/e;
 	}
 	
+	if (not $env{'sql_limit'}=~/^(\d+),(\d+)$/)
+	{
+		$env{'sql_limit'}='1';
+	}
+	
+	$env{'sql_order_by'}='event.datetime_start ASC' unless $env{'sql_order_by'};
+	
+	$env{'event_lng.lng'}=$env{'lng'} unless $env{'event_lng.lng'};
+	
+	$env{'event.status'}='Y' unless $env{'event.status'};
+		my $status_sql=join "','", split('',$env{'event.status'});
+	
+	$env{'thumbnail.image_format.ID'}=$App::501::image_format_thumbnail_ID unless $env{'thumbnail.image_format.ID'};
+	
 	my $execution_success=1;
 	
 	my $sql_where;
-	
-	if ($env{'event.ID'})
-	{
-		$sql_where.=" AND event.ID IN ('".
-			(join "','", split(';',$env{'event.ID'})).
-			"')";
-	}
-	
-	if ($env{'date'})
-	{
-		$sql_where.="AND (DATE(event.datetime_start)<='$env{'date'}' AND DATE(event.datetime_finish)>='$env{'date'}') ";
-		
-		my %datetime=TOM::Utils::datetime::datetime_collapse($env{'date'});
-		$datetime{'month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$datetime{'month'}-1];
-		$XSGN{'TMP'}=~s|<%date_(.*?)%>|$datetime{$1}|g;
-		
-	}
 	
 	my $sql_cat;
 	foreach my $ID_category(split(';',$env{'event_cat.ID_entity'}))
@@ -200,21 +190,21 @@ sub execute
 		{
 			next unless $ID_category;
 			my $cat_sql=qq{
-						SELECT
-							ID_charindex
-						FROM
-							`$App::730::db_name`.a730_event_cat
-						WHERE
-							ID_entity=$ID_category AND
-							lng='$env{'lng'}' AND
-							status='Y'
-						LIMIT 1
+				SELECT
+					ID_charindex
+				FROM
+					`$env{'db_name'}`.`a730_event_cat`
+				WHERE
+					ID_entity=$ID_category AND
+					lng='$env{'lng'}' AND
+					status='Y'
+				LIMIT 1
 			};
 			$ID_category=qq{
 				SELECT
 					ID_entity
 				FROM
-					`$App::730::db_name`.a730_event_cat
+					`$env{'db_name'}`.`a730_event_cat`
 				WHERE
 					ID_charindex LIKE CONCAT(($cat_sql),"%") AND
 					lng='$env{'lng'}' AND
@@ -230,18 +220,31 @@ sub execute
 		$sql_where.=" AND (".$sql_cat.") ";
 	}
 	
+	if ($env{'event.ID'})
+	{
+		$sql_where.=" AND event.ID IN ('".
+			(join "','", split(';',$env{'event.ID'})).
+			"')";
+	}
+	
+	if ($env{'date'})
+	{
+		$sql_where.="AND (DATE(event.datetime_start)<='$env{'date'}' AND DATE(event.datetime_finish)>='$env{'date'}') ";
+	}
+	
 	$env{'mode'}="future" unless $env{'mode'};
 	if ($env{'mode'} eq "future")
 	{
 		$sql_where.="AND (event.datetime_start >= NOW() OR (event.datetime_start <= NOW() AND event.datetime_finish >= NOW())) ";
 	}
-	elsif ($env{'mode'} eq "all")
+	elsif ($env{'mode'} eq "past")
 	{
+		$sql_where.="AND (event.datetime_finish <= NOW() OR (event.datetime_start <= NOW() AND (event.datetime_finish IS NULL OR event.datetime_finish >= NOW()))) ";
 	}
 	
 	if ($env{'sql_where.name'})
 	{
-		$sql_where.=" AND event.name LIKE '".TOM::Security::form::sql_escape($env{'sql_where.name'})."%' ";
+		$sql_where.=" AND event.name LIKE '%".TOM::Security::form::sql_escape($env{'sql_where.name'})."%' ";
 	}
 	
 	if ($env{'sql_where'})
@@ -301,7 +304,6 @@ sub execute
 		LIMIT
 			$env{'sql_limit'}
 	};
-	
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
 	
 	if(!$sth0{'sth'})
@@ -325,29 +327,53 @@ sub execute
 		
 		last if $count_max<$item_counter;
 		
-		my $item=
-			$XSGN{'item.'.$item_counter}
-			|| $XSGN{'item'};
+		my $item = $XSGN{'item'};
+		$item = $XSGN{'item.odd'} if ((not $item_counter % 2) && (exists $XSGN{'item.odd'}));
+		$item = $XSGN{'item.'.$item_counter} if $XSGN{'item.'.$item_counter};
 		
-		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
-		$db0_line{'datetime_start.year'}=$datetime{'year'};
-		$db0_line{'datetime_start.month'}=$datetime{'month'};
-		$db0_line{'datetime_start.month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_start.month'}-1];
-#		$db0_line{'datetime_start.month_name'}="$db0_line{'datetime_start.month_name'}";
-		$db0_line{'datetime_start.mday'}=$datetime{'mday'};
-		$db0_line{'datetime_start.hour'}=$datetime{'hour'};
-		$db0_line{'datetime_start.min'}=$datetime{'min'};
-		$db0_line{'datetime_start.sec'}=$datetime{'sec'};
+		if($db0_line{'datetime_start'} && $db0_line{'datetime_start'} ne "0000-00-00 00:00:00")
+		{
+			my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
+			$db0_line{'datetime_start.year'}=$datetime{'year'};
+			$db0_line{'datetime_start.month'}=$datetime{'month'};
+			$db0_line{'datetime_start.month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_start.month'}-1];
+			$db0_line{'datetime_start.month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$db0_line{'datetime_start.month'}-1];
+			$db0_line{'datetime_start.month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_start.month'}-1];
+			$db0_line{'datetime_start.mday'}=$datetime{'mday'};
+			$db0_line{'datetime_start.hour'}=$datetime{'hour'};
+			$db0_line{'datetime_start.min'}=$datetime{'min'};
+			$db0_line{'datetime_start.sec'}=$datetime{'sec'};
+			
+			if($db0_line{'datetime_start'} ne "0000-00-00 00:00:00")
+			{
+				my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
+				$db0_line{'datetime_start.wday'}=$dt->day_of_week_0();
+				$db0_line{'datetime_start.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week_0()];
+				$db0_line{'datetime_start.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week_0()];
+			}
+		}
 		
-		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_finish'});
-		$db0_line{'datetime_finish.year'}=$datetime{'year'};
-		$db0_line{'datetime_finish.month'}=$datetime{'month'};
-		$db0_line{'datetime_finish.month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_finish.month'}-1];
-#		$db0_line{'datetime_finish.month_name'}="$db0_line{'datetime_finish.month_name'}";
-		$db0_line{'datetime_finish.mday'}=$datetime{'mday'};
-		$db0_line{'datetime_finish.hour'}=$datetime{'hour'};
-		$db0_line{'datetime_finish.min'}=$datetime{'min'};
-		$db0_line{'datetime_finish.sec'}=$datetime{'sec'};
+		if($db0_line{'datetime_finish'})
+		{
+			my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_finish'});
+			$db0_line{'datetime_finish.year'}=$datetime{'year'};
+			$db0_line{'datetime_finish.month'}=$datetime{'month'};
+			$db0_line{'datetime_finish.month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_finish.month'}-1];
+			$db0_line{'datetime_finish.month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$db0_line{'datetime_finish.month'}-1];
+			$db0_line{'datetime_finish.month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_finish.month'}-1];
+			$db0_line{'datetime_finish.mday'}=$datetime{'mday'};
+			$db0_line{'datetime_finish.hour'}=$datetime{'hour'};
+			$db0_line{'datetime_finish.min'}=$datetime{'min'};
+			$db0_line{'datetime_finish.sec'}=$datetime{'sec'};
+			
+			if($db0_line{'datetime_finish'} ne "0000-00-00 00:00:00")
+			{
+				my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
+				$db0_line{'datetime_finish.wday'}=$dt->day_of_week_0();
+				$db0_line{'datetime_finish.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week_0()];
+				$db0_line{'datetime_finish.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week_0()];
+			}
+		}
 		
 		$item=~s|<#link#>|$XSGN{'link'}|g if $db0_line{'link'};
 		
@@ -358,9 +384,6 @@ sub execute
 		
 		$price=TOM::Utils::currency::format($db0_line{'price_incl_VAT'});
 		$item=~s|<%price_incl_VAT%>|$price|g;
-		
-		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
-		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
 		# replace metadata
 		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
@@ -460,8 +483,6 @@ sub execute
 		my $description_short_plain=TOM::Text::format::xml2plain($db0_line{'description_short'});
 		$item=~s|<%description_short_plain%>|$description_short_plain|;
 		
-		
-		
 		# process description
 		my $p=new App::401::mimetypes::html;
 		
@@ -539,17 +560,14 @@ sub execute
 		my $description_plain=TOM::Text::format::xml2plain($db0_line{'description'});
 		$item=~s|<%description_plain%>|$description_plain|;
 		
-		
-		
 #		# find alternate attributes (for thumbnail image for example)
 #		$p->parse($db0_line{'body'}) unless $p->{'out_tag'}->{'img.1'};
-		
 		
 		# finding thumbnail to event
 		my $thumbnail;
 		use App::501::_init;
 		my $relation=(App::160::SQL::get_relations(
-			'db_name' => $App::730::db_name,
+			'db_name' => $env{'db_name'},
 			'l_prefix' => 'a730',
 			'l_table' => 'event',
 			'l_ID_entity' => $db0_line{'ID_entity_event'},
@@ -629,13 +647,16 @@ sub execute
 		
 		$item=~s|<%organizers%>|$organizers|g;
 		
-		
 		$item=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
 		$item=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
 		
-		$item=~s|<%item_number%>|$item_counter|g;
-		
 		$item=~s|<%name%>|$db0_line{'name'}|;
+		
+		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		$item=~s|<%item_number%>|$item_counter|g;
 		
 		if($XSGN{'TMP'}=~/<#item.$item_counter#>/)
 		{
@@ -649,6 +670,11 @@ sub execute
 	
 	$XSGN{'TMP'}=~s|<%total_count%>|$item_counter|g;
 	
+	if ($env{'env.counter'})
+	{
+		$main::env{'count'}+=$item_counter;
+	}
+	
 	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
 	{
 		$env{'offset'}=$1;
@@ -658,10 +684,17 @@ sub execute
 	{
 		#$env{'count'}=$env{'sql_limit'};
 	}
-	#$env{'count'}=$count_max;
 	
+	if($XSGN{'paging'})
+	{
+		if(
+			($count_max && $item_counter >= $count_max && $count_max < $sth0{'rows'})
+			||	($env{'offset'}-$env{'sql_limit_start'})
+		){
+			$XSGN{'TMP'}=~s|<#paging#>|$XSGN{'paging'}|g;
+		}
+	}
 	
-	# offset
 	if ($count_max && $item_counter >= $count_max && $count_max < $sth0{'rows'}) # count
 	{
 		$XSGN{'next'}=~s|<%offset%>|$env{'offset'}+$count_max|ge;
@@ -680,12 +713,47 @@ sub execute
 		$XSGN{'TMP'}=~s|<#previous#>|$XSGN{'previous'}|g;
 	}
 	
+	$XSGN{'TMP.empty'}=$XSGN{'TMP_failure_no-data'} if $XSGN{'TMP_failure_no-data'}; #backwards compatibility
 	
 	if(!$item_counter)
 	{
-		if($XSGN{'TMP_failure_no-data'})
+		if($XSGN{'TMP.empty'})
 		{
-			$XSGN{'TMP'} = $XSGN{'TMP_failure_no-data'};
+			$XSGN{'TMP'} = $XSGN{'TMP.empty'};
+		}
+	}
+	
+	if ($env{'date'})
+	{
+		my %datetime=TOM::Utils::datetime::datetime_collapse($env{'date'});
+		$datetime{'month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$datetime{'month'}-1];
+		$datetime{'month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$datetime{'month'}-1];
+		$datetime{'month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$datetime{'month'}-1];
+		$XSGN{'TMP'}=~s|<%date_(.*?)%>|$datetime{$1}|g;
+	}
+	
+	if($env{'event_cat.ID_entity'}=~/^([0-9]+)\*?$/)
+	{
+		my $ID_category=$1;
+		my $sql=qq{
+			SELECT
+				name, name_url
+			FROM
+				`$env{'db_name'}`.`a730_event_cat`
+			WHERE
+						ID_entity=$ID_category
+				AND	lng='$env{'event_lng.lng'}'
+				AND	status IN ('$status_sql')
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto_'=>60);
+		
+		if($sth0{'sth'})
+		{
+			if (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				$XSGN{'TMP'}=~s|<%category_name%>|$db0_line{'name'}|g;
+				$XSGN{'TMP'}=~s|<%category_name_url%>|$db0_line{'name_url'}|g;
+			}
 		}
 	}
 	
