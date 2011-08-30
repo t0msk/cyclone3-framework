@@ -65,7 +65,7 @@ sub prepare
 {
 	my $self=shift;
 	
-	$self->{'OUT'}{'HEADER'} .= "\n";
+	$self->{'OUT'}{'HEADER'} .= "\n" if ($self->{'OUT'}{'HEADER'});
 	
 	$self->{'OUT'}{'BODY'} = qq{<!TMP-OUTPUT!>} unless $self->{'OUT'}{'BODY'};
 	
