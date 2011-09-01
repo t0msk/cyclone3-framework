@@ -115,8 +115,8 @@ sub execute
 		$XSGN{'TMP'}=~s|<%ID%>|$db0_line{'ID_user'}|g;
 		$XSGN{'TMP'}=~s|<%ID_entity%>|$db0_line{'ID_user'}|g;
 		
-		
-		# render about_me and desc
+		foreach my $part('about_me','description')
+		{
 			my $p=new App::401::mimetypes::html;
 			
 			# img
@@ -183,30 +183,34 @@ sub execute
 			# a010
 			foreach (keys %XSGN){if ($_=~/^a010/){$p->{'entity'}{$_}=$XSGN{$_};}}
 			
-			if ($db0_line{'about_me'}=~/<br/)
+			if($part eq 'about_me'){
+				if ($db0_line{'about_me'}=~/<br/)
+				{
+					# PARSE !!!
+					$p->parse($db0_line{'about_me'});
+					$p->eof();
+					my $part_html=$p->{'out'};
+					
+					$XSGN{'TMP'}=~s|<%about_me%>|$part_html|;
+					my @parts=split('<hr />',$part_html);
+					$XSGN{'TMP'}=~s|<%about_me%>|$part_html|;
+					$XSGN{'TMP'}=~s|<%about_me_(\d+)%>|$parts[$1]|;
+					$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+					$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+				}
+			}
+			else
 			{
-				# PARSE !!!
-				$p->parse($db0_line{'about_me'});
+				$p->parse($db0_line{'description'});
 				$p->eof();
-				my $part_html=$p->{'out'};
-				
-				$XSGN{'TMP'}=~s|<%about_me%>|$part_html|;
-				my @parts=split('<hr />',$part_html);
-				$XSGN{'TMP'}=~s|<%about_me%>|$part_html|;
-				$XSGN{'TMP'}=~s|<%about_me_(\d+)%>|$parts[$1]|;
+				my $description_html=$p->{'out'};
+				$XSGN{'TMP'}=~s|<%description%>|$description_html|;
+				my @parts=split('<hr />',$description_html);
+				$XSGN{'TMP'}=~s|<%description_(\d+)%>|$parts[$1]|;
 				$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
 				$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
 			}
-			
-			$p->parse($db0_line{'description'});
-			$p->eof();
-			my $description_html=$p->{'out'};
-			$XSGN{'TMP'}=~s|<%description%>|$description_html|;
-			my @parts=split('<hr />',$description_html);
-			$XSGN{'TMP'}=~s|<%description%>|$description_html|;
-			$XSGN{'TMP'}=~s|<%description_(\d+)%>|$parts[$1]|;
-			$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
-			$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+		}
 			
 		# replace metadata
 		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
