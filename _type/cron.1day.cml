@@ -35,15 +35,6 @@
 	<VAR id="-name" value="ticket_cleaner" />
 </MODULE>
 
-<MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="100" />
-	<VAR id="-name" value="ticket_email_list" />
-	<VAR id="-version" value="stability_report" />
-</MODULE>
-
-
-
 # a110
 
 <MODULE>
@@ -84,6 +75,14 @@
 	<VAR id="-name" value="all_cleaner" />
 </MODULE>
 
+
+# a130 - cleaning
+
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="130" />
+	<VAR id="-name" value="clear" />
+</MODULE>
 
 
 # a140 - cleaning
