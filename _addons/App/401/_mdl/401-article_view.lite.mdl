@@ -225,6 +225,7 @@ sub execute
 			article_attrs.name,
 			article_attrs.name_url,
 			article_attrs.name_hyphens,
+			article_attrs.alias_url,
 			article_content.subtitle,
 			article_content.subtitle_hyphens,
 			article_content.mimetype,
@@ -381,7 +382,41 @@ sub execute
 			}
 		}
 		
+		if($db0_line{'subtitle'}){
+			$XSGN{'TMP'}=~s|<#subtitle#>|$XSGN{'subtitle'}|g;
+		}
+		
 		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		my $ID_category=$db0_line{'ID_category'};
+		my $alias_url;
+		my %data=App::020::SQL::functions::get_ID(
+			'ID' => $ID_category,
+			'db_h' => 'main',
+			'db_name' => $env{'db_name'},
+			'tb_name' => 'a401_article_cat',
+			'columns' => {'*' => 1},
+			'-cache' => 3600,
+			'-slave' => 1,
+		);
+		$alias_url=$data{'alias_url'} if $data{'alias_url'};
+		while ($ID_category && !$alias_url)
+		{
+			my %data=App::020::SQL::functions::tree::get_parent_ID(
+				'ID' => $ID_category,
+				'db_h' => 'main',
+				'db_name' => $env{'db_name'},
+				'tb_name' => 'a401_article_cat',
+				'columns' => {'*' => 1},
+				'-cache' => 3600,
+				'-slave' => 1,
+			);
+			$ID_category=$data{'ID'};
+			if ($data{'alias_url'}){$alias_url=$data{'alias_url'};last;}
+		}
+		$XSGN{'TMP'}=~s|<%alias_url%>|$alias_url|g if $alias_url;
+		$XSGN{'TMP'}=~s|<%alias_url%>|$tom::H_www|g unless $alias_url;
+		$XSGN{'TMP'}=~s|<%alias_url_db%>|$alias_url|g;
 		
 			# replace metadata
 			my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
@@ -588,6 +623,13 @@ sub execute
 				$og_image_set=1;
 			}
 			
+			main::_log('---'.$part_html.'---');
+			
+			if($part_html ne '' && $part_html ne "<p>&nbsp;</p>")
+			{
+				$XSGN{'TMP'}=~s|<#$part#>|$XSGN{$part}|g if $XSGN{$part};
+			}
+			
 			$XSGN{'TMP'}=~s|<%$part%>|$part_html|;
 			$XSGN{'TMP'}=~s|<%$part\_plain%>|TOM::Text::format::xml2plain($part_html)|ge;
 			
@@ -659,8 +701,23 @@ sub execute
 		}
 		
 		# check author
-		if ($author{'ID_user'} && $XSGN{'author'} && length($author{'about_me'})>20)
+		if ($author{'ID_user'} && $XSGN{'author'})
 		{
+			#&& length($author{'about_me'})>20
+			# get author text
+			my $sql=qq{
+				SELECT
+					description
+				FROM
+					`$App::301::db_name`.a301_contact_lng
+				WHERE
+					ID_entity=? AND
+					lng=?
+			};
+			my %sth_author=TOM::Database::SQL::execute($sql, 'bind' => [$author{'ID_user'},$db0_line{'lng'}]);
+			my %dbauthor_line=$sth_author{'sth'}->fetchhash();
+			$author{'about_me'}=$dbauthor_line{'description'};
+			
 			# get author avatar
 			if (my $relation=(App::160::SQL::get_relations(
 				'db_name' => $App::301::db_name,
@@ -688,6 +745,9 @@ sub execute
 			$author{'about_me'}=(split('<hr/?>',$author{'about_me'}))[0];
 			$XSGN{'author'}=~s|<%(.*?)%>|$author{$1}|g;
 			$XSGN{'TMP'}=~s|<#author#>|$XSGN{'author'}|g;
+			
+#			return undef;
+			
 		}
 		
 		if ($db0_line{'sources'} && $XSGN{'sources'})
