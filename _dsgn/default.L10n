@@ -27,6 +27,7 @@
 		<de-DE>Diese Dienstleistung ist derzeit nicht verfügbar</de-DE>
 		<it-IT>Questo servizio attualmente non é accessibile</it-IT>
 		<uk-UA>У даний час немає доступу до цієї послуги</uk-UA>
+		<ar-SA>هذه الخدمة ليست متاحة حالياً.</ar-SA>
 	</string>
 	
 	<string id="We're trying to fix this problem at the moment and apologize for any inconvenience">
@@ -34,6 +35,7 @@
 		<de-DE>Wir bemühen uns, das Problem zu beheben und entschuldigen uns für die Komplikation</de-DE>
 		<it-IT>Ci stiamo adoperando a risolvere il problema e ci scusiamo per la complicazione</it-IT>
 		<uk-UA>У даний час ми намагаємося встановити проблему та вибачаємося за будь-які незручності</uk-UA>
+		<ar-SA>نحاول الآن حل المشكلة في الشبكة و نعتذر عن ذلك.</ar-SA>
 	</string>
 	
 	
