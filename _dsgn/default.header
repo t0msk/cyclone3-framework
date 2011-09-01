@@ -24,7 +24,7 @@ $DOC_BODY=<<"HEADER";
 
 <div id="page"><div id="page-i">
 	<div class="right">
-		<a href="http://www.webcom.sk/"><img src="<\$TOM::H_grf>/cyclone-160x55.gif" alt="WebCom Cyclone CMS" width="160" height="55" /></a>
+		<a href="http://www.comsultia.com/"><img src="<\$TOM::H_grf>/cyclone-160x55.gif" alt="Cyclone3 CMS" width="160" height="55" /></a>
 	</div>
 	
 	<h1><\$tom::H>: under construction</h1>
