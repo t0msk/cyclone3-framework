@@ -620,6 +620,7 @@ sub product_add
 			my %image=App::501::functions::image_add(
 				'image.ID_entity' => $relation->{'r_ID_entity'},
 				'image_attrs.name' => $env{'product.product_number'} || $env{'product.ID'} || $env{'thumbnail'},
+				'image_attrs.ID_category' => $App::910::thumbnail_cat_ID_entity,
 				'file' => $env{'thumbnail'}
 			);
 			
