@@ -98,7 +98,7 @@ sub execute
 		(
 			 'Data' => $tpl->{'entity'}{'email.xhtml'},
 			 'Type' => "text/html;charset=\"UTF-8\"",
-			 'Encoding' => "8bit",
+			 'Encoding' => "base64",
 		);
 		
 		$ent->attach
@@ -164,7 +164,7 @@ sub execute
 			'Subject' => "Suspected activity at $TOM::hostname",
 			
 			'Type' => "text/plain;charset=\"UTF-8\"",
-			'Encoding' => "8bit",
+			'Encoding' => "base64",
 			'Data' => $email_body
 		);
 		TOM::Net::email::send
