@@ -30,7 +30,7 @@ sub execute
 	# FACEBOOK AUTOLOGIN
 	if ($main::COOKIES_all{'fbs_'.$App::301::fb_app} && $main::USRM{'logged'} ne "Y" && $main::FORM{'facebook'} eq "true")
 	{
-		my $wget_cmd='/usr/sfw/bin/wget';
+		my $wget_cmd='/usr/bin/wget';
 #		$XSGN{'TMP'}="trying login from facebook";return 1;
 		
 		$main::COOKIES_all{'fbs_'.$App::301::fb_app}=~s|^"||;
@@ -56,6 +56,7 @@ sub execute
 			if (!$data)
 			{
 				$XSGN{'TMP'}="Facebook service not available";
+				#$XSGN{'TMP'}.="<!-- $link -->";
 				return 1;
 			}
 			
