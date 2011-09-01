@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	
+	<header>
+		
+		<extract>
+			<file location="expressInstall.swf" dest="swfobject2/" />
+			<file location="swfobject.js" dest="swfobject2/" />
+		</extract>
+		
+	</header>
+	
+</template>
