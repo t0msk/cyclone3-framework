@@ -10,10 +10,9 @@ use App::020::_init;
 
 =head1 NAME
 
-210-page_treemenu.0.mdl
+210-page_tree.menu.mdl
 
 =cut
-
 
 sub execute
 {
@@ -22,13 +21,16 @@ sub execute
 	delete $env{'ID_charindex'};
 	
 	$env{'tree'}=1 unless exists $env{'tree'};
+	$env{'ID.current'}=$env{'current_ID'} if $env{'current_ID'};
 	
 	my $from;
+	
+	my %root_item;
 	
 	# ak idem vykreslovat strom od nejakeho ID
 	if ($env{'ID'})
 	{
-		my %data=App::020::SQL::functions::get_ID(
+		%root_item=App::020::SQL::functions::get_ID(
 			'db_h'    => 'main',
 			'db_name' => $TOM::DB{'main'}{'name'},
 			'tb_name' => 'a210_page',
@@ -40,17 +42,15 @@ sub execute
 				'name_url' => 1
 			}
 		);
-		if ($data{'ID'})
+		if ($root_item{'ID'})
 		{
-			$env{'ID_charindex'}=$data{'ID_charindex'};
-			$XSGN{'TMP'}=~s|<%db_(.*?)%>|$data{$1}|g;
+			$env{'ID_charindex'}=$root_item{'ID_charindex'};
 		}
 		else
 		{
-			main::_log("can't find ID='$data{'ID'}'",1);
+			main::_log("can't find ID='$root_item{'ID'}'",1);
 			return undef;
 		}
-		
 	}
 	
 	my @ID_charindex_plus;
@@ -84,26 +84,21 @@ sub execute
 		
 	}
 	
-	# vykreslujem od urciteho levelu
 	if ($env{'ID_charindex'})
 	{
+		# start drawing from specified charindex node
+		
 		$from=$env{'ID_charindex'};
-		# zobrazit parent element daneho levelu alebo nie
+		
 		if (!$env{'parent'})
 		{
+			# don't show parent element of this node and its siblings
+			
 			$from.=':';
 		}
 	}
 	
-	my $where;
-	
-	# language
-	$where.="lng='$env{'lng'}' ";
-	# only active
-	$where.="AND status='Y' ";
-	# only visible (scratch this, we need all, because if we display more than 1 level, the children wouldn't know if the parent IS visible, thus, that they can't display)
-	#$where.="AND visible='Y' ";
-	
+	my $where="lng='$env{'lng'}' AND status='Y' ";
 	
 	if ($env{'check_sub'})
 	{
@@ -143,8 +138,6 @@ sub execute
 		}
 	}
 	
-	
-	# charindex
 	if (@ID_charindex_plus)
 	{
 		$where.="AND (ID_charindex LIKE '$from%'";
@@ -159,19 +152,17 @@ sub execute
 		$where.="AND ID_charindex LIKE '$from%' ";
 	}
 	
-	
-	# s akou hlbkou ziskavam data
 	if ($env{'depth'})
 	{
+		# show only nodes up to specified depth
+		
 		my $chars=length($from)+$env{'depth'}*4;
 		$where.="AND length(ID_charindex)<".($chars)." ";
 	}
 	
 	$where="WHERE ".$where if $where;
 	
-	
 	$env{'db_order'}="ID_charindex" unless $env{'db_order'};
-	
 	
 	my $sql=qq{
 		SELECT
@@ -215,11 +206,16 @@ $where
 			}
 		)
 	);
+	
+	my $no_items=1;
+	
 	if ($sth0{'sth'})
 	{
 		main::_log("received $sth0{'rows'} page nodes");
-		# naplnim si @tree s polozkami zo stromu preto aby som mohol v dalsom
-		# cykle pracovat ako s predchadzajucimi tak i s buducimi polozkami
+		$no_items=0 if $sth0{'rows'};
+		
+		# creating a complete temporary tree to work with
+		
 		my @tree;
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
@@ -233,8 +229,8 @@ $where
 			push @tree, {%db0_line};
 		}
 		
-		#now we'll clean the tree of invisible items, and their children (nevertheless of their visibility status, they shouldn't be visible),
-		#because the following processes are too complicated to do this otherwise
+		# cleaning tree of invisible items, and their children
+		# (ignoring their visibility status, they shouldn't be visible because their parent isn't)
 		
 		my $i=0;
 		my @parent_invisible;
@@ -273,19 +269,13 @@ $where
 					$i--;
 					next;
 				}
-				else
-				{
-					
-				}
 			}
 		}
-		
 		
 		$i=0;
 		
 		foreach my $entity(@tree)
 		{
-			
 			my $dbg_level=$entity->{'ID_charindex'};$dbg_level=~s|:||g;
 			$level=(length($dbg_level)/3)+1;
 			
@@ -303,7 +293,10 @@ $where
 			{
 				if ($level>$level_prev)
 				{
-					my $subtree = $XSGN{'SUB.'.($level-1)} || $XSGN{'SUB'};
+					my $subtree = $XSGN{'tree.'.($level-1)} || $XSGN{'tree'};
+					if($XSGN{'SUB.'.($level-1)} || $XSGN{'SUB'}){
+						$subtree = $XSGN{'SUB.'.($level-1)} || $XSGN{'SUB'};
+					}
 					my $rec=$XSGN{'TMP'}=~s|<#tree#>|$subtree|;
 				}
 			}
@@ -333,8 +326,11 @@ $where
 			$XSGN{'NULL'}=$XSGN{'ITEM'} if $XSGN{'ITEM'};
 			
 			if (
-					(($env{'current_ID'} eq $entity->{'ID'})
-					|| ($main::FORM{'a210_path'}=~/$path_/))
+					(
+						($env{'ID.current'} eq $entity->{'ID'})
+						|| ($main::FORM{'a210_path'}=~/^$path_\//)
+						|| ($main::FORM{'a210_path'} eq $path_)
+					)
 					&&
 					($XSGN{'item.current'} || $XSGN{'ITEM-current'})
 			)
@@ -389,8 +385,14 @@ $where
 	}
 	else
 	{
-		main::_log("not received any nodes");
+		main::_log("could not fetch data from db");
 	}
+	
+	if($no_items && exists $XSGN{'TMP.empty'}){
+		$XSGN{'TMP'}=$XSGN{'TMP.empty'};
+	}
+	
+	$XSGN{'TMP'}=~s|<%db_(.*?)%>|$root_item{$1}|g;
 	
 	return 1;
 }
