@@ -12,10 +12,9 @@ use App::160::_init;
 sub execute
 {
 	my %env=@_;
-
+	
 	my $sql_where;
 	my $sql_order;
-	$env{'sql_limit'}='1' unless $env{'sql_limit'};
 	
 	$sql_order="datetime_start DESC";
 	
@@ -55,6 +54,7 @@ sub execute
 			article_attrs.priority_B,
 			article_attrs.priority_C,
 			article_attrs.name,
+			article_attrs.name_url,
 			article_attrs.status,
 			
 			article_content.subtitle,
@@ -95,7 +95,7 @@ sub execute
 		ORDER BY
 			article_attrs.datetime_start DESC
 		LIMIT
-			$env{'sql_limit'}
+			1
 	},'quiet_'=>1,'-slave'=>1,
 		'-cache'=>1200,
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
@@ -120,6 +120,15 @@ sub execute
 	$main::env{'a401.article_cat.name'}=$article{'ID_category_name'} if $article{'ID_category_name'};
 	$main::env{'a401.article_cat.ID'}=$article{'ID_category'} if $article{'ID_category'};
 	
+	if ($env{'301'})
+	{
+		if (exists $main::FORM{'name_url'} && ($main::FORM{'name_url'} ne $article{'name_url'}))
+		{
+			 $main::location="?|?".$main::ENV{'QUERY_STRING_FULL'}.'&name_url='.$article{'name_url'};
+			 $main::action="stop";
+			 return 1;
+		}
+	}
 	
 	$main::H->add_DOC_title($article{'name'}) unless $env{'DOC_title.disable'};
 	$main::H->add_DOC_keywords($article{'keywords'});
@@ -137,6 +146,45 @@ sub execute
 	}
 	
 	App::401::functions::article_visit($article{'ID_entity'});
+	
+	if ($main::USRM{'ID_user'})
+	{
+		if ($main::ENV{'REF_TYPE'} eq "search")
+		{
+			# jukneme sa na klucove slova
+			my %data=TOM::Net::HTTP::referer::extract_keywords($main::ENV{'HTTP_REFERER'});
+			if ($data{'phrase'})
+			{
+				main::_log("at '$main::ENV{'REQUEST_URI'}' web search from '$main::ENV{'HTTP_REFERER'}' with phrase '$data{'phrase'}'",4,"pub.search");
+				foreach my $word (@{$data{'keywords'}})
+				{
+					TOM::Database::SQL::execute(qq{
+						INSERT DELAYED INTO `$App::401::db_name`.a401_article_keyword_income
+						(datetime_event, ID_user, ID_article, keyword, page_code)
+						VALUES (NOW(), ?, ?, ?, ?)
+					},'bind'=>[$main::USRM{'ID_user'},$article{'ID_entity'},$word,$main::request_code],'quiet'=>1);
+				}
+			}
+		}
+		elsif ($main::ENV{'REF_TYPE'} eq "onsite")
+		{
+			my ($domain,$query)=TOM::Net::HTTP::domain_clear($main::ENV{'HTTP_REFERER'});
+			my %query_form=TOM::Net::HTTP::CGI::get_QUERY_STRING($query,'quiet'=>1);
+			if ($query_form{'q'})
+			{
+				main::_log("at '$main::ENV{'REQUEST_URI'}' onsite search from '$main::ENV{'HTTP_REFERER'}' with phrase '$query_form{'q'}'",4,"pub.search");
+				foreach my $word(split ' ',$query_form{'q'})
+				{
+					next if (length($word)<3);
+					TOM::Database::SQL::execute(qq{
+						INSERT DELAYED INTO `$App::401::db_name`.a401_article_keyword_income
+						(datetime_event, ID_user, ID_article, keyword, page_code)
+						VALUES (NOW(), ?, ?, ?, ?)
+					},'bind'=>[$main::USRM{'ID_user'},$article{'ID_entity'},$word,$main::request_code],'quiet'=>1);
+				}
+			}
+		}
+	}
 	
 	if ($main::USRM{'ID_user'})
 	{
@@ -175,13 +223,14 @@ sub execute
 	}
 	
 	$env{'view_version'}="lite" unless $env{'view_version'};
+	$env{'view_global'}="1" unless exists $env{'view_global'};
 	
 	Tomahawk::module(
 		'-type' => "mdl",
 		'-category' => "401",
 		'-name' => "article_view",
 		'-version' => $env{'view_version'},
-		'-global' => 1,
+		'-global' => $env{'view_global'},
 		'-xsgn' => $env{'view_xsgn'},
 		'-xsgn_global' => $env{'view_xsgn_global'},
 		'-xlng_load' => $env{'view_xlng_load'},
@@ -266,7 +315,7 @@ sub execute
 	}
 	
 	# articles
-	if (exists $env{'related_TMP'})
+	if (exists $env{'related_TMP'} || $env{'relations'})
 	{
 		my $relations;
 		foreach my $relation(App::160::SQL::get_relations(
@@ -287,26 +336,31 @@ sub execute
 		
 		if ($relations)
 		{
-			Tomahawk::module(
-				'-type' => "mdl",
-				'-category' => "401",
-				'-name' => "article_list",
-				'-version' => "lite",
-				'-global' => 1,
-				'-TMP' => $env{'related_TMP'},
-				'-TMP_check' => 1,
-				'-cache_id' => 'related',
-				'-xsgn' => $env{'related_xsgn'},
-				'-xsgn_global' => $env{'related_xsgn_global'},
-					'article.ID_entity' => $relations,
-					'sql_limit' => 10,
-			);
+			$main::env{'related.a401.IDs'}=$relations;
+			
+			if(exists $env{'related_TMP'})
+			{
+				Tomahawk::module(
+					'-type' => "mdl",
+					'-category' => "401",
+					'-name' => "article_list",
+					'-version' => "lite",
+					'-global' => 1,
+					'-TMP' => $env{'related_TMP'},
+					'-TMP_check' => 1,
+					'-cache_id' => 'related',
+					'-xsgn' => $env{'related_xsgn'},
+					'-xsgn_global' => $env{'related_xsgn_global'},
+						'article.ID_entity' => $relations,
+						'sql_limit' => 10,
+				);
+			}
 		}
 	}
 	
 	
 	# attachments
-	if (exists $env{'attachments_TMP'})
+	if (exists $env{'attachments_TMP'} || $env{'relations'})
 	{
 		my $relations;
 		foreach my $relation(App::160::SQL::get_relations(
@@ -327,21 +381,26 @@ sub execute
 		
 		if ($relations)
 		{
-			Tomahawk::module(
-				'-type' => "mdl",
-				'-category' => "542",
-				'-name' => "file_list",
-				'-version' => "lite",
-				'-global' => 1,
-				'-TMP' => $env{'attachments_TMP'},
-				'-TMP_check' => 1,
-				'-cache_id' => 'attachments',
-				'-xsgn' => $env{'attachments_xsgn'},
-				'-xsgn_global' => $env{'attachments_xsgn_global'},
-				'-xlng_load' => $env{'attachments_xlng_load'},
-					'file.ID_entity' => $relations,
-					'sql_limit' => 10,
-			);
+			$main::env{'related.a542.IDs'}=$relations;
+			
+			if (exists $env{'attachments_TMP'})
+			{
+				Tomahawk::module(
+					'-type' => "mdl",
+					'-category' => "542",
+					'-name' => "file_list",
+					'-version' => "lite",
+					'-global' => 1,
+					'-TMP' => $env{'attachments_TMP'},
+					'-TMP_check' => 1,
+					'-cache_id' => 'attachments',
+					'-xsgn' => $env{'attachments_xsgn'},
+					'-xsgn_global' => $env{'attachments_xsgn_global'},
+					'-xlng_load' => $env{'attachments_xlng_load'},
+						'file.ID_entity' => $relations,
+						'sql_limit' => 10,
+				);
+			}
 		}
 	}
 	
