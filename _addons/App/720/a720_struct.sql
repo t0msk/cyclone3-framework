@@ -7,7 +7,7 @@
 CREATE TABLE `/*db_name*/`.`/*addon*/_contract` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- main id
-  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '', -- contract name
+  `name` varchar(256) character set utf8 collate utf8_unicode_ci NOT NULL default '', -- contract name
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `type` varchar(32) character set utf8 collate utf8_unicode_ci default NULL, -- contract type
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00', -- last change
@@ -43,7 +43,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contract` (
 CREATE TABLE `/*db_name*/`.`/*addon*/_contract_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
-  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name` varchar(256) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `type` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
