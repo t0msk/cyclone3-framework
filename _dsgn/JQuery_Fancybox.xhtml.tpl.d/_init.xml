@@ -4,6 +4,7 @@
 		<extract>
 			<file location="blank.gif" dest="jquery/fancybox/" />
 			<file location="fancy_close.png" dest="jquery/fancybox/" />
+			<file location="fancy_loading.png" dest="jquery/fancybox/" />
 			<file location="fancy_nav_left.png" dest="jquery/fancybox/" />
 			<file location="fancy_nav_right.png" dest="jquery/fancybox/" />
 			<file location="fancy_shadow_e.png" dest="jquery/fancybox/" />
