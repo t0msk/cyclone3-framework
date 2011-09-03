@@ -44,6 +44,7 @@ sub Int
 	
 	$ost=do
 	{
+		($ost<=-0.5) ? -1:
 		($ost>=0.5) ? 1:
 		($ost<0.5) ? 0:
 		0
@@ -90,7 +91,7 @@ sub format
 	$currency = (join $delimiter,@a) . "," . $cur[1];
 	
 	$currency=~s|,00|,--|g;
-	$currency="--" if $currency eq "0,--";
+#	$currency="--" if $currency eq "0,--";
 	return $currency;
 }
 

@@ -401,7 +401,7 @@ sub get_CGI
 	if ($form{'POSTDATA'})
 	{
 		# process SOAP data
-		if ($Net::DOC::type eq "soap")
+		if ($TOM::Document::type eq "soap")
 		{
 			main::_log("received SOAP POSTDATA, parsing");
 			
@@ -443,7 +443,7 @@ sub get_CGI
 			};
 		}
 		# process XML-RPC data
-		elsif ($Net::DOC::type eq "xmlrpc")
+		elsif ($TOM::Document::type eq "xmlrpc")
 		{
 			main::_log("received XML-RPC POSTDATA, parsing");
 			

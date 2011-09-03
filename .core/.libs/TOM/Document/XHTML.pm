@@ -166,7 +166,7 @@ sub prepare
 		'<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xml:lang="<%HEADER-LNG%>" lang="<%HEADER-LNG%>">'."\n";
 	
 	$self->{'OUT'}{'HEADER'} .= qq{<!--
-$Net::DOC::base::copyright
+$TOM::Document::base::copyright
 -->
 };
 	

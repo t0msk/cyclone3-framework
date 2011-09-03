@@ -60,8 +60,8 @@ sub engine_pub
 {
 	my $var=join(". ",@_);$var=~s|[\n\r]| |g;
 	
-	print "Content-Type: ".$Net::DOC::content_type."; charset=UTF-8\n\n";
-	my $out=$Net::DOC::warn_page;
+	print "Content-Type: ".$TOM::Document::content_type."; charset=UTF-8\n\n";
+	my $out=$TOM::Document::warn_page;
 	TOM::Utils::vars::replace($out);
 	$out=~s|<%message%>|$var|;
 	print $out;

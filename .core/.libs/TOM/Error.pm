@@ -187,7 +187,7 @@ sub engine_pub
 	{
 		main::_log("silent error");
 	}
-	elsif (!$Net::DOC::err_page)
+	elsif (!$TOM::Document::err_page)
 	{
 		main::_log("not defined err_page");
 		# ak nemam ziadny kod, tak som "umrel" prilis v skorej faze a v tom
@@ -202,11 +202,11 @@ sub engine_pub
 	}
 	else
 	{
-		print "Content-Type: ".$Net::DOC::content_type."; charset=UTF-8\n\n";
+		print "Content-Type: ".$TOM::Document::content_type."; charset=UTF-8\n\n";
 		my $tpl=new TOM::Template(
 			'level' => "auto",
 			'name' => "default",
-			'content-type' => $Net::DOC::type
+			'content-type' => $TOM::Document::type
 		);
 		my $page=$tpl->{'entity'}{'page.error'};
 		TOM::Utils::vars::replace($page);
@@ -379,7 +379,7 @@ sub module_pub
 	my $tpl=new TOM::Template(
 		'level' => "auto",
 		'name' => "default",
-		'content-type' => $Net::DOC::type
+		'content-type' => $TOM::Document::type
 	);
 	my $box=$tpl->{'entity'}{'box.error'};
 	

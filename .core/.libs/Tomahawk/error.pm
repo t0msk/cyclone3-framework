@@ -14,7 +14,7 @@ sub module
 	
 	main::_deprecated(0,"calling Tomahawk::error::module($env{-MODULE})");
 	
-	my $out=$Net::DOC::err_mdl;
+	my $out=$TOM::Document::err_mdl;
 	Utils::vars::replace($out);
 	$out=~s|<%MODULE%>|$env{-MODULE}|;
 	$out=~s|<%ERROR%>|$env{-ERROR}| if $main::IAdm;
@@ -69,9 +69,9 @@ sub page
 		main::_log("[PAGE][$tom::H on $TOM::core_uname_n] ??? $var",1,"pub.err",1);
 	};
 	
-	print "Content-Type: ".$Net::DOC::content_type."; charset=UTF-8\n\n";
+	print "Content-Type: ".$TOM::Document::content_type."; charset=UTF-8\n\n";
 	
-	my $out=$Net::DOC::err_page;
+	my $out=$TOM::Document::err_page;
 	Utils::vars::replace($out);
 	
 	foreach my $err(@_)

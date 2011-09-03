@@ -58,7 +58,7 @@ sub prepare
 	
 	$self->{'OUT'}{'HEADER'} = qq{<?xml version="1.0" encoding="<%CODEPAGE%>"?>
 <!--
-$Net::DOC::base::copyright
+$TOM::Document::base::copyright
 -->
 <SOAP-ENV:Envelope
 	xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" 

@@ -45,7 +45,7 @@ sub prepare
 	my $self=shift;
 	$self->{'OUT'}{'HEADER'} = "<?xml version=\"1.0\" encoding=\"<%CODEPAGE%>\"?>\n";
 	$self->{'OUT'}{'HEADER'} .= qq{<!--
-$Net::DOC::base::copyright
+$TOM::Document::base::copyright
 -->
 };
 	
