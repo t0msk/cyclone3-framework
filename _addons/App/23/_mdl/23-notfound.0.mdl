@@ -27,7 +27,7 @@ sub execute
 	my $tpl=new TOM::Template(
 		'level' => "auto",
 		'name' => "default",
-		'content-type' => $Net::DOC::type
+		'content-type' => $TOM::Document::type
 	);
 	
 	$XSGN{'TMP'}=$tpl->{'entity'}{'body.notfound'};
