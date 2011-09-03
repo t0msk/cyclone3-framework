@@ -40,10 +40,9 @@ sub get
  {if ($tom::Pm){$var=$tom::Pm;$null="m";}};
  # global layer
  $env{IDcategory}=~s/^g// && do {$var=$TOM::P;$null="g";};
- #Tomahawk::debug::log(0,"layer ".$var."/_type/".$null.$env{IDcategory}.".cml_gen");
+ 
  if (-e $var."/_type/".$null.$env{IDcategory}.".cml_gen")
  {
-  #Tomahawk::debug::log(0,"opening ".$var."/_type/".$null.$env{IDcategory}.".cml_gen");
   open (HND,"<".$var."/_type/".$null.$env{IDcategory}.".cml_gen") || die "cannot open layer ".$null.$env{IDcategory}."\n";#return undef;
   while ($env{file_line}=<HND>){$env{file_data}.=$env{file_line};}
   return $env{file_data};

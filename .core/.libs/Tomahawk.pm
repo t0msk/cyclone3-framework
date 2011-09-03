@@ -2,7 +2,7 @@
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
-use Tomahawk::debug;
+#use Tomahawk::debug;
 
 =head1 NAME
 
@@ -34,7 +34,7 @@ sub XSGN_load_hash
 }
 
 # DEFINUJEM NULOVY DEBUG
-use Tomahawk::debug;
+#use Tomahawk::debug;
 #use open ':utf8', ':std';
 #use encoding 'utf8';
 #use utf8;
@@ -352,7 +352,6 @@ sub module
 		$mdl_C{'-cache_id'}="0" unless $mdl_C{'-cache_id'}; # ak je vstup s cache_id ale nieje 0
 		$cache_domain=$tom::H unless $mdl_C{'-cache_master'};
 		
-		# Tomahawk::debug::log(3,"cache defined");
 		my $null;
 		foreach (sort keys %mdl_env){$_=~/^[^_]/ && do{$null.=$_."=\"".$mdl_env{$_}."\"\n";}}
 		foreach (sort keys %mdl_C){$null.=$_."=\"".$mdl_C{$_}."\"\n";}
@@ -529,7 +528,7 @@ sub module
 			# TU NEPOTREBUJEM NACITAVANIE Z OSTATNYCH ZDROJOV, LEBO SOM TO UZ NACITAL
 			
 			# zvysujem counter vyuzitia tejto cache
-			Tomahawk::debug::cache_conf_opt_plus();
+#			Tomahawk::debug::cache_conf_opt_plus();
 			
 			$main::H->r_("<!TMP-".$mdl_C{-TMP}."!>",$file_data);
 			
@@ -549,7 +548,7 @@ sub module
 				# cache je stary, spracujem debug data o cache
 				# kedze je cache system len v databaze, tak toto robit nemusim
 				# fcia je prazdna
-				Tomahawk::debug::cache_conf_opt();
+#				Tomahawk::debug::cache_conf_opt();
 			}
 		}
 	} #KONIEC OBLUSHY CACHE
@@ -815,13 +814,13 @@ sub module
 	# spravim debug tohto modulu ak bol fyzicky vykonany
 	# a v module som nenastavil ze nan nemam robit debug
 	main::_log("debug_disable=$Tomahawk::module::debug_disable");
-	Tomahawk::debug::module_load(
-		'-type' => $mdl_C{'-type'},
-		'-category' => $mdl_C{'-category'},
-		'-name' => $mdl_C{'-name'},
- 		'-load_req' => $t->{'time'}{'req'}{'duration'},
-		'-load_proc' => $t->{'time'}{'proc'}{'duration'}
-	) unless $Tomahawk::module::debug_disable==0;
+#	Tomahawk::debug::module_load(
+#		'-type' => $mdl_C{'-type'},
+#		'-category' => $mdl_C{'-category'},
+#		'-name' => $mdl_C{'-name'},
+#		'-load_req' => $t->{'time'}{'req'}{'duration'},
+#		'-load_proc' => $t->{'time'}{'proc'}{'duration'}
+#	) unless $Tomahawk::module::debug_disable==0;
 	
 	module_process_return_data(%return_data);
 	return $return_code,%return_data;

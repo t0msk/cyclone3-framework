@@ -91,9 +91,6 @@ use encoding 'utf8';
 use utf8;
 	
 	
-	use Tomahawk::error;
-	use Tomahawk::debug;
-	
 	use Tomahawk;
 	
 	use TOM::Document::base;
