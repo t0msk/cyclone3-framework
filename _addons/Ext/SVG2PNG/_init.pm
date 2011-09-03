@@ -28,27 +28,27 @@ sub convert
 	
 	# wait if inkscape is running
 	
-	waitloop:
+#	waitloop:
 	
-	my $lock=new TOM::lock("inkscape") || do {
-		main::_log("inscape running");
-		sleep 1;
-		goto waitloop;
-	};
+#	my $lock=new TOM::lock("inkscape") || do {
+#		main::_log("inscape running");
+#		sleep 1;
+#		goto waitloop;
+#	};
 	
 	
 	my $size_1=-s $file1;
-	if (-x '/usr/bin/inkscape')
-	{
-		main::_log("converting svg ($size_1) to png with inkscape");
-		#my $out=system("/usr/bin/inkscape $file1 -e=$file2");
-		my $out=`/usr/bin/inkscape $file1 -e=$file2 >/dev/null 2>/dev/null`;
-		#my $out=system("/usr/bin/inkscape $file1 -e=$file2 >/dev/null 2>/dev/null");
-		my $size_2=-s $file2;
-		main::_log("output($out) $file2 ($size_2)");
-		return 1;
-	}
-	elsif (-x '/usr/bin/convert')
+#	if (-x '/usr/bin/inkscape')
+#	{
+#		main::_log("converting svg ($size_1) to png with inkscape");
+#		#my $out=system("/usr/bin/inkscape $file1 -e=$file2");
+#		my $out=`/usr/bin/inkscape $file1 -e=$file2 >/dev/null 2>/dev/null`;
+#		#my $out=system("/usr/bin/inkscape $file1 -e=$file2 >/dev/null 2>/dev/null");
+#		my $size_2=-s $file2;
+#		main::_log("output($out) $file2 ($size_2)");
+#		return 1;
+#	}
+	if (-x '/usr/bin/convert')
 	{
 		main::_log("converting svg ($size_1) to png with ImageMagick");
 		my $out=`/usr/bin/convert $file1 $file2`;
