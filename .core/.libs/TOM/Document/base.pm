@@ -1,4 +1,4 @@
-package Net::DOC::base;
+package TOM::Document::base;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
@@ -85,7 +85,7 @@ sub BODY # get body code
 }
 
 
-sub OUT_ # get clean code
+sub OUT_ # get cleaned code
 {
 	my $self=shift;
 	$self->{OUT}{BODY}=~s|<%.*?%>||gs;
@@ -106,7 +106,7 @@ sub AUTOLOAD
 {
 	my $self = shift;
 	my $name = $AUTOLOAD;
-	main::_log("Unknown Net::DOC method '$name'",1);
+	main::_log("Unknown TOM::Document method '$name'",1);
 }
 
 

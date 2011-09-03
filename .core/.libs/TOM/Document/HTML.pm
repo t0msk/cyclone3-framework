@@ -1,6 +1,6 @@
-package Net::DOC;
+package TOM::Document;
 use strict;
-our @ISA=("Net::DOC::base"); # dedim z neho
+our @ISA=("TOM::Document::base"); # dedim z neho
 #use utf8;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}

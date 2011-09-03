@@ -39,6 +39,7 @@ use vars qw/
 	%FORM
 	$RPC
 	$H
+	$DOC
 	$action
 	$DOC_BODY
 	%DOC_HEADER
@@ -102,13 +103,10 @@ my $t_domain=track TOM::Debug("$TOM::engine domain initialization");
 eval
 {
 	
-	# Load domain configuration
-#	main::_log('require local.conf');
-#	require $tom::P."/local.conf";
-	
 	# import Content-Type library
 	main::_log("use Content-Type library type='$pub::DOC'");
-	eval "use Net::".$pub::DOC; die "can't load library DOC($pub::DOC)" if $@;
+#	eval "use Net::".$pub::DOC; die "can't load library DOC($pub::DOC)" if $@;
+	eval "use TOM::Document::".$pub::DOC; die "can't load library TOM::Document:;($pub::DOC)" if $@;
 	
 	# import default header
 	main::_log("require default.header");
@@ -128,7 +126,7 @@ eval
 	# FIXME:[fordinal] Odstranit spetnu kompatibilitu %HTML_HEADER a $HTML_TEMP
 	main::_log("generating template $pub::DOC from default.dsgn");
 	#if (keys %DOC_HEADER == 0)
-	$main::H_clone=new Net::DOC(%DOC_HEADER);
+	$main::H_clone=new TOM::Document(%DOC_HEADER);
 	$main::H_clone->prepare();
 	$main::H_clone->i($DOC_BODY);
 	main::_log("DOC_BODY = $DOC_BODY");
@@ -286,7 +284,7 @@ while ($main::CGI=new CGI::Fast())
 #	main::_log('DOS control');
 #	if (TOM::Net::HTTP::DOS::processENV(%main::ENV))
 #	{
-#		print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n\n";
+#		print "Content-Type: ".$TOM::Document::content_type."; charset=$main::LNG_cp_this\n\n";
 #		next;
 #	}
 	
@@ -298,7 +296,7 @@ while ($main::CGI=new CGI::Fast())
 #	{
 #		main::_log("IP $main::ENV{'REMOTE_ADDR'} is banned",1);
 #		print "Status: 404 Not Found\n";
-#		print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n\n";
+#		print "Content-Type: ".$TOM::Document::content_type."; charset=$main::LNG_cp_this\n\n";
 #		main::_log("IP \"$main::ENV{'REMOTE_ADDR'}\" banned from $tom::H",0,"pub.warn",1);
 #		$t_preeval->close();
 #		$t_request->close();
@@ -353,7 +351,7 @@ while ($main::CGI=new CGI::Fast())
 			$tom::Tyday,
 			$tom::Tisdst);
 		
-		local $Net::DOC::content_type=$Net::DOC::content_type;
+		local $TOM::Document::content_type=$TOM::Document::content_type;
 		
 		
 		main::_log("request from IP='$main::ENV{'REMOTE_ADDR'}' FORWARDED_FOR='$main::ENV{'HTTP_X_FORWARDED_FOR'}'");
@@ -489,8 +487,6 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("[$tom::H] By REQUEST_URI='$main::ENV{'REQUEST_URI'}' this request is from virus or hacked computer (IP='$main::ENV{'REMOTE_ADDR'}') from $ENV{HTTP_REFERER}",4,"$TOM::engine.hacked",1);
 			TOM::Net::HTTP::hacked::add($main::ENV{'REMOTE_ADDR'});
 			
-			#print "Status: 404 Not Found\n";
-			#print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n\n";
 			TOM::Warning::engine(
 				"The page you have requested can't be displayed",
 				"This request type is not allowed on this service"
@@ -1496,7 +1492,7 @@ while ($main::CGI=new CGI::Fast())
 				$main::DOC_BODY=$main::TEMPLATE if $main::TEMPLATE;
 				%main::DOC_HEADER=%main::HEADER if %main::HEADER;
 				
-				$H=new Net::DOC(%DOC_HEADER);
+				$H=new TOM::Document(%DOC_HEADER);
 				$H->i($main::DOC_BODY);
 				$H->prepare();
 				next;
@@ -1543,7 +1539,7 @@ while ($main::CGI=new CGI::Fast())
 				$TPL=new TOM::Template(
 					'level' => $env0{'level'},
 					'name' => $env0{'name'} || $env0{'value'},
-					'content-type' => $Net::DOC::type
+					'content-type' => $TOM::Document::type
 				);
 				next;
 			}
@@ -1683,8 +1679,8 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($env0{id} eq "Content-Type")
 			{
-				$Net::DOC::content_type=$env0{value};
-				_log("Change Net::DOC::content_type to ".$env0{value});
+				$TOM::Document::content_type=$env0{value};
+				_log("Change TOM::Document::content_type to ".$env0{value});
 				next;
 			}
 			
@@ -2213,7 +2209,7 @@ while ($main::CGI=new CGI::Fast())
 #		{
 #			$main::pp{$_}=$main::FORM{$_};
 #		}
-		$H->{OUT}{BODY}=~s/$url_regexp/Net::DOC::base::url_replace($1,$2,$3)/eg;
+		$H->{OUT}{BODY}=~s/$url_regexp/TOM::Document::base::url_replace($1,$2,$3)/eg;
 		$t_urlreplace->close();
 		
 		
@@ -2258,7 +2254,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			# pokial je vystup z publisheru ako PDF
 			# musim prevadzat HTML document do lokalneho kodovania
-			if ($Net::DOC::content_type eq "application/pdf")
+			if ($TOM::Document::content_type eq "application/pdf")
 			{
 				$main::LNG_cp=$Cyclone::l10n::charset::lng_charset{$tom::lng};
 				main::_log("codepage set to '$main::LNG_cp' because Content-Type='application/pdf' and language='$tom::lng'");
@@ -2343,7 +2339,7 @@ while ($main::CGI=new CGI::Fast())
 			print "Status: 404 Not Found\n";
 		}
 		
-		if ($Net::DOC::content_type eq "application/pdf")
+		if ($TOM::Document::content_type eq "application/pdf")
 		{
 			
 			# header
@@ -2388,7 +2384,7 @@ while ($main::CGI=new CGI::Fast())
 				main::_log("Pragma: ".$main::ENV{'Pragma'});
 				print "Pragma: ".$main::ENV{'Pragma'}."\n";
 			}
-			print "Content-Type: ".$Net::DOC::content_type."; charset=$main::LNG_cp_this\n";
+			print "Content-Type: ".$TOM::Document::content_type."; charset=$main::LNG_cp_this\n";
 			
 			
 			if ($ENV{'HTTP_ACCEPT_ENCODING'}=~/gzip/i && !$pub::gzip_disable)

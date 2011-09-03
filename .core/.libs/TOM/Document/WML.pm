@@ -1,11 +1,11 @@
-package Net::DOC;
+package TOM::Document;
 
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
 
-our @ISA=("Net::DOC::base");
+our @ISA=("TOM::Document::base");
 
 use TOM::Template;
 
@@ -22,8 +22,8 @@ our (
 	undef,
 	undef) = localtime(time);$year+=1900;
 
-our $content_type="application/json";
-our $type='json';
+our $content_type="text/vnd.wap.wml";
+our $type='wml';
 my $tpl=new TOM::Template(
 	'level' => "auto",
 	'name' => "default",
@@ -65,14 +65,21 @@ sub prepare
 {
 	my $self=shift;
 	
-	$self->{'OUT'}{'HEADER'} .= "\n";
+	$self->{'ENV'}{'DOCTYPE'} = "<!DOCTYPE wml PUBLIC \"-//WAPFORUM//DTD WML 1.1//EN\" \"http://www.wapforum.org/DTD/wml_1.1.xml\">" unless $self->{'ENV'}{'DOCTYPE'};
 	
-	$self->{'OUT'}{'BODY'} = qq{<!TMP-OUTPUT!>} unless $self->{'OUT'}{'BODY'};
+	$self->{'OUT'}{'HEADER'} .= "<?xml version=\"1.0\" encoding=\"<%CODEPAGE%>\"?>\n";
 	
-	$self->{'env'}{'DOC_title'}="$tom::H";
+	$self->{'OUT'}{'HEADER'} .= $self->{'ENV'}{'DOCTYPE'}."\n";
 	
-	$self->{'OUT'}{'FOOTER'} = "\n";
+	$self->{'OUT'}{'HEADER'} .= "<wml>\n";
 	
+	$self->{'OUT'}{'HEADER'} .= "<card id=\"main\" title=\"<%TITLE%>\">";
+	
+	$self->{'env'}{'DOC_title'}=$self->{'ENV'}{'HEAD'}{'TITLE'};
+	$self->{'env'}{'DOC_title'}=$tom::H unless $self->{'env'}{'DOC_title'};
+	
+	$self->{'OUT'}{'FOOTER'} = "</card>\n</wml>\n";
+ 
 	return 1;
 }
 
@@ -81,13 +88,12 @@ sub prepare_last
 {
 	my $self=shift;
 	
-#	$self->{'OUT'}{'HEADER'}=~s|<%TITLE%>|$self->{'env'}{'DOC_title'}|;
+	$self->{'OUT'}{'HEADER'}=~s|<%TITLE%>|$self->{'env'}{'DOC_title'}|;
 	
 	return 1;
 }
 
 
 sub add_DOC_css_link {return 1}
-sub change_DOC_robots {return 1}
 
 1;

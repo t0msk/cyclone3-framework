@@ -1,9 +1,9 @@
-package Net::DOC;
+package TOM::Document;
 use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
-our @ISA=("Net::DOC::base"); # dedim z neho
+our @ISA=("TOM::Document::base"); # dedim z neho
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
