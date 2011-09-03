@@ -230,7 +230,8 @@ main::_log("START FCGI PID:$$ domain:$tom::H",3,"pub.mng",1);
 
 while ($main::CGI=new CGI::Fast())
 {
-	$ENV{'QUERY_STRING'}=$ARGV[1] if $ENV{'TERM'};
+	$ENV{'QUERY_STRING'}=$ARGV[0] if $ENV{'TERM'};
+#	print "$ENV{'QUERY_STRING'}\n";exit;
 	alarm($TOM::fcgi_timeout); # zacnem pocitat X sekund kym nezbehne request
 	local $sig_term=0; # ignorujem TERM pocas behu requestu, povoleny je len pocas cakania na dalsi request
 #	if ($main::ENV{'HTTP_X_FORWARDED_FOR'}=~/([\d+\.]+)/)
@@ -1657,7 +1658,7 @@ while ($main::CGI=new CGI::Fast())
 			{
 				if ($env0{'lng'}){next if $env0{'lng'} ne $tom::lng;}
 				_log("Add to DOC::css_link to ".$env0{value});
-				my %env=Net::HTTP::CGI::GetQuery_l($env0{value});
+				my %env=TOM::Net::HTTP::CGI::get_QUERY_STRING($env0{'value'},'quiet'=>1);
 				$H->add_DOC_css_link(%env);
 				next;
 			}

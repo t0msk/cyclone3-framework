@@ -94,7 +94,6 @@ use utf8;
 	use Tomahawk;
 	
 	use TOM::Document::base;
-	use Net::HTTP::CGI; # TODO: [Aben] Pomaly sa zbavit vsetkych Net::* kniznic a vytvorit nove pod TOM::Net::*
 	use Net::HTTP::cookies;
 	use Net::HTTP::robots;
 	
