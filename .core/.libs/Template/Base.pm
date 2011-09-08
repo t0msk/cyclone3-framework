@@ -121,7 +121,8 @@ sub debug {
             : "\n";
     }
 
-    print STDERR "[$pkg] $msg";
+#    print STDERR "[$pkg] $msg";
+    main::_log("[$pkg] $msg");
 }
 
 
