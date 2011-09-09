@@ -24,8 +24,16 @@ sub execute
 	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
 	Tomahawk::XLNGtoXSGN() if Tomahawk::GetXLNG(); # retrieve language xml
 	#Tomahawk::GetXLNG() || return undef; # NATIAHNEM XML LANGUAGE
-	return undef unless $env{IDquestion};
-	return undef unless $env{IDanswer};
+	#return undef unless $env{IDquestion};
+	#return undef unless $env{IDanswer};
+	
+	if( (!$env{'IDquestion'}) || (!$env{'IDanswer'}) ){
+		if($env{'allow_empty_input'}){
+			return " ";
+		}else{
+			return undef;
+		}
+	}
 
 	$env{db_410}=Tomahawk::Getmdlvar("410","db") unless $env{db_410};
 	$env{db_410}=$TOM::DB_name_TOM unless $env{db_410};
