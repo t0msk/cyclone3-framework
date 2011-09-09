@@ -134,27 +134,18 @@ sub fetch {
     }
     elsif (File::Spec->file_name_is_absolute($name)) {
         # absolute paths (starting '/') allowed if ABSOLUTE set
-        ($data, $error) = $self->{ ABSOLUTE }
-            ? $self->_fetch($name)
-            : $self->{ TOLERANT }
-                ? (undef, Template::Constants::STATUS_DECLINED)
-            : ("$name: absolute paths are not allowed (set ABSOLUTE option)",
-               Template::Constants::STATUS_ERROR);
+        ($data, $error) = ("including files are not allowed",
+			Template::Constants::STATUS_ERROR);
     }
     elsif ($name =~ m/$RELATIVE_PATH/o) {
         # anything starting "./" is relative to cwd, allowed if RELATIVE set
-        ($data, $error) = $self->{ RELATIVE }
-            ? $self->_fetch($name)
-            : $self->{ TOLERANT }
-                ? (undef, Template::Constants::STATUS_DECLINED)
-            : ("$name: relative paths are not allowed (set RELATIVE option)",
-               Template::Constants::STATUS_ERROR);
+        ($data, $error) = ("including files are not allowed",
+			Template::Constants::STATUS_ERROR);
     }
     else {
         # otherwise, it's a file name relative to INCLUDE_PATH
-        ($data, $error) = $self->{ INCLUDE_PATH }
-            ? $self->_fetch_path($name)
-            : (undef, Template::Constants::STATUS_DECLINED);
+        ($data, $error) = 
+            $self->_fetch( $name, $name );
     }
 
 #    $self->_dump_cache()
@@ -504,6 +495,9 @@ sub _fetch {
 sub _fetch_path {
     my ($self, $name) = @_;
 
+    my ($data, $error) = $self->_fetch( './'.$name, $name );
+    return ( $data, $error );
+    
     $self->debug("_fetch_path($name)") if $self->{ DEBUG };
 
     # the template may have been stored using a non-filename name
@@ -936,6 +930,11 @@ sub _compiled_is_current {
 sub _template_modified {
     my $self = shift;
     my $template = shift || return;
+
+    if ($self->{'CONTEXT'}->{'tpl'})
+    {
+        return $self->{'CONTEXT'}->{'tpl'}->{'config'}->{'mtime'};
+    }
     return (stat( $template ))[9];
 }
 
@@ -959,6 +958,12 @@ sub _template_content {
     my $data;
     my $mod_date;
     my $error;
+
+    if ($self->{'CONTEXT'}->{'tpl'})
+    {
+        $data=$self->{'CONTEXT'}->{'tpl'}->{'entity'}->{$path};
+        return ($data, undef, $self->{'CONTEXT'}->{'tpl'}->{'config'}->{'mtime'})
+    }
 
     local *FH;
     if (open(FH, "< $path")) {

@@ -70,6 +70,7 @@ our %objects;
  <template>
    <header>
      <!--<L10n level="auto" name="xhtml" lng="auto"/>-->
+     <!--<tt enabled="false" />-->
      <extract>
        <!--
        <file location="cyclone3-150x44.png"/>
@@ -138,6 +139,7 @@ sub new
 	$obj->{'L10n'}={};
 	$obj->{'file'}={};
 	$obj->{'file_'}={};
+	$obj->{'config'}={};
 	
 	# find where is the source file/files
 	$obj->prepare_location();
@@ -153,7 +155,11 @@ sub new
 		# add this location into ignore list
 		push @{$obj->{'ENV'}->{'ignore'}}, $obj->{'location'};
 		$obj->prepare_xml();
+		# save modify time of definition file
+		$obj->{'config'}->{'mtime'}=(stat( $obj->{'location'} ))[9];
 		$obj->parse_header();
+		# save config from header to object cache
+		%{$objects{$obj->{'location'}}->{'config'}}=%{$obj->{'config'}};
 		$obj->parse_entity();
 	}
 	
@@ -170,6 +176,16 @@ sub new
 			%{$obj_return->{'entity_'}}=%{$objects{$obj->{'location'}}{'entity_'}};
 			%tpl::entity=%{$objects{$obj->{'location'}}{'entity'}};
 			%{$obj_return->{'L10n'}}=%{$objects{$obj->{'location'}}{'L10n'}};
+			# recovery header config to new object
+			%{$obj_return->{'config'}}=%{$objects{$obj->{'location'}}{'config'}};
+		}
+		if ($obj_return->{'config'}->{'tt'}) # extend by Template Toolkit
+		{
+			require Template;
+			$obj_return->{'tt'} = Template->new({
+				'EVAL_PERL' => 1,
+			});
+			$obj_return->{'tt'}->{'SERVICE'}->{'CONTEXT'}->{'tpl'}=$obj_return; # reference from Template Toolkit to TOM::Template
 		}
 		# replace_variables only in root level of Template not in templates called by <extend*>
 		$obj_return->process_entity() if (caller)[0] ne "TOM::Template";
@@ -317,6 +333,15 @@ sub parse_header
 			$self->{'L10n'}{'name'}=$node->getAttribute('name');
 			$self->{'L10n'}{'lng'}=$node->getAttribute('lng');
 			main::_log("request to load L10n level='$self->{'L10n'}{'level'}' addon='$self->{'L10n'}{'addon'}' name='$self->{'L10n'}{'name'}' lng='$self->{'L10n'}{'lng'}'") if $debug;
+		}
+		elsif ($name eq "tt")
+		{
+			if ($node->getAttribute('enabled') eq "true")
+			{
+				$self->{'config'}->{'tt'}=1;
+				main::_log("request to extend by tt (Template Toolkit)") if $debug;
+			}
+#			
 		}
 		
 	}

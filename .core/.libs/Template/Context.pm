@@ -125,8 +125,10 @@ sub template {
     $providers = $self->{ PREFIX_MAP }->{ default }
         || $self->{ LOAD_TEMPLATES }
             unless $providers;
-
-
+    
+    # hack to have reference to master object
+    $providers->[0]->{'CONTEXT'}=$self;
+    
     # Finally we try the regular template providers which will 
     # handle references to files, text, etc., as well as templates
     # reference by name.  If
