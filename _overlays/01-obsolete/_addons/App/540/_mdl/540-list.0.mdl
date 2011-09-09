@@ -23,11 +23,22 @@ sub execute
 	my @files;
 	my %arg;
 	
+	if (defined $env{active})
+	{
+		if($env{active} ne "*")
+		{
+			$arg{active}=$env{active};
+		}
+	}
+	else
+	{
+		$arg{active}='Y';
+	}
+	
 	# Priprava parametrov pre API
 	$arg{order} = "time DESC";
 	$arg{order}=$env{order} if $env{order};
 	$arg{limit}=$env{limit} if defined ($env{limit});
-	$arg{active}=$env{active} if defined ($env{active});
 	$arg{ID_dir}=$env{dir} if defined ($env{dir});
 	$arg{ID_dir}=$env{IDcat} if defined ($env{IDcat});
 	$arg{owner}=$env{user} if defined ($env{user});
