@@ -2524,7 +2524,10 @@ while ($main::CGI=new CGI::Fast())
 	
 	$main::request_code="00000000";
 	# re-registering ALARM
-	POSIX::sigaction(&POSIX::SIGALRM, $TOM::Engine::pub::SIG::action_exit);
+	if ($^O ne "MSWin32") # not working on Win32
+	{
+		POSIX::sigaction(&POSIX::SIGALRM, $TOM::Engine::pub::SIG::action_exit);
+	}
 	alarm($TOM::fcgi_sleep_timeout);
 } # end of while
 ######################################################################################
