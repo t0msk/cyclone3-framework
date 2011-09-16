@@ -193,7 +193,8 @@ sub module
 	}
 	
 	# V EVALKU OSETRIM CHYBU RYCHLOSTI A SPATNEHO MODULU
-	my $t_eval=track TOM::Debug("eval (timeout $CRON::ALRM_mdl)");
+	my $t_eval=track TOM::Debug("exec");
+	main::_log("set ALARM timetout to $CRON::ALRM_mdl");
 	eval
 	{
 		local $SIG{ALRM} = sub {die "Timed out $CRON::ALRM_mdl sec.\n"};
