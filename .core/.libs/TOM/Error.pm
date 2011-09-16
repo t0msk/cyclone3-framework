@@ -201,7 +201,7 @@ sub engine_pub
 		#
 		print "Status: 500 Internal Server Error\n";
 		print "Content-Type: text/html; charset=ISO-8859-1\n";
-
+		print "\n";
 print qq{<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"> 
 <html>
 	<head> 
