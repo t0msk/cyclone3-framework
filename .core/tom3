@@ -899,7 +899,11 @@ while ($main::CGI=new CGI::Fast())
 			
 			main::_log("user and request md5_identificator='$user_md5'");
 			
-			if (-e '../_data/USRM/cookie.'.$user_md5)
+			my $cookies_try=$Ext::CacheMemcache::cache->get(
+				'namespace' => "cookies_try",
+				'key' => $user_md5
+			);
+			if ($cookies_try)
 			{
 				main::_log("this user can't have a cookies");
 			}
@@ -911,9 +915,13 @@ while ($main::CGI=new CGI::Fast())
 			{
 				main::_log("trying to setup cookies");
 				main::_log("setup cookies (IP='$main::ENV{'REMOTE_ADDR'}' UserAgent='$main::UserAgent_name'), redirect with 302 code",3,"a301",2);
-				open(USRM,">../_data/USRM/cookie.".$user_md5);
-				print USRM "trying to setup cookies\n";
-				close(USRM);
+				
+				$Ext::CacheMemcache::cache->set(
+					'namespace' => "cookies_try",
+					'key' => $user_md5,
+					'value' => 1,
+					'expiration' => '3600S'
+				);
 				
 				$COOKIES{'_lt'}=$main::time_current;
 				Net::HTTP::cookies::SetCookies
@@ -2148,9 +2156,11 @@ while ($main::CGI=new CGI::Fast())
 		{
 			main::_log
 			(
-				"namespace '$_' process:".
-						$TOM::Debug::namespace{$_}{'time'}{'proc'}{'duration'}."s/".
-						$TOM::Debug::namespace{$_}{'time'}{'req'}{'duration'}."s"
+				"namespace '$_' (req:".
+						$TOM::Debug::namespace{$_}{'time'}{'req'}{'duration'}.
+						" proc:".
+						$TOM::Debug::namespace{$_}{'time'}{'proc'}{'duration'}.
+						")"
 			) if $TOM::DEBUG_benchmark;
 		}
 		
