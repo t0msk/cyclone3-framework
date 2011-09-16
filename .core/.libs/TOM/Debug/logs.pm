@@ -16,13 +16,6 @@ sub _log
 {
 	return undef if $TOM::DEBUG_log_file==-1;
 	return _log_lite(@_) unless $TOM::engine_ready;
-	# spetna kompatibilita, toto sa neskor vyhodi!
-#	if ($_[0]=~/^\d+$/ && $_[1])
-#	{
-#		shift @_;
-#		my ($package, $filename, $line) = caller;
-#		return _deprecated("calling _log(number,text) in deprecated format with message '".$_[0]."' from $filename:$line");
-#	}
 	unshift @_, $TOM::Debug::track_level;
 	
 	my ($package, $filename, $line) = caller;
@@ -55,10 +48,6 @@ sub _log
 	$get[3]=$TOM::engine unless $get[3];
 	$get[1]=~s|[\n\r\t]| |g;
 	
-#	$get[1]=~s|\n|\\n|g;
-#	$get[1]=~s|\r|\\r|g;
-#	$get[1]=~s|\t|\\t|g;
-	
 	my @ref=("+","-","+","+","-");
 	
 	my %date=Utils::datetime::ctodatetime(time,format=>1);
@@ -66,8 +55,6 @@ sub _log
 	my $msec;
 	my $msec='0.'.(Time::HiRes::gettimeofday)[1];
 		$msec=int($msec*1000);
-		#$msec=~s|^(.....).*|\1|;
-		#$msec=
 	
 	my $msg=
 		"[".sprintf ('%06d', $$).";$main::request_code]".
@@ -92,6 +79,12 @@ sub _log
 		print $msg."\n";
 		print color 'reset';
 		return 1;
+	}
+	elsif ($main::stdout && $ref[$get[2]] eq '-' && $get[3] eq $TOM::engine)
+	{
+		print STDERR color 'red';
+		print STDERR "CYCLONE3STDERR: ".$get[1]." at ".$filename." line ". $line ."\n";
+		print STDERR color 'reset';
 	}
 	
 	if (
