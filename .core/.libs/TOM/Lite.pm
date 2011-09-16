@@ -87,7 +87,7 @@ sub _log_lite
 	my $msg=
 		"[".sprintf ('%06d', $$).";$main::request_code]".
 		"[$date{hour}:$date{min}:$date{sec}.???]".
-		"[".sprintf("%02d",$get[0])."]".
+#		"[".sprintf("%02d",$get[0])."]".
 		" ".(" " x $get[0]).$ref[$get[2]].$get[1];
 	
 	
