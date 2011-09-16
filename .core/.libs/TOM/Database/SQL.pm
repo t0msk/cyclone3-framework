@@ -373,7 +373,7 @@ sub execute
 			if ($output{'err'})
 			{
 				my ($package, $filename, $line) = caller;
-				main::_log("SQL: err=".$output{'err'},1);# unless $env{'quiet'};
+				main::_log("SQL: ".$output{'err'},1);# unless $env{'quiet'};
 				main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
 				main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
 				if ($save_error && 
@@ -400,6 +400,41 @@ sub execute
 					print SUSP "---\n";
 					close(SUSP);
 				}
+				
+				if ($output{'err'} eq "MySQL server has gone away" ||
+					$output{'err'} eq "Lost connection to MySQL server during query") # hapal dole MySQL
+				{
+					main::_log("{$env{'db_h'}} MySQL server has gone away",4,"sql.err");
+					main::_log("[$tom::H] {$env{'db_h'}} MySQL server has gone away",4,"sql.err",1);
+					
+					main::_log("SQL: trying to reconnect '$env{'db_h'}' and re-call this SQL query");
+					
+					if (!$TOM::DB_mysql_auto_reconnect) # if auto-reconnect disabled, do it manually
+					{
+						TOM::Database::connect::disconnect($env{'db_h'}); # removes handlers
+						TOM::Database::connect::multi($env{'db_h'}) || do 
+						{
+							main::_log("{'$env{'db_h'}'} can't be reconnected",1);
+							# can't be reconnected
+							main::_log("{$env{'db_h'}} MySQL server can't be reconnected",4,"sql.err");
+							main::_log("[$tom::H] {$env{'db_h'}} MySQL server can't be reconnected",4,"sql.err",1);
+							$t->close();
+							return undef;
+						};
+						main::_log("SQL: sucesfully reconnected '$env{'db_h'}'");
+					}
+					
+					if ($package eq "TOM::Database::SQL")
+					{
+						$t->close();
+						return undef;
+					}
+					
+					main::_log("SQL: trying to re-call the query");
+					$t->close();
+					return TOM::Database::SQL::execute($SQL,%env,'quiet'=>0);
+				}
+				
 			}
 			main::_log("output info=".$output{'info'}) if (!$env{'quiet'} && $output{'info'});
 			$t->close();

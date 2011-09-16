@@ -183,4 +183,21 @@ sub multi
 	return 1;
 }
 
+
+sub disconnect
+{
+	my $db_h=shift;
+	return undef unless $db_h;
+	return undef unless $main::DB{$db_h};
+	
+	foreach (keys %main::DB)
+	{
+		next if $_ eq $db_h;
+		undef $main::DB{$_} if $main::DB{$_} eq $main::DB{$db_h};
+	}
+	undef $main::DB{$db_h};
+	
+	return 1;
+}
+
 1;
