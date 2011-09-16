@@ -132,9 +132,9 @@ sub multi
 			
 			return undef unless $main::DB{$handler} = DBI->connect
 			(
-				$TOM::DB{$handler}{uri},
-				$TOM::DB{$handler}{user},
-				$TOM::DB{$handler}{pass},
+				$TOM::DB{$handler}{'uri'},
+				$TOM::DB{$handler}{'user'},
+				$TOM::DB{$handler}{'pass'},
 				{
 					'PrintError' => 0,
 				}
@@ -143,8 +143,8 @@ sub multi
 			#$dbh->{AutoCommit}    = 1;
 			#$main::DB{$handler}->{RaiseError}    = 1;
 			
-			$main::DB{$handler}->{ora_check_sql} = 0;
-			$main::DB{$handler}->{RowCacheSize}  = 32;
+			$main::DB{$handler}->{'ora_check_sql'} = 0;
+			$main::DB{$handler}->{'RowCacheSize'}  = 32;
 			
 		}
 		else

@@ -41,6 +41,8 @@ BEGIN
 			main::_log_stdout("require $tom::P/local.conf");
 			require $tom::P."/local.conf";
 			
+			main::_log("domain hostname '$tom::H'");
+			
 			if ($tom::Pm)
 			{
 				shift @INC;
@@ -51,13 +53,16 @@ BEGIN
 				unshift @INC,$tom::P."/_addons";
 			}
 			
+			TOM::Database::connect::multi(@TOM::DB_pub_connect)
+				|| die "Error during connection request to database server\n";
+			
 			if ($tom::addons_init) # load all addons only if required by engine
 			{
 				foreach my $addon(keys %tom::addons)
 				{
 					delete $tom::addons{$addon} unless $tom::addons{$addon};
 				}
-				main::_log("load configured addons ".join(";",keys %tom::addons));
+				main::_log("loading configured addons ".join(";",keys %tom::addons));
 				foreach my $addon(sort keys %tom::addons)
 				{
 					my $addon_path;

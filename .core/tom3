@@ -75,21 +75,22 @@ our $sig_term=1;
 ######################################################################################
 
 
-my $t=track TOM::Debug("TOM engine '$TOM::engine' initializing...");
+my $t=track TOM::Debug("Engine '$TOM::engine' and domain init");
 
 eval
 {
-	my $t=track TOM::Debug('requiring TOM::Engine::pub');
+	my $t=track TOM::Debug('TOM::Engine::pub');
 	require TOM::Engine::pub;
 	$t->close();
 };
 if ($@)
 {
-	my @ERR=("Error occured during initialization");
+	my @ERR=("Error occured during engine and domain initialization");
 	push @ERR,$@;
 	# tento error sa nevykona jedine v pripade ak samotna kniznica TOM::Error je chybna
+	new CGI::Fast();
 	TOM::Error::engine(@ERR);
-	exit(0);
+	exit(1);
 }
 
 $t->close();
@@ -99,13 +100,12 @@ $t->close();
 ######################################################################################
 
 
-my $t_domain=track TOM::Debug("$TOM::engine domain initialization");
+my $t_domain=track TOM::Debug("Domain service init");
 eval
 {
 	
 	# import Content-Type library
 	main::_log("use Content-Type library type='$pub::DOC'");
-#	eval "use Net::".$pub::DOC; die "can't load library DOC($pub::DOC)" if $@;
 	eval "use TOM::Document::".$pub::DOC; die "can't load library TOM::Document:;($pub::DOC)" if $@;
 	
 	# import default header
@@ -151,8 +151,6 @@ eval
 	$TOM::IAdm_key='';
 	$TOM::ITst_key='';
 	
-#	TOM::Engine::pub::IAdm::load();
-	
 	# aktivizovanie mod_rewrite 0.136
 	main::_log("loading rewrite.conf");
 	if (open (KEY,"<".$tom::P."/rewrite.conf"))
@@ -162,8 +160,7 @@ eval
 		{
 			$data.=$line;
 		}
-		TOM::Net::URI::rewrite::get($data);close(KEY);$tom::rewrite=1;#$/="\n";
-#		$url_regexp=qr'(http[s]?:\/\/[a-zA-Z0-9\-\/\._:]{0,150}|)\?\|\?(.*?)(["\'#])';
+		TOM::Net::URI::rewrite::get($data);close(KEY);$tom::rewrite=1;
 		$url_regexp=qr'(.)\?\|\?(.*?)(["\'#])';
 		$tom::rewrite_time=time;
 	}
@@ -195,10 +192,10 @@ eval
 if ($@)
 {
 	#
-	# tento error budem zobrazovat ako webpage 30 sekudn
+	# tento error budem zobrazovat ako webpage 30 sekund
 	# a potom sa ukoncim a pockam na restart ( ci uz nieje chyba odstranena )
 	#
-	my @ERR=("Error occured during domain initialization");
+	my @ERR=("Error occured during domain service initialization");
 	push @ERR,$@;
 	#push @ERR,$!;
 	#my $req=FCGI::Request();

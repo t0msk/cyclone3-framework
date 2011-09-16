@@ -70,7 +70,7 @@ sub connect ($;$$$$) {
     $self->{'drh'} = DBI->install_driver($self->{'driver'});
     if ($db) {
 	my $dsn = "DBI:mysql:database=$db;host=$host";
-	my $dbh = $class->SUPER::connect($dsn, $user, $password);
+	my $dbh = $class->SUPER::connect($dsn, $user, $password,{'PrintError' => 0});
 	if (!$dbh) {
 	    $db_errstr = $DBI::errstr;
 	    return undef;

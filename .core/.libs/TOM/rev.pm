@@ -25,7 +25,7 @@ if ($svn_info=~/Revision: (\d+)/)
 #		$TOM::core_build=$1.$2.$3;
 #	}
 	
-	main::_log("SVN Revision='$TOM::core_revision' Date='$TOM::core_build'");
+	main::_log("Cyclone3 SVN Revision='$TOM::core_revision'");
 }
 
 

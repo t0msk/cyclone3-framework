@@ -116,8 +116,9 @@ sub engine_pub
 
 	my $ticket_ok = 1;
 	
-	if ( $TOM::ERROR_ticket )
-	{
+	if ( $TOM::ERROR_ticket && $main::DB{'main'})
+	{eval{
+		
 #		main::_log("Chcem vlozit ticket s errorom engine modulu $TOM::engine");
 		# Zistim si emaily
 		my $email_addr;
@@ -159,8 +160,8 @@ sub engine_pub
 			'emails' => $email_addr,
 			'cvml' => $cvml,
 		);
-	}
-
+	}}
+	
 	if (
 			($TOM::ERROR_email && $_[0]!=~/^silent/) # this is page generation error
 			|| ($TOM::ERROR_page_email && $_[0]=~/^silent/) # page silent error (page not found)
@@ -189,7 +190,7 @@ sub engine_pub
 	}
 	elsif (!$TOM::Document::err_page)
 	{
-		main::_log("not defined err_page");
+		main::_log("not defined TOM::Document::err_page, using buildin TOM::Error");
 		# ak nemam ziadny kod, tak som "umrel" prilis v skorej faze a v tom
 		# pripade nevyplujem ziaden kod a dam radsej rovno exit
 		# ( email o chybe som poslal, tak dufam ze to bude niekto okamzite riesit )
@@ -198,7 +199,25 @@ sub engine_pub
 		#
 		# mal by som vyplut aspon minimalny error v HTML 1.1
 		#
-		exit(1);
+		print "Status: 500 Internal Server Error\n";
+		print "Content-Type: text/html; charset=ISO-8859-1\n";
+
+print qq{<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"> 
+<html>
+	<head> 
+		<title>500 Internal Server Error</title> 
+	</head>
+<body> 
+<h1>Internal Server Error</h1>
+<p>The server encountered an internal error or misconfiguration and was unable to start Cyclone3 Publisher engine.</p>};
+print "<p><small>\n";print $_.". \n" foreach (@_);print "</small></p>\n";
+print qq{<p>Please contact the server administrator, $TOM::contact{'TECH'} and inform them of the time the error occurred, and anything you might have done that may have caused the error.</p>
+<p>More information about this error may be available in the Cyclone3 engine error log.</p>
+<hr>
+<address>$TOM::core_name/$TOM::core_version.$TOM::core_build Server at $TOM::hostname</address>
+</body></html>
+};
+#		exit(1);
 	}
 	else
 	{
