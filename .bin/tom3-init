@@ -136,7 +136,15 @@ if ($main::FORM{'domain'})
 	$tom::P=$main::p;
 	$TOM::P=$main::P;
 	
-	require TOM::Domain;
+	eval
+	{
+		require TOM::Domain;
+	};
+	if ($@)
+	{
+		main::_log_stdout("TOM::Domain error: ".$@,4);
+		exit;
+	}
 	
 	unshift @INC,$tom::P."/.libs";
 	unshift @INC,$tom::P."/_addons";

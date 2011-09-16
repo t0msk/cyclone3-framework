@@ -11,13 +11,9 @@ BEGIN
 	$main::debug=1;
 }
 
-use TOM;
-use Mysql;
-use TOM::Database::connect;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use CRON;
 use CRON::debug;
-
 
 package main;
 
@@ -57,10 +53,7 @@ require $ENV{'CYCLONE3PATH'}."/.core/_config/cron.conf";
 		$TOM::DB{'main'}{'name'}="TOM";
 	}
 	
-	TOM::Database::connect::all('main');
-	
-	print "";
-	
 	module(%FORM);
 	
 	&exit();
+	

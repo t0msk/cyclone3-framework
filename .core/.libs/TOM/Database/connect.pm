@@ -42,9 +42,9 @@ sub all
 	my @databases=@_;
 	$TOM::DB{main}{name}=$TOM::DB_name unless $TOM::DB{main}{name};
 	
-	main::_log("request to connect handler main");
+	main::_log("request to connect handler 'main'");
 	
-	main::_log("connecting main ($TOM::DB{main}{host} $TOM::DB{main}{name} $TOM::DB{main}{user})");
+	main::_log("connecting 'main' ($TOM::DB{main}{host} $TOM::DB{main}{name} $TOM::DB{main}{user})");
 	
 	$main::DB{'main'} = Mysql->Connect
 	(
@@ -90,7 +90,7 @@ sub multi
 		
 		if ($main::DB{$handler})
 		{
-			main::_log("this handler already exists");
+			main::_log("this handler already connected");
 			next;
 		}
 		

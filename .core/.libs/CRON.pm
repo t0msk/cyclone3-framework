@@ -122,7 +122,7 @@ sub module
 	main::_log("adding module ($tom::H) ".$mdl_env{-category}."-".$mdl_env{-name}."/".$mdl_env{-version}."/".$mdl_env{-global});
 	
 	# SPRACOVANIE PREMMENNYCH
-	foreach (keys %mdl_env)
+	foreach (sort keys %mdl_env)
 	{
 		my $var=$mdl_env{$_};$var=~s|[\n\r]||g;
 		if (length($var)>50){$var=substr($var,0,50)."..."}
@@ -134,8 +134,6 @@ sub module
 	
 	my $file_data;
 	
-	main::_log("executing");
-
 	# where is module?
 	if ($mdl_C{-global})
 	{
@@ -185,12 +183,13 @@ sub module
 	# AK MODUL NEEXISTUJE
 	if (not -e $mdl_C{P_MODULE})
 	{
-		main::_log("not exist",1);#return undef;
 		TOM::Error::module
 		(
 			-MODULE	=>	$mdl_C{-category}."-".$mdl_C{-name},
-			-ERROR	=>	"module not exist $mdl_C{P_MODULE}"
+			-ERROR	=>	"module file not found $mdl_C{P_MODULE}"
 		);
+		$t->close();
+		return undef;
 	}
 	
 	# V EVALKU OSETRIM CHYBU RYCHLOSTI A SPATNEHO MODULU
@@ -200,7 +199,7 @@ sub module
 		local $SIG{ALRM} = sub {die "Timed out $CRON::ALRM_mdl sec.\n"};
 		alarm $CRON::ALRM_mdl;
 		
-		if (not do $mdl_C{P_MODULE}){die "pre-compilation error - $! $@\n";}
+		if (not do $mdl_C{'P_MODULE'}){die "pre-compilation error - $! $@\n";}
 		
 		if (CRON::module::execute(%mdl_env))
 		{
