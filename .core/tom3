@@ -1,7 +1,5 @@
 #!/usr/bin/perl
-=head1 COPYRIGHT
-
-(c) 2003-2009 Comsultia, Ltd.
+=head1 NAME
 
 "V slobodnom state
  obcan moze rozmyslat
@@ -12,10 +10,6 @@
 "Build a system that even an idiot can use and only idiots will want to use it."
 
 =cut
-
-#
-# Volam univerzalny zavadzac Cyclone3
-#
 
 BEGIN
 {
