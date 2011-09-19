@@ -290,7 +290,8 @@ sub module
 {
 	local %mdl_env=@_;
 	$mdl_env{'-cache'} if $mdl_env{'-cache_id'};
-	my $t=track TOM::Debug("module",'attrs'=>"(".$mdl_env{-category}."-".$mdl_env{-name}.")",'timer'=>1);
+	if ($mdl_env{'-addon'}){$mdl_env{'-category'}=$mdl_env{'-addon'};$mdl_env{'-category'}=~s|^a||;};
+	my $t=track TOM::Debug("module",'attrs'=>"(".$mdl_env{'-category'}."-".$mdl_env{'-name'}.")",'timer'=>1);
 	local %mdl_C;
 	local $tom::ERR;
 	local $tom::ERR_plus;
@@ -666,6 +667,11 @@ sub module
 			$Tomahawk::module::XSGN{'TMP'}=~s|<#.*?#>||g;
 			$Tomahawk::module::XSGN{'TMP'}=~s|<%.*?%>||g;
 			
+			if ($mdl_C{'-stdout'} && $main::stdout)
+			{
+				print $Tomahawk::module::XSGN{'TMP'};
+			}
+			
 			if (($Tomahawk::module::XSGN{'TMP'})
 				&&(not $main::H->r_("<!TMP-".$mdl_C{'-TMP'}."!>",$Tomahawk::module::XSGN{'TMP'})))
 			{
@@ -813,7 +819,7 @@ sub module
 	
 	# spravim debug tohto modulu ak bol fyzicky vykonany
 	# a v module som nenastavil ze nan nemam robit debug
-	main::_log("debug_disable=$Tomahawk::module::debug_disable");
+#	main::_log("debug_disable=$Tomahawk::module::debug_disable");
 #	Tomahawk::debug::module_load(
 #		'-type' => $mdl_C{'-type'},
 #		'-category' => $mdl_C{'-category'},
