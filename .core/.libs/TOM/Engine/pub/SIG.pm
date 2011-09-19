@@ -71,7 +71,7 @@ sub handler_ignore
 }
 
 
-if ($^O ne "MSWin32"){
+if ($^O ne "MSWin32" && !$main::stdout){
 
 our $sigset = POSIX::SigSet->new();
 
