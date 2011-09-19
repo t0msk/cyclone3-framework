@@ -72,7 +72,7 @@ sub which {
     }
 
     my @path = File::Spec->path();
-    main::_log("finding '$exec' in (".(join (" ",@path)).")");
+#    main::_log("finding '$exec' in (".(join (" ",@path)).")");
 #	 foreach (@path)
 #	 {
 #		main::_log("finding $exec in $_");
