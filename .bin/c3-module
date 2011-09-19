@@ -1,0 +1,107 @@
+#!/usr/bin/perl
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use Term::ANSIColor;
+
+BEGIN
+{
+	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+	}
+	$tom::dsgn="default";
+}
+END {use Inline;$SIG{__WARN__} = sub {};}
+
+# process tom::P
+
+our %arg;
+foreach my $key(@ARGV)
+{
+	$key=~s/--// && do
+	{
+		my @ref=split('=',$key,2);
+		$ref[1]=1 unless exists $ref[1];
+		$main::arg{$ref[0]}=$ref[1];
+		next;
+	};
+	$key=~s/-// && do
+	{
+		foreach (split('',$key)){$main::arg{$_}++;}
+	};
+}
+
+if ($main::arg{'domain'})
+{
+	$main::arg{'domain'}=~s|^www\.||i;
+	$main::h=$main::arg{'domain'};$main::h=~s|\.|_|g;$main::h=~s|/|__|g;
+	
+	my $path=$main::arg{'domain'};$path=~s|^(.[^/]*)(.*)||;
+	my $path_dom=$1;my $path_sub=$2;
+	$path_dom=~s|(.*\.\|)(.*?\..*?)$|$1|;
+	$tom::p="!$2";$path_dom=~s|\.$||;
+	
+	foreach (reverse split('\.',$path_dom)){$tom::p.="/!$_";}
+	foreach (split('/',$path_sub)){$tom::p.="/$_";}
+	
+	$tom::p=~s|//|/|g;
+	$tom::p=$ENV{'CYCLONE3PATH'}."/".$tom::p;
+	
+	$tom::P=$tom::p;
+}
+
+require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
+
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8; # encode = fromutf8, decode=toutf8
+use strict; # scrict code
+use vars qw/
+	$CGI
+	%FORM
+	$RPC
+	$H
+	$DOC
+	$action
+	$DOC_BODY
+	%DOC_HEADER
+	$TPL
+	%COOKIES
+	%COOKIES_all
+	%COOKIES_save
+	%COOKIES_all_save
+	%USRM
+	%env
+	$IAdm
+	$IAdm_log
+	$ITst
+	$ITst_log
+	$DBH
+	%DB
+	$LNG_cp
+	$time_modules
+	$page_statuscode
+	$result
+	$page_save
+	$url_regexp
+	$USRM_flag
+	$location
+	$sitemap
+	%a210
+	%key
+	/;
+
+require TOM::Engine::pub;
+
+package main;
+
+$TOM::engine_ready=1;
+$main::debug=1 if $main::arg{'v'};
+
+Tomahawk::module(%arg,'-stdout'=>1);
+
+#print color 'reset';
+
