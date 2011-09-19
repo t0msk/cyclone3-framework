@@ -591,5 +591,85 @@ sub get_tpl_xml
 }
 
 
+sub variables_push
+{
+	my $self=shift;
+	my $entry0=shift; # place or variables
+	my $entry1=shift; # variables
+	
+	$self->{'variables'}={} unless $self->{'variables'};
+	
+	if ($entry1) # if sended variables, place also defined
+	{
+		$entry0='items' unless $entry0;
+		if (!$self->{'variables'}->{$entry0})
+		{
+			$self->{'variables'}->{$entry0}=[];
+			push @{$self->{'variables'}->{$entry0}},$entry1;
+		}
+		elsif (ref $self->{'variables'}->{$entry0} eq "ARRAY")
+		{
+			push @{$self->{'variables'}->{$entry0}},$entry1;
+		}
+	}
+	else
+	{
+		if (!$self->{'variables'}->{'items'})
+		{
+			$self->{'variables'}->{'items'}=[];
+			push @{$self->{'variables'}->{'items'}},$entry1;
+		}
+		elsif (ref $self->{'variables'}->{'items'} eq "ARRAY")
+		{
+			push @{$self->{'variables'}->{'items'}},$entry1;
+		}
+	}
+	
+}
+
+
+sub process
+{
+	# just process the template!
+	my $self=shift;
+	my $vars=shift;
+	
+	if ($self->{'config'}->{'tt'})
+	{
+		# ah, template toolkit available here!
+		my $tt=$self->{'tt'};
+		
+		# variables HASH
+		my $vars_process={};
+		$self->{'variables'}={} unless $self->{'variables'};
+		# copy reference to HASH
+		$vars_process=$self->{'variables'};
+		# create test string
+		$vars_process->{'test'}="this is test string";
+		
+		# override when required
+		$vars_process = $vars if $vars;
+		
+		# attach environment variables
+		$vars_process->{'request'}={
+			
+		};
+		$vars_process->{'user'}={
+			
+		};
+		$vars_process->{'process'}={
+			
+		};
+		$vars_process->{'service'}={
+			
+		};
+		
+		# process
+		$tt->process(\$self->{'entity'}->{'main'},$vars_process,\$self->{'output'}) || main::_log($tt->error(),1);
+		
+	}
+	
+	return 1;
+}
 
 1;
