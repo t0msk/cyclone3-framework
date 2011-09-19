@@ -117,7 +117,7 @@ BEGIN
 	$TOM::P=$ENV{'CYCLONE3PATH'} || "/www/TOM"; # always
 	
 	# actual path and domain service path
-	chomp($tom::p=`pwd`);
+	chomp($tom::p=`pwd`) unless $tom::p;
 	$tom::P=$tom::p;
 	$tom::P=~s|^(.*)/!www$|\1|;
 	# undef $tom::P if here is not domain service
