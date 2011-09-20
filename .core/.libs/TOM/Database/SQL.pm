@@ -240,16 +240,16 @@ sub execute
 	
 	TOM::Database::connect::multi($env{'db_h'}) unless $main::DB{$env{'db_h'}};
 	
-	my $subtype;	
-	
+	# subtype of connected handler (MySQL or MsSQL?)
+	my $subtype;
 	$subtype = $TOM::DB{$env{'db_h'}}{'subtype'};
 	if ($subtype)
 	{
-   if ($env{$subtype})
-   {
-      $SQL = $env{$subtype};
-   } 
-  }
+		if ($env{$subtype})
+		{
+			$SQL = $env{$subtype};
+		} 
+	}
 		
 	main::_log("db_h='$env{'db_h'}'") unless $env{'quiet'};
 	if ($env{'log'})
@@ -583,58 +583,76 @@ Aktualizovat aplikacie vo vsetkych databazach
 
 =cut
 
-1;
+package DBI::db;
+# provide methods fetchrow and Query, often used (old Mysql way)
 
+sub AUTOLOAD
+{
+	(my $method = our $AUTOLOAD) =~ s/.*:://;
+	my $self = shift;
+	
+	return if ($method eq 'DESTROY');
+	
+	# Query (from Mysql)
+	if ($method eq 'Query')
+	{
+		return unless (my $query = shift);
+		
+		my $sth = $self->prepare($query);
+		$sth->execute();
+		
+		return $sth;
+	}
+}
 
 package DBI::st;
 # provide methods fetchhash and insertid if missing
 
 sub AUTOLOAD
 {
-  (my $method = our $AUTOLOAD) =~ s/.*:://;
-  my $self = shift;
-  
-  return if ($method eq 'DESTROY');
-  
-  # fetchhash (from Mysql)
-  if ($method eq 'fetchhash')
-  {
-    my %outhash;
-  
-    my $hashref = $self -> fetchrow_hashref();
-  
-    if ($hashref)
-    {
-     foreach my $item (%{$hashref})
-     {
-       $outhash{$item} = $hashref -> {$item};
-     }  
-     return %outhash;
-    
-    } else
-    {
-     return;
-    }
-  }
-  
-  # insertid (from Mysql))
-  elsif ($method eq 'insertid')
-  {
-    my $dbh = $self -> {Database}; # reference to my parent database handle
-  
-    # SELECT last inserted autoincrement column - MS SQL
-    my $sth = $dbh -> prepare('SELECT @@IDENTITY;');
-    $sth -> execute();
-    my @results = $sth -> fetchrow_array();
-  
-    return $results[0] if (@results); 
-  }
-  else
-  {
-    die("DBI::st::$method is undefined and could not be autloaded.");
-  }
-
+	(my $method = our $AUTOLOAD) =~ s/.*:://;
+	my $self = shift;
+	
+	return if ($method eq 'DESTROY');
+	
+	# fetchhash (from Mysql)
+	if ($method eq 'fetchhash')
+	{
+		my %outhash;
+		
+		my $hashref = $self->fetchrow_hashref();
+		
+		if ($hashref)
+		{
+			foreach my $item (keys %{$hashref})
+			{
+				$outhash{$item} = $hashref -> {$item};
+			}  
+			return %outhash;
+		}
+		else
+		{
+			return;
+		}
+	}
+	
+	# insertid (from Mysql))
+	elsif ($method eq 'insertid')
+	{
+		my $dbh = $self->{'Database'}; # reference to my parent database handle
+	
+		# SELECT last inserted autoincrement column - MS SQL
+		my $sth = $dbh->prepare('SELECT @@IDENTITY;');
+		$sth->execute();
+		my @results = $sth->fetchrow_array();
+	
+		return $results[0] if (@results); 
+	}
+	else
+	{
+		die("DBI::st::$method is undefined and could not be autloaded.");
+	}
+	
 }
 
 1;
-
