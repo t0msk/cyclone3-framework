@@ -307,7 +307,8 @@ sub _chunk_prepare
 		{
 			$version = 'MSSQL';
 		}
-	} else
+	}
+	else
 	{
 		$version=$main::DB{$header->{'db_h'}}->getserverinfo();
 			$version=~s|^([\d]+)\.([\d]+)\.(.*)$|\1.\2|;
@@ -319,180 +320,179 @@ sub _chunk_prepare
 		main::_log("converting SQL $header->{'version'} to MSSQL");
 		
 		# CREATE TABLE IF NOT EXISTS
-			my @db_table = $$chunk =~ /CREATE TABLE IF NOT EXISTS `([^`]+)`.`([^`]+)`/i;
+		my @db_table = $$chunk =~ /CREATE TABLE IF NOT EXISTS `([^`]+)`.`([^`]+)`/i;
+		
+		if ($db_table[0] && $db_table[1])
+		{
 			
-			if ($db_table[0] && $db_table[1])
-			{
+			$db_table[0] = $TOM::DB_name if ($TOM::DB_name && $db_table[0] eq 'TOM');
 			
-			 $db_table[0] = $TOM::DB_name if ($TOM::DB_name && $db_table[0] eq 'TOM');
-			
-				my $add_code = qq{
+			my $add_code = qq{
 					IF NOT EXISTS (
 						SELECT * FROM sysobjects WHERE id = object_id(N'[$db_table[0]]..[$db_table[1]]')
 						AND OBJECTPROPERTY(id, N'IsUserTable') = 1
 					) CREATE TABLE [$db_table[0]]..[$db_table[1]] };
-				$$chunk =~ s/CREATE TABLE IF NOT EXISTS `([^`]+)`.`([^`]+)`/$add_code/i;
-			}
-			
-			$$chunk =~ s/CREATE OR REPLACE VIEW/CREATE VIEW/gi;
-			
-			# FIX ENCODINGS
-			# ASCII
-			$$chunk =~ s/(var)?char\((\d+)\) character set ascii( collate ascii_bin)?/\1char\(\2\)/gi;
-			# UTF8
-			$$chunk =~ s/(var)?char\((\d+)\) character set utf8( collate utf8_bin| collate utf8_unicode_ci)?/n\1char\(\2\)/gi;
-			# TEXT
-			$$chunk =~ s/ (long|tiny)?text character set.*unicode_ci/ nvarchar\(max\)/gi;
-			$$chunk =~ s/(tiny)?text character set ascii( collate ascii_bin)?/nvarchar\(max\)/gi;
-			
-			# VARCHAR BINARY (???)
-			
-			$$chunk =~ s/varchar\((\d+)\) binary/nvarchar\(\1\)/gi;
-			
-			# AUTO INCREMENT
-			# some journalling tables have auto-increment too - they shouldn't have
-			
-			if ($db_table[1] =~ /(_j|a301_user_rel_group|a010_eform_sym)$/)
-			{
-			   $$chunk =~ s/auto_increment//gi;
-			}
-			else
-			{
-				$$chunk =~ s/auto_increment/IDENTITY(1,1)/gi;
-			}
-			
-			# ZEROFILL - select statements will have to format manually
-			$$chunk =~ s/ zerofill / /gi;
-			
-			# ESCAPE CHARACTERS
-			$$chunk =~ s/`/\"/g;
-			
-			# NUMERIC TYPES, UNSIGNED - not supported by SQL server
-			$$chunk =~ s/(smallint|tinyint)(\(\d+\)?) unsigned/int/gi;
-			$$chunk =~ s/ (big|medium)?int(\(\d+\)?) unsigned/ bigint/gi;
-			$$chunk =~ s/\bdouble\b/real/gi;
-			$$chunk =~ s/bigint\(\d+\)/bigint/gi;
-			$$chunk =~ s/ int\(\d+\) / bigint /gi;
-			$$chunk =~ s/(smallint|tinyint)(\(\d+\)?)/int/gi;
-			
-			# UNIQUE KEY - also prepend table prefix to unique key name
-			# $$chunk =~ s/UNIQUE KEY \"([^\"]+)\" \(([^)]+)\)/CONSTRAINT "$db_table[1]\1" UNIQUE (\2)/gi;
-			# ACTUALLY LIFE WITHOUT UNIQUE KEYS IS EASIER
-			$$chunk =~ s/UNIQUE KEY +\"([^\"]+)\" \(([^)]+)\),?//gi;
-			
-			# ALSO GET RID OF PRIMARY KEY, THIS IS MANAGED BY IDENTITY
-			$$chunk =~ s/PRIMARY KEY +\(([^)]+)\),?//gi;
-			
-			# NO NOT NULL RESTRICTIONS
-			$$chunk =~ s/ NOT NULL//gi;
-			
-			# BLOB
-			$$chunk =~ s/(\"[^\"]+\") (medium)?blob/\1 varbinary(max)/gi;
-			
-			# KEY INDEX - ignore for now
-			$$chunk =~ s/(FULLTEXT )?KEY +\"[^\"]+\" +\([^\)]+\) *,? *\n//gi;
-			
-			# REMOVE MYSQL-SPECIFIC ENGINE DIRECTIVES
-			$$chunk =~ s/(TYPE|ENGINE)=(InnoDb|MyIsam)[^;]*//gi;
-			
-			# MSSQL 2005 doesn't support date type
-			$$chunk =~ s/\bdate\b/datetime/gi;
-			
-			# CONCAT MySQL=CONCAT(a,b,c) MSSQL=a+b+c
-			$$chunk =~ /CONCAT\ *\(([^\)]+)\)/;
-			if ($1)
-			{
-				my $operands = $1;
-				$operands =~ s/,/+/g;
-				$$chunk =~ s/CONCAT\ *\(([^\)]+)\)/$operands/;
-			}
-			
-			# SUBSTR
-			$$chunk =~ s/\bSUBSTR\b/SUBSTRING/gi;
-	
-			# FUNCTIONS
-			$$chunk =~ s/CURRENT_DATE\(\)/GETDATE()/gi;
-			
-			# FINALLY, REMOVE TRAILING COMMA
-			
-			$$chunk =~ s/,\s*\)\s*;/\n\);/m;
-			
-			
-			
-			# fix 301_user_group_j
-			
-			if ($db_table[1] eq 'a301_user_group_j')
-			{
-				$$chunk =~ s/\"perm_roles_override\"\s+varbinary\(max\)/\"perm_roles_override\" nvarchar\(max\)/;
-			}
+			$$chunk =~ s/CREATE TABLE IF NOT EXISTS `([^`]+)`.`([^`]+)`/$add_code/i;
+		}
+		
+		$$chunk =~ s/CREATE OR REPLACE VIEW/CREATE VIEW/gi;
+		
+		# FIX ENCODINGS
+		# ASCII
+		$$chunk =~ s/(var)?char\((\d+)\) character set ascii( collate ascii_bin)?/\1char\(\2\)/gi;
+		# UTF8
+		$$chunk =~ s/(var)?char\((\d+)\) character set utf8( collate utf8_bin| collate utf8_unicode_ci)?/n\1char\(\2\)/gi;
+		# TEXT
+		$$chunk =~ s/ (long|tiny)?text character set.*unicode_ci/ nvarchar\(max\)/gi;
+		$$chunk =~ s/(tiny)?text character set ascii( collate ascii_bin)?/nvarchar\(max\)/gi;
+		
+		# VARCHAR BINARY (???)
+		
+		$$chunk =~ s/varchar\((\d+)\) binary/nvarchar\(\1\)/gi;
+		
+		# AUTO INCREMENT
+		# some journalling tables have auto-increment too - they shouldn't have
+		
+		if ($db_table[1] =~ /(_j|a301_user_rel_group|a010_eform_sym)$/)
+		{
+		   $$chunk =~ s/auto_increment//gi;
+		}
+		else
+		{
+			$$chunk =~ s/auto_increment/IDENTITY(1,1)/gi;
+		}
+		
+		# ZEROFILL - select statements will have to format manually
+		$$chunk =~ s/ zerofill / /gi;
+		
+		# ESCAPE CHARACTERS
+		$$chunk =~ s/`/\"/g;
+		
+		# NUMERIC TYPES, UNSIGNED - not supported by SQL server
+		$$chunk =~ s/(smallint|tinyint)(\(\d+\)?) unsigned/int/gi;
+		$$chunk =~ s/ (big|medium)?int(\(\d+\)?) unsigned/ bigint/gi;
+		$$chunk =~ s/\bdouble\b/real/gi;
+		$$chunk =~ s/bigint\(\d+\)/bigint/gi;
+		$$chunk =~ s/ int\(\d+\) / bigint /gi;
+		$$chunk =~ s/(smallint|tinyint)(\(\d+\)?)/int/gi;
+		
+		# UNIQUE KEY - also prepend table prefix to unique key name
+		# $$chunk =~ s/UNIQUE KEY \"([^\"]+)\" \(([^)]+)\)/CONSTRAINT "$db_table[1]\1" UNIQUE (\2)/gi;
+		# ACTUALLY LIFE WITHOUT UNIQUE KEYS IS EASIER
+		$$chunk =~ s/UNIQUE KEY +\"([^\"]+)\" \(([^)]+)\),?//gi;
+		
+		# ALSO GET RID OF PRIMARY KEY, THIS IS MANAGED BY IDENTITY
+		$$chunk =~ s/PRIMARY KEY +\(([^)]+)\),?//gi;
+		
+		# NO NOT NULL RESTRICTIONS
+		$$chunk =~ s/ NOT NULL//gi;
+		
+		# BLOB
+		$$chunk =~ s/(\"[^\"]+\") (medium)?blob/\1 varbinary(max)/gi;
+		
+		# KEY INDEX - ignore for now
+		$$chunk =~ s/(FULLTEXT )?KEY +\"[^\"]+\" +\([^\)]+\) *,? *\n//gi;
+		
+		# REMOVE MYSQL-SPECIFIC ENGINE DIRECTIVES
+		$$chunk =~ s/(TYPE|ENGINE)=(InnoDb|MyIsam)[^;]*//gi;
+		
+		# MSSQL 2005 doesn't support date type
+		$$chunk =~ s/\bdate\b/datetime/gi;
+		
+		# CONCAT MySQL=CONCAT(a,b,c) MSSQL=a+b+c
+		$$chunk =~ /CONCAT\ *\(([^\)]+)\)/;
+		if ($1)
+		{
+			my $operands = $1;
+			$operands =~ s/,/+/g;
+			$$chunk =~ s/CONCAT\ *\(([^\)]+)\)/$operands/;
+		}
+		
+		# SUBSTR
+		$$chunk =~ s/\bSUBSTR\b/SUBSTRING/gi;
+		
+		# FUNCTIONS
+		$$chunk =~ s/CURRENT_DATE\(\)/GETDATE()/gi;
+		
+		# FINALLY, REMOVE TRAILING COMMA
+		
+		$$chunk =~ s/,\s*\)\s*;/\n\);/m;
+		
+		# fix 301_user_group_j
+		
+		if ($db_table[1] eq 'a301_user_group_j')
+		{
+			$$chunk =~ s/\"perm_roles_override\"\s+varbinary\(max\)/\"perm_roles_override\" nvarchar\(max\)/;
+		}
+		
 	}
-	else
+	else # MySQL
 	{
-	
-	 # upgrade na vyssie verzie
-	
-	 # 4.0 -> 4.1
-	 if ($header->{'version'} eq "4.0" && $version > $header->{'version'})
-	 {
-	 	 main::_log("converting SQL $header->{'version'} to 4.1");
-	 	 $header->{'version'}="4.1";
-	 }
-	
-	 # 4.1 -> 5.0
-	 if ($header->{'version'} eq "4.1" && $version > $header->{'version'})
-	 {
-		  main::_log("converting SQL $header->{'version'} to 5.0");
-		  $header->{'version'}="5.0";
-	 }
-	
-	 # 5.0 -> 5.1
-	if ($header->{'version'} eq "5.0" && $version > $header->{'version'})
-	{
-		main::_log("converting SQL $header->{'version'} to 5.1");
-		$$chunk=~s|collate|COLLATE|g;
-		$$chunk=~s|character set|CHARACTER SET|g;
-		$$chunk=~s| default| DEFAULT|g;
-		$$chunk=~s|auto_increment|AUTO_INCREMENT|g;
-		$$chunk=~s|PRIMARY KEY  |PRIMARY KEY |g;
+		
+		# upgrade na vyssie verzie
+		
+		# 4.0 -> 4.1
+		if ($header->{'version'} eq "4.0" && $version > $header->{'version'})
+		{
+			main::_log("converting SQL $header->{'version'} to 4.1");
+			$header->{'version'}="4.1";
+		}
+		
+		# 4.1 -> 5.0
+		if ($header->{'version'} eq "4.1" && $version > $header->{'version'})
+		{
+			main::_log("converting SQL $header->{'version'} to 5.0");
+			$header->{'version'}="5.0";
+		}
+		
+		# 5.0 -> 5.1
+		if ($header->{'version'} eq "5.0" && $version > $header->{'version'})
+		{
+			main::_log("converting SQL $header->{'version'} to 5.1");
+			$$chunk=~s|collate|COLLATE|g;
+			$$chunk=~s|character set|CHARACTER SET|g;
+			$$chunk=~s| default| DEFAULT|g;
+			$$chunk=~s|auto_increment|AUTO_INCREMENT|g;
+			$$chunk=~s|PRIMARY KEY  |PRIMARY KEY |g;
 #		  $$chunk=~s|(int\(\d+\).*?) NOT NULL,|$1 NOT NULL DEFAULT '0',|g;
 #		  $$chunk=~s|(float.*?) NOT NULL,|$1 NOT NULL DEFAULT '0',|g;
 #		  $$chunk=~s|( datetime) NOT NULL,|$1 NOT NULL DEFAULT '2000-01-01 00:00:00',|g;
 #		  $$chunk=~s|( date) NOT NULL,|$1 NOT NULL DEFAULT '2000-01-01',|g;
 #		  $$chunk=~s|( time) NOT NULL,|$1 NOT NULL DEFAULT '00:00:00',|g;
 #		  $$chunk=~s|NOT NULL,|NOT NULL DEFAULT '',|g;
-		$$chunk=~s|tinyint |tinyint(3) |g;
-		$$chunk=~s| (text\|longtext)( .*?) DEFAULT NULL,| $1$2,|g;
-		$$chunk=~s| (text\|tinytext\|longtext\|blob)( .*?)NOT NULL DEFAULT '',| $1$2NOT NULL,|g;
-		$header->{'version'}="5.1";
+			$$chunk=~s|tinyint |tinyint(3) |g;
+			$$chunk=~s| (text\|longtext)( .*?) DEFAULT NULL,| $1$2,|g;
+			$$chunk=~s| (text\|tinytext\|longtext\|blob)( .*?)NOT NULL DEFAULT '',| $1$2NOT NULL,|g;
+			$header->{'version'}="5.1";
+		}
+		
+		
+		# downgrade na nizsie verzie
+		
+		# 5.0 -> 4.1
+		if ($header->{'version'} eq "5.0" && $version < $header->{'version'})
+		{
+			my $to='4.1';
+			main::_log("converting SQL $header->{'version'} to $to");
+			$header->{'version'}=$to;
+		}
+		
+		# 4.1 -> 4.0
+		if ($header->{'version'} eq "4.1" && $version eq "4.0")
+		{
+			main::_log("converting SQL $header->{'version'} to $version");
+			$$chunk=~s|ENGINE=|TYPE=|;
+			$$chunk=~s|TYPE=InnoDB|TYPE=MyISAM|;
+			$$chunk=~s|character set (.*?) ||g;
+			$$chunk=~s|collate (.*?)_bin|binary|g;
+			$$chunk=~s|collate (.*?) ||g;
+			$$chunk=~s| DEFAULT CHARSET=(utf8\|ascii)||;
+			$$chunk=~s|varchar\((.*?)NOT NULL,|varchar(\1NOT NULL default '',|g;
+			$$chunk=~s|int\((.*?)NOT NULL,|int(\1NOT NULL default '0',|g;
+			$header->{'version'}=$version;
+		}
+		
 	}
-
-	
-	 # downgrade na nizsie verzie
-	
-	 # 5.0 -> 4.1
-	 if ($header->{'version'} eq "5.0" && $version < $header->{'version'})
-	 {
-		  my $to='4.1';
-		  main::_log("converting SQL $header->{'version'} to $to");
-		  $header->{'version'}=$to;
-	 }
-	
-  	# 4.1 -> 4.0
-	 if ($header->{'version'} eq "4.1" && $version eq "4.0")
-	 {
-		  main::_log("converting SQL $header->{'version'} to $version");
-		  $$chunk=~s|ENGINE=|TYPE=|;
-		  $$chunk=~s|TYPE=InnoDB|TYPE=MyISAM|;
-		  $$chunk=~s|character set (.*?) ||g;
-		  $$chunk=~s|collate (.*?)_bin|binary|g;
-		  $$chunk=~s|collate (.*?) ||g;
-		  $$chunk=~s| DEFAULT CHARSET=(utf8\|ascii)||;
-		  $$chunk=~s|varchar\((.*?)NOT NULL,|varchar(\1NOT NULL default '',|g;
-		  $$chunk=~s|int\((.*?)NOT NULL,|int(\1NOT NULL default '0',|g;
-		  $header->{'version'}=$version;
-	 }
-	}
-	
 	
 	$t->close();
 	return 1;
