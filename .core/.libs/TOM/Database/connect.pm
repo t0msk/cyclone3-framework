@@ -123,7 +123,7 @@ sub multi
 		
 		if ($TOM::DB{$handler}{'type'} eq "DBI")
 		{
-		  if  ($TOM::DB{$handler}{uri} =~ /dbi:ODBC:driver=\{SQL Server\}/i)
+		  if  ($TOM::DB{$handler}{uri} =~ /dbi:ODBC:driver=\{SQL Native Client/i)
 		  {
 		    $TOM::DB{$handler}{'subtype'} = 'mssql';
 		  }
@@ -137,6 +137,7 @@ sub multi
 				$TOM::DB{$handler}{'pass'},
 				{
 					'PrintError' => 0,
+					'RaiseError' => 0
 				}
 			);
 			
