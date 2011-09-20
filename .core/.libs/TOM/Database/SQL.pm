@@ -517,12 +517,23 @@ sub get_database_version
 	
 	TOM::Database::connect::multi($db_h) unless $main::DB{$db_h};
 	
-	my $version=$main::DB{$db_h}->getserverinfo();
-		$version=~s|^([\d]+)\.([\d]+)\.(.*)$|\1.\2|;
+	if ($main::DB{$db_h}->{'Driver'}->{'Name'} eq 'ODBC')
+	{
+		if ($main::DB{$db_h}->{'Name'} =~ /driver=\{SQL Native Client\}/)
+		{
+			my $version = 'MSSQL';
+			return $version;
+		}
+	}
+	else
+	{
+		my $version=$main::DB{$db_h}->getserverinfo();
+			$version=~s|^([\d]+)\.([\d]+)\.(.*)$|\1.\2|;
+			
+		main::_log("MySQL version on handler '$db_h'='$version'") if $debug;
 		
-	main::_log("MySQL version on handler '$db_h'='$version'") if $debug;
-	
-	return $version;
+		return $version;
+	}
 }
 
 
