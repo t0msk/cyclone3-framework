@@ -243,12 +243,9 @@ sub execute
 	# subtype of connected handler (MySQL or MsSQL?)
 	my $subtype;
 	$subtype = $TOM::DB{$env{'db_h'}}{'subtype'};
-	if ($subtype)
+	if ($subtype && $env{$subtype})
 	{
-		if ($env{$subtype})
-		{
-			$SQL = $env{$subtype};
-		} 
+		$SQL = $env{$subtype};
 	}
 		
 	main::_log("db_h='$env{'db_h'}'") unless $env{'quiet'};
@@ -326,7 +323,10 @@ sub execute
 	if ($TOM::DB{$env{'db_h'}}{'type'} eq "DBI")
 	{
 		$output{'type'} = "DBI";
-	  
+		
+		# how much of binary columns we want (MsSQL)
+		$main::DB{$env{'db_h'}}->{'LongReadLen'} = 512 * 1024;
+		
 		$output{'sth'} = $main::DB{$env{'db_h'}}->prepare($SQL,{'ora_auto_lob'=>0});
 		#$output{'err'} = $DBI::errstr unless $output{'sth'};
 		$output{'err'}=$main::DB{$env{'db_h'}}->errstr();
@@ -352,11 +352,29 @@ sub execute
 			return %output;
 		}
 		
-		$output{'sth'}->execute();
+		if ($env{'bind'}){$output{'sth'}->execute(@{$env{'bind'}});}
+		else {$output{'sth'}->execute()}
+		
 		$output{'rows'}=$output{'sth'}->rows;
-#		main::_log("rows = $output{'rows'}");
+		
+		$output{'err'} = $main::DB{$env{'db_h'}}->errstr();
+		
+		if ($output{'err'})
+		{
+			my ($package, $filename, $line) = caller;
+			main::_log("SQL: err=".$output{'err'},1);# unless $env{'quiet'};
+			main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
+			main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
+			
+			main::_log("output info=".$output{'info'}) if (!$env{'quiet'} && $output{'info'});
+			  
+			undef $output{'sth'};
+			$t->close();
+			return %output;
+		}
+		
 	}
-	else
+	else # standard MySQL
 	{
 		my $result;
 		$output{'sth'}=$main::DB{$env{'db_h'}}{'dbh'}->prepare($SQL);
@@ -368,7 +386,7 @@ sub execute
 		
 		undef $output{'sth'} unless $result; # backward compatibility
 		
-		if (not $output{'sth'})
+		if (not $output{'sth'} || $subtype)
 		{
 			if ($output{'err'})
 			{
