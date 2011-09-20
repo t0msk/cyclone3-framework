@@ -282,7 +282,7 @@ sub compare_database
 	
 	my %output;
 	
-	if ($database eq 'TOM')
+	if ($database eq $TOM::DB_name)
 	{
 		# zrusim pripadne predefinovanie handleru a nazvu databazy (to si precitam z TOM.sql a nemoze byt overridovane)
 		# hlavna databaza totiz moze byt len TOM a moze byt len v main handleri
