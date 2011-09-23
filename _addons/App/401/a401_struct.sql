@@ -161,6 +161,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content` (
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
   `datetime_check` datetime default NULL,
+  `version` tinyint(3) unsigned default NULL,
   `ID_editor` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `subtitle` varchar(250) character set utf8 collate utf8_unicode_ci NOT NULL,
   `subtitle_hyphens` text character set ascii default NULL,
@@ -173,7 +174,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content` (
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`,`version`),
   FULLTEXT KEY `FULL_0` (`subtitle`,`abstract`,`body`,`keywords`),
   FULLTEXT KEY `FULL_1` (`keywords`),
   KEY `ID_entity` (`ID_entity`),
@@ -192,6 +193,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content_j` (
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
   `datetime_check` datetime default NULL,
+  `version` tinyint(3) unsigned default NULL,
   `ID_editor` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `subtitle` varchar(250) character set utf8 collate utf8_unicode_ci NOT NULL,
   `subtitle_hyphens` text character set ascii default NULL,
@@ -490,7 +492,8 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 	LEFT JOIN `/*db_name*/`.`/*app*/_article_content` AS article_content ON
 	(
 		article_content.ID_entity = article.ID_entity AND
-		article_content.lng = article_attrs.lng
+		article_content.lng = article_attrs.lng AND
+		article_content.status = 'Y'
 	)
 	LEFT JOIN `/*db_name*/`.`/*app*/_article_cat` AS article_cat ON
 	(
