@@ -15,7 +15,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_relation` (
   `r_prefix` varchar(32) character set ascii collate ascii_bin NOT NULL,
   `r_table` varchar(64) character set ascii collate ascii_bin NOT NULL,
   `r_ID_entity` varchar(16) character set utf8 collate utf8_unicode_ci NOT NULL,
-  `priority` tinyint unsigned default NULL,
+  `priority` tinyint(3) unsigned default NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   KEY `SEL_0` (`l_prefix`,`l_table`,`l_ID_entity`),
@@ -36,7 +36,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_relation_j` (
   `r_prefix` varchar(32) character set ascii collate ascii_bin NOT NULL,
   `r_table` varchar(64) character set ascii collate ascii_bin NOT NULL,
   `r_ID_entity` varchar(16) character set utf8 collate utf8_unicode_ci NOT NULL,
-  `priority` tinyint unsigned default NULL,
+  `priority` tinyint(3) unsigned default NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
