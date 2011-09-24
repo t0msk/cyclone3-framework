@@ -86,7 +86,7 @@ our @setit_D=
 	# global
 	['^_addons'                        ,"global _addons"              ,"570","$user_www:$group"],
 	['^_overlays'                      ,"global _overlays"            ,"570","$user_www:$group"],
-	['^_data'                          ,"global _data"                ,"570","$user_www:$group"],
+	['^_data'                          ,"global _data"                ,"770","$user_www:$group"],
 	['^_temp'                          ,"global _temp"                ,"770","$user_www:$group"],
 	['^.symlinks$'                     ,"global .symlinks"            ,"570","$user_www:$group"],
 	['^_config'                        ,"global _config"              ,"770","$user_www:$group"],
