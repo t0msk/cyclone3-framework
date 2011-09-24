@@ -2,10 +2,10 @@
 -- ------------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`_config` (
-  `namespace` varchar(10) NOT NULL default '',
-  `variable` varchar(50) NOT NULL default '',
+  `namespace` varchar(10) collate utf8_unicode_ci NOT NULL default '',
+  `variable` varchar(50) character set utf8 collate utf8_bin NOT NULL default '',
   `linkT` char(1) character set ascii NOT NULL default '',
-  `value` text NOT NULL,
+  `value` text collate utf8_unicode_ci NOT NULL,
   `type` varchar(5) character set ascii collate ascii_bin NOT NULL default '',
   `cache` smallint(5) unsigned NOT NULL default '0',
   `reqtime` int(10) unsigned NOT NULL default '0',
@@ -16,7 +16,7 @@ CREATE TABLE `/*db_name*/`.`_config` (
 -- --------------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`_tom3` (
-  `var` varchar(100) NOT NULL default '0',
-  `value` text NOT NULL,
+  `var` varchar(100) collate utf8_unicode_ci NOT NULL default '0',
+  `value` text collate utf8_unicode_ci NOT NULL,
   PRIMARY KEY  (`var`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
