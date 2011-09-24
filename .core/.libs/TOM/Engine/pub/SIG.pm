@@ -27,12 +27,12 @@ sub handler_exit
 	}
 	elsif ($signame eq "PIPE")
 	{
-		main::_log("SIG '$signame' [EXIT] (lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H ($!)",3,"pub.mng",1);
+		main::_log("SIG '$signame' [EXIT] (sleep=$main::sig_term lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H ($!)",3,"pub.mng",1);
 		#foreach (keys %main::ENV){main::_log("key '$_'='$main::ENV{$_}'",3,"pub.mng",1);}
 	}
 	else
 	{
-		main::_log("SIG '$signame' [EXIT] (lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H ($!)",3,"pub.mng",1);
+		main::_log("SIG '$signame' [EXIT] (sleep=$main::sig_term lives ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H ($!)",3,"pub.mng",1);
 	}
 	exit(0);
 }
@@ -70,8 +70,66 @@ sub handler_ignore
 	main::_log("SIG '$signame' [IGNORE] (living ".(time()-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
 }
 
+if ($^O eq "solaris" && !$main::stdout)
+{
+	main::_log("registering SIG-nals for Solaris");
+	
+	our $sigset = POSIX::SigSet->new();
+	
+	
+	our $action_exit = POSIX::SigAction->new(
+		\&TOM::Engine::pub::SIG::handler_exit,
+		$sigset,
+		&POSIX::SA_NODEFER);
+	
+	
+	our $action_ignore = POSIX::SigAction->new(
+		\&TOM::Engine::pub::SIG::handler_ignore,
+		$sigset,
+		&POSIX::SA_NODEFER);
+	
+	
+	our $action_check = POSIX::SigAction->new(
+		\&TOM::Engine::pub::SIG::handler_check,
+		$sigset,
+		&POSIX::SA_NODEFER);
+	
+	main::_log("registering SIG{ALRM} action to EXIT");
+	POSIX::sigaction(&POSIX::SIGALRM, $action_exit);
+	
+	main::_log("registering SIG{HUP} action to CHECK");
+	POSIX::sigaction(&POSIX::SIGHUP, $action_check);
+	
+	main::_log("registering SIG{TERM} action to CHECK");
+	POSIX::sigaction(&POSIX::SIGTERM, $action_check);
+	
+	main::_log("registering SIG{SIGPIPE} action to CHECK");
+	POSIX::sigaction(&POSIX::SIGPIPE, $action_check);
+	
+	main::_log("registering SIG{SIGUSR1} action to CHECK");
+	POSIX::sigaction(&POSIX::SIGUSR1, $action_check);
+	
+	main::_log("registering SIG{SIGUSR2} action to CHECK");
+	POSIX::sigaction(&POSIX::SIGUSR2, $action_check);
+	
+	main::_log("registering SIG{SIGKILL} action to CHECK");
+	POSIX::sigaction(&POSIX::SIGKILL, $action_check);
+	
+	main::_log("registering SIG{SIGTSTP} action to CHECK");
+	POSIX::sigaction(&POSIX::SIGTSTP, $action_check);
+	
+	main::_log("registering SIG{SIGINT} action to IGNORE");
+	POSIX::sigaction(&POSIX::SIGINT, $action_ignore);
+	
+	main::_log("registering SIG{SIGQUIT} action to IGNORE");
+	POSIX::sigaction(&POSIX::SIGQUIT, $action_ignore);
+	
+	main::_log("start counting timeout $TOM::fcgi_timeout");
+	alarm($TOM::fcgi_timeout);
+}
+elsif ($^O ne "MSWin32" && !$main::stdout){
 
-if ($^O ne "MSWin32" && !$main::stdout){
+main::_log("registering SIG-nals for Linux");
 
 our $sigset = POSIX::SigSet->new();
 
@@ -166,6 +224,8 @@ main::_log("start counting timeout $TOM::fcgi_timeout");
 alarm($TOM::fcgi_timeout); # zacnem pocitat X sekund kym nedostanem request
 
 } elsif ($^O eq "MSWin32"){
+
+main::_log("registering SIG-nals for Win32");
 
 main::_log("registering SIG{ALRM} action to EXIT");
 $SIG{'ALRM'}=\&TOM::Engine::pub::SIG::handler_exit;
