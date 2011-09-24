@@ -460,6 +460,8 @@ sub _chunk_prepare
 #		  $$chunk=~s|( date) NOT NULL,|$1 NOT NULL DEFAULT '2000-01-01',|g;
 #		  $$chunk=~s|( time) NOT NULL,|$1 NOT NULL DEFAULT '00:00:00',|g;
 #		  $$chunk=~s|NOT NULL,|NOT NULL DEFAULT '',|g;
+			
+			$$chunk=~s|([^8]) COLLATE utf8_unicode_ci |$1 CHARACTER SET utf8 COLLATE utf8_unicode_ci |g;
 			$$chunk=~s|tinyint |tinyint(3) |g;
 			$$chunk=~s| (text\|longtext)( .*?) DEFAULT NULL,| $1$2,|g;
 			$$chunk=~s| (text\|tinytext\|longtext\|blob)( .*?)NOT NULL DEFAULT '',| $1$2NOT NULL,|g;
