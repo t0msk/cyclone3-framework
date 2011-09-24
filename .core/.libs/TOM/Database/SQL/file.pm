@@ -187,12 +187,28 @@ sub install
 		{
 			$filename=$tom::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql';
 		}
+		
+		# look into overlays
+		if (!$filename)
+		{
+			foreach (@TOM::Overlays::item)
+			{
+				if (-e $TOM::P.'/_overlays/'.$_.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
+				{
+					$filename=$TOM::P.'/_overlays/'.$_.'/_addons/App/'.$what.'/a'.$what.'_struct.sql';
+					last;
+				}
+			}
+		}
+		
 		# or in global
-		elsif (-e $TOM::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
+		if (!$filename && -e $TOM::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
 		{
 			$filename=$TOM::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql';
 		}
-		else
+		
+		# definition file not found
+		if (!$filename)
 		{
 			main::_log("SQL file of structure application '$what' not exists",1);
 			main::_log_stdout("SQL file of structure application '$what' not exists",4);
