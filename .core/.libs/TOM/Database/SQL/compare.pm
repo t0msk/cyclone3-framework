@@ -6,7 +6,7 @@ TOM::Database::SQL::compare
 
 =head1 DESCRIPTION
 
-Porovnanie dvoch tabuliek
+Comparing two CREATE TABLE
 
 =cut
 
@@ -19,6 +19,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 use TOM::Database::SQL::file;
 
 our $debug=0;
+our %compared_table;
 
 =head1 FUNCTIONS
 

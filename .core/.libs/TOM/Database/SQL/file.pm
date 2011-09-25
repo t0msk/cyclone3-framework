@@ -542,6 +542,15 @@ sub install_table
 	
 	my $database=$3;
 	my $table=$4;
+	
+	# don't install more than twice
+	if ($TOM::Database::SQL::compare::compared_tabe{$database.'.'.$table.'@'.$header->{'db_h'}})
+	{
+		$t->close();
+		return undef;
+	}
+	$TOM::Database::SQL::compare::compared_tabe{$database.'.'.$table.'@'.$header->{'db_h'}}++;
+	
 	main::_log("database='$database' table='$table' in db_h='$header->{'db_h'}'");
 	main::_log_stdout("check $database.$table \@$header->{'db_h'}",3);
 	
@@ -562,6 +571,10 @@ sub install_table
 		my @out=TOM::Database::SQL::compare::compare_create_table($SQL,$SQL_real);
 		foreach my $SQL_ALTER (@out)
 		{
+			# when ALTER commands available, then reset compare counter of this table
+			# it's better to check table twice when differences
+			delete $TOM::Database::SQL::compare::compared_tabe{$database.'.'.$table.'@'.$header->{'db_h'}};
+			
 			$SQL_ALTER.=" -- db_h=".$header->{'db_h'};
 			main::_log("ALTER='$SQL_ALTER'");
 			push @{$output{'ALTER'}}, $SQL_ALTER;
