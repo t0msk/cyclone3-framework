@@ -76,9 +76,6 @@
 	<body>
 		
 		<div id="page">
-			<div class="right">
-				<img src="<$tom::H_media>/tpl/cyclone3-262x76.png" alt="Cyclone3" width="262" height="76" />
-			</div>
 			<div id="page-i">
 				
 				<h1>500 - System Error</h1>
@@ -158,9 +155,6 @@
 	<body>
 		
 		<div id="page">
-			<div class="right">
-				<img src="<$tom::H_media>/tpl/cyclone3-262x76.png" alt="Cyclone3" width="262" height="76" />
-			</div>
 			<div id="page-i">
 				
 				<h1><$(System warning)></h1>
@@ -235,10 +229,6 @@
 	</style>
 	
 	<div id="page">
-		
-		<div class="right">
-			<img src="<$tom::H_media>/tpl/cyclone3-262x76.png" alt="Cyclone3" width="262" height="76" />
-		</div>
 		
 		<div id="page-i">
 			
