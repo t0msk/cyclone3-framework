@@ -351,6 +351,7 @@ sub article_add
 	
 	my %article_content;
 	$env{'article_content.lng'} = $env{'article_attrs.lng'} unless $env{'article_content.lng'};
+	$env{'article_content.version'} = '0' unless $env{'article_content.version'};
 	if (!$env{'article_content.ID'})
 	{
 		my $sql=qq{
@@ -359,11 +360,16 @@ sub article_add
 			FROM
 				`$App::401::db_name`.`a401_article_content`
 			WHERE
-				ID_entity='$env{'article.ID_entity'}' AND
-				lng='$env{'article_content.lng'}'
+				ID_entity=? AND
+				lng=? AND
+				version=?
 			LIMIT 1
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[
+			$env{'article.ID_entity'},
+			$env{'article_content.lng'},
+			$env{'article_content.version'}
+		],'quiet'=>1);
 		%article_content=$sth0{'sth'}->fetchhash();
 		$env{'article_content.ID'}=$article_content{'ID'};
 #		$env{'article_content.lng'}=$article_content{'lng'};
@@ -372,6 +378,13 @@ sub article_add
 	{
 		# create one language representation of article
 		my %columns;
+		$columns{'status'} = "'Y'";
+		
+		# when creating new version, then this version is by default disabled
+		if ($env{'article_content.version'} != '0')
+		{
+			$columns{'status'} = "'N'";
+		}
 		
 		$env{'article_content.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
@@ -382,6 +395,7 @@ sub article_add
 				%columns,
 				'ID_entity' => $env{'article.ID_entity'},
 				'lng' => "'$env{'article_content.lng'}'",
+				'version' => "'$env{'article_content.version'}'",
 			},
 			'-journalize' => 1,
 		);
@@ -457,7 +471,44 @@ sub article_add
 				$text_plain=~s/<(.*?)>/"<" . "*" x length($1) . ">"/ge;;
 			$columns{'body_hyphens'}="'". TOM::Security::form::sql_escape(join(",",Ext::TextHyphen::get_hyphens($text_plain,'lng'=>$article_attrs{'lng'}))) ."'";
 		}
-			
+		if (exists $env{'article_content.status'} && ($env{'article_content.status'} ne $article_content{'status'}))
+		{
+			$columns{'status'}="'".TOM::Security::form::sql_escape($env{'article_content.status'})."'";
+			if ($env{'article_content.status'} eq "Y")
+			{
+				# enabling version, also find all other enabled versions
+				my $sql=qq{
+					SELECT
+						ID,
+						version
+					FROM
+						`$App::401::db_name`.`a401_article_content`
+					WHERE
+						ID_entity=? AND
+						lng=? AND
+						status='Y' AND
+						version != ?
+				};
+				my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[
+					$env{'article.ID_entity'},
+					$env{'article_content.lng'},
+					$env{'article_content.version'}
+				],'quiet'=>1);
+				while (my %db0_line=$sth0{'sth'}->fetchhash())
+				{
+					main::_log("disable article_content.ID='$db0_line{'ID'}' with version='$db0_line{'version'}'");
+					App::020::SQL::functions::update(
+						'ID' => $db0_line{'ID'},
+						'db_h' => "main",
+						'db_name' => $App::401::db_name,
+						'tb_name' => "a401_article_content",
+						'columns' => {'status' => "'N'"},
+						'-journalize' => 1
+					);
+				}
+			}
+		}
+		
 		if (keys %columns)
 		{
 			$env{'article_content.ID_editor'}=$main::USRM{'ID_user'} unless $env{'article_content.ID_editor'};
@@ -471,6 +522,59 @@ sub article_add
 				'-journalize' => 1
 			);
 			$content_updated=1;
+		}
+		
+		# check if there is one enabled version
+		my $sql=qq{
+			SELECT
+				ID,
+				version
+			FROM
+				`$App::401::db_name`.`a401_article_content`
+			WHERE
+				ID_entity=? AND
+				lng=? AND
+				status='Y'
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[
+			$env{'article.ID_entity'},
+			$env{'article_content.lng'}
+		],'quiet'=>1);
+		if (!$sth0{'rows'})
+		{
+			# ouch, problem
+			# find the lowest disabled version to enable it
+			main::_log("any article_content entry is enabled!, trying to fix",1);
+			my $sql=qq{
+				SELECT
+					ID,
+					version
+				FROM
+					`$App::401::db_name`.`a401_article_content`
+				WHERE
+					ID_entity=? AND
+					lng=? AND
+					status='N'
+				ORDER BY
+					version
+				LIMIT 1
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[
+				$env{'article.ID_entity'},
+				$env{'article_content.lng'}
+			],'quiet'=>1);
+			if (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				main::_log("enabling article_content.ID='$db0_line{'ID'}' version='$db0_line{'version'}'");
+				App::020::SQL::functions::update(
+					'ID' => $db0_line{'ID'},
+					'db_h' => "main",
+					'db_name' => $App::401::db_name,
+					'tb_name' => "a401_article_content",
+					'columns' => {'status'=>"'Y'"},
+					'-journalize' => 1
+				);
+			}
 		}
 	}
 	
