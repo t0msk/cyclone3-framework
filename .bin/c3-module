@@ -98,10 +98,27 @@ require TOM::Engine::pub;
 
 package main;
 
+my $t_domain=track TOM::Debug("Domain service init");
+eval
+{
+	# import Content-Type library
+	main::_log("use Content-Type library type='$pub::DOC'");
+	eval "use TOM::Document::".$pub::DOC; die "can't load library TOM::Document:;($pub::DOC)" if $@;
+	# import default header
+	main::_log("require default.header");
+	do $tom::P."/_dsgn/default.header"
+		|| do $tom::P."/_dsgn/default.dsgn";
+};
+$t_domain->close();
+
 $TOM::engine_ready=1;
 $main::debug=1 if $main::arg{'v'};
 
-Tomahawk::module(%arg,'-stdout'=>1);
+my ($out)=Tomahawk::module(%arg,'-stdout'=>1);
+if (!$out)
+{
+	main::_log("returned error code $out".$tom::ERR,1);
+}
 
 #print color 'reset';
 
