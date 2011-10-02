@@ -499,7 +499,7 @@ sub throw {
 
     # die! die! die!
     if (blessed($error) && $error->isa(EXCEPTION)) {
-        die $error;
+        die "Template::Toolkit ".$error;
     }
     elsif (blessed($error) && $error->isa(BADGER_EXCEPTION)) {
         # convert a Badger::Exception to a Template::Exception so that
