@@ -102,13 +102,6 @@ elsif ($FORM{'a'})
 				'db_h'=>$FORM{'db_h'}
 			);
 			
-			#print "compared database '$TOM::DB{$FORM{'db_h'}}{'name'}'\n";
-			#print color 'reset bold yellow';
-#			foreach my $SQL(@{$out{'ALTER'}})
-#			{
-#				print "$SQL\n";
-#			}
-			
 			push @ALTER, @{$out{'ALTER'}};
 			
 			if (@ALTER > 10)
