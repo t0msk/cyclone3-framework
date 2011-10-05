@@ -6,7 +6,7 @@
 	
 	<string id="login">
 		<en-US>username</en-US>
-		<sk-SK>užívateľké meno</sk-SK>
+		<sk-SK>užívateľské meno</sk-SK>
 	</string>
 	
 	<string id="password">
