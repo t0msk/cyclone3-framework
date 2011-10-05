@@ -45,6 +45,7 @@
 	]]>
 	</entity>
 	
+	<entity id="parser.link.a401_article" replace_variables="false"><![CDATA[<a href="?|?ID=<%db_ID%>&name_url=<%db_name_url%>&type=article_view">]]></entity>
 	
 	<entity id="parser.a501_image" replace_variables="false"><![CDATA[
 	<div class="img_<%attr_align%>" style="margin: 2px; padding: 2px;background:gray; float: <%attr_align%>">
