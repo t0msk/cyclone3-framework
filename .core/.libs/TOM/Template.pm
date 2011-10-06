@@ -142,7 +142,21 @@ sub new
 	$obj->{'config'}={};
 	
 	# find where is the source file/files
-	$obj->prepare_location();
+	if ($env{'location'})
+	{
+		$obj->{'location'}=$env{'location'};
+		if (! -e $obj->{'location'})
+		{
+			$t->close() if $debug;
+			return undef;
+		}
+	}
+	else
+	{
+		$obj->prepare_location();
+	}
+	
+	$obj->{'config'}->{'tt'}=1 if $env{'tt'};
 	
 	# check if same location is already loaded in another object
 	# (location is unique identification of template)
@@ -272,7 +286,6 @@ sub prepare_xml
 	my $self=shift;
 	
 	$self->{'xp'} = XML::XPath->new(filename => $self->{'location'});
-	
 }
 
 
@@ -617,11 +630,11 @@ sub variables_push
 		if (!$self->{'variables'}->{'items'})
 		{
 			$self->{'variables'}->{'items'}=[];
-			push @{$self->{'variables'}->{'items'}},$entry1;
+			push @{$self->{'variables'}->{'items'}},$entry0;
 		}
 		elsif (ref $self->{'variables'}->{'items'} eq "ARRAY")
 		{
-			push @{$self->{'variables'}->{'items'}},$entry1;
+			push @{$self->{'variables'}->{'items'}},$entry0;
 		}
 	}
 	
@@ -650,6 +663,8 @@ sub process
 		# override when required
 		$vars_process = $vars if $vars;
 		
+		# test variable
+		$vars_process->{'test'}="test string";
 		# attach environment variables
 		$vars_process->{'request'}={
 			
@@ -667,6 +682,10 @@ sub process
 		# process
 		$tt->process(\$self->{'entity'}->{'main'},$vars_process,\$self->{'output'}) || main::_log($tt->error(),1);
 		
+	}
+	else
+	{
+		main::_log("this tpl can't be processed. Template::Toolkit extension not enabled",1);
 	}
 	
 	return 1;
