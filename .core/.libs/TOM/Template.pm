@@ -175,6 +175,15 @@ sub new
 		# save config from header to object cache
 		%{$objects{$obj->{'location'}}->{'config'}}=%{$obj->{'config'}};
 		$obj->parse_entity();
+		
+		if ($obj->{'config'}->{'tt'}) # extend by Template Toolkit
+		{
+			main::_log("creating new Template object");
+			require Template;
+			$obj->{'tt'} = Template->new({
+				'EVAL_PERL' => 1,
+			});
+		}
 	}
 	
 	# create copy of object to return it as unique
@@ -192,13 +201,15 @@ sub new
 			%{$obj_return->{'L10n'}}=%{$objects{$obj->{'location'}}{'L10n'}};
 			# recovery header config to new object
 			%{$obj_return->{'config'}}=%{$objects{$obj->{'location'}}{'config'}};
+			# get tt reference from objects cache
+			if ($obj_return->{'config'}->{'tt'})
+			{
+				$obj_return->{'tt'}=$objects{$obj->{'location'}}{'tt'};
+			}
 		}
 		if ($obj_return->{'config'}->{'tt'}) # extend by Template Toolkit
 		{
-			require Template;
-			$obj_return->{'tt'} = Template->new({
-				'EVAL_PERL' => 1,
-			});
+			# regenerate reference
 			$obj_return->{'tt'}->{'SERVICE'}->{'CONTEXT'}->{'tpl'}=$obj_return; # reference from Template Toolkit to TOM::Template
 		}
 		# replace_variables only in root level of Template not in templates called by <extend*>
@@ -680,6 +691,7 @@ sub process
 		};
 		
 		# process
+		undef $self->{'output'};
 		$tt->process(\$self->{'entity'}->{'main'},$vars_process,\$self->{'output'}) || main::_log($tt->error(),1);
 		
 	}
