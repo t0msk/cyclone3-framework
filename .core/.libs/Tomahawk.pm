@@ -19,7 +19,7 @@ use utf8;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-use vars qw/%XSGN %XLNG $ERR/;
+use vars qw/%XSGN %XLNG $ERR $TPL/;
 
 sub XSGN_load_hash
 {
@@ -324,9 +324,11 @@ sub module
 	}
 	
 	$mdl_C{'-category'}="0" unless $mdl_C{'-category'};
-	$mdl_C{'-version'}="0" unless $mdl_C{'-version'}; # NEBUDEM SE S NIKYM SRAAAT BEZ DUUVODU!...
-	$mdl_C{'-xsgn'}=$tom::dsgn unless $mdl_C{'-xsgn'}; # SAJRAJT
+	$mdl_C{'-version'}="0" unless $mdl_C{'-version'};
+	$mdl_C{'-xsgn'}=$mdl_C{'-tpl'} || $tom::dsgn unless $mdl_C{'-xsgn'};
+	$mdl_C{'-tpl'}=$mdl_C{'-xsgn'} unless $mdl_C{'-tpl'};
 	$mdl_C{'-xsgn_global'}=0 unless $mdl_C{'-xsgn_global'};
+	$mdl_C{'-tpl_global'}=0 unless $mdl_C{'-tpl_global'};
 	$mdl_C{'-xlng'}=$tom::lng unless $mdl_C{'-xlng'};
 	$mdl_C{'-xlng_global'}=0 unless $mdl_C{'-xlng_global'};
 	# nastavit default alarmu ak nevyzadujem zmenu alebo nieje povolena zmena
@@ -617,7 +619,7 @@ sub module
 	# AK MODUL NEEXISTUJE
 	if (not -e $mdl_C{'P_MODULE'})
 	{
-		main::_log("not exist",1);
+		main::_log("module file '$mdl_C{'P_MODULE'}' not exists",1);
 		TOM::Error::module(
 			'-TMP' => $mdl_C{'-TMP'},
 			'-MODULE' => "[MDL::".$mdl_C{'-category'}."-".$mdl_C{'-name'}."]",
@@ -654,10 +656,16 @@ sub module
 		if (not do $mdl_C{'P_MODULE'}){$tom::ERR="$@ $!";die "pre-compilation error: $@ $!\n";}#- $! $@\n";
 		
 		local %Tomahawk::module::XSGN;
+		local $Tomahawk::module::TPL;
 		local %Tomahawk::module::XLNG;
 		
 		my $t_execute=track TOM::Debug("exec");
 		($return_code,%return_data)=Tomahawk::module::execute(%mdl_env);
+		if ($Tomahawk::module::TPL)
+		{
+			$Tomahawk::module::TPL->process();
+			$Tomahawk::module::XSGN{'TMP'}=$Tomahawk::module::TPL->{'output'};
+		}
 		$t_execute->close();
 		
 		if ($return_code)
@@ -1290,6 +1298,94 @@ sub GetXSGN
 		my $var=$1;
 		$Tomahawk::module::XSGN{$var}=$2;
 	}
+	
+	return 1;
+}
+
+
+
+=head2 GetTpl()
+
+Used in modules to load tpl file
+
+ sub execute
+ {
+    my %env=@_;
+    Tomahawk::GetTpl() || return undef;
+    return 1;
+ }
+
+=cut
+
+sub GetTpl
+{
+	my %env=@_;
+	
+	$mdl_C{'-tpl'}="default" unless $mdl_C{'-tpl'};
+	main::_log("GetTpl -category='$mdl_C{'-category'}' -name='$mdl_C{'-name'}' -version='$mdl_C{'-version'}' -tpl='$mdl_C{'-tpl'}'");
+	$mdl_C{'P_TPL'}=$mdl_C{'-category'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".".$mdl_C{'-tpl'}.".tpl";
+	
+	if (!$mdl_C{'-name'})
+	{
+		main::_log("sorry, I am not in module, can't import tpl",1);
+		$tom::ERR="Can't import tpl, I am not in module";
+		return undef;
+	}
+	
+	# if module is local, tpl file can be only local
+	if (!$mdl_C{'-global'})
+	{
+		$mdl_C{'-tpl_global'}=0;
+		my $addon_path=$tom::P."/_addons/App/".$mdl_C{'-category'}."/_mdl/".$mdl_C{'P_TPL'};
+		if (-e $addon_path){$mdl_C{'P_TPL'}=$addon_path;}
+		else {$mdl_C{'P_TPL'}=$tom::P."/_mdl/".$mdl_C{'P_TPL'};}
+	}
+	# if module is global and tpl file is global
+	elsif ($mdl_C{'-tpl_global'}==1)
+	{
+		$mdl_C{'-tpl_global'}=1;
+		my $addon_path=$TOM::P."/_addons/App/".$mdl_C{'-category'}."/_mdl/".$mdl_C{'P_TPL'};
+		# find in overlays
+		foreach my $item(@TOM::Overlays::item)
+		{
+			my $file=
+				$TOM::P.'/_overlays/'.$item
+				.'/_addons/App/'.$mdl_C{'-category'}.'/_mdl/'
+				.$mdl_C{'P_TPL'};
+			if (-e $file){$addon_path=$file;last;}
+		}
+		if (-e $addon_path){$mdl_C{'P_TPL'}=$addon_path;}
+		else {$mdl_C{'P_TPL'}=$TOM::P."/_mdl/".$mdl_C{'-category'}."/".$mdl_C{'P_TPL'}}
+	}
+	# if module is in master/global and i wish to load tpl file master
+	elsif (($tom::Pm)&&($mdl_C{'-tpl_global'}==2))
+	{
+		$mdl_C{'-tpl_global'}=2;
+		my $addon_path=$tom::Pm."/_addons/App/".$mdl_C{'-category'}."/_mdl/".$mdl_C{'P_TPL'};
+		if (-e $addon_path){$mdl_C{'P_TPL'}=$addon_path;}
+		else {$mdl_C{'P_TPL'}=$tom::Pm."/_mdl/".$mdl_C{'P_TPL'};}
+	}
+	else
+	{
+		$mdl_C{'-tpl_global'}=0;
+		my $addon_path=$tom::P."/_addons/App/".$mdl_C{'-category'}."/_mdl/".$mdl_C{'P_TPL'};
+		if (-e $addon_path){$mdl_C{'P_TPL'}=$addon_path;}
+		else {$mdl_C{'P_TPL'}=$tom::P."/_mdl/".$mdl_C{'P_TPL'};}
+	}
+	
+	if (! -e $mdl_C{'P_TPL'})
+	{
+		main::_log("tpl file '$mdl_C{'P_TPL'}' not exists",1);
+		return undef;
+	}
+	
+	$Tomahawk::module::TPL=new TOM::Template(
+		'level' => "auto",
+		'name' => "default",
+		'content-type' => $TOM::Document::type,
+		'location' => $mdl_C{'P_TPL'},
+		'tt' => 1,
+	) || return undef;
 	
 	return 1;
 }
