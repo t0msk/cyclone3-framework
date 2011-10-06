@@ -366,8 +366,7 @@ sub execute
 			(
 				(
 					article.status LIKE 'Y' AND
-					article_attrs.status LIKE 'Y' AND
-					article_content.status LIKE 'Y'
+					article_attrs.status LIKE 'Y'
 				),
 				'Y', 'U'
 			) AS status_all
@@ -385,6 +384,7 @@ sub execute
 		LEFT JOIN `$env{'db_name'}`.`a401_article_content` AS article_content ON
 		(
 			article_content.ID_entity = article.ID_entity AND
+			article_content.status = 'Y' AND
 			article_content.lng = article_attrs.lng
 		)
 		LEFT JOIN `$env{'db_name'}`.`a401_article_cat` AS article_cat ON
