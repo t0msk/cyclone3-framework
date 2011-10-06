@@ -663,8 +663,10 @@ sub module
 		($return_code,%return_data)=Tomahawk::module::execute(%mdl_env);
 		if ($Tomahawk::module::TPL)
 		{
+			my $t_tt=track TOM::Debug("Template Toolkit process",'timer'=>1);
 			$Tomahawk::module::TPL->process();
 			$Tomahawk::module::XSGN{'TMP'}=$Tomahawk::module::TPL->{'output'};
+			$t_tt->close();
 		}
 		$t_execute->close();
 		
