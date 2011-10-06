@@ -232,7 +232,7 @@
 		
 		<div id="page-i">
 			
-			<h1><$(Page not found)></h1>
+			<h1>404 - <$(Page not found)></h1>
 			<h2><@xmlescape><$main::ENV{'REQUEST_URI'}></@xmlescape></h2>
 				<h2><$(Service)> '<@xmlescape><$main::FORM{'TID'}></@xmlescape>'</h2>
 			<p>
