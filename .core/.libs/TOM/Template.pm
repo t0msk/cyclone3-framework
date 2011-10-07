@@ -108,7 +108,7 @@ tpl source can be as
 
 	everything.content-type.tpl # this is xml file
 	everything.content-type.tpl.d/_init.xml
-	everything.content-type.ztpl # this is zipped directory
+	everything.content-type.ztpl # this is zipped directory (currently not supported)
 
 
 =cut
@@ -156,6 +156,15 @@ sub new
 		$obj->prepare_location();
 	}
 	
+	# modifytime of location
+	$obj->{'config'}->{'mtime'} = (stat($obj->{'location'}))[9];
+	
+	if ($objects{$obj->{'location'}} && ($obj->{'config'}->{'mtime'} > $objects{$obj->{'location'}}->{'config'}->{'mtime'}))
+	{
+		main::_log("{Template} '$obj->{'location'}' expired, modified before ".( $obj->{'config'}->{'mtime'}-$objects{$obj->{'location'}}->{'config'}->{'mtime'} )."s");
+		delete $objects{$obj->{'location'}};
+	}
+	
 	$obj->{'config'}->{'tt'}=1 if $env{'tt'};
 	
 	# check if same location is already loaded in another object
@@ -163,6 +172,8 @@ sub new
 	# when no, proceed parsing this tpl source
 	if ($obj->{'location'} && !$objects{$obj->{'location'}})
 	{
+		main::_log("<={Template} '$obj->{'location'}'");
+		
 		# add this object into global $TOM::Template::objects{} hash
 		$objects{$obj->{'location'}}=$obj;
 		
@@ -178,7 +189,7 @@ sub new
 		
 		if ($obj->{'config'}->{'tt'}) # extend by Template Toolkit
 		{
-			main::_log("creating new Template object");
+			main::_log("creating new Template::Toolkit object") if $debug;
 			require Template;
 			$obj->{'tt'} = Template->new({
 				'EVAL_PERL' => 1,
@@ -274,12 +285,6 @@ sub prepare_location
 	{
 		main::_log("can't find location for template",1);
 	}
-	else
-	{
-#		main::_log("XML '$self->{'location'}'");# if $debug;
-		main::_log("<={Template} '$self->{'location'}'");# if $debug;
-	}
-	
 	
 	if ($self->{'location'}=~/\/_init.xml$/)
 	{
