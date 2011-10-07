@@ -663,7 +663,7 @@ sub module
 		($return_code,%return_data)=Tomahawk::module::execute(%mdl_env);
 		if ($Tomahawk::module::TPL)
 		{
-			my $t_tt=track TOM::Debug("Template Toolkit process",'timer'=>1);
+			my $t_tt=track TOM::Debug("tt:process",'timer'=>1);
 			$Tomahawk::module::TPL->process();
 			$Tomahawk::module::XSGN{'TMP'}=$Tomahawk::module::TPL->{'output'};
 			$t_tt->close();
@@ -672,10 +672,13 @@ sub module
 		
 		if ($return_code)
 		{
-			TOM::Utils::vars::replace_comment($Tomahawk::module::XSGN{'TMP'});
-			
-			$Tomahawk::module::XSGN{'TMP'}=~s|<#.*?#>||g;
-			$Tomahawk::module::XSGN{'TMP'}=~s|<%.*?%>||g;
+			if (!$Tomahawk::module::TPL)
+			{
+				TOM::Utils::vars::replace_comment($Tomahawk::module::XSGN{'TMP'});
+				
+				$Tomahawk::module::XSGN{'TMP'}=~s|<#.*?#>||g;
+				$Tomahawk::module::XSGN{'TMP'}=~s|<%.*?%>||g;
+			}
 			
 			if ($mdl_C{'-stdout'} && $main::stdout)
 			{
