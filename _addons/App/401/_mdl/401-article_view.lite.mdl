@@ -623,7 +623,7 @@ sub execute
 				$og_image_set=1;
 			}
 			
-			main::_log('---'.$part_html.'---');
+#			main::_log('---'.$part_html.'---');
 			
 			if($part_html ne '' && $part_html ne "<p>&nbsp;</p>")
 			{
