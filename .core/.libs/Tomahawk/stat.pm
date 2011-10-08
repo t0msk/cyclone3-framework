@@ -30,7 +30,7 @@ sub rqs
 		$host=$tom::H unless $host; # ak nemam cookiehost tak moj host je default host v local configu
 	
 	my $filedir=$TOM::P."/_logs/weblog/".$tom::Fyear."-".$tom::Fmom."-".$tom::Fmday.".".$tom::Fhour;
-	main::_log("checking $filedir");
+	#main::_log("checking $filedir");
 	if (!-e $filedir)
 	{
 		use File::Path;
