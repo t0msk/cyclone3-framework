@@ -103,6 +103,7 @@ sub CookieClean
 			$deleted++;
 		};
 	}
+	closedir DIR;
 	
 	main::_log("processed $files files, $deleted removed");
 	
