@@ -4,6 +4,8 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
+# HiRes load
+our $hires;BEGIN {$hires=1;eval "use Time::HiRes qw( gettimeofday );";$hires=0 if $@;};
 
 sub _log_long
 {
@@ -84,19 +86,33 @@ sub _log_lite
 	
 	$get[0]=0 unless $get[0];
 	
-	my $msg=
-		"[".sprintf ('%06d', $$).";$main::request_code]".
-		"[$date{hour}:$date{min}:$date{sec}.???]".
+	my $msg;
+#		$msg.="[".sprintf ('%06d', $$).";$main::request_code]";
+		$msg.="[".sprintf ('%06d', $$)."]";
+		$msg.="[$date{hour}:$date{min}:$date{sec}.";
+		if ($hires)
+		{
+			my $msec='0.';
+			eval "\$msec.=(Time::HiRes::gettimeofday)[1];";
+			$msec=int($msec*1000);
+			$msg.=$msec;
+		}
+		else {$msg.="???";}
+		$msg.="]";
 #		"[".sprintf("%02d",$get[0])."]".
-		" ".(" " x $get[0]).$ref[$get[2]].$get[1];
+		$msg.=" ".(" " x $get[0]).$ref[$get[2]].$get[1];
 	
-	
-	open (HND_LOG,">>".$filename) && do
+	if (!$main::HND{$filename})
 	{
-		chmod (0666,$filename);
-		print HND_LOG $msg."\n";
-		close HND_LOG;
-	};
+		use Fcntl;
+		my $logfile_new;
+		$logfile_new unless -e $filename;
+		# open this handler at first
+		open ($main::HND{$filename},">>".$filename)
+			|| print "Cyclone3 system can't write into logfile $filename $!\n";
+		chmod (0666 , $filename) if $logfile_new;
+	}
+	syswrite($main::HND{$filename}, $msg."\n", length($msg."\n"));
 	
 	print $msg."\n" if $main::debug;
 	

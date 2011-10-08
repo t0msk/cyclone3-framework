@@ -10,7 +10,7 @@ use Utils::datetime;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Term::ANSIColor;
 
-
+our %HND;
 
 sub _log
 {
@@ -56,11 +56,14 @@ sub _log
 	my $msec='0.'.(Time::HiRes::gettimeofday)[1];
 		$msec=int($msec*1000);
 	
-	my $msg=
-		"[".sprintf ('%06d', $$).";$main::request_code]".
-		"[$date{hour}:$date{min}:$date{sec}.".sprintf("%03d",$msec)."]".
+	my $msg;
+		$msg.="[";
+		$msg.=sprintf ('%06d', $$);# unless $main::stdout;
+		$msg.=";$main::request_code" if ($TOM::Engine eq "pub" && !$main::stdout);
+		$msg.="]";
+		$msg.="[$date{hour}:$date{min}:$date{sec}.".sprintf("%03d",$msec)."]";
 #		"[".sprintf("%02d",$get[0])."]".
-		" ".(" " x $get[0]).$ref[$get[2]].$get[1];
+		$msg.=" ".(" " x $get[0]).$ref[$get[2]].$get[1];
 	if (length($msg)>8048)
 	{
 		$msg=substr($msg,1,8048);
@@ -90,8 +93,6 @@ sub _log
 	if (
 			($TOM::DEBUG_log_file>=$get[0])||
 			($get[2])||
-			($main::ITst)||
-			($main::IAdm)||
 			($main::debug)
 		) # logujem v pripade ze som v ramci levelu alebo ide o ERROR
 	{
@@ -119,62 +120,20 @@ sub _log
 		$file.="$date{year}-$date{mom}-$date{mday}";
 		$file.="-$date{hour}" if $TOM::DEBUG_log_file_frag; # rozlisenie na hodiny
 		
-		#print "file = $file\n";
-		
 		$get[0]=0 unless $get[0];
-		open (HND_LOG,">>".$file.".".$get[3].".log") || print STDERR "System can't write into logfile $file $!\n";
-#			|| die "System can't write into logfile ".$file.".".$get[3].".log"."\n";
-		chmod (0666,$file.".".$get[3].".log");
-		print HND_LOG $msg."\n";
-		close HND_LOG; # TODO: [Aben] uzavretie HND mozno zrusit
-	}
-	
-	if (($main::IAdm)&&($main::FORM{__IAdm_log})&&($pub::output_log))
-	{
-		my $message=$get[1];
 		
-		my $var="#D0D0D0";
-		$var="#F0F0F0" if $package eq "Tomahawk::module";
-		$var="#F00000" if $ref[$get[2]]=~/^-/;
-		my $div="<div style=\"font-family:monospace;background:$var;color:black;\" align=left>";
-		
-		$get[0]=0 unless $get[0];
-		#if ($get[0]<4){$var="#C0C0C0"};
-		$main::IAdm_log.=$div;
-		$main::IAdm_log.="[$date{hour}:$date{min}:$date{sec}.";
-		$main::IAdm_log.=sprintf("%07d",((Time::HiRes::gettimeofday)[1]))."] ";
-		$main::IAdm_log.="[".sprintf("%02d",$get[0])."] ";
-		$main::IAdm_log.=("&nbsp;" x $get[0]);
-		$main::IAdm_log.=$ref[$get[2]];
-		
-		my $max=115-$get[0];
-		my $i;
-		1 while ($message=~s|  | |g);
-		while ($message=~s/^(.{1,$max})//)
+		my $filename_full=$file.".".$get[3].".log";
+		if (!$HND{$filename_full})
 		{
-			my $message_out=$1;
-			$message_out=~s|<|&lt;|g;$message_out=~s|>|&gt;|g;
-			$message_out=~s| |&nbsp;|g;
-			if ($i>=10)
-			{
-				$main::IAdm_log.=$div.("&nbsp;" x ($get[0]+24))."<span style='color:yellow;'>&nbsp;</span>"."..."."</div>\n";
-				last;
-			}
-			elsif ($i)
-			{
-				$main::IAdm_log.=$div.("&nbsp;" x ($get[0]+24))."<span style='color:yellow;'>&nbsp;</span>";
-			}
-			
-			if ($message)
-			{
-				$message_out.="<span style='color:yellow;'>&nbsp;</span>";
-			}
-			
-			$main::IAdm_log.=$message_out."</div>\n";
-			
-			$i++;
+			use Fcntl;
+			my $logfile_new;
+			$logfile_new unless -e $filename_full;
+			# open this handler at first
+			open ($HND{$filename_full},">>".$filename_full)
+				|| print STDERR "Cyclone3 system can't write into logfile $filename_full $!\n";
+			chmod (0666 , $filename_full) if $logfile_new;
 		}
-		
+		syswrite($HND{$filename_full}, $msg."\n", length($msg."\n"));
 	}
 	
 	return 1;
