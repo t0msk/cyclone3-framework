@@ -159,6 +159,7 @@ eval
 		{
 			$data.=$line;
 		}
+		close(KEY);
 		TOM::Net::URI::rewrite::get($data);close(KEY);$tom::rewrite=1;
 		$url_regexp=qr'(.)\?\|\?(.*?)(["\'#])';
 		$tom::rewrite_time=time;
@@ -441,6 +442,7 @@ while ($main::CGI=new CGI::Fast())
 			{
 				my $data;
 				while (my $line=<KEY>){$data.=$line;}
+				close(KEY);
 				TOM::Net::URI::rewrite::get($data);close(KEY);$tom::rewrite=1;#$/="\n";
 				$tom::rewrite_time=$main::time_current;
 			}
@@ -462,6 +464,7 @@ while ($main::CGI=new CGI::Fast())
 			{
 				my $data;
 				while (my $line=<KEY>){$data.=$line;};
+				close(KEY);
 				TOM::Net::URI::301::get($data);close(KEY);
 				$tom::301_time=$main::time_current;
 			}
@@ -1391,6 +1394,7 @@ while ($main::CGI=new CGI::Fast())
 			{
 				open (HND,"<".$tom::P."/_type/pre.cml_type") || open (HND,"<".$tom::Pm."/_type/mpre.cml_type") || die "Cannot open PRE_TYPE file\n";
 				my $line;while ($line=<HND>){$data.=$line;}
+				close(HND);
 				#$file_data=$data."\n<#TYPE_PRE#>\n".$file_data;
 			}
 			$file_data=$data."\n<#TYPE_PRE#>\n".$file_data;
@@ -1524,6 +1528,7 @@ while ($main::CGI=new CGI::Fast())
 					local $/;
 					$main::DOC_BODY=<TMPL>
 				};
+				close(TMPL);
 				
 				undef $H->{'OUT'}{'BODY'};
 				$H->i($main::DOC_BODY);

@@ -45,6 +45,7 @@ sub get
  {
   open (HND,"<".$var."/_type/".$null.$env{IDcategory}.".cml_gen") || die "cannot open layer ".$null.$env{IDcategory}."\n";#return undef;
   while ($env{file_line}=<HND>){$env{file_data}.=$env{file_line};}
+  close(HND);
   return $env{file_data};
  }
  else

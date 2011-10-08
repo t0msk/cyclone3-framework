@@ -65,6 +65,7 @@ BEGIN
 			unshift @INC, $TOM::P.'/_overlays/'.$file.'/.libs';
 			unshift @INC, $TOM::P.'/_overlays/'.$file.'/_addons';
 		}
+		closedir(DIR);
 	}
 	
 	$t->close();
