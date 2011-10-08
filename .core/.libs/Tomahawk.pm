@@ -292,6 +292,7 @@ sub module
 	$mdl_env{'-cache'} if $mdl_env{'-cache_id'};
 	if ($mdl_env{'-addon'}){$mdl_env{'-category'}=$mdl_env{'-addon'};$mdl_env{'-category'}=~s|^a||;};
 	my $t=track TOM::Debug("module",'attrs'=>"(".$mdl_env{'-category'}."-".$mdl_env{'-name'}.")",'timer'=>1);
+	
 	local %mdl_C;
 	local $tom::ERR;
 	local $tom::ERR_plus;
@@ -653,14 +654,48 @@ sub module
 			);
 		}
 		
-		if (not do $mdl_C{'P_MODULE'}){$tom::ERR="$@ $!";die "pre-compilation error: $@ $!\n";}#- $! $@\n";
+		main::_log("load '$mdl_C{'P_MODULE'}'");
+		my $mdl_ID=$mdl_C{'P_MODULE'};
+			$mdl_ID=~s|/|:|g;
+			$mdl_ID=~s|[\./\-\!]|_|g;
+			1 while ($mdl_ID=~s|[:_][:_]|:|g);
+			1 while ($mdl_ID=~s|__|_|g);
+			1 while ($mdl_ID=~s|::|:|g);
+			$mdl_ID=~s|^[:_]||g;
+			$mdl_ID=~s|:|::|g;
 		
-		local %Tomahawk::module::XSGN;
-		local $Tomahawk::module::TPL;
-		local %Tomahawk::module::XLNG;
+		my $mdl_version='Tomahawk::module::'.$mdl_ID;
+		my $m_time=(stat($mdl_C{'P_MODULE'}))[9];
+		
+		if (!$mdl_version->VERSION() || ($mdl_version->VERSION() < $m_time))
+		{
+			my $t_do=track TOM::Debug("evalfile",'timer'=>1);
+			use Fcntl;
+			sysopen(HND_DO, $mdl_C{'P_MODULE'}, O_RDONLY);
+			my $mdl_buffer;
+			my $mdl_src;
+			while (sysread(HND_DO, $mdl_buffer, 1024)){$mdl_src.=$mdl_buffer;}
+			close(HND_DO);
+			my $mdl_inject=qq{
+use Tomahawk::module qw(\$TPL \%XSGN \%XLNG);
+our \$VERSION=$m_time;
+};
+			$mdl_src=~s|package Tomahawk::module;|package Tomahawk::module::$mdl_ID;$mdl_inject|;
+			eval $mdl_src;
+			if ($@){$tom::ERR="$@ $!";die "pre-compilation error: $@ $!\n";}
+			$t_do->close();
+		}
+		
+		# reset variables
+		undef %Tomahawk::module::XSGN;
+		undef $Tomahawk::module::TPL;
+		undef %Tomahawk::module::XLNG;
 		
 		my $t_execute=track TOM::Debug("exec");
-		($return_code,%return_data)=Tomahawk::module::execute(%mdl_env);
+		
+		no strict;
+		my $execute_package='Tomahawk::module::'.$mdl_ID.'::execute';
+		($return_code,%return_data)=&$execute_package(%mdl_env);
 		if ($Tomahawk::module::TPL)
 		{
 			my $t_tt=track TOM::Debug("tt:process",'timer'=>1);
@@ -682,7 +717,7 @@ sub module
 			
 			if ($mdl_C{'-stdout'} && $main::stdout)
 			{
-				print $Tomahawk::module::XSGN{'TMP'};
+				print $Tomahawk::module::XSGN{'TMP'}."\n";
 			}
 			
 			if (($Tomahawk::module::XSGN{'TMP'})
@@ -1026,7 +1061,7 @@ sub supermodule
 
 sub designmodule
 {
-	my $t=track TOM::Debug(__PACKAGE__."::designmodule()");
+	my $t=track TOM::Debug("designmodule");
 	
 	local %mdl_env=@_;
 	$Tomahawk::module::authors=""; # vyprazdnim zoznam authorov
@@ -1295,6 +1330,8 @@ sub GetXSGN
 	my $file_data;my $file_line;
 	while ($file_line=<HND>){$file_data.=$file_line;}
 	($file_data)=$file_data=~/<XML_DESIGN_DEFINITION.*?>(.*)<\/XML_DESIGN_DEFINITION>/s;
+	
+	close(HND);
 	
 	TOM::Utils::vars::replace($file_data);# if $env{'-convertvars'};
 	
