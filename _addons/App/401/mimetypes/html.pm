@@ -1021,12 +1021,11 @@ sub start
 		if ($attr->{'id'}=~/^a401_article:(.*)$/)
 		{
 			$self->{'level.ignore'}=$self->{'level'};
-			require App::501::_init;
+			require App::401::_init;
 			%vars=_parse_id($1);
-			if ($vars{'ID'})
+			if ($vars{'ID'} && (!$self->{'config'}->{'inline'}))
 			{
-				main::_log("include article");
-				
+				main::_log("request to include a401_article with ID='$vars{'ID'}'");
 				
 				my $sql=qq{
 					SELECT
@@ -1046,6 +1045,7 @@ sub start
 					LEFT JOIN `$App::401::db_name`.a401_article_content AS article_content ON
 					(
 						article_content.ID_entity = article.ID_entity AND
+						article_content.status = 'Y' AND
 						article_content.lng = article_attrs.lng
 					)
 					LEFT JOIN `$App::401::db_name`.a401_article_cat AS article_cat ON
@@ -1066,22 +1066,32 @@ sub start
 					LIMIT 1
 				};
 				my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[$vars{'ID'}],'quiet'=>1,'-slave'=>1);
-				my %db0_line=$sth0{'sth'}->fetchhash();
-				
-				my $p=new App::401::mimetypes::html;
-				$p->config_from($self);
-				delete $p->{'config'}->{'editable'};
-				$p->parse($db0_line{'body'});
-				$p->eof();
-				
-				$out_full=
-					$self->{'entity'}{'div.a401_article'}
-#					|| $self->{'entity'}{'a401_article'}
-					|| $out_full;
-				
-				$out_full_plus=$p->{'out'};
-				
-				$self->config_from($p);
+				if (my %db0_line=$sth0{'sth'}->fetchhash())
+				{
+					main::_log("processing article_content");
+					
+					my $p=new App::401::mimetypes::html;
+					$p->config_from($self);
+					delete $p->{'config'}->{'editable'};
+					$p->{'config'}->{'inline'}=1; # this is inline article
+					$p->parse($db0_line{'body'});
+					$p->eof();
+					
+					$out_full=
+						$self->{'entity'}{'div.a401_article'}
+#						|| $self->{'entity'}{'a401_article'}
+						|| $out_full;
+					
+					$out_full_plus=$p->{'out'};
+					
+					$self->config_from($p);
+				}
+				else
+				{
+					main::_log("can't find article",1);
+					#
+					$out_full="<!-- can't include article $vars{'ID'} -->";
+				}
 			}
 		}
 	}
