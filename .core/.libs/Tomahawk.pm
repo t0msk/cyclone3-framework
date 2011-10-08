@@ -657,7 +657,7 @@ sub module
 		main::_log("load '$mdl_C{'P_MODULE'}'");
 		my $mdl_ID=$mdl_C{'P_MODULE'};
 			$mdl_ID=~s|/|:|g;
-			$mdl_ID=~s|[\./\-\!]|_|g;
+			$mdl_ID=~s|[\./\-\! ]|_|g;
 			1 while ($mdl_ID=~s|[:_][:_]|:|g);
 			1 while ($mdl_ID=~s|__|_|g);
 			1 while ($mdl_ID=~s|::|:|g);
@@ -819,7 +819,7 @@ our \$VERSION=$m_time;
 				
 			}
 			
-			undef &Tomahawk::module::execute;
+#			undef &Tomahawk::module::execute;
 			
 		}
 		else # chyba o ktorej upozorni samotny program vratenim undef :)
