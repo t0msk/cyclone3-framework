@@ -19,7 +19,7 @@ use utf8;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-use vars qw/%XSGN %XLNG $ERR $TPL/;
+use vars qw/%XSGN %XLNG $ERR $TPL &XSGN_load_hash/;
 
 sub XSGN_load_hash
 {
@@ -620,12 +620,13 @@ sub module
 	# AK MODUL NEEXISTUJE
 	if (not -e $mdl_C{'P_MODULE'})
 	{
-		main::_log("module file '$mdl_C{'P_MODULE'}' not exists",1);
+		main::_log("module file '$mdl_C{'P_MODULE'}' can't be found",1);
 		TOM::Error::module(
 			'-TMP' => $mdl_C{'-TMP'},
 			'-MODULE' => "[MDL::".$mdl_C{'-category'}."-".$mdl_C{'-name'}."]",
-			'-ERROR' => "module does not exist!"#.$!
+			'-ERROR' => "module file '$mdl_C{'P_MODULE'}' can't be found"
 		);
+		$t->close();
 		return undef;
 	}
 	
@@ -677,7 +678,8 @@ sub module
 			while (sysread(HND_DO, $mdl_buffer, 1024)){$mdl_src.=$mdl_buffer;}
 			close(HND_DO);
 			my $mdl_inject=qq{
-use Tomahawk::module qw(\$TPL \%XSGN \%XLNG);
+use Tomahawk::module qw(\$TPL \%XSGN \%XLNG &XSGN_load_hash);
+our \$authors;
 our \$VERSION=$m_time;
 };
 			$mdl_src=~s|package Tomahawk::module;|package Tomahawk::module::$mdl_ID;$mdl_inject|;
