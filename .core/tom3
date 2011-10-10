@@ -2339,12 +2339,12 @@ while ($main::CGI=new CGI::Fast())
 		# odoslanie cookies
 		TOM::Engine::pub::cookies::send();
 		
-		if ($TOM::DEBUG_log_file >= 99)
-		{
-			open(HND,'>'.$tom::P.'/_temp/request_response_'.$main::request_code);
-			print HND $DOC_output;
-			close(HND);
-		}
+#		if ($TOM::DEBUG_log_file >= 99)
+#		{
+#			open(HND,'>'.$tom::P.'/_temp/request_response_'.$main::request_code);
+#			print HND $DOC_output;
+#			close(HND);
+#		}
 		
 		if ($main::page_statuscode eq "404")
 		{
