@@ -352,6 +352,33 @@ sub article_add
 	my %article_content;
 	$env{'article_content.lng'} = $env{'article_attrs.lng'} unless $env{'article_content.lng'};
 	$env{'article_content.version'} = '0' unless $env{'article_content.version'};
+	
+	# NULL fix - ugly hack
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			ID,
+			version
+		FROM
+			`$App::401::db_name`.`a401_article_content`
+		WHERE
+			ID_entity=? AND
+			lng=? AND
+			version IS NULL
+	},'bind'=>[$env{'article.ID_entity'},$env{'article_content.lng'}],'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		TOM::Database::SQL::execute(qq{
+			UPDATE
+				`$App::401::db_name`.`a401_article_content`
+			SET
+				version=0
+			WHERE
+				ID_entity=? AND
+				lng=? AND
+				version IS NULL
+		},'bind'=>[$env{'article.ID_entity'},$env{'article_content.lng'}],'quiet'=>1);
+	}
+	
 	if (!$env{'article_content.ID'})
 	{
 		my $sql=qq{
