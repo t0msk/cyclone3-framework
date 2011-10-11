@@ -322,7 +322,7 @@ foreach (sort keys %CRON::hosts)
 					my $pm = new Parallel::ForkManager(50);
 					my $pid = $pm->start and next;
 					sleep(2);
-					undef $main::DB{'main'};
+					undef %main::DB;
 					TOM::Database::connect::multi('main');
 					CRON::module(%mdl_env);
 					$pm->finish();
