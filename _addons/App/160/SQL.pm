@@ -582,13 +582,14 @@ sub get_relations
 			r_prefix,
 			r_table,
 			r_ID_entity,
-			status
+			status,
+			priority
 		FROM
 			`$env{'db_name'}`.`a160_relation`
 		WHERE
 			$where
 		ORDER BY
-			rel_type, r_db_name, r_prefix, r_table, r_ID_entity
+			priority, rel_type, r_db_name, r_prefix, r_table, r_ID_entity
 		LIMIT
 			$env{'limit'};
 	};
