@@ -589,7 +589,7 @@ sub get_relations
 		WHERE
 			$where
 		ORDER BY
-			priority, rel_type, r_db_name, r_prefix, r_table, r_ID_entity
+			priority DESC, rel_type, r_db_name, r_prefix, r_table, r_ID_entity
 		LIMIT
 			$env{'limit'};
 	};
@@ -842,6 +842,182 @@ sub trash_historization
 			'tb_name' => 'a160_historization',
 			'-journalize' => 1,
 	);
+}
+
+=head1
+
+Shifts relations priority to left or right
+
+
+relation_shift (
+	'direction' => 'left' | 'right',
+	'ID' => ?,
+	'regexp' => qr/^partner.*$/ # (optional)
+);
+
+
+
+
+=cut
+
+
+sub relation_shift
+{
+	my %env = @_;
+
+	return unless ($env{'direction'} && $env{'ID'});
+
+	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
+	$env{'db_h'}='main' unless $env{'db_h'};
+
+	my $plus;
+
+	if ($env{'direction'} eq 'up' || $env{'direction'} eq 'left')
+	{
+		$plus = -1;
+	} 
+	elsif($env{'direction'} eq 'down' || $env{'direction'} eq 'right')
+	{
+		$plus = 1;
+	}
+
+
+	# get relation details - l_ID_entity and rel_type
+
+	my $sql = qq{
+
+                SELECT
+                        *
+                FROM
+                        `$App::160::db_name`.a160_relation
+                WHERE
+                        ID = ?
+                LIMIT 1
+        };
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'quiet'=>1, 'bind' => [ $env{'ID'} ]);
+	if ($sth0{'sth'}){
+	
+		if ( my %db0_line=$sth0{'sth'}->fetchhash() )
+		{
+			# get all sister relations of the l_ID_entity of the type / like
+			
+			my $l_ID_entity = $db0_line{'l_ID_entity'};	
+			my $l_prefix = $db0_line{'l_prefix'};	
+			my $r_prefix = $db0_line{'r_prefix'};	
+			my $r_table = $db0_line{'r_table'};	
+			my $l_table = $db0_line{'l_table'};
+
+			my $rel_type = $db0_line{'rel_type'};
+
+			main::_log("Reordering relations for l_ID_entity=$l_ID_entity l_prefix=$l_prefix l_table=$l_table r_prefix=$r_prefix r_table=$r_table");
+			
+			if ($env{'regexp'})
+			{
+				main::_log("relation is of rel_type=$rel_type, but I will filter relations by specified regexp $env{'regexp'}");
+			} else
+			{
+				main::_log("I will filter relations by fixed rel type=$rel_type");
+			}
+
+			my $sql2 = qq{
+
+				SELECT
+					ID, priority, rel_type
+				FROM
+					`$App::160::db_name`.a160_relation
+				WHERE
+					l_ID_entity = ? AND
+					l_prefix = ? AND r_prefix = ? AND r_table = ? AND l_table = ?
+				ORDER BY
+					priority DESC, rel_type, r_db_name, r_prefix, r_table, r_ID_entity
+			};
+			my %sth1=TOM::Database::SQL::execute($sql2,'log'=>1,'quiet'=>1, 
+				'bind' => [ $l_ID_entity, $l_prefix, $r_prefix, $r_table, $l_table ]);
+
+			my @all_relations;
+			my $counter = 0;
+			my $position;
+
+			if ($sth1{'sth'})
+			{
+
+				while ( my %db1_line=$sth1{'sth'}->fetchhash() )
+				{
+					# check if relation is valid. we got relations of all rel_type's. Now we manually filter it
+					# either by the same rel_type or by regexp
+
+					my $regexp = $env{'regexp'};
+					my $rel_type_item = $db1_line{'rel_type'};
+	
+					# if regexp is in env, use regexp, otherwise compare to rel_type
+					$position = $counter if ($db1_line{'ID'} == $db0_line{'ID'});
+
+					if ($regexp)
+					{
+						$all_relations[$counter] = { %db1_line }  if ($rel_type_item =~ $regexp);
+					} 
+					elsif ($rel_type_item eq $rel_type)
+					{
+						$all_relations[$counter] = { %db1_line };
+					}
+					
+					$counter++;
+				}
+			}
+
+			# @all_relations now contains an ordered list of relations of the desired rel_type
+
+
+		 	my $priority_max = @all_relations - 1;
+
+			main::_log( "Max priority: $priority_max, I am at position: $position\n") if ($debug);
+
+			# switch positions of the relation we want to move with its neighboring relation to the left or right
+
+			if (my $switch_with = $all_relations[$position + $plus])
+			{
+				# main::_log( "Switching my primary ID=".$all_relations[$position]->{'ID'}." with ID=".$all_relations[$position + $plus]->{'ID'}."\n");
+				
+				$all_relations[$position + $plus] = $all_relations[$position];
+				$all_relations[$position] = $switch_with;
+				
+			} 
+
+			# Now update priorities for the whole set
+
+			my $tr=new TOM::Database::SQL::transaction('db_h'=>"main");
+
+			for (my $i = 0; $i <= $priority_max; $i++) 
+			{
+				my $sql_u = qq{
+
+					UPDATE
+						`$App::160::db_name`.a160_relation
+					SET
+						priority = ?
+					WHERE
+						ID = ?
+					LIMIT 1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql_u,'log'=>1,'quiet'=>1, 'bind' => [ int($priority_max - $i), $all_relations[$i]->{'ID'} ]);
+
+				main::_log('Updating relation ID='.$all_relations[$i]->{'ID'}.' to priority='.int($priority_max - $i)) if ($debug);
+			}
+			$tr ->close();
+
+
+			#update cache
+
+			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$l_prefix.'::'.$l_table.'::'.$l_ID_entity;
+			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
+			{
+				# save info about changed set of relations
+				my $tt=Time::HiRes::time();
+				main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
+				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
+			}
+		}
+	}
 }
 
 =head1 AUTHORS
