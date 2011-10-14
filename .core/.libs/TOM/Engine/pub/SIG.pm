@@ -234,23 +234,6 @@ When TERM is not executed if apache restarts, then process lost connection to ap
 elsif ($^O eq "MSWin32")
 {
 	
-	main::_log("registering SIG-nals for Win32");
-	
-	main::_log("registering SIG{ALRM} action to EXIT");
-	$SIG{'ALRM'}=\&TOM::Engine::pub::SIG::handler_exit;
-	
-	main::_log("registering SIG{HUP} action to CHECK");
-	$SIG{'HUP'}=\&TOM::Engine::pub::SIG::handler_check;
-	
-	main::_log("registering SIG{TERM} action to CHECK");
-	$SIG{'TERM'}=\&TOM::Engine::pub::SIG::handler_check;
-	
-	main::_log("registering SIG{SIGPIPE} action to IGNORE");
-	$SIG{'IGNORE'}=\&TOM::Engine::pub::SIG::handler_ignore;
-	
-	main::_log("registering SIG{SIGUSR1} action to CHECK");
-	$SIG{'USR1'}=\&TOM::Engine::pub::SIG::handler_check;
-	
 	main::_log("start counting timeout $TOM::fcgi_timeout");
 	alarm($TOM::fcgi_timeout);
 	
