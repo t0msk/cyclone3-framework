@@ -127,7 +127,7 @@ sub _log
 		{
 			use Fcntl;
 			my $logfile_new;
-			$logfile_new unless -e $filename_full;
+			$logfile_new=1 unless -e $filename_full;
 			# open this handler at first
 			open ($HND{$filename_full},">>".$filename_full)
 				|| print STDERR "Cyclone3 system can't write into logfile $filename_full $!\n";

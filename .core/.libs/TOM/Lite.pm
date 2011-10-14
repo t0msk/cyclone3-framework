@@ -106,7 +106,7 @@ sub _log_lite
 	{
 		use Fcntl;
 		my $logfile_new;
-		$logfile_new unless -e $filename;
+		$logfile_new=1 unless -e $filename;
 		# open this handler at first
 		open ($main::HND{$filename},">>".$filename)
 			|| print "Cyclone3 system can't write into logfile $filename $!\n";
