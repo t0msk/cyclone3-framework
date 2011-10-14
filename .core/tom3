@@ -105,7 +105,7 @@ eval
 	
 	# import Content-Type library
 	main::_log("use Content-Type library type='$pub::DOC'");
-	eval "use TOM::Document::".$pub::DOC; die "can't load library TOM::Document:;($pub::DOC)" if $@;
+	eval "use TOM::Document::".$pub::DOC; die "can't load library TOM::Document::($pub::DOC)" if $@;
 	
 	# import default header
 	main::_log("require default.header");
