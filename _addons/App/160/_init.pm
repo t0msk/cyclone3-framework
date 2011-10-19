@@ -38,7 +38,7 @@ L<App::160::SQL|app/"160/SQL.pm">
 
 our $db_name=$App::160::db_name || $TOM::DB{'main'}{'name'};
 
-our @partners=$App::160::partners || ( 'partner' );
+our @partners = ( @App::160::partners ) || ( 'partner' );
 
 
 use App::160::SQL;
