@@ -18,7 +18,7 @@ Application which manages orders
 
 BEGIN {main::_log("<={LIB} ".__PACKAGE__);}
 
-our $VERSION='$Rev$';
+our $VERSION='1';
 
 
 =head1 SYNOPSIS

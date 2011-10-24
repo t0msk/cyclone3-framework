@@ -83,7 +83,7 @@ use App::020::SQL::functions;
 use App::020::a160;
 use App::020::functions::metadata;
 
-our $VERSION='$Rev$';
+our $VERSION='1';
 
 =head1 SEE ALSO
 

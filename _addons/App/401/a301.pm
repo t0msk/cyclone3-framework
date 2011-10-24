@@ -44,7 +44,7 @@ use App::301::perm;
 use App::020::_init;
 
 
-our $VERSION='$Rev$';
+our $VERSION='1';
 our $debug=0;
 
 

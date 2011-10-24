@@ -20,7 +20,7 @@ Notice, L<a501|app/"501"> is used for storing thumbnail pictures.
 
 BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 
-our $VERSION='$Rev$';
+our $VERSION='1';
 
 
 

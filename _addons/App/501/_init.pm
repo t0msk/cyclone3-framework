@@ -18,7 +18,7 @@ Application which manages images and its formats
 
 BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 
-our $VERSION='$Rev$';
+our $VERSION='1';
 
 
 

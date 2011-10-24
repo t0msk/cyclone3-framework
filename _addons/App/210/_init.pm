@@ -13,7 +13,7 @@ use utf8;
 use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-our $VERSION='$Rev$';
+our $VERSION='1';
 
 use App::020::_init; # data standard 0
 use App::210::SQL;

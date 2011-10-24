@@ -43,7 +43,7 @@ use App::910::_init;
 use App::020::_init;
 use App::020::a160;
 
-our $VERSION='$Rev$';
+our $VERSION='1';
 
 sub get_relation_iteminfo
 {

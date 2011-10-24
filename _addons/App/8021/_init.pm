@@ -18,7 +18,7 @@ Application which allow to registered users send messages
 
 BEGIN {main::_log("<={LIB} ".__PACKAGE__);}
 
-our $VERSION='$Rev$';
+our $VERSION='1';
 
 
 =head1 SYNOPSIS

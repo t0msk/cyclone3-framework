@@ -34,7 +34,7 @@ L<App::020::_init|app/"020/_init.pm">
 use App::020::_init;
 use TOM::Database::SQL;
 
-our $VERSION='$Rev$';
+our $VERSION='1';
 our $DEBUG;
 our $db_h='main';
 

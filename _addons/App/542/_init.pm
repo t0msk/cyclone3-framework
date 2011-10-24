@@ -18,7 +18,7 @@ Application which manages files and directories.
 
 BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 
-our $VERSION='$Rev$';
+our $VERSION='1';
 
 
 
