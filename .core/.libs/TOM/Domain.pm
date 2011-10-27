@@ -104,6 +104,8 @@ BEGIN
 				}
 			}
 			
+			require Ext::Solr::_init if $Ext::Solr::url;
+			
 		}
 		
 	}
