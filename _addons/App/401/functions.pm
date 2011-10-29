@@ -94,6 +94,7 @@ sub article_add
 	$env{'article_content.mimetype'}="text/html" unless $env{'article_content.mimetype'};
 	
 	my $content_updated=0; # boolean if important content attributes was updated
+	my $content_reindex=0; # boolean if is required to update searchindex
 	
 	# detect language
 	my %article_cat;
@@ -268,6 +269,7 @@ sub article_add
 			'-journalize' => 1,
 		);
 		$content_updated=1;
+		$content_reindex=1;
 	}
 	if ($env{'article_attrs.ID'} && !$article_attrs{'ID_category'})
 	{
@@ -344,6 +346,8 @@ sub article_add
 				'-journalize' => 1
 			);
 			$content_updated=1;
+			$content_reindex=1 if $columns{'name'};
+			$content_reindex=1 if $columns{'status'};
 		}
 	}
 	
@@ -427,6 +431,7 @@ sub article_add
 			'-journalize' => 1,
 		);
 		$content_updated=1;
+		$content_reindex=1;
 	}
 	
 	# get article_content
@@ -533,6 +538,7 @@ sub article_add
 						'-journalize' => 1
 					);
 				}
+				$content_reindex=1;
 			}
 		}
 		
@@ -549,6 +555,10 @@ sub article_add
 				'-journalize' => 1
 			);
 			$content_updated=1;
+			$content_reindex=1 if $columns{'body'};
+			$content_reindex=1 if $columns{'abstract'};
+			$content_reindex=1 if $columns{'subtitle'};
+			$content_reindex=1 if $columns{'keywords'};
 		}
 		
 		# check if there is one enabled version
@@ -601,6 +611,7 @@ sub article_add
 					'columns' => {'status'=>"'Y'"},
 					'-journalize' => 1
 				);
+				$content_reindex=1;
 			}
 		}
 	}
@@ -684,6 +695,7 @@ sub article_add
 				'ID' => $env{'article_ent.ID'},
 				'metadata' => {App::020::functions::metadata::parse($env{'article_ent.metadata'})}
 			);
+			$content_reindex=1;
 		}
 		
 		if (keys %columns)
@@ -704,10 +716,160 @@ sub article_add
 		App::020::SQL::functions::_save_changetime({'db_h'=>'main','db_name'=>$App::401::db_name,'tb_name'=>'a401_article','ID_entity'=>$env{'article.ID_entity'}});
 	}
 	
+	if ($content_reindex)
+	{
+		# reindex this article;
+		_article_index('ID_entity'=>$env{'article.ID_entity'});
+	}
+	
 	$t->close();
 	return %env;
 }
 
+
+sub _article_index
+{
+	my %env=@_;
+	return undef unless $env{'ID_entity'};
+	return undef unless $Ext::Solr;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::_article_index()",'timer'=>1);
+	
+	my %content;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			$App::401::db_name.a401_article_content
+		WHERE
+			status='Y'
+			AND ID_entity=?
+	},'quiet'=>1,'bind'=>[$env{'ID_entity'}]);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("article_content ID='$db0_line{'ID'}' lng='$db0_line{'lng'}' version='$db0_line{'version'}'");
+		
+		for my $part('body','abstract')
+		{
+			$db0_line{$part}=~s|<.*?>||gms;
+			$db0_line{$part}=~s|&nbsp;| |gms;
+			$db0_line{$part}=~s|  | |gms;
+			for (0,1,2,4)
+			{$db0_line{$part}=~s|\x{$_}||g;}
+		}
+		
+		$content{$db0_line{'lng'}}{'text'}=WebService::Solr::Field->new( 'text' => $db0_line{'body'} );
+		$content{$db0_line{'lng'}}{'description'}=WebService::Solr::Field->new( 'description' => $db0_line{'abstract'} );
+		$content{$db0_line{'lng'}}{'keywords'}=WebService::Solr::Field->new( 'keywords' => $db0_line{'keywords'} ),
+		$content{$db0_line{'lng'}}{'subject'}=WebService::Solr::Field->new( 'subject' => $db0_line{'subtitle'} ),
+		
+		# name
+		# cat (multi)
+		# title (multi)
+		# subject
+		# comments
+		# author
+		# category
+		# last_modified
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				article_attrs.ID,
+				article_attrs.name,
+				article_attrs.lng,
+				article_attrs.datetime_start,
+				article_ent.ID_author,
+				article_cat.name AS cat_name
+			FROM
+				$App::401::db_name.a401_article AS article
+			LEFT JOIN $App::401::db_name.a401_article_ent AS article_ent ON
+			(
+				article_ent.ID_entity = article.ID_entity
+			)
+			LEFT JOIN $App::401::db_name.a401_article_attrs AS article_attrs ON
+			(
+				article_attrs.ID_entity = article.ID
+			)
+			LEFT JOIN $App::401::db_name.a401_article_cat AS article_cat ON
+			(
+				article_cat.ID = article_attrs.ID_category
+			)
+			WHERE
+				article_ent.ID_entity=?
+				AND article.status='Y'
+				AND article_attrs.status='Y'
+			ORDER BY
+				article_attrs.datetime_start DESC
+		},'quiet'=>1,'bind'=>[$env{'ID_entity'}]);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			main::_log("article_attrs ID='$db1_line{'ID'}' lng='$db1_line{'lng'}' name='$db1_line{'name'}' cat_name='$db1_line{'cat_name'}' datetime_start='$db1_line{'datetime_start'}'");
+			
+			if ($db1_line{'name'})
+			{
+				$content{$db0_line{'lng'}}{'name'}=WebService::Solr::Field->new( 'name' => $db1_line{'name'} );
+				push @{$content{$db0_line{'lng'}}{'title'}},WebService::Solr::Field->new( 'title' => $db1_line{'name'} );
+			}
+			if ($db1_line{'cat_name'})
+			{
+				push @{$content{$db0_line{'lng'}}{'cat'}},WebService::Solr::Field->new( 'cat' => $db1_line{'cat_name'} );
+			}
+			
+			$db1_line{'datetime_start'}=~s| (\d\d)|T$1|;
+			$db1_line{'datetime_start'}.="Z";
+			$content{$db0_line{'lng'}}{'last_modified'}=WebService::Solr::Field->new( 'last_modified' => $db1_line{'datetime_start'} );
+			
+		}
+	}
+	
+	my $solr = Ext::Solr::service();
+	
+	# how many articles of this type we have indexed?
+	my $response = $solr->search( "id:".$App::401::db_name.".a401_article.* AND ID_entity_i:$env{'ID_entity'}" );
+	for my $doc ( $response->docs )
+	{
+		my $lng=$doc->value_for( 'lng_s' );
+		if (!$content{$lng})
+		{
+			$solr->delete_by_id($doc->value_for('id'));
+		}
+	}
+	
+	foreach my $lng (keys %content)
+	{
+		my $id=$App::401::db_name.".a401_article.".$lng.".".$env{'ID_entity'};
+		main::_log("index id='$id'");
+		
+		my $doc = WebService::Solr::Document->new();
+		
+		$doc->add_fields((
+			WebService::Solr::Field->new( 'id' => $id ),
+			
+			$content{$lng}{'text'},
+			$content{$lng}{'description'},
+			$content{$lng}{'keywords'},
+			$content{$lng}{'subject'},
+			$content{$lng}{'name'},
+			@{$content{$lng}{'title'}},
+			@{$content{$lng}{'cat'}},
+			$content{$lng}{'last_modified'},
+			
+			WebService::Solr::Field->new( 'db_s' => $App::401::db_name ),
+			WebService::Solr::Field->new( 'addon_s' => 'a401_article' ),
+			WebService::Solr::Field->new( 'lng_s' => $lng ),
+			WebService::Solr::Field->new( 'ID_entity_i' => $env{'ID_entity'} ),
+		));
+		
+		$solr->add($doc);
+	}
+	
+	main::_log("Solr commiting...");
+	$solr->commit;
+	main::_log("commited.");
+	
+	$t->close();
+}
 
 
 =head2 article_content_extract_keywords()
