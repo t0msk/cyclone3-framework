@@ -7,6 +7,7 @@ use utf8;
 use strict;
 
 use App::020::_init;
+use App::210::_init;
 
 =head1 NAME
 
@@ -107,7 +108,7 @@ sub execute
 	my @path=App::020::SQL::functions::tree::get_path(
 		$env{'ID'},
 		'db_h' => "main",
-		'db_name' => $TOM::DB{'main'}{'name'},
+		'db_name' => $App::210::db_name,
 		'tb_name' => "a210_page",
 		'ID'      => $env{'ID'},
 	);
@@ -124,7 +125,10 @@ sub execute
 		$item=$XSGN{'item.'.$i} if $XSGN{'item.'.$i};
 		$item=$XSGN{'item.last'} if ($i-1==@path && $XSGN{'item.last'});
 		
+		$item=~s|<%db_ID%>|$tmp->{'ID'}|g;
+		$item=~s|<%db_ID%>|$tmp->{'ID_entity'}|g;
 		$item=~s|<%db_name%>|$tmp->{'name'}|g;
+		$item=~s|<%db_name_url%>|$tmp->{'name_url'}|g;
 		$item=~s|<%db_path_url%>|$path_url|g;
 		$XSGN{'TMP'}=~s|<#item#>|$item|;
 	}

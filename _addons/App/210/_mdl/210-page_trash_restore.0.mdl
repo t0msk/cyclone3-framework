@@ -7,6 +7,7 @@ use utf8;
 use strict;
 
 use App::020::_init;
+use App::210::_init;
 
 =head1 NAME
 
@@ -83,7 +84,7 @@ sub execute
 	my $ID_charindex=App::020::SQL::functions::tree::find_new_child(
 		undef,
 		'db_h' => "main",
-		'db_name' => $TOM::DB{'main'}{'name'},
+		'db_name' => $App::210::db_name,
 		'tb_name' => "a210_page",
 	);
 	
@@ -97,7 +98,7 @@ sub execute
 	# polozku updatnem bez journalingu na novy IDcharindex
 	my $out=App::020::SQL::functions::update(
 		'db_h' => "main",
-		'db_name' => $TOM::DB{'main'}{'name'},
+		'db_name' => $App::210::db_name,
 		'tb_name' => "a210_page",
 		'ID' => $env{'ID'},
 		'columns' =>
@@ -115,7 +116,7 @@ sub execute
 	
 	$out=App::020::SQL::functions::trash_restore(
 		'db_h' => "main",
-		'db_name' => $TOM::DB{'main'}{'name'},
+		'db_name' => $App::210::db_name,
 		'tb_name' => "a210_page",
 		'-journalize' => 1,
 		'ID'   => $env{'ID'}

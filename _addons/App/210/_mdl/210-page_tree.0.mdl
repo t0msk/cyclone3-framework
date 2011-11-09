@@ -7,6 +7,7 @@ use utf8;
 use strict;
 
 use App::020::_init;
+use App::210::_init;
 
 =head1 NAME
 
@@ -186,6 +187,11 @@ sub execute
 	
 	$env{'tree'}=1 unless exists $env{'tree'};
 	
+	# upratovanie stareho designu na novy typ
+	$XSGN{'item'}=$XSGN{'ITEM'} if (!$XSGN{'item'} && $XSGN{'ITEM'});
+	$XSGN{'item.current'}=$XSGN{'ITEM-current'} if (!$XSGN{'item.current'} && $XSGN{'ITEM-current'});
+	$XSGN{'tree'}=$XSGN{'SUB'} if (!$XSGN{'tree'} && $XSGN{'SUB'});
+	
 	my $from;
 	
 	# ak idem vykreslovat strom od nejakeho ID
@@ -193,7 +199,7 @@ sub execute
 	{
 		my %data=App::020::SQL::functions::get_ID(
 			'db_h'    => 'main',
-			'db_name' => $TOM::DB{'main'}{'name'},
+			'db_name' => $App::210::db_name,
 			'tb_name' => 'a210_page',
 			'ID'      => $env{'ID'},
 			'columns' => 
@@ -290,7 +296,7 @@ sub execute
 			SELECT
 				ID
 			FROM
-				`$TOM::DB{'main'}{'name'}`.`a210_page`
+				`$App::210::db_name`.`a210_page`
 			WHERE
 				$where
 				AND ID_charindex LIKE '$from%'
@@ -353,7 +359,7 @@ sub execute
 			visible,
 			is_default
 		FROM
-			`$TOM::DB{'main'}{'name'}`.`a210_page`
+			`$App::210::db_name`.`a210_page`
 $where
 		ORDER BY
 			$env{'db_order'}
@@ -408,7 +414,7 @@ $where
 			{
 				if ($level>$level_prev)
 				{
-					my $rec=$XSGN{'TMP'}=~s|<#tree#>|$XSGN{'SUB'}|;
+					my $rec=$XSGN{'TMP'}=~s|<#tree#>|$XSGN{'tree'}|;
 					main::_log("inserted tree ($rec) for level $level");
 				}
 			}
@@ -426,7 +432,7 @@ $where
 			foreach my $node (App::020::SQL::functions::tree::get_path(
 				$entity->{'ID'},
 				'db_h'    => 'main',
-				'db_name' => $TOM::DB{'main'}{'name'},
+				'db_name' => $App::210::db_name,
 				'tb_name' => 'a210_page'
 			))
 			{
@@ -435,20 +441,21 @@ $where
 			$path_=~s|^/||;
 			main::_log("path_='$path_'");
 			
-			$XSGN{'NULL'}=$XSGN{'ITEM'};
+			$XSGN{'NULL'}=$XSGN{'item'};
 			
 			if (
 					(($env{'current_ID'} eq $entity->{'ID'})
 					|| ($env{'current_path_url'} eq $path_))
-					&& $XSGN{'ITEM-current'}
+					&& $XSGN{'item.current'}
 			)
 			{
-				$XSGN{'NULL'}=$XSGN{'ITEM-current'};
+				$XSGN{'NULL'}=$XSGN{'item.current'};
 			}
 			
 			$XSGN{'NULL'}=~s|<%ID%>|$entity->{'ID'}|g;
 			$XSGN{'NULL'}=~s|<%ID_entity%>|$entity->{'ID_entity'}|g;
 			$XSGN{'NULL'}=~s|<%ID_parent%>|$entity->{'ID_parent'}|g;
+			$XSGN{'NULL'}=~s|<%level%>|$level|g;
 			$XSGN{'NULL'}=~s|<%name%>|$entity->{'name'}|g;
 			$XSGN{'NULL'}=~s|<%name_url%>|$entity->{'name_url'}|g;
 			$XSGN{'NULL'}=~s|<%datetime_create%>|$entity->{'datetime_create'}|g;

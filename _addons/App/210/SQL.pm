@@ -36,7 +36,7 @@ sub page_set_as_default
 	my $t=track TOM::Debug(__PACKAGE__."::page_set_as_default()");
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
-	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
+	$env{'db_name'}=$App::210::db_name unless $env{'db_name'};
 	
 	foreach (keys %env)
 	{
@@ -158,7 +158,7 @@ sub page_get_default_ID
 	$env{'tb_name'}='a210_page';
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
-	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
+	$env{'db_name'}=$App::210::db_name unless $env{'db_name'};
 	
 	$where.="AND status='Y' ";
 	

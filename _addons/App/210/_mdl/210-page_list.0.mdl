@@ -60,7 +60,7 @@ sub execute
 		
 		my %data=App::020::SQL::functions::get_ID(
 			'db_h'    => 'main',
-			'db_name' => $TOM::DB{'main'}{'name'},
+			'db_name' => $App::210::db_name,
 			'tb_name' => 'a210_page',
 			'ID'      => $env{'ID'},
 			'columns' => 
@@ -82,7 +82,7 @@ sub execute
 		foreach my $node (App::020::SQL::functions::tree::get_path(
 			$env{'ID'},
 			'db_h'    => 'main',
-			'db_name' => $TOM::DB{'main'}{'name'},
+			'db_name' => $App::210::db_name,
 			'tb_name' => 'a210_page'
 		))
 		{
@@ -106,7 +106,7 @@ sub execute
 				SELECT
 					ID
 				FROM
-					a210_page
+					`$App::210::db_name`.a210_page
 				WHERE $where AND ID_charindex = '$env{'ID_charindex_parent'}'
 				LIMIT 1
 			};
@@ -152,7 +152,7 @@ sub execute
 		SELECT
 			*
 		FROM
-			a210_page
+			`$App::210::db_name`.a210_page
 		WHERE $where AND ID_charindex LIKE '$env{'ID_charindex'}___'
 		ORDER BY
 			$env{'db_order'}
