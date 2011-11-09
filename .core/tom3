@@ -1111,7 +1111,7 @@ while ($main::CGI=new CGI::Fast())
 				if ($tom::a210)
 				{
 					my $t_a210=track TOM::Debug('a210:'.$main::FORM{'a210_path'});
-					my %sql_def=('db_h' => "main",'db_name' => $TOM::DB{'main'}{'name'},'tb_name' => "a210_page");
+					my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
 					# ziskanie dat o Sitemap node
 					# toto len v pripade ak uz nieje nastavene type z GET na nieco ine ako 'default' type
 					if (!$main::FORM{'a210_path'} && (!$main::FORM{'type'} || $main::FORM{'type'} eq "default"))
@@ -1120,6 +1120,7 @@ while ($main::CGI=new CGI::Fast())
 						my $ID=App::210::SQL::page_get_default_ID('lng'=>$main::FORM{'__lng'});
 						%a210=App::020::SQL::functions::get_ID(
 							%sql_def,
+							'db_name' => $App::210::db_name,
 							'ID'      => "'".TOM::Security::form::sql_escape($ID)."'",
 							'columns' => { '*' => 1 },
 							'-slave' => 1,
@@ -1131,6 +1132,7 @@ while ($main::CGI=new CGI::Fast())
 							App::020::SQL::functions::tree::get_path(
 								$ID,
 								%sql_def,
+								'db_name' => $App::210::db_name,
 								'-slave' => 1,
 								'-cache' => 3600
 							)
@@ -1156,7 +1158,7 @@ while ($main::CGI=new CGI::Fast())
 						%a210=App::020::SQL::functions::tree::find_path_url(
 							$main::FORM{'a210_path'},
 							'db_h' => "main",
-							'db_name' => $TOM::DB{'main'}{'name'},
+							'db_name' => $App::210::db_name,
 							'tb_name' => "a210_page",
 							'lng'     => $main::FORM{'__lng'},
 							'-cache' => 3600,
@@ -1166,7 +1168,7 @@ while ($main::CGI=new CGI::Fast())
 							App::020::SQL::functions::tree::get_path(
 								$a210{'ID'},
 								'db_h' => "main",
-								'db_name' => $TOM::DB{'main'}{'name'},
+								'db_name' => $App::210::db_name,
 								'tb_name' => "a210_page",
 								'-cache' => 3600,
 								'-slave' => 1
