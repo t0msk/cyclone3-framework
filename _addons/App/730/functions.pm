@@ -123,6 +123,12 @@ sub event_add
 		$columns{'datetime_finish'}='NOW()';
 		$columns{'datetime_publish_start'}='NOW()';
 		
+		my $user = $env{'ID_user'} if exists $env{'ID_user'};
+		$user = $main::USRM{'ID_user'} unless ($user);
+
+		$columns{'posix_owner'} = "'".TOM::Security::form::sql_escape($user)."'";
+		$columns{'posix_modified'} = "'".TOM::Security::form::sql_escape($user)."'";
+		
 		$env{'event.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
 			'db_name' => $App::730::db_name,
