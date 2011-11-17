@@ -1615,6 +1615,8 @@ sub ACL_user_update
 		$columns{'perm_3'} = "'".$env{'perm_3'}."'" if $env{'perm_3'};
 		$columns{'perm_4'} = "'".$env{'perm_4'}."'" if $env{'perm_4'};
 		$columns{'roles'} = "'".$env{'roles'}."'" if exists $env{'roles'};
+		$columns{'status'} = "'".$env{'status'}."'" if $env{'status'};
+		$columns{'note'} = "'".TOM::Security::form::sql_escape($env{'note'})."'" if $env{'note'};
 		App::020::SQL::functions::update(
 			'ID' => $db0_line{'ID'},
 			'db_h' => 'main',

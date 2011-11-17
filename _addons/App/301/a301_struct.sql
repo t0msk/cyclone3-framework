@@ -512,6 +512,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user` ( -- table is stored where addon
   `perm_3` char(1) character set ascii NOT NULL default 'N',
   `perm_4` char(1) character set ascii NOT NULL default 'N',
   `perm_roles_override` blob,
+  `note` text character set utf8 collate utf8_unicode_ci,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`r_prefix`,`r_table`,`r_ID_entity`),
@@ -538,6 +539,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_j` (
   `perm_3` char(1) character set ascii NOT NULL default 'N',
   `perm_4` char(1) character set ascii NOT NULL default 'N',
   `perm_roles_override` blob,
+  `note` text character set utf8 collate utf8_unicode_ci,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
