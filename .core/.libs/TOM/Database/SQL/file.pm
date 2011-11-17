@@ -544,12 +544,15 @@ sub install_table
 	my $table=$4;
 	
 	# don't install more than twice
-	if ($TOM::Database::SQL::compare::compared_tabe{$database.'.'.$table.'@'.$header->{'db_h'}})
+	if ($env{'-compare'})
 	{
-		$t->close();
-		return undef;
+		if ($TOM::Database::SQL::compare::compared_tabe{$database.'.'.$table.'@'.$header->{'db_h'}})
+		{
+			$t->close();
+			return undef;
+		}
+		$TOM::Database::SQL::compare::compared_tabe{$database.'.'.$table.'@'.$header->{'db_h'}}++;
 	}
-	$TOM::Database::SQL::compare::compared_tabe{$database.'.'.$table.'@'.$header->{'db_h'}}++;
 	
 	main::_log("database='$database' table='$table' in db_h='$header->{'db_h'}'");
 	main::_log_stdout("check $database.$table \@$header->{'db_h'}",3);
