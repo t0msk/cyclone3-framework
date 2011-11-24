@@ -74,7 +74,7 @@ sub genhashN
 	my $var;
 	for (1..$_[0])
 	{
-		$var.=$NCHAR[int(rand(25))];
+		$var.=$NCHAR[int(rand(10))];
 	}
 	return $var;
 }
