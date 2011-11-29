@@ -84,15 +84,21 @@ sub ticket_event_new
 	}
 	else
 	{
-		my %ticket = $sth0{'sth'}->fetchhash;
+		my %ticket = $sth0{'sth'}->fetchhash();
 		$ID_ticket = $ticket{'ID'};
+		if (!$ID_ticket)
+		{
+			main::_log("can't find ticket ID to update",1);
+			$t->close() if $debug;
+			return undef;
+		}
 		my $journalize;
 		$journalize=1 if $ticket{'status'} ne 'Y';
 		App::020::SQL::functions::update(
 			'db_h' => "main",
 			'db_name' => "TOM",
 			'tb_name' => "a100_ticket",
-			'ID' => $ticket{'ID'},
+			'ID' => $ID_ticket,
 			'columns' =>
 			{
 				'status' => "'Y'",
@@ -154,7 +160,7 @@ sub ticket_close
 	WHERE
 		ID_ticket=$env{'ID'}
 	/;
-	my %sth0 = TOM::Database::SQL::execute( $sql_events, 'db_h'=>$env{'db_h'} );
+	my %sth0 = TOM::Database::SQL::execute( $sql_events, 'db_h'=>$env{'db_h'}, '-quiet'=>1 );
 
 	$t->close();
 	return 1;
