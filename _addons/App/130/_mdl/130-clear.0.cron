@@ -8,6 +8,8 @@ sub execute
 {
 	my %env=@_;
 	
+	alarm(0);
+	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			ID
@@ -22,10 +24,12 @@ sub execute
 	{
 		if (-e $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml')
 		{
+			main::_log("unlink email body '$db0_line{'ID'}'");
 			unlink $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml';
 		}
 	}
 	
+	my $i;
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			ID
@@ -38,12 +42,14 @@ sub execute
 	});
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		main::_log("removing email ID=$db0_line{'ID'}");
+		main::_log("[$i/$sth0{'rows'}] removing email ID=$db0_line{'ID'}");
 		if (-e $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml')
 		{
+			main::_log("unlink email body '$db0_line{'ID'}'");
 			unlink $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml';
 		}
 		TOM::Database::SQL::execute(qq{DELETE FROM TOM.a130_send WHERE ID=?},'bind'=>[$db0_line{'ID'}],'quiet'=>1);
+		$i++;
 	}
 	
 	return 1
