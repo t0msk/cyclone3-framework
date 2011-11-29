@@ -86,7 +86,9 @@ elsif ($FORM{'a'})
 		eval
 		{
 			print "require $local\n";
-			require $local;
+			do $local;
+			$tom::P=$local;
+			$tom::P=~s|/local\.conf$||;
 			
 			foreach my $addon(@TOM::domain_default_addons)
 			{
