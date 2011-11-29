@@ -280,7 +280,12 @@ sub file_add
 		my %columns;
 		$columns{'ID_category'}=$env{'file_attrs.ID_category'} if $env{'file_attrs.ID_category'};
 		$columns{'status'}="'$env{'file_attrs.status'}'" if $env{'file_attrs.status'};
-		$columns{'name'}="'".TOM::Security::form::sql_escape($env{'file_attrs.name'})."'" if $env{'file_attrs.name'};
+		
+		if ($env{'file_attrs.name'})
+		{
+			$columns{'name'}="'".TOM::Security::form::sql_escape($env{'file_attrs.name'})."'";
+			$columns{'name_url'}="'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'file_attrs.name'}))."'";
+		}
 		
 		$env{'file_attrs.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
