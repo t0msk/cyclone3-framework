@@ -357,6 +357,8 @@ sub article_add
 	$env{'article_content.lng'} = $env{'article_attrs.lng'} unless $env{'article_content.lng'};
 	$env{'article_content.version'} = '0' unless $env{'article_content.version'};
 	
+	main::_log("processing article_content.version='$env{'article_content.version'}'");
+	
 	# NULL fix - ugly hack
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
