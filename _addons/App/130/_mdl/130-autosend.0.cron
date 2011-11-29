@@ -92,6 +92,12 @@ sub execute
 		}
 		
 #		main::_log("body size=".length($env0{'body'}));
+		if (length($env0{'body'}) < 10)
+		{
+			main::_log("can't send empty email body! ID='$env0{'ID'}' from='$env0{'from_email'}' datetime='$env0{'datetime_create'}'",3,"email",1);
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
+			next;
+		}
 #		next unless length($env0{'body'});
 		
 #		if ($env0{from_email} ne $TOM::contact{'from'})
