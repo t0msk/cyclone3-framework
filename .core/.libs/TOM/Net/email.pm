@@ -115,17 +115,69 @@ sub send
 		if ($sth0{'rows'})
 		{
 			my $ID=$sth0{'sth'}->insertid();
-			# save body into file
-			open(EMAILBODY,'>'.$TOM::P.'/_data/email/body_'.$ID.'.eml');
-			binmode(EMAILBODY);
-			print EMAILBODY $env{'body'};
-			close(EMAILBODY);
-			chmod 0666, $TOM::P.'/_data/email/body_'.$ID.'.eml';
 			
-			main::_log(" created ID='$ID'");
-			main::_log("created email ID='$ID' from='$env{'from_email'}' to='$env{'to_email'}' priority='$env{'priority'}' subject='$subject' domain='$tom::H'",3,"email",1);
+			if (!$ID)
+			{
+				my %sth0=TOM::Database::SQL::execute(qq{
+					SELECT
+						ID
+					FROM
+						TOM.a130_send
+					WHERE
+						sendtime = ? AND
+						from_name = ? AND
+						from_email = ? AND
+						from_host = ? AND
+						from_service = ? AND
+						to_name = ? AND
+						to_email = ?
+					LIMIT 1
+				},'bind'=>[
+					$env{'time'},
+					$env{'from_name'},
+					$env{'from_email'},
+					$tom::H,
+					$env{'from_service'},
+					$env{'to_name'},
+					$env{'to_email'}
+				],'quiet'=>1);
+				my %db0_line=$sth0{'sth'}->fetchhash();
+				$ID=$db0_line{'ID'};
+			}
 			
-			return 1;
+			if (!$ID)
+			{
+				main::_log("  can't write email into database (insertid() not returned), inserting email to filesystem",1);
+				main::_log(" can't write email into database (insertid() not returned), inserting email to filesystem",3,"email",1);
+			}
+			else
+			{
+				# save body into file
+				open(EMAILBODY,'>'.$TOM::P.'/_data/email/body_'.$ID.'.eml');
+				binmode(EMAILBODY);
+				print EMAILBODY $env{'body'};
+				close(EMAILBODY);
+				chmod 0666, $TOM::P.'/_data/email/body_'.$ID.'.eml';
+				
+				main::_log(" created email.ID='$ID'");
+				main::_log("created email ID='$ID' from='$env{'from_email'}' to='$env{'to_email'}' priority='$env{'priority'}' subject='$subject' domain='$tom::H' $!",3,"email",1);
+				
+				if (!-e $TOM::P.'/_data/email/body_'.$ID.'.eml')
+				{
+					main::_log("  can't write email.ID='$ID' into filesystem, inserting email body to database",1);
+					main::_log(" can't write email.ID='$ID' into filesystem, inserting email body to database",3,"email",1);
+					
+					# error writing email to filesystem
+					TOM::Database::SQL::execute(qq{
+						UPDATE TOM.a130_send
+						SET body=?
+						WHERE ID=?
+						LIMIT 1
+					},'bind'=>[$env{'body'},$ID],'quiet'=>1);
+				}
+				
+				return 1;
+			}
 		}
 	}
 	
