@@ -450,7 +450,23 @@ sub get_ACL_roles
 	
 	my $t=track TOM::Debug(__PACKAGE__."::get_ACL_roles()");
 	
-	main::_log("ID_user='$env{'ID_user'}' ID_group='$env{'ID_group'}' r_prefix='$env{'r_prefix'}' r_table='$env{'r_table'}' r_prefix='$env{'r_ID_entity'}'");
+	main::_log("ID_user='$env{'ID_user'}' ID_group='$env{'ID_group'}' r_prefix='$env{'r_prefix'}' r_table='$env{'r_table'}' r_ID_entity='$env{'r_ID_entity'}'");
+	
+	# get full roles
+	foreach my $role(sort keys %App::301::perm::ACL_roles)
+	{
+#		next unless $role=~/^$env{'r_prefix'}\./;
+		
+#		print "role=$role\n";
+		
+#		foreach (keys %{$App::301::perm::ACL_roles{$role}})
+#		{
+#			print "a $_\n";
+#		}
+		
+#		$roles{$role}=$App::301::perm::roles{$role}{'R'};
+#		print "$role=$roles{$role}\n";
+	}
 	
 	# get full ACL from this entity and filter it after
 	my @ACL=get_ACL(
@@ -458,7 +474,7 @@ sub get_ACL_roles
 		'r_table' => $env{'r_table'},
 		'r_ID_entity' => $env{'r_ID_entity'},
 	);
-
+	
 	foreach my $ACL_item(@ACL)
 	{
 		if (($env{'ID_user'} && !$ACL_item->{'folder'} && $ACL_item->{'ID'} eq $env{'ID_user'}) ||
@@ -706,15 +722,17 @@ sub get_entity_roles
 		$groups_roles{$role}=$perm;
 	}
 	
-	main::_log("output (only prefix!):");
+	main::_log("output RL (filtered to prefix '$env{'r_prefix'}\.')");
 	foreach my $role(sort keys %groups_roles)
 	{
 		delete $groups_roles{$role} unless $role=~/^$env{'r_prefix'}\./;
 		next unless $role=~/^$env{'r_prefix'}\./;
 		main::_log(" RL_$role '$groups_roles{$role}'");
+		$roles{$role}=$groups_roles{$role};
 	}
 	
 	$t->close();
+#	return $permstrip, %roles;
 	return ({%roles},$permstrip);
 }
 
@@ -735,6 +753,18 @@ sub get_entity_sum_roles
 	
 	main::_log("ID_user='$env{'ID_user'}' r_prefix='$env{'r_prefix'}' r_table='$env{'r_table'}' r_prefix='$env{'r_ID_entity'}'");
 	
+	# polopatisticky postup
+	# - 
+	#
+	# 
+	#
+	#
+	#
+	#
+	#
+	#
+	#
+	
 	# get ID_user global roles (defined by groups and ID_user)
 	my %roles_global=get_roles(
 		'ID_user'=>$env{'ID_user'},
@@ -749,7 +779,7 @@ sub get_entity_sum_roles
 	
 	
 	# get special roles of this entity
-	my $roles_entity=get_entity_roles(
+	my ($roles_entity,$permstrip)=get_entity_roles(
 		'r_prefix' => $env{'r_prefix'},
 		'r_table' => $env{'r_table'},
 		'r_ID_entity' => $env{'r_ID_entity'},
@@ -758,9 +788,19 @@ sub get_entity_sum_roles
 	);
 	
 	# and combine this all :)
+	my %roles_output;
+	foreach (keys %{$roles_entity})
+	{
+		$roles_global{$_}=~tr/RWXrwx_/rwxrwx-/;
+		$roles_entity->{$_}=~tr/RWXrwx_/rwx   -/;
+		my $output=perm_sum($roles_global{$_},$roles_entity->{$_});
+		$output='rwx' if $roles_global{'unlimited'};
+		main::_log("RL_$_ '$roles_global{$_}'+'$roles_entity->{$_}'='$output'");
+		$roles_output{$_}=$output;
+	}
 	
 	$t->close();
-	return undef;
+	return %roles_output;
 }
 
 
@@ -1634,6 +1674,9 @@ sub ACL_user_update
 	}
 	else
 	{
+		my %columns;
+		$columns{'status'} = "'".$env{'status'}."'" if $env{'status'};
+		$columns{'note'} = "'".TOM::Security::form::sql_escape($env{'note'})."'" if $env{'note'};
 		App::020::SQL::functions::new(
 			'db_h' => 'main',
 			'db_name' => $db_name,
@@ -1647,7 +1690,8 @@ sub ACL_user_update
 				'perm_R' => "'Y'",
 				'perm_W' => "'Y'",
 				'perm_X' => "'Y'",
-				'roles' => "'".$env{'roles'}."'"
+				'roles' => "'".$env{'roles'}."'",
+				%columns
 			},
 			'-journalize' => 1,
 			'-posix' => 1,
