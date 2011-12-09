@@ -44,7 +44,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
   `about` text character set utf8 collate utf8_unicode_ci,
   `note` text character set utf8 collate utf8_unicode_ci,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  
+
+  `datetime_evidence` datetime default NULL,
+  `datetime_modified` datetime default NULL,  
+
+  `mode` char(1) character set ascii NOT NULL default 'M',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
@@ -93,7 +97,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org_j` (
   `about` text character set utf8 collate utf8_unicode_ci,
   `note` text character set utf8 collate utf8_unicode_ci,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  
+
+  `datetime_evidence` datetime default NULL,
+  `datetime_modified` datetime default NULL,  
+
+  `mode` char(1) character set ascii NOT NULL default 'M',  
   `status` char(1) character set ascii NOT NULL default 'Y'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
