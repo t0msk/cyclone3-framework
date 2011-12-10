@@ -102,7 +102,6 @@ use vars qw/
 	%smdl_env
 	%CACHE
 	%VAR
-	$app
 	%var
 	%mdlvar
 	/;
@@ -290,13 +289,16 @@ sub module
 {
 	local %mdl_env=@_;
 	$mdl_env{'-cache'} if $mdl_env{'-cache_id'};
-	if ($mdl_env{'-addon'}){$mdl_env{'-category'}=$mdl_env{'-addon'};$mdl_env{'-category'}=~s|^a||;};
-	my $t=track TOM::Debug("module",'attrs'=>"(".$mdl_env{'-category'}."-".$mdl_env{'-name'}.")",'timer'=>1);
+	if ($mdl_env{'-category'}){$mdl_env{'-addon'}="a".$mdl_env{'-category'}}; # backward compatibility
+	$mdl_env{'-addon_type'}='App' if $mdl_env{'-addon'}=~/^a/;
+	$mdl_env{'-addon_type'}='Ext' if $mdl_env{'-addon'}=~/^e/;
+	$mdl_env{'-addon_name'}=$mdl_env{'-addon'};$mdl_env{'-addon_name'}=~s|^.||;
+	my $t=track TOM::Debug("module",'attrs'=>"(".$mdl_env{'-addon'}."-".$mdl_env{'-name'}.")",'timer'=>1);
 	
 	local %mdl_C;
 	local $tom::ERR;
 	local $tom::ERR_plus;
-	local $app=$mdl_env{-category};
+#	local $app=$mdl_env{-category};
 	my $cache_domain;
 	my $return_code;
 	my %return_data;
@@ -324,7 +326,7 @@ sub module
 		/^-/ && do {$mdl_C{$_}=$mdl_env{$_};delete $mdl_env{$_};}
 	}
 	
-	$mdl_C{'-category'}="0" unless $mdl_C{'-category'};
+	$mdl_C{'-addon'}="a010" unless $mdl_C{'-addon'};
 	$mdl_C{'-version'}="0" unless $mdl_C{'-version'};
 	$mdl_C{'-xsgn'}=$mdl_C{'-tpl'} || $tom::dsgn unless $mdl_C{'-xsgn'};
 	$mdl_C{'-tpl'}=$mdl_C{'-xsgn'} unless $mdl_C{'-tpl'};
@@ -365,7 +367,7 @@ sub module
 		main::_log("cache md5='".$mdl_C{'-md5'}."'") if $debug;
 		
 		# NAZOV PRE TYP CACHE V KONFIGURAKU
-		$mdl_C{'T_CACHE'}=$mdl_C{'-category'}."-".$mdl_C{'-name'}."-".$mdl_C{'-cache_id'};
+		$mdl_C{'T_CACHE'}=$mdl_C{'-addon'}."-".$mdl_C{'-name'}."-".$mdl_C{'-cache_id'};
 		
 		my $cache;
 		my $cache_parallel;
@@ -465,7 +467,7 @@ sub module
 					'$tom::Hm',
 					'$cache_domain',
 					'pub',
-					'$mdl_C{-category}',
+					'$mdl_C{-addon}',
 					'$mdl_C{-name}',
 					'$mdl_C{-cache_id}',
 					'$main::time_current',
@@ -570,27 +572,27 @@ sub module
 	if (($mdl_C{'-global'}==2)&&($tom::Pm))
 	{
 		# at first try addons directory
-		my $addon_path = $tom::Pm . "/_addons/App/" . $mdl_C{'-category'} . "/_mdl/" . $mdl_C{'-category'} . "-" . $mdl_C{'-name'} . "." . $mdl_C{'-version'} . ".mdl";
+		my $addon_path = $tom::Pm . "/_addons/".$mdl_C{'-addon_type'}."/" . $mdl_C{'-addon_name'} . "/_mdl/" . $mdl_C{'-addon_name'} . "-" . $mdl_C{'-name'} . "." . $mdl_C{'-version'} . ".mdl";
 		if (-e $addon_path)
 		{
 			$mdl_C{'P_MODULE'}=$addon_path;
 		}
 		else
 		{
-			$mdl_C{'P_MODULE'}=$tom::Pm."/_mdl/".$mdl_C{'-category'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
+			$mdl_C{'P_MODULE'}=$tom::Pm."/_mdl/".$mdl_C{'-addon_name'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
 		}
 	}
 	elsif ($mdl_C{'-global'})
 	{
 		$mdl_C{'-global'}=1;
-		my $addon_path = $TOM::P . "/_addons/App/" . $mdl_C{'-category'} . "/_mdl/" . $mdl_C{'-category'} . "-" . $mdl_C{'-name'} . "." . $mdl_C{'-version'} . ".mdl";
+		my $addon_path = $TOM::P . "/_addons/".$mdl_C{'-addon_type'}."/" . $mdl_C{'-addon_name'} . "/_mdl/" . $mdl_C{'-addon_name'} . "-" . $mdl_C{'-name'} . "." . $mdl_C{'-version'} . ".mdl";
 		# find in overlays
 		foreach my $item(@TOM::Overlays::item)
 		{
 			my $file=
 				$TOM::P.'/_overlays/'.$item
-				.'/_addons/App/'.$mdl_C{'-category'}.'/_mdl/'
-				.$mdl_C{'-category'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'}.'.mdl';
+				.'/_addons/'.$mdl_C{'-addon_type'}.'/'.$mdl_C{'-addon_name'}.'/_mdl/'
+				.$mdl_C{'-addon_name'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'}.'.mdl';
 			if (-e $file){$addon_path=$file;last;}
 		}
 		# at first try addons directory
@@ -600,12 +602,12 @@ sub module
 		}
 		else
 		{
-			$mdl_C{'P_MODULE'}=$TOM::P."/_mdl/".$mdl_C{'-category'}."/".$mdl_C{'-category'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
+			$mdl_C{'P_MODULE'}=$TOM::P."/_mdl/".$mdl_C{'-addon_name'}."/".$mdl_C{'-addon_name'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
 		}
 	}
 	else
 	{
-		my $addon_path = $tom::P . "/_addons/App/" . $mdl_C{'-category'} . "/_mdl/" . $mdl_C{'-category'} . "-" . $mdl_C{'-name'} . "." . $mdl_C{'-version'} . ".mdl";
+		my $addon_path = $tom::P . "/_addons/".$mdl_C{'-addon_type'}."/" . $mdl_C{'-addon_name'} . "/_mdl/" . $mdl_C{'-addon_name'} . "-" . $mdl_C{'-name'} . "." . $mdl_C{'-version'} . ".mdl";
 		# at first try addons directory
 		if (-e $addon_path)
 		{
@@ -613,7 +615,7 @@ sub module
 		}
 		else
 		{
-			$mdl_C{'P_MODULE'}=$tom::P."/_mdl/".$mdl_C{'-category'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
+			$mdl_C{'P_MODULE'}=$tom::P."/_mdl/".$mdl_C{'-addon_name'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
 		}
 	}
 	
@@ -623,7 +625,7 @@ sub module
 		main::_log("module file '$mdl_C{'P_MODULE'}' can't be found",1);
 		TOM::Error::module(
 			'-TMP' => $mdl_C{'-TMP'},
-			'-MODULE' => "[MDL::".$mdl_C{'-category'}."-".$mdl_C{'-name'}."]",
+			'-MODULE' => "[MDL::".$mdl_C{'-addon'}."-".$mdl_C{'-name'}."]",
 			'-ERROR' => "module file '$mdl_C{'P_MODULE'}' can't be found"
 		);
 		$t->close();
@@ -729,7 +731,7 @@ our \$VERSION=$m_time;
 				TOM::Error::module
 				(
 					'-TMP' => $mdl_C{'-TMP'},
-					'-MODULE' => "[MDL::".$mdl_C{'-category'}."-".$mdl_C{'-name'}."]",
+					'-MODULE' => "[MDL::".$mdl_C{'-addong'}."-".$mdl_C{'-name'}."]",
 					'-ERROR' => "Unknown TMP-".$mdl_C{'-TMP'},
 				);
 				return undef;
@@ -749,7 +751,7 @@ our \$VERSION=$m_time;
 						'domain' => $tom::Hm,
 						'domain_sub' => $cache_domain,
 						'engine' => "pub",
-						'Capp' => $mdl_C{'-category'},
+						'Capp' => $mdl_C{'-addon'},
 						'Cmodule' => $mdl_C{'-name'},
 						'Cid' => $mdl_C{'-cache_id'},
 						'Cid_md5' => $mdl_C{'-md5'},
@@ -813,7 +815,7 @@ our \$VERSION=$m_time;
 						$main::time_current,
 						$CACHE{$mdl_C{'T_CACHE'}}{'-domain'},
 						$CACHE{$mdl_C{'T_CACHE'}}{'-domain_sub'},
-						$mdl_C{'-category'},
+						$mdl_C{'-addon'},
 						$mdl_C{'-name'},
 						$mdl_C{'-cache_id'}
 					]);
@@ -837,7 +839,7 @@ our \$VERSION=$m_time;
 			}
 			TOM::Error::module(
 				'-TMP' => $mdl_C{'-TMP'},
-				'-MODULE' => "[MDL::".$mdl_C{'-category'}."-".$mdl_C{'-name'}."]",
+				'-MODULE' => "[MDL::".$mdl_C{'-addon'}."-".$mdl_C{'-name'}."]",
 				'-ERROR' => $tom::ERR,
 				'-PLUS' => $tom::ERR_plus,
 			)
@@ -860,7 +862,7 @@ our \$VERSION=$m_time;
 		TOM::Error::module
 		(
 			'-TMP' => $mdl_C{'-TMP'},
-			'-MODULE' => "[MDL::".$mdl_C{'-category'}."-".$mdl_C{'-name'}."]",
+			'-MODULE' => "[MDL::".$mdl_C{'-addon'}."-".$mdl_C{'-name'}."]",
 			'-ERROR' => $@,
 		);# unless $mdl_C{-noerror_run};
 	};
@@ -915,7 +917,7 @@ sub module_process_return_data
 sub supermodule
 {
 	local %smdl_env=@_;
-	local $app=$smdl_env{-category};
+#	local $app=$smdl_env{-category};
 	$Tomahawk::module::authors="";
 	
 	# SPRACOVANIE PREMMENNYCH
@@ -1240,11 +1242,11 @@ sub GetXSGN
 {
 	my %env=@_;
 	
-	main::_log("loading XSGN -category='$mdl_C{-category}' -name='$mdl_C{-name}' -version='$mdl_C{-version}' -xsgn='$mdl_C{-xsgn}'");
-	$mdl_C{P_XSGN}=$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".".$mdl_C{-xsgn}.".xsgn";
+	main::_log("loading XSGN -addon='$mdl_C{-addon}' -name='$mdl_C{-name}' -version='$mdl_C{-version}' -xsgn='$mdl_C{-xsgn}'");
+	$mdl_C{'P_XSGN'}=$mdl_C{'-addon_name'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".".$mdl_C{'-xsgn'}.".xsgn";
 #	main::_log("P_XSGN='$mdl_C{P_XSGN}'");
  
-	if (!$mdl_C{-name})
+	if (!$mdl_C{'-name'})
 	{
 		main::_log("sorry, I am not in module, can't import design",1);
 		$tom::ERR="Can't import design, I am not in module";
@@ -1277,7 +1279,7 @@ sub GetXSGN
 	if (!$mdl_C{-global})
 	{
 		$mdl_C{-xsgn_global}=0;
-		my $addon_path=$tom::P."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XSGN};
+		my $addon_path=$tom::P."/_addons/".$mdl_C{'-addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{P_XSGN};
 #		main::_log("addon_path='$addon_path'");
 		if (-e $addon_path){$mdl_C{P_XSGN}=$addon_path;}
 		else {$mdl_C{P_XSGN}=$tom::P."/_mdl/".$mdl_C{P_XSGN};}
@@ -1286,7 +1288,7 @@ sub GetXSGN
 	elsif ($mdl_C{-xsgn_global}==1)
 	{
 		$mdl_C{-xsgn_global}=1;
-		my $addon_path=$TOM::P."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XSGN};
+		my $addon_path=$TOM::P."/_addons/".$mdl_C{'-addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{P_XSGN};
 		# find in overlays
 		foreach my $item(@TOM::Overlays::item)
 		{
@@ -1298,13 +1300,13 @@ sub GetXSGN
 		}
 #		main::_log("addon_path='$addon_path'");
 		if (-e $addon_path){$mdl_C{P_XSGN}=$addon_path;}
-		else {$mdl_C{P_XSGN}=$TOM::P."/_mdl/".$mdl_C{-category}."/".$mdl_C{P_XSGN}}
+		else {$mdl_C{P_XSGN}=$TOM::P."/_mdl/".$mdl_C{'-addon_name'}."/".$mdl_C{P_XSGN}}
 	}
 	# if module is in master/global and i wish to load xsgn file master
 	elsif (($tom::Pm)&&($mdl_C{-xsgn_global}==2))
 	{
 		$mdl_C{-xsgn_global}=2;
-		my $addon_path=$tom::Pm."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XSGN};
+		my $addon_path=$tom::Pm."/_addons/".$mdl_C{'-addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{P_XSGN};
 #		main::_log("addon_path='$addon_path'");
 		if (-e $addon_path){$mdl_C{P_XSGN}=$addon_path;}
 		else {$mdl_C{P_XSGN}=$tom::Pm."/_mdl/".$mdl_C{P_XSGN};}
@@ -1312,7 +1314,7 @@ sub GetXSGN
 	else
 	{
 		$mdl_C{-xsgn_global}=0;
-		my $addon_path=$tom::P."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XSGN};
+		my $addon_path=$tom::P."/_addons/".$mdl_C{'-addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{P_XSGN};
 #		main::_log("addon_path='$addon_path'");
 		if (-e $addon_path){$mdl_C{P_XSGN}=$addon_path;}
 		else {$mdl_C{P_XSGN}=$tom::P."/_mdl/".$mdl_C{P_XSGN};}
@@ -1325,7 +1327,7 @@ sub GetXSGN
 	{
 		main::_log("can't open file '$mdl_C{P_XSGN}' '$!'",1);
 		$tom::ERR= "Can't import design \"" .
-			$mdl_C{-xsgn} . "\" (" . $mdl_C{-xsgn_global} . "/" . $mdl_C{-global} . "/" . $mdl_C{-category} . "-" . $mdl_C{-name} . "." . $mdl_C{-version} . "." . $mdl_C{-xsgn} . ".xsgn".") ($mdl_C{P_XSGN}) - " . $!;
+			$mdl_C{-xsgn} . "\" (" . $mdl_C{-xsgn_global} . "/" . $mdl_C{-global} . "/" . $mdl_C{'-addon'} . "-" . $mdl_C{-name} . "." . $mdl_C{-version} . "." . $mdl_C{-xsgn} . ".xsgn".") ($mdl_C{P_XSGN}) - " . $!;
 		return undef;
 	};
 	
@@ -1366,8 +1368,8 @@ sub GetTpl
 	my %env=@_;
 	
 	$mdl_C{'-tpl'}="default" unless $mdl_C{'-tpl'};
-	main::_log("GetTpl -category='$mdl_C{'-category'}' -name='$mdl_C{'-name'}' -version='$mdl_C{'-version'}' -tpl='$mdl_C{'-tpl'}'");
-	$mdl_C{'P_TPL'}=$mdl_C{'-category'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".".$mdl_C{'-tpl'}.".tpl";
+	main::_log("GetTpl -addon='$mdl_C{'-addon'}' -name='$mdl_C{'-name'}' -version='$mdl_C{'-version'}' -tpl='$mdl_C{'-tpl'}'");
+	$mdl_C{'P_TPL'}=$mdl_C{'-addon'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".".$mdl_C{'-tpl'}.".tpl";
 	
 	if (!$mdl_C{'-name'})
 	{
@@ -1380,7 +1382,7 @@ sub GetTpl
 	if (!$mdl_C{'-global'})
 	{
 		$mdl_C{'-tpl_global'}=0;
-		my $addon_path=$tom::P."/_addons/App/".$mdl_C{'-category'}."/_mdl/".$mdl_C{'P_TPL'};
+		my $addon_path=$tom::P."/_addons/".$mdl_C{'-addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{'P_TPL'};
 		if (-e $addon_path){$mdl_C{'P_TPL'}=$addon_path;}
 		else {$mdl_C{'P_TPL'}=$tom::P."/_mdl/".$mdl_C{'P_TPL'};}
 	}
@@ -1388,31 +1390,31 @@ sub GetTpl
 	elsif ($mdl_C{'-tpl_global'}==1)
 	{
 		$mdl_C{'-tpl_global'}=1;
-		my $addon_path=$TOM::P."/_addons/App/".$mdl_C{'-category'}."/_mdl/".$mdl_C{'P_TPL'};
+		my $addon_path=$TOM::P."/_addons/".$mdl_C{'-addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{'P_TPL'};
 		# find in overlays
 		foreach my $item(@TOM::Overlays::item)
 		{
 			my $file=
 				$TOM::P.'/_overlays/'.$item
-				.'/_addons/App/'.$mdl_C{'-category'}.'/_mdl/'
+				.'/_addons/'.$mdl_C{'-addon_type'}.'/'.$mdl_C{'-addon_name'}.'/_mdl/'
 				.$mdl_C{'P_TPL'};
 			if (-e $file){$addon_path=$file;last;}
 		}
 		if (-e $addon_path){$mdl_C{'P_TPL'}=$addon_path;}
-		else {$mdl_C{'P_TPL'}=$TOM::P."/_mdl/".$mdl_C{'-category'}."/".$mdl_C{'P_TPL'}}
+		else {$mdl_C{'P_TPL'}=$TOM::P."/_mdl/".$mdl_C{'-addon_name'}."/".$mdl_C{'P_TPL'}}
 	}
 	# if module is in master/global and i wish to load tpl file master
 	elsif (($tom::Pm)&&($mdl_C{'-tpl_global'}==2))
 	{
 		$mdl_C{'-tpl_global'}=2;
-		my $addon_path=$tom::Pm."/_addons/App/".$mdl_C{'-category'}."/_mdl/".$mdl_C{'P_TPL'};
+		my $addon_path=$tom::Pm."/_addons/".$mdl_C{'-addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{'P_TPL'};
 		if (-e $addon_path){$mdl_C{'P_TPL'}=$addon_path;}
 		else {$mdl_C{'P_TPL'}=$tom::Pm."/_mdl/".$mdl_C{'P_TPL'};}
 	}
 	else
 	{
 		$mdl_C{'-tpl_global'}=0;
-		my $addon_path=$tom::P."/_addons/App/".$mdl_C{'-category'}."/_mdl/".$mdl_C{'P_TPL'};
+		my $addon_path=$tom::P."/_addons/".$mdl_C{'-addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{'P_TPL'};
 		if (-e $addon_path){$mdl_C{'P_TPL'}=$addon_path;}
 		else {$mdl_C{'P_TPL'}=$tom::P."/_mdl/".$mdl_C{'P_TPL'};}
 	}
@@ -1453,7 +1455,7 @@ sub GetXLNG
 {
 	my %env=@_;
 	# HLADAME LANGUAGE
-	$mdl_C{P_XLNG}=$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version};
+	$mdl_C{P_XLNG}=$mdl_C{'-addon_name'}."-".$mdl_C{-name}.".".$mdl_C{-version};
 	$mdl_C{P_XLNG}.=".".$mdl_C{-xsgn} if $mdl_C{-xlng_xsgn};
 	$mdl_C{P_XLNG}.=".xlng";
 	
@@ -1461,37 +1463,37 @@ sub GetXLNG
 	if (!$mdl_C{-global}) # ak je modul lokalny, tak moze byt design len lokalny
 	{
 		$mdl_C{-xlng_global}=0;
-		my $addon_path=$tom::P."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XLNG};
+		my $addon_path=$tom::P."/_addons/".$mdl_C{'-addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{P_XLNG};
 		if (-e $addon_path){$mdl_C{P_XLNG}=$addon_path}
 		else {$mdl_C{P_XLNG}=$tom::P."/_mdl/".$mdl_C{P_XLNG};}
 	}
 	# ak je modul global, a chcem design global, tak ho dostanem :))
 	elsif ($mdl_C{-xlng_global}==1)
 	{
-		my $addon_path=$TOM::P."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XLNG};
+		my $addon_path=$TOM::P."/_addons/".$mdl_C{'-addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{P_XLNG};
 		# find in overlays
 		foreach my $item(@TOM::Overlays::item)
 		{
 			my $file=
 				$TOM::P.'/_overlays/'.$item
-				.'/_addons/App/'.$mdl_C{'-category'}.'/_mdl/'
+				.'/_addons/'.$mdl_C{'-addon_type'}.'/'.$mdl_C{'-addon_name'}.'/_mdl/'
 				.$mdl_C{'P_XSGN'};
 			if (-e $file){$addon_path=$file;last;}
 		}
 		if (-e $addon_path){$mdl_C{P_XLNG}=$addon_path}
-		else {$mdl_C{P_XLNG}=$TOM::P."/_mdl/".$mdl_C{-category}."/".$mdl_C{P_XLNG}};
+		else {$mdl_C{P_XLNG}=$TOM::P."/_mdl/".$mdl_C{'-addon_name'}."/".$mdl_C{P_XLNG}};
 	}
 	# chcem mastera, mam mastera a modul je global, alebo master
 	elsif (($tom::Pm)&&($mdl_C{-xlng_global}==2))
 	{
-		my $addon_path=$tom::Pm."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XLNG};
+		my $addon_path=$tom::Pm."/_addons/".$mdl_C{'addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{P_XLNG};
 		if (-e $addon_path){$mdl_C{P_XLNG}=$addon_path}
 		else {$mdl_C{P_XLNG}=$tom::Pm."/_mdl/".$mdl_C{P_XLNG}};
 	}
 	else
 	{
 		$mdl_C{-xlng_global}=0;
-		my $addon_path=$tom::P."/_addons/App/".$mdl_C{-category}."/_mdl/".$mdl_C{P_XLNG};
+		my $addon_path=$tom::P."/_addons/".$mdl_C{'-addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{P_XLNG};
 		if (-e $addon_path){$mdl_C{P_XLNG}=$addon_path}
 		else {$mdl_C{P_XLNG}=$tom::P."/_mdl/".$mdl_C{P_XLNG}};
 	}
