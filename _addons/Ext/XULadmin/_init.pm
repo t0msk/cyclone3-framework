@@ -22,6 +22,14 @@ BEGIN
 
 our $DIR=(__FILE__=~/^(.*)\//)[0];
 
+our $VERSION='1';
+
+if (!-e $tom::P.'/_data/XULadmin')
+{
+	File::Path::mkpath $tom::P.'/_data/XULadmin';
+	chmod 0770,$tom::P.'/_data/XULadmin';
+}
+
 1;
 
 =head1 AUTHOR
