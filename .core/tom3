@@ -1120,7 +1120,6 @@ while ($main::CGI=new CGI::Fast())
 						my $ID=App::210::SQL::page_get_default_ID('lng'=>$main::FORM{'__lng'});
 						%a210=App::020::SQL::functions::get_ID(
 							%sql_def,
-							'db_name' => $App::210::db_name,
 							'ID'      => "'".TOM::Security::form::sql_escape($ID)."'",
 							'columns' => { '*' => 1 },
 							'-slave' => 1,
@@ -1132,7 +1131,6 @@ while ($main::CGI=new CGI::Fast())
 							App::020::SQL::functions::tree::get_path(
 								$ID,
 								%sql_def,
-								'db_name' => $App::210::db_name,
 								'-slave' => 1,
 								'-cache' => 3600
 							)
@@ -2046,7 +2044,7 @@ while ($main::CGI=new CGI::Fast())
 			TOM::Engine::pub::cookies::send();
 			
 			my $out=$location;
-			my $t_301=track TOM::Debug("301 redirect by main::location");
+			my $t_301=track TOM::Debug("redirect by main::location");
 			if ($out=~/^-(\d+)/)
 			{
 				my $code=$1;
@@ -2061,21 +2059,21 @@ while ($main::CGI=new CGI::Fast())
 				next;
 			}
 			
-			main::_log("301 redirect to '$out'");
+			main::_log("302 redirect to '$out'");
 			
 			if ($out=~/^http/)
 			{
-				# ide kod 301
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"301",1);
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"301");
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)");
+				# ide kod 302
+				main::_log("302 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"301",1);
+				main::_log("302 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"301");
+				main::_log("302 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)");
 				
 				$t_301->close();
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
 				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
-				print "Status: 301 Moved permanently\n";
+				print "Status: 302 Found\n";
 				print "Location: $out\n\n";
 				next;
 			}
@@ -2144,16 +2142,16 @@ while ($main::CGI=new CGI::Fast())
 				# nekodovana linka
 				$link=~s|&|&amp;|g unless $TOM::type_code;
 				main::_log("URL='$link'");
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"301",1);
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"301");
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)");
+				main::_log("302 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"301",1);
+				main::_log("302 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"301");
+				main::_log("302 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)");
 				
 				$t_301->close();
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
 				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
-				print "Status: 301 Moved permanently\n";
+				print "Status: 302 Found\n";
 				print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 				next;
 			}
