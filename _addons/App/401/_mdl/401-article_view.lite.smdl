@@ -13,6 +13,8 @@ sub execute
 {
 	my %env=@_;
 	
+	$env{'article_attrs.lng'}=$env{'lng'} unless $env{'article_attrs.lng'};
+	
 	my $sql_where;
 	my $sql_order;
 	
@@ -92,7 +94,7 @@ sub execute
 		)
 		WHERE
 			article_attrs.status='Y' AND
-			article_attrs.lng='$env{'lng'}' AND
+			article_attrs.lng='$env{'article_attrs.lng'}' AND
 			article_attrs.datetime_start <= NOW() AND
 			(article_attrs.datetime_stop IS NULL OR article_attrs.datetime_stop >= NOW())
 			$sql_where
@@ -226,8 +228,10 @@ sub execute
 		$params{'page'}=1 unless $params{'page'};
 	}
 	
+	$env{'view_TMP'}=$env{'-TMP'} unless $env{'view_TMP'};	
 	$env{'view_version'}="lite" unless $env{'view_version'};
 	$env{'view_global'}="1" unless exists $env{'view_global'};
+	$env{'view_xsgn'}=$env{'-xsgn'} unless exists $env{'view_xsgn'};
 	
 	Tomahawk::module(
 		'-type' => "mdl",
@@ -241,6 +245,7 @@ sub execute
 		'-cache_id' => 'default',
 		'-cache_changed' => $article{'datetime_create'},
 		'-TMP' =>	$env{'view_TMP'},
+		'-TMP_check' =>	$env{'view_TMP_check'},
 			'article.ID' => $article{'ID'},
 #			'article_attrs.ID_category' => ${'ID_article'},
 			'a501_image_file.ID_format' => $env{'a501_image_file.ID_format'},
