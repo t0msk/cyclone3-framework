@@ -14,7 +14,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
   `name` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(64) character set ascii NOT NULL default '',
   `name_short` varchar(64) character set utf8 collate utf8_bin NOT NULL default '',
-  `name_code` char(4) character set ascii NOT NULL default '',
+  `name_code` char(20) character set ascii NOT NULL default '',
   
   `legal_form` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `ID_org` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
@@ -67,7 +67,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org_j` (
   `name` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(64) character set ascii NOT NULL default '',
   `name_short` varchar(64) character set utf8 collate utf8_bin NOT NULL default '',
-  `name_code` char(4) character set ascii NOT NULL default '',
+  `name_code` char(20) character set ascii NOT NULL default '',
   
   `legal_form` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `ID_org` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
