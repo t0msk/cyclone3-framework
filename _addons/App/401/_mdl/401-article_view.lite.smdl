@@ -30,6 +30,10 @@ sub execute
 	$sql_where.="AND article_attrs.name_url LIKE '$env{'article_attrs.name_url'}' "
 		if $env{'article_attrs.name_url'};
 	
+	$env{'article_content.status'}='Y' unless exists $env{'article_content.status'};
+	$sql_where.="AND article_content.status = '$env{'article_content.status'}' "
+		if $env{'article_content.status'};
+	
 	if ($env{'sql_where'})
 	{
 		$sql_where.="AND ".$env{'sql_where'};

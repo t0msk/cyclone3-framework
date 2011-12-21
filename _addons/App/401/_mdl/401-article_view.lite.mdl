@@ -157,16 +157,21 @@ sub execute
 	my $sql_where;
 	
 	# ID_entity
-	$sql_where.="AND article.ID_entity=$env{'article.ID_entity'}"
+	$sql_where.=" AND article.ID_entity=$env{'article.ID_entity'}"
 		if $env{'article.ID_entity'};
 	
 	# ID
-	$sql_where.="AND article.ID=$env{'article.ID'}"
+	$sql_where.=" AND article.ID=$env{'article.ID'}"
 		if $env{'article.ID'};
 	
 	# ID_category
-	$sql_where.="AND article_attrs.ID_category IN ($env{'article_attrs.ID_category'})"
+	$sql_where.=" AND article_attrs.ID_category IN ($env{'article_attrs.ID_category'})"
 		if $env{'article_attrs.ID_category'};
+	
+	# article_content.status
+	$env{'article_content.status'}='Y' unless exists $env{'article_content.status'};
+	$sql_where.=" AND article_content.status = '$env{'article_content.status'}' "
+		if $env{'article_content.status'};
 	
 	$env{'world_status'}="Y" unless $env{'world_status'};
 	
