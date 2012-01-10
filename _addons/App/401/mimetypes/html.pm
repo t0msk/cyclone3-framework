@@ -1031,6 +1031,11 @@ sub start
 					SELECT
 						article.ID_entity,
 						article.ID,
+						article_attrs.name,
+						article_attrs.name_url,
+						article_attrs.alias_url,
+						article_content.subtitle,
+						article_content.abstract,
 						article_content.body
 					FROM
 						`$App::401::db_name`.a401_article AS article
@@ -1074,13 +1079,22 @@ sub start
 					$p->config_from($self);
 					delete $p->{'config'}->{'editable'};
 					$p->{'config'}->{'inline'}=1; # this is inline article
-					$p->parse($db0_line{'body'});
+					if ($attr->{'mode'} eq "abstract")
+					{
+						$p->parse($db0_line{'abstract'});
+					}
+					else
+					{
+						$p->parse($db0_line{'body'});
+					}
 					$p->eof();
 					
 					$out_full=
 						$self->{'entity'}{'div.a401_article'}
 #						|| $self->{'entity'}{'a401_article'}
 						|| $out_full;
+					
+					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 					
 					$out_full_plus=$p->{'out'};
 					
