@@ -52,6 +52,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_ent_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
+  `datetime_publish_start` datetime default NULL,
+  `datetime_publish_stop` datetime default NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_author` varchar(8) character set ascii collate ascii_bin default NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
