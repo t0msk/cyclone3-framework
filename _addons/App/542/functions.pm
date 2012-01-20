@@ -376,6 +376,14 @@ sub file_add
 	{
 		# create one entity representation of file
 		my %columns;
+
+		if ($env{'file_ent.datetime_publish_start'})
+		{
+			$columns{'datetime_publish_start'} = "'".$env{'file_ent.datetime_publish_start'}."'";
+		} else
+		{
+			$columns{'datetime_publish_start'}='NOW()';
+		}
 		
 		$env{'file_ent.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
@@ -402,7 +410,12 @@ sub file_add
 		# posix_author
 		($env{'file_ent.posix_author'} && ($env{'file_ent.posix_author'} ne $file_ent{'posix_author'})) ||
 		# posix_owner
-		($env{'file_ent.posix_owner'} && ($env{'file_ent.posix_owner'} ne $file_ent{'posix_owner'}))
+		($env{'file_ent.posix_owner'} && ($env{'file_ent.posix_owner'} ne $file_ent{'posix_owner'})) ||
+		# datetime_publish_start
+		($env{'file_ent.datetime_publish_start'} && ($env{'file_ent.datetime_publish_start'} ne $file_ent{'datetime_publish_start'})) ||
+		# datetime_publish_stop
+		($env{'file_ent.datetime_publish_stop'} && ($env{'file_ent.datetime_publish_stop'} ne $file_ent{'datetime_publish_stop'}))
+
 	))
 	{
 		my %columns;
@@ -410,6 +423,16 @@ sub file_add
 			if ($env{'file_ent.posix_author'} && ($env{'file_ent.posix_author'} ne $file_ent{'posix_author'}));
 		$columns{'posix_owner'}="'".$env{'file_ent.posix_owner'}."'"
 			if ($env{'file_ent.posix_owner'} && ($env{'file_ent.posix_owner'} ne $file_ent{'posix_owner'}));
+		$columns{'posix_owner'}="'".$env{'file_ent.posix_owner'}."'"
+			if ($env{'file_ent.posix_owner'} && ($env{'file_ent.posix_owner'} ne $file_ent{'posix_owner'}));
+		
+		main::_log('Also trying to update datetime_publish');
+
+		$columns{'datetime_publish_start'}="'".$env{'file_ent.datetime_publish_start'}."'"
+			if ($env{'file_ent.datetime_publish_start'} && ($env{'file_ent.datetime_publish_start'} ne $file_ent{'datetime_publish_start'}));
+		$columns{'datetime_publish_stop'}="'".$env{'file_ent.datetime_publish_stop'}."'"
+			if ($env{'file_ent.datetime_publish_stop'} && ($env{'file_ent.datetime_publish_stop'} ne $file_ent{'datetime_publish_stop'}));
+
 		App::020::SQL::functions::update(
 			'ID' => $env{'file_ent.ID'},
 			'db_h' => "main",
