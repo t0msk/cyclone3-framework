@@ -215,6 +215,8 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_file_view` AS (
 		
 		file_ent.posix_owner,
 		file_ent.posix_author,
+		file_ent.datetime_publish_start,
+		file_ent.datetime_publish_stop,
 		
 		file_item.hash_secure,
 		file_item.datetime_create,
