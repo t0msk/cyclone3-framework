@@ -16,6 +16,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
   `name_short` varchar(64) character set utf8 collate utf8_bin NOT NULL default '',
   `name_code` char(20) character set ascii NOT NULL default '',
   
+  `type` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
+  
   `legal_form` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `ID_org` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `VAT_number` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
@@ -52,6 +54,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
+  KEY `county` (`county`),
+  KEY `district` (`district`),
+  KEY `city` (`city`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -68,6 +73,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org_j` (
   `name_url` varchar(64) character set ascii NOT NULL default '',
   `name_short` varchar(64) character set utf8 collate utf8_bin NOT NULL default '',
   `name_code` char(20) character set ascii NOT NULL default '',
+  
+  `type` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   
   `legal_form` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `ID_org` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
