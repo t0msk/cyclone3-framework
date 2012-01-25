@@ -1023,6 +1023,7 @@ sub start
 			$self->{'level.ignore'}=$self->{'level'};
 			require App::401::_init;
 			%vars=_parse_id($1);
+			
 			if ($vars{'ID'} && (!$self->{'config'}->{'inline'}))
 			{
 				main::_log("request to include a401_article with ID='$vars{'ID'}'");
@@ -1088,6 +1089,7 @@ sub start
 						$p->parse($db0_line{'body'});
 					}
 					$p->eof();
+					undef $p->{'config'}->{'inline'};
 					
 					$out_full=
 						$self->{'entity'}{'div.a401_article'}
@@ -1105,6 +1107,75 @@ sub start
 					main::_log("can't find article",1);
 					#
 					$out_full="<!-- can't include article $vars{'ID'} -->";
+				}
+			}
+		}
+		elsif ($attr->{'id'}=~/^a420_static:(.*)$/)
+		{
+			$self->{'level.ignore'}=$self->{'level'};
+			require App::420::_init;
+			%vars=_parse_id($1);
+			
+			if ($vars{'ID'} && (!$self->{'config'}->{'inline'}))
+			{
+				main::_log("request to include a420_static with ID='$vars{'ID'}'");
+				
+				my $sql=qq{
+					SELECT
+						static.ID_entity,
+						static.ID,
+						static.ID_category,
+						static_cat.name AS category_name,
+						static_cat.name_url AS category_name_url,
+						static.name,
+						static.alias_url,
+						static.posix_owner,
+						static.posix_modified,
+						static.datetime_create,
+						static.datetime_start,
+						DATE_FORMAT(static.datetime_start, '%Y-%m-%d %H:%i') AS datetime_start,
+						DATE_FORMAT(static.datetime_stop, '%Y-%m-%d %H:%i') AS datetime_stop,
+						static.body,
+						static.status
+					FROM
+						`$App::420::db_name`.a420_static AS static
+					LEFT JOIN `$App::420::db_name`.a420_static_cat AS static_cat ON
+					(
+						static_cat.ID = static.ID_category
+					)
+					WHERE
+						static.ID = ?
+					LIMIT
+						1
+				};
+				my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[$vars{'ID'}],'quiet'=>1,'-slave'=>1);
+				if (my %db0_line=$sth0{'sth'}->fetchhash())
+				{
+					main::_log("processing static");
+					
+					my $p=new App::401::mimetypes::html;
+					$p->config_from($self);
+					delete $p->{'config'}->{'editable'};
+					$p->{'config'}->{'inline'}=1; # this is inline article
+					$p->parse($db0_line{'body'});
+					$p->eof();
+					undef $p->{'config'}->{'inline'};
+					
+					$out_full=
+						$self->{'entity'}{'div.a420_static'}
+						|| $out_full;
+					
+					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+					
+					$out_full_plus=$p->{'out'};
+					
+					$self->config_from($p);
+				}
+				else
+				{
+					main::_log("can't find static",1);
+					#
+					$out_full="<!-- can't include static $vars{'ID'} -->";
 				}
 			}
 		}
@@ -1203,6 +1274,7 @@ sub end
 	}
 	elsif ($self->{'level.ignore'} == $self->{'level'})
 	{
+#		main::_log("deleting level.ignore");
 		delete $self->{'level.ignore'};
 	}
 	
