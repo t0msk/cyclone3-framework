@@ -113,7 +113,7 @@ sub article_add
 	}
 	
 	$env{'article_attrs.lng'}=$tom::lng unless $env{'article_attrs.lng'};
-	main::_log("lng='$env{'article_attrs.lng'}'");
+	main::_log("lng='$env{'article_attrs.lng'}' (first try)");
 	
 	# ARTICLE
 	
@@ -244,6 +244,7 @@ sub article_add
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		%article_attrs=$sth0{'sth'}->fetchhash();
 		$env{'article_attrs.ID'}=$article_attrs{'ID'};
+		$env{'article_attrs.lng'}=$article_attrs{'lng'};
 	}
 	if (!$env{'article_attrs.ID'})
 	{
@@ -281,6 +282,7 @@ sub article_add
 			'tb_name' => "a401_article_attrs",
 			'columns' => {'*'=>1}
 		);
+		$env{'article_attrs.lng'}=$article_attrs{'lng'};
 	}
 	
 	main::_log("$env{'article_attrs.ID'} ($env{'article_attrs.status'} && ($env{'article_attrs.status'} ne $article_attrs{'status'}))");
@@ -350,6 +352,8 @@ sub article_add
 			$content_reindex=1 if $columns{'status'};
 		}
 	}
+	
+	main::_log("article_attrs.lng='$env{'article_attrs.lng'}' (real)");
 	
 	# ARTICLE_CONTENT
 	
@@ -478,12 +482,13 @@ sub article_add
 	# update if necessary
 	if ($env{'article_content.ID'})
 	{
+		main::_log("check for update article_content.ID=$env{'article_content.ID'}");
 		my %columns;
 		$env{'article_content.subtitle'}=~s|$soft_hyphen||g;
 		if (exists $env{'article_content.subtitle'} && ($env{'article_content.subtitle'} ne $article_content{'subtitle'}))
 		{
 			$columns{'subtitle'}="'".TOM::Security::form::sql_escape($env{'article_content.subtitle'})."'";
-			$columns{'subtitle_hyphens'}="'". TOM::Security::form::sql_escape(join(",",Ext::TextHyphen::get_hyphens($env{'article_content.subtitle'},'lng'=>$article_attrs{'lng'}))) ."'";
+			$columns{'subtitle_hyphens'}="'". TOM::Security::form::sql_escape(join(",",Ext::TextHyphen::get_hyphens($env{'article_content.subtitle'},'lng'=>$article_content{'lng'}))) ."'";
 		}
 		$columns{'mimetype'}="'".TOM::Security::form::sql_escape($env{'article_content.mimetype'})."'"
 			if ($env{'article_content.mimetype'} && ($env{'article_content.mimetype'} ne $article_content{'mimetype'}));
@@ -493,7 +498,7 @@ sub article_add
 			$columns{'abstract'}="'".TOM::Security::form::sql_escape($env{'article_content.abstract'})."'";
 			my $text_plain=$env{'article_content.abstract'};
 				$text_plain=~s/<(.*?)>/"<" . "*" x length($1) . ">"/ge;;
-			$columns{'abstract_hyphens'}="'". TOM::Security::form::sql_escape(join(",",Ext::TextHyphen::get_hyphens($text_plain,'lng'=>$article_attrs{'lng'}))) ."'";
+			$columns{'abstract_hyphens'}="'". TOM::Security::form::sql_escape(join(",",Ext::TextHyphen::get_hyphens($text_plain,'lng'=>$article_content{'lng'}))) ."'";
 		}
 		$columns{'keywords'}="'".TOM::Security::form::sql_escape($env{'article_content.keywords'})."'"
 			if (exists $env{'article_content.keywords'} && ($env{'article_content.keywords'} ne $article_content{'keywords'}));
@@ -503,7 +508,7 @@ sub article_add
 			$columns{'body'}="'".TOM::Security::form::sql_escape($env{'article_content.body'})."'";
 			my $text_plain=$env{'article_content.body'};
 				$text_plain=~s/<(.*?)>/"<" . "*" x length($1) . ">"/ge;;
-			$columns{'body_hyphens'}="'". TOM::Security::form::sql_escape(join(",",Ext::TextHyphen::get_hyphens($text_plain,'lng'=>$article_attrs{'lng'}))) ."'";
+			$columns{'body_hyphens'}="'". TOM::Security::form::sql_escape(join(",",Ext::TextHyphen::get_hyphens($text_plain,'lng'=>$article_content{'lng'}))) ."'";
 		}
 		if (exists $env{'article_content.status'} && ($env{'article_content.status'} ne $article_content{'status'}))
 		{

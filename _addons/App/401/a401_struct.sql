@@ -455,10 +455,11 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_article_view` AS (
 		article_content.body,
 		article_content.keywords,
 		article_content.lng,
+		article_content.version,
 		
 --		article.status AS status_article,
 --		article_attrs.status AS status_attrs,
---		article_content.status AS status_content,
+		article_content.status AS status_content,
 		
 		article_ent.visits,
 		article_ent.rating_score,
