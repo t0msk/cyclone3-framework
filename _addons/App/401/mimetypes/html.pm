@@ -747,7 +747,7 @@ sub start
 			if ($vars{'ID'})
 			{
 				main::_log("find a210_page ID='$vars{'ID'}'") if $debug;
-				my %sql_def=('db_h' => "main",'db_name' => $TOM::DB{'main'}{'name'},'tb_name' => "a210_page");
+				my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
 				my %a210=App::020::SQL::functions::get_ID(
 					%sql_def,
 					'ID'      => "'$vars{'ID'}'",
