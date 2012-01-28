@@ -233,7 +233,7 @@ sub article_add
 		main::_log("!\$env{'article_attrs.ID'} -> SELECT");
 		my $sql=qq{
 			SELECT
-				ID
+				ID,lng
 			FROM
 				`$App::401::db_name`.`a401_article_attrs`
 			WHERE
@@ -243,8 +243,12 @@ sub article_add
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		%article_attrs=$sth0{'sth'}->fetchhash();
-		$env{'article_attrs.ID'}=$article_attrs{'ID'};
-		$env{'article_attrs.lng'}=$article_attrs{'lng'};
+		if ($article_attrs{'ID'})
+		{
+			$env{'article_attrs.ID'}=$article_attrs{'ID'};
+			$env{'article_attrs.lng'}=$article_attrs{'lng'};
+			main::_log("setup article_attrs.lng='$env{'article_attrs.lng'}'");
+		}
 	}
 	if (!$env{'article_attrs.ID'})
 	{
