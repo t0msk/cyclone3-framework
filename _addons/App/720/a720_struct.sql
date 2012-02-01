@@ -73,3 +73,53 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contract_j` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_contract_cat` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `alias_url` varchar(128) character set ascii NOT NULL default '',
+  `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `datetime_create` datetime NOT NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `lng` char(2) character set ascii NOT NULL default '',
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
+  KEY `name` (`name`),
+  KEY `lng` (`lng`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_contract_cat_j` (
+  `ID` bigint(20) unsigned NOT NULL,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `alias_url` varchar(128) character set ascii NOT NULL default '',
+  `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `datetime_create` datetime NOT NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `lng` char(2) character set ascii NOT NULL default '',
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_contract_rel_cat` (
+  `ID_category` bigint(20) unsigned NOT NULL auto_increment, -- rel _contract_cat.ID_entity
+  `ID_contract` bigint(20) unsigned NOT NULL, -- rel _contract.ID_entity,
+  PRIMARY KEY  (`ID_category`,`ID_contract`),
+  KEY `ID_contract` (`ID_contract`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
