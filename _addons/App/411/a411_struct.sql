@@ -15,6 +15,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_start` datetime NOT NULL,
   `datetime_stop` datetime default NULL,
+  `datetime_voting_start` datetime default NULL,
+  `datetime_voting_stop` datetime default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -34,6 +36,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll_j` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_start` datetime NOT NULL,
   `datetime_stop` datetime default NULL,
+  `datetime_voting_start` datetime default NULL,
+  `datetime_voting_stop` datetime default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
