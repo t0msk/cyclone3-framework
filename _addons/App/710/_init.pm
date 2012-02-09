@@ -66,7 +66,7 @@ use App::301::_init;
 use App::401::mimetypes;
 use App::710::a160;
 use App::710::a301;
-#use App::710::functions;
+use App::710::functions;
 
 
 our $db_name=$App::710::db_name || $TOM::DB{'main'}{'name'};
