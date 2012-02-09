@@ -119,8 +119,15 @@ sub event_add
 		$columns{'ID_entity'}=$env{'event.ID_entity'} if $env{'event.ID_entity'};
 		$columns{'mode'}="'".TOM::Security::form::sql_escape($env{'event.mode'})."'" if $env{'event.mode'};
 		
+		# default datetimes
+
+		# start today
 		$columns{'datetime_start'}='NOW()';
-		$columns{'datetime_finish'}='NOW()';
+
+		# finish last second of today by default
+		$columns{'datetime_finish'}='DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 1 DAY), INTERVAL  -1 SECOND)';
+		#$columns{'datetime_finish'}='NOW()';
+
 		$columns{'datetime_publish_start'}='NOW()';
 		
 		my $user = $env{'ID_user'} if exists $env{'ID_user'};
