@@ -514,6 +514,13 @@ sub article_add
 				$text_plain=~s/<(.*?)>/"<" . "*" x length($1) . ">"/ge;;
 			$columns{'body_hyphens'}="'". TOM::Security::form::sql_escape(join(",",Ext::TextHyphen::get_hyphens($text_plain,'lng'=>$article_content{'lng'}))) ."'";
 		}
+		# datetime_modified
+		# datetime_stop
+		if (exists $env{'article_content.datetime_modified'} && ($env{'article_content.datetime_modified'} ne $article_content{'datetime_modified'}))
+		{
+			if (!$env{'article_content.datetime_modified'}){$columns{'datetime_modified'}="NULL";}
+			else {$columns{'datetime_modified'}="'".$env{'article_content.datetime_modified'}."'";}
+		}
 		if (exists $env{'article_content.status'} && ($env{'article_content.status'} ne $article_content{'status'}))
 		{
 			$columns{'status'}="'".TOM::Security::form::sql_escape($env{'article_content.status'})."'";
@@ -557,6 +564,18 @@ sub article_add
 		{
 			$env{'article_content.ID_editor'}=$main::USRM{'ID_user'} unless $env{'article_content.ID_editor'};
 			$columns{'ID_editor'}="'".$env{'article_content.ID_editor'}."'";
+			
+			if ($env{'update_type'} eq "main")
+			{
+				# when this is main update, and content is REALLY changed, then update modified datetime to current datetime
+				$columns{'datetime_modified'}="NOW()";
+			}
+			
+			foreach (keys %columns)
+			{
+				main::_log("column $_='$columns{$_}'");
+			}
+			
 			App::020::SQL::functions::update(
 				'ID' => $env{'article_content.ID'},
 				'db_h' => "main",
