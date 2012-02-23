@@ -8,6 +8,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 our $debug=0;
 
+use JSON;
 
 sub new
 {
@@ -16,6 +17,13 @@ sub new
  my %env=@_;
 
  $self->{data}=$env{data};
+ 
+	if ($env{'data'}=~s/^#json\n//)
+	{
+		$self->{'hash'}=decode_json $env{'data'};
+		return bless $self, $class;
+	}
+ 
  my $no;
  $self->{data}=~s/(=|<)\[(.[^\n]{0,50}?)\]/ $1 eq "=" ? ("=[".$2."-L".$no++."]") : ("<[".$2."-L".--$no."]")/eg;
  $self->{data}=~s|\r||g;
@@ -350,6 +358,8 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
+use JSON;
+
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 sub publish
@@ -391,6 +401,9 @@ sub publish
 sub serialize
 {
 	my %hash=@_;
+	
+	return  "#json\n".encode_json \%hash;
+	
 #	return "" if 
 	my %out=serialize_data(level=>0,data=>\%hash);
 	#return "<:[]>" if $out{data} eq "[]";
