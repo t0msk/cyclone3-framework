@@ -20,6 +20,7 @@ sub new
  
 	if ($env{'data'}=~s/^#json\n//)
 	{
+		utf8::encode($env{'data'});
 		$self->{'hash'}=decode_json $env{'data'};
 		return bless $self, $class;
 	}
