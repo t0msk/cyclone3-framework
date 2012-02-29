@@ -1211,6 +1211,8 @@ while ($main::CGI=new CGI::Fast())
 						
 					}
 					
+					$a210{'path_url'}=$main::FORM{'a210_path'};
+					
 					$t_a210->close();
 				}
 				
@@ -1717,7 +1719,7 @@ while ($main::CGI=new CGI::Fast())
 						$date->add('seconds' => $1);
 					}
 					
-					$main::ENV{'Expires'} = $date->strftime("%a, %d %b %Y %H:%M:%S %Z"); 
+					$main::ENV{'Expires'} = $date->strftime("%a, %d %b %Y %H:%M:%S GMT"); 
 					
 					_log("Change Expires to ".$main::ENV{'Expires'});
 					next;
