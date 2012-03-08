@@ -1,0 +1,228 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+use App::401::mimetypes;
+use App::420::_init;
+use App::020::_init;
+use App::160::_init;
+use TOM::Text::format;
+use Ext::TextHyphen::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
+	$env{'db_name'}=$App::420::db_name unless $env{'db_name'};
+	
+	$env{'sql_limit'}='1' unless $env{'sql_limit'};
+	
+	$env{'static.status'}='Y' unless $env{'static.status'};
+		my $sql_status=join "','", split('',$env{'static.status'});
+	
+	$env{'static.ID'}=$env{'ID'} unless $env{'static.ID'};
+	$env{'static.ID_entity'}=$env{'ID_entity'} unless $env{'static.ID_entity'};
+	
+	my $sql_where;
+	
+	# ID_entity
+	$sql_where.=" AND static.ID_entity=$env{'static.ID_entity'}"
+		if $env{'static.ID_entity'};
+	
+	# ID
+	$sql_where.=" AND static.ID=$env{'static.ID'}"
+		if $env{'static.ID'};
+	
+	# ID_category
+	$sql_where.=" AND static.ID_category IN ($env{'static.ID_category'})"
+		if $env{'static.ID_category'};
+	
+	# static.status
+	$env{'static.status'}='Y' unless exists $env{'static.status'};
+	$sql_where.=" AND static.status IN ('$env{'static.status'}') "
+		if $env{'static.status'};
+	
+	my $sql_order="static.datetime_start DESC";
+		$sql_order=$env{'sql_order'} if $env{'sql_order'};
+		$sql_order=$env{'sql_order_by'} if $env{'sql_order_by'};
+	
+	my $sql=qq{
+		SELECT
+			static.ID_entity,
+			static.ID,
+			static.ID_category,
+			static_cat.name AS category_name,
+			static_cat.name_url AS category_name_url,
+			static.name,
+			static.alias_url,
+			static.posix_owner,
+			static.posix_modified,
+			static.datetime_create,
+			static.datetime_start,
+			DATE_FORMAT(static.datetime_start, '%Y-%m-%d %H:%i') AS datetime_start,
+			DATE_FORMAT(static.datetime_stop, '%Y-%m-%d %H:%i') AS datetime_stop,
+			static.body,
+			static.status
+		FROM
+			`$env{'db_name'}`.a420_static AS static
+		LEFT JOIN `$env{'db_name'}`.a420_static_cat AS static_cat ON
+		(
+			static_cat.ID = static.ID_category
+		)
+		WHERE
+					(static.datetime_start IS NULL OR static.datetime_start <= NOW())
+			AND	(static.datetime_stop IS NULL OR static.datetime_stop >= NOW())
+			$sql_where
+		ORDER BY
+			$sql_order
+		LIMIT
+			$env{'sql_limit'}
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_create'});
+		$db0_line{'datetime_create.year'}=$datetime{'year'};
+		$db0_line{'datetime_create.month'}=$datetime{'month'};
+		$db0_line{'datetime_create.mday'}=$datetime{'mday'};
+		$db0_line{'datetime_create.hour'}=$datetime{'hour'};
+		$db0_line{'datetime_create.min'}=$datetime{'min'};
+		$db0_line{'datetime_create.sec'}=$datetime{'sec'};
+		
+		$db0_line{'datetime_create.month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$datetime{'month'}-1];
+		$db0_line{'datetime_create.month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$datetime{'month'}-1];
+		
+		#if($db0_line{'datetime_create'} ne "0000-00-00 00:00:00")
+		#{
+		#	my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
+		#	$db0_line{'datetime_create.wday'}=$dt->day_of_week_0();
+		#	$db0_line{'datetime_create.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week_0()];
+		#	$db0_line{'datetime_create.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week_0()];
+		#}
+		
+		%datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
+		$db0_line{'datetime_start.year'}=$datetime{'year'};
+		$db0_line{'datetime_start.month'}=$datetime{'month'};
+		$db0_line{'datetime_start.mday'}=$datetime{'mday'};
+		$db0_line{'datetime_start.hour'}=$datetime{'hour'};
+		$db0_line{'datetime_start.min'}=$datetime{'min'};
+		$db0_line{'datetime_start.sec'}=$datetime{'sec'};
+		
+		$db0_line{'datetime_start.month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$datetime{'month'}-1];
+		$db0_line{'datetime_start.month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$datetime{'month'}-1];
+		
+		#if($db0_line{'datetime_start'} ne "0000-00-00 00:00:00")
+		#{
+		#	my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
+		#	$db0_line{'datetime_start.wday'}=$dt->day_of_week_0();
+		#	$db0_line{'datetime_start.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week_0()];
+		#	$db0_line{'datetime_start.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week_0()];
+		#}
+		
+		$XSGN{'TMP'}=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+#		# primary author
+#		my %author=App::301::authors::get_author($db0_line{'posix_author'});
+#		$XSGN{'TMP'}=~s|<%author_(.*?)%>|$author{$1}|g;
+#		
+#		my %editor=App::301::authors::get_author($db0_line{'posix_editor'});
+#		$XSGN{'TMP'}=~s|<%editor_(.*?)%>|$editor{$1}|g;
+		
+		# process body
+		my $og_image_set;
+		foreach my $part('body')
+		{
+			
+			my $p=new App::401::mimetypes::html;
+			
+			$p->config('name'=>$part,'env'=>\%env,'entity'=>\%XSGN);
+			
+			#removing unwanted paging
+			if($part eq 'body')
+			{
+				$db0_line{$part}=~s|<hr>||g;
+			}
+			
+			# PARSE !!!
+			$p->parse($db0_line{$part});
+			$p->eof();
+			my $part_html=$p->{'out'};
+			
+			if ($p->{'out_var'}->{'img.1.src'} && !$og_image_set)
+			{
+				push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=>$p->{'out_var'}->{'img.1.src'}};
+				
+				if ($p->{'out_addon'}->{'a510_video_part'}[1]{'video.ID_entity'} && $XSGN{'og:video'})
+				{
+					$XSGN{'og:video'}=~s|<%video\.ID_entity%>|$p->{'out_addon'}->{'a510_video_part'}[1]{'video.ID_entity'}|g;
+					
+					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video','content'=>$XSGN{'og:video'}};
+					
+					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:type','content'=>"application/x-shockwave-flash"};
+					
+					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:width','content'=>"430"};
+					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:height','content'=>"280"};
+					
+				}
+				$og_image_set=1;
+			}
+			
+			if($part_html ne '' && $part_html ne "<p>&nbsp;</p>")
+			{
+				$XSGN{'TMP'}=~s|<#$part#>|$XSGN{$part}|g if $XSGN{$part};
+			}
+			
+			$XSGN{'TMP'}=~s|<%$part%>|$part_html|;
+			$XSGN{'TMP'}=~s|<%$part\_plain%>|TOM::Text::format::xml2plain($part_html)|ge;
+			
+			#$XSGN{'TMP'}=~s|<%$part\.out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+			$XSGN{'TMP'}=~s|<#$part\.out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+			
+			$XSGN{'TMP'}=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+			$XSGN{'TMP'}=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+			
+		}
+		
+		$XSGN{'TMP'}=~s|<%static\.db_(.*?)%>|$db0_line{$1}|g;
+		
+	}
+	else
+	{
+		main::_log('could not load data from db!');
+		$XSGN{'TMP.empty'}=$XSGN{'TMP_failure_no-data'} if exists $XSGN{'TMP_failure_no-data'};
+		if(exists $XSGN{'TMP.empty'})
+		{
+			$XSGN{'TMP'}=$XSGN{'TMP.empty'};
+		}
+	}
+	
+	return 1,%env_out;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
