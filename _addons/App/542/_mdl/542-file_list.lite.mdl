@@ -54,7 +54,7 @@ B<sql_lng> - required language (default is current)
 
 =item *
 
-B<sql_order> - sql syntax to order by (default file_attrs.name, file_attrs.name_ext ASC)
+B<sql_order_by> - sql syntax to order by (default file_attrs.name, file_attrs.name_ext ASC)
 
 =back
 
@@ -114,87 +114,265 @@ sub execute
 	
 	$env{'db_name'}=$App::542::db_name unless $env{'db_name'};
 	
-	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
 	$env{'sql_limit'}='1' unless $env{'sql_limit'};
-	$env{'sql_status'}='Y' unless $env{'sql_status'};
-	$env{'sql_order'}='file.name, file.name_ext ASC' unless $env{'sql_order'};
 	
+	if (not $env{'sql_limit'}=~/,/){$env{'sql_limit'}="0,".$env{'sql_limit'}}
 	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
 	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
 	{
 		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
 	}
 	
+	my $count_max;
+	if ($env{'sql_limit'}=~/,(\d+)/)
+	{
+		$count_max=$1;
+		$env{'sql_limit'}=~s/,(\d+)/",".($1+10)/e;
+	}
+	
+	if (not $env{'sql_limit'}=~/^(\d+),(\d+)$/)
+	{
+		$env{'sql_limit'}='1';
+	}
+	
+	$env{'sql_order_by'}=$env{'sql_order'} if $env{'sql_order'};
+	$env{'sql_order_by'}='datetime_publish_start DESC, file.datetime_create DESC, file.name ASC, file.name_ext ASC' unless $env{'sql_order_by'};
+	
+	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
+	
+	$env{'file_attrs.status'}=$env{'sql_status'} if $env{'sql_status'}; #backward compatibility
+	$env{'file_attrs.status'}='Y' unless $env{'file_attrs.status'};
+	my $status_sql=join "','", split('',$env{'file_attrs.status'});
+	
 	my $sql_where;
 	
-	
-	
-	# find ID_category LIKE *
-	if ($env{'file_attrs.ID_category'}=~s/\*$//)
+	my $sql_cat;
+	foreach my $ID_category(split(';',$env{'file_attrs.ID_category'}))
 	{
-		my $cat_sql=qq{
-					SELECT
-						ID_charindex
-					FROM
-						`$App::542::db_name`.a542_file_dir
-					WHERE
-						ID=$env{'file_attrs.ID_category'}
-					LIMIT 1
-		};
-		$env{'file_attrs.ID_category'} = qq{
-			SELECT
-				ID
-			FROM
-				`$App::542::db_name`.a542_file_dir
-			WHERE
-				ID_charindex LIKE CONCAT(($cat_sql),"%") AND
-				lng='$env{'lng'}' AND
-				status IN ('$env{'sql_status'}')
-		};
+		next unless $ID_category;
+		if ($ID_category=~s/\*$//)
+		{
+			next unless $ID_category;
+			my $cat_sql=qq{
+				SELECT
+					ID_charindex
+				FROM
+					`$env{'db_name'}`.`a542_file_dir`
+				WHERE
+					ID=$ID_category
+				LIMIT 1
+			};
+			$ID_category=qq{
+				SELECT
+					ID
+				FROM
+					`$env{'db_name'}`.`a542_file_dir`
+				WHERE
+							ID_charindex LIKE CONCAT(($cat_sql),"%")
+					AND	lng='$env{'sql_lng'}'
+					AND	status IN ('$status_sql')
+			};
+		}
+		$sql_cat.=" OR file.ID_category IN ($ID_category)";
+		$sql_cat=~s/^ OR //;
 	}
-	elsif ($env{'file_attrs.ID_category'})
+	if ($sql_cat)
 	{
-		
+		$sql_where.=" AND (".$sql_cat.") ";
 	}
 	
 	if ($env{'file.ID_entity'})
 	{
 		$sql_where.=" AND file.ID_entity_file IN ('".
 			(join "','", split(';',$env{'file.ID_entity'})).
-			"')";
+		"')";
 	}
 	
-	$sql_where.=" AND file.ID_category IN ($env{'file_attrs.ID_category'})"
-		if $env{'file_attrs.ID_category'};
-	
-	# Line counter
-	my $item_counter=0;
+	if ($env{'file.ID'})
+	{
+		$sql_where.=" AND file.ID IN ('".
+			(join "','", split(';',$env{'file.ID'})).
+			"')";
+	}
 	
 	my $sql=qq{
 		SELECT
 			*
 		FROM
-			`$env{'db_name'}`.a542_file_view AS file
+			`$env{'db_name'}`.`a542_file_view` AS file
 		WHERE
-			file.status IN ('$env{'sql_status'}') AND
-			file.lng='$env{'sql_lng'}'
+					file.status IN ('$status_sql')
+			AND	file.lng='$env{'sql_lng'}'
 			$sql_where
 		ORDER BY
-			$env{'sql_order'}
-		LIMIT $env{'sql_limit'}
+			$env{'sql_order_by'}
+		LIMIT
+			$env{'sql_limit'}
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'log'=>0,'-slave'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
+	
+	if(!$sth0{'sth'})
+	{
+		main::_log("SQL can't be executed",1);
+	}
+	
+	if(!$sth0{'rows'})
+	{
+		main::_log("err: could not fetch articles");
+	}
+	
+	main::_log("received ".$sth0{'rows'}." rows");
+	
+	# Line counter
+	my $item_counter=0;
+	
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-      $item_counter++;
+		$item_counter++;
 		
-		my $item=
-			$XSGN{'item.'.$item_counter}
-			|| $XSGN{'item'};
+		last if $count_max<$item_counter;
+		
+		my $item = $XSGN{'item'};
+		$item = $XSGN{'item.odd'} if (($item_counter % 2) && (exists $XSGN{'item.odd'}));
+		$item = $XSGN{'item.'.$item_counter} if $XSGN{'item.'.$item_counter};
 		
 		$XSGN{'TMP'}=~s|<%name%>|$db0_line{'ID_dir_name'}|g;
 		#$XSGN{'TMP'}=~s|<%name%>|$db0_line{'ID_category_name'}|g;
+		
+		use DateTime;
+		
+     		if($db0_line{'datetime_create'})
+		{
+			my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_create'});
+			$db0_line{'datetime_create.year'}=$datetime{'year'};
+			$db0_line{'datetime_create.month'}=$datetime{'month'};
+			$db0_line{'datetime_create.month_'}=$datetime{'month'}-1+1;
+			$db0_line{'datetime_create.mday'}=$datetime{'mday'};
+			$db0_line{'datetime_create.hour'}=$datetime{'hour'};
+			$db0_line{'datetime_create.min'}=$datetime{'min'};
+			$db0_line{'datetime_create.sec'}=$datetime{'sec'};
+			
+			$db0_line{'datetime_create.month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$datetime{'month'}-1];
+			$db0_line{'datetime_create.month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$datetime{'month'}-1];
+			
+			if($db0_line{'datetime_create'} ne "0000-00-00 00:00:00")
+			{
+				my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
+				$db0_line{'datetime_create.wday'}=$dt->day_of_week();
+				$db0_line{'datetime_create.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week()];
+				$db0_line{'datetime_create.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week()];
+			}
+		}
+		
+		if($db0_line{'datetime_publish_start'})
+		{
+			my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_publish_start'});
+			$db0_line{'datetime_publish_start.year'}=$datetime{'year'};
+			$db0_line{'datetime_publish_start.month'}=$datetime{'month'};
+			$db0_line{'datetime_publish_start.month_'}=$datetime{'month'}-1+1;
+			$db0_line{'datetime_publish_start.mday'}=$datetime{'mday'};
+			$db0_line{'datetime_publish_start.hour'}=$datetime{'hour'};
+			$db0_line{'datetime_publish_start.min'}=$datetime{'min'};
+			$db0_line{'datetime_publish_start.sec'}=$datetime{'sec'};
+			
+			$db0_line{'datetime_publish_start.month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$datetime{'month'}-1];
+			$db0_line{'datetime_publish_start.month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$datetime{'month'}-1];
+			
+			if($db0_line{'datetime_publish_start'} ne "0000-00-00 00:00:00")
+			{
+				my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
+				$db0_line{'datetime_publish_start.wday'}=$dt->day_of_week();
+				$db0_line{'datetime_publish_start.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week()];
+				$db0_line{'datetime_publish_start.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week()];
+			}
+		}
+
+		
+		if($db0_line{'datetime_modify'})
+		{
+			my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_modify'});
+			$db0_line{'datetime_modify.year'}=$datetime{'year'};
+			$db0_line{'datetime_modify.month'}=$datetime{'month'};
+			$db0_line{'datetime_modify.month_'}=$datetime{'month'}-1+1;
+			$db0_line{'datetime_modify.mday'}=$datetime{'mday'};
+			$db0_line{'datetime_modify.hour'}=$datetime{'hour'};
+			$db0_line{'datetime_modify.min'}=$datetime{'min'};
+			$db0_line{'datetime_modify.sec'}=$datetime{'sec'};
+			
+			$db0_line{'datetime_modify.month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$datetime{'month'}-1];
+			$db0_line{'datetime_modify.month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$datetime{'month'}-1];
+			
+			if($db0_line{'datetime_modify'} ne "0000-00-00 00:00:00")
+			{
+				my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
+				$db0_line{'datetime_modify.wday'}=$dt->day_of_week();
+				$db0_line{'datetime_modify.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week()];
+				$db0_line{'datetime_modify.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week()];
+			}
+		}
+		
+		$db0_line{'file_size_gb'}=sprintf("%0.2f", ($db0_line{'file_size'} / (1024 * 1024 * 1024)));
+		$db0_line{'file_size_mb'}=sprintf("%0.2f", ($db0_line{'file_size'} / (1024 * 1024)));
+		$db0_line{'file_size_kb'}=sprintf("%0.2f", ($db0_line{'file_size'} / 1024));
+		$db0_line{'file_size.gb'}=sprintf("%0.2f", ($db0_line{'file_size'} / (1024 * 1024 * 1024)));
+		$db0_line{'file_size.mb'}=sprintf("%0.2f", ($db0_line{'file_size'} / (1024 * 1024)));
+		$db0_line{'file_size.kb'}=sprintf("%0.2f", ($db0_line{'file_size'} / 1024));
+		
+		if($XSGN{'thumbnail'})
+		{
+			my $thumbnail=$XSGN{'thumbnail'};
+			
+			my $relation =(App::160::SQL::get_relations(
+				'db_name' => $env{'db_name'},
+				'l_prefix' => 'a542',
+				'l_table' => 'file_item',
+				'l_ID_entity' => $db0_line{'ID_item'},
+				'rel_type' => 'thumbnail',
+				'r_prefix' => "a501",
+				'r_table' => "image",
+				'status' => "Y"
+			))[0];
+			
+			if($relation){
+				if (my %db1_line=App::501::functions::get_image_file
+					(
+						'image.ID_entity' => $relation->{'r_ID_entity'},
+						'image_file.ID_format' => $App::501::image_format_fullsize_ID,
+						'image_attrs.lng' => $env{'lng'}
+					)
+				){
+					$thumbnail=~s|<%fullsize.db_(.*?)%>|$db1_line{$1}|g;
+					$item=~s|<%thumbnail\.fullsize\.db_(.*?)%>|$db1_line{$1}|g;
+					#foreach (keys %db1_line){
+					#	main::_log($_.' '.$db1_line{$_});
+					#}
+				}
+				
+				if (my %db1_line=App::501::functions::get_image_file
+					(
+						'image.ID_entity' => $relation->{'r_ID_entity'},
+						'image_file.ID_format' => $env{'image.'.$item_counter.'.ID_format'} || $env{'image.ID_format'} || $App::501::image_format_thumbnail_ID,
+						'image_attrs.lng' => $env{'lng'}
+					)
+				)
+				{
+					$thumbnail=~s|<%db_(.*?)%>|$db1_line{$1}|g;
+					$item=~s|<%thumbnail\.db_(.*?)%>|$db1_line{$1}|g;
+				}
+			}
+			else
+			{
+				$thumbnail=$XSGN{'thumbnail.empty'};
+			}
+			
+			$thumbnail=~s|<%item.(.*?)%>|<%$1%>|g;
+			
+			$item=~s|<#thumbnail#>|$thumbnail|;
+		}
+		
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		$item=~s|<%item_number%>|$item_counter|g;
 		
 		if($XSGN{'TMP'}=~/<#item.$item_counter#>/)
 		{
@@ -203,6 +381,86 @@ sub execute
 		else
 		{
 			$XSGN{'TMP'}=~s|<#item#>|$item|;
+		}
+	}
+	
+	$XSGN{'TMP'}=~s|<%total_count%>|$item_counter|g;
+	
+	if ($env{'env.counter'})
+	{
+		$main::env{'count'}+=$item_counter;
+	}	
+	
+	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
+	{
+		$env{'offset'}=$1;
+		#$env{'count'}=$2;
+	}
+	else
+	{
+		#$env{'count'}=$env{'sql_limit'};
+	}
+	
+	if($XSGN{'paging'})
+	{
+		if(
+			($count_max && $item_counter >= $count_max && $count_max < $sth0{'rows'})
+			||	($env{'offset'}-$env{'sql_limit_start'})
+		){
+			$XSGN{'TMP'}=~s|<#paging#>|$XSGN{'paging'}|g;
+		}
+	}
+	
+	if ($count_max && $item_counter >= $count_max && $count_max < $sth0{'rows'}) # count
+	{
+		$XSGN{'next'}=~s|<%offset%>|$env{'offset'}+$count_max|ge;
+		$XSGN{'TMP'}=~s|<#next#>|$XSGN{'next'}|g;
+	}
+	if ($env{'offset'}-$env{'sql_limit_start'})
+	{
+		if ($env{'offset'} - $count_max - $env{'sql_limit_start'}>0)
+		{
+			$XSGN{'previous'}=~s|<%offset%>|$env{'offset'}-$count_max|ge;
+		}
+		else
+		{
+			$XSGN{'previous'}=~s|<%offset%>||ge;
+		}
+		$XSGN{'TMP'}=~s|<#previous#>|$XSGN{'previous'}|g;
+	}
+	
+	$XSGN{'TMP.empty'}=$XSGN{'TMP_failure_no-data'} if $XSGN{'TMP_failure_no-data'}; #backwards compatibility
+	
+	if(!$item_counter)
+	{
+		if($XSGN{'TMP.empty'})
+		{
+			$XSGN{'TMP'} = $XSGN{'TMP.empty'};
+		}
+	}
+	
+	if($env{'file_attrs.ID_category'}=~/^([0-9]+)\*?$/)
+	{
+		my $ID_category=$1;
+		my $sql=qq{
+			SELECT
+				name, name_url
+			FROM
+				`$env{'db_name'}`.`a542_file_dir`
+			WHERE
+						ID_entity=$ID_category
+				AND	lng='$env{'sql_lng'}'
+				AND	status IN ('$status_sql')
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto_'=>60);
+		
+		if($sth0{'sth'})
+		{
+			if (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				$XSGN{'TMP'}=~s|<%category_name%>|$db0_line{'name'}|g;
+				$XSGN{'TMP'}=~s|<%category_name_url%>|$db0_line{'name_url'}|g;
+			}
 		}
 	}
 	
