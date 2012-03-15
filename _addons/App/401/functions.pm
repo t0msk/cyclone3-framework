@@ -488,7 +488,7 @@ sub article_add
 	{
 		main::_log("check for update article_content.ID=$env{'article_content.ID'}");
 		my %columns;
-		$env{'article_content.subtitle'}=~s|$soft_hyphen||g;
+		$env{'article_content.subtitle'}=~s|$soft_hyphen||g if (exists $env{'article_content.subtitle'});
 		if (exists $env{'article_content.subtitle'} && ($env{'article_content.subtitle'} ne $article_content{'subtitle'}))
 		{
 			$columns{'subtitle'}="'".TOM::Security::form::sql_escape($env{'article_content.subtitle'})."'";
