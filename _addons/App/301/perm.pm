@@ -789,13 +789,19 @@ sub get_entity_sum_roles
 	
 	# and combine this all :)
 	my %roles_output;
+	foreach (keys %roles_global)
+	{
+		$roles_output{$_}=$roles_global{$_};
+		$roles_output{$_}=~tr/RWXrwx_/rwxrwx-/;
+		main::_log("RL_$_ '$roles_output{$_}'");
+	}
+	
 	foreach (keys %{$roles_entity})
 	{
-		$roles_global{$_}=~tr/RWXrwx_/rwxrwx-/;
 		$roles_entity->{$_}=~tr/RWXrwx_/rwx   -/;
-		my $output=perm_sum($roles_global{$_},$roles_entity->{$_});
-		$output='rwx' if $roles_global{'unlimited'};
-		main::_log("RL_$_ '$roles_global{$_}'+'$roles_entity->{$_}'='$output'");
+		my $output=perm_sum($roles_output{$_},$roles_entity->{$_});
+		$output='rwx' if $roles_output{'unlimited'};
+		main::_log("RL_$_ '$roles_output{$_}'+'$roles_entity->{$_}'='$output'");
 		$roles_output{$_}=$output;
 	}
 	
