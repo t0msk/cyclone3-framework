@@ -14,10 +14,10 @@ use strict;
 
 =head1 DESCRIPTION
 
- $XSGN{'TMP'}=$Net::DOC::notfound_page;
+ $XSGN{'TMP'}=$TOM::Document::notfound_page;
  TOM::Utils::vars::replace($XSGN{'TMP'});
 
-This modules is used by TypeID g_notfound to display design defined by TOM::Template "default" named "notfound.page". notfound.page is loaded into variable $Net::DOC::notfound_page after "use Net::DOC::XHTML".
+This modules is used by TypeID g_notfound to display design defined by TOM::Template "default" named "notfound.page". notfound.page is loaded into variable $TOM::Document::notfound_page after "use TOM::Document::XHTML".
 
 =cut
 
