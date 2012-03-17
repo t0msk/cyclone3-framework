@@ -789,10 +789,24 @@ sub _article_index
 			{$db0_line{$part}=~s|\x{$_}||g;}
 		}
 		
+		if (length($db0_line{'body'})<20)
+		{
+			main::_log("using abstract instead of '$db0_line{'body'}'");
+			$db0_line{'body'} = $db0_line{'abstract'};
+#			exit 0;
+		}
+		
 		$content{$db0_line{'lng'}}{'text'}=WebService::Solr::Field->new( 'text' => $db0_line{'body'} );
 		$content{$db0_line{'lng'}}{'description'}=WebService::Solr::Field->new( 'description' => $db0_line{'abstract'} );
-		$content{$db0_line{'lng'}}{'keywords'}=WebService::Solr::Field->new( 'keywords' => $db0_line{'keywords'} ),
-		$content{$db0_line{'lng'}}{'subject'}=WebService::Solr::Field->new( 'subject' => $db0_line{'subtitle'} ),
+		$content{$db0_line{'lng'}}{'keywords'}=WebService::Solr::Field->new( 'keywords' => $db0_line{'keywords'} );
+		$content{$db0_line{'lng'}}{'subject'}=WebService::Solr::Field->new( 'subject' => $db0_line{'subtitle'} );
+		
+		if ($db0_line{'datetime_modified'})
+		{
+			$db0_line{'datetime_modified'}=~s| (\d\d)|T$1|;
+			$db0_line{'datetime_modified'}.="Z";
+			$content{$db0_line{'lng'}}{'last_modified'}=WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_modified'} );
+		}
 		
 		# name
 		# cat (multi)
@@ -846,9 +860,12 @@ sub _article_index
 				push @{$content{$db0_line{'lng'}}{'cat'}},WebService::Solr::Field->new( 'cat' => $db1_line{'cat_name'} );
 			}
 			
-			$db1_line{'datetime_start'}=~s| (\d\d)|T$1|;
-			$db1_line{'datetime_start'}.="Z";
-			$content{$db0_line{'lng'}}{'last_modified'}=WebService::Solr::Field->new( 'last_modified' => $db1_line{'datetime_start'} );
+			if (!$content{$db0_line{'lng'}}{'last_modified'})
+			{
+				$db1_line{'datetime_start'}=~s| (\d\d)|T$1|;
+				$db1_line{'datetime_start'}.="Z";
+				$content{$db0_line{'lng'}}{'last_modified'}=WebService::Solr::Field->new( 'last_modified' => $db1_line{'datetime_start'} )
+			}
 			
 		}
 	}
