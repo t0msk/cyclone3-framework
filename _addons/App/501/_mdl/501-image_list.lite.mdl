@@ -146,72 +146,69 @@ sub execute
 	
 	$env{'db_name'}=$App::501::db_name unless $env{'db_name'};
 	
-	if (!$env{'image.ID_format'} && !$env{'image_file.ID_format'} && !$env{'image_format.name'})
-	{
-		$env{'image_format.name'}='thumbnail';
-	}
-	
-	$env{'image_attrs.lng'}=$env{'lng'} unless $env{'image_attrs.lng'};
-	$env{'image_attrs.status'}='Y' unless $env{'image_attrs.status'};
 	$env{'sql_limit'}='1' unless $env{'sql_limit'};
-	$env{'sql_order_by'}=$env{'sql_order'} || 'image.order_id DESC' unless $env{'sql_order_by'};
 	
+	if (not $env{'sql_limit'}=~/,/){$env{'sql_limit'}="0,".$env{'sql_limit'}}
 	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
 	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
 	{
 		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
 	}
 	
+	my $count_max;
+	if ($env{'sql_limit'}=~/,(\d+)/)
+	{
+		$count_max=$1;
+		$env{'sql_limit'}=~s/,(\d+)/",".($1+1)/e;
+	}
+	
+	if (not $env{'sql_limit'}=~/^(\d+),(\d+)$/)
+	{
+		$env{'sql_limit'}='1';
+	}
+	
+	$env{'sql_order_by'}=$env{'sql_order'} || 'image.order_id DESC' unless $env{'sql_order_by'};
+	
+	$env{'image_attrs.lng'}=$env{'lng'} unless $env{'image_attrs.lng'};
+	
+	$env{'image_attrs.status'}='Y' unless $env{'image_attrs.status'};
+		my $status_sql=join "','", split('',$env{'image_attrs.status'});
+	
 	my $sql_where;
 	
-	#$env{'ID_format'}
-	if ($env{'image.ID_format'})
+	my $sql_cat;
+	foreach my $ID_category(split(';',$env{'image_attrs.ID_category'}))
 	{
-		$sql_where.=" AND image.ID_format=$env{'image.ID_format'}";
+		next unless $ID_category;
+		if ($ID_category=~s/\*$//)
+		{
+			next unless $ID_category;
+			my $cat_sql=qq{
+				SELECT
+					ID_charindex
+				FROM
+					`$env{'db_name'}`.a501_image_cat
+				WHERE
+					ID=$ID_category
+				LIMIT 1
+			};
+			$ID_category=qq{
+				SELECT
+					ID
+				FROM
+					`$env{'db_name'}`.a501_image_cat
+				WHERE
+					ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+					lng='$env{'image_attrs.lng'}' AND
+					status IN ('$status_sql')
+			};
+		}
+		$sql_cat.=" OR image.ID_category IN ($ID_category)";
+		$sql_cat=~s/^ OR //;
 	}
-	elsif ($env{'image_format.name'})
+	if ($sql_cat)
 	{
-		$sql_where.=" AND image.ID_format_name='$env{'image_format.name'}'";
-	}
-#	elsif ($env{'format_name'})
-#	{
-#		$sql_where.=" AND image.ID_format_name='$env{'format.name'}'";
-#	}
-	elsif ($env{'image_file.ID_format'})
-	{
-		$sql_where.=" AND image.ID_format='$env{'image_file.ID_format'}'";
-	}
-	else
-	{
-		$sql_where.=" AND image.ID_format_name='thumbnail'";
-	}
-	
-	# find ID_category LIKE *
-	if ($env{'image_attrs.ID_category'}=~s/\*$//)
-	{
-		my $cat_sql=qq{
-					SELECT
-						ID_charindex
-					FROM
-						`$App::501::db_name`.a501_image_cat
-					WHERE
-						ID=$env{'image_attrs.ID_category'}
-					LIMIT 1
-		};
-		$env{'image_attrs.ID_category'} = qq{
-			SELECT
-				ID
-			FROM
-				`$App::501::db_name`.a501_image_cat
-			WHERE
-				ID_charindex LIKE CONCAT(($cat_sql),"%") AND
-				lng='$env{'image_attrs.lng'}' AND
-				status IN ('$env{'image_attrs.status'}')
-		};
-	}
-	elsif ($env{'image_attrs.ID_category'})
-	{
-		
+		$sql_where.=" AND (".$sql_cat.") ";
 	}
 	
 	if ($env{'image.ID_entity'})
@@ -220,9 +217,6 @@ sub execute
 			(join "','", split(';',$env{'image.ID_entity'})).
 			"')";
 	}
-	
-	$sql_where.=" AND image.ID_category IN ($env{'image_attrs.ID_category'})"
-		if $env{'image_attrs.ID_category'};
 	
 	if($env{'keywords'}){
 		$env{'keywords'}=~s|,| |g;
@@ -248,12 +242,14 @@ sub execute
 		FROM
 			`$env{'db_name'}`.a501_image_view AS image
 		WHERE
-			image.status IN ('$env{'image_attrs.status'}') AND
-			image.lng='$env{'image_attrs.lng'}'
+					image.status IN ('$status_sql')
+			AND	image.lng='$env{'image_attrs.lng'}'
+			AND	image.ID_format='1'
 			$sql_where
 		ORDER BY
 			$env{'sql_order_by'}
-		LIMIT $env{'sql_limit'}
+		LIMIT
+			$env{'sql_limit'}
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
 	
@@ -274,34 +270,63 @@ sub execute
 	
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		my $item=$XSGN{'item'};
+		$item_counter++;
 		
-      $item_counter++;
+		last if $count_max<$item_counter;
+		
+		my $item=$XSGN{'item'};
+		$item=$XSGN{'item.odd'} if (($item_counter % 2) && (exists $XSGN{'item.odd'}));
+		$item=$XSGN{'item.'.$item_counter} if (exists $XSGN{'item.'.$item_counter});
 		
 		$XSGN{'TMP'}=~s|<%name%>|$db0_line{'ID_category_name'}|g;
-		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
-		my $sql=qq{
-			SELECT
-				*
-			FROM
-				`$env{'db_name'}`.a501_image_view AS image
-			WHERE
-				image.ID_entity_image = $db0_line{'ID_entity_image'} AND
-				image.status IN ('$env{'image_attrs.status'}') AND
-				image.lng='$env{'image_attrs.lng'}' AND
-				image.ID_format=$App::501::image_format_fullsize_ID
-			LIMIT 1
-		};
-		my %sth1=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
-		if (my %db1_line=$sth1{'sth'}->fetchhash())
+		if (my %db1_line=App::501::functions::get_image_file
+			(
+				'image.ID_entity' => $db0_line{'ID_entity_image'},
+				'image_file.ID_format' => $App::501::image_format_fullsize_ID,
+				'image_attrs.lng' => $env{'lng'}
+			)
+		)
 		{
 			$item=~s|<%fullsize.db_(.*?)%>|$db1_line{$1}|g;
 		}
 		
+		if (my %db1_line=App::501::functions::get_image_file
+			(
+				'image.ID_entity' => $db0_line{'ID_entity_image'},
+				'image_file.ID_format' => $env{'image.ID_format'} || $App::501::image_format_thumbnail_ID,
+				'image_attrs.lng' => $env{'lng'}
+			)
+		)
+		{
+			$item=~s|<%db_(.*?)%>|$db1_line{$1}|g;
+		}
+		
+		#$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		#my $sql=qq{
+		#	SELECT
+		#		*
+		#	FROM
+		#		`$env{'db_name'}`.a501_image_view AS image
+		#	WHERE
+		#		image.ID_entity_image = $db0_line{'ID_entity_image'} AND
+		#		image.status IN ('$env{'image_attrs.status'}') AND
+		#		image.lng='$env{'image_attrs.lng'}' AND
+		#		image.ID_format=$App::501::image_format_fullsize_ID
+		#	LIMIT 1
+		#};
+		#my %sth1=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
+		#if (my %db1_line=$sth1{'sth'}->fetchhash())
+		#{
+		#	$item=~s|<%fullsize.db_(.*?)%>|$db1_line{$1}|g;
+		#}
+		
 #		foreach(keys %db0_line){
 #			$item=~s|<%$_%>|$db0_line{$_}|g;
 #		}
+		
+		$item=~s|<%item_number%>|$item_counter|g;
 		
 		if($XSGN{'TMP'}=~/<#item.$item_counter#>/)
 		{
@@ -316,28 +341,41 @@ sub execute
 	
 	$XSGN{'TMP'}=~s|<%total_count%>|$item_counter|g;
 	
+	if ($env{'env.counter'})
+	{
+		$main::env{'count'}+=$item_counter;
+	}
+	
 	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
 	{
 		$env{'offset'}=$1;
-		$env{'count'}=$2;
+		#$env{'count'}=$2;
 	}
 	else
 	{
-		$env{'count'}=$env{'sql_limit'};
+		#$env{'count'}=$env{'sql_limit'};
 	}
 	
-	
-	# offset
-	if ($env{'count'} && $item_counter >= $env{'count'}) # count
+	if($XSGN{'paging'})
 	{
-		$XSGN{'next'}=~s|<%offset%>|$env{'offset'}+$env{'count'}|ge;
+		if(
+			($count_max && $item_counter >= $count_max && $count_max < $sth0{'rows'})
+			||	($env{'offset'}-$env{'sql_limit_start'})
+		){
+			$XSGN{'TMP'}=~s|<#paging#>|$XSGN{'paging'}|g;
+		}
+	}
+	
+	if ($count_max && $item_counter >= $count_max && $count_max < $sth0{'rows'}) # count
+	{
+		$XSGN{'next'}=~s|<%offset%>|$env{'offset'}+$count_max|ge;
 		$XSGN{'TMP'}=~s|<#next#>|$XSGN{'next'}|g;
 	}
 	if ($env{'offset'}-$env{'sql_limit_start'})
 	{
-		if ($env{'offset'}-$env{'count'}-$env{'sql_limit_start'}>0)
+		if ($env{'offset'} - $count_max - $env{'sql_limit_start'}>0)
 		{
-			$XSGN{'previous'}=~s|<%offset%>|$env{'offset'}-$env{'count'}|ge;
+			$XSGN{'previous'}=~s|<%offset%>|$env{'offset'}-$count_max|ge;
 		}
 		else
 		{
@@ -346,12 +384,38 @@ sub execute
 		$XSGN{'TMP'}=~s|<#previous#>|$XSGN{'previous'}|g;
 	}
 	
+	$XSGN{'TMP.empty'}=$XSGN{'TMP_failure_no-data'} if $XSGN{'TMP_failure_no-data'}; #backwards compatibility
 	
 	if(!$item_counter)
 	{
-		if($XSGN{'TMP_failure_no-data'})
+		if($XSGN{'TMP.empty'})
 		{
-			$XSGN{'TMP'} = $XSGN{'TMP_failure_no-data'};
+			$XSGN{'TMP'} = $XSGN{'TMP.empty'};
+		}
+	}
+	
+	if($env{'image_attrs.ID_category'}=~/^([0-9]+)\*?$/)
+	{
+		my $ID_category=$1;
+		my $sql=qq{
+			SELECT
+				name, name_url
+			FROM
+				`$env{'db_name'}`.`a501_image_cat`
+			WHERE
+						ID_entity=$ID_category
+				AND	lng='$env{'image_attrs.lng'}'
+				AND	status IN ('$status_sql')
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto_'=>60);
+		
+		if($sth0{'sth'})
+		{
+			if (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				$XSGN{'TMP'}=~s|<%category_name%>|$db0_line{'name'}|g;
+				$XSGN{'TMP'}=~s|<%category_name_url%>|$db0_line{'name_url'}|g;
+			}
 		}
 	}
 	
