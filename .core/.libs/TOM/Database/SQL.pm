@@ -506,7 +506,7 @@ sub execute
 	
 	if ($logquery || (!$typeselect && $lognonselectquery))
 	{
-		main::_log("{$env{'db_h'}:exec:".($t->{'time'}{'req'}{'duration'})."s} '$SQL_' from '$filename:$line'",3,"sql");
+		main::_log("{$env{'db_h'}:exec:".($t->{'time'}{'req'}{'duration'})."s} '$SQL_' from '$package:$filename:$line'",3,"sql");
 	}
 	
 	if ($logquery_long && ($t->{'time'}{'req'}{'duration'} > $env{'-long'}))
