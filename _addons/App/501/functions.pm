@@ -589,19 +589,22 @@ sub image_file_process
 			# setup border
 			my $border=int(($pixel_r-$pixel_l+$pixel_b-$pixel_t)/2*0.05);
 			main::_log(" setup border to $border px");
-			$pixel_l-=$border;
-			$pixel_l=1 if $pixel_l<1;
-			$pixel_t-=$border;
-			$pixel_t=1 if $pixel_t<1;
-			$pixel_r+=$border;
-			$pixel_r=$image1->Get('width') if $pixel_r>$image1->Get('width');
-			$pixel_b+=$border;
-			$pixel_b=$image1->Get('height') if $pixel_b>$image1->Get('height');
-			# execute crop
-			$image1->Crop('x'=>$pixel_l,'y'=>$pixel_t,'width'=>$pixel_r-$pixel_l,'height'=>$pixel_b-$pixel_t);
-			
-#			$image1->Trim();
-			main::_log(" new width=".($image1->Get('width'))." height=".($image1->Get('height')));
+			if ($border)
+			{
+				main::_log(" cropping");
+				$pixel_l-=$border;
+				$pixel_l=1 if $pixel_l<1;
+				$pixel_t-=$border;
+				$pixel_t=1 if $pixel_t<1;
+				$pixel_r+=$border;
+				$pixel_r=$image1->Get('width') if $pixel_r>$image1->Get('width');
+				$pixel_b+=$border;
+				$pixel_b=$image1->Get('height') if $pixel_b>$image1->Get('height');
+				# execute crop
+				$image1->Crop('x'=>$pixel_l,'y'=>$pixel_t,'width'=>$pixel_r-$pixel_l,'height'=>$pixel_b-$pixel_t);
+	#			$image1->Trim();
+				main::_log(" new width=".($image1->Get('width'))." height=".($image1->Get('height')));
+			}
 			$procs++;
 			next;
 		}
@@ -798,6 +801,14 @@ sub image_file_process
 		
 		if ($function_name eq "face_debug")
 		{
+			next;
+		}
+		
+		if ($function_name eq "grayscale")
+		{
+			main::_log("exec $function_name()");
+			$image1->Quantize('colorspace'=>'gray');
+			$procs++;
 			next;
 		}
 		
