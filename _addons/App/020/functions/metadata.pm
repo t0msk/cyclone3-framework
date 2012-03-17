@@ -180,10 +180,10 @@ sub serialize
 	my %metadata=@_;
 	my $text="<metatree>\n";
 	
-	foreach my $section (keys %metadata)
+	foreach my $section (sort keys %metadata)
 	{
 		$text.="<section name=\"$section\">\n";
-		foreach my $variable(keys %{$metadata{$section}})
+		foreach my $variable(sort keys %{$metadata{$section}})
 		{
 			$text.="<variable name=\"$variable\">$metadata{$section}{$variable}</variable>\n";
 		}
