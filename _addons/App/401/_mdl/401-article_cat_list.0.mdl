@@ -87,6 +87,10 @@ sub execute
 		
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
+		my $odd;
+			$odd="odd" unless ($item_counter/2 == int($item_counter/2));
+		
+		$item=~s|<%odd%>|$odd|g;
 		
 		# process abstract
 		my $p=new App::401::mimetypes::html;
