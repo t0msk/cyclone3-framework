@@ -197,7 +197,7 @@ $where
 	main::_log("quering for data from a210_page");
 	my %sth0=TOM::Database::SQL::execute(
 		$sql,
-		'log'=>1,
+#		'log'=>1,
 		'-cache' => 300,
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime(
 			{
