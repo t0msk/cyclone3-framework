@@ -144,6 +144,17 @@ sub org_add
 		$org{'ID'}=$env{'org.ID'};
 	}
 	
+	if (!$org{'ID_entity'} && $org{'ID'})
+	{
+		%org=App::020::SQL::functions::get_ID(
+			'ID' => $org{'ID'},
+			'db_h' => "main",
+			'db_name' => $App::710::db_name,
+			'tb_name' => "a710_org",
+			'columns' => {'*'=>1}
+		);
+	}
+	
 	main::_log("org.ID='$org{'ID'}'");
 	
 	if (!$org{'posix_owner'} && !$env{'org.posix_owner'})
@@ -256,24 +267,40 @@ sub org_add
 	# metadata
 	my %metadata=App::020::functions::metadata::parse($org{'metadata'});
 	
-	if (!ref($env{'org.metadata'}))
+	if ($env{'org.metadata.replace'})
 	{
-		my %metadata_=App::020::functions::metadata::parse($env{'org.metadata'});
-		delete $env{'org.metadata'};
-		%{$env{'org.metadata'}}=%metadata_;
-	}
-	if (ref($env{'org.metadata'}) eq "HASH")
-	{
-		# metadata overrride
-		foreach my $section(keys %{$env{'org.metadata'}})
+		if (!ref($env{'org.metadata'}))
 		{
-			foreach my $variable(keys %{$env{'org.metadata'}{$section}})
+			%metadata=App::020::functions::metadata::parse($env{'org.metadata'});
+		}
+		if (ref($env{'org.metadata'}) eq "HASH")
+		{
+			%metadata=%{$env{'org.metadata'}};
+		}
+	}
+	else
+	{
+		if (!ref($env{'org.metadata'}))
+		{
+			my %metadata_=App::020::functions::metadata::parse($env{'org.metadata'});
+			delete $env{'org.metadata'};
+			%{$env{'org.metadata'}}=%metadata_;
+		}
+		if (ref($env{'org.metadata'}) eq "HASH")
+		{
+			# metadata overrride
+			foreach my $section(keys %{$env{'org.metadata'}})
 			{
-				$metadata{$section}{$variable}=$env{'org.metadata'}{$section}{$variable};
+				foreach my $variable(keys %{$env{'org.metadata'}{$section}})
+				{
+					$metadata{$section}{$variable}=$env{'org.metadata'}{$section}{$variable};
+				}
 			}
 		}
 	}
+	
 	$env{'org.metadata'}=App::020::functions::metadata::serialize(%metadata);
+	
 	$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'org.metadata'})."'"
 		if (exists $env{'org.metadata'} && ($env{'org.metadata'} ne $org{'metadata'}));
 	
@@ -468,10 +495,11 @@ sub _org_index
 	{
 		foreach (keys %{$metadata{$sec}})
 		{
-			next if $_ eq "enabled";
+			my $suffix_=$suffix;
+#			next if $_ eq "enabled";
 			next unless $metadata{$sec}{$_};
-#			main::_log(" $sec".'.'."$_=$metadata{$sec}{$_}");
-			push @{$content{'metadata'}},WebService::Solr::Field->new( $sec.'.'.$_.'_'.$suffix => "$metadata{$sec}{$_}" );
+			main::_log(" $sec".'.'."$_($suffix_)=$metadata{$sec}{$_}");
+			push @{$content{'metadata'}},WebService::Solr::Field->new( $sec.'.'.$_.'_'.$suffix_ => "$metadata{$sec}{$_}" );
 		}
 	}
 	
@@ -497,6 +525,7 @@ sub _org_index
 		WebService::Solr::Field->new( 'district_'.$suffix => $org{'district'} || ''),
 		WebService::Solr::Field->new( 'city_'.$suffix => $org{'city'} || ''),
 		WebService::Solr::Field->new( 'street_'.$suffix => $org{'street'} || ''),
+		WebService::Solr::Field->new( 'street_number_t' => $org{'street_num'} || ''),
 		
 		WebService::Solr::Field->new( 'address_postal_'.$suffix => $org{'address_postal'} || ''),
 		
@@ -510,9 +539,12 @@ sub _org_index
 		
 	));
 	
+#	return 1;
+	
 	main::_log("adding index entry '$id'");
 	
 	$solr->add($doc);
+#	return 1;
 	$solr->commit;
 	
 	$t->close();
