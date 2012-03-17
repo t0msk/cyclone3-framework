@@ -201,6 +201,8 @@ sub execute
 		}
 	}
 	
+#	$XSGN{'TMP'}="hyphen=$env{'hyphen'}";return 1;
+	
 	my $sql=qq{
 		SELECT
 			article.ID_entity,
@@ -220,6 +222,8 @@ sub execute
 			DATE_FORMAT(article_attrs.datetime_start, '%Y-%m-%d %H:%i') AS datetime_start,
 			DATE_FORMAT(article_attrs.datetime_stop, '%Y-%m-%d %H:%i') AS datetime_stop,
 			
+			article_content.datetime_modified,
+			
 			article_attrs.priority_A,
 			article_attrs.priority_B,
 			article_attrs.priority_C,
@@ -231,6 +235,7 @@ sub execute
 			article_attrs.name_url,
 			article_attrs.name_hyphens,
 			article_attrs.alias_url,
+			article_content.version,
 			article_content.subtitle,
 			article_content.subtitle_hyphens,
 			article_content.mimetype,
@@ -299,6 +304,24 @@ sub execute
 			'key' => $db0_line{'ID_entity_article'}
 		);
 		$db0_line{'visits'}+=$cache_visits->{'visits'} if $cache_visits->{'visits'};
+		
+		if ($db0_line{'version'}) # this content is versioned
+		{
+			$XSGN{'TMP'}=~s|<#versioned#>|$XSGN{'versioned'}|g;
+		}
+		else
+		{
+			$XSGN{'TMP'}=~s|<#unversioned#>|$XSGN{'unversioned'}|g;
+		}
+		
+		if ($db0_line{'datetime_modified'}) # this content was modified
+		{
+			$XSGN{'TMP'}=~s|<#modified#>|$XSGN{'modified'}|g;
+		}
+		else
+		{
+			$XSGN{'TMP'}=~s|<#unmodified#>|$XSGN{'unmodified'}|g;
+		}
 		
 		# size of article body in 
 #		my $size_root_square=int(sqrt(length($db0_line{'body'})));
@@ -369,6 +392,17 @@ sub execute
 		$db0_line{'datetime_create.hour'}=$datetime{'hour'};
 		$db0_line{'datetime_create.min'}=$datetime{'min'};
 		$db0_line{'datetime_create.sec'}=$datetime{'sec'};
+		
+		if($db0_line{'datetime_modified'})
+		{
+			%datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_modified'});
+			$db0_line{'datetime_modified.year'}=$datetime{'year'};
+			$db0_line{'datetime_modified.month'}=$datetime{'month'};
+			$db0_line{'datetime_modified.mday'}=$datetime{'mday'};
+			$db0_line{'datetime_modified.hour'}=$datetime{'hour'};
+			$db0_line{'datetime_modified.min'}=$datetime{'min'};
+			$db0_line{'datetime_modified.sec'}=$datetime{'sec'};
+		}
 		
 		my $rating5=int($db0_line{'rating'}/20);
 			$rating5=3 if $db0_line{'rating_votes'} < 5;
