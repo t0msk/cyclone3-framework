@@ -214,6 +214,16 @@ sub execute
 	}
 	
 	$env{'sql_order_by'}='article_attrs.datetime_start DESC' unless $env{'sql_order_by'};
+	$env{'sql_order_by'}=" ".$env{'sql_order_by'};
+	
+	$env{'sql_order_by'}=~s| modified|IF(article_content.datetime_modified,article_content.datetime_modified,article_attrs.datetime_start)|g;
+	
+#	if ($env{'sql_order_by'} eq "datetime_modified")
+#	{
+#		$env{'sql_order_by'}=qq{
+#			( IF(article_content.datetime_modified,article_content.datetime_modified,article_attrs.datetime_start) ) DESC
+#		};
+#	}
 	
 	$env{'article_content.lng'}=$env{'lng'} unless $env{'article_content.lng'};
 	
@@ -306,6 +316,18 @@ sub execute
 	if ($env{'sql_where'})
 	{
 		$sql_where.=" AND ".$env{'sql_where'};
+	}
+	
+	if ($env{'modified.datetime_from'})
+	{
+		$sql_select.=qq{
+		, IF (
+			IF(article_content.datetime_modified > article_attrs.datetime_start,article_content.datetime_modified,article_attrs.datetime_start)
+			> '$env{'modified.datetime_from'}',
+			"Y",
+			"N"
+		) AS mark_modified
+		};
 	}
 	
 	my $sql=qq{
@@ -449,13 +471,32 @@ sub execute
 		$item = $XSGN{'item.odd'} if (($item_counter % 2) && (exists $XSGN{'item.odd'}));
 		$item = $XSGN{'item.'.$item_counter} if $XSGN{'item.'.$item_counter};
 		
-		if ($XSGN{'item-empty'} && (!$db0_line{'abstract'} || $db0_line{'abstract'} eq "<p>&nbsp;&nbsp;</p>") && (!$db0_line{'body'} || $db0_line{'body'} eq "<p>&nbsp;&nbsp;</p>"))
+		my $abstract_plain=TOM::Text::format::xml2plain($db0_line{'abstract'});
+		my $body_plain=TOM::Text::format::xml2plain($db0_line{'body'});
+		
+		if ($XSGN{'item-empty'} && 
+			(!$db0_line{'abstract'} || (length($abstract_plain) < 10)) &&
+			(!$db0_line{'body'} || (length($body_plain) < 10)))
 		{
 			$item=$XSGN{'item-empty'};
 		}
-		elsif ($XSGN{'item-emptybody'} && (!$db0_line{'body'} || $db0_line{'body'} eq "<p>&nbsp;&nbsp;</p>"))
+		elsif ($XSGN{'item-emptybody'} && ((!$db0_line{'body'}) || (length($body_plain) < 10)))
 		{
 			$item=$XSGN{'item-emptybody'};
+		}
+		
+		if ($db0_line{'version'}) # this content is versioned
+		{
+			$item=~s|<#versioned#>|$XSGN{'versioned'}|g;
+		}else{
+			$item=~s|<#unversioned#>|$XSGN{'unversioned'}|g;
+		}
+		
+		if ($db0_line{'datetime_modified'}) # this content was modified
+		{
+			$item=~s|<#modified#>|$XSGN{'modified'}|g;
+		}else{
+			$item=~s|<#unmodified#>|$XSGN{'unmodified'}|g;
 		}
 		
 		use DateTime;
@@ -585,6 +626,29 @@ sub execute
 			$item=~s|<%published_old%>|$dur_string|g;
 		}
 		
+      if($db0_line{'datetime_modified'})
+		{
+			my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_modified'});
+			$db0_line{'datetime_modified.year'}=$datetime{'year'};
+			$db0_line{'datetime_modified.month'}=$datetime{'month'};
+			$db0_line{'datetime_modified.month_'}=$datetime{'month'}-1+1;
+			$db0_line{'datetime_modified.mday'}=$datetime{'mday'};
+			$db0_line{'datetime_modified.hour'}=$datetime{'hour'};
+			$db0_line{'datetime_modified.min'}=$datetime{'min'};
+			$db0_line{'datetime_modified.sec'}=$datetime{'sec'};
+			
+			$db0_line{'datetime_modified.month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$datetime{'month'}-1];
+			$db0_line{'datetime_modified.month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$datetime{'month'}-1];
+			
+			if($db0_line{'datetime_start'} ne "0000-00-00 00:00:00")
+			{
+				my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
+				$db0_line{'datetime_modified.wday'}=$dt->day_of_week_0();
+				$db0_line{'datetime_modified.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week_0()];
+				$db0_line{'datetime_modified.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week_0()];
+			}
+		}
+		
 		# hyphen
 		foreach (keys %hyphen)
 		{
@@ -605,92 +669,11 @@ sub execute
 		
 		$p->config('name'=>'abstract','env'=>\%env,'entity'=>\%XSGN,'counter'=>$item_counter,'prefix'=>'article');
 		
-=head1
-		# img
-		$p->{'ignore'}{'img'}=
-			$env{'body.ignore.img'}
-			|| $env{'ignore.img'}
-			|| undef;
-		
-		$p->{'ignore'}{'img.1'}=
-			$env{'abstract.ignore.img.1'}
-			|| $env{'ignore.img.1'}
-			|| undef;
-		
-		# a210_page
-		$p->{'entity'}{'a210_page'}=
-			$XSGN{'abstract.a210_page'}
-			|| $XSGN{'a210_page'}
-			|| undef;
-			
-		# a401_article
-		$p->{'entity'}{'a401_article'}=
-			$XSGN{'abstract.a401_article'}
-			|| $XSGN{'a401_article'}
-			|| undef;
-		
-		# a501_image
-		$p->{'config'}->{'a501_image_file.ID_format'}=
-			$env{'article.'.$item_counter.'.abstract.a501_image_file.ID_format'}
-			|| $env{'article.'.$item_counter.'.a501_image_file.ID_format'}
-			|| $env{'abstract.a501_image_file.ID_format'}
-			|| $env{'a501_image_file.ID_format'}
-			|| undef;
-		$p->{'config'}->{'a501_image_file.ID_format.1'}=
-			$env{'article.'.$item_counter.'.abstract.a501_image_file.ID_format.1'}
-			|| $env{'article.'.$item_counter.'.a501_image_file.ID_format.1'}
-			|| $env{'abstract.a501_image_file.ID_format.1'}
-			|| $env{'a501_image_file.ID_format.1'}
-			|| undef;
-		$p->{'config'}->{'a501_image_file.ID_format.extra'}=
-			$env{'a501_image_file.ID_format.extra'}
-			|| undef;
-		$p->{'entity'}->{'a501_image'}=
-			$XSGN{'abstract.a501_image'}
-			|| $XSGN{'a501_image'}
-			|| undef;
-		$p->{'entity'}->{'a501_image.1'}=
-			$XSGN{'abstract.a501_image.1'}
-			|| $XSGN{'a501_image.1'}
-			|| undef;
-		
-		# a510_video
-		$p->{'config'}->{'a510_video_part_file.ID_format'}=
-			$env{'article.'.$item_counter.'.abstract.a510_video_part_file.ID_format'}
-			|| $env{'article.'.$item_counter.'.a510_video_part_file.ID_format'}
-			|| $env{'abstract.a510_video_part_file.ID_format'}
-			|| $env{'a510_video_part_file.ID_format'}
-			|| undef;
-		$p->{'config'}->{'a510_video_part_file.ID_format.1'}=
-			$env{'article.'.$item_counter.'.abstract.a510_video_part_file.ID_format.1'}
-			|| $env{'article.'.$item_counter.'.a510_video_part_file.ID_format.1'}
-			|| $env{'abstract.a510_video_part_file.ID_format.1'}
-			|| $env{'a510_video_part_file.ID_format.1'}
-			|| undef;
-		$p->{'entity'}{'a510_video'}=
-			$XSGN{'abstract.a510_video'}
-			|| $XSGN{'a510_video'}
-			|| undef;
-		$p->{'entity'}{'a510_video.1'}=
-			$XSGN{'abstract.a510_video.1'}
-			|| $XSGN{'a510_video.1'}
-			|| undef;
-		$p->{'entity'}{'a510_video_part'}=
-			$XSGN{'abstract.a510_video_part'}
-			|| $XSGN{'a510_video_part'}
-			|| undef;
-		$p->{'entity'}{'a510_video_part.1'}=
-			$XSGN{'abstract.a510_video_part.1'}
-			|| $XSGN{'a510_video_part.1'}
-			|| undef;
-=cut
-		
 		$p->parse($db0_line{'abstract'}."\n");
 		#$p->eof();
 		my $abstract_html=$p->{'out'};
 		$item=~s|<%abstract%>|$abstract_html|g;
 		
-		my $abstract_plain=TOM::Text::format::xml2plain($db0_line{'abstract'});
 		$item=~s|<%abstract_plain%>|$abstract_plain|;
 		
 		# BODY
@@ -701,86 +684,6 @@ sub execute
 			my $p=new App::401::mimetypes::html;
 			
 			$p->config('name'=>'body','env'=>\%env,'entity'=>\%XSGN,'counter'=>$item_counter,'prefix'=>'article');
-			
-=head1
-			# img
-			$p->{'ignore'}{'img'}=
-				$env{'body.ignore.img'}
-				|| $env{'ignore.img'}
-				|| undef;
-			
-			$p->{'ignore'}{'img.1'}=
-				$env{'body.ignore.img.1'}
-				|| $env{'ignore.img.1'}
-				|| undef;
-			
-			# a210_page
-			$p->{'entity'}{'a210_page'}=
-				$XSGN{'body.a210_page'}
-				|| $XSGN{'a210_page'}
-				|| undef;
-			
-			# a401_article
-			$p->{'entity'}{'a401_article'}=
-				$XSGN{'body.a401_article'}
-				|| $XSGN{'a401_article'}
-				|| undef;
-			
-			# a501_image
-			$p->{'config'}->{'a501_image_file.ID_format'}=
-				$env{'article.'.$item_counter.'.abstract.a501_image_file.ID_format'}
-				|| $env{'article.'.$item_counter.'.a501_image_file.ID_format'}
-				|| $env{'abstract.a501_image_file.ID_format'}
-				|| $env{'a501_image_file.ID_format'}
-				|| undef;
-			$p->{'config'}->{'a501_image_file.ID_format.1'}=
-				$env{'article.'.$item_counter.'.abstract.a501_image_file.ID_format.1'}
-				|| $env{'article.'.$item_counter.'.a501_image_file.ID_format.1'}
-				|| $env{'abstract.a501_image_file.ID_format.1'}
-				|| $env{'a501_image_file.ID_format.1'}
-				|| undef;
-			$p->{'config'}->{'a501_image_file.ID_format.extra'}=
-				$env{'a501_image_file.ID_format.extra'}
-				|| undef;
-			$p->{'entity'}->{'a501_image'}=
-				$XSGN{'abstract.a501_image'}
-				|| $XSGN{'a501_image'}
-				|| undef;
-			$p->{'entity'}->{'a501_image.1'}=
-				$XSGN{'abstract.a501_image.1'}
-				|| $XSGN{'a501_image.1'}
-				|| undef;
-			
-			# a510_video
-			$p->{'config'}->{'a510_video_part_file.ID_format'}=
-				$env{'article.'.$item_counter.'.abstract.a510_video_part_file.ID_format'}
-				|| $env{'article.'.$item_counter.'.a510_video_part_file.ID_format'}
-				|| $env{'abstract.a510_video_part_file.ID_format'}
-				|| $env{'a510_video_part_file.ID_format'}
-				|| undef;
-			$p->{'config'}->{'a510_video_part_file.ID_format.1'}=
-				$env{'article.'.$item_counter.'.abstract.a510_video_part_file.ID_format.1'}
-				|| $env{'article.'.$item_counter.'.a510_video_part_file.ID_format.1'}
-				|| $env{'abstract.a510_video_part_file.ID_format.1'}
-				|| $env{'a510_video_part_file.ID_format.1'}
-				|| undef;
-			$p->{'entity'}{'a510_video'}=
-				$XSGN{'abstract.a510_video'}
-				|| $XSGN{'a510_video'}
-				|| undef;
-			$p->{'entity'}{'a510_video.1'}=
-				$XSGN{'abstract.a510_video.1'}
-				|| $XSGN{'a510_video.1'}
-				|| undef;
-			$p->{'entity'}{'a510_video_part'}=
-				$XSGN{'abstract.a510_video_part'}
-				|| $XSGN{'a510_video_part'}
-				|| undef;
-			$p->{'entity'}{'a510_video_part.1'}=
-				$XSGN{'abstract.a510_video_part.1'}
-				|| $XSGN{'a510_video_part.1'}
-				|| undef;
-=cut
 			
 			$p->parse($db0_line{'body'});
 			
@@ -1091,7 +994,7 @@ sub execute
 	
 	if(!$item_counter)
 	{
-		if($XSGN{'TMP.empty'})
+		if(defined $XSGN{'TMP.empty'})
 		{
 			$XSGN{'TMP'} = $XSGN{'TMP.empty'};
 		}
