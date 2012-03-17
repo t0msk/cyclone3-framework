@@ -229,7 +229,7 @@ sub execute
 	
 	if ($env{'date'})
 	{
-		$sql_where.="AND (DATE(event.datetime_start)<='$env{'date'}' AND DATE(event.datetime_finish)>='$env{'date'}') ";
+		$sql_where.="AND ((DATE(event.datetime_start)<='$env{'date'}' AND DATE(event.datetime_finish)>='$env{'date'}') OR (DATE(event.datetime_start)='$env{'date'}'))";
 	}
 	
 	$env{'mode'}="future" unless $env{'mode'};
@@ -328,7 +328,7 @@ sub execute
 		last if $count_max<$item_counter;
 		
 		my $item = $XSGN{'item'};
-		$item = $XSGN{'item.odd'} if ((not $item_counter % 2) && (exists $XSGN{'item.odd'}));
+		$item = $XSGN{'item.odd'} if (($item_counter % 2) && (exists $XSGN{'item.odd'}));
 		$item = $XSGN{'item.'.$item_counter} if $XSGN{'item.'.$item_counter};
 		
 		if($db0_line{'datetime_start'} && $db0_line{'datetime_start'} ne "0000-00-00 00:00:00")
@@ -347,9 +347,9 @@ sub execute
 			if($db0_line{'datetime_start'} ne "0000-00-00 00:00:00")
 			{
 				my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
-				$db0_line{'datetime_start.wday'}=$dt->day_of_week_0();
-				$db0_line{'datetime_start.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week_0()];
-				$db0_line{'datetime_start.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week_0()];
+				$db0_line{'datetime_start.wday'}=$dt->day_of_week();
+				$db0_line{'datetime_start.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week()];
+				$db0_line{'datetime_start.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week()];
 			}
 		}
 		
@@ -369,9 +369,9 @@ sub execute
 			if($db0_line{'datetime_finish'} ne "0000-00-00 00:00:00")
 			{
 				my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
-				$db0_line{'datetime_finish.wday'}=$dt->day_of_week_0();
-				$db0_line{'datetime_finish.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week_0()];
-				$db0_line{'datetime_finish.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week_0()];
+				$db0_line{'datetime_finish.wday'}=$dt->day_of_week();
+				$db0_line{'datetime_finish.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week()];
+				$db0_line{'datetime_finish.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week()];
 			}
 		}
 		
@@ -483,6 +483,9 @@ sub execute
 		my $description_short_plain=TOM::Text::format::xml2plain($db0_line{'description_short'});
 		$item=~s|<%description_short_plain%>|$description_short_plain|;
 		
+		$item=~s|<%description_short\.out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
+		$item=~s|<#description_short\.out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
+		
 		# process description
 		my $p=new App::401::mimetypes::html;
 		
@@ -592,6 +595,12 @@ sub execute
 				$item_thumbnail=~s|<%db_(.*?)%>|$image{$1}|g;
 				$item=~s|<#thumbnail#>|$item_thumbnail|g;
 			}
+		}
+		
+		if(!$thumbnail)
+		{
+			main::_log('ogh mygh ghogd!');
+			$item=~s|<#thumbnail#>|$XSGN{'thumbnail.empty'}|g if $XSGN{'thumbnail.empty'};
 		}
 		
 		my @ACL=App::301::perm::get_ACL(

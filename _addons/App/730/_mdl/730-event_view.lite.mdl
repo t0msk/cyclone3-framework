@@ -283,25 +283,49 @@ sub execute
 	{
 		$main::env{'a730_event.ID'}=$db0_line{'ID_event'};
 		
-		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
-		$db0_line{'datetime_start.year'}=$datetime{'year'};
-		$db0_line{'datetime_start.month'}=$datetime{'month'};
-		$db0_line{'datetime_start.month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_start.month'}-1];
-#		$db0_line{'datetime_start.month_name'}="$db0_line{'datetime_start.month_name'}";
-		$db0_line{'datetime_start.mday'}=$datetime{'mday'};
-		$db0_line{'datetime_start.hour'}=$datetime{'hour'};
-		$db0_line{'datetime_start.min'}=$datetime{'min'};
-		$db0_line{'datetime_start.sec'}=$datetime{'sec'};
+		if($db0_line{'datetime_start'} && $db0_line{'datetime_start'} ne "0000-00-00 00:00:00")
+		{
+			my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
+			$db0_line{'datetime_start.year'}=$datetime{'year'};
+			$db0_line{'datetime_start.month'}=$datetime{'month'};
+			$db0_line{'datetime_start.month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_start.month'}-1];
+			$db0_line{'datetime_start.month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$db0_line{'datetime_start.month'}-1];
+			$db0_line{'datetime_start.month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_start.month'}-1];
+			$db0_line{'datetime_start.mday'}=$datetime{'mday'};
+			$db0_line{'datetime_start.hour'}=$datetime{'hour'};
+			$db0_line{'datetime_start.min'}=$datetime{'min'};
+			$db0_line{'datetime_start.sec'}=$datetime{'sec'};
+			
+			if($db0_line{'datetime_start'} ne "0000-00-00 00:00:00")
+			{
+				my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
+				$db0_line{'datetime_start.wday'}=$dt->day_of_week();
+				$db0_line{'datetime_start.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week()];
+				$db0_line{'datetime_start.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week()];
+			}
+		}
 		
-		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_finish'});
-		$db0_line{'datetime_finish.year'}=$datetime{'year'};
-		$db0_line{'datetime_finish.month'}=$datetime{'month'};
-		$db0_line{'datetime_finish.month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_finish.month'}-1];
-#		$db0_line{'datetime_finish.month_name'}="$db0_line{'datetime_finish.month_name'}";
-		$db0_line{'datetime_finish.mday'}=$datetime{'mday'};
-		$db0_line{'datetime_finish.hour'}=$datetime{'hour'};
-		$db0_line{'datetime_finish.min'}=$datetime{'min'};
-		$db0_line{'datetime_finish.sec'}=$datetime{'sec'};
+		if($db0_line{'datetime_finish'})
+		{
+			my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_finish'});
+			$db0_line{'datetime_finish.year'}=$datetime{'year'};
+			$db0_line{'datetime_finish.month'}=$datetime{'month'};
+			$db0_line{'datetime_finish.month_name'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_finish.month'}-1];
+			$db0_line{'datetime_finish.month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$db0_line{'datetime_finish.month'}-1];
+			$db0_line{'datetime_finish.month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$db0_line{'datetime_finish.month'}-1];
+			$db0_line{'datetime_finish.mday'}=$datetime{'mday'};
+			$db0_line{'datetime_finish.hour'}=$datetime{'hour'};
+			$db0_line{'datetime_finish.min'}=$datetime{'min'};
+			$db0_line{'datetime_finish.sec'}=$datetime{'sec'};
+			
+			if($db0_line{'datetime_finish'} ne "0000-00-00 00:00:00")
+			{
+				my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
+				$db0_line{'datetime_finish.wday'}=$dt->day_of_week();
+				$db0_line{'datetime_finish.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week()];
+				$db0_line{'datetime_finish.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week()];
+			}
+		}
 		
 		$XSGN{'TMP'}=~s|<#link#>|$XSGN{'link'}|g if $db0_line{'link'};
 		
@@ -657,11 +681,43 @@ sub execute
 			
 		}
 		
+
+
 		my @ACL=App::301::perm::get_ACL(
 			'r_prefix' => 'a730',
 			'r_table' => 'event',
 			'r_ID_entity' => $db0_line{'ID_entity_event'}
 		);
+
+
+		# attendees
+
+		my $attendees = $XSGN{'attendees'};
+		my $i = 0;
+
+		
+		foreach my $acl_item (@ACL)
+		{
+			if ($acl_item->{'roles'} =~ /attendee/)
+			{
+				$i++;
+
+				my $attendees_item =  $XSGN{'attendees.item'};
+				
+
+
+
+
+				$attendees =~ s|<#attendees.item#>|$attendees_item|;
+			}
+		}
+
+		if ($i)
+		{
+			$XSGN{'TMP'}=~s|<#attendees#>|$attendees|;
+		}
+
+		
 		
 		my $organizers;
 		foreach my $acl_item (@ACL)
@@ -707,7 +763,8 @@ sub execute
 				}
 			}
 		}
-		
+
+
 		$XSGN{'TMP'}=~s|<%organizers%>|$organizers|g;
 		
 		
