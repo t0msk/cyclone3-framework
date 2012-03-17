@@ -802,9 +802,10 @@ sub execute
 	}
 	else
 	{
-		if(exists $XSGN{'TMP_failure_no-data'})
+		$XSGN{'TMP.empty'}=$XSGN{'TMP_failure_no-data'} if $XSGN{'TMP_failure_no-data'};
+		if(exists $XSGN{'TMP.empty'})
 		{
-			$XSGN{'TMP'}=$XSGN{'TMP_failure_no-data'};
+			$XSGN{'TMP'}=$XSGN{'TMP.empty'};
 		}
 	}
 	
