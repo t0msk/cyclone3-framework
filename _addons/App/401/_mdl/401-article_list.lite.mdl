@@ -518,9 +518,9 @@ sub execute
 			if($db0_line{'datetime_start'} ne "0000-00-00 00:00:00")
 			{
 				my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
-				$db0_line{'datetime_start.wday'}=$dt->day_of_week_0();
-				$db0_line{'datetime_start.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week_0()];
-				$db0_line{'datetime_start.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week_0()];
+				$db0_line{'datetime_start.wday'}=$dt->day_of_week();
+				$db0_line{'datetime_start.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week()];
+				$db0_line{'datetime_start.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week()];
 			}
 			
 			my $dt = DateTime->now();
@@ -717,6 +717,11 @@ sub execute
 			$item=~s|<#rating_top_mark#>|$XSGN{'rating_top_mark'}|g;
 		}
 		
+		if ($db0_line{'world_status'} eq 'N')
+		{
+			$item=~s|<#private_mark#>|$XSGN{'private_mark'}|g;
+		}
+		
 		if ($env{'relation'})
 		{
 			my $related_article;
@@ -861,6 +866,49 @@ sub execute
 						$db1_line{'file_size.mb'}=sprintf("%0.2f", ($db1_line{'file_size'} / (1024 * 1024)));
 						$db1_line{'file_size.kb'}=sprintf("%0.2f", ($db1_line{'file_size'} / 1024));
 						
+						my %datetime=TOM::Utils::datetime::datetime_collapse($db1_line{'datetime_create'});
+						$db1_line{'datetime_create.year'}=$datetime{'year'};
+						$db1_line{'datetime_create.month'}=$datetime{'month'};
+						$db1_line{'datetime_create.month_'}=$datetime{'month'}-1+1;
+						$db1_line{'datetime_create.mday'}=$datetime{'mday'};
+						$db1_line{'datetime_create.hour'}=$datetime{'hour'};
+						$db1_line{'datetime_create.min'}=$datetime{'min'};
+						$db1_line{'datetime_create.sec'}=$datetime{'sec'};
+						
+						$db1_line{'datetime_create.month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$datetime{'month'}-1];
+						$db1_line{'datetime_create.month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$datetime{'month'}-1];
+						
+						if($db1_line{'datetime_create'} ne "0000-00-00 00:00:00")
+						{
+							my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
+							$db1_line{'datetime_create.wday'}=$dt->day_of_week();
+							$db1_line{'datetime_create.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week()];
+							$db1_line{'datetime_create.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week()];
+						}
+						
+						if($db1_line{'datetime_publish_start'})
+						{
+							my %datetime=TOM::Utils::datetime::datetime_collapse($db1_line{'datetime_publish_start'});
+							$db1_line{'datetime_publish_start.year'}=$datetime{'year'};
+							$db1_line{'datetime_publish_start.month'}=$datetime{'month'};
+							$db1_line{'datetime_publish_start.month_'}=$datetime{'month'}-1+1;
+							$db1_line{'datetime_publish_start.mday'}=$datetime{'mday'};
+							$db1_line{'datetime_publish_start.hour'}=$datetime{'hour'};
+							$db1_line{'datetime_publish_start.min'}=$datetime{'min'};
+							$db1_line{'datetime_publish_start.sec'}=$datetime{'sec'};
+							
+							$db1_line{'datetime_publish_start.month.name'}=$Utils::datetime::MONTHS{$env{'lng'}}[$datetime{'month'}-1];
+							$db1_line{'datetime_publish_start.month.name.long'}=$Utils::datetime::MONTHS_L{$env{'lng'}}[$datetime{'month'}-1];
+							
+							if($db1_line{'datetime_publish_start'} ne "0000-00-00 00:00:00")
+							{
+								my $dt = DateTime->new(year => $datetime{'year'}, month => $datetime{'month'}, day => $datetime{'mday'}, hour => $datetime{'hour'}, minute => $datetime{'min'}, second => $datetime{'sec'}, time_zone => 'local');
+								$db1_line{'datetime_publish_start.wday'}=$dt->day_of_week();
+								$db1_line{'datetime_publish_start.wday.name'}=$Utils::datetime::DAYS{$env{'lng'}}[$dt->day_of_week()];
+								$db1_line{'datetime_publish_start.wday.name.long'}=$Utils::datetime::DAYS_L{$env{'lng'}}[$dt->day_of_week()];
+							}
+						}
+						
 						$item_attachment=~s|<%db_(.*?)%>|$db1_line{$1}|g;
 						$item=~s|<#attachment#>|$item_attachment|g;
 					}
@@ -933,6 +981,12 @@ sub execute
 		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 		
 		$item=~s|<%item_number%>|$item_counter|g;
+		while($item=~/<%item_number.divisible(\d+)%>/){
+			my $tmp=$1;
+			my $divisible=0;
+			$divisible=1 if not $item_counter % $tmp;
+			$item=~s|<%item_number.divisible$tmp%>|$divisible|g;
+		}
 		$item=~s|<%item_(.*?)%>|$db0_line{$1}|g;
 		
 		if($XSGN{'TMP'}=~/<#item.$item_counter#>/)
@@ -977,6 +1031,10 @@ sub execute
 		$XSGN{'next'}=~s|<%offset%>|$env{'offset'}+$count_max|ge;
 		$XSGN{'TMP'}=~s|<#next#>|$XSGN{'next'}|g;
 	}
+	else
+	{
+		$XSGN{'TMP'}=~s|<#next#>|$XSGN{'next.disabled'}|g;
+	}
 	if ($env{'offset'}-$env{'sql_limit_start'})
 	{
 		if ($env{'offset'} - $count_max - $env{'sql_limit_start'}>0)
@@ -988,6 +1046,10 @@ sub execute
 			$XSGN{'previous'}=~s|<%offset%>||ge;
 		}
 		$XSGN{'TMP'}=~s|<#previous#>|$XSGN{'previous'}|g;
+	}
+	else
+	{
+		$XSGN{'TMP'}=~s|<#previous#>|$XSGN{'previous.disabled'}|g;
 	}
 	
 	$XSGN{'TMP.empty'}=$XSGN{'TMP_failure_no-data'} if $XSGN{'TMP_failure_no-data'}; #backwards compatibility
