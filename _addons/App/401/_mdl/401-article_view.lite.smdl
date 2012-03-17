@@ -121,6 +121,7 @@ sub execute
 	$main::env{'a401.article.ID'}=$article{'ID'} if $article{'ID'};
 	$main::env{'a401.article.ID_entity'}=$article{'ID_entity'} if $article{'ID_entity'};
 	$main::env{'a401.article.name'}.=$article{'name'} if $article{'name'};
+	$main::env{'a401.article.name_url'}.=$article{'name_url'} if $article{'name_url'};
 	$main::env{'a401.article.posix_owner'}=$article{'posix_owner'} if $article{'posix_owner'};
 	$main::env{'keywords'}.=", ".$article{'keywords'} if $article{'keywords'};
 	$main::env{'a401.article_cat.name'}=$article{'ID_category_name'} if $article{'ID_category_name'};
