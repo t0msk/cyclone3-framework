@@ -894,9 +894,15 @@ sub module_process_return_data
 	{
 		if ($return_data{'call'}{'H'})
 		{
+			# metadata
 			foreach my $env0(@{$return_data{'call'}{'H'}{'add_DOC_meta'}})
 			{
 				$main::H->add_DOC_meta(%{$env0});
+			}
+			# title
+			foreach my $env0(@{$return_data{'call'}{'H'}{'add_DOC_title'}})
+			{
+				$main::H->add_DOC_title($env0);
 			}
 		}
 	}
