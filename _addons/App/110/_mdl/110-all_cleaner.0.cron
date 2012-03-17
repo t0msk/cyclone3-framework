@@ -40,10 +40,16 @@ sub execute
 	},'db_h'=>'stats');
 	
 	main::_log("cleaning TOM.a110_weblog_rqs");
-	TOM::Database::SQL::execute(qq{
-		DELETE FROM TOM.a110_weblog_rqs
-		WHERE reqdatetime <= DATE_SUB(CURDATE(), INTERVAL 32 DAY)
-	},'db_h'=>'stats');
+	my %sth0=('rows'=>1);
+	while ($sth0{'rows'})
+	{
+		%sth0=TOM::Database::SQL::execute(qq{
+			DELETE QUICK FROM TOM.a110_weblog_rqs
+			WHERE reqdatetime <= DATE_SUB(CURDATE(), INTERVAL 32 DAY)
+			LIMIT 5000
+		},'db_h'=>'stats','quiet'=>1);
+		main::_log(" erased $sth0{'rows'} rows");
+	}
 	
 	main::_log("cleaning TOM.a110_sitemap_day");
 	TOM::Database::SQL::execute(qq{
