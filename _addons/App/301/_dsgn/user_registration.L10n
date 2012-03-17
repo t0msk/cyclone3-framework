@@ -6,17 +6,17 @@
 	</header>
 	
 	<string id="Please enter">
-		<en-US>Pleas enter value:</en-US>
+		<en-US>Please enter value:</en-US>
 		<sk-SK>Prosím vložte údaj:</sk-SK>
 	</string>
 	
 	<string id="Please enter correct">
-		<en-US>Pleas enter correct value:</en-US>
+		<en-US>Please enter correct value:</en-US>
 		<sk-SK>Prosím vložte korektný údaj:</sk-SK>
 	</string>
 	
 	<string id="Login already used">
-		<en-US>This username is already used, try to type another.</en-US>
+		<en-US>This username is already used, try to enter another.</en-US>
 		<sk-SK>Toto užívateľské meno je už použité, prosím skúste iné.</sk-SK>
 	</string>
 	
@@ -26,7 +26,7 @@
 	</string>
 	
 	<string id="email.verify.subject">
-		<en-US>registration</en-US>
+		<en-US>registration confirmation</en-US>
 		<sk-SK>potvrdenie registrácie</sk-SK>
 	</string>
 	
