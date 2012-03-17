@@ -1,0 +1,500 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+=head1 NAME
+
+710-org_list.lite.mdl
+
+=head1 DESCRIPTION
+
+Lite list of orgs (default for upcoming)
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::710::_init|app/"710/_init.pm">
+
+=back
+
+=cut
+
+use App::710::_init;
+
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<-xlng_load> - load template internationalization file
+
+=item *
+
+B<db_name> - database name
+
+=item *
+
+B<sql_limit> - limit to display (default '1')
+
+=item *
+
+B<sql_limit_start> - at start skip defined items
+
+=item *
+
+B<sql_order_by> - order by in SQL
+
+=item *
+
+B<sql_where> - where in SQL
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default
+
+=item *
+
+B<#previous#> B<#next#> - to skip to another offset
+
+=item *
+
+B<previous> B<next> - include into <#previous#> <#next#>
+
+=item *
+
+B<%offset%> - offset value (calculated from sql_limit input param)
+
+=item *
+
+B<%sql_limit%> - SQL limit
+
+=item *
+
+B<%sql_limit_start%> - start SQL limit from value
+
+=item *
+
+B<#item#> - gateway to evemt item
+
+=item *
+
+B<item> - org item
+
+=item *
+
+B<item.1> - first org item
+
+=item *
+
+B<%db_*%> - org database items
+
+B<%db_name%>, B<%db_name_url%>, ...
+
+=item *
+
+B<%ID%> - org ID
+
+=item *
+
+B<%ID_entity%> - org ID_entity
+
+=item *
+
+B<%name%> - org name
+
+=item *
+
+B<TMP_failure_no-data> - if defined, replaces TMP for empty database output
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
+	$env{'db_name'}=$App::710::db_name unless $env{'db_name'};
+	
+	$env{'sql_limit'}='1' unless $env{'sql_limit'};
+	
+	if (not $env{'sql_limit'}=~/,/){$env{'sql_limit'}="0,".$env{'sql_limit'}}
+	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
+	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
+	{
+		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
+	}
+	
+	my $count_max;
+	if ($env{'sql_limit'}=~/,(\d+)/)
+	{
+		$count_max=$1;
+		$env{'sql_limit'}=~s/,(\d+)/",".($1+1)/e;
+	}
+	
+	if (not $env{'sql_limit'}=~/^(\d+),(\d+)$/)
+	{
+		$env{'sql_limit'}='1';
+	}
+	
+	$env{'sql_order_by'}='org.name ASC' unless $env{'sql_order_by'};
+	
+	$env{'org_lng.lng'}=$env{'lng'} unless $env{'org_lng.lng'};
+	
+	$env{'org.status'}='Y' unless $env{'org.status'};
+		my $status_sql=join "','", split('',$env{'org.status'});
+	
+	$env{'a501_image_file.ID_format'}=$App::501::image_format_thumbnail_ID unless $env{'a501_image_file.ID_format'};
+	$env{'thumbnail.image_format.ID'}=$App::501::image_format_thumbnail_ID unless $env{'thumbnail.image_format.ID'};
+	
+	my $execution_success=1;
+	
+	my $sql_where;
+	
+	my $sql_cat;
+	foreach my $ID_category(split(';',$env{'org_cat.ID_entity'}))
+	{
+		next unless $ID_category;
+		if ($ID_category=~s/\*$//)
+		{
+			next unless $ID_category;
+			my $cat_sql=qq{
+				SELECT
+					ID_charindex
+				FROM
+					`$env{'db_name'}`.`a710_org_cat`
+				WHERE
+					ID_entity=$ID_category AND
+					lng='$env{'org_lng.lng'}' AND
+					status='Y'
+				LIMIT 1
+			};
+			$ID_category=qq{
+				SELECT
+					ID_entity
+				FROM
+					`$env{'db_name'}`.a710_org_cat
+				WHERE
+					ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+					lng='$env{'org_lng.lng'}' AND
+					status='Y'
+			};
+		}
+		$sql_cat.=" OR org_rel_cat.ID_category IN ($ID_category)";
+		$sql_cat=~s/^ OR //;
+	}
+	
+	if ($sql_cat)
+	{
+		$sql_where.=" AND (".$sql_cat.") ";
+	}
+	
+	if ($env{'org.ID'})
+	{
+		$sql_where.=" AND org.ID IN ('".
+			(join "','", split(';',$env{'org.ID'})).
+			"')";
+	}
+	
+	if ($env{'sql_where.initial'})
+	{
+		if($env{'sql_where.initial'} eq '0-9'){
+			$sql_where.=" AND SUBSTR(org.name, 1,1) IN ('0','1','2','3','4','5','6','7','8','9')";
+		}
+		else
+		{
+			$env{'sql_where.initial'}=~s|^(.).*?$|$1|;
+			$sql_where.=" AND org.name LIKE '$env{'sql_where.initial'}%'";
+		}
+	}
+	
+	if ($env{'sql_where.city'})
+	{
+		$sql_where.=" AND org.city LIKE '".TOM::Security::form::sql_escape($env{'sql_where.city'})."%' ";
+	}
+	
+	if ($env{'sql_where.name'})
+	{
+		$sql_where.=" AND org.name LIKE '".TOM::Security::form::sql_escape($env{'sql_where.name'})."%' ";
+	}
+	
+	if ($env{'sql_where'})
+	{
+		$sql_where.=" AND ".$env{'sql_where'};
+	}
+	
+	my $sql=qq{
+		SELECT
+			
+			DISTINCT(org.ID_entity) AS ID_entity_org,
+			org.ID,
+			org.ID_org,
+			
+			org.datetime_create,
+			org.posix_owner,
+			
+			org.name,
+			org.name_short,
+			org.name_code,
+			org.name_url,
+			
+			org.legal_form,
+			org.VAT_number,
+			org.bank_contact,
+			
+			org.country_code,
+			org.state,
+			org.county,
+			org.district,
+			org.city,
+			org.ZIP,
+			org.street,
+			org.street_num,
+			
+			org.address_postal,
+			
+			org.phone_1,
+			org.phone_2,
+			org.fax,
+			org.email,
+			org.web,
+			
+			org_lng.about,
+			org.note,
+			
+			org.metadata
+			
+		FROM `$env{'db_name'}`.a710_org AS org
+		
+		LEFT JOIN `$env{'db_name'}`.a710_org_rel_cat AS org_rel_cat ON
+		(
+			org_rel_cat.ID_org=org.ID_entity
+		)
+		
+		LEFT JOIN `$env{'db_name'}`.a710_org_lng AS org_lng ON
+		(
+			org_lng.ID_entity=org.ID_entity AND org_lng.lng = '$env{'org_lng.lng'}'
+		)
+		
+		WHERE
+			org.status IN ('$status_sql')
+			$sql_where
+			
+		ORDER BY
+			$env{'sql_order_by'}
+			
+		LIMIT
+			$env{'sql_limit'}
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
+	
+	if(!$sth0{'sth'})
+	{
+		main::_log("SQL can't be executed",1);
+	}
+	
+	if(!$sth0{'rows'})
+	{
+		main::_log("err: could not fetch orgs");
+	}
+	
+	main::_log("received ".$sth0{'rows'}." rows");
+	
+	# Line counter
+	my $item_counter=0;
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+      $item_counter++;
+		
+		last if $count_max<$item_counter;
+		
+		my $item = $XSGN{'item'};
+		$item = $XSGN{'item.odd'} if (($item_counter % 2) && (exists $XSGN{'item.odd'}));
+		$item = $XSGN{'item.'.$item_counter} if $XSGN{'item.'.$item_counter};
+		
+		my $relation=(App::160::SQL::get_relations(
+			'db_name' => $env{'db_name'},
+			'l_prefix' => 'a710',
+			'l_table' => 'org',
+			'l_ID_entity' => $db0_line{'ID_entity_org'},
+			'rel_type' => 'avatar',
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y",
+			'limit' => 1
+		))[0];
+		if ($relation->{'ID'})
+		{
+			use App::501::_init;
+			
+			my %image=App::501::functions::get_image_file(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_file.ID_format' => $env{'image_format.ID'} || $App::501::image_format_ico_ID
+			);
+			if (%image)
+			{
+				my $uri=$tom::H_a501.'/image/file/'.$image{'file_path'};
+				my $item_avatar=$XSGN{'avatar'};
+				$item_avatar=~s|<%uri%>|$uri|;
+				$item=~s|<#avatar#>|$item_avatar|;
+			}
+			else
+			{
+				$item=$XSGN{'item.noimage'} if $XSGN{'item.noimage'};
+				$item=$XSGN{'item.noimage.'.$item_counter} if($XSGN{'item.noimage.'.$item_counter});
+			}
+		}
+		else
+		{
+			$item=$XSGN{'item.noimage'} if $XSGN{'item.noimage'};
+			$item=$XSGN{'item.noimage.'.$item_counter} if($XSGN{'item.noimage.'.$item_counter});
+		}
+		
+		# replace metadata
+		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
+		foreach my $sec(keys %metadata){foreach (keys %{$metadata{$sec}}){$item=~s/<%$sec\::$_%>/$metadata{$sec}{$_}/g;}}
+		
+		foreach my $key (keys %db0_line){
+			$item=~s|<#$key#>|$XSGN{$key}|g if $db0_line{$key};
+		}
+		
+		$item=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+		
+		$item=~s|<%item_number%>|$item_counter|g;
+		
+		if($XSGN{'TMP'}=~/<#item.$item_counter#>/)
+		{
+			$XSGN{'TMP'}=~s|<#item.$item_counter#>|$item|;
+		}
+		else
+		{
+			$XSGN{'TMP'}=~s|<#item#>|$item|;
+		}
+	}
+	
+	$XSGN{'TMP'}=~s|<%total_count%>|$item_counter|g;
+	
+	if ($env{'env.counter'})
+	{
+		$main::env{'count'}+=$item_counter;
+	}
+	
+	if ($env{'sql_limit'}=~/(\d+),(\d+)/)
+	{
+		$env{'offset'}=$1;
+		#$env{'count'}=$2;
+	}
+	else
+	{
+		#$env{'count'}=$env{'sql_limit'};
+	}
+	
+	if($XSGN{'paging'})
+	{
+		if(
+			($count_max && $item_counter >= $count_max && $count_max < $sth0{'rows'})
+			||	($env{'offset'}-$env{'sql_limit_start'})
+		){
+			$XSGN{'TMP'}=~s|<#paging#>|$XSGN{'paging'}|g;
+		}
+	}
+	
+	if ($count_max && $item_counter >= $count_max && $count_max < $sth0{'rows'}) # count
+	{
+		$XSGN{'next'}=~s|<%offset%>|$env{'offset'}+$count_max|ge;
+		$XSGN{'TMP'}=~s|<#next#>|$XSGN{'next'}|g;
+	}
+	if ($env{'offset'}-$env{'sql_limit_start'})
+	{
+		if ($env{'offset'} - $count_max - $env{'sql_limit_start'}>0)
+		{
+			$XSGN{'previous'}=~s|<%offset%>|$env{'offset'}-$count_max|ge;
+		}
+		else
+		{
+			$XSGN{'previous'}=~s|<%offset%>||ge;
+		}
+		$XSGN{'TMP'}=~s|<#previous#>|$XSGN{'previous'}|g;
+	}
+	
+	$XSGN{'TMP.empty'}=$XSGN{'TMP_failure_no-data'} if $XSGN{'TMP_failure_no-data'}; #backwards compatibility
+	
+	if(!$item_counter)
+	{
+		if($XSGN{'TMP.empty'})
+		{
+			$XSGN{'TMP'} = $XSGN{'TMP.empty'};
+		}
+	}
+	
+	if($env{'org_cat.ID_entity'}=~/^([0-9]+)\*?$/)
+	{
+		my $ID_category=$1;
+		my $sql=qq{
+			SELECT
+				name, name_url
+			FROM
+				`$env{'db_name'}`.`a710_org_cat`
+			WHERE
+						ID_entity=$ID_category
+				AND	lng='$env{'org_lng.lng'}'
+				AND	status IN ('$status_sql')
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto_'=>60);
+		
+		if($sth0{'sth'})
+		{
+			if (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				$XSGN{'TMP'}=~s|<%category_name%>|$db0_line{'name'}|g;
+				$XSGN{'TMP'}=~s|<%category_name_url%>|$db0_line{'name_url'}|g;
+			}
+		}
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
