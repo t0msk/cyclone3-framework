@@ -79,6 +79,13 @@ sub execute
 	my %env=@_;
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
 	$env{'db_name'}=$App::401::db_name unless $env{'db_name'};
 	
 	$env{'sql_lng'}=$env{'lng'} unless $env{'sql_lng'};
@@ -145,53 +152,123 @@ sub execute
 	my @percentages;
 	my @votes;
 	
-	my $counter = 0;
+	my $item_counter = 0;
 	
 	while (my %db1_line=$sth1{'sth'}->fetchhash())
 	{
 		my $answer=$XSGN{'answer'};
 		
 		$votes_total+=$db1_line{'vote_count'};
-		$votes[$counter] = $db1_line{'vote_count'};
+		$votes[$item_counter] = $db1_line{'vote_count'};
 		
-		$answer=~s|<%db_vote_count_percent%>|<%vote_count_percent_$counter%>|g;
+		$answer=~s|<%db_vote_count_percent%>|<%vote_count_percent_$item_counter%>|g;
 		
 		$answer=~s|<%poll_db_(.*?)%>|$db0_line{$1}|g;
 		
+		# process answer
 		my $p=new App::401::mimetypes::html;
 		
+		# img
+		$p->{'ignore'}{'img'}=
+			$env{'body.ignore.img'}
+			|| $env{'ignore.img'}
+			|| undef;
+		
+		$p->{'ignore'}{'img.1'}=
+			$env{'answer.ignore.img.1'}
+			|| $env{'ignore.img.1'}
+			|| undef;
+		
+		# a210_page
+		$p->{'entity'}{'a210_page'}=
+			$XSGN{'answer.a210_page'}
+			|| $XSGN{'a210_page'}
+			|| undef;
+			
+		# a401_article
+		$p->{'entity'}{'a401_article'}=
+			$XSGN{'answer.a401_article'}
+			|| $XSGN{'a401_article'}
+			|| undef;
+		
+		# a501_image
+		$p->{'config'}->{'a501_image_file.ID_format'}=
+			$env{'answer.'.$item_counter.'.a501_image_file.ID_format'}
+			|| $env{'answer.'.$item_counter.'.a501_image_file.ID_format'}
+			|| $env{'answer.a501_image_file.ID_format'}
+			|| $env{'a501_image_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.1'}=
+			$env{'answer.'.$item_counter.'.a501_image_file.ID_format.1'}
+			|| $env{'answer.'.$item_counter.'.a501_image_file.ID_format.1'}
+			|| $env{'answer.a501_image_file.ID_format.1'}
+			|| $env{'a501_image_file.ID_format.1'}
+			|| undef;
+		$p->{'config'}->{'a501_image_file.ID_format.extra'}=
+			$env{'a501_image_file.ID_format.extra'}
+			|| undef;
+		$p->{'entity'}->{'a501_image'}=
+			$XSGN{'answer.a501_image'}
+			|| $XSGN{'a501_image'}
+			|| undef;
+		$p->{'entity'}->{'a501_image.1'}=
+			$XSGN{'answer.a501_image.1'}
+			|| $XSGN{'a501_image.1'}
+			|| undef;
+		
 		# a510_video
+		$p->{'config'}->{'a510_video_part_file.ID_format'}=
+			$env{'answer.'.$item_counter.'.a510_video_part_file.ID_format'}
+			|| $env{'answer.'.$item_counter.'.a510_video_part_file.ID_format'}
+			|| $env{'answer.a510_video_part_file.ID_format'}
+			|| $env{'a510_video_part_file.ID_format'}
+			|| undef;
+		$p->{'config'}->{'a510_video_part_file.ID_format.1'}=
+			$env{'answer.'.$item_counter.'.a510_video_part_file.ID_format.1'}
+			|| $env{'answer.'.$item_counter.'.a510_video_part_file.ID_format.1'}
+			|| $env{'answer.a510_video_part_file.ID_format.1'}
+			|| $env{'a510_video_part_file.ID_format.1'}
+			|| undef;
 		$p->{'entity'}{'a510_video'}=
 			$XSGN{'answer.a510_video'}
 			|| $XSGN{'a510_video'}
 			|| undef;
-		
-		# a510_video_part
+		$p->{'entity'}{'a510_video.1'}=
+			$XSGN{'answer.a510_video.1'}
+			|| $XSGN{'a510_video.1'}
+			|| undef;
 		$p->{'entity'}{'a510_video_part'}=
 			$XSGN{'answer.a510_video_part'}
 			|| $XSGN{'a510_video_part'}
+			|| undef;
+		$p->{'entity'}{'a510_video_part.1'}=
+			$XSGN{'answer.a510_video_part.1'}
+			|| $XSGN{'a510_video_part.1'}
 			|| undef;
 		
 		# PARSE !!!
 		$p->parse($db1_line{'description'});
 		$p->eof();
 		my $description_html=$p->{'out'};
-		
+	
 		$answer=~s|<%db_description%>|$description_html|;
+		
+		my $description_plain=TOM::Text::format::xml2plain($db1_line{'description'});
+		$answer=~s|<%db_description_plain%>|$description_plain|g;
 		
 		$answer=~s|<%out\.(.*?)%>|$p->{'out_var'}->{$1}|g;
 		$answer=~s|<#out\.(.*?)#>|$p->{'out_tag'}->{$1}|g;
 		
 		$answer=~s|<%db_(.*?)%>|$db1_line{$1}|g;
 		
-		$counter++;
+		$item_counter++;
 		
-		$answer=~s|<%counter%>|$counter|g;
+		$answer=~s|<%counter%>|$item_counter|g;
 		
 		$XSGN{'TMP'}=~s|<#answer#>|$answer|;
 	}
 	
-	$XSGN{'TMP'}=~s|<%answers_count%>|$counter|g;
+	$XSGN{'TMP'}=~s|<%answers_count%>|$item_counter|g;
 	my $total_percent=0;
 	
 	for(my $tmp=0; $tmp<scalar(@votes); $tmp++)
@@ -223,16 +300,61 @@ sub execute
 	
 	my $p=new App::401::mimetypes::html;
 	
-	# a510_video
-	$p->{'entity'}{'a510_video'}=
-		$XSGN{'answer.a510_video'}
-		|| $XSGN{'a510_video'}
+	# img
+	$p->{'ignore'}{'img'}=
+		$env{'description.ignore.img'}
+		|| $env{'ignore.img'}
 		|| undef;
 	
-	# a510_video_part
+	$p->{'ignore'}{'img.1'}=
+		$env{'ignore.img.1'}
+		|| undef;
+	
+	# a210_page
+	$p->{'entity'}{'a210_page'}=
+		$XSGN{'a210_page'}
+		|| undef;
+		
+	# a401_article
+	$p->{'entity'}{'a401_article'}=
+		$XSGN{'a401_article'}
+		|| undef;
+	
+	# a501_image
+	$p->{'config'}->{'a501_image_file.ID_format'}=
+		$env{'a501_image_file.ID_format'}
+		|| undef;
+	$p->{'config'}->{'a501_image_file.ID_format.1'}=
+		$env{'a501_image_file.ID_format.1'}
+		|| undef;
+	$p->{'config'}->{'a501_image_file.ID_format.extra'}=
+		$env{'a501_image_file.ID_format.extra'}
+		|| undef;
+	$p->{'entity'}->{'a501_image'}=
+		$XSGN{'a501_image'}
+		|| undef;
+	$p->{'entity'}->{'a501_image.1'}=
+		$XSGN{'a501_image.1'}
+		|| undef;
+	
+	# a510_video
+	$p->{'config'}->{'a510_video_part_file.ID_format'}=
+		$env{'a510_video_part_file.ID_format'}
+		|| undef;
+	$p->{'config'}->{'a510_video_part_file.ID_format.1'}=
+		$env{'a510_video_part_file.ID_format.1'}
+		|| undef;
+	$p->{'entity'}{'a510_video'}=
+		$XSGN{'a510_video'}
+		|| undef;
+	$p->{'entity'}{'a510_video.1'}=
+		$XSGN{'a510_video.1'}
+		|| undef;
 	$p->{'entity'}{'a510_video_part'}=
-		$XSGN{'answer.a510_video_part'}
-		|| $XSGN{'a510_video_part'}
+		$XSGN{'a510_video_part'}
+		|| undef;
+	$p->{'entity'}{'a510_video_part.1'}=
+		$XSGN{'a510_video_part.1'}
 		|| undef;
 	
 	# PARSE !!!
