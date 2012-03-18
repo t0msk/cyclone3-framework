@@ -703,11 +703,17 @@ our \$VERSION=$m_time;
 		if ($Tomahawk::module::TPL)
 		{
 			my $t_tt=track TOM::Debug("tt:process",'timer'=>1);
+			# main variables
 			$Tomahawk::module::TPL->{'variables'}->{'module'}={
 				'name'=> $mdl_C{'-name'},
 				'version'=> $mdl_C{'-version'},
 				'addon'=> $mdl_C{'-addon'},
+				'filename' => $mdl_C{'P_MODULE'}
 			};
+			# add all module input variables
+			%{$Tomahawk::module::TPL->{'variables'}->{'module'}->{'env'}}=(%mdl_C,%mdl_env);
+			# output can be processed too
+			%{$Tomahawk::module::TPL->{'variables'}->{'module'}->{'output'}}=(%return_data);
 			$Tomahawk::module::TPL->process();
 			$Tomahawk::module::XSGN{'TMP'}=$Tomahawk::module::TPL->{'output'};
 			$t_tt->close();

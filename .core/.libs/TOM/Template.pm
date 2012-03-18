@@ -194,6 +194,10 @@ sub new
 			require Template;
 			$obj->{'tt'} = Template->new({
 				'EVAL_PERL' => 1,
+#				'LOAD_PERL' => 1,
+#				'PLUGINS' => {
+#					'date' => 'Template::Plugin::Date'
+#				}
 			});
 		}
 	}
