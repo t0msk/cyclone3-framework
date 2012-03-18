@@ -703,6 +703,11 @@ our \$VERSION=$m_time;
 		if ($Tomahawk::module::TPL)
 		{
 			my $t_tt=track TOM::Debug("tt:process",'timer'=>1);
+			$Tomahawk::module::TPL->{'variables'}->{'module'}={
+				'name'=> $mdl_C{'-name'},
+				'version'=> $mdl_C{'-version'},
+				'addon'=> $mdl_C{'-addon'},
+			};
 			$Tomahawk::module::TPL->process();
 			$Tomahawk::module::XSGN{'TMP'}=$Tomahawk::module::TPL->{'output'};
 			$t_tt->close();
@@ -1375,7 +1380,7 @@ sub GetTpl
 	
 	$mdl_C{'-tpl'}="default" unless $mdl_C{'-tpl'};
 	main::_log("GetTpl -addon='$mdl_C{'-addon'}' -name='$mdl_C{'-name'}' -version='$mdl_C{'-version'}' -tpl='$mdl_C{'-tpl'}'");
-	$mdl_C{'P_TPL'}=$mdl_C{'-addon'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".".$mdl_C{'-tpl'}.".tpl";
+	$mdl_C{'P_TPL'}=$mdl_C{'-addon_name'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".".$mdl_C{'-tpl'}.".tpl";
 	
 	if (!$mdl_C{'-name'})
 	{
@@ -1437,6 +1442,7 @@ sub GetTpl
 		'content-type' => $TOM::Document::type,
 		'location' => $mdl_C{'P_TPL'},
 		'tt' => 1,
+		'lng' => $mdl_C{'-xlng'}
 	) || return undef;
 	
 	return 1;

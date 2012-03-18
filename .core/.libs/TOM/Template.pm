@@ -102,6 +102,7 @@ our %objects;
   #'addon' => "a400",
   #'name' => "email-stats",
   'content-type' => "xhtml" # default is XML
+  'lng' => "en"
  )
 
 tpl source can be as
@@ -222,7 +223,15 @@ sub new
 		{
 			# regenerate reference
 			$obj_return->{'tt'}->{'SERVICE'}->{'CONTEXT'}->{'tpl'}=$obj_return; # reference from Template Toolkit to TOM::Template
+			# default set of variables for tt
+			my $lang=$TOM::L10n::codes::trans{$obj_return->{'ENV'}->{'lng'} || $tom::lng};
+				$lang=~s|\-|_|g;
+			$obj_return->{'variables'}={
+				'lng' => $obj_return->{'ENV'}->{'lng'} || $tom::lng,
+				'lang' => $lang
+			};
 		}
+		
 		# replace_variables only in root level of Template not in templates called by <extend*>
 		$obj_return->process_entity() if (caller)[0] ne "TOM::Template";
 		if ($obj->{'location'})
@@ -494,9 +503,8 @@ sub process_entity
 		if (!$lng || $lng eq "auto")
 		{
 #			main::_log("$tom::lng $tom::LNG $TOM::LNG");
-			$lng=$tom::lng;
-			$lng=$tom::LNG unless $lng;
-			$lng=$TOM::LNG unless $lng;
+			$lng=$self->{'ENV'}->{'lng'} || $tom::lng || $tom::LNG || $TOM::LNG;
+			# main::_log("process in lng $lng");
 		}
 		my $L10n=new TOM::L10n(
 			'level' => $self->{'L10n'}{'level'},
