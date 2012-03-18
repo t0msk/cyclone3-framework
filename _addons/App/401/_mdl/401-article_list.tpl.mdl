@@ -1,0 +1,299 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+use App::401::_init;
+use Ext::TextHyphen::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	
+	Tomahawk::GetTpl() || return undef;;
+	
+	$env{'db_name'}=$App::401::db_name unless $env{'db_name'};
+	
+	$env{'sql_limit'}='1' unless $env{'sql_limit'};
+	$env{'sql_limit_extra'}='10' unless $env{'sql_limit_extra'};
+	
+	main::_log("required sql_limit='$env{'sql_limit'}' (+$env{'sql_limit_extra'})");
+	
+	if (not $env{'sql_limit'}=~/,/){$env{'sql_limit'}="0,".$env{'sql_limit'}}
+	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
+	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
+	{
+		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
+	}
+	
+	my $count_max;
+	if ($env{'sql_limit'}=~/,(\d+)/)
+	{
+		$count_max=$1;
+		$env{'sql_limit'}=~s/,(\d+)/",".($1+$env{'sql_limit_extra'})/e;
+	}
+	
+	if (not $env{'sql_limit'}=~/^(\d+),(\d+)$/)
+	{
+		$env{'sql_limit'}='1';
+	}
+	
+	$env{'sql_order_by'}='article_attrs.datetime_start DESC' unless $env{'sql_order_by'};
+	
+	$env{'article_content.lng'}=$env{'lng'} unless $env{'article_content.lng'};
+	
+	$env{'article_attrs.status'}='Y' unless $env{'article_attrs.status'};
+		my $status_sql=join "','", split('',$env{'article_attrs.status'});
+	
+	$env{'world_status'}='Y' unless $env{'world_status'};
+	
+	my %hyphen;
+	if ($env{'hyphen'})
+	{
+		foreach(split('[,;]',$env{'hyphen'}))
+		{
+			$hyphen{$_}=1;
+		}
+	}
+	
+	my $execution_success=1;
+	
+	my $sql_where;
+	
+	my $sql_cat;
+	foreach my $ID_category(split(';',$env{'article_attrs.ID_category'}))
+	{
+		next unless $ID_category;
+		if ($ID_category=~s/\*$//)
+		{
+			next unless $ID_category;
+			my $cat_sql=qq{
+				SELECT
+					ID_charindex
+				FROM
+					`$env{'db_name'}`.`a401_article_cat`
+				WHERE
+					ID=$ID_category
+				LIMIT 1
+			};
+			$ID_category=qq{
+				SELECT
+					ID
+				FROM
+					`$env{'db_name'}`.`a401_article_cat`
+				WHERE
+					ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+					lng='$env{'article_content.lng'}' AND
+					status IN ('$status_sql')
+			};
+		}
+		$sql_cat.=" OR article_attrs.ID_category IN ($ID_category)";
+		$sql_cat=~s/^ OR //;
+	}
+	if ($sql_cat)
+	{
+		$sql_where.=" AND (".$sql_cat.") ";
+	}
+	
+	if ($env{'article.ID_entity'})
+	{
+		$sql_where.=" AND article.ID_entity IN ('".
+			(join "','", split(';',$env{'article.ID_entity'})).
+			"')";
+	}
+	
+	if ($env{'article.ID'})
+	{
+		$sql_where.=" AND article.ID IN ('".
+			(join "','", split(';',$env{'article.ID'})).
+			"')";
+	}
+	
+	if ($env{'world_status'} eq 'Y')
+	{
+		$sql_where.=" AND (ACL_world.perm_R='Y' OR ACL_world.perm_R IS NULL) ";
+	}
+	else
+	{
+#		$sql_where.=" AND ACL_world.perm_R='N' ";
+	}
+	
+	my $sql_select;
+	
+	if ($env{'sql_order_by'}=~s|:visits_(.*?):|:VISITS:|)
+	{
+		my $dur=$1;
+		my $sql_visits=qq{(SELECT COUNT(ID_article) FROM $env{'db_name'}.a401_article_visit AS visit WHERE visit.ID_article=article.ID_entity AND datetime_event >= DATE_SUB(NOW(),INTERVAL $dur))};
+		$env{'sql_order_by'}=~s|:VISITS:|$sql_visits|;
+		$sql_select=", $sql_visits AS visits_dur ";
+	}
+	
+	if ($env{'sql_where'})
+	{
+		$sql_where.=" AND ".$env{'sql_where'};
+	}
+	
+	main::_log("sql_order_by='$env{'sql_order_by'}'");
+	main::_log("sql_limit='$env{'sql_limit'}'");
+	
+	my $sql=qq{
+		SELECT
+			
+			article.ID_entity AS ID_entity_article,
+			article.ID AS ID_article,
+			article_attrs.ID AS ID_attrs,
+			article_content.ID AS ID_content,
+			
+			article_attrs.ID_category,
+			article_cat.name AS ID_category_name,
+			article_cat.name AS cat_name,
+			article_cat.name_url AS ID_category_name_url,
+			article_cat.name_url AS cat_name_url,
+			
+			article_ent.posix_owner,
+			article_ent.ID_author AS posix_author,
+			article_ent.visits,
+			article_content.ID_editor AS posix_editor,
+			
+			article_content.datetime_create,
+			article_attrs.datetime_start,
+			article_attrs.datetime_stop,
+         
+			
+			article_attrs.priority_A,
+			article_attrs.priority_B,
+			article_attrs.priority_C,
+			
+			article_attrs.name,
+			article_attrs.name_url,
+			article_attrs.name_hyphens,
+			article_attrs.alias_url,
+			
+			article_content.subtitle,
+			article_content.subtitle_hyphens,
+			article_content.mimetype,
+			article_content.abstract,
+			article_content.abstract_hyphens,
+			article_content.body,
+			article_content.body_hyphens,
+			article_content.keywords,
+			article_content.lng,
+			
+			IF(
+				round((`article_ent`.rating_score / `article_ent`.rating_votes),2),
+				round((`article_ent`.rating_score / `article_ent`.rating_votes),2), '0.00'
+			) as rating,
+			rating_score,
+			rating_votes,
+			
+			article_ent.visits,
+			
+			article_attrs.status,
+			
+			IF
+			(
+				(
+					article.status LIKE 'Y' AND
+					article_attrs.status LIKE 'Y'
+				),
+				'Y', 'U'
+			) AS status_all
+			$sql_select
+			
+		FROM `$env{'db_name'}`.a401_article_attrs AS article_attrs
+		LEFT JOIN `$env{'db_name'}`.a401_article AS article ON
+		(
+			article_attrs.ID_entity = article.ID
+		)
+		LEFT JOIN `$env{'db_name'}`.`a401_article_ent` AS article_ent ON
+		(
+			article_ent.ID_entity = article.ID_entity
+		)
+		LEFT JOIN `$env{'db_name'}`.`a401_article_content` AS article_content ON
+		(
+			article_content.ID_entity = article.ID_entity AND
+			article_content.status = 'Y' AND
+			article_content.lng = article_attrs.lng
+		)
+		LEFT JOIN `$env{'db_name'}`.`a401_article_cat` AS article_cat ON
+		(
+			article_cat.ID = article_attrs.ID_category
+		)
+		LEFT JOIN `$env{'db_name'}`.`a301_ACL_user_group` AS ACL_world ON
+		(
+			ACL_world.ID_entity = 0 AND
+			r_prefix = 'a401' AND
+			r_table = 'article' AND
+			r_ID_entity = article.ID_entity
+		)
+		
+		WHERE
+			article_attrs.status IN ('$status_sql') AND
+			article_attrs.lng='$env{'article_content.lng'}' AND
+			article_attrs.datetime_start <= NOW() AND
+			(article_attrs.datetime_stop IS NULL OR article_attrs.datetime_stop >= NOW())
+			$sql_where
+			
+		ORDER BY
+			$env{'sql_order_by'}
+			
+		LIMIT
+			$env{'sql_limit'}
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
+	
+	if(!$sth0{'sth'})
+	{
+		main::_log("SQL can't be executed",1);
+	}
+	
+	if(!$sth0{'rows'})
+	{
+		main::_log("err: could not fetch articles");
+	}
+	
+	main::_log("received ".$sth0{'rows'}." rows");
+	
+	# 'Cache' for author records
+	my %tmp_authors;
+	
+   my %IDs_entity;
+	
+	# Line counter
+	my $item_counter=0;
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		next if $IDs_entity{$db0_line{'ID_entity_article'}};
+		$IDs_entity{$db0_line{'ID_entity_article'}}++;
+		
+		$item_counter++;
+		
+		last if $count_max<$item_counter;
+		
+		main::_log("article[$item_counter/$count_max] article_attrs.name='$db0_line{'name'}'");
+		
+		# hyphen
+		foreach (keys %hyphen)
+		{
+			if ($db0_line{$_} && $db0_line{$_.'_hyphens'})
+			{
+				$db0_line{$_}=Ext::TextHyphen::add_hyphens($db0_line{$_},split(',',$db0_line{$_.'_hyphens'}));
+			}
+		}
+		
+		$TPL->variables_push(\%db0_line);
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+1;
