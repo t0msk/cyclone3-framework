@@ -224,7 +224,7 @@ sub static_add
 				'tb_name' => "a420_static",
 				'columns' => {
 					%columns,
-					'posix_modified' => "'".TOM::Security::form::sql_escape($main::USRM{'ID_user'})."'"
+					'posix_modified' => "'".TOM::Security::form::sql_escape($env{'static.posix_modified'} || $main::USRM{'ID_user'})."'"
 				},
 				'-journalize' => 1
 			);
