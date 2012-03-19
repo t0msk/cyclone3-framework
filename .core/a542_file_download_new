@@ -1,0 +1,372 @@
+#!/usr/bin/perl
+
+
+BEGIN
+{
+	$TOM::engine='download';
+	$main::debug=1 if $ENV{'TERM'};
+	require "/www/TOM/.core/.libs/TOM.pm";
+}
+
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8; # encode = fromutf8, decode=toutf8
+use strict; # scrict code
+use CGI::Fast qw(:standard);
+
+our $sig_term=1;
+
+eval
+{
+	my $t=track TOM::Debug('requiring TOM::Engine::download');
+	require TOM::Engine::download;
+	$t->close();
+};
+
+my $t_domain=track TOM::Debug("Domain initialization");
+eval
+{
+	# Load domain configuration
+	require TOM::Domain;	
+	$TOM::engine_ready=1;
+	require App::542::_init;
+};
+
+if ($@)
+{
+	my @ERR=("Error occured during domain initialization");
+	push @ERR,$@;
+	main::_log("request in domain initialization error",1);
+	TOM::Error::engine(@ERR);
+	exit(0);
+}
+
+$t_domain->close;
+
+our $CGI;
+while ($main::CGI=new CGI::Fast())
+{
+	local $sig_term=0; # ignorujem TERM pocas behu requestu, povoleny je len pocas cakania na dalsi request
+	eval
+	{
+		main::_log("redirecting SIG{ALRM} to die");
+		local $SIG{'ALRM'} = sub {die "Timed out during page sending! limit $TOM::ALRM sec.\n"};
+		
+		my %FORM=TOM::Net::HTTP::CGI::get_QUERY_STRING($ENV{'QUERY_STRING'});
+		
+		main::_log("request for ID='$FORM{'ID'}' hash='$FORM{'hash'}'");
+		
+		my $sql=qq{
+			SELECT
+				file.ID_entity AS ID_entity_file,
+				file.ID AS ID_file,
+				file_attrs.ID AS ID_attrs,
+				file_item.ID AS ID_item,
+				
+				file_attrs.ID_category,
+				
+				file_ent.posix_owner,
+				file_ent.posix_author,
+				
+				file_item.hash_secure,
+				file_item.datetime_create,
+				
+				file_attrs.name,
+				file_attrs.name_url,
+				file_attrs.name_ext,
+				
+				file_item.mimetype,
+				file_item.file_ext,
+				file_item.file_size,
+				file_item.lng,
+				
+				file_ent.downloads,
+				
+				file_attrs.status,
+				
+				CONCAT(file_item.lng,'/',SUBSTR(file_item.ID,1,4),'/',file_item.name,'.',file_attrs.name_ext) AS file_path,
+				ACL_world.perm_R
+				
+			FROM
+				`$App::542::db_name`.`a542_file` AS file
+			LEFT JOIN `$App::542::db_name`.`a542_file_ent` AS file_ent ON
+			(
+				file_ent.ID_entity = file.ID_entity
+			)
+			LEFT JOIN `$App::542::db_name`.`a542_file_attrs` AS file_attrs ON
+			(
+				file_attrs.ID_entity = file.ID
+			)
+			LEFT JOIN `$App::542::db_name`.`a542_file_item` AS file_item ON
+			(
+				file_item.ID_entity = file.ID_entity AND
+				file_item.lng = file_attrs.lng
+			)
+			LEFT JOIN `$App::542::db_name`.a301_ACL_user_group AS ACL_world ON
+			(
+				ACL_world.ID_entity = 0 AND
+				r_prefix = 'a542' AND
+				r_table = 'file' AND
+				r_ID_entity = file.ID_entity
+			)
+			
+			WHERE
+				file.ID_entity=?
+				AND file_item.hash_secure=?
+				AND file.status = 'Y'
+				AND file_attrs.status = 'Y'
+				AND file_item.status = 'Y'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'-slave'=>1,'bind'=>[$FORM{'ID'}, $FORM{'hash'}]);
+		if ($sth0{'rows'})
+		{
+			my %db0_line=$sth0{'sth'}->fetchhash();
+			
+			main::_log("path='$tom::H_a542/file/item/$db0_line{'file_path'}'");
+			
+			if ($db0_line{'perm_R'} ne "N")
+			{
+				# citatelne!
+				main::_log("perm_R=$db0_line{'perm_R'}");
+			}
+			else
+			{
+				
+				foreach (sort keys %main::ENV)
+				{
+#					print "$_=$main::ENV{$_}<br/>";
+					main::_log("$_=$main::ENV{$_}");
+				}
+				
+				if (!$main::ENV{'HTTP_AUTHORIZATION'})
+				{
+					print "Status: 401 Not Authorized\n";
+					print "WWW-Authenticate: Basic realm=\"This file requires a valid user\"\n";
+					print "Content-Type: text/html; charset=UTF-8\n";
+					print "\n";
+					print "<HTML><HEAD></HEAD><BODY><H1>401 Not Authorized</H1><p>This file requires a valid user</p>";
+					print "</BODY></HTML>\n";
+				}
+				else
+				{
+					my ($type,$data)=split(' ',$main::ENV{'HTTP_AUTHORIZATION'},2);
+					use MIME::Base64;
+					my $decoded_data = decode_base64($data);
+					my ($user,$pass) = split(':',$decoded_data);
+					
+					main::_log("user=$user");
+					
+					if ($user && $pass)
+					{
+						use App::301::_init;
+						my $sql=qq{
+							SELECT
+								*
+							FROM
+								TOM.a301_user
+							WHERE
+								(login=? OR email=?) AND
+								hostname='$tom::H_cookie' AND
+								status='Y'
+							LIMIT 1
+						};
+						my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'bind'=>[$user,$user]);
+						my %user=$sth0{'sth'}->fetchhash();
+						if ($user{'ID_user'})
+						{
+							main::_log("user found");
+							use Digest::MD5  qw(md5 md5_hex md5_base64);
+							use Digest::SHA1  qw(sha1 sha1_hex sha1_base64);
+							use Encode;
+							
+							if ($user{'pass'}=~/^MD5:/)
+							{
+								$pass='MD5:'.md5_hex(Encode::encode_utf8($pass));
+							}
+							elsif ($user{'pass'}=~/^SHA1:/)
+							{
+								$pass='SHA1:'.sha1_hex(Encode::encode_utf8($pass));
+							}
+							if ($pass eq $user{'pass'})
+							{
+								
+								my %roles=App::301::perm::get_entity_sum_roles(
+									'ID_user' => $user{'ID_user'},
+									'r_prefix' => 'a542',
+									'r_table' => 'file',
+									'r_ID_entity' => $db0_line{'ID_entity_file'}
+								);
+								
+								main::_log("rl_a542.addon=$roles{'a542.addon'}");
+								
+								if ($roles{'a542.addon'}=~/r/)
+								{
+									
+									my $sql=qq{
+										INSERT DELAYED INTO $App::542::db_name.a542_file_download
+										(
+											datetime_event,
+											ID_file,
+											ID_user
+										)
+										VALUES
+										(
+											NOW(),
+											?,
+											''
+										)
+									};
+									
+									TOM::Database::SQL::execute($sql,'db_h'=>'main','quiet'=>1,'bind'=>[$db0_line{'ID_entity_file'}]);
+									
+									if (1)
+									{
+										open(my $DLFILE, '<', $tom::P_media."/a542/file/item/".$db0_line{'file_path'}) or do {
+											
+										};
+										
+										print "Connection: close\n";
+										print "Content-Type: $db0_line{'mimetype'}\n";
+										print "Content-Disposition: attachment; filename = ".$db0_line{'name_url'}.".".$db0_line{'name_ext'}."\n";
+										my $size=(stat($tom::P_media."/a542/file/item/".$db0_line{'file_path'}))[7];
+										print "Content-length: $size\n";
+										
+										print "\n";
+										
+										binmode STDOUT;
+										binmode $DLFILE;
+										my $data;
+										while ((my $n = read $DLFILE, $data, 1024) != 0) {
+											print $data;
+										}
+										
+										undef ($DLFILE);
+										next;
+									}
+									else
+									{
+										print "Connection: close\n";
+										print "Content-Disposition: attachment; filename = ".$db0_line{'name_url'}.".".$db0_line{'name_ext'}."\n";
+										print "Location: $tom::H_a542/file/item/$db0_line{'file_path'}\n\n";
+									}
+									
+									
+								}
+								else
+								{
+									print "Status: 401 Not Authorized\n";
+									print "WWW-Authenticate: Basic realm=\"This file requires a valid user\"\n";
+									print "Content-Type: text/html; charset=UTF-8\n";
+									print "\n";
+									print "<HTML><HEAD></HEAD><BODY><H1>401 Not Authorized</H1><p>This file requires a valid user</p>";
+									print "</BODY></HTML>\n";
+								}
+								
+							}
+							else
+							{
+								print "Status: 401 Not Authorized\n";
+								print "WWW-Authenticate: Basic realm=\"This file requires a valid user\"\n";
+								print "Content-Type: text/html; charset=UTF-8\n";
+								print "\n";
+								print "<HTML><HEAD></HEAD><BODY><H1>401 Not Authorized</H1><p>This file requires a valid user</p>";
+								print "</BODY></HTML>\n";
+							}
+						}
+						else
+						{
+							main::_log("user not found",1);
+							print "Status: 401 Not Authorized\n";
+							print "WWW-Authenticate: Basic realm=\"This file requires a valid user\"\n";
+							print "Content-Type: text/html; charset=UTF-8\n";
+							print "\n";
+							print "<HTML><HEAD></HEAD><BODY><H1>401 Not Authorized</H1><p>This file requires a valid user</p>";
+							print "</BODY></HTML>\n";
+						}
+						
+					}
+					else
+					{
+						print "Status: 401 Not Authorized\n";
+						print "WWW-Authenticate: Basic realm=\"This file requires a valid user\"\n";
+						print "Content-Type: text/html; charset=UTF-8\n";
+						print "\n";
+						print "<HTML><HEAD></HEAD><BODY><H1>401 Not Authorized</H1><p>This file requires a valid user</p>";
+						print "</BODY></HTML>\n";
+					}
+					
+				}
+				
+				next;
+			}
+			
+			my $sql=qq{
+				INSERT DELAYED INTO $App::542::db_name.a542_file_download
+				(
+					datetime_event,
+					ID_file,
+					ID_user
+				)
+				VALUES
+				(
+					NOW(),
+					?,
+					''
+				)
+			};
+			
+			TOM::Database::SQL::execute($sql,'db_h'=>'main','quiet'=>1,'bind'=>[$db0_line{'ID_entity_file'}]);
+			
+			if (1)
+			{
+				open(my $DLFILE, '<', $tom::P_media."/a542/file/item/".$db0_line{'file_path'}) or do {
+					
+				};
+				
+				print "Connection: close\n";
+				print "Content-Type: $db0_line{'mimetype'}\n";
+				print "Content-Disposition: attachment; filename = ".$db0_line{'name_url'}.".".$db0_line{'name_ext'}."\n";
+				my $size=(stat($tom::P_media."/a542/file/item/".$db0_line{'file_path'}))[7];
+				print "Content-length: $size\n";
+				
+				print "\n";
+				
+				binmode STDOUT;
+				binmode $DLFILE;
+				my $data;
+				while ((my $n = read $DLFILE, $data, 1024) != 0) {
+					print $data;
+				}
+				
+				undef ($DLFILE);
+				next;
+			}
+			else
+			{
+				print "Connection: close\n";
+##				print "Content-Type: application/pdf\n";
+				print "Content-Disposition: attachment; filename = ".$db0_line{'name_url'}.".".$db0_line{'name_ext'}."\n";
+				print "Location: $tom::H_a542/file/item/$db0_line{'file_path'}\n\n";
+			}
+			
+		}
+		else
+		{
+			print "Status: 404 Not Found\n";
+			print "Content-Type: text/html; charset=UTF-8\n";
+			print "\n";
+			
+			print "<HTML><HEAD></HEAD><BODY><H1>404 File Not Found</H1></BODY></HTML>\n";
+		}
+	};
+	
+	if ($@)
+	{
+		my @ERR=("Error occured during request execution");
+		push @ERR,$@;
+		TOM::Error::engine(@ERR);
+	}
+	
+}
+
