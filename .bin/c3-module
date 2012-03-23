@@ -112,13 +112,24 @@ eval
 $t_domain->close();
 
 $TOM::engine_ready=1;
-$main::debug=1 if $main::arg{'v'};
 
-my ($out)=Tomahawk::module(%arg,'-stdout'=>1);
-if (!$out)
+eval
 {
-	main::_log("returned error code $out".$tom::ERR,1);
+	Tomahawk::module(%arg) if $main::arg{'d'}; # process double time
+	
+	$main::debug=1 if $main::arg{'v'};
+	
+	main::_log("call to module");
+	my ($out)=Tomahawk::module(%arg,'-stdout'=>1);
+	if (!$out)
+	{
+		main::_log("returned error code $out $@ ".$tom::ERR,1);
+	}
+};
+if ($@)
+{
+	main::_log("crashed with $@",1);
 }
 
-#print color 'reset';
+print color 'reset';
 
