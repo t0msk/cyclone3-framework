@@ -46,7 +46,7 @@ BEGIN
 	}
 }
 
-our $debug=0;
+our $debug=$main::debug || 0;
 our %objects;
 
 
@@ -155,6 +155,13 @@ sub new
 	else
 	{
 		$obj->prepare_location();
+		if (!$obj->{'location'})
+		{
+			main::_log("can't create template object",1) if $debug;
+			$t->close() if $debug;
+			return undef;
+#			return bless {}, $class;;
+		}
 	}
 	
 	# modifytime of location
@@ -179,6 +186,7 @@ sub new
 		$objects{$obj->{'location'}}=$obj;
 		
 		# add this location into ignore list
+#		main::_log("addding to ignore ".$obj->{'location'});
 		push @{$obj->{'ENV'}->{'ignore'}}, $obj->{'location'};
 		$obj->prepare_xml();
 		# save modify time of definition file
@@ -282,9 +290,10 @@ sub prepare_location
 		{
 			foreach my $ignore_dir (@{$self->{'ENV'}->{'ignore'}})
 			{
-				#main::_log("check ignore dir='$ignore_dir' to '$self->{'location'}'");
+#				main::_log("check ignore dir='$ignore_dir' to '$self->{'location'}'");
 				if ($self->{'location'} eq $ignore_dir)
 				{
+					main::_log("already loaded from '$ignore_dir'",1);
 					undef $self->{'location'};
 					last;
 				}
@@ -296,7 +305,8 @@ sub prepare_location
 	
 	if (!$self->{'location'})
 	{
-		main::_log("can't find location for template",1);
+		main::_log("can't find location for template '".$self->{'ENV'}->{'name'}.".".$self->{'ENV'}->{'content-type'}."' (template not exists, or already loaded as dependency)",1);
+		return undef;
 	}
 	
 	if ($self->{'location'}=~/\/_init.xml$/)
@@ -348,6 +358,12 @@ sub parse_header
 				'content-type' => $content_type,
 				'ignore' => $self->{'ENV'}{'ignore'}
 			);
+			
+			if (!$extend)
+			{
+				main::_log("can't extend byt template $level/$addon/$name/$content_type",1) if $debug;
+				next;
+			}
 			
 			# add entries from inherited tpl
 			foreach (keys %{$extend->{'entity'}})
@@ -617,15 +633,22 @@ sub get_tpl_xml
 {
 	my %env=@_;
 	
-	foreach my $ext(".tpl.d/_init.xml",".ztpl",".tpl")
+	foreach my $ext(
+		".tpl.d/_init.xml",
+#		".ztpl",
+		".tpl"
+	)
 	{
 		my $filename="$env{'dir'}/$env{'filename'}$ext";
-		main::_log(" finding in '$env{'dir'}/$env{'filename'}$ext'") if $debug;
+		main::_log(" touching in '".$filename."'") if $debug;
 		
 		# if checking ztpl, unpack them into _temp .tpl.d extension
 		# (check if not alredy actual exists) and return included xml
-		
-		return $filename if -e $filename;
+		if (-e $filename)
+		{
+			main::_log(" found ".$filename) if $debug;
+			return $filename;
+		}
 	}
 	
 	return undef;
