@@ -33,17 +33,23 @@ sub parse
 	my $metaindex=shift;
 	utf8::decode($metaindex) unless utf8::is_utf8($metaindex);
 	my %hash;
-
+	
+	if (not $metaindex =~/<\/metatree>/)
+	{
+		return %hash;
+	}
+	
 	while ($metaindex =~ /<section name="(.*?)"\ ?(\/?)>/)
 	{
 		my $section_name=$1;
 		$hash{$section_name} = {};
-
+		
 		if ($2)
 		{	
 			# empty section
 			$metaindex =~ s/<section name="(.*?)"\ ?\/>//;	
-		} else
+		}
+		else
 		{
 			# section with vars
 			$metaindex=~s|<section name="(.*?)">(.*?)</section>||s;
@@ -60,6 +66,7 @@ sub parse
 			}
 		}
 	}
+	
 	return %hash;
 }
 
