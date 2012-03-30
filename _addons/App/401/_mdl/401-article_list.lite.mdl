@@ -802,32 +802,7 @@ sub execute
 					$db1_line{'datetime_start.sec'}=$datetime{'sec'};
 					$item_article=~s|<%db_(.*?)%>|$db1_line{$1}|g;
 					
-					my $ID_category=$db1_line{'ID_category'};
-					my $alias_url;
-					my %data=App::020::SQL::functions::get_ID(
-						'ID' => $ID_category,
-						'db_h' => 'main',
-						'db_name' => $env{'db_name'},
-						'tb_name' => 'a401_article_cat',
-						'columns' => {'*' => 1},
-						'-cache' => 3600,
-						'-slave' => 1,
-					);
-					$alias_url=$data{'alias_url'} if $data{'alias_url'};
-					while ($ID_category && !$alias_url)
-					{
-						my %data=App::020::SQL::functions::tree::get_parent_ID(
-							'ID' => $ID_category,
-							'db_h' => 'main',
-							'db_name' => $env{'db_name'},
-							'tb_name' => 'a401_article_cat',
-							'columns' => {'*' => 1},
-							'-cache' => 3600,
-							'-slave' => 1,
-						);
-						$ID_category=$data{'ID'};
-						if ($data{'alias_url'}){$alias_url=$data{'alias_url'};last;}
-					}
+					my $alias_url=App::401::functions::article_alias_url('ID_category'=>$db1_line{'ID_category'});
 					$item_article=~s|<%alias_url%>|$alias_url|g if $alias_url;
 					$item_article=~s|<%alias_url%>|$tom::H_www|g unless $alias_url;
 					$item_article=~s|<%alias_url_db%>|$alias_url|g;
@@ -935,41 +910,7 @@ sub execute
 		}
 		
 		# check alternate url
-		my $ID_category=$db0_line{'ID_category'};
-		main::_log("finding alias_url from ID_category='$ID_category'");
-		my $alias_url;
-		my %data=App::020::SQL::functions::get_ID(
-			'ID' => $ID_category,
-			'db_h' => 'main',
-			'db_name' => $env{'db_name'},
-			'tb_name' => 'a401_article_cat',
-			'columns' => {'*' => 1},
-			'-cache' => 3600,
-			'-slave' => 1,
-		);
-		$alias_url=$data{'alias_url'} if $data{'alias_url'};
-		main::_log("setup alias_url='$alias_url' in ID_category='$ID_category'") if $alias_url;
-		while ($ID_category && !$alias_url)
-		{
-			my %data=App::020::SQL::functions::tree::get_parent_ID(
-				'ID' => $ID_category,
-				'db_h' => 'main',
-				'db_name' => $env{'db_name'},
-				'tb_name' => 'a401_article_cat',
-				'columns' => {'*' => 1},
-				'-cache' => 3600,
-				'-slave' => 1,
-			);
-			$ID_category=$data{'ID'};
-			if ($data{'alias_url'})
-			{
-				$alias_url=$data{'alias_url'};
-				main::_log("setup alias_url='$alias_url' in ID_category='$ID_category'");
-				last;
-			}
-		}
-		main::_log("can't find alias_url") unless $alias_url;
-		
+		my $alias_url=App::401::functions::article_alias_url('ID_category'=>$db0_line{'ID_category'});
 		$item=~s|<%alias_url%>|$alias_url|g if $alias_url;
 		$item=~s|<%alias_url%>|$tom::H_www|g unless $alias_url;
 		$item=~s|<%alias_url_db%>|$alias_url|g;

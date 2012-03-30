@@ -864,36 +864,11 @@ sub start
 		      $db0_line{'datetime_start.min'}=$datetime{'min'};
 		      $db0_line{'datetime_start.sec'}=$datetime{'sec'};
 				
-				my $ID_category=$db0_line{'ID_category'};
-				my $alias_url;
-				my %data=App::020::SQL::functions::get_ID(
-					'ID' => $ID_category,
-					'db_h' => 'main',
-					'db_name' => $App::401::db_name,
-					'tb_name' => 'a401_article_cat',
-					'columns' => {'*' => 1},
-					'-cache' => 3600,
-					'-slave' => 1,
-				);
-				$alias_url=$data{'alias_url'} if $data{'alias_url'};
-				while ($ID_category && !$alias_url)
-				{
-					my %data=App::020::SQL::functions::tree::get_parent_ID(
-						'ID' => $ID_category,
-						'db_h' => 'main',
-						'db_name' => $App::401::db_name,
-						'tb_name' => 'a401_article_cat',
-						'columns' => {'*' => 1},
-						'-cache' => 3600,
-						'-slave' => 1,
-					);
-					$ID_category=$data{'ID'};
-					if ($data{'alias_url'}){$alias_url=$data{'alias_url'};last;}
-				}
-				
+				my $alias_url=App::401::functions::article_alias_url('ID_category'=>$db0_line{"ID_category"});
+				# alias or domain
 				if ($alias_url){$db0_line{'alias_url'}=$alias_url;}
 				else {$db0_line{'alias_url'}=$tom::H_www;}
-				
+				# only alias
 				$db0_line{'alias_url_orig'}=$alias_url;
 				
 				# override default tag representation
