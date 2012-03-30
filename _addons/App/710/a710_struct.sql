@@ -45,7 +45,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
   
   `about` text character set utf8 collate utf8_unicode_ci,
   `note` text character set utf8 collate utf8_unicode_ci,
-  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `metadata` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
 
   `datetime_evidence` datetime default NULL,
   `datetime_modified` datetime default NULL,  
@@ -171,7 +171,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org_cat` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
-  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `metadata` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),

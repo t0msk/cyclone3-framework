@@ -509,6 +509,7 @@ sub _org_index
 		WebService::Solr::Field->new( 'id' => $id ),
 		
 		WebService::Solr::Field->new( 'name' => $org{'name'} || ''),
+		WebService::Solr::Field->new( 'name_url_s' => $org{'name_url'} || ''),
 		
 		WebService::Solr::Field->new( 'title' => $org{'name'} || ''),
 		
@@ -523,6 +524,7 @@ sub _org_index
 		WebService::Solr::Field->new( 'state_'.$suffix => $org{'state'} || ''),
 		WebService::Solr::Field->new( 'county_'.$suffix => $org{'county'} || ''),
 		WebService::Solr::Field->new( 'district_'.$suffix => $org{'district'} || ''),
+		WebService::Solr::Field->new( 'ZIP_'.$suffix => $org{'ZIP'} || ''),
 		WebService::Solr::Field->new( 'city_'.$suffix => $org{'city'} || ''),
 		WebService::Solr::Field->new( 'street_'.$suffix => $org{'street'} || ''),
 		WebService::Solr::Field->new( 'street_number_t' => $org{'street_num'} || ''),
