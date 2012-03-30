@@ -1703,7 +1703,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($env0{'id'} eq "Expires")
 			{
-				if ($env0{'value'}=~/^\+(\d+)([DHS])$/)
+				if ($env0{'value'}=~/^\+(\d+)([DHMS])$/)
 				{
 					my $date = DateTime->now('time_zone' => 'GMT');#->subtract( days => $env{'days'} );
 					if ($2 eq "D")
@@ -1713,6 +1713,10 @@ while ($main::CGI=new CGI::Fast())
 					if ($2 eq "H")
 					{
 						$date->add('hours' => $1);
+					}
+					if ($2 eq "M")
+					{
+						$date->add('minutes' => $1);
 					}
 					if ($2 eq "S")
 					{
