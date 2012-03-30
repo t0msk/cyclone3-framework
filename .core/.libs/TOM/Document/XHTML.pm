@@ -225,14 +225,17 @@ $TOM::Document::base::copyright
 	$self->{'env'}{'DOC_robots'}=$self->{'ENV'}{'head'}{'meta'}{'robots'};
 	$self->{'ENV'}{'head'}{'meta'}{'robots'}="<%HEADER-ROBOTS%>";
 	
-	$self->{'OUT'}{'HEADER'} .=
-	" <meta name=\"generator\" content=\"Cyclone3 ".
-	$TOM::core_version.".".
-	$TOM::core_build.
-	" \" />\n" unless $self->{'ENV'}{'head'}{'meta'}{'generator'};
-	
-	$self->{'OUT'}{'HEADER'} .=
-	" <meta name=\"Cyclone3\" content=\"<%META-Cyclone3%>\" />\n" unless $self->{'ENV'}{'head'}{'meta'}{'Cyclone3'};
+	if (!$TOM::paranoid)
+	{
+		# don't inform about details
+		$self->{'OUT'}{'HEADER'} .=
+		" <meta name=\"generator\" content=\"Cyclone3 ".
+		$TOM::core_version.".".
+		$TOM::core_build.
+		" \" />\n" unless $self->{'ENV'}{'head'}{'meta'}{'generator'};
+		$self->{'OUT'}{'HEADER'} .=
+		" <meta name=\"Cyclone3\" content=\"<%META-Cyclone3%>\" />\n" unless $self->{'ENV'}{'head'}{'meta'}{'Cyclone3'};
+	}
 	
 	foreach (sort keys %{$self->{'ENV'}{'head'}{'meta'}})
 	{
