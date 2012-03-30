@@ -5,7 +5,12 @@ BEGIN
 {
 	$TOM::engine='download';
 	$main::debug=1 if $ENV{'TERM'};
-	require "/www/TOM/.core/.libs/TOM.pm";
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
 }
 
 use open ':utf8', ':std';
