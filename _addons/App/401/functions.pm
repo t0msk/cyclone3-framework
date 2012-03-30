@@ -919,6 +919,82 @@ sub _article_index
 }
 
 
+sub _article_cat_index
+{
+	my %env=@_;
+	return undef unless $env{'ID'};
+	return undef unless $Ext::Solr;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::_article_cat_index()",'timer'=>1);
+	
+	my $solr = Ext::Solr::service();
+	
+	my %content;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			$App::401::db_name.a401_article_cat
+		WHERE
+			status IN ('Y','L')
+			AND ID=?
+	},'quiet'=>1,'bind'=>[$env{'ID'}]);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("found");
+		
+		my $id=$App::401::db_name.".a401_article_cat.".$db0_line{'lng'}.".".$db0_line{'ID'};
+		main::_log("index id='$id'");
+		
+		my $doc = WebService::Solr::Document->new();
+		
+		$db0_line{'description'}=~s|<.*?>||gms;
+		$db0_line{'description'}=~s|&nbsp;| |gms;
+		$db0_line{'description'}=~s|  | |gms;
+		
+		$db0_line{'datetime_create'}=~s| (\d\d)|T$1|;
+		$db0_line{'datetime_create'}.="Z";
+		
+		
+		$doc->add_fields((
+			WebService::Solr::Field->new( 'id' => $id ),
+			
+			WebService::Solr::Field->new( 'name' => $db0_line{'name'} ),
+			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
+			
+			WebService::Solr::Field->new( 'text' => $db0_line{'description'} ),
+			
+			WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_create'} ),
+			
+			WebService::Solr::Field->new( 'db_s' => $App::401::db_name ),
+			WebService::Solr::Field->new( 'addon_s' => 'a401_article_cat' ),
+			WebService::Solr::Field->new( 'lng_s' => $db0_line{'lng'} ),
+			WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
+			WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
+		));
+		
+		$solr->add($doc);
+		
+		main::_log("Solr commiting...");
+		$solr->commit;
+		main::_log("commited.");
+		
+	}
+	else
+	{
+		main::_log("not found active ID",1);
+		my $response = $solr->search( "id:".$App::401::db_name.".a401_article_cat.* AND ID_i:$env{'ID'}" );
+		for my $doc ( $response->docs )
+		{
+			$solr->delete_by_id($doc->value_for('id'));
+		}
+		$solr->commit;
+	}
+	
+	$t->close();
+}
+
 =head2 article_content_extract_keywords()
 
 Extracts keywords from article_content.abstract/body
@@ -954,6 +1030,63 @@ sub article_content_extract_keywords
 	
 	$t->close() if $debug;
 	return %keywords;
+}
+
+
+sub article_alias_url
+{
+	my %env=@_;
+	my $alias_url;
+	my $t=track TOM::Debug(__PACKAGE__."::article_alias_url()");
+	
+	if (!$env{'ID_category'})
+	{
+		$t->close();
+		return undef;
+	}
+	
+	# check alternate url
+	my %categories;
+	my @categories_pool;
+	my $ID_category=$env{'ID_category'};
+	push @categories_pool,$ID_category;
+	my $alias_url;
+	my %data=App::020::SQL::functions::get_ID(
+		'ID' => $ID_category,
+		'db_h' => 'main',
+		'db_name' => $App::401::db_name,
+		'tb_name' => 'a401_article_cat',
+		'columns' => {'*' => 1},
+		'-cache' => 3600,
+		'-slave' => 1,
+	);
+	$categories{$ID_category}=$data{'name_url'};
+	$alias_url=$data{'alias_url'} if $data{'alias_url'};
+	while ($ID_category && !$alias_url)
+	{
+		my %data=App::020::SQL::functions::tree::get_parent_ID(
+			'ID' => $ID_category,
+			'db_h' => 'main',
+			'db_name' => $App::401::db_name,
+			'tb_name' => 'a401_article_cat',
+			'columns' => {'*' => 1},
+			'-cache' => 3600,
+			'-slave' => 1,
+		);
+		$ID_category=$data{'ID'};
+		$categories{$ID_category}=$data{'name_url'};
+		push @categories_pool,$ID_category;
+		if ($data{'alias_url'})
+		{
+			$alias_url=$data{'alias_url'};
+			last;
+		}
+	}
+	
+	main::_log("alias_url='$alias_url'");
+	
+	$t->close();
+	return $alias_url;
 }
 
 
