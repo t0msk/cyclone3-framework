@@ -64,6 +64,7 @@ use TOM::Utils::currency;
 use App::020::_init; # data standard 0
 use App::301::_init;
 use App::401::mimetypes;
+use App::821::_init;
 use App::730::a160;
 use App::730::a301;
 use App::730::functions;
@@ -150,6 +151,81 @@ foreach my $lng(@TOM::LNG_accept)
 		);
 	}
 }
+
+# check relation to a821
+our $forum_ID_entity;
+our %forum;
+
+if ($tom::addons{'a821'})
+{
+	# find any category;
+	my $sql="
+		SELECT
+			ID, ID_entity
+		FROM
+			`$App::821::db_name`.`a821_discussion_forum`
+		WHERE
+			name='event discussions' AND
+			lng IN ('".(join "','",@TOM::LNG_accept)."')
+		LIMIT 1
+	";
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$forum_ID_entity=$db0_line{'ID_entity'} unless $forum_ID_entity;
+	}
+	else
+	{
+		$forum_ID_entity=App::020::SQL::functions::tree::new(
+			'db_h' => "main",
+			'db_name' => $App::821::db_name,
+			'tb_name' => "a821_discussion_forum",
+			'columns' => {
+				'name' => "'event discussions'",
+				'lng' => "'$tom::LNG'",
+				'status' => "'L'"
+			},
+			'-journalize' => 1
+		);
+	}
+	
+	foreach my $lng(@TOM::LNG_accept)
+	{
+		#main::_log("check related category $lng");
+		my $sql=qq{
+			SELECT
+				ID, ID_entity
+			FROM
+				`$App::821::db_name`.`a821_discussion_forum`
+			WHERE
+				ID_entity=$forum_ID_entity AND
+				lng='$lng'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$forum{$lng}=$db0_line{'ID'};
+		}
+		else
+		{
+			#main::_log("creating related category");
+			$forum{$lng}=App::020::SQL::functions::tree::new(
+				'db_h' => "main",
+				'db_name' => $App::821::db_name,
+				'tb_name' => "a821_discussion_forum",
+				'columns' => {
+					'ID_entity' => $forum_ID_entity,
+					'name' => "'event discussions'",
+					'lng' => "'$lng'",
+					'status' => "'L'"
+				},
+				'-journalize' => 1
+			);
+		}
+	}
+}
+
 
 
 =head1 AUTHOR
