@@ -222,7 +222,7 @@
     <fieldType name="text" class="solr.TextField" positionIncrementGap="100">
       <analyzer type="index">
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
-        <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="false"/>
+        <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="true"/>
 	<filter class="solr.ASCIIFoldingFilterFactory"/>
         <!-- Case insensitive stop word removal.
           add enablePositionIncrements=true in both the index and query
@@ -240,7 +240,7 @@
       </analyzer>
       <analyzer type="query">
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
-	<filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="true"/>
+	<filter class="solr.SynonymFilterFactory" synonyms="search_synonyms.txt" ignoreCase="true" expand="true"/>
 	<filter class="solr.ASCIIFoldingFilterFactory"/>
         <filter class="solr.StopFilterFactory"
                 ignoreCase="true"
@@ -260,7 +260,7 @@
 <!--        <filter class="solr.ASCIIFoldingFilterFactory"/>-->
         <filter class="solr.LowerCaseFilterFactory"/>
 <!--	<filter class="solr.PatternReplaceFilterFactory" pattern="(^[^A-Za-z0-9]*|[^A-Za-z0-9]*$)" replacement=""  replace="all" />-->
-	<filter class="solr.ShingleFilterFactory" maxShingleSize="3" outputUnigrams="true" outputUnigramIfNoNgram="true" />
+	<filter class="solr.ShingleFilterFactory" minShingleSize="2" maxShingleSize="3" outputUnigrams="true" outputUnigramIfNoNgram="true" />
       </analyzer>
       <analyzer type="query">
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
@@ -449,6 +449,7 @@
    <field name="id" type="string" indexed="true" stored="true" required="true" /> 
    <field name="sku" type="textTight" indexed="true" stored="true" omitNorms="true"/>
    <field name="name" type="textgen" indexed="true" stored="true"/>
+   <field name="name_sort" type="string" indexed="true" stored="false"/>
    <field name="alphaNameSort" type="alphaOnlySort" indexed="true" stored="false"/>
    <field name="manu" type="textgen" indexed="true" stored="true" omitNorms="true"/>
    <field name="cat" type="text_ws" indexed="true" stored="true" multiValued="true" omitNorms="true" />
@@ -456,9 +457,9 @@
    <field name="includes" type="text" indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true" />
 
    <field name="weight" type="float" indexed="true" stored="true"/>
-   <field name="price"  type="float" indexed="true" stored="true"/>
+   <!--<field name="price"  type="float" indexed="true" stored="true"/>-->
    <field name="popularity" type="int" indexed="true" stored="true" />
-   <field name="inStock" type="boolean" indexed="true" stored="true" />
+   <!--<field name="inStock" type="boolean" indexed="true" stored="true" />-->
 
 
    <!-- Common metadata fields, named specifically to match up with
@@ -469,7 +470,7 @@
    <field name="title" type="text" indexed="true" stored="true" multiValued="true"/>
    <field name="subject" type="text" indexed="true" stored="true"/>
    <field name="description" type="text" indexed="true" stored="true"/>
-   <field name="comments" type="text" indexed="true" stored="true"/>
+   <!--<field name="comments" type="text" indexed="true" stored="true"/>-->
    <field name="author" type="textgen" indexed="true" stored="true"/>
    <field name="keywords" type="textgen" indexed="true" stored="true"/>
    <field name="category" type="textgen" indexed="true" stored="true"/>
@@ -510,8 +511,10 @@
         both match, the first appearing in the schema will be used.  -->
    <dynamicField name="*_i"  type="int"    indexed="true"  stored="true"/>
    <dynamicField name="*_s"  type="string"  indexed="true"  stored="true"/>
+   <dynamicField name="*_sm" type="string"    indexed="true"  stored="true" multiValued="true" />
    <dynamicField name="*_l"  type="long"   indexed="true"  stored="true"/>
    <dynamicField name="*_t"  type="text"    indexed="true"  stored="true"/>
+   <dynamicField name="*_tm" type="text"    indexed="true"  stored="true" multiValued="true" />
    <dynamicField name="*_b"  type="boolean" indexed="true"  stored="true"/>
    <dynamicField name="*_f"  type="float"  indexed="true"  stored="true"/>
    <dynamicField name="*_d"  type="double" indexed="true"  stored="true"/>
@@ -554,15 +557,20 @@
         is added to the index.  It's used either to index the same field differently,
         or to add multiple fields to the same field for easier/faster searching.  -->
 
+   <copyField source="name" dest="name_sort"/>
+
    <copyField source="cat" dest="text"/>
    <copyField source="name" dest="text"/>
    <copyField source="manu" dest="text"/>
    <copyField source="features" dest="text"/>
    <copyField source="includes" dest="text"/>
    <copyField source="description" dest="text"/>
+   <copyField source="*_t" dest="text" />
+   <copyField source="*_tm" dest="text" />
    <copyField source="manu" dest="manu_exact"/>
 
    <copyField source="*_t" dest="text_shingle" />
+   <copyField source="*_tm" dest="text_shingle" />
    <copyField source="text" dest="text_shingle" />
 	
    <!-- Above, multiple source fields are copied to the [text] field. 
