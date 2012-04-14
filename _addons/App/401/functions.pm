@@ -911,9 +911,9 @@ sub _article_index
 		$solr->add($doc);
 	}
 	
-	main::_log("Solr commiting...");
-	$solr->commit;
-	main::_log("commited.");
+#	main::_log("Solr commiting...");
+#	$solr->commit;
+#	main::_log("commited.");
 	
 	$t->close();
 }
@@ -961,9 +961,10 @@ sub _article_cat_index
 			WebService::Solr::Field->new( 'id' => $id ),
 			
 			WebService::Solr::Field->new( 'name' => $db0_line{'name'} ),
+			WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
 			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
 			
-			WebService::Solr::Field->new( 'text' => $db0_line{'description'} ),
+			WebService::Solr::Field->new( 'description' => $db0_line{'description'} ),
 			
 			WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_create'} ),
 			
@@ -976,9 +977,9 @@ sub _article_cat_index
 		
 		$solr->add($doc);
 		
-		main::_log("Solr commiting...");
-		$solr->commit;
-		main::_log("commited.");
+#		main::_log("Solr commiting...");
+#		$solr->commit;
+#		main::_log("commited.");
 		
 	}
 	else
@@ -989,7 +990,7 @@ sub _article_cat_index
 		{
 			$solr->delete_by_id($doc->value_for('id'));
 		}
-		$solr->commit;
+#		$solr->commit;
 	}
 	
 	$t->close();
