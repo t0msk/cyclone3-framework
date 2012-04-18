@@ -29,7 +29,7 @@ sub genhash_N
  return $var;}
 
 
-sub replace # toto sa naozaj este pouziva!!! a dost casto!
+sub replace
 {
  #no strict;
  
@@ -44,10 +44,10 @@ sub replace # toto sa naozaj este pouziva!!! a dost casto!
    
    #print "var $var $value\n" if $main::debug;
 
-   if ($var=~/(sub\{|do\{|&|\+|\-|\*|\/|=|"|\||;)/)
+   if ($var=~/(sub\{|do\{|&|\+|\*|\/|=|"|\||;)/)
    #if ($var=~/(sub|do|&)/)
    {
-    main::_log("VAZNY PRIENIK ZAMENY PREMENNEJ \"".
+    main::_log("possibly security issue with replacing \"".
 	$var.
 	"\" z $main::ENV{'REMOTE_ADDR'} s $main::ENV{'QUERY_STRING'} ",1,"secure");
     $var="***";
