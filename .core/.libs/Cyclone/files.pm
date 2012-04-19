@@ -208,6 +208,7 @@ our @setit_F=
 	
 	['_mdl\/.*\.xlng$'                 ,"xlng"                        ,"660","$user_www:$group"],
 	['_mdl.*\.xsgn$'                   ,"xsgn"                        ,"660","$user_www:$group"],
+	['_mdl.*\.tpl$'                    ,"tpl"                         ,"660","$user_www:$group"],
 	['_mdl\/.*mdl$'                    ,"?mdl"                        ,"660","$user_www:$group"],
 	
 	['_mdl\/.*cron$'                   ,"_mdl cron"                   ,"660","$user_www:$group"],
