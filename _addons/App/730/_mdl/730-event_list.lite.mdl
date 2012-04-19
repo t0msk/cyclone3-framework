@@ -266,6 +266,8 @@ sub execute
 			event.datetime_publish_stop,
 			event.link,
 			event.location,
+			event.longitude_decimal,
+			event.latitude_decimal,
 			event.metadata,
 			event.status,
 			event.priority_A,
@@ -599,7 +601,6 @@ sub execute
 		
 		if(!$thumbnail)
 		{
-			main::_log('ogh mygh ghogd!');
 			$item=~s|<#thumbnail#>|$XSGN{'thumbnail.empty'}|g if $XSGN{'thumbnail.empty'};
 		}
 		

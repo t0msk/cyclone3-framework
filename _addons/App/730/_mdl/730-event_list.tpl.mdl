@@ -1,0 +1,264 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use DateTime;
+
+
+use App::730::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	
+	Tomahawk::GetTpl() || return undef;
+	
+	$env{'db_name'}=$App::730::db_name unless $env{'db_name'};
+	
+	$env{'sql_limit'}='1' unless $env{'sql_limit'};
+	
+	if (not $env{'sql_limit'}=~/,/){$env{'sql_limit'}="0,".$env{'sql_limit'}}
+	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
+	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
+	{
+		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
+	}
+	
+	my $count_max;
+	if ($env{'sql_limit'}=~/,(\d+)/)
+	{
+		$count_max=$1;
+		$env{'sql_limit'}=~s/,(\d+)/",".($1+1)/e;
+	}
+	
+	if (not $env{'sql_limit'}=~/^(\d+),(\d+)$/)
+	{
+		$env{'sql_limit'}='1';
+	}
+	
+	$env{'sql_order_by'}='event.datetime_start ASC' unless $env{'sql_order_by'};
+	
+	$env{'event_lng.lng'}=$env{'lng'} unless $env{'event_lng.lng'};
+	
+	$env{'event.status'}='Y' unless $env{'event.status'};
+		my $status_sql=join "','", split('',$env{'event.status'});
+	
+	$env{'thumbnail.image_format.ID'}=$App::501::image_format_thumbnail_ID unless $env{'thumbnail.image_format.ID'};
+	
+	my $execution_success=1;
+	
+	my $sql_where;
+	
+	my $sql_cat;
+	foreach my $ID_category(split(';',$env{'event_cat.ID_entity'}))
+	{
+		next unless $ID_category;
+		if ($ID_category=~s/\*$//)
+		{
+			next unless $ID_category;
+			my $cat_sql=qq{
+				SELECT
+					ID_charindex
+				FROM
+					`$env{'db_name'}`.`a730_event_cat`
+				WHERE
+					ID_entity=$ID_category AND
+					lng='$env{'lng'}' AND
+					status='Y'
+				LIMIT 1
+			};
+			$ID_category=qq{
+				SELECT
+					ID_entity
+				FROM
+					`$env{'db_name'}`.`a730_event_cat`
+				WHERE
+					ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+					lng='$env{'lng'}' AND
+					status='Y'
+			};
+		}
+		$sql_cat.=" OR event_rel_cat.ID_category IN ($ID_category)";
+		$sql_cat=~s/^ OR //;
+	}
+	
+	if ($sql_cat)
+	{
+		$sql_where.=" AND (".$sql_cat.") ";
+	}
+	
+	if ($env{'event.ID'})
+	{
+		$sql_where.=" AND event.ID IN ('".
+			(join "','", split(';',$env{'event.ID'})).
+			"')";
+	}
+	
+	if ($env{'date'})
+	{
+		$sql_where.="AND ((DATE(event.datetime_start)<='$env{'date'}' AND DATE(event.datetime_finish)>='$env{'date'}') OR (DATE(event.datetime_start)='$env{'date'}'))";
+	}
+	
+	$env{'mode'}="future" unless $env{'mode'};
+	if ($env{'mode'} eq "future")
+	{
+		$sql_where.="AND (event.datetime_start >= NOW() OR (event.datetime_start <= NOW() AND event.datetime_finish >= NOW())) ";
+	}
+	elsif ($env{'mode'} eq "past")
+	{
+		$sql_where.="AND (event.datetime_finish <= NOW() OR (event.datetime_start <= NOW() AND (event.datetime_finish IS NULL OR event.datetime_finish >= NOW()))) ";
+	}
+	
+	if ($env{'sql_where.name'})
+	{
+		$sql_where.=" AND event.name LIKE '%".TOM::Security::form::sql_escape($env{'sql_where.name'})."%' ";
+	}
+	
+	if ($env{'sql_where'})
+	{
+		$sql_where.=" AND ".$env{'sql_where'};
+	}
+	
+	my $sql=qq{
+		SELECT
+			
+			event.ID_entity AS ID_entity_event,
+			event.ID AS ID_event,
+			
+			event.name,
+			event.name_url,
+			event.datetime_start, -- event starts
+			event.datetime_finish, -- event ends
+			event.datetime_publish_start,
+			event.datetime_publish_stop,
+			event.link,
+			event.location,
+			event.longitude_decimal,
+			event.latitude_decimal,
+			event.metadata,
+			event.status,
+			event.priority_A,
+			
+			event.price,
+			(event.price*((100+event.VAT)/100)) AS price_incl_VAT,
+			event.price_currency,
+			event.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=event.price_currency LIMIT 1) AS price_EUR,
+			
+			event_lng.name_long,
+			event_lng.description_short,
+			event_lng.description,
+			event_lng.lng
+			
+		FROM `$env{'db_name'}`.a730_event AS event
+		
+		LEFT JOIN `$env{'db_name'}`.a730_event_lng AS event_lng ON
+		(
+			event_lng.ID_entity = event.ID_entity AND
+			event_lng.lng = '$env{'lng'}'
+		)
+		
+		LEFT JOIN `$env{'db_name'}`.a730_event_rel_cat AS event_rel_cat ON
+		(
+			event_rel_cat.ID_event=event.ID_entity
+		)
+		
+		WHERE
+			event.status IN ('$status_sql') AND
+			event.datetime_publish_start <= NOW() AND
+			(event.datetime_publish_stop IS NULL OR event.datetime_publish_stop >= NOW())
+			$sql_where
+		ORDER BY
+			$env{'sql_order_by'}
+			
+		LIMIT
+			$env{'sql_limit'}
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
+	
+	if(!$sth0{'sth'})
+	{
+		main::_log("SQL can't be executed",1);
+	}
+	
+	if(!$sth0{'rows'})
+	{
+		main::_log("err: could not fetch events");
+	}
+	
+	main::_log("received ".$sth0{'rows'}." rows");
+	
+	# Line counter
+	my $item_counter=0;
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$item_counter++;
+		
+		last if $count_max<$item_counter;
+		
+		# replace metadata
+		%{$db0_line{'metahash'}}=App::020::functions::metadata::parse($db0_line{'metadata'});
+		
+		my $p=new App::401::mimetypes::html;
+		$p->config('prefix'=>'event','name'=>'description_short','env'=>\%env,'entity'=>\%XSGN);
+		$p->parse($db0_line{'description_short'});
+		$p->eof();
+		$db0_line{'description_short'}=$p->{'out'};
+		
+		my $p=new App::401::mimetypes::html;
+		$p->config('prefix'=>'event','name'=>'description','env'=>\%env,'entity'=>\%XSGN);
+		$p->parse($db0_line{'description'});
+		$p->eof();
+		$db0_line{'description'}=$p->{'out'};
+		
+		# finding thumbnail to event
+		my $thumbnail;
+		use App::501::_init;
+		my $relation=(App::160::SQL::get_relations(
+			'db_name' => $env{'db_name'},
+			'l_prefix' => 'a730',
+			'l_table' => 'event',
+			'l_ID_entity' => $db0_line{'ID_entity_event'},
+			'rel_type' => 'thumbnail',
+			'r_db_name' => $App::501::db_name,
+			'r_prefix' => 'a501',
+			'r_table' => 'image',
+			'status' => 'Y',
+			'limit' => 1
+		))[0];
+		if ($relation->{'ID'})
+		{
+			my %image=App::501::functions::get_image_file(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_file.ID_format' => $env{'thumbnail.image_format.ID'},
+				'image_attrs.lng' => $tom::lng
+			);
+			if ($image{'ID_entity_image'})
+			{
+				$thumbnail=1;
+#				my $item_thumbnail=$XSGN{'thumbnail'};
+#				$item_thumbnail=~s|<%db_(.*?)%>|$image{$1}|g;
+#				$item=~s|<#thumbnail#>|$item_thumbnail|g;
+			}
+		}
+		
+		$TPL->variables_push(\%db0_line);
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
