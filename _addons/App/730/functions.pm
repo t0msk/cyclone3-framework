@@ -250,11 +250,35 @@ sub event_add
 		# latitude_decimal
 		$columns{'latitude_decimal'}="'".TOM::Security::form::sql_escape($env{'event.latitude_decimal'})."'"
 			if (exists $env{'event.latitude_decimal'} && ($env{'event.latitude_decimal'} ne $event{'latitude_decimal'}));
-
 		# longitude_decimal
 		$columns{'longitude_decimal'}="'".TOM::Security::form::sql_escape($env{'event.longitude_decimal'})."'"
 			if (exists $env{'event.longitude_decimal'} && ($env{'event.longitude_decimal'} ne $event{'longitude_decimal'}));
-
+		
+		# country_code
+		$columns{'country_code'}="'".TOM::Security::form::sql_escape($env{'event.country_code'})."'"
+			if (exists $env{'event.country_code'} && ($env{'event.country_code'} ne $event{'country_code'}));
+		# state
+		$columns{'state'}="'".TOM::Security::form::sql_escape($env{'event.state'})."'"
+			if (exists $env{'event.state'} && ($env{'event.state'} ne $event{'state'}));
+		# county
+		$columns{'county'}="'".TOM::Security::form::sql_escape($env{'event.county'})."'"
+			if (exists $env{'event.county'} && ($env{'event.county'} ne $event{'county'}));
+		# district
+		$columns{'district'}="'".TOM::Security::form::sql_escape($env{'event.district'})."'"
+			if (exists $env{'event.district'} && ($env{'event.district'} ne $event{'district'}));
+		# city
+		$columns{'city'}="'".TOM::Security::form::sql_escape($env{'event.city'})."'"
+			if (exists $env{'event.city'} && ($env{'event.city'} ne $event{'city'}));
+		# ZIP
+		$columns{'ZIP'}="'".TOM::Security::form::sql_escape($env{'event.ZIP'})."'"
+			if (exists $env{'event.ZIP'} && ($env{'event.ZIP'} ne $event{'ZIP'}));
+		# street
+		$columns{'street'}="'".TOM::Security::form::sql_escape($env{'event.street'})."'"
+			if (exists $env{'event.street'} && ($env{'event.street'} ne $event{'street'}));
+		# street_num
+		$columns{'street_num'}="'".TOM::Security::form::sql_escape($env{'event.street_num'})."'"
+			if (exists $env{'event.street_num'} && ($env{'event.street_num'} ne $event{'street_num'}));
+		
 		# metadata
 		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'event.metadata'})."'"
 			if (exists $env{'event.metadata'} && ($env{'event.metadata'} ne $event{'metadata'}));
