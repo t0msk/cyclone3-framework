@@ -703,7 +703,19 @@ our \$VERSION=$m_time;
 		if ($Tomahawk::module::TPL)
 		{
 			my $t_tt=track TOM::Debug("tt:process",'timer'=>1);
-			# main variables
+			
+			# domain variables
+			$Tomahawk::module::TPL->{'variables'}->{'domain'}={
+				'url' => $tom::H_www,
+				'url_grf' => $tom::H_grf,
+				'url_css' => $tom::H_css,
+				'url_js' => $tom::H_js,
+				'url_a501' => $tom::H_a501,
+				'url_a510' => $tom::H_a510,
+			};
+			# user variables
+			%{$Tomahawk::module::TPL->{'variables'}->{'USRM'}}=%main::USRM;
+			# module variables
 			$Tomahawk::module::TPL->{'variables'}->{'module'}={
 				'name'=> $mdl_C{'-name'},
 				'version'=> $mdl_C{'-version'},
