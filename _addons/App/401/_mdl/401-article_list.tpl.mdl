@@ -15,7 +15,7 @@ sub execute
 {
 	my %env=@_;
 	
-	Tomahawk::GetTpl() || return undef;;
+	Tomahawk::GetTpl() || return undef;
 	
 	$env{'db_name'}=$App::401::db_name unless $env{'db_name'};
 	
