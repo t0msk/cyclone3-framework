@@ -84,7 +84,7 @@ sub format {
             : ($params->{ gmt } || $self->{ gmt });
     my (@date, $datestr);
 
-    if ($time =~ /^\d+$/) {
+    if ($time =~ /^-?\d+$/) {
         # $time is now in seconds since epoch
         if ($gmt) {
             @date = (gmtime($time))[0..6];
@@ -125,21 +125,16 @@ sub format {
         # format the date in a specific locale, saving and subsequently
         # restoring the current locale.
         my $old_locale = &POSIX::setlocale(&POSIX::LC_ALL);
-        my $locale_setted;
+
         # some systems expect locales to have a particular suffix
         for my $suffix ('', @LOCALE_SUFFIX) {
             my $try_locale = $locale.$suffix;
             my $setlocale = &POSIX::setlocale(&POSIX::LC_ALL, $try_locale);
             if (defined $setlocale && $try_locale eq $setlocale) {
                 $locale = $try_locale;
-                $locale_setted=1;
                 last;
             }
         }
-			if (!$locale_setted)
-			{
-				main::_log("locale '$locale' not installed. try 'locale-gen $locale.UTF-8'",1);
-			}
         $datestr = &POSIX::strftime($format, @date);
         &POSIX::setlocale(&POSIX::LC_ALL, $old_locale);
     }
