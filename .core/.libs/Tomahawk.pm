@@ -289,7 +289,7 @@ sub module
 {
 	local %mdl_env=@_;
 	$mdl_env{'-cache'} if $mdl_env{'-cache_id'};
-	if ($mdl_env{'-category'}){$mdl_env{'-addon'}="a".$mdl_env{'-category'}}; # backward compatibility
+	if (exists $mdl_env{'-category'}){$mdl_env{'-addon'}="a".$mdl_env{'-category'}}; # backward compatibility
 	$mdl_env{'-addon_type'}='App' if $mdl_env{'-addon'}=~/^a/;
 	$mdl_env{'-addon_type'}='Ext' if $mdl_env{'-addon'}=~/^e/;
 	$mdl_env{'-addon_name'}=$mdl_env{'-addon'};$mdl_env{'-addon_name'}=~s|^.||;
@@ -703,18 +703,7 @@ our \$VERSION=$m_time;
 		if ($Tomahawk::module::TPL)
 		{
 			my $t_tt=track TOM::Debug("tt:process",'timer'=>1);
-			
-			# domain variables
-			$Tomahawk::module::TPL->{'variables'}->{'domain'}={
-				'url' => $tom::H_www,
-				'url_grf' => $tom::H_grf,
-				'url_css' => $tom::H_css,
-				'url_js' => $tom::H_js,
-				'url_a501' => $tom::H_a501,
-				'url_a510' => $tom::H_a510,
-			};
-			# user variables
-			%{$Tomahawk::module::TPL->{'variables'}->{'USRM'}}=%main::USRM;
+			# basic environment variables are attached in TOM::Template::process()
 			# module variables
 			$Tomahawk::module::TPL->{'variables'}->{'module'}={
 				'name'=> $mdl_C{'-name'},

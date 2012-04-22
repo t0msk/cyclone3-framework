@@ -716,19 +716,36 @@ sub process
 		
 		# test variable
 		$vars_process->{'test'}="test string";
-		# attach environment variables
-		$vars_process->{'request'}={
-			
+		
+		# domain variables
+		$vars_process->{'domain'}={
+			'url' => $tom::H_www,
+			'url_grf' => $tom::H_grf,
+			'url_css' => $tom::H_css,
+			'url_js' => $tom::H_js,
+			'url_a501' => $tom::H_a501,
+			'url_a510' => $tom::H_a510,
 		};
-		$vars_process->{'user'}={
-			
-		};
-		$vars_process->{'process'}={
-			
-		};
-		$vars_process->{'service'}={
-			
-		};
+		# request params
+		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'param'}=\%main::FORM;
+		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'code'}=$main::request_code;
+		# user variables
+		$Tomahawk::module::TPL->{'variables'}->{'user'}=\%main::USRM;
+		$Tomahawk::module::TPL->{'variables'}->{'USRM'}=\%main::USRM; # alias
+		
+#		# attach environment variables
+#		$vars_process->{'request'}={
+#			
+#		};
+#		$vars_process->{'user'}={
+#			
+#		};
+#		$vars_process->{'process'}={
+#			
+#		};
+#		$vars_process->{'service'}={
+#			
+#		};
 		
 		# process
 		undef $self->{'output'};
