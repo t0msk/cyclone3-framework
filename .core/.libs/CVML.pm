@@ -404,9 +404,9 @@ sub serialize
 {
 	my %hash=@_;
 	
-	return  "#json\n".encode_json \%hash;
+	my $js = JSON->new;$js->canonical(1); # sorted keys
+	return "#json\n" . $js->encode(\%hash);
 	
-#	return "" if 
 	my %out=serialize_data(level=>0,data=>\%hash);
 	#return "<:[]>" if $out{data} eq "[]";
 	return "<:[]>" if $out{data} eq ":[]";
