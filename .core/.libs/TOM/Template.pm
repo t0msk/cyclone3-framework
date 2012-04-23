@@ -730,8 +730,14 @@ sub process
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'param'}=\%main::FORM;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'code'}=$main::request_code;
 		# user variables
-		$Tomahawk::module::TPL->{'variables'}->{'user'}=\%main::USRM;
-		$Tomahawk::module::TPL->{'variables'}->{'USRM'}=\%main::USRM; # alias
+#		$Tomahawk::module::TPL->{'variables'}->{'user'}=\%main::USRM;
+		%{$Tomahawk::module::TPL->{'variables'}->{'user'}}=%main::USRM;
+		undef $Tomahawk::module::TPL->{'variables'}->{'user'}->{'session'};
+		# copy hash, not tied
+		%{$Tomahawk::module::TPL->{'variables'}->{'user'}->{'session'}}
+			= %{$main::USRM{'session'}};
+		# alias
+		%{$Tomahawk::module::TPL->{'variables'}->{'USRM'}}=%{$Tomahawk::module::TPL->{'variables'}->{'user'}};
 		
 #		# attach environment variables
 #		$vars_process->{'request'}={
