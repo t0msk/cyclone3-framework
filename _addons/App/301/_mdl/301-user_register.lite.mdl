@@ -416,12 +416,13 @@ sub execute
 			my $cvml=CVML::structure::serialize(%session);
 			$columns{'user.saved_session'}=$cvml;
 			
+			$columns{'user.status'}=$env{'user.status'} || "W";
+			
 			# register user
 			#$db0_line{'ID_user'}
 			my %user=App::301::functions::user_add(
 				'user.ID_user' => $user_reuse,
 				'user.login' => $main::FORM{'login'},
-				'user.status' => 'W', # wait status
 				'user.pass' => $main::FORM{'pass1'},
 				'user_profile.firstname' => $main::FORM{'firstname'},
 				'user_profile.surname' => $main::FORM{'surname'},
