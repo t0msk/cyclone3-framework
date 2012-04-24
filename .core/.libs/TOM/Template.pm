@@ -720,6 +720,7 @@ sub process
 		# domain variables
 		$vars_process->{'domain'}={
 			'url' => $tom::H_www,
+			'url_media' => $tom::H_media,
 			'url_grf' => $tom::H_grf,
 			'url_css' => $tom::H_css,
 			'url_js' => $tom::H_js,
