@@ -153,6 +153,7 @@ sub org_add
 			'tb_name' => "a710_org",
 			'columns' => {'*'=>1}
 		);
+		$env{'org.ID_entity'}=$org{'ID_entity'};
 	}
 	
 	main::_log("org.ID='$org{'ID'}'");
@@ -465,7 +466,7 @@ sub _org_index
 		{
 			$solr->delete_by_id($doc->value_for('id'));
 		}
-		$solr->commit();
+#		$solr->commit();
 		$t->close();
 		return 1;
 	}
@@ -487,6 +488,7 @@ sub _org_index
 	},'bind'=>[$org{'ID_entity'}],'quiet'=>1);
 	while (my %db1_line=$sth1{'sth'}->fetchhash())
 	{
+		main::_log(" cat=$db1_line{'name'}");
 		push @{$content{'cat'}},WebService::Solr::Field->new( 'cat' => $db1_line{'name'} );
 	}
 	
@@ -547,7 +549,7 @@ sub _org_index
 	
 	$solr->add($doc);
 #	return 1;
-	$solr->commit;
+#	$solr->commit;
 	
 	$t->close();
 }
