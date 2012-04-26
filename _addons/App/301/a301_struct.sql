@@ -499,6 +499,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user` ( -- table is stored where addon
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` varchar(8) character set ascii collate ascii_bin NOT NULL default '', -- rel _user.ID_user
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_evidence` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `roles` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
   `r_prefix` varchar(32) character set ascii collate ascii_bin NOT NULL,
@@ -526,6 +527,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_user_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `datetime_evidence` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `roles` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
   `r_prefix` varchar(32) character set ascii collate ascii_bin NOT NULL,

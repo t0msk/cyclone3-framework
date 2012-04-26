@@ -1697,6 +1697,7 @@ sub ACL_user_update
 				'perm_W' => "'Y'",
 				'perm_X' => "'Y'",
 				'roles' => "'".$env{'roles'}."'",
+				'datetime_evidence' => "NOW()",
 				%columns
 			},
 			'-journalize' => 1,
