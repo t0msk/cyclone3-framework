@@ -23,6 +23,7 @@ use strict;
 use warnings;
 use base 'Template::Plugin';
 use Data::Dumper;
+$Data::Dumper::Sortkeys=1;
 
 our $VERSION = 2.70;
 our $DEBUG   = 0 unless defined $DEBUG;
