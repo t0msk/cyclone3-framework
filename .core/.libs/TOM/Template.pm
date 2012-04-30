@@ -755,8 +755,13 @@ sub process
 #		};
 		
 		# process
+		my $entity_content='[%PROCESS main%]';
 		undef $self->{'output'};
-		$tt->process(\$self->{'entity'}->{'main'},$vars_process,\$self->{'output'}) || main::_log($tt->error(),1);
+		$tt->process(
+#			\$self->{'entity'}->{'main'},
+			\$entity_content,
+			$vars_process,\$self->{'output'}
+		) || main::_log($tt->error(),1);
 		
 	}
 	else
