@@ -26,6 +26,9 @@ use base 'Template::Base';
 use Template::Constants;
 use Scalar::Util 'blessed';
 
+#Cyclone3 dependencies
+use TOM::Utils::currency;
+
 our $VERSION         = 2.87;
 our $AVAILABLE       = { };
 our $TRUNCATE_LENGTH = 32;
@@ -56,7 +59,7 @@ our $FILTERS = {
     'lower'           => sub { lc $_[0] },
     'ucfirst'         => sub { ucfirst $_[0] },
     'lcfirst'         => sub { lcfirst $_[0] },
-    'stderr'          => sub { print STDERR @_; return '' },
+#    'stderr'          => sub { print STDERR @_; return '' },
     'trim'            => sub { for ($_[0]) { s/^\s+//; s/\s+$// }; $_[0] },
     'null'            => sub { return '' },
     'collapse'        => sub { for ($_[0]) { s/^\s+//; s/\s+$//; s/\s+/ /g };
@@ -76,7 +79,10 @@ our $FILTERS = {
     'evalperl'    => [ \&perl_filter_factory,        1 ],  # alias
     'redirect'    => [ \&redirect_filter_factory,    1 ],
     'file'        => [ \&redirect_filter_factory,    1 ],  # alias
-    'stdout'      => [ \&stdout_filter_factory,      1 ],
+#    'stdout'      => [ \&stdout_filter_factory,      1 ],
+
+	# Cyclone3 filters
+	'currency'     => \&TOM::Utils::currency::format,
 };
 
 # name of module implementing plugin filters
