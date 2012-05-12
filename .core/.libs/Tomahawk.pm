@@ -659,6 +659,9 @@ sub module
 		
 		main::_log("load '$mdl_C{'P_MODULE'}'");
 		my $mdl_ID=$mdl_C{'P_MODULE'};
+			$mdl_ID=~s|\.mdl$||;
+			$mdl_ID=~s|^$TOM::P/||;
+			$mdl_ID=~s|_mdl/||g;
 			$mdl_ID=~s|/|:|g;
 			$mdl_ID=~s|[\./\-\! ]|_|g;
 			1 while ($mdl_ID=~s|[:_][:_]|:|g);
@@ -667,7 +670,7 @@ sub module
 			$mdl_ID=~s|^[:_]||g;
 			$mdl_ID=~s|:|::|g;
 		
-		my $mdl_version='Tomahawk::module::'.$mdl_ID;
+		my $mdl_version='MODULE::'.$mdl_ID;
 		my $m_time=(stat($mdl_C{'P_MODULE'}))[9];
 		
 		if (!$mdl_version->VERSION() || ($mdl_version->VERSION() < $m_time))
@@ -684,9 +687,9 @@ use Tomahawk::module qw(\$TPL \%XSGN \%XLNG &XSGN_load_hash);
 our \$authors;
 our \$VERSION=$m_time;
 };
-			$mdl_src=~s|package Tomahawk::module;|package Tomahawk::module::$mdl_ID;$mdl_inject|;
+			$mdl_src=~s|package Tomahawk::module;|package MODULE::$mdl_ID;$mdl_inject|;
 			eval $mdl_src;
-			if ($@){$tom::ERR="$@ $!";die "pre-compilation error: $@ $!\n";}
+			if ($@){$t_do->close();$tom::ERR="$@";die "evalfile error: $@\n";}
 			$t_do->close();
 		}
 		
@@ -698,7 +701,7 @@ our \$VERSION=$m_time;
 		my $t_execute=track TOM::Debug("exec");
 		
 		no strict;
-		my $execute_package='Tomahawk::module::'.$mdl_ID.'::execute';
+		my $execute_package='MODULE::'.$mdl_ID.'::execute';
 		($return_code,%return_data)=&$execute_package(%mdl_env);
 		if ($Tomahawk::module::TPL)
 		{
@@ -715,7 +718,19 @@ our \$VERSION=$m_time;
 			%{$Tomahawk::module::TPL->{'variables'}->{'module'}->{'env'}}=(%mdl_C,%mdl_env);
 			# output can be processed too
 			%{$Tomahawk::module::TPL->{'variables'}->{'module'}->{'output'}}=(%return_data);
-			$Tomahawk::module::TPL->process();
+			$Tomahawk::module::TPL->process() || do
+			{
+				$t_tt->close();
+				$t_execute->close();
+				$tom::ERR=$Tomahawk::module::TPL->{'error'};
+				TOM::Error::module
+				(
+					'-TMP' => $mdl_C{'-TMP'},
+					'-MODULE' => "[MDL::".$mdl_C{'-addon'}."-".$mdl_C{'-name'}."]",
+					'-ERROR' => $tom::ERR,
+				);
+				return undef;
+			};
 			$Tomahawk::module::XSGN{'TMP'}=$Tomahawk::module::TPL->{'output'};
 			$t_tt->close();
 		}

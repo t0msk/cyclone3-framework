@@ -731,37 +731,28 @@ sub process
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'param'}=\%main::FORM;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'code'}=$main::request_code;
 		# user variables
-#		$Tomahawk::module::TPL->{'variables'}->{'user'}=\%main::USRM;
-		%{$Tomahawk::module::TPL->{'variables'}->{'user'}}=%main::USRM;
-		undef $Tomahawk::module::TPL->{'variables'}->{'user'}->{'session'};
-		# copy hash, not tied
-		%{$Tomahawk::module::TPL->{'variables'}->{'user'}->{'session'}}
-			= %{$main::USRM{'session'}};
-		# alias
-		%{$Tomahawk::module::TPL->{'variables'}->{'USRM'}}=%{$Tomahawk::module::TPL->{'variables'}->{'user'}};
-		
-#		# attach environment variables
-#		$vars_process->{'request'}={
-#			
-#		};
-#		$vars_process->{'user'}={
-#			
-#		};
-#		$vars_process->{'process'}={
-#			
-#		};
-#		$vars_process->{'service'}={
-#			
-#		};
-		
+		if (%main::USRM)
+		{
+			%{$Tomahawk::module::TPL->{'variables'}->{'user'}}=%main::USRM;
+			undef $Tomahawk::module::TPL->{'variables'}->{'user'}->{'session'};
+			# copy hash, not tied
+			%{$Tomahawk::module::TPL->{'variables'}->{'user'}->{'session'}}
+				= %{$main::USRM{'session'}};
+			# alias
+			%{$Tomahawk::module::TPL->{'variables'}->{'USRM'}}=%{$Tomahawk::module::TPL->{'variables'}->{'user'}};
+		}
 		# process
 		my $entity_content='[%PROCESS main%]';
 		undef $self->{'output'};
+		undef $self->{'error'};
 		$tt->process(
-#			\$self->{'entity'}->{'main'},
 			\$entity_content,
 			$vars_process,\$self->{'output'}
-		) || main::_log($tt->error(),1);
+		) || do {
+			main::_log($tt->error(),1);
+			$self->{'error'}=$tt->error();
+			return undef
+		};
 		
 	}
 	else
