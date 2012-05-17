@@ -551,7 +551,8 @@ sub tokenise_directive {
                 ( \/?\w+(?:(?:\/|::?)\w*)+ | \/\w+)
             |
                 # an identifier matches in $6
-                (\w+)                    # variable identifier
+#                ([\w]+)                    # variable identifier
+						((?:\w+|\\\.)+)           # variable identifier with escaped dots
             |   
                 # an unquoted word or symbol matches in $7
                 (   [(){}\[\]:;,\/\\]    # misc parenthesis and symbols
@@ -620,6 +621,7 @@ sub tokenise_directive {
             }
             else {
                 $type = 'IDENT';
+                $token =~s|\\\.|\.|g;
             }
         }
         elsif (defined ($token = $7)) {
