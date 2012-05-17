@@ -507,6 +507,22 @@ sub _org_index
 	
 	my $doc = WebService::Solr::Document->new();
 	
+	my @fields;
+	
+	if ($org{'latitude_decimal'})
+	{
+		push @fields,WebService::Solr::Field->new( 'latitude_decimal_f' => $org{'latitude_decimal'});
+	}
+	if ($org{'longitude_decimal'})
+	{
+		push @fields,WebService::Solr::Field->new( 'longitude_decimal_f' => $org{'longitude_decimal'});
+	}
+	
+	if ($org{'latitude_decimal'} && $org{'longitude_decimal'})
+	{
+		push @fields,WebService::Solr::Field->new( 'location' => $org{'latitude_decimal'}.','.$org{'longitude_decimal'});
+	}
+	
 	$doc->add_fields((
 		WebService::Solr::Field->new( 'id' => $id ),
 		
@@ -537,6 +553,8 @@ sub _org_index
 		WebService::Solr::Field->new( 'addon_s' => 'a710_org' ),
 #			WebService::Solr::Field->new( 'lng_s' => $lng ),
 		WebService::Solr::Field->new( 'ID_entity_i' => $org{'ID_entity'} ),
+		
+		@fields,
 		
 		@{$content{'cat'}},
 		@{$content{'metadata'}},
