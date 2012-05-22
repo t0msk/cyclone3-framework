@@ -1,0 +1,17 @@
+<!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
+
+<CONF_KEY name="static.ID" description="ID of static content" select="a420_static.ID" default="<$main::FORM{'ID'}>" />
+
+<CONF_VAR id="layers" value="layer_default" />
+
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-category" value="420" />
+	<VAR id="-name" value="static_view" />
+	<VAR id="-version" value="lite" />
+	<VAR id="-global" value="1" />
+		
+		<VAR id="-TMP" value="CONTENT" />
+		
+			<VAR id="static.ID" value="<$main::key{'static.ID'}>" />
+</MODULE>

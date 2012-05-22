@@ -1,0 +1,48 @@
+	<script type="text/javascript">
+	//<![CDATA[ 
+		var cyclone3 = {
+			'domain'			: "<$tom::H_www>",
+			'lng'				: "<$tom::lng>",
+			'log'				: function(logMsg) {
+				try{
+					if(console){
+						console.log(logMsg);
+					}
+				}catch(e){
+					//ignore
+				}
+			},
+			'cancelEvent': function(event) {
+				event.preventDefault ? event.preventDefault() : event.returnValue = false;
+			}
+		}
+	//]]>
+	</script>
+
+	<div class="page">
+		
+<!TMP-PAGE-HEAD!>
+		
+<!TMP-PAGE-FRAME!>
+		
+<!TMP-PAGE-FOOT!>
+		
+	</div>
+
+<!--	
+	<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+	<script src="http://connect.facebook.net/en_US/all.js#appId=<$App::301::fb_app>&amp;xfbml=1"></script>
+	<div id="fb-root"></div>
+-->
+
+	<script type="text/javascript">
+	//<![CDATA[
+		
+		//$(function(){
+		//	
+		//});
+		
+	//]]>
+	</script>
+
+<!TMP-TMP!>

@@ -1,0 +1,69 @@
+/* standardized element styling */
+
+body {
+	/*text-align: center;*/
+	margin: 0;
+	padding: 0;
+	font-family: arial, helvetica, sans-serif;
+	font-size: 0.8em;
+}
+
+a {
+	text-decoration: underline;
+}
+a:hover {
+	text-decoration: none;
+}
+img {
+	border: 0px;
+}
+input,
+textarea,
+select,
+option {
+	font-size: 12px;
+	font-family:Arial, Helvetica, sans-serif;
+}
+ol, ul {
+	margin-left: 1em;
+}
+
+/* standardized classes */
+
+.nodisp { display: none; } /* compatibility reasons - used by 301 register */
+
+.d-none { display: none !important; }
+.d_none { display: none !important; }
+.d_block { display: block; }
+.d_inline { display: inline; }
+
+.fl_left { float: left; }
+.fl_right { float: right; }
+.fl_clear,
+.fl_clear_l,
+.fl_clear_r {
+  display: block !important;
+  height: 1px; font-size: 1px;
+  overflow: hidden;
+  visibility: hidden;
+  clear: both;
+}
+.fl_clear_l {
+  clear: left;
+}
+.fl_clear_r {
+  clear: right;
+}
+
+.ta_left { text-align: left !important; }
+.ta_right { text-align: right !important; }
+.ta_justify { text-align: justify !important; }
+.ta_center { text-align: center !important; }
+
+.fw_bold {	font-weight: bold !important; }
+.fs_italic { font-style: italic !important; }
+
+/* misc */
+.nowrap { white-space: nowrap; }
+
+.cur_help { cursor: help; }

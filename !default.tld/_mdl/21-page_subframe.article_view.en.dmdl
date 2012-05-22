@@ -1,0 +1,13 @@
+				<h1><$Tomahawk::mdl_env{'caption'}></h1>
+					
+				<div class="filter">
+				
+<!TMP-INDEX-FILTER!>
+
+				</div>
+					
+				<div class="item_list">
+				
+<!TMP-INDEX-LIST!>
+					
+				</div>

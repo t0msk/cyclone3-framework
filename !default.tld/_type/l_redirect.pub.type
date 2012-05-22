@@ -1,0 +1,17 @@
+<!CMLTYPE type:name="Cyclone-Markup-Language" type:version="1.0" type:cp="UTF-8"!>
+
+<CONF_KEY name="link" description="New link" select="*" public="1" default="" />
+<CONF_KEY name="sitemap" description="Sitemap ID" select="a210_page.ID_entity" public="1" default="" />
+
+
+<MODULE>
+	<VAR id="-type" value="mdl" />
+	<VAR id="-category" value="010" />
+	<VAR id="-name" value="redirect" />
+	<VAR id="-version" value="lite" />
+
+		<VAR id="-TMP" value="CONTENT" />
+		
+			<VAR id="link" value="<$main::key{'link'}>" />
+			<VAR id="sitemap" value="<$main::key{'sitemap'}>" />
+</MODULE>
