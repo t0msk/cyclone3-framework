@@ -1921,7 +1921,7 @@ while ($main::CGI=new CGI::Fast())
 				print "Status: 301 Moved permanently\n";
 				print "Location: $tom::H_www$link\n\n";
 				
-				untie %{$main::USRM{'session'}} if $main::USRM{'session'}; # DESTROY
+				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				next;
 			}
 			
@@ -2063,7 +2063,7 @@ while ($main::CGI=new CGI::Fast())
 				$t_eval->close();
 				$t_request->close();
 				print "Status: $code Unknown\n\n";
-				untie %{$main::USRM{'session'}} if $main::USRM{'session'}; # DESTROY
+				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				next;
 			}
 			
@@ -2083,7 +2083,7 @@ while ($main::CGI=new CGI::Fast())
 				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
 				print "Status: 302 Found\n";
 				print "Location: $out\n\n";
-				untie %{$main::USRM{'session'}} if $main::USRM{'session'}; # DESTROY
+				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				next;
 			}
 			
@@ -2162,7 +2162,7 @@ while ($main::CGI=new CGI::Fast())
 				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
 				print "Status: 302 Found\n";
 				print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
-				untie %{$main::USRM{'session'}} if $main::USRM{'session'}; # DESTROY
+				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				next;
 			}
 			$t_301->close();
@@ -2524,11 +2524,11 @@ while ($main::CGI=new CGI::Fast())
 			
 		};
 		
-		untie %{$main::USRM{'session'}} if $main::USRM{'session'}; # DESTROY
+		untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 		
 	}; # end of eval
 	
-	untie %{$main::USRM{'session'}} if $main::USRM{'session'}; # DESTROY
+	untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 	
 	if ($@)
 	{
