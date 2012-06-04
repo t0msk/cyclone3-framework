@@ -1,0 +1,187 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+301-user_group_status.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Change status of user_group
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID of item
+
+=item *
+
+B<status> - new status
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default error
+
+=item *
+
+B<RESULT_success> - without error
+
+=item *
+
+B<RESULT_failure_no_input> - bad input
+
+=item *
+
+B<RESULT_failure_set> - can't be changed
+
+=item *
+
+B<%ID%> - ID
+
+=item *
+
+B<%missing_parameter%> - missing param
+
+=back
+
+returns %tpl_hash = (
+
+	'RESULT_failure_no_input' => 'Y',
+	'missing_parameter' => 'ID'|'status',
+	'RESULT_failure_no_input' => 'Y',
+	'RESULT_failure_set' => 'Y',
+	'ID',
+	'RESULT_success' => 'Y',
+	'status'
+	
+)
+
+=cut
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetTpl() || return undef;
+
+	my %tpl_hash;
+	
+	if (!$env{'ID'})
+	{
+		$tpl_hash{'RESULT_failure_no_input'}="Y";
+		$tpl_hash{'missing_parameter'}="ID";
+		$TPL->variables_push(\%tpl_hash);
+
+		return 1;
+	}
+	
+	if (!$env{'status'})
+	{
+		$tpl_hash{'RESULT_failure_no_input'}="Y";
+		$tpl_hash{'missing_parameter'}="status";
+		$TPL->variables_push(\%tpl_hash);
+
+		return 1;
+	}
+	
+	my $tb_name='a301_user_group';
+	
+	my $out;
+	
+	if ($env{'status'} eq "Y")
+	{
+		$out=App::020::SQL::functions::enable(
+			'db_h' => "main",
+			'db_name' => 'TOM',
+			'tb_name' => $tb_name,
+			'-journalize' => 1,
+			'ID'   => $env{'ID'},
+		);
+	}
+	elsif ($env{'status'} eq "N")
+	{
+		$out=App::020::SQL::functions::disable(
+			'db_h' => "main",
+			'db_name' => 'TOM',
+			'tb_name' => $tb_name,
+			'-journalize' => 1,
+			'ID'   => $env{'ID'},
+		);
+	}
+	else
+	{
+		$tpl_hash{'RESULT_failure_set'}="Y";
+		$tpl_hash{'ID'}=$env{'ID'};
+		$TPL->variables_push(\%tpl_hash);
+
+		return 1;
+	}
+	
+	main::_log("out=$out");
+	
+	if ($out)
+	{
+		$tpl_hash{'RESULT_success'}="Y";
+		$tpl_hash{'ID'}=$env{'ID'};
+		
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h' => "main",
+			'db_name' => 'TOM',
+			'tb_name' => $tb_name,
+			'-journalize' => 1,
+			'columns'=>
+			{
+				'status' => 1
+			},
+			'ID'   => $env{'ID'}
+		);
+		
+		$tpl_hash{'status'}=$data{'status'};
+		
+	}
+	else
+	{
+		$tpl_hash{'RESULT_failure_set'}="Y";
+		$tpl_hash{'ID'}=$env{'ID'};
+		$TPL->variables_push(\%tpl_hash);
+
+		return 1;
+	}
+	
+	$TPL->variables_push(\%tpl_hash);
+
+	return 1;
+}
+
+
+
+our $authors='open@comsultia.com';
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;

@@ -1,0 +1,129 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!! (tekelem)
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+returns %tpl_hash = (
+
+	'activated' => 'Y,
+	'email'
+)
+
+=cut
+
+use App::710::_init;
+use App::301::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetTpl() || return undef;
+
+	my %tpl_hash;
+	
+	
+	my %L10n=%{new TOM::L10n('addon' => 'a301', 'name'=>'user_registration', 'lng' => $env{'lng'})->{'string'}};
+	my %tpl=%{new TOM::Template('addon' => 'a301', 'name'=>'user_registration', 'content-type' => 'xhtml')->{'entity'}};
+	
+	unless ($env{'code'})
+	{
+		$TPL->variables_push(\%tpl_hash);
+		return 1;
+	}
+	
+	# finding user with code in last 24h
+	my $sql=qq{
+		SELECT
+			ID_user,
+			email,
+			status
+		FROM
+			TOM.a301_user
+		WHERE
+			ID_user='$env{'code'}' AND
+			hostname='$tom::H_cookie'
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql);
+	my %db0_line=$sth0{'sth'}->fetchhash();
+	if (!$db0_line{'ID_user'})
+	{
+		# bad code
+		$TPL->variables_push(\%tpl_hash);
+
+		return 1;
+	}
+	
+	if ($db0_line{'status'} ne "W")
+	{
+		# user already activated
+		$tpl_hash{'activated'}="Y";
+		$tpl_hash{'email'} = $db0_line{'email'};
+		$TPL->variables_push(\%tpl_hash);
+	
+		return 1;
+	}
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		UPDATE
+			TOM.a301_user
+		SET
+			status='Y'
+		WHERE
+			ID_user='$env{'code'}'
+		LIMIT 1
+	});
+	# user successfully activated
+	$tpl_hash{'activated'}="Y" if $sth0{'rows'};
+	$tpl_hash{'email'}=$db0_line{'email'};
+	
+	# find related organization in status W (only last!)
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			org.*,
+			ACL.roles
+		FROM
+			`$App::710::db_name`.a710_org AS org
+		LEFT JOIN `$App::710::db_name`.a301_ACL_user AS ACL ON
+		(
+			ACL.r_prefix='a710' AND
+			ACL.r_table='org' AND
+			ACL.r_ID_entity=org.ID_entity AND
+			ACL.ID_entity='$env{'code'}'
+		)
+		WHERE
+			org.posix_owner='$env{'code'}' OR ACL.ID_entity='$env{'code'}' AND
+			org.status='W'
+		ORDER BY
+			org.datetime_create DESC
+		LIMIT 1
+	});
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		TOM::Database::SQL::execute(qq{
+			UPDATE
+				`$App::710::db_name`.a710_org
+			SET
+				status='Y'
+			WHERE
+				ID='$db0_line{'ID'}'
+			LIMIT 1
+		});
+	}
+	
+	$TPL->variables_push(\%tpl_hash);
+
+	return 1;
+}
+
+
+
+
+1;

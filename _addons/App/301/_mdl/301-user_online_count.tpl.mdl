@@ -1,0 +1,38 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use Encode;
+use encoding 'utf8';
+use utf8;
+use strict;
+use Digest::MD5  qw(md5 md5_hex md5_base64);
+
+use App::301::_init;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetTpl() || return undef;
+
+	my %tpl_hash;
+
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			COUNT(*) AS cnt
+		FROM
+			TOM.a301_user_online
+		WHERE
+			domain='$tom::H'
+	},'quiet'=>1,'-cache'=>60);
+	my %db0_line=$sth0{'sth'}->fetchhash();
+	
+	$tpl_hash{'count'} = $db0_line{'cnt'}|g;
+
+	$TPL->variables_push(\%tpl_hash);
+	
+	return 1
+}
+
+
+1;

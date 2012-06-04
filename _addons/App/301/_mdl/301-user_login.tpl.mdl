@@ -17,14 +17,9 @@ use App::301::_init;
 sub execute
 {
 	my %env=@_;
-	Tomahawk::GetXSGN(-convertvars=>1) || return undef; # NATIAHNEM XML DESIGN
-	
-	if ($Tomahawk::mdl_C{'-xlng_load'})
-	{
-		main::_log("using xlng transformation");
-		Tomahawk::GetXLNG() || return undef; # retrieve language xml
-		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
-	}
+	Tomahawk::GetTpl() || return undef;
+
+	my %tpl_hash;
 	
 	$env{'login'}=$env{'login'} || $main::FORM{'login'} || $main::RPC->{'login'};
 	$env{'pass'}=$env{'pass'} || $main::FORM{'pass'} || $main::RPC->{'pass'};
@@ -164,16 +159,22 @@ sub execute
 		if (exists $main::FORM{'submit'} || $env{'login'} || $env{'pass'})
 		{
 			main::_log('no credentials!');
-			$XSGN{'TMP'}=$XSGN{'ERR_no-credentials'};
+			# $XSGN{'TMP'}=$XSGN{'ERR_no-credentials'};
+			$tpl_hash{'error'} = 'ERR_no-credentials';
 		}
-		return 1
+
+		$TPL->variables_push(\%tpl_hash);
+		return 1;
 	}
 	
 	# cookies are dissabled
 	if ((keys %main::COOKIES_save) == 0)
 	{
 		main::_log('no cookie support!');
-		$XSGN{'TMP'}=$XSGN{'ERR_cookies'};
+		#$XSGN{'TMP'}=$XSGN{'ERR_cookies'};
+		$tpl_hash{'error'} = 'ERR_cookies';
+
+		$TPL->variables_push(\%tpl_hash);
 		return 1;
 	}
 	
@@ -221,7 +222,10 @@ sub execute
 	else
 	{
 		main::_log("user with login '$env{'login'}' does not exist");
-		$XSGN{'TMP'}=$XSGN{'ERR_no-user'};
+		#$XSGN{'TMP'}=$XSGN{'ERR_no-user'};
+		$tpl_hash{'error'} = 'ERR_no-user';
+
+		$TPL->variables_push(\%tpl_hash);
 		return 1;
 	}
 	
@@ -292,7 +296,9 @@ sub execute
 					LIMIT 1
 				},'quiet'=>1);
 				
-				$XSGN{'TMP'}=$XSGN{'logged-on'};
+				#$XSGN{'TMP'}=$XSGN{'logged-on'};
+				$tpl_hash{'logged-on'} = 'Y';
+
 				$main::USRM_flag="L";
 			}
 			else
@@ -402,7 +408,9 @@ sub execute
 			
 		}
 		
-		$XSGN{'TMP'}=$XSGN{'logged-on'};
+		#$XSGN{'TMP'}=$XSGN{'logged-on'};
+		$tpl_hash{'logged-on'} = 'Y';
+	
 		$main::USRM_flag="L";
 		TOM::Database::SQL::execute(qq{
 			UPDATE
@@ -419,12 +427,15 @@ sub execute
 	else
 	{
 		main::_log("incorrect login/password combination");
-		$XSGN{'TMP'}=$XSGN{'ERR_user-pass'};
+		#$XSGN{'TMP'}=$XSGN{'ERR_user-pass'};
+		$tpl_hash{'error'} = 'ERR_user-pass';
+		
 	}
 	
 	foreach my $key(keys %main::USRM)
 	{
-		$XSGN{'TMP'}=~s|<%$key%>|$main::USRM{$key}|g;
+		#$XSGN{'TMP'}=~s|<%$key%>|$main::USRM{$key}|g;
+		$tpl_hash{'key'} = $main::USRM{$key};
 	}
 	
 	main::_log("Logged on='".$main::USRM{'logged'}."'");
@@ -445,6 +456,7 @@ sub execute
 		}
 	}
 	
+	$TPL->variables_push(\%tpl_hash);
 	return 1
 }
 

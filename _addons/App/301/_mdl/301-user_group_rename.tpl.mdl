@@ -1,0 +1,167 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+
+=head1 NAME
+
+301-user_group_rename.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Rename an existing user group
+
+This module takes a global group and renames it under 3 conditions:
+
+1.) user invoking the action must have admin rights for the domain this group belongs to
+2.) groups from the 'restricted groups' list cannot be renamed
+3.) a group cannot be renamed to either of the names from the restricted groups list
+
+
+returns %tpl_hash = (
+
+	'RESULT_failure_security' => 'Y',
+	'message',
+	'RESULT_failure_no_input' => 'Y',
+	'missing_parameter' => 'new_group_name'|'ID_group',
+	'RESULT_success' => 'Y'
+	
+)
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetTpl() || return undef;
+
+	my %tpl_hash;
+
+	$env{'ID_user'} = $main::USRM{'ID_user'};
+	$env{'admin_group_name'} = 'admin';
+	$env{'restricted_groups'} = [ qw(admin editor world publisher author) ];
+	
+	if ($env{'ID_group'} =~ /^\d+$/)
+	{
+		my $sql = qq{
+		
+			SELECT * FROM $App::301::db_name.a301_user_group 
+			WHERE
+				ID = ?
+			LIMIT 1
+		};
+
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>0, 'bind' => [ $env{'ID_group'} ]);
+		if (my %group=$sth0{'sth'}->fetchhash())
+		{
+			# check if our user is an admin for the domain of this group 
+			# (relation to the admin group of the same hostname as the selected group)
+
+			my $sql2 = qq{
+		
+				SELECT * FROM `$App::301::db_name`.a301_user_group AS user_group 
+				LEFT JOIN `$App::301::db_name`.a301_user_rel_group AS user_rel_group ON (user_group.ID = user_rel_group.ID_group)
+				WHERE
+					user_group.hostname = ? AND
+					user_group.name = ? AND
+					user_rel_group.ID_user = ?
+				LIMIT 1
+			};
+			my %sth1=TOM::Database::SQL::execute($sql2,'quiet'=>0, 'bind' => [ $group{'hostname'}, $env{'admin_group_name'}, $env{'ID_user'}]);
+			if (my %combined_group=$sth1{'sth'}->fetchhash())
+			{
+				# user is an admin for the domain, where our group to be renamed is located
+				my %restricted_groups = map { $_ => 1 } @{$env{'restricted_groups'}};
+				
+				if(exists($restricted_groups{$group{'name'}}))
+				{
+					# we are attempting to change a restricted group - this is not allowed
+					$tpl_hash{'RESULT_failure_security'} = 'Y';
+					$tpl_hash{'message'}="This group is restricted";
+					$TPL->variables_push(\%tpl_hash);
+					
+					return 1;
+
+				} else
+				{
+					# we are changing a non-restricted group, this is ok, but - is the new name restricted? is the new name ok?
+					if(exists($restricted_groups{$env{'new_group_name'}}) && $env{'new_group_name'} =~ /^[A-Za-z0-9_]+$/)
+					{
+						# cannot change to a restricted name 
+						$tpl_hash{'RESULT_failure_no_input'} = 'Y';
+						$tpl_hash{'missing_parameter'}="new_group_name";
+						$TPL->variables_push(\%tpl_hash);
+						
+						return 1;	
+					} else
+					{
+						# ok let's go on an change the name
+
+						my %columns;
+
+						$columns{'name'}="'".TOM::Security::form::sql_escape($env{'new_group_name'})."'";
+						$columns{'name_url'}="'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'new_group_name'}))."'";
+
+						App::020::SQL::functions::update(
+							'ID' => $env{'ID_group'},
+							'db_h' => "main",
+							'db_name' => $App::301::db_name,
+							'tb_name' => "a301_user_group",
+							'columns' => {%columns},
+							'-journalize' => 1,
+							'-posix' => 1
+						);
+					}
+				}
+
+			} else
+			{
+				# user is not an admin for this group
+				$tpl_hash{'RESULT_failure_security'} = 'Y';
+				$tpl_hash{'message'}="User is not admin for this group";
+				$TPL->variables_push(\%tpl_hash);
+				
+				return 1;
+			}
+		} else
+		{
+			# group not found
+			$TPL->variables_push(\%tpl_hash);
+			return 1;
+		}
+		
+
+	} else
+	{
+		# error, no group ID given
+
+		$tpl_hash{'RESULT_failure_no_input'}="Y";
+		$tpl_hash{'missing_parameter'}="ID_group";
+		
+		$TPL->variables_push(\%tpl_hash);
+		return 1;
+	}
+
+	$tpl_hash{'RESULT_success'}="Y";
+	#$XSGN{'TMP'}=~s|<%ID%>|$ID|g;
+	$TPL->variables_push(\%tpl_hash);
+	return 1;
+}
+
+our $authors='roman.fordinal@comsultia.com';
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;

@@ -1,0 +1,65 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use Encode;
+use encoding 'utf8';
+use utf8;
+use strict;
+use Digest::MD5  qw(md5 md5_hex md5_base64);
+
+use App::301::_init;
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetTpl() || return undef;
+
+	my %tpl_hash;
+	
+	if ($main::USRM{'logged'} eq "Y")
+	{
+		# get cached data about full username and avatar
+		my %user = App::301::authors::get_author($main::USRM{'ID_user'});
+		
+		my $fullname=$user{'login'};
+		$fullname=$user{'firstname'}.' '.$user{'surname'} if ($user{'firstname'} && $user{'surname'});
+		
+		$tpl_hash{'fullname'} = $fullname;
+		
+		if (my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::301::db_name,
+			'l_prefix' => 'a301',
+			'l_table' => 'user',
+			'l_ID_entity' => $main::USRM{'ID_user'},
+			'rel_type' => 'avatar',
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y",
+			'limit' => 1
+		))[0])
+		{
+			use App::501::_init;
+			my %db1_line=App::501::functions::get_image_file(
+				'image.ID_entity' => $relation->{'r_ID_entity'},
+				'image_file.ID_format' => $env{'image_format.ID'} || $App::501::image_format_thumbnail_ID,
+				'image_attrs.lng' => $env{'lng'}
+			);
+			my $uri=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+
+			$tpl_hash{'avatar'} = $uri;
+		}
+	}
+	
+	for (keys %main::USRM)
+	{
+		$tpl_hash{$_} = $main::USRM{$_};
+	}
+
+	$TPL->{'variables'}{'user'}=\%tpl_hash;
+	
+	return 1
+}
+
+
+1;

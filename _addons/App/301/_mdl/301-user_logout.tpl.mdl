@@ -1,0 +1,178 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+=head1 NAME
+
+301-user_logout.0.mdl
+
+=head1 DESCRIPTION
+
+Logout user from USRM
+
+returns %tpl_hash = (
+
+	'LINK' => 'relocation link',
+	'unlogged' => 'Y|' if set to Y - user is not logged, so they cannot log out (makes no sense)
+
+)
+
+=cut
+
+use App::301::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetTpl() || return undef;
+
+	my %tpl_hash;
+	
+	$env{'return'}=$tom::H_www unless $env{'return'};
+	
+	if ($TOM::CACHE_memcached)
+	{
+		# check for actual data in memcached
+		# if yes, use it
+		
+		# delete this data, use only database for next operations
+		$Ext::CacheMemcache::cache->delete(
+			'namespace' => "a301_online",
+			'key' => $tom::H_cookie.':'.$main::USRM{'ID_user'},
+		);
+	}
+	
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			TOM.a301_user_online
+		WHERE
+			ID_user='$main::USRM{'ID_user'}' AND
+			ID_session='$main::USRM{'ID_session'}'
+		LIMIT 1
+	},'log'=>1);
+	if (my %user=$sth0{'sth'}->fetchhash)
+	{
+		
+		if ($user{'logged'} eq "Y")
+		{
+			# MAM 2 MOZNOSTI :)
+			# BUD NASTAVIM LEN USERA NA offline, ale potom sa neprenesu statistiky,
+			# alebo to proste spravim sam, ze usera prenesiem :)
+			# ak ho prenesiem sam a zmazem z online a on je autolog, potom
+			# sa automaticky zas logne hned po refreshi :))
+			
+#			my %user0;
+#			$user0{'cookies'}="";
+#			
+#			my $cvml=new CVML(data=>$user{'cookies'});
+#			foreach (keys %{$cvml->{'hash'}})
+#			{
+#				$user0{'cookies'}{$_}=$cvml->{'hash'}{$_} if $_=~/^_/;
+#			}
+#			
+#			my %user0=&App::301::UserFind('ID_user'=>$main::USRM{'ID_user'});
+#			
+#			# get session data and store ich as cookies_system->{session}
+#			my $session=new CVML(data=>$user{'session'});
+#			my $cookies_system=new CVML(data=>$user0{'cookies_system'});
+#			%{$cookies_system->{'hash'}{'session'}}=%{$session->{'hash'}};
+#			my $cvml=CVML::structure::serialize(%{$cookies_system->{'hash'}});
+#			$cvml=~s|\'|\\'|g;
+			
+			TOM::Database::SQL::execute(qq{
+				UPDATE
+					TOM.a301_user
+				SET
+					datetime_last_login = ?,
+					requests_all = requests_all + $user{requests},
+					saved_cookies = ?,
+					saved_session = ?,
+					autolog = 'N'
+				WHERE
+					ID_user='$user{'ID_user'}'
+				LIMIT 1
+			},'bind'=>[
+				$user{'datetime_login'},
+				$user{'cookies'},
+				$user{'session'}
+			]);
+			
+			TOM::Database::SQL::execute(qq{
+				UPDATE
+					TOM.a301_user_online
+				SET
+					logged='N'
+				WHERE
+					ID_user='$user{'ID_user'}'
+				LIMIT 1
+			});
+			
+			# save session
+			App::301::session::archive($user{'ID_user'},'reset'=>1);
+			
+			# changing session
+			# not changing session, session is the same! I'm continuing browsing the page
+			# undef $main::COOKIES{'_IDsession'};
+			
+			# destroy hidden variables of logged user
+			foreach (keys %{$main::USRM{'session'}})
+			{
+				next if $_ eq "USRM_G";
+				next if $_ eq "USRM_S";
+				delete $main::USRM{'session'}{$_};
+			}
+			$main::USRM{'logged'}='N';
+			
+			$tpl_hash{'logout'} = 'Y';
+			
+			$main::H->rh("<!REFRESH!>","0; url=$env{'return'}");
+			$tpl_hash{'LINK'} = $env{'return'};
+			
+#			if ($App::301::fb_app && $main::COOKIES_all{'fbs_'.$App::301::fb_app})
+#			{
+#				undef $main::COOKIES_all{'fbs_'.$App::301::fb_app};
+#			}
+			
+			if ($env{'relocate'})
+			{
+				$main::location=$env{'return'};
+			}
+		}
+		else
+		{
+#			if ($App::301::fb_app && $main::COOKIES_all{'fbs_'.$App::301::fb_app})
+#			{
+#				undef $main::COOKIES_all{'fbs_'.$App::301::fb_app};
+#			}
+			
+			# ako sa chcem odhlasit ked niesom prihlaseny? :-o
+			$tpl_hash{'notlogged'} = 'Y';
+			$main::H->rh("<!REFRESH!>","0; url=$env{'return'}");
+			$tpl_hash{'LINK'} = $env{'return'};
+		}
+	}
+	else
+	{
+	
+	}
+	
+	$TPL->variables_push(\%tpl_hash);
+
+	return 1
+}
+
+=head1 AUTHORS
+
+Roman Fordinal (roman.fordinal@comsultia.com)
+
+=cut
+
+1;
