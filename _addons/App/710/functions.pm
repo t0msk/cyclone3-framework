@@ -226,6 +226,9 @@ sub org_add
 	# longitude_decimal
 	$columns{'longitude_decimal'}="'".TOM::Security::form::sql_escape($env{'org.longitude_decimal'})."'"
 		if (exists $env{'org.longitude_decimal'} && ($env{'org.longitude_decimal'} ne $org{'longitude_decimal'}));
+	# location_verified
+	$columns{'location_verified'}="'".TOM::Security::form::sql_escape($env{'org.location_verified'})."'"
+		if (exists $env{'org.location_verified'} && ($env{'org.location_verified'} ne $org{'location_verified'}));
 	# address_postal
 	$columns{'address_postal'}="'".TOM::Security::form::sql_escape($env{'org.address_postal'})."'"
 		if (exists $env{'org.address_postal'} && ($env{'org.address_postal'} ne $org{'address_postal'}));
@@ -521,6 +524,12 @@ sub _org_index
 	if ($org{'latitude_decimal'} && $org{'longitude_decimal'})
 	{
 		push @fields,WebService::Solr::Field->new( 'location' => $org{'latitude_decimal'}.','.$org{'longitude_decimal'});
+	}
+	
+	if ($org{'location_verified'})
+	{
+		push @fields,WebService::Solr::Field->new( 'location_verified_s' => $org{'location_verified'})
+			if $org{'location_verified'};
 	}
 	
 	$doc->add_fields((

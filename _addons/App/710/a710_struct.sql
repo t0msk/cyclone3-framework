@@ -34,6 +34,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
 
   `latitude_decimal` float(10,6) default NULL,
   `longitude_decimal` float(10,6) default NULL,
+  `location_verified` char(1) character set ascii NOT NULL default 'N',
   
   `address_postal` text character set utf8 collate utf8_unicode_ci,
   
@@ -92,6 +93,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org_j` (
   
   `latitude_decimal` float(10,6) default NULL,
   `longitude_decimal` float(10,6) default NULL,
+  `location_verified` char(1) character set ascii NOT NULL default 'N',
 
   `address_postal` text character set utf8 collate utf8_unicode_ci,
   
