@@ -324,6 +324,9 @@ while ($main::CGI=new CGI::Fast())
 					)
 				};
 				
+				# for anonymous users: ID_user cannot be NULL
+				$user{'ID_user'} = '' unless ($user{'ID_user'});
+
 				TOM::Database::SQL::execute($sql,'db_h'=>'main','quiet'=>1,'bind'=>[$db0_line{'ID_entity_file'}, $user{'ID_user'}]);
 				
 				if (1)
