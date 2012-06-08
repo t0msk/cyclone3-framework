@@ -426,6 +426,10 @@ sub product_add
 	$columns{'priority_C'}="'".TOM::Security::form::sql_escape($env{'product_ent.priority_C'})."'"
 		if (exists $env{'product_ent.priority_C'} && ($env{'product_ent.priority_C'} ne $product_ent{'priority_C'}));
 		$columns{'priority_C'}='NULL' if $columns{'priority_C'} eq "''";
+
+	# product_type
+	$columns{'product_type'}="'".TOM::Security::form::sql_escape($env{'product_ent.product_type'})."'"
+		if (exists $env{'product_ent.VAT'} && ($env{'product_ent.product_type'} ne $product_ent{'product_type'}));
 	
 	if (keys %columns)
 	{

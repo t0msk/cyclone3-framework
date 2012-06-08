@@ -91,6 +91,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_ent` ( -- summary table for product 
   `priority_A` tinyint(3) unsigned default NULL,
   `priority_B` tinyint(3) unsigned default NULL,
   `priority_C` tinyint(3) unsigned default NULL,
+  `product_type` char(3) character set ascii NOT NULL default 'GDS',
   `status` char(1) character set ascii NOT NULL default 'Y',
    PRIMARY KEY  (`ID`),
    UNIQUE KEY `UNI_0` (`ID_entity`)
@@ -111,6 +112,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_ent_j` (
   `priority_A` tinyint(3) unsigned default NULL,
   `priority_B` tinyint(3) unsigned default NULL,
   `priority_C` tinyint(3) unsigned default NULL,
+  `product_type` char(3) character set ascii NOT NULL default 'GDS',
   `status` char(1) character set ascii NOT NULL default 'Y',
    PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
