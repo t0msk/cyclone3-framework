@@ -32,13 +32,18 @@ sub execute
 	
 	
 	# FACEBOOK AUTOLOGIN
-	if ($main::COOKIES_all{'fbsr_'.$App::301::fb_app} && $main::USRM{'logged'} ne "Y" && $main::FORM{'facebook'} eq "true")
+	if (
+		$main::COOKIES_all{'fbsr_'.$App::301::fb_app} &&
+		($main::USRM{'logged'} ne "Y" || $env{'facebook_force'} == 1) &&
+		$main::FORM{'facebook'} eq "true"
+	)
 	{
 		my $wget_cmd='/usr/bin/wget';
-		$main::COOKIES_all{'fbsr_'.$App::301::fb_app}=~s|^"||;
-		$main::COOKIES_all{'fbsr_'.$App::301::fb_app}=~s|"$||;
+		my $fbsr=$main::COOKIES_all{'fbsr_'.$App::301::fb_app};
+		$fbsr=~s|^"||;
+		$fbsr=~s|"$||;
 		
-		my $control_string=$main::COOKIES_all{'fbsr_'.$App::301::fb_app};
+		my $control_string=$fbsr;
 #		main::_log("control_string=$control_string");
 		my ($encoded_sig, $payload)=split('\.',$control_string,2);
 		
@@ -55,19 +60,29 @@ sub execute
 #		main::_log("expected_sig=$expected_sig");
 		
 		use Data::Dumper;
+#		main::_log("data=".Dumper($data));
 		if ($expected_sig eq $encoded_sig)
 		{
-#			main::_log("data=".Dumper($data));
+			main::_log("sig equals, getting user data");
 			
-			my $link = "https://graph.facebook.com/oauth/access_token?client_id=".$App::301::fb_app
-				."&redirect_uri=&client_secret=".$App::301::fb_secret
-				."&code=".$data->{'code'};
-			my $link_data =`$wget_cmd --no-check-certificate -t 1 -T 3 -q -O - \"$link\"`;
+			my %FB_GET;
 			
-			main::_log("link=$link");
-			main::_log("link_data=$link_data");
-			
-			my %FB_GET=TOM::Net::HTTP::CGI::get_QUERY_STRING($link_data);
+			if ($data->{'code'})
+			{
+				my $link = "https://graph.facebook.com/oauth/access_token?client_id=".$App::301::fb_app
+					."&redirect_uri=&client_secret=".$App::301::fb_secret
+					."&code=".$data->{'code'};
+				my $link_data =`$wget_cmd --no-check-certificate -t 1 -T 3 -q -O - \"$link\"`;
+				
+				main::_log("link=$link");
+				main::_log("link_data=$link_data");
+				
+				%FB_GET=TOM::Net::HTTP::CGI::get_QUERY_STRING($link_data);
+			}
+			elsif ($data->{'oauth_token'})
+			{
+				$FB_GET{'access_token'}=$data->{'oauth_token'};
+			}
 			
 			if ($FB_GET{'access_token'})
 			{
@@ -75,8 +90,14 @@ sub execute
 				
 				my $link = "https://graph.facebook.com/me?access_token=".$FB_GET{'access_token'};
 				my $data =`$wget_cmd --no-check-certificate -t 1 -T 3 -q -O - \"$link\"`;
-				main::_log("data=$data");
+				main::_log("user_data=".$data);
+				$data="{}" unless $data;
 				my $data_json = decode_json $data;
+				
+				if (!$data_json->{'email'} && $data_json->{'username'})
+				{
+					$data_json->{'email'}=$data_json->{'username'}.'@facebook.com';
+				}
 				
 				# okay som prihlaseny cez facebook, idem hladat takeho usera
 				if ($data_json->{'email'})
@@ -124,7 +145,7 @@ sub execute
 						my $cvml=CVML::structure::serialize(%hash);
 						
 						%user=App::301::functions::user_add(
-#							'user.login' => $env{'login'},
+							'user.login' => $env{'login'}, # create login, because without is this user anonymous
 							'user.status' => 'Y',
 							'user.pass' => $env{'pass'},
 							'user.email' => $env{'login'},
