@@ -253,8 +253,6 @@ sub org_add
 	# note
 	$columns{'note'}="'".TOM::Security::form::sql_escape($env{'org.note'})."'"
 		if (exists $env{'org.note'} && ($env{'org.note'} ne $org{'note'}));
-	# metadata
-	
 	# datetime_evidence
 	$columns{'datetime_evidence'}="'".TOM::Security::form::sql_escape($env{'org.datetime_evidence'})."'"
 		if (exists $env{'org.datetime_evidence'} && ($env{'org.datetime_evidence'} ne $org{'datetime_evidence'}));
@@ -271,7 +269,7 @@ sub org_add
 	# metadata
 	my %metadata=App::020::functions::metadata::parse($org{'metadata'});
 	
-	if ($env{'org.metadata.replace'})
+	if ($env{'org.metadata.replace'} && $env{'org.metadata'})
 	{
 		if (!ref($env{'org.metadata'}))
 		{
@@ -284,11 +282,13 @@ sub org_add
 	}
 	else
 	{
-		if (!ref($env{'org.metadata'}))
+		if (!ref($env{'org.metadata'}) && $env{'org.metadata'})
 		{
-			my %metadata_=App::020::functions::metadata::parse($env{'org.metadata'});
-			delete $env{'org.metadata'};
-			%{$env{'org.metadata'}}=%metadata_;
+			# when metadata send as <metatree></metatree> then always replace
+			%metadata=App::020::functions::metadata::parse($env{'org.metadata'});
+#			my %metadata_=App::020::functions::metadata::parse($env{'org.metadata'});
+#			delete $env{'org.metadata'};
+#			%{$env{'org.metadata'}}=%metadata_;
 		}
 		if (ref($env{'org.metadata'}) eq "HASH")
 		{
