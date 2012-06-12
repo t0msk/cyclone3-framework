@@ -166,6 +166,11 @@ sub new_relation
 		return $relation->{'ID_entity'}, $relation->{'ID'};
 	}
 	
+	# prepare quantifier
+
+	my $quantifier = 1;	
+	$quantifier = $env{'quantifier'} if ($env{'quantizer'} =~ /^\d+$/);
+
 	# find if this relation has ID_entity
 	my $relation=(get_relations(
 		%env,
@@ -194,6 +199,7 @@ sub new_relation
 				'r_table' => "'".TOM::Security::form::sql_escape($env{'r_table'})."'",
 				'r_ID_entity' => "'".TOM::Security::form::sql_escape($env{'r_ID_entity'})."'",
 				'rel_type' => "'".TOM::Security::form::sql_escape($env{'rel_type'})."'",
+				'quantifier' => $quantifier,
 				'status' => "'".TOM::Security::form::sql_escape($env{'status'})."'",
 			},
 		);
@@ -224,6 +230,7 @@ sub new_relation
 			'l_table' => "'".TOM::Security::form::sql_escape($env{'l_table'})."'",
 			'l_ID_entity' => "'".TOM::Security::form::sql_escape($env{'l_ID_entity'})."'",
 			'rel_type' => "'".TOM::Security::form::sql_escape($env{'rel_type'})."'",
+			'quantifier' => $quantifier,
 			'r_db_name' => "'".TOM::Security::form::sql_escape($env{'r_db_name'})."'",
 			'r_prefix' => "'".TOM::Security::form::sql_escape($env{'r_prefix'})."'",
 			'r_table' => "'".TOM::Security::form::sql_escape($env{'r_table'})."'",
@@ -467,6 +474,76 @@ sub relation_change_rel_type
 	return 1;
 }
 
+sub relation_change_quantifier
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::relation_change_quantifier()");
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	# detect db_name - where a160 is stored
+	if ($env{'l_prefix'} && !$env{'db_name'})
+	{$env{'db_name'}=_detect_db_name($env{'l_prefix'})}
+	
+	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'") if $debug;
+	}
+	
+	# probe quantifier
+	return unless ($env{'quantifier'} =~ /^\d$/);
+
+	# check if this relation already exists
+	my $relation=(get_relations(
+		'ID' => $env{'ID'},
+		'l_prefix' => $env{'l_prefix'},
+		'db_name' => $env{'db_name'},
+		'status' => 'YN',
+		'limit' => '1'
+	))[0];
+	if ($relation->{'ID'})
+	{
+		main::_log("this relation exists with quantifier='$relation->{'quantifier'}'");
+		# when it exists, check if is not already set to same value
+		if ($relation->{'quantifier'} ne $env{'quantifier'})
+		{
+			main::_log("also updating rel_type");
+			App::020::SQL::functions::update(
+				'ID' => $relation->{'ID'},
+				'db_h' => $env{'db_h'},
+				'db_name' => $env{'db_name'},
+				'tb_name' => 'a160_relation',
+				'columns' => {
+					'quantifier' => "'".$env{'quantifier'}."'"
+				},
+				'-journalize' => 1,
+			);
+			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$relation->{'l_prefix'}.'::'.$relation->{'l_table'}.'::'.$relation->{'l_ID_entity'};
+			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
+			{
+				# save info about changed set of relations
+				my $tt=Time::HiRes::time();
+				main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
+				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
+			}
+			$t->close();
+			return 1;
+		}
+		else
+		{
+			# this relation has already this rel_type
+		}
+		
+	}
+	
+	# this relation not exists
+	
+	$t->close();
+	return 1;
+}
+
 
 =head2 get_relations()
 
@@ -578,6 +655,7 @@ sub get_relations
 			l_table,
 			l_ID_entity,
 			rel_type,
+			quantifier,
 			r_db_name,
 			r_prefix,
 			r_table,
@@ -908,6 +986,7 @@ sub relation_shift
 			my $l_table = $db0_line{'l_table'};
 
 			my $rel_type = $db0_line{'rel_type'};
+			my $quantifier = $db0_line{'quantifier'};
 
 			main::_log("Reordering relations for l_ID_entity=$l_ID_entity l_prefix=$l_prefix l_table=$l_table r_prefix=$r_prefix r_table=$r_table");
 			
