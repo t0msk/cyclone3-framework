@@ -60,7 +60,7 @@ sub get_relation_iteminfo
 	
 	if ($env{'lng'})
 	{
-		$lng_in="AND lng='".$env{'lng'}."'";
+		$lng_in="AND product_lng.lng='".$env{'lng'}."'";
 	}
 	
 	my %info;
@@ -69,14 +69,31 @@ sub get_relation_iteminfo
 	{
 		my $sql=qq{
 			SELECT
-				ID_product,
-				name,
-				ID_category,
-				lng
+				product.ID AS ID_product,
+				product_lng.name,
+				product_cat.ID AS ID_category,
+				product_lng.lng
 			FROM
-				`$env{'r_db_name'}`.a910_product_view
+				`$App::910::db_name`.`a910_product` AS product
+			LEFT JOIN `$App::910::db_name`.`a910_product_ent` AS product_ent ON
+			(
+				product_ent.ID_entity = product.ID_entity
+			)
+			LEFT JOIN `$App::910::db_name`.`a910_product_lng` AS product_lng ON
+			(
+				product_lng.ID_entity = product.ID
+			)
+			LEFT JOIN `$App::910::db_name`.`a910_product_sym` AS product_sym ON
+			(
+				product_sym.ID_entity = product.ID_entity
+			)
+			LEFT JOIN `$App::910::db_name`.`a910_product_cat` AS product_cat ON
+			(
+				product_cat.ID_entity = product_sym.ID AND
+				product_cat.lng = product_lng.lng
+			)
 			WHERE
-				ID_entity_product=$env{'r_ID_entity'}
+				product.ID_entity=$env{'r_ID_entity'}
 				$lng_in
 			LIMIT 1
 		};
