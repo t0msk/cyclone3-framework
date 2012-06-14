@@ -730,6 +730,7 @@ sub process
 		};
 		# request params
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'param'}=\%main::FORM;
+		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'a210'}=\%main::a210;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'code'}=$main::request_code;
 		# user variables
 		if (%main::USRM)

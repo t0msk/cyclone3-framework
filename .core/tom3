@@ -1126,6 +1126,7 @@ while ($main::CGI=new CGI::Fast())
 							'-cache' => 3600,
 							'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%sql_def)
 						);
+						$main::a210{'node'}=\%a210;
 						# musim vygenerovat default path pre automaticky 301 code
 						foreach my $p(
 							App::020::SQL::functions::tree::get_path(
@@ -1137,6 +1138,7 @@ while ($main::CGI=new CGI::Fast())
 						)
 						{
 							push @{$a210{'IDs'}}, $p->{'ID'};
+							push @{$a210{'nodes'}}, $p;
 							$main::FORM{'a210_path'}.="/".$p->{'name_url'};
 						}
 						$main::FORM{'a210_path'}=~s|^/||;
@@ -1162,6 +1164,7 @@ while ($main::CGI=new CGI::Fast())
 							'-cache' => 3600,
 							'-slave' => 1
 						);
+						$main::a210{'node'}=\%a210;
 						foreach my $p(
 							App::020::SQL::functions::tree::get_path(
 								$a210{'ID'},
@@ -1174,6 +1177,7 @@ while ($main::CGI=new CGI::Fast())
 						)
 						{
 							push @{$a210{'IDs'}}, $p->{'ID'};
+							push @{$a210{'nodes'}}, $p;
 						}
 						
 						
