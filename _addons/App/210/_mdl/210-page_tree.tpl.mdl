@@ -1,0 +1,126 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::210::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	
+	$env{'db_order'}="ID_charindex" unless $env{'db_order'};
+	
+	Tomahawk::GetTpl() || return undef;
+	
+	delete $env{'ID_charindex'};
+	
+	my $from;
+	
+	# let's go :)
+	if ($env{'ID'})
+	{
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h'    => 'main',
+			'db_name' => $App::210::db_name,
+			'tb_name' => 'a210_page',
+			'ID'      => $env{'ID'},
+			'columns' => 
+			{
+				'ID_charindex' => 1
+			}
+		);
+		if ($data{'ID'})
+		{
+			$env{'ID_charindex'}=$data{'ID_charindex'}.':';
+		}
+		else
+		{
+			main::_log("can't find ID='$data{'ID'}'",1);
+			return undef;
+		}
+		
+	}
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`$App::210::db_name`.`a210_page`
+		WHERE
+			lng = ?
+			AND ID_charindex LIKE ?
+			AND status IN ('Y','L')
+			AND visible IN ('Y')
+		ORDER BY
+			$env{'db_order'}
+	},
+		'bind'=>[$env{'lng'},$env{'ID_charindex'}.'%'],
+		'quiet'=>1,
+		'-cache' => 3600,
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::210::db_name,
+				'tb_name' => "a210_page"
+			}
+		)
+	);
+	my @nodes;
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+#		push 
+		delete $db0_line{'metadata'};
+		delete $db0_line{'t_keys'};
+		
+		foreach my $node (App::020::SQL::functions::tree::get_path(
+			$db0_line{'ID'},
+			'db_h'    => 'main',
+			'db_name' => $App::210::db_name,
+			'tb_name' => 'a210_page',
+			'-cache' => 3600,
+		))
+		{
+			$db0_line{'path_url'}.='/'.$node->{'name_url'};
+		}
+		$db0_line{'path_url'}=~s|^/||;
+		
+		$db0_line{'ID_charindex'}=~s|^$env{'ID_charindex'}||;
+		
+#		main::_log("ID_charindex=$env{'ID_charindex'}/$db0_line{'ID_charindex'}",3,"debug");
+		
+		push @nodes,\%db0_line;
+	}
+	
+	use Data::Dumper;
+	my @items;
+	foreach my $node(@nodes)
+	{
+		next unless $node->{'ID_charindex'}=~/^...$/;
+		push @{$node->{'items'}},subnodes(\@nodes,'prefix'=>$node->{'ID_charindex'});
+		$TPL->variables_push($node);
+	}
+	
+	return 1;
+}
+
+sub subnodes
+{
+	my $allnodes=shift;
+	my %env=@_;
+	my @mynodes;
+	foreach my $node (@{$allnodes})
+	{
+		next unless $node->{'ID_charindex'}=~/^$env{'prefix'}:...$/;
+		push @{$node->{'items'}},subnodes($allnodes,'prefix'=>$node->{'ID_charindex'});
+		push @mynodes,$node;
+	}
+	return @mynodes;
+}
+
+1;
