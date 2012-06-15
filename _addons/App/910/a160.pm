@@ -60,7 +60,7 @@ sub get_relation_iteminfo
 	
 	if ($env{'lng'})
 	{
-		$lng_in="AND product_lng.lng='".$env{'lng'}."'";
+		$lng_in="AND lng='".$env{'lng'}."'";
 	}
 	
 	my %info;
