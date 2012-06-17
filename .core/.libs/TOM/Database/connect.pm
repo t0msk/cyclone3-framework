@@ -137,9 +137,20 @@ sub multi
 				$TOM::DB{$handler}{'pass'},
 				{
 					'PrintError' => 0,
-					'RaiseError' => 0
+					'RaiseError' => 0,
+#					'LongReadLen' => 6000000
 				}
 			);
+			
+			if ($TOM::DB{$handler}{'uri'}=~/^dbi:Sybase:/)
+			{
+				$main::DB{$handler}->do("set textsize = 512000");
+			}
+			else
+			{
+				# don't sty readlen by this way for MSSQL
+				$main::DB{$handler}->{'LongReadLen'}  = 512000;
+			}
 			
 			#$dbh->{AutoCommit}    = 1;
 			#$main::DB{$handler}->{RaiseError}    = 1;
