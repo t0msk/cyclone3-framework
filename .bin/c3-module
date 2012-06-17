@@ -108,6 +108,10 @@ eval
 	main::_log("require default.header");
 	do $tom::P."/_dsgn/default.header"
 		|| do $tom::P."/_dsgn/default.dsgn";
+	
+	$main::H=new TOM::Document(%DOC_HEADER);
+	$main::time_current=time();
+	$tom::time_current=$main::time_current;
 };
 $t_domain->close();
 
