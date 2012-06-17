@@ -160,6 +160,10 @@ sub new_relation
 			my $tt=Time::HiRes::time();
 			main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
 			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
+			# the source application has been changed
+			App::020::SQL::functions::_save_changetime(
+				{'db_h'=>$env{'db_h'},'db_name'=>$env{'db_name'},'tb_name'=>$env{'l_prefix'}.'_'.$env{'l_table'},'ID_entity'=>$env{'l_ID_entity'}}
+			);
 		}
 		
 		$t->close();
@@ -212,6 +216,10 @@ sub new_relation
 			my $tt=Time::HiRes::time();
 			main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
 			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
+			# the source application has been changed
+			App::020::SQL::functions::_save_changetime(
+				{'db_h'=>$env{'db_h'},'db_name'=>$env{'db_name'},'tb_name'=>$env{'l_prefix'}.'_'.$env{'l_table'},'ID_entity'=>$env{'l_ID_entity'}}
+			);
 		}
 		
 		$t->close();
@@ -245,6 +253,10 @@ sub new_relation
 		my $tt=Time::HiRes::time();
 		main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
 		$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
+		# the source application has been changed
+		App::020::SQL::functions::_save_changetime(
+			{'db_h'=>$env{'db_h'},'db_name'=>$env{'db_name'},'tb_name'=>$env{'l_prefix'}.'_'.$env{'l_table'},'ID_entity'=>$env{'l_ID_entity'}}
+		);
 	}
 	
 	$t->close();
@@ -310,6 +322,10 @@ sub remove_relation
 				my $tt=Time::HiRes::time();
 				main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
 				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
+				# the source application has been changed
+				App::020::SQL::functions::_save_changetime(
+					{'db_h'=>$env{'db_h'},'db_name'=>$env{'db_name'},'tb_name'=>$relation->{'l_prefix'}.'_'.$relation->{'l_table'},'ID_entity'=>$relation->{'l_ID_entity'}}
+				);
 			}
 			$t->close();
 			return 1;
@@ -390,6 +406,10 @@ sub relation_change_status
 				my $tt=Time::HiRes::time();
 				main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
 				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
+				# the source application has been changed
+				App::020::SQL::functions::_save_changetime(
+					{'db_h'=>$env{'db_h'},'db_name'=>$env{'db_name'},'tb_name'=>$relation->{'l_prefix'}.'_'.$relation->{'l_table'},'ID_entity'=>$relation->{'l_ID_entity'}}
+				);
 			}
 			$t->close();
 			return 1;
@@ -457,6 +477,10 @@ sub relation_change_rel_type
 				my $tt=Time::HiRes::time();
 				main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
 				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
+				# the source application has been changed
+				App::020::SQL::functions::_save_changetime(
+					{'db_h'=>$env{'db_h'},'db_name'=>$env{'db_name'},'tb_name'=>$relation->{'l_prefix'}.'_'.$relation->{'l_table'},'ID_entity'=>$relation->{'l_ID_entity'}}
+				);
 			}
 			$t->close();
 			return 1;
@@ -527,6 +551,10 @@ sub relation_change_quantifier
 				my $tt=Time::HiRes::time();
 				main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
 				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
+				# the source application has been changed
+				App::020::SQL::functions::_save_changetime(
+					{'db_h'=>$env{'db_h'},'db_name'=>$env{'db_name'},'tb_name'=>$relation->{'l_prefix'}.'_'.$relation->{'l_table'},'ID_entity'=>$relation->{'l_ID_entity'}}
+				);
 			}
 			$t->close();
 			return 1;
