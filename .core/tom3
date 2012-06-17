@@ -2040,6 +2040,11 @@ while ($main::CGI=new CGI::Fast())
 				designmodule(%mdl_env);
 				next;
 			};
+			$mdl_env{'-type'}=~/^tpl/ && do
+			{
+				tplmodule(%mdl_env);
+				next;
+			};
 			$mdl_env{'-type'}=~/^dget/ && do
 			{
 				module(%mdl_env);
@@ -2265,9 +2270,11 @@ while ($main::CGI=new CGI::Fast())
 		$H->prepare_last(result=>$result);
 		
 		
-		
-		main::_log("Document not in UTF-8",1) unless utf8::is_utf8($H->{'OUT'}{'BODY'});
-		main::_log("Document not in UTF-8",1,"pub.err") unless utf8::is_utf8($H->{'OUT'}{'BODY'});
+		if ($H->{'OUT'}{'BODY'})
+		{
+			main::_log("Document not in UTF-8",1) unless utf8::is_utf8($H->{'OUT'}{'BODY'});
+			main::_log("Document not in UTF-8",1,"pub.err") unless utf8::is_utf8($H->{'OUT'}{'BODY'});
+		}
 		
 		
 		
