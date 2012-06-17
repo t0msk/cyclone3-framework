@@ -112,6 +112,7 @@ use Exporter;
 	module
 	supermodule
 	designmodule
+	tplmodule
 	/;
 	
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
@@ -1251,9 +1252,200 @@ sub designmodule
 
 
 
+=head2 tplmodule()
 
 
 
+=cut
+
+sub tplmodule
+{
+	local %mdl_env=@_;
+	$mdl_env{'-cache'} if $mdl_env{'-cache_id'};
+	if (exists $mdl_env{'-category'}){$mdl_env{'-addon'}="a".$mdl_env{'-category'}}; # backward compatibility
+	$mdl_env{'-addon_type'}='App' if $mdl_env{'-addon'}=~/^a/;
+	$mdl_env{'-addon_type'}='Ext' if $mdl_env{'-addon'}=~/^e/;
+	$mdl_env{'-addon_name'}=$mdl_env{'-addon'};$mdl_env{'-addon_name'}=~s|^.||;
+	my $t=track TOM::Debug("tplmodule",'attrs'=>"(".$mdl_env{'-addon'}."-".$mdl_env{'-name'}.")",'timer'=>1);
+	
+	local %mdl_C;
+	local $tom::ERR;
+	local $tom::ERR_plus;
+#	local $app=$mdl_env{-category};
+	my $cache_domain;
+	my $return_code;
+	my %return_data;
+	
+	# najpv si ocheckujem ci nechcem zistovat pritomnost TMP
+	# zaroven pritomnost TMP zistim
+	if ($mdl_env{'-TMP_check'})
+	{
+		main::_log("-TMP_check enabled");
+		if (not $main::H->{'OUT'}{'BODY'}=~/<!TMP-$mdl_env{-TMP}!>/)
+		{
+			main::_log("return 10, TMP '$mdl_env{-TMP}' not exists in BODY");
+			$t->close();
+			return 10;
+		}
+	}
+	
+	# SPRACOVANIE PREMENNYCH
+	my $debug;
+	my $debug=1 if $mdl_env{'-debug'};
+	
+	foreach (sort keys %mdl_env)
+	{
+		main::_log("input '$_'='$mdl_env{$_}'") if $debug;
+		/^-/ && do {$mdl_C{$_}=$mdl_env{$_};delete $mdl_env{$_};}
+	}
+	
+	$mdl_C{'-addon'}="a010" unless $mdl_C{'-addon'};
+	$mdl_C{'-version'}="0" unless $mdl_C{'-version'};
+	$mdl_C{'-xsgn'}=$mdl_C{'-tpl'} || $tom::dsgn unless $mdl_C{'-xsgn'};
+	$mdl_C{'-tpl'}=$mdl_C{'-xsgn'} unless $mdl_C{'-tpl'};
+	$mdl_C{'-xsgn_global'}=0 unless $mdl_C{'-xsgn_global'};
+	$mdl_C{'-tpl_global'}=0 unless $mdl_C{'-tpl_global'};
+	$mdl_C{'-xlng'}=$tom::lng unless $mdl_C{'-xlng'};
+	$mdl_C{'-xlng_global'}=0 unless $mdl_C{'-xlng_global'};
+	# nastavit default alarmu ak nevyzadujem zmenu alebo nieje povolena zmena
+	$mdl_C{'-ALRM'}=$TOM::ALRM_mdl if ((not exists $mdl_C{'-ALRM'})||(!$TOM::ALRM_change));
+	if ((exists $mdl_C{'-cache_id'})&&(!$mdl_C{'-cache_id'})){$mdl_C{'-cache_id'}="0"}
+	
+	my $file_data;
+	
+	# definujem rec pre modul aby ju mohol prijat ako $env{lng}
+	# AK NIEJE ZADANA NATVRDO CEZ module (-xlng), tak vezmem language
+	# tejto session. predam do $env{lng}
+	$mdl_env{'lng'}=$mdl_C{'-xlng'};
+	
+	# definujem design pre modul aby ju mohol prijat ako $env{dsgn}
+	# AK NIEJE ZADANA NATVRDO CEZ module (-xsgn), tak vezmem design
+	# tejto session. predam do $env{lng}
+	$mdl_env{'dsgn'}=$mdl_C{'-xsgn'};
+	
+	if ($mdl_C{'-level'})
+	{
+		if ($mdl_C{'-level'} eq "global"){$mdl_C{'-global'} = 1;}
+		elsif ($mdl_C{'-level'} eq "master"){$mdl_C{'-global'} = 2;}
+		elsif ($mdl_C{'-level'} eq "local"){$mdl_C{'-global'} = 0;}
+	}
+	
+	# zapinam defaultne debug, ktory mozem v module vypnut
+	$Tomahawk::module::debug_disable=0;
+	$Tomahawk::module::authors=""; # vyprazdnim zoznam authorov
+	
+	# V EVALKU OSETRIM CHYBU RYCHLOSTI A SPATNEHO MODULU
+	eval
+	{
+		# registering alarm
+		my $action_die = POSIX::SigAction->new(
+			sub {die "Timed out $mdl_C{-ALRM} sec.\n"},
+			$TOM::Engine::pub::SIG::sigset,
+			&POSIX::SA_NODEFER);
+		POSIX::sigaction(&POSIX::SIGALRM, $action_die);
+		Time::HiRes::alarm($mdl_C{'-ALRM'});
+		
+		# reset variables
+		undef $Tomahawk::module::TPL;
+		
+		my $t_execute=track TOM::Debug("exec");
+		
+		# gettpl
+		Tomahawk::GetTpl();
+		
+		if ($Tomahawk::module::TPL)
+		{
+			my $t_tt=track TOM::Debug("tt:process",'timer'=>1);
+			# basic environment variables are attached in TOM::Template::process()
+			# module variables
+			$Tomahawk::module::TPL->{'variables'}->{'module'}={
+				'name'=> $mdl_C{'-name'},
+				'version'=> $mdl_C{'-version'},
+				'addon'=> $mdl_C{'-addon'},
+				'filename' => $mdl_C{'P_MODULE'}
+			};
+			# add all module input variables
+			%{$Tomahawk::module::TPL->{'variables'}->{'module'}->{'env'}}=(%mdl_C,%mdl_env);
+			
+			$Tomahawk::module::TPL->process() || do
+			{
+				$t_tt->close();
+				$t_execute->close();
+				$tom::ERR=$Tomahawk::module::TPL->{'error'};
+				TOM::Error::module
+				(
+					'-TMP' => $mdl_C{'-TMP'},
+					'-MODULE' => "[TPLMDL::".$mdl_C{'-addon'}."-".$mdl_C{'-name'}."]",
+					'-ERROR' => $tom::ERR,
+				);
+				return undef;
+			};
+			
+			$Tomahawk::module::XSGN{'TMP'}=$Tomahawk::module::TPL->{'output'};
+			$t_tt->close();
+		}
+		else
+		{
+			$t_execute->close();
+			Time::HiRes::alarm(0);
+			TOM::Error::module
+			(
+				'-TMP' => $mdl_C{'-TMP'},
+				'-MODULE' => "[TPLMDL::".$mdl_C{'-addong'}."-".$mdl_C{'-name'}."]",
+				'-ERROR' => "TPL not defined or not found",
+			);
+			return undef;
+		}
+		$t_execute->close();
+		
+#		if ($return_code)
+#		{
+			if ($mdl_C{'-stdout'} && $main::stdout)
+			{
+				print $Tomahawk::module::XSGN{'TMP'}."\n";
+			}
+			
+			if (($Tomahawk::module::XSGN{'TMP'})
+				&&(not $main::H->r_("<!TMP-".$mdl_C{'-TMP'}."!>",$Tomahawk::module::XSGN{'TMP'})))
+			{
+				Time::HiRes::alarm(0);
+				TOM::Error::module
+				(
+					'-TMP' => $mdl_C{'-TMP'},
+					'-MODULE' => "[TPLMDL::".$mdl_C{'-addong'}."-".$mdl_C{'-name'}."]",
+					'-ERROR' => "Unknown TMP-".$mdl_C{'-TMP'},
+				);
+				return undef;
+			};
+			
+#		}
+#		else # chyba o ktorej upozorni samotny program vratenim undef :)
+#		{
+#			TOM::Error::module(
+#				'-TMP' => $mdl_C{'-TMP'},
+#				'-MODULE' => "[TPLMDL::".$mdl_C{'-addon'}."-".$mdl_C{'-name'}."]",
+#				'-ERROR' => $tom::ERR,
+#				'-PLUS' => $tom::ERR_plus,
+#			)
+#		};
+		Time::HiRes::alarm(0);
+	};
+	Time::HiRes::alarm(0);
+	
+	if ($@)
+	{
+		TOM::Error::module
+		(
+			'-TMP' => $mdl_C{'-TMP'},
+			'-MODULE' => "[TPLMDL::".$mdl_C{'-addon'}."-".$mdl_C{'-name'}."]",
+			'-ERROR' => $@,
+		);# unless $mdl_C{-noerror_run};
+	};
+	
+	$t->close();
+	
+	return $return_code,%return_data;
+}
 
 
 
