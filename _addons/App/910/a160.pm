@@ -60,7 +60,7 @@ sub get_relation_iteminfo
 	
 	if ($env{'lng'})
 	{
-		$lng_in="AND lng='".$env{'lng'}."'";
+		$lng_in="AND product_lng.lng='".$env{'lng'}."'";
 	}
 	
 	my %info;
@@ -108,6 +108,12 @@ sub get_relation_iteminfo
 			$t->close();
 			return %info;
 		}
+	}
+
+	
+	if ($env{'lng'})
+	{
+		$lng_in="AND lng='".$env{'lng'}."'";
 	}
 	
 	if ($env{'r_table'} eq "product_cat")
