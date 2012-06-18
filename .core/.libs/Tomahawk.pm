@@ -486,7 +486,35 @@ sub module
 			$mdl_C{'-cache_duration'}=$mdl_C{'-cache_old'};
 		}
 		
-		main::_log("cache info md5:$mdl_C{-md5} old:$mdl_C{-cache_old} duration:$mdl_C{-cache_duration} from:$mdl_C{-cache_from} to:$mdl_C{-cache_to}") if $debug;
+		# CHECK CACHED ENTITIES
+		my $data_changed;
+		my $entity_i;
+		if ($return_data{'entity'})
+		{
+			main::_log("checking cache of entities") if $debug;
+			foreach my $entity (@{$return_data{'entity'}})
+			{
+				$entity_i++;
+				my $changetime=App::020::SQL::functions::_get_changetime($entity);
+				main::_log("changetime of entity [$entity_i]".$entity->{'db_h'}.":".$entity->{'db_name'}.":".$entity->{'tb_name'}.":".$entity->{'ID_entity'}." ".$changetime."S") if $debug;
+				if (!$changetime)
+				{
+					main::_log("not found info about changetime of entity ".$entity->{'db_h'}.":".$entity->{'db_name'}.":".$entity->{'tb_name'}.":".$entity->{'ID_entity'},1);
+					App::020::SQL::functions::_save_changetime($entity);
+					$data_changed=1;
+#					last;
+				}
+				elsif ($changetime > $mdl_C{'-cache_from'})
+				{
+					my $changetime_diff=$main::time_current - $changetime;
+					main::_log("entity ".$entity->{'db_h'}.":".$entity->{'db_name'}.":".$entity->{'tb_name'}.":".$entity->{'ID_entity'}." changed in -".int($changetime_diff)."S");
+					$data_changed=1;
+					last;
+				}
+			}
+		}
+		
+		main::_log("cache info md5:$mdl_C{-md5} old:$mdl_C{-cache_old}S duration:$mdl_C{-cache_duration}S from:$mdl_C{-cache_from}S to:$mdl_C{-cache_to}S") if $debug;
 		
 		if(
 			(
@@ -521,6 +549,12 @@ sub module
 					&& ($main::FORM{'_rc'})
 				)
 			)
+			# A
+			&&
+			(
+				# data sa nezmenili
+				!$data_changed
+			)
 		)
 		# TAK TUTO CACHE POUZIJEM
 		{
@@ -529,13 +563,11 @@ sub module
 				"remain:".($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}-$mdl_C{'-cache_old'})."S ".
 				"parallel?:".$cache_parallel
 				);
-				
-			# NATIAHNEM HTML KOD :))
 			
-			# TU NEPOTREBUJEM NACITAVANIE Z OSTATNYCH ZDROJOV, LEBO SOM TO UZ NACITAL
-			
-			# zvysujem counter vyuzitia tejto cache
-#			Tomahawk::debug::cache_conf_opt_plus();
+			if ($mdl_C{'-stdout'} && $main::stdout)
+			{
+				print $file_data."\n";
+			}
 			
 			$main::H->r_("<!TMP-".$mdl_C{-TMP}."!>",$file_data);
 			
@@ -752,8 +784,10 @@ our \$VERSION=$m_time;
 				print $Tomahawk::module::XSGN{'TMP'}."\n";
 			}
 			
-			if (($Tomahawk::module::XSGN{'TMP'})
-				&&(not $main::H->r_("<!TMP-".$mdl_C{'-TMP'}."!>",$Tomahawk::module::XSGN{'TMP'})))
+			if (
+				!$main::stdout
+				&& ($Tomahawk::module::XSGN{'TMP'})
+				&& (not $main::H->r_("<!TMP-".$mdl_C{'-TMP'}."!>",$Tomahawk::module::XSGN{'TMP'})))
 			{
 				Time::HiRes::alarm(0);
 				TOM::Error::module
@@ -1591,6 +1625,11 @@ Used in modules to load tpl file
 sub GetTpl
 {
 	my %env=@_;
+	
+	if ($env{'env'})
+	{
+		%mdl_env=%{$env{'env'}};
+	}
 	
 	$mdl_C{'-tpl'}="default" unless $mdl_C{'-tpl'};
 	main::_log("GetTpl -addon='$mdl_C{'-addon'}' -name='$mdl_C{'-name'}' -version='$mdl_C{'-version'}' -tpl='$mdl_C{'-tpl'}'");
