@@ -13,10 +13,11 @@ use App::210::_init;
 sub execute
 {
 	my %env=@_;
+	my %env_out;
 	
 	$env{'db_order'}="ID_charindex" unless $env{'db_order'};
 	
-	Tomahawk::GetTpl() || return undef;
+	Tomahawk::GetTpl('env'=>\%env) || return undef;
 	
 	delete $env{'ID_charindex'};
 	
@@ -106,7 +107,14 @@ sub execute
 		$TPL->variables_push($node);
 	}
 	
-	return 1;
+	# this cache is unique for this used entities (all in a210 :-)
+	push @{$env_out{'entity'}},{
+		'db_h' => 'main',
+		'db_name' => $App::210::db_name,
+		'tb_name' => 'a210_page'
+	};
+	
+	return 1,%env_out;
 }
 
 sub subnodes
