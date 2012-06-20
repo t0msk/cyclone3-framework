@@ -8,7 +8,7 @@ use strict;
 
 use App::020::_init;
 use App::210::_init;
-
+use JSON;
 
 sub execute
 {
@@ -77,7 +77,15 @@ sub execute
 	{
 #		push 
 		delete $db0_line{'metadata'};
-		delete $db0_line{'t_keys'};
+		
+		if ($db0_line{'t_keys'})
+		{
+			my $cvml=new CVML('data'=>$db0_line{'t_keys'});
+			$db0_line{'keys'}=$cvml->{'hash'};
+			#;decode_json $db0_line{'t_keys'};
+		}
+		
+#		delete $db0_line{'t_keys'};
 		
 		foreach my $node (App::020::SQL::functions::tree::get_path(
 			$db0_line{'ID'},
