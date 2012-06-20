@@ -750,7 +750,7 @@ our \$VERSION=$m_time;
 			# add all module input variables
 			%{$Tomahawk::module::TPL->{'variables'}->{'module'}->{'env'}}=(%mdl_C,%mdl_env);
 			# output can be processed too
-			%{$Tomahawk::module::TPL->{'variables'}->{'module'}->{'output'}}=(%return_data);
+			$Tomahawk::module::TPL->{'variables'}->{'module'}->{'output'}=\%return_data;
 			$Tomahawk::module::TPL->process() || do
 			{
 				$t_tt->close();
@@ -966,6 +966,18 @@ sub module_process_return_data
 			{
 				$main::H->add_DOC_title($env0);
 			}
+		}
+	}
+	
+	if ($return_data{'set'})
+	{
+		foreach (keys %{$return_data{'set'}{'env'}})
+		{
+			$main::env{$_}=$return_data{'set'}{'env'}{$_};
+		}
+		foreach (keys %{$return_data{'set'}{'key'}})
+		{
+			$main::key{$_}=$return_data{'set'}{'key'}{$_};
 		}
 	}
 	
