@@ -732,7 +732,9 @@ sub process
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'param'}=\%main::FORM;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'a210'}=\%main::a210;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'code'}=$main::request_code;
+		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'key'}=\%main::key;
 		# user variables
+#=head1
 		if (%main::USRM)
 		{
 			%{$Tomahawk::module::TPL->{'variables'}->{'user'}}=%main::USRM;
@@ -743,6 +745,7 @@ sub process
 			# alias
 			%{$Tomahawk::module::TPL->{'variables'}->{'USRM'}}=%{$Tomahawk::module::TPL->{'variables'}->{'user'}};
 		}
+#=cut
 		# process
 		my $entity_content='[%PROCESS main%]';
 		undef $self->{'output'};
