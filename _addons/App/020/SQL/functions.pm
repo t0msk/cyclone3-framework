@@ -1459,14 +1459,19 @@ sub _save_changetime
 		'namespace' => "db_changed",
 		'key' => $key,
 		'value' => $tt,
+		'expiration' => "30D",
 	);
 	
-	$Ext::CacheMemcache::cache->set
-	(
-		'namespace' => "db_changed",
-		'key' => $key_entity,
-		'value' => $tt,
-	);
+	if ($env{'ID_entity'})
+	{
+		$Ext::CacheMemcache::cache->set
+		(
+			'namespace' => "db_changed",
+			'key' => $key_entity,
+			'value' => $tt,
+			'expiration' => "30D",
+		);
+	}
 	
 	return 1;
 }
