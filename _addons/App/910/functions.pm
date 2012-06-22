@@ -55,7 +55,7 @@ Add new product
    'product_lng.lng' => '',
    'product_lng.name' => '',
 	'product_lng.description' => '',
-	'product_sym.ID' => '', # product_cat.ID
+	'product_sym.ID' => '', # product_cat.ID_entity
  );
 
 Change product number (displayed in catalog)
@@ -91,7 +91,7 @@ Add new product symlink into category
  product_add
  (
    'product.ID_entity' => '',
-   'product_sym.ID' => '', # product_cat.ID
+   'product_sym.ID' => '', # product_cat.ID_entity
  );
 
 =cut
@@ -106,6 +106,7 @@ sub product_add
 	# PRODUCT AND PRODUCT MODIFICATION
 	
 	my %product;
+	my $content_reindex;
 	
 	if ($env{'product.ID'})
 	{
@@ -128,7 +129,25 @@ sub product_add
 		else
 		{
 			main::_log("not found product.ID, undef",1);
-			undef $env{'product.ID'};
+			#undef $env{'product.ID'};
+			App::020::SQL::functions::new(
+				'db_h' => "main",
+				'db_name' => $App::910::db_name,
+				'tb_name' => "a910_product",
+				'columns' => {
+					'ID' => $env{'product.ID'},
+					'product_number' => $env{'product.product_number'} # if defined
+				},
+				'-journalize' => 1,
+			);
+			%product=App::020::SQL::functions::get_ID(
+				'ID' => $env{'product.ID'},
+				'db_h' => "main",
+				'db_name' => $App::910::db_name,
+				'tb_name' => "a910_product",
+				'columns' => {'*'=>1}
+			);
+			$env{'product.ID_entity'}=$product{'ID_entity'};
 		}
 	}
 	
@@ -188,6 +207,7 @@ sub product_add
 		);
 		$env{'product.ID'}=$product{'ID'};
 		$env{'product.ID_entity'}=$product{'ID_entity'};
+		$content_reindex=1;
 	}
 	
 	main::_log("product.ID='$product{'ID'}' product.ID_entity='$product{'ID_entity'}'");
@@ -242,12 +262,54 @@ sub product_add
 	# supplier_person
 	$columns{'supplier_person'}="'".TOM::Security::form::sql_escape($env{'product.supplier_person'})."'"
 		if (exists $env{'product.supplier_person'} && ($env{'product.supplier_person'} ne $product{'supplier_person'}));
-
+	
 	# metadata
-	if ((not exists $env{'product.metadata'}) && (!$product{'metadata'})){$env{'product.metadata'}=$App::910::metadata_default;}
+	my %metadata=App::020::functions::metadata::parse($product{'metadata'});
+	
+	foreach my $section(split(';',$env{'product.metadata.override_sections'}))
+	{
+		delete $metadata{$section};
+	}
+	
+	if ($env{'product.metadata.replace'})
+	{
+		if (!ref($env{'product.metadata'}) && $env{'product.metadata'})
+		{
+			%metadata=App::020::functions::metadata::parse($env{'product.metadata'});
+		}
+		if (ref($env{'product.metadata'}) eq "HASH")
+		{
+			%metadata=%{$env{'product.metadata'}};
+		}
+	}
+	else
+	{
+		if (!ref($env{'product.metadata'}) && $env{'product.metadata'})
+		{
+			# when metadata send as <metatree></metatree> then always replace
+			%metadata=App::020::functions::metadata::parse($env{'product.metadata'});
+#			my %metadata_=App::020::functions::metadata::parse($env{'product.metadata'});
+#			delete $env{'product.metadata'};
+#			%{$env{'product.metadata'}}=%metadata_;
+		}
+		if (ref($env{'product.metadata'}) eq "HASH")
+		{
+			# metadata overrride
+			foreach my $section(keys %{$env{'product.metadata'}})
+			{
+				foreach my $variable(keys %{$env{'product.metadata'}{$section}})
+				{
+					$metadata{$section}{$variable}=$env{'product.metadata'}{$section}{$variable};
+				}
+			}
+		}
+	}
+	
+	$env{'product.metadata'}=App::020::functions::metadata::serialize(%metadata);
+	
 	$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'product.metadata'})."'"
-		if (exists $env{'product.metadata'} && ($env{'product.metadata'} ne $product{'metadata'}));
-	#if ($env{'product.metadata'})
+	if (exists $env{'product.metadata'} && ($env{'product.metadata'} ne $product{'metadata'}));
+	
 	if ($columns{'metadata'})
 	{
 		App::020::functions::metadata::metaindex_set(
@@ -255,7 +317,7 @@ sub product_add
 			'db_name' => $App::910::db_name,
 			'tb_name' => 'a910_product',
 			'ID' => $env{'product.ID'},
-			'metadata' => {App::020::functions::metadata::parse($env{'product.metadata'})}
+			'metadata' => {%metadata}
 		);
 	}
 	# status_new
@@ -298,6 +360,7 @@ sub product_add
 			'columns' => {%columns},
 			'-journalize' => 1
 		);
+		$content_reindex=1;
 	}
 	
 	
@@ -337,6 +400,7 @@ sub product_add
 		);
 		$env{'product_ent.ID'}=$product_ent{'ID'};
 		$env{'product_ent.ID_entity'}=$product_ent{'ID_entity'};
+		$content_reindex=1;
 	}
 	
 	main::_log("product_ent.ID='$product_ent{'ID'}' product_ent.ID_entity='$product_ent{'ID_entity'}'");
@@ -357,9 +421,9 @@ sub product_add
 			FROM
 				`$App::910::db_name`.a910_product_brand
 			WHERE
-				name='$env{'product_brand.name'}'
+				name=?
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'bind'=>[$env{'product_brand.name'}]);
 		my %product_brand=$sth0{'sth'}->fetchhash();
 		$env{'product_brand.ID'}=$product_brand{'ID'};
 		if (!$product_brand{'ID'})
@@ -374,6 +438,7 @@ sub product_add
 				},
 				'-journalize' => 1,
 			);
+			$content_reindex=1;
 		}
 	}
 	$columns{'ID_brand'}="'".TOM::Security::form::sql_escape($env{'product_brand.ID'})."'"
@@ -404,6 +469,7 @@ sub product_add
 				},
 				'-journalize' => 1,
 			);
+			$content_reindex=1;
 		}
 	}
 	$columns{'ID_family'}="'".TOM::Security::form::sql_escape($env{'product_family.ID'})."'"
@@ -441,6 +507,7 @@ sub product_add
 			'columns' => {%columns},
 			'-journalize' => 1
 		);
+		$content_reindex=1;
 	}
 	
 	
@@ -509,6 +576,7 @@ sub product_add
 		);
 		$env{'product_lng.ID'}=$product_lng{'ID'};
 		$env{'product_lng.ID_entity'}=$product_lng{'ID_entity'};
+		$content_reindex=1;
 	}
 	
 	main::_log("product_lng.ID='$product_lng{'ID'}' product_lng.ID_entity='$product_lng{'ID_entity'}'");
@@ -566,6 +634,7 @@ sub product_add
 			'columns' => {%columns},
 			'-journalize' => 1
 		);
+		$content_reindex=1;
 	}
 	
 	
@@ -597,10 +666,11 @@ sub product_add
 				},
 				'-journalize' => 1,
 			);
+			$content_reindex=1;
 		}
 	}
 	
-	main::_log("product_sym.ID='$env{'product_sym.ID'}'");
+#	main::_log("product_sym.ID='$env{'product_sym.ID'}'");
 	
 	
 	# THUMBNAIL
@@ -671,12 +741,361 @@ sub product_add
 		
 	}
 	
+	if ($content_reindex)
+	{
+		# reindex this product
+		_product_index('ID'=>$env{'product.ID'});
+	}
 	
 	$t->close();
 	return %env;
 }
 
 
+sub _product_index
+{
+	my %env=@_;
+	return undef unless $env{'ID'}; # product.ID
+	return undef unless $Ext::Solr;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::_product_index()",'timer'=>1);
+	
+	my @content_ent;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			$App::910::db_name.a910_product
+		WHERE
+			status='Y' AND
+			ID=?
+	},'quiet'=>1,'bind'=>[$env{'ID'}]);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$env{'ID_entity'}=$db0_line{'ID_entity'};
+		
+		push @content_ent,WebService::Solr::Field->new( 'product_number_s' => $db0_line{'product_number'} )
+			if $db0_line{'product_number'};
+		
+		push @content_ent,WebService::Solr::Field->new( 'amount_f' => $db0_line{'amount'} )
+			if $db0_line{'amount'};
+		
+		push @content_ent,WebService::Solr::Field->new( 'status_new_s' => $db0_line{'status_new'} )
+			if $db0_line{'status_new'};
+		push @content_ent,WebService::Solr::Field->new( 'status_sale_s' => $db0_line{'status_sale'} )
+			if $db0_line{'status_sale'};
+		push @content_ent,WebService::Solr::Field->new( 'status_special_s' => $db0_line{'status_special'} )
+			if $db0_line{'status_special'};
+		
+		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
+		foreach my $sec(keys %metadata)
+		{
+			foreach (keys %{$metadata{$sec}})
+			{
+				next unless $metadata{$sec}{$_};
+				push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
+				if ($metadata{$sec}{$_}=~/^[0-9]+$/)
+				{
+					push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
+				}
+				if ($metadata{$sec}{$_}=~/^[0-9\.]+$/)
+				{
+					push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
+				}
+				
+				# list of used metadata fields
+				push @content_ent,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_ );
+			}
+		}
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				$App::910::db_name.a910_product_ent
+			WHERE
+				ID_entity=?
+		},'quiet'=>1,'bind'=>[$db0_line{'ID_entity'}]);
+		if (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			my %sth2=TOM::Database::SQL::execute(qq{
+				SELECT
+					name
+				FROM
+					`$App::910::db_name`.a910_product_brand
+				WHERE
+					ID=?
+			},'quiet'=>1,'bind'=>[$db1_line{'ID_brand'}]);
+			if (my %db2_line=$sth2{'sth'}->fetchhash())
+			{
+				push @content_ent,WebService::Solr::Field->new( 'brand_f' =>  $db1_line{'ID_brand'});
+				push @content_ent,WebService::Solr::Field->new( 'brand_name_s' =>  $db2_line{'name'});
+			}
+		}
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				a910_product_sym.ID
+			FROM
+				$App::910::db_name.a910_product_sym
+			WHERE
+				a910_product_sym.status='Y'
+				AND a910_product_sym.ID_entity=?
+		},'quiet'=>1,'bind'=>[$env{'ID_entity'}]);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+#			main::_log("cat $db1_line{'ID'}");
+			push @content_ent,WebService::Solr::Field->new( 'cat' =>  $db1_line{'ID'}); # product_cat.ID_entity
+		}
+		
+	}
+	
+	my %content;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			$App::910::db_name.a910_product_lng
+		WHERE
+			status='Y'
+			AND ID_entity=?
+	},'quiet'=>1,'bind'=>[$env{'ID'}]);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $lng=$db0_line{'lng'};
+#		main::_log("product_lng ID='$db0_line{'ID'}' lng='$lng'");
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				a910_product_sym.ID,
+				a910_product_cat.ID_charindex
+			FROM
+				$App::910::db_name.a910_product_sym
+			INNER JOIN $App::910::db_name.a910_product_cat ON
+			(
+				a910_product_sym.ID = a910_product_cat.ID_entity
+				AND a910_product_cat.lng = ?
+			)
+			WHERE
+				a910_product_sym.status='Y'
+				AND a910_product_sym.ID_entity=?
+		},'quiet'=>1,'bind'=>[$db0_line{'lng'},$env{'ID_entity'}]);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+#			main::_log("cat+ $db1_line{'ID'} $db1_line{'ID_charindex'}");
+			push @{$content{$lng}},WebService::Solr::Field->new( 'cat_charindex_sm' =>  $db1_line{'ID_charindex'}); # product_cat.ID_entity
+		}
+		
+		# save original HTML values
+		push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description_short_orig_s' => $db0_line{'description_short'} )
+			if $db0_line{'description_short'};
+		push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description_orig_s' => $db0_line{'description'} )
+			if $db0_line{'description'};
+		
+		for my $part('description_short', 'description')
+		{
+			$db0_line{$part}=~s|<.*?>||gms;
+			$db0_line{$part}=~s|&nbsp;| |gms;
+			$db0_line{$part}=~s|  | |gms;
+#			for (0,1,2,4,11,'B','0161','0165')
+#			{$db0_line{$part}=~s|\x{$_}||g;}
+		}
+		
+		push @{$content{$lng}},WebService::Solr::Field->new( 'lng_s' => $lng );
+		
+		push @{$content{$lng}},WebService::Solr::Field->new( 'name' => $db0_line{'name'} )
+			if $db0_line{'name'};
+		push @{$content{$lng}},WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} )
+			if $db0_line{'name_url'};
+		push @{$content{$lng}},WebService::Solr::Field->new( 'subject' => $db0_line{'name_long'} )
+			if ($db0_line{'name_long'});
+		
+		push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description' => $db0_line{'description_short'} )
+			if $db0_line{'description_short'};
+		
+#		print $db0_line{'description'}."\n";
+#		my $len=9268;
+#		print "!".ord(substr($db0_line{'description'},$len-1,1))."!\n";
+#		print "!".ord(substr($db0_line{'description'},$len,1))."!\n";
+#		print "!".ord(substr($db0_line{'description'},$len+1,1))."!\n";
+#		$db0_line{'description'}=substr($db0_line{'description'},0,$len);
+		
+		push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'text' => $db0_line{'description'} )
+			if $db0_line{'description'};
+		push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'keywords' => $db0_line{'keywords'} )
+			if $db0_line{'keywords'};
+		
+		if ($db0_line{'datetime_modified'})
+		{
+			$db0_line{'datetime_modified'}=~s| (\d\d)|T$1|;
+			$db0_line{'datetime_modified'}.="Z";
+			push @{$content{$lng}},WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_modified'} );
+		}
+		
+	}
+	
+	use Data::Dumper;
+#	print Dumper(@content_ent);
+	
+	my $solr = Ext::Solr::service();
+	
+	# how many products of this type we have indexed?
+	my $response = $solr->search( "+id:".$App::910::db_name.".a910_product.* +ID_i:$env{'ID'}" );
+	for my $doc ( $response->docs )
+	{
+		my $lng=$doc->value_for( 'lng_s' );
+		if (!$content{$lng})
+		{
+			$solr->delete_by_id($doc->value_for('id'));
+		}
+	}
+	
+	my $last_indexed=$tom::Fyear."-".$tom::Fmom."-".$tom::Fmday."T".$tom::Fhour.":".$tom::Fmin.":".$tom::Fsec."Z";
+	foreach my $lng (keys %content)
+	{
+		my $id=$App::910::db_name.".a910_product.".$lng.".".$env{'ID'};
+		main::_log("index id='$id'");
+		
+		my $doc = WebService::Solr::Document->new();
+		
+		$doc->add_fields((
+			WebService::Solr::Field->new( 'id' => $id ),
+			@content_ent,
+			@{$content{$lng}},
+			WebService::Solr::Field->new( 'db_s' => $App::910::db_name ),
+			WebService::Solr::Field->new( 'addon_s' => 'a910_product' ),
+			WebService::Solr::Field->new( 'ID_i' => $env{'ID'} ),
+			WebService::Solr::Field->new( 'last_indexed_tdt' => $last_indexed )
+		));
+#		print "a $id\n";
+		$solr->add($doc);
+	}
+	
+	$t->close();
+}
+
+
+sub _a210_by_cat
+{
+	my $cats=shift;
+	my %env=@_;
+	
+	$env{'lng'}=$tom::lng unless $env{'lng'};
+	
+	my $cache_key=join('::',@{$cats});
+#=head1
+	# changetimes
+	my $changetime_a910=App::020::SQL::functions::_get_changetime({
+		'db_name' => $App::910::db_name,
+		'tb_name' => 'a910_product_cat',
+	});
+	my $changetime_a210=App::020::SQL::functions::_get_changetime({
+		'db_name' => $App::210::db_name,
+		'tb_name' => 'a210_page',
+	});
+	
+	if ($TOM::CACHE && $TOM::CACHE_memcached && $main::FORM{'_rc'}!=-2)
+	{
+		my $cache=$Ext::CacheMemcache::cache->get(
+			'namespace' => "fnc_cache",
+			'key' => 'App::910::functions::_a210_by_cat::'.$cache_key
+		);
+		if (($cache->{'time'} > $changetime_a210) && ($cache->{'time'} > $changetime_a910))
+		{
+			return $cache->{'value'};
+		}
+	}
+#=cut
+	
+	# find path
+	my @categories;
+	my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
+	foreach my $cat(@{$cats})
+	{
+		my %sth0=TOM::Database::SQL::execute(
+			qq{SELECT ID FROM $App::910::db_name.a910_product_cat WHERE ID_entity=? AND lng=? LIMIT 1},
+			'bind'=>[$cat,$env{'lng'}],'quiet'=>1,
+			'-cache' => 600,
+			'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+				'db_name' => $App::910::db_name,
+				'tb_name' => 'a910_product_cat',
+			})
+		);
+		
+		next unless $sth0{'rows'};
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		my $i;
+		foreach my $p(
+			App::020::SQL::functions::tree::get_path(
+				$db0_line{'ID'},
+				%sql_def,
+				'-slave' => 1,
+				'-cache' => 3600
+				# autocached by changetime
+			)
+		)
+		{
+			push @{$categories[$i]},$p->{'ID_entity'};
+			$i++;
+		}
+	}
+	
+	my $category;
+	for my $i (1 .. @categories)
+	{
+		foreach my $cat (@{$categories[-$i]})
+		{
+#				push @{$product->{'log'}},"find $i ".$cat;
+			
+			my $relation=(App::160::SQL::get_relations(
+				'db_name' => $App::210::db_name,
+				'l_prefix' => 'a210',
+				'l_table' => 'page',
+				#'l_ID_entity' = > ???
+				'r_prefix' => "a910",
+				'r_table' => "product_cat",
+				'r_ID_entity' => $cat,
+				'rel_type' => "link",
+				'status' => "Y"
+			))[0];
+			next unless $relation->{'l_ID_entity'};
+			
+			# je toto relacia na moju jazykovu verziu a je aktivna?
+			my %sth0=TOM::Database::SQL::execute(
+			qq{SELECT ID FROM $App::210::db_name.a210_page WHERE ID_entity=? AND lng=? AND status IN ('Y','L') LIMIT 1},
+			'bind'=>[$relation->{'l_ID_entity'},$env{'lng'}],'quiet'=>1,
+				'-cache' => 600,
+				'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+					'db_name' => $App::210::db_name,
+					'tb_name' => 'a210_page',
+				})
+			);
+			next unless $sth0{'rows'};
+			my %db0_line=$sth0{'sth'}->fetchhash();
+			
+			$category=$db0_line{'ID'};
+			last;
+		}
+		last if $category;
+	}
+	
+	if ($TOM::CACHE && $TOM::CACHE_memcached)
+	{
+		$Ext::CacheMemcache::cache->set(
+			'namespace' => "fnc_cache",
+			'key' => 'App::910::functions::_a210_by_cat::'.$cache_key,
+			'value' => {
+				'time' => time(),
+				'value' => $category
+			},
+			'expiration' => '3600S'
+		);
+	}
+	
+	return $category;
+}
 
 =head1 AUTHORS
 
