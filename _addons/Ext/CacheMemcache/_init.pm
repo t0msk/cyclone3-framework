@@ -21,22 +21,40 @@ Tested with memcached-1.1.2
 
 =cut
 
+our $fast;
+
 BEGIN
 {
 	main::_log("<={LIB} ".__PACKAGE__);
 	my $dir=(__FILE__=~/^(.*)\//)[0].'/src';
-	unshift @INC, $dir;
+	
+	eval {require Cache::Memcached::Managed};
+	if ($@)
+	{
+		main::_log("<={LIB:local} Cache::Memcached::Managed");
+		unshift @INC, $dir;
+		require Cache::Memcached;
+		require Cache::Memcached::Managed;
+		shift @INC;
+	}
+	else
+	{
+		main::_log("<={LIB:dist} Cache::Memcached::Managed");
+	}
+	
+	eval {require Cache::Memcached::Fast};
+	if (!$@)
+	{
+		main::_log("<={LIB:dist} Cache::Memcached::Fast");
+		$fast=1;
+	}
+	else
+	{
+		main::_log("<={LIB} Cache::Memcached::Fast not available",1);
+	}
 }
 
 use TOM::System::process;
-
-BEGIN
-{
-	require Cache::Memcached;
-	require Cache::Memcached::Managed;
-}
-
-BEGIN {shift @INC;}
 
 our $cache;
 #our $cache_available;
@@ -184,7 +202,12 @@ sub connect
 	}
 	
 	main::_log("connecting to memcached servers");
-	$cache = Cache::Memcached::Managed->new($TOM::CACHE_memcached_servers);
+	my %connect_set;
+	$connect_set{'memcached_class'} = 'Cache::Memcached::Fast' if $fast;
+	$cache = Cache::Memcached::Managed->new(
+		'data'=>$TOM::CACHE_memcached_servers,
+		%connect_set
+	);
 	$cache->{'debug'}=$debug;
 	
 	if ($cache)
@@ -226,7 +249,7 @@ sub connect
 # connect automatically
 if ($TOM::CACHE_memcached)
 {
-	&memcached_start();
+#	&memcached_start();
 	&connect();
 }
 
