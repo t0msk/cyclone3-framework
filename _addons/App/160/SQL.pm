@@ -564,7 +564,7 @@ sub get_relations
 	# Memcached key
 	my $use_cache=1;
 	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'l_prefix'}.'::'.$env{'l_table'}.'::'.$env{'l_ID_entity'};
-	if (!$env{'l_prefix'} || !$env{'l_table'} || !$env{'l_ID_entity'})
+	if (!$env{'l_prefix'} || !$env{'l_table'})
 	{
 		# don't use cache, when cached info is not related to atomized cache (ID_entity)
 		$use_cache=0;
