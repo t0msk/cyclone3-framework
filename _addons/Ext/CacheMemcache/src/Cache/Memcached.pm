@@ -1,4 +1,4 @@
-# $Id: Memcached.pm 811 2009-05-05 01:32:37Z bradfitz $
+# $Id$
 #
 # Copyright (c) 2003, 2004  Brad Fitzpatrick <brad@danga.com>
 #
@@ -18,6 +18,7 @@ use Time::HiRes ();
 use String::CRC32;
 use Errno qw( EINPROGRESS EWOULDBLOCK EISCONN );
 use Cache::Memcached::GetParser;
+use Encode ();
 use fields qw{
     debug no_rehash stats compress_threshold compress_enable stat_callback
     readonly select_timeout namespace namespace_len servers active buckets
@@ -25,6 +26,7 @@ use fields qw{
     bucketcount _single_sock _stime
     connect_timeout cb_connect_fail
     parser_class
+    buck2sock buck2sock_generation
 };
 
 # flag definitions
@@ -34,11 +36,12 @@ use constant F_COMPRESS => 2;
 # size savings required before saving compressed value
 use constant COMPRESS_SAVINGS => 0.20; # percent
 
-use vars qw($VERSION $HAVE_ZLIB $FLAG_NOSIGNAL);
-$VERSION = "1.26";
+use vars qw($VERSION $HAVE_ZLIB $FLAG_NOSIGNAL $HAVE_SOCKET6);
+$VERSION = "1.30";
 
 BEGIN {
     $HAVE_ZLIB = eval "use Compress::Zlib (); 1;";
+    $HAVE_SOCKET6 = eval "use Socket6 qw(AF_INET6 PF_INET6); 1;";
 }
 
 my $HAVE_XS = eval "use Cache::Memcached::GetParserXS; 1;";
@@ -54,7 +57,7 @@ eval { $FLAG_NOSIGNAL = MSG_NOSIGNAL; };
 
 my %host_dead;   # host -> unixtime marked dead until
 my %cache_sock;  # host -> socket
-my @buck2sock;   # bucket number -> $sock
+my $socket_cache_generation = 1; # Set to 1 here because below the buck2sock_generation is set to 0, keep them in order.
 
 my $PROTO_TCP;
 
@@ -66,6 +69,8 @@ sub new {
 
     my $args = (@_ == 1) ? shift : { @_ };  # hashref-ify args
 
+    $self->{'buck2sock'}= [];
+    $self->{'buck2sock_generation'} = 0;
     $self->set_servers($args->{'servers'});
     $self->{'debug'} = $args->{'debug'} || 0;
     $self->{'no_rehash'} = $args->{'no_rehash'};
@@ -99,7 +104,9 @@ sub set_servers {
     $self->{'buckets'} = undef;
     $self->{'bucketcount'} = 0;
     $self->init_buckets;
-    @buck2sock = ();
+
+    # We didn't close any sockets, so we reset the buck2sock generation, not increment the global socket cache generation.
+    $self->{'buck2sock_generation'} = 0;
 
     $self->{'_single_sock'} = undef;
     if (@{$self->{'servers'}} == 1) {
@@ -150,8 +157,13 @@ sub enable_compress {
 }
 
 sub forget_dead_hosts {
+    my Cache::Memcached $self = shift;
     %host_dead = ();
-    @buck2sock = ();
+
+    # We need to globally recalculate our buck2sock in all objects, so we increment the global generation.
+    $socket_cache_generation++;
+
+    return 1;
 }
 
 sub set_stat_callback {
@@ -163,7 +175,7 @@ sub set_stat_callback {
 my %sock_map;  # stringified-$sock -> "$ip:$port"
 
 sub _dead_sock {
-    my ($sock, $ret, $dead_for) = @_;
+    my ($self, $sock, $ret, $dead_for) = @_;
     if (my $ipport = $sock_map{$sock}) {
         my $now = time();
         $host_dead{$ipport} = $now + $dead_for
@@ -171,18 +183,24 @@ sub _dead_sock {
         delete $cache_sock{$ipport};
         delete $sock_map{$sock};
     }
-    @buck2sock = ();
+    # We need to globally recalculate our buck2sock in all objects, so we increment the global generation.
+    $socket_cache_generation++;
+
     return $ret;  # 0 or undef, probably, depending on what caller wants
 }
 
 sub _close_sock {
-    my ($sock) = @_;
+    my ($self, $sock) = @_;
     if (my $ipport = $sock_map{$sock}) {
         close $sock;
         delete $cache_sock{$ipport};
         delete $sock_map{$sock};
     }
-    @buck2sock = ();
+
+    # We need to globally recalculate our buck2sock in all objects, so we increment the global generation.
+    $socket_cache_generation++;
+
+    return 1;
 }
 
 sub _connect_sock { # sock, sin, timeout
@@ -224,13 +242,17 @@ sub _connect_sock { # sock, sin, timeout
     return $ret;
 }
 
-sub sock_to_host { # (host)
+sub sock_to_host { # (host)  #why is this public? I wouldn't have to worry about undef $self if it weren't.
     my Cache::Memcached $self = ref $_[0] ? shift : undef;
     my $host = $_[0];
     return $cache_sock{$host} if $cache_sock{$host};
 
     my $now = time();
-    my ($ip, $port) = $host =~ /(.*):(\d+)/;
+    my ($ip, $port) = $host =~ /(.*):(\d+)$/;
+    if (defined($ip)) {
+        $ip =~ s/[\[\]]//g;  # get rid of optional IPv6 brackets
+    }
+
     return undef if
         $host_dead{$host} && $host_dead{$host} > $now;
     my $sock;
@@ -243,10 +265,19 @@ sub sock_to_host { # (host)
     {
         # if a preferred IP is known, try that first.
         if ($self && $self->{pref_ip}{$ip}) {
-            socket($sock, PF_INET, SOCK_STREAM, $proto);
-            $sock_map{$sock} = $host;
             my $prefip = $self->{pref_ip}{$ip};
-            $sin = Socket::sockaddr_in($port,Socket::inet_aton($prefip));
+            if ($HAVE_SOCKET6 && index($prefip, ':') != -1) {
+                no strict 'subs';  # for PF_INET6 and AF_INET6, weirdly imported
+                socket($sock, PF_INET6, SOCK_STREAM, $proto);
+                $sock_map{$sock} = $host;
+                $sin = Socket6::pack_sockaddr_in6($port,
+                                                  Socket6::inet_pton(AF_INET6, $prefip));
+            } else {
+                socket($sock, PF_INET, SOCK_STREAM, $proto);
+                $sock_map{$sock} = $host;
+                $sin = Socket::sockaddr_in($port, Socket::inet_aton($prefip));
+            }
+
             if (_connect_sock($sock,$sin,$self->{connect_timeout})) {
                 $connected = 1;
             } else {
@@ -259,14 +290,23 @@ sub sock_to_host { # (host)
 
         # normal path, or fallback path if preferred IP failed
         unless ($connected) {
-            socket($sock, PF_INET, SOCK_STREAM, $proto);
-            $sock_map{$sock} = $host;
-            $sin = Socket::sockaddr_in($port,Socket::inet_aton($ip));
+            if ($HAVE_SOCKET6 && index($ip, ':') != -1) {
+                no strict 'subs';  # for PF_INET6 and AF_INET6, weirdly imported
+                socket($sock, PF_INET6, SOCK_STREAM, $proto);
+                $sock_map{$sock} = $host;
+                $sin = Socket6::pack_sockaddr_in6($port,
+                                                  Socket6::inet_pton(AF_INET6, $ip));
+            } else {
+                socket($sock, PF_INET, SOCK_STREAM, $proto);
+                $sock_map{$sock} = $host;
+                $sin = Socket::sockaddr_in($port, Socket::inet_aton($ip));
+            }
+
             my $timeout = $self ? $self->{connect_timeout} : 0.25;
-            unless (_connect_sock($sock,$sin,$timeout)) {
+            unless (_connect_sock($sock, $sin, $timeout)) {
                 my $cb = $self ? $self->{cb_connect_fail} : undef;
                 $cb->($ip) if $cb;
-                return _dead_sock($sock, undef, 20 + int(rand(10)));
+                return _dead_sock($self, $sock, undef, 20 + int(rand(10)));
             }
         }
     } else { # it's a unix domain/local socket
@@ -277,7 +317,7 @@ sub sock_to_host { # (host)
         unless (_connect_sock($sock,$sin,$timeout)) {
             my $cb = $self ? $self->{cb_connect_fail} : undef;
             $cb->($host) if $cb;
-            return _dead_sock($sock, undef, 20 + int(rand(10)));
+            return _dead_sock($self, $sock, undef, 20 + int(rand(10)));
         }
     }
 
@@ -325,12 +365,15 @@ sub init_buckets {
 }
 
 sub disconnect_all {
+    my Cache::Memcached $self = shift;
     my $sock;
     foreach $sock (values %cache_sock) {
         close $sock;
     }
     %cache_sock = ();
-    @buck2sock = ();
+
+    # We need to globally recalculate our buck2sock in all objects, so we increment the global generation.
+    $socket_cache_generation++;
 }
 
 # writes a line, then reads result.  by default stops reading after a
@@ -374,7 +417,7 @@ sub _write_and_read {
             next
                 if not defined $res and $!==EWOULDBLOCK;
             unless ($res > 0) {
-                _close_sock($sock);
+                $self->_close_sock($sock);
                 return undef;
             }
             if ($res == length($line)) { # all sent
@@ -389,7 +432,7 @@ sub _write_and_read {
             next
                 if !defined($res) and $!==EWOULDBLOCK;
             if ($res == 0) { # catches 0=conn closed or undef=error
-                _close_sock($sock);
+                $self->_close_sock($sock);
                 return undef;
             }
             $offset += $res;
@@ -398,7 +441,7 @@ sub _write_and_read {
     }
 
     unless ($state == 2) {
-        _dead_sock($sock); # improperly finished
+        $self->_dead_sock($sock); # improperly finished
         return undef;
     }
 
@@ -440,6 +483,14 @@ sub set {
     _set("set", @_);
 }
 
+sub append {
+    _set("append", @_);
+}
+
+sub prepend {
+    _set("prepend", @_);
+}
+
 sub _set {
     my $cmdname = shift;
     my Cache::Memcached $self = shift;
@@ -451,11 +502,13 @@ sub _set {
 
     use bytes; # return bytes from length()
 
+    my $app_or_prep = $cmdname eq 'append' || $cmdname eq 'prepend' ? 1 : 0;
     $self->{'stats'}->{$cmdname}++;
     my $flags = 0;
     $key = ref $key ? $key->[1] : $key;
 
     if (ref $val) {
+        die "append or prepend cannot take a reference" if $app_or_prep;
         local $Carp::CarpLevel = 2;
         $val = Storable::nfreeze($val);
         $flags |= F_STORABLE;
@@ -465,7 +518,7 @@ sub _set {
     my $len = length($val);
 
     if ($self->{'compress_threshold'} && $HAVE_ZLIB && $self->{'compress_enable'} &&
-        $len >= $self->{'compress_threshold'}) {
+        $len >= $self->{'compress_threshold'} && !$app_or_prep) {
 
         my $c_val = Compress::Zlib::memGzip($val);
         my $c_len = length($c_val);
@@ -537,6 +590,11 @@ sub get {
     # TODO: make a fast path for this?  or just keep using get_multi?
     my $r = $self->get_multi($key);
     my $kval = ref $key ? $key->[1] : $key;
+
+    # key reconstituted from server won't have utf8 on, so turn it off on input
+    # scalar to allow hash lookup to succeed
+    Encode::_utf8_off($kval) if Encode::is_utf8($kval);
+
     return $r->{$kval};
 }
 
@@ -562,6 +620,12 @@ sub get_multi {
     } else {
         my $bcount = $self->{'bucketcount'};
         my $sock;
+
+        if ($self->{'buck2sock_generation'} != $socket_cache_generation) {
+            $self->{'buck2sock_generation'} = $socket_cache_generation;
+            $self->{'buck2sock'} = [];
+        }
+
       KEY:
         foreach my $key (@_) {
             my ($hv, $real_key) = ref $key ?
@@ -577,9 +641,9 @@ sub get_multi {
                 #    and last;
 
                 # but this variant doesn't crash:
-                $sock = $buck2sock[$bucket] || $self->sock_to_host($self->{buckets}[ $bucket ]);
+                $sock = $self->{'buck2sock'}->[$bucket] || $self->sock_to_host($self->{buckets}[ $bucket ]);
                 if ($sock) {
-                    $buck2sock[$bucket] = $sock;
+                    $self->{'buck2sock'}->[$bucket] = $sock;
                     last;
                 }
 
@@ -639,7 +703,7 @@ sub _load_multi {
         }
 
         close $sock;
-        _dead_sock($sock);
+        $self->_dead_sock($sock);
     };
 
     # $finalize->($key, $flags)
@@ -847,6 +911,7 @@ sub stats {
     my @hosts = @{$self->{'buckets'}};
   HOST: foreach my $host (@hosts) {
         my $sock = $self->sock_to_host($host);
+        next HOST unless $sock;
       TYPE: foreach my $typename (grep !/^self$/, @$types) {
             my $type = $typename eq 'misc' ? "" : " $typename";
             my $lines = _write_and_read($self, $sock, "stats$type\r\n", sub {
@@ -854,7 +919,7 @@ sub stats {
                 return $$bref =~ /^(?:END|ERROR)\r?\n/m;
             });
             unless ($lines) {
-                _dead_sock($sock);
+                $self->_dead_sock($sock);
                 next HOST;
             }
 
@@ -899,9 +964,10 @@ sub stats_reset {
 
   HOST: foreach my $host (@{$self->{'buckets'}}) {
         my $sock = $self->sock_to_host($host);
+        next HOST unless $sock;
         my $ok = _write_and_read($self, $sock, "stats reset");
         unless (defined $ok && $ok eq "RESET\r\n") {
-            _dead_sock($sock);
+            $self->_dead_sock($sock);
         }
     }
     return 1;
@@ -977,6 +1043,10 @@ Use C<namespace> to prefix all keys with the provided namespace value.
 That is, if you set namespace to "app1:" and later do a set of "foo"
 to "bar", memcached is actually seeing you set "app1:foo" to "bar".
 
+Use C<connect_timeout> and C<select_timeout> to set connection and
+polling timeouts. The C<connect_timeout> defaults to .25 second, and
+the C<select_timeout> defaults to 1 second.
+
 The other useful key is C<debug>, which when set to true will produce
 diagnostics on STDERR.
 
@@ -1007,6 +1077,14 @@ Sets the C<no_rehash> flag.  See C<new> constructor for more information.
 =item C<set_compress_threshold>
 
 Sets the compression threshold. See C<new> constructor for more information.
+
+=item C<set_connect_timeout>
+
+Sets the connect timeout. See C<new> constructor for more information.
+
+=item C<set_select_timeout>
+
+Sets the select timeout. See C<new> constructor for more information.
 
 =item C<enable_compress>
 

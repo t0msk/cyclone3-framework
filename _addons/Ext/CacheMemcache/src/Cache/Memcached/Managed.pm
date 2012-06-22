@@ -2,7 +2,7 @@ package Cache::Memcached::Managed;
 
 # Make sure we have version info for this module
 
-$VERSION = '0.20';
+$VERSION= '0.24';
 
 # Make sure we're as strict as possible
 # With as much feedback that we can get
@@ -65,87 +65,110 @@ BEGIN {
 # OUT: 1 instantiated object
 
 sub new {
-
-# Obtain the class
-# Obtain the parameter hash
-
     my $class = shift;
     my %self = @_ < 2 ? (data => (shift || '127.0.0.1:11211')) : @_;
 
-# If we want to force an inactive object
-#  Make sure we have the code to do it
-#  Return the inactive object
-
+    # want to force an inactive object
     if (delete $self{'inactive'}) {
         require Cache::Memcached::Managed::Inactive;
         return Cache::Memcached::Managed::Inactive->new;
     }
 
-# Set the default expiration if not set already
-# Set the delimiter if not set already
-# Set the namespace if not set already
+    # set defaults
+    $self{expiration} = $expiration  if !$self{expiration};
+    $self{delimiter}  = $default_del if !length( $self{delimiter} || '' );
+    $self{namespace}  = $>           if !defined $self{namespace};
 
-    $self{'expiration'} = $expiration  unless $self{'expiration'};
-    $self{'delimiter'}  = $default_del unless length( $self{'delimiter'}||'' );
-    $self{'namespace'}  = $>           unless defined $self{'namespace'};
-
-# Set the group names if not set already
-# Set the group names as hash for easy checking
-
-    $self{'group_names'}  =
-     [$self{'group_names'} ? sort @{$self{'group_names'}} : 'group'];
-    $self{'_group_names'} = {map {$_ => undef} @{$self{'group_names'}}};
+    # set group names
+    $self{group_names}  =
+      [ $self{group_names} ? sort @{ $self{group_names} } : 'group' ];
+    $self{_group_names} = { map { $_ => undef } @{ $self{group_names} } };
 
     # obtain client class
     my $memcached_class = $self{memcached_class} ||= 'Cache::Memcached';
     die $@ if !eval "require $memcached_class; 1";
 
-# For both backends we need
-#  Reloop if there is nothing there
-#  Reloop if we already have blessed object
-#  Make sure we can make Cache::Memcached objects ourselves
-#  Create shortcut to type
-#  Initialize parameters
+    # check both backends
+    my @all_servers;
+  BACKEND:
+    foreach ( qw( data directory ) ) {
 
-    foreach (qw(data directory)) {
-        next unless $self{$_};
-        next if blessed $self{$_};
-        my $type = reftype $self{$_};
-        my $parameters;
+        # nothing to do
+        my $spec = $self{$_};
+        next BACKEND if !$spec;
+        
+        # giving an existing object
+        if ( blessed $spec ) {
 
-#  If it is just a scalar
-#   Assume it's a single server specification only
-#  Elsif it is a list ref
-#   Assume it's a multiple server specification only
-#  Elseif it is a hash ref
-#   Assume it is a complete parameter specification
-#  Else
-#   Quit because we don't know how to handle
-#  Attempt to create the object
-
-        if (!defined $type) {
-            $parameters = {servers => [split ',',$self{$_}]};
-        } elsif ($type eq 'ARRAY') {
-            $parameters = {servers => $self{$_}};
-        } elsif ($type eq 'HASH') {
-            $parameters = $self{$_};
-        } else {
-            die "Don't know how to handle '$self{$_}' as server specification";
+            # unfortunately, there does not seem to be an API for this
+            if ( my $servers = $spec->{servers} ) {
+                push @all_servers, @{$servers};
+                next BACKEND;
+            }
         }
-        $self{$_} = $memcached_class->new( $parameters );
+
+        # assume a single server spec
+        my $parameters;
+        my $type = reftype $spec;
+        if ( !$type ) {
+            my @servers = split ',', $spec;
+            push @all_servers, @servers;
+            $parameters = { servers => \@servers };
+        }
+
+        # list ref of servers
+        elsif ( $type eq 'ARRAY' ) {
+            push @all_servers, @{$spec};
+            $parameters = { servers => $spec };
+        }
+
+        # ready made parameter hash
+        elsif ( $type eq 'HASH' ) {
+            $parameters = $spec;
+
+            # attempt to find server spec in there
+            $spec = $parameters->{servers};
+            $type = reftype $spec;
+
+            # also need to fixup config
+            if ( !$type ) {
+                my @servers = split ',', $spec;
+                push @all_servers, @servers;
+                $parameters->{servers} = \@servers;
+            }
+
+            # regular array spec already
+            elsif ( $type eq 'ARRAY' ) {
+                push @all_servers, @{$spec};
+            }
+
+            # huh?
+            else {
+                undef $parameters;
+            }
+        }
+
+        # huh?
+        die "Don't know how to handle '$spec' as server specification"
+          if !$parameters;
+
+        # create the object for the backend
+        $self{$_} = $memcached_class->new($parameters);
     }
 
-# Quit now if no data server available
-# Set directory server if there was no data server
-# Remember the pid for fork checking
+    # huh?
+    die "No valid data server specification found" if !blessed $self{data};
 
-    die "No valid data server specification found" unless blessed $self{'data'};
-    $self{'directory'} = $self{'data'} unless blessed $self{'directory'};
-    $self{'_last_pid'} = $$;
+    # set directory server as data server if there was no data server
+    $self{directory} = $self{data} if !blessed $self{directory};
 
-# Return the hash as blessed object
+    # remember the pid for fork checking
+    $self{_last_pid} = $$;
 
-    bless \%self,$class;
+    # set server specification
+    $self{servers} = [ sort @all_servers ];
+
+    return bless \%self,$class;
 } #new
 
 #---------------------------------------------------------------------------
@@ -389,7 +412,7 @@ sub flush_all {
 
     my ($self,$interval) = @_;
     my $data = $self->data;
-    my @server = @{$data->{'servers'}};
+    my @server = $self->servers;
 
 # Use default interval if none specified
 # Initialize number of servers flushed
@@ -749,27 +772,28 @@ sub replace { shift->_do( 'replace',@_ ) } #replace
 # OUT: 1 returns true
 
 sub reset {
-
-# Obtain the object
-# Obtain local copy of data and directory object
-
     my $self = shift;
-    my ($data,$directory) = ($self->data,$self->directory);
 
-# For all of the Cache::Memcached objects we need to handle
-#  Disconnect all sockets
-#  Kickstart connection logic
+    # obtain local copy of data and directory object
+    my ( $data, $directory ) = ( $self->data, $self->directory );
 
-    foreach ($data == $directory ? ($data) : ($data,$directory)) {
-        $_->disconnect_all;
-        $_->forget_dead_hosts; # not sure official C::Memcached API
+    # all of the Cache::Memcached objects we need to handle
+    foreach ( $data == $directory ? ($data) : ( $data, $directory ) ) {
+
+        # disconnect all sockets
+        $_->disconnect_all    if $_->can('disconnect_all');;
+
+        # kickstart connection logic
+        $_->forget_dead_hosts if $_->can('forget_dead_hosts');
     }
 
-# Make sure we try to connect again
-# Set last pid used flag
-
+    # make sure we try to connect again
     $self->_mark_connected;
+
+    # set last pid used flag
     $self->{'_last_pid'} = $$;
+
+    return 1;
 } #reset
 
 #---------------------------------------------------------------------------
@@ -805,14 +829,9 @@ sub set { shift->_do( 'set',@_ ) } #set
 
 sub servers {
 
-# Obtain the object
-# Obtain the server specifications, weed out the double ones
-# Return the specifications sorted or as a hash ref
-
-    my $self = shift;
-    my %server =
-     map {$_ => undef} map {@{$self->$_->{'servers'}}} qw(data directory);
-    return wantarray ? sort keys %server : \%server;
+    return wantarray
+      ? @{ shift->{servers} }
+      : { map { $_ => undef } @{ shift->{servers} } };
 } #servers
 
 #---------------------------------------------------------------------------
@@ -881,7 +900,7 @@ sub stats {
     my %todo = @_ ? map {$_ => undef} @_ : %{$self->servers};
     my %result;
     foreach my $cache ($self->data,$self->directory) {
-        foreach my $host (@{$cache->{'servers'}}) {
+        foreach my $host ( $self->servers ) {
             next unless exists $todo{$host} and not exists $result{$host};
             $result{$host} = {
              map {s#^STAT ##; split m#\s+#}
@@ -1269,22 +1288,26 @@ sub _do {
         return $result;
     }
 
-# Obtain the directory server
-# If we still don't have a good result
-#  If we can obtain a bucket for this data key
-#   If we can lose the prefix
-#    Increment error for given server
-#  Block all access for this process
-#  Return indicating error
-
+    # still don't have a good result
     my $directory = $self->directory;
-    unless ($result) {
-        if (my $bucket = $data->get_sock( $data_key )) {
-            if ($bucket =~ s#^Sock_##) {
-                $directory->add( $bucket,1 ) unless $directory->incr( $bucket );
+    if ( !$result ) {
+
+        # can get the bucket
+        if ( $data->can('get_sock') ) {
+            if ( my $bucket = $data->get_sock($data_key) ) {
+
+                # can lose prefix, increment error on server
+                if ( $bucket =~ s#^Sock_## ) {
+                    $directory->add( $bucket, 1 )
+                      if !$directory->incr($bucket);
+                }
             }
         }
+
+        # block all access for this process
         $self->{'_disconnected'} = 1;
+
+        # return indicating error
         return undef;
     }
 
@@ -1345,8 +1368,12 @@ sub _expiration2seconds {
 # Return now if invalid characters found
 
     my $expiration = $_[1];
-    return unless defined $expiration;
-    return unless $expiration =~ m#^[sSmMhHdDwW\d]+$#;
+    return if !defined $expiration;
+    return if $expiration !~ m#^[sSmMhHdDwW\d]+$#;
+
+# Just a second specification
+
+    return $expiration if $expiration !~ m#\D#;
 
 # Convert seconds into seconds
 # Convert minutes into seconds
@@ -1491,18 +1518,17 @@ sub _mark_disconnected {
 # OUT: 1..N response lines
 
 sub _morelines {
+    my ( $self, $cache, $host, $send, $bucket ) = @_;
 
-# Obtain the parameters
-# Return now if we couldn't get a socket for the indicated bucket
+    # don't have any sock to host mapping, so quit
+    return if !$cache->can('sock_to_host');
 
-    my ($self,$cache,$host,$send,$bucket) = @_;
-    return unless my $socket = $cache->sock_to_host( $host );
+    # couldn't get a socket for given host
+    return unless my $socket = $cache->sock_to_host($host);
 
-# Return result of fetch, without newlines
-
-    map {
+    return map {
      s#[\r\n]+$##; m#^(?:END|ERROR)# ? () : ($_)
-    } $cache->run_command( $socket,$send."\r\n" );
+    } $cache->run_command( $socket, $send. "\r\n" );
 } #_morelines
 
 #---------------------------------------------------------------------------
@@ -1516,27 +1542,29 @@ sub _morelines {
 # OUT: 1 response or whether expected response returned
 
 sub _oneline {
+    my ( $self, $cache, $send, $bucket, $expect ) = @_;
 
-# Obtain the parameters
-# Return now if we couldn't get a socket for the indicated bucket
+    # can't get any socket, so quit
+    return if !$cache->can('get_sock');
 
-    my ($self,$cache,$send,$bucket,$expect) = @_;
+    # couldn't get a socket for the indicated bucket
     return unless my $socket = $cache->get_sock( [$bucket || 0,0] );
 
-# Make sure we can call a "_oneline" compatible method
+    # make sure we can call a "_oneline" compatible method
+    $_oneline ||=
+      $cache->can( '_oneline' ) ||
+      $cache->can( '_write_and_read' )
+      or die "Unsupported version of " . ( blessed $cache ) . "\n";
 
-    $_oneline ||= $cache->can( '_oneline' ) || $cache->can( '_write_and_read' )
-      or die "Unsupported version of ".(blessed $cache)."\n";
-
-# Send the request and obtain the response
-# Return response if we don't want to check here
-# Return whether result was expected
-
+    # obtain response
     my $response = defined $send
-     ? $_oneline->( $cache, $socket, $send."\r\n" )
+     ? $_oneline->( $cache, $socket, $send . "\r\n" )
      : $_oneline->( $cache, $socket );
-    return $response unless defined $expect;
-    $response and $expect."\r\n" eq $response;
+
+    # nothing to check against, just give back what we got
+    return $response if !defined $expect;
+
+    return ( $response and $expect."\r\n" eq $response );
 } #_oneline
 
 #---------------------------------------------------------------------------
@@ -1553,6 +1581,33 @@ sub _unique_key {
 
     join $_[0]->delimiter,$server,$$,time,++$unique;
 } #_unique_key
+
+#---------------------------------------------------------------------------
+# _spec2servers
+#
+# Converts server spec to list ref of servers
+#
+#  IN: 1 server spec
+#      2 recursing flag (only used internally)
+# OUT: 1 list ref of servers
+
+sub _spec2servers {
+    my ( $spec, $recursing ) = @_;
+
+    # assume scalar definition if not a ref
+    my $type = reftype $spec;
+    if ( !defined $type ) {
+        return [ split ',', $spec ];
+    }
+
+    # list ref of servers
+    elsif ( $type eq 'ARRAY' ) {
+        return $spec;
+    }
+
+    # huh?
+    die "Don't know how to handle '$spec' as server specification";
+}    #_spec2servers
 
 #---------------------------------------------------------------------------
 
@@ -1575,7 +1630,7 @@ Cache::Memcached::Managed - provide API for managing cached information
  $cache->set( value      => $value,
               id         => $id,
               key        => $key,
-              version    => 1.1,
+              version    => "1.1",
               namespace  => 'foo',
               expiration => '1D', );
 
@@ -1586,7 +1641,7 @@ Cache::Memcached::Managed - provide API for managing cached information
 
 =head1 VERSION
 
-This documentation describes version 0.20.
+This documentation describes version 0.22.
 
 =head1 DIFFERENCES FROM THE Cache::Memcached API
 
@@ -1616,7 +1671,7 @@ a Class::DBI object).  If necessary, a unique ID can be created automatically
 
 The caller's package provides an identifying version (by default), allowing
 differently formatted data-structures caused by source code changes, to live
-seperately from each other in the cache.
+separately from each other in the cache.
 
 =head2 namespace support
 
@@ -1725,6 +1780,10 @@ A specific version can be specified with each of the L<add>, L<decr>,
 L<get>, L<get_multi>, L<incr>, L<replace> and L<set> to indicate the link
 with the group of the information being cached.
 
+ Please always use a string as the version indicator.  Using floating point
+ values may yield unexpected results, where B<1.0> would actually use B<1>
+ as the version.
+
 =head2 namespace management
 
 The namespace indicates the realm to which the data belongs.  By default,
@@ -1746,7 +1805,7 @@ The data server can be obtained with the L<data> object.
 
 The data key identifies a piece of data in the L<"data server">.  It is
 formed by appending the namespace (by default the user id of the process),
-L<version>, L<key> and L<ID>, seperated by the L<delimiter>.
+L<version>, L<key> and L<ID>, separated by the L<delimiter>.
 
 If a scalar value is specified as an ID, then that value is used.
 
@@ -1807,7 +1866,7 @@ L<"group management">.  If no L<directory> server was specified, then the
 data server will be assumed.
 
 If there are multiple memcached servers used for the L<"data server">, then
-it is advised to use a seperate directory server (as a failure in one of
+it is advised to use a separate directory server (as a failure in one of
 the memcached backend servers will leave you with an incomplete directory
 otherwise).
 
@@ -1883,7 +1942,7 @@ following fields:
 The specification of the memcached server backend(s) for the L<"data server">.
 It should either be:
 
- - string with comma seperated memcached server specification
+ - string with comma separated memcached server specification
  - list ref with memcached server specification
  - hash ref with Cache::Memcached object specification
  - blessed object adhering to the Cache::Memcached API
@@ -1921,7 +1980,7 @@ some encoding issues within L<Cache::Memcached> regarding null bytes.
 The specification of the memcached server backend(s) for the
 L<"directory server">.  It should either be:
 
- - string with comma seperated memcached server specification
+ - string with comma separated memcached server specification
  - list ref with memcached server specification
  - hash ref with Cache::Memcached object specification
  - blessed object adhering to the Cache::Memcached API
@@ -2173,7 +2232,7 @@ Initialize contents of all of the memcached backend servers of the
 L<"data server">.  The input parameter specifies interval between flushes
 of backend memcached servers, default is the L<flush_interval> value
 implicitely) specified with L<new>.  Returns whether all memcached L<servers>
-were succesfully flushed.
+were successfully flushed.
 
 Please note that this method returns immediately after instructing each of
 the memcached servers.  Also note that the timed flush_all functionality has
@@ -2197,7 +2256,7 @@ Returns the default flush interval values used with L<flush_all>, as
 
  my $value = $cache->get( id        => $id,     # optional
                           key       => $key,    # optional
-                          version   => '1.0',   # optional
+                          version   => '1.1',   # optional
                           namespace => 'foo',   # optional
                         );
 
@@ -2392,7 +2451,7 @@ is specified with L<new>.
                id         => $id,     # default: key only
                key        => $key,    # default: caller environment
                expiration => '3H',    # default: $cache->expiration
-               version    => '1.0',   # default: key environment
+               version    => '1.1',   # default: key environment
                namespace  => 'foo',   # default: $cache->namespace
                group      => 'bar',   # default: none
              );
@@ -2426,7 +2485,7 @@ Obtain the default namespace, as (implicitely) specified with L<new>.
                   id         => $id,     # default: key only
                   key        => $key,    # default: caller environment
                   expiration => '3H',    # default: $cache->expiration
-                  version    => '1.0',   # default: key environment
+                  version    => '1.1',   # default: key environment
                   namespace  => 'foo',   # default: $cache->namespace
                 );
 
@@ -2471,7 +2530,7 @@ not responding.
               id         => $id,     # default: key only
               key        => $key,    # default: caller environment
               expiration => '3H',    # default: $cache->expiration
-              version    => '1.0',   # default: key environment
+              version    => '1.1',   # default: key environment
               namespace  => 'foo',   # default: $cache->namespace
               group      => 'bar',   # default: none
             );
@@ -2620,7 +2679,7 @@ This would put the value C<$value> into the cache, linked to the group
 'event1'.  Since we're not interested in the id of the event, but want to
 make sure it is always unique, the pseudo id ':unique' is specified.
 
-A recurring proces, usually a cron job, would then need to do the following
+A recurring process, usually a cron job, would then need to do the following
 to grab all of the values cached:
 
  my @value = $cache->grab_group( group => 'event1' );
@@ -2734,7 +2793,7 @@ test-suite).
 =head1 THEORY OF OPERATION
 
 The group management is implemented by keeping a type of directory information
-in a (seperate) directory memcached server.
+in a (separate) directory memcached server.
 
 For each L<group|"group management"> one directory key is maintained in the
 directory memcached server.  This key consists of the string
@@ -2847,7 +2906,7 @@ essentially starting again at 1.
 
 =head1 HISTORY
 
-This module started live as an internal module at BOOKINGS Online Hotel
+This module started life as an internal module at BOOKINGS Online Hotel
 Reservation, the foremost European on-line hotel booking portal.  With
 approval and funding of Bookings, this module was generalized and put on
 CPAN, for which Elizabeth Mattijsen would like to express her gratitude.
@@ -2856,6 +2915,7 @@ CPAN, for which Elizabeth Mattijsen would like to express her gratitude.
 
 (C) 2005, 2006 BOOKINGS
 (C) 2007, 2008 BOOKING.COM
+(C) 2012 Elizabeth Mattijsen
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
