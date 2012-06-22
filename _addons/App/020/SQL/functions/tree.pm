@@ -743,6 +743,20 @@ sub get_path
 	$cache{'-cache'}=$env{'-cache'} if $env{'-cache'};
 	$cache{'-cache_changetime'} = App::020::SQL::functions::_get_changetime(\%env) if $env{'-cache'};
 	
+	# get paths from cache
+	my $cache_key=$env{'db_h'}.':'.$env{'db_name'}.':'.$env{'tb_name'}.':'.$ID;
+	if ($TOM::CACHE && $TOM::CACHE_memcached && $main::FORM{'_rc'}!=-2)
+	{
+		my $cache=$Ext::CacheMemcache::cache->get(
+			'namespace' => "fnc_cache",
+			'key' => 'App::020::functions::tree::get_path::'.$cache_key
+		);
+		if ($cache->{'time'} > $cache{'-cache_changetime'})
+		{
+			return $cache->{'data'};
+		}
+	}
+	
 	my %data=App::020::SQL::functions::get_ID(
 		'ID'	=> $ID,
 		'db_h' => $env{'db_h'},
@@ -756,7 +770,7 @@ sub get_path
 			'lng' => 1,
 		},
 		'-slave' => $env{'-slave'},
-		'-cache' => $env{'-cache'}
+		%cache
 	);
 	
 	if (!$data{'ID'})
@@ -803,6 +817,19 @@ sub get_path
 		{
 			last;
 		}
+	}
+	
+	if ($TOM::CACHE && $TOM::CACHE_memcached)
+	{
+		$Ext::CacheMemcache::cache->set(
+			'namespace' => "fnc_cache",
+			'key' => 'App::020::functions::tree::get_path::'.$cache_key,
+			'value' => {
+				'time' => time(),
+				'data' => @path
+			},
+			'expiration' => '3600S'
+		);
 	}
 	
 	$t->close() if $debug;
