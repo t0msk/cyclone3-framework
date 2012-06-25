@@ -22,7 +22,7 @@ use XML::XPath;
 use XML::XPath::XMLParser;
 use TOM::L10n::codes;
 
-our $debug=0;
+our $debug=$main::debug || 0;
 our %objects;
 our $id;
 
@@ -54,7 +54,7 @@ sub new
 {
 	my $class=shift;
 	my %env=@_;
-	
+	undef $env{'lng'} if $env{'lng'} eq "auto";
 	TOM::L10n::codes::trans($env{'lng'});
 	$env{'lng'}="en-US" unless $env{'lng'};
 	$env{'level'}="auto" unless $env{'level'};
@@ -77,11 +77,21 @@ sub new
 	$obj->prepare_location();
 	$obj->{'uid'}=$obj->{'location'}.'/'.$env{'lng'};
 	
+	# modifytime of location
+	$obj->{'config'}->{'mtime'} = (stat($obj->{'location'}))[9];
+	
+	if ($objects{$obj->{'uid'}} && ($obj->{'config'}->{'mtime'} > $objects{$obj->{'uid'}}->{'config'}->{'mtime'}))
+	{
+		main::_log("{L10n} '$obj->{'location'}' expired, modified before ".( $obj->{'config'}->{'mtime'}-$objects{$obj->{'uid'}}->{'config'}->{'mtime'} )."s");
+		delete $objects{$obj->{'uid'}};
+	}
+	
 	# check if same location is already loaded in another object
 	# (location is unique identification of L10n)
 	# when no, proceed parsing this L10n source
 	if (!$objects{$obj->{'uid'}})
 	{
+		main::_log("<={L10n} '$obj->{'location'}'/'$obj->{'ENV'}->{'lng'}'");# if $debug;
 		# add this object into global $TOM::L10n::objects{} hash
 		$objects{$obj->{'uid'}}=$obj;
 		$id++;$L10n::id{$obj->{'uid'}}=$id; # add unique number to every one object
@@ -89,8 +99,13 @@ sub new
 		# add this location into ignore list
 		push @{$obj->{'ENV'}->{'ignore'}}, $obj->{'uid'};
 		$obj->prepare_xml();
+		$obj->{'config'}->{'mtime'}=(stat( $obj->{'location'} ))[9];
 		$obj->parse_header();
 		$obj->parse_string();
+	}
+	else
+	{
+#		main::_log("load cached L10n ".$obj->{'uid'});
 	}
 	
 	# create copy of object to return it as unique
@@ -101,8 +116,13 @@ sub new
 		$obj_return->{'location'}=$obj->{'location'};
 		$obj_return->{'uid'}=$obj->{'uid'};$obj_return->{'id'}=$obj->{'id'};
 		%{$obj_return->{'ENV'}}=%env;
-		%{$obj_return->{'string'}}=%{$objects{$obj->{'uid'}}{'string'}};
-		%{$obj_return->{'string_'}}=%{$objects{$obj->{'uid'}}{'string_'}};
+		if ($obj->{'location'})
+		{
+			%{$obj_return->{'string'}}=%{$objects{$obj->{'uid'}}{'string'}};
+			%{$obj_return->{'string_'}}=%{$objects{$obj->{'uid'}}{'string_'}};
+			# recovery header config to new object
+			%{$obj_return->{'config'}}=%{$objects{$obj->{'uid'}}{'config'}};
+		}
 		%L10n::string=%{$objects{$obj->{'uid'}}{'string'}};
 		# replace_variables only in root level of L10n not in l10n's called by <extend*>
 		$obj_return->process_string() if (caller)[0] ne "TOM::L10n";
@@ -173,7 +193,7 @@ sub prepare_location
 	else
 	{
 #		main::_log("XML '$self->{'location'}'");# if $debug;
-		main::_log("<={L10n} '$self->{'location'}'");# if $debug;
+#		main::_log("<={L10n} '$self->{'location'}'/'$self->{'ENV'}->{'lng'}'");# if $debug;
 	}
 	
 	return $self->{'location'};
@@ -210,6 +230,7 @@ sub parse_header
 			my $name=$node->getAttribute('name');
 			my $lng=$node->getAttribute('lng');
 			$lng=$self->{'ENV'}->{'lng'} unless $lng;
+			$lng=$self->{'ENV'}->{'lng'} if $lng eq "auto";
 			
 			main::_log("request to extend by level='$level' addon='$addon' name='$name' lng='$lng'") if $debug;
 			
@@ -224,6 +245,7 @@ sub parse_header
 			# add entries from inherited L10n
 			foreach (keys %{$extend->{'string'}})
 			{
+#				print "set $_\n";
 				$self->{'string'}{$_}=$extend->{'string'}{$_};
 				$self->{'string_'}{$_}=$extend->{'string_'}{$_};
 			}
