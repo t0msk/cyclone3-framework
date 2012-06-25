@@ -13,9 +13,6 @@ use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 
-use Digest::MD5  qw(md5 md5_hex md5_base64);
-
-
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
 
@@ -38,7 +35,8 @@ sub new
 	
 	my %env=@_;
 	
-	$env{'id'}=md5_hex(Encode::encode_utf8($env{'id'})) if $env{'id'};
+#	print "!$env{'id'}!\n";
+	$env{'id'}=TOM::Digest::hash($env{'id'}) if $env{'id'};
 	$env{'expire'}=$expiration if $env{'expire'} == 1; # don't cache to 1second
 	
 	if ($env{'sth'} && $env{'id'})

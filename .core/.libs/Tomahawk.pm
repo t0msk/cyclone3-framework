@@ -90,7 +90,6 @@ use Utils::vars;
 use Utils::datetime;
 use conv;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
-use Digest::MD5  qw(md5 md5_hex md5_base64);
 
 
 #use warnings;
@@ -364,7 +363,8 @@ sub module
 		foreach (sort keys %mdl_C){$null.=$_."=\"".$mdl_C{$_}."\"\n";}
 		
 		#$mdl_C{-md5}=md5_hex(Int::charsets::encode::UTF8_ASCII($null));
-		$mdl_C{'-md5'}=md5_hex(Encode::encode_utf8($null));
+#		$mdl_C{'-md5'}=md5_hex(Encode::encode_utf8($null));
+		$mdl_C{'-md5'}=TOM::Digest::hash($null);
 		main::_log("cache md5='".$mdl_C{'-md5'}."'") if $debug;
 		
 		# NAZOV PRE TYP CACHE V KONFIGURAKU
@@ -690,7 +690,7 @@ sub module
 			);
 		}
 		
-		main::_log("load '$mdl_C{'P_MODULE'}'");
+		main::_log("source '$mdl_C{'P_MODULE'}'");
 		my $mdl_ID=$mdl_C{'P_MODULE'};
 			$mdl_ID=~s|\.mdl$||;
 			$mdl_ID=~s|^$TOM::P/||;
@@ -708,7 +708,7 @@ sub module
 		
 		if (!$mdl_version->VERSION() || ($mdl_version->VERSION() < $m_time))
 		{
-			my $t_do=track TOM::Debug("evalfile",'timer'=>1);
+			my $t_do=track TOM::Debug("loadfile",'timer'=>1);
 			use Fcntl;
 			sysopen(HND_DO, $mdl_C{'P_MODULE'}, O_RDONLY);
 			my $mdl_buffer;
