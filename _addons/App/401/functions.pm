@@ -273,6 +273,21 @@ sub article_add
 			},
 			'-journalize' => 1,
 		);
+		
+		if ($columns{'ID_category'}) # article_cat.ID (i need ID_entity)
+		{
+			my %cat=App::020::SQL::functions::get_ID(
+				'ID' => $columns{'ID_category'},
+				'db_h' => "main",
+				'db_name' => $App::401::db_name,
+				'tb_name' => "a401_article_cat",
+				'columns' => {'ID_entity'=>1}
+			);
+			App::020::SQL::functions::_save_changetime(
+				{'db_h'=>'main','db_name'=>$App::401::db_name,'tb_name'=>'a401_article_cat','ID_entity'=>$cat{'ID_entity'}}
+			);
+		}
+		
 		$content_updated=1;
 		$content_reindex=1;
 	}
@@ -354,6 +369,23 @@ sub article_add
 			$content_updated=1;
 			$content_reindex=1 if $columns{'name'};
 			$content_reindex=1 if $columns{'status'};
+			
+			if ($columns{'ID_category'}) # article_cat.ID (i need ID_entity)
+			{
+				my %cat=App::020::SQL::functions::get_ID(
+					'ID' => $columns{'ID_category'},
+					'db_h' => "main",
+					'db_name' => $App::401::db_name,
+					'tb_name' => "a401_article_cat",
+					'columns' => {'ID_entity'=>1}
+				);
+				App::020::SQL::functions::_save_changetime( # changed all categories too (the content is added/removed)
+					{'db_h'=>'main','db_name'=>$App::401::db_name,'tb_name'=>'a401_article_cat'}
+				);
+				App::020::SQL::functions::_save_changetime(
+					{'db_h'=>'main','db_name'=>$App::401::db_name,'tb_name'=>'a401_article_cat','ID_entity'=>$cat{'ID_entity'}}
+				);
+			}
 		}
 	}
 	
