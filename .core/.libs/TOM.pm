@@ -160,6 +160,7 @@ use Inline (Config => DIRECTORY => $TOM::InlineDIR);
 
 
 use TOM::Lite;
+use TOM::Digest;
 use TOM::Overlays;
 #use TOM::Domain;
 
