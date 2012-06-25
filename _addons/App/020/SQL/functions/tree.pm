@@ -743,6 +743,8 @@ sub get_path
 	$cache{'-cache'}=$env{'-cache'} if $env{'-cache'};
 	$cache{'-cache_changetime'} = App::020::SQL::functions::_get_changetime(\%env) if $env{'-cache'};
 	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
 	# get paths from cache
 	my $cache_key=$env{'db_h'}.':'.$env{'db_name'}.':'.$env{'tb_name'}.':'.$ID;
 	if ($TOM::CACHE && $TOM::CACHE_memcached && $main::FORM{'_rc'}!=-2)
@@ -753,7 +755,7 @@ sub get_path
 		);
 		if ($cache->{'time'} > $cache{'-cache_changetime'})
 		{
-			return $cache->{'data'};
+			return @{$cache->{'data'}};
 		}
 	}
 	
@@ -826,7 +828,7 @@ sub get_path
 			'key' => 'App::020::functions::tree::get_path::'.$cache_key,
 			'value' => {
 				'time' => time(),
-				'data' => @path
+				'data' => \@path
 			},
 			'expiration' => '3600S'
 		);
