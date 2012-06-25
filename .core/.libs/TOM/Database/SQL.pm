@@ -283,6 +283,7 @@ sub execute
 	if (($env{'cache'} || $env{'cache_auto'}) && $TOM::CACHE && $TOM::CACHE_memcached && $typeselect && $main::FORM{'_rc'}!=-2)
 	{
 		main::_log("SQL: try to read from cache") if $env{'log'};
+		
 		my $cache=new TOM::Database::SQL::cache(
 			'id' => $cache_key
 		);
@@ -325,7 +326,13 @@ sub execute
 		$output{'type'} = "DBI";
 		
 		# how much of binary columns we want (MsSQL)
-		$main::DB{$env{'db_h'}}->{'LongReadLen'} = 512 * 1024;
+		if ($TOM::DB{$env{'db_h'}}{'uri'}=~/^dbi:Sybase:/)
+		{
+		}
+		else
+		{
+			$main::DB{$env{'db_h'}}->{'LongReadLen'} = 512 * 1024;
+		}
 		
 		$output{'sth'} = $main::DB{$env{'db_h'}}->prepare($SQL,{'ora_auto_lob'=>0});
 		#$output{'err'} = $DBI::errstr unless $output{'sth'};
