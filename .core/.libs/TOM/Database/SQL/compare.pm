@@ -40,17 +40,23 @@ sub compare_create_table
 	my @return;
 	
 	my $type0;
+	my $charset0;
 	my @fields0a;
 	my %fields0h;
 	my %keys0h;
+	my $partitions0;
 	my $create0 = shift;
+	my $create0_ext;
 	
 	# Destination Table
 	my $type1;
+	my $charset1;
 	my @fields1a;
 	my %fields1h;
 	my %keys1h;
+	my $partitions1;
 	my $create1 = shift;
+	my $create1_ext;
 	
 	if ($create1=~/CREATE ALGORITHM/)
 	{
@@ -67,19 +73,44 @@ sub compare_create_table
 	main::_log("database='$database' table='$tbl'");
 	
 	$create0=~s|^.*\(|\(|;
+	$create0=~s|[\s;]+$||;
+	$create0.=";";
+	
 	$create1=~s|^.*\(|\(|;
+	$create1=~s|[\s;]+$||;
+	$create1.=";";
 	
 	if ($create0)
 	{
+		# definition (file)
+		$create0=~s/((ENGINE|TYPE)=.*)//s; # cleaned
+		$create0_ext=$1;
+		$create0=~s|\(\n(.*)\n\)|\1|s;
+		$create0_ext=~s| AUTO_INCREMENT=\d+||;
+		$create0_ext=~s/(TYPE|ENGINE)=(\w+)( DEFAULT CHARSET=([^; \n]*))?[;\n]?//;
+		$type0=$2;
+		$charset0='utf8';
+		$charset0=$4 if $4;
+		if ($create0_ext=~/PARTITION (.*?PARTITIONS \d+)/)
+		{
+			$partitions0=$1;
+		}
 		
+		# actual state - database (to modify)
+		$create1=~s/((ENGINE|TYPE)=.*)//s; # cleaned
+		$create1_ext=$1;
+		$create1=~s|\(\n(.*)\n\)|\1|s;
+		$create1_ext=~s| AUTO_INCREMENT=\d+||;
+		$create1_ext=~s/(TYPE|ENGINE)=(\w+)( DEFAULT CHARSET=([^; \n]*))?[;\n]?//s;
+		$type1=$2;
+		$charset1=$4 if $4;
+		if ($create1_ext=~/PARTITION (.*?PARTITIONS \d+)/s)
+		{
+			$partitions1=$1;
+			$partitions1=~s|\n| |g;
+		}
 		
-		$create0=~s|\((.*)\)(.*)|\1|s;
-		$type0=$2;$type0=~/(TYPE|ENGINE)=(\w+)/;$type0=$2;
-		
-		$create1=~s|\((.*)\)(.*)|\1|s;
-		$type1=$2;$type1=~/(TYPE|ENGINE)=(\w+)/;$type1=$2;
-		
-		main::_log("table0 type='$type0' table1 type='$type1'");
+		main::_log("table0 type='$type0'/'$charset0' table1 type='$type1'/'$charset1'");
 		
 		foreach my $line(split('\n',$create0))
 		{
@@ -89,11 +120,11 @@ sub compare_create_table
 				$line=~s|,$||;$line=~s|`(.*?)` (.*)|\2|;my $name=$1;
 				push @fields0a, $name;$fields0h{$name}=$line; next
 			};
-			
 			$line=~s|,$||;
+			$line=~s| $||;
 			if ($line=~/^PRIMARY KEY/)
 			{
-				$keys0h{PRIMARY}=$line;
+				$keys0h{'PRIMARY'}=$line;
 			}
 			elsif ($line=~/FOREIGN KEY/)
 			{
@@ -112,13 +143,12 @@ sub compare_create_table
 				$line=~s|,$||;$line=~s|`(.*?)` (.*)|\2|;my $name=$1;
 				push @fields1a, $name;$fields1h{$name}=$line; next
 			};
-			
 			$line=~s|,$||;
+			$line=~s| $||;
 			if ($line=~/^PRIMARY KEY/)
 			{
-				$keys1h{PRIMARY}=$line;
+				$keys1h{'PRIMARY'}=$line;
 			}
-			
 			elsif ($line=~/FOREIGN KEY/)
 			{
 			}
@@ -130,12 +160,25 @@ sub compare_create_table
 		
 		if ($type0 ne $type1)
 		{
-			my $exec="ALTER TABLE `$database`.`$tbl` TYPE=$type0";
+			my $exec="ALTER TABLE `$database`.`$tbl` ENGINE=$type0";
 			push @return,$exec;
 			main::_log("add SQL '$exec'");
 			$type1=$type0;
 		}
 		
+		if ($charset0 ne $charset1)
+		{
+			my $exec="ALTER TABLE `$database`.`$tbl` DEFAULT CHARSET=$charset0";
+			main::_log("add SQL '$exec'");
+		   push @return,$exec;
+		}
+		
+		if ($partitions0 ne $partitions1)
+		{
+			my $exec="ALTER TABLE `$database`.`$tbl` PARTITION $partitions0";
+			main::_log("add SQL '$exec'");
+		   push @return,$exec;
+		}
 		
 		my $t_fields=track TOM::Debug("table0 fields");
 		my $count;
@@ -251,10 +294,11 @@ sub compare_create_table
 		
 		if ($type0 ne $type1)
 		{
-			my $exec="ALTER TABLE `$database`.`$tbl` TYPE=$type0";
+			my $exec="ALTER TABLE `$database`.`$tbl` ENGINE=$type0";
 			main::_log("add SQL '$exec'");
 		   push @return,$exec;
 		}
+		
 	}
 	
 	$t->close();
