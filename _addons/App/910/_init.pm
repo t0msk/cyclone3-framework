@@ -139,7 +139,7 @@ if ($tom::addons{'a821'})
 				lng='$lng'
 			LIMIT 1
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>0);
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			$forum{$lng}=$db0_line{'ID'};
