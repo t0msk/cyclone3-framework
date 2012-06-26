@@ -276,6 +276,57 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_cat_j` (
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*app*/_price_level` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_code` varchar(64) character set ascii NOT NULL default '',
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_price_level_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_code` varchar(64) character set ascii NOT NULL default '',
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_product_price` (
+  `ID` bigint(20) unsigned NOT NULL, -- rel price_level.ID_entity
+  `ID_entity` bigint(20) unsigned default NULL, -- rel product.ID
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_code` varchar(64) character set ascii NOT NULL default '',
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_product_price_j` (
+  `ID` bigint(20) unsigned NOT NULL,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_code` varchar(64) character set ascii NOT NULL default '',
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+
 CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_product_view` AS (
 	SELECT
 		product.ID_entity AS ID_entity_product,
