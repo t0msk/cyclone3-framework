@@ -309,20 +309,22 @@ CREATE TABLE `/*db_name*/`.`/*app*/_price_level_j` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_product_price` (
-  `ID` bigint(20) unsigned NOT NULL, -- rel price_level.ID_entity
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- rel product.ID
+  `ID_price` bigint(20) unsigned NOT NULL, -- rel price_level.ID_entity
   `price` decimal(12,3) default NULL, -- price for this relation
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`),
-  UNIQUE KEY `UNI_0` (`ID_entity`)
+  PRIMARY KEY  (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_product_price_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
+  `ID_price` bigint(20) unsigned NOT NULL, -- rel price_level.ID_entity
   `price` decimal(12,3) default NULL, 
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
