@@ -283,6 +283,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_price_level` (
   `ID_entity` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_code` varchar(6) character set ascii NOT NULL default '',
+  `country_code` char(3) character set ascii default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
@@ -296,7 +297,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_price_level_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_code` varchar(6) character set ascii NOT NULL default '',
+  `country_code` char(3) character set ascii default NULL,
+  `currency` varchar(3) character set ascii default 'EUR',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -327,6 +329,28 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price_j` (
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*app*/_product_legal` (
+  `ID` bigint(20) unsigned NOT NULL,
+  `ID_entity` bigint(20) unsigned default NULL, -- rel product.ID
+  `country_code` char(3) character set ascii default NULL,
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_product_legal_j` (
+  `ID` bigint(20) unsigned NOT NULL,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `country_code` char(3) character set ascii default NULL,
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
 
 CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_product_view` AS (
 	SELECT
