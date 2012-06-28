@@ -286,7 +286,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_price_level` (
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
-  UNIQUE KEY `UNI_0` (`ID_entity`)
+  UNIQUE KEY `UNI_0` (`ID_entity`),
+  UNIQUE KEY `UNI_1` (`name_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
