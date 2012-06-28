@@ -315,6 +315,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price` (
   `price` decimal(12,3) default NULL, -- price for this relation
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
+  UNIQUE KEY `UNI_0` (`ID_entity`, `ID_price`),
   PRIMARY KEY  (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
