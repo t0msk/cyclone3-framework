@@ -282,7 +282,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_price_level` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_code` varchar(64) character set ascii NOT NULL default '',
+  `name_code` varchar(6) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
@@ -295,7 +295,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_price_level_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_code` varchar(64) character set ascii NOT NULL default '',
+  `name_code` varchar(6) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -306,8 +306,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_price_level_j` (
 CREATE TABLE `/*db_name*/`.`/*app*/_product_price` (
   `ID` bigint(20) unsigned NOT NULL, -- rel price_level.ID_entity
   `ID_entity` bigint(20) unsigned default NULL, -- rel product.ID
-  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_code` varchar(64) character set ascii NOT NULL default '',
+  `price` decimal(12,3) default NULL, -- price for this relation
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
@@ -319,8 +318,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price` (
 CREATE TABLE `/*db_name*/`.`/*app*/_product_price_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
-  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_code` varchar(64) character set ascii NOT NULL default '',
+  `price` decimal(12,3) default NULL, 
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
