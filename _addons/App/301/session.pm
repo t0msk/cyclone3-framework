@@ -119,7 +119,7 @@ sub process
 		return 1;
 	}
 	
-	my $t=track TOM::Debug(__PACKAGE__."::process()");
+	my $t=track TOM::Debug(__PACKAGE__."::process()",'timer'=>1);
 	
 #	my $debug=0;
 #	return 1;
