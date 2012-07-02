@@ -672,6 +672,73 @@ sub product_add
 	
 #	main::_log("product_sym.ID='$env{'product_sym.ID'}'");
 	
+	if ($env{'prices'})
+	{
+		foreach my $price_level_name_code (keys %{$env{'prices'}})
+		{
+			# hladam cenovu hladinu
+			my %sth0=TOM::Database::SQL::execute(qq{SELECT * FROM `$App::910::db_name`.`a910_price_level` WHERE name_code=? LIMIT 1},
+				'bind'=>[$price_level_name_code],'quiet'=>1);
+			my %price_level=$sth0{'sth'}->fetchhash();
+			# nieje, vytvaram
+			if (!$sth0{'rows'})
+			{
+				App::020::SQL::functions::new(
+					'db_h' => "main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_price_level",
+					'columns' =>
+					{
+						'name_code' => "'".TOM::Security::form::sql_escape($price_level_name_code)."'",
+						'status' => "'Y'",
+					},
+					'-journalize' => 1,
+				);
+				my %sth0=TOM::Database::SQL::execute(qq{SELECT * FROM `$App::910::db_name`.`a910_price_level` WHERE name_code=? LIMIT 1},
+				'bind'=>[$price_level_name_code],'quiet'=>1);
+				%price_level=$sth0{'sth'}->fetchhash();
+			}
+			# ???
+			next unless $price_level{'ID_entity'};
+			# hladam cenu
+			my %sth0=TOM::Database::SQL::execute(qq{SELECT * FROM `$App::910::db_name`.`a910_product_price` WHERE ID_price=? AND ID_entity=? LIMIT 1},
+				'bind'=>[$price_level{'ID_entity'},$product{'ID'}],'quiet'=>1);
+			my %price=$sth0{'sth'}->fetchhash();
+			$env{'prices'}{$price_level_name_code}=sprintf("%0.3f",$env{'prices'}{$price_level_name_code});
+			if (!$sth0{'rows'})
+			{
+				App::020::SQL::functions::new(
+					'db_h' => "main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_product_price",
+					'columns' =>
+					{
+						'ID_entity' => $product{'ID'},
+						'ID_price' => $price_level{'ID_entity'},
+						'price' => $env{'prices'}{$price_level_name_code},
+						'status' => "'Y'",
+					},
+					'-journalize' => 1,
+				);
+				$content_reindex=1;
+			}
+			elsif ($price{'price'} ne $env{'prices'}{$price_level_name_code})
+			{
+				main::_log("$price{'price'}<>$env{'prices'}{$price_level_name_code}");
+				App::020::SQL::functions::update(
+					'ID' => $price{'ID'},
+					'db_h' => "main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_product_price",
+					'columns' => {
+						'price' => $env{'prices'}{$price_level_name_code},
+					},
+					'-journalize' => 1
+				);
+				$content_reindex=1;
+			}
+		}
+	}
 	
 	# THUMBNAIL
 	
@@ -819,6 +886,8 @@ sub _product_index
 		},'quiet'=>1,'bind'=>[$db0_line{'ID_entity'}]);
 		if (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
+			push @content_ent,WebService::Solr::Field->new( 'product_type_s' => $db1_line{'product_type'} );
+			
 			my %sth2=TOM::Database::SQL::execute(qq{
 				SELECT
 					name
@@ -834,6 +903,7 @@ sub _product_index
 			}
 		}
 		
+		# symlinks
 		my %sth1=TOM::Database::SQL::execute(qq{
 			SELECT
 				a910_product_sym.ID
@@ -847,6 +917,28 @@ sub _product_index
 		{
 #			main::_log("cat $db1_line{'ID'}");
 			push @content_ent,WebService::Solr::Field->new( 'cat' =>  $db1_line{'ID'}); # product_cat.ID_entity
+		}
+		
+		# prices
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				a910_product_price.*,
+				a910_price_level.name_code
+			FROM
+				$App::910::db_name.a910_product_price
+			INNER JOIN $App::910::db_name.a910_price_level ON
+			(
+				a910_product_price.ID_price = a910_price_level.ID_entity
+			)
+			WHERE
+				a910_product_price.ID_entity = ?
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			next if $db1_line{'price'} == 0;
+			push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_f' =>  $db1_line{'price'});
+#			push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_VAT_f' =>  );
+			push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_full_f' =>  $db1_line{'price'});
 		}
 		
 	}
@@ -976,6 +1068,77 @@ sub _product_index
 	$t->close();
 }
 
+sub _product_cat_index
+{
+	my %env=@_;
+	return undef unless $env{'ID'};
+	return undef unless $Ext::Solr;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::_product_cat_index()",'timer'=>1);
+	
+	my $solr = Ext::Solr::service();
+	
+	my %content;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			$App::910::db_name.a910_product_cat
+		WHERE
+			status IN ('Y','L')
+			AND ID=?
+	},'quiet'=>1,'bind'=>[$env{'ID'}]);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("found");
+		
+		my $id=$App::401::db_name.".a910_product_cat.".$db0_line{'lng'}.".".$db0_line{'ID'};
+		main::_log("index id='$id'");
+		
+		my $doc = WebService::Solr::Document->new();
+		
+		$db0_line{'description'}=~s|<.*?>||gms;
+		$db0_line{'description'}=~s|&nbsp;| |gms;
+		$db0_line{'description'}=~s|  | |gms;
+		
+		$db0_line{'datetime_create'}=~s| (\d\d)|T$1|;
+		$db0_line{'datetime_create'}.="Z";
+		
+		
+		$doc->add_fields((
+			WebService::Solr::Field->new( 'id' => $id ),
+			
+			WebService::Solr::Field->new( 'name' => $db0_line{'name'} ),
+			WebService::Solr::Field->new( 'name_t' => $db0_line{'name'} ),
+			WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
+			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
+			
+			WebService::Solr::Field->new( 'description' => $db0_line{'description'} ),
+			
+			WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_create'} ),
+			
+			WebService::Solr::Field->new( 'db_s' => $App::910::db_name ),
+			WebService::Solr::Field->new( 'addon_s' => 'a910_product_cat' ),
+			WebService::Solr::Field->new( 'lng_s' => $db0_line{'lng'} ),
+			WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
+			WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
+		));
+		
+		$solr->add($doc);
+	}
+	else
+	{
+		main::_log("not found active ID",1);
+		my $response = $solr->search( "id:".$App::910::db_name.".a910_product_cat.* AND ID_i:$env{'ID'}" );
+		for my $doc ( $response->docs )
+		{
+			$solr->delete_by_id($doc->value_for('id'));
+		}
+	}
+	
+	$t->close();
+}
 
 sub _a210_by_cat
 {
@@ -1023,7 +1186,6 @@ sub _a210_by_cat
 				'tb_name' => 'a910_product_cat',
 			})
 		);
-		
 		next unless $sth0{'rows'};
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		my $i;
