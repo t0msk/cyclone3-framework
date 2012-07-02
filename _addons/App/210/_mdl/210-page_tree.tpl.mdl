@@ -15,6 +15,7 @@ sub execute
 	my %env=@_;
 	my %env_out;
 	
+	$env{'depth'}=3 unless $env{'depth'};
 	$env{'db_order'}="ID_charindex" unless $env{'db_order'};
 	
 	Tomahawk::GetTpl('env'=>\%env) || return undef;
@@ -48,6 +49,16 @@ sub execute
 		
 	}
 	
+	my $sql_suffix='%';
+	my $sql_suffix_;
+	my $sql_length=50;
+	if ($env{'depth'})
+	{
+		$sql_suffix_=$env{'ID_charindex'}.('___:' x $env{'depth'});
+		$sql_length=length($sql_suffix_);
+	}
+#	main::_log("length = '$sql_length' $sql_suffix_",3,"debug");
+	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			*
@@ -58,10 +69,11 @@ sub execute
 			AND ID_charindex LIKE ?
 			AND status IN ('Y','L')
 			AND visible IN ('Y')
+			AND length(ID_charindex) < ?
 		ORDER BY
 			$env{'db_order'}
 	},
-		'bind'=>[$env{'lng'},$env{'ID_charindex'}.'%'],
+		'bind'=>[$env{'lng'},$env{'ID_charindex'}.$sql_suffix,$sql_length],
 		'quiet'=>1,
 		'-cache' => 3600,
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime(
@@ -76,16 +88,19 @@ sub execute
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 #		push 
+		
+		if ($db0_line{'metadata'})
+		{
+			%{$db0_line{'metahash'}}=App::020::functions::metadata::parse($db0_line{'metadata'});
+		}
 		delete $db0_line{'metadata'};
 		
 		if ($db0_line{'t_keys'})
 		{
 			my $cvml=new CVML('data'=>$db0_line{'t_keys'});
 			$db0_line{'keys'}=$cvml->{'hash'};
-			#;decode_json $db0_line{'t_keys'};
 		}
-		
-#		delete $db0_line{'t_keys'};
+		delete $db0_line{'t_keys'};
 		
 		foreach my $node (App::020::SQL::functions::tree::get_path(
 			$db0_line{'ID'},
