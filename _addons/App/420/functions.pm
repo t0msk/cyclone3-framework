@@ -215,6 +215,61 @@ sub static_add
 			$columns{'body'}="'".TOM::Security::form::sql_escape($env{'static.body'})."'";
 		}
 		
+		# metadata
+		my %metadata=App::020::functions::metadata::parse($static{'metadata'});
+		
+		foreach my $section(split(';',$env{'static.metadata.override_sections'}))
+		{
+			delete $metadata{$section};
+		}
+		
+		if ($env{'static.metadata.replace'})
+		{
+			if (!ref($env{'static.metadata'}) && $env{'static.metadata'})
+			{
+				%metadata=App::020::functions::metadata::parse($env{'static.metadata'});
+			}
+			if (ref($env{'static.metadata'}) eq "HASH")
+			{
+				%metadata=%{$env{'static.metadata'}};
+			}
+		}
+		else
+		{
+			if (!ref($env{'static.metadata'}) && $env{'static.metadata'})
+			{
+				# when metadata send as <metatree></metatree> then always replace
+				%metadata=App::020::functions::metadata::parse($env{'static.metadata'});
+			}
+			if (ref($env{'static.metadata'}) eq "HASH")
+			{
+				# metadata overrride
+				foreach my $section(keys %{$env{'static.metadata'}})
+				{
+					foreach my $variable(keys %{$env{'static.metadata'}{$section}})
+					{
+						$metadata{$section}{$variable}=$env{'static.metadata'}{$section}{$variable};
+					}
+				}
+			}
+		}
+		
+		$env{'static.metadata'}=App::020::functions::metadata::serialize(%metadata);
+		
+		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'static.metadata'})."'"
+		if (exists $env{'static.metadata'} && ($env{'static.metadata'} ne $static{'metadata'}));
+		
+		if ($columns{'metadata'})
+		{
+			App::020::functions::metadata::metaindex_set(
+				'db_h' => 'main',
+				'db_name' => $App::420::db_name,
+				'tb_name' => 'a420_static',
+				'ID' => $env{'static.ID'},
+				'metadata' => {%metadata}
+			);
+		}
+		
 		if (keys %columns)
 		{
 			App::020::SQL::functions::update(
@@ -234,12 +289,119 @@ sub static_add
 		}
 	}
 	
+	if ($content_updated)
+	{
+		App::020::SQL::functions::_save_changetime({'db_h'=>'main','db_name'=>$App::420::db_name,'tb_name'=>'a420_static','ID_entity'=>$env{'static.ID_entity'}});
+	}
 	
+	if ($content_reindex)
+	{
+		_static_index('ID' => $env{'static.ID'});
+	}
 	
 	$t->close();
 	return %env;
 }
 
+
+sub _static_index
+{
+	my %env=@_;
+	return undef unless $env{'ID'};
+	return undef unless $Ext::Solr;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::_static_index()",'timer'=>1);
+	
+	my $solr = Ext::Solr::service();
+	
+	my %content;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			$App::420::db_name.a420_static
+		WHERE
+			status IN ('Y','L')
+			AND ID=?
+	},'quiet'=>1,'bind'=>[$env{'ID'}]);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("found");
+		
+		my $id=$App::420::db_name.".a420_static.".$db0_line{'ID'};
+		main::_log("index id='$id'");
+		
+		my $doc = WebService::Solr::Document->new();
+		
+		$db0_line{'body'}=~s|<.*?>||gms;
+		$db0_line{'body'}=~s|&nbsp;| |gms;
+		$db0_line{'body'}=~s|  | |gms;
+		
+		$db0_line{'datetime_create'}=~s| (\d\d)|T$1|;
+		$db0_line{'datetime_create'}.="Z";
+		
+		my @content;
+		
+		push @content,WebService::Solr::Field->new( 'cat' =>  $db0_line{'ID_category'})
+			if $db0_line{'ID_category'};
+		
+		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
+		foreach my $sec(keys %metadata)
+		{
+			foreach (keys %{$metadata{$sec}})
+			{
+				next unless $metadata{$sec}{$_};
+				push @content,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
+				if ($metadata{$sec}{$_}=~/^[0-9]+$/)
+				{
+					push @content,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
+				}
+				if ($metadata{$sec}{$_}=~/^[0-9\.]+$/)
+				{
+					push @content,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
+				}
+				
+				# list of used metadata fields
+				push @content,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_ );
+			}
+		}
+		
+		$doc->add_fields((
+			WebService::Solr::Field->new( 'id' => $id ),
+			
+			WebService::Solr::Field->new( 'name' => $db0_line{'name'} || '' ),
+			WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
+			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
+			
+			WebService::Solr::Field->new( 'description' => $db0_line{'body'} || ''),
+			
+			WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_create'} ),
+			
+			WebService::Solr::Field->new( 'db_s' => $App::420::db_name ),
+			WebService::Solr::Field->new( 'addon_s' => 'a420_static' ),
+			WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
+			WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
+			
+			@content
+		));
+		
+		$solr->add($doc);
+		
+	}
+	else
+	{
+		main::_log("not found active ID",1);
+		my $response = $solr->search( "id:".$App::420::db_name.".a420_static.* AND ID_i:$env{'ID'}" );
+		for my $doc ( $response->docs )
+		{
+			$solr->delete_by_id($doc->value_for('id'));
+		}
+#		$solr->commit;
+	}
+	
+	$t->close();
+}
 
 
 =head1 AUTHORS

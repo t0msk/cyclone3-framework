@@ -17,6 +17,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_static` (
   `datetime_start` datetime NOT NULL,
   `datetime_stop` datetime default NULL,
   `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   KEY `ID_entity` (`ID_entity`),
@@ -38,9 +39,23 @@ CREATE TABLE `/*db_name*/`.`/*app*/_static_j` (
   `datetime_start` datetime NOT NULL,
   `datetime_stop` datetime default NULL,
   `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_static_metaindex` (
+  `ID` bigint(20) unsigned NOT NULL, -- ref _static.ID
+  `meta_section` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_variable` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_value` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`meta_section`,`meta_variable`),
+  KEY `SEL_0` (`meta_section`,`meta_variable`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
