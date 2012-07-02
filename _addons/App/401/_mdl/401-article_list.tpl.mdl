@@ -14,8 +14,7 @@ use Ext::TextHyphen::_init;
 sub execute
 {
 	my %env=@_;
-	
-	Tomahawk::GetTpl() || return undef;
+	my %env_out;
 	
 	$env{'db_name'}=$App::401::db_name unless $env{'db_name'};
 	
@@ -51,6 +50,9 @@ sub execute
 		my $status_sql=join "','", split('',$env{'article_attrs.status'});
 	
 	$env{'world_status'}='Y' unless $env{'world_status'};
+	
+	# get template
+	Tomahawk::GetTpl(\%env) || return undef;
 	
 	my %hyphen;
 	if ($env{'hyphen'})
@@ -92,8 +94,26 @@ sub execute
 					status IN ('$status_sql')
 			};
 		}
+		else
+		{
+			push @{$env_out{'entity'}},{
+				'db_h' => 'main',
+				'db_name' => $App::401::db_name,
+				'tb_name' => 'a401_article_cat',
+				'ID_entity' => $ID_category,
+			};
+		}
 		$sql_cat.=" OR article_attrs.ID_category IN ($ID_category)";
 		$sql_cat=~s/^ OR //;
+	}
+	if (!$env{'article_attrs.ID_category'})
+	{
+		# check whole table of categories
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::401::db_name,
+			'tb_name' => 'a401_article_cat',
+		};
 	}
 	if ($sql_cat)
 	{
@@ -272,11 +292,37 @@ sub execute
 		next if $IDs_entity{$db0_line{'ID_entity_article'}};
 		$IDs_entity{$db0_line{'ID_entity_article'}}++;
 		
+		# this cache is unique for this used entities
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::401::db_name,
+			'tb_name' => 'a401_article',
+			'ID_entity' => $db0_line{'ID_entity_article'},
+		};
+		
 		$item_counter++;
 		
 		last if $count_max<$item_counter;
 		
 		main::_log("article[$item_counter/$count_max] article_attrs.name='$db0_line{'name'}'");
+		
+		foreach my $node (App::020::SQL::functions::tree::get_path(
+			$db0_line{'ID_category'},
+			'db_h'    => 'main',
+			'db_name' => $App::401::db_name,
+			'tb_name' => 'a401_article_cat',
+			'-cache' => 3600,
+		))
+		{
+#			$db0_line{'path_url'}.='/'.$node->{'name_url'};
+			push @{$env_out{'entity'}},{
+				'db_h' => 'main',
+				'db_name' => $App::401::db_name,
+				'tb_name' => 'a401_article_cat',
+				'ID_entity' => $node->{'ID_entity'},
+			};
+		}
+#		$db0_line{'path_url'}=~s|^/||;
 		
 		# hyphen
 		foreach (keys %hyphen)
@@ -290,7 +336,7 @@ sub execute
 		$TPL->variables_push(\%db0_line);
 	}
 	
-	return 1;
+	return 1,%env_out;
 }
 
 

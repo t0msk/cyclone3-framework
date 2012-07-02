@@ -299,6 +299,14 @@ sub execute
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		
+		# this cache is unique for this used entities
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::401::db_name,
+			'tb_name' => 'a401_article',
+			'ID_entity' => $db0_line{'ID_entity'},
+		};
+		
 		my $cache_visits=$Ext::CacheMemcache::cache->get(
 			'namespace' => $App::401::db_name.".a401_article_ent.visit",
 			'key' => $db0_line{'ID_entity_article'}
