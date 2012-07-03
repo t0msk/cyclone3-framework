@@ -52,25 +52,28 @@ sub get_categories_for_entity
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 
-	main::_log('Getting category list for ID_entity='.$env{'ID_entity'}) if $debug;
-	
-	my $sql = qq{
-		SELECT 
-			*
-		FROM
-			`$App::910::db_name`.`a910_product_sym`
-		WHERE
-			ID_entity = ? AND status != 'T'
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1, 'bind' => [ $env{'ID_entity'} ]);
-
 	my @results;
 
-	if ($sth0{'sth'})
+	if ($env{'table'} eq 'product')
 	{
-		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		main::_log('Getting category list for ID_entity='.$env{'ID_entity'}) if $debug;
+		
+		my $sql = qq{
+			SELECT 
+				*
+			FROM
+				`$App::910::db_name`.`a910_product_sym`
+			WHERE
+				ID_entity = ? AND status != 'T'
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1, 'bind' => [ $env{'ID_entity'} ]);
+	
+		if ($sth0{'sth'})
 		{
-			push(@results, $db0_line{'ID'}) if ($db0_line{'ID'});
+			while (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				push(@results, $db0_line{'ID'}) if ($db0_line{'ID'});
+			}
 		}
 	}
 
