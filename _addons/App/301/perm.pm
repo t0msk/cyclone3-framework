@@ -40,7 +40,7 @@ L<App::160::_init|app/"160/_init.pm">
 #use App::301::_init;
 use App::160::_init;
 
-our $debug=0;
+our $debug=1;
 our %groups;
 our %roles;
 our %ACL_roles;
@@ -1793,6 +1793,196 @@ sub perm_sum # pesimistic - accept every permission (higher or lower) 'rw-'*' -x
 	return $to;
 }
 
+
+
+sub _get_permissions_for_category
+{
+	my %env = @_;
+
+	# If ACLs have already been retrieved, do not do this again
+
+	unless (exists $env{'permissions_hashref'} ->{$env{'ID'}})
+	{
+		my %roles=App::301::perm::get_entity_sum_roles(
+			'ID_user' => $env{'ID_user'},
+			'r_prefix' => $env{'prefix'},
+			'r_table' => $env{'table'},
+			'r_ID_entity' => $env{'ID'}
+		);
+
+		$env{'permissions_hashref'} ->{$env{'ID'}} = $roles{'a910.addon'};
+	}
+}
+
+
+
+
+
+
+=head2
+
+Gets permissions for a category or an entity, if supported by the application.
+
+$rwx_permissions_string = App::301::perm::get_permissions_for_entity(
+
+		'ID_entity' => 14,			# id entity or id category
+		'prefix' => 'a910',
+		'cat_table' => 'product_cat',
+		'table' => 'product',			# if not specified, I assume I am a category
+		'db_name' => $App::910::db_name,
+		'ID_user' => 'kkOb6lS1',
+);
+
+
+=cut
+
+
+sub get_permissions_for_entity
+{
+	my $t=track TOM::Debug(__PACKAGE__."::get_permissions_for_entity()") if $debug;
+	my %env=@_;
+
+	my $prefix_num = $env{'prefix'}; $prefix_num =~ s/\D//g;
+
+	my $package = 'App::'.$prefix_num.'::a020';
+
+	eval "use $package;";
+	main::_log("err:$@",1) if $@;
+	
+	my $result_rwx_final;
+
+	my %paths;
+	# the paths of all categories that this entity is in will be listed here
+
+	my %cat_permissions_cache;
+	# for every category, we need to get permissions. the paths, however, typically contain a category more than once
+	# so it makes sense for it to be stored. 
+
+	if (defined $package->VERSION)
+	{
+		# get a list of categories I am in - appplication dependant. if 'table' is specified, I expect
+		# I am an entity, not a category, if no 'table' is specified, I am a category and I will just insert myself
+		# into the list of categories.
+
+		my @categories_list;
+
+		if ($env{'table'})
+		{
+			@categories_list = $package->get_categories_for_entity(
+
+				$package, 
+				'ID_entity' => $env{'ID_entity'}, 
+				'table' => $env{'table'}
+			);
+		} else
+		{
+			# I am a category, not an entity, just examine my path
+
+			@categories_list = ( $env{'ID_entity'} );
+		}
+
+		# Do this for every category from the categories list.
+		foreach my $id_category (@categories_list)
+		{
+			# Get full path for this category.
+	
+			my @path_results = App::020::SQL::functions::tree::get_path(
+				$id_category, 
+				'tb_name' => $env{'prefix'} . '_' . $env{'cat_table'},
+				'db_name' => $env{'db_name'}
+			);
+	
+			# Push the path into the array {'categories'} for this category. Also, get partial permissions
+			# for every category in the path. (do this only once for every category to reduce the number
+			# of iterations.
+	
+			$paths{$id_category}->{'categories'} = [];
+	
+			foreach my $path_item (@path_results)
+			{
+				if ($path_item ->{'status'} ne 'T')
+				{
+					push( @{$paths{$id_category}->{'categories'}}, $path_item ->{'ID'});
+	
+					# Get permissions for this category and save them to cat_permissions_cache.
+					# (only once for each cat)
+	
+					_get_permissions_for_category(
+						'ID' => $path_item ->{'ID'}, 
+						'ID_user' => $env{'ID_user'},
+						'prefix' => $env{'prefix'},
+						'table' => $env{'cat_table'},
+						'permissions_hashref' => \%cat_permissions_cache
+					);
+					
+				} else
+				{
+					# if a path item is trashed, do not even continue
+					last;
+				}
+			}
+	
+			# Now $paths{$id_category}->{'categories'} contains an array of categories, which 
+			# represents full path.
+			# 
+			# We will compute the rwx result for this path using the override principle and save
+			# it to the variable $result_rwx_for_path.
+	
+			my $result_rwx_for_path;
+	
+			foreach my $i (@{$paths{$id_category}->{'categories'}})
+			{
+				$result_rwx_for_path = App::301::perm::perm_sum(
+	
+					$result_rwx_for_path,		# from
+					$cat_permissions_cache{$i}	# to
+				);
+			}
+	
+			# Does this path give us full permissions?
+	
+			if ($result_rwx_for_path eq 'rwx')
+			{
+				# Yes, this is the path of least resistance: just remember rwx and quit processing.
+	
+				$result_rwx_final = $result_rwx_for_path;
+				last;
+			} else
+			{
+				# No, just save the result (permissions for this path are less than rwx and
+				# the final result will be computed later)
+				
+				$paths{$id_category}->{'permissions'} = $result_rwx_for_path;
+			}
+		}
+
+		# now, %paths contains a list of categories and their full paths top -> bottom
+		# now, unless one of the paths already was 'rwx', we continue to pick the path of least resistance
+	
+		unless ($result_rwx_final)
+		{
+			foreach my $path (keys %paths)
+			{
+				$result_rwx_final = App::301::perm::perm_inc(
+		
+					$result_rwx_final,		# from
+					$paths{$path}->{'permissions'}	# to
+				);
+			}
+		}
+	
+	
+		#use Data::Dumper;
+		#print Dumper \%paths;
+		#print Dumper \%cat_permissions_cache;
+	
+		main::_log("FINAL PERMISSIONS: $result_rwx_final\n");
+	}
+
+	$t->close() if $debug;
+
+	return $result_rwx_final;
+}
 
 =head1 AUTHORS
 
