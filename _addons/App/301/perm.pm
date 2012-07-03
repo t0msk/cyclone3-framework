@@ -40,7 +40,7 @@ L<App::160::_init|app/"160/_init.pm">
 #use App::301::_init;
 use App::160::_init;
 
-our $debug=1;
+our $debug=0;
 our %groups;
 our %roles;
 our %ACL_roles;
