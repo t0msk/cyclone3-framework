@@ -1810,20 +1810,23 @@ sub _get_permissions_for_category
 			'r_ID_entity' => $env{'ID'}
 		);
 
-		$env{'permissions_hashref'} ->{$env{'ID'}} = $roles{'a910.addon'};
+		$env{'permissions_hashref'} ->{$env{'ID'}} = \%roles;
 	}
 }
-
-
-
-
 
 
 =head2
 
 Gets permissions for a category or an entity, if supported by the application.
 
-$rwx_permissions_string = App::301::perm::get_permissions_for_entity(
+Returns a hash reference in form:
+
+$ref = {
+	'role' => 'rwx permissions'
+	..
+}
+
+$rwx_permissions_hashref = App::301::perm::get_permissions_for_entity(
 
 		'ID_entity' => 14,			# id entity or id category
 		'prefix' => 'a910',
@@ -1928,58 +1931,44 @@ sub get_permissions_for_entity
 			# We will compute the rwx result for this path using the override principle and save
 			# it to the variable $result_rwx_for_path.
 	
-			my $result_rwx_for_path;
+			my $result_rwx_for_path = {};
 	
 			foreach my $i (@{$paths{$id_category}->{'categories'}})
 			{
-				$result_rwx_for_path = App::301::perm::perm_sum(
-	
-					$result_rwx_for_path,		# from
-					$cat_permissions_cache{$i}	# to
-				);
+				foreach my $role (keys %{$cat_permissions_cache{$i}})
+				{
+					$result_rwx_for_path->{$role} = App::301::perm::perm_sum(
+						$result_rwx_for_path->{$role},		# from
+						$cat_permissions_cache{$i}->{$role}	# to
+					);
+				}
 			}
-	
-			# Does this path give us full permissions?
-	
-			if ($result_rwx_for_path eq 'rwx')
-			{
-				# Yes, this is the path of least resistance: just remember rwx and quit processing.
-	
-				$result_rwx_final = $result_rwx_for_path;
-				last;
-			} else
-			{
-				# No, just save the result (permissions for this path are less than rwx and
-				# the final result will be computed later)
-				
-				$paths{$id_category}->{'permissions'} = $result_rwx_for_path;
-			}
-		}
 
+			$paths{$id_category}->{'permissions'} = $result_rwx_for_path;
+		}
+		
 		# now, %paths contains a list of categories and their full paths top -> bottom
 		# now, unless one of the paths already was 'rwx', we continue to pick the path of least resistance
-	
-		unless ($result_rwx_final)
-		{
-			foreach my $path (keys %paths)
-			{
-				$result_rwx_final = App::301::perm::perm_inc(
 		
-					$result_rwx_final,		# from
-					$paths{$path}->{'permissions'}	# to
+		foreach my $path (keys %paths)
+		{
+			foreach my $role (keys %{$paths{$path}->{'permissions'}})
+			{
+				$result_rwx_final->{$role} = App::301::perm::perm_inc(
+		
+					$result_rwx_final->{$role},			# from
+					$paths{$path}->{'permissions'}->{$role}		# to
 				);
 			}
 		}
-	
-	
-		#use Data::Dumper;
-		#print Dumper \%paths;
-		#print Dumper \%cat_permissions_cache;
-	
-		main::_log("FINAL PERMISSIONS: $result_rwx_final\n");
-	}
 
-	$t->close() if $debug;
+		if ($debug)
+		{
+			main::_log('Final permissions for role: '.$_.' = '.$result_rwx_final->{$_}) for keys %{$result_rwx_final};
+		}
+	}	
+
+	$t->close() if ($debug);
 
 	return $result_rwx_final;
 }
