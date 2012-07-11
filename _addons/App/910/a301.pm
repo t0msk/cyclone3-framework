@@ -57,6 +57,8 @@ our %functions=(
 	'action.product.new' => 1,
 	'action.product_cat.new' => 1,
 	'action.product_cat.trash' => 1,
+	'publish.product' => 1,
+	'publish.product_cat' => 1
 );
 
 
@@ -66,21 +68,29 @@ our %roles=(
 		'addon'
 	],
 	'product.data' => [
-		'data.product.details' => 1,
-		'data.product.thumbnail' => 1
+		'data.product.details',
+		'data.product.thumbnail'
 	],
 	'product.action' => [
-		'action.product.trash' => 1,
-		'action.product.new' => 1
+		'action.product.trash',
+		'action.product.new'
 	],
 	'product_cat.data' =>
 	[
-		'action.product_cat.details' => 1
+		'action.product_cat.details'
 	],
 	'product_cat.action' =>
 	[
-		'action.product_cat.new' => 1,
-		'action.product_cat.trash' => 1
+		'action.product_cat.new',
+		'action.product_cat.trash'
+	],
+	'product_cat.publish' =>
+	[
+		'product_cat.publish'
+	],
+	'product.publish' =>
+	[
+		'product.publish'
 	]
 );
 
@@ -92,7 +102,13 @@ our %groups=(
 	},
 	'editor' => {
 		'addon' => 'rwx',
-	}
+		'product.data' => 'rwx',
+		'product.action' => 'rwx',
+		'product.publish' => 'rwx',
+		'product_cat.data' => 'rwx',
+		'product_cat.action' => 'rwx',
+		'product_cat.publish' => 'rwx'
+	},
 );
 
 
