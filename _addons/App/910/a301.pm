@@ -50,6 +50,13 @@ our $VERSION='1';
 # addon functions
 our %functions=(
 	'addon' => 1,
+	'data.product.details' => 1,
+	'data.product.thumbnail' => 1,
+	'data.product_cat.details' => 1,
+	'action.product.trash' => 1,
+	'action.product.new' => 1,
+	'action.product_cat.new' => 1,
+	'action.product_cat.trash' => 1,
 );
 
 
@@ -58,6 +65,23 @@ our %roles=(
 	'addon' => [
 		'addon'
 	],
+	'product.data' => [
+		'data.product.details' => 1,
+		'data.product.thumbnail' => 1
+	],
+	'product.action' => [
+		'action.product.trash' => 1,
+		'action.product.new' => 1
+	],
+	'product_cat.data' =>
+	[
+		'action.product_cat.details' => 1
+	],
+	'product_cat.action' =>
+	[
+		'action.product_cat.new' => 1,
+		'action.product_cat.trash' => 1
+	]
 );
 
 
