@@ -1834,6 +1834,7 @@ $rwx_permissions_hashref = App::301::perm::get_permissions_for_entity(
 		'table' => 'product',			# if not specified, I assume I am a category
 		'db_name' => $App::910::db_name,
 		'ID_user' => 'kkOb6lS1',
+		'target_prefix => 'a501'		# give me roles only for this prefix (optional)
 );
 
 
@@ -1967,6 +1968,31 @@ sub get_permissions_for_entity
 			main::_log('Final permissions for role: '.$_.' = '.$result_rwx_final->{$_}) for keys %{$result_rwx_final};
 		}
 	}	
+
+	# check if I have the role unlimited and set all roles accordingly
+	# (if I have unlimited, set all result role permissions to rwx here)
+		
+
+
+	# if there is a target prefix (we only want to know roles targeted for a particular prefix, 
+	# return a list of roles filtered by prefix and the prefix cut.
+
+	if ($env{'target_prefix'})
+	{
+		my %result_rwx_final_filtered;
+		
+		my @filtered_keys = grep {/^$env{'target_prefix'}\./} keys (%{$result_rwx_final});
+		
+		foreach (@filtered_keys)
+		{
+			my $newkey = $_;
+			$newkey =~ s/$env{'target_prefix'}\.//;
+			$result_rwx_final_filtered{$newkey} = $result_rwx_final->{$_};
+		}
+
+		$t->close() if ($debug);
+		return \%result_rwx_final_filtered;
+	}
 
 	$t->close() if ($debug);
 
