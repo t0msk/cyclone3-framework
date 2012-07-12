@@ -1971,8 +1971,14 @@ sub get_permissions_for_entity
 
 	# check if I have the role unlimited and set all roles accordingly
 	# (if I have unlimited, set all result role permissions to rwx here)
-		
 
+	if ($result_rwx_final->{'unlimited'})
+	{
+		my $rwx = $result_rwx_final->{'unlimited'};
+
+		$result_rwx_final = \%App::301::perm::roles;
+		$result_rwx_final->{$_} = $rwx for keys %{$result_rwx_final};  
+	}
 
 	# if there is a target prefix (we only want to know roles targeted for a particular prefix, 
 	# return a list of roles filtered by prefix and the prefix cut.
