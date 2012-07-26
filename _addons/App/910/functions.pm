@@ -136,7 +136,7 @@ sub product_add
 				'tb_name' => "a910_product",
 				'columns' => {
 					'ID' => $env{'product.ID'},
-					'product_number' => $env{'product.product_number'} # if defined
+					'product_number' => "'".TOM::Security::form::sql_escape($env{'product.product_number'})."'" # if defined
 				},
 				'-journalize' => 1,
 			);
@@ -343,10 +343,10 @@ sub product_add
 			FROM
 				`$App::910::db_name`.a910_product
 			WHERE
-				product_number='$env{'product.product_number'}'
+				product_number=?
 			LIMIT 1
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[$env{'product.product_number'}],'quiet'=>1);
 		$columns{'product_number'}="'".TOM::Security::form::sql_escape($env{'product.product_number'})."'" unless $sth0{'rows'};
 	}
 	
@@ -668,6 +668,33 @@ sub product_add
 			);
 			$content_reindex=1;
 		}
+		
+		if ($env{'product_sym.replace'})
+		{
+			
+			my $sql=qq{
+				SELECT
+					*
+				FROM
+					`$App::910::db_name`.`a910_product_sym`
+				WHERE
+					ID_entity=$env{'product.ID_entity'} AND
+					ID <> $env{'product_sym.ID'}
+				LIMIT 1
+			};
+			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+			while (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				App::020::SQL::functions::delete(
+					'db_h' => "main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_product_sym",
+					'ID' => $db0_line{'ID'}
+				);
+			}
+			
+		}
+		
 	}
 	
 #	main::_log("product_sym.ID='$env{'product_sym.ID'}'");
@@ -828,6 +855,7 @@ sub _product_index
 	my $t=track TOM::Debug(__PACKAGE__."::_product_index()",'timer'=>1);
 	
 	my @content_ent;
+	my @content_id;
 	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
@@ -939,6 +967,23 @@ sub _product_index
 			push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_f' =>  $db1_line{'price'});
 #			push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_VAT_f' =>  );
 			push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_full_f' =>  $db1_line{'price'});
+		}
+		
+		# set
+		foreach my $relation (App::160::SQL::get_relations(
+			'db_name' => $App::910::db_name,
+			'l_prefix' => 'a910',
+			'l_table' => 'product',
+			'l_ID_entity' => $db0_line{'ID'},
+			'r_prefix' => "a910",
+			'r_table' => "product",
+			'rel_type' => "product_set",
+			'status' => "Y"
+		))
+		{
+			
+			push @content_id,WebService::Solr::Field->new( 'set_product_sm' =>  $relation->{'r_ID_entity'}.':'.$relation->{'quantifier'});
+			
 		}
 		
 	}
@@ -1055,6 +1100,7 @@ sub _product_index
 		$doc->add_fields((
 			WebService::Solr::Field->new( 'id' => $id ),
 			@content_ent,
+			@content_id,
 			@{$content{$lng}},
 			WebService::Solr::Field->new( 'db_s' => $App::910::db_name ),
 			WebService::Solr::Field->new( 'addon_s' => 'a910_product' ),
@@ -1146,9 +1192,8 @@ sub _a210_by_cat
 	my %env=@_;
 	
 	$env{'lng'}=$tom::lng unless $env{'lng'};
+	my $cache_key=$env{'lng'}.'::'.join('::',@{$cats});
 	
-	my $cache_key=join('::',@{$cats});
-#=head1
 	# changetimes
 	my $changetime_a910=App::020::SQL::functions::_get_changetime({
 		'db_name' => $App::910::db_name,
@@ -1167,10 +1212,11 @@ sub _a210_by_cat
 		);
 		if (($cache->{'time'} > $changetime_a210) && ($cache->{'time'} > $changetime_a910))
 		{
-			return $cache->{'value'};
+			print "value=$cache->{'value'} time=$cache->{'time'} key=$cache_key\n";
+#			return $cache->{'value'};
 		}
 	}
-#=cut
+	
 	
 	# find path
 	my @categories;
@@ -1209,9 +1255,10 @@ sub _a210_by_cat
 	{
 		foreach my $cat (@{$categories[-$i]})
 		{
-#				push @{$product->{'log'}},"find $i ".$cat;
+#			push @{$product->{'log'}},"find $i ".$cat;
 			
-			my $relation=(App::160::SQL::get_relations(
+			my %db0_line;
+			foreach my $relation(App::160::SQL::get_relations(
 				'db_name' => $App::210::db_name,
 				'l_prefix' => 'a210',
 				'l_table' => 'page',
@@ -1221,23 +1268,27 @@ sub _a210_by_cat
 				'r_ID_entity' => $cat,
 				'rel_type' => "link",
 				'status' => "Y"
-			))[0];
-			next unless $relation->{'l_ID_entity'};
+			))
+			{
+				# je toto relacia na moju jazykovu verziu a je aktivna?
+				my %sth0=TOM::Database::SQL::execute(
+				qq{SELECT ID FROM $App::210::db_name.a210_page WHERE ID_entity=? AND lng=? AND status IN ('Y','L') LIMIT 1},
+				'bind'=>[$relation->{'l_ID_entity'},$env{'lng'}],'quiet'=>1,
+					'-cache' => 600,
+					'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+						'db_name' => $App::210::db_name,
+						'tb_name' => 'a210_page',
+					})
+				);
+				next unless $sth0{'rows'};
+				%db0_line=$sth0{'sth'}->fetchhash();
+				last;
+			}
 			
-			# je toto relacia na moju jazykovu verziu a je aktivna?
-			my %sth0=TOM::Database::SQL::execute(
-			qq{SELECT ID FROM $App::210::db_name.a210_page WHERE ID_entity=? AND lng=? AND status IN ('Y','L') LIMIT 1},
-			'bind'=>[$relation->{'l_ID_entity'},$env{'lng'}],'quiet'=>1,
-				'-cache' => 600,
-				'-cache_changetime' => App::020::SQL::functions::_get_changetime({
-					'db_name' => $App::210::db_name,
-					'tb_name' => 'a210_page',
-				})
-			);
-			next unless $sth0{'rows'};
-			my %db0_line=$sth0{'sth'}->fetchhash();
+			next unless $db0_line{'ID'};
 			
 			$category=$db0_line{'ID'};
+			
 			last;
 		}
 		last if $category;
