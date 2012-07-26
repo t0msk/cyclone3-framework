@@ -41,7 +41,14 @@ sub get
  # global layer
  $env{IDcategory}=~s/^g// && do {$var=$TOM::P;$null="g";};
  
- if (-e $var."/_type/".$null.$env{IDcategory}.".cml_gen")
+ if (-e $var."/_type/".$null.$env{IDcategory}.".inc")
+ {
+	open (HND,"<".$var."/_type/".$null.$env{IDcategory}.".inc") || die "cannot open layer ".$null.$env{IDcategory}."\n";#return undef;
+	while ($env{file_line}=<HND>){$env{file_data}.=$env{file_line};}
+	close(HND);
+	return $env{file_data};
+ }
+ elsif (-e $var."/_type/".$null.$env{IDcategory}.".cml_gen")
  {
   open (HND,"<".$var."/_type/".$null.$env{IDcategory}.".cml_gen") || die "cannot open layer ".$null.$env{IDcategory}."\n";#return undef;
   while ($env{file_line}=<HND>){$env{file_data}.=$env{file_line};}

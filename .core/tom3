@@ -1258,7 +1258,15 @@ while ($main::CGI=new CGI::Fast())
 		undef $FORM{'TID'}; # don't allow to request TID directly
 		if ($FORM{'type'})
 		{
-			$FORM{'TID'}=$tom::type_c{$FORM{'type'}};
+			if (!$tom::type_c{$FORM{'type'}} && $tom::type_c{'autoload'})
+			{
+				main::_log("FORM{'TID'} for FORM{'type'} does not exist, using defined autoload FORM{'TID'}");
+				$FORM{'TID'}=$tom::type_c{'autoload'};
+			}
+			else
+			{
+				$FORM{'TID'}=$tom::type_c{$FORM{'type'}};
+			}
 			main::_log("FORM{type}='$FORM{'type'}' converted to FORM{'TID'}='$FORM{TID}'");
 		}
 		# tu je pre spetnu kompatibilitu tvar "[mg]0000"
@@ -1769,15 +1777,19 @@ while ($main::CGI=new CGI::Fast())
 				}
 			}
 			
-			if (($TOM::LAYERS)&&($env0{id} eq "layers"))
+			if (($TOM::LAYERS)&&(
+					($env0{'id'} eq "layers")
+					||($env0{'id'} eq "include")
+					||($env0{'id'} eq "includes")
+				)
+			)
 			{
-				_log("Get layers ".$env0{value});
-				if (my $var=Tomahawk::layers::get(IDcategory=>$env0{value}))
+				_log("Get layers/includes ".$env0{'value'});
+				if (my $var=Tomahawk::layers::get('IDcategory'=>$env0{'value'}))
 				{
 					_log("including");
 					Utils::vars::replace($var);
 					next if $file_data=~s|<#TYPE_PRE#>|$var<#TYPE_PRE#>|s;
-					#next if $file_data=~s|<#TYPE_PRE#>|$var<#TYPE_PRE#>|s;
 					$file_data=$var.$file_data;
 				}
 				next;
@@ -1948,9 +1960,9 @@ while ($main::CGI=new CGI::Fast())
 		
 		
 		# NEW LAYERS
-		while ($file_data=~s|<ADDLAYER (.*?)/>|<!TMP!>|)
+		while ($file_data=~s|<(ADDLAYER\|INCLUDE) (.*?)/>|<!TMP!>|)
 		{
-			my %env0=CML::VARhash($1);
+			my %env0=CML::VARhash($2);
 			my $var;
 			_log("Importing layers ".$env0{id});
 			if ($var=Tomahawk::layers::get(IDcategory=>$env0{id}))
