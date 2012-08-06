@@ -10,8 +10,28 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
-BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
+our $ixhash;
+
+BEGIN {
+	eval{main::_log("<={LIB} ".__PACKAGE__);};
+	eval {require Tie::IxHash;};
+	if ($@)
+	{
+		main::_log("<={LIB} Tie::IxHash not available",1);
+	}
+	else
+	{
+		main::_log("<={LIB:dist} Tie::IxHash");
+		$ixhash=1;
+	}
+}
+
+sub ixhash_ref
+{
+	tie my %hash, 'Tie::IxHash', @_;
+	return \%hash;
+}
 
 =head1 FUNCTIONS
 
@@ -33,6 +53,10 @@ sub parse
 	my $metaindex=shift;
 	utf8::decode($metaindex) unless utf8::is_utf8($metaindex);
 	my %hash;
+	if($ixhash)
+	{
+		tie %hash, 'Tie::IxHash';
+	}
 	
 	if (not $metaindex =~/<\/metatree>/)
 	{
@@ -42,7 +66,14 @@ sub parse
 	while ($metaindex =~ /<section name="(.*?)"\ ?(\/?)>/)
 	{
 		my $section_name=$1;
-		$hash{$section_name} = {};
+		if($ixhash)
+		{
+			$hash{$section_name} = ixhash_ref();
+		}
+		else
+		{
+			$hash{$section_name} = {};
+		}
 		
 		if ($2)
 		{	
@@ -61,7 +92,7 @@ sub parse
 				my $variable_name=$1;	
 				my $variable_value=$2;
 				$variable_value = undef if (!$3);
-	
+				
 				$hash{$section_name}{$variable_name}=$variable_value;
 			}
 		}
@@ -187,10 +218,10 @@ sub serialize
 	my %metadata=@_;
 	my $text="<metatree>\n";
 	
-	foreach my $section (sort keys %metadata)
+	foreach my $section (keys %metadata)
 	{
 		$text.="<section name=\"$section\">\n";
-		foreach my $variable(sort keys %{$metadata{$section}})
+		foreach my $variable(keys %{$metadata{$section}})
 		{
 			$text.="<variable name=\"$variable\">$metadata{$section}{$variable}</variable>\n";
 		}
