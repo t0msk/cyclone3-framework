@@ -359,6 +359,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_legal_j` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_product_rating` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
   `ID_product` bigint(20) unsigned default NULL, -- rel product.ID
   `title` varchar(128) character set utf8 collate utf8_unicode_ci default '',
   `score_basic` tinyint(3) unsigned default NULL,
@@ -376,6 +377,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_rating` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_product_rating_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
   `ID_product` bigint(20) unsigned default NULL, -- rel product.ID
   `title` varchar(128) character set utf8 collate utf8_unicode_ci default '',
   `score_basic` tinyint(3) unsigned default NULL,
@@ -393,7 +395,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_rating_j` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_product_rating_variable` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_entity` bigint(20) unsigned default NULL, -- rel. product_rating.ID
+  `ID_entity` bigint(20) unsigned default NULL, -- rel. product_rating.ID_entity
   `score_value` tinyint(3) unsigned default NULL,
   `score_variable` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
@@ -406,7 +408,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_rating_variable` (
 
 CREATE TABLE `/*db_name*/`.`/*app*/_product_rating_variable_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_entity` bigint(20) unsigned default NULL, -- rel. product_rating.ID
+  `ID_entity` bigint(20) unsigned default NULL, -- rel. product_rating.ID_entity
   `score_value` tinyint(3) unsigned default NULL,
   `score_variable` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',

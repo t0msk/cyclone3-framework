@@ -1310,6 +1310,138 @@ sub _a210_by_cat
 	return $category;
 }
 
+=head2 product_rating_add()
+
+Adds / updates a product rating
+
+
+	App::910::functions::product_rating_add(
+		'product_rating.ID' => 2,
+		'product_rating.description' => 'I have enjoyed this product very much.',
+		'product_rating.score_basic' => 5,
+		
+		'product_rating.variables' =>
+		{
+			'advanced_rating' => 50,
+			'personal_score' => 10
+		}
+	);
+
+=cut
+
+sub product_rating_add
+{
+	my %env=@_;
+	return undef unless ($env{'product.ID'} || $env{'product_rating.ID'}); # product.ID or rating.ID
+	
+	my $t=track TOM::Debug(__PACKAGE__."::product_rating_add()");
+
+	main::_log('product.ID='.$env{'product.ID'}." product_rating.ID=".$env{'product_rating.ID'}) if $debug;
+
+	my %columns;
+
+	$columns{'title'} = "'".TOM::Security::form::sql_escape($env{'product_rating.title'})."'" 
+		if exists ($env{'product_rating.title'});
+	$columns{'description'} = "'".TOM::Security::form::sql_escape($env{'product_rating.description'})."'" 
+		if exists ($env{'product_rating.description'});
+	$columns{'score_basic'} = "'".TOM::Security::form::sql_escape($env{'product_rating.score_basic'})."'" 
+		if exists ($env{'product_rating.score_basic'});
+	$columns{'lng'} = "'".$env{'lng'}."'" if (exists $env{'lng'});
+	
+	if (! $env{'product_rating.ID'})
+	{
+		# rating doesn't exist, create new
+		if ($env{'product.ID'} =~ /^\d+$/)
+		{
+			$env{'rating.ID'} = App::020::SQL::functions::new(
+				'db_h' => 'main',
+				'db_name' => $App::910::db_name,
+				'tb_name' => 'a910_product_rating',
+				'columns' => 
+				{
+					'ID_product' => $env{'product.ID'},
+					%columns
+				},
+				'-journalize' => 1,
+				'-posix' => 1
+			);
+		}
+	} else
+	{
+		# update an existing rating
+
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`$App::910::db_name`.`a910_product_rating`
+			WHERE
+				ID = ?
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1, 'log'=>0, 'bind' => [$env{'product_rating.ID'}] );
+		my %rating = $sth0{'sth'}->fetchhash();
+
+		my %columns_update;
+
+		$columns_update{'title'} = "'".TOM::Security::form::sql_escape($env{'product_rating.title'})."'" 
+			if (exists ($env{'product_rating.title'})) && $env{'product_rating.title'} ne $rating{'title'};
+		$columns_update{'description'} = "'".TOM::Security::form::sql_escape($env{'product_rating.description'})."'" 
+			if (exists ($env{'product_rating.description'})) && $env{'product_rating.description'} ne $rating{'description'};
+		$columns_update{'score_basic'} = "'".TOM::Security::form::sql_escape($env{'product_rating.score_basic'})."'" 
+			if (exists ($env{'product_rating.score_basic'})) && $env{'product_rating.score_basic'} ne $rating{'score_basic'};
+
+		if (keys %columns_update)
+		{
+			App::020::SQL::functions::update(
+				'ID' => $env{'product_rating.ID'},
+				'db_h' => "main",
+				'db_name' => $App::910::db_name,
+				'tb_name' => "a910_product_rating",
+				'columns' => {%columns_update},
+					'-journalize' => 1,
+					'-posix' => 1
+			);
+		}	
+	}
+
+
+	# check if there are additional variables and append them to the existing rating, now that it exists
+
+	if ($env{'product_rating.ID'})
+	{
+		if ($env{'product_rating.variables'})
+		{
+			my %variables = %{$env{'product_rating.variables'}};
+
+			foreach my $variable (keys %variables)
+			{
+				my $score_variable = "'".TOM::Security::form::sql_escape($variable)."'";
+				my $score_value = "'".TOM::Security::form::sql_escape($variables{$variable})."'";
+
+				# update this variable
+				my $variable_id = App::020::SQL::functions::new(
+					'db_h' => 'main',
+					'db_name' => $App::910::db_name,
+					'tb_name' => 'a910_product_rating_variable',
+					'columns' => 
+					{
+						'ID_entity' => $env{'product_rating.ID'},
+						'score_variable' => $score_variable,
+						'score_value' => $score_value
+					},
+					'-journalize' => 1,
+					'-replace' => 1
+				);
+
+			}
+		}
+	}
+
+
+	$t->close();
+}
+
 =head1 AUTHORS
 
 Comsultia, Ltd. (open@comsultia.com)
