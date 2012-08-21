@@ -328,8 +328,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price` (
   `price` decimal(12,3) default NULL, -- price for this relation
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
-  UNIQUE KEY `UNI_0` (`ID_entity`, `ID_price`),
-  PRIMARY KEY  (`ID`)
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`,`ID_price`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -379,7 +379,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_rating` (
   `description` text character set utf8 collate utf8_unicode_ci default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
-  `posix_owner` varchar(8) character set ascii collate ascii_bin,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `status` char(1) character set ascii default 'Y',
   `status_publish` char(1) character set ascii default 'N',
@@ -397,11 +397,11 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_rating_j` (
   `description` text character set utf8 collate utf8_unicode_ci default NULL,
   `lng` char(2) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
-  `posix_owner` varchar(8) character set ascii collate ascii_bin,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `status` char(1) character set ascii default 'Y',
   `status_publish` char(1) character set ascii default 'N',
-   PRIMARY KEY  (`ID`, `datetime_create`)
+   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -426,7 +426,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_rating_variable_j` (
   `score_variable` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii default 'Y',
-   PRIMARY KEY  (`ID`, `datetime_create`)
+   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
