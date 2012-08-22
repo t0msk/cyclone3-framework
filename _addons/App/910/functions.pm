@@ -1440,6 +1440,8 @@ sub product_rating_add
 
 
 	$t->close();
+
+	return $env{'rating.ID'};
 }
 
 =head1 AUTHORS
