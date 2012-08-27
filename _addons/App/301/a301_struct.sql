@@ -7,7 +7,7 @@
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
   `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
---  `secure_hash` varchar(16) character set utf8 collate utf8_bin NOT NULL default '',
+  `secure_hash` varchar(16) character set utf8 collate utf8_bin NOT NULL default '',
   `login` varchar(64) character set ascii default NULL,
   `pass` varchar(256) character set ascii collate ascii_bin default NULL,
   `autolog` char(1) character set ascii NOT NULL default 'N',
