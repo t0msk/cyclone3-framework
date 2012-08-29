@@ -27,7 +27,8 @@ our %trans=(
 	'de' => 'de-DE',
 	'it' => 'it-IT',
 	'uk' => 'uk-UA',
-	'ar' => 'ar-SA'
+	'ar' => 'ar-SA',
+	'hu' => 'hu-HU'
 );
 
 sub trans
