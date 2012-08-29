@@ -739,9 +739,12 @@ sub process
 		{
 			%{$Tomahawk::module::TPL->{'variables'}->{'user'}}=%main::USRM;
 			undef $Tomahawk::module::TPL->{'variables'}->{'user'}->{'session'};
-			# copy hash, not tied
-			%{$Tomahawk::module::TPL->{'variables'}->{'user'}->{'session'}}
-				= %{$main::USRM{'session'}};
+			if (ref($main::USRM{'session'}) eq "HASH")
+			{
+				# copy hash, not tied
+				%{$Tomahawk::module::TPL->{'variables'}->{'user'}->{'session'}}
+					= %{$main::USRM{'session'}};
+			}
 			# alias
 			%{$Tomahawk::module::TPL->{'variables'}->{'USRM'}}=%{$Tomahawk::module::TPL->{'variables'}->{'user'}};
 		}
