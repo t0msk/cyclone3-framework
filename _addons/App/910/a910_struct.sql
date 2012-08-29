@@ -88,6 +88,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_ent` ( -- summary table for product 
   `VAT` float NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
+  `rating` int(10) unsigned NOT NULL, -- helps indexing
   `priority_A` tinyint(3) unsigned default NULL,
   `priority_B` tinyint(3) unsigned default NULL,
   `priority_C` tinyint(3) unsigned default NULL,
@@ -109,6 +110,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_ent_j` (
   `VAT` float NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
+  `rating` int(10) unsigned NOT NULL,
   `priority_A` tinyint(3) unsigned default NULL,
   `priority_B` tinyint(3) unsigned default NULL,
   `priority_C` tinyint(3) unsigned default NULL,
@@ -116,6 +118,15 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_ent_j` (
   `status` char(1) character set ascii NOT NULL default 'Y',
    PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_product_rating_vote` (
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_product` mediumint(8) unsigned NOT NULL, -- ref _product_ent.ID
+  `datetime_event` datetime NOT NULL,
+  `score` int(10) unsigned NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
