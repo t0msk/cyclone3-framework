@@ -69,7 +69,7 @@ sub SetCookies
 	
 	foreach (keys %{$env{cookies}})
 	{
-		my $var="Set-Cookie: $_\=$tom::cookie_name:$env{cookies}{$_}; $expires; path\=$tom::P_cookie; domain\=$main::tom::H_cookie;\n";
+		my $var="Set-Cookie: $_\=$tom::cookie_name:$env{cookies}{$_}; $expires; path\=$tom::P_cookie; domain\=$main::tom::D_cookie;\n";
 		main::_log("$var");
 		print $var;
 	}
@@ -83,7 +83,7 @@ sub DeleteCookie
 	my $t=track TOM::Debug(__PACKAGE__."::DeleteCookie()") if $debug;
 	foreach (@_)
 	{
-		my $var="Set-Cookie: $_=deleted; expires=Thu, 01-Jan-1970 00:00:00 GMT; path\=$tom::P_cookie; domain\=$main::tom::H_cookie;\n";
+		my $var="Set-Cookie: $_=deleted; expires=Thu, 01-Jan-1970 00:00:00 GMT; path\=$tom::P_cookie; domain\=$main::tom::D_cookie;\n";
 		main::_log("$var");
 		print $var;
 	}

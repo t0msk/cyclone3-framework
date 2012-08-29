@@ -43,6 +43,12 @@ BEGIN
 			
 			main::_log("domain hostname '$tom::H'");
 			
+			#
+			$tom::D_cookie=$tom::H_cookie;
+			$tom::H_cookie=$tom::H_cookie.$tom::P_cookie;
+				$tom::H_cookie=~s|/$||;
+			main::_log("cookie domain='$tom::D_cookie' hostname='$tom::H_cookie'");
+			
 			if ($tom::Pm)
 			{
 				shift @INC;
@@ -53,8 +59,8 @@ BEGIN
 				unshift @INC,$tom::P."/_addons";
 			}
 			
-			TOM::Database::connect::multi(@TOM::DB_pub_connect)
-				|| die "Error during connection request to database server\n";
+			TOM::Database::connect::multi(@TOM::DB_pub_connect);
+#				|| die "Error during connection request to database server\n";
 			
 			if ($tom::addons_init) # load all addons only if required by engine
 			{
