@@ -46,7 +46,7 @@ $CGI::POST_MAX_USE=1024*1024*20; # 20MB
 use Text::Iconv;
 use MIME::Base64;
 use TOM::Net::URI::URL;
-
+use Data::Dumper;
 
 
 my $ISO_UTF = Text::Iconv->new("ISO-8859-1", "UTF-8");
@@ -287,7 +287,10 @@ sub get_QUERY_STRING
 			$value=~s|\+| |g;
 		}
 		
-		if ($name=~/\[\]$/){push @{$form{$name}},$value;}else{$form{$name}=$value;}
+		if ($name=~/\[\]$/){
+			push @{$form{$name}},$value;
+			}else{$form{$name}=$value;
+		}
 		
 		main::_log("'$name'='".$value."'") unless $env{'quiet'};
 	}
@@ -374,6 +377,7 @@ sub get_CGI
 			if ($name=~/\[\]$/)
 			{
 #				main::_log("get array $name");
+				delete $form{$name};
 				foreach my $param($main::CGI->param($name))
 				{
 					utf8::decode($param);
@@ -392,7 +396,16 @@ sub get_CGI
 		}
 		
 		if (length($form{$name})<1024)
-		{main::_log("name '$name'='".$form{$name}."'");}
+		{
+			if (ref($form{$name}) eq "ARRAY")
+			{
+				main::_log("name '$name'=".Dumper($form{$name}));
+			}
+			else
+			{
+				main::_log("name '$name'='".$form{$name}."'");
+			}
+		}
 		else {main::_log("name '$name'=length(".length($form{$name}).")");}
 		
 	}
