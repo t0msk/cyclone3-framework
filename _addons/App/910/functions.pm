@@ -129,6 +129,7 @@ sub product_add
 		else
 		{
 			main::_log("not found product.ID, undef",1);
+#			exit;
 			#undef $env{'product.ID'};
 			App::020::SQL::functions::new(
 				'db_h' => "main",
@@ -154,6 +155,7 @@ sub product_add
 	# find product by product_number
 	if (!$env{'product.ID'} && $env{'product.product_number'})
 	{
+#		exit;
 		# check if this product_number not already used by another product
 		my $sql=qq{
 			SELECT
@@ -182,6 +184,7 @@ sub product_add
 	if (!$env{'product.ID'}) # if modification not defined, create a new
 	{
 		main::_log("!product.ID, create product.ID (product.ID_entity='$env{'product.ID_entity'}')");
+#		exit;
 		my %columns;
 		$columns{'ID_entity'}=$env{'product.ID_entity'} if $env{'product.ID_entity'};
 		$env{'product.ID'}=App::020::SQL::functions::new(
@@ -236,6 +239,7 @@ sub product_add
 	$columns{'amount_order_div'}="'".TOM::Security::form::sql_escape($env{'product.amount_order_div'})."'"
 		if (exists $env{'product.amount_order_div'} && ($env{'product.amount_order_div'} ne $product{'amount_order_div'}));
 	# price
+	$env{'product.price'}=sprintf("%.3f",$env{'product.price'}) if $env{'product.price'};
 	$env{'product.price'}='' if $env{'product.price'} eq "0.000";
 	$columns{'price'}="'".TOM::Security::form::sql_escape($env{'product.price'})."'"
 		if (exists $env{'product.price'} && ($env{'product.price'} ne $product{'price'}));
@@ -495,7 +499,7 @@ sub product_add
 
 	# product_type
 	$columns{'product_type'}="'".TOM::Security::form::sql_escape($env{'product_ent.product_type'})."'"
-		if (exists $env{'product_ent.VAT'} && ($env{'product_ent.product_type'} ne $product_ent{'product_type'}));
+		if (exists $env{'product_ent.product_type'} && ($env{'product_ent.product_type'} ne $product_ent{'product_type'}));
 	
 	if (keys %columns)
 	{
@@ -642,6 +646,7 @@ sub product_add
 	
 	if ($env{'product_sym.ID'})
 	{
+		$env{'product_sym.ID'}+=0;
 		my $sql=qq{
 			SELECT
 				*
@@ -655,6 +660,7 @@ sub product_add
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		if (!$sth0{'rows'})
 		{
+#			exit;
 			$env{'product_sym.ID'}=App::020::SQL::functions::new(
 				'db_h' => "main",
 				'db_name' => $App::910::db_name,
@@ -667,11 +673,11 @@ sub product_add
 				'-journalize' => 1,
 			);
 			$content_reindex=1;
+#			exit;
 		}
 		
 		if ($env{'product_sym.replace'})
 		{
-			
 			my $sql=qq{
 				SELECT
 					*
@@ -679,7 +685,7 @@ sub product_add
 					`$App::910::db_name`.`a910_product_sym`
 				WHERE
 					ID_entity=$env{'product.ID_entity'} AND
-					ID <> $env{'product_sym.ID'}
+					ID != $env{'product_sym.ID'}
 				LIMIT 1
 			};
 			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
@@ -691,6 +697,7 @@ sub product_add
 					'tb_name' => "a910_product_sym",
 					'ID' => $db0_line{'ID'}
 				);
+				$content_reindex=1;
 			}
 			
 		}
@@ -928,6 +935,7 @@ sub _product_index
 			{
 				push @content_ent,WebService::Solr::Field->new( 'brand_f' =>  $db1_line{'ID_brand'});
 				push @content_ent,WebService::Solr::Field->new( 'brand_name_s' =>  $db2_line{'name'});
+				push @content_ent,WebService::Solr::Field->new( 'brand_name_t' =>  $db2_line{'name'});
 			}
 		}
 		
