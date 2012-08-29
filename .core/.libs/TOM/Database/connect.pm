@@ -138,7 +138,8 @@ sub multi
 				{
 					'PrintError' => 0,
 					'RaiseError' => 0,
-#					'LongReadLen' => 6000000
+#					'LongReadLen' => 6000000,
+#					'syb_enable_utf8' => 1
 				}
 			);
 			
@@ -152,6 +153,7 @@ sub multi
 			if ($TOM::DB{$handler}{'uri'}=~/^dbi:Sybase:/)
 			{
 				$main::DB{$handler}->do("set textsize = 512000");
+#				$main::DB{$handler}->syb_enable_utf8(1);
 			}
 			else
 			{
