@@ -61,7 +61,7 @@ sub send
 	{
 		if (!$main::COOKIES_all{$_})
 		{
-			my $var="Set-Cookie: $_=deleted; expires=Thu, 01-Jan-1970 00:00:00 GMT; path\=$tom::P_cookie; domain\=.$main::tom::H_cookie;\n";
+			my $var="Set-Cookie: $_=deleted; expires=Thu, 01-Jan-1970 00:00:00 GMT; path\=$tom::P_cookie; domain\=.$main::tom::D_cookie;\n";
 			main::_log("$var");
 			print $var;
 		}
@@ -76,7 +76,7 @@ sub send
 	{
 		if ($main::COOKIES_all{$_} && ($main::COOKIES_all_save{$_} ne $main::COOKIES_all{$_}))
 		{
-			my $var="Set-Cookie: $_\=$main::COOKIES_all{$_}; $expires; path\=$tom::P_cookie; domain\=$main::tom::H_cookie;\n";
+			my $var="Set-Cookie: $_\=$main::COOKIES_all{$_}; $expires; path\=$tom::P_cookie; domain\=$main::tom::D_cookie;\n";
 			main::_log("$var");
 			print $var;
 		}
