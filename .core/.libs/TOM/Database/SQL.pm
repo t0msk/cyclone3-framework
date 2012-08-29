@@ -64,7 +64,7 @@ sub get_database_applications
 	my $db0=$main::DB{$env{'db_h'}}->Query("SHOW TABLES FROM `$database`");
 	while (my @db0_line=$db0->fetchrow())
 	{
-		main::_log("fount table '$db0_line[0]'");
+		main::_log("found table '$db0_line[0]'");
 		if ($db0_line[0]=~s/^a//)
 		{
 			if ($db0_line[0]=~s|^([a-zA-Z0-9]*)||)
