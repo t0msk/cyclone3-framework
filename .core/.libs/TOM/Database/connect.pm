@@ -130,7 +130,7 @@ sub multi
 		  
 			main::_log("DBI connecting '$handler' ('$TOM::DB{$handler}{uri}' '$TOM::DB{$handler}{user}' '****')");
 			
-			return undef unless $main::DB{$handler} = DBI->connect
+			$main::DB{$handler} = DBI->connect
 			(
 				$TOM::DB{$handler}{'uri'},
 				$TOM::DB{$handler}{'user'},
@@ -141,6 +141,13 @@ sub multi
 #					'LongReadLen' => 6000000
 				}
 			);
+			
+			if (!$main::DB{$handler})
+			{
+				main::_log("can't connect '$handler'",1);
+				$t->close();
+				return undef;
+			}
 			
 			if ($TOM::DB{$handler}{'uri'}=~/^dbi:Sybase:/)
 			{
