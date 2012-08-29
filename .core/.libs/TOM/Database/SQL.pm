@@ -280,7 +280,7 @@ sub execute
 	
 	$typeselect=1 if $SQL_=~/^(\(\s+SELECT|SELECT)/;
 	
-	if (($env{'cache'} || $env{'cache_auto'}) && $TOM::CACHE && $TOM::CACHE_memcached && $typeselect && $main::FORM{'_rc'}!=-2)
+	if (($env{'cache'} || $env{'cache_auto'}) && $TOM::CACHE && $TOM::CACHE_memcached && ($typeselect || $env{'cache_force'}) && $main::FORM{'_rc'}!=-2)
 	{
 		main::_log("SQL: try to read from cache") if $env{'log'};
 		
@@ -485,12 +485,12 @@ sub execute
 	
 	$t->close();
 	
-	if ($env{'cache_auto'} && $typeselect && $t->{'time'}{'req'}{'duration'} >= $query_long_autocache)
+	if ($env{'cache_auto'} && ($typeselect || $env{'cache_force'}) && $t->{'time'}{'req'}{'duration'} >= $query_long_autocache)
 	{
 		main::_log("SQL: cache_auto used to cache, because query long") if $env{'log'};
 		$env{'cache'} = $env{'cache_auto'};
 	}
-	if ($env{'cache'} && $TOM::CACHE && $TOM::CACHE_memcached && $typeselect)
+	if ($env{'cache'} && $TOM::CACHE && $TOM::CACHE_memcached && ($typeselect || $env{'cache_force'}))
 	{
 		main::_log("SQL: saving to cache") if $env{'log'};
 		$output{'sth'}=new TOM::Database::SQL::cache(
