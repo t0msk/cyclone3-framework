@@ -127,6 +127,8 @@ sub execute
 		$env0{'body'}=~/Subject: (.*?)\n/;
 		my $subject=$1;
 		
+		$subject=Encode::encode_utf8($subject);
+		
 		main::_log("sending email $env0{ID} ($env0{priority}) from $env0{from_email} to $env0{to_email}");
 		main::_log("sending email ID='$env0{ID}' priority='$env0{priority}' from='$env0{from_email}' to='$env0{to_email}' subject='$subject'",3,"email",1);
 		
