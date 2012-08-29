@@ -27,6 +27,12 @@ sub execute
 #	return 1;
 	if (!$env{'max_online'}){$env{'max_online'}=20};
 	
+	my $where_plus;
+	if ($env{'user'})
+	{
+		$where_plus="AND ID_user='$env{'user'}'";
+	}
+	
 	for my $looper (1..1000)
 	{
 		my %sth=TOM::Database::SQL::execute(qq{
@@ -36,6 +42,7 @@ sub execute
 				TOM.a301_user_online
 			WHERE
 				datetime_request <= DATE_SUB(NOW(),INTERVAL $env{'max_online'} MINUTE)
+				$where_plus
 			LIMIT 100
 		},'quiet'=>0);
 		my $i;
@@ -59,8 +66,8 @@ sub execute
 			{
 				main::_log("is logged") if ($user{'logged'} eq "Y");
 				main::_log("not logged") if ($user{'logged'} ne "Y");
-				main::_log("anonymous") if (!$user0{'login'});
-				main::_log("authorized") if ($user0{'login'});
+				main::_log("anonymous") if (!$user0{'login'} && !$user0{'email'});
+				main::_log("authorized") if ($user0{'login'} || $user0{'email'});
 				
 				if ($TOM::CACHE_memcached)
 				{
@@ -75,8 +82,8 @@ sub execute
 				}
 				
 				if (
-						(($user{'logged'} eq "Y")&&($user0{'login'}))
-						||(($user{'logged'} ne "Y")&&(!$user0{'login'}))
+						(($user{'logged'} eq "Y")&&($user0{'login'} || $user0{'email'}))
+						||(($user{'logged'} ne "Y")&&(!$user0{'login'} || $user0{'email'}))
 					)
 				{
 					
