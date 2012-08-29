@@ -367,6 +367,21 @@ sub _static_index
 			}
 		}
 		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				$App::420::db_name.a420_static_cat
+			WHERE
+				ID=?
+		},'quiet'=>1,'bind'=>[$db0_line{'ID_category'}]);
+		if (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			push @content,WebService::Solr::Field->new( 'cat' => $db1_line{'name'} );
+			push @content,WebService::Solr::Field->new( 'cat_ID_sm' =>  $db1_line{'ID'});
+			push @content,WebService::Solr::Field->new( 'cat_charindex_sm' =>  $db1_line{'ID_charindex'});
+		}
+		
 		$doc->add_fields((
 			WebService::Solr::Field->new( 'id' => $id ),
 			
