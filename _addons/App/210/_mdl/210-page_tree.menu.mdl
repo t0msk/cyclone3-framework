@@ -21,6 +21,7 @@ sub execute
 	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
 	delete $env{'ID_charindex'};
 	
+	$env{'db_name'}=$App::210::db_name unless $env{'db_name'};
 	$env{'tree'}=1 unless exists $env{'tree'};
 	$env{'ID.current'}=$env{'current_ID'} if $env{'current_ID'};
 	
@@ -33,7 +34,7 @@ sub execute
 	{
 		%root_item=App::020::SQL::functions::get_ID(
 			'db_h'    => 'main',
-			'db_name' => $App::210::db_name,
+			'db_name' => $env{'db_name'},
 			'tb_name' => 'a210_page',
 			'ID'      => $env{'ID'},
 			'columns' => 
@@ -108,7 +109,7 @@ sub execute
 			SELECT
 				ID
 			FROM
-				`$App::210::db_name`.`a210_page`
+				`$env{'db_name'}`.`a210_page`
 			WHERE $where AND ID_charindex LIKE '$from%'
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,
@@ -116,7 +117,7 @@ sub execute
 			'-cache_changetime' => App::020::SQL::functions::_get_changetime(
 				{
 					'db_h'=>"main",
-					'db_name' => $App::210::db_name,
+					'db_name' => $env{'db_name'},
 					'tb_name' => "a210_page"
 				}
 			)
@@ -179,7 +180,7 @@ sub execute
 			visible,
 			is_default
 		FROM
-			`$App::210::db_name`.`a210_page`
+			`$env{'db_name'}`.`a210_page`
 $where
 		ORDER BY
 			$env{'db_order'}
@@ -202,7 +203,7 @@ $where
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",
-				'db_name' => $App::210::db_name,
+				'db_name' => $env{'db_name'},
 				'tb_name' => "a210_page"
 			}
 		)
@@ -313,7 +314,7 @@ $where
 			foreach my $node (App::020::SQL::functions::tree::get_path(
 				$entity->{'ID'},
 				'db_h'    => 'main',
-				'db_name' => $App::210::db_name,
+				'db_name' => $env{'db_name'},
 				'tb_name' => 'a210_page',
 				'-cache' => 3600,
 			))
