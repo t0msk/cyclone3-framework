@@ -294,7 +294,7 @@ sub parse_string
 			}
 			elsif ($self->{'ENV'}{'lng'} eq "en-US")
 			{
-				$self->{'string'}{$id}=$id;
+				$self->{'string'}{$id}="{".$id."}";
 			}
 			else
 			{
