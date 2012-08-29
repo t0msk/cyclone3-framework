@@ -388,6 +388,8 @@ while ($main::CGI=new CGI::Fast())
 			$main::ENV{'HTTP_USER_AGENT'}=$main::ENV{'TERM'} if $main::ENV{'TERM'};
 #			$main::ENV{'HTTP_USER_AGENT'}=" " unless $main::ENV{'HTTP_USER_AGENT'};
 			
+			main::_log("HTTP_USER_AGENT='$main::ENV{'HTTP_USER_AGENT'}'");
+			
 			($main::UserAgent,$main::UserAgent_name)= TOM::Net::HTTP::UserAgent::analyze($main::ENV{'HTTP_USER_AGENT'},IP=>$main::ENV{'REMOTE_ADDR'});
 			main::_log("detected UserAgent='$main::UserAgent' UserAgent_name='$main::UserAgent_name' UserAgent_type='".($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'})."'");
 			
@@ -880,9 +882,14 @@ while ($main::CGI=new CGI::Fast())
 		%main::COOKIES=&Net::HTTP::cookies::GetCookies if !$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{cookies_disable};
 		%main::COOKIES_all=&Net::HTTP::cookies::GetAllCookies if !$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{cookies_disable};
 		
-		foreach (keys %main::COOKIES_all)
+#		foreach (keys %main::COOKIES_all)
+#		{
+#			main::_log("key $_='$main::COOKIES_all{$_}'");
+#		}
+
+		foreach (keys %main::COOKIES)
 		{
-			main::_log("key $_='$main::COOKIES_all{$_}'");
+			main::_log("key $_='$main::COOKIES{$_}'");
 		}
 		
 		# nedostal som ziadne cookies (mozno je toto moj prvy request)
@@ -897,7 +904,8 @@ while ($main::CGI=new CGI::Fast())
 			my $user_md5=Digest::MD5::md5_hex
 			(
 				$main::ENV{'REMOTE_ADDR'}.
-				$main::ENV{'HTTP_USER_AGENT'}
+				$main::ENV{'HTTP_USER_AGENT'}.
+				'1'
 			);
 			
 			main::_log("user and request md5_identificator='$user_md5'");
@@ -923,15 +931,11 @@ while ($main::CGI=new CGI::Fast())
 					'namespace' => "cookies_try",
 					'key' => $user_md5,
 					'value' => 1,
-					'expiration' => '3600S'
+					'expiration' => '60S'
 				);
 				
 				$COOKIES{'_lt'}=$main::time_current;
-				Net::HTTP::cookies::SetCookies
-				(
-					time	=>	$tom::time_current+(86400*31*6)+86400+3600,
-					cookies	=>	{%COOKIES}
-				);
+				TOM::Engine::pub::cookies::send();
 				
 				my %form=TOM::Net::HTTP::CGI::get_CGI($main::ENV{'QUERY_STRING_FULL'});
 				foreach ('ref','gclid','utm_medium','utm_source','utm_campaign','utm_content','utm_term')
