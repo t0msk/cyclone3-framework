@@ -243,6 +243,7 @@ our %table=
 	'1044'	=> "D", # 'Д' v azbuke
 	'1045'	=> "E", # 'Е' v azbuke
 	
+	'1046'	=> "Z", # 'Ж' v azbuke (ž/zh)	
 	'1047'	=> "Z", # 'З' v azbuke
 	'1048'	=> "I", # 'И' v azbuke
 	'1049'	=> "J", # 'Й' v azbuke
@@ -292,6 +293,7 @@ our %table=
 	'1095'	=> "c", # 'ч' v azbuke
 	
 	'1097'	=> "s", # 'Щ' v azbuke
+	'1096'	=> "s", # 'ш' v azbuke
 	
 	'1099'	=> "y", # 'ы' v azbuke
 	

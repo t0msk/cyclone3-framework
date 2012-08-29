@@ -23,6 +23,7 @@ our $debug=0;
 our %trans=(
 	'en' => 'en-US',
 	'sk' => 'sk-SK',
+	'cs' => 'cs-CZ',
 	'de' => 'de-DE',
 	'it' => 'it-IT',
 	'uk' => 'uk-UA',
