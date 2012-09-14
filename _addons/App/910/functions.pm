@@ -333,6 +333,9 @@ sub product_add
 	# status_special
 	$columns{'status_special'}="'".TOM::Security::form::sql_escape($env{'product.status_special'})."'"
 		if ($env{'product.status_special'} && ($env{'product.status_special'} ne $product{'status_special'}));
+	# status_recommended
+	$columns{'status_recommended'}="'".TOM::Security::form::sql_escape($env{'product.status_recommended'})."'"
+		if ($env{'product.status_recommended'} && ($env{'product.status_recommended'} ne $product{'status_recommended'}));
 
 	# status
 	$columns{'status'}="'".TOM::Security::form::sql_escape($env{'product.status'})."'"
@@ -889,6 +892,8 @@ sub _product_index
 			if $db0_line{'status_sale'};
 		push @content_ent,WebService::Solr::Field->new( 'status_special_s' => $db0_line{'status_special'} )
 			if $db0_line{'status_special'};
+		push @content_ent,WebService::Solr::Field->new( 'status_recommended_s' => $db0_line{'status_recommended'} )
+			if $db0_line{'status_recommended'};
 		
 		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
 		foreach my $sec(keys %metadata)
