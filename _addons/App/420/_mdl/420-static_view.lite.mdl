@@ -58,6 +58,12 @@ sub execute
 	$sql_where.=" AND static.status IN ('$env{'static.status'}') "
 		if $env{'static.status'};
 	
+	# static.name
+	if ($env{'static.name'})
+	{
+		$sql_where.=" AND static.name LIKE '".TOM::Security::form::sql_escape($env{'static.name'})."'";
+	}
+	
 	my $sql_order="static.datetime_start DESC";
 		$sql_order=$env{'sql_order'} if $env{'sql_order'};
 		$sql_order=$env{'sql_order_by'} if $env{'sql_order_by'};
