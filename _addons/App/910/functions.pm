@@ -663,7 +663,6 @@ sub product_add
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		if (!$sth0{'rows'})
 		{
-#			exit;
 			$env{'product_sym.ID'}=App::020::SQL::functions::new(
 				'db_h' => "main",
 				'db_name' => $App::910::db_name,
@@ -676,7 +675,6 @@ sub product_add
 				'-journalize' => 1,
 			);
 			$content_reindex=1;
-#			exit;
 		}
 		
 		if ($env{'product_sym.replace'})
@@ -694,12 +692,17 @@ sub product_add
 			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 			while (my %db0_line=$sth0{'sth'}->fetchhash())
 			{
-				App::020::SQL::functions::delete(
-					'db_h' => "main",
-					'db_name' => $App::910::db_name,
-					'tb_name' => "a910_product_sym",
-					'ID' => $db0_line{'ID'}
-				);
+				TOM::Database::SQL::execute(qq{
+					DELETE FROM
+						`$App::910::db_name`.a910_product_sym
+					WHERE
+						ID_entity=? AND
+						ID=?
+					LIMIT 1;
+				},'bind'=>[
+					$db0_line{'ID_entity'},
+					$db0_line{'ID'}
+				],'quiet'=>1);
 				$content_reindex=1;
 			}
 			
@@ -845,6 +848,8 @@ sub product_add
 		
 	}
 	
+	$env{'reindex'}=$content_reindex;
+	
 	if ($content_reindex)
 	{
 		# reindex this product
@@ -958,6 +963,43 @@ sub _product_index
 		{
 #			main::_log("cat $db1_line{'ID'}");
 			push @content_ent,WebService::Solr::Field->new( 'cat' =>  $db1_line{'ID'}); # product_cat.ID_entity
+		}
+		
+		# rating_variable
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				a910_product_rating_variable.score_variable AS var,
+				AVG(a910_product_rating_variable.score_value) AS val
+			FROM
+				$App::910::db_name.a910_product_rating_variable
+			INNER JOIN a910_product_rating ON
+			(
+				a910_product_rating.ID_entity = a910_product_rating_variable.ID_entity
+			)
+			WHERE
+				a910_product_rating.status='Y' AND
+				a910_product_rating.ID_product = ?
+			GROUP BY
+				a910_product_rating_variable.score_variable
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my $i_count;
+		my $i_sum;
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			my $var=$db1_line{'var'};
+			$var=lc(Int::charsets::encode::UTF8_ASCII($var));
+			$var=~s|[^\w]||g;
+#			main::_log("avg $db1_line{'var'} = $db1_line{'val'}");
+			$i_count++;
+			$i_sum+=$db1_line{'val'};
+			push @content_ent,WebService::Solr::Field->new( 'Rating_variable.'.$var.'_i' =>  int($db1_line{'val'}+0));
+		}
+		
+		if ($i_count)
+		{
+			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_count_i' =>  int($i_count));
+			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_sum_i' =>  int($i_sum));
+			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_i' =>  int($i_sum/$i_count));
 		}
 		
 		# prices
@@ -1127,6 +1169,7 @@ sub _product_index
 	$t->close();
 }
 
+
 sub _product_cat_index
 {
 	my %env=@_;
@@ -1199,6 +1242,7 @@ sub _product_cat_index
 	$t->close();
 }
 
+
 sub _a210_by_cat
 {
 	my $cats=shift;
@@ -1219,14 +1263,16 @@ sub _a210_by_cat
 	
 	if ($TOM::CACHE && $TOM::CACHE_memcached && $main::FORM{'_rc'}!=-2)
 	{
+#		main::_log("get cached");
 		my $cache=$Ext::CacheMemcache::cache->get(
 			'namespace' => "fnc_cache",
 			'key' => 'App::910::functions::_a210_by_cat::'.$cache_key
 		);
 		if (($cache->{'time'} > $changetime_a210) && ($cache->{'time'} > $changetime_a910))
 		{
-			print "value=$cache->{'value'} time=$cache->{'time'} key=$cache_key\n";
-#			return $cache->{'value'};
+#			print "value=$cache->{'value'} time=$cache->{'time'} key=$cache_key\n";
+#			main::_log("found, return");
+			return $cache->{'value'};
 		}
 	}
 	
@@ -1348,11 +1394,11 @@ sub product_rating_add
 	return undef unless ($env{'product.ID'} || $env{'product_rating.ID'}); # product.ID or rating.ID
 	
 	my $t=track TOM::Debug(__PACKAGE__."::product_rating_add()");
-
+	
 	main::_log('product.ID='.$env{'product.ID'}." product_rating.ID=".$env{'product_rating.ID'}) if $debug;
-
+	
 	my %columns;
-
+	
 	$columns{'title'} = "'".TOM::Security::form::sql_escape($env{'product_rating.title'})."'" 
 		if exists ($env{'product_rating.title'});
 	$columns{'description'} = "'".TOM::Security::form::sql_escape($env{'product_rating.description'})."'" 
@@ -1366,7 +1412,7 @@ sub product_rating_add
 		# rating doesn't exist, create new
 		if ($env{'product.ID'} =~ /^\d+$/)
 		{
-			$env{'rating.ID'} = App::020::SQL::functions::new(
+			$env{'product_rating.ID'} = App::020::SQL::functions::new(
 				'db_h' => 'main',
 				'db_name' => $App::910::db_name,
 				'tb_name' => 'a910_product_rating',
@@ -1379,10 +1425,11 @@ sub product_rating_add
 				'-posix' => 1
 			);
 		}
-	} else
+	}
+	else
 	{
 		# update an existing rating
-
+		
 		my $sql=qq{
 			SELECT
 				*
@@ -1394,16 +1441,16 @@ sub product_rating_add
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1, 'log'=>0, 'bind' => [$env{'product_rating.ID'}] );
 		my %rating = $sth0{'sth'}->fetchhash();
-
+		
 		my %columns_update;
-
+		
 		$columns_update{'title'} = "'".TOM::Security::form::sql_escape($env{'product_rating.title'})."'" 
 			if (exists ($env{'product_rating.title'})) && $env{'product_rating.title'} ne $rating{'title'};
 		$columns_update{'description'} = "'".TOM::Security::form::sql_escape($env{'product_rating.description'})."'" 
 			if (exists ($env{'product_rating.description'})) && $env{'product_rating.description'} ne $rating{'description'};
 		$columns_update{'score_basic'} = "'".TOM::Security::form::sql_escape($env{'product_rating.score_basic'})."'" 
 			if (exists ($env{'product_rating.score_basic'})) && $env{'product_rating.score_basic'} ne $rating{'score_basic'};
-
+		
 		if (keys %columns_update)
 		{
 			App::020::SQL::functions::update(
@@ -1417,21 +1464,21 @@ sub product_rating_add
 			);
 		}	
 	}
-
-
+	
+	
 	# check if there are additional variables and append them to the existing rating, now that it exists
-
+	
 	if ($env{'product_rating.ID'})
 	{
 		if ($env{'product_rating.variables'})
 		{
 			my %variables = %{$env{'product_rating.variables'}};
-
+			
 			foreach my $variable (keys %variables)
 			{
 				my $score_variable = "'".TOM::Security::form::sql_escape($variable)."'";
 				my $score_value = "'".TOM::Security::form::sql_escape($variables{$variable})."'";
-
+				
 				# update this variable
 				my $variable_id = App::020::SQL::functions::new(
 					'db_h' => 'main',
@@ -1446,15 +1493,15 @@ sub product_rating_add
 					'-journalize' => 1,
 					'-replace' => 1
 				);
-
+				
 			}
 		}
 	}
-
-
+	
+	
 	$t->close();
-
-	return $env{'rating.ID'};
+	
+	return $env{'product_rating.ID'};
 }
 
 =head1 AUTHORS
