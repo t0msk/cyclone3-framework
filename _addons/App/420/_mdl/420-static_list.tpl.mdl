@@ -1,0 +1,187 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::401::mimetypes;
+use App::420::_init;
+use App::020::_init;
+use App::160::_init;
+use TOM::Text::format;
+use Ext::TextHyphen::_init;
+
+sub execute
+{
+	my %env=@_;
+	
+	Tomahawk::GetTpl() || return undef;
+	
+	$env{'db_name'}=$App::420::db_name unless $env{'db_name'};
+	
+	$env{'sql_limit'}='1' unless $env{'sql_limit'};
+	
+	if (not $env{'sql_limit'}=~/,/){$env{'sql_limit'}="0,".$env{'sql_limit'}}
+	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
+	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
+	{
+		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
+	}
+	
+	my $count_max;
+	if ($env{'sql_limit'}=~/,(\d+)/)
+	{
+		$count_max=$1;
+		$env{'sql_limit'}=~s/,(\d+)/",".($1+1)/e;
+	}
+	
+	if (not $env{'sql_limit'}=~/^(\d+),(\d+)$/)
+	{
+		$env{'sql_limit'}='1';
+	}
+	
+	$env{'sql_order_by'}='datetime_create DESC' unless $env{'sql_order_by'};
+	
+	$env{'static.status'}='Y' unless $env{'static.status'};
+		my $status_sql=join "','", split('',$env{'static.status'});
+	
+	my $sql_where;
+	
+	my $sql_cat;
+	foreach my $ID_category(split(';',$env{'static.ID_category'}))
+	{
+		next unless $ID_category;
+		if ($ID_category=~s/\*$//)
+		{
+			next unless $ID_category;
+			my $cat_sql=qq{
+				SELECT
+					`ID_charindex`
+				FROM
+					`$env{'db_name'}`.`a420_static_cat`
+				WHERE
+					`ID`=$ID_category
+				LIMIT 1
+			};
+			$ID_category=qq{
+				SELECT
+					`ID`
+				FROM
+					`$env{'db_name'}`.`a420_static_cat`
+				WHERE
+							`ID_charindex` LIKE CONCAT(($cat_sql),"%")
+					AND	`lng`='$env{'image_attrs.lng'}'
+					AND	`status` IN ('$status_sql')
+			};
+		}
+		$sql_cat.=" OR `static`.`ID_category` IN ($ID_category)";
+		$sql_cat=~s/^ OR //;
+	}
+	if ($sql_cat)
+	{
+		$sql_where.=" AND (".$sql_cat.") ";
+	}
+	
+	if ($env{'image.ID'})
+	{
+		$sql_where.=" AND image.ID_image IN ('".
+			(join "','", split(';',$env{'image.ID'})).
+			"')";
+	}
+	
+	if ($env{'image.ID_entity'})
+	{
+		$sql_where.=" AND image.ID_entity_image IN ('".
+			(join "','", split(';',$env{'image.ID_entity'})).
+			"')";
+	}
+	
+	# static.status
+	$env{'static.status'}='Y' unless exists $env{'static.status'};
+	$sql_where.=" AND static.status IN ('$env{'static.status'}') "
+		if $env{'static.status'};
+	
+	my $sql_order="static.datetime_start DESC";
+		$sql_order=$env{'sql_order'} if $env{'sql_order'};
+		$sql_order=$env{'sql_order_by'} if $env{'sql_order_by'};
+	
+	my $sql=qq{
+		SELECT
+			static.ID_entity,
+			static.ID,
+			static.ID_category,
+			static_cat.name AS category_name,
+			static_cat.name_url AS category_name_url,
+			static.name,
+			static.alias_url,
+			static.posix_owner,
+			static.posix_modified,
+			static.datetime_create,
+			static.datetime_start,
+			DATE_FORMAT(static.datetime_start, '%Y-%m-%d %H:%i') AS datetime_start,
+			DATE_FORMAT(static.datetime_stop, '%Y-%m-%d %H:%i') AS datetime_stop,
+			static.body,
+			static.status
+		FROM
+			`$env{'db_name'}`.a420_static AS static
+		LEFT JOIN `$env{'db_name'}`.a420_static_cat AS static_cat ON
+		(
+			static_cat.ID = static.ID_category
+		)
+		WHERE
+					(static.datetime_start IS NULL OR static.datetime_start <= NOW())
+			AND	(static.datetime_stop IS NULL OR static.datetime_stop >= NOW())
+			$sql_where
+		ORDER BY
+			$sql_order
+		LIMIT
+			$env{'sql_limit'}
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
+	
+	if(!$sth0{'sth'})
+	{
+		main::_log("SQL can't be executed",1);
+	}
+	
+	if(!$sth0{'rows'})
+	{
+		main::_log("err: could not fetch static content");
+	}
+	
+	main::_log("received ".$sth0{'rows'}." rows");
+	
+	my $item_counter=0;
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$item_counter++;
+		
+		last if $count_max<$item_counter;
+		
+		main::_log("static[$item_counter/$count_max] static.name='$db0_line{'name'}'");
+		
+		my $p=new App::401::mimetypes::html;
+		$p->config('prefix'=>'event','name'=>'body','env'=>\%env,'entity'=>\%XSGN);
+		$p->parse($db0_line{'body'});
+		$p->eof();
+		$db0_line{'body'}=$p->{'out'};
+		
+		$TPL->variables_push(\%db0_line);
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;

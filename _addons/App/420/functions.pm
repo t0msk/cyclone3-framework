@@ -116,6 +116,7 @@ sub static_add
 		$columns{'ID_entity'}=$env{'static.ID_entity'} if $env{'static.ID_entity'};
 		$columns{'datetime_start'}="NOW()" unless $columns{'datetime_start'};
 		
+		
 		$env{'static.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
 			'db_name' => $App::420::db_name,
