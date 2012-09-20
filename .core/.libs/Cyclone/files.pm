@@ -204,7 +204,7 @@ our @setit_F=
 	
 	['_type\/.*\.type$'                ,"_type type"                  ,"660","$user_www:$group"],
 	['_type\/.*\.cml_type$'            ,"_type cml_type"              ,"660","$user_www:$group"],
-	['_type\/.*\.cml_gen$'             ,"_type cml_gen"               ,"660","$user_www:$group"],
+	['_type\/.*\.(cml_gen|inc)$'       ,"_type inc"                   ,"660","$user_www:$group"],
 	
 	['_mdl\/.*\.xlng$'                 ,"xlng"                        ,"660","$user_www:$group"],
 	['_mdl.*\.xsgn$'                   ,"xsgn"                        ,"660","$user_www:$group"],
