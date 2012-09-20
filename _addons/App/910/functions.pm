@@ -903,7 +903,7 @@ sub _product_index
 			if $db0_line{'status_special'};
 		push @content_ent,WebService::Solr::Field->new( 'status_recommended_s' => $db0_line{'status_recommended'} )
 			if $db0_line{'status_recommended'};
-		push @content_id,WebService::Solr::Field->new( 'status_product_s' => $db0_line{'status'} )
+		push @content_id,WebService::Solr::Field->new( 'status_s' => $db0_line{'status'} )
 			if $db0_line{'status'};
 
 		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
