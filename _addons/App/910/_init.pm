@@ -80,12 +80,15 @@ use App::910::functions;
 
 our $currency=$App::910::currency || 'EUR';
 our $db_name=$App::910::db_name || $TOM::DB{'main'}{'name'};
+our $solr_status_index=$App::910::solr_status_index || 'Y';
+
 our $metadata_default=$App::910::metadata_default || qq{
 <metatree>
 	<section name="Others"></section>
 </metatree>
 };
 
+our $VAT_default=$App::910::metadata_default || '0.19';
 
 
 
@@ -167,6 +170,7 @@ if ($tom::addons{'a821'})
 use App::501::_init;
 our $thumbnail_cat_ID_entity;
 our %thumbnail_cat;
+
 
 # find any category;
 my $sql="
