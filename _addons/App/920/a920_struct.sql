@@ -21,6 +21,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order` (
   `delivery_service` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `delivery_address` text character set utf8 collate utf8_unicode_ci,
   `notes` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `ERP_data` longblob,
   `status` char(1) character set ascii NOT NULL default 'N', -- N=new order Y=accepted T=canceled
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
@@ -47,6 +48,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order_j` (
   `delivery_service` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `delivery_address` text character set utf8 collate utf8_unicode_ci,
   `notes` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `ERP_data` longblob,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
