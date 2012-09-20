@@ -872,13 +872,17 @@ sub _product_index
 	my @content_ent;
 	my @content_id;
 	
+	my $status_string = $App::910::solr_status_index;
+
+	$status_string =~ s/(\w)/\'$1\',/g; $status_string =~ s/,$//;
+
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			*
 		FROM
 			$App::910::db_name.a910_product
 		WHERE
-			status='Y' AND
+			status IN ( $status_string ) AND
 			ID=?
 	},'quiet'=>1,'bind'=>[$env{'ID'}]);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
@@ -899,7 +903,9 @@ sub _product_index
 			if $db0_line{'status_special'};
 		push @content_ent,WebService::Solr::Field->new( 'status_recommended_s' => $db0_line{'status_recommended'} )
 			if $db0_line{'status_recommended'};
-		
+		push @content_id,WebService::Solr::Field->new( 'status_product_s' => $db0_line{'status'} )
+			if $db0_line{'status'};
+
 		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
 		foreach my $sec(keys %metadata)
 		{
@@ -932,6 +938,7 @@ sub _product_index
 		if (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
 			push @content_ent,WebService::Solr::Field->new( 'product_type_s' => $db1_line{'product_type'} );
+			push @content_ent,WebService::Solr::Field->new( 'entity_posix_owner_s' => $db1_line{'posix_owner'} );
 			
 			my %sth2=TOM::Database::SQL::execute(qq{
 				SELECT
