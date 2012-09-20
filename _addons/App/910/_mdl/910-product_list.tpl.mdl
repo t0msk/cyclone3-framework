@@ -1,0 +1,338 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::910::_init;
+use App::401::_init;
+use App::501::_init;
+
+sub execute
+{
+	my %env=@_;
+	
+	Tomahawk::GetTpl() || return undef;
+	
+	$env{'db_name'}=$App::910::db_name unless $env{'db_name'};
+	
+	$env{'sql_limit'}='1' unless $env{'sql_limit'};
+	
+	if (not $env{'sql_limit'}=~/,/){$env{'sql_limit'}="0,".$env{'sql_limit'}}
+	if ($env{'sql_limit'}=~/^,/){$env{'sql_limit'}="0".$env{'sql_limit'};}
+	if ($env{'sql_limit'}=~/^0,/ && $env{'sql_limit_start'})
+	{
+		$env{'sql_limit'}=~s/^(\d+),/$1+$env{'sql_limit_start'}.","/e;
+	}
+	
+	my $count_max;
+	if ($env{'sql_limit'}=~/,(\d+)/)
+	{
+		$count_max=$1;
+		$env{'sql_limit'}=~s/,(\d+)/",".($1+1)/e;
+	}
+	
+	if (not $env{'sql_limit'}=~/^(\d+),(\d+)$/)
+	{
+		$env{'sql_limit'}='1';
+	}
+	
+	$env{'sql_order_by'}='product_lng.name ASC' unless $env{'sql_order_by'};
+	
+	$env{'product_lng.lng'}=$env{'lng'} unless $env{'product_lng.lng'};
+	
+	$env{'product.status'}='Y' unless $env{'product.status'};
+		my $status_sql=join "','", split('',$env{'product.status'});
+	
+	$env{'image_format.ID'}=$App::501::image_format_thumbnail_ID unless $env{'image_format.ID'};
+	
+	my %hyphen;
+	if ($env{'hyphen'})
+	{
+		foreach(split('[,;]',$env{'hyphen'}))
+		{
+			$hyphen{$_}=1;
+		}
+	}
+	
+	my $sql_where;
+	
+	my $sql_cat;
+	foreach my $ID_category(split(';',$env{'product_cat.ID_entity'}))
+	{
+		next unless $ID_category;
+		main::_log("select by ID_category=$ID_category");
+		if ($ID_category=~s/^\*$//)
+		{
+			main::_log("all categories");
+			$ID_category=qq{
+				SELECT
+					ID_entity
+				FROM
+					`$App::910::db_name`.a910_product_cat
+				WHERE
+					lng='$env{'product_lng.lng'}' AND
+					status IN ('$status_sql')
+			};
+		}
+		elsif ($ID_category=~s/\*$//)
+		{
+			main::_log("ID_category=$ID_category");
+			my $cat_sql=qq{
+						SELECT
+							ID_charindex
+						FROM
+							`$App::910::db_name`.a910_product_cat
+						WHERE
+							ID_entity=$ID_category
+						LIMIT 1
+			};
+			$ID_category=qq{
+				SELECT
+					ID_entity
+				FROM
+					`$App::910::db_name`.a910_product_cat
+				WHERE
+					ID_charindex LIKE CONCAT(($cat_sql),"%") AND
+					lng='$env{'product_lng.lng'}' AND
+					status IN ('$status_sql')
+			};
+		}
+		$sql_cat.=" OR product_sym.ID IN ($ID_category)";
+		$sql_cat=~s/^ OR //;
+	}
+	if ($sql_cat)
+	{
+		$sql_where.=" AND (".$sql_cat.") ";
+	}
+	
+	if ($env{'product.ID'})
+	{
+		$sql_where.=" AND product.ID IN ('".
+			(join "','", split(';',$env{'product.ID'})).
+			"')";
+	}
+	
+	if ($env{'product.ID_entity'})
+	{
+		$sql_where.=" AND product.ID_entity IN ('".
+			(join "','", split(';',$env{'product.ID_entity'})).
+			"')";
+	}
+	
+	if ($env{'keywords'})
+	{
+		$env{'keywords'}=~s|,| |g;
+		$sql_where.=" AND (";
+		foreach (split(' ',$env{'keywords'}))
+		{
+			next unless $_;
+			$sql_where.="(product_lng.name LIKE '%".TOM::Security::form::sql_escape($_)."%' OR product_lng.description LIKE '%".TOM::Security::form::sql_escape($_)."%') AND ";
+		}
+		$sql_where=~s|AND $||;
+		$sql_where.=") ";
+		
+	}
+	
+	if ($env{'sql_where'})
+	{
+		$env{'sql_where'}=~s|\(metadata::(.*?)::(.*?)\)|(SELECT meta_value FROM a910_product_metaindex WHERE ID=product.ID_entity AND meta_section='$1' AND meta_variable='$2' LIMIT 1)|g;
+		$sql_where.=" AND ".$env{'sql_where'};
+	}
+	
+	my $sql=qq{
+		SELECT
+			DISTINCT(product.ID_entity) AS ID_entity_product,
+			product.ID AS ID_product,
+			product_cat.ID AS ID_category,
+			product_sym.ID AS ID_entity_category,
+			product_lng.ID AS ID_lng,
+			product_lng.lng,
+			
+			product.price,
+			(product.price*((100+product_ent.VAT)/100)) AS price_incl_VAT,
+			product.price_currency,
+			product.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=product.price_currency LIMIT 1) AS price_EUR,
+			
+			product.amount,
+			product.amount_availability,
+			product.product_number,
+			product.metadata,
+			
+			product_cat.name AS ID_category_name,
+			product_cat.name_url AS ID_category_name_url,
+			
+			product_brand.name as brand_name,
+			product_brand.name_url as brand_name_url,
+			
+			product_family.name as family_name,
+			product_family.name_url as family_name_url,
+			
+			product_lng.name,
+			product_lng.name_url,
+			product_lng.name_long,
+			product_lng.description_short,
+			
+			product_ent.rating_score,
+			product_ent.rating_votes,
+			(product_ent.rating_score/product_ent.rating_votes) AS rating,
+			
+			IF (
+				supplier_org.name IS NOT NULL,
+				supplier_org.name,
+				IF (
+						supplier_person.firstname IS NOT NULL,
+						CONCAT(supplier_person.surname,', ',supplier_person.firstname),
+						NULL
+					)
+			) AS supplier_name,
+			
+			supplier_org.ID_entity AS supplier_org_ID_entity,
+			supplier_org.name AS supplier_org_name,
+			supplier_org.name_url AS supplier_org_name_url,
+			supplier_person.firstname AS supplier_person_firstname,
+			supplier_person.surname AS supplier_person_surname,
+			
+			product.status
+			
+		FROM
+			`$App::910::db_name`.`a910_product` AS product
+		LEFT JOIN `$App::910::db_name`.`a910_product_ent` AS product_ent ON
+		(
+			product_ent.ID_entity = product.ID_entity
+		)
+		LEFT JOIN `$App::910::db_name`.`a910_product_lng` AS product_lng ON
+		(
+			product_lng.ID_entity = product.ID
+		)
+		LEFT JOIN `$App::910::db_name`.`a910_product_sym` AS product_sym ON
+		(
+			product_sym.ID_entity = product.ID_entity
+		)
+		LEFT JOIN `$App::910::db_name`.`a910_product_brand` AS product_brand ON
+		(
+			product_brand.ID_entity = product_ent.ID_brand
+		)
+		LEFT JOIN `$App::910::db_name`.`a910_product_family` AS product_family ON
+		(
+			product_family.ID_entity = product_ent.ID_family
+		)
+		LEFT JOIN `$App::710::db_name`.`a710_org` AS supplier_org ON
+		(
+			supplier_org.ID_entity = product.supplier_org
+		)
+--		LEFT JOIN `$App::301::db_name`.`a301_user` AS user ON
+--		(
+--			user.ID_user = product.supplier_person
+--		)
+		LEFT JOIN `$App::301::db_name`.`a301_user_profile` AS supplier_person ON
+		(
+			supplier_person.ID_entity = product.supplier_person
+		)
+		LEFT JOIN `$App::910::db_name`.`a910_product_cat` AS product_cat ON
+		(
+			product_cat.ID_entity = product_sym.ID AND
+			product_cat.lng = product_lng.lng AND
+			product_cat.status IN ('$status_sql')
+		)
+		WHERE
+			product.status IN ('$status_sql') AND
+			product.price IS NOT NULL AND
+			product.price > 0 AND
+			product.product_number IS NOT NULL AND
+			product_sym.ID AND
+			product_lng.lng='$env{'product_lng.lng'}'
+			$sql_where
+		ORDER BY
+			$env{'sql_order_by'}
+		LIMIT
+			$env{'sql_limit'}
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache_auto_'=>60);
+	
+	if(!$sth0{'sth'})
+	{
+		main::_log("SQL can't be executed",1);
+	}
+	
+	if(!$sth0{'rows'})
+	{
+		main::_log("err: could not fetch products");
+	}
+	
+	main::_log("received ".$sth0{'rows'}." rows");
+	
+	# Line counter
+	my $item_counter=0;
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$item_counter++;
+		
+		last if $count_max<$item_counter;
+		
+		main::_log("product[$item_counter] product_lng.name='$db0_line{'name'}' $db0_line{'supplier_name'}");
+		
+		$db0_line{'ordinal'}=$item_counter;
+		
+		%{$db0_line{'metahash'}}=App::020::functions::metadata::parse($db0_line{'metadata'});
+		
+		my $price=TOM::Utils::currency::format($db0_line{'price'});
+		
+		$price=TOM::Utils::currency::format($db0_line{'price_incl_VAT'});
+		
+		$db0_line{'supplier_name_url'}=TOM::Net::URI::rewrite::convert($db0_line{'supplier_name'});
+		
+		my $p=new App::401::mimetypes::html;
+		$p->config('prefix'=>'event','name'=>'description_short','env'=>\%env,'entity'=>\%XSGN);
+		$p->parse($db0_line{'description_short'});
+		$p->eof();
+		$db0_line{'description_short'}=$p->{'out'};
+		
+		# finding thumbnail to event
+		my $thumbnail;
+		use App::501::_init;
+		my $relation=(App::160::SQL::get_relations(
+			'db_name' => $env{'db_name'},
+			'l_prefix' => 'a910',
+			'l_table' => 'product',
+			'l_ID_entity' => $db0_line{'ID_entity_product'},
+			'rel_type' => 'thumbnail',
+			'r_db_name' => $App::501::db_name,
+			'r_prefix' => 'a501',
+			'r_table' => 'image',
+			'status' => 'Y',
+			'limit' => 1
+		))[0];
+		if ($relation->{'ID'})
+		{
+			$db0_line{'image'}{'ID_entity'}=$relation->{'r_ID_entity'};
+		}
+		
+		# hyphen
+		foreach (keys %hyphen)
+		{
+			if ($db0_line{$_} && $db0_line{$_.'_hyphens'})
+			{
+				$db0_line{$_}=Ext::TextHyphen::add_hyphens($db0_line{$_},split(',',$db0_line{$_.'_hyphens'}));
+			}
+		}
+		
+		$TPL->variables_push(\%db0_line);
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
