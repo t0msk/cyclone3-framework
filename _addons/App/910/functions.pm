@@ -853,7 +853,7 @@ sub product_add
 	if ($content_reindex)
 	{
 		# reindex this product
-		_product_index('ID'=>$env{'product.ID'});
+		_product_index('ID'=>$env{'product.ID'}, 'commit' => $env{'commit'});
 	}
 	
 	$t->close();
@@ -887,6 +887,8 @@ sub _product_index
 	},'quiet'=>1,'bind'=>[$env{'ID'}]);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
+		main::_log('PRODUCT INDEX: ok got info');
+
 		$env{'ID_entity'}=$db0_line{'ID_entity'};
 		
 		push @content_ent,WebService::Solr::Field->new( 'product_number_s' => $db0_line{'product_number'} )
@@ -938,7 +940,7 @@ sub _product_index
 		if (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
 			push @content_ent,WebService::Solr::Field->new( 'product_type_s' => $db1_line{'product_type'} );
-			push @content_ent,WebService::Solr::Field->new( 'entity_posix_owner_s' => $db1_line{'posix_owner'} );
+			push @content_ent,WebService::Solr::Field->new( 'posix_owner_s' => $db1_line{'posix_owner'} );
 			
 			my %sth2=TOM::Database::SQL::execute(qq{
 				SELECT
@@ -1171,6 +1173,11 @@ sub _product_index
 		));
 #		print "a $id\n";
 		$solr->add($doc);
+	}
+
+	if ($env{'commit'})
+	{
+		$solr->commit();
 	}
 	
 	$t->close();
