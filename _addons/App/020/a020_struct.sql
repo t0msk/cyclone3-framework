@@ -10,7 +10,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_object` (
   `ID_category` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
@@ -24,7 +24,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_object_j` (
   `ID_category` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -38,7 +38,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_object_cat` (
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -54,7 +54,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_object_cat_j` (
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

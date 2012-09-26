@@ -85,7 +85,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contract_cat` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -108,7 +108,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contract_cat_j` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

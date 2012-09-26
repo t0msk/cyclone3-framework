@@ -73,7 +73,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_attrs` (
   `name_ext` varchar(120) character set ascii NOT NULL,
   `datetime_create` datetime NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -96,7 +96,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_attrs_j` (
   `name_ext` varchar(120) character set ascii NOT NULL,
   `datetime_create` datetime NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -115,7 +115,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_item` (
   `file_checksum` varchar(128) character set ascii collate ascii_bin NOT NULL,
   `file_ext` varchar(120) character set ascii NOT NULL, -- only for storage
   `hash_secure` varchar(32) character set ascii collate ascii_bin NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -141,7 +141,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_item_j` (
   `file_checksum` varchar(128) character set ascii collate ascii_bin NOT NULL,
   `file_ext` varchar(120) character set ascii NOT NULL,
   `hash_secure` varchar(32) character set ascii collate ascii_bin NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -168,7 +168,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_dir` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -193,7 +193,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_dir_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

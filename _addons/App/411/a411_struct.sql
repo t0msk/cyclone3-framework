@@ -17,7 +17,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll` (
   `datetime_stop` datetime default NULL,
   `datetime_voting_start` datetime default NULL,
   `datetime_voting_stop` datetime default NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
@@ -38,7 +38,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll_j` (
   `datetime_stop` datetime default NULL,
   `datetime_voting_start` datetime default NULL,
   `datetime_voting_stop` datetime default NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -52,7 +52,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll_answer` (
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
   `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
@@ -67,7 +67,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll_answer_j` (
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
   `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -94,7 +94,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll_cat` (
   `datetime_create` datetime NOT NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -112,7 +112,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll_cat_j` (
   `datetime_create` datetime NOT NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -17,7 +17,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_discussion` (
   `datetime_stop` datetime default NULL,
   `datetime_lastpost` datetime default NULL,
   `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
@@ -39,7 +39,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_discussion_j` (
   `datetime_stop` datetime default NULL,
   `datetime_lastpost` datetime default NULL,
   `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -56,7 +56,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_discussion_forum` (
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -75,7 +75,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_discussion_forum_j` (
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -99,7 +99,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_discussion_message` (
   `karma` float default NULL,
   `karma_label` varchar(8) character set ascii default NULL,
   `karma_label_editor` varchar(8) character set ascii default NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
@@ -128,7 +128,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_discussion_message_j` (
   `karma` float default NULL,
   `karma_label` varchar(8) character set ascii default NULL,
   `karma_label_editor` varchar(8) character set ascii default NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

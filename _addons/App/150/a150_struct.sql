@@ -16,7 +16,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_cache` (
   `Cid_md5` varchar(32) character set ascii collate ascii_bin NOT NULL default '',
   `C_id_sub` varchar(50) character set ascii NOT NULL default '',
   `C_xsgn` varchar(50) character set ascii NOT NULL default '',
-  `C_xlng` char(2) character set ascii NOT NULL default '',
+  `C_xlng` char(5) character set ascii NOT NULL default '',
   `time_from` int(10) unsigned NOT NULL default '0',
   `time_duration` int(10) unsigned NOT NULL default '0',
   `time_to` int(10) unsigned NOT NULL default '0',

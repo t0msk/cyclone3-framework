@@ -98,7 +98,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_attrs` (
   `order_id` int(10) unsigned NOT NULL,
   `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `keywords` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -121,7 +121,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_attrs_j` (
   `order_id` int(10) unsigned NOT NULL,
   `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
   `keywords` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -292,7 +292,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_cat` (
   `datetime_create` datetime NOT NULL,
   `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -318,7 +318,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_cat_j` (
   `datetime_create` datetime NOT NULL,
   `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -334,7 +334,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_format` (
   `datetime_create` datetime NOT NULL,
   `process` tinytext character set ascii NOT NULL,
   `required` char(1) NOT NULL default 'N',
-  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -355,7 +355,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_format_j` (
   `datetime_create` datetime NOT NULL,
   `process` tinytext character set ascii NOT NULL,
   `required` char(1) NOT NULL default 'N',
-  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

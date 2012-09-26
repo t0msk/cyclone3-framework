@@ -114,7 +114,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_lng` (
   `name_long` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
   `description_short` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
@@ -131,7 +131,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_lng_j` (
   `name_long` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
   `description_short` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -150,7 +150,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_cat` (
   `datetime_create` datetime NOT NULL,
   `description` longtext character set utf8 collate utf8_unicode_ci,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -174,7 +174,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_cat_j` (
   `datetime_create` datetime NOT NULL,
   `description` longtext character set utf8 collate utf8_unicode_ci,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

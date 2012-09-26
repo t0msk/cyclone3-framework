@@ -15,7 +15,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_message` (
   `datetime_sent` datetime NOT NULL,
   `datetime_read` datetime default NULL,
   `body` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
@@ -39,7 +39,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_message_j` (
   `datetime_sent` datetime NOT NULL,
   `datetime_read` datetime default NULL,
   `body` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

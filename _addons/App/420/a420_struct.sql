@@ -68,7 +68,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_static_cat` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -91,7 +91,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_static_cat_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

@@ -111,7 +111,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   `priority_D` tinyint(3) unsigned default NULL,
   `priority_E` tinyint(3) unsigned default NULL,
   `priority_F` tinyint(3) unsigned default NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -149,7 +149,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs_j` (
   `priority_D` tinyint(3) unsigned default NULL,
   `priority_E` tinyint(3) unsigned default NULL,
   `priority_F` tinyint(3) unsigned default NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -172,7 +172,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content` (
   `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `body_hyphens` longtext character set ascii,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`,`version`),
@@ -205,7 +205,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_content_j` (
   `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `body_hyphens` longtext character set ascii,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -261,7 +261,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat` (
   `datetime_create` datetime NOT NULL,
   `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -287,7 +287,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat_j` (
   `datetime_create` datetime NOT NULL,
   `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

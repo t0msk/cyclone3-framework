@@ -13,7 +13,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_bnn` (
   `endtime` int(10) unsigned NOT NULL default '0',
   `time_use` int(10) unsigned NOT NULL default '0',
   `code` text NOT NULL,
-  `lng` char(3) NOT NULL default '',
+  `lng` char(5) NOT NULL default '',
   `active` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`host`,`section`,`position`,`type`,`starttime`,`lng`,`active`,`action`),
   KEY `active` (`active`),

@@ -126,7 +126,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile` (
   `about_me` text character set utf8 collate utf8_unicode_ci,
   `note` text character set utf8 collate utf8_unicode_ci,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
@@ -179,7 +179,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_j` (
   `about_me` text character set utf8 collate utf8_unicode_ci,
   `note` text character set utf8 collate utf8_unicode_ci,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -227,7 +227,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_h` (
   `birth_place` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `about_me` text character set utf8 collate utf8_unicode_ci,
   `note` text character set utf8 collate utf8_unicode_ci,
-  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_valid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -344,7 +344,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_group` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
   `perm_roles_override` blob,
-  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
@@ -366,7 +366,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_group_j` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
   `perm_roles_override` blob,
-  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -406,7 +406,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contact_lng` (
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
@@ -421,7 +421,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contact_lng_j` (
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -439,7 +439,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contact_cat` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `hostname` varchar(64) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -462,7 +462,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contact_cat_j` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `hostname` varchar(64) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

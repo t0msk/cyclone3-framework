@@ -30,7 +30,6 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `status_special` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
-  UNIQUE KEY `UNI_0` (`product_number`),
   KEY `ID_entity` (`ID_entity`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -143,7 +142,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_lng` ( -- language versions of produ
   `description_short` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -166,7 +165,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_lng_j` (
   `description_short` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -257,7 +256,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_cat` (
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -283,7 +282,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_cat_j` (
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -389,7 +388,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_rating` (
   `title` varchar(128) character set utf8 collate utf8_unicode_ci default '',
   `score_basic` tinyint(3) unsigned default NULL,
   `description` text character set utf8 collate utf8_unicode_ci default NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
@@ -407,7 +406,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_rating_j` (
   `title` varchar(128) character set utf8 collate utf8_unicode_ci default '',
   `score_basic` tinyint(3) unsigned default NULL,
   `description` text character set utf8 collate utf8_unicode_ci default NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,

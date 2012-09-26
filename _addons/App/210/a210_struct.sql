@@ -16,7 +16,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_page` (
   `t_keys` text NOT NULL, -- kluce uchovavane ako CVML
   `is_default` char(1) character set ascii NOT NULL default 'N',
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `visible` char(1) character set ascii NOT NULL default 'Y',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -38,7 +38,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_page_j` (
   `t_keys` text NOT NULL,
   `is_default` char(1) character set ascii NOT NULL default 'N',
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `visible` char(1) character set ascii NOT NULL default 'Y',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)

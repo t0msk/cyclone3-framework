@@ -109,7 +109,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs` (
   `priority_A` tinyint(3) unsigned default NULL,
   `priority_B` tinyint(3) unsigned default NULL,
   `priority_C` tinyint(3) unsigned default NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -138,7 +138,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs_j` (
   `priority_A` tinyint(3) unsigned default NULL,
   `priority_B` tinyint(3) unsigned default NULL,
   `priority_C` tinyint(3) unsigned default NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -203,7 +203,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_caption` (
   `time_start` time NOT NULL,
   `time_stop` time NOT NULL,
   `caption` varchar(128) NOT NULL default '',
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   FULLTEXT KEY `FULL_0` (`caption`),
@@ -219,7 +219,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_caption_j` (
   `time_start` time NOT NULL,
   `time_stop` time NOT NULL,
   `caption` varchar(128) NOT NULL default '',
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -359,7 +359,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_attrs` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
   `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -379,7 +379,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_attrs_j` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL,
   `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -490,7 +490,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat` (
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -514,7 +514,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat_j` (
   `posix_group` int(10) unsigned NOT NULL,
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `datetime_create` datetime NOT NULL,
-  `lng` char(2) character set ascii NOT NULL default '',
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -531,7 +531,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_format` (
   `process` text character set ascii NOT NULL,
   `definition` text character set ascii,
   `required` char(1) NOT NULL default 'Y',
-  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
@@ -555,7 +555,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_format_j` (
   `process` text character set ascii NOT NULL,
   `definition` text character set ascii,
   `required` char(1) NOT NULL default 'Y',
-  `lng` char(2) character set ascii NOT NULL default 'xx',
+  `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
