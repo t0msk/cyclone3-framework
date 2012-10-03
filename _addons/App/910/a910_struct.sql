@@ -57,6 +57,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `supplier_org` bigint(20) unsigned default NULL, -- rel 710_org.ID_entity
   `supplier_person` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel 301.user_ID
   `status_new` char(1) character set ascii NOT NULL default 'N',
+  `status_recommended` char(1) character set ascii NOT NULL default 'N',
   `status_sale` char(1) character set ascii NOT NULL default 'N',
   `status_special` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'N',
