@@ -887,8 +887,6 @@ sub _product_index
 	},'quiet'=>1,'bind'=>[$env{'ID'}]);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		main::_log('PRODUCT INDEX: ok got info');
-
 		$env{'ID_entity'}=$db0_line{'ID_entity'};
 		
 		push @content_ent,WebService::Solr::Field->new( 'product_number_s' => $db0_line{'product_number'} )
@@ -914,6 +912,15 @@ sub _product_index
 			foreach (keys %{$metadata{$sec}})
 			{
 				next unless $metadata{$sec}{$_};
+				if ($_=~s/\[\]$//)
+				{
+					# this is comma separated array
+					foreach my $val (split(';',$metadata{$sec}{$_.'[]'}))
+					{push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_sm' => $val)}
+					push @content_ent,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_);
+					next;
+				}
+				
 				push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
 				if ($metadata{$sec}{$_}=~/^[0-9]{1,9}$/)
 				{
@@ -974,11 +981,13 @@ sub _product_index
 			push @content_ent,WebService::Solr::Field->new( 'cat' =>  $db1_line{'ID'}); # product_cat.ID_entity
 		}
 		
+		
 		# rating_variable
 		my %sth1=TOM::Database::SQL::execute(qq{
 			SELECT
 				a910_product_rating_variable.score_variable AS var,
-				AVG(a910_product_rating_variable.score_value) AS val
+				AVG(a910_product_rating_variable.score_value) AS val,
+				COUNT(DISTINCT(a910_product_rating.ID_entity)) AS cnt
 			FROM
 				$App::910::db_name.a910_product_rating_variable
 			INNER JOIN a910_product_rating ON
@@ -986,6 +995,7 @@ sub _product_index
 				a910_product_rating.ID_entity = a910_product_rating_variable.ID_entity
 			)
 			WHERE
+				a910_product_rating.score_basic IS NULL AND
 				a910_product_rating.status='Y' AND
 				a910_product_rating.ID_product = ?
 			GROUP BY
@@ -993,22 +1003,73 @@ sub _product_index
 		},'quiet'=>1,'bind'=>[$env{'ID'}]);
 		my $i_count;
 		my $i_sum;
+		my $i_avg;
 		while (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
+			main::_log("rating variable '$db1_line{'var'}' cnt='$db1_line{'cnt'}'");
 			my $var=$db1_line{'var'};
 			$var=lc(Int::charsets::encode::UTF8_ASCII($var));
 			$var=~s|[^\w]||g;
-#			main::_log("avg $db1_line{'var'} = $db1_line{'val'}");
 			$i_count++;
 			$i_sum+=$db1_line{'val'};
 			push @content_ent,WebService::Solr::Field->new( 'Rating_variable.'.$var.'_i' =>  int($db1_line{'val'}+0));
 		}
+		$i_avg=$i_sum/$i_count if $i_count; # overall average
 		
-		if ($i_count)
+		# count basic rates
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				COUNT(*) AS cnt
+			FROM
+				$App::910::db_name.a910_product_rating
+			WHERE
+				a910_product_rating.status='Y' AND
+				a910_product_rating.ID_product = ? AND
+				a910_product_rating.score_basic IS NOT NULL
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		my $rates_basic=$db1_line{'cnt'};
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				COUNT(*) AS cnt
+			FROM
+				$App::910::db_name.a910_product_rating
+			WHERE
+				a910_product_rating.status='Y' AND
+				a910_product_rating.ID_product = ? AND
+				a910_product_rating.score_basic IS NULL
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		my $rates_variables=$db1_line{'cnt'};
+		
+		# rating_basic
+		my $i_basic_count;
+		my $i_basic_avg;
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				AVG(a910_product_rating.score_basic) AS val
+			FROM
+				$App::910::db_name.a910_product_rating
+			WHERE
+				a910_product_rating.status='Y' AND
+				a910_product_rating.ID_product = ?
+			GROUP BY
+				a910_product_rating.ID_product
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		if (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
-			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_count_i' =>  int($i_count));
-			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_sum_i' =>  int($i_sum));
-			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_i' =>  int($i_sum/$i_count));
+			$i_basic_count=1;
+			$i_basic_avg=$db1_line{'val'};
+		}
+		
+		if (($rates_basic+$rates_variables)>0)
+		{
+			my $i_all_avg=int((($rates_basic*$i_basic_avg)+($rates_variables*$i_avg))/($rates_basic+$rates_variables));
+			main::_log("ratings basic='$rates_basic' avg='$i_basic_avg' enhanced='$rates_variables' avg='$i_avg' all avg='$i_all_avg'");
+			
+			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_count_i' =>  ($rates_basic+$rates_variables));
+			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_i' =>  $i_all_avg);
 		}
 		
 		# prices
