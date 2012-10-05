@@ -410,7 +410,7 @@ sub image_file_process
 	
 	if (!$env{'ext'})
 	{
-		if ($env{'image1'}=~/^.*\.(.*?)$/)
+		if ($env{'image1'}=~/^.*\.(.{3,5})$/)
 		{
 			# save the format of original image by default
 			$env{'ext'}=$1;
@@ -793,7 +793,7 @@ sub image_file_process
 		
 		if ($function_name eq "rotate")
 		{
-			main::_log("exec $function_name()");
+			main::_log("exec $function_name($params[0])");
 			my $out=$image1->Rotate('degrees'=>$params[0]);
 			$procs++;
 			next;
@@ -880,6 +880,8 @@ sub image_file_process
 		if ($out[0])
 		{
 			main::_log("error in writing",1);
+			main::_log($out[0]);
+
 			$out[0]=undef;
 		}
 		else
@@ -1896,6 +1898,8 @@ sub get_image_file
 		return undef;
 	}
 	
+	main::_log('ok getting image file');
+	
 	$env{'image_file.ID_format'} = $App::501::image_format_fullsize_ID unless $env{'image_file.ID_format'};
 	$env{'image_attrs.lng'}=$tom::lng unless $env{'image_attrs.lng'};
 	
@@ -2001,7 +2005,7 @@ sub get_image_file
 				return get_image_file(%env,'-recache'=>1,'-recursive'=>1);
 			}
 		}
-#		main::_log("received image_file with status='$image{'file_status'}'");
+		main::_log("received image_file with status='$image{'file_status'}'");
 		if ($env{'-regenerate'})
 		{
 			App::501::functions::image_file_generate(
