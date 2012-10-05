@@ -613,7 +613,7 @@ sub product_add
 	# name
 	$columns{'name'}="'".TOM::Security::form::sql_escape($env{'product_lng.name'})."'"
 		if ($env{'product_lng.name'} && ($env{'product_lng.name'} ne $product_lng{'name'}));
-	$columns{'name_url'}="'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'product_lng.name'}))."'"
+	$columns{'name_url'}="'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'product_lng.name'},'notlower'=>1))."'"
 		if ($env{'product_lng.name'} && ($env{'product_lng.name'} ne $product_lng{'name'}));
 	# name_long
 	$columns{'name_long'}="'".TOM::Security::form::sql_escape($env{'product_lng.name_long'})."'"
@@ -1063,14 +1063,112 @@ sub _product_index
 			$i_basic_avg=$db1_line{'val'};
 		}
 		
+		my $i_all_avg;
 		if (($rates_basic+$rates_variables)>0)
 		{
-			my $i_all_avg=int((($rates_basic*$i_basic_avg)+($rates_variables*$i_avg))/($rates_basic+$rates_variables));
+			$i_all_avg=int((($rates_basic*$i_basic_avg)+($rates_variables*$i_avg))/($rates_basic+$rates_variables));
 			main::_log("ratings basic='$rates_basic' avg='$i_basic_avg' enhanced='$rates_variables' avg='$i_avg' all avg='$i_all_avg'");
 			
 			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_count_i' =>  ($rates_basic+$rates_variables));
 			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_i' =>  $i_all_avg);
 		}
+		
+		
+		# rating in last 6months
+		if ($i_all_avg)
+		{
+			
+			# rating_variable
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					a910_product_rating_variable.score_variable AS var,
+					AVG(a910_product_rating_variable.score_value) AS val,
+					COUNT(DISTINCT(a910_product_rating.ID_entity)) AS cnt
+				FROM
+					$App::910::db_name.a910_product_rating_variable
+				INNER JOIN a910_product_rating ON
+				(
+					a910_product_rating.ID_entity = a910_product_rating_variable.ID_entity
+				)
+				WHERE
+					a910_product_rating.datetime_rating >= DATE_SUB(NOW(),INTERVAL 6 MONTH) AND
+					a910_product_rating.score_basic IS NULL AND
+					a910_product_rating.status='Y' AND
+					a910_product_rating.ID_product = ?
+				GROUP BY
+					a910_product_rating_variable.score_variable
+			},'quiet'=>1,'bind'=>[$env{'ID'}]);
+			my $i_count;
+			my $i_sum;
+			my $i_avg;
+			while (my %db1_line=$sth1{'sth'}->fetchhash())
+			{
+				$i_count++;
+				$i_sum+=$db1_line{'val'};
+			}
+			$i_avg=$i_sum/$i_count if $i_count; # overall average
+			
+			# count basic rates
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					COUNT(*) AS cnt
+				FROM
+					$App::910::db_name.a910_product_rating
+				WHERE
+					a910_product_rating.datetime_rating >= DATE_SUB(NOW(),INTERVAL 6 MONTH) AND
+					a910_product_rating.status='Y' AND
+					a910_product_rating.ID_product = ? AND
+					a910_product_rating.score_basic IS NOT NULL
+			},'quiet'=>1,'bind'=>[$env{'ID'}]);
+			my %db1_line=$sth1{'sth'}->fetchhash();
+			my $rates_basic=$db1_line{'cnt'};
+			
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					COUNT(*) AS cnt
+				FROM
+					$App::910::db_name.a910_product_rating
+				WHERE
+					a910_product_rating.datetime_rating >= DATE_SUB(NOW(),INTERVAL 6 MONTH) AND
+					a910_product_rating.status='Y' AND
+					a910_product_rating.ID_product = ? AND
+					a910_product_rating.score_basic IS NULL
+			},'quiet'=>1,'bind'=>[$env{'ID'}]);
+			my %db1_line=$sth1{'sth'}->fetchhash();
+			my $rates_variables=$db1_line{'cnt'};
+			
+			# rating_basic
+			my $i_basic_count;
+			my $i_basic_avg;
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					AVG(a910_product_rating.score_basic) AS val
+				FROM
+					$App::910::db_name.a910_product_rating
+				WHERE
+					a910_product_rating.datetime_rating >= DATE_SUB(NOW(),INTERVAL 6 MONTH) AND
+					a910_product_rating.status='Y' AND
+					a910_product_rating.ID_product = ?
+				GROUP BY
+					a910_product_rating.ID_product
+			},'quiet'=>1,'bind'=>[$env{'ID'}]);
+			if (my %db1_line=$sth1{'sth'}->fetchhash())
+			{
+				$i_basic_count=1;
+				$i_basic_avg=$db1_line{'val'};
+			}
+			
+			if (($rates_basic+$rates_variables)>0)
+			{
+				$i_all_avg=int((($rates_basic*$i_basic_avg)+($rates_variables*$i_avg))/($rates_basic+$rates_variables));
+				main::_log("ratings basic='$rates_basic' avg='$i_basic_avg' enhanced='$rates_variables' avg='$i_avg' all avg='$i_all_avg'");
+				
+				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_count_i' =>  ($rates_basic+$rates_variables));
+				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_avg_i' =>  $i_all_avg);
+			}
+			
+		}
+		
 		
 		# prices
 		my %sth1=TOM::Database::SQL::execute(qq{
@@ -1494,6 +1592,7 @@ sub product_rating_add
 				'columns' => 
 				{
 					'ID_product' => $env{'product.ID'},
+					'datetime_rating' => 'NOW()',
 					%columns
 				},
 				'-journalize' => 1,
