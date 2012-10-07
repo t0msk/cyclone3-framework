@@ -6,8 +6,8 @@
 -- db_name=TOM
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
-  `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
-  `secure_hash` varchar(16) character set utf8 collate utf8_bin NOT NULL default '',
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
+  `secure_hash` varchar(16) character set ascii collate ascii_bin default NULL,
   `login` varchar(64) character set ascii default NULL,
   `pass` varchar(256) character set ascii collate ascii_bin default NULL,
   `autolog` char(1) character set ascii NOT NULL default 'N',
@@ -34,7 +34,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
 -- db_name=TOM
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_session` (
-  `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   `IP` varchar(15) NOT NULL default '',
   `datetime_session_begin` datetime NOT NULL,
   `datetime_session_end` datetime NOT NULL,
@@ -50,8 +50,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_session` (
 -- db_name=TOM
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_inactive` (
-  `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
-  `secure_hash` varchar(16) character set utf8 collate utf8_bin NOT NULL default '',
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
+  `secure_hash` varchar(16) character set ascii collate ascii_bin default NULL,
   `login` varchar(64) character set ascii default NULL,
   `pass` varchar(256) character set ascii collate ascii_bin default NULL,
   `autolog` char(1) character set ascii NOT NULL default 'N',
