@@ -1034,6 +1034,7 @@ sub _product_index
 			main::_log("ratings avg='$db1_line{'score'}' count='$db1_line{'ratings'}'");
 			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_count_i' =>  int($db1_line{'ratings'}));
 			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_i' =>  int($db1_line{'score'}));
+			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_f' =>  $db1_line{'score'});
 		}
 		
 		# rating in last 6months
@@ -1058,6 +1059,7 @@ sub _product_index
 				main::_log("6mo ratings avg='$db1_line{'score'}' count='$db1_line{'ratings'}'");
 				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_count_i' =>  int($db1_line{'ratings'}));
 				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_avg_i' =>  int($db1_line{'score'}));
+				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_avg_f' =>  $db1_line{'score'});
 			}
 		}
 		
