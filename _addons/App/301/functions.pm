@@ -98,11 +98,19 @@ sub user_add
 	if (!$env{'user.ID_user'})
 	{
 		main::_log("!user.ID_user, create new");
+		# generate random token
+		my $token;
+		if ($env{'user.login'})
+		{
+			$token=TOM::Utils::vars::genhash(16);
+			main::_log(" secure_hash='$token'");
+		}
 		$env{'user.ID_user'}=user_newhash();
 		TOM::Database::SQL::execute(qq{
 			INSERT INTO `TOM`.a301_user
 			(
 				ID_user,
+				secure_hash,
 				posix_owner,
 				hostname,
 				datetime_register
@@ -112,10 +120,21 @@ sub user_add
 				?,
 				?,
 				?,
+				?,
 				NOW()
 			)
-		},'bind'=>[$env{'user.ID_user'},($main::USRM{'ID_user'} || ""),$env{'user.hostname'}],'quiet'=>1) || return undef;
+		},'bind'=>[$env{'user.ID_user'},$token,($main::USRM{'ID_user'} || ""),$env{'user.hostname'}],'quiet'=>1) || return undef;
 		$env{'new'}=1;
+	}
+	else
+	{
+		# user already exists
+		# check for missing data and problems to autofix it
+		if ($user{'login'} && !$user{'secure_hash'})
+		{
+			$env{'user.secure_hash'}=TOM::Utils::vars::genhash(16);
+			main::_log(" generate secure_hash='$env{'user.secure_hash'}'");
+		}
 	}
 	
 	
@@ -339,8 +358,6 @@ sub user_add
 			if (exists $env{'user_profile.email_public'} && ($env{'user_profile.email_public'} ne $user_profile{'email_public'}));
 		$columns{'email_office'}="'".TOM::Security::form::sql_escape($env{'user_profile.email_office'})."'"
 			if (exists $env{'user_profile.email_office'} && ($env{'user_profile.email_office'} ne $user_profile{'email_office'}));
-
-
 		
 		$columns{'idcard_num'}="'".TOM::Security::form::sql_escape($env{'user_profile.idcard_num'})."'"
 			if (exists $env{'user_profile.idcard_num'} && ($env{'user_profile.idcard_num'} ne $user_profile{'idcard_num'}));
@@ -350,10 +367,10 @@ sub user_add
 		
 		$columns{'bank_contact'}="'".TOM::Security::form::sql_escape($env{'user_profile.bank_contact'})."'"
 			if (exists $env{'user_profile.bank_contact'} && ($env{'user_profile.bank_contact'} ne $user_profile{'bank_contact'}));
-
+		
 		$columns{'birth_place'}="'".TOM::Security::form::sql_escape($env{'user_profile.birth_place'})."'"
 			if (exists $env{'user_profile.birth_place'} && ($env{'user_profile.birth_place'} ne $user_profile{'birth_place'}));
-
+		
 		$columns{'phone'}="'".TOM::Security::form::sql_escape($env{'user_profile.phone'})."'"
 			if (exists $env{'user_profile.phone'} && ($env{'user_profile.phone'} ne $user_profile{'phone'}));
 		$columns{'phone_office'}="'".TOM::Security::form::sql_escape($env{'user_profile.phone_office'})."'"
@@ -378,10 +395,10 @@ sub user_add
 			
 		$columns{'note'}="'".TOM::Security::form::sql_escape($env{'user_profile.note'})."'"
 			if (exists $env{'user_profile.note'} && ($env{'user_profile.note'} ne $user_profile{'note'}));
-
+		
 		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'user_profile.metadata'})."'"
 			if (exists $env{'user_profile.metadata'} && ($env{'user_profile.metadata'} ne $user_profile{'metadata'}));
-      
+		
 		if (keys %columns)
 		{
 			App::020::SQL::functions::update(
@@ -417,6 +434,7 @@ sub user_add
 			exists $env{'user.email'} ||
 			exists $env{'user.saved_cookies'} ||
 			exists $env{'user.saved_session'} ||
+			$env{'user.secure_hash'} ||
 			$env{'user.status'} ||
 			$env{'user.email_verified'}
 		)
@@ -447,6 +465,9 @@ sub user_add
 		# saved_session
 		$set.=",saved_session='".TOM::Security::form::sql_escape($env{'user.saved_session'})."'"
 			if exists $env{'user.saved_session'};
+		# secure_hash
+		$set.=",secure_hash='$env{'user.secure_hash'}'"
+			if $env{'user.secure_hash'};
 		# status
 		$set.=",status='$env{'user.status'}'"
 			if $env{'user.status'};
