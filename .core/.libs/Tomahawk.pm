@@ -298,6 +298,15 @@ sub module
 	local %mdl_C;
 	local $tom::ERR;
 	local $tom::ERR_plus;
+	
+	local $TOM::DEBUG_log_file = $TOM::DEBUG_log_file;
+	local $TOM::DEBUG_log_mdl_file = $TOM::DEBUG_log_mdl_file;
+	
+	if ($mdl_env{'-log'})
+	{
+		$TOM::DEBUG_log_file = $TOM::DEBUG_log_mdl_file = $mdl_env{'-log'};
+	}
+	
 #	local $app=$mdl_env{-category};
 	my $cache_domain;
 	my $return_code;
@@ -594,6 +603,13 @@ sub module
 	
 	#NECACHUJEM, LEBO VYPRSALA CACHE
 	
+	if ($mdl_C{'-tpl_level'})
+	{
+		if ($mdl_C{'-tpl_level'} eq "global"){$mdl_C{'-tpl_global'} = 1;}
+		elsif ($mdl_C{'-tpl_level'} eq "master"){$mdl_C{'-tpl_global'} = 2;}
+		elsif ($mdl_C{'-tpl_level'} eq "local"){$mdl_C{'-tpl_global'} = 0;}
+	}
+	
 	if ($mdl_C{'-level'})
 	{
 		if ($mdl_C{'-level'} eq "global"){$mdl_C{'-global'} = 1;}
@@ -655,7 +671,7 @@ sub module
 	# AK MODUL NEEXISTUJE
 	if (not -e $mdl_C{'P_MODULE'})
 	{
-		main::_log("module file '$mdl_C{'P_MODULE'}' can't be found",1);
+#		main::_log("module file '$mdl_C{'P_MODULE'}' can't be found",1);
 		TOM::Error::module(
 			'-TMP' => $mdl_C{'-TMP'},
 			'-MODULE' => "[MDL::".$mdl_C{'-addon'}."-".$mdl_C{'-name'}."]",
@@ -1000,11 +1016,15 @@ sub supermodule
 #	local $app=$smdl_env{-category};
 	$Tomahawk::module::authors="";
 	
-	# SPRACOVANIE PREMMENNYCH
-	$smdl_env{-category}=0 unless $smdl_env{-category};
-	$smdl_env{-version}="0" unless $smdl_env{-version}; # NEBUDEM SE S NIKYM SRAAAT BEZ DUUVODU!...
-	$smdl_env{-xsgn}=$tom::dsgn unless $smdl_env{-xsgn}; # SAJRAJT
-	$smdl_env{-xlng}=$tom::lng unless $smdl_env{-xlng};
+	if (exists $smdl_env{'-category'}){$smdl_env{'-addon'}="a".$smdl_env{'-category'}}; # backward compatibility
+	$smdl_env{'-addon_type'}='App' if $smdl_env{'-addon'}=~/^a/;
+	$smdl_env{'-addon_type'}='Ext' if $smdl_env{'-addon'}=~/^e/;
+	$smdl_env{'-addon_name'}=$smdl_env{'-addon'};$smdl_env{'-addon_name'}=~s|^.||;
+	$smdl_env{'-addon'}="a010" unless $smdl_env{'-addon'};
+	
+	$smdl_env{'-version'}="0" unless $smdl_env{'-version'}; # NEBUDEM SE S NIKYM SRAAAT BEZ DUUVODU!...
+	$smdl_env{'-xsgn'}=$tom::dsgn unless $smdl_env{'-xsgn'}; # SAJRAJT
+	$smdl_env{'-xlng'}=$tom::lng unless $smdl_env{'-xlng'};
 	
 	# main::_log("adding supermodule ".$smdl_env{-category}."-".$smdl_env{-name}."/".$smdl_env{-version}."/".$smdl_env{-global});
 	my $t=track TOM::Debug("supermodule",'attrs'=>"(".$smdl_env{-category}."-".$smdl_env{-name}.")",'timer'=>1);
@@ -1048,44 +1068,44 @@ sub supermodule
 	if (($smdl_env{-global}==2)&&($tom::Pm))
 	{
 		my $addon_path=
-			$tom::Pm . "/_addons/App/" . $smdl_env{-category} . "/_mdl/" . $smdl_env{-category} . "-" . $smdl_env{-name} . "." . $smdl_env{-version} . ".smdl";
+			$tom::Pm . "/_addons/" . $smdl_env{'-addon_type'} . "/" . $smdl_env{'-addon_name'} . "/_mdl/" . $smdl_env{'-addon_name'} . "-" . $smdl_env{-name} . "." . $smdl_env{-version} . ".smdl";
 		if (-e $addon_path)
 		{$smdl_env{P_MODULE}=$addon_path}
 		else
 		{$smdl_env{P_MODULE}=
-			$tom::Pm."/_mdl/".$smdl_env{-category}."-".$smdl_env{-name}.".".$smdl_env{-version}.".smdl";
+			$tom::Pm."/_mdl/".$smdl_env{'-addon_name'}."-".$smdl_env{'-name'}.".".$smdl_env{-version}.".smdl";
 		}
 	}
 	elsif ($smdl_env{-global})
 	{
 		$smdl_env{-global}=1;
 		my $addon_path=
-			$TOM::P . "/_addons/App/" . $smdl_env{-category} . "/_mdl/" . $smdl_env{-category} . "-" . $smdl_env{-name} . "." . $smdl_env{-version} . ".smdl";
+			$TOM::P . "/_addons/" . $smdl_env{'-addon_type'} . "/" . $smdl_env{'-addon_name'} . "/_mdl/" . $smdl_env{'-addon_name'} . "-" . $smdl_env{-name} . "." . $smdl_env{-version} . ".smdl";
 		# find in overlays
 		foreach my $item(@TOM::Overlays::item)
 		{
 			my $file=
 				$TOM::P.'/_overlays/'.$item
-				.'/_addons/App/'.$smdl_env{'-category'}.'/_mdl/'
-				.$smdl_env{'-category'}.'-'.$smdl_env{'-name'}.'.'. $smdl_env{'-version'}.'.smdl';
+				.'/_addons/'.$smdl_env{'-addon_type'} . "/" . $smdl_env{'-addon_name'}.'/_mdl/'
+				.$smdl_env{'-addon_name'}.'-'.$smdl_env{'-name'}.'.'. $smdl_env{'-version'}.'.smdl';
 			if (-e $file){$addon_path=$file;last;}
 		}
 		if (-e $addon_path)
 		{$smdl_env{P_MODULE}=$addon_path}
 		else
 		{$smdl_env{P_MODULE}=
-			$TOM::P."/_mdl/".$smdl_env{-category}."/".$smdl_env{-category}."-".$smdl_env{-name}.".".$smdl_env{-version}.".smdl";
+			$TOM::P."/_mdl/".$smdl_env{'-addon_name'}."-".$smdl_env{'-name'}.".".$smdl_env{-version}.".smdl";
 		}
 	}
 	else
 	{
 		my $addon_path=
-			$tom::P . "/_addons/App/" . $smdl_env{-category} . "/_mdl/" . $smdl_env{-category} . "-" . $smdl_env{-name} . "." . $smdl_env{-version} . ".smdl";
+			$tom::P . "/_addons/" . $smdl_env{'-addon_type'} . "/" . $smdl_env{'-addon_name'} . "/_mdl/" . $smdl_env{'-addon_name'}.'-'.$smdl_env{'-name'} . "." . $smdl_env{-version} . ".smdl";
 		if (-e $addon_path)
 		{$smdl_env{P_MODULE}=$addon_path}
 		else
 		{$smdl_env{P_MODULE}=
-			$tom::P."/_mdl/".$smdl_env{-category}."-".$smdl_env{-name}.".".$smdl_env{-version}.".smdl";
+			$tom::P."/_mdl/".$smdl_env{'-addon_name'}."-".$smdl_env{'-name'}.".".$smdl_env{-version}.".smdl";
 		}
 	}
 
@@ -1150,9 +1170,15 @@ sub designmodule
 	local %mdl_env=@_;
 	$Tomahawk::module::authors=""; # vyprazdnim zoznam authorov
 	# SPRACOVANIE PREMMENNYCH
-	$mdl_env{-category}=0 unless $mdl_env{-category};
-	$mdl_env{-xsgn}=$tom::dsgn unless $mdl_env{-xsgn}; # SAJRAJT
-	$mdl_env{-xlng}=$tom::lng unless $mdl_env{-xlng};
+	if (exists $mdl_env{'-category'}){$mdl_env{'-addon'}="a".$mdl_env{'-category'}}; # backward compatibility
+	$mdl_env{'-addon_type'}='App' if $mdl_env{'-addon'}=~/^a/;
+	$mdl_env{'-addon_type'}='Ext' if $mdl_env{'-addon'}=~/^e/;
+	$mdl_env{'-addon_name'}=$mdl_env{'-addon'};$mdl_env{'-addon_name'}=~s|^.||;
+	$mdl_env{'-addon'}="a010" unless $mdl_env{'-addon'};
+	
+	$mdl_env{'-xsgn'}=$mdl_env{'-version'} if $mdl_env{'-version'}; # -version is higher priority than -xsgn, -xsgn is deprecated
+	$mdl_env{'-xsgn'}=$tom::dsgn unless $mdl_env{'-xsgn'};
+	$mdl_env{'-xlng'}=$tom::lng unless $mdl_env{'-xlng'};
 	$mdl_env{'-convertvars'}=1 unless exists $mdl_env{'-convertvars'};
 	
 	if ($mdl_env{-TMP_check})
@@ -1195,52 +1221,52 @@ sub designmodule
 		elsif ($mdl_env{'-level'} eq "local"){$mdl_env{'-global'} = 0;}
 	}
 	
-	$mdl_env{'MODULE'}=$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng};
+	$mdl_env{'MODULE'}=$mdl_env{'-addon_name'}."-".$mdl_env{'-name'}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng};
 	
 	if (($mdl_env{-global}==2)&&($tom::Pm))
 	{
-		my $addon_path=$tom::Pm."/_addons/App/".$mdl_env{-category}."/_mdl/".
-			$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
+		my $addon_path=$tom::Pm."/_addons/".$mdl_env{'-addon_type'}."/" . $mdl_env{'-addon_name'} . "/_mdl/".
+			$mdl_env{'-addon_name'} . "-" . $mdl_env{'-name'} . ".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
 		if (-e $addon_path)
 		{$mdl_env{P_MODULE}=$addon_path}
 		else
 		{$mdl_env{P_MODULE}=
 			$tom::Pm."/_mdl/".
-			$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
+			$mdl_env{'-addon_name'} . "-" . $mdl_env{'-name'} . ".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
 		}
 	}
 	elsif ($mdl_env{-global})
 	{
 		$mdl_env{-global}=1;
-		my $addon_path=$TOM::P."/_addons/App/".$mdl_env{-category}."/_mdl/".
-			$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
+		my $addon_path=$TOM::P."/_addons/".$mdl_env{'-addon_type'}."/" . $mdl_env{'-addon_name'}."/_mdl/".
+			$mdl_env{'-addon_name'} . "-" . $mdl_env{'-name'} . ".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
 		# find in overlays
 		foreach my $item(@TOM::Overlays::item)
 		{
 			my $file=
 				$TOM::P.'/_overlays/'.$item
-				.'/_addons/App/'.$mdl_env{'-category'}.'/_mdl/'
-				.$mdl_env{'-category'}.'-'.$mdl_env{'-name'}.'.'.$mdl_env{'-xsgn'}.'.'.$mdl_env{'-xlng'}.'.dmdl';
+				.'/_addons/'.$mdl_env{'-addon_type'} . "/" . $mdl_env{'-addon_name'}.'/_mdl/'
+				.$mdl_env{'-addon_name'} . "-" . $mdl_env{'-name'}.'.'.$mdl_env{'-xsgn'}.'.'.$mdl_env{'-xlng'}.'.dmdl';
 			if (-e $file){$addon_path=$file;last;}
 		}
 		if (-e $addon_path)
 		{$mdl_env{P_MODULE}=$addon_path}
 		else
 		{$mdl_env{P_MODULE}=
-			$TOM::P."/_mdl/".$mdl_env{-category}."/".
-			$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
+			$TOM::P."/_mdl/".$mdl_env{'-addon_name'}."/".
+			$mdl_env{'-addon_name'} . "-" . $mdl_env{'-name'}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
 		}
 	}
 	else
 	{
-		my $addon_path=$tom::P."/_addons/App/".$mdl_env{-category}."/_mdl/".
-			$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
+		my $addon_path=$tom::P."/_addons/".$mdl_env{'-addon_type'} . "/" . $mdl_env{'-addon_name'}."/_mdl/".
+			$mdl_env{'-addon_name'} . "-" . $mdl_env{'-name'}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
 		if (-e $addon_path)
 		{$mdl_env{P_MODULE}=$addon_path}
 		else
 		{$mdl_env{P_MODULE}=
 			$tom::P."/_mdl/".
-			$mdl_env{-category}."-".$mdl_env{-name}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
+			$mdl_env{'-addon_name'} . "-" . $mdl_env{'-name'}.".".$mdl_env{-xsgn}.".".$mdl_env{-xlng}.".dmdl";
 		}
 	}
 	
@@ -1369,11 +1395,21 @@ sub tplmodule
 	# tejto session. predam do $env{lng}
 	$mdl_env{'dsgn'}=$mdl_C{'-xsgn'};
 	
+	if ($mdl_C{'-tpl_level'})
+	{
+		if ($mdl_C{'-tpl_level'} eq "global"){$mdl_C{'-tpl_global'} = 1;}
+		elsif ($mdl_C{'-tpl_level'} eq "master"){$mdl_C{'-tpl_global'} = 2;}
+		elsif ($mdl_C{'-tpl_level'} eq "local"){$mdl_C{'-tpl_global'} = 0;}
+	}
+	
 	if ($mdl_C{'-level'})
 	{
 		if ($mdl_C{'-level'} eq "global"){$mdl_C{'-global'} = 1;}
 		elsif ($mdl_C{'-level'} eq "master"){$mdl_C{'-global'} = 2;}
 		elsif ($mdl_C{'-level'} eq "local"){$mdl_C{'-global'} = 0;}
+		
+		# -level has higher priority than -tpl_level and -tpl_global
+		$mdl_C{'-tpl_global'} = $mdl_C{'-global'};
 	}
 	
 	# zapinam defaultne debug, ktory mozem v module vypnut
