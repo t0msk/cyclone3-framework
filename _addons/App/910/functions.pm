@@ -744,7 +744,19 @@ sub product_add
 			my %sth0=TOM::Database::SQL::execute(qq{SELECT * FROM `$App::910::db_name`.`a910_product_price` WHERE ID_price=? AND ID_entity=? LIMIT 1},
 				'bind'=>[$price_level{'ID_entity'},$product{'ID'}],'quiet'=>1);
 			my %price=$sth0{'sth'}->fetchhash();
-			$env{'prices'}{$price_level_name_code}=sprintf("%0.3f",$env{'prices'}{$price_level_name_code});
+			
+			if (ref($env{'prices'}{$price_level_name_code}) eq "HASH")
+			{
+				
+			}
+			else
+			{
+				my $price=sprintf("%0.3f",$env{'prices'}{$price_level_name_code});
+#				$env{'prices'}{$price_level_name_code}=sprintf("%0.3f",$env{'prices'}{$price_level_name_code});
+				delete $env{'prices'}{$price_level_name_code};
+				$env{'prices'}{$price_level_name_code}{'price'}=$price;
+				$env{'prices'}{$price_level_name_code}{'price_full'}=$price;
+			}
 			if (!$sth0{'rows'})
 			{
 				App::020::SQL::functions::new(
@@ -755,7 +767,8 @@ sub product_add
 					{
 						'ID_entity' => $product{'ID'},
 						'ID_price' => $price_level{'ID_entity'},
-						'price' => $env{'prices'}{$price_level_name_code},
+						'price' => $env{'prices'}{$price_level_name_code}{'price'},
+						'price_full' => $env{'prices'}{$price_level_name_code}{'price_full'},
 						'status' => "'Y'",
 					},
 					'-journalize' => 1,
@@ -771,7 +784,8 @@ sub product_add
 					'db_name' => $App::910::db_name,
 					'tb_name' => "a910_product_price",
 					'columns' => {
-						'price' => $env{'prices'}{$price_level_name_code},
+						'price' => $env{'prices'}{$price_level_name_code}{'price'},
+						'price_full' => $env{'prices'}{$price_level_name_code}{'price_full'},
 					},
 					'-journalize' => 1
 				);
@@ -1083,7 +1097,7 @@ sub _product_index
 			next if $db1_line{'price'} == 0;
 			push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_f' =>  $db1_line{'price'});
 #			push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_VAT_f' =>  );
-			push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_full_f' =>  $db1_line{'price'});
+			push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_full_f' =>  $db1_line{'price_full'} || $db1_line{'price'});
 		}
 		
 		# set
@@ -1472,7 +1486,14 @@ sub product_rating_add
 		if exists ($env{'product_rating.description'});
 	$columns{'score_basic'} = "'".TOM::Security::form::sql_escape($env{'product_rating.score_basic'})."'" 
 		if exists ($env{'product_rating.score_basic'});
-	$columns{'lng'} = "'".$env{'lng'}."'" if (exists $env{'lng'});
+	$columns{'helpful_Y'} = "'".TOM::Security::form::sql_escape($env{'product_rating.helpful_Y'})."'" 
+		if exists ($env{'product_rating.helpful_Y'});
+	$columns{'helpful_N'} = "'".TOM::Security::form::sql_escape($env{'product_rating.helpful_N'})."'" 
+		if exists ($env{'product_rating.helpful_N'});
+	$columns{'status_publish'} = "'".TOM::Security::form::sql_escape($env{'product_rating.status_publish'})."'" 
+		if exists ($env{'product_rating.status_publish'});
+	$columns{'lng'} = "'".$env{'lng'}."'" if exists $env{'lng'};
+	$columns{'lng'} = "'".$env{'product_rating.lng'}."'" if exists $env{'product_rating.lng'};
 	
 	if (! $env{'product_rating.ID'})
 	{
@@ -1518,6 +1539,14 @@ sub product_rating_add
 			if (exists ($env{'product_rating.description'})) && $env{'product_rating.description'} ne $rating{'description'};
 		$columns_update{'score_basic'} = "'".TOM::Security::form::sql_escape($env{'product_rating.score_basic'})."'" 
 			if (exists ($env{'product_rating.score_basic'})) && $env{'product_rating.score_basic'} ne $rating{'score_basic'};
+		
+		$columns_update{'helpful_Y'} = "'".TOM::Security::form::sql_escape($env{'product_rating.helpful_Y'})."'" 
+			if (exists ($env{'product_rating.helpful_Y'})) && $env{'product_rating.helpful_Y'} ne $rating{'helpful_Y'};
+		$columns_update{'helpful_N'} = "'".TOM::Security::form::sql_escape($env{'product_rating.helpful_N'})."'" 
+			if (exists ($env{'product_rating.helpful_N'})) && $env{'product_rating.helpful_N'} ne $rating{'helpful_N'};
+		
+		$columns_update{'status_publish'} = "'".TOM::Security::form::sql_escape($env{'product_rating.status_publish'})."'" 
+			if (exists ($env{'product_rating.status_publish'})) && $env{'product_rating.status_publish'} ne $rating{'status_publish'};
 		
 		if (keys %columns_update)
 		{

@@ -338,6 +338,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price` (
   `ID_entity` bigint(20) unsigned default NULL, -- rel product.ID
   `ID_price` bigint(20) unsigned NOT NULL, -- rel price_level.ID_entity
   `price` decimal(12,3) default NULL, -- price for this relation
+  `price_full` decimal(12,3) default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
@@ -351,7 +352,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_price` bigint(20) unsigned NOT NULL, -- rel price_level.ID_entity
-  `price` decimal(12,3) default NULL, 
+  `price` decimal(12,3) default NULL,
+  `price_full` decimal(12,3) default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -394,6 +396,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_rating` (
   `datetime_rating` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `helpful_Y` mediumint(8) unsigned NOT NULL,
+  `helpful_N` mediumint(8) unsigned NOT NULL,
   `status` char(1) character set ascii default 'Y',
   `status_publish` char(1) character set ascii default 'N',
    PRIMARY KEY  (`ID`)
@@ -413,10 +417,22 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_rating_j` (
   `datetime_rating` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `helpful_Y` mediumint(8) unsigned NOT NULL,
+  `helpful_N` mediumint(8) unsigned NOT NULL,
   `status` char(1) character set ascii default 'Y',
   `status_publish` char(1) character set ascii default 'N',
    PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_product_rating_helpful_vote` (
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_rating` mediumint(8) unsigned NOT NULL, -- ref _product_rating.ID
+  `helpful` char(1) character set ascii default 'Y',
+  PRIMARY KEY  (`ID_user`,`ID_rating`),
+  KEY `ID_rating` (`ID_rating`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
