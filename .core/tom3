@@ -879,8 +879,8 @@ while ($main::CGI=new CGI::Fast())
 		%main::COOKIES=();
 		%main::COOKIES_all=();
 		
-		%main::COOKIES=&Net::HTTP::cookies::GetCookies if !$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{cookies_disable};
-		%main::COOKIES_all=&Net::HTTP::cookies::GetAllCookies if !$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{cookies_disable};
+		%main::COOKIES=&Net::HTTP::cookies::GetCookies if !$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'cookies_disable'};
+		%main::COOKIES_all=&Net::HTTP::cookies::GetAllCookies if !$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'cookies_disable'};
 		
 #		foreach (keys %main::COOKIES_all)
 #		{
