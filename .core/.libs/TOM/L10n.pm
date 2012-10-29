@@ -75,6 +75,12 @@ sub new
 	
 	# find where is the source file/files
 	$obj->prepare_location();
+	if (!$obj->{'location'})
+	{
+		main::_log("can't create L10n object",1) if $debug;
+		$t->close() if $debug;
+		return undef;
+	}
 	$obj->{'uid'}=$obj->{'location'}.'/'.$env{'lng'};
 	
 	# modifytime of location
@@ -188,7 +194,8 @@ sub prepare_location
 	
 	if (!$self->{'location'})
 	{
-		main::_log("this L10n not exists",1);
+		main::_log("can't find location for L10n '".$self->{'ENV'}->{'name'}.".".$self->{'ENV'}->{'lng'}."' (L10n not exists, or already loaded as dependency)",1);
+		return undef;
 	}
 	else
 	{
