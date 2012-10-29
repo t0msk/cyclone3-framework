@@ -44,10 +44,10 @@ BEGIN
 			main::_log("domain hostname '$tom::H'");
 			
 			#
-			$tom::D_cookie=$tom::H_cookie;
+			$tom::D_cookie=$tom::H_cookie unless $tom::D_cookie;
 			$tom::H_cookie=$tom::H_cookie.$tom::P_cookie;
 				$tom::H_cookie=~s|/$||;
-			main::_log("cookie domain='$tom::D_cookie' hostname='$tom::H_cookie'");
+			main::_log("cookie domain='$tom::D_cookie' USRM hostname='$tom::H_cookie'");
 			
 			if ($tom::Pm)
 			{
