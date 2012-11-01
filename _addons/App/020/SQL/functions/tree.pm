@@ -642,12 +642,12 @@ sub copy_to
 	if ($data2{'ID'})
 	{
 		# zistim ci sa nepokusam prekopirovat nejaky jazyk do ineho jazyka
-		if ($data{'lng'} ne $data2{'lng'})
-		{
-			main::_log("can't move, in parent_ID is different language",1);
-			$t->close();
-			return undef;
-		}
+#		if ($data{'lng'} ne $data2{'lng'})
+#		{
+#			main::_log("can't move, in parent_ID is different language",1);
+#			$t->close();
+#			return undef;
+#		}
 	}
 	
 	# zistim ci cielovy ID_charindex nieje sucastou stromu ktory chcem kopirovat
@@ -704,14 +704,22 @@ sub copy_to
 		$ID_charindex=~s|^$data{ID_charindex}|$ID_charindex_new|;
 		main::_log("ID='$db0_line{'ID'}' copy from ID_charindex='$db0_line{'ID_charindex'}'->'$ID_charindex'");
 		
+		my %columns;
+		if ($data2{'lng'})
+		{
+			$columns{'lng'}="'$data2{'lng'}'";
+		}
+		
 		App::020::SQL::functions::copy(
 			'ID' => $db0_line{'ID'},
 			'db_h' => $env{'db_h'},
 			'db_name' => $env{'db_name'},
 			'tb_name' => $env{'tb_name'},
+			'a160' => $env{'a160'}, # copy a160 relation too, when required
 			'columns' =>
 			{
 				'ID_charindex' => "'$ID_charindex'",
+				%columns
 			},
 		);
 		

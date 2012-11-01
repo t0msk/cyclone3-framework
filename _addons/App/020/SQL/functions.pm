@@ -768,6 +768,7 @@ sub copy
 	my $t=track TOM::Debug(__PACKAGE__."::copy()");
 	
 	my $ID;
+	my $ID_entity;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
@@ -786,7 +787,7 @@ sub copy
 	);
 	if ($data{'ID'} && $data{'status'}=~/^[YN]$/)
 	{
-		
+		$ID_entity=$data{'ID_entity'};
 		# pripravim si columny na new
 		
 		# nepovolim update tychto columnov (z povodneho riadku)
@@ -801,7 +802,7 @@ sub copy
 		# osetrenie data
 		foreach (keys %data)
 		{
-			$data{$_}="'".$data{$_}."'";
+			$data{$_}="'".TOM::Security::form::sql_escape($data{$_})."'";
 		}
 		
 		# override %data z $env{columns}
@@ -829,7 +830,41 @@ sub copy
 			$t->close();
 			return undef;
 		}
-		
+		else
+		{
+			if ($env{'a160'})
+			{
+				require App::160::_init;
+#				main::_log("copy a160 of ID_entity=$ID_entity");
+				
+				my $l_prefix=$env{'tb_name'};
+					$l_prefix=~s|^(.*?)_(.*)$|$1|;
+				my $l_table=$2;
+				foreach my $relation (App::160::SQL::get_relations(
+					'db_name' => $env{'db_name'},
+					'l_prefix' => $1,
+					'l_table' => $2,
+					'l_ID_entity' => $ID_entity
+				))
+				{
+#					use Data::Dumper;
+#					print "relation:".Dumper($relation)."\n";
+					# create relation
+					App::160::SQL::new_relation(
+						'l_prefix' => $relation->{'l_prefix'},
+						'l_table' => $relation->{'l_table'}, # this value can be send as undefined
+						'l_ID_entity' => $ID,
+						'rel_type' => $relation->{'rel_type'},
+						'r_db_name' => $relation->{'r_db_name'}, # this value can be send as undefined
+						'r_prefix' => $relation->{'r_prefix'},
+						'r_table' => $relation->{'r_table'}, # this value can be send as undefined
+						'r_ID_entity' => $relation->{'r_ID_entity'},
+						'status' => $relation->{'status'},
+					);
+				}
+				
+			}
+		}
 	}
 	else
 	{
