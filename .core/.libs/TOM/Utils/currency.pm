@@ -90,7 +90,7 @@ sub format
 	unshift @a,$cur[0];
 	$currency = (join $delimiter,@a) . "," . $cur[1];
 	
-	$currency=~s|,00|,--|g;
+	$currency=~s|,00|,–|g;
 #	$currency="--" if $currency eq "0,--";
 	return $currency;
 }
