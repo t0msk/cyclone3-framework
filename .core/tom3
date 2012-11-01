@@ -2375,11 +2375,22 @@ while ($main::CGI=new CGI::Fast())
 		
 		my $t_send=track TOM::Debug("send",'timer'=>1);
 		
+		print "C3-Request: $main::request_code\n";
+		print "C3-Domain: $tom::H\n";
+		#print "C3-TypeID: $main::H\n";
+		
 		# codepage pouzity pre tuto page;
 		$main::LNG_cp_this=$COOKIES{cp};
 		
-		# odoslanie cookies
-		TOM::Engine::pub::cookies::send();
+		# send cookies
+		if ($main::ENV{'Cache-Control'}=~/(public|revalidate)/)
+		{
+			main::_log("sending cookies disabled by Cache-Control='".$main::ENV{'Cache-Control'}."'");
+		}
+		else
+		{
+			TOM::Engine::pub::cookies::send();
+		}
 		
 #		if ($TOM::DEBUG_log_file >= 99)
 #		{
