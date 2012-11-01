@@ -327,7 +327,7 @@ sub module
 	
 	# SPRACOVANIE PREMENNYCH
 	my $debug;
-	my $debug=1 if $mdl_env{'-debug'};
+		$debug=1 if $mdl_env{'-debug'};
 	
 	foreach (sort keys %mdl_env)
 	{
@@ -981,6 +981,11 @@ sub module_process_return_data
 			foreach my $env0(@{$return_data{'call'}{'H'}{'add_DOC_title'}})
 			{
 				$main::H->add_DOC_title($env0);
+			}
+			# description
+			foreach my $env0(@{$return_data{'call'}{'H'}{'change_DOC_description'}})
+			{
+				$main::H->change_DOC_description($env0);
 			}
 		}
 	}
