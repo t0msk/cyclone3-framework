@@ -257,7 +257,14 @@ sub product_add
 	# price_currency
 	$columns{'price_currency'}="'".TOM::Security::form::sql_escape($env{'product.price_currency'})."'"
 		if ($env{'product.price_currency'} && ($env{'product.price_currency'} ne $product{'price_currency'}));
-
+	# datetime_process
+	$columns{'datetime_process'}="'".TOM::Security::form::sql_escape($env{'product.datetime_process'})."'"
+		if ($env{'product.datetime_process'} && ($env{'product.datetime_process'} ne $product{'datetime_process'}));
+	$columns{'datetime_process'}="NULL" if $env{'product.datetime_process'} eq "NULL";
+	# datetime_next_index
+	$columns{'datetime_next_index'}="'".TOM::Security::form::sql_escape($env{'product.datetime_next_index'})."'"
+		if (exists $env{'product.datetime_next_index'} && ($env{'product.datetime_next_index'} ne $product{'datetime_next_index'}));
+	$columns{'datetime_next_index'}="NULL" if $columns{'datetime_next_index'} eq "''";
 	# supplier_org
 	$columns{'supplier_org'}="'".TOM::Security::form::sql_escape($env{'product.supplier_org'})."'"
 		if (exists $env{'product.supplier_org'} && ($env{'product.supplier_org'} ne $product{'supplier_org'}));
@@ -866,6 +873,12 @@ sub product_add
 	
 	if ($content_reindex)
 	{
+		App::020::SQL::functions::_save_changetime({
+			'db_h'=>'main',
+			'db_name'=>$App::910::db_name,
+			'tb_name'=>'a910_product',
+			'ID_entity'=>$env{'product.ID'}}
+		);
 		# reindex this product
 		_product_index('ID'=>$env{'product.ID'}, 'commit' => $env{'commit'});
 	}
@@ -919,7 +932,14 @@ sub _product_index
 			if $db0_line{'status_recommended'};
 		push @content_id,WebService::Solr::Field->new( 'status_s' => $db0_line{'status'} )
 			if $db0_line{'status'};
-
+		
+		if ($db0_line{'datetime_next_index'})
+		{
+			$db0_line{'datetime_next_index'}=~s| (\d\d)|T$1|;
+			$db0_line{'datetime_next_index'}.="Z";
+			push @content_id,WebService::Solr::Field->new( 'next_index_tdt' => $db0_line{'datetime_next_index'} );
+		}
+		
 		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
 		foreach my $sec(keys %metadata)
 		{

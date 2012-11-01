@@ -9,6 +9,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `ID_entity` bigint(20) unsigned default NULL,
   `product_number` varchar(32) character set ascii default NULL, -- unique for every modification
   `datetime_create` datetime NOT NULL,
+  `datetime_process` datetime default NULL,
+  `datetime_next_index` datetime default NULL,
   `amount` int(10) unsigned NOT NULL,
   `amount_unit` varchar(8) character set ascii default 'pcs',
   `amount_availability` varchar(32) NOT NULL,
@@ -41,6 +43,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `ID_entity` bigint(20) unsigned default NULL,
   `product_number` varchar(32) character set ascii default NULL,
   `datetime_create` datetime NOT NULL,
+  `datetime_process` datetime default NULL,
+  `datetime_next_index` datetime default NULL,
   `amount` int(10) unsigned NOT NULL,
   `amount_unit` varchar(8) character set ascii default 'pcs',
   `amount_availability` varchar(32) NOT NULL,
@@ -76,6 +80,25 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_metaindex` (
   KEY `SEL_0` (`meta_section`,`meta_variable`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_product_visit` (
+  `datetime_event` datetime NOT NULL,
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_product` bigint(20) NOT NULL, -- rel to product.ID_entity
+  PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_product`),
+  KEY `SEL_0` (`ID_product`,`datetime_event`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8; -- must be myisam because inserting with insert delayed
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_product_visit_arch` (
+  `datetime_event` datetime NOT NULL,
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_product` bigint(20) NOT NULL,
+  KEY `datetime_event` (`datetime_event`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
