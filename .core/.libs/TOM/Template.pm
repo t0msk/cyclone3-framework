@@ -719,6 +719,7 @@ sub process
 		
 		# domain variables
 		$vars_process->{'domain'}={
+			'name' => $tom::H,
 			'url' => $tom::H_www,
 			'url_master' => $tom::Hm_www,
 			'url_media' => $tom::H_media,
@@ -746,6 +747,12 @@ sub process
 				%{$Tomahawk::module::TPL->{'variables'}->{'user'}->{'session'}}
 					= %{$main::USRM{'session'}};
 			}
+			# remove unwanted
+			delete $Tomahawk::module::TPL->{'variables'}->{'user'}->{'cookies'};
+			delete $Tomahawk::module::TPL->{'variables'}->{'user'}->{'pass'};
+			delete $Tomahawk::module::TPL->{'variables'}->{'user'}->{'saved_cookies'};
+			delete $Tomahawk::module::TPL->{'variables'}->{'user'}->{'session_save'};
+			
 			# alias
 			%{$Tomahawk::module::TPL->{'variables'}->{'USRM'}}=%{$Tomahawk::module::TPL->{'variables'}->{'user'}};
 		}
