@@ -27,26 +27,36 @@ sub browser_autodetect
 	main::_log("lng browser autodetection '$main::ENV{'HTTP_ACCEPT_LANGUAGE'}'");
 	#main::_log("teeeeeeeeeeeest");
 	
+	my $lng_set;
 	foreach my $lng(split(',',$main::ENV{'HTTP_ACCEPT_LANGUAGE'}))
 	{
 		$lng=~s| ||;
 		$lng=~s|;.*||g;
-		
-		# preklady blbosti
-		$lng="en" if $lng=~/^en-/;
-		$lng="de" if $lng=~/^de-/;
+		my $lang=$lng;
+			$lng=~s|^(.*)\-.*$|$1|; # create short version
 		
 		foreach (@TOM::LNG_accept)
 		{
 			main::_log("$_ equal $lng ?");
 			
-			if ($lng eq $_)
+			if ($lang eq $_) # full variant 'en-US'
 			{
 				main::_log("selected '$_'");
 				$t->close();
 				return $_;
 			}
+			elsif ($lng eq $_) # short variant 'en'
+			{
+				main::_log("possible '$_'");
+				$lng_set=$_;
+			}
 		}
+	}
+	
+	if ($lng_set)
+	{
+		$t->close();
+		return $lng_set;
 	}
 	
 =head1
