@@ -1294,7 +1294,7 @@ while ($main::CGI=new CGI::Fast())
 		{
 			# nastavenie 404 je nutne, inak by som sa nedostal vobec k citaniu l_notfound
 			$main::page_statuscode="404";
-			$FORM{TID}="l_".$FORM{type};
+			$FORM{'TID'}="l_".$FORM{'type'};
 		}
 		# ak je len TID poslane prazdne alebo zle
 		else
@@ -1349,18 +1349,18 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("access to:".$tom::Ptype."/_addons/Ext/".$1."/_type/".($FORM{TID}).".pub.type");
 			local $/;$file_data=<TYPE>;
 		}
-		elsif (($main::page_statuscode eq "200")&&($main::FORM{TID} =~/default/)&&(open (TYPE,"<".$tom::P."/_type/l_0000.pub.type")))
-		{
-			main::_deprecated("using bad TypeID file, $tom::P/_type/l_0000.pub.type");
-			local $/;$file_data=<TYPE>;
-		}
+#		elsif (($main::page_statuscode eq "200")&&($main::FORM{TID} =~/default/)&&(open (TYPE,"<".$tom::P."/_type/l_0000.pub.type")))
+#		{
+#			main::_deprecated("using bad TypeID file, $tom::P/_type/l_0000.pub.type");
+#			local $/;$file_data=<TYPE>;
+#		}
 		# potom sa pokusam najst not_found page
 		elsif (
 			open (TYPE,"<".$tom::P."/_type/l_notfound.pub.type") ||
 			open (TYPE,"<".$tom::Pm."/_type/m_notfound.pub.type") ||
 			open (TYPE,"<".$TOM::P."/_type/g_notfound.pub.type") )
 		{
-			main::_log("access to: notfound.pub.type");
+			main::_log("loading: notfound.pub.type");
 			local $/;$file_data=<TYPE>;
 			$main::page_statuscode="404";
 			if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'} ne "vandaliser")
