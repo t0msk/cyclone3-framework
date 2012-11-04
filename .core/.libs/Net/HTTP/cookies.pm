@@ -36,7 +36,7 @@ sub GetAllCookies
 	my $t=track TOM::Debug(__PACKAGE__."::GetCookies()") if $debug;
 	my %cookie;
 	
-	main::_log("COOKIES=$ENV{'HTTP_COOKIE'}");
+#	main::_log("COOKIES=$ENV{'HTTP_COOKIE'}");
 	
 	foreach (split(/; /, $ENV{'HTTP_COOKIE'}))
 	{
