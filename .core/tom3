@@ -278,6 +278,18 @@ while ($main::CGI=new CGI::Fast())
 	$main::ENV{'Cache-Control'}="no-cache";
 	$main::ENV{'Pragma'}="no-cache";
 	
+	# override tom::lng
+	local $tom::lng=$tom::lng;
+	if ($main::ENV{'lng'}){main::_log("override \$tom::lng by ENV to '$main::ENV{'lng'}' from '$tom::lng'");$tom::lng=$main::ENV{'lng'}}
+	# override tom::H
+	local $tom::H=$tom::H;
+	if ($main::ENV{'domain'}){main::_log("override \$tom::H by ENV to '$main::ENV{'domain'}' from '$tom::H'");$tom::H=$main::ENV{'domain'}}
+	# override tom::Hm
+	local $tom::Hm=$tom::Hm;
+	if ($main::ENV{'domain_master'}){main::_log("override \$tom::Hm by ENV to '$main::ENV{'domain_master'}' from '$tom::Hm'");$tom::Hm=$main::ENV{'domain_master'}}
+	# override $tom::D_cookie
+	local $tom::D_cookie=$tom::D_cookie;
+	if ($main::ENV{'domain_cookie'}){main::_log("override \$tom::D_cookie by ENV to '$main::ENV{'domain_cookie'}' from '$tom::D_cookie'");$tom::D_cookie=$main::ENV{'domain_cookie'}}
 	
 #	main::_log('DOS control');
 #	if (TOM::Net::HTTP::DOS::processENV(%main::ENV))
@@ -2215,10 +2227,10 @@ while ($main::CGI=new CGI::Fast())
 		my $t_postprocess=track TOM::Debug("postprocess",'timer'=>1);
 		
 		
-		if (!$COOKIES{_lng} && $TOM::LNG_autodetect)
+		if (!$COOKIES{'_lng'} && $TOM::LNG_autodetect)
 		{
 			main::_log("COOKIES{_lng}=tom::lng_ after autodect");
-			$COOKIES{_lng}=$tom::lng_;
+			$COOKIES{'_lng'}=$tom::lng_;
 		}
 		
 		
@@ -2389,7 +2401,14 @@ while ($main::CGI=new CGI::Fast())
 		}
 		else
 		{
-			TOM::Engine::pub::cookies::send();
+			if ($main::ENV{'SERVER_NAME'}=~/$tom::D_cookie$/)
+			{
+				TOM::Engine::pub::cookies::send();
+			}
+			else
+			{
+				main::_log("SERVER_NAME='$main::ENV{'SERVER_NAME'}' != tom::D_cookie='$tom::D_cookie'",1);
+			}
 		}
 		
 #		if ($TOM::DEBUG_log_file >= 99)
