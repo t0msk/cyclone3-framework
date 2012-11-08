@@ -763,6 +763,7 @@ sub get_path
 		);
 		if ($cache->{'time'} > $cache{'-cache_changetime'})
 		{
+			$t->close() if $debug;
 			return @{$cache->{'data'}};
 		}
 	}
@@ -1497,5 +1498,8 @@ sub clone
 	$t->close();
 	return $ID;
 }
+
+
+
 
 1;
