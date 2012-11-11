@@ -410,11 +410,10 @@ while ($main::CGI=new CGI::Fast())
 			
 			# logovanie pre UserAgentov, ktori maju specialne zapnute logovanie;
 			local $TOM::DEBUG_log_file=$TOM::DEBUG_log_file;
-			local $TOM::DEBUG_log_mdl_file=$TOM::DEBUG_log_mdl_file;
 			
 			if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'log'})
 			{
-				$TOM::DEBUG_log_mdl_file=$TOM::DEBUG_log_file=99;
+				$TOM::DEBUG_log_file=99;
 				main::_log("changed to full logging");
 			}
 			
@@ -1593,7 +1592,6 @@ while ($main::CGI=new CGI::Fast())
 			{
 				main::_log("Changing log.level='$env0{value}'");
 				$TOM::DEBUG_log_file=$env0{'value'};
-				$TOM::DEBUG_log_mdl_file=$env0{'value'};
 				main::_log("Changed log.level='$env0{value}'");
 			}
 			
