@@ -300,11 +300,10 @@ sub module
 	local $tom::ERR_plus;
 	
 	local $TOM::DEBUG_log_file = $TOM::DEBUG_log_file;
-	local $TOM::DEBUG_log_mdl_file = $TOM::DEBUG_log_mdl_file;
 	
 	if ($mdl_env{'-log'})
 	{
-		$TOM::DEBUG_log_file = $TOM::DEBUG_log_mdl_file = $mdl_env{'-log'};
+		$TOM::DEBUG_log_file = $mdl_env{'-log'};
 	}
 	
 #	local $app=$mdl_env{-category};
@@ -572,6 +571,20 @@ sub module
 				"remain:".($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}-$mdl_C{'-cache_old'})."S ".
 				"parallel?:".$cache_parallel
 				);
+			
+			if ($TOM::DEBUG_cache)
+			{
+				$Ext::CacheMemcache::cache->incr(
+					'namespace' => "mcache_hits",
+					'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
+				);
+				my $hits=$Ext::CacheMemcache::cache->get(
+					'namespace' => "mcache_hits",
+					'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
+				);
+				$hits=1 unless $hits;
+				main::_log("[mdl][".$mdl_C{'-md5'}."][HIT] name='".$mdl_C{'T_CACHE'}."' (start:".$mdl_C{'-cache_from'}." old:".$mdl_C{'-cache_old'}." hits:$hits hpm:".int($mdl_C{'-cache_old'}/60/$hits).")",3,"cache");
+			}
 			
 			if ($mdl_C{'-stdout'} && $main::stdout)
 			{
@@ -865,6 +878,17 @@ our \$VERSION=$m_time;
 					{
 						main::_log("memcached: can't save record",1);
 					}
+					
+					if ($TOM::DEBUG_cache)
+					{
+						main::_log("[mdl][".$mdl_C{'-md5'}."][CRT] name='".$mdl_C{'T_CACHE'}."' (start:".$main::time_current.")",3,"cache");
+						$Ext::CacheMemcache::cache->set(
+							'namespace' => "mcache_hits",
+							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
+							'value' => 0
+						);
+					}
+					
 				}
 				
 				if (!$memcached)
