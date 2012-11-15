@@ -433,7 +433,7 @@
    <field name="sku" type="textTight" indexed="true" stored="true" omitNorms="true"/>
    <field name="name" type="textgen" indexed="true" stored="true"/>
 	<field name="name_partial" type="text_partial" indexed="true" stored="true"/>
-	<filed name="name_exact" type="string" indexed="true" stored="true"/>
+	<field name="name_exact" type="string" indexed="true" stored="true"/>
 	<field name="name_sort" type="string" indexed="true" stored="false"/>
    <field name="alphaNameSort" type="alphaOnlySort" indexed="true" stored="false"/>
    <field name="manu" type="textgen" indexed="true" stored="true" omitNorms="true"/>
