@@ -754,7 +754,7 @@ sub product_add
 			
 			if (ref($env{'prices'}{$price_level_name_code}) eq "HASH")
 			{
-				
+				$env{'prices'}{$price_level_name_code}{'price'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price'});
 			}
 			else
 			{
@@ -764,6 +764,7 @@ sub product_add
 				$env{'prices'}{$price_level_name_code}{'price'}=$price;
 				$env{'prices'}{$price_level_name_code}{'price_full'}=$price;
 			}
+			
 			if (!$sth0{'rows'})
 			{
 				App::020::SQL::functions::new(
@@ -782,9 +783,9 @@ sub product_add
 				);
 				$content_reindex=1;
 			}
-			elsif ($price{'price'} ne $env{'prices'}{$price_level_name_code})
+			elsif ($price{'price'} ne $env{'prices'}{$price_level_name_code}{'price'})
 			{
-				main::_log("$price{'price'}<>$env{'prices'}{$price_level_name_code}");
+				main::_log("$price{'price'}<>$env{'prices'}{$price_level_name_code}{'price'}");
 				App::020::SQL::functions::update(
 					'ID' => $price{'ID'},
 					'db_h' => "main",
@@ -1195,6 +1196,8 @@ sub _product_index
 		
 		push @{$content{$lng}},WebService::Solr::Field->new( 'name' => $db0_line{'name'} )
 			if $db0_line{'name'};
+		push @{$content{$lng}},WebService::Solr::Field->new( 'title' => $db0_line{'name'} )
+			if $db0_line{'name'};
 		push @{$content{$lng}},WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} )
 			if $db0_line{'name_url'};
 		push @{$content{$lng}},WebService::Solr::Field->new( 'subject' => $db0_line{'name_long'} )
@@ -1296,7 +1299,7 @@ sub _product_cat_index
 	{
 		main::_log("found");
 		
-		my $id=$App::401::db_name.".a910_product_cat.".$db0_line{'lng'}.".".$db0_line{'ID'};
+		my $id=$App::910::db_name.".a910_product_cat.".$db0_line{'lng'}.".".$db0_line{'ID'};
 		main::_log("index id='$id'");
 		
 		my $doc = WebService::Solr::Document->new();
@@ -1314,6 +1317,7 @@ sub _product_cat_index
 			
 			WebService::Solr::Field->new( 'name' => $db0_line{'name'} ),
 			WebService::Solr::Field->new( 'name_t' => $db0_line{'name'} ),
+			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
 			WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
 			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
 			
@@ -1334,6 +1338,79 @@ sub _product_cat_index
 	{
 		main::_log("not found active ID",1);
 		my $response = $solr->search( "id:".$App::910::db_name.".a910_product_cat.* AND ID_i:$env{'ID'}" );
+		for my $doc ( $response->docs )
+		{
+			$solr->delete_by_id($doc->value_for('id'));
+		}
+	}
+	
+	$t->close();
+}
+
+
+sub _product_brand_index
+{
+	my %env=@_;
+	return undef unless $env{'ID'};
+	return undef unless $Ext::Solr;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::_product_brand_index()",'timer'=>1);
+	
+	my $solr = Ext::Solr::service();
+	
+	my %content;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			$App::910::db_name.a910_product_brand
+		WHERE
+			status IN ('Y','L')
+			AND ID=?
+	},'quiet'=>1,'bind'=>[$env{'ID'}]);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("found '$db0_line{'name'}'");
+		
+		my $id=$App::910::db_name.".a910_product_brand.en.".$db0_line{'ID'};
+		main::_log("index id='$id'");
+		
+		my $doc = WebService::Solr::Document->new();
+		
+#		$db0_line{'description'}=~s|<.*?>||gms;
+#		$db0_line{'description'}=~s|&nbsp;| |gms;
+#		$db0_line{'description'}=~s|  | |gms;
+		
+		$db0_line{'datetime_create'}=~s| (\d\d)|T$1|;
+		$db0_line{'datetime_create'}.="Z";
+		
+		
+		$doc->add_fields((
+			WebService::Solr::Field->new( 'id' => $id ),
+			
+			WebService::Solr::Field->new( 'name' => $db0_line{'name'} ),
+			WebService::Solr::Field->new( 'name_t' => $db0_line{'name'} ),
+			WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
+			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
+			
+#			WebService::Solr::Field->new( 'description' => $db0_line{'description'} ),
+			
+			WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_create'} ),
+			
+			WebService::Solr::Field->new( 'db_s' => $App::910::db_name ),
+			WebService::Solr::Field->new( 'addon_s' => 'a910_product_brand' ),
+			WebService::Solr::Field->new( 'lng_s' => 'en' ),
+			WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
+			WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
+		));
+		
+		$solr->add($doc);
+	}
+	else
+	{
+		main::_log("not found active ID",1);
+		my $response = $solr->search( "id:".$App::910::db_name.".a910_product_brand.* AND ID_i:$env{'ID'}" );
 		for my $doc ( $response->docs )
 		{
 			$solr->delete_by_id($doc->value_for('id'));
@@ -1377,15 +1454,15 @@ sub _a210_by_cat
 		}
 	}
 	
-	
 	# find path
 	my @categories;
 	my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
 	foreach my $cat(@{$cats})
 	{
+#		print "mam $cat";
 		my %sth0=TOM::Database::SQL::execute(
 			qq{SELECT ID FROM $App::910::db_name.a910_product_cat WHERE ID_entity=? AND lng=? LIMIT 1},
-			'bind'=>[$cat,$env{'lng'}],'quiet'=>1,
+			'bind'=>[$cat,$env{'lng'}],'log'=>1,
 			'-cache' => 600,
 			'-cache_changetime' => App::020::SQL::functions::_get_changetime({
 				'db_name' => $App::910::db_name,
@@ -1410,13 +1487,15 @@ sub _a210_by_cat
 		}
 	}
 	
+#	print Dumper(\@categories);
+	
 	my $category;
 	for my $i (1 .. @categories)
 	{
 		foreach my $cat (@{$categories[-$i]})
 		{
 #			push @{$product->{'log'}},"find $i ".$cat;
-			
+#			print "aha $i $cat\n";
 			my %db0_line;
 			foreach my $relation(App::160::SQL::get_relations(
 				'db_name' => $App::210::db_name,
@@ -1430,6 +1509,7 @@ sub _a210_by_cat
 				'status' => "Y"
 			))
 			{
+#				print "fakt mam\n";
 				# je toto relacia na moju jazykovu verziu a je aktivna?
 				my %sth0=TOM::Database::SQL::execute(
 				qq{SELECT ID FROM $App::210::db_name.a210_page WHERE ID_entity=? AND lng=? AND status IN ('Y','L') LIMIT 1},
