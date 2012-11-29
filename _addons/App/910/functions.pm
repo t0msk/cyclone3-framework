@@ -110,6 +110,7 @@ sub product_add
 	
 	if ($env{'product.ID'})
 	{
+		$env{'product.ID'}=$env{'product.ID'}+0;
 		undef $env{'product.ID_entity'}; # ID_entity has lower priority as ID
 		# when real ID_entity used, then read it from ID
 		# when ID not found, undef ID_entity, because is invalid
@@ -1592,14 +1593,20 @@ sub product_rating_add
 		if exists ($env{'product_rating.helpful_N'});
 	$columns{'status_publish'} = "'".TOM::Security::form::sql_escape($env{'product_rating.status_publish'})."'" 
 		if exists ($env{'product_rating.status_publish'});
+	$columns{'posix_owner'} = "'".TOM::Security::form::sql_escape($env{'product_rating.posix_owner'})."'" 
+		if $env{'product_rating.posix_owner'};
+	$columns{'posix_owner'} = "'".$main::USRM{'ID_user'}."'" unless $env{'product_rating.posix_owner'};
 	$columns{'lng'} = "'".$env{'lng'}."'" if exists $env{'lng'};
 	$columns{'lng'} = "'".$env{'product_rating.lng'}."'" if exists $env{'product_rating.lng'};
 	
-	if (! $env{'product_rating.ID'})
+	if (!$env{'product_rating.ID'})
 	{
 		# rating doesn't exist, create new
 		if ($env{'product.ID'} =~ /^\d+$/)
 		{
+			$columns{'datetime_rating'}="'".$env{'product_rating.datetime_rating'}."'"
+				if $env{'product_rating.datetime_rating'};
+			$columns{'datetime_rating'}='NOW()' unless $columns{'datetime_rating'};
 			$env{'product_rating.ID'} = App::020::SQL::functions::new(
 				'db_h' => 'main',
 				'db_name' => $App::910::db_name,
@@ -1607,7 +1614,7 @@ sub product_rating_add
 				'columns' => 
 				{
 					'ID_product' => $env{'product.ID'},
-					'datetime_rating' => 'NOW()',
+#					'datetime_rating' => 'NOW()',
 					%columns
 				},
 				'-journalize' => 1,
