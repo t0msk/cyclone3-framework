@@ -32,9 +32,18 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `status_special` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`product_number`),
   KEY `ID_entity` (`ID_entity`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_product_reindex` (
+  `datetime_event` datetime NOT NULL,
+  `ID_product` bigint(20) NOT NULL,
+  KEY `ID_product` (`ID_product`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8; -- must be myisam because inserting with insert delayed
 
 -- --------------------------------------------------
 
