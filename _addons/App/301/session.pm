@@ -41,6 +41,7 @@ sub DESTROY
 		# toto moze nastat len v pripade ked je object poskodeny
 		# a serializovat by sa nemal, takze to dost agresivne zalogujem
 		main::_log("TIE-DESTROY trying to serialize unavailable object from $filename:$line",4,"pub.err");
+		main::_log("TIE-DESTROY trying to serialize unavailable object from $filename:$line",1);
 		return undef;
 	}
 	
@@ -49,7 +50,7 @@ sub DESTROY
 		
 		return undef if (($cvml eq $session_save) && $performance);
 		
-		main::_log("TIE-cvml:='$cvml'") if $debug;
+		main::_log("TIE-string:='$cvml'") if $debug;
 		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			UPDATE
@@ -238,6 +239,31 @@ sub process
 					# naplnim obsah USRM{cookies}
 					my %hash;foreach (sort keys %main::COOKIES){$_=~/^_/ && do {$hash{$_}=$main::COOKIES{$_};next}};
 					$main::USRM{'cookies'}=CVML::structure::serialize(%hash);
+					
+					if ($main::USRM{'logged'} eq "Y")
+					{
+						my %sth0=TOM::Database::SQL::execute(qq{
+							SELECT
+								*
+							FROM
+								$App::301::db_name.a301_user_profile
+							WHERE
+								ID_entity=?
+							LIMIT 1
+						},
+							'log'=>0,
+							'quiet'=>1,
+							'bind'=>[$main::USRM{'ID_user'}],
+							'-cache' => 3600,
+							'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+								'db_name' => $App::301::db_name,
+								'tb_name' => 'a301_user_profile',
+								'ID_entity' => $main::USRM{'ID_user'}
+							})
+						);
+						my %profile=$sth0{'sth'}->fetchhash();
+						%{$main::USRM{'profile'}}=%profile;
+					}
 					
 					if ($TOM::CACHE_memcached)
 					{
