@@ -135,7 +135,23 @@ sub module
 	my $file_data;
 	
 	# where is module?
-	if ($mdl_C{-global})
+	if (($mdl_C{'-global'}==2)&&($tom::Pm))
+	{
+		my $addon_path=
+			$tom::Pm."/_addons/App/".$mdl_C{-category}."/_mdl/".
+			$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".cron";
+		if (-e $addon_path)
+		{
+			$mdl_C{P_MODULE}=$addon_path;
+		}
+		else
+		{
+			$mdl_C{P_MODULE}=
+				$tom::Pm."/_mdl/".
+				$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".cron";
+		}
+	}
+	elsif ($mdl_C{-global})
 	{
 		my $addon_path=
 			$CRON::P."/_addons/App/".$mdl_C{-category}."/_mdl/".
