@@ -735,6 +735,8 @@ sub process
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'a210'}=\%main::a210;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'code'}=$main::request_code;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'key'}=\%main::key;
+		%{$Tomahawk::module::TPL->{'variables'}->{'request'}->{'env'}}=%main::env;
+			delete $Tomahawk::module::TPL->{'variables'}->{'request'}->{'env'}{'cache'};
 		# user variables
 #=head1
 		if (%main::USRM)
