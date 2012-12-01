@@ -311,11 +311,15 @@ sub module
 	my $return_code;
 	my %return_data;
 	
+	# SPRACOVANIE PREMENNYCH
+	my $debug;
+		$debug=1 if $mdl_env{'-debug'};
+	
 	# najpv si ocheckujem ci nechcem zistovat pritomnost TMP
 	# zaroven pritomnost TMP zistim
 	if ($mdl_env{'-TMP_check'})
 	{
-		main::_log("-TMP_check enabled");
+		main::_log("-TMP_check enabled") if $debug;
 		if (not $main::H->{'OUT'}{'BODY'}=~/<!TMP-$mdl_env{-TMP}!>/)
 		{
 			main::_log("return 10, TMP '$mdl_env{-TMP}' not exists in BODY");
@@ -323,10 +327,6 @@ sub module
 			return 10;
 		}
 	}
-	
-	# SPRACOVANIE PREMENNYCH
-	my $debug;
-		$debug=1 if $mdl_env{'-debug'};
 	
 	foreach (sort keys %mdl_env)
 	{
@@ -583,7 +583,10 @@ sub module
 					'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
 				);
 				$hits=1 unless $hits;
-				main::_log("[mdl][".$mdl_C{'-md5'}."][HIT] name='".$mdl_C{'T_CACHE'}."' (start:".$mdl_C{'-cache_from'}." old:".$mdl_C{'-cache_old'}." hits:$hits hpm:".int($mdl_C{'-cache_old'}/60/$hits).")",3,"cache");
+				my $hpm=0;
+					$hpm=int($hits/($mdl_C{'-cache_old'}/60))
+						if ($mdl_C{'-cache_old'}/60);
+				main::_log("[mdl][".$mdl_C{'-md5'}."][HIT] name='".$mdl_C{'T_CACHE'}."' (start:".$mdl_C{'-cache_from'}." old:".$mdl_C{'-cache_old'}." hits:$hits hpm:$hpm)",3,"cache");
 			}
 			
 			if ($mdl_C{'-stdout'} && $main::stdout)
@@ -1459,7 +1462,7 @@ sub tplmodule
 		# reset variables
 		undef $Tomahawk::module::TPL;
 		
-		my $t_execute=track TOM::Debug("exec");
+#		my $t_execute=track TOM::Debug("exec");
 		
 		# gettpl
 		Tomahawk::GetTpl();
@@ -1481,7 +1484,7 @@ sub tplmodule
 			$Tomahawk::module::TPL->process() || do
 			{
 				$t_tt->close();
-				$t_execute->close();
+#				$t_execute->close();
 				$tom::ERR=$Tomahawk::module::TPL->{'error'};
 				TOM::Error::module
 				(
@@ -1497,7 +1500,7 @@ sub tplmodule
 		}
 		else
 		{
-			$t_execute->close();
+#			$t_execute->close();
 			Time::HiRes::alarm(0);
 			TOM::Error::module
 			(
@@ -1507,7 +1510,7 @@ sub tplmodule
 			);
 			return undef;
 		}
-		$t_execute->close();
+#		$t_execute->close();
 		
 #		if ($return_code)
 #		{
