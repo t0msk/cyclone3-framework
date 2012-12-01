@@ -323,7 +323,8 @@ sub execute
 					'key' => $cache_key_id
 				);
 				my $hpm=0;
-					$hpm=int((time()-$cache->{'value'}->{'time'})/60/$hits) if $hits;
+				$hpm=int($hits/((time()-$cache->{'value'}->{'time'})/60))
+					if (((time()-$cache->{'value'}->{'time'})/60));
 				main::_log("[sql][".$cache_key_id."][HIT] name='".substr($SQL_,0,80)."...' (start:".$cache->{'value'}->{'time'}." old:".(time()-$cache->{'value'}->{'time'})." hits:$hits hpm:".$hpm.")",3,"cache");
 			}
 			
