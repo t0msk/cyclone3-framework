@@ -58,6 +58,7 @@ sub execute
 			static_cat.name AS category_name,
 			static_cat.name_url AS category_name_url,
 			static.name,
+			static.name_url,
 			static.alias_url,
 			static.posix_owner,
 			static.posix_modified,
@@ -89,7 +90,7 @@ sub execute
 		main::_log("static.name='$db0_line{'name'}'");
 		
 		my $p=new App::401::mimetypes::html;
-		$p->config('prefix'=>'event','name'=>'body','env'=>\%env,'entity'=>\%XSGN);
+		$p->config('prefix'=>'static','name'=>'body','env'=>\%env,'entity'=>$TPL->{'entity'});
 		$p->parse($db0_line{'body'});
 		$p->eof();
 		$db0_line{'body'}=$p->{'out'};
