@@ -24,6 +24,7 @@ our (
 
 our $content_type="text/html";
 our $type='xhtml';
+our $title_delimiter=$TOM::Document::title_delimiter || ' - ';
 my $tpl=new TOM::Template(
 	'level' => "auto",
 	'name' => "default",
@@ -71,7 +72,7 @@ sub add_DOC_title
 	my $self=shift;
 	my $text=shift;
 #	$self->{env}{DOC_title}.=" - ".shift;
-	$self->{'env'}{'DOC_title'}=$text . " - " . $self->{'env'}{'DOC_title'};
+	$self->{'env'}{'DOC_title'}=$text . $title_delimiter . $self->{'env'}{'DOC_title'};
 	return 1;
 }
 

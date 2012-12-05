@@ -817,9 +817,10 @@ our \$VERSION=$m_time;
 			}
 			
 			if (
-				!$main::stdout
-				&& ($Tomahawk::module::XSGN{'TMP'})
-				&& (not $main::H->r_("<!TMP-".$mdl_C{'-TMP'}."!>",$Tomahawk::module::XSGN{'TMP'})))
+				$Tomahawk::module::XSGN{'TMP'}
+				&& (not $main::H->r_("<!TMP-".$mdl_C{'-TMP'}."!>",$Tomahawk::module::XSGN{'TMP'}))
+				&& !$main::stdout
+			)
 			{
 				Time::HiRes::alarm(0);
 				TOM::Error::module
