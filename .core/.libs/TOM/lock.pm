@@ -72,7 +72,7 @@ sub new
 		open (LOCK,"<".$self->{'filename'});
 		my $pid=<LOCK>;$pid=~s|[\n\r]||g;
 		main::_log("lock named '$self->{name}' is open in PID '$pid'");
-		if ($pid && -e "/proc/$pid")
+		if ($pid && -e "/proc/$pid" && ($pid ne $$))
 		{
 			main::_log("concurrent PID '$pid' is running, also return undef");
 			$t->close();
@@ -85,6 +85,8 @@ sub new
 	open (LOCK,">".$self->{'filename'});
 	print LOCK $$;
 	close (LOCK);
+	
+	$self->{'PID'}=$$;
 	
 	$t->close();
 	
@@ -135,8 +137,15 @@ sub close
 sub DESTROY
 {
 	my $self=shift;
-	main::_log("destroying lock named '$self->{name}'");
-	unlink $self->{'filename'};
+	if ($self->{'PID'} == $$ && -e $self->{'filename'})
+	{
+		main::_log("destroying lock named '$self->{name}'");
+		unlink $self->{'filename'};
+	}
+	elsif (-e $self->{'filename'})
+	{
+		main::_log("exiting lock, i can't destroy lock named '$self->{name}' (i'm another process)");
+	}
 	return 1;
 }
 

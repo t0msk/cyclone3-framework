@@ -45,14 +45,14 @@ sub waitload
 {
 	return undef unless $_[0];
 	my $loops;
-	my $avg=(System::meter::getLoad)[0];
+	my $avg=(System::meter::getLoad)[1];
 	
 	while (($avg>$_[0])&&($loops<100))
 	{
-		$avg=(System::meter::getLoad)[0];
+		$avg=(System::meter::getLoad)[1];
 		my $var=int(rand(10));
 		$loops++;
-		main::_log("{$loops} load ".((System::meter::getLoad)[0])." has reached the maximum $_[0], waiting $var seconds",1);
+		main::_log("{$loops} load ".((System::meter::getLoad)[1])." has reached the maximum $_[0], waiting $var seconds",1);
 		Time::HiRes::sleep($var);
 	}
 	return 1;

@@ -132,8 +132,8 @@ sub getLoad
  return @env;
 =cut
 	my @env;
-	@env=(`/sbin/sysctl -n vm.loadavg`=~/(\d+\.\d+) (\d+\.\d+) (\d+\.\d+)/);
-
+#	@env=(`/sbin/sysctl -n vm.loadavg`=~/(\d+\.\d+) (\d+\.\d+) (\d+\.\d+)/);
+	@env=(`/usr/bin/uptime`=~/(\d+\.\d+), (\d+\.\d+), (\d+\.\d+)/);
 }
 
 

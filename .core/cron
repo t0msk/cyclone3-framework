@@ -102,20 +102,21 @@ local (
 	$main::Fyear_sub=~s/^..//;
 	
 $TOM::engine_ready=1;
+$TOM::DEBUG_log_file=90;
 $TOM::engine='cron.'.$type;
 
 my $var=10;#rand(1);
-main::_log("starting cron, sleeping $var secs.");
+#main::_log("starting cron, sleeping $var secs.");
 
 
-Time::HiRes::sleep($var);
+#Time::HiRes::sleep($var);
 
 
 my $lock=new TOM::lock("CRON ".$type) || exit;
 
-
 CRON::waitload($CRON::LOADAVG);
 
+my $lock=new TOM::lock("CRON ".$type) || exit;
 
 if (-e $CRON::P."/_config/cron.".$type.".cml" || -e $CRON::P."/_type/cron.".$type.".cml")
 {
@@ -203,7 +204,7 @@ sub file2domain
 %CRON::hosts=();
 
 
-main::_log("automatic analyze of hosts $TOM::P");
+#main::_log("automatic analyze of hosts in '$TOM::P'");
 if (opendir (DIR,$TOM::P))
 {
 	my @files=readdir DIR;
@@ -221,7 +222,7 @@ if (opendir (DIR,$TOM::P))
 		}
 		if ($file=~s/\/local.conf$//)
 		{
-			main::_log(file2domain($file));
+#			main::_log(file2domain($file));
 			$CRON::hosts{file2domain($file)}=$file;
 		}
 		
@@ -235,28 +236,29 @@ if (opendir (DIR,$TOM::P))
 
 foreach (sort keys %CRON::hosts)
 {
-	main::_log("host $_ in $CRON::hosts{$_}");
+#	main::_log("host $_ in $CRON::hosts{$_}");
 	
 	if (-e $CRON::P."/".$CRON::hosts{$_}."/.cron_ignore")
 	{
-		main::_log("requested ignore to domain '$_'");
+#		main::_log("requested ignore to domain '$_'");
 		next;
 	}
 	
 	if (-e $CRON::P."/".$CRON::hosts{$_}."/cron.".$type.".cml")
 	{
-		main::_log("preparing for fork()");
+		main::_log("host fork '$_'");
 		CRON::waitload($CRON::LOADAVG);
 		
 		$main::pm->start and next;
 		
-		main::_log("fork with debug level='$TOM::DEBUG_log_file'");
+#		main::_log(" 'ok' from fork '$_'");
+#		main::_log("fork with debug level='$TOM::DEBUG_log_file'");
 		
 		$cron::P=$CRON::P."/".$CRON::hosts{$_};
 		$tom::P=$cron::P;
 		$TOM::P=$CRON::P;
 		
-		main::_log("start forked cron on path='$cron::P'");
+#		main::_log("start forked cron on path='$cron::P'");
 		CRON::waitload($CRON::LOADAVG);
 		require TOM::Domain;
 		$TOM::DEBUG_log_file=98;
@@ -343,14 +345,13 @@ foreach (sort keys %CRON::hosts)
 	}
 }
 
-main::_log("parent cron iw waitig to all children");
+main::_log("parent cron is waitig to exit of all children");
 
 $pm->wait_all_children;
 
-main::_log("end parent cron");
+main::_log("closing parent cron process");
 
 $lock->close();
-
 
 exit(0);
 
