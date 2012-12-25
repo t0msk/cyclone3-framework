@@ -20,7 +20,7 @@
 package Template::Filters;
 
 use strict;
-use warnings;
+#use warnings;
 use locale;
 use base 'Template::Base';
 use Template::Constants;
@@ -28,6 +28,7 @@ use Scalar::Util 'blessed';
 
 #Cyclone3 dependencies
 use TOM::Utils::currency;
+use Digest::MD5 qw(md5 md5_hex md5_base64);
 
 our $VERSION         = 2.87;
 our $AVAILABLE       = { };
@@ -55,6 +56,7 @@ our $FILTERS = {
     'xml'             => \&xml_filter,
     'uri'             => \&uri_filter,
     'url'             => \&url_filter,
+    'url_convert'     => \&TOM::Net::URI::rewrite::convert,
     'upper'           => sub { uc $_[0] },
     'lower'           => sub { lc $_[0] },
     'ucfirst'         => sub { ucfirst $_[0] },
@@ -83,6 +85,8 @@ our $FILTERS = {
 
 	# Cyclone3 filters
 	'currency'     => \&TOM::Utils::currency::format,
+	'md5' => \&md5,
+	'md5_hex' => \&md5_hex,
 };
 
 # name of module implementing plugin filters
