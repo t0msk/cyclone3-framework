@@ -20,7 +20,7 @@ package Template::Constants;
 
 require Exporter;
 use strict;
-use warnings;
+#use warnings;
 use Exporter;
 # Perl::MinimumVersion seems to think this is a Perl 5.008ism...
 # use base qw( Exporter );

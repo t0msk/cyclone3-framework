@@ -22,7 +22,7 @@
 package Template::Test;
 
 use strict;
-use warnings;
+#use warnings;
 use Template qw( :template );
 use Exporter;
 

@@ -26,7 +26,7 @@
 package Template::View;
 
 use strict;
-use warnings;
+#use warnings;
 use base 'Template::Base';
 
 our $VERSION  = 2.91;

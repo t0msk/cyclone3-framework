@@ -39,7 +39,7 @@
 package Template::Provider;
 
 use strict;
-use warnings;
+#use warnings;
 use base 'Template::Base';
 use Template::Config;
 use Template::Constants;

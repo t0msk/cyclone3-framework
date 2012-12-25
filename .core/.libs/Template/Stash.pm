@@ -20,7 +20,7 @@
 package Template::Stash;
 
 use strict;
-use warnings;
+#use warnings;
 use Template::VMethods;
 use Template::Exception;
 use Scalar::Util qw( blessed reftype );

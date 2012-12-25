@@ -22,7 +22,7 @@
 package Template::VMethods;
 
 use strict;
-use warnings;
+#use warnings;
 use Scalar::Util qw( blessed looks_like_number );
 use Template::Filters;
 require Template::Stash;

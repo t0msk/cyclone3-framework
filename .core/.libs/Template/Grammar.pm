@@ -31,7 +31,7 @@
 package Template::Grammar;
 
 use strict;
-use warnings;
+#use warnings;
 
 our $VERSION  = 2.25;
 
@@ -102,7 +102,7 @@ $LEXTABLE = {
 # localise the temporary variables needed to complete lexer table
 { 
 #    my @tokens = qw< ( ) [ ] { } ${ $ / ; : ? >;
-    my @tokens = qw< ( ) [ ] { } ${ $ + / ; : ? >;
+    my @tokens = qw" ( ) [ ] { } ${ $ + / ; : ? ";
     my @cmpop  = keys %CMPOP;
 #    my @binop  = qw( + - * % );              # '/' above, in @tokens
     my @binop  = qw( - * % );              # '+' and '/' above, in @tokens

@@ -20,7 +20,7 @@
 package Template::Exception;
 
 use strict;
-use warnings;
+#use warnings;
 use constant TYPE  => 0;
 use constant INFO  => 1;
 use constant TEXT  => 2;

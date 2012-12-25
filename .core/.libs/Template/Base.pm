@@ -20,7 +20,7 @@
 package Template::Base;
 
 use strict;
-use warnings;
+#use warnings;
 use Template::Constants;
 
 our $VERSION = 2.78;

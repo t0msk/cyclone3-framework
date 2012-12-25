@@ -21,7 +21,7 @@
 package Template::Plugin;
 
 use strict;
-use warnings;
+#use warnings;
 use base 'Template::Base';
 
 our $VERSION = 2.70;

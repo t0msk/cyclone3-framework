@@ -19,7 +19,7 @@
 package Template::Config;
 
 use strict;
-use warnings;
+#use warnings;
 use base 'Template::Base';
 use vars qw( $VERSION $DEBUG $ERROR $INSTDIR
              $PARSER $PROVIDER $PLUGINS $FILTERS $ITERATOR 

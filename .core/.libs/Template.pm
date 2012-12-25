@@ -20,7 +20,7 @@
 package Template;
 
 use strict;
-use warnings;
+#use warnings;
 use 5.006;
 use base 'Template::Base';
 
