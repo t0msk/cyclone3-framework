@@ -326,6 +326,7 @@ sub execute
 				$hpm=int($hits/((time()-$cache->{'value'}->{'time'})/60))
 					if (((time()-$cache->{'value'}->{'time'})/60));
 				main::_log("[sql][".$cache_key_id."][HIT] name='".substr($SQL_,0,80)."...' (start:".$cache->{'value'}->{'time'}." old:".(time()-$cache->{'value'}->{'time'})." hits:$hits hpm:".$hpm.")",3,"cache");
+				main::_log("[sql][$tom::H][".$cache_key_id."][HIT]",3,"cache",1);
 			}
 			
 			$t->close();
@@ -537,6 +538,7 @@ sub execute
 				'value' => 0
 			);
 			main::_log("[sql][".$cache_key_id."][CRT] name='".substr($SQL_,0,80)."...' (start:".time().")",3,"cache");
+			main::_log("[sql][$tom::H][".$cache_key_id."][CRT]",3,"cache",1);
 		}
 		
 	}
