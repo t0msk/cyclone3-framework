@@ -19,7 +19,7 @@
 package Template::Plugin::Math;
 
 use strict;
-use warnings;
+#use warnings;
 use base 'Template::Plugin';
 
 our $VERSION = 1.16;

@@ -1,7 +1,7 @@
 package Template::Plugin::a501;
 
 use strict;
-use warnings;
+#use warnings;
 use base 'Template::Plugin';
 use App::501::_init;
 
