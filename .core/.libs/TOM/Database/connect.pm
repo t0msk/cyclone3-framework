@@ -102,9 +102,10 @@ sub multi
 				($main::DB{$_})
 				&&
 				(
-					($TOM::DB{$_}{host} eq $TOM::DB{$handler}{host})
-					&&($TOM::DB{$_}{user} eq $TOM::DB{$handler}{user})
-					&&($TOM::DB{$_}{name} eq $TOM::DB{$handler}{name})
+					($TOM::DB{$_}{'host'} eq $TOM::DB{$handler}{'host'})
+					&&($TOM::DB{$_}{'user'} eq $TOM::DB{$handler}{'user'})
+					&&($TOM::DB{$_}{'user'} eq $TOM::DB{$handler}{'user'})
+					&&($TOM::DB{$_}{'uri'} eq $TOM::DB{$handler}{'uri'})
 				)
 			)
 			{
