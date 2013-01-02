@@ -21,13 +21,15 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
   `saved_cookies` blob NOT NULL,
   `saved_session` blob NOT NULL,
   `perm_roles_override` blob,
+  `ref_facebook` varchar(20) character set ascii default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID_user`),
   UNIQUE KEY `UNI_0` (`hostname`,`login`),
   KEY `secure_hash` (`secure_hash`),
   KEY `login` (`login`),
   KEY `hostname` (`hostname`),
-  KEY `email` (`email`)
+  KEY `email` (`email`),
+  KEY `ref_facebook` (`ref_facebook`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -65,6 +67,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_inactive` (
   `saved_cookies` blob NOT NULL,
   `saved_session` blob NOT NULL,
   `perm_roles_override` blob,
+  `ref_facebook` varchar(20) character set ascii default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID_user`),
   KEY `SEL_0` (`datetime_last_login`,`requests_all`)

@@ -95,6 +95,23 @@ sub user_add
 		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
 	}
 	
+	if ($env{'user.ref_facebook'} && !$env{'user.ID_user'})
+	{
+		main::_log("search user by ref_facebook='$env{'user.ref_facebook'}'");
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`TOM`.a301_user
+			WHERE
+				ref_facebook=? AND
+				hostname=?
+			LIMIT 1;
+		},'bind'=>[$env{'user.ref_facebook'},$env{'user.hostname'}],'quiet'=>1);
+		%user=$sth0{'sth'}->fetchhash();
+		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
+	}
+	
 	if (!$env{'user.ID_user'})
 	{
 		main::_log("!user.ID_user, create new");
@@ -436,6 +453,7 @@ sub user_add
 			exists $env{'user.saved_session'} ||
 			$env{'user.secure_hash'} ||
 			$env{'user.status'} ||
+			$env{'user.ref_facebook'} ||
 			$env{'user.email_verified'}
 		)
 	)
@@ -468,6 +486,9 @@ sub user_add
 		# secure_hash
 		$set.=",secure_hash='$env{'user.secure_hash'}'"
 			if $env{'user.secure_hash'};
+		# ref_facebook
+		$set.=",ref_facebook='$env{'user.ref_facebook'}'"
+			if $env{'user.ref_facebook'};
 		# status
 		$set.=",status='$env{'user.status'}'"
 			if $env{'user.status'};
