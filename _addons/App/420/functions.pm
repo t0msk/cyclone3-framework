@@ -285,8 +285,8 @@ sub static_add
 				'-journalize' => 1
 			);
 			$content_updated=1;
-			$content_reindex=1 if $columns{'name'};
-			$content_reindex=1 if $columns{'status'};
+			$content_reindex=1;# if $columns{'name'};
+#			$content_reindex=1 if $columns{'status'};
 		}
 	}
 	
