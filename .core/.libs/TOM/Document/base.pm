@@ -160,7 +160,7 @@ sub url_replace
 	# zapisal do XSGN alebo DSGN
 	# ide o linku v zapise ?ahoj=nieco&amp;ahoj2=nieco2&amp;...
 	# ide o standardny zapis i ked my ho nepouzivame ( zatial )
-	$link=~s|&amp;|&|g;
+#	$link=~s|&amp;|&|g;
 	
 	my %form;
 	# pridam systemovo posielane premenne __nieco
@@ -179,7 +179,11 @@ sub url_replace
 	}
 	
 	my %form_array; # only statuses
-	foreach my $cc(split('&',$link))
+	
+	my $split_by='&';
+		$split_by='&amp;' if $link=~/&amp;/; # preffered
+	
+	foreach my $cc(split($split_by,$link))
 	{
 		my @ref=split('=',$cc);
 		if (not $cc=~/=/)
