@@ -17,7 +17,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_page` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL, -- changed by user
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
-  KEY `SEL_0` (`ID_entity`,`ID`)
+  KEY `url` (`url`),
+  KEY `SEL_0` (`ID_entity`,`ID`),
+  KEY `SEL_1` (`domain`,`url`,`reply`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
