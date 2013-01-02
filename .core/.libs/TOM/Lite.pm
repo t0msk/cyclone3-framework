@@ -92,9 +92,11 @@ sub _log_lite
 		$msg.="[$date{hour}:$date{min}:$date{sec}.";
 		if ($hires)
 		{
-			my $msec='0.';
-			eval "\$msec.=(Time::HiRes::gettimeofday)[1];";
-			$msec=int($msec*1000);
+			my $msec;
+				eval "\$msec=(Time::HiRes::gettimeofday)[1];";
+				$msec='0'.$msec if $msec < 1000;
+				$msec='0.'.$msec;
+				$msec=int($msec*1000);
 			$msg.=$msec;
 		}
 		else {$msg.="???";}

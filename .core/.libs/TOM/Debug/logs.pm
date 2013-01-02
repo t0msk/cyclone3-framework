@@ -52,8 +52,9 @@ sub _log
 	
 	my %date=Utils::datetime::ctodatetime(time,format=>1);
 	
-	my $msec;
-	my $msec='0.'.(Time::HiRes::gettimeofday)[1];
+	my $msec=(Time::HiRes::gettimeofday)[1];
+		$msec='0'.$msec if $msec < 1000;
+		$msec='0.'.$msec;
 		$msec=int($msec*1000);
 	
 	my $msg;
