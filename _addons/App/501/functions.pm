@@ -1917,6 +1917,7 @@ sub get_image_file
 			image_file.image_height,
 			image_file.name AS file_name,
 			image_file.file_size,
+			image_file.file_checksum,
 			image_file.file_ext,
 			image_file.status AS file_status,
 			CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
