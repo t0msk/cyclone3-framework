@@ -920,6 +920,8 @@ sub _product_index
 		
 		push @content_ent,WebService::Solr::Field->new( 'product_number_s' => $db0_line{'product_number'} )
 			if $db0_line{'product_number'};
+		push @content_ent,WebService::Solr::Field->new( 'product_number_t' => $db0_line{'product_number'} )
+			if $db0_line{'product_number'};
 		
 		push @content_ent,WebService::Solr::Field->new( 'amount_f' => $db0_line{'amount'} )
 			if $db0_line{'amount'};
@@ -1017,6 +1019,30 @@ sub _product_index
 			push @content_ent,WebService::Solr::Field->new( 'cat' =>  $db1_line{'ID'}); # product_cat.ID_entity
 		}
 		
+		# hits
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				COUNT(*) AS cnt
+			FROM
+				$App::910::db_name.a910_product_hit
+			WHERE
+				ID_product = ?
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		if (my %db1_line=$sth1{'sth'}->fetchhash())
+		{push @content_ent,WebService::Solr::Field->new( 'hits_i' =>  $db1_line{'cnt'});}
+		
+		# hits 7days
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				COUNT(*) AS cnt
+			FROM
+				$App::910::db_name.a910_product_hit
+			WHERE
+				ID_product = ?
+				AND datetime_event >= DATE_SUB(NOW(),INTERVAL 7 DAY)
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		if (my %db1_line=$sth1{'sth'}->fetchhash())
+		{push @content_ent,WebService::Solr::Field->new( 'hits_7dy_i' =>  $db1_line{'cnt'})}
 		
 		# rating_variable
 		my %sth1=TOM::Database::SQL::execute(qq{
