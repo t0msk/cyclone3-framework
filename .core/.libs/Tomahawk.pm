@@ -372,6 +372,7 @@ sub module
 		
 		#$mdl_C{-md5}=md5_hex(Int::charsets::encode::UTF8_ASCII($null));
 #		$mdl_C{'-md5'}=md5_hex(Encode::encode_utf8($null));
+#		main::_log("md5 string '$null'");
 		$mdl_C{'-md5'}=TOM::Digest::hash($null);
 		main::_log("cache md5='".$mdl_C{'-md5'}."'") if $debug;
 		
@@ -587,6 +588,7 @@ sub module
 					$hpm=int($hits/($mdl_C{'-cache_old'}/60))
 						if ($mdl_C{'-cache_old'}/60);
 				main::_log("[mdl][".$mdl_C{'-md5'}."][HIT] name='".$mdl_C{'T_CACHE'}."' (start:".$mdl_C{'-cache_from'}." old:".$mdl_C{'-cache_old'}." hits:$hits hpm:$hpm)",3,"cache");
+				main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][HIT]",3,"cache",1);
 			}
 			
 			if ($mdl_C{'-stdout'} && $main::stdout)
@@ -826,7 +828,7 @@ our \$VERSION=$m_time;
 				TOM::Error::module
 				(
 					'-TMP' => $mdl_C{'-TMP'},
-					'-MODULE' => "[MDL::".$mdl_C{'-addong'}."-".$mdl_C{'-name'}."]",
+					'-MODULE' => "[MDL::".$mdl_C{'-addon'}."-".$mdl_C{'-name'}."]",
 					'-ERROR' => "Unknown TMP-".$mdl_C{'-TMP'},
 				);
 				return undef;
@@ -886,6 +888,7 @@ our \$VERSION=$m_time;
 					if ($TOM::DEBUG_cache)
 					{
 						main::_log("[mdl][".$mdl_C{'-md5'}."][CRT] name='".$mdl_C{'T_CACHE'}."' (start:".$main::time_current.")",3,"cache");
+						main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][CRT]",3,"cache",1);
 						$Ext::CacheMemcache::cache->set(
 							'namespace' => "mcache_hits",
 							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
