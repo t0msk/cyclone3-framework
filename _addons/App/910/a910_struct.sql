@@ -47,6 +47,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_reindex` (
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*app*/_product_hit` (
+  `datetime_event` datetime NOT NULL,
+  `ID_product` bigint(20) NOT NULL,
+  KEY `ID_product` (`ID_product`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8; -- must be myisam because inserting with insert delayed
+
+-- --------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
@@ -432,7 +440,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_rating` (
   `helpful_N` mediumint(8) unsigned NOT NULL,
   `status` char(1) character set ascii default 'Y',
   `status_publish` char(1) character set ascii default 'N',
-   PRIMARY KEY  (`ID`)
+   PRIMARY KEY  (`ID`),
+   KEY `SEL_0` (`ID_product`,`status`,`lng`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
