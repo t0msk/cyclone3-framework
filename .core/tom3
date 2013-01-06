@@ -290,6 +290,9 @@ while ($main::CGI=new CGI::Fast())
 	# override $tom::D_cookie
 	local $tom::D_cookie=$tom::D_cookie;
 	if ($main::ENV{'domain_cookie'}){main::_log("override \$tom::D_cookie by ENV to '$main::ENV{'domain_cookie'}' from '$tom::D_cookie'");$tom::D_cookie=$main::ENV{'domain_cookie'}}
+	# override $tom::H_cookie
+	local $tom::H_cookie=$tom::H_cookie;
+	if ($main::ENV{'hostname_cookie'}){main::_log("override \$tom::H_cookie by ENV to '$main::ENV{'hostname_cookie'}' from '$tom::H_cookie'");$tom::H_cookie=$main::ENV{'hostname_cookie'}}
 	
 #	main::_log('DOS control');
 #	if (TOM::Net::HTTP::DOS::processENV(%main::ENV))
@@ -1006,37 +1009,6 @@ while ($main::CGI=new CGI::Fast())
 		
 		$t_cookies->close();
 		
-		# PREVERENIE IAdm a ITst module
-#		if
-#		(
-#			(
-#				($IAdm) || ($ITst)
-#			)
-#			&&
-#			(
-#				($main::FORM{__key_} ne $main::COOKIES{key})
-#				||(!$main::FORM{__key_})
-#			)
-#		)
-#		{
-#			# hups, prienik!
-#			main::_log("session key not equals form:'$main::FORM{__key_}' ne cookies:'$main::COOKIES{key}'");
-#			undef $main::COOKIES{key};
-#			undef $main::IAdm;
-#			undef $main::ITst;
-#		}
-#		elsif
-#		(
-#			(
-#				($IAdm) || ($ITst)
-#			)
-#			&&
-#			($main::FORM{__key_} eq $main::COOKIES{key})
-#		)
-#		{
-#			main::_log("session key equals $main::FORM{__key_} == $main::COOKIES{key}");
-#		}
-		
 		
 		# LOKALIZUJEM PROSTREDIE pre KAZDY REQUEST
 		local $H=$main::H_clone->clone();
@@ -1068,7 +1040,157 @@ while ($main::CGI=new CGI::Fast())
 		$tom::dsgn_=$COOKIES{_dsgn}=$FORM{_dsgn} if $FORM{_dsgn};
 		$tom::lng_=$COOKIES{_lng}=$FORM{_lng} if $FORM{_lng};
 		
-		
+		# is If-Modified-Since header present?
+		if ($main::ENV{'HTTP_IF_MODIFIED_SINCE'}=~/^(.*?), (\d+) (.*?) (\d+) (\d+):(\d+):(\d+) GMT$/)
+		{
+			my $user_session_modified;
+			
+			# converd datetime to timestamp
+			my %months=("Jan"=>1,"Feb"=>2,"Mar"=>3,"Apr"=>4,"May"=>5,"Jun"=>6,"Jul"=>7,"Aug"=>8,"Sep"=>9,"Oct"=>10,"Nov"=>11,"Dec"=>12);
+			use DateTime;
+			my $date = DateTime->new(
+				'year' => $4,
+				'month' => $months{$3},
+				'day' => $2,
+				'hour' => $5+0,
+				'minute' => $6+0,
+				'second' => $7+0,
+				'time_zone' => 'GMT');#->subtract( days => $env{'days'} );
+			my $date_timestamp=$date->epoch();
+			
+			main::_log("HTTP_IF_MODIFIED_SINCE='$main::ENV{'HTTP_IF_MODIFIED_SINCE'}'/$date_timestamp HTTP_IF_NONE_MATCH/Etag='$main::ENV{'HTTP_IF_NONE_MATCH'}'");
+			
+			main::_log("HTTP_IF_MODIFIED_SINCE='$main::ENV{'HTTP_IF_MODIFIED_SINCE'}'/$date_timestamp HTTP_IF_NONE_MATCH/Etag='$main::ENV{'HTTP_IF_NONE_MATCH'}' '$main::ENV{QUERY_STRING_FULL}' '$main::ENV{'HTTP_USER_AGENT'}'",3,"debug");
+			
+			my $usrmevent_timestamp;
+			if ($main::COOKIES{'usrmevent'}=~/^(\d\d\d\d)\-(\d\d)\-(\d\d) (\d\d):(\d\d):(\d\d)$/)
+			{
+				my $date = DateTime->new(
+					'year' => $1,
+					'month' => $2,
+					'day' => $3,
+					'hour' => $4,
+					'minute' => $5,
+					'second' => $6,
+					'time_zone' => 'local');#->subtract( days => $env{'days'} );
+				$usrmevent_timestamp=$date->epoch();
+				
+				main::_log("usrmevent: $usrmevent_timestamp ($main::COOKIES{'usrmevent'}) <=> cached at:$date_timestamp ($main::ENV{'HTTP_IF_MODIFIED_SINCE'})",3,"debug");
+				if ($usrmevent_timestamp > $date_timestamp)
+				{
+					# to reindex
+					main::_log("user changed login after cached",3,"debug");
+					$user_session_modified=1;
+				}
+				else
+				{
+					main::_log("no user activity (login)",3,"debug");
+				}
+			}
+			
+			if (!$user_session_modified)
+			{
+				# okay, process etag
+				
+				my $etag=$main::ENV{'HTTP_IF_NONE_MATCH'};
+				use MIME::Base64;
+				$etag=decode_base64($etag);
+				my $etag_valid;
+				
+				my $page_usecached=1;
+				foreach my $etag_part(split(';',$etag))
+				{
+					if ($etag_part=~s/^E:://)
+					{
+						$etag_valid=1;
+						my @entity=split('::',$etag_part);
+						my $changetime=App::020::SQL::functions::_get_changetime({
+							'db_h'=>"main",'db_name'=>$entity[0],'tb_name'=>$entity[1],
+							'ID_entity' => $entity[2]
+						});
+						$changetime=int($changetime);
+						if ($changetime > $date_timestamp)
+						{
+							# entity changed
+							main::_log("changed $changetime(entity) >= $date_timestamp(query)",3,"debug");
+							$page_usecached=0;
+							last;
+						}
+					}
+					elsif ($etag_part=~/^max-age:(\d+)$/)
+					{
+						$etag_valid=1;
+						my $max_age=$1;
+						if ($date_timestamp < time()-$max_age )
+						{
+							main::_log("cache page duration expired",3,"debug");
+							$page_usecached=0;
+							last;
+						}
+					}
+					elsif ($etag_part=~/^valid-to:(\d+)$/)
+					{
+						$etag_valid=1;
+						my $valid_to=$1;
+						if (time() >= $valid_to)
+						{
+							main::_log("cache page is not already valid",3,"debug");
+							$page_usecached=0;
+							last;
+						}
+					}
+				}
+				
+				if (!$etag_valid)
+				{
+					# etag not available or no check inside
+					# also... apply default recache
+					if ($date_timestamp < time()-$TOM::CACHE_time)
+					{
+						main::_log("cache page has been expired by default cache time ($TOM::CACHE_time)",3,"debug");
+						$page_usecached=0;
+					}
+					else
+					{
+						main::_log("cache page time remaining (".($TOM::CACHE_time-(time()-$date_timestamp)).")",3,"debug");
+					}
+				}
+				
+				if ($page_usecached)
+				{
+					main::_log("304 Not Modified",3,"debug");
+					# entity not changed
+					main::_log("[page][".$main::ENV{'HTTP_IF_NONE_MATCH'}."][HIT]",3,"cache");
+					main::_log("[page][$tom::H][".$main::ENV{'HTTP_IF_NONE_MATCH'}."][HIT]",3,"cache",1);
+					$t_preprocess->close();
+					$t_eval->close();
+					$t_request->close();
+					Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
+					
+					main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track');
+					
+					print "Status: 304 Not Modified\n\n";
+					next;
+				}
+				
+#				else
+#				{
+#					main::_log("no Etag info, also recache",3,"debug");
+	#				main::_log("[page][".$etag."][HIT]",3,"cache");
+	#				main::_log("[page][$tom::H][".$etag."][HIT]",3,"cache",1);
+	#				$t_preprocess->close();
+	#				$t_eval->close();
+	#				$t_request->close();
+	#				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
+	#				print "Status: 304 Not Modified\n\n";
+	#				next;
+#				}
+				
+				
+				
+			}
+			
+		}
 		
 		if ($TOM::LNG_permanent)
 		{
@@ -1770,6 +1892,15 @@ while ($main::CGI=new CGI::Fast())
 				next;
 			}
 			
+			if ($env0{'id'} eq "Etag")
+			{
+				use MIME::Base64;
+				$main::ENV{'Etag'}=encode_base64($env0{'value'});
+#				$main::ENV{'Etag'}=$env0{'value'};
+				_log("Change Etag to ".$env0{'value'});
+				next;
+			}
+			
 			if ($env0{'id'} eq "env" && $env0{'type'})
 			{
 				_log("Change main::env ($env0{'type'}) to ".$env0{'value'});
@@ -2392,6 +2523,8 @@ while ($main::CGI=new CGI::Fast())
 		# codepage pouzity pre tuto page;
 		$main::LNG_cp_this=$COOKIES{cp};
 		
+		untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
+		
 		# send cookies
 		if ($main::ENV{'Cache-Control'}=~/(public|revalidate)/)
 		{
@@ -2403,7 +2536,7 @@ while ($main::CGI=new CGI::Fast())
 			{
 				TOM::Engine::pub::cookies::send();
 			}
-			else
+			elsif ($main::ENV{'SERVER_NAME'})
 			{
 				main::_log("SERVER_NAME='$main::ENV{'SERVER_NAME'}' != tom::D_cookie='$tom::D_cookie'",1);
 			}
@@ -2451,10 +2584,45 @@ while ($main::CGI=new CGI::Fast())
 		}
 		else
 		{
+			if ($main::ENV{'Etag'}) # timestamp only pls!
+			{
+				$main::ENV{'Etag'}=~s|[\n\r]||gms; # fix when Base64
+				print "Etag: ".$main::ENV{'Etag'}."\n";
+				$main::ENV{'Last-Modified'}=time() unless $main::ENV{'Last-Modified'};
+			}
+			if ($main::ENV{'Last-Modified'}) # timestamp only pls!
+			{
+				$main::ENV{'Last-Modified'}=int($main::ENV{'Last-Modified'});
+				if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'} ne "robot")
+				{
+					# highest value is time() for non bots
+					# because cache time = last-modified time sent by webserver to browser
+					# and browser after caching asks for modifications to last-modified
+					$main::ENV{'Last-Modified'}=time() if $main::ENV{'Last-Modified'}<time();
+				}
+				use DateTime;
+				# convert and publish Last-Modified header
+				my $date = DateTime->from_epoch('epoch'=>int($main::ENV{'Last-Modified'}),'time_zone' => 'GMT');
+				my $date_string = $date->strftime("%a, %d %b %Y %H:%M:%S GMT");
+				main::_log("set 'Last-Modified' to $main::ENV{'Last-Modified'} ($date_string)",3,"debug");
+				print "Last-Modified: ".$date_string."\n";
+				main::_log("[page][".$main::ENV{'Etag'}."][CRT] Last-Modified:$date_string",3,"cache");
+				main::_log("[page][$tom::H][".$main::ENV{'Etag'}."][CRT] Last-Modified:$date_string",3,"cache",1);
+			}
 			if ($main::ENV{'Expires'})
 			{
 				main::_log("Expires: ".$main::ENV{'Expires'});
 				print "Expires: ".$main::ENV{'Expires'}."\n";
+				if ($main::ENV{'Last-Modified'})
+				{
+				}
+				else
+				{
+#					# last-modified is now
+#					my $date = DateTime->now('time_zone' => 'GMT');
+#					$main::ENV{'Last-Modified'} = $date->strftime("%a, %d %b %Y %H:%M:%S GMT"); 
+#					print "Last-Modified: ".$main::ENV{'Last-Modified'}."\n";
+				}
 			}
 			if ($main::ENV{'Cache-Control'})
 			{
@@ -2506,25 +2674,6 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("HUP (waiting to 30 seconds) (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
 		}
 		
-		# NASTAVENIE PADU
-		if
-		(
-			($tom::fastcgi) &&
-			(
-				(($tom::HUP) && (($main::time_current-$TOM::time_start)>30)) || # bol request na HUP
-				($tom::count>=$TOM::max_count) || # pocet requestov je privysoky
-				(($main::time_current-$TOM::time_start)>=$TOM::max_time) # som v pamati uz pridlho
-			)
-		)
-		{
-			main::_log("SHUTDOWN (".$tom::count."reqs ".($main::time_current-$TOM::time_start)."secs) PID:$$ domain:$tom::H HUP:$tom::HUP",3,"pub.mng",1);
-			$t_send->close();
-			$t_postprocess->close();
-			$t_eval->close();
-			$t_request->close();
-			Tomahawk::shutdown();
-		}
-		
 		$t_send->close();
 		$t_postprocess->close();
 		$t_eval->close();
@@ -2541,6 +2690,8 @@ while ($main::CGI=new CGI::Fast())
 			my $e_p=$t_eval->{'time'}{proc}{duration};
 			my $e_r=$t_eval->{'time'}{req}{duration};
 			main::_log("[$tom::H]".
+				" ".
+				"TID:".$main::FORM{'TID'}.
 				" ".
 				"eval:".$e_r."/".$e_p.
 				" ".
@@ -2579,8 +2730,6 @@ while ($main::CGI=new CGI::Fast())
 			
 		};
 		
-		untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
-		
 	}; # end of eval
 	
 	untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
@@ -2597,7 +2746,7 @@ while ($main::CGI=new CGI::Fast())
 	if (
 			($tom::HUP) && (($main::time_current-$TOM::time_start)<30) ||
 			($tom::HUP == 2) ||
-			($TOM::max_count <= $tom::count) ||
+			($TOM::max_count && ($TOM::max_count <= $tom::count)) ||
 			($TOM::max_time <= ($main::time_current-$TOM::time_start))
 		)
 	{
