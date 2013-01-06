@@ -1489,7 +1489,7 @@ sub _a210_by_cat
 #		print "mam $cat";
 		my %sth0=TOM::Database::SQL::execute(
 			qq{SELECT ID FROM $App::910::db_name.a910_product_cat WHERE ID_entity=? AND lng=? LIMIT 1},
-			'bind'=>[$cat,$env{'lng'}],'log'=>1,
+			'bind'=>[$cat,$env{'lng'}],'log'=>0,'quiet'=>1,
 			'-cache' => 600,
 			'-cache_changetime' => App::020::SQL::functions::_get_changetime({
 				'db_name' => $App::910::db_name,
