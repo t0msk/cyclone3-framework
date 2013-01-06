@@ -63,8 +63,10 @@ sub DESTROY
 			LIMIT 1
 		},'quiet'=>1,'bind'=>[$cvml,$IDsession,$IDuser]);
 		main::_log("TIE-serialized in $sth0{'rows'} a301_user_online rows") if ($debug && $sth0{'rows'});
-#		main::_log("TIE-serialized") if $debug;
-	
+		
+		# changes user session
+		$main::COOKIES{'usrmevent'}=$tom::Tyear."-".$tom::Fmom."-".$tom::Fmday." ".$tom::Fhour.":".$tom::Fmin.":".$tom::Fsec;
+		
 	return undef;
 }
 
@@ -219,6 +221,10 @@ sub process
 			{
 				main::_log("user '$main::COOKIES{_ID_user}' is online");
 				$main::USRM{'ID_user'}=$main::COOKIES{'_ID_user'} unless $main::USRM{'ID_user'};
+				
+				# set last changed state of user into cookies
+				$main::COOKIES{'usrmevent'}=$main::USRM{'datetime_login'}
+					if $main::COOKIES{'usrmevent'} lt $main::USRM{'datetime_login'};
 				
 				# fix unicode in session
 				utf8::decode($main::USRM{'session'}) unless utf8::is_utf8($main::USRM{'session'});
