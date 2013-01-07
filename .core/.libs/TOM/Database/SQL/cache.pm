@@ -74,6 +74,9 @@ sub new
 					$line++;
 					push @{$self->{'value'}->{'fetch'}}, {%{$db0_line}};
 				}
+				# finish it after fetch all
+				# http://board.issociate.de/thread/160584/Attempt-to-initiate-a-new-SQL-Server-operation-with-results-pending.html
+				$env{'sth'}->finish();
 			}
 			else
 			{
@@ -173,7 +176,12 @@ sub close
 	return undef;
 }
 
-
+sub finish
+{
+	my $self=shift;
+	
+	return undef;
+}
 
 sub DESTROY
 {
