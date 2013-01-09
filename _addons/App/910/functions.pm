@@ -1044,6 +1044,19 @@ sub _product_index
 		if (my %db1_line=$sth1{'sth'}->fetchhash())
 		{push @content_ent,WebService::Solr::Field->new( 'hits_7dy_i' =>  $db1_line{'cnt'})}
 		
+		# hits 24hr
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				COUNT(*) AS cnt
+			FROM
+				$App::910::db_name.a910_product_hit
+			WHERE
+				ID_product = ?
+				AND datetime_event >= DATE_SUB(NOW(),INTERVAL 24 HOUR)
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		if (my %db1_line=$sth1{'sth'}->fetchhash())
+		{push @content_ent,WebService::Solr::Field->new( 'hits_24hr_i' =>  $db1_line{'cnt'})}
+		
 		# rating_variable
 		my %sth1=TOM::Database::SQL::execute(qq{
 			SELECT
