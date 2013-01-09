@@ -193,6 +193,7 @@ sub process
 			{
 				my $sql=qq{
 					SELECT
+						user_online.ID_user,
 						user_online.ID_session,
 						user_online.logged,
 						user_online.datetime_login,
@@ -202,20 +203,38 @@ sub process
 						user_online.domain,
 						user_online.user_agent,
 						user_online.cookies,
-						user_online.session,
-						user.*
+						user_online.session
 					FROM
 						`TOM`.`a301_user_online` AS user_online
-					LEFT JOIN `TOM`.`a301_user` AS user ON
-					(
-						user.ID_user = user_online.ID_user
-					)
 					WHERE
 						user_online.ID_user=?
 					LIMIT 1
 				};
 				my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[$main::COOKIES{'_ID_user'}],'quiet'=>1,'-slave'=>0);
 				%main::USRM=$sth0{'sth'}->fetchhash();
+				
+				my %sth0=TOM::Database::SQL::execute(qq{
+					SELECT
+						user.secure_hash,
+						user.autolog,
+						user.hostname,
+						user.datetime_register,
+						user.datetime_last_login,
+						user.requests_all,
+						user.email,
+						user.email_verified
+					FROM
+						`TOM`.`a301_user` AS user
+					WHERE
+						user.ID_user=?
+					LIMIT 1
+				},'bind'=>[$main::COOKIES{'_ID_user'}],'quiet'=>1,'-slave'=>0);
+				my %db0_line=$sth0{'sth'}->fetchhash();
+				foreach(keys %db0_line)
+				{
+					$main::USRM{$_}=$db0_line{$_};
+				}
+				
 			}
 			if ($main::USRM{'ID_user'}) # yes, user is online
 			{
