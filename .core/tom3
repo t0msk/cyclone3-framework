@@ -436,6 +436,10 @@ while ($main::CGI=new CGI::Fast())
 				main::_log("engine_disable for UserAgent \"$main::UserAgent_name\"-\"$main::ENV{'HTTP_USER_AGENT'}\"",0,"pub.warn",1);
 				push @ERR, $TOM::Net::HTTP::UserAgent::messages{'old'}[$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'old'}] if exists $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{old};
 				# FIXME:[fordinal] zrusit Tomahawk::error::page_warn(@ERR) a nahradit novym
+				
+				$t_agent->close();
+				$t_preprocess->close();
+				$t_eval->close();
 				$t_request->close();
 				TOM::Warning::engine(@ERR);
 				next;
