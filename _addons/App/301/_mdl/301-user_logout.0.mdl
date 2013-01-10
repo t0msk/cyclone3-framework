@@ -155,6 +155,11 @@ sub execute
 			$XSGN{'TMP'}=$XSGN{'notlogged'};
 			$main::H->rh("<!REFRESH!>","0; url=$env{'return'}");
 			$XSGN{TMP}=~s|<%LINK%>|$env{'return'}|g;
+			
+			if ($env{'relocate'})
+			{
+				$main::location=$env{'return'};
+			}
 		}
 	}
 	else
