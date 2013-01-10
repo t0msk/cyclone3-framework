@@ -25,23 +25,23 @@ When library is loaded, IAdm in /www/TOM/_config and ITast in domain directory i
 BEGIN
 {
 	# kontrola ci dana instalacia ma vytvoreny IAdm a ITst kluce
-	if (not -e $TOM::P.'/_config/IAdm.key')
-	{
-		main::_log("generating IAdm.key");
-		my $key=TOM::Utils::vars::genhash(512);
-		open(HND,'>'.$TOM::P.'/_config/IAdm.key');# || die "$!";
-		print HND $key;
-		close (HND);
-	}
+#	if (not -e $TOM::P.'/_config/IAdm.key')
+#	{
+#		main::_log("generating IAdm.key");
+#		my $key=TOM::Utils::vars::genhash(512);
+#		open(HND,'>'.$TOM::P.'/_config/IAdm.key');# || die "$!";
+#		print HND $key;
+#		close (HND);
+#	}
 	
-	if (not -e $tom::P.'/ITst.key')
-	{
-		main::_log("generating ITst.key");
-		my $key=TOM::Utils::vars::genhash(512);
-		open(HND,'>'.$tom::P.'/ITst.key');# || die "$!";
-		print HND $key;
-		close (HND);
-	}
+#	if (not -e $tom::P.'/ITst.key')
+#	{
+#		main::_log("generating ITst.key");
+#		my $key=TOM::Utils::vars::genhash(512);
+#		open(HND,'>'.$tom::P.'/ITst.key');# || die "$!";
+#		print HND $key;
+#		close (HND);
+#	}
 	
 }
 
