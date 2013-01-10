@@ -216,6 +216,7 @@ sub process
 				my %sth0=TOM::Database::SQL::execute(qq{
 					SELECT
 						user.secure_hash,
+						user.login,
 						user.autolog,
 						user.hostname,
 						user.datetime_register,
