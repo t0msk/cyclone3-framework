@@ -293,7 +293,8 @@ sub track
 	
 	if ($self->{'timer'})
 	{
-		$self->{'time'}{req}{start}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+#		$self->{'time'}{req}{start}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+		$self->{'time'}{'req'}{'start'}=Time::HiRes::time();
 		$self->{'time'}{proc}{start}=(times)[0];
 	}
 	
@@ -319,7 +320,8 @@ sub DESTROY
 sub semiclose
 {
 	my $self=shift;
-	$self->{'time'}{'req'}{'end'}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+#	$self->{'time'}{'req'}{'end'}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+	$self->{'time'}{'req'}{'end'}=Time::HiRes::time();
 	$self->{'time'}{'proc'}{'end'}=(times)[0];
 	$self->{'time'}{'req'}{'duration'}=$self->{'time'}{req}{end}-$self->{'time'}{req}{start};
 	$self->{'time'}{'proc'}{'duration'}=$self->{'time'}{proc}{end}-$self->{'time'}{proc}{start};
@@ -352,7 +354,8 @@ sub close
 	
 	if ($self->{'timer'})
 	{
-		$self->{'time'}{'req'}{'end'}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+#		$self->{'time'}{'req'}{'end'}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+		$self->{'time'}{'req'}{'end'}=Time::HiRes::time();
 		$self->{'time'}{'proc'}{'end'}=(times)[0];
 		$self->{'time'}{'req'}{'duration'}=$self->{'time'}{req}{end}-$self->{'time'}{req}{start};
 		$self->{'time'}{'proc'}{'duration'}=$self->{'time'}{proc}{end}-$self->{'time'}{proc}{start};
