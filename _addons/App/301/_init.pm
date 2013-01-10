@@ -118,7 +118,7 @@ if ($tom::H_cookie)
 {
 	# admin is group for administrators
 	# editor is group with access into rpc services
-	foreach my $group('admin','editor')
+	foreach my $group('admin','editor','newsletter')
 	{
 		my $sql=qq{
 			SELECT
