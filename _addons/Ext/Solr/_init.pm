@@ -46,7 +46,7 @@ sub service
 	if (!$service)
 	{
 		$service = WebService::Solr->new($Ext::Solr::url, { autocommit => $Ext::Solr::autocommit });
-		$service->commit(); # first commit to store previous uncommited sessions
+#		$service->commit(); # first commit to store previous uncommited sessions
 	}
 	return $service;
 }
