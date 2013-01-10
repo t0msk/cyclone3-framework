@@ -1,0 +1,80 @@
+#!/usr/bin/env perl
+# ex:ts=4
+
+use strict;
+use warnings;
+use DateTime;
+use File::ReadBackwards;
+
+my $cmd = shift || '';
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 cache usage [SQL]
+graph_category cyclone3
+graph_vlabel calls
+graph_order crt hit
+graph_scale no
+crt.label cache create / second
+crt.draw AREA
+crt.min 0
+hit.label cache hit / second
+hit.draw STACK
+hit.min 0
+};
+	exit 0;
+}
+
+my $debug;
+	$debug=1 if $cmd eq "debug";
+
+my $date=`date +"%Y-%m-%d"`;chomp($date);
+#my $text=`cat /srv/Cyclone3/_logs/$date.cache.log`;
+
+#print $text
+
+my $datetime_now=DateTime->now('time_zone' => 'local');
+	$datetime_now->add('minutes' => -1);
+#my $datetime_now_string=$datetime_now->hour().":".$datetime_now->minute();
+my $datetime_now_string=sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute()).":".sprintf('%02d',$datetime_now->second());
+	print "from $datetime_now_string\n" if $debug;
+	
+my $i;
+my $value_crt=0;
+my $value_hit=0;
+
+
+my $bw = File::ReadBackwards->new('/srv/Cyclone3/_logs/'.$date.'.cache.log') or die "can't read 'log_file' $!" ;
+while( my $line = $bw->readline )
+{
+	chomp($line);
+	next unless $line=~/\[sql\]/;
+	if ($line=~/\[(\d\d):(\d\d):(\d\d)/)
+	{
+		my $time_str=$1.":".$2.":".$3;
+		last if $time_str lt $datetime_now_string;
+	}
+	else
+	{
+		next;
+	}
+	
+	if ($line=~/\[sql\].*?\[(CRT|HIT)\]/)
+	{
+		$i++;
+		print $line."\n" if $debug;
+		if ($1 eq "CRT")
+		{
+			$value_crt+=1;
+		}
+		else
+		{
+			$value_hit+=1;
+		}
+#		$value_proc+=$2;
+	}
+	
+}
+
+$i=1 unless $i;
+
+print "crt.value " . int(($value_crt/1/60)*100)/100 . "\n";
+print "hit.value " . int(($value_hit/1/60)*100)/100 . "\n";
+

@@ -1,0 +1,98 @@
+#!/usr/bin/env perl
+# ex:ts=4
+
+use strict;
+use warnings;
+use DateTime;
+use File::ReadBackwards;
+
+my $cmd = shift || '';
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 availability
+graph_args --base 1000
+graph_category cyclone3
+graph_vlabel milliseconds
+graph_order proc req
+graph_total total
+proc.label CPU
+proc.draw AREA
+proc.min 0
+proc.max 1000
+proc.colour 0022ff
+req.label IOWAIT
+req.draw STACK
+req.min 0
+req.max 1000
+req.colour ffcc00
+};
+	exit 0;
+}
+
+my $debug;
+	$debug=1 if $cmd eq "debug";
+
+my $date=`date +"%Y-%m-%d"`;chomp($date);
+#my $text=`tail /srv/Cyclone3/_logs/$date.pub.bench.log -n 1000`;
+
+#print $text
+
+my $datetime_now=DateTime->now('time_zone' => 'local');
+	my $startday=$datetime_now->day();
+	$datetime_now->add('minutes' => -1);
+	if ($startday>$datetime_now->day())
+	{
+		$datetime_now->add('days' => 1);
+		$datetime_now->set_hour(0);
+		$datetime_now->set_minute(0);
+	}
+#my $datetime_now_string=$datetime_now->hour().":".$datetime_now->minute();
+my $datetime_now_string=sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute()).":".sprintf('%02d',$datetime_now->second());
+	print "from $datetime_now_string\n" if $debug;
+	
+my $i;
+my $value_req=0;
+my $value_proc=0;
+
+my $bw = File::ReadBackwards->new('/srv/Cyclone3/_logs/'.$date.'.pub.bench.log') or die "can't read 'log_file' $!" ;
+while( my $line = $bw->readline )
+{
+	chomp($line);
+	if ($line=~/\[(\d\d):(\d\d):(\d\d)/)
+	{
+		my $time_str=$1.":".$2.":".$3;
+		last if $time_str lt $datetime_now_string;
+	}
+	else
+	{
+		next;
+	}
+#	next 
+	print $line."\n" if $debug;
+# eval:0.034/0.009
+	if ($line=~/eval:([\d\.]+)\/([\d\.]+)/)
+	{
+		$i++;
+		$value_req+=$1;
+		$value_proc+=$2;
+	}
+}
+
+$i=1 unless $i;
+
+$value_req/=$i;
+$value_proc/=$i;
+$value_req=int(($value_req-$value_proc)*1000);
+$value_req=2000 if $value_req>2000;
+$value_proc=int($value_proc*1000);
+$value_proc=2000 if $value_proc>2000;
+
+$value_req="U" unless $value_req;
+$value_proc="U" unless $value_proc;
+
+print "req.value " . $value_req . "\n";
+print "proc.value " . $value_proc . "\n";
+
+#print "$value_req $value_proc";
+
+#my $tom3_value=`ps ax | grep "\.core/tom3" | grep -vc "grep"`;chomp($tom3_value);
+#print "tom3.value " . $tom3_value . "\n";
+

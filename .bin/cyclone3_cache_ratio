@@ -1,0 +1,94 @@
+#!/usr/bin/env perl
+# ex:ts=4
+
+use strict;
+#use warnings;
+use DateTime;
+use File::ReadBackwards;
+
+my $cmd = shift || '';
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 cache ratio
+graph_category cyclone3
+graph_vlabel calls
+graph_order page mdl sql
+graph_scale no
+page.label page cache ratio
+page.draw LINE
+page.min 0
+mdl.label module cache ratio
+mdl.draw LINE
+mdl.min 0
+sql.label sql cache ratio
+sql.draw LINE
+sql.min 0
+};
+	exit 0;
+}
+
+my $debug;
+	$debug=1 if $cmd eq "debug";
+
+my $date=`date +"%Y-%m-%d"`;chomp($date);
+#my $text=`cat /srv/Cyclone3/_logs/$date.cache.log`;
+
+#print $text
+
+my $datetime_now=DateTime->now('time_zone' => 'local');
+	$datetime_now->add('minutes' => -1);
+#my $datetime_now_string=$datetime_now->hour().":".$datetime_now->minute();
+my $datetime_now_string=sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute()).":".sprintf('%02d',$datetime_now->second());
+	print "from $datetime_now_string\n" if $debug;
+	
+my $i;
+my %value_crt;
+my %value_hit;
+
+
+my $bw = File::ReadBackwards->new('/srv/Cyclone3/_logs/'.$date.'.cache.log') or die "can't read 'log_file' $!" ;
+while( my $line = $bw->readline )
+{
+	chomp($line);
+	if ($line=~/\[(\d\d):(\d\d):(\d\d)/)
+	{
+		my $time_str=$1.":".$2.":".$3;
+		last if $time_str lt $datetime_now_string;
+	}
+	else
+	{
+		next;
+	}
+	
+	if ($line=~/\[(sql|mdl|page)\].*?\[(CRT|HIT)\]/)
+	{
+		my $type=$1;
+		$i++;
+#		print "$type\n";
+		print $line."\n" if $debug;
+		if ($2 eq "CRT")
+		{
+			$value_crt{$type}+=1;
+		}
+		else
+		{
+			$value_hit{$type}+=1;
+		}
+#		$value_proc+=$2;
+	}
+	
+}
+
+$i=1 unless $i;
+
+foreach (sort keys %value_crt)
+{
+#	$value_crt{$_}=1 unless $value_crt{$_};
+	print "$_.value ".(
+		
+		int(($value_hit{$_}/$value_crt{$_})*100)/100
+		
+	)."\n";
+}
+
+#print "crt.value " . int(($value_crt/10/60)*100)/100 . "\n";
+#print "hit.value " . int(($value_hit/10/60)*100)/100 . "\n";
+

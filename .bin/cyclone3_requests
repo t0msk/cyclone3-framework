@@ -1,0 +1,75 @@
+#!/usr/bin/env perl
+# ex:ts=4
+
+use strict;
+use warnings;
+use DateTime;
+use File::ReadBackwards;
+
+my $cmd = shift || '';
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 requests
+graph_args --base 1000
+graph_category cyclone3
+graph_vlabel requests / second
+graph_order req req_slow
+graph_scale no
+req.label Requests
+req.min 0
+req.max 1000
+req_slow.label Slow requests >500ms
+req_slow.min 0
+req_slow.max 1000
+};
+	exit 0;
+}
+
+my $debug;
+	$debug=1 if $cmd eq "debug";
+
+my $date=`date +"%Y-%m-%d"`;chomp($date);
+#my $text=`tail /srv/Cyclone3/_logs/$date.pub.bench.log -n 100000`;
+
+#print $text
+
+my $datetime_now=DateTime->now('time_zone' => 'local');
+	$datetime_now->add('minutes' => -1);
+my $datetime_now_string=sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute()).":".sprintf('%02d',$datetime_now->second());
+	print "from $datetime_now_string\n" if $debug;
+	
+my $i=0;
+my $i_slow=0;
+my $value_req=0;
+my $value_proc=0;
+
+my $bw = File::ReadBackwards->new('/srv/Cyclone3/_logs/'.$date.'.pub.bench.log') or die "can't read 'log_file' $!" ;
+while( my $line = $bw->readline )
+{
+	chomp($line);
+	if ($line=~/\[(\d\d):(\d\d):(\d\d)/)
+	{
+		my $time_str=$1.":".$2.":".$3;
+		last if $time_str lt $datetime_now_string;
+	}
+	else
+	{
+		next;
+	}
+#	next 
+	print $line."\n" if $debug;
+# eval:0.034/0.009
+	if ($line=~/eval:([\d\.]+)\/([\d\.]+)/)
+	{
+		$i++;
+		if ($1 > 0.5)
+		{
+			$i_slow++;
+		}
+	}
+}
+
+$i=0 unless $i;
+
+print "req.value " . int(($i/1/60)*100)/100 . "\n";
+print "req_slow.value " . int(($i_slow/1/60)*100)/100 . "\n";
+
+
