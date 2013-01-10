@@ -839,7 +839,7 @@ sub get_path
 				'time' => time(),
 				'data' => \@path
 			},
-			'expiration' => '3600S'
+			'expiration' => '30D'
 		);
 	}
 	
