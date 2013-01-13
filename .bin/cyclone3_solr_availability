@@ -1,0 +1,75 @@
+#!/usr/bin/env perl
+# ex:ts=4
+
+use strict;
+use warnings;
+use DateTime;
+use File::ReadBackwards;
+
+my $cmd = shift || '';
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 Solr availability
+graph_args --base 1000
+graph_category cyclone3
+graph_vlabel milliseconds
+graph_order query
+query.label Query duration
+query.min 0
+query.max 1000
+};
+	exit 0;
+}
+
+my $debug;
+	$debug=1 if $cmd eq "debug";
+
+my $date=`date +"%Y-%m-%d"`;chomp($date);
+#my $text=`tail /srv/Cyclone3/_logs/$date.pub.bench.log -n 1000`;
+
+my $datetime_now=DateTime->now('time_zone' => 'local');
+	my $startday=$datetime_now->day();
+	$datetime_now->add('minutes' => -1);
+	if ($startday>$datetime_now->day())
+	{
+		$datetime_now->add('days' => 1);
+		$datetime_now->set_hour(0);
+		$datetime_now->set_minute(0);
+		$datetime_now->set_second(0);
+	}
+#my $datetime_now_string=$datetime_now->hour().":".$datetime_now->minute();
+my $datetime_now_string=sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute()).":".sprintf('%02d',$datetime_now->second());
+	print "from $datetime_now_string\n" if $debug;
+	
+my $i;
+my $value_query=0;
+
+my $bw = File::ReadBackwards->new('/srv/Cyclone3/_logs/'.$date.'.solr.log') or die "can't read 'log_file' $!" ;
+while( my $line = $bw->readline )
+{
+	chomp($line);
+	if ($line=~/\[(\d\d):(\d\d):(\d\d)/)
+	{
+		my $time_str=$1.":".$2.":".$3;
+		last if $time_str lt $datetime_now_string;
+	}
+	else
+	{
+		next;
+	}
+#	next 
+	print $line."\n" if $debug;
+# eval:0.034/0.009
+	if ($line=~/qtime='([\d\.]+)'/)
+	{
+		$i++;
+		$value_query+=$1;
+	}
+}
+
+$i=1 unless $i;
+
+$value_query/=$i;
+$value_query=int($value_query);
+$value_query="U" unless $value_query;
+
+print "query.value " . $value_query . "\n";
+

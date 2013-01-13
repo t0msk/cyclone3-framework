@@ -1,0 +1,80 @@
+#!/usr/bin/env perl
+# ex:ts=4
+
+use strict;
+use warnings;
+use DateTime;
+use File::ReadBackwards;
+
+my $cmd = shift || '';
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 Solr requests
+graph_args --base 1000
+graph_category cyclone3
+graph_vlabel requests / second
+graph_order commit add search
+graph_scale no
+commit.label COMMIT
+commit.min 0
+commit.max 1000
+add.label Add document
+add.min 0
+add.max 1000
+search.label Search query
+search.min 0
+search.max 1000
+};
+	exit 0;
+}
+
+my $debug;
+	$debug=1 if $cmd eq "debug";
+
+my $date=`date +"%Y-%m-%d"`;chomp($date);
+#my $text=`tail /srv/Cyclone3/_logs/$date.pub.bench.log -n 100000`;
+
+#print $text
+
+my $datetime_now=DateTime->now('time_zone' => 'local');
+	$datetime_now->add('minutes' => -1);
+my $datetime_now_string=sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute()).":".sprintf('%02d',$datetime_now->second());
+	print "from $datetime_now_string\n" if $debug;
+	
+my $value_commit=0;
+my $value_add=0;
+my $value_search=0;
+
+my $bw = File::ReadBackwards->new('/srv/Cyclone3/_logs/'.$date.'.solr.log') or die "can't read 'log_file' $!" ;
+while( my $line = $bw->readline )
+{
+	chomp($line);
+	if ($line=~/\[(\d\d):(\d\d):(\d\d)/)
+	{
+		my $time_str=$1.":".$2.":".$3;
+		last if $time_str lt $datetime_now_string;
+	}
+	else
+	{
+		next;
+	}
+	
+	print $line."\n" if $debug;
+	
+	if ($line=~/\] search /)
+	{
+		$value_search++;
+	}
+	elsif ($line=~/\] COMMIT /)
+	{
+		$value_commit++;
+	}
+	elsif ($line=~/\] add /)
+	{
+		$value_add++;
+	}
+}
+
+print "COMMIT.value " . int(($value_commit/1/60)*100)/100 . "\n";
+print "add.value " . int(($value_add/1/60)*100)/100 . "\n";
+print "search.value " . int(($value_search/1/60)*100)/100 . "\n";
+
+
