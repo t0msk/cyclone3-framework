@@ -340,6 +340,7 @@ while ($main::CGI=new CGI::Fast())
 			$tom::Twday,
 			$tom::Tyday,
 			$tom::Tisdst) = localtime($tom::time_current);
+#		main::_log("hour=$tom::Thour");
 		# doladenie casu
 		$tom::Tyear+=1900;$tom::Tmom++;
 		# zaciatok dnesneho dna
@@ -1173,6 +1174,29 @@ while ($main::CGI=new CGI::Fast())
 					$t_eval->close();
 					$t_request->close();
 					Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
+					
+					do
+					{
+						my $e_p=$t_eval->{'time'}{'proc'}{'duration'};
+						my $e_r=$t_eval->{'time'}{'req'}{'duration'};
+						main::_log("[$tom::H]".
+							" ".
+							"TID:?".
+							" ".
+							"eval:".$e_r."/".$e_p.
+							" ".
+							"(".
+								"pre_process:".
+									$t_preprocess->{'time'}{req}{duration}.'/'.$t_preprocess->{'time'}{proc}{duration}.' '.
+									TOM::Math::percentage($e_r,$t_preprocess->{'time'}{req}{duration})."%/".
+									TOM::Math::percentage($e_p,$t_preprocess->{'time'}{proc}{duration})."%".
+								" ".
+								"process: 0/0 0%/0%".
+								" ".
+								"post_process: 0/0 0%/0%".
+							")".
+							"",3,"pub.bench",1) if $TOM::DEBUG_benchmark;
+					};
 					
 					main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track');
 					
