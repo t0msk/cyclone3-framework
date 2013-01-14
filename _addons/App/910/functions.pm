@@ -138,7 +138,8 @@ sub product_add
 				'tb_name' => "a910_product",
 				'columns' => {
 					'ID' => $env{'product.ID'},
-					'product_number' => "'".TOM::Security::form::sql_escape($env{'product.product_number'})."'" # if defined
+					'product_number' => "'".TOM::Security::form::sql_escape($env{'product.product_number'})."'", # if defined
+					'datetime_publish_start' => 'NOW()'
 				},
 				'-journalize' => 1,
 			);
@@ -266,6 +267,12 @@ sub product_add
 	$columns{'datetime_next_index'}="'".TOM::Security::form::sql_escape($env{'product.datetime_next_index'})."'"
 		if (exists $env{'product.datetime_next_index'} && ($env{'product.datetime_next_index'} ne $product{'datetime_next_index'}));
 	$columns{'datetime_next_index'}="NULL" if $columns{'datetime_next_index'} eq "''";
+	# datetime_publish_start
+	$columns{'datetime_publish_start'}="'".TOM::Security::form::sql_escape($env{'product.datetime_publish_start'})."'"
+		if ($env{'product.datetime_publish_start'} && ($env{'product.datetime_publish_start'} ne $product{'datetime_publish_start'}));
+	# datetime_publish_stop
+	$columns{'datetime_publish_stop'}="'".TOM::Security::form::sql_escape($env{'product.datetime_publish_stop'})."'"
+		if ($env{'product.datetime_publish_stop'} && ($env{'product.datetime_publish_stop'} ne $product{'datetime_publish_stop'}));
 	# supplier_org
 	$columns{'supplier_org'}="'".TOM::Security::form::sql_escape($env{'product.supplier_org'})."'"
 		if (exists $env{'product.supplier_org'} && ($env{'product.supplier_org'} ne $product{'supplier_org'}));
@@ -943,7 +950,21 @@ sub _product_index
 			$db0_line{'datetime_next_index'}.="Z";
 			push @content_id,WebService::Solr::Field->new( 'next_index_tdt' => $db0_line{'datetime_next_index'} );
 		}
-		
+
+		if ($db0_line{'datetime_publish_start'})
+		{
+			$db0_line{'datetime_publish_start'}=~s| (\d\d)|T$1|;
+			$db0_line{'datetime_publish_start'}.="Z";
+			push @content_id,WebService::Solr::Field->new( 'datetime_publish_start_tdt' => $db0_line{'datetime_publish_start'} );
+		}
+
+		if ($db0_line{'datetime_publish_stop'})
+		{
+			$db0_line{'datetime_publish_stop'}=~s| (\d\d)|T$1|;
+			$db0_line{'datetime_publish_stop'}.="Z";
+			push @content_id,WebService::Solr::Field->new( 'datetime_publish_stop_tdt' => $db0_line{'datetime_publish_stop'} );
+		}
+
 		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
 		foreach my $sec(keys %metadata)
 		{
