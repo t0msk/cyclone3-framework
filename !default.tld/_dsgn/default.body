@@ -14,12 +14,20 @@
 			},
 			'cancelEvent': function(event) {
 				event.preventDefault ? event.preventDefault() : event.returnValue = false;
+			},
+			'trackEvent': function(category, action, opt_label, opt_value, opt_noninteraction) {
+				try{
+					cyclone3.log(category+' '+action+' '+opt_label+' '+opt_value+' '+opt_noninteraction)
+					pageTracker._trackEvent(category, action, opt_label, opt_value, opt_noninteraction);
+				}catch(e){
+					//ignore
+				}
 			}
 		}
 	//]]>
 	</script>
 
-	<div class="page">
+	<div class="site">
 		
 <!TMP-PAGE-HEAD!>
 		
