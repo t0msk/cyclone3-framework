@@ -1768,6 +1768,77 @@ sub product_rating_add
 	return $env{'product_rating.ID'};
 }
 
+=head2 product_rating_remove()
+
+Removes a product rating and all its variables
+
+
+	App::910::functions::product_rating_remove(
+		'product_rating.ID' => 2
+	);
+
+=cut
+
+sub product_rating_remove
+{
+	# get this rating and get all rating-variables for this rating, then trash them and reindex the product
+	my %env = @_;
+
+	if ($env{'product_rating.ID'} =~ /^\d+$/)
+	{
+		$env{'ID'} = $env{'product_rating.ID'};
+
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`$App::910::db_name`.`a910_product_rating`
+			WHERE
+				ID = ?
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1, 'log'=>0, 'bind' => [$env{'ID'}] );
+
+		if (my %rating = $sth0{'sth'}->fetchhash())
+		{
+			my $sql2=qq{
+				SELECT
+					*
+				FROM
+					`$App::910::db_name`.`a910_product_rating_variable`
+				WHERE
+					ID_entity = ?
+			};
+			my %sth1=TOM::Database::SQL::execute($sql2,'quiet'=>1, 'log'=>0, 'bind' => [$env{'ID'}] );
+			
+			# trash all rating variables
+			while (my %rating_variable = $sth1{'sth'}->fetchhash())
+			{
+				main::_log('Vymazavam: '.$rating_variable{'ID'});
+
+				App::020::SQL::functions::to_trash(
+					'ID' => $rating_variable{'ID'},
+					'db_h' => 'main',
+					'db_name' => $App::910::db_name,
+					'tb_name' => 'a910_product_rating_variable',
+					'-journalize' => 0
+				);
+				
+			}
+
+			# trash the master rating (entity)
+			
+			App::020::SQL::functions::to_trash(
+				'ID' => $env{'ID'},
+				'db_h' => 'main',
+				'db_name' => $App::910::db_name,
+				'tb_name' => 'a910_product_rating',
+				'-journalize' => 1,
+			);
+		}
+	}
+}
+
 =head1 AUTHORS
 
 Comsultia, Ltd. (open@comsultia.com)
