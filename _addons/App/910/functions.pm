@@ -271,8 +271,15 @@ sub product_add
 	$columns{'datetime_publish_start'}="'".TOM::Security::form::sql_escape($env{'product.datetime_publish_start'})."'"
 		if ($env{'product.datetime_publish_start'} && ($env{'product.datetime_publish_start'} ne $product{'datetime_publish_start'}));
 	# datetime_publish_stop
-	$columns{'datetime_publish_stop'}="'".TOM::Security::form::sql_escape($env{'product.datetime_publish_stop'})."'"
-		if ($env{'product.datetime_publish_stop'} && ($env{'product.datetime_publish_stop'} ne $product{'datetime_publish_stop'}));
+	if ($env{'product.datetime_publish_stop'})
+	{
+		$columns{'datetime_publish_stop'}="'".TOM::Security::form::sql_escape($env{'product.datetime_publish_stop'})."'"
+			if ($env{'product.datetime_publish_stop'} && ($env{'product.datetime_publish_stop'} ne $product{'datetime_publish_stop'}));
+	} else
+	{
+		$columns{'datetime_publish_stop'} = "NULL";
+	}
+
 	# supplier_org
 	$columns{'supplier_org'}="'".TOM::Security::form::sql_escape($env{'product.supplier_org'})."'"
 		if (exists $env{'product.supplier_org'} && ($env{'product.supplier_org'} ne $product{'supplier_org'}));
