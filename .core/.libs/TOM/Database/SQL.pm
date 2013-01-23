@@ -362,11 +362,23 @@ sub execute
 			if ($output{'err'})
 			{
 				my ($package, $filename, $line) = caller;
-				main::_log("SQL: err=".$output{'err'},1);# unless $env{'quiet'};
-				main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
-				main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
+				main::_log("SQL prepare: err=".$output{'err'},1);# unless $env{'quiet'};
+				main::_log("{$env{'db_h'}} SQL prepare='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
+				main::_log("[$tom::H] {$env{'db_h'}} SQL prepare='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
 				
 				if ($output{'err'}=~/ORA-03114/) # hapal dole Orákulum
+				{
+					# vynutime reconnect, ale tento query je uz strateny
+					undef $main::DB{$env{'db_h'}};
+				}
+				
+				if ($output{'err'}=~/Attempt to initiate a new Adaptive Server/) # hapalo dole MsSQL
+				{
+					# vynutime reconnect, ale tento query je uz strateny
+					undef $main::DB{$env{'db_h'}};
+				}
+				
+				if ($output{'err'}=~/Adaptive Server connection timed out/) # hapalo dole MsSQL
 				{
 					# vynutime reconnect, ale tento query je uz strateny
 					undef $main::DB{$env{'db_h'}};
@@ -393,7 +405,25 @@ sub execute
 			main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
 			
 			main::_log("output info=".$output{'info'}) if (!$env{'quiet'} && $output{'info'});
-			  
+			
+			if ($output{'err'}=~/ORA-03114/) # hapal dole Orákulum
+			{
+				# vynutime reconnect, ale tento query je uz strateny
+				undef $main::DB{$env{'db_h'}};
+			}
+			
+			if ($output{'err'}=~/Attempt to initiate a new Adaptive Server/) # hapalo dole MsSQL
+			{
+				# vynutime reconnect, ale tento query je uz strateny
+				undef $main::DB{$env{'db_h'}};
+			}
+			
+			if ($output{'err'}=~/Adaptive Server connection timed out/) # hapalo dole MsSQL
+			{
+				# vynutime reconnect, ale tento query je uz strateny
+				undef $main::DB{$env{'db_h'}};
+			}
+			
 			undef $output{'sth'};
 			$t->close();
 			return %output;
