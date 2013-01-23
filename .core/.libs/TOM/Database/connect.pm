@@ -131,6 +131,8 @@ sub multi
 		  
 			main::_log("DBI connecting '$handler' ('$TOM::DB{$handler}{uri}' '$TOM::DB{$handler}{user}' '****')");
 			
+			main::_log("DBI connecting '$handler' ('$TOM::DB{$handler}{uri}' '$TOM::DB{$handler}{user}' '****')",3,"sql.err");
+			
 			$main::DB{$handler} = DBI->connect
 			(
 				$TOM::DB{$handler}{'uri'},
@@ -174,6 +176,8 @@ sub multi
 			$TOM::DB{$handler}{'name'}=$TOM::DB{'main'}{'name'} unless $TOM::DB{$handler}{'name'};
 			
 			main::_log("connecting '$handler' ('$TOM::DB{$handler}{host}' '$TOM::DB{$handler}{name}' '$TOM::DB{$handler}{user}' '****')");
+			
+			main::_log("connecting '$handler' ('$TOM::DB{$handler}{host}' '$TOM::DB{$handler}{name}' '$TOM::DB{$handler}{user}' '****')",3,"sql.err");
 			
 			$main::DB{$handler} = Mysql->Connect
 			(
