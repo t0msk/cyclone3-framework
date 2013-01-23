@@ -277,7 +277,10 @@ sub product_add
 			if ($env{'product.datetime_publish_stop'} && ($env{'product.datetime_publish_stop'} ne $product{'datetime_publish_stop'}));
 	} else
 	{
-		$columns{'datetime_publish_stop'} = "NULL";
+		if (exists $env{'product.datetime_publish_stop'})
+		{
+			$columns{'datetime_publish_stop'} = "NULL";
+		}
 	}
 
 	# supplier_org
