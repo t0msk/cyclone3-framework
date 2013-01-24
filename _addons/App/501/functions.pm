@@ -702,10 +702,10 @@ sub image_file_process
 			my $width=$image1->Get('width');
 			my $height=$image1->Get('height');
 			
-			my $scale_new=int(($params[0]/$params[1])*100)/100;
-			my $scale_old=int(($width/$height)*100)/100;
+			my $scale_new=int(($params[0]/$params[1])*10000)/10000;
+			my $scale_old=int(($width/$height)*10000)/10000;
 			
-			main::_log("w=$width h=$height $scale_old -> $scale_new");
+			main::_log("w=$width h=$height current scale:$scale_old requested scale:$scale_new");
 			
 			my $scale='1:1';
 			my $scale_x=$params[0];
@@ -731,20 +731,26 @@ sub image_file_process
 				$nheight=$scale_y*$scl;
 			}
 			
-			main::_log("w=$nwidth h=$nheight");
+			$nwidth=int($nwidth);
+			$nheight=int($nheight);
+			
+			main::_log("calculated new size to crop by scale $scale_new new w=$nwidth new h=$nheight");
 			
 			my $x;
 			my $y;
 			
-			$x=($width-$nwidth)/2;
-			$y=($height-$nheight)/2;
+			$x=($width-$nwidth)/2; # center crop
+			my $x_max=$width-$nwidth;
+			$y=($height-$nheight)/2; # center crop
+			my $y_max=$height-$nheight;
 			
 			if ($height > $nheight)
 			{
-				main::_log("vertical moving");
-				if ($env{'green_area'}{'x1'})
+				main::_log("vertical moving to position y:$env{'green_area'}{'y1'} (free pixels to move:$y_max)");
+				if ($env{'green_area'}{'y1'})
 				{
 					$y=$env{'green_area'}{'y1'}+(($env{'green_area'}{'y2'}-$env{'green_area'}{'y1'})/2)-($nheight/2);
+					$y=$y_max if ($y > $y_max);
 				}
 				else
 				{
@@ -755,10 +761,11 @@ sub image_file_process
 			
 			if ($width > $nwidth)
 			{
-				main::_log("horizontal moving");
+				main::_log("horizontal moving to position x:$env{'green_area'}{'x1'} (free pixels to move:$x_max)");
 				if ($env{'green_area'}{'x1'})
 				{
 					$x=$env{'green_area'}{'x1'}+(($env{'green_area'}{'x2'}-$env{'green_area'}{'x1'})/2)-($nwidth/2);
+					$x=$x_max if ($x > $x_max);
 				}
 				else
 				{
@@ -2021,7 +2028,7 @@ sub get_image_file
 		return %image;
 	}
 	
-	return 1;
+	return undef;
 }
 
 
