@@ -419,7 +419,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'log'})
 			{
-				$TOM::DEBUG_log_file=99;
+				$TOM::DEBUG_log_file=90;
 				main::_log("changed to full logging");
 			}
 			
@@ -431,11 +431,12 @@ while ($main::CGI=new CGI::Fast())
 				&&($pub::engine_disabling))
 			{
 				my @ERR=(
-					"The page you have requested can't be displayed",
-					@{$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'messages'}}
+					"The page you have requested can't be displayed"
+#					,@{$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'messages'}}
 				);
 				main::_log("engine_disable for UserAgent \"$main::UserAgent_name\"-\"$main::ENV{'HTTP_USER_AGENT'}\"",0,"pub.warn",1);
-				push @ERR, $TOM::Net::HTTP::UserAgent::messages{'old'}[$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'old'}] if exists $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{old};
+				push @ERR, $TOM::Net::HTTP::UserAgent::messages{'old'}[$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'old'}]
+					if exists $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'old'};
 				# FIXME:[fordinal] zrusit Tomahawk::error::page_warn(@ERR) a nahradit novym
 				
 				$t_agent->close();
@@ -446,12 +447,10 @@ while ($main::CGI=new CGI::Fast())
 				next;
 			}
 			
-			
 			if (my $dom=TOM::Net::HTTP::referer::analyze( (TOM::Net::HTTP::domain_clear($main::ENV{'HTTP_REFERER'}))[0] ))
 			{
 				$main::ENV{'REF_TYPE'}=$TOM::Net::HTTP::referer::table{$dom}{'ref_type'};
 			}
-			
 			
 		$t_agent->close();
 		
@@ -2617,44 +2616,55 @@ while ($main::CGI=new CGI::Fast())
 		}
 		else
 		{
-			if ($main::ENV{'Etag'}) # timestamp only pls!
+			# only when page generated without errors
+			if ($page_statuscode eq "200")
 			{
-				$main::ENV{'Etag'}=~s|[\n\r]||gms; # fix when Base64
-				print "Etag: ".$main::ENV{'Etag'}."\n";
-				$main::ENV{'Last-Modified'}=time() unless $main::ENV{'Last-Modified'};
-			}
-			if ($main::ENV{'Last-Modified'}) # timestamp only pls!
-			{
-				$main::ENV{'Last-Modified'}=int($main::ENV{'Last-Modified'});
-				if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'} ne "robot")
+				if ($main::ENV{'Etag'}) # timestamp only pls!
 				{
-					# highest value is time() for non bots
-					# because cache time = last-modified time sent by webserver to browser
-					# and browser after caching asks for modifications to last-modified
-					$main::ENV{'Last-Modified'}=time() if $main::ENV{'Last-Modified'}<time();
+					$main::ENV{'Etag'}=~s|[\n\r]||gms; # fix when Base64
+					print "Etag: ".$main::ENV{'Etag'}."\n";
+					$main::ENV{'Last-Modified'}=time() unless $main::ENV{'Last-Modified'};
 				}
-				use DateTime;
-				# convert and publish Last-Modified header
-				my $date = DateTime->from_epoch('epoch'=>int($main::ENV{'Last-Modified'}),'time_zone' => 'GMT');
-				my $date_string = $date->strftime("%a, %d %b %Y %H:%M:%S GMT");
-				main::_log("set 'Last-Modified' to $main::ENV{'Last-Modified'} ($date_string)",3,"debug");
-				print "Last-Modified: ".$date_string."\n";
-				main::_log("[page][".$main::ENV{'Etag'}."][CRT] Last-Modified:$date_string",3,"cache");
-				main::_log("[page][$tom::H][".$main::ENV{'Etag'}."][CRT] Last-Modified:$date_string",3,"cache",1);
+				if ($main::ENV{'Last-Modified'}) # timestamp only pls!
+				{
+					$main::ENV{'Last-Modified'}=int($main::ENV{'Last-Modified'});
+					if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'} ne "robot")
+					{
+						# highest value is time() for non bots
+						# because cache time = last-modified time sent by webserver to browser
+						# and browser after caching asks for modifications to last-modified
+						$main::ENV{'Last-Modified'}=time() if $main::ENV{'Last-Modified'}<time();
+					}
+					use DateTime;
+					# convert and publish Last-Modified header
+					my $date = DateTime->from_epoch('epoch'=>int($main::ENV{'Last-Modified'}),'time_zone' => 'GMT');
+					my $date_string = $date->strftime("%a, %d %b %Y %H:%M:%S GMT");
+					print "Last-Modified: ".$date_string."\n";
+					main::_log("[page][".$main::ENV{'Etag'}."][CRT] Last-Modified:$date_string",3,"cache");
+					main::_log("[page][$tom::H][".$main::ENV{'Etag'}."][CRT] Last-Modified:$date_string",3,"cache",1);
+				}
 			}
+			else
+			{
+				# reset cache settings
+				$main::ENV{'Expires'}="0";
+				$main::ENV{'Cache-Control'}="no-cache";
+				$main::ENV{'Pragma'}="no-cache";
+				undef $main::ENV{'Last-Modified'};
+			}
+			
+			
 			if ($main::ENV{'Expires'})
 			{
 				main::_log("Expires: ".$main::ENV{'Expires'});
 				print "Expires: ".$main::ENV{'Expires'}."\n";
 				if ($main::ENV{'Last-Modified'})
 				{
+					
 				}
 				else
 				{
-#					# last-modified is now
-#					my $date = DateTime->now('time_zone' => 'GMT');
-#					$main::ENV{'Last-Modified'} = $date->strftime("%a, %d %b %Y %H:%M:%S GMT"); 
-#					print "Last-Modified: ".$main::ENV{'Last-Modified'}."\n";
+					
 				}
 			}
 			if ($main::ENV{'Cache-Control'})
