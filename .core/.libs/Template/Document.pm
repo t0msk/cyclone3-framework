@@ -313,8 +313,10 @@ sub write_perl_file {
         close($fh);
     };
     return $class->error($@) if $@;
-    return rename($tmpfile, $file)
-        || $class->error($!);
+    rename($tmpfile, $file)
+        || return $class->error($!);
+    chmod (0666,$file);
+    return 1;
 }
 
 

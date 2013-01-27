@@ -123,7 +123,6 @@ sub fetch {
     my ($self, $name) = @_;
     my ($data, $error);
 
-
     if (ref $name) {
         # $name can be a reference to a scalar, GLOB or file handle
         ($data, $error) = $self->_load($name);
@@ -548,9 +547,14 @@ sub _compiled_filename {
     $path =~ /^(.+)$/s or die "invalid filename: $path";
     $path =~ s[:][]g if $^O eq 'MSWin32';
 
-    $compiled = "$path$compext";
+	if ($self->{'CONTEXT'}->{'tpl'})
+	{
+		use Digest::MD5 qw(md5_hex);
+		$compiled = md5_hex($self->{'CONTEXT'}->{'tpl'}->{'location'}).".";
+	}
+    $compiled .= $path.$compext;
     $compiled = File::Spec->catfile($compdir, $compiled) if length $compdir;
-
+#    $self->debug("[Template::Provider] compiled_filename $compiled");
     return $compiled;
 }
 
@@ -931,10 +935,11 @@ sub _template_modified {
     my $self = shift;
     my $template = shift || return;
 
-    if ($self->{'CONTEXT'}->{'tpl'})
-    {
-        return $self->{'CONTEXT'}->{'tpl'}->{'config'}->{'mtime'};
-    }
+	# Cyclone3
+	if ($self->{'CONTEXT'}->{'tpl'})
+	{
+		return $self->{'CONTEXT'}->{'tpl'}->{'config'}->{'mtime'};
+	}
     return (stat( $template ))[9];
 }
 
@@ -959,11 +964,12 @@ sub _template_content {
     my $mod_date;
     my $error;
 
-    if ($self->{'CONTEXT'}->{'tpl'})
-    {
-        $data=$self->{'CONTEXT'}->{'tpl'}->{'entity'}->{$path};
-        return ($data, undef, $self->{'CONTEXT'}->{'tpl'}->{'config'}->{'mtime'})
-    }
+	# Cyclone3
+	if ($self->{'CONTEXT'}->{'tpl'})
+	{
+		$data=$self->{'CONTEXT'}->{'tpl'}->{'entity'}->{$path};
+		return ($data, undef, $self->{'CONTEXT'}->{'tpl'}->{'config'}->{'mtime'})
+	}
 
     local *FH;
     if (open(FH, "< $path")) {
