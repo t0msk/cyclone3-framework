@@ -44,6 +44,12 @@ BEGIN
 	{
 		main::_log("\$tom::P_media is not defined in TOM::Template (loaded without TOM::Domain?)",1);
 	}
+	
+	use Template;
+	use Template::Config;
+	eval {require Template::Stash::XS};
+	if (!$@){$Template::Config::STASH = 'Template::Stash::XS'}
+	
 }
 
 our $debug=$main::debug || 0;
@@ -199,13 +205,17 @@ sub new
 		if ($obj->{'config'}->{'tt'}) # extend by Template Toolkit
 		{
 			main::_log("creating new Template::Toolkit object") if $debug;
-			require Template;
 			$obj->{'tt'} = Template->new({
-				'EVAL_PERL' => 1,
+#				'EVAL_PERL' => 1,
+#				'STASH' => $stash,
+#				},
 #				'LOAD_PERL' => 1,
 #				'PLUGINS' => {
 #					'date' => 'Template::Plugin::Date'
-#				}
+#				'RECURSION' => 1,
+				'INCLUDE_PATH' => [$tom::P.'/_dsgn',$tom::Pm.'/_dsgn'],
+				'COMPILE_DIR' => $tom::P.'/_temp',
+				'COMPILE_EXT' => '.ttc2',
 			});
 		}
 	}
@@ -760,11 +770,10 @@ sub process
 		}
 #=cut
 		# process
-		my $entity_content='[%PROCESS main%]';
 		undef $self->{'output'};
 		undef $self->{'error'};
 		$tt->process(
-			\$entity_content,
+			'main',
 			$vars_process,\$self->{'output'}
 		) || do {
 			main::_log($tt->error(),1);
