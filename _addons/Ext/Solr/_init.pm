@@ -76,6 +76,11 @@ sub search
 	my $self=shift;
 	my ($package, $filename, $line) = caller(0);
 	
+	if (exists $_[1]->{'start'} && !$_[1]->{'start'})
+	{
+		delete $_[1]->{'start'};
+	}
+	
 	# call
 	my $response=$self->SUPER::search(@_);
 	
