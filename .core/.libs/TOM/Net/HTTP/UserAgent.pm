@@ -708,6 +708,14 @@ our @table=
 	# --------------------------------------------------------------------
 	
 	# SAFARI
+	{name=>'Google.com/mobile', # contains info about Safari
+		regexp		=>	['Googlebot-Mobile'],
+		agent_type	=>	"robot",
+		engine_disable	=>	0,
+		recache_disable =>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+	},
 	{'name'=>'Safari iPad 6X',
 		'regexp' => ['iPad.*?Safari.6'],
 		'media_type' => "tablet",
@@ -1787,6 +1795,22 @@ our @table=
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
 	},
+	{name=>'Yandex.com',
+		regexp		=>	['YandexBot'],
+		agent_type	=>	"robot",
+		engine_disable	=>	0,
+		recache_disable =>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+	},
+	{name=>'Seznam.cz',
+		regexp		=>	['Seznam screenshot','SeznamBot'],
+		agent_type	=>	"robot",
+		engine_disable	=>	0,
+		recache_disable =>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+	},
 	{name=>'AskJeeves.com',
 		regexp		=>	['Ask Jeeves/Teoma'],
 		home_url	=>	"http://sp.ask.com/docs/about/tech_crawling.html",
@@ -2226,19 +2250,19 @@ our @table=
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
 	},
-	{name=>'spambot', # UserAgent from hacked computer (request from trojan, virus,...)
+	{name=>'spambot', # bot collecting email adresses or adding comments
 		agent_type	=>	"vandaliser",
 		recache_disable =>	1,
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
-#		engine_disable => 1,
+		engine_disable => 1,
 	},
-	{name=>'badbot', # bot with bad USRM support
+	{name=>'badbot', # bot with bad USRM support or too high frequency of requests
 		agent_type	=>	"vandaliser",
 		recache_disable =>	1,
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
-#		engine_disable => 1,
+		engine_disable => 1,
 	},
 );
 
@@ -2335,6 +2359,39 @@ our %table_IP=
 	'91\.210\.182\.23' => 'badbot', # 2009-11-29 - Digmia checker
 	
 	'217\.11\.242\.50' => 'badbot', # 2011-03-29 - unknown
+	
+	
+	'59\.60\.96\.' => 'spambot', # 2013-01-17
+	'59\.60\.97\.' => 'spambot', # 2013-01-17
+	'59\.60\.99\.' => 'spambot', # 2013-01-24
+	'59\.60\.105\.' => 'spambot', # 2013-01-16
+	'59\.60\.106\.' => 'spambot', # 2013-01-16
+	'59\.60\.107\.' => 'spambot', # 2013-01-17
+	'59\.60\.109\.' => 'spambot', # 2013-01-17
+	'59\.60\.111\.' => 'spambot', # 2013-01-17
+	'60\.173\.26\.35' => 'spambot', # 2013-01-24
+	'65\.111\.172\.' => 'spambot', # 2013-01-15
+	'91\.205\.174\.' => 'spambot', # 2013-01-14
+	'93\.182\.136\.56' => 'spambot', # 2013-01-15
+	'110\.34\.232\.59' => 'spambot', # 2013-01-16
+	'111\.73\.45\.59' => 'spambot', # 2013-01-16
+	'112\.111\.172\.70' => 'spambot', # 2013-01-15
+	'113\.212\.69\.' => 'spambot', # 2013-01-14 - http://www.projecthoneypot.org/ip_113.212.69.122
+	'117\.26\.204\.173' => 'spambot', # 2013-01-24
+	'123\.153\.9\.54' => 'spambot', # 2013-01-16
+	'142\.0\.34\.' => 'spambot', # 2013-01-24
+	'142\.0\.35\.' => 'spambot', # 2013-01-14 - http://www.projecthoneypot.org/ip_142.0.35.169
+	'142\.0\.42\.' => 'spambot', # 2013-01-14
+	'142\.0\.133\.81' => 'spambot', # 2013-01-14
+	'173\.242\.121\.163' => 'spambot', # 2013-01-24
+	'175\.44\.4\.188' => 'spambot', # 2013-01-15
+	'192\.74\.228\.' => 'spambot', # 2013-01-17
+	'199\.19\.107\.' => 'spambot', # 2013-01-15
+	'199\.19\.109\.' => 'spambot', # 2013-01-14 - http://www.projecthoneypot.org/ip_199.19.109.214
+	'199\.115\.229\.' => 'spambot', # 2013-01-14 - http://www.projecthoneypot.org/ip_199.115.229.192
+	'199\.180\.117\.' => 'spambot', # 2013-01-16
+	'222\.77\.243\.98' => 'spambot', # 2013-01-15
+	'222\.77\.247\.171' => 'spambot', # 2013-01-15
 	
 	# list of anonymizers
 	#'91\.127\.103\.156' => 'anonymizer',
