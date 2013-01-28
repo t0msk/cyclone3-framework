@@ -111,7 +111,9 @@ sub new
 	}
 	else
 	{
+		main::_log("<={L10n}{cache} '$obj->{'location'}'/'$obj->{'ENV'}->{'lng'}'");# if $debug;
 #		main::_log("load cached L10n ".$obj->{'uid'});
+		return $objects{$obj->{'uid'}};
 	}
 	
 	# create copy of object to return it as unique
