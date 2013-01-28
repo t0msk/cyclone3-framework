@@ -219,6 +219,10 @@ sub new
 			});
 		}
 	}
+	else
+	{
+		main::_log("<={Template}{cache} '$obj->{'location'}'");
+	}
 	
 	# create copy of object to return it as unique
 	# this is important to allow changing variables
@@ -233,6 +237,16 @@ sub new
 			%{$obj_return->{'entity_'}}=%{$objects{$obj->{'location'}}{'entity_'}};
 			%tpl::entity=%{$objects{$obj->{'location'}}{'entity'}};
 			%{$obj_return->{'L10n'}}=%{$objects{$obj->{'location'}}{'L10n'}};
+			# when L10n differs, initialize new L10n object
+			if ($obj_return->{'L10n'} && $obj_return->{'ENV'}->{'lng'} ne $obj_return->{'L10n'}{'lng'})
+			{
+				$obj_return->{'L10n'}{'obj'}=new TOM::L10n(
+					'level' => $obj_return->{'L10n'}{'level'},
+					'addon' => $obj_return->{'L10n'}{'addon'},
+					'name' => $obj_return->{'L10n'}{'name'},
+					'lng' => $obj_return->{'ENV'}->{'lng'} || $tom::lng || $tom::LNG || $TOM::LNG,
+				);
+			}
 			# recovery header config to new object
 			%{$obj_return->{'config'}}=%{$objects{$obj->{'location'}}{'config'}};
 			# get tt reference from objects cache
