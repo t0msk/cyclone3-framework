@@ -16,17 +16,19 @@ sub new {
 	
 	my $lng=$context->{'tpl'}->{'ENV'}->{'lng'} || $tom::lng;
 	
-	my $L10n=new TOM::L10n(
-		'level' => $context->{'tpl'}->{'L10n'}->{'level'},
-		'addon' => $context->{'tpl'}->{'L10n'}->{'addon'},
-		'name' => $context->{'tpl'}->{'L10n'}->{'name'},
-		'lng' => $lng,
-	);
+#	my $L10n=new TOM::L10n(
+#		'level' => $context->{'tpl'}->{'L10n'}->{'level'},
+#		'addon' => $context->{'tpl'}->{'L10n'}->{'addon'},
+#		'name' => $context->{'tpl'}->{'L10n'}->{'name'},
+#		'lng' => $lng,
+#	);
+	
+#	print Dumper($context->{'tpl'}->{'L10n'}->{'obj'});
 	
 	return bless {
 		'_CONTEXT' => $context,
 		'_ARGS' => \@args,
-		'L10n' => $L10n,
+		'L10n' => $context->{'tpl'}->{'L10n'}->{'obj'},
 	}, $class;
 }
 

@@ -401,6 +401,14 @@ sub parse_header
 			$self->{'L10n'}{'name'}=$node->getAttribute('name');
 			$self->{'L10n'}{'lng'}=$node->getAttribute('lng');
 			main::_log("request to load L10n level='$self->{'L10n'}{'level'}' addon='$self->{'L10n'}{'addon'}' name='$self->{'L10n'}{'name'}' lng='$self->{'L10n'}{'lng'}'") if $debug;
+			
+			$self->{'L10n'}{'obj'}=new TOM::L10n(
+				'level' => $self->{'L10n'}{'level'},
+				'addon' => $self->{'L10n'}{'addon'},
+				'name' => $self->{'L10n'}{'name'},
+				'lng' => $self->{'ENV'}->{'lng'} || $tom::lng || $tom::LNG || $TOM::LNG,
+			);
+			
 		}
 		elsif ($name eq "tt")
 		{
@@ -536,12 +544,12 @@ sub process_entity
 			$lng=$self->{'ENV'}->{'lng'} || $tom::lng || $tom::LNG || $TOM::LNG;
 			# main::_log("process in lng $lng");
 		}
-		my $L10n=new TOM::L10n(
-			'level' => $self->{'L10n'}{'level'},
-			'addon' => $self->{'L10n'}{'addon'},
-			'name' => $self->{'L10n'}{'name'},
-			'lng' => $lng,
-		);
+		my $L10n=$self->{'L10n'}{'obj'};#new TOM::L10n(
+		#	'level' => $self->{'L10n'}{'level'},
+		#	'addon' => $self->{'L10n'}{'addon'},
+		#	'name' => $self->{'L10n'}{'name'},
+		#	'lng' => $lng,
+		#);
 		
 		foreach my $entity (keys %{$self->{'entity'}})
 		{
