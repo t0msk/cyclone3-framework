@@ -53,6 +53,7 @@ BEGIN
 }
 
 our $debug=$main::debug || 0;
+our $TTL=5;
 our %objects;
 
 
@@ -146,9 +147,10 @@ sub new
 	$obj->{'L10n'}={};
 	$obj->{'file'}={};
 	$obj->{'file_'}={};
+	$obj->{'mfile'}={}; # list of files on which we control changes
 	$obj->{'config'}={};
 	
-	# find where is the source file/files
+	# find where is the definition file/files
 	if ($env{'location'})
 	{
 		$obj->{'location'}=$env{'location'};
@@ -157,6 +159,8 @@ sub new
 			$t->close() if $debug;
 			return undef;
 		}
+		# modifytime
+		$obj->{'mfile'}{$obj->{'location'}}=(stat($obj->{'location'}))[9];
 	}
 	else
 	{
@@ -170,13 +174,25 @@ sub new
 		}
 	}
 	
-	# modifytime of location
-	$obj->{'config'}->{'mtime'} = (stat($obj->{'location'}))[9];
-	
-	if ($objects{$obj->{'location'}} && ($obj->{'config'}->{'mtime'} > $objects{$obj->{'location'}}->{'config'}->{'mtime'}))
+	if ($objects{$obj->{'location'}} && $objects{$obj->{'location'}}->{'config'}{'ctime'} < (time()-$TTL))
 	{
-		main::_log("{Template} '$obj->{'location'}' expired, modified before ".( $obj->{'config'}->{'mtime'}-$objects{$obj->{'location'}}->{'config'}->{'mtime'} )."s");
-		delete $objects{$obj->{'location'}};
+		# time to check changes
+		$objects{$obj->{'location'}}->{'config'}{'ctime'} = time();
+		my $object_modified=0;
+		foreach (keys %{$objects{$obj->{'location'}}->{'mfile'}})
+		{
+			if ($objects{$obj->{'location'}}->{'mfile'}{$_} < (stat($_))[9])
+			{
+				main::_log("{Template} '$obj->{'location'}' expired, file '$_' modified");
+				$object_modified=1;
+				last;
+			}
+#			main::_log(" file=$_");
+		}
+		if ($object_modified)
+		{
+			delete $objects{$obj->{'location'}};
+		}
 	}
 	
 	$obj->{'config'}->{'tt'}=1 if $env{'tt'};
@@ -195,10 +211,13 @@ sub new
 #		main::_log("addding to ignore ".$obj->{'location'});
 		push @{$obj->{'ENV'}->{'ignore'}}, $obj->{'location'};
 		$obj->prepare_xml();
-		# save modify time of definition file
-		$obj->{'config'}->{'mtime'}=(stat( $obj->{'location'} ))[9];
+		# save time of object creation (last-check time)
+		$obj->{'config'}->{'ctime'} = time();
+		# save modifytime of xml definition file_
+		# will be override posibly with higher times in tpl dependencies or files (by parse_header)
+		$obj->{'config'}->{'mtime'} = (stat($obj->{'location'}))[9];
 		$obj->parse_header();
-		# save config from header to object cache
+		# save config from header to object memory cache
 		%{$objects{$obj->{'location'}}->{'config'}}=%{$obj->{'config'}};
 		$obj->parse_entity();
 		
@@ -274,6 +293,7 @@ sub new
 		{
 			%{$obj_return->{'file'}}=%{$objects{$obj->{'location'}}{'file'}};
 			%{$obj_return->{'file_'}}=%{$objects{$obj->{'location'}}{'file_'}};
+			%{$obj_return->{'mfile'}}=%{$objects{$obj->{'location'}}{'mfile'}};
 		}
 	$t->close() if $debug;
 	return $obj_return;
@@ -338,6 +358,8 @@ sub prepare_location
 		$self->{'dir'}=$self->{'location'};
 		$self->{'dir'}=~s/\/_init.xml$//;
 	}
+	
+	$self->{'mfile'}{$self->{'location'}}=(stat($self->{'location'}))[9];
 	
 	return $self->{'location'};
 }
@@ -406,6 +428,18 @@ sub parse_header
 				$self->{'file_'}{$_}=$extend->{'file_'}{$_};
 			}
 			
+			# if modifytime of dependency is higher than master object
+			if ($self->{'config'}->{'mtime'} < $extend->{'config'}->{'mtime'})
+			{
+				$self->{'config'}->{'mtime'} = $extend->{'config'}->{'mtime'};
+			}
+			
+			# add modify files from inherited tpl
+			foreach (keys %{$extend->{'mfile'}})
+			{
+				$self->{'mfile'}{$_}=$extend->{'mfile'}{$_};
+			}
+			
 			next;
 		}
 		elsif ($name eq "L10n")
@@ -461,6 +495,15 @@ sub parse_header
 				my $replace_L10n=$node->getAttribute('replace_L10n');
 				
 				main::_log("extract file '$location' from '$self->{'dir'}' to '$destination' replace_variables='$replace_variables' replace_L10n='$replace_L10n'") if $debug;
+				
+				# added to mfile
+				$self->{'mfile'}{$self->{'dir'}.'/'.$location}=(stat($self->{'dir'}.'/'.$location))[9];
+				
+				# if modifytime of file is higher than definition file modifytime
+				if ($self->{'config'}->{'mtime'} < $self->{'mfile'}{$self->{'dir'}.'/'.$location})
+				{
+					$self->{'config'}->{'mtime'} = $self->{'mfile'}{$self->{'dir'}.'/'.$location};
+				}
 				
 				# check if this file is not oveerided, or already exists in
 				# destination directory
