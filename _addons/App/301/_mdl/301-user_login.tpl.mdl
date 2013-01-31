@@ -82,11 +82,13 @@ sub execute
 						FROM
 							TOM.a301_user
 						WHERE
-							email=? AND
+							(email=? OR ref_facebook=?) AND
 							hostname=? AND
 							status='Y'
+						ORDER BY
+							ref_facebook DESC
 						LIMIT 1
-					},'bind'=>[$data_json->{'email'},$tom::H_cookie],'quiet'=>1);
+					},'bind'=>[$data_json->{'email'},$data_json->{'id'},$tom::H_cookie],'quiet'=>1);
 					my %user=$sth0{'sth'}->fetchhash();
 					if ($user{'ID_user'})
 					{
@@ -122,7 +124,8 @@ sub execute
 #							'user.login' => $env{'login'},
 							'user.status' => 'Y',
 							'user.pass' => $env{'pass'},
-							'user.email' => $env{'login'},
+							'user.email' => $data_json->{'email'},
+							'user.ref_facebook' => $data_json->{'id'},
 							'user.email_verified' => 'Y',
 							'user.saved_session' => $cvml,
 #							'groups' => ['newsletter']
@@ -137,13 +140,57 @@ sub execute
 					`$wget_cmd -t 1 -T 3 -q \"$link\" -O \"$photo->{'filename'}\"`;
 					
 					# update user data
-					App::301::functions::user_add(
+					main::_log("update user $user{'ID_user'}",3,"debug");
+					%user=App::301::functions::user_add(
 #						'user.login' => "",
 						'user.ID_user' => $user{'ID_user'},
+#						'user.login' => $main::FORM{'email'},
+						'user.email' => $data_json->{'email'},
+						'user.ref_facebook' => $data_json->{'id'},
 						'user_profile.firstname' => $data_json->{'first_name'},
 						'user_profile.surname' => $data_json->{'last_name'},
 						'avatar' => $photo->{'filename'}
 					);
+					
+					if ($App::301::fb_friend)
+					{
+						main::_log("sync friends",3,"debug");
+						# sync friends
+						my $link="https://graph.facebook.com/".$data_json->{'id'}."/friends?access_token=".$FB_GET{'access_token'}."&limit=5000";
+						my $data_friends =`/usr/bin/wget -t 1 -T 3 -q -O - \"$link\"`;
+						my $data_friends_json = decode_json $data_friends;
+						foreach (@{$data_friends_json->{'data'}})
+						{
+							
+							
+							my %sth2=TOM::Database::SQL::execute(qq{
+								SELECT
+									ID_user
+								FROM
+									TOM.a301_user
+								WHERE
+									ref_facebook=?
+									AND hostname=?
+									AND status='Y'
+								LIMIT 1
+							},'bind'=>[$_->{'id'},$tom::H_cookie],'quiet'=>1);
+							if (my %db2_line=$sth2{'sth'}->fetchhash())
+							{
+								main::_log("$user{'user.ID_user'} id=".$_->{'id'}." name=".$_->{'name'} ,3,"debug");
+								App::160::SQL::new_relation(
+									'l_prefix' => 'a301',
+									'l_table' => 'user',
+									'l_ID_entity' => $user{'user.ID_user'},
+									'rel_type' => 'fb_friend',
+									'r_db_name' => $App::301::db_name,
+									'r_prefix' => 'a301',
+									'r_table' => 'user',
+									'r_ID_entity' => $db2_line{'ID_user'},
+									'status' => 'Y',
+								);
+							}
+						}
+					}
 					
 				}
 				
@@ -212,6 +259,8 @@ sub execute
 			$env{'pass'}='SHA1:'.sha1_hex(Encode::encode_utf8($env{'pass'}));
 			main::_log("pass='$env{'pass'}'");
 		}
+		
+		main::_log("vlozeny pass='$env{'pass'}' a povodny pass='$pass'");
 		
 		if ($pass eq $env{'pass'} || $forcelogin)
 		{
