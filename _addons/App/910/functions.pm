@@ -1668,7 +1668,7 @@ sub product_rating_add
 	$columns{'posix_owner'} = "'".$main::USRM{'ID_user'}."'" unless $env{'product_rating.posix_owner'};
 	$columns{'lng'} = "'".$env{'lng'}."'" if exists $env{'lng'};
 	$columns{'lng'} = "'".$env{'product_rating.lng'}."'" if exists $env{'product_rating.lng'};
-	
+
 	if (!$env{'product_rating.ID'})
 	{
 		# rating doesn't exist, create new
@@ -1690,6 +1690,38 @@ sub product_rating_add
 				'-journalize' => 1,
 				'-posix' => 1
 			);
+		}
+
+		# check if there are additional variables and append them to the existing rating, now that it exists
+	
+		if ($env{'product_rating.ID'})
+		{
+			if ($env{'product_rating.variables'})
+			{
+				my %variables = %{$env{'product_rating.variables'}};
+				
+				foreach my $variable (keys %variables)
+				{
+					my $score_variable = "'".TOM::Security::form::sql_escape($variable)."'";
+					my $score_value = "'".TOM::Security::form::sql_escape($variables{$variable})."'";
+					
+					# update this variable
+					my $variable_id = App::020::SQL::functions::new(
+						'db_h' => 'main',
+						'db_name' => $App::910::db_name,
+						'tb_name' => 'a910_product_rating_variable',
+						'columns' => 
+						{
+							'ID_entity' => $env{'product_rating.ID'},
+							'score_variable' => $score_variable,
+							'score_value' => $score_value
+						},
+						'-journalize' => 1,
+						'-replace' => 1
+					);
+					
+				}
+			}
 		}
 	}
 	else
@@ -1736,41 +1768,63 @@ sub product_rating_add
 					'-journalize' => 1,
 					'-posix' => 1
 			);
-		}	
-	}
-	
-	
-	# check if there are additional variables and append them to the existing rating, now that it exists
-	
-	if ($env{'product_rating.ID'})
-	{
-		if ($env{'product_rating.variables'})
+		}
+
+		# also, if we are updating an existing rating, it's rating variables need to updated or trashed
+		# rating_ID (entity): $env{'product_rating.ID'}
+		# 
+
+		# get a list of rating variables to be updated
+		if (ref($env{'product_rating.variables'}) eq 'HASH')
 		{
-			my %variables = %{$env{'product_rating.variables'}};
-			
-			foreach my $variable (keys %variables)
+			my %variables = %{$env{'product_rating.variables'}};	
+		
+			my $sql_rating_vars=qq{
+				SELECT
+					*
+				FROM
+					`$App::910::db_name`.`a910_product_rating_variable`
+				WHERE
+					ID_entity = ?
+			};
+			my %sth_rating=TOM::Database::SQL::execute($sql_rating_vars,'quiet'=>1, 'log'=>0, 'bind' => [$env{'product_rating.ID'}] );
+				
+			# trash all rating variables
+			while (my %rating_variable = $sth_rating{'sth'}->fetchhash())
 			{
-				my $score_variable = "'".TOM::Security::form::sql_escape($variable)."'";
-				my $score_value = "'".TOM::Security::form::sql_escape($variables{$variable})."'";
-				
-				# update this variable
-				my $variable_id = App::020::SQL::functions::new(
-					'db_h' => 'main',
-					'db_name' => $App::910::db_name,
-					'tb_name' => 'a910_product_rating_variable',
-					'columns' => 
-					{
-						'ID_entity' => $env{'product_rating.ID'},
-						'score_variable' => $score_variable,
-						'score_value' => $score_value
-					},
-					'-journalize' => 1,
-					'-replace' => 1
-				);
-				
+				# does the rating variable exist in the new list of variables to be updated?
+				if (exists($variables{$rating_variable{'score_variable'}}))
+				{
+					# update this variable
+					App::020::SQL::functions::update(
+						'ID' => $rating_variable{'ID'},
+						'db_h' => 'main',
+						'db_name' => $App::910::db_name,
+						'tb_name' => 'a910_product_rating_variable',
+						'columns' => {
+	
+							'score_value' => "'".TOM::Security::form::sql_escape($variables{$rating_variable{'score_variable'}})."'",
+							'status' => "'Y'"
+						},
+						'-journalize' => 0
+					);
+				} else
+				{
+					# trash this
+					App::020::SQL::functions::to_trash(
+						'ID' => $rating_variable{'ID'},
+						'db_h' => 'main',
+						'db_name' => $App::910::db_name,
+						'tb_name' => 'a910_product_rating_variable',
+						'-journalize' => 0
+					);
+				}
 			}
 		}
 	}
+	
+	
+	
 	
 	
 	$t->close();
