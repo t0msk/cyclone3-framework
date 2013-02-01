@@ -18,36 +18,50 @@ sub execute
 {
 	my %env=@_;
 	Tomahawk::GetTpl() || return undef;
-
+	
 	my %tpl_hash;
 	
 	$env{'login'}=$env{'login'} || $main::FORM{'login'} || $main::RPC->{'login'};
 	$env{'pass'}=$env{'pass'} || $main::FORM{'pass'} || $main::RPC->{'pass'};
 	my $forcelogin; # without password
 	
+	if ($main::USRM{'logged'} eq "Y")
+	{
+		
+		if ($env{'url'})
+		{
+			$main::location=$env{'url'};
+			return 1;
+		}
+		
+	}
 	
 	# FACEBOOK AUTOLOGIN
-	if ($main::COOKIES_all{'fbsr_'.$App::301::fb_app} && $main::USRM{'logged'} ne "Y" && $main::FORM{'facebook'} eq "true")
+	my %FB_GET;
+	my $wget_cmd='/usr/bin/wget';
+	$FB_GET{'access_token'} = $main::FORM{'access_token'}
+		if $main::FORM{'access_token'};
+	if ( $main::COOKIES_all{'fbsr_'.$App::301::fb_app} && $main::USRM{'logged'} ne "Y" && $main::FORM{'facebook'} eq "true" && !$FB_GET{'access_token'})
 	{
-		my $wget_cmd='/usr/bin/wget';
+		
 		$main::COOKIES_all{'fbsr_'.$App::301::fb_app}=~s|^"||;
 		$main::COOKIES_all{'fbsr_'.$App::301::fb_app}=~s|"$||;
 		
 		my $control_string=$main::COOKIES_all{'fbsr_'.$App::301::fb_app};
-#		main::_log("control_string=$control_string");
+		main::_log("control_string=$control_string");
 		my ($encoded_sig, $payload)=split('\.',$control_string,2);
 		
-#		main::_log("encoded_sig=$encoded_sig");
-#		main::_log("payload=$payload");
+		main::_log("encoded_sig=$encoded_sig");
+		main::_log("payload=$payload");
 		
 		$encoded_sig=~s|_|/|g;
 		$encoded_sig=~s|\-|+|g;
 		my $sig=decode_base64($encoded_sig);
-		
+		main::_log("sig=$sig");
 		my $data = decode_json(decode_base64($payload));
 		
 		my $expected_sig=hmac_sha256_base64($payload, $App::301::fb_secret);
-#		main::_log("expected_sig=$expected_sig");
+		main::_log("expected_sig=$expected_sig");
 		
 		use Data::Dumper;
 		if ($expected_sig eq $encoded_sig)
@@ -62,8 +76,12 @@ sub execute
 			main::_log("link=$link");
 			main::_log("link_data=$link_data");
 			
-			my %FB_GET=TOM::Net::HTTP::CGI::get_QUERY_STRING($link_data);
+			%FB_GET=TOM::Net::HTTP::CGI::get_QUERY_STRING($link_data);
 			
+		}
+		
+	}
+	
 			if ($FB_GET{'access_token'})
 			{
 				main::_log("access_token=".$FB_GET{'access_token'});
@@ -195,10 +213,6 @@ sub execute
 				}
 				
 			}
-			
-		}
-		
-	}
 	
 	
 	if ((!$env{'login'})||(!$env{'pass'})||(not $env{'login'}=~/^[a-zA-Z0-9_\@\.\-]{3,64}$/))
@@ -406,7 +420,7 @@ sub execute
 				SET
 					status='N'
 				WHERE
-					ID_user='$main::COOKIES{'_ID_user'}'
+					ID_user='$main::USRM{'ID_user'}'
 				LIMIT 1
 			},'quiet'=>1);
 			$main::USRM{'logged'}="Y";
@@ -478,7 +492,6 @@ sub execute
 		main::_log("incorrect login/password combination");
 		#$XSGN{'TMP'}=$XSGN{'ERR_user-pass'};
 		$tpl_hash{'error'} = 'ERR_user-pass';
-		
 	}
 	
 	foreach my $key(keys %main::USRM)
