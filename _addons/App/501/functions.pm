@@ -446,6 +446,26 @@ sub image_file_process
 	
 	# GIF magick
 	$image1=$image1->[0] if $image1->Get('magick') eq 'GIF';
+	main::_log("units=".$image1->Get('units'));
+	my $density=$image1->Get('density');
+	main::_log("density=".$density);
+	
+#	$image1->Set('units'=>"PixelsPerInch");
+#	$image1->Set('density'=>"72x72");
+	
+	if ($density=~/^([\d\.]+)x/ && $1 < 1)
+	{
+		main::_log("fixing density");
+		$image1->Set('units' => "PixelsPerInch");
+		if ($1 == 0.0072)
+		{
+			$image1->Set('density' => "100x100");
+		}
+		else
+		{
+			$image1->Set('density' => "72x72");
+		}
+	}
 	# CMYK magick
 	$image1->Set(colorspace=>'RGB') if $image1->Get('colorspace') eq "CMYK";
 	# Profile magick (reduces size)
@@ -1905,7 +1925,7 @@ sub get_image_file
 		return undef;
 	}
 	
-	main::_log('ok getting image file');
+#	main::_log('ok getting image file');
 	
 	$env{'image_file.ID_format'} = $App::501::image_format_fullsize_ID unless $env{'image_file.ID_format'};
 	$env{'image_attrs.lng'}=$tom::lng unless $env{'image_attrs.lng'};
@@ -1988,7 +2008,7 @@ sub get_image_file
 	}
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,
-		'-cache' => 86400, #24H max
+		'-cache' => 86400*7*4, #24H max
 #		'-cache_min' => 600, # when changetime before this limit 10min
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
 			'db_h'=>"main",'db_name'=>$App::501::db_name,'tb_name'=>"a501_image",
@@ -2013,7 +2033,7 @@ sub get_image_file
 				return get_image_file(%env,'-recache'=>1,'-recursive'=>1);
 			}
 		}
-		main::_log("received image_file with status='$image{'file_status'}'");
+#		main::_log("received image_file with status='$image{'file_status'}'");
 		if ($env{'-regenerate'})
 		{
 			App::501::functions::image_file_generate(
