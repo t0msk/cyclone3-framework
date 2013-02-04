@@ -53,16 +53,16 @@ sub _log
 	my %date=Utils::datetime::ctodatetime(time,format=>1);
 	
 	my $msec=(Time::HiRes::gettimeofday)[1];
-		$msec='0'.$msec if $msec < 1000;
-		$msec='0.'.$msec;
-		$msec=int($msec*1000);
+#		$msec='0'.$msec if $msec < 1000;
+#		$msec='0.'.$msec;
+		$msec=int($msec/100);# useconds to mseconds
 	
 	my $msg;
 		$msg.="[";
 		$msg.=sprintf ('%06d', $$);# unless $main::stdout;
 		$msg.=";$main::request_code" if ($TOM::Engine eq "pub" && !$main::stdout);
 		$msg.="]";
-		$msg.="[$date{hour}:$date{min}:$date{sec}.".sprintf("%03d",$msec)."]";
+		$msg.="[$date{hour}:$date{min}:$date{sec}.".sprintf("%04d",$msec)."]";
 #		"[".sprintf("%02d",$get[0])."]".
 		$msg.=" ".(" " x $get[0]).$ref[$get[2]].$get[1];
 	if (length($msg)>8048)
