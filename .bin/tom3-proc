@@ -84,7 +84,7 @@ while(1)
 	
 		&Clear();
 		print color 'reset bold cyan';
-		print "[HOST".(" " x ($l-4))."][ENGINE][STAT ][P ][CPU  ][RSS  ][START][TIME ]\n";
+		print "[HOST".(" " x ($l-4))."][ENGINE   ][STAT ][P ][  CPU][  RSS][START][TIMEm]\n";
 		print color 'reset cyan';
 		
 		my $processes;
@@ -106,11 +106,12 @@ while(1)
 				if (!$_){print "[".sprintf("%-".$l."s",$host)."]";}else {print (" " x ($l+2));}
 				
 				# engine
-				$hosts{$host}[$_]{'engine'}=substr($hosts{$host}[$_]{'engine'},0,6);
-				print "[".sprintf("%-6s",$hosts{$host}[$_]{'engine'})."]";
+				$hosts{$host}[$_]{'engine'}=substr($hosts{$host}[$_]{'engine'},0,9);
+				print "[".sprintf("%-9s",$hosts{$host}[$_]{'engine'})."]";
 				
 				# STAT
 				print "[";
+				if ($hosts{$host}[$_]{'state'} eq "run"){print color 'bold yellow'}
 				print sprintf("%5s",$hosts{$host}[$_]{'state'});
 				print color $setcolor;print "]";
 				
@@ -128,18 +129,18 @@ while(1)
 				# MEM
 				$hosts{$host}[$_]{'rss'}=int($hosts{$host}[$_]{'rss'}/1024/1024);
 				print "[";
-				if ($hosts{$host}[$_]{'rss'} > 50){print color 'yellow'}
-				if ($hosts{$host}[$_]{'rss'} > 100){print color 'bold red'}
+				if ($hosts{$host}[$_]{'rss'} > 100){print color 'yellow'}
+				if ($hosts{$host}[$_]{'rss'} > 200){print color 'bold red'}
 				print sprintf("%4d",$hosts{$host}[$_]{'rss'});print color $setcolor;print "M]";
 				$rss+=$hosts{$host}[$_]{'rss'};
 				
-				my $dt = DateTime->from_epoch( epoch => $hosts{$host}[$_]{'start'}+(3600*2));
+				my $dt = DateTime->from_epoch( epoch => $hosts{$host}[$_]{'start'},'time_zone'=>'local');
 				print "[".sprintf('%02d',$dt->hour).":".sprintf('%02d',$dt->min)."]";
 				
 				print "[";
-				if ((time()-$hosts{$host}[$_]{'start'}) > 1200){print color 'yellow'};
-				if ((time()-$hosts{$host}[$_]{'start'}) > 1800){print color 'bold red'};
-				print sprintf('%5s',time()-$hosts{$host}[$_]{'start'});
+				if ((time()-$hosts{$host}[$_]{'start'}) > $TOM::max_time*0.5){print color 'yellow'};
+				if ((time()-$hosts{$host}[$_]{'start'}) > $TOM::max_time*0.8){print color 'bold red'};
+				print sprintf('%5s',int((time()-$hosts{$host}[$_]{'start'})/60)+1);
 				print color $setcolor;
 				print "]";
 				
@@ -153,7 +154,7 @@ while(1)
 		}
 		
 		print color 'reset cyan';
-		print "[TOTAL".(" " x ($l-5))."]               [". sprintf('%2d',$processes)."][". sprintf('%2.2f',$cpu) ."][" .sprintf('%4s',$rss). "M]\n";
+		print "[TOTAL".(" " x ($l-5))."]                  [". sprintf('%2d',$processes)."][". sprintf('%5s',sprintf('%-2.2f',$cpu)) ."][" .sprintf('%4s',$rss). "M]\n";
 		print color 'reset cyan';
 		
 		
