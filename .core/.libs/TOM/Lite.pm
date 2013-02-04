@@ -94,10 +94,10 @@ sub _log_lite
 		{
 			my $msec;
 				eval "\$msec=(Time::HiRes::gettimeofday)[1];";
-				$msec='0'.$msec if $msec < 1000;
-				$msec='0.'.$msec;
-				$msec=int($msec*1000);
-			$msg.=$msec;
+#				$msec='0'.$msec if $msec < 10000;
+#				$msec='0.'.$msec;
+				$msec=int($msec/100);
+			$msg.=sprintf('%04d',$msec);
 		}
 		else {$msg.="???";}
 		$msg.="]";
@@ -272,7 +272,8 @@ sub track
 	
 	if ($env{'attrs'})
 	{
-		main::_log("<$self->{name} $env{'attrs'}>") unless $self->{'quiet'};
+		$self->{'attrs'}=$env{'attrs'};
+		main::_log("<$self->{name}> #$env{'attrs'}") unless $self->{'quiet'};
 	}
 	else
 	{
@@ -295,7 +296,7 @@ sub track
 	{
 #		$self->{'time'}{req}{start}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
 		$self->{'time'}{'req'}{'start'}=Time::HiRes::time();
-		$self->{'time'}{proc}{start}=(times)[0];
+		$self->{'time'}{'proc'}{'start'}=(times)[0];
 	}
 	
 	$tracks_obj[$track_level]=bless $self, $class;
@@ -325,7 +326,7 @@ sub semiclose
 	$self->{'time'}{'proc'}{'end'}=(times)[0];
 	$self->{'time'}{'req'}{'duration'}=$self->{'time'}{req}{end}-$self->{'time'}{req}{start};
 	$self->{'time'}{'proc'}{'duration'}=$self->{'time'}{proc}{end}-$self->{'time'}{proc}{start};
-	$self->{'time'}{'req'}{'duration'}=int($self->{'time'}{req}{duration}*1000)/1000;
+	$self->{'time'}{'req'}{'duration'}=int($self->{'time'}{req}{duration}*10000)/10000;
 	$self->{'time'}{'proc'}{'duration'}=int($self->{'time'}{proc}{duration}*1000)/1000;
 }
 
@@ -359,7 +360,7 @@ sub close
 		$self->{'time'}{'proc'}{'end'}=(times)[0];
 		$self->{'time'}{'req'}{'duration'}=$self->{'time'}{req}{end}-$self->{'time'}{req}{start};
 		$self->{'time'}{'proc'}{'duration'}=$self->{'time'}{proc}{end}-$self->{'time'}{proc}{start};
-		$self->{'time'}{'req'}{'duration'}=int($self->{'time'}{req}{duration}*1000)/1000;
+		$self->{'time'}{'req'}{'duration'}=int($self->{'time'}{req}{duration}*10000)/10000;
 		$self->{'time'}{'proc'}{'duration'}=int($self->{'time'}{proc}{duration}*1000)/1000;
 	}
 	
@@ -381,11 +382,26 @@ sub close
 	{
 		if ($self->{'timer'})
 		{
-			main::_log("</$self->{name}> (req:".($self->{'time'}{req}{duration})." proc:".($self->{'time'}{proc}{duration}).")")
+			
+			if ($self->{'attrs'})
+			{
+				main::_log("</$self->{name}> #".$self->{'attrs'}." (time:".($self->{'time'}{'req'}{'duration'}*1000)."ms user:~".($self->{'time'}{'proc'}{'duration'}*1000)."ms)")
+			}
+			else
+			{
+				main::_log("</$self->{name}> (time:".($self->{'time'}{'req'}{'duration'}*1000)."ms user:~".($self->{'time'}{'proc'}{'duration'}*1000)."ms)")
+			}
 		}
 		else
 		{
-			main::_log("</$self->{name}>")
+			if ($self->{'attrs'})
+			{
+				main::_log("</$self->{name}> #".$self->{'attrs'});
+			}
+			else
+			{
+				main::_log("</$self->{name}>")
+			}
 		}
 	}
 }
