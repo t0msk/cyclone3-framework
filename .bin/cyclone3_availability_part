@@ -7,22 +7,24 @@ use DateTime;
 use File::ReadBackwards;
 
 my $cmd = shift || '';
-if ($cmd eq 'config') {print qq{graph_title Cyclone3 availability
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 CPU usage
 graph_args --base 1000 --lower-limit 0
 graph_category cyclone3
 graph_vlabel milliseconds
-graph_order proc req
+graph_order pre post pro
 graph_total total
-proc.label CPU
-proc.draw AREA
-proc.min 0
-proc.max 1000
-proc.colour 0022ff
-req.label IOWAIT
-req.draw STACK
-req.min 0
-req.max 1000
-req.colour ffcc00
+pre.label prepare
+pre.draw LINE2
+pre.min 0
+pre.max 1000
+post.label postprocess
+post.draw LINE2
+post.min 0
+post.max 1000
+pro.label process
+pro.draw LINE2
+pro.min 0
+pro.max 1000
 };
 	exit 0;
 }
@@ -49,9 +51,9 @@ my $datetime_now_string=sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d'
 	print "from $datetime_now_string\n" if $debug;
 	
 my $i;
-my $value_req=0;
-my $value_proc=0;
-
+my $value_pre;
+my $value_pro;
+my $value_post;
 my $bw = File::ReadBackwards->new('/srv/Cyclone3/_logs/'.$date.'.pub.bench.log') or die "can't read 'log_file' $!" ;
 while( my $line = $bw->readline )
 {
@@ -67,29 +69,39 @@ while( my $line = $bw->readline )
 	}
 #	next 
 	print $line."\n" if $debug;
-# eval:0.034/0.009
-	if ($line=~/eval:([\d\.]+)\/([\d\.]+)/)
+	
+	$i++;
+	if ($line=~/pre_process:([\d\.]+)\/([\d\.]+)/)
 	{
-		$i++;
-		$value_req+=$1;
-		$value_proc+=$2;
+		$value_pre+=$2;
+	}
+	if ($line=~/ process:([\d\.]+)\/([\d\.]+)/)
+	{
+		$value_pro+=$2;
+	}
+	if ($line=~/post_process:([\d\.]+)\/([\d\.]+)/)
+	{
+		$value_post+=$2;
 	}
 }
 
 $i=1 unless $i;
 
-$value_req/=$i;
-$value_proc/=$i;
-$value_req=int(($value_req-$value_proc)*1000);
-$value_req=2000 if $value_req>2000;
-$value_proc=int($value_proc*1000);
-$value_proc=2000 if $value_proc>2000;
+$value_pre/=$i;
+$value_pro/=$i;
+$value_post/=$i;
 
-$value_req="U" unless $value_req;
-$value_proc="U" unless $value_proc;
+$value_pre=int($value_pre*1000);
+$value_pro=int($value_pro*1000);
+$value_post=int($value_post*1000);
 
-print "req.value " . $value_req . "\n";
-print "proc.value " . $value_proc . "\n";
+$value_pre="U" unless $value_pre;
+$value_pro="U" unless $value_pro;
+$value_post="U" unless $value_post;
+
+print "pre.value " . $value_pre . "\n";
+print "pro.value " . $value_pro . "\n";
+print "post.value " . $value_post . "\n";
 
 #print "$value_req $value_proc";
 

@@ -13,14 +13,14 @@ graph_vlabel calls
 graph_order page mdl sql
 graph_scale no
 page.label page cache ratio
-page.draw LINE
 page.min 0
+page.draw LINE2
 mdl.label module cache ratio
-mdl.draw LINE
 mdl.min 0
+mdl.draw LINE2
 sql.label sql cache ratio
-sql.draw LINE
 sql.min 0
+sql.draw LINE2
 };
 	exit 0;
 }

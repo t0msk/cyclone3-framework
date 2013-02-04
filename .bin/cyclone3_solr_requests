@@ -11,9 +11,9 @@ if ($cmd eq 'config') {print qq{graph_title Cyclone3 Solr requests
 graph_args --base 1000
 graph_category cyclone3
 graph_vlabel requests / second
-graph_order commit add search
+graph_order search add commit
 graph_scale no
-commit.label COMMIT
+commit.label COMMIT*10
 commit.min 0
 commit.max 1000
 add.label Add document
@@ -73,7 +73,7 @@ while( my $line = $bw->readline )
 	}
 }
 
-print "COMMIT.value " . int(($value_commit/1/60)*100)/100 . "\n";
+print "commit.value " . int((($value_commit*10)/1/60)*100)/100 . "\n";
 print "add.value " . int(($value_add/1/60)*100)/100 . "\n";
 print "search.value " . int(($value_search/1/60)*100)/100 . "\n";
 
