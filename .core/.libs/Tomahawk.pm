@@ -293,7 +293,7 @@ sub module
 	$mdl_env{'-addon_type'}='App' if $mdl_env{'-addon'}=~/^a/;
 	$mdl_env{'-addon_type'}='Ext' if $mdl_env{'-addon'}=~/^e/;
 	$mdl_env{'-addon_name'}=$mdl_env{'-addon'};$mdl_env{'-addon_name'}=~s|^.||;
-	my $t=track TOM::Debug("module",'attrs'=>"(".$mdl_env{'-addon'}."-".$mdl_env{'-name'}.")",'timer'=>1);
+	my $t=track TOM::Debug("module",'attrs'=>$mdl_env{'-addon'}."-".$mdl_env{'-name'},'timer'=>1,'namespace'=>'MDL');
 	
 	local %mdl_C;
 	local $tom::ERR;
@@ -567,9 +567,9 @@ sub module
 		)
 		# TAK TUTO CACHE POUZIJEM
 		{
-			main::_log("using cache domain:$cache_domain from:$mdl_C{-cache_from}S old:$mdl_C{-cache_old}S ".
-				"max:".$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}."S ".
-				"remain:".($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}-$mdl_C{'-cache_old'})."S ".
+			main::_log("using cache domain:$cache_domain from:$mdl_C{-cache_from}s old:$mdl_C{-cache_old}s ".
+				"max:".$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}."s ".
+				"remain:".($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}-$mdl_C{'-cache_old'})."s ".
 				"parallel?:".$cache_parallel
 				);
 			
@@ -1063,7 +1063,7 @@ sub supermodule
 	$smdl_env{'-xlng'}=$tom::lng unless $smdl_env{'-xlng'};
 	
 	# main::_log("adding supermodule ".$smdl_env{-category}."-".$smdl_env{-name}."/".$smdl_env{-version}."/".$smdl_env{-global});
-	my $t=track TOM::Debug("supermodule",'attrs'=>"(".$smdl_env{-category}."-".$smdl_env{-name}.")",'timer'=>1);
+	my $t=track TOM::Debug("supermodule",'attrs'=>$smdl_env{-category}."-".$smdl_env{-name},'timer'=>1);
 	
 	foreach (sort keys %smdl_env)
 	{
@@ -1201,7 +1201,7 @@ sub supermodule
 
 sub designmodule
 {
-	my $t=track TOM::Debug("designmodule");
+	my $t=track TOM::Debug("designmodule",'timer'=>1,'namespace'=>'MDL');
 	
 	local %mdl_env=@_;
 	$Tomahawk::module::authors=""; # vyprazdnim zoznam authorov
@@ -1374,7 +1374,7 @@ sub tplmodule
 	$mdl_env{'-addon_type'}='App' if $mdl_env{'-addon'}=~/^a/;
 	$mdl_env{'-addon_type'}='Ext' if $mdl_env{'-addon'}=~/^e/;
 	$mdl_env{'-addon_name'}=$mdl_env{'-addon'};$mdl_env{'-addon_name'}=~s|^.||;
-	my $t=track TOM::Debug("tplmodule",'attrs'=>"(".$mdl_env{'-addon'}."-".$mdl_env{'-name'}.")",'timer'=>1);
+	my $t=track TOM::Debug("tplmodule",'attrs'=>$mdl_env{'-addon'}."-".$mdl_env{'-name'},'timer'=>1,'namespace'=>'MDL');
 	
 	local %mdl_C;
 	local $tom::ERR;
