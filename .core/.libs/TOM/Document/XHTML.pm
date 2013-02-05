@@ -299,6 +299,7 @@ sub prepare_last
 	$self->{'env'}{'DOC_title'}=~s|<|&lt;|g;
 	$self->{'env'}{'DOC_title'}=~s|>|&gt;|g;
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-TITLE%>|$self->{env}{DOC_title}|;
+	$self->{'OUT'}{'HEADER'}=~s/<%HEADER-AB%>/$main::USRM{'session'}{'AB'} || '0'/eg; # the A/B testing
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-ROBOTS%>|$self->{env}{DOC_robots}|;
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-LNG%>|$tom::lng|g;
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-cache-control%>|$main::ENV{'Cache-Control'}|g;
