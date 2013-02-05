@@ -1,6 +1,9 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
-BEGIN {require "/www/TOM/.bin/tom3-init";}
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'}){$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";}
+	require $ENV{'CYCLONE3PATH'}."/.bin/tom3-init";
+}
 use Mysql;
 use TOM::Database::connect;
 use Utils::datetime;
