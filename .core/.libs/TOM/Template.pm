@@ -143,7 +143,7 @@ sub new
 	# add params into object
 	%{$obj->{'ENV'}}=%env;
 	$obj->{'entity'}={};
-	$obj->{'entity_'}={};
+	$obj->{'entity_'}={}; # hash form of entity
 	$obj->{'L10n'}={};
 	$obj->{'file'}={};
 	$obj->{'file_'}={};
@@ -578,6 +578,7 @@ sub parse_entity
 		}
 		$self->{'entity_'}{$id}{'replace_variables'}=$node->getAttribute('replace_variables');
 		$self->{'entity_'}{$id}{'replace_L10n'}=$node->getAttribute('replace_L10n');
+		$self->{'entity_'}{$id}{'location'}=$self->{'location'}; # the source of entity
 		main::_log("setup entity id='$id' with length(".(length($self->{'entity'}{$id})).")") if $debug;
 		push @ents, $id;
 	}

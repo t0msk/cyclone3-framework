@@ -550,7 +550,17 @@ sub _compiled_filename {
 	if ($self->{'CONTEXT'}->{'tpl'})
 	{
 		use Digest::MD5 qw(md5_hex);
-		$compiled = md5_hex($self->{'CONTEXT'}->{'tpl'}->{'location'}).".";
+		
+		my $source=$self->{'CONTEXT'}->{'tpl'}->{'entity_'}{$file}{'location'};
+			$source=~s|^$tom::P/|| if $tom::P;
+			$source=~s|^$tom::Pm/|M/| if $tom::PM;
+			$source=~s|^$TOM::P/|G/|;
+			$source=~s|\.d/_init.xml$||;
+			$source=~s|(_dsgn\|_mdl)/||;
+			$source=~s|\.tpl||g;
+			$source=~s|/|-|g;
+		
+		$compiled = "tpl-".$source . "-";
 	}
     $compiled .= $path.$compext;
     $compiled = File::Spec->catfile($compdir, $compiled) if length $compdir;
