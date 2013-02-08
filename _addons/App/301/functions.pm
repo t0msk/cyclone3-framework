@@ -117,7 +117,7 @@ sub user_add
 		main::_log("!user.ID_user, create new");
 		# generate random token
 		my $token;
-		if ($env{'user.login'})
+		if ($user{'login'} || $user{'email'} || $user{'ref_facebook'})
 		{
 			$token=TOM::Utils::vars::genhash(16);
 			main::_log(" secure_hash='$token'");
@@ -147,7 +147,7 @@ sub user_add
 	{
 		# user already exists
 		# check for missing data and problems to autofix it
-		if ($user{'login'} && !$user{'secure_hash'})
+		if (($user{'login'} || $user{'email'} || $user{'ref_facebook'}) && !$user{'secure_hash'})
 		{
 			$env{'user.secure_hash'}=TOM::Utils::vars::genhash(16);
 			main::_log(" generate secure_hash='$env{'user.secure_hash'}'");
