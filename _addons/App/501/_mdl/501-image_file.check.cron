@@ -284,77 +284,79 @@ sub execute
 	}
 	
 	$check_files=100 if $check_files>100; # don't remove more than 100 files
-	main::_log("remove all old generated image_file items in image_file table");
-	my $sql=qq{
-		SELECT
-			a501_image_file.*,
-			CONCAT(a501_image_file.ID_format,'/',SUBSTR(a501_image_file.ID,1,4),'/',a501_image_file.name,'.',a501_image_file.file_ext) AS file_path
-		FROM
-			`$App::501::db_name`.a501_image_file
-		INNER JOIN `$App::501::db_name`.a501_image_format ON
-		(
-			a501_image_file.ID_format = a501_image_format.ID
-		)
-		WHERE
-			a501_image_file.from_parent = 'Y' AND
-			a501_image_file.ID_format <> $App::501::image_format_original_ID AND
-			a501_image_file.datetime_create <= DATE_SUB(CURDATE(),INTERVAL 1 MONTH) AND
-			(a501_image_format.required = "N" OR a501_image_format.status = "N" )
-		ORDER BY
-			a501_image_file.datetime_create
-		LIMIT
-			$check_files
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	if ($App::501::autoremove_old)
 	{
-		
-		my $file=$tom::P_media.'/a501/image/file/'.$db0_line{'file_path'};
-		
-		if (!$db0_line{'name'})
+		main::_log("remove all old generated image_file items in image_file table");
+		my $sql=qq{
+			SELECT
+				a501_image_file.*,
+				CONCAT(a501_image_file.ID_format,'/',SUBSTR(a501_image_file.ID,1,4),'/',a501_image_file.name,'.',a501_image_file.file_ext) AS file_path
+			FROM
+				`$App::501::db_name`.a501_image_file
+			INNER JOIN `$App::501::db_name`.a501_image_format ON
+			(
+				a501_image_file.ID_format = a501_image_format.ID
+			)
+			WHERE
+				a501_image_file.from_parent = 'Y' AND
+				a501_image_file.ID_format <> $App::501::image_format_original_ID AND
+				a501_image_file.datetime_create <= DATE_SUB(CURDATE(),INTERVAL 1 MONTH) AND
+				(a501_image_format.required = "N" OR a501_image_format.status = "N" )
+			ORDER BY
+				a501_image_file.datetime_create
+			LIMIT
+				$check_files
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
-			next
-		}
-		elsif (-e $file)
-		{
-			main::_log("remove file image_file.ID=$db0_line{'ID'} from='$db0_line{'datetime_create'}'");
-			# remove db entry to this image_file, allow to re-create it
-			# file on disk will be removed in one of next executions by removing old files from image_file_j
-			App::020::SQL::functions::update(
-				'db_h' => $env{'db_h'},
-				'db_name' => $App::501::db_name,
-				'tb_name' => 'a501_image_file',
-				'ID' => $db0_line{'ID'},
-				'columns' => {
-					'status' => "'D'",
-				},
-				'-journalize' => 1
-			);
-			# zmazem z hlavnej tabulky zmazany zaznam
-			App::020::SQL::functions::_remove(
-				'db_h' => $env{'db_h'},
-				'db_name' => $App::501::db_name,
-				'tb_name' => 'a501_image_file',
-				'ID' => $db0_line{'ID'},
-			);
-=head1 the old way of removing files
-			my $out=unlink $file;
-			if (!$out){main::_log("can't remove: $!",1);}
-			else
+			
+			my $file=$tom::P_media.'/a501/image/file/'.$db0_line{'file_path'};
+			
+			if (!$db0_line{'name'})
 			{
-				TOM::Database::SQL::execute(qq{
-					DELETE FROM `$App::501::db_name`.`a501_image_file`
-					WHERE
-						ID=$db0_line{'ID'} AND
-						name='$db0_line{'name'}' AND
-						datetime_create='$db0_line{'datetime_create'}'
-					LIMIT 1
-				},'quiet'=>1);
+				next
 			}
-=cut
+			elsif (-e $file)
+			{
+				main::_log("remove file image_file.ID=$db0_line{'ID'} from='$db0_line{'datetime_create'}'");
+				# remove db entry to this image_file, allow to re-create it
+				# file on disk will be removed in one of next executions by removing old files from image_file_j
+				App::020::SQL::functions::update(
+					'db_h' => $env{'db_h'},
+					'db_name' => $App::501::db_name,
+					'tb_name' => 'a501_image_file',
+					'ID' => $db0_line{'ID'},
+					'columns' => {
+						'status' => "'D'",
+					},
+					'-journalize' => 1
+				);
+				# zmazem z hlavnej tabulky zmazany zaznam
+				App::020::SQL::functions::_remove(
+					'db_h' => $env{'db_h'},
+					'db_name' => $App::501::db_name,
+					'tb_name' => 'a501_image_file',
+					'ID' => $db0_line{'ID'},
+				);
+				
+				my $out=unlink $file;
+				if (!$out){main::_log("can't remove: $!",1);}
+				else
+				{
+					TOM::Database::SQL::execute(qq{
+						DELETE FROM `$App::501::db_name`.`a501_image_file`
+						WHERE
+							ID=$db0_line{'ID'} AND
+							name='$db0_line{'name'}' AND
+							datetime_create='$db0_line{'datetime_create'}'
+						LIMIT 1
+					},'quiet'=>1);
+				}
+				
+			}
 		}
 	}
-	
 	
 	return 1
 }
