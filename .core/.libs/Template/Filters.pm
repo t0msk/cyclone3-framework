@@ -56,7 +56,6 @@ our $FILTERS = {
     'xml'             => \&xml_filter,
     'uri'             => \&uri_filter,
     'url'             => \&url_filter,
-    'url_convert'     => \&TOM::Net::URI::rewrite::convert,
     'upper'           => sub { uc $_[0] },
     'lower'           => sub { lc $_[0] },
     'ucfirst'         => sub { ucfirst $_[0] },
@@ -84,9 +83,11 @@ our $FILTERS = {
 #    'stdout'      => [ \&stdout_filter_factory,      1 ],
 
 	# Cyclone3 filters
-	'currency'     => \&TOM::Utils::currency::format,
-	'md5' => \&md5,
-	'md5_hex' => \&md5_hex,
+	'currency'         => \&TOM::Utils::currency::format,
+	'url_convert'      => \&TOM::Net::URI::rewrite::convert,
+	'mimetype_render'  => [ \&render_filter_factory,  1 ],
+	'md5'              => \&md5,
+	'md5_hex'          => \&md5_hex,
 };
 
 # name of module implementing plugin filters
@@ -659,6 +660,36 @@ sub stdout_filter_factory {
     }
 }
 
+
+#------------------------------------------------------------------------
+# render_filter_factory($n)               [% FILTER mimetype_render(%env) %]
+#
+# Create a filter to render html or other mimetype content.
+#------------------------------------------------------------------------
+
+sub render_filter_factory {
+	my ($context, $env) = @_;
+	$env->{'mimetype'}='html'
+		unless $env->{'mimetype'};
+	
+	return sub {
+		my $text = shift;
+		$text = '' unless defined $text;
+		if ($env->{'mimetype'} eq "html")
+		{
+			my $p=new App::401::mimetypes::html;
+			$p->config(
+				'env' => $env,
+				'entity' => $context->{'tpl'}->{'entity'}
+			);
+			$p->parse($text);
+			$p->eof();
+			$text=$p->{'out'};
+		}
+		return $text;
+	}
+	
+}
 
 1;
 
