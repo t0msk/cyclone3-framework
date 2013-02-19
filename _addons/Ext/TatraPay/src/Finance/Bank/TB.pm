@@ -110,6 +110,7 @@ sub new {
 
 	$self->{'mid'} = shift;
 	$self->{'tbkey'} = shift;
+	$self->{'aredir'} = 0;
 
 	croak "KEY must be 8 chars" if ( length($self->tbkey) != 8 );
 	
@@ -313,6 +314,7 @@ my $tb_form = <<EOM;
 <input type=hidden name=REM value="$self->{rem}">
 <input type=hidden name=IPC value="$self->{ipc}">
 <input type=hidden name=NAME value="$self->{name}">
+<input type=hidden name=AREDIR value="$self->{aredir}">
 <input type=hidden name=SIGN value="$sign">
 $submit
 </form>
@@ -367,6 +369,7 @@ RSMS=$self->{rsms} &
 REM=$self->{rem} & 
 IPC=$self->{ipc} & 
 NAME=$self->{name} & 
+AREDIR=$self->{aredir} & 
 SIGN=$sign 
 EOM
 
