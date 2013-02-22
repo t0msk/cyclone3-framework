@@ -5,7 +5,12 @@ BEGIN
 {
 	$TOM::engine='wc';
 	$main::debug=1;# if $ENV{'TERM'};
-	require "/www/TOM/.core/.libs/TOM.pm";
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
 }
 
 use open ':utf8', ':std';
@@ -13,9 +18,6 @@ use encoding 'utf8';
 use utf8; # encode = fromutf8, decode=toutf8
 use strict; # scrict code
 use CGI::Fast qw(:standard);
-
-use enc3;
-use iconv;
 
 my $t=track TOM::Debug("TOM engine '$TOM::engine' initializing...");
 
@@ -75,9 +77,8 @@ while ($main::CGI=new CGI::Fast())
 		)
 	};
 	
-	TOM::Database::SQL::execute($sql,'db_h'=>'stats');
+	TOM::Database::SQL::execute($sql,'db_h'=>'stats','quiet'=>1);
 	
-	print "Location: http://media.webcom.sk/grf/t.gif\n\n";
-	
+	print "Location: $tom::H_grf/t.gif\n\n";
 }
 
