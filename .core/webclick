@@ -61,24 +61,47 @@ while ($main::CGI=new CGI::Fast())
 			datetime_insert,
 			x,
 			y,
+			oc,
+			oy,
+			ow,
+			oh,
 			logged,
 			IDuser
 		)
 		VALUES
 		(
-			'$tom::Hm',
-			'$tom::H',
-			'$FORM{TID}',
+			?,
+			?,
+			?,
 			NOW(),
-			'$FORM{x}',
-			'$FORM{y}',
-			'$FORM{l}',
-			'$FORM{u}'
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?
 		)
 	};
 	
-	TOM::Database::SQL::execute($sql,'db_h'=>'stats','quiet'=>1);
+	TOM::Database::SQL::execute($sql,'db_h'=>'stats','bind'=>[
+		$tom::Hm,
+		$tom::H,
+		$FORM{'TID'},
+		$FORM{'x'},
+		$FORM{'y'},
+		$FORM{'oc'},
+		$FORM{'oy'},
+		$FORM{'ow'},
+		$FORM{'oh'},
+		$FORM{'l'},
+		$FORM{'u'}
+	],
+	'quiet'=>1);
 	
-	print "Location: $tom::H_grf/t.gif\n\n";
+#	print "Location: $tom::H_grf/t.gif\n\n";
+	print "Status: 200 OK\n\n";
+	print "\n";
 }
 
