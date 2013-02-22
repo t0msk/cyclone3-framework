@@ -93,6 +93,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_webclick_log` (
   `oy` int(10) default NULL,
   `ow` int(10) default NULL,
   `oh` int(10) default NULL,
+  `g` varchar(64) character set ascii collate ascii_bin default NULL,
   `logged` char(1) character set ascii NOT NULL default 'N',
   `IDuser` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `user_agent` varchar(256) character set ascii collate ascii_bin NOT NULL,

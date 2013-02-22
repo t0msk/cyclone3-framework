@@ -15,6 +15,27 @@
 		objectW = Math.round($(event.target).width());
 		objectH = Math.round($(event.target).height());
 //		cyclone3.log('object center=' + objectC + ' top=' + objectY + ' width=' + objectW);
+		
+		var overlay_found;
+		var overlay_group=$(event.target).parents().filter(function() {
+//			cyclone3.log('check ' + $(this).prop('tagName') + ' z-index ' + $(this).css('z-index'));
+			if ($(this).css('z-index') != 'auto' && $(this).css('z-index') > 0)
+			{
+				overlay_found=1;
+				return $(this);
+			}
+		});
+		var overlay_group_name='';
+		if (overlay_found)
+		{
+			overlay_group_name = 
+				overlay_group.attr('c3_clickgroup')
+				|| overlay_group.attr('id')
+				|| overlay_group.attr('class')
+				|| overlay_group.css('z-index');
+//			cyclone3.log('overlay_group ' + overlay_group_name + ' z-index:' + overlay_group.css('z-index'));
+		}
+		
 		$.ajax({
 			url: "/wc.tom",
 			type: "GET",
@@ -27,7 +48,8 @@
 				'oc': objectC,
 				'oy': objectY,
 				'ow': objectW,
-				'oh': objectH
+				'oh': objectH,
+				'g': overlay_group_name
 			}
 		});
 		return true;
