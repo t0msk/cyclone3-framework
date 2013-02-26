@@ -52,6 +52,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_reindex` (
 CREATE TABLE `/*db_name*/`.`/*app*/_product_hit` (
   `datetime_event` datetime NOT NULL,
   `ID_product` bigint(20) NOT NULL,
+  `ID_user` varchar(8) character set ascii collate ascii_bin default NULL,
   KEY `ID_product` (`ID_product`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8; -- must be myisam because inserting with insert delayed
 
