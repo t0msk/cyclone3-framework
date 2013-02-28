@@ -17,9 +17,11 @@ use App::301::_init;
 sub execute
 {
 	my %env=@_;
+	my %env_output;
+	
 	Tomahawk::GetTpl() || return undef;
 	
-	my %tpl_hash;
+	#my %tpl_hash;
 	
 	$env{'login'}=$env{'login'} || $main::FORM{'login'} || $main::RPC->{'login'};
 	$env{'pass'}=$env{'pass'} || $main::FORM{'pass'} || $main::RPC->{'pass'};
@@ -67,152 +69,147 @@ sub execute
 		if ($expected_sig eq $encoded_sig)
 		{
 #			main::_log("data=".Dumper($data));
-			
 			my $link = "https://graph.facebook.com/oauth/access_token?client_id=".$App::301::fb_app
 				."&redirect_uri=&client_secret=".$App::301::fb_secret
 				."&code=".$data->{'code'};
 			my $link_data =`$wget_cmd --no-check-certificate -t 1 -T 3 -q -O - \"$link\"`;
-			
 			main::_log("link=$link");
 			main::_log("link_data=$link_data");
-			
 			%FB_GET=TOM::Net::HTTP::CGI::get_QUERY_STRING($link_data);
-			
 		}
 		
 	}
 	
-			if ($FB_GET{'access_token'})
+	if ($FB_GET{'access_token'})
+	{
+		main::_log("access_token=".$FB_GET{'access_token'});
+		
+		my $link = "https://graph.facebook.com/me?access_token=".$FB_GET{'access_token'};
+		my $data =`$wget_cmd --no-check-certificate -t 1 -T 3 -q -O - \"$link\"`;
+		main::_log("data=$data");
+		my $data_json = decode_json $data;
+		
+		# okay som prihlaseny cez facebook, idem hladat takeho usera
+		if ($data_json->{'email'})
+		{
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					*
+				FROM
+					TOM.a301_user
+				WHERE
+					(email=? OR ref_facebook=?) AND
+					hostname=? AND
+					status='Y'
+				ORDER BY
+					ref_facebook DESC
+				LIMIT 1
+			},'bind'=>[$data_json->{'email'},$data_json->{'id'},$tom::H_cookie],'quiet'=>1);
+			my %user=$sth0{'sth'}->fetchhash();
+			if ($user{'ID_user'})
 			{
-				main::_log("access_token=".$FB_GET{'access_token'});
+				$forcelogin=1;
+				$env{'login'}=$data_json->{'email'};
+				$env{'pass'}='force';
+			}
+			else
+			{
+				# create new user
+				$forcelogin=1;
+				$env{'login'}=$data_json->{'email'};
+				$env{'pass'}=TOM::Utils::vars::genhashN(6); # nahodne heslo/pin
 				
-				my $link = "https://graph.facebook.com/me?access_token=".$FB_GET{'access_token'};
-				my $data =`$wget_cmd --no-check-certificate -t 1 -T 3 -q -O - \"$link\"`;
-				main::_log("data=$data");
-				my $data_json = decode_json $data;
-				
-				# okay som prihlaseny cez facebook, idem hladat takeho usera
-				if ($data_json->{'email'})
+				my %hash;
+				# save USRM registration data into new user
+				# (from where is comming this user, from campaing, search engine,...?)
+				$hash{'USRM_G'}=$main::USRM{'session'}{'USRM_G'};
+				if ($main::USRM{'session'}{'USRM_S'})
 				{
-					my %sth0=TOM::Database::SQL::execute(qq{
+					$hash{'USRM_S'}=$main::USRM{'session'}{'USRM_S'};
+					if ($main::USRM{'session'}{'USRM_S'}{'utm_medium'} eq "affiliate")
+					{
+						$hash{'USRM_G'}=$main::USRM{'session'}{'USRM_S'};
+					}
+				}
+				
+				# vytvorim CVML hash do profilu usera
+				my $cvml=CVML::structure::serialize(%hash);
+				
+				%user=App::301::functions::user_add(
+#					'user.login' => $env{'login'},
+					'user.status' => 'Y',
+					'user.pass' => $env{'pass'},
+					'user.email' => $data_json->{'email'},
+					'user.ref_facebook' => $data_json->{'id'},
+					'user.email_verified' => 'Y',
+					'user.saved_session' => $cvml,
+#					'groups' => ['newsletter']
+				);
+				$user{'ID_user'}=$user{'user.ID_user'};
+				
+			}
+			
+			# check user profile photo
+			my $photo=new TOM::Temp::file('dir'=>$main::ENV{'TMP'});
+			my $link="http://graph.facebook.com/".$data_json->{'id'}."/picture?type=large";
+			`$wget_cmd -t 1 -T 3 -q \"$link\" -O \"$photo->{'filename'}\"`;
+			
+			# update user data
+			main::_log("update user $user{'ID_user'}",3,"debug");
+			%user=App::301::functions::user_add(
+#				'user.login' => "",
+				'user.ID_user' => $user{'ID_user'},
+#				'user.login' => $main::FORM{'email'},
+				'user.email' => $data_json->{'email'},
+				'user.ref_facebook' => $data_json->{'id'},
+				'user_profile.firstname' => $data_json->{'first_name'},
+				'user_profile.surname' => $data_json->{'last_name'},
+				'avatar' => $photo->{'filename'}
+			);
+			
+			
+			if ($App::301::fb_friend)
+			{
+				main::_log("sync friends",3,"debug");
+				# sync friends
+				my $link="https://graph.facebook.com/".$data_json->{'id'}."/friends?access_token=".$FB_GET{'access_token'}."&limit=5000";
+				my $data_friends =`/usr/bin/wget -t 1 -T 3 -q -O - \"$link\"`;
+				my $data_friends_json = decode_json $data_friends;
+				foreach (@{$data_friends_json->{'data'}})
+				{
+					my %sth2=TOM::Database::SQL::execute(qq{
 						SELECT
-							*
+							ID_user
 						FROM
 							TOM.a301_user
 						WHERE
-							(email=? OR ref_facebook=?) AND
-							hostname=? AND
-							status='Y'
-						ORDER BY
-							ref_facebook DESC
+							ref_facebook=?
+							AND hostname=?
+							AND status='Y'
 						LIMIT 1
-					},'bind'=>[$data_json->{'email'},$data_json->{'id'},$tom::H_cookie],'quiet'=>1);
-					my %user=$sth0{'sth'}->fetchhash();
-					if ($user{'ID_user'})
+					},'bind'=>[$_->{'id'},$tom::H_cookie],'quiet'=>1);
+					if (my %db2_line=$sth2{'sth'}->fetchhash())
 					{
-						$forcelogin=1;
-						$env{'login'}=$data_json->{'email'};
-						$env{'pass'}='force';
-					}
-					else
-					{
-						# create new user
-						$forcelogin=1;
-						$env{'login'}=$data_json->{'email'};
-						$env{'pass'}=TOM::Utils::vars::genhashN(6); # nahodne heslo/pin
-						
-						# musim vycreovat tuto firmu
-						my %hash;
-						# save USRM registration data into new user
-						# (from where is comming this user, from campaing, search engine,...?)
-						$hash{'USRM_G'}=$main::USRM{'session'}{'USRM_G'};
-						if ($main::USRM{'session'}{'USRM_S'})
-						{
-							$hash{'USRM_S'}=$main::USRM{'session'}{'USRM_S'};
-							if ($main::USRM{'session'}{'USRM_S'}{'utm_medium'} eq "affiliate")
-							{
-								$hash{'USRM_G'}=$main::USRM{'session'}{'USRM_S'};
-							}
-						}
-						
-						# vytvorim CVML hash do profilu usera
-						my $cvml=CVML::structure::serialize(%hash);
-						
-						%user=App::301::functions::user_add(
-#							'user.login' => $env{'login'},
-							'user.status' => 'Y',
-							'user.pass' => $env{'pass'},
-							'user.email' => $data_json->{'email'},
-							'user.ref_facebook' => $data_json->{'id'},
-							'user.email_verified' => 'Y',
-							'user.saved_session' => $cvml,
-#							'groups' => ['newsletter']
+						main::_log("$user{'user.ID_user'} id=".$_->{'id'}." name=".$_->{'name'} ,3,"debug");
+						App::160::SQL::new_relation(
+							'l_prefix' => 'a301',
+							'l_table' => 'user',
+							'l_ID_entity' => $user{'user.ID_user'},
+							'rel_type' => 'fb_friend',
+							'r_db_name' => $App::301::db_name,
+							'r_prefix' => 'a301',
+							'r_table' => 'user',
+							'r_ID_entity' => $db2_line{'ID_user'},
+							'status' => 'Y',
 						);
-						$user{'ID_user'}=$user{'user.ID_user'};
-						
 					}
-					
-					# check user profile photo
-					my $photo=new TOM::Temp::file('dir'=>$main::ENV{'TMP'});
-					my $link="http://graph.facebook.com/".$data_json->{'id'}."/picture?type=large";
-					`$wget_cmd -t 1 -T 3 -q \"$link\" -O \"$photo->{'filename'}\"`;
-					
-					# update user data
-					main::_log("update user $user{'ID_user'}",3,"debug");
-					%user=App::301::functions::user_add(
-#						'user.login' => "",
-						'user.ID_user' => $user{'ID_user'},
-#						'user.login' => $main::FORM{'email'},
-						'user.email' => $data_json->{'email'},
-						'user.ref_facebook' => $data_json->{'id'},
-						'user_profile.firstname' => $data_json->{'first_name'},
-						'user_profile.surname' => $data_json->{'last_name'},
-						'avatar' => $photo->{'filename'}
-					);
-					
-					if ($App::301::fb_friend)
-					{
-						main::_log("sync friends",3,"debug");
-						# sync friends
-						my $link="https://graph.facebook.com/".$data_json->{'id'}."/friends?access_token=".$FB_GET{'access_token'}."&limit=5000";
-						my $data_friends =`/usr/bin/wget -t 1 -T 3 -q -O - \"$link\"`;
-						my $data_friends_json = decode_json $data_friends;
-						foreach (@{$data_friends_json->{'data'}})
-						{
-							
-							
-							my %sth2=TOM::Database::SQL::execute(qq{
-								SELECT
-									ID_user
-								FROM
-									TOM.a301_user
-								WHERE
-									ref_facebook=?
-									AND hostname=?
-									AND status='Y'
-								LIMIT 1
-							},'bind'=>[$_->{'id'},$tom::H_cookie],'quiet'=>1);
-							if (my %db2_line=$sth2{'sth'}->fetchhash())
-							{
-								main::_log("$user{'user.ID_user'} id=".$_->{'id'}." name=".$_->{'name'} ,3,"debug");
-								App::160::SQL::new_relation(
-									'l_prefix' => 'a301',
-									'l_table' => 'user',
-									'l_ID_entity' => $user{'user.ID_user'},
-									'rel_type' => 'fb_friend',
-									'r_db_name' => $App::301::db_name,
-									'r_prefix' => 'a301',
-									'r_table' => 'user',
-									'r_ID_entity' => $db2_line{'ID_user'},
-									'status' => 'Y',
-								);
-							}
-						}
-					}
-					
 				}
-				
 			}
+			
+			
+		}
+		
+	}
 	
 	
 	if ((!$env{'login'})||(!$env{'pass'})||(not $env{'login'}=~/^[a-zA-Z0-9_\@\.\-]{3,64}$/))
@@ -220,11 +217,9 @@ sub execute
 		if (exists $main::FORM{'submit'} || $env{'login'} || $env{'pass'})
 		{
 			main::_log('no credentials!');
-			# $XSGN{'TMP'}=$XSGN{'ERR_no-credentials'};
-			$tpl_hash{'error'} = 'ERR_no-credentials';
+			$TPL->{'variables'}{'error'} = 'no credentials';
 		}
-
-		$TPL->variables_push(\%tpl_hash);
+		
 		return 1;
 	}
 	
@@ -232,10 +227,7 @@ sub execute
 	if ((keys %main::COOKIES_save) == 0)
 	{
 		main::_log('no cookie support!');
-		#$XSGN{'TMP'}=$XSGN{'ERR_cookies'};
-		$tpl_hash{'error'} = 'ERR_cookies';
-
-		$TPL->variables_push(\%tpl_hash);
+		$TPL->{'variables'}{'error'} = 'no cookies';
 		return 1;
 	}
 	
@@ -285,10 +277,7 @@ sub execute
 	else
 	{
 		main::_log("user with login '$env{'login'}' does not exist");
-		#$XSGN{'TMP'}=$XSGN{'ERR_no-user'};
-		$tpl_hash{'error'} = 'ERR_no-user';
-
-		$TPL->variables_push(\%tpl_hash);
+		$TPL->{'variables'}{'error'} = 'no user';
 		return 1;
 	}
 	
@@ -360,7 +349,7 @@ sub execute
 				},'quiet'=>1);
 				
 				#$XSGN{'TMP'}=$XSGN{'logged-on'};
-				$tpl_hash{'logged-on'} = 'Y';
+				#$tpl_hash{'logged-on'} = 'Y';
 
 				$main::USRM_flag="L";
 			}
@@ -472,7 +461,7 @@ sub execute
 		}
 		
 		#$XSGN{'TMP'}=$XSGN{'logged-on'};
-		$tpl_hash{'logged-on'} = 'Y';
+		#$tpl_hash{'logged-on'} = 'Y';
 	
 		$main::USRM_flag="L";
 		TOM::Database::SQL::execute(qq{
@@ -490,15 +479,14 @@ sub execute
 	else
 	{
 		main::_log("incorrect login/password combination");
-		#$XSGN{'TMP'}=$XSGN{'ERR_user-pass'};
-		$tpl_hash{'error'} = 'ERR_user-pass';
+		$TPL->{'variables'}{'error'} = 'invalid combination';
 	}
 	
-	foreach my $key(keys %main::USRM)
-	{
+	#foreach my $key(keys %main::USRM)
+	#{
 		#$XSGN{'TMP'}=~s|<%$key%>|$main::USRM{$key}|g;
-		$tpl_hash{'key'} = $main::USRM{$key};
-	}
+		#$tpl_hash{'key'} = $main::USRM{$key};
+	#}
 	
 	main::_log("Logged on='".$main::USRM{'logged'}."'");
 	
@@ -518,8 +506,7 @@ sub execute
 		}
 	}
 	
-	$TPL->variables_push(\%tpl_hash);
-	return 1
+	return 1, %env_output;
 }
 
 
