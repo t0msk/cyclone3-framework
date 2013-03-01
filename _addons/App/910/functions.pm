@@ -913,7 +913,7 @@ sub _product_index
 	return undef unless $env{'ID'}; # product.ID
 	return undef unless $Ext::Solr;
 	
-	my $t=track TOM::Debug(__PACKAGE__."::_product_index()",'timer'=>1);
+	my $t=track TOM::Debug(__PACKAGE__."::_product_index($env{'ID'})",'timer'=>1);
 	
 	my @content_ent;
 	my @content_id;
@@ -1137,6 +1137,7 @@ sub _product_index
 		
 		if ($db1_line{'ratings'})
 		{
+			$db1_line{'score'} = 0 unless $db1_line{'score'};
 			main::_log("ratings avg='$db1_line{'score'}' count='$db1_line{'ratings'}'");
 			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_count_i' =>  int($db1_line{'ratings'}));
 			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_i' =>  int($db1_line{'score'}));
@@ -1163,12 +1164,47 @@ sub _product_index
 			if ($db1_line{'ratings'})
 			{
 				main::_log("6mo ratings avg='$db1_line{'score'}' count='$db1_line{'ratings'}'");
+				$db1_line{'score'} = 0 unless $db1_line{'score'};
 				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_count_i' =>  int($db1_line{'ratings'}));
 				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_avg_i' =>  int($db1_line{'score'}));
 				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_avg_f' =>  $db1_line{'score'});
 			}
 		}
 		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				COUNT(rating.ID) AS ratings
+			FROM
+				$App::910::db_name.a910_product_rating AS rating
+			WHERE
+				rating.status='Y'
+				AND rating.posix_owner != ''
+				AND rating.description IS NOT NULL
+				AND rating.status_publish='Y'
+				AND rating.ID_product = ?
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		if ($db1_line{'ratings'})
+		{
+			push @content_ent,WebService::Solr::Field->new( 'Rating_public_count_i' =>  int($db1_line{'ratings'}));
+		}
+		
+		if (my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::910::db_name,
+			'l_prefix' => 'a910',
+			'l_table' => 'product',
+			'l_ID_entity' => $env{'ID'},
+			'rel_type' => 'thumbnail',
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y",
+			'limit' => 1
+		))[0])
+		{
+			push @content_ent,WebService::Solr::Field->new( 'is_thumbnail_i' => 1);
+			push @content_ent,WebService::Solr::Field->new( 'is_thumbnail_s' => 'Y');
+			push @content_ent,WebService::Solr::Field->new( 'thumbnail_i' => $relation->{'r_ID_entity'});
+		}
 		
 		# prices
 		my %sth1=TOM::Database::SQL::execute(qq{
@@ -1332,7 +1368,7 @@ sub _product_index
 			WebService::Solr::Field->new( 'ID_i' => $env{'ID'} ),
 			WebService::Solr::Field->new( 'last_indexed_tdt' => $last_indexed )
 		));
-#		print "a $id\n";
+		
 		$solr->add($doc);
 	}
 
