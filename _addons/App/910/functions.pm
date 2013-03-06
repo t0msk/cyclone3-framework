@@ -1809,7 +1809,7 @@ sub product_rating_add
 		# also, if we are updating an existing rating, it's rating variables need to updated or trashed
 		# rating_ID (entity): $env{'product_rating.ID'}
 		# 
-
+		
 		# get a list of rating variables to be updated
 		if (ref($env{'product_rating.variables'}) eq 'HASH')
 		{
@@ -1844,6 +1844,8 @@ sub product_rating_add
 						},
 						'-journalize' => 0
 					);
+
+					delete $variables{$rating_variable{'score_variable'}};
 				} else
 				{
 					# trash this
@@ -1856,6 +1858,35 @@ sub product_rating_add
 					);
 				}
 			}
+
+			# add all detailed variables that are left
+			
+			foreach my $variable (keys %variables)
+			{
+				my $score_variable = "'".TOM::Security::form::sql_escape($variable)."'";
+				my $score_value = "'".TOM::Security::form::sql_escape($variables{$variable})."'";
+				
+				# update this variable
+				my $variable_id = App::020::SQL::functions::new(
+					'db_h' => 'main',
+					'db_name' => $App::910::db_name,
+					'tb_name' => 'a910_product_rating_variable',
+					'columns' => 
+					{
+						'ID_entity' => $env{'product_rating.ID'},
+						'score_variable' => $score_variable,
+						'score_value' => $score_value
+					},
+					'-journalize' => 1,
+					'-replace' => 1
+				);
+				
+			}
+			
+
+		} else
+		{
+			# No detailed rating variables to add
 		}
 	}
 	
