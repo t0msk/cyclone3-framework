@@ -26,8 +26,8 @@ sub new {
 
 sub get_static {
 	my $self = shift;
-	my $env = @_;
-	my %static;#=App::501::functions::get_image_file(%{$env});
+	my $env = shift;
+	my %static;
 	
 	my @bind;
 	my %sql_env;
@@ -80,7 +80,9 @@ sub get_static {
 		@bind=[$env->{'ID'}];
 	}
 	
-	$sql.=$sql_where;
+	$sql.=qq{ AND a420_static.status='Y'};
+	
+#	$sql.=$sql_where;
 	$sql.=qq{
 		LIMIT 1
 	};
