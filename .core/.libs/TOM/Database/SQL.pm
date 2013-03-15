@@ -372,16 +372,41 @@ sub execute
 					undef $main::DB{$env{'db_h'}};
 				}
 				
-				if ($output{'err'}=~/Attempt to initiate a new Adaptive Server/) # hapalo dole MsSQL
+				if ($output{'err'}=~/Attempt to initiate a new Adaptive Server/
+					|| $output{'err'}=~/Adaptive Server connection timed out/) # hapalo dole MsSQL
 				{
-					# vynutime reconnect, ale tento query je uz strateny
+					# vynutime reconnect
 					undef $main::DB{$env{'db_h'}};
-				}
-				
-				if ($output{'err'}=~/Adaptive Server connection timed out/) # hapalo dole MsSQL
-				{
-					# vynutime reconnect, ale tento query je uz strateny
-					undef $main::DB{$env{'db_h'}};
+					
+					if ($TOM::DB_DBI_sql_recall) # if auto-reconnect disabled, do it manually
+					{
+						main::_log("{$env{'db_h'}} lost connection ",4,"sql.err");
+						main::_log("[$tom::H] {$env{'db_h'}} lost connection",4,"sql.err",1);
+#						main::_log("lost connection, re-connecting '$env{'db_h'}'",4,"sql.err");
+						
+						TOM::Database::connect::disconnect($env{'db_h'}); # removes handlers
+						TOM::Database::connect::multi($env{'db_h'}) || do 
+						{
+							main::_log("{'$env{'db_h'}'} can't be reconnected",1);
+							# can't be reconnected
+							main::_log("{$env{'db_h'}} DBI server can't be reconnected",4,"sql.err");
+							main::_log("[$tom::H] {$env{'db_h'}} DBI server can't be reconnected",4,"sql.err",1);
+							$t->close();
+							return undef;
+						};
+						main::_log("SQL: sucesfully reconnected '$env{'db_h'}'");
+					}
+					
+					if ($package eq "TOM::Database::SQL")
+					{
+						$t->close();
+						return undef;
+					}
+					
+					main::_log("SQL: trying to re-call the query");
+					$t->close();
+					return TOM::Database::SQL::execute($SQL,%env,'quiet'=>0);
+					
 				}
 				
 			}
@@ -408,18 +433,24 @@ sub execute
 			
 			if ($output{'err'}=~/ORA-03114/) # hapal dole Orákulum
 			{
+				main::_log("{$env{'db_h'}} lost connection ",4,"sql.err");
+				main::_log("[$tom::H] {$env{'db_h'}} lost connection",4,"sql.err",1);
 				# vynutime reconnect, ale tento query je uz strateny
 				undef $main::DB{$env{'db_h'}};
 			}
 			
 			if ($output{'err'}=~/Attempt to initiate a new Adaptive Server/) # hapalo dole MsSQL
 			{
+				main::_log("{$env{'db_h'}} lost connection ",4,"sql.err");
+				main::_log("[$tom::H] {$env{'db_h'}} lost connection",4,"sql.err",1);
 				# vynutime reconnect, ale tento query je uz strateny
 				undef $main::DB{$env{'db_h'}};
 			}
 			
 			if ($output{'err'}=~/Adaptive Server connection timed out/) # hapalo dole MsSQL
 			{
+				main::_log("{$env{'db_h'}} lost connection ",4,"sql.err");
+				main::_log("[$tom::H] {$env{'db_h'}} lost connection",4,"sql.err",1);
 				# vynutime reconnect, ale tento query je uz strateny
 				undef $main::DB{$env{'db_h'}};
 			}
