@@ -67,6 +67,7 @@ use vars qw/
 	$sitemap
 	%a210
 	%key
+	$cache
 	/;
 our $sig_term=1;
 
@@ -143,6 +144,7 @@ eval
 	
 	# TAHAM NASTAVENIE CACHE ()
 	&Tomahawk::GetCACHE_CONF if $TOM::CACHE;
+	$main::cache = $TOM::CACHE;
 	
 	# nastavenie pola klucov pre kodovanie (len tie ktore sa este pouzivaju)
 	foreach (keys %tom::code_keys){push @tom::type_code,$_ unless $tom::code_keys{$_}{notuse};}
@@ -270,6 +272,7 @@ while ($main::CGI=new CGI::Fast())
 	local $TPL;
 	local %a210;
 	local %key;
+	local $cache=$TOM::CACHE;
 	my $rewrite_301;
 	my %FORM_reject;
 	$result="ok";
@@ -671,6 +674,9 @@ while ($main::CGI=new CGI::Fast())
 		#
 		# %FORM filled
 		#
+		
+		# cache disable if requested (should be rewrited)
+		$main::cache=0 if $main::FORM{'_rc'} < 0;
 		
 		$main::ENV{'QUERY_STRING_FULL'}=TOM::Net::URI::URL::genGET(%main::FORM);
 		
@@ -1526,12 +1532,15 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("loading: notfound.pub.type");
 			local $/;$file_data=<TYPE>;
 			$main::page_statuscode="404";
-			if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'} ne "vandaliser")
+			if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'} ne "vandaliser"
+				&& $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'} ne "spambot"
+			)
 			{
 				TOM::Error::engine(
-					"silent (This error message is in silen mode)",
-					"Can't generate document for service type with requested REQUEST_URI='$main::ENV{REQUEST_URI}' TID='$FORM{TID}'",
-					"Please check your type.conf, rewrite.conf or RewriteRules in .htaccess");
+#					"silent (This error message is in silen mode)",
+					"404, service type not found REQUEST_URI='$main::ENV{REQUEST_URI}' TID='$FORM{TID}'",
+#					"Please check your type.conf, rewrite.conf or RewriteRules in .htaccess"
+				);
 				$result="failed";
 			}
 		}
@@ -1971,7 +1980,8 @@ while ($main::CGI=new CGI::Fast())
 			}
 		}
 		
-		$main::H->change_DOC_robots("noindex") if $main::FORM{'_rc'};
+		# don't index this page when cache enabled globally, but disabled in this request
+		$main::H->change_DOC_robots("noindex") if (!$main::cache && $TOM::CACHE);
 		
 		
 		
@@ -2444,7 +2454,7 @@ while ($main::CGI=new CGI::Fast())
 		if ($main::page_statuscode eq "404")
 		{
 			$main::H->change_DOC_robots("noindex,noarchive");
-			main::_log("$ENV{'REQUEST_URI'} $ENV{'QUERY_STRING'} Not Found for $main::ENV{'REMOTE_ADDR'} $main::ENV{'HTTP_USER_AGENT'}",4,"pub.404");
+			main::_log("404 REQUEST_URI='$ENV{'REQUEST_URI'}' QUERY='$ENV{'QUERY_STRING'}' Not Found for '$main::ENV{'REMOTE_ADDR'}' with '$main::ENV{'HTTP_USER_AGENT'}'",4,"pub.404");
 		}
 		if ($result eq "failed")
 		{
@@ -2618,7 +2628,7 @@ while ($main::CGI=new CGI::Fast())
 		else
 		{
 			# only when page generated without errors
-			if ($page_statuscode eq "200")
+			if ($page_statuscode eq "200" && $main::cache)
 			{
 				if ($main::ENV{'Etag'}) # timestamp only pls!
 				{
