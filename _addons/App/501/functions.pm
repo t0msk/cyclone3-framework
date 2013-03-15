@@ -1674,7 +1674,7 @@ sub image_file_add
 			.substr($db0_line{'ID'},0,4).'/'
 			.$db0_line{'name'}.'.'.$db0_line{'file_ext'};
 		main::_log("check for update image_file $filename_old");
-		if ($db0_line{'file_checksum'} eq "$checksum_method:$checksum" && -e $filename_old)
+		if ($db0_line{'file_checksum'} eq "$checksum_method:$checksum" && -e $filename_old && !$App::501::checksum_eq_ignore)
 		{
 			main::_log("same checksum, just enabling file when disabled");
 			App::020::SQL::functions::update(
@@ -2046,6 +2046,10 @@ sub get_image_file
 			}
 		}
 		return %image;
+	}
+	else
+	{
+		main::_log("not found image_file for image $env{'image.ID'} with format $env{'image_file.ID_format'}",1);
 	}
 	
 	return undef;
