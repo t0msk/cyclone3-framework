@@ -147,6 +147,8 @@ BEGIN
 	require $TOM::P.'/_config/TOM.conf';
 	# configuration defined by this hostname ( one node in server farm )
 	require $TOM::P.'/_config/'.$TOM::hostname.'.conf' if -e $TOM::P.'/_config/'.$TOM::hostname.'.conf';
+	# localized boolean of cache
+	$main::cache = $TOM::CACHE;
 }
 
 
