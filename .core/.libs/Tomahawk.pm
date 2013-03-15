@@ -1013,6 +1013,15 @@ sub module_process_return_data
 			{
 				$main::H->add_DOC_title($env0);
 			}
+			foreach my $env0(@{$return_data{'call'}{'H'}{'change_DOC_title'}})
+			{
+				$main::H->change_DOC_title($env0);
+			}
+			# keywords
+			foreach my $env0(@{$return_data{'call'}{'H'}{'add_DOC_keywords'}})
+			{
+				$main::H->add_DOC_keywords($env0);
+			}
 			# description
 			foreach my $env0(@{$return_data{'call'}{'H'}{'change_DOC_description'}})
 			{
