@@ -1322,6 +1322,10 @@ while ($main::CGI=new CGI::Fast())
 						else
 						{
 							delete $main::FORM{'a210_path'};
+							if ($tom::type_c{'homepage'}) # use 'homepage' instead of 'default' when available
+							{
+								$main::FORM{'type'}='homepage';
+							}
 						}
 					}
 					elsif ($main::FORM{'a210_path'})
@@ -1537,9 +1541,9 @@ while ($main::CGI=new CGI::Fast())
 			)
 			{
 				TOM::Error::engine(
-#					"silent (This error message is in silen mode)",
+					"silent (This error message is in silen mode)",
 					"404, service type not found REQUEST_URI='$main::ENV{REQUEST_URI}' TID='$FORM{TID}'",
-#					"Please check your type.conf, rewrite.conf or RewriteRules in .htaccess"
+					"Please check your type.conf, rewrite.conf or RewriteRules in .htaccess"
 				);
 				$result="failed";
 			}
