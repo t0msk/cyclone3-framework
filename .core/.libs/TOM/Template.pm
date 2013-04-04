@@ -797,11 +797,13 @@ sub process
 		$vars_process->{'domain'}={
 			'name' => $tom::H,
 			'url' => $tom::H_www,
-			'url_master' => $tom::Hm_www,
+			'url_orig' => $tom::H_www_orig || $tom::H_www,
+			'url_master' => $tom::Hm_www || $tom::H_www,
 			'url_media' => $tom::H_media,
-			'url_grf' => $tom::H_grf,
-			'url_css' => $tom::H_css,
-			'url_js' => $tom::H_js,
+			'url_tpl' => $tom::H_tpl || $tom::H_media.'/tpl',
+			'url_grf' => $tom::H_grf || $tom::H_media.'/grf',
+			'url_css' => $tom::H_css || $tom::H_media.'/css',
+			'url_js' => $tom::H_js || $tom::H_media.'/js',
 			'url_a501' => $tom::H_a501,
 			'url_a510' => $tom::H_a510,
 			'setup' => \%tom::setup
