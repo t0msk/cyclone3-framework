@@ -213,7 +213,7 @@
 			<tokenizer class="solr.WhitespaceTokenizerFactory"/>
 <!--        <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="false"/>-->
 <!--        <filter class="solr.ASCIIFoldingFilterFactory"/>-->
-			<filter class="solr.LowerCaseFilterFactory"/>
+<!--			<filter class="solr.LowerCaseFilterFactory"/>-->
 <!--		<filter class="solr.PatternReplaceFilterFactory" pattern="(^[^A-Za-z0-9]*|[^A-Za-z0-9]*$)" replacement=""  replace="all" />-->
 			<filter class="solr.ShingleFilterFactory" minShingleSize="2" maxShingleSize="3" outputUnigrams="true" outputUnigramIfNoNgram="true" />
 		</analyzer>
@@ -440,6 +440,7 @@
 	<field name="name_exact" type="string" indexed="true" stored="true"/>
 	<field name="name_ws" type="text_ws" indexed="true" stored="false"/>
 	<field name="name_sort" type="string" indexed="true" stored="false"/>
+	<field name="name_shingle" type="text_shingle" indexed="true" stored="false"/>
    <field name="alphaNameSort" type="alphaOnlySort" indexed="true" stored="false"/>
    <field name="manu" type="textgen" indexed="true" stored="true" omitNorms="true"/>
    <field name="cat" type="text_ws" indexed="true" stored="true" multiValued="true" omitNorms="true" />
@@ -555,6 +556,7 @@
 
    <copyField source="name" dest="name_sort"/>
 	<copyField source="name" dest="name_partial"/>
+	<copyField source="name" dest="name_shingle"/>
 	<copyField source="name" dest="name_exact"/>
 	<copyField source="name" dest="name_ws"/>
 
