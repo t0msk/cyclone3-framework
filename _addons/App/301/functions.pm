@@ -886,6 +886,151 @@ sub user_get
 }
 
 
+sub _user_index
+{
+	my %env=@_;
+	return undef unless $env{'ID_user'};
+	return undef unless $Ext::Solr;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::_user_index()",'timer'=>1);
+	
+	my $solr = Ext::Solr::service();
+	
+	my %content;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			$App::301::db_name.a301_user
+		WHERE
+			status IN ('Y')
+			AND ID_user=?
+	},'quiet'=>1,'bind'=>[$env{'ID_user'}]);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+#		main::_log("user found");
+		my $id=$App::301::db_name.".a301_user.".$db0_line{'ID_user'};
+		main::_log("index id='$id'");
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				$App::301::db_name.a301_user_profile
+			WHERE
+				ID_entity = ?
+		},'quiet'=>1,'bind'=>[$env{'ID_user'}]);
+		my %profile=$sth1{'sth'}->fetchhash();
+		
+		my $doc = WebService::Solr::Document->new();
+		
+		my @fields;
+		
+		push @fields,WebService::Solr::Field->new( 'title' => $db0_line{'login'} )
+			if $db0_line{'login'};
+		push @fields,WebService::Solr::Field->new( 'login_s' => $db0_line{'login'} )
+			if $db0_line{'login'};
+		
+		push @fields,WebService::Solr::Field->new( 'title' => $db0_line{'email'} )
+			if $db0_line{'email'};
+		push @fields,WebService::Solr::Field->new( 'email_s' => $db0_line{'email'} )
+			if $db0_line{'email'};
+		
+		push @fields,WebService::Solr::Field->new( 'ID_i' => $profile{'ID'} )
+			if $profile{'ID'};
+		
+		my $name=$db0_line{'email'} || $db0_line{'login'};
+		
+		if ($profile{'firstname'} && $profile{'surname'})
+		{
+			$name=$profile{'firstname'}.' '.$profile{'surname'};
+			push @fields,WebService::Solr::Field->new( 'title' => $name );
+		}
+		
+		if ($db0_line{'datetime_last_login'})
+		{
+			$db0_line{'datetime_last_login'}=~s| (\d\d)|T$1|;
+			$db0_line{'datetime_last_login'}.="Z";
+			push @fields,WebService::Solr::Field->new( 'datetime_last_login_tdt' => $db0_line{'datetime_last_login'} );
+		}
+		
+		push @fields,WebService::Solr::Field->new( 'firstname_s' => $profile{'firstname'} )
+			if $profile{'firstname'};
+		push @fields,WebService::Solr::Field->new( 'surname_s' => $profile{'surname'} )
+			if $profile{'surname'};
+		
+		if ($profile{'rating_weight'})
+		{
+			push @fields,WebService::Solr::Field->new( 'weight' => $profile{'rating_weight'} );
+		}
+		
+		$doc->add_fields((
+			WebService::Solr::Field->new( 'id' => $id ),
+			
+			WebService::Solr::Field->new( 'name' => $name ),
+			
+			@fields,
+			
+			WebService::Solr::Field->new( 'hostname_s' => $db0_line{'hostname'} ),
+			
+			WebService::Solr::Field->new( 'db_s' => $App::301::db_name ),
+			WebService::Solr::Field->new( 'addon_s' => 'a301_user' ),
+			WebService::Solr::Field->new( 'ID_s' => $db0_line{'ID_user'} ),
+			
+			
+			
+		));
+=head1
+		
+		
+		
+		$db0_line{'description'}=~s|<.*?>||gms;
+		$db0_line{'description'}=~s|&nbsp;| |gms;
+		$db0_line{'description'}=~s|  | |gms;
+		
+		$db0_line{'datetime_create'}=~s| (\d\d)|T$1|;
+		$db0_line{'datetime_create'}.="Z";
+		
+		
+		$doc->add_fields((
+			WebService::Solr::Field->new( 'id' => $id ),
+			
+			WebService::Solr::Field->new( 'name' => $db0_line{'name'} ),
+			WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
+			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
+			
+			WebService::Solr::Field->new( 'description' => $db0_line{'description'} ),
+			
+			WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_create'} ),
+			
+			WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
+			WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
+		));
+		
+=cut
+		
+		$solr->add($doc);
+		
+#		main::_log("Solr commiting...");
+#		$solr->commit;
+#		main::_log("commited.");
+		
+	}
+	else
+	{
+#		main::_log("not found active ID",1);
+#		my $response = $solr->search( "id:".$App::401::db_name.".a401_article_cat.* AND ID_i:$env{'ID'}" );
+#		for my $doc ( $response->docs )
+#		{
+#			$solr->delete_by_id($doc->value_for('id'));
+#		}
+##		$solr->commit;
+	}
+	
+	$t->close();
+}
+
 
 =head1 AUTHORS
 
