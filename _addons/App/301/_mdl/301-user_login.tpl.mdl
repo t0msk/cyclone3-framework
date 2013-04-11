@@ -50,20 +50,20 @@ sub execute
 		$main::COOKIES_all{'fbsr_'.$App::301::fb_app}=~s|"$||;
 		
 		my $control_string=$main::COOKIES_all{'fbsr_'.$App::301::fb_app};
-		main::_log("control_string=$control_string");
+#		main::_log("control_string=$control_string");
 		my ($encoded_sig, $payload)=split('\.',$control_string,2);
 		
-		main::_log("encoded_sig=$encoded_sig");
-		main::_log("payload=$payload");
+#		main::_log("encoded_sig=$encoded_sig");
+#		main::_log("payload=$payload");
 		
 		$encoded_sig=~s|_|/|g;
 		$encoded_sig=~s|\-|+|g;
 		my $sig=decode_base64($encoded_sig);
-		main::_log("sig=$sig");
+#		main::_log("sig=$sig");
 		my $data = decode_json(decode_base64($payload));
 		
 		my $expected_sig=hmac_sha256_base64($payload, $App::301::fb_secret);
-		main::_log("expected_sig=$expected_sig");
+#		main::_log("expected_sig=$expected_sig");
 		
 		use Data::Dumper;
 		if ($expected_sig eq $encoded_sig)
@@ -73,25 +73,59 @@ sub execute
 				."&redirect_uri=&client_secret=".$App::301::fb_secret
 				."&code=".$data->{'code'};
 			my $link_data =`$wget_cmd --no-check-certificate -t 1 -T 3 -q -O - \"$link\"`;
-			main::_log("link=$link");
-			main::_log("link_data=$link_data");
+#			main::_log("link=$link");
+#			main::_log("link_data=$link_data");
 			%FB_GET=TOM::Net::HTTP::CGI::get_QUERY_STRING($link_data);
 		}
 		
 	}
 	
+	if ($main::FORM{'token'})
+	{
+		main::_log("login with token=".$main::FORM{'token'});
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				TOM.a301_user
+			WHERE
+				secure_hash = ? AND
+				hostname=? AND
+				email IS NOT NULL AND
+				status='Y'
+			ORDER BY
+				ref_facebook DESC
+			LIMIT 1
+		},'bind'=>[$main::FORM{'token'},$tom::H_cookie],'quiet'=>1);
+		my %user=$sth0{'sth'}->fetchhash();
+		if ($user{'ID_user'})
+		{
+			$forcelogin=1;
+			$env{'login'}=$user{'email'};
+			$env{'pass'}='force';
+		}
+	}
+	
 	if ($FB_GET{'access_token'})
 	{
-		main::_log("access_token=".$FB_GET{'access_token'});
+		$FB_GET{'access_token'}=~s|\?.*?$||;
 		
+		main::_log("login with facebook access_token=".$FB_GET{'access_token'});
+		main::_log("login with facebook access_token=".$FB_GET{'access_token'},3,"debug");
 		my $link = "https://graph.facebook.com/me?access_token=".$FB_GET{'access_token'};
 		my $data =`$wget_cmd --no-check-certificate -t 1 -T 3 -q -O - \"$link\"`;
 		main::_log("data=$data");
 		my $data_json = decode_json $data;
 		
+		if (!$data_json->{'email'} && $data_json->{'username'})
+		{
+			$data_json->{'email'}=$data_json->{'username'}.'@facebook.com';
+		}
+		
 		# okay som prihlaseny cez facebook, idem hladat takeho usera
 		if ($data_json->{'email'})
 		{
+			main::_log("user identification with email=".$data_json->{'email'}." fb_id=".$data_json->{'id'});
 			my %sth0=TOM::Database::SQL::execute(qq{
 				SELECT
 					*
@@ -149,24 +183,89 @@ sub execute
 				
 			}
 			
-			# check user profile photo
-			my $photo=new TOM::Temp::file('dir'=>$main::ENV{'TMP'});
-			my $link="http://graph.facebook.com/".$data_json->{'id'}."/picture?type=large";
-			`$wget_cmd -t 1 -T 3 -q \"$link\" -O \"$photo->{'filename'}\"`;
-			
 			# update user data
 			main::_log("update user $user{'ID_user'}",3,"debug");
-			%user=App::301::functions::user_add(
+			App::301::functions::user_add(
 #				'user.login' => "",
 				'user.ID_user' => $user{'ID_user'},
 #				'user.login' => $main::FORM{'email'},
 				'user.email' => $data_json->{'email'},
 				'user.ref_facebook' => $data_json->{'id'},
-				'user_profile.firstname' => $data_json->{'first_name'},
-				'user_profile.surname' => $data_json->{'last_name'},
-				'avatar' => $photo->{'filename'}
+#				'user_profile.firstname' => $data_json->{'first_name'},
+#				'user_profile.surname' => $data_json->{'last_name'},
+#				'avatar' => $photo->{'filename'}
 			);
 			
+			# has already this user avatar?
+			# if not, upgrade it
+			# if yes, don't change it
+			my $relation_avatar=(App::160::SQL::get_relations(
+				'db_name' => $App::301::db_name,
+				'l_prefix' => 'a301',
+				'l_table' => 'user',
+				'l_ID_entity' => $user{'ID_user'},
+				'rel_type' => 'avatar',
+				'r_prefix' => "a501",
+				'r_table' => "image",
+				'status' => "Y",
+				'limit' => 1
+			))[0];
+			if (!$relation_avatar)
+			{
+				# check user profile photo
+				my $photo=new TOM::Temp::file('dir'=>$main::ENV{'TMP'});
+				my $link="http://graph.facebook.com/".$data_json->{'id'}."/picture?type=large";
+				`$wget_cmd -t 1 -T 3 -q \"$link\" -O \"$photo->{'filename'}\"`;
+				App::301::functions::user_add(
+					'user.ID_user' => $user{'ID_user'},
+					'avatar' => $photo->{'filename'}
+				);
+			}
+			
+			# update user profile data only when previous not defined
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					*
+				FROM
+					`TOM`.a301_user_profile
+				WHERE
+					ID_entity=?
+				LIMIT 1
+			},'bind'=>[$user{'ID_user'}],'quiet'=>1);
+			my %user_profile=$sth0{'sth'}->fetchhash();
+			my %columns;
+			
+			if ((!$user_profile{'date_birth'}||$user_profile{'date_birth'} eq "0000-00-00")
+				&& $data_json->{'birthday'}=~/^(\d+)\/(\d+)\/(\d+)$/)
+			{
+				$columns{'user_profile.date_birth'}=$3.'-'.$1.'-'.$2;
+			}
+			
+			if (!$user_profile{'firstname'} && $data_json->{'first_name'})
+			{
+				$columns{'user_profile.firstname'}=$data_json->{'first_name'};
+			}
+			
+			if (!$user_profile{'surname'} && $data_json->{'last_name'})
+			{
+				$columns{'user_profile.surname'}=$data_json->{'last_name'};
+			}
+			
+			if (!$user_profile{'gender'} && $data_json->{'gender'}=~/^(female|male)$/)
+			{
+				$columns{'user_profile.gender'}='F' if $1 eq "female";
+				$columns{'user_profile.gender'}='M' if $1 eq "male";
+			}
+			
+			if (keys %columns)
+			{
+				# update!
+				main::_log("update user profile by facebook profile data");
+				App::301::functions::user_add(
+					'user.ID_user' => $user{'ID_user'},
+					%columns
+				);
+			}
 			
 			if ($App::301::fb_friend)
 			{
@@ -190,11 +289,11 @@ sub execute
 					},'bind'=>[$_->{'id'},$tom::H_cookie],'quiet'=>1);
 					if (my %db2_line=$sth2{'sth'}->fetchhash())
 					{
-						main::_log("$user{'user.ID_user'} id=".$_->{'id'}." name=".$_->{'name'} ,3,"debug");
+						main::_log("$user{'ID_user'} id=".$_->{'id'}." name=".$_->{'name'} ,3,"debug");
 						App::160::SQL::new_relation(
 							'l_prefix' => 'a301',
 							'l_table' => 'user',
-							'l_ID_entity' => $user{'user.ID_user'},
+							'l_ID_entity' => $user{'ID_user'},
 							'rel_type' => 'fb_friend',
 							'r_db_name' => $App::301::db_name,
 							'r_prefix' => 'a301',
