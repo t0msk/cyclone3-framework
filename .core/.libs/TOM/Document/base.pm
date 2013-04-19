@@ -117,7 +117,140 @@ sub DESTROY
 }
 
 
-
+sub url_generate
+{
+	my %form_in;
+	
+	if (!ref($_[0]))
+	{
+		%form_in=TOM::Net::HTTP::CGI::get_QUERY_STRING($_[0]);
+	}
+	else
+	{
+		%form_in=%{$_[0]};
+	}
+	
+	$tom::H_www_orig=$tom::H_www unless $tom::H_www_orig;
+	$tom::H_www_external=0; # tato linka je externa?
+	my $debug_url=0;
+	
+	my %form;
+	# pridam systemovo posielane premenne __nieco
+	foreach (keys %main::FORM){$_=~/^__/ && do{$form{$_}=$main::FORM{$_};};}
+	
+	my %form_array; # only statuses
+	
+	my $split_by='&';
+		$split_by='&amp;';# if $link=~/&amp;/; # preffered
+	
+	foreach my $cc(keys %form_in)
+	{
+		if (!$form_in{$cc})
+		{
+			delete $form{$cc};
+			next;
+		}
+		$form{$cc}=$form_in{$cc};
+	}
+	
+	# POSLEDNE UPRAVY
+	delete $form{_dsgn} if $form{_dsgn} eq $tom::dsgn_;
+	delete $form{_lng} if $form{_lng} eq $tom::lng_;
+	
+	my $newlink_prefix='';
+	if ($tom::rewrite)
+	{
+		$newlink_prefix=$tom::H_www."/";
+	}
+	else
+	{
+	}
+	
+	# spracujem %form este cez rewrite a mozno z %form budu este vyhodne
+	# nadbytocne veci
+	if ($tom::rewrite)
+	{
+		my ($rewrite_domain,$rewrite)=TOM::Net::URI::rewrite::parse_hash(\%form);
+		main::_log("dom=$rewrite_domain url=$rewrite") if $debug_url;
+		
+		if ($rewrite_domain) # we are linking to external domain
+		{
+			$newlink_prefix=$rewrite_domain."/";
+			$tom::H_www_external=1;
+		}
+		
+		if ($rewrite)
+		{
+			# REWRITE TREBA DECODOVAT!!!
+			$rewrite=TOM::Net::URI::URL::url_encode($rewrite);
+			$rewrite=~s|%2F|/|g;
+			$newlink_prefix.=$rewrite;
+		}
+	}
+	
+	main::_log("URL newlink_prefix='$newlink_prefix'") if $debug_url;
+	
+	# vygenerujem z %hash string
+	my $link;
+	if (keys %form > 0)
+	{
+		$link=TOM::Net::URI::URL::genGET(%form);
+	}
+	
+	# nasleduje spracovanie stringu
+	# aby som ho mal v zakodovanej podobe
+	# idem teda kodovat
+	if
+		(
+			($TOM::type_code) # kodujem
+			&&
+			($link) # v link vobec nieco je?
+		)
+	{
+		my $link_hash=TOM::Net::URI::URL::hash_encode($link);
+		main::_log("output URL '$newlink_prefix?$link_hash'") if $debug_url;
+		return "$newlink_prefix?$link_hash";
+	}
+	
+	# pokial nekodujem linku, tak oddelovace premennych '&' musia byt v linke
+	# v HTML kode ako &amp; (je to tak podla standardov)
+	$link=~s|&|&amp;|g unless $TOM::type_code;
+	
+	if ($tom::H_www ne $tom::H_www_orig) # ak som na alternativnej subdomene
+	{
+		if ($tom::H_www_external)
+		{
+			# ak je linka mimo hlavnej domeny, tak ju nechavam ako je
+		}
+		else
+		{
+			# vsetky ostatne linky smeruju na orig domenu
+			$newlink_prefix=~s/(https?:\/\/)(.*?)\//$tom::H_www_orig.'\/'/e;
+		}
+	}
+	else
+	{
+		
+	}
+	
+	# mozem si dovolit optimalizovat linku na relativnu
+#	if ($newlink_prefix=~/^$tom::H_www\//)
+#	{
+#		$newlink_prefix=~s/^$tom::H_www//;
+#	}
+	
+	if ($tom::rewrite && !$link) # link je prazdny (titulka)
+	{
+		main::_log("output URL '$newlink_prefix'") if $debug_url;
+		return "$newlink_prefix";
+	}
+	else
+	{
+		main::_log("output URL '$newlink_prefix?$link'") if $debug_url;
+		return "$newlink_prefix?$link";
+	}
+	
+}
 
 
 sub url_replace
@@ -227,7 +360,7 @@ sub url_replace
 	)
 	{
 		my ($rewrite_domain,$rewrite)=TOM::Net::URI::rewrite::parse_hash(\%form);
-		main::_log("dom=$rewrite_domain url=$rewrite");
+		main::_log("dom=$rewrite_domain url=$rewrite") if $debug_url;
 		
 		if ($rewrite_domain) # we are linking to external domain
 		{
@@ -244,7 +377,7 @@ sub url_replace
 		}
 	}
 	
-	main::_log("URL newlink_prefix='$newlink_prefix'");
+	main::_log("URL newlink_prefix='$newlink_prefix'") if $debug_url;
 	
 	# vygenerujem z %hash string
 	$link='';
