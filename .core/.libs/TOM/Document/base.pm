@@ -122,9 +122,11 @@ sub DESTROY
 
 sub url_replace
 {
-	my $url_cache_enabled=1;
+	my $url_cache_enabled=0;
 	my $debug_url=0;
 	
+	$tom::H_www_orig=$tom::H_www unless $tom::H_www_orig;
+	$tom::H_www_external=0; # tato linka je externa?
 	
 	my $link_begin; # character before ?|?
 	my $link; # link
@@ -215,20 +217,34 @@ sub url_replace
 	# POSLEDNE UPRAVY
 	delete $form{_dsgn} if $form{_dsgn} eq $tom::dsgn_;
 	delete $form{_lng} if $form{_lng} eq $tom::lng_;
+	
 	# spracujem %form este cez rewrite a mozno z %form budu este vyhodne
 	# nadbytocne veci
 	if
 	(
 		($newlink_prefix ne "http://null/")&&
-		($tom::rewrite)&&
-		(my $rewrite=TOM::Net::URI::rewrite::parse_hash(\%form))
+		($tom::rewrite)
 	)
 	{
-		# REWRITE TREBA DECODOVAT!!!
-		$rewrite=TOM::Net::URI::URL::url_encode($rewrite);
-		$rewrite=~s|%2F|/|g;
-		$newlink_prefix.=$rewrite;
+		my ($rewrite_domain,$rewrite)=TOM::Net::URI::rewrite::parse_hash(\%form);
+		main::_log("dom=$rewrite_domain url=$rewrite");
+		
+		if ($rewrite_domain) # we are linking to external domain
+		{
+			$newlink_prefix=$rewrite_domain."/";
+			$tom::H_www_external=1;
+		}
+		
+		if ($rewrite)
+		{
+			# REWRITE TREBA DECODOVAT!!!
+			$rewrite=TOM::Net::URI::URL::url_encode($rewrite);
+			$rewrite=~s|%2F|/|g;
+			$newlink_prefix.=$rewrite;
+		}
 	}
+	
+	main::_log("URL newlink_prefix='$newlink_prefix'");
 	
 	# vygenerujem z %hash string
 	$link='';
@@ -298,7 +314,30 @@ sub url_replace
 	$link=~s|&|&amp;|g unless $TOM::type_code;
 	$newlink_prefix="" if ($newlink_prefix eq "http://null/");
 	
-	if ($tom::rewrite && !$link) # nechcem zbytocne vypisovat ?
+	if ($tom::H_www ne $tom::H_www_orig) # ak som na alternativnej subdomene
+	{
+		if ($tom::H_www_external)
+		{
+			# ak je linka mimo hlavnej domeny, tak ju nechavam ako je
+		}
+		else
+		{
+			# vsetky ostatne linky smeruju na orig domenu
+			$newlink_prefix=~s/(https?:\/\/)(.*?)\//$tom::H_www_orig.'\/'/e;
+		}
+	}
+	else
+	{
+		
+	}
+	
+	# mozem si dovolit optimalizovat linku na relativnu
+	if ($newlink_prefix=~/^$tom::H_www\// && $link_end eq '"')
+	{
+		$newlink_prefix=~s/^$tom::H_www//;
+	}
+	
+	if ($tom::rewrite && !$link) # link je prazdny (titulka)
 	{
 		main::_log("output URL '$newlink_prefix$link_end'") if $debug_url;
 		$main::url_cache{$cache_key}="$newlink_prefix" if $url_cache_enabled;

@@ -288,10 +288,30 @@ while ($main::CGI=new CGI::Fast())
 	if ($main::ENV{'lng'}){main::_log("override \$tom::lng by ENV to '$main::ENV{'lng'}' from '$tom::lng'");$tom::lng=$main::ENV{'lng'}}
 	# override tom::H
 	local $tom::H=$tom::H;
-	if ($main::ENV{'domain'}){main::_log("override \$tom::H by ENV to '$main::ENV{'domain'}' from '$tom::H'");$tom::H=$main::ENV{'domain'}}
+	local $tom::H_www=$tom::H_www;
+	$tom::H_www_orig=$tom::H_www; # save original $tom::H_www
+	if ($main::ENV{'domain'})
+	{
+		main::_log("override \$tom::H by ENV to '$main::ENV{'domain'}' from '$tom::H'");
+		$tom::H=$main::ENV{'domain'};
+		$tom::H_www=~s|^(http[s]?://)(.*)$|$1$tom::H|;
+	}
+	# override tom::H_www
+	if ($main::ENV{'HTTP_HOST'} && $tom::H_www_by_HTTP_HOST)
+	{
+#		$tom::H=$main::ENV{'HTTP_HOST'};
+		$tom::H_www=~s|^(http[s]?://)(.*)$|$1$main::ENV{'HTTP_HOST'}|;
+		main::_log("override \$tom::H_www by HTTP_HOST '$main::ENV{'HTTP_HOST'}' to '$tom::H_www'");
+	}
 	# override tom::Hm
 	local $tom::Hm=$tom::Hm;
-	if ($main::ENV{'domain_master'}){main::_log("override \$tom::Hm by ENV to '$main::ENV{'domain_master'}' from '$tom::Hm'");$tom::Hm=$main::ENV{'domain_master'}}
+	local $tom::Hm_www=$tom::Hm_www;
+	if ($main::ENV{'domain_master'})
+	{
+		main::_log("override \$tom::Hm by ENV to '$main::ENV{'domain_master'}' from '$tom::Hm'");
+		$tom::Hm=$main::ENV{'domain_master'};
+		$tom::Hm_www=~s|^(http[s]?://)(.*)$|$1$tom::Hm|;
+	}
 	# override $tom::D_cookie
 	local $tom::D_cookie=$tom::D_cookie;
 	if ($main::ENV{'domain_cookie'}){main::_log("override \$tom::D_cookie by ENV to '$main::ENV{'domain_cookie'}' from '$tom::D_cookie'");$tom::D_cookie=$main::ENV{'domain_cookie'}}
@@ -755,8 +775,9 @@ while ($main::CGI=new CGI::Fast())
 				
 				my %form=TOM::Net::HTTP::CGI::GetQuery($out,'-lite'=>1);
 				
-				my $rewrite="/".TOM::Net::URI::rewrite::parse_hash(\%form);
-				main::_log("rewrited part is '$rewrite'");
+				my ($rewrite_domain,$rewrite)=TOM::Net::URI::rewrite::parse_hash(\%form);
+					$rewrite="/".$rewrite;
+				main::_log("rewrited part is '$rewrite' domain '$rewrite_domain'");
 				
 				my $link;
 				my $var='';
@@ -799,7 +820,7 @@ while ($main::CGI=new CGI::Fast())
 				
 				main::_log("URL='$link'");
 				
-				my $URI_base=$tom::H_www;
+				my $URI_base=$rewrite_domain || $tom::H_www;
 					$URI_base=~s|$tom::rewrite_RewriteBase$||;
 				my $URI_enh="$tom::rewrite_RewriteBase$link";
 				$URI_base.='/' unless $URI_enh=~/^\//;
@@ -966,8 +987,10 @@ while ($main::CGI=new CGI::Fast())
 				my %form=TOM::Net::HTTP::CGI::get_CGI($main::ENV{'QUERY_STRING_FULL'});
 				foreach ('ref','gclid','utm_medium','utm_source','utm_campaign','utm_content','utm_term')
 				{delete $form{$_};}
-				my $rewrite="/";
-				$rewrite.=TOM::Net::URI::rewrite::parse_hash(\%form) if $tom::rewrite;
+				
+				my ($rewrite_domain,$rewrite)=TOM::Net::URI::rewrite::parse_hash(\%form) if $tom::rewrite;
+					$rewrite="/".$rewrite if $tom::rewrite;
+					
 				my $var=TOM::Net::URI::URL::genGET(%form);
 				my $link_hash=$var;
 				$link_hash=TOM::Net::URI::URL::hash_encode($var) if $TOM::type_code;
@@ -985,14 +1008,14 @@ while ($main::CGI=new CGI::Fast())
 				
 				$link="" if $link eq "/";
 				
-				my $URL_orig=$tom::H_www;
+				my $URL_orig=$tom::H_www_orig;
 					my $rq_uri=$main::ENV{'REQUEST_URI'};
 						$rq_uri=~s|^(.*?)[\?&].*$|$1|;
 						$rq_uri=~s|$tom::rewrite_RewriteBase||;
 						$rq_uri=~s|^/||;
 					$URL_orig.='/'.$rq_uri if $rq_uri;
 					$URL_orig.='?'.$main::ENV{'QUERY_STRING'} if $main::ENV{'QUERY_STRING'};
-				my $URL=$tom::H_www.$link;
+				my $URL=($rewrite_domain || $tom::H_www).$link;
 				
 				main::_log("302 '$URL_orig' to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"pub.301",1);
 				main::_log("302 '$URL_orig' to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"pub.301");
@@ -1285,6 +1308,19 @@ while ($main::CGI=new CGI::Fast())
 				{
 					my $t_a210=track TOM::Debug('a210:'.$main::FORM{'a210_path'});
 					my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+					
+					# add a201_path_prefix when in secondary domain
+					foreach (grep {defined $_->{'H'} && defined $_->{'a210_path_prefix'}} @tom::H_www_multi)
+					{
+						if ($tom::H_www=~/^https?:\/\/$_->{'H'}$/)
+						{
+							$main::FORM{'a210_path'}=
+								$_->{'a210_path_prefix'}.'/'.$main::FORM{'a210_path'};
+							$main::FORM{'a210_path'}=~s|/$||;
+							last;
+						}
+					}
+					
 					# ziskanie dat o Sitemap node
 					# toto len v pripade ak uz nieje nastavene type z GET na nieco ine ako 'default' type
 					if (!$main::FORM{'a210_path'} && (!$main::FORM{'type'} || $main::FORM{'type'} eq "default"))
@@ -2030,8 +2066,8 @@ while ($main::CGI=new CGI::Fast())
 			
 			main::_log("REQUEST_URI='$main::ENV{REQUEST_URI}'");
 			
-			my $link_old=$main::ENV{REQUEST_URI};
-			my $rewrite_old=$main::ENV{REQUEST_URI};$rewrite_old=~s|^(.*)\?.*?$|$1|;
+			my $link_old=$main::ENV{'REQUEST_URI'};
+			my $rewrite_old=$main::ENV{'REQUEST_URI'};$rewrite_old=~s|^(.*)\?.*?$|$1|;
 				$rewrite_old=~s|^$tom::rewrite_RewriteBase||;
 			
 			# pokus o vytvorenie rewrite linky
@@ -2043,8 +2079,25 @@ while ($main::CGI=new CGI::Fast())
 			delete $form{'cookies'};
 			delete $form{'type'} if $a210{'t_name_used'}; # dont' paste to URL $form{'type'} when is defined by $a210{'t_name'}
 			
-			my $rewrite="/".TOM::Net::URI::rewrite::parse_hash(\%form);
-			main::_log("rewrited part is '$rewrite'");
+			my ($rewrite_domain,$rewrite)=TOM::Net::URI::rewrite::parse_hash(\%form);
+				$rewrite="/".$rewrite;
+				$rewrite_domain=$tom::H_www_orig unless $rewrite_domain;
+				
+			main::_log("rewrited part is '$rewrite' domain '$rewrite_domain'");
+			
+			foreach (grep {defined $_->{'a210_path_prefix'}} @tom::H_www_multi)
+			{
+#				if ($a210_path=~/^$_->{'a210_path_prefix'}\//)
+#				{
+#					$a210_path=~s|^$_->{'a210_path_prefix'}/||;
+#					$a210_path=~s|/$||;
+#					$form{'a210_path'}=$a210_path;
+#					$newlink_prefix=~s/(https?:\/\/)(.*?)\//$1.$_->{'H'}.'\/'/e;
+#					main::_log("URL changed newlink_prefix='$newlink_prefix'") if $debug_url;
+#					$tom::H_www_external=1;
+#					last;
+#				}
+			}
 			
 			my $link;
 			
@@ -2059,17 +2112,6 @@ while ($main::CGI=new CGI::Fast())
 					($TOM::type_code) # kodujem
 					&&
 					($var) # vo var vobec nieco je
-#					&&
-#					(
-#						($IAdm && !$FORM{_IAdm_decode})
-#						||
-#						(!$IAdm)
-#					)
-#					&&
-#					(
-#						($ITst && !$FORM{_ITst_decode})
-#						||(!$ITst)
-#					)
 					&&
 					(
 						# encodovat cast URI s premennymi len ak je v linke hashovana cast
@@ -2106,16 +2148,16 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("link_old='$link_old' link='$link'");
 			main::_log("rewrite_old='$rewrite_old' rewrite='$rewrite'");
 			
-			if (($rewrite_old ne $rewrite) || $rewrite_301)
+			if (($tom::H_www ne $rewrite_domain) || ($rewrite_old ne $rewrite) || $rewrite_301)
 			#if (($link_old ne $link) || $rewrite_301)
 			{
 				# musim odoslat cookies i ked robim relocation
 				TOM::Engine::pub::cookies::send();
 				
 				# ide kod 301
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$tom::H_www$link' (test)",3,"pub.301",1);
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$tom::H_www$link' (test)",3,"pub.301");
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$tom::H_www$link' (test)");
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$rewrite_domain$link' (test)",3,"pub.301",1);
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$rewrite_domain$link' (test)",3,"pub.301");
+				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$rewrite_domain$link' (test)");
 				
 				$t_301->close();
 				$t_process->close();
@@ -2124,7 +2166,7 @@ while ($main::CGI=new CGI::Fast())
 				# save stat
 				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
 				print "Status: 301 Moved permanently\n";
-				print "Location: $tom::H_www$link\n\n";
+				print "Location: $rewrite_domain$link\n\n";
 				
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				next;
@@ -2308,7 +2350,10 @@ while ($main::CGI=new CGI::Fast())
 				{
 					main::_log("key '$_'='$form{$_}'");
 				}
-				my $rewrite="/".TOM::Net::URI::rewrite::parse_hash(\%form);
+				
+				my ($rewrite_domain,$rewrite)=TOM::Net::URI::rewrite::parse_hash(\%form);
+					$rewrite="/".$rewrite;
+				
 				main::_log("rewrited part is '$rewrite'");
 				my $link;
 				my $var='';
@@ -2355,7 +2400,7 @@ while ($main::CGI=new CGI::Fast())
 					$link.="?".$var if $var;
 				}
 				
-				my $URI_base=$tom::H_www;
+				my $URI_base=$rewrite_domain || $tom::H_www;
 					$URI_base=~s|$tom::rewrite_RewriteBase$||;
 				my $URI_enh="$tom::rewrite_RewriteBase$link";
 				$URI_base.='/' unless $URI_enh=~/^\//;

@@ -210,6 +210,7 @@ sub parse_hash
 {
 	my $t=track TOM::Debug(__PACKAGE__."::parse_hash()") if $debug;
 	
+	my $H_www="";
 	my $hash=shift;
 	
 	# problematic hash with undefined keyname
@@ -218,6 +219,27 @@ sub parse_hash
 	foreach (keys %{$hash})
 	{
 		main::_log("input key '$_'='$hash->{$_}'") if $debug;
+	}
+	
+	if ($hash->{'a210_path'})
+	{
+		
+		foreach (grep {defined $_->{'a210_path_prefix'}} @tom::H_www_multi)
+		{
+			my $a210_path=$hash->{'a210_path'}.'/';
+			if ($a210_path=~/^$_->{'a210_path_prefix'}\//)
+			{
+				$a210_path=~s|^$_->{'a210_path_prefix'}/||;
+				$a210_path=~s|/$||;
+				$hash->{'a210_path'}=$a210_path;
+				
+#				main::_log("$tom::H_www to ".$_->{'H'});
+				$H_www=$tom::H_www;
+				$H_www=~s/(https?:\/\/)(.*)/$1.$_->{'H'}/e;
+				last;
+			}
+		}
+		
 	}
 	
 	for my $rule(0..@rules-1)
@@ -327,30 +349,28 @@ sub parse_hash
 				}
 			}
 			
-			
 			foreach (keys %{$hash})
 			{
 				main::_log("output key '$_'") if $debug;
 			}
-			
 			
 			$URL=~s/\/$/.html/ if $rules[$rule]{type} eq "html";
 			
 			main::_log("output URL '$URL'") if $debug;
 			
 			$t->close() if $debug;
-			return $URL;
+			return $H_www,$URL;
 		}
 		else
 		{
-
+			
 		}
 		
 	}
 	
 	main::_log("output default URL 'index.html'") if $debug;
 	$t->close() if $debug;
-	return "index.html";
+	return $H_www,"index.html";
 }
 
 
