@@ -123,7 +123,7 @@ sub url_generate
 	
 	if (!ref($_[0]))
 	{
-		%form_in=TOM::Net::HTTP::CGI::get_QUERY_STRING($_[0]);
+		%form_in=TOM::Net::HTTP::CGI::get_QUERY_STRING($_[0],'quiet'=>1);
 	}
 	else
 	{
