@@ -44,6 +44,7 @@ our $debug=0;
 our $tpl=new TOM::Template(
 	'level' => "auto",
 	'addon' => "a401",
+	'tt' => 1, # enable tt processing
 #	'name' => "parse",
 	'content-type' => "xhtml" # default is XML
 );
@@ -146,12 +147,27 @@ sub _escape_attr
 	return $attr;
 }
 
+sub _find_tpl_entity
+{
+	my $self=shift;
+	my $name=shift;
+	
+	if ($tpl->{'entity'}{$name})
+	{
+		$self->{'entity_tt'}=$name
+			if $tpl->{'entity_'}{$name}{'tt'} eq "true";
+		return $tpl->{'entity'}{$name};
+	}
+	return undef;
+}
+
 sub start
 {
 	my ($self, $tag, $attr, $attrseq, $origtext) = @_;
 	$tag=~s|/$||;
 	
 	$self->{'level'}++;
+	delete $self->{'entity_tt'};
 	
 	# fix not closed tags
 	$attr->{'/'}='/' if $tag=~/^hr|br|img$/;
@@ -647,6 +663,9 @@ sub start
 	} # if tag=''
 	elsif ($tag eq "a")
 	{
+		$self->{'count'}->{'a'}++;
+		$out_cnt=$self->{'count'}->{'a'};$out_tag='a';
+		
 		if ($attr->{'id'}=~/^a542_file:(.*)$/)
 		{
 			require App::542::_init;
@@ -763,7 +782,7 @@ sub start
 						$vars{'ID'},
 						%sql_def,
 						'-slave' => 1,
-						'-cache' => 3600
+						'-cache' => 3600*24
 					)
 				)
 				{
@@ -774,22 +793,38 @@ sub start
 				
 				if ($TOM::LNG_permanent)
 				{
-					$attr->{'href'}=$tom::H_www.'/?|?a210_path='.$a210_path;
+					$attr->{'href'}='?|?a210_path='.$a210_path;
 				}
 				else
 				{
-					$attr->{'href'}=$tom::H_www.'/?|?a210_path='.$a210_path.'&__lng='.$a210{'lng'};
+					$attr->{'href'}='?|?a210_path='.$a210_path.'&__lng='.$a210{'lng'};
 				}
 				
 				# override default tag representation
 				$out_full=
 					$self->{'entity'}{'a210_page.'.$out_cnt}
 					|| $self->{'entity'}{'a210_page'}
-					|| $tpl->{'entity'}{'parser.a210_page.'.$out_cnt}
-					|| $tpl->{'entity'}{'parser.a210_page'}
+					|| $self->_find_tpl_entity('parser.link.a210_page')
+					|| $self->_find_tpl_entity('parser.a210_page')
 					|| $out_full;
 				
-				$out_full=~s|<%db_(.*?)%>|$a210{$1}|g;
+				if ($self->{'entity_tt'})
+				{
+					if ($tpl->process({
+						'tag'=>$tag,
+						'text'=>$origtext,
+						'attr'=>$attr,
+						'var'=>\%vars,
+						'count'=>$out_cnt,
+						'entity'=>\%a210},
+					$self->{'entity_tt'}))
+					{$out_full=$tpl->{'output'};}
+					else {$out_full=$tpl->{'error'}}
+				}
+				else
+				{
+					$out_full=~s|<%db_(.*?)%>|$a210{$1}|g;
+				}
 			}
 			
 		}
@@ -856,13 +891,13 @@ sub start
 			my %db0_line=$sth0{'sth'}->fetchhash();
 			if ($db0_line{'ID_entity'})
 			{
-		      my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
-		      $db0_line{'datetime_start.year'}=$datetime{'year'};
-		      $db0_line{'datetime_start.month'}=$datetime{'month'};
-		      $db0_line{'datetime_start.mday'}=$datetime{'mday'};
-		      $db0_line{'datetime_start.hour'}=$datetime{'hour'};
-		      $db0_line{'datetime_start.min'}=$datetime{'min'};
-		      $db0_line{'datetime_start.sec'}=$datetime{'sec'};
+				my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
+				$db0_line{'datetime_start.year'}=$datetime{'year'};
+				$db0_line{'datetime_start.month'}=$datetime{'month'};
+				$db0_line{'datetime_start.mday'}=$datetime{'mday'};
+				$db0_line{'datetime_start.hour'}=$datetime{'hour'};
+				$db0_line{'datetime_start.min'}=$datetime{'min'};
+				$db0_line{'datetime_start.sec'}=$datetime{'sec'};
 				
 				my $alias_url=App::401::functions::article_alias_url('ID_category'=>$db0_line{"ID_category"});
 				# alias or domain
