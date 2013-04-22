@@ -577,6 +577,7 @@ sub parse_entity
 			$self->{'entity'}{$id}=$node->string_value();
 		}
 		$self->{'entity_'}{$id}{'replace_variables'}=$node->getAttribute('replace_variables');
+		$self->{'entity_'}{$id}{'tt'}=$node->getAttribute('tt');
 		$self->{'entity_'}{$id}{'replace_L10n'}=$node->getAttribute('replace_L10n');
 		$self->{'entity_'}{$id}{'location'}=$self->{'location'}; # the source of entity
 		main::_log("setup entity id='$id' with length(".(length($self->{'entity'}{$id})).")") if $debug;
@@ -773,6 +774,7 @@ sub process
 	# just process the template!
 	my $self=shift;
 	my $vars=shift;
+	my $fnc=shift || 'main';
 	
 	if ($self->{'config'}->{'tt'})
 	{
@@ -843,7 +845,7 @@ sub process
 		undef $self->{'output'};
 		undef $self->{'error'};
 		$tt->process(
-			'main',
+			$fnc,
 			$vars_process,\$self->{'output'}
 		) || do {
 			main::_log($tt->error(),1);
