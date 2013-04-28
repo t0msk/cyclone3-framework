@@ -1,0 +1,49 @@
+#!/usr/bin/env perl
+# ex:ts=4
+
+use strict;
+use warnings;
+use DateTime;
+
+my $cmd = shift || '';
+if ($cmd eq 'config') {print qq{graph_title Memory VMware
+graph_category system
+graph_args --base 1024
+graph_vlabel Bytes
+graph_order swap balloon memlimit memres
+memlimit.label Limit
+memlimit.min 0
+memres.label Reservation
+memres.min 0
+swap.label Swapping
+swap.min 0
+balloon.label Ballooning
+balloon.min 0
+};
+	exit 0;
+}
+
+my $debug;
+	$debug=1 if $cmd eq "debug";
+
+my $date=`date +"%Y-%m-%d"`;chomp($date);
+
+my $swap=`vmware-toolbox-cmd stat swap`;chomp($swap);
+	$swap=~s/^.*?(\d+).*?$/$1*1024*1024/e;
+
+my $balloon=`vmware-toolbox-cmd stat balloon`;chomp($balloon);
+	$balloon=~s/^.*?(\d+).*?$/$1*1024*1024/e;
+
+my $memlimit=`vmware-toolbox-cmd stat memlimit`;chomp($memlimit);
+	$memlimit=~s/^.*?(\d+).*?$/$1*1024*1024/e;
+
+my $memres=`vmware-toolbox-cmd stat memres`;chomp($memres);
+	$memres=~s/^.*?(\d+).*?$/$1*1024*1024/e;
+	
+#print $memres;
+
+print "memlimit.value " . $memlimit . "\n";
+print "memres.value " . $memres . "\n";
+print "swap.value " . $swap . "\n";
+print "balloon.value " . $balloon . "\n";
+
