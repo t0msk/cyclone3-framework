@@ -2341,6 +2341,24 @@ while ($main::CGI=new CGI::Fast())
 				next;
 			}
 			
+			if ($out=~/^\//)
+			{
+				# ide kod 302
+				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"pub.301",1);
+				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"pub.301");
+				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)");
+				
+				$t_301->close();
+				$t_process->close();
+				$t_eval->close();
+				$t_request->close();
+				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
+				print "Status: $main::location_code Found\n";
+				print "Location: $out\n\n";
+				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
+				next;
+			}
+			
 			if ($out=~s/^\?\|\?//)
 			{
 				main::_log("encoding URL");
