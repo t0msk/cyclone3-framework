@@ -239,6 +239,12 @@ sub execute
 	}
 	
 	TOM::Database::connect::multi($env{'db_h'}) unless $main::DB{$env{'db_h'}};
+	if (!$main::DB{$env{'db_h'}})
+	{
+		main::_log("can't connect db_h=$env{'db_h'}",1);
+		$t->close();
+		return 1;
+	}
 	
 	# subtype of connected handler (MySQL or MsSQL?)
 	my $subtype;
