@@ -715,6 +715,7 @@ sub start
 					LEFT JOIN `$App::542::db_name`.`a542_file_attrs` AS file_attrs ON
 					(
 						file_attrs.ID_entity = file.ID
+--						AND file_attrs.lng='$tom::lng'
 					)
 					LEFT JOIN `$App::542::db_name`.`a542_file_item` AS file_item ON
 					(
@@ -726,8 +727,7 @@ sub start
 						file_dir.ID = file_attrs.ID_category
 					)
 					WHERE
-						file.ID_entity=$vars{'ID_entity'} AND
-						file_attrs.lng='$tom::lng'
+						file.ID_entity=$vars{'ID_entity'}
 					LIMIT 1;
 				},'quiet'=>1,'-cache'=>$cache);
 				my %db0_line=$sth0{'sth'}->fetchhash();
