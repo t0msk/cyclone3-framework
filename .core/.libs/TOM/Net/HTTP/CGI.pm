@@ -424,7 +424,7 @@ sub get_CGI
 			
 			if ($form{'POSTDATA'}=~/^{/) # JSON?
 			{eval{
-				%{$main::RPC}=%{decode_json($form{'POSTDATA'})};
+				%{$main::RPC}=%{JSON::decode_json($form{'POSTDATA'})};
 			}}
 			else
 			{eval{
