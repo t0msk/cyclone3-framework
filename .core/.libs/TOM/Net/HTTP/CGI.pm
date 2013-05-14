@@ -419,8 +419,15 @@ sub get_CGI
 			main::_log("received SOAP POSTDATA, parsing");
 			
 			require SOAP::Lite;
+			require JSON;
 			main::_log($form{'POSTDATA'});
-			eval {
+			
+			if ($form{'POSTDATA'}=~/^{/) # JSON?
+			{eval{
+				%{$main::RPC}=%{decode_json($form{'POSTDATA'})};
+			}}
+			else
+			{eval{
 				my $som = SOAP::Deserializer->deserialize($form{'POSTDATA'});
 				my $body = $som->body;
 				
@@ -453,7 +460,7 @@ sub get_CGI
 						%{$main::RPC}=%{$body->{$form{'type'}}};
 					}
 				}
-			};
+			}};
 		}
 		# process XML-RPC data
 		elsif ($TOM::Document::type eq "xmlrpc")
