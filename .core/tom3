@@ -300,7 +300,7 @@ while ($main::CGI=new CGI::Fast())
 	if ($main::ENV{'HTTP_HOST'} && $tom::H_www_by_HTTP_HOST)
 	{
 #		$tom::H=$main::ENV{'HTTP_HOST'};
-		$tom::H_www=~s|^(http[s]?://)(.*)$|$1$main::ENV{'HTTP_HOST'}|;
+		$tom::H_www=~s|^(http[s]?://)(.*)$|$1$main::ENV{'HTTP_HOST'}$tom::rewrite_RewriteBase|;
 		main::_log("override \$tom::H_www by HTTP_HOST '$main::ENV{'HTTP_HOST'}' to '$tom::H_www'");
 	}
 	# override tom::Hm
