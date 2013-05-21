@@ -1,8 +1,0 @@
-#!/usr/bin/perl
-use open ':utf8', ':std';
-use encoding 'utf8';
-use utf8; # encode = fromutf8, decode=toutf8
-use strict; # scrict code
-if (!$ENV{'CYCLONE3PATH'}){if (-d '/Cyclone3'){$ENV{'CYCLONE3PATH'}="/Cyclone3";}elsif (-d '/www/TOM'){$ENV{'CYCLONE3PATH'}="/www/TOM";}}
-do $ENV{'CYCLONE3PATH'}."/.core/tom3";
-END {use Inline;$SIG{__WARN__} = sub {};}
