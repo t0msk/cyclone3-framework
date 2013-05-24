@@ -32,7 +32,7 @@ L<App::301::_init|app/"301/_init.pm">
 =cut
 
 use App::301::_init;
-
+our $user_index=0;
 
 =head1 FUNCTIONS
 
@@ -58,6 +58,7 @@ sub user_add
 	$env{'user.hostname'}=$tom::H_cookie unless $env{'user.hostname'};
 	main::_log("hostname=$env{'user.hostname'}");
 	
+	my $content_reindex;
 	my %user;
 	if ($env{'user.ID_user'})
 	{
@@ -142,6 +143,7 @@ sub user_add
 			)
 		},'bind'=>[$env{'user.ID_user'},$token,($main::USRM{'ID_user'} || ""),$env{'user.hostname'}],'quiet'=>1) || return undef;
 		$env{'new'}=1;
+		$content_reindex=1;
 	}
 	else
 	{
@@ -327,6 +329,7 @@ sub user_add
 				'-journalize' => 1,
 			);
 			$env{'user_profile.ID_entity'}=$env{'user.ID_user'} if $env{'user_profile.ID'};
+			$content_reindex=1;
 		}
 		
 	}
@@ -413,8 +416,55 @@ sub user_add
 		$columns{'note'}="'".TOM::Security::form::sql_escape($env{'user_profile.note'})."'"
 			if (exists $env{'user_profile.note'} && ($env{'user_profile.note'} ne $user_profile{'note'}));
 		
+#		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'user_profile.metadata'})."'"
+#			if (exists $env{'user_profile.metadata'} && ($env{'user_profile.metadata'} ne $user_profile{'metadata'}));
+		
+		# metadata
+		my %metadata=App::020::functions::metadata::parse($user_profile{'metadata'});
+		
+		foreach my $section(split(';',$env{'user_profile.metadata.override_sections'}))
+		{
+			delete $metadata{$section};
+		}
+		
+		if ($env{'user_profile.metadata.replace'})
+		{
+			if (!ref($env{'user_profile.metadata'}) && $env{'user_profile.metadata'})
+			{
+				%metadata=App::020::functions::metadata::parse($env{'user_profile.metadata'});
+			}
+			if (ref($env{'user_profile.metadata'}) eq "HASH")
+			{
+				%metadata=%{$env{'user_profile.metadata'}};
+			}
+		}
+		else
+		{
+			if (!ref($env{'user_profile.metadata'}) && $env{'user_profile.metadata'})
+			{
+				# when metadata send as <metatree></metatree> then always replace
+				%metadata=App::020::functions::metadata::parse($env{'user_profile.metadata'});
+	#			my %metadata_=App::020::functions::metadata::parse($env{'product.metadata'});
+	#			delete $env{'product.metadata'};
+	#			%{$env{'product.metadata'}}=%metadata_;
+			}
+			if (ref($env{'user_profile.metadata'}) eq "HASH")
+			{
+				# metadata overrride
+				foreach my $section(keys %{$env{'user_profile.metadata'}})
+				{
+					foreach my $variable(keys %{$env{'user_profile.metadata'}{$section}})
+					{
+						$metadata{$section}{$variable}=$env{'user_profile.metadata'}{$section}{$variable};
+					}
+				}
+			}
+		}
+		
+		$env{'user_profile.metadata'}=App::020::functions::metadata::serialize(%metadata);
+		
 		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'user_profile.metadata'})."'"
-			if (exists $env{'user_profile.metadata'} && ($env{'user_profile.metadata'} ne $user_profile{'metadata'}));
+		if (exists $env{'user_profile.metadata'} && ($env{'user_profile.metadata'} ne $user_profile{'metadata'}));
 		
 		if (keys %columns)
 		{
@@ -427,6 +477,7 @@ sub user_add
 				'-journalize' => 1,
 				'-posix' => 1
 			);
+			$content_reindex=1;
       }
 	}
 	
@@ -493,6 +544,8 @@ sub user_add
 		$set.=",status='$env{'user.status'}'"
 			if $env{'user.status'};
 		
+		$content_reindex=1;
+		
 		TOM::Database::SQL::execute(qq{
 			UPDATE `TOM`.a301_user
 			SET
@@ -556,6 +609,12 @@ sub user_add
 			},'bind'=>[$env{'user.ID_user'},$db0_line{'ID'},$main::USRM{'ID_user'}],'quiet'=>1);
 		}
 		
+		$content_reindex=1;
+	}
+	
+	if ($content_reindex && $user_index)
+	{
+		_user_index('ID_user'=>$env{'user.ID_user'});
 	}
 	
 	$t->close();
@@ -945,6 +1004,10 @@ sub _user_index
 		if ($profile{'firstname'} && $profile{'surname'})
 		{
 			$name=$profile{'firstname'}.' '.$profile{'surname'};
+			$name=$profile{'name_prefix'}.' '.$name
+				if $profile{'name_prefix'};
+			$name=$name.' '.$profile{'name_suffix'}
+				if $profile{'name_suffix'};
 			push @fields,WebService::Solr::Field->new( 'title' => $name );
 		}
 		
@@ -955,14 +1018,56 @@ sub _user_index
 			push @fields,WebService::Solr::Field->new( 'datetime_last_login_tdt' => $db0_line{'datetime_last_login'} );
 		}
 		
+		push @fields,WebService::Solr::Field->new( 'name_prefix_s' => $profile{'name_prefix'} )
+			if $profile{'name_prefix'};
 		push @fields,WebService::Solr::Field->new( 'firstname_s' => $profile{'firstname'} )
 			if $profile{'firstname'};
 		push @fields,WebService::Solr::Field->new( 'surname_s' => $profile{'surname'} )
 			if $profile{'surname'};
+		push @fields,WebService::Solr::Field->new( 'name_suffix_s' => $profile{'name_suffix'} )
+			if $profile{'name_suffix'};
 		
 		if ($profile{'rating_weight'})
 		{
 			push @fields,WebService::Solr::Field->new( 'weight' => $profile{'rating_weight'} );
+		}
+		
+		my %metadata=App::020::functions::metadata::parse($profile{'metadata'});
+		foreach my $sec(keys %metadata)
+		{
+			foreach (keys %{$metadata{$sec}})
+			{
+				next unless $metadata{$sec}{$_};
+				if ($_=~s/\[\]$//)
+				{
+					# this is comma separated array
+					foreach my $val (keys %{{map{$_=>1}(split(';',$metadata{$sec}{$_.'[]'}))}})
+#					foreach my $val (split(';',$metadata{$sec}{$_.'[]'}))
+					{push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_sm' => $val);
+					push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_tm' => $val)}
+					push @fields,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_);
+					next;
+				}
+				
+				push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
+				if ($metadata{$sec}{$_}=~/^[0-9]{1,9}$/)
+				{
+					push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
+				}
+				if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}$/)
+				{
+					push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
+				}
+				
+				# list of used metadata fields
+				push @fields,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_ );
+			}
+		}
+		
+		if (!$name)
+		{
+			$t->close();
+			return undef;
 		}
 		
 		$doc->add_fields((
@@ -981,34 +1086,6 @@ sub _user_index
 			
 			
 		));
-=head1
-		
-		
-		
-		$db0_line{'description'}=~s|<.*?>||gms;
-		$db0_line{'description'}=~s|&nbsp;| |gms;
-		$db0_line{'description'}=~s|  | |gms;
-		
-		$db0_line{'datetime_create'}=~s| (\d\d)|T$1|;
-		$db0_line{'datetime_create'}.="Z";
-		
-		
-		$doc->add_fields((
-			WebService::Solr::Field->new( 'id' => $id ),
-			
-			WebService::Solr::Field->new( 'name' => $db0_line{'name'} ),
-			WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
-			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
-			
-			WebService::Solr::Field->new( 'description' => $db0_line{'description'} ),
-			
-			WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_create'} ),
-			
-			WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
-			WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
-		));
-		
-=cut
 		
 		$solr->add($doc);
 		
@@ -1019,13 +1096,13 @@ sub _user_index
 	}
 	else
 	{
-#		main::_log("not found active ID",1);
-#		my $response = $solr->search( "id:".$App::401::db_name.".a401_article_cat.* AND ID_i:$env{'ID'}" );
-#		for my $doc ( $response->docs )
-#		{
-#			$solr->delete_by_id($doc->value_for('id'));
-#		}
-##		$solr->commit;
+		main::_log("not found active ID",1);
+		my $response = $solr->search( "id:".$App::301::db_name.".a301_user.* AND ID_s:$env{'ID_user'}" );
+		for my $doc ( $response->docs )
+		{
+			$solr->delete_by_id($doc->value_for('id'));
+		}
+#		$solr->commit;
 	}
 	
 	$t->close();
