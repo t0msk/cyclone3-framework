@@ -432,6 +432,7 @@ sub org_add
 	if ($content_reindex)
 	{
 		# reindex this org
+		main::_log("go to reindex");
 		_org_index('ID'=>$env{'org.ID'});
 	}
 	
@@ -495,22 +496,40 @@ sub _org_index
 		push @{$content{'cat'}},WebService::Solr::Field->new( 'cat' => $db1_line{'name'} );
 	}
 	
+	my @fields;
 	my %metadata=App::020::functions::metadata::parse($org{'metadata'});
 	foreach my $sec(keys %metadata)
 	{
 		foreach (keys %{$metadata{$sec}})
 		{
-			my $suffix_=$suffix;
-#			next if $_ eq "enabled";
 			next unless $metadata{$sec}{$_};
-			main::_log(" $sec".'.'."$_($suffix_)=$metadata{$sec}{$_}");
-			push @{$content{'metadata'}},WebService::Solr::Field->new( $sec.'.'.$_.'_'.$suffix_ => "$metadata{$sec}{$_}" );
+			if ($_=~s/\[\]$//)
+			{
+				# this is comma separated array
+				foreach my $val (keys %{{map{$_=>1}(split(';',$metadata{$sec}{$_.'[]'}))}})
+#				foreach my $val (split(';',$metadata{$sec}{$_.'[]'}))
+				{push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_sm' => $val);
+				push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_tm' => $val)}
+				push @fields,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_);
+				next;
+			}
+			
+			push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
+			if ($metadata{$sec}{$_}=~/^[0-9]{1,9}$/)
+			{
+				push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
+			}
+			if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}$/)
+			{
+				push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
+			}
+			
+			# list of used metadata fields
+			push @fields,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_ );
 		}
 	}
 	
 	my $doc = WebService::Solr::Document->new();
-	
-	my @fields;
 	
 	if ($org{'latitude_decimal'})
 	{
@@ -532,6 +551,18 @@ sub _org_index
 			if $org{'location_verified'};
 	}
 	
+	if ($org{'county'})
+	{
+		push @fields,WebService::Solr::Field->new( 'county_t' => $org{'county'} || '');
+		push @fields,WebService::Solr::Field->new( 'county_s' => $org{'county'} || '');
+	}
+	
+	if ($org{'district'})
+	{
+		push @fields,WebService::Solr::Field->new( 'district_t' => $org{'district'} || '');
+		push @fields,WebService::Solr::Field->new( 'district_s' => $org{'district'} || '');
+	}
+	
 	$doc->add_fields((
 		WebService::Solr::Field->new( 'id' => $id ),
 		
@@ -549,8 +580,6 @@ sub _org_index
 		WebService::Solr::Field->new( 'VAT_number_'.$suffix => $org{'VAT_number'} || ''),
 		
 		WebService::Solr::Field->new( 'state_'.$suffix => $org{'state'} || ''),
-		WebService::Solr::Field->new( 'county_'.$suffix => $org{'county'} || ''),
-		WebService::Solr::Field->new( 'district_'.$suffix => $org{'district'} || ''),
 		WebService::Solr::Field->new( 'ZIP_'.$suffix => $org{'ZIP'} || ''),
 		WebService::Solr::Field->new( 'city_'.$suffix => $org{'city'} || ''),
 		WebService::Solr::Field->new( 'street_'.$suffix => $org{'street'} || ''),
