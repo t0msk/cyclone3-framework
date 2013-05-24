@@ -943,9 +943,21 @@ while ($main::CGI=new CGI::Fast())
 		# nastavujem, teda cookies na posielanie cez URL linku (zaroven sa vzdy i tak
 		# budem snazit posielat cookies standardnou cestou)
 		
-		if ((keys %main::COOKIES) == 0)
+#		foreach (keys %main::ENV)
+#		{
+#			main::_log("ENV $_=".$main::ENV{$_});
+#		}
+		
+		if (
+				(keys %main::COOKIES) == 0 &&
+				(
+					(keys %main::COOKIES_all)
+#					|| ($TOM::Document::type ne "xml")
+					|| ($main::ENV{'HTTP_CONNECTION'} ne "close") # risky to send 302 code
+				)
+		)
 		{
-			main::_log("none cookies found");
+			main::_log("none cookies found, but looks like supported");
 			
 			
 			my $user_md5=Digest::MD5::md5_hex
@@ -2757,6 +2769,7 @@ while ($main::CGI=new CGI::Fast())
 			}
 			print "Content-Type: ".$TOM::Document::content_type."; charset=$main::LNG_cp_this\n";
 			
+			print "Access-Control-Allow-Origin: *\n";
 			
 			if ($ENV{'HTTP_ACCEPT_ENCODING'}=~/gzip/i && !$pub::gzip_disable)
 			{
