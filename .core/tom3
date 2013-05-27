@@ -698,6 +698,18 @@ while ($main::CGI=new CGI::Fast())
 		# cache disable if requested (should be rewrited)
 		$main::cache=0 if $main::FORM{'_rc'} < 0;
 		
+		# add a201_path_prefix when in secondary domain
+		foreach (grep {defined $_->{'H'} && defined $_->{'a210_path_prefix'}} @tom::H_www_multi)
+		{
+			if ($tom::H_www=~/^https?:\/\/$_->{'H'}$/)
+			{
+				$main::FORM{'a210_path'}=
+					$_->{'a210_path_prefix'}.'/'.$main::FORM{'a210_path'};
+				$main::FORM{'a210_path'}=~s|/$||;
+				last;
+			}
+		}
+		
 		$main::ENV{'QUERY_STRING_FULL'}=TOM::Net::URI::URL::genGET(%main::FORM);
 		
 		main::_log("output QUERY_STRING_FULL='$main::ENV{'QUERY_STRING_FULL'}'");
@@ -1320,18 +1332,6 @@ while ($main::CGI=new CGI::Fast())
 				{
 					my $t_a210=track TOM::Debug('a210:'.$main::FORM{'a210_path'});
 					my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
-					
-					# add a201_path_prefix when in secondary domain
-					foreach (grep {defined $_->{'H'} && defined $_->{'a210_path_prefix'}} @tom::H_www_multi)
-					{
-						if ($tom::H_www=~/^https?:\/\/$_->{'H'}$/)
-						{
-							$main::FORM{'a210_path'}=
-								$_->{'a210_path_prefix'}.'/'.$main::FORM{'a210_path'};
-							$main::FORM{'a210_path'}=~s|/$||;
-							last;
-						}
-					}
 					
 					# ziskanie dat o Sitemap node
 					# toto len v pripade ak uz nieje nastavene type z GET na nieco ine ako 'default' type
