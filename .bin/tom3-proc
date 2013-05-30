@@ -81,11 +81,11 @@ while(1)
 		{
 			$l=length($host) if length($host)>$l;
 		}
-	
-		&Clear();
-		print color 'reset bold cyan';
-		print "[DOMAIN(start)".(" " x ($l-13))."][ENGINE   ][STAT ][P ][  CPU][  RSS][START][TIMEm][  PID][IDLEs][  rqs][rq/m][rqcode  ][uri               ]\n";
-		print color 'reset cyan';
+		
+		my $print_out;
+		$print_out.=color 'reset bold cyan';
+		$print_out.="[DOMAIN(start)".(" " x ($l-13))."][ENGINE   ][STAT ][P ][  CPU][  RSS][START][TIMEm][  PID][IDLEs][  rqs][rq/m][rqcode  ][uri               ]\n";
+		$print_out.=color 'reset cyan';
 		
 		my $processes;
 		my $cpu;
@@ -100,51 +100,51 @@ while(1)
 				if ($hosts{$host}[$_]{'state'} eq "run"){$setcolor = 'reset bold cyan';}
 				if ($hosts{$host}[$_]{'state'} eq "proc"){$setcolor = 'reset bold cyan';}
 				else {$setcolor = 'reset cyan';}
-				print color $setcolor;
+				$print_out.=color $setcolor;
 				
 				# host
-				if (!$_){print "[".sprintf("%-".$l."s",$host)."]";}else {print (" " x ($l+2));}
+				if (!$_){$print_out.="[".sprintf("%-".$l."s",$host)."]";}else {$print_out.=(" " x ($l+2));}
 				
 				# engine
 				$hosts{$host}[$_]{'engine'}=substr($hosts{$host}[$_]{'engine'},0,9);
-				print "[".sprintf("%-9s",$hosts{$host}[$_]{'engine'})."]";
+				$print_out.= "[".sprintf("%-9s",$hosts{$host}[$_]{'engine'})."]";
 				
 				# STAT
-				print "[";
-				if ($hosts{$host}[$_]{'state'} eq "run"){print color 'bold yellow'}
-				print sprintf("%5s",$hosts{$host}[$_]{'state'});
-				print color $setcolor;print "]";
+				$print_out.= "[";
+				if ($hosts{$host}[$_]{'state'} eq "run"){$print_out.= color 'bold yellow'}
+				$print_out.= sprintf("%5s",$hosts{$host}[$_]{'state'});
+				$print_out.= color $setcolor;$print_out.= "]";
 				
 				# P
-				print "[".sprintf("%2s",$_+1)."]";
+				$print_out.= "[".sprintf("%2s",$_+1)."]";
 				
 				# CPU
-				print "[";
-				if ($hosts{$host}[$_]{'pctcpu'} > 1){print color 'bold cyan'}
-				if ($hosts{$host}[$_]{'pctcpu'} > 10){print color 'yellow'}
-				if ($hosts{$host}[$_]{'pctcpu'} > 30){print color 'bold red'}
-				print sprintf('%5s',sprintf('%-2.2f',$hosts{$host}[$_]{'pctcpu'}));print color $setcolor;print "]";
+				$print_out.= "[";
+				if ($hosts{$host}[$_]{'pctcpu'} > 1){$print_out.= color 'bold cyan'}
+				if ($hosts{$host}[$_]{'pctcpu'} > 10){$print_out.= color 'yellow'}
+				if ($hosts{$host}[$_]{'pctcpu'} > 30){$print_out.= color 'bold red'}
+				$print_out.= sprintf('%5s',sprintf('%-2.1f',$hosts{$host}[$_]{'pctcpu'}));$print_out.= color $setcolor;$print_out.= "]";
 				$cpu+=$hosts{$host}[$_]{'pctcpu'};
 				
 				# MEM
 				$hosts{$host}[$_]{'rss'}=int($hosts{$host}[$_]{'rss'}/1024/1024);
-				print "[";
-				if ($hosts{$host}[$_]{'rss'} > 100){print color 'yellow'}
-				if ($hosts{$host}[$_]{'rss'} > 200){print color 'bold red'}
-				print sprintf("%4d",$hosts{$host}[$_]{'rss'});print color $setcolor;print "M]";
+				$print_out.= "[";
+				if ($hosts{$host}[$_]{'rss'} > 100){$print_out.= color 'yellow'}
+				if ($hosts{$host}[$_]{'rss'} > 200){$print_out.= color 'bold red'}
+				$print_out.= sprintf("%4d",$hosts{$host}[$_]{'rss'});$print_out.= color $setcolor;$print_out.= "M]";
 				$rss+=$hosts{$host}[$_]{'rss'};
 				
 				my $dt = DateTime->from_epoch( epoch => $hosts{$host}[$_]{'start'},'time_zone'=>'local');
-				print "[".sprintf('%02d',$dt->hour).":".sprintf('%02d',$dt->min)."]";
+				$print_out.= "[".sprintf('%02d',$dt->hour).":".sprintf('%02d',$dt->min)."]";
 				
-				print "[";
-				if ((time()-$hosts{$host}[$_]{'start'}) > $TOM::max_time*0.5){print color 'yellow'};
-				if ((time()-$hosts{$host}[$_]{'start'}) > $TOM::max_time*0.8){print color 'bold red'};
-				print sprintf('%5s',int((time()-$hosts{$host}[$_]{'start'})/60)+1);
-				print color $setcolor;
-				print "]";
+				$print_out.= "[";
+				if ((time()-$hosts{$host}[$_]{'start'}) > $TOM::max_time*0.5){$print_out.= color 'yellow'};
+				if ((time()-$hosts{$host}[$_]{'start'}) > $TOM::max_time*0.8){$print_out.= color 'bold red'};
+				$print_out.= sprintf('%5s',int((time()-$hosts{$host}[$_]{'start'})/60)+1);
+				$print_out.= color $setcolor;
+				$print_out.= "]";
 				
-				print "[".sprintf('%5s',$hosts{$host}[$_]{'pid'})."]";
+				$print_out.= "[".sprintf('%5s',$hosts{$host}[$_]{'pid'})."]";
 				
 				if ($TOM::CACHE_memcached)
 				{
@@ -155,61 +155,63 @@ while(1)
 						use Data::Dumper;
 #						print Dumper($vals);
 						
-						print "[";
+						$print_out.= "[";
 						my $idle=(time() - $vals->{'time'});
 #						if ($idle > 5){print color 'bold cyan'}
-						if ($idle > 60){print color 'yellow'}
+						if ($idle > 60){$print_out.= color 'yellow'}
 #						if ($idle > 60){print color 'bold red'}
 						if ($idle > 1)
 						{
-							printf('%5s',$idle);
+							$print_out.=sprintf('%5s',$idle);
 						}
 						else
 						{
-							print "     ";
+							$print_out.= "     ";
 						}
-						print color $setcolor;print "]";
+						$print_out.= color $setcolor;$print_out.= "]";
 						
-						print "[".sprintf('%5s',$vals->{'count'})."]";
+						$print_out.= "[".sprintf('%5s',$vals->{'count'})."]";
 						
 						my $living=(time()-$hosts{$host}[$_]{'start'})/60;
 						my $rqs=int($vals->{'count'}/$living);
 						
-						print "[";
+						$print_out.= "[";
 #						if ($rqs < 1){print color 'bold red'}
-						if ($rqs < 10){print color 'yellow'}
+						if ($rqs < 10){$print_out.= color 'yellow'}
 						elsif ($rqs < 60){}
-						else {print color 'bold cyan'}
+						else {$print_out.= color 'bold cyan'}
 #						if ($rqs > 60){print color 'bold red'}
 #						if ($rqs > 60){print color 'bold red'}
-						printf('%4s',$rqs);
-						print color $setcolor;print "]";
+						$print_out.=sprintf('%4s',$rqs);
+						$print_out.= color $setcolor;$print_out.= "]";
 						
-						print "[";
-						if ($vals->{'request_code'}){print color 'bold cyan'}
-						printf('%8s',$vals->{'request_code'});
-						print color $setcolor;print "]";
+						$print_out.= "[";
+						if ($vals->{'request_code'}){$print_out.= color 'bold cyan'}
+						$print_out.=sprintf('%8s',$vals->{'request_code'});
+						$print_out.= color $setcolor;$print_out.= "]";
 						
-						print "[";
-						printf('%.70s',$vals->{'http_host'}.$vals->{'request_uri'});
-						print "]";
+						$print_out.= "[";
+						$print_out.=sprintf('%.70s',$vals->{'http_host'}.$vals->{'request_uri'});
+						$print_out.= "]";
 						
 					}
 				}
 				
-				print "\n";
+				$print_out.= "\n";
 				
 			}
 			
 			
 		}
 		
-		print color 'reset cyan';
-		print "[TOTAL".(" " x ($l-5))."]                  [". sprintf('%2d',$processes)."][". sprintf('%5s',sprintf('%-2.2f',$cpu)) ."][" .sprintf('%4s',$rss). "M]\n";
-		print color 'reset cyan';
+		$print_out.= color 'reset cyan';
+		$print_out.= "[TOTAL".(" " x ($l-5))."]                  [". sprintf('%2d',$processes)."][". sprintf('%5s',sprintf('%-2.2f',$cpu)) ."][" .sprintf('%4s',$rss). "M]\n";
+		$print_out.= color 'reset cyan';
 		
+		&Clear();
+		print $print_out;
 		#print color 'reset bold cyan';print "*";print "\n";
-		Time::HiRes::sleep(3);
+		Time::HiRes::sleep(0.3) unless $FORM{'r'};
 #		exit;
 	
 }
