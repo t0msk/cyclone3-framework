@@ -84,7 +84,7 @@ while(1)
 	
 		&Clear();
 		print color 'reset bold cyan';
-		print "[HOST".(" " x ($l-4))."][ENGINE   ][STAT ][P ][  CPU][  RSS][START][TIMEm]\n";
+		print "[DOMAIN(start)".(" " x ($l-13))."][ENGINE   ][STAT ][P ][  CPU][  RSS][START][TIMEm][  PID][IDLEs][  rqs][rq/m][rqcode  ][uri               ]\n";
 		print color 'reset cyan';
 		
 		my $processes;
@@ -144,7 +144,58 @@ while(1)
 				print color $setcolor;
 				print "]";
 				
-				print " #".$hosts{$host}[$_]{'pid'};
+				print "[".sprintf('%5s',$hosts{$host}[$_]{'pid'})."]";
+				
+				if ($TOM::CACHE_memcached)
+				{
+					# additional data
+					
+					if (my $vals=$Ext::CacheMemcache::cache->get('namespace'=>'c3process','key' => $TOM::hostname.':'.$hosts{$host}[$_]{'pid'}))
+					{
+						use Data::Dumper;
+#						print Dumper($vals);
+						
+						print "[";
+						my $idle=(time() - $vals->{'time'});
+#						if ($idle > 5){print color 'bold cyan'}
+						if ($idle > 60){print color 'yellow'}
+#						if ($idle > 60){print color 'bold red'}
+						if ($idle > 1)
+						{
+							printf('%5s',$idle);
+						}
+						else
+						{
+							print "     ";
+						}
+						print color $setcolor;print "]";
+						
+						print "[".sprintf('%5s',$vals->{'count'})."]";
+						
+						my $living=(time()-$hosts{$host}[$_]{'start'})/60;
+						my $rqs=int($vals->{'count'}/$living);
+						
+						print "[";
+#						if ($rqs < 1){print color 'bold red'}
+						if ($rqs < 10){print color 'yellow'}
+						elsif ($rqs < 60){}
+						else {print color 'bold cyan'}
+#						if ($rqs > 60){print color 'bold red'}
+#						if ($rqs > 60){print color 'bold red'}
+						printf('%4s',$rqs);
+						print color $setcolor;print "]";
+						
+						print "[";
+						if ($vals->{'request_code'}){print color 'bold cyan'}
+						printf('%8s',$vals->{'request_code'});
+						print color $setcolor;print "]";
+						
+						print "[";
+						printf('%.70s',$vals->{'http_host'}.$vals->{'request_uri'});
+						print "]";
+						
+					}
+				}
 				
 				print "\n";
 				
@@ -156,7 +207,6 @@ while(1)
 		print color 'reset cyan';
 		print "[TOTAL".(" " x ($l-5))."]                  [". sprintf('%2d',$processes)."][". sprintf('%5s',sprintf('%-2.2f',$cpu)) ."][" .sprintf('%4s',$rss). "M]\n";
 		print color 'reset cyan';
-		
 		
 		#print color 'reset bold cyan';print "*";print "\n";
 		Time::HiRes::sleep(3);
