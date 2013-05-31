@@ -430,7 +430,8 @@ sub start
 				$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 				
 			}
-			
+			$self->{'out_var'}->{'img.'.$out_cnt.'.ID'}=$vars{'ID'};
+			$self->{'out_var'}->{'img.'.$out_cnt.'.ID_entity'}=$vars{'ID_entity'};
 			$self->{'out_var'}->{'img.'.$out_cnt.'.src'}=$attr->{'src'};
 			$self->{'out_var'}->{'img.'.$out_cnt.'.fullsize.src'}=$attr->{'fullsize.src'} if $attr->{'fullsize.src'};
 			$self->{'out_var'}->{'img.'.$out_cnt.'.extra.src'}=$attr->{'extra.src'} if $attr->{'extra.src'};
@@ -481,61 +482,87 @@ sub start
 					$out_full=
 						$self->{'entity'}{'a510_video.'.$out_cnt}
 						|| $self->{'entity'}{'a510_video'}
-						|| $tpl->{'entity'}{'parser.a510_video.'.$out_cnt}
-						|| $tpl->{'entity'}{'parser.a510_video'}
+						|| $self->_find_tpl_entity('parser.a510_video')
 						# or as image
-						|| $self->{'entity'}{'a501_image.'.$out_cnt}
-						|| $self->{'entity'}{'a501_image'}
-						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
-						|| $tpl->{'entity'}{'parser.a501_image'}
+#						|| $self->{'entity'}{'a501_image.'.$out_cnt}
+#						|| $self->{'entity'}{'a501_image'}
+#						|| $tpl->{'entity'}{'parser.a501_image.'.$out_cnt}
+#						|| $tpl->{'entity'}{'parser.a501_image'}
 						|| $out_full;
 					
-					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
-					$out_full=~s|<%attr_height_plus%>|$attr->{'height'}+60|eg;
-					
-					# find thumbnail image to first part
-					my $relation=(App::160::SQL::get_relations(
-						'l_prefix' => 'a510',
-						'l_table' => 'video_part',
-						'l_ID_entity' => $db0_line{'ID_part'},
-						'rel_type' => 'thumbnail',
-						'r_db_name' => $App::501::db_name,
-						'r_prefix' => 'a501',
-						'r_table' => 'image',
-						'limit' => 1
-					))[0];
-					if ($relation->{'ID'})
+					if ($self->{'entity_tt'})
 					{
-						main::_log("find a501_image ID='$relation->{'r_ID_entity'}'") if $debug;
+						$db0_line{'thumbnail'}=(App::160::SQL::get_relations(
+							'l_prefix' => 'a510',
+							'l_table' => 'video_part',
+							'l_ID_entity' => $db0_line{'ID_part'},
+							'rel_type' => 'thumbnail',
+							'r_db_name' => $App::501::db_name,
+							'r_prefix' => 'a501',
+							'r_table' => 'image',
+							'limit' => 1
+						))[0];
+						if ($tpl->process({
+							'tag'=>$tag,
+							'text'=>$origtext,
+							'attr'=>$attr,
+							'var'=>\%vars,
+							'count'=>$out_cnt,
+							'entity'=>\%db0_line},
+						$self->{'entity_tt'}))
+						{$out_full=$tpl->{'output'};}
+						else {$out_full=$tpl->{'error'}}
+					}
+					else
+					{
 						
-						my $img_ID_format=
-							$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
-							|| $self->{'config'}->{'a501_image_file.ID_format'}
-							|| $App::501::image_format_fullsize_ID;
+						$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+						$out_full=~s|<%attr_height_plus%>|$attr->{'height'}+60|eg;
 						
-						my %db1_line=App::501::functions::get_image_file(
-							'image.ID_entity' => $relation->{'r_ID_entity'},
-							'image_file.ID_format' => $img_ID_format,
-							'image_attrs.lng' => $tom::lng
-						);
-						if ($db1_line{'file_path'})
+						# find thumbnail image to first part
+						my $relation=(App::160::SQL::get_relations(
+							'l_prefix' => 'a510',
+							'l_table' => 'video_part',
+							'l_ID_entity' => $db0_line{'ID_part'},
+							'rel_type' => 'thumbnail',
+							'r_db_name' => $App::501::db_name,
+							'r_prefix' => 'a501',
+							'r_table' => 'image',
+							'limit' => 1
+						))[0];
+						if ($relation->{'ID'})
 						{
-							$attr->{'src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
-							$out_full=~s|<%img\.db_(.*?)%>|$db1_line{$1}|g;
-							$self->{'out_addon'}->{'a510_video_part'}[$addon_part_cnt]{'img.src'}=$attr->{'src'};
-							$self->{'out_addon'}->{'a510_video_part'}[$addon_part_cnt]{'ID_image'}=$db1_line{'ID_image'};
-						}
-						# extra format
-						if ($self->{'config'}->{'a501_image_file.ID_format.extra'})
-						{
+							main::_log("find a501_image ID='$relation->{'r_ID_entity'}'") if $debug;
+							
+							my $img_ID_format=
+								$self->{'config'}->{'a501_image_file.ID_format.'.$out_cnt}
+								|| $self->{'config'}->{'a501_image_file.ID_format'}
+								|| $App::501::image_format_fullsize_ID;
+							
 							my %db1_line=App::501::functions::get_image_file(
 								'image.ID_entity' => $relation->{'r_ID_entity'},
-								'image_file.ID_format' => $self->{'config'}->{'a501_image_file.ID_format.extra'},
+								'image_file.ID_format' => $img_ID_format,
 								'image_attrs.lng' => $tom::lng
 							);
-							if ($db1_line{'ID_image'})
+							if ($db1_line{'file_path'})
 							{
-								$attr->{'extra.src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+								$attr->{'src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+								$out_full=~s|<%img\.db_(.*?)%>|$db1_line{$1}|g;
+								$self->{'out_addon'}->{'a510_video_part'}[$addon_part_cnt]{'img.src'}=$attr->{'src'};
+								$self->{'out_addon'}->{'a510_video_part'}[$addon_part_cnt]{'ID_image'}=$db1_line{'ID_image'};
+							}
+							# extra format
+							if ($self->{'config'}->{'a501_image_file.ID_format.extra'})
+							{
+								my %db1_line=App::501::functions::get_image_file(
+									'image.ID_entity' => $relation->{'r_ID_entity'},
+									'image_file.ID_format' => $self->{'config'}->{'a501_image_file.ID_format.extra'},
+									'image_attrs.lng' => $tom::lng
+								);
+								if ($db1_line{'ID_image'})
+								{
+									$attr->{'extra.src'}=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+								}
 							}
 						}
 					}
