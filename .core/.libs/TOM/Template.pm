@@ -184,7 +184,7 @@ sub new
 			);
 	}
 	
-	if ($objects{$obj->{'location'}})# && $objects{$obj->{'location'}}->{'config'}{'ctime'} < (time()-$TTL))
+	if ($objects{$obj->{'location'}} && $objects{$obj->{'location'}}->{'config'}{'ctime'} < (time()-$TTL))
 	{
 		# time to check changes
 		$objects{$obj->{'location'}}->{'config'}{'ctime'} = time();
