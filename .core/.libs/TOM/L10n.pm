@@ -86,6 +86,16 @@ sub new
 	# modifytime of location
 	$obj->{'config'}->{'mtime'} = (stat($obj->{'location'}))[9];
 	
+	if (!$objects{$obj->{'uid'}} && $TOM::CACHE_memcached && $main::cache)
+	{
+		# try memcached
+		$objects{$obj->{'uid'}} = 
+			$Ext::CacheMemcache::cache->get(
+				'namespace' => "l10ncache",
+				'key' => $obj->{'uid'}
+			);
+	}
+	
 	if ($objects{$obj->{'uid'}} && ($obj->{'config'}->{'mtime'} > $objects{$obj->{'uid'}}->{'config'}->{'mtime'}))
 	{
 		main::_log("{L10n} '$obj->{'location'}' expired, modified before ".( $obj->{'config'}->{'mtime'}-$objects{$obj->{'uid'}}->{'config'}->{'mtime'} )."s");
@@ -137,7 +147,9 @@ sub new
 		$obj_return->process_string() if (caller)[0] ne "TOM::L10n";
 		my $i;
 		my $id=$L10n::id{$obj->{'uid'}}; # get unique number of object
+		
 		# create a copy of actual strings into public
+		# obsolete, remove it as soon as possible
 		foreach (sort keys %L10n::string)
 		{
 			$i++;
@@ -145,6 +157,17 @@ sub new
 			$L10n::num{'#'.$obj->{'id'}}{$_}=$i;
 			$L10n::obj{'#'.$obj->{'id'}.'#'.$i}=$L10n::string{$_};
 		}
+	
+	if ($TOM::CACHE_memcached)
+	{
+		$Ext::CacheMemcache::cache->set(
+			'namespace' => "l10ncache",
+			'key' => $obj->{'uid'},
+			'value' => $obj_return,
+			'expiration' => '86400S'
+		);
+	}
+	
 	$t->close() if $debug;
 	return $obj_return;
 }

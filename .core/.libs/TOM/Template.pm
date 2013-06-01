@@ -174,7 +174,17 @@ sub new
 		}
 	}
 	
-	if ($objects{$obj->{'location'}} && $objects{$obj->{'location'}}->{'config'}{'ctime'} < (time()-$TTL))
+	if (!$objects{$obj->{'location'}} && $TOM::CACHE_memcached && $main::cache)
+	{
+		# try memcached
+		$objects{$obj->{'location'}} = 
+			$Ext::CacheMemcache::cache->get(
+				'namespace' => "tplcache",
+				'key' => $obj->{'location'}
+			);
+	}
+	
+	if ($objects{$obj->{'location'}})# && $objects{$obj->{'location'}}->{'config'}{'ctime'} < (time()-$TTL))
 	{
 		# time to check changes
 		$objects{$obj->{'location'}}->{'config'}{'ctime'} = time();
@@ -237,11 +247,33 @@ sub new
 				'COMPILE_EXT' => '.ttc2',
 			});
 		}
+		
+		if ($TOM::CACHE_memcached)
+		{
+			$Ext::CacheMemcache::cache->set(
+				'namespace' => "tplcache",
+				'key' => $obj->{'location'},
+				'value' => {
+					'ENV' => $obj->{'ENV'},
+					'config' => $obj->{'config'},
+					'mfile' => $obj->{'mfile'},
+					'entity' => $obj->{'entity'},
+					'entity_' => $obj->{'entity_'},
+					'L10n' => $obj->{'L10n'},
+					'file' => $obj->{'file'},
+					'file_' => $obj->{'file_'},
+					'location' => $obj->{'location'}
+				},
+				'expiration' => '86400S'
+			);
+		}
+		
 	}
 	else
 	{
 		main::_log("<={Template}{cache} '$obj->{'location'}'");
 	}
+	
 	
 	# create copy of object to return it as unique
 	# this is important to allow changing variables
@@ -258,6 +290,7 @@ sub new
 			%{$obj_return->{'L10n'}}=%{$objects{$obj->{'location'}}{'L10n'}};
 			# when L10n differs, initialize new L10n object
 			if ($obj_return->{'L10n'} && $obj_return->{'ENV'}->{'lng'} ne $obj_return->{'L10n'}{'lng'})
+#				|| (!$obj_return->{'L10n'}{'obj'} && $obj_return->{'L10n'} && $obj_return->{'ENV'}->{'lng'})
 			{
 				$obj_return->{'L10n'}{'obj'}=new TOM::L10n(
 					'level' => $obj_return->{'L10n'}{'level'},
@@ -271,6 +304,17 @@ sub new
 			# get tt reference from objects cache
 			if ($obj_return->{'config'}->{'tt'})
 			{
+				# in config is tt enabled, but object is missing (when loaded from memcached)
+				if (!$objects{$obj->{'location'}}{'tt'}) # extend by Template Toolkit
+				{
+					# in object cache is missing tt reference, because is loaded from memcached
+					main::_log("creating new Template::Toolkit object") if $debug;
+					$objects{$obj->{'location'}}{'tt'} = Template->new({
+						'INCLUDE_PATH' => [$tom::P.'/_dsgn',$tom::Pm.'/_dsgn'],
+						'COMPILE_DIR' => $tom::P.'/_temp',
+						'COMPILE_EXT' => '.ttc2',
+					});
+				}
 				$obj_return->{'tt'}=$objects{$obj->{'location'}}{'tt'};
 			}
 		}
@@ -295,6 +339,8 @@ sub new
 			%{$obj_return->{'file_'}}=%{$objects{$obj->{'location'}}{'file_'}};
 			%{$obj_return->{'mfile'}}=%{$objects{$obj->{'location'}}{'mfile'}};
 		}
+	
+	
 	$t->close() if $debug;
 	return $obj_return;
 }
@@ -576,7 +622,8 @@ sub parse_entity
 		{
 			$self->{'entity'}{$id}=$node->string_value();
 		}
-		$self->{'entity_'}{$id}{'replace_variables'}=$node->getAttribute('replace_variables');
+		$self->{'entity_'}{$id}{'replace_variables'}=$node->getAttribute('replace_variables')
+			if $node->getAttribute('replace_variables');
 		$self->{'entity_'}{$id}{'tt'}=$node->getAttribute('tt');
 		$self->{'entity_'}{$id}{'replace_L10n'}=$node->getAttribute('replace_L10n');
 		$self->{'entity_'}{$id}{'location'}=$self->{'location'}; # the source of entity
