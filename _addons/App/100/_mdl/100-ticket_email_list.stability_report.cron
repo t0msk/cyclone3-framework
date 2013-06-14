@@ -101,7 +101,7 @@ sub execute
 			date_events < CURDATE()
 		ORDER BY
 			DATE(datetime_create) ASC
-	},'db_h'=>'main');
+	},'db_h'=>'stats');
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		#$db0_line{'reqdatetime'}=~s/^\d\d\d\d\-\d\d\-\d\d (\d\d).*$/$1/;

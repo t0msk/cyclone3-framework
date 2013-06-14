@@ -1,4 +1,4 @@
--- db_h=main
+-- db_h=stats
 -- db_name=TOM
 -- app=a100
 -- version 5.0
@@ -15,11 +15,11 @@ CREATE TABLE `/*db_name*/`.`/*app*/_ticket` (
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`domain`,`name`),
+  KEY `SEL_0` (`status`,`datetime_create`,`emails`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID` (`ID`),
-  KEY `domain` (`domain`),
-  KEY `status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  KEY `domain` (`domain`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -32,7 +32,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_ticket_j` (
   `emails` varchar(255) character set ascii default NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -46,10 +46,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_ticket_event` (
   PRIMARY KEY  (`ID`,`datetime_create`),
   KEY `SEL_0` (`ID_ticket`,`status`,`datetime_create`),
   KEY `ID_entity` (`ID_entity`),
-  KEY `ID_ticket` (`ID_ticket`),
-  KEY `ID` (`ID`),
   KEY `status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 

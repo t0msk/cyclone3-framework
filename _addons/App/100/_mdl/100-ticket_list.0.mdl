@@ -62,7 +62,7 @@ sub execute
 		$env{'db_order'}
 	LIMIT $env{'db_limit'}
 	};
-	my %sth = TOM::Database::SQL::execute( $sql, 'log' => $debug);
+	my %sth = TOM::Database::SQL::execute( $sql, 'log' => $debug,'db_h'=>'stats');
 
 	if ( $sth{'rows'} )
 	{

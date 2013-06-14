@@ -27,6 +27,7 @@ sub execute
 	
 	my $number = 10;
 	
+	main::_log("get email");
 	my $sql = qq{
 		SELECT
 			emails
@@ -35,9 +36,11 @@ sub execute
 		WHERE
 			status='Y' AND
 			datetime_create >= DATE_SUB(NOW(), INTERVAL $time_durration MINUTE)
+		GROUP BY
+			emails
 	};
 	
-	my %sth0 = TOM::Database::SQL::execute($sql);
+	my %sth0 = TOM::Database::SQL::execute($sql,'db_h'=>'stats');
 	
 	if ($sth0{'rows'})
 	{
@@ -50,6 +53,7 @@ sub execute
 		
 		foreach my $email ( keys %emaillist )
 		{
+			main::_log("creating report to $email");
 			
 			my $tpl=new TOM::Template(
 				'level' => "auto",
@@ -88,7 +92,7 @@ sub execute
 				(
 					t.ID = e.ID_ticket
 					AND e.status = 'Y'
---					AND e.datetime_create >= DATE_SUB(NOW(),INTERVAL $time_durration MINUTE)
+					AND e.datetime_create >= DATE_SUB(NOW(),INTERVAL $time_durration MINUTE)
 				)
 				WHERE
 					t.emails like '%$email%'
@@ -103,7 +107,7 @@ sub execute
 			my $tickets;
 			my $events;
 			my $events_current;
-			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'db_h'=>'stats');
 			while (my %db1_line=$sth1{'sth'}->fetchhash)
 			{
 				$tickets++;
@@ -119,7 +123,7 @@ sub execute
 						e.status='Y' AND
 						e.datetime_create >= DATE_SUB(NOW(),INTERVAL $time_durration MINUTE)
 				};
-				my %sth2=TOM::Database::SQL::execute($sql,'quiet'=>1);
+				my %sth2=TOM::Database::SQL::execute($sql,'quiet'=>1,'db_h'=>'stats');
 				my %db2_line=$sth2{'sth'}->fetchhash;
 				$events_current+=$db2_line{'cnt'};
 				
@@ -159,7 +163,7 @@ sub execute
 						e.datetime_create DESC
 					LIMIT 1
 				};
-				my %sth3=TOM::Database::SQL::execute($sql,'quiet'=>1);
+				my %sth3=TOM::Database::SQL::execute($sql,'quiet'=>1,'db_h'=>'stats');
 				my %db3_line=$sth3{'sth'}->fetchhash;
 				my $cvml = new CVML( data => $db3_line{'cvml'} );
 				my %cvml_hash = %{$cvml->{'hash'}};

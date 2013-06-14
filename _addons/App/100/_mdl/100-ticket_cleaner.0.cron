@@ -37,7 +37,7 @@ sub execute
 		WHERE
 			status='Y'
 	};
-	my %sth0=TOM::Database::SQL::execute($sql);
+	my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'stats');
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		
@@ -55,7 +55,7 @@ sub execute
 				AND status='Y'
 			LIMIT 1
 		};
-		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
+		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'db_h'=>'stats');
 		
 		if ($sth1{'sth'}->fetchhash())
 		{
@@ -85,13 +85,13 @@ sub execute
 			datetime_create < DATE_SUB(NOW(),INTERVAL 3 MONTH)
 			AND status='N'
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'db_h'=>'stats');
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		main::_log("event $db0_line{'ID_entity'}");
 		App::020::SQL::functions::delete(
 			'ID' => $db0_line{'ID'},
-			'db_h' => 'main',
+			'db_h' => 'stats',
 			'db_name' => 'TOM',
 			'tb_name' => 'a100_ticket_event',
 		);
@@ -111,13 +111,13 @@ sub execute
 			datetime_create < DATE_SUB(NOW(),INTERVAL 1 YEAR)
 			AND status='N'
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'db_h'=>'stats');
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		main::_log("event $db0_line{'ID_entity'}");
 		App::020::SQL::functions::delete(
 			'ID' => $db0_line{'ID'},
-			'db_h' => 'main',
+			'db_h' => 'stats',
 			'db_name' => 'TOM',
 			'tb_name' => 'a100_ticket',
 			'-journalize' => 1,

@@ -28,7 +28,7 @@ sub execute
 	WHERE
 		ID=$env{'ID_ticket'}
 	/;
-	my %sth_ticket = TOM::Database::SQL::execute( $sql_ticket, 'log' => $debug);
+	my %sth_ticket = TOM::Database::SQL::execute( $sql_ticket, 'log' => $debug, 'db_h'=>'stats');
 	return 1 unless $sth_ticket{'rows'};
 
 	my %ticket = $sth_ticket{'sth'}->fetchhash;
@@ -58,7 +58,7 @@ sub execute
 		e.ID DESC
 	$env{'db_limit'}
 	/;
-	my %sth = TOM::Database::SQL::execute( $sql_events, 'log' => $debug);
+	my %sth = TOM::Database::SQL::execute( $sql_events, 'log' => $debug,'db_h'=>'stats');
 
 	if ( $sth{'rows'} )
 	{

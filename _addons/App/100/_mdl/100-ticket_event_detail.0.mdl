@@ -31,7 +31,7 @@ sub execute
 	WHERE
 		e.ID=$env{'ID'}
 	/;
-	my %sth = TOM::Database::SQL::execute( $sql, 'log' => $debug);
+	my %sth = TOM::Database::SQL::execute( $sql, 'log' => $debug,'db_h'=>'stats');
 
 	if ( $sth{'rows'} )
 	{

@@ -48,7 +48,7 @@ It is ordered by count of events.
 			status='Y'
 	};
 	
-	my %sth0 = TOM::Database::SQL::execute($sql);
+	my %sth0 = TOM::Database::SQL::execute($sql,'db_h'=>'stats');
 	
 	if ($sth0{'rows'})
 	{
@@ -109,7 +109,7 @@ It is ordered by count of events.
 				LIMIT $number
 			};
 			
-			my %sth1=TOM::Database::SQL::execute($sql);
+			my %sth1=TOM::Database::SQL::execute($sql,'db_h'=>'stats');
 			while (my %db1_line=$sth1{'sth'}->fetchhash)
 			{
 				my $line = $tpl->{'entity'}{'email.table.line'};
