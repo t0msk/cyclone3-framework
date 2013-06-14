@@ -41,6 +41,7 @@ use App::160::SQL;
 
 our $debug=1;
 our $quiet;$quiet=1 unless $debug;
+our $log_changes=$App::910::log_changes || undef;
 
 =head2 product_add()
 
@@ -386,6 +387,8 @@ sub product_add
 	
 	if (keys %columns)
 	{
+		main::_log(" a910_product '$env{'product.ID'}' update ".(join ".",keys %columns),3,$App::910::log_changes,2)
+			if $App::910::log_changes;
 		App::020::SQL::functions::update(
 			'ID' => $env{'product.ID'},
 			'db_h' => "main",
@@ -533,6 +536,8 @@ sub product_add
 	
 	if (keys %columns)
 	{
+		main::_log(" a910_product_ent '$env{'product_ent.ID'}' update ".(join ".",keys %columns),3,$App::910::log_changes,2)
+			if $App::910::log_changes;
 		App::020::SQL::functions::update(
 			'ID' => $env{'product_ent.ID'},
 			'db_h' => "main",
@@ -660,6 +665,8 @@ sub product_add
 	
 	if (keys %columns)
 	{
+		main::_log(" a910_product_lng '$env{'product_lng.ID'}' update ".(join ".",keys %columns),3,$App::910::log_changes,2)
+			if $App::910::log_changes;
 		App::020::SQL::functions::update(
 			'ID' => $env{'product_lng.ID'},
 			'db_h' => "main",
@@ -894,6 +901,8 @@ sub product_add
 	
 	if ($content_reindex)
 	{
+		main::_log(" index product '$env{'product.ID'}'",3,$App::910::log_changes,2)
+			if $App::910::log_changes;
 		App::020::SQL::functions::_save_changetime({
 			'db_h'=>'main',
 			'db_name'=>$App::910::db_name,
@@ -1034,22 +1043,6 @@ sub _product_index
 				push @content_ent,WebService::Solr::Field->new( 'brand_name_s' =>  $db2_line{'name'});
 				push @content_ent,WebService::Solr::Field->new( 'brand_name_t' =>  $db2_line{'name'});
 			}
-		}
-		
-		# symlinks
-		my %sth1=TOM::Database::SQL::execute(qq{
-			SELECT
-				a910_product_sym.ID
-			FROM
-				$App::910::db_name.a910_product_sym
-			WHERE
-				a910_product_sym.status='Y'
-				AND a910_product_sym.ID_entity=?
-		},'quiet'=>1,'bind'=>[$env{'ID_entity'}]);
-		while (my %db1_line=$sth1{'sth'}->fetchhash())
-		{
-#			main::_log("cat $db1_line{'ID'}");
-			push @content_ent,WebService::Solr::Field->new( 'cat' =>  $db1_line{'ID'}); # product_cat.ID_entity
 		}
 		
 		# hits
@@ -1419,7 +1412,8 @@ sub _product_index
 		my %sth1=TOM::Database::SQL::execute(qq{
 			SELECT
 				a910_product_sym.ID,
-				a910_product_cat.ID_charindex
+				a910_product_cat.ID_charindex,
+				a910_product_cat.ID as cat_ID
 			FROM
 				$App::910::db_name.a910_product_sym
 			INNER JOIN $App::910::db_name.a910_product_cat ON
@@ -1433,8 +1427,23 @@ sub _product_index
 		},'quiet'=>1,'bind'=>[$db0_line{'lng'},$env{'ID_entity'}]);
 		while (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
-#			main::_log("cat+ $db1_line{'ID'} $db1_line{'ID_charindex'}");
+#			main::_log("[$lng] cat+ $db1_line{'ID'} $db1_line{'ID_charindex'}");
 			push @{$content{$lng}},WebService::Solr::Field->new( 'cat_charindex_sm' =>  $db1_line{'ID_charindex'}); # product_cat.ID_entity
+			push @{$content{$lng}},WebService::Solr::Field->new( 'cat' =>  $db1_line{'ID'});
+			
+			my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$db1_line{'cat_ID'},
+					%sql_def,
+					'-cache' => 86400*7
+				)
+			)
+			{
+#				main::_log(" cat_sm=".$p->{'ID_entity'});
+				push @{$content{$lng}},WebService::Solr::Field->new( 'cat_path_sm' =>  $p->{'ID_entity'});
+			}
+			
 		}
 		
 		# save original HTML values
@@ -1507,7 +1516,6 @@ sub _product_index
 	foreach my $lng (keys %content)
 	{
 		my $id=$App::910::db_name.".a910_product.".$lng.".".$env{'ID'};
-		main::_log("index id='$id'");
 		
 		my $doc = WebService::Solr::Document->new();
 		
@@ -1774,7 +1782,7 @@ sub _a210_by_cat
 				my %sth0=TOM::Database::SQL::execute(
 				qq{SELECT ID FROM $App::210::db_name.a210_page WHERE ID_entity=? AND lng=? AND status IN ('Y','L') LIMIT 1},
 				'bind'=>[$relation->{'l_ID_entity'},$env{'lng'}],'quiet'=>1,
-					'-cache' => 600,
+					'-cache' => 86400*7,
 					'-cache_changetime' => App::020::SQL::functions::_get_changetime({
 						'db_name' => $App::210::db_name,
 						'tb_name' => 'a210_page',
