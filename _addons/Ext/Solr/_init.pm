@@ -89,10 +89,13 @@ sub search
 	{
 		my $numfound=$response->content->{'response'}->{'numFound'};
 		my $qtime=$response->content->{'responseHeader'}->{'QTime'};
-		main::_log("[solr] search '$_[0]' found='$numfound' qtime='$qtime'");
-		main::_log("search '$_[0]' found='$numfound' qtime='$qtime' from $package at $filename:$line",3,"solr");
-		main::_log("[$tom::H] search '$_[0]' found='$numfound' qtime='$qtime' from $package at $filename:$line",3,"solr",1);
-		main::_log("[$tom::H] search '$_[0]' found='$numfound' qtime='$qtime' from $package at $filename:$line",3,"solr",2) if $tom::H ne $tom::Hm;
+		if (!$_[1]->{'quiet'})
+		{
+			main::_log("[solr] search '$_[0]' found='$numfound' qtime='$qtime'");
+			main::_log("search '$_[0]' found='$numfound' qtime='$qtime' from $package at $filename:$line",3,"solr");
+			main::_log("[$tom::H] search '$_[0]' found='$numfound' qtime='$qtime' from $package at $filename:$line",3,"solr",1);
+			main::_log("[$tom::H] search '$_[0]' found='$numfound' qtime='$qtime' from $package at $filename:$line",3,"solr",2) if $tom::H ne $tom::Hm;
+		}
 	}
 	else
 	{
