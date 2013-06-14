@@ -116,6 +116,7 @@ sub new
 	
 	my $type="INSERT";
 	$type="REPLACE" if $env{'-replace'};
+	$type.=" DELAYED" if $env{'-delayed'};
 	my $SQL=qq{
 		$type INTO
 			`$env{'db_name'}`.`$env{'tb_name'}`
@@ -140,6 +141,7 @@ sub new
 			'ID' => $ID,
 			'ID_entity' => $env{'columns'}{'ID_entity'},
 			'datetime_create' => $env{'columns'}{'datetime_create'},
+			'-low_priority' => $env{'-delayed'}
 		);
 		
 		if ($env{'-journalize'})
@@ -198,6 +200,7 @@ sub new_initialize
 		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
+	my $low_priority=" LOW_PRIORITY" if $env{'-low_priority'};
 	$env{'datetime_create'}="NOW()" unless $env{'datetime_create'};
 	
 	# this is not very secure, but...
@@ -215,11 +218,11 @@ sub new_initialize
 		elsif ($db0_line{'ID'} > 1){$ID_entity=$db0_line{'ID'};}
 	}
 	
-	my $SQL="UPDATE `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=$env{'datetime_create'}, ";
+	my $SQL="UPDATE$low_priority `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=$env{'datetime_create'}, ";
 	
 	if ($env{'ID_entity'} && $env{'ID'})
 	{
-		$SQL="UPDATE `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=$env{'datetime_create'} WHERE ID=$env{'ID'}";
+		$SQL="UPDATE$low_priority `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=$env{'datetime_create'} WHERE ID=$env{'ID'}";
 	}
 	elsif ($env{'ID'})
 	{
