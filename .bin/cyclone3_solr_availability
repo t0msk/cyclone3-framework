@@ -8,11 +8,13 @@ use File::ReadBackwards;
 
 my $cmd = shift || '';
 if ($cmd eq 'config') {print qq{graph_title Cyclone3 Solr availability
-graph_args --base 1000
+graph_args --base 1000 --lower-limit 0
 graph_category cyclone3
 graph_vlabel milliseconds
 graph_order query
-query.label Query duration
+query.label Search duration
+query.warning 20
+query.critical 30
 query.min 0
 query.max 1000
 };
@@ -42,7 +44,13 @@ my $datetime_now_string=sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d'
 my $i;
 my $value_query=0;
 
-my $bw = File::ReadBackwards->new('/srv/Cyclone3/_logs/'.$date.'.solr.log') or die "can't read 'log_file' $!" ;
+my $logfile;
+if (-e '/var/log/Cyclone3/'.$date.'.solr.log'){$logfile='/var/log/Cyclone3/'.$date.'.solr.log'}
+elsif (-e '/srv/Cyclone3/_logs/'.$date.'.solr.log'){$logfile='/srv/Cyclone3/_logs/'.$date.'.solr.log'}
+elsif (-e '/Cyclone3/_logs/'.$date.'.solr.log'){$logfile='/Cyclone3/_logs/'.$date.'.solr.log'}
+elsif (-e '/www/TOM/_logs/'.$date.'.solr.log'){$logfile='/www/TOM/_logs/'.$date.'.solr.log'};
+
+my $bw = File::ReadBackwards->new($logfile) or die "can't read 'log_file' $!" ;
 while( my $line = $bw->readline )
 {
 	chomp($line);

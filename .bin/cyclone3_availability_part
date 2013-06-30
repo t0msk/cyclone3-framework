@@ -11,20 +11,21 @@ if ($cmd eq 'config') {print qq{graph_title Cyclone3 CPU usage
 graph_args --base 1000 --lower-limit 0
 graph_category cyclone3
 graph_vlabel milliseconds
-graph_order pre post pro
-graph_total total
+graph_order pre pro post
 pre.label prepare
-pre.draw LINE2
+pre.draw LINE1
 pre.min 0
-pre.max 1000
 post.label postprocess
-post.draw LINE2
+post.draw LINE1
 post.min 0
-post.max 1000
 pro.label process
-pro.draw LINE2
+pro.draw LINE1
 pro.min 0
-pro.max 1000
+total.colour 000000
+total.label total
+total.draw LINE0
+total.warning 100
+total.critical 200
 };
 	exit 0;
 }
@@ -102,6 +103,7 @@ $value_post="U" unless $value_post;
 print "pre.value " . $value_pre . "\n";
 print "pro.value " . $value_pro . "\n";
 print "post.value " . $value_post . "\n";
+print "total.value " . ($value_pre+$value_pro+$value_post) . "\n";
 
 #print "$value_req $value_proc";
 

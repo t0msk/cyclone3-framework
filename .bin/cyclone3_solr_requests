@@ -13,15 +13,15 @@ graph_category cyclone3
 graph_vlabel requests / second
 graph_order search add commit
 graph_scale no
-commit.label COMMIT*10
+commit.label COMMIT
+commit.draw LINE1
 commit.min 0
-commit.max 1000
 add.label Add document
+add.draw LINE1
 add.min 0
-add.max 1000
 search.label Search query
+search.draw LINE1
 search.min 0
-search.max 1000
 };
 	exit 0;
 }
@@ -43,7 +43,13 @@ my $value_commit=0;
 my $value_add=0;
 my $value_search=0;
 
-my $bw = File::ReadBackwards->new('/srv/Cyclone3/_logs/'.$date.'.solr.log') or die "can't read 'log_file' $!" ;
+my $logfile;
+if (-e '/var/log/Cyclone3/'.$date.'.solr.log'){$logfile='/var/log/Cyclone3/'.$date.'.solr.log'}
+elsif (-e '/srv/Cyclone3/_logs/'.$date.'.solr.log'){$logfile='/srv/Cyclone3/_logs/'.$date.'.solr.log'}
+elsif (-e '/Cyclone3/_logs/'.$date.'.solr.log'){$logfile='/Cyclone3/_logs/'.$date.'.solr.log'}
+elsif (-e '/www/TOM/_logs/'.$date.'.solr.log'){$logfile='/www/TOM/_logs/'.$date.'.solr.log'};
+
+my $bw = File::ReadBackwards->new($logfile) or die "can't read 'log_file' $!" ;
 while( my $line = $bw->readline )
 {
 	chomp($line);
@@ -73,7 +79,7 @@ while( my $line = $bw->readline )
 	}
 }
 
-print "commit.value " . int((($value_commit*10)/1/60)*100)/100 . "\n";
+print "commit.value " . int((($value_commit)/1/60)*100)/100 . "\n";
 print "add.value " . int(($value_add/1/60)*100)/100 . "\n";
 print "search.value " . int(($value_search/1/60)*100)/100 . "\n";
 

@@ -41,7 +41,13 @@ my $value_crt=0;
 my $value_hit=0;
 
 
-my $bw = File::ReadBackwards->new('/srv/Cyclone3/_logs/'.$date.'.cache.log') or die "can't read 'log_file' $!" ;
+my $logfile;
+if (-e '/var/log/Cyclone3/'.$date.'.cache.log'){$logfile='/var/log/Cyclone3/'.$date.'.cache.log'}
+elsif (-e '/srv/Cyclone3/_logs/'.$date.'.cache.log'){$logfile='/srv/Cyclone3/_logs/'.$date.'.cache.log'}
+elsif (-e '/Cyclone3/_logs/'.$date.'.cache.log'){$logfile='/Cyclone3/_logs/'.$date.'.cache.log'}
+elsif (-e '/www/TOM/_logs/'.$date.'.cache.log'){$logfile='/www/TOM/_logs/'.$date.'.cache.log'};
+
+my $bw = File::ReadBackwards->new($logfile) or die "can't read 'log_file' $!" ;
 while( my $line = $bw->readline )
 {
 	chomp($line);

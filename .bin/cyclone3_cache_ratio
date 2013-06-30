@@ -14,13 +14,13 @@ graph_order page mdl sql
 graph_scale no
 page.label page cache ratio
 page.min 0
-page.draw LINE2
+page.draw LINE1
 mdl.label module cache ratio
 mdl.min 0
-mdl.draw LINE2
+mdl.draw LINE1
 sql.label sql cache ratio
 sql.min 0
-sql.draw LINE2
+sql.draw LINE1
 };
 	exit 0;
 }
@@ -43,8 +43,13 @@ my $i;
 my %value_crt;
 my %value_hit;
 
+my $logfile;
+if (-e '/var/log/Cyclone3/'.$date.'.cache.log'){$logfile='/var/log/Cyclone3/'.$date.'.cache.log'}
+elsif (-e '/srv/Cyclone3/_logs/'.$date.'.cache.log'){$logfile='/srv/Cyclone3/_logs/'.$date.'.cache.log'}
+elsif (-e '/Cyclone3/_logs/'.$date.'.cache.log'){$logfile='/Cyclone3/_logs/'.$date.'.cache.log'}
+elsif (-e '/www/TOM/_logs/'.$date.'.cache.log'){$logfile='/www/TOM/_logs/'.$date.'.cache.log'};
 
-my $bw = File::ReadBackwards->new('/srv/Cyclone3/_logs/'.$date.'.cache.log') or die "can't read 'log_file' $!" ;
+my $bw = File::ReadBackwards->new($logfile) or die "can't read 'log_file' $!" ;
 while( my $line = $bw->readline )
 {
 	chomp($line);
