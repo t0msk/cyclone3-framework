@@ -110,7 +110,11 @@ BEGIN
 				}
 			}
 			
+			# when locally defined
 			require Ext::Solr::_init if $Ext::Solr::url;
+			require Ext::RabbitMQ::_init if $Ext::RabbitMQ::host;
+			require Ext::Redis::_init if $Ext::Redis::host;
+			require Ext::CacheMemcache::_init if $TOM::CACHE_memcached;
 			
 		}
 		
