@@ -36,6 +36,7 @@ L<App::401::mimetypes::html|app/"401/mimetypes/html.pm">
 =cut
 
 use App::401::_init;
+use HTML::Parser;
 use App::401::mimetypes::html;
 
 
