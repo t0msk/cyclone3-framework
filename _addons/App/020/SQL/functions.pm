@@ -52,6 +52,7 @@ L<App::020|app/"020/_init.pm">
 
 use TOM::Database::SQL;
 use Ext::CacheMemcache::_init;
+use Ext::Redis::_init;
 use App::020::SQL::functions::tree;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 
@@ -1440,7 +1441,7 @@ sub _get_changetime
 	$env{'db_h'}='main' unless $env{'db_h'};
 	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
 	
-	if (!$TOM::CACHE_memcached)
+	if (!$TOM::CACHE_memcached && !$Redis)
 	{
 		# when memcached is not enabled, return 1 = database is always changed
 		return Time::HiRes::time();
@@ -1455,11 +1456,19 @@ sub _get_changetime
 		return $main::env{'cache'}{'db_changed'}{$key};
 	}
 	
-	my $changetime=$Ext::CacheMemcache::cache->get
-	(
-		'namespace' => "db_changed",
-		'key' => $key
-	);
+	my $changetime;
+	if ($Redis)
+	{
+		$changetime=$Redis->hget('C3|db_entity|'.$key,'modified');
+	}
+	else # or old memcached way
+	{
+		$changetime=$Ext::CacheMemcache::cache->get
+		(
+			'namespace' => "db_changed",
+			'key' => $key
+		);
+	}
 	
 	$main::env{'cache'}{'db_changed'}{$key}=$changetime;
 	
@@ -1479,9 +1488,9 @@ sub _save_changetime
 	$env{'db_h'}='main' unless $env{'db_h'};
 	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
 	
-	if (!$TOM::CACHE_memcached)
+	if (!$TOM::CACHE_memcached && !$Redis)
 	{
-		# when memcached is not enabled, return 1
+		# when memcached or Redis is not enabled, return 1
 		return 1;
 	}
 	
@@ -1491,6 +1500,18 @@ sub _save_changetime
 	my $tt=Time::HiRes::time();
 	$main::env{'cache'}{'db_changed'}{$key}=$tt;
 	$main::env{'cache'}{'db_changed'}{$key_entity}=$tt;
+	
+	if ($Redis)
+	{
+		$Redis->hset('C3|db_entity|'.$key,'modified',$tt);
+		$Redis->publish('C3|db_entity|'.$key,$tt); # publish event
+		if ($env{'ID_entity'})
+		{
+			$Redis->hset('C3|db_entity|'.$key_entity,'modified',$tt);
+			$Redis->publish('C3|db_entity|'.$key_entity,$tt);
+		}
+		return 1;
+	}
 	
 	$Ext::CacheMemcache::cache->set
 	(
