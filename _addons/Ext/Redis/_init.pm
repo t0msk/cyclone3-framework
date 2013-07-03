@@ -47,8 +47,11 @@ if ($Ext::Redis::host)
 	)};
 	if ($service && $service->ping)
 	{
-		main::_log("Redis connected and respondig");
+		my %info=%{$service->info()};
+		main::_log("Redis v".$info{'redis_version'}." connected and respondig");
+#		if ($info{'redis_version'} < '2.4.15')
 		#$service->send_command('CLIENT SETNAME aa');
+		
 		
 		# override memcached
 		$TOM::CACHE_memcached=1;
@@ -100,6 +103,10 @@ sub set
 	{
 		$expire=$1*86400;
 	}
+	elsif ($env{'expiration'}=~/^(\d+)H$/)
+	{
+		$expire=$1*3600;
+	}
 	
 	$Ext::Redis::service->set(
 		$key,
@@ -117,11 +124,16 @@ sub get
 {
 	my $self=shift;
 	my %env=@_;
-	return Storable::thaw(
+	my $value=Storable::thaw(
 		$Ext::Redis::service->get(
 			'memcache|'.$env{'namespace'}.'|'.$env{'key'}
 		)
 	);
+	if (ref $value eq "SCALAR")
+	{
+		return $$value;
+	}
+	return $value;
 }
 
 sub AUTOLOAD
