@@ -28,6 +28,8 @@ BEGIN
 	main::_log("<={LIB} ".__PACKAGE__);
 	my $dir=(__FILE__=~/^(.*)\//)[0].'/src';
 	
+	return if $Ext::CacheMemcache::cache;
+	
 	eval {require Cache::Memcached::Managed};
 	if ($@)
 	{
@@ -185,6 +187,9 @@ Creates connection to memcached daemon/s when defined in configuration
 sub connect
 {
 	my %env=@_;
+	
+	return if $Ext::CacheMemcache::cache;
+	
 	my $t=track TOM::Debug(__PACKAGE__."::connect()");
 	
 #	if (check())

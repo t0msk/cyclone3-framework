@@ -38,6 +38,7 @@ BEGIN
 
 if ($Ext::Redis::host)
 {
+	my $t=track TOM::Debug("connect",'attrs'=>$Ext::Redis::host);
 	eval{$service = RedisDB->new(
 		'host' => (split(':',$Ext::Redis::host))[0],
 		'port' => (split(':',$Ext::Redis::host))[1] || 6379,
@@ -46,19 +47,21 @@ if ($Ext::Redis::host)
 	)};
 	if ($service && $service->ping)
 	{
-		main::_log("Redis host $Ext::Redis::host connected");
+		main::_log("Redis connected and respondig");
 		#$service->send_command('CLIENT SETNAME aa');
 		
 		# override memcached
 		$TOM::CACHE_memcached=1;
 		$Ext::CacheMemcache::cache = new Ext::CacheMemcache::Redir;
-		
+		main::_log("overriding \$Ext::CacheMemcache::cache object");
 	}
 	else
 	{
+		$t->close();
 		undef $service;
 		undef $Ext::Redis::host;
 	}
+	$t->close();
 }
 
 package Ext::CacheMemcache::Redir; # buaah
