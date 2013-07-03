@@ -1,0 +1,45 @@
+#!/usr/bin/perl
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.bin/c3-init";
+}
+
+my $cmd = shift || '';
+if ($cmd eq 'config') {print qq{graph_title Redis commands rate
+graph_args --base 1000 -l 0
+graph_category cyclone3
+graph_order commands hits misses
+graph_vlabel commands/s
+graph_scale no
+graph_info This graph monitors the commands rate
+commands.label commands/s
+commands.type COUNTER
+commands.min 0
+hits.label cache hits
+hits.type COUNTER
+hits.min 0
+misses.label cache misses
+misses.type COUNTER
+misses.min 0
+};
+	exit 0;
+}
+
+use Ext::Redis::_init;
+
+if (!$Redis)
+{
+	exit 0;
+}
+
+my %info=%{$Redis->info()};
+use Data::Dumper;
+#print Dumper(\%info);
+print "commands.value " . $info{'total_commands_processed'} . "\n";
+print "hits.value " . $info{'keyspace_hits'} . "\n";
+print "misses.value " . $info{'keyspace_misses'} . "\n";

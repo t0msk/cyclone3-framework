@@ -1,0 +1,39 @@
+#!/usr/bin/perl
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.bin/c3-init";
+}
+
+my $cmd = shift || '';
+if ($cmd eq 'config') {print qq{graph_title Redis keys
+graph_args --base 1000 -l 0
+graph_category cyclone3
+graph_order keys expires
+graph_vlabel Pernament keys
+graph_scale no
+keys.label keys
+keys.draw LINE1
+expires.label Keys with expiration
+expires.draw LINE1
+};
+	exit 0;
+}
+
+use Ext::Redis::_init;
+
+if (!$Redis)
+{
+	exit 0;
+}
+
+my %info=%{$Redis->info()};
+use Data::Dumper;
+#print Dumper(\%info);
+print "keys.value " . ($info{'db0'}=~/keys=(\d+)/)[0] . "\n";
+print "expires.value " . ($info{'db0'}=~/expires=(\d+)/)[0] . "\n";
+
