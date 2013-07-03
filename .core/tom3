@@ -319,6 +319,10 @@ while ($main::CGI=new CGI::Fast())
 	local $tom::H_cookie=$tom::H_cookie;
 	if ($main::ENV{'hostname_cookie'}){main::_log("override \$tom::H_cookie by ENV to '$main::ENV{'hostname_cookie'}' from '$tom::H_cookie'");$tom::H_cookie=$main::ENV{'hostname_cookie'}}
 	
+	# no original, all links are with the same priority
+	$tom::H_www_orig=$tom::H_www
+		unless @tom::H_www_multi;
+	
 #	main::_log('DOS control');
 #	if (TOM::Net::HTTP::DOS::processENV(%main::ENV))
 #	{
@@ -2302,7 +2306,7 @@ while ($main::CGI=new CGI::Fast())
 				next;
 			}
 			
-			if ($mdl_env{'-disabled'} == 1)
+			if ($mdl_env{'-disabled'})
 			{
 				main::_log("module disabled");
 				next;
