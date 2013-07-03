@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+use strict;
+use open ':utf8', ':std';
+use utf8;
+
+BEGIN
+{
+	$main::debug=0;
+	$main::stdout=1;
+	$TOM::engine="cli";
+	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
+	$TOM::engine_ready=1;
+	$TOM::core_uname_n=$TOM::hostname;
+	
+	chomp ($main::p=`pwd`);
+	$main::P=$TOM::P;
+	$TOM::P=$main::P;
+	unshift @INC,$main::P."/.core/.libs";
+}
+
+use TOM::lock;
+
+1;
