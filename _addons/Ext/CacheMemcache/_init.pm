@@ -54,6 +54,7 @@ BEGIN
 	{
 		main::_log("<={LIB} Cache::Memcached::Fast not available",1);
 	}
+#	$fast=0;
 }
 
 use TOM::System::process;
@@ -210,7 +211,10 @@ sub connect
 	my %connect_set;
 	$connect_set{'memcached_class'} = 'Cache::Memcached::Fast' if $fast;
 	$cache = Cache::Memcached::Managed->new(
+#		$TOM::CACHE_memcached_servers,
 		'data'=>$TOM::CACHE_memcached_servers,
+#		'directory'=>@{$TOM::CACHE_memcached_servers}[0],
+		'directory'=>$TOM::CACHE_memcached_servers,
 		%connect_set
 	);
 	$cache->{'debug'}=$debug;
