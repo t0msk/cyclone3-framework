@@ -12,7 +12,7 @@ BEGIN {
 my $cmd = shift || '';
 if ($cmd eq 'config') {print qq{graph_title Redis connections
 graph_args --base 1000 -l 0
-graph_category cyclone3
+graph_category cyclone3_redis
 graph_order connections
 graph_vlabel connections
 graph_scale no

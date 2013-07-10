@@ -12,7 +12,7 @@ BEGIN {
 my $cmd = shift || '';
 if ($cmd eq 'config') {print qq{graph_title Redis expired keys
 graph_args --base 1000 -l 0
-graph_category cyclone3
+graph_category cyclone3_redis
 graph_order expired evicted
 graph_vlabel commands/s
 graph_scale no
