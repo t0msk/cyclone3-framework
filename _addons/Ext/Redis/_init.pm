@@ -39,12 +39,24 @@ BEGIN
 if ($Ext::Redis::host)
 {
 	my $t=track TOM::Debug("connect",'attrs'=>$Ext::Redis::host);
-	eval{$service = RedisDB->new(
-		'host' => (split(':',$Ext::Redis::host))[0],
-		'port' => (split(':',$Ext::Redis::host))[1] || 6379,
-#			'connection_name' => 'C3',#.$TOM::Engine.' '.$tom::H_www,
-		'raise_error' => 0 # not works
-	)};
+	eval{
+		if ($Ext::Redis::host=~/^\//)
+		{
+			$service = RedisDB->new(
+				'path' => $Ext::Redis::host,
+				'raise_error' => 0 # not works
+			)
+		}
+		else
+		{
+			$service = RedisDB->new(
+				'host' => (split(':',$Ext::Redis::host))[0],
+				'port' => (split(':',$Ext::Redis::host))[1] || 6379,
+		#			'connection_name' => 'C3',#.$TOM::Engine.' '.$tom::H_www,
+				'raise_error' => 0 # not works
+			)
+		}
+	};
 	if ($service && $service->ping)
 	{
 		my %info=%{$service->info()};
@@ -110,11 +122,13 @@ sub set
 	
 	$Ext::Redis::service->set(
 		$key,
-		$env{'value'}
+		$env{'value'},
+		sub {} # in pipeline
 	);
 	$Ext::Redis::service->expire(
 		$key,
-		$expire || 600
+		$expire || 600,
+		sub {} # in pipeline
 	);
 	
 	return 1;
