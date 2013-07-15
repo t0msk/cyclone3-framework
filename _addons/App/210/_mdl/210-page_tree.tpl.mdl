@@ -75,7 +75,7 @@ sub execute
 	},
 		'bind'=>[$env{'lng'},$env{'ID_charindex'}.$sql_suffix,$sql_length],
 		'quiet'=>1,
-		'-cache' => 3600,
+		'-cache' => 86400*7,
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",
@@ -107,7 +107,7 @@ sub execute
 			'db_h'    => 'main',
 			'db_name' => $App::210::db_name,
 			'tb_name' => 'a210_page',
-			'-cache' => 3600,
+			'-cache' => 86400*7
 		))
 		{
 			$db0_line{'path_url'}.='/'.$node->{'name_url'};
