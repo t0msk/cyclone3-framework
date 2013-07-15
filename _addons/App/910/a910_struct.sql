@@ -9,6 +9,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `ID_entity` bigint(20) unsigned default NULL,
   `product_number` varchar(32) character set ascii default NULL, -- unique for every modification
   `datetime_create` datetime NOT NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_process` datetime default NULL,
   `datetime_next_index` datetime default NULL,
   `datetime_publish_start` datetime NOT NULL,
@@ -34,7 +35,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `status_special` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
-  UNIQUE KEY `UNI_0` (`product_number`),
+--  UNIQUE KEY `UNI_0` (`product_number`),
   KEY `ID_entity` (`ID_entity`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -64,6 +65,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `ID_entity` bigint(20) unsigned default NULL,
   `product_number` varchar(32) character set ascii default NULL,
   `datetime_create` datetime NOT NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_process` datetime default NULL,
   `datetime_next_index` datetime default NULL,
   `datetime_publish_start` datetime NOT NULL,
