@@ -554,7 +554,7 @@ sub module
 				if ($Redis)
 				{
 					my $key = 'C3|mdl_cache|'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
-					$hits=$Redis->hincrby($key,'hits',1);
+#					$hits=$Redis->hincrby($key,'hits',1);
 				}
 				else
 				{
@@ -572,7 +572,7 @@ sub module
 					$hpm=int($hits/($mdl_C{'-cache_old'}/60))
 						if ($mdl_C{'-cache_old'}/60);
 				main::_log("[mdl][".$mdl_C{'-md5'}."][HIT] name='".$mdl_C{'T_CACHE'}."' (start:".$mdl_C{'-cache_from'}." old:".$mdl_C{'-cache_old'}." hits:$hits hpm:$hpm)",3,"cache");
-				main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][HIT]",3,"cache",1);
+				main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][HIT] #$hits",3,"cache",1);
 			}
 			
 			if ($mdl_C{'-stdout'} && $main::stdout)
@@ -841,11 +841,23 @@ our \$VERSION=$m_time;
 						'return_code' => $return_code,
 						'time_from' => $main::time_current,
 						'time_duration' => $CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'},
-						'hits' => 0
+						'hits' => 0,
+						sub {} # in pipeline
 					);
-					$Redis->hdel($key,'etime'); # remove execution time
-					$Redis->expire($key,$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}+600); # set expiration time
+					$Redis->hdel($key,'etime',sub {}); # remove execution time
+					$Redis->expire($key,
+						$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'} + 
+						int($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}/2),
+						sub {} # in pipeline
+					); # set expiration time
 					main::_log("saved to redis '$key'");
+					
+					if ($TOM::DEBUG_cache)
+					{
+						main::_log("[mdl][".$mdl_C{'-md5'}."][CRT] name='".$mdl_C{'T_CACHE'}."' (start:".$main::time_current.")",3,"cache");
+						main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][CRT]",3,"cache",1);
+					}
+					
 				}
 				elsif ($TOM::CACHE_memcached)
 				{
