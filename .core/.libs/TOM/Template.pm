@@ -859,6 +859,7 @@ sub process
 		};
 		# request params
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'param'}=\%main::FORM;
+		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'RPC'}=$main::RPC;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'ENV'}=\%main::ENV;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'cookie'}=\%main::COOKIES_all;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'a210'}=\%main::a210;
