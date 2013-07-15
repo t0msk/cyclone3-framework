@@ -1375,7 +1375,7 @@ while ($main::CGI=new CGI::Fast())
 							'ID'      => "'".TOM::Security::form::sql_escape($ID)."'",
 							'columns' => { '*' => 1 },
 							'-slave' => 1,
-							'-cache' => 3600,
+							'-cache' => 86400,
 							'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%sql_def)
 						);
 						$main::a210{'node'}=\%a210;
@@ -1385,7 +1385,7 @@ while ($main::CGI=new CGI::Fast())
 								$ID,
 								%sql_def,
 								'-slave' => 1,
-								'-cache' => 3600
+								'-cache' => 86400
 							)
 						)
 						{
@@ -1417,7 +1417,7 @@ while ($main::CGI=new CGI::Fast())
 							'db_name' => $App::210::db_name,
 							'tb_name' => "a210_page",
 							'lng'     => $main::FORM{'__lng'},
-							'-cache' => 3600,
+							'-cache' => 86400,
 							'-slave' => 1
 						);
 						$main::a210{'node'}=\%a210;
@@ -1427,7 +1427,7 @@ while ($main::CGI=new CGI::Fast())
 								'db_h' => "main",
 								'db_name' => $App::210::db_name,
 								'tb_name' => "a210_page",
-								'-cache' => 3600,
+								'-cache' => 86400,
 								'-slave' => 1
 							)
 						)
