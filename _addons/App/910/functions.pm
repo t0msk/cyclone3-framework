@@ -205,6 +205,7 @@ sub product_add
 			'db_name' => $App::910::db_name,
 			'tb_name' => "a910_product",
 			'columns' => {'product_number'=>"'NEW-".$env{'product.ID'}."'"},
+			'-posix' => 1,
 		);
 		%product=App::020::SQL::functions::get_ID(
 			'ID' => $env{'product.ID'},
@@ -250,6 +251,7 @@ sub product_add
 		if (exists $env{'product.price'} && ($env{'product.price'} ne $product{'price'}));
 	$columns{'price'}='NULL' if $columns{'price'} eq "''";
 	# price_previous
+	$env{'product.price_previous'}=sprintf("%.3f",$env{'product.price_previous'}) if exists $env{'product.price_previous'};
 	$env{'product.price_previous'}='' if $env{'product.price_previous'} eq "0.000";
 	$columns{'price_previous'}="'".TOM::Security::form::sql_escape($env{'product.price_previous'})."'"
 		if (exists $env{'product.price_previous'} && ($env{'product.price_previous'} ne $product{'price_previous'}));
@@ -278,12 +280,11 @@ sub product_add
 	{
 		$columns{'datetime_publish_stop'}="'".TOM::Security::form::sql_escape($env{'product.datetime_publish_stop'})."'"
 			if ($env{'product.datetime_publish_stop'} && ($env{'product.datetime_publish_stop'} ne $product{'datetime_publish_stop'}));
-	} else
+	}
+	elsif (exists $env{'product.datetime_publish_stop'})
 	{
-		if (exists $env{'product.datetime_publish_stop'})
-		{
-			$columns{'datetime_publish_stop'} = "NULL";
-		}
+		$columns{'datetime_publish_stop'} = "NULL"
+			if ($env{'product.datetime_publish_stop'} ne $product{'datetime_publish_stop'});
 	}
 
 	# supplier_org
@@ -387,7 +388,7 @@ sub product_add
 	
 	if (keys %columns)
 	{
-		main::_log(" a910_product '$env{'product.ID'}' update ".(join ".",keys %columns),3,$App::910::log_changes,2)
+		main::_log(" a910_product '$env{'product.ID'}' update ".(join ",",keys %columns),3,$App::910::log_changes,2)
 			if $App::910::log_changes;
 		App::020::SQL::functions::update(
 			'ID' => $env{'product.ID'},
@@ -395,6 +396,7 @@ sub product_add
 			'db_name' => $App::910::db_name,
 			'tb_name' => "a910_product",
 			'columns' => {%columns},
+			'-posix' => 1,
 			'-journalize' => 1
 		);
 		$content_reindex=1;
@@ -536,7 +538,7 @@ sub product_add
 	
 	if (keys %columns)
 	{
-		main::_log(" a910_product_ent '$env{'product_ent.ID'}' update ".(join ".",keys %columns),3,$App::910::log_changes,2)
+		main::_log(" a910_product_ent '$env{'product_ent.ID'}' update ".(join ",",keys %columns),3,$App::910::log_changes,2)
 			if $App::910::log_changes;
 		App::020::SQL::functions::update(
 			'ID' => $env{'product_ent.ID'},
@@ -665,7 +667,7 @@ sub product_add
 	
 	if (keys %columns)
 	{
-		main::_log(" a910_product_lng '$env{'product_lng.ID'}' update ".(join ".",keys %columns),3,$App::910::log_changes,2)
+		main::_log(" a910_product_lng '$env{'product_lng.ID'}' update ".(join ",",keys %columns),3,$App::910::log_changes,2)
 			if $App::910::log_changes;
 		App::020::SQL::functions::update(
 			'ID' => $env{'product_lng.ID'},
@@ -673,7 +675,8 @@ sub product_add
 			'db_name' => $App::910::db_name,
 			'tb_name' => "a910_product_lng",
 			'columns' => {%columns},
-			'-journalize' => 1
+			'-journalize' => 1,
+			'-posix' => 1,
 		);
 		$content_reindex=1;
 	}
