@@ -612,7 +612,18 @@ sub execute
 	
 	if ($logquery || (!$typeselect && $lognonselectquery))
 	{
-		main::_log("{$env{'db_h'}:exec:".($t->{'time'}{'req'}{'duration'})."s} '$SQL_' from '$package:$filename:$line'",3,"sql");
+		my $caller_plus;
+		my ($package_, $filename_, $line_) = caller(1);
+		if ($filename_)
+		{
+			$caller_plus.="/$package_:$filename_:$line_";
+			($package_, $filename_, $line_) = caller(2);
+			if ($filename_)
+			{
+				$caller_plus.="/$package_:$filename_:$line_";
+			}
+		}
+		main::_log("{$env{'db_h'}:exec:".($t->{'time'}{'req'}{'duration'})."s} '$SQL_' from '$package:$filename:$line'$caller_plus",3,"sql");
 	}
 	
 	if ($logquery_long && ($t->{'time'}{'req'}{'duration'} > $env{'-long'}))
