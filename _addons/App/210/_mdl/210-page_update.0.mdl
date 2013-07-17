@@ -125,10 +125,10 @@ sub execute
 		}
 	}
 	my $t_keys=CVML::structure::serialize( %key );
-	$t_keys=~s|\'|\\'|g;
+#	$t_keys=~s|\'|\\'|g;
 	if ($t_keys ne $a210{'t_keys'})
 	{
-		$columns{'t_keys'}="'".$t_keys."'";
+		$columns{'t_keys'}="'".TOM::Security::form::sql_escape($t_keys)."'";
 		main::_log("set t_keys=$columns{'t_keys'}");
 	}
 	
