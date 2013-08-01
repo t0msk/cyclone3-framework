@@ -42,42 +42,45 @@ sub get_static {
 		(
 			a420_static.ID_category = a420_static_cat.ID
 		)
-		WHERE
-	};
+		WHERE};
 	my $sql_where;
 	
-	if (ref($env) == 'SCALAR')
+	if (ref($env) eq 'SCALAR' || !ref($env))
 	{
 		if ($env=~/^\d+$/)
 		{
 			$sql_where.=qq{a420_static.ID=?};
-			@bind=[$env];
+			push @bind,$env;
 		}
 		else
 		{
 			$sql.=qq{a420_static.name=?};
-			@bind=[$env];
+			push @bind,$env;
 		}
 	}
-	elsif ($env->{'static_cat.name'})
+	else
 	{
-		$sql.=qq{a420_static_cat.name=?};
-		@bind=[$env->{'static_cat.name'}];
-	}
-	elsif ($env->{'static.name'})
-	{
-		$sql.=qq{a420_static.name=?};
-		@bind=[$env->{'static.name'}];
-	}
-	elsif ($env->{'static.ID'})
-	{
-		$sql.=qq{a420_static.ID=?};
-		@bind=[$env->{'static.ID'}];
-	}
-	elsif ($env->{'ID'})
-	{
-		$sql.=qq{a420_static.ID=?};
-		@bind=[$env->{'ID'}];
+		if ($env->{'static_cat.name'})
+		{
+			$sql.=qq{ AND a420_static_cat.name=?};
+			push @bind,$env->{'static_cat.name'};
+		}
+		if ($env->{'static.name'})
+		{
+			$sql.=qq{ AND a420_static.name=?};
+			push @bind,$env->{'static.name'};
+		}
+		if ($env->{'static.ID'})
+		{
+			$sql.=qq{ AND a420_static.ID=?};
+			push @bind,$env->{'static.ID'};
+		}
+		if ($env->{'ID'})
+		{
+			$sql.=qq{ AND a420_static.ID=?};
+			push @bind,$env->{'ID'};
+		}
+		$sql=~s|WHERE AND|WHERE|ms;
 	}
 	
 	$sql.=qq{ AND a420_static.status='Y'};
@@ -87,7 +90,7 @@ sub get_static {
 		LIMIT 1
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'bind'=>@bind,'quiet'=>1,%sql_env);
+	my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[@bind],'log'=>1,%sql_env);
 	%static=$sth0{'sth'}->fetchhash();
 	
 	return \%static;
