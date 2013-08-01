@@ -2066,8 +2066,10 @@ sub image_file_resize
 		return undef;
 	}
 	
-	return undef unless $env{'width'};
-	return undef unless $env{'height'};
+	return undef if (!$env{'width'} && !$env{'height'});
+	
+#	return undef unless $env{'width'};
+#	return undef unless $env{'height'};
 	$env{'method'}="resize" unless $env{'method'};
 	$env{'method'}="resize" if $env{'method'} eq "auto";
 	$env{'method'}="resize" if $env{'method'} eq "true";
@@ -2087,7 +2089,7 @@ sub image_file_resize
 	{
 		my $new_file_path=$env{'method'}.'/'.$db0_line{'file_dir'};
 		#my $new_file=$db0_line{'name'}."_".$env{'width'}."_".$env{'height'}.'.'.$db0_line{'file_ext'};
-		my $new_file=$db0_line{'name'}."_".$env{'width'}.'.'.$db0_line{'file_ext'};
+		my $new_file=$db0_line{'name'}."_".($env{'width'} || 'U').'x'.($env{'height'}||'U').'.'.$db0_line{'file_ext'};
 		if (-e $tom::P_media.'/a501/image/file_p/'.$new_file_path.'/'.$new_file)
 		{
 			# this resized file already exists
@@ -2109,18 +2111,37 @@ sub image_file_resize
 			return undef;
 		}
 		
-		main::_log("resizing file to width='$env{'width'}'");
-		
-		my ($out,$ext)=image_file_process(
-			'image1' => $tom::P_media.'/a501/image/file/'.$db0_line{'file_path'},
-			'image2' => $tom::P_media.'/a501/image/file_p/'.$new_file_path.'/'.$new_file,
-			'process' => qq{scale($env{'width'},)}
-		);
-		
-		if ($out)
+		if ($env{'width'})
 		{
-			$env{'file_path'}=$new_file_path.'/'.$new_file;
-			return %env;
+			main::_log("resizing file to width='$env{'width'}'");
+			
+			my ($out,$ext)=image_file_process(
+				'image1' => $tom::P_media.'/a501/image/file/'.$db0_line{'file_path'},
+				'image2' => $tom::P_media.'/a501/image/file_p/'.$new_file_path.'/'.$new_file,
+				'process' => qq{scale($env{'width'},)}
+			);
+			
+			if ($out)
+			{
+				$env{'file_path'}=$new_file_path.'/'.$new_file;
+				return %env;
+			}
+		}
+		else
+		{
+			main::_log("resizing file to height='$env{'height'}'");
+			
+			my ($out,$ext)=image_file_process(
+				'image1' => $tom::P_media.'/a501/image/file/'.$db0_line{'file_path'},
+				'image2' => $tom::P_media.'/a501/image/file_p/'.$new_file_path.'/'.$new_file,
+				'process' => qq{scale(,$env{'height'})}
+			);
+			
+			if ($out)
+			{
+				$env{'file_path'}=$new_file_path.'/'.$new_file;
+				return %env;
+			}
 		}
 		
 	}
