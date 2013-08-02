@@ -1503,12 +1503,25 @@ sub _save_changetime
 	
 	if ($Redis)
 	{
-		$Redis->hset('C3|db_entity|'.$key,'modified',$tt);
-		$Redis->publish('C3|db_entity|'.$key,$tt); # publish event
+		use JSON;
+		$Redis->hset('C3|db_entity|'.$key,'modified',$tt,sub {});
+		$Redis->expire('C3|db_entity|'.$key,(86400*30),sub {});
+		$Redis->publish('C3|db_entity|modified|'.$key,to_json({
+			'mtime'=>$tt,
+			'user'=>$main::USRM{'ID_user'},
+			'hostname' => $TOM::hostname,
+			'domain' => $tom::H
+		}),sub {}); # publish event
 		if ($env{'ID_entity'})
 		{
-			$Redis->hset('C3|db_entity|'.$key_entity,'modified',$tt);
-			$Redis->publish('C3|db_entity|'.$key_entity,$tt);
+			$Redis->hset('C3|db_entity|'.$key_entity,'modified',$tt,sub {});
+			$Redis->expire('C3|db_entity|'.$key_entity,(86400*30),sub {});
+			$Redis->publish('C3|db_entity|modified|'.$key_entity,to_json({
+				'mtime'=>$tt,
+				'user'=>$main::USRM{'ID_user'},
+				'hostname' => $TOM::hostname,
+				'domain' => $tom::H
+			}),sub {});
 		}
 		return 1;
 	}
