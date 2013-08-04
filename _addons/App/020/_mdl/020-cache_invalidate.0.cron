@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use Ext::Redis::_init;
+
+sub execute
+{
+	my %env=@_;
+	return unless $Redis;
+	main::_log("ok, redis available");
+	alarm(0);
+	my $lock=new TOM::lock("a020 - cache_invalidate") || return 1;
+	
+	use Data::Dumper;
+	
+	# new parallel connection to Redis
+	my $Redis_=Ext::Redis::service->new();
+	
+	$Redis->subscription_loop(
+		'psubscribe' => [ 'C3|db_entity|modified|*' => sub{
+			my ($redis, $channel, $pattern, $message) = @_;
+			next if $channel=~/^C3\|db_entity\|modified\|main::TOM::a010_test/;
+			main::_log("RECV \@'$channel' MSG '$message'");
+			main::_log("RECV \@'$channel' MSG '$message'",3,"pubsub");
+			
+			# get zoznam vsetkych klucov pre invalidate tohoto
+			my $key_entity=$channel;
+				$key_entity=~s/^C3\|db_entity\|modified\|/C3\|invalidate\|db_entity\|/;
+			
+			main::_log("check entity '$key_entity'");
+			
+			foreach (@{$Redis_->smembers($key_entity)})
+			{
+				main::_log(" remove key '$_'",1);
+				main::_log(" remove key '$_'",3,"pubsub");
+				$Redis_->del($_,sub{});
+			}
+			$Redis_->del($key_entity,sub{});
+			
+		}],
+	);
+	
+	return 1
+}
+
+
+1;

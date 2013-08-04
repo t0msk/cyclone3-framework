@@ -38,3 +38,11 @@
 	<VAR id="-name" value="currency_rate" />
 	<VAR id="-version" value="import" />
 </MODULE>
+
+# cache invalidate
+<MODULE>
+	<VAR id="-global" value="1" />
+	<VAR id="-category" value="020" />
+	<VAR id="-name" value="cache_invalidate" />
+	<VAR id="-fork" value="1" />
+</MODULE>
