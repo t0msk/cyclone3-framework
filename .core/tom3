@@ -1372,7 +1372,7 @@ while ($main::CGI=new CGI::Fast())
 						my $ID=App::210::SQL::page_get_default_ID('lng'=>$main::FORM{'__lng'});
 						%a210=App::020::SQL::functions::get_ID(
 							%sql_def,
-							'ID'      => "'".TOM::Security::form::sql_escape($ID)."'",
+							'ID'      => $ID,
 							'columns' => { '*' => 1 },
 							'-slave' => 1,
 							'-cache' => 86400,
