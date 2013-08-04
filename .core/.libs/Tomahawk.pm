@@ -481,25 +481,18 @@ sub module
 		# CHECK CACHED ENTITIES
 		my $data_changed;
 		my $entity_i;
-		if ($return_data{'entity'})
+		if ($return_data{'entity'})# && !$Redis) # when Redis, expiration is active
 		{
 			main::_log("checking cache of entities") if $debug;
 			foreach my $entity (@{$return_data{'entity'}})
 			{
 				$entity_i++;
 				my $changetime=App::020::SQL::functions::_get_changetime($entity);
-				main::_log("changetime of entity [$entity_i]".$entity->{'db_h'}.":".$entity->{'db_name'}.":".$entity->{'tb_name'}.":".$entity->{'ID_entity'}." ".$changetime."S") if $debug;
-				if (!$changetime)
-				{
-					main::_log("not found info about changetime of entity ".$entity->{'db_h'}.":".$entity->{'db_name'}.":".$entity->{'tb_name'}.":".$entity->{'ID_entity'},1);
-					App::020::SQL::functions::_save_changetime($entity);
-					$data_changed=1;
-#					last;
-				}
-				elsif ($changetime > $mdl_C{'-cache_from'})
+				main::_log("changetime of entity [$entity_i]".$entity->{'db_h'}."::".$entity->{'db_name'}."::".$entity->{'tb_name'}.do{"::".$entity->{'ID_entity'} if $entity->{'ID_entity'}}." ".$changetime."S") if $debug;
+				if ($changetime > $mdl_C{'-cache_from'})
 				{
 					my $changetime_diff=$main::time_current - $changetime;
-					main::_log("entity ".$entity->{'db_h'}.":".$entity->{'db_name'}.":".$entity->{'tb_name'}.":".$entity->{'ID_entity'}." changed in -".int($changetime_diff)."S");
+					main::_log("entity ".$entity->{'db_h'}."::".$entity->{'db_name'}."::".$entity->{'tb_name'}.do{"::".$entity->{'ID_entity'} if $entity->{'ID_entity'}}." changed in ".($mdl_C{'-cache_from'}-$changetime)."S (relative to module cache start time)");
 					$data_changed=1;
 					last;
 				}
@@ -541,9 +534,9 @@ sub module
 		)
 		# TAK TUTO CACHE POUZIJEM
 		{
-			main::_log("using cache domain:$cache_domain from:$mdl_C{-cache_from}s old:$mdl_C{-cache_old}s ".
+			main::_log("using cache domain:$cache_domain from:$mdl_C{'-cache_from'}s old:".int($mdl_C{'-cache_old'})."s ".
 				"max:".$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}."s ".
-				"remain:".($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}-$mdl_C{'-cache_old'})."s ".
+				"est:".int($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}-$mdl_C{'-cache_old'})."s ".
 				"hits:".$cache->{'hits'}." ".
 				"parallel?:".$cache_parallel
 				);
@@ -580,7 +573,10 @@ sub module
 				print $file_data."\n";
 			}
 			
-			$main::H->r_("<!TMP-".$mdl_C{-TMP}."!>",$file_data);
+			if (!$mdl_C{'-stdout_dummy'})
+			{
+				$main::H->r_("<!TMP-".$mdl_C{-TMP}."!>",$file_data);
+			}
 			
 			$t->close();
 			module_process_return_data(%return_data);
@@ -811,7 +807,8 @@ our \$VERSION=$m_time;
 			}
 			
 			if (
-				$Tomahawk::module::XSGN{'TMP'}
+				!$mdl_C{'-stdout_dummy'}
+				&& $Tomahawk::module::XSGN{'TMP'}
 				&& (not $main::H->r_("<!TMP-".$mdl_C{'-TMP'}."!>",$Tomahawk::module::XSGN{'TMP'}))
 				&& !$main::stdout
 			)
@@ -833,13 +830,27 @@ our \$VERSION=$m_time;
 				
 				if ($Redis)
 				{
-					# save to Redis
 					my $key = 'C3|mdl_cache|'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+					
+					if ($return_data{'entity'})
+					{
+						foreach my $entity (@{$return_data{'entity'}})
+						{
+							my $key_entity=$entity->{'db_h'}."::".$entity->{'db_name'}."::".$entity->{'tb_name'};
+								$key_entity.="::".$entity->{'ID_entity'} if $entity->{'ID_entity'};
+							my $changetime=App::020::SQL::functions::_get_changetime($entity);
+							main::_log(" autoinvalidate if key 'C3|db_entity|$key_entity' changes at mtime=".$changetime);
+							$Redis->sadd('C3|invalidate|db_entity|'.$key_entity,$key,sub{});
+							$Redis->expire('C3|invalidate|db_entity|'.$key_entity,(86400*30),sub{});
+						}
+					}
+					
+					# save to Redis
 					$Redis->hmset($key,
 						'body' => $Tomahawk::module::XSGN{'TMP'} || "",
 						'return_data' => Storable::nfreeze(\%return_data),
 						'return_code' => $return_code,
-						'time_from' => $main::time_current,
+						'time_from' => Time::HiRes::time(),
 						'time_duration' => $CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'},
 						'hits' => 0,
 						sub {} # in pipeline
@@ -875,7 +886,7 @@ our \$VERSION=$m_time;
 						'C_xsgn' => $mdl_env{'dsgn'},
 						'C_xlng' => $mdl_env{'lng'},
 						'body' => $Tomahawk::module::XSGN{'TMP'},
-						'time_from' => $main::time_current,
+						'time_from' => Time::HiRes::time(),
 						'time_duration' => $CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'},
 						'time_to' => ($main::time_current+$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}),
 						'return_code' => $return_code,
