@@ -1,0 +1,181 @@
+#!/usr/bin/perl
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.bin/c3-init";
+	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
+}
+
+my $cmd = shift || '';
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 benchmarks
+graph_args --base 1000 -l 0
+graph_category cyclone3
+graph_order hmset hmget userget userget_cache save_changetime get_changetime get_tpl module_exec module_cache
+graph_vlabel duration in ms
+graph_scale no
+hmset.label Redis hmset
+hmset.draw LINE1
+hmget.label Redis hmget
+hmget.draw LINE1
+userget.label MySQL user_online get
+userget.draw LINE1
+userget_cache.label MySQL user_online get (cache)
+userget_cache.draw LINE1
+save_changetime.label save_changetime
+save_changetime.draw LINE1
+get_changetime.label get_changetime
+get_changetime.draw LINE1
+get_tpl.label get tpl
+get_tpl.draw LINE1
+module_exec.label module exec/3
+module_exec.draw LINE1
+module_cache.label module exec (cache)
+module_cache.draw LINE1
+};
+	exit 0;
+}
+
+use Ext::Redis::_init;
+use Tomahawk;
+use Data::Dumper;
+
+TOM::Database::connect::multi('main');
+
+
+if ($Redis)
+{
+	# speed of hmset
+	my $t=track TOM::Debug("exec",'timer'=>1);
+	for (1..100)
+	{
+		$Redis->hmset('C3|test|hmset_'.$_,
+			'test01' => "asdasdf",
+			'test02' => "b bbbbb"
+		);
+		$Redis->expire('C3|test|hmset_'.$_,600);
+	}
+	$t->close();
+	print "hmset.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
+
+
+	# speed of hmget
+	my $t=track TOM::Debug("exec",'timer'=>1);
+	for (1..100)
+	{
+		$Redis->hmget('C3|test|hmset_'.$_,'test01');
+	}
+	$t->close();
+	print "hmget.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
+}
+
+# select random users
+my $t=track TOM::Debug("exec",'timer'=>1);
+for (1..100)
+{
+	my %sth0=TOM::Database::SQL::execute(qq{SELECT * FROM TOM.a301_user_online WHERE ID_user=? LIMIT 1},
+		'bind'=>['usr'.$_],'quiet'=>1);
+}
+$t->close();
+print "userget.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
+
+
+# select random users
+my $t=track TOM::Debug("exec",'timer'=>1);
+for (1..100)
+{
+	my %sth0=TOM::Database::SQL::execute(qq{SELECT * FROM TOM.a301_user_online WHERE ID_user=? LIMIT 1},
+		'bind'=>['usr'.$_],'quiet'=>1,'-cache'=>600);
+}
+$t->close();
+print "userget_cache.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
+
+
+# get changetime
+my $t=track TOM::Debug("exec",'timer'=>1);
+for (1..100)
+{
+	App::020::SQL::functions::_get_changetime({
+		'db_h'=>'main',
+		'db_name'=>$App::010::db_name,
+		'tb_name'=>'a010_test',
+		'ID_entity'=>$_
+	});
+}
+$t->close();
+print "get_changetime.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
+
+
+# save changetime
+my $t=track TOM::Debug("exec",'timer'=>1);
+for (1..100)
+{
+	App::020::SQL::functions::_save_changetime({
+		'db_h'=>'main',
+		'db_name'=>$App::010::db_name,
+		'tb_name'=>'a010_test',
+		'ID_entity'=>$_
+	});
+}
+$t->close();
+print "save_changetime.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
+
+
+# get tpl
+my $t=track TOM::Debug("exec",'timer'=>1);
+for (1..100)
+{
+	my $tpl=new TOM::Template(
+		'level' => "auto",
+		'name' => "default",
+		'content-type' => 'xhtml'
+	);
+	undef %TOM::Template::objects; # to not use local cache
+}
+$t->close();
+print "get_tpl.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
+
+
+# exec module
+my $t=track TOM::Debug("exec",'timer'=>1);
+for (1..10)
+{
+	my ($out)=Tomahawk::module(
+		'-type' => 'mdl',
+		'-addon' => 'a020',
+		'-level' => 'global',
+		'-name' => 'minimal',
+			'-stdout_dummy' => 1,
+	);
+}
+$t->close();
+print "module_exec.value " . (($t->{'time'}{'req'}{'duration'}*100)/3) . "\n";
+
+
+# exec module (cache)
+Tomahawk::module(
+	'-type' => 'mdl',
+	'-addon' => 'a020',
+	'-level' => 'global',
+	'-name' => 'minimal',
+		'-stdout_dummy' => 1,
+		'-cache_id' => 'default'
+);
+my $t=track TOM::Debug("exec",'timer'=>1);
+for (1..10)
+{
+	my ($out)=Tomahawk::module(
+		'-type' => 'mdl',
+		'-addon' => 'a020',
+		'-level' => 'global',
+		'-name' => 'minimal',
+			'-stdout_dummy' => 1,
+			'-cache_id' => 'default'
+	);
+}
+$t->close();
+print "module_cache.value " . ($t->{'time'}{'req'}{'duration'}*100) . "\n";
+
