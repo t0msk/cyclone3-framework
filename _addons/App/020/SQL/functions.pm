@@ -1474,9 +1474,9 @@ sub _get_changetime
 	
 	if (!$changetime)
 	{
-		_save_changetime(\%env);
+		_save_changetime(\%env,'-autosave'=>1);
 	}
-	
+#	main::_log("ent '$key' $changetime");
 	return $changetime || Time::HiRes::time();
 }
 
@@ -1484,6 +1484,7 @@ sub _get_changetime
 sub _save_changetime
 {
 	my %env=%{shift @_};
+	my %conf=@_;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
@@ -1504,24 +1505,34 @@ sub _save_changetime
 	if ($Redis)
 	{
 		use JSON;
-		$Redis->hset('C3|db_entity|'.$key,'modified',$tt,sub {});
-		$Redis->expire('C3|db_entity|'.$key,(86400*30),sub {});
-		$Redis->publish('C3|db_entity|modified|'.$key,to_json({
-			'mtime'=>$tt,
-			'user'=>$main::USRM{'ID_user'},
-			'hostname' => $TOM::hostname,
-			'domain' => $tom::H
-		}),sub {}); # publish event
+		if (!$env{'ID_entity'}||($env{'ID_entity'} && !$conf{'-autosave'}))
+		{
+#			main::_log("mdf table $key at $tt",3,"debug");
+			$Redis->hset('C3|db_entity|'.$key,'modified',$tt,sub {});
+			$Redis->expire('C3|db_entity|'.$key,(86400*30),sub {});
+			$Redis->publish('C3|db_entity|modified|'.$key,to_json({
+				'mtime'=>$tt,
+				'user'=>$main::USRM{'ID_user'},
+				'hostname' => $TOM::hostname,
+				'domain' => $tom::H
+			}),sub {}) unless $conf{'-autosave'}; # publish event
+		}
+		
 		if ($env{'ID_entity'})
 		{
+#			$Redis->multi();
 			$Redis->hset('C3|db_entity|'.$key_entity,'modified',$tt,sub {});
+#				$Redis->expire('C3|db_entity|'.$key_entity,(86400*30),sub {})
+#			});
 			$Redis->expire('C3|db_entity|'.$key_entity,(86400*30),sub {});
+#			$Redis->exec();
+#			$Redis->expire('C3|db_entity|'.$key_entity,(86400*30),sub {});
 			$Redis->publish('C3|db_entity|modified|'.$key_entity,to_json({
 				'mtime'=>$tt,
 				'user'=>$main::USRM{'ID_user'},
 				'hostname' => $TOM::hostname,
 				'domain' => $tom::H
-			}),sub {});
+			}),sub {}) unless $conf{'-autosave'};
 		}
 		return 1;
 	}
