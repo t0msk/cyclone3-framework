@@ -16,6 +16,9 @@ BEGIN
 	$main::P=$TOM::P;
 	$TOM::P=$main::P;
 	unshift @INC,$main::P."/.core/.libs";
+	
+	$TOM::DB{'main'}{'name'}="TOM";
+	$tom::time_current=time();
 }
 
 use TOM::lock;
