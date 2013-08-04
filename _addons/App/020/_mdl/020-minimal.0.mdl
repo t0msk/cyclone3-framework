@@ -1,0 +1,34 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+use App::160::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	Tomahawk::GetTpl('env'=>\%env) || return undef;
+	
+	# this module depends on entities
+	for (1..10)
+	{
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::010::db_name,
+			'tb_name' => 'a010_test',
+			'ID_entity' => $_,
+		};
+	}
+	
+	return 1,%env_out;
+}
+
+1;
