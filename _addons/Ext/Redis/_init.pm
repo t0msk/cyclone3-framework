@@ -18,11 +18,14 @@ Library that uses memory daemon to store data between processes
 #use Redis;
 
 our $service;
+our %services;
+our $lib;
 
 BEGIN
 {
 	main::_log("<={LIB} ".__PACKAGE__);
 	
+#	eval {require AnyEvent::Redis}; RedisDB is faster (30%)
 	eval {require RedisDB};
 	if ($@)
 	{
@@ -32,54 +35,40 @@ BEGIN
 	else
 	{
 		main::_log("<={LIB} RedisDB");
+		$lib='RedisDB';
 	}
 	
 };
 
-if ($Ext::Redis::host)
+sub _connect
 {
-	my $t=track TOM::Debug("connect",'attrs'=>$Ext::Redis::host);
-	eval{
-		if ($Ext::Redis::host=~/^\//)
+	my $name=shift;
+	my $service_;
+	
+	if ($service_=Ext::Redis::service->new())
+	{
+		if ($name)
 		{
-			$service = RedisDB->new(
-				'path' => $Ext::Redis::host,
-				'raise_error' => 0 # not works
-			)
+			$services{$name}=$service_;
 		}
 		else
 		{
-			$service = RedisDB->new(
-				'host' => (split(':',$Ext::Redis::host))[0],
-				'port' => (split(':',$Ext::Redis::host))[1] || 6379,
-		#			'connection_name' => 'C3',#.$TOM::Engine.' '.$tom::H_www,
-				'raise_error' => 0 # not works
-			)
+			$service=$service_;
+			# override memcached
+			$TOM::CACHE_memcached=1;
+			$Ext::CacheMemcache::cache = new Ext::CacheMemcache::Redir;
+			main::_log("overriding \$Ext::CacheMemcache::cache object");
 		}
-	};
-	if ($service && $service->ping)
-	{
-		my %info=%{$service->info()};
-		main::_log("Redis v".$info{'redis_version'}." connected and respondig");
-#		if ($info{'redis_version'} < '2.4.15')
-		#$service->send_command('CLIENT SETNAME aa');
-		
-		
-		# override memcached
-		$TOM::CACHE_memcached=1;
-		$Ext::CacheMemcache::cache = new Ext::CacheMemcache::Redir;
-		main::_log("overriding \$Ext::CacheMemcache::cache object");
 	}
-	else
-	{
-		$t->close();
-		undef $service;
-		undef $Ext::Redis::host;
-	}
-	$t->close();
+	
+	return $service_;
 }
 
-package Ext::CacheMemcache::Redir; # buaah
+_connect(); # default connection
+# call $Redis_{custom_name}=Ext::Redis::_connect('{custom_name}') to create parallel connection
+# for example: $Redis_para2=Ext::Redis::_connect('para2');
+
+package Ext::CacheMemcache::Redir;
 use Storable;
 
 sub new
@@ -165,5 +154,110 @@ use base 'Exporter';
 our @EXPORT = qw($Redis);
 
 our $Redis=$Ext::Redis::service;
+
+
+# override default handling of get commands in AnyEvent - to be blocking
+# only set commands we want to have non-blocking
+package Ext::Redis::service;
+use vars qw{$AUTOLOAD};
+
+sub new
+{
+	my $class=shift;
+	my $self={};
+	
+	$self->{'lib'}="RedisDB";
+	
+	my %env=@_;
+	
+	return undef unless $Ext::Redis::host;
+	
+	my $t=track TOM::Debug("connect",'attrs'=>$Ext::Redis::host);
+	
+	if ($self->{'lib'} eq "AnyEvent")
+	{
+		main::_log("using AnyEvent");
+		$Ext::Redis::host='localhost:6379' if $Ext::Redis::host=~/\//;
+		$self->{'service'}=AnyEvent::Redis->new(
+			'host' => (split(':',$Ext::Redis::host))[0],
+			'port' => (split(':',$Ext::Redis::host))[1] || 6379,
+		);
+		
+		if ($self->{'service'} && $self->{'service'}->ping->recv())
+		{
+			my %info=%{$self->{'service'}->info()->recv()};
+			main::_log("Redis v".$info{'redis_version'}." connected and respondig");
+		}
+		else
+		{
+			main::_log("can't connect Redis",1);
+			$t->close();
+			undef $Ext::Redis::host;
+			return undef;
+		}
+	}
+	elsif ($self->{'lib'} eq "RedisDB")
+	{
+		main::_log("using RedisDB");
+		eval
+		{
+			if ($Ext::Redis::host=~/^\//)
+			{
+				$self->{'service'} = RedisDB->new(
+					'path' => $Ext::Redis::host,
+					'raise_error' => 0 # not works
+				)
+			}
+			else
+			{
+				$self->{'service'} = RedisDB->new(
+					'host' => (split(':',$Ext::Redis::host))[0],
+					'port' => (split(':',$Ext::Redis::host))[1] || 6379,
+					'raise_error' => 0 # not works
+				)
+			}
+		};
+		if ($self->{'service'} && $self->{'service'}->ping)
+		{
+			my %info=%{$self->{'service'}->info()};
+			main::_log("Redis v".$info{'redis_version'}." connected and respondig");
+		}
+		else
+		{
+			main::_log("can't connect Redis",1);
+			$t->close();
+			undef $Ext::Redis::host;
+			return undef;
+		}
+	}
+	
+	$t->close();
+	return bless $self, $class;
+}
+
+sub DESTROY { }
+
+sub AUTOLOAD
+{
+	my $self=shift;
+	
+	(my $method = $AUTOLOAD ) =~ s{.*::}{};
+	
+	if ($self->{'lib'} eq "AnyEvent")
+	{
+		if (ref($_[-1]) eq "CODE") # last parameter is sub{}
+		{
+			# async
+			return $self->{'service'}->$method(@_);
+		}
+		else
+		{
+			# sync
+			return $self->{'service'}->$method(@_)->recv();
+		}
+	}
+	# others
+	return $self->{'service'}->$method(@_);
+}
 
 1;
