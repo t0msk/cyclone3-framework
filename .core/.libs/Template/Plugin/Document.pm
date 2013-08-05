@@ -1,0 +1,49 @@
+package Template::Plugin::Document;
+
+use strict;
+#use warnings;
+use base 'Template::Plugin';
+
+our $VERSION = 1.00;
+our $DEBUG   = 0 unless defined $DEBUG;
+our $AUTOLOAD;
+
+#==============================================================================
+#                      -----  CLASS METHODS -----
+#==============================================================================
+
+sub new {
+	my ($class, $context, $params) = @_;
+	my ($key, $val);
+	$params ||= { };
+
+	bless { 
+		_CONTEXT => $context, 
+	}, $class;
+}
+
+sub title {
+	my $self = shift;
+	my $title = shift;
+	$main::H->change_DOC_title($title);
+	return
+}
+
+sub add_title {
+	my $self = shift;
+	my $title = shift;
+	$main::H->add_DOC_title($title);
+	return
+}
+
+sub add_keywords {
+	my $self = shift;
+	
+	foreach (@_)
+	{
+		$main::H->add_DOC_keywords($_);
+	}
+	return
+}
+
+1;
