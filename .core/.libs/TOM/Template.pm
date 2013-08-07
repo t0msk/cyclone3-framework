@@ -242,6 +242,10 @@ sub new
 #				'PLUGINS' => {
 #					'date' => 'Template::Plugin::Date'
 #				'RECURSION' => 1,
+				'VARIABLES' => {
+					'devel' => $tom::devel,
+					'version' => 'version'
+				},
 				'INCLUDE_PATH' => [$tom::P.'/_dsgn',$tom::Pm.'/_dsgn'],
 				'COMPILE_DIR' => $tom::P.'/_temp',
 				'COMPILE_EXT' => '.ttc2',
