@@ -38,6 +38,7 @@ L<TOM::Security::form|lib/"TOM/Security/form.pm">
 use App::910::_init;
 use TOM::Security::form;
 use App::160::SQL;
+use POSIX qw(ceil);
 
 our $debug=1;
 our $quiet;$quiet=1 unless $debug;
@@ -933,7 +934,7 @@ sub _product_index
 	my @content_id;
 	
 	my $status_string = $App::910::solr_status_index;
-
+	
 	$status_string =~ s/(\w)/\'$1\',/g; $status_string =~ s/,$//;
 
 	my %sth0=TOM::Database::SQL::execute(qq{
@@ -1116,30 +1117,41 @@ sub _product_index
 			$var=~s|[^\w]||g;
 			$i_count++;
 			$i_sum+=$db1_line{'val'};
-			push @content_ent,WebService::Solr::Field->new( 'Rating_variable.'.$var.'_i' =>  int($db1_line{'val'}+0));
+			push @content_ent,WebService::Solr::Field->new( 'Rating_variable.'.$var.'_i' =>  ceil($db1_line{'val'}+0));
 		}
 		
 		# vahovany rating
+		my $helpful_initial=2;
 		my %sth1=TOM::Database::SQL::execute(qq{
-			SELECT
-				(SUM(
-					IF (rating.score_basic, rating.score_basic,(SELECT AVG(rating_variable.score_value) AS val FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity))
-					* ((
+			SELECT (
+				SUM(
+					IF (rating.score_basic, rating.score_basic,
+						(SELECT AVG(rating_variable.score_value) AS val FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity))
+					* COALESCE((
 						SELECT IF (rating_weight,rating_weight,0.01)
 						FROM TOM.a301_user_profile
 						WHERE ID_entity = rating.posix_owner
 						LIMIT 1
-					) || 1)) / SUM((
-					SELECT IF (rating_weight,rating_weight,0.01)
-					FROM TOM.a301_user_profile
-					WHERE ID_entity = rating.posix_owner
-					LIMIT 1
-				) || 1)) AS score,
+					),0.5) * ((rating.helpful_Y+$helpful_initial) / (rating.helpful_Y+$helpful_initial + rating.helpful_N+$helpful_initial))
+				) / SUM( COALESCE((
+						SELECT IF (rating_weight,rating_weight,0.01)
+						FROM TOM.a301_user_profile
+						WHERE ID_entity = rating.posix_owner
+						LIMIT 1
+					),0.5) * ((rating.helpful_Y+$helpful_initial) / (rating.helpful_Y+$helpful_initial + rating.helpful_N+$helpful_initial))
+				)
+			) AS score,
 				COUNT(rating.ID) AS ratings
 			FROM
 				$App::910::db_name.a910_product_rating AS rating
 			WHERE
 				rating.status='Y'
+--				AND (
+--					SELECT ID
+--					FROM TOM.a301_user_profile
+--					WHERE ID_entity = rating.posix_owner
+--					LIMIT 1
+--				) IS NOT NULL
 				AND (rating.score_basic IS NOT NULL
 					OR (
 						SELECT COUNT(rating_variable.score_value) FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity
@@ -1150,36 +1162,17 @@ sub _product_index
 				rating.ID_product
 		},'quiet'=>1,'bind'=>[$env{'ID'}]);
 		my %db1_line=$sth1{'sth'}->fetchhash();
-#		main::_log("score (weight) = $db1_line{'score'}");
-=head1
-		my %sth1=TOM::Database::SQL::execute(qq{
-			SELECT
-				AVG
-				(
-					(
-						IF (rating.score_basic, rating.score_basic,(SELECT AVG(rating_variable.score_value) AS val FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity))
-					)
-				)
-				AS score,
-				COUNT(rating.ID) AS ratings
-			FROM
-				$App::910::db_name.a910_product_rating AS rating
-			WHERE
-				rating.status='Y'
-				AND rating.ID_product = ?
-		},'quiet'=>1,'bind'=>[$env{'ID'}]);
-		my %db1_line=$sth1{'sth'}->fetchhash();
-=cut
+		
 		if ($db1_line{'ratings'})
 		{
 			$db1_line{'score'} = 0 unless $db1_line{'score'};
 			main::_log("ratings avg='$db1_line{'score'}' count='$db1_line{'ratings'}'");
-			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_count_i' =>  int($db1_line{'ratings'}));
-			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_i' =>  int($db1_line{'score'}));
+			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_count_i' =>  ceil($db1_line{'ratings'}));
+			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_i' =>  ceil($db1_line{'score'}));
 			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_f' =>  $db1_line{'score'});
 		}
 		
-		# rating in last 6months
+		# rating in last 6months (not weighted)
 		if ($db1_line{'ratings'})
 		{
 			my %sth1=TOM::Database::SQL::execute(qq{
@@ -1200,8 +1193,8 @@ sub _product_index
 			{
 				main::_log("6mo ratings avg='$db1_line{'score'}' count='$db1_line{'ratings'}'");
 				$db1_line{'score'} = 0 unless $db1_line{'score'};
-				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_count_i' =>  int($db1_line{'ratings'}));
-				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_avg_i' =>  int($db1_line{'score'}));
+				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_count_i' =>  ceil($db1_line{'ratings'}));
+				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_avg_i' =>  ceil($db1_line{'score'}));
 				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_avg_f' =>  $db1_line{'score'});
 			}
 		}
@@ -1361,7 +1354,7 @@ sub _product_index
 					my $prices_i;
 					foreach (keys %prices){$prices_i+=$prices{$_};$prices_sum+=$_*$prices{$_};}
 					
-					my $avg=int(($prices_sum/$prices_i)*100)/100;
+					my $avg=ceil(($prices_sum/$prices_i)*100)/100;
 					
 					my $code=$interval.do{$interval_type=~/^(.)/;lc($1);};
 					
