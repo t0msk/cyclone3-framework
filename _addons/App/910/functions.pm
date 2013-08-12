@@ -655,7 +655,7 @@ sub product_add
 		if ($env{'product_lng.name_long'} && ($env{'product_lng.name_long'} ne $product_lng{'name_long'}));
 	# name_label
 	$columns{'name_label'}="'".TOM::Security::form::sql_escape($env{'product_lng.name_label'})."'"
-		if ($env{'product_lng.name_label'} && ($env{'product_lng.name_label'} ne $product_lng{'name_label'}));
+		if (exists $env{'product_lng.name_label'} && ($env{'product_lng.name_label'} ne $product_lng{'name_label'}));
 	# description_short
 	$columns{'description_short'}="'".TOM::Security::form::sql_escape($env{'product_lng.description_short'})."'"
 		if ($env{'product_lng.description_short'} && ($env{'product_lng.description_short'} ne $product_lng{'description_short'}));
@@ -1467,6 +1467,8 @@ sub _product_index
 			if $db0_line{'name_url'};
 		push @{$content{$lng}},WebService::Solr::Field->new( 'subject' => $db0_line{'name_long'} )
 			if ($db0_line{'name_long'});
+		push @{$content{$lng}},WebService::Solr::Field->new( 'name_label_s' => $db0_line{'name_label'} )
+			if $db0_line{'name_label'};
 		
 		push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description' => $db0_line{'description_short'} )
 			if $db0_line{'description_short'};
@@ -1584,6 +1586,7 @@ sub _product_cat_index
 			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
 			WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
 			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
+			do {if ($db0_line{'alias_name'}){WebService::Solr::Field->new( 'alias_name_s' => $db0_line{'alias_name'} )}},
 			
 			WebService::Solr::Field->new( 'description' => $db0_line{'description'} ),
 			
