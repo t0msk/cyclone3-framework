@@ -385,7 +385,7 @@ sub video_part_file_process
 	main::_log("video1='$env{'video1'}'");
 	main::_log("video2='$env{'video2'}'");
 	
-	my $temp_passlog=new TOM::Temp::file('unlink_ext'=>'-0.log','ext'=>'log','dir'=>$main::ENV{'TMP'});
+	my $temp_passlog=new TOM::Temp::file('unlink_ext'=>'*','ext'=>'log','dir'=>$main::ENV{'TMP'});
 	
 	my $procs; # how many changes have been made in video2 file
 	
@@ -605,6 +605,7 @@ sub video_part_file_process
 				if ($env{'qmax'}){push @encoder_env, '-qmax '.$env{'qmax'};}
 				if ($env{'qdiff'}){push @encoder_env, '-qdiff '.$env{'qdiff'};}
 				if ($env{'vcodec'}){push @encoder_env, '-vcodec '.$env{'vcodec'};}
+				if ($env{'vpre'}){push @encoder_env, '-vpre '.$env{'vpre'};}
 				if (exists $env{'threads'}){push @encoder_env, '-threads '.$env{'threads'};}
 				if ($env{'b'}){push @encoder_env, '-b '.$env{'b'};}
 				if ($env{'s_width'})
@@ -1707,6 +1708,14 @@ sub video_part_file_add
 		'columns' => {'*'=>1}
 	);
 	
+	# override modifytime
+	App::020::SQL::functions::_save_changetime({
+		'db_h' => 'main',
+		'db_name' => $App::510::db_name,
+		'tb_name' => 'a510_video',
+		'ID_entity' => $part{'ID_entity'}
+	});
+	
 	my $sql=qq{
 		SELECT
 			video.*
@@ -1721,7 +1730,6 @@ sub video_part_file_add
 	my %video_db=$sth0{'sth'}->fetchhash();
 	main::_log("video.ID='$video_db{'ID_video'}' video.name='$video_db{'name'}'");
 	$env{'from_parent'}='N' unless $env{'from_parent'};
-	
 	
 	# file must be analyzed
 	
@@ -2397,6 +2405,8 @@ sub get_video_part_file
 			video_part_file.file_ext,
 			video_part_file.file_alt_src,
 			
+			video_format.name AS video_format_name,
+			
 			CONCAT(video_part_file.ID_format,'/',SUBSTR(video_part_file.ID,1,4),'/',video_part_file.name,'.',video_part_file.file_ext) AS file_part_path
 	};
 
@@ -2431,6 +2441,10 @@ sub get_video_part_file
 		LEFT JOIN `$App::510::db_name`.`a510_video_cat` AS video_cat ON
 		(
 			video_cat.ID_entity = video_attrs.ID_category
+		)
+		INNER JOIN `$App::510::db_name`.`a510_video_format` AS video_format ON
+		(
+			video_format.ID = video_part_file.ID_format
 		)
 		WHERE
 			video.ID_entity=$env{'video.ID_entity'} AND
@@ -2475,6 +2489,10 @@ sub get_video_part_file
 		(
 			video_cat.ID_entity = video_attrs.ID_category
 		)
+		INNER JOIN `$App::510::db_name`.`a510_video_format` AS video_format ON
+		(
+			video_format.ID = video_part_file.ID_format
+		)
 		WHERE
 			video_part.ID=$env{'video_part.ID'} AND
 			video_part_file.ID_format=$env{'video_part_file.ID_format'} AND
@@ -2484,7 +2502,7 @@ sub get_video_part_file
 	}
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,
-		'-cache' => 86400, #24H max
+		'-cache' => 3600, #24H max
 		'-cache_min' => 600, # when changetime before this limit 10min
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
 			'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video",
