@@ -80,11 +80,27 @@ sub DESTROY
 	if ($self->{'unlink'})
 	{
 		my $size=(stat $self->{'filename'})[7];
-		main::_log("destroying tempfile $self->{'filename'} size=".$size."b");
-		unlink $self->{'filename'};
-		if ($self->{'unlink_ext'})
+		if ($self->{'unlink_ext'} eq "*")
+		{
+			my $dir=($self->{'filename'}=~/^(.*\/)/)[0];
+			opendir (DIR, $dir) || main::_log("$!",1);
+			my $file=($self->{'filename'}=~/^.*\/(.*?)$/)[0];
+#			main::_log("file $file");
+			foreach (grep {$_=~/^$file/} readdir DIR)
+			{
+				main::_log("destroying tempfile $dir$_");
+				unlink $dir.$_ || main::_log("$!",1);
+#				main::_log("unlink $_");
+			}
+		}
+		elsif ($self->{'unlink_ext'})
 		{
 			unlink $self->{'filename'}.$self->{'unlink_ext'};
+		}
+		if (-e $self->{'filename'})
+		{
+			main::_log("destroying tempfile $self->{'filename'} size=".$size."b");
+			unlink $self->{'filename'};
 		}
 	}
 	
