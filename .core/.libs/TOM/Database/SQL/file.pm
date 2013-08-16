@@ -470,6 +470,7 @@ sub _chunk_prepare
 			$$chunk=~s| default| DEFAULT|g;
 			$$chunk=~s|auto_increment|AUTO_INCREMENT|g;
 			$$chunk=~s|PRIMARY KEY  |PRIMARY KEY |g;
+			$$chunk=~s|TYPE=|ENGINE=|;
 #		  $$chunk=~s|(int\(\d+\).*?) NOT NULL,|$1 NOT NULL DEFAULT '0',|g;
 #		  $$chunk=~s|(float.*?) NOT NULL,|$1 NOT NULL DEFAULT '0',|g;
 #		  $$chunk=~s|( datetime) NOT NULL,|$1 NOT NULL DEFAULT '2000-01-01 00:00:00',|g;
