@@ -45,7 +45,9 @@ sub GetAllCookies
 		$chip =~ s/%([A-Fa-f0-9]{2})/pack("c",hex($1))/ge;#url kodovanie do normal. kodovanie
 		$val =~ s/%([A-Fa-f0-9]{2})/pack("c",hex($1))/ge;
 		#main::_log("'$chip'='$val'");
+		next if ($val=~s/^$tom::cookie_name://);
 		$cookie{$chip} = $val;
+#		main::_log("get '$chip'='$val'",3,"cookie_debug");
 	}
 	$t->close() if $debug;
 	return %cookie;
