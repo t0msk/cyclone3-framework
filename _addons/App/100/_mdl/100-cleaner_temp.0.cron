@@ -24,7 +24,7 @@ sub execute
 {
 	my %env=@_;
 	
-	my $max=86400;
+	my $max=3600*3;
 	
 	opendir (DIR, ($tom::P || $TOM::P).'/_temp');
 	foreach my $file (readdir DIR)
@@ -56,6 +56,27 @@ sub execute
 #				File::Path::rmtree $filename;
 #			}
 #		}
+		
+	}
+	
+	opendir (DIR, '/var/tmp');
+	foreach my $file (readdir DIR)
+	{
+		
+		next unless $file=~/^Cyclone3TMP\-/;
+		
+		#main::_log("file:$file");
+		my $filename="/var/tmp/".$file;
+		
+		if (-f $filename)
+		{
+			my $created=(stat $filename)[9];
+			if (($main::time_current-$created) > $max)
+			{
+				main::_log("old $file ".($main::time_current-$created).", removing...");
+				unlink $filename;
+			}
+		}
 		
 	}
 	
