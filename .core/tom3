@@ -239,6 +239,14 @@ while ($main::CGI=new CGI::Fast())
 #		$main::ENV{'REMOTE_ADDR_ORIGINAL'}=$main::ENV{'REMOTE_ADDR'};
 #		$main::ENV{'REMOTE_ADDR'}=$1;
 #	}
+	if ($main::ENV{'HTTP_REMOTE_ADDR_SOURCE'})
+	{
+		$main::ENV{'REMOTE_ADDR'}=$main::ENV{'HTTP_REMOTE_ADDR_SOURCE'};
+	}
+	
+	$main::ENV{'REMOTE_ADDR_PREFIX'}=$main::ENV{'REMOTE_ADDR'};
+		$main::ENV{'REMOTE_ADDR_PREFIX'}=~s|^(\d+\.\d+\.\d+)\.\d+$|$1|;
+	
 	$main::request_code=Utils::vars::genhash(8);
 	TOM::Debug::clear_namespaces();
 	my $t_request=track TOM::Debug("request [".($tom::count+1)."/$TOM::max_count] at $TOM::hostname",'timer'=>1);
@@ -963,10 +971,13 @@ while ($main::CGI=new CGI::Fast())
 		
 		#  local %COOKIES;
 		%main::COOKIES=();
+		%main::COOKIES_save=();
 		%main::COOKIES_all=();
+		%main::COOKIES_all_save=();
 		
 		%main::COOKIES=&Net::HTTP::cookies::GetCookies if !$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'cookies_disable'};
 		%main::COOKIES_all=&Net::HTTP::cookies::GetAllCookies if !$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'cookies_disable'};
+		%COOKIES_all_save=%COOKIES_all;
 		
 #		foreach (keys %main::COOKIES_all)
 #		{
@@ -999,7 +1010,7 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("none cookies found, but looks like supported");
 			
 			
-			my $user_md5=Digest::MD5::md5_hex
+			my $user_md5=TOM::Digest::hash
 			(
 				$main::ENV{'REMOTE_ADDR'}.
 				$main::ENV{'HTTP_USER_AGENT'}.
@@ -1093,7 +1104,6 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		%COOKIES_save=%COOKIES;
-		%COOKIES_all_save=%COOKIES_all;
 		
 		$t_cookies->close();
 		
@@ -2681,6 +2691,10 @@ while ($main::CGI=new CGI::Fast())
 		
 		print "C3-Request: $main::request_code\n";
 		print "C3-Domain: $tom::H\n";
+			my $date = DateTime->now('time_zone' => 'local');
+			my $date_string = $date->strftime("%d %b %Y %H:%M:%S");
+		print "C3-Date: $date_string\n";
+		print "C3-Hostname: $TOM::hostname\n";
 		#print "C3-TypeID: $main::H\n";
 		
 		# codepage pouzity pre tuto page;
@@ -2853,7 +2867,7 @@ while ($main::CGI=new CGI::Fast())
 		$t_postprocess->close();
 		$t_eval->close();
 		
-		main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track');
+		main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'/'$main::ENV{'HTTP_USER_AGENT'}'",3,'pub.track');
 		
 		if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 		
