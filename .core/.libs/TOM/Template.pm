@@ -377,6 +377,7 @@ sub prepare_location
 		$self->{'location'}=get_tpl_xml
 		(
 			'dir' => $_,
+			'addon' => $self->{'ENV'}->{'addon'},
 			'filename' => $self->{'ENV'}->{'name'}.".".$self->{'ENV'}->{'content-type'}
 		);
 		
@@ -387,7 +388,7 @@ sub prepare_location
 #				main::_log("check ignore dir='$ignore_dir' to '$self->{'location'}'");
 				if ($self->{'location'} eq $ignore_dir)
 				{
-					main::_log("already loaded from '$ignore_dir'",1);
+					main::_log("already loaded from '$ignore_dir'",1) if $debug;
 					undef $self->{'location'};
 					last;
 				}
@@ -727,6 +728,10 @@ sub get_tpl_dirs
 	if ($env{'level'} eq "auto")
 	{
 		# local
+		if ($env{'addon'})
+		{
+			push @dirs,$tom::P."/_dsgn" if $tom::P;
+		}
 		push @dirs,$tom::P."/".$subdir if $tom::P;
 		# master
 		push @dirs,$tom::Pm."/".$subdir if ($tom::Pm && $tom::Pm ne $tom::P);
@@ -767,11 +772,18 @@ sub get_tpl_xml
 		".tpl"
 	)
 	{
+		if ($env{'addon'})
+		{
+			my $filename="$env{'dir'}/$env{'addon'}-$env{'filename'}$ext";
+			main::_log(" touching in '".$filename."'") if $debug;
+			if (-e $filename)
+			{
+				main::_log(" found ".$filename) if $debug;
+				return $filename;
+			}
+		}
 		my $filename="$env{'dir'}/$env{'filename'}$ext";
 		main::_log(" touching in '".$filename."'") if $debug;
-		
-		# if checking ztpl, unpack them into _temp .tpl.d extension
-		# (check if not alredy actual exists) and return included xml
 		if (-e $filename)
 		{
 			main::_log(" found ".$filename) if $debug;
