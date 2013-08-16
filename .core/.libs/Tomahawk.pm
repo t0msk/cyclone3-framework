@@ -730,7 +730,7 @@ sub module
 		
 		if (!$mdl_version->VERSION() || ($mdl_version->VERSION() < $m_time))
 		{
-			my $t_do=track TOM::Debug("loadfile",'timer'=>1);
+			my $t_do=track TOM::Debug("loadfile mtime:".$m_time,'timer'=>1);
 			use Fcntl;
 			sysopen(HND_DO, $mdl_C{'P_MODULE'}, O_RDONLY);
 			my $mdl_buffer;
