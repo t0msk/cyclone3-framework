@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	<header>
+		<!--
+		<extend level="auto" name="SWFObject"/>
+		-->
+		<extract>
+			<file location="flowplayer-3.2.12.min.js" dest="flowplayer/" />
+			<file location="flowplayer-3.2.16.swf" dest="flowplayer/" />
+			<file location="flowplayer.controls-3.2.15.swf" dest="flowplayer/" />
+		</extract>
+	</header>
+	
+</template>
