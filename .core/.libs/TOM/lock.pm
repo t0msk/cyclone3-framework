@@ -80,9 +80,9 @@ sub new
 		}
 	}
 	
-	main::_log("creating lock named '$self->{name}'");
+	main::_log("creating lock named '$self->{name}' with PID $$");
 	
-	open (LOCK,">".$self->{'filename'});
+	open (LOCK,">".$self->{'filename'}) || return undef;
 	print LOCK $$;
 	close (LOCK);
 	
