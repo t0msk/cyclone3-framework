@@ -744,7 +744,7 @@ sub get_path
 	return undef unless $ID;
 	my @path;
 	my %env=@_;
-	#my $debug=1;
+#	my $debug=1;
 	my $t=track TOM::Debug(__PACKAGE__."::get_path('$ID')") if $debug;
 	
 	my %cache;
@@ -811,14 +811,18 @@ sub get_path
 			FROM
 				`$env{'db_name'}`.`$env{'tb_name'}`
 			WHERE
-				ID_charindex='$parent'
-				AND lng='$data{'lng'}'
+				ID_charindex = ?
+				AND lng = ?
 			LIMIT 1
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'quiet'=>1,'-slave' => $env{'-slave'},%cache);
+		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'bind'=>[
+			$parent,
+			$data{'lng'}
+		],'quiet'=>1,'-slave' => $env{'-slave'},%cache);
 		if ($sth0{'rows'})
 		{
-			my %data2=$sth0{'sth'}->fetchhash();
+			my %data2=$sth0{'sth'}->fetchhash();use Data::Dumper;
+#			main::_log(" found $data2{'ID_entity'} $sth0{'rows'}".Dumper(\%data2)) if $debug;
 			unshift @path, {%data2};
 			$parent=$data2{'ID_charindex'};
 			$parent=~s|^(.*)...$|\1|;
