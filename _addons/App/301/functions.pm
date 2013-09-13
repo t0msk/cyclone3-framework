@@ -577,6 +577,7 @@ sub user_add
 		},'bind'=>[$group,$group,$env{'user.hostname'}],'quiet'=>1);
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
+			main::_log(" group number $db0_line{'ID'} hostname $env{'user.hostname'}");
 			TOM::Database::SQL::execute(qq{
 				REPLACE INTO TOM.a301_user_rel_group
 				(
@@ -608,7 +609,10 @@ sub user_add
 				)
 			},'bind'=>[$env{'user.ID_user'},$db0_line{'ID'},$main::USRM{'ID_user'}],'quiet'=>1);
 		}
-		
+		else
+		{
+			main::_log(" can't find group",1);
+		}
 		$content_reindex=1;
 	}
 	
