@@ -262,6 +262,7 @@
 	<tr>
 		<td style="FONT:bold 10px Verdana;COLOR:black;BACKGROUND:#F0F0F0;">
 			<img src="<$tom::H_media>/tpl/cyclone3-errorbox.png" border='0' align='left'><%MODULE%> <$(This service is currently not available)>. <$(We're trying to fix this problem at the moment and apologize for any inconvenience)>. <%ERROR%> <%PLUS%>
+			<script type='text/javascript'>_gaq.push(['_trackEvent', 'Error', 'Cyclone3', '<%MODULE%>']);</script>
 		</td>
 	</tr>
 	</table>

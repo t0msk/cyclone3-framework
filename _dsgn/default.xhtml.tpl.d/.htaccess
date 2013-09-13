@@ -1,1 +1,4 @@
 RewriteEngine off
+
+ExpiresActive On
+ExpiresDefault "access plus 1 month"
