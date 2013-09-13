@@ -36,6 +36,13 @@ sub add_title {
 	return
 }
 
+sub description {
+	my $self = shift;
+	my $text = shift;
+	$main::H->change_DOC_description($text);
+	return
+}
+
 sub add_keywords {
 	my $self = shift;
 	
