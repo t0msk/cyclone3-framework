@@ -219,7 +219,7 @@ sub video_part_file_generate
 	);
 	
 	main::_log("path to parent video_part_file='$video1_path'");
-	my $video2=new TOM::Temp::file('dir'=>$main::ENV{'TMP'});
+	my $video2=new TOM::Temp::file('dir'=>$main::ENV{'TMP'},'nocreate'=>1);
 	
 	my %out=video_part_file_process(
 		'video1' => $video1_path,
@@ -234,14 +234,6 @@ sub video_part_file_generate
 	if ($out{'return'})
 	{
 		main::_log("parent video_part_file can't be processed",1);
-		
-		my $sql=qq{
-			UPDATE `$App::510::db_name`.`a510_video_part_file_process`
-			SET datetime_stop=NOW(), status='E'
-			WHERE ID=$process_ID
-			LIMIT 1
-		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		
 #		if ($file_parent{'ID_format'} == $App::510::video_format_original_ID && ($out <=> 512))
 #		{
@@ -331,17 +323,18 @@ sub video_part_file_generate
 				);
 			}
 #		}
+		
+		my $sql=qq{
+			UPDATE `$App::510::db_name`.`a510_video_part_file_process`
+			SET datetime_stop=NOW(), status='E'
+			WHERE ID=$process_ID
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		
 		$t->close();
 		return undef;
 	}
-	
-	my $sql=qq{
-		UPDATE `$App::510::db_name`.`a510_video_part_file_process`
-		SET datetime_stop=NOW(), status='Y'
-		WHERE ID=$process_ID
-		LIMIT 1
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	
 	video_part_file_add
 	(
@@ -351,7 +344,24 @@ sub video_part_file_generate
 		'video_format.ID' => $format{'ID'},
 		'from_parent' => "Y",
 		'thumbnail_lock_ignore' => $env{'thumbnail_lock_ignore'}
-	) || do {$t->close();return undef};
+	) || do {
+		my $sql=qq{
+			UPDATE `$App::510::db_name`.`a510_video_part_file_process`
+			SET datetime_stop=NOW(), status='E'
+			WHERE ID=$process_ID
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		$t->close();return undef
+	};
+	
+	my $sql=qq{
+		UPDATE `$App::510::db_name`.`a510_video_part_file_process`
+		SET datetime_stop=NOW(), status='Y'
+		WHERE ID=$process_ID
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	
 	$t->close();
 	return 1;
@@ -371,6 +381,7 @@ sub _video_part_file_genpath
 	if (!-d $pth)
 	{
 		File::Path::mkpath($tom::P_media.'/a510/video/part/file/'.$format.'/'.$ID);
+		chmod 0777, $tom::P_media.'/a510/video/part/file/'.$format.'/'.$ID;
 	}
 	return "$format/$ID/$name.$ext";
 };
@@ -385,7 +396,8 @@ sub video_part_file_process
 	main::_log("video1='$env{'video1'}'");
 	main::_log("video2='$env{'video2'}'");
 	
-	my $temp_passlog=new TOM::Temp::file('unlink_ext'=>'*','ext'=>'log','dir'=>$main::ENV{'TMP'});
+	my $temp_passlog=new TOM::Temp::file('unlink_ext'=>'*','ext'=>'log','dir'=>$main::ENV{'TMP'},'nocreate_'=>1);
+	my $temp_statslog=new TOM::Temp::file('unlink_ext'=>'*','ext'=>'log','dir'=>$main::ENV{'TMP'},'nocreate_'=>1);
 	
 	my $procs; # how many changes have been made in video2 file
 	
@@ -491,7 +503,7 @@ sub video_part_file_process
 			main::_log("exec $function_name()");
 			$env{'video1'}=~/.*\.(.*?)$/;
 			
-			push @files,new TOM::Temp::file('ext'=>'avi','dir'=>$main::ENV{'TMP'});
+			push @files,new TOM::Temp::file('ext'=>'avi','dir'=>$main::ENV{'TMP'},'nocreate'=>1);
 			
 			main::_log($env{'video1'}."->".$files[-1]->{'filename'});
 			
@@ -559,6 +571,7 @@ sub video_part_file_process
 				{
 					push @encoder_env, '-pass '.$env{'pass'};
 					push @encoder_env, '-passlogfile '.$temp_passlog->{'filename'};
+					push @encoder_env, '-stats '.$temp_statslog->{'filename'};
 				}
 				if ($env{'vframes'}){push @encoder_env, '-vframes '.$env{'vframes'};}
 				if ($env{'f'}){push @encoder_env, '-f '.$env{'f'};}
@@ -607,15 +620,60 @@ sub video_part_file_process
 				if ($env{'vcodec'}){push @encoder_env, '-vcodec '.$env{'vcodec'};}
 				if ($env{'vpre'}){push @encoder_env, '-vpre '.$env{'vpre'};}
 				if (exists $env{'threads'}){push @encoder_env, '-threads '.$env{'threads'};}
-				if ($env{'b'}){push @encoder_env, '-b '.$env{'b'};}
+				if ($env{'b'}){
+					if ($env{'upscale'} eq "false" && $movie1_info{'bitrate'})
+					{ # check for upscale
+						my $bitrate=$env{'b'};
+							$bitrate=~s|k$|000|;
+						if ($bitrate > $movie1_info{'bitrate'})
+						{
+							push @encoder_env, '-b '.$movie1_info{'bitrate'};
+						}
+						else
+						{
+							push @encoder_env, '-b '.$env{'b'};
+						}
+					}
+					else
+					{
+						push @encoder_env, '-b '.$env{'b'};
+					}
+				}
 				if ($env{'s_width'})
 					{$env{'s'}=$env{'s_width'}.'x'.(int($movie1_info{'height'}/($movie1_info{'width'}/$env{'s_width'})/2)*2);}
 				if ($env{'s_height'} && $movie1_info{'height'})
-					{$env{'s'}=(int($movie1_info{'width'}/($movie1_info{'height'}/$env{'s_height'})/2)*2).'x'.$env{'s_height'};}
+					{
+						if ($env{'upscale'} eq "false" && $env{'s_height'} >= $movie1_info{'height'})
+						{
+							# don't upscale
+						}
+						else
+						{
+							$env{'s'}=(int($movie1_info{'width'}/($movie1_info{'height'}/$env{'s_height'})/2)*2).'x'.$env{'s_height'};
+						}
+					}
 				if ($env{'s'}){push @encoder_env, '-s '.$env{'s'};}
 				if ($env{'r'}){push @encoder_env, '-r '.$env{'r'};}
 				if ($env{'acodec'}){push @encoder_env, '-acodec '.$env{'acodec'};}
-				if ($env{'ab'}){push @encoder_env, '-ab '.$env{'ab'};}
+				if ($env{'ab'}){
+					if ($env{'upscale'} eq "false" && $movie1_info{'audio_bitrate'})
+					{ # check for upscale
+						my $bitrate=$env{'ab'};
+							$bitrate=~s|k$|000|;
+						if ($bitrate > $movie1_info{'audio_bitrate'})
+						{
+							push @encoder_env, '-ab '.$movie1_info{'audio_bitrate'};
+						}
+						else
+						{
+							push @encoder_env, '-ab '.$env{'ab'};
+						}
+					}
+					else
+					{
+						push @encoder_env, '-ab '.$env{'ab'};
+					}
+				}
 				if ($env{'ar'}){push @encoder_env, '-ar '.$env{'ar'};}
 				if ($env{'ac'}){push @encoder_env, '-ac '.$env{'ac'};}
 				if ($env{'fs'}){push @encoder_env, '-fs '.$env{'fs'};}
@@ -640,11 +698,11 @@ sub video_part_file_process
 				}
 				else
 				{
-					$temp_video=new TOM::Temp::file('ext'=>$ext,'dir'=>$main::ENV{'TMP'});
+					$temp_video=new TOM::Temp::file('ext'=>$ext,'dir'=>$main::ENV{'TMP'},'nocreate_'=>1);
 					$files_key{'pass'}=$temp_video;
 				}
 			}
-			$temp_video=new TOM::Temp::file('ext'=>$ext,'dir'=>$main::ENV{'TMP'}) unless $temp_video;
+			$temp_video=new TOM::Temp::file('ext'=>$ext,'dir'=>$main::ENV{'TMP'},'nocreate_'=>1) unless $temp_video;
 			# don't erase files after partial encode()
 			push @files, $temp_video;
 			$files_key{$env{'o_key'}}=$temp_video if $env{'o_key'};
@@ -683,7 +741,7 @@ sub video_part_file_process
 		{
 			main::_log("exec $function_name()");
 			
-			my $temp_video=new TOM::Temp::file('ext'=>'mp4','nocreate'=>1,'dir'=>$main::ENV{'TMP'});
+			my $temp_video=new TOM::Temp::file('ext'=>'mp4','dir'=>$main::ENV{'TMP'},'nocreate'=>1);
 			
 			if ($files_key{'video'})
 			{
@@ -706,7 +764,7 @@ sub video_part_file_process
 			elsif ($files_key{'audiovideo'})
 			{
 				
-				my $temp_video_input=new TOM::Temp::file('ext'=>'mp4','nocreate'=>1,'dir'=>$main::ENV{'TMP'});
+				my $temp_video_input=new TOM::Temp::file('ext'=>'mp4','dir'=>$main::ENV{'TMP'},'nocreate'=>1);
 				
 				main::_log("adding m4v");
 				my $cmd='cd '.$main::ENV{'TMP'}.';'.$MP4Box_exec.' -add '.$files_key{'audiovideo'}->{'filename'}.'#video '.$temp_video->{'filename'};
@@ -774,6 +832,7 @@ sub video_part_file_process
 	{
 		main::_log("copying same file '$env{'video2'}' ext='$env{'ext'}'");
 		File::Copy::copy($env{'video1'}, $env{'video2'});
+		chmod 0666, $env{'video2'};
 		$t->close();
 		$outret{'return'}=0;return %outret;
 	}
@@ -832,6 +891,7 @@ sub video_add
 	$env{'video.ID_entity'}=$env{'video_ent.ID_entity'} if $env{'video_ent.ID_entity'};
 	
 	my $content_updated=0;
+	my $content_reindex=0;
 	
 	# check if thumbnail file is correct
 	if ($env{'file_thumbnail'})
@@ -1027,6 +1087,7 @@ sub video_add
 		);
 		main::_log("generated video.ID='$env{'video.ID'}'");
 		$content_updated=1;
+		$content_reindex=1;
 	}
 	
 	
@@ -1083,6 +1144,7 @@ sub video_add
 				'-journalize' => 1
 			);
 			$content_updated=1;
+			$content_reindex=1;
 		}
 	}
 	
@@ -1152,6 +1214,7 @@ sub video_add
 #			'columns' => {'*'=>1}
 #		);
 		$content_updated=1;
+		$content_reindex=1;
 	}
 	
 	
@@ -1191,6 +1254,7 @@ sub video_add
 			'-journalize' => 1,
 		);
 		$content_updated=1;
+		$content_reindex=1;
 	}
 	
 	if (!$video_ent{'posix_owner'} && !$env{'video_ent.posix_owner'})
@@ -1250,6 +1314,7 @@ sub video_add
 				'-journalize' => 1
 			);
 			$content_updated=1;
+			$content_reindex=1;
 		}
 	}
 	
@@ -1324,6 +1389,7 @@ sub video_add
 				'-journalize' => 1
 			);
 			$content_updated=1;
+			$content_reindex=1;
 		}
 		
 	}
@@ -1355,6 +1421,7 @@ sub video_add
 				'-journalize' => 1
 			);
 			$content_updated=1;
+			$content_reindex=1;
 		}
 	}
 	
@@ -1363,6 +1430,11 @@ sub video_add
 	if ($content_updated)
 	{
 		App::020::SQL::functions::_save_changetime({'db_h'=>'main','db_name'=>$App::510::db_name,'tb_name'=>'a510_video'});
+	}
+	
+	if ($content_reindex)
+	{
+		_video_index('ID_entity'=>$env{'video.ID_entity'});
 	}
 	
 	$tr->close(); # commit transaction
@@ -1410,6 +1482,7 @@ sub video_part_add
 	$env{'video_format.ID'}=$App::510::video_format_original_ID unless $env{'video_format.ID'};
 	
 	my $content_updated=0;
+	my $content_reindex=0;
 	
 	# get video informations
 	
@@ -1475,6 +1548,7 @@ sub video_part_add
 				'-journalize' => 1
 			);
 			$content_updated=1;
+			$content_reindex=1;
 		}
 		
 	}
@@ -1514,6 +1588,7 @@ sub video_part_add
 		);
 		main::_log("generated video_part ID='$env{'video_part.ID'}'");
 		$content_updated=1;
+		$content_reindex=1;
 	}
 	
 	# update if necessary
@@ -1534,6 +1609,7 @@ sub video_part_add
 				'-journalize' => 1
 			);
 			$content_updated=1;
+			$content_reindex=1;
 		}
 	}
 	
@@ -1576,6 +1652,7 @@ sub video_part_add
 			'-journalize' => 1,
 		);
 		$content_updated=1;
+		$content_reindex=1;
 	}
 	
 	
@@ -1626,6 +1703,7 @@ sub video_part_add
 				'-journalize' => 1
 			);
 			$content_updated=1;
+			$content_reindex=1;
 		}
 	}
 	
@@ -1633,7 +1711,13 @@ sub video_part_add
 	
 	if ($content_updated)
 	{
-		App::020::SQL::functions::_save_changetime({'db_h'=>'main','db_name'=>$App::510::db_name,'tb_name'=>'a510_video'});
+		App::020::SQL::functions::_save_changetime({'db_h'=>'main','db_name'=>$App::510::db_name,'tb_name'=>'a510_video',
+			'ID_entity'=>$env{'video.ID_entity'}});
+	}
+	
+	if ($content_reindex)
+	{
+		_video_index('ID_entity'=>$env{'video.ID_entity'});
 	}
 	
 	$t->close();
@@ -1770,7 +1854,7 @@ sub video_part_file_add
 	
 	# file must be copied to have correct extension
 	# if (not already has it)
-	my $file3=new TOM::Temp::file('ext'=>$file_ext,'dir'=>$main::ENV{'TMP'});
+	my $file3=new TOM::Temp::file('ext'=>$file_ext,'dir'=>$main::ENV{'TMP'},'nocreate'=>1);
 	my %video;
 	if ((not $env{'file'}=~/\.$file_ext$/) && (!$env{'file_dontcheck'}))
 	{
@@ -1811,10 +1895,6 @@ sub video_part_file_add
 	main::_log("optimal_hash='$optimal_hash'");
 	my $name=video_part_file_newhash($optimal_hash);
 	
-	
-	
-	
-	
 	if (
 			($env{'video_format.ID'} eq $App::510::video_format_full_ID)
 			||($env{'file_thumbnail'})
@@ -1823,7 +1903,7 @@ sub video_part_file_add
 		# generate thumbnail from full
 		my $rel;
 		main::_log("checking if generate thumbnail");
-		my $tmpjpeg=new TOM::Temp::file('ext'=>'jpeg','dir'=>$main::ENV{'TMP'});
+		my $tmpjpeg=new TOM::Temp::file('ext'=>'jpeg','dir'=>$main::ENV{'TMP'},'nocreate'=>1);
 		
 		if (!$env{'file_thumbnail'} &&
 			($part{'thumbnail_lock'} eq 'N' || $env{'thumbnail_lock_ignore'}))
@@ -1994,6 +2074,15 @@ sub video_part_file_add
 				'-journalize' => 1,
 			);
 			$t->close();
+			
+			# override modifytime
+			App::020::SQL::functions::_save_changetime({
+				'db_h' => 'main',
+				'db_name' => $App::510::db_name,
+				'tb_name' => 'a510_video',
+				'ID_entity' => $part{'ID_entity'}
+			});
+			_video_index('ID_entity'=>$part{'ID_entity'});
 			return $db0_line{'ID'};
 		}
 		else
@@ -2054,6 +2143,14 @@ sub video_part_file_add
 				}
 			}
 			$t->close();
+			# override modifytime
+			App::020::SQL::functions::_save_changetime({
+				'db_h' => 'main',
+				'db_name' => $App::510::db_name,
+				'tb_name' => 'a510_video',
+				'ID_entity' => $part{'ID_entity'}
+			});
+			_video_index('ID_entity'=>$part{'ID_entity'});
 			return $db0_line{'ID'};
 		}
 	}
@@ -2123,10 +2220,27 @@ sub video_part_file_add
 			}
 		}
 		$t->close();
+		# override modifytime
+		App::020::SQL::functions::_save_changetime({
+			'db_h' => 'main',
+			'db_name' => $App::510::db_name,
+			'tb_name' => 'a510_video',
+			'ID_entity' => $part{'ID_entity'}
+		});
+		_video_index('ID_entity'=>$part{'ID_entity'});
 		return $ID;
 	}
 	
 	$t->close();
+	# override modifytime
+	App::020::SQL::functions::_save_changetime({
+		'db_h' => 'main',
+		'db_name' => $App::510::db_name,
+		'tb_name' => 'a510_video',
+		'ID_entity' => $part{'ID_entity'}
+	});
+	_video_index('ID_entity'=>$part{'ID_entity'});
+	
 	return 1;
 }
 
@@ -2382,6 +2496,8 @@ sub get_video_part_file
 			video_part.ID AS ID_part,
 			video_part_attrs.ID AS ID_part_attrs,
 			
+			video_ent.keywords,
+			
 			LEFT(video.datetime_rec_start, 18) AS datetime_rec_start,
 			LEFT(video_attrs.datetime_create, 18) AS datetime_create,
 			LEFT(video.datetime_rec_start,10) AS date_recorded,
@@ -2409,7 +2525,6 @@ sub get_video_part_file
 			
 			CONCAT(video_part_file.ID_format,'/',SUBSTR(video_part_file.ID,1,4),'/',video_part_file.name,'.',video_part_file.file_ext) AS file_part_path
 	};
-
 	
 	if ($env{'video.ID_entity'})
 	{
@@ -2417,7 +2532,7 @@ sub get_video_part_file
 		$sql.=qq{
 		FROM
 			`$App::510::db_name`.`a510_video` AS video
-		LEFT JOIN `$App::510::db_name`.`a510_video_ent` AS video_ent ON
+		INNER JOIN `$App::510::db_name`.`a510_video_ent` AS video_ent ON
 		(
 			video_ent.ID_entity = video.ID_entity
 		)
@@ -2468,7 +2583,7 @@ sub get_video_part_file
 		(
 			video_part.ID_entity = video.ID_entity
 		)
-		LEFT JOIN `$App::510::db_name`.`a510_video_ent` AS video_ent ON
+		INNER JOIN `$App::510::db_name`.`a510_video_ent` AS video_ent ON
 		(
 			video_ent.ID_entity = video.ID_entity
 		)
@@ -2502,8 +2617,8 @@ sub get_video_part_file
 	}
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,
-		'-cache' => 3600, #24H max
-		'-cache_min' => 600, # when changetime before this limit 10min
+		'-cache' => 86400*7*4, #24H max
+#		'-cache_min' => 600, # when changetime before this limit 10min
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
 			'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video",
 			'ID_entity' => $env{'video.ID_entity'}
@@ -2550,7 +2665,7 @@ sub get_video_part_file_process_front
 			`$App::510::db_name`.a510_video_part AS video_part
 		
 		
-		LEFT JOIN `$App::510::db_name`.a510_video AS video ON
+		INNER JOIN `$App::510::db_name`.a510_video AS video ON
 		(
 			video_part.ID_entity = video.ID_entity
 		)
@@ -2618,9 +2733,10 @@ sub get_video_part_file_process_front
 			
 			/* skip videos in processing */
 			AND video_part_file_process.ID IS NULL
+			/* skip videos where depending format is in processing */
 			AND video_part_file_process_p.ID IS NULL
 			
-			/* parent video must exists */
+			/* parent video file must exists */
 			AND video_part_file_p.ID
 			AND video_part_file_p.status='Y'
 			
@@ -2630,7 +2746,16 @@ sub get_video_part_file_process_front
 				(
 					/* video_part_file is missing, but required */
 					video_part_file.ID IS NULL AND
-					video_format.required='Y'
+					video_format.required='Y' AND
+					(
+						video_format.required_min_height IS NULL
+						OR (video_format.required_min_height <= video_part_file_p.video_height)
+					)
+					AND
+					(
+						video_format.required_min_bitrate IS NULL
+						OR (video_format.required_min_bitrate <= video_part_file_p.video_bitrate)
+					)
 				)
 				OR
 				(
@@ -2658,14 +2783,21 @@ sub get_video_part_file_process_front
 		
 		GROUP BY
 			video_part.ID, video_format.ID
-			
-		ORDER BY
-			video_format.ID_charindex, video_part.datetime_create DESC
-			
-		LIMIT $env{'limit'}
 	};
 	my $i;
-	my %sth0=TOM::Database::SQL::execute($sql);
+	if ($env{'count'})
+	{
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT COUNT(*) AS cnt FROM ($sql) AS t2
+		});
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		return $db0_line{'cnt'};
+	}
+	my %sth0=TOM::Database::SQL::execute($sql.qq{
+		ORDER BY
+			video_format.ID_charindex ASC, video.datetime_create DESC
+		LIMIT $env{'limit'}
+	});
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$i++;
@@ -2674,6 +2806,471 @@ sub get_video_part_file_process_front
 	}
 	
 	return @data;
+}
+
+
+sub _a210_by_cat
+{
+	my $cats=shift;
+	my %env=@_;
+	
+	$env{'lng'}=$tom::lng unless $env{'lng'};
+	$env{'db_name'}=$App::210::db_name unless $env{'db_name'};
+	my $cache_key=$env{'db_name'}.'::'.$env{'lng'}.'::'.join('::',@{$cats});
+	
+	# changetimes
+	my $changetime_a510=App::020::SQL::functions::_get_changetime({
+		'db_name' => $App::510::db_name,
+		'tb_name' => 'a510_video_cat',
+	});
+	my $changetime_a210=App::020::SQL::functions::_get_changetime({
+		'db_name' => $env{'db_name'},
+		'tb_name' => 'a210_page',
+	});
+	
+	if ($TOM::CACHE && $TOM::CACHE_memcached && $main::cache)
+	{
+		my $cache=$Ext::CacheMemcache::cache->get(
+			'namespace' => "fnc_cache",
+			'key' => 'App::510::functions::_a210_by_cat::'.$cache_key
+		);
+		if (($cache->{'time'} > $changetime_a210) && ($cache->{'time'} > $changetime_a510))
+		{
+			return $cache->{'value'};
+		}
+	}
+	
+	# find path
+	my @categories;
+	my %sql_def=('db_h' => "main",'db_name' => $App::510::db_name,'tb_name' => "a510_video_cat");
+	foreach my $cat(@{$cats})
+	{
+		my %sth0=TOM::Database::SQL::execute(
+			qq{SELECT ID FROM $App::510::db_name.a510_video_cat WHERE ID_entity=? AND lng=? LIMIT 1},
+			'bind'=>[$cat,$env{'lng'}],'log'=>0,'quiet'=>1,
+			'-cache' => 86400*7,
+			'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+				'db_name' => $App::510::db_name,
+				'tb_name' => 'a510_video_cat',
+			})
+		);
+		next unless $sth0{'rows'};
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		my $i;
+		foreach my $p(
+			App::020::SQL::functions::tree::get_path(
+				$db0_line{'ID'},
+				%sql_def,
+				'-slave' => 1,
+				'-cache' => 86400*7
+				# autocached by changetime
+			)
+		)
+		{
+			push @{$categories[$i]},$p->{'ID_entity'};
+			$i++;
+		}
+	}
+	
+	my $category;
+	for my $i (1 .. @categories)
+	{
+		foreach my $cat (@{$categories[-$i]})
+		{
+			my %db0_line;
+			foreach my $relation(App::160::SQL::get_relations(
+				'db_name' => $env{'db_name'},
+				'l_prefix' => 'a210',
+				'l_table' => 'page',
+				#'l_ID_entity' = > ???
+				'r_prefix' => "a510",
+				'r_table' => "video_cat",
+				'r_ID_entity' => $cat,
+				'rel_type' => "link",
+				'status' => "Y"
+			))
+			{
+				# je toto relacia na moju jazykovu verziu a je aktivna?
+				my %sth0=TOM::Database::SQL::execute(
+				qq{SELECT ID FROM $env{'db_name'}.a210_page WHERE ID_entity=? AND lng=? AND status IN ('Y','L') LIMIT 1},
+				'bind'=>[$relation->{'l_ID_entity'},$env{'lng'}],'quiet'=>1,
+					'-cache' => 86400*7,
+					'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+						'db_name' => $env{'db_name'},
+						'tb_name' => 'a210_page',
+					})
+				);
+				next unless $sth0{'rows'};
+				%db0_line=$sth0{'sth'}->fetchhash();
+				last;
+			}
+			
+			next unless $db0_line{'ID'};
+			
+			$category=$db0_line{'ID'};
+			
+			last;
+		}
+		last if $category;
+	}
+	
+	if ($TOM::CACHE && $TOM::CACHE_memcached)
+	{
+		$Ext::CacheMemcache::cache->set(
+			'namespace' => "fnc_cache",
+			'key' => 'App::510::functions::_a210_by_cat::'.$cache_key,
+			'value' => {
+				'time' => time(),
+				'value' => $category
+			},
+			'expiration' => '86400S'
+		);
+	}
+	
+	return $category;
+}
+
+
+sub _video_index
+{
+	my %env=@_;
+	return undef unless $env{'ID_entity'}; # product.ID
+	return undef unless $Ext::Solr;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::_video_index($env{'ID_entity'})",'timer'=>1);
+	
+	my $solr = Ext::Solr::service();
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			video.*,
+--			video_ent.datetime_rec_start,
+--			video_ent.datetime_rec_stop,
+			video_ent.keywords,
+			video_ent.metadata,
+			video_ent.movie_release_year,
+			video_ent.movie_release_date,
+			video_ent.movie_country_code,
+			video_ent.movie_imdb,
+			video_ent.movie_catalog_number,
+			video_ent.movie_length,
+			video_ent.movie_note,
+			video_attrs.lng
+		FROM
+			$App::510::db_name.a510_video AS video
+		INNER JOIN $App::510::db_name.a510_video_ent AS video_ent ON
+		(
+			video_ent.ID_entity = video.ID_entity AND
+			video_ent.status IN ('Y','L')
+		)
+		INNER JOIN $App::510::db_name.a510_video_attrs AS video_attrs ON
+		(
+			video_attrs.ID_entity = video.ID AND
+			video_attrs.status IN ('Y','L')
+		)
+		INNER JOIN $App::510::db_name.a510_video_part AS video_part ON
+		(
+			video_part.ID_entity = video.ID_entity AND
+			video_part.status IN ('Y','L') AND
+			video_part.part_id = 1
+		)
+		INNER JOIN $App::510::db_name.a510_video_part_file AS video_part_file ON
+		(
+			video_part_file.ID_entity = video_part.ID AND
+			video_part_file.status IN ('Y','L') AND
+			video_part_file.ID_format = $App::510::video_format_full_ID
+		)
+		WHERE
+			video.status IN ('Y','L') AND
+			video.ID_entity = ?
+	},'quiet'=>1,'bind'=>[$env{'ID_entity'}]);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		
+		#my $id=$App::510::db_name.".a510_video.".$db0_line{'lng'}.".".$db0_line{'ID_entity'};
+#		main::_log("index id='$id'");
+		
+		my @video_ent;
+		
+		push @video_ent,
+#			WebService::Solr::Field->new( 'id' => $id ),
+			WebService::Solr::Field->new( 'db_s' => $App::510::db_name ),
+			WebService::Solr::Field->new( 'addon_s' => 'a510_video' ),
+			WebService::Solr::Field->new( 'lng_s' => $db0_line{'lng'} ),
+			WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
+			WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
+			WebService::Solr::Field->new( 'a510_video.ID_entity_i' => $db0_line{'ID_entity'} ),
+			
+			WebService::Solr::Field->new( 'keywords' => $db0_line{'keywords'} )
+			
+			;
+		
+		if ($db0_line{'datetime_rec_start'})
+		{
+			$db0_line{'datetime_rec_start'}=~s| (\d\d)|T$1|;
+			$db0_line{'datetime_rec_start'}.="Z";
+			push @video_ent,
+				WebService::Solr::Field->new( 'datetime_rec_start_dt' => $db0_line{'datetime_rec_start'} )
+		}
+		
+		# all visits
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				SUM(video_part.visits) AS visits
+			FROM
+				$App::510::db_name.a510_video_part AS video_part
+			WHERE
+				video_part.ID_entity = ? AND
+				video_part.status IN ('Y','L')
+		},'quiet'=>1,'bind'=>[$env{'ID_entity'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		main::_log(" visits=$db1_line{'visits'}");
+		push @video_ent, WebService::Solr::Field->new( 'visits_i' => $db1_line{'visits'} );
+		
+		# visits 7d
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				SUM((
+					SELECT COUNT(*)
+					FROM $App::510::db_name.a510_video_part_callback
+					WHERE datetime_create >= DATE_SUB(NOW(),INTERVAL 7 DAY) AND ID_part = video_part.ID
+				)) AS visits
+			FROM
+				$App::510::db_name.a510_video_part AS video_part
+			WHERE
+				video_part.ID_entity = ? AND
+				video_part.status IN ('Y','L')
+		},'quiet'=>1,'-slave'=>1,'bind'=>[$env{'ID_entity'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		main::_log(" 7d visits=$db1_line{'visits'}");
+		push @video_ent, WebService::Solr::Field->new( 'visits_7d_i' => $db1_line{'visits'} );
+		
+		# visits 24h
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				SUM((
+					SELECT COUNT(*)
+					FROM $App::510::db_name.a510_video_part_callback
+					WHERE datetime_create >= DATE_SUB(NOW(),INTERVAL 1 DAY) AND ID_part = video_part.ID
+				)) AS visits
+			FROM
+				$App::510::db_name.a510_video_part AS video_part
+			WHERE
+				video_part.ID_entity = ? AND
+				video_part.status IN ('Y','L')
+		},'quiet'=>1,'-slave'=>1,'bind'=>[$env{'ID_entity'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		main::_log(" 24h visits=$db1_line{'visits'}");
+		push @video_ent, WebService::Solr::Field->new( 'visits_24h_i' => $db1_line{'visits'} );
+		
+		my %video_attrs;
+		my %video_attrs_;
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				video_attrs.*,
+				video_cat.ID AS cat_ID,
+				video_cat.name AS cat_name,
+				video_cat.ID_charindex AS cat_ID_charindex
+			FROM
+				$App::510::db_name.a510_video AS video
+			INNER JOIN $App::510::db_name.a510_video_ent AS video_ent ON
+			(
+				video_ent.ID_entity = video.ID_entity AND
+				video_ent.status IN ('Y','L')
+			)
+			LEFT JOIN $App::510::db_name.a510_video_attrs AS video_attrs ON
+			(
+				video_attrs.ID_entity = video.ID AND
+				video_attrs.status IN ('Y','L')
+			)
+			LEFT JOIN $App::510::db_name.a510_video_cat AS video_cat ON
+			(
+				video_cat.ID_entity = video_attrs.ID_category AND
+				video_cat.lng = video_attrs.lng AND
+				video_cat.status IN ('Y','L')
+			)
+			WHERE
+				video.status IN ('Y','L') AND
+				video.ID_entity = ? AND
+				video_attrs.ID_entity IS NOT NULL
+		},'quiet'=>1,'bind'=>[$env{'ID_entity'}]);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			main::_log(" attrs $db1_line{'lng'} $db1_line{'name'}");
+			
+			for my $part('description')
+			{
+				$db0_line{$part}=~s|<.*?>||gms;
+				$db0_line{$part}=~s|&nbsp;| |gms;
+				$db0_line{$part}=~s|  | |gms;
+			}
+			
+			push @{$video_attrs{$db1_line{'lng'}}},
+				WebService::Solr::Field->new( 'title' => $db1_line{'name'} );
+			
+			$video_attrs_{$db1_line{'lng'}}{'name'}=WebService::Solr::Field->new( 'name' => $db1_line{'name'} )
+				if (!$video_attrs_{$db1_line{'lng'}}{'name'} && $db1_line{'name'});
+			$video_attrs_{$db1_line{'lng'}}{'description'}=WebService::Solr::Field->new( 'description' => $db1_line{'description'} )
+				if (!$video_attrs_{$db1_line{'lng'}}{'description'} && $db1_line{'description'});
+			
+			
+			if ($db1_line{'cat_ID'})
+			{
+				push @{$video_attrs{$db1_line{'lng'}}},WebService::Solr::Field->new( 'cat_charindex_sm' =>  $db1_line{'cat_ID_charindex'});
+				push @{$video_attrs{$db1_line{'lng'}}},WebService::Solr::Field->new( 'cat_name_sm' =>  $db1_line{'cat_name'});
+				push @{$video_attrs{$db1_line{'lng'}}},WebService::Solr::Field->new( 'cat_name_tm' =>  $db1_line{'cat_name'});
+				push @{$video_attrs{$db1_line{'lng'}}},WebService::Solr::Field->new( 'cat' =>  $db1_line{'cat_ID'});
+				
+				my %sql_def=('db_h' => "main",'db_name' => $App::510::db_name,'tb_name' => "a510_video_cat");
+				foreach my $p(
+					App::020::SQL::functions::tree::get_path(
+						$db1_line{'cat_ID'},
+						%sql_def,
+						'-cache' => 86400*7
+					)
+				)
+				{
+					push @{$video_attrs{$db1_line{'lng'}}},WebService::Solr::Field->new( 'cat_path_sm' =>  $p->{'ID_entity'});
+				}
+			}
+			
+		}
+		
+		foreach my $lng(keys %video_attrs)
+		{
+			my $doc = WebService::Solr::Document->new();	
+			my $id=$App::510::db_name.".a510_video.".$lng.".".$db0_line{'ID_entity'};
+			$doc->add_fields((
+				WebService::Solr::Field->new( 'id' => $id ),
+				@video_ent,
+				@{$video_attrs{$lng}},
+				$video_attrs_{$db1_line{'lng'}}{'name'},
+				$video_attrs_{$db1_line{'lng'}}{'description'}
+			));
+			
+			$solr->add($doc);
+		}
+		
+	}
+	else
+	{
+		
+		main::_log("not found active ID_entity",1);
+		my $response = $solr->search( "id:".$App::510::db_name.".a510_video* AND a510_video.ID_entity_i:$env{'ID_entity'}" );
+		for my $doc ( $response->docs )
+		{
+			$solr->delete_by_id($doc->value_for('id'));
+		}
+		
+	}
+	
+	$t->close();
+	return 1;
+}
+
+
+sub _video_cat_index
+{
+	my %env=@_;
+	return undef unless $env{'ID'};
+	return undef unless $Ext::Solr;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::_video_cat_index()",'timer'=>1);
+	
+	my $solr = Ext::Solr::service();
+	
+	my %content;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			$App::510::db_name.a510_video_cat
+		WHERE
+			status IN ('Y','L')
+			AND ID=?
+	},'quiet'=>1,'bind'=>[$env{'ID'}]);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("found");
+		
+		my $id=$App::510::db_name.".a510_video_cat.".$db0_line{'lng'}.".".$db0_line{'ID_entity'};
+		main::_log("index id='$id'");
+		
+		my $doc = WebService::Solr::Document->new();
+		
+		$db0_line{'description'}=~s|<.*?>||gms;
+		$db0_line{'description'}=~s|&nbsp;| |gms;
+		$db0_line{'description'}=~s|  | |gms;
+		
+		$db0_line{'datetime_create'}=~s| (\d\d)|T$1|;
+		$db0_line{'datetime_create'}.="Z";
+		
+		my @metadata_fields;
+		
+		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
+		foreach my $sec(keys %metadata)
+		{
+			foreach (keys %{$metadata{$sec}})
+			{
+				next unless $metadata{$sec}{$_};
+				if ($_=~s/\[\]$//)
+				{
+					# this is comma separated array
+					foreach my $val (split(';',$metadata{$sec}{$_.'[]'}))
+					{push @metadata_fields,WebService::Solr::Field->new( $sec.'.'.$_.'_sm' => $val)}
+					push @metadata_fields,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_);
+					next;
+				}
+				
+				push @metadata_fields,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
+				if ($metadata{$sec}{$_}=~/^[0-9]{1,9}$/)
+				{
+					push @metadata_fields,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
+				}
+				if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}$/)
+				{
+					push @metadata_fields,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
+				}
+				
+				# list of used metadata fields
+				push @metadata_fields,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_ );
+			}
+		}
+		
+		$doc->add_fields((
+			WebService::Solr::Field->new( 'id' => $id ),
+			
+			WebService::Solr::Field->new( 'name' => $db0_line{'name'} ),
+			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
+			WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
+			
+			WebService::Solr::Field->new( 'keywords' => $db0_line{'keywords'} ),
+			WebService::Solr::Field->new( 'description' => $db0_line{'description'} ),
+			
+			WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_create'} ),
+			
+			WebService::Solr::Field->new( 'db_s' => $App::510::db_name ),
+			WebService::Solr::Field->new( 'addon_s' => 'a510_video_cat' ),
+			WebService::Solr::Field->new( 'lng_s' => $db0_line{'lng'} ),
+			WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
+			WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
+			@metadata_fields
+		));
+		
+		$solr->add($doc);
+	}
+	else
+	{
+		main::_log("not found active ID",1);
+		my $response = $solr->search( "id:".$App::510::db_name.".a510_video_cat.* AND ID_i:$env{'ID'}" );
+		for my $doc ( $response->docs )
+		{
+			$solr->delete_by_id($doc->value_for('id'));
+		}
+	}
+	
+	$t->close();
 }
 
 
