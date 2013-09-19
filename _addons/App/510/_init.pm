@@ -412,6 +412,80 @@ foreach my $lng(@TOM::LNG_accept)
 }
 
 
+# video cat avatars
+
+our $cat_avatar_cat_ID_entity;
+our %cat_avatar_cat;
+
+# find any category;
+my $sql="
+	SELECT
+		ID, ID_entity
+	FROM
+		`$App::501::db_name`.`a501_image_cat`
+	WHERE
+		name='video category avatars' AND
+		lng IN ('".(join "','",@TOM::LNG_accept)."')
+	LIMIT 1
+";
+my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+if (my %db0_line=$sth0{'sth'}->fetchhash())
+{
+	$cat_avatar_cat_ID_entity=$db0_line{'ID_entity'} unless $cat_avatar_cat_ID_entity;
+}
+else
+{
+	$cat_avatar_cat_ID_entity=App::020::SQL::functions::tree::new(
+		'db_h' => "main",
+		'db_name' => $App::501::db_name,
+		'tb_name' => "a501_image_cat",
+		'parent_ID' => $App::501::system_cat{$tom::LNG},
+		'columns' => {
+			'name' => "'video category avatars'",
+			'lng' => "'$tom::LNG'",
+			'status' => "'L'"
+		},
+		'-journalize' => 1
+	);
+}
+
+foreach my $lng(@TOM::LNG_accept)
+{
+	#main::_log("check related category $lng");
+	my $sql=qq{
+		SELECT
+			ID, ID_entity
+		FROM
+			`$App::501::db_name`.`a501_image_cat`
+		WHERE
+			ID_entity=$cat_avatar_cat_ID_entity AND
+			lng='$lng'
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$cat_avatar_cat{$lng}=$db0_line{'ID'};
+	}
+	else
+	{
+		#main::_log("creating related category");
+		$cat_avatar_cat{$lng}=App::020::SQL::functions::tree::new(
+			'db_h' => "main",
+			'db_name' => $App::501::db_name,
+			'tb_name' => "a501_image_cat",
+			'parent_ID' => $App::501::system_cat{$lng},
+			'columns' => {
+				'ID_entity' => $cat_avatar_cat_ID_entity,
+				'name' => "'video category avatars'",
+				'lng' => "'$lng'",
+				'status' => "'L'"
+			},
+			'-journalize' => 1
+		);
+	}
+}
+
 
 # check relation to a821
 our $forum_ID_entity;
