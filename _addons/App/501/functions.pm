@@ -1932,6 +1932,8 @@ sub get_image_file
 	
 	my $sql=qq{
 		SELECT
+			image.ID_entity,
+			image.ID,
 			image.ID_entity AS ID_entity_image,
 			image.ID AS ID_image,
 			image_file.ID_format AS ID_format,
@@ -2033,6 +2035,12 @@ sub get_image_file
 				return get_image_file(%env,'-recache'=>1,'-recursive'=>1);
 			}
 		}
+		
+		if ($image{'file_status'} eq "E")
+		{
+			undef $image{'file_path'};
+		}
+		
 #		main::_log("received image_file with status='$image{'file_status'}'");
 		if ($env{'-regenerate'})
 		{
