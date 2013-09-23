@@ -779,6 +779,7 @@ sub get_path
 			'name_url' => 1,
 			'ID_charindex' => 1,
 			'lng' => 1,
+			'metadata' => $env{'columns'}{'metadata'},
 		},
 		'-slave' => $env{'-slave'},
 		%cache
@@ -807,7 +808,9 @@ sub get_path
 				ID_charindex,
 				name,
 				name_url,
-				status
+				status}.do{
+					",metadata" if $env{'columns'}{'metadata'};
+				}.qq{
 			FROM
 				`$env{'db_name'}`.`$env{'tb_name'}`
 			WHERE
