@@ -1,0 +1,293 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::401::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'article_attrs.status'}='Y' unless $env{'article_attrs.status'};
+		my $sql_article_attrs_status=join "','", split('',$env{'article_attrs.status'});
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || 'article_attrs.datetime_start DESC';
+	
+	if ($env{'article.ID_entity'})
+	{
+		main::_log("search by article.ID_entity");
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::401::db_name,
+			'tb_name' => 'a401_article',
+			'ID_entity' => $env{'article.ID_entity'}
+		};
+		$sql_where.="AND article.ID_entity=? ";
+		push @sql_bind,$env{'article.ID_entity'};
+	}
+	
+	if ($env{'article_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'article_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::401::db_name.a401_article_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$sql_cat.=qq{ OR article_cat.ID_charindex LIKE CONCAT(($cat_sql),"%")};
+			}
+			else
+			{
+				$sql_cat.=" OR article_cat.ID_entity=$ID_category";
+				push @{$env_out{'entity'}},{
+					'db_h' => 'main',
+					'db_name' => $App::401::db_name,
+					'tb_name' => 'a401_article_cat',
+					'ID_entity' => $ID_category,
+				};
+			}
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'article_cat.ID'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'article_cat.ID'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::401::db_name.a401_article_cat WHERE ID=$ID_category AND status IN ('Y','L') LIMIT 1};
+				$sql_cat.=qq{ OR article_cat.ID_charindex LIKE CONCAT(($cat_sql),"%")};
+			}
+			else
+			{
+				$sql_cat.=" OR article_cat.ID=$ID_category";
+			}
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	return 1 unless $sql_where;
+	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			article.ID_entity,
+			article.ID,
+			article_attrs.ID AS attrs_ID,
+			article_content.ID AS content_ID,
+			
+			article_attrs.ID_category,
+			article_cat.ID AS cat_ID,
+			article_cat.name AS cat_name,
+			article_cat.name_url AS cat_name_url,
+			
+			article_ent.posix_owner,
+			article_ent.ID_author AS posix_author,
+			article_ent.visits,
+			article_ent.sources,
+			article_content.ID_editor AS posix_editor,
+			
+			article_content.datetime_create AS content_datetime_create,
+			article_attrs.datetime_start,
+			article_attrs.datetime_stop,
+			
+			article_attrs.priority_A,
+			article_attrs.priority_B,
+			article_attrs.priority_C,
+			
+			article_attrs.name,
+			article_attrs.name_url,
+			article_attrs.name_hyphens,
+			article_attrs.alias_url,
+			
+			article_content.subtitle,
+			article_content.subtitle_hyphens,
+			article_content.mimetype,
+			article_content.abstract,
+			article_content.abstract_hyphens,
+			article_content.body,
+			article_content.body_hyphens,
+			article_content.keywords,
+			article_content.lng,
+			
+			IF(
+				round((`article_ent`.rating_score / `article_ent`.rating_votes),2),
+				round((`article_ent`.rating_score / `article_ent`.rating_votes),2), '0.00'
+			) as rating,
+			rating_score,
+			rating_votes,
+			
+			article_ent.visits,
+			
+			article_attrs.status,
+			
+			IF
+			(
+				(
+					article.status LIKE 'Y' AND
+					article_attrs.status LIKE 'Y'
+				),
+				'Y', 'U'
+			) AS status_all
+			
+		FROM $App::401::db_name.a401_article_ent AS article_ent
+		INNER JOIN $App::401::db_name.a401_article AS article ON
+		(
+			article_ent.ID_entity = article.ID_entity
+		)
+		INNER JOIN $App::401::db_name.a401_article_attrs AS article_attrs ON
+		(
+			article_attrs.ID_entity = article.ID AND
+			article_attrs.status IN ('$sql_article_attrs_status') AND
+			article_attrs.lng = '$env{'lng'}'
+		)
+		INNER JOIN $App::401::db_name.a401_article_content AS article_content ON
+		(
+			article_content.ID_entity = article.ID_entity AND
+			article_content.status = 'Y' AND
+			article_content.lng = article_attrs.lng
+		)
+		INNER JOIN $App::401::db_name.a401_article_cat AS article_cat ON
+		(
+			article_cat.ID = article_attrs.ID_category
+		)
+		LEFT JOIN $App::401::db_name.a301_ACL_user_group AS ACL_world ON
+		(
+			ACL_world.ID_entity = 0 AND
+			r_prefix = 'a401' AND
+			r_table = 'article' AND
+			r_ID_entity = article.ID_entity
+		)
+		WHERE
+			article_ent.status = 'Y'
+			AND article.status = 'Y'
+			$sql_where
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			1
+	},'bind'=>[@sql_bind],'log_'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::401::db_name,
+				'tb_name' => "a401_article",
+				'ID_entity' => do{$env{'article.ID_entity'} if $env{'article.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	my %article=$sth0{'sth'}->fetchhash();
+	
+	return 1 unless $article{'ID_entity'};
+	
+	main::_log("found article.ID_entity=$article{'ID_entity'}");
+	
+	push @{$env_out{'entity'}},{
+		'db_h' => 'main',
+		'db_name' => $App::401::db_name,
+		'tb_name' => 'a401_article',
+		'ID_entity' => $article{'ID_entity'}
+	};
+	
+	push @{$env_out{'call'}{'H'}{'add_DOC_keywords'}},$article{'keywords'}
+		if $env{'header.keywords'};
+	
+	push @{$env_out{'call'}{'H'}{'add_DOC_title'}},$article{'name'}
+		if $env{'header.title'};
+	
+	if ($article{'cat_ID'})
+	{
+		# link to a210_page
+		if (my $category=App::510::functions::_a210_by_cat([$article{'cat_ID'}],'lng'=>$env{'lng'}))
+		{
+			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$category,
+					%sql_def,
+					'-slave' => 1,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$article{'a210'}{'IDs'}}, $p->{'ID'};
+				push @{$article{'a210'}{'nodes'}}, $p;
+				$article{'a210'}{'path_url'}.="/".$p->{'name_url'};
+			}
+			$article{'a210'}{'path_url'}=~s|^/||;
+		}
+	}
+	
+	if ($env{'header.og'})
+	{
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:title','content'=>$article{'name'}};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:site_name','content' => $tom::H};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:type','content'=>'article'};
+	}
+	
+	# parser abstract
+	$parser->parse($article{'abstract'});
+	$parser->eof();
+	push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+	$article{'abstract_parser'}={
+		'output' => $parser->{'output'},
+		'addon' => $parser->{'addon'},
+		'entity' => $parser->{'entity'},
+		'thumbnail' => $parser->{'thumbnail'},
+	};
+	
+	# parser body
+	$parser->parse($article{'body'});
+	$parser->eof();
+	$article{'body_parser'}={
+		'output' => $parser->{'output'},
+		'addon' => $parser->{'addon'},
+		'entity' => $parser->{'entity'},
+		'thumbnail' => $parser->{'thumbnail'},
+	};
+	push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+	
+	$TPL->{'variables'}{'article'} = \%article;
+	
+	return 1,%env_out;
+}
+
+1;

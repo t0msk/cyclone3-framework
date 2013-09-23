@@ -139,6 +139,7 @@ sub article_add
 	
 	# check if this symlink with same ID_category not exists
 	# and article.ID is unknown
+	main::_log("$env{'article_attrs.ID_category'} $env{'article.ID'} $env{'article.ID_entity'} $env{'forcesymlink'}");
 	if ($env{'article_attrs.ID_category'} && !$env{'article.ID'} && $env{'article.ID_entity'} && !$env{'forcesymlink'})
 	{
 		main::_log("\$env{'article_attrs.ID_category'} && !\$env{'article.ID'} && \$env{'article.ID_entity'} -> search for article.ID");
@@ -591,6 +592,8 @@ sub article_add
 				$content_reindex=1;
 			}
 		}
+		$columns{'ID_editor'}="'".TOM::Security::form::sql_escape($env{'article_content.ID_editor'})."'"
+			if (exists $env{'article_content.ID_editor'} && ($env{'article_content.ID_editor'} ne $article_content{'ID_editor'}));
 		
 		if (keys %columns)
 		{
@@ -1310,6 +1313,118 @@ sub article_visit
 	
 	return 1;
 }
+
+
+
+sub _a210_by_cat
+{
+	my $cats=shift;
+	my %env=@_;
+	
+	$env{'lng'}=$tom::lng unless $env{'lng'};
+	my $cache_key=$App::210::db_name.'::'.$env{'lng'}.'::'.join('::',@{$cats});
+	
+	# changetimes
+	my $changetime_a401=App::020::SQL::functions::_get_changetime({
+		'db_name' => $App::401::db_name,
+		'tb_name' => 'a401_article_cat',
+	});
+	my $changetime_a210=App::020::SQL::functions::_get_changetime({
+		'db_name' => $App::210::db_name,
+		'tb_name' => 'a210_page',
+	});
+	
+	if ($TOM::CACHE && $TOM::CACHE_memcached && $main::cache && 0)
+	{
+		my $cache=$Ext::CacheMemcache::cache->get(
+			'namespace' => "fnc_cache",
+			'key' => 'App::401::functions::_a210_by_cat::'.$cache_key
+		);
+		if (($cache->{'time'} > $changetime_a210) && ($cache->{'time'} > $changetime_a401))
+		{
+			return $cache->{'value'};
+		}
+	}
+	
+	# find path
+	my @categories;
+	my %sql_def=('db_h' => "main",'db_name' => $App::401::db_name,'tb_name' => "a401_article_cat");
+	foreach my $cat(@{$cats})
+	{
+		my $i;
+		foreach my $p(
+			App::020::SQL::functions::tree::get_path(
+				$cat,
+				%sql_def,
+				'-slave' => 1,
+				'-cache' => 86400*7
+				# autocached by changetime
+			)
+		)
+		{
+			push @{$categories[$i]},$p->{'ID_entity'};
+			$i++;
+		}
+	}
+	
+	my $category;
+	for my $i (1 .. @categories)
+	{
+		foreach my $cat (@{$categories[-$i]})
+		{
+			my %db0_line;
+			foreach my $relation(App::160::SQL::get_relations(
+				'db_name' => $App::210::db_name,
+				'l_prefix' => 'a210',
+				'l_table' => 'page',
+				#'l_ID_entity' = > ???
+				'r_prefix' => "a401",
+				'r_table' => "article_cat",
+				'r_ID_entity' => $cat,
+				'rel_type' => "link",
+				'status' => "Y",
+			))
+			{
+				# je toto relacia na moju jazykovu verziu a je aktivna?
+				my %sth0=TOM::Database::SQL::execute(
+				qq{SELECT ID FROM $App::210::db_name.a210_page WHERE ID_entity=? AND lng=? AND status IN ('Y','L') LIMIT 1},
+				'bind'=>[$relation->{'l_ID_entity'},$env{'lng'}],'quiet'=>1,
+					'-cache' => 86400*7,
+					'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+						'db_name' => $App::210::db_name,
+						'tb_name' => 'a210_page',
+					})
+				);
+				next unless $sth0{'rows'};
+				%db0_line=$sth0{'sth'}->fetchhash();
+				last;
+			}
+			
+			next unless $db0_line{'ID'};
+			
+			$category=$db0_line{'ID'};
+			
+			last;
+		}
+		last if $category;
+	}
+	
+	if ($TOM::CACHE && $TOM::CACHE_memcached)
+	{
+		$Ext::CacheMemcache::cache->set(
+			'namespace' => "fnc_cache",
+			'key' => 'App::401::functions::_a210_by_cat::'.$cache_key,
+			'value' => {
+				'time' => time(),
+				'value' => $category
+			},
+			'expiration' => '86400S'
+		);
+	}
+	
+	return $category;
+}
+
 
 =head1 AUTHORS
 
