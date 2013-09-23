@@ -53,6 +53,7 @@ L<App::020|app/"020/_init.pm">
 use TOM::Database::SQL;
 use Ext::CacheMemcache::_init;
 use Ext::Redis::_init;
+use Ext::RabbitMQ::_init;
 use App::020::SQL::functions::tree;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 
@@ -1489,7 +1490,7 @@ sub _save_changetime
 	$env{'db_h'}='main' unless $env{'db_h'};
 	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
 	
-	if (!$TOM::CACHE_memcached && !$Redis)
+	if (!$TOM::CACHE_memcached && !$Redis && !$RabbitMQ)
 	{
 		# when memcached or Redis is not enabled, return 1
 		return 1;
@@ -1502,37 +1503,76 @@ sub _save_changetime
 	$main::env{'cache'}{'db_changed'}{$key}=$tt;
 	$main::env{'cache'}{'db_changed'}{$key_entity}=$tt;
 	
+	if ($RabbitMQ && !$conf{'-autosave'}) # publish event
+	{
+		use JSON;
+		if ($env{'ID_entity'})
+		{
+			$RabbitMQ->publish(
+				'exchange' => 'entity.change',
+				'routing_key' => '',
+				'header' => {
+					'app_id' => $tom::H
+				},
+				'body' => to_json({
+					'key' => $key_entity,
+					'mtime' => $tt,
+					'user' => $main::USRM{'ID_user'},
+					'hostname' => $TOM::hostname,
+					'domain' => $tom::H
+				})
+			);
+		}
+		else
+		{
+			$RabbitMQ->publish(
+				'exchange' => 'entity.change',
+				'routing_key' => '',
+				'header' => {
+					'app_id' => $tom::H
+				},
+				'body' => to_json({
+					'key' => $key,
+					'mtime' => $tt,
+					'user' => $main::USRM{'ID_user'},
+					'hostname'  => $TOM::hostname,
+					'domain' => $tom::H
+				})
+			);
+		}
+	}
+	
 	if ($Redis)
 	{
 		use JSON;
 		if (!$env{'ID_entity'}||($env{'ID_entity'} && !$conf{'-autosave'}))
 		{
-#			main::_log("mdf table $key at $tt",3,"debug");
 			$Redis->hset('C3|db_entity|'.$key,'modified',$tt,sub {});
 			$Redis->expire('C3|db_entity|'.$key,(86400*30),sub {});
-			$Redis->publish('C3|db_entity|modified|'.$key,to_json({
-				'mtime'=>$tt,
-				'user'=>$main::USRM{'ID_user'},
-				'hostname' => $TOM::hostname,
-				'domain' => $tom::H
-			}),sub {}) unless $conf{'-autosave'}; # publish event
+#			if (!$RabbitMQ) # publish only when pub/sub of RabbitMQ not available
+#			{
+				$Redis->publish('C3|db_entity|modified|'.$key,to_json({
+					'mtime'=>$tt,
+					'user'=>$main::USRM{'ID_user'},
+					'hostname' => $TOM::hostname,
+					'domain' => $tom::H
+				}),sub {}) unless $conf{'-autosave'}; # publish event
+#			}
 		}
 		
 		if ($env{'ID_entity'})
 		{
-#			$Redis->multi();
 			$Redis->hset('C3|db_entity|'.$key_entity,'modified',$tt,sub {});
-#				$Redis->expire('C3|db_entity|'.$key_entity,(86400*30),sub {})
-#			});
 			$Redis->expire('C3|db_entity|'.$key_entity,(86400*30),sub {});
-#			$Redis->exec();
-#			$Redis->expire('C3|db_entity|'.$key_entity,(86400*30),sub {});
-			$Redis->publish('C3|db_entity|modified|'.$key_entity,to_json({
-				'mtime'=>$tt,
-				'user'=>$main::USRM{'ID_user'},
-				'hostname' => $TOM::hostname,
-				'domain' => $tom::H
-			}),sub {}) unless $conf{'-autosave'};
+#			if (!$RabbitMQ) # publish only when pub/sub of RabbitMQ not available
+#			{
+				$Redis->publish('C3|db_entity|modified|'.$key_entity,to_json({
+					'mtime'=>$tt,
+					'user'=>$main::USRM{'ID_user'},
+					'hostname' => $TOM::hostname,
+					'domain' => $tom::H
+				}),sub {}) unless $conf{'-autosave'};
+#			}
 		}
 		return 1;
 	}
@@ -1559,8 +1599,40 @@ sub _save_changetime
 	return 1;
 }
 
-
-
+our %db_names;
+sub _detect_db_name
+{
+	my $prefix=shift;
+	
+	return undef unless $prefix=~/^[a-zA-Z0-9_\-:]+$/;
+	
+	main::_log("detect db_name with '$prefix' addon") if $debug;
+	# at first check if this addon is available
+	$prefix=~s|^a|App::|;
+	$prefix=~s|^e|Ext::|;
+	# load this addon if not available
+	if (not defined $prefix->VERSION)
+	{
+		eval "use $prefix".'::_init;';
+		if ($@)
+		{
+			main::_log("err:$@",1);
+			return undef;
+		}
+	}
+	# read db_name from this library
+	if ($db_names{$prefix})
+	{
+		main::_log("get cached db_name=$db_names{$prefix}") if $debug;
+		return $db_names{$prefix};
+	}
+	my $db_name;eval '$db_name=$'.$prefix.'::db_name;';
+	main::_log("detected db_name=$db_name") if $debug;
+	# setup when found
+	$db_names{$prefix}=$db_name;
+	return $db_name if $db_name;
+	return undef;
+}
 
 
 =head1 SEE ALSO
