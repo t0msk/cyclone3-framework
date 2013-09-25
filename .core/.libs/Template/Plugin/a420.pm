@@ -49,12 +49,12 @@ sub get_static {
 	{
 		if ($env=~/^\d+$/)
 		{
-			$sql_where.=qq{a420_static.ID=?};
+			$sql.=qq{ AND a420_static.ID=?};
 			push @bind,$env;
 		}
 		else
 		{
-			$sql.=qq{a420_static.name=?};
+			$sql.=qq{ AND a420_static.name=?};
 			push @bind,$env;
 		}
 	}
@@ -80,8 +80,9 @@ sub get_static {
 			$sql.=qq{ AND a420_static.ID=?};
 			push @bind,$env->{'ID'};
 		}
-		$sql=~s|WHERE AND|WHERE|ms;
 	}
+	
+	$sql=~s|WHERE AND|WHERE|ms;
 	
 	$sql.=qq{ AND a420_static.status='Y'};
 	
