@@ -236,7 +236,7 @@ sub execute
 	if ($article{'cat_ID'})
 	{
 		# link to a210_page
-		if (my $category=App::510::functions::_a210_by_cat([$article{'cat_ID'}],'lng'=>$env{'lng'}))
+		if (my $category=App::401::functions::_a210_by_cat([$article{'cat_ID'}],'lng'=>$env{'lng'}))
 		{
 			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
 			foreach my $p(
