@@ -63,43 +63,6 @@ Creates a new relation and return ID_entity, ID
 
 =cut
 
-our %db_names;
-
-sub _detect_db_name
-{
-	my $prefix=shift;
-	
-	return undef unless $prefix=~/^[a-zA-Z0-9_\-:]+$/;
-	
-	main::_log("detect db_name with '$prefix' addon") if $debug;
-	# at first check if this addon is available
-	$prefix=~s|^a|App::|;
-	$prefix=~s|^e|Ext::|;
-	# load this addon if not available
-	if (not defined $prefix->VERSION)
-	{
-		eval "use $prefix".'::_init;';
-		if ($@)
-		{
-			main::_log("err:$@",1);
-			return undef;
-		}
-	}
-	# read db_name from this library
-	if ($db_names{$prefix})
-	{
-		main::_log("get cached db_name=$db_names{$prefix}") if $debug;
-		return $db_names{$prefix};
-	}
-	my $db_name;eval '$db_name=$'.$prefix.'::db_name;';
-	main::_log("detected db_name=$db_name") if $debug;
-	# setup when found
-	$db_names{$prefix}=$db_name;
-	return $db_name if $db_name;
-	return undef;
-}
-
-
 sub new_relation
 {
 	my %env=@_;
@@ -112,7 +75,7 @@ sub new_relation
 	
 	# detect db_name - where a160 is stored
 	if ($env{'l_prefix'} && !$env{'db_name'})
-	{$env{'db_name'}=_detect_db_name($env{'l_prefix'})}
+	{$env{'db_name'}=App::020::SQL::functions::_detect_db_name($env{'l_prefix'})}
 	
 	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	$env{'status'}='Y' unless $env{'status'};
@@ -123,6 +86,7 @@ sub new_relation
 	}
 	
 	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'l_prefix'}.'::'.$env{'l_table'}.'::'.$env{'l_ID_entity'};
+	my $cache_change_rkey='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'r_prefix'}.'::'.$env{'r_table'}.'::'.$env{'r_ID_entity'};
 	
 	# check if this relation already exists
 	my $relation=(get_relations(
@@ -164,6 +128,8 @@ sub new_relation
 			App::020::SQL::functions::_save_changetime(
 				{'db_h'=>$env{'db_h'},'db_name'=>$env{'db_name'},'tb_name'=>$env{'l_prefix'}.'_'.$env{'l_table'},'ID_entity'=>$env{'l_ID_entity'}}
 			);
+			# destination entity
+			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_rkey, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
 		}
 		
 		$t->close();
@@ -220,6 +186,8 @@ sub new_relation
 			App::020::SQL::functions::_save_changetime(
 				{'db_h'=>$env{'db_h'},'db_name'=>$env{'db_name'},'tb_name'=>$env{'l_prefix'}.'_'.$env{'l_table'},'ID_entity'=>$env{'l_ID_entity'}}
 			);
+			# destination entity
+			$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_rkey, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
 		}
 		
 		$t->close();
@@ -257,6 +225,8 @@ sub new_relation
 		App::020::SQL::functions::_save_changetime(
 			{'db_h'=>$env{'db_h'},'db_name'=>$env{'db_name'},'tb_name'=>$env{'l_prefix'}.'_'.$env{'l_table'},'ID_entity'=>$env{'l_ID_entity'}}
 		);
+		# destination entity
+		$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_rkey, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
 	}
 	
 	$t->close();
@@ -284,7 +254,7 @@ sub remove_relation
 	
 	# detect db_name - where a160 is stored
 	if ($env{'l_prefix'} && !$env{'db_name'})
-	{$env{'db_name'}=_detect_db_name($env{'l_prefix'})}
+	{$env{'db_name'}=App::020::SQL::functions::_detect_db_name($env{'l_prefix'})}
 	
 	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	
@@ -316,6 +286,7 @@ sub remove_relation
 				'-journalize' => 1,
 			);
 			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$relation->{'l_prefix'}.'::'.$relation->{'l_table'}.'::'.$relation->{'l_ID_entity'};
+			my $cache_change_rkey='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$relation->{'r_prefix'}.'::'.$relation->{'r_table'}.'::'.$relation->{'r_ID_entity'};
 			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 			{
 				# save info about changed set of relations
@@ -326,6 +297,8 @@ sub remove_relation
 				App::020::SQL::functions::_save_changetime(
 					{'db_h'=>$env{'db_h'},'db_name'=>$env{'db_name'},'tb_name'=>$relation->{'l_prefix'}.'_'.$relation->{'l_table'},'ID_entity'=>$relation->{'l_ID_entity'}}
 				);
+				# destination entity
+				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_rkey, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
 			}
 			$t->close();
 			return 1;
@@ -365,7 +338,7 @@ sub relation_change_status
 	
 	# detect db_name - where a160 is stored
 	if ($env{'l_prefix'} && !$env{'db_name'})
-	{$env{'db_name'}=_detect_db_name($env{'l_prefix'})}
+	{$env{'db_name'}=App::020::SQL::functions::_detect_db_name($env{'l_prefix'})}
 	
 	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	
@@ -400,6 +373,7 @@ sub relation_change_status
 				'-journalize' => 1,
 			);
 			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$relation->{'l_prefix'}.'::'.$relation->{'l_table'}.'::'.$relation->{'l_ID_entity'};
+			my $cache_change_rkey='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$relation->{'r_prefix'}.'::'.$relation->{'r_table'}.'::'.$relation->{'r_ID_entity'};
 			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 			{
 				# save info about changed set of relations
@@ -410,6 +384,8 @@ sub relation_change_status
 				App::020::SQL::functions::_save_changetime(
 					{'db_h'=>$env{'db_h'},'db_name'=>$env{'db_name'},'tb_name'=>$relation->{'l_prefix'}.'_'.$relation->{'l_table'},'ID_entity'=>$relation->{'l_ID_entity'}}
 				);
+				# destination entity
+				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_rkey, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
 			}
 			$t->close();
 			return 1;
@@ -427,6 +403,7 @@ sub relation_change_status
 	return 1;
 }
 
+
 sub relation_change_rel_type
 {
 	my %env=@_;
@@ -436,7 +413,7 @@ sub relation_change_rel_type
 	
 	# detect db_name - where a160 is stored
 	if ($env{'l_prefix'} && !$env{'db_name'})
-	{$env{'db_name'}=_detect_db_name($env{'l_prefix'})}
+	{$env{'db_name'}=App::020::SQL::functions::_detect_db_name($env{'l_prefix'})}
 	
 	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	
@@ -493,6 +470,7 @@ sub relation_change_rel_type
 			);
 			
 			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$relation->{'l_prefix'}.'::'.$relation->{'l_table'}.'::'.$relation->{'l_ID_entity'};
+			my $cache_change_rkey='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$relation->{'r_prefix'}.'::'.$relation->{'r_table'}.'::'.$relation->{'r_ID_entity'};
 			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
 			{
 				# save info about changed set of relations
@@ -503,6 +481,8 @@ sub relation_change_rel_type
 				App::020::SQL::functions::_save_changetime(
 					{'db_h'=>$env{'db_h'},'db_name'=>$env{'db_name'},'tb_name'=>$relation->{'l_prefix'}.'_'.$relation->{'l_table'},'ID_entity'=>$relation->{'l_ID_entity'}}
 				);
+				# destination entity
+				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_rkey, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
 			}
 			$t->close();
 			return 1;
@@ -552,7 +532,7 @@ sub get_relations
 	
 	# detect db_name - where a160 is stored
 	if ($env{'l_prefix'} && !$env{'db_name'})
-	{$env{'db_name'}=_detect_db_name($env{'l_prefix'})}
+	{$env{'db_name'}=App::020::SQL::functions::_detect_db_name($env{'l_prefix'})}
 	
 	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	$env{'limit'}="100" unless $env{'limit'};
@@ -564,6 +544,10 @@ sub get_relations
 	# Memcached key
 	my $use_cache=1;
 	my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'l_prefix'}.'::'.$env{'l_table'}.'::'.$env{'l_ID_entity'};
+	if ($env{'r_ID_entity'})
+	{
+		$cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'r_prefix'}.'::'.$env{'r_table'}.'::'.$env{'r_ID_entity'};
+	}
 	if (!$env{'l_prefix'} || !$env{'l_table'})
 	{
 		# don't use cache, when cached info is not related to atomized cache (ID_entity)
@@ -706,13 +690,13 @@ sub get_relation_iteminfo
 	
 	# detect db_name - where a160 is stored
 	if ($env{'l_prefix'} && !$env{'db_name'})
-	{$env{'db_name'}=_detect_db_name($env{'l_prefix'})}
+	{$env{'db_name'}=App::020::SQL::functions::_detect_db_name($env{'l_prefix'})}
 	
 #	$env{'r_db_name'}=$App::160::db_name unless $env{'r_db_name'};
 	
 	# detect r_db_name - where dest App is stored
 	if ($env{'r_prefix'} && !$env{'r_db_name'})
-	{$env{'r_db_name'}=_detect_db_name($env{'r_prefix'})}
+	{$env{'r_db_name'}=App::020::SQL::functions::_detect_db_name($env{'r_prefix'})}
 	
 	# list of input
 	foreach (sort keys %env) {main::_log("input '$_'='$env{$_}'") if defined $env{$_}};
