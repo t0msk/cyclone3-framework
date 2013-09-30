@@ -39,6 +39,7 @@ L<App::160::_init|app/"160/_init.pm">
 
 #use App::301::_init;
 use App::160::_init;
+use App::020::SQL::functions;
 
 our $debug=0;
 our %groups;
@@ -856,7 +857,7 @@ sub get_owner
 	else
 	{
 		main::_log("blind get_owner()") if $debug;
-		my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'});
+		my $db_name=App::020::SQL::functions::_detect_db_name($env{'r_prefix'});
 		
 		my $sql=qq{
 			SELECT
@@ -940,7 +941,7 @@ sub get_ACL
 	my %env=@_;
 	my @ACL;
 	
-	my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+	my $db_name=App::020::SQL::functions::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
 	
 	my $world;
 	my $sql=qq{
@@ -1216,7 +1217,7 @@ sub set_ACL
 	my %env=@_;
 	my @ACL_set=@{$env{'ACL'}};
 	
-	my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+	my $db_name=App::020::SQL::functions::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
 	
 	my @ACL_orig=App::301::perm::get_ACL('r_prefix' => $env{'r_prefix'},'r_table' => $env{'r_table'},'r_ID_entity' => $env{'r_ID_entity'});
 	my @ACL_new=App::301::perm::get_ACL('r_prefix' => $env{'r_prefix'},'r_table' => $env{'r_table'},'r_ID_entity' => $env{'r_ID_entity'});
@@ -1345,7 +1346,7 @@ sub ACL_org_update
 	my $t=track TOM::Debug(__PACKAGE__."::ACL_org_update()");
 	my %env=@_;
 	
-   my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+   my $db_name=App::020::SQL::functions::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
 	
 	if ($env{'roles'})
 	{
@@ -1451,7 +1452,7 @@ sub ACL_org_remove
 	my $t=track TOM::Debug(__PACKAGE__."::ACL_org_remove()");
 	my %env=@_;
 	
-   my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+   my $db_name=App::020::SQL::functions::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
 	
 	my $sql=qq{
 		SELECT
@@ -1494,7 +1495,7 @@ sub ACL_user_group_update
 	my $t=track TOM::Debug(__PACKAGE__."::ACL_user_group_update()");
 	my %env=@_;
 	
-   my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+   my $db_name=App::020::SQL::functions::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
 	
 	if ($env{'roles'})
 	{
@@ -1580,7 +1581,7 @@ sub ACL_user_group_remove
 	my $t=track TOM::Debug(__PACKAGE__."::ACL_user_group_remove()");
 	my %env=@_;
 	
-   my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+   my $db_name=App::020::SQL::functions::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
 	
 	my $sql=qq{
 		SELECT
@@ -1622,7 +1623,7 @@ sub ACL_user_update
 	my $t=track TOM::Debug(__PACKAGE__."::ACL_user_update()");
 	my %env=@_;
 	
-   my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+   my $db_name=App::020::SQL::functions::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
 	
 	if ($env{'roles'})
 	{
@@ -1717,7 +1718,7 @@ sub ACL_user_remove
 	my $t=track TOM::Debug(__PACKAGE__."::ACL_user_remove()");
 	my %env=@_;
 	
-   my $db_name=App::160::SQL::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
+   my $db_name=App::020::SQL::functions::_detect_db_name($env{'r_prefix'}) || $TOM::DB{'main'}{'name'};
 	
 	my $sql=qq{
 		SELECT
