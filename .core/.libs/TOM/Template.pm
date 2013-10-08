@@ -858,6 +858,8 @@ sub process
 		# test variable
 		$vars_process->{'test'}="test string";
 		
+		$Tomahawk::module::TPL->{'variables'}->{'devel'}=$tom::devel;
+		
 		# domain variables
 		$vars_process->{'domain'}={
 			'name' => $tom::H,
@@ -875,6 +877,7 @@ sub process
 		};
 		# request params
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'param'}=\%main::FORM;
+		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'timestamp'}=$main::time_current;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'RPC'}=$main::RPC;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'ENV'}=\%main::ENV;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'cookie'}=\%main::COOKIES_all;
