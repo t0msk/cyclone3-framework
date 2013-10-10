@@ -1455,10 +1455,10 @@ sub config
 		$entity->{$name.'.a501_image.1'}
 		|| $entity->{'a501_image.1'}
 		|| undef;
-#	$self->{'entity'}->{'a501_image.fullsize'}=
-#		$entity->{$name.'.a501_image.fullsize'}
-#		|| $entity->{'a501_image.fullsize'}
-#		|| undef;
+	$self->{'entity'}->{'a501_image.fullsize'}=
+		$entity->{$name.'.a501_image.fullsize'}
+		|| $entity->{'a501_image.fullsize'}
+		|| undef;
 	$self->{'entity'}->{'link.a501_image'}=
 		$entity->{$name.'.link.a501_image'}
 		|| $entity->{'link.a501_image'}
