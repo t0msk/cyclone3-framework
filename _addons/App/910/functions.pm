@@ -811,6 +811,7 @@ sub product_add
 						'status' => "'Y'",
 					},
 					'-journalize' => 1,
+					'-posix' => 1
 				);
 				$content_reindex=1;
 			}
@@ -826,7 +827,8 @@ sub product_add
 						'price' => $env{'prices'}{$price_level_name_code}{'price'},
 						'price_full' => $env{'prices'}{$price_level_name_code}{'price_full'},
 					},
-					'-journalize' => 1
+					'-journalize' => 1,
+					'-posix' => 1
 				);
 				$content_reindex=1;
 			}

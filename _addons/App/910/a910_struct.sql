@@ -188,8 +188,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_lng` ( -- language versions of produ
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `name_long` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
   `name_label` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
-  `description_short` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `description_short` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -211,8 +211,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_lng_j` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `name_long` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
   `name_label` varchar(64) character set utf8 collate utf8_unicode_ci NOT NULL,
-  `description_short` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `description_short` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
+  `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -390,6 +390,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price` (
   `price` decimal(12,3) default NULL, -- price for this relation
   `price_full` decimal(12,3) default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`ID_price`)
@@ -405,6 +406,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price_j` (
   `price` decimal(12,3) default NULL,
   `price_full` decimal(12,3) default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
