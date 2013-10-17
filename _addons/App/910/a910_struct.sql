@@ -33,6 +33,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `status_recommended` char(1) character set ascii NOT NULL default 'N',
   `status_sale` char(1) character set ascii NOT NULL default 'N',
   `status_special` char(1) character set ascii NOT NULL default 'N',
+  `status_main` char(1) character set ascii NOT NULL default 'Y', -- is this main product, or only variation?
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`product_number`),
@@ -89,6 +90,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `status_recommended` char(1) character set ascii NOT NULL default 'N',
   `status_sale` char(1) character set ascii NOT NULL default 'N',
   `status_special` char(1) character set ascii NOT NULL default 'N',
+  `status_main` char(1) character set ascii NOT NULL default 'Y',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

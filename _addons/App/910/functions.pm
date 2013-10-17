@@ -197,7 +197,7 @@ sub product_add
 			'db_h' => "main",
 			'db_name' => $App::910::db_name,
 			'tb_name' => "a910_product",
-			'columns' => {%columns},
+			'columns' => {%columns,'datetime_publish_start' => 'NOW()'},
 			'-journalize' => 1,
 		);
 		App::020::SQL::functions::update(
@@ -339,10 +339,14 @@ sub product_add
 		}
 	}
 	
+#	use Data::Dumper;print Dumper(\%metadata);
+	
 	$env{'product.metadata'}=App::020::functions::metadata::serialize(%metadata);
 	
 	$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'product.metadata'})."'"
 	if (exists $env{'product.metadata'} && ($env{'product.metadata'} ne $product{'metadata'}));
+	
+#	print "metadata=".$columns{'metadata'};
 	
 	if ($columns{'metadata'} && $App::910::metaindex eq 'Y')
 	{
@@ -366,6 +370,9 @@ sub product_add
 	# status_recommended
 	$columns{'status_recommended'}="'".TOM::Security::form::sql_escape($env{'product.status_recommended'})."'"
 		if ($env{'product.status_recommended'} && ($env{'product.status_recommended'} ne $product{'status_recommended'}));
+	# status_main
+	$columns{'status_main'}="'".TOM::Security::form::sql_escape($env{'product.status_main'})."'"
+		if ($env{'product.status_main'} && ($env{'product.status_main'} ne $product{'status_main'}));
 	
 	# status
 	$columns{'status'}="'".TOM::Security::form::sql_escape($env{'product.status'})."'"
@@ -968,6 +975,8 @@ sub _product_index
 			if $db0_line{'status_special'};
 		push @content_ent,WebService::Solr::Field->new( 'status_recommended_s' => $db0_line{'status_recommended'} )
 			if $db0_line{'status_recommended'};
+		push @content_id,WebService::Solr::Field->new( 'status_main_s' => $db0_line{'status_main'} )
+			if $db0_line{'status_main'};
 		push @content_id,WebService::Solr::Field->new( 'status_s' => $db0_line{'status'} )
 			if $db0_line{'status'};
 		
@@ -993,6 +1002,7 @@ sub _product_index
 		}
 		
 		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
+#		use Data::Dumper;print Dumper(\%metadata);
 		foreach my $sec(keys %metadata)
 		{
 			foreach (keys %{$metadata{$sec}})
