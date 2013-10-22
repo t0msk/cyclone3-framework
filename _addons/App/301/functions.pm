@@ -118,10 +118,11 @@ sub user_add
 		main::_log("!user.ID_user, create new");
 		# generate random token
 		my $token;
-		if ($user{'login'} || $user{'email'} || $user{'ref_facebook'})
+		if ($user{'login'} || $user{'email'} || $user{'ref_facebook'} || $env{'user.login'} || $env{'user.email'} || $env{'user.ref_facebook'})
 		{
 			$token=TOM::Utils::vars::genhash(16);
 			main::_log(" secure_hash='$token'");
+			$env{'user.secure_hash'}=$token;
 		}
 		$env{'user.ID_user'}=user_newhash();
 		TOM::Database::SQL::execute(qq{
