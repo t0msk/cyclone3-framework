@@ -78,6 +78,7 @@ use App::301::session;
 use App::301::authors;
 use App::301::perm;
 use App::301::a301;
+use App::301::a160;
 use CVML;
 use Digest::MD5;
 use Digest::SHA1;
