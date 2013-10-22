@@ -26,6 +26,7 @@ sub execute
 	$env{'login'}=$env{'login'} || $main::FORM{'login'} || $main::RPC->{'login'};
 	$env{'pass'}=$env{'pass'} || $main::FORM{'pass'} || $main::RPC->{'pass'};
 	my $forcelogin; # without password
+	my $login_ishash;
 	
 	if ($main::USRM{'logged'} eq "Y")
 	{
@@ -83,6 +84,9 @@ sub execute
 	if ($main::FORM{'token'})
 	{
 		main::_log("login with token=".$main::FORM{'token'});
+		my $sql_status="status='Y'";
+			$sql_status="status IN ('Y','W')" if $env{'token_force_status'};
+			$env{'force_status'} = 1 if $env{'token_force_status'};
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				*
@@ -92,7 +96,7 @@ sub execute
 				secure_hash = ? AND
 				hostname=? AND
 				email IS NOT NULL AND
-				status='Y'
+				$sql_status
 			ORDER BY
 				ref_facebook DESC
 			LIMIT 1
@@ -101,7 +105,9 @@ sub execute
 		if ($user{'ID_user'})
 		{
 			$forcelogin=1;
-			$env{'login'}=$user{'email'};
+			$login_ishash=1;
+			#$env{'ID_user'}=$user{'ID_user'};
+			$env{'login'}=$user{'ID_user'};
 			$env{'pass'}='force';
 		}
 	}
@@ -143,7 +149,9 @@ sub execute
 			if ($user{'ID_user'})
 			{
 				$forcelogin=1;
-				$env{'login'}=$data_json->{'email'};
+				$login_ishash=1;
+#				$env{'login'}=$data_json->{'email'};
+				$env{'login'}=$user{'ID_user'};
 				$env{'pass'}='force';
 			}
 			else
@@ -337,18 +345,32 @@ sub execute
 	# continue with current USRM_S session data
 	my %USRM_S;if ($main::USRM{'session'}{'USRM_S'}){%USRM_S=%{$main::USRM{'session'}{'USRM_S'}};}
 	
+	my $sql_status="status='Y'";
+		$sql_status="status IN ('Y','W')" if $env{'force_status'};
+	
+	my $sql_user="login=? OR email=?";
+	my @sql_user_bind;
+		push @sql_user_bind,$env{'login'};
+		push @sql_user_bind,$env{'login'};
+	
+	if ($login_ishash)
+	{
+		$sql_user="ID_user=?";
+		@sql_user_bind=($env{'login'});
+	}
+	
 	my $sql=qq{
 		SELECT
 			*
 		FROM
 			TOM.a301_user
 		WHERE
-			(login='$env{'login'}' OR email='$env{'login'}') AND
+			($sql_user) AND
 			hostname='$tom::H_cookie' AND
-			status='Y'
+			$sql_status
 		LIMIT 1
 	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[@sql_user_bind],'quiet'=>1);
 	my %user=$sth0{'sth'}->fetchhash();
 	if ($user{'ID_user'})
 	{
@@ -480,20 +502,27 @@ sub execute
 					UPDATE
 						TOM.a301_user_online
 					SET
-						ID_session='$main::USRM{'ID_session'}',
-						domain='$tom::H',
+						ID_session=?,
+						domain=?,
 						logged='Y',
 						datetime_login=FROM_UNIXTIME($main::time_current),
 						datetime_request=FROM_UNIXTIME($main::time_current),
-						IP='$main::ENV{'REMOTE_ADDR'}',
-						user_agent='$main::ENV{'HTTP_USER_AGENT'}',
-						cookies='$main::USRM{'saved_cookies'}',
-						session='$main::USRM{'saved_session'}',
+						IP=?,
+						user_agent=?,
+						cookies=?,
+						session=?,
 						status='Y'
 					WHERE
 						ID_user='$main::COOKIES{'_ID_user'}'
 					LIMIT 1
-				},'quiet'=>1);
+				},'quiet'=>1,'bind'=>[
+					$main::USRM{'ID_session'},
+					$tom::H,
+					$main::ENV{'REMOTE_ADDR'},
+					$main::ENV{'HTTP_USER_AGENT'},
+					$main::USRM{'saved_cookies'},
+					$main::USRM{'saved_session'}
+				]);
 				
 			}
 			
@@ -521,10 +550,26 @@ sub execute
 			$main::USRM{'cookies'}=$main::USRM{'saved_cookies'};
 			$main::USRM{'session'}=$main::USRM{'saved_session'};
 			
-#			my %hash;foreach (sort keys %main::COOKIES){$_=~/^_/ && do {$hash{$_}=$main::COOKIES{$_};next}};
-#			$main::USRM{'cookies'}=CVML::structure::serialize(%hash);
+			# fix unicode in session
+			utf8::decode($main::USRM{'session'}) unless utf8::is_utf8($main::USRM{'session'});
+			
+=head1
+			# get session datas from online table in CVML
+			# save it into cvml object
+			my $cvml=new CVML('data'=>$main::USRM{'session'});
+			# save backup copy of session, to compare it at end of request
+			$main::USRM{'session_save'}=$main::USRM{'session'};
+			# remove all session data
+			undef $main::USRM{'session'};
+			# control CVML session datas as object
+			$App::301::session::serialize=0; # don't serialize into database now!
+			# fill session hash with datas from CVML
+			tie %{$main::USRM{'session'}}, 'App::301::session'; # create empty tie hash
+			%{$main::USRM{'session'}}=%{$cvml->{'hash'}}; # fill tie hash
+=cut
 			
 			main::_log("insert user into online table");
+			main::_log("session=".$main::USRM{'saved_session'});
 			
 			TOM::Database::SQL::execute(qq{
 				INSERT INTO TOM.a301_user_online
@@ -552,16 +597,19 @@ sub execute
 					'1',
 					'$main::ENV{'REMOTE_ADDR'}',
 					'$main::ENV{'HTTP_USER_AGENT'}',
-					'$main::USRM{'saved_cookies'}',
-					'$main::USRM{'saved_session'}'
+					?,
+					?
 				)
-			},'quiet'=>1);
+			},'bind'=>[
+				$main::USRM{'saved_cookies'},
+				$main::USRM{'saved_session'}
+			],'quiet'=>1);
 			
 		}
 		
 		#$XSGN{'TMP'}=$XSGN{'logged-on'};
 		#$tpl_hash{'logged-on'} = 'Y';
-	
+		
 		$main::USRM_flag="L";
 		TOM::Database::SQL::execute(qq{
 			UPDATE
@@ -603,6 +651,7 @@ sub execute
 				$main::location.='&ID_session='.$main::USRM{'ID_session'}.'&ID_user='.$main::USRM{'ID_user'};
 			}
 		}
+		$main::action="stop";
 	}
 	
 	return 1, %env_output;
