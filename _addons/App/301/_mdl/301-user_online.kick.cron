@@ -82,7 +82,7 @@ sub execute
 				}
 				
 				if (
-						(($user{'logged'} eq "Y")&&($user0{'login'} || $user0{'email'}))
+						($user{'logged'} eq "Y")#&&($user0{'login'} || $user0{'email'}))
 						||(($user{'logged'} ne "Y")&&(!$user0{'login'} || $user0{'email'}))
 					)
 				{
@@ -93,14 +93,18 @@ sub execute
 						UPDATE
 							TOM.a301_user
 						SET
-							datetime_last_login = '$user{datetime_login}',
+							datetime_last_login = ?,
 							requests_all = requests_all + $user{requests},
-							saved_cookies = '}.TOM::Security::form::sql_escape($user{'cookies'}).qq{',
-							saved_session = '}.TOM::Security::form::sql_escape($user{'session'}).qq{'
+							saved_cookies = ?,
+							saved_session = ?
 						WHERE
 							ID_user='$user{ID_user}'
 						LIMIT 1
-					},'quiet'=>1);
+					},'bind'=>[
+						$user{'datetime_login'},
+						$user{'cookies'},
+						$user{'session'}
+					],'quiet'=>1);
 					
 					TOM::Database::SQL::execute(qq{
 						DELETE FROM
