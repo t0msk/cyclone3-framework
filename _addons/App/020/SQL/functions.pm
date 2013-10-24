@@ -293,7 +293,7 @@ sub get_ID(%env)
 		'status'
 	);
 	
-	push @columns, keys %{$env{'columns'}} if $env{'columns'};
+	push @columns, grep {defined $env{'columns'}{$_}} keys %{$env{'columns'}} if $env{'columns'};
 	@columns=('*') if $env{'columns'}{'*'};
 	
 	my $sel_columns=join ",",@columns;
@@ -465,6 +465,7 @@ sub update
 	$transaction=1 if $env{'-journalize'};
 	$transaction=1 if $env{'-historical'};
 	
+	my @bind;
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	foreach (keys %env)
@@ -479,6 +480,11 @@ sub update
 	foreach (sort keys %{$env{'columns'}})
 	{
 		$sel_set.="\t\t`$_` = $env{'columns'}{$_},\n";
+	}
+	foreach (sort keys %{$env{'data'}})
+	{
+		$sel_set.="\t\t`$_` = ?,\n";
+		push @bind, $env{'data'}{$_};
 	}
 	$sel_set=~s|,\n$||;
 	
@@ -509,7 +515,7 @@ $sel_set
 	
 	my $clmns=join "','", keys %{$env{'columns'}};
 	
-	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet,'bind'=>[@bind]);
 	
 	if ($sth0{'rows'})
 	{
