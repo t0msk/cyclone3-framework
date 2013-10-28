@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <template>
 	
+	<entity id="img.a030_youtube">
+		<![CDATA[
+		<div class="external-player-wrap">
+			<div class="body">
+				<iframe width="100%" height="100%" frameborder="0" allowfullscreen="" src="//www.youtube.com/embed/[%entity.id.ID_entity%]"></iframe>
+			</div>
+		</div>
+	]]></entity>
+	
 	<entity id="img.a501_image"><![CDATA[[%USE dumper;USE a501;FILTER collapse;
 		attr_ignore={'/'=>1,id=>'1','src'=>1,'alt'=>1,'align'=>1,'class'=>1};
 		image = a501.get_image_file(
