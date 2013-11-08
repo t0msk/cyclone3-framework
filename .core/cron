@@ -171,7 +171,7 @@ undef $DBH;
 # zacina praca s jednotlivymi hostami;
 
 CRON::waitload($CRON::LOADAVG);
-our $pm = new Parallel::ForkManager(5);
+our $pm = new Parallel::ForkManager(2);
 
 
 
@@ -250,7 +250,7 @@ foreach (sort keys %CRON::hosts)
 		CRON::waitload($CRON::LOADAVG);
 		
 		$main::pm->start and next;
-		
+		srand (time ^ $$);
 #		main::_log(" 'ok' from fork '$_'");
 #		main::_log("fork with debug level='$TOM::DEBUG_log_file'");
 		
@@ -323,6 +323,7 @@ foreach (sort keys %CRON::hosts)
 					main::_log("running module in separate fork");
 					my $pm = new Parallel::ForkManager(50);
 					my $pid = $pm->start and next;
+					srand (time ^ $$);
 					sleep(2);
 					undef %main::DB;
 					TOM::Database::connect::multi('main');
