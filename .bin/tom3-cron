@@ -37,6 +37,7 @@ require $ENV{'CYCLONE3PATH'}."/.core/_config/cron.conf";
 	$cron::P=$CRON::P;
 	
 	$TOM::engine="cron";
+	$TOM::DEBUG_log_file=90;
 	
 	$CRON::P=$ENV{'CYCLONE3PATH'};
 	$cron::P=$CRON::P;
