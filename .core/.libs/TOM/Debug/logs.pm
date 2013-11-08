@@ -82,7 +82,7 @@ sub _log
 		print color 'red' if $ref[$get[2]] eq '-';
 		print $msg."\n";
 		print color 'reset';
-		return 1;
+		return 1 if $get[3] eq "stdout";
 	}
 	elsif ($main::stdout && $ref[$get[2]] eq '-' && $get[3] eq $TOM::engine)
 	{
