@@ -424,8 +424,10 @@ sub get_CGI
 			
 			if ($form{'POSTDATA'}=~/^{/) # JSON?
 			{eval{
+				main::_log(" type=json");
+				utf8::encode($form{'POSTDATA'});
 				%{$main::RPC}=%{JSON::decode_json($form{'POSTDATA'})};
-			}}
+			};if($@){main::_log("error=".$@)}}
 			else
 			{eval{
 				my $som = SOAP::Deserializer->deserialize($form{'POSTDATA'});
