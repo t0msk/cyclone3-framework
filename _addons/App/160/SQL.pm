@@ -509,7 +509,7 @@ sub relation_change_priority
 	
 	# detect db_name - where a160 is stored
 	if ($env{'l_prefix'} && !$env{'db_name'})
-	{$env{'db_name'}=_detect_db_name($env{'l_prefix'})}
+	{$env{'db_name'}=App::020::SQL::functions::_detect_db_name($env{'l_prefix'})}
 	
 	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	
@@ -572,6 +572,93 @@ sub relation_change_priority
 		else
 		{
 			main::_log('no columns, not updating');
+			# this relation has already this rel_type
+		}
+	}
+	# this relation does not exist
+	
+	$t->close();
+	return 1;
+}
+
+
+sub relation_change_name
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::relation_change_name()");
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	# detect db_name - where a160 is stored
+	if ($env{'l_prefix'} && !$env{'db_name'})
+	{$env{'db_name'}=App::020::SQL::functions::_detect_db_name($env{'l_prefix'})}
+	
+	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'") if $debug;
+	}
+	
+	# check if this relation already exists
+	my $relation=(get_relations(
+		'ID' => $env{'ID'},
+		'l_prefix' => $env{'l_prefix'},
+		'db_name' => $env{'db_name'},
+		'status' => 'YN',
+		'limit' => '1'
+	))[0];
+	if ($relation->{'ID'})
+	{
+		main::_log("this relation exists with rel_name='$relation->{'rel_name'}'");
+		# when it exists, check if is not already set to same value
+		
+		my %data;
+		my %columns;
+		
+		if (exists $env{'rel_name'})
+		{
+			main::_log('trying to update rel_name: '.$env{'rel_name'});
+			$data{'rel_name'} = $env{'rel_name'} if ($relation->{'rel_name'} ne $env{'rel_name'});
+			$columns{'rel_name'} = 'NULL' unless $data{'rel_name'};
+		}
+		
+		if (exists $data{'rel_name'} || exists $columns{'rel_name'})
+		{
+			main::_log("also updating rel_name");
+			
+			App::020::SQL::functions::update(
+				'ID' => $relation->{'ID'},
+				'db_h' => $env{'db_h'},
+				'db_name' => $env{'db_name'},
+				'tb_name' => 'a160_relation',
+				'columns' => {
+					%columns
+				},
+				'data' => {
+					%data
+				},
+				'-journalize' => 1,
+			);
+			
+			my $cache_change_key='a160_relation_change::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$relation->{'l_prefix'}.'::'.$relation->{'l_table'}.'::'.$relation->{'l_ID_entity'};
+			if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
+			{
+				# save info about changed set of relations
+				my $tt=Time::HiRes::time();
+				main::_log("[cache_change_key] set '$cache_change_key'=$tt") if $debug;
+				$Ext::CacheMemcache::cache->set('namespace'=>"db_cache", 'key'=>$cache_change_key, 'value'=>$tt, 'expiration'=>$cache_expire.'S');
+				# the source application has been changed
+				App::020::SQL::functions::_save_changetime(
+					{'db_h'=>$env{'db_h'},'db_name'=>$env{'db_name'},'tb_name'=>$relation->{'l_prefix'}.'_'.$relation->{'l_table'},'ID_entity'=>$relation->{'l_ID_entity'}}
+				);
+			}
+			$t->close();
+			return 1;
+		}
+		else
+		{
+			main::_log('no datas, not updating');
 			# this relation has already this rel_type
 		}
 	}
@@ -696,6 +783,7 @@ sub get_relations
 			l_table,
 			l_ID_entity,
 			rel_type,
+			rel_name,
 			quantifier,
 			r_db_name,
 			r_prefix,

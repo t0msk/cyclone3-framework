@@ -248,8 +248,11 @@ sub execute
 				'r_ID_entity' => $relation->{'r_ID_entity'},
 				'lng' => $env{'lng'}
 			);
+			
+			$null=~s|<%name%>|$relation->{'rel_name'}|g if $relation->{'rel_name'};
 			$null=~s|<%name%>|$item{'name'} ($item{'name_plus'})|g if $item{'name_plus'};
 			$null=~s|<%name%>|$item{'name'}|g;
+			
 			$null=~s|<%type_name%>|$item{'type_name'}|g;
 			# extended attributes
 			$null=~s|<%r_ID%>|$item{'ID'}|g;
