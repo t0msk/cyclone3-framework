@@ -169,6 +169,7 @@ sub new_relation
 				'r_table' => "'".TOM::Security::form::sql_escape($env{'r_table'})."'",
 				'r_ID_entity' => "'".TOM::Security::form::sql_escape($env{'r_ID_entity'})."'",
 				'rel_type' => "'".TOM::Security::form::sql_escape($env{'rel_type'})."'",
+				'rel_name' => "NULL",
 				'quantifier' => $quantifier,
 				'status' => "'".TOM::Security::form::sql_escape($env{'status'})."'",
 			},
