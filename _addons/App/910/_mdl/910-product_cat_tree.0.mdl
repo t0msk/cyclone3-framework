@@ -412,7 +412,7 @@ $where
 				# count of items
 				
 				my $sql=qq{
-					SELECT COUNT(sym.ID_entity) AS itemcount
+					SELECT COUNT(DISTINCT(product.ID_entity)) AS itemcount
 					FROM
 						`$App::910::db_name`.`a910_product_sym` AS sym
 					LEFT JOIN `$App::910::db_name`.`a910_product` AS product ON
@@ -421,6 +421,7 @@ $where
 					)
 					WHERE
 						product.status IN ('Y','N') AND
+						product.status_main IN ('Y') AND
 						sym.ID = $entity->{'ID_entity'}
 				};
 				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'_cache'=>30);
