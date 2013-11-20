@@ -106,12 +106,19 @@ sub new
 	my $sel_values;
 	my @columns;
 	my @values;
+	my @bind;
 	$env{'columns'}{'posix_modified'}="'".$main::USRM{'ID_user'}."'" if $env{'-posix'};
 	foreach (sort keys %{$env{'columns'}})
 	{
 #		next unless $env{'columns'}{$_};
 		push @columns, $_;
 		push @values, $env{'columns'}{$_};
+	}
+	foreach (sort keys %{$env{'data'}})
+	{
+		push @columns, $_;
+		push @values, '?';
+		push @bind, $env{'data'}{$_};
 	}
 	$sel_columns="`" . (join "`,`" , @columns) . "`" if @columns;
 	$sel_values= join (",",@values) if @values;
@@ -127,7 +134,7 @@ sub new
 		($sel_values)
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
+	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'bind'=>[@bind],'quiet'=>$quiet);
 	
 	if ($sth0{'rows'})
 	{
