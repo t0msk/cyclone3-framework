@@ -366,7 +366,10 @@ sub start
 					'db' => \%db_entity
 				},
 				'env' => $self->{'env'},
-#				'count' => $out_cnt,
+				'count' => {
+					'tag' => $self->{'count'}{'tag'}{$tag},
+					'addon' => $self->{'count'}{'addon'}{$entity}
+				},
 #				'entity'=>\%db0_line
 				},$tpl_entity))
 			{
