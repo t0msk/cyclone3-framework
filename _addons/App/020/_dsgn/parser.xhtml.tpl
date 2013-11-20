@@ -1,13 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <template>
 	
-	<entity id="img.a030_youtube">
-		<![CDATA[
-		<div class="external-player-wrap">
-			<div class="body">
-				<iframe width="100%" height="100%" frameborder="0" allowfullscreen="" src="//www.youtube.com/embed/[%entity.id.ID_entity%]"></iframe>
-			</div>
-		</div>
+	<entity id="img.a030_youtube"><![CDATA[
+		<iframe width="100%" height="315" frameborder="0" allowfullscreen="" src="//www.youtube.com/embed/[%entity.id.ID_entity%]"></iframe>
 	]]></entity>
 	
 	<entity id="img.a501_image"><![CDATA[[%USE dumper;USE a501;FILTER collapse;
