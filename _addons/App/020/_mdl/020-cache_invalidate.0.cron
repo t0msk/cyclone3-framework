@@ -19,6 +19,8 @@ sub execute
 	# new parallel connection to Redis
 	my $Redis_=Ext::Redis::service->new();
 	
+	main::_log("WATCH \@'C3|db_entity|modified|*'",3,"pubsub");
+	
 	$Redis->subscription_loop(
 		'psubscribe' => [ 'C3|db_entity|modified|*' => sub{
 			my ($redis, $channel, $pattern, $message) = @_;
