@@ -274,6 +274,15 @@ sub execute
 		'thumbnail' => $parser->{'thumbnail'},
 	};
 	
+	if ($env{'header.og'} && $parser->{'thumbnail'}[0])
+	{
+		my %image=App::501::functions::get_image_file(
+			'image.ID_entity' => $parser->{'thumbnail'}[0],
+			'image_file.ID_format' => 2
+		);
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $tom::H_a501.'/image/file/'.$image{'file_path'}};
+	}
+	
 	# parser body
 	$parser->parse($article{'body'});
 	$parser->eof();
