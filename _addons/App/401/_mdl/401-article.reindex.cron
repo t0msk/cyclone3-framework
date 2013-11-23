@@ -1,0 +1,48 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use strict;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+use JSON;
+use App::401::_init;
+
+sub execute
+{
+	my %env=@_;
+	
+	use Data::Dumper;
+	$Data::Dumper::Sortkeys=1;
+	
+#	$Ext::Solr::url='http://10.100.100.141:8985/solr';
+	my $solr = Ext::Solr::service();
+	
+	# reindex
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			a401_article
+	});
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		main::_log("[$i/$sth0{'rows'}]");
+		App::401::functions::_article_index('ID_entity'=>$db0_line{'ID_entity'});
+		
+		if (int($i/1000) == $i/1000)
+		{
+			main::_log("commit");
+			$solr->commit();
+		}
+	}
+	
+	$solr->commit();
+	
+ return 1}
+1;
