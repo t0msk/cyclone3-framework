@@ -1,0 +1,183 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::401::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	# paging
+	$env{'page_limit'} = 100 unless $env{'page_limit'};
+	$env{'page'} = 1 unless $env{'page'};
+	$env{'page_offset'} = 0 unless $env{'page_offset'};
+	$env{'page_plus'} = 1 unless $env{'page_plus'};
+	if (!$env{'sql_limit'})
+	{
+		$env{'sql_limit'}=((($env{'page'}-1)*$env{'page_limit'})+$env{'page_offset'}).",".($env{'page_limit'}+$env{'page_plus'});
+	}
+	else
+	{
+#		$env{'sql_limit'}=~/^(\d+),?(\d+)?$/;
+	}
+	
+	my @sql_bind;
+		push @sql_bind,$env{'lng'};
+	my $sql_where;
+	my $sql_limit=$env{'sql_limit'} || 100;
+	my $sql_order_by=$env{'sql_order_by'} || 'ID_charindex ASC';
+	
+	Tomahawk::GetTpl(\%env) || return undef;
+	
+	delete $env{'article_cat.ID_charindex'};
+	
+	my $from;
+	
+	if ($env{'article_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'article_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::401::db_name.a401_article_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID_entity FROM $App::401::db_name.a401_article_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR article_cat.ID_entity IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'article_cat.ID'}=~/;/)
+	{
+		$sql_where.=" AND article_cat.ID IN (".split(';',$env{'article_cat.ID'}).")";
+	}
+	elsif ($env{'article_cat.ID'})
+	{
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h'    => 'main',
+			'db_name' => $App::401::db_name,
+			'tb_name' => 'a401_article_cat',
+			'ID'      => $env{'article_cat.ID'},
+			'columns' => 
+			{
+				'ID_charindex' => 1
+			}
+		);
+		if ($data{'ID'})
+		{
+			$env{'article_cat.ID_charindex'}=$data{'ID_charindex'}.':';
+			
+			$sql_where.=" AND article_cat.ID_charindex LIKE ?";
+			push @sql_bind,$env{'article_cat.ID_charindex'}.'___';
+		}
+		else
+		{
+			main::_log("can't find ID='$data{'ID'}'",1);
+			return undef;
+		}
+	}
+	
+	$sql_where=~s|^ ||;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			$App::401::db_name.a401_article_cat AS article_cat
+		WHERE
+			article_cat.lng = ?
+			AND article_cat.status IN ('Y','L')
+			$sql_where
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},
+		'bind'=>[@sql_bind],
+		'quiet' => 1,
+		'-cache' => 86400*7,
+		'-changetime' => App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::401::db_name,
+				'tb_name' => "a401_article_cat"
+			}
+		)
+	);
+	
+	my @nodes;
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		delete $db0_line{'metadata'};
+		delete $db0_line{'t_keys'};
+		
+		foreach my $node (App::020::SQL::functions::tree::get_path(
+			$db0_line{'ID'},
+			'db_h'    => 'main',
+			'db_name' => $App::401::db_name,
+			'tb_name' => 'a401_article_cat',
+			'-cache' => 86400*7,
+		))
+		{
+			$db0_line{'path_url'}.='/'.$node->{'name_url'};
+		}
+		$db0_line{'path_url'}=~s|^/||;
+		
+		$db0_line{'related_avatar'}=(App::160::SQL::get_relations(
+			'db_name' => $App::401::db_name,
+			'l_prefix' => 'a401',
+			'l_table' => 'article_cat',
+			'l_ID_entity' => $db0_line{'ID'},
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'rel_type' => "avatar",
+			'status' => "Y"
+		))[0];
+		
+		# link to a210_page
+		if (my $category=App::401::functions::_a210_by_cat([$db0_line{'ID'}],'lng'=>$env{'lng'}))
+		{
+			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$category,
+					%sql_def,
+					'-slave' => 1,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$db0_line{'a210'}{'IDs'}}, $p->{'ID'};
+				push @{$db0_line{'a210'}{'nodes'}}, $p;
+				$db0_line{'a210'}{'path_url'}.="/".$p->{'name_url'};
+			}
+			$db0_line{'a210'}{'path_url'}=~s|^/||;
+		}
+		
+		$TPL->variables_push(\%db0_line);
+	}
+	
+	push @{$env_out{'entity'}},{
+		'db_h' => 'main',
+		'db_name' => $App::401::db_name,
+		'tb_name' => 'a401_article_cat'
+	};
+	
+	return 1,%env_out;
+}
+
+1;
