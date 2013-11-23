@@ -69,6 +69,7 @@ use File::Type;
 use Movie::Info;
 use File::Which qw(where);
 use Time::HiRes qw(usleep);
+use Ext::Redis::_init;
 
 our $ffmpeg_exec = (where('ffmpeg'))[0];main::_log("ffmpeg in '$ffmpeg_exec'");
 our $mencoder_exec = (where('mencoder'))[0];main::_log("mencoder in '$mencoder_exec'");
@@ -2382,6 +2383,39 @@ Increase number of video_part visits
 sub video_part_visit
 {
 	my $ID_part=shift;
+	
+	if ($Redis)
+	{
+		my $key='main::'.$App::510::db_name.'::a510_video_part::ID_'.$ID_part;
+		my $count_visits = $Redis->hmget('C3|db_entity|'.$key,'_firstvisit','visits');
+		if (
+			($count_visits->[0] <= ($main::time_current - 1200)) # save every 10 minutes
+			|| $count_visits->[1] >= 1000)
+		{
+			# it's time to save
+			TOM::Database::SQL::execute(qq{
+				UPDATE `$App::510::db_name`.a510_video_part
+				SET visits = visits + $count_visits->[1]
+				WHERE ID = $ID_part
+				LIMIT 1
+			},'log'=>1) if $count_visits->[1];
+			$Redis->hmset('C3|db_entity|'.$key,
+				'visits',1,
+				'_firstvisit', $main::time_current,
+				sub {}
+			);
+			$Redis->expire($key,86400,sub {});
+		}
+		else
+		{
+			$Redis->hincrby('C3|db_entity|'.$key,'visits',1,sub {});
+			if (!$count_visits->[0])
+			{
+				$Redis->expire($key,86400,sub {});
+			}
+		}
+		return 1;
+	}
 	
 	# check if this visit is in video_part
 	my $cache={};
