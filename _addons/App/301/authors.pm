@@ -192,10 +192,10 @@ sub add_author
 			FROM
 				`TOM`.`a301_user_profile` AS user_profile
 			WHERE
-				user_profile.firstname LIKE '$env{'string'}'
+				user_profile.firstname LIKE ?
 			LIMIT 1
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[$env{'string'}],'quiet'=>1);
 		if ($sth0{'rows'})
 		{
 			$env{'author_firstname'}=$env{'string'};
@@ -262,12 +262,12 @@ sub add_author
 				WHERE
 					user.status IN ('Y','N','L','W') AND
 					user.hostname='$tom::H_cookie' AND
-					user_profile.firstname LIKE '$env{'author_firstname'}' AND
-					user_profile.surname LIKE '$env{'author_surname'}'
+					user_profile.firstname LIKE ? AND
+					user_profile.surname LIKE ?
 				LIMIT 1
 			};
 			
-			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+			my %sth0=TOM::Database::SQL::execute($sql,bind=>[$env{'author_firstname'},$env{'author_surname'}],'quiet'=>1);
 			if ($sth0{'rows'})
 			{
 				my %author=$sth0{'sth'}->fetchhash();
@@ -342,11 +342,11 @@ sub add_author
 				WHERE
 					user.status IN ('Y','N','L','W') AND
 					user.hostname='$tom::H_cookie' AND
-					user_profile.firstname LIKE '$env{'author_firstname'}' AND
+					user_profile.firstname LIKE ? AND
 					user_profile.surname IS NULL
 				LIMIT 1
 			};
-			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+			my %sth0=TOM::Database::SQL::execute($sql,bind=>[$env{'author_firstname'}],'quiet'=>1);
 			if ($sth0{'rows'})
 			{
 				my %author=$sth0{'sth'}->fetchhash();
