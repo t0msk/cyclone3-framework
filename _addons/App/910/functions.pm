@@ -1706,7 +1706,7 @@ sub _a210_by_cat
 	my %env=@_;
 	
 	$env{'lng'}=$tom::lng unless $env{'lng'};
-	my $cache_key=$env{'lng'}.'::'.join('::',@{$cats});
+	my $cache_key=$App::210::db_name.'::'.$env{'lng'}.'::'.join('::',@{$cats});
 	
 	# changetimes
 	my $changetime_a910=App::020::SQL::functions::_get_changetime({
