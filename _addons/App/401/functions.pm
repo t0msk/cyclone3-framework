@@ -41,6 +41,7 @@ use App::401::_init;
 use TOM::Security::form;
 use Time::HiRes qw(usleep);
 use Ext::TextHyphen::_init;
+use Ext::Redis::_init;
 
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
@@ -859,7 +860,9 @@ sub _article_index
 				article_attrs.lng,
 				article_attrs.datetime_start,
 				article_ent.ID_author,
-				article_cat.name AS cat_name
+				article_cat.name AS cat_name,
+				article_cat.ID AS cat_ID,
+				article_cat.ID_charindex
 			FROM
 				$App::401::db_name.a401_article AS article
 			LEFT JOIN $App::401::db_name.a401_article_ent AS article_ent ON
@@ -893,6 +896,22 @@ sub _article_index
 			if ($db1_line{'cat_name'})
 			{
 				push @{$content{$db0_line{'lng'}}{'cat'}},WebService::Solr::Field->new( 'cat' => $db1_line{'cat_name'} );
+			}
+			
+			if ($db1_line{'ID_charindex'})
+			{
+				push @{$content{$db0_line{'lng'}}{'cat'}},WebService::Solr::Field->new( 'cat_charindex_sm' =>  $db1_line{'ID_charindex'});
+				my %sql_def=('db_h' => "main",'db_name' => $App::401::db_name,'tb_name' => "a401_article_cat");
+				foreach my $p(
+					App::020::SQL::functions::tree::get_path(
+						$db1_line{'cat_ID'},
+						%sql_def,
+						'-cache' => 86400*7
+					)
+				)
+				{
+					push @{$content{$db0_line{'lng'}}{'cat'}},WebService::Solr::Field->new( 'cat_path_sm' =>  $p->{'ID_entity'});
+				}
 			}
 			
 			if (!$content{$db0_line{'lng'}}{'last_modified'})
@@ -1239,6 +1258,41 @@ Increase number of article visits
 sub article_visit
 {
 	my $ID_entity=shift;
+	
+	if ($Redis)
+	{
+		my $key='main::'.$App::401::db_name.'::a401_article_ent::'.$ID_entity;
+		my $count_visits = $Redis->hmget('C3|db_entity|'.$key,'_firstvisit','visits');
+		if (
+			($count_visits->[0] <= ($main::time_current - 1200)) # save every 10 minutes
+			|| $count_visits->[1] >= 1000)
+		{
+			# it's time to save
+			TOM::Database::SQL::execute(qq{
+				UPDATE `$App::401::db_name`.a401_article_ent
+				SET visits = visits + $count_visits->[1]
+				WHERE ID_entity = $ID_entity
+				LIMIT 1
+			},'quiet'=>1) if $count_visits->[1];
+			$Redis->hmset('C3|db_entity|'.$key,
+				'visits',1,
+				'_firstvisit', $main::time_current,
+				sub {}
+			);
+			$Redis->expire($key,86400,sub {});
+		}
+		else
+		{
+#			main::_log("last visit $count_visits->[0] $count_visits->[1]");
+#			$Redis->hset('C3|db_entity|'.$key,'_firstvisit',$main::time_current,sub {});
+			$Redis->hincrby('C3|db_entity|'.$key,'visits',1,sub {});
+			if (!$count_visits->[0])
+			{
+				$Redis->expire($key,86400,sub {});
+			}
+		}
+		return 1;
+	}
 	
 	# check if this visit is in article
 	my $cache={};
