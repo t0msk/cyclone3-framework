@@ -1,0 +1,29 @@
+#!/bin/bash
+
+if [ "$1" = "config" ]; then
+
+	echo "graph_title Packages to update"
+	echo "graph_args --base 1000 --lower-limit 0"
+	echo "graph_vlabel packages"
+	echo "graph_category system"
+
+	echo "updates.label available updates"
+	echo "updates.min 0"
+
+	echo "security.label security"
+	echo "security.min 0"
+	echo "security.warning 1"
+	echo "security.critical 3"
+	
+	exit 0
+fi
+
+packages=$(/usr/lib/update-notifier/apt-check 2>&1 >/dev/null);
+#echo $packages;
+arrIN=(${packages//;/ })
+
+#echo ${arrIN[0]};
+#echo ${arrIN[1]};
+
+echo "updates.value ${arrIN[0]}"
+echo "security.value ${arrIN[1]}"
