@@ -42,7 +42,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_obsolete_log` (
   `func_line` int(10) unsigned NOT NULL default '0',
   `func` varchar(100) NOT NULL default '',
   PRIMARY KEY  (`ID`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 -- --------------------------------------------------------
 -- version=5.0
@@ -59,7 +59,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_sitemap` (
   `weight` float NOT NULL default '0',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `domain` (`domain`,`domain_sub`,`url`)
-) TYPE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- version=5.0
@@ -76,7 +76,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_sitemap_day` (
   `weight` float NOT NULL default '0',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `domain` (`domain`,`domain_sub`,`url`,`date_create`)
-) TYPE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 -- version=5.0
@@ -247,4 +247,4 @@ CREATE TABLE `/*db_name*/`.`/*app*/_weblog_week` (
   `load_req` float unsigned NOT NULL default '0',
   PRIMARY KEY  (`reqdatetime`,`domain`,`domain_sub`),
   KEY `reqdatetime` (`reqdatetime`)
-) TYPE=InnoDB;
+) ENGINE=InnoDB;
