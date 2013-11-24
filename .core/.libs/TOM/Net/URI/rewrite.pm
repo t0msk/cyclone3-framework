@@ -512,7 +512,8 @@ sub regexp
 
 sub get
 {
-	my $t=track TOM::Debug(__PACKAGE__."::get()");
+	my $t=track TOM::Debug(__PACKAGE__."::get()") if $debug;
+	main::_log(__PACKAGE__."::get()") unless $debug;
 	
 	my $data=shift;
 	#main::_log("get data to url_rewrite");
@@ -539,7 +540,7 @@ sub get
 		#print "  spracuvam sekciu URL: $sections[0]\n" if $main::debug;
 		#main::_log("spracuvam sekciu URL: '$sections[0]'");
 		
-		main::_log("URL '$sections[0]' GET '$sections[1]'") unless $debug;
+#		main::_log("URL '$sections[0]' GET '$sections[1]'") unless $debug;
 		
 		my $t_sec=track TOM::Debug("URL '$sections[0]'") if $debug;
 		
@@ -628,7 +629,7 @@ sub get
 		
 	}
 	
-	$t->close();
+	$t->close() if $debug;
 }
 
 
