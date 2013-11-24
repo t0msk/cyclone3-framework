@@ -40,7 +40,9 @@ sub new
 	
 	if (!$env{'nocreate'})
 	{
+		main::_log("create temp file ".$self->{'filename'});
 		open(HND_CNT,'>'.$self->{'filename'});binmode HND_CNT;close(HND_CNT);
+		chmod 0666, $self->{'filename'};
 	}
 	
 	return bless $self, $class;
