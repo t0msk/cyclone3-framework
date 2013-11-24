@@ -6,7 +6,11 @@ use Term::ANSIColor;
 
 BEGIN
 {
-	if (!$ENV{'CYCLONE3PATH'}){$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";}
+	if (!$ENV{'CYCLONE3PATH'}){
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
 	require $ENV{'CYCLONE3PATH'}."/.bin/tom3-init";
 	$main::debug=1;
 }
