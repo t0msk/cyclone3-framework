@@ -8,6 +8,7 @@ use utf8;
 BEGIN
 {
 	$main::debug=0;
+	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
 	$main::stdout=1;
 	$TOM::engine="bin";
 	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
