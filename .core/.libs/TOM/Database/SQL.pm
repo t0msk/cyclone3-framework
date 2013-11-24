@@ -124,9 +124,10 @@ our %slave_status;
 sub get_slave_status
 {
 	my $db_h=shift;
+	my $TTL=5;
 	
 	# check only on every 60 seconds
-	if ($slave_status{$db_h} && ($slave_status{$db_h}{'time'}-time()<60))
+	if ($slave_status{$db_h} && ($slave_status{$db_h}{'time'} - time() < $TTL))
 	{
 		return %{$slave_status{$db_h}{'hash'}};
 	}
@@ -135,7 +136,7 @@ sub get_slave_status
 	my $db0=$main::DB{$db_h}->Query("SHOW SLAVE STATUS");
 	my %db0_line=$db0->fetchhash();
 	
-	if ($db0_line{'Seconds_Behind_Master'}>120)
+	if ($db0_line{'Seconds_Behind_Master'} > 300)
 	{
 		main::_log("SQL: Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",1);
 		main::_log("{$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err");
@@ -193,7 +194,7 @@ sub execute
 {
 	my $SQL=shift;
 	my %env=@_;
-  	
+	
 	my $t=track TOM::Debug(__PACKAGE__."::execute()",'namespace'=>"SQL",'quiet' => $env{'quiet'},'timer'=>1);
 	  
 	# when I'm sometimes really wrong ;)
@@ -202,6 +203,7 @@ sub execute
 	$env{'cache'}=$env{'cache'} || $env{'-cache'};
 	$env{'cache_auto'}=$env{'cache_auto'} || $env{'-cache_auto'};
 	$env{'-long'}=$logquery_long unless $env{'-long'};
+	$env{'-changetime'} = $env{'-changetime'} || $env{'-cache_changetime'};
 	# no, TOM::Database::SQL::cache, changes 1s to default value
 	#if ($env{'cache'} == 1){$env{'cache'}=60}; # default is 60 seconds
 	
@@ -226,13 +228,25 @@ sub execute
 		{
 			# check quality of this slave
 			my %slave_quality=get_slave_status($env{'db_h'}.':'.$slave);
-			if ($slave_quality{'Seconds_Behind_Master'} > $TOM::DB_mysql_seconds_behind_master_max)
+			
+			if ($env{'-changetime'} &&
+				($slave_quality{'Seconds_Behind_Master'} &&
+				(time()-$slave_quality{'Seconds_Behind_Master'}-60 < $env{'-changetime'})))
+			{
+				main::_log("slave '$slave' is behind master:$slave_quality{'Seconds_Behind_Master'}s, data changed ".(time()-$env{'-changetime'})."s before now, using master") unless $env{'quiet'};
+			}
+			elsif ($slave_quality{'Seconds_Behind_Master'} > $TOM::DB_mysql_seconds_behind_master_max)
 			{
 				main::_log("slave '$slave' is outdated (behind master:$slave_quality{'Seconds_Behind_Master'}s), using master",1);
 			}
 			else
 			{
-				main::_log("using slave '$slave' (behind master:$slave_quality{'Seconds_Behind_Master'}s)") unless $env{'quiet'};
+				main::_log("using slave '$slave' (behind master:$slave_quality{'Seconds_Behind_Master'}s)".do{
+					if ($env{'-changetime'})
+					{
+						" (changetime -".int(time()-$env{'-changetime'})."s)";
+					}
+				}) unless $env{'quiet'};
 				$env{'db_h'}=$env{'db_h'}.':'.$slave;
 			}
 		}
@@ -285,7 +299,6 @@ sub execute
 #	main::_log("cache_key='$cache_key'") if $env{'log'};
 	
 	$typeselect=1 if $SQL_=~/^(\(\s+SELECT|SELECT)/;
-	
 	if (($env{'cache'} || $env{'cache_auto'}) && $TOM::CACHE && $TOM::CACHE_memcached && ($typeselect || $env{'cache_force'}) && $main::FORM{'_rc'}!=-2)
 	{
 		main::_log("SQL: try to read from cache") if $env{'log'};
@@ -294,12 +307,12 @@ sub execute
 			'id' => $cache_key
 		);
 		
-		if ($env{'-cache_changetime'})
+		if ($env{'-changetime'})
 		{
-			main::_log("SQL: db changed before ".int(time()-$env{'-cache_changetime'})."s. cache created ".int($cache->{'value'}->{'time'}-$env{'-cache_changetime'})."s after db changes (min old:$env{'-cache_min'}s)") if $env{'log'};
+			main::_log("SQL: db changed before ".int(time()-$env{'-changetime'})."s. cache created ".int($cache->{'value'}->{'time'}-$env{'-changetime'})."s after db changes (min old:$env{'-cache_min'}s)") if $env{'log'};
 		}
 		
-		if ($cache && $env{'-cache_changetime'} && ($env{'-cache_changetime'})>$cache->{'value'}->{'time'} && ((time()-$cache->{'value'}->{'time'})>$env{'-cache_min'}) )
+		if ($cache && $env{'-changetime'} && ($env{'-changetime'})>$cache->{'value'}->{'time'} && ((time()-$cache->{'value'}->{'time'})>$env{'-cache_min'}) )
 		{
 			main::_log("SQL: don't use this cache, data changed") if $env{'log'};
 		}
