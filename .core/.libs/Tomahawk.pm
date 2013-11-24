@@ -839,7 +839,7 @@ our \$VERSION=$m_time;
 							my $key_entity=$entity->{'db_h'}."::".$entity->{'db_name'}."::".$entity->{'tb_name'};
 								$key_entity.="::".$entity->{'ID_entity'} if $entity->{'ID_entity'};
 							my $changetime=App::020::SQL::functions::_get_changetime($entity);
-							main::_log(" autoinvalidate if key 'C3|db_entity|$key_entity' changes at mtime=".$changetime);
+#							main::_log(" autoinvalidate if key 'C3|db_entity|$key_entity' changes at mtime=".$changetime);
 							$Redis->sadd('C3|invalidate|db_entity|'.$key_entity,$key,sub{});
 							$Redis->expire('C3|invalidate|db_entity|'.$key_entity,(86400*30),sub{});
 						}
