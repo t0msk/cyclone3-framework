@@ -234,14 +234,14 @@ while ($main::CGI=new CGI::Fast())
 #	print "$ENV{'QUERY_STRING'}\n";exit;
 	alarm($TOM::fcgi_timeout); # zacnem pocitat X sekund kym nezbehne request
 	local $sig_term=0; # ignorujem TERM pocas behu requestu, povoleny je len pocas cakania na dalsi request
-#	if ($main::ENV{'HTTP_X_FORWARDED_FOR'}=~/([\d+\.]+)/)
-#	{
-#		$main::ENV{'REMOTE_ADDR_ORIGINAL'}=$main::ENV{'REMOTE_ADDR'};
-#		$main::ENV{'REMOTE_ADDR'}=$1;
-#	}
 	if ($main::ENV{'HTTP_REMOTE_ADDR_SOURCE'})
 	{
 		$main::ENV{'REMOTE_ADDR'}=$main::ENV{'HTTP_REMOTE_ADDR_SOURCE'};
+	}
+	elsif ($main::ENV{'HTTP_X_FORWARDED_FOR'}=~/([\d+\.]+)/)
+	{
+		$main::ENV{'REMOTE_ADDR_ORIGINAL'}=$main::ENV{'REMOTE_ADDR'};
+		$main::ENV{'REMOTE_ADDR'}=$1;
 	}
 	
 	$main::ENV{'REMOTE_ADDR_PREFIX'}=$main::ENV{'REMOTE_ADDR'};
@@ -296,6 +296,7 @@ while ($main::CGI=new CGI::Fast())
 	if ($main::ENV{'lng'}){main::_log("override \$tom::lng by ENV to '$main::ENV{'lng'}' from '$tom::lng'");$tom::lng=$main::ENV{'lng'}}
 	# override tom::H
 	local $tom::H=$tom::H;
+	$tom::H_orig=$tom::H;
 	local $tom::H_www=$tom::H_www;
 	$tom::H_www_orig=$tom::H_www; # save original $tom::H_www
 	if ($main::ENV{'domain'})
@@ -521,6 +522,18 @@ while ($main::CGI=new CGI::Fast())
 				$tom::rewrite_time=$main::time_current;
 			}
 			
+		}
+		
+		local @TOM::Net::URI::rewrite::rules=@TOM::Net::URI::rewrite::rules;
+		
+		if ($tom::rewrite && -e $tom::P.'/rewrite.'.$main::ENV{'HTTP_HOST'}.'.conf')
+		{
+			main::_log("[$main::ENV{'HTTP_HOST'}].rewrite.conf, loading");
+			if (open (KEY,"<".$tom::P.'/rewrite.'.$main::ENV{'HTTP_HOST'}.'.conf'))
+			{
+				local $/;my $data=<KEY>;close(KEY);
+				TOM::Net::URI::rewrite::get($data);$tom::rewrite=1;
+			}
 		}
 		
 		# prezriem si pravidla pre type.conf
@@ -1031,6 +1044,7 @@ while ($main::CGI=new CGI::Fast())
 			(
 				$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'}=~/browser/
 				&& !$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'cookies_disable'}
+				&& $main::ENV{'X-Requested-With'} ne "XMLHttpRequest"
 			)
 			{
 				main::_log("trying to setup cookies");
@@ -1430,6 +1444,11 @@ while ($main::CGI=new CGI::Fast())
 							'-cache' => 86400,
 							'-slave' => 1
 						);
+						if ($App::210::node_metadata_parse)
+						{
+							%{$a210{'metatree'}}=App::020::functions::metadata::parse($a210{'metadata'});
+#							delete $p->{'metadata'};
+						}
 						$main::a210{'node'}=\%a210;
 						foreach my $p(
 							App::020::SQL::functions::tree::get_path(
@@ -1438,10 +1457,18 @@ while ($main::CGI=new CGI::Fast())
 								'db_name' => $App::210::db_name,
 								'tb_name' => "a210_page",
 								'-cache' => 86400,
-								'-slave' => 1
+								'-slave' => 1,
+								'columns' => {
+									'metadata' => 1
+								}
 							)
 						)
 						{
+							if ($App::210::nod_metadata_parse)
+							{
+								%{$p->{'metatree'}}=App::020::functions::metadata::parse($p->{'metadata'});
+							}
+							delete $p->{'metadata'};
 							push @{$a210{'IDs'}}, $p->{'ID'};
 							push @{$a210{'nodes'}}, $p;
 						}
