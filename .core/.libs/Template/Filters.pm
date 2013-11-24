@@ -88,6 +88,7 @@ our $FILTERS = {
 	'mimetype_render'  => [ \&render_filter_factory,  1 ],
 	'md5'              => \&md5,
 	'md5_hex'          => \&md5_hex,
+	'html_strip'       => \&html_strip,
 };
 
 # name of module implementing plugin filters
@@ -371,6 +372,19 @@ sub html_paragraph  {
     return "<p>\n" 
            . join("\n</p>\n\n<p>\n", split(/(?:\r?\n){2,}/, $text))
            . "</p>\n";
+}
+
+
+#------------------------------------------------------------------------
+# html_strip()                                 [% FILTER html_strip %]
+#
+# Removes htm tags
+#------------------------------------------------------------------------
+
+sub html_strip  {
+    my $text = shift;
+    use TOM::Text::format;
+    return TOM::Text::format::xml2plain($text);
 }
 
 
