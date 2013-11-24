@@ -222,7 +222,7 @@ while(1)
 		&Clear();
 		print $print_out;
 		#print color 'reset bold cyan';print "*";print "\n";
-		Time::HiRes::sleep(0.3) unless $FORM{'r'};
+		Time::HiRes::sleep(1) unless $FORM{'r'};
 #		exit;
 	
 }
