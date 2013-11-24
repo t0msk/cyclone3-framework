@@ -24,7 +24,8 @@ keys.min 0
 	exit 0;
 }
 
-use Ext::Redis::_init;
+undef @Ext::Redis::hosts; # don't use sharding
+$Redis=Ext::Redis::_connect();
 
 if (!$Redis)
 {
@@ -32,6 +33,4 @@ if (!$Redis)
 }
 
 my %info=%{$Redis->info()};
-use Data::Dumper;
-#print Dumper(\%info);
 print "keys.value " . $info{'changes_since_last_save'} . "\n";

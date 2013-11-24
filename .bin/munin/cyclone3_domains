@@ -37,8 +37,11 @@ my $datetime_now=DateTime->now('time_zone' => 'local');
 my $datetime_now_string=sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute()).":".sprintf('%02d',$datetime_now->second());
 	print "from $datetime_now_string\n" if $debug;
 	
+my $filename='/srv/Cyclone3/_logs/'.$date.'.pub.bench.log';
+	$filename='/var/log/Cyclone3/'.$date.'.pub.bench.log' if -e '/var/log/Cyclone3/'.$date.'.pub.bench.log';
+	
 my $i;
-my $bw = File::ReadBackwards->new('/srv/Cyclone3/_logs/'.$date.'.pub.bench.log') or die "can't read 'log_file' $!" ;
+my $bw = File::ReadBackwards->new($filename) or die "can't read 'log_file' $!" ;
 my %domains;
 while( my $line = $bw->readline )
 {

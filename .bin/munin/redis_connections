@@ -22,7 +22,8 @@ connections.draw LINE1
 	exit 0;
 }
 
-use Ext::Redis::_init;
+undef @Ext::Redis::hosts; # don't use sharding
+$Redis=Ext::Redis::_connect();
 
 if (!$Redis)
 {

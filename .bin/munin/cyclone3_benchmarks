@@ -33,7 +33,7 @@ get_tpl.label get tpl
 get_tpl.draw LINE1
 module_exec.label module exec/3
 module_exec.draw LINE1
-module_cache.label module exec (cache)
+module_cache.label module exec/3 (cache)
 module_cache.draw LINE1
 };
 	exit 0;
@@ -60,8 +60,7 @@ if ($Redis)
 	}
 	$t->close();
 	print "hmset.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
-
-
+	
 	# speed of hmget
 	my $t=track TOM::Debug("exec",'timer'=>1);
 	for (1..100)
@@ -149,6 +148,7 @@ for (1..10)
 		'-level' => 'global',
 		'-name' => 'minimal',
 			'-stdout_dummy' => 1,
+			'ID' => $_
 	);
 }
 $t->close();
@@ -173,9 +173,10 @@ for (1..10)
 		'-level' => 'global',
 		'-name' => 'minimal',
 			'-stdout_dummy' => 1,
-			'-cache_id' => 'default'
+			'-cache_id' => 'default',
+			'ID' => $_
 	);
 }
 $t->close();
-print "module_cache.value " . ($t->{'time'}{'req'}{'duration'}*100) . "\n";
+print "module_cache.value " . (($t->{'time'}{'req'}{'duration'}*100)/3) . "\n";
 

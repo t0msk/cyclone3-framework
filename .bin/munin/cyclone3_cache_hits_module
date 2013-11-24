@@ -7,13 +7,16 @@ use DateTime;
 use File::ReadBackwards;
 
 my $cmd = shift || '';
-if ($cmd eq 'config') {print qq{graph_title Cyclone3 cache usage [PAGE]
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 cache usage [MDL]
 graph_category cyclone3
 graph_vlabel calls
-graph_order hit
 graph_scale no
+graph_order crt hit
+crt.label cache create / second
+crt.draw AREA
+crt.min 0
 hit.label cache hit / second
-hit.draw LINE2
+hit.draw STACK
 hit.min 0
 };
 	exit 0;
@@ -28,7 +31,7 @@ my $date=`date +"%Y-%m-%d"`;chomp($date);
 #print $text
 
 my $datetime_now=DateTime->now('time_zone' => 'local');
-	$datetime_now->add('minutes' => -2);
+	$datetime_now->add('minutes' => -1);
 #my $datetime_now_string=$datetime_now->hour().":".$datetime_now->minute();
 my $datetime_now_string=sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute()).":".sprintf('%02d',$datetime_now->second());
 	print "from $datetime_now_string\n" if $debug;
@@ -37,11 +40,14 @@ my $i;
 my $value_crt=0;
 my $value_hit=0;
 
-my $bw = File::ReadBackwards->new('/srv/Cyclone3/_logs/'.$date.'.cache.log') or die "can't read 'log_file' $!" ;
+my $filename='/srv/Cyclone3/_logs/'.$date.'.cache.log';
+	$filename='/var/log/Cyclone3/'.$date.'.cache.log' if -e '/var/log/Cyclone3/'.$date.'.cache.log';
+
+my $bw = File::ReadBackwards->new($filename) or die "can't read 'log_file' $!" ;
 while( my $line = $bw->readline )
 {
 	chomp($line);
-	next unless $line=~/\[page\]/;
+	next unless $line=~/\[mdl\]/;
 	if ($line=~/\[(\d\d):(\d\d):(\d\d)/)
 	{
 		my $time_str=$1.":".$2.":".$3;
@@ -53,7 +59,7 @@ while( my $line = $bw->readline )
 	}
 #	next 
 # eval:0.034/0.009
-	if ($line=~/\[page\].*?\[(CRT|HIT)\]/)
+	if ($line=~/\[mdl\].*?\[(CRT|HIT)\]/)
 	{
 		$i++;
 		print $line."\n" if $debug;
@@ -78,16 +84,8 @@ $i=1 unless $i;
 #$value_proc=int($value_proc*1000);
 #$value_proc=1000 if $value_proc>1000;
 
-#print "crt.value " . $value_crt . "\n";
-
-my $value_avg=int(($value_hit/2/60)*1000)/1000;
-#	$value_avg="U" unless $value_avg;
-
-print "hit.value " . $value_avg . "\n";
-
-$value_avg=int(($value_crt/2/60)*1000)/1000;
-
-print "crt.value " . $value_avg . "\n";
+print "crt.value " . int(($value_crt/1/60)*100)/100 . "\n";
+print "hit.value " . int(($value_hit/1/60)*100)/100 . "\n";
 
 #print "$value_req $value_proc";
 

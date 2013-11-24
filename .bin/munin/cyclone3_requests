@@ -39,7 +39,10 @@ my $i_veryslow=0;
 my $value_req=0;
 my $value_proc=0;
 
-my $bw = File::ReadBackwards->new('/srv/Cyclone3/_logs/'.$date.'.pub.bench.log') or die "can't read 'log_file' $!" ;
+my $filename='/srv/Cyclone3/_logs/'.$date.'.pub.bench.log';
+	$filename='/var/log/Cyclone3/'.$date.'.pub.bench.log' if -e '/var/log/Cyclone3/'.$date.'.pub.bench.log';
+
+my $bw = File::ReadBackwards->new($filename) or die "can't read 'log_file' $!" ;
 while( my $line = $bw->readline )
 {
 	chomp($line);

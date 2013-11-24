@@ -24,7 +24,8 @@ expires.draw LINE1
 	exit 0;
 }
 
-use Ext::Redis::_init;
+undef @Ext::Redis::hosts; # don't use sharding
+$Redis=Ext::Redis::_connect();
 
 if (!$Redis)
 {
@@ -32,8 +33,6 @@ if (!$Redis)
 }
 
 my %info=%{$Redis->info()};
-use Data::Dumper;
-#print Dumper(\%info);
 print "keys.value " . ($info{'db0'}=~/keys=(\d+)/)[0] . "\n";
 print "expires.value " . ($info{'db0'}=~/expires=(\d+)/)[0] . "\n";
 

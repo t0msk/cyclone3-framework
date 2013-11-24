@@ -24,7 +24,8 @@ used.draw LINE1
 	exit 0;
 }
 
-use Ext::Redis::_init;
+undef @Ext::Redis::hosts; # don't use sharding
+$Redis=Ext::Redis::_connect();
 
 if (!$Redis)
 {
@@ -33,7 +34,6 @@ if (!$Redis)
 
 my %info=%{$Redis->info()};
 use Data::Dumper;
-#print Dumper(\%info);
 print "rss.value " . $info{'used_memory_rss'} . "\n";
 print "used.value " . $info{'used_memory'} . "\n";
 

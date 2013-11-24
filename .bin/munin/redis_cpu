@@ -33,21 +33,16 @@ used_cpu_user_children.min 0
 	exit 0;
 }
 
-use Ext::Redis::_init;
+undef @Ext::Redis::hosts; # don't use sharding
+$Redis=Ext::Redis::_connect();
 
 if (!$Redis)
 {
 	exit 0;
 }
 
-#used_cpu_sys' => '242.00',
-#'used_cpu_user_children' => '306.01',
-#'used_cpu_user' => '175.57',
-#'used_cpu_sys_children
 
 my %info=%{$Redis->info('cpu')};
-use Data::Dumper;
-#print Dumper(\%info);
 print "used_cpu_sys.value " . int($info{'used_cpu_sys'}*1000) . "\n";
 print "used_cpu_sys_children.value " . int($info{'used_cpu_sys_children'}*1000) . "\n";
 print "used_cpu_user.value " . int($info{'used_cpu_user'}*1000) . "\n";
