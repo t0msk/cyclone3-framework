@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	<header>
+		<!--
+		<extend level="auto" name="SWFObject"/>
+		-->
+		<extract>
+			<file location="jwplayer.js" dest="jwplayer/" />
+			<file location="jwplayer.html5.js" dest="jwplayer/" />
+			<file location="jwplayer.flash.swf" dest="jwplayer/" />
+		</extract>
+	</header>
+	
+</template>
