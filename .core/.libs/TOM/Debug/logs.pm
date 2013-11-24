@@ -103,8 +103,8 @@ sub _log
 		{
 			$file=$TOM::path_log;
 			if ($get[4]==1) {} # global
-			elsif ($tom::Pm && $get[4]==2) {$file.='/'.$tom::Hm} # master
-			elsif ($tom::H) {$file.='/'.$tom::H} # local
+			elsif ($tom::Pm && $get[4]==2) {$file.='/'.($tom::H_orig || $tom::Hm)} # master
+			elsif ($tom::H) {$file.='/'.($tom::H_orig || $tom::H)} # local
 			$file.='/'; # global
 	#		print "file = $file\n";
 			if (! -e $file){mkdir $file;chmod (0777,$file)}
