@@ -58,6 +58,10 @@ sub execute
 		my $attrs2;
 		foreach my $kk(sort keys %env0)
 		{
+			if ($kk eq "default" && $env0{$kk}=~/^<\$/)
+			{
+				TOM::Utils::vars::replace($env0{'default'});
+			}
 			$env0{$kk}=~s|<|&lt;|g;
 			$env0{$kk}=~s|>|&gt;|g;
 			$attrs2.=$kk.'='.'"'.$env0{$kk}.'" ';
