@@ -142,6 +142,29 @@ sub get_relation_iteminfo
 		}
 	}
 	
+	if ($env{'r_table'} eq "product_brand")
+	{
+		my $sql=qq{
+			SELECT
+				ID,
+				name
+			FROM
+				`$env{'r_db_name'}`.a910_product_brand
+			WHERE
+				ID_entity=$env{'r_ID_entity'}
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'main');
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$info{'name'}=$db0_line{'name'};
+			$info{'ID'}=$db0_line{'ID'};
+			main::_log("returning name='$info{'name'}'");
+			$t->close();
+			return %info;
+		}
+	}
+	
 	$t->close();
 	return undef;
 }
