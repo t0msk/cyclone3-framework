@@ -14,7 +14,7 @@ if ($cmd eq 'config') {print qq{graph_title Redis keys
 graph_args --base 1000 -l 0
 graph_category cyclone3_redis
 graph_order keys expires
-graph_vlabel Pernament keys
+graph_vlabel active keys
 graph_scale yes
 keys.label keys
 keys.draw LINE1
