@@ -28,7 +28,7 @@ use POSIX ();
 
 our $VERSION = 2.78;
 our $FORMAT  = '%H:%M:%S %d-%b-%Y';    # default strftime() format
-our @LOCALE_SUFFIX = qw( .ISO8859-1 .ISO_8859-15 .US-ASCII .UTF-8 );
+our @LOCALE_SUFFIX = qw( .UTF-8 .ISO8859-1 .ISO_8859-15 .US-ASCII );
 
 
 #------------------------------------------------------------------------
@@ -127,7 +127,7 @@ sub format {
         my $old_locale = &POSIX::setlocale(&POSIX::LC_ALL);
 
         # some systems expect locales to have a particular suffix
-        for my $suffix ('', @LOCALE_SUFFIX) {
+        for my $suffix (@LOCALE_SUFFIX,'') {
             my $try_locale = $locale.$suffix;
             my $setlocale = &POSIX::setlocale(&POSIX::LC_ALL, $try_locale);
             if (defined $setlocale && $try_locale eq $setlocale) {
