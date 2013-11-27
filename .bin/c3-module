@@ -121,6 +121,17 @@ eval
 {
 	Tomahawk::module(%arg) if $main::arg{'d'}; # process double time
 	
+	if (exists $main::arg{'s'}) # speed test
+	{
+		$main::arg{'s'}=10 unless $main::arg{'s'};
+		for (1..$main::arg{'s'})
+		{
+			main::_log("run [$_/$main::arg{'s'}]");
+			Tomahawk::module(%arg);
+		}
+#		main::_log("speed");
+	}
+	
 	$main::debug=1 if $main::arg{'v'};
 	
 	main::_log("call to module");
