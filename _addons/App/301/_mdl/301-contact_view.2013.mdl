@@ -94,6 +94,7 @@ sub execute
 			user_profile.note,
 			user_profile.metadata,
 			
+			contact_lng.name_long,
 			contact_lng.description
 			
 		FROM
