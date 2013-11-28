@@ -479,7 +479,7 @@ sub user_add
 				'-posix' => 1
 			);
 			$content_reindex=1;
-      }
+		}
 	}
 	
 	if ($env{'user.pass'})
