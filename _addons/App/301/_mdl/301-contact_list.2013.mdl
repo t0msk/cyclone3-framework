@@ -38,15 +38,15 @@ sub execute
 	my $sql_where;
 	my $sql_changetime;
 	my $sql_limit=$env{'sql_limit'} || 10;
-	my $sql_order_by=$env{'sql_order_by'} || 'user_profile.surname ASC, user_profile.firstname DESC';
+	my $sql_order_by=$env{'sql_order_by'} || '`user_profile`.`surname` ASC, `user_profile`.`firstname` ASC';
 	my $sql_group_by;
 	
-	$sql_where.=" AND user.hostname=?";
+	$sql_where.=" AND `user`.`hostname`=?";
 	push @sql_bind, $tom::H_cookie;
 	
 	if ($env{'unique'})
 	{
-		$sql_group_by="user.ID_user";
+		$sql_group_by="`user`.`ID_user`";
 	}
 	
 	if ($env{'contact_cat.ID_entity'})
@@ -57,10 +57,10 @@ sub execute
 			next unless $ID_category;
 			if ($ID_category=~s/\*$//)
 			{
-				my $cat_sql=qq{SELECT ID_charindex FROM $App::301::db_name.a301_contact_cat WHERE ID_entity=$ID_category AND status IN ('Y','L') LIMIT 1};
-				$ID_category=qq{SELECT ID_entity FROM $App::301::db_name.a301_contact_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND status IN ('Y','L')};
+				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::301::db_name`.`a301_contact_cat` WHERE `ID_entity`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT `ID_entity` FROM `$App::301::db_name`.`a301_contact_cat` WHERE `ID_charindex` LIKE CONCAT(($cat_sql),"%") AND `status` IN ('Y','L')};
 			}
-			$sql_cat.=" OR contact_rel_cat.ID_category IN ($ID_category)";
+			$sql_cat.=" OR `contact_rel_cat`.`ID_category` IN ($ID_category)";
 			$sql_cat=~s/^ OR //;
 		}
 		if ($sql_cat)
@@ -169,8 +169,14 @@ sub execute
 	
    if ($env{'user.ID_user'})
 	{
-		$sql_where.=" AND user.ID_user IN ('".join('\',\'',split(';',$env{'user.ID_user'}))."')";
+		$sql_where.=" AND `user`.`ID_user` IN ('".join('\',\'',split(';',$env{'user.ID_user'}))."')";
 		$sql_limit=scalar split(';',$env{'user.ID_user'});
+	}
+	
+   if ($env{'user_profile.ID'})
+	{
+		$sql_where.=" AND `user_profile`.`ID_user` IN ('".join('\',\'',split(';',$env{'user_profile.ID'}))."')";
+		$sql_limit=scalar split(';',$env{'user_profile.ID'});
 	}
 
 	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
@@ -185,57 +191,60 @@ sub execute
 	my $i;
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
-			user.hostname,
+			`user`.`hostname`,
 			
-			contact_cat.ID_entity AS cat_ID_entity,
-			contact_cat.name AS cat_name,
+			`contact_cat`.`ID_entity` AS `cat_ID_entity`,
+			`contact_cat`.`name` AS `cat_name`,
 			
-			user.ID_user,
-			user.login,
-			user.pass,
-			user.email,
-			user.status,
-			user.datetime_register,
-			user.datetime_last_login,
+			`user`.`ID_user`,
+			`user`.`login`,
+			`user`.`pass`,
+			`user`.`email`,
+			`user`.`status`,
+			`user`.`datetime_register`,
+			`user`.`datetime_last_login`,
 			
-			user_profile.firstname,
-			user_profile.surname,
-			user_profile.gender,
-			user_profile.country_code,
-			user_profile.date_birth,
-			user_profile.city,
-			user_profile.ZIP,
-			user_profile.street,
-			user_profile.street_num,
-			user_profile.address_postal,
-			user_profile.about_me,
-			user_profile.note,
-			user_profile.metadata,
+			`user_profile`.`ID`,
+			`user_profile`.`ID_entity`,
+			`user_profile`.`firstname`,
+			`user_profile`.`surname`,
+			`user_profile`.`gender`,
+			`user_profile`.`country_code`,
+			`user_profile`.`date_birth`,
+			`user_profile`.`city`,
+			`user_profile`.`ZIP`,
+			`user_profile`.`street`,
+			`user_profile`.`street_num`,
+			`user_profile`.`address_postal`,
+			`user_profile`.`about_me`,
+			`user_profile`.`note`,
+			`user_profile`.`metadata`,
 			
-			contact_lng.description
+			`contact_lng`.`name_long`,
+			`contact_lng`.`description`
 			
 		FROM
-			$App::301::db_name.a301_user AS user
-		INNER JOIN $App::301::db_name.a301_user_profile AS user_profile ON
+			`$App::301::db_name`.`a301_user` AS `user`
+		INNER JOIN `$App::301::db_name`.`a301_user_profile` AS `user_profile` ON
 		(
-			user_profile.ID_entity = user.ID_user
+			`user_profile`.`ID_entity` = `user`.`ID_user`
 		)
-		LEFT JOIN $App::301::db_name.a301_contact_rel_cat AS contact_rel_cat ON
+		LEFT JOIN `$App::301::db_name`.`a301_contact_rel_cat` AS `contact_rel_cat` ON
 		(
-			user.ID_user = contact_rel_cat.ID_user
+			`user`.`ID_user` = `contact_rel_cat`.`ID_user`
 		)
-		LEFT JOIN $App::301::db_name.a301_contact_cat AS contact_cat ON
+		LEFT JOIN `$App::301::db_name`.`a301_contact_cat` AS `contact_cat` ON
 		(
-			contact_cat.ID = contact_rel_cat.ID_category AND
-			contact_cat.status IN ('Y','L')
+					`contact_cat`.`ID` = `contact_rel_cat`.`ID_category`
+			AND	`contact_cat`.`status` IN ('Y','L')
 		)
-		LEFT JOIN $App::301::db_name.a301_contact_lng AS contact_lng ON
+		LEFT JOIN `$App::301::db_name`.`a301_contact_lng` AS `contact_lng` ON
 		(
-			contact_lng.ID_entity = user.ID_user AND
-			contact_lng.lng = '$env{'lng'}'
+					`contact_lng`.`ID_entity` = `user`.`ID_user`
+			AND	`contact_lng`.`lng` = '$env{'lng'}'
 		)
 		WHERE
-			user.status IN ('Y','L')
+			`user`.`status` IN ('Y','L')
 			$sql_where}.do{if($sql_group_by){qq{
 		GROUP BY
 			$sql_group_by}}}.qq{
@@ -243,7 +252,7 @@ sub execute
 			$sql_order_by
 		LIMIT
 			$sql_limit
-	},'bind'=>[@sql_bind],'log_'=>1,'-slave'=>1,
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
 		'-changetime'=>App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",
@@ -258,14 +267,26 @@ sub execute
 		$i++;
 		last if $i > $env{'page_limit'};
 		
-		main::_log("[$i/$env{'page_limit'}] found user.ID_entity=$user{'ID_entity'}");
+		main::_log("[$i/$env{'page_limit'}] found user.ID_user=$user{'ID_user'}");
 		
 		push @{$env_out{'entity'}},{
 			'db_h' => 'main',
 			'db_name' => $App::301::db_name,
 			'tb_name' => 'a301_user',
-			'ID_entity' => $user{'ID_entity'}
+			'ID_entity' => $user{'ID_user'}
 		};
+		
+		$user{'related_avatar'}=(App::160::SQL::get_relations(
+			'db_name' => $App::301::db_name,
+			'l_prefix' => 'a301',
+			'l_table' => 'user',
+			'l_ID_entity' => $user{'ID_user'},
+			'rel_type' => "avatar",
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y",
+			'limit' => 1
+		))[0];
 		
 =head1
 		# link to a210_page
