@@ -1,0 +1,602 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use DateTime;
+
+
+use App::730::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+#	$env{'check_video_part_file'} = 1 unless exists $env{'check_video_part_file'};
+	
+	$env{'event.status'}='Y' unless $env{'event.status'};
+		my $sql_event_status=join "','", split('',$env{'event.status'});
+	
+	# paging
+	$env{'page_limit'} = 10 unless $env{'page_limit'};
+	$env{'page'} = 1 unless $env{'page'};
+	$env{'page_offset'} = 0 unless $env{'page_offset'};
+	$env{'page_plus'} = 1 unless $env{'page_plus'};
+	if (!$env{'sql_limit'})
+	{
+		$env{'sql_limit'}=((($env{'page'}-1)*$env{'page_limit'})+$env{'page_offset'}).",".($env{'page_limit'}+$env{'page_plus'});
+	}
+	else
+	{
+#		$env{'sql_limit'}=~/^(\d+),?(\d+)?$/;
+	}
+	
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_join;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || 'event.datetime_publish_start DESC';
+	my $sql_group_by;
+	
+	if ($env{'unique'})
+	{
+		$sql_group_by="event.ID_entity";
+	}
+	
+	if ($env{'event_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'event_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::730::db_name.a730_event_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID_entity FROM $App::730::db_name.a730_event_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR event_rel_cat.ID_category IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'event_cat.ID'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'event_cat.ID'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::730::db_name.a730_event_cat WHERE ID=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID FROM $App::730::db_name.a730_event_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR event_cat.ID IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+=head1
+	if ($env{'solr'})
+	{
+		$env{'solr.defType'} = 'edismax' unless $env{'solr.defType'};
+		$env{'solr.rows'} = 10 unless $env{'solr.rows'};
+		$env{'solr.start'} = 0 unless $env{'solr.start'};
+		$env{'solr.qf'} = "title name name_partial cat_name_sm^0.2 cat_name_tm^0.2 description^0.8 keywords^2 text^0.5" unless $env{'solr.qf'};
+		
+		if ($env{'solr.keywords'})
+		{
+			my $query=$env{'solr.keywords'};
+			1 while ($query=~s|  | |g);
+			$query=~s|^ ||g;
+			$query=~s| $||g;
+			my @query_part=split(' ',$query);$query='';
+			my $part_last;
+			foreach my $part(@query_part){
+				$part=~s|\-|\\-|g;
+				$query.="$part AND ";
+				$part_last=$part;
+			}
+			$query=~s| AND $part_last AND $| AND ($part_last OR $part_last*)|;
+			$query=~s|^$part_last AND $|$part_last OR $part_last*|;
+			$query=~s| AND $||;
+			$env{'solr.q'}="AND (".$query.")";
+		}
+		
+		if ($env{'solr.related_keywords'})
+		{
+			my $query=$env{'solr.related_keywords'};
+			1 while ($query=~s|  | |g);
+			$query=~s|^ ||g;
+			$query=~s| $||g;
+			my @query_part=split(' ',$query);$query='';
+			my $part_last;
+			foreach my $part(@query_part){
+				$part=~s|\-|\\-|g;
+				$query.="$part ";
+				$part_last=$part;
+			}
+			$query=~s| $||;
+			$env{'solr.q'}="AND (".$query.")";
+		}
+		
+		use Ext::Solr::_init;
+		my $solr = Ext::Solr::service();
+		
+		my $response = $solr->search('+id:'.($App::510::db_name).'.a510_video.'.$env{'lng'}.'.* '.$env{'solr.q'},
+			{
+				'-cluster' => 1,
+				
+				'defType' => $env{'solr.defType'},
+				
+				'rows' => $env{'solr.rows'},
+				'start' => $env{'solr.start'},
+				
+				'bq' => $env{'solr.bq'},
+				'qf' => $env{'solr.qf'},
+				'fl' => "id ID_i ID_entity_i score ".$env{'solr.fl'},
+			}
+		);
+		
+		$env{'video.ID_entity'}="";
+		for my $doc ( $response->docs )
+		{
+			$env{'video.ID_entity'}.=$doc->value_for('ID_entity_i').";";
+		}
+		
+	}
+=cut
+	
+	if ($env{'event.ID_entity'}=~/^[0-9;]+$/)
+	{
+		$sql_where.=" AND event.ID_entity IN (".join(',',split(';',$env{'event.ID_entity'})).")";
+		$sql_limit=scalar split(';',$env{'event.ID_entity'});
+		if ($env{'solr'})
+		{
+			$sql_group_by="event.ID_entity";
+			$sql_order_by="CASE\n";
+			my $i;
+			foreach (split(';',$env{'event.ID_entity'}))
+			{
+				$i++;
+				$sql_order_by.="\t\t\t\tWHEN event.ID_entity=$_ THEN $i\n";
+			}
+			$sql_order_by.="\t\t\tEND";
+		}
+	}
+	
+	if ($env{'datetime_mode'} eq "present")
+	{
+		$sql_where.=" AND (event.datetime_start IS NULL OR event.datetime_start <= NOW())";
+		$sql_where.=" AND (event.datetime_finish IS NULL OR event.datetime_finish >= NOW())";
+	}
+	elsif ($env{'datetime_mode'} eq "past")
+	{
+		$sql_where.=" AND (event.datetime_start IS NULL OR event.datetime_start <= NOW())";
+		$sql_where.=" AND event.datetime_finish <= NOW()";
+	}
+	elsif ($env{'datetime_mode'} eq "future")
+	{
+		$sql_where.=" AND event.datetime_start >= NOW()";
+		$sql_where.=" AND (event.datetime_finish IS NULL OR event.datetime_finish >= NOW())";
+	}
+	elsif ($env{'datetime_mode'} eq "all")
+	{
+		
+	}
+	else # present & comming
+	{
+		$sql_where.=" AND (event.datetime_finish IS NULL OR event.datetime_finish >= NOW())";
+	}
+	
+	if ($env{'having_program'})
+	{
+		$sql_where.=qq{ AND (
+				SELECT
+					sub_rel.ID
+				FROM
+					$App::730::db_name.a160_relation AS sub_rel
+				INNER JOIN $App::730::db_name.a730_event AS sub_event ON
+				(
+					sub_event.ID_entity = sub_rel.r_ID_entity AND
+					sub_event.status IN ('Y','N')
+				)
+				WHERE
+					sub_rel.l_prefix = 'a730' AND
+					sub_rel.l_table = 'event' AND
+					sub_rel.l_ID_entity = event.ID_entity AND
+					sub_rel.rel_type = 'subevent' AND
+					sub_rel.r_prefix = 'a730' AND
+					sub_rel.r_table = 'event' AND
+					sub_rel.status = 'Y'
+				LIMIT 1
+			) IS NOT NULL
+		};
+	}
+	elsif (exists $env{'having_program'})
+	{
+		$sql_where.=qq{ AND (
+				SELECT
+					sub_rel.ID
+				FROM
+					$App::730::db_name.a160_relation AS sub_rel
+				INNER JOIN $App::730::db_name.a730_event AS sub_event ON
+				(
+					sub_event.ID_entity = sub_rel.r_ID_entity AND
+					sub_event.status IN ('Y','N')
+				)
+				WHERE
+					sub_rel.l_prefix = 'a730' AND
+					sub_rel.l_table = 'event' AND
+					sub_rel.l_ID_entity = event.ID_entity AND
+					sub_rel.rel_type = 'subevent' AND
+					sub_rel.r_prefix = 'a730' AND
+					sub_rel.r_table = 'event' AND
+					sub_rel.status = 'Y'
+				LIMIT 1
+			) IS NULL
+		};
+	}
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	main::_log('-------------------------------------------------------'.$env{'sql_where'});
+	
+	$sql_where=~s|^ ||;
+	
+	Tomahawk::GetTpl('env'=>\%env) || return undef;
+	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			event.ID,
+			event.ID_entity,
+			event.name,
+			event.name_url,
+			event.posix_owner,
+			event.datetime_start,
+			event.datetime_finish,
+			event.datetime_publish_start,
+			event.datetime_publish_stop,
+			event.link,
+			event.location,
+			
+			event.country_code,
+			event.state,
+			event.county,
+			event.district,
+			event.city,
+			event.ZIP,
+			event.street,
+			event.street_num,
+			
+			event.latitude_decimal,
+			event.longitude_decimal,
+			
+			event.priority_A,
+			
+			event.price,
+			event.price_currency,
+			event.VAT,
+			(event.price*((100+event.VAT)/100)) AS price_incl_VAT,
+			
+			event.max_attendees,
+			event.metadata,
+			event.status,
+			event.mode,
+			
+			event_lng.name_long,
+			event_lng.description_short,
+			event_lng.description,
+			event_lng.lng}.do{if($env{'program_count'}){qq{
+			,(
+				SELECT
+					sub_rel.ID
+				FROM
+					$App::730::db_name.a160_relation AS sub_rel
+				INNER JOIN $App::730::db_name.a730_event AS sub_event ON
+				(
+					sub_event.ID_entity = sub_rel.r_ID_entity AND
+					sub_event.status IN ('Y','N')
+				)
+				WHERE
+					sub_rel.l_prefix = 'a730' AND
+					sub_rel.l_table = 'event' AND
+					sub_rel.l_ID_entity = event.ID_entity AND
+					sub_rel.rel_type = 'subevent' AND
+					sub_rel.r_prefix = 'a730' AND
+					sub_rel.r_table = 'event' AND
+					sub_rel.status = 'Y'
+				LIMIT 1
+			) as program_count}}}.qq{
+			
+		FROM $App::730::db_name.a730_event AS event
+		LEFT JOIN $App::730::db_name.a730_event_lng AS event_lng ON
+		(
+			event.ID_entity = event_lng.ID_entity AND
+			event_lng.lng = '$env{'lng'}'
+		)
+		LEFT JOIN $App::730::db_name.a730_event_rel_cat AS event_rel_cat ON
+		(
+			event_rel_cat.ID_event = event.ID_entity
+		)
+		LEFT JOIN $App::730::db_name.a730_event_cat AS event_cat ON
+		(
+			event_cat.ID_entity = event_rel_cat.ID_category AND
+			event_cat.lng = '$env{'lng'}'
+		)$sql_join
+		WHERE
+			event.status IN ('$sql_event_status')
+			AND event.datetime_publish_start <= NOW()
+			AND (event.datetime_publish_stop IS NULL OR event.datetime_publish_stop >= NOW())
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::730::db_name,
+				'tb_name' => "a730_event",
+				'ID_entity' => do{$env{'event.ID_entity'} if $env{'event.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	while (my %event=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		last if $i > $env{'page_limit'};
+		
+		main::_log("[$i/$env{'page_limit'}] found event.ID_entity=$event{'ID_entity'}");
+		
+		$event{'related_thumbnail'}=(App::160::SQL::get_relations(
+			'db_name' => $App::730::db_name,
+			'l_prefix' => 'a730',
+			'l_table' => 'event',
+			'l_ID_entity' => $event{'ID_entity'},
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'rel_type' => "thumbnail",
+			'status' => "Y"
+		))[0];
+		
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::730::db_name,
+			'tb_name' => 'a730_event',
+			'ID_entity' => $event{'ID_entity'}
+		};
+		
+=head1
+		# link to a210_page
+		if (my $category=App::401::functions::_a210_by_cat([$article{'cat_ID'}],'lng'=>$env{'lng'}))
+		{
+			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$category,
+					%sql_def,
+					'-slave' => 1,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$article{'a210'}{'IDs'}}, $p->{'ID'};
+				push @{$article{'a210'}{'nodes'}}, $p;
+				$article{'a210'}{'path_url'}.="/".$p->{'name_url'};
+			}
+			$article{'a210'}{'path_url'}=~s|^/||;
+		}
+=cut
+		
+		if ($env{'parent'} && ($event{'mode'} eq "S"))
+		{
+			
+			my $relation=(App::160::SQL::get_relations(
+				'l_prefix' => 'a730',
+				'l_table' => 'event',
+				'r_prefix' => 'a730',
+				'r_table' => 'event', # this value can be send as undefined
+				'r_ID_entity' => $event{'ID_entity'},
+				'status' => 'Y',
+				'rel_type' => 'subevent',
+				'limit' => 1
+			))[0];
+			
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					
+					event.ID,
+					event.ID_entity,
+					event.name,
+					event.name_url,
+					event.posix_owner,
+					event.datetime_start,
+					event.datetime_finish,
+					event.datetime_publish_start,
+					event.datetime_publish_stop,
+					event.link,
+					event.location,
+					
+					event.country_code,
+					event.state,
+					event.county,
+					event.district,
+					event.city,
+					event.ZIP,
+					event.street,
+					event.street_num,
+					
+					event.latitude_decimal,
+					event.longitude_decimal,
+					
+					event.priority_A,
+					
+					event.price,
+					event.price_currency,
+					event.VAT,
+					(event.price*((100+event.VAT)/100)) AS price_incl_VAT,
+					
+					event.max_attendees,
+					event.metadata,
+					event.status,
+					event.mode,
+					
+					event_lng.name_long,
+					event_lng.description_short,
+					event_lng.description,
+					event_lng.lng
+					
+				FROM $App::730::db_name.a730_event AS event
+				LEFT JOIN $App::730::db_name.a730_event_lng AS event_lng ON
+				(
+					event.ID_entity = event_lng.ID_entity AND
+					event_lng.lng = '$env{'lng'}'
+				)
+				WHERE
+					event.status IN ('$sql_event_status')
+					AND event.datetime_publish_start <= NOW()
+					AND (event.datetime_publish_stop IS NULL OR event.datetime_publish_stop >= NOW())
+					AND event.ID_entity = ?
+				LIMIT
+					1
+			},'bind'=>[
+				$relation->{'l_ID_entity'}
+			],'log_'=>1,'-slave'=>1,
+#				'-changetime'=>App::020::SQL::functions::_get_changetime(
+#					{
+#						'db_h'=>"main",
+#						'db_name' => $App::730::db_name,
+#						'tb_name' => "a730_event",
+#						'ID_entity' => do{$env{'event.ID_entity'} if $env{'event.ID_entity'}=~/^\d+$/}
+#					}),
+			);
+			%{$event{'parent'}}=$sth1{'sth'}->fetchhash();
+		}
+		
+		# render
+		$parser->parse($event{'description_short'});
+		$parser->eof();
+		push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+		$event{'description_short_parser'}={
+			'output' => $parser->{'output'},
+			'addon' => $parser->{'addon'},
+			'entity' => $parser->{'entity'},
+			'thumbnail' => $parser->{'thumbnail'},
+		};
+		
+		if ($env{'parser.description'})
+		{
+			$parser->parse($event{'description'});
+			$parser->eof();
+			$event{'description_parser'}={
+				'output' => $parser->{'output'},
+				'addon' => $parser->{'addon'},
+				'entity' => $parser->{'entity'},
+				'thumbnail' => $parser->{'thumbnail'},
+			};
+		}
+		
+		if ($env{'organizers'})
+		{
+			foreach my $acl_item (grep {$_->{'roles'}=~/organizer/ && $_->{'folder'} eq "O"} App::301::perm::get_ACL(
+				'r_prefix' => 'a730',
+				'r_table' => 'event',
+				'r_ID_entity' => $event{'ID_entity'}
+			))
+			{
+				use App::710::_init;
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						org.*,
+						org_lng.name_short,
+						org_lng.about
+					FROM $App::710::db_name.a710_org AS org
+					LEFT JOIN $App::710::db_name.a710_org_lng AS org_lng ON
+					(
+						org_lng.ID_entity = org.ID AND
+						org_lng.lng = '$env{'lng'}'
+					)
+					WHERE
+						org.status = 'Y' AND
+						org.ID = ?
+					LIMIT
+						1
+				},'bind'=>[$acl_item->{'ID'}],'log'=>0,'-slave'=>1,
+					'-changetime'=>App::020::SQL::functions::_get_changetime(
+						{
+							'db_h'=>"main",
+							'db_name' => $App::710::db_name,
+							'tb_name' => "a710_org",
+							'ID_entity' => $acl_item->{'ID'}
+						})
+				);
+				my %db1_line=$sth1{'sth'}->fetchhash();
+				
+				$db1_line{'related_avatar'}=(App::160::SQL::get_relations(
+					'db_name' => $App::710::db_name,
+					'l_prefix' => 'a710',
+					'l_table' => 'org',
+					'l_ID_entity' => $db1_line{'ID_entity'},
+					'r_prefix' => "a501",
+					'r_table' => "image",
+					'rel_type' => "avatar",
+					'status' => "Y"
+				))[0];
+				
+				%{$db1_line{'metahash'}}=App::020::functions::metadata::parse($db1_line{'metadata'});
+				delete $db1_line{'metadata'};
+				
+				push @{$event{'organizers_org'}},\%db1_line;
+			}
+
+			
+=head1
+			if ($env{'supplier_org'} && $product{'supplier_org_ID'})
+			{
+				use App::710::_init;
+				
+			}
+=cut
+		}
+		
+		push @{$TPL->{'variables'}{'items'}},\%event;
+	}
+	
+	return 1,%env_out;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
