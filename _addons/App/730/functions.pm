@@ -120,21 +120,21 @@ sub event_add
 		$columns{'mode'}="'".TOM::Security::form::sql_escape($env{'event.mode'})."'" if $env{'event.mode'};
 		
 		# default datetimes
-
+		
 		# start today
 		$columns{'datetime_start'}='NOW()';
-
+		
 		# finish last second of today by default
 		$columns{'datetime_finish'}='DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 1 DAY), INTERVAL  -1 SECOND)';
 		#$columns{'datetime_finish'}='NOW()';
-
+		
 		$columns{'datetime_publish_start'}='NOW()';
 		
-		my $user = $env{'ID_user'} if exists $env{'ID_user'};
-		$user = $main::USRM{'ID_user'} unless ($user);
-
-		$columns{'posix_owner'} = "'".TOM::Security::form::sql_escape($user)."'";
-		$columns{'posix_modified'} = "'".TOM::Security::form::sql_escape($user)."'";
+#		my $user = $env{'ID_user'} if exists $env{'ID_user'};
+#		$user = $main::USRM{'ID_user'} unless ($user);
+		
+		$columns{'posix_owner'} = "'".($env{'ID_user'} || $main::USRM{'ID_user'})."'";
+		$columns{'posix_modified'} = "'".$main::USRM{'ID_user'}."'";
 		
 		$env{'event.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
@@ -280,18 +280,44 @@ sub event_add
 			if (exists $env{'event.street_num'} && ($env{'event.street_num'} ne $event{'street_num'}));
 		
 		# metadata
+		my %metadata=App::020::functions::metadata::parse($event{'metadata'});
+		
+		if ($env{'event.metadata.replace'} && $env{'event.metadata'})
+		{
+			if (!ref($env{'event.metadata'}))
+			{
+				%metadata=App::020::functions::metadata::parse($env{'event.metadata'});
+			}
+			if (ref($env{'event.metadata'}) eq "HASH")
+			{
+				%metadata=%{$env{'event.metadata'}};
+			}
+		}
+		else
+		{
+			if (!ref($env{'event.metadata'}) && $env{'event.metadata'})
+			{
+				# when metadata send as <metatree></metatree> then always replace
+				%metadata=App::020::functions::metadata::parse($env{'event.metadata'});
+			}
+			if (ref($env{'event.metadata'}) eq "HASH")
+			{
+				# metadata overrride
+				foreach my $section(keys %{$env{'event.metadata'}})
+				{
+					foreach my $variable(keys %{$env{'event.metadata'}{$section}})
+					{
+						$metadata{$section}{$variable}=$env{'event.metadata'}{$section}{$variable};
+					}
+				}
+			}
+		}
+		
+		$env{'event.metadata'}=App::020::functions::metadata::serialize(%metadata);
+		
 		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'event.metadata'})."'"
 			if (exists $env{'event.metadata'} && ($env{'event.metadata'} ne $event{'metadata'}));
-		if ($columns{'metadata'})
-		{
-			App::020::functions::metadata::metaindex_set(
-				'db_h' => 'main',
-				'db_name' => $App::730::db_name,
-				'tb_name' => 'a730_event',
-				'ID' => $env{'event.ID'},
-				'metadata' => {App::020::functions::metadata::parse($env{'event.metadata'})}
-			);
-		}
+		
 		# status
 		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'event.status'})."'"
 			if ($env{'event.status'} && ($env{'event.status'} ne $event{'status'}));
@@ -453,14 +479,226 @@ sub event_add
 		}
 	}
 	
-	
 	if ($content_updated)
 	{
 		App::020::SQL::functions::_save_changetime({'db_h'=>'main','db_name'=>$App::730::db_name,'tb_name'=>'a730_event','ID_entity'=>$env{'event.ID_entity'}});
+		_event_index('ID'=>$env{'event.ID'}, 'commit' => $env{'commit'});
 	}
 	
 	$t->close();
 	return %env;
+}
+
+
+sub _event_index
+{
+	my %env=@_;
+	return undef unless $env{'ID'}; # event.ID
+	return undef unless $Ext::Solr;
+	
+	my $t=track TOM::Debug(__PACKAGE__."::_event_index($env{'ID'})",'timer'=>1);
+	
+	my @content;
+	my %content_lng;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			$App::730::db_name.a730_event
+		WHERE
+			status IN ('Y','N','L') AND
+			ID=?
+		LIMIT 1
+	},'quiet'=>1,'bind'=>[$env{'ID'}]);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$env{'ID_entity'} = $db0_line{'ID_entity'};
+		
+		push @content,WebService::Solr::Field->new( 'name' => $db0_line{'name'} )
+			if $db0_line{'name'};
+		push @content,WebService::Solr::Field->new( 'title' => $db0_line{'name'} )
+			if $db0_line{'name'};
+		push @content,WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} )
+			if $db0_line{'name_url'};
+		
+		push @content,WebService::Solr::Field->new( 'link_s' => $db0_line{'link'} )
+			if $db0_line{'link'};
+		push @content,WebService::Solr::Field->new( 'location_s' => $db0_line{'location'} )
+			if $db0_line{'location'};
+		push @content,WebService::Solr::Field->new( 'country_code_s' => $db0_line{'country_code'} )
+			if $db0_line{'country_code'};
+		push @content,WebService::Solr::Field->new( 'state_s' => $db0_line{'state'} )
+			if $db0_line{'state'};
+		push @content,WebService::Solr::Field->new( 'county_s' => $db0_line{'county'} )
+			if $db0_line{'county'};
+		push @content,WebService::Solr::Field->new( 'district_s' => $db0_line{'district'} )
+			if $db0_line{'district'};
+		push @content,WebService::Solr::Field->new( 'city_s' => $db0_line{'city'} )
+			if $db0_line{'city'};
+		push @content,WebService::Solr::Field->new( 'ZIP_s' => $db0_line{'ZIP'} )
+			if $db0_line{'ZIP'};
+		push @content,WebService::Solr::Field->new( 'street_s' => $db0_line{'street'} )
+			if $db0_line{'street'};
+		push @content,WebService::Solr::Field->new( 'street_num_s' => $db0_line{'street_num'} )
+			if $db0_line{'street_num'};
+		push @content,WebService::Solr::Field->new( 'latitude_decimal_f' => $db0_line{'latitude_decimal'} )
+			if $db0_line{'latitude_decimal'};
+		push @content,WebService::Solr::Field->new( 'longitude_decimal_f' => $db0_line{'longitude_decimal'} )
+			if $db0_line{'longitude_decimal'};
+		push @content,WebService::Solr::Field->new( 'priority_A_s' => $db0_line{'priority_A'} )
+			if $db0_line{'priority_A'};
+		push @content,WebService::Solr::Field->new( 'max_attendees_i' => $db0_line{'max_attendees'} )
+			if $db0_line{'max_attendees'};
+		
+		push @content,WebService::Solr::Field->new( 'mode_s' => $db0_line{'mode'} )
+			if $db0_line{'mode'};
+		push @content,WebService::Solr::Field->new( 'status_s' => $db0_line{'status'} )
+			if $db0_line{'status'};
+		
+		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
+		foreach my $sec(keys %metadata)
+		{
+			foreach (keys %{$metadata{$sec}})
+			{
+				next unless $metadata{$sec}{$_};
+				if ($_=~s/\[\]$//)
+				{
+					# this is comma separated array
+					foreach my $val (split(';',$metadata{$sec}{$_.'[]'}))
+					{push @content,WebService::Solr::Field->new( $sec.'.'.$_.'_sm' => $val)}
+					push @content,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_);
+					next;
+				}
+				
+				push @content,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
+				if ($metadata{$sec}{$_}=~/^[0-9]{1,9}$/)
+				{
+					push @content,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
+				}
+				if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}$/)
+				{
+					push @content,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
+				}
+				
+				# list of used metadata fields
+				push @content,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_ );
+			}
+		}
+	}
+	else
+	{
+		
+	}
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			$App::730::db_name.a730_event_lng
+		WHERE
+			status='Y'
+			AND ID_entity=?
+	},'quiet'=>1,'bind'=>[$env{'ID'}]);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $lng=$db0_line{'lng'};
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				a730_event_rel_cat.ID_category,
+				a730_event_cat.ID_charindex
+			FROM
+				$App::730::db_name.a730_event_rel_cat
+			INNER JOIN $App::730::db_name.a730_event_cat ON
+			(
+				a730_event_rel_cat.ID_category = a730_event_cat.ID_entity
+				AND a730_event_cat.lng = ?
+				AND a730_event_cat.status = 'Y'
+			)
+			WHERE
+				a730_event_rel_cat.ID_event = ?
+		},'quiet'=>1,'bind'=>[$lng,$env{'ID_entity'}]);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			push @{$content_lng{$lng}},WebService::Solr::Field->new( 'cat_charindex_sm' =>  $db1_line{'ID_charindex'}); # product_cat.ID_entity
+		}
+		
+		# save original HTML values
+		push @{$content_lng{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description_short_orig_s' => $db0_line{'description_short'} )
+			if $db0_line{'description_short'};
+		push @{$content_lng{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description_orig_s' => $db0_line{'description'} )
+			if $db0_line{'description'};
+		
+		for my $part('description_short', 'description')
+		{
+			$db0_line{$part}=~s|<.*?>||gms;
+			$db0_line{$part}=~s|&nbsp;| |gms;
+			$db0_line{$part}=~s|  | |gms;
+		}
+		
+		push @{$content_lng{$lng}},WebService::Solr::Field->new( 'lng_s' => $lng );
+		
+		push @{$content_lng{$lng}},WebService::Solr::Field->new( 'name' => $db0_line{'name'} )
+			if $db0_line{'name'};
+		push @{$content_lng{$lng}},WebService::Solr::Field->new( 'title' => $db0_line{'name'} )
+			if $db0_line{'name'};
+		push @{$content_lng{$lng}},WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} )
+			if $db0_line{'name_url'};
+		push @{$content_lng{$lng}},WebService::Solr::Field->new( 'subject' => $db0_line{'name_long'} )
+			if ($db0_line{'name_long'});
+		
+		push @{$content_lng{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description' => $db0_line{'description_short'} )
+			if $db0_line{'description_short'};
+		
+		if ($db0_line{'datetime_modified'})
+		{
+			$db0_line{'datetime_modified'}=~s| (\d\d)|T$1|;
+			$db0_line{'datetime_modified'}.="Z";
+			push @{$content_lng{$lng}},WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_modified'} );
+		}
+		
+	}
+	
+	my $solr = Ext::Solr::service();
+	
+	my $response = $solr->search( "+id:".$App::730::db_name.".a730_event.* +ID_i:$env{'ID'}" );
+	for my $doc ( $response->docs )
+	{
+		my $lng=$doc->value_for( 'lng_s' );
+		if (!$content_lng{$lng})
+		{
+			$solr->delete_by_id($doc->value_for('id'));
+		}
+	}
+	
+	my $last_indexed=$tom::Fyear."-".$tom::Fmom."-".$tom::Fmday."T".$tom::Fhour.":".$tom::Fmin.":".$tom::Fsec."Z";
+	foreach my $lng (keys %content_lng)
+	{
+		my $id=$App::730::db_name.".a730_event.".$lng.".".$env{'ID'};
+		main::_log("index id='$id'");
+		
+		my $doc = WebService::Solr::Document->new();
+		
+		$doc->add_fields((
+			WebService::Solr::Field->new( 'id' => $id ),
+			@content,
+			@{$content_lng{$lng}},
+			WebService::Solr::Field->new( 'db_s' => $App::730::db_name ),
+			WebService::Solr::Field->new( 'addon_s' => 'a730_event' ),
+			WebService::Solr::Field->new( 'ID_i' => $env{'ID'} ),
+			WebService::Solr::Field->new( 'last_indexed_tdt' => $last_indexed )
+		));
+		
+		$solr->add($doc);
+	}
+	
+	if ($env{'commit'})
+	{
+		$solr->commit();
+	}
+	
+	$t->close();
 }
 
 
