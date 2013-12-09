@@ -84,6 +84,31 @@ sub get_relation_iteminfo
 			return %info;
 		}
 	}
+	elsif ($env{'r_table'} eq "event_cat")
+	{
+		my $sql=qq{
+			SELECT
+				ID,
+				ID_entity,
+				name,
+				lng
+			FROM
+				`$env{'r_db_name'}`.a730_event_cat
+			WHERE
+				ID_entity=$env{'r_ID_entity'}
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'main');
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$info{'name'}=$db0_line{'name'};
+			$info{'ID'}=$db0_line{'ID'};
+			$info{'lng'}=$db0_line{'lng'};
+			main::_log("returning name='$info{'name'}'");
+			$t->close();
+			return %info;
+		}
+	}
 	
 	$t->close();
 	return undef;
