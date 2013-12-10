@@ -1464,7 +1464,7 @@ while ($main::CGI=new CGI::Fast())
 							)
 						)
 						{
-							if ($App::210::nod_metadata_parse)
+							if ($App::210::node_metadata_parse)
 							{
 								%{$p->{'metatree'}}=App::020::functions::metadata::parse($p->{'metadata'});
 							}
