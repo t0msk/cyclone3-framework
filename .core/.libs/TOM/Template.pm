@@ -863,6 +863,7 @@ sub process
 		# domain variables
 		$vars_process->{'domain'}={
 			'name' => $tom::H,
+			'name_master' => $tom::Hm,
 			'url' => $tom::H_www,
 			'url_orig' => $tom::H_www_orig || $tom::H_www,
 			'url_master' => $tom::Hm_www || $tom::H_www,
