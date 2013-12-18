@@ -44,6 +44,15 @@
 </video>
 	]]></entity>
 	
+	<entity id="img.a510_video_part"><![CDATA[[%USE dumper;USE a510;USE a501%]
+<video
+	class="a510_video[%IF entity.attr.class;" " _ entity.attr.class|xml;END;%]"
+	alt="[%entity.attr.alt || entity.db.name | xml%]"
+	align="[%entity.attr.align|xml%]"
+	src="[%domain.url_a510%]/video/part/file/[%entity.db.file_part_path%]"
+>
+</video>
+	]]></entity>
 	
 	<entity id="a.a510_video"><![CDATA[[%USE dumper;USE a510;FILTER collapse;
 		attr_ignore={'/'=>1,id=>'1','href'=>1,'title'=>1,'class'=>1};
