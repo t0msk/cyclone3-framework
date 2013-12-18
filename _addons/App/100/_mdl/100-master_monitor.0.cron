@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+package CRON::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use Ext::Redis::_init;
+use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
+
+sub execute
+{
+	my %env=@_;
+	return unless $Redis;
+	main::_log("ok, redis available");
+	alarm(0);
+	my $lock=new TOM::lock("a100 - master_monitor") || return 1;
+	
+	use Data::Dumper;
+	
+	TOM::Database::SQL::execute(qq{TRUNCATE TABLE TOM.a100_master});
+	
+	while(1)
+	{
+		my ($seconds, $microseconds) = gettimeofday;
+		my $ttime=$seconds.'.'.$microseconds;
+		main::_log("insert master $ttime");
+		$Redis->set('C3|db_main|modified',$ttime,sub{});
+		$Redis->expire('C3|db_main|modified',10,sub {});
+		TOM::Database::SQL::execute(qq{
+			REPLACE INTO
+				TOM.a100_master
+				(
+					ID,
+					datetime_create,
+					timestamp
+				)
+				VALUES
+				(
+					1,
+					FROM_UNIXTIME($ttime),
+					$ttime
+				)
+		},'quiet'=>1);
+		Time::HiRes::sleep(0.5);
+	}
+	
+	return 1
+}
+
+
+1;
