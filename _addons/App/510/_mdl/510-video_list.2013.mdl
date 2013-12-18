@@ -21,6 +21,7 @@ sub execute
 	$env{'video_format.ID_entity'} = $App::510::video_format_full_ID unless $env{'video_format.ID_entity'};
 #	$env{'video_part'} = 1 unless exists $env{'video_part'};
 #	$env{'video_part_file'} = 1 unless exists $env{'video_part_file'};
+#	$env{'datetime_mode'}="present" unless $env{'datetime_mode'};
 	
 	# paging
 	$env{'page_limit'} = 10 unless $env{'page_limit'};
@@ -43,6 +44,12 @@ sub execute
 	my $sql_limit=$env{'sql_limit'} || 10;
 	my $sql_order_by=$env{'sql_order_by'} || 'video.datetime_rec_start DESC';
 	my $sql_group_by;
+	
+	if ($env{'datetime_mode'} eq "present")
+	{
+#		$sql_where.=" AND video_attrs.datetime_start <= NOW()";
+#		$sql_where.=" AND (video_attrs.datetime_stop IS NULL OR video_attrs.datetime_stop >= NOW())";
+	}
 	
 	if ($env{'video_cat.ID_entity'})
 	{
