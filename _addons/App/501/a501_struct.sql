@@ -12,7 +12,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image` (
   PRIMARY KEY  (`ID`),
   KEY `ID_entity` (`ID_entity`),
   KEY `status` (`status`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -22,7 +22,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_j` (
   `datetime_create` datetime NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -42,7 +42,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent` (
   KEY `ID_entity` (`ID_entity`),
   KEY `visits` (`visits`),
   KEY `status` (`status`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -59,7 +59,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent_j` (
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -72,7 +72,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_ent_metaindex` (
   PRIMARY KEY  (`ID`,`meta_section`,`meta_variable`),
   KEY `SEL_0` (`meta_section`,`meta_variable`),
   KEY `status` (`status`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -107,7 +107,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_attrs` (
   KEY `ID_category` (`ID_category`),
   KEY `name` (`name`),
   KEY `lng` (`lng`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -124,7 +124,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_attrs_j` (
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -148,7 +148,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_file` (
   KEY `name` (`name`),
   KEY `file_checksum` (`file_checksum`),
   KEY `status` (`status`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -168,7 +168,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_file_j` (
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   KEY `name` (`name`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -300,7 +300,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_cat` (
   KEY `name` (`name`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -321,7 +321,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_cat_j` (
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -343,7 +343,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_format` (
   KEY `name` (`name`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -360,7 +360,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_format_j` (
   `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
