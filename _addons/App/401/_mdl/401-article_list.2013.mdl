@@ -22,6 +22,8 @@ sub execute
 	$env{'article_attrs.status'}='Y' unless $env{'article_attrs.status'};
 		my $sql_article_attrs_status=join "','", split('',$env{'article_attrs.status'});
 	
+	$env{'datetime_mode'}="present" unless $env{'datetime_mode'};
+	
 	# paging
 	$env{'page_limit'} = 10 unless $env{'page_limit'};
 	$env{'page'} = 1 unless $env{'page'};
@@ -47,6 +49,12 @@ sub execute
 	if ($env{'unique'})
 	{
 		$sql_group_by="article_ent.ID_entity";
+	}
+	
+	if ($env{'datetime_mode'} eq "present")
+	{
+		$sql_where.=" AND article_attrs.datetime_start <= NOW()";
+		$sql_where.=" AND (article_attrs.datetime_stop IS NULL OR article_attrs.datetime_stop >= NOW())";
 	}
 	
 	if ($env{'article_cat.ID_entity'})
@@ -166,7 +174,8 @@ sub execute
 		$env{'article.ID_entity'}="";
 		for my $doc ( $response->docs )
 		{
-			$env{'article.ID_entity'}.=$doc->value_for('ID_entity_i').";";
+			$env{'article.ID_entity'}.=$doc->value_for('ID_entity_i').";"
+				if $doc->value_for('ID_entity_i');
 		}
 		
 	}
