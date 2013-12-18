@@ -1447,7 +1447,7 @@ while ($main::CGI=new CGI::Fast())
 						if ($App::210::node_metadata_parse)
 						{
 							%{$a210{'metatree'}}=App::020::functions::metadata::parse($a210{'metadata'});
-#							delete $p->{'metadata'};
+							delete $a210{'metadata'};
 						}
 						$main::a210{'node'}=\%a210;
 						foreach my $p(
