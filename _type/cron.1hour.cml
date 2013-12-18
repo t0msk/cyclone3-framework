@@ -40,7 +40,7 @@
 </MODULE>
 
 # cache invalidate
-<MODULE>
+<#MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="020" />
 	<VAR id="-name" value="cache_invalidate" />
