@@ -755,6 +755,12 @@ sub get_path
 	
 	# get paths from cache
 	my $cache_key=$env{'db_h'}.':'.$env{'db_name'}.':'.$env{'tb_name'}.':'.$ID;
+		foreach (%{$env{'columns'}})
+		{
+			$cache_key.=":".$_."=".$env{'columns'}{$_};
+		}
+		$cache_key=TOM::Digest::hash($cache_key);
+		
 	if ($TOM::CACHE && $TOM::CACHE_memcached && $main::FORM{'_rc'}!=-2)
 	{
 		my $cache=$Ext::CacheMemcache::cache->get(
