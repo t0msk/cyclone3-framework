@@ -319,7 +319,7 @@ sub start
 				{
 					$attr->{'src'}=$tom::H_a501.'/image/file/'.$db0_line{'file_path'};
 					main::_log("found image src='$attr->{'src'}'") if $debug;
-					$attr->{'alt'}=$db0_line{'name'} unless $attr->{'alt'};
+					$attr->{'alt'}=$db0_line{'name'} unless defined $attr->{'alt'};
 					
 					$attr->{'width'}=~s|[^0-9]+||g;
 					$attr->{'height'}=~s|[^0-9]+||g;
