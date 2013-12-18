@@ -1,0 +1,117 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::210::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'db_order'}="ID_charindex" unless $env{'db_order'};
+	
+	Tomahawk::GetTpl() || return undef;
+	
+	delete $env{'ID_charindex'};
+	
+	my $from;
+	
+	if ($env{'ID'})
+	{
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h'    => 'main',
+			'db_name' => $App::210::db_name,
+			'tb_name' => 'a210_page',
+			'ID'      => $env{'ID'},
+			'columns' => 
+			{
+				'ID_charindex' => 1
+			}
+		);
+		if ($data{'ID'})
+		{
+			$env{'ID_charindex'}=$data{'ID_charindex'}.':';
+		}
+		else
+		{
+			main::_log("can't find ID='$data{'ID'}'",1);
+			return undef;
+		}
+	}
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`$App::210::db_name`.`a210_page`
+		WHERE
+			lng = ?
+			AND ID_charindex LIKE ?
+			AND status IN ('Y','L')
+			AND visible IN ('Y')
+		ORDER BY
+			$env{'db_order'}
+	},
+		'bind'=>[$env{'lng'},$env{'ID_charindex'}.'___'],
+		'quiet' => 1,
+		'-cache' => 86400*7,
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::210::db_name,
+				'tb_name' => "a210_page"
+			}
+		)
+	);
+	
+	my @nodes;
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		delete $db0_line{'metadata'};
+		delete $db0_line{'t_keys'};
+		
+		foreach my $node (App::020::SQL::functions::tree::get_path(
+			$db0_line{'ID'},
+			'db_h'    => 'main',
+			'db_name' => $App::210::db_name,
+			'tb_name' => 'a210_page',
+			'-cache' => 86400*7,
+		))
+		{
+			$db0_line{'path_url'}.='/'.$node->{'name_url'};
+		}
+		$db0_line{'path_url'}=~s|^/||;
+		
+		$db0_line{'ID_charindex'}=~s|^$env{'ID_charindex'}||;
+		
+		$db0_line{'related_thumbnail'}=(App::160::SQL::get_relations(
+			'db_name' => $App::210::db_name,
+			'l_prefix' => 'a210',
+			'l_table' => 'page',
+			'l_ID_entity' => $db0_line{'ID'},
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'rel_type' => "avatar",
+			'status' => "Y"
+		))[0];
+		
+		$TPL->variables_push(\%db0_line);
+	}
+	
+	push @{$env_out{'entity'}},{
+		'db_h' => 'main',
+		'db_name' => $App::210::db_name,
+		'tb_name' => 'a210_page'
+	};
+	
+	return 1,%env_out;
+}
+
+1;
