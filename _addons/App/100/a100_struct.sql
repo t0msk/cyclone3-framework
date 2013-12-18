@@ -63,3 +63,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_ircbot_msg` (
   KEY `status` (`status`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------
+-- db_h=main
+-- version 5.0
+
+CREATE TABLE `/*db_name*/`.`/*app*/_master` (
+  `ID` bigint(20) unsigned NOT NULL,
+  `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `timestamp` decimal(20,6) unsigned NOT NULL,
+  PRIMARY KEY  (`ID`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
