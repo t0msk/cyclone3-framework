@@ -124,15 +124,51 @@ our %slave_status;
 sub get_slave_status
 {
 	my $db_h=shift;
-	my $TTL=5;
+	use Ext::Redis::_init;
 	
-	# check only on every 60 seconds
-	if ($slave_status{$db_h} && ($slave_status{$db_h}{'time'} - time() < $TTL))
+	my $TTL=5;
+		$TTL=1 if $Redis;
+	
+	# check only on every $TTL seconds
+#	main::_log("chk $slave_status{$db_h}{'time'} ".time()." diff:".(time() - $slave_status{$db_h}{'time'}))
+#		if $slave_status{$db_h};
+	if ($slave_status{$db_h} && ((time() - $slave_status{$db_h}{'time'}) < $TTL))
 	{
+#		main::_log("from cache");
 		return %{$slave_status{$db_h}{'hash'}};
 	}
-	main::_log("get show slave status");
+	
+#	main::_log("read $db_h slave status (seconds behind)");
 	TOM::Database::connect::multi($db_h) unless $main::DB{$db_h};
+	
+	if ($Redis && ($db_h=~/^main:/))
+	{
+		my $changetime=$Redis->get('C3|db_main|modified');
+		if ($changetime)
+		{
+#			main::_log("modifytime=$changetime");
+			my $db0=$main::DB{$db_h}->Query("SELECT timestamp FROM TOM.a100_master LIMIT 1");
+			my %db0_line=$db0->fetchhash();
+			my $changetime_slave=$db0_line{'timestamp'};
+#			main::_log("modifytime_slave=$changetime_slave");
+			
+			$db0_line{'Seconds_Behind_Master'}=int(($changetime-$changetime_slave)*10000)/10000;
+			if ($db0_line{'Seconds_Behind_Master'} > 300)
+			{
+				main::_log("SQL: Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",1);
+				main::_log("{$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err");
+				main::_log("[$tom::H] {$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err",1) if $tom::H;
+			}
+			else
+			{
+#				main::_log("{$db_h} Seconds_Behind_Master $db0_line{'Seconds_Behind_Master'}s");
+			}
+			$slave_status{$db_h}{'time'}=time();
+			%{$slave_status{$db_h}{'hash'}}=%db0_line;
+			return %db0_line;
+		}
+	}
+	
 	my $db0=$main::DB{$db_h}->Query("SHOW SLAVE STATUS");
 	my %db0_line=$db0->fetchhash();
 	
