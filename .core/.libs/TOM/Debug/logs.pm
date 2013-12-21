@@ -124,8 +124,8 @@ sub _log
 		$get[0]=0 unless $get[0];
 		
 		my $filename_full=$file.".".$get[3].".log";
-		if (!$HND{$filename_full})
-		{
+#		if (!$HND{$filename_full})
+#		{
 			use Fcntl;
 			my $logfile_new;
 			$logfile_new=1 unless -e $filename_full;
@@ -133,8 +133,9 @@ sub _log
 			open ($HND{$filename_full},">>".$filename_full)
 				|| print STDERR "Cyclone3 system can't write into logfile $filename_full $!\n";
 			chmod (0666 , $filename_full) if $logfile_new;
-		}
+#		}
 		syswrite($HND{$filename_full}, $msg."\n", length($msg."\n"));
+		close($HND{$filename_full});
 	}
 	
 	return 1;
