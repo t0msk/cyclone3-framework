@@ -1,0 +1,241 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::930::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'rfp.status'}='Y' unless $env{'rfp.status'};
+		my $sql_rfp_status=join "','", split('',$env{'rfp.status'});
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || 'rfp.datetime_publish_start DESC';
+	
+	if ($env{'rfp.ID_entity'})
+	{
+		main::_log("search by rfp.ID_entity");
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::930::db_name,
+			'tb_name' => 'a930_rfp',
+			'ID_entity' => $env{'rfp.ID_entity'}
+		};
+		$sql_where.="AND rfp.ID_entity=? ";
+		push @sql_bind,$env{'rfp.ID_entity'};
+	}
+	
+	if ($env{'rfp.ID'})
+	{
+		main::_log("search by rfp.ID");
+		$sql_where.="AND rfp.ID=? ";
+		push @sql_bind,$env{'rfp.ID'};
+	}
+	
+	if ($env{'rfp_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'rfp_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::930::db_name.a930_rfp_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID_entity FROM $App::930::db_name.a930_rfp_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR rfp_rel_cat.ID_category IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'rfp_cat.ID'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'rfp_cat.ID'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::930::db_name.a930_rfp_cat WHERE ID=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID_entity FROM $App::930::db_name.a930_rfp_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR rfp_rel_cat.ID_category IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	return 1 unless $sql_where;
+	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			rfp.ID,
+			rfp.ID_entity,
+			rfp.datetime_publish_start,
+			rfp.datetime_publish_stop,
+			rfp.posix_owner,
+			rfp.posix_modified,
+			rfp.ID_user,
+			rfp.ID_org,
+			rfp.price,
+			rfp.price_currency,
+			rfp.metadata,
+			rfp.status,
+			
+			rfp_lng.name,
+			rfp_lng.name_url,
+			rfp_lng.name_long,
+			rfp_lng.abstract,
+			rfp_lng.body,
+			rfp_lng.lng,
+			
+			rfp_cat.ID AS cat_ID,
+			rfp_cat.ID_entity AS cat_ID_entity,
+			rfp_cat.name AS cat_name
+			
+		FROM $App::930::db_name.a930_rfp AS rfp
+		INNER JOIN $App::930::db_name.a930_rfp_lng AS rfp_lng ON
+		(
+			rfp_lng.ID_entity = rfp.ID AND
+			rfp_lng.lng = '$env{'lng'}'
+		)
+		LEFT JOIN $App::930::db_name.a930_rfp_rel_cat AS rfp_rel_cat ON
+		(
+			rfp_rel_cat.ID_rfp = rfp.ID
+		)
+		LEFT JOIN $App::930::db_name.a930_rfp_cat AS rfp_cat ON
+		(
+			rfp_cat.ID_entity = rfp_rel_cat.ID_category AND
+			rfp_cat.status IN ('Y','N','L') AND
+			rfp_cat.lng = '$env{'lng'}'
+		)
+		WHERE
+			rfp.status IN ('$sql_rfp_status')
+			AND rfp.datetime_publish_start <= NOW()
+			AND (rfp.datetime_publish_stop IS NULL OR rfp.datetime_publish_stop >= NOW())
+			$sql_where}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],'log_'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::930::db_name,
+				'tb_name' => "a930_rfp",
+				'ID_entity' => do{$env{'rfp.ID_entity'} if $env{'rfp.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	my %rfp=$sth0{'sth'}->fetchhash();
+	
+	return 1 unless $rfp{'ID_entity'};
+	
+	main::_log("found rfp.ID_entity=$rfp{'ID_entity'}");
+	
+	push @{$env_out{'entity'}},{
+		'db_h' => 'main',
+		'db_name' => $App::930::db_name,
+		'tb_name' => 'a930_rfp',
+		'ID_entity' => $rfp{'ID_entity'}
+	};
+	
+	push @{$env_out{'call'}{'H'}{'add_DOC_title'}},$rfp{'name'}
+		if $env{'header.title'};
+	
+=head1
+	if ($event{'cat_ID'})
+	{
+		# link to a210_page
+		if (my $category=App::730::functions::_a210_by_cat([$event{'cat_ID'}],'lng'=>$env{'lng'}))
+		{
+			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$category,
+					%sql_def,
+					'-slave' => 1,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$event{'a210'}{'IDs'}}, $p->{'ID'};
+				push @{$event{'a210'}{'nodes'}}, $p;
+				$event{'a210'}{'path_url'}.="/".$p->{'name_url'};
+			}
+			$event{'a210'}{'path_url'}=~s|^/||;
+		}
+	}
+=cut
+	
+	if ($env{'header.og'})
+	{
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:title','content'=>$rfp{'name'}};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:site_name','content' => $tom::H};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:type','content'=>'article'};
+	}
+	
+	# parser abstract
+	$parser->parse($rfp{'abstract'});
+	$parser->eof();
+	push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+	$rfp{'abstract_parser'}={
+		'output' => $parser->{'output'},
+		'addon' => $parser->{'addon'},
+		'entity' => $parser->{'entity'},
+		'thumbnail' => $parser->{'thumbnail'},
+	};
+	
+	# parser body
+	$parser->parse($rfp{'body'});
+	$parser->eof();
+	$rfp{'body_parser'}={
+		'output' => $parser->{'output'},
+		'addon' => $parser->{'addon'},
+		'entity' => $parser->{'entity'},
+		'thumbnail' => $parser->{'thumbnail'},
+	};
+	push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+	
+	$TPL->{'variables'}{'rfp'} = \%rfp;
+	
+	return 1,%env_out;
+}
+
+1;

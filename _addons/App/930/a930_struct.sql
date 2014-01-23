@@ -83,15 +83,17 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_rfp_lng_j` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_rfp_rfi` ( -- request for information
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_rfp` mediumint(8) unsigned NOT NULL, -- ref _rfp.ID
   `datetime_create` datetime NOT NULL,
   `req_ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `req_ID_org` bigint(20) unsigned default NULL,
   `req_IP` varchar(15) character set ascii default NULL,
-  `ref_email` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `req_email` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  PRIMARY KEY  (`ID`),
   KEY `datetime_create` (`datetime_create`),
   KEY `SEL_0` (`ID_rfp`,`datetime_create`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
