@@ -190,6 +190,9 @@ sub org_add
 	# ID_org
 	$columns{'ID_org'}="'".TOM::Security::form::sql_escape($env{'org.ID_org'})."'"
 		if (exists $env{'org.ID_org'} && ($env{'org.ID_org'} ne $org{'ID_org'}));
+	# tax_number
+	$columns{'tax_number'}="'".TOM::Security::form::sql_escape($env{'org.tax_number'})."'"
+		if (exists $env{'org.tax_number'} && ($env{'org.tax_number'} ne $org{'tax_number'}));
 	# VAT_number
 	$columns{'VAT_number'}="'".TOM::Security::form::sql_escape($env{'org.VAT_number'})."'"
 		if (exists $env{'org.VAT_number'} && ($env{'org.VAT_number'} ne $org{'VAT_number'}));

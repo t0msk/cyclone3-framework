@@ -20,6 +20,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
   
   `legal_form` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `ID_org` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `tax_number` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `VAT_number` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `bank_contact` text character set utf8 collate utf8_unicode_ci,
   
@@ -79,6 +80,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org_j` (
   
   `legal_form` varchar(64) character set utf8 collate utf8_unicode_ci default NULL,
   `ID_org` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
+  `tax_number` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `VAT_number` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `bank_contact` text character set utf8 collate utf8_unicode_ci,
   
