@@ -205,7 +205,7 @@ sub product_add
 			'db_h' => "main",
 			'db_name' => $App::910::db_name,
 			'tb_name' => "a910_product",
-			'columns' => {'product_number'=>"'NEW-".$env{'product.ID'}."'"},
+			'columns' => {'product_number'=>"'N".$env{'product.ID'}."'"},
 			'-posix' => 1,
 		);
 		%product=App::020::SQL::functions::get_ID(
@@ -958,6 +958,9 @@ sub _product_index
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$env{'ID_entity'}=$db0_line{'ID_entity'};
+		
+		push @content_ent,WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} )
+			if $db0_line{'ID_entity'};
 		
 		push @content_ent,WebService::Solr::Field->new( 'product_number_s' => $db0_line{'product_number'} )
 			if $db0_line{'product_number'};
