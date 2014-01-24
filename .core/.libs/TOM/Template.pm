@@ -859,6 +859,7 @@ sub process
 		$vars_process->{'test'}="test string";
 		
 		$Tomahawk::module::TPL->{'variables'}->{'devel'}=$tom::devel;
+		$Tomahawk::module::TPL->{'variables'}->{'hostname'}=$TOM::hostname;
 		
 		# domain variables
 		$vars_process->{'domain'}={
