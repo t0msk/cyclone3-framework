@@ -20,6 +20,8 @@ sub execute
 #	$env{'video_part'} = 1 unless exists $env{'video_part'};
 #	$env{'video_part_file'} = 1 unless exists $env{'video_part_file'};
 	
+	$env{'datetime_mode'}="present" unless $env{'datetime_mode'};
+	
 	# get template
 	Tomahawk::GetTpl(\%env) || return undef;
 	
@@ -29,6 +31,11 @@ sub execute
 	my $sql_limit=$env{'sql_limit'} || 1;
 	my $sql_order_by=$env{'sql_order_by'} || 'video.datetime_rec_start DESC';
 	
+	if ($env{'datetime_mode'} eq "present")
+	{
+		$sql_where.=" AND video_attrs.datetime_publish_start <= NOW()";
+		$sql_where.=" AND (video_attrs.datetime_publish_stop IS NULL OR video_attrs.datetime_publish_stop >= NOW())";
+	}
 	
 	if ($env{'video.ID_entity'})
 	{
@@ -174,7 +181,11 @@ sub execute
 	);
 	my %video=$sth0{'sth'}->fetchhash();
 	
-	return 1 unless $video{'ID_entity'};
+	if (!$video{'ID_entity'})
+	{
+		main::_log("video not found",1);
+		return 1,%env_out;
+	}
 	
 	main::_log("found video.ID_entity=$video{'ID_entity'}");
 	

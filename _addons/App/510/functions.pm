@@ -1194,6 +1194,10 @@ sub video_add
 		my %columns;
 		$columns{'ID_category'}=$env{'video_attrs.ID_category'} if $env{'video_attrs.ID_category'};
 		#$columns{'status'}="'$env{'video_attrs.status'}'" if $env{'video_attrs.status'};
+		$columns{'datetime_publish_start'}="'".$env{'video_attrs.datetime_publish_start'}."'" if $env{'video_attrs.datetime_publish_start'};
+		$columns{'datetime_publish_start'}=$env{'video_attrs.datetime_publish_start'} if ($env{'video_attrs.datetime_publish_start'} && (not $env{'video_attrs.datetime_publish_start'}=~/^\d/));
+		$columns{'datetime_publish_start'}="NOW()" unless $columns{'datetime_publish_start'};
+		
 		$env{'video_attrs.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
 			'db_name' => $App::510::db_name,
@@ -1408,6 +1412,23 @@ sub video_add
 			if ($env{'video_attrs.name'} && ($env{'video_attrs.name'} ne $video_attrs{'name'}));
 		$columns{'description'}="'".TOM::Security::form::sql_escape($env{'video_attrs.description'})."'"
 			if (exists $env{'video_attrs.description'} && ($env{'video_attrs.description'} ne $video_attrs{'description'}));
+		# datetime_start
+		$columns{'datetime_publish_start'}="'".$env{'video_attrs.datetime_publish_start'}."'"
+			if ($env{'video_attrs.datetime_publish_start'} && ($env{'video_attrs.datetime_publish_start'} ne $video_attrs{'datetime_publish_start'}));
+		$columns{'datetime_publish_start'}=$env{'video_attrs.datetime_publish_start'}
+			if (($env{'video_attrs.datetime_publish_start'} && ($env{'video_attrs.datetime_publish_start'} ne $video_attrs{'datetime_publish_start'})) && (not $env{'video_attrs.datetime_publish_start'}=~/^\d/));
+		# datetime_stop
+		if (exists $env{'video_attrs.datetime_publish_stop'} && ($env{'video_attrs.datetime_publish_stop'} ne $video_attrs{'datetime_publish_stop'}))
+		{
+			if (!$env{'video_attrs.datetime_publish_stop'})
+			{
+				$columns{'datetime_publish_stop'}="NULL";
+			}
+			else
+			{
+				$columns{'datetime_publish_stop'}="'".$env{'video_attrs.datetime_publish_stop'}."'";
+			}
+		}
 		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'video_attrs.status'})."'"
 			if ($env{'video_attrs.status'} && ($env{'video_attrs.status'} ne $video_attrs{'status'}));
 		
