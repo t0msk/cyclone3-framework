@@ -54,6 +54,7 @@ sub new
 		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'enabled'};
 		
 		my $SQL="START TRANSACTION";
+			$SQL.=" WITH CONSISTENT SNAPSHOT" if $env{'snapshot'};
 		my %eout=TOM::Database::SQL::execute($SQL,'db_h'=>$self->{'db_h'},'log'=>$debug,'quiet'=>$quiet) if $self->{'enabled'};
 		
 	}
