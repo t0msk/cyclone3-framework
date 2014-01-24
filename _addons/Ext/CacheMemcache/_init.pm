@@ -169,10 +169,12 @@ sub check
 	for (1..10)
 	{
 		my $k='X' x $_;
-		$cache->set('namespace'=>'test_namespace','key' => 'test_key_'.$k,'value'=>"test_value",'expiration'=>'1H');
-		if (!$cache->get('namespace'=>'test_namespace','key' => 'test_key_'.$k)){main::_log("memcached with incorrect response (key '$k')",1);$test=0;last;}
+		my $test_value=rand(100);
+		$cache->set('namespace'=>'test_namespace','key' => 'test_key_'.$k,'value'=>$test_value,'expiration'=>'1H');
+		if ($cache->get('namespace'=>'test_namespace','key' => 'test_key_'.$k) ne $test_value){main::_log("memcached with incorrect response (key '$k')",1);$test=0;last;}
 	}
 	return undef unless $test;
+#	main::_log("memcached is okay");
 	return 1;
 }
 
