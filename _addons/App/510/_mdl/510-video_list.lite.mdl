@@ -327,9 +327,9 @@ sub execute
 	{
 		$item_counter++;
 		
-		my $item=
-			$XSGN{'item.'.$item_counter}
-			|| $XSGN{'item'};
+		my $item = $XSGN{'item'};
+		$item = $XSGN{'item.odd'} if (($item_counter % 2) && (exists $XSGN{'item.odd'}));
+		$item = $XSGN{'item.'.$item_counter} if $XSGN{'item.'.$item_counter};
 		
 		$db0_line{'datetime_recorded'}=$db0_line{'datetime_rec_start'};
 		$db0_line{'datetime_recorded'}=~s|^(.*):\d\d$|$1|;
@@ -377,6 +377,7 @@ sub execute
 		
 		if($item=~/<%db_file_part_path%>/)
 		{
+			main::_log('---------------------------------------------------------------------------');
 			my %db1_line=App::510::functions::get_video_part_file
 			(
 				'video.ID_entity' => $db0_line{'ID_entity_video'},
@@ -385,7 +386,10 @@ sub execute
 				'video_attrs.lng' => $env{'video_attrs.lng'}
 			);
 			$item=~s|<%db_file_part_path%>|$db1_line{'file_part_path'}|g;
-			
+			main::_log($db1_line{'file_part_path'});
+			main::_log($env{'video_file.ID_format'});
+			main::_log($db0_line{'ID_entity_video'});
+			main::_log($env{'video_attrs.lng'});
 		}
 		
 		if($item=~/<%db_original_file_part_path%>/)
