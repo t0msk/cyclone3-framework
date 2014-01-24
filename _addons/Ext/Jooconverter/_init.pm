@@ -116,7 +116,9 @@ sub convert
 	my $file1=shift;
 	my $file2=shift;
 	
-	my $t=track TOM::Debug(__PACKAGE__."::convert('$file1','$file2')");
+#	my $t=track TOM::Debug(__PACKAGE__."::convert('$file1','$file2')");
+	
+	main::_log(__PACKAGE__."::convert('$file1','$file2')");
 	
 	if (length($file2)<=4)
 	{
@@ -143,7 +145,7 @@ sub convert
 	};
 	if ($@)
 	{
-		$t->close();
+#		$t->close();
 		main::_log("can't convert because: ".$@->getMessage,1);
 		return undef;
 	}
@@ -152,7 +154,7 @@ sub convert
 #	my $cmd="java -jar $DIR/lib/jooconverter-2.1.0.jar $file1 $file2";
 #	open(CNV,"$cmd 2>/dev/null|");
 	
-	$t->close();
+#	$t->close();
 	return 1;
 }
 
