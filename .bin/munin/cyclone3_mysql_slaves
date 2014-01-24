@@ -1,0 +1,45 @@
+#!/usr/bin/perl
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.bin/c3-init";
+	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
+}
+
+my $cmd = shift || '';
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 Mysql slaves condition
+graph_args --base 1000 -l 0
+graph_category cyclone3
+graph_vlabel seconds behind master
+graph_scale no
+};
+foreach my $db_h (grep {$_=~/:\d+$/} sort keys %TOM::DB)
+{
+	my $db_h_name=$db_h;
+		$db_h_name=~s|:|_|g;
+	print "$db_h_name.label $db_h\n";
+	print "$db_h_name.warning 60\n";
+	print "$db_h_name.critical $TOM::DB_mysql_seconds_behind_master_max\n";
+	print "$db_h_name.draw LINE1\n";
+}
+	exit 0;
+}
+
+use Ext::Redis::_init;
+use Tomahawk;
+use Data::Dumper;
+
+foreach my $db_h (grep {$_=~/:\d+$/} sort keys %TOM::DB)
+{
+	my $db_h_name=$db_h;
+		$db_h_name=~s|:|_|g;
+	
+	my %status=TOM::Database::SQL::get_slave_status($db_h);
+	print "$db_h_name.value $status{'Seconds_Behind_Master'}\n";
+}
+
+
