@@ -354,7 +354,11 @@ sub pay_link {
   $action = $self->{action_url};
 
   my $sign = $self->get_send_sign();
-
+	
+	use URI::Escape;
+	my $rurl=uri_escape($self->{'rurl'});
+	
+	
 my $tb_form = <<EOM;
 $action ?
 PT=$pt &
@@ -363,7 +367,7 @@ AMT=$self->{amt} &
 VS=$self->{vs} &
 CURR=$self->{curr} & 
 CS=$self->{cs} & 
-RURL=$self->{rurl} & 
+RURL=$rurl & 
 DESC=$self->{desc} & 
 RSMS=$self->{rsms} & 
 REM=$self->{rem} & 
