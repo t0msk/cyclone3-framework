@@ -1,0 +1,292 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::710::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'org.status'}='YL' unless $env{'org.status'};
+		my $sql_org_status=join "','", split('',$env{'org.status'});
+	
+	# paging
+	$env{'page_limit'} = 10 unless $env{'page_limit'};
+	$env{'page'} = 1 unless $env{'page'};
+	$env{'page_offset'} = 0 unless $env{'page_offset'};
+	$env{'page_plus'} = 1 unless $env{'page_plus'};
+	if (!$env{'sql_limit'})
+	{
+		$env{'sql_limit'}=((($env{'page'}-1)*$env{'page_limit'})+$env{'page_offset'}).",".($env{'page_limit'}+$env{'page_plus'});
+	}
+	else
+	{
+#		$env{'sql_limit'}=~/^(\d+),?(\d+)?$/;
+	}
+	
+	
+	my @sql_bind;
+	my $sql_join;
+	my $sql_columns;
+	my $sql_where;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || 'org.name ASC';
+	my $sql_group_by;
+	
+	if ($env{'unique'})
+	{
+		$sql_group_by="org.ID_entity";
+	}
+	
+	if ($env{'org.ID_entity'}=~/^[;0-9]+$/)
+	{
+		$sql_where.=" AND org.ID_entity IN (".join(',',split(';',$env{'org.ID_entity'})).")";
+		$sql_limit=scalar split(';',$env{'org.ID_entity'});
+		$sql_group_by="org.ID_entity";
+		if ($env{'solr'})
+		{
+			$sql_order_by="CASE\n";
+			my $i;
+			foreach (split(';',$env{'org.ID_entity'}))
+			{
+				$i++;
+				$sql_order_by.="\t\t\t\tWHEN org.ID_entity=$_ THEN $i\n";
+			}
+			$sql_order_by.="\t\t\tEND";
+		}
+	}
+	
+	if ($env{'org.ID'}=~/^[;0-9]+$/)
+	{
+		$sql_where.=" AND org.ID IN (".join(',',split(';',$env{'org.ID'})).")";
+		$sql_limit=scalar split(';',$env{'org.ID'});
+	}
+	
+	if ($env{'org_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'org_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::710::db_name.a710_org_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID_entity FROM $App::710::db_name.a710_org_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR org_rel_cat.ID_category IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'org_cat.ID'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'org_cat.ID'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::710::db_name.a710_org_cat WHERE ID=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID FROM $App::710::db_name.a710_org_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR org_cat.ID IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			org.ID_entity,
+			org.ID,
+			org.datetime_create,
+			org.posix_owner,
+			org.posix_modified,
+			org.name,
+			org.name_url,
+			org.name_short,
+			org.name_code,
+			org.type,
+			org.legal_form,
+			org.ID_org,
+			org.tax_number,
+			org.VAT_number,
+			org.bank_contact,
+			org.country_code,
+			org.state,
+			org.county,
+			org.district,
+			org.city,
+			org.ZIP,
+			org.street,
+			org.street_num,
+			org.latitude_decimal,
+			org.longitude_decimal,
+			org.location_verified,
+			org.address_postal,
+			org.phone_1,
+			org.phone_2,
+			org.fax,
+			org.email,
+			org.web,
+			org.note,
+			org.metadata,
+			org.datetime_evidence,
+			org.mode,
+			org.status,
+			
+			org_lng.about
+			
+			$sql_columns
+			
+		FROM $App::710::db_name.a710_org AS org
+		LEFT JOIN $App::710::db_name.a710_org_lng AS org_lng ON
+		(
+			org_lng.ID_entity = org.ID AND
+			org_lng.lng = '$env{'lng'}'
+		)
+		LEFT JOIN $App::710::db_name.a710_org_rel_cat AS org_rel_cat ON
+		(
+			org_rel_cat.ID_org = org.ID_entity
+		)
+		LEFT JOIN $App::710::db_name.a710_org_cat AS org_cat ON
+		(
+			org_cat.ID_entity = org_rel_cat.ID_category AND
+			org_cat.lng = '$env{'lng'}'
+		)
+		$sql_join
+		
+		WHERE
+			org.status IN ('$sql_org_status')
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::710::db_name,
+				'tb_name' => "a710_org",
+				'ID_entity' => do{$env{'org.ID_entity'} if $env{'org.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	while (my %org=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		last if $i > $env{'page_limit'};
+		
+		main::_log("[$i/$env{'page_limit'}] found org.ID=$org{'ID'} cat_ID=$org{'cat_ID'}");
+		
+		my @abouts=split "<hr>", $org{'about'};
+		
+		if (scalar @abouts > 1) {
+			$org{'about_short'}=shift @abouts;
+			$org{'about'}=join "<hr>", @abouts;
+			
+			my $p=new App::401::mimetypes::html;
+			$p->config('prefix'=>'org','name'=>'about_short','env'=>\%env,'entity'=>$TPL->{'entity'});
+			$p->parse($org{'about_short'});
+			$p->eof();
+			$org{'about_short'}=$p->{'out'};
+		}
+		
+      $org{'related_avatar'}=(App::160::SQL::get_relations(
+			'db_name' => $App::710::db_name,
+			'l_prefix' => 'a710',
+			'l_table' => 'org',
+			'l_ID_entity' => $org{'ID_entity'},
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'rel_type' => "avatar",
+			'status' => "Y"
+		))[0];
+
+=head1
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::910::db_name,
+			'tb_name' => 'a910_product',
+			'ID_entity' => $product{'ID_entity'}
+		};
+		
+		
+		
+		# link to a210_page
+		if (my $category=App::401::functions::_a210_by_cat([$product{'cat_ID'}],'lng'=>$env{'lng'}))
+		{
+			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$category,
+					%sql_def,
+					'-slave' => 1,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$product{'a210'}{'IDs'}}, $p->{'ID'};
+				push @{$product{'a210'}{'nodes'}}, $p;
+				$product{'a210'}{'path_url'}.="/".$p->{'name_url'};
+			}
+			$product{'a210'}{'path_url'}=~s|^/||;
+		}
+		
+		# render
+		$parser->parse($product{'description_short'});
+		$parser->eof();
+		push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+		$product{'description_short_parser'}={
+			'output' => $parser->{'output'},
+			'addon' => $parser->{'addon'},
+			'entity' => $parser->{'entity'},
+			'thumbnail' => $parser->{'thumbnail'},
+		};
+		
+=cut
+
+		%{$org{'metahash'}}=App::020::functions::metadata::parse($org{'metadata'});
+		
+		push @{$TPL->{'variables'}{'items'}},\%org;
+	}
+	
+	return 1,%env_out;
+}
+
+1;

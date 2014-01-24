@@ -1,0 +1,228 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::710::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'org.status'}='Y' unless $env{'org.status'};
+		my $sql_org_status=join "','", split('',$env{'org.status'});
+	
+	
+	my @sql_bind;
+	my $sql_join;
+	my $sql_columns;
+	my $sql_where;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || 'org.ID DESC';
+	my $sql_group_by;
+	
+	
+	if ($env{'org.ID_entity'})
+	{
+		main::_log("search by org.ID_entity: ".$env{'org.ID_entity'});
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::710::db_name,
+			'tb_name' => 'a710_org',
+			'ID_entity' => $env{'org.ID_entity'}
+		};
+		$sql_where.="AND org.ID_entity=? ";
+		push @sql_bind,$env{'org.ID_entity'};
+		$sql_changetime=App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::710::db_name,
+				'tb_name' => "a710_org",
+				'ID_entity' => $env{'org.ID_entity'}
+			}
+		);
+	}
+	else
+	{
+		main::_log("org.ID_entity not defined");
+		return 1;
+	}
+	
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+#	return 1 unless $sql_where;
+	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			org.ID_entity,
+			org.ID,
+			org.datetime_create,
+			org.posix_owner,
+			org.posix_modified,
+			org.name,
+			org.name_url,
+			org.name_short,
+			org.name_code,
+			org.type,
+			org.legal_form,
+			org.ID_org,
+			org.tax_number,
+			org.VAT_number,
+			org.bank_contact,
+			org.country_code,
+			org.state,
+			org.county,
+			org.district,
+			org.city,
+			org.ZIP,
+			org.street,
+			org.street_num,
+			org.latitude_decimal,
+			org.longitude_decimal,
+			org.location_verified,
+			org.address_postal,
+			org.phone_1,
+			org.phone_2,
+			org.fax,
+			org.email,
+			org.web,
+			org.note,
+			org.metadata,
+			org.datetime_evidence,
+			org.mode,
+			org.status,
+			
+			org_lng.about$sql_columns
+			
+		FROM $App::710::db_name.a710_org AS org
+		LEFT JOIN $App::710::db_name.a710_org_lng AS org_lng ON
+		(
+			org_lng.ID_entity = org.ID AND
+			org_lng.lng = '$env{'lng'}'
+		)
+		LEFT JOIN $App::710::db_name.a710_org_rel_cat AS org_rel_cat ON
+		(
+			org_rel_cat.ID_org = org.ID_entity
+		)
+		LEFT JOIN $App::710::db_name.a710_org_cat AS org_cat ON
+		(
+			org_cat.ID_entity = org_rel_cat.ID_category AND
+			org_cat.lng = '$env{'lng'}'
+		)
+		$sql_join
+		
+		WHERE
+			org.status IN ('$sql_org_status')
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			1
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::710::db_name,
+				'tb_name' => "a710_org",
+				'ID_entity' => do{$env{'org.ID_entity'} if $env{'org.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	my %org=$sth0{'sth'}->fetchhash();
+	
+	return 1 unless $org{'ID_entity'};
+	
+	main::_log("org org.ID_entity='$org{'ID_entity'}' org.ID='$org{'ID'}' org.name='$org{'name'}'");
+	
+#	push @{$env_out{'call'}{'H'}{'add_DOC_keywords'}},$product{'keywords'}
+#		if $env{'header.keywords'};
+	
+	push @{$env_out{'call'}{'H'}{'add_DOC_title'}},$org{'name'}
+		if $env{'header.title'};
+	
+	$org{'related_avatar'}=(App::160::SQL::get_relations(
+		'db_name' => $App::710::db_name,
+		'l_prefix' => 'a710',
+		'l_table' => 'org',
+		'l_ID_entity' => $org{'ID'},
+		'r_prefix' => "a501",
+		'r_table' => "image",
+		'rel_type' => "avatar",
+		'status' => "Y"
+	))[0];
+	
+	if ($env{'header.og'})
+	{
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:title','content'=>$org{'name'}};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:site_name','content' => $tom::H};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:type','content'=>'article'};
+		
+		if ($org{'related_avatar'}->{'r_ID_entity'})
+		{
+			my %image=App::501::functions::get_image_file(
+				'image.ID_entity' => $org{'related_avatar'}->{'r_ID_entity'},
+				'image_file.ID_format' => $env{'header.og.image_format.ID'} || $App::501::image_format_thumbnail_ID,
+				'image_attrs.lng' => $env{'lng'}
+			);
+			push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=>$tom::H_a501.'/image/file/'.$image{'file_path'}};
+		}
+	}
+	
+	
+	my @abouts=split "<hr>", $org{'about'};
+		if (scalar @abouts > 1) {
+			$org{'about_short'}=shift @abouts;
+			$org{'about'}=join "<hr>", @abouts;
+			
+			$parser->parse($org{'about_short'});
+			$parser->eof();
+			push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+			$org{'about_short_parser'}={
+				'output' => $parser->{'output'},
+				'addon' => $parser->{'addon'},
+				'entity' => $parser->{'entity'},
+				'thumbnail' => $parser->{'thumbnail'},
+			};
+		}
+	
+	$parser->parse($org{'about'});
+	$parser->eof();
+	push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+	$org{'about_parser'}={
+		'output' => $parser->{'output'},
+		'addon' => $parser->{'addon'},
+		'entity' => $parser->{'entity'},
+		'thumbnail' => $parser->{'thumbnail'},
+	};
+	
+	%{$org{'metahash'}}=App::020::functions::metadata::parse($org{'metadata'});
+	delete $org{'metadata'};
+	
+	
+	$TPL->{'variables'}{'org'} = \%org;
+	
+	return 1,%env_out;
+}
+
+1;
