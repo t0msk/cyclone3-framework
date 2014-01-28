@@ -1,0 +1,237 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::420::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'static.status'}='Y' unless $env{'static.status'};
+		my $sql_static_status=join "','", split('',$env{'static.status'});
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || '`static`.`datetime_start` DESC';
+	
+	if ($env{'static.ID'})
+	{
+		main::_log("search by static.ID");
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::420::db_name,
+			'tb_name' => 'a420_static',
+			'ID_entity' => $env{'static.ID'}
+		};
+		$sql_where.="AND static.ID=? ";
+		push @sql_bind,$env{'static.ID'};
+	}
+	
+	if ($env{'static.ID_entity'})
+	{
+		main::_log("search by static.ID_entity");
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::420::db_name,
+			'tb_name' => 'a420_static',
+			'ID_entity' => $env{'static.ID_entity'}
+		};
+		$sql_where.="AND static.ID_entity=? ";
+		push @sql_bind,$env{'static.ID_entity'};
+	}
+	
+	if ($env{'static.name_url'})
+	{
+		$sql_where.="AND `static`.`name_url`=? ";
+		push @sql_bind,$env{'static.name_url'};
+	}
+	
+	if ($env{'static_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'static_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::420::db_name`.`a420_static_cat` WHERE `ID_entity`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
+				$sql_cat.=qq{ OR `static_cat`.`ID_charindex` LIKE CONCAT(($cat_sql),"%")};
+			}
+			else
+			{
+				$sql_cat.=" OR `static_cat`.`ID_entity`=$ID_category";
+				push @{$env_out{'entity'}},{
+					'db_h' => 'main',
+					'db_name' => $App::420::db_name,
+					'tb_name' => 'a420_static_cat',
+					'ID_entity' => $ID_category,
+				};
+			}
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'static_cat.ID'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'static_cat.ID'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::420::db_name`.`a420_static_cat` WHERE `ID`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
+				$sql_cat.=qq{ OR `static_cat`.`ID_charindex` LIKE CONCAT(($cat_sql),"%")};
+			}
+			else
+			{
+				$sql_cat.=" OR `static`.`ID_category`=$ID_category";
+			}
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	return 1 unless $sql_where;
+	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			`static`.`ID_entity`,
+			`static`.`ID`,
+			`static`.`ID_category`,
+			
+			`static_cat`.`ID` AS `cat_ID`,
+			`static_cat`.`ID_entity` AS `cat_ID_entity`,
+			`static_cat`.`name` AS `cat_name`,
+			`static_cat`.`name_url` AS `cat_name_url`,
+			
+			`static`.`name`,
+			`static`.`name_url`,
+			`static`.`alias_url`,
+			`static`.`posix_owner`,
+			`static`.`posix_modified`,
+			`static`.`datetime_start`,
+			`static`.`datetime_stop`,
+			`static`.`body`,
+			`static`.`metadata`,
+			`static`.`status`
+			
+		FROM `$App::420::db_name`.`a420_static` AS `static`
+		INNER JOIN `$App::420::db_name`.`a420_static_cat` AS `static_cat` ON
+		(
+			`static_cat`.`ID` = `static`.`ID_category`
+		)
+		WHERE
+			static.status = 'Y'
+			$sql_where
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			1
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::420::db_name,
+				'tb_name' => "a420_static",
+				'ID_entity' => do{$env{'static.ID_entity'} if $env{'static.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	my %static=$sth0{'sth'}->fetchhash();
+	
+	return 1 unless $static{'ID_entity'};
+	
+	main::_log("found static.ID_entity=$static{'ID_entity'}");
+	
+	push @{$env_out{'entity'}},{
+		'db_h' => 'main',
+		'db_name' => $App::420::db_name,
+		'tb_name' => 'a420_static',
+		'ID_entity' => $static{'ID_entity'}
+	};
+	
+	push @{$env_out{'call'}{'H'}{'add_DOC_title'}},$static{'name'}
+		if $env{'header.title'};
+	
+=head1
+	if ($article{'cat_ID'})
+	{
+		# link to a210_page
+		if (my $category=App::401::functions::_a210_by_cat([$article{'cat_ID'}],'lng'=>$env{'lng'}))
+		{
+			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$category,
+					%sql_def,
+					'-slave' => 1,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$article{'a210'}{'IDs'}}, $p->{'ID'};
+				push @{$article{'a210'}{'nodes'}}, $p;
+				$article{'a210'}{'path_url'}.="/".$p->{'name_url'};
+			}
+			$article{'a210'}{'path_url'}=~s|^/||;
+		}
+	}
+=cut
+	
+	if ($env{'header.og'})
+	{
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:title','content'=>$static{'name'}};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:site_name','content' => $tom::H};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:type','content'=>'article'};
+	}
+	
+	# parser body
+	$parser->parse($static{'body'});
+	$parser->eof();
+	$static{'body_parser'}={
+		'output' => $parser->{'output'},
+		'addon' => $parser->{'addon'},
+		'entity' => $parser->{'entity'},
+		'thumbnail' => $parser->{'thumbnail'},
+	};
+	push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+	
+	$TPL->{'variables'}{'static'} = \%static;
+	
+	return 1,%env_out;
+}
+
+1;
