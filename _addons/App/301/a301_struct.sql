@@ -487,9 +487,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contact_cat_j` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_contact_rel_cat` (
   `ID_category` bigint(20) unsigned NOT NULL auto_increment, -- rel _contact_cat.ID
+  `priority_A` tinyint(3) unsigned default NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
   PRIMARY KEY  (`ID_category`,`ID_user`),
-  KEY `ID_user` (`ID_user`)
+  KEY `ID_user` (`ID_user`),
+  KEY `SEL_0` (`ID_category`,`priority_A`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
