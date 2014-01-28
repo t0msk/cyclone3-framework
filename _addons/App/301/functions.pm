@@ -617,6 +617,20 @@ sub user_add
 		$content_reindex=1;
 	}
 	
+	if (ref($env{'contact.cats'}) eq "ARRAY")
+	{
+		foreach (@{$env{'contact.cats'}})
+		{
+			TOM::Database::SQL::execute(qq{
+				REPLACE INTO
+					TOM.a301_contact_rel_cat
+					(ID_category, ID_user)
+				VALUES
+					(?, ?)
+			},'bind'=>[$_,$env{'user.ID_user'}],'quiet'=>1);
+		}
+	}
+	
 	if ($content_reindex && $user_index)
 	{
 		_user_index('ID_user'=>$env{'user.ID_user'});
