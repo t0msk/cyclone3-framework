@@ -56,7 +56,7 @@ sub _connect
 			$service=$service_;
 			# override memcached
 			$TOM::CACHE_memcached=1;
-			$Ext::CacheMemcache::cache = new Ext::CacheMemcache::Redir;
+			$Ext::CacheMemcache::cache = new Ext::CacheMemcache::Redis;
 			main::_log("overriding \$Ext::CacheMemcache::cache object");
 		}
 	}
@@ -68,7 +68,7 @@ _connect(); # default connection
 # call $Redis_{custom_name}=Ext::Redis::_connect('{custom_name}') to create parallel connection
 # for example: $Redis_para2=Ext::Redis::_connect('para2');
 
-package Ext::CacheMemcache::Redir;
+package Ext::CacheMemcache::Redis;
 use Storable;
 
 sub new
