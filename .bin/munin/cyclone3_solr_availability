@@ -13,8 +13,8 @@ graph_category cyclone3
 graph_vlabel milliseconds
 graph_order query
 query.label Search duration
-query.warning 20
-query.critical 30
+query.warning 50
+query.critical 100
 query.min 0
 query.max 1000
 };
