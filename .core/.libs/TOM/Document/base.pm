@@ -8,6 +8,8 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 use vars qw{$AUTOLOAD};
 
+our $url_relative_disable = $TOM::Document::base::url_relative_disable || 0;
+
 our $copyright=qq{  This service is powered by Cyclone3 v$TOM::core_version - professionals for better internet.
   Cyclone3 is a free open source Application Framework initially developed by Comsultia and licensed under GNU/GPLv2.
   Addons and overlays are copyright of their respective owners.
@@ -355,7 +357,7 @@ sub url_replace
 	# nadbytocne veci
 	if
 	(
-		($newlink_prefix ne "http://null/")&&
+		($newlink_prefix ne "http://null/") &&
 		($tom::rewrite)
 	)
 	{
@@ -465,9 +467,14 @@ sub url_replace
 	}
 	
 	# mozem si dovolit optimalizovat linku na relativnu
-	if ($newlink_prefix=~/^$tom::H_www\// && $link_end eq '"')
+	if ($newlink_prefix=~/^$tom::H_www\// && $link_end eq '"' && !$TOM::Document::base::url_relative_disable)
 	{
-		$newlink_prefix=~s/^$tom::H_www//;
+		if ($tom::H_www_by_HTTP_HOST || (
+			$newlink_prefix=~/^https?:\/\/$main::ENV{'HTTP_HOST'}/
+		))
+		{
+			$newlink_prefix=~s/^http[s]?:\/\/.*?\//\//;
+		}
 	}
 	
 	if ($tom::rewrite && !$link) # link je prazdny (titulka)
