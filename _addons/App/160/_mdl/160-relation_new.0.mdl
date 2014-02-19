@@ -122,22 +122,42 @@ sub execute
 		return 1;
 	}
 	
-	foreach my $r_ID_entity(split(';',$env{'r_ID_entity'}))
+	if ($env{'l_ID_entity'}=~/;/)
 	{
-		next unless $r_ID_entity;
-		my ($ID_entity,$ID)=App::160::SQL::new_relation(
-			'l_prefix' => $env{'l_prefix'},
-			'l_table' => $env{'l_table'}, # this value can be send as undefined
-			'l_ID_entity' => $env{'l_ID_entity'},
-			'rel_type' => $env{'rel_type'},
-			'r_db_name' => $env{'r_db_name'}, # this value can be send as undefined
-			'r_prefix' => $env{'r_prefix'},
-			'r_table' => $env{'r_table'}, # this value can be send as undefined
-			'r_ID_entity' => $r_ID_entity,
-			'status' => $env{'status'},
-		);
+		foreach my $l_ID_entity(split(';',$env{'l_ID_entity'}))
+		{
+			next unless $l_ID_entity;
+			my ($ID_entity,$ID)=App::160::SQL::new_relation(
+				'l_prefix' => $env{'l_prefix'},
+				'l_table' => $env{'l_table'}, # this value can be send as undefined
+				'l_ID_entity' => $l_ID_entity,
+				'rel_type' => $env{'rel_type'},
+				'r_db_name' => $env{'r_db_name'}, # this value can be send as undefined
+				'r_prefix' => $env{'r_prefix'},
+				'r_table' => $env{'r_table'}, # this value can be send as undefined
+				'r_ID_entity' => $env{'r_ID_entity'},
+				'status' => $env{'status'},
+			);
+		}
 	}
-	
+	else
+	{
+		foreach my $r_ID_entity(split(';',$env{'r_ID_entity'}))
+		{
+			next unless $r_ID_entity;
+			my ($ID_entity,$ID)=App::160::SQL::new_relation(
+				'l_prefix' => $env{'l_prefix'},
+				'l_table' => $env{'l_table'}, # this value can be send as undefined
+				'l_ID_entity' => $env{'l_ID_entity'},
+				'rel_type' => $env{'rel_type'},
+				'r_db_name' => $env{'r_db_name'}, # this value can be send as undefined
+				'r_prefix' => $env{'r_prefix'},
+				'r_table' => $env{'r_table'}, # this value can be send as undefined
+				'r_ID_entity' => $r_ID_entity,
+				'status' => $env{'status'},
+			);
+		}
+	}
 	return 1;
 }
 
