@@ -4,8 +4,12 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
+use JSON;
+use Tie::IxHash;
+use IO::Socket::INET;
 # HiRes load
 our $hires;BEGIN {$hires=1;eval "use Time::HiRes qw( gettimeofday );";$hires=0 if $@;};
+our $event_socket;
 
 sub _log_long
 {
@@ -131,7 +135,57 @@ sub _deprecated
 }
 
 
+sub _event
+{
+	return undef unless $TOM::event_socket;
+	return undef if
+	(
+		(!$_[0] || !$_[1])
+	);
+	
+	if (!$event_socket)
+	{
+		my @peer=split(':',$TOM::event_socket);
+		$event_socket = IO::Socket::INET->new(
+			'PeerAddr' => $peer[0],
+			'PeerPort' => $peer[1],
+			'Proto'    => $peer[2] || "tcp",
+			'Type'     => SOCK_STREAM)
+		or do {undef $TOM::event_socket;return;};
+	}
+	
+	tie my %hash, 'Tie::IxHash', (
+		'timestamp' => time().do{'.'.int((Time::HiRes::gettimeofday)[1]/1000) if $hires},
+		'severity' => $_[0],
+		'hostname' => $TOM::hostname,
+		'PID' => $$,
+		'facility' => $_[1],
+		'engine' => $TOM::engine,
+	
+		do{('domain',$tom::H) if $tom::H},
+		do{('request',$main::request_code) if $main::request_code},
+		%{$_[2]}
+	);
+	
+	if ($main::USRM{'ID_user'})
+	{
+		$hash{'user'}={
+			'ID' => $main::USRM{'ID_user'} || $main::USRM{'IDhash'},
+			'session' => $main::USRM{'ID_session'},
+			'logged' => $main::USRM{'logged'}
+		};
+	}
+	
+	print $event_socket to_json(\%hash)."\n";
+	
+}
 
+_event('info','process.start',{
+	'cmd' => $0.' '.(join " ",@ARGV),
+	'UID' => $<,
+	'perl' => "$^V",
+	'osname' => $^O
+});
 
 
 
@@ -208,13 +262,8 @@ sub engine_lite
 	
 	my $var=join(". ",@_);$var=~s|\n| |g;
 	
-	# zalogujeme chybu
 	main::_log("[ENGINE][".($tom::H?$tom::H:$tom::type?$tom::type:"?")." on $TOM::hostname] $var",1);
 	main::_log("[ENGINE][".($tom::H?$tom::H:$tom::type?$tom::type:"?")." on $TOM::hostname] $var",1,$TOM::engine.".err",1);
-	
-	# co vyplujem von?
-	
-	# ZAPISANIE ERROR EMAILU DO textoveho suboru
 	
 	my $msg = MIME::Entity->build
 	(
