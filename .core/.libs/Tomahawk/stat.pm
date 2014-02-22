@@ -8,6 +8,24 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 sub rqs
 {
+	my %env=@_;
+	
+	main::_event('info','pub.request',{
+		'msec' => {
+			'req' => $env{'req'},
+			'wait' => $env{'req'}-$env{'proc'},
+			'proc' => $env{'proc'},
+		},
+		'REMOTE_ADDR' => $main::ENV{'REMOTE_ADDR'},
+		'REFERER' => $main::ENV{'HTTP_REFERER'},
+		'HOST' => $main::ENV{'HTTP_HOST'},
+		'REQUEST_URI' => $main::ENV{'REQUEST_URI'},
+		'QUERY_STRING' => $main::ENV{'QUERY_STRING'},
+		'query' => {%main::FORM},
+		'USER_AGENT' => $main::ENV{'HTTP_USER_AGENT'},
+		'UserAgent' => $main::UserAgent_name,
+	});
+	
 	#return 1;
 	#main::_log("rqs $TOM::STAT $App::110::direct_sql");
 	return undef if $main::IAdm;
@@ -15,7 +33,6 @@ sub rqs
 	return undef if $main::FORM{'_rc'}; # if this page is only request to recache content
 	return undef unless $TOM::STAT;
 	
-	my %env=@_;
 	my $null;$null="C" if $TOM::DB_name_TOM eq $TOM::DB_name_STAT;
 	
 	my $var="$tom::Fyear-$tom::Fmom-$tom::Fmday $tom::Fhour:$tom::Fmin:$tom::Fsec";
