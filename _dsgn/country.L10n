@@ -88,6 +88,7 @@
 		<de-DE>Österreich</de-DE>
 		<de-AT>Österreich</de-AT>
 		<hu-HU>Ausztria</hu-HU>
+		<pl-PL>Austria</pl-PL>
 	</string>
 
 	<string id="country.AU">
@@ -344,6 +345,7 @@
 		<de-DE>Tschechische Republik</de-DE>
 		<de-AT>Tschechische Republik</de-AT>
 		<hu-HU>Csehország</hu-HU>
+		<pl-PL>Czechy</pl-PL>
 	</string>
 
 	<string id="country.DE">
@@ -354,6 +356,7 @@
 		<de-DE>Deutschland</de-DE>
 		<de-AT>Deutschland</de-AT>
 		<hu-HU>Németország</hu-HU>
+		<pl-PL>Niemcy</pl-PL>
 	</string>
 
 	<string id="country.DJ">
@@ -610,6 +613,7 @@
 		<de-DE>Ungarn</de-DE>
 		<de-AT>Ungarn</de-AT>
 		<hu-HU>Magyarország</hu-HU>
+		<pl-PL>Węgry</pl-PL>
 	</string>
 
 	<string id="country.ID">
@@ -1061,6 +1065,7 @@
 		<en-UK>Poland</en-UK>
 		<sk-SK>Poľsko</sk-SK>
 		<cs-CZ>Polsko</cs-CZ>
+		<pl-PL>Polska</pl-PL>
 	</string>
 
 	<string id="country.PM">
@@ -1203,6 +1208,7 @@
 		<de-DE>Slowakei</de-DE>
 		<de-AT>Slowakei</de-AT>
 		<hu-HU>Szlovákia</hu-HU>
+		<pl-PL>Słowacja</pl-PL>
 	</string>
 
 	<string id="country.SL">
