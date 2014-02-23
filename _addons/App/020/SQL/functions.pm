@@ -80,7 +80,7 @@ This function makes automatically journalization copy of every created new row, 
    'column3' => "NULL"
   },
   '-journalize' => 1,
-  '-posix' => 1,
+  '-posix' => 1, # posix enhanced table (set posix_modified to $main::USRM{'ID_user'})
   '-replace' => 0 # use REPLACE INTO instead of INSERT INTO
  )
 
