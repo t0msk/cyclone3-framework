@@ -134,7 +134,8 @@ eval
 	
 	#if ($TOM::CACHE){require Tomahawk::cache;}; # budem logovat v pripade ze ho mam nastavene
 	if ($TOM::LAYERS){require Tomahawk::layers;}; # budem robit s layermi tak natiahnem kniznicu
-	if ($TOM::STAT){require Tomahawk::stat;}; # budem robit weblog a a110 len v pripade ak nat.kniznicu
+#	if ($TOM::STAT){require Tomahawk::stat;}; # budem robit weblog a a110 len v pripade ak nat.kniznicu
+	require Tomahawk::stat;
 	
 	TOM::Database::connect::multi(@TOM::DB_pub_connect)
 		|| die "Error during connection request to database server\n";
@@ -299,17 +300,20 @@ while ($main::CGI=new CGI::Fast())
 	$tom::H_orig=$tom::H;
 	local $tom::H_www=$tom::H_www;
 	$tom::H_www_orig=$tom::H_www; # save original $tom::H_www
+	$tom::H_www = $tom::H_www_https if ($main::ENV{'HTTPS'} && $tom::H_www_https);
 	if ($main::ENV{'domain'})
 	{
 		main::_log("override \$tom::H by ENV to '$main::ENV{'domain'}' from '$tom::H'");
 		$tom::H=$main::ENV{'domain'};
 		$tom::H_www=~s|^(http[s]?://)(.*)$|$1$tom::H|;
+		$tom::H_www=~s|^http://|https://| if $main::ENV{'HTTPS'};
 	}
 	# override tom::H_www
 	if ($main::ENV{'HTTP_HOST'} && $tom::H_www_by_HTTP_HOST)
 	{
 #		$tom::H=$main::ENV{'HTTP_HOST'};
 		$tom::H_www=~s|^(http[s]?://)(.*)$|$1$main::ENV{'HTTP_HOST'}$tom::rewrite_RewriteBase|;
+		$tom::H_www=~s|^http://|https://| if $main::ENV{'HTTPS'};
 		main::_log("override \$tom::H_www by HTTP_HOST '$main::ENV{'HTTP_HOST'}' to '$tom::H_www'");
 	}
 	# override tom::Hm
@@ -330,7 +334,7 @@ while ($main::CGI=new CGI::Fast())
 	
 	# no original, all links are with the same priority
 	$tom::H_www_orig=$tom::H_www
-		unless @tom::H_www_multi;
+		if (!@tom::H_www_multi && !$tom::H_www_https_onlyifrequired);
 	
 #	main::_log('DOS control');
 #	if (TOM::Net::HTTP::DOS::processENV(%main::ENV))
@@ -739,6 +743,11 @@ while ($main::CGI=new CGI::Fast())
 		#
 		
 		# cache disable if requested (should be rewrited)
+		if ($main::ENV{'Cache-Control'} eq "no-cache")
+		{
+#			$main::cache=0;
+#			main::_log("IP=$main::ENV{'REMOTE_ADDR'} requested no-cache",3,"debug");
+		}
 		$main::cache=0 if $main::FORM{'_rc'} < 0;
 		
 		# add a201_path_prefix when in secondary domain
@@ -1304,6 +1313,7 @@ while ($main::CGI=new CGI::Fast())
 					};
 					
 					main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track');
+					main::_log("[$tom::H] ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track',1);
 					
 					print "Status: 304 Not Modified\n\n";
 					
@@ -1760,12 +1770,22 @@ while ($main::CGI=new CGI::Fast())
 		#
 		# CONF TypeID
 		#
+		$main::env{'https'}=0;
 		while ($file_data=~s|<CONF_VAR (.*?)/>||)
 		{
 			next unless $1; # vyhnem sa vykonavaniu dalsich podmienok
 			my %env0=CML::VARhash($1);
 			next unless $env0{id};
 			
+			if ($env0{'id'} eq "https" && $env0{'value'})
+			{
+				_log("https mode is '$env0{'value'}', H_www_https='$tom::H_www_https' current HTTPS mode is '$main::ENV{'HTTPS'}'",3,"debug");
+				if ($env0{'value'} eq "required")
+				{
+					$main::env{'https'}=1;
+				}
+				next;
+			}
 			
 			if ($env0{'id'} eq "link")
 			{
@@ -2138,7 +2158,7 @@ while ($main::CGI=new CGI::Fast())
 		if (
 				$tom::rewrite &&
 				$tom::rewrite_301 &&
-				$ENV{'HTTP_HOST'} &&
+				$ENV{'HTTP_HOST'} && # running under webserver
 				$main::page_statuscode ne "404"
 			)
 		{
@@ -2161,7 +2181,24 @@ while ($main::CGI=new CGI::Fast())
 			
 			my ($rewrite_domain,$rewrite)=TOM::Net::URI::rewrite::parse_hash(\%form);
 				$rewrite="/".$rewrite;
-				$rewrite_domain=$tom::H_www_orig unless $rewrite_domain;
+				$rewrite_domain=$rewrite_domain || do {
+					if (
+							$tom::H_www_https &&
+							(
+								(
+									$main::ENV{'HTTPS'} eq "on"
+									&& !$tom::H_www_https_onlyifrequired
+								)
+								||
+								(
+									$tom::H_www_https_onlyifrequired
+									&& $main::env{'https'}
+								)
+							)
+					)
+					{
+						$tom::H_www_https
+					}} || $tom::H_www_orig;
 				
 			main::_log("rewrited part is '$rewrite' domain '$rewrite_domain'");
 			
@@ -2226,7 +2263,8 @@ while ($main::CGI=new CGI::Fast())
 			}
 			
 			main::_log("link_old='$link_old' link='$link'");
-			main::_log("rewrite_old='$rewrite_old' rewrite='$rewrite'");
+			main::_log("H_www='$tom::H_www' rewrite_domain='$rewrite_domain' rewrite_old='$rewrite_old' rewrite='$rewrite'");
+			main::_log("H_www_orig='$tom::H_www_orig' H_www='$tom::H_www' rewrite_domain='$rewrite_domain' rewrite_old='$rewrite_old' rewrite='$rewrite'",3,"debug");
 			
 			if (($tom::H_www ne $rewrite_domain) || ($rewrite_old ne $rewrite) || $rewrite_301)
 			#if (($link_old ne $link) || $rewrite_301)
@@ -2244,7 +2282,7 @@ while ($main::CGI=new CGI::Fast())
 				$t_eval->close();
 				$t_request->close();
 				# save stat
-				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
+				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'},'code'=>'301');
 				print "Status: 301 Moved permanently\n";
 				print "Location: $rewrite_domain$link\n\n";
 				
@@ -2418,7 +2456,7 @@ while ($main::CGI=new CGI::Fast())
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
-				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
+				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'},'code'=>'302');
 				print "Status: $main::location_code Found\n";
 				print "Location: $out\n\n";
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
@@ -2438,7 +2476,7 @@ while ($main::CGI=new CGI::Fast())
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
-				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
+				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'},'code'=>$main::location_code);
 				print "Status: $main::location_code Found\n";
 				print "Location: $out\n\n";
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
@@ -2506,7 +2544,12 @@ while ($main::CGI=new CGI::Fast())
 					$link.="?".$var if $var;
 				}
 				
-				my $URI_base=$rewrite_domain || $tom::H_www;
+				my $URI_base=$rewrite_domain || do {
+					if ($main::ENV{'HTTPS'} eq "on" && $tom::H_www_https)
+					{
+						$tom::H_www_https
+					}
+				} || $tom::H_www;
 					$URI_base=~s|$tom::rewrite_RewriteBase$||;
 				my $URI_enh="$tom::rewrite_RewriteBase$link";
 				$URI_base.='/' unless $URI_enh=~/^\//;
@@ -2514,15 +2557,15 @@ while ($main::CGI=new CGI::Fast())
 				# nekodovana linka
 				$link=~s|&|&amp;|g unless $TOM::type_code;
 				main::_log("URL='$link'");
-				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"pub.301",1);
-				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"pub.301");
-				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)");
+				main::_log("$main::location_code from '".($main::ENV{'HTTPS'})."//$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"pub.301",1);
+				main::_log("$main::location_code from '".($main::ENV{'HTTPS'})."//$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"pub.301");
+				main::_log("$main::location_code from '".($main::ENV{'HTTPS'})."//$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)");
 				
 				$t_301->close();
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
-				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
+				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'},'code'=>$main::location_code);
 				print "Status: $main::location_code Found\n";
 				print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
@@ -2722,6 +2765,20 @@ while ($main::CGI=new CGI::Fast())
 			my $date_string = $date->strftime("%d %b %Y %H:%M:%S");
 		print "C3-Date: $date_string\n";
 		print "C3-Hostname: $TOM::hostname\n";
+		print "C3-Cache-Control: ".do{
+			if ($main::cache)
+			{
+				"cache";
+			}
+			elsif (not defined $main::cache)
+			{
+				"expunge";
+			}
+			else
+			{
+				"no-cache";
+			}
+		}."\n";
 		#print "C3-TypeID: $main::H\n";
 		
 		# codepage pouzity pre tuto page;
@@ -2895,12 +2952,14 @@ while ($main::CGI=new CGI::Fast())
 		$t_eval->close();
 		
 		main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'/'$main::ENV{'HTTP_USER_AGENT'}'",3,'pub.track');
+		main::_log("[$tom::H] ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track',1);
 		
 		if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 		
 		Tomahawk::stat::rqs(
-			proc => $t_eval->{'time'}{proc}{duration},
-			req => $t_eval->{'time'}{req}{duration}
+			'proc' => $t_eval->{'time'}{'proc'}{'duration'},
+			'req' => $t_eval->{'time'}{'req'}{'duration'},
+			'code' => $main::page_statuscode
 		);# if (!$main::ITst && !$main::IAdm); # pouzivam statistiky;
 		
 		do
