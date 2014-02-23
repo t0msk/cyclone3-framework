@@ -108,6 +108,10 @@ sub set
 	{
 		$expire=$1*3600;
 	}
+	elsif ($env{'expiration'}=~/^(\d+)M$/)
+	{
+		$expire=$1*60;
+	}
 	
 	$Ext::Redis::service->set(
 		$key,
