@@ -10,6 +10,9 @@ sub rqs
 {
 	my %env=@_;
 	
+	my $reqtype="B";
+	$reqtype="R" if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type} eq "robot");
+	
 	main::_event('info','pub.request',{
 		'msec' => {
 			'req' => $env{'req'},
@@ -24,6 +27,8 @@ sub rqs
 		'query' => {%main::FORM},
 		'USER_AGENT' => $main::ENV{'HTTP_USER_AGENT'},
 		'UserAgent' => $main::UserAgent_name,
+		'UserAgent_type' => $reqtype,
+		'response_status' => $env{'code'}
 	});
 	
 	#return 1;
@@ -36,10 +41,6 @@ sub rqs
 	my $null;$null="C" if $TOM::DB_name_TOM eq $TOM::DB_name_STAT;
 	
 	my $var="$tom::Fyear-$tom::Fmom-$tom::Fmday $tom::Fhour:$tom::Fmin:$tom::Fsec";
-	
-	my $reqtype="B";
-	
-	$reqtype="R" if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type} eq "robot");
 	
 	# zistim pod ktory host vlastne patrim...
 	my $host=$tom::Hm; # moj host je moj master
