@@ -114,7 +114,8 @@ BEGIN
 	# i'm fastcgi?
 	$tom::fastcgi=1 if $tom::SCRIPT_NAME=~/(tom|fcgi|fpl)$/;
 	# TOM installation directory
-	$TOM::P=$ENV{'CYCLONE3PATH'} || "/www/TOM"; # always
+	$TOM::P=$ENV{'CYCLONE3PATH'} || "/srv/Cyclone3"; # always
+	$TOM::P_uuid=(stat($TOM::P.'/.core'))[0].'.'.(stat($TOM::P.'/.core'))[1];
 	
 	# actual path and domain service path
 	chomp($tom::p=`pwd`) unless $tom::p;
