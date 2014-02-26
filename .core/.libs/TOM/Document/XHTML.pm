@@ -246,6 +246,11 @@ $TOM::Document::base::copyright
 		$self->{'OUT'}{'HEADER'} .= " <meta name=\"" . $_ . "\" content=\"" . $self->{'ENV'}{'head'}{'meta'}{$_} . "\" />\n";
 	}
 	
+	foreach (sort keys %{$self->{'ENV'}{'head'}{'meta-property'}})
+	{
+		$self->{'OUT'}{'HEADER'} .= " <meta property=\"" . $_ . "\" content=\"" . $self->{'ENV'}{'head'}{'meta-property'}{$_} . "\" />\n";
+	}
+	
 	$self->{'OUT'}{'HEADER'} .= " <meta name=\"domain\" content=\"<%domain%>\" />\n";
 	
 	foreach my $hash(@{$self->{'ENV'}{'head'}{'link'}})
