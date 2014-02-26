@@ -143,6 +143,9 @@ sub _event
 		(!$_[0] || !$_[1])
 	);
 	
+	return undef if $TOM::event_severity_disable{$_[0]};
+	return undef if $TOM::event_facility_disable{$_[1]};
+	
 	if (!$event_socket)
 	{
 		my @peer=split(':',$TOM::event_socket);
@@ -161,7 +164,6 @@ sub _event
 		'PID' => $$,
 		'facility' => $_[1],
 		'engine' => $TOM::engine,
-	
 		do{('domain',$tom::H) if $tom::H},
 		do{('request',$main::request_code) if $main::request_code},
 		%{$_[2]}
@@ -180,7 +182,7 @@ sub _event
 	
 }
 
-_event('info','process.start',{
+_event('debug','process.start',{
 	'cmd' => $0.' '.(join " ",@ARGV),
 	'UID' => $<,
 	'perl' => "$^V",
@@ -345,7 +347,8 @@ sub track
 	{
 #		$self->{'time'}{req}{start}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
 		$self->{'time'}{'req'}{'start'}=Time::HiRes::time();
-		$self->{'time'}{'proc'}{'start'}=(times)[0];
+		$self->{'time'}{'user'}{'start'}=$self->{'time'}{'proc'}{'start'}=(times)[0];
+		$self->{'time'}{'sys'}{'start'}=(times)[1];
 	}
 	
 	$tracks_obj[$track_level]=bless $self, $class;
@@ -372,11 +375,14 @@ sub semiclose
 	my $self=shift;
 #	$self->{'time'}{'req'}{'end'}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
 	$self->{'time'}{'req'}{'end'}=Time::HiRes::time();
-	$self->{'time'}{'proc'}{'end'}=(times)[0];
+	$self->{'time'}{'user'}{'end'}=$self->{'time'}{'proc'}{'end'}=(times)[0];
+	$self->{'time'}{'sys'}{'end'}=(times)[1];
 	$self->{'time'}{'req'}{'duration'}=$self->{'time'}{req}{end}-$self->{'time'}{req}{start};
 	$self->{'time'}{'proc'}{'duration'}=$self->{'time'}{proc}{end}-$self->{'time'}{proc}{start};
+	$self->{'time'}{'sys'}{'duration'}=$self->{'time'}{'sys'}{end}-$self->{'time'}{'sys'}{start};
 	$self->{'time'}{'req'}{'duration'}=int($self->{'time'}{req}{duration}*10000)/10000;
-	$self->{'time'}{'proc'}{'duration'}=int($self->{'time'}{proc}{duration}*1000)/1000;
+	$self->{'time'}{'user'}{'duration'}=$self->{'time'}{'proc'}{'duration'}=int($self->{'time'}{proc}{duration}*1000)/1000;
+	$self->{'time'}{'sys'}{'duration'}=int($self->{'time'}{'sys'}{'sys'}*10000)/10000;
 }
 
 
@@ -406,11 +412,14 @@ sub close
 	{
 #		$self->{'time'}{'req'}{'end'}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
 		$self->{'time'}{'req'}{'end'}=Time::HiRes::time();
-		$self->{'time'}{'proc'}{'end'}=(times)[0];
+		$self->{'time'}{'user'}{'end'}=$self->{'time'}{'proc'}{'end'}=(times)[0];
+		$self->{'time'}{'sys'}{'end'}=(times)[1];
 		$self->{'time'}{'req'}{'duration'}=$self->{'time'}{req}{end}-$self->{'time'}{req}{start};
-		$self->{'time'}{'proc'}{'duration'}=$self->{'time'}{proc}{end}-$self->{'time'}{proc}{start};
-		$self->{'time'}{'req'}{'duration'}=int($self->{'time'}{req}{duration}*10000)/10000;
-		$self->{'time'}{'proc'}{'duration'}=int($self->{'time'}{proc}{duration}*1000)/1000;
+		$self->{'time'}{'user'}{'duration'}=$self->{'time'}{'proc'}{'duration'}=$self->{'time'}{proc}{end}-$self->{'time'}{proc}{start};
+		$self->{'time'}{'sys'}{'duration'}=$self->{'time'}{'sys'}{'end'}-$self->{'time'}{'sys'}{start};
+		$self->{'time'}{'duration'}=$self->{'time'}{'req'}{'duration'}=int($self->{'time'}{req}{duration}*10000)/10000;
+		$self->{'time'}{'user'}{'duration'}=$self->{'time'}{'proc'}{'duration'}=int($self->{'time'}{proc}{duration}*1000)/1000;
+		$self->{'time'}{'sys'}{'duration'}=int($self->{'time'}{'sys'}{'sys'}*1000)/1000;
 	}
 	
 	if ($self->{'namespace'})
@@ -418,11 +427,12 @@ sub close
 		if ($tracks_obj[$track_level]->{'namespace'} ne $self->{'namespace'} && $self->{'timer'})
 		{
 			#main::_log("collect namespace '".$self->{'namespace'}."'");
-			$namespace{$self->{'namespace'}}{'time'}{'req'}{'duration'}+=$self->{'time'}{'req'}{'duration'};
+			$namespace{$self->{'namespace'}}{'time'}{'duration'}=$namespace{$self->{'namespace'}}{'time'}{'req'}{'duration'}+=$self->{'time'}{'req'}{'duration'};
 			$namespace{$self->{'namespace'}}{'time'}{'proc'}{'duration'}+=$self->{'time'}{'proc'}{'duration'};
+			$namespace{$self->{'namespace'}}{'time'}{'user'}{'duration'}=$namespace{$self->{'namespace'}}{'time'}{'proc'}{'duration'};
+			$namespace{$self->{'namespace'}}{'time'}{'sys'}{'duration'}+=$self->{'time'}{'sys'}{'duration'};
 		}
 	}
-	
 	
 	$self->{'DESTROY'}=1;
 	($self->{'DESTROY_package'}, $self->{'DESTROY_filename'}, $self->{'DESTROY_line'}) = caller;
@@ -434,11 +444,11 @@ sub close
 			
 			if ($self->{'attrs'})
 			{
-				main::_log("</$self->{name}> #".$self->{'attrs'}." (time:".($self->{'time'}{'req'}{'duration'}*1000)."ms user:~".($self->{'time'}{'proc'}{'duration'}*1000)."ms)")
+				main::_log("</$self->{name}> #".$self->{'attrs'}." (time:".($self->{'time'}{'duration'}*1000)."ms user:~".($self->{'time'}{'user'}{'duration'}*1000)."ms sys:~".($self->{'time'}{'sys'}{'duration'}*1000)."ms)")
 			}
 			else
 			{
-				main::_log("</$self->{name}> (time:".($self->{'time'}{'req'}{'duration'}*1000)."ms user:~".($self->{'time'}{'proc'}{'duration'}*1000)."ms)")
+				main::_log("</$self->{name}> (time:".($self->{'time'}{'duration'}*1000)."ms user:~".($self->{'time'}{'user'}{'duration'}*1000)."ms sys:~".($self->{'time'}{'sys'}{'duration'}*1000)."ms)")
 			}
 		}
 		else
