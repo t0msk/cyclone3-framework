@@ -23,14 +23,30 @@ sub engine
 		if ($TOM::engine eq "pub")
 		{
 			engine_pub(@_);
+			main::_event("error","engine.error",{
+				'pub' => {
+					'REMOTE_ADDR' => $main::ENV{'REMOTE_ADDR'},
+					'REFERER' => $main::ENV{'HTTP_REFERER'},
+					'HOST' => $main::ENV{'HTTP_HOST'},
+					'REQUEST_URI' => $main::ENV{'REQUEST_URI'},
+					'QUERY_STRING' => $main::ENV{'QUERY_STRING'},
+					'query' => {%main::FORM},
+					'USER_AGENT' => $main::ENV{'HTTP_USER_AGENT'},
+					'UserAgent' => $main::UserAgent_name,
+					'UserAgent_type' => $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'}
+				},
+				'message'=> join(". ", @_)
+			});
 		}
 		elsif ($TOM::engine=~/^cron/)
 		{
 			engine_cron(@_);
+			main::_event("error","engine.error",{'message'=>[@_]});
 		}
 		else
 		{
 			engine_lite(@_);
+			main::_event("error","engine.error",{'message'=>[@_]});
 		}
 	};
 }
@@ -367,8 +383,6 @@ sub engine_cron
 
 sub module
 {
-	
-	
 	# zvysujem mieru logovania ak sa vyskytuje chyba
 	$TOM::DEBUG_log_file++;
 	$main::result="failed";
@@ -376,15 +390,31 @@ sub module
 	if ($TOM::engine eq "pub")
 	{
 		module_pub(@_);
+		main::_event("error","module.error",{
+			'pub' => {
+				'REMOTE_ADDR' => $main::ENV{'REMOTE_ADDR'},
+				'REFERER' => $main::ENV{'HTTP_REFERER'},
+				'HOST' => $main::ENV{'HTTP_HOST'},
+				'REQUEST_URI' => $main::ENV{'REQUEST_URI'},
+				'QUERY_STRING' => $main::ENV{'QUERY_STRING'},
+				'query' => {%main::FORM},
+				'USER_AGENT' => $main::ENV{'HTTP_USER_AGENT'},
+				'UserAgent' => $main::UserAgent_name,
+				'UserAgent_type' => $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'},
+			},
+			@_
+		});
 	}
 	elsif ($TOM::engine=~/^cron/)
 	{
 		module_cron(@_);
+		main::_event("error","module.error",{@_});
 	}
-#	else
-#	{
+	else
+	{
 #		engine_lite(@_);
-#	}
+		main::_event("error","module.error",{@_});
+	}
 }
 
 
