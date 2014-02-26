@@ -828,7 +828,13 @@ while ($main::CGI=new CGI::Fast())
 				$t_preprocess->close();
 				$t_eval->close();
 				$t_request->close();
-				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
+				TOM::Debug::pub::request(
+					'duration' => $t_eval->{'time'}{'duration'},
+					'user' => $t_eval->{'time'}{'user'}{'duration'},
+					'sys' => $t_eval->{'time'}{'sys'}{'duration'},
+					'code' => '301',
+					'location' => $out
+				);
 				print "Status: 301 Moved permanently\n";
 				print "Location: $out\n\n";
 				
@@ -900,7 +906,13 @@ while ($main::CGI=new CGI::Fast())
 				$t_preprocess->close();
 				$t_eval->close();
 				$t_request->close();
-				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
+				TOM::Debug::pub::request(
+					'duration' => $t_eval->{'time'}{'duration'},
+					'user' => $t_eval->{'time'}{'user'}{'duration'},
+					'sys' => $t_eval->{'time'}{'sys'}{'duration'},
+					'code' => '301',
+					'location' => $URI_base.$tom::rewrite_RewriteBase.$link
+				);
 				print "Status: 301 Moved permanently\n";
 				print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 				
@@ -923,7 +935,13 @@ while ($main::CGI=new CGI::Fast())
 			$t_preprocess->close();
 			$t_eval->close();
 			$t_request->close();
-			Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
+			TOM::Debug::pub::request(
+				'duration' => $t_eval->{'time'}{'duration'},
+				'user' => $t_eval->{'time'}{'user'}{'duration'},
+				'sys' => $t_eval->{'time'}{'sys'}{'duration'},
+				'code' => '301',
+				'location' => $URI_base.$tom::rewrite_RewriteBase.$link
+			);
 			print "Status: 301 Moved permanently\n";
 			print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 			
@@ -1109,7 +1127,13 @@ while ($main::CGI=new CGI::Fast())
 				$t_preprocess->close();
 				$t_eval->close();
 				$t_request->close();
-				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
+				TOM::Debug::pub::request(
+					'duration' => $t_eval->{'time'}{'duration'},
+					'user' => $t_eval->{'time'}{'user'}{'duration'},
+					'sys' => $t_eval->{'time'}{'sys'}{'duration'},
+					'code' => '302',
+					'location' => $URL
+				);
 				print "Status: 302 Found\n";
 				print "Location: $URL\n\n";
 				
@@ -1287,8 +1311,13 @@ while ($main::CGI=new CGI::Fast())
 					$t_preprocess->close();
 					$t_eval->close();
 					$t_request->close();
-					Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'});
-					
+					TOM::Debug::pub::request(
+						'duration' => $t_eval->{'time'}{'duration'},
+						'user' => $t_eval->{'time'}{'user'}{'duration'},
+						'sys' => $t_eval->{'time'}{'sys'}{'duration'},
+						'code' => '304'
+					);
+=head1
 					do
 					{
 						my $e_p=$t_eval->{'time'}{'proc'}{'duration'};
@@ -1311,6 +1340,7 @@ while ($main::CGI=new CGI::Fast())
 							")".
 							"",3,"pub.bench",1) if $TOM::DEBUG_benchmark;
 					};
+=cut
 					
 					main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track');
 					main::_log("[$tom::H] ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track',1);
@@ -2281,8 +2311,13 @@ while ($main::CGI=new CGI::Fast())
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
-				# save stat
-				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'},'code'=>'301');
+				TOM::Debug::pub::request(
+					'duration' => $t_eval->{'time'}{'duration'},
+					'user' => $t_eval->{'time'}{'user'}{'duration'},
+					'sys' => $t_eval->{'time'}{'sys'}{'duration'},
+					'code' => '301',
+					'location' => $rewrite_domain.$link
+				);
 				print "Status: 301 Moved permanently\n";
 				print "Location: $rewrite_domain$link\n\n";
 				
@@ -2456,7 +2491,13 @@ while ($main::CGI=new CGI::Fast())
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
-				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'},'code'=>'302');
+				TOM::Debug::pub::request(
+					'duration' => $t_eval->{'time'}{'duration'},
+					'user' => $t_eval->{'time'}{'user'}{'duration'},
+					'sys' => $t_eval->{'time'}{'sys'}{'duration'},
+					'code' => $main::location_code,
+					'location' => $out
+				);
 				print "Status: $main::location_code Found\n";
 				print "Location: $out\n\n";
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
@@ -2476,7 +2517,13 @@ while ($main::CGI=new CGI::Fast())
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
-				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'},'code'=>$main::location_code);
+				TOM::Debug::pub::request(
+					'duration' => $t_eval->{'time'}{'duration'},
+					'user' => $t_eval->{'time'}{'user'}{'duration'},
+					'sys' => $t_eval->{'time'}{'sys'}{'duration'},
+					'code' => $main::location_code,
+					'location' => $out
+				);
 				print "Status: $main::location_code Found\n";
 				print "Location: $out\n\n";
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
@@ -2565,7 +2612,13 @@ while ($main::CGI=new CGI::Fast())
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
-				Tomahawk::stat::rqs('proc' => $t_eval->{'time'}{'proc'}{'duration'},'req' => $t_eval->{'time'}{'req'}{'duration'},'code'=>$main::location_code);
+				TOM::Debug::pub::request(
+					'duration' => $t_eval->{'time'}{'duration'},
+					'user' => $t_eval->{'time'}{'user'}{'duration'},
+					'sys' => $t_eval->{'time'}{'sys'}{'duration'},
+					'code' => $main::location_code,
+					'location' => $URI_base.$tom::rewrite_RewriteBase.$link
+				);
 				print "Status: $main::location_code Found\n";
 				print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
@@ -2956,11 +3009,12 @@ while ($main::CGI=new CGI::Fast())
 		
 		if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 		
-		Tomahawk::stat::rqs(
-			'proc' => $t_eval->{'time'}{'proc'}{'duration'},
-			'req' => $t_eval->{'time'}{'req'}{'duration'},
-			'code' => $main::page_statuscode
-		);# if (!$main::ITst && !$main::IAdm); # pouzivam statistiky;
+		TOM::Debug::pub::request(
+			'duration' => $t_eval->{'time'}{'duration'},
+			'user' => $t_eval->{'time'}{'user'}{'duration'},
+			'sys' => $t_eval->{'time'}{'sys'}{'duration'},
+			'code' => $main::page_statuscode,
+		);
 		
 		do
 		{
