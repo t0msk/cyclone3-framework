@@ -42,6 +42,7 @@ Uzavrie ticket
 sub ticket_event_new
 {
 	my %env=@_;
+	return 1 if $App::100::ticket_ignore;
 	my $t=track TOM::Debug(__PACKAGE__."::ticket_event_new()") if $debug;
 	
 	$env{'db_h'}='stats' unless $env{'db_h'};
@@ -178,6 +179,7 @@ Function return true or false
 
 sub ircbot_msg_new
 {
+	return 1 if $App::100::ticket_ignore;
 	my $message=shift;
 	my $t=track TOM::Debug(__PACKAGE__."::ircbot_msg_new()") if $debug;
 	
