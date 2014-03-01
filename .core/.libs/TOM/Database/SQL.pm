@@ -130,16 +130,17 @@ sub get_slave_status
 		$TTL=1 if $Redis;
 	
 	# check only on every $TTL seconds
-#	main::_log("chk $slave_status{$db_h}{'time'} ".time()." diff:".(time() - $slave_status{$db_h}{'time'}))
-#		if $slave_status{$db_h};
+	main::_log("chk $slave_status{$db_h}{'time'} ".time()." diff:".(time() - $slave_status{$db_h}{'time'}))
+		if $slave_status{$db_h};
 	if ($slave_status{$db_h} && ((time() - $slave_status{$db_h}{'time'}) < $TTL))
 	{
-#		main::_log("from cache");
+		main::_log("show_slave_status($db_h) from cache");
 		return %{$slave_status{$db_h}{'hash'}};
 	}
 	
-#	main::_log("read $db_h slave status (seconds behind)");
+	main::_log("show_slave_status($db_h) from db");
 	TOM::Database::connect::multi($db_h) unless $main::DB{$db_h};
+	return undef unless $main::DB{$db_h};
 	
 	if ($Redis && ($db_h=~/^main:/))
 	{
@@ -148,12 +149,19 @@ sub get_slave_status
 		{
 #			main::_log("modifytime=$changetime");
 			my $db0=$main::DB{$db_h}->Query("SELECT timestamp FROM TOM.a100_master LIMIT 1");
+			my $err=$main::DB{$db_h}->errmsg();
+			if ($err eq "MySQL server has gone away" ||
+				$err eq "Lost connection to MySQL server during query") # hapal dole MySQL
+			{
+				TOM::Database::connect::disconnect($db_h);
+				return undef;
+			}
 			my %db0_line=$db0->fetchhash();
 			my $changetime_slave=$db0_line{'timestamp'};
 #			main::_log("modifytime_slave=$changetime_slave");
 			
 			$db0_line{'Seconds_Behind_Master'}=int(($changetime-$changetime_slave)*10000)/10000;
-			if ($db0_line{'Seconds_Behind_Master'} > 300)
+			if ($db0_line{'Seconds_Behind_Master'} > $TOM::DB_mysql_seconds_behind_master_max)
 			{
 				main::_log("SQL: Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",1);
 				main::_log("{$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err");
@@ -172,7 +180,7 @@ sub get_slave_status
 	my $db0=$main::DB{$db_h}->Query("SHOW SLAVE STATUS");
 	my %db0_line=$db0->fetchhash();
 	
-	if ($db0_line{'Seconds_Behind_Master'} > 300)
+	if ($db0_line{'Seconds_Behind_Master'} > $TOM::DB_mysql_seconds_behind_master_max)
 	{
 		main::_log("SQL: Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",1);
 		main::_log("{$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err");
@@ -259,31 +267,56 @@ sub execute
 	
 	if ($env{'slave'} && $TOM::DB{$env{'db_h'}}{'slaves'} && $typeselect)
 	{
-		my $slave=int(rand($TOM::DB{$env{'db_h'}}{'slaves'}))+1;
-		if ($TOM::DB{$env{'db_h'}.':'.$slave})
+		my $slaveselected;
+		my $slave_finding;
+		while (!$slaveselected)
 		{
-			# check quality of this slave
-			my %slave_quality=get_slave_status($env{'db_h'}.':'.$slave);
-			
-			if ($env{'-changetime'} &&
-				($slave_quality{'Seconds_Behind_Master'} &&
-				(time()-$slave_quality{'Seconds_Behind_Master'}-60 < $env{'-changetime'})))
+			my $slave=int(rand($TOM::DB{$env{'db_h'}}{'slaves'}))+1;
+				$slave_finding++;
+				last if $slave_finding >= $TOM::DB{$env{'db_h'}}{'slaves'};
+			if ($TOM::DB{$env{'db_h'}.':'.$slave}) # is defined
 			{
-				main::_log("slave '$slave' is behind master:$slave_quality{'Seconds_Behind_Master'}s, data changed ".(time()-$env{'-changetime'})."s before now, using master") unless $env{'quiet'};
-			}
-			elsif ($slave_quality{'Seconds_Behind_Master'} > $TOM::DB_mysql_seconds_behind_master_max)
-			{
-				main::_log("slave '$slave' is outdated (behind master:$slave_quality{'Seconds_Behind_Master'}s), using master",1);
-			}
-			else
-			{
-				main::_log("using slave '$slave' (behind master:$slave_quality{'Seconds_Behind_Master'}s)".do{
-					if ($env{'-changetime'})
-					{
-						" (changetime -".int(time()-$env{'-changetime'})."s)";
-					}
-				}) unless $env{'quiet'};
-				$env{'db_h'}=$env{'db_h'}.':'.$slave;
+				# check quality of this slave
+				my %slave_quality=get_slave_status($env{'db_h'}.':'.$slave);
+#				print Dumper(\%slave_quality);use Data::Dumper;
+				if (!$slave_quality{'timestamp'}) # this handler is not recognized or connected
+				{
+					main::_log("slave '$slave' is not available",1);
+					$slaveselected=1;
+#					next;
+				}
+				elsif ($env{'-changetime'} &&
+					($slave_quality{'Seconds_Behind_Master'} &&
+					(time()-$slave_quality{'Seconds_Behind_Master'}-60 < $env{'-changetime'})))
+				{
+					main::_log("slave '$slave' is behind master:$slave_quality{'Seconds_Behind_Master'}s, data changed ".(time()-$env{'-changetime'})."s before now, using master") unless $env{'quiet'};
+					$slaveselected=1;
+				}
+				elsif ($slave_quality{'Seconds_Behind_Master'} > $TOM::DB_mysql_seconds_behind_master_max)
+				{
+					main::_log("slave '$slave' is outdated (behind master:$slave_quality{'Seconds_Behind_Master'}s), using master",1);
+					$slaveselected=1;
+				}
+				else
+				{
+					main::_log("using slave '$slave' (behind master:$slave_quality{'Seconds_Behind_Master'}s)".do{
+						if ($env{'-changetime'})
+						{
+							" (changetime -".int(time()-$env{'-changetime'})."s)";
+						}
+					}) unless $env{'quiet'};
+#					if (!$main::DB{$env{'db_h'}})
+#					{
+#						TOM::Database::connect::multi($env{'db_h'}) || do
+#						{
+#							main::_log("this slave is not available",1);
+#							next;
+#						};
+#					}
+					$env{'db_h'}=$env{'db_h'}.':'.$slave;
+					$slaveselected=1;
+				}
+#				$slaveselected=1;
 			}
 		}
 	}
@@ -567,9 +600,9 @@ sub execute
 					main::_log("{$env{'db_h'}} MySQL server has gone away",4,"sql.err");
 					main::_log("[$tom::H] {$env{'db_h'}} MySQL server has gone away",4,"sql.err",1);
 					
-					main::_log("SQL: trying to reconnect '$env{'db_h'}' and re-call this SQL query");
+					main::_log("SQL: trying to reconnect/reuse '$env{'db_h'}' and re-call this SQL query");
 					
-					if (!$TOM::DB_mysql_auto_reconnect) # if auto-reconnect disabled, do it manually
+					if (!$TOM::DB_mysql_auto_reconnect) # if auto-reconnect disabled, do it manually (only master)
 					{
 						TOM::Database::connect::disconnect($env{'db_h'}); # removes handlers
 						TOM::Database::connect::multi($env{'db_h'}) || do 
@@ -578,21 +611,37 @@ sub execute
 							# can't be reconnected
 							main::_log("{$env{'db_h'}} MySQL server can't be reconnected",4,"sql.err");
 							main::_log("[$tom::H] {$env{'db_h'}} MySQL server can't be reconnected",4,"sql.err",1);
-							$t->close();
-							return undef;
+							if ($env{'db_h'}=~/:\d+$/) # this is slave
+							{
+								# remove handler and definition
+								delete $main::DB{$env{'db_h'}};
+								$env{'db_h'}=~s|:\d+$||; # don't try to reconnect same slave, maybe down for a longer time
+							}
+							else
+							{
+								$t->close();
+								return undef;
+							}
 						};
 						main::_log("SQL: sucesfully reconnected '$env{'db_h'}'");
+					}
+					else
+					{
+#						
+#						delete $env{'slave'}; # don't try to use another slave
 					}
 					
 					if ($package eq "TOM::Database::SQL")
 					{
+						main::_log("no sollution to this problem",1);
 						$t->close();
 						return undef;
 					}
 					
 					main::_log("SQL: trying to re-call the query");
+					my %semiout=TOM::Database::SQL::execute($SQL,%env,'quiet'=>0);
 					$t->close();
-					return TOM::Database::SQL::execute($SQL,%env,'quiet'=>0);
+					return %semiout;
 				}
 				
 			}

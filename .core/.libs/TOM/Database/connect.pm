@@ -187,7 +187,14 @@ sub multi
 				$TOM::DB{$handler}{'pass'},
 			);
 			
-			if (!$main::DB{$handler})
+			if (!$main::DB{$handler} && $handler=~/:\d+$/)
+			{
+				main::_log("can't connect slave handler '$handler', removing from pool",1);
+				undef $TOM::DB{$handler};
+				$t->close();
+				return undef;
+			}
+			elsif (!$main::DB{$handler})
 			{
 				die "Connection to MySQL database not established: ".Mysql->errmsg()."\n";
 			}
