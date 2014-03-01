@@ -92,7 +92,7 @@ sub new
 		$objects{$obj->{'uid'}} = 
 			$Ext::CacheMemcache::cache->get(
 				'namespace' => "l10ncache",
-				'key' => $obj->{'uid'}
+				'key' => $TOM::P_uuid.':'.$obj->{'uid'}
 			);
 	}
 	
@@ -162,7 +162,7 @@ sub new
 	{
 		$Ext::CacheMemcache::cache->set(
 			'namespace' => "l10ncache",
-			'key' => $obj->{'uid'},
+			'key' => $TOM::P_uuid.':'.$obj->{'uid'},
 			'value' => $obj_return,
 			'expiration' => '86400S'
 		);

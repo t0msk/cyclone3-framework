@@ -180,7 +180,7 @@ sub new
 		$objects{$obj->{'location'}} = 
 			$Ext::CacheMemcache::cache->get(
 				'namespace' => "tplcache",
-				'key' => $obj->{'location'}
+				'key' => $TOM::P_uuid.':'.$obj->{'location'}
 			);
 	}
 	
@@ -256,7 +256,7 @@ sub new
 		{
 			$Ext::CacheMemcache::cache->set(
 				'namespace' => "tplcache",
-				'key' => $obj->{'location'},
+				'key' => $TOM::P_uuid.':'.$obj->{'location'},
 				'value' => {
 					'ENV' => $obj->{'ENV'},
 					'config' => $obj->{'config'},

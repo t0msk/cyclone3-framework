@@ -386,7 +386,7 @@ sub module
 		if ($Redis)
 		{
 			# get from Redis
-			my $key = 'C3|mdl_cache|'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+			my $key = 'C3|mdl_cache|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
 			$cache={
 				@{$Redis->hgetall($key)}
 			};
@@ -398,11 +398,11 @@ sub module
 			main::_log("memcached: reading '".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}."'") if $debug;
 			$cache=$Ext::CacheMemcache::cache->get(
 				'namespace' => "mcache",
-				'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
+				'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
 			);
 			$cache_parallel=$Ext::CacheMemcache::cache->get(
 				'namespace' => "mcache_parallel",
-				'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
+				'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
 			);
 		}
 		else
@@ -546,18 +546,18 @@ sub module
 				my $hits;
 				if ($Redis)
 				{
-					my $key = 'C3|mdl_cache|'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+					my $key = 'C3|mdl_cache|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
 #					$hits=$Redis->hincrby($key,'hits',1);
 				}
 				else
 				{
 					$Ext::CacheMemcache::cache->incr(
 						'namespace' => "mcache_hits",
-						'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
+						'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
 					);
 					$hits=$Ext::CacheMemcache::cache->get(
 						'namespace' => "mcache_hits",
-						'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
+						'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
 					);
 				}
 				$hits=1 unless $hits;
@@ -698,14 +698,14 @@ sub module
 		{
 			if ($Redis)
 			{
-				my $key = 'C3|mdl_cache|'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+				my $key = 'C3|mdl_cache|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
 				$Redis->hset($key,'etime',$main::time_current);
 			}
 			elsif ($TOM::CACHE_memcached)
 			{
 				$Ext::CacheMemcache::cache->set(
 					'namespace' => "mcache_parallel",
-					'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
+					'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
 					'value' => 1,
 					'expiration' => '60S' # safe time to not parallel caching
 				);
@@ -830,7 +830,7 @@ our \$VERSION=$m_time;
 				
 				if ($Redis)
 				{
-					my $key = 'C3|mdl_cache|'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+					my $key = 'C3|mdl_cache|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
 					
 					if ($return_data{'entity'})
 					{
@@ -895,7 +895,7 @@ our \$VERSION=$m_time;
 					
 					if ($Ext::CacheMemcache::cache->set(
 							'namespace' => "mcache",
-							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
+							'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
 							'value' => $cache,
 							'expiration' => $CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}.'S'
 						)
@@ -905,7 +905,7 @@ our \$VERSION=$m_time;
 						# filling cache stopped
 						$Ext::CacheMemcache::cache->set(
 							'namespace' => "mcache_parallel",
-							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
+							'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
 							'value' => 0
 						);
 					}
@@ -920,7 +920,7 @@ our \$VERSION=$m_time;
 						main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][CRT]",3,"cache",1);
 						$Ext::CacheMemcache::cache->set(
 							'namespace' => "mcache_hits",
-							'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
+							'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
 							'value' => 0
 						);
 					}
@@ -938,7 +938,7 @@ our \$VERSION=$m_time;
 			{
 				if ($Redis)
 				{
-					my $key = 'C3|mdl_cache|'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+					my $key = 'C3|mdl_cache|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
 					$Redis->hdel($key,'etime'); # remove execution time
 				}
 				elsif ($TOM::CACHE_memcached)
@@ -946,7 +946,7 @@ our \$VERSION=$m_time;
 					# refilling cache stopped
 					$Ext::CacheMemcache::cache->set(
 						'namespace' => "mcache_parallel",
-						'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
+						'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
 						'value' => 0
 					);
 				}
@@ -968,7 +968,7 @@ our \$VERSION=$m_time;
 		{
 			if ($Redis)
 			{
-				my $key = 'C3|mdl_cache|'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+				my $key = 'C3|mdl_cache|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
 				$Redis->hdel($key,'etime'); # remove execution time
 			}
 			elsif ($TOM::CACHE_memcached)
@@ -976,7 +976,7 @@ our \$VERSION=$m_time;
 				# refilling cache stopped
 				$Ext::CacheMemcache::cache->set(
 					'namespace' => "mcache_parallel",
-					'key' => $tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
+					'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
 					'value' => 0
 				);
 			}
