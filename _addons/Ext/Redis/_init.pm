@@ -70,6 +70,10 @@ _connect(); # default connection
 
 package Ext::CacheMemcache::Redis;
 use Storable;
+use JSON::XS; # this is faster than Storable
+
+our $format = 'j';# s=storable, j=json (json is ~30% faster)
+our $json = JSON::XS->new->utf8->allow_blessed->allow_nonref->allow_unknown(1);
 
 sub new
 {
@@ -84,16 +88,24 @@ sub set
 	my $self=shift;
 	my %env=@_;
 	
-	if (ref $env{'value'})
+	if ($format eq "j")
 	{
-		$env{'value'}=Storable::nfreeze($env{'value'});
+		$env{'value'}=$json->encode($env{'value'})
+			if ref $env{'value'};
 	}
 	else
 	{
-		$env{'value'}=Storable::nfreeze(\$env{'value'});
+		if (ref $env{'value'})
+		{
+			$env{'value'}=Storable::nfreeze($env{'value'});
+		}
+		else
+		{
+			$env{'value'}=Storable::nfreeze(\$env{'value'});
+		}
 	}
 	
-	my $key='memcache|'.$env{'namespace'}.'|'.$env{'key'};
+	my $key='C3|M'.$format.'|'.$env{'namespace'}.'|'.$env{'key'};
 	
 	my $expire;
 	if ($env{'expiration'}=~/^(\d+)S?$/)
@@ -131,16 +143,25 @@ sub get
 {
 	my $self=shift;
 	my %env=@_;
-	my $value=Storable::thaw(
-		$Ext::Redis::service->get(
-			'memcache|'.$env{'namespace'}.'|'.$env{'key'}
-		)
+	my $value=$Ext::Redis::service->get(
+		'C3|M'.$format.'|'.$env{'namespace'}.'|'.$env{'key'}
 	);
-	if (ref $value eq "SCALAR")
+	
+	if ($format eq "j")
 	{
-		return $$value;
+		return $json->decode($value) if $value=~/^{/;
+		return {} if $value eq "null";
+		return $value;
 	}
-	return $value;
+	else
+	{
+		$value=Storable::thaw($value);
+		if (ref $value eq "SCALAR")
+		{
+			return $$value;
+		}
+		return $value;
+	}
 }
 
 sub AUTOLOAD
