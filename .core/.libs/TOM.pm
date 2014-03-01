@@ -1,5 +1,8 @@
-package main;
+package TOM;
 
+$INC{'TOM.pm'} = [caller]->[1];
+
+package main;
 =head1 NAME
 
 TOM
@@ -101,7 +104,6 @@ _config/${hostname}.conf
 
 BEGIN
 {
-	
 	$main::request_code="00000000";
 	# debug
 	$main::stdout=1 if ($ENV{'TERM'} && not defined $main::stdout);
@@ -160,22 +162,17 @@ use strict;
 use POSIX; # 800KB in RAM
 use Inline (Config => DIRECTORY => $TOM::InlineDIR);
 
-
+use JSON;
+use Tie::IxHash;
+use IO::Socket::INET;
+# HiRes load
+use Time::HiRes qw( gettimeofday );
+use Term::ANSIColor;
 
 use TOM::Lite;
 use TOM::Digest;
 use TOM::Overlays;
 #use TOM::Domain;
-
-
-
-BEGIN
-{
-	#my $t=track TOM::Debug("INC");
-	#foreach (@INC){main::_log("$_");}
-	#$t->close();
-}
-
 
 
 eval
@@ -189,6 +186,8 @@ if ($@)
 	die "$error_msg";
 }
 
+
+package TOM;
 main::_log("<={LIB} TOM loaded");
 
 1;

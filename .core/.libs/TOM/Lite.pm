@@ -4,136 +4,215 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-use JSON;
-use Tie::IxHash;
-use IO::Socket::INET;
-# HiRes load
-our $hires;BEGIN {$hires=1;eval "use Time::HiRes qw( gettimeofday );";$hires=0 if $@;};
 our $event_socket;
 
+#eval {if ($Ext::Redis::logger){
+#	# try to use RedisDB logging
+#	use Ext::Redis::_init;
+#}};
+
+
+sub ctodatetime
+{
+	my $var=shift @_;
+	my %env=@_;
+	my %env0;
+	(	$env0{sec},
+		$env0{min},
+		$env0{hour},
+		$env0{mday},
+		$env0{mom},
+		$env0{year},
+		$env0{wday},
+		$env0{yday},
+		$env0{isdst}) = localtime($var);
+	# doladenie casu
+	$env0{year}+=1900;$env0{mom}++;
+	return %env0 unless $env{format};
+	(	$env0{sec},
+		$env0{min},
+		$env0{hour},
+		$env0{mday},
+		$env0{mom},
+		) = (
+		sprintf ('%02d', $env0{sec}),
+		sprintf ('%02d', $env0{min}),
+		sprintf ('%02d', $env0{hour}),
+		sprintf ('%02d', $env0{mday}),
+		sprintf ('%02d', $env0{mom}),
+	);
+	$env0{mon}=$env0{mom};
+return %env0}
+
+
+our %HND;
+our @log_sym=("+","-","+","+","-");
+our $log_time;
+our %log_date;
+sub _log
+{
+	return undef if $TOM::DEBUG_log_file==-1;
+	unshift @_, $TOM::Debug::track_level;
+	
+	my @get=@_;
+	#$get[0] = level
+	#$get[1] = message
+	#$get[2] = mode
+	#	0=norm	level	not
+	#	1=error!	level	mustlog
+	#	2=norm	level	mustlog
+	#	3=norm	not	mustlog
+	#	4=error	not	mustlog
+	#$get[3] = engine, or logname
+	#$get[4] = 0-local 1-global 2-master
+	
+	return undef unless $get[1];
+	$get[0]=0 if $get[2]==3;
+	$get[0]=0 if $get[2]==4;
+	return undef if
+	(
+		($TOM::DEBUG_log_file < $get[0]) &&
+		(!$get[2]) &&
+		(!$main::debug) &&
+		(!$main::stdout)
+	);
+	
+	$get[3]=$TOM::engine unless $get[3];
+	$get[1]=~s|[\n\r\t]| |g;
+	
+	my $tt=time();
+	if ($tt > $log_time)
+	{
+		$log_time=$tt;
+		%log_date=ctodatetime($log_time,format=>1);
+	}
+	
+	my $msec=ceil((Time::HiRes::gettimeofday)[1]/100);
+	
+	my $msg="[".sprintf ('%06d', $$);# unless $main::stdout;
+		$msg.=";$main::request_code" if ($TOM::Engine eq "pub" && !$main::stdout);
+		$msg.="]["
+			.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.".".sprintf("%04d",$msec)."] "
+			.(" " x $get[0]).$log_sym[$get[2]].$get[1];
+	
+	if (length($msg)>8048)
+	{
+		$msg=substr($msg,1,8048);
+		$msg.="...";
+	}
+	
+#=head1
+	if (
+			($main::stdout && $main::debug && $get[3] eq $TOM::engine) ||
+			($main::stdout && $get[3] eq "stdout")
+		)
+	{
+		# only to stdout
+		$msg=$log_sym[$get[2]].' '.$get[1] unless $main::debug;
+		print color 'green';
+		print color 'bold' if $get[1]=~/^</;
+		print color 'red' if $log_sym[$get[2]] eq '-';
+		print $msg."\n";
+		print color 'reset';
+		return 1 if $get[3] eq "stdout";
+	}
+	elsif ($main::stdout && $log_sym[$get[2]] eq '-' && $get[3] eq $TOM::engine)
+	{
+		my ($package, $filename, $line) = caller;
+		# error to stderr
+		print STDERR color 'red';
+		print STDERR "CYCLONE3STDERR: ".$get[1]." at ".$filename." line ". $line ."\n";
+		print STDERR color 'reset';
+	}
+#=cut
+	
+	if (
+			($TOM::DEBUG_log_file>=$get[0])||
+			($get[2])||
+			($main::debug)
+		) # logujem v pripade ze som v ramci levelu alebo ide o ERROR
+	{
+		return 1 if $get[3] eq "stdout";
+#		if ($Redis && $Ext::Redis::logger)
+#		{
+#			print $msg."\n";
+#			$Redis->publish('C3|log|'."test",
+#				"message"
+#				,sub {});
+#			return 1;
+#		}
+		
+		my $file;
+		if ($TOM::path_log)
+		{
+			$file=$TOM::path_log;
+			if ($get[4]==1) {} # global
+			elsif ($tom::Pm && $get[4]==2) {$file.='/'.($tom::H_orig || $tom::Hm)} # master
+			elsif ($tom::H) {$file.='/'.($tom::H_orig || $tom::H)} # local
+			$file.='/'; # global
+		}
+		else
+		{
+			$file=$TOM::P."/_logs/";
+			$file=$tom::P."/_logs/" if $tom::P;
+			$file=$tom::Pm."/_logs/" if ($tom::Pm && $get[4]==2);
+			$file=$TOM::P."/_logs/" if $get[4]==1;
+		}
+		
+		$file.="[".$TOM::hostname."]" if $TOM::serverfarm;
+		$file.="$log_date{year}-$log_date{mom}-$log_date{mday}";
+#		$file.="-$log_date{hour}" if $TOM::DEBUG_log_file_frag; # rozlisenie na hodiny
+		
+		$get[0]=0 unless $get[0];
+		
+		my $filename_full=$file.".".$get[3].".log";
+		if (!$HND{$filename_full})
+		{
+#			print "a '$filename_full'\n";
+			if (! -e $file){mkdir $file;chmod (0777,$file)} # check directory
+			use Fcntl;
+			my $logfile_new;
+			$logfile_new=1 unless -e $filename_full;
+			# open this handler at first
+			open ($HND{$filename_full},">>".$filename_full)
+#			sysopen($HND{$filename_full},$filename_full,O_APPEND)
+				|| print STDERR "Cyclone3 system can't write into logfile $filename_full $!\n";
+			chmod (0666 , $filename_full) if $logfile_new;
+		}
+		syswrite($HND{$filename_full}, $msg."\n", length($msg."\n"));
+#		print $HND{$filename_full} ($msg."\n");
+#		print $HND{$filename_full} "test";
+#		close($HND{$filename_full}); # close on every write (because logrotate)
+	}
+	
+	return 1;
+};
+
+#sub _log {_log_lite(@_);}
+sub _applog {_log(@_);}
+sub _log_stdout
+{
+	return undef unless $main::stdout;
+	$_[2]="stdout";
+	_log(@_);
+}
+sub _deprecated
+{
+	#return 1;
+	my ($package, $filename, $line) = caller;
+	_log($_[0]." from $filename:$line",0,"deprecated",1);
+}
 sub _log_long
 {
 	my @get=@_;
-	
 	foreach my $msg(split('\n',$get[0]))
 	{
 		my @get0=@get;
 		$get0[0]=$msg;
 		_log(@get0);
 	}
-	
 	return 1;
 }
-
-# len zakladna funkcia, bude prevalena TOM::Debug::logs
-sub _log_lite
-{
-	return undef if $TOM::DEBUG_log_file==-1;
-	if ($_[0]=~/^\d+$/)
-	{
-		shift @_;
-		my ($package, $filename, $line) = caller;
-		return _deprecated("calling _log(number,text) in deprecated format with message '".$_[0]."' from $filename:$line");
-	}
-	unshift @_, $TOM::Debug::track_level;
-	
-	my @get=@_;
-	return undef unless $get[1];
-	
-	$get[3]=$TOM::engine unless $get[3];
-	$get[1]=~s|[\n\r]||g;
-	
-	$get[0]=0 if $get[2]==3;
-	$get[0]=0 if $get[2]==4;
-	my @ref=("+","-","+","+","-");
-	
-	my %date;#=Utils::datetime::ctodatetime(time,format=>1);
-	
-	(
-		$date{sec},
-		$date{min},
-		$date{hour},
-		$date{mday},
-		$date{mom},
-		$date{year},
-		undef,
-		undef,
-		undef
-	) = localtime(time);
-		
-	# formatujem cas
-	($date{sec},$date{min},$date{hour},$date{mday},$date{mom},$date{year}) = 
-		(sprintf ('%02d', $date{sec}),sprintf ('%02d', $date{min}),sprintf ('%02d', $date{hour}),sprintf ('%02d', $date{mday}),sprintf ('%02d', $date{mom}+1),$date{year}+1900);
-	
-	
-	my $filename;
-	if ($TOM::path_log)
-	{
-		$filename=$TOM::path_log;
-		if ($get[4]==1) {} # global
-		elsif ($tom::Pm && $get[4]==2) {$filename.='/'.$tom::Hm} # master
-		elsif ($tom::H) {$filename.='/'.$tom::H} # local
-		$filename.='/'; # global
-		if (! -e $filename){mkdir $filename;chmod (0777,$filename)}
-	}
-	else
-	{
-		$filename=$TOM::P."/_logs/";
-		$filename=$tom::P."/_logs/" if $tom::P;
-		$filename=$tom::Pm."/_logs/" if ($tom::Pm && $get[4]==2);
-		$filename=$TOM::P."/_logs/" if $get[4]==1;
-	}
-	
-	$filename.="[".$TOM::hostname."]" if $TOM::serverfarm;
-	$filename.="$date{year}-$date{mom}-$date{mday}";
-	$filename.=".".$get[3].".log";
-	
-	$get[0]=0 unless $get[0];
-	
-	my $msg;
-#		$msg.="[".sprintf ('%06d', $$).";$main::request_code]";
-		$msg.="[".sprintf ('%06d', $$)."]";
-		$msg.="[$date{hour}:$date{min}:$date{sec}.";
-		if ($hires)
-		{
-			my $msec;
-				eval "\$msec=(Time::HiRes::gettimeofday)[1];";
-#				$msec='0'.$msec if $msec < 10000;
-#				$msec='0.'.$msec;
-				$msec=int($msec/100);
-			$msg.=sprintf('%04d',$msec);
-		}
-		else {$msg.="???";}
-		$msg.="]";
-#		"[".sprintf("%02d",$get[0])."]".
-		$msg.=" ".(" " x $get[0]).$ref[$get[2]].$get[1];
-	
-	if (!$main::HND{$filename})
-	{
-		use Fcntl;
-		my $logfile_new;
-		$logfile_new=1 unless -e $filename;
-		# open this handler at first
-		open ($main::HND{$filename},">>".$filename)
-			|| print "Cyclone3 system can't write into logfile $filename $!\n";
-		chmod (0666 , $filename) if $logfile_new;
-	}
-	syswrite($main::HND{$filename}, $msg."\n", length($msg."\n"));
-	
-	print $msg."\n" if $main::debug;
-	
-	return 1;
-};
-
-sub _log {_log_lite(@_);}
-sub _applog {_log_lite(@_);}
-sub _deprecated
-{
-	#return 1;
-	my ($package, $filename, $line) = caller;
-	_log_lite($_[0]." from $filename:$line",0,"deprecated",1);
-}
-
 
 sub _event
 {
@@ -158,7 +237,7 @@ sub _event
 	}
 	
 	tie my %hash, 'Tie::IxHash', (
-		'timestamp' => time().do{'.'.int((Time::HiRes::gettimeofday)[1]/1000) if $hires},
+		'timestamp' => time().int((Time::HiRes::gettimeofday)[1]/1000),
 		'severity' => $_[0],
 		'hostname' => $TOM::hostname,
 		'PID' => $$,
@@ -188,8 +267,6 @@ _event('debug','process.start',{
 	'perl' => "$^V",
 	'osname' => $^O
 });
-
-
 
 
 
@@ -447,11 +524,11 @@ sub close
 			
 			if ($self->{'attrs'})
 			{
-				main::_log("</$self->{name}> #".$self->{'attrs'}." (time:".($self->{'time'}{'duration'}*1000)."ms user:~".($self->{'time'}{'user'}{'duration'}*1000)."ms sys:~".($self->{'time'}{'sys'}{'duration'}*1000)."ms)")
+				main::_log("</$self->{name}> #".$self->{'attrs'}." (time:".($self->{'time'}{'duration'}*1000)."ms user:~".($self->{'time'}{'user'}{'duration'}*1000)."ms)")
 			}
 			else
 			{
-				main::_log("</$self->{name}> (time:".($self->{'time'}{'duration'}*1000)."ms user:~".($self->{'time'}{'user'}{'duration'}*1000)."ms sys:~".($self->{'time'}{'sys'}{'duration'}*1000)."ms)")
+				main::_log("</$self->{name}> (time:".($self->{'time'}{'duration'}*1000)."ms user:~".($self->{'time'}{'user'}{'duration'}*1000)."ms)")
 			}
 		}
 		else
