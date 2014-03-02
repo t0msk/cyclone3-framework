@@ -43,19 +43,6 @@ sub new
 	{
 		main::_log("SQL::cache: created cache object to save data '$env{'id'}' expiration=$env{'expire'}") if $debug;
 		$self->{'value'}->{'expire'}=$env{'expire'};
-		if ($env{'schedule'})
-		{
-			$env{'expire_original'}=$env{'expire'};
-			$env{'expire'}*=10;
-			main::_log("SQL::cache: schedule expiration=$env{'expire'}") if $debug;
-			$self->{'value'}->{'schedule'}=$env{'schedule'};
-			$self->{'value'}->{'schedule_group'}=$env{'schedule_group'};
-			my $sql=qq{
-				REPLACE INTO TOM.a150_sql(ID,group_ID,cache_duration,datetime_executed)
-				VALUES ('$env{'id'}','$env{'schedule_group'}',SEC_TO_TIME($env{'expire_original'}),NOW())
-			};
-			TOM::Database::SQL::execute($sql,'db_h'=>'sys','quiet'=>1);
-		}
 		$self->{'value'}->{'db_h'}=$env{'db_h'} if $env{'db_h'};
 		$self->{'value'}->{'sql'}=$env{'sql'} if $env{'sql'};
 		$self->{'value'}->{'type'}=$env{'type'} if $env{'type'};
@@ -95,19 +82,6 @@ sub new
 			'value' => $self->{'value'},
 			'expiration' => $env{'expire'}.'S'
 		);
-		if ($cache)
-		{
-			main::_log("SQL::cache: saved to cache") if $debug;
-			if ($env{'schedule'} && !$env{'recache'})
-			{# don't save last use when only recaching or not scheduling
-				$Ext::CacheMemcache::cache->set(
-					'namespace' => "db_cache_SQL:use",
-					'key' => $env{'id'},
-					'value' => time(),
-					'expiration' => ($self->{'value'}->{'expire'}*10).'S',
-				);
-			}
-		}
 	}
 	else
 	{
@@ -116,24 +90,6 @@ sub new
 			'namespace' => "db_cache_SQL",
 			'key' => $env{'id'}
 		);
-		#main::_log("SQL::cache: readed from cache $self->{'value'}->{'rows'}") if $debug;
-		if ($self->{'value'})
-		{
-			main::_log("SQL::cache: readed from cache") if $debug;
-			if ($env{'schedule'} && !$env{'recache'})
-			{ # don't save last use when only recaching or not scheduling
-				$Ext::CacheMemcache::cache->set(
-					'namespace' => "db_cache_SQL:use",
-					'key' => $env{'id'},
-					'value' => time(),
-					'expiration' => ($self->{'value'}->{'expire'}*10).'S',
-				);
-			}
-		}
-		else
-		{
-			return undef;
-		}
 	}
 	
 	return bless $self, $class;
