@@ -96,6 +96,8 @@ sub new
 			);
 	}
 	
+#	use Data::Dumper;print Dumper($objects{$obj->{'uid'}});
+	
 	if ($objects{$obj->{'uid'}} && ($obj->{'config'}->{'mtime'} > $objects{$obj->{'uid'}}->{'config'}->{'mtime'}))
 	{
 		main::_log("{L10n} '$obj->{'location'}' expired, modified before ".( $obj->{'config'}->{'mtime'}-$objects{$obj->{'uid'}}->{'config'}->{'mtime'} )."s");
@@ -171,6 +173,8 @@ sub new
 	$t->close() if $debug;
 	return $obj_return;
 }
+
+sub TO_JSON { return { %{ shift() } }; }
 
 =head1 METHODS
 

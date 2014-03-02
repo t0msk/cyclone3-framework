@@ -349,7 +349,7 @@ sub new
 	return $obj_return;
 }
 
-
+sub TO_JSON { return { %{ shift() } }; }
 
 
 
