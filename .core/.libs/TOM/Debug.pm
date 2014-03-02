@@ -27,7 +27,7 @@ knižnice:
 =cut
 
 #use TOM;
-use TOM::Debug::logs; # 300KB
+#use TOM::Debug::logs; # 300KB
 use TOM::Debug::breakpoints;
 use TOM::Debug::proc;
 use XML::Generator; # 400KB
