@@ -92,6 +92,8 @@ use conv;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Ext::Redis::_init;
 use Storable;
+use JSON::XS;
+our $json = JSON::XS->new->utf8->allow_blessed->allow_nonref->allow_unknown(1);
 
 #use warnings;
 use vars qw/
@@ -386,11 +388,13 @@ sub module
 		if ($Redis)
 		{
 			# get from Redis
-			my $key = 'C3|mdl_cache|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+			my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
 			$cache={
 				@{$Redis->hgetall($key)}
 			};
-			$cache->{'return_data'}=Storable::thaw($cache->{'return_data'});
+			$cache->{'return_data'}=$json->decode($cache->{'return_data'})
+				if $cache->{'return_data'};
+			$cache->{'return_data'}={} unless $cache->{'return_data'};
 			$cache_parallel=$cache->{'etime'};
 		}
 		elsif ($TOM::CACHE_memcached)
@@ -546,7 +550,7 @@ sub module
 				my $hits;
 				if ($Redis)
 				{
-					my $key = 'C3|mdl_cache|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+					my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
 #					$hits=$Redis->hincrby($key,'hits',1);
 				}
 				else
@@ -698,7 +702,7 @@ sub module
 		{
 			if ($Redis)
 			{
-				my $key = 'C3|mdl_cache|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+				my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
 				$Redis->hset($key,'etime',$main::time_current);
 			}
 			elsif ($TOM::CACHE_memcached)
@@ -830,7 +834,7 @@ our \$VERSION=$m_time;
 				
 				if ($Redis)
 				{
-					my $key = 'C3|mdl_cache|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+					my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
 					
 					if ($return_data{'entity'})
 					{
@@ -848,7 +852,7 @@ our \$VERSION=$m_time;
 					# save to Redis
 					$Redis->hmset($key,
 						'body' => $Tomahawk::module::XSGN{'TMP'} || "",
-						'return_data' => Storable::nfreeze(\%return_data),
+						'return_data' => $json->encode(\%return_data),
 						'return_code' => $return_code,
 						'time_from' => Time::HiRes::time(),
 						'time_duration' => $CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'},
@@ -938,7 +942,7 @@ our \$VERSION=$m_time;
 			{
 				if ($Redis)
 				{
-					my $key = 'C3|mdl_cache|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+					my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
 					$Redis->hdel($key,'etime'); # remove execution time
 				}
 				elsif ($TOM::CACHE_memcached)
@@ -968,7 +972,7 @@ our \$VERSION=$m_time;
 		{
 			if ($Redis)
 			{
-				my $key = 'C3|mdl_cache|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+				my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
 				$Redis->hdel($key,'etime'); # remove execution time
 			}
 			elsif ($TOM::CACHE_memcached)
