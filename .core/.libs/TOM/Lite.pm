@@ -47,8 +47,10 @@ return %env0}
 
 our %HND;
 our @log_sym=("+","-","+","+","-");
+our %log_file;
 our $log_time;
 our %log_date;
+our $log_TTL=5;
 sub _log
 {
 	return undef if $TOM::DEBUG_log_file==-1;
@@ -81,10 +83,19 @@ sub _log
 	$get[1]=~s|[\n\r\t]| |g;
 	
 	my $tt=time();
+	
 	if ($tt > $log_time)
 	{
+#		print "aaaaaaaaaaa\n";
 		$log_time=$tt;
 		%log_date=ctodatetime($log_time,format=>1);
+		foreach (keys %log_file)
+		{
+#			print "close $_\n";
+			close ($HND{$log_file{$_}});
+			delete $HND{$log_file{$_}};
+			delete $log_file{$_};
+		}
 	}
 	
 	my $msec=ceil((Time::HiRes::gettimeofday)[1]/100);
@@ -101,7 +112,6 @@ sub _log
 		$msg.="...";
 	}
 	
-#=head1
 	if (
 			($main::stdout && $main::debug && $get[3] eq $TOM::engine) ||
 			($main::stdout && $get[3] eq "stdout")
@@ -124,7 +134,6 @@ sub _log
 		print STDERR "CYCLONE3STDERR: ".$get[1]." at ".$filename." line ". $line ."\n";
 		print STDERR color 'reset';
 	}
-#=cut
 	
 	if (
 			($TOM::DEBUG_log_file>=$get[0])||
@@ -142,35 +151,38 @@ sub _log
 #			return 1;
 #		}
 		
-		my $file;
-		if ($TOM::path_log)
-		{
-			$file=$TOM::path_log;
-			if ($get[4]==1) {} # global
-			elsif ($tom::Pm && $get[4]==2) {$file.='/'.($tom::H_orig || $tom::Hm)} # master
-			elsif ($tom::H) {$file.='/'.($tom::H_orig || $tom::H)} # local
-			$file.='/'; # global
-		}
-		else
-		{
-			$file=$TOM::P."/_logs/";
-			$file=$tom::P."/_logs/" if $tom::P;
-			$file=$tom::Pm."/_logs/" if ($tom::Pm && $get[4]==2);
-			$file=$TOM::P."/_logs/" if $get[4]==1;
-		}
-		
-		$file.="[".$TOM::hostname."]" if $TOM::serverfarm;
-		$file.="$log_date{year}-$log_date{mom}-$log_date{mday}";
-#		$file.="-$log_date{hour}" if $TOM::DEBUG_log_file_frag; # rozlisenie na hodiny
-		
 		$get[0]=0 unless $get[0];
 		
-		my $filename_full=$file.".".$get[3].".log";
-		if (!$HND{$filename_full})
+		my $file_spec=$get[3].':'.$get[4].":".$log_date{'mday'};
+		my $filename_full=$log_file{$file_spec};
+		if (!$log_file{$file_spec})
 		{
-#			print "a '$filename_full'\n";
-			if (! -e $file){mkdir $file;chmod (0777,$file)} # check directory
-			use Fcntl;
+			if ($TOM::path_log)
+			{
+				$filename_full=$TOM::path_log;
+				if ($get[4]==1) {} # global
+				elsif ($tom::Pm && $get[4]==2) {$filename_full.='/'.($tom::H_orig || $tom::Hm)} # master
+				elsif ($tom::H) {$filename_full.='/'.($tom::H_orig || $tom::H)} # local
+				$filename_full.='/'; # global
+			}
+			else
+			{
+				$filename_full=$TOM::P."/_logs/";
+				$filename_full=$tom::P."/_logs/" if $tom::P;
+				$filename_full=$tom::Pm."/_logs/" if ($tom::Pm && $get[4]==2);
+				$filename_full=$TOM::P."/_logs/" if $get[4]==1;
+			}
+			
+			$filename_full.="[".$TOM::hostname."]" if $TOM::serverfarm;
+			$filename_full.="$log_date{year}-$log_date{mom}-$log_date{mday}";
+		
+			$filename_full=$filename_full.".".$get[3].".log";
+			
+			$filename_full=~/^(.*)\//;my $file_dir=$1;
+			$log_file{$file_spec}=$filename_full;
+#			print "$file_spec $file_dir file=$filename_full\n";
+			
+			if (! -e $file_dir){mkdir $file_dir;chmod (0777,$file_dir)} # check directory
 			my $logfile_new;
 			$logfile_new=1 unless -e $filename_full;
 			# open this handler at first
@@ -179,10 +191,9 @@ sub _log
 				|| print STDERR "Cyclone3 system can't write into logfile $filename_full $!\n";
 			chmod (0666 , $filename_full) if $logfile_new;
 		}
+		
 		syswrite($HND{$filename_full}, $msg."\n", length($msg."\n"));
-#		print $HND{$filename_full} ($msg."\n");
-#		print $HND{$filename_full} "test";
-#		close($HND{$filename_full}); # close on every write (because logrotate)
+		
 	}
 	
 	return 1;
