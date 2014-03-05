@@ -1189,6 +1189,170 @@ sub find_path_url
 
 
 
+sub find_path_url_j
+{
+	my $path=shift;
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::find_path_url_j('$path')") if $debug;
+	
+	$env{'db_h'}='main' unless $env{'db_h'};
+	
+	foreach (keys %env)
+	{
+		main::_log("input '$_'='$env{$_}'") if $debug;
+	}
+	
+	my $cache_key='tree_path_url::'.$env{'db_h'}.'::'.$env{'db_name'}.'::'.$env{'tb_name'}.'_j::'.$env{'lng'}.'::'.$path;
+	my $cache_changetime;
+	
+	if ($env{'-cache'} && $TOM::CACHE_memcached)
+	{
+		
+		$cache_changetime=App::020::SQL::functions::_get_changetime(\%env);
+		
+		my $cache=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_key);
+		
+		if ($cache_changetime <= $cache->{'time'})
+		{
+			main::_log("found in cache") if $debug;
+			main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}_j'.'$env{'tb_name'}' has ID='$cache->{'data'}{'ID'}'") unless $debug;
+			$t->close() if $debug;
+			return %{$cache->{'data'}};
+		}
+		
+	}
+	
+	my @level=split('/',$path);
+	my $levels=($path=~s|/|/|g);
+	
+	main::_log("levels=$levels") if $debug;
+	
+	my $ID_charindex= '___:' x ($levels+1);
+	$ID_charindex=~s|:$||;
+	
+	my $i=0;
+	my @ID_charindex_find=('');
+	foreach my $level_part (@level)
+	{
+		my $t_level=track TOM::Debug("level-$i") if $debug;
+		main::_log("part='$level_part'") if $debug;
+		
+		my $i0=0;
+		foreach my $way (@ID_charindex_find)
+		{
+			my $ID_charindex=$way;
+			$ID_charindex.=":" if $ID_charindex;
+			if ($way eq "-"){$i0++;next;}
+			my $ll=($ID_charindex=~s|:|:|g);
+			if ($ll==$i+1){$i0++;next;}
+			
+			my $t_way=track TOM::Debug("way-$i0") if $debug;
+			main::_log("ID_charindex='$way'") if $debug;
+			
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					ID,
+					ID_charindex
+				FROM
+					`$env{'db_name'}`.`$env{'tb_name'}_j`
+				WHERE
+					ID_charindex LIKE '$ID_charindex\___'
+					AND name_url=?
+					AND lng='$env{'lng'}'
+					AND status='Y'
+				ORDER BY
+					ID_charindex, datetime_create DESC
+			},'bind'=>[
+				$level[$i]
+			],'db_h'=>$env{'db_h'},'-quiet'=>1,'-slave'=>$env{'-slave'});
+			if (!$sth0{'sth'})
+			{
+				return undef;
+			}
+			
+			if (!$sth0{'rows'})
+			{
+				$way="-";
+				$t_way->close() if $debug;
+				next;
+			}
+			
+			my $i2=0;
+			while (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				if (!$i2)
+				{
+					$ID_charindex_find[$i0]=$db0_line{'ID_charindex'};
+					main::_log("set way='$ID_charindex_find[$i0]'") if $debug;
+				}
+				else
+				{
+					main::_log("new way='$db0_line{'ID_charindex'}'") if $debug;
+					push @ID_charindex_find,$db0_line{'ID_charindex'};
+				}
+				
+				$i2++;
+			}
+			
+			$i0++;
+			$t_way->close() if $debug;
+		}
+		$i++;
+		$t_level->close() if $debug;
+	}
+	
+	foreach (@ID_charindex_find)
+	{
+		main::_log("out=$_") if $debug;
+	}
+	
+	my $SQL=qq{
+		SELECT
+			*
+		FROM
+			`$env{'db_name'}`.`$env{'tb_name'}_j`
+		WHERE
+			ID_charindex='$ID_charindex_find[0]'
+			AND status='Y'
+			AND lng='$env{lng}'
+		ORDER BY datetime_create DESC
+		};
+	my %sth1=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'quiet'=>1,'-slave'=>$env{'-slave'});
+	if ($sth1{'rows'})
+	{
+		main::_log("only 1 output") if $debug;
+		my %data=$sth1{'sth'}->fetchhash();
+		main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$data{'ID'}'") unless $debug;
+		
+		if ($env{'-cache'} && $TOM::CACHE_memcached)
+		{
+			$Ext::CacheMemcache::cache->set
+			(
+				'namespace' => "db_cache",
+				'key' => $cache_key,
+				'value' =>
+				{
+					'time' => time(),
+					'data' => {%data}
+				}
+			);
+		}
+		
+		$t->close() if $debug;
+		return %data;
+	}
+	else
+	{
+		main::_log("can't be found",1) if $debug;
+		$t->close() if $debug;
+		return undef;
+	}
+	
+	$t->close() if $debug;
+	return undef;
+}
+
+
 =head2 find_path
 
 Find path in table
