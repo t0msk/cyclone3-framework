@@ -153,7 +153,7 @@ sub _log
 		
 		$get[0]=0 unless $get[0];
 		
-		my $file_spec=$get[3].':'.$get[4].":".$log_date{'mday'};
+		my $file_spec=$get[3].':'.$get[4].":".$tom::H.":".$log_date{'mday'};
 		my $filename_full=$log_file{$file_spec};
 		if (!$log_file{$file_spec})
 		{
