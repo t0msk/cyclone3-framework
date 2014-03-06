@@ -90,6 +90,14 @@ sub new
 			'namespace' => "db_cache_SQL",
 			'key' => $env{'id'}
 		);
+		if ($self->{'value'})
+		{
+			main::_log("SQL::cache: readed from cache") if $debug;
+		}
+		else
+		{
+			return undef;
+		}
 	}
 	
 	return bless $self, $class;
