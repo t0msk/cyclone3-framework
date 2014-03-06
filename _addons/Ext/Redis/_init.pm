@@ -74,7 +74,7 @@ use Storable;
 use JSON::XS; # this is faster than Storable
 
 our $format = 'j';# s=storable, j=json (json is ~30% faster)
-our $json = JSON::XS->new->utf8->allow_blessed->convert_blessed();
+our $json = JSON::XS->new->utf8->convert_blessed();
 
 sub new
 {

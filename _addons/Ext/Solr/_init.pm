@@ -198,6 +198,10 @@ sub add
 	return $response;
 }
 
+package WebService::Solr::Field;
+
+sub TO_JSON { return { %{ shift() } }; }
+
 1;
 
 =head1 AUTHOR
