@@ -1,10 +1,24 @@
-#!/usr/bin/env perl
-# ex:ts=4
+#!/usr/bin/perl
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.bin/c3-init";
+}
 
 use strict;
 use warnings;
 use DateTime;
 use File::ReadBackwards;
+use Ext::Solr::_init;
+
+$Ext::Solr::munin_availability_warning = 20
+	unless $Ext::Solr::munin_availability_warning;
+$Ext::Solr::munin_availability_critical = 30
+	unless $Ext::Solr::munin_availability_critical;
 
 my $cmd = shift || '';
 if ($cmd eq 'config') {print qq{graph_title Cyclone3 Solr availability
@@ -13,8 +27,8 @@ graph_category cyclone3
 graph_vlabel milliseconds
 graph_order query
 query.label Search duration
-query.warning 50
-query.critical 100
+query.warning $Ext::Solr::munin_availability_warning
+query.critical $Ext::Solr::munin_availability_critical
 query.min 0
 query.max 1000
 };
