@@ -33,4 +33,6 @@ if (!$Redis)
 }
 
 my %info=%{$Redis->info()};
-print "keys.value " . $info{'changes_since_last_save'} . "\n";
+use Data::Dumper;
+#print Dumper(\%info);
+print "keys.value " . ($info{'changes_since_last_save'} || $info{'rdb_changes_since_last_save'}) . "\n";
