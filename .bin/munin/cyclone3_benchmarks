@@ -87,7 +87,7 @@ my $t=track TOM::Debug("exec",'timer'=>1);
 for (1..100)
 {
 	my %sth0=TOM::Database::SQL::execute(qq{SELECT * FROM TOM.a301_user_online WHERE ID_user=? LIMIT 1},
-		'bind'=>['usr'.$_],'quiet'=>1,'-cache'=>600);
+		'bind'=>['usr'.$_],'quiet'=>1,'-cache'=>86400);
 }
 $t->close();
 print "userget_cache.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
