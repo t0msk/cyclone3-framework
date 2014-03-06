@@ -93,7 +93,7 @@ use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Ext::Redis::_init;
 use Storable;
 use JSON::XS;
-our $json = JSON::XS->new->utf8->allow_blessed->allow_nonref->allow_unknown(1);
+our $json = JSON::XS->new->utf8->allow_blessed->convert_blessed;
 
 #use warnings;
 use vars qw/
