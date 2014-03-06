@@ -93,7 +93,7 @@ use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Ext::Redis::_init;
 use Storable;
 use JSON::XS;
-our $json = JSON::XS->new->utf8->allow_blessed->convert_blessed;
+our $json = JSON::XS->new->utf8->convert_blessed;
 
 #use warnings;
 use vars qw/
@@ -411,7 +411,7 @@ sub module
 		}
 		else
 		{
-			main::_log("memcached: not available (lower performance)",1) if $debug;
+			main::_log("memcached/redis: not available (lower performance)",1);# if $debug;
 		}
 		
 		if ($cache)
