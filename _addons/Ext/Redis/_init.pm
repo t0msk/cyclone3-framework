@@ -303,7 +303,7 @@ sub new
 		}
 		else
 		{
-			main::_log("can't connect Redis",1);
+			main::_log("can't connect Redis $@",1);
 			$t->close();
 			undef $Ext::Redis::host;
 			return undef;
