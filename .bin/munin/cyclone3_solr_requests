@@ -65,15 +65,15 @@ while( my $line = $bw->readline )
 	
 	print $line."\n" if $debug;
 	
-	if ($line=~/\] search /)
+	if ($line=~/\]  ?search /)
 	{
 		$value_search++;
 	}
-	elsif ($line=~/\] COMMIT /)
+	elsif ($line=~/\]  ?COMMIT /)
 	{
 		$value_commit++;
 	}
-	elsif ($line=~/\] add /)
+	elsif ($line=~/\]  ?add /)
 	{
 		$value_add++;
 	}
