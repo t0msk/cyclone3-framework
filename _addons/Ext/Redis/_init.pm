@@ -58,6 +58,7 @@ sub _connect
 			$TOM::CACHE_memcached=1;
 			$Ext::CacheMemcache::cache = new Ext::CacheMemcache::Redis;
 			main::_log("overriding \$Ext::CacheMemcache::cache object");
+			$INC{'Ext/CacheMemcache/_init.pm'} = [caller]->[1];
 		}
 	}
 	
@@ -73,7 +74,7 @@ use Storable;
 use JSON::XS; # this is faster than Storable
 
 our $format = 'j';# s=storable, j=json (json is ~30% faster)
-our $json = JSON::XS->new->utf8->allow_blessed->allow_nonref->allow_unknown(1);
+our $json = JSON::XS->new->utf8->allow_blessed->convert_blessed();
 
 sub new
 {
