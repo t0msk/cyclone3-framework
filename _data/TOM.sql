@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS `_config` (
   `reqtime` int(10) unsigned NOT NULL default '0',
   `about` varchar(100) default NULL,
   PRIMARY KEY  (`variable`,`type`,`namespace`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS `_tom3` (
   `var` varchar(100) NOT NULL default '0',
   `value` text NOT NULL,
   PRIMARY KEY  (`var`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `_url` (
   `url` text NOT NULL,
   `inserttime` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`hash`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS `a110_weblog_rqs` (
   KEY `USRM_flag` (`USRM_flag`),
   KEY `lng` (`lng`),
   KEY `result` (`result`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS `a130_received` (
   `lng` char(3) NOT NULL default '',
   `active` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`ID`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS `a130_send` (
   `active` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   KEY `ID_md5` (`ID_md5`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -146,7 +146,7 @@ CREATE TABLE IF NOT EXISTS `a150_cache` (
   UNIQUE KEY `Usecond` (`domain`,`domain_sub`,`engine`,`Cid_md5`,`time_from`),
   KEY `domain` (`domain`,`domain_sub`,`Capp`,`Cmodule`,`Cid`),
   KEY `ID_config` (`ID_config`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -168,7 +168,7 @@ CREATE TABLE IF NOT EXISTS `a150_config` (
   `about` varchar(100) NOT NULL default '',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `domain` (`domain`,`domain_sub`,`engine`,`Capp`,`Cmodule`,`Cid`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -191,7 +191,7 @@ CREATE TABLE IF NOT EXISTS `a1B0_banned` (
   `banned` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `time_start` (`time_start`,`Atype`,`Awhat`,`Btype`,`Bwho`,`lng`,`domain`,`domain_sub`,`Awhat_action`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS `a1D0_imports` (
   `import` longtext NOT NULL,
   PRIMARY KEY  (`ID`),
   KEY `IDimport` (`IDimport`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -232,27 +232,7 @@ CREATE TABLE IF NOT EXISTS `a300_users` (
   KEY `host` (`host`),
   KEY `lng` (`lng`),
   KEY `active` (`active`)
-) TYPE=MyISAM;
-
--- --------------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS `a410` (
-  `ID` int(10) unsigned NOT NULL auto_increment,
-  `IDlink` int(10) unsigned NOT NULL default '0',
-  `IDcategory` int(10) unsigned NOT NULL default '0',
-  `domain` varchar(100) default NULL,
-  `title` varchar(100) NOT NULL default '',
-  `tiny` varchar(250) NOT NULL default '',
-  `starttime` int(10) unsigned NOT NULL default '0',
-  `endtime` int(10) unsigned default NULL,
-  `IDauthor` smallint(5) unsigned NOT NULL default '0',
-  `IDeditor` smallint(5) unsigned NOT NULL default '0',
-  `votes` int(10) unsigned NOT NULL default '0',
-  `xrelated` text NOT NULL,
-  `lng` char(3) NOT NULL default '',
-  `active` char(1) NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`lng`,`active`,`starttime`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -269,5 +249,5 @@ CREATE TABLE IF NOT EXISTS `a8010_users` (
   `active` char(1) NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `IDuser` (`IDuser`,`IDuser_email`,`domain`,`domain_sub`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
