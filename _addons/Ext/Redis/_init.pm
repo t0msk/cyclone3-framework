@@ -69,6 +69,8 @@ _connect(); # default connection
 # call $Redis_{custom_name}=Ext::Redis::_connect('{custom_name}') to create parallel connection
 # for example: $Redis_para2=Ext::Redis::_connect('para2');
 
+package XML::XPath;sub TO_JSON{return undef}
+
 package Ext::CacheMemcache::Redis;
 use Storable;
 use JSON::XS; # this is faster than Storable
