@@ -281,6 +281,11 @@ sub execute
 		'thumbnail' => $parser->{'thumbnail'},
 	};
 	
+	my $doc_desc=$article{'abstract'};
+		$doc_desc=~s|<.*?>||gms;
+	push @{$env_out{'call'}{'H'}{'change_DOC_description'}},$doc_desc
+		if $env{'header.description'};
+	
 	if ($env{'header.og'} && $parser->{'thumbnail'}[0])
 	{
 		my %image=App::501::functions::get_image_file(
