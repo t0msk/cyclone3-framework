@@ -9,6 +9,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order` (
   `ID_entity` int(8) unsigned zerofill default NULL,
   `datetime_create` datetime NOT NULL, -- last modified
   `datetime_order` datetime NOT NULL, -- order time
+  `datetime_apply` datetime default NULL, -- apply time
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL, -- who created this order
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL, -- who last modified this order
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL, -- rel a301_user.ID_user
@@ -21,6 +22,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order` (
   `delivery_service` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `delivery_address` text character set utf8 collate utf8_unicode_ci,
   `notes` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `commission` varchar(8) character set ascii default NULL,
+  `ERP_source` varchar(8) character set ascii default NULL,
   `ERP_data` longblob,
   `status` char(1) character set ascii NOT NULL default 'N', -- N=new order Y=accepted T=canceled
   PRIMARY KEY  (`ID`),
@@ -36,6 +39,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order_j` (
   `ID_entity` int(8) unsigned zerofill default NULL,
   `datetime_create` datetime NOT NULL,
   `datetime_order` datetime NOT NULL,
+  `datetime_apply` datetime default NULL, -- apply time
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
@@ -48,6 +52,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order_j` (
   `delivery_service` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `delivery_address` text character set utf8 collate utf8_unicode_ci,
   `notes` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `commission` varchar(8) character set ascii default NULL,
+  `ERP_source` varchar(8) character set ascii default NULL,
   `ERP_data` longblob,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
