@@ -409,23 +409,23 @@ sub execute
 			$output{'rows'}=$cache->{'value'}->{'rows'};
 			$output{'time'}=$cache->{'value'}->{'time'};
 			
-#			if ($TOM::DEBUG_cache)
-#			{
-#				my $cache_key_id=TOM::Digest::hash($cache_key);
-#				$Ext::CacheMemcache::cache->incr(
-#					'namespace' => "sqlcache_hits",
-#					'key' => $cache_key_id
-#				);
-#				my $hits=$Ext::CacheMemcache::cache->get(
-#					'namespace' => "sqlcache_hits",
-#					'key' => $cache_key_id
-#				);
-#				my $hpm=0;
-#				$hpm=int($hits/((time()-$cache->{'value'}->{'time'})/60))
-#					if (((time()-$cache->{'value'}->{'time'})/60));
-#				main::_log("[sql][".$cache_key_id."][HIT] name='".substr($SQL_,0,80)."...' (start:".$cache->{'value'}->{'time'}." old:".(time()-$cache->{'value'}->{'time'})." hits:$hits hpm:".$hpm.")",3,"cache");
-#				main::_log("[sql][$tom::H][".$cache_key_id."][HIT]",3,"cache",1);
-#			}
+			if ($TOM::DEBUG_cache)
+			{
+				my $cache_key_id=TOM::Digest::hash($cache_key);
+				$Ext::CacheMemcache::cache->incr(
+					'namespace' => "sqlcache_hits",
+					'key' => $cache_key_id
+				);
+				my $hits=$Ext::CacheMemcache::cache->get(
+					'namespace' => "sqlcache_hits",
+					'key' => $cache_key_id
+				);
+				my $hpm=0;
+				$hpm=int($hits/((time()-$cache->{'value'}->{'time'})/60))
+					if (((time()-$cache->{'value'}->{'time'})/60));
+				main::_log("[sql][".$cache_key_id."][HIT] name='".substr($SQL_,0,80)."...' (start:".$cache->{'value'}->{'time'}." old:".(time()-$cache->{'value'}->{'time'})." hits:$hits hpm:".$hpm.")",3,"cache");
+				main::_log("[sql][$tom::H][".$cache_key_id."][HIT]",3,"cache",1);
+			}
 			
 			$t->close();
 			return %output;
@@ -706,20 +706,19 @@ sub execute
 			'id_src' => $cache_key_src,
 			'limit_start' => $SQL_src_start,
 			'limit_rows' => $SQL_src_rows
-			
 		);
 		
-#		if ($TOM::DEBUG_cache)
-#		{
-#			my $cache_key_id=TOM::Digest::hash($cache_key);
-#			$Ext::CacheMemcache::cache->set(
-#				'namespace' => "sqlcache_hits",
-#				'key' => $cache_key_id,
-#				'value' => 0
-#			);
-#			main::_log("[sql][".$cache_key_id."][CRT] name='".substr($SQL_,0,80)."...' (start:".time().")",3,"cache");
-#			main::_log("[sql][$tom::H][".$cache_key_id."][CRT]",3,"cache",1);
-#		}
+		if ($TOM::DEBUG_cache)
+		{
+			my $cache_key_id=TOM::Digest::hash($cache_key);
+			$Ext::CacheMemcache::cache->set(
+				'namespace' => "sqlcache_hits",
+				'key' => $cache_key_id,
+				'value' => 0
+			);
+			main::_log("[sql][".$cache_key_id."][CRT] name='".substr($SQL_,0,80)."...' (start:".time().")",3,"cache");
+			main::_log("[sql][$tom::H][".$cache_key_id."][CRT]",3,"cache",1);
+		}
 		
 	}
 	
