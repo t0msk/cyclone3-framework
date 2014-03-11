@@ -59,6 +59,9 @@ sub new
 				while (my $db0_line=$env{'sth'}->fetchrow_hashref())
 				{
 					$line++;
+					# autofix unicode
+					foreach (grep {!utf8::is_utf8($db0_line->{$_})} keys %{$db0_line})
+						{utf8::decode($db0_line->{$_})};
 					push @{$self->{'value'}->{'fetch'}}, {%{$db0_line}};
 				}
 				# finish it after fetch all
