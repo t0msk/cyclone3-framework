@@ -26,8 +26,6 @@ BEGIN
 	$Ext::Solr=1;
 }
 
-BEGIN {shift @INC;}
-
 #our $cache_available;
 our $debug=0;
 our $service;
