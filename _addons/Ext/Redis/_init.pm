@@ -150,10 +150,16 @@ sub get
 		'C3|M'.$format.'|'.$env{'namespace'}.'|'.$env{'key'}
 	);
 	
+	if (ref($value) eq "RedisDB::Error::DISCONNECTED")
+	{
+		main::_log("RedisDB diconnected",1);
+		return undef;
+	}
+	
 	if ($format eq "j")
 	{
 		return $json->decode($value) if $value=~/^{/;
-		return {} if $value eq "null";
+		return {} if ($value eq "null");
 		return $value;
 	}
 	else
@@ -245,7 +251,7 @@ sub new
 					else
 					{
 						
-						main::_log("can't connect Redis",1);
+						main::_log("can't connect any active Redis node, disabling Redis service",1);
 						$t->close();
 						undef @Ext::Redis::hosts;
 						undef $Ext::Redis::host;
@@ -341,10 +347,19 @@ sub _redisdb_connect
 				)
 			}
 		};
-		if ($service && $service->ping)
+		if ($service)
 		{
-			my %info=%{$service->info()};
-			main::_log("Redis \@$host v".$info{'redis_version'}." connected and respondig");
+			my $ping=$service->ping;
+			if (!ref($ping) && $ping eq "PONG")
+			{
+				my %info=%{$service->info()};
+				main::_log("Redis \@$host v".$info{'redis_version'}." connected and respondig");
+			}
+			else
+			{
+				main::_log("can't connect Redis \@$host",1);
+				return undef;
+			}
 		}
 		else
 		{
