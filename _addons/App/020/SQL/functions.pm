@@ -53,7 +53,7 @@ L<App::020|app/"020/_init.pm">
 use TOM::Database::SQL;
 use Ext::CacheMemcache::_init;
 use Ext::Redis::_init;
-use Ext::RabbitMQ::_init;
+#use Ext::RabbitMQ::_init;
 use App::020::SQL::functions::tree;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 
@@ -1503,7 +1503,7 @@ sub _save_changetime
 	$env{'db_h'}='main' unless $env{'db_h'};
 	$env{'db_name'}=$TOM::DB{$env{'db_h'}}{'name'} unless $env{'db_name'};
 	
-	if (!$TOM::CACHE_memcached && !$Redis && !$RabbitMQ)
+	if (!$TOM::CACHE_memcached && !$Redis)
 	{
 		# when memcached or Redis is not enabled, return 1
 		return 1;
@@ -1516,44 +1516,44 @@ sub _save_changetime
 	$main::env{'cache'}{'db_changed'}{$key}=$tt;
 	$main::env{'cache'}{'db_changed'}{$key_entity}=$tt;
 	
-	if ($RabbitMQ && !$conf{'-autosave'}) # publish event
-	{
-		use JSON;
-		if ($env{'ID_entity'})
-		{
-			$RabbitMQ->publish(
-				'exchange' => 'entity.change',
-				'routing_key' => '',
-				'header' => {
-					'app_id' => $tom::H
-				},
-				'body' => to_json({
-					'key' => $key_entity,
-					'mtime' => $tt,
-					'user' => $main::USRM{'ID_user'},
-					'hostname' => $TOM::hostname,
-					'domain' => $tom::H
-				})
-			);
-		}
-		else
-		{
-			$RabbitMQ->publish(
-				'exchange' => 'entity.change',
-				'routing_key' => '',
-				'header' => {
-					'app_id' => $tom::H
-				},
-				'body' => to_json({
-					'key' => $key,
-					'mtime' => $tt,
-					'user' => $main::USRM{'ID_user'},
-					'hostname'  => $TOM::hostname,
-					'domain' => $tom::H
-				})
-			);
-		}
-	}
+#	if ($RabbitMQ && !$conf{'-autosave'}) # publish event
+#	{
+#		use JSON;
+#		if ($env{'ID_entity'})
+#		{
+#			$RabbitMQ->publish(
+#				'exchange' => 'entity.change',
+#				'routing_key' => '',
+#				'header' => {
+#					'app_id' => $tom::H
+#				},
+#				'body' => to_json({
+#					'key' => $key_entity,
+#					'mtime' => $tt,
+#					'user' => $main::USRM{'ID_user'},
+#					'hostname' => $TOM::hostname,
+#					'domain' => $tom::H
+#				})
+#			);
+#		}
+#		else
+#		{
+#			$RabbitMQ->publish(
+#				'exchange' => 'entity.change',
+#				'routing_key' => '',
+#				'header' => {
+#					'app_id' => $tom::H
+#				},
+#				'body' => to_json({
+#					'key' => $key,
+#					'mtime' => $tt,
+#					'user' => $main::USRM{'ID_user'},
+#					'hostname'  => $TOM::hostname,
+#					'domain' => $tom::H
+#				})
+#			);
+#		}
+#	}
 	
 	if ($Redis)
 	{
