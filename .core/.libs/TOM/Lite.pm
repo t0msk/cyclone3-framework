@@ -5,12 +5,8 @@ use utf8;
 use strict;
 
 our $event_socket;
-
-#eval {if ($Ext::Redis::logger){
-#	# try to use RedisDB logging
-#	use Ext::Redis::_init;
-#}};
-
+use JSON;
+our $json = JSON::XS->new->utf8->allow_blessed(1);
 
 sub ctodatetime
 {
@@ -142,14 +138,6 @@ sub _log
 		) # logujem v pripade ze som v ramci levelu alebo ide o ERROR
 	{
 		return 1 if $get[3] eq "stdout";
-#		if ($Redis && $Ext::Redis::logger)
-#		{
-#			print $msg."\n";
-#			$Redis->publish('C3|log|'."test",
-#				"message"
-#				,sub {});
-#			return 1;
-#		}
 		
 		$get[0]=0 unless $get[0];
 		
@@ -227,7 +215,15 @@ sub _log_long
 
 sub _event
 {
-	return undef unless $TOM::event_socket;
+	if (
+		!$TOM::event_socket &&
+		(!$TOM::event_redis && !$Ext::Redis::service) &&
+		(!$TOM::event_elastic && !$Ext::Elastic::service)
+	)
+	{
+		return undef;
+	}
+	
 	return undef if
 	(
 		(!$_[0] || !$_[1])
@@ -236,7 +232,7 @@ sub _event
 	return undef if $TOM::event_severity_disable{$_[0]};
 	return undef if $TOM::event_facility_disable{$_[1]};
 	
-	if (!$event_socket)
+	if (!$event_socket && $TOM::event_socket)
 	{
 		my @peer=split(':',$TOM::event_socket);
 		$event_socket = IO::Socket::INET->new(
@@ -247,16 +243,17 @@ sub _event
 		or do {undef $TOM::event_socket;return;};
 	}
 	
+	my $msec=int((Time::HiRes::gettimeofday)[1]/1000);
 	tie my %hash, 'Tie::IxHash', (
-		'timestamp' => time().int((Time::HiRes::gettimeofday)[1]/1000),
+		'timestamp' => time().'.'.$msec,
 		'severity' => $_[0],
 		'hostname' => $TOM::hostname,
 		'PID' => $$,
 		'facility' => $_[1],
 		'engine' => $TOM::engine,
+		%{$_[2]},
 		do{('domain',$tom::H) if $tom::H},
 		do{('request',$main::request_code) if $main::request_code},
-		%{$_[2]}
 	);
 	
 	if ($main::USRM{'ID_user'})
@@ -268,8 +265,22 @@ sub _event
 		};
 	}
 	
-	print $event_socket to_json(\%hash)."\n";
-	
+	if ($event_socket && $TOM::event_socket)
+	{
+		print $event_socket $json->encode(\%hash)."\n";
+	}
+	if ($TOM::event_elastic && $Ext::Elastic::service)
+	{
+		my %log_date=ctodatetime(int($hash{'timestamp'}),format=>1);
+		$Ext::Elastic::service->index(
+			'index' => '.cyclone3.'.$log_date{'year'}.$log_date{'mon'},
+			'type' => 'event',
+			'body' => {
+				'datetime' => $log_date{'year'}.'-'.$log_date{'mon'}.'-'.$log_date{'mday'}.' '.$log_date{'hour'}.':'.$log_date{'min'}.':'.$log_date{'sec'}.'.'.$msec,
+				%hash
+			}
+		);
+	}
 }
 
 _event('debug','process.start',{
