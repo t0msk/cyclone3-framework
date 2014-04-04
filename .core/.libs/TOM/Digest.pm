@@ -17,34 +17,49 @@ use strict;
 use Encode;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-our $murmur;
+our $sha;
+our $sha1;
+#our $murmur;
 our $md5;
 
 BEGIN
 {
-	eval {require Digest::MurmurHash;};
+	eval {require Digest::SHA;};
 	if (!$@)
 	{
-		main::_log("<={LIB} Digest::MurmurHash");
-		$murmur=1;
+		main::_log("<={LIB} Digest::SHA");
+		$sha=1;
 	}
 	else
 	{
-		main::_log("<={LIB} Digest::MurmurHash not found",1);
-		eval {require Digest::MD5;};
+		eval {require Digest::SHA1;};
 		if (!$@)
 		{
-			main::_log("<={LIB} Digest::MD5");
-			$md5=1;
-		};
+			main::_log("<={LIB} Digest::SHA1");
+			$sha1=1;
+		}
+		else
+		{
+			main::_log("<={LIB} Digest::SHA1 not found",1);
+			eval {require Digest::MD5;};
+			if (!$@)
+			{
+				main::_log("<={LIB} Digest::MD5");
+				$md5=1;
+			};
+		}
 	}
 };
 
 sub hash
 {
-	if ($murmur)
+	if ($sha)
 	{
-		return Digest::MurmurHash::murmur_hash(shift);
+		return Digest::SHA::sha256_hex(shift);
+	}
+	elsif ($sha1)
+	{
+		return Digest::SHA1::sha1_hex(Encode::encode_utf8(shift));
 	}
 	elsif ($md5)
 	{
