@@ -47,8 +47,12 @@ if ($@)
 $t_domain->close;
 
 our $CGI;
+$TOM::max_count=1000;
+$tom::count=0;
 while ($main::CGI=new CGI::Fast())
 {
+	alarm($TOM::fcgi_timeout);
+	$tom::count++;
 	
 	my %FORM=TOM::Net::HTTP::CGI::get_QUERY_STRING($ENV{'QUERY_STRING'});
 	
@@ -106,5 +110,19 @@ while ($main::CGI=new CGI::Fast())
 #	print "Location: $tom::H_grf/t.gif\n\n";
 	print "Status: 200 OK\n\n";
 	print "\n";
+	
+	if (
+			($tom::HUP) && (($main::time_current-$TOM::time_start)<30) ||
+			($tom::HUP == 2) ||
+			($TOM::max_count && ($TOM::max_count <= $tom::count)) ||
+			($TOM::max_time <= ($main::time_current-$TOM::time_start))
+		)
+	{
+#		main::_log("SHUTDOWN (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3);
+#		main::_log("SHUTDOWN (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
+		exit;
+	}
+	
+	alarm($TOM::fcgi_sleep_timeout);
 }
 
