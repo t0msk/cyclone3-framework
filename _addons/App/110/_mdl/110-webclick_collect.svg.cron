@@ -1,0 +1,283 @@
+#!/usr/bin/perl
+# áéíóú - USE UTF-8 !!!
+package CRON::module;
+#use App::400;
+#use App::400::format;
+#use App::1D0;
+use SVG;
+use Utils::vars;
+#use App::400::SQL::a400;
+
+#use Net::HTTP::LiteAgent;
+
+#use TOM::Net::HTTP::agents;
+
+use Utils::datetime;
+#use App::1B0;
+use Time::Local;
+use TOM::Database::connect;
+use Int::charsets::encode;
+
+use strict;
+
+sub execute
+{
+	my %env=@_;
+	TOM::Database::connect::multi("main","stats");
+	use Data::Dumper;
+	
+	my $width=1300;
+	my $svg=SVG->new(width=>$width,height=>5000);
+	
+	my $h=50;
+	my $left=$width/2;
+	my @arr;
+	
+	foreach (keys %env)
+	{
+		main::_log("$_: $env{$_}");
+	}
+	
+	my $TID="l_default";
+	$TID=$env{'typeid'} if $env{'typeid'};
+	
+#	my %datetime_from=Utils::datetime::ctodatetime($select_from,format=>1);
+#	my %datetime_to=Utils::datetime::ctodatetime($select_to,format=>1);
+	
+	$env{'from'}='2010-01-22 00:00:00';
+	$env{'to'}='2010-01-25 00:00:00';
+
+	main::_log("data from: $env{'from'} to: $env{'to'} TID:$TID domain_sub: $tom::H");
+	
+	my %hash;
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			TOM.a110_webclick_log
+		WHERE
+			datetime_insert >= DATE_SUB(NOW(),INTERVAL 7 DAY)
+			AND TID='$TID'
+			AND domain_sub='$tom::H'
+			AND g IS NOT NULL
+--			AND g != ''
+--			AND oc IS NOT NULL
+--			AND user_agent != ''
+--			AND (user_agent LIKE '\%Chrome%' OR user_agent LIKE '\%Firefox%')
+	};
+	
+	my $db0=$main::DB{'stats'}->Query($sql);
+	
+	my $num=$db0->NumRows();
+	main::_log("selected $num rows");
+	
+	use Ext::SVGraph::_init;
+	
+	my %box;
+	my %box_group_color;
+	my %box_group_color_used;
+	my $box_max;
+	my $p;
+	
+	$box_group_color_used{'black'}=1;
+	$box_group_color{''}='black';
+	
+	my $pix_round=2;
+	
+	while (my %db0_line=$db0->fetchhash)
+	{
+		$p++;
+		
+		foreach('oc','oy','ow','oh')
+		{
+			$db0_line{$_}=int($db0_line{$_}/$pix_round)*$pix_round;
+		}
+		
+		$db0_line{'ow'}=$pix_round if $db0_line{'ow'}<$pix_round;
+		$db0_line{'oh'}=$pix_round if $db0_line{'oh'}<$pix_round;
+		
+		my $key_name=$db0_line{'oc'}.':'.$db0_line{'oy'}.':'.$db0_line{'ow'}.':'.$db0_line{'oh'};
+		
+#		main::_log("$key_name");
+		
+		$box{$db0_line{'g'}}{$key_name}++;
+		
+		$box_max=$box{$db0_line{'g'}}{$key_name}
+			if $box{$db0_line{'g'}}{$key_name}>$box_max;
+		if (!$box_group_color{$db0_line{'g'}})
+		{
+			foreach my $color(@SVGraph::colors::table_C)
+			{
+				next if $box_group_color_used{$color};
+				$box_group_color_used{$color}=1;
+				$box_group_color{$db0_line{'g'}}=$color;
+				last;
+			}
+		}
+	}
+	
+	foreach my $group_name (sort {$a cmp $b} keys %box)
+	{
+		print "group=$group_name\n";
+		
+		
+		foreach my $box_name (sort {$box{$group_name}{$b} <=> $box{$group_name}{$a}} keys %{$box{$group_name}})
+		{
+			my @arg=split(':',$box_name);
+			#my $group_name=$arg[4];
+			
+			my $opacity=$box{$group_name}{$box_name}/$box_max/2;
+				$opacity=int($opacity*200)/200;
+			
+			next unless $opacity;
+			
+			print "@arg ". $box_group_color{$group_name} ." ".$box{$group_name}{$box_name}." opacity=$opacity\n";
+			
+				$svg->polyline(
+					'points' => 
+						($arg[0]+$left).",".($arg[1])." ".
+						($arg[0]+$arg[2]+$left).",".($arg[1])." ".
+						($arg[0]+$arg[2]+$left).",".($arg[1]+$arg[3])." ".
+						($arg[0]+$left).",".($arg[1]+$arg[3])." ".
+						($arg[0]+$left).",".($arg[1]),
+					'fill' => 'rgb('.$SVGraph::colors::table{$box_group_color{$group_name}}{'B0'}.')',
+					'fill-opacity' =>$opacity,
+					
+					'stroke' => 'rgb('.$SVGraph::colors::table{$box_group_color{$group_name}}{'N0'}.')',
+					'stroke-width' => ($pix_round*3)."pt",
+					'stroke-opacity' => $opacity/5,
+					
+					'stroke-location' => "inside",
+					'stroke-linecap' => "square",
+					'stroke-linejoin' => "square"
+				);
+			
+		}
+		
+		
+	}
+	
+#	return 1;
+	
+
+	
+=head1
+	return 1;
+	
+	my $max;
+	for my $x(0..@arr-1)
+	{
+		next if not ref($arr[$x]) eq "ARRAY";
+		for my $y(0..@{$arr[$x]}-1)
+		{
+			next unless $arr[$x][$y];
+			$max=$arr[$x][$y] if $arr[$x][$y]>$max;
+		}
+	}
+	
+	for my $x(0..@arr-1)
+	{
+		
+		next if not ref($arr[$x]) eq "ARRAY";
+		for my $y(0..@{$arr[$x]}-1)
+		{
+			#print "  -$y\n";
+			#print "- $x , $y $arr[$x][$y]\n";
+			next unless $arr[$x][$y];
+			my $opacity=($arr[$x][$y]/$max); #/
+			$opacity=$opacity/2;
+			
+#=head1
+			$svg->polyline(
+				'points'	=>	($x*$h).",".($y*$h-1)." ".
+								($x*$h).",".($y*$h+$h-1)." ".
+								($x*$h+$h-1).",".($y*$h+$h-1)." ".
+								($x*$h+$h-1).",".($y*$h)." ".
+								($x*$h).",".($y*$h)." ",
+				'fill'			=>"red",
+				'fill-opacity'	=>"0",
+				'stroke'		=>"rgb(0,0,0)",
+				'stroke-width'	=>"0.5",
+				'stroke-opacity'	=>"1",
+				'stroke-linecap'	=>"round",
+				'stroke-linejoin'	=>"round");
+#=cut
+			
+#=head1
+			my $r=$arr[$x][$y];
+			$svg->circle
+			(
+				cx	=>	($x*$h)+($h/2),
+				cy	=>	($y*$h)+($h/2),
+				r	=>	$r,
+				'fill'			=>	"green",
+				'fill-opacity'	=>"0.2",
+				'stroke'		=>	"rgb(50,50,50)",
+				'stroke-width'	=>	"0.25pt",
+			);
+#=cut
+			
+#=head1
+			$svg->polyline(
+				'points'	=>	($x*$h).",".($y*$h-1)." ".
+								($x*$h).",".($y*$h+$h-1)." ".
+								($x*$h+$h-1).",".($y*$h+$h-1)." ".
+								($x*$h+$h-1).",".($y*$h)." ".
+								($x*$h).",".($y*$h)." ",
+				'fill'			=>"red",
+				'fill-opacity'	=>$opacity,
+#				'stroke'		=>"rgb(0,0,0)",
+#				'stroke-width'	=>"0.25",
+				'stroke-linecap'	=>"round",
+				'stroke-linejoin'	=>"round");
+#=cut
+		}
+	}
+	
+	
+=cut
+	
+	my $r=1;
+	my $db0=$main::DB{stats}->Query($sql);
+	while (my %db0_line=$db0->fetchhash)
+	{
+		
+		my $color="yellow";
+		
+		$svg->circle
+		(
+			cx	=>	$db0_line{x}+$left,
+			cy	=>	$db0_line{y},
+			r	=>	$r.'pt',
+#			'fill'			=>	$color,
+#			'fill'			=>	"red",
+			'fill' => 'rgb('.$SVGraph::colors::table{$box_group_color{$db0_line{'g'}}}{'N0'}.')',
+			'fill-opacity' => '0.5',
+#				'stroke'		=>	"rgb(50,50,50)",
+			'stroke'		=>	'rgb('.$SVGraph::colors::table{$box_group_color{$db0_line{'g'}}}{'N0'}.')',
+			'stroke-opacity' => '0.05',
+			'stroke-width'	=>	"5pt",
+		);
+	}
+	
+	my $svg_out=$svg->xmlify
+	(
+		'-pubid' => "-//W3C//DTD SVG 1.0//EN",
+	);
+	
+	my $filename=$TID."_".$env{'from'}."-".$env{'to'}.".svg";
+	my $filename=$TID.".svg";
+	
+	print $tom::P."/!www/".$filename."\n";
+	
+	open(HND0,">".$tom::P."/!www/".$filename);
+	print HND0 $svg_out;
+	close HND0;
+	
+	use Ext::SVG2PNG::_init;
+#	Ext::SVG2PNG::convert($tom::P."/!www/".$filename,$tom::P."/!www/".$filename.".png");
+	
+	
+ return 1}
+
+1;
