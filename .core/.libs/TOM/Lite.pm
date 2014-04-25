@@ -42,7 +42,7 @@ return %env0}
 
 
 our %HND;
-our @log_sym=("+","-","+","+","-");
+our @log_sym=("","-","","","-");
 our %log_file;
 our $log_time;
 our %log_date;
@@ -96,9 +96,11 @@ sub _log
 	
 	my $msec=ceil((Time::HiRes::gettimeofday)[1]/100);
 	
-	my $msg="[".sprintf ('%06d', $$);# unless $main::stdout;
+	my $msg;
+		$msg.="[".sprintf ('%06d', $$) unless $main::stdout;
 		$msg.=";$main::request_code" if ($TOM::Engine eq "pub" && !$main::stdout);
-		$msg.="]["
+		$msg.="]" unless $main::stdout;
+		$msg.="["
 			.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.".".sprintf("%04d",$msec)."] "
 			.(" " x $get[0]).$log_sym[$get[2]].$get[1];
 	
@@ -114,7 +116,8 @@ sub _log
 		)
 	{
 		# only to stdout
-		$msg=$log_sym[$get[2]].' '.$get[1] unless $main::debug;
+#		$msg=$log_sym[$get[2]].' '.$get[1] unless $main::debug;
+		$msg=$log_sym[$get[2]].$get[1] unless $main::debug;
 		print color 'green';
 		print color 'bold' if $get[1]=~/^</;
 		print color 'red' if $log_sym[$get[2]] eq '-';
@@ -127,7 +130,7 @@ sub _log
 		my ($package, $filename, $line) = caller;
 		# error to stderr
 		print STDERR color 'red';
-		print STDERR "CYCLONE3STDERR: ".$get[1]." at ".$filename." line ". $line ."\n";
+		print STDERR $get[1]." at ".$filename." line ". $line ."\n";
 		print STDERR color 'reset';
 	}
 	
