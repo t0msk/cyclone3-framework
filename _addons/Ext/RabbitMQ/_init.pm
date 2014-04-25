@@ -28,15 +28,17 @@ sub service
 	return undef unless $Ext::RabbitMQ::lib;
 	if (!$Ext::RabbitMQ::service)
 	{
-		my $t=track TOM::Debug("connect");
-		utf8::decode($Ext::RabbitMQ::user);
-		utf8::decode($Ext::RabbitMQ::pass);
+#		my $t=track TOM::Debug("connect");
+		utf8::encode($Ext::RabbitMQ::user); # octets -> bytes
+		utf8::encode($Ext::RabbitMQ::pass);
+		utf8::encode($Ext::RabbitMQ::vhost);
+		main::_log("connecting $Ext::RabbitMQ::user \@$Ext::RabbitMQ::host");
 		$Ext::RabbitMQ::service = Ext::RabbitMQ::RabbitFoot->new()->load_xml_spec()->connect(
 			'host' => $Ext::RabbitMQ::host || 'localhost',
 			'port' => $Ext::RabbitMQ::port || 5672,
 			'user' => $Ext::RabbitMQ::user || 'guest',
 			'pass' => $Ext::RabbitMQ::pass || 'guest',
-			'vhost' => $Ext::RabbitMQ::vhost || 'Cyclone3',
+			'vhost' => $Ext::RabbitMQ::vhost || '/',
 			'timeout' => 1
 		);
 		
@@ -50,52 +52,93 @@ sub service
 		
 #		$channel->{'arc'}->confirm();
 		
-		my $queue=$Ext::RabbitMQ::service->{'_exclusive_queue'}=$channel->declare_queue('exclusive' => 1,'queue' => '['.$TOM::hostname.':'.$$.'] callback '.$TOM::engine.' '.$tom::H);
-		use Data::Dumper;
+#		my $queue_name='['.$TOM::hostname.':'.$$.'] callback '.$TOM::engine.' '.$tom::H;
+		my $queue_name='['.$TOM::hostname.':'.$$.'] exclusive callback';
+			utf8::encode($queue_name);
+		my $queue=$Ext::RabbitMQ::service->{'_exclusive_queue'}=$channel->declare_queue('exclusive' => 1,'queue' => $queue_name);
+#		use Data::Dumper;
 #		print Dumper(
 #			$Ext::RabbitMQ::service->{'queue'}=$channel->declare_queue(exclusive => 1)
 #		);
 		
 #=head1
-		$channel->declare_exchange(
-			'exchange' => 'log',
-			'type' => 'fanout',
-		);
+#		$channel->declare_exchange(
+#			'exchange' => 'log',
+#			'type' => 'fanout',
+#		);
 		
-		$channel->declare_exchange(
-			'exchange' => 'entity.change',
-			'type' => 'fanout',
-		);
+#		$channel->declare_exchange(
+#			'exchange' => 'entity.change',
+#			'type' => 'fanout',
+#		);
 		
 		# topics
-		$channel->declare_exchange(
-			'exchange' => 'topic',
-			'type' => 'topic',
-			'durable' => 1,
-		);
+#		$channel->declare_exchange(
+#			'exchange' => 'topic',
+#			'type' => 'topic',
+#			'durable' => 1,
+#		);
 		
 		# rpc
-		$channel->declare_exchange(
-			'exchange' => 'rpc',
-			'type' => 'direct',
-			'durable' => 0,
-		);
-		$channel->declare_exchange(
-			'exchange' => 'rpc.async',
-			'type' => 'direct',
-			'durable' => 1,
-		);
+#		$channel->declare_exchange(
+#			'exchange' => 'rpc',
+#			'type' => 'direct',
+#			'durable' => 0,
+#		);
+#		$channel->declare_exchange(
+#			'exchange' => 'rpc.async',
+#			'type' => 'direct',
+#			'durable' => 1,
+#		);
 		
-		$channel->declare_queue(
-			'queue' => 'pub.job.module',
-			'exchange' => 'rpc.async',
-			'durable' => 1,
-		);
+#		$channel->declare_queue(
+#			'queue' => 'pub.job.module',
+#			'exchange' => 'rpc.async',
+#			'durable' => 1,
+#		);
 #=cut
 		
-		$t->close();
+#		# cyclone3.notify
+#		$channel->declare_exchange('exchange' => 'cyclone3.notify','type' => 'direct','durable' => 1);
+		
+=head1
+		# cyclone3.notify: notify -> cyclone3.notify
+		$channel->declare_queue('exchange' => 'cyclone3.notify','queue' => 'cyclone3.notify','durable' => 1);
+		$channel->bind_queue('exchange' => 'cyclone3.notify','routing_key' => 'notify','queue' => 'cyclone3.notify');
+		
+		# cyclone3.job
+		$channel->declare_exchange('exchange' => 'cyclone3.job','type' => 'direct','durable' => 1);
+=cut
+
+=head1
+		# cyclone3.job: job -> cyclone3.job
+		$channel->declare_queue('exchange' => 'cyclone3.job','queue' => 'cyclone3.job','durable' => 1);
+		$channel->bind_queue('exchange' => 'cyclone3.job','routing_key' => 'job','queue' => 'cyclone3.job');
+		
+		# cyclone3.job: cyclone3.job.domain.tld -> cyclone3.job.domain.tld
+		if ($tom::H_orig)
+		{
+			my $queue_name='cyclone3.job.'.$tom::H_orig;utf8::encode($queue_name);
+			$channel->declare_queue('exchange' => 'cyclone3.job','queue' => $queue_name,'durable' => 1);
+			$channel->bind_queue('exchange' => 'cyclone3.job','queue' => $queue_name,'routing_key' => $queue_name);
+		}
+=cut
+		
+#		$channel->delete_queue(
+#			'queue' => $queue_name,
+#			'exchange' => 'cyclone3.async',
+#			'durable' => 1,
+#		);# if $tom::H;
+		
+#		$channel->declare_queue(
+#			'queue' => utf8::decode('cyclone3.rpc.'.$tom::H),
+#			'exchange' => 'cyclone3.async',
+#			'durable' => 1,
+#		);
+		
+#		$t->close();
 	}
-	main::_log("return service");
+#	main::_log("return service");
 #	use Data::Dumper;print Dumper($service);
 	return $Ext::RabbitMQ::service;
 }
@@ -120,6 +163,12 @@ sub _channel
 	return $self->{'_exclusive_channel'}
 }
 
+sub _channels
+{
+	my $self=shift;
+	return $self->_channel->{'arc'}->{'connection'}->{'_channels'}
+}
+
 sub _queue
 {
 	my $self=shift;
@@ -129,10 +178,23 @@ sub _queue
 sub publish
 {
 	my $self=shift;
-	my %env=@_;utf8::decode($env{$_}) foreach keys %env;
-	utf8::decode($env{'header'}{$_}) foreach keys %{$env{'header'}};# if $env{'header'};
+	my %env=@_;
+	
+	main::_log("[Rabbit] publish exchange='".$env{'exchange'}."' routing_key='".$env{'routing_key'}."'");
+	
+	utf8::encode($env{$_}) foreach(grep {!ref($env{$_})} keys %env);
+	if (ref($env{'header'})){
+		utf8::encode($env{'header'}{$_}) foreach grep {!ref($env{'header'}{$_})} keys %{$env{'header'}};
+	};
+	
 	$self->_channel->publish(%env);
 }
 
+sub DESTROY
+{
+	my $self=shift;
+#	main::_log("DESTROY RabbitMQ");
+	$self->_channel->close();
+}
 
 1;
