@@ -585,7 +585,7 @@ sub execute
 					)
 				)
 				{
-					my %date=Utils::datetime::ctodatetime(time,format=>1);
+					my %date=main::ctodatetime(time,format=>1);
 					open(SUSP,">".$TOM::P."/_logs/_debug/".$date{'hour'}.":".$date{'min'}.":".$date{'sec'}."-".$$.".sql.err.event");
 					print SUSP "domain: $tom::H\n";
 					print SUSP "db_h: $env{'db_h'}\n";
