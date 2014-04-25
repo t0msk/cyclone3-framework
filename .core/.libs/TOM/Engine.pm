@@ -92,6 +92,8 @@ use TOM::Temp::file;
 use TOM::Template;
 use CVML;
 
+sub jobify{return undef}
+
 BEGIN
 {
 	# load if enabled in TOM.conf (to all engines)
@@ -99,6 +101,7 @@ BEGIN
 	require Ext::RabbitMQ::_init if $Ext::RabbitMQ::host;
 	require Ext::Redis::_init if ($Ext::Redis::host || @Ext::Redis::hosts);
 	require Ext::CacheMemcache::_init if $TOM::CACHE_memcached && !$Ext::CacheMemcache::cache;
+	use TOM::Engine::job::module; # for every engine load support of jobs
 }
 
 # default aplikácie
