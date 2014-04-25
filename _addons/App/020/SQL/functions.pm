@@ -53,7 +53,7 @@ L<App::020|app/"020/_init.pm">
 use TOM::Database::SQL;
 use Ext::CacheMemcache::_init;
 use Ext::Redis::_init;
-#use Ext::RabbitMQ::_init;
+use Ext::RabbitMQ::_init;
 use App::020::SQL::functions::tree;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 
@@ -1516,26 +1516,30 @@ sub _save_changetime
 	$main::env{'cache'}{'db_changed'}{$key}=$tt;
 	$main::env{'cache'}{'db_changed'}{$key_entity}=$tt;
 	
-#	if ($RabbitMQ && !$conf{'-autosave'}) # publish event
-#	{
-#		use JSON;
-#		if ($env{'ID_entity'})
-#		{
-#			$RabbitMQ->publish(
-#				'exchange' => 'entity.change',
-#				'routing_key' => '',
-#				'header' => {
-#					'app_id' => $tom::H
-#				},
-#				'body' => to_json({
-#					'key' => $key_entity,
-#					'mtime' => $tt,
-#					'user' => $main::USRM{'ID_user'},
-#					'hostname' => $TOM::hostname,
-#					'domain' => $tom::H
-#				})
-#			);
-#		}
+	if ($RabbitMQ && !$conf{'-autosave'}) # publish event
+	{
+		use JSON;
+		if ($env{'ID_entity'})
+		{
+			$RabbitMQ->publish(
+				'exchange' => 'cyclone3.notify',
+				'routing_key' => 'notify',
+				'header' => {
+					'app_id' => $tom::H_orig
+				},
+				'body' => to_json({
+					'event' => 'db_changed',
+					'db_name' => $env{'db_name'},
+					'tb_name' => $env{'tb_name'},
+					'ID_entity' => $env{'ID_entity'},
+					'key' => $key_entity,
+					'mtime' => $tt,
+					'user' => $main::USRM{'ID_user'},
+					'hostname' => $TOM::hostname,
+					'domain' => $tom::H_orig
+				})
+			);
+		}
 #		else
 #		{
 #			$RabbitMQ->publish(
@@ -1553,7 +1557,7 @@ sub _save_changetime
 #				})
 #			);
 #		}
-#	}
+	}
 	
 	if ($Redis)
 	{
