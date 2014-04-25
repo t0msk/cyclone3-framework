@@ -19,6 +19,7 @@ use open ':utf8', ':std';
 use encoding 'utf8';
 use utf8;
 use strict;
+use JSON;
 
 BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 
@@ -40,6 +41,9 @@ BEGIN
 			$tom::P_media=$tom::P."/!media"; # redefine P_media
 			main::_log_stdout("require $tom::P/local.conf");
 			require $tom::P."/local.conf";
+			
+			# save original tom::H
+			$tom::H_orig=$tom::H;
 			
 			main::_log("domain hostname '$tom::H'");
 			
@@ -115,6 +119,16 @@ BEGIN
 			require Ext::RabbitMQ::_init if $Ext::RabbitMQ::host;
 			require Ext::Redis::_init if $Ext::Redis::host;
 			require Ext::CacheMemcache::_init if $TOM::CACHE_memcached && !$Ext::CacheMemcache::cache;
+			
+			if ($Ext::Redis::service){eval{
+				main::_log("updating register of domains (RedisDB)");
+				$Ext::Redis::service->hset('C3|domains',$tom::H_orig,to_json({
+					'updated' => time(),
+					'db_name' => $TOM::DB{'main'}{'name'},
+					'tom::P' => $tom::P,
+					'tom::Pm' => $tom::Pm
+				}),sub{});
+			};}
 			
 		}
 		
