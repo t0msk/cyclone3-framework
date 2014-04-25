@@ -11,7 +11,8 @@ our $gi;
 BEGIN
 {
 	eval "use Geo::IP";
-	if ($@){main::_log("can't find Geo::IP",1)}else{
+	if ($@){#main::_log("can't find Geo::IP",1)
+		}else{
 		$GEOIP=1;
 		$gi = Geo::IP->new();
 	}
