@@ -42,8 +42,15 @@ sub _connect
 	{
 		use Data::Dumper;
 #		print Dumper($service_->{'transport'}->{'cxn_pool'}->{'seed_nodes'});
-#		main::_log("connected ".(join ",",@{$service_->{'transport'}->{'cxn_pool'}->{'seed_nodes'}}));
+		main::_log("connected ".(join ",",@{$service_->{'transport'}->{'cxn_pool'}->{'seed_nodes'}}));
 		$service=$service_;
+#		my $index='cyclone3.'.$TOM::DB{'main'}{'name'};
+#		main::_log("primary indice '$index'");
+#		if (!$service->indices->exists('index'=>$index))
+#		{
+#			main::_log("creating index '".$index."'");
+#			$service->indices->create('index'=>$index);
+#		}
 	}
 	else
 	{
@@ -66,6 +73,9 @@ use base 'Exporter';
 our @EXPORT = qw($Elastic);
 
 our $Elastic=$Ext::Elastic::service;
+
+package Search::Elasticsearch::Error::Missing;
+sub TO_JSON{return undef}
 
 1;
 
