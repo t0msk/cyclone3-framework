@@ -1,0 +1,417 @@
+#!/usr/bin/perl
+BEGIN
+{
+	$TOM::engine='job';
+	if ($ARGV[0] eq "debug"){$main::debug=1;shift @ARGV;}
+		$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
+}
+
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8; # encode = fromutf8, decode=toutf8
+use strict; # scrict code
+use vars qw//;
+our $sig_term=1;
+
+
+######################################################################################
+######################################################################################
+
+my $t0=track TOM::Debug('TOM::Engine::job');
+require TOM::Engine::job;
+$t0->close();
+
+use Encode qw(decode encode);
+use JSON;
+use Data::Dumper;
+use Ext::Redis::_init;
+use LWP::UserAgent;
+use AnyEvent;
+use Coro;
+use AnyEvent::ForkManager;
+use Proc::ProcessTable;
+use Sys::Info;
+use Sys::Info::Constants qw( :device_cpu );
+
+# main loop AnyEvent
+my $main_loop = AnyEvent->condvar;
+
+# connect RabbitMQ
+our $service=Ext::RabbitMQ::service();
+our $do=new class_do;
+
+# test API
+my $ua = LWP::UserAgent->new;
+my $uri='http://'.$Ext::RabbitMQ::user.':'.$Ext::RabbitMQ::pass.'@'.$Ext::RabbitMQ::host.':15672/api';
+my $response = $ua->get($uri.'/queues');
+if (!$response->is_success)
+{
+	die "can't connect to RabbitMQ API (".$response->status_line.")";
+}
+
+my $info = Sys::Info->new;
+my $cpu  = $info->device('CPU');
+main::_log_stdout("running for ".$cpu->count." cpu's");
+
+main::_log_stdout("declaring default job exchange, queue, binding");
+
+# cyclone3.job
+$service->_channel->declare_exchange(
+	'exchange' => encode('UTF-8', 'cyclone3.job'),
+	'type' => encode('UTF-8', 'direct'),
+	'durable' => 1);
+	# cyclone3.job: job -> cyclone3.job
+	$service->_channel->declare_queue( # global job queue
+		'exchange' => encode('UTF-8', 'cyclone3.job'),
+		'queue' => encode('UTF-8', 'cyclone3.job._global'),
+		'durable' => 1);
+	$service->_channel->bind_queue(
+		'exchange' => encode('UTF-8', 'cyclone3.job'),
+		'routing_key' => encode('UTF-8', 'job'),
+		'queue' => encode('UTF-8', 'cyclone3.job._global')
+	);
+
+# notify channel to generate triggers
+$service->_channel->declare_exchange(
+	'exchange' => encode('UTF-8', 'cyclone3.notify'),
+	'type' => encode('UTF-8', 'direct'),
+	'durable' => 1);
+our $notify_channel=$Ext::RabbitMQ::service->open_channel();
+	$notify_channel->declare_queue(
+		'exchange' => encode('UTF-8', 'cyclone3.notify'),
+		'queue' => encode('UTF-8', 'cyclone3.notify'),
+		'durable' => 1
+	);
+	$notify_channel->bind_queue(
+		'exchange' => encode('UTF-8', 'cyclone3.notify'),
+		'routing_key' => encode('UTF-8', 'notify'),
+		'queue' => encode('UTF-8', 'cyclone3.notify')
+	);
+
+	
+our %domain_info;
+our %domain_worker;
+check_domains();
+
+my $MAX_WORKERS = $TOM::job_host_max_processes || ($cpu->count * 2) +1;
+$TOM::job_domain_max_workers||=16; # max X workers parallel on same domain
+$TOM::job_worker_start_delay||=5; # start next worker after delay
+$TOM::job_domain_worker_start_delay||=60; # start next worker after delay on same domain
+
+#	$MAX_WORKERS = 1;
+main::_log_stdout("max $MAX_WORKERS workers");
+our $pm = AnyEvent::ForkManager->new(max_workers => $MAX_WORKERS);
+
+$pm->on_start(sub {
+	my($pm) = @_;
+#	main::_log("starting new fork $$");
+});
+$pm->on_finish(sub {
+	my($pm, $pid, $status) = @_;
+#  main::_log("stopping fork $$ $pid $status");
+#	exit;
+});
+
+main::_log_stdout("main loop timer starting");
+my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
+	
+#	main::_log_stdout("controlling job queue pool");
+	
+	main::_log("\@$TOM::hostname workers=".$pm->num_workers()."/".$MAX_WORKERS);
+	
+	my $response = $ua->get($uri.'/queues');
+	if (!$response->is_success)
+	{
+		die "can't connect to RabbitMQ API (".$response->status_line.")";
+	}	
+	
+	my $content=$response->decoded_content;
+	
+	my $data=from_json($content);
+	
+	#print Dumper($data);
+=head1
+	{
+		'messages_ready' => 0,
+		'messages_ready_details' => {
+			'rate' => '0'
+		},
+		'status' => 'running',
+		'node' => 'rabbit@app-01',
+		'vhost' => '/',
+		'policy' => '',
+		'messages_unacknowledged_details' => {
+			'rate' => '0'
+		},
+		'idle_since' => '2014-03-28 16:02:56',
+		'messages' => 0,
+		'durable' => bless( do{\(my $o = 0)}, 'JSON::XS::Boolean' ),
+		'messages_unacknowledged' => 0,
+		'name' => '[app-01:23433] exclusive callback',
+		'owner_pid_details' => {
+			'peer_port' => 42863,
+			'name' => '127.0.0.1:42863 -> 127.0.0.1:5672',
+			'peer_host' => '127.0.0.1'
+		},
+		'auto_delete' => $VAR1->[0]{'durable'},
+		'messages_details' => {
+			'rate' => '0'
+		},
+		'memory' => 6600,
+		'consumers' => 0,
+		'arguments' => {},
+		'backing_queue_status' => {
+			'len' => 0,
+			'next_seq_id' => 0,
+			'ram_ack_count' => 0,
+			'avg_egress_rate' => '0',
+			'q2' => 0,
+			'avg_ingress_rate' => '0',
+			'q3' => 0,
+			'pending_acks' => 0,
+			'avg_ack_ingress_rate' => '0',
+			'avg_ack_egress_rate' => '0',
+			'q4' => 0,
+			'q1' => 0,
+			'delta' => [
+				'delta',
+				'undefined',
+				0,
+				'undefined'
+			],
+			'target_ram_count' => 'infinity',
+			'persistent_count' => 0,
+			'ram_msg_count' => 0
+		},
+		'exclusive_consumer_tag' => ''
+	},
+=cut
+	
+	foreach my $queue (grep {$_->{'name'}=~/^cyclone3\.job\./} @{$data})
+	{
+		my $domain=$queue->{'name'};
+			$domain=~s|^cyclone3\.job\.||;
+		
+		if ($domain=~/^db:(.*?)$/)
+		{
+			undef $domain;
+			my $db_name=$1;
+#			main::_log_stdout("queue '$queue->{'name'}' db='$db_name' jobs=".$queue->{'messages_ready'}." rate=".$queue->{'messages_ready_details'}->{'rate'}." workers=".$queue->{'consumers'});
+			foreach (sort keys %domain_info)
+			{
+				if ($domain_info{$_}->{'db_name'} eq $db_name)
+				{
+					$domain=$_;
+					last;
+				}
+			}
+			next unless $domain;
+		}
+		
+		main::_log_stdout("queue '$queue->{'name'}' domain='$domain' jobs=".$queue->{'messages_ready'}." rate=".$queue->{'messages_ready_details'}->{'rate'}." workers=".$queue->{'consumers'})
+			if (
+				$queue->{'consumers'}
+				|| $queue->{'messages_ready'}
+				|| $queue->{'messages_ready_details'}->{'rate'}
+			);
+		
+		if (!$domain_info{$domain} && ($domain ne "_global"))
+		{
+			main::_log_stdout(" unknown domain '$domain' with jobs=".$queue->{'messages_ready'},1);
+			if (!$queue->{'messages_ready'})
+			{
+				main::_log_stdout("queue '$queue->{'name'}' unknown, removing",1);
+				async {
+					$service->_channel->delete_queue(
+						'exchange' => encode('UTF-8', 'cyclone3.job'),
+						'queue' => encode('UTF-8', 'cyclone3.job.'.$domain)
+					);
+				}
+			}
+			next;
+		}
+		
+		next if $pm->is_working_max;
+		next if $TOM::job_domain_max_workers <= $queue->{'consumers'};
+		next if ($domain_worker{$domain}{'request_time'} >= (time() - $TOM::job_domain_worker_start_delay));
+		
+		if ($queue->{'messages_ready'}) # !$queue->{'consumers'} && 
+		{
+			main::_log_stdout("requesting for new worker for '$domain'");
+			$domain_worker{$domain}{'request_time'}=time();
+			$main::pm->start(
+				'cb' => sub {
+					$0="job.workerd [".$domain."]";
+					undef $Ext::RabbitMQ::service; # destroy queue, create own
+					srand (time ^ $$);
+					$tom::P=$domain_info{$domain}{'tom::P'} || $TOM::P.'/.core'; # new local.conf location
+					
+					chdir $tom::P;
+					my $cmd='/usr/bin/perl '.$TOM::P."/.core/job.worker > /dev/null";
+					system($cmd);
+					main::_log_stdout("ending worker '$domain':$$");
+					$pm->finish;
+				}
+			) || do {
+#				main::_log_stdout("sorry, too much processes",1);
+			};# and next;
+			
+		}
+	}
+	
+});
+
+my $w=AnyEvent->timer(after => 60, interval => 60, cb => \&check_domains);
+sub check_domains
+{
+	main::_log_stdout("checking all domains and triggers");
+	
+	my %domains=@{$Redis->hgetall('C3|domains')};
+	
+	foreach my $domain (sort keys %domains)
+	{
+		my $dom_data=from_json $domains{$domain};
+		if (!-d $dom_data->{'tom::P'} || ($dom_data->{'updated'} < (time() - (86400*3))))
+		{
+			# ignoring domain
+			$Redis->hdel('C3|domains',$domain,sub{});
+			main::_log_stdout("removing inactive domain '$domain' from register",1);
+			next;
+		}
+		
+		$domain_info{$domain}=$dom_data;
+		
+		async {
+		
+			# create queue
+#			main::_log("create queue for $domain");
+			# cyclone3.job.domain.tld: cyclone3.job -> cyclone3.job
+			$service->_channel->declare_queue(
+				'exchange' => encode('UTF-8', 'cyclone3.job'),
+				'queue' => encode('UTF-8', 'cyclone3.job.'.$domain),
+				'durable' => 1
+			);
+			$service->_channel->bind_queue(
+				'exchange' => encode('UTF-8', 'cyclone3.job'),
+				'routing_key' => encode('UTF-8', $domain),
+				'queue' => encode('UTF-8', 'cyclone3.job.'.$domain)
+			);
+			
+			$service->_channel->declare_queue(
+				'exchange' => encode('UTF-8', 'cyclone3.job'),
+				'queue' => encode('UTF-8', 'cyclone3.job.db:'.$domain_info{$domain}->{'db_name'}),
+				'durable' => 1
+			);
+			$service->_channel->bind_queue(
+				'exchange' => encode('UTF-8', 'cyclone3.job'),
+				'routing_key' => encode('UTF-8', 'db:'.$domain_info{$domain}->{'db_name'}),
+				'queue' => encode('UTF-8', 'cyclone3.job.db:'.$domain_info{$domain}->{'db_name'})
+			);
+#			$service->_channel->bind_queue(
+#				'exchange' => encode('UTF-8', 'cyclone3.job'),
+#				'routing_key' => encode('UTF-8', 'db:'.$dom_data->{'db_name'}),
+#				'queue' => encode('UTF-8', 'cyclone3.job.'.$domain)
+#			);
+			
+		};
+		
+		# check if there are special triggers
+		
+		
+	}
+	
+}
+
+# read notify messages
+sub callback
+{
+	my $var = shift;
+	my $body = from_json($var->{'body'}->{'payload'});
+	
+	my $timestamp=$var->{'header'}->{'timestamp'};
+	my $user_id=$var->{'header'}->{'user_id'};
+	my $delivery_tag=$var->{'deliver'}->{'method_frame'}->{'delivery_tag'};
+	my $routing_key=$var->{'deliver'}->{'method_frame'}->{'routing_key'};
+
+	if ($body->{'event'} eq "db_changed")
+	{
+		main::_log("event='$body->{'event'}' '$body->{'key'}'");
+	}
+	else
+	{
+		main::_log("event='$body->{'event'}'");
+	}
+	return $notify_channel->ack();
+#	main::_log("");
+	
+	my $eval_data='
+			return undef;
+			$do->job({\'routing_key\' => \'db:\'.$body->{\'db_name\'}.\'\'},{
+				\'name\' => \'a301-check_user\'
+			},{
+				\'ID_user\' => $body->{\'ID_entity\'}
+			});
+	';
+	
+	eval $eval_data;
+	main::_log($@,1) if $@;
+	
+	$notify_channel->ack();
+	exit;
+}
+
+$notify_channel->consume(
+	on_consume => \&callback,
+	no_ack => 0,
+);
+
+$main_loop->recv;
+
+package class_do;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8; # encode = fromutf8, decode=toutf8
+use strict; # scrict code
+use Ext::RabbitMQ::_init;
+use JSON;
+use Data::Dumper;
+
+sub new
+{
+	my $class=shift;
+	my $obj=bless {}, $class;
+	
+	
+	
+	return $obj;
+}
+
+sub job
+{
+	my $self=shift;
+	my $header=shift;
+	my $job=shift;
+	my $args=shift;
+	
+	print Dumper($header,$job,$args);
+	
+	$main::service->publish(
+		'exchange' => 'cyclone3.job',
+		'routing_key' => ($header->{'routing_key'} || 'job'),
+		'body' => to_json({
+			'job' => $job,
+			'args' => $args
+		})
+	);
+	
+#	print Dumper($main::service);
+}
+
+1;

@@ -1,0 +1,187 @@
+#!/usr/bin/perl
+BEGIN
+{
+	$TOM::engine='job';
+	if ($ARGV[0] eq "debug"){$main::debug=1;shift @ARGV;}
+	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
+}
+
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8; # encode = fromutf8, decode=toutf8
+use strict; # scrict code
+use vars qw//;
+our $sig_term=1;
+
+
+######################################################################################
+######################################################################################
+
+
+my $t=track TOM::Debug("Engine '$TOM::engine' and domain init");
+	my $t0=track TOM::Debug('TOM::Engine::job');
+		require TOM::Engine::job;
+	$t0->close();
+$t->close();
+
+
+######################################################################################
+######################################################################################
+
+
+my $t_domain=track TOM::Debug("Domain service init");
+	
+	TOM::Database::connect::multi(@TOM::DB_pub_connect)
+		|| die "Error during connection request to database server\n";
+	# TODO:[fordinal] odstranit spetnu kompatibilitu $main::DBH
+	$main::DBH=$main::DB{main};
+	
+	$TOM::engine_ready=1;
+	$0="job.worker [".($tom::H_orig || 'global')."]";
+	
+$t_domain->close;
+
+######################################################################################
+######################################################################################
+######################################################################################
+######################################################################################
+
+use Encode qw(decode encode);
+use JSON;
+use Data::Dumper;
+use Ext::Redis::_init;
+our $alarm=60;
+
+my $service=Ext::RabbitMQ::service();
+
+# cyclone3.job
+$service->_channel->declare_exchange('exchange' => encode('UTF-8', 'cyclone3.job'),'type' => encode('UTF-8', 'direct'),'durable' => 1);
+
+# open two channels
+# cyclone3.job: cyclone3.job.domain_tld -> cyclone3.job.domain_tld
+
+my $channel_domain=$Ext::RabbitMQ::service->open_channel();
+$channel_domain->declare_queue(
+	'exchange' => encode('UTF-8', 'cyclone3.job'),
+	'queue' => encode('UTF-8', 'cyclone3.job.'.($tom::H_orig || '_global')),'durable' => 1
+);
+$channel_domain->bind_queue(
+	'exchange' => encode('UTF-8', 'cyclone3.job'),
+	'queue' => encode('UTF-8', 'cyclone3.job.'.($tom::H_orig || '_global')),
+	'routing_key' => encode('UTF-8', ($tom::H_orig || 'job'))
+);
+
+my $channel_database=$Ext::RabbitMQ::service->open_channel();
+$channel_database->declare_queue(
+	'exchange' => encode('UTF-8', 'cyclone3.job'),
+	'queue' => encode('UTF-8', 'cyclone3.job.db:'.($TOM::DB{'main'}{'name'} || 'TOM')),'durable' => 1
+);
+$channel_database->bind_queue(
+	'exchange' => encode('UTF-8', 'cyclone3.job'),
+	'queue' => encode('UTF-8', 'cyclone3.job.db:'.($TOM::DB{'main'}{'name'} || 'TOM')),
+	'routing_key' => encode('UTF-8', 'db:'.($TOM::DB{'main'}{'name'} || 'TOM'))
+);
+
+sub callback {
+	alarm 0;
+	my $var = shift;
+	my $body = $var->{'body'}->{'payload'};
+	my $this_channel=$service->_channels->{$var->{'body'}->{'channel'}};
+#	print Dumper($service);
+	
+	my $timestamp=$var->{'header'}->{'timestamp'};
+	my $user_id=$var->{'header'}->{'user_id'};
+	my $delivery_tag=$var->{'deliver'}->{'method_frame'}->{'delivery_tag'};
+	my $routing_key=$var->{'deliver'}->{'method_frame'}->{'routing_key'};
+	my $deduplication=1;
+	main::_log("received message '$delivery_tag' from '$user_id' routing='$routing_key' timestamp='$timestamp' size=".length($var->{'body'}->{'payload'}));
+	
+	my $key_entity=TOM::Digest::hash($var->{'body'}->{'payload'});
+	if ($deduplication && $Redis)
+	{
+		my $timestamp_exec=$Redis->hget('C3|job|'.$key_entity,'modified');
+		if ($timestamp < $timestamp_exec)
+		{
+			main::_log("job '$key_entity' already executed ".($timestamp_exec-$timestamp)."s after this request",1);
+			$this_channel->ack();
+			alarm $alarm;
+			return 0;
+		}
+	}
+	
+	eval
+	{
+		no strict;
+		my $payload=from_json($var->{'body'}->{'payload'});
+		if ($payload->{'function'})
+		{
+			my $function=$payload->{'function'};
+			main::_log("calling '$function'");
+			$main::nojobify=1; # nojobify, execute!
+			&$function(@{$payload->{'args'}});
+		}
+		elsif ($payload->{'job'})
+		{
+			my $job=$payload->{'job'};
+			main::_log("calling '".($job->{'file'} || $job->{'name'})."'");
+			
+			$main::nojobify=1; # nojobify, execute!
+			my $job=new TOM::Engine::job::module(
+				$job,
+				$payload->{'args'}
+			);
+			$job->execute() if $job;
+		}
+		else
+		{
+			main::_log("unknown type of job",1);
+		}
+		if ($deduplication && $Redis)
+		{
+			$Redis->hset('C3|job|'.$key_entity,'modified',time(),sub {});
+			$Redis->expire('C3|job|'.$key_entity,86400,sub {});
+		}
+	};
+	if ($@)
+	{
+		main::_log("error ".$@,1);
+	}
+	$this_channel->ack();
+	alarm $alarm;
+}
+
+$service->_channel->qos(
+	prefetch_count => 1,
+	prefetch_size => 1
+);
+$channel_domain->qos(
+	prefetch_count => 1,
+	prefetch_size => 1
+);
+$channel_database->qos(
+	prefetch_count => 1,
+	prefetch_size => 1
+);
+
+alarm $alarm;
+$service->_channel->consume(
+	on_consume => \&callback,
+	no_ack => 0,
+);
+$channel_domain->consume(
+	on_consume => \&callback,
+	no_ack => 0,
+);
+$channel_database->consume(
+	on_consume => \&callback,
+	no_ack => 0,
+);
+
+AnyEvent->condvar->recv;
