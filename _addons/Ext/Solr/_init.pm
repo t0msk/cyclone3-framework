@@ -86,7 +86,14 @@ sub new
 	
 	if (!keys %Ext::Solr::hosts)
 	{
-		$self->{'service'} = Ext::Solr::webservice->new($Ext::Solr::url, { 'autocommit' => $Ext::Solr::autocommit });
+		$self->{'service'} = Ext::Solr::webservice->new(
+			$Ext::Solr::url, {
+				'autocommit' => $Ext::Solr::autocommit,
+				'agent' => LWP::UserAgent->new(
+					'keep_alive' => 1,
+					'timeout' => 600
+				)
+			});
 	}
 	
 	$t->close();
