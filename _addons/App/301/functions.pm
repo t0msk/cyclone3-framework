@@ -53,6 +53,10 @@ our $user_index=0;
 sub user_add
 {
 	my %env=@_;
+	if ($env{'-jobify'})
+	{
+		return 1 if TOM::Engine::jobify(\@_); # do it in background
+	}
 	my $t=track TOM::Debug(__PACKAGE__."::user_add()");
 	
 	$env{'user.hostname'}=$tom::H_cookie unless $env{'user.hostname'};
@@ -966,6 +970,7 @@ sub user_get
 
 sub _user_index
 {
+	return 1 if TOM::Engine::jobify(\@_); # do it in background
 	my %env=@_;
 	return undef unless $env{'ID_user'};
 	return undef unless $Ext::Solr;
