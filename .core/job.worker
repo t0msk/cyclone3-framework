@@ -28,6 +28,9 @@ our $sig_term=1;
 my $t=track TOM::Debug("Engine '$TOM::engine' and domain init");
 	my $t0=track TOM::Debug('TOM::Engine::job');
 		require TOM::Engine::job;
+		$TOM::DB{'main'}{'name'}="TOM"
+			unless $TOM::DB{'main'}{'name'};
+		TOM::Database::connect::multi('main');
 	$t0->close();
 $t->close();
 
@@ -62,12 +65,16 @@ our $alarm=60;
 my $service=Ext::RabbitMQ::service();
 
 # cyclone3.job
-$service->_channel->declare_exchange('exchange' => encode('UTF-8', 'cyclone3.job'),'type' => encode('UTF-8', 'direct'),'durable' => 1);
+#$service->_channel->declare_exchange('exchange' => encode('UTF-8', 'cyclone3.job'),'type' => encode('UTF-8', 'direct'),'durable' => 1);
 
 # open two channels
 # cyclone3.job: cyclone3.job.domain_tld -> cyclone3.job.domain_tld
 
 my $channel_domain=$Ext::RabbitMQ::service->open_channel();
+$channel_domain->declare_exchange(
+	'exchange' => encode('UTF-8', 'cyclone3.notify'),
+	'type' => encode('UTF-8', 'direct'),
+	'durable' => 1);
 $channel_domain->declare_queue(
 	'exchange' => encode('UTF-8', 'cyclone3.job'),
 	'queue' => encode('UTF-8', 'cyclone3.job.'.($tom::H_orig || '_global')),'durable' => 1
@@ -116,6 +123,7 @@ sub callback {
 		}
 	}
 	
+	my $t0=track TOM::Debug('eval');
 	eval
 	{
 		no strict;
@@ -149,9 +157,11 @@ sub callback {
 			$Redis->expire('C3|job|'.$key_entity,86400,sub {});
 		}
 	};
+	$t0->close();
 	if ($@)
 	{
-		main::_log("error ".$@,1);
+		main::_log("job error ".$@,1);
+		exit;
 	}
 	$this_channel->ack();
 	alarm $alarm;
