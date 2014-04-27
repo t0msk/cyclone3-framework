@@ -42,6 +42,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 	
 	# default addons
 	use App::020::_init; # standard 0
+	use App::301::_init;
 	
 	# new Cyclone libs
 	use Cyclone;
