@@ -58,7 +58,7 @@ if (!$response->is_success)
 
 my $info = Sys::Info->new;
 my $cpu  = $info->device('CPU');
-main::_log_stdout("running for ".$cpu->count." cpu's");
+main::_log_stdout("running for ".$cpu->count." cpu's");# if $ENV{'WORKERS'};
 
 main::_log_stdout("declaring default job exchange, queue, binding");
 
@@ -101,12 +101,13 @@ our %domain_worker;
 check_domains();
 
 my $MAX_WORKERS = $TOM::job_host_max_processes || ($cpu->count * 2) +1;
+$ENV{'WORKERS'}=1 unless exists $ENV{'WORKERS'}; # spawning workers?
 $TOM::job_domain_max_workers||=16; # max X workers parallel on same domain
 $TOM::job_worker_start_delay||=5; # start next worker after delay
 $TOM::job_domain_worker_start_delay||=60; # start next worker after delay on same domain
 
-#	$MAX_WORKERS = 1;
-main::_log_stdout("max $MAX_WORKERS workers");
+	$MAX_WORKERS = 2;
+main::_log_stdout("max $MAX_WORKERS workers (enabled=$ENV{'WORKERS'})");
 our $pm = AnyEvent::ForkManager->new(max_workers => $MAX_WORKERS);
 
 $pm->on_start(sub {
@@ -119,7 +120,7 @@ $pm->on_finish(sub {
 #	exit;
 });
 
-main::_log_stdout("main loop timer starting");
+main::_log_stdout("main loop timer starting") if $ENV{'WORKERS'};
 my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 	
 #	main::_log_stdout("controlling job queue pool");
@@ -266,7 +267,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 		}
 	}
 	
-});
+}) if $ENV{'WORKERS'};
 
 my $w=AnyEvent->timer(after => 60, interval => 60, cb => \&check_domains);
 sub check_domains
@@ -349,6 +350,7 @@ sub callback
 		main::_log("event='$body->{'event'}'");
 	}
 	return $notify_channel->ack();
+=head1
 #	main::_log("");
 	
 	my $eval_data='
@@ -365,8 +367,13 @@ sub callback
 	
 	$notify_channel->ack();
 	exit;
+=cut
 }
 
+$notify_channel->qos(
+	prefetch_count => 1,
+	prefetch_size => 1
+);
 $notify_channel->consume(
 	on_consume => \&callback,
 	no_ack => 0,
