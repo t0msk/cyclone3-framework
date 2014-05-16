@@ -166,7 +166,8 @@ use utf8;
 use strict;
 use JSON;
 use Ext::RabbitMQ::_init;
-
+use Ext::Redis::_init;
+use Encode;
 
 sub jobify # prepare function call to background
 {
@@ -177,6 +178,41 @@ sub jobify # prepare function call to background
 		return undef;
 	}
 	return undef unless $RabbitMQ;
+	
+	if ($env->{'class'})
+	{
+		my $queue=$env->{'routing_key'} || $tom::H_orig || '_global';
+			$queue.="::".$env->{'class'};
+			
+		$env->{'routing_key'}=$env->{'routing_key'} || $tom::H_orig || 'job';
+		$env->{'routing_key'}.="::".$env->{'class'};
+		
+		my $queue_found;
+		if ($Redis)
+		{
+			$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
+			$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
+			$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,15,sub {});
+		}
+		if (!$queue_found)
+		{
+			$RabbitMQ->_channel->declare_queue(
+				'exchange' => encode('UTF-8', 'cyclone3.job'),
+				'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
+				'durable' => 1
+			);
+			$RabbitMQ->_channel->bind_queue(
+				'exchange' => encode('UTF-8', 'cyclone3.job'),
+				'routing_key' => encode('UTF-8', $env->{'routing_key'}),
+				'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
+			);
+		}
+	}
+	else
+	{
+		$env->{'routing_key'}=$env->{'routing_key'} || $tom::H_orig || 'job';
+	}
+	
 	my (undef,undef,undef,$function)=caller 1;
 	$RabbitMQ->publish(
 		'exchange'=>'cyclone3.job',
