@@ -2,7 +2,7 @@
 BEGIN
 {
 	$TOM::engine='job';
-	if ($ARGV[0] eq "debug"){$main::debug=1;shift @ARGV;}
+#	if ($ARGV[0] eq "debug"){$main::debug=1;shift @ARGV;}
 	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
 	if (!$ENV{'CYCLONE3PATH'})
 	{
@@ -19,13 +19,13 @@ use utf8; # encode = fromutf8, decode=toutf8
 use strict; # scrict code
 use vars qw//;
 our $sig_term=1;
-
+our $class=$ARGV[0];$class="::".$class if $class;
 
 ######################################################################################
 ######################################################################################
 
 
-my $t=track TOM::Debug("Engine '$TOM::engine' and domain init");
+my $t=track TOM::Debug("Engine '$TOM::engine'$class and domain init");
 	my $t0=track TOM::Debug('TOM::Engine::job');
 		require TOM::Engine::job;
 		$TOM::DB{'main'}{'name'}="TOM"
@@ -47,7 +47,7 @@ my $t_domain=track TOM::Debug("Domain service init");
 	$main::DBH=$main::DB{main};
 	
 	$TOM::engine_ready=1;
-	$0="job.worker [".($tom::H_orig || 'global')."]";
+	$0="job.worker [".($tom::H_orig || 'global').$class."]";
 	
 $t_domain->close;
 
@@ -77,23 +77,23 @@ $channel_domain->declare_exchange(
 	'durable' => 1);
 $channel_domain->declare_queue(
 	'exchange' => encode('UTF-8', 'cyclone3.job'),
-	'queue' => encode('UTF-8', 'cyclone3.job.'.($tom::H_orig || '_global')),'durable' => 1
+	'queue' => encode('UTF-8', 'cyclone3.job.'.($tom::H_orig || '_global').$class),'durable' => 1
 );
 $channel_domain->bind_queue(
 	'exchange' => encode('UTF-8', 'cyclone3.job'),
-	'queue' => encode('UTF-8', 'cyclone3.job.'.($tom::H_orig || '_global')),
-	'routing_key' => encode('UTF-8', ($tom::H_orig || 'job'))
+	'queue' => encode('UTF-8', 'cyclone3.job.'.($tom::H_orig || '_global').$class),
+	'routing_key' => encode('UTF-8', ($tom::H_orig || 'job').$class)
 );
 
 my $channel_database=$Ext::RabbitMQ::service->open_channel();
 $channel_database->declare_queue(
 	'exchange' => encode('UTF-8', 'cyclone3.job'),
-	'queue' => encode('UTF-8', 'cyclone3.job.db:'.($TOM::DB{'main'}{'name'} || 'TOM')),'durable' => 1
+	'queue' => encode('UTF-8', 'cyclone3.job.db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class),'durable' => 1
 );
 $channel_database->bind_queue(
 	'exchange' => encode('UTF-8', 'cyclone3.job'),
-	'queue' => encode('UTF-8', 'cyclone3.job.db:'.($TOM::DB{'main'}{'name'} || 'TOM')),
-	'routing_key' => encode('UTF-8', 'db:'.($TOM::DB{'main'}{'name'} || 'TOM'))
+	'queue' => encode('UTF-8', 'cyclone3.job.db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class),
+	'routing_key' => encode('UTF-8', 'db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class)
 );
 
 sub callback {
