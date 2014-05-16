@@ -488,6 +488,15 @@ sub _chunk_prepare
 		
 		# downgrade na nizsie verzie
 		
+		# 5.6 -> 5.5
+		if ($header->{'version'} eq "5.6" && $version < $header->{'version'})
+		{
+			my $to='5.5';
+			main::_log("converting SQL $header->{'version'} to $to");
+			$$chunk=~s|datetime\(\d+\) |datetime |g;
+			$header->{'version'}=$to;
+		}
+		
 		# 5.0 -> 4.1
 		if ($header->{'version'} eq "5.0" && $version < $header->{'version'})
 		{
