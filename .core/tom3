@@ -1043,6 +1043,7 @@ while ($main::CGI=new CGI::Fast())
 #					|| ($TOM::Document::type ne "xml")
 					|| ($main::ENV{'HTTP_CONNECTION'} ne "close") # risky to send 302 code
 				)
+				&& ($tom::addons{'a301'} != -1)
 		)
 		{
 			main::_log("none cookies found, but looks like supported");
