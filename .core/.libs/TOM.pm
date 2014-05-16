@@ -122,7 +122,16 @@ BEGIN
 	# actual path and domain service path
 	chomp($tom::p=`pwd`) unless $tom::p;
 	$tom::P=$tom::p;
-	$tom::P=~s|^(.*)/!www$|\1|;
+	
+	# try to find domain service local.conf
+	my $tomP=$tom::P;$tomP=~s|^$TOM::P/||;
+	my $max_skip=()=$tomP=~/\//g;
+	for (0..$max_skip)
+	{
+		if (-e $TOM::P.'/'.$tomP.'/local.conf'){$tom::P=$TOM::P.'/'.$tomP;last;}
+		$tomP=~s|^(.*)\/.*$|$1|;
+	}
+	
 	# undef $tom::P if here is not domain service
 	$tom::P=$TOM::P unless -e $tom::P.'/local.conf';
 	$tom::P_media=$tom::P."/!media" unless $tom::P_media;
