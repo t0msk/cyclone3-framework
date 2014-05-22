@@ -276,7 +276,8 @@ sub execute
 				video_part_attrs.name,
 				video_part_attrs.name_url,
 				video_part_attrs.datetime_create,
-				video_part_attrs.description
+				video_part_attrs.description, 
+				video_part_file.length AS file_length
 			FROM
 				$App::510::db_name.a510_video_part AS video_part
 			INNER JOIN $App::510::db_name.a510_video_part_attrs AS video_part_attrs ON
