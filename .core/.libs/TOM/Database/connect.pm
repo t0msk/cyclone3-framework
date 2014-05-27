@@ -182,7 +182,7 @@ sub multi
 			$main::DB{$handler} = Mysql->Connect
 			(
 				$TOM::DB{$handler}{'host'},
-				$TOM::DB{$handler}{'name'},
+				$TOM::DB{$handler}{'name'} || 'TOM',
 				$TOM::DB{$handler}{'user'},
 				$TOM::DB{$handler}{'pass'},
 			);
