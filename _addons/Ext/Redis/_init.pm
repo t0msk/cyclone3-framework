@@ -149,10 +149,11 @@ sub get
 	my $value=$Ext::Redis::service->get(
 		'C3|M'.$format.'|'.$env{'namespace'}.'|'.$env{'key'}
 	);
-	
+	#print "get $env{'key'}\n" if $tom::test;
+	#main::_log("RedisDB=".ref($value)."=".$value,3,"debug");
 	if (ref($value) eq "RedisDB::Error::DISCONNECTED")
 	{
-		main::_log("RedisDB diconnected",1);
+#		main::_log("RedisDB disconnected",1);
 		return undef;
 	}
 	
@@ -329,13 +330,13 @@ sub _redisdb_connect
 	my $host=shift;
 	my $service=shift;
 		
-		eval
+		eval # because of raise error
 		{
 			if ($host=~/^\//)
 			{
 				$service = RedisDB->new(
 					'path' => $host,
-					'raise_error' => 0 # not works
+					'raise_error' => 0 # from 2.33 works
 				)
 			}
 			else
@@ -343,7 +344,7 @@ sub _redisdb_connect
 				$service = RedisDB->new(
 					'host' => (split(':',$host))[0],
 					'port' => (split(':',$host))[1] || 6379,
-					'raise_error' => 0 # not works
+					'raise_error' => 0 # from 2.33 works
 				)
 			}
 		};
@@ -381,6 +382,7 @@ sub AUTOLOAD
 	
 	if ($self->{'lib'} eq "AnyEvent")
 	{
+=head1
 		if (ref($_[-1]) eq "CODE") # last parameter is sub{}
 		{
 			# async
@@ -391,6 +393,7 @@ sub AUTOLOAD
 			# sync
 			return $self->{'service'}->$method(@_)->recv();
 		}
+=cut
 	}
 	elsif ($self->{'lib'} eq "RedisDB" && $self->{'services'} && @{$self->{'services'}})
 	{
@@ -408,9 +411,21 @@ sub AUTOLOAD
 			$service_number=$crc % $services;
 			
 			$service=$self->{'services'}[$service_number];
+			print "$service_number\n" if $tom::test;
 		}
 		
-		return $service->$method(@_);
+		my $value=$service->$method(@_);
+		if (ref($value) eq "RedisDB::Error::DISCONNECTED")
+		{
+#			main::_log("RedisDB disconnected ($method call)",1);
+			if ($method=~/^(hgetall)$/)
+			{
+				return [];
+			}
+			return undef;
+		}
+		return $value;
+#		return $service->$method(@_);
 	}
 	
 #	scalar @{$self->{'services'}}
