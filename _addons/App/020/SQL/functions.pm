@@ -520,7 +520,7 @@ $sel_set
 #		};
 	}
 	
-	my $clmns=join "','", keys %{$env{'columns'}};
+	my $clmns=join "','", (keys %{$env{'columns'}},keys %{$env{'data'}});
 	
 	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet,'bind'=>[@bind]);
 	
