@@ -60,7 +60,9 @@ use Encode qw(decode encode);
 use JSON;
 use Data::Dumper;
 use Ext::Redis::_init;
-our $alarm=60;
+our $alarm=30; # autoexit after 10 seconds of inactivity
+our $time_max=1200;
+our $time_start=time();
 
 my $service=Ext::RabbitMQ::service();
 
@@ -98,6 +100,7 @@ $channel_database->bind_queue(
 
 sub callback {
 	alarm 0;
+	local $main::_canexit;
 	my $var = shift;
 	my $body = $var->{'body'}->{'payload'};
 	my $this_channel=$service->_channels->{$var->{'body'}->{'channel'}};
@@ -132,7 +135,7 @@ sub callback {
 		{
 			my $function=$payload->{'function'};
 			main::_log("calling '$function'");
-			$main::nojobify=1; # nojobify, execute!
+			$main::nojobify=1; # nojobify, just execute!
 			&$function(@{$payload->{'args'}});
 		}
 		elsif ($payload->{'job'})
@@ -165,6 +168,11 @@ sub callback {
 	}
 	$this_channel->ack();
 	alarm $alarm;
+	if ((time() - $time_start) > $time_max)
+	{
+		main::_log("running too long, shutdown");
+		exit;
+	}
 }
 
 $service->_channel->qos(
@@ -194,4 +202,7 @@ $channel_database->consume(
 	no_ack => 0,
 );
 
+# and now renice
+use POSIX;
+POSIX::nice(19);
 AnyEvent->condvar->recv;
