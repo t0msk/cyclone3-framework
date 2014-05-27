@@ -74,3 +74,17 @@ CREATE TABLE `/*db_name*/`.`/*app*/_master` (
   PRIMARY KEY  (`ID`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------
+-- db_h=sys
+-- version 5.0
+
+CREATE TABLE `/*db_name*/`.`/*app*/_job_cron_schedule` (
+  `filename` varchar(255) character set ascii NOT NULL,
+  `id` varchar(255) character set ascii NOT NULL,
+  `cron-schedule` varchar(64) character set ascii NOT NULL,
+  `datetime_create` datetime default NULL,
+  `datetime_next` datetime default NULL,
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`filename`,`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
