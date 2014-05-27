@@ -125,7 +125,7 @@ $pm->on_finish(sub {
 main::_log_stdout("main loop timer starting",3,"job.mng") if $ENV{'WORKERS'};
 my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 	
-#	main::_log_stdout("controlling job queue pool");
+	main::_log_stdout("controlling job queue pool");
 	local $main::_canexit;
 	
 	main::_log("active workers \@$TOM::hostname ".$pm->num_workers()."/".$MAX_WORKERS,3,"job.mng");
@@ -140,7 +140,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 	
 	my $data=from_json($content);
 	
-	#print Dumper($data);
+#	print Dumper($data);
 =head1
 	{
 		'messages_ready' => 0,
@@ -203,8 +203,6 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 		my $domain=$queue->{'name'};
 			$domain=~s|^cyclone3\.job\.||;
 		
-#		print "$domain\n";
-		
 		my $class;
 			$class=$2 if $domain=~s|^(.*)(::.*?)$|$1|;
 		my $class_=$class;
@@ -214,13 +212,20 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 		{
 			undef $domain;
 			my $db_name=$1;
-#			main::_log_stdout("queue '$queue->{'name'}' db='$db_name' jobs=".$queue->{'messages_ready'}." rate=".$queue->{'messages_ready_details'}->{'rate'}." workers=".$queue->{'consumers'});
-			foreach (sort keys %domain_info)
+			if ($db_name eq "TOM")
 			{
-				if ($domain_info{$_}->{'db_name'} eq $db_name)
+				$domain = "_global";
+			}
+			else
+			{
+#			main::_log_stdout("queue '$queue->{'name'}' db='$db_name' jobs=".$queue->{'messages_ready'}." rate=".$queue->{'messages_ready_details'}->{'rate'}." workers=".$queue->{'consumers'});
+				foreach (sort keys %domain_info)
 				{
-					$domain=$_;
-					last;
+					if ($domain_info{$_}->{'db_name'} eq $db_name)
+					{
+						$domain=$_;
+						last;
+					}
 				}
 			}
 			next unless $domain;
