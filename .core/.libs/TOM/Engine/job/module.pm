@@ -8,6 +8,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 use TOM;
 use Cwd 'abs_path';
+use Ext::Redis::_init;
 
 sub new
 {
@@ -87,7 +88,18 @@ sub new
 		}
 		
 		my $m_time=(stat($conf->{'file'}))[9];
-		my $extra_name=TOM::Digest::hash($conf->{'file'});
+		
+		my $shortify=$conf->{'file'};
+			$shortify=~s|^$TOM::P/||;
+			$shortify=~s|\.job$||;
+			$shortify=~s/(_mdl|_addons|App|Ext)\///g;
+			$shortify=~s|/|::|g;
+			$shortify=~s|[\.\-]|_|g;
+			$shortify=~s|[^a-zA-Z0-9_:]||g;
+#		main::_log("shortify=".$shortify);
+		
+		my $extra_name;#=TOM::Digest::hash($conf->{'file'});
+			$extra_name=$shortify;
 		my $job_class='Cyclone3::job::'.$extra_name;
 		
 		if (!$job_class->VERSION() || ($job_class->VERSION() < $m_time))
@@ -157,7 +169,63 @@ sub execute
 	return $self;
 }
 
+sub running
+{
+	my $self=shift;
+	my $conf=shift;
+	
+	$conf->{'max'}=600 unless $conf->{'max'};
+	
+#	main::_log("check if already running '".(ref $self)."'");
+	
+	if ($Redis)
+	{
+		my $key_entity=(ref $self);
+			$key_entity.='::'.$tom::H unless $conf->{'domain'};
+		$key_entity=TOM::Digest::hash($key_entity);
+		
+		$self->{'_running'}=$key_entity;
+		
+		my $is_running=$Redis->hget('C3|job|running|'.$key_entity,'PID');
+		if ($is_running)
+		{
+#			main::_log("alresy lock of running job");
+			my ($run_hostname,$run_PID)=split(':',$is_running);
+			if ($run_hostname eq $TOM::hostname)
+			{
+				if (-e '/proc/'.$run_PID)
+				{
+					main::_log("this job is already running \@$run_hostname:$run_PID, skip",1);
+					delete $self->{'_running'};
+					return 1;
+				}
+			}
+			else
+			{
+				main::_log("this job is already running \@$run_hostname:$run_PID, skip",1);
+				delete $self->{'_running'};
+				return 1;
+			}
+		}
+		
+		$Redis->hset('C3|job|running|'.$key_entity,'PID',$TOM::hostname.':'.$$,sub {});
+		$Redis->expire('C3|job|running|'.$key_entity,$conf->{'max'},sub {});
+	}
+	
+	return undef;
+}
 
+sub DESTROY
+{
+	my $self=shift;
+	
+	if ($self->{'_running'} && $Redis)
+	{
+		$Redis->del('C3|job|running|'.$self->{'_running'},sub {});
+#		main::_log("DESTROY");
+	}
+	
+}
 
 package TOM::Engine;
 use open ':utf8', ':std';
