@@ -194,8 +194,17 @@ sub _log
 sub _applog {_log(@_);}
 sub _log_stdout
 {
-	return undef unless $main::stdout;
-	$_[2]="stdout";
+	if (!$_[2])
+	{
+		return undef unless $main::stdout;
+		$_[2]="stdout";
+		return _log(@_);
+	}
+	if ($main::stdout)
+	{
+		_log($_[0],$_[1],'stdout');
+	}
+#	$_[2]="stdout";
 	_log(@_);
 }
 sub _deprecated
