@@ -1,0 +1,132 @@
+#!/usr/bin/perl
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use Data::Dumper;
+use Term::ANSIColor;
+
+BEGIN
+{
+	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
+#	$main::stdout=0 unless $ENV{'CYCLONE3DEBUG'};
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+}
+END {use Inline;$SIG{__WARN__} = sub {};}
+
+our $job_file;
+if ($ARGV[0] && not($ARGV[0]=~/^\-/)) # direct link to job file
+{
+	$job_file=$ARGV[0];
+	delete $ARGV[0];
+}
+
+our %arg;
+foreach my $key(@ARGV)
+{
+	$key=~s/^\-\-// && do
+	{
+		my @ref=split('=',$key,2);
+		$ref[1]=1 unless exists $ref[1];
+		$main::arg{$ref[0]}=$ref[1];
+		next;
+	};
+	$key=~s/^\-// && do
+	{
+		foreach (split('',$key)){$main::arg{$_}++;}
+	};
+}
+
+if ($main::arg{'v'} >= 2)
+{
+#	$main::stdout=1;
+	$main::debug=1;# if ($main::arg{'v'} >= 2);
+#	delete $main::arg{'v'};
+}
+
+if ($main::arg{'domain'})
+{
+	$main::arg{'domain'}=~s|^www\.||i;
+	$main::h=$main::arg{'domain'};$main::h=~s|\.|_|g;$main::h=~s|/|__|g;
+	
+	my $path=$main::arg{'domain'};$path=~s|^(.[^/]*)(.*)||;
+	my $path_dom=$1;my $path_sub=$2;
+	$path_dom=~s|(.*\.\|)(.*?\..*?)$|$1|;
+	$tom::p="!$2";$path_dom=~s|\.$||;
+	
+	foreach (reverse split('\.',$path_dom)){$tom::p.="/!$_";}
+	foreach (split('/',$path_sub)){$tom::p.="/$_";}
+	
+	$tom::p=~s|//|/|g;
+	$tom::p=$ENV{'CYCLONE3PATH'}."/".$tom::p;
+	
+	$tom::P=$tom::p;
+	delete $main::arg{'domain'};
+}
+
+require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
+require TOM::Engine::job;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use vars qw//;
+
+package main;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+use Cwd 'abs_path';
+
+$TOM::engine_ready=1;
+
+eval
+{
+	main::_log_stdout("load & exec '".($job_file || $main::arg{'name'})."'");
+	
+	my $job=new TOM::Engine::job::module(
+		{'file' => $job_file, 'name' => $main::arg{'name'}, 'level' => $main::arg{'level'}},
+		\%main::arg
+	);
+	
+	if ($main::arg{'v'})
+	{
+		$main::debug=1;
+	}
+	
+	if (exists $main::arg{'jobify'} && $Ext::RabbitMQ::service)
+	{
+		main::_log_stdout("sending to job queue with routing key '".($tom::H_orig || 'job')."'");
+		
+		$job_file=abs_path($job_file)
+			if $job_file;
+		
+		delete $main::arg{'jobify'};
+		delete $main::arg{'v'};
+		$Ext::RabbitMQ::service->publish(
+			'exchange'=>'cyclone3.job',
+			'routing_key' => ($tom::H_orig || 'job'),
+			'body' => to_json({'job' => {'file' => $job_file, 'name' => $main::arg{'name'}, 'level' => $main::arg{'level'}},
+				'args' => \%main::arg
+			})
+		);
+	}
+	else
+	{
+		my $t_exec=track TOM::Debug("execute",'timer'=>1);
+		$job->execute() if $job;
+		$t_exec->close();
+	}
+};
+if ($@)
+{
+	main::_log("crashed with $@",1);
+}
+
+print color 'reset';
+
