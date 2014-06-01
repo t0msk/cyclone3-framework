@@ -93,7 +93,7 @@ sub get_relation_iteminfo
 				product_cat.lng = product_lng.lng
 			)
 			WHERE
-				product.ID_entity=$env{'r_ID_entity'}
+				product.ID=$env{'r_ID_entity'}
 				$lng_in
 			LIMIT 1
 		};
