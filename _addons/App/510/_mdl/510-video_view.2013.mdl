@@ -262,6 +262,14 @@ sub execute
 	
 	if ($env{'video_part'})
 	{
+		my @sql_bind;
+		my $sql_where;
+		
+		if ($env{'video_part.ID'})
+		{
+			$sql_where.="AND video_part.ID=? ";
+			push @sql_bind,$env{'video_part.ID'};
+		}
 		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
@@ -294,9 +302,10 @@ sub execute
 			WHERE
 				video_part.status IN ('Y','L') AND
 				video_part.ID_entity = ?
+				$sql_where
 			ORDER BY
 				part_id ASC
-		},'bind'=>[$video{'ID_entity'}],'quiet'=>1);
+		},'bind'=>[$video{'ID_entity'},@sql_bind],'quiet'=>1);
 		while (my %video_part=$sth0{'sth'}->fetchhash())
 		{
 			
