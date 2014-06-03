@@ -36,7 +36,7 @@
 #		);
 	%]
 <video
-	class="a510_video[%IF entity.attr.class;" " _ entity.attr.class|xml;END;%]"
+	class="[%IF entity.attr.class;" " _ entity.attr.class|xml;END;%]"
 	alt="[%entity.attr.alt || entity.db.name | xml%]"
 	align="[%entity.attr.align|xml%]"
 	src="[%domain.url_a510%]/video/part/file/[%entity.db.file_part_path%]"
@@ -46,7 +46,7 @@
 	
 	<entity id="img.a510_video_part"><![CDATA[[%USE dumper;USE a510;USE a501%]
 <video
-	class="a510_video[%IF entity.attr.class;" " _ entity.attr.class|xml;END;%]"
+	class="[%IF entity.attr.class;" " _ entity.attr.class|xml;END;%]"
 	alt="[%entity.attr.alt || entity.db.name | xml%]"
 	align="[%entity.attr.align|xml%]"
 	src="[%domain.url_a510%]/video/part/file/[%entity.db.file_part_path%]"

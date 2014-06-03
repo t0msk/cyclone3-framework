@@ -343,6 +343,60 @@ sub start
 			}
 			
 		}
+		elsif ($entity eq "a510_video_part")
+		{
+			# get data
+			require App::510::_init;
+			%db_entity=App::510::functions::get_video_part_file(
+				'video_part.ID' => $vars{'ID'},
+				'video_part_file.ID_format' => $vars{'ID_format'} || 1,
+				'video_attrs.lng' => $tom::lng
+			);
+			
+			if ($db_entity{'ID_category'})
+			{
+				# link to a210_page
+				require App::210::_init;
+				if (my $category=App::510::functions::_a210_by_cat([$db_entity{'ID_category'}],'lng'=>$tom::lng))
+				{
+					my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+					foreach my $p(
+						App::020::SQL::functions::tree::get_path(
+							$category,
+							%sql_def,
+							'-slave' => 1,
+							'-cache' => 86400*7
+						)
+					)
+					{
+						push @{$db_entity{'a210'}{'IDs'}}, $p->{'ID'};
+						push @{$db_entity{'a210'}{'nodes'}}, $p;
+						$db_entity{'a210'}{'path_url'}.="/".$p->{'name_url'};
+					}
+					$db_entity{'a210'}{'path_url'}=~s|^/||;
+				}
+			}
+			
+			if ($db_entity{'ID_part'})
+			{
+				my $relation=(App::160::SQL::get_relations(
+					'l_prefix' => 'a510',
+					'l_table' => 'video_part',
+					'l_ID_entity' => $db_entity{'ID_part'},
+					'rel_type' => 'thumbnail',
+					'r_db_name' => $App::501::db_name,
+					'r_prefix' => 'a501',
+					'r_table' => 'image',
+					'limit' => 1
+				))[0];
+				if ($relation->{'ID'})
+				{
+					$db_entity{'thumbnail'}=$relation->{'r_ID_entity'};
+					push @{$self->{'thumbnail'}},$relation->{'r_ID_entity'} if $tag eq "img";
+				}
+			}
+			
+		}
 		
 		my $tpl_src='tpl';
 		my $tpl_entity;
