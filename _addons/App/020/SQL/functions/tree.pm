@@ -366,7 +366,8 @@ sub swap
 #				'-journalize' => $env{'-journalize'},
 				'columns' => {
 					'ID_charindex' => "'$ID_charindex_c'"
-				}
+				},
+				'-journalize' => 1
 			);
 		}
 	}
@@ -399,7 +400,7 @@ sub swap
 				'db_name' => $env{'db_name'},
 				'tb_name' => $env{'tb_name'},
 				'ID' => $db1_line{'ID'},
-				'-journalize' => $env{'-journalize'},
+				'-journalize' => 1,
 				'columns' => {
 					'ID_charindex' => "'$ID_charindex_c'"
 				}
@@ -435,7 +436,7 @@ sub swap
 				'db_name' => $env{'db_name'},
 				'tb_name' => $env{'tb_name'},
 				'ID' => $db1_line{'ID'},
-				'-journalize' => $env{'-journalize'},
+				'-journalize' => 1,
 				'columns' => {
 					'ID_charindex' => "'$ID_charindex_c'"
 				}
@@ -571,7 +572,8 @@ sub move_to
 				'columns' =>
 				{
 					'ID_charindex' => "'$ID_charindex_new'",
-				}
+				},
+				'-journalize' => 1
 			);
 			if (!$out)
 			{
@@ -1577,7 +1579,7 @@ sub rename
 			'db_name' => $env{'db_name'},
 			'tb_name' => $env{'tb_name'},
 			'ID' => $env{'ID'},
-			'-journalize' => $env{'-journalize'},
+			'-journalize' => 1,
 			'columns' => {
 				'name'     => "'$name'",
 				'name_url' => "'$name_url'"
@@ -1629,7 +1631,7 @@ sub update
 		'db_name' => $env{'db_name'},
 		'tb_name' => $env{'tb_name'},
 		'ID' => $env{'ID'},
-		'-journalize' => $env{'-journalize'},
+		'-journalize' => 1,
 		'columns' =>
 		{
 			%{$env{'columns'}}
