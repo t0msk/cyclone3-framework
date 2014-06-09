@@ -936,6 +936,11 @@ sub _product_index
 	my %env=@_;
 	return undef unless $env{'ID'}; # product.ID
 	return undef unless $Ext::Solr;
+	if ($Ext::Solr::update_fork)
+	{
+		fork() and return 1;
+		%main::DB={};
+	}
 	
 	my $t=track TOM::Debug(__PACKAGE__."::_product_index($env{'ID'})",'timer'=>1);
 	
@@ -1156,7 +1161,8 @@ sub _product_index
 					),0.5) * ((rating.helpful_Y+$helpful_initial) / (rating.helpful_Y+$helpful_initial + rating.helpful_N+$helpful_initial))
 				)
 			) AS score,
-				COUNT(rating.ID) AS ratings
+				COUNT(rating.ID) AS ratings,
+				MAX(rating.datetime_rating) AS datetime_rating
 			FROM
 				$App::910::db_name.a910_product_rating AS rating
 			WHERE
@@ -1185,6 +1191,10 @@ sub _product_index
 			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_count_i' =>  ceil($db1_line{'ratings'}));
 			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_i' =>  ceil($db1_line{'score'}));
 			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_f' =>  $db1_line{'score'});
+			
+			$db1_line{'datetime_rating'}=~s| (\d\d)|T$1|;
+			$db1_line{'datetime_rating'}.="Z";
+			push @content_id,WebService::Solr::Field->new( 'Rating_datetime_tdt' => $db1_line{'datetime_rating'} );
 		}
 		
 		# rating in last 6months (not weighted)
@@ -1552,6 +1562,12 @@ sub _product_index
 	}
 	
 	$t->close();
+	
+	if ($Ext::Solr::update_fork)
+	{
+		main::_log("end fork");
+		exit;
+	}
 }
 
 
