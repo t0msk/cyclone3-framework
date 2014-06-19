@@ -11,6 +11,7 @@ BEGIN
 		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
 	}
 	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
+	$0.=".workerd";
 }
 
 use open ':utf8', ':std';
@@ -273,16 +274,14 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 #			$domain_worker{$domain.$class_}{'count'}++;
 			$main::pm->start(
 				'cb' => sub {
-					$0="job.workerd [".$domain.$class_."]";
+					$0.=" [".$domain."]";
+					$0.=" :".$class if $class;
 					undef $Ext::RabbitMQ::service; # destroy queue, create own
 					srand (time ^ $$);
 					$tom::P=$domain_info{$domain}{'tom::P'} || $TOM::P.'/.core'; # new local.conf location
 					chdir $tom::P;
 					my $cmd='/usr/bin/perl '.$TOM::P."/.core/job.worker $class > /dev/null";
-#						$domain_worker{$domain.$class_}{'count'}++;
 					system($cmd);
-#						$domain_worker{$domain.$class_}{'count'}--;
-#					main::_log_stdout("ending worker '$domain$class_':$$",3,"job.mng");
 					$pm->finish;
 					exit;
 				}
@@ -393,7 +392,7 @@ sub check_domains
 				next;
 			}
 			
-			print Dumper($data);
+#			print Dumper($data);
 			
 			$config_file{$filename}{'mtime'}=(stat($filename))[9];
 			$config_file{$filename}{'domain'}=$dom_data;
@@ -590,7 +589,66 @@ sub callback
 	my $user_id=$var->{'header'}->{'user_id'};
 	my $delivery_tag=$var->{'deliver'}->{'method_frame'}->{'delivery_tag'};
 	my $routing_key=$var->{'deliver'}->{'method_frame'}->{'routing_key'};
-
+	
+#	print Dumper($body);
+	
+	if (!$body->{'event'})
+	{
+		#main::_log_stdout("",3,"job");
+		main::_log("not defined any type of event",1);
+		return $notify_channel->ack();
+	}
+	
+	main::_log("event='$body->{'event'}' '$body->{'key'}'");
+	
+	foreach my $filename (keys %config_file)
+	{
+#		my $content;
+#		print "file=$file\n";
+		
+#		print "".$config_file{$file}->{'domain'}->{'domain'}."\n";
+		
+		if (
+			$config_file{$filename}->{'domain'}->{'domain'} eq $body->{'domain'}
+			|| $config_file{$filename}->{'domain'}->{'domain'} eq "_global"
+		)
+		{
+#			print "file=$filename\n";
+			
+			foreach my $id(
+				grep {$config_file{$filename}{'trigger'}{$_}{'notify-event'} eq $body->{'event'}}
+				grep {$config_file{$filename}{'trigger'}{$_}{'type'} eq "notify"}
+				keys %{$config_file{$filename}{'trigger'}})
+			{
+				
+				my $trigger=$config_file{$filename}{'trigger'}{$id};
+				
+				if (
+					$body->{'event'} eq "db_changed" &&
+					$trigger->{'notify-event-tb_name'} eq $body->{'tb_name'})
+				{
+#					print Dumper($trigger);
+					main::_log(" eval trigger '$id'");
+					eval $trigger->{'content'};
+					if ($@)
+					{
+						main::_log("$@",1);
+					}
+				}
+				
+#				if (!$cron->{'cron-schedule'})
+#				{
+#					main::_log_stdout(" job '$id' missing \@cron-schedule definition",1,"job.mng");
+#				}
+			}
+			
+		}
+	}
+	
+	return $notify_channel->ack();
+	
+	exit;
+	
 	if ($body->{'event'} eq "db_changed")
 	{
 		main::_log("event='$body->{'event'}' '$body->{'key'}'");
