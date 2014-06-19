@@ -258,7 +258,7 @@ sub jobify # prepare function call to background
 		my $queue_found;
 		if ($Redis)
 		{
-			$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
+			$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
 			$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
 			$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,15,sub {});
 		}
