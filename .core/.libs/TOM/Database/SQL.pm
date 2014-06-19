@@ -238,6 +238,10 @@ sub execute
 {
 	my $SQL=shift;
 	my %env=@_;
+	if ($env{'-jobify'})
+	{
+		return 1 if TOM::Engine::jobify([$SQL,@_]); # do it in background
+	}
 	
 	my $t=track TOM::Debug(__PACKAGE__."::execute()",'namespace'=>"SQL",'quiet' => $env{'quiet'},'timer'=>1);
 	  
