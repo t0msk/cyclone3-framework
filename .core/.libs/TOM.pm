@@ -113,6 +113,9 @@ BEGIN
 	$TOM::engine='tom' unless $TOM::engine;
 	
 	$tom::SCRIPT_NAME=$0;
+	
+	$0='c3-'.$TOM::engine;
+	
 	# i'm fastcgi?
 	$tom::fastcgi=1 if $tom::SCRIPT_NAME=~/(tom|fcgi|fpl)$/;
 	# TOM installation directory
