@@ -11,6 +11,7 @@ BEGIN
 		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
 	}
 	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
+	$0.=".worker";
 }
 
 use open ':utf8', ':std';
@@ -47,7 +48,8 @@ my $t_domain=track TOM::Debug("Domain service init");
 	$main::DBH=$main::DB{main};
 	
 	$TOM::engine_ready=1;
-	$0="job.worker [".($tom::H_orig || 'global').$class."]";
+	#$0="job.worker [".($tom::H_orig || 'global').$class."]";
+	$0.=" :".$class if $class;
 	
 $t_domain->close;
 
@@ -60,7 +62,7 @@ use Encode qw(decode encode);
 use JSON;
 use Data::Dumper;
 use Ext::Redis::_init;
-our $alarm=30; # autoexit after 10 seconds of inactivity
+our $alarm=60; # autoexit after 60 seconds of inactivity
 our $time_max=1200;
 our $time_start=time();
 
@@ -131,6 +133,7 @@ sub callback {
 	{
 		no strict;
 		my $payload=from_json($var->{'body'}->{'payload'});
+#		print $payload;
 		if ($payload->{'function'})
 		{
 			my $function=$payload->{'function'};
@@ -164,6 +167,7 @@ sub callback {
 	if ($@)
 	{
 		main::_log("job error ".$@,1);
+#		$this_channel->ack();
 		exit;
 	}
 	$this_channel->ack();
