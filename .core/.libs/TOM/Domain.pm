@@ -46,6 +46,7 @@ BEGIN
 			$tom::H_orig=$tom::H;
 			
 			main::_log("domain hostname '$tom::H'");
+			$0.=" [".$tom::H."]";
 			
 			#
 			$tom::D_cookie=$tom::H_cookie unless $tom::D_cookie;
