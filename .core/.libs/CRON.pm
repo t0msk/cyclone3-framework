@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-
+use TOM::Engine;
 
 # DEFINUJEM PREMENNE V OBLASTI MODULOV
 package CRON::module;
@@ -195,7 +195,7 @@ sub module
 				$mdl_C{-category}."-".$mdl_C{-name}.".".$mdl_C{-version}.".cron";
 		}
 	}
-	
+#	print $mdl_C{'P_MODULE'}."\n";
 	# AK MODUL NEEXISTUJE
 	if (not -e $mdl_C{P_MODULE})
 	{
@@ -215,9 +215,9 @@ sub module
 	{
 		local $SIG{ALRM} = sub {die "Timed out $CRON::ALRM_mdl sec.\n"};
 		alarm $CRON::ALRM_mdl;
-		
+#		main::_log("start do");
 		if (not do $mdl_C{'P_MODULE'}){die "pre-compilation error - $! $@\n";}
-		
+#		main::_log("end do");
 		if (CRON::module::execute(%mdl_env))
 		{
 			#main::_log("end eval");
