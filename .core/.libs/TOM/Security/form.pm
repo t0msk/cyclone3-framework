@@ -87,6 +87,8 @@ sub html_input_value_escape
 {
 	my $val=shift;
 	$val=~s|&|&amp;|g;
+	$val=~s|<|&lt;|g;
+	$val=~s|>|&gt;|g;
 	$val=~s|"|&quot;|g;
 	return $val;
 }
