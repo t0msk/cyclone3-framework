@@ -144,7 +144,6 @@ sub hash_encode
 	
 	if ($link)
 	{
-#		$link=enc3::xor($link,$tom::code_keys{$key_name}{key});
 		$link=MIME::Base64::encode_base64($link);
 		$link=~s|[\n\r]||;
 		$link=~s|==$||;
