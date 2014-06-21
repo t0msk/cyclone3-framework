@@ -1367,6 +1367,7 @@ sub designmodule
 	{
 		main::_log("'-convertvars' enabled, converting <\$vars>");
 		TOM::Utils::vars::replace($file_data);
+		TOM::Utils::vars::replace_comment($file_data);
 	}
 	
 	if (not $main::H->r_("<!TMP-".$mdl_env{-TMP}."!>",$file_data))
@@ -1535,7 +1536,7 @@ sub tplmodule
 			TOM::Error::module
 			(
 				'-TMP' => $mdl_C{'-TMP'},
-				'-MODULE' => "[TPLMDL::".$mdl_C{'-addong'}."-".$mdl_C{'-name'}."]",
+				'-MODULE' => "[TPLMDL::".$mdl_C{'-addon'}."-".$mdl_C{'-name'}."]",
 				'-ERROR' => "TPL not defined or not found",
 			);
 			return undef;
