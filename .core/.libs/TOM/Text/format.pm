@@ -147,7 +147,6 @@ sub wordwrap
 use TOM::Net::URI::URL;
 use TOM::Net::HTTP::CGI;
 use MIME::Base64;
-use enc3;
 
 # TOM::Text::format::decode_URLS
 sub decode_URLS
@@ -166,18 +165,7 @@ sub decode_URLS
 			}
 			elsif ($ver eq "3")
 			{
-				
-				while ($url=~/%/){$url=TOM::Net::URI::URL::url_decode($url)};
-				$url=MIME::Base64::decode_base64($url."==");
-				
-				my $query=TOM::Net::URI::URL::url_decode(enc3::xor($url,$tom::code_keys{$code}{key}));
-				my %form=TOM::Net::HTTP::CGI::get_QUERY_STRING($query,'quiet'=>1);
-				# kontrola spravnosti rozparsovania - pravdepodobnosti normalnej linky
-				my $bad;foreach (keys %form){$bad=1 if $_=/[^a-zA-Z0-9_\-]/;}
-				if (!$bad)
-				{
-					$text=~s|<!TMPURLDEC!>|?\|?$query|;
-				}
+				# sorry, unsupported
 			}
 		}
 		else
