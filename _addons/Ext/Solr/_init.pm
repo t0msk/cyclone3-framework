@@ -43,7 +43,10 @@ sub service
 	return undef unless $Ext::Solr::url;
 	if (!$service)
 	{
-#		$service = Ext::Solr::service->new($Ext::Solr::url, { 'autocommit' => $Ext::Solr::autocommit });
+#		$service = Ext::Solr::service->new($Ext::Solr::url, { 'autocommit' => $Ext::Solr::autocommit,agent => LWP::UserAgent->new(
+#			keep_alive => 1,
+#			timeout => 3600
+#		) });
 		$service = Ext::Solr::service->new();
 	}
 	return $service;
