@@ -1218,7 +1218,7 @@ sub delete
 	if (!$columns{'ID'})
 	{
 		main::_log("this ID not exists!",1) if $debug;
-		$t->close();
+		$t->close() if $debug;
 		return undef;
 	}
 	
