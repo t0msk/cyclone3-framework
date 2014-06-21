@@ -236,6 +236,7 @@ sub module
 	
 	if ($@)
 	{
+		use TOM::Error;
 		TOM::Error::module
 		(
 			-MODULE	=>	$mdl_C{-category}."-".$mdl_C{-name},
