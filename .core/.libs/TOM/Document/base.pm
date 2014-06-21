@@ -108,7 +108,7 @@ sub AUTOLOAD
 {
 	my $self = shift;
 	my $name = $AUTOLOAD;
-	main::_log("Unknown TOM::Document method '$name'",1);
+	main::_log("Unknown TOM::Document method '$name'");
 }
 
 
