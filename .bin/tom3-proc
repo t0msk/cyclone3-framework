@@ -2,13 +2,17 @@
 use Term::ANSIColor;
 use Time::HiRes;
 BEGIN {
-	if (!$ENV{'CYCLONE3PATH'}){$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";}
+	if (!$ENV{'CYCLONE3PATH'}){
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
 	require $ENV{'CYCLONE3PATH'}."/.bin/tom3-init";
 }
 use Term::InKey;
 %form=
 (
- '--host'	=>	"restart host (eg. www_localhost_com)",
+# '--host'	=>	"restart host (eg. www_localhost_com)",
 # '-s'		=>	"show all",
 );
 if (($FORM{h})||($FORM{help})){&help();}
@@ -32,29 +36,34 @@ while(1)
 	my $t = new Proc::ProcessTable;
 	foreach my $p (@{$t->table})
 	{
+		use Data::Dumper;
+#		print Dumper($p);
 #		next unless $p->{'cmndline'}=~/(\.core\/tom3|perl.*core\.tom)/;
 #		print $p->{'cmndline'}."\n";
-		next unless $p->{'cmndline'}=~/^.*\/perl $TOM::P\/[^ ]*\/(.*?)$/;
+		#next unless $p->{'cmndline'}=~/^.*\/perl $TOM::P\/[^ ]*\/(.*?)$/;
+		
+		next unless $p->{'cmndline'}=~/^c3\-([^ ]*)/;
 		my $engine=$1;
 		
-		my $host;
-		$p->{'cmndline'}=~s| pwd=.*$||;
-		$p->{'cmndline'}=~/$TOM::P\/(.*)\/(.*?)$/;
-		my $pwd=$1;
+		my $host='_global';
+		$p->{'cmndline'}=~s|\[(.*?)\]|| && do {$host=$1};
+#		$p->{'cmndline'}=~/$TOM::P\/(.*)\/(.*?)$/;
+
+#		my $pwd=$1;
 #			$pwd=~s|^.*?/TOM/||;
-			$pwd=~s| $||g;
+#			$pwd=~s| $||g;
 		
-		foreach (split('/',$pwd))
-		{
-			$_=~s/^!// && do
-			{
-				if ($host){$host=$_.".".$host;next}
-				$host=$_;next;
-			};
-			$host.="/".$_;
-		}
-		$host=~s|^www\.||;
-		$host=~s|/core\.tom$||;
+#		foreach (split('/',$pwd))
+#		{
+#			$_=~s/^!// && do
+#			{
+#				if ($host){$host=$_.".".$host;next}
+#				$host=$_;next;
+#			};
+#			$host.="/".$_;
+#		}
+#		$host=~s|^www\.||;
+#		$host=~s|/core\.tom$||;
 		
 #		foreach (keys %{$p})
 #		{
@@ -82,9 +91,11 @@ while(1)
 			$l=length($host) if length($host)>$l;
 		}
 		
+		$l=20 if $l<=20;
+		
 		my $print_out;
 		$print_out.=color 'reset bold cyan';
-		$print_out.="[DOMAIN(start)".(" " x ($l-13))."][ENGINE   ][STAT ][P ][  CPU][  RSS][START][TIMEm][  PID][IDLEs][  rqs][rq/m][rqcode  ][uri               ]\n";
+		$print_out.="[DOMAIN(start)".(" " x ($l-13))."][ENGINE      ][STAT ][P ][  CPU][  RSS][START][TIMEm][  PID][IDLEs][  rqs][rq/m][rqcode  ][uri               ]\n";
 		$print_out.=color 'reset cyan';
 		
 		my $processes;
@@ -106,8 +117,8 @@ while(1)
 				if (!$_){$print_out.="[".sprintf("%-".$l."s",$host)."]";}else {$print_out.=(" " x ($l+2));}
 				
 				# engine
-				$hosts{$host}[$_]{'engine'}=substr($hosts{$host}[$_]{'engine'},0,9);
-				$print_out.= "[".sprintf("%-9s",$hosts{$host}[$_]{'engine'})."]";
+				$hosts{$host}[$_]{'engine'}=substr($hosts{$host}[$_]{'engine'},0,12);
+				$print_out.= "[".sprintf("%-12s",$hosts{$host}[$_]{'engine'})."]";
 				
 				# STAT
 				$print_out.= "[";
@@ -152,9 +163,9 @@ while(1)
 					
 					if (my $vals=$Ext::CacheMemcache::cache->get('namespace'=>'c3process','key' => $TOM::hostname.':'.$hosts{$host}[$_]{'pid'}))
 					{
-						use Data::Dumper;
+#						use Data::Dumper;
 #						print Dumper($vals);
-						
+#						exit;
 						$print_out.= "[";
 						my $idle=(time() - $vals->{'time'});
 #						if ($idle > 5){print color 'bold cyan'}
@@ -216,14 +227,14 @@ while(1)
 		}
 		
 		$print_out.= color 'reset cyan';
-		$print_out.= "[TOTAL".(" " x ($l-5))."]                  [". sprintf('%2d',$processes)."][". sprintf('%5s',sprintf('%-2.2f',$cpu)) ."][" .sprintf('%4s',$rss). "M]\n";
+		$print_out.= "[TOTAL".(" " x ($l-5))."]                     [". sprintf('%2d',$processes)."][". sprintf('%5s',sprintf('%-2.2f',$cpu)) ."][" .sprintf('%4s',$rss). "M]\n";
 		$print_out.= color 'reset cyan';
 		
-		&Clear();
+		&Clear() unless $FORM{'s'};
 		print $print_out;
 		#print color 'reset bold cyan';print "*";print "\n";
 		Time::HiRes::sleep(1) unless $FORM{'r'};
-#		exit;
+		exit if $FORM{'s'};
 	
 }
 
