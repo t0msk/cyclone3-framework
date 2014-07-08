@@ -42,6 +42,7 @@ use TOM::Security::form;
 use Time::HiRes qw(usleep);
 use Ext::TextHyphen::_init;
 use Ext::Redis::_init;
+use Ext::Elastic::_init;
 
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
@@ -90,6 +91,11 @@ Move article to another directory (new ID of category for symlink defined)
 sub article_add
 {
 	my %env=@_;
+	if ($env{'-jobify'})
+	{
+		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::401::db_name}); # do it in background
+	}
+	
 	my $t=track TOM::Debug(__PACKAGE__."::article_add()",'timer'=>1);
 	
 	$env{'article_content.mimetype'}="text/html" unless $env{'article_content.mimetype'};
@@ -140,10 +146,8 @@ sub article_add
 	
 	# check if this symlink with same ID_category not exists
 	# and article.ID is unknown
-	main::_log("$env{'article_attrs.ID_category'} $env{'article.ID'} $env{'article.ID_entity'} $env{'forcesymlink'}");
 	if ($env{'article_attrs.ID_category'} && !$env{'article.ID'} && $env{'article.ID_entity'} && !$env{'forcesymlink'})
 	{
-		main::_log("\$env{'article_attrs.ID_category'} && !\$env{'article.ID'} && \$env{'article.ID_entity'} -> search for article.ID");
 		my $sql=qq{
 			SELECT
 				*
@@ -169,6 +173,7 @@ sub article_add
 	{
 		# check if this article exists
 		# - not necessary :)
+		
 	}
 	
 	main::_log("status article.ID='$env{'article.ID'}' article.ID_entity='$env{'article.ID_entity'}'");
@@ -305,8 +310,6 @@ sub article_add
 		);
 		$env{'article_attrs.lng'}=$article_attrs{'lng'};
 	}
-	
-	main::_log("$env{'article_attrs.ID'} ($env{'article_attrs.status'} && ($env{'article_attrs.status'} ne $article_attrs{'status'}))");
 	
 	# update if necessary
 	if ($env{'article_attrs.ID'})
@@ -793,13 +796,161 @@ sub article_add
 }
 
 
+sub _article_index_all
+{
+	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::401::db_name}); # do it in background
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			ID_entity
+		FROM
+			$App::401::db_name.a401_article_ent
+		LIMIT 100
+	},'quiet'=>1);
+	my $i;
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		_article_index('ID_entity' => $db0_line{'ID_entity'});
+	}
+	main::_log("created pool");
+}
+
+
 sub _article_index
 {
+	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::401::db_name,'class'=>'indexer'}); # do it in background
+	
 	my %env=@_;
 	return undef unless $env{'ID_entity'};
+	
+	if ($Elastic) # the new way in Cyclone3 :)
+	{
+		my $t=track TOM::Debug(__PACKAGE__."::_article_index::elastic(".$env{'ID_entity'}.")",'timer'=>1);
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				article.ID
+			FROM `$App::401::db_name`.a401_article_ent AS article_ent
+			INNER JOIN `$App::401::db_name`.a401_article AS article ON
+			(
+				article_ent.ID_entity = article.ID_entity
+			)
+			WHERE
+				article.ID_entity = ? AND
+				article.status IN ('Y','N','L') AND
+				article_ent.status IN ('Y','N','L')
+			LIMIT 1
+		},'quiet'=>1,'bind'=>[$env{'ID_entity'}]);
+		if (!$sth0{'rows'})
+		{
+			main::_log("article.ID_entity=$env{'ID_entity'} not found",1);
+			if ($Elastic->exists(
+				'index' => 'cyclone3.'.$App::401::db_name,
+				'type' => 'a401_article',
+				'id' => $env{'ID_entity'}
+			))
+			{
+				main::_log("removing from Elastic",1);
+				$Elastic->delete(
+					'index' => 'cyclone3.'.$App::401::db_name,
+					'type' => 'a401_article',
+					'id' => $env{'ID_entity'}
+				);
+			}
+			$t->close();
+			return 1;
+		}
+		
+		my %article;
+		
+		# article_content
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				$App::401::db_name.a401_article_content
+			WHERE
+				status='Y'
+				AND ID_entity=?
+		},'quiet'=>1,'bind'=>[$env{'ID_entity'}]);
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$article{'locale'}{$db0_line{'lng'}}{'body'}=$db0_line{'body'}
+				if $db0_line{'body'};
+			$article{'locale'}{$db0_line{'lng'}}{'abstract'}=$db0_line{'abstract'}
+				if $db0_line{'abstract'};
+			$article{'locale'}{$db0_line{'lng'}}{'keywords'}=$db0_line{'keywords'}
+				if $db0_line{'keywords'};
+			$article{'locale'}{$db0_line{'lng'}}{'subtitle'}=$db0_line{'subtitle'}
+				if $db0_line{'subtitle'};
+		}
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				article_attrs.ID,
+				article_attrs.name,
+				article_attrs.lng,
+				article_attrs.datetime_start,
+				article_attrs.status,
+				article_ent.ID_author,
+				article_cat.name AS cat_name,
+				article_cat.ID AS cat_ID,
+				article_cat.ID_charindex
+			FROM
+				$App::401::db_name.a401_article AS article
+			LEFT JOIN $App::401::db_name.a401_article_ent AS article_ent ON
+			(
+				article_ent.ID_entity = article.ID_entity
+			)
+			LEFT JOIN $App::401::db_name.a401_article_attrs AS article_attrs ON
+			(
+				article_attrs.ID_entity = article.ID
+			)
+			LEFT JOIN $App::401::db_name.a401_article_cat AS article_cat ON
+			(
+				article_cat.ID = article_attrs.ID_category
+			)
+			WHERE
+				article_ent.ID_entity=?
+				AND article.status='Y'
+				AND article_attrs.status='Y'
+			ORDER BY
+				article_attrs.datetime_start DESC
+		},'quiet'=>1,'bind'=>[$env{'ID_entity'}]);
+		$article{'status'}="N";
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			push @{$article{'name'}},$db0_line{'name'};
+			push @{$article{'cat'}{'charindex'}},$db0_line{'ID_charindex'};
+			push @{$article{'cat'}{'ID'}},$db0_line{'cat_ID'};
+			push @{$article{'cat'}{'name'}},$db0_line{'cat_name'};
+			
+			push @{$article{'locale'}{$db0_line{'lng'}}{'name'}},$db0_line{'name'};
+			push @{$article{'article_attrs'}},{
+				'name' => $db0_line{'name'}
+			};
+			$article{'status'}="Y"
+				if $db0_line{'status'} eq "Y";
+		}
+		
+#		use Data::Dumper;print Dumper(\%article);
+		
+		$Elastic->index(
+			'index' => 'cyclone3.'.$App::401::db_name,
+			'type' => 'a401_article',
+			'id' => $env{'ID_entity'},
+			'body' => {
+				%article
+			}
+		);
+		
+		$t->close();
+		return 1;
+	}
+	
 	return undef unless $Ext::Solr;
 	
-	my $t=track TOM::Debug(__PACKAGE__."::_article_index()",'timer'=>1);
+	my $t=track TOM::Debug(__PACKAGE__."::_article_index::solr(".$env{'ID_entity'}.")",'timer'=>1);
 	
 	my %content;
 	
