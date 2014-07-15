@@ -2775,10 +2775,10 @@ sub get_video_part_file_process_front
 		
 		WHERE
 			/* only not trashed video parts */
-			video_part.status IN ('Y','N') AND
+			video_part.status IN ('Y') AND
 			
 			/* only not trashed videos */
-			video.status IN ('Y','N') AND
+			video.status IN ('Y') AND
 			
 			/* only not trashed video_attrs */
 			video_attrs.status IN ('Y','N') AND
