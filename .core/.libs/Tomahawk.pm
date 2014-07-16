@@ -291,7 +291,7 @@ sub GetCACHE_CONF
 sub module
 {
 	local %mdl_env=@_;
-	$mdl_env{'-cache'} if $mdl_env{'-cache_id'};
+#	$mdl_env{'-cache'} if $mdl_env{'-cache_id'};
 	if (exists $mdl_env{'-category'}){$mdl_env{'-addon'}="a".$mdl_env{'-category'}}; # backward compatibility
 	$mdl_env{'-addon_type'}='App' if $mdl_env{'-addon'}=~/^a/;
 	$mdl_env{'-addon_type'}='Ext' if $mdl_env{'-addon'}=~/^e/;
@@ -363,7 +363,7 @@ sub module
 	
 	# AK JE DEFINOVANA POZIADAVKA NA CACHOVANIE A JE DEFINOVANA
 	# POZIADAVKA NA VOBEC CACHOVANIE, TAK SA TOMU VENUJEM
-	if ((exists $mdl_C{'-cache_id'})&&($TOM::CACHE))
+	if ((exists $mdl_C{'-cache_id'} || $mdl_C{'-cache'})&&($TOM::CACHE))
 	{
 		$mdl_C{'-cache_id_sub'}="0" unless $mdl_C{'-cache_id_sub'};
 		$mdl_C{'-cache_id'}="0" unless $mdl_C{'-cache_id'}; # ak je vstup s cache_id ale nieje 0
@@ -435,9 +435,29 @@ sub module
 		# nevlozil uz nahodou data o tejto cache druhy proces?
 		if (not exists $CACHE{$mdl_C{'T_CACHE'}}){GetCACHE_CONF();}
 		
-		
-		# nie nevlozil, ide sa na tooooo! :))
-		if (not exists $CACHE{$mdl_C{'T_CACHE'}})
+		# neexistuje konfiguracia tohto typu cache
+		if ((not exists $CACHE{$mdl_C{'T_CACHE'}}) && $mdl_C{'-cache'})
+		{
+			# a definujem dlzku cache priamo z typecka
+			if ($mdl_C{'-cache'}=~/^(\d+)H$/i)
+			{
+				$mdl_C{'-cache_time'}=3600*$1;
+			}
+			elsif ($mdl_C{'-cache'}=~/^(\d+)M$/i)
+			{
+				$mdl_C{'-cache_time'}=60*$1;
+			}
+			elsif ($mdl_C{'-cache'}=~/^(\d+)S$/i)
+			{
+				$mdl_C{'-cache_time'}=$1;
+			}
+			else
+			{
+				$mdl_C{'-cache_time'}=$mdl_C{'-cache'};
+			}
+			$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}=$mdl_C{'-cache_time'};
+		}
+		elsif (not exists $CACHE{$mdl_C{'T_CACHE'}})
 		{
 			$mdl_C{'-cache_time'}=$TOM::CACHE_time unless $mdl_C{'-cache_time'};
 			$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}=$mdl_C{'-cache_time'};
@@ -1396,7 +1416,7 @@ sub designmodule
 sub tplmodule
 {
 	local %mdl_env=@_;
-	$mdl_env{'-cache'} if $mdl_env{'-cache_id'};
+#	$mdl_env{'-cache'} if $mdl_env{'-cache_id'};
 	if (exists $mdl_env{'-category'}){$mdl_env{'-addon'}="a".$mdl_env{'-category'}}; # backward compatibility
 	$mdl_env{'-addon_type'}='App' if $mdl_env{'-addon'}=~/^a/;
 	$mdl_env{'-addon_type'}='Ext' if $mdl_env{'-addon'}=~/^e/;
