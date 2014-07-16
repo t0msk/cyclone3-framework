@@ -70,6 +70,7 @@ use Movie::Info;
 use File::Which qw(where);
 use Time::HiRes qw(usleep);
 use Ext::Redis::_init;
+use Ext::Elastic::_init;
 
 our $ffmpeg_exec = (where('ffmpeg'))[0];main::_log("ffmpeg in '$ffmpeg_exec'");
 our $mencoder_exec = (where('mencoder'))[0];main::_log("mencoder in '$mencoder_exec'");
@@ -155,7 +156,12 @@ sub video_part_file_generate
 		'tb_name' => 'a510_video_format'
 	);
 	
-	if ($format_parent{'status'} ne "Y" &&  $format_parent{'status'} ne "L")
+	if ($format{'ID'} eq $App::510::video_format_original_ID && $format{'process'})
+	{
+		main::_log("regenerate video_part_file");
+		%format_parent=%format;
+	}
+	elsif ($format_parent{'status'} ne "Y" &&  $format_parent{'status'} ne "L")
 	{
 		main::_log("parent video_format is disabled or not available",1);
 		$t->close();
@@ -235,7 +241,7 @@ sub video_part_file_generate
 	if ($out{'return'})
 	{
 		main::_log("parent video_part_file can't be processed",1);
-		
+#		exit;
 #		if ($file_parent{'ID_format'} == $App::510::video_format_original_ID && ($out <=> 512))
 #		{
 #			main::_log("lock processing of video_part.ID='$env{'video_part.ID'}'",1);
@@ -266,32 +272,52 @@ sub video_part_file_generate
 			my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 			if (my %db0_line=$sth0{'sth'}->fetchhash)
 			{
-				App::020::SQL::functions::update(
-					'ID' => $db0_line{'ID'},
-					'db_h' => 'main',
-					'db_name' => $App::510::db_name,
-					'tb_name' => 'a510_video_part_file',
-					'columns' =>
-					{
-						'name' => "''",
-						'video_width' => "''",
-						'video_height' => "''",
-						'video_codec' => "''",
-						'video_fps' => "''",
-						'video_bitrate' => "''",
-						'audio_codec' => "''",
-						'audio_bitrate' => "''",
-						'length' => "''",
-						'file_alt_src' => "''",
-						'file_size' => "''",
-						'file_checksum' => "''",
-						'file_ext' => "''",
-						'from_parent' => "'Y'",
-						'regen' => "'N'",
-						'status' => "'E'",
-					},
-					'-journalize' => 1,
-				);
+				if ($db0_line{'ID_format'} eq "1")
+				{
+					main::_log("can't set source format as invalid",1);
+					App::020::SQL::functions::update(
+						'ID' => $db0_line{'ID'},
+						'db_h' => 'main',
+						'db_name' => $App::510::db_name,
+						'tb_name' => 'a510_video_part_file',
+						'columns' =>
+						{
+							'from_parent' => "'Y'",
+							'regen' => "'N'",
+							'status' => "'E'",
+						},
+						'-journalize' => 1,
+					);
+				}
+				else
+				{
+					App::020::SQL::functions::update(
+						'ID' => $db0_line{'ID'},
+						'db_h' => 'main',
+						'db_name' => $App::510::db_name,
+						'tb_name' => 'a510_video_part_file',
+						'columns' =>
+						{
+							'name' => "''",
+							'video_width' => "''",
+							'video_height' => "''",
+							'video_codec' => "''",
+							'video_fps' => "''",
+							'video_bitrate' => "''",
+							'audio_codec' => "''",
+							'audio_bitrate' => "''",
+							'length' => "''",
+							'file_alt_src' => "''",
+							'file_size' => "''",
+							'file_checksum' => "''",
+							'file_ext' => "''",
+							'from_parent' => "'Y'",
+							'regen' => "'N'",
+							'status' => "'E'",
+						},
+						'-journalize' => 1,
+					);
+				}
 			}
 			else
 			{
@@ -367,6 +393,138 @@ sub video_part_file_generate
 	$t->close();
 	return 1;
 }
+
+
+
+sub video_part_smil_generate
+{
+	my %env=@_;
+	return undef unless $env{'video_part.ID'};
+	my $t=track TOM::Debug(__PACKAGE__."::video_part_smil_generate($env{'video_part.ID'})");
+	
+	my $subdir=sprintf('%04d',int($env{'video_part.ID'}/10000));
+	my $directory=$tom::P_media.'/a510/video/part/smil/'.$subdir;
+#	main::_log("subdir $subdir");
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`$App::510::db_name`.a510_video_part_file
+		WHERE
+			ID_entity=?
+			AND status='Y'
+			AND file_alt_src IS NULL
+			AND
+			(
+				ID_format != $App::510::video_format_original_ID
+				OR
+				(
+					ID_format = $App::510::video_format_original_ID
+					AND from_parent = 'Y'
+				)
+			)
+		ORDER BY
+			ID_format
+	},'bind'=>[$env{'video_part.ID'}],'quiet'=>1);
+	
+	main::_log("found $sth0{'rows'} playable items");
+	use XML::Generator ':pretty';
+	
+	if (!$sth0{'rows'})
+	{
+		main::_log("nothing to generate",1);
+		$t->close();
+		return undef;
+	}
+	
+	my $xml=XML::Generator->new(':pretty');
+	my $xml_string=$xml->smil(
+		{
+			'title' => "Cyclone3 ".$tom::H." video_part ".$env{'video_part.ID'}
+		},
+		$xml->header(),
+		$xml->body(
+			$xml->switch(do{
+				my @video;
+				while (my %db0_line=$sth0{'sth'}->fetchhash())
+				{
+					push @video, $xml->video({
+						'src' => $App::510::smil2file_path.'/'
+							.$db0_line{'ID_format'}.'/'.substr($db0_line{'ID'},0,4).'/'
+							.$db0_line{'name'}.'.'.$db0_line{'file_ext'},
+						'width' => $db0_line{'video_width'},
+						'height' => $db0_line{'video_height'},
+						'system-bitrate' => ($db0_line{'video_bitrate'} + $db0_line{'audio_bitrate'})
+					},
+						$xml->param({
+							'name' => "videoBitrate",
+							'value' => $db0_line{'video_bitrate'},
+							'valuetype' => 'data'
+						}),
+						$xml->param({
+							'name' => "audioBitrate",
+							'value' => $db0_line{'audio_bitrate'},
+							'valuetype' => 'data'
+						})
+					);
+				}
+				@video;
+			})
+		)
+	);
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`$App::510::db_name`.a510_video_part_smil
+		WHERE
+			ID_entity=?
+		LIMIT 1
+	},'bind'=>[$env{'video_part.ID'}],'quiet'=>1);
+	
+#	if (!-e $tom::P_media.'/a510/video/part/smil')
+#	{
+#		File::Path::mkpath $tom::P_media.'/a510/video/part/smil';
+#		chmod (0777,$tom::P_media.'/a510/video/part/smil')
+#	}
+#	if (!-e $directory)
+#	{
+#		File::Path::mkpath $directory;
+#		chmod (0777,$directory);
+#	}
+	
+	my %db0_line=$sth0{'sth'}->fetchhash();
+	my $file_name=$db0_line{'name'};
+	if (!$sth0{'rows'})
+	{
+		$file_name=TOM::Utils::vars::genhash(32);
+		App::020::SQL::functions::new(
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_video_part_smil",
+			'columns' =>
+			{
+				'ID_entity' => $env{'video_part.ID'},
+				'name' => "'".$file_name."'",
+				'status' => "'Y'"
+			},
+		);
+	}
+	
+	main::_log("hash=$file_name");
+	
+#	open(HNDSMIL,'>'.$directory.'/'.$file_name.'.smil');
+	open(HNDSMIL,'>'.$tom::P_media.'/a510/video/part/'.$file_name.'.smil');
+	print HNDSMIL $xml_string;
+	close(HNDSMIL);
+	chmod (0666,$directory.'/'.$file_name.'.smil');
+	
+	$t->close();
+	return 1;
+}
+
 
 
 
@@ -572,7 +730,7 @@ sub video_part_file_process
 				{
 					push @encoder_env, '-pass '.$env{'pass'};
 					push @encoder_env, '-passlogfile '.$temp_passlog->{'filename'};
-					push @encoder_env, '-stats '.$temp_statslog->{'filename'};
+#					push @encoder_env, '-stats '.$temp_statslog->{'filename'};
 				}
 				if ($env{'vframes'}){push @encoder_env, '-vframes '.$env{'vframes'};}
 				if ($env{'f'}){push @encoder_env, '-f '.$env{'f'};}
@@ -640,6 +798,25 @@ sub video_part_file_process
 						push @encoder_env, '-b '.$env{'b'};
 					}
 				}
+				if ($env{'b:v'}){
+					if ($env{'upscale'} eq "false" && $movie1_info{'bitrate'})
+					{ # check for upscale
+						my $bitrate=$env{'b:v'};
+							$bitrate=~s|k$|000|;
+						if ($bitrate > $movie1_info{'bitrate'})
+						{
+							push @encoder_env, '-b:v '.$movie1_info{'bitrate'};
+						}
+						else
+						{
+							push @encoder_env, '-b:v '.$env{'b:v'};
+						}
+					}
+					else
+					{
+						push @encoder_env, '-b:v '.$env{'b:v'};
+					}
+				}
 				if ($env{'s_width'})
 					{$env{'s'}=$env{'s_width'}.'x'.(int($movie1_info{'height'}/($movie1_info{'width'}/$env{'s_width'})/2)*2);}
 				if ($env{'s_height'} && $movie1_info{'height'})
@@ -655,7 +832,13 @@ sub video_part_file_process
 					}
 				if ($env{'s'}){push @encoder_env, '-s '.$env{'s'};}
 				if ($env{'r'}){push @encoder_env, '-r '.$env{'r'};}
-				if ($env{'acodec'}){push @encoder_env, '-acodec '.$env{'acodec'};}
+				if ($env{'acodec'}){
+					push @encoder_env, '-acodec '.$env{'acodec'};
+					if ($env{'acodec'})
+					{
+						push @encoder_env, '-strict -2';
+					}
+				}
 				if ($env{'ab'}){
 					if ($env{'upscale'} eq "false" && $movie1_info{'audio_bitrate'})
 					{ # check for upscale
@@ -673,6 +856,25 @@ sub video_part_file_process
 					else
 					{
 						push @encoder_env, '-ab '.$env{'ab'};
+					}
+				}
+				if ($env{'b:a'}){
+					if ($env{'upscale'} eq "false" && $movie1_info{'audio_bitrate'})
+					{ # check for upscale
+						my $bitrate=$env{'b:a'};
+							$bitrate=~s|k$|000|;
+						if ($bitrate > $movie1_info{'audio_bitrate'})
+						{
+							push @encoder_env, '-b:a '.$movie1_info{'audio_bitrate'};
+						}
+						else
+						{
+							push @encoder_env, '-b:a '.$env{'b:a'};
+						}
+					}
+					else
+					{
+						push @encoder_env, '-b:a '.$env{'b:a'};
 					}
 				}
 				if ($env{'ar'}){push @encoder_env, '-ar '.$env{'ar'};}
@@ -2104,6 +2306,7 @@ sub video_part_file_add
 				'tb_name' => 'a510_video',
 				'ID_entity' => $part{'ID_entity'}
 			});
+			video_part_smil_generate('video_part.ID' => $env{'video_part.ID'});
 			_video_index('ID_entity'=>$part{'ID_entity'});
 			return $db0_line{'ID'};
 		}
@@ -2172,6 +2375,7 @@ sub video_part_file_add
 				'tb_name' => 'a510_video',
 				'ID_entity' => $part{'ID_entity'}
 			});
+			video_part_smil_generate('video_part.ID' => $env{'video_part.ID'});
 			_video_index('ID_entity'=>$part{'ID_entity'});
 			return $db0_line{'ID'};
 		}
@@ -2249,6 +2453,7 @@ sub video_part_file_add
 			'tb_name' => 'a510_video',
 			'ID_entity' => $part{'ID_entity'}
 		});
+		video_part_smil_generate('video_part.ID' => $env{'video_part.ID'});
 		_video_index('ID_entity'=>$part{'ID_entity'});
 		return $ID;
 	}
@@ -2261,6 +2466,7 @@ sub video_part_file_add
 		'tb_name' => 'a510_video',
 		'ID_entity' => $part{'ID_entity'}
 	});
+	video_part_smil_generate('video_part.ID' => $env{'video_part.ID'});
 	_video_index('ID_entity'=>$part{'ID_entity'});
 	
 	return 1;
@@ -2732,8 +2938,8 @@ sub get_video_part_file_process_front
 		
 		LEFT JOIN `$App::510::db_name`.a510_video_format AS video_format ON
 		(
-			video_format.status IN ('Y','L') AND
-			video_format.name NOT LIKE 'original'
+			video_format.status IN ('Y','L')
+--			AND video_format.name NOT LIKE 'original'
 		)
 		LEFT JOIN `$App::510::db_name`.a510_video_part_file AS video_part_file ON
 		(
@@ -2791,9 +2997,16 @@ sub get_video_part_file_process_front
 			/* skip videos where depending format is in processing */
 			AND video_part_file_process_p.ID IS NULL
 			
-			/* parent video file must exists */
-			AND video_part_file_p.ID
-			AND video_part_file_p.status='Y'
+			/* parent video file must exists or we are processing 'original' */
+			AND
+			(
+				video_format.name LIKE 'original'
+				OR
+				(
+					video_part_file_p.ID
+					AND video_part_file_p.status='Y'
+				)
+			)
 			
 			/* cases when video_part_file must be re-encoded */
 			AND
@@ -2833,6 +3046,13 @@ sub get_video_part_file_process_front
 				(
 					/* or regeneration is awaiting */
 					video_part_file.status = 'W'
+				)
+				OR
+				(
+					/* or original file must be re-encoded, because is new */
+					video_format.name = 'original'
+					AND video_format.process IS NOT NULL
+					AND video_part_file.from_parent = 'N'
 				)
 			)
 		
@@ -3326,6 +3546,404 @@ sub _video_cat_index
 	}
 	
 	$t->close();
+}
+
+
+sub broadcast_program_add
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::broadcast_program_add()");
+	
+	my %program;
+	if ($env{'program.ID'})
+	{
+		%program=App::020::SQL::functions::get_ID(
+			'ID' => $env{'program.ID'},
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_broadcast_program",
+			'columns' => {'*'=>1}
+		);
+	}
+	elsif ($env{'program.ID_entity'})
+	{
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`$App::510::db_name`.`a510_broadcast_program`
+			WHERE
+				ID_entity=?
+			LIMIT 1
+		},'-bind'=>[$env{'program.ID_entity'}],'quiet'=>1);
+		if (%program=$sth0{'sth'}->fetchhash())
+		{
+			$env{'program.ID'}=$program{'ID'};
+				$env{'program.ID_entity'}=$program{'ID_entity'};
+		}
+	}
+	elsif ($env{'program.program_code'})
+	{
+		if ($env{'program.datetime_air_start'})
+		{
+			if ($env{'program.ID_channel'})
+			{
+				my %sth0=TOM::Database::SQL::execute(qq{
+					SELECT
+						*
+					FROM
+						`$App::510::db_name`.a510_broadcast_program
+					WHERE
+						program_code=?
+						AND ID_channel=?
+						AND ABS(TIME_TO_SEC(TIMEDIFF(?,datetime_air_start))) <= 7200
+					ORDER BY
+						ABS(TIME_TO_SEC(TIMEDIFF(?,datetime_air_start))) ASC
+					LIMIT 1
+				},'bind'=>[
+					$env{'program.program_code'},
+					$env{'program.ID_channel'},
+					$env{'program.datetime_air_start'},
+					$env{'program.datetime_air_start'}
+				],'quiet'=>1);
+				if (%program=$sth0{'sth'}->fetchhash())
+				{
+					$env{'program.ID'}=$program{'ID'};
+					$env{'program.ID_entity'}=$program{'ID_entity'};
+				}
+			}
+			else
+			{
+				my %sth0=TOM::Database::SQL::execute(qq{
+					SELECT
+						*
+					FROM
+						`$App::510::db_name`.a510_broadcast_program
+					WHERE
+						program_code=?
+						AND ABS(TIME_TO_SEC(TIMEDIFF(?,datetime_air_start))) <= 7200
+	--					AND status IN ('Y','N','L','W')
+					ORDER BY
+						ABS(TIME_TO_SEC(TIMEDIFF(?,datetime_air_start))) ASC
+					LIMIT 1
+				},'bind'=>[
+					$env{'program.program_code'},
+					$env{'program.datetime_air_start'},
+					$env{'program.datetime_air_start'}
+				],'quiet'=>1);
+				if (%program=$sth0{'sth'}->fetchhash())
+				{
+					$env{'program.ID'}=$program{'ID'};
+					$env{'program.ID_entity'}=$program{'ID_entity'};
+				}
+			}
+		}
+		else
+		{
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					*
+				FROM
+					`$App::510::db_name`.a510_broadcast_program
+				WHERE
+					program_code=?
+--					AND status IN ('Y','N','L','W')
+				LIMIT 1
+			},'bind'=>[$env{'program.program_code'}],'quiet'=>1);
+			if (%program=$sth0{'sth'}->fetchhash())
+			{
+				$env{'program.ID'}=$program{'ID'};
+				$env{'program.ID_entity'}=$program{'ID_entity'};
+			}
+		}
+	}
+	
+	if (!$env{'program.ID'})
+	{
+		main::_log("new program.ID");
+		
+		$env{'program.ID'}=App::020::SQL::functions::new(
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_broadcast_program",
+			'data' =>
+			{
+				'ID_entity' => $env{'program.ID_entity'},
+				'ID_channel' => $env{'program.ID_channel'},
+				'name' => $env{'program.name'},
+				'status' => $env{'program.status'},
+			},
+			'columns' => 
+			{
+				'datetime_air_start' => 'NOW()',
+				'datetime_air_stop' => 'DATE_ADD(NOW(), INTERVAL 3600 SECOND)'
+			},
+			'-posix' => 1,
+			'-journalize' => 1,
+		);
+		# reload
+		%program=App::020::SQL::functions::get_ID(
+			'ID' => $env{'program.ID'},
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_broadcast_program",
+			'columns' => {'*'=>1}
+		);
+		$env{'program.ID'}=$program{'ID'};
+		$env{'program.ID_entity'}=$program{'ID_entity'};
+	}
+	
+	# update if necessary
+	if ($env{'program.ID'})
+	{
+		my %columns;
+		my %data;
+		
+		$data{'ID_channel'}=$env{'program.ID_channel'}
+			if ($env{'program.ID_channel'} && ($env{'program.ID_channel'} ne $program{'ID_channel'}));
+		$data{'name'}=$env{'program.name'}
+			if (exists $env{'program.name'} && ($env{'program.name'} ne $program{'name'}));
+		$env{'program.name_url'}=TOM::Net::URI::rewrite::convert($env{'program.name'})
+			if $env{'program.name'};
+		$data{'name_url'}=$env{'program.name_url'}
+			if (exists $env{'program.name_url'} && ($env{'program.name_url'} ne $program{'name_url'}));
+		
+		$env{'program.video_aspect'}=sprintf('%.3f',$env{'program.video_aspect'})
+			if $env{'program.video_aspect'};
+		
+		foreach (
+			'name_original',
+			'subtitle',
+			'synopsis',
+			'description',
+			'program_code',
+			'program_type_code',
+			'authoring_country',
+			'authoring_year',
+			'authoring_cast',
+			'authoring_authors',
+			'series_ID',
+			'series_type',
+			'series_code',
+			'series_episode',
+			'series_episodes',
+			'video_aspect',
+			'video_bw',
+			'audio_mode',
+			'audio_dubbing',
+			'rating_pg',
+			'accessibility_deaf',
+			'accessibility_cc',
+			'status_live',
+			'status_premiere',
+			'status_internet',
+			'recording',
+			'datetime_real_start',
+			'datetime_real_stop',
+			'datetime_real_status'
+		)
+		{
+			if (exists $env{'program.'.$_} && ($env{'program.'.$_} ne $program{$_}))
+			{
+				main::_log("$_: '$program{$_}'<>'".$env{'program.'.$_}."'");
+				if ($env{'program.'.$_} || $env{'program.'.$_} eq "0")
+				{
+					$data{$_}=$env{'program.'.$_};
+				}
+				else
+				{
+					$columns{$_}='NULL';
+				}
+			}
+		}
+		
+		$data{'datetime_air_start'}=$env{'program.datetime_air_start'}
+			if ($env{'program.datetime_air_start'} && ($env{'program.datetime_air_start'} ne $program{'datetime_air_start'}));
+		if ($env{'program.datetime_air_duration'} && $env{'program.datetime_air_start'}=~/^(\d\d\d\d)\-(\d\d)\-(\d\d) (\d\d):(\d\d):(\d\d)/)
+		{
+			use DateTime;
+			my $dt=DateTime->new(
+				'year' => $1,
+				'month' => $2,
+				'day' => $3,
+				'hour' => $4,
+				'minute' => $5,
+				'second' => $6
+			);
+			$dt->add('seconds' => $env{'program.datetime_air_duration'});
+			$env{'program.datetime_air_stop'} = $dt->strftime("%F %T");
+			main::_log_stdout(" $env{'program.datetime_air_start'}/$env{'program.datetime_air_duration'} air_stop=$env{'program.datetime_air_stop'}");
+		}
+		$data{'datetime_air_stop'}=$env{'program.datetime_air_stop'}
+			if ($env{'program.datetime_air_stop'} && ($env{'program.datetime_air_stop'} ne $program{'datetime_air_stop'}));
+		
+		$data{'status'}=$env{'program.status'}
+			if ($env{'program.status'} && ($env{'program.status'} ne $program{'status'}));
+			
+		if (keys %columns || keys %data)
+		{
+			App::020::SQL::functions::update(
+				'ID' => $env{'program.ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_broadcast_program",
+				'columns' => {%columns},
+				'data' => {%data},
+				'-posix' => 1,
+				'-journalize' => 1
+			);
+			# reload
+			%program=App::020::SQL::functions::get_ID(
+				'ID' => $env{'program.ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_broadcast_program",
+				'columns' => {'*'=>1}
+			);
+			_broadcast_program_index('ID_entity' => $env{'program.ID_entity'});
+		}
+	}
+	
+	if (
+		$program{'ID'} &&
+		$program{'ID_channel'} &&
+		$program{'program_code'} &&
+		$program{'datetime_air_start'} &&
+		$program{'status'}=~/^[YNLW]$/
+	)
+	{
+#		main::_log("searching for conflicts");
+		# najst konflikty a trashovat
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`$App::510::db_name`.a510_broadcast_program
+			WHERE
+				ID != ?
+				AND ID_channel=?
+				AND datetime_air_start <= ?
+				AND datetime_air_stop > ?
+				AND status IN ('Y','N','L','W')
+		},'bind'=>[
+			$program{'ID'},
+			$program{'ID_channel'},
+			$program{'datetime_air_start'},
+			$program{'datetime_air_start'}
+		],'quiet'=>1);
+		while (my %program0=$sth0{'sth'}->fetchhash())
+		{
+			main::_log("conflict start with $program0{'ID'}",1);
+			App::020::SQL::functions::update(
+				'ID' => $program0{'ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_broadcast_program",
+				'columns' => {'status'=>'"T"'},
+				'-journalize' => 1
+			);
+			_broadcast_program_index('ID_entity' => $program0{'ID_entity'});
+		}
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`$App::510::db_name`.a510_broadcast_program
+			WHERE
+				ID != ?
+				AND ID_channel=?
+				AND datetime_air_start < ?
+				AND datetime_air_stop >= ?
+				AND status IN ('Y','N','L','W')
+		},'bind'=>[
+			$program{'ID'},
+			$program{'ID_channel'},
+			$program{'datetime_air_stop'},
+			$program{'datetime_air_stop'}
+		],'quiet'=>1);
+		while (my %program0=$sth0{'sth'}->fetchhash())
+		{
+			main::_log("conflict stop with $program0{'ID'}",1);
+			App::020::SQL::functions::update(
+				'ID' => $program0{'ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_broadcast_program",
+				'columns' => {'status'=>'"T"'},
+				'-journalize' => 1
+			);
+			_broadcast_program_index('ID_entity' => $program0{'ID_entity'});
+		}
+		
+	}
+	
+	$t->close();
+	foreach (%program){$env{'program.'.$_}=$program{$_}};
+	return %env;
+}
+
+
+sub _broadcast_program_index
+{
+	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::510::db_name,'class'=>'indexer'}); # do it in background
+	
+	my %env=@_;
+	return undef unless $env{'ID_entity'};
+	
+	if ($Elastic) # the new way in Cyclone3 :)
+	{
+		my $t=track TOM::Debug(__PACKAGE__."::_broadcast_program_index::elastic(".$env{'ID_entity'}.")",'timer'=>1);
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				a510_broadcast_program.*
+			FROM `$App::510::db_name`.a510_broadcast_program
+			WHERE
+				a510_broadcast_program.ID_entity = ? AND
+				a510_broadcast_program.status IN ('Y','L')
+			LIMIT 1
+		},'quiet'=>1,'bind'=>[$env{'ID_entity'}]);
+		if (!$sth0{'rows'})
+		{
+			main::_log("broadcast_program.ID_entity=$env{'ID_entity'} not found, removing from index",1);
+			if ($Elastic->exists(
+				'index' => 'cyclone3.'.$App::510::db_name,
+				'type' => 'a510_broadast_program',
+				'id' => $env{'ID_entity'}
+			))
+			{
+				main::_log("removing from Elastic",1);
+				$Elastic->delete(
+					'index' => 'cyclone3.'.$App::510::db_name,
+					'type' => 'a510_broadast_program',
+					'id' => $env{'ID_entity'}
+				);
+			}
+			$t->close();
+			return 1;
+		}
+		
+		my %program=$sth0{'sth'}->fetchhash();
+		foreach (keys %program){delete $program{$_} unless $program{$_};}
+		$Elastic->index(
+			'index' => 'cyclone3.'.$App::510::db_name,
+			'type' => 'a510_broadcast_program',
+			'id' => $env{'ID_entity'},
+			'body' => {
+				%program
+			}
+		);
+		
+		$t->close();
+		return 1;
+	}
+	
+	return undef unless $Ext::Solr;
+	
+	
+	
+	return 1;
 }
 
 
