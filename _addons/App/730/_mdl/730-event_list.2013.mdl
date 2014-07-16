@@ -304,6 +304,10 @@ sub execute
 			event.status,
 			event.mode,
 			
+			event_cat.ID AS cat_ID,
+			event_cat.name AS cat_name,
+			event_cat.name_url AS cat_name_url,
+			
 			event_lng.name_long,
 			event_lng.description_short,
 			event_lng.description,
