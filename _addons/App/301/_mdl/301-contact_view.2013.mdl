@@ -163,7 +163,25 @@ sub execute
 		$user{'roles'}=$acl_item->{'roles'};
 	}
 	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	# parser body
+	$parser->parse($user{'description'});
+	$parser->eof();
+	$user{'description_parser'}={
+		'output' => $parser->{'output'},
+		'addon' => $parser->{'addon'},
+		'entity' => $parser->{'entity'},
+		'thumbnail' => $parser->{'thumbnail'},
+	};
+	push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+	
 	$TPL->{'variables'}{'contact'}=\%user;
+	
+	push @{$env_out{'call'}{'H'}{'add_DOC_title'}},$user{'firstname'}.' '.$user{'surname'};
 	
 	return 1,%env_out;
 }
