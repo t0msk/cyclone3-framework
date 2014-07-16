@@ -186,8 +186,17 @@ sub publish
 	if (ref($env{'header'})){
 		utf8::encode($env{'header'}{$_}) foreach grep {!ref($env{'header'}{$_})} keys %{$env{'header'}};
 	};
-	
-	$self->_channel->publish(%env);
+	eval {
+		$self->_channel->publish(%env,
+#		'on_inactive' => sub(){}
+		);
+		return 1;
+	};
+	if ($@)
+	{
+		main::_log("$@",1);
+		return undef;
+	}
 }
 
 sub DESTROY
