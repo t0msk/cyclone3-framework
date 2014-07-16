@@ -2771,7 +2771,7 @@ while ($main::CGI=new CGI::Fast())
 		
 		
 		
-		$main::H->message("This document has been generated as needed for User agent \"".$main::UserAgent_name."\"");
+		$main::H->message("This document has been generated as requested for UserAgent \"".$main::UserAgent_name."\"");
 		
 		# ak je browser stary
 		$main::H->message($TOM::Net::HTTP::UserAgent::messages{old}[$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{old}])if exists $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{old};
@@ -2802,6 +2802,7 @@ while ($main::CGI=new CGI::Fast())
 					Encode::from_to($DOC_output, $TOM::LNG_cp_default, $main::LNG_cp);
 				}
 				main::_log("output document converted to codepage '$main::LNG_cp' succesfully length=(".(length($DOC_output)).")");
+				$main::cache='';$main::ENV{'Cache-Control'}='no-cache';
 			}
 			elsif (
 					($main::LNG_cp ne $TOM::LNG_cp_default)
@@ -2824,6 +2825,7 @@ while ($main::CGI=new CGI::Fast())
 					$DOC_output = encode_utf8($DOC_output);
 					Encode::from_to($DOC_output, $TOM::LNG_cp_default, $main::LNG_cp);
 				}
+				$main::cache='';$main::ENV{'Cache-Control'}='no-cache';
 			}
 			elsif (
 				($ENV{HTTP_ACCEPT_CHARSET}=~/$TOM::LNG_cp_default/i)
@@ -2844,6 +2846,7 @@ while ($main::CGI=new CGI::Fast())
 				$COOKIES{cp}="ISO-8859-1";
 				$H->rh("<%CODEPAGE%>","ISO-8859-1");
 				$DOC_output=Int::charsets::encode::UTF8_ASCII($H->OUT_);
+				$main::cache='';$main::ENV{'Cache-Control'}='no-cache';
 			}
 			
 			#if (utf8::is_utf8($DOC_output)){main::_log("DOC_output flag is utf8");}
