@@ -45,6 +45,7 @@ use Data::Dumper;
 
 TOM::Database::connect::multi('main');
 
+my %event;
 
 if ($Redis)
 {
@@ -60,6 +61,7 @@ if ($Redis)
 	}
 	$t->close();
 	print "hmset.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
+	$event{'hmset'}=$t->{'time'}{'req'}{'duration'}*10;
 	
 	# speed of hmget
 	my $t=track TOM::Debug("exec",'timer'=>1);
@@ -69,6 +71,7 @@ if ($Redis)
 	}
 	$t->close();
 	print "hmget.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
+	$event{'hmget'}=$t->{'time'}{'req'}{'duration'}*10;
 }
 
 # select random users
@@ -80,7 +83,7 @@ for (1..100)
 }
 $t->close();
 print "userget.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
-
+$event{'userget'}=$t->{'time'}{'req'}{'duration'}*10;
 
 # select random users
 my $t=track TOM::Debug("exec",'timer'=>1);
@@ -91,7 +94,7 @@ for (1..100)
 }
 $t->close();
 print "userget_cache.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
-
+$event{'userget_cache'}=$t->{'time'}{'req'}{'duration'}*10;
 
 # get changetime
 my $t=track TOM::Debug("exec",'timer'=>1);
@@ -106,7 +109,7 @@ for (1..100)
 }
 $t->close();
 print "get_changetime.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
-
+$event{'get_changetime'}=$t->{'time'}{'req'}{'duration'}*10;
 
 # save changetime
 my $t=track TOM::Debug("exec",'timer'=>1);
@@ -121,7 +124,7 @@ for (1..100)
 }
 $t->close();
 print "save_changetime.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
-
+$event{'save_changetime'}=$t->{'time'}{'req'}{'duration'}*10;
 
 # get tpl
 my $t=track TOM::Debug("exec",'timer'=>1);
@@ -136,7 +139,7 @@ for (1..100)
 }
 $t->close();
 print "get_tpl.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
-
+$event{'get_tpl'}=$t->{'time'}{'req'}{'duration'}*10;
 
 # exec module
 my $t=track TOM::Debug("exec",'timer'=>1);
@@ -153,7 +156,7 @@ for (1..10)
 }
 $t->close();
 print "module_exec.value " . (($t->{'time'}{'req'}{'duration'}*100)/3) . "\n";
-
+$event{'module_exec'}=$t->{'time'}{'req'}{'duration'}*100;
 
 # exec module (cache)
 Tomahawk::module(
@@ -179,4 +182,7 @@ for (1..10)
 }
 $t->close();
 print "module_cache.value " . (($t->{'time'}{'req'}{'duration'}*100)/3) . "\n";
+$event{'module_cache'}=$t->{'time'}{'req'}{'duration'}*100;
+
+main::_event("info","benchmark",{'times' => {%event}});
 
