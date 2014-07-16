@@ -208,7 +208,7 @@ $TOM::Document::base::copyright
 	
 	# META
 	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-language\" content=\"<%HEADER-LNG%>\" />\n";
-	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"cache-control\" content=\"<%HEADER-cache-control%>\" />\n";
+#	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"cache-control\" content=\"<%HEADER-cache-control%>\" />\n"; obsolete
 	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-type\" content=\"text/html; charset=<%CODEPAGE%>\" />\n"
 	unless $self->{'ENV'}{'head'}{'meta'}{'content-type'};
 	
