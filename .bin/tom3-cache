@@ -45,13 +45,13 @@ TOM::Database::connect::all('main','sys','stats');
 	my $count0;
 	
 	#print "$tom::Hm $tom::H\n";
-	my $db0=$DB{sys}->Query("
+	my %db0=TOM::Database::SQL::execute(qq{
 		SELECT * FROM TOM.a150_config
 		WHERE
 				(domain='' OR domain='$tom::Hm')
 				AND (domain_sub='' OR domain_sub='$tom::H')
-		ORDER BY Capp, Cmodule, Cid, engine, domain, domain_sub ");
-	while (my %db0_line=$db0->fetchhash)
+		ORDER BY Capp, Cmodule, Cid, engine, domain, domain_sub },'db_h'=>'sys');
+	while (my %db0_line=$db0{'sth'}->fetchhash())
 	{
 		print color 'reset green';
 		#GM
