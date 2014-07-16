@@ -1,0 +1,43 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+use JSON;
+use App::510::_init;
+use LWP::Simple;
+
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	return if $self->running({'max'=>600}); # check if not already running
+	
+	if (!$tom::H)
+	{
+		main::_log("only running under domain",1);
+		return undef;
+	}
+	
+	# reindex
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			a510_broadcast_program
+	});
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		main::_log("[$i/$sth0{'rows'}]");
+		App::510::functions::_broadcast_program_index('ID_entity'=>$db0_line{'ID_entity'},'-jobify'=>1);
+	}
+	
+return 1}
+1;
