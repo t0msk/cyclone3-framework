@@ -8,7 +8,8 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 our $debug=0;
 
-use JSON;
+use JSON::XS;
+our $json = JSON::XS->new->utf8->allow_blessed();
 
 sub new
 {
@@ -360,7 +361,9 @@ use encoding 'utf8';
 use utf8;
 use strict;
 
-use JSON;
+use JSON::XS;
+our $json = JSON::XS->new->utf8->allow_blessed->canonical(1);
+
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
@@ -404,8 +407,10 @@ sub serialize
 {
 	my %hash=@_;
 	
-	my $js = JSON->new;$js->canonical(1); # sorted keys
-	return "#json\n" . $js->encode(\%hash);
+#	print "aaa\n";
+#	use Data::Dumper;print Dumper(\%hash);
+#	my $js = JSON->new;$js->canonical(1); # sorted keys
+	return "#json\n" . $json->encode(\%hash);
 	
 	my %out=serialize_data(level=>0,data=>\%hash);
 	#return "<:[]>" if $out{data} eq "[]";
