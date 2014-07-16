@@ -21,8 +21,8 @@ Notice, L<a501|app/"501"> is used for storing thumbnail pictures.
 BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 
 our $VERSION='1';
-
-
+our $smil=$App::510::smil || 0;
+our $smil2file_path=$App::510::smil2file_path || '../file';
 
 =head1 SYNOPSIS
 
@@ -116,6 +116,12 @@ BEGIN
 				close HND;
 			}
 			
+			if ($smil && !-e $tom::P_media.'/a510/video/part/smil')
+			{
+				File::Path::mkpath $tom::P_media.'/a510/video/part/smil';
+				chmod (0777,$tom::P_media.'/a510/video/part/smil')
+			}
+			
 		}
 	};
 	alarm 0;
@@ -159,18 +165,18 @@ $priority{'A'}=$App::401::priority{'A'} || 1;
 $priority{'B'}=$App::401::priority{'B'} || undef;
 $priority{'C'}=$App::401::priority{'C'} || undef;
 
+our $original_playable;
 our $video_format_original_ID;
 our $video_format_full_ID;
 #our $video_format_preview_ID;
 
 
-my $sql=qq{
-	SELECT ID
+my %sth0=TOM::Database::SQL::execute(qq{
+	SELECT ID,process
 	FROM `$db_name`.a510_video_format
 	WHERE name='original'
 	LIMIT 1;
-};
-my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+},'quiet'=>1);
 my %db0_line=$sth0{'sth'}->fetchhash();
 if (!$db0_line{'ID'})
 {
@@ -188,6 +194,11 @@ if (!$db0_line{'ID'})
 }
 else
 {
+	if ($db0_line{'process'})
+	{
+		main::_log("original video format is playable (\$App::510::original_playable=1)");
+		$original_playable=1;
+	}
 	$video_format_original_ID=$db0_line{'ID'};
 }
 
