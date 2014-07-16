@@ -22,6 +22,7 @@ sub start
 {
 	my $self=shift;
 	$self->{time}{req}{start}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+	$self->{time}{sys}{start}=(times)[1];
 	$self->{time}{proc}{start}=(times)[0];
 }
 
@@ -30,6 +31,7 @@ sub end
 {
 	my $self=shift;
 	$self->{time}{req}{end}=(Time::HiRes::gettimeofday)[0]+((Time::HiRes::gettimeofday)[1]/1000000);
+	$self->{time}{sys}{end}=(times)[1];
 	$self->{time}{proc}{end}=(times)[0];
 }
 
@@ -37,9 +39,11 @@ sub duration
 {
 	my $self=shift;
 	$self->{time}{req}{duration}=$self->{time}{req}{end}-$self->{time}{req}{start};
+	$self->{time}{sys}{duration}=$self->{time}{sys}{end}-$self->{time}{sys}{start};
 	$self->{time}{proc}{duration}=$self->{time}{proc}{end}-$self->{time}{proc}{start};
 	
 	$self->{time}{req}{duration}=int($self->{time}{req}{duration}*1000)/1000;
+	$self->{time}{sys}{duration}=int($self->{time}{sys}{duration}*1000)/1000;
 	$self->{time}{proc}{duration}=int($self->{time}{proc}{duration}*1000)/1000;
 }
 
