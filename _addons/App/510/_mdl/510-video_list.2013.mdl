@@ -271,6 +271,7 @@ sub execute
 			video_part.ID AS part_ID,
 			video_part.ID_entity AS part_ID_entity,
 			video_part.visits AS part_visits,
+			video_part_smil.name AS smil_name,
 			video_part_file.ID AS file_ID,
 			video_part_file.ID_entity AS file_ID_entity,
 			video_part_file.name AS file_name,
@@ -312,6 +313,10 @@ sub execute
 			video_part_file.ID_entity = video_part.ID AND
 			video_part_file.status IN ('Y','L') AND
 			video_part_file.ID_format = $env{'video_format.ID_entity'}
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part_smil` AS video_part_smil ON
+		(
+			video_part_smil.ID_entity = video_part.ID
 		)
 		}}}.qq{
 		WHERE
