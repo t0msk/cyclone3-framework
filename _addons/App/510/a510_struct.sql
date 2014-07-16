@@ -1,17 +1,17 @@
 -- db_h=main
 -- addon=a510
--- version=5.0
+-- version=5.6
 
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL,
+  `ID` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL,
   `datetime_create` datetime NOT NULL,
-  `datetime_rec_start` datetime default NULL,
-  `datetime_rec_stop` datetime default NULL,
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`),
+  `datetime_rec_start` datetime DEFAULT NULL,
+  `datetime_rec_stop` datetime DEFAULT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`),
   KEY `ID_entity` (`ID_entity`),
   KEY `datetime_rec_start` (`datetime_rec_start`),
   KEY `status` (`status`)
@@ -21,36 +21,36 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_j` (
   `ID` mediumint(8) unsigned NOT NULL,
-  `ID_entity` mediumint(8) unsigned default NULL,
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL,
   `datetime_create` datetime NOT NULL,
-  `datetime_rec_start` datetime default NULL,
-  `datetime_rec_stop` datetime default NULL,
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  `datetime_rec_start` datetime DEFAULT NULL,
+  `datetime_rec_stop` datetime DEFAULT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_entity` bigint(20) unsigned default NULL, -- ref _video.ID_entity
+  `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` bigint(20) unsigned DEFAULT NULL, -- ref _video.ID_entity
   `datetime_create` datetime NOT NULL,
-  `datetime_rec_start` datetime default NULL, -- slow and obsolete
-  `datetime_rec_stop` datetime default NULL, -- slow and obsolete
-  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
-  `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `movie_release_year` varchar(4) character set ascii default NULL,
-  `movie_release_date` date default NULL,
-  `movie_country_code` char(3) character set ascii default NULL,
-  `movie_imdb` varchar(9) character set ascii default NULL,
-  `movie_catalog_number` varchar(16) character set ascii collate ascii_bin default NULL,
-  `movie_length` time default NULL,
-  `movie_note` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
-  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`),
+  `datetime_rec_start` datetime DEFAULT NULL, -- slow and obsolete
+  `datetime_rec_stop` datetime DEFAULT NULL, -- slow and obsolete
+  `posix_owner` varchar(8) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `posix_author` varchar(8) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `posix_modified` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `keywords` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `movie_release_year` varchar(4) CHARACTER SET ascii DEFAULT NULL,
+  `movie_release_date` date DEFAULT NULL,
+  `movie_country_code` char(3) CHARACTER SET ascii DEFAULT NULL,
+  `movie_imdb` varchar(9) CHARACTER SET ascii DEFAULT NULL,
+  `movie_catalog_number` varchar(16) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `movie_length` time DEFAULT NULL,
+  `movie_note` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`),
   FULLTEXT KEY `keywords` (`keywords`),
   UNIQUE KEY `UNI_0` (`movie_imdb`),
   KEY `ID_entity` (`ID_entity`),
@@ -62,35 +62,35 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent_j` (
   `ID` bigint(20) unsigned NOT NULL,
-  `ID_entity` bigint(20) unsigned default NULL,
+  `ID_entity` bigint(20) unsigned DEFAULT NULL,
   `datetime_create` datetime NOT NULL,
-  `datetime_rec_start` datetime default NULL,
-  `datetime_rec_stop` datetime default NULL,
-  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `posix_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
-  `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `movie_release_year` varchar(4) character set ascii default NULL,
-  `movie_release_date` date default NULL,
-  `movie_country_code` char(3) character set ascii default NULL,
-  `movie_imdb` varchar(9) character set ascii default NULL,
-  `movie_catalog_number` varchar(16) character set ascii collate ascii_bin default NULL,
-  `movie_length` time default NULL,
-  `movie_note` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
-  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  `datetime_rec_start` datetime DEFAULT NULL,
+  `datetime_rec_stop` datetime DEFAULT NULL,
+  `posix_owner` varchar(8) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `posix_author` varchar(8) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `posix_modified` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `keywords` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `movie_release_year` varchar(4) CHARACTER SET ascii DEFAULT NULL,
+  `movie_release_date` date DEFAULT NULL,
+  `movie_country_code` char(3) CHARACTER SET ascii DEFAULT NULL,
+  `movie_imdb` varchar(9) CHARACTER SET ascii DEFAULT NULL,
+  `movie_catalog_number` varchar(16) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `movie_length` time DEFAULT NULL,
+  `movie_note` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent_metaindex` (
   `ID` bigint(20) unsigned NOT NULL, -- ref _article_ent.ID
-  `meta_section` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
-  `meta_variable` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
-  `meta_value` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
-  `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`meta_section`,`meta_variable`),
+  `meta_section` varchar(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `meta_variable` varchar(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `meta_value` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`ID`,`meta_section`,`meta_variable`),
   KEY `SEL_0` (`meta_section`,`meta_variable`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -98,22 +98,22 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent_metaindex` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID
-  `ID_category` bigint(20) unsigned default NULL, -- rel _video_cat.ID_entity
-  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `ID` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL, -- rel _video.ID
+  `ID_category` bigint(20) unsigned DEFAULT NULL, -- rel _video_cat.ID_entity
+  `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
   `datetime_create` datetime NOT NULL,
   `datetime_publish_start` datetime NOT NULL,
-  `datetime_publish_stop` datetime default NULL,
+  `datetime_publish_stop` datetime DEFAULT NULL,
   `order_id` int(10) unsigned NOT NULL,
-  `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `priority_A` tinyint(3) unsigned default NULL,
-  `priority_B` tinyint(3) unsigned default NULL,
-  `priority_C` tinyint(3) unsigned default NULL,
-  `lng` char(5) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`),
+  `description` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `priority_A` tinyint(3) unsigned DEFAULT NULL,
+  `priority_B` tinyint(3) unsigned DEFAULT NULL,
+  `priority_C` tinyint(3) unsigned DEFAULT NULL,
+  `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   FULLTEXT KEY `FULL_0` (`name`,`description`),
   KEY `SEL_0` (`status`,`lng`,`datetime_publish_start`),
@@ -133,39 +133,39 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_attrs_j` (
   `ID` mediumint(8) unsigned NOT NULL,
-  `ID_entity` mediumint(8) unsigned default NULL,
-  `ID_category` bigint(20) unsigned default NULL,
-  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL,
+  `ID_category` bigint(20) unsigned DEFAULT NULL,
+  `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
   `datetime_create` datetime NOT NULL,
   `datetime_publish_start` datetime NOT NULL,
-  `datetime_publish_stop` datetime default NULL,
+  `datetime_publish_stop` datetime DEFAULT NULL,
   `order_id` int(10) unsigned NOT NULL,
-  `description` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `priority_A` tinyint(3) unsigned default NULL,
-  `priority_B` tinyint(3) unsigned default NULL,
-  `priority_C` tinyint(3) unsigned default NULL,
-  `lng` char(5) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  `description` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `priority_A` tinyint(3) unsigned DEFAULT NULL,
+  `priority_B` tinyint(3) unsigned DEFAULT NULL,
+  `priority_C` tinyint(3) unsigned DEFAULT NULL,
+  `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
-  `part_id` mediumint(8) unsigned NOT NULL default '0',
+  `ID` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL, -- rel _video.ID_entity
+  `part_id` mediumint(8) unsigned NOT NULL DEFAULT '0',
   `datetime_create` datetime NOT NULL,
   `visits` int(10) unsigned NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
   `rating` int(10) unsigned NOT NULL,
-  `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `process_lock` char(1) character set ascii NOT NULL default 'N',
-  `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`),
+  `keywords` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `process_lock` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `thumbnail_lock` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`),
   FULLTEXT KEY `FULL_0` (`keywords`),
   KEY `ID_entity` (`ID_entity`),
   KEY `visits` (`visits`),
@@ -178,24 +178,24 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_j` (
   `ID` mediumint(8) unsigned NOT NULL,
-  `ID_entity` mediumint(8) unsigned default NULL, -- rel _video.ID_entity
-  `part_id` mediumint(8) unsigned NOT NULL default '0',
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL, -- rel _video.ID_entity
+  `part_id` mediumint(8) unsigned NOT NULL DEFAULT '0',
   `datetime_create` datetime NOT NULL,
   `visits` int(10) unsigned NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
   `rating` int(10) unsigned NOT NULL,
-  `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `process_lock` char(1) character set ascii NOT NULL default 'N',
-  `thumbnail_lock` char(1) character set ascii NOT NULL default 'N',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  `keywords` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `process_lock` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `thumbnail_lock` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_rating_vote` (
-  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_user` varchar(8) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `ID_part` mediumint(8) unsigned NOT NULL,
   `datetime_event` datetime NOT NULL,
   `score` int(10) unsigned NOT NULL
@@ -203,16 +203,38 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_rating_vote` (
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_smil` (
+  `ID` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL, -- rel _video_part.ID
+  `datetime_create` datetime NOT NULL,
+  `name` varchar(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_smil_j` (
+  `ID` mediumint(8) unsigned NOT NULL,
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL,
+  `datetime_create` datetime NOT NULL,
+  `name` varchar(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_caption` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
+  `ID` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL, -- rel _video_part.ID
   `datetime_create` datetime NOT NULL,
   `time_start` time NOT NULL,
   `time_stop` time NOT NULL,
-  `caption` varchar(128) NOT NULL default '',
-  `lng` char(5) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`),
+  `caption` varchar(128) NOT NULL DEFAULT '',
+  `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`),
   FULLTEXT KEY `FULL_0` (`caption`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`time_start`,`lng`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -221,69 +243,26 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_caption` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_caption_j` (
   `ID` mediumint(8) unsigned NOT NULL,
-  `ID_entity` mediumint(8) unsigned default NULL,
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL,
   `datetime_create` datetime NOT NULL,
   `time_start` time NOT NULL,
   `time_stop` time NOT NULL,
-  `caption` varchar(128) NOT NULL default '',
-  `lng` char(5) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  `caption` varchar(128) NOT NULL DEFAULT '',
+  `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_emo` ( -- experimental EMO characteristics
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
-  `datetime_create` datetime NOT NULL,
-  `emo_sad` int(10) unsigned NOT NULL default '0',
-  `emo_angry` int(10) unsigned NOT NULL default '0',
-  `emo_confused` int(10) unsigned NOT NULL default '0',
-  `emo_love` int(10) unsigned NOT NULL default '0',
-  `emo_omg` int(10) unsigned NOT NULL default '0',
-  `emo_smile` int(10) unsigned NOT NULL default '0',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`),
-  UNIQUE KEY `UNI_0` (`ID_entity`),
-  KEY `ID_entity` (`ID_entity`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_emo_j` (
-  `ID` mediumint(8) unsigned NOT NULL,
-  `ID_entity` mediumint(8) unsigned default NULL,
-  `datetime_create` datetime NOT NULL,
-  `emo_angry` int(10) unsigned NOT NULL default '0',
-  `emo_confused` int(10) unsigned NOT NULL default '0',
-  `emo_love` int(10) unsigned NOT NULL default '0',
-  `emo_omg` int(10) unsigned NOT NULL default '0',
-  `emo_sad` int(10) unsigned NOT NULL default '0',
-  `emo_smile` int(10) unsigned NOT NULL default '0',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_emo_vote` (
-  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `ID_part` mediumint(8) unsigned NOT NULL,
-  `datetime_event` datetime NOT NULL,
-  `emo` varchar(8) character set ascii NOT NULL default ''
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_callback` (
   `ID_part` mediumint(8) unsigned NOT NULL,
   `datetime_create` datetime NOT NULL,
-  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `IP` varchar(15) character set ascii default NULL,
-  `country_code` char(3) character set ascii default NULL,
-  `duration` int(10) unsigned NOT NULL default '0',
-  `state` varchar(10) character set ascii collate ascii_bin NOT NULL,
+  `ID_user` varchar(8) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `IP` varchar(15) CHARACTER SET ascii DEFAULT NULL,
+  `country_code` char(3) CHARACTER SET ascii DEFAULT NULL,
+  `duration` int(10) unsigned NOT NULL DEFAULT '0',
+  `state` varchar(10) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   KEY `datetime_create` (`datetime_create`),
   KEY `country_code` (`country_code`),
   KEY `SEL_0` (`ID_user`,`datetime_create`),
@@ -295,80 +274,26 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_callback` (
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_callback_arch` (
   `ID_part` mediumint(8) unsigned NOT NULL,
   `datetime_create` datetime NOT NULL,
-  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `IP` varchar(15) character set ascii default NULL,
-  `country_code` char(3) character set ascii default NULL,
-  `duration` int(10) unsigned NOT NULL default '0',
-  `state` varchar(10) character set ascii collate ascii_bin NOT NULL,
+  `ID_user` varchar(8) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `IP` varchar(15) CHARACTER SET ascii DEFAULT NULL,
+  `country_code` char(3) CHARACTER SET ascii DEFAULT NULL,
+  `duration` int(10) unsigned NOT NULL DEFAULT '0',
+  `state` varchar(10) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   KEY `datetime_create` (`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
-CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_part_emo_view` AS (
-	SELECT
-		emo.ID,
-      emo.ID_entity,
-		(emo.emo_sad + emo.emo_angry + emo.emo_confused + emo.emo_love + emo.emo_omg + emo.emo_smile) AS emo_all,
-      (emo.emo_sad/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
-			AS emo_sad_perc,
-		(emo.emo_angry/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
-			AS emo_angry_perc,
-		(emo.emo_confused/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
-			AS emo_confused_perc,
-		(emo.emo_love/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
-			AS emo_love_perc,
-		(emo.emo_omg/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
-			AS emo_omg_perc,
-		(emo.emo_smile/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
-			AS emo_smile_perc
-	FROM
-		`/*db_name*/`.`/*addon*/_video_part_emo` AS emo
-	WHERE
-		(emo.emo_sad + emo.emo_angry + emo.emo_confused + emo.emo_love + emo.emo_omg + emo.emo_smile) > 5
-)
-
--- --------------------------------------------------
-
-CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_part_emo_viewEQ` AS (
-	SELECT
-		emo1.ID AS emo1_ID,
-		emo2.ID AS emo2_ID,
-      ABS(emo1.emo_sad_perc - emo2.emo_sad_perc) AS emo_sad_diff,
-		ABS(emo1.emo_angry_perc - emo2.emo_angry_perc) AS emo_angry_diff,
-		ABS(emo1.emo_confused_perc - emo2.emo_confused_perc) AS emo_confused_diff,
-		ABS(emo1.emo_love_perc - emo2.emo_love_perc) AS emo_love_diff,
-		ABS(emo1.emo_omg_perc - emo2.emo_omg_perc) AS emo_omg_diff,
-		ABS(emo1.emo_smile_perc - emo2.emo_smile_perc) AS emo_smile_diff,
-		(100-((
-			ABS(emo1.emo_sad_perc - emo2.emo_sad_perc) +
-			ABS(emo1.emo_angry_perc - emo2.emo_angry_perc) +
-			ABS(emo1.emo_confused_perc - emo2.emo_confused_perc) +
-			ABS(emo1.emo_love_perc - emo2.emo_love_perc) +
-			ABS(emo1.emo_omg_perc - emo2.emo_omg_perc) +
-			ABS(emo1.emo_smile_perc - emo2.emo_smile_perc)
-		)/6)) AS EQ
-	FROM
-		`/*db_name*/`.`/*addon*/_video_part_emo_view` AS emo1,
-		`/*db_name*/`.`/*addon*/_video_part_emo_view` AS emo2
-	WHERE
-		emo1.ID <> emo2.ID AND
-      emo1.emo_all > 100 AND
-      emo2.emo_all > 100
-)
-
--- --------------------------------------------------
-
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_attrs` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
-  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `ID` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL, -- rel _video_part.ID
+  `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
   `datetime_create` datetime NOT NULL,
-  `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(5) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`),
+  `description` tinytext CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   FULLTEXT KEY `FULL_0` (`name`,`description`),
   KEY `ID_entity` (`ID_entity`),
@@ -381,14 +306,14 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_attrs` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_attrs_j` (
   `ID` mediumint(8) unsigned NOT NULL,
-  `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
-  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL, -- rel _video_part.ID
+  `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
   `datetime_create` datetime NOT NULL,
-  `description` tinytext character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(5) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  `description` tinytext CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -396,35 +321,35 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_attrs_j` (
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_dist` (
   `datetime_create` datetime NOT NULL,
   `ID_part` bigint(20) NOT NULL,
-  `country_code` char(3) character set ascii NOT NULL,
-  `distname` varchar(16) character set ascii NOT NULL,
-  PRIMARY KEY  (`ID_part`,`country_code`,`distname`)
+  `country_code` char(3) CHARACTER SET ascii NOT NULL,
+  `distname` varchar(16) CHARACTER SET ascii NOT NULL,
+  PRIMARY KEY (`ID_part`,`country_code`,`distname`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file` (
-  `ID` mediumint(8) unsigned zerofill NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL, -- rel _video_part.ID
+  `ID` mediumint(8) unsigned zerofill NOT NULL AUTO_INCREMENT,
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL, -- rel _video_part.ID
   `ID_format` bigint(20) unsigned NOT NULL,
-  `name` varchar(128) character set ascii collate ascii_bin NOT NULL,
+  `name` varchar(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `datetime_create` datetime NOT NULL,
   `video_width` int(10) unsigned NOT NULL,
   `video_height` int(10) unsigned NOT NULL,
-  `video_codec` varchar(50) character set ascii NOT NULL,
+  `video_codec` varchar(50) CHARACTER SET ascii NOT NULL,
   `video_fps` float NOT NULL,
   `video_bitrate` int(10) unsigned NOT NULL,
-  `audio_codec` varchar(50) character set ascii NOT NULL,
+  `audio_codec` varchar(50) CHARACTER SET ascii NOT NULL,
   `audio_bitrate` int(10) unsigned NOT NULL,
   `length` time NOT NULL,
-  `file_alt_src` varchar(250) character set ascii default NULL,
-  `file_size` bigint(20) unsigned default NULL,
-  `file_checksum` varchar(128) character set ascii collate ascii_bin NOT NULL,
-  `file_ext` varchar(120) character set ascii NOT NULL,
-  `from_parent` char(1) character set ascii NOT NULL default 'N', -- is this file generated from parent video_part_file?
-  `regen` char(1) character set ascii NOT NULL default 'N', -- regenerate this video_part_file?
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`),
+  `file_alt_src` varchar(250) CHARACTER SET ascii DEFAULT NULL,
+  `file_size` bigint(20) unsigned DEFAULT NULL,
+  `file_checksum` varchar(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `file_ext` varchar(120) CHARACTER SET ascii NOT NULL,
+  `from_parent` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N', -- is this file generated from parent video_part_file?
+  `regen` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N', -- regenerate this video_part_file?
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`ID_format`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID_format` (`ID_format`),
@@ -436,43 +361,43 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file_j` (
-  `ID` mediumint(8) unsigned zerofill NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL,
+  `ID` mediumint(8) unsigned zerofill NOT NULL AUTO_INCREMENT,
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL,
   `ID_format` bigint(20) unsigned NOT NULL,
-  `name` varchar(128) character set ascii collate ascii_bin NOT NULL,
+  `name` varchar(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `datetime_create` datetime NOT NULL,
   `video_width` int(10) unsigned NOT NULL,
   `video_height` int(10) unsigned NOT NULL,
-  `video_codec` varchar(50) character set ascii NOT NULL,
+  `video_codec` varchar(50) CHARACTER SET ascii NOT NULL,
   `video_fps` float NOT NULL,
   `video_bitrate` int(10) unsigned NOT NULL,
-  `audio_codec` varchar(50) character set ascii NOT NULL,
+  `audio_codec` varchar(50) CHARACTER SET ascii NOT NULL,
   `audio_bitrate` int(10) unsigned NOT NULL,
   `length` time NOT NULL,
-  `file_alt_src` varchar(250) character set ascii default NULL,
-  `file_size` bigint(20) unsigned default NULL,
-  `file_checksum` varchar(128) character set ascii collate ascii_bin NOT NULL,
-  `file_ext` varchar(120) character set ascii NOT NULL,
-  `from_parent` char(1) character set ascii NOT NULL default 'N',
-  `regen` char(1) character set ascii NOT NULL default 'N',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  `file_alt_src` varchar(250) CHARACTER SET ascii DEFAULT NULL,
+  `file_size` bigint(20) unsigned DEFAULT NULL,
+  `file_checksum` varchar(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `file_ext` varchar(120) CHARACTER SET ascii NOT NULL,
+  `from_parent` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `regen` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file_process` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_part` mediumint(8) unsigned default NULL, -- rel _video_part.ID
+  `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_part` mediumint(8) unsigned DEFAULT NULL, -- rel _video_part.ID
   `ID_format` bigint(20) unsigned NOT NULL, -- rel _video_format.ID_entity
-  `hostname` varchar(128) character set ascii collate ascii_bin NOT NULL,
-  `hostname_PID` varchar(128) character set ascii collate ascii_bin NOT NULL,
-  `process` text character set ascii NOT NULL,
-  `process_output` text character set ascii NOT NULL,
+  `hostname` varchar(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `hostname_PID` varchar(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `process` text CHARACTER SET ascii NOT NULL,
+  `process_output` text CHARACTER SET ascii NOT NULL,
   `datetime_start` datetime NOT NULL,
-  `datetime_stop` datetime default NULL,
-  `status` char(1) character set ascii NOT NULL default 'W',
-  PRIMARY KEY  (`ID`),
+  `datetime_stop` datetime DEFAULT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'W',
+  PRIMARY KEY (`ID`),
   KEY `SEL_0` (`ID_part`,`ID_format`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -480,30 +405,30 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file_process` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_visit` (
   `datetime_event` datetime NOT NULL,
-  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_user` varchar(8) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `ID_video` bigint(20) NOT NULL,
-  PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_video`)
+  PRIMARY KEY (`datetime_event`,`ID_user`,`ID_video`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_entity` bigint(20) unsigned default NULL,
-  `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
-  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_url` varchar(128) character set ascii NOT NULL default '',
-  `alias_url` varchar(128) character set ascii NOT NULL default '',
-  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` bigint(20) unsigned DEFAULT NULL,
+  `ID_charindex` varchar(64) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `alias_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `posix_owner` varchar(8) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `posix_group` int(10) unsigned NOT NULL,
-  `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
-  `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `posix_perms` char(9) CHARACTER SET ascii NOT NULL DEFAULT 'rwxrw-r--',
+  `keywords` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL,
-  `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
-  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(5) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`),
+  `description` longtext CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
   KEY `ID_entity` (`ID_entity`),
@@ -517,40 +442,40 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat_j` (
   `ID` bigint(20) unsigned NOT NULL,
-  `ID_entity` bigint(20) unsigned default NULL,
-  `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
-  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_url` varchar(128) character set ascii NOT NULL default '',
-  `alias_url` varchar(128) character set ascii NOT NULL default '',
-  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_entity` bigint(20) unsigned DEFAULT NULL,
+  `ID_charindex` varchar(64) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `alias_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `posix_owner` varchar(8) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `posix_group` int(10) unsigned NOT NULL,
-  `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
-  `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `posix_perms` char(9) CHARACTER SET ascii NOT NULL DEFAULT 'rwxrw-r--',
+  `keywords` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL,
-  `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
-  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `lng` char(5) character set ascii NOT NULL default '',
-  `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  `description` longtext CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_format` (
-  `ID` bigint(20) unsigned NOT NULL auto_increment,
-  `ID_entity` bigint(20) unsigned default NULL,
-  `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
-  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` bigint(20) unsigned DEFAULT NULL,
+  `ID_charindex` varchar(64) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
   `datetime_create` datetime NOT NULL,
-  `process` text character set ascii NOT NULL,
-  `definition` text character set ascii,
-  `required_min_bitrate` int(10) unsigned default NULL,
-  `required_min_height` int(10) unsigned default NULL,
-  `required` char(1) NOT NULL default 'Y',
-  `lng` char(5) character set ascii NOT NULL default 'xx',
-  `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`),
+  `process` text CHARACTER SET ascii NOT NULL,
+  `definition` text CHARACTER SET ascii,
+  `required_min_bitrate` int(10) unsigned DEFAULT NULL,
+  `required_min_height` int(10) unsigned DEFAULT NULL,
+  `required` char(1) NOT NULL DEFAULT 'Y',
+  `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT 'xx',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
   KEY `ID_entity` (`ID_entity`),
@@ -564,132 +489,161 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_format` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_format_j` (
   `ID` bigint(20) unsigned NOT NULL,
-  `ID_entity` bigint(20) unsigned default NULL,
-  `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
-  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `ID_entity` bigint(20) unsigned DEFAULT NULL,
+  `ID_charindex` varchar(64) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
   `datetime_create` datetime NOT NULL,
-  `process` text character set ascii NOT NULL,
-  `definition` text character set ascii,
-  `required_min_bitrate` int(10) unsigned default NULL,
-  `required_min_height` int(10) unsigned default NULL,
-  `required` char(1) NOT NULL default 'Y',
-  `lng` char(5) character set ascii NOT NULL default 'xx',
-  `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  `process` text CHARACTER SET ascii NOT NULL,
+  `definition` text CHARACTER SET ascii,
+  `required_min_bitrate` int(10) unsigned DEFAULT NULL,
+  `required_min_height` int(10) unsigned DEFAULT NULL,
+  `required` char(1) NOT NULL DEFAULT 'Y',
+  `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT 'xx',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
-CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_video_view` AS (
-	SELECT
-		CONCAT(video.ID_entity,'_',video.ID,'_',video_attrs.lng,'_',video_format.ID) AS ID,
-		
-		video.ID_entity AS ID_entity_video,
-		video.ID AS ID_video,
-		video_attrs.ID AS ID_attrs,
-		video_format.ID AS ID_format,
-		video_format.name AS ID_format_name,
-		video_part.ID AS ID_part,
-		video_part_attrs.ID AS ID_part_attrs,
-		video_part_file.ID AS ID_part_file,
-		
-		LEFT(video.datetime_rec_start, 18) AS datetime_rec_start,
-		LEFT(video_attrs.datetime_create, 18) AS datetime_create,
-		LEFT(video.datetime_rec_start,10) AS date_recorded,
-		LEFT(video.datetime_rec_stop, 18) AS datetime_rec_stop,
-		
-		video_attrs.ID_category,
-		video_cat.name AS ID_category_name,
-		
-		video_ent.posix_owner,
-		video_ent.posix_author,
-		video_ent.keywords AS video_keywords,
---		video.posix_group,
---		video.posix_perms,
-		
-		video_attrs.name,
-		video_attrs.name_url,
-		video_attrs.description,
-		video_attrs.order_id,
-		video_attrs.priority_A,
-		video_attrs.priority_B,
-		video_attrs.priority_C,
-		video_attrs.lng,
-		
-		video_part_attrs.name AS part_name,
-		video_part_attrs.description AS part_description,
-		video_part.part_id AS part_id,
-		video_part.keywords AS part_keywords,
-		video_part.visits,
-		video_part_attrs.lng AS part_lng,
-		
-		video_part_file.video_width,
-		video_part_file.video_height,
-		video_part_file.video_bitrate,
-		video_part_file.length,
-		video_part_file.file_size,
-		video_part_file.file_ext,
-		video_part_file.file_alt_src,
-		
-		video_part.rating_score,
-		video_part.rating_votes,
-		(video_part.rating_score/video_part.rating_votes) AS rating,
-		
-		CONCAT(video_format.ID,'/',SUBSTR(video_part_file.ID,1,4),'/',video_part_file.name,'.',video_part_file.file_ext) AS file_part_path,
-		
-		video_attrs.status,
-		video_part.status AS status_part,
-		
-		IF
-		(
-			(
-				video.status LIKE 'Y' AND
-				video_attrs.status LIKE 'Y' AND
-				video_format.status IN ('Y','L') AND
-				video_part.status LIKE 'Y' AND
-				video_part_file.status LIKE 'Y'
-			),
-			 'Y', 'U'
-		) AS status_all
-		
-	FROM
-		`/*db_name*/`.`/*addon*/_video` AS video
-	LEFT JOIN `/*db_name*/`.`/*addon*/_video_ent` AS video_ent ON
-	(
-		video_ent.ID_entity = video.ID_entity
-	)
-	LEFT JOIN `/*db_name*/`.`/*addon*/_video_attrs` AS video_attrs ON
-	(
-		video_attrs.ID_entity = video.ID
-	)
-	LEFT JOIN `/*db_name*/`.`/*addon*/_video_part` AS video_part ON
-	(
-		video_part.ID_entity = video.ID_entity
-	)
-	LEFT JOIN `/*db_name*/`.`/*addon*/_video_part_attrs` AS video_part_attrs ON
-	(
-		video_part_attrs.ID_entity = video_part.ID AND
-		video_part_attrs.lng = video_attrs.lng
-	)
-	LEFT JOIN `/*db_name*/`.`/*addon*/_video_part_file` AS video_part_file ON
-	(
-		video_part_file.ID_entity = video_part.ID
-	)
-	LEFT JOIN `/*db_name*/`.`/*addon*/_video_format` AS video_format ON
-	(
-		video_format.ID_entity = video_part_file.ID_format
-	)
-	LEFT JOIN `/*db_name*/`.`/*addon*/_video_cat` AS video_cat ON
-	(
-		video_cat.ID_entity = video_attrs.ID_category AND
-		video_cat.lng = video_attrs.lng
-	)
-	
-	WHERE
-		video.ID AND
-		video_attrs.ID
-)
+CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_channel` (
+  `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` bigint(20) unsigned DEFAULT NULL,
+  `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `datetime_create` datetime NOT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`ID`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `name` (`name`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_channel_state` ( -- switching of broadcasting / not broadcasting
+  `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` bigint(20) unsigned DEFAULT NULL, -- rel _broadcast_channel.ID_entity
+  `description` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `datetime_create` datetime NOT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N', -- Y = live, N = not streaming
+  PRIMARY KEY (`ID`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
+  `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` bigint(20) unsigned DEFAULT NULL,
+  `ID_channel` bigint(20) unsigned DEFAULT '0', -- rel _live_channel.ID_entity
+  `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL, -- number of program - not unique
+  `program_type_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
+  `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name_original` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `datetime_create` datetime NOT NULL,
+  `posix_modified` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `subtitle` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `synopsis` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+  `description` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+  `datetime_air_start` datetime NOT NULL,
+  `datetime_air_stop` datetime NOT NULL,
+  `datetime_real_start` datetime DEFAULT NULL,
+  `datetime_real_stop` datetime DEFAULT NULL,
+  `datetime_real_status` char(1) CHARACTER SET ascii DEFAULT NULL, -- status of broadcasting NULL/Y = true
+  `authoring_year` year(4) DEFAULT NULL,
+  `authoring_country` varchar(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `authoring_cast` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+  `authoring_authors` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `series_ID` bigint(20) unsigned DEFAULT NULL,
+  `series_type` varchar(6) CHARACTER SET ascii DEFAULT NULL,
+  `series_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
+  `series_episode` smallint(5) unsigned DEFAULT NULL,
+  `series_episodes` smallint(5) unsigned DEFAULT NULL,
+  `video_aspect` float(5,3) unsigned DEFAULT NULL,
+  `video_bw` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `audio_mode` varchar(12) CHARACTER SET ascii DEFAULT NULL,
+  `audio_dubbing` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `rating_pg` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `accessibility_deaf` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `accessibility_cc` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `status_premiere` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `status_live` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `status_internet` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `recording` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N', -- it is recording now
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_channel`,`program_code`,`datetime_air_start`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `name` (`name`),
+  KEY `status` (`status`,`status_internet`,`status_premiere`,`status_live`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
+  `ID` bigint(20) unsigned NOT NULL,
+  `ID_entity` bigint(20) unsigned DEFAULT NULL,
+  `ID_channel` bigint(20) unsigned DEFAULT NULL,
+  `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL,
+  `program_type_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
+  `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name_original` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `datetime_create` datetime NOT NULL,
+  `posix_modified` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `subtitle` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `synopsis` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+  `description` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+  `datetime_air_start` datetime NOT NULL,
+  `datetime_air_stop` datetime NOT NULL,
+  `datetime_real_start` datetime DEFAULT NULL,
+  `datetime_real_stop` datetime DEFAULT NULL,
+  `datetime_real_status` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `authoring_year` year(4) DEFAULT NULL,
+  `authoring_country` varchar(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `authoring_cast` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+  `authoring_authors` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `series_ID` bigint(20) unsigned DEFAULT NULL,
+  `series_type` varchar(6) CHARACTER SET ascii DEFAULT NULL,
+  `series_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
+  `series_episode` smallint(5) unsigned DEFAULT NULL,
+  `series_episodes` smallint(5) unsigned DEFAULT NULL,
+  `video_aspect` float(5,3) unsigned DEFAULT NULL,
+  `video_bw` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `audio_mode` varchar(12) CHARACTER SET ascii DEFAULT NULL,
+  `audio_dubbing` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `rating_pg` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `accessibility_deaf` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `accessibility_cc` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `status_premiere` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `status_live` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `status_internet` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `recording` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_schedule` ( -- schedule with realtime and commercials
+  `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` bigint(20) unsigned DEFAULT NULL,
+  `ID_channel` bigint(20) unsigned DEFAULT NULL, -- rel _live_channel.ID_entity
+  `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL, -- number of program - not unique
+  `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `datetime_create` datetime NOT NULL,
+  `datetime_start` datetime(3) NOT NULL,
+  `datetime_stop` datetime(3) NOT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`ID`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `name` (`name`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
