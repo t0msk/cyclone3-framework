@@ -248,7 +248,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_file_view` AS (
 		
 	FROM
 		`/*db_name*/`.`/*app*/_file` AS file
-	LEFT JOIN `/*db_name*/`.`/*app*/_file_ent` AS file_ent ON
+	INNER JOIN `/*db_name*/`.`/*app*/_file_ent` AS file_ent ON
 	(
 		file_ent.ID_entity = file.ID_entity
 	)
