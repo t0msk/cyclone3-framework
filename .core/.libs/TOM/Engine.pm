@@ -96,6 +96,10 @@ sub jobify{return undef}
 
 BEGIN
 {
+	if ($TOM::user_ ne $TOM::user && $TOM::user_ ne $TOM::user_www)
+	{
+		main::_log_stdout("WARNING: you are starting Cyclone3 framework under user $TOM::user_",1);
+	}
 	# load if enabled in TOM.conf (to all engines)
 	require Ext::Solr::_init if $Ext::Solr::url;
 	require Ext::RabbitMQ::_init if $Ext::RabbitMQ::host;
