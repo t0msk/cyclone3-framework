@@ -108,7 +108,10 @@ BEGIN
 	# debug
 	$main::stdout=1 if ($ENV{'TERM'} && not defined $main::stdout);
 	# hostname
-	chomp ($TOM::hostname=`hostname`);
+	use Sys::Hostname;
+	$TOM::hostname=hostname;
+	# running user
+	$TOM::user_=getpwuid $<;
 	# Engine
 	$TOM::engine='tom' unless $TOM::engine;
 	
