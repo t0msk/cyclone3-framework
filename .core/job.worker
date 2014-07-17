@@ -20,7 +20,7 @@ use utf8; # encode = fromutf8, decode=toutf8
 use strict; # scrict code
 use vars qw//;
 our $sig_term=1;
-our $class=$ARGV[0];$class="::".$class if $class;
+our $class_=our $class=$ARGV[0];$class="::".$class if $class;
 
 ######################################################################################
 ######################################################################################
@@ -49,7 +49,7 @@ my $t_domain=track TOM::Debug("Domain service init");
 	
 	$TOM::engine_ready=1;
 	#$0="job.worker [".($tom::H_orig || 'global').$class."]";
-	$0.=" :".$class if $class;
+	$0.=" :".$class_ if $class_;
 	
 $t_domain->close;
 
