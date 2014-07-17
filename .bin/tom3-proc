@@ -8,6 +8,7 @@ BEGIN {
 		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
 	}
 	require $ENV{'CYCLONE3PATH'}."/.bin/tom3-init";
+	$0.=" {tom3-proc}";
 }
 use Term::InKey;
 %form=
@@ -44,32 +45,12 @@ while(1)
 		
 		next unless $p->{'cmndline'}=~/^c3\-([^ ]*)/;
 		my $engine=$1;
+		my $request;
 		
 		my $host='_global';
 		$p->{'cmndline'}=~s|\[(.*?)\]|| && do {$host=$1};
-#		$p->{'cmndline'}=~/$TOM::P\/(.*)\/(.*?)$/;
-
-#		my $pwd=$1;
-#			$pwd=~s|^.*?/TOM/||;
-#			$pwd=~s| $||g;
+		$p->{'cmndline'}=~s|\{(.*?)\}|| && do {$request=$1};
 		
-#		foreach (split('/',$pwd))
-#		{
-#			$_=~s/^!// && do
-#			{
-#				if ($host){$host=$_.".".$host;next}
-#				$host=$_;next;
-#			};
-#			$host.="/".$_;
-#		}
-#		$host=~s|^www\.||;
-#		$host=~s|/core\.tom$||;
-		
-#		foreach (keys %{$p})
-#		{
-#			print $_ . " = ". $p->{$_} . "\n";
-#		}
-#		exit;
 		push @{$hosts{$host}},{
 			'engine'=>$engine,
 			'size'=>$p->{'size'},
@@ -78,7 +59,8 @@ while(1)
 			'state'=>$p->{'state'},
 			'start'=>$p->{'start'},
 			'time'=>$p->{'time'},
-			'pid'=>$p->{'pid'}
+			'pid'=>$p->{'pid'},
+			'request' => $request
 		};
 		
 	}
@@ -216,6 +198,10 @@ while(1)
 						$print_out.=sprintf('%.70s',$vals->{'http_host'}.$vals->{'request_uri'});
 						$print_out.= "]";
 						
+					}
+					elsif ($hosts{$host}[$_]{'request'})
+					{
+						$print_out.= "[".$hosts{$host}[$_]{'request'};
 					}
 				}
 				
