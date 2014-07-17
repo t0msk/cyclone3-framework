@@ -94,6 +94,8 @@ eval
 {
 	main::_log_stdout("load & exec '".($job_file || $main::arg{'name'})."'");
 	
+	$0.=" {".($main::arg{'name'} || $job_file)."}";
+	
 	my $job=new TOM::Engine::job::module(
 		{'file' => $job_file, 'name' => $main::arg{'name'}, 'level' => $main::arg{'level'}},
 		\%main::arg
