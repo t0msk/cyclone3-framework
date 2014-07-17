@@ -117,7 +117,8 @@ sub _log
 	{
 		# only to stdout
 #		$msg=$log_sym[$get[2]].' '.$get[1] unless $main::debug;
-		$msg=$log_sym[$get[2]].$get[1] unless $main::debug;
+#		$msg=$log_sym[$get[2]].$get[1] unless $main::debug;
+		$msg=$get[1] unless $main::debug;
 		print color 'green';
 		print color 'bold' if $get[1]=~/^</;
 		print color 'red' if $log_sym[$get[2]] eq '-';
@@ -281,6 +282,10 @@ sub _event
 	{
 		print $event_socket $json->encode(\%hash)."\n";
 	}
+	
+	# write to RabbitMQ to notice channel?
+	
+	# write to Elastic
 	if ($TOM::event_elastic && $Ext::Elastic::service)
 	{
 		my %log_date=ctodatetime(int($hash{'timestamp'}),format=>1);
