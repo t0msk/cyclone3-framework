@@ -59,6 +59,7 @@ B<priority> - default '1' ( higher priority means sending sooner )
 
 sub send
 {
+	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => '_global','class'=>'email'}); # do it in background
 	my $ID=time()."-".$$."-".sprintf("%07d",int(rand(10)));
 	my %env=@_;
 	
@@ -115,6 +116,10 @@ sub send
 		if ($sth0{'rows'})
 		{
 			my $ID=$sth0{'sth'}->insertid();
+			
+			App::020::SQL::functions::_save_changetime(
+				{'db_h'=>'main','db_name'=>'TOM','tb_name'=>'a130_send','ID_entity'=>$ID}
+			);
 			
 			if (!$ID)
 			{
