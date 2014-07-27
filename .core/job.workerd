@@ -27,6 +27,8 @@ our $sig_term=1;
 
 my $t0=track TOM::Debug('TOM::Engine::job');
 require TOM::Engine::job;
+TOM::Database::connect::multi('main','sys')
+	|| die "Error during connection request to database server\n";
 $t0->close();
 
 use Encode qw(decode encode);
@@ -126,7 +128,7 @@ $pm->on_finish(sub {
 main::_log_stdout("main loop timer starting",3,"job.mng") if $ENV{'WORKERS'};
 my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 	
-	main::_log_stdout("controlling job queue pool");
+#	main::_log_stdout("controlling job queue pool");
 	local $main::_canexit;
 	
 	main::_log("active workers \@$TOM::hostname ".$pm->num_workers()."/".$MAX_WORKERS,3,"job.mng");
@@ -238,17 +240,17 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 		
 		main::_log_stdout("active queue '$queue->{'name'}' domain='$domain' jobs=".$queue->{'messages_ready'}." rate=".$queue->{'messages_ready_details'}->{'rate'}." consumers=".$queue->{'consumers'},3,"job.mng")
 			if (
-				$queue->{'consumers'}
-				|| $queue->{'messages_ready'}
-				|| $queue->{'messages_ready_details'}->{'rate'}
+#				$queue->{'consumers'} ||
+				$queue->{'messages_ready'} ||
+				$queue->{'messages_ready_details'}->{'rate'}
 			);
 		
 		if (!$domain_info{$domain} && ($domain ne "_global"))
 		{
-			main::_log_stdout(" unknown domain '$domain' with jobs=".$queue->{'messages_ready'},1,"job.mng");
+#			main::_log_stdout(" unknown domain '$domain' with jobs=".$queue->{'messages_ready'},1,"job.mng");
 			if (!$queue->{'messages_ready'})
 			{
-				main::_log_stdout("queue '$queue->{'name'}' unknown, removing",1,"job.mng");
+#				main::_log_stdout("queue '$queue->{'name'}' unknown, removing",1,"job.mng");
 #				async {
 #					$service->_channel->delete_queue(
 ##						'exchange' => encode('UTF-8', 'cyclone3.job'),
@@ -294,7 +296,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 	
 }) if $ENV{'WORKERS'};
 
-my $w=AnyEvent->timer(after => 60, interval => 60, cb => \&check_domains);
+my $w=AnyEvent->timer(after => 60, interval => 10, cb => \&check_domains);
 my $w=AnyEvent->timer(after => 0, interval => 5, cb => \&check_scheduler);
 sub check_domains
 {
@@ -303,9 +305,10 @@ sub check_domains
 	
 	my %domains=@{$Redis->hgetall('C3|domains')};
 	
-	main::_log("active ".scalar(keys %domains)." domains (".(join(",",sort keys %domains)).")",3,"job.mng");
+#	main::_log("check_domains");
+#	main::_log("active ".scalar(keys %domains)." domains (".(join(",",sort keys %domains)).")",3,"job.mng");
 	
-	foreach my $domain (sort keys %domains)
+	foreach my $domain (sort {length($a) <=> length($b) || $a cmp $b} keys %domains)
 	{
 		my $dom_data=from_json $domains{$domain};
 			$dom_data->{'domain'}=$domain;
@@ -407,9 +410,127 @@ sub check_domains
 			foreach my $id(grep {$config_file{$filename}{'trigger'}{$_}{'type'} eq "cron"} keys %{$config_file{$filename}{'trigger'}})
 			{
 				my $cron=$config_file{$filename}{'trigger'}{$id};
-				if (!$cron->{'cron-schedule'})
+				if (!$cron->{'cron-schedule'} && !$cron->{'cron-run-every'})
 				{
-					main::_log_stdout(" job '$id' missing \@cron-schedule definition",1,"job.mng");
+					main::_log_stdout(" job '$id' missing \@cron-schedule||\@cron-run-every definition",1,"job.mng");
+					next;
+				}
+				
+				if ($cron->{'cron-run-every'})
+				{
+					my %sth0=TOM::Database::SQL::execute(qq{
+						SELECT
+							*,
+							UNIX_TIMESTAMP(datetime_next) AS unixtime_next,
+							IF(datetime_next < NOW(),'before','future') AS status_now
+						FROM
+							`TOM`.`a100_job_cron_schedule`
+						WHERE
+							`filename`=? AND
+							`id`=? AND
+							`status`='Y'
+						LIMIT 1
+					},'db_h'=>'sys','bind'=>[
+						$filename,
+						$id
+					],'quiet'=>1);
+					my %db0_line=$sth0{'sth'}->fetchhash();
+					
+					my $datetime_next=time();
+					if ($cron->{'cron-run-every'}=~/^(\d+)S$/i)
+					{
+						$datetime_next+=$1;
+					}
+					elsif ($cron->{'cron-run-every'}=~/^(\d+)M$/i)
+					{
+						$datetime_next+=(60 * $1);
+					}
+					elsif ($cron->{'cron-run-every'}=~/^(\d+)H$/i)
+					{
+						$datetime_next+=(3600 * $1);
+					}
+					elsif ($cron->{'cron-run-every'}=~/^(\d+)D$/i)
+					{
+						$datetime_next+=(86400 * $1);
+					}
+					
+					if (!$db0_line{'status_now'})
+					{
+						main::_log_stdout(" [$domain] set cron '".$id."' to execute every '".($cron->{'cron-run-every'})."', after ".($datetime_next-time())."S from now",3,"job.mng");
+						TOM::Database::SQL::execute(qq{
+							REPLACE INTO
+								`TOM`.`a100_job_cron_schedule`
+							SET
+								`filename`=?,
+								`id`=?,
+								`cron-schedule`=NULL,
+								`cron-run-every`=?,
+								`datetime_create`=NOW(),
+								`datetime_next`=FROM_UNIXTIME(?),
+								`status`='Y'
+						},'db_h'=>'sys','bind'=>[
+							$filename,
+							$id,
+							$cron->{'cron-run-every'},
+							$datetime_next
+						],'quiet'=>1);
+						next;
+					}
+					
+#					exit;
+					
+					if ($db0_line{'status_now'} eq "before")
+					{
+#						main::_log("running is in plan");
+					}
+					else
+					{
+#						main::_log("next is ".($db0_line{'unixtime_next'})." calculated $datetime_next");
+						if ($datetime_next < $db0_line{'unixtime_next'})
+						{
+							main::_log_stdout(" [$domain] set cron '".$id."' to execute every '".($cron->{'cron-run-every'})."', after ".($datetime_next-time())."S from now",3,"job.mng");
+							
+							TOM::Database::SQL::execute(qq{
+								REPLACE INTO
+									`TOM`.`a100_job_cron_schedule`
+								SET
+									`filename`=?,
+									`id`=?,
+									`cron-schedule`=NULL,
+									`cron-run-every`=?,
+									`datetime_create`=NOW(),
+									`datetime_next`=FROM_UNIXTIME(?),
+									`status`='Y'
+							},'db_h'=>'sys','bind'=>[
+								$filename,
+								$id,
+								$cron->{'cron-run-every'},
+								$datetime_next
+							],'quiet'=>1);
+							next;
+						}
+					}
+					
+					my %sth0=TOM::Database::SQL::execute(qq{
+						UPDATE
+							`TOM`.`a100_job_cron_schedule`
+						SET
+							`datetime_create`=NOW(),
+							`cron-run-every`=?,
+							`cron-schedule`=NULL
+						WHERE
+							`filename`=? AND
+							`id`=?
+						LIMIT 1
+					},'db_h'=>'sys','bind'=>[
+						$cron->{'cron-run-every'},
+						$filename,
+						$id
+					],'quiet'=>1);
+					
+					main::_log_stdout(" [$domain] set cron '".$id."' to execute every '".($cron->{'cron-run-every'})."', planned ".($db0_line{'unixtime_next'}-time())."S before now",3,"job.mng");
+					
+					next;
 				}
 				
 				my $datetime_next=TOM::Engine::job::cron::get_next_execution_time($cron->{'cron-schedule'},time());
@@ -440,6 +561,7 @@ sub check_domains
 							`TOM`.`a100_job_cron_schedule`
 						SET
 							`datetime_create`=NOW(),
+							`cron-run-every`=NULL,
 							`cron-schedule`=?
 						WHERE
 							`filename`=? AND
@@ -461,6 +583,7 @@ sub check_domains
 							`filename`=?,
 							`id`=?,
 							`cron-schedule`=?,
+							`cron-run-every`=NULL,
 							`datetime_create`=NOW(),
 							`datetime_next`=FROM_UNIXTIME(?),
 							`status`='Y'
@@ -542,18 +665,94 @@ sub check_scheduler
 		# jobify
 		my $cron=$config->{'trigger'}{$db0_line{'id'}};
 		
+		my $class;
+			$class.="::".$cron->{'job-class'}
+				if $cron->{'job-class'};
+		
+		my $routing_key=$domain;
+			$routing_key="job" if $routing_key eq "_global";
+			$routing_key.=$class if $class;
+		
+		my $queue=$domain;
+			$queue.=$class if $class;
+		
 		if ($cron->{'job-name'})
 		{
-			my $routing_key=$domain;
-				$routing_key="job" if $routing_key eq "_global";
-			main::_log_stdout(" job-name '".$cron->{'job-name'}."'",3,"job.mng");
-			$do->job({'routing_key' => $domain},{
+			
+			my $queue_found;
+			if ($Redis)
+			{
+				$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
+				$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
+				$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,15,sub {});
+			}
+			if (!$queue_found)
+			{
+				async {
+					$service->_channel->declare_queue(
+						'exchange' => encode('UTF-8', 'cyclone3.job'),
+						'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
+						'durable' => 1
+					);
+					$service->_channel->bind_queue(
+						'exchange' => encode('UTF-8', 'cyclone3.job'),
+						'routing_key' => encode('UTF-8', $routing_key),
+						'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
+					);
+				};
+			}
+			
+			main::_log_stdout(" job-name '".$cron->{'job-name'}.$class."'",3,"job.mng");
+			$do->job({'routing_key' => $routing_key},{
 				'name' => $cron->{'job-name'}
 			});
+			
 		}
-#			$do->job({'routing_key' => $domain},{
-#				'name' => 'a301-check_user'
-#			});
+		
+		if ($db0_line{'cron-run-every'})
+		{
+#			main::_log(" cron-run-every='$db0_line{'cron-run-every'}'");
+			my $datetime_next=time();
+			if ($db0_line{'cron-run-every'}=~/^(\d+)S$/i)
+			{
+				$datetime_next+=$1;
+#				main::_log(" +$1S");
+			}
+			elsif ($db0_line{'cron-run-every'}=~/^(\d+)M$/i)
+			{
+				$datetime_next+=(60 * $1);
+#				main::_log(" +$1M");
+			}
+			elsif ($db0_line{'cron-run-every'}=~/^(\d+)H$/i)
+			{
+				$datetime_next+=(3600 * $1);
+#				main::_log(" +$1H");
+			}
+			elsif ($db0_line{'cron-run-every'}=~/^(\d+)D$/i)
+			{
+				$datetime_next+=(86400 * $1);
+#				main::_log(" +$1D");
+			}
+#			main::_log(" cron-run-every='$db0_line{'cron-run-every'}'");
+			
+			my %sth0=TOM::Database::SQL::execute(qq{
+				UPDATE
+					`TOM`.`a100_job_cron_schedule`
+				SET
+					`datetime_next`=FROM_UNIXTIME(?)
+				WHERE
+					`filename`=? AND
+					`id`=?
+				LIMIT 1
+			},'db_h'=>'sys','bind'=>[
+				$datetime_next,
+				$filename,
+				$db0_line{'id'}
+			],'quiet'=>1);
+			
+			main::_log_stdout(" next exec after ".($datetime_next-time())."S",3,"job.mng");
+			next;
+		}
 		
 		my $datetime_next=TOM::Engine::job::cron::get_next_execution_time($db0_line{'cron-schedule'},time());
 		
