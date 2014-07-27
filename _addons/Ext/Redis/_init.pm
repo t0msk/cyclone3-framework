@@ -411,7 +411,7 @@ sub AUTOLOAD
 			$service_number=$crc % $services;
 			
 			$service=$self->{'services'}[$service_number];
-			print "$service_number\n" if $tom::test;
+#			print "$service_number\n" if $tom::test;
 		}
 		
 		my $value=$service->$method(@_);
