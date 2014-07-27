@@ -1,0 +1,209 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+
+use Net::SMTP;
+use Mail::Mailer qw(sendmail);
+
+use App::100::_init;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	return if $self->running({'max'=>600}); # check if not already running
+	
+	$env->{'max'} = 10 unless $env->{'max'};
+	
+	alarm(3600);
+	
+	my @sql_bind;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			ID
+		FROM
+			TOM.a130_send
+		WHERE
+			sendtime < ? AND
+			active='N' AND
+			priority>-120
+	},'quiet'=>1,'bind'=>[time()]);
+	main::_log("$sth0{'rows'} mails in queue (max $env->{'max'})");
+	if (!$sth0{'rows'})
+	{
+		return 1;
+	}
+	
+	my $emails;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			TOM.a130_send
+		WHERE
+			sendtime < ? AND
+			active='N' AND
+			priority>-120
+		ORDER BY
+			priority DESC,
+			sendtime
+		LIMIT
+			$env->{'max'}
+	},'quiet'=>1,'bind'=>[time(),@sql_bind]);
+	while (my %env0=$sth0{'sth'}->fetchhash)
+	{
+		$emails++;
+		
+		if (-e $TOM::P.'/_data/email/body_'.$env0{'ID'}.'.eml')
+		{
+			local $/;
+			open(EMAILBODY,'<'.$TOM::P.'/_data/email/body_'.$env0{'ID'}.'.eml');
+			$env0{'body'}=<EMAILBODY>;
+			close(EMAILBODY);
+		}
+		
+		if (length($env0{'body'}) < 10)
+		{
+			main::_log("can't send empty email body! ID='$env0{'ID'}' from='$env0{'from_email'}' datetime='$env0{'datetime_create'}'",3,"email",1);
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
+			next;
+		}
+		
+		if (!$env0{'from_email'})
+		{
+#			main::_log("DEPRECATED from_email (not from $TOM::contact{'from'}) used in table a130_send, email ID $env0{ID}",1,"pub.warn",1);
+			$env0{'from_email'}=$TOM::contact{'from'};
+		};
+		
+		if ($env0{to_email}=~s|,|;|g)
+		{
+			main::_log("DEPRECATED delimiter , not ; used in table a130_send, email ID $env0{ID}",1,"pub.warn",1);
+		};
+		
+		$env0{to_email}=~s| ||g;
+		$env0{to_email}=~s|<||g;
+		$env0{to_email}=~s|>||g;
+		
+		$env0{to_email}=~s|^;||g;
+		$env0{to_email}=~s|;$||g;
+		
+		$env0{'body'}=~/Subject: (.*?)\n/;
+		my $subject=$1;
+		
+		$subject=Encode::encode_utf8($subject);
+		
+		main::_log("[$emails] sending email $env0{ID} ($env0{priority}) from $env0{from_email} to $env0{to_email}");
+		main::_log("[$emails] sending email ID='$env0{ID}' priority='$env0{priority}' from='$env0{from_email}' to='$env0{to_email}' subject='$subject'",3,"email",1);
+		
+		if (!$TOM::smtp_host)
+		{
+			main::_log("sending using mailer");
+			main::_log("subject = $subject");
+			my $mailer = new Mail::Mailer 'sendmail';
+			main::_log("defined mailer");
+			$mailer->open(
+				{
+					'From' => $env0{'from_email'},
+					'To' => $env0{'to_email'},
+					'Subject' => $subject,
+				}) or die "Can't open: $!\n";
+			print $mailer $env0{'body'};
+			$mailer->close();
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET active='Y' WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
+			next;
+		}
+		
+		my $smtp;
+		
+		if ($TOM::smtp_SSL)
+		{
+			require Net::SMTP::SSL;
+			$smtp = new Net::SMTP::SSL
+			(
+				$TOM::smtp_host,
+				'Port' => 465,
+			);
+			if (not $smtp->auth($TOM::smtp_user,$TOM::smtp_pass))
+			{
+				main::_log("SSL Authentification not works $! $@",1);
+				return 1;
+			}
+		}
+		else
+		{
+			$smtp = Net::SMTP->new($TOM::smtp_host);
+			if ($TOM::smtp_user)
+			{
+				main::_log("authentification with user '$TOM::smtp_user' at '$TOM::smtp_host'");
+				if (not $smtp->auth($TOM::smtp_user,$TOM::smtp_pass))
+				{
+					main::_log("Authentification not works (SSL or TLS?)",1);
+					return 1;
+				}
+			}
+		}
+		
+		my @rcpt=split(';',$env0{to_email});
+		
+		if (not $smtp->mail($env0{from_email}))
+		{
+			main::_log("can't send, not accepted sender ".$smtp->status,1);
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
+			next;
+		}
+		
+		my $rcpt_count;
+		foreach my $rcpt_mail (@rcpt)
+		{
+			if (not $smtp->recipient($rcpt_mail))
+			{
+				main::_log("not accepted RCPT: '$rcpt_mail' status:".$smtp->status,1);
+				next;
+			}
+			$rcpt_count++;
+		}
+		if (!$rcpt_count)
+		{
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-10 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
+			next;
+		}
+		
+		if (not $smtp->data())
+		{
+			main::_log("can't accept DATA",1);
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);     
+			next;
+		}
+		
+		if (not $smtp->datasend($env0{body}))
+		{
+			main::_log("can't accept DATASEND",1);
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
+			next;
+		}
+		
+		if (not $smtp->dataend())
+		{
+			main::_log("can't accept DATAEND",1);
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
+			next;
+		}
+		
+		$smtp->quit;
+		
+		TOM::Database::SQL::execute("UPDATE TOM.a130_send SET active='Y' WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
+		
+		main::_log("sended email ID='$env0{ID}'",3,"email",1);
+		
+	}
+	
+	
+return 1}
+1;
