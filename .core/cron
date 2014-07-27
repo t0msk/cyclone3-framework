@@ -112,6 +112,7 @@ my $var=10;#rand(1);
 
 #Time::HiRes::sleep($var);
 
+#main::_log("is RabbitMQ active? ".$Ext::RabbitMQ::service);
 
 my $lock=new TOM::lock("CRON ".$type) || exit;
 
@@ -150,6 +151,12 @@ if (-e $CRON::P."/_config/cron.".$type.".cml" || -e $CRON::P."/_type/cron.".$typ
 			next if not defined $2;
 			$mdl_env{$1}=$2;
 			$mdl_env{$1}=~s|\"|"|g;
+		}
+		if ($mdl_env{'-ignore-if-job'} && $Ext::RabbitMQ::service)
+		{
+			# ignoring
+			main::_log("ignoring, because JOB engine is running");
+			next;
 		}
 		module(%mdl_env);
 	}
@@ -316,6 +323,12 @@ foreach (sort keys %CRON::hosts)
 					$mdl_env{$1}=$2;
 					$mdl_env{$1}=~s|\"|"|g;
 				}
+				if ($mdl_env{'-ignore-if-job'} && $Ext::RabbitMQ::service)
+				{
+					# ignoring
+					main::_log("ignoring, because JOB engine is running");
+					next;
+				}
 				CRON::waitload($CRON::LOADAVG);
 				main::_log("call module with debug level='$TOM::DEBUG_log_file'");
 				
@@ -339,8 +352,6 @@ foreach (sort keys %CRON::hosts)
 		main::_log("end forked cron");
 		
 		$main::pm->finish();
-		
-		
 	}
 	else
 	{
