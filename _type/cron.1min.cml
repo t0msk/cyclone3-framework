@@ -15,6 +15,8 @@
 </MODULE>
 
 <MODULE>
+	<VAR id="-ignore-if-job" value="true" />
+	
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="130" />
 	<VAR id="-name" value="autosend" />
@@ -22,6 +24,8 @@
 </MODULE>
 
 <MODULE>
+	<#VAR id="-ignore-if-job" value="true" />
+	
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="150" />
 	<VAR id="-name" value="sql" />
