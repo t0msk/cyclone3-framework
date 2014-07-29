@@ -48,6 +48,7 @@ my $t_domain=track TOM::Debug("Domain service init");
 	$main::DBH=$main::DB{main};
 	
 	$TOM::engine_ready=1;
+	$TOM::DEBUG_log_file=90;
 	#$0="job.worker [".($tom::H_orig || 'global').$class."]";
 	$0.=" :".$class_ if $class_;
 	
@@ -63,7 +64,7 @@ use JSON;
 use Data::Dumper;
 use Ext::Redis::_init;
 our $alarm=60; # autoexit after 60 seconds of inactivity
-our $time_max=1200;
+our $time_max=600;
 our $time_start=time();
 
 my $service=Ext::RabbitMQ::service();
@@ -137,9 +138,10 @@ sub callback {
 		if ($payload->{'function'})
 		{
 			my $function=$payload->{'function'};
-			main::_log("calling '$function'");
+			main::_log("calling function '$function'");
 			$main::nojobify=1; # nojobify, just execute!
 			&$function(@{$payload->{'args'}});
+			main::_log("end of call $@");
 		}
 		elsif ($payload->{'job'})
 		{
