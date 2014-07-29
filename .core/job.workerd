@@ -222,7 +222,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 			else
 			{
 #			main::_log_stdout("queue '$queue->{'name'}' db='$db_name' jobs=".$queue->{'messages_ready'}." rate=".$queue->{'messages_ready_details'}->{'rate'}." workers=".$queue->{'consumers'});
-				foreach (sort keys %domain_info)
+				foreach (sort {length($a) <=> length($b) || $a cmp $b} keys %domain_info)
 				{
 					if ($domain_info{$_}->{'db_name'} eq $db_name)
 					{
@@ -359,7 +359,7 @@ sub check_domains
 	}
 	
 	# load or update job.conf files
-	foreach my $domain ('_global',sort keys %domains)
+	foreach my $domain ('_global',sort {length($a) <=> length($b) || $a cmp $b} keys %domains)
 	{
 #		main::_log("domain = $domain");
 		my $dom_data={};
