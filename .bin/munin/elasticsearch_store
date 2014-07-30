@@ -1,0 +1,49 @@
+#!/usr/bin/env perl
+use strict;                   
+#use warnings;                 
+use LWP;                      
+use JSON qw/decode_json/;     
+
+my $host = $ENV{'host'} || 'localhost';
+
+my $ua = LWP::UserAgent->new;
+$ua->timeout(10);
+
+sub get_json_from_url {
+    my $uri = shift;
+    my $res = $ua->get($uri, 'Content-Type' => 'application/json' );
+    Carp::confess($res->code . " for " . $uri) unless $res->is_success;
+    my $data = do { local $@; eval { decode_json($res->content) } };
+    die("Could not decode JSON from: " . $res->content) unless $data;
+    return $data;
+}
+
+my $data = get_json_from_url("http://$host:9200/_nodes/stats");
+my %out;
+
+foreach my $node (keys %{$data->{nodes}}){
+	$out{$data->{'nodes'}->{$node}->{'name'}}=$data->{'nodes'}->{$node}->{'indices'}->{'store'}->{'size_in_bytes'};
+}
+
+if ($ARGV[0] and $ARGV[0] eq 'config')
+{
+	print "graph_args --base 1024 --lower-limit 0\n";
+	print "graph_title ElasticSearch cluster store\n";
+	print "graph_category elasticsearch\n";
+	print "graph_vlabel Bytes\n";
+
+	foreach my $name (sort keys %out)
+	{
+		print "$name.label $name\n";
+	}
+}
+
+elsif (!$ARGV[0] || $ARGV[0] eq 'autoconf')
+{
+	foreach my $name (sort keys %out)
+	{
+		print "$name.value " . $out{$name} . "\n";
+	}
+}
+
+exit(0);
