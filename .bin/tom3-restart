@@ -1,66 +1,7 @@
 #!/usr/bin/perl
 use Term::ANSIColor;
-BEGIN {
-	if (!$ENV{'CYCLONE3PATH'}){$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";}
-	require $ENV{'CYCLONE3PATH'}."/.bin/tom3-init";
-}
-%form=
-(
- '--domain'	=>	"restart domain in db (eg. localhost.com)",
- '-a'		=>	"restart all domains",
-);
 
-
-if (($FORM{h})||($FORM{help})||($ENV{USER} ne "root")){print "\n[PLEASE USE SUDO]\n\n";&help();}
-if ((!$FORM{domain})&&(!$FORM{a})&&(!$FORM{'zombie'})){&help();}
-
-my $time_current=time;
-
-
-open(*STDERR,">/dev/null");
-
-
-use Proc::ProcessTable;
-
-
-print "restart DOMAIN: $FORM{domain}\n";
-
-$FORM{'SIG'}=HUP unless $FORM{'SIG'};
-
-$FORM{'SIG'}=HUP if $FORM{'SIG'} eq "HUP";
-$FORM{'SIG'}=HUP if $FORM{'SIG'} eq "-HUP";
-$FORM{'SIG'}=KILL if $FORM{'SIG'} eq "-9";
-
-$main::p=~s|^.*$TOM::P/||;
-
-my $t = new Proc::ProcessTable;
-foreach my $p (@{$t->table})
-{
-	my $cmd=$p->cmndline;
-	
-	next unless $p->{'cmndline'}=~/^.*\/perl $TOM::P\/([^ ]*)\/(.*?)$/;
-	
-	my $engine=$2;
-	my $domain=$1;
-	$domain=~s|/!www\s?$||;
-	next if $domain eq ".bin";
-	
-	next if ((not $domain eq $main::p)&&(!$FORM{'a'})&&(!$FORM{'zombie'}));
-	if ($FORM{'zombie'})
-	{
-		next if ((time()-$p->{'start'}) < 3600);
-	}
-	
-	print color 'reset bold yellow';
-	print " Send $FORM{SIG} to ($engine) PID:".$p->pid." ($domain) =";
-	print color 'reset bold red';
-	
-	my $out=kill $FORM{'SIG'}, $p->pid;
-	print " $out\n";
-	
-}
-
-
-
-
-&exit();
+print color 'reset red';
+print qq{tom3-restart removed, use 'c3-restart' instead
+};
+print color 'reset';

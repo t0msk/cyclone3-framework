@@ -1,0 +1,121 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+use Proc::ProcessTable;
+use Data::Dumper;
+
+BEGIN
+{
+	$TOM::engine='cli';
+	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+}
+END {use Inline;$SIG{__WARN__} = sub {};}
+
+#require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
+
+our %arg;
+foreach my $key(@ARGV)
+{
+	$key=~s/--// && do
+	{
+		my @ref=split('=',$key,2);
+		$ref[1]=1 unless exists $ref[1];
+		$main::arg{$ref[0]}=$ref[1];
+		next;
+	};
+	$key=~s/-// && do
+	{
+		foreach (split('',$key)){$main::arg{$_}++;}
+	};
+}
+
+print color 'bold blue';
+print qq{Cyclone3 domain service restart tool (c3-restart)
+};print color 'reset';
+
+if ($ENV{'USER'} ne "root")
+{	
+	print color 'reset red';
+	print qq{only root can restart processes
+};
+	print color 'reset';
+	exit;
+}
+
+if ($arg{'help'} || $arg{'h'} || (!$arg{'a'} && !$arg{'domain'}))
+{
+	print color 'reset green';
+	print qq{-h, --help   this help page
+--domain     restart domain services
+-a           restart all domain services (default only pub engine)
+-aa          restart all domain services in all engines
+--SIG        send specific SIG to process (default HUP)
+--t, --test  only test output
+};
+	print color 'reset';
+	exit;
+}
+
+$arg{'SIG'}=HUP if $arg{'SIG'} eq "HUP";
+$arg{'SIG'}=KILL if $arg{'SIG'} eq "-9";
+$arg{'SIG'}=HUP unless $arg{'SIG'};
+$arg{'engine'}='pub' unless exists $arg{'engine'};
+delete $arg{'engine'} if $arg{'a'} >= 2;
+
+print color 'green';
+
+print "sending ".$arg{'SIG'}." to ".do{
+	if ($arg{'domain'})
+	{
+		$arg{'domain'}." domain";
+	}
+	else
+	{
+		"all domains";
+	}
+}." in ".do{
+	if ($arg{'engine'})
+	{
+		$arg{'engine'}." engine";
+	}
+	else
+	{
+		"all engines";
+	}
+}."\n" if (!$arg{'t'} && !$arg{'test'});
+
+my $t = new Proc::ProcessTable;
+foreach my $p (@{$t->table})
+{
+	my $cmd=$p->cmndline;
+	
+	next unless $p->{'cmndline'}=~/^c3\-([^ ]*)(.*)$/;
+	
+	my $engine=$1;
+	my $info=$2;
+		$engine=~s|^([^\.]*).*$|$1|;
+	my $domain;
+	$domain=$1 if $info=~/\[(.*?)\]/;
+	
+	if ($arg{'domain'} && ($arg{'domain'} ne $domain))
+	{
+		next
+	}
+	if ($arg{'engine'} && ($arg{'engine'} ne $engine))
+	{
+		next
+	}
+	
+	print "PID:".$p->pid." '".$p->{'cmndline'}."' live:".(time()-$p->start())."S SIG:$arg{'SIG'}\n";
+	next if $arg{'t'};
+	next if $arg{'test'};
+	my $out=kill $arg{'SIG'}, $p->pid;
+}
+
+print color 'reset';
+
