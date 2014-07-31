@@ -2,17 +2,23 @@
 # ex:ts=4
 
 use strict;
-use warnings;
+#use warnings;
+use Proc::ProcessTable;
+use Data::Dumper;
 
 my $cmd = shift || '';
 if ($cmd eq 'config') {print qq{graph_title Cyclone3 processes
 graph_args --base 1000 -l 0
 graph_category cyclone3
-graph_order cron pub
+graph_order cron job cli pub
 graph_vlabel processes
 graph_scale no
 cron.label cron engine
 cron.draw LINE1
+job.label job engine
+job.draw LINE1
+cli.label cli engine
+cli.draw LINE1
 pub.label pub engine
 pub.draw LINE1
 total.colour 000000
@@ -22,19 +28,26 @@ total.draw LINE1
 	exit 0;
 }
 
-my $total_value;
-my $tom3_value=`ps ax | grep "/core\.tom" | grep -vc "grep"`;chomp($tom3_value);
-print "pub.value " . $tom3_value . "\n";
-$total_value+=$tom3_value;
+my %engines;
 
-#$tom3_value=`ps ax | grep "\.core/webclick" | grep -vc "grep"`;chomp($tom3_value);
-#print "webclick.value " . $tom3_value . "\n";
+my $total_value=0;
 
-#$tom3_value=`ps ax | grep "\.core/a542_file_download" | grep -vc "grep"`;chomp($tom3_value);
-#print "download.value " . $tom3_value . "\n";
+my $t = new Proc::ProcessTable;
+foreach my $p (@{$t->table})
+{
+	my $cmd=$p->cmndline;
+	next unless $p->{'cmndline'}=~/^c3\-([^ \.]*)/;
+	$engines{$1}++;
+}
 
-$tom3_value=`ps ax | grep "perl" | grep "cron" | grep -vc "grep"`;chomp($tom3_value);
-print "cron.value " . $tom3_value . "\n";
-$total_value+=$tom3_value;
+print "cron.value " . ($engines{'cron'} || 0) . "\n";
+$total_value+=$engines{'cron'};
+print "job.value " . ($engines{'job'} || 0) . "\n";
+$total_value+=$engines{'job'};
+print "cli.value " . ($engines{'cli'} || 0) . "\n";
+$total_value+=$engines{'cli'};
+print "pub.value " . ($engines{'pub'} || 0) . "\n";
+$total_value+=$engines{'pub'};
+
 
 print "total.value " . $total_value . "\n";
