@@ -123,11 +123,21 @@ BEGIN
 			
 			if ($Ext::Redis::service){eval{
 				main::_log("updating register of domains (RedisDB)");
+				no strict;
+				my %addons=%tom::addons;
+				foreach (keys %addons)
+				{
+					my $db_var=$_.'::db_name';
+						$db_var=~s|^a|App::| || $db_var=~s|^e|Ext::|;
+					my $db_name=$$db_var || $TOM::DB{'main'}{'name'};
+					$addons{$_}=$db_name;
+				}
 				$Ext::Redis::service->hset('C3|domains',$tom::H_orig,to_json({
 					'updated' => time(),
 					'db_name' => $TOM::DB{'main'}{'name'},
 					'tom::P' => $tom::P,
-					'tom::Pm' => $tom::Pm
+					'tom::Pm' => $tom::Pm,
+					'addons' => \%addons
 				}),sub{});
 			};}
 			
