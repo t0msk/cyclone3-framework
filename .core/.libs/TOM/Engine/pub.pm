@@ -27,6 +27,11 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 	# CORE Engine kniznice
 	use TOM::Domain; # all addons will be initialized because $tom::addons_init is in true state
 	
+	if ($TOM::user_ ne $TOM::user && $TOM::user_ ne $TOM::user_www)
+	{
+		main::_log_stdout("WARNING: you are starting Cyclone3 framework under user $TOM::user_",1);
+	}
+	
 	BEGIN
 	{
 		# data adresar
