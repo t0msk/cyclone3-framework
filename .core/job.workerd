@@ -656,11 +656,12 @@ sub check_scheduler
 		}
 		
 		my $domain=$config->{'domain'}->{'domain'};
+		
+		my @domains=($domain);
+		
 #		print Dumper($domain);
 		next unless $domain;
 #		print Dumper($config->{'domain'}->{'domain'});
-		
-		main::_log_stdout("[$domain] jobify cron '$db0_line{'id'}' scheduled to '".$db0_line{'datetime_next'}."'",3,"job.mng");
 		
 		# jobify
 		my $cron=$config->{'trigger'}{$db0_line{'id'}};
@@ -669,45 +670,100 @@ sub check_scheduler
 			$class.="::".$cron->{'job-class'}
 				if $cron->{'job-class'};
 		
-		my $routing_key=$domain;
-			$routing_key="job" if $routing_key eq "_global";
-			$routing_key.=$class if $class;
+#		print Dumper($cron);
 		
-		my $queue=$domain;
-			$queue.=$class if $class;
 		
-		if ($cron->{'job-name'})
+		if ($cron->{'run-on-each'} eq "domain")
+		{
+			@domains=();
+			foreach my $domain_ (sort {length($a) <=> length($b) || $a cmp $b} keys %domain_info)
+			{
+				next unless $domain_info{$domain_}{'db_name'};
+#				print Dumper()
+#				main::_log_stdout("test domain '$domain_'",3,"job.mng");
+				push @domains, $domain_;
+			}
+		}
+		elsif ($cron->{'run-on-each'} eq "database")
+		{
+			my %database_;
+			@domains=();
+			foreach my $domain_ (sort {length($a) <=> length($b) || $a cmp $b} keys %domain_info)
+			{
+				next unless $domain_info{$domain_}{'db_name'};
+				
+				if ($cron->{'run-if-addon'})
+				{
+					next unless $domain_info{$domain_}{'addons'}{$cron->{'run-if-addon'}};
+					next if $database_{$domain_info{$domain_}{'addons'}{$cron->{'run-if-addon'}}};
+					$database_{$domain_info{$domain_}{'addons'}{$cron->{'run-if-addon'}}}++;
+					
+#					main::_log_stdout("test domain '$domain_' db_name='$domain_info{$domain_}{'db_name'}'",3,"job.mng");
+					
+					push @domains, $domain_;
+				}
+				else
+				{
+					next if $database_{$domain_info{$domain_}{'db_name'}};
+					$database_{$domain_info{$domain_}{'db_name'}}++;
+					
+#					main::_log_stdout("test domain '$domain_' db_name='$domain_info{$domain_}{'db_name'}'",3,"job.mng");
+					
+					push @domains, $domain_;
+				}
+			}
+		}
+		
+		foreach $domain (@domains)
 		{
 			
-			my $queue_found;
-			if ($Redis)
-			{
-				$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
-				$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
-				$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,15,sub {});
-			}
-			if (!$queue_found)
-			{
-				async {
-					$service->_channel->declare_queue(
-						'exchange' => encode('UTF-8', 'cyclone3.job'),
-						'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
-						'durable' => 1
-					);
-					$service->_channel->bind_queue(
-						'exchange' => encode('UTF-8', 'cyclone3.job'),
-						'routing_key' => encode('UTF-8', $routing_key),
-						'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
-					);
-				};
-			}
+			main::_log_stdout("[$domain] jobify cron '$db0_line{'id'}' scheduled to '".$db0_line{'datetime_next'}."'",3,"job.mng");
 			
-			main::_log_stdout(" job-name '".$cron->{'job-name'}.$class."'",3,"job.mng");
-			$do->job({'routing_key' => $routing_key},{
-				'name' => $cron->{'job-name'}
-			});
+#			next;
+			
+			my $routing_key=$domain;
+				$routing_key="job" if $routing_key eq "_global";
+				$routing_key.=$class if $class;
+			
+			my $queue=$domain;
+				$queue.=$class if $class;
+			
+			if ($cron->{'job-name'})
+			{
+				
+				my $queue_found;
+				if ($Redis)
+				{
+					$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
+					$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
+					$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,15,sub {});
+				}
+				if (!$queue_found)
+				{
+					async {
+						$service->_channel->declare_queue(
+							'exchange' => encode('UTF-8', 'cyclone3.job'),
+							'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
+							'durable' => 1
+						);
+						$service->_channel->bind_queue(
+							'exchange' => encode('UTF-8', 'cyclone3.job'),
+							'routing_key' => encode('UTF-8', $routing_key),
+							'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
+						);
+					};
+				}
+				
+				main::_log_stdout(" job-name '".$cron->{'job-name'}.$class."'",3,"job.mng");
+				$do->job({'routing_key' => $routing_key},{
+					'name' => $cron->{'job-name'}
+				});
+				
+			}
 			
 		}
+		
+#		next;
 		
 		if ($db0_line{'cron-run-every'})
 		{
@@ -773,7 +829,7 @@ sub check_scheduler
 		
 		main::_log_stdout(" next exec after ".($datetime_next-time())."S",3,"job.mng");
 	}
-	
+#	exit;
 }
 
 
