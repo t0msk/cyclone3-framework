@@ -139,7 +139,7 @@ sub execute
 			}
 		);
 		
-		$env{'video.ID_entity'}="";
+		$env{'video.ID_entity'}="0;";
 		for my $doc ( $response->docs )
 		{
 #			my $id=$doc->value_for('id');
