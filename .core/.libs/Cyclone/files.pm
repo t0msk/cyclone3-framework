@@ -153,6 +153,7 @@ our @setit_F=
 	
 	
 	['\.pm'                            ,"perl library"                ,"660","$user_www:$group"],
+	['\.job$'                          ,"job"                         ,"770","$user:$group"],
 	['_addons'                         ,"addons file"                 ,"460","$user_www:$group"],
 	
 	
