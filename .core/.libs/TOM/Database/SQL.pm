@@ -130,15 +130,15 @@ sub get_slave_status
 		$TTL=1 if $Redis;
 	
 	# check only on every $TTL seconds
-	main::_log("chk $slave_status{$db_h}{'time'} ".time()." diff:".(time() - $slave_status{$db_h}{'time'}))
-		if $slave_status{$db_h};
+#	main::_log("chk $slave_status{$db_h}{'time'} ".time()." diff:".(time() - $slave_status{$db_h}{'time'}))
+#		if $slave_status{$db_h};
 	if ($slave_status{$db_h} && ((time() - $slave_status{$db_h}{'time'}) < $TTL))
 	{
-		main::_log("show_slave_status($db_h) from cache");
+#		main::_log("show_slave_status($db_h) from cache");
 		return %{$slave_status{$db_h}{'hash'}};
 	}
 	
-	main::_log("show_slave_status($db_h) from db");
+#	main::_log("show_slave_status($db_h) from db");
 	TOM::Database::connect::multi($db_h) unless $main::DB{$db_h};
 	return undef unless $main::DB{$db_h};
 	
@@ -281,7 +281,9 @@ sub execute
 			if ($TOM::DB{$env{'db_h'}.':'.$slave}) # is defined
 			{
 				# check quality of this slave
+#				print "a\n";
 				my %slave_quality=get_slave_status($env{'db_h'}.':'.$slave);
+#				print "a\n";
 #				print Dumper(\%slave_quality);use Data::Dumper;
 				if (!$slave_quality{'timestamp'}) # this handler is not recognized or connected
 				{
