@@ -516,7 +516,8 @@ sub video_part_smil_generate
 	main::_log("hash=$file_name");
 	
 #	open(HNDSMIL,'>'.$directory.'/'.$file_name.'.smil');
-	open(HNDSMIL,'>'.$tom::P_media.'/a510/video/part/'.$file_name.'.smil');
+	open(HNDSMIL,'>'.$tom::P_media.'/a510/video/part/'.$file_name.'.smil') || 
+		main::_log("can't write $!",1);
 	print HNDSMIL $xml_string;
 	close(HNDSMIL);
 	chmod (0666,$directory.'/'.$file_name.'.smil');
@@ -2625,7 +2626,7 @@ sub video_part_visit
 				SET visits = visits + $count_visits->[1]
 				WHERE ID = $ID_part
 				LIMIT 1
-			},'log'=>1) if $count_visits->[1];
+			},'quiet'=>1,'-jobify'=>1) if $count_visits->[1];
 			$Redis->hmset('C3|db_entity|'.$key,
 				'visits',1,
 				'_firstvisit', $main::time_current,
@@ -2679,7 +2680,7 @@ sub video_part_visit
 			SET visits=visits+1
 			WHERE ID=$ID_part
 			LIMIT 1
-		},'quiet'=>1) unless $TOM::CACHE_memcached;
+		},'quiet'=>1,'-jobify'=>1) unless $TOM::CACHE_memcached;
 		return 1;
 	}
 	
@@ -2698,7 +2699,7 @@ sub video_part_visit
 			SET visits=visits+$cache->{'visits'}
 			WHERE ID=$ID_part
 			LIMIT 1
-		},'quiet'=>1);
+		},'quiet'=>1,'-jobify'=>1);
 		$cache->{'visits'}=0;
 		$cache->{'time'}=time();
 	}
@@ -3013,6 +3014,7 @@ sub get_video_part_file_process_front
 			(
 				(
 					/* video_part_file is missing, but required */
+					video_format.name != 'original' AND
 					video_part_file.ID IS NULL AND
 					video_format.required='Y' AND
 					(
@@ -3028,23 +3030,27 @@ sub get_video_part_file_process_front
 				OR
 				(
 					/* can be in error state, but the error state is older than new video format definition */
+					video_format.name != 'original' AND
 					video_part_file.ID IS NOT NULL AND
 					video_format.datetime_create > video_part_file.datetime_create
 				)
 				OR
 				(
 					/* or parent file has been changed */
+					video_format.name != 'original' AND
 					video_part_file.ID IS NOT NULL AND
 					video_part_file.datetime_create <= video_part_file_p.datetime_create
 				)
 				OR
 				(
 					/* or regeneration is required */
+--					video_format.name != 'original' AND
 					video_part_file.regen = 'Y'
 				)
 				OR
 				(
 					/* or regeneration is awaiting */
+--					video_format.name != 'original' AND
 					video_part_file.status = 'W'
 				)
 				OR
@@ -3052,6 +3058,7 @@ sub get_video_part_file_process_front
 					/* or original file must be re-encoded, because is new */
 					video_format.name = 'original'
 					AND video_format.process IS NOT NULL
+					AND video_format.process != ''
 					AND video_part_file.from_parent = 'N'
 				)
 			)
@@ -3208,6 +3215,8 @@ sub _a210_by_cat
 
 sub _video_index
 {
+	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::510::db_name,'class'=>'indexer'}); # do it in background
+	
 	my %env=@_;
 	return undef unless $env{'ID_entity'}; # product.ID
 	return undef unless $Ext::Solr;
