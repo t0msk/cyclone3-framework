@@ -9,7 +9,7 @@ use strict;
 
 use App::210::_init;
 use App::401::_init;
-
+use Ext::Solr::_init;
 
 sub execute
 {
@@ -154,6 +154,7 @@ sub execute
 		}
 		
 		use Ext::Solr::_init;
+		main::_log("connecting Solr");
 		my $solr = Ext::Solr::service();
 		
 		my $response = $solr->search('+id:'.($App::401::db_name).'.a401_article.'.$env{'lng'}.'.* '.$env{'solr.q'},
@@ -171,7 +172,7 @@ sub execute
 			}
 		);
 		
-		$env{'article.ID_entity'}="";
+		$env{'article.ID_entity'}="0;";
 		for my $doc ( $response->docs )
 		{
 			$env{'article.ID_entity'}.=$doc->value_for('ID_entity_i').";"
