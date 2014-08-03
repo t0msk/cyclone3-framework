@@ -125,6 +125,7 @@ sub execute
 			video_cat.name_url AS cat_name_url}.do{if ($env{'check_video_part_file'}){qq{,
 			video_part.ID AS part_ID,
 			video_part.ID_entity AS part_ID_entity,
+			video_part_smil.name AS smil_name,
 			video_part_file.ID AS file_ID,
 			video_part_file.ID_entity AS file_ID_entity,
 			video_part_file.name AS file_name,
@@ -137,34 +138,38 @@ sub execute
 			video_part_file.audio_bitrate AS file_audio_bitrate,
 			video_part_file.length AS file_length}}}.qq{
 		FROM
-			$App::510::db_name.a510_video AS video
-		INNER JOIN $App::510::db_name.a510_video_ent AS video_ent ON
+			`$App::510::db_name`.a510_video AS video
+		INNER JOIN `$App::510::db_name`.a510_video_ent AS video_ent ON
 		(
 			video_ent.ID_entity = video.ID_entity AND
 			video_ent.status IN ('Y','L')
 		)
-		INNER JOIN $App::510::db_name.a510_video_attrs AS video_attrs ON
+		INNER JOIN `$App::510::db_name`.a510_video_attrs AS video_attrs ON
 		(
 			video_attrs.ID_entity = video.ID AND
 			video_attrs.lng = '$env{'lng'}' AND
 			video_attrs.status IN ('Y','L')
 		)
-		LEFT JOIN $App::510::db_name.a510_video_cat AS video_cat ON
+		LEFT JOIN `$App::510::db_name`.a510_video_cat AS video_cat ON
 		(
 			video_cat.ID_entity = video_attrs.ID_category AND
 			video_cat.lng = video_attrs.lng AND
 			video_cat.status IN ('Y','L')
 		)}.do{if ($env{'check_video_part_file'}){qq{
-		INNER JOIN $App::510::db_name.a510_video_part AS video_part ON
+		INNER JOIN `$App::510::db_name`.a510_video_part AS video_part ON
 		(
 			video_part.ID_entity = video.ID_entity AND
 			video_part.status IN ('Y','L')
 		)
-		INNER JOIN $App::510::db_name.a510_video_part_file AS video_part_file ON
+		INNER JOIN `$App::510::db_name`.a510_video_part_file AS video_part_file ON
 		(
 			video_part_file.ID_entity = video_part.ID AND
 			video_part_file.status IN ('Y','L') AND
 			video_part_file.ID_format = $env{'video_format.ID_entity'}
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part_smil` AS video_part_smil ON
+		(
+			video_part_smil.ID_entity = video_part.ID
 		)
 		}}}.qq{
 		WHERE
@@ -281,10 +286,11 @@ sub execute
 				video_part.rating_votes,
 				video_part.rating,
 				video_part.keywords,
+				video_part_smil.name AS smil_name,
 				video_part_attrs.name,
 				video_part_attrs.name_url,
 				video_part_attrs.datetime_create,
-				video_part_attrs.description, 
+				video_part_attrs.description,
 				video_part_file.length AS file_length
 			FROM
 				$App::510::db_name.a510_video_part AS video_part
@@ -298,6 +304,10 @@ sub execute
 				video_part_file.ID_entity = video_part.ID AND
 				video_part_file.status IN ('Y','L') AND
 				video_part_file.ID_format = $env{'video_format.ID_entity'}
+			)
+			LEFT JOIN `$App::510::db_name`.`a510_video_part_smil` AS video_part_smil ON
+			(
+				video_part_smil.ID_entity = video_part.ID
 			)}}}.qq{
 			WHERE
 				video_part.status IN ('Y','L') AND
