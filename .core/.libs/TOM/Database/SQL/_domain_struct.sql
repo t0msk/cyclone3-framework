@@ -11,7 +11,7 @@ CREATE TABLE `/*db_name*/`.`_config` (
   `reqtime` int(10) unsigned NOT NULL default '0',
   `about` varchar(100) character set ascii default NULL,
   PRIMARY KEY  (`variable`,`type`,`namespace`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -19,4 +19,4 @@ CREATE TABLE `/*db_name*/`.`_tom3` (
   `var` varchar(100) collate utf8_unicode_ci NOT NULL default '0',
   `value` text collate utf8_unicode_ci NOT NULL,
   PRIMARY KEY  (`var`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
