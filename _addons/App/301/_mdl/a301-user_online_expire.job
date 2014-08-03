@@ -1,0 +1,128 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+
+use App::301::_init;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	return if $self->running({'max'=>600}); # check if not already running
+	
+	$env->{'max_online'} = 40 unless $env->{'max_online'};
+	$env->{'max'} = 100 unless $env->{'max'};
+	
+	alarm(3600);
+	
+	my %sth=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			TOM.a301_user_online
+		WHERE
+			datetime_request <= DATE_SUB(NOW(),INTERVAL $env->{'max_online'} MINUTE)
+		LIMIT $env->{'max'}
+	},'quiet'=>0);
+	my $i;
+	while (my %user=$sth{'sth'}->fetchhash)
+	{
+		$i++;
+		# save session
+		App::301::session::archive($user{'ID_user'});
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM TOM.a301_user
+			WHERE
+				ID_user='$user{'ID_user'}'
+			LIMIT 1
+		},'quiet'=>1);
+		if (my %user0=$sth0{'sth'}->fetchhash)
+		{
+			main::_log("is logged") if ($user{'logged'} eq "Y");
+			main::_log("not logged") if ($user{'logged'} ne "Y");
+			main::_log("anonymous") if (!$user0{'login'} && !$user0{'email'});
+			main::_log("authorized") if ($user0{'login'} || $user0{'email'});
+			
+			if ($TOM::CACHE_memcached)
+			{
+				# actualize data
+				
+				
+				# delete if data are old
+				$Ext::CacheMemcache::cache->delete(
+					'namespace' => "a301_online",
+					'key' => $tom::H_cookie.':'.$main::COOKIES{_ID_user},
+				);
+			}
+			
+			if (
+					($user{'logged'} eq "Y")#&&($user0{'login'} || $user0{'email'}))
+					||(($user{'logged'} ne "Y")&&(!$user0{'login'} || $user0{'email'}))
+				)
+			{
+				
+				main::_log(" save data into users table");
+				
+				TOM::Database::SQL::execute(qq{
+					UPDATE
+						TOM.a301_user
+					SET
+						datetime_last_login = ?,
+						requests_all = requests_all + $user{requests},
+						saved_cookies = ?,
+						saved_session = ?
+					WHERE
+						ID_user='$user{ID_user}'
+					LIMIT 1
+				},'bind'=>[
+					$user{'datetime_login'},
+					$user{'cookies'},
+					$user{'session'}
+				],'quiet'=>1);
+				
+				TOM::Database::SQL::execute(qq{
+					DELETE FROM
+						TOM.a301_user_online
+					WHERE
+						ID_user='$user{'ID_user'}'
+					LIMIT 1
+				},'quiet'=>1);
+				
+			}
+			else
+			{
+				main::_log(" just delete from online");
+				TOM::Database::SQL::execute(qq{
+					DELETE FROM
+						TOM.a301_user_online
+					WHERE
+						ID_user='$user{'ID_user'}'
+					LIMIT 1
+				},'quiet'=>1);
+			}
+		}
+		else
+		{
+			main::_log(" user not exists in users table",1);
+			main::_log(" just delete from online");
+			TOM::Database::SQL::execute(qq{
+				DELETE FROM
+					TOM.a301_user_online
+				WHERE
+					ID_session='$user{'ID_session'}'
+				LIMIT 1
+			},'quiet'=>1);
+		}
+	}
+	
+return 1}
+1;
