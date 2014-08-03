@@ -19,9 +19,9 @@ BEGIN
 	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
 	if (!$ENV{'CYCLONE3PATH'})
 	{
-		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
-		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
 		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM"; # obsolete
 	}
 	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
 }
@@ -1706,7 +1706,7 @@ while ($main::CGI=new CGI::Fast())
 		};
 		
 		# najprv hladam subor so spravnym TYPE
-#		main::_log("Ptype=$tom::Ptype");
+#		main::_log("statuscode = $main::page_statuscode");
 		if (($main::page_statuscode eq "200")&&(open (TYPE,"<".$tom::Ptype."/_type/".($FORM{TID}).".pub.type")))
 		{
 			main::_log("access to:".$tom::Ptype."/_type/".($FORM{TID}).".pub.type");
@@ -2856,6 +2856,12 @@ while ($main::CGI=new CGI::Fast())
 			#if (utf8::is_utf8($DOC_output)){main::_log("DOC_output flag is utf8");}
 			
 #		$t->close();};
+		
+		if ($result eq "failed")
+		{
+			# don't cache when page failed
+			$main::cache='';$main::ENV{'Cache-Control'}='no-cache';
+		}
 		
 		my $t_send=track TOM::Debug("send",'timer'=>1);
 		
