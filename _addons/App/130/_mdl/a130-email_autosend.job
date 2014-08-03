@@ -138,6 +138,7 @@ sub execute
 		}
 		else
 		{
+			main::_log("connecting to smtp host '$TOM::smtp_host'");
 			$smtp = Net::SMTP->new($TOM::smtp_host);
 			if ($TOM::smtp_user)
 			{
