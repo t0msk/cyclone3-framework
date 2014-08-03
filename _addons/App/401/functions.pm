@@ -945,10 +945,9 @@ sub _article_index
 		);
 		
 		$t->close();
-		return 1;
 	}
 	
-	return undef unless $Ext::Solr;
+	return 1 unless $Ext::Solr;
 	
 	my $t=track TOM::Debug(__PACKAGE__."::_article_index::solr(".$env{'ID_entity'}.")",'timer'=>1);
 	
@@ -1116,11 +1115,8 @@ sub _article_index
 		$solr->add($doc);
 	}
 	
-#	main::_log("Solr commiting...");
-#	$solr->commit;
-#	main::_log("commited.");
-	
 	$t->close();
+	return 1;
 }
 
 
@@ -1424,7 +1420,7 @@ sub article_visit
 				SET visits = visits + $count_visits->[1]
 				WHERE ID_entity = $ID_entity
 				LIMIT 1
-			},'quiet'=>1) if $count_visits->[1];
+			},'quiet'=>1,'-jobify'=>1) if $count_visits->[1];
 			$Redis->hmset('C3|db_entity|'.$key,
 				'visits',1,
 				'_firstvisit', $main::time_current,
@@ -1480,7 +1476,7 @@ sub article_visit
 			SET visits=visits+1
 			WHERE ID_entity=?
 			LIMIT 1
-		},'bind'=>[$ID_entity],'quiet'=>1) unless $TOM::CACHE_memcached;
+		},'bind'=>[$ID_entity],'quiet'=>1,'-jobify'=>1) unless $TOM::CACHE_memcached;
 		return 1;
 	}
 	
@@ -1499,7 +1495,7 @@ sub article_visit
 			SET visits=visits+$cache->{'visits'}
 			WHERE ID_entity=$ID_entity
 			LIMIT 1
-		},'quiet'=>1);
+		},'quiet'=>1,'-jobify'=>1);
 		$cache->{'visits'}=0;
 		$cache->{'time'}=time();
 	}
