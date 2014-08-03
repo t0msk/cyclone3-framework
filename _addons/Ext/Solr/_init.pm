@@ -119,7 +119,7 @@ sub AUTOLOAD
 		$role='w';
 	}
 	
-	if (ref($_[1]) eq "HASH" && $_[1]->{'-cluster'})
+	if (ref($_[1]) eq "HASH" && $_[1]->{'-cluster'} && keys %{$self->{'services'}})
 	{
 		my $hosts=scalar grep {$Ext::Solr::hosts{$_}{'roles'}=~/$role/} keys %{$self->{'services'}};
 		my $hosts_selected = int(rand($hosts));
