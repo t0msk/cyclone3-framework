@@ -172,7 +172,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
   KEY `rating` (`rating`),
   KEY `part_id` (`part_id`),
   KEY `status` (`status`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -209,7 +209,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_smil` (
   `datetime_create` datetime NOT NULL,
   `name` varchar(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
-  PRIMARY KEY (`ID`)
+  PRIMARY KEY (`ID`),
+  KEY `ID_entity` (`ID_entity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -399,6 +400,17 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file_process` (
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'W',
   PRIMARY KEY (`ID`),
   KEY `SEL_0` (`ID_part`,`ID_format`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_brick` (
+  `ID` mediumint(8) unsigned zerofill NOT NULL auto_increment,
+  `ID_entity` mediumint(8) unsigned default NULL,
+  `name` varchar(128) character set ascii collate ascii_bin NOT NULL,
+  `datetime_create` datetime NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -646,4 +658,5 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_schedule` ( -- schedule with rea
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
+
 
