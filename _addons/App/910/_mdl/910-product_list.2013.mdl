@@ -1,0 +1,700 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::710::_init;
+use App::910::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'product.status'}='Y' unless $env{'product.status'};
+		my $sql_product_status=join "','", split('',$env{'product.status'});
+	
+	$env{'product.status_main'}='Y' unless $env{'product.status_main'};
+		my $sql_product_status_main=join "','", split('',$env{'product.status_main'});
+	
+	$env{'check_price'} = 1 unless exists $env{'check_price'};
+	$env{'check_world'} = 1 unless exists $env{'check_world'};
+	$env{'modifications'} = 0 unless exists $env{'modifications'};
+	$env{'check_availability'} = 0 unless exists $env{'check_availability'};
+	
+	$env{'price_level.ID_entity'} = 0 unless exists $env{'price_level.ID_entity'};
+	
+	# paging
+	$env{'page_limit'} = 10 unless $env{'page_limit'};
+	$env{'page'} = 1 unless $env{'page'};
+	$env{'page_offset'} = 0 unless $env{'page_offset'};
+	$env{'page_plus'} = 1 unless $env{'page_plus'};
+	if (!$env{'sql_limit'})
+	{
+		$env{'sql_limit'}=((($env{'page'}-1)*$env{'page_limit'})+$env{'page_offset'}).",".($env{'page_limit'}+$env{'page_plus'});
+	}
+	else
+	{
+#		$env{'sql_limit'}=~/^(\d+),?(\d+)?$/;
+	}
+	
+	
+	my @sql_bind;
+	my $sql_join;
+	my $sql_columns;
+	my $sql_where;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || 'product_lng.name ASC';
+	my $sql_group_by;
+	
+	if ($env{'unique'})
+	{
+		$sql_group_by="product.ID_entity";
+	}
+	
+	if ($env{'check_world'})
+	{
+		if ($main::USRM{'logged'} eq "Y")
+		{
+		}
+		else
+		{
+			$sql_where.=" AND (ACL_world.perm_R='Y' OR ACL_world.perm_R IS NULL)";
+		}
+	}
+	
+	if ($env{'a430_list.ID'})
+	{
+		require App::430::_init;
+		$sql_join.=qq{INNER JOIN `$App::430::db_name`.a160_relation AS a430_list_relation ON
+		(
+			a430_list_relation.l_prefix = 'a430' AND
+			a430_list_relation.l_table = 'list' AND
+			a430_list_relation.l_ID_entity = $env{'a430_list.ID'} AND
+			a430_list_relation.r_prefix = 'a910' AND
+			a430_list_relation.r_table = 'product' AND
+			a430_list_relation.r_ID_entity = product.ID AND
+			a430_list_relation.status = 'Y'
+		)
+		};
+		$sql_order_by="a430_list_relation.priority DESC";
+	}
+	
+	if ($env{'price_level.ID_entity'} && $env{'price_level.ID_entity'} =~/^\d+$/)
+	{
+		$sql_join.=qq{INNER JOIN $App::910::db_name.a910_price_level AS price_level ON
+		(
+			price_level.ID_entity = $env{'price_level.ID_entity'} AND
+			price_level.status = 'Y'
+		)
+		INNER JOIN $App::910::db_name.a910_product_price AS product_price ON
+		(
+			product_price.ID_price = $env{'price_level.ID_entity'} AND
+			product_price.status = 'Y'
+		)
+		};
+		$sql_columns.=qq{,
+			product_price.price,
+			product_price.price_full, AS price_incl_VAT,
+			product_level.currency AS price_currency,
+			product_price.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=product_level.currency LIMIT 1) AS price_EUR};
+		$sql_where.=" AND product_price.price IS NOT NULL AND product_price.price > 0";
+	}
+	else
+	{
+		$sql_columns.=qq{,
+			product.price,
+			(product.price*((100+product_ent.VAT)/100)) AS price_incl_VAT,
+			product.price_currency,
+			product.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=product.price_currency LIMIT 1) AS price_EUR};
+		$sql_where.="
+			AND ((product.price IS NOT NULL AND product.price > 0)".do{
+				if ($env{'modifications'})
+				{
+					qq{ OR (
+				SELECT modification.price
+				FROM $App::910::db_name.a910_product AS modification
+				WHERE
+					modification.ID_entity = product.ID_entity
+					AND modification.status IN ('$sql_product_status')
+					AND modification.status_main IN ('N')
+					AND (modification.datetime_publish_start IS NULL OR modification.datetime_publish_start <= NOW())
+					AND (modification.datetime_publish_stop IS NULL OR modification.datetime_publish_stop >= NOW())
+					AND modification.price IS NOT NULL
+					AND modification.price > 0}.do{
+				if ($env{'check_availability'})
+				{
+					qq{
+					AND modification.amount > modification.amount_limit AND modification.amount > 0
+					};
+				}
+					}.qq{
+				LIMIT 1
+			) > 0};
+				}else{''}
+			}.")"
+		if $env{'check_price'};
+	}
+	
+	if ($env{'check_availability'})
+	{
+		$sql_where.="
+			AND ((product.amount > product.amount_limit AND product.amount > 0)".do{
+				if ($env{'modifications'})
+				{
+					qq{ OR (
+				SELECT modification.ID
+				FROM $App::910::db_name.a910_product AS modification
+				WHERE
+					modification.ID_entity = product.ID_entity
+					AND modification.status IN ('$sql_product_status')
+					AND modification.status_main IN ('N')
+					AND (modification.datetime_publish_start IS NULL OR modification.datetime_publish_start <= NOW())
+					AND (modification.datetime_publish_stop IS NULL OR modification.datetime_publish_stop >= NOW())
+					AND modification.amount > modification.amount_limit
+					AND modification.amount > 0}.do{
+				if ($env{'check_price'})
+				{
+					qq{
+					AND modification.price IS NOT NULL AND modification.price > 0
+					};
+				}
+					}.qq{
+				LIMIT 1
+			) IS NOT NULL};
+				}else{''}
+			}.")"
+	}
+	
+	if ($env{'product_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'product_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::910::db_name.a910_product_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$sql_cat.=qq{ OR product_cat.ID_charindex LIKE CONCAT(($cat_sql),"%")};
+			}
+			else
+			{
+				$sql_cat.=" OR product_cat.ID_entity=$ID_category";
+				push @{$env_out{'entity'}},{
+					'db_h' => 'main',
+					'db_name' => $App::910::db_name,
+					'tb_name' => 'a910_product_cat',
+					'ID_entity' => $ID_category,
+				};
+			}
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'product_cat.ID'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'product_cat.ID'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::910::db_name.a910_product_cat WHERE ID=$ID_category AND status IN ('Y','L') LIMIT 1};
+				$sql_cat.=qq{ OR product_cat.ID_charindex LIKE CONCAT(($cat_sql),"%")};
+			}
+			else
+			{
+				$sql_cat.=" OR product_cat.ID=$ID_category";
+			}
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+#=head1
+	if ($env{'solr'})
+	{
+		$env{'solr.defType'} = 'edismax' unless $env{'solr.defType'};
+		$env{'solr.rows'} = 10 unless $env{'solr.rows'};
+		$env{'solr.start'} = 0 unless $env{'solr.start'};
+		$env{'solr.qf'} = "title name name_partial description^0.8 keywords^2 text^0.5" unless $env{'solr.qf'};
+		
+		if ($env{'solr.keywords'})
+		{
+			my $query=$env{'solr.keywords'};
+			1 while ($query=~s|  | |g);
+			$query=~s|^ ||g;
+			$query=~s| $||g;
+			my @query_part=split(' ',$query);$query='';
+			my $part_last;
+			foreach my $part(@query_part){
+				$part=~s|\-|\\-|g;
+				$query.="$part AND ";
+				$part_last=$part;
+			}
+			$query=~s| AND $part_last AND $| AND ($part_last OR $part_last*)|;
+			$query=~s|^$part_last AND $|$part_last OR $part_last*|;
+			$query=~s| AND $||;
+			$env{'solr.q'}="AND (".$query.")";
+		}
+		
+		if ($env{'solr.related_keywords'})
+		{
+			my $query=$env{'solr.related_keywords'};
+			1 while ($query=~s|  | |g);
+			$query=~s|^ ||g;
+			$query=~s| $||g;
+			my @query_part=split(' ',$query);$query='';
+			my $part_last;
+			foreach my $part(@query_part){
+				$part=~s|\-|\\-|g;
+				$query.="$part ";
+				$part_last=$part;
+			}
+			$query=~s| $||;
+			$env{'solr.q'}="AND (".$query.")";
+		}
+		
+		use Ext::Solr::_init;
+		my $solr = Ext::Solr::service();
+		
+		my $response = $solr->search('+id:'.($App::910::db_name).'.a910_product.'.$env{'lng'}.'.* '.$env{'solr.q'},
+			{
+				'-cluster' => 1,
+				
+				'defType' => $env{'solr.defType'},
+				
+				'rows' => $env{'solr.rows'},
+				'start' => $env{'solr.start'},
+				
+				'bq' => $env{'solr.bq'},
+				'qf' => $env{'solr.qf'},
+				'fl' => "id ID_i ID_entity_i score ".$env{'solr.fl'},
+			}
+		);
+		
+		$env{'product.ID_entity'}="";
+		for my $doc ( $response->docs )
+		{
+			$env{'product.ID_entity'}.=$doc->value_for('ID_entity_i').";"
+				if $doc->value_for('ID_entity_i');
+		}
+		
+	}
+#=cut
+	
+	if ($env{'product.ID_entity'}=~/^[;0-9]+$/)
+	{
+		$sql_where.="
+			AND product.ID_entity IN (".join(',',split(';',$env{'product.ID_entity'})).")";
+		$sql_limit=scalar split(';',$env{'product.ID_entity'});
+		$sql_group_by="product.ID_entity";
+		if ($env{'solr'})
+		{
+			$sql_order_by="CASE\n";
+			my $i;
+			foreach (split(';',$env{'product.ID_entity'}))
+			{
+				$i++;
+				$sql_order_by.="\t\t\t\tWHEN product.ID_entity=$_ THEN $i\n";
+			}
+			$sql_order_by.="\t\t\tEND";
+		}
+	}
+	
+	if ($env{'product.ID'}=~/^[;0-9]+$/)
+	{
+		$sql_where.=" AND product.ID IN (".join(',',split(';',$env{'product.ID'})).")";
+		$sql_limit=scalar split(';',$env{'product.ID'});
+	}
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			product.ID_entity,
+			product.ID,
+			product.product_number,
+			product.datetime_publish_start,
+			product.datetime_publish_stop,
+			product.amount,
+			product.amount_unit,
+			product.amount_availability,
+			product.amount_limit,
+			product.amount_order_min,
+			product.amount_order_max,
+			product.amount_order_div,
+			product.metadata,
+			product.supplier_org,
+			product.supplier_person,
+			product.status_new,
+			product.status_recommended,
+			product.status_sale,
+			product.status_special,
+			product.status_main,
+			product.status,
+			
+			product_ent.posix_owner,
+			product_ent.ID_brand,
+			product_ent.ID_family,
+			product_ent.VAT AS ent_VAT,
+			product_ent.rating_score,
+			product_ent.rating_votes,
+			(product_ent.rating_score/product_ent.rating_votes) AS rating,
+			product_ent.priority_A,
+			product_ent.priority_B,
+			product_ent.priority_C,
+			product_ent.product_type,
+			
+			product_lng.name,
+			product_lng.name_url,
+			product_lng.name_long,
+			product_lng.name_label,
+			product_lng.description_short,
+			product_lng.description,
+			product_lng.keywords,
+			product_lng.lng,
+			
+			product_cat.ID AS cat_ID,
+			product_cat.name AS cat_name,
+			product_cat.name_url AS cat_name_url,
+			
+			product_brand.name AS brand_name,
+			
+			product_family.name AS family_name,
+			
+			supplier_org.ID AS supplier_org_ID,
+			supplier_org.ID_entity AS supplier_org_ID_entity,
+			supplier_org.name AS supplier_org_name,
+			supplier_org.name_url AS supplier_org_name_url,
+			supplier_org_lng.about AS supplier_org_about
+			$sql_columns
+			
+		FROM $App::910::db_name.a910_product_ent AS product_ent
+		LEFT JOIN $App::910::db_name.a910_product AS product ON
+		(
+			product_ent.ID_entity = product.ID_entity
+		)
+		LEFT JOIN $App::910::db_name.a910_product_lng AS product_lng ON
+		(
+			product_lng.ID_entity = product.ID AND
+			product_lng.lng = '$env{'lng'}'
+		)
+		
+		INNER JOIN $App::910::db_name.a910_product_sym AS product_sym ON
+		(
+			product_sym.ID_entity = product.ID_entity
+		)
+		INNER JOIN $App::910::db_name.a910_product_cat AS product_cat ON
+		(
+			product_cat.ID_entity = product_sym.ID AND
+			product_cat.lng = product_lng.lng AND
+			product_cat.status IN ('Y','L')
+		)
+		
+		LEFT JOIN $App::910::db_name.a910_product_brand AS product_brand ON
+		(
+			product_brand.ID_entity = product_ent.ID_brand
+		)
+		LEFT JOIN $App::910::db_name.a910_product_family AS product_family ON
+		(
+			product_family.ID_entity = product_ent.ID_family
+		)
+		LEFT JOIN $App::710::db_name.a710_org AS supplier_org ON
+		(
+			supplier_org.ID_entity = product.supplier_org
+		)
+		LEFT JOIN $App::710::db_name.a710_org_lng AS supplier_org_lng ON
+		(
+			supplier_org.ID_entity=supplier_org_lng.ID_entity AND supplier_org_lng.lng = '$env{'lng'}'
+		)
+		LEFT JOIN $App::910::db_name.a301_ACL_user_group AS ACL_world ON
+		(
+			ACL_world.ID_entity = 0 AND
+			r_prefix = 'a910' AND
+			r_table = 'product' AND
+			r_ID_entity = product.ID_entity
+		)
+		
+		$sql_join
+		
+		WHERE
+			product_ent.status = 'Y'
+			AND product.status IN ('$sql_product_status')
+			AND product.status_main IN ('$sql_product_status_main')
+			AND (product.datetime_publish_start IS NULL OR product.datetime_publish_start <= NOW())
+			AND (product.datetime_publish_stop IS NULL OR product.datetime_publish_stop >= NOW())
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::910::db_name,
+				'tb_name' => "a910_product",
+				'ID_entity' => do{$env{'product.ID_entity'} if $env{'product.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	while (my %product=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		last if $i > $env{'page_limit'};
+		
+		main::_log("[$i/$env{'page_limit'}] found product.ID=$product{'ID'} cat_ID=$product{'cat_ID'}");
+		
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::910::db_name,
+			'tb_name' => 'a910_product',
+			'ID_entity' => $product{'ID_entity'}
+		};
+		
+		$product{'related_thumbnail'}=(App::160::SQL::get_relations(
+			'db_name' => $App::910::db_name,
+			'l_prefix' => 'a910',
+			'l_table' => 'product',
+			'l_ID_entity' => $product{'ID'},
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'rel_type' => "thumbnail",
+			'status' => "Y"
+		))[0];
+		
+		# link to a210_page
+		if (my $category=App::401::functions::_a210_by_cat([$product{'cat_ID'}],'lng'=>$env{'lng'}))
+		{
+			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$category,
+					%sql_def,
+					'-slave' => 1,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$product{'a210'}{'IDs'}}, $p->{'ID'};
+				push @{$product{'a210'}{'nodes'}}, $p;
+				$product{'a210'}{'path_url'}.="/".$p->{'name_url'};
+			}
+			$product{'a210'}{'path_url'}=~s|^/||;
+		}
+		
+		# render
+		$parser->parse($product{'description_short'});
+		$parser->eof();
+		push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+		$product{'description_short_parser'}={
+			'output' => $parser->{'output'},
+			'addon' => $parser->{'addon'},
+			'entity' => $parser->{'entity'},
+			'thumbnail' => $parser->{'thumbnail'},
+		};
+		
+		%{$product{'metahash'}}=App::020::functions::metadata::parse($product{'metadata'});
+		
+		if ($product{'status_main'} eq "Y" && $env{'modifications'})
+		{
+			# skusime najst produktove modifikacie;
+			
+			my $sql_columns;
+			my $sql_join;
+			my $sql_bind;
+			my $sql_where;
+			my @sql_bind;
+			
+			$sql_where.="AND product.ID_entity=? ";
+			push @sql_bind,$product{'ID_entity'};
+			
+			if ($env{'price_level.ID_entity'} && $env{'price_level.ID_entity'} =~/^\d+$/)
+			{
+				$sql_join.=qq{INNER JOIN $App::910::db_name.a910_price_level AS price_level ON
+				(
+					price_level.ID_entity = $env{'price_level.ID_entity'} AND
+					price_level.status = 'Y'
+				)
+				INNER JOIN $App::910::db_name.a910_product_price AS product_price ON
+				(
+					product_price.ID_price = $env{'price_level.ID_entity'} AND
+					product_price.status = 'Y'
+				)
+				};
+				$sql_columns.=qq{,
+					product_price.price,
+					product_price.price_full, AS price_incl_VAT,
+					product_level.currency AS price_currency,
+					product_price.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=product_level.currency LIMIT 1) AS price_EUR};
+				$sql_where.=" AND product_price.price IS NOT NULL AND product_price.price > 0";
+			}
+			else
+			{
+				$sql_columns.=qq{,
+					product.price,
+					(product.price*((100+product_ent.VAT)/100)) AS price_incl_VAT,
+					product.price_currency,
+					product.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=product.price_currency LIMIT 1) AS price_EUR,
+					product.price_previous,
+					(product.price_previous*((100+product_ent.VAT)/100)) AS price_previous_incl_VAT,
+					product.price_previous/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=product.price_currency LIMIT 1) AS price_previous_EUR};
+				$sql_where.=" AND product.price IS NOT NULL AND product.price > 0"
+					if $env{'check_price'};
+			}
+			
+			if ($env{'check_availability'})
+			{
+				$sql_where.=qq{
+					AND product.amount > product.amount_limit AND product.amount > 0};
+			}
+			
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					
+					product.ID_entity,
+					product.ID,
+					product.product_number,
+					product.datetime_publish_start,
+					product.datetime_publish_stop,
+					product.amount,
+					product.amount_unit,
+					product.amount_availability,
+					product.amount_limit,
+					product.amount_order_min,
+					product.amount_order_max,
+					product.amount_order_div,
+					product.metadata,
+					product.supplier_org,
+					product.supplier_person,
+					product.status_new,
+					product.status_recommended,
+					product.status_sale,
+					product.status_special,
+					product.status_main,
+					product.status,
+					
+					product_lng.name,
+					product_lng.name_url,
+					product_lng.name_long,
+					product_lng.name_label,
+					product_lng.description_short,
+					product_lng.description,
+					product_lng.keywords,
+					product_lng.lng,
+					
+					supplier_org.ID AS supplier_org_ID,
+					supplier_org.ID_entity AS supplier_org_ID_entity,
+					supplier_org.name AS supplier_org_name,
+					supplier_org.name_url AS supplier_org_name_url
+					
+					$sql_columns
+					
+				FROM $App::910::db_name.a910_product_ent AS product_ent
+				LEFT JOIN $App::910::db_name.a910_product AS product ON
+				(
+					product_ent.ID_entity = product.ID_entity
+				)
+				LEFT JOIN $App::910::db_name.a910_product_lng AS product_lng ON
+				(
+					product_lng.ID_entity = product.ID AND
+					product_lng.lng = '$env{'lng'}'
+				)
+				
+				LEFT JOIN $App::710::db_name.a710_org AS supplier_org ON
+				(
+					supplier_org.ID_entity = product.supplier_org
+				)
+				
+				$sql_join
+				
+				WHERE
+					product_ent.status = 'Y'
+					AND product.status IN ('$sql_product_status')
+					AND product.status_main IN ('N')
+					AND (product.datetime_publish_start IS NULL OR product.datetime_publish_start <= NOW())
+					AND (product.datetime_publish_stop IS NULL OR product.datetime_publish_stop >= NOW())
+					$sql_where
+				ORDER BY
+					product.ID DESC
+			},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,
+				'-changetime'=>App::020::SQL::functions::_get_changetime(
+					{
+						'db_h'=>"main",
+						'db_name' => $App::910::db_name,
+						'tb_name' => "a910_product",
+						'ID_entity' => $product{'ID_entity'}
+					}),
+			);
+			
+			while (my %product_modification=$sth1{'sth'}->fetchhash())
+			{
+				main::_log("modification product.ID='$product_modification{'ID'}' product.name='$product_modification{'name'}'");
+				
+				$product_modification{'related_thumbnail'}=(App::160::SQL::get_relations(
+					'db_name' => $App::910::db_name,
+					'l_prefix' => 'a910',
+					'l_table' => 'product',
+					'l_ID_entity' => $product_modification{'ID'},
+					'r_prefix' => "a501",
+					'r_table' => "image",
+					'rel_type' => "thumbnail",
+					'status' => "Y"
+				))[0];
+				
+				push @{$product{'modifications'}},\%product_modification;
+			}
+			
+		}
+		
+		my @supplier_abouts=split "<hr>", $product{'supplier_org_about'};
+		
+		if (scalar @supplier_abouts > 1)
+		{
+			$product{'supplier_org_about_short'}=shift @supplier_abouts;
+			$product{'supplier_org_about'}=join "<hr>", @supplier_abouts;
+			
+			my $p=new App::401::mimetypes::html;
+			$p->config('prefix'=>'org','name'=>'about_short','env'=>\%env,'entity'=>$TPL->{'entity'});
+			$p->parse($product{'supplier_org_about_short'});
+			$p->eof();
+			$product{'supplier_org_about_short'}=$p->{'out'};
+		}
+		
+		push @{$TPL->{'variables'}{'items'}},\%product;
+	}
+	
+	return 1,%env_out;
+}
+
+1;
