@@ -1208,7 +1208,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			main::_log("HTTP_IF_MODIFIED_SINCE='$main::ENV{'HTTP_IF_MODIFIED_SINCE'}'/$date_timestamp HTTP_IF_NONE_MATCH/Etag='$main::ENV{'HTTP_IF_NONE_MATCH'}'");
 			
-			main::_log("HTTP_IF_MODIFIED_SINCE='$main::ENV{'HTTP_IF_MODIFIED_SINCE'}'/$date_timestamp HTTP_IF_NONE_MATCH/Etag='$main::ENV{'HTTP_IF_NONE_MATCH'}' '$main::ENV{QUERY_STRING_FULL}' '$main::ENV{'HTTP_USER_AGENT'}'",3,"debug");
+#			main::_log("HTTP_IF_MODIFIED_SINCE='$main::ENV{'HTTP_IF_MODIFIED_SINCE'}'/$date_timestamp HTTP_IF_NONE_MATCH/Etag='$main::ENV{'HTTP_IF_NONE_MATCH'}' '$main::ENV{QUERY_STRING_FULL}' '$main::ENV{'HTTP_USER_AGENT'}'",3,"debug");
 			
 			my $usrmevent_timestamp;
 			if ($main::COOKIES{'usrmevent'}=~/^(\d\d\d\d)\-(\d\d)\-(\d\d) (\d\d):(\d\d):(\d\d)$/)
@@ -1223,16 +1223,16 @@ while ($main::CGI=new CGI::Fast())
 					'time_zone' => 'local');#->subtract( days => $env{'days'} );
 				$usrmevent_timestamp=$date->epoch();
 				
-				main::_log("usrmevent: $usrmevent_timestamp ($main::COOKIES{'usrmevent'}) <=> cached at:$date_timestamp ($main::ENV{'HTTP_IF_MODIFIED_SINCE'})",3,"debug");
+#				main::_log("usrmevent: $usrmevent_timestamp ($main::COOKIES{'usrmevent'}) <=> cached at:$date_timestamp ($main::ENV{'HTTP_IF_MODIFIED_SINCE'})",3,"debug");
 				if ($usrmevent_timestamp > $date_timestamp)
 				{
 					# to reindex
-					main::_log("user changed login after cached",3,"debug");
+#					main::_log("user changed login after cached",3,"debug");
 					$user_session_modified=1;
 				}
 				else
 				{
-					main::_log("no user activity (login)",3,"debug");
+#					main::_log("no user activity (login)",3,"debug");
 				}
 			}
 			
@@ -1260,7 +1260,7 @@ while ($main::CGI=new CGI::Fast())
 						if ($changetime > $date_timestamp)
 						{
 							# entity changed
-							main::_log("changed $changetime(entity) >= $date_timestamp(query)",3,"debug");
+#							main::_log("changed $changetime(entity) >= $date_timestamp(query)",3,"debug");
 							$page_usecached=0;
 							last;
 						}
@@ -1271,7 +1271,7 @@ while ($main::CGI=new CGI::Fast())
 						my $max_age=$1;
 						if ($date_timestamp < time()-$max_age )
 						{
-							main::_log("cache page duration expired",3,"debug");
+#							main::_log("cache page duration expired",3,"debug");
 							$page_usecached=0;
 							last;
 						}
@@ -1282,7 +1282,7 @@ while ($main::CGI=new CGI::Fast())
 						my $valid_to=$1;
 						if (time() >= $valid_to)
 						{
-							main::_log("cache page is not already valid",3,"debug");
+#							main::_log("cache page is not already valid",3,"debug");
 							$page_usecached=0;
 							last;
 						}
@@ -1291,7 +1291,7 @@ while ($main::CGI=new CGI::Fast())
 				
 				if (!$etag_valid)
 				{
-					main::_log("page cache without Etag, expire",3,"debug");
+#					main::_log("page cache without Etag, expire",3,"debug");
 #					# etag not available or no check inside
 #					# also... apply default recache
 #					if ($date_timestamp < time()-$TOM::CACHE_time)
@@ -1307,7 +1307,7 @@ while ($main::CGI=new CGI::Fast())
 				
 				if ($page_usecached)
 				{
-					main::_log("304 Not Modified",3,"debug");
+#					main::_log("304 Not Modified",3,"debug");
 					# entity not changed
 					main::_log("[page][".$main::ENV{'HTTP_IF_NONE_MATCH'}."][HIT]",3,"cache");
 					main::_log("[page][$tom::H][".$main::ENV{'HTTP_IF_NONE_MATCH'}."][HIT]",3,"cache",1);
@@ -1320,7 +1320,7 @@ while ($main::CGI=new CGI::Fast())
 						'sys' => $t_eval->{'time'}{'sys'}{'duration'},
 						'code' => '304'
 					);
-=head1
+#=head1
 					do
 					{
 						my $e_p=$t_eval->{'time'}{'proc'}{'duration'};
@@ -1343,7 +1343,7 @@ while ($main::CGI=new CGI::Fast())
 							")".
 							"",3,"pub.bench",1) if $TOM::DEBUG_benchmark;
 					};
-=cut
+#=cut
 					
 					main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track');
 					main::_log("[$tom::H] ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track',1);
@@ -1853,7 +1853,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($env0{'id'} eq "https" && $env0{'value'})
 			{
-				_log("https mode is '$env0{'value'}', H_www_https='$tom::H_www_https' current HTTPS mode is '$main::ENV{'HTTPS'}'",3,"debug");
+#				_log("https mode is '$env0{'value'}', H_www_https='$tom::H_www_https' current HTTPS mode is '$main::ENV{'HTTPS'}'",3,"debug");
 				if ($env0{'value'} eq "required")
 				{
 					$main::env{'https'}=1;
@@ -2338,7 +2338,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			main::_log("link_old='$link_old' link='$link'");
 			main::_log("H_www='$tom::H_www' rewrite_domain='$rewrite_domain' rewrite_old='$rewrite_old' rewrite='$rewrite'");
-			main::_log("H_www_orig='$tom::H_www_orig' H_www='$tom::H_www' rewrite_domain='$rewrite_domain' rewrite_old='$rewrite_old' rewrite='$rewrite'",3,"debug");
+#			main::_log("H_www_orig='$tom::H_www_orig' H_www='$tom::H_www' rewrite_domain='$rewrite_domain' rewrite_old='$rewrite_old' rewrite='$rewrite'",3,"debug");
 			
 			if (($tom::H_www ne $rewrite_domain) || ($rewrite_old ne $rewrite) || $rewrite_301)
 			#if (($link_old ne $link) || $rewrite_301)
