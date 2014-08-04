@@ -61,6 +61,7 @@ our $TEXT_VMETHODS = {
     dquote      => \&text_dquote,
     html        => \&Template::Filters::html_filter,
     xml         => \&Template::Filters::xml_filter,
+    md5_hex		 => \&Template::Filters::md5_hex,
 };
 
 our $HASH_VMETHODS = {
