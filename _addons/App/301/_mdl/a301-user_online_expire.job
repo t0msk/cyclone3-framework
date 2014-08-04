@@ -34,6 +34,9 @@ sub execute
 	while (my %user=$sth{'sth'}->fetchhash)
 	{
 		$i++;
+		
+		main::_log("expire user '$user{'ID_user'}'");
+		
 		# save session
 		App::301::session::archive($user{'ID_user'});
 		
