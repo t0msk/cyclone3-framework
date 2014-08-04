@@ -19,9 +19,9 @@ sub execute
 	my $env=$self->env;
 	return if $self->running({'max'=>600}); # check if not already running
 	
-	$env->{'max'} = 10 unless $env->{'max'};
+	$env->{'max'} = 50 unless $env->{'max'};
 	
-	alarm(3600);
+	alarm(600);
 	
 	my @sql_bind;
 	
