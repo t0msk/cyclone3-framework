@@ -39,7 +39,7 @@ sub service
 			'user' => $Ext::RabbitMQ::user || 'guest',
 			'pass' => $Ext::RabbitMQ::pass || 'guest',
 			'vhost' => $Ext::RabbitMQ::vhost || '/',
-			'timeout' => 1
+			'timeout' => 0
 		);
 		
 #		use Data::Dumper;
@@ -180,7 +180,7 @@ sub publish
 	my $self=shift;
 	my %env=@_;
 	
-	main::_log("[Rabbit] publish exchange='".$env{'exchange'}."' routing_key='".$env{'routing_key'}."'");
+	main::_log("[RabbitMQ] publish exchange='".$env{'exchange'}."' routing_key='".$env{'routing_key'}."'");
 	
 	utf8::encode($env{$_}) foreach(grep {!ref($env{$_})} keys %env);
 	if (ref($env{'header'})){
@@ -195,6 +195,7 @@ sub publish
 	if ($@)
 	{
 		main::_log("$@",1);
+		main::_log("[RabbitMQ] $@",3,"debug");
 		return undef;
 	}
 }
