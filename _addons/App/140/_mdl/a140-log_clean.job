@@ -1,0 +1,122 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	
+	$env->{'max_days'} = 7 unless $env->{'max_days'};
+	
+	alarm(3600);
+	
+	my $dir_step;
+	
+	my @files;
+	opendir (DIR, $TOM::P);
+	push @files, readdir DIR;
+	my $dir=$TOM::P;
+	
+	while (my $file=shift @files)
+	{
+		
+		my $count=@files;
+		
+		if (!$dir_step && $count==0)
+		{
+			main::_log("opening second '$TOM::path_log'");
+			opendir (DIR2, $TOM::path_log);
+			push @files, readdir DIR2;
+			$dir=$TOM::path_log;
+			$dir_step++;
+			next;
+		}
+		
+		if (($file ne ".")&&($file ne ".."))
+		{
+			next if $file =~/!media/;
+			next if $file =~/media/;
+			next if $file =~/!www/;
+			next if $file =~/_data/;
+			next if $file =~/_addons/;
+			next if $file =~/_debug/;
+			next if $file =~/\.svn/;
+			next if $file =~/_type/;
+			next if $file =~/_mdl/;
+			next if $file =~/\.core/;
+			next if $file =~/\.libs/;
+			next if $file =~/httpd/;
+			
+			if
+			(
+				(-d $dir."/".$file) &&
+				(
+					($file=~/![\w\.\-]+$/)
+					||
+					($file=~/\/[\w\.\-]+$/)
+					||
+					($file=~/_logs$/)
+					||
+					($dir_step)
+				)
+			)
+			{
+				if (opendir (DIR1,$dir."/".$file))
+				{foreach (readdir DIR1)
+				{
+					if (($_ ne ".")&&($_ ne "..")){push @files,$file."/".$_;}}
+				}
+			}
+			
+			if ($file=~/\.log(\.gz|\.bz2|)$/)
+			{
+				$file =~ /^.*\d\.(.*?)\.log(\.gz|\.bz2|)$/; my $log_type = $1;
+				
+				my $filename=$dir.'/'.$file;
+				
+				my $max_days = $env->{'max_days'};
+				if ($log_type && $TOM::DEBUG_log_type{$log_type}{'max_days'})
+				{
+					$max_days = $TOM::DEBUG_log_type{$log_type}{'max_days'};
+				}
+				my $max_secs = $max_days*86400;
+				
+				my $var=(stat $filename)[9];
+				
+				main::_log("$filename");
+				
+				if (($main::time_current-$var) < 3600)
+				{
+					next;
+				}
+				
+				if (($main::time_current-$var)>$max_secs)
+				{
+					main::_log_stdout("unlink $filename");
+					unlink $filename;
+				}
+				elsif ($file=~/\.log$/ && (not $file=~/$tom::Fyear\-$tom::Fmom\-$tom::Fmday/) && -x '/bin/bzip2')
+				{
+					main::_log_stdout("bzip2 $filename");
+					system("/bin/bzip2","--best","-f",$filename);
+				}
+				elsif ($file=~/\.log$/ && (not $file=~/$tom::Fyear\-$tom::Fmom\-$tom::Fmday/) && -x '/bin/gzip')
+				{
+					main::_log_stdout("gzip $filename");
+					system("/bin/gzip","--best",$filename);
+				}
+			}
+		}
+		
+		
+	}
+	
+return 1}
+1;
