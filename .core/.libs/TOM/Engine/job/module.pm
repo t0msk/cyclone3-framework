@@ -282,6 +282,7 @@ sub jobify # prepare function call to background
 	}
 	
 	my (undef,undef,undef,$function)=caller 1;
+	main::_log("{jobify} function '$function' routing_key='".($env->{'routing_key'})."'");
 	main::_log("{jobify} function '$function' routing_key='".($env->{'routing_key'})."'",3,"job");
 	return $RabbitMQ->publish(
 		'exchange'=>'cyclone3.job',
