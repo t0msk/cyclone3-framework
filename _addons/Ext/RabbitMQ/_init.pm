@@ -187,17 +187,20 @@ sub publish
 		utf8::encode($env{'header'}{$_}) foreach grep {!ref($env{'header'}{$_})} keys %{$env{'header'}};
 	};
 	eval {
-		$self->_channel->publish(%env,
+		my $out=$self->_channel->publish(%env,
 #		'on_inactive' => sub(){}
 		);
-		return 1;
+		main::_log("[RabbitMQ] published (".$out->{'arc'}->{'id'}.")");
+#		use Data::Dumper;
+#		print Dumper($out);
 	};
 	if ($@)
 	{
 		main::_log("$@",1);
-		main::_log("[RabbitMQ] $@",3,"debug");
+		main::_log("[RabbitMQ] error '$@'",3,"debug");
 		return undef;
 	}
+	return 1;
 }
 
 sub DESTROY
