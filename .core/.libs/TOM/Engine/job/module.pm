@@ -281,13 +281,17 @@ sub jobify # prepare function call to background
 		$env->{'routing_key'}=$env->{'routing_key'} || $tom::H_orig || 'job';
 	}
 	
+	my $id=TOM::Utils::vars::genhash(16);
 	my (undef,undef,undef,$function)=caller 1;
-	main::_log("{jobify} function '$function' routing_key='".($env->{'routing_key'})."'");
-	main::_log("{jobify} function '$function' routing_key='".($env->{'routing_key'})."'",3,"job");
+	main::_log("{jobify} function '$function' routing_key='".($env->{'routing_key'})."' id='$id'");
+	main::_log("{jobify} function '$function' routing_key='".($env->{'routing_key'})."' id='$id'",3,"job");
 	return $RabbitMQ->publish(
 		'exchange'=>'cyclone3.job',
 		'routing_key' => ($env->{'routing_key'} || $tom::H_orig || 'job'),
-		'body' => to_json({'function' => $function,'args' => $_[0]})
+		'body' => to_json({'function' => $function,'args' => $_[0]}),
+		'header' => {
+			'headers'=>{'message_id'=>$id}
+		}
 	);
 #	return 1;
 }
