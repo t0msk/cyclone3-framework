@@ -180,17 +180,31 @@ sub publish
 	my $self=shift;
 	my %env=@_;
 	
-	main::_log("[RabbitMQ] publish exchange='".$env{'exchange'}."' routing_key='".$env{'routing_key'}."'");
+	use Encode;
+	
+	$env{'header'}{'headers'}{'message_id'}=TOM::Utils::vars::genhash(16)
+		unless $env{'header'}{'headers'}{'message_id'};
+	
+	main::_log("[RabbitMQ] publish message_id='$env{'header'}{'headers'}{'message_id'}' exchange='".$env{'exchange'}."' routing_key='".$env{'routing_key'}."'");
 	
 	utf8::encode($env{$_}) foreach(grep {!ref($env{$_})} keys %env);
 	if (ref($env{'header'})){
 		utf8::encode($env{'header'}{$_}) foreach grep {!ref($env{'header'}{$_})} keys %{$env{'header'}};
+		if (ref($env{'header'}{'headers'}))
+		{
+			foreach my $key (grep {!ref($env{'header'}{'headers'}{$_})} keys %{$env{'header'}{'headers'}})
+			{
+				$key=encode('utf8',$key);
+				$env{'header'}{'headers'}{$key}=encode('utf8',$env{'header'}{'headers'}{$key});
+			}
+		}
 	};
+	
 	eval {
 		my $out=$self->_channel->publish(%env,
 #		'on_inactive' => sub(){}
 		);
-		main::_log("[RabbitMQ] published (".$out->{'arc'}->{'id'}.")");
+		main::_log("[RabbitMQ] published (".$env{'header'}{'headers'}{'message_id'}.")");
 #		use Data::Dumper;
 #		print Dumper($out);
 	};
