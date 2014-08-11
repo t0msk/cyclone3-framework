@@ -114,7 +114,7 @@ sub callback {
 	my $delivery_tag=$var->{'deliver'}->{'method_frame'}->{'delivery_tag'};
 	my $routing_key=$var->{'deliver'}->{'method_frame'}->{'routing_key'};
 	my $deduplication=1;
-	main::_log("received message '$delivery_tag' from '$user_id' routing='$routing_key' timestamp='$timestamp' size=".length($var->{'body'}->{'payload'}));
+	main::_log("received message id='".($var->{'header'}->{'headers'}->{'message_id'})."' '$delivery_tag' from '$user_id' routing='$routing_key' timestamp='$timestamp' size=".length($var->{'body'}->{'payload'}));
 	
 	my $key_entity=TOM::Digest::hash($var->{'body'}->{'payload'});
 	if ($deduplication && $Redis)
@@ -135,10 +135,12 @@ sub callback {
 		no strict;
 		my $payload=from_json($var->{'body'}->{'payload'});
 #		print $payload;
+		use Data::Dumper;
+#		main::_log('dump='.Dumper($var));
 		if ($payload->{'function'})
 		{
 			my $function=$payload->{'function'};
-			main::_log("calling function '$function'");
+			main::_log("calling function '$function' id='".($var->{'header'}->{'headers'}->{'message_id'})."'");
 			$main::nojobify=1; # nojobify, just execute!
 			&$function(@{$payload->{'args'}});
 			main::_log("end of call $@");
@@ -146,7 +148,7 @@ sub callback {
 		elsif ($payload->{'job'})
 		{
 			my $job=$payload->{'job'};
-			main::_log("calling '".($job->{'file'} || $job->{'name'})."'");
+			main::_log("calling '".($job->{'file'} || $job->{'name'})."' id='".($var->{'header'}->{'headers'}->{'message_id'})."'");
 			
 			$main::nojobify=1; # nojobify, execute!
 			my $job=new TOM::Engine::job::module(
