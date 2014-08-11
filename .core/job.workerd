@@ -716,7 +716,6 @@ sub check_scheduler
 		
 		foreach $domain (@domains)
 		{
-			
 			main::_log_stdout("[$domain] jobify cron '$db0_line{'id'}' scheduled to '".$db0_line{'datetime_next'}."'",3,"job.mng");
 			
 #			next;
@@ -971,6 +970,9 @@ sub job
 	my $args=shift;
 	
 #	print Dumper($header,$job,$args);
+	my $id=TOM::Utils::vars::genhash(16);
+	
+	main::_log("{jobify} job '".($job->{'file'} || $job->{'name'})."' routing_key='".($header->{'routing_key'} || 'job')."' id='$id'");
 	
 	$main::service->publish(
 		'exchange' => 'cyclone3.job',
@@ -978,7 +980,12 @@ sub job
 		'body' => to_json({
 			'job' => $job,
 			'args' => $args
-		})
+		}),
+		'header' => {
+			'headers' => {
+				'message_id' => $id,
+			}
+		}
 	);
 	
 #	print Dumper($main::service);
