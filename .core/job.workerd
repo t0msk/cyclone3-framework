@@ -11,7 +11,9 @@ BEGIN
 		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
 	}
 	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
+	$TOM::engine.='.workerd';
 	$0.=".workerd";
+	$TOM::DEBUG_log_file=90;
 }
 
 use open ':utf8', ':std';
@@ -61,9 +63,9 @@ if (!$response->is_success)
 
 my $info = Sys::Info->new;
 my $cpu  = $info->device('CPU');
-main::_log_stdout("running on host with ".$cpu->count." CPU cores PID $$",3,"job.mng");# if $ENV{'WORKERS'};
+main::_log_stdout("running on host with ".$cpu->count." CPU cores PID $$",3,"job.workerd");# if $ENV{'WORKERS'};
 
-main::_log_stdout("declaring default job exchange, queue, binding",3,"job.mng");
+main::_log_stdout("declaring default job exchange, queue, binding",3,"job.workerd");
 
 # cyclone3.job
 $service->_channel->declare_exchange(
@@ -112,7 +114,7 @@ $TOM::job_worker_start_delay||=5; # start next worker after delay
 $TOM::job_domain_worker_start_delay||=60; # start next worker after delay on same domain
 
 #	$MAX_WORKERS = 2;
-main::_log_stdout("max $MAX_WORKERS workers (allowed to fork?=$ENV{'WORKERS'})",3,"job.mng");
+main::_log_stdout("max $MAX_WORKERS workers (allowed to fork?=$ENV{'WORKERS'})",3,"job.workerd");
 our $pm = AnyEvent::ForkManager->new(max_workers => $MAX_WORKERS);
 
 $pm->on_start(sub {
@@ -125,13 +127,13 @@ $pm->on_finish(sub {
 #	exit;
 });
 
-main::_log_stdout("main loop timer starting",3,"job.mng") if $ENV{'WORKERS'};
+main::_log_stdout("main loop timer starting",3,"job.workerd") if $ENV{'WORKERS'};
 my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 	
 #	main::_log_stdout("controlling job queue pool");
 	local $main::_canexit;
 	
-	main::_log("active workers \@$TOM::hostname ".$pm->num_workers()."/".$MAX_WORKERS,3,"job.mng");
+	main::_log("active workers \@$TOM::hostname ".$pm->num_workers()."/".$MAX_WORKERS,3,"job.workerd");
 	
 	my $response = $ua->get($uri.'/queues');
 	if (!$response->is_success)
@@ -238,7 +240,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 		$Redis->hset('C3|Rabbit|queue|'.$queue->{'name'},'time',time(),sub {});
 		$Redis->expire('C3|Rabbit|queue|'.$queue->{'name'},15,sub {});
 		
-		main::_log_stdout("active queue '$queue->{'name'}' domain='$domain' jobs=".$queue->{'messages_ready'}." rate=".$queue->{'messages_ready_details'}->{'rate'}." consumers=".$queue->{'consumers'},3,"job.mng")
+		main::_log_stdout("active queue '$queue->{'name'}' domain='$domain' jobs=".$queue->{'messages_ready'}." rate=".$queue->{'messages_ready_details'}->{'rate'}." consumers=".$queue->{'consumers'},3,"job.workerd")
 			if (
 #				$queue->{'consumers'} ||
 				$queue->{'messages_ready'} ||
@@ -247,10 +249,10 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 		
 		if (!$domain_info{$domain} && ($domain ne "_global"))
 		{
-#			main::_log_stdout(" unknown domain '$domain' with jobs=".$queue->{'messages_ready'},1,"job.mng");
+#			main::_log_stdout(" unknown domain '$domain' with jobs=".$queue->{'messages_ready'},1,"job.workerd");
 			if (!$queue->{'messages_ready'})
 			{
-#				main::_log_stdout("queue '$queue->{'name'}' unknown, removing",1,"job.mng");
+#				main::_log_stdout("queue '$queue->{'name'}' unknown, removing",1,"job.workerd");
 #				async {
 #					$service->_channel->delete_queue(
 ##						'exchange' => encode('UTF-8', 'cyclone3.job'),
@@ -271,7 +273,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 		
 		if ($queue->{'messages_ready'}) # !$queue->{'consumers'} && 
 		{
-			main::_log_stdout("starting new worker for '$domain$class_'",3,"job.mng");
+			main::_log_stdout("starting new worker for '$domain$class_'",3,"job.workerd");
 			$domain_worker{$domain.$class_}{'request_time'}=time();
 #			$domain_worker{$domain.$class_}{'count'}++;
 			$main::pm->start(
@@ -306,7 +308,7 @@ sub check_domains
 	my %domains=@{$Redis->hgetall('C3|domains')};
 	
 #	main::_log("check_domains");
-#	main::_log("active ".scalar(keys %domains)." domains (".(join(",",sort keys %domains)).")",3,"job.mng");
+#	main::_log("active ".scalar(keys %domains)." domains (".(join(",",sort keys %domains)).")",3,"job.workerd");
 	
 	foreach my $domain (sort {length($a) <=> length($b) || $a cmp $b} keys %domains)
 	{
@@ -316,7 +318,7 @@ sub check_domains
 		{
 			# ignoring domain
 			$Redis->hdel('C3|domains',$domain,sub{});
-			main::_log_stdout("removing inactive domain '$domain' from register",1,"job.mng");
+			main::_log_stdout("removing inactive domain '$domain' from register",1,"job.workerd");
 			delete $domains{$domain};
 			next;
 		}
@@ -380,7 +382,7 @@ sub check_domains
 		my $filename=$dom_data->{'tom::P'}.'/job.conf';
 		if (-e $filename && (stat($filename))[9] > $config_file{$filename}{'mtime'})
 		{
-			main::_log_stdout(" loading '".($dom_data->{'tom::P'}.'/job.conf')."' mtime=".(stat($filename))[9],3,"job.mng");
+			main::_log_stdout(" loading '".($dom_data->{'tom::P'}.'/job.conf')."' mtime=".(stat($filename))[9],3,"job.workerd");
 			
 			# start parsing file
 			use XML::Simple;
@@ -391,7 +393,7 @@ sub check_domains
 			
 			if ($@)
 			{
-				main::_log_stdout(" can't parse '$filename' ($@)",1,"job.mng");
+				main::_log_stdout(" can't parse '$filename' ($@)",1,"job.workerd");
 				next;
 			}
 			
@@ -412,7 +414,7 @@ sub check_domains
 				my $cron=$config_file{$filename}{'trigger'}{$id};
 				if (!$cron->{'cron-schedule'} && !$cron->{'cron-run-every'})
 				{
-					main::_log_stdout(" job '$id' missing \@cron-schedule||\@cron-run-every definition",1,"job.mng");
+					main::_log_stdout(" job '$id' missing \@cron-schedule||\@cron-run-every definition",1,"job.workerd");
 					next;
 				}
 				
@@ -456,7 +458,7 @@ sub check_domains
 					
 					if (!$db0_line{'status_now'})
 					{
-						main::_log_stdout(" [$domain] set cron '".$id."' to execute every '".($cron->{'cron-run-every'})."', after ".($datetime_next-time())."S from now",3,"job.mng");
+						main::_log_stdout(" [$domain] set cron '".$id."' to execute every '".($cron->{'cron-run-every'})."', after ".($datetime_next-time())."S from now",3,"job.workerd");
 						TOM::Database::SQL::execute(qq{
 							REPLACE INTO
 								`TOM`.`a100_job_cron_schedule`
@@ -488,7 +490,7 @@ sub check_domains
 #						main::_log("next is ".($db0_line{'unixtime_next'})." calculated $datetime_next");
 						if ($datetime_next < $db0_line{'unixtime_next'})
 						{
-							main::_log_stdout(" [$domain] set cron '".$id."' to execute every '".($cron->{'cron-run-every'})."', after ".($datetime_next-time())."S from now",3,"job.mng");
+							main::_log_stdout(" [$domain] set cron '".$id."' to execute every '".($cron->{'cron-run-every'})."', after ".($datetime_next-time())."S from now",3,"job.workerd");
 							
 							TOM::Database::SQL::execute(qq{
 								REPLACE INTO
@@ -528,7 +530,7 @@ sub check_domains
 						$id
 					],'quiet'=>1);
 					
-					main::_log_stdout(" [$domain] set cron '".$id."' to execute every '".($cron->{'cron-run-every'})."', planned ".($db0_line{'unixtime_next'}-time())."S before now",3,"job.mng");
+					main::_log_stdout(" [$domain] set cron '".$id."' to execute every '".($cron->{'cron-run-every'})."', planned ".($db0_line{'unixtime_next'}-time())."S before now",3,"job.workerd");
 					
 					next;
 				}
@@ -554,7 +556,7 @@ sub check_domains
 				
 				if ($db0_line{'status_now'} eq "before")
 				{
-#					main::_log_stdout(" [$domain] set cron '".$id."' first execute after ".($datetime_next-time())."S",3,"job.mng");
+#					main::_log_stdout(" [$domain] set cron '".$id."' first execute after ".($datetime_next-time())."S",3,"job.workerd");
 					
 					my %sth0=TOM::Database::SQL::execute(qq{
 						UPDATE
@@ -575,7 +577,7 @@ sub check_domains
 				}
 				else
 				{
-					main::_log_stdout(" [$domain] set cron '".$id."' to execute after ".($datetime_next-time())."S",3,"job.mng");
+					main::_log_stdout(" [$domain] set cron '".$id."' to execute after ".($datetime_next-time())."S",3,"job.workerd");
 					TOM::Database::SQL::execute(qq{
 						REPLACE INTO
 							`TOM`.`a100_job_cron_schedule`
@@ -652,7 +654,7 @@ sub check_scheduler
 		my $config=$config_file{$filename};
 		if (!$config)
 		{
-			main::_log_stdout("missing config '$filename'",1,"job.mng");
+			main::_log_stdout("missing config '$filename'",1,"job.workerd");
 		}
 		
 		my $domain=$config->{'domain'}->{'domain'};
@@ -680,7 +682,7 @@ sub check_scheduler
 			{
 				next unless $domain_info{$domain_}{'db_name'};
 #				print Dumper()
-#				main::_log_stdout("test domain '$domain_'",3,"job.mng");
+#				main::_log_stdout("test domain '$domain_'",3,"job.workerd");
 				push @domains, $domain_;
 			}
 		}
@@ -698,7 +700,7 @@ sub check_scheduler
 					next if $database_{$domain_info{$domain_}{'addons'}{$cron->{'run-if-addon'}}};
 					$database_{$domain_info{$domain_}{'addons'}{$cron->{'run-if-addon'}}}++;
 					
-#					main::_log_stdout("test domain '$domain_' db_name='$domain_info{$domain_}{'db_name'}'",3,"job.mng");
+#					main::_log_stdout("test domain '$domain_' db_name='$domain_info{$domain_}{'db_name'}'",3,"job.workerd");
 					
 					push @domains, $domain_;
 				}
@@ -707,7 +709,7 @@ sub check_scheduler
 					next if $database_{$domain_info{$domain_}{'db_name'}};
 					$database_{$domain_info{$domain_}{'db_name'}}++;
 					
-#					main::_log_stdout("test domain '$domain_' db_name='$domain_info{$domain_}{'db_name'}'",3,"job.mng");
+#					main::_log_stdout("test domain '$domain_' db_name='$domain_info{$domain_}{'db_name'}'",3,"job.workerd");
 					
 					push @domains, $domain_;
 				}
@@ -716,7 +718,7 @@ sub check_scheduler
 		
 		foreach $domain (@domains)
 		{
-			main::_log_stdout("[$domain] jobify cron '$db0_line{'id'}' scheduled to '".$db0_line{'datetime_next'}."'",3,"job.mng");
+			main::_log_stdout("[$domain] jobify cron '$db0_line{'id'}' scheduled to '".$db0_line{'datetime_next'}."'",3,"job.workerd");
 			
 #			next;
 			
@@ -753,8 +755,8 @@ sub check_scheduler
 					};
 				}
 				
-				main::_log_stdout(" job-name '".$cron->{'job-name'}.$class."'",3,"job.mng");
-				$do->job({'routing_key' => $routing_key},{
+				main::_log_stdout(" job-name '".$cron->{'job-name'}.$class."'",3,"job.workerd");
+				$do->job({'deduplication'=>'true','routing_key' => $routing_key},{
 					'name' => $cron->{'job-name'}
 				});
 				
@@ -805,7 +807,7 @@ sub check_scheduler
 				$db0_line{'id'}
 			],'quiet'=>1);
 			
-			main::_log_stdout(" next exec after ".($datetime_next-time())."S",3,"job.mng");
+			main::_log_stdout(" next exec after ".($datetime_next-time())."S",3,"job.workerd");
 			next;
 		}
 		
@@ -826,7 +828,7 @@ sub check_scheduler
 			$db0_line{'id'}
 		],'quiet'=>1);
 		
-		main::_log_stdout(" next exec after ".($datetime_next-time())."S",3,"job.mng");
+		main::_log_stdout(" next exec after ".($datetime_next-time())."S",3,"job.workerd");
 	}
 #	exit;
 }
@@ -853,7 +855,8 @@ sub callback
 		return $notify_channel->ack();
 	}
 	
-	main::_log("event='$body->{'event'}' '$body->{'key'}'");
+	main::_log("event='$body->{'event'}' '$body->{'key'}'")
+		unless $body->{'key'}=~/^main::TOM::a010_test::\d+$/; # this is only for testing purposes
 	
 	foreach my $filename (keys %config_file)
 	{
@@ -892,7 +895,7 @@ sub callback
 				
 #				if (!$cron->{'cron-schedule'})
 #				{
-#					main::_log_stdout(" job '$id' missing \@cron-schedule definition",1,"job.mng");
+#					main::_log_stdout(" job '$id' missing \@cron-schedule definition",1,"job.workerd");
 #				}
 			}
 			
@@ -972,7 +975,7 @@ sub job
 #	print Dumper($header,$job,$args);
 	my $id=TOM::Utils::vars::genhash(16);
 	
-	main::_log("{jobify} job '".($job->{'file'} || $job->{'name'})."' routing_key='".($header->{'routing_key'} || 'job')."' id='$id'");
+	main::_log("{jobify} job '".($job->{'file'} || $job->{'name'})."' routing_key='".($header->{'routing_key'} || 'job')."' id='$id' deduplication=".$header->{'deduplication'});
 	
 	$main::service->publish(
 		'exchange' => 'cyclone3.job',
@@ -984,6 +987,7 @@ sub job
 		'header' => {
 			'headers' => {
 				'message_id' => $id,
+				'deduplication' => $header->{'deduplication'}
 			}
 		}
 	);
