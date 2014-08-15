@@ -14,13 +14,13 @@ graph_order cron job cli pub
 graph_vlabel processes
 graph_scale no
 cron.label cron engine
-cron.draw LINE1
+cron.draw AREASTACK
 job.label job engine
-job.draw LINE1
+job.draw AREASTACK
 cli.label cli engine
-cli.draw LINE1
+cli.draw AREASTACK
 pub.label pub engine
-pub.draw LINE1
+pub.draw AREASTACK
 total.colour 000000
 total.label total
 total.draw LINE1
