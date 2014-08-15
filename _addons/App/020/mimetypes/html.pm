@@ -275,6 +275,150 @@ sub start
 			}
 			$db_entity{'path_url'}=~s|^/||;
 		}
+		elsif ($entity eq "a401_article")
+		{
+			# get data
+			require App::401::_init;
+#			main::_log("get article $tom::lng");
+			
+			my $sql_where;
+			my @sql_bind;
+			
+			if ($vars{'ID_entity'})
+			{
+				$sql_where.=" AND article.ID_entity=?";
+				push @sql_bind,$vars{'ID_entity'};
+			}
+			elsif ($vars{'ID'})
+			{
+				$sql_where.=" AND article.ID=?";
+				push @sql_bind,$vars{'ID'};
+			}
+			
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					article.ID_entity,
+					article.ID,
+					article_attrs.ID_category,
+					article_cat.ID AS cat_ID,
+					article_cat.name AS cat_name,
+					article_cat.name_url AS cat_name_url,
+					article_attrs.name,
+					article_attrs.name_url
+				FROM $App::401::db_name.a401_article_ent AS article_ent
+				INNER JOIN $App::401::db_name.a401_article AS article ON
+				(
+					article_ent.ID_entity = article.ID_entity
+				)
+				INNER JOIN $App::401::db_name.a401_article_attrs AS article_attrs ON
+				(
+					article_attrs.ID_entity = article.ID AND
+					article_attrs.status IN ('Y')
+				)
+				INNER JOIN $App::401::db_name.a401_article_content AS article_content ON
+				(
+					article_content.ID_entity = article.ID_entity AND
+					article_content.status = 'Y' AND
+					article_content.lng = article_attrs.lng
+				)
+				INNER JOIN $App::401::db_name.a401_article_cat AS article_cat ON
+				(
+					article_cat.ID = article_attrs.ID_category
+				)
+				LEFT JOIN $App::401::db_name.a301_ACL_user_group AS ACL_world ON
+				(
+					ACL_world.ID_entity = 0 AND
+					r_prefix = 'a401' AND
+					r_table = 'article' AND
+					r_ID_entity = article.ID_entity
+				)
+				WHERE
+					article_ent.status = 'Y'
+					AND article.status = 'Y'
+					AND article_attrs.lng = ?
+					$sql_where
+				LIMIT
+					1
+			},'bind'=>[$tom::lng,@sql_bind],'quiet'=>1,'-slave'=>1,
+				'-changetime'=>App::020::SQL::functions::_get_changetime(
+					{
+						'db_h'=>"main",
+						'db_name' => $App::401::db_name,
+						'tb_name' => "a401_article",
+						'ID_entity' => do{$vars{'ID_entity'} if $vars{'ID_entity'}=~/^\d+$/}
+					}),
+			);
+			%db_entity=$sth0{'sth'}->fetchhash();
+			main::_log("found ID=$db_entity{'ID'} ID_entity=$db_entity{'ID_entity'}");
+			
+			# search for a210_page linked to this
+			use App::210::_init;
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					a210_page.*
+				FROM
+					`$App::210::db_name`.a210_page
+				INNER JOIN `$App::210::db_name`.a160_relation ON
+				(
+					a160_relation.l_prefix = 'a210' AND
+					a160_relation.l_table = 'page' AND
+					a160_relation.l_ID_entity = a210_page.ID AND
+					a160_relation.r_prefix = 'a401' AND
+					a160_relation.r_table = 'article' AND
+					a160_relation.r_ID_entity = ? AND
+					a160_relation.rel_type = 'link' AND
+					a160_relation.status = 'Y'
+				)
+				WHERE
+					a210_page.status = 'Y'
+				LIMIT 1
+			},'bind'=>[$db_entity{'ID_entity'}],'quiet'=>1);
+			if ($sth0{'rows'})
+			{
+				my %a210=$sth0{'sth'}->fetchhash();
+				my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+				foreach my $p(
+					App::020::SQL::functions::tree::get_path(
+						$a210{'ID_entity'},
+						%sql_def,
+						'-slave' => 1,
+						'-cache' => 86400*7
+					)
+				)
+				{
+					push @{$db_entity{'a210'}{'IDs'}}, $p->{'ID'};
+					push @{$db_entity{'a210'}{'nodes'}}, $p;
+					$db_entity{'a210'}{'link'}='direct';
+					$db_entity{'a210'}{'path_url'}.="/".$p->{'name_url'};
+				}
+				$db_entity{'a210'}{'path_url'}=~s|^/||;
+			}
+			
+			if ($db_entity{'ID_category'} && !$db_entity{'a210'})
+			{
+				# link to a210_page
+				require App::210::_init;
+				if (my $category=App::401::functions::_a210_by_cat([$db_entity{'ID_category'}],'lng'=>$tom::lng))
+				{
+					my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+					foreach my $p(
+						App::020::SQL::functions::tree::get_path(
+							$category,
+							%sql_def,
+							'-slave' => 1,
+							'-cache' => 86400*7
+						)
+					)
+					{
+						push @{$db_entity{'a210'}{'IDs'}}, $p->{'ID'};
+						push @{$db_entity{'a210'}{'nodes'}}, $p;
+						$db_entity{'a210'}{'path_url'}.="/".$p->{'name_url'};
+					}
+					$db_entity{'a210'}{'path_url'}=~s|^/||;
+				}
+			}
+			
+		}
 		elsif ($entity eq "a501_image")
 		{
 			# get data
@@ -395,6 +539,98 @@ sub start
 					push @{$self->{'thumbnail'}},$relation->{'r_ID_entity'} if $tag eq "img";
 				}
 			}
+			
+		}
+		elsif ($entity eq "a542_file")
+		{
+			# get data
+			require App::542::_init;
+			
+			my $sql_where;
+			my @sql_bind;
+			
+			if ($vars{'ID_entity'})
+			{
+				$sql_where.=" AND file.ID_entity=?";
+				push @sql_bind, $vars{'ID_entity'};
+			}
+			elsif ($vars{'ID'})
+			{
+				$sql_where.=" AND file.ID=?";
+				push @sql_bind, $vars{'ID'};
+			}
+			
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					file.ID_entity AS ID_entity,
+					file.ID AS ID,
+					file_attrs.ID AS attrs_ID,
+					file_item.ID AS item_ID,
+					
+					file_attrs.ID_category,
+					file_dir.name AS dir_name,
+					file_dir.name_url AS dir_name_url,
+					
+					file_ent.posix_owner,
+					file_ent.posix_author,
+					file_ent.datetime_publish_start,
+					file_ent.datetime_publish_stop,
+					
+					file_item.hash_secure,
+					file_item.datetime_create,
+					
+					file_attrs.name,
+					file_attrs.name_url,
+					file_attrs.name_ext,
+					
+					file_item.mimetype,
+					file_item.file_ext,
+					file_item.file_size,
+					file_item.lng,
+					
+					file_ent.downloads,
+					
+					file_attrs.status,
+					
+					CONCAT(file_item.lng,'/',SUBSTR(file_item.ID,1,4),'/',file_item.name,'.',file_attrs.name_ext) AS file_path
+					
+				FROM
+					`$App::542::db_name`.`a542_file` AS file
+				INNER JOIN `$App::542::db_name`.`a542_file_ent` AS file_ent ON
+				(
+					file_ent.ID_entity = file.ID_entity
+				)
+				LEFT JOIN `$App::542::db_name`.`a542_file_attrs` AS file_attrs ON
+				(
+					file_attrs.ID_entity = file.ID
+				)
+				LEFT JOIN `$App::542::db_name`.`a542_file_item` AS file_item ON
+				(
+					file_item.ID_entity = file.ID_entity AND
+					file_item.lng = file_attrs.lng
+				)
+				LEFT JOIN `$App::542::db_name`.`a542_file_dir` AS file_dir ON
+				(
+					file_dir.ID = file_attrs.ID_category
+				)
+				
+				WHERE
+					file_ent.ID AND
+					file_attrs.ID AND
+					file_item.ID
+					$sql_where
+			},'quiet'=>1,'bind'=>[@sql_bind],'-slave'=>1,
+				'-changetime'=>App::020::SQL::functions::_get_changetime(
+					{
+						'db_h'=>"main",
+						'db_name' => $App::542::db_name,
+						'tb_name' => "a542_file",
+						'ID_entity' => do{$vars{'ID_entity'} if $vars{'ID_entity'}=~/^\d+$/}
+					})
+			);
+			
+			%db_entity=$sth0{'sth'}->fetchhash();
+			main::_log("found ID=$db_entity{'ID'} ID_entity=$db_entity{'ID_entity'}");
 			
 		}
 		
