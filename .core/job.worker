@@ -113,8 +113,9 @@ sub callback {
 	my $user_id=$var->{'header'}->{'user_id'};
 	my $delivery_tag=$var->{'deliver'}->{'method_frame'}->{'delivery_tag'};
 	my $routing_key=$var->{'deliver'}->{'method_frame'}->{'routing_key'};
-	my $deduplication=1;
-	main::_log("received message id='".($var->{'header'}->{'headers'}->{'message_id'})."' '$delivery_tag' from '$user_id' routing='$routing_key' timestamp='$timestamp' size=".length($var->{'body'}->{'payload'}));
+	my $deduplication;
+		$deduplication=$var->{'header'}->{'headers'}->{'deduplication'};
+	main::_log("received message id='".($var->{'header'}->{'headers'}->{'message_id'})."' routing_key='$routing_key' timestamp='$timestamp' size=".length($var->{'body'}->{'payload'})."b deduplication=".$deduplication);
 	
 	my $key_entity=TOM::Digest::hash($var->{'body'}->{'payload'});
 	if ($deduplication && $Redis)
