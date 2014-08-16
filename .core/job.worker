@@ -51,6 +51,7 @@ my $t_domain=track TOM::Debug("Domain service init");
 	$TOM::DEBUG_log_file=90;
 	#$0="job.worker [".($tom::H_orig || 'global').$class."]";
 	$0.=" :".$class_ if $class_;
+	$0.=" {}";
 	
 $t_domain->close;
 
@@ -109,6 +110,8 @@ sub callback {
 	my $this_channel=$service->_channels->{$var->{'body'}->{'channel'}};
 #	print Dumper($service);
 	
+	$0=~s|{.*?}|{reading...}|;
+	
 	my $timestamp=$var->{'header'}->{'timestamp'};
 	my $user_id=$var->{'header'}->{'user_id'};
 	my $delivery_tag=$var->{'deliver'}->{'method_frame'}->{'delivery_tag'};
@@ -126,6 +129,7 @@ sub callback {
 			main::_log("job '$key_entity' already executed ".($timestamp_exec-$timestamp)."s after this request",1);
 			$this_channel->ack();
 			alarm $alarm;
+			$0=~s|{.*?}|{}|;
 			return 0;
 		}
 	}
@@ -141,6 +145,7 @@ sub callback {
 		if ($payload->{'function'})
 		{
 			my $function=$payload->{'function'};
+			$0=~s|{.*?}|{$function}|;
 			main::_log("calling function '$function' id='".($var->{'header'}->{'headers'}->{'message_id'})."'");
 			$main::nojobify=1; # nojobify, just execute!
 			&$function(@{$payload->{'args'}});
@@ -149,7 +154,9 @@ sub callback {
 		elsif ($payload->{'job'})
 		{
 			my $job=$payload->{'job'};
-			main::_log("calling '".($job->{'file'} || $job->{'name'})."' id='".($var->{'header'}->{'headers'}->{'message_id'})."'");
+			my $job_name=($job->{'file'} || $job->{'name'});
+			$0=~s|{.*?}|{$job_name}|;
+			main::_log("calling '".$job_name."' id='".($var->{'header'}->{'headers'}->{'message_id'})."'");
 			
 			$main::nojobify=1; # nojobify, execute!
 			my $job=new TOM::Engine::job::module(
@@ -177,6 +184,7 @@ sub callback {
 	}
 	$this_channel->ack();
 	alarm $alarm;
+	$0=~s|{.*?}|{}|;
 	if ((time() - $time_start) > $time_max)
 	{
 		main::_log("running too long, shutdown");
