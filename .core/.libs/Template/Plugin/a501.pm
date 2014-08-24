@@ -28,6 +28,17 @@ sub get_image_file {
 	my $env=shift;
 	my %image=App::501::functions::get_image_file(%{$env});
 	$image{'ID_entity'}=$image{'ID_entity_image'};
+	
+	if ($env->{'resize'} && $image{'ID'})
+	{
+		%{$image{'resized'}}=App::501::functions::image_file_resize(
+			'image_file.ID' => $image{'ID'},
+			'width' => $env->{'resize'}->{'width'},
+			'height' => $env->{'resize'}->{'height'},
+			'method' => $env->{'resize'}->{'method'} || 'auto',
+		);
+	}
+	
 	return \%image;
 }
 
