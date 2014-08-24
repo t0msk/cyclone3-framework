@@ -541,7 +541,12 @@ our @table=
 		agent_group	=>	"Mozilla.org",
 		old			=>	6,
 	},
-	
+	{name=>'Mozilla Firefox 13.X',
+		regexp		=>	['undefined GoogleToolbarBB'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Mozilla.org",
+#		old			=>	6,
+	},	
 	
 	# --------------------------------------------------------------------
 	
