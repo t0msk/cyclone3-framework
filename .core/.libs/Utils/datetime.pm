@@ -142,6 +142,7 @@ zh 	Chinese 	zu 	Zulu
 	en	=>	["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
 	sk	=>	["Jan","Feb","Mar","Apr","Maj","Jún","Júl","Aug","Sep","Okt","Nov","Dec"],
 	la	=>	["Ian","Feb","Mar","Apr","Mai","Iun","Iul","Aug","Sep","Oct","Nov","Dec"],
+	it	=>	["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"],
 #	cz	=>	["Led","Ún","Mar","Apr","Maj","Jun","Júl","Aug","Sep","Okt","Nov","Dec"],
 );
 
@@ -165,7 +166,7 @@ zh 	Chinese 	zu 	Zulu
 
 our %PUBLISHED=
 (
-	'sk' => ["pred","teraz","dnes","včera","hodinou","hodinami","dňom","dňami","týžňom","týžňami","mesiacom","mesiacmi","rokom","rokmi"]
+	'sk' => ["pred","teraz","dnes","včera","hodinou","hodinami","dňom","dňami","týždňom","týždňami","mesiacom","mesiacmi","rokom","rokmi"]
 );
 
 our %PUBLISHED_OLD=
