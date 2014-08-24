@@ -84,6 +84,7 @@ our $FILTERS = {
 
 	# Cyclone3 filters
 	'currency'         => \&TOM::Utils::currency::format,
+	'ascii'            => \&Int::charsets::encode::UTF8_ASCII,
 	'url_convert'      => \&TOM::Net::URI::rewrite::convert,
 	'mimetype_render'  => [ \&render_filter_factory,  1 ],
 	'md5'              => \&md5,
