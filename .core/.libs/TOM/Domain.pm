@@ -52,7 +52,7 @@ BEGIN
 			$tom::D_cookie=$tom::H_cookie unless $tom::D_cookie;
 			$tom::H_cookie=$tom::H_cookie.$tom::P_cookie;
 				$tom::H_cookie=~s|/$||;
-			main::_log("cookie domain='$tom::D_cookie' USRM hostname='$tom::H_cookie'");
+			main::_log("cookie domain='$tom::D_cookie' USRM unique hostname='$tom::H_cookie'");
 			
 			if ($tom::Pm)
 			{
