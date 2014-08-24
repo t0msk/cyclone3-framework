@@ -188,23 +188,26 @@ sub install
 			$filename=$tom::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql';
 		}
 		
-		# look into overlays
-		if (!$filename)
+		if (not $what=~/^01/) # this is definition of local app
 		{
-			foreach (@TOM::Overlays::item)
+			# look into overlays
+			if (!$filename)
 			{
-				if (-e $TOM::P.'/_overlays/'.$_.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
+				foreach (@TOM::Overlays::item)
 				{
-					$filename=$TOM::P.'/_overlays/'.$_.'/_addons/App/'.$what.'/a'.$what.'_struct.sql';
-					last;
+					if (-e $TOM::P.'/_overlays/'.$_.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
+					{
+						$filename=$TOM::P.'/_overlays/'.$_.'/_addons/App/'.$what.'/a'.$what.'_struct.sql';
+						last;
+					}
 				}
 			}
-		}
-		
-		# or in global
-		if (!$filename && -e $TOM::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
-		{
-			$filename=$TOM::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql';
+			
+			# or in global
+			if (!$filename && -e $TOM::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
+			{
+				$filename=$TOM::P.'/_addons/App/'.$what.'/a'.$what.'_struct.sql';
+			}
 		}
 		
 		# definition file not found
@@ -556,6 +559,7 @@ sub install_table
 	# don't install more than twice
 	if ($env{'-compare'})
 	{
+#		main::_log("  check if compared '".($database.'.'.$table.'@'.$header->{'db_h'})."'");
 		if ($TOM::Database::SQL::compare::compared_tabe{$database.'.'.$table.'@'.$header->{'db_h'}})
 		{
 			$t->close();
