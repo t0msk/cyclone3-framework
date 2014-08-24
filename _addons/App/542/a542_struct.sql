@@ -234,7 +234,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*app*/_file_view` AS (
 		
 		file_attrs.status,
 		
-		CONCAT(file_item.lng,'/',SUBSTR(file_item.ID,1,4),'/',file_item.name,'.',file_attrs.name_ext) AS file_path,
+		CONCAT(file_item.lng,'/',SUBSTR(file_item.ID,1,4),'/',file_item.name,'.',file_item.file_ext) AS file_path,
       
 		IF
 		(

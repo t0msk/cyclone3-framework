@@ -257,7 +257,16 @@ sub file_add
 	
 	
 	# FILE ATTRS
-	
+	if (!$file_attrs{'ID'} && $env{'file_attrs.ID'})
+	{
+		%file_attrs=App::020::SQL::functions::get_ID(
+			'ID' => $env{'file_attrs.ID'},
+			'db_h' => "main",
+			'db_name' => $App::542::db_name,
+			'tb_name' => "a542_file_attrs",
+			'columns' => {'*'=>1}
+		);
+	}
 	if (!$env{'file_attrs.ID'})
 	{
 		my $sql=qq{
@@ -308,6 +317,8 @@ sub file_add
 			'columns' => {'*'=>1}
 		);
 	}
+	
+#	use Data::Dumper;print Dumper(\%file_attrs);
 	
 	# update if necessary
 	if ($file_attrs{'ID'} &&
@@ -516,7 +527,7 @@ sub file_add
 			main::_log("check for update file_item");
 			main::_log("checkum in database = '$db0_line{'file_checksum'}'");
 			main::_log("checkum from file = '$checksum_method:$checksum'");
-			if ($db0_line{'file_checksum'} eq "$checksum_method:$checksum")
+			if ($db0_line{'file_checksum'} eq "$checksum_method:$checksum" && !$env{'force'})
 			{
 				main::_log("same checksum, just enabling file when disabled");
 				my %columns;
