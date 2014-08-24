@@ -424,7 +424,28 @@ sub prepare_xml
 	$self->{'xp'} = XML::XPath->new(filename => $self->{'location'});
 }
 
-
+sub _directory_tree
+{
+	next undef unless $_[0];
+	next undef unless -d $_[0];
+	opendir (DIR, $_[0]) || return undef;
+	my @files;
+	foreach (readdir(DIR))
+	{
+		next if $_=~/^\.+$/;
+		next unless -e $_[0].'/'.$_;
+		if (-d $_[0].'/'.$_)
+		{
+#			main::_log("dir $_[0]/$_");
+			push @files,_directory_tree($_[0].'/'.$_);
+			next;
+		}
+		
+#		main::_log("add $_[0]/$_");
+		push @files,$_[0].'/'.$_;
+	}
+	return @files;
+}
 
 sub parse_header
 {
@@ -532,7 +553,87 @@ sub parse_header
 		{
 			my $name=$node->getName();
 			
-			if ($name eq "file")
+			if ($name eq "directory")
+			{
+				my $location=$node->getAttribute('location');
+				my $destination=$node->getAttribute('dest') || $node->getAttribute('destination');
+				
+				my $replace_variables=$node->getAttribute('replace_variables');
+				my $replace_L10n=$node->getAttribute('replace_L10n');
+				
+				main::_log("extract directory '$location' from '$self->{'dir'}' to '$destination' replace_variables='$replace_variables' replace_L10n='$replace_L10n'") if $debug;
+				
+				if (!-d $self->{'dir'}.'/'.$location)
+				{
+					main::_log("source file is directory, weee sorry!");
+					next;
+				}
+				
+				foreach my $location_ (_directory_tree($self->{'dir'}.'/'.$location))
+				{
+					#$location=$location_;
+					$location_=~s|^$self->{'dir'}/||;
+					$location_=~s|^$location/||;# if $destination=~/\/$/;
+
+					my $destination_=$destination;
+					
+					my $destination_dir=$tom::P_media.'/tpl/'.$destination_.'/'.$location_;
+						$destination_dir=~s|^(.*)/(.*?)$||;
+						$destination_dir=$1;
+					my $destination_file=$2;
+					
+					my $src=$self->{'dir'}.'/'.$location.'/'.$location_;
+					my $src_file=$location.'/'.$location_;
+					my $dst=$destination_dir.'/'.$destination_file;
+					
+					# added to mfile
+					$self->{'mfile'}{$src}=(stat($src))[9];
+					
+					# if modifytime of file is higher than definition file modifytime
+					if ($self->{'config'}->{'mtime'} < $self->{'mfile'}{$src})
+					{
+						$self->{'config'}->{'mtime'} = $self->{'mfile'}{$src};
+					}
+					
+					# check if this file is not oveerided, or already exists in
+					# destination directory
+					$self->{'file'}{$src_file}{'src'}=$src;
+					$self->{'file'}{$src_file}{'dst'}=$dst;
+					
+					if (!-e $dst)
+					{
+						main::_log("extract '$src_file'") unless $debug;
+						if (!-e $destination_dir)
+						{
+							File::Path::mkpath $destination_dir;
+							chmod (0777,$destination_dir);
+						}
+						File::Copy::copy($src, $dst);
+						chmod (0666,$dst);
+						#symlink($src,$dst);
+						next;
+					}
+					
+					main::_log("file '$src_file' already exists") if $debug;
+					
+					my $src_stat=(stat($src))[7];
+					my $dst_stat=(stat($dst))[7];
+					
+					if ($src_stat ne $dst_stat)
+					{
+						main::_log("not same filesize, rewrite by source") if $debug;
+						main::_log("extract override '$location'") unless $debug;
+						File::Copy::copy($src, $dst);
+						chmod (0666,$dst);
+						#symlink($src,$dst);
+						next;
+					}
+					
+				}
+				
+				next;
+			}
+			elsif ($name eq "file")
 			{
 				my $location=$node->getAttribute('location');
 				my $destination=$node->getAttribute('dest') || $node->getAttribute('destination');
@@ -546,6 +647,12 @@ sub parse_header
 				my $replace_L10n=$node->getAttribute('replace_L10n');
 				
 				main::_log("extract file '$location' from '$self->{'dir'}' to '$destination' replace_variables='$replace_variables' replace_L10n='$replace_L10n'") if $debug;
+				
+				if (-d $self->{'dir'}.'/'.$location)
+				{
+					main::_log("source file is directory, weee sorry!");
+					next;
+				}
 				
 				# added to mfile
 				$self->{'mfile'}{$self->{'dir'}.'/'.$location}=(stat($self->{'dir'}.'/'.$location))[9];
@@ -564,6 +671,8 @@ sub parse_header
 				
 				$self->{'file'}{$location}{'src'}=$src;
 				$self->{'file'}{$location}{'dst'}=$dst;
+				
+#				print "$location\n";
 				
 				if (!-e $dst)
 				{
@@ -886,6 +995,7 @@ sub process
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'a210'}=\%main::a210;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'code'}=$main::request_code;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'key'}=\%main::key;
+		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'lng'}=$tom::lng;
 		%{$Tomahawk::module::TPL->{'variables'}->{'request'}->{'env'}}=%main::env;
 			delete $Tomahawk::module::TPL->{'variables'}->{'request'}->{'env'}{'cache'};
 		# user variables
