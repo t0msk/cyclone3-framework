@@ -29,7 +29,9 @@ our %trans=(
 	'uk' => 'uk-UA',
 	'ar' => 'ar-SA',
 	'hu' => 'hu-HU',
-	'pl' => 'pl-PL'
+	'fr' => 'fr-FR',
+	'pl' => 'pl-PL',
+	'it' => 'it-IT'
 );
 
 sub trans
