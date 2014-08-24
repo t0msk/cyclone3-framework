@@ -380,6 +380,12 @@ sub prepare_last
 	foreach my $hash(@{$self->{'env'}{'DOC_meta'}})
 	{
 		$self->{'OUT'}{'HEADER'} .= " <meta";
+		if ($hash->{'property'})
+		{
+			$hash->{'property'}=~s|"|'|g;
+			$self->{'OUT'}{'HEADER'} .= ' property="'.$hash->{'property'}.'"';
+			delete $hash->{'property'};
+		}
 		foreach (keys %{$hash}){$$hash{$_}=~s|"|'|g;$self->{'OUT'}{'HEADER'} .= " ".$_ . "=\"".$$hash{$_}."\"";}
 		$self->{'OUT'}{'HEADER'} .= " />\n";
 	}
