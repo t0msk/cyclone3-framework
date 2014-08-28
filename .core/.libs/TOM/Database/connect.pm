@@ -124,31 +124,47 @@ sub multi
 		
 		if ($TOM::DB{$handler}{'type'} eq "DBI")
 		{
-		  if  ($TOM::DB{$handler}{uri} =~ /dbi:ODBC:driver=\{SQL Native Client/i)
-		  {
-		    $TOM::DB{$handler}{'subtype'} = 'mssql';
-		  }
-		  
+			if  ($TOM::DB{$handler}{uri} =~ /dbi:ODBC:driver=\{SQL Native Client/i)
+			{
+				$TOM::DB{$handler}{'subtype'} = 'mssql';
+			}
+			
 			main::_log("DBI connecting '$handler' ('$TOM::DB{$handler}{uri}' '$TOM::DB{$handler}{user}' '****')");
 			
 #			main::_log("DBI connecting '$handler' ('$TOM::DB{$handler}{uri}' '$TOM::DB{$handler}{user}' '****')",3,"sql.err");
 			
-			$main::DB{$handler} = DBI->connect
-			(
-				$TOM::DB{$handler}{'uri'},
-				$TOM::DB{$handler}{'user'},
-				$TOM::DB{$handler}{'pass'},
-				{
-					'PrintError' => 0,
-					'RaiseError' => 0,
-#					'LongReadLen' => 6000000,
-#					'syb_enable_utf8' => 1
-				}
-			);
+			if ($TOM::DB{$handler}{'timeouted'})
+			{
+				main::_log("can't connect '$handler', already timeouted",1);
+				$t->close();
+				return undef;
+			}
+			
+			eval {
+			my $action_die = POSIX::SigAction->new(
+				sub {$TOM::DB{$handler}{'timeouted'}=1;die "Timed out sec.\n"},
+				$TOM::Engine::pub::SIG::sigset,
+				&POSIX::SA_NODEFER);
+				POSIX::sigaction(&POSIX::SIGALRM, $action_die);
+				alarm(2);
+				$main::DB{$handler} = DBI->connect
+				(
+					$TOM::DB{$handler}{'uri'},
+					$TOM::DB{$handler}{'user'},
+					$TOM::DB{$handler}{'pass'},
+					{
+						'PrintError' => 0,
+						'RaiseError' => 0,
+	#					'LongReadLen' => 6000000,
+	#					'syb_enable_utf8' => 1
+					}
+				);
+			};
+			alarm 0;
 			
 			if (!$main::DB{$handler})
 			{
-				main::_log("can't connect '$handler'",1);
+				main::_log("can't connect '$handler' error='$DBI::errstr'",1);
 				$t->close();
 				return undef;
 			}
@@ -169,6 +185,21 @@ sub multi
 			
 			$main::DB{$handler}->{'ora_check_sql'} = 0;
 			$main::DB{$handler}->{'RowCacheSize'}  = 32;
+			
+			foreach my $sql(@{$TOM::DB{$handler}{'sql'}})
+			{
+				if (ref($sql) eq "CODE")
+				{
+					main::_log("code call");
+					&$sql;
+				}
+				else
+				{
+					main::_log("sql='$sql'");
+					TOM::Database::SQL::execute($sql, 'db_h'=>$handler, 'quiet'=>1);
+				}
+#				
+			}
 			
 		}
 		else
