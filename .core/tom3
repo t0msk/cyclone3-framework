@@ -420,6 +420,8 @@ while ($main::CGI=new CGI::Fast())
 			$tom::Tyday,
 			$tom::Tisdst);
 		
+		$tom::datetime=$tom::Fyear.'-'.$tom::Fmom.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin.':'.$tom::Fsec;
+		
 		local $TOM::Document::content_type=$TOM::Document::content_type;
 		
 		
@@ -1345,7 +1347,7 @@ while ($main::CGI=new CGI::Fast())
 					};
 #=cut
 					
-					main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track');
+					main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ').":".($main::USRM{'logged'} || ' ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track');
 					main::_log("[$tom::H] ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track',1);
 					
 					print "Status: 304 Not Modified\n\n";
@@ -1477,7 +1479,7 @@ while ($main::CGI=new CGI::Fast())
 					elsif ($main::FORM{'a210_path'})
 					{
 						#... find this path in a210
-						#main::_log("find this path in a210");
+#						main::_log("find this path in a210");
 						%a210=App::020::SQL::functions::tree::find_path_url(
 							$main::FORM{'a210_path'},
 							'db_h' => "main",
@@ -1502,7 +1504,8 @@ while ($main::CGI=new CGI::Fast())
 								'-cache' => 86400,
 								'-slave' => 1,
 								'columns' => {
-									'metadata' => 1
+									'metadata' => 1,
+									't_keys' => 1,
 								}
 							)
 						)
@@ -1632,6 +1635,7 @@ while ($main::CGI=new CGI::Fast())
 		local $tom::Ptype=$tom::P; # cesta k typeckam
 		local $tom::type;
 		# convert type to TID
+		$FORM{'TID.req'} = $FORM{'TID'} if $FORM{'TID'};
 		undef $FORM{'TID'}; # don't allow to request TID directly
 		if ($FORM{'type'})
 		{
@@ -2326,12 +2330,12 @@ while ($main::CGI=new CGI::Fast())
 				
 				my $link_hash=TOM::Net::URI::URL::hash_encode($var,$key);
 				
-				$rewrite=~s|&|&amp;|g unless $TOM::type_code;
+#				$rewrite=~s|&|&amp;|g unless $TOM::type_code;
 				$link="$rewrite?$link_hash";
 			}
 			else
 			{
-				$rewrite=~s|&|&amp;|g unless $TOM::type_code;
+#				$rewrite=~s|&|&amp;|g unless $TOM::type_code;
 				$link=$rewrite;
 				$link.="?".$var if $var;
 			}
@@ -2503,6 +2507,8 @@ while ($main::CGI=new CGI::Fast())
 			# musim odoslat cookies i ked robim relocation
 			TOM::Engine::pub::cookies::send();
 			
+			main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ').":".($main::USRM{'logged'} || ' ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track');
+			
 			my $out=$location;
 			my $t_301=track TOM::Debug("redirect by main::location");
 			if ($out=~/^-(\d+)/)
@@ -2646,7 +2652,7 @@ while ($main::CGI=new CGI::Fast())
 				$URI_base.='/' unless $URI_enh=~/^\//;
 				
 				# nekodovana linka
-				$link=~s|&|&amp;|g unless $TOM::type_code;
+#				$link=~s|&|&amp;|g unless $TOM::type_code;
 				main::_log("URL='$link'");
 				main::_log("$main::location_code from '".($main::ENV{'HTTPS'})."//$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"pub.301",1);
 				main::_log("$main::location_code from '".($main::ENV{'HTTPS'})."//$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"pub.301");
@@ -3057,7 +3063,7 @@ while ($main::CGI=new CGI::Fast())
 		$t_postprocess->close();
 		$t_eval->close();
 		
-		main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'/'$main::ENV{'HTTP_USER_AGENT'}'",3,'pub.track');
+		main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ').":".($main::USRM{'logged'} || ' ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'/'$main::ENV{'HTTP_USER_AGENT'}'",3,'pub.track');
 		main::_log("[$tom::H] ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track',1);
 		
 		if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
