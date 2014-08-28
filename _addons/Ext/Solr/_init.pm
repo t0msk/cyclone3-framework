@@ -64,10 +64,11 @@ sub new
 	
 #	$self->{'service'} = Ext::Solr::webservice->new($Ext::Solr::url, { 'autocommit' => $Ext::Solr::autocommit });
 	
-	my $t=track TOM::Debug("connect");
+	my $t=track TOM::Debug("solr connect");
 	
 	foreach my $host (sort keys %Ext::Solr::hosts)
 	{
+#		main::_log("host=$host");
 		$self->{'services'}{$host} = Ext::Solr::webservice->new(
 			$Ext::Solr::hosts{$host}{'url'}, { 'autocommit' => $Ext::Solr::autocommit }
 		);
@@ -97,6 +98,10 @@ sub new
 					'timeout' => 600
 				)
 			});
+		if ($self->{'service'}->ping())
+		{
+			main::_log("Solr \@$Ext::Solr::url connected and respondig");
+		}
 	}
 	
 	$t->close();
@@ -119,6 +124,7 @@ sub AUTOLOAD
 		$role='w';
 	}
 	
+#	if (ref($_[1]) eq "HASH" && $_[1]->{'-cluster'} && $self->{'services'})
 	if (ref($_[1]) eq "HASH" && $_[1]->{'-cluster'} && keys %{$self->{'services'}})
 	{
 		my $hosts=scalar grep {$Ext::Solr::hosts{$_}{'roles'}=~/$role/} keys %{$self->{'services'}};
@@ -144,7 +150,7 @@ sub commit
 	my ($package, $filename, $line) = caller(0);
 	
 	main::_log("[solr".do{':'.$self->{'host_name'} if $self->{'host_name'}}."] COMMIT");
-	main::_log(do{'@'.$self->{'host_name'} if $self->{'host_name'}}." COMMIT from $package at $filename:$line",3,"solr");
+	main::_log(do{'@'.$self->{'host_name'}.' ' if $self->{'host_name'}}."COMMIT from $package at $filename:$line",3,"solr");
 	main::_log("[$tom::H] ".do{'@'.$self->{'host_name'} if $self->{'host_name'}}." COMMIT from $package at $filename:$line",3,"solr",1);
 	main::_log("[$tom::H] ".do{'@'.$self->{'host_name'} if $self->{'host_name'}}." COMMIT from $package at $filename:$line",3,"solr",2) if $tom::H ne $tom::Hm;
 	
@@ -163,7 +169,8 @@ sub search
 	}
 	
 	# call
-	my $response=$self->SUPER::search(@_);
+	my $response;
+	eval{$response=$self->SUPER::search(@_)};
 	
 	# process
 	if ($response)
@@ -173,7 +180,7 @@ sub search
 		if (!$_[1]->{'quiet'})
 		{
 			main::_log("[solr".do{':'.$self->{'host_name'} if $self->{'host_name'}}."] search '$_[0]' found='$numfound' qtime='$qtime'");
-			main::_log(do{'@'.$self->{'host_name'} if $self->{'host_name'}}." search '$_[0]' found='$numfound' qtime='$qtime' from $package at $filename:$line",3,"solr");
+			main::_log(do{'@'.$self->{'host_name'}.' ' if $self->{'host_name'}}."search '$_[0]' found='$numfound' qtime='$qtime' from $package at $filename:$line",3,"solr");
 			main::_log("[$tom::H] ".do{'@'.$self->{'host_name'} if $self->{'host_name'}}." search '$_[0]' found='$numfound' qtime='$qtime' from $package at $filename:$line",3,"solr",1);
 			main::_log("[$tom::H] ".do{'@'.$self->{'host_name'} if $self->{'host_name'}}." search '$_[0]' found='$numfound' qtime='$qtime' from $package at $filename:$line",3,"solr",2) if $tom::H ne $tom::Hm;
 		}
@@ -199,7 +206,7 @@ sub add
 	my $response=$self->SUPER::add(@_);
 	
 	main::_log("[solr".do{':'.$self->{'host_name'} if $self->{'host_name'}}."] add '$id'");
-	main::_log(do{':'.$self->{'host_name'} if $self->{'host_name'}}." add '$id' from $package at $filename:$line",3,"solr");
+	main::_log(do{':'.$self->{'host_name'}.' ' if $self->{'host_name'}}."add '$id' from $package at $filename:$line",3,"solr");
 	main::_log("[$tom::H] ".do{'@'.$self->{'host_name'} if $self->{'host_name'}}." add '$id' from $package at $filename:$line",3,"solr",1);
 	main::_log("[$tom::H] ".do{'@'.$self->{'host_name'} if $self->{'host_name'}}." add '$id' from $package at $filename:$line",3,"solr",2) if $tom::H ne $tom::Hm;
 	
