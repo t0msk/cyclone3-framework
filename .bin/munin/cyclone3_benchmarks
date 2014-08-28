@@ -51,7 +51,7 @@ if ($Redis)
 {
 	# speed of hmset
 	my $t=track TOM::Debug("exec",'timer'=>1);
-	for (1..100)
+	for (1..10)
 	{
 		$Redis->hmset('C3|test|hmset_'.$_,
 			'test01' => "asdasdf",
@@ -60,45 +60,45 @@ if ($Redis)
 		$Redis->expire('C3|test|hmset_'.$_,600);
 	}
 	$t->close();
-	print "hmset.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
-	$event{'hmset'}=$t->{'time'}{'req'}{'duration'}*10;
+	print "hmset.value " . ($t->{'time'}{'req'}{'duration'}*100) . "\n";
+	$event{'hmset'}=$t->{'time'}{'req'}{'duration'}*100;
 	
 	# speed of hmget
 	my $t=track TOM::Debug("exec",'timer'=>1);
-	for (1..100)
+	for (1..10)
 	{
 		$Redis->hmget('C3|test|hmset_'.$_,'test01');
 	}
 	$t->close();
-	print "hmget.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
-	$event{'hmget'}=$t->{'time'}{'req'}{'duration'}*10;
+	print "hmget.value " . ($t->{'time'}{'req'}{'duration'}*100) . "\n";
+	$event{'hmget'}=$t->{'time'}{'req'}{'duration'}*100;
 }
 
 # select random users
 my $t=track TOM::Debug("exec",'timer'=>1);
-for (1..100)
+for (1..10)
 {
 	my %sth0=TOM::Database::SQL::execute(qq{SELECT * FROM TOM.a301_user_online WHERE ID_user=? LIMIT 1},
 		'bind'=>['usr'.$_],'quiet'=>1);
 }
 $t->close();
-print "userget.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
-$event{'userget'}=$t->{'time'}{'req'}{'duration'}*10;
+print "userget.value " . ($t->{'time'}{'req'}{'duration'}*100) . "\n";
+$event{'userget'}=$t->{'time'}{'req'}{'duration'}*100;
 
 # select random users
 my $t=track TOM::Debug("exec",'timer'=>1);
-for (1..100)
+for (1..10)
 {
 	my %sth0=TOM::Database::SQL::execute(qq{SELECT * FROM TOM.a301_user_online WHERE ID_user=? LIMIT 1},
 		'bind'=>['usr'.$_],'quiet'=>1,'-cache'=>86400);
 }
 $t->close();
-print "userget_cache.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
-$event{'userget_cache'}=$t->{'time'}{'req'}{'duration'}*10;
+print "userget_cache.value " . ($t->{'time'}{'req'}{'duration'}*100) . "\n";
+$event{'userget_cache'}=$t->{'time'}{'req'}{'duration'}*100;
 
 # get changetime
 my $t=track TOM::Debug("exec",'timer'=>1);
-for (1..100)
+for (1..10)
 {
 	App::020::SQL::functions::_get_changetime({
 		'db_h'=>'main',
@@ -108,12 +108,12 @@ for (1..100)
 	});
 }
 $t->close();
-print "get_changetime.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
-$event{'get_changetime'}=$t->{'time'}{'req'}{'duration'}*10;
+print "get_changetime.value " . ($t->{'time'}{'req'}{'duration'}*100) . "\n";
+$event{'get_changetime'}=$t->{'time'}{'req'}{'duration'}*100;
 
 # save changetime
 my $t=track TOM::Debug("exec",'timer'=>1);
-for (1..100)
+for (1..10)
 {
 	App::020::SQL::functions::_save_changetime({
 		'db_h'=>'main',
@@ -123,12 +123,12 @@ for (1..100)
 	});
 }
 $t->close();
-print "save_changetime.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
-$event{'save_changetime'}=$t->{'time'}{'req'}{'duration'}*10;
+print "save_changetime.value " . ($t->{'time'}{'req'}{'duration'}*100) . "\n";
+$event{'save_changetime'}=$t->{'time'}{'req'}{'duration'}*100;
 
 # get tpl
 my $t=track TOM::Debug("exec",'timer'=>1);
-for (1..100)
+for (1..10)
 {
 	my $tpl=new TOM::Template(
 		'level' => "auto",
@@ -138,8 +138,8 @@ for (1..100)
 	undef %TOM::Template::objects; # to not use local cache
 }
 $t->close();
-print "get_tpl.value " . ($t->{'time'}{'req'}{'duration'}*10) . "\n";
-$event{'get_tpl'}=$t->{'time'}{'req'}{'duration'}*10;
+print "get_tpl.value " . ($t->{'time'}{'req'}{'duration'}*100) . "\n";
+$event{'get_tpl'}=$t->{'time'}{'req'}{'duration'}*100;
 
 # exec module
 my $t=track TOM::Debug("exec",'timer'=>1);
