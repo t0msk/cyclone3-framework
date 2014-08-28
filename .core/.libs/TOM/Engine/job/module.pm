@@ -38,40 +38,41 @@ sub new
 		
 		my $file=$addon_type.$addon_name.'-'.$conf->{'name'}.'.job';
 		
+		my @inc;
+		
 		if ($tom::P ne $TOM::P)
 		{
-			if (-e $tom::P.'/_addons/'.$addon_path.'/_mdl/'.$file)
-			{
-				$conf->{'file'} = $tom::P.'/_addons/'.$addon_path.'/_mdl/'.$file;
-			}
-			elsif (-e $tom::P.'/_mdl/'.$file)
-			{
-				$conf->{'file'} = $tom::P.'/_mdl/'.$file;
-			}
+			push @inc,$tom::P.'/_addons/'.$addon_path.'/_mdl';
+			push @inc,$tom::P.'/_mdl';
+		}
+		
+		if ($tom::Pm && ($tom::P ne $tom::Pm))
+		{
+			push @inc,$tom::Pm.'/_addons/'.$addon_path.'/_mdl';
+			push @inc,$tom::Pm.'/_mdl';
 		}
 		
 		foreach my $dir_item (@TOM::Overlays::item)
 		{
-			if (-e $TOM::P.'/_overlays/'.$dir_item.'/_addons/'.$addon_path.'/_mdl/'.$file)
+			push @inc,$TOM::P.'/_overlays/'.$dir_item.'/_addons/'.$addon_path.'/_mdl';
+			push @inc,$TOM::P.'/_overlays/'.$dir_item.'/_mdl';
+		}
+
+		push @inc,$TOM::P.'/_addons/'.$addon_path.'/_mdl';
+		push @inc,$TOM::P.'/_mdl';
+		
+		foreach (@inc)
+		{
+			if (-e $_.'/'.$file)
 			{
-				$conf->{'file'} = $TOM::P.'/_overlays/'.$dir_item.'/_addons/'.$addon_path.'/_mdl/'.$file;
-			}
-			elsif (-e $TOM::P.'/_overlays/'.$dir_item.'/_mdl/'.$file)
-			{
-				$conf->{'file'} = $TOM::P.'/_overlays/'.$dir_item.'/_mdl/'.$file;
+				$conf->{'file'}=$_.'/'.$file;
+				last;
 			}
 		}
 		
 		if (!$conf->{'file'})
 		{
-			if (-e $TOM::P.'/_addons/'.$addon_path.'/_mdl/'.$file)
-			{
-				$conf->{'file'} = $TOM::P.'/_addons/'.$addon_path.'/_mdl/'.$file;
-			}
-			elsif (-e $TOM::P.'/_mdl/'.$file)
-			{
-				$conf->{'file'} = $TOM::P.'/_mdl/'.$file;
-			}
+			main::_log("can't find job file ".$file." in @inc",1);
 		}
 		
 		delete $conf->{'name'};
@@ -135,6 +136,10 @@ sub new
 		my $job=new $job_class($conf,$env);
 			$job->{'file'}=$abs_path;
 		return $job;
+	}
+	else
+	{
+		#main::_log("can't find job ".($conf->{'file'} || $conf->{'name'}),1);
 	}
 	
 	my $obj=bless {}, $class;
@@ -240,6 +245,7 @@ use Encode;
 sub jobify # prepare function call to background
 {
 	my $env=$_[1];
+	my $id=Utils::vars::genhash(8);
 	if ($main::nojobify)
 	{
 		undef $main::nojobify;
