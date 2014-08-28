@@ -280,11 +280,11 @@ my %ASPECTS = (
 	'objects' => {
 		'title' => 'Number of objects',
 		'values' => {
-			'n_object' => {
+			'MAIN_n_object' => {
 				'type' => 'GAUGE',
 				'label' => 'Number of objects'
 			},
-			'n_objecthead' => {
+			'MAIN_n_objecthead' => {
 				'type' => 'GAUGE',
 				'label' => 'Number of object heads',
 				'info' => 'Each object head can have one '
@@ -349,36 +349,75 @@ my %ASPECTS = (
 			}
 		}
 	},
+	'childs' => {
+		'title' => 'Child management status',
+		'values' => { 
+			'MGT_child_start' => {
+				'type' => 'DERIVE',
+#				'draw' => 'STACK',
+				'min' => '0'
+			},
+			'MGT_child_exit' => {
+				'type' => 'DERIVE',
+#				'draw' => 'STACK',
+				'min' => '0'
+			},
+			'MGT_child_stop' => {
+				'type' => 'DERIVE',
+#				'draw' => 'STACK',
+				'min' => '0'
+			},
+			'MGT_child_died' => {
+				'type' => 'DERIVE',
+#				'draw' => 'STACK',
+				'min' => '0'
+			},
+			'MGT_child_dump' => {
+				'type' => 'DERIVE',
+#				'draw' => 'STACK',
+				'min' => '0'
+			},
+			'MGT_child_panic' => {
+				'type' => 'DERIVE',
+#				'draw' => 'STACK',
+				'min' => '0'
+			},
+		}
+	},
 	'threads' => {
 		'title' => 'Thread status',
 		'values' => { 
-			'n_wrk' => {
-				'type' => 'GAUGE',
-				'min' => '0',
-				'warning' => '1:'
-			},
-			'n_wrk_create' => {
-				'type' => 'DERIVE',
+			'MAIN_threads' => {
+				'draw' => 'STACK',
 				'min' => '0'
 			},
-			'n_wrk_failed' => {
-				'type' => 'DERIVE',
-				'min' => '0',
-				'warning' => ':1'
-			},
-			'n_wrk_max' => { 
-				'type' => 'DERIVE',
-				'min' => '0'
-			},
-			'n_wrk_overflow' => {
-				'type' => 'DERIVE',
-				'min' => '0'
-			},
-			'n_wrk_drop' => {
-				'type' => 'DERIVE',
-				'min' => '0',
-				'warning' => ':1'
-			}
+#			'n_wrk' => {
+#				'type' => 'GAUGE',
+#				'min' => '0',
+#				'warning' => '1:'
+#			},
+#			'n_wrk_create' => {
+#				'type' => 'DERIVE',
+#				'min' => '0'
+#			},
+#			'n_wrk_failed' => {
+#				'type' => 'DERIVE',
+#				'min' => '0',
+#				'warning' => ':1'
+#			},
+#			'n_wrk_max' => { 
+#				'type' => 'DERIVE',
+#				'min' => '0'
+#			},
+#			'n_wrk_overflow' => {
+#				'type' => 'DERIVE',
+#				'min' => '0'
+#			},
+#			'n_wrk_drop' => {
+#				'type' => 'DERIVE',
+#				'min' => '0',
+#				'warning' => ':1'
+#			}
 		}
 	},
 	'memory_usage' => {
@@ -406,9 +445,9 @@ my %ASPECTS = (
 		'vlabel' => 'days',
 		'scale' => 'no',
 		'values' => {
-			'uptime' => {
+			'MAIN_uptime' => {
 				'type' => 'GAUGE',
-				'cdef' => 'uptime,86400,/'
+				'cdef' => 'MAIN_uptime,86400,/'
 			}
 		}
 	},
@@ -494,19 +533,19 @@ my %ASPECTS = (
 		'title' => 'Sessions',
 		'DEBUG' => 'yes',
 		'values' => {
-			'sess_closed' => {
+			'MAIN_sess_closed' => {
 				'type' => 'DERIVE',
 				'min' => '0'
 			},
-			'sess_pipeline' => {
+			'MAIN_sess_pipeline' => {
 				'type' => 'DERIVE',
 				'min' => '0'
 			},
-			'sess_readahead' => {
+			'MAIN_sess_readahead' => {
 				'type' => 'DERIVE',
 				'min' => '0'
 			},
-			'sess_linger' => {
+			'MAIN_sess_linger' => {
 				'type' => 'DERIVE',
 				'min' => '0'
 			}
