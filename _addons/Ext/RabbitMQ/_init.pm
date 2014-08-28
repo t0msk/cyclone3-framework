@@ -12,11 +12,13 @@ BEGIN
 
 BEGIN
 {
-	require Net::RabbitFoot;
-	$Ext::RabbitMQ::lib=1;
+	eval {
+		require Net::RabbitFoot if $Ext::RabbitMQ::host;
+		$Ext::RabbitMQ::lib=1;
+	};
 }
 
-BEGIN {shift @INC;}
+#BEGIN {shift @INC;}
 
 our $debug=0;
 our $service;
