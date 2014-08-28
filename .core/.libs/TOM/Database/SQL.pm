@@ -243,7 +243,7 @@ sub execute
 		return 1 if TOM::Engine::jobify([$SQL,@_]); # do it in background
 	}
 	
-	my $t=track TOM::Debug(__PACKAGE__."::execute()",'namespace'=>"SQL",'quiet' => $env{'quiet'},'timer'=>1);
+	my $t=track TOM::Debug(__PACKAGE__."::execute()",'namespace'=>"SQL:".($env{'db_h'} || 'main'),'quiet' => $env{'quiet'},'timer'=>1);
 	  
 	# when I'm sometimes really wrong ;)
 	my $typeselect=0; # select query?
@@ -457,9 +457,12 @@ sub execute
 			$main::DB{$env{'db_h'}}->{'LongReadLen'} = 512 * 1024;
 		}
 		
+#		undef $DBI::errstr;
 		$output{'sth'} = $main::DB{$env{'db_h'}}->prepare($SQL,{'ora_auto_lob'=>0});
 		#$output{'err'} = $DBI::errstr unless $output{'sth'};
-		$output{'err'}=$main::DB{$env{'db_h'}}->errstr();
+#		main::_log("err=$DBI::errstr");
+		$output{'err'}=$main::DB{$env{'db_h'}}->errstr() || $DBI::errstr;
+		undef $output{'sth'} if $output{'err'};
 		
 		if (not $output{'sth'})
 		{
