@@ -179,7 +179,7 @@ undef $DBH;
 # zacina praca s jednotlivymi hostami;
 
 CRON::waitload($CRON::LOADAVG);
-our $pm = new Parallel::ForkManager(2);
+our $pm = new Parallel::ForkManager(1);
 
 
 
@@ -335,14 +335,14 @@ foreach (sort keys %CRON::hosts)
 				if ($mdl_env{'-fork'})
 				{
 					main::_log("running module in separate fork");
-					my $pm = new Parallel::ForkManager(50);
-					my $pid = $pm->start and next;
+					my $pm2 = new Parallel::ForkManager(2);
+					my $pid = $pm2->start and next;
 					srand (time ^ $$);
 					sleep(2);
 					undef %main::DB;
 					TOM::Database::connect::multi('main');
 					CRON::module(%mdl_env);
-					$pm->finish();
+					$pm2->finish();
 				}
 				
 				CRON::module(%mdl_env);
