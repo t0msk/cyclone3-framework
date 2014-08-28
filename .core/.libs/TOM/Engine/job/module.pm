@@ -245,7 +245,7 @@ use Encode;
 sub jobify # prepare function call to background
 {
 	my $env=$_[1];
-	my $id=Utils::vars::genhash(8);
+	
 	if ($main::nojobify)
 	{
 		undef $main::nojobify;
