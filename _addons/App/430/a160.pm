@@ -68,7 +68,7 @@ sub get_relation_iteminfo
 				ID_entity,
 				name
 			FROM
-				`$env{'r_db_name'}`.a430_static
+				`$env{'r_db_name'}`.a430_list
 			WHERE
 				ID_entity=$env{'r_ID_entity'}
 			LIMIT 1
