@@ -211,6 +211,9 @@ sub execute
 	
 	$env{'get_name'}=$main::FORM{'get_name'} || $main::RPC->{'get_name'}  unless $env{'get_name'};
 	
+	if ($env{'l_prefix'} && !$env{'db_name'})
+	{$env{'db_name'}=App::020::SQL::functions::_detect_db_name($env{'l_prefix'})}
+	
 	foreach (keys %env)
 	{
 		main::_log("parsed input '$_'='$env{$_}'");
@@ -273,7 +276,7 @@ sub execute
 #			'l_prefix' => $env{'l_prefix'} || $main::FORM{'l_prefix'} || $main::RPC->{'l_prefix'},
 #			'l_table' => $env{'l_table'}, # this value can be send as undefined
 #			'l_ID_entity' => $env{'l_ID_entity'} || $main::FORM{'l_ID_entity'} || $main::RPC->{'l_ID_entity'},
-			'r_db_name' => $env{'l_db_name'}, # this value can be send as undefined
+			'r_db_name' => $env{'db_name'}, # this value can be send as undefined
 			'r_prefix' => $env{'l_prefix'} || $main::FORM{'l_prefix'} || $main::RPC->{'l_prefix'},
 			'r_table' => $env{'l_table'}, # this value can be send as undefined
 			'r_ID_entity' => $env{'l_ID_entity'} || $main::FORM{'l_ID_entity'} || $main::RPC->{'l_ID_entity'},

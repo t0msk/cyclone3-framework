@@ -77,6 +77,9 @@ sub new_relation
 	if ($env{'l_prefix'} && !$env{'db_name'})
 	{$env{'db_name'}=App::020::SQL::functions::_detect_db_name($env{'l_prefix'})}
 	
+	if ($env{'r_prefix'} && !$env{'r_db_name'})
+	{$env{'r_db_name'}=App::020::SQL::functions::_detect_db_name($env{'r_prefix'})}
+
 	$env{'db_name'}=$App::160::db_name unless $env{'db_name'};
 	$env{'status'}='Y' unless $env{'status'};
 	
