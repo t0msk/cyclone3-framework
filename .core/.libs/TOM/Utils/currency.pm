@@ -69,7 +69,16 @@ sub format
 }
 =cut
 
-
+our $currency_format_extsymbol=do{
+	if (defined $TOM::Utils::currency::currency_format_extsymbol)
+	{
+		$TOM::Utils::currency::currency_format_extsymbol;
+	}
+	else
+	{
+		",–";
+	}
+};
 
 sub format
 {
@@ -90,7 +99,7 @@ sub format
 	unshift @a,$cur[0];
 	$currency = (join $delimiter,@a) . "," . $cur[1];
 	
-	$currency=~s|,00|,–|g;
+	$currency=~s|,00|$currency_format_extsymbol|g;
 #	$currency="--" if $currency eq "0,--";
 	return $currency;
 }
