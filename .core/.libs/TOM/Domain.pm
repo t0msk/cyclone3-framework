@@ -132,10 +132,13 @@ BEGIN
 					my $db_name=$$db_var || $TOM::DB{'main'}{'name'};
 					$addons{$_}=$db_name;
 				}
+				my $path=$tom::P;
+					$path=~s|^$TOM::P/||;
 				$Ext::Redis::service->hset('C3|domains',$tom::H_orig,to_json({
 					'updated' => time(),
 					'db_name' => $TOM::DB{'main'}{'name'},
 					'tom::P' => $tom::P,
+					'tom::P_rel' => $path,
 					'tom::Pm' => $tom::Pm,
 					'addons' => \%addons
 				}),sub{});
