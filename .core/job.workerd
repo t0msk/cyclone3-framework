@@ -6,9 +6,9 @@ BEGIN
 		$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
 	if (!$ENV{'CYCLONE3PATH'})
 	{
-		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
-		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM"; # obsolete
 		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
 	}
 	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
 	$TOM::engine.='.workerd';
@@ -313,12 +313,16 @@ sub check_domains
 	foreach my $domain (sort {length($a) <=> length($b) || $a cmp $b} keys %domains)
 	{
 		my $dom_data=from_json $domains{$domain};
+			$dom_data->{'tom::P'}=$TOM::P.'/'.$dom_data->{'tom::P_rel'}
+				if $dom_data->{'tom::P_rel'};
+			$dom_data->{'tom::P_rel'}=$dom_data->{'tom::P'};
+				$dom_data->{'tom::P_rel'}=~s|^$TOM::P/||;
 			$dom_data->{'domain'}=$domain;
-		if (!-d $dom_data->{'tom::P'} || ($dom_data->{'updated'} < (time() - (86400*3))))
+		if (!-d $dom_data->{'tom::P'} || ($dom_data->{'updated'} < (time() - (86400 * 7))))
 		{
 			# ignoring domain
 			$Redis->hdel('C3|domains',$domain,sub{});
-			main::_log_stdout("removing inactive domain '$domain' from register",1,"job.workerd");
+			main::_log_stdout("removing inactive domain '$domain' (".($dom_data->{'tom::P'}).") from register",1,"job.workerd");
 			delete $domains{$domain};
 			next;
 		}
@@ -377,6 +381,10 @@ sub check_domains
 			}
 		
 		$domain_info{$domain}=$dom_data;
+		
+		main::_log_stdout("domain '$domain' config dir ".$dom_data->{'tom::P'});
+		
+#		print Dumper($dom_data);
 		
 		# check if there are special triggers definition file (jobs.conf)
 		my $filename=$dom_data->{'tom::P'}.'/job.conf';
@@ -655,6 +663,21 @@ sub check_scheduler
 		if (!$config)
 		{
 			main::_log_stdout("missing config '$filename'",1,"job.workerd");
+			
+			TOM::Database::SQL::execute(qq{
+				UPDATE
+					`TOM`.`a100_job_cron_schedule`
+				SET
+					`status`='E'
+				WHERE
+					filename=? AND
+					id = ?
+			},'db_h'=>'sys','bind'=>[
+				$filename,
+				$db0_line{'id'}
+			],'quiet'=>1);
+			
+			next;
 		}
 		
 		my $domain=$config->{'domain'}->{'domain'};
