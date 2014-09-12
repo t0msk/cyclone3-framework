@@ -137,6 +137,47 @@ sub callback {
 	my $t0=track TOM::Debug('eval');
 	eval
 	{
+		
+		$main::time_current=$tom::time_current=time();
+		local (
+			$tom::Tsec,
+			$tom::Tmin,
+			$tom::Thour,
+			$tom::Tmday,
+			$tom::Tmom,
+			$tom::Tyear,
+			$tom::Twday,
+			$tom::Tyday,
+			$tom::Tisdst) = localtime($tom::time_current);
+#		main::_log("hour=$tom::Thour");
+		# doladenie casu
+		$tom::Tyear+=1900;$tom::Tmom++;
+		# zaciatok dnesneho dna
+		$main::time_day=$tom::time_current-($tom::Thour*3600)-($tom::Tmin*60)-$tom::Tsec;
+		# formatujem cas
+		local (
+			$tom::Fsec,
+			$tom::Fmin,
+			$tom::Fhour,
+			$tom::Fmday,
+			$tom::Fmom,
+			$tom::Fyear,
+			$tom::Fwday,
+			$tom::Fyday,
+			$tom::Fisdst
+			) = (
+			sprintf ('%02d', $tom::Tsec),
+			sprintf ('%02d', $tom::Tmin),
+			sprintf ('%02d', $tom::Thour),
+			sprintf ('%02d', $tom::Tmday),
+			sprintf ('%02d', $tom::Tmom),
+			$tom::Tyear,
+			$tom::Twday,
+			$tom::Tyday,
+			$tom::Tisdst);
+		
+		$tom::datetime=$tom::Fyear.'-'.$tom::Fmom.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin.':'.$tom::Fsec;
+		
 		no strict;
 		my $payload=from_json($var->{'body'}->{'payload'});
 #		print $payload;
@@ -179,8 +220,8 @@ sub callback {
 	if ($@)
 	{
 		main::_log("job error ".$@,1);
-#		$this_channel->ack();
-		exit;
+		$this_channel->ack();
+#		exit;
 	}
 	$this_channel->ack();
 	alarm $alarm;
