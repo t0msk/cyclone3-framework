@@ -16,25 +16,30 @@ sub new
 	my $self={};
 	my %env=@_;
 	
-	loop_file:
-	
-	$self->{'unique'}=TOM::Utils::vars::genhash(32);
-	
-#	$main::ENV{'TMP'}
-	if ($env{'dir'})
+	my $file_notexists=1;
+	while ($file_notexists)
 	{
-		$self->{'filename'}=$env{'dir'}.'/Cyclone3TMP-'.$self->{'unique'};
+		$self->{'unique'}=$$.'-'.TOM::Utils::vars::genhash(32);
+		
+		if ($env{'dir'})
+		{
+			$self->{'filename'}=$env{'dir'}.'/Cyclone3TMP-'.$self->{'unique'};
+		}
+		else
+		{
+			$self->{'filename'}=$TOM::P.'/_temp/tmp-'.$self->{'unique'};	
+		}
+		
+		$self->{'filename'}.='.'.$env{'ext'} if $env{'ext'};
+		$self->{'unlink_ext'}=$env{'unlink_ext'} if $env{'unlink_ext'};
+		$self->{'unlink'}=1;
+		
+		$file_notexists=0;
+		if (-e $self->{'filename'})
+		{
+			$file_notexists=1;
+		}
 	}
-	else
-	{
-		$self->{'filename'}=$TOM::P.'/_temp/tmp-'.$self->{'unique'};	
-	}
-	
-	$self->{'filename'}.='.'.$env{'ext'} if $env{'ext'};
-	$self->{'unlink_ext'}=$env{'unlink_ext'} if $env{'unlink_ext'};
-	$self->{'unlink'}=1;
-	
-	if (-e $self->{'filename'}){goto loop_file;}
 	
 	main::_log("opened tempfile $self->{'filename'}");
 	
