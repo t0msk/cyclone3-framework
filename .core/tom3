@@ -19,9 +19,9 @@ BEGIN
 	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
 	if (!$ENV{'CYCLONE3PATH'})
 	{
-		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
-		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
 		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM"; # obsolete
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
 	}
 	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
 }
