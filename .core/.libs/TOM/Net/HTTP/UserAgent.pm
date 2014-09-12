@@ -409,6 +409,16 @@ our @table=
 	# --------------------------------------------------------------------
 	
 	# MOZILLA
+	{name=>'Mozilla Firefox 3X.X',
+		regexp		=>	['Firefox/3\d'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Mozilla.org",
+			'html5' => 1,
+			'video_ogg' => 1,
+			'xmlhttp' => 1,
+			'hyphen' => 1,
+#		log	=>	1,
+	},
 	{name=>'Mozilla Firefox 2X.X',
 		regexp		=>	['Firefox/2\d'],
 		agent_type	=>	"browser",
@@ -2397,6 +2407,7 @@ our %table_IP=
 	'59\.60\.107\.' => 'spambot', # 2013-01-17
 	'59\.60\.109\.' => 'spambot', # 2013-01-17
 	'59\.60\.111\.' => 'spambot', # 2013-01-17
+#	'62\.197\.199\.74' => 'spambot', # 2013-08-05
 	'60\.173\.26\.35' => 'spambot', # 2013-01-24
 	'65\.111\.172\.' => 'spambot', # 2013-01-15
 	'91\.205\.174\.' => 'spambot', # 2013-01-14
