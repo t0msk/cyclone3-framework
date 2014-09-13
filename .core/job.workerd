@@ -318,7 +318,8 @@ sub check_domains
 			$dom_data->{'tom::P_rel'}=$dom_data->{'tom::P'};
 				$dom_data->{'tom::P_rel'}=~s|^$TOM::P/||;
 			$dom_data->{'domain'}=$domain;
-		if (!-d $dom_data->{'tom::P'} || ($dom_data->{'updated'} < (time() - (86400 * 7))))
+		$domains{$domain}=to_json $dom_data;
+		if (!-d $dom_data->{'tom::P'} || ($dom_data->{'updated'} < (time() - (86400 * 31))))
 		{
 			# ignoring domain
 			$Redis->hdel('C3|domains',$domain,sub{});
@@ -382,7 +383,7 @@ sub check_domains
 		
 		$domain_info{$domain}=$dom_data;
 		
-		main::_log_stdout("domain '$domain' config dir ".$dom_data->{'tom::P'});
+		main::_log_stdout("domain '$domain' config dir ".$dom_data->{'tom::P'}." \"last_invocation\"=-".(time()-$dom_data->{'updated'})."s");
 		
 #		print Dumper($dom_data);
 		
@@ -639,6 +640,7 @@ sub check_domains
 		delete $config_file{$_}
 			unless -e $_;
 	}
+	
 }
 
 
