@@ -126,15 +126,16 @@ BEGIN
 	$TOM::P_uuid=(stat($TOM::P.'/.core'))[0].'.'.(stat($TOM::P.'/.core'))[1];
 	
 	# actual path and domain service path
-	chomp($tom::p=`pwd`) unless $tom::p;
-	$tom::P=$tom::p;
+	use Cwd;
+	$tom::P=$tom::p=getcwd();
 	
 	# try to find domain service local.conf
-	my $tomP=$tom::P;$tomP=~s|^$TOM::P/||;
+	my $tomP=$tom::P;#$tomP=~s|^$TOM::P/||;
 	my $max_skip=()=$tomP=~/\//g;
 	for (0..$max_skip)
 	{
-		if (-e $TOM::P.'/'.$tomP.'/local.conf'){$tom::P=$TOM::P.'/'.$tomP;last;}
+#		if (-e $TOM::P.'/'.$tomP.'/local.conf'){$tom::P=$TOM::P.'/'.$tomP;last;}
+		if (-e $tomP.'/local.conf'){$tom::P=$tomP;last;}
 		$tomP=~s|^(.*)\/.*$|$1|;
 	}
 	
@@ -156,7 +157,7 @@ BEGIN
 	$TOM::InlineDIR="$TOM::P/_temp/_Inline.[".$TOM::hostname."]";
 	mkdir $TOM::InlineDIR if (! -e $TOM::InlineDIR);
 	
-	$main::time_current=time();
+	$main::time_current=$main::time_start=time();
 	
 	# CONFIG
 	# configuration defined by software
