@@ -120,7 +120,7 @@ sub callback {
 		$deduplication=$var->{'header'}->{'headers'}->{'deduplication'};
 	main::_log("received message id='".($var->{'header'}->{'headers'}->{'message_id'})."' routing_key='$routing_key' timestamp='$timestamp' size=".length($var->{'body'}->{'payload'})."b deduplication=".$deduplication);
 	
-	my $key_entity=TOM::Digest::hash($var->{'body'}->{'payload'});
+	my $key_entity=TOM::Digest::hash($tom::H.$var->{'body'}->{'payload'});
 	if ($deduplication && $Redis)
 	{
 		my $timestamp_exec=$Redis->hget('C3|job|'.$key_entity,'modified');
