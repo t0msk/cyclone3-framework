@@ -42,8 +42,13 @@ use AnyEvent;
 use Coro;
 use AnyEvent::ForkManager;
 use Proc::ProcessTable;
-use Sys::Info;
-use Sys::Info::Constants qw( :device_cpu );
+#use Sys::Info;
+use Sys::Statistics::Linux;
+use Sys::Statistics::Linux::SysInfo;
+use Sys::Statistics::Linux::LoadAVG;
+use Sys::Statistics::Linux::MemStats;
+#use Sys::CpuLoad;
+#use Sys::Info::Constants qw( :device_cpu );
 
 # main loop AnyEvent
 my $main_loop = AnyEvent->condvar;
@@ -61,9 +66,17 @@ if (!$response->is_success)
 	die "can't connect to RabbitMQ API (".$response->status_line.")";
 }
 
-my $info = Sys::Info->new;
-my $cpu  = $info->device('CPU');
-main::_log_stdout("running on host with ".$cpu->count." CPU cores PID $$",3,"job.workerd");# if $ENV{'WORKERS'};
+my $sysinfo  = Sys::Statistics::Linux::SysInfo->new;
+my $sysstat = $sysinfo->get;
+
+my $meminfo = Sys::Statistics::Linux::MemStats->new;
+my $memstat = $meminfo->get;
+
+my $loadinfo = Sys::Statistics::Linux::LoadAVG->new;
+my $loadstat = $loadinfo->get;
+
+main::_log_stdout("running on host with ".$sysstat->{'tcpucount'}." CPU cores PID $$",3,"job.workerd");# if $ENV{'WORKERS'};
+our $MAX_LOAD=($sysstat->{'tcpucount'} * 3);
 
 main::_log_stdout("declaring default job exchange, queue, binding",3,"job.workerd");
 
@@ -114,14 +127,20 @@ sub get_workers
 }
 
 our $WORKERS = get_workers();
-my $MAX_WORKERS = $TOM::job_host_max_processes || ($cpu->count * 2) +1;
+my $MAX_WORKERS = $TOM::job_host_max_processes || ($sysstat->{'tcpucount'} * 2) +1;
 $ENV{'WORKERS'}=1 unless exists $ENV{'WORKERS'}; # spawning workers?
 $TOM::job_domain_max_workers||=16; # max X workers parallel on same domain
 $TOM::job_worker_start_delay||=5; # start next worker after delay
 $TOM::job_domain_worker_start_delay||=60; # start next worker after delay on same domain
 
 #	$MAX_WORKERS = 2;
-main::_log_stdout("max $MAX_WORKERS workers (allowed to fork?=$ENV{'WORKERS'})",3,"job.workerd");
+
+our $usable_memory = (
+	($memstat->{'memfree'} - ($memstat->{'memtotal'} * 0.05)) # reserve 1GB
+	+ ($memstat->{'cached'} - ($memstat->{'memtotal'} * 0.05)) # +1GB filesystem cache reserver
+);
+main::_log_stdout("max $MAX_WORKERS workers (allowed to fork?=$ENV{'WORKERS'}), max load is allowed $MAX_LOAD, usable free memory ".(int(($usable_memory/1024/1024)*100)/100)."GB for ".int($usable_memory/200000)." workers",3,"job.workerd");
+
 #our $pm = AnyEvent::ForkManager->new(max_workers => $MAX_WORKERS);
 
 #$pm->on_start(sub {
@@ -143,6 +162,25 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 	$WORKERS = get_workers();
 	
 	main::_log("active workers \@$TOM::hostname ".$WORKERS."/".$MAX_WORKERS,3,"job.workerd");
+	
+	$loadstat = $loadinfo->get;
+	my $load=$loadstat->{'avg_5'};#(Sys::CpuLoad::load())[1];
+	if ($load >= $MAX_LOAD && $WORKERS > 1)
+	{
+		main::_log("high load ($load) \@$TOM::hostname, skipping",3,"job.workerd");
+		return undef;
+	}
+	
+	my $memstat = $meminfo->get;
+	$usable_memory = (
+		($memstat->{'memfree'} - ($memstat->{'memtotal'} * 0.05)) # reserve 1GB
+		+ ($memstat->{'cached'} - ($memstat->{'memtotal'} * 0.05)) # +1GB filesystem cache reserver
+	);
+	if ($usable_memory < 200000 && $WORKERS > 1)
+	{
+		main::_log("usable memory too low (".($usable_memory)."kb) \@$TOM::hostname, skipping",3,"job.workerd");
+		return undef;
+	}
 	
 	my $response = $ua->get($uri.'/queues');
 	if (!$response->is_success)
@@ -289,7 +327,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 			$tom::P=$domain_info{$domain}{'tom::P'} || $TOM::P.'/.core'; # new local.conf location
 			chdir $tom::P;
 			my $cmd='/usr/bin/perl '.$TOM::P."/.core/job.worker $class > /dev/null";
-#			main::_log("exec '$cmd'");
+			main::_log_stdout("chdir '$tom::P' exec '$cmd'",3,"job.workerd");
 			`$cmd&`;
 #			sleep 1;
 #			main::_log("executed");
@@ -606,7 +644,7 @@ sub check_domains
 				}
 				else
 				{
-					main::_log_stdout(" [$domain] set cron '".$id."' to execute after ".($datetime_next-time())."S",3,"job.workerd");
+					main::_log_stdout(" [$domain] set cron '".$id."' to execute after ".($datetime_next-time())."S from now",3,"job.workerd");
 					TOM::Database::SQL::execute(qq{
 						REPLACE INTO
 							`TOM`.`a100_job_cron_schedule`
