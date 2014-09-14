@@ -133,7 +133,7 @@ BEGIN
 					$addons{$_}=$db_name;
 				}
 				my $path=$tom::P;
-					$path=~s|^$TOM::P/||;
+					$path=~s|^.*?!|!|;
 				$Ext::Redis::service->hset('C3|domains',$tom::H_orig,to_json({
 					'updated' => time(),
 					'db_name' => $TOM::DB{'main'}{'name'},
