@@ -13,7 +13,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_discount` (
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL, -- who created this item
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL, -- who last modified this item
-  `when_validate` varchar(8) character set ascii collate ascii_bin default 'start',
+  `postprocess` char(1) character set ascii NOT NULL default 'N',
   `rules_validation` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `rules_apply` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_discount_j` (
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `when_validate` varchar(8) character set ascii collate ascii_bin default 'start',
+  `postprocess` char(1) character set ascii NOT NULL default 'N',
   `rules_validation` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `rules_apply` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
