@@ -1,0 +1,105 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use Ext::Elastic::_init;
+use Data::Dumper;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	
+	if (!$Elastic)
+	{
+		main::_log_stdout("Elastic not available");
+		return undef;
+	}
+	
+	my $results = $Elastic->search(
+		'index' => '.cyclone3.*',
+		'type' => 'event',
+		'body'  => {
+			'query' => {
+				'filtered' => {
+					
+					'filter' => {
+						
+						"bool" => {
+							"must" => [
+								{
+									"terms" => {
+										"facility" => [
+											"pub.request"
+										]
+									},
+								},
+								{
+									'range' => {
+										'datetime' => {
+										#	'gte' => '',
+											'lte' => 'now-4w'
+										}
+									}
+									
+								},
+							]
+						},
+						
+					}
+					
+					
+				}
+			}
+		}
+	);
+	
+	print Dumper($results->{'hits'}->{'total'});
+	
+	my $results = $Elastic->search(
+		'index' => '.cyclone3.*',
+		'type' => 'event',
+		'body'  => {
+			'query' => {
+				'filtered' => {
+					
+					'filter' => {
+						
+						"bool" => {
+							"must" => [
+								{
+									'range' => {
+										'datetime' => {
+										#	'gte' => '',
+											'lte' => 'now-24h'
+										}
+									}
+								},
+							],
+							"must_not" => [
+								{
+									"terms" => {
+										"facility" => [
+											"pub.request"
+										]
+									},
+								},
+							]
+						},
+						
+					}
+					
+					
+				}
+			}
+		}
+	);
+	
+	print Dumper($results->{'hits'}->{'total'});
+	
+return 1}
+1;
