@@ -10,6 +10,7 @@ use strict;
 use App::210::_init;
 use App::401::_init;
 use Ext::Solr::_init;
+use Ext::Elastic::_init;
 
 sub execute
 {
@@ -45,6 +46,7 @@ sub execute
 	my $sql_limit=$env{'sql_limit'} || 10;
 	my $sql_order_by=$env{'sql_order_by'} || 'article_attrs.datetime_start DESC';
 	my $sql_group_by;
+	my $elastic;
 	
 	if ($env{'unique'})
 	{
@@ -110,7 +112,117 @@ sub execute
 	}
 	
 	
-	if ($env{'solr'})
+	if ($env{'elastic'})
+	{
+		main::_log("request to Elastic");
+		return undef unless $Elastic;
+		
+		my @elastic_must;
+		my @elastic_should;
+		my @elastic_filtered;
+		
+		push @elastic_must,{"terms" => {"status" => [$env{'article_attrs.status'}]}};
+		
+		if ($env{'article_cat.ID'})
+		{
+			my $filter={'or' => [{'term' => {}},{'prefix' => {}}]};
+			
+			foreach my $ID_category (split(';',$env{'article_cat.ID'}))
+			{
+				next unless $ID_category;
+				if ($ID_category=~s/\*$//)
+				{
+					my %sth0=TOM::Database::SQL::execute(qq{
+						SELECT
+							ID_charindex
+						FROM `$App::401::db_name`.a401_article_cat
+						WHERE
+							ID=? AND status IN ('Y','L')
+						LIMIT 1
+					},'bind'=>[$ID_category],'quiet'=>1);
+					my %db0_line=$sth0{'sth'}->fetchhash();
+					push @{$filter->{'or'}->[1]->{'prefix'}->{'cat.charindex'}},$db0_line{'ID_charindex'}
+						if $db0_line{'ID_charindex'};
+				}
+				else
+				{
+					push @{$filter->{'or'}->[0]->{'term'}->{'cat.ID'}},$ID_category;
+				}
+				
+				if (!$filter->{'or'}->[0]->{'term'}->{'cat.ID'})
+				{
+					shift $filter->{'or'};
+					if (!$filter->{'or'}->[0]->{'prefix'}->{'cat.charindex'})
+					{
+						undef $filter;
+					}
+				}
+				elsif (!$filter->{'or'}->[1]->{'prefix'}->{'cat.charindex'})
+				{
+					pop $filter->{'or'};
+					if (!$filter->{'or'}->[0]->{'term'}->{'cat.ID'})
+					{
+						undef $filter;
+					}
+				}
+			}
+			push @elastic_must,$filter
+				if $filter;
+		}
+		
+		$env{'elastic.page'} = 1 unless $env{'elastic.page'};
+		$env{'elastic.size'} = $env{'page_limit'} unless $env{'elastic.size'};
+		
+		my $results = $Elastic->search(
+			'index' => 'cyclone3.'.$App::401::db_name,
+			'type' => 'a401_article',
+			'fields' => ["_id","name","abstract","cat.ID","cat.charindex"],
+			'from' => (($env{'elastic.page'}-1)*$env{'elastic.size'}),
+			'size' => $env{'elastic.size'},
+			'body'  => {
+				'query' => {
+					'filtered' => {
+						'query' => {
+							'query_string' => {
+								"fields" => ["name^10", "*.abstract"],
+								'query' => $env{'elastic.query_string'} || "",
+#								'analyze_wildcar' => 'true'
+								"use_dis_max" => 1
+							}
+						},
+						'filter' => {
+							'bool' => {
+								'must' => [
+									@elastic_must
+								]
+							}
+						}
+					}
+				},
+				"highlight" => {
+					"fields" => {
+						"name" => {}
+					},
+					"fragment_size" => 300,
+					"pre_tags" => ['<em>'],
+					"post_tags" => ['</em>']
+				},
+			}
+		);
+		
+		main::_log("found ".$results->{'hits'}->{'total'}." documents");
+		
+		$env{'article.ID_entity'}="0;";
+		
+		$elastic=$results->{'hits'};
+		
+		foreach my $doc ( @{$results->{'hits'}->{'hits'}} )
+		{
+			$env{'article.ID_entity'}.=$doc->{'_id'}.";";
+		}
+		
+	}
+	elsif ($env{'solr'})
 	{
 		$env{'solr.defType'} = 'edismax' unless $env{'solr.defType'};
 		$env{'solr.rows'} = 10 unless $env{'solr.rows'};
@@ -181,12 +293,11 @@ sub execute
 		
 	}
 	
-	
 	if ($env{'article.ID_entity'}=~/;/)
 	{
 		$sql_where.=" AND article.ID_entity IN (".join(',',split(';',$env{'article.ID_entity'})).")";
 		$sql_limit=scalar split(';',$env{'article.ID_entity'});
-		if ($env{'solr'})
+		if ($env{'solr'} || $env{'elastic'})
 		{
 			$sql_group_by="article.ID_entity";
 			$sql_order_by="CASE\n";
@@ -206,6 +317,9 @@ sub execute
 	
 	# get template
 	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	$TPL->{'variables'}->{'elastic'}=$elastic
+		if $elastic;
 	
 	use App::020::mimetypes::html;
 	my $parser=new App::020::mimetypes::html(
@@ -328,7 +442,7 @@ sub execute
 		$i++;
 		last if $i > $env{'page_limit'};
 		
-		main::_log("[$i/$env{'page_limit'}] found article.ID_entity=$article{'ID_entity'}");
+		main::_log("[$i/$env{'page_limit'}] found article.ID_entity=$article{'ID_entity'} name='$article{'name'}'");
 		
 		push @{$env_out{'entity'}},{
 			'db_h' => 'main',
@@ -337,6 +451,18 @@ sub execute
 			'ID_entity' => $article{'ID_entity'}
 		};
 		
+		$article{'related_thumbnail'}=(App::160::SQL::get_relations(
+			'db_name' => $App::401::db_name,
+			'l_prefix' => 'a401',
+			'l_table' => 'article',
+			'l_ID_entity' => $article{'ID_entity'},
+			'rel_type' => 'thumbnail',
+			'r_db_name' => $App::501::db_name,
+			'r_prefix' => 'a501',
+			'r_table' => 'image',
+			'status' => 'Y',
+			'limit' => 1
+		))[0];
 		
 		# get all cats
 		my @cats;
@@ -364,7 +490,8 @@ sub execute
 				AND article.status = 'Y'
 				AND article_cat.ID IS NOT NULL
 				AND article.ID_entity = ?
-		},'bind'=>[$article{'ID_entity'}],'log_'=>1,'-slave'=>1,
+		},'bind'=>[$article{'ID_entity'}],'quiet'=>1,'-slave'=>1,
+			'-cache' => 600,
 			'-changetime'=>App::020::SQL::functions::_get_changetime(
 				{
 					'db_h'=>"main",

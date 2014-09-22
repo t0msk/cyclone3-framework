@@ -306,6 +306,19 @@ sub execute
 	};
 	push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
 	
+	$article{'related_thumbnail'}=(App::160::SQL::get_relations(
+		'db_name' => $App::401::db_name,
+		'l_prefix' => 'a401',
+		'l_table' => 'article',
+		'l_ID_entity' => $article{'ID_entity'},
+		'rel_type' => 'thumbnail',
+		'r_db_name' => $App::501::db_name,
+		'r_prefix' => 'a501',
+		'r_table' => 'image',
+		'status' => 'Y',
+		'limit' => 1
+	))[0];
+	
 	$TPL->{'variables'}{'article'} = \%article;
 	
 	return 1,%env_out;
