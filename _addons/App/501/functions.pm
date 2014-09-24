@@ -393,6 +393,8 @@ sub _image_file_genpath
 	{
 		File::Path::mkpath($path);
 		chmod (0777,$path);
+		$path=$tom::P_media.'/a501/image/file/'.$format;
+		chmod (0777,$path);
 	}
 	return "$format/$ID/$name.$ext";
 };
@@ -625,6 +627,15 @@ sub image_file_process
 	#			$image1->Trim();
 				main::_log(" new width=".($image1->Get('width'))." height=".($image1->Get('height')));
 			}
+			$procs++;
+			next;
+		}
+		
+		if ($function_name eq "crop")
+		{
+			main::_log("exec $function_name($params[0],$params[1],$params[2],$params[3])");
+			$image1->Crop('x'=>$params[0],'y'=>$params[1],'width'=>$params[2]-$params[0],'height'=>$params[3]-$params[1]);
+			main::_log(" new width=".($image1->Get('width'))." height=".($image1->Get('height')));
 			$procs++;
 			next;
 		}
@@ -2021,7 +2032,8 @@ sub get_image_file
 	if ($sth0{'rows'})
 	{
 		my %image=$sth0{'sth'}->fetchhash();
-		if (!$image{'ID_file'})
+#		if (!$image{'ID_file'})
+		if (!$image{'file_name'})
 		{
 			undef $image{'file_path'};
 			main::_log("this image does not have format '$env{'image_file.ID_format'}'");
@@ -2150,6 +2162,73 @@ sub image_file_resize
 				$env{'file_path'}=$new_file_path.'/'.$new_file;
 				return %env;
 			}
+		}
+		
+	}
+	
+	return undef;
+}
+
+sub image_file_crop
+{
+	my %env=@_;
+	
+	if (!$env{'image_file.ID'})
+	{
+		return undef;
+	}
+	
+	return undef if (!$env{'crop'});
+	
+	# najprv najdem dany file
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*,
+			CONCAT(ID_format,'/',SUBSTR(ID,1,4)) AS file_dir,
+			CONCAT(ID_format,'/',SUBSTR(ID,1,4),'/',name,'.',file_ext) AS file_path
+		FROM
+			`$App::501::db_name`.a501_image_file
+		WHERE
+			ID=?
+	},'quiet'=>1,'bind'=>[$env{'image_file.ID'}]);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $new_file_path=$env{'method'}.'/'.$db0_line{'file_dir'};
+		
+		my $new_file=$db0_line{'name'}."_".($env{'crop'}).'.'.$db0_line{'file_ext'};
+		if (-e $tom::P_media.'/a501/image/file_p/'.$new_file_path.'/'.$new_file)
+		{
+			# this resized file already exists
+			$env{'file_path'}=$new_file_path.'/'.$new_file;
+			return %env;
+		}
+		
+		# not exists, also resizing
+		# at first create directory
+		if (!-e $tom::P_media.'/a501/image/file_p/'.$new_file_path)
+		{
+			File::Path::mkpath($tom::P_media.'/a501/image/file_p/'.$new_file_path) || return undef;
+			chmod (0777,$tom::P_media.'/a501/image/file_p/'.$new_file_path) || return undef;
+		}
+		
+		if (!-e $tom::P_media.'/a501/image/file/'.$db0_line{'file_path'})
+		{
+			# original file not exists
+			return undef;
+		}
+		
+		main::_log("crop file to crop='$env{'crop'}'");
+		
+		my ($out,$ext)=image_file_process(
+			'image1' => $tom::P_media.'/a501/image/file/'.$db0_line{'file_path'},
+			'image2' => $tom::P_media.'/a501/image/file_p/'.$new_file_path.'/'.$new_file,
+			'process' => qq{crop($env{'crop'})}
+		);
+		
+		if ($out)
+		{
+			$env{'file_path'}=$new_file_path.'/'.$new_file;
+			return %env;
 		}
 		
 	}
