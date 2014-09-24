@@ -330,7 +330,26 @@ sub start
 					$attr->{'width'}=$db0_line{'image_width'} unless $attr->{'width'};
 					$attr->{'height'}=$db0_line{'image_height'} unless $attr->{'height'};
 					
-					if (
+					if ($attr->{'crop'} &&
+						# resize only when request same format as saved in html code
+						($vars{'ID_format_orig'} eq $vars{'ID_format'}))
+					{
+						main::_log("post crop image_file.ID=$db0_line{'ID_file'}");
+						my %image_resized=App::501::functions::image_file_crop(
+							'image_file.ID' => $db0_line{'ID_file'},
+							'crop' => $attr->{'crop'},
+						);
+						if ($image_resized{'file_path'})
+						{
+							$attr->{'src'}=$tom::H_a501.'/image/file_p/'.$image_resized{'file_path'};
+							main::_log("change image src='$attr->{'src'}'") if $debug;
+#							$attr->{'width'}=$image_resized{'width'};
+#							$attr->{'height'}=undef;
+#							$attr->{'width_forced'}=$attr->{'width'};
+#							$attr->{'height_forced'}=$attr->{'height'};
+						}
+					}
+					elsif (
 						($db0_line{'image_width'} ne $attr->{'width'} || $db0_line{'image_height'} ne $attr->{'height'})
 						&&
 						(
