@@ -130,6 +130,7 @@ sub execute
 			article_ent.ID_author AS posix_author,
 			article_ent.visits,
 			article_ent.sources,
+			article_ent.metadata,
 			article_content.ID_editor AS posix_editor,
 			
 			article_content.datetime_create AS content_datetime_create,
@@ -269,6 +270,9 @@ sub execute
 		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:site_name','content' => $tom::H};
 		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:type','content'=>'article'};
 	}
+	
+	%{$article{'metahash'}}=App::020::functions::metadata::parse($article{'metadata'});
+	delete $article{'metadata'};
 	
 	# parser abstract
 	$parser->parse($article{'abstract'});
