@@ -38,6 +38,13 @@ sub get_image_file {
 			'method' => $env->{'resize'}->{'method'} || 'auto',
 		);
 	}
+	elsif ($env->{'crop'} && $image{'ID'})
+	{
+		%{$image{'cropped'}}=App::501::functions::image_file_crop(
+			'image_file.ID' => $image{'ID'},
+			'crop' => $env->{'crop'}
+		);
+	}
 	
 	return \%image;
 }
