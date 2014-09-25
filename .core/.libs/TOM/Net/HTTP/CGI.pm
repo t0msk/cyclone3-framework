@@ -464,6 +464,17 @@ sub get_CGI
 				}
 			}};
 		}
+		elsif ($TOM::Document::type eq "json" && (
+			($form{'POSTDATA'}=~/^{/ && $form{'POSTDATA'}=~/}$/)
+			|| ($form{'POSTDATA'}=~/^\[/ && $form{'POSTDATA'}=~/\]$/)
+		)) # JSON?
+		{eval{
+			main::_log(" type=json");
+			utf8::encode($form{'POSTDATA'});
+#			%{$main::RPC}=%{JSON::decode_json($form{'POSTDATA'})};
+			$main::RPC={};
+			$main::RPC=JSON::decode_json($form{'POSTDATA'});
+		};if($@){main::_log("error=".$@)}}
 		# process XML-RPC data
 		elsif ($TOM::Document::type eq "xmlrpc")
 		{
