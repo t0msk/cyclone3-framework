@@ -716,7 +716,8 @@ while ($main::CGI=new CGI::Fast())
 		#
 		
 		%FORM=();
-		%{$RPC}=();
+		#%{$RPC}=();
+		$RPC={};
 		my %FORM_rewrite=();
 		
 		# parse rewrited part of url and translate it to variables by rewrite.conf
@@ -1872,6 +1873,16 @@ while ($main::CGI=new CGI::Fast())
 				delete $env0{'id'};
 				delete $env0{'lng'};
 				$H->add_DOC_css_link(%env0);
+				next;
+			}
+			
+			if ($env0{'id'} eq "script")
+			{
+				if ($env0{'lng'}){next if $env0{'lng'} ne $tom::lng;}
+				_log("Add to DOC::script");
+				delete $env0{'id'};
+				delete $env0{'lng'};
+				$H->add_DOC_script(%env0);
 				next;
 			}
 			
