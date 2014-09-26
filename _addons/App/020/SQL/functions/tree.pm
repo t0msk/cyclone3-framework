@@ -42,13 +42,18 @@ sub new
 	}
 	
 	# automaticka zamena name na name_url
-	if (!$env{'columns'}{'name_url'})
+	if (!$env{'columns'}{'name_url'} && $env{'columns'}{'name'})
 	{
 		$env{'columns'}{'name'}=~s|^'||;
 		$env{'columns'}{'name'}=~s|'$||;
 		$env{'columns'}{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'columns'}{'name'})."'";
 		$env{'columns'}{'name'}="'".$env{'columns'}{'name'}."'";
 		main::_log("create 'columns'->'name_url'='$env{'columns'}{'name_url'}'") if $debug;
+	}
+	elsif (!$env{'data'}{'name_url'} && $env{'data'}{'name'})
+	{
+		$env{'data'}{'name_url'}=TOM::Net::URI::rewrite::convert($env{'data'}{'name'});
+		main::_log("create 'data'->'name_url'='$env{'data'}{'name_url'}'") if $debug;
 	}
 	
 	# najdem volny ID_charindex
@@ -787,7 +792,8 @@ sub get_path
 			'name_url' => 1,
 			'ID_charindex' => 1,
 			'lng' => 1,
-			'metadata' => $env{'columns'}{'metadata'},
+#			'metadata' => $env{'columns'}{'metadata'},
+			%{$env{'columns'}}
 		},
 		'-slave' => $env{'-slave'},
 		%cache
@@ -818,6 +824,7 @@ sub get_path
 				name_url,
 				status}.do{
 					",metadata" if $env{'columns'}{'metadata'};
+					",t_keys" if $env{'columns'}{'t_keys'};
 				}.qq{
 			FROM
 				`$env{'db_name'}`.`$env{'tb_name'}`
@@ -1625,6 +1632,10 @@ sub update
 		$env{'columns'}{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'columns'}{'name'})."'";
 		$env{'columns'}{'name'}="'".$env{'columns'}{'name'}."'";
 	}
+	if ($env{'data'}{'name'})
+	{
+		$env{'data'}{'name_url'}=TOM::Net::URI::rewrite::convert($env{'data'}{'name'});
+	}
 	
 	App::020::SQL::functions::update(
 		'db_h' => $env{'db_h'},
@@ -1635,6 +1646,10 @@ sub update
 		'columns' =>
 		{
 			%{$env{'columns'}}
+		},
+		'data' =>
+		{
+			%{$env{'data'}}
 		}
 	);
 	
