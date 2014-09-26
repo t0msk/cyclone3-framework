@@ -341,6 +341,8 @@ sub user_add
 	if ($env{'user_profile.ID'})
 	{
 		my %columns;
+		my %data;
+		
 		$columns{'gender'}="'".TOM::Security::form::sql_escape($env{'user_profile.gender'})."'"
 			if ($env{'user_profile.gender'} && ($env{'user_profile.gender'} ne $user_profile{'gender'}));
 		$columns{'firstname'}="'".TOM::Security::form::sql_escape($env{'user_profile.firstname'})."'"
@@ -421,6 +423,9 @@ sub user_add
 		$columns{'note'}="'".TOM::Security::form::sql_escape($env{'user_profile.note'})."'"
 			if (exists $env{'user_profile.note'} && ($env{'user_profile.note'} ne $user_profile{'note'}));
 		
+		$columns{'lng'}="'".TOM::Security::form::sql_escape($env{'user_profile.lng'})."'"
+			if (exists $env{'user_profile.lng'} && ($env{'user_profile.lng'} ne $user_profile{'lng'}));
+		
 #		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'user_profile.metadata'})."'"
 #			if (exists $env{'user_profile.metadata'} && ($env{'user_profile.metadata'} ne $user_profile{'metadata'}));
 		
@@ -468,10 +473,10 @@ sub user_add
 		
 		$env{'user_profile.metadata'}=App::020::functions::metadata::serialize(%metadata);
 		
-		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'user_profile.metadata'})."'"
-		if (exists $env{'user_profile.metadata'} && ($env{'user_profile.metadata'} ne $user_profile{'metadata'}));
+		$data{'metadata'}=$env{'user_profile.metadata'}
+			if (exists $env{'user_profile.metadata'} && ($env{'user_profile.metadata'} ne $user_profile{'metadata'}));
 		
-		if (keys %columns)
+		if (keys %columns || keys %data)
 		{
 			App::020::SQL::functions::update(
 				'ID' => $env{'user_profile.ID'},
@@ -479,6 +484,7 @@ sub user_add
 				'db_name' => 'TOM',
 				'tb_name' => "a301_user_profile",
 				'columns' => {%columns},
+				'data' => {%data},
 				'-journalize' => 1,
 				'-posix' => 1
 			);
