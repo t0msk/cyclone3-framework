@@ -126,7 +126,8 @@ sub execute
 			
 			rfp_cat.ID AS cat_ID,
 			rfp_cat.ID_entity AS cat_ID_entity,
-			rfp_cat.name AS cat_name
+			rfp_cat.name AS cat_name,
+			rfp_cat.name AS cat_name_url
 			
 		FROM $App::930::db_name.a930_rfp AS rfp
 		INNER JOIN $App::930::db_name.a930_rfp_lng AS rfp_lng ON
@@ -209,6 +210,56 @@ sub execute
 		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:title','content'=>$rfp{'name'}};
 		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:site_name','content' => $tom::H};
 		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:type','content'=>'article'};
+	}
+	
+	%{$rfp{'user'}} = App::301::authors::get_author($rfp{'ID_user'})
+		if $rfp{'ID_user'};
+	
+	if ($rfp{'ID_org'})
+	{
+		use App::710::_init;
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				org.*,
+				org_lng.name_short,
+				org_lng.about
+			FROM $App::710::db_name.a710_org AS org
+			LEFT JOIN $App::710::db_name.a710_org_lng AS org_lng ON
+			(
+				org_lng.ID_entity = org.ID AND
+				org_lng.lng = '$env{'lng'}'
+			)
+			WHERE
+				org.status IN ('Y','L') AND
+				org.ID_entity = ?
+			LIMIT
+				1
+		},'bind'=>[$rfp{'ID_org'}],'log'=>0,'-slave'=>1,
+			'-changetime'=>App::020::SQL::functions::_get_changetime(
+				{
+					'db_h'=>"main",
+					'db_name' => $App::710::db_name,
+					'tb_name' => "a710_org",
+					'ID_entity' => $rfp{'ID_org'}
+				})
+		);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		
+		$db1_line{'related_avatar'}=(App::160::SQL::get_relations(
+			'db_name' => $App::710::db_name,
+			'l_prefix' => 'a710',
+			'l_table' => 'org',
+			'l_ID_entity' => $db1_line{'ID_entity'},
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'rel_type' => "avatar",
+			'status' => "Y"
+		))[0];
+		
+		%{$db1_line{'metahash'}}=App::020::functions::metadata::parse($db1_line{'metadata'});
+		delete $db1_line{'metadata'};
+		
+		$rfp{'org'}=\%db1_line;
 	}
 	
 	# parser abstract
