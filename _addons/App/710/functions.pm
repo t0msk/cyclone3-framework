@@ -593,6 +593,7 @@ sub _org_index
 		WebService::Solr::Field->new( 'db_s' => $App::710::db_name ),
 		WebService::Solr::Field->new( 'addon_s' => 'a710_org' ),
 #			WebService::Solr::Field->new( 'lng_s' => $lng ),
+		WebService::Solr::Field->new( 'ID_i' => $org{'ID'} ),
 		WebService::Solr::Field->new( 'ID_entity_i' => $org{'ID_entity'} ),
 		
 		@fields,
