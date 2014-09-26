@@ -65,6 +65,22 @@ sub _do {
     return @responses;
 }
 
+
+package AnyEvent::RabbitMQ::Channel;
+no warnings; # yes, i know, i'm redefining _body...
+
+sub _body {
+	my ($self, $body,) = @_;
+	my $body_max = 20000;
+	# chunk up body into segments measured by $frame_max
+	while (length $body) {
+		$self->{connection}->_push_write(
+			Net::AMQP::Frame::Body->new(payload => substr($body, 0, $body_max, '')), $self->{id}
+		);
+	}
+	return $self;
+}
+
 1;
 __END__
 
