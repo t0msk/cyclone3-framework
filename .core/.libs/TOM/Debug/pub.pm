@@ -26,6 +26,16 @@ sub request
 	my $reqtype="B";
 	$reqtype="R" if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type} eq "robot");
 	
+	my %form_=%main::FORM;
+	foreach (keys %form_)
+	{
+		delete $form_{$_} if ref($form_{$_});
+		if (length($form_{$_}) > 64)
+		{
+			$form_{$_} = substr($form_{$_},1,64) . '...';
+		}
+	}
+	
 	main::_event('info','pub.request',{
 		'times' => {
 			'duration' => $env{'duration'},
@@ -39,7 +49,7 @@ sub request
 			'HOST' => $main::ENV{'HTTP_HOST'},
 			'REQUEST_URI' => $main::ENV{'REQUEST_URI'},
 			'QUERY_STRING' => $main::ENV{'QUERY_STRING'},
-			'query' => {%main::FORM},
+			'query' => {%form_},
 			'USER_AGENT' => $main::ENV{'HTTP_USER_AGENT'},
 			'UserAgent' => $main::UserAgent_name,
 			'UserAgent_type' => $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'},
