@@ -60,6 +60,7 @@ sub execute
 	}
 	
 	main::_log_stdout("put settings");
+	$Elastic->indices->close('index'=>'cyclone3.*');
 	$Elastic->indices->put_settings(
 		'index'=>'cyclone3.*',
 		'body' => {
@@ -113,7 +114,7 @@ sub execute
 #						}
 #					},
 #				},
-			]
+			],
 			'properties' => {
 				'status' => {
 					'type' => 'string',
