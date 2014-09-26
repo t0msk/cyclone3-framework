@@ -634,18 +634,31 @@ sub start
 			
 		}
 		
+		# selection which entry name in tpl will be used to process
 		my $tpl_src='tpl';
 		my $tpl_entity;
-		if ($self->{'tpl_ext'} && $self->{'tpl_ext'}->{'entity'}{'parser.'.$tag.'.'.$entity})
+		# if tpl is extended by module tpl, then search for entries with prefix "parser."
+		if ($self->{'tpl_ext'} && $self->{'env'}->{'prefix'} && $self->{'tpl_ext'}->{'entity'}{'parser.'.$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity})
+		{
+			$tpl_src.='_ext';
+			$tpl_entity='parser.'.$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity;
+		}
+		elsif ($self->{'tpl_ext'} && $self->{'tpl_ext'}->{'entity'}{'parser.'.$tag.'.'.$entity})
 		{
 			$tpl_src.='_ext';
 			$tpl_entity='parser.'.$tag.'.'.$entity;
+		}
+		# otherwise use native entry from tpl
+		elsif ($self->{'env'}->{'prefix'} && $self->{'tpl'}->{'entity'}{$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity})
+		{
+			$tpl_entity=$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity;
 		}
 		elsif ($self->{'tpl'}->{'entity'}{$tag.'.'.$entity})
 		{
 			$tpl_entity=$tag.'.'.$entity;
 		}
 		
+		# if found entry name, process it by tt2
 		if ($tpl_entity) # tt2 process
 		{
 			if ($self->{$tpl_src}->process({
