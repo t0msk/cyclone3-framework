@@ -168,6 +168,47 @@ BEGIN
 	require $TOM::P.'/_config/'.$TOM::hostname.'.conf' if -e $TOM::P.'/_config/'.$TOM::hostname.'.conf';
 	# localized boolean of cache
 	$main::cache = $TOM::CACHE;
+	
+	# local time
+	$main::time_current=$tom::time_current=time();
+	(
+		$tom::Tsec,
+		$tom::Tmin,
+		$tom::Thour,
+		$tom::Tmday,
+		$tom::Tmom,
+		$tom::Tyear,
+		$tom::Twday,
+		$tom::Tyday,
+		$tom::Tisdst) = localtime($tom::time_current);
+#		main::_log("hour=$tom::Thour");
+	# doladenie casu
+	$tom::Tyear+=1900;$tom::Tmom++;
+	# zaciatok dnesneho dna
+	$main::time_day=$tom::time_current-($tom::Thour*3600)-($tom::Tmin*60)-$tom::Tsec;
+	# formatujem cas
+	(
+		$tom::Fsec,
+		$tom::Fmin,
+		$tom::Fhour,
+		$tom::Fmday,
+		$tom::Fmom,
+		$tom::Fyear,
+		$tom::Fwday,
+		$tom::Fyday,
+		$tom::Fisdst
+		) = (
+		sprintf ('%02d', $tom::Tsec),
+		sprintf ('%02d', $tom::Tmin),
+		sprintf ('%02d', $tom::Thour),
+		sprintf ('%02d', $tom::Tmday),
+		sprintf ('%02d', $tom::Tmom),
+		$tom::Tyear,
+		$tom::Twday,
+		$tom::Tyday,
+		$tom::Tisdst);
+		
+	$tom::datetime=$tom::Fyear.'-'.$tom::Fmom.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin.':'.$tom::Fsec;
 }
 
 
