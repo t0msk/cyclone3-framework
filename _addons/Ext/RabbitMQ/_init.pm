@@ -187,8 +187,10 @@ sub publish
 	$env{'header'}{'headers'}{'message_id'}=TOM::Utils::vars::genhash(16)
 		unless $env{'header'}{'headers'}{'message_id'};
 	
-	main::_log("[RabbitMQ] publish message_id='$env{'header'}{'headers'}{'message_id'}' exchange='".$env{'exchange'}."' routing_key='".$env{'routing_key'}."'")
+	main::_log("[RabbitMQ] publish message_id='$env{'header'}{'headers'}{'message_id'}' exchange='".$env{'exchange'}."' routing_key='".$env{'routing_key'}."' size=".length($env{'body'}))
 		if $debug;
+	
+#	print $env{'body'};
 	
 	utf8::encode($env{$_}) foreach(grep {!ref($env{$_})} keys %env);
 	if (ref($env{'header'})){
@@ -207,8 +209,10 @@ sub publish
 		my $out=$self->_channel->publish(%env,
 #		'on_inactive' => sub(){}
 		);
-		main::_log("[RabbitMQ] published (".$env{'header'}{'headers'}{'message_id'}.")")
-			if $debug;
+		main::_log("[RabbitMQ] WARN: wbuf size=".(length($out->{'arc'}->{'connection'}->{'_handle'}->{'wbuf'})))
+			if $out->{'arc'}->{'connection'}->{'_handle'}->{'wbuf'};
+		main::_log("[RabbitMQ] published (".$env{'header'}{'headers'}{'message_id'}.")") if $debug;
+#		use Data::Dumper;print Dumper($out);
 	};
 	if ($@)
 	{
