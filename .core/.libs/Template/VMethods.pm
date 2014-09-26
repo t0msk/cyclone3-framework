@@ -25,6 +25,7 @@ use strict;
 #use warnings;
 use Scalar::Util qw( blessed looks_like_number );
 use Template::Filters;
+use JSON;
 require Template::Stash;
 
 our $VERSION = 2.16;
@@ -80,6 +81,7 @@ our $HASH_VMETHODS = {
     import  => \&hash_import,
     sort    => \&hash_sort,
     nsort   => \&hash_nsort,
+    json    => \&to_json
 };
 
 our $LIST_VMETHODS = {
@@ -105,6 +107,7 @@ our $LIST_VMETHODS = {
     merge   => \&list_merge,
     slice   => \&list_slice,
     splice  => \&list_splice,
+    json    => \&to_json
 };
 
 
