@@ -116,11 +116,11 @@ BEGIN
 				close HND;
 			}
 			
-			if ($smil && !-e $tom::P_media.'/a510/video/part/smil')
-			{
-				File::Path::mkpath $tom::P_media.'/a510/video/part/smil';
-				chmod (0777,$tom::P_media.'/a510/video/part/smil')
-			}
+#			if ($smil && !-e $tom::P_media.'/a510/video/part/smil')
+#			{
+#				File::Path::mkpath $tom::P_media.'/a510/video/part/smil';
+#				chmod (0777,$tom::P_media.'/a510/video/part/smil')
+#			}
 			
 		}
 	};
@@ -571,5 +571,19 @@ if ($App::821::db_name)
 	}
 }
 
+my %sth0=TOM::Database::SQL::execute(qq{
+	SELECT name
+	FROM `$db_name`.a510_video_brick
+	WHERE status='Y'
+	ORDER BY ID
+},'quiet'=>1);
+while (my %db0_line=$sth0{'sth'}->fetchhash())
+{
+	my $class_name="App::510::brick::".$db0_line{'name'};
+#	main::_log("load brick '$db0_line{'name'}' '$class_name'");
+#	require $class_name;
+	eval "require $class_name; 1; ";
+	main::_log("$@",1);
+}
 
 1;
