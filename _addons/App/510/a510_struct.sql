@@ -51,12 +51,12 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
   `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
   PRIMARY KEY (`ID`),
-  FULLTEXT KEY `keywords` (`keywords`),
   UNIQUE KEY `UNI_0` (`movie_imdb`),
   KEY `ID_entity` (`ID_entity`),
+  KEY `ID_program` (`ID_program`),
   KEY `datetime_rec_start` (`datetime_rec_start`),
   KEY `status` (`status`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -156,7 +156,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
   `ID` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
   `ID_entity` mediumint(8) unsigned DEFAULT NULL, -- rel _video.ID_entity
   `part_id` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `ID_brick` mediumint(8) unsigned DEFAULT NULL, -- rel _video_brick.ID
   `datetime_create` datetime NOT NULL,
+  `datetime_air` datetime DEFAULT '2000-01-01 00:00:00',
   `visits` int(10) unsigned NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
@@ -166,7 +168,6 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
   `thumbnail_lock` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
   PRIMARY KEY (`ID`),
-  FULLTEXT KEY `FULL_0` (`keywords`),
   KEY `ID_entity` (`ID_entity`),
   KEY `visits` (`visits`),
   KEY `rating` (`rating`),
@@ -180,7 +181,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_j` (
   `ID` mediumint(8) unsigned NOT NULL,
   `ID_entity` mediumint(8) unsigned DEFAULT NULL, -- rel _video.ID_entity
   `part_id` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `ID_brick` mediumint(8) unsigned DEFAULT NULL,
   `datetime_create` datetime NOT NULL,
+  `datetime_air` datetime DEFAULT '2000-01-01 00:00:00',
   `visits` int(10) unsigned NOT NULL,
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
@@ -405,12 +408,13 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file_process` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_brick` (
-  `ID` mediumint(8) unsigned zerofill NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL,
-  `name` varchar(128) character set ascii collate ascii_bin NOT NULL,
+  `ID` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL,
+  `name` varchar(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL, -- class name
   `datetime_create` datetime NOT NULL,
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  `dontprocess` char(1) CHARACTER SET ascii DEFAULT NULL, -- uploaded files to this brick will be not processed (encoded) into another formats by _video_format
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -549,7 +553,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_channel_state` ( -- switching of
 CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `ID_entity` bigint(20) unsigned DEFAULT NULL,
-  `ID_channel` bigint(20) unsigned DEFAULT '0', -- rel _live_channel.ID_entity
+  `ID_channel` bigint(20) unsigned DEFAULT '0', -- rel _broadcast_channel.ID_entity
+  `ID_series` bigint(20) unsigned DEFAULT NULL, -- internal rel _broadcast_series.ID_entity
+  `ID_video` bigint(20) unsigned DEFAULT NULL, -- internal rel _video.ID_entity
   `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL, -- number of program - not unique
   `program_type_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
@@ -569,7 +575,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   `authoring_country` varchar(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   `authoring_cast` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
   `authoring_authors` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
-  `series_ID` bigint(20) unsigned DEFAULT NULL,
+  `series_ID` bigint(20) unsigned DEFAULT NULL, -- external ID (IBDm/...)
   `series_type` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `series_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `series_episode` smallint(5) unsigned DEFAULT NULL,
@@ -589,8 +595,12 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   PRIMARY KEY (`ID`),
   UNIQUE KEY `UNI_0` (`ID_channel`,`program_code`,`datetime_air_start`),
   KEY `ID_entity` (`ID_entity`),
-  KEY `name` (`name`),
-  KEY `status` (`status`,`status_internet`,`status_premiere`,`status_live`)
+  KEY `name` (`name`,`datetime_air_start`),
+  KEY `datetime_air_start` (`datetime_air_start`),
+  KEY `ID_series` (`ID_series`),
+  KEY `series_ID` (`series_ID`),
+  KEY `status` (`status`,`status_internet`,`status_premiere`,`status_live`),
+  KEY `ID_channel` (`ID_channel`,`datetime_air_start`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -599,6 +609,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned DEFAULT NULL,
   `ID_channel` bigint(20) unsigned DEFAULT NULL,
+  `ID_series` bigint(20) unsigned DEFAULT NULL,
+  `ID_video` bigint(20) unsigned DEFAULT NULL,
   `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL,
   `program_type_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
@@ -640,7 +652,69 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
 
 -- --------------------------------------------------
 
-CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_schedule` ( -- schedule with realtime and commercials
+CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_series` (
+  `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` bigint(20) unsigned DEFAULT NULL,
+  `parent_ID` bigint(20) unsigned DEFAULT NULL,
+  `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '', -- series name
+  `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `name_original` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL,
+  `program_type_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
+  `authoring_year` year(4) DEFAULT NULL,
+  `authoring_country` varchar(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `authoring_cast` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+  `authoring_authors` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `series_ID` bigint(20) unsigned DEFAULT NULL, -- external ID (IBDm/...)
+  `series_type` varchar(6) CHARACTER SET ascii DEFAULT NULL,
+  `series_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
+  `series_episodes` smallint(5) unsigned DEFAULT NULL,
+  `posix_owner` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `posix_modified` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `datetime_create` datetime NOT NULL,
+  `synopsis` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `body` longtext CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL, -- description + content
+  `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y', -- display Y/N/T
+  PRIMARY KEY (`ID`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `parent_ID` (`parent_ID`),
+  KEY `series_ID` (`series_ID`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_series_j` (
+  `ID` bigint(20) unsigned NOT NULL,
+  `ID_entity` bigint(20) unsigned DEFAULT NULL,
+  `parent_ID` bigint(20) unsigned DEFAULT NULL,
+  `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `name_original` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL,
+  `program_type_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
+  `authoring_year` year(4) DEFAULT NULL,
+  `authoring_country` varchar(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `authoring_cast` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+  `authoring_authors` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `series_ID` bigint(20) unsigned DEFAULT NULL,
+  `series_type` varchar(6) CHARACTER SET ascii DEFAULT NULL,
+  `series_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
+  `series_episodes` smallint(5) unsigned DEFAULT NULL,
+  `posix_owner` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `posix_modified` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `datetime_create` datetime NOT NULL,
+  `synopsis` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `body` longtext CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`,`datetime_create`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_schedule` ( -- schedule program with realtime informations and commercials
   `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `ID_entity` bigint(20) unsigned DEFAULT NULL,
   `ID_channel` bigint(20) unsigned DEFAULT NULL, -- rel _live_channel.ID_entity
@@ -654,9 +728,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_schedule` ( -- schedule with rea
   PRIMARY KEY (`ID`),
   KEY `ID_entity` (`ID_entity`),
   KEY `name` (`name`),
-  KEY `status` (`status`)
+  KEY `status` (`status`,`ID_channel`,`datetime_start`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
-
-
