@@ -3257,12 +3257,12 @@ sub get_video_part_file_process_front
 			video_part.process_lock = 'N' AND
 			
 			/* skip video bricks locked */
-			video_brick.dontprocess != 'Y'
+			(video_part.ID_brick IS NULL OR video_brick.dontprocess != 'Y') AND
 			
 			/* skip videos in processing */
-			AND video_part_file_process.ID IS NULL
+			video_part_file_process.ID IS NULL AND
 			/* skip videos where depending format is in processing */
-			AND video_part_file_process_p.ID IS NULL
+			video_part_file_process_p.ID IS NULL
 			
 			/* parent video file must exists or we are processing 'original' */
 			AND

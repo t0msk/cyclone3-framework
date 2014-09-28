@@ -169,6 +169,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
   PRIMARY KEY (`ID`),
   KEY `ID_entity` (`ID_entity`),
+  KEY `ID_brick` (`ID_brick`),
   KEY `visits` (`visits`),
   KEY `rating` (`rating`),
   KEY `part_id` (`part_id`),
