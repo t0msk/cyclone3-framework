@@ -36,6 +36,8 @@ sub execute
 {
 	my %env=@_;
 	
+	return 1; # bricks are not supported by now
+	
 	# Check
 	if (!$tom::addons{'a510'} || ($TOM::DB{'main'}{'name'} ne $App::510::db_name))
 	{main::_log("not enabled, or set for another domain service");return 1;}
