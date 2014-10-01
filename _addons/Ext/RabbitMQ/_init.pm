@@ -209,8 +209,9 @@ sub publish
 		my $out=$self->_channel->publish(%env,
 #		'on_inactive' => sub(){}
 		);
-		main::_log("[RabbitMQ] WARN: wbuf size=".(length($out->{'arc'}->{'connection'}->{'_handle'}->{'wbuf'})))
+		main::_log("[RabbitMQ] WARN: wbuf size=".(length($out->{'arc'}->{'connection'}->{'_handle'}->{'wbuf'})),3)
 			if $out->{'arc'}->{'connection'}->{'_handle'}->{'wbuf'};
+		die "wbuf detected, message to RabbitMQ not published" if $out->{'arc'}->{'connection'}->{'_handle'}->{'wbuf'};
 		main::_log("[RabbitMQ] published (".$env{'header'}{'headers'}{'message_id'}.")") if $debug;
 #		use Data::Dumper;print Dumper($out);
 	};
