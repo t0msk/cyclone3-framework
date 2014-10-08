@@ -53,6 +53,8 @@ my $t_domain=track TOM::Debug("Domain service init");
 	$0.=" :".$class_ if $class_;
 	$0.=" {}";
 	
+	$TOM::engine.='.'.$class_ if $class_;
+	
 $t_domain->close;
 
 ######################################################################################
