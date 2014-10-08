@@ -428,7 +428,7 @@ while ($main::CGI=new CGI::Fast())
 		main::_log("request from IP='$main::ENV{'REMOTE_ADDR'}' FORWARDED_FOR='$main::ENV{'HTTP_X_FORWARDED_FOR'}'");
 		if ($main::ENV{'GEOIP_ADDR'} || $main::ENV{'GEOIP_COUNTRY_CODE'})
 		{
-			main::_log("GEOIP_ADDR=$main::ENV{'GEOIP_ADDR'} GEOIP_COUNTRY_CODE=$main::ENV{'GEOIP_COUNTRY_CODE'}",3,"debug");
+#			main::_log("GEOIP_ADDR=$main::ENV{'GEOIP_ADDR'} GEOIP_COUNTRY_CODE=$main::ENV{'GEOIP_COUNTRY_CODE'}",3,"debug");
 		}
 		$main::ENV{'REMOTE_COUNTRY_CODE'}='';
 		if ($TOM::Int::lng::GEOIP)
