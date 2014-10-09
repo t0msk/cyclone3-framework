@@ -95,6 +95,7 @@ sub _log
 	}
 	
 	my $msec=ceil((Time::HiRes::gettimeofday)[1]/100);
+		$msec=9999 if $msec==10000;
 	
 	my $msg;
 		$msg.="[".sprintf ('%06d', $$) unless $main::stdout;
@@ -201,7 +202,7 @@ sub _log_stdout
 		$_[2]="stdout";
 		return _log(@_);
 	}
-	if ($main::stdout)
+	if ($main::stdout && !$main::debug)
 	{
 		_log($_[0],$_[1],'stdout');
 	}
