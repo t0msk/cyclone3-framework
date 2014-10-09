@@ -164,6 +164,7 @@ sub new
 			);
 		}
 		
+		$env{'ID_entity'} = $env{'ID_entity'} || $env{'columns'}{'ID_entity'} || $env{'data'}{'ID_entity'} || $ID;
 		_save_changetime(\%env);
 		
 		$t->close() if $debug;
@@ -209,7 +210,8 @@ sub new_initialize
 		main::_log("input '$_'='$env{$_}'") if $debug;
 	}
 	
-	my $low_priority=" LOW_PRIORITY" if $env{'-low_priority'};
+	my $low_priority;
+#		$low_priority=" LOW_PRIORITY" if $env{'-low_priority'};
 	$env{'datetime_create'}="NOW()" unless $env{'datetime_create'};
 	
 	# this is not very secure, but...
@@ -1515,6 +1517,8 @@ sub _save_changetime
 	my $tt=Time::HiRes::time();
 	$main::env{'cache'}{'db_changed'}{$key}=$tt;
 	$main::env{'cache'}{'db_changed'}{$key_entity}=$tt;
+	
+#	main::_log("_save_changetime($key_entity)");
 	
 	if ($RabbitMQ && !$conf{'-autosave'}) # publish event
 	{
