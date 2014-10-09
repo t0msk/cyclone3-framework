@@ -24,6 +24,9 @@ sub execute
 	push @files, readdir DIR;
 	my $dir=$TOM::P;
 	
+	my @time = localtime();
+   my $secs = ($time[2] * 3600) + ($time[1] * 60) + $time[0];
+	
 	while (my $file=shift @files)
 	{
 		
@@ -86,18 +89,19 @@ sub execute
 				{
 					$max_days = $TOM::DEBUG_log_type{$log_type}{'max_days'};
 				}
-				my $max_secs = $max_days*86400;
+				my $max_secs = $max_days * 86400;
 				
 				my $var=(stat $filename)[9];
+				my $var2=(stat $filename)[10];
 				
-				main::_log("$filename");
+				main::_log("$filename old=".(time() - $var2));
 				
-				if (($main::time_current-$var) < 3600)
+				if ((time() - $var2) < $secs)
 				{
 					next;
 				}
 				
-				if (($main::time_current-$var)>$max_secs)
+				if ((time() - $var) > $max_secs)
 				{
 					main::_log_stdout("unlink $filename");
 					unlink $filename;
