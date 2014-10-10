@@ -1625,7 +1625,7 @@ sub _detect_db_name
 {
 	my $prefix=shift;
 	
-	return undef unless $prefix=~/^[a-zA-Z0-9_\-:]+$/;
+	return $TOM::DB{'main'}{'name'} unless $prefix=~/^[a-zA-Z0-9_\-:]+$/;
 	
 	main::_log("detect db_name with '$prefix' addon") if $debug;
 	# at first check if this addon is available
