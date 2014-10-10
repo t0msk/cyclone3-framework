@@ -72,9 +72,15 @@ sub execute
 			}
 		);
 	}
+	elsif ($env{'product.product_number'})
+	{
+		main::_log("search by product.product_number");
+		$sql_where.="AND product.product_number=? ";
+		push @sql_bind,$env{'product.product_number'};
+	}
 	else
 	{
-		main::_log("product.ID_entity not defined");
+		main::_log("product.ID_entity/product_number not defined");
 		return 1;
 	}
 	
