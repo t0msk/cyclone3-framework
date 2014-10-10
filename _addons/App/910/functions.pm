@@ -38,6 +38,8 @@ L<TOM::Security::form|lib/"TOM/Security/form.pm">
 use App::910::_init;
 use TOM::Security::form;
 use App::160::SQL;
+use Ext::Redis::_init;
+use Ext::Elastic::_init;
 use POSIX qw(ceil);
 
 our $debug=1;
@@ -224,6 +226,9 @@ sub product_add
 	
 	# update only if necessary
 	my %columns;
+#	# product_number
+#	$columns{'product_number'}="'".TOM::Security::form::sql_escape($env{'product.product_number'})."'"
+#		if ($env{'product.product_number'} && ($env{'product.product_number'} ne $product{'product_number'}));
 	# amount
 	$columns{'amount'}="'".TOM::Security::form::sql_escape($env{'product.amount'})."'"
 		if (exists $env{'product.amount'} && ($env{'product.amount'} ne $product{'amount'}));
@@ -388,6 +393,7 @@ sub product_add
 				`$App::910::db_name`.a910_product
 			WHERE
 				product_number=?
+--				AND status IN ('X')
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[$env{'product.product_number'}],'quiet'=>1);
@@ -934,15 +940,18 @@ sub product_add
 sub _product_index
 {
 	my %env=@_;
-	return undef unless $env{'ID'}; # product.ID
-	return undef unless $Ext::Solr;
-	if ($Ext::Solr::update_fork)
+	if ($env{'-jobify'} || $Ext::Solr::update_fork)
 	{
-		fork() and return 1;
-		%main::DB={};
+		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name}); # do it in background
 	}
+	return undef unless $env{'ID'}; # product.ID
+#	return undef unless $Ext::Solr;
 	
 	my $t=track TOM::Debug(__PACKAGE__."::_product_index($env{'ID'})",'timer'=>1);
+	
+	
+if ($Ext::Solr && ($env{'solr'} || not exists $env{'solr'}))
+{
 	
 	my @content_ent;
 	my @content_id;
@@ -950,7 +959,7 @@ sub _product_index
 	my $status_string = $App::910::solr_status_index;
 	
 	$status_string =~ s/(\w)/\'$1\',/g; $status_string =~ s/,$//;
-
+	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			*
@@ -1192,6 +1201,27 @@ sub _product_index
 			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_i' =>  ceil($db1_line{'score'}));
 			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_f' =>  $db1_line{'score'});
 			
+#			$db1_line{'datetime_rating'}=~s| (\d\d)|T$1|;
+#			$db1_line{'datetime_rating'}.="Z";
+#			push @content_id,WebService::Solr::Field->new( 'Rating_datetime_tdt' => $db1_line{'datetime_rating'} );
+		}
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				rating.datetime_rating
+			FROM
+				$App::910::db_name.a910_product_rating AS rating
+			WHERE
+				rating.status='Y'
+				AND length(rating.description) >= 10
+				AND rating.ID_product = ?
+			ORDER BY
+				rating.datetime_rating DESC
+			LIMIT 1
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		if ($db1_line{'datetime_rating'})
+		{
 			$db1_line{'datetime_rating'}=~s| (\d\d)|T$1|;
 			$db1_line{'datetime_rating'}.="Z";
 			push @content_id,WebService::Solr::Field->new( 'Rating_datetime_tdt' => $db1_line{'datetime_rating'} );
@@ -1408,6 +1438,7 @@ sub _product_index
 		))
 		{
 			
+			main::_log("product_set relation to ".$relation->{'r_ID_entity'}." ".$relation->{'priority'});
 			push @content_id,WebService::Solr::Field->new( 'set_product_sm' =>  $relation->{'r_ID_entity'}.':'.$relation->{'quantifier'});
 			
 		}
@@ -1517,6 +1548,29 @@ sub _product_index
 			push @{$content{$lng}},WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_modified'} );
 		}
 		
+		# language rating
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				rating.datetime_rating
+			FROM
+				$App::910::db_name.a910_product_rating AS rating
+			WHERE
+				rating.status='Y'
+				AND length(rating.description) >= 10
+				AND rating.ID_product = ?
+				AND rating.lng = ?
+			ORDER BY
+				rating.datetime_rating DESC
+			LIMIT 1
+		},'quiet'=>1,'bind'=>[$env{'ID'},$db0_line{'lng'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		if ($db1_line{'datetime_rating'})
+		{
+			$db1_line{'datetime_rating'}=~s| (\d\d)|T$1|;
+			$db1_line{'datetime_rating'}.="Z";
+			push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'Rating_datetime_lng_tdt' => $db1_line{'datetime_rating'} );
+		}
+		
 	}
 	
 	use Data::Dumper;
@@ -1560,14 +1614,141 @@ sub _product_index
 	{
 		$solr->commit();
 	}
+}
+	
+	if ($Elastic) # the new way in Cyclone3 :)
+	{
+#		my $status_string = $App::910::solr_status_index;
+#		$status_string =~ s/(\w)/\'$1\',/g; $status_string =~ s/,$//;
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				product.ID,
+				product.ID_entity,
+				product.product_number,
+				product.EAN,
+				product.datetime_publish_start,
+				product.datetime_publish_stop,
+				product.amount,
+				product.amount_unit,
+				product.amount_availability,
+				product.amount_limit,
+				product.amount_order_min,
+				product.amount_order_max,
+				product.amount_order_div,
+				product.price,
+				product.price_previous,
+				product.price_max,
+				product.price_currency,
+				product.price_EUR,
+				product.metadata,
+				product.supplier_org,
+				product.supplier_person,
+				product.status_new,
+				product.status_recommended,
+				product.status_sale,
+				product.status_special,
+				product.status_main,
+				product.status,
+				product_ent.ID_brand,
+				product_ent.ID_family,
+				product_ent.VAT,
+				product_ent.rating_score,
+				product_ent.rating_votes,
+				product_ent.rating,
+				product_ent.priority_A,
+				product_ent.priority_B,
+				product_ent.priority_C,
+				product_ent.product_type
+			FROM
+				$App::910::db_name.a910_product AS product
+			INNER JOIN $App::910::db_name.a910_product_ent AS product_ent ON
+			(
+				product.ID_entity = product_ent.ID_entity
+			)
+			WHERE
+				product.status IN ('Y','N','L','W') AND
+				product.ID=?
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		if (!$sth0{'rows'})
+		{
+			main::_log("product.ID=$env{'ID'} not found",1);
+			if ($Elastic->exists(
+				'index' => 'cyclone3.'.$App::910::db_name,
+				'type' => 'a910_product',
+				'id' => $env{'ID'}
+			))
+			{
+				main::_log("removing from Elastic",1);
+				$Elastic->delete(
+					'index' => 'cyclone3.'.$App::910::db_name,
+					'type' => 'a910_article',
+					'id' => $env{'ID'}
+				);
+			}
+			$t->close();
+			return 1;
+		}
+		
+		my %product=$sth0{'sth'}->fetchhash();
+		
+		%{$product{'metahash'}}=App::020::functions::metadata::parse($product{'metadata'});
+		delete $product{'metadata'};
+		
+		# product_lng
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				name,
+				name_url,
+				name_long,
+				name_label,
+				description_short,
+				description,
+				keywords,
+				lng
+			FROM
+				$App::910::db_name.a910_product_lng
+			WHERE
+				status='Y'
+				AND ID_entity=?
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			%{$product{'locale'}{$db0_line{'lng'}}}=%db0_line;
+		}
+		
+#		print Dumper(\%product) if $tom::test;
+		
+		delete $product{'datetime_publish_start'}
+			if $product{'datetime_publish_start'}=~/^0/;
+		
+		$Elastic->index(
+			'index' => 'cyclone3.'.$App::910::db_name,
+			'type' => 'a910_product',
+			'id' => $env{'ID'},
+			'body' => {
+				%product
+			}
+		);
+		
+	}
+	
+	
+	if ($Redis)
+	{
+		$Redis->incr($App::910::db_name.".a910_product.indexed",sub{});
+	}
+	
+	# when product indexed, it's like changed
+	App::020::SQL::functions::_save_changetime({
+		'db_h'=>'main',
+		'db_name'=>$App::910::db_name,
+		'tb_name'=>'a910_product',
+		'ID_entity'=>$env{'ID'}}
+	);
 	
 	$t->close();
 	
-	if ($Ext::Solr::update_fork)
-	{
-		main::_log("end fork");
-		exit;
-	}
 }
 
 
