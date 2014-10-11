@@ -66,7 +66,7 @@ use Encode qw(decode encode);
 use JSON;
 use Data::Dumper;
 use Ext::Redis::_init;
-our $alarm=60; # autoexit after 60 seconds of inactivity
+our $alarm=30; # autoexit after 60 seconds of inactivity
 our $time_max=600;
 our $time_start=time();
 
@@ -110,7 +110,7 @@ sub callback {
 	my $var = shift;
 	my $body = $var->{'body'}->{'payload'};
 	my $this_channel=$service->_channels->{$var->{'body'}->{'channel'}};
-#	print Dumper($service);
+#	print Dumper($body);
 	
 	$0=~s|{.*?}|{reading...}|;
 	
@@ -125,7 +125,9 @@ sub callback {
 	my $key_entity=TOM::Digest::hash($tom::H.$var->{'body'}->{'payload'});
 	if ($deduplication && $Redis)
 	{
+		main::_log(" deduplication hash = '$key_entity'");
 		my $timestamp_exec=$Redis->hget('C3|job|'.$key_entity,'modified');
+		# if timestamp of message is lower than execution timestamp
 		if ($timestamp < $timestamp_exec)
 		{
 			main::_log("job '$key_entity' already executed ".($timestamp_exec-$timestamp)."s after this request",1);
@@ -133,6 +135,12 @@ sub callback {
 			alarm $alarm;
 			$0=~s|{.*?}|{}|;
 			return 0;
+		}
+		else
+		{
+			# deduplication job start
+			$Redis->hset('C3|job|'.$key_entity,'modified',time()+86400,sub {}); # set virtually to future (max execution time)
+			$Redis->expire('C3|job|'.$key_entity,86400,sub {});
 		}
 	}
 	
@@ -206,6 +214,7 @@ sub callback {
 				$job,
 				$payload->{'args'}
 			);
+			undef $main::nojobify; # jobify everything required
 			$job->execute() if $job;
 		}
 		else
@@ -214,6 +223,7 @@ sub callback {
 		}
 		if ($deduplication && $Redis)
 		{
+			# deduplication job end
 			$Redis->hset('C3|job|'.$key_entity,'modified',time(),sub {});
 			$Redis->expire('C3|job|'.$key_entity,86400,sub {});
 		}
