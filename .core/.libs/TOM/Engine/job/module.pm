@@ -249,6 +249,7 @@ sub jobify # prepare function call to background
 	if ($main::nojobify)
 	{
 		undef $main::nojobify;
+		main::_log("can't jobify, go to exec",1);
 		return undef;
 	}
 	return undef unless $RabbitMQ;
@@ -291,12 +292,20 @@ sub jobify # prepare function call to background
 	my (undef,undef,undef,$function)=caller 1;
 	main::_log("{jobify} function '$function' routing_key='".($env->{'routing_key'})."' id='$id'");
 	main::_log("{jobify} function '$function' routing_key='".($env->{'routing_key'})."' id='$id'",3,"job");
+	
+	my %headers;
+		$headers{'deduplication'}=$env->{'deduplication'}
+			if $env->{'deduplication'};
 	return $RabbitMQ->publish(
 		'exchange'=>'cyclone3.job',
 		'routing_key' => ($env->{'routing_key'} || $tom::H_orig || 'job'),
 		'body' => to_json({'function' => $function,'args' => $_[0]}),
 		'header' => {
-			'headers'=>{'message_id'=>$id}
+			'headers' => {
+				'message_id' => $id,
+				%headers
+#				,'deduplication' => $env->{'deduplication'}
+			}
 		}
 	);
 #	return 1;
