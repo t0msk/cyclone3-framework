@@ -1,0 +1,233 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+use App::501::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'check_image_file'} = 1 unless exists $env{'check_image_file'};
+	$env{'image_format.ID'} = $App::501::image_format_fullsize_ID unless $env{'image_format.ID'};
+	
+	# get template
+	Tomahawk::GetTpl(\%env) || return undef;
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 1;
+	my $sql_order_by=$env{'sql_order_by'} || 'image_attrs.order_id ASC, image_ent.datetime_create DESC';
+	
+	if ($env{'image.ID_entity'})
+	{
+		main::_log("search by image.ID_entity");
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image',
+			'ID_entity' => $env{'image.ID_entity'}
+		};
+		$sql_where.="AND image.ID_entity=? ";
+		push @sql_bind,$env{'image.ID_entity'};
+		$sql_changetime=App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::501::db_name,
+				'tb_name' => "a501_video",
+				'ID_entity' => $env{'image.ID_entity'}
+			}
+		);
+	}
+	else
+	{
+=head1
+		if ($env{'video_cat.ID'})
+		{
+			my %data=App::020::SQL::functions::get_ID(
+				'db_h'    => 'main',
+				'db_name' => $App::510::db_name,
+				'tb_name' => 'a510_video_cat',
+				'ID'      => $env{'video_cat.ID'},
+				'columns' => {'ID_entity' => 1}
+			);
+			push @{$env_out{'entity'}},{
+				'db_h' => 'main',
+				'db_name' => $App::510::db_name,
+				'tb_name' => 'a510_video_cat',
+				'ID_entity' => $data{'ID_entity'}
+			};
+		}
+		elsif ($env{'video_cat.ID_entity'})
+		{
+			my $sql_cat;
+			foreach my $ID_category (split(';',$env{'video_cat.ID_entity'}))
+			{
+				next unless $ID_category;
+				if ($ID_category=~s/\*$//)
+				{
+					my $cat_sql=qq{SELECT ID_charindex FROM $App::510::db_name.a510_video_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+					$ID_category=qq{SELECT ID_entity FROM $App::510::db_name.a510_video_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+				}
+				$sql_cat.=" OR video_attrs.ID_category IN ($ID_category)";
+				$sql_cat=~s/^ OR //;
+			}
+			if ($sql_cat)
+			{
+				$sql_where.=" AND (".$sql_cat.") ";
+			}
+		}
+=cut
+	}
+	
+	return 1 unless $sql_where;
+	
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+	
+		SELECT
+			image.ID,
+			image.ID_entity,
+			image_ent.posix_owner AS ent_posix_owner,
+			image_ent.posix_author AS ent_posix_author,
+			image_ent.datetime_produce AS ent_datetime_produce,
+			image_ent.rating_score AS ent_rating_score,
+			image_ent.rating_votes AS ent_rating_votes,
+			image_ent.metadata AS ent_metadata,
+			image_attrs.name AS attrs_name,
+			image_attrs.name_url AS attrs_name_url,
+			image_attrs.description AS attrs_description,
+			image_attrs.keywords AS attrs_keywords,
+			image_attrs.order_id AS attrs_order_id,
+			image_cat.ID AS cat_ID,
+			image_cat.ID_entity AS cat_ID_entity,
+			image_cat.ID_charindex AS cat_ID_charindex,
+			image_cat.name AS cat_name,
+			image_cat.name_url AS cat_name_url}.do{if ($env{'check_image_file'}){qq{,
+			image_file.name AS file_name,
+			image_file.image_width AS file_image_width,
+			image_file.image_height AS file_image_height,
+			image_file.file_size AS file_size,
+			image_file.file_ext AS file_ext}}}.qq{
+		FROM
+			$App::501::db_name.a501_image AS image
+		INNER JOIN $App::501::db_name.a501_image_ent AS image_ent ON
+		(
+			image_ent.ID_entity = image.ID_entity AND
+			image_ent.status IN ('Y','L')
+		)
+		INNER JOIN $App::501::db_name.a501_image_attrs AS image_attrs ON
+		(
+			image_attrs.ID_entity = image.ID AND
+			image_attrs.lng = '$env{'lng'}' AND
+			image_attrs.status IN ('Y','L')
+		)
+		LEFT JOIN $App::501::db_name.a501_image_cat AS image_cat ON
+		(
+			image_cat.ID_entity = image_attrs.ID_category AND
+			image_cat.lng = image_attrs.lng AND
+			image_cat.status IN ('Y','L')
+		)}.do{if ($env{'check_image_file'}){qq{
+		INNER JOIN $App::501::db_name.a501_image_file AS image_file ON
+		(
+			image_file.ID_entity = image.ID_entity AND
+			image_file.status IN ('Y','L') AND
+			image_file.ID_format = $env{'image_format.ID'}
+		)
+		}}}.qq{
+		WHERE
+			image.status IN ('Y','L')
+			$sql_where
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],'quiet_'=>1,'-slave'=>1,'-cache_'=>86400*7,
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+			'db_h'=>"main",'db_name'=>$App::501::db_name,'tb_name'=>"a501_image",'ID_entity'=>$env{'image.ID_entity'}
+		})
+	);
+	my %image=$sth0{'sth'}->fetchhash();
+	
+	if (!$image{'ID_entity'})
+	{
+		main::_log("image not found",1);
+		return 1,%env_out;
+	}
+	
+	main::_log("found image.ID_entity=$image{'ID_entity'}");
+	
+	
+	push @{$env_out{'entity'}},{
+		'db_h' => 'main',
+		'db_name' => $App::501::db_name,
+		'tb_name' => 'a501_image',
+		'ID_entity' => $image{'ID_entity'}
+	};
+	
+	push @{$env_out{'call'}{'H'}{'add_DOC_keywords'}},$image{'ent_keywords'}
+		if $env{'header.keywords'};
+	
+	push @{$env_out{'call'}{'H'}{'add_DOC_title'}},$image{'attrs_name'}
+		if $env{'header.title'};
+#	push @{$env_out{'call'}{'H'}{'change_DOC_description'}},ucfirst($description);
+	
+=head1
+	if ($video{'cat_ID'})
+	{
+		# link to a210_page
+		if (my $category=App::510::functions::_a210_by_cat([$video{'cat_ID'}],'lng'=>$env{'lng'}))
+		{
+			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$category,
+					%sql_def,
+					'-slave' => 1,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$video{'a210'}{'IDs'}}, $p->{'ID'};
+				push @{$video{'a210'}{'nodes'}}, $p;
+				$video{'a210'}{'path_url'}.="/".$p->{'name_url'};
+			}
+			$video{'a210'}{'path_url'}=~s|^/||;
+		}
+	}
+=cut
+	
+=head1
+	if ($env{'header.og'})
+	{
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:title','content'=>$video{'attrs_name'}};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:site_name','content' => $tom::H};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:type','content'=>'article'};
+		
+		if ($video{'related_thumbnail'}->{'r_ID_entity'})
+		{
+			my %image=App::501::functions::get_image_file(
+				'image.ID_entity' => $video{'related_thumbnail'}->{'r_ID_entity'},
+				'image_file.ID_format' => $env{'header.og.image_format.ID'} || $App::501::image_format_thumbnail_ID,
+				'image_attrs.lng' => $env{'lng'}
+			);
+			push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=>$tom::H_a501.'/image/file/'.$image{'file_path'}};
+		}
+		
+	}
+=cut
+	
+	$TPL->{'variables'}{'image'} = \%image;
+	
+	return 1,%env_out;
+}
+
+1;
