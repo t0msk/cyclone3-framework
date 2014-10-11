@@ -290,7 +290,8 @@ sub _event
 	if ($TOM::event_elastic && $Ext::Elastic::service)
 	{
 		my %log_date=ctodatetime(int($hash{'timestamp'}),format=>1);
-		$Ext::Elastic::service->index(
+		my $service=$Ext::Elastic::service_async || $Ext::Elastic::service; # async when async library available
+		$service->index(
 			'index' => '.cyclone3.'.$log_date{'year'}.$log_date{'mon'},
 			'type' => 'event',
 			'body' => {
