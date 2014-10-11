@@ -1,10 +1,22 @@
 #!/usr/bin/env perl
 # ex:ts=4
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.bin/c3-init";
+}
 
 use strict;
-use warnings;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
 use DateTime;
-use File::ReadBackwards;
+use Ext::Redis::_init;
+use Data::Dumper;
 
 my $cmd = shift || '';
 if ($cmd eq 'config') {print qq{graph_title Cyclone3 cache usage [SQL]
@@ -25,62 +37,28 @@ hit.min 0
 my $debug;
 	$debug=1 if $cmd eq "debug";
 
-my $date=`date +"%Y-%m-%d"`;chomp($date);
-#my $text=`cat /srv/Cyclone3/_logs/$date.cache.log`;
-
-#print $text
-
 my $datetime_now=DateTime->now('time_zone' => 'local');
-	$datetime_now->add('minutes' => -1);
-#my $datetime_now_string=$datetime_now->hour().":".$datetime_now->minute();
-my $datetime_now_string=sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute()).":".sprintf('%02d',$datetime_now->second());
-	print "from $datetime_now_string\n" if $debug;
-	
+
 my $i;
-my $value_crt=0;
-my $value_hit=0;
+my $value_crt;
+my $value_hit;
 
-
-my $logfile;
-if (-e '/var/log/Cyclone3/'.$date.'.cache.log'){$logfile='/var/log/Cyclone3/'.$date.'.cache.log'}
-elsif (-e '/srv/Cyclone3/_logs/'.$date.'.cache.log'){$logfile='/srv/Cyclone3/_logs/'.$date.'.cache.log'}
-elsif (-e '/Cyclone3/_logs/'.$date.'.cache.log'){$logfile='/Cyclone3/_logs/'.$date.'.cache.log'}
-elsif (-e '/www/TOM/_logs/'.$date.'.cache.log'){$logfile='/www/TOM/_logs/'.$date.'.cache.log'};
-
-my $bw = File::ReadBackwards->new($logfile) or die "can't read 'log_file' $!" ;
-while( my $line = $bw->readline )
+for (1..10)
 {
-	chomp($line);
-	next unless $line=~/\[sql\]/;
-	if ($line=~/\[(\d\d):(\d\d):(\d\d)/)
-	{
-		my $time_str=$1.":".$2.":".$3;
-		last if $time_str lt $datetime_now_string;
-	}
-	else
-	{
-		next;
-	}
+	$datetime_now->add('minutes' => -1);
 	
-	if ($line=~/\[sql\].*?\[(CRT|HIT)\]/)
-	{
-		$i++;
-		print $line."\n" if $debug;
-		if ($1 eq "CRT")
-		{
-			$value_crt+=1;
-		}
-		else
-		{
-			$value_hit+=1;
-		}
-#		$value_proc+=$2;
-	}
+	my $date_str=
+		sprintf('%04d',$datetime_now->year()).'-'.sprintf('%02d',$datetime_now->month()).'-'.sprintf('%02d',$datetime_now->day())
+		.' '
+		.sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute());
 	
+	my %data=@{$Redis->hgetall('C3|counters|sql_cache|'.$date_str)};
+	$value_crt+=$data{'crt'};
+	$value_hit+=$data{'hit'};
 }
 
 $i=1 unless $i;
 
-print "crt.value " . int(($value_crt/1/60)*100)/100 . "\n";
-print "hit.value " . int(($value_hit/1/60)*100)/100 . "\n";
+print "crt.value " . int(($value_crt/10/60)*100)/100 . "\n";
+print "hit.value " . int(($value_hit/10/60)*100)/100 . "\n";
 
