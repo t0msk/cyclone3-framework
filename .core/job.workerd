@@ -101,6 +101,7 @@ $service->_channel->declare_exchange(
 	'exchange' => encode('UTF-8', 'cyclone3.notify'),
 	'type' => encode('UTF-8', 'direct'),
 	'durable' => 1);
+
 our $notify_channel=$Ext::RabbitMQ::service->open_channel();
 	$notify_channel->declare_queue(
 		'exchange' => encode('UTF-8', 'cyclone3.notify'),
@@ -388,6 +389,7 @@ sub check_domains
 		
 		$domain_info{$domain}=$dom_data;
 		
+#=head1
 		async {
 		
 			# create queue
@@ -421,6 +423,8 @@ sub check_domains
 #			);
 			
 		};
+#=cut
+		
 	}
 	
 	# load or update job.conf files
@@ -783,7 +787,7 @@ sub check_scheduler
 					next if $database_{$domain_info{$domain_}{'addons'}{$cron->{'run-if-addon'}}};
 					$database_{$domain_info{$domain_}{'addons'}{$cron->{'run-if-addon'}}}++;
 					
-#					main::_log_stdout("test domain '$domain_' db_name='$domain_info{$domain_}{'db_name'}'",3,"job.workerd");
+					main::_log_stdout("test domain '$domain_' db_name='$domain_info{$domain_}{'db_name'}'",3,"job.workerd");
 					
 					push @domains, $domain_;
 				}
@@ -825,6 +829,7 @@ sub check_scheduler
 				if (!$queue_found)
 				{
 					async {
+						main::_log("declare_queue");
 						$service->_channel->declare_queue(
 							'exchange' => encode('UTF-8', 'cyclone3.job'),
 							'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
@@ -1060,7 +1065,13 @@ sub job
 	
 	main::_log("{jobify} job '".($job->{'file'} || $job->{'name'})."' routing_key='".($header->{'routing_key'} || 'job')."' id='$id' deduplication=".$header->{'deduplication'});
 	
+	my %headers;
+		$headers{'deduplication'} = $header->{'deduplication'}
+			if $header->{'deduplication'};#=> ($header->{'deduplication'} || '')
+			
+#	$main::notify_channel->publish(
 	$main::service->publish(
+#	$RabbitMQ->publish(
 		'exchange' => 'cyclone3.job',
 		'routing_key' => ($header->{'routing_key'} || 'job'),
 		'body' => to_json({
@@ -1070,7 +1081,7 @@ sub job
 		'header' => {
 			'headers' => {
 				'message_id' => $id,
-				'deduplication' => $header->{'deduplication'}
+				%headers
 			}
 		}
 	);
