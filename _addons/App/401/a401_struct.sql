@@ -47,6 +47,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   KEY `visits` (`visits`),
   KEY `rating` (`rating`),
   KEY `status` (`status`),
+  KEY `published_mark` (`published_mark`),
   KEY `datetime_create` (`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -115,7 +116,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
-  KEY `SEL_0` (`status`,`lng`,`datetime_start`),
+  KEY `SEL_0` (`status`,`lng`,`datetime_start`,`datetime_stop`),
   KEY `SEL_1` (`datetime_start`,`datetime_stop`),
   KEY `SEL_2` (`ID_category`,`status`,`lng`),
   KEY `name` (`name`),
@@ -127,7 +128,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   KEY `priority_D` (`priority_D`),
   KEY `priority_E` (`priority_E`),
   KEY `priority_F` (`priority_F`),
-  KEY `lng` (`lng`)
+  KEY `lng` (`lng`,`datetime_start`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
