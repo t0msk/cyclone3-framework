@@ -106,7 +106,7 @@ $main::time_current=$cron::time_current=$tom::time_current=time;
 	$tom::Fhour=$main::Fhour=$cron::Fhour;
 	$tom::Fmday=$main::Fmday=$cron::Fmday;
 	$tom::Fmom=$main::Fmom=$cron::Fmom;
-	$tom::Fmon=$main::Fmon=$cron::Fmon;
+	$tom::Fmon=$main::Fmon=$cron::Fmon=$cron::Fmom;
 	$tom::Fyear=$main::Fyear=$cron::Fyear;
 	$tom::Fwday=$main::Fwday=$cron::Fwday;
 	$tom::Fyday=$main::Fyday=$cron::Fyday;
