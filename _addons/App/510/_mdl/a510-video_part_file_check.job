@@ -1,0 +1,122 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+use JSON;
+use App::510::_init;
+use Movie::Info;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	return if $self->running({'max'=>3600}); # check if not already running
+	
+	if (!$tom::H)
+	{
+		main::_log("only running under domain",1);
+		return undef;
+	}
+	
+	return 1 unless $env->{'ID_entity'}; # video_part_file.ID_entity
+	
+	main::_log("checking video_part_file.ID_entity=".$env->{'ID_entity'});
+	
+	# check files without info (W status)
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			a510_video_part_file.*,
+			a510_video_part.ID_brick,
+			a510_video_part.ID AS part_ID
+		FROM
+			`$App::510::db_name`.a510_video_part_file
+		INNER JOIN `$App::510::db_name`.a510_video_part ON
+		(
+			a510_video_part_file.ID_entity = a510_video_part.ID
+		)
+		WHERE
+			a510_video_part_file.ID_entity = ? AND
+			a510_video_part_file.status='W' OR
+			(
+				a510_video_part_file.status='N' AND
+				a510_video_part_file.regen='Y' AND
+				a510_video_part_file.ID_format=1
+			)
+		LIMIT 100
+	},'bind'=>[$env->{'ID_entity'}]);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $vd = Movie::Info->new || die "Couldn't find an mplayer to use\n";
+		
+		my %brick;
+		%brick=App::020::SQL::functions::get_ID(
+			'ID' => $db0_line{'ID_brick'},
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_video_brick",
+			'columns' => {'*'=>1}
+		) if $db0_line{'ID_brick'};
+		
+		my $brick_class='App::510::brick';
+		$brick_class.="::".$brick{'name'}
+			if $brick{'name'};
+		
+		my $video_=$brick_class->video_part_file_path({
+			'video_part_file.ID' => $db0_line{'ID'},
+			'video_part.ID' => $db0_line{'part_ID'},
+			'video_format.ID' => $db0_line{'ID_format'},
+			'video_part_file.name' => $db0_line{'name'},
+			'video_part_file.file_ext' => $db0_line{'file_ext'}
+		});
+		
+		my $filename=$db0_line{'file_alt_src'} || $video_->{'dir'}.'/'.$video_->{'file_path'};
+		main::_log("filename=$filename");
+		
+		my %video = $vd->info($filename);
+		
+		App::020::SQL::functions::update(
+			'ID' => $db0_line{'ID'},
+			'db_h' => 'main',
+			'db_name' => $App::510::db_name,
+			'tb_name' => 'a510_video_part_file',
+			'columns' =>
+			{
+				'video_width' => "'$video{'width'}'",
+				'video_height' => "'$video{'height'}'",
+				'video_codec' => "'$video{'codec'}'",
+				'video_fps' => "'$video{'fps'}'",
+				'video_bitrate' => "'$video{'bitrate'}'",
+				'audio_codec' => "'$video{'audio_codec'}'",
+				'audio_bitrate' => "'$video{'audio_bitrate'}'",
+				'length' => "SEC_TO_TIME(".int($video{'length'}).")",
+				'status' => "'Y'",
+				'regen' => "'N'",
+			},
+			'-journalize' => 1,
+		);
+		
+		return 1;
+	}
+	
+	foreach my $video_part_file (App::510::functions::get_video_part_file_process_front(
+		'limit'=>100,
+		'video_part.ID' => $env->{'ID_entity'} # part.ID = part_file.ID_entity
+	))
+	{
+		next unless $video_part_file->{'ID_part'};
+		
+		App::510::functions::video_part_file_generate(
+				'-jobify' => 1,
+			'video_part.ID' => $video_part_file->{'ID_part'},
+			'video_format.ID' => $video_part_file->{'ID_entity_format'}
+		);
+		
+	}
+	
+return 1}
+1;

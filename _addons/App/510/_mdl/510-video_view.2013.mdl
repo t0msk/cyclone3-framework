@@ -179,7 +179,7 @@ sub execute
 			$sql_order_by
 		LIMIT
 			$sql_limit
-	},'bind'=>[@sql_bind],'quiet_'=>1,'-slave'=>1,'-cache'=>86400*7,
+	},'bind'=>[@sql_bind],'quiet_'=>1,'-slave'=>1,'-cache_'=>86400*7,
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
 			'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video",'ID_entity'=>$env{'video.ID_entity'}
 		})
@@ -244,6 +244,15 @@ sub execute
 			'rel_type' => "thumbnail",
 			'status' => "Y"
 		))[0];
+		if ($video{'related_thumbnail'} && $video{'related_thumbnail'}->{'r_ID_entity'})
+		{
+			push @{$env_out{'entity'}},{
+				'db_h' => 'main',
+				'db_name' => $App::501::db_name,
+				'tb_name' => 'a501_image',
+				'ID_entity' => $video{'related_thumbnail'}->{'r_ID_entity'}
+			};
+		}
 	}
 	
 	if ($env{'header.og'})

@@ -73,6 +73,7 @@ use Time::HiRes qw(usleep);
 use Ext::Redis::_init;
 use Ext::Elastic::_init;
 
+our $avconv_exec = (where('avconv'))[0];main::_log("avconv in '$avconv_exec'");
 our $ffmpeg_exec = (where('ffmpeg'))[0];main::_log("ffmpeg in '$ffmpeg_exec'");
 our $mencoder_exec = (where('mencoder'))[0];main::_log("mencoder in '$mencoder_exec'");
 our $mplayer_exec = (where('mplayer'))[0];main::_log("mplayer in '$mplayer_exec'");
@@ -96,6 +97,14 @@ our $MP4Box_exec = (where('MP4Box'))[0];main::_log("MP4Box in '$MP4Box_exec'");
 sub video_part_file_generate
 {
 	my %env=@_;
+	if ($env{'-jobify'})
+	{
+		return 1 if TOM::Engine::jobify(\@_,{
+			'routing_key' => 'db:'.$App::510::db_name,
+			'class' => 'encoder',
+			'deduplication' => 1}); # do it in background
+	}
+	
 	my $t=track TOM::Debug(__PACKAGE__."::video_part_file_generate($env{'video_part.ID'},".
 		($env{'video_format.ID'}||$env{'video_format.name'}).")");
 	
@@ -148,6 +157,9 @@ sub video_part_file_generate
 		);
 		$env{'video_format.name'}=$format{'name'};
 	}
+	
+	# lock time to this current
+	$main::time_current=$tom::time_current=time();
 	
 	main::_log("video_format ID='$format{'ID'}' name='$format{'name'}' status='$format{'status'}'");
 	
@@ -962,6 +974,177 @@ sub video_part_file_process
 				$ext='mp4' if $env{'f'} eq "mp4";
 				$ext='flv' if $env{'f'} eq "flv";
 			}
+			elsif ($env{'encoder'} eq "avconv")
+			{
+				if ($env{'pass'})
+				{
+					push @encoder_env, '-pass '.$env{'pass'};
+					push @encoder_env, '-passlogfile '.$temp_passlog->{'filename'};
+#					push @encoder_env, '-stats '.$temp_statslog->{'filename'};
+				}
+				if ($env{'vframes'}){push @encoder_env, '-vframes '.$env{'vframes'};}
+				if ($env{'f'}){push @encoder_env, '-f '.$env{'f'};}
+				if ($env{'map'}){push @encoder_env, '-map '.$env{'map'};}
+				if ($env{'map0'}){push @encoder_env, '-map '.$env{'map0'};}
+				if ($env{'map1'}){push @encoder_env, '-map '.$env{'map1'};}
+				if ($env{'map2'}){push @encoder_env, '-map '.$env{'map2'};}
+				if (exists $env{'an'} && !$env{'acodec'}){push @encoder_env, '-an'}
+				if (exists $env{'sameq'}){push @encoder_env, '-sameq '}
+				if (exists $env{'deinterlace'}){push @encoder_env, '-deinterlace '}
+				if ($env{'flags'}){push @encoder_env, '-flags '.$env{'flags'};}
+				if ($env{'flags2'}){push @encoder_env, '-flags2 '.$env{'flags2'};}
+				if ($env{'cmp'}){push @encoder_env, '-cmp '.$env{'cmp'};}
+				if ($env{'subcmp'}){push @encoder_env, '-subcmp '.$env{'subcmp'};}
+				if ($env{'mbcmp'}){push @encoder_env, '-mbcmp '.$env{'mbcmp'};}
+				if ($env{'ildctcmp'}){push @encoder_env, '-ildctcmp '.$env{'ildctcmp'};}
+				if ($env{'precmp'}){push @encoder_env, '-precmp '.$env{'precmp'};}
+				if ($env{'skipcmp'}){push @encoder_env, '-skipcmp '.$env{'skipcmp'};}
+				if (exists $env{'mv0'}){push @encoder_env, '-mv0 ';}
+				if ($env{'mbd'}){push @encoder_env, '-mbd '.$env{'mbd'};}
+				if ($env{'inter_matrix'}){push @encoder_env, '-inter_matrix '.$env{'inter_matrix'};}
+				if ($env{'pred'}){push @encoder_env, '-pred '.$env{'pred'};}
+				if ($env{'partitions'}){push @encoder_env, '-partitions '.$env{'partitions'};}
+				if ($env{'me'}){push @encoder_env, '-me '.$env{'me'};}
+				if ($env{'subq'}){push @encoder_env, '-subq '.$env{'subq'};}
+				if ($env{'trellis'}){push @encoder_env, '-trellis '.$env{'trellis'};}
+				if ($env{'refs'}){push @encoder_env, '-refs '.$env{'refs'};}
+				if ($env{'bf'}){push @encoder_env, '-bf '.$env{'bf'};}
+				if ($env{'b_strategy'}){push @encoder_env, '-b_strategy '.$env{'b_strategy'};}
+				if ($env{'coder'}){push @encoder_env, '-coder '.$env{'coder'};}
+				if ($env{'me_range'}){push @encoder_env, '-me_range '.$env{'me_range'};}
+				if ($env{'q'}){push @encoder_env, '-q '.$env{'q'};}
+				if ($env{'g'}){push @encoder_env, '-g '.$env{'g'};}
+				if ($env{'strict'}){push @encoder_env, '-strict '.$env{'strict'};}
+				if ($env{'keyint_min'}){push @encoder_env, '-keyint_min '.$env{'keyint_min'};}
+#				if ($env{'keyint'}){push @encoder_env, '-keyint '.$env{'keyint'};}
+				if ($env{'sc_threshold'}){push @encoder_env, '-sc_threshold '.$env{'sc_threshold'};}
+				if ($env{'i_qfactor'}){push @encoder_env, '-i_qfactor '.$env{'i_qfactor'};}
+				if ($env{'bt'}){push @encoder_env, '-bt '.$env{'bt'};}
+				if ($env{'rc_eq'}){push @encoder_env, "-rc_eq '".$env{'rc_eq'}."'";}
+				if ($env{'qcomp'}){push @encoder_env, '-qcomp '.$env{'qcomp'};}
+				if ($env{'qblur'}){push @encoder_env, '-qblur '.$env{'qblur'};}
+				if ($env{'qmin'}){push @encoder_env, '-qmin '.$env{'qmin'};}
+				if ($env{'qmax'}){push @encoder_env, '-qmax '.$env{'qmax'};}
+				if ($env{'qdiff'}){push @encoder_env, '-qdiff '.$env{'qdiff'};}
+				if ($env{'vcodec'}){push @encoder_env, '-vcodec '.$env{'vcodec'};}
+#				if ($env{'vpre'}){push @encoder_env, '-vpre '.$env{'vpre'};}
+				if ($env{'preset'}){push @encoder_env, '-preset '.$env{'preset'};}
+				if ($env{'tune'}){push @encoder_env, '-tune '.$env{'tune'};}
+				if ($env{'profile'}){push @encoder_env, '-profile '.$env{'profile'};}
+				if ($env{'pass'})
+				{
+					push @encoder_env, '-stats '.$temp_statslog->{'filename'};
+				}
+				if (exists $env{'threads'}){push @encoder_env, '-threads '.$env{'threads'};}
+				if ($env{'b'}){
+					if ($env{'upscale'} eq "false" && $movie1_info{'bitrate'})
+					{ # check for upscale
+						my $bitrate=$env{'b'};
+							$bitrate=~s|k$|000|;
+						if ($bitrate > $movie1_info{'bitrate'})
+						{
+							push @encoder_env, '-b '.$movie1_info{'bitrate'};
+						}
+						else
+						{
+							push @encoder_env, '-b '.$env{'b'};
+						}
+					}
+					else
+					{
+						push @encoder_env, '-b '.$env{'b'};
+					}
+				}
+				if ($env{'b:v'}){
+					if ($env{'upscale'} eq "false" && $movie1_info{'bitrate'})
+					{ # check for upscale
+						my $bitrate=$env{'b:v'};
+							$bitrate=~s|k$|000|;
+						if ($bitrate > $movie1_info{'bitrate'})
+						{
+							push @encoder_env, '-b:v '.$movie1_info{'bitrate'};
+						}
+						else
+						{
+							push @encoder_env, '-b:v '.$env{'b:v'};
+						}
+					}
+					else
+					{
+						push @encoder_env, '-b:v '.$env{'b:v'};
+					}
+				}
+				if ($env{'s_width'})
+					{$env{'s'}=$env{'s_width'}.'x'.(int($movie1_info{'height'}/($movie1_info{'width'}/$env{'s_width'})/2)*2);}
+				if ($env{'s_height'} && $movie1_info{'height'})
+					{
+						if ($env{'upscale'} eq "false" && $env{'s_height'} >= $movie1_info{'height'})
+						{
+							# don't upscale
+						}
+						else
+						{
+							$env{'s'}=(int($movie1_info{'width'}/($movie1_info{'height'}/$env{'s_height'})/2)*2).'x'.$env{'s_height'};
+						}
+					}
+				if ($env{'s'}){push @encoder_env, '-s '.$env{'s'};}
+				if ($env{'r'}){push @encoder_env, '-r '.$env{'r'};}
+				if ($env{'acodec'}){
+					push @encoder_env, '-acodec '.$env{'acodec'};
+					if ($env{'acodec'})
+					{
+						push @encoder_env, '-strict -2';
+					}
+				}
+				if ($env{'ab'}){
+					if ($env{'upscale'} eq "false" && $movie1_info{'audio_bitrate'})
+					{ # check for upscale
+						my $bitrate=$env{'ab'};
+							$bitrate=~s|k$|000|;
+						if ($bitrate > $movie1_info{'audio_bitrate'})
+						{
+							push @encoder_env, '-ab '.$movie1_info{'audio_bitrate'};
+						}
+						else
+						{
+							push @encoder_env, '-ab '.$env{'ab'};
+						}
+					}
+					else
+					{
+						push @encoder_env, '-ab '.$env{'ab'};
+					}
+				}
+				if ($env{'b:a'}){
+					if ($env{'upscale'} eq "false" && $movie1_info{'audio_bitrate'})
+					{ # check for upscale
+						my $bitrate=$env{'b:a'};
+							$bitrate=~s|k$|000|;
+						if ($bitrate > $movie1_info{'audio_bitrate'})
+						{
+							push @encoder_env, '-b:a '.$movie1_info{'audio_bitrate'};
+						}
+						else
+						{
+							push @encoder_env, '-b:a '.$env{'b:a'};
+						}
+					}
+					else
+					{
+						push @encoder_env, '-b:a '.$env{'b:a'};
+					}
+				}
+				if ($env{'ar'}){push @encoder_env, '-ar '.$env{'ar'};}
+				if ($env{'ac'}){push @encoder_env, '-ac '.$env{'ac'};}
+				if ($env{'fs'}){push @encoder_env, '-fs '.$env{'fs'};}
+				if ($env{'ss'}){push @encoder_env, '-ss '.$env{'ss'};}
+				if ($env{'t'}){push @encoder_env, '-t '.$env{'t'};}
+				if ($env{'async'}){push @encoder_env, '-async '.$env{'async'};}
+				
+				# suggest extension
+				$ext='mp4' if $env{'f'} eq "mp4";
+				$ext='flv' if $env{'f'} eq "flv";
+			}
 			
 			$outret{'ext'}=$ext;
 			
@@ -988,12 +1171,14 @@ sub video_part_file_process
 			#main::_log("encoding to file '$temp_video->{'filename'}'");
 			my $ff=$env{'video1'};
 			$ff=~s| |\\ |g;
-			my $cmd="/usr/bin/mencoder ".$ff." -o ".($env{'o'} || $temp_video->{'filename'});
 			
+			my $cmd="/usr/bin/mencoder ".$ff." -o ".($env{'o'} || $temp_video->{'filename'});
 			$cmd="cd $main::ENV{'TMP'};$ffmpeg_exec -y -i ".$ff if $env{'encoder'} eq "ffmpeg";
+			$cmd="cd $main::ENV{'TMP'};$avconv_exec -y -i ".$ff if $env{'encoder'} eq "avconv";
 			
 			foreach (@encoder_env){$cmd.=" $_";}
 			$cmd.=" ".($env{'o'} || $temp_video->{'filename'}) if $env{'encoder'} eq "ffmpeg";
+			$cmd.=" ".($env{'o'} || $temp_video->{'filename'}) if $env{'encoder'} eq "avconv";
 			main::_log("cmd=$cmd");
 			
 			$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
@@ -2491,7 +2676,7 @@ sub video_part_file_add
 					'from_parent' => "'$env{'from_parent'}'",
 					'regen' => "'N'",
 					'status' => "'Y'",
-					'datetime_create' => "FROM_UNIXTIME($main::time_current)", # hack
+#					'datetime_create' => "FROM_UNIXTIME($main::time_current)", # hack
 					%columns
 				},
 				'-journalize' => 1,
@@ -2541,7 +2726,7 @@ sub video_part_file_add
 					'from_parent' => "'$env{'from_parent'}'",
 					'regen' => "'N'",
 					'status' => "'Y'",
-					'datetime_create' => "FROM_UNIXTIME($main::time_current)", # hack
+#					'datetime_create' => "FROM_UNIXTIME($main::time_current)", # hack
 					%columns
 				},
 				'-journalize' => 1,
@@ -2624,7 +2809,7 @@ sub video_part_file_add
 				'file_ext' => "'$file_ext'",
 				'from_parent' => "'$env{'from_parent'}'",
 #				'status' => "'Y'",
-				'datetime_create' => "FROM_UNIXTIME($main::time_current)", # hack
+#				'datetime_create' => "FROM_UNIXTIME($main::time_current)", # hack
 				%columns
 			},
 			'-journalize' => 1
@@ -3169,6 +3354,20 @@ sub get_video_part_file_process_front
 	my %env=@_;
 	$env{'limit'}=10 unless $env{'limit'};
 	
+	my $sql_where;
+	my @sql_bind;
+	
+	if ($env{'video_part_file.ID_entity'})
+	{
+		$sql_where.=" AND video_part.ID=?";
+		push @sql_bind, $env{'video_part_file.ID_entity'}
+	}
+	elsif ($env{'video_part.ID'})
+	{
+		$sql_where.=" AND video_part.ID=?";
+		push @sql_bind, $env{'video_part.ID'}
+	}
+	
 	my @data;
 	my $sql=qq{
 		SELECT
@@ -3305,7 +3504,7 @@ sub get_video_part_file_process_front
 					/* or parent file has been changed */
 					video_format.name != 'original' AND
 					video_part_file.ID IS NOT NULL AND
-					video_part_file.datetime_create <= video_part_file_p.datetime_create
+					video_part_file.datetime_create < video_part_file_p.datetime_create
 				)
 				OR
 				(
@@ -3328,7 +3527,7 @@ sub get_video_part_file_process_front
 					AND video_part_file.from_parent = 'N'
 				)
 			)
-		
+			$sql_where
 		GROUP BY
 			video_part.ID, video_format.ID
 	};
@@ -3337,7 +3536,7 @@ sub get_video_part_file_process_front
 	{
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT COUNT(*) AS cnt FROM ($sql) AS t2
-		});
+		},'bind'=>[@sql_bind]);
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		return $db0_line{'cnt'};
 	}
@@ -3345,7 +3544,7 @@ sub get_video_part_file_process_front
 		ORDER BY
 			video_format.ID_charindex ASC, video.datetime_create DESC
 		LIMIT $env{'limit'}
-	});
+	},'bind'=>[@sql_bind]);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$i++;
