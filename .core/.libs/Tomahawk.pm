@@ -570,8 +570,15 @@ sub module
 				my $hits;
 				if ($Redis)
 				{
-					my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+#					my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
 #					$hits=$Redis->hincrby($key,'hits',1);
+					
+					my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
+		#			$Redis->hincrby('C3|counters|mdl_cache|'.$date_str,'crt',1,sub{});
+					$Redis->hincrby('C3|counters|mdl_cache|'.$date_str,'hit',1,sub{});
+					$Redis->expire('C3|counters|mdl_cache|'.$date_str,3600,sub{});
+					
+#					main::_log("mdl hit '$date_str'");
 				}
 				else
 				{
@@ -584,12 +591,12 @@ sub module
 						'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
 					);
 				}
-				$hits=1 unless $hits;
-				my $hpm=0;
-					$hpm=int($hits/($mdl_C{'-cache_old'}/60))
-						if ($mdl_C{'-cache_old'}/60);
-				main::_log("[mdl][".$mdl_C{'-md5'}."][HIT] name='".$mdl_C{'T_CACHE'}."' (start:".$mdl_C{'-cache_from'}." old:".$mdl_C{'-cache_old'}." hits:$hits hpm:$hpm)",3,"cache");
-				main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][HIT] #$hits",3,"cache",1);
+#				$hits=1 unless $hits;
+#				my $hpm=0;
+#					$hpm=int($hits/($mdl_C{'-cache_old'}/60))
+#						if ($mdl_C{'-cache_old'}/60);
+#				main::_log("[mdl][".$mdl_C{'-md5'}."][HIT] name='".$mdl_C{'T_CACHE'}."' (start:".$mdl_C{'-cache_from'}." old:".$mdl_C{'-cache_old'}." hits:$hits hpm:$hpm)",3,"cache");
+#				main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][HIT] #$hits",3,"cache",1);
 			}
 			
 			if ($mdl_C{'-stdout'} && $main::stdout)
@@ -889,8 +896,14 @@ our \$VERSION=$m_time;
 					
 					if ($TOM::DEBUG_cache)
 					{
-						main::_log("[mdl][".$mdl_C{'-md5'}."][CRT] name='".$mdl_C{'T_CACHE'}."' (start:".$main::time_current.")",3,"cache");
-						main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][CRT]",3,"cache",1);
+#						main::_log("[mdl][".$mdl_C{'-md5'}."][CRT] name='".$mdl_C{'T_CACHE'}."' (start:".$main::time_current.")",3,"cache");
+#						main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][CRT]",3,"cache",1);
+						
+						my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
+						$Redis->hincrby('C3|counters|mdl_cache|'.$date_str,'crt',1,sub{});
+			#			$Redis->hincrby('C3|counters|mdl_cache|'.$date_str,'hit',1,sub{});
+						$Redis->expire('C3|counters|mdl_cache|'.$date_str,3600,sub{});
+						
 					}
 					
 				}
@@ -940,8 +953,8 @@ our \$VERSION=$m_time;
 					
 					if ($TOM::DEBUG_cache)
 					{
-						main::_log("[mdl][".$mdl_C{'-md5'}."][CRT] name='".$mdl_C{'T_CACHE'}."' (start:".$main::time_current.")",3,"cache");
-						main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][CRT]",3,"cache",1);
+#						main::_log("[mdl][".$mdl_C{'-md5'}."][CRT] name='".$mdl_C{'T_CACHE'}."' (start:".$main::time_current.")",3,"cache");
+#						main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][CRT]",3,"cache",1);
 						$Ext::CacheMemcache::cache->set(
 							'namespace' => "mcache_hits",
 							'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
