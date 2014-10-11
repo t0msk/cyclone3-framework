@@ -1417,10 +1417,10 @@ sub article_visit
 			# it's time to save
 			TOM::Database::SQL::execute(qq{
 				UPDATE `$App::401::db_name`.a401_article_ent
-				SET visits = visits + $count_visits->[1]
+				SET visits = visits + ?
 				WHERE ID_entity = $ID_entity
 				LIMIT 1
-			},'quiet'=>1,'-jobify'=>1) if $count_visits->[1];
+			},'quiet'=>1,'-jobify'=>1,'bind'=>[$count_visits->[1]]) if $count_visits->[1];
 			$Redis->hmset('C3|db_entity|'.$key,
 				'visits',1,
 				'_firstvisit', $main::time_current,
