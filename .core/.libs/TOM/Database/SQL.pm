@@ -17,13 +17,14 @@ use TOM::Database::SQL::file;
 use TOM::Database::SQL::compare;
 use TOM::Database::SQL::transaction;
 use TOM::Database::SQL::cache;
+use Ext::Redis::_init;
 
 our $debug=$TOM::Database::SQL::debug || 0;
 our $save_error=$TOM::Database::SQL::save_error || 1;
 our $logcachequery=$TOM::Database::SQL::logcachequery || 0;
 our $lognonselectquery=$TOM::Database::SQL::lognonselectquery || 0;
 our $logquery=$TOM::Database::SQL::logquery || 0;
-our $logquery_long=$TOM::Database::SQL::logquery_long || 5; # in seconds
+our $logquery_long=$TOM::Database::SQL::logquery_long || 1; # in seconds
 
 our $query_long_autocache=$TOM::Database::SQL::query_long_autocache || 0.01; # less availability than Memcached
 
@@ -161,6 +162,7 @@ sub get_slave_status
 #			main::_log("modifytime_slave=$changetime_slave");
 			
 			$db0_line{'Seconds_Behind_Master'}=int(($changetime-$changetime_slave)*10000)/10000;
+			$db0_line{'Seconds_Behind_Master'}=0 if $db0_line{'Seconds_Behind_Master'} < 0;
 			if ($db0_line{'Seconds_Behind_Master'} > $TOM::DB_mysql_seconds_behind_master_max)
 			{
 				main::_log("SQL: Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",1);
@@ -234,6 +236,40 @@ Example of binding params into SQL
 
 =cut
 
+sub _choose_weighted {
+
+	my ($objects, $weightsArg ) = @_;
+	my $calcWeight = $weightsArg if 'CODE' eq ref $weightsArg;
+	
+	my @weights;		# fix wasteful of memory
+	if( $calcWeight){
+		@weights =  map { $calcWeight->($_) } @$objects; 
+	}
+	else{
+		@weights =@$weightsArg;
+		if ( @$objects != @weights ){
+#			croak "given arefs of unequal lengths!";
+			return undef;
+		}
+	}
+	
+	my @ranges = ();		# actually upper bounds on ranges
+	my $left = 0;
+	for my $weight( @weights){
+		$weight = 0 if $weight < 0; # the world is hostile...
+		my $right = $left+$weight;
+		push @ranges, $right;
+		$left = $right;
+	}
+	
+	my $weightIndex = rand $left;
+	for( my $i =0; $i< @$objects; $i++){
+		my $range = $ranges[$i];
+		return $objects->[$i] if $weightIndex < $range;
+	}
+	
+}
+
 sub execute
 {
 	my $SQL=shift;
@@ -273,17 +309,21 @@ sub execute
 	{
 		my $slaveselected;
 		my $slave_finding;
+		
+		my $slave_choices = [1..$TOM::DB{$env{'db_h'}}{'slaves'}];
+		my $slave_weights = [map {$_ = $TOM::DB{$_}{'weight'} || 1 } grep {$_=~/^$env{'db_h'}:/} sort keys %TOM::DB];
+		
 		while (!$slaveselected)
-		{
-			my $slave=int(rand($TOM::DB{$env{'db_h'}}{'slaves'}))+1;
+		{			
+			#my $slave=int(rand($TOM::DB{$env{'db_h'}}{'slaves'}))+1;
+			my $slave=_choose_weighted($slave_choices, $slave_weights);
 				$slave_finding++;
 				last if $slave_finding >= $TOM::DB{$env{'db_h'}}{'slaves'};
 			if ($TOM::DB{$env{'db_h'}.':'.$slave}) # is defined
 			{
 				# check quality of this slave
-#				print "a\n";
 				my %slave_quality=get_slave_status($env{'db_h'}.':'.$slave);
-#				print "a\n";
+				
 #				print Dumper(\%slave_quality);use Data::Dumper;
 				if (!$slave_quality{'timestamp'}) # this handler is not recognized or connected
 				{
@@ -417,20 +457,27 @@ sub execute
 			
 			if ($TOM::DEBUG_cache)
 			{
-				my $cache_key_id=TOM::Digest::hash($cache_key);
-				$Ext::CacheMemcache::cache->incr(
-					'namespace' => "sqlcache_hits",
-					'key' => $cache_key_id
-				);
-				my $hits=$Ext::CacheMemcache::cache->get(
-					'namespace' => "sqlcache_hits",
-					'key' => $cache_key_id
-				);
-				my $hpm=0;
-				$hpm=int($hits/((time()-$cache->{'value'}->{'time'})/60))
-					if (((time()-$cache->{'value'}->{'time'})/60));
-				main::_log("[sql][".$cache_key_id."][HIT] name='".substr($SQL_,0,80)."...' (start:".$cache->{'value'}->{'time'}." old:".(time()-$cache->{'value'}->{'time'})." hits:$hits hpm:".$hpm.")",3,"cache");
-				main::_log("[sql][$tom::H][".$cache_key_id."][HIT]",3,"cache",1);
+				if ($Redis)
+				{
+					my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
+#					print "$date_str\n" if $tom::test;
+					$Redis->hincrby('C3|counters|sql_cache|'.$date_str,'hit',1,sub{});
+					$Redis->expire('C3|counters|sql_cache|'.$date_str,3600,sub{});
+				}
+#				my $cache_key_id=TOM::Digest::hash($cache_key);
+#				$Ext::CacheMemcache::cache->incr(
+#					'namespace' => "sqlcache_hits",
+#					'key' => $cache_key_id
+#				);
+#				my $hits=$Ext::CacheMemcache::cache->get(
+#					'namespace' => "sqlcache_hits",
+#					'key' => $cache_key_id
+#				);
+#				my $hpm=0;
+#				$hpm=int($hits/((time()-$cache->{'value'}->{'time'})/60))
+#					if (((time()-$cache->{'value'}->{'time'})/60));
+#				main::_log("[sql][".$cache_key_id."][HIT] name='".substr($SQL_,0,80)."...' (start:".$cache->{'value'}->{'time'}." old:".(time()-$cache->{'value'}->{'time'})." hits:$hits hpm:".$hpm.")",3,"cache");
+#				main::_log("[sql][$tom::H][".$cache_key_id."][HIT]",3,"cache",1);
 			}
 			
 			$t->close();
@@ -719,14 +766,21 @@ sub execute
 		
 		if ($TOM::DEBUG_cache)
 		{
-			my $cache_key_id=TOM::Digest::hash($cache_key);
-			$Ext::CacheMemcache::cache->set(
-				'namespace' => "sqlcache_hits",
-				'key' => $cache_key_id,
-				'value' => 0
-			);
-			main::_log("[sql][".$cache_key_id."][CRT] name='".substr($SQL_,0,80)."...' (start:".time().")",3,"cache");
-			main::_log("[sql][$tom::H][".$cache_key_id."][CRT]",3,"cache",1);
+			if ($Redis)
+			{
+				my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
+				$Redis->hincrby('C3|counters|sql_cache|'.$date_str,'crt',1,sub{});
+#				$Redis->hincrby('C3|counters|sql_cache|'.$date_str,'hit',1,sub{});
+				$Redis->expire('C3|counters|sql_cache|'.$date_str,3600,sub{});
+			}
+#			my $cache_key_id=TOM::Digest::hash($cache_key);
+#			$Ext::CacheMemcache::cache->set(
+#				'namespace' => "sqlcache_hits",
+#				'key' => $cache_key_id,
+#				'value' => 0
+#			);
+#			main::_log("[sql][".$cache_key_id."][CRT] name='".substr($SQL_,0,80)."...' (start:".time().")",3,"cache");
+#			main::_log("[sql][$tom::H][".$cache_key_id."][CRT]",3,"cache",1);
 		}
 		
 	}
