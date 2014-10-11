@@ -71,12 +71,14 @@ no warnings; # yes, i know, i'm redefining _body...
 
 sub _body {
 	my ($self, $body,) = @_;
-	my $body_max = 20000;
+	my $body_max = 20048;
 	# chunk up body into segments measured by $frame_max
+	use Time::HiRes qw(usleep);
 	while (length $body) {
 		$self->{connection}->_push_write(
 			Net::AMQP::Frame::Body->new(payload => substr($body, 0, $body_max, '')), $self->{id}
 		);
+		usleep(5000) if $body;
 	}
 	return $self;
 }
