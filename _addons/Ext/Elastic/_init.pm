@@ -21,10 +21,10 @@ BEGIN
 	eval {require Search::Elasticsearch};
 	if ($@){main::_log("<={LIB} Search::Elasticsearch",1);undef $Ext::Elastic;}
 	else {main::_log("<={LIB} Search::Elasticsearch");}
-	$Ext::Elastic::async=1;
-	eval {require Search::Elasticsearch::Async};
-	if ($@){main::_log("<={LIB} Search::Elasticsearch::Async",1);undef $Ext::Elastic::async;}
-	else {main::_log("<={LIB} Search::Elasticsearch::Async");}
+	$Ext::Elastic::async=0;
+	eval {require Search::Elasticsearch::Async::Simple};
+	if ($@){main::_log("<={LIB} Search::Elasticsearch::Async::Simple",1);undef $Ext::Elastic::async;}
+	else {$Ext::Elastic::async=1;main::_log("<={LIB} Search::Elasticsearch::Async::Simple");}
 }
 
 our $debug=0;
@@ -47,12 +47,12 @@ sub _connect
 		main::_log("can't connect any active node",1);
 	}
 	
-	if ($Ext::Elastic::async)
+	if ($Ext::Elastic::async && 0)
 	{
 		$Ext::Elastic_async=$Ext::Elastic;
-		$Ext::Elastic_async->{'cxn_pool'}='Async::Sniff'
-			if $Ext::Elastic_async->{'cxn_pool'} eq 'Sniff';
-		if (my $service__=Search::Elasticsearch::Async->new($Ext::Elastic_async))
+#		$Ext::Elastic_async->{'cxn_pool'}='Async::Sniff'
+#			if $Ext::Elastic_async->{'cxn_pool'} eq 'Sniff';
+		if (my $service__=Search::Elasticsearch::Async::Simple->new($Ext::Elastic_async))
 		{
 			main::_log("connected sync ".(join ",",@{$service__->{'transport'}->{'cxn_pool'}->{'seed_nodes'}}));
 			$service_async=$service__;
@@ -77,7 +77,7 @@ use encoding 'utf8';
 use utf8;
 use strict;
 use base 'Exporter';
-our @EXPORT = qw($Elastic);
+our @EXPORT = qw($Elastic $Elastic_async);
 
 our $Elastic=$Ext::Elastic::service;
 our $Elastic_async=$Ext::Elastic::service_async;
