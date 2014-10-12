@@ -19,7 +19,7 @@ use Ext::Redis::_init;
 use Data::Dumper;
 
 my $cmd = shift || '';
-if ($cmd eq 'config') {print qq{graph_title Cyclone3 cache ratio
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 cache ratio (all hosts)
 graph_category cyclone3
 graph_vlabel ratio
 graph_order page mdl sql

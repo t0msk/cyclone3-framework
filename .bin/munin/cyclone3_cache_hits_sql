@@ -19,7 +19,7 @@ use Ext::Redis::_init;
 use Data::Dumper;
 
 my $cmd = shift || '';
-if ($cmd eq 'config') {print qq{graph_title Cyclone3 cache usage [SQL]
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 cache usage [SQL] (all hosts)
 graph_category cyclone3
 graph_vlabel calls
 graph_order crt hit
