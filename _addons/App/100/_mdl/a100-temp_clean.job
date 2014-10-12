@@ -1,0 +1,42 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	
+	my $max=86400;
+	
+	opendir (DIR, $tom::P.'/_temp');
+	foreach my $file (readdir DIR)
+	{
+		
+		next if $file=~/^_/;
+		next if $file=~/^\./;
+		next if $file=~/\.ttc2$/;
+		
+		my $filename=$tom::P."/_temp/".$file;
+		
+		if (-f $filename)
+		{
+			my $created=(stat $filename)[9];
+			if (($main::time_current - $created) > $max)
+			{
+				main::_log("old $file ".($main::time_current-$created).", removing...");
+				unlink $filename;
+			}
+			
+		}
+		
+	}
+	
+return 1}
+1;
