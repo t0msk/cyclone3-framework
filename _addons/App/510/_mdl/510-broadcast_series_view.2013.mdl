@@ -1,0 +1,119 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::020::_init;
+use App::301::perm;
+use App::510::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	Tomahawk::GetTpl(\%env) || return undef;
+	
+	$env{'broadcast_series.status'}='YNL' unless $env{'broadcast_series.status'};
+		my $sql_broadcast_series_status=join "','", split('',$env{'broadcast_series.status'});
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 1;
+	my $sql_order_by=$env{'sql_order_by'} || 'broadcast_series.ID DESC';
+	
+	if ($env{'broadcast_series.ID_entity'})
+	{
+		main::_log("search by broadcast_series.ID_entity");
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::510::db_name,
+			'tb_name' => 'a510_broadcast_series',
+			'ID_entity' => $env{'broadcast_series.ID_entity'}
+		};
+		$sql_where.="AND broadcast_series.ID_entity=? ";
+		push @sql_bind,$env{'broadcast_series.ID_entity'};
+		$sql_changetime=App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_broadcast_series",
+				'ID_entity' => $env{'broadcast_series.ID_entity'}
+			}
+		);
+	}
+	
+	return 1 unless $sql_where;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			broadcast_series.*
+		FROM
+			$App::510::db_name.a510_broadcast_series AS broadcast_series
+		WHERE
+			broadcast_series.status IN ('$sql_broadcast_series_status')
+			$sql_where
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],'quiet_'=>1,'-slave'=>1,'-cache'=>86400*7,
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+			'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_broadcast_series",'ID_entity'=>$env{'broadcast_series.ID_entity'}
+		})
+	);
+	
+	my %broadcast_series=$sth0{'sth'}->fetchhash();
+	
+	if (!$broadcast_series{'ID_entity'})
+	{
+		main::_log("broadcast_series not found",1);
+		return 1,%env_out;
+	}
+	
+	main::_log("found broadcast_series.ID_entity=$broadcast_series{'ID_entity'}");
+	
+	
+	push @{$env_out{'entity'}},{
+		'db_h' => 'main',
+		'db_name' => $App::510::db_name,
+		'tb_name' => 'a510_broadcast_series',
+		'ID_entity' => $broadcast_series{'ID_entity'}
+	};
+	
+	$broadcast_series{'related_thumbnail'}=(App::160::SQL::get_relations(
+		'db_name' => $App::510::db_name,
+		'l_prefix' => 'a510',
+		'l_table' => 'broadcast_series',
+		'l_ID_entity' => $broadcast_series{'ID_entity'},
+		'rel_type' => 'thumbnail',
+		'r_prefix' => "a501",
+		'r_table' => "image",
+		'status' => "Y",
+		'limit' => 1
+	))[0];
+	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	$parser->parse($broadcast_series{'body'});
+	$parser->eof();
+	$broadcast_series{'body_parser'}={
+		'output' => $parser->{'output'},
+		'addon' => $parser->{'addon'},
+		'entity' => $parser->{'entity'},
+		'thumbnail' => $parser->{'thumbnail'},
+	};
+	
+	$TPL->{'variables'}{'broadcast_series'} = \%broadcast_series;
+	
+	return 1,%env_out;
+}
+
+1;
