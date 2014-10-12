@@ -1,0 +1,215 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+use JSON;
+use App::501::_init;
+
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	return if $self->running({'max'=>3600}); # check if not already running
+	
+	$env->{'time_max'}=60*5 unless $env->{'time_max'};
+	
+	if (!$tom::H)
+	{
+		main::_log("only running under domain",1);
+		return undef;
+	}
+	
+	# remove old E statuses
+	main::_log("remove old image_file with status E");
+	my %sth0=TOM::Database::SQL::execute(qq{
+		DELETE FROM `$App::501::db_name`.a501_image_file
+		WHERE datetime_create < DATE_SUB(NOW(),INTERVAL 7 DAY) AND status='E'
+	});
+	
+	# check directory of formats
+	
+	
+	# check list of formats and its directories
+	
+	
+	my $time_start=time();
+	
+	
+	# check original images, if original images must to be resized
+	my $sql=qq{
+		SELECT
+			file.ID_entity AS image_ID_entity,
+			file.ID AS file_ID
+		FROM
+			`$App::501::db_name`.a501_image_file AS file
+		INNER JOIN `$App::501::db_name`.a501_image_format AS format ON
+		(
+			format.ID = $App::501::image_format_original_ID
+		)
+		WHERE
+			file.ID_format = $App::501::image_format_original_ID AND
+			format.datetime_create > file.datetime_create
+		ORDER BY
+			file.ID_entity DESC
+		LIMIT
+			100
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-long'=>10);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("changing original image_file for image_ID_entity='$db0_line{'image_ID_entity'}'");
+		
+		App::501::functions::image_file_generate(
+				'-jobify' => 1,
+			'image.ID_entity' => $db0_line{'image_ID_entity'},
+			'image_format.ID' => $App::501::image_format_original_ID,
+		);
+		
+	}
+	
+	
+	# find missing formats
+	my $sql=qq{
+		SELECT
+			*
+		FROM
+			`$App::501::db_name`.a501_image_format
+		WHERE
+			status IN ('Y','L') AND
+--			required LIKE 'Y' AND
+			name NOT LIKE 'original'
+		ORDER BY
+--			ID_charindex ASC
+			RAND()
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-long'=>10);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("check image_files in image_format ID='$db0_line{'ID'}' name='$db0_line{'name'}'");
+		
+		# find all images without this format
+		my $sql=qq{
+			SELECT
+				image.ID AS image_ID,
+				image.ID_entity AS image_ID_entity,
+				file.ID AS file_ID
+			FROM
+				`$App::501::db_name`.a501_image AS image
+			LEFT JOIN `$App::501::db_name`.a501_image_file AS file ON
+			(
+				image.ID_entity = file.ID_entity AND
+				file.ID_format = $db0_line{'ID'}
+			)
+			LEFT JOIN `$App::501::db_name`.a501_image_format AS format ON
+			(
+				format.ID_entity = $db0_line{'ID'}
+			)
+			WHERE
+				image.status IN ('Y','N') AND
+				(
+					(
+						file.ID IS NULL AND
+						format.required = 'Y'
+					)
+					OR
+					(
+						file.ID IS NOT NULL AND
+						format.datetime_create > file.datetime_create
+					)
+				)
+			GROUP BY
+				image.ID_entity
+			ORDER BY
+				image.ID_entity DESC
+			LIMIT
+				100
+		};
+		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-long'=>10);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			main::_log("image ID_entity='$db1_line{'image_ID_entity'}' with missing format '$db0_line{'name'}'");
+			next unless $db1_line{'image_ID_entity'};
+			
+			App::501::functions::image_file_generate(
+				'image.ID_entity' => $db1_line{'image_ID_entity'},
+				'image_format.ID' => $db0_line{'ID'}
+			);
+			
+			if ($time_start+$env->{'time_max'}<time())
+			{
+				main::_log("this job is running too long, exiting",1);
+				return 1;
+			}
+			
+		}
+		
+		# find parrent format
+		my %format_parent=App::020::SQL::functions::tree::get_parent_ID(
+			'ID' => $db0_line{'ID'},
+			'db_h' => 'main',
+			'db_name' => $App::501::db_name,
+			'tb_name' => 'a501_image_format'
+		);
+		
+		if ($format_parent{'ID'})
+		{
+			# find images which parent has been changed
+			main::_log(" check image_files for parent image_format ID='$format_parent{'ID'}' name='$format_parent{'name'}'");
+			my $sql=qq{
+				SELECT
+					image.ID AS image_ID,
+					image.ID_entity AS image_ID_entity,
+					file1.ID AS file1_ID,
+					file2.ID AS file2_ID
+				FROM
+					`$App::501::db_name`.a501_image AS image
+				LEFT JOIN `$App::501::db_name`.a501_image_file AS file1 ON
+				(
+					image.ID_entity = file1.ID_entity AND
+					file1.ID_format = $format_parent{'ID'}
+				)
+				LEFT JOIN `$App::501::db_name`.a501_image_file AS file2 ON
+				(
+					image.ID_entity = file2.ID_entity AND
+					file2.ID_format = $db0_line{'ID'}
+				)
+				WHERE
+					image.status IN ('Y','N') AND
+					file1.status='Y' AND -- parent status
+					file2.status IN ('Y','E') AND -- current status
+					file1.datetime_create > file2.datetime_create
+				ORDER BY
+					image.ID_entity DESC
+				LIMIT
+					100
+			};
+			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-long'=>10);
+			while (my %db1_line=$sth1{'sth'}->fetchhash())
+			{
+				main::_log("parent of image_file ID='$db1_line{'file2_ID'}' has been changed");
+				
+				App::501::functions::image_file_generate(
+					'image.ID_entity' => $db1_line{'image_ID_entity'},
+					'image_format.ID' => $db0_line{'ID'}
+				);
+				
+				if ($time_start+$env->{'time_max'}<time())
+				{
+					main::_log("this job is running too long, exiting",1);
+					return 1;
+				}
+				
+			}
+			
+		}
+		
+	}
+	
+return 1}
+1;
