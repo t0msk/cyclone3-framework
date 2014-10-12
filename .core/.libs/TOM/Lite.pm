@@ -289,16 +289,31 @@ sub _event
 	# write to Elastic
 	if ($TOM::event_elastic && $Ext::Elastic::service)
 	{
+#		main::_log("event $hash{'serverity'} $hash{'facility'}",3,"event",1);
 		my %log_date=ctodatetime(int($hash{'timestamp'}),format=>1);
-		my $service=$Ext::Elastic::service_async || $Ext::Elastic::service; # async when async library available
-		$service->index(
-			'index' => '.cyclone3.'.$log_date{'year'}.$log_date{'mon'},
-			'type' => 'event',
-			'body' => {
-				'datetime' => $log_date{'year'}.'-'.$log_date{'mon'}.'-'.$log_date{'mday'}.' '.$log_date{'hour'}.':'.$log_date{'min'}.':'.$log_date{'sec'}.'.'.$msec,
-				%hash
-			}
-		);
+#		my $service=$Ext::Elastic::service_async || $Ext::Elastic::service; # async when async library available
+		if ($Ext::Elastic::service_async)
+		{
+			$Ext::Elastic::service_async->index(
+				'index' => '.cyclone3.'.$log_date{'year'}.$log_date{'mon'},
+				'type' => 'event',
+				'body' => {
+					'datetime' => $log_date{'year'}.'-'.$log_date{'mon'}.'-'.$log_date{'mday'}.' '.$log_date{'hour'}.':'.$log_date{'min'}.':'.$log_date{'sec'}.'.'.$msec,
+					%hash
+				},sub{}
+			);
+		}
+		else
+		{
+			$Ext::Elastic::service->index(
+				'index' => '.cyclone3.'.$log_date{'year'}.$log_date{'mon'},
+				'type' => 'event',
+				'body' => {
+					'datetime' => $log_date{'year'}.'-'.$log_date{'mon'}.'-'.$log_date{'mday'}.' '.$log_date{'hour'}.':'.$log_date{'min'}.':'.$log_date{'sec'}.'.'.$msec,
+					%hash
+				}
+			);
+		}
 	}
 }
 
