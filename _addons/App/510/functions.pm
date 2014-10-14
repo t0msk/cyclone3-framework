@@ -465,6 +465,75 @@ sub video_part_smil_generate
 		'columns' => {'*'=>1}
 	);
 	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			video.ID_entity,
+			video.ID,
+			
+			video.ID_entity AS ID_entity_video,
+			video.ID AS ID_video,
+			video_attrs.ID AS ID_attrs,
+			video_part.ID AS ID_part,
+			video_part_attrs.ID AS ID_part_attrs,
+			
+			video_ent.keywords,
+			
+			LEFT(video.datetime_rec_start, 18) AS datetime_rec_start,
+			LEFT(video_attrs.datetime_create, 18) AS datetime_create,
+			LEFT(video.datetime_rec_start,10) AS date_recorded,
+			LEFT(video_ent.datetime_rec_stop, 18) AS datetime_rec_stop,
+			
+			video_attrs.ID_category,
+			video_cat.name AS ID_category_name,
+			
+			video_attrs.name,
+			video_attrs.name_url,
+			
+			video_attrs.datetime_publish_start,
+			video_attrs.datetime_publish_stop,
+			
+			video_part_attrs.name AS part_name,
+			video_part_attrs.description AS part_description,
+			video_part.keywords AS part_keywords,
+			video_part.datetime_air AS part_datetime_air
+			
+		FROM
+			`$App::510::db_name`.`a510_video` AS video
+		INNER JOIN `$App::510::db_name`.`a510_video_ent` AS video_ent ON
+		(
+			video_ent.ID_entity = video.ID_entity
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_attrs` AS video_attrs ON
+		(
+			video_attrs.ID_entity = video.ID
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part` AS video_part ON
+		(
+			video_part.ID_entity = video.ID_entity
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part_attrs` AS video_part_attrs ON
+		(
+			video_part_attrs.ID_entity = video_part.ID AND
+			video_part_attrs.lng = video_attrs.lng
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_cat` AS video_cat ON
+		(
+			video_cat.ID_entity = video_attrs.ID_category
+		)
+		WHERE
+			video_part.ID=$env{'video_part.ID'}
+		LIMIT 1
+	},'quiet'=>1,'-slave'=>1);
+	my %video=$sth0{'sth'}->fetchhash();
+	
+#	my %video=App::020::SQL::functions::get_ID(
+#		'ID' => $part{'ID_entity'},
+#		'db_h' => "main",
+#		'db_name' => $App::510::db_name,
+#		'tb_name' => "a510_video",
+#		'columns' => {'*'=>1}
+#	);
+	
 	my %brick;
 	%brick=App::020::SQL::functions::get_ID(
 		'ID' => $part{'ID_brick'},
@@ -541,7 +610,22 @@ sub video_part_smil_generate
 		{
 			'title' => "Cyclone3 ".$tom::H." video_part ".$env{'video_part.ID'}
 		},
-		$xml->header(),
+		$xml->header(
+			$xml->entity(['C3' => 'uri:C3'],
+				$xml->part(['C3' => 'uri:C3'],{
+					'ID'=>$env{'video_part.ID'},
+					'order_id' => $part{'part_id'},
+					'name' => $video{'part_name'},
+					'datetime_air'=>$part{'datetime_air'}
+				}),
+				$xml->video(['C3' => 'uri:C3'],{
+					'name' => $video{'name'},
+					'ID_entity' => $part{'ID_entity'},
+					'valid-from' => $video{'datetime_publish_start'},
+					'valid-to' => $video{'datetime_publish_stop'},
+				})
+			)
+		),
 		$xml->body(
 			$xml->switch(do{
 				my @video;
@@ -598,6 +682,11 @@ sub video_part_smil_generate
 				'status' => "'Y'"
 			},
 		);
+	}
+	
+	if (-e $dir_name.'/'.$file_name.'.smil')
+	{
+		unlink $dir_name.'/'.$file_name.'.smil';
 	}
 	
 	main::_log("writed smil file");
@@ -3379,7 +3468,9 @@ sub get_video_part_file_process_front
 			video_part_file.ID AS ID_file,
 			video_part_file.datetime_create AS file_datetime_create,
 			video_part_file.status AS file_status,
-			video_part_file_process.status AS process
+			video_part_file_process.status AS process,
+			video_part.ID_brick,
+			video_brick.dontprocess AS brick_dontprocess
 		FROM
 			`$App::510::db_name`.a510_video_part AS video_part
 		
@@ -3548,7 +3639,7 @@ sub get_video_part_file_process_front
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$i++;
-		main::_log("[$i/$sth0{'rows'}] video.ID_entity=$db0_line{'ID_entity_video'} video_part.ID=$db0_line{'ID_part'} video_format.ID_entity='$db0_line{'ID_entity_format'}' video_format.datetime_create='$db0_line{'format_datetime_create'}' video_part_file.ID=$db0_line{'ID_file'} video_part_file.datetime_create='$db0_line{'file_datetime_create'}' video_part_file.status='$db0_line{'file_status'}' video_format_p.ID_entity='$db0_line{'ID_entity_format_p'}'");
+		main::_log("[$i/$sth0{'rows'}] '$db0_line{'ID_brick'}/$db0_line{'brick_dontprocess'}' video.ID_entity=$db0_line{'ID_entity_video'} video_part.ID=$db0_line{'ID_part'} video_format.ID_entity='$db0_line{'ID_entity_format'}' video_format.datetime_create='$db0_line{'format_datetime_create'}' video_part_file.ID=$db0_line{'ID_file'} video_part_file.datetime_create='$db0_line{'file_datetime_create'}' video_part_file.status='$db0_line{'file_status'}' video_format_p.ID_entity='$db0_line{'ID_entity_format_p'}'");
 		push @data,{%db0_line};
 	}
 	
@@ -4145,7 +4236,7 @@ sub broadcast_program_add
 				'ID_entity' => $env{'program.ID_entity'},
 				'ID_channel' => $env{'program.ID_channel'},
 				'name' => $env{'program.name'},
-				'status' => $env{'program.status'},
+				'status' => $env{'program.status'} || 'N',
 			},
 			'columns' => 
 			{
@@ -4211,12 +4302,15 @@ sub broadcast_program_add
 			'accessibility_deaf',
 			'accessibility_cc',
 			'status_live',
+			'status_live_geoblock',
 			'status_premiere',
 			'status_internet',
+			'status_geoblock',
 			'recording',
 			'datetime_real_start',
 			'datetime_real_stop',
-			'datetime_real_status'
+			'datetime_real_status',
+			'license_valid_to'
 		)
 		{
 			if (exists $env{'program.'.$_} && ($env{'program.'.$_} ne $program{$_}))
@@ -4236,7 +4330,8 @@ sub broadcast_program_add
 		$data{'datetime_air_start'}=$env{'program.datetime_air_start'}
 			if ($env{'program.datetime_air_start'} && ($env{'program.datetime_air_start'} ne $program{'datetime_air_start'}));
 		
-		main::_log("dur='$env{'program.datetime_air_duration'}' start='$env{'program.datetime_air_start'}'");
+		main::_log("dur='$env{'program.datetime_air_duration'}' start='$env{'program.datetime_air_start'}'")
+			if $env{'program.datetime_air_duration'};
 		
 		if ($env{'program.datetime_air_duration'} && $env{'program.datetime_air_start'}=~/^(\d\d\d\d)\-(\d\d)\-(\d\d) (\d\d):(\d\d):(\d\d)/)
 		{
