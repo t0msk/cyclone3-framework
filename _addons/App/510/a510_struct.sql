@@ -576,6 +576,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   `authoring_country` varchar(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   `authoring_cast` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
   `authoring_authors` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `license_valid_to` datetime DEFAULT NULL,
   `series_ID` bigint(20) unsigned DEFAULT NULL, -- external ID (IBDm/...)
   `series_type` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `series_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
@@ -590,7 +591,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   `accessibility_cc` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_premiere` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_live` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `status_live_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_internet` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `status_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
   `recording` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N', -- it is recording now
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   PRIMARY KEY (`ID`),
@@ -631,6 +634,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
   `authoring_country` varchar(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   `authoring_cast` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
   `authoring_authors` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `license_valid_to` datetime DEFAULT NULL,
   `series_ID` bigint(20) unsigned DEFAULT NULL,
   `series_type` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `series_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
@@ -645,7 +649,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
   `accessibility_cc` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_premiere` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_live` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `status_live_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_internet` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `status_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
   `recording` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   PRIMARY KEY (`ID`,`datetime_create`)
@@ -656,7 +662,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
 CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_series` (
   `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `ID_entity` bigint(20) unsigned DEFAULT NULL,
-  `parent_ID` bigint(20) unsigned DEFAULT NULL,
+  `parent_ID` bigint(20) unsigned DEFAULT NULL, -- ref ID_entity
   `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '', -- series name
   `name_url` varchar(128) CHARACTER SET ascii NOT NULL DEFAULT '',
   `name_original` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
