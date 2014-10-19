@@ -1,0 +1,131 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::411::_init;
+use App::401::mimetypes::html;
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 1;
+	my $sql_order_by=$env{'sql_order_by'} || 'poll.datetime_start DESC';
+	
+	if ($env{'poll.ID_entity'})
+	{
+		main::_log("search by poll.ID_entity");
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::411::db_name,
+			'tb_name' => 'a411_poll',
+			'ID_entity' => $env{'poll.ID_entity'}
+		};
+		$sql_where.="AND poll.ID_entity=? ";
+		push @sql_bind,$env{'poll.ID_entity'};
+	}
+	elsif ($env{'poll.ID'})
+	{
+		main::_log("search by poll.ID");
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::411::db_name,
+			'tb_name' => 'a411_poll',
+			'ID_entity' => $env{'poll.ID'}
+		};
+		$sql_where.="AND poll.ID=? ";
+		push @sql_bind,$env{'poll.ID'};
+	}
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	return 1 unless $sql_where;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			poll.ID,
+			poll.ID_entity,
+			poll.name,
+			poll.description,
+			poll.datetime_create,
+			poll.posix_owner,
+			poll.posix_modified,
+			poll.datetime_start,
+			poll.datetime_stop,
+			poll.datetime_voting_start,
+			poll.datetime_voting_stop,
+			poll.lng
+			
+		FROM `$App::411::db_name`.a411_poll AS poll
+		
+		WHERE
+			poll.status = 'Y'
+			AND poll.lng = '$env{'lng'}'
+			AND poll.datetime_start <= NOW()
+			AND (poll.datetime_stop IS NULL OR poll.datetime_stop >= NOW())
+			$sql_where
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			1
+	},'bind'=>[@sql_bind],'log_'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::411::db_name,
+				'tb_name' => "a411_poll",
+				'ID_entity' => do{$env{'poll.ID_entity'} if $env{'poll.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	my %poll=$sth0{'sth'}->fetchhash();
+	
+	return 1 unless $poll{'ID_entity'};
+	
+	main::_log("found poll.ID_entity=$poll{'ID_entity'}");
+	
+	# select answers
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			poll_answer.*,
+			(
+				SELECT COUNT(*)
+				FROM `$App::411::db_name`.a411_poll_vote
+				WHERE ID_answer=poll_answer.ID_entity
+			) AS votes
+		FROM
+			`$App::411::db_name`.a411_poll_answer AS poll_answer
+		WHERE
+			poll_answer.ID_poll = ? AND
+			poll_answer.lng='$env{'lng'}' AND
+			poll_answer.status = 'Y'
+		ORDER BY
+			poll_answer.ID_entity
+	},'bind'=>[$poll{'ID_entity'}],'log_'=>1,'-slave'=>1);
+	
+	while (my %answer=$sth0{'sth'}->fetchhash())
+	{
+		$poll{'votes'} += $answer{'votes'};
+		push @{$poll{'answers'}},\%answer;
+	}
+	
+	$TPL->{'variables'}{'poll'} = \%poll;
+	
+	return 1,%env_out;
+}
+
+1;

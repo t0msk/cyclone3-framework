@@ -80,7 +80,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll_vote` (
   `ID_answer` bigint(20) NOT NULL, -- rel poll_answer.ID_entity
   `IP` varchar(15) NOT NULL default '',
   `email` varchar(64) character set ascii default NULL,
-  PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_answer`)
+  PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_answer`),
+  UNIQUE KEY `UNI_0` (`datetime_event`,`IP`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
