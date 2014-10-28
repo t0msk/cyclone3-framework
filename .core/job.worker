@@ -120,17 +120,28 @@ sub callback {
 	my $routing_key=$var->{'deliver'}->{'method_frame'}->{'routing_key'};
 	my $deduplication;
 		$deduplication=$var->{'header'}->{'headers'}->{'deduplication'};
-	main::_log("received message id='".($var->{'header'}->{'headers'}->{'message_id'})."' routing_key='$routing_key' timestamp='$timestamp' size=".length($var->{'body'}->{'payload'})."b deduplication=".$deduplication);
+	
+	my %env0=main::ctodatetime($timestamp,format=>1);
+	my $time_str=$env0{'year'}.'-'.$env0{'mon'}.'-'.$env0{'mday'}.' '.$env0{'hour'}.':'.$env0{'min'}.':'.$env0{'sec'};
+	main::_log("received message id='".($var->{'header'}->{'headers'}->{'message_id'})."' routing_key='$routing_key' created='$time_str' size=".length($var->{'body'}->{'payload'})."b deduplication=".$deduplication);
 	
 	my $key_entity=TOM::Digest::hash($tom::H.$var->{'body'}->{'payload'});
 	if ($deduplication && $Redis)
 	{
-		main::_log(" deduplication hash = '$key_entity'");
-		my $timestamp_exec=$Redis->hget('C3|job|'.$key_entity,'modified');
+		my $timestamp_exec=$Redis->hget('C3|job|'.$key_entity,'finished');
+		
+		my %env0=main::ctodatetime($timestamp_exec,format=>1);
+		my $time_str=$env0{'year'}.'-'.$env0{'mon'}.'-'.$env0{'mday'}.' '.$env0{'hour'}.':'.$env0{'min'}.':'.$env0{'sec'};
+		
+		main::_log(" deduplication hash='$key_entity' time='$time_str'");
+		
+		$timestamp_exec=time()
+			if $timestamp_exec > time();
+		
 		# if timestamp of message is lower than execution timestamp
 		if ($timestamp < $timestamp_exec)
 		{
-			main::_log("job '$key_entity' already executed ".($timestamp_exec-$timestamp)."s after this request",1);
+			main::_log("job '$key_entity' already executed at '$time_str' (".($timestamp_exec-$timestamp)."s after this message)",1);
 			$this_channel->ack();
 			alarm $alarm;
 			$0=~s|{.*?}|{}|;
@@ -138,8 +149,8 @@ sub callback {
 		}
 		else
 		{
-			# deduplication job start
-			$Redis->hset('C3|job|'.$key_entity,'modified',time()+86400,sub {}); # set virtually to future (max execution time)
+#			# deduplication job start
+			$Redis->hset('C3|job|'.$key_entity,'started',time(),sub {}); # set virtually to future (max execution time)
 			$Redis->expire('C3|job|'.$key_entity,86400,sub {});
 		}
 	}
@@ -224,7 +235,7 @@ sub callback {
 		if ($deduplication && $Redis)
 		{
 			# deduplication job end
-			$Redis->hset('C3|job|'.$key_entity,'modified',time(),sub {});
+			$Redis->hset('C3|job|'.$key_entity,'finished',time(),sub {});
 			$Redis->expire('C3|job|'.$key_entity,86400,sub {});
 		}
 	};
