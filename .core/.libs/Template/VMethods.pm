@@ -230,18 +230,18 @@ sub text_replace {
             $chunk;
         };
         if ($global) {
-            $text =~ s{$pattern}{ &$expand($replace, [@-], [@+]) }eg;
+            $text =~ s{$pattern}{ &$expand($replace, [@-], [@+]) }egms;
         }
         else {
-            $text =~ s{$pattern}{ &$expand($replace, [@-], [@+]) }e;
+            $text =~ s{$pattern}{ &$expand($replace, [@-], [@+]) }ems;
         }
     }
     else {
         if ($global) {
-            $text =~ s/$pattern/$replace/g;
+            $text =~ s/$pattern/$replace/gms;
         }
         else {
-            $text =~ s/$pattern/$replace/;
+            $text =~ s/$pattern/$replace/ms;
         }
     }
     return $text;
