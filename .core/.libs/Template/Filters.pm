@@ -527,7 +527,7 @@ sub replace_filter_factory {
     return sub {
         my $text = shift;
         $text = '' unless defined $text;
-        $text =~ s/$search/$replace/g;
+        $text =~ s/$search/$replace/gms;
         return $text;
     }
 }
