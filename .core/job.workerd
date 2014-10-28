@@ -130,6 +130,7 @@ sub get_workers
 our $WORKERS = get_workers();
 my $MAX_WORKERS = $TOM::job_host_max_processes || ($sysstat->{'tcpucount'} * 2) +1;
 $ENV{'WORKERS'}=1 unless exists $ENV{'WORKERS'}; # spawning workers?
+$ENV{'AUTORESTART'}=1 unless exists $ENV{'AUTORESTART'}; # spawning workers?
 $TOM::job_domain_max_workers||=16; # max X workers parallel on same domain
 $TOM::job_worker_start_delay||=5; # start next worker after delay
 $TOM::job_domain_worker_start_delay||=60; # start next worker after delay on same domain
@@ -142,17 +143,6 @@ our $usable_memory = (
 );
 main::_log_stdout("max $MAX_WORKERS workers (allowed to fork?=$ENV{'WORKERS'}), max load is allowed $MAX_LOAD, usable free memory ".(int(($usable_memory/1024/1024)*100)/100)."GB for ".int($usable_memory/200000)." workers",3,"job.workerd");
 
-#our $pm = AnyEvent::ForkManager->new(max_workers => $MAX_WORKERS);
-
-#$pm->on_start(sub {
-#	my($pm) = @_;
-##	main::_log("starting new fork $$");
-#});
-#$pm->on_finish(sub {
-#	my($pm, $pid, $status) = @_;
-##  main::_log("stopping fork $$ $pid $status");
-##	exit;
-#});
 
 main::_log_stdout("main loop timer starting",3,"job.workerd") if $ENV{'WORKERS'};
 my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
@@ -357,10 +347,42 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 	
 }) if $ENV{'WORKERS'};
 
+my $w=AnyEvent->timer(after => 0, interval => 0.5, cb => \&monitor_master_db);
+sub monitor_master_db
+{
+#	main::_log("check db");
+	use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
+	my ($seconds, $microseconds) = gettimeofday;
+	my $ttime=$seconds.'.'.$microseconds;
+#	main::_log("insert master $ttime");
+	$Redis->set('C3|db_main|modified',$ttime,sub{});
+	$Redis->expire('C3|db_main|modified',10,sub {});
+	TOM::Database::SQL::execute(qq{
+		REPLACE INTO
+			TOM.a100_master
+			(
+				ID,
+				datetime_create,
+				timestamp
+			)
+			VALUES
+			(
+				1,
+				FROM_UNIXTIME($ttime),
+				$ttime
+			)
+	},'quiet'=>1);
+}
+
 my $w=AnyEvent->timer(after => 60, interval => 10, cb => \&check_domains);
 my $w=AnyEvent->timer(after => 0, interval => 5, cb => \&check_scheduler);
 sub check_domains
 {
+	if ($ENV{'AUTORESTART'} && (time()-$main::time_current) >= (3600*6))
+	{ # restart every 6h
+		main::_log("running too long, restarting");
+		exit;
+	}
 	
 	local $main::_canexit;
 	
@@ -946,6 +968,20 @@ sub callback
 	main::_log("event='$body->{'event'}' '$body->{'key'}'")
 		unless $body->{'key'}=~/^main::TOM::a010_test::\d+$/; # this is only for testing purposes
 	
+	if ($body->{'event'} eq "db_changed" && $Redis)
+	{
+		# invalidate all caches depending on this key
+		my $key_entity="C3|invalidate|db_entity|".$body->{'key'};
+#		main::_log("check to invalidate '$key_entity'");
+		foreach (@{$Redis->smembers($key_entity)})
+		{
+			main::_log("remove cache key '$_'");
+#			main::_log(" remove key '$_'",3,"pubsub");
+			$Redis->del($_,sub{});
+		}
+		$Redis->del($key_entity,sub{});
+	}
+	
 	foreach my $filename (keys %config_file)
 	{
 #		my $content;
@@ -991,36 +1027,6 @@ sub callback
 	}
 	
 	return $notify_channel->ack();
-	
-	exit;
-	
-	if ($body->{'event'} eq "db_changed")
-	{
-		main::_log("event='$body->{'event'}' '$body->{'key'}'");
-	}
-	else
-	{
-		main::_log("event='$body->{'event'}'");
-	}
-	return $notify_channel->ack();
-=head1
-#	main::_log("");
-	
-	my $eval_data='
-			return undef;
-			$do->job({\'routing_key\' => \'db:\'.$body->{\'db_name\'}.\'\'},{
-				\'name\' => \'a301-check_user\'
-			},{
-				\'ID_user\' => $body->{\'ID_entity\'}
-			});
-	';
-	
-	eval $eval_data;
-	main::_log($@,1) if $@;
-	
-	$notify_channel->ack();
-	exit;
-=cut
 }
 
 $notify_channel->qos(
@@ -1084,7 +1090,10 @@ sub job
 				%headers
 			}
 		}
-	);
+	) || do {
+		main::_log("oh, shit, workerd not working",1);
+		exit;
+	};
 	
 #	print Dumper($main::service);
 }
