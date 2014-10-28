@@ -40,7 +40,7 @@ BEGIN {
         *{__PACKAGE__ . '::' . $method} = sub {
             my $self = shift;
 #            main::_log("method=$method");
-				print Dumper({@_}) if $tom::test;
+#				print Dumper({@_}) if $tom::test;
             $self->{arc}->$method(@_);
             return $self;
         };
