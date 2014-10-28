@@ -314,11 +314,11 @@ sub execute
 		my $slave_weights = [map {$_ = $TOM::DB{$_}{'weight'} || 1 } grep {$_=~/^$env{'db_h'}:/} sort keys %TOM::DB];
 		
 		while (!$slaveselected)
-		{			
+		{
 			#my $slave=int(rand($TOM::DB{$env{'db_h'}}{'slaves'}))+1;
 			my $slave=_choose_weighted($slave_choices, $slave_weights);
 				$slave_finding++;
-				last if $slave_finding >= $TOM::DB{$env{'db_h'}}{'slaves'};
+				last if $slave_finding > $TOM::DB{$env{'db_h'}}{'slaves'};
 			if ($TOM::DB{$env{'db_h'}.':'.$slave}) # is defined
 			{
 				# check quality of this slave
