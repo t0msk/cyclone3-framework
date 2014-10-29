@@ -12,7 +12,7 @@ BEGIN
 #	$main::stdout=0 unless $ENV{'CYCLONE3DEBUG'};
 	if (!$ENV{'CYCLONE3PATH'})
 	{
-		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM"; # obsolete
 		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
 		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
 	}
