@@ -40,6 +40,7 @@ use Proc::ProcessTable;
 require $TOM::P."/.core/_config/cron.conf";
 
 our $type=$ARGV[0];
+$0.=" :".$type;
 exit(0) unless $type;
 $cron::P=$CRON::P;
 $main::time_current=$cron::time_current=time;
@@ -258,6 +259,7 @@ foreach (sort keys %CRON::hosts)
 		CRON::waitload($CRON::LOADAVG);
 		
 		$main::pm->start and next;
+#		$0.=" [".$tom::H."]";
 		srand (time ^ $$);
 #		main::_log(" 'ok' from fork '$_'");
 #		main::_log("fork with debug level='$TOM::DEBUG_log_file'");
@@ -345,6 +347,9 @@ foreach (sort keys %CRON::hosts)
 					$pm2->finish();
 				}
 				
+				$0=~s| {.*?}||;
+				$0.=" {".$mdl_env{'-category'}.'-'.$mdl_env{'-name'}."}";
+
 				CRON::module(%mdl_env);
 			}
 		}
