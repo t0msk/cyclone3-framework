@@ -6,8 +6,9 @@ use Term::ANSIColor;
 
 BEGIN
 {
-	if (!$ENV{'CYCLONE3PATH'}){
-		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM"; # obsolete
 		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
 		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
 	}
@@ -58,7 +59,7 @@ require $ENV{'CYCLONE3PATH'}."/.core/_config/cron.conf";
 		$TOM::DB{'main'}{'name'}="TOM";
 	}
 	
-	$0.=" {a".$FORM{'-category'}.'-'.$FORM{'-name'}.".cron}";
+	$0.=" {a".$FORM{'-category'}.'-'.$FORM{'-name'}.".".($FORM{'-version'} || 0).".cron}";
 	
 	module(%FORM);
 	
