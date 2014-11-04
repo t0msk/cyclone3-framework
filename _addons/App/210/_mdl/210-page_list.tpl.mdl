@@ -22,6 +22,10 @@ sub execute
 	delete $env{'ID_charindex'};
 	
 	my $from;
+	my @sql_bind;
+	my $sql_join;
+	my $sql_column;
+	my $sql_where;
 	
 	if ($env{'ID'})
 	{
@@ -46,21 +50,59 @@ sub execute
 		}
 	}
 	
+	if ($env{'page.visible'})
+	{
+		
+	}
+	elsif (exists $env{'page.visible'})
+	{
+		
+	}
+	else
+	{
+		$sql_where.=" AND `a210_page`.visible IN ('Y')";
+	}
+	
+	if ($env{'a430_list.ID'})
+	{
+		require App::430::_init;
+		$sql_join.=qq{INNER JOIN `$App::430::db_name`.a160_relation AS a430_list_relation ON
+		(
+			a430_list_relation.l_prefix = 'a430' AND
+			a430_list_relation.l_table = 'list' AND
+			a430_list_relation.l_ID_entity = $env{'a430_list.ID'} AND
+			a430_list_relation.r_prefix = 'a210' AND
+			a430_list_relation.r_table = 'page' AND
+			a430_list_relation.r_ID_entity = `a210_page`.ID_entity AND
+			a430_list_relation.status = 'Y'
+		)
+		};
+		$sql_column.=",a430_list_relation.rel_name";
+		$env{'db_order'}="a430_list_relation.priority DESC";
+	}
+	else
+	{
+		push @sql_bind,$env{'ID_charindex'}.'___';
+		$sql_where.=" AND `a210_page`.ID_charindex LIKE ?";
+	}
+	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
-			*
+			`a210_page`.*
+			$sql_column
 		FROM
 			`$App::210::db_name`.`a210_page`
+		$sql_join
 		WHERE
-			lng = ?
-			AND ID_charindex LIKE ?
-			AND status IN ('Y','L')
-			AND visible IN ('Y')
+			`a210_page`.lng = ?
+			AND `a210_page`.status IN ('Y','L')
+			$sql_where
 		ORDER BY
 			$env{'db_order'}
 	},
-		'bind'=>[$env{'lng'},$env{'ID_charindex'}.'___'],
+		'bind'=>[$env{'lng'},@sql_bind],
 		'quiet' => 1,
+#		'log' => 1,
 		'-cache' => 86400*7,
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime(
 			{
