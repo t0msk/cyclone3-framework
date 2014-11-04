@@ -3134,14 +3134,14 @@ sub video_part_visit
 				'_firstvisit', $main::time_current,
 				sub {}
 			);
-			$Redis->expire($key,86400,sub {});
+			$Redis->expire($key,(86400 * 7 * 4),sub {});
 		}
 		else
 		{
 			$Redis->hincrby('C3|db_entity|'.$key,'visits',1,sub {});
 			if (!$count_visits->[0])
 			{
-				$Redis->expire($key,86400,sub {});
+				$Redis->expire($key,(86400 * 7 * 4),sub {});
 			}
 		}
 		return 1;
