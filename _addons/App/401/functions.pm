@@ -93,7 +93,7 @@ sub article_add
 	my %env=@_;
 	if ($env{'-jobify'})
 	{
-		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::401::db_name}); # do it in background
+		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::401::db_name,'class'=>'fifo'}); # do it in background
 	}
 	
 	my $t=track TOM::Debug(__PACKAGE__."::article_add()",'timer'=>1);
@@ -891,6 +891,7 @@ sub _article_index
 				article_attrs.name,
 				article_attrs.lng,
 				article_attrs.datetime_start,
+				article_attrs.datetime_stop,
 				article_attrs.status,
 				article_ent.ID_author,
 				article_cat.name AS cat_name,
@@ -921,13 +922,16 @@ sub _article_index
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			push @{$article{'name'}},$db0_line{'name'};
+#			push @{$article{'datetime_start'}},$db0_line{'datetime_start'}
+#				if $db0_line{'datetime_start'};
 			push @{$article{'cat'}{'charindex'}},$db0_line{'ID_charindex'};
 			push @{$article{'cat'}{'ID'}},$db0_line{'cat_ID'};
 			push @{$article{'cat'}{'name'}},$db0_line{'cat_name'};
 			
 			push @{$article{'locale'}{$db0_line{'lng'}}{'name'}},$db0_line{'name'};
 			push @{$article{'article_attrs'}},{
-				'name' => $db0_line{'name'}
+				'name' => $db0_line{'name'},
+				'datetime_start' => $db0_line{'datetime_start'}
 			};
 			$article{'status'}="Y"
 				if $db0_line{'status'} eq "Y";
