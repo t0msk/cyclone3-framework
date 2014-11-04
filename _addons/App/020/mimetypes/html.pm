@@ -584,6 +584,7 @@ sub start
 					file_attrs.name_ext,
 					
 					file_item.mimetype,
+					file_item.name AS file_name,
 					file_item.file_ext,
 					file_item.file_size,
 					file_item.lng,
@@ -592,7 +593,7 @@ sub start
 					
 					file_attrs.status,
 					
-					CONCAT(file_item.lng,'/',SUBSTR(file_item.ID,1,4),'/',file_item.name,'.',file_attrs.name_ext) AS file_path
+					CONCAT(file_item.lng,'/',SUBSTR(file_item.ID,1,4),'/',file_item.name,'.',file_item.file_ext) AS file_path
 					
 				FROM
 					`$App::542::db_name`.`a542_file` AS file
@@ -672,6 +673,21 @@ sub start
 				'count' => {
 					'tag' => $self->{'count'}{'tag'}{$tag},
 					'addon' => $self->{'count'}{'addon'}{$entity}
+				},
+				'domain' => {
+					'name' => $tom::H,
+					'name_master' => $tom::Hm,
+					'url' => $tom::H_www,
+					'url_orig' => $tom::H_www_orig || $tom::H_www,
+					'url_master' => $tom::Hm_www || $tom::H_www,
+					'url_media' => $tom::H_media,
+					'url_tpl' => $tom::H_tpl || $tom::H_media.'/tpl',
+					'url_grf' => $tom::H_grf || $tom::H_media.'/grf',
+					'url_css' => $tom::H_css || $tom::H_media.'/css',
+					'url_js' => $tom::H_js || $tom::H_media.'/js',
+					'url_a501' => $tom::H_a501,
+					'url_a510' => $tom::H_a510,
+					'setup' => \%tom::setup
 				},
 #				'entity'=>\%db0_line
 				},$tpl_entity))
