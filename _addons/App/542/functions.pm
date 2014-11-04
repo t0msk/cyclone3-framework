@@ -114,6 +114,7 @@ sub file_add
 			main::_log("detect filename='$env{'filename'}'");
 		}
 	}
+	
 	if ($env{'filename'} && !$env{'file_attrs.name'})
 	{
 		my $ext=$env{'filename'};
@@ -122,6 +123,7 @@ sub file_add
 		$env{'file_attrs.name'}=~s|\.$ext$||;
 		main::_log("file_attrs.name='$env{'file_attrs.name'}'");
 	}
+	
 	if ($env{'filename'} && !$env{'file_attrs.name_ext'})
 	{
 		$env{'file_attrs.name_ext'}=$env{'filename'};

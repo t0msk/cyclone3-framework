@@ -68,8 +68,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_attrs` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- rel file.ID
   `ID_category` bigint(20) unsigned default NULL, -- rel file_dir.ID
-  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `name` varchar(256) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_url` varchar(256) character set ascii NOT NULL default '',
   `name_ext` varchar(120) character set ascii NOT NULL,
   `datetime_create` datetime NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
@@ -91,8 +91,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_attrs_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- rel 
   `ID_category` bigint(20) unsigned default NULL, -- rel file_dir.ID
-  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `name_url` varchar(128) character set ascii NOT NULL default '',
+  `name` varchar(256) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `name_url` varchar(256) character set ascii NOT NULL default '',
   `name_ext` varchar(120) character set ascii NOT NULL,
   `datetime_create` datetime NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
@@ -106,7 +106,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_attrs_j` (
 CREATE TABLE `/*db_name*/`.`/*app*/_file_item` (
   `ID` mediumint(8) unsigned zerofill NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
-  `name` varchar(128) character set ascii collate ascii_bin NOT NULL,
+  `name` varchar(256) character set ascii collate ascii_bin NOT NULL,
   `datetime_create` datetime NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `description` varchar(250) character set utf8 collate utf8_unicode_ci NOT NULL,
@@ -132,7 +132,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_file_item` (
 CREATE TABLE `/*db_name*/`.`/*app*/_file_item_j` (
   `ID` mediumint(8) unsigned zerofill NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
-  `name` varchar(128) character set ascii collate ascii_bin NOT NULL,
+  `name` varchar(256) character set ascii collate ascii_bin NOT NULL,
   `datetime_create` datetime NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `description` varchar(250) character set utf8 collate utf8_unicode_ci NOT NULL,
