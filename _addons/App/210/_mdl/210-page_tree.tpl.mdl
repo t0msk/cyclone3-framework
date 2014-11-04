@@ -23,6 +23,10 @@ sub execute
 	delete $env{'ID_charindex'};
 	
 	my $from;
+	my @sql_bind;
+	my $sql_join;
+	my $sql_column;
+	my $sql_where;
 	
 	# let's go :)
 	if ($env{'ID'})
@@ -59,6 +63,19 @@ sub execute
 	}
 #	main::_log("length = '$sql_length' $sql_suffix_",3,"debug");
 	
+	if ($env{'page.visible'})
+	{
+		
+	}
+	elsif (exists $env{'page.visible'})
+	{
+		
+	}
+	else
+	{
+		$sql_where.=" AND `a210_page`.visible IN ('Y')";
+	}
+	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			*
@@ -68,12 +85,12 @@ sub execute
 			lng = ?
 			AND ID_charindex LIKE ?
 			AND status IN ('Y','L')
-			AND visible IN ('Y')
 			AND length(ID_charindex) < ?
+			$sql_where
 		ORDER BY
 			$env{'db_order'}
 	},
-		'bind'=>[$env{'lng'},$env{'ID_charindex'}.$sql_suffix,$sql_length],
+		'bind'=>[$env{'lng'},$env{'ID_charindex'}.$sql_suffix,$sql_length,@sql_bind],
 		'quiet'=>1,
 		'-cache' => 86400*7,
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime(
