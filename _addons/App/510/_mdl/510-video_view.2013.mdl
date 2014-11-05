@@ -356,7 +356,30 @@ sub execute
 			push @{$video{'part'}}, \%video_part;
 		}
 		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				SEC_TO_TIME(SUM(file.length)) AS length
+			FROM
+				`$App::510::db_name`.a510_video_part AS video_part
+			LEFT JOIN `$App::510::db_name`.a510_video_part_file AS file ON
+			(
+				file.ID_entity = video_part.ID AND
+				file.ID_format = $App::510::video_format_original_ID
+			)
+			WHERE
+				video_part.ID_entity = ? AND
+				video_part.status IN ('Y','N','L')
+		},'quiet'=>1,'bind'=>[$video{'ID_entity'}],'-slave'=>1,'-cache'=>3600,
+			'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+				'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video",'ID_entity'=>$video{'ID_entity'}
+		}));
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		$video{'length'} = $db1_line{'length'};
+		main::_log("video length=$video{'length'}");
+		
 	}
+	
+	
 	
 	$TPL->{'variables'}{'video'} = \%video;
 	

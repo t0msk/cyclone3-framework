@@ -42,6 +42,8 @@ sub execute
 	my @sql_bind;
 	my $sql_where;
 	my $sql_changetime;
+	my $sql_column;
+	my $sql_join;
 	my $sql_limit=$env{'sql_limit'} || 10;
 	my $sql_order_by=$env{'sql_order_by'} || 'video.datetime_rec_start DESC';
 	my $sql_group_by;
@@ -71,6 +73,24 @@ sub execute
 		{
 			$sql_where.=" AND (".$sql_cat.") ";
 		}
+	}
+	
+	if ($env{'a430_list.ID'})
+	{
+		require App::430::_init;
+		$sql_join.=qq{INNER JOIN `$App::430::db_name`.a160_relation AS a430_list_relation ON
+		(
+			a430_list_relation.l_prefix = 'a430' AND
+			a430_list_relation.l_table = 'list' AND
+			a430_list_relation.l_ID_entity = $env{'a430_list.ID'} AND
+			a430_list_relation.r_prefix = 'a510' AND
+			a430_list_relation.r_table = 'video' AND
+			a430_list_relation.r_ID_entity = `video`.ID_entity AND
+			a430_list_relation.status = 'Y'
+		)
+		};
+		$sql_column.=",a430_list_relation.rel_name";
+		$sql_order_by="a430_list_relation.priority DESC";
 	}
 	
 	if ($env{'solr'})
@@ -283,6 +303,7 @@ sub execute
 			video_part_file.audio_codec AS file_audio_codec,
 			video_part_file.audio_bitrate AS file_audio_bitrate,
 			video_part_file.length AS file_length}}}.qq{
+			$sql_column
 		FROM
 			$App::510::db_name.a510_video AS video
 		INNER JOIN $App::510::db_name.a510_video_ent AS video_ent ON
@@ -319,6 +340,7 @@ sub execute
 			video_part_smil.ID_entity = video_part.ID
 		)
 		}}}.qq{
+		$sql_join
 		WHERE
 			video.status IN ('Y','L')
 			$sql_where}.do{if($sql_group_by){qq{
@@ -457,6 +479,27 @@ sub execute
 				
 				push @{$video{'part'}}, \%video_part;
 			}
+			
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					SEC_TO_TIME(SUM(file.length)) AS length
+				FROM
+					`$App::510::db_name`.a510_video_part AS video_part
+				LEFT JOIN `$App::510::db_name`.a510_video_part_file AS file ON
+				(
+					file.ID_entity = video_part.ID AND
+					file.ID_format = $App::510::video_format_original_ID
+				)
+				WHERE
+					video_part.ID_entity = ? AND
+					video_part.status IN ('Y','N','L')
+			},'quiet'=>1,'bind'=>[$video{'ID_entity'}],'-slave'=>1,'-cache'=>3600,
+				'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+					'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video",'ID_entity'=>$video{'ID_entity'}
+			}));
+			my %db1_line=$sth1{'sth'}->fetchhash();
+			$video{'length'} = $db1_line{'length'};
+			main::_log("video length=$video{'length'}");
 			
 		}
 		
