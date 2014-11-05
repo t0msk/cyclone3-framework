@@ -156,6 +156,11 @@ sub execute
 		$columns{'alias_name'}="'".TOM::Security::form::sql_escape($main::FORM{'alias_name'})."'";
 	}
 	
+	if ($main::FORM{'ID_entity'})
+	{
+		$columns{'ID_entity'}=$main::FORM{'ID_entity'};
+	}
+	
 	$columns{'metadata'}="'".TOM::Security::form::sql_escape($main::RPC->{'metadata'})."'"
 		if exists $main::RPC->{'metadata'};
 	
