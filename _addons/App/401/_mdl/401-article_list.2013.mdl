@@ -46,6 +46,8 @@ sub execute
 	my $sql_limit=$env{'sql_limit'} || 10;
 	my $sql_order_by=$env{'sql_order_by'} || 'article_attrs.datetime_start DESC';
 	my $sql_group_by;
+	my $sql_column;
+	my $sql_join;
 	my $elastic;
 	
 	if ($env{'unique'})
@@ -111,6 +113,23 @@ sub execute
 		}
 	}
 	
+	if ($env{'a430_list.ID'})
+	{
+		require App::430::_init;
+		$sql_join.=qq{INNER JOIN `$App::430::db_name`.a160_relation AS a430_list_relation ON
+		(
+			a430_list_relation.l_prefix = 'a430' AND
+			a430_list_relation.l_table = 'list' AND
+			a430_list_relation.l_ID_entity = $env{'a430_list.ID'} AND
+			a430_list_relation.r_prefix = 'a401' AND
+			a430_list_relation.r_table = 'article' AND
+			a430_list_relation.r_ID_entity = `article`.ID_entity AND
+			a430_list_relation.status = 'Y'
+		)
+		};
+		$sql_column.=",a430_list_relation.rel_name";
+		$sql_order_by="a430_list_relation.priority DESC";
+	}
 	
 	if ($env{'elastic'})
 	{
@@ -387,6 +406,7 @@ sub execute
 				),
 				'Y', 'U'
 			) AS status_all
+			$sql_column
 			
 		FROM `$App::401::db_name`.a401_article_ent AS article_ent
 		INNER JOIN `$App::401::db_name`.a401_article AS article ON
@@ -416,6 +436,7 @@ sub execute
 			r_table = 'article' AND
 			r_ID_entity = article.ID_entity
 		)
+		$sql_join
 		WHERE
 			article_ent.status = 'Y'
 			AND article.status = 'Y'
@@ -504,6 +525,7 @@ sub execute
 		{
 			push @cats, $cat{'cat_ID'};
 		}
+#push @{$TPL->{'variables'}->{'cat'}},@cats;
 		
 		# link to a210_page
 		if (my $category=App::401::functions::_a210_by_cat(\@cats,'lng'=>$env{'lng'}))
