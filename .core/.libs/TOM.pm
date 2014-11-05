@@ -127,7 +127,8 @@ BEGIN
 	
 	# actual path and domain service path
 	use Cwd;
-	$tom::P=$tom::p=getcwd();
+	$tom::P=$tom::p=getcwd()
+		unless $tom::P;
 	
 	# try to find domain service local.conf
 	my $tomP=$tom::P;#$tomP=~s|^$TOM::P/||;
