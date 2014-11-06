@@ -95,3 +95,42 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_discount_coupon_use` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_gift` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` int(8) unsigned default NULL,
+  `datetime_create` datetime NOT NULL, -- last modified
+  `datetime_valid_from` datetime DEFAULT NULL,
+  `datetime_valid_to` datetime DEFAULT NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL, -- who created this item
+  `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL, -- who last modified this item
+  `postprocess` char(1) character set ascii NOT NULL default 'N',
+  `rules_validation` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `rules_apply` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_gift_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` int(8) unsigned default NULL,
+  `datetime_create` datetime NOT NULL, -- last modified
+  `datetime_valid_from` datetime DEFAULT NULL,
+  `datetime_valid_to` datetime DEFAULT NULL,
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `postprocess` char(1) character set ascii NOT NULL default 'N',
+  `rules_validation` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `rules_apply` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
