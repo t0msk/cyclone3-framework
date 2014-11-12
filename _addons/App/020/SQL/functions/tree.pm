@@ -757,18 +757,21 @@ sub get_path
 	my %cache;
 	$cache{'-cache'}=$env{'-cache'} if $env{'-cache'};
 	$cache{'-cache_changetime'} = App::020::SQL::functions::_get_changetime(\%env) if $env{'-cache'};
+	%cache={} unless $main::cache;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
 	
 	# get paths from cache
 	my $cache_key=$env{'db_h'}.':'.$env{'db_name'}.':'.$env{'tb_name'}.':'.$ID;
-		foreach (%{$env{'columns'}})
+		foreach (keys %{$env{'columns'}})
 		{
 			$cache_key.=":".$_."=".$env{'columns'}{$_};
 		}
+		$cache_key.='v2';
 		$cache_key=TOM::Digest::hash($cache_key);
-		
-	if ($TOM::CACHE && $TOM::CACHE_memcached && $main::FORM{'_rc'}!=-2)
+	
+	
+	if ($TOM::CACHE && $TOM::CACHE_memcached && $main::cache)
 	{
 		my $cache=$Ext::CacheMemcache::cache->get(
 			'namespace' => "fnc_cache",
@@ -812,6 +815,9 @@ sub get_path
 	$parent=~s|^(.*)...$|\1|;
 	$parent=~s|:$||;
 	# hladam nody az po root
+	my $sql_columns;
+		$sql_columns.=",metadata" if $env{'columns'}{'metadata'};
+		$sql_columns.=",t_keys" if $env{'columns'}{'t_keys'};
 	while ($parent)
 	{
 		main::_log("find parent '$parent'") if $debug;
@@ -822,10 +828,7 @@ sub get_path
 				ID_charindex,
 				name,
 				name_url,
-				status}.do{
-					",metadata" if $env{'columns'}{'metadata'};
-					",t_keys" if $env{'columns'}{'t_keys'};
-				}.qq{
+				status$sql_columns
 			FROM
 				`$env{'db_name'}`.`$env{'tb_name'}`
 			WHERE
@@ -861,7 +864,7 @@ sub get_path
 				'time' => time(),
 				'data' => \@path
 			},
-			'expiration' => '30D'
+			'expiration' => '1D'
 		);
 	}
 	
