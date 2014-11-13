@@ -4301,6 +4301,7 @@ sub broadcast_program_add
 			'rating_pg',
 			'accessibility_deaf',
 			'accessibility_cc',
+			'status_archive',
 			'status_live',
 			'status_live_geoblock',
 			'status_premiere',
@@ -4308,7 +4309,9 @@ sub broadcast_program_add
 			'status_geoblock',
 			'recording',
 			'datetime_real_start',
+			'datetime_real_start_msec',
 			'datetime_real_stop',
+			'datetime_real_stop_msec',
 			'datetime_real_status',
 			'license_valid_to'
 		)
