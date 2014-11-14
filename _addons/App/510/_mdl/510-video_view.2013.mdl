@@ -353,6 +353,13 @@ sub execute
 				}
 			}
 			
+			push @{$env_out{'entity'}},{
+				'db_h' => 'main',
+				'db_name' => $App::510::db_name,
+				'tb_name' => 'a510_video_part',
+				'ID_entity' => $video_part{'ID_entity'}
+			};
+			
 			push @{$video{'part'}}, \%video_part;
 		}
 		
