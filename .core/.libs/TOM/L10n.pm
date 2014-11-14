@@ -308,6 +308,12 @@ sub parse_string
 	foreach my $node ($nodeset->get_nodelist)
 	{
 		my $name=$node->getName();
+		
+		if ($node->getAttribute('disabled') eq "true")
+		{
+			next;
+		}
+		
 		my $id=$node->getAttribute('id');
 		
 		if (!$id)
