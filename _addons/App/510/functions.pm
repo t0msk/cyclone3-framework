@@ -702,6 +702,305 @@ sub video_part_smil_generate
 
 
 
+sub video_part_brick_change
+{
+	my %env=@_;
+	return undef unless $env{'video_part.ID'};
+	return undef unless defined $env{'video_part.ID_brick'};
+	my $t=track TOM::Debug(__PACKAGE__."::video_part_brick_change($env{'video_part.ID'},$env{'video_part.ID_brick'})");
+	
+	my %part=App::020::SQL::functions::get_ID(
+		'ID' => $env{'video_part.ID'},
+		'db_h' => "main",
+		'db_name' => $App::510::db_name,
+		'tb_name' => "a510_video_part",
+		'columns' => {'*'=>1}
+	);
+	
+	if (!$part{'ID'})
+	{
+		main::_log("brick not found",1);
+		$t->close();
+		return undef;
+	}
+	
+	if ($part{'ID_brick'} eq $env{'video_part.ID_brick'})
+	{
+		main::_log("already changed ID_brick to '$part{'ID_brick'}'");
+		$t->close();
+		return 1;
+	}
+	
+	my $sql=qq{
+		SELECT
+			video.ID_entity AS ID_entity_video,
+			video.ID AS ID_video,
+			video_attrs.ID AS ID_attrs,
+			video_part.ID AS ID_part,
+			video_part_attrs.ID AS ID_part_attrs,
+			
+			LEFT(video.datetime_rec_start, 16) AS datetime_rec_start,
+			LEFT(video_attrs.datetime_create, 18) AS datetime_create,
+			LEFT(video.datetime_rec_start,10) AS date_recorded,
+			LEFT(video.datetime_rec_stop, 16) AS datetime_rec_stop,
+			
+			video_attrs.ID_category,
+			
+			video_attrs.name,
+			video_attrs.name_url,
+			video_attrs.description,
+			video_attrs.order_id,
+			video_attrs.priority_A,
+			video_attrs.priority_B,
+			video_attrs.priority_C,
+			video_attrs.lng,
+			
+			video_part_attrs.name AS part_name,
+			video_part_attrs.description AS part_description,
+			video_part.part_id AS part_id,
+			video_part.keywords AS part_keywords,
+			video_part.visits,
+			video_part_attrs.lng AS part_lng,
+			
+			video_part.rating_score,
+			video_part.rating_votes,
+			(video_part.rating_score/video_part.rating_votes) AS rating,
+			
+			video_attrs.status,
+			video_part.status AS status_part
+			
+		FROM
+			`$App::510::db_name`.`a510_video` AS video
+		INNER JOIN `$App::510::db_name`.`a510_video_ent` AS video_ent ON
+		(
+			video_ent.ID_entity = video.ID_entity
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_attrs` AS video_attrs ON
+		(
+			video_attrs.ID_entity = video.ID
+		)
+		INNER JOIN `$App::510::db_name`.`a510_video_part` AS video_part ON
+		(
+			video_part.ID_entity = video.ID_entity
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part_attrs` AS video_part_attrs ON
+		(
+			video_part_attrs.ID_entity = video_part.ID AND
+			video_part_attrs.lng = video_attrs.lng
+		)
+		
+		WHERE
+			video.ID AND
+			video_attrs.ID AND
+			video_part.ID=?
+		
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[$part{'ID'}],'quiet'=>1);
+	my %video_db=$sth0{'sth'}->fetchhash();
+	
+	my %brick_src;
+	%brick_src=App::020::SQL::functions::get_ID(
+		'ID' => $part{'ID_brick'},
+		'db_h' => "main",
+		'db_name' => $App::510::db_name,
+		'tb_name' => "a510_video_brick",
+		'columns' => {'*'=>1}
+	) if $part{'ID_brick'};
+	
+	my $brick_src_class='App::510::brick';
+		$brick_src_class.="::".$brick_src{'name'}
+			if $brick_src{'name'};
+	
+	main::_log("source brick class = '$brick_src_class'");
+	
+	my %brick_dst=App::020::SQL::functions::get_ID(
+		'ID' => $env{'video_part.ID_brick'},
+		'db_h' => "main",
+		'db_name' => $App::510::db_name,
+		'tb_name' => "a510_video_brick",
+		'columns' => {'*'=>1}
+	);
+	
+	my $brick_dst_class='App::510::brick';
+		$brick_dst_class.="::".$brick_dst{'name'}
+			if $brick_dst{'name'};
+	
+	main::_log("destination brick class = '$brick_dst_class'");
+	
+	my %sth1=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`$App::510::db_name`.a510_video_part_file
+		WHERE
+			ID_entity=?
+			AND status IN ('Y','N','L','W')
+		ORDER BY
+			ID_format
+	},'bind'=>[$env{'video_part.ID'}],'quiet'=>1);
+	my @files_move;
+	while (my %db1_line=$sth1{'sth'}->fetchhash())
+	{
+		main::_log("video_part_file.ID=$db1_line{'ID'} format.ID=$db1_line{'ID_format'}");
+		
+		my $video_=$brick_src_class->video_part_file_path({
+			'video_part.ID' => $part{'ID'},
+			'video_format.ID' => $db1_line{'ID_format'},
+			'video_part_file.ID' => $db1_line{'ID'},
+			'video_part_file.name' => $db1_line{'name'},
+			'video_part_file.file_ext' => $db1_line{'file_ext'},
+			'video_part.datetime_air' => $part{'datetime_air'},
+		});
+		my $src_dir=$video_->{'dir'};
+		my $src_file_path=$video_->{'file_path'};
+		
+		
+		my $video_=$brick_dst_class->video_part_file_path({
+			'video_part.ID' => $part{'ID'},
+			'video_format.ID' => $db1_line{'ID_format'},
+			'video_part_file.ID' => $db1_line{'ID'},
+#			'video_part_file.name' => $db1_line{'name'},
+			'video_part_file.file_ext' => $db1_line{'file_ext'},
+			'video_part.datetime_air' => $part{'datetime_air'},
+			
+			'video.datetime_rec_start' => $video_db{'datetime_rec_start'},
+			'video_attrs.name' => ($video_db{'name'} || $video_db{'ID_video'}),
+			'video_part_attrs.name' => $video_db{'part_name'}
+		});
+		my $dst_dir=$video_->{'dir'};
+		my $dst_file_path=$video_->{'file_path'};
+		
+		main::_log(" file src '$src_dir/$src_file_path'");
+		main::_log(" file dst '$dst_dir/$dst_file_path'");
+		
+		if (!-e $src_dir.'/'.$src_file_path)
+		{
+			main::_log("src file can't be found",1);
+			$t->close();
+			return undef;
+		}
+		push @files_move,[
+			$src_dir.'/'.$src_file_path,
+			$dst_dir.'/'.$dst_file_path,
+			$db1_line{'ID'}, # ID
+			$video_->{'video_part_file.name'}
+		];
+	}
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`$App::510::db_name`.a510_video_part_smil
+		WHERE
+			ID_entity=?
+		LIMIT 1
+	},'bind'=>[$part{'ID'}],'quiet'=>1);
+	my %db0_line=$sth0{'sth'}->fetchhash();
+	my $smil_src_file;
+	if ($db0_line{'name'})
+	{
+		my $smil_=$brick_src_class->video_part_smil_path({
+			'video_part.ID' => $part{'ID'},
+			'video_part_smil.name' => $db0_line{'name'}
+		});
+		$smil_src_file=$smil_->{'dir'}.'/'.$smil_->{'smil_path'};
+		main::_log("smil src '$smil_src_file'");
+	}
+	
+	# copy files
+	use File::Copy;
+	my $i=0;
+	foreach (@files_move)
+	{
+		$i++;
+		my $src_file=$_->[0];
+		my $dst_file=$_->[1];
+		main::_log(" copy file [$i] size=".(stat $src_file)[7]."b");
+		copy($src_file,$dst_file) || do {
+			main::_log("$!",1);
+			$t->close();
+			return undef;
+		}
+	}
+	
+	# rename files in db to new names
+	my $i=0;
+	foreach (@files_move)
+	{
+		$i++;
+		my $id=$_->[2];
+		my $name=$_->[3];
+		main::_log(" rename file in db [$i] to '$name'");
+		App::020::SQL::functions::update(
+			'ID' => $id,
+			'db_h' => 'main',
+			'db_name' => $App::510::db_name,
+			'tb_name' => 'a510_video_part_file',
+			'data' =>
+			{
+				'name' => $name
+			},
+			'-journalize' => 1,
+		);
+	}
+	
+	# update video_part.ID_brick
+	App::020::SQL::functions::update(
+		'ID' => $part{'ID'},
+		'db_h' => "main",
+		'db_name' => $App::510::db_name,
+		'tb_name' => "a510_video_part",
+		'columns' =>
+		{
+			'ID_brick' => $env{'video_part.ID_brick'}
+		},
+		'-journalize' => 1
+	);
+	
+	# remove old files
+	# TODO: delay this for couple of hours
+	my $i=0;
+	foreach (@files_move)
+	{
+		$i++;
+		my $src_file=$_->[0];
+		my $dst_file=$_->[1];
+		main::_log(" unlink file [$i]");
+		unlink($src_file) || do {
+			main::_log("$!",1);
+			# sorry, can't stop this process now
+		}
+	}
+	
+	# remove smil from db - hard way
+	my %sth0=TOM::Database::SQL::execute(qq{
+		DELETE
+		FROM
+			`$App::510::db_name`.a510_video_part_smil
+		WHERE
+			ID_entity=?
+		LIMIT 1
+	},'bind'=>[$part{'ID'}],'quiet'=>1);
+	
+	# generate smil file
+	video_part_smil_generate('video_part.ID' => $part{'ID'});
+	
+	# remove old smil file
+	if ($smil_src_file)
+	{
+		main::_log("unlink $smil_src_file");
+		unlink $smil_src_file || do {
+			main::_log("$!",1);
+		};
+	}
+	
+	$t->close();
+	return 1;
+}
+
+
 
 sub _video_part_file_genpath
 {
@@ -2826,9 +3125,9 @@ sub video_part_file_add
 				my $video_=$brick_class->video_part_file_path({
 					'video_part.ID' => $part{'ID'},
 					'video_part.datetime_air' => $part{'datetime_air'},
+					'video_format.ID' => $env{'video_format.ID'},
 	#				'video.ID' => $video{'ID_video'},
 					'video_part_file.ID' => $db0_line{'ID'},
-					'video_format.ID' => $env{'video_format.ID'},
 					'video_part_file.name' => $name,
 					'video_part_file.file_ext' => $file_ext,
 				});
@@ -2917,9 +3216,9 @@ sub video_part_file_add
 			my $video_=$brick_class->video_part_file_path({
 				'video_part.ID' => $env{'video_part.ID'},
 				'video_part.datetime_air' => $part{'datetime_air'},
+				'video_format.ID' => $env{'video_format.ID'},
 #				'video.ID' => $video{'ID_video'},
 				'video_part_file.ID' => $ID,
-				'video_format.ID' => $env{'video_format.ID'},
 				'video_part_file.name' => $name,
 				'video_part_file.file_ext' => $file_ext,
 			});
@@ -3412,8 +3711,8 @@ sub get_video_part_file
 				'video_part.ID' => $video{'ID_part'},
 				'video_part.datetime_air' => $video{'part_datetime_air'},
 				'video.ID' => $video{'ID_video'},
-				'video_part_file.ID' => $video{'file_ID'},
 				'video_format.ID' => $video{'format_ID'},
+				'video_part_file.ID' => $video{'file_ID'},
 				'video_part_file.file_ext' => $video{'file_ext'},
 				'video_part_file.file_alt_src' => $video{'file_alt_src'},
 				'video_part_file.name' => $video{'file_name'},
