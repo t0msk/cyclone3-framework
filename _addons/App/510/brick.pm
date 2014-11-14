@@ -20,11 +20,12 @@ sub video_part_file_path
 	
 	$video->{'dir'}=$tom::P_media.'/a510/video/part/file';
 	
-	if (!$video->{'video_part_file.ID'})
+	if (!$video->{'video_part_file.name'})
 	{
 		# generate optimized, or random 
 		my $optimal_hash;
-#			main::_log("tst=".$video->{'video.datetime_rec_start'});
+		if ($video->{'video_attrs.name'} || $video->{'video_part_attrs.name'})
+		{
 			$video->{'video.datetime_rec_start'}=~s| \d\d:\d\d$||;
 			$optimal_hash.=$video->{'video.datetime_rec_start'}.'-'
 				if $video->{'video.datetime_rec_start'};
@@ -35,15 +36,20 @@ sub video_part_file_path
 			$optimal_hash.=$video->{'video_format.ID'}.'-'
 				if $video->{'video_format.ID'};
 			$optimal_hash=~s|-$||;
-			
-		$optimal_hash=Int::charsets::encode::UTF8_ASCII($optimal_hash);
-		$optimal_hash=~tr/[A-Z]/[a-z]/;
-		$optimal_hash=~s|[^a-z0-9\-]|_|g;
-		1 while ($optimal_hash=~s|__|_|g);
-		my $max=120;
-		if (length($optimal_hash)>$max)
+				
+			$optimal_hash=Int::charsets::encode::UTF8_ASCII($optimal_hash);
+			$optimal_hash=~tr/[A-Z]/[a-z]/;
+			$optimal_hash=~s|[^a-z0-9\-]|_|g;
+			1 while ($optimal_hash=~s|__|_|g);
+			my $max=120;
+			if (length($optimal_hash)>$max)
+			{
+				$optimal_hash=substr($optimal_hash,0,$max);
+			}
+		}
+		else
 		{
-			$optimal_hash=substr($optimal_hash,0,$max);
+			$optimal_hash=TOM::Utils::vars::genhash(8);
 		}
 		
 		my $okay=0;
