@@ -15,6 +15,15 @@ sub video_part_file_path
 {
 	shift;
 	my $video=shift;
+	
+	if ($video->{'video_part_file.file_alt_src'})
+	{
+		$video->{'dir'} = $video->{'video_part_file.file_alt_src'};
+		$video->{'dir'} =~s|^(.*)/(.*?)$|$1|;
+		$video->{'file_path'}=$2;
+		return $video;
+	}
+	
 	return $video if
 		$video->{'video_part_file.file_alt_src'};
 	

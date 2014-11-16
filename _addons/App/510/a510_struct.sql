@@ -169,6 +169,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
   PRIMARY KEY (`ID`),
   KEY `ID_entity` (`ID_entity`),
   KEY `ID_brick` (`ID_brick`),
+  KEY `datetime_air` (`datetime_air`),
   KEY `visits` (`visits`),
   KEY `rating` (`rating`),
   KEY `part_id` (`part_id`),
@@ -260,7 +261,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_caption_j` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_callback` (
-  `ID_part` mediumint(8) unsigned NOT NULL,
+  `ID_part` mediumint(8) unsigned NOT NULL, -- rel _video_part.ID
   `datetime_create` datetime NOT NULL,
   `ID_user` varchar(8) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `IP` varchar(15) CHARACTER SET ascii DEFAULT NULL,

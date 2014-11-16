@@ -842,12 +842,13 @@ sub video_part_brick_change
 	my @files_move;
 	while (my %db1_line=$sth1{'sth'}->fetchhash())
 	{
-		main::_log("video_part_file.ID=$db1_line{'ID'} format.ID=$db1_line{'ID_format'}");
+		main::_log("video_part_file.ID=$db1_line{'ID'} format.ID=$db1_line{'ID_format'} name=$db1_line{'name'}");
 		
 		my $video_=$brick_src_class->video_part_file_path({
 			'video_part.ID' => $part{'ID'},
 			'video_format.ID' => $db1_line{'ID_format'},
 			'video_part_file.ID' => $db1_line{'ID'},
+			'video_part_file.file_alt_src' => $db1_line{'file_alt_src'},
 			'video_part_file.name' => $db1_line{'name'},
 			'video_part_file.file_ext' => $db1_line{'file_ext'},
 			'video_part.datetime_air' => $part{'datetime_air'},
@@ -874,7 +875,29 @@ sub video_part_brick_change
 		main::_log(" file src '$src_dir/$src_file_path'");
 		main::_log(" file dst '$dst_dir/$dst_file_path'");
 		
-		if (!-e $src_dir.'/'.$src_file_path)
+		if ($src_dir.'/'.$src_file_path eq $dst_dir.'/'.$dst_file_path)
+		{
+			main::_log("src file same as destination",1);
+			next;
+		}
+		elsif (-e $src_dir && !-e $src_dir.'/'.$src_file_path)
+		{
+			main::_log("src file can't be found, dir exits",1);
+#			App::020::SQL::functions::update(
+#				'ID' => $db1_line{'ID'},
+#				'db_h' => "main",
+#				'db_name' => $App::510::db_name,
+#				'tb_name' => "a510_video_part",
+#				'data' =>
+#				{
+#					'status' => "'E'"
+#				},
+#				'-journalize' => 1
+#			);
+			$t->close();
+			return undef;
+		}
+		elsif (!-e $src_dir.'/'.$src_file_path)
 		{
 			main::_log("src file can't be found",1);
 			$t->close();
