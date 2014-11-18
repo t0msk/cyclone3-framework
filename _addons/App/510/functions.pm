@@ -875,7 +875,11 @@ sub video_part_brick_change
 		main::_log(" file src '$src_dir/$src_file_path'");
 		main::_log(" file dst '$dst_dir/$dst_file_path'");
 		
-		if ($src_dir.'/'.$src_file_path eq $dst_dir.'/'.$dst_file_path)
+		if ($src_dir=~/skvid/)
+		{
+			next;
+		}
+		elsif ($src_dir.'/'.$src_file_path eq $dst_dir.'/'.$dst_file_path)
 		{
 			main::_log("src file same as destination",1);
 			next;
@@ -956,17 +960,32 @@ sub video_part_brick_change
 		my $id=$_->[2];
 		my $name=$_->[3];
 		main::_log(" rename file in db [$i] to '$name'");
-		App::020::SQL::functions::update(
-			'ID' => $id,
-			'db_h' => 'main',
-			'db_name' => $App::510::db_name,
-			'tb_name' => 'a510_video_part_file',
-			'data' =>
-			{
-				'name' => $name
-			},
-			'-journalize' => 1,
-		);
+		my %sth0=TOM::Database::SQL::execute(qq{
+			UPDATE
+				`$App::510::db_name`.a510_video_part_file
+			SET
+				name=?,
+				file_alt_src=NULL
+			WHERE
+				ID=?
+			LIMIT 1
+		},'bind'=>[$name,$id],'quiet'=>1);
+		# noooo, don't change datetime_create
+#		App::020::SQL::functions::update(
+#			'ID' => $id,
+#			'db_h' => 'main',
+#			'db_name' => $App::510::db_name,
+#			'tb_name' => 'a510_video_part_file',
+#			'data' =>
+#			{
+#				'name' => $name
+#			},
+#			'columns' => 
+#			{
+#				'file_alt_src' => 'NULL'
+#			},
+#			'-journalize' => 1,
+#		);
 	}
 	
 	# update video_part.ID_brick
@@ -3961,7 +3980,7 @@ sub get_video_part_file_process_front
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$i++;
-		main::_log("[$i/$sth0{'rows'}] '$db0_line{'ID_brick'}/$db0_line{'brick_dontprocess'}' video.ID_entity=$db0_line{'ID_entity_video'} video_part.ID=$db0_line{'ID_part'} video_format.ID_entity='$db0_line{'ID_entity_format'}' video_format.datetime_create='$db0_line{'format_datetime_create'}' video_part_file.ID=$db0_line{'ID_file'} video_part_file.datetime_create='$db0_line{'file_datetime_create'}' video_part_file.status='$db0_line{'file_status'}' video_format_p.ID_entity='$db0_line{'ID_entity_format_p'}'");
+		main::_log("[$i/$sth0{'rows'}] brick='$db0_line{'ID_brick'}/$db0_line{'brick_dontprocess'}' video.ID_entity=$db0_line{'ID_entity_video'} video_part.ID=$db0_line{'ID_part'} video_format.ID_entity='$db0_line{'ID_entity_format'}' video_format.datetime_create='$db0_line{'format_datetime_create'}' video_part_file.ID=$db0_line{'ID_file'} video_part_file.datetime_create='$db0_line{'file_datetime_create'}' video_part_file.status='$db0_line{'file_status'}' video_format_p.ID_entity='$db0_line{'ID_entity_format_p'}'");
 		push @data,{%db0_line};
 	}
 	
