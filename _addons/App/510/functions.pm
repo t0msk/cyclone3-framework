@@ -2528,7 +2528,7 @@ sub video_part_add
 		$columns{'keywords'}="'".$env{'video_part.keywords'}."'"
 			if (exists $env{'video_part.keywords'} && ($env{'video_part.keywords'} ne $video_part{'keywords'}));
 		$columns{'datetime_air'}="'".$env{'video_part.datetime_air'}."'"
-			if (exists $env{'video_part.datetime_air'} && ($env{'video_part.datetime_air'} ne $video_part{'datetime_air'}));
+			if ($env{'video_part.datetime_air'} && ($env{'video_part.datetime_air'} ne $video_part{'datetime_air'}));
 		
 		if (keys %columns)
 		{
