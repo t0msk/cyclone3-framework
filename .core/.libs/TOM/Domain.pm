@@ -136,10 +136,17 @@ BEGIN
 					$path=~s|^.*?!|!|;
 				$Ext::Redis::service->hset('C3|domains',$tom::H_orig,to_json({
 					'updated' => time(),
+					'env' => {
+						'cmd' => $0,
+						'engine' => $TOM::engine,
+						'hostname' => $TOM::hostname,
+						'PID' => $$
+					},
 					'db_name' => $TOM::DB{'main'}{'name'},
 					'tom::P' => $tom::P,
 					'tom::P_rel' => $path,
 					'tom::Pm' => $tom::Pm,
+#					'ENV' => %m
 					'addons' => \%addons
 				}),sub{});
 			};}
