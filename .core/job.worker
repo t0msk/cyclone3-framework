@@ -87,22 +87,26 @@ $channel_domain->declare_queue(
 	'exchange' => encode('UTF-8', 'cyclone3.job'),
 	'queue' => encode('UTF-8', 'cyclone3.job.'.($tom::H_orig || '_global').$class),'durable' => 1
 );
+main::_log("declare_queue '".'cyclone3.job.'.($tom::H_orig || '_global').$class."'");
 $channel_domain->bind_queue(
 	'exchange' => encode('UTF-8', 'cyclone3.job'),
 	'queue' => encode('UTF-8', 'cyclone3.job.'.($tom::H_orig || '_global').$class),
 	'routing_key' => encode('UTF-8', ($tom::H_orig || 'job').$class)
 );
+main::_log("routing_key '".($tom::H_orig || 'job').$class."'");
 
 my $channel_database=$Ext::RabbitMQ::service->open_channel();
 $channel_database->declare_queue(
 	'exchange' => encode('UTF-8', 'cyclone3.job'),
 	'queue' => encode('UTF-8', 'cyclone3.job.db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class),'durable' => 1
 );
+main::_log("declare_queue '".'cyclone3.job.db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class."'");
 $channel_database->bind_queue(
 	'exchange' => encode('UTF-8', 'cyclone3.job'),
 	'queue' => encode('UTF-8', 'cyclone3.job.db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class),
 	'routing_key' => encode('UTF-8', 'db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class)
 );
+main::_log("routing_key '".'db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class."'");
 
 sub callback {
 	alarm 0;
@@ -125,21 +129,46 @@ sub callback {
 	my $time_str=$env0{'year'}.'-'.$env0{'mon'}.'-'.$env0{'mday'}.' '.$env0{'hour'}.':'.$env0{'min'}.':'.$env0{'sec'};
 	main::_log("received message id='".($var->{'header'}->{'headers'}->{'message_id'})."' routing_key='$routing_key' created='$time_str' size=".length($var->{'body'}->{'payload'})."b deduplication=".$deduplication);
 	
+	main::_log("message payload=".$body);
+	
 	my $key_entity=TOM::Digest::hash($tom::H.$var->{'body'}->{'payload'});
 	if ($deduplication && $Redis)
 	{
 		my $timestamp_exec=$Redis->hget('C3|job|'.$key_entity,'finished');
+		my $timestamp_start=$Redis->hget('C3|job|'.$key_entity,'started');
 		
 		my %env0=main::ctodatetime($timestamp_exec,format=>1);
 		my $time_str=$env0{'year'}.'-'.$env0{'mon'}.'-'.$env0{'mday'}.' '.$env0{'hour'}.':'.$env0{'min'}.':'.$env0{'sec'};
 		
-		main::_log(" deduplication hash='$key_entity' time='$time_str'");
+		my %env0=main::ctodatetime($timestamp_start,format=>1);
+		my $time_start_str=$env0{'year'}.'-'.$env0{'mon'}.'-'.$env0{'mday'}.' '.$env0{'hour'}.':'.$env0{'min'}.':'.$env0{'sec'};
+		
+		main::_log(" deduplication hash='$key_entity' time_stop='".(
+			do {
+				if ($timestamp_exec)
+				{
+					$time_str
+				}
+				else
+				{
+					'null';
+				}
+			}
+		)."'");
 		
 		$timestamp_exec=time()
 			if $timestamp_exec > time();
 		
 		# if timestamp of message is lower than execution timestamp
-		if ($timestamp < $timestamp_exec)
+		if ($timestamp_start && ($timestamp_start < time()) && !$timestamp_exec)
+		{
+			main::_log("job '$key_entity' already running from '$time_start_str'",1);
+			$this_channel->ack();
+			alarm $alarm;
+			$0=~s|{.*?}|{}|;
+			return 0;
+		}
+		elsif ($timestamp < $timestamp_exec)
 		{
 			main::_log("job '$key_entity' already executed at '$time_str' (".($timestamp_exec-$timestamp)."s after this message)",1);
 			$this_channel->ack();
@@ -151,6 +180,7 @@ sub callback {
 		{
 #			# deduplication job start
 			$Redis->hset('C3|job|'.$key_entity,'started',time(),sub {}); # set virtually to future (max execution time)
+			$Redis->hdel('C3|job|'.$key_entity,'finished',sub {});
 			$Redis->expire('C3|job|'.$key_entity,86400,sub {});
 		}
 	}
@@ -232,14 +262,15 @@ sub callback {
 		{
 			main::_log("unknown type of job",1);
 		}
-		if ($deduplication && $Redis)
-		{
-			# deduplication job end
-			$Redis->hset('C3|job|'.$key_entity,'finished',time(),sub {});
-			$Redis->expire('C3|job|'.$key_entity,86400,sub {});
-		}
 	};
 	$t0->close();
+	if ($deduplication && $Redis)
+	{
+		# deduplication job end
+		$Redis->hdel('C3|job|'.$key_entity,'started',sub {});
+		$Redis->hset('C3|job|'.$key_entity,'finished',time(),sub {});
+		$Redis->expire('C3|job|'.$key_entity,86400,sub {});
+	}
 	if ($@)
 	{
 		main::_log("job error ".$@,1);
