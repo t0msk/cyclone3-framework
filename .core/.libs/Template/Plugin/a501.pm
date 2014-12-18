@@ -32,7 +32,7 @@ sub get_image_file {
 	if ($env->{'resize'} && $image{'ID'})
 	{
 		%{$image{'resized'}}=App::501::functions::image_file_resize(
-			'image_file.ID' => $image{'ID'},
+			'image_file.ID' => $image{'ID_file'},
 			'width' => $env->{'resize'}->{'width'},
 			'height' => $env->{'resize'}->{'height'},
 			'method' => $env->{'resize'}->{'method'} || 'auto',
