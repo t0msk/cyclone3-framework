@@ -66,7 +66,8 @@ use Encode qw(decode encode);
 use JSON;
 use Data::Dumper;
 use Ext::Redis::_init;
-our $alarm=30; # autoexit after 60 seconds of inactivity
+our $alarm=$ENV{'TIMEOUT'};
+	 $alarm||=30; # autoexit after 60 seconds of inactivity
 our $time_max=600;
 our $time_start=time();
 
@@ -79,6 +80,7 @@ my $service=Ext::RabbitMQ::service();
 # cyclone3.job: cyclone3.job.domain_tld -> cyclone3.job.domain_tld
 
 my $channel_domain=$Ext::RabbitMQ::service->open_channel();
+	$channel_domain->{'arc'}->confirm();
 $channel_domain->declare_exchange(
 	'exchange' => encode('UTF-8', 'cyclone3.notify'),
 	'type' => encode('UTF-8', 'direct'),
@@ -96,6 +98,7 @@ $channel_domain->bind_queue(
 main::_log("routing_key '".($tom::H_orig || 'job').$class."'");
 
 my $channel_database=$Ext::RabbitMQ::service->open_channel();
+	$channel_database->{'arc'}->confirm();
 $channel_database->declare_queue(
 	'exchange' => encode('UTF-8', 'cyclone3.job'),
 	'queue' => encode('UTF-8', 'cyclone3.job.db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class),'durable' => 1
@@ -136,6 +139,7 @@ sub callback {
 	{
 		my $timestamp_exec=$Redis->hget('C3|job|'.$key_entity,'finished');
 		my $timestamp_start=$Redis->hget('C3|job|'.$key_entity,'started');
+		my $process_start=$Redis->hget('C3|job|'.$key_entity,'process');
 		
 		my %env0=main::ctodatetime($timestamp_exec,format=>1);
 		my $time_str=$env0{'year'}.'-'.$env0{'mon'}.'-'.$env0{'mday'}.' '.$env0{'hour'}.':'.$env0{'min'}.':'.$env0{'sec'};
@@ -162,11 +166,25 @@ sub callback {
 		# if timestamp of message is lower than execution timestamp
 		if ($timestamp_start && ($timestamp_start < time()) && !$timestamp_exec)
 		{
-			main::_log("job '$key_entity' already running from '$time_start_str'",1);
-			$this_channel->ack();
-			alarm $alarm;
-			$0=~s|{.*?}|{}|;
-			return 0;
+			my $duration=time() - $timestamp_start;
+			main::_log("job '$key_entity' already running from '$time_start_str' duration='".($duration)."s' \@$process_start",1);
+#			if ($duration > (3600*12))
+			if ($duration > 3600)
+			{
+				main::_log("running too long, what happens? (i'm trying to restart, and you try to search bug in logs)",1);
+				# deduplication job start
+				$Redis->hset('C3|job|'.$key_entity,'started',time(),sub {});
+				$Redis->hset('C3|job|'.$key_entity,'process',$TOM::hostname.':'.$$,sub {});
+				$Redis->hdel('C3|job|'.$key_entity,'finished',sub {});
+				$Redis->expire('C3|job|'.$key_entity,86400,sub {});
+			}
+			else
+			{
+				$this_channel->ack();
+				alarm $alarm;
+				$0=~s|{.*?}|{}|;
+				return 0;
+			}
 		}
 		elsif ($timestamp < $timestamp_exec)
 		{
@@ -178,14 +196,15 @@ sub callback {
 		}
 		else
 		{
-#			# deduplication job start
-			$Redis->hset('C3|job|'.$key_entity,'started',time(),sub {}); # set virtually to future (max execution time)
+			# deduplication job start
+			$Redis->hset('C3|job|'.$key_entity,'started',time(),sub {});
+			$Redis->hset('C3|job|'.$key_entity,'process',$TOM::hostname.':'.$$,sub {});
 			$Redis->hdel('C3|job|'.$key_entity,'finished',sub {});
 			$Redis->expire('C3|job|'.$key_entity,86400,sub {});
 		}
 	}
 	
-	my $t0=track TOM::Debug('eval');
+	my $t0=track TOM::Debug('eval','timer'=>1);
 	eval
 	{
 		
@@ -268,6 +287,7 @@ sub callback {
 	{
 		# deduplication job end
 		$Redis->hdel('C3|job|'.$key_entity,'started',sub {});
+		$Redis->hdel('C3|job|'.$key_entity,'process',sub {});
 		$Redis->hset('C3|job|'.$key_entity,'finished',time(),sub {});
 		$Redis->expire('C3|job|'.$key_entity,86400,sub {});
 	}

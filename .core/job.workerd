@@ -158,7 +158,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 	my $load=$loadstat->{'avg_5'};#(Sys::CpuLoad::load())[1];
 	if ($load >= $MAX_LOAD && $WORKERS > 1)
 	{
-		main::_log("high load ($load) \@$TOM::hostname, skipping",3,"job.workerd");
+		main::_log("high load ($load) \@$TOM::hostname, skip spawning",3,"job.workerd");
 		return undef;
 	}
 	
@@ -169,7 +169,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 	);
 	if ($usable_memory < 200000 && $WORKERS > 1)
 	{
-		main::_log("usable memory too low (".($usable_memory)."kb) \@$TOM::hostname, skipping",3,"job.workerd");
+		main::_log("usable memory too low (".($usable_memory)."kb) \@$TOM::hostname, skip spawning",3,"job.workerd");
 		return undef;
 	}
 	
@@ -401,7 +401,7 @@ sub check_domains
 			$dom_data->{'domain'}=$domain;
 		$domains{$domain}=to_json $dom_data;
 		
-		main::_log(" domain='$domain' old=".(time()-$dom_data->{'updated'}));
+#		main::_log(" domain='$domain' old=".(time()-$dom_data->{'updated'}));
 #		print Dumper($dom_data);
 #		exit if $domain eq "play.markiza.sk";
 		
