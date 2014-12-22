@@ -41,18 +41,21 @@ sub service
 			'user' => $Ext::RabbitMQ::user || 'guest',
 			'pass' => $Ext::RabbitMQ::pass || 'guest',
 			'vhost' => $Ext::RabbitMQ::vhost || '/',
-			'timeout' => 0
+			'timeout' => (3600*24),
+			'heatbeat' => 60,
 		);
 		
 #		use Data::Dumper;
 #		print Dumper($Ext::RabbitMQ::service);
 		
 		my $channel=$Ext::RabbitMQ::service->{'_exclusive_channel'}=$Ext::RabbitMQ::service->open_channel();
+		$channel->{'arc'}->confirm();
+#		$channel->confirm();
 #		print Dumper($channel);
 		
 		main::_log("open_channel \@$Ext::RabbitMQ::host ".$Ext::RabbitMQ::service->{'_ar'}->{'_server_properties'}->{'product'}.' v'.$Ext::RabbitMQ::service->{'_ar'}->{'_server_properties'}->{'version'});
 		
-#		$channel->{'arc'}->confirm();
+#		$Ext::RabbitMQ::service->confirm();
 		
 #		my $queue_name='['.$TOM::hostname.':'.$$.'] callback '.$TOM::engine.' '.$tom::H;
 		my $queue_name='['.$TOM::hostname.':'.$$.'] exclusive callback';
