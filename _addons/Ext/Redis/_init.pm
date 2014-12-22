@@ -413,8 +413,17 @@ sub AUTOLOAD
 			$service=$self->{'services'}[$service_number];
 #			print "$service_number\n" if $tom::test;
 		}
-		
-		my $value=$service->$method(@_);
+		my $value;#=$service->$method(@_);
+		eval {$value=$service->$method(@_)};
+		if ($@)
+		{
+			main::_log("[RedisDB] error '$@'",1);
+			if ($method=~/^(hgetall)$/)
+			{
+				return [];
+			}
+			return undef;			
+		}
 		if (ref($value) eq "RedisDB::Error::DISCONNECTED")
 		{
 #			main::_log("RedisDB disconnected ($method call)",1);
