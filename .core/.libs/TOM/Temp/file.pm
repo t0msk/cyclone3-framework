@@ -8,7 +8,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 use TOM;
 use TOM::Utils::vars;
-
+use Number::Bytes::Human qw(format_bytes);
 
 sub new
 {
@@ -45,7 +45,7 @@ sub new
 	
 	if (!$env{'nocreate'})
 	{
-		main::_log("create temp file ".$self->{'filename'});
+#		main::_log("create temp file ".$self->{'filename'});
 		open(HND_CNT,'>'.$self->{'filename'});binmode HND_CNT;close(HND_CNT);
 		chmod 0666, $self->{'filename'};
 	}
@@ -106,7 +106,7 @@ sub DESTROY
 		}
 		if (-e $self->{'filename'})
 		{
-			main::_log("destroying tempfile $self->{'filename'} size=".$size."b");
+			main::_log("destroying tempfile $self->{'filename'} size=".format_bytes($size));
 			unlink $self->{'filename'};
 		}
 	}
