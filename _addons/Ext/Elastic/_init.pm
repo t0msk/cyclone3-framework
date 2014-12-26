@@ -1,7 +1,7 @@
 #!/bin/perl
 package Ext::Elastic;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 
@@ -73,7 +73,7 @@ _connect(); # autoconnect
 # only for exporting symbols
 package Ext::Elastic::_init;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 use base 'Exporter';

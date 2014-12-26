@@ -16,7 +16,7 @@ $tom::addons_init is enabled by default only in 'pub' engine.
 =cut
 
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 use JSON;

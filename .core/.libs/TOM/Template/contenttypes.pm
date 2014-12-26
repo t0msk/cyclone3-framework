@@ -11,7 +11,7 @@ Tempalte management Content-Type codes
 =cut
 
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 

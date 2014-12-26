@@ -1,6 +1,6 @@
 package Tomahawk::stat;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use Fcntl ':flock';
 use utf8;
 

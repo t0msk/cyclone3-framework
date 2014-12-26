@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 #use Tomahawk::debug;
 
@@ -14,7 +14,7 @@ Tomahawk - core library
 package Tomahawk::module;
 use Encode;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
@@ -36,7 +36,7 @@ sub XSGN_load_hash
 # DEFINUJEM NULOVY DEBUG
 #use Tomahawk::debug;
 #use open ':utf8', ':std';
-#use encoding 'utf8';
+#use if $] < 5.018, 'encoding','utf8';
 #use utf8;
 
 #BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
@@ -54,7 +54,7 @@ sub XSGN_load_hash
 # DEFINUJEM NULOVE STATISTIKY
 package Tomahawk::stat;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
@@ -66,7 +66,7 @@ sub rqs{return 1}
 # DEFINUJEM NULOVY CACHE
 package Tomahawk::cache;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
@@ -83,7 +83,7 @@ sub destroy{return undef}
 # TOMAHAWK BEGINN
 package Tomahawk;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 use Utils::vars;

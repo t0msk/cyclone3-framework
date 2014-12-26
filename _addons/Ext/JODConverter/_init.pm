@@ -6,7 +6,7 @@
 
 package main;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 
@@ -45,7 +45,7 @@ use Inline
 
 package Ext::JODConverter;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 

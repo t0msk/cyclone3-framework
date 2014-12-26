@@ -11,7 +11,7 @@ Knižnica poskytuje služby pre overovanie dostupnosti a iné sieťové služby
 =cut
 
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}

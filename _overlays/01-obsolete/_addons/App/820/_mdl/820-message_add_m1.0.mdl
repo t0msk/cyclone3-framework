@@ -2,7 +2,7 @@
 # USE UTF-8 !!!
 package Tomahawk::module;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 $authors="fordinal\@webcom.sk;nemsak\@webcom.sk";
 use App::1B0::_init;

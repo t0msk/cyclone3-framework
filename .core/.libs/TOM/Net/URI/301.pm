@@ -11,7 +11,7 @@ my $hash=TOM::Net::URI::rewrite::parse_URL("http://spravy.markiza.sk/~USRM/edit.
 
 package TOM::Net::URI::301;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 

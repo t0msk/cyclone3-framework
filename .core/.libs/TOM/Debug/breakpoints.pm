@@ -2,7 +2,7 @@
 package TOM::Debug::breakpoints;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 

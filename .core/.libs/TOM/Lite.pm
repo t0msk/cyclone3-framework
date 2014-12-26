@@ -1,6 +1,6 @@
 package main;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 
@@ -331,7 +331,7 @@ _event('debug','process.start',{
 
 package TOM;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 
@@ -343,7 +343,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__."::Lite (_log + conf)");};}
 
 package TOM::Net::email;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 
@@ -372,7 +372,7 @@ sub send
 
 package TOM::Error;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 
@@ -433,7 +433,7 @@ sub engine
 package TOM::Debug;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 

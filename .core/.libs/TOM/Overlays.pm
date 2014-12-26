@@ -37,7 +37,7 @@ Overlay initialization can be skipped when .ignore file is available in overlay 
 =cut
 
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 
