@@ -1,0 +1,160 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+
+=head1 NAME
+
+910-product_cat_name.lite.mdl
+
+=head1 DESCRIPTION
+
+Lite name of product category (without modifications)
+
+=head1 DEPENDS
+
+=over
+
+=item *
+
+L<App::910::_init|app/"910/_init.pm">
+
+=back
+
+=cut
+
+use App::910::_init;
+
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<-xlng_load> - load template internationalization file
+
+=item *
+
+B<db_name> - database name
+
+=item *
+
+B<product_cat.ID_entity> - comma separated list of product ID_category (can be set with * suffix to select all subcategories - 5;2*;3;7)
+
+=item *
+
+B<product_cat.path> - category path for the actual view
+
+=item *
+
+B<product_lng.lng> - required language (default is current)
+
+=back
+
+=cut
+
+
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default
+
+=item *
+
+B<%db_*%> - product database items
+
+=item *
+
+B<%ID%> - product ID
+
+=item *
+
+B<%ID_entity%> - product ID_entity
+
+=item *
+
+B<TMP_failure_no-data> - if defined, replaces TMP for empty database output
+
+=back
+
+=cut
+
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
+	$env{'db_name'}=$App::910::db_name unless $env{'db_name'};
+	
+	$env{'product_lng.lng'}=$env{'lng'} unless $env{'product_lng.lng'};
+	$env{'product.status'}='Y' unless $env{'product.status'};
+		my $status_sql=join "','", split('',$env{'product.status'});
+	
+	my $sql_where;
+	
+	if($env{'product_cat.path'})
+	{
+		my @arr = split '/', $env{'product_cat.path'};
+		
+		my $tmppath;
+		
+		for (my $i=0; $i<scalar @arr; $i++){
+			$tmppath.=$arr[$i];
+			
+			my %product_cat=App::020::SQL::functions::tree::find_path_url(
+				$tmppath,
+				'db_h' => "main",
+				'db_name' => $TOM::DB{'main'}{'name'},
+				'tb_name' => "a910_product_cat",
+				'lng' => $env{'lng'},
+				'-cache' => 3600,
+				'-slave' => 1
+			);
+			
+			my $item = $XSGN{'item.last'};
+			if(($i+1)<scalar @arr){
+				$item = $XSGN{'item'};
+			}
+			
+			$item=~s|<%db_name%>|$product_cat{'name'}|g;
+			$item=~s|<%db_name_url%>|$product_cat{'name_url'}|g;
+			$item=~s|<%db_ID_entity%>|$product_cat{'ID_entity'}|g;
+			$item=~s|<%db_path%>|$tmppath|g;
+			$XSGN{'TMP'}=~s|<#item#>|$item|g;
+			
+			$tmppath.="/";
+		}
+	}
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;

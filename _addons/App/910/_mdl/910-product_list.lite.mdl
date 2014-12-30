@@ -439,7 +439,6 @@ sub execute
 			$env{'sql_limit'}
 	};
 	
-	
 	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1,'-cache_auto_'=>60);
 	
 	if(!$sth0{'sth'})
@@ -577,6 +576,20 @@ sub execute
 				{
 					my $uri=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
 					$item=~s|<%thumbnail.src%>|$uri|;
+					
+					# fatal: added option to load fullsize image path
+					my %db1_line=App::501::functions::get_image_file(
+						'image.ID_entity' => $relation->{'r_ID_entity'},
+						'image_file.ID_format' => 2,
+						'image_attrs.lng' => $env{'lng'}
+					);
+					
+					if ($db1_line{'ID_entity_image'})
+					{
+						my $uri=$tom::H_a501.'/image/file/'.$db1_line{'file_path'};
+						$item=~s|<%fullsize.src%>|$uri|;
+					}
+					# /fatal
 				}
 			}
 		}

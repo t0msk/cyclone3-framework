@@ -1,0 +1,469 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::910::_init;
+
+=head1 NAME
+
+910-product_cat_tree.0.mdl
+
+=cut
+
+=head1 DESCRIPTION
+
+Display tree of product categories (folders)
+
+=cut
+
+=head1 INPUTS
+
+=over
+
+=item *
+
+B<ID> - ID parent of category item
+
+=item *
+
+B<tree> - default '1' - display as tree or listing
+
+=item *
+
+B<parent> - default '0' - display items including parent B<ID>
+
+=item *
+
+B<depth> - default '' - depth of tree
+
+=item *
+
+B<level> - default '' - from which level display elements
+
+=item *
+
+B<check_sub> - default '' - if none sub elements is available, display siblings
+
+=item *
+
+B<status> - default 'Y' - display only items where status is IN ( example. 'YNT' )
+
+=item *
+
+B<db_order> - default 'ID_charindex' - order item by SQL
+
+=item *
+
+B<current_ID> - current ID of item (to highlight)
+
+=item *
+
+B<current_path_url> - current path_url (to highlight)
+
+=back
+
+=cut
+
+=head1 XSGN
+
+=over
+
+=item *
+
+B<TMP> - default
+
+=item *
+
+B<item> - item of tree
+
+=item *
+
+B<item.current> - current item of tree when param B<current_*>='' is used
+
+=item *
+
+B<tree> - in 'tree' mode used for creating sub-tree entry
+
+=item *
+
+B<#tree#> - entry for sub-tree
+
+=item *
+
+B<#item#> - entry for ITEM
+
+=item *
+
+B<%path%> - ID
+
+=item *
+
+B<%name%> - name of item
+
+=back
+
+Listing mode:
+
+ <XML_DESIGN_DEFINITION>
+ 
+ <DEFINITION id="TMP">
+  <#item#>
+ </DEFINITION>
+ 
+ <DEFINITION id="item">
+  <item IDitem="<%ID%>">
+   <ID><%ID%></ID>
+   <ID_entity><%ID_entity%></ID_entity>
+   <ID_parent><%ID_parent%></ID_parent>
+   <name><%name%></name>
+   <name_url><%name_url%></name_url>
+   <path><%path%></path>
+   <datetime_create><%datetime_create%></datetime_create>
+   <lng><%lng%></lng>
+   <status><%status%></status>
+  </item>
+  <#item#>
+ </DEFINITION>
+ 
+ </XML_DESIGN_DEFINITION>
+
+=cut
+
+
+sub execute
+{
+	my %env=@_;
+	Tomahawk::GetXSGN('-convertvars'=>1) || return undef;
+	
+	if ($Tomahawk::mdl_C{'-xlng_load'})
+	{
+		main::_log("using xlng transformation");
+		Tomahawk::GetXLNG() || return undef; # retrieve language xml
+		Tomahawk::XLNGtoXSGN(); # implement XLNG into XSGN
+	}
+	
+	delete $env{'ID_charindex'};
+	
+	$env{'tree'}=1 unless exists $env{'tree'};
+	
+	my $from;
+	
+	my @ID_charindex_plus;
+	
+	
+	my $where;
+	
+	# language
+	$where.="lng='$env{'lng'}' ";
+	
+	# status
+	if ($env{'status'})
+	{
+		$XSGN{'TMP'}=~s|<%required_status%>|$env{'status'}|g;
+		$where.="AND (";
+		foreach (split('',$env{'status'}))
+		{
+			$where.="status='$_' OR ";
+		}
+		$where=~s|OR $||;
+		$where.=")";
+	}
+	else
+	{
+		$where.="AND status='Y' ";
+	}
+	
+	
+	$where.=" AND ( ID_charindex LIKE '___' ";
+	
+	if ($env{'current_ID'})
+	{
+		main::_log("current_ID=$env{'current_ID'}");
+		my %data=App::020::SQL::functions::get_ID(
+			'db_h'    => 'main',
+			'db_name' => $App::910::db_name,
+			'tb_name' => 'a910_product_cat',
+			'ID'      => $env{'current_ID'},
+			'columns' => 
+			{
+				'ID_charindex' => 1
+			}
+		);
+		if ($data{'ID'})
+		{
+			$where.="OR ID_charindex LIKE '$data{'ID_charindex'}' OR ID_charindex LIKE '$data{'ID_charindex'}:___' ";
+			while ($data{'ID_charindex'}=~s|:...$||)
+			{
+				$where.="OR ID_charindex LIKE '$data{'ID_charindex'}:___' ";
+			}
+		}
+		else
+		{
+			main::_log("can't find ID='$env{'current_ID'}'",1);
+			return undef;
+		}
+	}
+	
+	$where.=" ) ";
+	
+	if ($env{'depth'})
+	{
+		$where.=" AND length(ID_charindex)<=".($env{'depth'}*4);
+	}
+	
+	$where="WHERE ".$where if $where;
+	
+	$env{'db_order'}="ID_charindex" unless $env{'db_order'};
+	
+	my $sql=qq{
+		SELECT
+			ID,
+			ID_entity,
+			ID_charindex,
+			datetime_create,
+			name,
+			name_url,
+			lng,
+			status
+		FROM
+			`$App::910::db_name`.a910_product_cat
+$where
+		ORDER BY
+			$env{'db_order'}
+	};
+	
+	my @path;
+	my @path_url;
+	
+	my %charindex_ID;
+	
+	my $level;
+	my $level_prev;
+	my $level_next;
+	
+	my %ignore_hash;
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
+	if ($sth0{'sth'})
+	{
+		# naplnim si @tree s polozkami zo stromu preto aby som mohol v dalsom
+		# cykle pracovat ako s predchadzajucimi tak i s buducimi polozkami
+		my @tree;
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			if ($env{'check'})
+			{
+				my $sql=qq{
+					SELECT
+						product.ID_entity
+					FROM
+						`$App::910::db_name`.`a910_product` AS product
+					LEFT JOIN `$App::910::db_name`.`a910_product_sym` AS product_sym ON
+					(
+						product_sym.ID_entity = product.ID_entity
+					)
+					WHERE
+						product.status IN ('Y') AND
+						product.price IS NOT NULL AND
+						product.price > 0 AND
+						product.product_number IS NOT NULL AND
+						product_sym.ID IN (
+							SELECT
+								ID_entity
+							FROM
+								`$App::910::db_name`.a910_product_cat
+							WHERE
+								ID_charindex LIKE CONCAT((
+									SELECT
+										ID_charindex
+									FROM
+										`$App::910::db_name`.a910_product_cat
+									WHERE
+										ID=$db0_line{'ID'} AND
+										lng='$env{'lng'}'
+									LIMIT 1
+								),"%") AND
+								lng='$env{'lng'}' AND
+								status IN ('Y') 
+						)
+					LIMIT 1
+				};
+				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-cache'=>3600);
+				if (!$sth1{'rows'})
+				{
+					$ignore_hash{$db0_line{'ID_charindex'}}++;
+				}
+			}
+			my $ignore;
+			foreach (sort keys %ignore_hash)
+			{
+				if ($db0_line{'ID_charindex'}=~/^$_/)
+				{
+					$ignore=1;
+					last;
+				}
+			}
+			next if $ignore;
+		
+		
+			$charindex_ID{$db0_line{'ID_charindex'}}=$db0_line{'ID'};
+			
+			my $dbg=$db0_line{'ID_charindex'};
+			$dbg=~s|^(.*?)(.{0,4})$|\1|;
+			
+			$db0_line{'ID_parent'}=$charindex_ID{$dbg};
+			
+			push @tree, {%db0_line};
+		}
+		
+		my $i=0;
+		
+		foreach my $entity(@tree)
+		{
+			my $dbg_level=$entity->{'ID_charindex'};$dbg_level=~s|:||g;
+			$level=(length($dbg_level)/3);
+			
+			if ($tree[$i+1])
+			{
+				my $dbg_level=$tree[$i+1]->{'ID_charindex'};$dbg_level=~s|:||g;
+				$level_next=(length($dbg_level)/3);
+			}
+			else
+			{
+				$level_next=0;
+			}
+			
+			if ($env{'tree'})
+			{
+				if ($level>$level_prev)
+				{
+					my $rec=$XSGN{'TMP'}=~s|<#tree#>|$XSGN{'tree'}|;
+#					main::_log("inserted tree ($rec) for level $level");
+				}
+			}
+			
+			main::_log("$level($level_next) $entity->{'ID_charindex'} $entity->{'name'} $entity->{'lng'}");
+			
+			for ($level..$level_prev+1)
+			{
+				delete $path[$_];
+			}
+			
+			$path[$level]=$entity->{'name_url'};
+			
+			my $path_;
+			foreach my $node (App::020::SQL::functions::tree::get_path(
+				$entity->{'ID'},
+				'db_h'    => 'main',
+				'db_name' => $App::910::db_name,
+				'tb_name' => 'a910_product_cat'
+			))
+			{
+				$path_.='/'.$node->{'name_url'};
+			}
+			$path_=~s|^/||;
+#			main::_log("path_='$path_'");
+			
+			my $item=$XSGN{'item'};
+			
+			if (
+					(($env{'current_ID'} eq $entity->{'ID'})
+					|| ($env{'current_path_url'} eq $path_)
+					)
+					&& $XSGN{'item.current'}
+			)
+			{
+				$item=$XSGN{'item.current'};
+			}
+			
+			$item=~s|<%ID%>|$entity->{'ID'}|g;
+			$item=~s|<%ID_entity%>|$entity->{'ID_entity'}|g;
+			$item=~s|<%ID_parent%>|$entity->{'ID_parent'}|g;
+			$item=~s|<%name%>|$entity->{'name'}|g;
+			$item=~s|<%name_url%>|$entity->{'name_url'}|g;
+			$item=~s|<%datetime_create%>|$entity->{'datetime_create'}|g;
+			$item=~s|<%status%>|$entity->{'status'}|g;
+			$item=~s|<%path%>|$path_|g;
+			
+			if ($env{'itemcount'})
+			{
+				# count of items
+				
+				my $sql=qq{
+					SELECT COUNT(sym.ID_entity) AS itemcount
+					FROM
+						`$App::910::db_name`.`a910_product_sym` AS sym
+					LEFT JOIN `$App::910::db_name`.`a910_product` AS product ON
+					(
+						sym.ID_entity = product.ID_entity
+					)
+					WHERE
+						product.status IN ('Y','N') AND
+						sym.ID = $entity->{'ID_entity'}
+				};
+				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'_cache'=>30);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					$item=~s|<%itemcount%>||g unless $db1_line{'itemcount'};
+					$item=~s|<%itemcount%>|$db1_line{'itemcount'}|g;
+				}
+				else
+				{
+					$item=~s|<%itemcount%>||g;
+				}
+				
+			}
+			
+			if ($env{'tree'})
+			{
+				if ($level_next<$level)
+				{
+					$item=~s|<#item#>||g;
+				}
+				if ($level_next<=$level)
+				{
+					$item=~s|<#tree#>||g;
+				}
+			}
+			
+			$XSGN{'TMP'}=~s|<#item#>|$item|;
+			
+			if ($env{'tree'})
+			{
+				for ($level_next..$level-2)
+				{
+					$XSGN{'TMP'}=~s|<#item#>||;
+				}
+				for ($level_next..$level-1)
+				{
+					$XSGN{'TMP'}=~s|<#tree#>||;
+				}
+			}
+			
+			$level_prev=$level;
+			$i++;
+		}
+	}
+	else
+	{
+		main::_log("can't select");
+	}
+	
+#	main::_log("XSGN=$XSGN{'TMP'}");
+	
+	return 1;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
