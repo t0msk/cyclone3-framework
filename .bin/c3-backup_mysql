@@ -1,0 +1,73 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'}){
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.bin/tom3-init";
+	$main::debug=0;
+}
+use Mysql;
+use TOM::Database::connect;
+use Utils::datetime;
+
+$main::time_current=time;
+
+%form=
+(
+	'--domain'	=>	"backup domain (eg. localhost.com)",
+	'-v' => "verbose all"
+);
+if (($FORM{'h'})||($FORM{'help'})){&help();}
+
+
+$TOM::DB{'main'}{'name'}="TOM";
+TOM::Database::connect::multi('main');
+
+my %ignore_tables=(
+	'a100_ircbot_msg' => 1,
+	'a100_ticket' => 1,
+	'a100_ticket_event' => 1,
+	'a110_weblog_rqs' => 1,
+	'a130_send' => 1,
+	'a300_users_arch' => 1,
+	'a300_users_attrs_arch' => 1,
+	'a301_user_inactive' => 1,
+	'a301_user_session' => 1,
+);
+
+my %sth0=TOM::Database::SQL::execute(qq{SHOW DATABASES});
+while (my @db0_line=$sth0{'sth'}->fetchrow())
+{
+	my $database=$db0_line[0];
+	next if $database eq "information_schema";
+#	next unless $database eq "TOM";
+	main::_log_stdout("DB=".$database);
+	# get tables to backup
+	my %sth1=TOM::Database::SQL::execute(qq{SHOW TABLES FROM `$database`});
+	my @exclude;
+	while (my @db1_line=$sth1{'sth'}->fetchrow())
+	{
+		my $table=$db1_line[0];
+#		main::_log_stdout(" table=".$table);
+		if ($table=~/_j$/)
+		{
+			push @exclude, $database.".".$table;
+		}
+		elsif ($ignore_tables{$table}){push @exclude, $database.".".$table;}
+	}
+#	main::_log_stdout("exclude ".(join(" ",@exclude)));
+	
+	my $cmd="mysqldump --defaults-file=/etc/mysql/debian.cnf -u debian-sys-maint --opt -Q --single-transaction --extended-insert=FALSE --lock-tables=false -r /backup/mysql-dump/".$database.".sql --database $database";
+	if (@exclude)
+	{
+		$cmd.=" --ignore-table=".join(" --ignore-table=",@exclude)."\n";
+	}
+	
+	main::_log_stdout(" $cmd");
+	`$cmd`;
+#	last;
+}
+
