@@ -17,7 +17,7 @@ BEGIN
 }
 
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8; # encode = fromutf8, decode=toutf8
 use strict; # scrict code
 use vars qw//;
@@ -347,7 +347,8 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 	
 }) if $ENV{'WORKERS'};
 
-my $w=AnyEvent->timer(after => 0, interval => 0.5, cb => \&monitor_master_db);
+my $w=AnyEvent->timer(after => 0, interval => 0.5, cb => \&monitor_master_db)
+	if $TOM::DB{'main:1'};
 sub monitor_master_db
 {
 #	main::_log("check db");
@@ -1047,7 +1048,7 @@ $main_loop->recv;
 
 package class_do;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8; # encode = fromutf8, decode=toutf8
 use strict; # scrict code
 use Ext::RabbitMQ::_init;
