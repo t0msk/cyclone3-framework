@@ -88,7 +88,8 @@ sub _log
 		foreach (keys %log_file)
 		{
 #			print "close $_\n";
-			close ($HND{$log_file{$_}});
+			close ($HND{$log_file{$_}})
+				if $HND{$log_file{$_}};
 			delete $HND{$log_file{$_}};
 			delete $log_file{$_};
 		}

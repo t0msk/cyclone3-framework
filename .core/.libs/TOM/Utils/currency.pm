@@ -1,5 +1,6 @@
 package TOM::Utils::currency;
 use strict;
+use utf8;
 use POSIX qw(ceil floor);
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
