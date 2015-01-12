@@ -76,7 +76,7 @@ use Storable;
 use JSON::XS; # this is faster than Storable
 
 our $format = 'j';# s=storable, j=json (json is ~30% faster)
-our $json = JSON::XS->new->utf8->convert_blessed();
+our $json = JSON::XS->new->ascii->convert_blessed();
 
 sub new
 {
@@ -217,6 +217,7 @@ sub new
 		$self->{'service'}=AnyEvent::Redis->new(
 			'host' => (split(':',$Ext::Redis::host))[0],
 			'port' => (split(':',$Ext::Redis::host))[1] || 6379,
+			'utf8' => 1,
 		);
 		
 		if ($self->{'service'} && $self->{'service'}->ping->recv())
@@ -293,7 +294,8 @@ sub new
 			{
 				$self->{'service'} = RedisDB->new(
 					'path' => $Ext::Redis::host,
-					'raise_error' => 0 # not works
+					'raise_error' => 0, # not works
+					'utf8' => 1
 				)
 			}
 			else
@@ -301,7 +303,8 @@ sub new
 				$self->{'service'} = RedisDB->new(
 					'host' => (split(':',$Ext::Redis::host))[0],
 					'port' => (split(':',$Ext::Redis::host))[1] || 6379,
-					'raise_error' => 0 # not works
+					'raise_error' => 0, # not works
+					'utf8' => 1
 				)
 			}
 		};
@@ -344,7 +347,8 @@ sub _redisdb_connect
 				$service = RedisDB->new(
 					'host' => (split(':',$host))[0],
 					'port' => (split(':',$host))[1] || 6379,
-					'raise_error' => 0 # from 2.33 works
+					'raise_error' => 0, # from 2.33 works
+					'utf8' => 1
 				)
 			}
 		};
