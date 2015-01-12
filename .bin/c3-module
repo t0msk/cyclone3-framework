@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use Term::ANSIColor;
 
@@ -57,7 +57,7 @@ if ($main::arg{'domain'})
 require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
 
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8; # encode = fromutf8, decode=toutf8
 use strict; # scrict code
 use vars qw/

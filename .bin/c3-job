@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use Data::Dumper;
 use Term::ANSIColor;
@@ -76,14 +76,14 @@ require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
 require TOM::Engine::job;
 $0.=" ".$argv if $argv;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 use vars qw//;
 
 package main;
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 use Cwd 'abs_path';
