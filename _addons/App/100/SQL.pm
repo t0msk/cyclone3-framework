@@ -123,7 +123,7 @@ sub ticket_event_new
 			'cvml' => "'".TOM::Security::form::sql_escape($env{'cvml'})."'",
 			'status' => "'Y'",
 		},
-		'-delayed' => 1
+#		'-delayed' => 1
 	);
 	
 #	return 0 unless $ID_ticket_event;
