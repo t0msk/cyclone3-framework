@@ -5,19 +5,19 @@ BEGIN
 {
 	$TOM::engine='download';
 	$main::debug=1 if $ENV{'TERM'};
-	require "/www/TOM/.core/.libs/TOM.pm";
+	require "/srv/Cyclone3/.core/.libs/TOM.pm";
 }
 
 use open ':utf8', ':std';
-use encoding 'utf8';
+use if $] < 5.018, 'encoding','utf8';
 use utf8; # encode = fromutf8, decode=toutf8
 use strict; # scrict code
 use CGI::Fast qw(:standard);
 
 our $sig_term=1;
 
-use enc3;
-use iconv;
+#use enc3;
+#use iconv;
 
 eval
 {
