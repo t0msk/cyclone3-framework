@@ -520,10 +520,12 @@ sub execute
 					'Subject' => Int::charsets::encode::UTF8_ASCII($tom::H.' - '.$L10n{'email.verify.subject'})
 				);
 				
+				use Encode;
 				$ent->attach(
-					Type    => 'text/html',
-					Charset => 'UTF-8',
-					Data    => $body
+					'Type'    => 'text/html',
+					'Charset' => 'UTF-8',
+					'Data' => Encode::encode_utf8($body),
+					'Encoding' => "base64",
 				);
 				
 				TOM::Net::email::send(
