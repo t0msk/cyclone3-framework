@@ -485,6 +485,10 @@ sub execute
 			$XSGN{'item.'.$item_counter}
 			|| $XSGN{'item'};
 		
+		if($db0_line{'amount_availability'}){
+			$item=$XSGN{'item.unavailable'} if $XSGN{'item.unavailable'};
+		}
+		
 		if (!$price_lowest || $db0_line{'price_incl_VAT'}<$price_lowest)
 		{
 			$price_lowest=$db0_line{'price_incl_VAT'};

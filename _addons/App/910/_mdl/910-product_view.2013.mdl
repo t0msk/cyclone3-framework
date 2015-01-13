@@ -22,6 +22,12 @@ sub execute
 	
 	$env{'product.status_main'}='Y' unless $env{'product.status_main'};
 		my $sql_product_status_main=join "','", split('',$env{'product.status_main'});
+		
+	$env{'set.product.status_main'}='Y' unless $env{'set.product.status_main'};
+		my $sql_set_product_status_main=join "','", split('',$env{'set.product.status_main'});
+	
+	$env{'modification.product.status_main'}='N' unless $env{'modification.product.status_main'};
+		my $sql_modification_product_status_main=join "','", split('',$env{'modification.product.status_main'});
 	
 	$env{'check_price'} = 1 unless exists $env{'check_price'};
 	$env{'check_world'} = 1 unless exists $env{'check_world'};
@@ -71,6 +77,26 @@ sub execute
 				'ID_entity' => $env{'product.ID_entity'}
 			}
 		);
+	}
+	elsif ($env{'product.ID'})
+	{
+		main::_log("search by product.ID");
+		#push @{$env_out{'entity'}},{
+		#	'db_h' => 'main',
+		#	'db_name' => $App::910::db_name,
+		#	'tb_name' => 'a910_product',
+		#	'ID_entity' => $env{'product.ID_entity'}
+		#};
+		$sql_where.="AND product.ID=? ";
+		push @sql_bind,$env{'product.ID'};
+		#$sql_changetime=App::020::SQL::functions::_get_changetime(
+		#	{
+		#		'db_h'=>"main",
+		#		'db_name' => $App::910::db_name,
+		#		'tb_name' => "a910_product",
+		#		'ID_entity' => $env{'product.ID_entity'}
+		#	}
+		#);
 	}
 	elsif ($env{'product.product_number'})
 	{
@@ -124,7 +150,7 @@ sub execute
 				WHERE
 					modification.ID_entity = product.ID_entity
 					AND modification.status IN ('$sql_product_status')
-					AND modification.status_main IN ('N')
+					AND modification.status_main IN ('$sql_modification_product_status_main')
 					AND (modification.datetime_publish_start IS NULL OR modification.datetime_publish_start <= NOW())
 					AND (modification.datetime_publish_stop IS NULL OR modification.datetime_publish_stop >= NOW())
 					AND modification.price IS NOT NULL
@@ -155,7 +181,7 @@ sub execute
 				WHERE
 					modification.ID_entity = product.ID_entity
 					AND modification.status IN ('$sql_product_status')
-					AND modification.status_main IN ('N')
+					AND modification.status_main IN ('$sql_modification_product_status_main')
 					AND (modification.datetime_publish_start IS NULL OR modification.datetime_publish_start <= NOW())
 					AND (modification.datetime_publish_stop IS NULL OR modification.datetime_publish_stop >= NOW())
 					AND modification.amount > modification.amount_limit
@@ -306,7 +332,7 @@ sub execute
 			$sql_order_by
 		LIMIT
 			1
-	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+	},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,
 		'-changetime'=>App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",
@@ -389,6 +415,26 @@ sub execute
 		}
 	}
 	
+	# link to a210_page
+	if (my $category=App::910::functions::_a210_by_cat([$product{'cat_ID'}],'lng'=>$env{'lng'}))
+	{
+		my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+		foreach my $p(
+			App::020::SQL::functions::tree::get_path(
+				$category,
+				%sql_def,
+				'-slave' => 1,
+				'-cache' => 86400*7
+			)
+		)
+		{
+			push @{$product{'a210'}{'IDs'}}, $p->{'ID'};
+			push @{$product{'a210'}{'nodes'}}, $p;
+			$product{'a210'}{'path_url'}.="/".$p->{'name_url'};
+		}
+		$product{'a210'}{'path_url'}=~s|^/||;
+	}
+	
 	# parser description_short
 	$parser->parse($product{'description_short'});
 	$parser->eof();
@@ -464,11 +510,37 @@ sub execute
 		$product{'supplier_org'}=\%db1_line;
 	}
 	
-	main::_log("try to find modifications (status_main=$product{'status_main'} modifications=$env{'modifications'})");
+	if ($env{'prices'})
+	{
+		# prices
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				a910_product_price.*,
+				a910_price_level.name_code
+			FROM
+				$App::910::db_name.a910_product_price
+			INNER JOIN $App::910::db_name.a910_price_level ON
+			(
+				a910_product_price.ID_price = a910_price_level.ID_entity
+			)
+			WHERE
+				a910_product_price.ID_entity = ?
+		},'quiet'=>1,'bind'=>[$product{'ID'}]);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			next if $db1_line{'price'} == 0;
+			$product{'prices'}{$db1_line{'name_code'}}={
+				'price' => $db1_line{'price'},
+				'price_full' => ($db1_line{'price_full'} || $db1_line{'price'})
+			}
+		}
+	}
+	
+	main::_log("try to find modifications? (status_main=$product{'status_main'} modifications=$env{'modifications'})");
 	if ($product{'status_main'} eq "Y" && $env{'modifications'})
 	{
 		# skusime najst produktove modifikacie;
-		main::_log("try to find modifications");
+		main::_log("yes, try to find modifications");
 		
 		my $sql_columns;
 		my $sql_join;
@@ -522,6 +594,7 @@ sub execute
 				product.ID_entity,
 				product.ID,
 				product.product_number,
+				product.ref_ID,
 				product.datetime_publish_start,
 				product.datetime_publish_stop,
 				product.amount,
@@ -578,7 +651,7 @@ sub execute
 			WHERE
 				product_ent.status = 'Y'
 				AND product.status IN ('$sql_product_status')
-				AND product.status_main IN ('N')
+				AND product.status_main IN ('$sql_modification_product_status_main')
 				AND (product.datetime_publish_start IS NULL OR product.datetime_publish_start <= NOW())
 				AND (product.datetime_publish_stop IS NULL OR product.datetime_publish_stop >= NOW())
 				$sql_where
@@ -609,7 +682,225 @@ sub execute
 				'status' => "Y"
 			))[0];
 			
+			%{$product_modification{'metahash'}}=App::020::functions::metadata::parse($product_modification{'metadata'});
+			delete $product_modification{'metadata'};
+			
+			if ($env{'prices'})
+			{
+				# prices
+				my %sth2=TOM::Database::SQL::execute(qq{
+					SELECT
+						a910_product_price.*,
+						a910_price_level.name_code
+					FROM
+						$App::910::db_name.a910_product_price
+					INNER JOIN $App::910::db_name.a910_price_level ON
+					(
+						a910_product_price.ID_price = a910_price_level.ID_entity
+					)
+					WHERE
+						a910_product_price.ID_entity = ?
+				},'quiet'=>1,'bind'=>[$product_modification{'ID'}]);
+				while (my %db2_line=$sth2{'sth'}->fetchhash())
+				{
+					next if $db2_line{'price'} == 0;
+					$product_modification{'prices'}{$db2_line{'name_code'}}={
+						'price' => $db2_line{'price'},
+						'price_full' => ($db2_line{'price_full'} || $db2_line{'price'})
+					}
+				}
+			}
+			
 			push @{$product{'modifications'}},\%product_modification;
+		}
+		
+	}
+	
+	# produktovy set
+	if ($product{'product_type'} eq "SET")
+	{
+		main::_log("try to find products in set");
+		
+		foreach my $relation (App::160::SQL::get_relations(
+				'db_name' => $App::910::db_name,
+				'l_prefix' => 'a910',
+				'l_table' => 'product',
+				'l_ID_entity' => $product{'ID'},
+				'r_prefix' => "a910",
+				'r_table' => "product",
+				'rel_type' => "product_set",
+				'status' => "Y"
+		))
+		{
+			my $sql_columns;
+			my $sql_join;
+			my $sql_bind;
+			my $sql_where;
+			my @sql_bind;
+			
+			$sql_where.="AND product.ID=? ";
+			push @sql_bind,$relation->{'r_ID_entity'};
+			
+			if ($env{'price_level.ID_entity'} && $env{'price_level.ID_entity'} =~/^\d+$/)
+			{
+				$sql_join.=qq{INNER JOIN $App::910::db_name.a910_price_level AS price_level ON
+				(
+					price_level.ID_entity = $env{'price_level.ID_entity'} AND
+					price_level.status = 'Y'
+				)
+				INNER JOIN $App::910::db_name.a910_product_price AS product_price ON
+				(
+					product_price.ID_price = $env{'price_level.ID_entity'} AND
+					product_price.status = 'Y'
+				)
+				};
+				$sql_columns.=qq{,
+					product_price.price,
+					product_price.price_full, AS price_incl_VAT,
+					product_level.currency AS price_currency,
+					product_price.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=product_level.currency LIMIT 1) AS price_EUR};
+#				$sql_where.=" AND product_price.price IS NOT NULL AND product_price.price > 0";
+			}
+			else
+			{
+				$sql_columns.=qq{,
+					product.price,
+					(product.price*((100+product_ent.VAT)/100)) AS price_incl_VAT,
+					product.price_currency,
+					product.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=product.price_currency LIMIT 1) AS price_EUR};
+#				$sql_where.=" AND product.price IS NOT NULL AND product.price > 0"
+#					if $env{'check_price'};
+			}
+			
+#			if ($env{'check_availability'})
+#			{
+#				$sql_where.=qq{
+#					AND product.amount > product.amount_limit AND product.amount > 0};
+#			}
+			
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					
+					product.ID_entity,
+					product.ID,
+					product.product_number,
+					product.datetime_publish_start,
+					product.datetime_publish_stop,
+					product.amount,
+					product.amount_unit,
+					product.amount_availability,
+					product.amount_limit,
+					product.amount_order_min,
+					product.amount_order_max,
+					product.amount_order_div,
+					product.metadata,
+					product.supplier_org,
+					product.supplier_person,
+					product.status_new,
+					product.status_recommended,
+					product.status_sale,
+					product.status_special,
+					product.status_main,
+					product.status,
+					
+					product_lng.name,
+					product_lng.name_url,
+					product_lng.name_long,
+					product_lng.name_label,
+					product_lng.description_short,
+					product_lng.description,
+					product_lng.keywords,
+					product_lng.lng,
+					
+					supplier_org.ID AS supplier_org_ID,
+					supplier_org.ID_entity AS supplier_org_ID_entity,
+					supplier_org.name AS supplier_org_name,
+					supplier_org.name_url AS supplier_org_name_url
+					
+					$sql_columns
+					
+				FROM $App::910::db_name.a910_product_ent AS product_ent
+				LEFT JOIN $App::910::db_name.a910_product AS product ON
+				(
+					product_ent.ID_entity = product.ID_entity
+				)
+				LEFT JOIN $App::910::db_name.a910_product_lng AS product_lng ON
+				(
+					product_lng.ID_entity = product.ID AND
+					product_lng.lng = '$env{'lng'}'
+				)
+				
+				LEFT JOIN $App::710::db_name.a710_org AS supplier_org ON
+				(
+					supplier_org.ID_entity = product.supplier_org
+				)
+				
+				$sql_join
+				
+				WHERE
+					product_ent.status = 'Y'
+					AND product.status IN ('$sql_set_product_status_main')
+					AND (product.datetime_publish_start IS NULL OR product.datetime_publish_start <= NOW())
+					AND (product.datetime_publish_stop IS NULL OR product.datetime_publish_stop >= NOW())
+					$sql_where
+				ORDER BY
+					product.ID DESC
+			},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,
+				'-changetime'=>App::020::SQL::functions::_get_changetime(
+					{
+						'db_h'=>"main",
+						'db_name' => $App::910::db_name,
+						'tb_name' => "a910_product"
+					}),
+			);
+			
+			if (my %product_=$sth1{'sth'}->fetchhash())
+			{
+				main::_log("product.ID='$product_{'ID'}' product.name='$product_{'name'}'");
+				
+				$product_{'related_thumbnail'}=(App::160::SQL::get_relations(
+					'db_name' => $App::910::db_name,
+					'l_prefix' => 'a910',
+					'l_table' => 'product',
+					'l_ID_entity' => $product_{'ID'},
+					'r_prefix' => "a501",
+					'r_table' => "image",
+					'rel_type' => "thumbnail",
+					'status' => "Y"
+				))[0];
+				
+				%{$product_{'metahash'}}=App::020::functions::metadata::parse($product_{'metadata'});
+				delete $product_{'metadata'};
+				
+				if ($env{'prices'})
+				{
+					# prices
+					my %sth2=TOM::Database::SQL::execute(qq{
+						SELECT
+							a910_product_price.*,
+							a910_price_level.name_code
+						FROM
+							$App::910::db_name.a910_product_price
+						INNER JOIN $App::910::db_name.a910_price_level ON
+						(
+							a910_product_price.ID_price = a910_price_level.ID_entity
+						)
+						WHERE
+							a910_product_price.ID_entity = ?
+					},'quiet'=>1,'bind'=>[$product_{'ID'}]);
+					while (my %db2_line=$sth2{'sth'}->fetchhash())
+					{
+						next if $db2_line{'price'} == 0;
+						$product_{'prices'}{$db2_line{'name_code'}}={
+							'price' => $db2_line{'price'},
+							'price_full' => ($db2_line{'price_full'} || $db2_line{'price'})
+						}
+					}
+				}
+				
+				push @{$product{'set'}},\%product_;
+			}
+			
 		}
 		
 	}

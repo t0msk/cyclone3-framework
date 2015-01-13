@@ -22,6 +22,12 @@ sub execute
 	
 	$env{'product.status_main'}='Y' unless $env{'product.status_main'};
 		my $sql_product_status_main=join "','", split('',$env{'product.status_main'});
+		
+	$env{'modification.product.status'}='Y' unless $env{'modification.product.status'};
+		my $sql_modification_product_status=join "','", split('',$env{'modification.product.status'});
+	
+	$env{'modification.product.status_main'}='N' unless $env{'modification.product.status_main'};
+		my $sql_modification_product_status_main=join "','", split('',$env{'modification.product.status_main'});
 	
 	$env{'check_price'} = 1 unless exists $env{'check_price'};
 	$env{'check_world'} = 1 unless exists $env{'check_world'};
@@ -43,6 +49,8 @@ sub execute
 	{
 #		$env{'sql_limit'}=~/^(\d+),?(\d+)?$/;
 	}
+	
+	main::_log('sql_limit: '.$env{'sql_limit'});
 	
 	
 	my @sql_bind;
@@ -228,10 +236,13 @@ sub execute
 #=head1
 	if ($env{'solr'})
 	{
+		my %solr;
+		
 		$env{'solr.defType'} = 'edismax' unless $env{'solr.defType'};
 		$env{'solr.rows'} = 10 unless $env{'solr.rows'};
 		$env{'solr.start'} = 0 unless $env{'solr.start'};
 		$env{'solr.qf'} = "title name name_partial description^0.8 keywords^2 text^0.5" unless $env{'solr.qf'};
+		$env{'solr.filter'} = "+status_s:Y +price_f:[* TO *]" unless $env{'solr.filter'};
 		
 		if ($env{'solr.keywords'})
 		{
@@ -269,31 +280,70 @@ sub execute
 			$env{'solr.q'}="AND (".$query.")";
 		}
 		
+		if ($env{'unique'})
+		{
+			$env{'solr.defType'} = 'edismax';
+			$solr{'group'} = 'true';
+			$solr{'group.field'} = 'ID_entity_i';
+			$solr{'group.limit'} = $env{'solr.group.limit'} || 3;
+#			$solr{'group.sort'} ||= $env{'solr.sort'};
+			$solr{'sort'} = $env{'solr.sort'};
+#			$solr{'sort'} = 'price_f asc';
+		}
+		
 		use Ext::Solr::_init;
 		my $solr = Ext::Solr::service();
 		
-		my $response = $solr->search('+id:'.($App::910::db_name).'.a910_product.'.$env{'lng'}.'.* '.$env{'solr.q'},
+#		main::_log("duper=".Dumper(\%solr));
+		
+		main::_log("sort=$solr{'sort'}");
+		my $response = $solr->search('+id:'.($App::910::db_name).'.a910_product.'.$env{'lng'}.'.* '.$env{'solr.q'}.' '.$env{'solr.filter'},
 			{
 				'-cluster' => 1,
 				
 				'defType' => $env{'solr.defType'},
 				
-				'rows' => $env{'solr.rows'},
+				'rows' => $env{'solr.rows'} + 10,
 				'start' => $env{'solr.start'},
 				
 				'bq' => $env{'solr.bq'},
 				'qf' => $env{'solr.qf'},
-				'fl' => "id ID_i ID_entity_i score ".$env{'solr.fl'},
+				'fl' => "id name_exact ID_i ID_entity_i score ".$env{'solr.fl'},
+				
+				%solr
 			}
 		);
 		
-		$env{'product.ID_entity'}="";
-		for my $doc ( $response->docs )
+		use Data::Dumper;
+#		print Dumper($response);
+		
+		$env{'product.ID_entity'}="0;";
+		if ($response->{'content'}->{'grouped'})
 		{
-			$env{'product.ID_entity'}.=$doc->value_for('ID_entity_i').";"
-				if $doc->value_for('ID_entity_i');
+			delete $env{'product.ID_entity'};
+			$env{'product.ID'}="0;";
+#			print Dumper($response->{'content'}->{'grouped'});
+			foreach (@{$response->{'content'}->{'grouped'}->{'ID_entity_i'}->{'groups'}})
+			{
+				$env{'product.ID'}.=$_->{'doclist'}->{'docs'}[0]{'ID_i'}.";";
+			}
+#			main::_log("ID=".$env{'product.ID'},3,"debug");
+		}
+		else
+		{
+			for my $doc ( $response->docs )
+			{
+				$env{'product.ID_entity'}.=$doc->value_for('ID_entity_i').";"
+					if $doc->value_for('ID_entity_i');
+#				$env{'product.ID_entity'}.=$doc->value_for('ID_entity_i').";"
+#					if $doc->value_for('ID_entity_i');
+			}
 		}
 		
+		$env{'product.ID'}=~s|;$||;
+		$env{'product.ID_entity'}=~s|;$||;
+		
+		main::_log("ID=$env{'product.ID'} ID_entity=$env{'product.ID_entity'}");
 	}
 #=cut
 	
@@ -302,6 +352,7 @@ sub execute
 		$sql_where.="
 			AND product.ID_entity IN (".join(',',split(';',$env{'product.ID_entity'})).")";
 		$sql_limit=scalar split(';',$env{'product.ID_entity'});
+		main::_log('product.ID_entity list acquired - changing sql_limit to '.$sql_limit);
 		$sql_group_by="product.ID_entity";
 		if ($env{'solr'})
 		{
@@ -320,6 +371,18 @@ sub execute
 	{
 		$sql_where.=" AND product.ID IN (".join(',',split(';',$env{'product.ID'})).")";
 		$sql_limit=scalar split(';',$env{'product.ID'});
+		main::_log('product.ID list acquired - changing sql_limit to '.$sql_limit);
+		if ($env{'solr'})
+		{
+			$sql_order_by="CASE\n";
+			my $i;
+			foreach (split(';',$env{'product.ID'}))
+			{
+				$i++;
+				$sql_order_by.="\t\t\t\tWHEN product.ID=$_ THEN $i\n";
+			}
+			$sql_order_by.="\t\t\tEND";
+		}
 	}
 	
 	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
@@ -471,9 +534,10 @@ sub execute
 	while (my %product=$sth0{'sth'}->fetchhash())
 	{
 		$i++;
-		last if $i > $env{'page_limit'};
 		
-		main::_log("[$i/$env{'page_limit'}] found product.ID=$product{'ID'} cat_ID=$product{'cat_ID'}");
+		main::_log("[$i/$env{'page_limit'}] found product.ID_entity=$product{'ID_entity'} product.ID=$product{'ID'} cat_ID=$product{'cat_ID'}");
+		
+		last if $i > $env{'page_limit'};
 		
 		push @{$env_out{'entity'}},{
 			'db_h' => 'main',
@@ -494,7 +558,7 @@ sub execute
 		))[0];
 		
 		# link to a210_page
-		if (my $category=App::401::functions::_a210_by_cat([$product{'cat_ID'}],'lng'=>$env{'lng'}))
+		if (my $category=App::910::functions::_a210_by_cat([$product{'cat_ID'}],'lng'=>$env{'lng'}))
 		{
 			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
 			foreach my $p(
@@ -528,6 +592,7 @@ sub execute
 		
 		if ($product{'status_main'} eq "Y" && $env{'modifications'})
 		{
+			main::_log("search for modifications");
 			# skusime najst produktove modifikacie;
 			
 			my $sql_columns;
@@ -640,14 +705,14 @@ sub execute
 				
 				WHERE
 					product_ent.status = 'Y'
-					AND product.status IN ('$sql_product_status')
-					AND product.status_main IN ('N')
+					AND product.status IN ('$sql_modification_product_status')
+					AND product.status_main IN ('$sql_modification_product_status_main')
 					AND (product.datetime_publish_start IS NULL OR product.datetime_publish_start <= NOW())
 					AND (product.datetime_publish_stop IS NULL OR product.datetime_publish_stop >= NOW())
 					$sql_where
 				ORDER BY
 					product.ID DESC
-			},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,
+			},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
 				'-changetime'=>App::020::SQL::functions::_get_changetime(
 					{
 						'db_h'=>"main",
@@ -671,10 +736,62 @@ sub execute
 					'rel_type' => "thumbnail",
 					'status' => "Y"
 				))[0];
-				
+=head1
+				if ($env{'prices'})
+				{
+					# prices
+					my %sth2=TOM::Database::SQL::execute(qq{
+						SELECT
+							a910_product_price.*,
+							a910_price_level.name_code
+						FROM
+							$App::910::db_name.a910_product_price
+						INNER JOIN $App::910::db_name.a910_price_level ON
+						(
+							a910_product_price.ID_price = a910_price_level.ID_entity
+						)
+						WHERE
+							a910_product_price.ID_entity = ?
+					},'quiet'=>1,'bind'=>[$product_modification{'ID'}]);
+					while (my %db2_line=$sth2{'sth'}->fetchhash())
+					{
+						next if $db2_line{'price'} == 0;
+						$product_modification{'prices'}{$db2_line{'name_code'}}={
+							'price' => $db2_line{'price'},
+							'price_full' => ($db2_line{'price_full'} || $db2_line{'price'})
+						}
+					}
+				}
+=cut
 				push @{$product{'modifications'}},\%product_modification;
 			}
 			
+		}
+		
+		if ($env{'prices'})
+		{
+			# prices
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					a910_product_price.*,
+					a910_price_level.name_code
+				FROM
+					$App::910::db_name.a910_product_price
+				INNER JOIN $App::910::db_name.a910_price_level ON
+				(
+					a910_product_price.ID_price = a910_price_level.ID_entity
+				)
+				WHERE
+					a910_product_price.ID_entity = ?
+			},'quiet'=>1,'bind'=>[$product{'ID'}]);
+			while (my %db1_line=$sth1{'sth'}->fetchhash())
+			{
+				next if $db1_line{'price'} == 0;
+				$product{'prices'}{$db1_line{'name_code'}}={
+					'price' => $db1_line{'price'},
+					'price_full' => ($db1_line{'price_full'} || $db1_line{'price'})
+				}
+			}
 		}
 		
 		my @supplier_abouts=split "<hr>", $product{'supplier_org_about'};

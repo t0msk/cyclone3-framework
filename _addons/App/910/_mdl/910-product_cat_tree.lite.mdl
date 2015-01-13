@@ -392,8 +392,10 @@ $where
 			my $item=$XSGN{'item'};
 			
 			if (
-					(($env{'current_ID'} eq $entity->{'ID'})
-					|| ($env{'current_path_url'} eq $path_)
+					(
+						($env{'current_ID'} eq $entity->{'ID'})
+						|| ($env{'current_path_url'}=~/^$path_\//)
+						|| ($env{'current_path_url'} eq $path_)
 					)
 					&& $XSGN{'item.current'}
 			)
@@ -474,7 +476,7 @@ $where
 		main::_log("can't select");
 	}
 	
-	main::_log("XSGN=$XSGN{'TMP'}");
+	#main::_log("XSGN=$XSGN{'TMP'}");
 	
 	return 1;
 }

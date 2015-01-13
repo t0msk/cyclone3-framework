@@ -103,6 +103,10 @@ Add new product symlink into category
 sub product_add
 {
 	my %env=@_;
+	if ($env{'-jobify'})
+	{
+		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'fifo'});
+	}
 	my $t=track TOM::Debug(__PACKAGE__."::product_add()");
 	
 	$env{'product_sym.ID'} = $env{'product_cat.ID_entity'} if $env{'product_cat.ID_entity'};
@@ -111,11 +115,12 @@ sub product_add
 	
 	my %product;
 	my $content_reindex;
+	my $ent_reindex;
 	
 	if ($env{'product.ID'})
 	{
 		$env{'product.ID'}=$env{'product.ID'}+0;
-		undef $env{'product.ID_entity'}; # ID_entity has lower priority as ID
+		
 		# when real ID_entity used, then read it from ID
 		# when ID not found, undef ID_entity, because is invalid
 		main::_log("finding product.ID_entity by product.ID='$env{'product.ID'}'");
@@ -128,13 +133,41 @@ sub product_add
 		);
 		if ($product{'ID'})
 		{
+			main::_log("found product.ID_entity='$product{'ID_entity'}'");
+			
+			if ($env{'product.ID_entity'} && ($env{'product.ID_entity'} ne $product{'ID_entity'}))
+			{
+				main::_log("requested change ID_entity to '$env{'product.ID_entity'}'");
+				
+				App::020::SQL::functions::update(
+					'ID' => $env{'product.ID'},
+					'db_h' => "main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_product",
+					'columns' => {'ID_entity' => $env{'product.ID_entity'}},
+					'-posix' => 1,
+				);
+				%product=App::020::SQL::functions::get_ID(
+					'ID' => $env{'product.ID'},
+					'db_h' => "main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_product",
+					'columns' => {'*'=>1}
+				);
+				
+				$content_reindex=1;
+#				return 1;
+			}
+			
 			$env{'product.ID_entity'}=$product{'ID_entity'};
 			$env{'product.product_number'}=$product{'product_number'}
 				unless $env{'product.product_number'};
-			main::_log("found product.ID_entity='$env{'product.ID_entity'}'");
+			
 		}
 		else
 		{
+			undef $env{'product.ID_entity'}; # ID_entity has lower priority as ID
+			
 			main::_log("not found product.ID, undef",1);
 #			exit;
 			#undef $env{'product.ID'};
@@ -232,6 +265,8 @@ sub product_add
 #	# product_number
 #	$columns{'product_number'}="'".TOM::Security::form::sql_escape($env{'product.product_number'})."'"
 #		if ($env{'product.product_number'} && ($env{'product.product_number'} ne $product{'product_number'}));
+	$columns{'ref_ID'}="'".TOM::Security::form::sql_escape($env{'product.ref_ID'})."'"
+		if (exists $env{'product.ref_ID'} && ($env{'product.ref_ID'} ne $product{'ref_ID'}));
 	# amount
 	$columns{'amount'}="'".TOM::Security::form::sql_escape($env{'product.amount'})."'"
 		if (exists $env{'product.amount'} && ($env{'product.amount'} ne $product{'amount'}));
@@ -350,7 +385,7 @@ sub product_add
 #	use Data::Dumper;print Dumper(\%metadata);
 	
 	$env{'product.metadata'}=App::020::functions::metadata::serialize(%metadata);
-	
+#	print $env{'product.metadata'};
 	$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'product.metadata'})."'"
 	if (exists $env{'product.metadata'} && ($env{'product.metadata'} ne $product{'metadata'}));
 	
@@ -407,6 +442,10 @@ sub product_add
 	{
 		main::_log(" a910_product '$env{'product.ID'}' update ".(join ",",keys %columns),3,$App::910::log_changes,2)
 			if $App::910::log_changes;
+		if ($columns{'amount'})
+		{
+			main::_log(" update amount from '$product{'amount'}' to '$columns{'amount'}'");
+		}
 		App::020::SQL::functions::update(
 			'ID' => $env{'product.ID'},
 			'db_h' => "main",
@@ -457,6 +496,7 @@ sub product_add
 		$env{'product_ent.ID'}=$product_ent{'ID'};
 		$env{'product_ent.ID_entity'}=$product_ent{'ID_entity'};
 		$content_reindex=1;
+		$ent_reindex=1;
 	}
 	
 	main::_log("product_ent.ID='$product_ent{'ID'}' product_ent.ID_entity='$product_ent{'ID_entity'}'");
@@ -528,6 +568,10 @@ sub product_add
 			$content_reindex=1;
 		}
 	}
+	elsif (exists $env{'product_family.name'}) # reset
+	{
+		$env{'product_family.ID'}='';
+	}
 	$columns{'ID_family'}="'".TOM::Security::form::sql_escape($env{'product_family.ID'})."'"
 		if (exists $env{'product_family.ID'} && ($env{'product_family.ID'} ne $product_ent{'ID_family'}));
 	# posix_owner
@@ -566,6 +610,7 @@ sub product_add
 			'-journalize' => 1
 		);
 		$content_reindex=1;
+		$ent_reindex=1;
 	}
 	
 	
@@ -677,7 +722,7 @@ sub product_add
 		if ($env{'product_lng.description_short'} && ($env{'product_lng.description_short'} ne $product_lng{'description_short'}));
 	# description
 	$columns{'description'}="'".TOM::Security::form::sql_escape($env{'product_lng.description'})."'"
-		if ($env{'product_lng.description'} && ($env{'product_lng.description'} ne $product_lng{'description'}));
+		if (exists $env{'product_lng.description'} && ($env{'product_lng.description'} ne $product_lng{'description'}));
 	# keywords
 	$columns{'keywords'}="'".TOM::Security::form::sql_escape($env{'product_lng.keywords'})."'"
 		if ($env{'product_lng.keywords'} && ($env{'product_lng.keywords'} ne $product_lng{'keywords'}));
@@ -729,6 +774,7 @@ sub product_add
 				'-journalize' => 1,
 			);
 			$content_reindex=1;
+			$ent_reindex=1;
 		}
 		
 		if ($env{'product_sym.replace'})
@@ -758,6 +804,7 @@ sub product_add
 					$db0_line{'ID'}
 				],'quiet'=>1);
 				$content_reindex=1;
+				$ent_reindex=1;
 			}
 			
 		}
@@ -921,7 +968,32 @@ sub product_add
 	
 	$env{'reindex'}=$content_reindex;
 	
-	if ($content_reindex)
+	if ($ent_reindex)
+	{
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				ID
+			FROM
+				$App::910::db_name.a910_product
+			WHERE
+				ID_entity = ?
+		},'quiet'=>1,'bind'=>[$env{'product.ID_entity'}]);
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			main::_log(" index product '$db0_line{'ID'}'",3,$App::910::log_changes,2)
+				if $App::910::log_changes;
+			App::020::SQL::functions::_save_changetime({
+				'db_h'=>'main',
+				'db_name'=>$App::910::db_name,
+				'tb_name'=>'a910_product',
+				'ID_entity'=>$db0_line{'ID'}}
+			);
+			# reindex this product
+			_product_index('ID'=>$db0_line{'ID'}, 'commit' => $env{'commit'});
+			
+		}
+	}
+	elsif ($content_reindex)
 	{
 		main::_log(" index product '$env{'product.ID'}'",3,$App::910::log_changes,2)
 			if $App::910::log_changes;
@@ -943,7 +1015,8 @@ sub product_add
 sub _product_index
 {
 	my %env=@_;
-	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name}); # do it in background
+#	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer'});
+#		unless $env{'-jobify'}; # do it in background
 	return undef unless $env{'ID'}; # product.ID
 	
 	my $t=track TOM::Debug(__PACKAGE__."::_product_index($env{'ID'})",'timer'=>1);
@@ -951,13 +1024,14 @@ sub _product_index
 	
 	if ($Ext::Solr && ($env{'solr'} || not exists $env{'solr'}))
 	{
-		
 		my @content_ent;
 		my @content_id;
 		
 		my $status_string = $App::910::solr_status_index;
 		
 		$status_string =~ s/(\w)/\'$1\',/g; $status_string =~ s/,$//;
+		
+#		main::_log(" status=$status_string");
 		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
@@ -971,6 +1045,7 @@ sub _product_index
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			$env{'ID_entity'}=$db0_line{'ID_entity'};
+#			main::_log(" ID_entity=$db0_line{'ID_entity'}");
 			
 			push @content_ent,WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} )
 				if $db0_line{'ID_entity'};
@@ -996,6 +1071,9 @@ sub _product_index
 			push @content_id,WebService::Solr::Field->new( 'status_s' => $db0_line{'status'} )
 				if $db0_line{'status'};
 			
+			push @content_id,WebService::Solr::Field->new( 'price_f' => $db0_line{'price'} )
+				if $db0_line{'price'};
+			
 			if ($db0_line{'datetime_next_index'})
 			{
 				$db0_line{'datetime_next_index'}=~s| (\d\d)|T$1|;
@@ -1018,7 +1096,7 @@ sub _product_index
 			}
 			
 			my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
-	#		use Data::Dumper;print Dumper(\%metadata);
+#			use Data::Dumper;print Dumper(\%metadata);
 			foreach my $sec(keys %metadata)
 			{
 				foreach (keys %{$metadata{$sec}})
@@ -1026,6 +1104,7 @@ sub _product_index
 					next unless $metadata{$sec}{$_};
 					if ($_=~s/\[\]$//)
 					{
+#						print "$sec\n";
 						# this is comma separated array
 						foreach my $val (split(';',$metadata{$sec}{$_.'[]'}))
 						{push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_sm' => $val)}
@@ -1933,7 +2012,7 @@ sub _a210_by_cat
 		'tb_name' => 'a210_page',
 	});
 	
-	if ($TOM::CACHE && $TOM::CACHE_memcached && $main::FORM{'_rc'}!=-2)
+	if ($TOM::CACHE && $TOM::CACHE_memcached && $main::cache)
 	{
 #		main::_log("get cached");
 		my $cache=$Ext::CacheMemcache::cache->get(
@@ -1953,6 +2032,7 @@ sub _a210_by_cat
 	my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
 	foreach my $cat(@{$cats})
 	{
+		main::_log("cat=$cat") if $env{'debug'};
 #		print "mam $cat";
 		my %sth0=TOM::Database::SQL::execute(
 			qq{SELECT ID FROM $App::910::db_name.a910_product_cat WHERE ID_entity=? AND lng=? LIMIT 1},
@@ -1979,6 +2059,7 @@ sub _a210_by_cat
 			push @{$categories[$i]},$p->{'ID_entity'};
 			$i++;
 		}
+#		main::_log(" path=@categories") if $env{'debug'};
 	}
 	
 #	print Dumper(\@categories);
@@ -1991,6 +2072,8 @@ sub _a210_by_cat
 #			push @{$product->{'log'}},"find $i ".$cat;
 #			print "aha $i $cat\n";
 			my %db0_line;
+			
+			my @a210_page_IDs;
 			foreach my $relation(App::160::SQL::get_relations(
 				'db_name' => $App::210::db_name,
 				'l_prefix' => 'a210',
@@ -2003,21 +2086,24 @@ sub _a210_by_cat
 				'status' => "Y"
 			))
 			{
-#				print "fakt mam\n";
-				# je toto relacia na moju jazykovu verziu a je aktivna?
-				my %sth0=TOM::Database::SQL::execute(
-				qq{SELECT ID FROM $App::210::db_name.a210_page WHERE ID_entity=? AND lng=? AND status IN ('Y','L') LIMIT 1},
-				'bind'=>[$relation->{'l_ID_entity'},$env{'lng'}],'quiet'=>1,
-					'-cache' => 86400*7,
-					'-cache_changetime' => App::020::SQL::functions::_get_changetime({
-						'db_name' => $App::210::db_name,
-						'tb_name' => 'a210_page',
-					})
-				);
-				next unless $sth0{'rows'};
-				%db0_line=$sth0{'sth'}->fetchhash();
-				last;
+				push @a210_page_IDs,$relation->{'l_ID_entity'};
+				main::_log(" related from a210_page ID=".$relation->{'l_ID_entity'}) if $env{'debug'};
 			}
+			next unless @a210_page_IDs;
+			
+			# the longer path is better
+			my %sth0=TOM::Database::SQL::execute(
+			qq{SELECT ID FROM $App::210::db_name.a210_page WHERE ID_entity IN (}
+				.(join ',',@a210_page_IDs).
+			qq{) AND lng=? AND status IN ('Y','L') ORDER BY length(ID_charindex) DESC},
+			'bind'=>[$env{'lng'}],'quiet'=>1,
+				'-cache' => 86400*7,
+				'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+					'db_name' => $App::210::db_name,
+					'tb_name' => 'a210_page',
+				})
+			);
+			my %db0_line=$sth0{'sth'}->fetchhash();
 			
 			next unless $db0_line{'ID'};
 			
