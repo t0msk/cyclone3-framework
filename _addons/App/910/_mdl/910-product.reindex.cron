@@ -1,0 +1,63 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use strict;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+use JSON;
+use App::910::_init;
+
+sub execute
+{
+	my %env=@_;
+	
+	use Data::Dumper;
+	$Data::Dumper::Sortkeys=1;
+	
+#	$Ext::Solr::url='http://10.100.100.141:8985/solr';
+	my $solr = Ext::Solr::service();
+	
+	my %IDs;
+	my $response = $solr->search( "+id:".$App::910::db_name.".a910_product.*",{'fl' => "ID_i"});
+	for my $doc ( $response->docs )
+	{
+		my $ID=$doc->value_for( 'ID_i' );
+		$IDs{$ID}++;
+	}
+	
+	# reindex
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			a910_product
+--		WHERE ID=6
+	});
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		main::_log("[$i/$sth0{'rows'}]");
+		$main::nojobify=1;
+		
+		delete $IDs{$db0_line{'ID'}};
+		
+		App::910::functions::_product_index('ID'=>$db0_line{'ID'});
+		
+		if (int($i/1000) == $i/1000)
+		{
+			main::_log("commit");
+			$solr->commit();
+		}
+	}
+	
+	main::_log("delete ID's=".keys %IDs);
+	
+	$solr->commit();
+	
+ return 1}
+1;
