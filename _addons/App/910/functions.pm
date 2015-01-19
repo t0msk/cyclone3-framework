@@ -622,15 +622,25 @@ sub product_add
 	my %product_cat;
 	if (!$env{'product_lng.lng'} && $env{'product_sym.ID'})
 	{
+		my $sym_ID;
+		if (ref($env{'product_sym.ID'}) eq "ARRAY")
+		{
+			$env{'product_sym.ID'}[0];
+		}
+		else
+		{
+			$sym_ID=$env{'product_sym.ID'};
+		}
+		
 		%product_cat=App::020::SQL::functions::get_ID(
-			'ID' => $env{'product_sym.ID'},
+			'ID' => $sym_ID,
 			'db_h' => "main",
 			'db_name' => $App::910::db_name,
 			'tb_name' => "a910_product_cat",
 			'columns' => {'*'=>1}
 		);
 		$env{'product_lng.lng'}=$product_cat{'lng'} if $product_cat{'ID'};
-		main::_log("setting lng='$env{'product_lng.lng'}' from product_sym.ID='$env{'product_sym.ID'}'");
+		main::_log("setting lng='$env{'product_lng.lng'}' from product_sym.ID='$sym_ID'");
 	}
 	# check lng_param
 	$env{'product_lng.lng'}=$tom::lng unless $env{'product_lng.lng'};
@@ -746,7 +756,82 @@ sub product_add
 	
 	# PRODUCT_SYM
 	
-	if ($env{'product_sym.ID'})
+	if ($env{'product_sym.ID'} && ref($env{'product_sym.ID'}) eq "ARRAY")
+	{
+		my @sym_IDs;
+		foreach my $sym_ID (@{$env{'product_sym.ID'}})
+		{
+			$sym_ID+=0;
+			next unless $sym_ID;
+			push @sym_IDs,$sym_ID;
+			
+#			main::_log("checking sym $sym_ID");
+			
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					*
+				FROM
+					`$App::910::db_name`.`a910_product_sym`
+				WHERE
+					ID_entity=? AND
+					ID=?
+				LIMIT 1
+			},'quiet'=>1,'bind'=>[
+				$env{'product.ID_entity'},
+				$sym_ID
+			]);
+			if (!$sth0{'rows'})
+			{
+				$env{'product_sym.ID'}=App::020::SQL::functions::new(
+					'db_h' => "main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_product_sym",
+					'columns' =>
+					{
+						'ID_entity' => $env{'product.ID_entity'},
+						'ID' => $sym_ID
+					},
+					'-journalize' => 1,
+				);
+				$content_reindex=1;
+				$ent_reindex=1;
+			}
+			
+		}
+		
+		if ($env{'product_sym.replace'})
+		{
+			my $sql_sym = join ',',@sym_IDs;
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					*
+				FROM
+					`$App::910::db_name`.`a910_product_sym`
+				WHERE
+					ID_entity=$env{'product.ID_entity'} AND
+					ID NOT IN ($sql_sym)
+			},'quiet'=>1);
+			while (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				main::_log("delete $db0_line{'ID'}");
+				TOM::Database::SQL::execute(qq{
+					DELETE FROM
+						`$App::910::db_name`.a910_product_sym
+					WHERE
+						ID_entity=? AND
+						ID=?
+					LIMIT 1;
+				},'bind'=>[
+					$db0_line{'ID_entity'},
+					$db0_line{'ID'}
+				],'quiet'=>1);
+				$content_reindex=1;
+				$ent_reindex=1;
+			}
+		}
+		
+	}
+	elsif ($env{'product_sym.ID'})
 	{
 		$env{'product_sym.ID'}+=0;
 		my $sql=qq{
