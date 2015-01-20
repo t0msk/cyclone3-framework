@@ -9,7 +9,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 our $debug=0;
 
 use JSON::XS;
-our $json = JSON::XS->new->utf8->allow_blessed();
+our $json = JSON::XS->new->ascii->allow_blessed();
 
 sub new
 {
@@ -362,7 +362,7 @@ use utf8;
 use strict;
 
 use JSON::XS;
-our $json = JSON::XS->new->utf8->allow_blessed->canonical(1);
+our $json = JSON::XS->new->ascii->allow_blessed->canonical(1);
 
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
