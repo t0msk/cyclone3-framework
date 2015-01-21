@@ -90,7 +90,7 @@ our $metadata_default=$App::910::metadata_default || qq{
 </metatree>
 };
 
-our $VAT_default=$App::910::metadata_default || '0.19';
+our $VAT_default=$App::910::VAT_default || '0.20';
 
 
 
