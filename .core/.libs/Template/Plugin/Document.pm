@@ -53,4 +53,18 @@ sub add_keywords {
 	return
 }
 
+sub add_meta {
+	my $self = shift;
+	
+	use Data::Dumper;
+	
+	#my @arr=%{$_[0]};
+	#main::_log("dump=".Dumper(@arr),3,"debug");
+	#$main::H->add_DOC_meta(@{$_[0]});
+	$main::H->add_DOC_meta(
+		%{$_[0]}
+	);
+	return
+}
+
 1;
