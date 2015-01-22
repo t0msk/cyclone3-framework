@@ -119,6 +119,7 @@ sub execute
 			video_attrs.name AS attrs_name,
 			video_attrs.name_url AS attrs_name_url,
 			video_attrs.description AS attrs_description,
+			video_attrs.datetime_publish_start,
 			video_cat.ID AS cat_ID,
 			video_cat.ID_entity AS cat_ID_entity,
 			video_cat.name AS cat_name,
