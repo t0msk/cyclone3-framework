@@ -134,6 +134,7 @@ our @setit_F=
 	['fdetect'                         ,".svn files"                  ,"777",""],
 	
 	['^_temp/_Inline'                  ,"global Inline"               ,"777","$user_www:$group"],
+	['_temp/.*?\.ttc2$'                ,"global _temp"                ,"666","$mediasrv_user:$group"],
 	['^_temp'                          ,"global _temp"                ,"",""],
 	
 	['\/type.*?conf$'                  ,"service type.conf"           ,"660","$user_www:$group"],
