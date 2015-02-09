@@ -260,6 +260,37 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_caption_j` (
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_cuepoint` (
+  `ID` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL, -- rel _video_part.ID
+  `datetime_create` datetime NOT NULL,
+  `posix_modified` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `time_cuepoint` time NOT NULL,
+  `title` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `body` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`,`time_cuepoint`,`lng`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_cuepoint_j` (
+  `ID` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `ID_entity` mediumint(8) unsigned DEFAULT NULL,
+  `datetime_create` datetime NOT NULL,
+  `posix_modified` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `time_cuepoint` time NOT NULL,
+  `title` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `body` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_callback` (
   `ID_part` mediumint(8) unsigned NOT NULL, -- rel _video_part.ID
   `datetime_create` datetime NOT NULL,
@@ -558,6 +589,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   `ID_series` bigint(20) unsigned DEFAULT NULL, -- internal rel _broadcast_series.ID_entity
   `ID_video` bigint(20) unsigned DEFAULT NULL, -- internal rel _video.ID_entity
   `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL, -- number of program - not unique
+  `record_id` varchar(64) CHARACTER SET ascii DEFAULT NULL, -- unique id of job from broadcaster
   `program_type_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `name_original` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -605,6 +637,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   KEY `name` (`name`,`datetime_air_start`),
   KEY `datetime_air_start` (`datetime_air_start`),
   KEY `ID_series` (`ID_series`),
+  KEY `record_id` (`record_id`),
   KEY `series_ID` (`series_ID`),
   KEY `status` (`status`,`status_internet`,`status_premiere`,`status_live`),
   KEY `ID_channel` (`ID_channel`,`datetime_air_start`)
@@ -619,6 +652,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
   `ID_series` bigint(20) unsigned DEFAULT NULL,
   `ID_video` bigint(20) unsigned DEFAULT NULL,
   `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL,
+  `record_id` varchar(64) CHARACTER SET ascii DEFAULT NULL, -- unique id of job from broadcaster
   `program_type_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `name_original` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
