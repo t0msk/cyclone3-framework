@@ -84,6 +84,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_job_cron_schedule` (
   `cron-schedule` varchar(64) character set ascii default NULL,
   `cron-run-every` varchar(64) character set ascii default NULL,
   `datetime_create` datetime default NULL,
+  `datetime_past_jobify` datetime default NULL,
   `datetime_next` datetime default NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`filename`,`id`)
