@@ -524,7 +524,8 @@ sub execute
 				a910_product_price.ID_price = a910_price_level.ID_entity
 			)
 			WHERE
-				a910_product_price.ID_entity = ?
+						a910_product_price.ID_entity = ?
+				AND	a910_product_price.status IN ('Y', 'L')
 		},'quiet'=>1,'bind'=>[$product{'ID'}]);
 		while (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
@@ -714,7 +715,8 @@ sub execute
 						a910_product_price.ID_price = a910_price_level.ID_entity
 					)
 					WHERE
-						a910_product_price.ID_entity = ?
+								a910_product_price.ID_entity = ?
+						AND	a910_product_price.status IN ('Y', 'L')
 				},'quiet'=>1,'bind'=>[$product_modification{'ID'}]);
 				while (my %db2_line=$sth2{'sth'}->fetchhash())
 				{
@@ -901,7 +903,8 @@ sub execute
 							a910_product_price.ID_price = a910_price_level.ID_entity
 						)
 						WHERE
-							a910_product_price.ID_entity = ?
+									a910_product_price.ID_entity = ?
+							AND	a910_product_price.status IN ('Y', 'L')
 					},'quiet'=>1,'bind'=>[$product_{'ID'}]);
 					while (my %db2_line=$sth2{'sth'}->fetchhash())
 					{

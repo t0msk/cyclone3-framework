@@ -61,6 +61,7 @@ sub execute
 	my $sql_limit=$env{'sql_limit'} || 10;
 	my $sql_order_by=$env{'sql_order_by'} || 'product_lng.name ASC';
 	my $sql_group_by;
+	my $total_results;
 	
 	if ($env{'unique'})
 	{
@@ -326,6 +327,9 @@ sub execute
 			foreach (@{$response->{'content'}->{'grouped'}->{'ID_entity_i'}->{'groups'}})
 			{
 				$env{'product.ID'}.=$_->{'doclist'}->{'docs'}[0]{'ID_i'}.";";
+				$total_results+=$_->{'doclist'}->{'numFound'};
+				#main::_log('results in group: '.$_->{'doclist'}->{'numFound'});
+				$total_results++;
 			}
 #			main::_log("ID=".$env{'product.ID'},3,"debug");
 		}
@@ -338,7 +342,9 @@ sub execute
 #				$env{'product.ID_entity'}.=$doc->value_for('ID_entity_i').";"
 #					if $doc->value_for('ID_entity_i');
 			}
+			$total_results=$response->{'content'}->{'numFound'};
 		}
+		main::_log('total solr results: '.$total_results);
 		
 		$env{'product.ID'}=~s|;$||;
 		$env{'product.ID_entity'}=~s|;$||;
@@ -391,6 +397,8 @@ sub execute
 	
 	# get template
 	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	$TPL->{'variables'}->{'total_rows'}=$total_results;
 	
 	use App::020::mimetypes::html;
 	my $parser=new App::020::mimetypes::html(
@@ -752,6 +760,7 @@ sub execute
 						)
 						WHERE
 							a910_product_price.ID_entity = ?
+							AND	a910_product_price.status IN ('Y', 'L')
 					},'quiet'=>1,'bind'=>[$product_modification{'ID'}]);
 					while (my %db2_line=$sth2{'sth'}->fetchhash())
 					{
@@ -783,6 +792,7 @@ sub execute
 				)
 				WHERE
 					a910_product_price.ID_entity = ?
+					AND	a910_product_price.status IN ('Y', 'L')
 			},'quiet'=>1,'bind'=>[$product{'ID'}]);
 			while (my %db1_line=$sth1{'sth'}->fetchhash())
 			{
