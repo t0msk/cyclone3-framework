@@ -35,6 +35,9 @@ sub execute
 	my $sql_limit=$env{'sql_limit'} || 100;
 	my $sql_order_by=$env{'sql_order_by'} || 'ID_charindex ASC';
 	
+	$env{'article_attrs.status'}='Y' unless $env{'article_attrs.status'};
+		my $sql_article_attrs_status=join "','", split('',$env{'article_attrs.status'});
+	
 	Tomahawk::GetTpl(\%env) || return undef;
 	
 	delete $env{'article_cat.ID_charindex'};
@@ -166,6 +169,50 @@ sub execute
 				$db0_line{'a210'}{'path_url'}.="/".$p->{'name_url'};
 			}
 			$db0_line{'a210'}{'path_url'}=~s|^/||;
+		}
+		
+		if ($env{'count_contents'})
+		{
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					
+					article_ent.ID_entity
+					
+				FROM `$App::401::db_name`.a401_article_ent AS article_ent
+				INNER JOIN `$App::401::db_name`.a401_article AS article ON
+				(
+					article_ent.ID_entity = article.ID_entity
+				)
+				INNER JOIN `$App::401::db_name`.a401_article_attrs AS article_attrs ON
+				(
+					article_attrs.ID_entity = article.ID AND
+					article_attrs.status IN ('$sql_article_attrs_status') AND
+					article_attrs.lng = '$env{'lng'}'
+				)
+				LEFT JOIN `$App::401::db_name`.a301_ACL_user_group AS ACL_world ON
+				(
+					ACL_world.ID_entity = 0 AND
+					r_prefix = 'a401' AND
+					r_table = 'article' AND
+					r_ID_entity = article.ID_entity
+				)
+				WHERE
+							article_ent.status = 'Y'
+					AND	article.status = 'Y'
+					AND	article_attrs.ID_category = $db0_line{'ID_entity'}
+				GROUP BY
+					article_ent.ID_entity
+			},'bind'=>[],'log'=>1,'-slave'=>1,
+				'-changetime'=>App::020::SQL::functions::_get_changetime(
+					{
+						'db_h'=>"main",
+						'db_name' => $App::401::db_name,
+						'tb_name' => "a401_article",
+						'ID_entity' => do{$env{'article.ID_entity'} if $env{'article.ID_entity'}=~/^\d+$/}
+					}),
+			);
+			
+			$db0_line{'article_count'}=$sth1{'rows'} || 0;
 		}
 		
 		$TPL->variables_push(\%db0_line);
