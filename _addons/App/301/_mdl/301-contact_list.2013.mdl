@@ -307,6 +307,33 @@ sub execute
 			'limit' => 1
 		))[0];
 		
+		if ($env{'get_ACL'})
+		{
+			use App::710::_init;
+			
+			my @organizations;
+			
+			my $sql1 = qq{
+				SELECT
+					ACL_user.roles,
+					org.*
+				FROM
+					`$App::301::db_name`.a301_ACL_user AS ACL_user
+				LEFT JOIN `$App::710::db_name`.a710_org AS org ON 
+					(ACL_user.r_ID_entity = org.ID_entity AND org.status != 'T')
+				WHERE
+					ACL_user.r_prefix = 'a710' AND ACL_user.r_table = 'org' AND ACL_user.status = 'Y' AND
+					ACL_user.ID_entity = ?
+			};
+			my %sth1=TOM::Database::SQL::execute($sql1,'log'=>0,'slave'=>1, 'quiet' => 1, 'bind' => [$user{'ID_user'}]);
+			while (my %db1_line=$sth1{'sth'}->fetchhash())
+			{
+				push @organizations, \%db1_line;
+			}
+			
+			$user{'acl_orgs'}=\@organizations;
+		}
+		
 =head1
 		# link to a210_page
 		if (my $category=App::510::functions::_a210_by_cat([$video{'cat_ID'}],'lng'=>$env{'lng'}))
