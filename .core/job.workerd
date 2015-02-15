@@ -302,7 +302,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 		}
 		
 		next if $WORKERS >= $MAX_WORKERS;
-		if ($class && $TOM::job_class_max_workers{$class})
+		if ($class && exists $TOM::job_class_max_workers{$class})
 		{
 			next if $TOM::job_class_max_workers{$class} <= $queue->{'consumers'};
 		}
@@ -379,7 +379,7 @@ my $w=AnyEvent->timer(after => 60, interval => 10, cb => \&check_domains);
 my $w=AnyEvent->timer(after => 0, interval => 5, cb => \&check_scheduler);
 sub check_domains
 {
-	if ($ENV{'AUTORESTART'} && (time()-$main::time_current) >= (3600*6))
+	if ($ENV{'AUTORESTART'} && (time()-$main::time_current) >= (3600*3))
 	{ # restart every 6h
 		main::_log("running too long, restarting");
 		exit;
@@ -912,6 +912,7 @@ sub check_scheduler
 				UPDATE
 					`TOM`.`a100_job_cron_schedule`
 				SET
+					`datetime_past_jobify`=NOW(),
 					`datetime_next`=FROM_UNIXTIME(?)
 				WHERE
 					`filename`=? AND
@@ -933,6 +934,7 @@ sub check_scheduler
 			UPDATE
 				`TOM`.`a100_job_cron_schedule`
 			SET
+				`datetime_past_jobify`=NOW(),
 				`datetime_next`=FROM_UNIXTIME(?)
 			WHERE
 				`filename`=? AND
