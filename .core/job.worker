@@ -126,13 +126,13 @@ sub callback {
 	my $delivery_tag=$var->{'deliver'}->{'method_frame'}->{'delivery_tag'};
 	my $routing_key=$var->{'deliver'}->{'method_frame'}->{'routing_key'};
 	my $deduplication;
-		$deduplication=$var->{'header'}->{'headers'}->{'deduplication'};
+		$deduplication=$var->{'header'}->{'headers'}->{'deduplication'} || 'N';
 	
 	my %env0=main::ctodatetime($timestamp,format=>1);
 	my $time_str=$env0{'year'}.'-'.$env0{'mon'}.'-'.$env0{'mday'}.' '.$env0{'hour'}.':'.$env0{'min'}.':'.$env0{'sec'};
-	main::_log("received message id='".($var->{'header'}->{'headers'}->{'message_id'})."' routing_key='$routing_key' created='$time_str' size=".length($var->{'body'}->{'payload'})."b deduplication=".$deduplication);
+	main::_log("<={".($var->{'header'}->{'headers'}->{'message_id'})."} routing_key='$routing_key' created='$time_str' size=".length($var->{'body'}->{'payload'})."b deduplication=".$deduplication);
 	
-	main::_log("message payload=".$body);
+	main::_log(" payload=".$body);
 	
 	my $key_entity=TOM::Digest::hash($tom::H.$var->{'body'}->{'payload'});
 	if ($deduplication && $Redis)
@@ -167,11 +167,11 @@ sub callback {
 		if ($timestamp_start && ($timestamp_start < time()) && !$timestamp_exec)
 		{
 			my $duration=time() - $timestamp_start;
-			main::_log("job '$key_entity' already running from '$time_start_str' duration='".($duration)."s' \@$process_start",1);
+			main::_log(" job '$key_entity' already running from '$time_start_str' duration='".($duration)."s' \@$process_start",1);
 #			if ($duration > (3600*12))
-			if ($duration > 3600)
+			if ($duration > (3600 * 4))
 			{
-				main::_log("running too long, what happens? (i'm trying to restart, and you try to search bug in logs)",1);
+				main::_log(" running too long, what happens? (i'm trying to re-run this job, and you try to search bug in logs)",1);
 				# deduplication job start
 				$Redis->hset('C3|job|'.$key_entity,'started',time(),sub {});
 				$Redis->hset('C3|job|'.$key_entity,'process',$TOM::hostname.':'.$$,sub {});
@@ -188,7 +188,7 @@ sub callback {
 		}
 		elsif ($timestamp < $timestamp_exec)
 		{
-			main::_log("job '$key_entity' already executed at '$time_str' (".($timestamp_exec-$timestamp)."s after this message)",1);
+			main::_log(" job '$key_entity' already executed at '$time_str' (".($timestamp_exec-$timestamp)."s after this message)",1);
 			$this_channel->ack();
 			alarm $alarm;
 			$0=~s|{.*?}|{}|;
