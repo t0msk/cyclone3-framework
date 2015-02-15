@@ -168,8 +168,31 @@ sub callback {
 		{
 			my $duration=time() - $timestamp_start;
 			main::_log(" job '$key_entity' already running from '$time_start_str' duration='".($duration)."s' \@$process_start",1);
-#			if ($duration > (3600*12))
-			if ($duration > (3600 * 4))
+			
+			my ($process_hostname,$process_id) = split(':',$process_start);
+			if ($process_hostname eq $TOM::hostname)
+			{
+				main::_log(" same hostname, checking if process running");
+				my $exists = kill 0, $process_id;
+				if ($exists)
+				{
+					main::_log(" yes, running");
+					$this_channel->ack();
+					alarm $alarm;
+					$0=~s|{.*?}|{}|;
+					return 0;
+				}
+				else
+				{
+					main::_log(" nope, also try to run again");
+					# deduplication job start
+					$Redis->hset('C3|job|'.$key_entity,'started',time(),sub {});
+					$Redis->hset('C3|job|'.$key_entity,'process',$TOM::hostname.':'.$$,sub {});
+					$Redis->hdel('C3|job|'.$key_entity,'finished',sub {});
+					$Redis->expire('C3|job|'.$key_entity,86400,sub {});
+				}
+			}
+			elsif ($duration > (3600 * 4))
 			{
 				main::_log(" running too long, what happens? (i'm trying to re-run this job, and you try to search bug in logs)",1);
 				# deduplication job start
@@ -321,6 +344,7 @@ $channel_database->qos(
 );
 
 alarm $alarm;
+
 $service->_channel->consume(
 	on_consume => \&callback,
 	no_ack => 0,
