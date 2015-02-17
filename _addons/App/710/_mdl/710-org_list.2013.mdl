@@ -48,6 +48,23 @@ sub execute
 		$sql_group_by="org.ID_entity";
 	}
 	
+	if ($env{'a430_list.ID'})
+	{
+		require App::430::_init;
+		$sql_join.=qq{INNER JOIN `$App::430::db_name`.a160_relation AS a430_list_relation ON
+		(
+			a430_list_relation.l_prefix = 'a430' AND
+			a430_list_relation.l_table = 'list' AND
+			a430_list_relation.l_ID_entity = $env{'a430_list.ID'} AND
+			a430_list_relation.r_prefix = 'a710' AND
+			a430_list_relation.r_table = 'org' AND
+			a430_list_relation.r_ID_entity = org.ID AND
+			a430_list_relation.status = 'Y'
+		)
+		};
+		$sql_order_by="a430_list_relation.priority DESC";
+	}
+	
 	if ($env{'org.ID_entity'}=~/^[;0-9]+$/)
 	{
 		$sql_where.=" AND org.ID_entity IN (".join(',',split(';',$env{'org.ID_entity'})).")";
@@ -166,6 +183,10 @@ sub execute
 			org.mode,
 			org.status,
 			
+			org_cat.ID AS cat_ID,
+			org_cat.name AS cat_name,
+			org_cat.name_url AS cat_name_url,
+			
 			org_lng.about
 			
 			$sql_columns
@@ -237,7 +258,22 @@ sub execute
 			'rel_type' => "avatar",
 			'status' => "Y"
 		))[0];
+		
+		foreach my $related (App::160::SQL::get_relations(
+			'db_name' => $App::710::db_name,
+			'l_prefix' => 'a710',
+			'l_table' => 'org',
+			'l_ID_entity' => $org{'ID_entity'},
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'rel_type' => "gallery",
+			'status' => "Y"
+		))
+		{
+			push @{$org{'related_gallery'}},$related;
+		}
 
+		
 =head1
 		push @{$env_out{'entity'}},{
 			'db_h' => 'main',
