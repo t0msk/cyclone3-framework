@@ -319,6 +319,75 @@ sub execute
 
 		%{$org{'metahash'}}=App::020::functions::metadata::parse($org{'metadata'});
 		
+		if ($env{'get_acl_users'})
+		{
+			my @acl_users;
+			
+			use App::301::_init;
+			
+			my @ACL=App::301::perm::get_ACL(
+				'r_prefix' => 'a710',
+				'r_table' => 'org',
+				'r_ID_entity' => $org{'ID_entity'}
+			);
+			
+			foreach my $acl_item (@ACL)
+			{
+				if ($acl_item->{'ID'})
+				{
+					main::_log($acl_item->{'ID'}.' '.$acl_item->{'roles'});
+					
+					my $sql_user = qq{
+						SELECT
+							user.login,
+							user.email,
+							user.ID_user,
+							user_profile.*
+						FROM
+							`$App::301::db_name`.`a301_user` AS user
+						LEFT JOIN `$App::301::db_name`.a301_user_profile AS user_profile ON
+						(
+							user_profile.ID_entity = user.ID_user
+						)
+						WHERE
+							ID_user = ? AND
+							user.status != 'T'
+						LIMIT 1
+					};
+					my %sth_user=TOM::Database::SQL::execute($sql_user,'log'=>1,'-slave'=>1, 'bind' => [ $acl_item->{'ID'} ] );
+					if (my %acl_user=$sth_user{'sth'}->fetchhash())
+					{
+						$acl_item->{'user_data'} = \%acl_user;
+					}
+					
+					use App::160::_init;
+					
+					$acl_item->{'related_avatar'}=(App::160::SQL::get_relations(
+						'db_name' => $App::301::db_name,
+						'l_prefix' => 'a301',
+						'l_table' => 'user',
+						'l_ID_entity' => $acl_item->{'ID'},
+						'rel_type' => "avatar",
+						'r_prefix' => "a501",
+						'r_table' => "image",
+						'status' => "Y",
+						'limit' => 1
+					))[0];
+					
+					if ($acl_item->{'roles'} eq 'owner')
+					{
+						$org{'acl_owner'}=$acl_item;
+					}
+					else
+					{
+						push @acl_users, $acl_item;
+					}
+				}
+			}
+			$org{'acl_users'}=\@acl_users;
+		}
+		
+		
 		push @{$TPL->{'variables'}{'items'}},\%org;
 	}
 	
