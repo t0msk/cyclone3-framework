@@ -24,6 +24,7 @@ sub execute
 	}
 	
 	main::_log_stdout("check if cyclone3.tom exists");
+#	$Elastic->indices->open('index'=>'cyclone3.*');
 	
 	if (!$Elastic->exists(
 		'index' => 'cyclone3.tom',
@@ -31,15 +32,121 @@ sub execute
 		'id' => 1
 	))
 	{
-		$Elastic->index(
+		main::_log_stdout("first index");
+		eval {$Elastic->index(
 			'index' => 'cyclone3.tom',
 			'type' => 'a010_test',
 			'id' => 1,
 			'body' => {
 				'test' => 'test'
 			}
-		);
+		)};
 	}
+	
+	main::_log_stdout("delete_template");
+	$Elastic->indices->delete_template('name'=>'cyclone3.*');
+	main::_log_stdout("put_template");
+	$Elastic->indices->put_template(
+		'name'=>'cyclone3.*',
+		'body' => {
+			'template'=>'cyclone3.*',
+			'mappings' => {
+				'_default_' => {
+					"_meta" => {
+						"version" => "1.02"
+					},
+					'properties' => {
+						'status' => {
+							'type' => 'string',
+							'index' => 'not_analyzed'
+						}
+					},
+					'dynamic_templates' => [
+						{
+							"status" => {
+								"match" => "*_status",
+								'mapping' => {
+									'type' => 'string',
+									'format' => 'not_analyzed'
+								}
+							}
+						},
+						{
+							"datetime" => {
+								"match" => "datetime_*",
+								'mapping' => {
+									'type' => 'date',
+									'format' => 'yyyy-MM-dd HH:mm:ss'
+								}
+							}
+						}
+					]
+				},
+				
+				'a401_article' => {
+					"_meta" => {
+						"version" => "1.00"
+					},
+					'properties' => {
+						'status' => {
+							'type' => 'string',
+							'index' => 'not_analyzed'
+						},
+						'cat' => {
+							'properties' => {
+								'ID' => { 'type' => 'integer' },
+								'charindex' => {
+									'type' => 'string',
+									"index" => "not_analyzed"
+								},
+							},
+						},
+						'article_attrs' => {
+							'properties' => {
+								'datetime_start' => {
+									'type' => 'date',
+									'format' => 'YYYY-MM-dd HH:mm:ss',
+									'store' => 'yes'
+								}
+							}
+						}
+					}
+				}
+				
+			},
+			'settings' => {
+				'version' => '1.03',
+				'analysis' => {
+					'analyzer' => {
+						'default_index' => {
+							'tokenizer' => 'lowercase',
+							'filter' => ['standard', 'lowercase', 'asciifolding', 'unique'],
+							'char_filter' => ['html_strip']
+						},
+						'default_search' => {
+							'tokenizer' => "lowercase",
+							'filter' => ['standard', "lowercase", "asciifolding"]
+						}
+					},
+					"filter" => {
+						"cyclone3_delimiter" => {
+							"type" => "word_delimiter",
+							"generate_word_parts" => 'true',
+							"catenate_words" => 'true',
+							"catenate_numbers" => 'true',
+							"catenate_all" => 'true',
+							"split_on_case_change" => 'true',
+							"preserve_original" => 'true',
+							"split_on_numerics" => 'true',
+							"stem_english_possessive" => 'true'
+						}
+					}
+				}
+			}
+			
+		}
+	);
+	
 	
 	main::_log_stdout("open index cyclone3.tom");
 	$Elastic->indices->open('index'=>'cyclone3.tom');	
@@ -48,7 +155,7 @@ sub execute
 	{
 		main::_log_stdout("delete indexes cyclone3.*");
 		$Elastic->indices->delete('index'=>'cyclone3.*');
-		main::_log_stdout("create index");
+		main::_log_stdout("create index cyclone3.tom");
 		$Elastic->index(
 			'index' => 'cyclone3.tom',
 			'type' => 'a010_test',
@@ -59,24 +166,27 @@ sub execute
 		);
 	}
 	
+=head1
 	main::_log_stdout("put settings");
 	$Elastic->indices->close('index'=>'cyclone3.*');
 	$Elastic->indices->put_settings(
 		'index'=>'cyclone3.*',
 		'body' => {
-			'version' => '1.02',
+			'version' => '1.03',
 			'analysis' => {
 				'analyzer' => {
 					'default_index' => {
 						'tokenizer' => 'lowercase',
 #						'tokenizer' => 'word_delimiter',
-						'filter' => ['standard', 'lowercase', 'asciifolding', 'trim', 'stop', 'unique'],
+#						'filter' => ['standard', 'lowercase', 'asciifolding', 'trim', 'stop', 'unique'],
+						'filter' => ['standard', 'lowercase', 'asciifolding', 'unique'],
 #						'filter' => ['cyclone3_delimiter'],
 						'char_filter' => ['html_strip']
 					},
 					'default_search' => {
 						'tokenizer' => "lowercase",
-						'filter' => ["standard", "lowercase", "asciifolding", "stop", "porter_stem"]
+#						'filter' => ["standard", "lowercase", "asciifolding", "stop", "porter_stem"]
+						'filter' => ['standard', "lowercase", "asciifolding"]
 					}
 				},
 				"filter" => {
@@ -95,7 +205,9 @@ sub execute
 			}
 		}
 	);
+=cut
 	
+=head1
 	# _default_
 	main::_log_stdout("put mapping _default_");
 	$Elastic->indices->put_mapping(
@@ -103,9 +215,9 @@ sub execute
 		'type' => "_default_",
 		'body' => {
 			"_meta" => {
-				"version" => "1.00"
+				"version" => "1.01"
 			},
-			"dynamic_templates" => [
+#			"dynamic_templates" => [
 #				{
 #					"pub.query" => {
 #						"path_match" => "pub.query.*",
@@ -114,7 +226,7 @@ sub execute
 #						}
 #					},
 #				},
-			],
+#			],
 			'properties' => {
 				'status' => {
 					'type' => 'string',
@@ -123,7 +235,9 @@ sub execute
 			}
 		}
 	);
+#=cut
 	
+#=head1
 	# a401
 	main::_log_stdout("put mapping a401_article");
 	$Elastic->indices->put_mapping(
@@ -159,10 +273,11 @@ sub execute
 			}
 		}
 	);
+=cut
 	
-	main::_log_stdout("open indexes cyclone3.*");
+#	main::_log_stdout("open indexes cyclone3.*");
 	
-	$Elastic->indices->open('index'=>'cyclone3.*');
+#	$Elastic->indices->open('index'=>'cyclone3.*');
 	
 	main::_log_stdout("getting settings");
 	
@@ -170,7 +285,7 @@ sub execute
 		'index'   => 'cyclone3.tom',
 	);
 	
-#	print Dumper($result);
+	print Dumper($result);
 	
 return 1}
 1;
