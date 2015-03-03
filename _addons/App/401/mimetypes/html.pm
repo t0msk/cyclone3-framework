@@ -1235,6 +1235,62 @@ sub start
 				}
 			}
 		}
+		elsif ($attr->{'id'}=~/^a411_poll:(.*)$/)
+		{
+			$self->{'level.ignore'}=$self->{'level'};
+			require App::411::_init;
+			%vars=_parse_id($1);
+			
+			if ($vars{'ID_entity'} && (!$self->{'config'}->{'inline'}))
+			{
+				main::_log("request to include a411_poll with ID_entity='$vars{'ID_entity'}'");
+				require App::411::_init;
+				my %sth0=TOM::Database::SQL::execute(qq{
+					SELECT
+						*
+					FROM
+						`$App::411::db_name`.a411_poll
+					WHERE
+						ID_entity = ?
+				},'bind'=>[$vars{'ID_entity'}],'quiet'=>1,'-slave'=>1);
+				if (my %db0_line=$sth0{'sth'}->fetchhash())
+				{
+					main::_log("processing poll");
+					
+					$out_full=
+						$self->{'entity'}{'div.a411_poll'}
+						|| $out_full;
+					
+					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+					
+					$out_full_plus="<h4>".$db0_line{'name'}."</h4>";
+					$out_full_plus.="<p>".$db0_line{'description'}."</p>";
+					$out_full_plus.="<ul>";
+					
+					# answers
+					my %sth1=TOM::Database::SQL::execute(qq{
+						SELECT
+							*
+						FROM
+							`$App::411::db_name`.a411_poll_answer
+						WHERE
+							ID_poll = ?
+							AND status = 'Y'
+						ORDER BY
+							ID
+					},'quiet' => 1,'bind' => [
+						$db0_line{'ID_entity'}
+					]);
+					while (my %db1_line=$sth1{'sth'}->fetchhash())
+					{
+						$out_full_plus.="<li id=\"$db1_line{'ID'}\">".($db1_line{'name'})."</li>";
+					}
+					
+					$out_full_plus.="</ul>";
+				}
+				
+			}
+		}
 	}
 	elsif ($tag eq "p")
 	{
