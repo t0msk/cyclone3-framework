@@ -71,6 +71,60 @@ use App::411::a301;
 our $db_name=$App::411::db_name || $TOM::DB{'main'}{'name'};
 
 
+# check system category
+our $system_cat_ID_entity;
+our %system_cat;
+# find any category;
+my $sql="
+	SELECT ID, ID_entity
+	FROM `$App::411::db_name`.`a411_poll_cat`
+	WHERE name='System' AND lng IN ('".(join "','",@TOM::LNG_accept)."')
+	LIMIT 1 ";
+my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+if (my %db0_line=$sth0{'sth'}->fetchhash())
+{$system_cat_ID_entity=$db0_line{'ID_entity'} unless $system_cat_ID_entity;}
+else
+{
+	$system_cat_ID_entity=App::020::SQL::functions::tree::new(
+		'db_h' => "main",
+		'db_name' => $App::411::db_name,
+		'tb_name' => "a411_poll_cat",
+		'columns' => {
+			'name' => "'System'",
+			'lng' => "'$tom::LNG'",
+			'status' => "'L'"
+		},
+		'-journalize' => 1
+	);
+}
+foreach my $lng(@TOM::LNG_accept)
+{
+	my $sql=qq{
+		SELECT ID, ID_entity
+		FROM `$App::411::db_name`.`a411_poll_cat`
+		WHERE ID_entity=$system_cat_ID_entity AND lng='$lng'
+		LIMIT 1
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{$system_cat{$lng}=$db0_line{'ID'};}
+	else
+	{
+		$system_cat{$lng}=App::020::SQL::functions::tree::new(
+			'db_h' => "main",
+			'db_name' => $App::411::db_name,
+			'tb_name' => "a411_poll_cat",
+			'columns' => {
+				'ID_entity' => $system_cat_ID_entity,
+				'name' => "'System'",
+				'lng' => "'$lng'",
+				'status' => "'L'"
+			},
+			'-journalize' => 1
+		);
+	}
+}
+
 
 =head1 AUTHOR
 
