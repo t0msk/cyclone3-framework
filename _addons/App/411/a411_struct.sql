@@ -77,11 +77,13 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll_answer_j` (
 CREATE TABLE `/*db_name*/`.`/*app*/_poll_vote` (
   `datetime_event` datetime NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ref_user` varchar(64) character set ascii collate ascii_bin default NULL,
   `ID_answer` bigint(20) NOT NULL, -- rel poll_answer.ID_entity
   `IP` varchar(15) NOT NULL default '',
   `email` varchar(64) character set ascii default NULL,
   PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_answer`),
-  UNIQUE KEY `UNI_0` (`datetime_event`,`IP`)
+  UNIQUE KEY `UNI_0` (`datetime_event`,`IP`),
+  KEY `SEL_0` (`datetime_event`,`ref_user`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
