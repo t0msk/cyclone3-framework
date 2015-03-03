@@ -23,6 +23,7 @@ sub execute
 		return undef;
 	}
 	
+	$Elastic->indices->open('index'=>'cyclone3.tom');
 	main::_log_stdout("check if cyclone3.tom exists");
 #	$Elastic->indices->open('index'=>'cyclone3.*');
 	
@@ -149,7 +150,7 @@ sub execute
 	
 	
 	main::_log_stdout("open index cyclone3.tom");
-	$Elastic->indices->open('index'=>'cyclone3.tom');	
+	$Elastic->indices->open('index'=>'cyclone3.tom');
 	
 	if ($env->{'recreate'})
 	{
@@ -210,6 +211,35 @@ sub execute
 =head1
 	# _default_
 	main::_log_stdout("put mapping _default_");
+	$Elastic->indices->put_template(
+		'name' => "cyclone3",
+		'body' => {
+			'template' => 'cyclone3.*',
+			'mappings' => {
+				'_default_' => {
+					"dynamic_templates" => [
+						{ "metahash" => {
+							'path_match' => "metahash.*.*",
+							'mapping' => {
+								'type' => 'string',
+								'index' => 'not_analyzed'
+							}
+						}},
+					],
+					'properties' => {
+						'status' => {
+							'type' => 'string',
+							'index' => 'not_analyzed'
+						}
+					}
+				}
+			}
+		}
+	);
+	
+	
+	
+=head1
 	$Elastic->indices->put_mapping(
 		'index' => "cyclone3.*",
 		'type' => "_default_",
@@ -218,14 +248,30 @@ sub execute
 				"version" => "1.01"
 			},
 #			"dynamic_templates" => [
-#				{
-#					"pub.query" => {
-#						"path_match" => "pub.query.*",
-#						'mapping' => {
-#							'type' => 'string','index' => 'not_analyzed'
+				{ "metahash" => {
+					'path_match' => "metahash.*",
+#					'date_detection' => "false",
+#					"match" => "metahash.*",
+					'mapping' => {
+#						'date_detection' => "false",
+#						'type' => 'string',
+						'index' => 'not_analyzed',
+#						"fields" => {
+#							"{name}" => {"type"=> "string", "index"=> "not_analyzed"}
+#							"raw" : {"type": "string", "index" : "not_analyzed"}
 #						}
-#					},
-#				},
+					}
+				}},
+#				{ "metahash_in" => {
+#					'path_match' => "metahash.*.*",
+#					'date_detection' => "false",
+##					"match" => "metahash.*",
+#					'mapping' => {
+#						'date_detection' => "false",
+#						'type' => 'string',
+#						'index' => 'not_analyzed'
+#					}
+#				}},
 #			],
 			'properties' => {
 				'status' => {
