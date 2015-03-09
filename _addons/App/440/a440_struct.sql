@@ -19,6 +19,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_promo_item` (
   `datetime_start` datetime NOT NULL,
   `datetime_stop` datetime default NULL,
   `abstract` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
@@ -43,6 +44,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_promo_item_j` (
   `datetime_start` datetime NOT NULL,
   `datetime_stop` datetime default NULL,
   `abstract` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)

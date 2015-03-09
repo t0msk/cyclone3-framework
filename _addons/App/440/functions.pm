@@ -203,6 +203,10 @@ sub promo_item_add
 		$columns{'abstract'}="'".TOM::Security::form::sql_escape($env{'promo_item.abstract'})."'"
 			if ($env{'promo_item.abstract'} && ($env{'promo_item.abstract'} ne $promo_item{'abstract'}));
 		
+		# body
+		$columns{'body'}="'".TOM::Security::form::sql_escape($env{'promo_item.body'})."'"
+			if ($env{'promo_item.body'} && ($env{'promo_item.body'} ne $promo_item{'body'}));
+		
 		# status
 		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'promo_item.status'})."'"
 			if ($env{'promo_item.status'} && ($env{'promo_item.status'} ne $promo_item{'status'}));
