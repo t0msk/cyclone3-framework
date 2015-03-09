@@ -1,9 +1,9 @@
 #!/bin/perl
-package App::401::a301;
+package App::501::a301;
 
 =head1 NAME
 
-App::411::a301
+App::501::a301
 
 =cut
 use open ':utf8', ':std';
@@ -15,7 +15,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 =head1 DESCRIPTION
 
-a301 enhancement to a411
+a301 enhancement to a501
 
 =cut
 
@@ -25,7 +25,7 @@ a301 enhancement to a411
 
 =item *
 
-L<App::411::_init|app/"411/_init.pm">
+L<App::501::_init|app/"501/_init.pm">
 
 =item *
 
@@ -39,7 +39,7 @@ L<App::020::_init|app/"020/_init.pm">
 
 =cut
 
-use App::411::_init;
+use App::501::_init;
 use App::301::perm;
 use App::020::_init;
 
@@ -169,7 +169,7 @@ sub set_owner
 		  (
 				'ID_entity' => $env{'r_ID_entity'},
 				'db_h' => 'main',
-				'db_name' => $App::401::db_name,
+				'db_name' => $App::501::db_name,
 				'tb_name' => 'a501_image_ent',
 		  );
 		  if ($IDs[0]->{'ID'})
@@ -177,7 +177,7 @@ sub set_owner
 				App::020::SQL::functions::update(
 					 'ID' => $IDs[0]->{'ID'},
 					 'db_h' => 'main',
-					 'db_name' => $App::401::db_name,
+					 'db_name' => $App::501::db_name,
 					 'tb_name' => 'a501_image_ent',
 					 'columns' =>
 					 {
