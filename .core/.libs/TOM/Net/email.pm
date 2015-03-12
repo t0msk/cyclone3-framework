@@ -59,7 +59,7 @@ B<priority> - default '1' ( higher priority means sending sooner )
 
 sub send
 {
-	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => '_global','class'=>'email'}); # do it in background
+	#return 1 if TOM::Engine::jobify(\@_,{'routing_key' => '_global','class'=>'email'}); # do it in background
 	my %env=@_;
 	
 	my $ID=time()."-".$$."-".sprintf("%07d",int(rand(10)));
