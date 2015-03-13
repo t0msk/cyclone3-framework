@@ -52,6 +52,10 @@ sub execute
 	{
 		$sql_where.=" AND video_attrs.datetime_publish_start <= NOW()";
 		$sql_where.=" AND (video_attrs.datetime_publish_stop IS NULL OR video_attrs.datetime_publish_stop >= NOW())";
+	}	
+	elsif ($env{'datetime_mode'} eq "archive")
+	{
+		$sql_where.=" AND video_attrs.datetime_publish_start <= NOW()";
 	}
 	
 	if ($env{'video_cat.ID_entity'})
@@ -284,6 +288,7 @@ sub execute
 			video_attrs.name_url AS attrs_name_url,
 			video_attrs.description AS attrs_description,
 			video_attrs.datetime_publish_start,
+			video_attrs.datetime_publish_stop,
 			video_cat.ID AS cat_ID,
 			video_cat.ID_entity AS cat_ID_entity,
 			video_cat.name AS cat_name,
