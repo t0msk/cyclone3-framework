@@ -33,6 +33,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event` (
   `longitude_decimal` float(10,6) default NULL,
   
   `priority_A` tinyint(3) unsigned default NULL,
+  `priority_B` tinyint(3) unsigned default NULL,
+  `priority_C` tinyint(3) unsigned default NULL,
+  
   `price` decimal(12,3) default NULL, -- different modifications, different prices
   `price_max` decimal(12,3) default NULL,
   `price_currency` varchar(3) character set ascii default 'EUR',
@@ -78,6 +81,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_j` (
   `longitude_decimal` float(10,6) default NULL,
   
   `priority_A` tinyint(3) unsigned default NULL,
+  `priority_B` tinyint(3) unsigned default NULL,
+  `priority_C` tinyint(3) unsigned default NULL,
+  
   `price` decimal(12,3) default NULL, -- different modifications, different prices
   `price_max` decimal(12,3) default NULL,
   `price_currency` varchar(3) character set ascii default 'EUR',
