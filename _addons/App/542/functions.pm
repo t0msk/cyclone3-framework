@@ -289,6 +289,7 @@ sub file_add
 	{
 		# create one language representation of video
 		my %columns;
+		my %data;
 		$columns{'ID_category'}=$env{'file_attrs.ID_category'} if $env{'file_attrs.ID_category'};
 		$columns{'status'}="'$env{'file_attrs.status'}'" if $env{'file_attrs.status'};
 		
@@ -307,6 +308,10 @@ sub file_add
 				%columns,
 				'ID_entity' => $env{'file.ID'},
 				'lng' => "'$env{'file_attrs.lng'}'",
+			},
+			'data' => 
+			{
+				%data
 			},
 			'-journalize' => 1,
 			'-posix' => 1,
@@ -329,6 +334,8 @@ sub file_add
 		($env{'file_attrs.name'} && ($env{'file_attrs.name'} ne $file_attrs{'name'})) ||
 		# name_ext
 		($env{'file_attrs.name_ext'} && ($env{'file_attrs.name_ext'} ne $file_attrs{'name_ext'})) ||
+		# description_short
+		($env{'file_attrs.description_short'} && ($env{'file_attrs.description_short'} ne $file_attrs{'description_short'})) ||
 		# ID_category
 		($env{'file_attrs.ID_category'} && ($env{'file_attrs.ID_category'} ne $file_attrs{'ID_category'})) ||
 		# status
@@ -336,6 +343,7 @@ sub file_add
 	))
 	{
 		my %columns;
+		my %data;
 		
 		# name
 		$columns{'name'}="'".TOM::Security::form::sql_escape($env{'file_attrs.name'})."'"
@@ -353,12 +361,16 @@ sub file_add
 		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'file_attrs.status'})."'"
 			if ($env{'file_attrs.status'} && ($env{'file_attrs.status'} ne $file_attrs{'status'}));
 		
+		$data{'description_short'}=$env{'file_attrs.description_short'}
+			if ($file_attrs{'description_short'} ne $env{'file_attrs.description_short'});
+		
 		App::020::SQL::functions::update(
 			'ID' => $file_attrs{'ID'},
 			'db_h' => "main",
 			'db_name' => $App::542::db_name,
 			'tb_name' => "a542_file_attrs",
 			'columns' => {%columns},
+			'data' => {%data},
 			'-journalize' => 1,
 			'-posix' => 1,
 		);
