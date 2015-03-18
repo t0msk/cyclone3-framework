@@ -1,0 +1,177 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use App::542::_init;
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	# paging
+	$env{'page_limit'} = 10 unless $env{'page_limit'};
+	$env{'page'} = 1 unless $env{'page'};
+	$env{'page_offset'} = 0 unless $env{'page_offset'};
+	$env{'page_plus'} = 1 unless $env{'page_plus'};
+	if (!$env{'sql_limit'})
+	{
+		$env{'sql_limit'}=((($env{'page'}-1)*$env{'page_limit'})+$env{'page_offset'}).",".($env{'page_limit'}+$env{'page_plus'});
+	}
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || 'file_ent.datetime_create DESC';
+	my $sql_group_by;
+	
+	if ($env{'file_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'file_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::542::db_name.a542_file_dir WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID_entity FROM $App::542::db_name.a542_file_dir WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR file_attrs.ID_category IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'file.ID_entity'})
+	{
+		$sql_where.=" AND file.ID_entity IN ('".
+			(join "','", split(';',$env{'file.ID_entity'})).
+		"')";
+	}
+	
+	if ($env{'file.ID'})
+	{
+		$sql_where.=" AND file.ID IN ('".
+			(join "','", split(';',$env{'file.ID'})).
+			"')";
+	}
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			file.ID,
+			file.ID_entity,
+			file_ent.datetime_publish_start,
+			file_ent.datetime_publish_stop,
+			file_ent.posix_owner AS ent_posix_owner,
+			file_ent.posix_author AS ent_posix_author,
+			file_attrs.name,
+			file_attrs.name_url,
+			file_attrs.name_ext,
+			file_cat.ID AS cat_ID,
+			file_cat.ID_entity AS cat_ID_entity,
+			file_cat.ID_charindex AS cat_ID_charindex,
+			file_cat.name AS cat_name,
+			file_cat.name_url AS cat_name_url,
+			file_item.hash_secure,
+			file_item.file_size,
+			file_item.mimetype,
+			IF
+			(
+				(ACL_world.perm_R='Y' OR ACL_world.perm_R IS NULL),
+				'Y', 'N'
+			) AS world_status
+			
+		FROM
+			$App::542::db_name.a542_file AS file
+		INNER JOIN $App::542::db_name.a542_file_ent AS file_ent ON
+		(
+			file_ent.ID_entity = file.ID_entity AND
+			file_ent.status IN ('Y','L')
+		)
+		INNER JOIN $App::542::db_name.a542_file_attrs AS file_attrs ON
+		(
+			file_attrs.ID_entity = file.ID AND
+			file_attrs.lng = '$env{'lng'}' AND
+			file_attrs.status IN ('Y','L')
+		)
+		INNER JOIN $App::542::db_name.a542_file_item AS file_item ON
+		(
+			file_item.ID_entity = file.ID AND
+			file_item.lng = '$env{'lng'}' AND
+			file_item.status IN ('Y','L')
+		)
+		LEFT JOIN $App::542::db_name.a542_file_dir AS file_cat ON
+		(
+			file_cat.ID_entity = file_attrs.ID_category AND
+			file_cat.lng = file_attrs.lng AND
+			file_cat.status IN ('Y','L')
+		)
+		LEFT JOIN $App::401::db_name.a301_ACL_user_group AS ACL_world ON
+		(
+			ACL_world.ID_entity = 0 AND
+			r_prefix = 'a542' AND
+			r_table = 'file' AND
+			r_ID_entity = file.ID_entity
+		)
+		WHERE
+			file.status IN ('Y','L')
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::542::db_name,
+				'tb_name' => "a542_image",
+				'ID_entity' => do{$env{'file.ID_entity'} if $env{'file.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	main::_log($sth0{'sql'});
+	
+	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	while (my %file=$sth0{'sth'}->fetchhash())
+	{
+		my $relation =(App::160::SQL::get_relations(
+			'db_name' => $env{'db_name'},
+			'l_prefix' => 'a542',
+			'l_table' => 'file_item',
+			'l_ID_entity' => sprintf("%08d", $file{'ID_entity'}),
+			'rel_type' => 'thumbnail',
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y"
+		))[0];
+		
+		$file{'related_thumbnail'}->{'ID_entity'}=$relation->{'r_ID_entity'};
+		
+		$TPL->variables_push(\%file);
+	}
+	
+	return 1,%env_out;
+}
+
+our $authors="open\@comsultia.com";
+
+1;
