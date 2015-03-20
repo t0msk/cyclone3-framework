@@ -43,31 +43,42 @@ while (my @db0_line=$sth0{'sth'}->fetchrow())
 {
 	my $database=$db0_line[0];
 	next if $database eq "information_schema";
+	next if $database eq "performance_schema";
+	next if $database eq "mysql";
 #	next unless $database eq "TOM";
 	main::_log_stdout("DB=".$database);
 	# get tables to backup
 	my %sth1=TOM::Database::SQL::execute(qq{SHOW TABLES FROM `$database`});
 	my @exclude;
+	my @include;
 	while (my @db1_line=$sth1{'sth'}->fetchrow())
 	{
 		my $table=$db1_line[0];
 #		main::_log_stdout(" table=".$table);
-		if ($table=~/_j$/)
+		if ($table=~/(_j|_l|_h|_metaindex|_visit|_hit|_arch|_log)$/)
 		{
 			push @exclude, $database.".".$table;
 		}
 		elsif ($ignore_tables{$table}){push @exclude, $database.".".$table;}
+		else
+		{
+			push @include,$table;
+		}
 	}
 #	main::_log_stdout("exclude ".(join(" ",@exclude)));
 	
-	my $cmd="mysqldump --defaults-file=/etc/mysql/debian.cnf -u debian-sys-maint --opt -Q --single-transaction --extended-insert=FALSE --lock-tables=false -r /backup/mysql-dump/".$database.".sql --database $database";
-	if (@exclude)
+	foreach my $table (@include)
 	{
-		$cmd.=" --ignore-table=".join(" --ignore-table=",@exclude)."\n";
+		my $cmd="mysqldump --defaults-file=/etc/mysql/debian.cnf -u debian-sys-maint --opt -Q --single-transaction --extended-insert=FALSE --lock-tables=false -r /backup/mysql-dump/".$database.":".$table.".sql $database $table";
+#	if (@exclude)
+#	{
+#		$cmd.=" --ignore-table=".join(" --ignore-table=",@exclude)."\n";
+#	}
+		#main::_log_stdout(" $cmd");
+		main::_log_stdout(" $database $table");
+		`$cmd`;
 	}
 	
-	main::_log_stdout(" $cmd");
-	`$cmd`;
 #	last;
 }
 
