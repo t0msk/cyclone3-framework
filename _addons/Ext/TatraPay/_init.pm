@@ -22,7 +22,10 @@ BEGIN
 	unshift @INC, $dir;
 }
 
-BEGIN {require Finance::Bank::TB;}
+BEGIN {
+	require Finance::Bank::TB;
+	require Finance::Bank::TB_AES;
+}
 
 BEGIN {shift @INC;}
 
