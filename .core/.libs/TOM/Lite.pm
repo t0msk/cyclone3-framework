@@ -40,7 +40,15 @@ sub ctodatetime
 	$env0{mon}=$env0{mom};
 return %env0}
 
-
+our $fluentd_socket;
+BEGIN {eval {if ($TOM::DEBUG_log_fluentd){
+	require Fluent::Logger;
+	$fluentd_socket=Fluent::Logger->new(
+		'host' => (split(':',$TOM::DEBUG_log_fluentd))[0],
+		'port' => (split(':',$TOM::DEBUG_log_fluentd))[1],
+		'tag_prefix' => "cyclone3"
+	);
+}};if ($@){undef $TOM::DEBUG_log_fluentd}};
 our %HND;
 our @log_sym=("","-","","","-");
 our %log_file;
@@ -144,6 +152,23 @@ sub _log
 		) # logujem v pripade ze som v ramci levelu alebo ide o ERROR
 	{
 		return 1 if $get[3] eq "stdout";
+		
+		if ($fluentd_socket)
+		{
+			$fluentd_socket->post("log", {
+				'PID' => $$,
+				'datetime' => $log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
+							.' '.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.".".sprintf("%04d",$msec),
+				'hostname' => $TOM::hostname.'.'.($TOM::domain || 'undef'),
+				'level' => $get[0],
+				'domain' => $tom::H,
+				'code' => $main::request_code,
+				'engine' => $TOM::engine,
+				'log' => $get[3],
+				"msg" => $get[1],
+			});
+#			return 1;
+		}
 		
 		$get[0]=0 unless $get[0];
 		
