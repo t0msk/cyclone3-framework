@@ -157,8 +157,8 @@ sub _log
 		{
 			$fluentd_socket->post("log", {
 				'PID' => $$,
-				'datetime' => $log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
-							.' '.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.".".sprintf("%04d",$msec),
+				'time' => $log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
+							.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.".".sprintf("%03d",$msec/10).'Z',
 				'hostname' => $TOM::hostname.'.'.($TOM::domain || 'undef'),
 				'level' => $get[0],
 				'domain' => $tom::H,
