@@ -156,16 +156,16 @@ sub _log
 		if ($fluentd_socket)
 		{
 			$fluentd_socket->post("log", {
-				'PID' => $$,
 				'time' => $log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
 							.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.".".sprintf("%03d",$msec/10).'Z',
-				'hostname' => $TOM::hostname.'.'.($TOM::domain || 'undef'),
-				'level' => $get[0],
-				'domain' => $tom::H,
-				'code' => $main::request_code,
-				'engine' => $TOM::engine,
-				'log' => $get[3],
-				"msg" => $get[1],
+				'p' => $$,
+				'h' => $TOM::hostname.'.'.($TOM::domain || 'undef'),
+				'l' => $get[0],
+				'd' => $tom::H,
+				'c' => $main::request_code,
+				'e' => $TOM::engine,
+				't' => $get[3],
+				"m" => $get[1],
 			});
 #			return 1;
 		}
