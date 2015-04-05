@@ -155,19 +155,25 @@ sub _log
 		
 		if ($fluentd_socket)
 		{
-			$fluentd_socket->post("log", {
+			$fluentd_socket->post($get[3], {
 				'time' =>
 					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
 					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.".".sprintf("%03d",$msec/10).'Z',
 				'p' => $$,
 				'h' => $TOM::hostname.'.'.($TOM::domain || 'undef'),
+				'hd' => $TOM::domain,
 				'l' => $get[0],
 				'd' => do {
 					if ($get[4]==1){undef;}
 					elsif ($tom::Pm && $get[4]==2){$tom::H_orig || $tom::Hm;}
 					else {$tom::H_orig;}
 				},
-				'dm' => $tom::Hm,
+				'dm' => do {
+					if ($get[4]==1){undef;}
+					else {
+						$tom::Hm
+					}
+				},
 				'c' => $main::request_code,
 				'e' => $TOM::engine,
 				'f' => do {if ($get[2] == 1 || $get[2] == 4){'1';}else{undef;}},
@@ -322,6 +328,7 @@ sub _event
 	# write to Elastic
 	if ($TOM::event_elastic && $Ext::Elastic::service)
 	{
+#		print "event\n";
 #		main::_log("event $hash{'serverity'} $hash{'facility'}",3,"event",1);
 		my %log_date=ctodatetime(int($hash{'timestamp'}),format=>1);
 #		my $service=$Ext::Elastic::service_async || $Ext::Elastic::service; # async when async library available
@@ -338,6 +345,7 @@ sub _event
 		}
 		else
 		{
+#			print "sync write\n";
 			$Ext::Elastic::service->index(
 				'index' => '.cyclone3.'.$log_date{'year'}.$log_date{'mon'},
 				'type' => 'event',
