@@ -40,6 +40,38 @@ sub ctodatetime
 	$env0{mon}=$env0{mom};
 return %env0}
 
+sub ctogmdatetime
+{
+	my $var=shift @_;
+	my %env=@_;
+	my %env0;
+	(	$env0{sec},
+		$env0{min},
+		$env0{hour},
+		$env0{mday},
+		$env0{mom},
+		$env0{year},
+		$env0{wday},
+		$env0{yday},
+		$env0{isdst}) = gmtime($var);
+	# doladenie casu
+	$env0{year}+=1900;$env0{mom}++;
+	return %env0 unless $env{format};
+	(	$env0{sec},
+		$env0{min},
+		$env0{hour},
+		$env0{mday},
+		$env0{mom},
+		) = (
+		sprintf ('%02d', $env0{sec}),
+		sprintf ('%02d', $env0{min}),
+		sprintf ('%02d', $env0{hour}),
+		sprintf ('%02d', $env0{mday}),
+		sprintf ('%02d', $env0{mom}),
+	);
+	$env0{mon}=$env0{mom};
+return %env0}
+
 our $fluentd_socket;
 BEGIN {eval {if ($TOM::DEBUG_log_fluentd){
 	require Fluent::Logger;
@@ -155,8 +187,9 @@ sub _log
 		
 		if ($fluentd_socket)
 		{
+			local %log_date=ctogmdatetime($log_time,format=>1); # we are logging in GMT zone
 			$fluentd_socket->post($get[3], {
-				'time' =>
+				'@timestamp' =>
 					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
 					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.".".sprintf("%03d",$msec/10).'Z',
 				'p' => $$,
@@ -177,7 +210,7 @@ sub _log
 				'c' => $main::request_code,
 				'e' => $TOM::engine,
 				'f' => do {if ($get[2] == 1 || $get[2] == 4){'1';}else{undef;}},
-				't' => $get[3],
+#				't' => $get[3],
 				"m" => $get[1],
 			});
 			#return 1
