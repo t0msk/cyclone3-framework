@@ -201,13 +201,8 @@ sub _log
 					elsif ($tom::Pm && $get[4]==2){$tom::H_orig || $tom::Hm;}
 					else {$tom::H_orig;}
 				},
-				'dm' => do {
-					if ($get[4]==1){undef;}
-					else {
-						$tom::Hm
-					}
-				},
-				'c' => $main::request_code,
+				'dm' => do {if ($get[4]==1){undef;}else {$tom::Hm}},
+				'c' => do {if ($main::request_code){$main::request_code;}else{undef;}},
 				'e' => $TOM::engine,
 				'f' => do {if ($get[2] == 1 || $get[2] == 4){'1';}else{undef;}},
 #				't' => $get[3],
