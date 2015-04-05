@@ -180,7 +180,7 @@ sub _log
 				't' => $get[3],
 				"m" => $get[1],
 			});
-#			return 1;
+			#return 1
 		}
 		
 		$get[0]=0 unless $get[0];
