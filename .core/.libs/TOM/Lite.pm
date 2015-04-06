@@ -192,6 +192,7 @@ sub _log
 				'@timestamp' =>
 					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
 					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.".".sprintf("%03d",$msec/10).'Z',
+				'o' => ++$main::log_o,
 				'p' => $$,
 				'h' => $TOM::hostname.'.'.($TOM::domain || 'undef'),
 				'hd' => $TOM::domain,
