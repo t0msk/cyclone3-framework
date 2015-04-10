@@ -18,6 +18,7 @@ sub execute
 	
 	$env{'check_image_file'} = 1 unless exists $env{'check_image_file'};
 	$env{'image_format.ID'} = $App::501::image_format_fullsize_ID unless $env{'image_format.ID'};
+	$env{'sql_lng'} = $env{'lng'} unless $env{'sql_lng'};
 	
 	# paging
 	$env{'page_limit'} = 10 unless $env{'page_limit'};
@@ -49,8 +50,8 @@ sub execute
 			next unless $ID_category;
 			if ($ID_category=~s/\*$//)
 			{
-				my $cat_sql=qq{SELECT ID_charindex FROM $App::501::db_name.a501_image_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
-				$ID_category=qq{SELECT ID_entity FROM $App::501::db_name.a501_image_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::501::db_name.a501_image_cat WHERE ID_entity=$ID_category AND lng='$env{'sql_lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID_entity FROM $App::501::db_name.a501_image_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'sql_lng'}' AND status IN ('Y','L')};
 			}
 			$sql_cat.=" OR image_attrs.ID_category IN ($ID_category)";
 			$sql_cat=~s/^ OR //;
@@ -204,7 +205,7 @@ sub execute
 		INNER JOIN $App::501::db_name.a501_image_attrs AS image_attrs ON
 		(
 			image_attrs.ID_entity = image.ID AND
-			image_attrs.lng = '$env{'lng'}' AND
+			image_attrs.lng = '$env{'sql_lng'}' AND
 			image_attrs.status IN ('Y','L')
 		)
 		LEFT JOIN $App::501::db_name.a501_image_cat AS image_cat ON
