@@ -1,0 +1,70 @@
+#!/usr/bin/env perl
+use strict;                   
+#use warnings;                 
+use LWP;                      
+use JSON qw/decode_json/;     
+
+my $host = $ENV{'host'} || 'localhost';
+
+my $ua = LWP::UserAgent->new;
+$ua->timeout(10);
+
+sub get_json_from_url {
+    my $uri = shift;
+    my $res = $ua->get($uri, 'Content-Type' => 'application/json' );
+    Carp::confess($res->code . " for " . $uri) unless $res->is_success;
+    my $data = do { local $@; eval { decode_json($res->content) } };
+    die("Could not decode JSON from: " . $res->content) unless $data;
+    return $data;
+}
+
+my $data = get_json_from_url("http://$host:9200/_stats");
+#use Data::Dumper;print Dumper($data);
+my %out;
+my %out_name;
+
+foreach my $node (keys %{$data->{'indices'}}){
+	
+	my $node_=$node;
+		$node_=~s|[\.\-]||g;
+	$out{$node_}=$data->{'indices'}->{$node}->{'total'}->{'docs'}->{'count'};
+	$out_name{$node_}=$node;
+	
+#	$out{'search'}+=$data->{'nodes'}->{$node}->{'indices'}->{'search'}->{'query_total'};
+#	$out{'indexing'}+=$data->{'nodes'}->{$node}->{'indices'}->{'indexing'}->{'index_total'};
+#	$out{'get'}+=$data->{'nodes'}->{$node}->{'indices'}->{'get'}->{'total'};
+#	$out{'refresh'}+=$data->{'nodes'}->{$node}->{'indices'}->{'refresh'}->{'total'};
+	
+}
+
+if ($ARGV[0] and $ARGV[0] eq 'config')
+{
+#	print "graph_args --base 1024\n";
+	print "graph_title ElasticSearch RLog indices docs\n";
+	print "graph_category elasticsearch_rlog\n";
+	print "graph_vlabel docs\n";
+	
+#	print "search.label search\nsearch.type GAUGE\n";
+#	print "indexing.label search\nindexing.type GAUGE\n";
+#	print "get.label search\nget.type GAUGE\n";
+#	print "refresh.label search\nrefresh.type GAUGE\n";
+	
+	foreach my $name (sort keys %out)
+	{
+		print "$name.label $out_name{$name}\n";
+	}
+}
+
+elsif (!$ARGV[0] || $ARGV[0] eq 'autoconf')
+{
+	foreach my $name (sort keys %out)
+	{
+		print "$name.value ".$out{$name}."\n";
+#		print "search.value " . $out{'search'} . "\n";
+#		print "indexing.value " . $out{'indexing'} . "\n";
+#		print "get.value " . $out{'get'} . "\n";
+#		print "refresh.value " . $out{'refresh'} . "\n";
+	}
+}
+
+exit(0);
