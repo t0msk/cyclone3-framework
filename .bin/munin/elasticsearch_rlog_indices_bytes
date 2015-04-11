@@ -52,19 +52,28 @@ if ($ARGV[0] and $ARGV[0] eq 'config')
 	foreach my $name (sort keys %out)
 	{
 		print "$name.label $out_name{$name}\n";
+		print "$name.draw AREASTACK\n";
 	}
+	print "total.colour 000000\n";
+	print "total.label total\n";
+	print "total.draw LINE0\n";
+#	print "total.warning 300\n";
+#	print "total.critical 700\n";
 }
 
 elsif (!$ARGV[0] || $ARGV[0] eq 'autoconf')
 {
+	my $total;
 	foreach my $name (sort keys %out)
 	{
 		print "$name.value ".$out{$name}."\n";
+		$total+=$out{$name};
 #		print "search.value " . $out{'search'} . "\n";
 #		print "indexing.value " . $out{'indexing'} . "\n";
 #		print "get.value " . $out{'get'} . "\n";
 #		print "refresh.value " . $out{'refresh'} . "\n";
 	}
+	print "total.value ".$total."\n";
 }
 
 exit(0);
