@@ -513,7 +513,7 @@ sub product_add
 	{
 		my $sql=qq{
 			SELECT
-				ID,ID_entity
+				ID,ID_entity,status
 			FROM
 				`$App::910::db_name`.a910_product_brand
 			WHERE
@@ -530,11 +530,17 @@ sub product_add
 				'tb_name' => "a910_product_brand",
 				'columns' => {
 					'name' => "'".TOM::Security::form::sql_escape($env{'product_brand.name'})."'",
-					'name_url' => "'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'product_brand.name'}))."'"
+					'name_url' => "'".TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env{'product_brand.name'}))."'",
+#					'status' => "'Y'"
 				},
 				'-journalize' => 1,
 			);
+			product_brand_add('product_brand.ID' => $env{'product_brand.ID'},'status' => 'Y');
 			$content_reindex=1;
+		}
+		elsif ($product_brand{'status'} eq "T")
+		{
+			product_brand_add('product_brand.ID' => $product_brand{'ID'},'status' => 'Y');
 		}
 	}
 	$columns{'ID_brand'}="'".TOM::Security::form::sql_escape($env{'product_brand.ID'})."'"
@@ -2006,8 +2012,203 @@ sub _product_cat_index
 }
 
 
+
+sub product_brand_add
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::product_brand_add()");
+	
+	my $content_reindex;
+	
+	my %product_brand;
+	
+	if ($env{'product_brand.ID'})
+	{
+		$env{'product_brand.ID'}=$env{'product_brand.ID'}+0;
+		undef $env{'product_brand.ID_entity'}; # ID_entity has lower priority as ID
+		# when real ID_entity used, then read it from ID
+		# when ID not found, undef ID_entity, because is invalid
+		main::_log("finding product_brand.ID_entity by product_brand.ID='$env{'product_brand.ID'}'");
+		%product_brand=App::020::SQL::functions::get_ID(
+			'ID' => $env{'product_brand.ID'},
+			'db_h' => "main",
+			'db_name' => $App::910::db_name,
+			'tb_name' => "a910_product_brand",
+			'columns' => {'*'=>1}
+		);
+		if ($product_brand{'ID'})
+		{
+			$env{'product_brand.ID_entity'}=$product_brand{'ID_entity'};
+			main::_log("found product_brand.ID_entity='$env{'product_brand.ID_entity'}'");
+		}
+		else
+		{
+			main::_log("not found product_brand.ID, undef",1);
+			$content_reindex=1;
+			App::020::SQL::functions::new(
+				'db_h' => "main",
+				'db_name' => $App::910::db_name,
+				'tb_name' => "a910_product_brand",
+				'columns' => {
+					'ID' => $env{'product_brand.ID'},
+					'datetime_publish_start' => 'NOW()'
+				},
+				'-journalize' => 1,
+			);
+			%product_brand=App::020::SQL::functions::get_ID(
+				'ID' => $env{'product_brand.ID'},
+				'db_h' => "main",
+				'db_name' => $App::910::db_name,
+				'tb_name' => "a910_product_brand",
+				'columns' => {'*'=>1}
+			);
+			$env{'product_brand.ID_entity'}=$product_brand{'ID_entity'};
+		}
+	}
+	
+	if (!$env{'product_brand.ID'})
+	{
+		main::_log("!product_brand.ID, create product_brand.ID (product_brand.ID_entity='$env{'product_brand.ID_entity'}')");
+		$content_reindex=1;
+		my %columns;
+		$columns{'ID_entity'}=$env{'product_brand.ID_entity'} if $env{'product_brand.ID_entity'};
+		$env{'product_brand.ID'}=App::020::SQL::functions::new(
+			'db_h' => "main",
+			'db_name' => $App::910::db_name,
+			'tb_name' => "a910_product_brand",
+			'columns' => {%columns},
+			'-journalize' => 1,
+		);
+		%product_brand=App::020::SQL::functions::get_ID(
+			'ID' => $env{'product_brand.ID'},
+			'db_h' => "main",
+			'db_name' => $App::910::db_name,
+			'tb_name' => "a910_product_brand",
+			'columns' => {'*'=>1}
+		);
+		$env{'product_brand.ID'}=$product_brand{'ID'};
+		$env{'product_brand.ID_entity'}=$product_brand{'ID_entity'};
+	}
+	
+	main::_log("product_brand.ID='$product_brand{'ID'}' product_brand.ID_entity='$product_brand{'ID_entity'}'");
+	
+	# update only if necessary
+	my %columns;
+	my %data;
+	# name
+	$data{'name'}=$env{'product_brand.name'}
+		if ($env{'product_brand.name'} && ($env{'product_brand.name'} ne $product_brand{'name'}));
+	$data{'name_url'}=TOM::Net::URI::rewrite::convert($env{'product_brand.name'},'notlower'=>1)
+		if ($env{'product_brand.name'} && ($env{'product_brand.name'} ne $product_brand{'name'}));
+	# status
+	$data{'status'}=$env{'product_brand.status'}
+		if ($env{'product_brand.status'} && ($env{'product_brand.status'} ne $product_brand{'status'}));
+	
+	if (keys %columns || keys %data)
+	{
+		$content_reindex=1;
+		App::020::SQL::functions::update(
+			'ID' => $env{'product_brand.ID'},
+			'db_h' => "main",
+			'db_name' => $App::910::db_name,
+			'tb_name' => "a910_product_brand",
+			'columns' => {%columns},
+			'data' => {%data},
+			'-posix' => 1,
+			'-journalize' => 1
+		);
+	}
+	
+	# check lng_param
+	$env{'product_brand_lng.lng'}=$tom::lng unless $env{'product_brand_lng.lng'};
+	main::_log("lng='$env{'product_brand_lng.lng'}'");
+	
+	# PRODUCT_BRAND_LNG
+	
+	my %product_brand_lng;
+	if (!$env{'product_brand_lng.ID'})
+	{
+		my $sql=qq{
+			SELECT
+				*
+			FROM
+				`$App::910::db_name`.`a910_product_brand_lng`
+			WHERE
+				ID_entity=$env{'product_brand.ID'} AND
+				lng='$env{'product_brand_lng.lng'}'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		%product_brand_lng=$sth0{'sth'}->fetchhash();
+		$env{'product_brand_lng.ID'}=$product_brand_lng{'ID'} if $product_brand_lng{'ID'};
+	}
+	
+	if (!$env{'product_brand_lng.ID'}) # if product_lng not defined, create a new
+	{
+		main::_log("!product_brand_lng.ID, create product_brand_lng.ID (product_brand_lng.lng='$env{'product_brand_lng.lng'}')");
+		$content_reindex=1;
+		my %data;
+		$data{'ID_entity'}=$env{'product_brand.ID'};
+		$data{'lng'}=$env{'product_brand_lng.lng'};
+		$env{'product_brand_lng.ID'}=App::020::SQL::functions::new(
+			'db_h' => "main",
+			'db_name' => $App::910::db_name,
+			'tb_name' => "a910_product_brand_lng",
+			'data' => {%data},
+			'-journalize' => 1,
+		);
+		%product_brand_lng=App::020::SQL::functions::get_ID(
+			'ID' => $env{'product_brand_lng.ID'},
+			'db_h' => "main",
+			'db_name' => $App::910::db_name,
+			'tb_name' => "a910_product_brand_lng",
+			'columns' => {'*'=>1}
+		);
+		$env{'product_brand_lng.ID'}=$product_brand_lng{'ID'};
+		$env{'product_brand_lng.ID_entity'}=$product_brand_lng{'ID_entity'};
+	}
+	
+	main::_log("product_brand_lng.ID='$product_brand_lng{'ID'}' product_brand_lng.ID_entity='$product_brand_lng{'ID_entity'}'");
+	
+	# update only if necessary
+	my %columns;
+	my %data;
+	# description
+	$data{'description'}=$env{'product_brand_lng.description'}
+		if ($env{'product_brand_lng.description'} && ($env{'product_brand_lng.description'} ne $product_brand_lng{'description'}));
+	
+	if (keys %columns || keys %data)
+	{
+		$content_reindex=1;
+		App::020::SQL::functions::update(
+			'ID' => $env{'product_brand_lng.ID'},
+			'db_h' => "main",
+			'db_name' => $App::910::db_name,
+			'tb_name' => "a910_product_brand_lng",
+			'columns' => {%columns},
+			'data' => {%data},
+			'-journalize' => 1,
+			'-posix' => 1,
+		);
+	}
+	
+	if ($content_reindex)
+	{
+#		main::_log(" index product_brand '$env{'product_brand.ID'}'",3,$App::910::log_changes,2)
+#			if $App::910::log_changes;
+		# reindex this product
+		_product_brand_index('ID'=>$env{'product_brand.ID'});
+	}
+	
+	$t->close();
+	return %product_brand;
+}
+
+
+
 sub _product_brand_index
 {
+	TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'fifo'});
 	my %env=@_;
 	return undef unless $env{'ID'};
 	return undef unless $Ext::Solr;
