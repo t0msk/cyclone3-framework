@@ -197,11 +197,11 @@ sub promo_item_add
 		
 		# subtitle
 		$columns{'subtitle'}="'".TOM::Security::form::sql_escape($env{'promo_item.subtitle'})."'"
-			if ($env{'promo_item.subtitle'} && ($env{'promo_item.subtitle'} ne $promo_item{'subtitle'}));
+			if (exists $env{'promo_item.subtitle'} && ($env{'promo_item.subtitle'} ne $promo_item{'subtitle'}));
 		
 		# abstract
 		$columns{'abstract'}="'".TOM::Security::form::sql_escape($env{'promo_item.abstract'})."'"
-			if ($env{'promo_item.abstract'} && ($env{'promo_item.abstract'} ne $promo_item{'abstract'}));
+			if (exists $env{'promo_item.abstract'} && ($env{'promo_item.abstract'} ne $promo_item{'abstract'}));
 		
 		# body
 		$columns{'body'}="'".TOM::Security::form::sql_escape($env{'promo_item.body'})."'"
@@ -213,10 +213,11 @@ sub promo_item_add
 		
 		# alias_url
 		$columns{'alias_url'}="'".TOM::Security::form::sql_escape($env{'promo_item.alias_url'})."'"
-			if ($env{'promo_item.alias_url'} && ($env{'promo_item.alias_url'} ne $promo_item{'alias_url'}));
+			if (exists $env{'promo_item.alias_url'} && ($env{'promo_item.alias_url'} ne $promo_item{'alias_url'}));
+		$columns{'alias_url'}='NULL' if $columns{'alias_url'} eq "''";
 		# alias_addon
 		$columns{'alias_addon'}="'".TOM::Security::form::sql_escape($env{'promo_item.alias_addon'})."'"
-			if ($env{'promo_item.alias_addon'} && ($env{'promo_item.alias_addon'} ne $promo_item{'alias_addon'}));
+			if (exists $env{'promo_item.alias_addon'} && ($env{'promo_item.alias_addon'} ne $promo_item{'alias_addon'}));
 		
 		# posix_owner
 		$columns{'posix_owner'}="'".TOM::Security::form::sql_escape($env{'promo_item.posix_owner'})."'"
