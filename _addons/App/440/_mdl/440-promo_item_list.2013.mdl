@@ -1,0 +1,556 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::440::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'promo_item.status'}='Y' unless $env{'promo_item.status'};
+		my $sql_static_status=join "','", split('',$env{'promo_item.status'});
+	
+	$env{'promo_cat.ID'} = $env{'promo_item.ID_category'} if $env{'promo_item.ID_category'};
+	
+	# paging
+	$env{'page_limit'} = 10 unless $env{'page_limit'};
+	$env{'page'} = 1 unless $env{'page'};
+	$env{'page_offset'} = 0 unless $env{'page_offset'};
+	$env{'page_plus'} = 1 unless $env{'page_plus'};
+	if (!$env{'sql_limit'})
+	{
+		$env{'sql_limit'}=((($env{'page'}-1)*$env{'page_limit'})+$env{'page_offset'}).",".($env{'page_limit'}+$env{'page_plus'});
+	}
+	else
+	{
+#		$env{'sql_limit'}=~/^(\d+),?(\d+)?$/;
+	}
+	
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || '`promo_item`.`datetime_start` DESC';
+	my $sql_group_by;
+	
+	if ($env{'unique'})
+	{
+		$sql_group_by="`promo_item`.`ID_entity`";
+	}
+	
+	if ($env{'promo_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'promo_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::440::db_name`.`a440_promo_cat` WHERE `ID_entity`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
+				$sql_cat.=qq{ OR `promo_cat`.`ID_charindex` LIKE CONCAT(($cat_sql),"%")};
+			}
+			else
+			{
+				$sql_cat.=" OR `promo_cat`.`ID_entity`=$ID_category";
+				push @{$env_out{'entity'}},{
+					'db_h' => 'main',
+					'db_name' => $App::440::db_name,
+					'tb_name' => 'a440_promo_cat',
+					'ID_entity' => $ID_category,
+				};
+			}
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'promo_cat.ID'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'promo_cat.ID'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::440::db_name`.`a440_promo_cat` WHERE `ID`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
+				$sql_cat.=qq{ OR `promo_cat`.`ID_charindex` LIKE CONCAT(($cat_sql),"%")};
+			}
+			else
+			{
+				$sql_cat.=" OR `promo_item`.`ID_category`=$ID_category";
+			}
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			`promo_item`.`ID_entity`,
+			`promo_item`.`ID`,
+			`promo_item`.`ID_category`,
+			
+			`promo_cat`.`ID` AS `cat_ID`,
+			`promo_cat`.`ID_entity` AS `cat_ID_entity`,
+			`promo_cat`.`name` AS `cat_name`,
+			`promo_cat`.`name_url` AS `cat_name_url`,
+			
+			`promo_item`.`title`,
+			`promo_item`.`title_url`,
+			`promo_item`.`subtitle`,
+			`promo_item`.`alias_url`,
+			`promo_item`.`alias_addon`,
+			`promo_item`.`posix_owner`,
+			`promo_item`.`posix_modified`,
+			`promo_item`.`datetime_start`,
+			`promo_item`.`datetime_stop`,
+			`promo_item`.`abstract`,
+			`promo_item`.`metadata`,
+			`promo_item`.`status`
+			
+		FROM `$App::440::db_name`.`a440_promo_item` AS `promo_item`
+		INNER JOIN `$App::440::db_name`.`a440_promo_cat` AS `promo_cat` ON
+		(
+			`promo_cat`.`ID` = `promo_item`.`ID_category`
+		)
+		WHERE
+			`promo_item`.`status` = 'Y' AND
+			(`promo_item`.`datetime_start` IS NULL OR `promo_item`.`datetime_start` <= NOW())
+			AND (`promo_item`.`datetime_stop` IS NULL OR `promo_item`.`datetime_stop` >= NOW())
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::440::db_name,
+				'tb_name' => "a440_promo_item",
+				'ID_entity' => do{$env{'promo_item.ID_entity'} if $env{'promo_item.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	while (my %promo_item=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		last if $i > $env{'page_limit'};
+		
+		main::_log("[$i/$env{'page_limit'}] found promo_item.ID_entity=$promo_item{'ID_entity'}");
+		
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::440::db_name,
+			'tb_name' => 'a440_static',
+			'ID_entity' => $promo_item{'ID_entity'}
+		};
+		
+		$promo_item{'related_thumbnail'}=(App::160::SQL::get_relations(
+			'db_name' => $App::440::db_name,
+			'l_prefix' => 'a440',
+			'l_table' => 'promo_item',
+			'l_ID_entity' => $promo_item{'ID'},
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'rel_type' => "thumbnail",
+			'status' => "Y"
+		))[0];
+		
+		%{$promo_item{'metahash'}}=App::020::functions::metadata::parse($promo_item{'metadata'});
+		delete $promo_item{'metadata'};
+		
+		my @alias_addon=split(':',$promo_item{'alias_addon'},2);
+		main::_log("addon=@alias_addon",3,"debug");
+		if ($alias_addon[0] && $alias_addon[1])
+		{
+			$promo_item{'addon_type'}=$alias_addon[0];
+			$promo_item{'addon_ID_entity'}=$alias_addon[1];
+			
+			if ($alias_addon[0] eq "a401_article")
+			{
+				require App::401::_init;
+				
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						
+						article.ID_entity,
+						article.ID,
+						article_attrs.ID AS attrs_ID,
+						article_content.ID AS content_ID,
+						
+						article_attrs.ID_category,
+						article_cat.ID AS cat_ID,
+						article_cat.name AS cat_name,
+						article_cat.name_url AS cat_name_url,
+						
+						article_ent.posix_owner,
+						article_ent.ID_author AS posix_author,
+						article_ent.visits,
+						article_ent.sources,
+						article_ent.metadata,
+						article_content.ID_editor AS posix_editor,
+						
+						article_content.datetime_create AS content_datetime_create,
+						article_attrs.datetime_start,
+						article_attrs.datetime_stop,
+						
+						article_attrs.priority_A,
+						article_attrs.priority_B,
+						article_attrs.priority_C,
+						
+						article_attrs.name,
+						article_attrs.name_url,
+						article_attrs.name_hyphens,
+						article_attrs.alias_url,
+						
+						article_content.subtitle,
+						article_content.subtitle_hyphens,
+						article_content.mimetype,
+						article_content.abstract,
+						article_content.abstract_hyphens,
+						article_content.body,
+						article_content.body_hyphens,
+						article_content.keywords,
+						article_content.lng,
+						
+						article_ent.visits,
+						
+						article_attrs.status
+						
+					FROM `$App::401::db_name`.a401_article_ent AS article_ent
+					INNER JOIN `$App::401::db_name`.a401_article AS article ON
+					(
+						article_ent.ID_entity = article.ID_entity
+					)
+					INNER JOIN `$App::401::db_name`.a401_article_attrs AS article_attrs ON
+					(
+						article_attrs.ID_entity = article.ID AND
+						article_attrs.status IN ('Y') AND
+						article_attrs.lng = '$env{'lng'}'
+					)
+					INNER JOIN `$App::401::db_name`.a401_article_content AS article_content ON
+					(
+						article_content.ID_entity = article.ID_entity AND
+						article_content.status = 'Y' AND
+						article_content.lng = article_attrs.lng
+					)
+					INNER JOIN `$App::401::db_name`.a401_article_cat AS article_cat ON
+					(
+						article_cat.ID = article_attrs.ID_category
+					)
+					LEFT JOIN `$App::401::db_name`.a301_ACL_user_group AS ACL_world ON
+					(
+						ACL_world.ID_entity = 0 AND
+						r_prefix = 'a401' AND
+						r_table = 'article' AND
+						r_ID_entity = article.ID_entity
+					)
+					WHERE
+						article_ent.status = 'Y'
+						AND article.status = 'Y'
+						AND article.ID_entity = ?
+					LIMIT
+						1
+				},'bind'=>[$alias_addon[1]]);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					
+					
+					# get all cats
+					my @cats;
+					my %sth2=TOM::Database::SQL::execute(qq{
+						SELECT
+							article_cat.ID AS cat_ID
+						FROM `$App::401::db_name`.a401_article_ent AS article_ent
+						INNER JOIN `$App::401::db_name`.a401_article AS article ON
+						(
+							article_ent.ID_entity = article.ID_entity
+						)
+						LEFT JOIN `$App::401::db_name`.a401_article_attrs AS article_attrs ON
+						(
+							article_attrs.ID_entity = article.ID AND
+							article_attrs.status IN ('Y') AND
+							article_attrs.lng = '$env{'lng'}'
+						)
+						LEFT JOIN `$App::401::db_name`.a401_article_cat AS article_cat ON
+						(
+							article_cat.ID = article_attrs.ID_category AND
+							article_cat.status IN ('Y','L')
+						)
+						WHERE
+							article_ent.status = 'Y'
+							AND article.status = 'Y'
+							AND article_cat.ID IS NOT NULL
+							AND article.ID_entity = ?
+					},'bind'=>[$alias_addon[1]],'quiet'=>1,'-slave'=>1,
+						'-cache' => 600,
+						'-changetime'=>App::020::SQL::functions::_get_changetime(
+							{
+								'db_h'=>"main",
+								'db_name' => $App::401::db_name,
+								'tb_name' => "a401_article",
+								'ID_entity' => $alias_addon[1]
+							}),
+					);
+					while (my %cat=$sth2{'sth'}->fetchhash())
+					{
+						push @cats, $cat{'cat_ID'};
+					}
+					
+					# link to a210_page
+					if (my $category=App::401::functions::_a210_by_cat(\@cats,'lng'=>$env{'lng'}))
+					{
+						my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+						foreach my $p(
+							App::020::SQL::functions::tree::get_path(
+								$category,
+								%sql_def,
+								'-slave' => 1,
+								'-cache' => 86400*7
+							)
+						)
+						{
+							push @{$db1_line{'a210'}{'IDs'}}, $p->{'ID'};
+							push @{$db1_line{'a210'}{'nodes'}}, $p;
+							$db1_line{'a210'}{'path_url'}.="/".$p->{'name_url'};
+						}
+						$db1_line{'a210'}{'path_url'}=~s|^/||;
+					}
+					
+					$promo_item{'addon'}=\%db1_line;
+				}
+				
+			}
+			elsif ($alias_addon[0] eq "a510_broadcast_program")
+			{
+				require App::510::_init;
+				
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						program.*,
+						channel.name AS channel_name
+					FROM `$App::510::db_name`.`a510_broadcast_program` AS program
+					INNER JOIN `$App::510::db_name`.`a510_broadcast_channel` AS channel ON
+					(
+						program.ID_channel = channel.ID
+					)
+					WHERE
+						program.status = 'Y' AND
+						program.ID_entity = ?
+					LIMIT
+						1
+				},'bind'=>[$alias_addon[1]]);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					
+					my %sth2=TOM::Database::SQL::execute(qq{
+						SELECT
+							series.*
+						FROM `$App::510::db_name`.`a510_broadcast_series` AS series
+						WHERE
+							series.status = 'Y' AND
+							series.ID_entity = ?
+						LIMIT
+							1
+					},'bind'=>[$db1_line{'ID_series'}]);
+					%{$db1_line{'series'}}=$sth2{'sth'}->fetchhash();
+					
+					$promo_item{'addon'}=\%db1_line;
+				}
+				
+			}
+			elsif ($alias_addon[0] eq "a510_broadcast_series")
+			{
+				require App::510::_init;
+				
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						series.*
+					FROM `$App::510::db_name`.`a510_broadcast_series` AS series
+					WHERE
+						series.status = 'Y' AND
+						series.ID_entity = ?
+					LIMIT
+						1
+				},'bind'=>[$alias_addon[1]]);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					
+					my %sth1=TOM::Database::SQL::execute(qq{
+						SELECT
+							broadcast_program.*
+						FROM
+							`$App::510::db_name`.a510_broadcast_series AS broadcast_series
+						LEFT JOIN `$App::510::db_name`.a510_broadcast_program AS broadcast_program ON
+						(
+							broadcast_program.ID_series = broadcast_series.ID_entity
+							AND broadcast_program.ID_video IS NOT NULL
+							AND broadcast_program.status = 'Y'
+							AND broadcast_program.datetime_air_start <= NOW()
+						)
+						WHERE
+							broadcast_series.status = 'Y'
+							AND broadcast_program.ID_video IS NOT NULL
+							AND (broadcast_series.ID_entity = ? OR broadcast_series.parent_ID = ?)
+							AND broadcast_program.datetime_air_start >= NOW()
+						ORDER BY
+							broadcast_program.datetime_air_start ASC
+						LIMIT 1
+					},'-slave'=>1,'bind'=>[
+						$db1_line{'ID_entity'},
+						$db1_line{'ID_entity'}
+					],'log'=>0);
+					%{$db1_line{'program'}}=$sth1{'sth'}->fetchhash();
+					
+					$promo_item{'addon'}=\%db1_line;
+				}
+				
+=head1
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						program.*,
+						channel.name AS channel_name
+					FROM `$App::510::db_name`.`a510_broadcast_program` AS program
+					INNER JOIN `$App::510::db_name`.`a510_broadcast_channel` AS channel ON
+					(
+						program.ID_channel = channel.ID
+					)
+					WHERE
+						program.status = 'Y' AND
+						program.ID_entity = ?
+					LIMIT
+						1
+				},'bind'=>[$alias_addon[1]]);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					$promo_item{'addon'}=\%db1_line;
+				}
+=cut
+				
+			}
+			elsif ($alias_addon[0] eq "a520_broadcast_program")
+			{
+				require App::520::_init;
+				
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						program.*,
+						channel.name AS channel_name
+					FROM `$App::520::db_name`.`a520_broadcast_program` AS program
+					INNER JOIN `$App::520::db_name`.`a520_broadcast_channel` AS channel ON
+					(
+						program.ID_channel = channel.ID
+					)
+					WHERE
+						program.status = 'Y' AND
+						program.ID_entity = ?
+					LIMIT
+						1
+				},'bind'=>[$alias_addon[1]]);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					$promo_item{'addon'}=\%db1_line;
+				}
+				
+			}
+			elsif ($alias_addon[0] eq "a542_file")
+			{
+				require App::542::_init;
+				
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						file.ID_entity,
+						file.ID,
+						file_attrs.ID AS attrs_ID,
+						file_item.ID AS item_ID,
+						
+						file_attrs.ID_category,
+						
+						file_ent.datetime_publish_start,
+						file_ent.datetime_publish_stop,
+						
+						file_item.hash_secure,
+						file_item.datetime_create,
+						
+						file_attrs.name,
+						file_attrs.name_url,
+						file_attrs.name_ext,
+						
+						file_item.mimetype,
+						file_item.file_ext,
+						file_item.file_size,
+						file_item.lng,
+						
+						file_ent.downloads,
+						
+						file_attrs.status,
+						
+						CONCAT(file_item.lng,'/',SUBSTR(file_item.ID,1,4),'/',file_item.name,'.',file_item.file_ext) AS file_path
+						
+					FROM
+						`$App::542::db_name`.`a542_file` AS file
+					INNER JOIN `$App::542::db_name`.`a542_file_ent` AS file_ent ON
+					(
+						file_ent.ID_entity = file.ID_entity
+					)
+					LEFT JOIN `$App::542::db_name`.`a542_file_attrs` AS file_attrs ON
+					(
+						file_attrs.ID_entity = file.ID
+					)
+					LEFT JOIN `$App::542::db_name`.`a542_file_item` AS file_item ON
+					(
+						file_item.ID_entity = file.ID_entity AND
+						file_item.lng = file_attrs.lng
+					)
+					LEFT JOIN `$App::542::db_name`.`a542_file_dir` AS file_dir ON
+					(
+						file_dir.ID = file_attrs.ID_category
+					)
+					WHERE
+						file.ID_entity = ?
+					LIMIT 1
+				},'bind'=>[$alias_addon[1]]);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					$promo_item{'addon'}=\%db1_line;
+				}
+				
+			}
+		}
+		
+		push @{$TPL->{'variables'}{'items'}},\%promo_item;
+	}
+	
+	return 1,%env_out;
+}
+
+1;
