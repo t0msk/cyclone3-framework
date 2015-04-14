@@ -1458,6 +1458,11 @@ while ($main::CGI=new CGI::Fast())
 							'-cache' => 600,
 							'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%sql_def)
 						);
+						if ($App::210::node_metadata_parse)
+						{
+							%{$a210{'metatree'}}=App::020::functions::metadata::parse($a210{'metadata'});
+							delete $a210{'metadata'};
+						}
 						$main::a210{'node'}=\%a210;
 						# musim vygenerovat default path pre automaticky 301 code
 						foreach my $p(
@@ -1470,6 +1475,16 @@ while ($main::CGI=new CGI::Fast())
 							)
 						)
 						{
+							my $cvml = new CVML(data=>$p->{'t_keys'});
+							foreach (grep {$_=~/^_/} keys %{$cvml->{'hash'}}) # cascading keys
+							{
+								$key{$_}=$cvml->{'hash'}->{$_};
+								main::_log("t_key set '$_'='$key{$_}'");
+							}
+							if ($App::210::node_metadata_parse)
+							{
+								%{$p->{'metatree'}}=App::020::functions::metadata::parse($p->{'metadata'});
+							}
 							push @{$a210{'IDs'}}, $p->{'ID'};
 							push @{$a210{'nodes'}}, $p;
 							$main::FORM{'a210_path'}.="/".$p->{'name_url'};
@@ -1526,6 +1541,12 @@ while ($main::CGI=new CGI::Fast())
 							)
 						)
 						{
+							my $cvml = new CVML(data=>$p->{'t_keys'});
+							foreach (grep {$_=~/^_/} keys %{$cvml->{'hash'}}) # cascading keys
+							{
+								$key{$_}=$cvml->{'hash'}->{$_};
+								main::_log("t_key set '$_'='$key{$_}'");
+							}
 							if ($App::210::node_metadata_parse)
 							{
 								%{$p->{'metatree'}}=App::020::functions::metadata::parse($p->{'metadata'});
@@ -1556,10 +1577,11 @@ while ($main::CGI=new CGI::Fast())
 						
 						my $cvml = new CVML(data=>$a210{'t_keys'});
 						# a vytvor z neho hash
-						%key = %{$cvml->{'hash'}};
-						foreach (keys %key)
+						#%key = %{$cvml->{'hash'}};
+						foreach (keys %{$cvml->{'hash'}})
 						{
-							main::_log("key '$_'='$key{$_}'");
+							$key{$_}=$cvml->{'hash'}->{$_};
+							main::_log("t_key set '$_'='$key{$_}'");
 						}
 						
 						if (!$a210{'ID'})
@@ -1847,11 +1869,11 @@ while ($main::CGI=new CGI::Fast())
 			next unless $env0{'default'};
 			if (!$main::key{$env0{'name'}})
 			{
-				main::_log("set key='$env0{'name'}' default value='$env0{'default'}'");
+				main::_log("t_key '$env0{'name'}' set to default value='$env0{'default'}'");
 				if ($env0{'default'}=~/^<\$/)
 				{
 					TOM::Utils::vars::replace($env0{'default'});
-					main::_log("re-set key='$env0{'name'}' default value='$env0{'default'}'");
+					main::_log("re-set t_key '$env0{'name'}' to default value='$env0{'default'}'");
 				}
 				$main::key{$env0{'name'}}=$env0{'default'};
 			}
