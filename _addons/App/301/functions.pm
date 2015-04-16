@@ -573,57 +573,9 @@ sub user_add
 #		return undef
 	}
 	
-	foreach my $group(@{$env{'groups'}})
+	if ($env{'groups'})
 	{
-		next unless $group;
-		main::_log("add to group '$group'");
-		my %sth0=TOM::Database::SQL::execute(qq{
-			SELECT
-				ID
-			FROM
-				TOM.a301_user_group
-			WHERE
-				(name = ? OR ID = ?) AND
-				hostname = ?
-		},'bind'=>[$group,$group,$env{'user.hostname'}],'quiet'=>1);
-		if (my %db0_line=$sth0{'sth'}->fetchhash())
-		{
-			main::_log(" group number $db0_line{'ID'} hostname $env{'user.hostname'}");
-			TOM::Database::SQL::execute(qq{
-				REPLACE INTO TOM.a301_user_rel_group
-				(
-					ID_user,
-					ID_group
-				)
-				VALUES
-				(
-					?,
-					?
-				)
-			},'bind'=>[$env{'user.ID_user'},$db0_line{'ID'}],'quiet'=>1);
-			TOM::Database::SQL::execute(qq{
-				INSERT INTO TOM.a301_user_rel_group_l
-				(
-					ID_user,
-					ID_group,
-					datetime_event,
-					posix_modified,
-					action
-				)
-				VALUES
-				(
-					?,
-					?,
-					NOW(),
-					?,
-					'A'
-				)
-			},'bind'=>[$env{'user.ID_user'},$db0_line{'ID'},$main::USRM{'ID_user'}],'quiet'=>1);
-		}
-		else
-		{
-			main::_log(" can't find group",1);
-		}
+		user_group_add($env{'user.ID_user'},$env{'groups'});
 		$content_reindex=1;
 	}
 	
@@ -816,7 +768,8 @@ sub user_groups
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			user_group.ID AS ID_group,
-			user_group.name AS group_name
+			user_group.name AS group_name,
+			user_group.status
 		FROM
 			`TOM`.`a301_user_rel_group` AS rel
 		LEFT JOIN `TOM`.`a301_user` AS user ON
@@ -843,6 +796,182 @@ sub user_groups
 	return %groups;
 }
 
+
+sub user_group_add
+{
+	my $ID_user=shift;
+	if (not $ID_user=~/^[a-zA-Z0-9]{8}$/)
+	{
+		return undef;
+	}
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`TOM`.a301_user
+		WHERE
+			ID_user=?
+		LIMIT 1;
+	},'bind'=>[$ID_user],'quiet'=>1);
+	my %user=$sth0{'sth'}->fetchhash();
+	return unless $user{'ID_user'};
+	
+	my $t=track TOM::Debug(__PACKAGE__."::user_group_add($ID_user)");
+	
+	my $groups=shift;
+	
+	my $changed;
+	foreach my $group(@{$groups})
+	{
+		next unless $group;
+		main::_log("add to group '$group'");
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				ID
+			FROM
+				TOM.a301_user_group
+			WHERE
+				(name = ? OR ID = ?) AND
+				hostname = ?
+		},'bind'=>[$group,$group,$user{'hostname'}],'quiet'=>1);
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			main::_log("user_group.ID=$db0_line{'ID'} hostname $user{'hostname'}");
+			TOM::Database::SQL::execute(qq{
+				REPLACE INTO TOM.a301_user_rel_group
+				(
+					ID_user,
+					ID_group
+				)
+				VALUES
+				(
+					?,
+					?
+				)
+			},'bind'=>[$ID_user,$db0_line{'ID'}],'quiet'=>1);
+			TOM::Database::SQL::execute(qq{
+				INSERT INTO TOM.a301_user_rel_group_l
+				(
+					ID_user,
+					ID_group,
+					datetime_event,
+					posix_modified,
+					action
+				)
+				VALUES
+				(
+					?,
+					?,
+					NOW(),
+					?,
+					'A'
+				)
+			},'bind'=>[$ID_user,$db0_line{'ID'},$main::USRM{'ID_user'}],'quiet'=>1);
+			$changed = 1;
+		}
+		else
+		{
+			main::_log(" can't find group",1);
+		}
+	}
+	if ($changed)
+	{
+		App::020::SQL::functions::_save_changetime({
+			'tb_name' => 'a301_user_rel_group',
+			'ID_entity' => $ID_user
+		});
+	}
+	
+	$t->close();
+	return 1;
+}
+
+
+sub user_group_remove
+{
+	my $ID_user=shift;
+	if (not $ID_user=~/^[a-zA-Z0-9]{8}$/)
+	{
+		return undef;
+	}
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`TOM`.a301_user
+		WHERE
+			ID_user = ?
+		LIMIT 1;
+	},'bind'=>[$ID_user],'quiet'=>1);
+	my %user=$sth0{'sth'}->fetchhash();
+	return unless $user{'ID_user'};
+	
+	my $t=track TOM::Debug(__PACKAGE__."::user_group_add($ID_user)");
+	
+	my $groups=shift;
+	
+	my $changed;
+	foreach my $group(@{$groups})
+	{
+		next unless $group;
+		main::_log("remove from group '$group'");
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				ID
+			FROM
+				TOM.a301_user_group
+			WHERE
+				(name = ? OR ID = ?) AND
+				hostname = ?
+		},'bind'=>[$group,$group,$user{'hostname'}],'quiet'=>1);
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			main::_log("user_group.ID=$db0_line{'ID'} hostname $user{'hostname'}");
+			TOM::Database::SQL::execute(qq{
+				DELETE FROM TOM.a301_user_rel_group
+				WHERE
+					ID_user = ? AND
+					ID_group = ?
+				LIMIT 1
+			},'bind'=>[$ID_user,$db0_line{'ID'}],'quiet'=>1);
+			TOM::Database::SQL::execute(qq{
+				INSERT INTO TOM.a301_user_rel_group_l
+				(
+					ID_user,
+					ID_group,
+					datetime_event,
+					posix_modified,
+					action
+				)
+				VALUES
+				(
+					?,
+					?,
+					NOW(),
+					?,
+					'R'
+				)
+			},'bind'=>[$ID_user,$db0_line{'ID'},$main::USRM{'ID_user'}],'quiet'=>1);
+			$changed = 1;
+		}
+		else
+		{
+			main::_log(" can't find group",1);
+		}
+	}
+	if ($changed)
+	{
+		App::020::SQL::functions::_save_changetime({
+			'tb_name' => 'a301_user_rel_group',
+			'ID_entity' => $ID_user
+		});
+	}
+	
+	$t->close();
+	return 1;
+}
 
 
 sub user_active
