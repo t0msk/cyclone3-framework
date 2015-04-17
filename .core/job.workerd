@@ -146,7 +146,7 @@ main::_log_stdout("max $MAX_WORKERS workers (allowed to fork?=$ENV{'WORKERS'}), 
 
 main::_log_stdout("main loop timer starting",3,"job.workerd") if $ENV{'WORKERS'};
 my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
-	
+	$main::request_code=Utils::vars::genhash(8);
 #	main::_log_stdout("controlling job queue pool");
 	local $main::_canexit;
 	
@@ -379,6 +379,7 @@ my $w=AnyEvent->timer(after => 60, interval => 10, cb => \&check_domains);
 my $w=AnyEvent->timer(after => 0, interval => 5, cb => \&check_scheduler);
 sub check_domains
 {
+	$main::request_code=Utils::vars::genhash(8);
 	if ($ENV{'AUTORESTART'} && (time()-$main::time_current) >= (3600*3))
 	{ # restart every 6h
 		main::_log("running too long, restarting");
@@ -736,6 +737,7 @@ sub check_domains
 
 sub check_scheduler
 {
+	$main::request_code=Utils::vars::genhash(8);
 	local $main::_canexit;
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
