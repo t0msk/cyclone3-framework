@@ -26,17 +26,21 @@ sub request
 	my $reqtype="B";
 	$reqtype="R" if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{agent_type} eq "robot");
 	
-	my %form_=%main::FORM;
-	foreach (keys %form_)
+	my %form_;
+	if (!$TOM::event_severity_disable{'debug'})
 	{
-		delete $form_{$_} if ref($form_{$_});
-		if (length($form_{$_}) > 64)
+		%form_=%main::FORM;
+		foreach (keys %form_)
 		{
-			$form_{$_} = substr($form_{$_},1,64) . '...';
+			delete $form_{$_} if ref($form_{$_});
+			if (length($form_{$_}) > 64)
+			{
+				$form_{$_} = substr($form_{$_},1,64) . '...';
+			}
 		}
 	}
 	
-	main::_event('info','pub.request',{
+	my $obj={
 		'times' => {
 			'duration' => $env{'duration'},
 			'wait' => $env{'duration'}-$env{'user'}-$env{'sys'},
@@ -57,7 +61,19 @@ sub request
 			'response_status' => $env{'code'},
 			'redirect' => $env{'location'}
 		}
-	});
+	};
+	
+	# remove verbosity
+	if ($TOM::event_severity_disable{'debug'})
+	{
+		delete $obj->{'times'};
+		delete $obj->{'pub'}->{'query'};
+		delete $obj->{'pub'}->{'USER_AGENT'};
+		delete $obj->{'pub'}->{'redirect'};
+		delete $obj->{'pub'}->{'REFERER'};
+	}
+	
+	main::_event('info','pub.request',$obj);
 	
 	return undef if $App::110::IP_exclude{$main::ENV{'REMOTE_ADDR'}};
 	return undef if $main::FORM{'_rc'}; # if this page is only request to recache content
