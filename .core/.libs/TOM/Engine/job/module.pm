@@ -1,3 +1,8 @@
+package job;
+sub jobify {return TOM::Engine::job::module::jobify(@_)}
+sub call {my @r=@_;shift @r;$r[0]={'name'=>$r[0]} if scalar $r[0];return new TOM::Engine::job::module(@r)->execute()}
+sub new {my @r=@_;shift @r;$r[0]={'name'=>$r[0]} if scalar $r[0];return new TOM::Engine::job::module(@r)}
+
 package TOM::Engine::job::module;
 use open ':utf8', ':std';
 use if $] < 5.018, 'encoding','utf8';
@@ -9,6 +14,13 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 use TOM;
 use Cwd 'abs_path';
 use Ext::Redis::_init;
+
+sub jobify
+{
+	return 1 if TOM::Engine::jobify(\@_);my @r=@_;
+	$r[1]={'name'=>$r[1]} if scalar $r[1];
+	return new(@r)->execute();
+}
 
 sub new
 {
@@ -72,7 +84,7 @@ sub new
 		
 		if (!$conf->{'file'})
 		{
-			main::_log("can't find job file ".$file." in @inc",1);
+#			main::_log("can't find job file ".$file." in @inc",1);
 		}
 		
 		delete $conf->{'name'};
@@ -249,7 +261,7 @@ sub jobify # prepare function call to background
 	if ($main::nojobify)
 	{
 		undef $main::nojobify;
-		main::_log("can't jobify, go to exec",1);
+#		main::_log("can't jobify, go to exec",1);
 		return undef;
 	}
 	return undef unless $RabbitMQ;
@@ -291,7 +303,6 @@ sub jobify # prepare function call to background
 	my $id=TOM::Utils::vars::genhash(16);
 	my (undef,undef,undef,$function)=caller 1;
 	main::_log("{jobify} function '$function' routing_key='".($env->{'routing_key'})."' id='$id'");
-	main::_log("{jobify} function '$function' routing_key='".($env->{'routing_key'})."' id='$id'",3,"job");
 	
 	my %headers;
 		$headers{'deduplication'}=$env->{'deduplication'}
