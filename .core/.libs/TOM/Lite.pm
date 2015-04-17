@@ -6,6 +6,7 @@ use strict;
 
 our $event_socket;
 use JSON;
+use Encode qw(decode encode);
 our $json = JSON::XS->new->utf8->allow_blessed(1);
 
 sub ctodatetime
@@ -349,7 +350,7 @@ sub _event
 	
 	if ($event_socket && $TOM::event_socket)
 	{
-		print $event_socket $json->encode(\%hash)."\n";
+		print $event_socket encode('UTF-8',$json->encode(\%hash)."\n");
 	}
 	
 	# write to RabbitMQ to notice channel?
@@ -363,18 +364,21 @@ sub _event
 #		my $service=$Ext::Elastic::service_async || $Ext::Elastic::service; # async when async library available
 		if ($Ext::Elastic::service_async)
 		{
+			main::_log("event async");
 			$Ext::Elastic::service_async->index(
 				'index' => '.cyclone3.'.$log_date{'year'}.$log_date{'mon'},
 				'type' => 'event',
 				'body' => {
 					'datetime' => $log_date{'year'}.'-'.$log_date{'mon'}.'-'.$log_date{'mday'}.' '.$log_date{'hour'}.':'.$log_date{'min'}.':'.$log_date{'sec'}.'.'.$msec,
 					%hash
-				},sub{}
-			);
+				}
+			)->then(sub{
+#				$Ext::Elastic::cv->send({'test' => 'a'});
+				main::_log("event async writed");
+			});
 		}
 		else
 		{
-#			print "sync write\n";
 			$Ext::Elastic::service->index(
 				'index' => '.cyclone3.'.$log_date{'year'}.$log_date{'mon'},
 				'type' => 'event',
