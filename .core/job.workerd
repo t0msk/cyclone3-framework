@@ -27,6 +27,7 @@ our $sig_term=1;
 ######################################################################################
 ######################################################################################
 
+$main::request_code=Utils::vars::genhash(8);
 my $t0=track TOM::Debug('TOM::Engine::job');
 require TOM::Engine::job;
 TOM::Database::connect::multi('main','sys')
