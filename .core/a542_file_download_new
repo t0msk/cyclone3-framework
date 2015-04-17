@@ -65,7 +65,7 @@ while ($main::CGI=new CGI::Fast())
 		
 		my %FORM=TOM::Net::HTTP::CGI::get_QUERY_STRING($ENV{'QUERY_STRING'});
 		
-		main::_log("request for ID='$FORM{'ID'}' hash='$FORM{'hash'}'");
+		main::_log("request for ID='$FORM{'ID'}' hash='$FORM{'hash'}' open='$FORM{'open'}'");    
 
 		my $can_download = 0;
 		my $debug;
@@ -337,7 +337,13 @@ while ($main::CGI=new CGI::Fast())
 					
 					print "Connection: close\n";
 					print "Content-Type: $db0_line{'mimetype'}\n";
-					print "Content-Disposition: attachment; filename = ".$db0_line{'name_url'}.".".$db0_line{'name_ext'}."\n";
+					if (!$FORM{'open'}) {
+						print "Content-Disposition: attachment;" 
+					} else {
+						main:_log('opening file');
+						print "Content-Disposition: inline;";
+					}
+					print "filename = ".$db0_line{'name_url'}.".".$db0_line{'name_ext'}."\n";
 					my $size=(stat($tom::P_media."/a542/file/item/".$db0_line{'file_path'}))[7];
 					print "Content-length: $size\n";
 					
