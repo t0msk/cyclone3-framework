@@ -90,15 +90,27 @@ sub BODY # get body code
 sub OUT_ # get cleaned code
 {
 	my $self=shift;
-	$self->{OUT}{BODY}=~s|<%.*?%>||gs;
-	$self->{OUT}{BODY}=~s|<#.*?#>||gs;
-	$self->{OUT}{BODY}=~s|<![^-].*?!>||g;# unless $main::IAdm;
-	$self->{OUT}{BODY}=~s|<!---->||g;# unless $main::IAdm;
-	$self->{OUT}{HEADER}=~s|<%.*?%>||gs;
-	$self->{OUT}{HEADER}=~s|<#.*?#>||gs;
-	$self->{OUT}{HEADER}=~s|<!.*?!>||g;# unless $main::IAdm;
-	my $doc=$self->{OUT}{HEADER}.$self->{OUT}{BODY}.$self->{OUT}{FOOTER};
+	$self->{'OUT'}{'BODY'}=~s|<%.*?%>||gs;
+	$self->{'OUT'}{'BODY'}=~s|<#.*?#>||gs;
+	$self->{'OUT'}{'BODY'}=~s|<![^-].*?!>||g;# unless $main::IAdm;
+	$self->{'OUT'}{'BODY'}=~s|<!---->||g;# unless $main::IAdm;
+	$self->{'OUT'}{'HEADER'}=~s|<%.*?%>||gs;
+	$self->{'OUT'}{'HEADER'}=~s|<#.*?#>||gs;
+	$self->{'OUT'}{'HEADER'}=~s|<!.*?!>||g;# unless $main::IAdm;
+	my $doc=$self->{'OUT'}{'HEADER'}.$self->{'OUT'}{'BODY'}.$self->{'OUT'}{'FOOTER'};
 	1 while ($doc=~s|\n\n$|\n|g);
+	if (@pub::DOC_HTTPS_autoreplace && $main::ENV{'HTTPS'} eq "on")
+	{
+		main::_log("autoreplace HTTPS",3,"debug");
+		foreach my $replace (@pub::DOC_HTTPS_autoreplace)
+		{
+			use Data::Dumper;
+#			main::_log(" replace=".Dumper($replace),3,"debug");
+			main::_log(" $replace->[0] -> $replace->[1]",3,"debug");
+			$doc=~s|$replace->[0]|$replace->[1]|gm;
+#			main::_log(" $_='$main::ENV{$_}'",3,"debug");
+		}
+	}
 	utf8::decode($doc) unless utf8::is_utf8($doc);
 	return $doc;
 }
