@@ -166,7 +166,7 @@ sub new
 			'namespace' => "l10ncache",
 			'key' => $TOM::P_uuid.':'.$obj->{'uid'},
 			'value' => $obj_return,
-			'expiration' => '86400S'
+			'expiration' => '3600S'
 		);
 	}
 	
