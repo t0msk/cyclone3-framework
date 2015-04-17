@@ -114,6 +114,7 @@ main::_log("routing_key '".'db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class."'")
 sub callback {
 	alarm 0;
 	local $main::_canexit;
+	local $main::request_code=Utils::vars::genhash(8);
 	my $var = shift;
 	my $body = $var->{'body'}->{'payload'};
 	my $this_channel=$service->_channels->{$var->{'body'}->{'channel'}};
@@ -126,7 +127,7 @@ sub callback {
 	my $delivery_tag=$var->{'deliver'}->{'method_frame'}->{'delivery_tag'};
 	my $routing_key=$var->{'deliver'}->{'method_frame'}->{'routing_key'};
 	my $deduplication;
-		$deduplication=$var->{'header'}->{'headers'}->{'deduplication'} || 'N';
+		$deduplication=$var->{'header'}->{'headers'}->{'deduplication'} || 'false';
 	
 	my %env0=main::ctodatetime($timestamp,format=>1);
 	my $time_str=$env0{'year'}.'-'.$env0{'mon'}.'-'.$env0{'mday'}.' '.$env0{'hour'}.':'.$env0{'min'}.':'.$env0{'sec'};
@@ -135,7 +136,7 @@ sub callback {
 	main::_log(" payload=".$body);
 	
 	my $key_entity=TOM::Digest::hash($tom::H.$var->{'body'}->{'payload'});
-	if ($deduplication && $Redis)
+	if ($deduplication && ($deduplication ne "false") && $Redis)
 	{
 		my $timestamp_exec=$Redis->hget('C3|job|'.$key_entity,'finished');
 		my $timestamp_start=$Redis->hget('C3|job|'.$key_entity,'started');
