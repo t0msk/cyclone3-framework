@@ -164,11 +164,43 @@ if ($main::arg{'msg'})
 	}
 };
 
-push @filter,{"range" => {
-	'@timestamp' => {
-		'gte' => 'now-24h'
-	}
-}};
+$main::arg{'range'}='24h' unless $main::arg{'range'};
+if ($main::arg{'date'}=~/^(\d\d\d\d)-(\d\d)-(\d\d)$/)
+{
+	my $td = DateTime->new(
+		'year' => $1,
+		'month' => $2,
+		'day' => $3,
+		'hour' => 0,
+		'minute' => 0,
+		'second' => 0,
+		'time_zone'  => 'local'
+	);
+	$td->set_time_zone('GMT');
+	
+	my $date_start=$td->strftime('%FT%H:%M:%SZ');
+	$td->add('days'=>1);
+	my $date_stop=$td->strftime('%FT%H:%M:%SZ');
+#	print $date_start;
+#	print $date_stop;
+	
+	push @filter,{"range" => {
+		'@timestamp' => {
+			'gte' => $date_start,
+			'lt' => $date_stop
+		}
+	}};
+	$query.=" date=~".$main::arg{'date'};
+}
+elsif ($main::arg{'range'})
+{
+	push @filter,{"range" => {
+		'@timestamp' => {
+			'gte' => 'now-24h'
+		}
+	}};
+	$query.=" (date)range=-".$main::arg{'range'};
+}
 
 $query=~s|^ ||;
 
