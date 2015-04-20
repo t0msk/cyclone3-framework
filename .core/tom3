@@ -749,12 +749,15 @@ while ($main::CGI=new CGI::Fast())
 		#
 		
 		# cache disable if requested (should be rewrited)
-		if ($main::ENV{'Cache-Control'} eq "no-cache")
+		if ($tom::devel) # allow recache only in devel server
 		{
-#			$main::cache=0;
-#			main::_log("IP=$main::ENV{'REMOTE_ADDR'} requested no-cache",3,"debug");
+			if ($main::ENV{'Cache-Control'} eq "no-cache")
+			{
+				$main::cache=0;
+				main::_log("IP=$main::ENV{'REMOTE_ADDR'} requested no-cache",3,"debug");
+			}
+			$main::cache=0 if $main::FORM{'_rc'} < 0;
 		}
-		$main::cache=0 if $main::FORM{'_rc'} < 0;
 		
 		# add a201_path_prefix when in secondary domain
 		foreach (grep {defined $_->{'H'} && defined $_->{'a210_path_prefix'}} @tom::H_www_multi)
@@ -1333,33 +1336,51 @@ while ($main::CGI=new CGI::Fast())
 						'sys' => $t_eval->{'time'}{'sys'}{'duration'},
 						'code' => '304'
 					);
-#=head1
+					
 					do
 					{
-						my $e_p=$t_eval->{'time'}{'proc'}{'duration'};
 						my $e_r=$t_eval->{'time'}{'req'}{'duration'};
-						main::_log("[$tom::H]".
-							" ".
-							"TID:?".
-							" ".
-							"eval:".$e_r."/".$e_p.
-							" ".
-							"(".
-								"pre_process:".
-									$t_preprocess->{'time'}{req}{duration}.'/'.$t_preprocess->{'time'}{proc}{duration}.' '.
-									TOM::Math::percentage($e_r,$t_preprocess->{'time'}{req}{duration})."%/".
-									TOM::Math::percentage($e_p,$t_preprocess->{'time'}{proc}{duration})."%".
-								" ".
-								"process: 0/0 0%/0%".
-								" ".
-								"post_process: 0/0 0%/0%".
-							")".
-							"",3,"pub.bench",1) if $TOM::DEBUG_benchmark;
+						my $e_p=$t_eval->{'time'}{'proc'}{'duration'};
+						
+						if ($Ext::Redis::service)
+						{
+							my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
+							$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
+								'cnt',1,sub{});
+#							$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
+#								'pre_req',$t_preprocess->{'time'}{'req'}{'duration'}*1000,sub{});
+#							$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
+#								'pre_proc',$t_preprocess->{'time'}{'proc'}{'duration'}*1000,sub{});
+							$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
+								'eval_req',int($e_r*1000),sub{});
+							$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
+								'eval_proc',int($e_p*1000),sub{});
+							
+#							print "r=$e_r p=$e_p\n";
+							
+						}
+						
+#						main::_log("[$tom::H]".
+#							" ".
+#							"TID:?".
+#							" ".
+#							"eval:".$e_r."/".$e_p.
+#							" ".
+#							"(".
+#								"pre_process:".
+#									$t_preprocess->{'time'}{req}{duration}.'/'.$t_preprocess->{'time'}{proc}{duration}.' '.
+#									TOM::Math::percentage($e_r,$t_preprocess->{'time'}{req}{duration})."%/".
+#									TOM::Math::percentage($e_p,$t_preprocess->{'time'}{proc}{duration})."%".
+#								" ".
+#								"process: 0/0 0%/0%".
+#								" ".
+#								"post_process: 0/0 0%/0%".
+#							")".
+#							"",3,"pub.bench",1) if $TOM::DEBUG_benchmark;
 					};
-#=cut
 					
 					main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ').":".($main::USRM{'logged'} || ' ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track');
-					main::_log("[$tom::H] ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track',1);
+#					main::_log("[$tom::H] ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track',1);
 					
 					print "Status: 304 Not Modified\n\n";
 					
@@ -3134,47 +3155,59 @@ while ($main::CGI=new CGI::Fast())
 		
 		do
 		{
-			my $e_p=$t_eval->{'time'}{proc}{duration};
-			my $e_r=$t_eval->{'time'}{req}{duration};
-			main::_log("[$tom::H]".
-				" ".
-				"TID:".$main::FORM{'TID'}.
-				" ".
-				"eval:".$e_r."/".$e_p.
-				" ".
-				"(".
-					"pre_process:".
-						$t_preprocess->{'time'}{req}{duration}.'/'.$t_preprocess->{'time'}{proc}{duration}.' '.
-						TOM::Math::percentage($e_r,$t_preprocess->{'time'}{req}{duration})."%/".
-						TOM::Math::percentage($e_p,$t_preprocess->{'time'}{proc}{duration})."%".
-					" ".
-					"process:".
-						$t_process->{'time'}{req}{duration}.'/'.$t_process->{'time'}{proc}{duration}.' '.
-						TOM::Math::percentage($e_r,$t_process->{'time'}{req}{duration})."%/".
-						TOM::Math::percentage($e_p,$t_process->{'time'}{proc}{duration})."%".
-					" ".
-					"post_process:".
-						$t_postprocess->{'time'}{req}{duration}.'/'.$t_postprocess->{'time'}{proc}{duration}.' '.
-						TOM::Math::percentage($e_r,$t_postprocess->{'time'}{req}{duration})."%/".
-						TOM::Math::percentage($e_p,$t_postprocess->{'time'}{proc}{duration})."%".
-				")".
-				"",3,"pub.bench",1) if $TOM::DEBUG_benchmark;
-				
-#			foreach (keys %TOM::Debug::namespace)
-#			{
-#				main::_log
-#				("[$tom::H]".
-#					" ".
-#					"namespace '$_' eval:".
-#							$TOM::Debug::namespace{$_}{'time'}{'proc'}{'duration'}."/".
-#							$TOM::Debug::namespace{$_}{'time'}{'req'}{'duration'}." (".
-#							TOM::Math::percentage($e_p,$TOM::Debug::namespace{$_}{'time'}{'proc'}{'duration'})."%/".
-#							TOM::Math::percentage($e_r,$TOM::Debug::namespace{$_}{'time'}{'req'}{'duration'})."%".
-#							")"
-#					,3,"pub.bench",1
-#				) if $TOM::DEBUG_benchmark;
-#			}
+			my $e_p=$t_eval->{'time'}{'proc'}{'duration'};
+			my $e_r=$t_eval->{'time'}{'req'}{'duration'};
 			
+			if ($Ext::Redis::service)
+			{
+				my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
+#				print "date=$date_str\n";
+				$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
+					'cnt',1,sub{});
+				$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
+					'eval_req',int($e_r*1000),sub{});
+				$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
+					'eval_proc',int($e_p*1000),sub{});
+#				$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
+#					'pre_req',$t_preprocess->{'time'}{'req'}{'duration'}*1000,sub{});
+#				$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
+#					'pre_proc',$t_preprocess->{'time'}{'proc'}{'duration'}*1000,sub{});
+#				$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
+#					'pro_req',$t_process->{'time'}{'req'}{'duration'}*1000,sub{});
+#				$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
+#					'pro_proc',$t_process->{'time'}{'proc'}{'duration'}*1000,sub{});
+#				$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
+#					'post_req',$t_postprocess->{'time'}{'req'}{'duration'}*1000,sub{});
+#				$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
+#					'post_proc',$t_postprocess->{'time'}{'proc'}{'duration'}*1000,sub{});
+				
+#				print "r=".($e_r*1000)." p=".($e_p*1000)."\n";
+				
+			}
+			
+#			main::_log("[$tom::H]".
+#				" ".
+#				"TID:".$main::FORM{'TID'}.
+#				" ".
+#				"eval:".$e_r."/".$e_p.
+#				" ".
+#				"(".
+#					"pre_process:".
+#						$t_preprocess->{'time'}{req}{duration}.'/'.$t_preprocess->{'time'}{proc}{duration}.' '.
+#						TOM::Math::percentage($e_r,$t_preprocess->{'time'}{req}{duration})."%/".
+#						TOM::Math::percentage($e_p,$t_preprocess->{'time'}{proc}{duration})."%".
+#					" ".
+#					"process:".
+#						$t_process->{'time'}{req}{duration}.'/'.$t_process->{'time'}{proc}{duration}.' '.
+#						TOM::Math::percentage($e_r,$t_process->{'time'}{req}{duration})."%/".
+#						TOM::Math::percentage($e_p,$t_process->{'time'}{proc}{duration})."%".
+#					" ".
+#					"post_process:".
+#						$t_postprocess->{'time'}{req}{duration}.'/'.$t_postprocess->{'time'}{proc}{duration}.' '.
+#						TOM::Math::percentage($e_r,$t_postprocess->{'time'}{req}{duration})."%/".
+#						TOM::Math::percentage($e_p,$t_postprocess->{'time'}{proc}{duration})."%".
+#				")".
+#				"",3,"pub.bench",1) if $TOM::DEBUG_benchmark;
 		};
 		
 	}; # end of eval

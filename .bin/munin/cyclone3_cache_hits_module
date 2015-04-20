@@ -43,7 +43,7 @@ my $i;
 my $value_crt;
 my $value_hit;
 
-for (1..10)
+for (1..5)
 {
 	$datetime_now->add('minutes' => -1);
 	

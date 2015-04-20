@@ -1,10 +1,22 @@
 #!/usr/bin/env perl
 # ex:ts=4
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.bin/c3-init";
+}
 
 use strict;
-use warnings;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
 use DateTime;
-use File::ReadBackwards;
+use Ext::Redis::_init;
+use Data::Dumper;
 
 my $cmd = shift || '';
 if ($cmd eq 'config') {print qq{graph_title Cyclone3 availability
@@ -32,73 +44,30 @@ total.critical 700
 my $debug;
 	$debug=1 if $cmd eq "debug";
 
-my $date=`date +"%Y-%m-%d"`;chomp($date);
-#my $text=`tail /srv/Cyclone3/_logs/$date.pub.bench.log -n 1000`;
-
-#print $text
-
 my $datetime_now=DateTime->now('time_zone' => 'local');
-	my $startday=$datetime_now->day();
-	$datetime_now->add('minutes' => -1);
-	if ($startday>$datetime_now->day())
-	{
-		$datetime_now->add('days' => 1);
-		$datetime_now->set_hour(0);
-		$datetime_now->set_minute(0);
-	}
-#my $datetime_now_string=$datetime_now->hour().":".$datetime_now->minute();
-my $datetime_now_string=sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute()).":".sprintf('%02d',$datetime_now->second());
-	print "from $datetime_now_string\n" if $debug;
-	
+
 my $i;
-my $value_req=0;
-my $value_proc=0;
+my $value_req;
+my $value_proc;
 
-my $filename='/srv/Cyclone3/_logs/'.$date.'.pub.bench.log';
-	$filename='/var/log/Cyclone3/'.$date.'.pub.bench.log' if -e '/var/log/Cyclone3/'.$date.'.pub.bench.log';
-
-my $bw = File::ReadBackwards->new($filename) or die "can't read 'log_file' $!" ;
-while( my $line = $bw->readline )
+for (1..5)
 {
-	chomp($line);
-	if ($line=~/\[(\d\d):(\d\d):(\d\d)/)
-	{
-		my $time_str=$1.":".$2.":".$3;
-		last if $time_str lt $datetime_now_string;
-	}
-	else
-	{
-		next;
-	}
+	$datetime_now->add('minutes' => -1);
 	
-	print $line."\n" if $debug;
+	my $date_str=
+		sprintf('%04d',$datetime_now->year()).'-'.sprintf('%02d',$datetime_now->month()).'-'.sprintf('%02d',$datetime_now->day())
+		.' '
+		.sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute());
 	
-	if ($line=~/eval:([\d\.]+)\/([\d\.]+)/)
-	{
-		$i++;
-		$value_req+=$1;
-		$value_proc+=$2;
-	}
+	my %data=@{$Redis->hgetall('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str)};
+	print Dumper(\%data);
+	$i+=$data{'cnt'};
+	$value_req+=$data{'eval_req'};
+	$value_proc+=$data{'eval_proc'};
 }
 
-$i=1 unless $i;
+print "req.value " . int(($value_req - $value_proc)/$i) . "\n";
+print "proc.value " . int($value_proc/$i) . "\n";
+print "total.value " . int(($value_req)/$i) . "\n";
 
-$value_req/=$i;
-$value_proc/=$i;
-$value_req=int(($value_req-$value_proc)*1000);
-#$value_req=2000 if $value_req>2000;
-$value_proc=int($value_proc*1000);
-#$value_proc=2000 if $value_proc>2000;
-
-$value_req="U" unless $value_req;
-$value_proc="U" unless $value_proc;
-
-print "req.value " . $value_req . "\n";
-print "proc.value " . $value_proc . "\n";
-print "total.value " . ($value_proc+$value_req) . "\n";
-
-#print "$value_req $value_proc";
-
-#my $tom3_value=`ps ax | grep "\.core/tom3" | grep -vc "grep"`;chomp($tom3_value);
-#print "tom3.value " . $tom3_value . "\n";
 
