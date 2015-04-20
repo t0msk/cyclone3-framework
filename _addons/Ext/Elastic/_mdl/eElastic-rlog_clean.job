@@ -169,5 +169,11 @@ sub execute
 		}
 	}
 	
+	main::_log("optimizing indices");
+	$Elastic->indices->optimize(
+		'index' => 'logstash-*',
+		'only_expunge_deletes' => 1
+	);
+	
 return 1}
 1;
