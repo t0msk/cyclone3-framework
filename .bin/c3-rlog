@@ -1,0 +1,355 @@
+#!/usr/bin/perl
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use Data::Dumper;
+use Term::ANSIColor;
+use DateTime;
+
+BEGIN
+{
+	$TOM::engine='cli';
+	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
+#	$main::stdout=0 unless $ENV{'CYCLONE3DEBUG'};
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM"; # obsolete
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+}
+END {use Inline;$SIG{__WARN__} = sub {};}
+
+our $argv=join " ",@ARGV;
+
+our $job_file;
+if ($ARGV[0] && not($ARGV[0]=~/^\-/)) # direct link to job file
+{
+	$job_file=$ARGV[0];
+	delete $ARGV[0];
+}
+
+our %arg;
+foreach my $key(@ARGV)
+{
+	$key=~s/^\-\-// && do
+	{
+		my @ref=split('=',$key,2);
+		$ref[1]=1 unless exists $ref[1];
+		$main::arg{$ref[0]}=$ref[1];
+		next;
+	};
+	$key=~s/^\-// && do
+	{
+		foreach (split('',$key)){$main::arg{$_}++;}
+	};
+}
+
+
+if ($main::arg{'v'} >= 2)
+{
+#	$main::stdout=1;
+	$main::debug=1;# if ($main::arg{'v'} >= 2);
+#	delete $main::arg{'v'};
+}
+
+if ($main::arg{'domain'})
+{
+	$main::arg{'domain'}=~s|^www\.||i;
+	$main::h=$main::arg{'domain'};$main::h=~s|\.|_|g;$main::h=~s|/|__|g;
+	
+	my $path=$main::arg{'domain'};$path=~s|^(.[^/]*)(.*)||;
+	my $path_dom=$1;my $path_sub=$2;
+	$path_dom=~s|(.*\.\|)(.*?\..*?)$|$1|;
+	$tom::p="!$2";$path_dom=~s|\.$||;
+	
+	foreach (reverse split('\.',$path_dom)){$tom::p.="/!$_";}
+	foreach (split('/',$path_sub)){$tom::p.="/$_";}
+	
+	$tom::p=~s|//|/|g;
+	$tom::p=$ENV{'CYCLONE3PATH'}."/".$tom::p;
+	
+	$tom::P=$tom::p;
+	delete $main::arg{'domain'};
+}
+
+require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
+require TOM::Engine::job;
+$0.=" ".$argv if $argv;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+use vars qw//;
+
+package main;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+use Cwd 'abs_path';
+
+$TOM::engine_ready=1;
+
+print color 'reset';
+
+if (!$main::arg{'d'} && !$main::arg{'dm'} && !$main::arg{'hd'})
+{
+	$main::arg{'hd'} ||= $TOM::domain;
+	$main::arg{'h'} ||= $TOM::hostname.'.'.($TOM::domain || 'undef');
+}
+
+my $limit=100;
+my $query;
+my %query_string;
+my @filter;
+if ($main::arg{'hd'})
+{
+	$query.=" hd=".$main::arg{'hd'};
+	push @filter,{"terms" => {"hd" => [$main::arg{'hd'}]}},
+};
+if ($main::arg{'h'})
+{
+	$main::arg{'h'}='*' if $main::arg{'h'}==1;
+	$query.=" h=".$main::arg{'h'};
+	push @filter,{"terms" => {"h" => [$main::arg{'h'}]}}
+		unless $main::arg{'h'} eq "*";
+};
+if ($main::arg{'d'})
+{
+	$main::arg{'d'}='*' if $main::arg{'d'}==1;
+	$query.=" d=".$main::arg{'d'};
+	push @filter,{"terms" => {"d" => [$main::arg{'d'}]}}
+		unless $main::arg{'d'} eq "*";
+}
+elsif ($tom::H)
+{
+	$query.=" d=".$tom::H;
+	push @filter,{"terms" => {"d" => [$tom::H]}};
+}
+if ($main::arg{'dm'})
+{
+	$query.=" dm=".$main::arg{'dm'};
+	push @filter,{"terms" => {"dm" => [$main::arg{'dm'}]}},
+};
+if ($main::arg{'t'})
+{
+	$query.=" t=".$main::arg{'t'};
+	push @filter,{"terms" => {"t" => ['cyclone3.'.$main::arg{'t'}]}},
+};
+if ($main::arg{'f'})
+{
+	$query.=" f=".$main::arg{'f'};
+	push @filter,{"terms" => {"f" => [1]}},
+};
+if ($main::arg{'c'})
+{
+	$query.=" c=".$main::arg{'c'};
+	push @filter,{"terms" => {"c" => [$main::arg{'c'}]}};
+	$limit=10000;
+};
+if ($main::arg{'p'})
+{
+	$query.=" p=".$main::arg{'p'};
+	push @filter,{"terms" => {"p" => [$main::arg{'p'}]}};
+	$limit=100;
+};
+if ($main::arg{'msg'})
+{
+	$query.=" msg=~'".$main::arg{'msg'}."'";
+	$query_string{'query'}{'query_string'} = {
+		"fields" => ["m"],
+		'query' => $main::arg{'msg'},
+		"use_dis_max" => 1
+	}
+};
+
+push @filter,{"range" => {
+	'@timestamp' => {
+		'gte' => 'now-24h'
+	}
+}};
+
+$query=~s|^ ||;
+
+
+$Ext::Elastic = $Ext::Elastic_rlog_hd{$main::arg{'hd'}}
+	|| $Ext::Elastic_rlog
+	|| $Ext::Elastic;
+require Ext::Elastic::_init;
+main::_log_stdout("ElasticSearch @".join(',@',@{$Ext::Elastic->{'nodes'}}));
+Ext::Elastic::_connect();
+our $Elastic=$Ext::Elastic::service;
+
+my $temp_version=1.05;
+my $temp_data={};
+eval {$temp_data=$Elastic->indices->get_template('name'=>'logstash-*');};
+if ($temp_data->{'logstash-*'}->{'mappings'}->{'fluentd'}->{'_meta'}->{'version'} < $temp_version)
+{
+	main::_log_stdout("updating template to version $temp_version");
+	$Elastic->indices->put_template(
+		'name'=>'logstash-*',
+		'body' => {
+			'timetout' => 600000,
+			'template'=>'logstash-*',
+			'mappings' => {
+				'fluentd' => {
+					"_meta" => {
+						"version" => $temp_version
+					},
+					'properties' => {
+						'p' => { # pid
+							'type' => 'integer',
+						},
+						'h' => { # hostname
+							'type' => 'string',
+							'index' => 'not_analyzed'
+						},
+						'hd' => { # host domain
+							'type' => 'string',
+							'index' => 'not_analyzed'
+						},
+						'l' => { # level
+							'type' => 'integer'
+						},
+						'o' => { # helps to natural order
+							'type' => 'long'
+						},
+						'd' => { # domain
+							'type' => 'string',
+							'index' => 'not_analyzed'
+						},
+						'dm' => { # domain master
+							'type' => 'string',
+							'index' => 'not_analyzed'
+						},
+						'c' => { # code
+							'type' => 'string',
+							'index' => 'not_analyzed'
+						},
+						'e' => { # engine
+							'type' => 'string',
+							'index' => 'not_analyzed'
+						},
+						'f' => { # fault
+							'type' => 'integer',
+						},
+						't' => { # log name / type
+							'type' => 'string',
+							'index' => 'not_analyzed'
+						},
+						'm' => { # message
+							'type' => 'string'
+						},
+					}
+				}
+			}
+		}
+	);
+}
+
+print color 'green bold';
+main::_log_stdout($query);
+
+$limit=$main::arg{'limit'} if $main::arg{'limit'};
+my $results = $Elastic->search(
+	'index' => 'logstash-*',
+	'type' => 'fluentd',
+	'size' => $limit,
+	'body'  => {
+		'sort' => [
+			{'@timestamp' => "desc"},
+			{'o' => "desc"}
+		],
+		'query' => {
+			'filtered' => {
+				'filter' => {
+					'bool' => {
+						'must' => [@filter]
+					}
+				},
+				%query_string
+			}
+		},
+		"highlight" => {
+			"fields" => {
+				"m" => {}
+			},
+			"fragment_size" => 3000,
+			"pre_tags" => [color 'bold yellow'],
+			"post_tags" => [color 'reset']
+		},
+	}
+);
+
+main::_log_stdout("display ".(scalar @{$results->{'hits'}->{'hits'}})." rows from ".$results->{'hits'}->{'total'}." found (took ".int($results->{'took'}/1000)."s)");
+
+
+my $src;
+my $src_last;
+foreach my $line (sort {
+	$a->{'_source'}->{'h'} cmp $b->{'_source'}->{'h'} ||
+	$a->{'_source'}->{'d'} cmp $b->{'_source'}->{'d'} ||
+	$a->{'_source'}->{'t'} cmp $b->{'_source'}->{'t'} ||
+	$a->{'_source'}->{'@timestamp'} cmp $b->{'_source'}->{'@timestamp'} ||
+	$a->{'_source'}->{'o'} <=> $b->{'_source'}->{'o'}
+} @{$results->{'hits'}->{'hits'}})
+{
+	$line->{'_source'}->{'t'}=~s|^cyclone3\.||;
+	
+	$line->{'_source'}->{'@timestamp'}=~/^(\d\d\d\d)\-(\d\d)\-(\d\d)T(\d\d):(\d\d):(\d\d).(\d\d\d)Z$/;
+	my $td = DateTime->new(
+		'year' => $1,
+		'month' => $2,
+		'day' => $3,
+		'hour' => $4,
+		'minute' => $5,
+		'second' => $6,
+		'time_zone'  => 'GMT'
+	);
+	$td->set_time_zone('local');
+	
+	my $src_date=$td->strftime('%F');
+	$src=$line->{'_source'}->{'h'};
+	$src.='/'.$line->{'_source'}->{'d'} if $line->{'_source'}->{'d'};
+	$src.='/'.$src_date.'.'.$line->{'_source'}->{'t'}.'.log';
+	if ($src ne $src_last)
+	{
+		print "\n";
+		print color 'reset cyan';
+		
+		print $line->{'_source'}->{'h'};
+		print '/'.(color 'reset bold cyan').$line->{'_source'}->{'d'}.(color 'reset cyan') if $line->{'_source'}->{'d'};
+		print '/'.(color 'reset bold cyan').$src_date.(color 'reset cyan').'.'.(color 'reset bold cyan').$line->{'_source'}->{'t'}.(color 'reset cyan').'.log';
+		print "\n";
+		print color 'reset';
+	}
+	
+	my $msg;#=$line->{'_source'}->{'m'};
+	
+	$msg.="[".sprintf('%06d',$line->{'_source'}->{'p'});
+	if (!$main::arg{'c'})
+	{
+		$msg.=";".($line->{'_source'}->{'c'} || '       0');
+	}
+	$msg.="]";
+	
+	$msg.='['.$td->strftime('%H:%M:%S').".".$7.']';
+	
+	$msg.=" ".(" " x $line->{'_source'}->{'l'});
+	$msg.="-"
+		if $line->{'_source'}->{'f'};
+	$msg.=($line->{'highlight'}->{'m'}->[0] || $line->{'_source'}->{'m'});
+	
+	print color 'bold red'
+		if $line->{'_source'}->{'f'};
+	
+	print $msg."\n";
+	
+	print color 'reset';
+	
+	$src_last=$src;
+}
+
+print "\n";
+1;
