@@ -26,7 +26,25 @@ sub execute
 		return 1;
 	}
 	
-	main::_log("connected, preparing data removal");
+	main::_log("checking indices");
+	my $indices=$Elastic->indices->stats('index' => 'logstash-*')->{'indices'};
+	foreach my $indice (sort keys %{$indices})
+	{
+		my $rel=($indices->{$indice}->{'total'}->{'docs'}->{'deleted'}/$indices->{$indice}->{'total'}->{'docs'}->{'count'});
+		main::_log(" indice $indice docs=".$indices->{$indice}->{'total'}->{'docs'}->{'count'}." deleted=".$indices->{$indice}->{'total'}->{'docs'}->{'deleted'}."(".int($rel*100)."%)");
+		if ($rel>=0.1)
+		{
+			main::_log("  optimize");
+			eval {$Elastic->indices->optimize('index' => $indice);};
+			if ($@)
+			{
+				main::_log($@,1);
+			}
+			last;
+		}
+	}
+	
+	main::_log("preparing data removal");
 	
 	# at first, create facet
 	my $results = $Elastic->search(
@@ -48,9 +66,7 @@ sub execute
 						'bool' => {
 							'must' => [
 								{
-									"terms" => {
-										"hd" => [$TOM::domain || 'undef'],
-									}
+									"terms" => {"hd" => [$TOM::domain || 'undef']}
 								}
 							]
 						}
@@ -168,12 +184,6 @@ sub execute
 			}
 		}
 	}
-	
-	main::_log("optimizing indices");
-	$Elastic->indices->optimize(
-		'index' => 'logstash-*',
-		'only_expunge_deletes' => 1
-	);
 	
 return 1}
 1;
