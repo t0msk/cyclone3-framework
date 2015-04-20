@@ -12,6 +12,7 @@ BEGIN
 	}
 	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
 	$0.=".worker";
+	setpriority $$,$$,19;
 }
 
 use open ':utf8', ':std';
