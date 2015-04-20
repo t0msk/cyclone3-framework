@@ -1,0 +1,173 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use Ext::Elastic::_init;
+use Data::Dumper;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	
+	if (!$Ext::Elastic_rlog && !$Ext::Elastic)
+	{
+		return 1;
+	}
+	
+	my $Elastic=Search::Elasticsearch->new($Ext::Elastic_rlog || $Ext::Elastic);
+	
+	if (!$Elastic)
+	{
+		return 1;
+	}
+	
+	main::_log("connected, preparing data removal");
+	
+	# at first, create facet
+	my $results = $Elastic->search(
+		'index' => 'logstash-*',
+		'type' => 'fluentd',
+		'body'  => {
+			"size" => 0,
+			"aggregations" => {
+				"top_t" => {
+					"terms" => {
+						'field' => "t",
+						"size" => 200,
+					}
+				}
+			},
+			'query' => {
+				'filtered' => {
+					'filter' => {
+						'bool' => {
+							'must' => [
+								{
+									"terms" => {
+										"hd" => [$TOM::domain || 'undef'],
+									}
+								}
+							]
+						}
+					}
+				}
+			}
+		}
+	);
+	
+#	print Dumper($results);
+	
+	foreach my $type (@{$results->{'aggregations'}->{'top_t'}->{'buckets'}})
+	{
+		$type->{'key'}=~s|^cyclone3\.||;
+		
+		main::_log("'$type->{'key'}' docs=$type->{'doc_count'}");
+		
+		my $max_days=$TOM::DEBUG_log_type{$type->{'key'}}->{'max_days'} || $TOM::DEBUG_log_type{'_default'}->{'max_days'};
+		main::_log(" remove older than $max_days days");
+		
+		my $results = $Elastic->delete_by_query(
+			'index' => 'logstash-*',
+			'type' => 'fluentd',
+			'body'  => {
+#				"size" => 0,
+				'query' => {
+					'filtered' => {
+						'filter' => {
+							'bool' => {
+								'must' => [
+									{"terms" => {"hd" => [$TOM::domain || 'undef']}},
+									{"terms" => {"t" => ["cyclone3.".$type->{'key'}]}},
+									{
+										"range" => {
+											'@timestamp' => {
+												"lt" => 'now-'.$max_days.'d'
+											}
+										}
+									}
+								]
+							}
+						}
+					}
+				},
+			}
+		);
+		
+		if ($TOM::DEBUG_log_type{$type->{'key'}}->{'fault'})
+		{
+			$max_days=$TOM::DEBUG_log_type{$type->{'key'}}->{'fault'};
+			main::_log(" remove faults older than $max_days days");
+			$Elastic->delete_by_query(
+				'index' => 'logstash-*',
+				'type' => 'fluentd',
+				'body'  => {
+					'query' => {
+						'filtered' => {
+							'filter' => {
+								'bool' => {
+									'must' => [
+										{"terms" => {"hd" => [$TOM::domain || 'undef']}},
+										{"terms" => {"t" => ["cyclone3.".$type->{'key'}]}},
+										{"terms" => {"f" => [1]}},
+										{
+											"range" => {
+												'@timestamp' => {
+													"lt" => 'now-'.$max_days.'d'
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					},
+				}
+			);
+		}
+		
+		if ($TOM::DEBUG_log_type{$type->{'key'}}->{'levels'})
+		{
+			foreach my $level (sort keys %{$TOM::DEBUG_log_type{$type->{'key'}}->{'levels'}})
+			{
+				$max_days=$TOM::DEBUG_log_type{$type->{'key'}}->{'levels'}->{$level};
+				main::_log(" remove level $level older than $max_days days");
+				$Elastic->delete_by_query(
+					'index' => 'logstash-*',
+					'type' => 'fluentd',
+					'body'  => {
+						'query' => {
+							'filtered' => {
+								'filter' => {
+									'bool' => {
+										'must' => [
+											{"terms" => {"hd" => [$TOM::domain || 'undef']}},
+											{"terms" => {"t" => ["cyclone3.".$type->{'key'}]}},
+											{"range" => {"l" => {'gte' => $level}}},
+											{
+												"range" => {
+													'@timestamp' => {
+														"lt" => 'now-'.$max_days.'d'
+													}
+												}
+											}
+										],
+										'must_not' => [
+											{"terms" => {"f" => [1]}},
+										]
+									}
+								}
+							}
+						},
+					}
+				);
+			}
+		}
+	}
+	
+return 1}
+1;
