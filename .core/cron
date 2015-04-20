@@ -12,9 +12,7 @@ BEGIN
 	}
 	require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
 	$CRON::P=$TOM::P;
-	#$CRON::P=`pwd`;
-	#$CRON::P=~s|(.*)/.*?\n$|\1|;
-	#unshift @INC,$CRON::P."/.core/.libs";
+	setpriority $$,$$,19;
 }
 
 #$TOM::P=$CRON::P;
