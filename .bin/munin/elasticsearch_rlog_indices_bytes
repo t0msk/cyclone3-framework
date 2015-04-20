@@ -27,6 +27,7 @@ foreach my $node (keys %{$data->{'indices'}}){
 	
 	my $node_=$node;
 		$node_=~s|[\.\-]||g;
+	next unless $node=~/^logstash\-/;
 	$out{$node_}=$data->{'indices'}->{$node}->{'total'}->{'store'}->{'size_in_bytes'};
 	$out_name{$node_}=$node;
 	
@@ -54,6 +55,7 @@ if ($ARGV[0] and $ARGV[0] eq 'config')
 		print "$name.label $out_name{$name}\n";
 		print "$name.draw AREASTACK\n";
 	}
+	
 	print "total.colour 000000\n";
 	print "total.label total\n";
 	print "total.draw LINE0\n";
