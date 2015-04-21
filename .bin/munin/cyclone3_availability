@@ -60,12 +60,12 @@ for (1..5)
 		.sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute());
 	
 	my %data=@{$Redis->hgetall('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str)};
-	print Dumper(\%data);
 	$i+=$data{'cnt'};
 	$value_req+=$data{'eval_req'};
 	$value_proc+=$data{'eval_proc'};
 }
 
+$i||=1;
 print "req.value " . int(($value_req - $value_proc)/$i) . "\n";
 print "proc.value " . int($value_proc/$i) . "\n";
 print "total.value " . int(($value_req)/$i) . "\n";
