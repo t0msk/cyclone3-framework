@@ -45,6 +45,7 @@ my $debug;
 	$debug=1 if $cmd eq "debug";
 
 my $datetime_now=DateTime->now('time_zone' => 'local');
+	$datetime_now->add('minutes' => 1);
 
 my $i;
 my $value_req;
