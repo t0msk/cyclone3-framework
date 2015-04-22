@@ -303,7 +303,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 			next;
 		}
 		
-		next if $WORKERS >= $MAX_WORKERS;
+		last if $WORKERS >= $MAX_WORKERS;
 		if ($class && exists $TOM::job_class_max_workers{$class})
 		{
 			next if $TOM::job_class_max_workers{$class} <= $queue->{'consumers'};
@@ -322,7 +322,8 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 			my $cmd='/usr/bin/perl '.$TOM::P."/.core/job.worker $class > /dev/null";
 			main::_log_stdout("chdir '$tom::P' exec '$cmd'",3,"job.workerd");
 			`$cmd&`;
-#			sleep 1;
+			sleep 1;
+			$WORKERS++;
 #			main::_log("executed");
 #			next;
 			
@@ -342,8 +343,6 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 #			) || do {
 ##				main::_log_stdout("sorry, too much processes",1);
 #			};# and next;
-			
-			
 		}
 	}
 	
