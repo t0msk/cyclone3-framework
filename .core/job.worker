@@ -172,7 +172,8 @@ sub callback {
 			main::_log(" job '$key_entity' already running from '$time_start_str' duration='".($duration)."s' \@$process_start",1);
 			
 			my ($process_hostname,$process_id) = split(':',$process_start);
-			if ($process_hostname eq $TOM::hostname)
+			if ($process_hostname eq $TOM::hostname 
+				&& $duration > 600) # if process crashed because of segfault, try to re-run only after 600 seconds
 			{
 				main::_log(" same hostname, checking if process running");
 				my $exists = kill 0, $process_id;
@@ -194,7 +195,7 @@ sub callback {
 					$Redis->expire('C3|job|'.$key_entity,86400,sub {});
 				}
 			}
-			elsif ($duration > (3600 * 4))
+			elsif ($duration > (3600 * 6))
 			{
 				main::_log(" running too long, what happens? (i'm trying to re-run this job, and you try to search bug in logs)",1);
 				# deduplication job start
