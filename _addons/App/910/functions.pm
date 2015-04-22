@@ -2194,9 +2194,13 @@ sub product_brand_add
 	
 	if ($content_reindex)
 	{
-#		main::_log(" index product_brand '$env{'product_brand.ID'}'",3,$App::910::log_changes,2)
-#			if $App::910::log_changes;
-		# reindex this product
+		App::020::SQL::functions::_save_changetime({
+			'db_h'=>'main',
+			'db_name'=>$App::910::db_name,
+			'tb_name'=>'a910_product_brand',
+			'ID_entity'=>$env{'product_brand.ID_entity'}}
+		);
+		# reindex this product_brand
 		_product_brand_index('ID'=>$env{'product_brand.ID'});
 	}
 	
