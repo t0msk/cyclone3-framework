@@ -283,11 +283,13 @@ sub jobify # prepare function call to background
 		}
 		if (!$queue_found)
 		{
+			main::_log("[RabbitMQ] declare_queue(".'cyclone3.job.'.$queue.")");
 			$RabbitMQ->_channel->declare_queue(
 				'exchange' => encode('UTF-8', 'cyclone3.job'),
 				'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
 				'durable' => 1
 			);
+			main::_log("[RabbitMQ] bind_queue(".$env->{'routing_key'}.")");
 			$RabbitMQ->_channel->bind_queue(
 				'exchange' => encode('UTF-8', 'cyclone3.job'),
 				'routing_key' => encode('UTF-8', $env->{'routing_key'}),
