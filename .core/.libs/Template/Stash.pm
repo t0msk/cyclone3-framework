@@ -27,7 +27,8 @@ use Scalar::Util qw( blessed reftype );
 
 our $VERSION    = 2.91;
 our $DEBUG      = 0 unless defined $DEBUG;
-our $PRIVATE    = qr/^[_.]/;
+#our $PRIVATE    = qr/^[_.]/;
+our $PRIVATE    = undef;
 our $UNDEF_TYPE = 'var.undef';
 our $UNDEF_INFO = 'undefined variable: %s';
 
