@@ -36,7 +36,23 @@ foreach my $key(@ARGV)
 	{
 		my @ref=split('=',$key,2);
 		$ref[1]=1 unless exists $ref[1];
-		$main::arg{$ref[0]}=$ref[1];
+		if (ref($main::arg{$ref[0]}) eq "ARRAY")
+		{
+			push @{$main::arg{$ref[0]}},$ref[1];
+		}
+		elsif ($main::arg{$ref[0]})
+		{
+			my $oldval=$main::arg{$ref[0]};
+			delete $main::arg{$ref[0]};
+			$main::arg{$ref[0]}=[
+				$oldval,
+				$ref[1]
+			];
+		}
+		else
+		{
+			$main::arg{$ref[0]}=$ref[1];
+		}
 		next;
 	};
 	$key=~s/^\-// && do
@@ -154,13 +170,39 @@ if ($main::arg{'p'})
 	push @filter,{"terms" => {"p" => [$main::arg{'p'}]}};
 	$limit=100;
 };
+
+if ($main::arg{'oldest'})
+{
+	$query.=" {oldest first}";
+};
+
 if ($main::arg{'msg'})
 {
-	$query.=" msg=~'".$main::arg{'msg'}."'";
-	$query_string{'query'}{'query_string'} = {
-		"fields" => ["m"],
-		'query' => $main::arg{'msg'},
-		"use_dis_max" => 1
+	if (ref($main::arg{'msg'}) eq "ARRAY")
+	{
+		$query.=" msg=~";
+		foreach my $part (@{$main::arg{'msg'}})
+		{
+			$part=lc($part);
+			$query.="+'".$part."'";
+			push @filter,{"terms" => {"m" => [$part]}};
+		}
+		$query=~s|msg=~\+'|msg=~'|;
+		# for highlights
+		$query_string{'query'}{'query_string'} = {
+			"fields" => ["m"],
+			'query' => join(" ",@{$main::arg{'msg'}}),
+			"use_dis_max" => 1
+		};
+	}
+	else
+	{
+		$query.=" msg=~'".$main::arg{'msg'}."'";
+		$query_string{'query'}{'query_string'} = {
+			"fields" => ["m"],
+			'query' => $main::arg{'msg'},
+			"use_dis_max" => 1
+		}
 	}
 };
 
@@ -290,7 +332,16 @@ my $results = $Elastic->search(
 	'size' => $limit,
 	'body'  => {
 		'sort' => [
-			{'@timestamp' => "desc"},
+			{'@timestamp' => do{
+				if ($main::arg{'oldest'})
+				{
+					"asc"
+				}
+				else
+				{
+					"desc"
+				}
+			}},
 			{'o' => "desc"}
 		],
 		'query' => {
