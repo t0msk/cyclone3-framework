@@ -1,79 +1,62 @@
 #!/usr/bin/env perl
 # ex:ts=4
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.bin/c3-init";
+}
 
 use strict;
-use warnings;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
 use DateTime;
-use File::ReadBackwards;
+use Ext::Redis::_init;
+use Data::Dumper;
 
 my $cmd = shift || '';
-if ($cmd eq 'config') {print qq{graph_title Cyclone3 requests
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 requests ($TOM::hostname)
 graph_args --base 1000
 graph_category cyclone3
 graph_vlabel requests / second
-graph_order req req_slow req_veryslow
+graph_order req
 graph_scale no
 req.label Requests
 req.min 0
-req_slow.label Slow requests >300ms
-req_slow.min 0
-req_veryslow.label Critical requests >1000ms
-req_veryslow.min 0
 };
+#req_slow.label Slow requests >300ms
+#req_slow.min 0
+#req_veryslow.label Critical requests >1000ms
+#req_veryslow.min 0
+#};
 	exit 0;
 }
 
-my $debug;
-	$debug=1 if $cmd eq "debug";
-
-my $date=`date +"%Y-%m-%d"`;chomp($date);
-
 my $datetime_now=DateTime->now('time_zone' => 'local');
-	$datetime_now->add('minutes' => -1);
-my $datetime_now_string=sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute()).":".sprintf('%02d',$datetime_now->second());
-	print "from $datetime_now_string\n" if $debug;
-	
-my $i=0;
-my $i_slow=0;
-my $i_veryslow=0;
-my $value_req=0;
-my $value_proc=0;
 
-my $filename='/srv/Cyclone3/_logs/'.$date.'.pub.bench.log';
-	$filename='/var/log/Cyclone3/'.$date.'.pub.bench.log' if -e '/var/log/Cyclone3/'.$date.'.pub.bench.log';
+my $i;
+my $value_req;
+my $value_proc;
 
-my $bw = File::ReadBackwards->new($filename) or die "can't read 'log_file' $!" ;
-while( my $line = $bw->readline )
+for (1..2)
 {
-	chomp($line);
-	if ($line=~/\[(\d\d):(\d\d):(\d\d)/)
-	{
-		my $time_str=$1.":".$2.":".$3;
-		last if $time_str lt $datetime_now_string;
-	}
-	else
-	{
-		next;
-	}
-	print $line."\n" if $debug;
+	$datetime_now->add('minutes' => -1);
 	
-	if ($line=~/eval:([\d\.]+)\/([\d\.]+)/)
-	{
-		$i++;
-		if ($1 > 0.3)
-		{
-			$i_slow++;
-		}
-		if ($1 > 1)
-		{
-			$i_veryslow++;
-		}
-	}
+	my $date_str=
+		sprintf('%04d',$datetime_now->year()).'-'.sprintf('%02d',$datetime_now->month()).'-'.sprintf('%02d',$datetime_now->day())
+		.' '
+		.sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute());
+	
+	my %data=@{$Redis->hgetall('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str)};
+	$i+=$data{'cnt'};
 }
-
 $i=0 unless $i;
 
-print "req.value " . int(($i/1/60)*100)/100 . "\n";
-print "req_slow.value " . int(($i_slow/1/60)*100)/100 . "\n";
-print "req_veryslow.value " . int(($i_veryslow/1/60)*100)/100 . "\n";
+print "req.value " . int($i/120*10)/10 . "\n";
+#print "req_slow.value " . int(($i_slow/1/60)*100)/100 . "\n";
+#print "req_veryslow.value " . int(($i_veryslow/1/60)*100)/100 . "\n";
 
