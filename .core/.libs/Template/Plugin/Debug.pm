@@ -27,7 +27,7 @@ sub log {
 #	my $env=shift;
 	
 	main::_log(@_);
-	
+	return undef;
 #	my @relations=App::160::SQL::get_relations(%{$env});
 #	return \@relations;
 }
