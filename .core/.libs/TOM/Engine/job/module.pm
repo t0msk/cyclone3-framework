@@ -278,8 +278,6 @@ sub jobify # prepare function call to background
 		if ($Redis)
 		{
 			$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
-			$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
-			$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,15,sub {});
 		}
 		if (!$queue_found)
 		{
@@ -295,6 +293,8 @@ sub jobify # prepare function call to background
 				'routing_key' => encode('UTF-8', $env->{'routing_key'}),
 				'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
 			);
+			$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
+			$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,15,sub {});
 		}
 	}
 	else
@@ -316,6 +316,7 @@ sub jobify # prepare function call to background
 		'header' => {
 			'headers' => {
 				'message_id' => $id,
+				'timestamp' => time(),
 				%headers
 #				,'deduplication' => $env->{'deduplication'}
 			}
