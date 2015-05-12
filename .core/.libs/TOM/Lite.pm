@@ -96,7 +96,7 @@ sub _log
 	my @get=@_;
 	#$get[0] = level
 	#$get[1] = message
-	#$get[2] = mode
+	#$get[2] = mode || ref
 	#	0=norm	level	not
 	#	1=error!	level	mustlog
 	#	2=norm	level	mustlog
@@ -104,6 +104,26 @@ sub _log
 	#	4=error	not	mustlog
 	#$get[3] = engine, or logname
 	#$get[4] = 0-local 1-global 2-master
+	
+	if (ref($get[2]) eq "HASH")
+	{
+#		print "hash\n";
+		my $hash=$get[2];
+		undef $get[2];
+		$get[2] = $hash->{'severity'} || undef;
+		$get[3] = $hash->{'facility'} || undef;
+		$get[4] = do {
+			if ($hash->{'level'} eq "global")
+			{
+				1;
+			}
+			elsif ($hash->{'level'} eq "master")
+			{
+				2;
+			}
+		} || undef;
+		$get[5] = $hash->{'data'};
+	}
 	
 	return undef unless $get[1];
 	$get[0]=0 if $get[2]==3;
@@ -117,7 +137,9 @@ sub _log
 	);
 	
 	$get[3]=$TOM::engine unless $get[3];
-	$get[1]=~s|[\n\r\t]| |g;
+	$get[1]=~s|\r|\\r|g;
+	$get[1]=~s|\t|\\t|g;
+	$get[1]=~s|\n|\\n|g;
 	
 	my $tt=time();
 	
@@ -145,7 +167,9 @@ sub _log
 		$msg.="]" unless $main::stdout;
 		$msg.="["
 			.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.".".sprintf("%04d",$msec)."] "
-			.(" " x $get[0]).$log_sym[$get[2]].$get[1];
+			.(" " x $get[0]).$log_sym[$get[2]];
+		my $msg_tab=length($msg);
+		$msg.=$get[1];
 	
 	if (length($msg)>8048)
 	{
@@ -165,7 +189,7 @@ sub _log
 		print color 'green';
 		print color 'bold' if $get[1]=~/^</;
 		print color 'red' if $log_sym[$get[2]] eq '-';
-		print $msg."\n";
+		print $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
 		print color 'reset';
 		return 1 if $get[3] eq "stdout";
 	}
@@ -208,9 +232,10 @@ sub _log
 				'e' => $TOM::engine,
 				'f' => do {if ($get[2] == 1 || $get[2] == 4){'1';}else{undef;}},
 #				't' => $get[3],
-				"m" => $get[1],
+				'm' => $get[1],
+				'data' => $get[5]
 			});
-			#return 1
+			return 1
 		}
 		
 		$get[0]=0 unless $get[0];
@@ -254,6 +279,7 @@ sub _log
 			chmod (0666 , $filename_full) if $logfile_new;
 		}
 		
+		$msg.="\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH";
 		syswrite($HND{$filename_full}, $msg."\n", length($msg."\n"));
 		
 	}
@@ -286,13 +312,14 @@ sub _deprecated
 }
 sub _log_long
 {
-	my @get=@_;
-	foreach my $msg(split('\n',$get[0]))
-	{
-		my @get0=@get;
-		$get0[0]=$msg;
-		_log(@get0);
-	}
+	_log(@_);
+#	my @get=@_;
+#	foreach my $msg(split('\n',$get[0]))
+#	{
+#		my @get0=@get;
+#		$get0[0]=$msg;
+#		_log(@get0);
+#	}
 	return 1;
 }
 
@@ -651,26 +678,20 @@ sub close
 	{
 		if ($self->{'timer'})
 		{
-			
-			if ($self->{'attrs'})
-			{
-				main::_log("</$self->{name}> #".$self->{'attrs'}." (time:".($self->{'time'}{'duration'}*1000)."ms user:~".($self->{'time'}{'user'}{'duration'}*1000)."ms)")
-			}
-			else
-			{
-				main::_log("</$self->{name}> (time:".($self->{'time'}{'duration'}*1000)."ms user:~".($self->{'time'}{'user'}{'duration'}*1000)."ms)")
-			}
+			main::_log("</$self->{name}>".do{
+				" #".$self->{'attrs'} if $self->{'attrs'};
+			},{
+				'data' => {
+					'duration_f' => $self->{'time'}{'duration'},
+					'duration_user_f' => $self->{'time'}{'user'}{'duration'}
+				}
+			});
 		}
 		else
 		{
-			if ($self->{'attrs'})
-			{
-				main::_log("</$self->{name}> #".$self->{'attrs'});
-			}
-			else
-			{
-				main::_log("</$self->{name}>")
-			}
+			main::_log("</$self->{name}>".do{
+				" #".$self->{'attrs'} if $self->{'attrs'};
+			});
 		}
 	}
 }
