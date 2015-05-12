@@ -505,7 +505,7 @@ sub article_add
 		$env{'article_content.keywords'}=$ref[0].' # '.$ref[1];
 	}
 	else {$env{'article_content.keywords'}=$article_content{'keywords'};}
-	if ( $env{'article_content.abstract'} || $env{'article_content.body'})
+	if (exists $env{'article_content.abstract'} || exists $env{'article_content.body'})
 	{
 		my @ref=split('#',$env{'article_content.keywords'});
 		$ref[0]='';
