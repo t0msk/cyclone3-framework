@@ -109,6 +109,37 @@ $TOM::engine_ready=1;
 
 print color 'reset';
 
+if (!keys %main::arg)
+{
+	print  qq{Cyclone3 remote log receiver
+Usage: c3-rlog [options]
+
+Basic options:
+ --d=<domain>           filter to domain (default <pwd>)
+ --d                    don't filter domain (disables --d,--h,--hd,--dm)
+ --dm=<domain>          filter to domain master and subdomains
+ --h=<hostname>         filter to hostname (default current)
+ --h                    don't filter by hostname
+ --hd=<hostdomain>      filter to hostdomain / Cyclone3 cluster (default current || undef)
+ --t=<facility>         filter to facility (pub/pub.track/sql/...)
+ --f                    filter by faults
+ --msg=<string>         search in message string
+ --msg=<string> --msg=...
+ --filter=<elastic>     filter by custom code
+ --filter=<elastic> --filter=...
+ --c=<request_code>     filter to request code (disables --limit,--d,--h,--hd)
+ --p=<pid>              filter to PID
+ --oldest               search for oldest lines first
+ --limit=<num>          receive <num> lines of log (default 100)
+ --range=<num[dhms]>    filter in date range now-<num[dms]>
+ --date=<YYYY-MM-DD>    filter to date
+ --pretty               display additional attributes in pretty json format
+ --ch                   strict chronological - don't group primary by log source
+ 
+};
+	exit;
+}
+
 if (!$main::arg{'d'} && !$main::arg{'dm'} && !$main::arg{'hd'})
 {
 	$main::arg{'hd'} ||= $TOM::domain;
@@ -206,6 +237,23 @@ if ($main::arg{'msg'})
 	}
 };
 
+if ($main::arg{'filter'})
+{
+	if (ref($main::arg{'filter'}) eq "ARRAY")
+	{
+		foreach my $filter (@{$main::arg{'filter'}})
+		{
+			
+		}
+	}
+	else
+	{
+#		print $main::arg{'filter'}."\n";
+#		print Dumper(from_json($main::arg{'filter'}));
+		push @filter,from_json($main::arg{'filter'});
+	}
+};
+
 $main::arg{'range'}='24h' unless $main::arg{'range'};
 if ($main::arg{'date'}=~/^(\d\d\d\d)-(\d\d)-(\d\d)$/)
 {
@@ -238,7 +286,7 @@ elsif ($main::arg{'range'})
 {
 	push @filter,{"range" => {
 		'@timestamp' => {
-			'gte' => 'now-24h'
+			'gte' => 'now-'.$main::arg{'range'}
 		}
 	}};
 	$query.=" (date)range=-".$main::arg{'range'};
@@ -255,7 +303,7 @@ main::_log_stdout("ElasticSearch @".join(',@',@{$Ext::Elastic->{'nodes'}}));
 Ext::Elastic::_connect();
 our $Elastic=$Ext::Elastic::service;
 
-my $temp_version=1.05;
+my $temp_version=1.06;
 my $temp_data={};
 eval {$temp_data=$Elastic->indices->get_template('name'=>'logstash-*');};
 if ($temp_data->{'logstash-*'}->{'mappings'}->{'fluentd'}->{'_meta'}->{'version'} < $temp_version)
@@ -315,7 +363,42 @@ if ($temp_data->{'logstash-*'}->{'mappings'}->{'fluentd'}->{'_meta'}->{'version'
 						'm' => { # message
 							'type' => 'string'
 						},
-					}
+					},
+					
+					'dynamic_templates' => [
+						{'string' => {
+							"match" => "*_s",
+							"mapping" => {
+								"type" => "string",
+								"analyzer" => "not_analyzed"
+							}
+						}},
+						{'text' => {
+							"match" => "*_t",
+							"mapping" => {
+								"type" => "string"
+							}
+						}},
+						{'integer' => {
+							"match" => "*_i",
+							"mapping" => {
+								"type" => "integer"
+							}
+						}},
+						{'float' => {
+							"match" => "*_f",
+							"mapping" => {
+								"type" => "float"
+							}
+						}},
+						{'date' => {
+							"match" => "*_d",
+							"mapping" => {
+								"type" => "date"
+							}
+						}}
+					]
+					
 				}
 			}
 		}
@@ -370,12 +453,25 @@ main::_log_stdout("display ".(scalar @{$results->{'hits'}->{'hits'}})." rows fro
 
 my $src;
 my $src_last;
+my $src_t;
+my $src_t_last;
 foreach my $line (sort {
-	$a->{'_source'}->{'h'} cmp $b->{'_source'}->{'h'} ||
-	$a->{'_source'}->{'d'} cmp $b->{'_source'}->{'d'} ||
-	$a->{'_source'}->{'t'} cmp $b->{'_source'}->{'t'} ||
-	$a->{'_source'}->{'@timestamp'} cmp $b->{'_source'}->{'@timestamp'} ||
-	$a->{'_source'}->{'o'} <=> $b->{'_source'}->{'o'}
+	if ($main::arg{'ch'})
+	{
+		$a->{'_source'}->{'h'} cmp $b->{'_source'}->{'h'} ||
+		$a->{'_source'}->{'d'} cmp $b->{'_source'}->{'d'} ||
+#		$a->{'_source'}->{'t'} cmp $b->{'_source'}->{'t'} ||
+		$a->{'_source'}->{'@timestamp'} cmp $b->{'_source'}->{'@timestamp'} ||
+		$a->{'_source'}->{'o'} <=> $b->{'_source'}->{'o'}
+	}
+	else
+	{
+		$a->{'_source'}->{'h'} cmp $b->{'_source'}->{'h'} ||
+		$a->{'_source'}->{'d'} cmp $b->{'_source'}->{'d'} ||
+		$a->{'_source'}->{'t'} cmp $b->{'_source'}->{'t'} ||
+		$a->{'_source'}->{'@timestamp'} cmp $b->{'_source'}->{'@timestamp'} ||
+		$a->{'_source'}->{'o'} <=> $b->{'_source'}->{'o'}
+	}
 } @{$results->{'hits'}->{'hits'}})
 {
 	$line->{'_source'}->{'t'}=~s|^cyclone3\.||;
@@ -395,17 +491,38 @@ foreach my $line (sort {
 	my $src_date=$td->strftime('%F');
 	$src=$line->{'_source'}->{'h'};
 	$src.='/'.$line->{'_source'}->{'d'} if $line->{'_source'}->{'d'};
-	$src.='/'.$src_date.'.'.$line->{'_source'}->{'t'}.'.log';
-	if ($src ne $src_last)
+	#$src.='/'.$src_date.'.'.$line->{'_source'}->{'t'}.'.log';
+	$src.='/'.$src_date;
+	$src_t=$line->{'_source'}->{'t'};
+	
+	if (($src ne $src_last)
+		|| (!$main::arg{'ch'} && ($src_t ne $src_t_last)))
 	{
 		print "\n";
 		print color 'reset cyan';
 		
 		print $line->{'_source'}->{'h'};
 		print '/'.(color 'reset bold cyan').$line->{'_source'}->{'d'}.(color 'reset cyan') if $line->{'_source'}->{'d'};
-		print '/'.(color 'reset bold cyan').$src_date.(color 'reset cyan').'.'.(color 'reset bold cyan').$line->{'_source'}->{'t'}.(color 'reset cyan').'.log';
+		
+		print '/'.(color 'reset bold cyan').$src_date.(color 'reset cyan');
+		if (!$main::arg{'ch'})
+		{
+			print '.'.(color 'reset bold cyan').$line->{'_source'}->{'t'}.(color 'reset cyan').'.log';
+		}
+		else
+		{
+			print '/';
+		}
+		
 		print "\n";
 		print color 'reset';
+	}
+	
+	if ($main::arg{'ch'} && ($src_t ne $src_t_last))
+	{
+		print ''.(color 'reset bold cyan').$line->{'_source'}->{'t'}.(color 'reset cyan').'.log';
+		print color 'reset';
+		print "\n";
 	}
 	
 	my $msg;#=$line->{'_source'}->{'m'};
@@ -420,9 +537,36 @@ foreach my $line (sort {
 	$msg.='['.$td->strftime('%H:%M:%S').".".$7.']';
 	
 	$msg.=" ".(" " x $line->{'_source'}->{'l'});
+	
+	my $msg_prefix_size=length($msg);
+	my $message=$line->{'highlight'}->{'m'}->[0] || $line->{'_source'}->{'m'};
+	
+	if ($message=~/\\[nrt]/ms && $main::arg{'pretty'})
+	{
+		$message=~s/\\n/"\n" . (" " x $msg_prefix_size)/ge;
+#		$message=~s/\\n/"\n" . $msg_prefix_size/ge;
+		$message=~s|\\r|\r|g;
+		$message=~s|\\t|   |g;
+	}
+	
 	$msg.="-"
 		if $line->{'_source'}->{'f'};
-	$msg.=($line->{'highlight'}->{'m'}->[0] || $line->{'_source'}->{'m'});
+	$msg.=$message;
+	
+	if ($line->{'_source'}->{'data'})
+	{
+		my $msg_data=color 'black';
+		$msg_data.=to_json($line->{'_source'}->{'data'},{
+			'pretty' => $main::arg{'pretty'},
+			'canonical' => 1,
+			'space_before' => 0
+		});
+		$msg_data=~s/\n/"\n" . (" " x $msg_prefix_size)/ge;
+		$msg_data=~s|\s+$||;
+		$msg_data.=color 'reset';
+		$msg.="\n".(" " x $msg_prefix_size).$msg_data;
+	}
+#	print Dumper($line->{'_source'}->{'data'});
 	
 	print color 'bold red'
 		if $line->{'_source'}->{'f'};
@@ -432,6 +576,7 @@ foreach my $line (sort {
 	print color 'reset';
 	
 	$src_last=$src;
+	$src_t_last=$src_t;
 }
 
 print "\n";
