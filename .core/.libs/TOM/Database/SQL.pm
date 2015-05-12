@@ -165,9 +165,9 @@ sub get_slave_status
 			$db0_line{'Seconds_Behind_Master'}=0 if $db0_line{'Seconds_Behind_Master'} < 0;
 			if ($db0_line{'Seconds_Behind_Master'} > $TOM::DB_mysql_seconds_behind_master_max)
 			{
-				main::_log("SQL: Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",1);
+#				main::_log("SQL: Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",1);
 				main::_log("{$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err");
-				main::_log("[$tom::H] {$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err",1) if $tom::H;
+#				main::_log("[$tom::H] {$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err",1) if $tom::H;
 			}
 			else
 			{
@@ -184,9 +184,9 @@ sub get_slave_status
 	
 	if ($db0_line{'Seconds_Behind_Master'} > $TOM::DB_mysql_seconds_behind_master_max)
 	{
-		main::_log("SQL: Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",1);
+#		main::_log("SQL: Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",1);
 		main::_log("{$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err");
-		main::_log("[$tom::H] {$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err",1) if $tom::H;
+#		main::_log("[$tom::H] {$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err",1) if $tom::H;
 	}
 	
 	$slave_status{$db_h}{'time'}=time();
@@ -272,7 +272,7 @@ sub _choose_weighted {
 
 sub execute
 {
-	my $SQL=shift;
+	my $SQL_orig=my $SQL=shift;
 	my %env=@_;
 	if ($env{'-jobify'})
 	{
@@ -386,12 +386,13 @@ sub execute
 	main::_log("db_h='$env{'db_h'}'") unless $env{'quiet'};
 	if ($env{'log'})
 	{
-		foreach my $line(split("\n",$SQL))
-		{
-			$line=~s|\t|   |g;
-			$line=~s|[\t ]+$||g;
-			main::_log($line) unless $env{'quiet'};
-		}
+		main::_log($SQL_orig) unless $env{'quiet'};
+#		foreach my $line(split("\n",$SQL))
+#		{
+#			$line=~s|\t|   |g;
+#			$line=~s|[\t ]+$||g;
+#			main::_log($line) unless $env{'quiet'};
+#		}
 	}
 	
 	my ($package, $filename, $line) = caller;
@@ -785,7 +786,10 @@ sub execute
 		
 	}
 	
-	if ($logquery || (!$typeselect && $lognonselectquery))
+	if (
+		($logquery || (!$typeselect && $lognonselectquery))
+		|| ($logquery_long && ($t->{'time'}{'req'}{'duration'} > $env{'-long'}))
+	)
 	{
 		my $caller_plus;
 		my ($package_, $filename_, $line_) = caller(1);
@@ -798,15 +802,28 @@ sub execute
 				$caller_plus.="/$package_:$filename_:$line_";
 			}
 		}
-		main::_log("{$env{'db_h'}:exec:".($t->{'time'}{'req'}{'duration'})."s} '$SQL_' from '$package:$filename:$line'$caller_plus",3,"sql");
+#		main::_log("{$env{'db_h'}:exec:".($t->{'time'}{'req'}{'duration'})."s} '$SQL_' from '$package:$filename:$line'$caller_plus",3,"sql");
+		main::_log($SQL_orig,{
+			'severity' => 3,
+			'facility' => 'sql',
+			'data' => {
+				'exec_s' => 'db', # or 'cache'
+				'rows_i' => $output{'rows'},
+				'db_h_s' => $env{'db_h'},
+				'duration_f' => $t->{'time'}{'req'}{'duration'},
+				'caller' => [
+					{'p_s' => $package,'f_s' => $filename,'l_i' => $line},
+#					{'p_s' => $package_,'f_s' => $filename_,'l_i' => $line_}
+				]
+			}
+		})
 	}
-	
-	if ($logquery_long && ($t->{'time'}{'req'}{'duration'} > $env{'-long'}))
-	{
-		main::_log("{$env{'db_h'}} executed ".($t->{'time'}{'req'}{'duration'})."s query",1);
-		main::_log("{$env{'db_h'}} duration:".($t->{'time'}{'req'}{'duration'})."s SQL='$SQL_' from $package:$filename:$line",4,"sql.long");
-		main::_log("[$tom::H] {$env{'db_h'}} duration:".($t->{'time'}{'req'}{'duration'})."s SQL='$SQL_' from $package:$filename:$line",4,"sql.long",1) if $tom::H;
-	}
+#	elsif ($logquery_long && ($t->{'time'}{'req'}{'duration'} > $env{'-long'}))
+#	{
+#		main::_log("{$env{'db_h'}} executed ".($t->{'time'}{'req'}{'duration'})."s query",1);
+#		main::_log("{$env{'db_h'}} duration:".($t->{'time'}{'req'}{'duration'})."s SQL='$SQL_' from $package:$filename:$line",4,"sql.long");
+#		main::_log("[$tom::H] {$env{'db_h'}} duration:".($t->{'time'}{'req'}{'duration'})."s SQL='$SQL_' from $package:$filename:$line",4,"sql.long",1) if $tom::H;
+#	}
 	
 	return %output;
 }
