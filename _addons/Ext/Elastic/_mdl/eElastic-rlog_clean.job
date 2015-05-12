@@ -35,7 +35,7 @@ sub execute
 		if ($rel>=0.1)
 		{
 			main::_log("  optimize");
-			eval {$Elastic->indices->optimize('index' => $indice);};
+			eval {$Elastic->indices->optimize('index' => $indice,'only_expunge_deletes' => 1);};
 			if ($@)
 			{
 				main::_log($@,1);
@@ -151,7 +151,7 @@ sub execute
 			foreach my $level (sort keys %{$TOM::DEBUG_log_type{$type->{'key'}}->{'levels'}})
 			{
 				$max_days=$TOM::DEBUG_log_type{$type->{'key'}}->{'levels'}->{$level};
-				main::_log(" remove level $level older than $max_days days");
+				main::_log(" remove level >=$level older than $max_days days");
 				$Elastic->delete_by_query(
 					'index' => 'logstash-*',
 					'type' => 'fluentd',

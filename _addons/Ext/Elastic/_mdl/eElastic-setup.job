@@ -14,7 +14,6 @@ sub execute
 	my $self=shift;
 	my $env=$self->env;
 	
-#	print "funguje\n";
 	main::_log_stdout("putting settings");
 	
 	if (!$Elastic)
@@ -45,7 +44,7 @@ sub execute
 	}
 	
 	main::_log_stdout("delete_template");
-	$Elastic->indices->delete_template('name'=>'cyclone3.*');
+	eval{$Elastic->indices->delete_template('name'=>'cyclone3.*')};
 	main::_log_stdout("put_template");
 	$Elastic->indices->put_template(
 		'name'=>'cyclone3.*',
