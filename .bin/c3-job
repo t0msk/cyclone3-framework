@@ -92,7 +92,9 @@ $TOM::engine_ready=1;
 
 eval
 {
-	main::_log_stdout("load & exec '".($job_file || $main::arg{'name'})."'");
+	local $main::request_code=Utils::vars::genhash(8);
+	
+	main::_log_stdout("{$main::request_code} load & exec '".($job_file || $main::arg{'name'})."'");
 	
 	$0.=" {".($main::arg{'name'} || $job_file)."}";
 	
