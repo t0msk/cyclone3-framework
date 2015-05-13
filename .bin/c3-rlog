@@ -303,7 +303,7 @@ main::_log_stdout("ElasticSearch @".join(',@',@{$Ext::Elastic->{'nodes'}}));
 Ext::Elastic::_connect();
 our $Elastic=$Ext::Elastic::service;
 
-my $temp_version=1.06;
+my $temp_version=1.07;
 my $temp_data={};
 eval {$temp_data=$Elastic->indices->get_template('name'=>'logstash-*');};
 if ($temp_data->{'logstash-*'}->{'mappings'}->{'fluentd'}->{'_meta'}->{'version'} < $temp_version)
@@ -320,6 +320,10 @@ if ($temp_data->{'logstash-*'}->{'mappings'}->{'fluentd'}->{'_meta'}->{'version'
 						"version" => $temp_version
 					},
 					'properties' => {
+						'a' => { # archived?
+							'type' => 'string',
+							'index' => 'not_analyzed'
+						},
 						'p' => { # pid
 							'type' => 'integer',
 						},
@@ -370,7 +374,7 @@ if ($temp_data->{'logstash-*'}->{'mappings'}->{'fluentd'}->{'_meta'}->{'version'
 							"match" => "*_s",
 							"mapping" => {
 								"type" => "string",
-								"analyzer" => "not_analyzed"
+								"index" => "not_analyzed"
 							}
 						}},
 						{'text' => {
@@ -407,6 +411,8 @@ if ($temp_data->{'logstash-*'}->{'mappings'}->{'fluentd'}->{'_meta'}->{'version'
 
 print color 'green bold';
 main::_log_stdout($query);
+
+#$Elastic->indices->delete('index'=>'logstash-2015-20');
 
 $limit=$main::arg{'limit'} if $main::arg{'limit'};
 my $results = $Elastic->search(
