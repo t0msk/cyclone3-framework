@@ -79,6 +79,7 @@ my $loadstat = $loadinfo->get;
 
 main::_log_stdout("running on host with ".$sysstat->{'tcpucount'}." CPU cores PID $$",3,"job.workerd");# if $ENV{'WORKERS'};
 our $MAX_LOAD=($sysstat->{'tcpucount'} * 3);
+main::_log_stdout("max load $MAX_LOAD",3,"job.workerd");# if $ENV{'WORKERS'};
 
 main::_log_stdout("declaring default job exchange, queue, binding",3,"job.workerd");
 
@@ -317,13 +318,14 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 			$domain_worker{$domain.$class_}{'request_time'}=time();
 #			$domain_worker{$domain.$class_}{'count'}++;
 			
-			$tom::P=$domain_info{$domain}{'tom::P'} || $TOM::P.'/.core'; # new local.conf location
-			chdir $tom::P;
+			$tom::P__=$domain_info{$domain}{'tom::P'} || $TOM::P.'/.core'; # new local.conf location
+			chdir $tom::P__;
 			my $cmd='/usr/bin/perl '.$TOM::P."/.core/job.worker $class > /dev/null";
 			main::_log_stdout("chdir '$tom::P' exec '$cmd'",3,"job.workerd");
 			`$cmd&`;
-			sleep 1;
+			sleep 2;
 			$WORKERS++;
+			main::_log_stdout("started new worker",3,"job.workerd");
 #			main::_log("executed");
 #			next;
 			
@@ -376,7 +378,7 @@ sub monitor_master_db
 	},'quiet'=>1);
 }
 
-my $w=AnyEvent->timer(after => 60, interval => 10, cb => \&check_domains);
+my $w=AnyEvent->timer(after => 60, interval => 30, cb => \&check_domains);
 my $w=AnyEvent->timer(after => 0, interval => 5, cb => \&check_scheduler);
 sub check_domains
 {
@@ -423,7 +425,7 @@ sub check_domains
 		if ((time()-$dom_data->{'updated'}) < 3600){async {
 		
 			# create queue
-#			main::_log("create queue for $domain");
+#			main::_log("re-create queue for $domain");
 			# cyclone3.job.domain.tld: cyclone3.job -> cyclone3.job
 			$service->_channel->declare_queue(
 				'exchange' => encode('UTF-8', 'cyclone3.job'),
