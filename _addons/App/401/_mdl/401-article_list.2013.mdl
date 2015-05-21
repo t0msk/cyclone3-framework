@@ -170,7 +170,7 @@ sub execute
 				
 				if (!$filter->{'or'}->[0]->{'term'}->{'cat.ID'})
 				{
-					shift $filter->{'or'};
+					shift @{$filter->{'or'}};
 					if (!$filter->{'or'}->[0]->{'prefix'}->{'cat.charindex'})
 					{
 						undef $filter;
@@ -178,7 +178,7 @@ sub execute
 				}
 				elsif (!$filter->{'or'}->[1]->{'prefix'}->{'cat.charindex'})
 				{
-					pop $filter->{'or'};
+					pop @{$filter->{'or'}};
 					if (!$filter->{'or'}->[0]->{'term'}->{'cat.ID'})
 					{
 						undef $filter;
