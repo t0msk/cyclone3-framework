@@ -73,6 +73,28 @@ sub request
 		delete $obj->{'pub'}->{'REFERER'};
 	}
 	
+#	main::_log("testy");
+	main::_log("'".$main::ENV{'REQUEST_URI'}."' ".$main::ENV{'QUERY_STRING_FULL'}.' '.$main::ENV{'REMOTE_ADDR'}.' '.$env{'code'}.' '.$env{'location'},{
+		'facility' => 'pub.track',
+		'severity' => 3,
+		'data' => {
+			'response_status_i' => $env{'code'},
+			'user_s' => $main::USRM{'ID_user'},
+			'user_logged_s' => $main::USRM{'logged'},
+			
+			'servicetype_t' => $main::FORM{'TID'},
+			
+			'REMOTE_ADDR_t' => $main::ENV{'REMOTE_ADDR'},
+			'REFERER_t' => $main::ENV{'HTTP_REFERER'},
+			'USER_AGENT_t' => $main::ENV{'HTTP_USER_AGENT'},
+			'UserAgent_t' => $main::UserAgent_name,
+#			'UserAgent_type_s' => $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'},
+#			'UserAgent_type_group_s' => $reqtype,
+			
+			'duration_f' => $env{'duration'},
+			'duration_user_f' => $env{'user'}
+		}
+	});
 	main::_event('info','pub.request',$obj);
 	
 	return undef if $App::110::IP_exclude{$main::ENV{'REMOTE_ADDR'}};
