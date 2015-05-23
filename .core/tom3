@@ -829,9 +829,9 @@ while ($main::CGI=new CGI::Fast())
 			if ($out=~/^http/)
 			{
 				# ide kod 301
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out' (301.conf)",3,"pub.301",1);
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out' (301.conf)",3,"pub.301");
-				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out' (301.conf)");
+#				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out' (301.conf)",3,"pub.301",1);
+#				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out' (301.conf)",3,"pub.301");
+#				main::_log("301 from $ENV{HTTP_HOST}$ENV{REQUEST_URI} to '$out' (301.conf)");
 				
 				$t_301->close();
 				$t_preprocess->close();
@@ -907,9 +907,9 @@ while ($main::CGI=new CGI::Fast())
 				my $URI_enh="$tom::rewrite_RewriteBase$link";
 				$URI_base.='/' unless $URI_enh=~/^\//;
 				
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)",3,"pub.301",1);
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)",3,"pub.301");
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)");
+#				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)",3,"pub.301",1);
+#				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)",3,"pub.301");
+#				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)");
 				
 				$t_301->close();
 				$t_preprocess->close();
@@ -936,9 +936,9 @@ while ($main::CGI=new CGI::Fast())
 			my $URI_enh="$tom::rewrite_RewriteBase$link";
 			$URI_base.='/' unless $URI_enh=~/^\//;
 			
-			main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)",3,"301",1);
-			main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)",3,"301");
-			main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)");
+#			main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)",3,"301",1);
+#			main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)",3,"301");
+#			main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (301.conf)");
 			
 			$t_301->close();
 			$t_preprocess->close();
@@ -1130,9 +1130,10 @@ while ($main::CGI=new CGI::Fast())
 					$URL_orig.='?'.$main::ENV{'QUERY_STRING'} if $main::ENV{'QUERY_STRING'};
 				my $URL=($rewrite_domain || $tom::H_www).$link;
 				
-				main::_log("302 '$URL_orig' to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"pub.301",1);
-				main::_log("302 '$URL_orig' to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"pub.301");
-				main::_log("302 '$URL_orig' to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'");
+#				main::_log("302 '$URL_orig' to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"pub.301",1);
+#				main::_log("302 '$URL_orig' to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'",3,"pub.301");
+#				main::_log("302 '$URL_orig' to '$URL' (trying setup cookies) IP='$ENV{REMOTE_ADDR}' USER_AGENT='$ENV{'HTTP_USER_AGENT'}'");
+				
 				$t_cookies->close();
 				$t_preprocess->close();
 				$t_eval->close();
@@ -1341,7 +1342,6 @@ while ($main::CGI=new CGI::Fast())
 					{
 						my $e_r=$t_eval->{'time'}{'req'}{'duration'};
 						my $e_p=$t_eval->{'time'}{'proc'}{'duration'};
-						
 						if ($Ext::Redis::service)
 						{
 							my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
@@ -1355,31 +1355,10 @@ while ($main::CGI=new CGI::Fast())
 								'eval_req',int($e_r*1000),sub{});
 							$Ext::Redis::service->hincrby('C3|counters|pub_bench|'.$TOM::hostname.'|'.$date_str,
 								'eval_proc',int($e_p*1000),sub{});
-							
-#							print "r=$e_r p=$e_p\n";
-							
 						}
-						
-#						main::_log("[$tom::H]".
-#							" ".
-#							"TID:?".
-#							" ".
-#							"eval:".$e_r."/".$e_p.
-#							" ".
-#							"(".
-#								"pre_process:".
-#									$t_preprocess->{'time'}{req}{duration}.'/'.$t_preprocess->{'time'}{proc}{duration}.' '.
-#									TOM::Math::percentage($e_r,$t_preprocess->{'time'}{req}{duration})."%/".
-#									TOM::Math::percentage($e_p,$t_preprocess->{'time'}{proc}{duration})."%".
-#								" ".
-#								"process: 0/0 0%/0%".
-#								" ".
-#								"post_process: 0/0 0%/0%".
-#							")".
-#							"",3,"pub.bench",1) if $TOM::DEBUG_benchmark;
 					};
 					
-					main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ').":".($main::USRM{'logged'} || ' ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track');
+#					main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ').":".($main::USRM{'logged'} || ' ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track');
 					
 					print "Status: 304 Not Modified\n\n";
 					
@@ -2420,9 +2399,9 @@ while ($main::CGI=new CGI::Fast())
 				TOM::Engine::pub::cookies::send();
 				
 				# ide kod 301
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$rewrite_domain$link' (test)",3,"pub.301",1);
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$rewrite_domain$link' (test)",3,"pub.301");
-				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$rewrite_domain$link' (test)");
+#				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$rewrite_domain$link' (test)",3,"pub.301",1);
+#				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$rewrite_domain$link' (test)",3,"pub.301");
+#				main::_log("301 from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$rewrite_domain$link' (test)");
 				
 				$t_301->close();
 				$t_process->close();
@@ -2576,20 +2555,28 @@ while ($main::CGI=new CGI::Fast())
 			# musim odoslat cookies i ked robim relocation
 			TOM::Engine::pub::cookies::send();
 			
-			main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ').":".($main::USRM{'logged'} || ' ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track');
+#			main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ').":".($main::USRM{'logged'} || ' ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'",3,'pub.track');
 			
 			my $out=$location;
 			my $t_301=track TOM::Debug("redirect by main::location");
 			if ($out=~/^-(\d+)/)
 			{
 				my $code=$1;
-				main::_log("code $1 on REQUEST_URI='$ENV{'REQUEST_URI'}' (location)",3,"pub.301",1);
-				main::_log("code $1 on REQUEST_URI='$ENV{'REQUEST_URI'}' (location)",3,"pub.301");
-				main::_log("code $1 on REQUEST_URI='$ENV{'REQUEST_URI'}' (location)",1);
+#				main::_log("code $1 on REQUEST_URI='$ENV{'REQUEST_URI'}' (location)",3,"pub.301",1);
+#				main::_log("code $1 on REQUEST_URI='$ENV{'REQUEST_URI'}' (location)",3,"pub.301");
+#				main::_log("code $1 on REQUEST_URI='$ENV{'REQUEST_URI'}' (location)",1);
+				
 				$t_301->close();
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
+				TOM::Debug::pub::request(
+					'duration' => $t_eval->{'time'}{'duration'},
+					'user' => $t_eval->{'time'}{'user'}{'duration'},
+					'sys' => $t_eval->{'time'}{'sys'}{'duration'},
+					'code' => $code,
+#					'location' => $out
+				);
 				print "Status: $code Unknown\n\n";
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				
@@ -2602,9 +2589,9 @@ while ($main::CGI=new CGI::Fast())
 			if ($out=~/^http/)
 			{
 				# ide kod 302
-				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"pub.301",1);
-				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"pub.301");
-				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)");
+#				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"pub.301",1);
+#				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"pub.301");
+#				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)");
 				
 				$t_301->close();
 				$t_process->close();
@@ -2628,9 +2615,9 @@ while ($main::CGI=new CGI::Fast())
 			if ($out=~/^\//)
 			{
 				# ide kod 302
-				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"pub.301",1);
-				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"pub.301");
-				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)");
+#				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"pub.301",1);
+#				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)",3,"pub.301");
+#				main::_log("$main::location_code from '$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$out' (location)");
 				
 				$t_301->close();
 				$t_process->close();
@@ -2723,9 +2710,9 @@ while ($main::CGI=new CGI::Fast())
 				# nekodovana linka
 #				$link=~s|&|&amp;|g unless $TOM::type_code;
 				main::_log("URL='$link'");
-				main::_log("$main::location_code from '".($main::ENV{'HTTPS'})."//$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"pub.301",1);
-				main::_log("$main::location_code from '".($main::ENV{'HTTPS'})."//$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"pub.301");
-				main::_log("$main::location_code from '".($main::ENV{'HTTPS'})."//$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)");
+#				main::_log("$main::location_code from '".($main::ENV{'HTTPS'})."//$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"pub.301",1);
+#				main::_log("$main::location_code from '".($main::ENV{'HTTPS'})."//$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)",3,"pub.301");
+#				main::_log("$main::location_code from '".($main::ENV{'HTTPS'})."//$ENV{HTTP_HOST}$ENV{REQUEST_URI}' to '$URI_base$tom::rewrite_RewriteBase$link' (location)");
 				
 				$t_301->close();
 				$t_process->close();
@@ -3140,7 +3127,7 @@ while ($main::CGI=new CGI::Fast())
 		$t_postprocess->close();
 		$t_eval->close();
 		
-		main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ').":".($main::USRM{'logged'} || ' ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'/'$main::ENV{'HTTP_USER_AGENT'}'",3,'pub.track');
+#		main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ').":".($main::USRM{'logged'} || ' ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'/'$main::ENV{'HTTP_USER_AGENT'}'",3,'pub.track');
 		
 		if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 		
