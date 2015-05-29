@@ -195,7 +195,6 @@ sub execute
 	
 	main::_log("found video.ID_entity=$video{'ID_entity'}");
 	
-	
 	push @{$env_out{'entity'}},{
 		'db_h' => 'main',
 		'db_name' => $App::510::db_name,
@@ -209,6 +208,9 @@ sub execute
 	push @{$env_out{'call'}{'H'}{'add_DOC_title'}},$video{'attrs_name'}
 		if $env{'header.title'};
 #	push @{$env_out{'call'}{'H'}{'change_DOC_description'}},ucfirst($description);
+	
+	%{$video{'metahash'}}=App::020::functions::metadata::parse($video{'ent_metadata'});
+	delete $video{'ent_metadata'};
 	
 	if ($video{'cat_ID'})
 	{
