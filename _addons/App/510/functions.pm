@@ -1,63 +1,12 @@
 #!/bin/perl
 package App::510::functions;
 
-=head1 NAME
-
-App::510::functions
-
-=head1 DESCRIPTION
-
-Functions to handle basic actions with videos.
-
-=cut
-
 use open ':utf8', ':std';
 use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-
-
-=head1 DEPENDS
-
-=over
-
-=item *
-
-L<App::510::_init|app/"510/_init.pm">
-
-=item *
-
-L<App::160::_init|app/"160/_init.pm">
-
-=item *
-
-L<App::542::mimetypes|app/"542/mimetypes.pm">
-
-=item *
-
-File::Path
-
-=item *
-
-Digest::MD5
-
-=item *
-
-Digest::SHA1
-
-=item *
-
-File::Type
-
-=item *
-
-Movie::Info
-
-=back
-
-=cut
 
 use App::510::_init;
 use App::510::brick;
@@ -72,6 +21,7 @@ use File::Which qw(where);
 use Time::HiRes qw(usleep);
 use Ext::Redis::_init;
 use Ext::Elastic::_init;
+use Number::Bytes::Human qw(format_bytes);
 
 our $avconv_exec = (where('avconv'))[0];main::_log("avconv in '$avconv_exec'");
 our $ffmpeg_exec = (where('ffmpeg'))[0];main::_log("ffmpeg in '$ffmpeg_exec'");
@@ -208,9 +158,9 @@ sub video_part_file_generate
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	my %file_parent=$sth0{'sth'}->fetchhash();
 	
-	if ($file_parent{'status'} ne "Y")
+	if ($file_parent{'status'} ne "Y" && ($format_parent{'ID'} ne 1))
 	{
-		main::_log("parent video_part_file.ID='$file_parent{'ID'}' is disabled or not available",1);
+		main::_log("parent video_part_file.ID='$file_parent{'ID'}' ID_format=$format_parent{'ID'} is disabled or not available",1);
 		$t->close();
 		return undef;
 	}
@@ -224,6 +174,7 @@ sub video_part_file_generate
 		(
 			`ID_part`,
 			`ID_format`,
+			`request_code`,
 			`hostname`,
 			`hostname_PID`,
 			`process`,
@@ -233,6 +184,7 @@ sub video_part_file_generate
 		(
 			'$video_part{'ID'}',
 			'$format{'ID'}',
+			'$main::request_code',
 			'$TOM::hostname',
 			'$$',
 			'',
@@ -241,7 +193,7 @@ sub video_part_file_generate
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	my $process_ID=$sth0{'sth'}->insertid();
-	
+	main::_log("creating entry to _video_part_file_process with id '$process_ID' to lock video_part.ID='$video_part{'ID'}' format.ID='$format{'ID'}'");
 	
 	my $video_=$brick_class->video_part_file_path({
 		'video_part.ID' => $video_part{'ID'},
@@ -268,7 +220,14 @@ sub video_part_file_generate
 	
 	my $video1={};
 	no strict;
-	if (${$brick_class.'::copybeforeencode'})
+	if ($brick_class->can('download'))
+	{
+		$video1=new TOM::Temp::file('dir'=>$main::ENV{'TMP'},'nocreate'=>1);
+		main::_log("download parent video to '$video1->{'filename'}'");
+		$brick_class->download($video1_path, $video1->{'filename'});
+		$video1_path=$video1->{'filename'};
+	}
+	elsif (${$brick_class.'::copybeforeencode'})
 #	if ($brick_class->{'copybeforeencode'})
 	{
 		$video1=new TOM::Temp::file('dir'=>$main::ENV{'TMP'},'nocreate'=>1);
@@ -409,7 +368,7 @@ sub video_part_file_generate
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-		
+		main::_log("set entry to _video_part_file_process with id '$process_ID' to status='E' (not processed)");
 		$t->close();
 		return undef;
 	}
@@ -423,6 +382,7 @@ sub video_part_file_generate
 		'from_parent' => "Y",
 		'thumbnail_lock_ignore' => $env{'thumbnail_lock_ignore'}
 	) || do {
+		main::_log("setting entry to _video_part_file_process with id '$process_ID' to status='E' (not coppied)");
 		my $sql=qq{
 			UPDATE `$App::510::db_name`.`a510_video_part_file_process`
 			SET datetime_stop=NOW(), status='E'
@@ -433,6 +393,7 @@ sub video_part_file_generate
 		$t->close();return undef
 	};
 	
+	main::_log("setting entry to _video_part_file_process with id '$process_ID' to status='Y' (done)");
 	my $sql=qq{
 		UPDATE `$App::510::db_name`.`a510_video_part_file_process`
 		SET datetime_stop=NOW(), status='Y'
@@ -684,17 +645,41 @@ sub video_part_smil_generate
 		);
 	}
 	
-	if (-e $dir_name.'/'.$file_name.'.smil')
-	{
-		unlink $dir_name.'/'.$file_name.'.smil';
-	}
+#	if (-e $dir_name.'/'.$file_name.'.smil')
+#	{
+#		unlink $dir_name.'/'.$file_name.'.smil';
+#	}
 	
-	main::_log("writed smil file");
-	open(HNDSMIL,'>'.$dir_name.'/'.$file_name.'.smil') || 
+#	main::_log("writed smil file");
+	
+	my $file_temp=new TOM::Temp::file('ext'=>'smil');
+	open(HNDSMIL,'>'.$file_temp->{'filename'}) || 
 		main::_log("can't write $!",1);
 	print HNDSMIL $xml_string;
 	close(HNDSMIL);
-	chmod (0666,$dir_name.'/'.$file_name.'.smil');
+	chmod (0666,$file_temp->{'filename'});
+	
+	if ($brick_class->can('upload'))
+	{
+		main::_log(" upload file size=".format_bytes((stat $file_temp->{'filename'})[7]));
+		$brick_class->upload(
+			$file_temp->{'filename'},
+			$dir_name.'/'.$file_name.'.smil'
+		) || do {
+			main::_log("$!",1);
+			$t->close();
+			return undef;
+		};
+	}
+	else
+	{
+		main::_log(" copy file size=".format_bytes((stat $file_temp->{'filename'})[7]));
+		copy($file_temp->{'filename'},$dir_name.'/'.$file_name.'.smil') || do {
+			main::_log("$!",1);
+			$t->close();
+			return undef;
+		};
+	}
 	
 	$t->close();
 	return 1;
@@ -705,6 +690,10 @@ sub video_part_smil_generate
 sub video_part_brick_change
 {
 	my %env=@_;
+	if ($env{'-jobify'})
+	{
+		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::510::db_name,'class'=>'fifo'}); # do it in background
+	}
 	return undef unless $env{'video_part.ID'};
 	return undef unless defined $env{'video_part.ID_brick'};
 	my $t=track TOM::Debug(__PACKAGE__."::video_part_brick_change($env{'video_part.ID'},$env{'video_part.ID_brick'})");
@@ -875,29 +864,34 @@ sub video_part_brick_change
 		main::_log(" file src '$src_dir/$src_file_path'");
 		main::_log(" file dst '$dst_dir/$dst_file_path'");
 		
-		if ($src_dir=~/skvid/)
-		{
-			next;
-		}
-		elsif ($src_dir.'/'.$src_file_path eq $dst_dir.'/'.$dst_file_path)
+		if ($src_dir.'/'.$src_file_path eq $dst_dir.'/'.$dst_file_path)
 		{
 			main::_log("src file same as destination",1);
 			next;
 		}
+		
+		# test source file
+		if ($brick_src_class->can('testdir'))
+		{
+			if (!$brick_src_class->testdir($src_dir))
+			{
+				main::_log("src dir can't be found, exiting",1);
+				$t->close();
+				return undef;
+			}
+			if ($brick_src_class->can('testfile'))
+			{
+				if (!$brick_src_class->testfile($src_dir.'/'.$src_file_path))
+				{
+					main::_log("src file can't be found, exiting",1);
+					$t->close();
+					return undef;
+				}
+			}
+		}
 		elsif (-e $src_dir && !-e $src_dir.'/'.$src_file_path)
 		{
 			main::_log("src file can't be found, dir exits",1);
-#			App::020::SQL::functions::update(
-#				'ID' => $db1_line{'ID'},
-#				'db_h' => "main",
-#				'db_name' => $App::510::db_name,
-#				'tb_name' => "a510_video_part",
-#				'data' =>
-#				{
-#					'status' => "'E'"
-#				},
-#				'-journalize' => 1
-#			);
 			$t->close();
 			return undef;
 		}
@@ -907,6 +901,7 @@ sub video_part_brick_change
 			$t->close();
 			return undef;
 		}
+		
 		push @files_move,[
 			$src_dir.'/'.$src_file_path,
 			$dst_dir.'/'.$dst_file_path,
@@ -944,11 +939,56 @@ sub video_part_brick_change
 		$i++;
 		my $src_file=$_->[0];
 		my $dst_file=$_->[1];
-		main::_log(" copy file [$i] size=".(stat $src_file)[7]."b");
-		copy($src_file,$dst_file) || do {
-			main::_log("$!",1);
-			$t->close();
-			return undef;
+		
+		# pridat este download ak ideme z brick na brick
+		
+		if ($brick_src_class->can('download'))
+		{
+			
+			if ($brick_dst_class->can('upload'))
+			{
+				# download to upload
+				main::_log("sorry, i don't know how to do this",1);
+				
+				$t->close();
+				return undef;
+				
+			}
+			else
+			{
+				main::_log(" download file [$i]");
+				
+				$brick_src_class->download(
+					$src_file,
+					$dst_file
+				) || do {
+					main::_log("$!",1);
+					$t->close();
+					return undef;
+				};
+			}
+			
+		}
+		elsif ($brick_dst_class->can('upload'))
+		{
+			main::_log(" upload file [$i] size=".format_bytes((stat $src_file)[7]));
+			$brick_dst_class->upload(
+				$src_file,
+				$dst_file
+			) || do {
+				main::_log("$!",1);
+				$t->close();
+				return undef;
+			};
+		}
+		else
+		{
+			main::_log(" copy file [$i] size=".format_bytes((stat $src_file)[7]));
+			copy($src_file,$dst_file) || do {
+				main::_log("$!",1);
+				$t->close();
+				return undef;
+			};
 		}
 	}
 	
@@ -1010,9 +1050,23 @@ sub video_part_brick_change
 		my $src_file=$_->[0];
 		my $dst_file=$_->[1];
 		main::_log(" unlink file [$i]");
-		unlink($src_file) || do {
-			main::_log("$!",1);
-			# sorry, can't stop this process now
+		
+		if ($brick_src_class->can('unlink'))
+		{
+			$brick_src_class->unlink(
+				$src_file
+			) || do {
+				main::_log("$!",1);
+				$t->close();
+				return undef;
+			};
+		}
+		else
+		{
+			unlink($src_file) || do {
+				main::_log("$!",1);
+				# sorry, can't stop this process now
+			}
 		}
 	}
 	
@@ -1033,15 +1087,28 @@ sub video_part_brick_change
 	if ($smil_src_file)
 	{
 		main::_log("unlink $smil_src_file");
-		unlink $smil_src_file || do {
-			main::_log("$!",1);
-		};
+		
+		if ($brick_src_class->can('unlink'))
+		{
+			$brick_src_class->unlink(
+				$smil_src_file
+			) || do {
+				main::_log("$!",1);
+				$t->close();
+				return undef;
+			};
+		}
+		else
+		{
+			unlink $smil_src_file || do {
+				main::_log("$!",1);
+			};
+		}
 	}
 	
 	$t->close();
 	return 1;
 }
-
 
 
 sub _video_part_file_genpath
@@ -1421,6 +1488,7 @@ sub video_part_file_process
 				if (exists $env{'an'} && !$env{'acodec'}){push @encoder_env, '-an'}
 				if (exists $env{'sameq'}){push @encoder_env, '-sameq '}
 				if (exists $env{'deinterlace'}){push @encoder_env, '-deinterlace '}
+				if ($env{'movflags'}){push @encoder_env, '-movflags '.$env{'movflags'};}
 				if ($env{'flags'}){push @encoder_env, '-flags '.$env{'flags'};}
 				if ($env{'flags2'}){push @encoder_env, '-flags2 '.$env{'flags2'};}
 				if ($env{'cmp'}){push @encoder_env, '-cmp '.$env{'cmp'};}
@@ -1457,6 +1525,18 @@ sub video_part_file_process
 				if ($env{'qmax'}){push @encoder_env, '-qmax '.$env{'qmax'};}
 				if ($env{'qdiff'}){push @encoder_env, '-qdiff '.$env{'qdiff'};}
 				if ($env{'vcodec'}){push @encoder_env, '-vcodec '.$env{'vcodec'};}
+				if ($env{'acodec'}){
+					push @encoder_env, '-acodec '.$env{'acodec'};
+					if ($env{'acodec'})
+					{
+						push @encoder_env, '-strict -2';
+					}
+				}
+				if ($env{'c:v'}){push @encoder_env, '-b:v '.$env{'c:v'};}
+				if ($env{'c:a'}){
+					push @encoder_env, '-c:a '.$env{'c:a'};
+					push @encoder_env, '-strict -2';
+				}
 #				if ($env{'vpre'}){push @encoder_env, '-vpre '.$env{'vpre'};}
 				if ($env{'preset'}){push @encoder_env, '-preset '.$env{'preset'};}
 				if ($env{'tune'}){push @encoder_env, '-tune '.$env{'tune'};}
@@ -1518,13 +1598,16 @@ sub video_part_file_process
 						}
 					}
 				if ($env{'s'}){push @encoder_env, '-s '.$env{'s'};}
-				if ($env{'r'}){push @encoder_env, '-r '.$env{'r'};}
-				if ($env{'acodec'}){
-					push @encoder_env, '-acodec '.$env{'acodec'};
-					if ($env{'acodec'})
+				if ($env{'r'}){
+					if ($movie1_info{'fps'} && $env{'upscale'} eq "false")
 					{
-						push @encoder_env, '-strict -2';
+						my $fps=int($movie1_info{'fps'});
+						if ($fps < $env{'r'})
+						{
+							$env{'r'} = $fps;
+						}
 					}
+					push @encoder_env, '-r '.$env{'r'};
 				}
 				if ($env{'ab'}){
 					if ($env{'upscale'} eq "false" && $movie1_info{'audio_bitrate'})
@@ -1604,7 +1687,8 @@ sub video_part_file_process
 			
 			my $cmd="/usr/bin/mencoder ".$ff." -o ".($env{'o'} || $temp_video->{'filename'});
 			$cmd="cd $main::ENV{'TMP'};$ffmpeg_exec -y -i ".$ff if $env{'encoder'} eq "ffmpeg";
-			$cmd="cd $main::ENV{'TMP'};$avconv_exec -y -i ".$ff if $env{'encoder'} eq "avconv";
+			#$cmd="cd $main::ENV{'TMP'};$avconv_exec -y -i ".$ff if $env{'encoder'} eq "avconv";
+			$cmd="$avconv_exec -y -i ".$ff if $env{'encoder'} eq "avconv";
 			
 			foreach (@encoder_env){$cmd.=" $_";}
 			$cmd.=" ".($env{'o'} || $temp_video->{'filename'}) if $env{'encoder'} eq "ffmpeg";
@@ -1612,6 +1696,7 @@ sub video_part_file_process
 			main::_log("cmd=$cmd");
 			
 			$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
+			
 #			$outret{'return'}=undef if $outret{'return'}==256;
 			if ($outret{'return'} && $outret{'return'} != 11){$t->close();return %outret}
 			
@@ -1820,6 +1905,15 @@ sub video_add
 		$env{'video_attrs.ID_category'}=$category{'ID_entity'};
 		main::_log("setting lng='$env{'video_attrs.lng'}' from video_attrs.ID_category");
 		main::_log("setting video_attrs.ID_category='$env{'video_attrs.ID_category'}' from video_cat.ID='$env{'video_cat.ID'}'");
+#		print Dumper(\%category);
+		if ($category{'ID_brick'} || ($category{'ID_brick'} eq '0'))
+		{
+			if (not exists $env{'video_part.ID_brick'})
+			{
+				main::_log("re-set ID_brick=".$category{'ID_brick'});
+				$env{'video_part.ID_brick'} = "$category{'ID_brick'}";
+			}
+		}
 	}
 	$env{'video_attrs.ID_category'}='NULL' if $env{'video_cat.ID'} eq 'NULL';
 	
@@ -2238,6 +2332,7 @@ sub video_add
 		'video_part_attrs.lng' => $env{'video_attrs.lng'},
 		'video_part_attrs.name' => $env{'video_part_attrs.name'},
 		'video_part_attrs.description' => $env{'video_part_attrs.description'},
+		'video_part_file.from_parent' => $env{'video_part_file.from_parent'}
 	);
 	$env{'video_part.ID'} = $env0{'video_part.ID'} if $env0{'video_part.ID'};
 	if (!$env{'video_part.ID'})
@@ -2495,7 +2590,11 @@ sub video_part_add
 		$columns{'keywords'}=$env{'video_part.keywords'} if $env{'video_part.keywords'};
 		$columns{'part_id'}=$env{'video_part.part_id'} if $env{'video_part.part_id'};
 		$columns{'thumbnail_lock'}="'Y'" if $env{'file_thumbnail'};
-		$columns{'ID_brick'}=$env{'video_part.ID_brick'} || $App::510::brick_default || 'NULL';
+		$columns{'ID_brick'}=$env{'video_part.ID_brick'};
+			if (!$columns{'ID_brick'} && ($columns{'ID_brick'} ne "0"))
+			{
+				$columns{'ID_brick'} = $App::510::brick_default || 'NULL';
+			}
 		
 		if ($env{'video_part.datetime_air'})
 		{
@@ -2609,7 +2708,7 @@ sub video_part_add
 			'file_dontcheck' => $env{'file_dontcheck'},
 			'video_part.ID' => $env{'video_part.ID'},
 			'video_format.ID' => $env{'video_format.ID'},
-			'from_parent' => "N",
+			'from_parent' => ($env{'video_part_file.from_parent'} || "N"),
 			# used to detect optimal filename
 			'video.datetime_rec_start' => $env{'video.datetime_rec_start'},
 			'video_attrs.name' => $env{'video_attrs.name'},
@@ -2619,6 +2718,23 @@ sub video_part_add
 		{
 			$t->close();
 			return undef;
+		}
+	}
+	else
+	{
+		if ($env{'video_part.ID_brick'} || ($env{'video_part.ID_brick'} eq "0"))
+		{
+			if ($env{'video_part.ID_brick'} ne $video_part{'ID_brick'})
+			{
+				main::_log("changing brick from '$video_part{'ID_brick'}' to '$env{'video_part.ID_brick'}'");
+				
+				App::510::functions::video_part_brick_change(
+						'-jobify' => 1,
+					'video_part.ID' => $env{'video_part.ID'},
+					'video_part.ID_brick' => $env{'video_part.ID_brick'},
+				);
+				
+			}
 		}
 	}
 	
@@ -2826,7 +2942,7 @@ sub video_part_file_add
 	
 	# size
 	my $file_size=(stat($env{'file'}))[7];
-	main::_log("file size='$file_size'");
+	main::_log("file size=".format_bytes($file_size));
 	
 	if (!$file_size)
 	{
@@ -2903,18 +3019,6 @@ sub video_part_file_add
 	# override extension by videofile metadata
 	$file_ext='flv' if $video{'ID_VIDEO_FORMAT'} eq "1FLV";
 	
-	
-	# generate new unique hash
-#	my $optimal_hash=
-#		($env{'video.datetime_rec_start'} || $video_db{'datetime_rec_start'})
-#		."-".($env{'video_attrs.name'} || $video_db{'name'} || $video_db{'ID_video'})
-#		."-".$video_db{'part_id'}
-#		."-".($env{'video_part_attrs.name'} || $video_db{'part_name'})
-#		."-".$video_db{'ID_format'}
-#		;
-#	main::_log("optimal_hash='$optimal_hash'");
-#	my $name=video_part_file_newhash($optimal_hash);
-	
 	main::_log("get video_part_file_path");
 	my $brick_class='App::510::brick';
 		$brick_class.="::".$brick{'name'}
@@ -2934,7 +3038,10 @@ sub video_part_file_add
 	my $name=$video_->{'video_part_file.name'};
 	
 	if (
-			($env{'video_format.ID'} eq $App::510::video_format_full_ID)
+			(
+				$env{'video_format.ID'} eq "1" ||
+				$env{'video_format.ID'} eq $App::510::video_format_full_ID
+			)
 			||($env{'file_thumbnail'})
 		)
 	{
@@ -3134,6 +3241,48 @@ sub video_part_file_add
 			else
 			{$columns{'file_alt_src'}='NULL';}
 			
+			if (!$env{'file_nocopy'})
+			{
+				
+				my $video_=$brick_class->video_part_file_path({
+					'video_part.ID' => $part{'ID'},
+					'video_part.datetime_air' => $part{'datetime_air'},
+	#				'video.ID' => $video{'ID_video'},
+					'video_part_file.ID' => $db0_line{'ID'},
+					'video_format.ID' => $env{'video_format.ID'},
+					'video_part_file.name' => $name,
+					'video_part_file.file_ext' => $file_ext,
+				});
+				
+				my $path=$video_->{'dir'}.'/'.$video_->{'file_path'};
+				
+				if ($brick_class->can('upload'))
+				{
+					$brick_class->upload(
+						$env{'file'},
+						$path
+					) || do {
+						main::_log("file can't be uploaded",1);
+						$t->close();
+						return undef;
+					};
+				}
+				else
+				{
+					main::_log("copy file");
+					if (File::Copy::copy($env{'file'},$path))
+					{
+					}
+					else
+					{
+						main::_log("file can't be copied: $!",1);
+						$t->close();
+						return undef;
+					}
+				}
+				
+			}
+			
 			App::020::SQL::functions::update(
 				'ID' => $db0_line{'ID'},
 				'db_h' => 'main',
@@ -3161,39 +3310,7 @@ sub video_part_file_add
 				},
 				'-journalize' => 1,
 			);
-			if (!$env{'file_nocopy'})
-			{
-				
-				my $video_=$brick_class->video_part_file_path({
-					'video_part.ID' => $part{'ID'},
-					'video_part.datetime_air' => $part{'datetime_air'},
-					'video_format.ID' => $env{'video_format.ID'},
-	#				'video.ID' => $video{'ID_video'},
-					'video_part_file.ID' => $db0_line{'ID'},
-					'video_part_file.name' => $name,
-					'video_part_file.file_ext' => $file_ext,
-				});
-				
-				my $path=$video_->{'dir'}.'/'.$video_->{'file_path'};
-				
-#				my $path=$tom::P_media.'/a510/video/part/file/'._video_part_file_genpath
-#				(
-#					$env{'video_format.ID'},
-#					$db0_line{'ID'},
-#					$name,
-#					$file_ext
-#				);
-				main::_log("copy to $path");
-				if (File::Copy::copy($env{'file'},$path))
-				{
-				}
-				else
-				{
-					main::_log("file can't be copied: $!",1);
-					$t->close();
-					return undef;
-				}
-			}
+			
 			$t->close();
 			# override modifytime
 			App::020::SQL::functions::_save_changetime({
@@ -3238,11 +3355,11 @@ sub video_part_file_add
 				'file_checksum' => "'$checksum_method:$checksum'",
 				'file_ext' => "'$file_ext'",
 				'from_parent' => "'$env{'from_parent'}'",
-#				'status' => "'Y'",
 #				'datetime_create' => "FROM_UNIXTIME($main::time_current)", # hack
-				%columns
+				%columns,
+				'status' => "'X'",
 			},
-			'-journalize' => 1
+#			'-journalize' => 1
 		);
 		if (!$ID)
 		{
@@ -3258,9 +3375,9 @@ sub video_part_file_add
 			my $video_=$brick_class->video_part_file_path({
 				'video_part.ID' => $env{'video_part.ID'},
 				'video_part.datetime_air' => $part{'datetime_air'},
-				'video_format.ID' => $env{'video_format.ID'},
 #				'video.ID' => $video{'ID_video'},
 				'video_part_file.ID' => $ID,
+				'video_format.ID' => $env{'video_format.ID'},
 				'video_part_file.name' => $name,
 				'video_part_file.file_ext' => $file_ext,
 			});
@@ -3277,19 +3394,69 @@ sub video_part_file_add
 #				$name,
 #				$file_ext
 #			);
-			main::_log("copy to $path");
-			if (File::Copy::copy($env{'file'},$path))
+			
+			if ($brick_class->can('upload'))
 			{
+				$brick_class->upload(
+					$env{'file'},
+					$path
+				) || do {
+					main::_log("file can't be uploaded",1);
+					App::020::SQL::functions::update(
+						'ID' => $ID,
+						'db_h' => 'main',
+						'db_name' => $App::510::db_name,
+						'tb_name' => 'a510_video_part_file',
+						'columns' =>
+						{
+							'status' => "'E'"
+						},
+						'-journalize' => 1,
+					);
+					$t->close();
+					return undef;
+				};
 			}
 			else
 			{
-				main::_log("file can't be copied: $!",1);
-				$t->close();
-				return undef;
+				main::_log("copy file");
+				if (File::Copy::copy($env{'file'},$path))
+				{
+				}
+				else
+				{
+					main::_log("file can't be copied: $!",1);
+					App::020::SQL::functions::update(
+						'ID' => $ID,
+						'db_h' => 'main',
+						'db_name' => $App::510::db_name,
+						'tb_name' => 'a510_video_part_file',
+						'columns' =>
+						{
+							'status' => "'E'"
+						},
+						'-journalize' => 1,
+					);
+					$t->close();
+					return undef;
+				}
 			}
+			
 		}
 		$t->close();
+		
 		# override modifytime
+		App::020::SQL::functions::update(
+			'ID' => $ID,
+			'db_h' => 'main',
+			'db_name' => $App::510::db_name,
+			'tb_name' => 'a510_video_part_file',
+			'columns' =>
+			{
+				'status' => $columns{'status'}
+			},
+			'-journalize' => 1,
+		);
 		App::020::SQL::functions::_save_changetime({
 			'db_h' => 'main',
 			'db_name' => $App::510::db_name,
@@ -3301,7 +3468,6 @@ sub video_part_file_add
 		return $ID;
 	}
 	
-	$t->close();
 	# override modifytime
 	App::020::SQL::functions::_save_changetime({
 		'db_h' => 'main',
@@ -3311,8 +3477,10 @@ sub video_part_file_add
 	});
 	
 	video_part_smil_generate('video_part.ID' => $env{'video_part.ID'});
+	main::_log("calling _video_index()");
 	_video_index('ID_entity'=>$part{'ID_entity'});
 	
+	$t->close();
 	return 1;
 }
 
@@ -3587,7 +3755,8 @@ sub get_video_part_file
 		return undef;
 	}
 	
-	$env{'video_part_file.ID_format'} = $App::510::video_format_full_ID unless $env{'video_part_file.ID_format'};
+	$env{'video_part_file.ID_format'} ||= $env{'video_format.ID'};
+	$env{'video_part_file.ID_format'} ||= $App::510::video_format_full_ID;
 	$env{'video_attrs.lng'}=$tom::lng unless $env{'video_attrs.lng'};
 	
 	my $sql=qq{
@@ -3605,10 +3774,10 @@ sub get_video_part_file
 			
 			video_ent.keywords,
 			
-			LEFT(video.datetime_rec_start, 18) AS datetime_rec_start,
-			LEFT(video_attrs.datetime_create, 18) AS datetime_create,
+			LEFT(video.datetime_rec_start, 16) AS datetime_rec_start,
+			LEFT(video_attrs.datetime_create, 16) AS datetime_create,
 			LEFT(video.datetime_rec_start,10) AS date_recorded,
-			LEFT(video_ent.datetime_rec_stop, 18) AS datetime_rec_stop,
+			LEFT(video_ent.datetime_rec_stop, 16) AS datetime_rec_stop,
 			
 			video_attrs.ID_category,
 			video_cat.name AS ID_category_name,
@@ -3619,7 +3788,7 @@ sub get_video_part_file
 			video_part_attrs.name AS part_name,
 			video_part_attrs.description AS part_description,
 			video_part.keywords AS part_keywords,
-			video_part.datetime_air AS part_datetime_air,
+			LEFT(video_part.datetime_air, 16) AS part_datetime_air,
 			
 			video_part_file.ID AS file_ID,
 			video_part_file.video_width,
@@ -3630,6 +3799,10 @@ sub get_video_part_file
 			video_part_file.file_ext,
 			video_part_file.file_alt_src,
 			video_part_file.name AS file_name,
+			video_part_file.status AS file_status,
+			video_part_file.regen AS file_regen,
+			
+			video_part_smil.name AS smil_name,
 			
 			video_format.ID AS format_ID,
 			video_format.name AS video_format_name,
@@ -3671,6 +3844,10 @@ sub get_video_part_file
 		LEFT JOIN `$App::510::db_name`.`a510_video_brick` AS video_brick ON
 		(
 			video_brick.ID = video_part.ID_brick
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part_smil` AS video_part_smil ON
+		(
+			video_part_smil.ID_entity = video_part.ID
 		)
 		INNER JOIN `$App::510::db_name`.`a510_video_format` AS video_format ON
 		(
@@ -3723,6 +3900,10 @@ sub get_video_part_file
 		(
 			video_brick.ID = video_part.ID_brick
 		)
+		LEFT JOIN `$App::510::db_name`.`a510_video_part_smil` AS video_part_smil ON
+		(
+			video_part_smil.ID_entity = video_part.ID
+		)
 		INNER JOIN `$App::510::db_name`.`a510_video_format` AS video_format ON
 		(
 			video_format.ID = video_part_file.ID_format
@@ -3737,7 +3918,6 @@ sub get_video_part_file
 	
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,
 		'-cache' => 3600, #24H max
-#		'-cache_min' => 600, # when changetime before this limit 10min
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
 			'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video",
 			'ID_entity' => $env{'video.ID_entity'}
@@ -3753,8 +3933,8 @@ sub get_video_part_file
 				'video_part.ID' => $video{'ID_part'},
 				'video_part.datetime_air' => $video{'part_datetime_air'},
 				'video.ID' => $video{'ID_video'},
-				'video_format.ID' => $video{'format_ID'},
 				'video_part_file.ID' => $video{'file_ID'},
+				'video_format.ID' => $video{'format_ID'},
 				'video_part_file.file_ext' => $video{'file_ext'},
 				'video_part_file.file_alt_src' => $video{'file_alt_src'},
 				'video_part_file.name' => $video{'file_name'},
@@ -3820,7 +4000,7 @@ sub get_video_part_file_process_front
 		(
 			video_part.ID_entity = video.ID_entity
 		)
-		LEFT JOIN `$App::510::db_name`.a510_video_attrs AS video_attrs ON
+		INNER JOIN `$App::510::db_name`.a510_video_attrs AS video_attrs ON
 		(
 			video_attrs.ID_entity = video.ID
 		)
@@ -3840,7 +4020,7 @@ sub get_video_part_file_process_front
 		LEFT JOIN `$App::510::db_name`.a510_video_part_file_process AS video_part_file_process ON
 		(
 			video_part_file_process.ID_part = video_part.ID AND
-			video_part_file_process.ID_format = video_format.ID_entity AND
+--			video_part_file_process.ID_format = video_format.ID_entity AND
 			video_part_file_process.datetime_start >= video_format.datetime_create AND
 			video_part_file_process.datetime_start <= NOW() AND
 			video_part_file_process.status = 'W' AND
@@ -4625,6 +4805,7 @@ sub broadcast_program_add
 			'synopsis',
 			'description',
 			'program_code',
+			'record_id',
 			'program_type_code',
 			'authoring_country',
 			'authoring_year',
@@ -4730,7 +4911,6 @@ sub broadcast_program_add
 		$program{'status'}=~/^[YNLW]$/
 	)
 	{
-#		main::_log("searching for conflicts");
 		# najst konflikty a trashovat
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
@@ -4740,18 +4920,18 @@ sub broadcast_program_add
 			WHERE
 				ID != ?
 				AND ID_channel=?
-				AND datetime_air_start <= ?
-				AND datetime_air_stop > ?
+				AND (datetime_air_start >= ? AND datetime_air_start < ?)
 				AND status IN ('Y','N','L','W')
 		},'bind'=>[
 			$program{'ID'},
 			$program{'ID_channel'},
 			$program{'datetime_air_start'},
-			$program{'datetime_air_start'}
+			$program{'datetime_air_stop'}
 		],'quiet'=>1);
 		while (my %program0=$sth0{'sth'}->fetchhash())
 		{
-			main::_log("conflict start with $program0{'ID'}",1);
+			main::_log("conflict start with $program0{'ID'} '$program0{'name'}'",1);
+#			next;
 			App::020::SQL::functions::update(
 				'ID' => $program0{'ID'},
 				'db_h' => "main",
@@ -4951,6 +5131,115 @@ sub broadcast_series_add
 	foreach (%series){$env{'series.'.$_}=$series{$_}};
 	return %env;
 }
+
+
+
+sub video_part_cuepoint_add
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::video_part_cuepoint_add()");
+	
+	my %cuepoint;
+	if ($env{'cuepoint.ID'})
+	{
+		%cuepoint=App::020::SQL::functions::get_ID(
+			'ID' => $env{'cuepoint.ID'},
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_video_part_cuepoint",
+			'columns' => {'*'=>1}
+		);
+	}
+	
+	if (!$env{'cuepoint.ID'})
+	{
+		main::_log("new video_part_cuepoint.ID");
+		
+		$env{'cuepoint.ID'}=App::020::SQL::functions::new(
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_video_part_cuepoint",
+			'data' =>
+			{
+				'ID_entity' => $env{'cuepoint.ID_entity'},
+				'time_cuepoint' => $env{'cuepoint.time_cuepoint'}
+			},
+			'-posix' => 1,
+			'-journalize' => 1,
+		);
+		# reload
+		%cuepoint=App::020::SQL::functions::get_ID(
+			'ID' => $env{'cuepoint.ID'},
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_video_part_cuepoint",
+			'columns' => {'*'=>1}
+		);
+		$env{'cuepoint.ID'}=$cuepoint{'ID'};
+		$env{'cuepoint.ID_entity'}=$cuepoint{'ID_entity'};
+	}
+	
+	# update if necessary
+	if ($env{'cuepoint.ID'})
+	{
+		my %columns;
+		my %data;
+		
+		# with NULL
+		foreach (
+			'title',
+			'body'
+		)
+		{
+			if (exists $env{'cuepoint.'.$_} && ($env{'cuepoint.'.$_} ne $cuepoint{$_}))
+			{
+				main::_log("$_: '$cuepoint{$_}'<>'".$env{'cuepoint.'.$_}."'");
+				if ($env{'cuepoint.'.$_} || $env{'cuepoint.'.$_} eq "0")
+				{
+					$data{$_}=$env{'cuepoint.'.$_};
+				}
+				else
+				{
+					$columns{$_}='NULL';
+				}
+			}
+		}
+		
+		$data{'time_cuepoint'}=$env{'cuepoint.time_cuepoint'}
+			if ($env{'cuepoint.time_cuepoint'} && ($env{'cuepoint.time_cuepoint'} ne $cuepoint{'time_cuepoint'}));
+		
+		$data{'status'}=$env{'cuepoint.status'}
+			if ($env{'cuepoint.status'} && ($env{'cuepoint.status'} ne $cuepoint{'status'}));
+			
+		if (keys %columns || keys %data)
+		{
+			App::020::SQL::functions::update(
+				'ID' => $env{'cuepoint.ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_video_part_cuepoint",
+				'columns' => {%columns},
+				'data' => {%data},
+				'-posix' => 1,
+				'-journalize' => 1
+			);
+			# reload
+			%cuepoint=App::020::SQL::functions::get_ID(
+				'ID' => $env{'cuepoint.ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_video_part_cuepoint",
+				'columns' => {'*'=>1}
+			);
+#			_broadcast_series_index('ID_entity' => $env{'series.ID_entity'});
+		}
+	}
+	
+	$t->close();
+	foreach (%cuepoint){$env{'cuepoint.'.$_}=$cuepoint{$_}};
+	return %env;
+}
+
 
 
 sub _broadcast_program_index
