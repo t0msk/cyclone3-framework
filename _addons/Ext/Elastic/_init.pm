@@ -22,14 +22,15 @@ BEGIN
 	if ($@){main::_log("<={LIB} Search::Elasticsearch",1);undef $Ext::Elastic;}
 	else {main::_log("<={LIB} Search::Elasticsearch");}
 	$Ext::Elastic::async=0;
-#	eval {require Search::Elasticsearch::Async::Simple};
-#	if ($@){main::_log("<={LIB} Search::Elasticsearch::Async::Simple",1);undef $Ext::Elastic::async;}
-#	else {$Ext::Elastic::async=1;main::_log("<={LIB} Search::Elasticsearch::Async::Simple");}
+	eval {require Search::Elasticsearch::Async;};
+	if ($@){main::_log("<={LIB} Search::Elasticsearch::Async",1);undef $Ext::Elastic::async;}
+	else {$Ext::Elastic::async=1;main::_log("<={LIB} Search::Elasticsearch::Async");}
 }
 
 our $debug=0;
 our $service; # reference to object when created
 our $service_async; # reference to async object
+#our $cv = AnyEvent->condvar;
 
 sub _connect
 {
@@ -47,12 +48,12 @@ sub _connect
 		main::_log("can't connect any active node",1);
 	}
 	
-	if ($Ext::Elastic::async && 0)
+	if ($Ext::Elastic::async)
 	{
 		$Ext::Elastic_async=$Ext::Elastic;
-#		$Ext::Elastic_async->{'cxn_pool'}='Async::Sniff'
-#			if $Ext::Elastic_async->{'cxn_pool'} eq 'Sniff';
-		if (my $service__=Search::Elasticsearch::Async::Simple->new($Ext::Elastic_async))
+		$Ext::Elastic_async->{'cxn_pool'}='Async::Sniff'
+			if $Ext::Elastic_async->{'cxn_pool'} eq 'Sniff';
+		if (my $service__=Search::Elasticsearch::Async->new($Ext::Elastic_async))
 		{
 			main::_log("connected sync ".(join ",",@{$service__->{'transport'}->{'cxn_pool'}->{'seed_nodes'}}));
 			$service_async=$service__;
