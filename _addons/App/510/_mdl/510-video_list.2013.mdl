@@ -296,6 +296,7 @@ sub execute
 			video_part.ID AS part_ID,
 			video_part.ID_entity AS part_ID_entity,
 			video_part.visits AS part_visits,
+			video_part.ID_brick AS part_ID_brick,
 			video_part_smil.name AS smil_name,
 			video_part_file.ID AS file_ID,
 			video_part_file.ID_entity AS file_ID_entity,
