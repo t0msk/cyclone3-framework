@@ -40,14 +40,18 @@ sub execute
 			a510_video_part_file.ID_entity = a510_video_part.ID
 		)
 		WHERE
-			a510_video_part_file.ID_entity = ? AND
-			a510_video_part_file.status='W' OR
+			a510_video_part_file.ID_entity = ?
+			AND
 			(
-				a510_video_part_file.status='N' AND
-				a510_video_part_file.regen='Y' AND
-				a510_video_part_file.ID_format=1
+				a510_video_part_file.status='W' OR
+				(
+					a510_video_part_file.status='N' AND
+					a510_video_part_file.regen='Y' AND
+					a510_video_part_file.ID_format=1 AND
+					a510_video_part_file.from_parent != 'Y'
+				)
 			)
-		LIMIT 100
+		LIMIT 10
 	},'bind'=>[$env->{'ID_entity'}]);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
@@ -77,6 +81,23 @@ sub execute
 		my $filename=$db0_line{'file_alt_src'} || $video_->{'dir'}.'/'.$video_->{'file_path'};
 		main::_log("filename=$filename");
 		
+		my $tmp_file={};
+		if ($brick_class->can('download'))
+		{
+			$tmp_file=new TOM::Temp::file('dir'=>$main::ENV{'TMP'},'nocreate'=>1);
+			$brick_class->download($filename, $tmp_file->{'filename'});
+			$filename=$tmp_file->{'filename'};
+		}
+		
+		if ($db0_line{'ID_format'} eq "1")
+		{
+			if (!-e $filename)
+			{
+				main::_log("file not found",1);
+				next;
+			}
+		}
+		
 		my %video = $vd->info($filename);
 		
 		App::020::SQL::functions::update(
@@ -100,7 +121,11 @@ sub execute
 			'-journalize' => 1,
 		);
 		
-		return 1;
+		App::510::functions::video_part_smil_generate(
+			'video_part.ID' => $db0_line{'part_ID'}
+		);
+		
+#		return 1;
 	}
 	
 	foreach my $video_part_file (App::510::functions::get_video_part_file_process_front(
@@ -110,12 +135,14 @@ sub execute
 	{
 		next unless $video_part_file->{'ID_part'};
 		
+#		print Dumper($video_part_file);
+		
+#		next;
 		App::510::functions::video_part_file_generate(
 				'-jobify' => 1,
 			'video_part.ID' => $video_part_file->{'ID_part'},
 			'video_format.ID' => $video_part_file->{'ID_entity_format'}
 		);
-		
 	}
 	
 return 1}
