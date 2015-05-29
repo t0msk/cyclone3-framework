@@ -40,17 +40,17 @@ sub DESTROY
 		# nebudem serializovat do databazy ak to nemam dovolene
 		# toto moze nastat len v pripade ked je object poskodeny
 		# a serializovat by sa nemal, takze to dost agresivne zalogujem
-		main::_log("TIE-DESTROY trying to serialize unavailable object from $filename:$line",4,"pub.err");
+#		main::_log("TIE-DESTROY trying to serialize unavailable object from $filename:$line",4,"pub.err");
 		main::_log("TIE-DESTROY trying to serialize unavailable object from $filename:$line",1);
 		return undef;
 	}
 	
-		main::_log("TIE-DESTROY a301::session='$IDsession'") if $debug;
+		main::_log("TIE-DESTROY a301::session='$IDsession'",3,"debug") if $debug;
 		my $cvml=CVML::structure::serialize(%{$self});
 		
 		return undef if (($cvml eq $session_save) && $performance);
 		
-		main::_log("TIE-string:='$cvml'") if $debug;
+		main::_log("TIE-string:='$cvml'",3,"debug") if $debug;
 		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			UPDATE
@@ -62,7 +62,7 @@ sub DESTROY
 				AND ID_user=?
 			LIMIT 1
 		},'quiet'=>1,'bind'=>[$cvml,$IDsession,$IDuser]);
-		main::_log("TIE-serialized in $sth0{'rows'} a301_user_online rows") if ($debug && $sth0{'rows'});
+		main::_log("TIE-serialized in $sth0{'rows'} a301_user_online rows",3,"debug") if ($debug && $sth0{'rows'});
 		
 		# changes user session
 		$main::COOKIES{'usrmevent'}=$tom::Tyear."-".$tom::Fmom."-".$tom::Fmday." ".$tom::Fhour.":".$tom::Fmin.":".$tom::Fsec;
@@ -386,15 +386,21 @@ sub process
 					
 					use DateTime;
 					my $dt_now=DateTime->now;
-					$main::USRM{'datetime_last_login'}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)$/;
-					my $dt_old=DateTime->new(
-						year   => $1,
-						month  => $2,
-						day    => $3,
-						hour   => $4,
-						minute => $5
-					);
-					#my $dt_diff=$dt_now-$dt_old;
+					my $dt_old=$dt_now;
+					if ($main::USRM{'datetime_last_login'}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)$/)
+					{
+						$dt_old=DateTime->new(
+							year   => $1,
+							month  => $2,
+							day    => $3,
+							hour   => $4,
+							minute => $5
+						);
+					}
+					else
+					{
+						main::_log("invalid 'datetime_last_login' = '$main::USRM{'datetime_last_login'}'",3,"pub.err");
+					}
 					
 					#main::_log("go online user '$main::USRM{'ID_user'}' from '$main::USRM{'datetime_last_login'}' (".($dt_diff->year)."-".($dt_diff->month).") with '$main::USRM{'requests_all'}' requests",3,"a301",2);
 					main::_log("[$tom::H] returned user '$main::USRM{'ID_user'}' last logged '$main::USRM{'datetime_last_login'}' with '$main::USRM{'requests_all'}' requests",3,"a301",2);
