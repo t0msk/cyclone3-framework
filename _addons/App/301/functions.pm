@@ -878,6 +878,7 @@ sub user_group_add
 	if ($changed)
 	{
 		App::020::SQL::functions::_save_changetime({
+			'db_name' => 'TOM',
 			'tb_name' => 'a301_user_rel_group',
 			'ID_entity' => $ID_user
 		});
@@ -964,6 +965,7 @@ sub user_group_remove
 	if ($changed)
 	{
 		App::020::SQL::functions::_save_changetime({
+			'db_name' => 'TOM',
 			'tb_name' => 'a301_user_rel_group',
 			'ID_entity' => $ID_user
 		});
