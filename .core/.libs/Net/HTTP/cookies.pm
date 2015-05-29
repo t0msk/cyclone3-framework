@@ -5,7 +5,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 use strict;
 use Utils::datetime;
 
-our $debug=1;
+our $debug=0;
 
 sub GetCookies
 {
