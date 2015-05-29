@@ -16,6 +16,7 @@ sub video_part_file_path
 	shift;
 	my $video=shift;
 	
+	
 	if ($video->{'video_part_file.file_alt_src'})
 	{
 		$video->{'dir'} = $video->{'video_part_file.file_alt_src'};
@@ -29,6 +30,7 @@ sub video_part_file_path
 	
 	$video->{'dir'}=$tom::P_media.'/a510/video/part/file';
 	
+	my $create;
 	if (!$video->{'video_part_file.name'})
 	{
 		# generate optimized, or random 
@@ -100,7 +102,7 @@ sub video_part_file_path
 		
 		$video->{'video_part_file.name'}=$hash;
 		
-#		return $video;
+		$create=1;
 	}
 
 	$video->{'file_path'}=
@@ -111,15 +113,36 @@ sub video_part_file_path
 	my $fullpath=$video->{'dir'}.'/'.$video->{'file_path'};
 		$fullpath=~s|^(.*)/.*?$|$1|g;
 	
-	if (!-d $fullpath)
+	if ($create)
 	{
-		File::Path::mkpath($fullpath);
-		chmod 0777, $fullpath;
+		testdir(undef,$fullpath);
 	}
 	
 	return $video;
 }
 
+
+our %testdir_already;
+sub testdir
+{
+	shift;
+	my $fullpath=shift;
+	return 1 if $testdir_already{$fullpath};
+	$testdir_already{$fullpath}++;
+	if (!-d $fullpath)
+	{
+		File::Path::mkpath($fullpath);
+		chmod 0777, $fullpath;
+	}
+	return 1;
+}
+sub testfile
+{
+	shift;
+	my $fullpath=shift;
+	return 1 if -e $fullpath;
+	return undef;
+}
 
 
 sub video_part_smil_path
