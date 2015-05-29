@@ -474,7 +474,8 @@ sub parse_header
 				'addon' => $addon,
 				'name' => $name,
 				'content-type' => $content_type,
-				'ignore' => $self->{'ENV'}{'ignore'}
+				'ignore' => $self->{'ENV'}{'ignore'},
+				'lng' => $self->{'ENV'}{'lng'}
 			);
 			
 			if (!$extend)
