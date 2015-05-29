@@ -271,7 +271,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_cuepoint` (
   `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   PRIMARY KEY (`ID`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`time_cuepoint`,`lng`)
+  KEY `SEL_0` (`ID_entity`,`time_cuepoint`,`lng`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -426,6 +426,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file_process` (
   `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `ID_part` mediumint(8) unsigned DEFAULT NULL, -- rel _video_part.ID
   `ID_format` bigint(20) unsigned NOT NULL, -- rel _video_format.ID_entity
+  `request_code` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
   `hostname` varchar(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `hostname_PID` varchar(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `process` text CHARACTER SET ascii NOT NULL,
@@ -445,6 +446,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_brick` (
   `name` varchar(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL, -- class name
   `datetime_create` datetime NOT NULL,
   `dontprocess` char(1) CHARACTER SET ascii DEFAULT NULL, -- uploaded files to this brick will be not processed (encoded) into another formats by _video_format
+  `visible` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
   PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -473,6 +475,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat` (
   `keywords` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL,
   `description` longtext CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `ID_brick` mediumint(8) unsigned DEFAULT NULL, -- rel _video_brick.ID
   `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
@@ -501,6 +504,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat_j` (
   `keywords` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL,
   `description` longtext CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `ID_brick` mediumint(8) unsigned DEFAULT NULL,
   `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
