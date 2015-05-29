@@ -26,6 +26,7 @@ sub execute
 	my $sql_changetime;
 	my $sql_limit=$env{'sql_limit'} || 1;
 	my $sql_order_by=$env{'sql_order_by'} || 'broadcast_series.ID DESC';
+	my @series;
 	
 	if ($env{'broadcast_series.ID_entity'})
 	{
@@ -77,7 +78,7 @@ sub execute
 	}
 	
 	main::_log("found broadcast_series.ID_entity=$broadcast_series{'ID_entity'}");
-	
+	push @series, $broadcast_series{'ID_entity'};
 	
 	push @{$env_out{'entity'}},{
 		'db_h' => 'main',
@@ -110,6 +111,127 @@ sub execute
 		'entity' => $parser->{'entity'},
 		'thumbnail' => $parser->{'thumbnail'},
 	};
+	
+	
+	# najdeme vsetky sub serie
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			broadcast_series.ID_entity
+		FROM
+			`$App::510::db_name`.a510_broadcast_series AS broadcast_series
+		WHERE
+			broadcast_series.status IN ('Y','W')
+			AND broadcast_series.parent_ID = ?
+	},'bind'=>[$broadcast_series{'ID_entity'}],'quiet'=>1,'-slave'=>1,'-cache'=>3600,
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+			'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_broadcast_series",'ID_entity'=>$broadcast_series{'ID_entity'}
+		})
+	);
+	while (my %broadcast_series_=$sth0{'sth'}->fetchhash())
+	{
+		push @series, $broadcast_series_{'ID_entity'};
+		main::_log("found sub-series=$broadcast_series_{'ID_entity'}");
+	}
+	my $series_sql = join ",",@series;
+	
+	if ($env{'broadcast_program.ID'})
+	{
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				broadcast_program.*,
+				broadcast_channel.name AS channel_name
+			FROM
+				`$App::510::db_name`.a510_broadcast_program AS broadcast_program
+			INNER JOIN `$App::510::db_name`.a510_broadcast_channel AS broadcast_channel ON
+			(
+				broadcast_channel.ID = broadcast_program.ID_channel
+			)
+			WHERE
+				broadcast_program.ID_series = ?
+				AND broadcast_program.ID = ?
+				AND broadcast_program.status = 'Y'
+			LIMIT 1
+		},'-slave'=>1,'bind'=>[$broadcast_series{'ID_entity'},$env{'broadcast_program.ID'}],'-cache'=>86400*7,
+			'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+				'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_broadcast_program"
+			})
+		);
+		%{$broadcast_series{'program'}}=$sth1{'sth'}->fetchhash();
+		
+		if ($broadcast_series{'program'}{'ID'})
+		{
+			my $parser=new App::020::mimetypes::html(
+				'tpl_ext' => $TPL # extend
+			);
+			$parser->parse($broadcast_series{'program'}{'description'});
+			$parser->eof();
+			$broadcast_series{'program'}{'description_parser'}={
+				'output' => $parser->{'output'},
+				'addon' => $parser->{'addon'},
+				'entity' => $parser->{'entity'},
+				'thumbnail' => $parser->{'thumbnail'},
+			};
+			
+			$broadcast_series{'program'}{'related_thumbnail'}=(App::160::SQL::get_relations(
+				'db_name' => $App::510::db_name,
+				'l_prefix' => 'a510',
+				'l_table' => 'broadcast_program',
+				'l_ID_entity' => $broadcast_series{'program'}{'ID_entity'},
+				'rel_type' => 'thumbnail',
+				'r_prefix' => "a501",
+				'r_table' => "image",
+				'status' => "Y",
+				'limit' => 1
+			))[0];
+			
+		}
+		
+	}
+	
+	# su archivne videa?
+	my %sth1=TOM::Database::SQL::execute(qq{
+		SELECT
+			broadcast_program.*
+		FROM
+			`$App::510::db_name`.a510_broadcast_program AS broadcast_program
+		WHERE
+			broadcast_program.ID_series IN ($series_sql)
+			AND broadcast_program.ID_video IS NOT NULL
+			AND broadcast_program.status = 'Y'
+		LIMIT 1
+	},'-slave'=>1,'-cache'=>86400*7,
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+			'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_broadcast_program"
+		})
+	);
+	$broadcast_series{'video'} = 'Y' if $sth1{'rows'};
+	
+	
+	if ($env{'program'})
+	{
+		# next play
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				broadcast_program.*
+			FROM
+				`$App::510::db_name`.a510_broadcast_program AS broadcast_program
+			WHERE
+				broadcast_program.status IN ('Y')
+				AND broadcast_program.ID_series IN ($series_sql)
+				AND broadcast_program.datetime_air_start >= NOW()
+			ORDER BY
+				broadcast_program.datetime_air_start
+			LIMIT 7
+		},'quiet_'=>1,'-slave'=>1,'-cache'=>3600,
+			'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+				'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_broadcast_series"
+			})
+		);
+		while (my %calendar_item=$sth0{'sth'}->fetchhash())
+		{
+			push @{$TPL->{'variables'}->{'program_next'}}, \%calendar_item;
+		}
+	}
 	
 	$TPL->{'variables'}{'broadcast_series'} = \%broadcast_series;
 	
