@@ -68,7 +68,7 @@ use JSON;
 use Data::Dumper;
 use Ext::Redis::_init;
 our $alarm=$ENV{'TIMEOUT'};
-	 $alarm||=30; # autoexit after 60 seconds of inactivity
+	 $alarm||=15; # autoexit after 60 seconds of inactivity
 our $time_max=600;
 our $time_start=time();
 
@@ -117,6 +117,10 @@ sub callback {
 	local $main::_canexit;
 	local $main::request_code=Utils::vars::genhash(8);
 	my $var = shift;
+		if ($var->{'header'}->{'headers'}->{'message_id'})
+		{
+			$main::request_code=substr($var->{'header'}->{'headers'}->{'message_id'},0,8);
+		}
 	my $body = $var->{'body'}->{'payload'};
 	my $this_channel=$service->_channels->{$var->{'body'}->{'channel'}};
 #	print Dumper($body);
@@ -130,11 +134,19 @@ sub callback {
 	my $deduplication;
 		$deduplication=$var->{'header'}->{'headers'}->{'deduplication'} || 'false';
 	
-	my %env0=main::ctodatetime($timestamp,format=>1);
-	my $time_str=$env0{'year'}.'-'.$env0{'mon'}.'-'.$env0{'mday'}.' '.$env0{'hour'}.':'.$env0{'min'}.':'.$env0{'sec'};
-	main::_log("<={".($var->{'header'}->{'headers'}->{'message_id'})."} routing_key='$routing_key' created='$time_str' size=".length($var->{'body'}->{'payload'})."b deduplication=".$deduplication);
-	
-	main::_log(" payload=".$body);
+	my %env0=main::ctogmdatetime($timestamp,format=>1);
+	my $time_str=$env0{'year'}.'-'.$env0{'mon'}.'-'.$env0{'mday'}.'T'.$env0{'hour'}.':'.$env0{'min'}.':'.$env0{'sec'}.'Z';
+	main::_log("<={".($var->{'header'}->{'headers'}->{'message_id'})."} worker_callback created='$time_str' payload size=".length($var->{'body'}->{'payload'})."b",{
+		'data' => {
+			'id_s' => $var->{'header'}->{'headers'}->{'message_id'},
+			'routing_key_s' => $routing_key,
+			'deduplication_s' => $deduplication,
+#			'created_i' => $timestamp,
+			'created_d' => $time_str,
+			'elapsed_i' => (time()-$timestamp),
+			'payload_s' => $body,
+		}
+	});
 	
 	my $key_entity=TOM::Digest::hash($tom::H.$var->{'body'}->{'payload'});
 	if ($deduplication && ($deduplication ne "false") && $Redis)
@@ -283,7 +295,11 @@ sub callback {
 		{
 			my $function=$payload->{'function'};
 			$0=~s|{.*?}|{$function}|;
-			main::_log("calling function '$function' id='".($var->{'header'}->{'headers'}->{'message_id'})."'");
+			main::_log("call function '$function'",{
+				'data' => {
+					'function_name_s' => $function
+				}
+			});
 			$main::nojobify=1; # nojobify, just execute!
 			&$function(@{$payload->{'args'}});
 			main::_log("end of call $@");
@@ -293,7 +309,11 @@ sub callback {
 			my $job=$payload->{'job'};
 			my $job_name=($job->{'file'} || $job->{'name'});
 			$0=~s|{.*?}|{$job_name}|;
-			main::_log("calling '".$job_name."' id='".($var->{'header'}->{'headers'}->{'message_id'})."'");
+			main::_log("call job '".$job_name."'",{
+				'data' => {
+					'job_name_s' => $job_name
+				}
+			});
 			
 			$main::nojobify=1; # nojobify, execute!
 			my $job=new TOM::Engine::job::module(
@@ -305,7 +325,7 @@ sub callback {
 		}
 		else
 		{
-			main::_log("unknown type of job",1);
+			main::_log("unknown type of callback",1);
 		}
 	};
 	$t0->close();
@@ -328,7 +348,11 @@ sub callback {
 	$0=~s|{.*?}|{}|;
 	if ((time() - $time_start) > $time_max)
 	{
-		main::_log("running too long, shutdown");
+		main::_log("worker running too long, shutdown",{
+			'data' => {
+				'elapsed_i' => (time() - $time_start)
+			}
+		});
 		exit;
 	}
 }
