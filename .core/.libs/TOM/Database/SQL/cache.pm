@@ -8,6 +8,7 @@ TOM::Database::SQL::cache
 
 use open ':utf8', ':std';
 use if $] < 5.018, 'encoding','utf8';
+use Encode;
 use utf8;
 use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
@@ -36,7 +37,7 @@ sub new
 	my %env=@_;
 	
 #	print "!$env{'id'}!\n";
-	$env{'id'}=TOM::Digest::hash($env{'id'}) if $env{'id'};
+	$env{'id'}=TOM::Digest::hash(Encode::encode('UTF-8',$env{'id'})) if $env{'id'};
 	$env{'expire'}=$expiration if $env{'expire'} == 1; # don't cache to 1second
 	
 	if ($env{'sth'} && $env{'id'})
