@@ -187,10 +187,6 @@ sub search
 					'rows_i' => $numfound
 				}
 			});
-#			main::_log("[solr".do{':'.$self->{'host_name'} if $self->{'host_name'}}."] search '$_[0]' found='$numfound' qtime='$qtime'");
-#			main::_log(do{'@'.$self->{'host_name'}.' ' if $self->{'host_name'}}."search '$_[0]' found='$numfound' qtime='$qtime' from $package at $filename:$line",3,"solr");
-#			main::_log("[$tom::H] ".do{'@'.$self->{'host_name'} if $self->{'host_name'}}." search '$_[0]' found='$numfound' qtime='$qtime' from $package at $filename:$line",3,"solr",1);
-#			main::_log("[$tom::H] ".do{'@'.$self->{'host_name'} if $self->{'host_name'}}." search '$_[0]' found='$numfound' qtime='$qtime' from $package at $filename:$line",3,"solr",2) if $tom::H ne $tom::Hm;
 		}
 	}
 	else
