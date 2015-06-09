@@ -20,6 +20,9 @@
 
 package Template::Plugin::Date;
 
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
 use strict;
 use warnings;
 use base 'Template::Plugin';
@@ -141,7 +144,9 @@ sub format {
     else {
         $datestr = &POSIX::strftime($format, @date);
     }
-
+	
+	utf8::decode($datestr);
+	
     return $datestr;
 }
 
