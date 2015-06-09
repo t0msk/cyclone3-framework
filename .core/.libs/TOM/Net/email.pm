@@ -59,7 +59,7 @@ B<priority> - default '1' ( higher priority means sending sooner )
 
 sub send
 {
-	#return 1 if TOM::Engine::jobify(\@_,{'routing_key' => '_global','class'=>'email'}); # do it in background
+#	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => '_global','class'=>'email'}); # do it in background
 	my %env=@_;
 	
 	my $ID=time()."-".$$."-".sprintf("%07d",int(rand(10)));
@@ -97,7 +97,7 @@ sub send
 	
 	if (!$@)
 	{
-		main::_log("creating email over a130 to '$env{'to_email'}'");
+#		main::_log("creating email over a130 to '$env{'to_email'}'");
 		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			INSERT INTO TOM.a130_send
@@ -165,8 +165,16 @@ sub send
 				close(EMAILBODY);
 				chmod 0666, $TOM::P.'/_data/email/body_'.$ID.'.eml';
 				
-				main::_log(" created email.ID='$ID'");
-				main::_log("created email ID='$ID' from='$env{'from_email'}' to='$env{'to_email'}' priority='$env{'priority'}' subject='$subject' domain='$tom::H' $!",3,"email",1);
+#				main::_log(" created email.ID='$ID'");
+				#main::_log("created email ID='$ID' from='$env{'from_email'}' to='$env{'to_email'}' priority='$env{'priority'}' subject='$subject' domain='$tom::H' $!",3,"email",1);
+				main::_log("created email $ID to a130",{
+					'facility' => 'email',
+					'severity' => 3,
+					'data' => {
+						'id_i' => $ID,
+						'email_s' => $env{'to_email'},
+					}
+				});
 				
 				if (!-e $TOM::P.'/_data/email/body_'.$ID.'.eml')
 				{
@@ -201,7 +209,7 @@ sub send
 	close (HND_mail);
 	chmod 0666, $TOM::P."/_temp/_email-".$ID;
 	
-	return 1;
+	return $ID;
 }
 
 =head2 convert_TO('email@domain.tld;my@domain.tld')
