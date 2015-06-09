@@ -6,7 +6,6 @@ use strict;
 
 our $event_socket;
 use JSON;
-use Encode qw(decode encode);
 our $json = JSON::XS->new->utf8->allow_blessed(1);
 
 sub ctodatetime
@@ -189,6 +188,8 @@ sub _log
 		print color 'green';
 		print color 'bold' if $get[1]=~/^</;
 		print color 'red' if $log_sym[$get[2]] eq '-';
+		$msg=~s|\\n|\n|g;
+		$msg=~s|\\t|\t|g;
 		print $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
 		print color 'reset';
 		return 1 if $get[3] eq "stdout";
@@ -212,6 +213,7 @@ sub _log
 		
 		if ($fluentd_socket)
 		{
+			local $@;
 			local %log_date=ctogmdatetime($log_time,format=>1); # we are logging in GMT zone
 			$fluentd_socket->post($get[3], {
 				'@timestamp' =>
@@ -235,7 +237,7 @@ sub _log
 				'm' => $get[1],
 				'data' => $get[5]
 			});
-			return 1
+			return 1 unless $tom::devel;
 		}
 		
 		$get[0]=0 unless $get[0];
@@ -325,6 +327,7 @@ sub _log_long
 
 sub _event
 {
+	local $@;
 	if (
 		!$TOM::event_socket &&
 		(!$TOM::event_redis && !$Ext::Redis::service) &&
@@ -377,7 +380,7 @@ sub _event
 	
 	if ($event_socket && $TOM::event_socket)
 	{
-		print $event_socket encode('UTF-8',$json->encode(\%hash)."\n");
+		print $event_socket $json->encode(\%hash)."\n";
 	}
 	
 	# write to RabbitMQ to notice channel?
@@ -391,21 +394,18 @@ sub _event
 #		my $service=$Ext::Elastic::service_async || $Ext::Elastic::service; # async when async library available
 		if ($Ext::Elastic::service_async)
 		{
-			main::_log("event async");
 			$Ext::Elastic::service_async->index(
 				'index' => '.cyclone3.'.$log_date{'year'}.$log_date{'mon'},
 				'type' => 'event',
 				'body' => {
 					'datetime' => $log_date{'year'}.'-'.$log_date{'mon'}.'-'.$log_date{'mday'}.' '.$log_date{'hour'}.':'.$log_date{'min'}.':'.$log_date{'sec'}.'.'.$msec,
 					%hash
-				}
-			)->then(sub{
-#				$Ext::Elastic::cv->send({'test' => 'a'});
-				main::_log("event async writed");
-			});
+				},sub{}
+			);
 		}
 		else
 		{
+#			print "sync write\n";
 			$Ext::Elastic::service->index(
 				'index' => '.cyclone3.'.$log_date{'year'}.$log_date{'mon'},
 				'type' => 'event',
