@@ -1028,17 +1028,6 @@ our \$VERSION=$m_time;
 	
 	$t->close();
 	
-	# spravim debug tohto modulu ak bol fyzicky vykonany
-	# a v module som nenastavil ze nan nemam robit debug
-#	main::_log("debug_disable=$Tomahawk::module::debug_disable");
-#	Tomahawk::debug::module_load(
-#		'-type' => $mdl_C{'-type'},
-#		'-category' => $mdl_C{'-category'},
-#		'-name' => $mdl_C{'-name'},
-#		'-load_req' => $t->{'time'}{'req'}{'duration'},
-#		'-load_proc' => $t->{'time'}{'proc'}{'duration'}
-#	) unless $Tomahawk::module::debug_disable==0;
-	
 	module_process_return_data(%return_data);
 	return $return_code,%return_data;
 }
