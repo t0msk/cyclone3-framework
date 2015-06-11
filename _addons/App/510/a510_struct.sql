@@ -49,6 +49,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
   `movie_length` time DEFAULT NULL,
   `movie_note` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `status_encryption` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
   PRIMARY KEY (`ID`),
   UNIQUE KEY `UNI_0` (`movie_imdb`),
@@ -77,6 +78,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent_j` (
   `movie_length` time DEFAULT NULL,
   `movie_note` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `status_encryption` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
   PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -382,6 +384,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file` (
   `file_size` bigint(20) unsigned DEFAULT NULL,
   `file_checksum` varchar(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `file_ext` varchar(120) CHARACTER SET ascii NOT NULL,
+  `encryption_key` varchar(128) CHARACTER SET ascii default NULL,
   `from_parent` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N', -- is this file generated from parent video_part_file?
   `regen` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N', -- regenerate this video_part_file?
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
@@ -414,6 +417,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file_j` (
   `file_size` bigint(20) unsigned DEFAULT NULL,
   `file_checksum` varchar(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `file_ext` varchar(120) CHARACTER SET ascii NOT NULL,
+  `encryption_key` varchar(128) CHARACTER SET ascii default NULL,
   `from_parent` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `regen` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
