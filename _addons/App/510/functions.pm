@@ -687,6 +687,182 @@ sub video_part_smil_generate
 
 
 
+sub video_encryption_generate
+{
+	my %env=@_;
+	return undef unless $env{'ID_entity'};
+	my $t=track TOM::Debug(__PACKAGE__."::video_encryption_generate($env{'ID_entity'})");
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`$App::510::db_name`.a510_video_ent
+		WHERE
+			ID_entity = ?
+		LIMIT 1
+	},'bind'=>[$env{'ID_entity'}],'quiet'=>1);
+	my %video_ent=$sth0{'sth'}->fetchhash();
+	
+	main::_log("encryption=".$video_ent{'status_encryption'});
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`$App::510::db_name`.a510_video_part
+		WHERE
+			ID_entity = ? AND
+			status IN ('Y','N','L')
+		ORDER BY
+			part_id
+	},'bind'=>[$env{'ID_entity'}],'quiet'=>1);
+	while (my %part=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("part $part{'part_id'} ID=$part{'ID'} ID_brick=$part{'ID_brick'}");
+		
+		my %brick;
+		%brick=App::020::SQL::functions::get_ID(
+			'ID' => $part{'ID_brick'},
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_video_brick",
+			'columns' => {'*'=>1}
+		) if $part{'ID_brick'};
+		
+		my $brick_class='App::510::brick';
+			$brick_class.="::".$brick{'name'}
+				if $brick{'name'};
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`$App::510::db_name`.a510_video_part_file
+			WHERE
+				ID_entity = ? AND
+				status IN ('Y','N','L')
+			ORDER BY
+				ID_format
+		},'bind'=>[$part{'ID'}],'quiet'=>1);
+		while (my %part_file=$sth1{'sth'}->fetchhash())
+		{
+			my $video_=$brick_class->video_part_file_path({
+				'video_part.ID' => $part{'ID'},
+				'video_format.ID' => $part_file{'ID_format'},
+				'video_part_file.ID' => $part_file{'ID'},
+				'video_part_file.file_alt_src' => $part_file{'file_alt_src'},
+				'video_part_file.name' => $part_file{'name'},
+				'video_part_file.file_ext' => $part_file{'file_ext'},
+				'video_part.datetime_air' => $part{'datetime_air'},
+			});
+			main::_log("file ID=$part_file{'ID'} encryption_key=$part_file{'encryption_key'} dir=$video_->{'dir'} file=$video_->{'file_path'}");
+			
+			my $key_dir=$video_->{'dir'};
+			my $key_file=$video_->{'file_path'}.".key";
+			if ($brick_class->can('key_file_path'))
+			{
+#				main::_log("asking for key file");
+				my $video_=$brick_class->key_file_path({
+					'video_part.ID' => $part{'ID'},
+					'video_format.ID' => $part_file{'ID_format'},
+					'video_part_file.ID' => $part_file{'ID'},
+					'video_part_file.file_alt_src' => $part_file{'file_alt_src'},
+					'video_part_file.name' => $part_file{'name'},
+					'video_part_file.file_ext' => $part_file{'file_ext'},
+					'video_part.datetime_air' => $part{'datetime_air'},
+				});
+				$key_dir=$video_->{'dir'};
+				$key_file=$video_->{'file_path'};
+			}
+			
+			
+			$key_dir=$key_dir.'/'.$key_file;
+			$key_dir=~s|^(.*)/(.*?)$|$1|;
+			$key_file=$2;
+			main::_log(" key file dir=$key_dir file=$key_file");
+			
+			if (($part_file{'encryption_key'} || $env{'force'}) && $video_ent{'status_encryption'} ne "Y")
+			{
+				main::_log(" removing encryption");
+			}
+			elsif ((!$part_file{'encryption_key'} || $env{'force'}) && $video_ent{'status_encryption'} eq "Y")
+			{
+				my $hash=uc(unpack('H*',TOM::Utils::vars::genhashNU(16)));
+				main::_log(" adding encryption AES-128 key '$hash'");
+				my $content;
+				$content.="cupertinostreaming-aes128-key: ".$hash."\n";
+				$content.="cupertinostreaming-aes128-url: ".$tom::Hm_www."/binary/videokey?id=".$part_file{'ID'};
+				$content.="\n";
+				
+				if ($brick_class->can('testdir'))
+				{
+					if (!$brick_class->testdir($key_dir))
+					{
+						main::_log("src dir can't be found, exiting",1);
+						$t->close();
+						return undef;
+					}
+				}
+				
+				my $file_temp=new TOM::Temp::file('ext'=>'key');
+				open(HNDKEY,'>'.$file_temp->{'filename'}) || 
+					main::_log("can't write $!",1);
+				print HNDKEY $content;
+				close(HNDKEY);
+				chmod (0666,$file_temp->{'filename'});
+				
+				if ($brick_class->can('upload'))
+				{
+					main::_log(" upload file size=".format_bytes((stat $file_temp->{'filename'})[7]));
+					$brick_class->upload(
+						$file_temp->{'filename'},
+						$key_dir.'/'.$key_file
+					) || do {
+						main::_log("$!",1);
+						$t->close();
+						return undef;
+					};
+				}
+				else
+				{
+					main::_log(" copy file size=".format_bytes((stat $file_temp->{'filename'})[7]));
+					copy($file_temp->{'filename'},$key_dir.'/'.$key_file) || do {
+						main::_log("$!",1);
+						$t->close();
+						return undef;
+					};
+				}
+				
+				TOM::Database::SQL::execute(qq{
+					UPDATE
+						`$App::510::db_name`.a510_video_part_file
+					SET
+						encryption_key=?
+					WHERE
+						ID=?
+					LIMIT 1
+				},'bind'=>[$hash,$part_file{'ID'}],'quiet'=>1);
+				
+				# override modifytime
+				App::020::SQL::functions::_save_changetime({
+					'db_h' => 'main',
+					'db_name' => $App::510::db_name,
+					'tb_name' => 'a510_video_part_file',
+					'ID_entity' => $part_file{'ID'}
+				});
+				
+			}
+		}
+		
+	}
+	
+	$t->close();
+	return 1;
+}
+
+
+
 sub video_part_brick_change
 {
 	my %env=@_;
@@ -2282,6 +2458,9 @@ sub video_add
 		$columns{'movie_note'}="'".TOM::Security::form::sql_escape($env{'video_ent.movie_note'})."'"
 			if (exists $env{'video_ent.movie_note'} && ($env{'video_ent.movie_note'} ne $video_ent{'movie_note'}));
 		
+		$columns{'status_encryption'}="'".TOM::Security::form::sql_escape($env{'video_ent.status_encryption'})."'"
+			if (exists $env{'video_ent.status_encryption'} && ($env{'video_ent.status_encryption'} ne $video_ent{'status_encryption'}));
+		
 		if ((not exists $env{'video_ent.metadata'}) && (!$video_ent{'metadata'})){$env{'video_ent.metadata'}=$App::510::metadata_default;}
 		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'video_ent.metadata'})."'"
 			if (exists $env{'video_ent.metadata'} && ($env{'video_ent.metadata'} ne $video_ent{'metadata'}));
@@ -2391,7 +2570,7 @@ sub video_add
 		
 	}
 	
-	# MUST be rewrited - update only if necessary
+	
 	if ($env{'video_attrs.ID'})
 	{
 		my %columns;
@@ -2449,6 +2628,7 @@ sub video_add
 	if ($content_reindex)
 	{
 		_video_index('ID_entity'=>$env{'video.ID_entity'});
+		video_encryption_generate('ID_entity'=>$env{'video.ID_entity'});
 	}
 	
 	$tr->close(); # commit transaction
@@ -3026,7 +3206,7 @@ sub video_part_file_add
 	my $video_=$brick_class->video_part_file_path({
 		'video_part.ID' => $env{'video_part.ID'},
 		'video_format.ID' => $env{'video_format.ID'},
-#		'video_part_file.name' => $name,
+#		'video_part_file.name' => $name, # why not?
 		'video_part_file.file_ext' => $file_ext,
 		'video_part.datetime_air' => $part{'datetime_air'},
 		
@@ -3269,7 +3449,7 @@ sub video_part_file_add
 				}
 				else
 				{
-					main::_log("copy file");
+					main::_log("copy file '$env{'file'}' to '$path'");
 					if (File::Copy::copy($env{'file'},$path))
 					{
 					}
@@ -3382,18 +3562,7 @@ sub video_part_file_add
 				'video_part_file.file_ext' => $file_ext,
 			});
 			
-#			use Data::Dumper;print Dumper($video_);
-#			$video{'dir'}=$video_->{'dir'};
-#			$video{'file_part_path'}=$video_->{'file_path'};
-			
 			my $path=$video_->{'dir'}.'/'.$video_->{'file_path'};
-#			my $path=$tom::P_media.'/a510/video/part/file/'._video_part_file_genpath
-#			(
-#				$env{'video_format.ID'},
-#				$ID,
-#				$name,
-#				$file_ext
-#			);
 			
 			if ($brick_class->can('upload'))
 			{
@@ -3419,7 +3588,7 @@ sub video_part_file_add
 			}
 			else
 			{
-				main::_log("copy file");
+				main::_log("copy file '$env{'file'}' to '$path'");
 				if (File::Copy::copy($env{'file'},$path))
 				{
 				}
