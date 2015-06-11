@@ -111,12 +111,10 @@ sub video_part_file_path
 		.'/'.$video->{'video_part_file.name'}.'.'.$video->{'video_part_file.file_ext'};
 	
 	my $fullpath=$video->{'dir'}.'/'.$video->{'file_path'};
+	main::_log("[brick] video_part_file_path '$fullpath' video_format.ID=$video->{'video_format.ID'} video_part_file.ID=$video->{'video_part_file.ID'}");
 		$fullpath=~s|^(.*)/.*?$|$1|g;
 	
-	if ($create)
-	{
-		testdir(undef,$fullpath);
-	}
+	testdir(undef,$fullpath);
 	
 	return $video;
 }
@@ -128,6 +126,7 @@ sub testdir
 	shift;
 	my $fullpath=shift;
 	return 1 if $testdir_already{$fullpath};
+	main::_log("[brick] testdir '$fullpath'");
 	$testdir_already{$fullpath}++;
 	if (!-d $fullpath)
 	{
@@ -161,5 +160,37 @@ sub video_part_smil_path
 	
 	return $video;
 }
+
+
+sub key_file_path
+{
+	shift;
+	my $video=shift;
+	
+	
+	if ($video->{'video_part_file.file_alt_src'})
+	{
+		$video->{'dir'} = $video->{'video_part_file.file_alt_src'};
+		$video->{'dir'} =~s|^(.*)/(.*?)$|$1|;
+		$video->{'file_path'}=$2.'.key';
+		return $video;
+	}
+	
+	return $video if
+		$video->{'video_part_file.file_alt_src'};
+	
+	$video->{'dir'}=$tom::P_media.'/a510/video/key';
+
+	$video->{'file_path'}='part/file/'
+		.$video->{'video_format.ID'}
+		.'/'.substr($video->{'video_part_file.ID'},0,4)
+		.'/'.$video->{'video_part_file.name'}.'.'.$video->{'video_part_file.file_ext'}.'.key';
+	
+	my $fullpath=$video->{'dir'}.'/'.$video->{'file_path'};
+		$fullpath=~s|^(.*)/.*?$|$1|g;
+	
+	return $video;
+}
+
 
 1;
