@@ -26,6 +26,13 @@ sub now {
 	return DateTime->now(%{$env});
 }
 
+sub compare {
+	my $self=shift;
+	my $env0=shift;
+	my $env1=shift;
+	return DateTime->compare($env0, $env1);
+}
+
 sub last_day_of_month {
 	my $self=shift;
 	my $env=shift;
