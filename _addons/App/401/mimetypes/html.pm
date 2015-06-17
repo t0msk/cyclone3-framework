@@ -1235,6 +1235,23 @@ sub start
 				}
 			}
 		}
+		elsif ($attr->{'id'}=~/^a030_instagram:(.*)$/)
+		{
+			$self->{'level.ignore'}=$self->{'level'};
+			%vars=_parse_id($1);
+			
+			if ($vars{'ID'} && (!$self->{'config'}->{'inline'}))
+			{
+				$out_full=
+					$self->{'entity'}{'div.a030_instagram'}
+					|| $out_full;
+				
+#				$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+				
+				$out_full_plus="<h4>".$vars{'ID'}."</h4>";
+				$out_full_plus.="<img src=\"https://instagram.com/p/". $vars{'ID'} ."/media\"/>";
+			}
+		}
 		elsif ($attr->{'id'}=~/^a411_poll:(.*)$/)
 		{
 			$self->{'level.ignore'}=$self->{'level'};
