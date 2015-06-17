@@ -2460,6 +2460,8 @@ sub video_add
 		
 		$columns{'status_encryption'}="'".TOM::Security::form::sql_escape($env{'video_ent.status_encryption'})."'"
 			if (exists $env{'video_ent.status_encryption'} && ($env{'video_ent.status_encryption'} ne $video_ent{'status_encryption'}));
+		$columns{'status_geoblock'}="'".TOM::Security::form::sql_escape($env{'video_ent.status_geoblock'})."'"
+			if (exists $env{'video_ent.status_geoblock'} && ($env{'video_ent.status_geoblock'} ne $video_ent{'status_geoblock'}));
 		
 		if ((not exists $env{'video_ent.metadata'}) && (!$video_ent{'metadata'})){$env{'video_ent.metadata'}=$App::510::metadata_default;}
 		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'video_ent.metadata'})."'"
