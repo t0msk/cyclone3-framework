@@ -119,6 +119,17 @@ sub genhashNU
 }
 
 
+sub genhash256
+{
+	my $var;
+	for (1..$_[0])
+	{
+		$var.=chr(int(rand(255)));
+	}
+	return $var;
+}
+
+
 =head2 unique_split()
 
 Split given string by ";" character and removes duplicit parts of this string.
