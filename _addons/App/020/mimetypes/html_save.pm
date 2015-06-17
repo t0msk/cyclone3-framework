@@ -117,6 +117,16 @@ sub start
 				'attrseq' => $attrseq
 			};
 		}
+		elsif ($attr->{'class'} eq "a030_instagram")
+		{
+			main::_log("ignore level=".$self->{'level'});
+			$self->{'level.ignore'}=$self->{'level'};
+			$self->{'embed'}={
+				'name' => 'a030_instagram',
+				'attr' => $attr,
+				'attrseq' => $attrseq
+			};
+		}
 	}
 	elsif ($tag eq "p")
 	{
@@ -200,14 +210,9 @@ sub end
 			$self->{'embed'}->{'attr'}->{'id'}=~s|^(.*?):||;
 			%{$self->{'embed'}->{'id'}}=_parse_id($self->{'embed'}->{'attr'}->{'id'});
 			
-#			use Data::Dumper;
-#			print Dumper($self->{'embed'});
-			
 			$self->{'embed'}->{'attr'}->{'id'}=$self->{'embed'}->{'name'};
 			if ($self->{'embed'}->{'name'} eq "a411_poll")
 			{
-#				$self->{'embed'}->{'attr'}->{'id'}=$self->{'embed'}->{'name'};
-				
 				my %poll;
 				if (!$self->{'embed'}->{'id'}->{'ID_entity'}) # create a new one
 				{
@@ -340,8 +345,17 @@ sub end
 				}
 				
 			}
+			elsif ($self->{'embed'}->{'name'} eq "a030_instagram")
+			{
+				
+#				$self->{'embed'}->{'id'}->{'ID'}='a';
+				
+			}
 			
-			$self->{'embed'}->{'attr'}->{'id'}.=":ID_entity=".$self->{'embed'}->{'id'}->{'ID_entity'};
+			$self->{'embed'}->{'attr'}->{'id'}.=":ID_entity=".$self->{'embed'}->{'id'}->{'ID_entity'}
+				if $self->{'embed'}->{'id'}->{'ID_entity'};
+			$self->{'embed'}->{'attr'}->{'id'}.=":ID=".$self->{'embed'}->{'id'}->{'ID'}
+				if $self->{'embed'}->{'id'}->{'ID'};
 			
 			my $out;
 			my %attrs_;
