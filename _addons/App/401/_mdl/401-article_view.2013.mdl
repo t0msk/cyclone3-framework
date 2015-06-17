@@ -224,16 +224,19 @@ sub execute
 	
 	my %article=$sth0{'sth'}->fetchhash();
 	
+	if ($env{'article.ID_entity'} || $article{'ID_entity'})
+	{
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::401::db_name,
+			'tb_name' => 'a401_article',
+			'ID_entity' => ($article{'ID_entity'} || $env{'article.ID_entity'})
+		};
+	}
+	
 	return 1 unless $article{'ID_entity'};
 	
 	main::_log("found article.ID_entity=$article{'ID_entity'}");
-	
-	push @{$env_out{'entity'}},{
-		'db_h' => 'main',
-		'db_name' => $App::401::db_name,
-		'tb_name' => 'a401_article',
-		'ID_entity' => $article{'ID_entity'}
-	};
 	
 	push @{$env_out{'call'}{'H'}{'add_DOC_keywords'}},$article{'keywords'}
 		if $env{'header.keywords'};
