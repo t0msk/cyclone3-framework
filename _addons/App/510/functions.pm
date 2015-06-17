@@ -594,6 +594,7 @@ sub video_part_smil_generate
 				{
 					
 					my $video_=$brick_class->video_part_file_path({
+							'-notest' => 1,
 						'video_part.ID' => $part{'ID'},
 						'video_part.datetime_air' => $part{'datetime_air'},
 						'video_part_file.ID' => $db1_line{'ID'},
@@ -748,6 +749,7 @@ sub video_encryption_generate
 		while (my %part_file=$sth1{'sth'}->fetchhash())
 		{
 			my $video_=$brick_class->video_part_file_path({
+					'-notest' => 1,
 				'video_part.ID' => $part{'ID'},
 				'video_format.ID' => $part_file{'ID_format'},
 				'video_part_file.ID' => $part_file{'ID'},
@@ -3944,6 +3946,7 @@ sub get_video_part_file
 			video_brick.name AS brick_name,
 			
 			video_ent.keywords,
+			video_ent.status_geoblock,
 			
 			LEFT(video.datetime_rec_start, 16) AS datetime_rec_start,
 			LEFT(video_attrs.datetime_create, 16) AS datetime_create,
@@ -4101,6 +4104,7 @@ sub get_video_part_file
 			$brick_class.="::".$video{'brick_name'}
 				if $video{'brick_name'};
 			my $video_=$brick_class->video_part_file_path({
+					'-notest' => 1,
 				'video_part.ID' => $video{'ID_part'},
 				'video_part.datetime_air' => $video{'part_datetime_air'},
 				'video.ID' => $video{'ID_video'},

@@ -114,7 +114,10 @@ sub video_part_file_path
 	main::_log("[brick] video_part_file_path '$fullpath' video_format.ID=$video->{'video_format.ID'} video_part_file.ID=$video->{'video_part_file.ID'}");
 		$fullpath=~s|^(.*)/.*?$|$1|g;
 	
-	testdir(undef,$fullpath);
+	if (!$video->{'-notest'})
+	{
+		testdir(undef,$fullpath);
+	}
 	
 	return $video;
 }

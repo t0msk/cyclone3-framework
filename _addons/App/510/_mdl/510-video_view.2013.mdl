@@ -116,6 +116,7 @@ sub execute
 			video_ent.movie_length AS ent_movie_length,
 			video_ent.movie_note AS ent_movie_note,
 			video_ent.metadata AS ent_metadata,
+			video_ent.status_geoblock,
 			video_attrs.name AS attrs_name,
 			video_attrs.name_url AS attrs_name_url,
 			video_attrs.description AS attrs_description,
