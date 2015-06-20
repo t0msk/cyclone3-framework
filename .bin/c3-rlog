@@ -125,16 +125,18 @@ Basic options:
  --f                    filter by faults
  --msg=<string>         search in message string
  --msg=<string> --msg=...
- --filter=<elastic>     filter by custom code
+ --filter=<elastic>     filter by custom code eg. '{"term":{"data.test_s":["word"]}}'
  --filter=<elastic> --filter=...
- --c=<request_code>     filter to request code (disables --limit,--d,--h,--hd)
+ --c=<request_code>     filter to request code (disables --limit,--h,--hd)
  --p=<pid>              filter to PID
  --oldest               search for oldest lines first
  --limit=<num>          receive <num> lines of log (default 100)
- --range=<num[dhms]>    filter in date range now-<num[dms]>
+ --range=<num[mdh]>     filter in date range now-<num[mdh]> ([m]onths, [d]ays, [h]ours)
+ --range                disable range filter
  --date=<YYYY-MM-DD>    filter to date
  --pretty               display additional attributes in pretty json format
  --ch                   strict chronological - don't group primary by log source
+ --data.*               search term in data.* field
  
 };
 	exit;
@@ -248,15 +250,47 @@ if ($main::arg{'filter'})
 	}
 	else
 	{
-#		print $main::arg{'filter'}."\n";
-#		print Dumper(from_json($main::arg{'filter'}));
 		push @filter,from_json($main::arg{'filter'});
 	}
 };
 
-$main::arg{'range'}='24h' unless $main::arg{'range'};
+foreach (sort keys %main::arg)
+{
+	if ($_=~/^data\./)
+	{
+		$query.=" ".$_."=".$main::arg{$_};
+		push @filter,{"term" => {$_ => [$main::arg{$_}]}};
+	}
+}
+
+
+
+
+# connect
+$Ext::Elastic = $Ext::Elastic_rlog_hd{$main::arg{'hd'}}
+	|| $Ext::Elastic_rlog
+	|| $Ext::Elastic;
+require Ext::Elastic::_init;
+main::_log_stdout("ElasticSearch @".join(',@',@{$Ext::Elastic->{'nodes'}}));
+$Ext::Elastic->{'request_timeout'} = 300;
+Ext::Elastic::_connect();
+our $Elastic=$Ext::Elastic::service;
+
+# get all log indices
+my %indices;
+foreach (sort keys %{$Elastic->indices->get('index' => 'logstash-*')})
+{$indices{$_}++;};
+my %search_indices;
+
+my $td = DateTime->now('time_zone'  => 'GMT');
+$search_indices{'logstash-'.$td->strftime('%Y-%m-%d')}=1;
+#my $indice='logstash-'.$td->strftime('%Y-%m-%d');
+
+$main::arg{'range'}='6h' unless $main::arg{'range'};
 if ($main::arg{'date'}=~/^(\d\d\d\d)-(\d\d)-(\d\d)$/)
 {
+	%search_indices=();
+	
 	my $td = DateTime->new(
 		'year' => $1,
 		'month' => $2,
@@ -268,22 +302,88 @@ if ($main::arg{'date'}=~/^(\d\d\d\d)-(\d\d)-(\d\d)$/)
 	);
 	$td->set_time_zone('GMT');
 	
-	my $date_start=$td->strftime('%FT%H:%M:%SZ');
+	my $date_start_=$td->strftime('%FT%H:%M:%SZ');
+	my $date_start=$td->strftime('%F');
+	
+	if ($indices{'logstash-'.$date_start})
+	{
+		$search_indices{'logstash-'.$date_start}=1;
+	}
+	elsif ($indices{'logstash-'.($date_start=~/^(\d\d\d\d\-\d\d)/)[0]})
+	{
+		$search_indices{'logstash-'.($date_start=~/^(\d\d\d\d\-\d\d)/)[0]}=1;
+	}
+	
 	$td->add('days'=>1);
-	my $date_stop=$td->strftime('%FT%H:%M:%SZ');
-#	print $date_start;
-#	print $date_stop;
+	my $date_stop_=$td->strftime('%FT%H:%M:%SZ');
+	my $date_stop=$td->strftime('%F');
+	
+	if ($indices{'logstash-'.$date_stop})
+	{
+		$search_indices{'logstash-'.$date_stop}=1;
+	}
+	elsif ($indices{'logstash-'.($date_stop=~/^(\d\d\d\d\-\d\d)/)[0]})
+	{
+		$search_indices{'logstash-'.($date_stop=~/^(\d\d\d\d\-\d\d)/)[0]}=1;
+	}
 	
 	push @filter,{"range" => {
 		'@timestamp' => {
-			'gte' => $date_start,
-			'lt' => $date_stop
+			'gte' => $date_start_,
+			'lt' => $date_stop_
 		}
 	}};
 	$query.=" date=~".$main::arg{'date'};
 }
+elsif ($main::arg{'range'} eq '1')
+{
+	%search_indices=('logstash-*'=>1);
+}
 elsif ($main::arg{'range'})
 {
+	# detect range indices
+	my $td = DateTime->now('time_zone'  => 'local');
+	$td->set_time_zone('GMT');
+	
+	my $td_from=$td->clone();
+	
+	if ($main::arg{'range'}=~/^(\d+)([mdh])$/)
+	{
+		my $num=$1;
+		my $type=$2;
+		if ($type eq "m")
+		{
+			$td_from->subtract('months'=>$num);
+		}
+		elsif ($type eq "d")
+		{
+			$td_from->subtract('days'=>$num);
+		}
+		elsif ($type eq "h")
+		{
+			$td_from->subtract('hours'=>$num);
+		}
+	}
+	
+	while (1)
+	{
+		last if $td_from >= $td;
+		
+		my $date_start=$td_from->strftime('%F');
+		
+		if ($indices{'logstash-'.$date_start})
+		{
+			$search_indices{'logstash-'.$date_start}=1;
+		}
+		elsif ($indices{'logstash-'.($date_start=~/^(\d\d\d\d\-\d\d)/)[0]})
+		{
+			$search_indices{'logstash-'.($date_start=~/^(\d\d\d\d\-\d\d)/)[0]}=1;
+		}
+		
+		$td_from->add('days'=>1);
+	}
+	
+	# add filter
 	push @filter,{"range" => {
 		'@timestamp' => {
 			'gte' => 'now-'.$main::arg{'range'}
@@ -294,132 +394,21 @@ elsif ($main::arg{'range'})
 
 $query=~s|^ ||;
 
-
-$Ext::Elastic = $Ext::Elastic_rlog_hd{$main::arg{'hd'}}
-	|| $Ext::Elastic_rlog
-	|| $Ext::Elastic;
-require Ext::Elastic::_init;
-main::_log_stdout("ElasticSearch @".join(',@',@{$Ext::Elastic->{'nodes'}}));
-Ext::Elastic::_connect();
-our $Elastic=$Ext::Elastic::service;
-
-my $temp_version=1.07;
-my $temp_data={};
-eval {$temp_data=$Elastic->indices->get_template('name'=>'logstash-*');};
-if ($temp_data->{'logstash-*'}->{'mappings'}->{'fluentd'}->{'_meta'}->{'version'} < $temp_version)
-{
-	main::_log_stdout("updating template to version $temp_version");
-	$Elastic->indices->put_template(
-		'name'=>'logstash-*',
-		'body' => {
-			'timetout' => 600000,
-			'template'=>'logstash-*',
-			'mappings' => {
-				'fluentd' => {
-					"_meta" => {
-						"version" => $temp_version
-					},
-					'properties' => {
-						'a' => { # archived?
-							'type' => 'string',
-							'index' => 'not_analyzed'
-						},
-						'p' => { # pid
-							'type' => 'integer',
-						},
-						'h' => { # hostname
-							'type' => 'string',
-							'index' => 'not_analyzed'
-						},
-						'hd' => { # host domain
-							'type' => 'string',
-							'index' => 'not_analyzed'
-						},
-						'l' => { # level
-							'type' => 'integer'
-						},
-						'o' => { # helps to natural order
-							'type' => 'long'
-						},
-						'd' => { # domain
-							'type' => 'string',
-							'index' => 'not_analyzed'
-						},
-						'dm' => { # domain master
-							'type' => 'string',
-							'index' => 'not_analyzed'
-						},
-						'c' => { # code
-							'type' => 'string',
-							'index' => 'not_analyzed'
-						},
-						'e' => { # engine
-							'type' => 'string',
-							'index' => 'not_analyzed'
-						},
-						'f' => { # fault
-							'type' => 'integer',
-						},
-						't' => { # log name / type
-							'type' => 'string',
-							'index' => 'not_analyzed'
-						},
-						'm' => { # message
-							'type' => 'string'
-						},
-					},
-					
-					'dynamic_templates' => [
-						{'string' => {
-							"match" => "*_s",
-							"mapping" => {
-								"type" => "string",
-								"index" => "not_analyzed"
-							}
-						}},
-						{'text' => {
-							"match" => "*_t",
-							"mapping" => {
-								"type" => "string"
-							}
-						}},
-						{'integer' => {
-							"match" => "*_i",
-							"mapping" => {
-								"type" => "integer"
-							}
-						}},
-						{'float' => {
-							"match" => "*_f",
-							"mapping" => {
-								"type" => "float"
-							}
-						}},
-						{'date' => {
-							"match" => "*_d",
-							"mapping" => {
-								"type" => "date"
-							}
-						}}
-					]
-					
-				}
-			}
-		}
-	);
-}
+my $indice=join(",",sort keys %search_indices);
 
 print color 'green bold';
 main::_log_stdout($query);
 
-#$Elastic->indices->delete('index'=>'logstash-2015-20');
+main::_log_stdout("search in '$indice'");
 
-$limit=$main::arg{'limit'} if $main::arg{'limit'};
+$limit=$main::arg{'limit'} if exists $main::arg{'limit'};
 my $results = $Elastic->search(
-	'index' => 'logstash-*',
+	'index' => $indice,
 	'type' => 'fluentd',
 	'size' => $limit,
+	'timeout' => '600s',
 	'body'  => {
+		'timeout' => '600s',
 		'sort' => [
 			{'@timestamp' => do{
 				if ($main::arg{'oldest'})
@@ -455,7 +444,10 @@ my $results = $Elastic->search(
 );
 
 main::_log_stdout("display ".(scalar @{$results->{'hits'}->{'hits'}})." rows from ".$results->{'hits'}->{'total'}." found (took ".int($results->{'took'}/1000)."s)");
+main::_log_stdout("timed_out",1)
+	if $results->{'timed_out'};
 
+#print Dumper($results);
 
 my $src;
 my $src_last;
@@ -561,7 +553,7 @@ foreach my $line (sort {
 	
 	if ($line->{'_source'}->{'data'})
 	{
-		my $msg_data=color 'black';
+		my $msg_data=color 'bright_black';
 		$msg_data.=to_json($line->{'_source'}->{'data'},{
 			'pretty' => $main::arg{'pretty'},
 			'canonical' => 1,
