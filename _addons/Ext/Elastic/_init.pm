@@ -22,9 +22,9 @@ BEGIN
 	if ($@){main::_log("<={LIB} Search::Elasticsearch",1);undef $Ext::Elastic;}
 	else {main::_log("<={LIB} Search::Elasticsearch");}
 	$Ext::Elastic::async=0;
-	eval {require Search::Elasticsearch::Async;};
-	if ($@){main::_log("<={LIB} Search::Elasticsearch::Async",1);undef $Ext::Elastic::async;}
-	else {$Ext::Elastic::async=1;main::_log("<={LIB} Search::Elasticsearch::Async");}
+#	eval {require Search::Elasticsearch::Async;};
+#	if ($@){main::_log("<={LIB} Search::Elasticsearch::Async",1);undef $Ext::Elastic::async;}
+#	else {$Ext::Elastic::async=1;main::_log("<={LIB} Search::Elasticsearch::Async");}
 }
 
 our $debug=0;
