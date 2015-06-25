@@ -23,6 +23,7 @@ use XML::XPath::XMLParser;
 use TOM::L10n::codes;
 
 our $debug=$main::debug || 0;
+our $stats||=0;
 our %objects;
 our $id;
 
@@ -86,32 +87,36 @@ sub new
 	# modifytime of location
 	$obj->{'config'}->{'mtime'} = (stat($obj->{'location'}))[9];
 	
-	if (!$objects{$obj->{'uid'}} && $TOM::CACHE_memcached && $main::cache)
+#	main::_log("trying '$obj->{'uid'}' in mem=".do{if($objects{$obj->{'uid'}}){"1"}}." no-cache=".$env{'no-cache'},3,"l10n");
+	
+	my $object={};
+		$object=$objects{$obj->{'uid'}}
+			unless $env{'no-cache'};
+	
+	if (!$object && $TOM::CACHE_memcached && $main::cache)
 	{
 		# try memcached
-		$objects{$obj->{'uid'}} = 
+		$object = 
 			$Ext::CacheMemcache::cache->get(
 				'namespace' => "l10ncache",
 				'key' => $TOM::P_uuid.':'.$obj->{'uid'}
 			);
 	}
 	
-#	use Data::Dumper;print Dumper($objects{$obj->{'uid'}});
-	
-	if ($objects{$obj->{'uid'}} && ($obj->{'config'}->{'mtime'} > $objects{$obj->{'uid'}}->{'config'}->{'mtime'}))
+	if ($object && ($obj->{'config'}->{'mtime'} > $object->{'config'}->{'mtime'}))
 	{
-		main::_log("{L10n} '$obj->{'location'}' expired, modified before ".( $obj->{'config'}->{'mtime'}-$objects{$obj->{'uid'}}->{'config'}->{'mtime'} )."s");
-		delete $objects{$obj->{'uid'}};
+		main::_log("{L10n} '$obj->{'location'}' expired, modified before ".( $obj->{'config'}->{'mtime'}-$object->{'config'}->{'mtime'} )."s");
+		undef $object;
 	}
 	
 	# check if same location is already loaded in another object
 	# (location is unique identification of L10n)
 	# when no, proceed parsing this L10n source
-	if (!$objects{$obj->{'uid'}})
+	if (!$object)
 	{
 		main::_log("<={L10n} '$obj->{'location'}'/'$obj->{'ENV'}->{'lng'}'");# if $debug;
 		# add this object into global $TOM::L10n::objects{} hash
-		$objects{$obj->{'uid'}}=$obj;
+		$object=$obj;
 		$id++;$L10n::id{$obj->{'uid'}}=$id; # add unique number to every one object
 		$obj->{'id'}=$id;
 		# add this location into ignore list
@@ -123,10 +128,19 @@ sub new
 	}
 	else
 	{
-		main::_log("<={L10n}{cache} '$obj->{'location'}'/'$obj->{'ENV'}->{'lng'}'");# if $debug;
+		main::_log("<={L10n}{cache".(do{
+			if ($objects{$obj->{'uid'}} && !$env{'no-cache'})
+			{
+				":mem";
+			}
+		})."} '$obj->{'location'}'/'$obj->{'ENV'}->{'lng'}'");# if $debug;
 #		main::_log("load cached L10n ".$obj->{'uid'});
+		
+		$objects{$obj->{'uid'}}=$object
+			unless $env{'no-cache'};
+		
 		$t->close() if $debug;
-		return $objects{$obj->{'uid'}};
+		return $object;
 	}
 	
 	# create copy of object to return it as unique
@@ -139,12 +153,12 @@ sub new
 		%{$obj_return->{'ENV'}}=%env;
 		if ($obj->{'location'})
 		{
-			%{$obj_return->{'string'}}=%{$objects{$obj->{'uid'}}{'string'}};
-			%{$obj_return->{'string_'}}=%{$objects{$obj->{'uid'}}{'string_'}};
+			%{$obj_return->{'string'}}=%{$object->{'string'}};
+			%{$obj_return->{'string_'}}=%{$object->{'string_'}};
 			# recovery header config to new object
-			%{$obj_return->{'config'}}=%{$objects{$obj->{'uid'}}{'config'}};
+			%{$obj_return->{'config'}}=%{$object->{'config'}};
 		}
-		%L10n::string=%{$objects{$obj->{'uid'}}{'string'}};
+		%L10n::string=%{$object->{'string'}};
 		# replace_variables only in root level of L10n not in l10n's called by <extend*>
 		$obj_return->process_string() if (caller)[0] ne "TOM::L10n";
 		my $i;
@@ -160,8 +174,9 @@ sub new
 			$L10n::obj{'#'.$obj->{'id'}.'#'.$i}=$L10n::string{$_};
 		}
 	
-	if ($TOM::CACHE_memcached)
+	if ($TOM::CACHE_memcached && !$env{'no-cache'})
 	{
+		$objects{$obj->{'uid'}}=$object;
 		$Ext::CacheMemcache::cache->set(
 			'namespace' => "l10ncache",
 			'key' => $TOM::P_uuid.':'.$obj->{'uid'},
@@ -276,7 +291,8 @@ sub parse_header
 				'addon' => $addon,
 				'name' => $name,
 				'lng' => $lng,
-				'ignore' => $self->{'ENV'}{'ignore'}
+				'ignore' => $self->{'ENV'}{'ignore'},
+				'no-cache' => 1
 			);
 			
 			# add entries from inherited L10n
@@ -325,7 +341,7 @@ sub parse_string
 		
 		if ($node->getAttribute('automap') eq "true")
 		{
-			main::_log("setup string id='$id' automap") if $debug;
+#			main::_log("setup string id='$id' automap") if $debug;
 			$self->{'string'}{$id}=$id;
 		}
 		else
@@ -345,10 +361,11 @@ sub parse_string
 				$self->{'string'}{$id}="{".$id."}";
 			}
 			
-			main::_log("setup string id='$id' with length(".(length($self->{'string'}{$id})).")") if $debug;
+#			main::_log("setup string id='$id' with length(".(length($self->{'string'}{$id})).")") if $debug;
 		}
 		
 		$self->{'string_'}{$id}{'replace_variables'}=$node->getAttribute('replace_variables');
+		$self->{'string_'}{$id}{'location'}=$self->{'location'};
 		push @strs, $id;
 	}
 	
