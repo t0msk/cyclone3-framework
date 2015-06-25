@@ -327,11 +327,33 @@ sub execute
 			foreach (@{$response->{'content'}->{'grouped'}->{'ID_entity_i'}->{'groups'}})
 			{
 				$env{'product.ID'}.=$_->{'doclist'}->{'docs'}[0]{'ID_i'}.";";
-				$total_results+=$_->{'doclist'}->{'numFound'};
 				#main::_log('results in group: '.$_->{'doclist'}->{'numFound'});
-				$total_results++;
 			}
 #			main::_log("ID=".$env{'product.ID'},3,"debug");
+			if ($env{'solr.totals'})
+			{
+				my $response = $solr->search('+id:'.($App::910::db_name).'.a910_product.'.$env{'lng'}.'.* '.$env{'solr.q'}.' '.$env{'solr.filter'},
+					{
+						'-cluster' => 1,
+						
+						'defType' => $env{'solr.defType'},
+						
+						'rows' => '1000000',
+						
+						'bq' => $env{'solr.bq'},
+						'qf' => $env{'solr.qf'},
+						'fl' => $env{'solr.totals.field'},
+						
+						%solr
+					}
+				);
+				
+				foreach (@{$response->{'content'}->{'grouped'}->{$env{'solr.totals.field'}}->{'groups'}})
+				{
+					#main::_log('results in group: '.$_->{'doclist'}->{'numFound'});
+					$total_results++;
+				}
+			}
 		}
 		else
 		{
