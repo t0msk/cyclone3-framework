@@ -34,8 +34,8 @@ sub service
 		utf8::encode($Ext::RabbitMQ::user); # octets -> bytes
 		utf8::encode($Ext::RabbitMQ::pass);
 		utf8::encode($Ext::RabbitMQ::vhost);
-		main::_log("connecting $Ext::RabbitMQ::user \@$Ext::RabbitMQ::host");
-		$Ext::RabbitMQ::service = Ext::RabbitMQ::RabbitFoot->new()->load_xml_spec()->connect(
+		main::_log("connecting RabbitMQ $Ext::RabbitMQ::user\@$Ext::RabbitMQ::host");
+		eval {$Ext::RabbitMQ::service = Ext::RabbitMQ::RabbitFoot->new()->load_xml_spec()->connect(
 			'host' => $Ext::RabbitMQ::host || 'localhost',
 			'port' => $Ext::RabbitMQ::port || 5672,
 			'user' => $Ext::RabbitMQ::user || 'guest',
@@ -43,7 +43,12 @@ sub service
 			'vhost' => $Ext::RabbitMQ::vhost || '/',
 			'timeout' => (3600*24),
 			'heatbeat' => 60,
-		);
+		)};
+		if ($@)
+		{
+			main::_log("can't connect RabbitMQ \@$Ext::RabbitMQ::host",1);
+			return undef;
+		}
 		
 #		use Data::Dumper;
 #		print Dumper($Ext::RabbitMQ::service);
