@@ -136,6 +136,7 @@ sub execute
 			article_content.datetime_create AS content_datetime_create,
 			article_attrs.datetime_start,
 			article_attrs.datetime_stop,
+			article_content.datetime_modified,
 			
 			article_attrs.priority_A,
 			article_attrs.priority_B,
