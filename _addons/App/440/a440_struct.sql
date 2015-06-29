@@ -21,6 +21,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_promo_item` (
   `abstract` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `status_nofollow` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   KEY `ID_entity` (`ID_entity`),
@@ -46,6 +47,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_promo_item_j` (
   `abstract` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `status_nofollow` char(1) character set ascii NOT NULL default 'N',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

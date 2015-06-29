@@ -138,6 +138,7 @@ sub execute
 			`promo_item`.`datetime_stop`,
 			`promo_item`.`abstract`,
 			`promo_item`.`metadata`,
+			`promo_item`.`status_nofollow`,
 			`promo_item`.`status`
 			
 		FROM `$App::440::db_name`.`a440_promo_item` AS `promo_item`

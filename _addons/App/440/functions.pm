@@ -211,6 +211,10 @@ sub promo_item_add
 		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'promo_item.status'})."'"
 			if ($env{'promo_item.status'} && ($env{'promo_item.status'} ne $promo_item{'status'}));
 		
+		# status_nofollow
+		$columns{'status_nofollow'}="'".TOM::Security::form::sql_escape($env{'promo_item.status_nofollow'})."'"
+			if ($env{'promo_item.status_nofollow'} && ($env{'promo_item.status_nofollow'} ne $promo_item{'status_nofollow'}));
+		
 		# alias_url
 		$columns{'alias_url'}="'".TOM::Security::form::sql_escape($env{'promo_item.alias_url'})."'"
 			if (exists $env{'promo_item.alias_url'} && ($env{'promo_item.alias_url'} ne $promo_item{'alias_url'}));
