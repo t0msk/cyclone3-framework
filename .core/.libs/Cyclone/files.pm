@@ -178,8 +178,9 @@ our @setit_F=
 	['\.(RFC|docbook)$'                ,"documentation files"         ,"660","$user_www:$group"],
 	['\/master\.conf$'                 ,"master conf"                 ,"660","$user_www:$group"],
 	['\/local\.conf$'                  ,"local conf"                  ,"660","$user_www:$group"],
-	['\/rewrite\.conf$'                ,"rewrite conf"                ,"660","$user_www:$group"],
+	['\/rewrite.*?conf$'               ,"rewrite conf"                ,"660","$user_www:$group"],
 	['\/301\.conf$'                    ,"301 conf"                    ,"660","$user_www:$group"],
+	['\/job\.conf$'                    ,"job conf"                    ,"660","$user:$group"],
  
 	['\/cron\..*?\.cml$'               ,"local cron cml"              ,"460","$user_www:$group"],
 	
