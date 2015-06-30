@@ -78,6 +78,35 @@ sub send
 	
 	# spracovanie duplikatov emailovych adries
 	$env{'to_email'}=TOM::Utils::vars::unique_split($env{'to_email'});
+	$env{'to_email_orig'}=$env{'to_email'};
+	
+	my %rcpt=map {$_ => 1} split(';',$env{'to_email'});
+	foreach (keys %rcpt)
+	{
+		if ($tom::devel)
+		{
+			if ($App::130::rcpt_regex_forced)
+			{
+				delete $rcpt{$_}
+					unless $_=~/$App::130::rcpt_regex_forced/;
+			}
+			else
+			{
+				delete $rcpt{$_};
+			}
+		}
+	}
+	
+	$env{'to_email'}=join(';',sort keys %rcpt);
+	
+	if (!$env{'to_email'} && $tom::devel)
+	{
+		main::_log("sending email's to '$env{'to_email_orig'}' not allowed, tom::devel enabled (edit \$App::130::rcpt_regex_forced to allow send emails to specific email addresses)",{
+			'facility' => 'email',
+			'severity' => 4
+		});
+		return
+	}
 	
 	#
 	# najprv zistim ci mozem tento email zapisovat do databazy, potom
@@ -153,8 +182,7 @@ sub send
 			
 			if (!$ID)
 			{
-				main::_log("  can't write email into database (insertid() not returned), inserting email to filesystem",1);
-				main::_log(" can't write email into database (insertid() not returned), inserting email to filesystem",3,"email",1);
+				main::_log("can't write email into database (insertid() not returned), inserting email to filesystem",3,"email",1);
 			}
 			else
 			{
@@ -165,21 +193,19 @@ sub send
 				close(EMAILBODY);
 				chmod 0666, $TOM::P.'/_data/email/body_'.$ID.'.eml';
 				
-#				main::_log(" created email.ID='$ID'");
-				#main::_log("created email ID='$ID' from='$env{'from_email'}' to='$env{'to_email'}' priority='$env{'priority'}' subject='$subject' domain='$tom::H' $!",3,"email",1);
-				main::_log("created email $ID to a130",{
+				main::_log("[$ID] created email to a130",{
 					'facility' => 'email',
 					'severity' => 3,
 					'data' => {
 						'id_i' => $ID,
-						'email_s' => $env{'to_email'},
+						'email_s' => [split(';',$env{'to_email'})],
+						'subject_t' => $subject
 					}
 				});
 				
 				if (!-e $TOM::P.'/_data/email/body_'.$ID.'.eml')
 				{
-					main::_log("  can't write email.ID='$ID' into filesystem, inserting email body to database",1);
-					main::_log(" can't write email.ID='$ID' into filesystem, inserting email body to database",3,"email",1);
+					main::_log("can't write email.ID='$ID' into filesystem, inserting email body to database",3,"email",1);
 					
 					# error writing email to filesystem
 					TOM::Database::SQL::execute(qq{
@@ -201,11 +227,10 @@ sub send
 	main::_log("sending email over file '$ID' to '$env{'to_email'}'");
 	
 	open(HND_mail,">".$TOM::P."/_temp/_email-".$ID) || die "can't send email over file!\n";
+	binmode(HND_mail);
 	print HND_mail "$env{'from_email'}\n";
 	print HND_mail "$env{'to_email'}\n";
-	#print HND_mail "---\n";
 	print HND_mail $env{'body'}."\n";
-	#print HND_mail "---\n";
 	close (HND_mail);
 	chmod 0666, $TOM::P."/_temp/_email-".$ID;
 	
