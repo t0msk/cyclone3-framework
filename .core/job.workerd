@@ -379,7 +379,7 @@ sub monitor_master_db
 }
 
 my $w=AnyEvent->timer(after => 60, interval => 30, cb => \&check_domains);
-my $w=AnyEvent->timer(after => 0, interval => 5, cb => \&check_scheduler);
+my $w=AnyEvent->timer(after => 0, interval => 1, cb => \&check_scheduler);
 sub check_domains
 {
 	$main::request_code=Utils::vars::genhash(8);
@@ -878,7 +878,11 @@ sub check_scheduler
 				
 				main::_log_stdout(" job-name '".$cron->{'job-name'}.$class."'",3,"job.workerd");
 				$do->job({'deduplication'=>'true','routing_key' => $routing_key},{
-					'name' => $cron->{'job-name'}
+					'name' => $cron->{'job-name'},
+					'schedule-entry' => {
+						'filename' => $db0_line{'filename'},
+						'id' => $db0_line{'id'}
+					}
 				});
 				
 			}
@@ -1082,15 +1086,20 @@ sub job
 #	print Dumper($header,$job,$args);
 	my $id=TOM::Utils::vars::genhash(16);
 	
-	main::_log("{jobify} job '".($job->{'file'} || $job->{'name'})."' routing_key='".($header->{'routing_key'} || 'job')."' id='$id' deduplication=".$header->{'deduplication'});
+	main::_log("{jobify} job '".($job->{'file'} || $job->{'name'})."' routing_key='".($header->{'routing_key'} || 'job')."' id='$id' deduplication=".$header->{'deduplication'},{
+		'data' => {
+			'payload_s' => to_json({
+				'job' => $job,
+				'args' => $args
+			})
+		}
+	});
 	
 	my %headers;
 		$headers{'deduplication'} = $header->{'deduplication'}
 			if $header->{'deduplication'};#=> ($header->{'deduplication'} || '')
 			
-#	$main::notify_channel->publish(
 	$main::service->publish(
-#	$RabbitMQ->publish(
 		'exchange' => 'cyclone3.job',
 		'routing_key' => ($header->{'routing_key'} || 'job'),
 		'body' => to_json({
