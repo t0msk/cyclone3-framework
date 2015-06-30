@@ -327,7 +327,7 @@ sub new
 			# regenerate reference
 			$obj_return->{'tt'}->{'SERVICE'}->{'CONTEXT'}->{'tpl'}=$obj_return; # reference from Template Toolkit to TOM::Template
 			# default set of variables for tt
-			my $lang=$TOM::L10n::codes::trans{$obj_return->{'ENV'}->{'lng'} || $tom::lng};
+			my $lang=$TOM::L10n::codes::trans{$obj_return->{'ENV'}->{'lng'} || $tom::lng} || $obj_return->{'ENV'}->{'lng'} || $tom::lng;
 				$lang=~s|\-|_|g;
 			$obj_return->{'variables'}={
 				'lng' => $obj_return->{'ENV'}->{'lng'} || $tom::lng,
