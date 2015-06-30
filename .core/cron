@@ -121,6 +121,7 @@ my $lock=new TOM::lock("CRON ".$type) || exit;
 
 if (-e $CRON::P."/_config/cron.".$type.".cml" || -e $CRON::P."/_type/cron.".$type.".cml")
 {
+	local $main::request_code=Utils::vars::genhash(8);
 	main::_log("event '$type' defined");
 	$TOM::DB{'main'}{'name'}='TOM' unless $TOM::DB{'main'}{'name'};
 	TOM::Database::connect::multi('main');
@@ -259,6 +260,7 @@ foreach (sort keys %CRON::hosts)
 		$main::pm->start and next;
 #		$0.=" [".$tom::H."]";
 		srand (time ^ $$);
+		$main::request_code=Utils::vars::genhash(8);
 #		main::_log(" 'ok' from fork '$_'");
 #		main::_log("fork with debug level='$TOM::DEBUG_log_file'");
 		
