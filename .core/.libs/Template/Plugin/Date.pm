@@ -25,6 +25,9 @@ use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 use warnings;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
 use base 'Template::Plugin';
 
 use POSIX ();
@@ -172,6 +175,9 @@ sub throw {
 
 
 package Template::Plugin::Date::Calc;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
 use base qw( Template::Plugin );
 use vars qw( $AUTOLOAD );
 *throw = \&Template::Plugin::Date::throw;
@@ -191,6 +197,9 @@ sub AUTOLOAD {
 }
 
 package Template::Plugin::Date::Manip;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
 use base qw( Template::Plugin );
 use vars qw( $AUTOLOAD );
 *throw = \&Template::Plugin::Date::throw;
