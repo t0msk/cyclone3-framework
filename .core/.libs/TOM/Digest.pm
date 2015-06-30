@@ -55,7 +55,7 @@ sub hash
 {
 	if ($sha)
 	{
-		return Digest::SHA::sha256_hex(shift);
+		return Digest::SHA::sha256_hex(Encode::encode_utf8(shift));
 	}
 	elsif ($sha1)
 	{
