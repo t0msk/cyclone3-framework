@@ -156,6 +156,7 @@ sub new
 	
 	my $obj=bless {}, $class;
 	
+	$obj->{'conf'}=$conf;
 	$obj->{'env'}=$env;
 	
 	return $obj;
@@ -185,6 +186,51 @@ sub execute
 	
 	return $self;
 }
+
+
+sub reschedule
+{
+	my $self=shift;
+	my $conf=shift;
+	
+	if ($self->{'conf'}->{'schedule-entry'}
+		&& $self->{'conf'}->{'schedule-entry'}->{'filename'}
+		&& $self->{'conf'}->{'schedule-entry'}->{'id'}
+	)
+	{
+	}
+	else
+	{
+		return 1;
+	}
+	
+	my $now='NOW()';
+	
+	if ($conf->{'add'} && !ref($conf->{'add'}))
+	{
+		$now="DATE_ADD(NOW(),INTERVAL ".$conf->{'add'}." SECOND)";
+	}
+	
+	main::_log("re-schedule job to '$now'");
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		UPDATE
+			`TOM`.`a100_job_cron_schedule`
+		SET
+			`datetime_create` = NOW(),
+			`datetime_next` = $now
+		WHERE
+			`filename`=? AND
+			`id`=?
+		LIMIT 1
+	},'db_h'=>'sys','bind'=>[
+		$self->{'conf'}->{'schedule-entry'}->{'filename'},
+		$self->{'conf'}->{'schedule-entry'}->{'id'}
+	],'quiet'=>1);
+	
+	return 1;
+}
+
 
 sub running
 {
