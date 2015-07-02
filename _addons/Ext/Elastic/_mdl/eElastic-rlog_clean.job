@@ -156,7 +156,8 @@ sub execute
 	}
 	
 	my $nodes_weak = 0;
-	my $nodes_strong = 0;	
+	my $nodes_strong = 0;
+	my $nodes_medium = 0;
 	my $nodes_data = 0;
 	
 	if ($Ext::Elastic_rlog->{'_manage'})
@@ -166,16 +167,21 @@ sub execute
 		$node_stats  = $Elastic->nodes->stats();
 		foreach my $node (keys %{$node_stats->{'nodes'}})
 		{
-			$nodes_weak =+ 1
+			$nodes_weak += 1
 				if $node_stats->{'nodes'}->{$node}->{'attributes'}->{'tag'}=~/weak/;
-			$nodes_strong =+ 1
+			$nodes_strong += 1
 				if $node_stats->{'nodes'}->{$node}->{'attributes'}->{'tag'}=~/strong/;
+			$nodes_medium += 1
+				if $node_stats->{'nodes'}->{$node}->{'attributes'}->{'tag'}=~/medium/;
 		}
 		
-		main::_log("data_nodes=$nodes_data strong=$nodes_strong weak=$nodes_weak");
+#		main::_log("data_nodes=$nodes_data strong=$nodes_strong weak=$nodes_weak medium=$nodes_medium");
 		# re-occupy
-		$nodes_weak ||= $nodes_data-$nodes_strong || $nodes_data;
-		$nodes_strong ||= $nodes_data-$nodes_weak || $nodes_data;	
+		$nodes_weak ||= $nodes_data-$nodes_strong-$nodes_medium || $nodes_data;
+		$nodes_strong ||= $nodes_data-$nodes_weak-$nodes_medium || $nodes_data;
+		$nodes_medium ||= $nodes_data-$nodes_weak-$nodes_strong || $nodes_data;
+		
+		main::_log("data_nodes=$nodes_data strong=$nodes_strong weak=$nodes_weak medium=$nodes_medium");
 	}
 	
 	my @indices_list;
@@ -229,7 +235,7 @@ sub execute
 			main::_log(" indice $indice docs=".$indices->{$indice}->{'total'}->{'docs'}->{'count'}." deleted=".$indices->{$indice}->{'total'}->{'docs'}->{'deleted'}."(".int($rel*100)."%) replicas=".$settings->{$indice}->{'settings'}->{'index'}->{'number_of_replicas'}." segments=".$indices->{$indice}->{'total'}->{'segments'}->{'count'}." old=".$old."d exclude=$tags");
 			
 			
-			if ($old >= $TOM::DEBUG_log_type{'pub'}{'max_days'}) # old indices
+			if ($old > $TOM::DEBUG_log_type{'pub'}{'max_days'}+1) # old indices
 			{
 				my $tags_='strong,medium';
 				if ($tags ne $tags_)
@@ -243,7 +249,8 @@ sub execute
 					);
 				}
 				
-				my $replicas=$nodes_data-$nodes_strong-1;
+				my $replicas=$nodes_data-$nodes_strong-$nodes_medium-1;
+					$replicas=0 if $replicas<0;
 				if ($settings->{$indice}->{'settings'}->{'index'}->{'number_of_replicas'} != $replicas)
 				{
 					main::_log("  change replicas to $replicas");
@@ -270,6 +277,7 @@ sub execute
 				}
 				
 				my $replicas=$nodes_data-$nodes_weak-1;
+					$replicas=0 if $replicas<0;
 				if ($settings->{$indice}->{'settings'}->{'index'}->{'number_of_replicas'} != $replicas)
 				{
 					main::_log("  change replicas to $replicas");
@@ -282,8 +290,9 @@ sub execute
 				}
 			}
 			else # live indice
+			# allow only strong nodes
 			{
-				my $tags_='weak';
+				my $tags_='weak,medium';
 				if ($tags ne $tags_)
 				{
 					main::_log("  change routing out of '$tags_'");
@@ -296,6 +305,7 @@ sub execute
 				}
 				
 				my $replicas=$nodes_strong-1;
+					$replicas=0 if $replicas<0;
 				if ($settings->{$indice}->{'settings'}->{'index'}->{'number_of_replicas'} != $replicas)
 				{
 					main::_log("  change replicas to $replicas");
@@ -366,7 +376,7 @@ sub execute
 				'on_success'  => sub {
 					my ($action,$response) = @_;
 					$i++;
-					main::_log("reindex [$i]") if ($i/1000 == int($i/1000));
+					main::_log("reindex [$i]") if ($i/10000 == int($i/10000));
 					$bulk_delete->delete({'id' => $response->{'_id'}});
 				},
 			);
@@ -374,7 +384,7 @@ sub execute
 			$bulk->reindex(
 				'source'  => {
 					'index'			=>	$indice,
-					'size'			=>	10000,
+					'size'			=>	1000,
 					'search_type'	=>	'scan',
 				}
 			);
