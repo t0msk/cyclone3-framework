@@ -69,6 +69,44 @@ sub execute
 		#my $old=
 		my $old = int((time() - int($results->{'aggregations'}->{'oldest'}->{'value'}/1000))/86400);
 		
+		if ($Ext::Elastic_rlog->{'_manage'} && $old > ($TOM::DEBUG_log_type{'pub'}{'max_days'}+1) && $indice=~/\d\d\d\d\-\d\d\-\d\d$/)
+		{
+			my $indice_new=$indice;
+				$indice_new=~s/\-\d\d$//;
+			main::_log("'$indice' is old dayindex, moving to monthindex '$indice_new'");
+			
+			my $i;
+			my $bulk_delete = $Elastic->bulk_helper(
+				'index'		=> $indice,
+				'type'  		=> 'fluentd',
+				'verbose'	=> 0,
+			);
+			my $bulk = $Elastic->bulk_helper(
+				'index'		=> $indice_new,
+				'type'  		=> 'fluentd',
+				'verbose'	=> 0,
+				'on_success'  => sub {
+					my ($action,$response) = @_;
+					$i++;
+					main::_log("reindex [$i]") if ($i/10000 == int($i/10000));
+					$bulk_delete->delete({'id' => $response->{'_id'}});
+				},
+			);
+			
+			$bulk->reindex(
+				'source'  => {
+					'index'			=>	$indice,
+					'size'			=>	1000,
+					'search_type'	=>	'scan',
+				}
+			);
+			
+			$bulk->flush();
+			$bulk_delete->flush();
+			
+			main::_log(" moved");
+		}
+		
 		main::_log("'$indice' preparing data removal (indice old $old days)");
 		
 		# at second, create facet
