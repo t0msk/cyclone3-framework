@@ -389,6 +389,27 @@ $where
 			
 			$db0_line{'ID_parent'}=$charindex_ID{$dbg};
 			
+			if ($env{'mods'})
+			{
+				my @mods;
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						lng
+					FROM
+						`$App::210::db_name`.`a210_page`
+					WHERE
+						ID_entity = ?
+						AND status IN ('Y','N','L')
+					ORDER BY
+						lng
+				},'quiet'=>1,'bind'=>[$db0_line{'ID_entity'}]);
+				while (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					push @mods,$db1_line{'lng'};
+				}
+				$db0_line{'mods'}=join(",",@mods);
+			}
+			
 			push @tree, {%db0_line};
 		}
 		
@@ -462,6 +483,7 @@ $where
 			$XSGN{'NULL'}=~s|<%t_name%>|$entity->{'t_name'}|g;
 			$XSGN{'NULL'}=~s|<%status%>|$entity->{'status'}|g;
 			$XSGN{'NULL'}=~s|<%visible%>|$entity->{'visible'}|g;
+			$XSGN{'NULL'}=~s|<%mods%>|$entity->{'mods'}|g;
 			$XSGN{'NULL'}=~s|<%is_default%>|$entity->{'is_default'}|g;
 			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
 			
