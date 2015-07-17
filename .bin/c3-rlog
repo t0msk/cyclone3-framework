@@ -109,7 +109,7 @@ $TOM::engine_ready=1;
 
 print color 'reset';
 
-if (!keys %main::arg)
+if (!keys %main::arg || exists $main::arg{'help'})
 {
 	print  qq{Cyclone3 remote log receiver
 Usage: c3-rlog [options]
@@ -402,46 +402,95 @@ main::_log_stdout($query);
 main::_log_stdout("search in '$indice'");
 
 $limit=$main::arg{'limit'} if exists $main::arg{'limit'};
-my $results = $Elastic->search(
-	'index' => $indice,
-	'type' => 'fluentd',
-	'size' => $limit,
-	'timeout' => '600s',
-	'body'  => {
+my $results={};
+
+while (1){
+	$results = $Elastic->search(
+		'index' => $indice,
+		'type' => 'fluentd',
+		'size' => $limit,
 		'timeout' => '600s',
-		'sort' => [
-			{'@timestamp' => do{
-				if ($main::arg{'oldest'})
-				{
-					"asc"
-				}
-				else
-				{
-					"desc"
-				}
-			}},
-			{'o' => "desc"}
-		],
-		'query' => {
-			'filtered' => {
-				'filter' => {
-					'bool' => {
-						'must' => [@filter]
+		'body'  => {
+			'timeout' => '600s',
+			'sort' => [
+				{'@timestamp' => do{
+					if ($main::arg{'oldest'})
+					{
+						"asc"
 					}
-				},
-				%query_string
-			}
-		},
-		"highlight" => {
-			"fields" => {
-				"m" => {}
+					else
+					{
+						"desc"
+					}
+				}},
+				{'o' => "desc"}
+			],
+			'query' => {
+				'filtered' => {
+					'filter' => {
+						'bool' => {
+							'must' => [@filter]
+						}
+					},
+					%query_string
+				}
 			},
-			"fragment_size" => 3000,
-			"pre_tags" => [color 'bold yellow'],
-			"post_tags" => [color 'reset']
-		},
+			"highlight" => {
+				"fields" => {
+					"m" => {}
+				},
+				"fragment_size" => 3000,
+				"pre_tags" => [color 'bold yellow'],
+				"post_tags" => [color 'reset']
+			},
+		}
+	);
+	
+	if (!$results->{'hits'}->{'total'})
+	{
+		my $results = $Elastic->search(
+			'index' => $indice,
+			'type' => 'fluentd',
+			'size' => 1,
+			'timeout' => '5s',
+			'body'  => {
+				'timeout' => '5s',
+				'sort' => [
+					{'@timestamp' => "desc"}
+				]
+			}
+		);
+#		print Dumper($results);
+		if ($results && $results->{'hits'} && $results->{'hits'}->{'hits'}[0]->{'_source'}{'@timestamp'})
+		{
+			my $date=$results->{'hits'}->{'hits'}[0]->{'_source'}{'@timestamp'};
+			$date=~/^(\d\d\d\d)\-(\d\d)\-(\d\d)T(\d\d):(\d\d):(\d\d).(\d\d\d)Z$/;
+			my $td = DateTime->new(
+				'year' => $1,
+				'month' => $2,
+				'day' => $3,
+				'hour' => $4,
+				'minute' => $5,
+				'second' => $6,
+				'time_zone'  => 'GMT'
+			);
+			$td->set_time_zone('local');
+			
+			my $src_date=$td->strftime('%F %H:%M:%S');
+			
+#			print $src_date;
+			main::_log_stdout("not found, last entry in this indice from $src_date",1);
+		}
 	}
-);
+	
+	if (!$results->{'hits'}->{'total'} && $main::arg{'retry'})
+	{
+		main::_log_stdout("not found, retry after ".($main::arg{'retry'}*5)."s");
+		sleep ($main::arg{'retry'}*5);
+		next;
+	}
+	last;
+}
 
 main::_log_stdout("display ".(scalar @{$results->{'hits'}->{'hits'}})." rows from ".$results->{'hits'}->{'total'}." found (took ".int($results->{'took'}/1000)."s)");
 main::_log_stdout("timed_out",1)
