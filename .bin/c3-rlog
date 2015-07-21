@@ -122,7 +122,9 @@ Basic options:
  --h                    don't filter by hostname
  --hd=<hostdomain>      filter to hostdomain / Cyclone3 cluster (default current || undef)
  --t=<facility>         filter to facility (pub/pub.track/sql/...)
- --f                    filter by faults
+ --t=?						show all available facilities by defined filter
+ --f                    filter only faults
+ --tail						search, and search for new lines, and search for ...
  --msg=<string>         search in message string
  --msg=<string> --msg=...
  --filter=<elastic>     filter by custom code eg. '{"term":{"data.test_s":["word"]}}'
@@ -181,7 +183,12 @@ if ($main::arg{'dm'})
 	$query.=" dm=".$main::arg{'dm'};
 	push @filter,{"terms" => {"dm" => [$main::arg{'dm'}]}},
 };
-if ($main::arg{'t'})
+if ($main::arg{'t'} eq "?")
+{
+	$query.=" t=".$main::arg{'t'};
+#	push @filter,{"terms" => {"t" => ['cyclone3.'.$main::arg{'t'}]}},
+}
+elsif ($main::arg{'t'})
 {
 	$query.=" t=".$main::arg{'t'};
 	push @filter,{"terms" => {"t" => ['cyclone3.'.$main::arg{'t'}]}},
@@ -404,49 +411,79 @@ main::_log_stdout("search in '$indice'");
 $limit=$main::arg{'limit'} if exists $main::arg{'limit'};
 my $results={};
 
-while (1){
-	$results = $Elastic->search(
-		'index' => $indice,
-		'type' => 'fluentd',
-		'size' => $limit,
+my $search_config={
+	'index' => $indice,
+	'type' => 'fluentd',
+	'size' => $limit,
+	'timeout' => '600s',
+	'body'  => {
 		'timeout' => '600s',
-		'body'  => {
-			'timeout' => '600s',
-			'sort' => [
-				{'@timestamp' => do{
-					if ($main::arg{'oldest'})
-					{
-						"asc"
-					}
-					else
-					{
-						"desc"
-					}
-				}},
-				{'o' => "desc"}
-			],
-			'query' => {
-				'filtered' => {
-					'filter' => {
-						'bool' => {
-							'must' => [@filter]
-						}
-					},
-					%query_string
+		'sort' => [
+			{'@timestamp' => do{
+				if ($main::arg{'oldest'})
+				{
+					"asc"
 				}
-			},
-			"highlight" => {
-				"fields" => {
-					"m" => {}
+				else
+				{
+					"desc"
+				}
+			}},
+			{'o' => "desc"}
+		],
+		'query' => {
+			'filtered' => {
+				'filter' => {
+					'bool' => {
+						'must' => [@filter]
+					}
 				},
-				"fragment_size" => 3000,
-				"pre_tags" => [color 'bold yellow'],
-				"post_tags" => [color 'reset']
+				%query_string
+			}
+		},
+		"highlight" => {
+			"fields" => {
+				"m" => {}
 			},
+			"fragment_size" => 3000,
+			"pre_tags" => [color 'bold yellow'],
+			"post_tags" => [color 'reset']
+		},
+	}
+};
+
+if ($main::arg{'t'} eq "?")
+{
+	$search_config->{'size'}=0;
+	$search_config->{'body'}{'aggregations'} = {
+		"facility" => {
+			"terms" => {
+				'field' => "t",
+				"size" => 200,
+			}
 		}
-	);
+	};
 	
-	if (!$results->{'hits'}->{'total'})
+	$results = $Elastic->search($search_config);
+	
+	foreach my $type (@{$results->{'aggregations'}->{'facility'}->{'buckets'}})
+	{
+		$type->{'key'}=~s|^cyclone3\.||;
+		main::_log_stdout(" $type->{'key'} ($type->{'doc_count'})");
+	}
+	
+#	print Dumper($results);
+	
+	exit;
+}
+
+my $last_timestamp;
+my $last_o;
+
+while (1){
+	$results = $Elastic->search($search_config);
+	
+	if (!$results->{'hits'}->{'total'} && !$main::arg{'tail'})
 	{
 		my $results = $Elastic->search(
 			'index' => $indice,
@@ -489,10 +526,11 @@ while (1){
 		sleep ($main::arg{'retry'}*5);
 		next;
 	}
-	last;
-}
+#	last;
+#}
 
-main::_log_stdout("display ".(scalar @{$results->{'hits'}->{'hits'}})." rows from ".$results->{'hits'}->{'total'}." found (took ".int($results->{'took'}/1000)."s)");
+main::_log_stdout("display ".(scalar @{$results->{'hits'}->{'hits'}})." rows from ".$results->{'hits'}->{'total'}." found (took ".int($results->{'took'}/1000)."s)")
+	unless $last_timestamp;
 main::_log_stdout("timed_out",1)
 	if $results->{'timed_out'};
 
@@ -522,6 +560,12 @@ foreach my $line (sort {
 } @{$results->{'hits'}->{'hits'}})
 {
 	$line->{'_source'}->{'t'}=~s|^cyclone3\.||;
+	
+	if ($line->{'_source'}->{'@timestamp'} gt $last_timestamp)
+	{
+		$last_timestamp = $line->{'_source'}->{'@timestamp'};
+		$last_o = $line->{'_source'}->{'o'};
+	}
 	
 	$line->{'_source'}->{'@timestamp'}=~/^(\d\d\d\d)\-(\d\d)\-(\d\d)T(\d\d):(\d\d):(\d\d).(\d\d\d)Z$/;
 	my $td = DateTime->new(
@@ -624,6 +668,40 @@ foreach my $line (sort {
 	
 	$src_last=$src;
 	$src_t_last=$src_t;
+}
+
+	# main while
+	if ($main::arg{'tail'})
+	{
+#		main::_log_stdout("search for new from '$last_timestamp'");
+		
+#		{"range" => {
+#			'@timestamp' => {
+#				'gte' => 'now-'.$main::arg{'range'}
+#			}
+#		}}
+		my $last_filter=$search_config->{'body'}->{'query'}->{'filtered'}->{'filter'}->{'bool'}->{'must'}[-1];
+		
+		if (!$last_filter->{'range'} || !$last_filter->{'range'}->{'@timestamp'} || !$last_filter->{'range'}->{'@timestamp'}->{'gt'})
+		{
+			push @{$search_config->{'body'}->{'query'}->{'filtered'}->{'filter'}->{'bool'}->{'must'}},
+				{"range" => {
+					'@timestamp' => {
+						'gt' => $last_timestamp
+					}
+				}};
+		}
+		else
+#		if ($last_filter->{'range'} && $last_filter->{'range'}->{'@timestamp'} && $last_filter->{'range'}->{'gte'})
+		{
+			delete $last_filter->{'range'}->{'@timestamp'};
+			$last_filter->{'range'}->{'@timestamp'}->{'gt'} = $last_timestamp;
+		}
+		
+		sleep (1);
+		next;
+	}
+	last
 }
 
 print "\n";
