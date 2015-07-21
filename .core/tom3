@@ -748,15 +748,18 @@ while ($main::CGI=new CGI::Fast())
 		# %FORM filled
 		#
 		
-		# cache disable if requested (should be rewrited)
-		if ($tom::devel) # allow recache only in devel server
+		# cache disable if requested
+		if ((
+				$tom::devel # allow recache only in devel server
+				&& $main::FORM{'_rc'} < 0
+			) || ( 
+				$main::ENV{'HTTP_PRAGMA'} eq "no-cache" && 
+				$tom::admin_ip_regexp &&
+				$main::ENV{'REMOTE_ADDR'}=~/$tom::admin_ip_regexp/
+		))
 		{
-#			if ($main::ENV{'Cache-Control'} eq "no-cache")
-#			{
-#				$main::cache=0;
-#				main::_log("IP=$main::ENV{'REMOTE_ADDR'} requested no-cache",3,"debug");
-#			}
-			$main::cache=0 if $main::FORM{'_rc'} < 0;
+			$main::cache=0;
+			main::_log("IP=$main::ENV{'REMOTE_ADDR'} requested no-cache",3,"debug");
 		}
 		
 		# add a201_path_prefix when in secondary domain
