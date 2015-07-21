@@ -68,6 +68,13 @@ sub url_encode
 	return $out;
 }
 
+sub url_var_encode
+{
+	my $toencode = shift;
+	$toencode=~s|["><=]||g;
+	return url_encode($toencode);
+}
+
 
 
 =head2 url_decode()
@@ -189,7 +196,7 @@ sub genGET
 		}
 		else
 		{
-			$GET.="$_=".url_encode($form{$_})."&";
+			$GET.=url_var_encode($_)."=".url_encode($form{$_})."&";
 		}
 	}
 	$GET=~s|&$||;
