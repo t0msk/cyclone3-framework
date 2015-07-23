@@ -298,7 +298,15 @@ while ($main::CGI=new CGI::Fast())
 	$tom::H_orig=$tom::H;
 	local $tom::H_www=$tom::H_www;
 	$tom::H_www_orig=$tom::H_www; # save original $tom::H_www
-	$tom::H_www = $tom::H_www_https if ($main::ENV{'HTTPS'} && $tom::H_www_https);
+#	foreach (sort keys %main::ENV){main::_log("$_=$main::ENV{$_}",3,"debug");}
+	
+	$main::ENV{'HTTPS'}="on" if $main::ENV{'HTTP_X_FORWARDED_PROTO'};
+	if ($main::ENV{'HTTPS'} && $tom::H_www_https)
+	{
+		$tom::H_www = $tom::H_www_https;
+		$TOM::DEBUG_log_file=90;
+	}
+	main::_log("tom::H_www=$tom::H_www",3,"debug");
 	if ($main::ENV{'domain'})
 	{
 		main::_log("override \$tom::H by ENV to '$main::ENV{'domain'}' from '$tom::H'");
@@ -848,6 +856,7 @@ while ($main::CGI=new CGI::Fast())
 					'location' => $out
 				);
 				print "Status: 301 Moved permanently\n";
+				print "C3-Request: $main::request_code\n";
 				print "Location: $out\n\n";
 				
 				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
@@ -926,6 +935,7 @@ while ($main::CGI=new CGI::Fast())
 					'location' => $URI_base.$tom::rewrite_RewriteBase.$link
 				);
 				print "Status: 301 Moved permanently\n";
+				print "C3-Request: $main::request_code\n";
 				print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 				
 				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
@@ -955,6 +965,7 @@ while ($main::CGI=new CGI::Fast())
 				'location' => $URI_base.$tom::rewrite_RewriteBase.$link
 			);
 			print "Status: 301 Moved permanently\n";
+			print "C3-Request: $main::request_code\n";
 			print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 			
 			if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
@@ -1149,6 +1160,7 @@ while ($main::CGI=new CGI::Fast())
 					'location' => $URL
 				);
 				print "Status: 302 Found\n";
+				print "C3-Request: $main::request_code\n";
 				print "Location: $URL\n\n";
 				
 				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
@@ -1588,7 +1600,7 @@ while ($main::CGI=new CGI::Fast())
 						
 						if (!$a210{'ID'})
 						{
-							main::_log("path not found in a210_page, searching in a210_page_j");
+							main::_log("path '$main::FORM{'a210_path'}' not found in a210_page, searching in a210_page_j");
 							%a210=App::020::SQL::functions::tree::find_path_url_j(
 								$main::FORM{'a210_path'},
 								'db_h' => "main",
@@ -2422,6 +2434,7 @@ while ($main::CGI=new CGI::Fast())
 					'location' => $rewrite_domain.$link
 				);
 				print "Status: 301 Moved permanently\n";
+				print "C3-Request: $main::request_code\n";
 				print "Location: $rewrite_domain$link\n\n";
 				
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
@@ -2612,6 +2625,7 @@ while ($main::CGI=new CGI::Fast())
 					'location' => $out
 				);
 				print "Status: $main::location_code Found\n";
+				print "C3-Request: $main::request_code\n";
 				print "Location: $out\n\n";
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				
@@ -2930,6 +2944,8 @@ while ($main::CGI=new CGI::Fast())
 		{
 			# don't cache when page failed
 			$main::cache='';$main::ENV{'Cache-Control'}='no-cache';
+			# when page failed, send 500 error
+			$main::page_statuscode="500"; # internal server error
 		}
 		
 		my $t_send=track TOM::Debug("send",'timer'=>1);
@@ -2955,6 +2971,15 @@ while ($main::CGI=new CGI::Fast())
 			}
 		}."\n";
 		#print "C3-TypeID: $main::H\n";
+		
+		if ($TOM::Document::content_security_policy)
+		{
+			print "Content-Security-Policy: ".($TOM::Document::content_security_policy || "frame-ancestors 'self'").";\n";
+		}
+		if ($TOM::Document::frame_options ne "ALLOWALL")
+		{
+			print "X-FRAME-OPTIONS: ".($TOM::Document::frame_options || 'SAMEORIGIN')."\n";
+		}
 		
 		# codepage pouzity pre tuto page;
 		$main::LNG_cp_this=$COOKIES{cp};
@@ -2988,6 +3013,10 @@ while ($main::CGI=new CGI::Fast())
 		if ($main::page_statuscode eq "404")
 		{
 			print "Status: 404 Not Found\n";
+		}
+		elsif ($main::page_statuscode eq "500")
+		{
+			print "Status: 500 Internal Server Error\n";
 		}
 		
 		if ($TOM::Document::content_type eq "application/pdf")
