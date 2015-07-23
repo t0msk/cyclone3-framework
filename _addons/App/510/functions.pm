@@ -4243,7 +4243,7 @@ sub get_video_part_file_process_front
 			video_part.process_lock = 'N' AND
 			
 			/* skip video bricks locked */
-			(video_part.ID_brick IS NULL OR video_brick.dontprocess != 'Y') AND
+			(video_part.ID_brick IN (NULL,0) OR video_brick.dontprocess != 'Y') AND
 			
 			/* skip videos in processing */
 			video_part_file_process.ID IS NULL AND
