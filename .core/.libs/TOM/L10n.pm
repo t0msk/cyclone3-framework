@@ -103,7 +103,7 @@ sub new
 			);
 	}
 	
-	if ($object && ($obj->{'config'}->{'mtime'} > $object->{'config'}->{'mtime'}))
+	if ($object && ($obj->{'config'}->{'mtime'} > $object->{'config'}->{'mtime'} || !$main::cache))
 	{
 		main::_log("{L10n} '$obj->{'location'}' expired, modified before ".( $obj->{'config'}->{'mtime'}-$object->{'config'}->{'mtime'} )."s");
 		undef $object;
