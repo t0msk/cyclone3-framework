@@ -15,6 +15,8 @@ our $copyright=qq{  This service is powered by Cyclone3 v$TOM::core_version - pr
   Addons and overlays are copyright of their respective owners.
   Information and contribution at http://www.cyclone3.org};
 
+$TOM::Document::frame_options||="ALLOWALL";
+
 sub message
 {
 	my $self=shift;
