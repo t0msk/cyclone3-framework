@@ -85,6 +85,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_discount_coupon_j` (
 CREATE TABLE `/*db_name*/`.`/*addon*/_discount_coupon_use` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` int(8) unsigned default NULL, -- rel _discount_coupon.ID
+  `ID_order` int(8) unsigned zerofill default NULL,
   `datetime_create` datetime NOT NULL, -- last modified
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL, -- who used
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL, -- who writed
