@@ -56,6 +56,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_discount_coupon` (
   `applications` int(8) unsigned DEFAULT '0',
   `limit_to_email` varchar(32) character set ascii DEFAULT NULL,
   `limit_customer` char(1) character set ascii NOT NULL default 'Y',
+  `note` text character set utf8 collate utf8_unicode_ci,
   `status` char(1) character set ascii NOT NULL default 'N', -- active or not
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`coupon_code`)
@@ -76,6 +77,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_discount_coupon_j` (
   `applications` int(8) unsigned DEFAULT '0',
   `limit_to_email` varchar(32) character set ascii DEFAULT NULL,
   `limit_customer` char(1) character set ascii NOT NULL default 'Y',
+  `note` text character set utf8 collate utf8_unicode_ci,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
