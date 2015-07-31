@@ -1873,7 +1873,70 @@ sub video_part_file_process
 			$cmd.=" ".($env{'o'} || $temp_video->{'filename'}) if $env{'encoder'} eq "avconv";
 			main::_log("cmd=$cmd");
 			
-			$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
+			if ($tom::test && $env{'encoder'} eq "avconv")
+			{
+				main::_log("use async avconv processing");
+				my $cv = AnyEvent->condvar;
+				require AnyEvent::Run;
+				my $handle = AnyEvent::Run->new(
+					cmd      => [ $cmd ],
+					priority => 19,              # optional nice value 
+					on_read  => sub {
+						my $handle = shift;
+						use Data::Dumper;
+#						main::_log("handle ".Dumper($handle),1);
+						my $line=$handle->{'rbuf'};
+						$handle->{'rbuf'}='';
+#						$line=~s|\r||gms;
+#						print "!$line!\n";
+						
+#						open HND,'>'.$tom::P.'/_temp/dump.dump';
+#						print HND $line;
+#						close HND;
+						if ($line)
+						{
+							if ($line=~/frame=\s*(\d*) fps=\s*?(\d*) q=\s*([\d\.]*) size=\s*?([\d\.]*\w+) time=\s*?([\d\.]*) bitrate=\s+?([\d\.]+\w+)/) #     
+							{
+								my $frame=$1;
+								my $fps=$2;
+								my $q=$3;
+								my $size=$4;
+								my $time=$5;
+								my $bitrate=$6;
+								
+								my $perc=int(($time / $movie1_info{'length'})*100);
+								
+								main::_log("frame=$frame fps=$fps q=$q size=$size time=$time [$perc%] bitrate=$bitrate");
+							}
+							else
+							{
+#								main::_log("$line");
+							}
+						}
+#						$line=~/([^\n\r]*)\r$/ && do
+#						{
+#							$line=$1;
+#							$line=~s|[\n\r]||g;
+#							main::_log("$line");
+#						}
+						
+#						print Dumper($handle->{'rbuf'});
+#						print $1."\n";
+#						$cv->send;
+					},
+					on_error  => sub {
+						my ($handle, $fatal, $msg) = @_;
+						main::_log("error $fatal $msg",1);
+						$cv->send;
+					},
+				);
+				
+				$cv->recv;
+			}
+			else
+			{
+				$outret{'return'}=system("$cmd");main::_log("out=$outret{'return'}");
+			}
 			
 #			$outret{'return'}=undef if $outret{'return'}==256;
 			if ($outret{'return'} && $outret{'return'} != 11){$t->close();return %outret}
@@ -4993,8 +5056,10 @@ sub broadcast_program_add
 			'series_episodes',
 			'video_aspect',
 			'video_bw',
+			'video_quality',
 			'audio_mode',
 			'audio_dubbing',
+			'audio_desc',
 			'rating_pg',
 			'accessibility_deaf',
 			'accessibility_cc',
