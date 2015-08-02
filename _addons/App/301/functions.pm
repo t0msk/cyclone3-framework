@@ -146,7 +146,7 @@ sub user_add
 				?,
 				NOW()
 			)
-		},'bind'=>[$env{'user.ID_user'},$token,($main::USRM{'ID_user'} || ""),$env{'user.hostname'}],'quiet'=>1) || return undef;
+		},'bind'=>[$env{'user.ID_user'},$token,($env{'user.owner'} || $main::USRM{'ID_user'} || ""),$env{'user.hostname'}],'quiet'=>1) || return undef;
 		$env{'new'}=1;
 		$content_reindex=1;
 	}
@@ -476,6 +476,17 @@ sub user_add
 		$data{'metadata'}=$env{'user_profile.metadata'}
 			if (exists $env{'user_profile.metadata'} && ($env{'user_profile.metadata'} ne $user_profile{'metadata'}));
 		
+		if ($data{'metadata'})
+		{
+			App::020::functions::metadata::metaindex_set(
+				'db_h' => 'main',
+				'db_name' => 'TOM',
+				'tb_name' => 'a301_user_profile',
+				'ID' => $env{'user_profile.ID'},
+				'metadata' => {%metadata}
+			);
+		}
+		
 		if (keys %columns || keys %data)
 		{
 			App::020::SQL::functions::update(
@@ -511,6 +522,7 @@ sub user_add
 			exists $env{'user.login'} ||
 			exists $env{'user.pass'} ||
 			exists $env{'user.email'} ||
+			exists $env{'user.posix_owner'} ||
 			exists $env{'user.saved_cookies'} ||
 			exists $env{'user.saved_session'} ||
 			$env{'user.secure_hash'} ||
@@ -533,6 +545,9 @@ sub user_add
 		# pass
 		$set.=",pass='$env{'user.pass'}'"
 			if exists $env{'user.pass'};
+		# posix_owner
+		$set.=",posix_owner='".TOM::Security::form::sql_escape($env{'user.posix_owner'})."'"
+			if exists $env{'user.posix_owner'};
 		# email
 		$set.=",email='".TOM::Security::form::sql_escape($env{'user.email'})."'"
 			if exists $env{'user.email'};
@@ -597,6 +612,9 @@ sub user_add
 	{
 		_user_index('ID_user'=>$env{'user.ID_user'});
 	}
+	
+	# backward compatibility
+	$env{'ID_user'}=$env{'user.ID_user'};
 	
 	$t->close();
 	return %env;
