@@ -88,6 +88,36 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_emailverify` (
 -- --------------------------------------------------
 -- db_name=TOM
 
+CREATE TABLE `/*db_name*/`.`/*addon*/_user_journal` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel _user.ID_user
+  `datetime_create` datetime NOT NULL,
+  `datetime_journal` datetime NOT NULL,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `note` text character set utf8 collate utf8_unicode_ci,
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+-- db_name=TOM
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_user_journal_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
+  `datetime_create` datetime NOT NULL,
+  `datetime_journal` datetime NOT NULL,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `note` text character set utf8 collate utf8_unicode_ci,
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+-- db_name=TOM
+
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel _user.ID_user
@@ -235,6 +265,20 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_h` (
   `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_valid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+-- db_name=TOM
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_metaindex` (
+  `ID` bigint(20) unsigned NOT NULL, -- ref _product.ID
+  `meta_section` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_variable` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_value` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'N',
+  PRIMARY KEY  (`ID`,`meta_section`,`meta_variable`),
+  KEY `SEL_0` (`meta_section`,`meta_variable`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
