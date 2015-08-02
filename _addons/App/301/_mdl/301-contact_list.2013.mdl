@@ -195,6 +195,7 @@ sub execute
 			
 			`contact_cat`.`ID_entity` AS `cat_ID_entity`,
 			`contact_cat`.`name` AS `cat_name`,
+			`contact_rel_cat`.`priority_A` AS `cat_priority_A`,
 			
 			`user`.`ID_user`,
 			`user`.`login`,
