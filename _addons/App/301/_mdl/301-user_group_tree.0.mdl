@@ -45,12 +45,24 @@ sub execute
 		$XSGN{'NULL'}=~s|<%name%>|$db0_line{'name'}|g;
 		$XSGN{'NULL'}=~s|<%status%>|$db0_line{'status'}|g;
 		
+#		my $sql=qq{
+#			SELECT COUNT(*) AS itemcount
+#			FROM TOM.a301_user_rel_group
+#			WHERE ID_group=$db0_line{'ID'}
+#		};
 		my $sql=qq{
-			SELECT COUNT(*) AS itemcount
-			FROM TOM.a301_user_rel_group
-			WHERE ID_group=$db0_line{'ID'}
+			SELECT
+				count(user.ID_user) AS itemcount
+			FROM
+				TOM.a301_user_rel_group
+			INNER JOIN TOM.a301_user AS user ON
+				( a301_user_rel_group.ID_user = user.ID_user )
+			WHERE
+				a301_user_rel_group.ID_group=$db0_line{'ID'} AND
+				hostname=? AND
+				user.status IN ('Y','N','L','W')
 		};
-		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		my %sth1=TOM::Database::SQL::execute($sql,'bind'=>[$tom::H_cookie],'quiet'=>1);
 		if (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
 			#main::_log("itemcount = $db1_line{'itemcount'}");
