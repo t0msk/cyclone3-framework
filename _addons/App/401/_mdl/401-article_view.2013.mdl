@@ -17,7 +17,6 @@ sub execute
 	my %env_out;
 	
 	$env{'article_attrs.status'}='Y' unless $env{'article_attrs.status'};
-		my $sql_article_attrs_status=join "','", split('',$env{'article_attrs.status'});
 	$env{'datetime_mode'}="present" unless $env{'datetime_mode'};
 	
 	my @sql_bind;
@@ -26,11 +25,17 @@ sub execute
 	my $sql_limit=$env{'sql_limit'} || 10;
 	my $sql_order_by=$env{'sql_order_by'} || 'article_attrs.datetime_start DESC';
 	
-	if ($env{'datetime_mode'} eq "present")
+	if ($env{'force'})
+	{
+		$env{'article_attrs.status'}='Y,N,L,W';
+	}
+	elsif ($env{'datetime_mode'} eq "present")
 	{
 		$sql_where.=" AND article_attrs.datetime_start <= NOW()";
 		$sql_where.=" AND (article_attrs.datetime_stop IS NULL OR article_attrs.datetime_stop >= NOW())";
 	}
+	
+	my $sql_article_attrs_status=join "','", split('',$env{'article_attrs.status'});
 	
 	if ($env{'article.ID_entity'})
 	{
