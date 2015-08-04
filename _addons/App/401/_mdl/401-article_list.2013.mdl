@@ -25,8 +25,10 @@ sub execute
 	
 	$env{'datetime_mode'}="present" unless $env{'datetime_mode'};
 	
+	$env{'default.page_limit'} = 10 unless $env{'default.page_limit'};
+
 	# paging
-	$env{'page_limit'} = 10 unless $env{'page_limit'};
+	$env{'page_limit'} = $env{'default.page_limit'} unless $env{'page_limit'};
 	$env{'page'} = 1 unless $env{'page'};
 	$env{'page_offset'} = 0 unless $env{'page_offset'};
 	$env{'page_plus'} = 1 unless $env{'page_plus'};
@@ -363,6 +365,7 @@ sub execute
 			article_ent.ID_author AS posix_author,
 			article_ent.visits,
 			article_ent.sources,
+			article_ent.metadata,
 			article_content.ID_editor AS posix_editor,
 			
 			article_content.datetime_create AS content_datetime_create,
@@ -548,6 +551,9 @@ sub execute
 			}
 			$article{'a210'}{'path_url'}=~s|^/||;
 		}
+		
+		%{$article{'metahash'}}=App::020::functions::metadata::parse($article{'metadata'});
+		delete $article{'metadata'};
 		
 		# render
 		$parser->parse($article{'abstract'});
