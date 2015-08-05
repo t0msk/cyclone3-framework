@@ -2103,6 +2103,9 @@ sub product_brand_add
 	# status
 	$data{'status'}=$env{'product_brand.status'}
 		if ($env{'product_brand.status'} && ($env{'product_brand.status'} ne $product_brand{'status'}));
+	# metadata
+	$data{'metadata'}=$env{'product_brand.metadata'}
+		if ($env{'product_brand.metadata'} && ($env{'product_brand.metadata'} ne $product_brand{'metadata'}));
 	
 	if (keys %columns || keys %data)
 	{

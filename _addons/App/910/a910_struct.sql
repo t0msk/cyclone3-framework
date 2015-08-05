@@ -257,6 +257,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_brand` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`)
@@ -271,6 +272,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_brand_j` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
