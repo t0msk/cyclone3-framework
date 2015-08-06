@@ -639,22 +639,25 @@ sub start
 		my $tpl_src='tpl';
 		my $tpl_entity;
 		# if tpl is extended by module tpl, then search for entries with prefix "parser."
-		if ($self->{'tpl_ext'} && $self->{'env'}->{'prefix'} && $self->{'tpl_ext'}->{'entity'}{'parser.'.$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity})
+		if ($self->{'tpl_ext'} && $self->{'env'}->{'prefix'}
+			&& exists $self->{'tpl_ext'}->{'entity'}{'parser.'.$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity})
 		{
 			$tpl_src.='_ext';
 			$tpl_entity='parser.'.$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity;
 		}
-		elsif ($self->{'tpl_ext'} && $self->{'tpl_ext'}->{'entity'}{'parser.'.$tag.'.'.$entity})
+		elsif ($self->{'tpl_ext'}
+			&& exists $self->{'tpl_ext'}->{'entity'}{'parser.'.$tag.'.'.$entity})
 		{
 			$tpl_src.='_ext';
 			$tpl_entity='parser.'.$tag.'.'.$entity;
 		}
 		# otherwise use native entry from tpl
-		elsif ($self->{'env'}->{'prefix'} && $self->{'tpl'}->{'entity'}{$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity})
+		elsif ($self->{'env'}->{'prefix'}
+			&& exists $self->{'tpl'}->{'entity'}{$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity})
 		{
 			$tpl_entity=$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity;
 		}
-		elsif ($self->{'tpl'}->{'entity'}{$tag.'.'.$entity})
+		elsif (exists $self->{'tpl'}->{'entity'}{$tag.'.'.$entity})
 		{
 			$tpl_entity=$tag.'.'.$entity;
 		}
@@ -707,6 +710,73 @@ sub start
 #			if $tpl->{'entity_'}{$name}{'tt'} eq "true";
 #		return $tpl->{'entity'}{$name};
 #	}
+		
+	}
+	
+	if (($tag eq "var" || $tag eq "pre") && $attr->{'class'} eq "script")
+	{
+		my $entity='script';
+		
+		# selection which entry name in tpl will be used to process
+		my $tpl_src='tpl';
+		my $tpl_entity;
+		
+		# if tpl is extended by module tpl, then search for entries with prefix "parser."
+		if ($self->{'tpl_ext'}
+			&& $self->{'env'}->{'prefix'}
+			&& exists $self->{'tpl_ext'}->{'entity'}{'parser.'.$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity})
+		{
+			$tpl_src.='_ext';
+			$tpl_entity='parser.'.$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity;
+		}
+		elsif ($self->{'tpl_ext'}
+			&& exists $self->{'tpl_ext'}->{'entity'}{'parser.'.$tag.'.'.$entity})
+		{
+			$tpl_src.='_ext';
+			$tpl_entity='parser.'.$tag.'.'.$entity;
+		}
+		# otherwise use native entry from tpl
+		elsif ($self->{'env'}->{'prefix'}
+			&& exists $self->{'tpl'}->{'entity'}{$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity})
+		{
+			$tpl_entity=$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity;
+		}
+		elsif (exists $self->{'tpl'}->{'entity'}{$tag.'.'.$entity})
+		{
+			$tpl_entity=$tag.'.'.$entity;
+		}
+		
+		$tag_output=$self->{'tpl'}->{'entity'}{$tpl_entity};
+		
+		
+		my $tpl_entity;
+		
+		# if tpl is extended by module tpl, then search for entries with prefix "parser."
+		if ($self->{'tpl_ext'}
+			&& $self->{'env'}->{'prefix'}
+			&& exists $self->{'tpl_ext'}->{'entity'}{'parser.'.$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity.'.close'})
+		{
+			$tpl_src.='_ext';
+			$tpl_entity='parser.'.$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity.'.close';
+		}
+		elsif ($self->{'tpl_ext'}
+			&& exists $self->{'tpl_ext'}->{'entity'}{'parser.'.$tag.'.'.$entity.'.close'})
+		{
+			$tpl_src.='_ext';
+			$tpl_entity='parser.'.$tag.'.'.$entity.'.close';
+		}
+		# otherwise use native entry from tpl
+		elsif ($self->{'env'}->{'prefix'}
+			&& exists $self->{'tpl'}->{'entity'}{$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity.'.close'})
+		{
+			$tpl_entity=$self->{'env'}->{'prefix'}.'.'.$tag.'.'.$entity.'.close';
+		}
+		elsif (exists $self->{'tpl'}->{'entity'}{$tag.'.'.$entity.'.close'})
+		{
+			$tpl_entity=$tag.'.'.$entity.'.close';
+		}
+		
+		$self->{'closetag'}->[$self->{'level'}] = $self->{'tpl'}->{'entity'}{$tpl_entity};
 		
 	}
 	
@@ -787,10 +857,14 @@ sub end
 		delete $self->{'level.ignore'};
 	}
 	
-	$self->{'level'}--;
-	
+	main::_log("close $origtext level=$self->{'level'}");
+		
 	# print out original text
-	$self->{'output'}.=$origtext;
+	$self->{'output'}.=$self->{'closetag'}[$self->{'level'}] || $origtext;
+	
+	delete $self->{'closetag'}[$self->{'level'}];
+	
+	$self->{'level'}--;
 }
 
 

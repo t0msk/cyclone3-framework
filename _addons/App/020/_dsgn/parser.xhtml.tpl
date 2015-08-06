@@ -135,4 +135,9 @@
 %]>
 	[%END%]]]></entity>
 	
+	
+	<entity id="pre.script"><![CDATA[[%]]></entity><entity id="pre.script.close"><![CDATA[%]]]></entity>
+	<entity id="var.script"><![CDATA[[%]]></entity><entity id="var.script.close"><![CDATA[%]]]></entity>
+	
+	
 </template>
