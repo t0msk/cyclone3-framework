@@ -301,6 +301,8 @@ sub execute
 			};
 		}
 		
+		%{$static{'metahash'}}=App::020::functions::metadata::parse($static{'metadata'});
+		
 		push @{$TPL->{'variables'}{'items'}},\%static;
 	}
 	
