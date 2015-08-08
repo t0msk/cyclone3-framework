@@ -18,9 +18,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_static` (
   `datetime_stop` datetime default NULL,
   `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
-  KEY `ID_entity` (`ID_entity`),
+  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -40,6 +41,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_static_j` (
   `datetime_stop` datetime default NULL,
   `body` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

@@ -52,10 +52,11 @@ Adds new static content to category, or updates old content
  static_add
  (
    'static.ID' => '',
+   'static.lng' => '',
    'static.ID_entity' => '',
-   'article.ID_category' => '',
-   'article.name' => '',
-   'article.body' => ''
+   'static.ID_category' => '',
+   'static.name' => '',
+   'static.body' => ''
  );
 
 =cut
@@ -81,22 +82,28 @@ sub static_add
 			'columns' => {'*'=>1}
 		);
 		$env{'static.ID_entity'}=$static{'ID_entity'} if $static{'ID_entity'};
+		$env{'static.lng'}=$static{'lng'} if $static{'lng'};
 	}
+	
+	$env{'static.lng'}=$tom::lng unless $env{'static.lng'};
 	
 	# static.ID is unknown
 	if (!$env{'static.ID'} && $env{'static.ID_entity'})
 	{
-		my $sql=qq{
+		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				*
 			FROM
 				`$App::420::db_name`.`a420_static`
 			WHERE
-				ID_entity=$env{'static.ID_entity'} AND
+				ID_entity=? AND
+				lng=? AND
 				status IN ('Y','N','L')
 			LIMIT 1
-		};
-		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		},'bind'=>[
+			$env{'static.ID_entity'},
+			$env{'static.lng'}
+		],'quiet'=>1);
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		if ($db0_line{'ID'})
 		{
@@ -115,7 +122,8 @@ sub static_add
 		my %columns;
 		$columns{'ID_entity'}=$env{'static.ID_entity'} if $env{'static.ID_entity'};
 		$columns{'datetime_start'}="NOW()" unless $columns{'datetime_start'};
-		
+		my %data;
+		$data{'lng'} = $env{'static.lng'};
 		
 		$env{'static.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
@@ -124,6 +132,9 @@ sub static_add
 			'columns' =>
 			{
 				%columns,
+			},
+			'data' => {
+				%data
 			},
 			'-journalize' => 1,
 		);
@@ -148,6 +159,7 @@ sub static_add
 				'columns' => {'*'=>1}
 			);
 			$env{'static.ID_entity'}=$static{'ID_entity'};
+			$env{'static.lng'}=$static{'lng'};
 		}
 		else
 		{
