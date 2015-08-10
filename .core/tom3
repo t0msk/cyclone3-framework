@@ -233,6 +233,9 @@ while ($main::CGI=new CGI::Fast())
 #	print "$ENV{'QUERY_STRING'}\n";exit;
 	alarm($TOM::fcgi_timeout); # zacnem pocitat X sekund kym nezbehne request
 	local $sig_term=0; # ignorujem TERM pocas behu requestu, povoleny je len pocas cakania na dalsi request
+	local $TOM::DEBUG_log_file=$TOM::DEBUG_log_file;
+	local $cache=$TOM::CACHE;
+	
 	if ($main::ENV{'HTTP_REMOTE_ADDR_SOURCE'})
 	{
 		$main::ENV{'REMOTE_ADDR'}=$main::ENV{'HTTP_REMOTE_ADDR_SOURCE'};
@@ -245,6 +248,17 @@ while ($main::CGI=new CGI::Fast())
 	
 	$main::ENV{'REMOTE_ADDR_PREFIX'}=$main::ENV{'REMOTE_ADDR'};
 		$main::ENV{'REMOTE_ADDR_PREFIX'}=~s|^(\d+\.\d+\.\d+)\.\d+$|$1|;
+	
+	if (
+			$main::ENV{'HTTP_PRAGMA'} eq "no-cache" && 
+			$tom::admin_ip_regexp &&
+			$main::ENV{'REMOTE_ADDR'}=~/$tom::admin_ip_regexp/
+	)
+	{
+		$main::cache=0;
+		$TOM::DEBUG_log_file=90;
+		main::_log("IP=$main::ENV{'REMOTE_ADDR'} requested no-cache",3,"debug");
+	}
 	
 	$main::request_code=Utils::vars::genhash(8);
 	TOM::Debug::clear_namespaces();
@@ -279,7 +293,6 @@ while ($main::CGI=new CGI::Fast())
 	local $TPL;
 	local %a210;
 	local %key;
-	local $cache=$TOM::CACHE;
 	my $rewrite_301;
 	my %FORM_reject;
 	$result="ok";
@@ -483,8 +496,8 @@ while ($main::CGI=new CGI::Fast())
 			($main::Media,$main::Media_name,$main::Media_type)= TOM::Net::HTTP::Media::analyze($main::ENV{'HTTP_USER_AGENT'});
 			main::_log("detected Media='$main::Media' Media_name='$main::Media_name' Media_type='$main::Media_type'");
 			
-			# logovanie pre UserAgentov, ktori maju specialne zapnute logovanie;
-			local $TOM::DEBUG_log_file=$TOM::DEBUG_log_file;
+#			# logovanie pre UserAgentov, ktori maju specialne zapnute logovanie;
+#			local $TOM::DEBUG_log_file=$TOM::DEBUG_log_file;
 			
 			if ($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'log'})
 			{
@@ -757,16 +770,16 @@ while ($main::CGI=new CGI::Fast())
 		#
 		
 		# cache disable if requested
-		if ((
-				$tom::devel # allow recache only in devel server
-				&& $main::FORM{'_rc'} < 0
-			) || ( 
-				$main::ENV{'HTTP_PRAGMA'} eq "no-cache" && 
-				$tom::admin_ip_regexp &&
-				$main::ENV{'REMOTE_ADDR'}=~/$tom::admin_ip_regexp/
-		))
+		if ($main::ENV{'HTTP_PRAGMA'} eq "no-cache")
+		{
+			main::_log("requested no-cache (don't know if proceed)");
+		}
+		
+		# allow recache only in devel server
+		if ($tom::devel && $main::FORM{'_rc'} < 0)
 		{
 			$main::cache=0;
+			$TOM::DEBUG_log_file=90;
 			main::_log("IP=$main::ENV{'REMOTE_ADDR'} requested no-cache",3,"debug");
 		}
 		
