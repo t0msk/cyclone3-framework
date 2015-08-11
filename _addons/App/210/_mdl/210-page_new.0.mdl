@@ -88,7 +88,26 @@ sub execute
 		return 1;
 	}
 	
-	$env{'name'}=~s|\'|\\'|;
+	if ($App::210::path2name)
+	{
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`$App::210::db_name`.a210_page
+			WHERE
+				name = ?
+				AND lng = ?
+				AND status IN ('Y','N','L','W')
+		},'bind'=>[$env{'name'},$env{'lng'}]);
+		if ($sth0{'rows'})
+		{
+			$XSGN{'TMP'}=$XSGN{'RESULT_failure_same_name'};
+			return 1;
+		}
+	}
+	
+#	$env{'name'}=~s|\'|\\'|;
 	
 	my $ID=App::020::SQL::functions::tree::new(
 		'db_h' => "main",
@@ -98,10 +117,16 @@ sub execute
 		'parent_ID'   => $env{'ID_parent'},
 		'columns' =>
 		{
-			'name' => "'$env{'name'}'",
-			'lng'  => "'$env{'lng'}'",
-			'status'  => "'N'",
-			'metadata' => "'".TOM::Security::form::sql_escape($App::210::metadata_default)."'"
+#			'name' => "'$env{'name'}'",
+
+#			'status'  => "'N'",
+#			'metadata' => "'".TOM::Security::form::sql_escape($App::210::metadata_default)."'"
+		},
+		'data' => {
+			'name' => $env{'name'},
+			'lng'  => $env{'lng'},
+			'status'  => 'N',
+			'metadata' => $App::210::metadata_default
 		}
 	);
 	

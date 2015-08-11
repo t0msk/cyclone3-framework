@@ -52,6 +52,41 @@ sub execute
 		}
 		
 	}
+	elsif ($env{'ID_entity'})
+	{
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`$App::210::db_name`.`a210_page`
+			WHERE
+				lng = ?
+				AND ID_entity = ?
+			LIMIT 1
+		},
+			'bind'=>[$env{'lng'},$env{'ID_entity'}],
+			'quiet'=>1,
+			'-cache' => 86400*7,
+			'-cache_changetime' => App::020::SQL::functions::_get_changetime(
+				{
+					'db_h'=>"main",
+					'db_name' => $App::210::db_name,
+					'tb_name' => "a210_page"
+				}
+			)
+		);
+		my %data=$sth0{'sth'}->fetchhash();
+		main::_log("found page $data{'ID'}",3,"debug");
+		if ($data{'ID'})
+		{
+			$env{'ID_charindex'}=$data{'ID_charindex'}.':';
+		}
+		else
+		{
+			main::_log("can't find ID='$data{'ID'}'",1);
+			return undef;
+		}
+	}
 	
 	my $sql_suffix='%';
 	my $sql_suffix_;
