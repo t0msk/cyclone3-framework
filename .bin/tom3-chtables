@@ -63,15 +63,27 @@ if ($FORM{'domain'})
 	
 	if (@{$out{'ALTER'}})
 	{
-		print "Do it? [No/yes]\n";
-		my $do=<STDIN>;
-		if ($do=~/yes/i)
+		if ($FORM{'y'})
 		{
 			print color 'reset red';
 			foreach my $SQL(@{$out{'ALTER'}})
 			{
 				print "$SQL\n";
 				TOM::Database::SQL::execute($SQL);
+			}
+		}
+		else
+		{
+			print "Do it? [No/yes]\n";
+			my $do=<STDIN>;
+			if ($do=~/yes/i)
+			{
+				print color 'reset red';
+				foreach my $SQL(@{$out{'ALTER'}})
+				{
+					print "$SQL\n";
+					TOM::Database::SQL::execute($SQL);
+				}
 			}
 		}
 	}
@@ -114,16 +126,28 @@ elsif ($FORM{'a'})
 				{
 					print "$SQL\n";
 				}
-			
-				print "Do it? [No/yes]\n";
-				my $do=<STDIN>;
-				if ($do=~/yes/i)
+				
+				if ($FORM{'y'})
 				{
 					print color 'reset red';
 					foreach my $SQL(@ALTER)
 					{
 						print "$SQL\n";
 						TOM::Database::SQL::execute($SQL);
+					}
+				}
+				else
+				{
+					print "Do it? [No/yes]\n";
+					my $do=<STDIN>;
+					if ($do=~/yes/i)
+					{
+						print color 'reset red';
+						foreach my $SQL(@ALTER)
+						{
+							print "$SQL\n";
+							TOM::Database::SQL::execute($SQL);
+						}
 					}
 				}
 				
@@ -144,15 +168,27 @@ elsif ($FORM{'a'})
 			print "$SQL\n";
 		}
 		
-		print "Do it? [No/yes]\n";
-		my $do=<STDIN>;
-		if ($do=~/yes/i)
+		if ($FORM{'y'})
 		{
 			print color 'reset red';
 			foreach my $SQL(@ALTER)
 			{
 				print "$SQL\n";
 				TOM::Database::SQL::execute($SQL);
+			}
+		}
+		else
+		{
+			print "Do it? [No/yes]\n";
+			my $do=<STDIN>;
+			if ($do=~/yes/i)
+			{
+				print color 'reset red';
+				foreach my $SQL(@ALTER)
+				{
+					print "$SQL\n";
+					TOM::Database::SQL::execute($SQL);
+				}
 			}
 		}
 		
@@ -186,15 +222,26 @@ else
 	
 	if (@{$out{'ALTER'}})
 	{
-		print "Do it? [No/yes]\n";
-		my $do=<STDIN>;
-		if ($do=~/yes/i)
+		if ($FORM{'y'})
 		{
-			print color 'reset red';
 			foreach my $SQL(@{$out{'ALTER'}})
 			{
 				print "$SQL\n";
 				TOM::Database::SQL::execute($SQL);
+			}
+		}
+		else
+		{
+			print "Do it? [No/yes]\n";
+			my $do=<STDIN>;
+			if ($do=~/yes/i)
+			{
+				print color 'reset red';
+				foreach my $SQL(@{$out{'ALTER'}})
+				{
+					print "$SQL\n";
+					TOM::Database::SQL::execute($SQL);
+				}
 			}
 		}
 	}
