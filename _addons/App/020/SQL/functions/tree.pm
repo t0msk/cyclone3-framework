@@ -1632,7 +1632,7 @@ sub update
 	{
 		$env{'columns'}{'name'}=~s|^'||;
 		$env{'columns'}{'name'}=~s|'$||;
-		$env{'columns'}{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'columns'}{'name'})."'";
+		$env{'columns'}{'name_url'}="'".TOM::Net::URI::rewrite::convert($env{'columns'}{'name'},'notlower'=>1)."'";
 		$env{'columns'}{'name'}="'".$env{'columns'}{'name'}."'";
 	}
 	if ($env{'data'}{'name'})
