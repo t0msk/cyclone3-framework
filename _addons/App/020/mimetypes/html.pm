@@ -24,12 +24,16 @@ sub new
 	my ($class, %env) = @_;
 	my $self = $class->SUPER::new();
 	
+	$self->{'lng'} = $env{'lng'} || $tom::lng;
+#	main::_log("lng=" . $self->{'lng'});
+	
 	$self->{'tpl'}=new TOM::Template(
 		'level' => "auto",
 		'addon' => "a020",
 		'tt' => 1, # enable tt processing
 		'name' => "parser",
-		'content-type' => "xhtml"
+		'content-type' => "xhtml",
+		'lng' => $self->{'lng'}
 	);
 	
 	if ($env{'tpl_ext'})
@@ -214,6 +218,8 @@ sub start
 		) if $tom::addons{($entity=~/^(.*?)_/)[0]};
 			$db_name = $TOM::DB{'main'}{'name'} unless $db_name;
 		
+#		main::_log("ID_entity=$vars{'ID_entity'} ID=$vars{'ID'} chk addon=".($entity=~/^(.*?)_/)[0]." a=".$tom::addons{($entity=~/^(.*?)_/)[0]});
+		
 		if (!$vars{'ID_entity'} && $vars{'ID'} && $tom::addons{($entity=~/^(.*?)_/)[0]})
 		{
 			my %sql_def=('db_h' => "main",'db_name' => $db_name,'tb_name' => $entity);
@@ -226,7 +232,7 @@ sub start
 				'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%sql_def)
 			);
 			$vars{'ID_entity'}=$row{'ID_entity'};
-		} elsif (!$vars{'ID_entity'} && $vars{'ID'}){$vars{'ID_entity'}=$vars{'ID'};}
+		}# elsif (!$vars{'ID_entity'} && $vars{'ID'}){$vars{'ID_entity'}=$vars{'ID'};}
 		
 		push @{$self->{'entity'}},{
 #			'db_h' => 'main',
@@ -255,7 +261,7 @@ sub start
 				ORDER BY
 					ID_charindex DESC
 				LIMIT 1
-			},'db_h'=>'main','log'=>0,'quiet'=>1,'bind'=>[$vars{'ID_entity'},$tom::lng],'-cache'=>86400,
+			},'db_h'=>'main','log'=>0,'quiet'=>1,'bind'=>[$vars{'ID_entity'},$self->{'lng'}],'-cache'=>86400,
 				'-cache_changetime' => App::020::SQL::functions::_get_changetime(
 					{'db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => 'a210_page','ID_entity'=>$vars{'ID_entity'}}
 				)
@@ -339,7 +345,7 @@ sub start
 					$sql_where
 				LIMIT
 					1
-			},'bind'=>[$tom::lng,@sql_bind],'quiet'=>1,'-slave'=>1,
+			},'bind'=>[$self->{'lng'},@sql_bind],'quiet'=>1,'-slave'=>1,
 				'-changetime'=>App::020::SQL::functions::_get_changetime(
 					{
 						'db_h'=>"main",
@@ -398,7 +404,7 @@ sub start
 			{
 				# link to a210_page
 				require App::210::_init;
-				if (my $category=App::401::functions::_a210_by_cat([$db_entity{'ID_category'}],'lng'=>$tom::lng))
+				if (my $category=App::401::functions::_a210_by_cat([$db_entity{'ID_category'}],'lng'=>$self->{'lng'}))
 				{
 					my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
 					foreach my $p(
@@ -416,6 +422,110 @@ sub start
 					}
 					$db_entity{'a210'}{'path_url'}=~s|^/||;
 				}
+			}
+			
+		}
+		elsif ($entity eq "a420_static")
+		{
+			require App::420::_init;
+			
+			my $sql_where;
+			my @sql_bind;
+			
+			if ($vars{'ID_entity'})
+			{
+				$sql_where.=" AND `static`.ID_entity = ?";
+				push @sql_bind,$vars{'ID_entity'};
+				$sql_where.=" AND `static`.lng = ?";
+				push @sql_bind, $self->{'lng'};
+			}
+			elsif ($vars{'ID'})
+			{
+				$sql_where.=" AND `static`.ID = ?";
+				push @sql_bind,$vars{'ID'};
+			}
+			
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					
+					`static`.`ID_entity`,
+					`static`.`ID`,
+					`static`.`ID_category`,
+					
+					`static_cat`.`ID` AS `cat_ID`,
+					`static_cat`.`ID_entity` AS `cat_ID_entity`,
+					`static_cat`.`name` AS `cat_name`,
+					`static_cat`.`name_url` AS `cat_name_url`,
+					
+					`static`.`name`,
+					`static`.`name_url`,
+					`static`.`alias_url`,
+					`static`.`posix_owner`,
+					`static`.`posix_modified`,
+					`static`.`datetime_start`,
+					`static`.`datetime_stop`,
+					`static`.`body`,
+					`static`.`metadata`,
+					`static`.`status`
+					
+				FROM `$App::420::db_name`.`a420_static` AS `static`
+				LEFT JOIN `$App::420::db_name`.`a420_static_cat` AS `static_cat` ON
+				(
+					`static_cat`.`ID` = `static`.`ID_category`
+				)
+				WHERE
+					static.status = 'Y'
+					$sql_where
+				LIMIT 1
+			},'bind'=>[@sql_bind],'quiet'=>1,'-slave'=>1,
+				'-changetime'=>App::020::SQL::functions::_get_changetime(
+					{
+						'db_h'=>"main",
+						'db_name' => $App::420::db_name,
+						'tb_name' => "a420_static",
+						'ID_entity' => do{$vars{'ID_entity'} if $vars{'ID_entity'}=~/^\d+$/}
+					}),
+			);
+			%db_entity=$sth0{'sth'}->fetchhash();
+			main::_log("found ID=$db_entity{'ID'} ID_entity=$db_entity{'ID_entity'}");
+			
+			if ($tag eq "div")
+			{
+				main::_log("embed");
+				
+				$self->{'level.ignore'}=$self->{'level'};
+				
+				if (!$self->{'config'}->{'inline'})
+				{
+					
+					my $p=new App::020::mimetypes::html(
+						'tpl_ext' => $self->{'tpl_ext'},
+						'lng' => $self->{'lng'}
+					);
+					$p->config_from($self);
+					delete $p->{'config'}->{'editable'};
+					$p->{'config'}->{'inline'}=1; # this is inline article
+					$p->parse($db_entity{'body'});
+					$p->eof();
+					undef $p->{'config'}->{'inline'};
+					
+					$db_entity{'body_parser'}={
+						'output' => $p->{'output'},
+						'addon' => $p->{'addon'},
+						'entity' => $p->{'entity'},
+						'thumbnail' => $p->{'thumbnail'},
+					};
+					
+#					$out_full=
+#						$self->{'entity'}{'div.a420_static'}
+#						|| $out_full;
+#					
+#					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
+#					
+#					$out_full_plus=$p->{'out'};
+					
+				}
+				
 			}
 			
 		}
@@ -857,8 +967,6 @@ sub end
 		delete $self->{'level.ignore'};
 	}
 	
-	main::_log("close $origtext level=$self->{'level'}");
-		
 	# print out original text
 	$self->{'output'}.=$self->{'closetag'}[$self->{'level'}] || $origtext;
 	
@@ -874,35 +982,35 @@ sub config_from
 	my $self=shift; # new object
 	my $self_old=shift; # old object
 	
-	foreach (keys %{$self_old->{'entity'}})
-	{
-		$self->{'entity'}{$_}=$self_old->{'entity'}{$_};
-	}
+#	foreach (keys %{$self_old->{'entity'}})
+#	{
+#		$self->{'entity'}{$_}=$self_old->{'entity'}{$_};
+#	}
 	
-	foreach (keys %{$self_old->{'config'}})
-	{
-		$self->{'config'}->{$_}=$self_old->{'config'}->{$_};
-	}
+#	foreach (keys %{$self_old->{'config'}})
+#	{
+#		$self->{'config'}->{$_}=$self_old->{'config'}->{$_};
+#	}
 	
-	foreach (keys %{$self_old->{'count'}})
-	{
-		$self->{'count'}->{$_}=$self_old->{'count'}->{$_};
-	}
+#	foreach (keys %{$self_old->{'count'}})
+#	{
+#		$self->{'count'}->{$_}=$self_old->{'count'}->{$_};
+#	}
 	
-	foreach (keys %{$self_old->{'out_var'}})
-	{
-		$self->{'out_var'}->{$_}=$self_old->{'out_var'}->{$_};
-	}
+#	foreach (keys %{$self_old->{'out_var'}})
+#	{
+#		$self->{'out_var'}->{$_}=$self_old->{'out_var'}->{$_};
+#	}
 	
-	foreach (keys %{$self_old->{'out_addon'}})
-	{
-		$self->{'out_addon'}->{$_}=$self_old->{'out_addon'}->{$_};
-	}
+#	foreach (keys %{$self_old->{'out_addon'}})
+#	{
+#		$self->{'out_addon'}->{$_}=$self_old->{'out_addon'}->{$_};
+#	}
 	
-	foreach (keys %{$self_old->{'out_tag'}})
-	{
-		$self->{'out_tag'}->{$_}=$self_old->{'out_tag'}->{$_};
-	}
+#	foreach (keys %{$self_old->{'out_tag'}})
+#	{
+#		$self->{'out_tag'}->{$_}=$self_old->{'out_tag'}->{$_};
+#	}
 	
 }
 

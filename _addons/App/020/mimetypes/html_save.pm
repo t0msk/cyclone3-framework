@@ -39,7 +39,7 @@ sub text
 	
 	if ($self->{'embed'} && $self->{'embed'}->{'tag'})
 	{
-		main::_log(" process '$self->{'embed'}->{'tag'}' with '$text' in embed '$self->{'embed'}->{'name'}'");
+#		main::_log(" process '$self->{'embed'}->{'tag'}' with '$text' in embed '$self->{'embed'}->{'name'}'");
 		
 		if ($self->{'embed'}->{'tag'} eq "li")
 		{
@@ -84,7 +84,7 @@ sub start
 	
 	$self->{'level'}++;
 	
-	main::_log("[$tag] level=".$self->{'level'});
+#	main::_log("[$tag] level=".$self->{'level'});
 	
 	# fix not closed tags
 	$attr->{'/'}='/' if $tag=~/^hr|br|img$/;
@@ -109,7 +109,7 @@ sub start
 	{
 		if ($attr->{'class'} eq "a411_poll")
 		{
-			main::_log("ignore level=".$self->{'level'});
+#			main::_log("ignore level=".$self->{'level'});
 			$self->{'level.ignore'}=$self->{'level'};
 			$self->{'embed'}={
 				'name' => 'a411_poll',
@@ -119,7 +119,7 @@ sub start
 		}
 		elsif ($attr->{'class'} eq "a030_instagram")
 		{
-			main::_log("ignore level=".$self->{'level'});
+#			main::_log("ignore level=".$self->{'level'});
 			$self->{'level.ignore'}=$self->{'level'};
 			$self->{'embed'}={
 				'name' => 'a030_instagram',
@@ -205,7 +205,7 @@ sub end
 		
 		if ($self->{'embed'})
 		{
-			main::_log(" stopping embed '$self->{'embed'}->{'name'}', processing");
+#			main::_log(" stopping embed '$self->{'embed'}->{'name'}', processing");
 			
 			$self->{'embed'}->{'attr'}->{'id'}=~s|^(.*?):||;
 			%{$self->{'embed'}->{'id'}}=_parse_id($self->{'embed'}->{'attr'}->{'id'});
@@ -313,7 +313,7 @@ sub end
 					}
 					if (!$found)
 					{
-						main::_log("not found answer in definition",1);
+#						main::_log("not found answer in definition",1);
 						App::020::SQL::functions::to_trash(
 							'db_h' => "main",
 							'db_name' => $App::411::db_name,
@@ -326,7 +326,7 @@ sub end
 				foreach my $answer (@{$self->{'embed'}->{'data'}->{'answer'}})
 				{
 					next unless $answer->{'text'};
-					main::_log("writing new answer '$answer->{'text'}'");
+#					main::_log("writing new answer '$answer->{'text'}'");
 					$answer->{'id'}=App::020::SQL::functions::new(
 						'db_h' => "main",
 						'db_name' => $App::411::db_name,
@@ -383,7 +383,7 @@ sub end
 		delete $self->{'embed'};
 	}
 	
-	main::_log("[/$tag] level=".$self->{'level'});
+#	main::_log("[/$tag] level=".$self->{'level'});
 	
 	$self->{'level'}--;
 	

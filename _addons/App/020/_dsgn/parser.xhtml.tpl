@@ -135,6 +135,7 @@
 %]>
 	[%END%]]]></entity>
 	
+	<entity id="div.a420_static"><![CDATA[<div id="[%entity.attr.id|xml%]" class="a420_static">[%entity.db.body_parser.output%]]]></entity>
 	
 	<entity id="pre.script"><![CDATA[[%]]></entity><entity id="pre.script.close"><![CDATA[%]]]></entity>
 	<entity id="var.script"><![CDATA[[%]]></entity><entity id="var.script.close"><![CDATA[%]]]></entity>
