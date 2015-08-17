@@ -55,7 +55,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll_answer` (
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`)
+  UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
+  KEY `SEL_0` (`ID_poll`,`lng`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -83,6 +84,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll_vote` (
   `email` varchar(64) character set ascii default NULL,
   PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_answer`),
   UNIQUE KEY `UNI_0` (`datetime_event`,`IP`),
+  KEY `ID_answer` (`ID_answer`),
   KEY `SEL_0` (`datetime_event`,`ref_user`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 

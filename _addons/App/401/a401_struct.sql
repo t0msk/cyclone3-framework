@@ -42,7 +42,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
-  KEY `ID_entity` (`ID_entity`),
+  KEY `ID_entity` (`ID_entity`,`status`),
   KEY `ID_author` (`ID_author`),
   KEY `visits` (`visits`),
   KEY `rating` (`rating`),
