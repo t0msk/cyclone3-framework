@@ -1477,6 +1477,7 @@ while ($main::CGI=new CGI::Fast())
 					{
 						main::_log("finding default");
 						my $ID=App::210::SQL::page_get_default_ID('lng'=>$main::FORM{'__lng'});
+						main::_log("default ID=$ID");
 						%a210=App::020::SQL::functions::get_ID(
 							%sql_def,
 							'ID'      => $ID,
@@ -3026,6 +3027,18 @@ while ($main::CGI=new CGI::Fast())
 		if ($main::page_statuscode eq "404")
 		{
 			print "Status: 404 Not Found\n";
+		}
+		elsif ($main::page_statuscode eq "400")
+		{
+			print "Status: 400 Bad Request\n";
+		}
+		elsif ($main::page_statuscode eq "401")
+		{
+			print "Status: 401 Unauthorized\n";
+		}
+		elsif ($main::page_statuscode eq "403")
+		{
+			print "Status: 403 Forbidden\n";
 		}
 		elsif ($main::page_statuscode eq "500")
 		{
