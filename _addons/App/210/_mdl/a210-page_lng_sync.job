@@ -1,0 +1,199 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use DateTime;
+use Data::Dumper;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	
+	local $TOM::Database::SQL::transaction::disabled=0;
+	
+	my $ID=$env->{'ID'};
+	my $lng=$env->{'lng'} || $tom::lng;
+	
+	my %data=App::020::SQL::functions::get_ID(
+		'db_name' => $App::210::db_name,
+		'tb_name' => 'a210_page',
+		'ID' => $ID,
+		'columns' => {'*'=>1}
+	);
+	$lng = $data{'lng'} if $data{'lng'};
+	$data{'ID_charindex'}.=":" if $data{'ID_charindex'};
+	main::_log("lng=$lng");
+	
+	if ($data{'ID_entity'})
+	{
+		main::_log("parent [$data{'ID_entity'}] '$data{'name'}'");
+	}
+	else
+	{
+		main::_log("without parent");
+	}
+	
+	my @nodes;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`$App::210::db_name`.`a210_page`
+		WHERE
+			lng = ?
+			AND ID_charindex LIKE ?
+			AND status IN ('Y','N','L')
+		ORDER BY
+			ID_charindex
+	},
+		'bind'=>[$lng,$data{'ID_charindex'}.'___'],
+		'quiet'=>1
+	);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("[$db0_line{'ID_entity'}] '$db0_line{'name'}'");
+		push @nodes, $db0_line{'ID_entity'};
+		
+		call job('a210-page_reorder',{
+			'ID' => $db0_line{'ID'}
+		});
+	}
+	
+	return 1 unless @nodes;
+	
+	main::_log("languages: ".join(';',@TOM::LNG_accept));
+	my $nodes_sql = join(",",@nodes);
+	
+	foreach my $lng_ (@TOM::LNG_accept)
+	{
+		next if $lng_ eq $lng;
+		
+		my $t=track TOM::Debug('compare '.$lng_);
+		
+		my $parent_ID_charindex;
+		if ($data{'ID_entity'})
+		{
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					*
+				FROM
+					`$App::210::db_name`.`a210_page`
+				WHERE
+					lng = ?
+					AND ID_entity = ?
+				LIMIT 1
+			},
+				'bind'=>[$lng_,$data{'ID_entity'}],
+				'quiet'=>1
+			);
+			my %db0_line=$sth0{'sth'}->fetchhash();
+			if (!$db0_line{'ID'})
+			{
+				$t->close();
+				next;
+			}
+			$parent_ID_charindex=$db0_line{'ID_charindex'}.':';
+			main::_log("parent ID_charindex='$parent_ID_charindex'");
+		}
+		
+		my @nodes_;
+		my %ids_;
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`$App::210::db_name`.`a210_page`
+			WHERE
+				lng = ?
+				AND ID_entity IN ($nodes_sql)
+				AND status IN ('Y','N','L')
+			ORDER BY
+				ID_charindex
+		},
+			'bind'=>[$lng_],
+			'quiet'=>1
+		);
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			next unless $db0_line{'ID_charindex'}=~/^$parent_ID_charindex...$/;
+			main::_log("[$db0_line{'ID_entity'}] '$db0_line{'name'}' '$db0_line{'ID_charindex'}'");
+			push @nodes_, $db0_line{'ID_entity'};
+			$ids_{$db0_line{'ID_entity'}}=$db0_line{'ID'};
+		}
+		
+		my @nodes_p = @nodes;
+		for my $i (0..@nodes_p-1)
+		{
+			my $found;
+			foreach (@nodes_)
+			{
+				if ($nodes_p[$i] eq $_)
+				{
+					$found=1;
+					last;
+				}
+			}
+			next if $found;
+#			main::_log("[$i] '$nodes[$i]' <=> '$nodes_[$i]' not found");
+			delete $nodes_p[$i];
+		}
+		
+		@nodes_p = grep {$_} @nodes_p;
+		
+		my @swaps;
+		for my $i (0..@nodes_p-1)
+		{
+#			main::_log("[$i] '$nodes_p[$i]' <=> '$nodes_[$i]'");
+			if ($nodes_p[$i] ne $nodes_[$i])
+			{
+				# search position of 
+				my $pos;
+				for my $i_ (0..@nodes_-1)
+				{
+					if ($nodes_[$i_] eq $nodes_p[$i])
+					{
+						$pos=$i_;
+						last;
+					}
+				}
+#				main::_log("swap with $pos");
+				
+				my $val_before=$nodes_[$i];
+				$nodes_[$i] = $nodes_[$pos];
+				$nodes_[$pos] = $val_before;
+				
+				push @swaps,[
+					$ids_{$val_before},
+					$ids_{$nodes_[$i]}
+				];
+			}
+		}
+		
+		if (@swaps)
+		{
+			my $tr=new TOM::Database::SQL::transaction('db_h'=>'main');
+			foreach my $pair (@swaps)
+			{
+				main::_log("swap $pair->[0] with $pair->[1]");
+				
+				App::020::SQL::functions::tree::swap(
+					'db_name' => $App::210::db_name,
+					'tb_name' => 'a210_page',
+					'ID1' => $pair->[0],
+					'ID2' => $pair->[1],
+				);
+				
+			}
+			$tr->close();
+		}
+		
+		$t->close();
+	}
+
+return 1}
+1;
