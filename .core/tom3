@@ -293,6 +293,7 @@ while ($main::CGI=new CGI::Fast())
 	local $TPL;
 	local %a210;
 	local %key;
+	local @main::header;
 	my $rewrite_301;
 	my %FORM_reject;
 	$result="ok";
@@ -2866,8 +2867,8 @@ while ($main::CGI=new CGI::Fast())
 		
 		if ($H->{'OUT'}{'BODY'})
 		{
-			main::_log("Document not in UTF-8",1) unless utf8::is_utf8($H->{'OUT'}{'BODY'});
-			main::_log("Document not in UTF-8",1,"pub.err") unless utf8::is_utf8($H->{'OUT'}{'BODY'});
+#			main::_log("Document not in UTF-8",1) unless utf8::is_utf8($H->{'OUT'}{'BODY'});
+#			main::_log("Document not in UTF-8",1,"pub.err") unless utf8::is_utf8($H->{'OUT'}{'BODY'});
 		}
 		
 		
@@ -2984,6 +2985,12 @@ while ($main::CGI=new CGI::Fast())
 				"no-cache";
 			}
 		}."\n";
+		
+		foreach my $head (@main::header)
+		{
+			print $head."\n";
+		}
+		
 		#print "C3-TypeID: $main::H\n";
 		
 		if ($TOM::Document::content_security_policy)
