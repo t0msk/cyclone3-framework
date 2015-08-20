@@ -27,18 +27,20 @@ sub execute
 	);
 	$lng = $data{'lng'} if $data{'lng'};
 	$data{'ID_charindex'}.=":" if $data{'ID_charindex'};
-	main::_log("lng=$lng");
+#	main::_log("lng=$lng node='$data{'name'}'");
 	
 	if ($data{'ID_entity'})
 	{
-		main::_log("parent [$data{'ID_entity'}] '$data{'name'}'");
+		main::_log("start node [$data{'ID_entity'}] '$data{'name'}' lng='$data{'lng'}'");
 	}
 	else
 	{
-		main::_log("without parent");
+		main::_log("no start node");
 	}
 	
 	my @nodes;
+	my %nodes_status;
+	my %nodes_visible;
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			*
@@ -56,11 +58,14 @@ sub execute
 	);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		main::_log("[$db0_line{'ID_entity'}] '$db0_line{'name'}'");
+		main::_log("sub-node [$db0_line{'ID_entity'}] '$db0_line{'name'}'");
+		$nodes_status{$db0_line{'ID_entity'}} = $db0_line{'status'};
+		$nodes_visible{$db0_line{'ID_entity'}} = $db0_line{'visible'};
 		push @nodes, $db0_line{'ID_entity'};
 		
-		call job('a210-page_reorder',{
-			'ID' => $db0_line{'ID'}
+		call job('a210-page_lng_sync',{
+			'ID' => $db0_line{'ID'},
+			'lng' => $db0_line{'lng'}
 		});
 	}
 	
@@ -111,7 +116,7 @@ sub execute
 			WHERE
 				lng = ?
 				AND ID_entity IN ($nodes_sql)
-				AND status IN ('Y','N','L')
+				AND status IN ('Y','N','L','T')
 			ORDER BY
 				ID_charindex
 		},
@@ -124,6 +129,60 @@ sub execute
 			main::_log("[$db0_line{'ID_entity'}] '$db0_line{'name'}' '$db0_line{'ID_charindex'}'");
 			push @nodes_, $db0_line{'ID_entity'};
 			$ids_{$db0_line{'ID_entity'}}=$db0_line{'ID'};
+			
+			if ($db0_line{'status'} ne $nodes_status{$db0_line{'ID_entity'}})
+			{
+#				main::_log("different status (is $db0_line{'status'} may be '$nodes_status{$db0_line{'ID_entity'}}')",1);
+#				if ($nodes_status{$db0_line{'ID_entity'}} eq "Y")
+#				{
+#					App::020::SQL::functions::enable
+#					(
+#						'ID' => $db0_line{'ID'},
+#						'db_name' => $App::210::db_name,
+#						'tb_name' => 'a210_page',
+#						'-journalize' => 1,
+#					);
+#				}
+#				elsif ($nodes_status{$db0_line{'ID_entity'}} eq "N")
+#				{
+#					App::020::SQL::functions::disable
+#					(
+#						'ID' => $db0_line{'ID'},
+#						'db_name' => $App::210::db_name,
+#						'tb_name' => 'a210_page',
+#						'-journalize' => 1,
+#					);
+#				}
+#				else
+#				{
+					App::020::SQL::functions::update
+					(
+						'ID' => $db0_line{'ID'},
+						'db_name' => $App::210::db_name,
+						'tb_name' => 'a210_page',
+						'data' => {
+							'status' => $nodes_status{$db0_line{'ID_entity'}}
+						},
+						'-journalize' => 1,
+					);
+#				}
+			}
+			
+			if ($db0_line{'visible'} ne $nodes_visible{$db0_line{'ID_entity'}})
+			{
+#				main::_log("different status (is $db0_line{'status'} may be '$nodes_status{$db0_line{'ID_entity'}}')",1);
+				App::020::SQL::functions::update
+				(
+					'ID' => $db0_line{'ID'},
+					'db_name' => $App::210::db_name,
+					'tb_name' => 'a210_page',
+					'data' => {
+						'visible' => $nodes_visible{$db0_line{'ID_entity'}}
+					},
+					'-journalize' => 1,
+				);
+			}
+			
 		}
 		
 		my @nodes_p = @nodes;
