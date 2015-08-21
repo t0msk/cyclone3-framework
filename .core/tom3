@@ -2992,7 +2992,8 @@ while ($main::CGI=new CGI::Fast())
 			# don't cache when page failed
 			$main::cache='';$main::ENV{'Cache-Control'}='no-cache';
 			# when page failed, send 500 error
-			$main::page_statuscode="500"; # internal server error
+			$main::page_statuscode="500"
+				if $main::page_statuscode eq "200"; # internal server error
 		}
 		
 		my $t_send=track TOM::Debug("send",'timer'=>1);
@@ -3063,11 +3064,8 @@ while ($main::CGI=new CGI::Fast())
 #			close(HND);
 #		}
 		
-		if ($main::page_statuscode eq "404")
-		{
-			print "Status: 404 Not Found\n";
-		}
-		elsif ($main::page_statuscode eq "400")
+		
+		if ($main::page_statuscode eq "400")
 		{
 			print "Status: 400 Bad Request\n";
 		}
@@ -3078,6 +3076,10 @@ while ($main::CGI=new CGI::Fast())
 		elsif ($main::page_statuscode eq "403")
 		{
 			print "Status: 403 Forbidden\n";
+		}
+		elsif ($main::page_statuscode eq "404")
+		{
+			print "Status: 404 Not Found\n";
 		}
 		elsif ($main::page_statuscode eq "500")
 		{
