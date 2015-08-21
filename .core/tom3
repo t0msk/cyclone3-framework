@@ -2482,6 +2482,7 @@ while ($main::CGI=new CGI::Fast())
 				print "Status: 301 Moved permanently\n";
 				print "C3-Request: $main::request_code\n";
 				print "Location: $rewrite_domain$link\n\n";
+				main::_log("Location: $rewrite_domain$link");
 				
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				
