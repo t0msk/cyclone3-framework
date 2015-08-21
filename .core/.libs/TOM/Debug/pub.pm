@@ -74,9 +74,11 @@ sub request
 	}
 	
 #	main::_log("testy");
+	my $severity=3;
+		$severity=4 if $env{'code'}=~/^5..$/;
 	main::_log("'".$main::ENV{'REQUEST_URI'}."' ".$main::ENV{'QUERY_STRING_FULL'}.' '.$main::ENV{'REMOTE_ADDR'}.' '.$env{'code'}.' '.$env{'location'},{
 		'facility' => 'pub.track',
-		'severity' => 3,
+		'severity' => $severity,
 		'data' => {
 			'response_status_i' => $env{'code'},
 			'user_s' => $main::USRM{'ID_user'},
