@@ -546,10 +546,13 @@ sub get
 		
 		$rule{'URL'}=();
 		
-		while ($sections[0]=~s|^(.*?)\{(.*?)\}||)
+		my $no;$sections[0]=~s/({|})/ $1 eq "{" ? ("<curvy:".$no++.">") : ("<\/curvy:".--$no.">")/eg;
+		while ($sections[0]=~s|^(.*?)<curvy:0>(.*?)</curvy:0>||)
 		{
 			my $before=$1;
 			my $url=$2;
+				$url=~s|<curvy:\d>|{|g;
+				$url=~s|</curvy:\d>|}|g;
 			
 			main::_log("processing before:'$1' url:'$2'") if $debug;
 			
@@ -644,10 +647,10 @@ sub convert
 	$URL="\L$URL" unless $env{'notlower'};
 	
 	# convert znakov ktore chcem zachovat v kontexte
-	$URL=~s|;|-|g;
-	$URL=~s|[/]|-|g;
+#	$URL=~s|;|-|g;
+#	$URL=~s|[/]|-|g;
 	$URL=~s|\N{NO-BREAK SPACE}| |g;
-	$URL=~s|[/\(\) ]|-|g;
+	$URL=~s|[/\(\) \.;]|-|g;
 	
 	# uplne odstranenie nevhodnych znakov
 	$URL=~s|[^a-zA-Z0-9\._\- ]||g;
