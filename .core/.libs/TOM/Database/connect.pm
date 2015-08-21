@@ -145,6 +145,7 @@ sub multi
 				sub {$TOM::DB{$handler}{'timeouted'}=1;die "Timed out sec.\n"},
 				$TOM::Engine::pub::SIG::sigset,
 				&POSIX::SA_NODEFER);
+				
 				POSIX::sigaction(&POSIX::SIGALRM, $action_die);
 				alarm(2);
 				$main::DB{$handler} = DBI->connect
@@ -157,6 +158,7 @@ sub multi
 						'RaiseError' => 0,
 	#					'LongReadLen' => 6000000,
 	#					'syb_enable_utf8' => 1
+#						syb_err_handler => \&err_handler
 					}
 				);
 			};
@@ -164,7 +166,7 @@ sub multi
 			
 			if (!$main::DB{$handler})
 			{
-				main::_log("can't connect '$handler' error='$DBI::errstr'",1);
+				main::_log("can't connect '$handler' error='$DBI::err $DBI::errstr' '$@' '$!'",1);
 				$t->close();
 				return undef;
 			}
