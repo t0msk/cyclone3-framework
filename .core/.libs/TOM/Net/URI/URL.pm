@@ -177,6 +177,14 @@ sub genGET
 	my $t0=track TOM::Debug(__PACKAGE__."::genGET()") if $debug;
 	my %form=@_;
 	my $GET;
+	
+	if ($App::210::path2name && $form{'a210_path'})
+	{
+		$form{'a210_name'}=$form{'a210_path'};
+		delete $form{'a210_path'};
+		$form{'a210_name'}=~s|^.*/||;
+	}
+	
 	foreach (sort keys %form)
 	{
 		next if $_ eq "multipart";
