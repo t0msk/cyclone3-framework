@@ -17,6 +17,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_page` (
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `t_name` varchar(64) character set ascii NOT NULL default '',
   `t_keys` text NOT NULL, -- kluce uchovavane ako CVML
+  `rules_validation` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `is_default` char(1) character set ascii NOT NULL default 'N',
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(5) character set ascii NOT NULL default '',
@@ -42,6 +43,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_page_j` (
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `t_name` varchar(64) character set ascii NOT NULL default '',
   `t_keys` text NOT NULL,
+  `rules_validation` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `is_default` char(1) character set ascii NOT NULL default 'N',
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(5) character set ascii NOT NULL default '',
