@@ -587,6 +587,10 @@ sub start
 					}
 					
 				}
+				else
+				{
+					main::_log("not found",1) if $debug;
+				}
 				
 			}
 			$self->{'out_var'}->{'img.'.$out_cnt.'.src'}=$attr->{'src'};
