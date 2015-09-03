@@ -35,7 +35,18 @@ sub execute
 		$sql_where.=" AND (article_attrs.datetime_stop IS NULL OR article_attrs.datetime_stop >= NOW())";
 	}
 	
-	my $sql_article_attrs_status=join "','", split('',$env{'article_attrs.status'});
+	if ($env{'article.ID'})
+	{
+		main::_log("search by article.ID");
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::401::db_name,
+			'tb_name' => 'a401_article',
+			'ID' => $env{'article.ID'}
+		};
+		$sql_where.="AND article.ID=? ";
+		push @sql_bind,$env{'article.ID'};
+	}
 	
 	if ($env{'article.ID_entity'})
 	{
@@ -49,6 +60,8 @@ sub execute
 		$sql_where.="AND article.ID_entity=? ";
 		push @sql_bind,$env{'article.ID_entity'};
 	}
+
+	my $sql_article_attrs_status=join "','", split('',$env{'article_attrs.status'});
 	
 	if ($env{'article_cat.ID_entity'})
 	{
@@ -299,15 +312,6 @@ sub execute
 	push @{$env_out{'call'}{'H'}{'change_DOC_description'}},$doc_desc
 		if $env{'header.description'};
 	
-	if ($env{'header.og'} && $parser->{'thumbnail'}[0])
-	{
-		my %image=App::501::functions::get_image_file(
-			'image.ID_entity' => $parser->{'thumbnail'}[0],
-			'image_file.ID_format' => 2
-		);
-		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $tom::H_a501.'/image/file/'.$image{'file_path'}};
-	}
-	
 	# parser body
 	$parser->parse($article{'body'});
 	$parser->eof();
@@ -331,6 +335,23 @@ sub execute
 		'status' => 'Y',
 		'limit' => 1
 	))[0];
+	
+	if ($env{'header.og'} && $parser->{'thumbnail'}[0])
+	{
+		my %image=App::501::functions::get_image_file(
+			'image.ID_entity' => $parser->{'thumbnail'}[0],
+			'image_file.ID_format' => 2
+		);
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $tom::H_a501.'/image/file/'.$image{'file_path'}};
+	}
+	elsif ($env{'header.og'} && $article{'related_thumbnail'})
+	{
+		my %image=App::501::functions::get_image_file(
+			'image.ID_entity' => $article{'related_thumbnail'}->{'r_ID_entity'},
+			'image_file.ID_format' => 2
+		);
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $tom::H_a501.'/image/file/'.$image{'file_path'}};
+	}
 	
 	$TPL->{'variables'}{'article'} = \%article;
 	
