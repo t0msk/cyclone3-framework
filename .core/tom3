@@ -404,7 +404,8 @@ while ($main::CGI=new CGI::Fast())
 		local $SIG{ALRM} = sub {die "Timed out during page sending! limit $TOM::ALRM sec.\n"};
 		
 		#main::_log("get current_time");
-		$main::time_current=$tom::time_current=time();
+		$main::ENV{'time_current'}=$main::time_current=$tom::time_current=time();
+		
 		local (
 			$tom::Tsec,
 			$tom::Tmin,
@@ -443,7 +444,7 @@ while ($main::CGI=new CGI::Fast())
 			$tom::Tisdst);
 		$tom::Tmom=$tom::Tmon;
 		$tom::Fmom=$tom::Fmon;
-		$tom::datetime=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin.':'.$tom::Fsec;
+		$main::ENV{'datetime_current'}=$tom::datetime=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin.':'.$tom::Fsec;
 		
 		local $TOM::Document::content_type=$TOM::Document::content_type;
 		
