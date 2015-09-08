@@ -482,6 +482,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat` (
   `datetime_create` datetime NOT NULL,
   `description` longtext CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `ID_brick` mediumint(8) unsigned DEFAULT NULL, -- rel _video_brick.ID
+  `encoder_slot` mediumint(8) unsigned DEFAULT NULL,
   `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
@@ -511,6 +512,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat_j` (
   `datetime_create` datetime NOT NULL,
   `description` longtext CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `ID_brick` mediumint(8) unsigned DEFAULT NULL,
+  `encoder_slot` mediumint(8) unsigned DEFAULT NULL,
   `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
