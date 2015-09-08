@@ -366,16 +366,13 @@ sub module
 	if ((exists $mdl_C{'-cache_id'} || $mdl_C{'-cache'})&&($TOM::CACHE))
 	{
 		$mdl_C{'-cache_id_sub'}="0" unless $mdl_C{'-cache_id_sub'};
-		$mdl_C{'-cache_id'}="0" unless $mdl_C{'-cache_id'}; # ak je vstup s cache_id ale nieje 0
+		$mdl_C{'-cache_id'}||=$mdl_C{'-cache'} || "0"; # ak je vstup s cache_id ale nieje 0
 		$cache_domain=$tom::H unless $mdl_C{'-cache_master'};
 		
 		my $null;
 		foreach (sort keys %mdl_env){$_=~/^[^_]/ && do{$null.=$_."=\"".$mdl_env{$_}."\"\n";}}
 		foreach (sort keys %mdl_C){$null.=$_."=\"".$mdl_C{$_}."\"\n";}
 		
-		#$mdl_C{-md5}=md5_hex(Int::charsets::encode::UTF8_ASCII($null));
-#		$mdl_C{'-md5'}=md5_hex(Encode::encode_utf8($null));
-#		main::_log("md5 string '$null'");
 		$mdl_C{'-md5'}=TOM::Digest::hash($null);
 		main::_log("cache md5='".$mdl_C{'-md5'}."'") if $debug;
 		
