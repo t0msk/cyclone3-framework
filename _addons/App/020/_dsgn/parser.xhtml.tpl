@@ -2,7 +2,7 @@
 <template>
 	
 	<entity id="img.a030_youtube"><![CDATA[
-		<iframe width="100%" height="315" frameborder="0" allowfullscreen="" src="//www.youtube.com/embed/[%entity.id.ID_entity%]"></iframe>
+		<iframe width="100%" height="315" frameborder="0" allowfullscreen="" src="//www.youtube.com/embed/[%entity.id.ID%]"></iframe>
 	]]></entity>
 	
 	<entity id="img.a501_image"><![CDATA[[%USE dumper;USE a501;FILTER collapse;
