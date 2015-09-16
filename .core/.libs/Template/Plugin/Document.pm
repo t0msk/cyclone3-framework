@@ -67,4 +67,23 @@ sub add_meta {
 	return
 }
 
+sub add_link {
+	my $self = shift;
+	
+	$main::H->add_DOC_css_link(
+		%{$_[0]}
+	);
+	return
+}
+
+
+sub add_script {
+	my $self = shift;
+	
+	$main::H->add_DOC_script(
+		%{$_[0]}
+	);
+	return
+}
+
 1;
