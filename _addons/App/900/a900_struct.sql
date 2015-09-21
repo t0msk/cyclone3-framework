@@ -25,6 +25,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner` (
   `datetime_publish_start` datetime NOT NULL,
   `datetime_publish_stop` datetime default NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `utm_source` varchar(128) character set ascii default NULL,
+  `utm_medium` varchar(128) character set ascii default NULL,
+  `utm_term` varchar(128) character set ascii default NULL,
+  `utm_content` varchar(128) character set ascii default NULL,
+  `utm_campaign` varchar(128) character set ascii default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`)
@@ -53,6 +58,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_j` (
   `datetime_publish_start` datetime NOT NULL,
   `datetime_publish_stop` datetime default NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `utm_source` varchar(128) character set ascii default NULL,
+  `utm_medium` varchar(128) character set ascii default NULL,
+  `utm_term` varchar(128) character set ascii default NULL,
+  `utm_content` varchar(128) character set ascii default NULL,
+  `utm_campaign` varchar(128) character set ascii default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

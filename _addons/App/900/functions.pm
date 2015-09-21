@@ -185,7 +185,8 @@ sub banner_add
 		}
 	}
 	
-	foreach my $field ('target_url', 'target_addon', 'stats_view', 'rules_views_max', 'rules_views_session_max', 'rules_clicks_max')
+	foreach my $field ('target_url', 'target_addon', 'stats_view', 'rules_views_max', 'rules_views_session_max', 'rules_clicks_max',
+		'utm_source', 'utm_medium', 'utm_term', 'utm_content', 'utm_campaign')
 	{
 		$data{$field}=$env{'banner.'.$field}
 			if (exists $env{'banner.'.$field} && ($env{'banner.'.$field} ne $banner{$field}));
