@@ -140,6 +140,8 @@ sub new
 	TOM::Template::contenttypes::trans($env{'content-type'});
 	$env{'level'}="auto" unless $env{'level'};
 	
+	$env{'lng'}||= $tom::lng || $tom::LNG || $TOM::LNG;
+	
 	# add params into object
 	%{$obj->{'ENV'}}=%env;
 	$obj->{'entity'}={};
