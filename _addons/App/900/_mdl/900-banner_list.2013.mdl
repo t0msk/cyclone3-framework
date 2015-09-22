@@ -1,0 +1,293 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::900::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'banner.status'}='Y' unless $env{'banner.status'};
+		my $sql_static_status=join "','", split('',$env{'banner.status'});
+	
+	# paging
+	$env{'page_limit'} = 10 unless $env{'page_limit'};
+	$env{'page'} = 1 unless $env{'page'};
+	$env{'page_offset'} = 0 unless $env{'page_offset'};
+	$env{'page_plus'} = 1 unless $env{'page_plus'};
+	if (!$env{'sql_limit'})
+	{
+		$env{'sql_limit'}=((($env{'page'}-1)*$env{'page_limit'})+$env{'page_offset'}).",".($env{'page_limit'}+$env{'page_plus'});
+	}
+	else
+	{
+#		$env{'sql_limit'}=~/^(\d+),?(\d+)?$/;
+	}
+	
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || '`banner`.`rules_weight` DESC, RAND()';
+	my $sql_group_by;
+	
+	if ($env{'banner_zonetarget.name'})
+	{
+		$sql_where.=" AND banner_zonetarget.name LIKE ?";
+		push @sql_bind, $env{'banner_zonetarget.name'};
+	}
+	
+	if ($env{'banner_domain.name'})
+	{
+		$sql_where.=" AND banner_domain.name LIKE ?";
+		push @sql_bind, $env{'banner_domain.name'};
+	}
+	
+	if ($env{'banner_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'banner_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::900::db_name`.`a900_banner_cat` WHERE `ID_entity`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
+				$sql_cat.=qq{ OR `banner_cat`.`ID_charindex` LIKE CONCAT(($cat_sql),"%")};
+			}
+			else
+			{
+				$sql_cat.=" OR banner_rel_cat.ID_category IN ($ID_category)";
+				push @{$env_out{'entity'}},{
+					'db_h' => 'main',
+					'db_name' => $App::900::db_name,
+					'tb_name' => 'a900_banner_cat',
+					'ID_entity' => $ID_category,
+				};
+			}
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+#	if ($env{'banner_cat.ID'})
+#	{
+#		my $sql_cat;
+#		foreach my $ID_category (split(';',$env{'banner_cat.ID'}))
+#		{
+#			next unless $ID_category;
+#			if ($ID_category=~s/\*$//)
+#			{
+#				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::900::db_name`.`a900_banner_cat` WHERE `ID`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
+#				$sql_cat.=qq{ OR `banner_cat`.`ID_charindex` LIKE CONCAT(($cat_sql),"%")};
+#			}
+#			else
+#			{
+#				$sql_cat.=" OR `banner`.`ID_category`=$ID_category";
+#			}
+#			$sql_cat=~s/^ OR //;
+#		}
+#		if ($sql_cat)
+#		{
+#			$sql_where.=" AND (".$sql_cat.") ";
+#		}
+#	}
+	
+	if ($env{'banner.ID'})
+	{
+		$sql_where.=" AND banner.ID IN (".
+			(join(",",grep {$_} split(';',$env{'banner.ID'})) || 0)
+		.") ";
+	}
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			`banner`.*,
+			`banner_lng`.*,
+			`banner`.ID,
+			`banner`.ID_entity,
+			`banner_lng`.ID AS lng_ID,
+			`banner_lng`.ID_entity AS lng_ID_entity,
+			
+			`banner_zonetarget`.name AS zonetarget_name,
+			
+			`banner_cat`.`ID` AS `cat_ID`,
+			`banner_cat`.`ID_entity` AS `cat_ID_entity`,
+			`banner_cat`.`name` AS `cat_name`
+			
+		FROM `$App::900::db_name`.`a900_banner` AS `banner`
+		
+		INNER JOIN $App::900::db_name.a900_banner_lng AS banner_lng ON
+		(
+			banner_lng.ID_entity = banner.ID_entity AND
+			banner_lng.lng = '$env{'lng'}'
+		)
+		LEFT JOIN `$App::900::db_name`.a900_banner_zonetarget AS banner_zonetarget ON
+		(
+			banner_zonetarget.ID_entity = banner.ID_zonetarget
+		)
+		LEFT JOIN $App::900::db_name.a900_banner_rel_cat AS banner_rel_cat ON
+		(
+			banner_rel_cat.ID_banner = banner.ID_entity
+		)
+		LEFT JOIN $App::900::db_name.a900_banner_cat AS banner_cat ON
+		(
+			banner_cat.ID_entity = banner_rel_cat.ID_category AND
+			banner_cat.status IN ('Y','N','L')
+		)
+		LEFT JOIN $App::900::db_name.a900_banner_rel_domain AS banner_rel_domain ON
+		(
+			banner_rel_domain.ID_banner = banner.ID_entity
+		)
+		LEFT JOIN $App::900::db_name.a900_banner_domain AS banner_domain ON
+		(
+			banner_domain.ID_entity = banner_rel_domain.ID_domain AND
+			banner_domain.status IN ('Y','N','L')
+		)
+		WHERE
+			`banner`.`status` = 'Y' AND
+			(`banner`.`datetime_publish_start` IS NULL OR `banner`.`datetime_publish_start` <= NOW())
+			AND (`banner`.`datetime_publish_stop` IS NULL OR `banner`.`datetime_publish_stop` >= NOW())
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::900::db_name,
+				'tb_name' => "a900_banner",
+				'ID_entity' => do{$env{'banner.ID_entity'} if $env{'banner.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	while (my %banner=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		last if $i > $env{'page_limit'};
+		
+		main::_log("[$i/$env{'page_limit'}] found banner.ID_entity=$banner{'ID_entity'}");
+		
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::900::db_name,
+			'tb_name' => 'a900_banner',
+			'ID_entity' => $banner{'ID_entity'}
+		};
+		
+		@{$banner{'related_gallery'}}=App::160::SQL::get_relations(
+			'db_name' => $App::900::db_name,
+			'l_prefix' => 'a900',
+			'l_table' => 'banner',
+			'l_ID_entity' => $banner{'ID_entity'},
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'rel_type' => "gallery",
+			'status' => "Y"
+		);
+		
+		@{$banner{'lng_related_gallery'}}=App::160::SQL::get_relations(
+			'db_name' => $App::900::db_name,
+			'l_prefix' => 'a900',
+			'l_table' => 'banner_lng',
+			'l_ID_entity' => $banner{'lng_ID'},
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'rel_type' => "gallery",
+			'status' => "Y"
+		);
+		
+		%{$banner{'metahash'}}=App::020::functions::metadata::parse($banner{'metadata'});
+		delete $banner{'metadata'};
+		
+		my @target_addon=split(':',$banner{'target_addon'},2);
+		main::_log("addon=@target_addon",3,"debug");
+		if ($target_addon[0] && $target_addon[1])
+		{
+			$banner{'addon_type'}=$target_addon[0];
+			$banner{'addon_ID_entity'}=$target_addon[1];
+			
+			if ($banner{'addon_type'} eq "a210_page")
+			{
+				require App::210::_init;
+				
+				my %sth0=TOM::Database::SQL::execute(qq{
+					SELECT
+						`a210_page`.*
+					FROM
+						`$App::210::db_name`.`a210_page`
+					WHERE
+						`a210_page`.ID_entity = ? AND
+						`a210_page`.lng = ? AND
+						`a210_page`.status IN ('Y','L')
+				},
+					'bind'=>[$banner{'addon_ID_entity'},$env{'lng'}],
+					'quiet' => 1,
+					'-cache' => 600,
+					'-cache_changetime' => App::020::SQL::functions::_get_changetime(
+						{
+							'db_h'=>"main",
+							'db_name' => $App::210::db_name,
+							'tb_name' => "a210_page"
+						}
+					)
+				);
+				if (my %db0_line=$sth0{'sth'}->fetchhash())
+				{
+					delete $db0_line{'metadata'};
+					delete $db0_line{'t_keys'};
+					
+					foreach my $node (App::020::SQL::functions::tree::get_path(
+						$db0_line{'ID'},
+						'db_h'    => 'main',
+						'db_name' => $App::210::db_name,
+						'tb_name' => 'a210_page',
+						'-cache' => 86400*7,
+					))
+					{
+						$db0_line{'path_url'}.='/'.$node->{'name_url'};
+					}
+					$db0_line{'path_url'}=~s|^/||;
+					
+					$db0_line{'ID_charindex'}=~s|^$env{'ID_charindex'}||;
+					
+					$banner{'addon'}=\%db0_line;
+				}
+				
+			}
+			
+		}
+		
+		push @{$TPL->{'variables'}{'items'}},\%banner;
+	}
+	
+	return 1,%env_out;
+}
+
+1;
