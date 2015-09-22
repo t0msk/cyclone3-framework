@@ -63,6 +63,7 @@ our $TEXT_VMETHODS = {
     html        => \&Template::Filters::html_filter,
     xml         => \&Template::Filters::xml_filter,
     md5_hex		 => \&Template::Filters::md5_hex,
+    eval		    => \&Template::Filters::eval_filter_factory,
 };
 
 our $HASH_VMETHODS = {

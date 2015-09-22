@@ -49,7 +49,7 @@ sub get_static {
 	{
 		if ($env=~/^\d+$/)
 		{
-			$sql.=qq{ AND a420_static.ID=?};
+			$sql.=qq{ AND a420_static.ID_entity=?};
 			push @bind,$env;
 		}
 		else
@@ -85,6 +85,13 @@ sub get_static {
 	$sql=~s|WHERE AND|WHERE|ms;
 	
 	$sql.=qq{ AND a420_static.status='Y'};
+	$sql.=qq{ AND a420_static.lng=?};push @bind,$self->{'_CONTEXT'}->{'tpl'}->{'ENV'}->{'lng'};
+	
+#	use Data::Dumper;
+#	open(HND,'>'.$tom::P.'/!www/dump.dump');
+#	print HND Dumper($self->{'_CONTEXT'}->{'tpl'}->{'ENV'});
+#	close (HND);
+#	main::_log("lng is ".Dumper($self->{'_CONTEXT'}),3,"debug");
 	
 #	$sql.=$sql_where;
 	$sql.=qq{
