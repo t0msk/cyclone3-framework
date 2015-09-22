@@ -193,13 +193,15 @@ sub send
 				close(EMAILBODY);
 				chmod 0666, $TOM::P.'/_data/email/body_'.$ID.'.eml';
 				
+				use Encode qw/encode decode/;
+				
 				main::_log("[$ID] created email to a130",{
 					'facility' => 'email',
 					'severity' => 3,
 					'data' => {
 						'id_i' => $ID,
 						'email_s' => [split(';',$env{'to_email'})],
-						'subject_t' => $subject
+						'subject_t' => decode('MIME-Header',$subject)
 					}
 				});
 				
