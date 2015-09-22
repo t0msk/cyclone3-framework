@@ -176,11 +176,28 @@ sub _log
 		$msg.="...";
 	}
 	
+	$tom::last_log_engine ||= $TOM::engine;
+	
 	if (
-			($main::stdout && $main::debug && $get[3] eq $TOM::engine) ||
+			($main::stdout && $main::debug) || # && $get[3] eq $TOM::engine) ||
 			($main::stdout && $get[3] eq "stdout")
 		)
 	{
+		
+		if ($get[3] ne $TOM::engine && $get[3] ne "stdout")
+		{
+			if ($tom::last_log_engine ne $get[3])
+			{
+				print color 'reset cyan';print $get[3].".log\n";print color 'reset';
+				$tom::last_log_engine = $get[3];
+			}
+		}
+		elsif ($tom::last_log_engine ne $get[3])
+		{
+			print color 'reset cyan';print $get[3].".log\n";print color 'reset';
+			$tom::last_log_engine = $get[3];
+		}
+		
 		# only to stdout
 #		$msg=$log_sym[$get[2]].' '.$get[1] unless $main::debug;
 #		$msg=$log_sym[$get[2]].$get[1] unless $main::debug;
@@ -192,6 +209,12 @@ sub _log
 		$msg=~s|\\t|\t|g;
 		print $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
 		print color 'reset';
+		
+#		if ($get[3] ne $TOM::engine && $get[3] ne "stdout")
+#		{
+#			print color 'reset cyan';print $TOM::engine."\n";print color 'reset';
+#		}
+		
 		return 1 if $get[3] eq "stdout";
 	}
 	elsif ($main::stdout && $log_sym[$get[2]] eq '-' && $get[3] eq $TOM::engine)
