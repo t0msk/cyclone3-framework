@@ -51,6 +51,11 @@ sub execute
 		push @sql_bind,$env{'static.ID_entity'};
 	}
 	
+	if ($env{'static.name'})
+	{
+		$sql_where.="AND `static`.`name`=? ";
+		push @sql_bind,$env{'static.name'};
+	}
 	if ($env{'static.name_url'})
 	{
 		$sql_where.="AND `static`.`name_url`=? ";
@@ -109,6 +114,8 @@ sub execute
 		}
 	}
 	
+	$sql_where.=" AND static.lng = ?";
+	push @sql_bind, $env{'lng'};
 	
 	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
 	

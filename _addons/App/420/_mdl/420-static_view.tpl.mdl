@@ -83,6 +83,7 @@ sub execute
 		WHERE
 					(static.datetime_start IS NULL OR static.datetime_start <= NOW())
 			AND	(static.datetime_stop IS NULL OR static.datetime_stop >= NOW())
+			AND   status.lng = '$env{'lng'}'
 			$sql_where
 		ORDER BY
 			$sql_order
