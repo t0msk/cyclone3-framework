@@ -125,6 +125,89 @@ foreach my $lng(@TOM::LNG_accept)
 	}
 }
 
+# check relation to a821
+our $form_ID_entity;
+our %form;
+
+if ($tom::addons{'a830'})
+{
+	use App::830::_init;
+	
+	my $tmplng = 'xx';
+	
+	# find any category;
+	my $sql="
+		SELECT
+			`ID`,
+			`ID_entity`
+		FROM
+			`$App::830::db_name`.`a830_form_cat`
+		WHERE
+					`name` = 'poll forms'
+--			AND	`lng` IN ('".(join "','",@TOM::LNG_accept)."')
+			AND	`lng` = '$tmplng'
+		LIMIT 1
+	";
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$form_ID_entity=$db0_line{'ID_entity'} unless $form_ID_entity;
+	}
+	else
+	{
+		$form_ID_entity=App::020::SQL::functions::tree::new(
+			'db_h' => "main",
+			'db_name' => $App::830::db_name,
+			'tb_name' => "a830_form_cat",
+			'columns' => {
+				'name' => "'poll forms'",
+				#'lng' => "'$tom::LNG'",
+				'lng' => "'$tmplng'",
+				'status' => "'L'"
+			},
+			'-journalize' => 1
+		);
+	}
+	
+	#foreach my $lng(@TOM::LNG_accept)
+	#{
+		main::_log("check related category $tmplng");
+		my $sql=qq{
+			SELECT
+				`ID`,
+				`ID_entity`
+			FROM
+				`$App::830::db_name`.`a830_form_cat`
+			WHERE
+						`ID_entity` = $form_ID_entity
+				AND	`lng` = '$tmplng'
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$form{$tmplng}=$db0_line{'ID'};
+		}
+		#else
+		#{
+			#main::_log("creating related category");
+			#$form{$tmplng}=App::020::SQL::functions::tree::new(
+			#	'db_h' => "main",
+			#	'db_name' => $App::830::db_name,
+			#	'tb_name' => "a830_form_cat",
+			#	'columns' => {
+			#		'ID_entity' => $form_ID_entity,
+			#		'name' => "'poll forms'",
+			#		'lng' => "'$tmplng'",
+			#		'status' => "'L'"
+			#	},
+			#	'-journalize' => 1
+			#);
+		#}
+	#}
+}
+
 
 =head1 AUTHOR
 

@@ -17,6 +17,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll` (
   `datetime_stop` datetime default NULL,
   `datetime_voting_start` datetime default NULL,
   `datetime_voting_stop` datetime default NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
@@ -38,6 +39,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_poll_j` (
   `datetime_stop` datetime default NULL,
   `datetime_voting_start` datetime default NULL,
   `datetime_voting_stop` datetime default NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
