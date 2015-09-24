@@ -26,8 +26,6 @@ sub form_add
 	
 	my %form;
 	
-	main::_log('form name: '.$env{'form.name'}, 3);
-	
 	if ($env{'form.ID'})
 	{
 		$env{'form.ID'}=$env{'form.ID'}+0;
@@ -56,6 +54,7 @@ sub form_add
 				'tb_name' => "a830_form",
 				'columns' => {
 					'ID' => $env{'form.ID'},
+					'name' => $env{'form.name'},
 					'datetime_publish_start' => 'NOW()'
 				},
 				'-journalize' => 1,
@@ -73,7 +72,7 @@ sub form_add
 	
 	if (!$env{'form.ID'})
 	{
-		main::_log("!form.ID, create form.ID (form.ID_entity='$env{'form.ID_entity'}') with name '".$env{'form.name'}."'");
+		main::_log("!form.ID, create form.ID (form.ID_entity='$env{'form.ID_entity'}')");
 		my %columns;
 		$columns{'ID_entity'}=$env{'form.ID_entity'} if $env{'form.ID_entity'};
 		$env{'form.ID'}=App::020::SQL::functions::new(
@@ -99,11 +98,6 @@ sub form_add
 	# update only if necessary
 	my %columns;
 	my %data;
-	# name
-	$data{'name'}=$env{'form.name'}
-		if (exists $env{'form.name'} && ($env{'form.name'} ne $form{'name'}));
-	$data{'name_url'}=TOM::Net::URI::rewrite::convert($env{'form.name'})
-		if (exists $env{'form.name'} && ($env{'form.name'} ne $form{'name'}));
 	# datetime_publish_start
 	$columns{'datetime_publish_start'}="'".TOM::Security::form::sql_escape($env{'form.datetime_publish_start'})."'"
 		if ($env{'form.datetime_publish_start'} && ($env{'form.datetime_publish_start'} ne $form{'datetime_publish_start'}));
@@ -118,6 +112,9 @@ sub form_add
 		$columns{'datetime_publish_stop'} = "NULL"
 			if ($env{'form.datetime_publish_stop'} ne $form{'datetime_publish_stop'});
 	}
+	
+	$columns{'name'}="'".TOM::Security::form::sql_escape($env{'form.name'})."'"
+		if (exists $env{'form.name'} && ($env{'form.name'} ne $form{'name'}));
 	
 	# metadata
 	my %metadata=App::020::functions::metadata::parse($form{'metadata'});
@@ -163,7 +160,7 @@ sub form_add
 	
 	$env{'form.metadata'}=App::020::functions::metadata::serialize(%metadata);
 	
-	$data{'metadata'}=$env{'form.metadata'}
+	$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'form.metadata'})."'"
 		if (exists $env{'form.metadata'} && ($env{'form.metadata'} ne $form{'metadata'}));
 	
 	if (($main::RPC->{'form_cat.ID'} || $main::RPC->{'form_cat.ID_entity'}) && ($form{'status'} eq "T"))
@@ -200,8 +197,7 @@ sub form_add
 				`$App::830::db_name`.`a830_form_cat`
 			WHERE
 				`ID` = $env{'form_cat.ID'}
-			LIMIT
-				1
+			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		my %form_cat=$sth0{'sth'}->fetchhash();
