@@ -83,6 +83,23 @@ sub send
 				print $var;
 			}
 		}
+		
+		# autoset browser id
+		if (!$main::COOKIES_all{'c3bid'} && $main::USRM{'ID_user'})
+		{
+			my $var="Set-Cookie: c3bid\=$main::USRM{'ID_user'}; $expires; path\=$tom::P_cookie; domain\=$tom::D_cookie;\n";
+			main::_log("$var");
+			print $var;
+		}
+		
+		# autoset browser session id
+		if (!$main::COOKIES_all{'c3sid'} && $main::USRM{'ID_session'})
+		{
+			my $var="Set-Cookie: c3sid\=$main::USRM{'ID_session'}; path\=$tom::P_cookie; domain\=$tom::D_cookie;\n";
+			main::_log("$var");
+			print $var;
+		}
+		
 	}
 	
 	$t_cookies->close() if $debug;
