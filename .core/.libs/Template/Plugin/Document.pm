@@ -29,6 +29,12 @@ sub title {
 	return
 }
 
+sub location {
+	my $self = shift;
+	$main::location = shift;
+	return
+}
+
 sub add_title {
 	my $self = shift;
 	my $title = shift;
