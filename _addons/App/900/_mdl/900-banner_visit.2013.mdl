@@ -1,0 +1,91 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::900::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	return 1 unless $env{'banner.ID_entity'};
+	
+	return undef unless $env{'banner.ID_entity'}=~/^[0-9;]+$/;
+	
+	foreach my $ID (split(';',$env{'banner.ID_entity'}))
+	{
+	
+		TOM::Database::SQL::execute(qq{
+			INSERT DELAYED INTO
+				`$App::900::db_name`.a900_banner_view
+				(
+					ID_banner,
+					datetime_event,
+					ID_user,
+					ID_session,
+					ID_browser,
+					ID_browser_session
+				)
+				VALUES
+				(
+					?,
+					NOW(),
+					?,
+					?,
+					?,
+					?
+				)
+		},'-quiet'=>1,'bind'=>[
+			$ID,
+			$main::USRM{'ID_user'},
+			$main::USRM{'ID_session'},
+			$main::COOKIES_all{'c3bid'},
+			$main::COOKIES_all{'c3sid'}
+		]);
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				COUNT(a900_banner_view.ID_user) AS cnt
+			FROM
+				`$App::900::db_name`.a900_banner_view
+			INNER JOIN `$App::900::db_name`.a900_banner ON
+			(
+				a900_banner_view.ID_banner = a900_banner.ID_entity
+			)
+			WHERE
+				a900_banner_view.ID_banner = ? AND
+				a900_banner_view.datetime_event >= a900_banner.datetime_publish_start
+		},'-quiet'=>1,'bind'=>[
+			$ID
+		]);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		
+		TOM::Database::SQL::execute(qq{
+			UPDATE
+				`$App::900::db_name`.a900_banner
+			SET
+				stats_views = ?
+			WHERE
+				ID_entity = ?
+		},'-quiet'=>1,'bind'=>[
+			$db0_line{'cnt'},
+			$ID
+		]);
+	
+	}
+	
+	return 1,%env_out;
+}
+
+1;
