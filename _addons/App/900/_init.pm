@@ -22,5 +22,25 @@ use App::900::functions;
 
 our $db_name=$App::900::db_name || $TOM::DB{'main'}{'name'};
 
+our $banner_cat_default;
+my %sth0=TOM::Database::SQL::execute(qq{
+	SELECT ID, ID_entity
+	FROM `$App::900::db_name`.`a900_banner_cat`
+	WHERE name='Default' AND status = 'L'
+	LIMIT 1},'quiet'=>1);
+if (my %db0_line=$sth0{'sth'}->fetchhash()){$banner_cat_default=$db0_line{'ID_entity'}}
+else
+{
+	$banner_cat_default=App::020::SQL::functions::tree::new(
+		'db_h' => "main",
+		'db_name' => $App::900::db_name,
+		'tb_name' => "a900_banner_cat",
+		'columns' => {
+			'name' => "'Default'",
+			'status' => "'L'"
+		},
+		'-journalize' => 1
+	);
+}
 
 1;
