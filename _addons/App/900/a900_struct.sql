@@ -18,12 +18,17 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner` (
   `rules_validation` text character set utf8 collate utf8_unicode_ci NOT NULL, -- valid=1 to valid to display
   `rules_apply` text character set utf8 collate utf8_unicode_ci NOT NULL, -- script variables for banner - target.url, etc...
   `rules_weight` int(10) unsigned default '1',
-  `stats_views` int(10) unsigned default NULL, -- applied impressions
+  `stats_views` int(10) unsigned NOT NULL, -- impressions
+  `stats_clicks` int(10) unsigned NOT NULL, -- applied impressions
   `rules_views_max` int(10) unsigned default NULL,
   `rules_views_session_max` int(10) unsigned default NULL,
+  `rules_views_browser_session_max` int(10) unsigned default NULL,
   `rules_clicks_max` int(10) unsigned default NULL,
+  `rules_clicks_browser_max` int(10) unsigned default NULL,
   `datetime_publish_start` datetime NOT NULL,
   `datetime_publish_stop` datetime default NULL,
+  `time_publish_start` time default NULL,
+  `time_publish_stop` time default NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `utm_source` varchar(128) character set ascii default NULL,
   `utm_medium` varchar(128) character set ascii default NULL,
@@ -43,20 +48,25 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
-  `ID_zonetarget` bigint(20) unsigned NOT NULL, -- rel banner_zonetarget.ID_entity
+  `ID_zonetarget` bigint(20) unsigned NOT NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `target_url` varchar(128) character set ascii default NULL,
   `target_addon` varchar(64) character set ascii default NULL,
-  `rules_validation` text character set utf8 collate utf8_unicode_ci NOT NULL, -- valid=1 to valid to display
-  `rules_apply` text character set utf8 collate utf8_unicode_ci NOT NULL, -- script variables for banner - target.url, etc...
+  `rules_validation` text character set utf8 collate utf8_unicode_ci NOT NULL,
+  `rules_apply` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `rules_weight` int(10) unsigned default '1',
-  `stats_views` int(10) unsigned default NULL, -- applied impressions
+  `stats_views` int(10) unsigned NOT NULL,
+  `stats_clicks` int(10) unsigned NOT NULL,
   `rules_views_max` int(10) unsigned default NULL,
   `rules_views_session_max` int(10) unsigned default NULL,
+  `rules_views_browser_session_max` int(10) unsigned default NULL,
   `rules_clicks_max` int(10) unsigned default NULL,
+  `rules_clicks_browser_max` int(10) unsigned default NULL,
   `datetime_publish_start` datetime NOT NULL,
   `datetime_publish_stop` datetime default NULL,
+  `time_publish_start` time default NULL,
+  `time_publish_stop` time default NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `utm_source` varchar(128) character set ascii default NULL,
   `utm_medium` varchar(128) character set ascii default NULL,
@@ -73,7 +83,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_lng` ( -- language versions of bann
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- rel _banner.ID_entity
   `title` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `def_type` varchar(8) character set ascii collate ascii_bin default NULL, -- popup, html, dynamic, ...
+  `def_type` varchar(32) character set ascii collate ascii_bin default NULL, -- popup, html, dynamic, ...
   `def_img_src` varchar(250) character set ascii collate ascii_bin default NULL,
   `def_script` text character set utf8 collate utf8_unicode_ci default NULL,
   `def_target` varchar(16) character set ascii collate ascii_bin default '_blank',
@@ -98,7 +108,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_lng_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL, -- rel _banner.ID_entity
   `title` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
-  `def_type` varchar(8) character set ascii collate ascii_bin default NULL, -- popup, html, dynamic, ...
+  `def_type` varchar(32) character set ascii collate ascii_bin default NULL, -- popup, html, dynamic, ...
   `def_img_src` varchar(250) character set ascii collate ascii_bin default NULL,
   `def_script` text character set utf8 collate utf8_unicode_ci default NULL,
   `def_target` varchar(16) character set ascii collate ascii_bin default '_blank',
@@ -120,6 +130,37 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_view` (
   `datetime_event` datetime NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_session` varchar(32) character set utf8 collate utf8_bin default NULL, -- rel a301_user_online.ID_session
+  `ID_browser` varchar(8) character set utf8 collate utf8_bin default NULL,
+  `ID_browser_session` varchar(32) character set utf8 collate utf8_bin default NULL,
+  `ID_banner` bigint(20) NOT NULL, -- rel to banner.ID_entity
+  PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_banner`),
+  KEY `SEL_0` (`ID_banner`,`datetime_event`),
+  KEY `SEL_1` (`ID_user`,`ID_banner`),
+  KEY `SEL_2` (`ID_session`,`ID_banner`),
+  KEY `SEL_3` (`ID_browser`,`ID_banner`),
+  KEY `SEL_4` (`ID_browser_session`,`ID_banner`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8; -- must be myisam because inserting with insert delayed
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_banner_view_arch` (
+  `datetime_event` datetime NOT NULL,
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_session` varchar(32) character set utf8 collate utf8_bin default NULL,
+  `ID_browser` varchar(8) character set utf8 collate utf8_bin default NULL,
+  `ID_browser_session` varchar(32) character set utf8 collate utf8_bin default NULL,
+  `ID_banner` bigint(20) NOT NULL,
+  PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_banner`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8; -- too big table
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_banner_click` (
+  `datetime_event` datetime NOT NULL,
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_session` varchar(32) character set utf8 collate utf8_bin default NULL, -- rel a301_user_online.ID_session
+  `ID_browser` varchar(8) character set utf8 collate utf8_bin default NULL,
+  `ID_browser_session` varchar(32) character set utf8 collate utf8_bin default NULL,
   `ID_banner` bigint(20) NOT NULL, -- rel to banner.ID_entity
   PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_banner`),
   KEY `SEL_0` (`ID_banner`,`datetime_event`)
