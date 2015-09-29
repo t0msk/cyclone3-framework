@@ -409,6 +409,23 @@ sub execute
 			
 		}
 		
+		if ($banner{'def_body'})
+		{
+			use App::020::mimetypes::html;
+			my $parser=new App::020::mimetypes::html(
+				'tpl_ext' => $TPL # extend
+			);
+			$parser->parse($banner{'def_body'});
+			$parser->eof();
+			push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+			$banner{'def_body_parser'}={
+				'output' => $parser->{'output'},
+				'addon' => $parser->{'addon'},
+				'entity' => $parser->{'entity'},
+				'thumbnail' => $parser->{'thumbnail'},
+			};
+		}
+		
 		if ($env{'click'})
 		{
 			TOM::Database::SQL::execute(qq{
