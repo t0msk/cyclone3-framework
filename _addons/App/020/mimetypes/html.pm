@@ -495,8 +495,8 @@ sub start
 				
 				$self->{'level.ignore'}=$self->{'level'};
 				
-				if (!$self->{'config'}->{'inline'})
-				{
+#				if (!$self->{'config'}->{'inline'})
+#				{
 					
 					my $p=new App::020::mimetypes::html(
 						'tpl_ext' => $self->{'tpl_ext'},
@@ -516,15 +516,7 @@ sub start
 						'thumbnail' => $p->{'thumbnail'},
 					};
 					
-#					$out_full=
-#						$self->{'entity'}{'div.a420_static'}
-#						|| $out_full;
-#					
-#					$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
-#					
-#					$out_full_plus=$p->{'out'};
-					
-				}
+#				}
 				
 			}
 			
@@ -744,6 +736,89 @@ sub start
 			main::_log("found ID=$db_entity{'ID'} ID_entity=$db_entity{'ID_entity'}");
 			
 		}
+		elsif ($entity eq "a900_banner")
+		{
+			# get data
+			require App::900::_init;
+			
+			my $sql_where;
+			my @sql_bind;
+			
+			if ($vars{'ID_entity'})
+			{
+				$sql_where.=" AND banner.ID_entity=?";
+				push @sql_bind, $vars{'ID_entity'};
+			}
+			elsif ($vars{'ID'})
+			{
+				$sql_where.=" AND banner.ID=?";
+				push @sql_bind, $vars{'ID'};
+			}
+			
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+				
+					`banner`.*,
+					`banner_lng`.*,
+					`banner`.ID,
+					`banner`.ID_entity,
+					`banner_lng`.ID AS lng_ID,
+					`banner_lng`.ID_entity AS lng_ID_entity,
+					
+					`banner_zonetarget`.name AS zonetarget_name,
+					
+					`banner_cat`.`ID` AS `cat_ID`,
+					`banner_cat`.`ID_entity` AS `cat_ID_entity`,
+					`banner_cat`.`name` AS `cat_name`
+					
+				FROM `$App::900::db_name`.`a900_banner` AS `banner`
+				
+				INNER JOIN $App::900::db_name.a900_banner_lng AS banner_lng ON
+				(
+					banner_lng.ID_entity = banner.ID_entity AND
+					banner_lng.lng = ?
+				)
+				LEFT JOIN `$App::900::db_name`.a900_banner_zonetarget AS banner_zonetarget ON
+				(
+					banner_zonetarget.ID_entity = banner.ID_zonetarget
+				)
+				LEFT JOIN $App::900::db_name.a900_banner_rel_cat AS banner_rel_cat ON
+				(
+					banner_rel_cat.ID_banner = banner.ID_entity
+				)
+				LEFT JOIN $App::900::db_name.a900_banner_cat AS banner_cat ON
+				(
+					banner_cat.ID_entity = banner_rel_cat.ID_category AND
+					banner_cat.status IN ('Y','N','L')
+				)
+				LEFT JOIN $App::900::db_name.a900_banner_rel_domain AS banner_rel_domain ON
+				(
+					banner_rel_domain.ID_banner = banner.ID_entity
+				)
+				LEFT JOIN $App::900::db_name.a900_banner_domain AS banner_domain ON
+				(
+					banner_domain.ID_entity = banner_rel_domain.ID_domain AND
+					banner_domain.status IN ('Y','N','L')
+				)
+				WHERE
+					`banner`.status IN ('Y','N','L','W')
+					$sql_where
+				LIMIT
+					1
+			},'quiet'=>1,'bind'=>[$self->{'lng'},@sql_bind],'-slave'=>1,
+				'-changetime'=>App::020::SQL::functions::_get_changetime(
+					{
+						'db_h'=>"main",
+						'db_name' => $App::900::db_name,
+						'tb_name' => "a900_banner",
+						'ID_entity' => do{$vars{'ID_entity'} if $vars{'ID_entity'}=~/^\d+$/}
+					})
+			);
+			
+			%db_entity=$sth0{'sth'}->fetchhash();
+			main::_log("found ID=$db_entity{'ID'} ID_entity=$db_entity{'ID_entity'}");
+			
+		}
 		
 		# selection which entry name in tpl will be used to process
 		my $tpl_src='tpl';
@@ -775,6 +850,9 @@ sub start
 		# if found entry name, process it by tt2
 		if ($tpl_entity) # tt2 process
 		{
+			my %variables;
+			%{$variables{'request'}->{'env'}}=%main::env;
+			$variables{'request'}->{'param'}=\%main::FORM;
 			if ($self->{$tpl_src}->process({
 				'entity' => {
 					'tag' => $tag,
@@ -782,6 +860,7 @@ sub start
 					'id' => \%vars,
 					'db' => \%db_entity
 				},
+				'lng' => $self->{'lng'},
 				'env' => $self->{'env'},
 				'count' => {
 					'tag' => $self->{'count'}{'tag'}{$tag},
@@ -802,6 +881,7 @@ sub start
 					'url_a510' => $tom::H_a510,
 					'setup' => \%tom::setup
 				},
+				%variables
 #				'entity'=>\%db0_line
 				},$tpl_entity))
 			{
