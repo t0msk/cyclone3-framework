@@ -71,7 +71,7 @@ sub prepare
 	
 	$self->{'env'}{'DOC_title'}="$tom::H";
 	
-	$self->{'OUT'}{'FOOTER'} = "\n";
+#	$self->{'OUT'}{'FOOTER'} = "\n";
 	
 	return 1;
 }
