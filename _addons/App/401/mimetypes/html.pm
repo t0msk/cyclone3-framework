@@ -813,6 +813,21 @@ sub start
 			require App::210::_init;
 			%vars=_parse_id($1);
 			
+			if ($vars{'ID_entity'})
+			{
+				my %sth0=TOM::Database::SQL::execute(qq{
+					SELECT
+						*
+					FROM
+						`$App::210::db_name`.a210_page
+					WHERE
+						ID_entity = ?
+						AND lng = '$tom::lng'
+				},'bind'=>[$vars{'ID_entity'}]);
+				my %db0_line=$sth0{'sth'}->fetchhash();
+				$vars{'ID'} = $db0_line{'ID'};
+			}
+			
 			if ($vars{'ID'})
 			{
 				main::_log("find a210_page ID='$vars{'ID'}'") if $debug;
