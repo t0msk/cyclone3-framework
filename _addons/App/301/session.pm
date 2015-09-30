@@ -794,6 +794,7 @@ sub archive
 		INSERT IGNORE INTO TOM.a301_user_session
 		(
 			ID_user,
+			ID_session,
 			IP,
 			datetime_session_begin,
 			datetime_session_end,
@@ -803,6 +804,7 @@ sub archive
 		)
 		SELECT
 			ID_user,
+			ID_session,
 			IP,
 			datetime_login,
 			datetime_request,

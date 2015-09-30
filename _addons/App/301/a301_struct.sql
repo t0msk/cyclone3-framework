@@ -37,6 +37,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_session` (
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
+  `ID_session` varchar(32) character set utf8 collate utf8_bin NOT NULL default '',
   `IP` varchar(15) NOT NULL default '',
   `datetime_session_begin` datetime NOT NULL,
   `datetime_session_end` datetime NOT NULL,
@@ -45,6 +46,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_session` (
   `saved_session` blob NOT NULL,
   PRIMARY KEY  (`ID_user`,`datetime_session_begin`),
   KEY `datetime_session_begin` (`datetime_session_begin`),
+  KEY `ID_session` (`ID_session`),
   KEY `IP` (`IP`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
