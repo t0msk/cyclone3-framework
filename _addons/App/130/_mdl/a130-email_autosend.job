@@ -71,7 +71,7 @@ sub execute
 		
 		if (length($env0{'body'}) < 10)
 		{
-			main::_log("can't send empty email body! ID='$env0{'ID'}' from='$env0{'from_email'}' datetime='$env0{'datetime_create'}'",3,"email",1);
+			main::_log("can't send empty email body! ID='$env0{'ID'}' from='$env0{'from_email'}' datetime='$env0{'datetime_create'}'");
 			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-1 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
 			next;
 		}
@@ -84,7 +84,7 @@ sub execute
 		
 		if ($env0{to_email}=~s|,|;|g)
 		{
-			main::_log("DEPRECATED delimiter , not ; used in table a130_send, email ID $env0{ID}",1,"pub.warn",1);
+			main::_log("DEPRECATED delimiter , not ; used in table a130_send, email ID $env0{ID}");
 		};
 		
 		$env0{to_email}=~s| ||g;
@@ -94,13 +94,17 @@ sub execute
 		$env0{to_email}=~s|^;||g;
 		$env0{to_email}=~s|;$||g;
 		
+#		if ($tom::devel && not($env0{'to_email'}=~/\@comsultia\.com/))
+#		{
+#			$env0{'to_email'}='trash@comsultia.com';
+#		}
+		
 		$env0{'body'}=~/Subject: (.*?)\n/;
 		my $subject=$1;
 		
 		$subject=Encode::encode_utf8($subject);
 		
-		main::_log("[$emails] sending email $env0{ID} ($env0{priority}) from $env0{from_email} to $env0{to_email}");
-		main::_log("[$emails] sending email ID='$env0{ID}' priority='$env0{priority}' from='$env0{from_email}' to='$env0{to_email}' subject='$subject'",3,"email",1);
+		main::_log("[$emails] sending email ID='$env0{ID}' priority='$env0{priority}' from='$env0{from_email}' to='$env0{to_email}' subject='$subject'");
 		
 		if (!$TOM::smtp_host)
 		{
@@ -201,7 +205,14 @@ sub execute
 		
 		TOM::Database::SQL::execute("UPDATE TOM.a130_send SET active='Y' WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
 		
-		main::_log("sended email ID='$env0{ID}'",3,"email",1);
+		main::_log("[$env0{'ID'}] sent email",{
+			'facility' => 'email',
+			'severity' => 3,
+			'data' => {
+				'id_i' => $env0{'ID'},
+				'email_s' => [@rcpt],
+			}
+		});
 		
 	}
 	
