@@ -350,7 +350,8 @@ sub article_add
 
 		# alias_url		
 		$columns{'alias_url'}="'".TOM::Security::form::sql_escape($env{'article_attrs.alias_url'})."'"
-			if ($env{'article_attrs.alias_url'} && ($env{'article_attrs.alias_url'} ne $article_attrs{'alias_url'}));
+			if (exists $env{'article_attrs.alias_url'} && ($env{'article_attrs.alias_url'} ne $article_attrs{'alias_url'}));
+		$columns{'alias_url'}="NULL" if $columns{'alias_url'} eq "''";
 
 		# priority_A
 		$columns{'priority_A'}="'".$env{'article_attrs.priority_A'}."'"
