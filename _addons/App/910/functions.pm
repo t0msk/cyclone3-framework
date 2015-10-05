@@ -1902,11 +1902,34 @@ sub _product_index
 			%{$product{'locale'}{$db0_line{'lng'}}}=%db0_line;
 		}
 		
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				a910_product_price.*,
+				a910_price_level.name_code
+			FROM
+				$App::910::db_name.a910_product_price
+			INNER JOIN $App::910::db_name.a910_price_level ON
+			(
+				a910_product_price.ID_price = a910_price_level.ID_entity
+			)
+			WHERE
+				a910_product_price.ID_entity = ?
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			$product{'prices'}{$db1_line{'name_code'}}{'price'} = $db1_line{'price'}
+				if $db1_line{'price'};
+			$product{'prices'}{$db1_line{'name_code'}}{'price_full'} = $db1_line{'price_full'}
+				if $db1_line{'price_full'};
+		}
+		
 #		print Dumper(\%product) if $tom::test;
 		
 		delete $product{'datetime_publish_start'}
 			if $product{'datetime_publish_start'}=~/^0/;
 		
+		main::_log("ID=$product{'ID'}");
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::910::db_name,
 			'type' => 'a910_product',
