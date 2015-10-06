@@ -38,6 +38,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
   `rating` int(10) unsigned NOT NULL, -- helps indexing
+  `votes` int(10) unsigned DEFAULT 0, -- helps indexing
   `published_mark` varchar(16) character set ascii collate ascii_bin NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -46,6 +47,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   KEY `ID_author` (`ID_author`),
   KEY `visits` (`visits`),
   KEY `rating` (`rating`),
+  KEY `votes` (`votes`),
   KEY `status` (`status`),
   KEY `published_mark` (`published_mark`),
   KEY `datetime_create` (`datetime_create`)
@@ -65,6 +67,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_j` (
   `rating_score` int(10) unsigned NOT NULL,
   `rating_votes` int(10) unsigned NOT NULL,
   `rating` int(10) unsigned NOT NULL,
+  `votes` int(10) unsigned DEFAULT 0,
   `published_mark` varchar(16) character set ascii collate ascii_bin NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -87,10 +90,12 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_metaindex` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_article_rating_vote` (
-  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `ID_user` varchar(8) character set ascii collate ascii_bin default NULL,
+  `IP` varchar(15) default NULL,
   `ID_article` mediumint(8) unsigned NOT NULL, -- ref _article.ID_entity
   `datetime_event` datetime NOT NULL,
   `score` int(10) unsigned NOT NULL
+  -- UNIQUE KEY `UNI_0` (`ID_user`,`IP`,`ID_article`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -361,6 +366,17 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_rel_published` (
 CREATE TABLE `/*db_name*/`.`/*app*/_article_published` (
   `ID` mediumint(8) unsigned NOT NULL auto_increment,
   `name` varchar(256) character set utf8 collate utf8_unicode_ci NOT NULL,
+  PRIMARY KEY  (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_article_vote` (
+  `ID` mediumint(8) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned NOT NULL, -- rel article.ID_entity
+  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
+  `datetime_event` datetime NOT NULL,
+  `IP` varchar(15) default NULL,
   PRIMARY KEY  (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
