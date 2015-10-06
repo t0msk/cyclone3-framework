@@ -15,6 +15,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_qa` (
   `datetime_create` datetime NOT NULL,
   `datetime_publish_start` datetime NOT NULL,
   `datetime_publish_stop` datetime default NULL,
+  `respondent` varchar(8) character set ascii collate ascii_bin default NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
@@ -35,6 +36,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_qa_j` (
   `datetime_create` datetime NOT NULL,
   `datetime_publish_start` datetime NOT NULL,
   `datetime_publish_stop` datetime default NULL,
+  `respondent` varchar(8) character set ascii collate ascii_bin default NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
