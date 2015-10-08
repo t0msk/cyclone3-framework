@@ -15,6 +15,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `target_url` varchar(128) character set ascii default NULL,
   `target_addon` varchar(64) character set ascii default NULL,
+  `target_nofollow` char(1) character set ascii NOT NULL default 'N',
   `rules_validation` text character set utf8 collate utf8_unicode_ci NOT NULL, -- valid=1 to valid to display
   `rules_apply` text character set utf8 collate utf8_unicode_ci NOT NULL, -- script variables for banner - target.url, etc...
   `rules_weight` int(10) unsigned default '1',
@@ -53,6 +54,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_j` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `target_url` varchar(128) character set ascii default NULL,
   `target_addon` varchar(64) character set ascii default NULL,
+  `target_nofollow` char(1) character set ascii NOT NULL default 'N',
   `rules_validation` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `rules_apply` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `rules_weight` int(10) unsigned default '1',

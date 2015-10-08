@@ -168,7 +168,7 @@ sub banner_add
 		$env{'banner.status'}=$env{'banner.status'} || 'N';
 	}
 	
-	foreach my $field ('ID_zonetarget', 'status', 'rules_weight')
+	foreach my $field ('ID_zonetarget', 'status', 'rules_weight', 'target_nofollow')
 	{
 		$data{$field}=$env{'banner.'.$field}
 			if ($env{'banner.'.$field} && ($env{'banner.'.$field} ne $banner{$field}));
