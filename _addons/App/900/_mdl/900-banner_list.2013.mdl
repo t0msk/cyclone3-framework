@@ -79,6 +79,7 @@ sub execute
 	{
 		$sql_where.=" AND banner_zonetarget.name LIKE ?";
 		push @sql_bind, $env{'banner_zonetarget.name'};
+		main::_log("search banner '$env{'banner_zonetarget.name'}'",3,"debug") if $debug;
 	}
 	
 	if ($env{'banner_domain.name'})
