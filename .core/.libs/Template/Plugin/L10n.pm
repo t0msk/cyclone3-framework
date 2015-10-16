@@ -40,3 +40,12 @@ sub msg
 	
 	return $self->{'L10n'}->{'string'}->{$msg} || "{".$msg."}";
 }
+
+sub is
+{
+	my $self=shift;
+	my $msg=shift;
+	
+	return $self->{'L10n'}->{'string'}->{$msg} if $self->{'L10n'}->{'string'}->{$msg};
+	return undef;
+}
