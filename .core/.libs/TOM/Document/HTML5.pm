@@ -392,7 +392,7 @@ sub prepare_last
 		$self->{'OUT'}{'HEADER'} .= " />\n";
 	}
 
-	# DOC_meta
+	# DOC_inline
 	foreach my $inline(@{$self->{'env'}{'DOC_inline'}})
 	{
 		$self->{'OUT'}{'HEADER'} .= " " . $inline . "\n";
