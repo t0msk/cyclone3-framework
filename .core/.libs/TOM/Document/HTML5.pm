@@ -144,6 +144,13 @@ sub add_DOC_meta
 	return 1;
 }
 
+sub add_DOC_inline
+{
+	my $self=shift;
+	push @{$self->{'env'}{'DOC_inline'}},shift;
+	return 1;
+}
+
 sub change_DOC_robots
 {
 	my $self=shift;
@@ -383,6 +390,12 @@ sub prepare_last
 		$self->{'OUT'}{'HEADER'} .= " <meta";
 		foreach (keys %{$hash}){$$hash{$_}=~s|"|'|g;$self->{'OUT'}{'HEADER'} .= " ".$_ . "=\"".$$hash{$_}."\"";}
 		$self->{'OUT'}{'HEADER'} .= " />\n";
+	}
+
+	# DOC_meta
+	foreach my $inline(@{$self->{'env'}{'DOC_inline'}})
+	{
+		$self->{'OUT'}{'HEADER'} .= " " . $inline . "\n";
 	}
 	
 	$self->{'OUT'}{'HEADER'}.=" <meta name=\"pragma\" content=\"$main::ENV{'Pragma'}\" />\n" if $main::ENV{'Pragma'};

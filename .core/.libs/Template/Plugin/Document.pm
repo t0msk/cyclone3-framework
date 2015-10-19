@@ -92,4 +92,13 @@ sub add_script {
 	return
 }
 
+sub add_inline {
+	my $self = shift;
+	my $inline = shift;
+	$main::H->add_DOC_inline(
+		$inline
+	);
+	return
+}
+
 1;
