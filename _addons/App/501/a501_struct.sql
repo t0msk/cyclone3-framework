@@ -179,103 +179,6 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_visit` (
   PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_image`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-
--- --------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*addon*/_image_emo` ( -- experimental EMO characteristics
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL, -- rel _image.ID_entity
-  `datetime_create` datetime NOT NULL,
-  `emo_sad` int(10) unsigned NOT NULL default '0',
-  `emo_angry` int(10) unsigned NOT NULL default '0',
-  `emo_confused` int(10) unsigned NOT NULL default '0',
-  `emo_love` int(10) unsigned NOT NULL default '0',
-  `emo_omg` int(10) unsigned NOT NULL default '0',
-  `emo_smile` int(10) unsigned NOT NULL default '0',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`),
-  UNIQUE KEY `UNI_0` (`ID_entity`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*addon*/_image_emo_j` (
-  `ID` mediumint(8) unsigned NOT NULL auto_increment,
-  `ID_entity` mediumint(8) unsigned default NULL,
-  `datetime_create` datetime NOT NULL,
-  `emo_angry` int(10) unsigned NOT NULL default '0',
-  `emo_confused` int(10) unsigned NOT NULL default '0',
-  `emo_love` int(10) unsigned NOT NULL default '0',
-  `emo_omg` int(10) unsigned NOT NULL default '0',
-  `emo_sad` int(10) unsigned NOT NULL default '0',
-  `emo_smile` int(10) unsigned NOT NULL default '0',
-  `status` char(1) character set ascii NOT NULL default 'Y',
-  PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------
-
-CREATE TABLE `/*db_name*/`.`/*addon*/_image_emo_vote` (
-  `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `ID_image` mediumint(8) unsigned NOT NULL, -- rel _image.ID_entity
-  `datetime_event` datetime NOT NULL,
-  `emo` varchar(8) character set ascii NOT NULL default ''
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------
-
-CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_emo_view` AS (
-	SELECT
-		emo.ID,
-      emo.ID_entity,
-		(emo.emo_sad + emo.emo_angry + emo.emo_confused + emo.emo_love + emo.emo_omg + emo.emo_smile) AS emo_all,
-      (emo.emo_sad/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
-			AS emo_sad_perc,
-		(emo.emo_angry/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
-			AS emo_angry_perc,
-		(emo.emo_confused/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
-			AS emo_confused_perc,
-		(emo.emo_love/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
-			AS emo_love_perc,
-		(emo.emo_omg/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
-			AS emo_omg_perc,
-		(emo.emo_smile/(GREATEST(emo.emo_sad,emo.emo_angry,emo.emo_confused,emo.emo_love,emo.emo_omg,emo.emo_smile)/100))
-			AS emo_smile_perc
-	FROM
-		`/*db_name*/`.`/*addon*/_image_emo` AS emo
-	WHERE
-		(emo.emo_sad + emo.emo_angry + emo.emo_confused + emo.emo_love + emo.emo_omg + emo.emo_smile) > 5
-)
-
--- --------------------------------------------------
-
-CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_image_emo_viewEQ` AS (
-	SELECT
-		emo1.ID AS emo1_ID,
-		emo2.ID AS emo2_ID,
-      ABS(emo1.emo_sad_perc - emo2.emo_sad_perc) AS emo_sad_diff,
-		ABS(emo1.emo_angry_perc - emo2.emo_angry_perc) AS emo_angry_diff,
-		ABS(emo1.emo_confused_perc - emo2.emo_confused_perc) AS emo_confused_diff,
-		ABS(emo1.emo_love_perc - emo2.emo_love_perc) AS emo_love_diff,
-		ABS(emo1.emo_omg_perc - emo2.emo_omg_perc) AS emo_omg_diff,
-		ABS(emo1.emo_smile_perc - emo2.emo_smile_perc) AS emo_smile_diff,
-		(100-((
-			ABS(emo1.emo_sad_perc - emo2.emo_sad_perc) +
-			ABS(emo1.emo_angry_perc - emo2.emo_angry_perc) +
-			ABS(emo1.emo_confused_perc - emo2.emo_confused_perc) +
-			ABS(emo1.emo_love_perc - emo2.emo_love_perc) +
-			ABS(emo1.emo_omg_perc - emo2.emo_omg_perc) +
-			ABS(emo1.emo_smile_perc - emo2.emo_smile_perc)
-		)/6)) AS EQ
-	FROM
-		`/*db_name*/`.`/*addon*/_image_emo_view` AS emo1,
-		`/*db_name*/`.`/*addon*/_image_emo_view` AS emo2
-	WHERE
-		emo1.ID <> emo2.ID AND
-      emo1.emo_all > 100 AND
-      emo2.emo_all > 100
-)
-
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_image_cat` (
@@ -290,6 +193,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_cat` (
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL,
+  `datetime_produce` datetime default NULL, -- when were images in this folder produced/taken
   `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(5) character set ascii NOT NULL default '',
@@ -316,6 +220,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_image_cat_j` (
   `posix_perms` char(9) character set ascii NOT NULL default 'rwxrw-r--',
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL,
+  `datetime_produce` datetime default NULL, -- when were images in this folder produced/taken
   `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(5) character set ascii NOT NULL default '',
