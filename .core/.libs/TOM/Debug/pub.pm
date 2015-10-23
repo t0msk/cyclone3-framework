@@ -80,6 +80,9 @@ sub request
 		'facility' => 'pub.track',
 		'severity' => $severity,
 		'data' => {
+			
+			'query_data_t' => substr(join(' ',%main::FORM),1,128),
+			
 			'response_status_i' => $env{'code'},
 			'user_s' => $main::USRM{'ID_user'},
 			'user_logged_s' => $main::USRM{'logged'},
