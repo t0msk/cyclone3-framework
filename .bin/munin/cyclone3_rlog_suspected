@@ -19,7 +19,7 @@ use Ext::Redis::_init;
 use Data::Dumper;
 
 my $cmd = shift || '';
-if ($cmd eq 'config') {print qq{graph_title Cyclone3 500 requests ($TOM::domain)
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 suspected requests ($TOM::domain)
 graph_args --base 1000
 graph_category cyclone3_err
 graph_vlabel requests / minute
@@ -49,12 +49,16 @@ my $indice='logstash-'.$td->strftime('%Y-%m-%d');
 my @filter;
 my %query_string;
 
-push @filter,{"range" => {'@timestamp' => {'gte' => 'now-5m'}}};
+push @filter,{"range" => {'@timestamp' => {'gte' => 'now-50m'}}};
 
 push @filter,{"terms" => {"hd" => [$TOM::domain]}};
 push @filter,{"terms" => {"t" => ['cyclone3.pub.track']}};
+push @filter,{"terms" => {"data.query_data_t" => [
+	'script',
+	'select'
+]}};
 
-push @filter,{"range" => {'data.response_status_i' => {'gte' => 500}}};
+#push @filter,{"range" => {'data.response_status_i' => {'gte' => 500}}};
 #push @filter,{"terms" => {"data.response_status_i" => [500]}};
 
 my $search_config={

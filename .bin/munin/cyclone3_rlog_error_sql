@@ -21,7 +21,7 @@ use Data::Dumper;
 my $cmd = shift || '';
 if ($cmd eq 'config') {print qq{graph_title Cyclone3 SQL errors ($TOM::domain)
 graph_args --base 1000
-graph_category cyclone3
+graph_category cyclone3_err
 graph_vlabel errors / minute
 graph_order req
 graph_scale no
