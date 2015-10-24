@@ -49,13 +49,27 @@ my $indice='logstash-'.$td->strftime('%Y-%m-%d');
 my @filter;
 my %query_string;
 
-push @filter,{"range" => {'@timestamp' => {'gte' => 'now-50m'}}};
+my $minutes=5;
+
+push @filter,{"range" => {'@timestamp' => {'gte' => 'now-'.$minutes.'m'}}};
 
 push @filter,{"terms" => {"hd" => [$TOM::domain]}};
 push @filter,{"terms" => {"t" => ['cyclone3.pub.track']}};
+#push @filter,{"terms" => {"f" => [1]}};
 push @filter,{"terms" => {"data.query_data_t" => [
 	'script',
-	'select'
+	'javascript',
+	'string',
+	'alert',
+	'exec',
+	'execute',
+	'select',
+	'declare',
+	'table',
+	'drop',
+	'null',
+	'varchar',
+	'procedure'
 ]}};
 
 #push @filter,{"range" => {'data.response_status_i' => {'gte' => 500}}};
@@ -83,5 +97,5 @@ my $search_config={
 
 my $results = $Elastic->search($search_config);
 
-print "req.value ".(int($results->{'hits'}->{'total'}/5*10)/10)."\n";
+print "req.value ".(int($results->{'hits'}->{'total'}/$minutes*10)/10)."\n";
 
