@@ -52,6 +52,12 @@ sub execute
 		$sql_where.=" AND static.name LIKE '".TOM::Security::form::sql_escape($env{'static.name'})."'";
 	}
 	
+	# static.name
+	if ($env{'static.name_url'})
+	{
+		$sql_where.=" AND static.name_url LIKE '".TOM::Security::form::sql_escape($env{'static.name_url'})."'";
+	}
+	
 	my $sql_order="static.datetime_start DESC";
 		$sql_order=$env{'sql_order'} if $env{'sql_order'};
 		$sql_order=$env{'sql_order_by'} if $env{'sql_order_by'};
@@ -83,7 +89,7 @@ sub execute
 		WHERE
 					(static.datetime_start IS NULL OR static.datetime_start <= NOW())
 			AND	(static.datetime_stop IS NULL OR static.datetime_stop >= NOW())
-			AND   status.lng = '$env{'lng'}'
+			AND   static.lng = '$env{'lng'}'
 			$sql_where
 		ORDER BY
 			$sql_order
