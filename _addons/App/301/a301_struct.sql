@@ -22,6 +22,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
   `saved_session` blob NOT NULL,
   `perm_roles_override` blob,
   `ref_facebook` varchar(20) character set ascii default NULL,
+  `ref_deviceid` varchar(64) character set ascii default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID_user`),
   UNIQUE KEY `UNI_0` (`hostname`,`login`),
@@ -29,7 +30,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
   KEY `login` (`login`),
   KEY `hostname` (`hostname`),
   KEY `email` (`email`),
-  KEY `ref_facebook` (`ref_facebook`)
+  KEY `ref_facebook` (`ref_facebook`),
+  KEY `ref_deviceid` (`ref_deviceid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -70,6 +72,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_inactive` (
   `saved_session` blob NOT NULL,
   `perm_roles_override` blob,
   `ref_facebook` varchar(20) character set ascii default NULL,
+  `ref_deviceid` varchar(64) character set ascii default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID_user`),
   KEY `SEL_0` (`datetime_last_login`,`requests_all`)

@@ -60,6 +60,8 @@ sub execute
 				user.login IS NULL AND
 				user_profile.ID_entity IS NULL AND
 				user.email IS NULL AND
+				user.ref_deviceid IS NULL AND
+				user.ref_facebook IS NULL AND
 				user.datetime_last_login < DATE_SUB(CURDATE(),INTERVAL $env{'max_days'} DAY)
 			LIMIT 100
 		};
