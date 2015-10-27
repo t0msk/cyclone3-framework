@@ -767,7 +767,7 @@ sub get_path
 		{
 			$cache_key.=":".$_."=".$env{'columns'}{$_};
 		}
-		$cache_key.='v2';
+#		$cache_key.='v2';
 		$cache_key=TOM::Digest::hash($cache_key);
 	
 	
@@ -779,10 +779,13 @@ sub get_path
 		);
 		if ($cache->{'time'} > $cache{'-cache_changetime'})
 		{
+#			main::_log("return cache");
 			$t->close() if $debug;
 			return @{$cache->{'data'}};
 		}
 	}
+	
+#	main::_log("get data");
 	
 	my %data=App::020::SQL::functions::get_ID(
 		'ID'	=> $ID,
@@ -818,6 +821,7 @@ sub get_path
 	my $sql_columns;
 		$sql_columns.=",metadata" if $env{'columns'}{'metadata'};
 		$sql_columns.=",t_keys" if $env{'columns'}{'t_keys'};
+		$sql_columns.=",`$env{'tb_name'}`.*" if $env{'columns'}{'*'};
 	while ($parent)
 	{
 		main::_log("find parent '$parent'") if $debug;
@@ -839,7 +843,9 @@ sub get_path
 		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'bind'=>[
 			$parent,
 			$data{'lng'}
-		],'quiet'=>1,'-slave' => $env{'-slave'},%cache);
+		],'quiet'=>1,
+			'-slave' => $env{'-slave'},%cache
+		);
 		if ($sth0{'rows'})
 		{
 			my %data2=$sth0{'sth'}->fetchhash();use Data::Dumper;
