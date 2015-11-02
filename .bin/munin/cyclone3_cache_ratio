@@ -55,9 +55,11 @@ for (1..10)
 		.' '
 		.sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute());
 	
-	my %data=@{$Redis->hgetall('C3|counters|sql_cache|'.$date_str)};
-	$value_crt{'sql'}+=$data{'crt'};
-	$value_hit{'sql'}+=$data{'hit'};
+	my %data=@{$Redis->hgetall('C3|counters|sql|'.$date_str)};
+	foreach (grep {$_=~/\|cache_fill$/} keys %data){$value_crt{'sql'}+=$data{$_};}
+	foreach (grep {$_=~/\|cache_hit$/} keys %data){$value_hit{'sql'}+=$data{$_};}
+#	$value_crt{'sql'}+=$data{'crt'};
+#	$value_hit{'sql'}+=$data{'hit'};
 	
 	my %data=@{$Redis->hgetall('C3|counters|mdl_cache|'.$date_str)};
 	$value_crt{'mdl'}+=$data{'crt'};

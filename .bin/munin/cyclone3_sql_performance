@@ -19,19 +19,13 @@ use Ext::Redis::_init;
 use Data::Dumper;
 
 my $cmd = shift || '';
-if ($cmd eq 'config') {print qq{graph_title Cyclone3 cache usage [SQL] (all hosts)
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 SQL select performance (all hosts)
 graph_category cyclone3
-graph_vlabel calls
-graph_order crt hit
-graph_scale no
-crt.label cache create / second
-crt.draw AREA
-crt.min 0
-hit.label cache hit / second
-hit.draw STACK
-hit.min 0
+graph_vlabel msec
+graph_scale yes
+graph_args --base 1000 -l 0
 };
-	exit 0;
+#	exit 0;
 }
 
 my $debug;
@@ -40,10 +34,9 @@ my $debug;
 my $datetime_now=DateTime->now('time_zone' => 'local');
 
 my $i;
-my $value_crt;
-my $value_hit;
+my %db_h;
 
-for (1..5)
+for (1..2)
 {
 	$datetime_now->add('minutes' => -1);
 	
@@ -54,14 +47,35 @@ for (1..5)
 	
 	my %data=@{$Redis->hgetall('C3|counters|sql|'.$date_str)};
 	print Dumper(\%data) if $cmd eq "debug";
-	last if $cmd eq "debug";
-	foreach (grep {$_=~/\|cache_fill$/} keys %data){$value_crt+=$data{$_};}
-	foreach (grep {$_=~/\|cache_hit$/} keys %data){$value_hit+=$data{$_};}
-#	$value_hit+=$data{'hit'};
+	
+	foreach (grep {$_=~/\|r_exec$/} keys %data)
+	{
+		$_=~s/\|(.)_exec$//;
+		my $type=$1;
+		my $h=$_;
+			$h=~s|:|_|;
+		$db_h{$h}{'exec'}+=$data{$_.'|'.$type.'_exec'};
+		$db_h{$h}{'durr'}+=$data{$_.'|'.$type.'_durration'};
+	}
 }
 
-$i=1 unless $i;
+print Dumper(\%db_h) if $cmd eq "debug";
 
-print "crt.value " . int(($value_crt/10/60)*100)/100 . "\n";
-print "hit.value " . int(($value_hit/10/60)*100)/100 . "\n";
+if ($cmd eq 'config') {
+	print "graph_order ".join(" ",sort keys %db_h)."\n";
+	foreach my $db (sort keys %db_h)
+	{
+		print qq{$db.label $db
+$db.min 0
+$db.draw LINE
+};
+	}
+	exit 0;
+}
+
+foreach my $db (sort keys %db_h)
+{
+	print "$db.value ".int($db_h{$db}{'durr'}/$db_h{$db}{'exec'})."\n"
+		if $db_h{$db}{'exec'};
+}
 

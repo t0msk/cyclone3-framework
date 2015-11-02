@@ -1,0 +1,134 @@
+#!/usr/bin/env perl
+# ex:ts=4
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.bin/c3-init";
+}
+
+use strict;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use DateTime;
+use Ext::Redis::_init;
+use Data::Dumper;
+
+my $cmd = shift || '';
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 SQL queries (read), by percentage (all hosts)
+graph_category cyclone3
+graph_vlabel %
+graph_scale no
+graph_args --base 1000 -l 0 -u 100 -r
+};
+#	exit 0;
+}
+
+my $debug;
+	$debug=1 if $cmd eq "debug";
+
+my $datetime_now=DateTime->now('time_zone' => 'local');
+
+my $i;
+my %db_h;
+my %db_h_name;
+#my $value_crt;
+#my $value_hit;
+
+my $total;
+
+for (1..2)
+{
+	$datetime_now->add('minutes' => -1);
+	
+	my $date_str=
+		sprintf('%04d',$datetime_now->year()).'-'.sprintf('%02d',$datetime_now->month()).'-'.sprintf('%02d',$datetime_now->day())
+		.' '
+		.sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute());
+	
+	my %data=@{$Redis->hgetall('C3|counters|sql|'.$date_str)};
+	print Dumper(\%data) if $cmd eq "debug";
+	
+	foreach (grep {$_=~/\|r_exec$/} sort keys %data)
+	{
+		$_=~s/\|r_exec$//;
+		my $type='r';
+#		print ":".$type."\n";
+		my $h=$_;
+			$h=~s|:|_|;
+		$db_h_name{$h}=$_;
+		
+#		if ($_=~/:1$/)
+		if (not ($_=~/:/) && $data{$_.'|slave_miss'})
+		{
+			# okaaay slave
+			# make master slave miss
+#			my $db=$h;$db=~s|_1$|_0|;
+#			my $db_=$_;$db_=~s|:\d+$||;
+			
+			$db_h_name{$h.'_0'}=$_.' (slave pass)';
+			
+			$db_h{$h.'_0'}+=$data{$_.'|slave_miss'};
+			$db_h{$h}-=$data{$_.'|slave_miss'};
+		}
+		
+		$db_h{$h}+=$data{$_.'|'.$type.'_exec'};
+		$total+=$data{$_.'|'.$type.'_exec'};
+	}
+	
+#	last if $cmd eq "debug";
+#	foreach (grep {$_=~/\|cache_fill$/} keys %data){$value_crt+=$data{$_};}
+#	foreach (grep {$_=~/\|cache_hit$/} keys %data){$value_hit+=$data{$_};}
+#	$value_hit+=$data{'hit'};
+}
+
+print Dumper(\%db_h) if $cmd eq "debug";
+
+if ($cmd eq 'config') {
+	print "graph_order ".join(" ",sort keys %db_h)." total\n";
+	print qq{total.label total (analyzed queries)
+total.min 0
+total.draw LINE0
+};
+	foreach my $db (sort keys %db_h)
+	{
+#		if ($db_h_name{$db}=~/:1$/) # first slave
+#		{
+#			my $db_=$db;
+#				$db_=~s|_1$|_0|;
+#			print qq{$db_.label $db_h_name{$db_}
+#$db_.min 0
+#$db_.draw LINE1
+#$db_.cdef $db_,total,/,100,*
+#};
+#		}
+		
+#		if ($db=~/_0$/) # first slave
+#		{
+#			print qq{$db.label $db_h_name{$db}
+#$db.min 0
+#$db.draw AREASTACK
+#$db.cdef $db,total,/,100,*
+#};
+#			next;
+#		}
+		
+		print qq{$db.label $db_h_name{$db}
+$db.min 0
+$db.draw AREASTACK
+$db.cdef $db,total,/,100,*
+};
+	}
+	exit 0;
+}
+
+foreach my $db (sort keys %db_h)
+{
+	print "$db.value ".int($db_h{$db})."\n";
+}
+print "total.value " . int($total || 1) . "\n";
+
