@@ -81,7 +81,7 @@ sub request
 		'severity' => $severity,
 		'data' => {
 			
-			'query_data_t' => substr(join(' ',%main::FORM),1,128),
+			'query_data_t' => substr(join(' ',values %main::FORM),0,1024),
 			
 			'response_status_i' => $env{'code'},
 			'user_s' => $main::USRM{'ID_user'},
@@ -93,6 +93,9 @@ sub request
 			'REFERER_t' => $main::ENV{'HTTP_REFERER'},
 			'USER_AGENT_t' => $main::ENV{'HTTP_USER_AGENT'},
 			'UserAgent_t' => $main::UserAgent_name,
+			
+			'CacheControl_s' => $main::ENV{'Cache-Control'},
+			
 #			'UserAgent_type_s' => $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'},
 #			'UserAgent_type_group_s' => $reqtype,
 			
