@@ -85,7 +85,7 @@ while(1)
 		
 		my $print_out;
 		$print_out.=color 'reset bold cyan';
-		$print_out.="[DOMAIN(start)".(" " x ($l-13))."][ENGINE          ][STAT ][P ][  CPU][  RSS][START][TIMEm][  PID][IDLEs][  rqs][rq/m][rqcode  ][uri               ]\n";
+		$print_out.="[DOMAIN(start)".(" " x ($l-13))."][ENGINE              ][STAT ][P ][  CPU][  RSS][START][TIMEm][  PID][IDLEs][  rqs][rq/m][rqcode  ][uri               ]\n";
 		$print_out.=color 'reset cyan';
 		
 		my $processes;
@@ -107,8 +107,8 @@ while(1)
 				if (!$_){$print_out.="[".sprintf("%-".$l."s",$host)."]";}else {$print_out.=(" " x ($l+2));}
 				
 				# engine
-				$hosts{$host}[$_]{'engine'}=substr($hosts{$host}[$_]{'engine'},0,16);
-				$print_out.= "[".sprintf("%-16s",$hosts{$host}[$_]{'engine'})."]";
+				$hosts{$host}[$_]{'engine'}=substr($hosts{$host}[$_]{'engine'},0,20);
+				$print_out.= "[".sprintf("%-20s",$hosts{$host}[$_]{'engine'})."]";
 				
 				# STAT
 				$print_out.= "[";
@@ -221,7 +221,7 @@ while(1)
 		}
 		
 		$print_out.= color 'reset cyan';
-		$print_out.= "[TOTAL".(" " x ($l-5))."]                     [". sprintf('%2d',$processes)."][". sprintf('%5s',sprintf('%-2.2f',$cpu)) ."][" .sprintf('%4s',$rss). "M]\n";
+		$print_out.= "[TOTAL".(" " x ($l-5))."]                             [". sprintf('%2d',$processes)."][". sprintf('%5s',sprintf('%-2.2f',$cpu)) ."][" .sprintf('%4s',$rss). "M]\n";
 		$print_out.= color 'reset cyan';
 		
 		&Clear() unless $FORM{'s'};
