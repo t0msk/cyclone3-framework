@@ -1,0 +1,102 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use Ext::Redis::_init;
+use Data::Dumper;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	
+	return unless $Redis;
+	
+	# check ci su slaves
+	use DateTime;
+	my $datetime_now=DateTime->now('time_zone' => 'local');
+	
+	my %db_h;
+	my $range=200;
+	
+	for (1..5)
+	{
+		
+		my $date_str=
+			sprintf('%04d',$datetime_now->year()).'-'.sprintf('%02d',$datetime_now->month()).'-'.sprintf('%02d',$datetime_now->day())
+			.' '
+			.sprintf('%02d',$datetime_now->hour()).":".sprintf('%02d',$datetime_now->minute());
+		
+		my %data=@{$Redis->hgetall('C3|counters|sql|'.$date_str)};
+		
+		foreach (grep {$_=~/:\d+\|r_exec$/} sort keys %data)
+		{
+			my $h=$_;
+				$h=~s/\|.*$//;
+			my $hm=$h;
+				$hm=~s|:\d+$||;
+#			main::_log("slave $h");
+			
+			$db_h{$hm}{$h}{'exec'}+=$data{$h.'|r_exec'};
+			$db_h{$hm}{$h}{'durration'}+=$data{$h.'|r_durration'};
+			
+			$db_h{$hm}{$h}{'perf'}=$db_h{$hm}{$h}{'durration'}/$db_h{$hm}{$h}{'exec'};
+		}
+		
+		$datetime_now->add('minutes' => -1);
+	}
+	
+	return 1 unless keys %db_h;
+	
+	
+	
+	foreach my $hm (sort keys %db_h)
+	{
+		main::_log("calculate weights for '$hm' slaves");
+		
+		my %data=@{$Redis->hgetall('C3|sql|balancer|'.$hm)};
+		
+		my $last_perf;
+		foreach my $h (sort {$db_h{$hm}{$a}{'perf'} <=> $db_h{$hm}{$b}{'perf'}} keys %{$db_h{$hm}})
+		{
+			$data{$h}||=int($range/2);
+			main::_log("slave $h with performance ".(int($db_h{$hm}{$h}{'perf'}*10)/10)."ms weight=$data{$h} ($db_h{$hm}{$h}{'exec'} queries)");
+			
+			my $koef=0.2;
+			if (!$last_perf)
+			{
+				# toto je najrychlejsi
+				$data{$h}++;
+			}
+			elsif ($last_perf && (int($last_perf * $koef) < int($db_h{$hm}{$h}{'perf'} * $koef)))
+			{
+#				main::_log(" ".int($last_perf * $koef)."<=>".int($db_h{$hm}{$h}{'perf'} * $koef));
+				$data{$h}--;
+			}
+			
+			$data{$h}=1 if $data{$h} < 1;
+			$data{$h}=$range if $data{$h} > $range;
+			$db_h{$hm}{$h}{'weight'} = $data{$h};
+			
+#			$data{$h}=50;
+			main::_log(" new weight=$data{$h}");
+			
+			$Redis->hset('C3|sql|balancer|'.$hm,$h,$data{$h},sub{});
+			
+			$last_perf=int($db_h{$hm}{$h}{'perf'});
+		}
+		
+#		use Data::Dumper;
+		main::_log("database_slaves_weights db_h='$hm' count(".join(", ",map {$_ = int($db_h{$hm}{$_}{'exec'}) || 0 } sort keys %{$db_h{$hm}}).") perf(".join(", ",map {$_ = (int($db_h{$hm}{$_}{'perf'}*10)/10) || 0 } sort keys %{$db_h{$hm}}).") weight(".join(", ",map {$_ = $db_h{$hm}{$_}{'weight'} || 1 } sort keys %{$db_h{$hm}}).")");
+		
+		$Redis->expire('C3|sql|balancer|'.$hm,3600,sub{});
+	}
+	
+	$self->reschedule({'add' => 5});
+	
+return 1}
+1;
