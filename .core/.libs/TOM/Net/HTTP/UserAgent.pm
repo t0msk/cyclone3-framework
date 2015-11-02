@@ -746,7 +746,7 @@ our @table=
 	
 	# SAFARI
 	{name=>'Google.com/mobile', # contains info about Safari
-		regexp		=>	['Googlebot-Mobile'],
+		regexp		=>	['Googlebot-Mobile','Mobile.*?Googlebot'],
 		agent_type	=>	"robot",
 		engine_disable	=>	0,
 		recache_disable =>	1,
