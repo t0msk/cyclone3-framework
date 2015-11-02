@@ -66,7 +66,8 @@ sub all
 	foreach my $sql(@{$TOM::DB{'main'}{'sql'}})
 	{
 		main::_log("sql='$sql'");
-		TOM::Database::SQL::execute($sql,'db_h'=>'main','quiet'=>1);
+		my $sth=$main::DB{'main'}->{'dbh'}->prepare($sql);$sth->execute();
+#		TOM::Database::SQL::execute($sql,'db_h'=>'main','quiet'=>1);
 	}
 	
 	TOM::Database::connect::multi(@databases);
@@ -198,7 +199,8 @@ sub multi
 				else
 				{
 					main::_log("sql='$sql'");
-					TOM::Database::SQL::execute($sql, 'db_h'=>$handler, 'quiet'=>1);
+#					TOM::Database::SQL::execute($sql, 'db_h'=>$handler, 'quiet'=>1);
+					my $sth=$main::DB{$handler}->{'dbh'}->prepare($sql);$sth->execute();
 				}
 #				
 			}
@@ -238,7 +240,8 @@ sub multi
 			foreach my $sql(@{$TOM::DB{$handler}{'sql'}})
 			{
 				main::_log("sql='$sql'");
-				TOM::Database::SQL::execute($sql, 'db_h'=>$handler, 'quiet'=>1);
+#				TOM::Database::SQL::execute($sql, 'db_h'=>$handler, 'quiet'=>1);
+				my $sth=$main::DB{$handler}->{'dbh'}->prepare($sql);$sth->execute();
 			}
 			
 		}

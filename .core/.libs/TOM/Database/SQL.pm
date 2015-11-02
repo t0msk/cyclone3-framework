@@ -20,6 +20,7 @@ use TOM::Database::SQL::cache;
 use Ext::Redis::_init;
 
 our $debug=$TOM::Database::SQL::debug || 0;
+our %balance;
 our $save_error=$TOM::Database::SQL::save_error || 1;
 our $logcachequery=$TOM::Database::SQL::logcachequery || 0;
 our $lognonselectquery=$TOM::Database::SQL::lognonselectquery || 0;
@@ -165,9 +166,7 @@ sub get_slave_status
 			$db0_line{'Seconds_Behind_Master'}=0 if $db0_line{'Seconds_Behind_Master'} < 0;
 			if ($db0_line{'Seconds_Behind_Master'} > $TOM::DB_mysql_seconds_behind_master_max)
 			{
-#				main::_log("SQL: Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",1);
-				main::_log("{$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err");
-#				main::_log("[$tom::H] {$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err",1) if $tom::H;
+				main::_log("{$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql");
 			}
 			else
 			{
@@ -184,9 +183,7 @@ sub get_slave_status
 	
 	if ($db0_line{'Seconds_Behind_Master'} > $TOM::DB_mysql_seconds_behind_master_max)
 	{
-#		main::_log("SQL: Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",1);
-		main::_log("{$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err");
-#		main::_log("[$tom::H] {$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql.err",1) if $tom::H;
+		main::_log("{$db_h} Seconds_Behind_Master too high. $db0_line{'Seconds_Behind_Master'}s",4,"sql");
 	}
 	
 	$slave_status{$db_h}{'time'}=time();
@@ -280,7 +277,7 @@ sub execute
 	}
 	
 	my $t=track TOM::Debug(__PACKAGE__."::execute()",'namespace'=>"SQL:".($env{'db_h'} || 'main'),'quiet' => $env{'quiet'},'timer'=>1);
-	  
+	
 	# when I'm sometimes really wrong ;)
 	my $typeselect=0; # select query?
 	$env{'slave'}=$env{'slave'} || $env{'-slave'};
@@ -311,6 +308,21 @@ sub execute
 		my $slave_finding;
 		
 		my $slave_choices = [1..$TOM::DB{$env{'db_h'}}{'slaves'}];
+		
+		if ($Redis && $TOM::DB{$env{'db_h'}}{'slaves_autoweight'})
+		{
+			if (!$balance{$env{'db_h'}} || ($balance{$env{'db_h'}}{'time'}+1) <= time()) # TTL = 1s
+			{
+				$balance{$env{'db_h'}}{'time'}=time();
+				%{$balance{$env{'db_h'}}{'data'}}=@{$Redis->hgetall('C3|sql|balancer|'.$env{'db_h'})};
+			}
+			my %data=%{$balance{$env{'db_h'}}{'data'}};
+			foreach my $kk (grep {exists $TOM::DB{$_}} sort keys %data)
+			{
+				$TOM::DB{$kk}{'weight'} = $data{$kk} || 1;
+			}
+		}
+		
 		my $slave_weights = [map {$_ = $TOM::DB{$_}{'weight'} || 1 } grep {$_=~/^$env{'db_h'}:/} sort keys %TOM::DB];
 		
 		while (!$slaveselected)
@@ -461,24 +473,9 @@ sub execute
 				if ($Redis)
 				{
 					my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
-#					print "$date_str\n" if $tom::test;
-					$Redis->hincrby('C3|counters|sql_cache|'.$date_str,'hit',1,sub{});
-					$Redis->expire('C3|counters|sql_cache|'.$date_str,3600,sub{});
+					$Redis->hincrby('C3|counters|sql|'.$date_str,$env{'db_h'}.'|cache_hit',1,sub{});
+					$Redis->expire('C3|counters|sql|'.$date_str,3600,sub{});
 				}
-#				my $cache_key_id=TOM::Digest::hash($cache_key);
-#				$Ext::CacheMemcache::cache->incr(
-#					'namespace' => "sqlcache_hits",
-#					'key' => $cache_key_id
-#				);
-#				my $hits=$Ext::CacheMemcache::cache->get(
-#					'namespace' => "sqlcache_hits",
-#					'key' => $cache_key_id
-#				);
-#				my $hpm=0;
-#				$hpm=int($hits/((time()-$cache->{'value'}->{'time'})/60))
-#					if (((time()-$cache->{'value'}->{'time'})/60));
-#				main::_log("[sql][".$cache_key_id."][HIT] name='".substr($SQL_,0,80)."...' (start:".$cache->{'value'}->{'time'}." old:".(time()-$cache->{'value'}->{'time'})." hits:$hits hpm:".$hpm.")",3,"cache");
-#				main::_log("[sql][$tom::H][".$cache_key_id."][HIT]",3,"cache",1);
 			}
 			
 			$t->close();
@@ -517,9 +514,7 @@ sub execute
 			if ($output{'err'})
 			{
 				my ($package, $filename, $line) = caller;
-				main::_log("SQL prepare: err=".$output{'err'},1);# unless $env{'quiet'};
-				main::_log("{$env{'db_h'}} SQL prepare='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
-				main::_log("[$tom::H] {$env{'db_h'}} SQL prepare='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
+				main::_log("{$env{'db_h'}} SQL prepare='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql");
 				
 				if ($output{'err'}=~/ORA-03114/) # hapal dole Orákulum
 				{
@@ -535,17 +530,14 @@ sub execute
 					
 					if ($TOM::DB_DBI_sql_recall) # if auto-reconnect disabled, do it manually
 					{
-						main::_log("{$env{'db_h'}} lost connection ",4,"sql.err");
-						main::_log("[$tom::H] {$env{'db_h'}} lost connection",4,"sql.err",1);
-#						main::_log("lost connection, re-connecting '$env{'db_h'}'",4,"sql.err");
+						main::_log("{$env{'db_h'}} lost connection ",4,"sql");
 						
 						TOM::Database::connect::disconnect($env{'db_h'}); # removes handlers
 						TOM::Database::connect::multi($env{'db_h'}) || do 
 						{
 							main::_log("{'$env{'db_h'}'} can't be reconnected",1);
 							# can't be reconnected
-							main::_log("{$env{'db_h'}} DBI server can't be reconnected",4,"sql.err");
-							main::_log("[$tom::H] {$env{'db_h'}} DBI server can't be reconnected",4,"sql.err",1);
+							main::_log("{$env{'db_h'}} DBI server can't be reconnected",4,"sql");
 							$t->close();
 							return undef;
 						};
@@ -581,31 +573,27 @@ sub execute
 		{
 			my ($package, $filename, $line) = caller;
 			main::_log("SQL: err=".$output{'err'},1);# unless $env{'quiet'};
-			main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
-			main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
+			main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql");
 			
 			main::_log("output info=".$output{'info'}) if (!$env{'quiet'} && $output{'info'});
 			
 			if ($output{'err'}=~/ORA-03114/) # hapal dole Orákulum
 			{
-				main::_log("{$env{'db_h'}} lost connection ",4,"sql.err");
-				main::_log("[$tom::H] {$env{'db_h'}} lost connection",4,"sql.err",1);
+				main::_log("{$env{'db_h'}} lost connection ",4,"sql");
 				# vynutime reconnect, ale tento query je uz strateny
 				undef $main::DB{$env{'db_h'}};
 			}
 			
 			if ($output{'err'}=~/Attempt to initiate a new Adaptive Server/) # hapalo dole MsSQL
 			{
-				main::_log("{$env{'db_h'}} lost connection ",4,"sql.err");
-				main::_log("[$tom::H] {$env{'db_h'}} lost connection",4,"sql.err",1);
+				main::_log("{$env{'db_h'}} lost connection ",4,"sql");
 				# vynutime reconnect, ale tento query je uz strateny
 				undef $main::DB{$env{'db_h'}};
 			}
 			
 			if ($output{'err'}=~/Adaptive Server connection timed out/) # hapalo dole MsSQL
 			{
-				main::_log("{$env{'db_h'}} lost connection ",4,"sql.err");
-				main::_log("[$tom::H] {$env{'db_h'}} lost connection",4,"sql.err",1);
+				main::_log("{$env{'db_h'}} lost connection ",4,"sql");
 				# vynutime reconnect, ale tento query je uz strateny
 				undef $main::DB{$env{'db_h'}};
 			}
@@ -634,8 +622,7 @@ sub execute
 			{
 				my ($package, $filename, $line) = caller;
 				main::_log("SQL: ".$output{'err'},1);# unless $env{'quiet'};
-				main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
-				main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1) if $tom::H;
+				main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql");
 				if ($save_error && 
 					(
 						$output{'err'} ne "MySQL server has gone away"
@@ -664,8 +651,7 @@ sub execute
 				if ($output{'err'} eq "MySQL server has gone away" ||
 					$output{'err'} eq "Lost connection to MySQL server during query") # hapal dole MySQL
 				{
-					main::_log("{$env{'db_h'}} MySQL server has gone away",4,"sql.err");
-					main::_log("[$tom::H] {$env{'db_h'}} MySQL server has gone away",4,"sql.err",1);
+					main::_log("{$env{'db_h'}} MySQL server has gone away",4,"sql");
 					
 					main::_log("SQL: trying to reconnect/reuse '$env{'db_h'}' and re-call this SQL query");
 					
@@ -676,8 +662,7 @@ sub execute
 						{
 							main::_log("{'$env{'db_h'}'} can't be reconnected",1);
 							# can't be reconnected
-							main::_log("{$env{'db_h'}} MySQL server can't be reconnected",4,"sql.err");
-							main::_log("[$tom::H] {$env{'db_h'}} MySQL server can't be reconnected",4,"sql.err",1);
+							main::_log("{$env{'db_h'}} MySQL server can't be reconnected",4,"sql");
 							if ($env{'db_h'}=~/:\d+$/) # this is slave
 							{
 								# remove handler and definition
@@ -724,8 +709,7 @@ sub execute
 	if ($output{'err'})
 	{
 		main::_log("SQL: err=".$output{'err'},1);# unless $env{'quiet'};
-		main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err");
-		main::_log("[$tom::H] {$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql.err",1);
+		main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql");
 	}
 	
 	if ($TOM::DB{$env{'db_h'}}{'type'} ne "DBI")
@@ -735,6 +719,29 @@ sub execute
 	}
 	
 	$t->close();
+	
+	my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
+	if ($TOM::DEBUG_cache && $Redis)
+	{
+		if ($typeselect || $env{'cache_force'})
+		{
+			# select/read durrations
+			$Redis->hincrby('C3|counters|sql|'.$date_str, $env{'db_h'}.'|r_exec',1,sub{});
+			$Redis->hincrby('C3|counters|sql|'.$date_str, $env{'db_h'}.'|r_durration',int($t->{'time'}{'req'}{'duration'}*1000),sub{});
+			# requested slave, but can't be used (out of date)
+			if ($env{'slave'} && not($env{'db_h'}=~/:/))
+			{
+				$Redis->hincrby('C3|counters|sql|'.$date_str, $env{'db_h'}.'|slave_miss',1,sub{});
+			}
+		}
+		else
+		{
+			# write, update, etc...
+			$Redis->hincrby('C3|counters|sql|'.$date_str, $env{'db_h'}.'|w_exec',1,sub{});
+			$Redis->hincrby('C3|counters|sql|'.$date_str, $env{'db_h'}.'|w_durration',int($t->{'time'}{'req'}{'duration'}*1000),sub{});
+		}
+		$Redis->expire('C3|counters|sql|'.$date_str, 3600,sub{});
+	}
 	
 	if ($env{'cache_auto'} && ($typeselect || $env{'cache_force'}) && $t->{'time'}{'req'}{'duration'} >= $query_long_autocache)
 	{
@@ -765,23 +772,9 @@ sub execute
 			'limit_rows' => $SQL_src_rows
 		);
 		
-		if ($TOM::DEBUG_cache)
+		if ($TOM::DEBUG_cache && $Redis)
 		{
-			if ($Redis)
-			{
-				my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
-				$Redis->hincrby('C3|counters|sql_cache|'.$date_str,'crt',1,sub{});
-#				$Redis->hincrby('C3|counters|sql_cache|'.$date_str,'hit',1,sub{});
-				$Redis->expire('C3|counters|sql_cache|'.$date_str,3600,sub{});
-			}
-#			my $cache_key_id=TOM::Digest::hash($cache_key);
-#			$Ext::CacheMemcache::cache->set(
-#				'namespace' => "sqlcache_hits",
-#				'key' => $cache_key_id,
-#				'value' => 0
-#			);
-#			main::_log("[sql][".$cache_key_id."][CRT] name='".substr($SQL_,0,80)."...' (start:".time().")",3,"cache");
-#			main::_log("[sql][$tom::H][".$cache_key_id."][CRT]",3,"cache",1);
+			$Redis->hincrby('C3|counters|sql|'.$date_str, $env{'db_h'}.'|cache_fill',1,sub{});
 		}
 		
 	}
@@ -802,11 +795,16 @@ sub execute
 				$caller_plus.="/$package_:$filename_:$line_";
 			}
 		}
-#		main::_log("{$env{'db_h'}:exec:".($t->{'time'}{'req'}{'duration'})."s} '$SQL_' from '$package:$filename:$line'$caller_plus",3,"sql");
 		main::_log($SQL_orig,{
 			'severity' => 3,
 			'facility' => 'sql',
 			'data' => {
+				'exec_iswrite_i' => do {if ($typeselect || $env{'cache_force'}){0}else{1}},
+				'exec_reqslave_i' => do {
+					if ($typeselect || $env{'cache_force'}){
+						if ($env{'slave'}){1}else{0}	
+					}else{}
+				},
 				'exec_s' => 'db', # or 'cache'
 				'rows_i' => $output{'rows'},
 				'db_h_s' => $env{'db_h'},
@@ -818,12 +816,6 @@ sub execute
 			}
 		})
 	}
-#	elsif ($logquery_long && ($t->{'time'}{'req'}{'duration'} > $env{'-long'}))
-#	{
-#		main::_log("{$env{'db_h'}} executed ".($t->{'time'}{'req'}{'duration'})."s query",1);
-#		main::_log("{$env{'db_h'}} duration:".($t->{'time'}{'req'}{'duration'})."s SQL='$SQL_' from $package:$filename:$line",4,"sql.long");
-#		main::_log("[$tom::H] {$env{'db_h'}} duration:".($t->{'time'}{'req'}{'duration'})."s SQL='$SQL_' from $package:$filename:$line",4,"sql.long",1) if $tom::H;
-#	}
 	
 	return %output;
 }
