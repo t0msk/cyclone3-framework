@@ -59,7 +59,7 @@ sub get_user {
 		LIMIT 1
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[@bind],'quiet'=>1,%sql_env);
+	my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[@bind],'quiet'=>1,'-slave'=>1,'-cache'=>60,%sql_env);
 	%user=$sth0{'sth'}->fetchhash();
 	
 	return \%user;

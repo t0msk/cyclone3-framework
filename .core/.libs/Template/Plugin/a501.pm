@@ -26,8 +26,13 @@ sub new {
 sub get_image_file {
 	my $self = shift;
 	my $env=shift;
+	
+	use JSON;
+	
 	my %image=App::501::functions::get_image_file(%{$env});
 	$image{'ID_entity'}=$image{'ID_entity_image'};
+	
+#	main::_log("get_image_file input=".to_json($env)." output=".to_json(\%image),3,"debug");
 	
 	if ($env->{'resize'} && $image{'ID'})
 	{

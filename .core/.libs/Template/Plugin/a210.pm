@@ -56,7 +56,11 @@ sub get_path_url {
 			WHERE
 				ID_entity = ?
 				AND lng = ?
-		},'bind' => [
+		},
+		'-slave' => 1,
+		'-cache' => 60,
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%sql_def),
+		'bind' => [
 			$env->{'ID_entity'},
 			$env->{'lng'} || $tom::lng
 		]);
@@ -116,7 +120,11 @@ sub get_node {
 			WHERE
 				ID_entity = ?
 				AND lng = ?
-		},'bind' => [
+		},
+		'-slave' => 1,
+		'-cache' => 60,
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%sql_def),
+		'bind' => [
 			$env->{'ID_entity'},
 			$env->{'lng'} || $tom::lng
 		]);
