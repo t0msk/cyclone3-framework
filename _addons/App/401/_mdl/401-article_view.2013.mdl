@@ -9,7 +9,7 @@ use strict;
 
 use App::210::_init;
 use App::401::_init;
-
+use App::501::_init;
 
 sub execute
 {
@@ -125,6 +125,12 @@ sub execute
 	
 	return 1 unless $sql_where;
 	
+	# create object for abstract
+	my $parser_abstract=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	# create object for body:
 	use App::020::mimetypes::html;
 	my $parser=new App::020::mimetypes::html(
 		'tpl_ext' => $TPL # extend
@@ -293,18 +299,23 @@ sub execute
 		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:type','content'=>'article'};
 	}
 	
+	#push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=>$tom::H_a501.'/image/file/'.$image{'file_path'}};
+
+	#this is meta-cache controller
+	#push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=>'saa6'}; 
+	
 	%{$article{'metahash'}}=App::020::functions::metadata::parse($article{'metadata'});
 	delete $article{'metadata'};
 	
 	# parser abstract
-	$parser->parse($article{'abstract'});
-	$parser->eof();
-	push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+	$parser_abstract->parse($article{'abstract'});
+	$parser_abstract->eof();
+	push @{$env_out{'entity'}},@{$parser_abstract->{'entity'}} if $parser_abstract->{'entity'}; # depend on this too
 	$article{'abstract_parser'}={
-		'output' => $parser->{'output'},
-		'addon' => $parser->{'addon'},
-		'entity' => $parser->{'entity'},
-		'thumbnail' => $parser->{'thumbnail'},
+		'output' => $parser_abstract->{'output'},
+		'addon' => $parser_abstract->{'addon'},
+		'entity' => $parser_abstract->{'entity'},
+		'thumbnail' => $parser_abstract->{'thumbnail'},
 	};
 	
 	my $doc_desc=$article{'abstract'};
@@ -336,18 +347,26 @@ sub execute
 		'limit' => 1
 	))[0];
 	
-	if ($env{'header.og'} && $parser->{'thumbnail'}[0])
+	if ($env{'header.og'} && $article{'related_thumbnail'})
 	{
 		my %image=App::501::functions::get_image_file(
-			'image.ID_entity' => $parser->{'thumbnail'}[0],
+			'image.ID_entity' => $article{'related_thumbnail'}->{'r_ID_entity'},
 			'image_file.ID_format' => 2
 		);
 		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $tom::H_a501.'/image/file/'.$image{'file_path'}};
 	}
-	elsif ($env{'header.og'} && $article{'related_thumbnail'})
+	elsif ($env{'header.og.abstract'} && $parser_abstract->{'thumbnail'}[0])
 	{
 		my %image=App::501::functions::get_image_file(
-			'image.ID_entity' => $article{'related_thumbnail'}->{'r_ID_entity'},
+			'image.ID_entity' => $parser_abstract->{'thumbnail'}[0],
+			'image_file.ID_format' => 2
+		);
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $tom::H_a501.'/image/file/'.$image{'file_path'}};
+	}
+	elsif ($env{'header.og'} && $parser->{'thumbnail'}[0])
+	{
+		my %image=App::501::functions::get_image_file(
+			'image.ID_entity' => $parser->{'thumbnail'}[0],
 			'image_file.ID_format' => 2
 		);
 		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $tom::H_a501.'/image/file/'.$image{'file_path'}};
