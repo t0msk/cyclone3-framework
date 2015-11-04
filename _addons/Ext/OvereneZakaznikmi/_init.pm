@@ -13,6 +13,28 @@ Extension Heureka
 
 Library for Czech and Slovak price comparison and e-shop evaluation sites heureka.cz and heureka.sk
 
+always provide apikey, language string and user email.
+
+example usage:
+if ($TOM::apikeys{'heureka-api-key'}) {
+	main::_log("heureka overene zakaznikmi init");
+	eval {
+		my $overene = new HeurekaOverene('apiKey'=>$env{'heureka-api-key'},'lng'=>'sk');
+		$overene->setEmail($main::USRM{'session'}{'order'}{'email'});
+		
+		foreach my $ID_product (@ID_product_list) {
+			$overene->addProductId($ID_product);
+			main::_log("heureka adding product $ID_product");
+		}
+		$overene->addOrderId($order_ID_entity);
+		$overene->send();
+		main::_log("heureka order $order_ID_entity sent");
+	} or do {
+		my $error = $@;
+		main::_log("Heureka error message=$error");
+	}
+}
+
 =cut
 
 BEGIN
