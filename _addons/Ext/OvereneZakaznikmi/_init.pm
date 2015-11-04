@@ -16,8 +16,11 @@ Library for Czech and Slovak price comparison and e-shop evaluation sites heurek
 always provide apikey, language string and user email.
 
 example usage:
+
+
 if ($TOM::apikeys{'heureka-api-key'}) {
 	main::_log("heureka overene zakaznikmi init");
+	use Ext::OvereneZakaznikmi::_init;
 	eval {
 		my $overene = new HeurekaOverene('apiKey'=>$env{'heureka-api-key'},'lng'=>'sk');
 		$overene->setEmail($main::USRM{'session'}{'order'}{'email'});
