@@ -75,10 +75,20 @@ sub get_static {
 			$sql.=qq{ AND a420_static.ID=?};
 			push @bind,$env->{'static.ID'};
 		}
+		if ($env->{'static.ID_entity'})
+		{
+			$sql.=qq{ AND a420_static.ID_entity=?};
+			push @bind,$env->{'static.ID_entity'};
+		}
 		if ($env->{'ID'})
 		{
 			$sql.=qq{ AND a420_static.ID=?};
 			push @bind,$env->{'ID'};
+		}
+		if ($env->{'ID_entity'})
+		{
+			$sql.=qq{ AND a420_static.ID_entity=?};
+			push @bind,$env->{'ID_entity'};
 		}
 	}
 	
