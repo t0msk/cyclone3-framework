@@ -97,7 +97,10 @@ sub execute
 			1
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
+	main::_log('asd'.$tom::lng);
+	main::_log('asd'.$tom::setup{$tom::lng}{'home_promo1'});
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1,'-slave'=>1);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		main::_log("static.name='$db0_line{'name'}'");

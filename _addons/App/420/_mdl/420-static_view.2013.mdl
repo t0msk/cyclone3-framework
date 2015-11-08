@@ -193,6 +193,18 @@ sub execute
 	push @{$env_out{'call'}{'H'}{'add_DOC_title'}},$static{'name'}
 		if $env{'header.title'};
 	
+	$static{'related_thumbnail'}=(App::160::SQL::get_relations(
+		'db_name' => $App::420::db_name,
+		'l_prefix' => 'a420',
+		'l_table' => 'static',
+		'l_ID_entity' => $static{'ID_entity'},
+		'rel_type' => 'thumbnail',
+		'r_db_name' => $App::501::db_name,
+		'r_prefix' => 'a501',
+		'r_table' => 'image',
+		'status' => 'Y',
+		'limit' => 1
+	))[0];
 =head1
 	if ($article{'cat_ID'})
 	{
@@ -239,6 +251,23 @@ sub execute
 	%{$static{'metahash'}}=App::020::functions::metadata::parse($static{'metadata'});
 	
 	$TPL->{'variables'}{'static'} = \%static;
+	
+	my @related_gallery;
+	
+	foreach my $relation(App::160::SQL::get_relations(
+		'db_name' => $App::420::db_name,
+		'l_prefix' => 'a420',
+		'l_table' => 'static',
+		'l_ID_entity' => $static{'ID_entity'},
+		'rel_type' => 'gallery',
+		'r_prefix' => "a501",
+		'r_table' => "image",
+		'status' => "Y",
+	)){
+		push @related_gallery, $relation;
+	};
+	
+	$static{'related_gallery'}=\@related_gallery;
 	
 	return 1,%env_out;
 }

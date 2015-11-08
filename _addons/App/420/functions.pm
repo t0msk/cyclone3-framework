@@ -347,9 +347,11 @@ sub _static_index
 		
 		my $doc = WebService::Solr::Document->new();
 		
-		$db0_line{'body'}=~s|<.*?>||gms;
+		$db0_line{'body'}=~s|<.*?>| |gms;
 		$db0_line{'body'}=~s|&nbsp;| |gms;
 		$db0_line{'body'}=~s|  | |gms;
+		
+#		print $db0_line{'body'};
 		
 		$db0_line{'datetime_create'}=~s| (\d\d)|T$1|;
 		$db0_line{'datetime_create'}.="Z";
@@ -366,6 +368,7 @@ sub _static_index
 			{
 				next unless $metadata{$sec}{$_};
 				push @content,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
+				push @content,WebService::Solr::Field->new( $sec.'.'.$_.'_t' => "$metadata{$sec}{$_}" );
 				if ($metadata{$sec}{$_}=~/^[0-9]+$/)
 				{
 					push @content,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
@@ -410,6 +413,8 @@ sub _static_index
 			WebService::Solr::Field->new( 'addon_s' => 'a420_static' ),
 			WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
 			WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
+			
+			WebService::Solr::Field->new( 'status_s' => $db0_line{'status'} ),
 			
 			@content
 		));

@@ -70,6 +70,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_static_cat` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
@@ -93,6 +94,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_static_cat_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
+  `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)

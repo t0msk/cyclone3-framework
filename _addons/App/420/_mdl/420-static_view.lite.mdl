@@ -173,18 +173,18 @@ sub execute
 			
 			if ($p->{'out_var'}->{'img.1.src'} && !$og_image_set)
 			{
-				push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=>$p->{'out_var'}->{'img.1.src'}};
+				push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=>$p->{'out_var'}->{'img.1.src'}} unless $env{'add_DOC_meta_disabled'};
 				
 				if ($p->{'out_addon'}->{'a510_video_part'}[1]{'video.ID_entity'} && $XSGN{'og:video'})
 				{
 					$XSGN{'og:video'}=~s|<%video\.ID_entity%>|$p->{'out_addon'}->{'a510_video_part'}[1]{'video.ID_entity'}|g;
 					
-					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video','content'=>$XSGN{'og:video'}};
+					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video','content'=>$XSGN{'og:video'}} unless $env{'add_DOC_meta_disabled'};
 					
-					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:type','content'=>"application/x-shockwave-flash"};
+					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:type','content'=>"application/x-shockwave-flash"} unless $env{'add_DOC_meta_disabled'};
 					
-					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:width','content'=>"430"};
-					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:height','content'=>"280"};
+					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:width','content'=>"430"} unless $env{'add_DOC_meta_disabled'};
+					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:height','content'=>"280"} unless $env{'add_DOC_meta_disabled'};
 					
 				}
 				$og_image_set=1;
