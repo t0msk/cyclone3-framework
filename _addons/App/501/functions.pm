@@ -448,10 +448,12 @@ sub image_file_process
 	
 	# GIF magick
 	$image1=$image1->[0] if $image1->Get('magick') eq 'GIF';
+#	$image1->Profile('profile'=>'');
 	main::_log("units=".$image1->Get('units'));
 	my $density=$image1->Get('density');
 	main::_log("density=".$density);
-	
+	main::_log("width=".($image1->Get('width'))." height=".($image1->Get('height')));
+	main::_log("orientation=".$image1->Get('orientation'));
 #	$image1->Set('units'=>"PixelsPerInch");
 #	$image1->Set('density'=>"72x72");
 	
@@ -469,9 +471,9 @@ sub image_file_process
 		}
 	}
 	# CMYK magick
-	$image1->Set(colorspace=>'RGB') if $image1->Get('colorspace') eq "CMYK";
+	$image1->Set('colorspace'=>'RGB') if $image1->Get('colorspace') eq "CMYK";
 	# Profile magick (reduces size)
-	$image1->Profile('profile'=>'');
+#	$image1->Profile('profile'=>'');
 	
 	foreach my $function(split('\n',$env{'process'}))
 	{
@@ -508,6 +510,57 @@ sub image_file_process
 			next;
 		}
 		
+		if ($function_name eq "autorotate")
+		{
+			main::_log("check exec $function_name($params[0])");
+			#main::_log(" Orientation=".$image1->Get('format', '%[EXIF:*]');
+#			if ($image1->Get('width') > $params[0] || $image1->Get('height') > $params[1])
+#			{
+#				$image1->AutoOrient();
+#				$procs++;
+#			}
+			next;
+		}
+		
+		if ($function_name eq "autoorient")
+		{
+			main::_log("exec $function_name()");
+			
+			my $exif = $image1->Get('format', '%[EXIF:*]');
+#			print $exif;
+			my %exifdata;
+			foreach (split(/[\r\n]/, $exif))
+			{
+#				main::_log(" $_");
+				if ( /exif:([^=]+)=(.*)$/ )
+				{
+					$exifdata{$1} = $2;
+				}
+			}
+			
+			if ($exifdata{'Orientation'})
+			{
+				main::_log(" found exif Orientation=".$exifdata{'Orientation'});
+			}
+			
+#			if ($exifdata{'Orientation'} == 1)
+#			{
+#				main::_log(" rotate(90)");
+#				$image1->Rotate(90);
+#			}
+#			else
+#			{
+				main::_log(" orientation=".$image1->Get('orientation'));
+				main::_log(" Orientation=".$image1->Get('Orientation'));
+				main::_log(" autoorient()");
+				$image1->AutoOrient();
+				main::_log(" orientation=".$image1->Get('orientation'));
+				main::_log(" width=".($image1->Get('width'))." height=".($image1->Get('height')));
+#			}
+			$procs++;
+			next;
+		}
+		
 		if ($function_name eq "downscale")
 		{
 			main::_log("check exec $function_name($params[0],$params[1]) from (".$image1->Get('width').",".$image1->Get('height').")");
@@ -527,6 +580,15 @@ sub image_file_process
 			main::_log("exec $function_name($params[0],$params[1])");
 			$image1->Resize('geometry'=>$params[0].'x'.$params[1]);
 			main::_log("width=".($image1->Get('width'))." height=".($image1->Get('height')));
+			$procs++;
+			next;
+		}
+		
+		if ($function_name eq "autotrim")
+		{
+			main::_log("exec $function_name()");
+			$image1->Trim();
+			$image1->Set(page=>'0x0+0+0');
 			$procs++;
 			next;
 		}
@@ -812,6 +874,75 @@ sub image_file_process
 			next;
 		}
 		
+		if ($function_name eq "edimensions")
+		{
+			main::_log("exec $function_name($params[0],$params[1])");
+			
+			my $width=$image1->Get('width');
+			my $height=$image1->Get('height');
+			
+			my $scale_new=int(($params[0]/$params[1])*10000)/10000;
+			my $scale_old=int(($width/$height)*10000)/10000;
+			
+			main::_log("w=$width h=$height current scale:$scale_old requested scale:$scale_new");
+			
+			my $scale='1:1';
+			my $scale_x=$params[0];
+			my $scale_y=$params[1];
+			
+			my $nwidth;
+			my $nheight;
+			
+			my $scl;
+			
+			if ($scale_old<$scale_new)
+			{
+				$scl=$height/$scale_y;
+				$nwidth=$scale_x*$scl;
+				$nheight=$scale_y*$scl;
+			}
+			else
+			{
+				$scl=$width/$scale_x;
+				$nwidth=$scale_x*$scl;
+				$nheight=$scale_y*$scl;
+			}
+			
+			$nwidth=int($nwidth);
+			$nheight=int($nheight);
+			
+			main::_log("calculated new size to extent by scale $scale_new new w=$nwidth new h=$nheight");
+			
+			$image1->Extent('width' => $nwidth, 'height' => $nheight,
+				'x'=> int(($nwidth-$width)/2),
+				'y'=>int(($nheight-$height)/2)
+			);
+			
+			$procs++;
+			next;
+		}
+		
+		if ($function_name eq "border")
+		{
+			main::_log("exec $function_name($params[0]");
+			
+			my $width=$image1->Get('width');
+			my $height=$image1->Get('height');
+			
+			main::_log("w=$width h=$height");
+			
+			my $nwidth=$width+int($params[0]*2);
+			my $nheight=$height+int($params[0]*2);
+			
+			$image1->Extent('width' => $nwidth, 'height' => $nheight,
+				'x'=> int(($nwidth-$width)/2),
+				'y'=>int(($nheight-$height)/2)
+			);
+			
+			$procs++;
+			next;
+		}
+		
 		if ($function_name eq "thumbnail")
 		{
 			main::_log("exec $function_name($params[0],$params[1])");
@@ -905,6 +1036,7 @@ sub image_file_process
 	
 	if ($procs)
 	{
+		$image1->Profile('profile'=>'');
 		
 		if ($env{'quality'})
 		{
@@ -966,6 +1098,14 @@ Add new image (uploading new original sized image)
 sub image_add
 {
 	my %env=@_;
+	if ($env{'-jobify'})
+	{
+		return 1 if TOM::Engine::jobify(\@_,{
+			'routing_key' => 'db:'.$App::501::db_name,
+#			'class' => 'encoder',
+			'deduplication' => 1}); # do it in background
+	}
+	
 	my $t=track TOM::Debug(__PACKAGE__."::image_add()");
 	
 #	foreach (sort keys %env)
@@ -1067,29 +1207,25 @@ sub image_add
 			my $image = Image::Magick->new();
 			$image->Read($env{'file'});
 			my $exif = $image->Get('format', '%[EXIF:*]');
-
-
 			my %exifdata;
-
 			foreach (split(/[\r\n]/, $exif))
 			{
-				main::_log($_);
-                		
+#				main::_log($_);
 				if ( /exif:([^=]+)=(.*)$/ )
-                		{
-                        		$exifdata{$1} = $2;
-                		}
+				{
+					$exifdata{$1} = $2;
+				}
 			}
 			if ($exifdata{'DateTime'} && !$env{'image_ent.datetime_produce'})
 			{
 				$env{'image_ent.datetime_produce'}=$exifdata{'DateTime'};
 			}
-
+			
 			if (!$env{'image_ent.metadata'})
 			{
-			        $env{'image_ent.metadata'} = App::020::functions::metadata::serialize('EXIF' => { %exifdata });	
+				$env{'image_ent.metadata'} = App::020::functions::metadata::serialize('EXIF' => { %exifdata });	
 			}
-
+			
 		}
 		
 		$content_updated=1;
@@ -1432,9 +1568,54 @@ sub image_add
 			if (exists $env{'image_ent.datetime_produce'} && ($env{'image_ent.datetime_produce'} ne $image_ent{'datetime_produce'}));
 		$columns{'datetime_produce'}='NULL' if $columns{'datetime_produce'} eq "''";
 		
-		if ((not exists $env{'image_ent.metadata'}) && (!$image_ent{'metadata'})){$env{'image_ent.metadata'}=$App::501::metadata_default;}
+		
+		# metadata
+		my %metadata=App::020::functions::metadata::parse($image_ent{'metadata'});
+		
+		foreach my $section(split(';',$env{'image_ent.metadata.override_sections'}))
+		{
+			delete $metadata{$section};
+		}
+		
+		if ($env{'image_ent.metadata.replace'})
+		{
+			if (!ref($env{'image_ent.metadata'}) && $env{'image_ent.metadata'})
+			{
+				%metadata=App::020::functions::metadata::parse($env{'image_ent.metadata'});
+			}
+			if (ref($env{'image_ent.metadata'}) eq "HASH")
+			{
+				%metadata=%{$env{'image_ent.metadata'}};
+			}
+		}
+		else
+		{
+			if (!ref($env{'image_ent.metadata'}) && $env{'image_ent.metadata'})
+			{
+				# when metadata send as <metatree></metatree> then always replace
+				%metadata=App::020::functions::metadata::parse($env{'image_ent.metadata'});
+			}
+			if (ref($env{'image_ent.metadata'}) eq "HASH")
+			{
+				# metadata overrride
+				foreach my $section(keys %{$env{'image_ent.metadata'}})
+				{
+					foreach my $variable(keys %{$env{'image_ent.metadata'}{$section}})
+					{
+						$metadata{$section}{$variable}=$env{'image_ent.metadata'}{$section}{$variable};
+					}
+				}
+			}
+		}
+		
+		$env{'image_ent.metadata'}=App::020::functions::metadata::serialize(%metadata);
+		
 		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'image_ent.metadata'})."'"
-			if (exists $env{'image_ent.metadata'} && ($env{'image_ent.metadata'} ne $image_ent{'metadata'}));
+		if (exists $env{'image_ent.metadata'} && ($env{'image_ent.metadata'} ne $image_ent{'metadata'}));
+		
+#		if ((not exists $env{'image_ent.metadata'}) && (!$image_ent{'metadata'})){$env{'image_ent.metadata'}=$App::501::metadata_default;}
+#		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'image_ent.metadata'})."'"
+#			if (exists $env{'image_ent.metadata'} && ($env{'image_ent.metadata'} ne $image_ent{'metadata'}));
 		
 		if ($columns{'metadata'})
 		{
@@ -1634,6 +1815,9 @@ sub image_file_add
 	my $image_height=$image->Get('height');
 	main::_log("image width=$image_width height=$image_height");
 	
+	return undef unless $image_width;
+	return undef unless $image_height;
+	
 	# generate new unique hash
 	my $name=image_file_newhash();
 	# add asciied name of image
@@ -1687,22 +1871,29 @@ sub image_file_add
 		main::_log("check for update image_file $filename_old");
 		if ($db0_line{'file_checksum'} eq "$checksum_method:$checksum" && -e $filename_old && !$App::501::checksum_eq_ignore)
 		{
-			main::_log("same checksum, just enabling file when disabled");
-			App::020::SQL::functions::update(
-				'ID' => $db0_line{'ID'},
-				'db_h' => 'main',
-				'db_name' => $App::501::db_name,
-				'tb_name' => 'a501_image_file',
-				'columns' =>
-				{
-					'image_width' => $image_width,
-					'image_height' => $image_height,
-					'file_size' => $file_size,
-#					'file_ext' => "'$file_ext'",
-					'status' => "'Y'",
-				},
-				#'-journalize' => 1, -- must be disabled
-			);
+			main::_log("same checksum");
+			
+#			if ($db0_line{'status'} ne "Y")
+#			{
+#				main::_log("re-enabling file, because disabled");
+				# nesmiem toto robit zbytocne, inak dochadza dookola k regenerovaniu obrazkov
+				App::020::SQL::functions::update(
+					'ID' => $db0_line{'ID'},
+					'db_h' => 'main',
+					'db_name' => $App::501::db_name,
+					'tb_name' => 'a501_image_file',
+					'columns' =>
+					{
+						'image_width' => $image_width,
+						'image_height' => $image_height,
+						'file_size' => $file_size,
+	#					'file_ext' => "'$file_ext'",
+						'status' => "'Y'",
+					},
+					#'-journalize' => 1, -- must be disabled
+				);
+				
+#			}
 			$t->close();
 			return $db0_line{'ID'};
 		}
@@ -1734,7 +1925,7 @@ sub image_file_add
 				$file_ext
 			);
 			main::_log("copy to $path");
-			File::Copy::copy($env{'file'},$path);
+			File::Copy::copy($env{'file'},$path) || main::_log("error $!");
 			$t->close();
 			return $db0_line{'ID'};
 		}
