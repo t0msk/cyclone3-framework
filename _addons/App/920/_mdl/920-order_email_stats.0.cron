@@ -1,0 +1,536 @@
+#!/bin/perl
+# USE UTF-8 !!!
+package CRON::module;
+use TOM;
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+
+use App::110::_init;
+use App::920::_init;
+use TOM::Net::HTTP;
+use TOM::Net::HTTP::referer;
+use TOM::Net::HTTP::CGI;
+use TOM::Utils::datetime;
+use Ext::EmailGraph::_init;
+use Ext::SVGraph::_init;
+use Ext::SVG2PNG::_init;
+
+sub execute
+{
+	alarm(3600);
+	my %env=@_;
+	
+	$env{'days'}=31 unless $env{'days'};
+#	my $post="days";
+	
+	my $tpl=new TOM::Template(
+		'level' => "auto",
+		'name' => "email-stats",
+		'content-type' => "xhtml"
+	);
+	
+	$env{'to_email'} = $env{'email'} || $TOM::contact{'stats'};
+#	$env{'to_email'} = 'roman.fordinal@comsultia.com';
+	$env{'to_email'} = TOM::Utils::vars::unique_split($env{'to_email'});
+	
+	
+	# DESIGN
+	$tpl->{'entity'}{'email.xhtml'}=~s|<%main-title%>|e-shop Order Analytics|g;
+	$tpl->{'entity'}{'email.xhtml'}=~s|<%main-desc%>|This statistic is last $env{'days'} days orders and customers analytics|g;
+#	$tpl->{'entity'}{'email.xhtml'}=~s|<%main-term%>|$firstday - $lastday|g;
+	
+	my $date = TOM::Utils::datetime::mail_current();
+	
+	my $msg = MIME::Entity->build
+	(
+		'Type'    => "multipart/related",
+		'List-Id' => "Cyclone3",
+		'Date'    => $date,
+		'From'    => "$tom::H ($TOM::hostname) <$TOM::contact{'from'}>",
+		'To'      => TOM::Net::email::convert_TO($env{'to_email'}),
+		'Subject' => "Cyclone3 Stats: Order Analytics in last $env{'days'} days"
+	);
+	
+	my @img;
+	my $i;
+	
+	
+	
+	
+	# FIRST ORDERS
+	# table
+	my $table=$tpl->{'entity'}{'email.table'};
+	$table =~ s|<%title%>|New customers|g;
+	$table =~ s|<%colscount%>|6|g;
+	# list of columns
+	foreach my $col_name ( 'Customer', 'Datetime', 'Order', 'Value', 'Days after Reg.', 'Source' )
+	{
+		my $col = $tpl->{'entity'}{'email.table.col.name'};
+		$col =~ s|<%name%>|$col_name|g;
+		$table=~s|<#email.table.col.name#>|$col|g;
+	}
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			ID,
+			ID_entity,
+			ID_user,
+			COUNT(*) AS orders,
+			MAX(datetime_order) AS datetime_order
+		FROM
+			`$App::920::db_name`.a920_order
+		GROUP BY
+			ID_user
+		HAVING
+			orders = 1 AND
+			datetime_order >= DATE_SUB(NOW(),INTERVAL $env{'days'} DAY)
+		ORDER BY
+			datetime_order DESC
+	});
+	my $i;
+	my $days;
+	my $value_sum;
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$db0_line{'datetime_order'}=~/(\d\d\d\d)\-(\d\d)\-(\d\d) (\d\d)/;
+		my $dt_order=DateTime->new('year' => $1, 'month' => $2, 'day' => $3);
+		main::_log("order $db0_line{'ID'} '$db0_line{'datetime_order'}'");
+		
+		my %user=App::301::functions::user_get($db0_line{'ID_user'});
+		my $cvml=new CVML('data' => $user{'saved_session'});
+#		main::_log(" registered=$user{'datetime_register'}");
+		$user{'datetime_register'}=~/(\d\d\d\d)\-(\d\d)\-(\d\d) (\d\d)/;
+		my $dt_register=DateTime->new('year' => $1, 'month' => $2, 'day' => $3);
+		next unless $cvml->{'hash'}{'USRM_G'};
+		if ($cvml->{'hash'}{'USRM_G'} && $cvml->{'hash'}{'USRM_G'}{'time'})
+		{
+			$dt_register=DateTime->from_epoch( epoch => $cvml->{'hash'}{'USRM_G'}{'time'} );
+		}
+		
+		my $dt_duration=$dt_order-$dt_register;
+		main::_log(" days=".$dt_duration->days());
+		
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				SUM(price_incl_VAT) AS value_sum
+			FROM
+				`$App::920::db_name`.a920_order_product
+			WHERE
+				ID_entity=$db0_line{'ID_entity'}
+			GROUP BY
+				ID_entity
+		},'quiet'=>1);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		
+		my $line = $tpl->{'entity'}{'email.table.line'};
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$user{'login'} || $user{'ID_user'}/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'datetime_order'}/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db0_line{'ID_entity'}/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$db1_line{'value_sum'}/e;
+			$col =~ s|<%align%>|right|g;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$dt_duration->days()/e;
+			$col =~ s|<%align%>|right|g;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			if ($cvml->{'hash'}{'USRM_G'} && $cvml->{'hash'}{'USRM_G'}{'ref_type'})
+			{
+				my ($domain,$query)=TOM::Net::HTTP::domain_clear($cvml->{'hash'}{'USRM_G'}{'referer'});
+				$domain="" if $cvml->{'hash'}{'USRM_G'}{'ref_type'} eq "direct";
+				$col =~ s/<%value%>/'<strong>1:<\/strong>'.$cvml->{'hash'}{'USRM_G'}{'ref_type'}.':'.$domain.'<%value%>'/e;
+				if ($cvml->{'hash'}{'USRM_S'})
+				{
+					my $string=$cvml->{'hash'}{'USRM_S'}{'ref_type'};
+					my ($domain,$query)=TOM::Net::HTTP::domain_clear($cvml->{'hash'}{'USRM_S'}{'referer'});
+					$string.=":". $cvml->{'hash'}{'USRM_S'}{'utm_campaign'} if $cvml->{'hash'}{'USRM_S'}{'ref_type'} eq "banner";
+					$string.=":". $cvml->{'hash'}{'USRM_S'}{'utm_content'} if $cvml->{'hash'}{'USRM_S'}{'utm_content'};
+					$string.=":". $domain if $cvml->{'hash'}{'USRM_S'}{'ref_type'} eq "web";
+					$string.=":". $domain if $cvml->{'hash'}{'USRM_S'}{'ref_type'} eq "search";
+					$col =~ s/<%value%>/'<br\/><strong>S:<\/strong>'.$string/e;
+				}
+			}
+			else
+			{
+				$col =~ s/<%value%>/$cvml->{'hash'}{'USRM_G'}{'ref_type'} || '&nbsp;'/e;
+			}
+			$col =~ s|<%align%>|right|g;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		$table =~ s|<#email.table.line#>|$line|g;
+		
+		
+		$i++;
+		$days+=$dt_duration->days();
+		$value_sum+=$db1_line{'value_sum'};
+	}
+	
+	my $line = $tpl->{'entity'}{'email.table.line_sum'};
+	my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+		$col =~ s/<%value%>/"Average"/e;
+		$line =~ s|<#email.table.col.value#>|$col|g;
+	my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+		$col =~ s/<%value%>/'&nbsp;'/e;
+		$line =~ s|<#email.table.col.value#>|$col|g;
+	my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+		$col =~ s/<%value%>/'&nbsp;'/e;
+		$line =~ s|<#email.table.col.value#>|$col|g;
+	my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+		$col =~ s/<%value%>/int($value_sum\/$i)/e;
+		$line =~ s|<#email.table.col.value#>|$col|g;
+	my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+		$col =~ s/<%value%>/int($days\/$i)/e;
+		$line =~ s|<#email.table.col.value#>|$col|g;
+	my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+		$col =~ s/<%value%>/'&nbsp;'/e;
+		$line =~ s|<#email.table.col.value#>|$col|g;
+	$table =~ s|<#email.table.line#>|$line|g;
+	# add table
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$table<#email.content#>|;
+	
+	
+	
+	# SOURCES BY VALUE
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`$App::920::db_name`.a920_order
+		WHERE
+			datetime_order >= DATE_SUB(NOW(),INTERVAL $env{'days'} DAY)
+		ORDER BY
+			datetime_order DESC
+	});
+	my %source_type;
+	my %source;
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$db0_line{'datetime_order'}=~/(\d\d\d\d)\-(\d\d)\-(\d\d) (\d\d)/;
+		my $dt_order=DateTime->new('year' => $1, 'month' => $2, 'day' => $3);
+		my %user=App::301::functions::user_get($db0_line{'ID_user'},'dontactive'=>1);
+		my $cvml=new CVML('data' => $user{'saved_session'});
+		$user{'datetime_register'}=~/(\d\d\d\d)\-(\d\d)\-(\d\d) (\d\d)/;
+		my $dt_register=DateTime->new('year' => $1, 'month' => $2, 'day' => $3);
+		next unless $cvml->{'hash'}{'USRM_G'};
+		if ($cvml->{'hash'}{'USRM_G'}{'time'})
+		{
+			$dt_register=DateTime->from_epoch( epoch => $cvml->{'hash'}{'USRM_G'}{'time'} );
+		}
+		my $dt_duration=$dt_order-$dt_register;
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				SUM(price_incl_VAT) AS value_sum
+			FROM
+				`$App::920::db_name`.a920_order_product
+			WHERE
+				ID_entity=$db0_line{'ID_entity'}
+			GROUP BY
+				ID_entity
+		},'quiet'=>1);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		
+		my $ref_type=$cvml->{'hash'}{'USRM_G'}{'ref_type'};
+		$ref_type=$cvml->{'hash'}{'USRM_G'}{'utm_medium'} if $cvml->{'hash'}{'USRM_G'}{'utm_medium'};
+		my $ref_type_domain;
+		if ($ref_type)
+		{
+			($ref_type_domain,undef)=TOM::Net::HTTP::domain_clear($cvml->{'hash'}{'USRM_G'}{'referer'});
+		}
+		$ref_type_domain="" if $ref_type eq "direct";
+		
+		$source_type{$ref_type}{'orders'}++;
+		$source_type{$ref_type}{'value'}+=$db1_line{'value_sum'};
+		
+		my $full_ref=$ref_type;
+		if ($ref_type eq "cpc" || $ref_type eq "banner" || $ref_type eq "affiliate" || $ref_type eq "email" || $ref_type eq "partner")
+		{
+			$full_ref.=":".$cvml->{'hash'}{'USRM_G'}{'utm_campaign'} if $cvml->{'hash'}{'USRM_G'}{'utm_campaign'};
+			$full_ref.=":".$cvml->{'hash'}{'USRM_G'}{'utm_source'} if $cvml->{'hash'}{'USRM_G'}{'utm_source'};
+			$full_ref.=":".$ref_type_domain if (!$cvml->{'hash'}{'USRM_G'}{'utm_source'} && $ref_type_domain);
+		}
+		elsif ($ref_type eq "social")
+		{
+			$full_ref.=":".$ref_type_domain;
+		}
+		elsif ($ref_type eq "search")
+		{
+			$full_ref.=":".$ref_type_domain;
+		}
+		elsif ($ref_type eq "web")
+		{
+			$full_ref.=":".$ref_type_domain;
+		}
+		
+		$source{$full_ref}{'orders'}++;
+		$source{$full_ref}{'value'}+=$db1_line{'value_sum'};
+		
+	}
+	# table
+	my $table=$tpl->{'entity'}{'email.table'};
+	$table =~ s|<%title%>|Source types by order value (FIRST VISIT)|g;
+	$table =~ s|<%colscount%>|4|g;
+	# list of columns
+	foreach my $col_name ( 'Source', 'Orders', 'Value', 'Avg. value')
+	{
+		my $col = $tpl->{'entity'}{'email.table.col.name'};
+		$col =~ s|<%name%>|$col_name|g;
+		$table=~s|<#email.table.col.name#>|$col|g;
+	}
+	foreach (sort {$source_type{$b}{'value'} <=> $source_type{$a}{'value'}} keys %source_type)
+	{
+		my $line = $tpl->{'entity'}{'email.table.line'};
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$_/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$source_type{$_}{'orders'}/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$source_type{$_}{'value'}/e;
+			$col =~ s|<%align%>|right|g;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/int($source_type{$_}{'value'}\/$source_type{$_}{'orders'})/e;
+			$col =~ s|<%align%>|right|g;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		$table =~ s|<#email.table.line#>|$line|g;
+	}
+	# add table
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$table<#email.content#>|;
+	# table2
+	my $table=$tpl->{'entity'}{'email.table'};
+	$table =~ s|<%title%>|Sources by order value (FIRST VISIT)|g;
+	$table =~ s|<%colscount%>|4|g;
+	# list of columns
+	foreach my $col_name ( 'Source', 'Orders', 'Value', 'Avg. value')
+	{
+		my $col = $tpl->{'entity'}{'email.table.col.name'};
+		$col =~ s|<%name%>|$col_name|g;
+		$table=~s|<#email.table.col.name#>|$col|g;
+	}
+	foreach (sort {$source{$b}{'value'} <=> $source{$a}{'value'}} keys %source)
+	{
+		my $line = $tpl->{'entity'}{'email.table.line'};
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$_/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$source{$_}{'orders'}/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$source{$_}{'value'}/e;
+			$col =~ s|<%align%>|right|g;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/int($source{$_}{'value'}\/$source{$_}{'orders'})/e;
+			$col =~ s|<%align%>|right|g;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		$table =~ s|<#email.table.line#>|$line|g;
+	}
+	# add table
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$table<#email.content#>|;
+	
+	
+	
+	
+	# SOURCES BY VALUE
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`$App::920::db_name`.a920_order
+		WHERE
+			datetime_order >= DATE_SUB(NOW(),INTERVAL $env{'days'} DAY)
+		ORDER BY
+			datetime_order DESC
+	});
+	my %source_type;
+	my %source;
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$db0_line{'datetime_order'}=~/(\d\d\d\d)\-(\d\d)\-(\d\d) (\d\d)/;
+		my $dt_order=DateTime->new('year' => $1, 'month' => $2, 'day' => $3);
+		my %user=App::301::functions::user_get($db0_line{'ID_user'},'dontactive'=>1);
+		my $cvml=new CVML('data' => $user{'saved_session'});
+		$user{'datetime_register'}=~/(\d\d\d\d)\-(\d\d)\-(\d\d) (\d\d)/;
+		my $dt_register=DateTime->new('year' => $1, 'month' => $2, 'day' => $3);
+		if ($cvml->{'hash'}{'USRM_S'}{'time'})
+		{
+			$dt_register=DateTime->from_epoch( epoch => $cvml->{'hash'}{'USRM_S'}{'time'} );
+		}
+		my $dt_duration=$dt_order-$dt_register;
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				SUM(price_incl_VAT) AS value_sum
+			FROM
+				`$App::920::db_name`.a920_order_product
+			WHERE
+				ID_entity=$db0_line{'ID_entity'}
+			GROUP BY
+				ID_entity
+		},'quiet'=>1);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		
+		my $ref_type=$cvml->{'hash'}{'USRM_S'}{'ref_type'};
+		$ref_type=$cvml->{'hash'}{'USRM_S'}{'utm_medium'} if $cvml->{'hash'}{'USRM_S'}{'utm_medium'};
+		my $ref_type_domain;
+		if ($ref_type)
+		{
+			($ref_type_domain,undef)=TOM::Net::HTTP::domain_clear($cvml->{'hash'}{'USRM_S'}{'referer'});
+		}
+		$ref_type='{undefined}' unless $ref_type;
+		
+		$source_type{$ref_type}{'orders'}++;
+		$source_type{$ref_type}{'value'}+=$db1_line{'value_sum'};
+		
+		my $full_ref=$ref_type;
+		if ($ref_type eq "cpc" || $ref_type eq "banner" || $ref_type eq "affiliate" || $ref_type eq "email" || $ref_type eq "partner")
+		{
+			$full_ref.=":".$cvml->{'hash'}{'USRM_S'}{'utm_campaign'} if $cvml->{'hash'}{'USRM_S'}{'utm_campaign'};
+			$full_ref.=":".$cvml->{'hash'}{'USRM_S'}{'utm_source'} if $cvml->{'hash'}{'USRM_S'}{'utm_source'};
+			$full_ref.=":".$ref_type_domain if (!$cvml->{'hash'}{'USRM_S'}{'utm_source'} && $ref_type_domain);
+		}
+		elsif ($ref_type eq "social")
+		{
+			$full_ref.=":".$ref_type_domain;
+		}
+		elsif ($ref_type eq "search")
+		{
+			$full_ref.=":".$ref_type_domain;
+		}
+		elsif ($ref_type eq "web")
+		{
+			$full_ref.=":".$ref_type_domain;
+		}
+		
+		$source{$full_ref}{'orders'}++;
+		$source{$full_ref}{'value'}+=$db1_line{'value_sum'};
+	}
+	# table
+	my $table=$tpl->{'entity'}{'email.table'};
+	$table =~ s|<%title%>|Source types by order value (CURRENT VISIT)|g;
+	$table =~ s|<%colscount%>|4|g;
+	# list of columns
+	foreach my $col_name ( 'Source', 'Orders', 'Value', 'Avg. value')
+	{
+		my $col = $tpl->{'entity'}{'email.table.col.name'};
+		$col =~ s|<%name%>|$col_name|g;
+		$table=~s|<#email.table.col.name#>|$col|g;
+	}
+	foreach (sort {$source_type{$b}{'value'} <=> $source_type{$a}{'value'}} keys %source_type)
+	{
+		my $line = $tpl->{'entity'}{'email.table.line'};
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$_/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$source_type{$_}{'orders'}/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$source_type{$_}{'value'}/e;
+			$col =~ s|<%align%>|right|g;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/int($source_type{$_}{'value'}\/$source_type{$_}{'orders'})/e;
+			$col =~ s|<%align%>|right|g;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		$table =~ s|<#email.table.line#>|$line|g;
+	}
+	# add table
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$table<#email.content#>|;
+	# table2
+	my $table=$tpl->{'entity'}{'email.table'};
+	$table =~ s|<%title%>|Sources by order value (CURRENT VISIT)|g;
+	$table =~ s|<%colscount%>|4|g;
+	# list of columns
+	foreach my $col_name ( 'Source', 'Orders', 'Value', 'Avg. value')
+	{
+		my $col = $tpl->{'entity'}{'email.table.col.name'};
+		$col =~ s|<%name%>|$col_name|g;
+		$table=~s|<#email.table.col.name#>|$col|g;
+	}
+	foreach (sort {$source{$b}{'value'} <=> $source{$a}{'value'}} keys %source)
+	{
+		my $line = $tpl->{'entity'}{'email.table.line'};
+		my $col = $tpl->{'entity'}{'email.table.col.value_sum'};
+			$col =~ s/<%value%>/$_/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$source{$_}{'orders'}/e;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/$source{$_}{'value'}/e;
+			$col =~ s|<%align%>|right|g;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		my $col = $tpl->{'entity'}{'email.table.col.value'};
+			$col =~ s/<%value%>/int($source{$_}{'value'}\/$source{$_}{'orders'})/e;
+			$col =~ s|<%align%>|right|g;
+			$line =~ s|<#email.table.col.value#>|$col|g;
+		$table =~ s|<#email.table.line#>|$line|g;
+	}
+	# add table
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<#email.content#>|$table<#email.content#>|;
+	
+	
+	
+	
+	# cleaning
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<#.*?#>||gs;
+	$tpl->{'entity'}{'email.xhtml'} =~ s|<%.*?%>||gs;
+	
+	$msg->attach
+	(
+		'Data' => $tpl->{'entity'}{'email.xhtml'},
+		'Type' => "text/html;charset=\"UTF-8\"",
+		'Encoding' => "8bit",
+	);
+	
+	my $i;
+	foreach (@img)
+	{
+		$msg->attach
+		(
+			'Path'       => $img[$i]->{'filename'},
+			'Type'       => "image/png",
+			'Content-ID' => '<'.$i.'@graf>',
+			'Encoding'   => "base64"
+		);
+		$i++;
+	}
+	
+	$msg->attach
+	(
+		'Path'       => $tpl->{'file'}{'cyclone3-150x44.png'}{'dst'},
+		'Type'       => "image/gif",
+		'Content-ID' => "<logo\@cyclone3.org>",
+		'Encoding'   => "base64"
+	);
+	
+	TOM::Net::email::send
+	(
+		'to' => $env{'to_email'},
+		'body' => $msg->as_string()
+	);
+	
+	return 1;
+}
+
+
+our $authors = 'info@webom.sk';
+
+=head1 AUTHOR
+
+WebCom, s.r.o (info@webcom.sk)
+
+=cut
+
+1;

@@ -26,6 +26,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order` (
   `commission` varchar(8) character set ascii default NULL,
   `ERP_source` varchar(8) character set ascii default NULL,
   `ERP_data` longblob,
+  `domain` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N', -- N=new order Y=accepted T=canceled
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
@@ -57,6 +58,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order_j` (
   `commission` varchar(8) character set ascii default NULL,
   `ERP_source` varchar(8) character set ascii default NULL,
   `ERP_data` longblob,
+  `domain` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -69,7 +71,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order_product` (
   `datetime_create` datetime NOT NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
-  `ID_product` bigint(20) unsigned default NULL, -- rel a710_product.ID
+  `ID_product` bigint(20) unsigned default NULL, -- rel a910_product.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
   `type` char(1) character set ascii NOT NULL default 'P',
   `VAT` float NOT NULL, -- VAT percentage
