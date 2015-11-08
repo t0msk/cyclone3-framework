@@ -120,6 +120,10 @@ $tom::H_a501=$tom::H_media."/a501" if (!$tom::H_a501 && $tom::H_media);
 main::_log("db_name='$db_name' H_a501='$tom::H_a501'");
 our $image_format_ext_default=$App::501::image_format_ext_default || 'jpg';
 our $status_default=$App::501::status_default || 'Y';
+our $metadata_default=$App::501::metadata_default || qq{
+<metatree>
+</metatree>
+};
 
 
 
@@ -236,6 +240,7 @@ foreach my $lng(@TOM::LNG_accept)
 
 our $image_format_original_ID;
 our $image_format_fullsize_ID;
+our $image_format_facedebug_ID;
 our $image_format_thumbnail_ID;
 our $image_format_ico_ID;
 
@@ -259,8 +264,7 @@ if (!$db0_line{'ID'})
 		{
 			'name' => "'original'",
 			'required' => "'Y'",
-			'process' => "'set_env(\\'ext\\',\\'jpg\\')
-set_env(\\'quality\\',\\'90\\')
+			'process' => "'set_env(\\'quality\\',\\'95\\')
 downscale(2048,2048)'",
 			'status' => "'L'"
 		}
@@ -294,8 +298,7 @@ if ($image_format_original_ID)
 			{
 				'name' => "'fullsize'",
 				'required' => "'Y'",
-				'process' => "'set_env(\\'ext\\',\\'jpg\\')
-set_env(\\'quality\\',\\'85\\')
+				'process' => "'set_env(\\'quality\\',\\'90\\')
 downscale(640,640)'",
 				'status' => "'L'"
 			}
@@ -370,6 +373,40 @@ thumbnail(16,16)'",
 			$image_format_ico_ID=$db0_line{'ID'};
 		}
 	}
+	
+	
+	my $sql=qq{
+		SELECT ID
+		FROM `$db_name`.a501_image_format
+		WHERE name='face_debug'
+		LIMIT 1;
+	};
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	my %db0_line=$sth0{'sth'}->fetchhash();
+	if (!$db0_line{'ID'})
+	{
+		$image_format_thumbnail_ID=App::020::SQL::functions::tree::new(
+			'parent_ID' => $image_format_fullsize_ID,
+			'db_h' => 'main',
+			'db_name' => $db_name,
+			'tb_name' => 'a501_image_format',
+			'columns' =>
+			{
+				'name' => "'face_debug'",
+				'process' => "'set_env(\\'ext\\',\\'jpg\\')
+set_env(\\'quality\\',\\'85\\')
+face_debug()
+downscale(300,300)'",
+				'status' => "'L'",
+				'required' => "'N'"
+			}
+		);
+	}
+	else
+	{
+		$image_format_facedebug_ID=$db0_line{'ID'};
+	}
+	
 	
 }
 
