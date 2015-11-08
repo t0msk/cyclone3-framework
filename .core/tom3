@@ -1956,7 +1956,11 @@ while ($main::CGI=new CGI::Fast())
 #				_log("https mode is '$env0{'value'}', H_www_https='$tom::H_www_https' current HTTPS mode is '$main::ENV{'HTTPS'}'",3,"debug");
 				if ($env0{'value'} eq "required")
 				{
-					$main::env{'https'}=1;
+					$main::env{'https'} = 'required';
+				}
+				elsif ($env0{'value'} eq "allowed")
+				{
+					$main::env{'https'} = 'allowed';
 				}
 				next;
 			}
@@ -2384,7 +2388,12 @@ while ($main::CGI=new CGI::Fast())
 								||
 								(
 									$tom::H_www_https_onlyifrequired
-									&& $main::env{'https'}
+									&& $main::env{'https'} eq "required"
+								)
+								||
+								(
+									$main::ENV{'HTTPS'} eq "on"
+									&& $main::env{'https'} eq "allowed"
 								)
 							)
 					)
