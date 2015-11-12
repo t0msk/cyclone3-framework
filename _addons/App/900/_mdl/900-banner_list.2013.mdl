@@ -260,7 +260,8 @@ sub execute
 		INNER JOIN $App::900::db_name.a900_banner_lng AS banner_lng ON
 		(
 			banner_lng.ID_entity = banner.ID_entity AND
-			banner_lng.lng = '$env{'lng'}'
+			banner_lng.lng = '$env{'lng'}' AND
+			banner_lng.status = 'Y'
 		)
 		LEFT JOIN `$App::900::db_name`.a900_banner_zonetarget AS banner_zonetarget ON
 		(
