@@ -596,7 +596,7 @@ while ($main::CGI=new CGI::Fast())
 		main::_log("input QUERY_STRING='$ENV{'QUERY_STRING'}'");
 		main::_log("input CONTENT_TYPE='$ENV{'CONTENT_TYPE'}' CONTENT_LENGTH='$ENV{'CONTENT_LENGTH'}'");
 		
-		my $t_querystring=track TOM::Debug("QUERY_STRING processing");
+		my $t_querystring=track TOM::Debug("query");
 		
 		
 		if (my $hacked=TOM::Net::HTTP::hacked::check($main::ENV{'REQUEST_URI'}))
@@ -628,7 +628,7 @@ while ($main::CGI=new CGI::Fast())
 		
 		# odstranim ak sa tu este nachadza
 		# (niektore vyhladavace ho tam nechavaju = je to znak '?')
-		main::_log('%3F cleaning');
+#		main::_log('%3F cleaning');
 		$ENV{'QUERY_STRING'}=~s/^%3F//;
 		
 		# ak potrebujem hackovat
@@ -798,7 +798,7 @@ while ($main::CGI=new CGI::Fast())
 		
 		$main::ENV{'QUERY_STRING_FULL'}=TOM::Net::URI::URL::genGET(%main::FORM);
 		
-		main::_log("output QUERY_STRING_FULL='$main::ENV{'QUERY_STRING_FULL'}'");
+		main::_log("QUERY_STRING_FULL='$main::ENV{'QUERY_STRING_FULL'}'");
 		
 		$t_querystring->close();
 		
@@ -2709,6 +2709,7 @@ while ($main::CGI=new CGI::Fast())
 					'location' => $out
 				);
 				print "Status: $main::location_code Found\n";
+				print "C3-Request: $main::request_code\n";
 				print "Location: $out\n\n";
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				
@@ -2804,6 +2805,7 @@ while ($main::CGI=new CGI::Fast())
 					'location' => $URI_base.$tom::rewrite_RewriteBase.$link
 				);
 				print "Status: $main::location_code Found\n";
+				print "C3-Request: $main::request_code\n";
 				print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				
