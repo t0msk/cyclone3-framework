@@ -202,10 +202,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_lng` ( -- language versions of produ
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
-  FULLTEXT KEY `FULL_0` (`name`,`name_long`,`name_label`,`description_short`,`description`,`keywords`),
+--  FULLTEXT KEY `FULL_0` (`name`,`name_long`,`name_label`,`description_short`,`description`,`keywords`),
   KEY `lng` (`lng`),
-  KEY `status` (`status`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  KEY `SEL_0` (`status`,`name_url`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -260,7 +260,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_brand` (
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
-  UNIQUE KEY `UNI_0` (`ID_entity`)
+  UNIQUE KEY `UNI_0` (`ID_entity`),
+  KEY `SEL_0` (`status`,`name_url`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
