@@ -1867,7 +1867,7 @@ sub _product_index
 				main::_log("removing from Elastic",1);
 				$Elastic->delete(
 					'index' => 'cyclone3.'.$App::910::db_name,
-					'type' => 'a910_article',
+					'type' => 'a910_product',
 					'id' => $env{'ID'}
 				);
 			}
@@ -1899,6 +1899,7 @@ sub _product_index
 		},'quiet'=>1,'bind'=>[$env{'ID'}]);
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
+			push @{$product{'name'}},$db0_line{'name'};
 			%{$product{'locale'}{$db0_line{'lng'}}}=%db0_line;
 		}
 		
