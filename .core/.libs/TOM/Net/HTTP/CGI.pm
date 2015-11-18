@@ -313,11 +313,12 @@ sub get_CGI
 	my $query=shift;
 	my %form;
 	
-	main::_log("query='$query'");
+	main::_log("query='$query'") if $query;
 	
 	# parse GET method
 	
-	my %form_qs=get_QUERY_STRING($query);
+	my %form_qs;
+		%form_qs=get_QUERY_STRING($query) if $query;
 	foreach my $key(keys %form_qs)
 	{
 		$form{$key}=$form_qs{$key};
