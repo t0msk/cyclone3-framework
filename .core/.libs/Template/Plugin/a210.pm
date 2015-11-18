@@ -58,7 +58,7 @@ sub get_path_url {
 				AND lng = ?
 		},
 		'-slave' => 1,
-		'-cache' => 60,
+		'-cache' => 600,
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%sql_def),
 		'bind' => [
 			$env->{'ID_entity'},
@@ -122,7 +122,7 @@ sub get_node {
 				AND lng = ?
 		},
 		'-slave' => 1,
-		'-cache' => 60,
+		'-cache' => 600,
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%sql_def),
 		'bind' => [
 			$env->{'ID_entity'},
