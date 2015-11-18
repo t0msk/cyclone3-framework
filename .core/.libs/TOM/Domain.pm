@@ -41,6 +41,7 @@ BEGIN
 			$tom::P_media=$tom::P."/!media"; # redefine P_media
 			main::_log_stdout("require $tom::P/local.conf");
 			require $tom::P."/local.conf";
+			main::_log("tom::Pm=$tom::Pm");
 			
 			# save original tom::H
 			$tom::H_orig=$tom::H;

@@ -131,14 +131,16 @@ BEGIN
 		unless $tom::P;
 	
 	# try to find domain service local.conf
-	my $tomP=$tom::P;#$tomP=~s|^$TOM::P/||;
+	my $tomP=$tom::P;
 	my $max_skip=()=$tomP=~/\//g;
 	for (0..$max_skip)
 	{
-#		if (-e $TOM::P.'/'.$tomP.'/local.conf'){$tom::P=$TOM::P.'/'.$tomP;last;}
 		if (-e $tomP.'/local.conf'){$tom::P=$tomP;last;}
 		$tomP=~s|^(.*)\/.*$|$1|;
 	}
+	# try to find domains/data directory (by default same as Cyclone3 installation directory)
+	my $tomP=$tom::P;$tomP=~s|^(.*?)/\!.*$|$1|;
+	$TOM::DP=$ENV{'CYCLONE3DOMAINPATH'} || $tomP;
 	
 	# undef $tom::P if here is not domain service
 	$tom::P=$TOM::P unless -e $tom::P.'/local.conf';
@@ -155,7 +157,7 @@ BEGIN
 	#open(STDERR,">>$TOM::P/_logs/[".$TOM::hostname."]STDERR.log");
 	
 	# C a C++ libraries
-	$TOM::InlineDIR="$TOM::P/_temp/_Inline.[".$TOM::hostname."]";
+	$TOM::InlineDIR=$TOM::P."/_temp/_Inline.[".$TOM::hostname."]";
 	mkdir $TOM::InlineDIR if (! -e $TOM::InlineDIR);
 	
 	$main::time_current=$main::time_start=time();
