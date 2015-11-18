@@ -25,7 +25,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_page` (
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
-  UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`)
+  UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
+  KEY `SEL_0` (`status`,`name_url`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -49,5 +50,6 @@ CREATE TABLE `/*db_name*/`.`/*app*/_page_j` (
   `lng` char(5) character set ascii NOT NULL default '',
   `visible` char(1) character set ascii NOT NULL default 'Y',
   `status` char(1) character set ascii NOT NULL default 'N',
-  PRIMARY KEY  (`ID`,`datetime_create`)
+  PRIMARY KEY  (`ID`,`datetime_create`),
+  KEY `SEL_0` (`name_url`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
