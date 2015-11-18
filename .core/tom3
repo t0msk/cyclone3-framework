@@ -894,7 +894,7 @@ while ($main::CGI=new CGI::Fast())
 					$var=TOM::Net::URI::URL::genGET(%form);
 				}
 				
-				main::_log("rewrite='$rewrite' URL='$var'");
+				main::_log("rewrite_domain='$rewrite_domain' rewrite='$rewrite' URL='$var'");
 				my $link;
 				if
 					(
@@ -926,9 +926,9 @@ while ($main::CGI=new CGI::Fast())
 					$link="$rewrite";
 				}
 				
-				main::_log("URL='$link'");
+				main::_log("URL='$rewrite_domain/$link'");
 				
-				my $URI_base=$rewrite_domain || $tom::H_www;
+				my $URI_base=$rewrite_domain || $tom::H_www_orig;
 					$URI_base=~s|$tom::rewrite_RewriteBase$||;
 				my $URI_enh="$tom::rewrite_RewriteBase$link";
 				$URI_base.='/' unless $URI_enh=~/^\//;
@@ -2730,7 +2730,7 @@ while ($main::CGI=new CGI::Fast())
 				my ($rewrite_domain,$rewrite)=TOM::Net::URI::rewrite::parse_hash(\%form);
 					$rewrite="/".$rewrite;
 				
-				main::_log("rewrited part is '$rewrite'");
+				main::_log("rewrited part is '$rewrite' domain='$rewrite_domain'");
 				my $link;
 				my $var='';
 				if (keys %form > 0)
@@ -2781,7 +2781,7 @@ while ($main::CGI=new CGI::Fast())
 					{
 						$tom::H_www_https
 					}
-				} || $tom::H_www;
+				} || $tom::H_www_orig;
 					$URI_base=~s|$tom::rewrite_RewriteBase$||;
 				my $URI_enh="$tom::rewrite_RewriteBase$link";
 				$URI_base.='/' unless $URI_enh=~/^\//;
