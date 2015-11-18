@@ -789,11 +789,11 @@ sub execute
 		if ($filename_)
 		{
 			$caller_plus.="/$package_:$filename_:$line_";
-			($package_, $filename_, $line_) = caller(2);
-			if ($filename_)
-			{
-				$caller_plus.="/$package_:$filename_:$line_";
-			}
+#			($package_, $filename_, $line_) = caller(2);
+#			if ($filename_)
+#			{
+#				$caller_plus.="/$package_:$filename_:$line_";
+#			}
 		}
 		main::_log($SQL_orig,{
 			'severity' => 3,
