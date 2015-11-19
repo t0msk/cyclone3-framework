@@ -102,6 +102,7 @@ BEGIN
 	require Ext::Redis::_init if ($Ext::Redis::host || @Ext::Redis::hosts);
 	require Ext::CacheMemcache::_init if $TOM::CACHE_memcached && !$Ext::CacheMemcache::cache;
 	use TOM::Engine::job::module; # for every engine load support of jobs
+	use TOM::request;
 }
 
 # default aplikácie

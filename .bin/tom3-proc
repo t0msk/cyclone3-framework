@@ -24,6 +24,7 @@ if (($FORM{h})||($FORM{help})){&help();}
 
 use Proc::ProcessTable;
 use DateTime;
+use Ext::Redis::_init;
 
 while(1)
 {
@@ -147,15 +148,12 @@ while(1)
 				
 				$print_out.= "[".sprintf('%5s',$hosts{$host}[$_]{'pid'})."]";
 				
-				if ($TOM::CACHE_memcached)
+				if ($Redis)
 				{
 					# additional data
-					
-					if (my $vals=$Ext::CacheMemcache::cache->get('namespace'=>'c3process','key' => $TOM::hostname.':'.$hosts{$host}[$_]{'pid'}))
+					my $vals={@{$Redis->hgetall('c3process|'.$TOM::hostname.':'.$hosts{$host}[$_]{'pid'})}};
+					if ($vals->{'time'})
 					{
-#						use Data::Dumper;
-#						print Dumper($vals);
-#						exit;
 						$print_out.= "[";
 						my $idle=(time() - $vals->{'time'});
 #						if ($idle > 5){print color 'bold cyan'}
@@ -202,9 +200,9 @@ while(1)
 							{
 								$print_out.= color 'bold yellow';
 							}
+							$print_out.=sprintf('%.70s',$vals->{'host'}.$vals->{'request'});
+							$print_out.= "]";
 						}
-						$print_out.=sprintf('%.70s',$vals->{'http_host'}.$vals->{'request_uri'});
-						$print_out.= "]";
 						
 					}
 					elsif ($hosts{$host}[$_]{'request'})
