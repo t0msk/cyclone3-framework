@@ -258,14 +258,14 @@ sub running
 			{
 				if (-e '/proc/'.$run_PID)
 				{
-					main::_log("this job is already running \@$run_hostname:$run_PID, skip",1);
+					main::_log("this job is already running \@$run_hostname:$run_PID, skip");
 					delete $self->{'_running'};
 					return 1;
 				}
 			}
 			else
 			{
-				main::_log("this job is already running \@$run_hostname:$run_PID, skip",1);
+				main::_log("this job is already running \@$run_hostname:$run_PID, skip");
 				delete $self->{'_running'};
 				return 1;
 			}
@@ -340,7 +340,7 @@ sub jobify # prepare function call to background
 				'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
 			);
 			$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
-			$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,15,sub {});
+			$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,10,sub {});
 		}
 	}
 	else
