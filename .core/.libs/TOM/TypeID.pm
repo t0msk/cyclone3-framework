@@ -91,7 +91,7 @@ sub parse_conf
 				else
 				{
 					die "can't import type.conf named 'type.$cmd[1].conf'" if $important;
-					main::_log("can't import type.conf named 'type.$cmd[1].conf'",1);
+					main::_log("can't found type.conf named 'type.$cmd[1].conf'");
 				}
 			}
 			next;
