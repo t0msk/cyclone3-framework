@@ -80,9 +80,9 @@ $db\_c.draw LINE
 
 foreach my $db (sort keys %db_h)
 {
-	print "$db\_r.value ".(int($db_h{$db}{'r_exec'}/2/60*10)/10)."\n";
-	print "$db\_w.value ".(int($db_h{$db}{'w_exec'}/2/60*10)/10)."\n";
-	print "$db\_c.value ".(int($db_h{$db}{'cache_hit'}/2/60*10)/10)."\n";
+	print "$db\_r.value ".(int($db_h{$db}{'r_exec'}/2/60*100)/100)."\n";
+	print "$db\_w.value ".(int($db_h{$db}{'w_exec'}/2/60*100)/100)."\n";
+	print "$db\_c.value ".(int($db_h{$db}{'cache_hit'}/2/60*100)/100)."\n";
 #		if $db_h{$db}{'exec'};
 #	print "$db.value ".int($db_h{$db}{'durr'}/$db_h{$db}{'exec'})."\n"
 #		if $db_h{$db}{'exec'};
