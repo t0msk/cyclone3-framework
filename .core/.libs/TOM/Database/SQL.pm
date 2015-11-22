@@ -720,6 +720,18 @@ sub execute
 	
 	$t->close();
 	
+	local ($tom::Tsec, $tom::Tmin, $tom::Thour, $tom::Tmday, $tom::Tmon, $tom::Tyear, $tom::Twday, $tom::Tyday, $tom::Tisdst) = localtime(time());
+	$tom::Tyear+=1900;$tom::Tmon++;
+	local ($tom::Fsec, $tom::Fmin, $tom::Fhour, $tom::Fmday, $tom::Fmon, $tom::Fyear, $tom::Fwday, $tom::Fyday, $tom::Fisdst ) = (
+		sprintf ('%02d', $tom::Tsec),
+		sprintf ('%02d', $tom::Tmin),
+		sprintf ('%02d', $tom::Thour),
+		sprintf ('%02d', $tom::Tmday),
+		sprintf ('%02d', $tom::Tmon),
+		$tom::Tyear,
+		$tom::Twday,
+		$tom::Tyday,
+		$tom::Tisdst);
 	my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
 	if ($TOM::DEBUG_cache && $Redis)
 	{
