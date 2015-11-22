@@ -1080,8 +1080,10 @@ sub product_add
 				'ID_entity'=>$db0_line{'ID'}}
 			);
 			# reindex this product
-			_product_index('ID'=>$db0_line{'ID'}, 'commit' => $env{'commit'});
-			
+			if (not exists $env{'index'} || $env{'index'})
+			{
+				_product_index('ID'=>$db0_line{'ID'}, 'commit' => $env{'commit'});
+			}
 		}
 	}
 	elsif ($content_reindex)
@@ -1095,7 +1097,10 @@ sub product_add
 			'ID_entity'=>$env{'product.ID'}}
 		);
 		# reindex this product
-		_product_index('ID'=>$env{'product.ID'}, 'commit' => $env{'commit'});
+		if (not exists $env{'index'} || $env{'index'})
+		{
+			_product_index('ID'=>$env{'product.ID'}, 'commit' => $env{'commit'});
+		}
 	}
 	
 	$t->close();
@@ -1108,6 +1113,13 @@ sub _product_index
 	my %env=@_;
 #	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer'});
 #		unless $env{'-jobify'}; # do it in background
+
+	if ($env{'-jobify'})
+	{
+#		main::_log("try jobify");
+		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer'});
+	}
+
 	return undef unless $env{'ID'}; # product.ID
 	
 	my $t=track TOM::Debug(__PACKAGE__."::_product_index($env{'ID'})",'timer'=>1);
