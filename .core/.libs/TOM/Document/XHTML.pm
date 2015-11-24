@@ -124,6 +124,12 @@ sub add_DOC_link
 {
 	my $self=shift;
 	my %env=@_; 
+	
+	if ($env{'href'}=~s/^\?\|\?//)
+	{
+		$env{'href'}=TOM::Document::base::url_generate($env{'href'});
+	}
+	
 	push @{$self->{'env'}{'DOC_css_link'}},{%env};
 	return 1;
 }
