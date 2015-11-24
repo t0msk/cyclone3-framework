@@ -324,6 +324,16 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_karma` (
 -- --------------------------------------------------
 -- db_name=TOM
 
+CREATE TABLE `/*db_name*/`.`/*addon*/_receipt` (
+  `ID` varchar(256) character set utf8 collate utf8_bin NOT NULL,
+  `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel _user.ID_user
+  `datetime_create` date NOT NULL,
+  PRIMARY KEY  (`ID`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+-- db_name=TOM
+
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_emo` ( -- experimental EMO characteristics
   `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel _user.ID_user
   `date_event` date NOT NULL,
