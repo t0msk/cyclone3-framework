@@ -86,6 +86,30 @@ sub execute
 		$sql_where.=" AND `a210_page`.ID_charindex LIKE ?";
 	}
 	
+	main::_log(qq{
+		SELECT
+			`a210_page`.*
+			,a430_list_relation.rel_name
+		FROM
+			`$App::210::db_name`.`a210_page`
+		INNER JOIN `$App::430::db_name`.a160_relation AS a430_list_relation ON
+		(
+			a430_list_relation.l_prefix = 'a430' AND
+			a430_list_relation.l_table = 'list' AND
+			a430_list_relation.l_ID_entity = $env{'a430_list.ID'} AND
+			a430_list_relation.r_prefix = 'a210' AND
+			a430_list_relation.r_table = 'page' AND
+			a430_list_relation.r_ID_entity = `a210_page`.ID_entity AND
+			a430_list_relation.status = 'Y'
+		)
+		WHERE
+			`a210_page`.lng = ?
+			AND `a210_page`.status IN ('Y','L')
+			$sql_where
+		ORDER BY
+			$env{'db_order'}
+	});
+	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			`a210_page`.*
