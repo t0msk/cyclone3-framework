@@ -812,11 +812,6 @@ sub execute
 			'facility' => 'sql',
 			'data' => {
 				'exec_iswrite_i' => do {if ($typeselect || $env{'cache_force'}){0}else{1}},
-				'exec_reqslave_i' => do {
-					if ($typeselect || $env{'cache_force'}){
-						if ($env{'slave'}){1}else{0}	
-					}else{}
-				},
 				'exec_s' => 'db', # or 'cache'
 				'rows_i' => $output{'rows'},
 				'db_h_s' => $env{'db_h'},
@@ -824,7 +819,12 @@ sub execute
 				'caller' => [
 					{'p_s' => $package,'f_s' => $filename,'l_i' => $line},
 #					{'p_s' => $package_,'f_s' => $filename_,'l_i' => $line_}
-				]
+				],
+				'exec_reqslave_i' => do {
+					if ($typeselect || $env{'cache_force'}){
+						if ($env{'slave'}){1}else{0}	
+					}else{undef}
+				}
 			}
 		})
 	}
