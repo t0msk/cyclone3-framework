@@ -22,8 +22,9 @@ sub execute
 		main::_log("only running under domain",1);
 		return undef;
 	}
+#	$main::cache=0;
 	
-	# clean freezed W statuses (encoding running longer than 7 hours?)
+	# clean freezed W statuses (encoding running longer than 24 hours?)
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
 			*
@@ -32,17 +33,45 @@ sub execute
 		WHERE
 			status = 'W'
 			AND datetime_start <= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-		LIMIT 5
 	},'quiet'=>1);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
+		main::_log("old process hostname='$db0_line{'hostname'}' PID='$db0_line{'hostname_PID'}' started at '$db0_line{'datetime_start'}', removing lock",1);
 		TOM::Database::SQL::execute(qq{
 			DELETE FROM `$App::510::db_name`.a510_video_part_file_process
 			WHERE ID=?
 			LIMIT 1
 		},'bind'=>[$db0_line{'ID'}],'quiet'=>1);
 	}
-	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			`$App::510::db_name`.a510_video_part_file_process
+		WHERE
+			status = 'W'
+			AND datetime_start <= DATE_SUB(NOW(), INTERVAL 30 MINUTE)
+	},'quiet'=>1);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("old process hostname='$db0_line{'hostname'}' PID='$db0_line{'hostname_PID'}' started at '$db0_line{'datetime_start'}'");
+		if ($db0_line{'hostname'} eq $TOM::hostname )
+		{
+			my $exists = kill 0, $db0_line{'hostname_PID'};
+			if ($exists)
+			{
+			}
+			else
+			{
+				main::_log("this PID is already not running, removing lock",1);
+				TOM::Database::SQL::execute(qq{
+					DELETE FROM `$App::510::db_name`.a510_video_part_file_process
+					WHERE ID=?
+					LIMIT 1
+				},'bind'=>[$db0_line{'ID'}],'quiet'=>1);
+			}
+		}
+	}
 	
 	# check files without info (W status)
 	my %sth0=TOM::Database::SQL::execute(qq{
@@ -139,13 +168,59 @@ sub execute
 	}
 	
 	use Data::Dumper;
-	foreach my $video_part_file (App::510::functions::get_video_part_file_process_front('limit'=>20))
+	foreach my $video_part_file (App::510::functions::get_video_part_file_process_front('limit'=>50))
 	{
 		next unless $video_part_file->{'ID_part'};
-#		print Dumper($video_part_file);
-#		next;
+		my $slot;
+		
+		main::_log("video.ID_entity=".$video_part_file->{'ID_entity_video'});
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				video_cat.ID
+			FROM
+				`$App::510::db_name`.a510_video AS video
+			INNER JOIN `$App::510::db_name`.a510_video_ent AS video_ent ON
+			(
+				video_ent.ID_entity = video.ID_entity AND
+				video_ent.status IN ('Y','L')
+			)
+			INNER JOIN `$App::510::db_name`.a510_video_attrs AS video_attrs ON
+			(
+				video_attrs.ID_entity = video.ID AND
+				video_attrs.status IN ('Y','L','N')
+			)
+			LEFT JOIN `$App::510::db_name`.a510_video_cat AS video_cat ON
+			(
+				video_cat.ID_entity = video_attrs.ID_category AND
+				video_cat.status IN ('Y','L','N')
+			)
+			WHERE
+				video.status IN ('Y','L') AND
+				video.ID_entity = ?
+			LIMIT 1
+		},'quiet'=>1,'bind'=>[$video_part_file->{'ID_entity_video'}]);
+		my %db0_line=$sth0{'sth'}->fetchhash();
+		my $cat=$db0_line{'ID'};
+		if ($cat)
+		{
+			main::_log(" category=".$cat);
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$cat,
+					'db_h' => "main",'db_name' => $App::510::db_name,'tb_name' => "a510_video_cat",
+					'columns' => { '*' => 1 },'-slave' => 1,'-cache' => 600
+				)
+			)
+			{
+				main::_log(" cat $p->{'ID_entity'} slot ".$p->{'encoder_slot'});
+				$slot=$p->{'encoder_slot'}
+					if defined $p->{'encoder_slot'};
+			}
+		}
+		
 		App::510::functions::video_part_file_generate(
 				'-jobify' => 1,
+				'-encoder_slot' => $slot,
 			'video_part.ID' => $video_part_file->{'ID_part'},
 			'video_format.ID' => $video_part_file->{'ID_entity_format'}
 		);
