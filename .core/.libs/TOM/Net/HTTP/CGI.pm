@@ -414,6 +414,7 @@ sub get_CGI
 	
 	if ($form{'POSTDATA'})
 	{
+		main::_log("received POSTDATA");
 		# process SOAP data
 		if ($TOM::Document::type eq "soap")
 		{
