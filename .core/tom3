@@ -378,21 +378,26 @@ while ($main::CGI=new CGI::Fast())
 #		next;
 #	}
 	
-	if ($TOM::CACHE && $TOM::CACHE_memcached) # set info into memcached Cyclone3 processtable
-	{
-		$Ext::CacheMemcache::cache->set(
-			'namespace'=>"c3process",
-			'key' => $TOM::hostname.':'.$$,
-			'value' => {
-				'time' => time(),
-				'start' => $TOM::time_start,
-				'count' => $tom::count,
-				'request_code' => $main::request_code,
-				'http_host' => $main::ENV{'HTTP_HOST'},
-				'request_uri' => $main::ENV{'REQUEST_URI'},
-			}
-		);
-	}
+	my $tom_request=new TOM::request({
+		'host' => $main::ENV{'HTTP_HOST'},
+		'request' => $main::ENV{'REQUEST_URI'}
+	});
+	
+#	if ($TOM::CACHE && $TOM::CACHE_memcached) # set info into memcached Cyclone3 processtable
+#	{
+#		$Ext::CacheMemcache::cache->set(
+#			'namespace'=>"c3process",
+#			'key' => $TOM::hostname.':'.$$,
+#			'value' => {
+#				'time' => time(),
+#				'start' => $TOM::time_start,
+#				'count' => $tom::count,
+#				'request_code' => $main::request_code,
+#				'http_host' => $main::ENV{'HTTP_HOST'},
+#				'request_uri' => $main::ENV{'REQUEST_URI'},
+#			}
+#		);
+#	}
 	
 	$t_preeval->close();
 	eval
@@ -478,7 +483,7 @@ while ($main::CGI=new CGI::Fast())
 			$t_preprocess->close();
 			$t_eval->close();
 			$t_request->close();
-			if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#			if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 			next;
 		}
 		
@@ -527,7 +532,7 @@ while ($main::CGI=new CGI::Fast())
 				$t_eval->close();
 				$t_request->close();
 				TOM::Warning::engine(@ERR);
-				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 				next;
 			}
 			
@@ -614,7 +619,7 @@ while ($main::CGI=new CGI::Fast())
 			$t_preprocess->close();
 			$t_eval->close();
 			$t_request->close();
-			if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#			if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 			next;
 		}
 		
@@ -844,7 +849,7 @@ while ($main::CGI=new CGI::Fast())
 				
 				print "<HTML><HEAD></HEAD><BODY><H1>$code</H1></BODY></HTML>\n";
 				
-				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 				next;
 			}
 			
@@ -873,7 +878,7 @@ while ($main::CGI=new CGI::Fast())
 				print "C3-Request: $main::request_code\n";
 				print "Location: $out\n\n";
 				
-				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 				next;
 			}
 			
@@ -952,7 +957,7 @@ while ($main::CGI=new CGI::Fast())
 				print "C3-Request: $main::request_code\n";
 				print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 				
-				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 				next;
 			}
 			
@@ -982,7 +987,7 @@ while ($main::CGI=new CGI::Fast())
 			print "C3-Request: $main::request_code\n";
 			print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 			
-			if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#			if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 			next;
 		}
 		
@@ -1177,7 +1182,7 @@ while ($main::CGI=new CGI::Fast())
 				print "C3-Request: $main::request_code\n";
 				print "Location: $URL\n\n";
 				
-				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 				next;
 			}
 			else
@@ -1391,7 +1396,7 @@ while ($main::CGI=new CGI::Fast())
 					
 					print "Status: 304 Not Modified\n\n";
 					
-					if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#					if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 					next;
 				}
 				
@@ -2496,7 +2501,7 @@ while ($main::CGI=new CGI::Fast())
 				
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				
-				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 				next;
 			}
 			
@@ -2657,7 +2662,7 @@ while ($main::CGI=new CGI::Fast())
 				print "Status: $code Unknown\n\n";
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				
-				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 				next;
 			}
 			
@@ -2686,7 +2691,7 @@ while ($main::CGI=new CGI::Fast())
 				print "Location: $out\n\n";
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				
-				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 				next;
 			}
 			
@@ -2713,7 +2718,7 @@ while ($main::CGI=new CGI::Fast())
 				print "Location: $out\n\n";
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				
-				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 				next;
 			}
 			
@@ -2809,7 +2814,7 @@ while ($main::CGI=new CGI::Fast())
 				print "Location: $URI_base$tom::rewrite_RewriteBase$link\n\n";
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				
-				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 				next;
 			}
 			$t_301->close();
@@ -3244,7 +3249,7 @@ while ($main::CGI=new CGI::Fast())
 		
 #		main::_log("ID_user='".($main::USRM{'ID_user'} || $main::USRM{'IDhash'} || '        ').":".($main::USRM{'logged'} || ' ')."' IP='".($main::ENV{'REMOTE_ADDR'})."' QUERY='$main::ENV{QUERY_STRING_FULL}' REFERER='$main::ENV{HTTP_REFERER}' UserAgent='$main::UserAgent_name'/'$main::ENV{'HTTP_USER_AGENT'}'",3,'pub.track');
 		
-		if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#		if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 		
 		TOM::Debug::pub::request(
 			'duration' => $t_eval->{'time'}{'duration'},
@@ -3330,7 +3335,7 @@ while ($main::CGI=new CGI::Fast())
 			($TOM::max_time <= ($main::time_current-$TOM::time_start))
 		)
 	{
-		if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+#		if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
 		
 		main::_log("SHUTDOWN (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3);
 		main::_log("SHUTDOWN (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
