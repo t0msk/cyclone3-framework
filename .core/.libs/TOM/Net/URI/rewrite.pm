@@ -17,7 +17,7 @@ use charnames ':full';
 use Digest::MD5  qw(md5 md5_hex md5_base64);
 use Int::charsets::encode;
 
-my $debug=0;
+our $debug=0;
 
 our @rules;
 
@@ -244,7 +244,8 @@ sub parse_hash
 	
 	for my $rule(0..@rules-1)
 	{
-		main::_log("[$rule] checking rule") if $debug;
+		my $row=$rules[$rule]->{'row'};
+		main::_log("#$row checking rule") if $debug;
 		
 		my $true=1;
 		foreach my $kluc(keys %{$rules[$rule]{'GET'}})
@@ -256,7 +257,7 @@ sub parse_hash
 			# porovnanie na hodnotu kluca
 			if ($rules[$rule]{'GET'}{$kluc})
 			{
-				main::_log("[$rule] proc key '$kluc' requested value '$rules[$rule]{'GET'}{$kluc}'") if $debug;
+				main::_log("#$row proc key '$kluc' requested value '$rules[$rule]{'GET'}{$kluc}'") if $debug;
 				if ($rules[$rule]{'GET'}{$kluc} eq $hash->{$kluc})
 				{
 					next;
@@ -269,7 +270,7 @@ sub parse_hash
 			}
 			elsif (defined $rules[$rule]{'GET'}{$kluc})
 			{
-				main::_log("[$rule] proc key '$kluc' requested empty value ''") if $debug;
+				main::_log("#$row proc key '$kluc' requested empty value ''") if $debug;
 				if ($rules[$rule]{'GET'}{$kluc} eq $hash->{$kluc})
 				{
 					next;
@@ -283,7 +284,7 @@ sub parse_hash
 			# porovnanie na existenciu kluca
 			else
 			{
-				main::_log("[$rule] proc key '$kluc' requested any value") if $debug;
+				main::_log("#$row proc key '$kluc' requested any value") if $debug;
 #				if (defined $hash->{$kluc})
 				if ($hash->{$kluc})
 				{
@@ -296,14 +297,34 @@ sub parse_hash
 		
 		if ($true)
 		{
-			main::_log("[$rule] rule equals") if $debug;
+			main::_log("#$row rule equals") if $debug;
 			
 			# VYTVORENIE LINKY
 			my $URL;
 			foreach my $reference(@{$rules[$rule]{'URL'}})
 			{
 				
-				if ($reference->{dynamic}) # ak je tato cast dynamicka
+				
+#				next unless $kluc->{'test'};
+#				my $fnc=$kluc->{'test'};
+#				main::_log(" test ".($i-1)." '".($url[$i-1])."' test='".$kluc->{'test'}."'") if $debug;
+#				no strict 'refs';
+#				if (!$fnc->($url[$i-1],\%hash))
+#				{
+#					undef $test;
+#					last;
+#				}
+				if ($reference->{'test'})
+				{
+					my $fnc=$reference->{'test'};
+					no strict 'refs';
+					$fnc->(\$hash->{$reference->{'name'}},$hash);
+					
+					$URL.=$reference->{'before'}.$hash->{$reference->{'name'}}.$reference->{'after'};
+					
+					next;
+				}
+				elsif ($reference->{'dynamic'}) # ak je tato cast dynamicka
 				{
 					
 					#TYPE
@@ -374,16 +395,30 @@ sub parse_hash
 }
 
 
+sub test
+{
+	my $string=shift;
+	my $hash=shift;
+	if ($string) # this is test
+	{
+		$hash->{'test'}='test';
+		return 1;
+	}
+	else # this is link generation
+	{
+		$string='test';
+		delete $hash->{'test'};
+		return 1;
+	}
+}
 
 
 sub parse_URL
 {
 	my $URL=shift;
 	my %metahash;
-	my %hash;
-	my %hash_cookies;
 	
-	my $t=track TOM::Debug(__PACKAGE__."::parse_URL()");
+	my $t=track TOM::Debug(__PACKAGE__."::parse_URL()",'timer'=>1);
 	
 	# odstranim woloviny
 	#$URL=~s|^.*?~||;
@@ -395,8 +430,6 @@ sub parse_URL
 	}
 	
 	$URL=~s|^/||;
-	#$URL=~s|^.*?-||;
-#	$URL=~s|^(.*)\.html.*|$1|;
 	$URL=~s|\?.*$||;
 	
 	#main::_log("rewriting '$URL'");
@@ -410,60 +443,16 @@ sub parse_URL
 	
 	for my $rule(0..@rules-1)
 	{
-		
-		#main::_log("rule $rule");
-		
+		my %hash;
 		my $regexp=regexp($rule);
 		my $true;
 		
-		main::_log("rule $rule '$URL'=~'$regexp'") if $debug;
+		main::_log("rule at row #".$rules[$rule]->{'row'}." '$URL'=~'$regexp'") if $debug;
 		
 		if (@url=($URL=~/$regexp/))
 		{
-			main::_log("success") if $debug;
-			$true=1;
-		}
-		
-		if ($true)
-		{
-			main::_log("converting rule '$rule' to \%hash") if $debug;
-			#print " priradujem podla URL dynamicke\n" if $main::debug;
 			
-			# ------------------------------
-			#return %metahash;
-			# ------------------------------
-			
-			
-			main::_log("convert by splitted URL");
-			my $i=-1;
-			foreach my $kluc(@{$rules[$rule]{'URL'}})
-			{
-				$i++;
-				main::_log("part $i with variable named '".$kluc->{name}."'") if $debug;
-				
-				if ($kluc->{dynamic}) # ak je tato premenna dynamicka
-				{
-					# ak je definovany defaultna hodnota a v URL je tato hodnota
-					if ((exists $kluc->{default})&&($url[$i] eq $kluc->{default}))
-					{
-						next;
-					}
-					# ak nieje definovana defaultna hodnota a v URL je hodnota "default"
-					elsif ((not exists $kluc->{default})&&($url[$i] eq "default"))
-					{
-						next;
-					}
-					# inak beriem hodnotu v URL ako danu a prevezmem ju
-					if ($kluc->{source} eq "GET")
-					{
-						main::_log("GET: '".$kluc->{name}."'='".$url[$i]."'") if $debug;
-						$hash{$kluc->{name}}=$url[$i];
-					}
-					next;
-				}
-			}
-			
-			main::_log("convert by splitted GET");
+			main::_log("convert by splitted GET") if $debug;
 			foreach my $kluc(keys %{$rules[$rule]{'GET'}})
 			{
 				if ($rules[$rule]{'GET'}{$kluc})
@@ -473,14 +462,73 @@ sub parse_URL
 				}
 			}
 			
+			main::_log("convert by splitted URL") if $debug;
+			my $i=-1;
+			foreach my $kluc(@{$rules[$rule]{'URL'}})
+			{
+				$i++;
+				main::_log("part $i with variable named '".$kluc->{'name'}."'") if $debug;
+				
+				if ($kluc->{'dynamic'}) # ak je tato premenna dynamicka
+				{
+					if ($kluc->{'test'})
+					{
+						# will be defined by executing test
+						next;
+					}
+					# ak je definovana defaultna hodnota a v URL je tato hodnota
+					elsif ((exists $kluc->{'default'})&&($url[$i] eq $kluc->{'default'}))
+					{
+						next;
+					}
+					# ak nieje definovana defaultna hodnota a v URL je hodnota "default"
+					elsif ((not exists $kluc->{'default'})&&($url[$i] eq "default"))
+					{
+						next;
+					}
+					# inak beriem hodnotu v URL ako danu a prevezmem ju
+					if ($kluc->{'source'} eq "GET")
+					{
+						main::_log("GET: '".$kluc->{'name'}."'='".$url[$i]."'") if $debug;
+						$hash{$kluc->{'name'}}=$url[$i];
+					}
+					next;
+				}
+			}
+			
+			my $i;
+			my $test=1;
+			foreach my $kluc(@{$rules[$rule]{'URL'}})
+			{
+				$i++;
+				next unless $kluc->{'test'};
+				my $fnc=$kluc->{'test'};
+				main::_log(" test ".($i-1)." '".($url[$i-1])."' test='".$kluc->{'test'}."'") if $debug;
+				no strict 'refs';
+				if (!$fnc->(\$url[$i-1],\%hash))
+				{
+					undef $test;
+					last;
+				}
+			}
+			
+			next unless $test;
+			
+			main::_log("apply rewrite.conf rule #".$rules[$rule]->{'row'}." ~/$regexp/");
+			
 			%{$metahash{'GET'}}=%hash;
 			
 			$t->close();
 			return %metahash;
 		}
-		else
-		{
-		}
+		
+#		if ($true)
+#		{
+#			main::_log("converting rule #".$rules[$rule]->{'row'}." to \%hash") if $debug;
+#		}
+#		else
+#		{
+#		}
 		
 	}
 	
@@ -520,8 +568,10 @@ sub get
 	
 	@rules=();
 	
+	my $row;
 	foreach my $line(split('\n',$data))
 	{
+		$row++;
 		$line=~s|[\n\r]||g;
 		
 		my %rule;
@@ -545,6 +595,7 @@ sub get
 		my $t_sec=track TOM::Debug("URL '$sections[0]'") if $debug;
 		
 		$rule{'URL'}=();
+		$rule{'row'}=$row;
 		
 		my $no;$sections[0]=~s/({|})/ $1 eq "{" ? ("<curvy:".$no++.">") : ("<\/curvy:".--$no.">")/eg;
 		while ($sections[0]=~s|^(.*?)<curvy:0>(.*?)</curvy:0>||)
@@ -559,39 +610,54 @@ sub get
 			my %rule_url;
 			
 			
-			$rule_url{source}="GET";
-			$rule_url{before}=$before;
+			$rule_url{'source'}="GET";
+			$rule_url{'before'}=$before;
 			if ($url=~/;/)
 			{
 				main::_log("var defined in depth: '$url'") if $debug;
 				my @data=split(';',$url);
 				$url=shift @data;
+				if ($url=~s/^"(.*?)"$/$1/)
+				{
+					$rule_url{'test'}=$url;
+					undef $rule_url{'name'};
+				}
 				foreach my $data(@data)
 				{
-					if ($data=~/default="(.*)"/)
+					if ($data=~/^default="(.*)"/)
 					{
-						$rule_url{default}=$1;
+						$rule_url{'default'}=$1;
 						main::_log("default='$1'") if $debug;
 						next;
 					}
-					if ($data=~/regexp="(.*)"/)
+					if ($data=~/^regexp="(.*)"/)
 					{
-						$rule_url{regexp}=$1;
+						$rule_url{'regexp'}=$1;
 						main::_log("regexp='$1'") if $debug;
 						next;
 					}
-					if ($data=~/source="(.*)"/)
+					if ($data=~/^source="(.*)"/)
 					{
-						$rule_url{source}=$1;
+						$rule_url{'source'}=$1;
 						main::_log("source='$1'") if $debug;
+						next;
+					}
+					if ($data=~/^test="(.*)"/)
+					{
+						$rule_url{'test'}=$1;
+						main::_log("test='$1'") if $debug;
 						next;
 					}
 				}
 			}
-			$rule_url{dynamic}=1;
-			$rule_url{name}=$url;
-			#$rule_url{regexp}=".{1,}?" unless $rule_url{regexp};
-			$rule_url{regexp}=".{1,}?" unless $rule_url{regexp};
+			$rule_url{'dynamic'}=1;
+			$rule_url{'name'}=$url;
+				if ($url=~s/^"(.*?)"$/$1/)
+				{
+					$rule_url{'test'}=$url;
+					undef $rule_url{'name'};
+				}
+			$rule_url{'regexp'}=".{1,}?" unless $rule_url{'regexp'};
 			
 			push @{$rule{'URL'}}, {%rule_url};
 		}
@@ -614,8 +680,13 @@ sub get
 			main::_log("processing '$get'") if $debug;
 			if ($get=~/(.*)="(.{0,})"/)
 			{
-				main::_log("hard '$1'='$2'") if $debug;
+				main::_log("exact '$1'='$2'") if $debug;
 				$rule{'GET'}{$1}=$2;
+			}
+			elsif ($get=~/!(.*)/)
+			{
+				main::_log("empty '$1'") if $debug;
+				$rule{'GET'}{$1}='';
 			}
 			else
 			{
@@ -644,7 +715,7 @@ sub convert
 	my %env=@_;
 	
 	$URL=Int::charsets::encode::UTF8_ASCII($URL); 
-	$URL="\L$URL" unless $env{'notlower'};
+	$URL=lc($URL) unless $env{'notlower'};
 	
 	# convert znakov ktore chcem zachovat v kontexte
 #	$URL=~s|;|-|g;
