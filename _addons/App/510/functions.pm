@@ -51,7 +51,7 @@ sub video_part_file_generate
 	{
 		return 1 if TOM::Engine::jobify(\@_,{
 			'routing_key' => 'db:'.$App::510::db_name,
-			'class' => 'encoder',
+			'class' => 'encoder'.do{if (defined $env{'-encoder_slot'}){''.$env{'-encoder_slot'};}else{'';}},
 			'deduplication' => 1}); # do it in background
 	}
 	
@@ -1044,7 +1044,7 @@ sub video_part_brick_change
 		
 		if ($src_dir.'/'.$src_file_path eq $dst_dir.'/'.$dst_file_path)
 		{
-			main::_log("src file same as destination",1);
+			main::_log("src file same as destination");
 			next;
 		}
 		
