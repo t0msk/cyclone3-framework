@@ -76,7 +76,7 @@ sub add_meta {
 sub add_link {
 	my $self = shift;
 	
-	$main::H->add_DOC_css_link(
+	$main::H->add_DOC_link(
 		%{$_[0]}
 	);
 	return
