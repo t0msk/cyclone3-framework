@@ -9,24 +9,30 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 our %table=
 (
 #
-
+	'128' => "",
+	'129' => "", # 
 	'130'	=>	" ",
 	'131'	=>	" ",
 
 #	'136'	=>	"",
 
 	'138'	=>	" ", # ?
-
-#	'140'	=>	"",
-#	'141'	=>	"",
+	
+	'140'	=>	"OE", # PARTIAL LINE BACKWARD
+	'141'	=>	"", # REVERSE LINE FEED
 	'142'	=>	"Z", # SS2 ??? 'Z' s makcenom
 	
 #	'143'	=>	"",
 	
 	'145'	=>	"", # PU1
-
-	'154'	=>	"s", # 's' s makcenom
 	
+	'147'	=>	"", # STS
+	
+	'152' => "~", # START OF STRING
+	'153'	=>	"(tm)", # znak 'tm'
+	'154'	=>	"s", # 's' s makcenom
+	'155' => ">", # CONTROL SEQUENCE INTRODUCER
+	'156' => "oe", # STRING TERMINATOR
 	'157'	=>	" ", # ?
 	
 	'158'	=>	"z", # 'z' s makcenom
@@ -48,9 +54,11 @@ our %table=
 	
 	'176'	=>	" ", # pevna medzera
 	'177'	=>	"plusminus", # ±
-
+	
+	'179' => "f", # NO BREAK HERE
 	'180'	=>	"'", # napriklad v slove "don't"
 	'181'	=>	"l", # 'l' s makcenom
+	'182'	=>	"", # PILCROW SIGN
 	
 	'184'	=>	"", # '¸'
 	'185'	=>	"s", # 's' s makcenom
@@ -400,6 +408,8 @@ our %table=
 	'1740' => "y", # ی
 	
 	'1744' => "e", # ې
+	
+	'8209' => "-", # NON-BREAKING HYPHEN
 	
 #	'8226' =>	"", #
 #	'8230' =>	"", #
