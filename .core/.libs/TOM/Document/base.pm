@@ -375,6 +375,42 @@ sub url_replace
 		$form{'a210_name'}=~s|^.*/||;
 	}
 	
+	if ($form{'a210_ID'})
+	{
+		delete $form{'a210_path'};
+		delete $form{'a210_name'};
+		require App::210::_init;
+		my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+		my %sth0=TOM::Database::SQL::execute(qq{SELECT ID,name_url FROM `$App::210::db_name`.a210_page WHERE ID_entity = ? AND lng = ? LIMIT 1},
+			'bind'=>[$form{'a210_ID'},($form{'__lng'} || $tom::lng)],
+			'-slave' => 1,
+			'-cache' => 600,
+			'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%sql_def),
+			'-quiet' => 1);
+		my %page=$sth0{'sth'}->fetchhash();
+		if ($App::210::path2name)
+		{
+			$form{'a210_name'} = $page{'name_url'};
+		}
+		else
+		{
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$page{'ID'},
+					%sql_def,
+					'columns' => { '*' => 1 },
+					'-slave' => 1,
+					'-cache' => 600
+				)
+			)
+			{
+				$form{'a210_path'}.="/".$p->{'name_url'};
+			}
+			$form{'a210_path'}=~s|^/||;
+		}
+		delete $form{'a210_ID'};
+	}
+	
 	# spracujem %form este cez rewrite a mozno z %form budu este vyhodne
 	# nadbytocne veci
 	if
