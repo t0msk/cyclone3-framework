@@ -133,9 +133,10 @@ Basic options:
  --p=<pid>              filter to PID
  --oldest               search for oldest lines first
  --limit=<num>          receive <num> lines of log (default 100)
- --range=<num[mdh]>     filter in date range now-<num[mdh]> ([m]onths, [d]ays, [h]ours)
+ --range=<num[dhm]>     filter in date range now-<num[dhm]> ([d]ays, [h]ours, [m]inutes)
  --range                disable range filter
  --date=<YYYY-MM-DD>    filter to date
+ --datetime-from=<YYYY-MM-DD HH:MM:SS> --datetime-to=<YYYY-MM-DD HH:MM:SS>
  --pretty               display additional attributes in pretty json format
  --ch                   strict chronological - don't group primary by log source
  --data.*               search term in data.* field
@@ -166,7 +167,12 @@ if ($main::arg{'h'})
 	push @filter,{"terms" => {"h" => [$main::arg{'h'}]}}
 		unless $main::arg{'h'} eq "*";
 };
-if ($main::arg{'d'})
+if ($main::arg{'d'} eq "?")
+{
+	$query.=" d=".$main::arg{'d'};
+#	push @filter,{"terms" => {"t" => ['cyclone3.'.$main::arg{'t'}]}},
+}
+elsif ($main::arg{'d'})
 {
 	$main::arg{'d'}='*' if $main::arg{'d'}==1;
 	$query.=" d=".$main::arg{'d'};
@@ -294,7 +300,72 @@ $search_indices{'logstash-'.$td->strftime('%Y-%m-%d')}=1;
 #my $indice='logstash-'.$td->strftime('%Y-%m-%d');
 
 $main::arg{'range'}='6h' unless $main::arg{'range'};
-if ($main::arg{'date'}=~/^(\d\d\d\d)-(\d\d)-(\d\d)$/)
+
+if ($main::arg{'datetime-from'}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)$/
+	&& $main::arg{'datetime-to'}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)$/)
+{
+	%search_indices=();
+	
+	$main::arg{'datetime-from'}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)$/;
+	my $td = DateTime->new(
+		'year' => $1,
+		'month' => $2,
+		'day' => $3,
+		'hour' => $4,
+		'minute' => $5,
+		'second' => $6,
+		'time_zone'  => 'local'
+	);
+	$td->set_time_zone('GMT');
+	my $date_start_=$td->strftime('%FT%H:%M:%SZ');
+	my $date_start=$td->strftime('%F');
+	
+	$main::arg{'datetime-to'}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)$/;
+	my $td_to = DateTime->new(
+		'year' => $1,
+		'month' => $2,
+		'day' => $3,
+		'hour' => $4,
+		'minute' => $5,
+		'second' => $6,
+		'time_zone'  => 'local'
+	);
+	$td_to->set_time_zone('GMT');
+	my $date_to_=$td_to->strftime('%FT%H:%M:%SZ');
+	my $date_to=$td_to->strftime('%F');
+	
+	if ($indices{'logstash-'.$date_start})
+	{
+		$search_indices{'logstash-'.$date_start}=1;
+	}
+	elsif ($indices{'logstash-'.($date_start=~/^(\d\d\d\d\-\d\d)/)[0]})
+	{
+		$search_indices{'logstash-'.($date_start=~/^(\d\d\d\d\-\d\d)/)[0]}=1;
+	}
+	
+	while ($td < $td_to)
+	{
+		$td->add('days'=>1);
+		my $date_now=$td->strftime('%F');
+		if ($indices{'logstash-'.$date_now})
+		{
+			$search_indices{'logstash-'.$date_now}=1;
+		}
+		elsif ($indices{'logstash-'.($date_now=~/^(\d\d\d\d\-\d\d)/)[0]})
+		{
+			$search_indices{'logstash-'.($date_now=~/^(\d\d\d\d\-\d\d)/)[0]}=1;
+		}
+	}
+	
+	push @filter,{"range" => {
+		'@timestamp' => {
+			'gte' => $date_start_,
+			'lt' => $date_to_
+		}
+	}};
+	$query.=" date=\"".$main::arg{'datetime-from'}." - ".$main::arg{'datetime-to'}."\"";
+}
+elsif ($main::arg{'date'}=~/^(\d\d\d\d)-(\d\d)-(\d\d)$/)
 {
 	%search_indices=();
 	
@@ -354,13 +425,13 @@ elsif ($main::arg{'range'})
 	
 	my $td_from=$td->clone();
 	
-	if ($main::arg{'range'}=~/^(\d+)([mdh])$/)
+	if ($main::arg{'range'}=~/^(\d+)([dhm])$/)
 	{
 		my $num=$1;
 		my $type=$2;
 		if ($type eq "m")
 		{
-			$td_from->subtract('months'=>$num);
+			$td_from->subtract('minutes'=>$num);
 		}
 		elsif ($type eq "d")
 		{
@@ -473,6 +544,29 @@ if ($main::arg{'t'} eq "?")
 	}
 	
 #	print Dumper($results);
+	
+	exit;
+}
+
+if ($main::arg{'d'} eq "?")
+{
+	$search_config->{'size'}=0;
+	$search_config->{'body'}{'aggregations'} = {
+		"facility" => {
+			"terms" => {
+				'field' => "d",
+				"size" => 50,
+			}
+		}
+	};
+	
+	$results = $Elastic->search($search_config);
+	
+	foreach my $type (@{$results->{'aggregations'}->{'facility'}->{'buckets'}})
+	{
+		$type->{'key'}=~s|^cyclone3\.||;
+		main::_log_stdout(" $type->{'key'} ($type->{'doc_count'})");
+	}
 	
 	exit;
 }
