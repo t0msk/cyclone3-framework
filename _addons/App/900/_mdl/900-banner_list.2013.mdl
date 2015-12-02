@@ -77,8 +77,18 @@ sub execute
 	
 	if ($env{'banner_zonetarget.name'})
 	{
-		$sql_where.=" AND banner_zonetarget.name LIKE ?";
-		push @sql_bind, $env{'banner_zonetarget.name'};
+		$env{'banner_zonetarget.name'}=~s|,|;|;
+		
+		my $sqlin;
+		
+		foreach my $zone (split(';',$env{'banner_zonetarget.name'}))
+		{
+			$sqlin.=", ?";
+			push @sql_bind, $zone;
+		}
+		$sqlin=~s|^, ||;
+		
+		$sql_where.=" AND banner_zonetarget.name IN (" . $sqlin . ")";
 		main::_log("search banner '$env{'banner_zonetarget.name'}'",3,"debug") if $debug;
 	}
 	
@@ -305,6 +315,8 @@ sub execute
 				'ID_entity' => do{$env{'banner.ID_entity'} if $env{'banner.ID_entity'}=~/^\d+$/}
 			}),
 	);
+	
+	main::_log('binds: '.join("     ", @sql_bind));
 	
 	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
 	
