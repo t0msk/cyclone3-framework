@@ -238,7 +238,9 @@ sub start
 #			'db_h' => 'main',
 			'db_name' => $db_name,
 			'tb_name' => $entity,
+			'ID' => $vars{'ID'},
 			'ID_entity' => $vars{'ID_entity'},
+#			'id-tag' => \%vars,
 			'count' => {
 				'tag' => $self->{'count'}->{'tag'}->{$tag},
 				'addon' => $self->{'count'}->{'addon'}->{$entity}
