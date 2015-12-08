@@ -44,6 +44,9 @@ sub execute
 	
 	my @sql_bind;
 	my $sql_where;
+	my @sql_bind_firsttry;
+	my $sql_where_firsttry;
+	
 	my $sql_changetime;
 	my $sql_limit=$env{'sql_limit'} || 10;
 	my $sql_order_by=$env{'sql_order_by'} || 'article_attrs.datetime_start DESC';
@@ -61,6 +64,10 @@ sub execute
 	{
 		$sql_where.=" AND article_attrs.datetime_start <= NOW()";
 		$sql_where.=" AND (article_attrs.datetime_stop IS NULL OR article_attrs.datetime_stop >= NOW())";
+		if ($env{'datetime_interval'})
+		{
+			$sql_where_firsttry.=" AND article_attrs.datetime_start >= DATE_SUB(NOW(),INTERVAL $env{'datetime_interval'})";
+		}
 	}
 	
 	if ($env{'article_cat.ID_entity'})
@@ -444,14 +451,15 @@ sub execute
 		WHERE
 			article_ent.status = 'Y'
 			AND article.status = 'Y'
-			$sql_where}.do{if($sql_group_by){qq{
+			$sql_where
+			$sql_where_firsttry}.do{if($sql_group_by){qq{
 		GROUP BY
 			$sql_group_by}}}.qq{
 		ORDER BY
 			$sql_order_by
 		LIMIT
 			$sql_limit
-	},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,'-cache' => 600,
+	},'bind'=>[@sql_bind,@sql_bind_firsttry],'log'=>0,'-slave'=>1,'-cache' => 600,
 		'-changetime'=>App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",
@@ -462,6 +470,125 @@ sub execute
 	);
 	
 	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	
+	if (!$sth0{'rows'} && $env{'datetime_interval_retry'})
+	{
+		%sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				
+				article.ID_entity,
+				article.ID,
+				article_attrs.ID AS attrs_ID,
+				article_content.ID AS content_ID,
+				
+				article_attrs.ID_category,
+				article_cat.ID AS cat_ID,
+				article_cat.name AS cat_name,
+				article_cat.name_url AS cat_name_url,
+				
+				article_ent.posix_owner,
+				article_ent.ID_author AS posix_author,
+				article_ent.visits,
+				article_ent.sources,
+				article_ent.metadata,
+				article_content.ID_editor AS posix_editor,
+				
+				article_content.datetime_create AS content_datetime_create,
+				article_attrs.datetime_start,
+				article_attrs.datetime_stop,
+				
+				article_attrs.priority_A,
+				article_attrs.priority_B,
+				article_attrs.priority_C,
+				
+				article_attrs.name,
+				article_attrs.name_url,
+				article_attrs.name_hyphens,
+				article_attrs.alias_url,
+				
+				article_content.subtitle,
+				article_content.subtitle_hyphens,
+				article_content.mimetype,
+				article_content.abstract,
+				article_content.abstract_hyphens,
+				article_content.body,
+				article_content.body_hyphens,
+				article_content.keywords,
+				article_content.lng,
+				
+				IF(
+					round((`article_ent`.rating_score / `article_ent`.rating_votes),2),
+					round((`article_ent`.rating_score / `article_ent`.rating_votes),2), '0.00'
+				) as rating,
+				rating_score,
+				rating_votes,
+				
+				article_ent.visits,
+				
+				article_attrs.status,
+				
+				IF
+				(
+					(
+						article.status LIKE 'Y' AND
+						article_attrs.status LIKE 'Y'
+					),
+					'Y', 'U'
+				) AS status_all
+				$sql_column
+				
+			FROM `$App::401::db_name`.a401_article_ent AS article_ent
+			INNER JOIN `$App::401::db_name`.a401_article AS article ON
+			(
+				article_ent.ID_entity = article.ID_entity
+			)
+			INNER JOIN `$App::401::db_name`.a401_article_attrs AS article_attrs ON
+			(
+				article_attrs.ID_entity = article.ID AND
+				article_attrs.status IN ('$sql_article_attrs_status') AND
+				article_attrs.lng = '$env{'lng'}'
+			)
+			INNER JOIN `$App::401::db_name`.a401_article_content AS article_content ON
+			(
+				article_content.ID_entity = article.ID_entity AND
+				article_content.status = 'Y' AND
+				article_content.lng = article_attrs.lng
+			)
+			INNER JOIN `$App::401::db_name`.a401_article_cat AS article_cat ON
+			(
+				article_cat.ID = article_attrs.ID_category
+			)
+			LEFT JOIN `$App::401::db_name`.a301_ACL_user_group AS ACL_world ON
+			(
+				ACL_world.ID_entity = 0 AND
+				r_prefix = 'a401' AND
+				r_table = 'article' AND
+				r_ID_entity = article.ID_entity
+			)
+			$sql_join
+			WHERE
+				article_ent.status = 'Y'
+				AND article.status = 'Y'
+				$sql_where}.do{if($sql_group_by){qq{
+			GROUP BY
+				$sql_group_by}}}.qq{
+			ORDER BY
+				$sql_order_by
+			LIMIT
+				$sql_limit
+		},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,'-cache' => 600,
+			'-changetime'=>App::020::SQL::functions::_get_changetime(
+				{
+					'db_h'=>"main",
+					'db_name' => $App::401::db_name,
+					'tb_name' => "a401_article",
+					'ID_entity' => do{$env{'article.ID_entity'} if $env{'article.ID_entity'}=~/^\d+$/}
+				}),
+		);
+		
+		$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	}
+	
 	while (my %article=$sth0{'sth'}->fetchhash())
 	{
 		$i++;
