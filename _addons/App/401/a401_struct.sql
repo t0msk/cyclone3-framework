@@ -94,7 +94,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_rating_vote` (
   `IP` varchar(15) default NULL,
   `ID_article` mediumint(8) unsigned NOT NULL, -- ref _article.ID_entity
   `datetime_event` datetime NOT NULL,
-  `score` int(10) unsigned NOT NULL
+  `score` int(10) unsigned NOT NULL,
+  KEY `ID_article` (`ID_article`)
   -- UNIQUE KEY `UNI_0` (`ID_user`,`IP`,`ID_article`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -272,8 +273,6 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat` (
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
-  KEY `ID_entity` (`ID_entity`),
-  KEY `ID_charindex` (`ID_charindex`),
   KEY `name` (`name`),
   KEY `lng` (`lng`),
   KEY `status` (`status`)
