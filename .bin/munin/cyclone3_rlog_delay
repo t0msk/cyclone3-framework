@@ -1,0 +1,128 @@
+#!/usr/bin/env perl
+# ex:ts=4
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.bin/c3-init";
+}
+
+use strict;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use DateTime;
+use Ext::Redis::_init;
+use Data::Dumper;
+
+my $cmd = shift || '';
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 rlog delay ($TOM::domain)
+graph_args --base 1000
+graph_category cyclone3_err
+graph_vlabel seconds
+graph_order delay
+graph_scale no
+delay.label Seconds
+delay.min 0
+delay.warning 600
+delay.critical 3600
+};
+	exit 0;
+}
+
+#my $datetime_now=DateTime->now('time_zone' => 'local');
+
+$Ext::Elastic = $Ext::Elastic_rlog_hd{$main::arg{'hd'}}
+	|| $Ext::Elastic_rlog
+	|| $Ext::Elastic;
+require Ext::Elastic::_init;
+#main::_log_stdout("ElasticSearch @".join(',@',@{$Ext::Elastic->{'nodes'}}));
+$Ext::Elastic->{'request_timeout'} = 2;
+Ext::Elastic::_connect();
+our $Elastic=$Ext::Elastic::service;
+
+my $td = DateTime->now('time_zone'  => 'GMT');
+my $limit=1;
+my $indice='logstash-'.$td->strftime('%Y-%m-%d');
+
+my @filter;
+my %query_string;
+
+my $hours=3;
+
+push @filter,{"range" => {'@timestamp' => {'gte' => 'now-'.$hours.'h'}}};
+
+push @filter,{"terms" => {"hd" => [$TOM::domain]}};
+#push @filter,{"terms" => {"t" => ['cyclone3.pub.track']}};
+#push @filter,{"terms" => {"f" => [1]}};
+#push @filter,{"terms" => {"data.query_data_t" => [
+#	'script',
+#	'javascript',
+#	'string',
+#	'alert',
+#	'exec',
+#	'execute',
+#	'select',
+#	'declare',
+#	'table',
+#	'drop',
+#	'null',
+#	'varchar',
+#	'procedure'
+#]}};
+
+#push @filter,{"range" => {'data.response_status_i' => {'gte' => 500}}};
+#push @filter,{"terms" => {"data.response_status_i" => [500]}};
+
+my $search_config={
+	'index' => $indice,
+	'type' => 'fluentd',
+	'size' => $limit,
+	'timeout' => '2s',
+	'body'  => {
+		'timeout' => '2s',
+		'sort' => [
+			{'@timestamp' => "desc"}
+		],
+		'query' => {
+			'filtered' => {
+				'filter' => {
+					'bool' => {
+						'must' => [@filter]
+					}
+				},
+				%query_string
+			}
+		}
+	}
+};
+
+my $results = $Elastic->search($search_config);
+
+my $date=$results->{'hits'}->{'hits'}[0]->{'_source'}{'@timestamp'};
+$date=~/^(\d\d\d\d)\-(\d\d)\-(\d\d)T(\d\d):(\d\d):(\d\d).(\d\d\d)Z$/;
+my $td = DateTime->new(
+	'year' => $1,
+	'month' => $2,
+	'day' => $3,
+	'hour' => $4,
+	'minute' => $5,
+	'second' => $6,
+	'time_zone'  => 'GMT'
+);
+$td->set_time_zone('local');
+my $td2=DateTime->now();
+
+my $duration = $td2 - $td;
+
+print "delay.value ".$duration->seconds()."\n";
+
+#my $src_date=$td->strftime('%F %H:%M:%S');
+#print "$src_date\n";
+#print $results->{'hits'}->{'hits'}[0]->{'_source'}->{'@timestamp'}."\n";
+
+#print "req.value ".(int($results->{'hits'}->{'total'}/$hours/10)/10)."\n";
+
