@@ -372,6 +372,44 @@ sub execute
 		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $tom::H_a501.'/image/file/'.$image{'file_path'}};
 	}
 	
+	# tags
+	foreach my $relation (App::160::SQL::get_relations(
+		'db_name' => $App::401::db_name,
+		'r_prefix' => 'a401',
+		'r_table' => 'article',
+		'r_ID_entity' => $article{'ID_entity'},
+		'rel_type' => 'tag',
+		'l_prefix' => "a460",
+		'l_table' => "tag",
+		'status' => "Y",
+	))
+	{
+		require App::460::_init;
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM `$App::460::db_name`.a460_tag
+			WHERE
+				ID_entity = ?
+				AND status IN ('Y','N','L','W')
+			LIMIT 1
+		},'quiet'=>1,'bind'=>[$relation->{'l_ID_entity'}],'-slave'=>1,'-cache'=>86400,
+			'-changetime'=>App::020::SQL::functions::_get_changetime({
+				'db_h'=>"main",
+				'db_name' => $App::460::db_name,
+				'tb_name' => "a460_tag",
+				'ID_entity' => $relation->{'l_ID_entity'}
+			})
+		);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		
+		push @{$article{'tags'}},{
+			'ID_entity' => $relation->{'l_ID_entity'},
+			'name' => $db1_line{'name'},
+			'name_url' => $db1_line{'name_url'},
+		};
+	}
+	
 	$TPL->{'variables'}{'article'} = \%article;
 	
 	return 1,%env_out;

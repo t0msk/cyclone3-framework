@@ -122,7 +122,7 @@ sub execute
 		}
 	}
 	
-	if ($env{'a430_list.ID'})
+	if ($env{'a430_list.ID'}=~/^\d+$/)
 	{
 		require App::430::_init;
 		$sql_join.=qq{INNER JOIN `$App::430::db_name`.a160_relation AS a430_list_relation ON
@@ -138,6 +138,23 @@ sub execute
 		};
 		$sql_column.=",a430_list_relation.rel_name";
 		$sql_order_by="a430_list_relation.priority DESC";
+	}
+	
+	if ($env{'a460_tag.name_url'})
+	{
+		require App::460::_init;
+		$sql_join.=qq{INNER JOIN `markiza_sk`.a160_relation AS tag_relation ON
+		(
+			tag_relation.l_prefix = 'a460' AND
+			tag_relation.l_table = 'tag' AND
+			tag_relation.rel_type = 'tag' AND
+			tag_relation.r_prefix = 'a401' AND
+			tag_relation.r_table = 'article' AND
+			tag_relation.r_ID_entity = article.ID_entity
+		)
+		};
+		$sql_where.=" AND tag_relation.l_ID_entity IN (SELECT tag.ID_entity FROM `$App::460::db_name`.a460_tag AS tag WHERE tag.name_url LIKE ?)";
+		push @sql_bind, $env{'a460_tag.name_url'};
 	}
 	
 	if ($env{'elastic'})
