@@ -131,12 +131,12 @@ sub get_workers
 }
 
 our $WORKERS = get_workers();
-my $MAX_WORKERS = $TOM::job_host_max_processes || ($sysstat->{'tcpucount'} * 1) +1;
+my $MAX_WORKERS = $TOM::job_host_max_processes || ($sysstat->{'tcpucount'} * 2) +1;
 $ENV{'WORKERS'}=1 unless exists $ENV{'WORKERS'}; # spawning workers?
 $ENV{'AUTORESTART'}=1 unless exists $ENV{'AUTORESTART'}; # spawning workers?
 $TOM::job_domain_max_workers||=16; # max X workers parallel on same domain
 $TOM::job_worker_start_delay||=5; # start next worker after delay
-$TOM::job_domain_worker_start_delay||=60; # start next worker after delay on same domain
+$TOM::job_domain_worker_start_delay||=10; # start next worker after delay on same domain
 
 #	$MAX_WORKERS = 2;
 
@@ -497,6 +497,7 @@ sub check_domains
 			if ($@)
 			{
 				main::_log_stdout(" can't parse '$filename' ($@)",1,"job.workerd");
+				$config_file{$filename}{'mtime'}=(stat($filename))[9];
 				next;
 			}
 			
@@ -884,6 +885,16 @@ sub check_scheduler
 						'id' => $db0_line{'id'}
 					}
 				});
+				
+			}
+			elsif ($cron->{'content'})
+			{
+				
+				eval $cron->{'content'};
+				if ($@)
+				{
+					main::_log("$@",1);
+				}
 				
 			}
 			
