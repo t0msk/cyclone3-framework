@@ -92,7 +92,7 @@ use TOM::Temp::file;
 use TOM::Template;
 use CVML;
 
-sub jobify{return undef}
+sub jobify{main::_log("dummy jobify");return undef}
 
 BEGIN
 {
