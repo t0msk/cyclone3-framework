@@ -181,7 +181,7 @@ sub callback {
 		if ($timestamp_start && ($timestamp_start < time()) && !$timestamp_exec)
 		{
 			my $duration=time() - $timestamp_start;
-			main::_log(" job '$key_entity' already running from '$time_start_str' duration='".($duration)."s' \@$process_start",1);
+			main::_log(" job '$key_entity' already running from '$time_start_str' duration='".($duration)."s' \@$process_start");
 			
 			my ($process_hostname,$process_id) = split(':',$process_start);
 			if ($process_hostname eq $TOM::hostname 
@@ -226,7 +226,7 @@ sub callback {
 		}
 		elsif ($timestamp < $timestamp_exec)
 		{
-			main::_log(" job '$key_entity' already executed at '$time_str' (".($timestamp_exec-$timestamp)."s after this message)",1);
+			main::_log(" job '$key_entity' already executed at '$time_str' (".($timestamp_exec-$timestamp)."s after this message)");
 			$this_channel->ack();
 			alarm $alarm;
 			$0=~s|{.*?}|{}|;
