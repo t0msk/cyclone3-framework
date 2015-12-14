@@ -459,7 +459,10 @@ use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 
-BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__."::Lite (_log + conf)");main::_log("TOM::P=$TOM::P TOM::DP=$TOM::DP");};}
+BEGIN {eval{
+	main::_log("init '$0' ".join(",",@ARGV));
+	main::_log("<={LIB} ".__PACKAGE__."::Lite (_log + conf)");main::_log("TOM::P=$TOM::P TOM::DP=$TOM::DP");
+};}
 
 
 
