@@ -269,6 +269,31 @@ sub url_generate
 }
 
 
+sub doc_url_replace
+{
+	my $doc=$_[0];shift;
+	my $data=shift;
+	
+	local $TOM::Document::base::url_relative_disable=1;
+	
+	local %main::FORM;
+	$main::FORM{'__lng'}=$data->{'form'}->{'__lng'} || $tom::lng;
+	
+	my $url_regexp=qr'(.)\?\|\?(.*?)(["\'#])';
+	if (!$tom::rewrite_time && open (KEY,"<".$tom::P."/rewrite.conf"))
+	{
+		local $/;
+		my $data=<KEY>;close(KEY);
+		TOM::Net::URI::rewrite::get($data);close(KEY);$tom::rewrite=1;
+		
+		$tom::rewrite_time=time;
+	}
+	
+	$$doc=~s/$url_regexp/TOM::Document::base::url_replace($1,$2,$3)/eg;
+	
+#	print $$doc;
+}
+
 sub url_replace
 {
 	my $url_cache_enabled=0;
