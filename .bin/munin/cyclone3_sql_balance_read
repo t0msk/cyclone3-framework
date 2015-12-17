@@ -57,21 +57,13 @@ for (1..2)
 	{
 		$_=~s/\|r_exec$//;
 		my $type='r';
-#		print ":".$type."\n";
 		my $h=$_;
 			$h=~s|:|_|;
 		$db_h_name{$h}=$_;
 		
-#		if ($_=~/:1$/)
 		if (not ($_=~/:/) && $data{$_.'|slave_miss'})
 		{
-			# okaaay slave
-			# make master slave miss
-#			my $db=$h;$db=~s|_1$|_0|;
-#			my $db_=$_;$db_=~s|:\d+$||;
-			
 			$db_h_name{$h.'_0'}=$_.' (slave pass)';
-			
 			$db_h{$h.'_0'}+=$data{$_.'|slave_miss'};
 			$db_h{$h}-=$data{$_.'|slave_miss'};
 		}
@@ -84,6 +76,15 @@ for (1..2)
 #	foreach (grep {$_=~/\|cache_fill$/} keys %data){$value_crt+=$data{$_};}
 #	foreach (grep {$_=~/\|cache_hit$/} keys %data){$value_hit+=$data{$_};}
 #	$value_hit+=$data{'hit'};
+}
+
+foreach my $db (sort keys %db_h)
+{
+	if ($db=~s/_\d+$//)
+	{
+		$db_h_name{$db.'_0'}=$db.' (slave pass)';
+		$db_h{$db.'_0'}||=0;
+	}
 }
 
 print Dumper(\%db_h) if $cmd eq "debug";
