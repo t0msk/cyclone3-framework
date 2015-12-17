@@ -1,0 +1,61 @@
+#!/usr/bin/env perl
+# ex:ts=4
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM";
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.bin/c3-init";
+}
+
+use strict;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use DateTime;
+use Ext::Redis::_init;
+use Data::Dumper;
+use JSON;
+
+my $cmd = shift || '';
+if ($cmd eq 'config') {print qq{graph_title Cyclone3 RabbitMQ processing (all hosts)
+graph_category cyclone3_rabbitmq
+graph_vlabel messages
+graph_scale no
+graph_args --base 1000 -l 0 -r
+messages.label messages in ack
+messages.warning 10
+messages.critical 100
+consumers.label consumers
+};
+#	exit 0;
+}
+
+my $debug;
+	$debug=1 if $cmd eq "debug";
+
+# test API
+my $ua = LWP::UserAgent->new;
+my $uri='http://'.$Ext::RabbitMQ::user.':'.$Ext::RabbitMQ::pass.'@'.$Ext::RabbitMQ::host.':15672/api';
+my $response = $ua->get($uri.'/queues');
+
+my $json=from_json($response->content());
+#print Dumper($json);
+
+my $total;
+my $consumers;
+foreach my $item (@{$json})
+{
+#	$total+=$item->{'messages_unacknowledged'};
+#	$pending+=$item->{'backing_queue_status'}->{'pending_acks'};
+	$total+=$item->{'backing_queue_status'}->{'pending_acks'};
+	$consumers+=$item->{'consumers'};
+#	print $item->{'messages_ready'};
+}
+
+print "messages.value " . $total . "\n";
+print "consumers.value " . $consumers . "\n";
+
+
