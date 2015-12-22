@@ -51,7 +51,7 @@ my $indice='logstash-'.$td->strftime('%Y-%m-%d');
 my @filter;
 my %query_string;
 
-my $hours=3;
+my $hours=12;
 
 push @filter,{"range" => {'@timestamp' => {'gte' => 'now-'.$hours.'h'}}};
 
@@ -81,9 +81,9 @@ my $search_config={
 	'index' => $indice,
 	'type' => 'fluentd',
 	'size' => $limit,
-	'timeout' => '2s',
+	'timeout' => '60s',
 	'body'  => {
-		'timeout' => '2s',
+		'timeout' => '60s',
 		'sort' => [
 			{'@timestamp' => "desc"}
 		],
@@ -104,13 +104,16 @@ my $results = $Elastic->search($search_config);
 
 my $date=$results->{'hits'}->{'hits'}[0]->{'_source'}{'@timestamp'};
 $date=~/^(\d\d\d\d)\-(\d\d)\-(\d\d)T(\d\d):(\d\d):(\d\d).(\d\d\d)Z$/;
+
+#print Dumper($results);
+
 my $td = DateTime->new(
-	'year' => $1,
-	'month' => $2,
-	'day' => $3,
-	'hour' => $4,
-	'minute' => $5,
-	'second' => $6,
+	'year' => ($1 || 1970),
+	'month' => ($2 || 1),
+	'day' => ($3 || 1),
+	'hour' => ($4 || 0),
+	'minute' => ($5 || 0),
+	'second' => ($6 || 0),
 	'time_zone'  => 'GMT'
 );
 $td->set_time_zone('local');
@@ -118,7 +121,7 @@ my $td2=DateTime->now();
 
 my $duration = $td2 - $td;
 
-print "delay.value ".$duration->seconds()."\n";
+print "delay.value ".($duration->seconds() + ($duration->minutes()*60) + ($duration->hours()*60*60))."\n";
 
 #my $src_date=$td->strftime('%F %H:%M:%S');
 #print "$src_date\n";
