@@ -392,14 +392,6 @@ sub url_replace
 	delete $form{_dsgn} if $form{_dsgn} eq $tom::dsgn_;
 	delete $form{_lng} if $form{_lng} eq $tom::lng_;
 	
-	# path2name
-	if ($App::210::path2name && $form{'a210_path'})
-	{
-		$form{'a210_name'}=$form{'a210_path'};
-		delete $form{'a210_path'};
-		$form{'a210_name'}=~s|^.*/||;
-	}
-	
 	if ($form{'a210_ID'})
 	{
 		delete $form{'a210_path'};
@@ -434,6 +426,14 @@ sub url_replace
 			$form{'a210_path'}=~s|^/||;
 		}
 		delete $form{'a210_ID'};
+	}
+	
+	# path2name
+	if ($App::210::path2name && $form{'a210_path'})
+	{
+		$form{'a210_name'}=$form{'a210_path'};
+		delete $form{'a210_path'};
+		$form{'a210_name'}=~s|^.*/||;
 	}
 	
 	# spracujem %form este cez rewrite a mozno z %form budu este vyhodne
