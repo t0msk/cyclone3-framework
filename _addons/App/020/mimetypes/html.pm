@@ -489,11 +489,11 @@ sub start
 					}),
 			);
 			%db_entity=$sth0{'sth'}->fetchhash();
-			main::_log("found ID=$db_entity{'ID'} ID_entity=$db_entity{'ID_entity'}");
+			main::_log("found ID=$db_entity{'ID'} ID_entity=$db_entity{'ID_entity'} '$db_entity{'name'}'");
 			
 			if ($tag eq "div")
 			{
-				main::_log("embed");
+				my $t=track TOM::Debug("embed");
 				
 				$self->{'level.ignore'}=$self->{'level'};
 				
@@ -518,8 +518,10 @@ sub start
 						'thumbnail' => $p->{'thumbnail'},
 					};
 					
+					main::_log("here is divid",1) if $p->{'output'}=~/\<divid/;
+					
 #				}
-				
+				$t->close();
 			}
 			
 		}
@@ -1046,6 +1048,7 @@ sub start
 	
 	if (!$tag_output)
 	{
+#		main::_log("rebuild tag '$tag'");
 		# rebuild a tag
 		my %attrs_;
 		my $tag_tmp="<$tag";
@@ -1070,8 +1073,14 @@ sub start
 			$self->{'level'}--;
 		}
 		
+#		main::_log("generate output '$tag_output'");
+		
 		# fill into out_full
 		$tag_output=$tag_tmp;
+	}
+	else
+	{
+#		main::_log("just output '$tag_output'");
 	}
 	
 	$self->{'output'}.=$tag_output;
