@@ -1698,7 +1698,7 @@ sub _product_index
 			# save original HTML values
 			push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description_short_orig_pl' => $db0_line{'description_short'} )
 				if $db0_line{'description_short'};
-			main::_log("length=".length($db0_line{'description'}));
+#			main::_log("length=".length($db0_line{'description'}));
 			push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description_orig_pl' => $db0_line{'description'} )
 				if $db0_line{'description'};
 			
