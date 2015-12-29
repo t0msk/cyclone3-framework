@@ -376,7 +376,7 @@ sub execute
 			{
 				require App::210::_init;
 				
-				my %sth0=TOM::Database::SQL::execute(qq{
+				my %sth1=TOM::Database::SQL::execute(qq{
 					SELECT
 						`a210_page`.*
 					FROM
@@ -397,26 +397,155 @@ sub execute
 						}
 					)
 				);
-				if (my %db0_line=$sth0{'sth'}->fetchhash())
+				if (my %db1_line=$sth0{'sth'}->fetchhash())
 				{
-					delete $db0_line{'metadata'};
-					delete $db0_line{'t_keys'};
+					delete $db1_line{'metadata'};
+					delete $db1_line{'t_keys'};
 					
 					foreach my $node (App::020::SQL::functions::tree::get_path(
-						$db0_line{'ID'},
+						$db1_line{'ID'},
 						'db_h'    => 'main',
 						'db_name' => $App::210::db_name,
 						'tb_name' => 'a210_page',
 						'-cache' => 86400*7,
 					))
 					{
-						$db0_line{'path_url'}.='/'.$node->{'name_url'};
+						$db1_line{'path_url'}.='/'.$node->{'name_url'};
 					}
-					$db0_line{'path_url'}=~s|^/||;
+					$db1_line{'path_url'}=~s|^/||;
 					
-					$db0_line{'ID_charindex'}=~s|^$env{'ID_charindex'}||;
+					$db1_line{'ID_charindex'}=~s|^$env{'ID_charindex'}||;
 					
-					$banner{'addon'}=\%db0_line;
+					$banner{'addon'}=\%db1_line;
+				}
+				
+			}
+			elsif ($banner{'addon_type'} eq "a910_product")
+			{
+				require App::910::_init;
+				
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						product.ID_entity,
+						product.ID,
+						product.product_number,
+						product.datetime_publish_start,
+						product.datetime_publish_stop,
+						product.amount,
+						product.amount_unit,
+						product.amount_availability,
+						product.amount_limit,
+						product.amount_order_min,
+						product.amount_order_max,
+						product.amount_order_div,
+						product.supplier_org,
+						product.supplier_person,
+						product.status_new,
+						product.status_recommended,
+						product.status_sale,
+						product.status_special,
+						product.status_main,
+						product.status,
+						
+						product_ent.posix_owner,
+						product_ent.ID_brand,
+						product_ent.ID_family,
+						product_ent.VAT AS ent_VAT,
+						product_ent.rating_score,
+						product_ent.rating_votes,
+						(product_ent.rating_score/product_ent.rating_votes) AS rating,
+						product_ent.priority_A,
+						product_ent.priority_B,
+						product_ent.priority_C,
+						product_ent.product_type,
+						
+						product_lng.name,
+						product_lng.name_url,
+						product_lng.lng,
+						
+						product_cat.ID AS cat_ID,
+						product_cat.ID_entity AS cat_ID_entity,
+						
+						product_brand.name AS brand_name,
+						product_brand.name_url AS brand_name_url,
+						
+						product_family.name AS family_name,
+						product_family.name_url AS family_name_url
+						
+					FROM $App::910::db_name.a910_product_ent AS product_ent
+					LEFT JOIN $App::910::db_name.a910_product AS product ON
+					(
+						product_ent.ID_entity = product.ID_entity
+					)
+					LEFT JOIN $App::910::db_name.a910_product_lng AS product_lng ON
+					(
+						product_lng.ID_entity = product.ID AND
+						product_lng.lng = '$env{'lng'}'
+					)
+					
+					INNER JOIN $App::910::db_name.a910_product_sym AS product_sym ON
+					(
+						product_sym.ID_entity = product.ID_entity
+					)
+					INNER JOIN $App::910::db_name.a910_product_cat AS product_cat ON
+					(
+						product_cat.ID_entity = product_sym.ID AND
+						product_cat.lng = product_lng.lng AND
+						product_cat.status IN ('Y','L')
+					)
+					
+					LEFT JOIN $App::910::db_name.a910_product_brand AS product_brand ON
+					(
+						product_brand.ID_entity = product_ent.ID_brand
+					)
+					LEFT JOIN $App::910::db_name.a910_product_family AS product_family ON
+					(
+						product_family.ID_entity = product_ent.ID_family
+					)
+					WHERE
+						product_ent.status = 'Y'
+						AND product.ID = ?
+						AND product_lng.lng = ?
+						AND product.status IN ('Y')
+					LIMIT
+						1
+				},
+					'bind'=>[$banner{'addon_ID_entity'},$env{'lng'}],
+					'quiet' => 1,
+					'-cache' => 600,
+					'-cache_changetime' => App::020::SQL::functions::_get_changetime(
+						{
+							'db_h'=>"main",
+							'db_name' => $App::910::db_name,
+							'tb_name' => "a910_product"
+						}
+					)
+				);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					# link to a210_page
+					if (my $category=App::910::functions::_a210_by_cat([$db1_line{'cat_ID_entity'}],'lng'=>$env{'lng'}))
+					{
+						my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+						foreach my $p(
+							App::020::SQL::functions::tree::get_path(
+								$category,
+								%sql_def,
+								'-slave' => 1,
+								'-cache' => 86400*7
+							)
+						)
+						{
+							push @{$db1_line{'a210'}{'IDs'}}, $p->{'ID'};
+							push @{$db1_line{'a210'}{'nodes'}}, $p;
+							$db1_line{'a210'}{'path_url'}.="/".$p->{'name_url'};
+							$db1_line{'a210'}{'name_url'}=$p->{'name_url'};
+						}
+						$db1_line{'a210'}{'path_url'}=~s|^/||;
+					}
+					
+					$banner{'addon'}=\%db1_line;
+					
 				}
 				
 			}
@@ -470,7 +599,7 @@ sub execute
 				$main::COOKIES_all{'c3sid'}
 			]);
 			
-			my %sth0=TOM::Database::SQL::execute(qq{
+			my %sth1=TOM::Database::SQL::execute(qq{
 				SELECT COUNT(ID_user) AS cnt
 				FROM `$App::900::db_name`.a900_banner_click
 				WHERE	ID_banner = ? AND datetime_event >= ?
@@ -478,7 +607,7 @@ sub execute
 				$banner{'ID_entity'},
 				$banner{'datetime_publish_start'}
 			]);
-			my %db0_line=$sth0{'sth'}->fetchhash();
+			my %db1_line=$sth1{'sth'}->fetchhash();
 			
 			TOM::Database::SQL::execute(qq{
 				UPDATE
@@ -488,7 +617,7 @@ sub execute
 				WHERE
 					ID_entity = ?
 			},'-quiet'=>1,'bind'=>[
-				$db0_line{'cnt'},
+				$db1_line{'cnt'},
 				$banner{'ID_entity'}
 			]);
 		}
