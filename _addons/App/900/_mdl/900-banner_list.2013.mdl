@@ -397,7 +397,7 @@ sub execute
 						}
 					)
 				);
-				if (my %db1_line=$sth0{'sth'}->fetchhash())
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
 				{
 					delete $db1_line{'metadata'};
 					delete $db1_line{'t_keys'};
@@ -504,7 +504,7 @@ sub execute
 					)
 					WHERE
 						product_ent.status = 'Y'
-						AND product.ID = ?
+						AND product.ID_entity = ?
 						AND product_lng.lng = ?
 						AND product.status IN ('Y')
 					LIMIT
