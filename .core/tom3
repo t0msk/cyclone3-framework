@@ -1589,13 +1589,9 @@ while ($main::CGI=new CGI::Fast())
 								'db_h' => "main",
 								'db_name' => $App::210::db_name,
 								'tb_name' => "a210_page",
+								'columns' => { '*' => 1 },
 								'-cache' => 600,
 								'-slave' => 1,
-								'columns' => {
-									'metadata' => 1,
-									'alias_name' => 1,
-									't_keys' => 1,
-								}
 							)
 						)
 						{
@@ -1663,6 +1659,7 @@ while ($main::CGI=new CGI::Fast())
 									App::020::SQL::functions::tree::get_path(
 										$a210{'ID'},
 										%sql_def,
+										'columns' => { '*' => 1 },
 										'-slave' => 1,
 										'-cache' => 600
 									)
