@@ -66,7 +66,7 @@ sub execute
 		call job('a210-page_lng_sync',{
 			'ID' => $db0_line{'ID'},
 			'lng' => $db0_line{'lng'}
-		});
+		}) unless $env->{'nodeep'};
 	}
 	
 	return 1 unless @nodes;
@@ -81,6 +81,7 @@ sub execute
 		my $t=track TOM::Debug('compare '.$lng_);
 		
 		my $parent_ID_charindex;
+		my $parent_ID;
 		if ($data{'ID_entity'})
 		{
 			my %sth0=TOM::Database::SQL::execute(qq{
@@ -102,6 +103,7 @@ sub execute
 				$t->close();
 				next;
 			}
+			$parent_ID=$db0_line{'ID'};
 			$parent_ID_charindex=$db0_line{'ID_charindex'}.':';
 			main::_log("parent ID_charindex='$parent_ID_charindex'");
 		}
@@ -125,8 +127,26 @@ sub execute
 		);
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
-			next unless $db0_line{'ID_charindex'}=~/^$parent_ID_charindex...$/;
-			main::_log("[$db0_line{'ID_entity'}] '$db0_line{'name'}' '$db0_line{'ID_charindex'}'");
+			if ($db0_line{'ID_charindex'}=~/^$parent_ID_charindex...$/)
+			{
+			}
+			else
+			{
+				main::_log("node [$db0_line{'ID_entity'}/$db0_line{'ID'}] in another parent '$db0_line{'name'}' '$db0_line{'ID_charindex'}' '$db0_line{'status'}'",1);
+				
+				App::020::SQL::functions::tree::move_to(
+					'db_h' => "main",
+					'db_name' => $App::210::db_name,
+					'tb_name' => "a210_page",
+					'-journalize' => 1,
+					'ID'   => $db0_line{'ID'},
+					'parent_ID'   => $parent_ID
+				);
+#				return 1;
+				next;
+			}
+#			next unless $db0_line{'ID_charindex'}=~/^$parent_ID_charindex...$/;
+			main::_log("[$db0_line{'ID_entity'}] '$db0_line{'name'}' '$db0_line{'ID_charindex'}' '$db0_line{'status'}'");
 			push @nodes_, $db0_line{'ID_entity'};
 			$ids_{$db0_line{'ID_entity'}}=$db0_line{'ID'};
 			
