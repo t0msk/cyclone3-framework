@@ -18,10 +18,10 @@ sub execute
 	
 	our $debug=1;
 	
-	foreach (sort keys %env)
-	{
-		main::_log("env $_=$env{$_}");
-	}
+#	foreach (sort keys %env)
+#	{
+#		main::_log("env $_=$env{$_}");
+#	}
 	
 	$env{'banner.status'}='Y' unless $env{'banner.status'};
 		my $sql_banner_status=join "','", split('',$env{'banner.status'});
@@ -67,9 +67,11 @@ sub execute
 	}
 	
 	my @sql_bind;
+	my @sql_bind_test;
 		push @sql_bind,$main::USRM{'ID_session'};
 		push @sql_bind,$main::USRM{'ID_session'};
 	my $sql_where;
+	my $sql_where_plus;
 	my $sql_changetime;
 	my $sql_limit=$env{'sql_limit'} || 10;
 	my $sql_order_by=$env{'sql_order_by'} || '`banner`.`rules_weight` DESC';
@@ -84,7 +86,7 @@ sub execute
 		foreach my $zone (split(';',$env{'banner_zonetarget.name'}))
 		{
 			$sqlin.=", ?";
-			push @sql_bind, $zone;
+			push @sql_bind, $zone;push @sql_bind_test, $zone;
 		}
 		$sqlin=~s|^, ||;
 		
@@ -96,6 +98,7 @@ sub execute
 	{
 		$sql_where.=" AND banner_domain.name LIKE ?";
 		push @sql_bind, $env{'banner_domain.name'};
+		push @sql_bind_test, $env{'banner_domain.name'};
 	}
 	
 	if ($env{'a210_page.ID'})
@@ -185,7 +188,7 @@ sub execute
 	
 	if (!$env{'force'}) # when force => 1, allow display not active banners
 	{
-		$sql_where.=qq{
+		$sql_where_plus.=qq{
 			AND (banner.rules_views_max IS NULL OR banner.rules_views_max >= banner.stats_views)
 			AND (banner.rules_clicks_max IS NULL OR banner.rules_clicks_max >= banner.stats_clicks)
 			AND (banner.rules_views_session_max IS NULL OR (
@@ -233,6 +236,84 @@ sub execute
 	
 	# get template
 	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	if ($env{'http_cache'} eq "auto")
+	{
+		main::_log("http_cache=auto");
+		# check all possible banners
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				
+				`banner`.ID,
+				`banner`.ID_entity,
+				`banner_lng`.ID AS lng_ID,
+				`banner_lng`.ID_entity AS lng_ID_entity
+				
+			FROM `$App::900::db_name`.`a900_banner` AS `banner`
+			
+			INNER JOIN $App::900::db_name.a900_banner_lng AS banner_lng ON
+			(
+				banner_lng.ID_entity = banner.ID_entity AND
+				banner_lng.lng = '$env{'lng'}' AND
+				banner_lng.status = 'Y'
+			)
+			LEFT JOIN `$App::900::db_name`.a900_banner_zonetarget AS banner_zonetarget ON
+			(
+				banner_zonetarget.ID_entity = banner.ID_zonetarget
+			)
+			LEFT JOIN $App::900::db_name.a900_banner_rel_cat AS banner_rel_cat ON
+			(
+				banner_rel_cat.ID_banner = banner.ID_entity
+			)
+			LEFT JOIN $App::900::db_name.a900_banner_cat AS banner_cat ON
+			(
+				banner_cat.ID_entity = banner_rel_cat.ID_category AND
+				banner_cat.status IN ('Y','N','L')
+			)
+			LEFT JOIN $App::900::db_name.a900_banner_rel_domain AS banner_rel_domain ON
+			(
+				banner_rel_domain.ID_banner = banner.ID_entity
+			)
+			LEFT JOIN $App::900::db_name.a900_banner_domain AS banner_domain ON
+			(
+				banner_domain.ID_entity = banner_rel_domain.ID_domain AND
+				banner_domain.status IN ('Y','N','L')
+			)
+			WHERE
+				`banner`.`status` IN ('$sql_banner_status') AND
+				(`banner`.`datetime_publish_start` IS NULL OR `banner`.`datetime_publish_start` <= NOW())
+				AND (`banner`.`datetime_publish_stop` IS NULL OR `banner`.`datetime_publish_stop` >= NOW())
+				AND (
+					`banner`.rules_clicks_max IS NOT NULL
+					OR `banner`.rules_clicks_browser_max IS NOT NULL
+					OR `banner`.rules_views_session_max IS NOT NULL
+					OR `banner`.rules_views_browser_session_max IS NOT NULL
+				)
+				$sql_where
+			LIMIT
+				1
+		},'bind'=>[@sql_bind_test],'quiet'=>1,'-slave'=>1,'-cache' => 30,
+			'-changetime'=>App::020::SQL::functions::_get_changetime(
+				{
+					'db_h'=>"main",
+					'db_name' => $App::900::db_name,
+					'tb_name' => "a900_banner"
+				}),
+		);
+		if (my %banner=$sth0{'sth'}->fetchhash())
+		{
+			main::_log("http cache blocking banner $banner{'ID'}");
+		}
+		else
+		{
+			main::_log("set http cache");
+			$main::ENV{'Cache-Control'} = "public";
+			use DateTime;
+			my $date = DateTime->now('time_zone' => 'GMT');
+			$date->add('seconds' => 30);
+			$main::ENV{'Expires'} = $date->strftime("%a, %d %b %Y %H:%M:%S GMT"); 
+		}
+	}
 	
 	my $i;
 	my %sth0=TOM::Database::SQL::execute(qq{
@@ -299,14 +380,14 @@ sub execute
 			`banner`.`status` IN ('$sql_banner_status') AND
 			(`banner`.`datetime_publish_start` IS NULL OR `banner`.`datetime_publish_start` <= NOW())
 			AND (`banner`.`datetime_publish_stop` IS NULL OR `banner`.`datetime_publish_stop` >= NOW())
-			$sql_where}.do{if($sql_group_by){qq{
+			$sql_where$sql_where_plus}.do{if($sql_group_by){qq{
 		GROUP BY
 			$sql_group_by}}}.qq{
 		ORDER BY
 			$sql_order_by
 		LIMIT
 			$sql_limit
-	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+	},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,
 		'-changetime'=>App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",
@@ -315,8 +396,6 @@ sub execute
 				'ID_entity' => do{$env{'banner.ID_entity'} if $env{'banner.ID_entity'}=~/^\d+$/}
 			}),
 	);
-	
-	main::_log('binds: '.join("     ", @sql_bind));
 	
 	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
 	
