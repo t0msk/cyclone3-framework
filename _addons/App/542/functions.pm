@@ -872,6 +872,103 @@ sub file_item_info
 }
 
 
+sub get_file_item
+{
+	my %env=@_;
+	
+	if (!$env{'file.ID_entity'})
+	{
+		return undef;
+	}
+	
+#	$env{'file_item.lng'}=$tom::lng unless $env{'image_attrs.lng'};
+	
+	my $sql=qq{
+		SELECT
+			file.ID_entity AS ID_entity_file,
+			file.ID AS ID_file,
+			file_attrs.ID AS ID_attrs,
+			file_item.ID AS ID_item,
+			
+			file_attrs.ID_category,
+			
+			file_ent.posix_owner,
+			file_ent.posix_author,
+			
+			file_item.hash_secure,
+			file_item.datetime_create,
+			
+			file_attrs.name,
+			file_attrs.name_url,
+			file_attrs.name_ext,
+			
+			file_item.mimetype,
+			file_item.file_ext,
+			file_item.file_size,
+			file_item.lng,
+			
+			file_ent.downloads,
+			
+			file_attrs.status,
+			
+			CONCAT(file_item.lng,'/',SUBSTR(file_item.ID,1,4),'/',file_item.name,'.',file_item.file_ext) AS file_path,
+			ACL_world.perm_R
+			
+		FROM
+			`$App::542::db_name`.`a542_file` AS file
+		LEFT JOIN `$App::542::db_name`.`a542_file_ent` AS file_ent ON
+		(
+			file_ent.ID_entity = file.ID_entity
+		)
+		LEFT JOIN `$App::542::db_name`.`a542_file_attrs` AS file_attrs ON
+		(
+			file_attrs.ID_entity = file.ID
+		)
+		LEFT JOIN `$App::542::db_name`.`a542_file_item` AS file_item ON
+		(
+			file_item.ID_entity = file.ID_entity AND
+			file_item.lng = file_attrs.lng
+		)
+		LEFT JOIN `$App::542::db_name`.a301_ACL_user_group AS ACL_world ON
+		(
+			ACL_world.ID_entity = 0 AND
+			r_prefix = 'a542' AND
+			r_table = 'file' AND
+			r_ID_entity = file.ID_entity
+		)
+		WHERE
+			file.ID_entity=?
+			AND file.status = 'Y'
+			AND file_attrs.status = 'Y'
+			AND file_item.status = 'Y'
+		LIMIT 1
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,
+		'bind' => [$env{'file.ID_entity'}],
+#		'-cache' => 86400*7*4, #24H max
+#		'-cache_min' => 600, # when changetime before this limit 10min
+#		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+#			'db_h'=>"main",'db_name'=>$App::501::db_name,'tb_name'=>"a501_image",
+#			'ID_entity' => $env{'image.ID_entity'}
+#		}),
+#		'-recache' => $env{'-recache'}
+	);
+	if ($sth0{'rows'})
+	{
+		my %file=$sth0{'sth'}->fetchhash();
+		$file{'full_path'} = $tom::P.'/!media/a542/file/item/'.$file{'file_path'};
+		return %file;
+	}
+	else
+	{
+#		main::_log("not found image_file for image $env{'image.ID'} with format $env{'image_file.ID_format'}",1);
+	}
+	
+	return undef;
+}
+
+
 =head1 AUTHORS
 
 Comsultia, Ltd. (open@comsultia.com)

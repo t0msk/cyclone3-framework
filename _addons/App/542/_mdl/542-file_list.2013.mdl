@@ -30,10 +30,10 @@ sub execute
 	my $sql_order_by=$env{'sql_order_by'} || 'file_ent.datetime_create DESC';
 	my $sql_group_by;
 	
-	if ($env{'file_cat.ID_entity'})
+	if ($env{'file_dir.ID_entity'})
 	{
 		my $sql_cat;
-		foreach my $ID_category (split(';',$env{'file_cat.ID_entity'}))
+		foreach my $ID_category (split(';',$env{'file_dir.ID_entity'}))
 		{
 			next unless $ID_category;
 			if ($ID_category=~s/\*$//)
@@ -83,11 +83,11 @@ sub execute
 			file_attrs.name,
 			file_attrs.name_url,
 			file_attrs.name_ext,
-			file_cat.ID AS cat_ID,
-			file_cat.ID_entity AS cat_ID_entity,
-			file_cat.ID_charindex AS cat_ID_charindex,
-			file_cat.name AS cat_name,
-			file_cat.name_url AS cat_name_url,
+			file_dir.ID AS cat_ID,
+			file_dir.ID_entity AS cat_ID_entity,
+			file_dir.ID_charindex AS cat_ID_charindex,
+			file_dir.name AS cat_name,
+			file_dir.name_url AS cat_name_url,
 			file_item.hash_secure,
 			file_item.file_size,
 			file_item.mimetype,
@@ -116,11 +116,11 @@ sub execute
 			file_item.lng = '$env{'lng'}' AND
 			file_item.status IN ('Y','L')
 		)
-		LEFT JOIN $App::542::db_name.a542_file_dir AS file_cat ON
+		LEFT JOIN $App::542::db_name.a542_file_dir AS file_dir ON
 		(
-			file_cat.ID_entity = file_attrs.ID_category AND
-			file_cat.lng = file_attrs.lng AND
-			file_cat.status IN ('Y','L')
+			file_dir.ID_entity = file_attrs.ID_category AND
+			file_dir.lng = file_attrs.lng AND
+			file_dir.status IN ('Y','L')
 		)
 		LEFT JOIN $App::401::db_name.a301_ACL_user_group AS ACL_world ON
 		(

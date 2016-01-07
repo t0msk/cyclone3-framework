@@ -77,11 +77,11 @@ sub get_relation_iteminfo
 			FROM
 				`$env{'r_db_name'}`.a542_file_view
 			WHERE
-				ID_entity_file=$env{'r_ID_entity'}
+				ID_entity_file=?
 				$lng_in
 			LIMIT 1
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'main');
+		my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[$env{'r_ID_entity'}],'db_h'=>'main');
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			$info{'name'}=$db0_line{'name'};
