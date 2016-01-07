@@ -2418,9 +2418,11 @@ sub _a210_by_cat
 			))
 			{
 				push @a210_page_IDs,$relation->{'l_ID_entity'};
-				main::_log(" related from a210_page ID=".$relation->{'l_ID_entity'}) if $env{'debug'};
+#				main::_log(" related from a210_page ID=".$relation->{'l_ID_entity'}) if $env{'debug'};
 			}
 			next unless @a210_page_IDs;
+			
+			main::_log("search for valid a210_page's @a210_page_IDs") if $env{'debug'};
 			
 			# the longer path is better
 			my %sth0=TOM::Database::SQL::execute(
@@ -2458,6 +2460,7 @@ sub _a210_by_cat
 		);
 	}
 	
+	main::_log("found category $category") if $env{'debug'};
 	return $category;
 }
 

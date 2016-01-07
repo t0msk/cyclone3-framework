@@ -93,11 +93,11 @@ sub get_relation_iteminfo
 				product_cat.lng = product_lng.lng
 			)
 			WHERE
-				product.ID=$env{'r_ID_entity'}
+				product.ID=?
 				$lng_in
 			LIMIT 1
 		};
-		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'main');
+		my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[$env{'r_ID_entity'}],'db_h'=>'main');
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			$info{'name'}=$db0_line{'name'};
