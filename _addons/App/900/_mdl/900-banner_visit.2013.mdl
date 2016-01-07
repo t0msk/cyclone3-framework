@@ -25,63 +25,107 @@ sub execute
 	
 	foreach my $ID (split(';',$env{'banner.ID_entity'}))
 	{
-	
-		TOM::Database::SQL::execute(qq{
-			INSERT DELAYED INTO
-				`$App::900::db_name`.a900_banner_view
-				(
-					ID_banner,
-					datetime_event,
-					ID_user,
-					ID_session,
-					ID_browser,
-					ID_browser_session
-				)
-				VALUES
-				(
-					?,
-					NOW(),
-					?,
-					?,
-					?,
-					?
-				)
-		},'-quiet'=>1,'bind'=>[
-			$ID,
-			$main::USRM{'ID_user'},
-			$main::USRM{'ID_session'},
-			$main::COOKIES_all{'c3bid'},
-			$main::COOKIES_all{'c3sid'}
-		]);
 		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
-				COUNT(a900_banner_view.ID_user) AS cnt
-			FROM
-				`$App::900::db_name`.a900_banner_view
-			INNER JOIN `$App::900::db_name`.a900_banner ON
-			(
-				a900_banner_view.ID_banner = a900_banner.ID_entity
-			)
+				`banner`.*
+			FROM `$App::900::db_name`.`a900_banner` AS `banner`
 			WHERE
-				a900_banner_view.ID_banner = ? AND
-				a900_banner_view.datetime_event >= a900_banner.datetime_publish_start
-		},'-quiet'=>1,'bind'=>[
-			$ID
-		]);
-		my %db0_line=$sth0{'sth'}->fetchhash();
+				`banner`.ID_entity = ?
+			LIMIT
+				1
+		},'bind'=>[$ID],'quiet'=>1,'-slave'=>1,'-cache'=>60,
+			'-changetime'=>App::020::SQL::functions::_get_changetime(
+				{
+					'db_h'=>"main",
+					'db_name' => $App::900::db_name,
+					'tb_name' => "a900_banner",
+					'ID_entity' => $ID
+				})
+		);
+		my %banner=$sth0{'sth'}->fetchhash();
+		
+		if ($banner{'rules_views_session_max'} || $banner{'rules_views_browser_session_max'})
+		{
+			TOM::Database::SQL::execute(qq{
+				INSERT DELAYED INTO
+					`$App::900::db_name`.a900_banner_view
+					(
+						ID_banner,
+						datetime_event,
+						ID_user,
+						ID_session,
+						ID_browser,
+						ID_browser_session
+					)
+					VALUES
+					(
+						?,
+						NOW(),
+						?,
+						?,
+						?,
+						?
+					)
+			},'-quiet'=>1,'bind'=>[
+				$ID,
+				$main::USRM{'ID_user'},
+				$main::USRM{'ID_session'},
+				$main::COOKIES_all{'c3bid'},
+				$main::COOKIES_all{'c3sid'}
+			]);
+		}
+		else
+		{
+			TOM::Database::SQL::execute(qq{
+				INSERT INTO `$App::900::db_name`.a900_banner_view_anon
+				(date_event, ID_banner, stats_views)
+				VALUES(CURDATE(), ?, 1) ON DUPLICATE KEY UPDATE stats_views=stats_views+1
+			},'-quiet'=>1,'bind'=>[
+				$ID
+			]);
+		}
 		
 		TOM::Database::SQL::execute(qq{
 			UPDATE
 				`$App::900::db_name`.a900_banner
 			SET
-				stats_views = ?
+				stats_views = stats_views + 1
 			WHERE
 				ID_entity = ?
 		},'-quiet'=>1,'bind'=>[
-			$db0_line{'cnt'},
 			$ID
 		]);
+		
+#		# this jobify and deduplicate in timeline
+#		my %sth0=TOM::Database::SQL::execute(qq{
+#			SELECT
+#				COUNT(a900_banner_view.ID_user) AS cnt
+#			FROM
+#				`$App::900::db_name`.a900_banner_view
+#			INNER JOIN `$App::900::db_name`.a900_banner ON
+#			(
+#				a900_banner_view.ID_banner = a900_banner.ID_entity
+#			)
+#			WHERE
+#				a900_banner_view.ID_banner = ? AND
+#				a900_banner_view.datetime_event >= a900_banner.datetime_publish_start
+#		},'-quiet'=>1,'bind'=>[
+#			$ID
+#		]);
+#		my %db0_line=$sth0{'sth'}->fetchhash();
+		
+#		TOM::Database::SQL::execute(qq{
+#			UPDATE
+#				`$App::900::db_name`.a900_banner
+#			SET
+#				stats_views = ?
+#			WHERE
+#				ID_entity = ?
+#		},'-quiet'=>1,'bind'=>[
+#			$db0_line{'cnt'},
+#			$ID
+#		]);
 	
 	}
 	

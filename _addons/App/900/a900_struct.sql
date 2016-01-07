@@ -145,6 +145,15 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_view` (
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*addon*/_banner_view_anon` (
+  `date_event` date NOT NULL,
+  `ID_banner` bigint(20) NOT NULL, -- rel to banner.ID_entity
+  `stats_views` int(10) unsigned NOT NULL, -- impressions
+  PRIMARY KEY  (`date_event`,`ID_banner`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*addon*/_banner_view_arch` (
   `datetime_event` datetime NOT NULL,
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL,
