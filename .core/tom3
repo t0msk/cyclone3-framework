@@ -302,6 +302,7 @@ while ($main::CGI=new CGI::Fast())
 #	$main::ENV{'Expires'}="Mon, 1 Jan 1990 23:00:00 GMT";
 	$main::ENV{'Expires'}="0";
 	$main::ENV{'Cache-Control'}="no-cache";
+	$main::ENV{'ESI'}=0; # ESI disabled by default
 #	$main::ENV{'Pragma'}="no-cache";
 	
 	# override tom::lng
@@ -2218,6 +2219,14 @@ while ($main::CGI=new CGI::Fast())
 				next;
 			}
 			
+			if ($env0{'id'} eq "ESI")
+			{
+				$main::ENV{'ESI'}=$env0{'value'};
+#				delete $env0{'id'};
+#				$main::H->set_ESI($env0{'value'});
+				next;
+			}
+			
 			if ($env0{'id'} eq "Expires")
 			{
 				if ($env0{'value'}=~/^\+(\d+)([DHMS])$/)
@@ -3032,6 +3041,8 @@ while ($main::CGI=new CGI::Fast())
 				"no-cache";
 			}
 		}."\n";
+		print "C3-ESI: ".$main::ENV{'ESI'}."\n"
+			if $main::ENV{'ESI'};
 		
 		foreach my $head (@main::header)
 		{
