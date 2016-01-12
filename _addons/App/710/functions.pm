@@ -238,6 +238,7 @@ sub org_add
 	# phone_1
 	$columns{'phone_1'}="'".TOM::Security::form::sql_escape($env{'org.phone_1'})."'"
 		if (exists $env{'org.phone_1'} && ($env{'org.phone_1'} ne $org{'phone_1'}));
+	main::_log("phone_1 $env{'org.phone_1'} ne $org{'phone_1'}");
 	# phone_2
 	$columns{'phone_2'}="'".TOM::Security::form::sql_escape($env{'org.phone_2'})."'"
 		if (exists $env{'org.phone_2'} && ($env{'org.phone_2'} ne $org{'phone_2'}));
@@ -271,6 +272,8 @@ sub org_add
 	
 	# metadata
 	my %metadata=App::020::functions::metadata::parse($org{'metadata'});
+#	use Data::Dumper;
+#	print Dumper(\%columns);
 	
 	if ($env{'org.metadata.replace'} && $env{'org.metadata'})
 	{

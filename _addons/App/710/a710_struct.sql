@@ -52,6 +52,10 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
   `datetime_evidence` datetime default NULL,
   `datetime_modified` datetime default NULL,  
 
+  `priority_A` tinyint(3) unsigned default NULL,
+  `priority_B` tinyint(3) unsigned default NULL,
+  `priority_C` tinyint(3) unsigned default NULL,
+
   `mode` char(1) character set ascii NOT NULL default 'M',
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
@@ -111,6 +115,10 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org_j` (
 
   `datetime_evidence` datetime default NULL,
   `datetime_modified` datetime default NULL,  
+
+  `priority_A` tinyint(3) unsigned default NULL,
+  `priority_B` tinyint(3) unsigned default NULL,
+  `priority_C` tinyint(3) unsigned default NULL,
 
   `mode` char(1) character set ascii NOT NULL default 'M',  
   `status` char(1) character set ascii NOT NULL default 'Y'
