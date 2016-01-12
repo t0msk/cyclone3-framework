@@ -794,10 +794,7 @@ sub get_path
 		'tb_name' => $env{'tb_name'},
 		'columns' =>
 		{
-			'name' => 1,
-			'name_url' => 1,
-			'ID_charindex' => 1,
-			'lng' => 1,
+			'*' => 1,
 #			'metadata' => $env{'columns'}{'metadata'},
 			%{$env{'columns'}}
 		},
@@ -827,12 +824,7 @@ sub get_path
 		main::_log("find parent '$parent'") if $debug;
 		my $sql=qq{
 			SELECT
-				ID,
-				ID_entity,
-				ID_charindex,
-				name,
-				name_url,
-				status$sql_columns
+				*
 			FROM
 				`$env{'db_name'}`.`$env{'tb_name'}`
 			WHERE
