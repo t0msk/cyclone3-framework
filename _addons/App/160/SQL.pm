@@ -42,7 +42,7 @@ use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
 our $CACHE=1;
-our $cache_expire=86400*7*4; # 5 minutes - better is less time, when anything is cached wrong
+our $cache_expire = 300; # 5 minutes - better is less time, when anything is cached wrong
 
 =head1 FUNCTIONS
 
@@ -854,7 +854,7 @@ sub get_relations
 	
 	my @relations;
 	
-	if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE && $use_cache && $main::FORM{'_rc'}!=-2)
+	if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE && $use_cache && $main::cache)
 	{
 		$cache_change=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_change_key);
 		my $cache=$Ext::CacheMemcache::cache->get('namespace' => "db_cache",'key' => $cache_key);
