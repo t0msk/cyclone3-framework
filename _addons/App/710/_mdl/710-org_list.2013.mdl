@@ -183,6 +183,10 @@ sub execute
 			org.mode,
 			org.status,
 			
+			org.priority_A,
+			org.priority_B,
+			org.priority_C,
+			
 			org_cat.ID AS cat_ID,
 			org_cat.name AS cat_name,
 			org_cat.name_url AS cat_name_url,
