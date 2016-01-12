@@ -54,6 +54,12 @@ sub execute
 	# get template
 	Tomahawk::GetTpl(\%env) || return undef;
 	
+	if ($env{'sql_limit'}=~/^(.*?),(.*?)$/){
+		$TPL->{'variables'}->{'list_limit'}=$env{'sql_limit'};
+		$TPL->{'variables'}->{'list_offset'}=$1;
+		$TPL->{'variables'}->{'list_count'}=$2-$env{'sql_limit_extra'};
+	}
+	
 	my %hyphen;
 	if ($env{'hyphen'})
 	{
@@ -304,7 +310,31 @@ sub execute
 		
 		last if $count_max<$item_counter;
 		
-		main::_log("article[$item_counter/$count_max] article_attrs.name='$db0_line{'name'}'");
+		main::_log("article[$item_counter/$count_max] article_attrs.name='$db0_line{'name'}' article_cat.ID/name=$db0_line{'ID_category'}/'$db0_line{'ID_category_name'}'");
+		
+		my @cats;
+		push @cats,$db0_line{'ID_category'};
+		if (my $category=App::401::functions::_a210_by_cat(\@cats,'lng'=>$env{'lng'}))
+		{
+			main::_log(" linked to a210_page.ID=$category");
+			
+			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$category,
+					%sql_def,
+					'-slave' => 1,
+					'-cache' => 3600
+				)
+			)
+			{
+				push @{$db0_line{'a210'}{'IDs'}}, $p->{'ID'};
+				push @{$db0_line{'a210'}{'nodes'}}, $p;
+				$db0_line{'a210'}{'path_url'}.="/".$p->{'name_url'};
+			}
+			$db0_line{'a210'}{'path_url'}=~s|^/||;
+			main::_log(" a210_path='$db0_line{'a210'}{'path_url'}'");
+		}
 		
 		foreach my $node (App::020::SQL::functions::tree::get_path(
 			$db0_line{'ID_category'},
@@ -332,6 +362,14 @@ sub execute
 				$db0_line{$_}=Ext::TextHyphen::add_hyphens($db0_line{$_},split(',',$db0_line{$_.'_hyphens'}));
 			}
 		}
+		
+		my $p=new App::401::mimetypes::html;
+		$p->config('prefix'=>'article','name'=>'abstract','env'=>\%env,'entity'=>$TPL->{'entity'});
+		$p->parse($db0_line{'abstract'});
+		$p->eof();
+		$db0_line{'abstract'}=$p->{'out'};
+		$db0_line{'abstract_tag'}=$p->{'out_tag'};
+		$db0_line{'abstract_var'}=$p->{'out_var'};
 		
 		$TPL->variables_push(\%db0_line);
 	}
