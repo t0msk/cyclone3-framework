@@ -133,7 +133,7 @@ sub format {
         my $old_locale = &POSIX::setlocale(&POSIX::LC_ALL);
 
         # some systems expect locales to have a particular suffix
-        for my $suffix (@LOCALE_SUFFIX,'') {
+        for my $suffix ('.UTF-8', '', @LOCALE_SUFFIX) {
             my $try_locale = $locale.$suffix;
             my $setlocale = &POSIX::setlocale(&POSIX::LC_ALL, $try_locale);
             if (defined $setlocale && $try_locale eq $setlocale) {
