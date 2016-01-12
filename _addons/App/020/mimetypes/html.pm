@@ -427,6 +427,114 @@ sub start
 			}
 			
 		}
+		elsif ($entity eq "a710_org")
+		{
+			# get data
+			require App::710::_init;
+#			main::_log("get article $tom::lng");
+			
+			my $sql_where;
+			my @sql_bind;
+			
+			if ($vars{'ID_entity'})
+			{
+				$sql_where.=" AND org.ID_entity=?";
+				push @sql_bind,$vars{'ID_entity'};
+			}
+			elsif ($vars{'ID'})
+			{
+				$sql_where.=" AND org.ID=?";
+				push @sql_bind,$vars{'ID'};
+			}
+			
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					org.ID_entity,
+					org.ID,
+					org.name,
+					org.name_url,
+					org.name_code,
+					org_lng.name_short,
+					org_cat.ID AS cat_ID,
+					org_cat.name AS cat_name,
+					org_cat.name_url AS cat_name_url
+				FROM $App::710::db_name.a710_org AS org
+				LEFT JOIN $App::710::db_name.a710_org_lng AS org_lng ON
+				(
+					org_lng.ID_entity = org.ID AND
+					org_lng.lng = '$self->{'lng'}'
+				)
+				LEFT JOIN $App::710::db_name.a710_org_rel_cat AS org_rel_cat ON
+				(
+					org_rel_cat.ID_org = org.ID_entity
+				)
+				LEFT JOIN $App::710::db_name.a710_org_cat AS org_cat ON
+				(
+					org_cat.ID_entity = org_rel_cat.ID_category AND
+					org_cat.lng = '$self->{'lng'}'
+				)
+				WHERE
+							org.status = 'Y'
+					AND	org_lng.lng = '$self->{'lng'}'
+					$sql_where
+				LIMIT
+					1
+			},'bind'=>[@sql_bind],'quiet'=>1,'-slave'=>1,
+				'-changetime'=>App::020::SQL::functions::_get_changetime(
+					{
+						'db_h'=>"main",
+						'db_name' => $App::710::db_name,
+						'tb_name' => "a710_org",
+						'ID_entity' => do{$vars{'ID_entity'} if $vars{'ID_entity'}=~/^\d+$/}
+					}),
+			);
+			%db_entity=$sth0{'sth'}->fetchhash();
+			main::_log("found ID=$db_entity{'ID'} ID_entity=$db_entity{'ID_entity'}");
+			
+			# search for a210_page linked to this
+			use App::210::_init;
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					a210_page.*
+				FROM
+					`$App::210::db_name`.a210_page
+				INNER JOIN `$App::210::db_name`.a160_relation ON
+				(
+					a160_relation.l_prefix = 'a210' AND
+					a160_relation.l_table = 'page' AND
+					a160_relation.l_ID_entity = a210_page.ID AND
+					a160_relation.r_prefix = 'a710' AND
+					a160_relation.r_table = 'org' AND
+					a160_relation.r_ID_entity = ? AND
+					a160_relation.rel_type = 'link' AND
+					a160_relation.status = 'Y'
+				)
+				WHERE
+					a210_page.status = 'Y'
+				LIMIT 1
+			},'bind'=>[$db_entity{'ID_entity'}],'quiet'=>1);
+			if ($sth0{'rows'})
+			{
+				my %a210=$sth0{'sth'}->fetchhash();
+				my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+				foreach my $p(
+					App::020::SQL::functions::tree::get_path(
+						$a210{'ID_entity'},
+						%sql_def,
+						'-slave' => 1,
+						'-cache' => 86400*7
+					)
+				)
+				{
+					push @{$db_entity{'a210'}{'IDs'}}, $p->{'ID'};
+					push @{$db_entity{'a210'}{'nodes'}}, $p;
+					$db_entity{'a210'}{'link'}='direct';
+					$db_entity{'a210'}{'path_url'}.="/".$p->{'name_url'};
+				}
+				$db_entity{'a210'}{'path_url'}=~s|^/||;
+			}
+			
+		}
 		elsif ($entity eq "a420_static")
 		{
 			require App::420::_init;
