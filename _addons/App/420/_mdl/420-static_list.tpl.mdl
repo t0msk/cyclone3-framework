@@ -164,6 +164,30 @@ sub execute
 		
 		main::_log("static[$item_counter/$count_max] static.name='$db0_line{'name'}'");
 		
+		if($db0_line{'body'}=~/a501_image:ID=(\d+)/){
+			$db0_line{'bodyimage'}=$1;
+		}
+		
+		$db0_line{'bodyplain'}=$db0_line{'body'};
+		$db0_line{'bodyplain'}=~s|<.*?>||g;
+		
+		if ($env{'parser.body'})
+		{
+			use App::020::mimetypes::html;
+			my $parser=new App::020::mimetypes::html(
+				'tpl_ext' => $TPL # extend
+			);
+			$parser->parse($db0_line{'body'});
+			$parser->eof();
+			#push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+			$db0_line{'body_parser'}={
+				'output' => $parser->{'output'},
+				'addon' => $parser->{'addon'},
+				'entity' => $parser->{'entity'},
+				'thumbnail' => $parser->{'thumbnail'},
+			};
+		}
+		
 		my $p=new App::401::mimetypes::html;
 		$p->config('prefix'=>'static','name'=>'body','env'=>\%env,'entity'=>$TPL->{'entity'});
 		$p->parse($db0_line{'body'});
