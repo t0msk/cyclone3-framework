@@ -205,6 +205,8 @@ sub execute
 			`user`.`datetime_register`,
 			`user`.`datetime_last_login`,
 			
+			`user_rel_group`.`ID_group` AS `group_ID`,
+			
 			`user_profile`.`ID`,
 			`user_profile`.`ID_entity`,
 			`user_profile`.`PIN`,
@@ -248,6 +250,10 @@ sub execute
 		INNER JOIN `$App::301::db_name`.`a301_user_profile` AS `user_profile` ON
 		(
 			`user_profile`.`ID_entity` = `user`.`ID_user`
+		)
+		LEFT JOIN `$App::301::db_name`.`a301_user_rel_group` AS `user_rel_group` ON
+		(
+			`user`.`ID_user` = `user_rel_group`.`ID_user`
 		)
 		LEFT JOIN `$App::301::db_name`.`a301_contact_rel_cat` AS `contact_rel_cat` ON
 		(
