@@ -88,6 +88,7 @@ sub execute
 			file_dir.ID_charindex AS cat_ID_charindex,
 			file_dir.name AS cat_name,
 			file_dir.name_url AS cat_name_url,
+			file_item.ID AS file_item_ID,
 			file_item.hash_secure,
 			file_item.file_size,
 			file_item.mimetype,
@@ -157,14 +158,14 @@ sub execute
 			'db_name' => $env{'db_name'},
 			'l_prefix' => 'a542',
 			'l_table' => 'file_item',
-			'l_ID_entity' => sprintf("%08d", $file{'ID_entity'}),
+			'l_ID_entity' => sprintf("%08d", $file{'file_item_ID'}),
 			'rel_type' => 'thumbnail',
 			'r_prefix' => "a501",
 			'r_table' => "image",
 			'status' => "Y"
 		))[0];
 		
-		$file{'related_thumbnail'}->{'ID_entity'}=$relation->{'r_ID_entity'};
+		$file{'related_thumbnail'}=$relation;
 		
 		$TPL->variables_push(\%file);
 	}
