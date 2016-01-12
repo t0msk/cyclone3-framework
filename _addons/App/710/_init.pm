@@ -70,7 +70,10 @@ use App::710::functions;
 
 
 our $db_name=$App::710::db_name || $TOM::DB{'main'}{'name'};
-
+our %priority;
+$priority{'A'}=$App::710::priority{'A'} || 1;
+$priority{'B'}=$App::710::priority{'B'} || undef;
+$priority{'C'}=$App::710::priority{'C'} || undef;
 our $metadata_default=$App::710::metadata_default || '';
 
 # check relation to a501
