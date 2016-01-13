@@ -110,6 +110,11 @@ our %table_ISO639_2=
 	'cz' => 'cs',
 	'at' => 'de',
 	'us' => 'en',
+	
+	'ro' => 'ro', # romanian
+	'si' => 'sl', # slovenian
+	'es' => 'es', # espanol
+	'pt' => 'pt' # portugese
 );
 
 
