@@ -277,7 +277,7 @@ sub new
 	}
 	else
 	{
-		main::_log("<={Template}{cache} '$obj->{'location'}'");
+#		main::_log("<={Template}{cache} '$obj->{'location'}'");
 	}
 	
 	
