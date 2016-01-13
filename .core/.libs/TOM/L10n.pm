@@ -133,7 +133,7 @@ sub new
 			{
 				":mem";
 			}
-		})."} '$obj->{'location'}'/'$obj->{'ENV'}->{'lng'}'");# if $debug;
+		})."} '$obj->{'location'}'/'$obj->{'ENV'}->{'lng'}'") if $debug;
 #		main::_log("load cached L10n ".$obj->{'uid'});
 		
 		$objects{$obj->{'uid'}}=$object

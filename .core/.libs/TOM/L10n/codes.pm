@@ -19,7 +19,7 @@ BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 
 our $debug=0;
 
-# short format language code (639-2?) -> long format language code
+# short format language code (639-2?) -> long format language code (https://msdn.microsoft.com/en-us/library/ee825488(v=cs.20).aspx)
 our %trans=(
 	'en' => 'en-US',
 	'sk' => 'sk-SK',
@@ -31,7 +31,13 @@ our %trans=(
 	'hu' => 'hu-HU',
 	'fr' => 'fr-FR',
 	'pl' => 'pl-PL',
-	'it' => 'it-IT'
+	'it' => 'it-IT',
+	
+	'ro' => 'ro-RO',
+	'sl' => 'sl-SI',
+	'es' => 'es-ES',
+	'pt' => 'pt-PT'
+	
 );
 
 sub trans
