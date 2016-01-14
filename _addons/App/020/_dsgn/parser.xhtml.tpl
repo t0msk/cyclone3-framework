@@ -8,12 +8,13 @@
 	<entity id="img.a501_image"><![CDATA[[%USE dumper;USE a501;FILTER collapse;
 		attr_ignore={'/'=>1,id=>'1','src'=>1,'alt'=>1,'align'=>1,'class'=>1};
 		image = a501.get_image_file(
+			'image.ID' => entity.id.ID,
 			'image.ID_entity' => entity.id.ID_entity,
 			'image_file.ID_format' => entity.id.ID_format || 2
 		);
 	%]
 		<img
-			class="a501_image[%IF entity.attr.class;" " _ entity.attr.class|xml;END;%]"
+			class="a501_image[%entity.attr.class|replace('a501_image')|xml%]"
 			alt="[%entity.attr.alt || entity.db.name | xml%]"
 			align="[%entity.attr.align|xml%]"
 			src="[%domain.url_a501%]/image/file/[%image.file_path%]"
