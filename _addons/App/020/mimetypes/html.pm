@@ -638,6 +638,7 @@ sub start
 			# get data
 			require App::501::_init;
 			%db_entity=App::501::functions::get_image_file(
+				'image.ID' => $vars{'ID'},
 				'image.ID_entity' => $vars{'ID_entity'},
 				'image_file.ID_format' => $App::501::image_format_original_ID,
 				'image_attrs.lng' => $tom::lng
