@@ -75,9 +75,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order_product` (
   `name` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
   `type` char(1) character set ascii NOT NULL default 'P',
   `VAT` float NOT NULL, -- VAT percentage
-  `price_unit` decimal(12,2) default NULL, -- price per unit
-  `price` decimal(12,2) default NULL, -- full price (without VAT)
-  `price_incl_VAT` decimal(12,2) default NULL, -- full price with VAT
+  `price_unit` decimal(12,3) default NULL, -- price per unit
+  `price` decimal(12,3) default NULL, -- full price (without VAT)
+  `price_incl_VAT` decimal(12,3) default NULL, -- full price with VAT
   `price_currency` varchar(3) character set ascii default 'EUR', -- currency
   `amount` int(10) unsigned NOT NULL,
   `amount_unit` varchar(8) character set ascii default 'pcs',
@@ -100,9 +100,9 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order_product_j` (
   `name` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
   `type` char(1) character set ascii NOT NULL default 'P',
   `VAT` float NOT NULL,
-  `price_unit` decimal(12,2) default NULL,
-  `price` decimal(12,2) default NULL,
-  `price_incl_VAT` decimal(12,2) default NULL,
+  `price_unit` decimal(12,3) default NULL,
+  `price` decimal(12,3) default NULL,
+  `price_incl_VAT` decimal(12,3) default NULL,
   `price_currency` varchar(3) character set ascii default 'EUR',
   `amount` int(10) unsigned NOT NULL,
   `amount_unit` varchar(8) character set ascii default 'pcs',
