@@ -17,7 +17,7 @@ use base "HTML::Parser";
 our $cache=300;
 #our $cache=0;
 our $debug=0;
-
+our $a_external_blank = $App::020::mimetypes::html::a_external_blank || 0;
 
 sub new
 {
@@ -199,6 +199,13 @@ sub start
 	if (not $tag=~/^(br|strong|em|i|u|b|font|div|object|param|embed)$/) # don't display info about not important tags
 	{
 		main::_log("tag='$tag' origtext='$origtext'") if $debug;
+	}
+	
+	if ($tag eq "a" 
+		&& $App::020::mimetypes::html::a_external_blank
+		&& (not $attr->{'href'}=~/^$tom::H_www_orig/))
+	{
+		$attr->{'target'} = "_blank";
 	}
 	
 	my $tag_output;
