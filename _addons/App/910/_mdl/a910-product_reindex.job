@@ -1,0 +1,69 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+use JSON;
+use App::910::_init;
+
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	
+	if (!$tom::H)
+	{
+		main::_log("only running under domain",1);
+		return undef;
+	}
+	
+#	my $solr = Ext::Solr::service();
+	
+#	my %IDs;
+#	my $response = $solr->search( "+id:".$App::910::db_name.".a910_product.*",{'fl' => "ID_i"});
+#	for my $doc ( $response->docs )
+#	{
+#		my $ID=$doc->value_for( 'ID_i' );
+#		$IDs{$ID}++;
+#	}
+	
+	# reindex
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			a910_product
+--		LIMIT 10
+	});
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		main::_log("[$i/$sth0{'rows'}]");
+#		$main::nojobify=1;
+		
+#		delete $IDs{$db0_line{'ID'}};
+		
+		App::910::functions::_product_index('ID'=>$db0_line{'ID'},'-jobify' => 1);
+#		sleep 1;
+		
+#		if (int($i/1000) == $i/1000)
+#		{
+#			main::_log("commit");
+#			$solr->commit();
+#		}
+	}
+	
+	sleep 10;
+#	main::_log("delete ID's=".keys %IDs);
+	
+#	$solr->commit();
+	
+	
+return 1}
+1;
