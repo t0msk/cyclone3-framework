@@ -285,6 +285,7 @@ sub banner_add
 		$env{'banner_lng.ID_entity'}=$banner_lng{'ID_entity'};
 	}
 	
+	$banner{'banner_lng.ID'} = $banner_lng{'ID'};
 	main::_log("banner_lng.ID='$banner_lng{'ID'}' banner_lng.ID_entity='$banner_lng{'ID_entity'}'");
 	
 	# update only if necessary
