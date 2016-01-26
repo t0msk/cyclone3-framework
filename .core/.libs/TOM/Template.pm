@@ -987,6 +987,7 @@ sub process
 			'url_js' => $tom::H_js || $tom::H_media.'/js',
 			'url_a501' => $tom::H_a501,
 			'url_a510' => $tom::H_a510,
+			'lng' => $tom::LNG, # default lng
 			'setup' => \%tom::setup
 		};
 		# request params
