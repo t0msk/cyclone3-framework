@@ -731,7 +731,7 @@ sub product_add
 	$data{'name'}=$env{'product_lng.name'}
 		if ($env{'product_lng.name'} && ($env{'product_lng.name'} ne $product_lng{'name'}));
 	$data{'name_url'}=TOM::Net::URI::rewrite::convert($env{'product_lng.name'})
-		if ($env{'product_lng.name'} && (TOM::Net::URI::rewrite::convert($env{'product_lng.name'}) ne $product_lng{'name'}));
+		if ($env{'product_lng.name'} && (TOM::Net::URI::rewrite::convert($env{'product_lng.name'}) ne $product_lng{'name_url'}));
 	# name_long
 	$columns{'name_long'}="'".TOM::Security::form::sql_escape($env{'product_lng.name_long'})."'"
 		if ($env{'product_lng.name_long'} && ($env{'product_lng.name_long'} ne $product_lng{'name_long'}));
