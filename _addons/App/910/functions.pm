@@ -1702,9 +1702,10 @@ sub _product_index
 			}
 			
 			# save original HTML values
+			$db0_line{'description_short'}=~s/\|/&#124;/g;
 			push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description_short_orig_pl' => $db0_line{'description_short'} )
 				if $db0_line{'description_short'};
-#			main::_log("length=".length($db0_line{'description'}));
+			$db0_line{'description'}=~s/\|/&#124;/g;
 			push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description_orig_pl' => $db0_line{'description'} )
 				if $db0_line{'description'};
 			
@@ -2309,6 +2310,8 @@ sub _product_index
 	$t->close();
 	
 }
+
+
 
 
 sub _product_cat_index
