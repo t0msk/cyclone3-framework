@@ -216,9 +216,10 @@ $TOM::Document::base::copyright
 	# META
 	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\" />\n";
 	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-language\" content=\"<%HEADER-LNG%>\" />\n";
-	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"cache-control\" content=\"<%HEADER-cache-control%>\" />\n";
 	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-type\" content=\"text/html; charset=<%CODEPAGE%>\" />\n"
 	unless $self->{'ENV'}{'head'}{'meta'}{'content-type'};
+#	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"Accept-CH\" content=\"DPR, Width, Viewport-Width\" />\n"
+#	unless $self->{'ENV'}{'head'}{'meta'}{'Accept-CH'};
 	
 	$self->{'ENV'}{'head'}{'meta'}{'refresh'}=$self->{'ENV'}{'head'}{'meta'}{'Refresh'} if $self->{'ENV'}{'head'}{'meta'}{'Refresh'};
 	delete $self->{'ENV'}{'head'}{'meta'}{'Refresh'};
