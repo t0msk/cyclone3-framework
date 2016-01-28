@@ -69,10 +69,10 @@ sub execute
 		#my $old=
 		my $old = int((time() - int($results->{'aggregations'}->{'oldest'}->{'value'}/1000))/86400);
 		
-#		if ($tom::Thour >= 18 || $tom::Thour <= 8) # do it only when developers sleep
-#		{
-			
-			if ($Ext::Elastic_rlog->{'_manage'} && $old > ($TOM::DEBUG_log_type{'pub'}{'max_days'}+3) && $indice=~/\d\d\d\d\-\d\d\-\d\d$/)
+		if ($tom::Thour >= 18 || $tom::Thour <= 6) # do it only when developers sleep
+		{
+#			main::_log("'$indice' $old days " . ($TOM::DEBUG_log_type{'pub'}{'max_days'}+3));
+			if ($Ext::Elastic_rlog->{'_manage'} && ($old > ($TOM::DEBUG_log_type{'pub'}{'max_days'}+3)) && $indice=~/\d\d\d\d\-\d\d\-\d\d$/)
 			{
 				my $indice_new=$indice;
 					$indice_new=~s/\-\d\d$//;
@@ -91,11 +91,12 @@ sub execute
 					'on_success'  => sub {
 						my ($action,$response) = @_;
 						$i++;
-						main::_log("reindex [$i]") if ($i/10000 == int($i/10000));
+						main::_log("  reindex [$i]") if ($i/10000 == int($i/10000));
 						$bulk_delete->delete({'id' => $response->{'_id'}});
 					},
 				);
 				
+				eval {
 				$bulk->reindex(
 					'source'  => {
 						'index'			=>	$indice,
@@ -103,6 +104,7 @@ sub execute
 						'search_type'	=>	'scan',
 					}
 				);
+				};
 				
 				$bulk->flush();
 				$bulk_delete->flush();
@@ -110,7 +112,7 @@ sub execute
 				main::_log(" moved");
 			}
 			
-#		}
+		}
 		
 		main::_log("'$indice' preparing data removal (indice old $old days)");
 		
@@ -156,11 +158,18 @@ sub execute
 			{
 				main::_log("  remove older than $max_days days");
 				
-				my $results = $Elastic->delete_by_query(
-					'index' => $indice,
-					'type' => 'fluentd',
+				my $bulk_delete = $Elastic->bulk_helper(
+					'index'		=> $indice,
+					'type'  		=> 'fluentd',
+					'verbose'	=> 0,
+				);
+				
+				my $scroll = $Elastic->scroll_helper(
+					'index'       => $indice,
+#					'search_type' => 'scan',
+					'size'        => 500,
+					'fields' => ['_id'],
 					'body'  => {
-		#				"size" => 0,
 						'query' => {
 							'filtered' => {
 								'filter' => {
@@ -181,6 +190,15 @@ sub execute
 						},
 					}
 				);
+				
+				main::_log("  found ".$scroll->total." docs to remove");
+				
+				while (my $response = $scroll->next) {
+					# do something
+					$bulk_delete->delete({'id' => $response->{'_id'}});
+				}
+				$bulk_delete->flush();
+				
 			}
 			
 			if ($TOM::DEBUG_log_type{$type->{'key'}}->{'fault'})
