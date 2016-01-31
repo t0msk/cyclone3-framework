@@ -208,9 +208,19 @@ sub execute
 				next if $max_days > $old;
 				
 				main::_log("  remove faults older than $max_days days");
-				$Elastic->delete_by_query(
-					'index' => $indice,
-					'type' => 'fluentd',
+				
+				
+				my $bulk_delete = $Elastic->bulk_helper(
+					'index'		=> $indice,
+					'type'  		=> 'fluentd',
+					'verbose'	=> 0,
+				);
+				
+				my $scroll = $Elastic->scroll_helper(
+					'index'       => $indice,
+#					'search_type' => 'scan',
+					'size'        => 500,
+					'fields' => ['_id'],
 					'body'  => {
 						'query' => {
 							'filtered' => {
@@ -233,6 +243,15 @@ sub execute
 						},
 					}
 				);
+				
+				main::_log("  found ".$scroll->total." docs to remove");
+				
+				while (my $response = $scroll->next) {
+					# do something
+					$bulk_delete->delete({'id' => $response->{'_id'}});
+				}
+				$bulk_delete->flush();
+				
 			}
 			
 			if ($TOM::DEBUG_log_type{$type->{'key'}}->{'levels'})
@@ -244,9 +263,18 @@ sub execute
 					next if $max_days > $old;
 					
 					main::_log("  remove level >=$level older than $max_days days");
-					$Elastic->delete_by_query(
-						'index' => $indice,
-						'type' => 'fluentd',
+					
+					my $bulk_delete = $Elastic->bulk_helper(
+						'index'		=> $indice,
+						'type'  		=> 'fluentd',
+						'verbose'	=> 0,
+					);
+					
+					my $scroll = $Elastic->scroll_helper(
+						'index'       => $indice,
+	#					'search_type' => 'scan',
+						'size'        => 500,
+						'fields' => ['_id'],
 						'body'  => {
 							'query' => {
 								'filtered' => {
@@ -272,6 +300,15 @@ sub execute
 							},
 						}
 					);
+					
+					main::_log("  found ".$scroll->total." docs to remove");
+					
+					while (my $response = $scroll->next) {
+						# do something
+						$bulk_delete->delete({'id' => $response->{'_id'}});
+					}
+					$bulk_delete->flush();
+					
 				}
 			}
 		}
