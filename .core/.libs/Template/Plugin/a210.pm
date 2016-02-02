@@ -109,7 +109,7 @@ sub get_node {
 	}
 	
 #	main::_log("search ".$env->{'ID_entity'}." lng=".$env->{'lng'},3,"debug");
-	
+	my %page;
 	if ($env->{'ID_entity'})
 	{
 		my %sth0=TOM::Database::SQL::execute(qq{
@@ -129,7 +129,7 @@ sub get_node {
 			$env->{'lng'} || $tom::lng
 		]);
 		return undef unless $sth0{'rows'};
-		my %page=$sth0{'sth'}->fetchhash();
+		%page=$sth0{'sth'}->fetchhash();
 		
 		foreach my $p(
 			App::020::SQL::functions::tree::get_path(
@@ -149,11 +149,12 @@ sub get_node {
 		
 		my $tmpjson = $page{'t_keys'};
 		$tmpjson =~s|^#json||;
-		$page{'keys'} = from_json($tmpjson);
+		$page{'keys'} = from_json($tmpjson) if $tmpjson;
 		
 		return \%page;
 	}
 	
+#	return \%page;
 }
 
 1;
