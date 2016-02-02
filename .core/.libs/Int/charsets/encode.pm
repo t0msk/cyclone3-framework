@@ -86,6 +86,7 @@ our %table=
 	'204'	=> "I", # 'Ì' s dvoma dlznami
 	'205'	=>	"I", # 'Í' s dlznom
 	
+	'206'	=>	"I", # 'Î'
 	'207'	=>	"I", # 'I' s dvojbodkou
 	'208'	=>	"D", # 'Ð'
 	'209'	=>	"N", # 'Ñ'
@@ -232,6 +233,10 @@ our %table=
 	'380'	=>	"z", # 'z' s bodkou
 	'381'	=>	"Z", # 'Z' s makcenom
 	'382'	=>	"z", # 'z' s makcenom
+	
+	'537'	=>	"s", # 'ș'
+	
+	'539'	=>	"t", # 'ț'
 	
 	'711'	=>	"ˇ", # makcen
 	
