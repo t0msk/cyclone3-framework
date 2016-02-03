@@ -309,7 +309,7 @@ sub execute
 			$main::ENV{'Cache-Control'} = "public";
 			use DateTime;
 			my $date = DateTime->now('time_zone' => 'GMT');
-			$date->add('seconds' => 120);
+			$date->add('seconds' => 300);
 			$main::ENV{'Expires'} = $date->strftime("%a, %d %b %Y %H:%M:%S GMT"); 
 		}
 	}
@@ -487,7 +487,7 @@ sub execute
 						'db_h'    => 'main',
 						'db_name' => $App::210::db_name,
 						'tb_name' => 'a210_page',
-						'-cache' => 86400*7,
+						'-cache' => 3600,
 					))
 					{
 						$db1_line{'path_url'}.='/'.$node->{'name_url'};
@@ -612,7 +612,7 @@ sub execute
 								$category,
 								%sql_def,
 								'-slave' => 1,
-								'-cache' => 86400*7
+								'-cache' => 3600
 							)
 						)
 						{
