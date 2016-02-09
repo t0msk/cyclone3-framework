@@ -30,6 +30,7 @@ sub execute
 	my $sql_order_by=$env{'sql_order_by'} || 'file_ent.datetime_create DESC';
 	my $sql_group_by;
 	
+	$env{'file_dir.ID_entity'}||=$env{'file_cat.ID_entity'};
 	if ($env{'file_dir.ID_entity'})
 	{
 		my $sql_cat;
