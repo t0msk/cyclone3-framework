@@ -933,6 +933,7 @@
 		<sl-SI>Litva</sl-SI>
 		<ro-RO>Lituania</ro-RO>
 		<fr-FR>Lituanie</fr-FR>
+	</string>
 
 	<string id="country.LU">
 		<en-US>Luxembourg</en-US>
@@ -1697,3 +1698,4 @@
 	</string>
 
 </L10n>
+
