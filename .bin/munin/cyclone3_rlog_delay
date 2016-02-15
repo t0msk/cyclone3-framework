@@ -22,13 +22,13 @@ my $cmd = shift || '';
 if ($cmd eq 'config') {print qq{graph_title Cyclone3 rlog delay ($TOM::domain)
 graph_args --base 1000
 graph_category cyclone3_err
-graph_vlabel seconds
-graph_order delay
+graph_vlabel minutes
+graph_order delaym
 graph_scale no
-delay.label Seconds
-delay.min 0
-delay.warning 600
-delay.critical 3600
+delaym.label Minutes
+delaym.min 0
+delaym.warning 5
+delaym.critical 60
 };
 	exit 0;
 }
@@ -121,7 +121,10 @@ my $td2=DateTime->now();
 
 my $duration = $td2 - $td;
 
-print "delay.value ".($duration->seconds() + ($duration->minutes()*60) + ($duration->hours()*60*60))."\n";
+my $delaym=($duration->seconds() + ($duration->minutes()*60) + ($duration->hours()*60*60))/60;
+	$delaym=int($delaym*100)/100;
+
+print "delaym.value ".$delaym."\n";
 
 #my $src_date=$td->strftime('%F %H:%M:%S');
 #print "$src_date\n";
