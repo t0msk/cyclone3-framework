@@ -63,13 +63,6 @@ sub execute
 
 	my $sql_article_attrs_status=join "','", split('',$env{'article_attrs.status'});
 	
-	if ($env{'article.ID'})
-	{
-		main::_log("search by article.ID");
-		$sql_where.="AND article.ID=? ";
-		push @sql_bind,$env{'article.ID'};
-	}
-	
 	if ($env{'article_cat.ID_entity'})
 	{
 		my $sql_cat;
@@ -206,7 +199,9 @@ sub execute
 					article_attrs.status LIKE 'Y'
 				),
 				'Y', 'U'
-			) AS status_all
+			) AS status_all,
+			
+			`ACL_world`.`perm_R` AS status_world
 			
 		FROM $App::401::db_name.a401_article_ent AS article_ent
 		INNER JOIN $App::401::db_name.a401_article AS article ON
@@ -315,6 +310,7 @@ sub execute
 	delete $article{'metadata'};
 	
 	# parser abstract
+	$parser_abstract->{'env'}->{'prefix'}='abstract';
 	$parser_abstract->parse($article{'abstract'});
 	$parser_abstract->eof();
 	push @{$env_out{'entity'}},@{$parser_abstract->{'entity'}} if $parser_abstract->{'entity'}; # depend on this too
@@ -330,7 +326,24 @@ sub execute
 	push @{$env_out{'call'}{'H'}{'change_DOC_description'}},$doc_desc
 		if $env{'header.description'};
 	
+	if ($env{'header.og'} && $parser->{'thumbnail'}[0])
+	{
+		if($parser->{'thumbnail'}[0])
+		{
+			my %image=App::501::functions::get_image_file(
+				'image.ID_entity' => $parser->{'thumbnail'}[0],
+				'image_file.ID_format' => 2
+			);
+			push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $tom::H_a501.'/image/file/'.$image{'file_path'}};
+		}
+		elsif($env{'header.og.image.default'})
+		{
+			push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $env{'header.og.image.default'}};
+		}
+	}
+	
 	# parser body
+	$parser->{'env'}->{'prefix'}='body';
 	$parser->parse($article{'body'});
 	$parser->eof();
 	$article{'body_parser'}={
@@ -340,6 +353,58 @@ sub execute
 		'thumbnail' => $parser->{'thumbnail'},
 	};
 	push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+	
+	my @item_cats;
+	my %sth1=TOM::Database::SQL::execute(qq{
+		SELECT
+			article_cat.ID AS cat_ID,
+			article_cat.ID_entity AS cat_ID_entity,
+			article_cat.ID_charindex AS cat_ID_charindex,
+			article_cat.name AS cat_name,
+			article_cat.name_url AS cat_name_url
+		FROM `$App::401::db_name`.a401_article_ent AS article_ent
+		INNER JOIN `$App::401::db_name`.a401_article AS article ON
+		(
+			article_ent.ID_entity = article.ID_entity
+		)
+		LEFT JOIN `$App::401::db_name`.a401_article_attrs AS article_attrs ON
+		(
+			article_attrs.ID_entity = article.ID AND
+			article_attrs.status IN ('$sql_article_attrs_status') AND
+			article_attrs.lng = '$env{'lng'}'
+		)
+		LEFT JOIN `$App::401::db_name`.a401_article_cat AS article_cat ON
+		(
+			article_cat.ID = article_attrs.ID_category AND
+			article_cat.status IN ('Y','L')
+		)
+		WHERE
+			article_ent.status = 'Y'
+			AND article.status = 'Y'
+			AND article_cat.ID IS NOT NULL
+			AND article.ID_entity = ?
+	},'bind'=>[$article{'ID_entity'}],'quiet'=>1,'-slave'=>1,
+		'-cache' => 600,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::401::db_name,
+				'tb_name' => "a401_article",
+				'ID_entity' => $article{'ID_entity'}
+			}),
+	);
+	while (my %cat=$sth1{'sth'}->fetchhash())
+	{
+		push @item_cats, {
+			'ID' => $cat{'cat_ID'},
+			'ID_entity' => $cat{'cat_ID_entity'},
+			'ID_charindex' => $cat{'cat_ID_charindex'},
+			'name' => $cat{'cat_name'},
+			'name_url' => $cat{'cat_name_url'}
+		};
+	}
+	
+	$article{'categories'}=\@item_cats;
 	
 	$article{'related_thumbnail'}=(App::160::SQL::get_relations(
 		'db_name' => $App::401::db_name,
