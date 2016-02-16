@@ -147,7 +147,7 @@ sub execute
 	if ($env{'a460_tag.name_url'})
 	{
 		require App::460::_init;
-		$sql_join.=qq{INNER JOIN `markiza_sk`.a160_relation AS tag_relation ON
+		$sql_join.=qq{INNER JOIN `$App::401::db_name`.a160_relation AS tag_relation ON
 		(
 			tag_relation.l_prefix = 'a460' AND
 			tag_relation.l_table = 'tag' AND
