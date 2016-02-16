@@ -89,7 +89,7 @@ sub execute
 			{
 				my $cat_sql=qq{SELECT ID_charindex FROM `$App::401::db_name`.a401_article_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
 #				$sql_cat.=qq{ OR article_cat.ID_charindex LIKE CONCAT(($cat_sql),"%")};
-				$sql_cat.=qq{ OR article_attrs.ID_category IN (SELECT ID FROM `markiza_sk`.a401_article_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%"))};
+				$sql_cat.=qq{ OR article_attrs.ID_category IN (SELECT ID FROM `$App::401::db_name`.a401_article_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%"))};
 			}
 			else
 			{
@@ -120,7 +120,7 @@ sub execute
 			{
 				my $cat_sql=qq{SELECT ID_charindex FROM `$App::401::db_name`.a401_article_cat WHERE ID=$ID_category AND status IN ('Y','L') LIMIT 1};
 #				$sql_cat.=qq{ OR article_cat.ID_charindex LIKE CONCAT(($cat_sql),"%")};
-				$sql_cat.=qq{ OR article_attrs.ID_category IN (SELECT ID FROM `markiza_sk`.a401_article_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%"))};
+				$sql_cat.=qq{ OR article_attrs.ID_category IN (SELECT ID FROM `$App::401::db_name`.a401_article_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%"))};
 			}
 			else
 			{
