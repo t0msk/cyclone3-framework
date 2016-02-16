@@ -56,6 +56,14 @@ sub execute
 	my $sql_join;
 	my $elastic;
 	
+	if ($sql_order_by=~s|:visits_(.*?):|:VISITS:|)
+	{
+		my $dur=$1;
+		my $sql_visits=qq{(SELECT COUNT(ID_article) FROM `$App::401::db_name`.a401_article_visit AS visit WHERE visit.ID_article=article.ID_entity AND datetime_event >= DATE_SUB(NOW(),INTERVAL $dur))};
+		$sql_order_by=~s|:VISITS:|$sql_visits|;
+#		$sql_select=", $sql_visits AS visits_dur ";
+	}
+	
 	if ($env{'unique'})
 	{
 #		$sql_group_by="article_ent.ID_entity";
