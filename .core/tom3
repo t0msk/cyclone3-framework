@@ -319,7 +319,7 @@ while ($main::CGI=new CGI::Fast())
 	if ($main::ENV{'HTTPS'} && $tom::H_www_https)
 	{
 		$tom::H_www = $tom::H_www_https;
-		$TOM::DEBUG_log_file=90;
+#		$TOM::DEBUG_log_file=90;
 	}
 	# main::_log("tom::H_www=$tom::H_www",3,"debug");
 	if ($main::ENV{'domain'})
