@@ -63,6 +63,13 @@ sub execute
 
 	my $sql_article_attrs_status=join "','", split('',$env{'article_attrs.status'});
 	
+	if ($env{'article.ID'})
+	{
+		main::_log("search by article.ID");
+		$sql_where.="AND article.ID=? ";
+		push @sql_bind,$env{'article.ID'};
+	}
+	
 	if ($env{'article_cat.ID_entity'})
 	{
 		my $sql_cat;
