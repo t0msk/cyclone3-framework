@@ -15,7 +15,7 @@ sub execute
 	my $env=$self->env;
 	return if $self->running({'max'=>(3600+600)}); # check if not already running
 	
-	alarm 3600;
+	alarm 3500;
 	
 	if (!$Ext::Elastic_rlog && !$Ext::Elastic)
 	{
