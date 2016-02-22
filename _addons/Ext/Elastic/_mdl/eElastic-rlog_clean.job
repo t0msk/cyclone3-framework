@@ -13,7 +13,9 @@ sub execute
 {
 	my $self=shift;
 	my $env=$self->env;
-	return if $self->running({'max'=>(3600*12)}); # check if not already running
+	return if $self->running({'max'=>(3600+600)}); # check if not already running
+	
+	alarm 3600;
 	
 	if (!$Ext::Elastic_rlog && !$Ext::Elastic)
 	{
