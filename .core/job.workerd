@@ -78,7 +78,7 @@ my $loadinfo = Sys::Statistics::Linux::LoadAVG->new;
 my $loadstat = $loadinfo->get;
 
 main::_log_stdout("running on host with ".$sysstat->{'tcpucount'}." CPU cores PID $$",3,"job.workerd");# if $ENV{'WORKERS'};
-our $MAX_LOAD=($sysstat->{'tcpucount'} * 3);
+our $MAX_LOAD=($sysstat->{'tcpucount'} * 4);
 main::_log_stdout("max load $MAX_LOAD",3,"job.workerd");# if $ENV{'WORKERS'};
 
 main::_log_stdout("declaring default job exchange, queue, binding",3,"job.workerd");
@@ -131,7 +131,7 @@ sub get_workers
 }
 
 our $WORKERS = get_workers();
-my $MAX_WORKERS = $TOM::job_host_max_processes || ($sysstat->{'tcpucount'} * 2) +1;
+my $MAX_WORKERS = $TOM::job_host_max_processes || ($sysstat->{'tcpucount'} * 4) +1;
 $ENV{'WORKERS'}=1 unless exists $ENV{'WORKERS'}; # spawning workers?
 $ENV{'AUTORESTART'}=1 unless exists $ENV{'AUTORESTART'}; # spawning workers?
 $TOM::job_domain_max_workers||=16; # max X workers parallel on same domain
@@ -305,6 +305,17 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 		}
 		
 		last if $WORKERS >= $MAX_WORKERS;
+		
+		# check consumers
+		my $t = new Proc::ProcessTable;
+		if ($class && $domain)
+		{
+			my $workers_local=(scalar (grep {$_->{'cmndline'}=~/^c3\-job\.worker \[$domain\] :$class /;} @{$t->table}))-1;
+			$queue->{'consumers'} = $workers_local
+				if $workers_local > $queue->{'consumers'};
+			main::_log_stdout("real local consumers=".$queue->{'consumers'}." in domain=$domain class=$class",3,"job.workerd");
+		}
+		
 		if ($class && exists $TOM::job_class_max_workers{$class})
 		{
 			next if $TOM::job_class_max_workers{$class} <= $queue->{'consumers'};
@@ -315,6 +326,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 		if ($queue->{'messages_ready'}) # !$queue->{'consumers'} && 
 		{
 			main::_log_stdout("starting new worker for '$domain$class_'",3,"job.workerd");
+			
 			$domain_worker{$domain.$class_}{'request_time'}=time();
 #			$domain_worker{$domain.$class_}{'count'}++;
 			
@@ -360,22 +372,8 @@ sub monitor_master_db
 	my $ttime=$seconds.'.'.$microseconds;
 #	main::_log("insert master $ttime");
 	$Redis->set('C3|db_main|modified',$ttime,sub{});
-	$Redis->expire('C3|db_main|modified',10,sub {});
-	TOM::Database::SQL::execute(qq{
-		REPLACE INTO
-			TOM.a100_master
-			(
-				ID,
-				datetime_create,
-				timestamp
-			)
-			VALUES
-			(
-				1,
-				FROM_UNIXTIME($ttime),
-				$ttime
-			)
-	},'quiet'=>1);
+	$Redis->expire('C3|db_main|modified',86400,sub {});
+	TOM::Database::SQL::execute(qq{REPLACE INTO TOM.a100_master (ID,datetime_create,timestamp) VALUES (1,FROM_UNIXTIME($ttime),$ttime)},'quiet'=>1);
 }
 
 my $w=AnyEvent->timer(after => 60, interval => 30, cb => \&check_domains);
