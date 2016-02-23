@@ -135,8 +135,8 @@ my $MAX_WORKERS = $TOM::job_host_max_processes || ($sysstat->{'tcpucount'} * 4) 
 $ENV{'WORKERS'}=1 unless exists $ENV{'WORKERS'}; # spawning workers?
 $ENV{'AUTORESTART'}=1 unless exists $ENV{'AUTORESTART'}; # spawning workers?
 $TOM::job_domain_max_workers||=16; # max X workers parallel on same domain
-$TOM::job_worker_start_delay||=5; # start next worker after delay
-$TOM::job_domain_worker_start_delay||=10; # start next worker after delay on same domain
+$TOM::job_worker_start_delay||=1; # start next worker after delay
+$TOM::job_domain_worker_start_delay||=5; # start next worker after delay on same domain
 
 #	$MAX_WORKERS = 2;
 
