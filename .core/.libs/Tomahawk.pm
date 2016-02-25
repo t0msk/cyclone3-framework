@@ -1108,7 +1108,7 @@ sub supermodule
 	$smdl_env{'-xlng'}=$tom::lng unless $smdl_env{'-xlng'};
 	
 	# main::_log("adding supermodule ".$smdl_env{-category}."-".$smdl_env{-name}."/".$smdl_env{-version}."/".$smdl_env{-global});
-	my $t=track TOM::Debug("supermodule",'attrs'=>$smdl_env{-category}."-".$smdl_env{-name},'timer'=>1);
+	my $t=track TOM::Debug("supermodule",'attrs'=>$smdl_env{-addon}."-".$smdl_env{-name}.'.'.$smdl_env{'-version'},'timer'=>1);
 	
 	foreach (sort keys %smdl_env)
 	{
