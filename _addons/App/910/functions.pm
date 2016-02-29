@@ -387,7 +387,12 @@ sub product_add
 	$env{'product.metadata'}=App::020::functions::metadata::serialize(%metadata);
 #	print $env{'product.metadata'};
 	$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'product.metadata'})."'"
-	if (exists $env{'product.metadata'} && ($env{'product.metadata'} ne $product{'metadata'}));
+		if (exists $env{'product.metadata'} && ($env{'product.metadata'} ne $product{'metadata'}));
+	
+#	if (exists $env{'product.metadata'} && ($env{'product.metadata'} ne $product{'metadata'}))
+#	{
+#		print $product{'metadata'}."\n";
+#	}
 	
 #	print "metadata=".$columns{'metadata'};
 	
@@ -2281,12 +2286,16 @@ sub _product_index
 			if $product{'datetime_publish_start'}=~/^0/;
 		
 #		main::_log("index ID=$product{'ID'}",3,"elastic");
+		my %log_date=main::ctogmdatetime(time(),format=>1);
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::910::db_name,
 			'type' => 'a910_product',
 			'id' => $env{'ID'},
 			'body' => {
-				%product
+				%product,
+				'_datetime_index' => 
+					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
+					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.'Z'
 			}
 		);
 #		main::_log("/index ID=$product{'ID'}",3,"elastic");
