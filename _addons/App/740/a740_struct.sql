@@ -53,6 +53,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_joboffer_lng` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `name_url` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
   `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -69,6 +70,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_joboffer_lng_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `name_url` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
   `description` longtext character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -118,9 +120,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_joboffer_cat_j` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_joboffer_rel_cat` (
-  `ID_category` bigint(20) unsigned NOT NULL auto_increment, -- rel _event_cat.ID_entity
-  `ID_event` bigint(20) unsigned NOT NULL, -- rel _event.ID_entity,
-  PRIMARY KEY  (`ID_category`,`ID_event`)
+  `ID_category` bigint(20) unsigned NOT NULL auto_increment, -- rel _joboffer_cat.ID_entity
+  `ID_joboffer` bigint(20) unsigned NOT NULL, -- rel _joboffer.ID_entity,
+  PRIMARY KEY  (`ID_category`,`ID_joboffer`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
