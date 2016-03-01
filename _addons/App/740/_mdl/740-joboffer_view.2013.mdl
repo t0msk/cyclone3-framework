@@ -1,0 +1,162 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use App::740::_init;
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'joboffer.status'}='Y' unless $env{'joboffer.status'};
+		my $sql_joboffer_status=join "','", split('',$env{'joboffer.status'});
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_columns;
+	my $sql_join;
+	if ($env{'joboffer.ID_entity'})
+	{
+		main::_log("search by joboffer.ID_entity");
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::740::db_name,
+			'tb_name' => 'a740_joboffer',
+			'ID_entity' => $env{'joboffer.ID_entity'}
+		};
+		$sql_where.="AND joboffer.ID_entity=? ";
+		push @sql_bind,$env{'joboffer.ID_entity'};
+	}
+	
+	if ($env{'joboffer.ID'})
+	{
+		main::_log("search by joboffer.ID");
+		$sql_where.="AND joboffer.ID=? ";
+		push @sql_bind,$env{'joboffer.ID'};
+	}
+	
+	
+	if ($env{'get_org_data'}) {
+		use App::710::_init;
+		$sql_columns .= ",
+			org.ID AS org_ID,
+			org.ID_entity org_ID_entity,
+			org.name AS org_name
+		";
+		$sql_join = "
+			LEFT JOIN $App::710::db_name.a710_org AS org ON (
+				org.ID = joboffer.contact_org
+			)
+		";
+	}
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	return 1 unless $sql_where;
+	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			joboffer.ID,
+			joboffer.ID_entity,
+			joboffer.posix_owner,
+			joboffer.datetime_publish_start,
+			joboffer.datetime_publish_stop,
+			joboffer.location_city,
+			joboffer.education,
+			joboffer.contract_type,
+			joboffer.contact_org,
+
+			joboffer_lng.name,
+			joboffer_lng.name_url,
+			joboffer_lng.description,
+			joboffer_lng.lng,
+			
+			joboffer.metadata,
+			joboffer.status,
+			
+			joboffer_cat.ID AS cat_ID,
+			joboffer_cat.name AS cat_name,
+			joboffer_cat.name_url AS cat_name_url
+			$sql_columns
+			
+		FROM $App::740::db_name.a740_joboffer AS joboffer
+		LEFT JOIN $App::740::db_name.a740_joboffer_lng AS joboffer_lng ON
+		(
+			joboffer.ID_entity = joboffer_lng.ID_entity AND
+			joboffer_lng.lng = '$env{'lng'}'
+		)
+		LEFT JOIN $App::740::db_name.a740_joboffer_rel_cat AS joboffer_rel_cat ON
+		(
+			joboffer_rel_cat.ID_joboffer = joboffer.ID_entity
+		)
+		LEFT JOIN $App::740::db_name.a740_joboffer_cat AS joboffer_cat ON
+		(
+			joboffer_cat.ID_entity = joboffer_rel_cat.ID_category AND
+			joboffer_cat.lng = '$env{'lng'}'
+		)
+		$sql_join
+		WHERE
+			joboffer.status IN ('$sql_joboffer_status')
+			AND joboffer.datetime_publish_start <= NOW()
+			AND (joboffer.datetime_publish_stop IS NULL OR joboffer.datetime_publish_stop >= NOW())
+			$sql_where
+		LIMIT
+			1
+	},'bind'=>[@sql_bind],'log_'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::740::db_name,
+				'tb_name' => "a740_joboffer",
+				'ID_entity' => do{$env{'joboffer.ID_entity'} if $env{'joboffer.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	my %joboffer=$sth0{'sth'}->fetchhash();
+	
+	return 1 unless $joboffer{'ID_entity'};
+	
+	main::_log("found joboffer.ID_entity=$joboffer{'ID_entity'}");
+	
+	push @{$env_out{'entity'}},{
+		'db_h' => 'main',
+		'db_name' => $App::740::db_name,
+		'tb_name' => 'a740_joboffer',
+		'ID_entity' => $joboffer{'ID_entity'}
+	};
+	
+	# parser body
+	$parser->parse($joboffer{'description'});
+	$parser->eof();
+	$joboffer{'description_parser'}={
+		'output' => $parser->{'output'},
+		'addon' => $parser->{'addon'},
+		'entity' => $parser->{'entity'},
+		'thumbnail' => $parser->{'thumbnail'},
+	};
+	push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+
+	$main::env{'joboffer.location_city_url'} = TOM::Net::URI::rewrite::convert($joboffer{'location_city'});
+	
+	$TPL->{'variables'}{'item'} = \%joboffer;
+	
+	return 1,%env_out;
+}
+
+1;

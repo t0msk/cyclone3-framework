@@ -1,0 +1,261 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+use DateTime;
+
+
+use App::740::_init;
+
+use Data::Dumper;
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'joboffer.status'}='Y' unless $env{'joboffer.status'};
+		my $sql_joboffer_status=join "','", split('',$env{'joboffer.status'});
+
+	# paging
+	$env{'page_limit'} = 10 unless $env{'page_limit'};
+	$env{'page'} = 1 unless $env{'page'};
+	$env{'page_offset'} = 0 unless $env{'page_offset'};
+	$env{'page_plus'} = 1 unless $env{'page_plus'};	
+	$env{'sql_limit'}=((($env{'page'}-1)*$env{'page_limit'})+$env{'page_offset'}).",".($env{'page_limit'}+$env{'page_plus'});
+	my @sql_bind;
+	my $sql_where;
+	my $sql_join;
+	my $sql_columns;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || 'joboffer.datetime_publish_start DESC';
+	my $sql_group_by;
+	
+	if ($env{'unique'})
+	{ 
+		$sql_group_by="joboffer.ID_entity";
+	}
+	
+	if ($env{'joboffer_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'joboffer_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM `$App::740::db_name`.a740_joboffer_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID_entity FROM `$App::740::db_name`.a740_joboffer_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR joboffer_rel_cat.ID_category IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'joboffer_cat.ID'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'joboffer_cat.ID'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM `$App::740::db_name`.a740_joboffer_cat WHERE ID=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID FROM `$App::740::db_name`.a740_joboffer_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR joboffer_cat.ID IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'joboffer.ID_entity'}=~/^[0-9;]+$/)
+	{
+		$sql_where.=" AND joboffer.ID_entity IN (".join(',',split(';',$env{'joboffer.ID_entity'})).")";
+		$sql_limit=scalar split(';',$env{'joboffer.ID_entity'});
+	}
+	
+	if ($env{'datetime_mode'} eq "present")
+	{
+		$sql_where.=" AND (joboffer.datetime_publish_start IS NULL OR joboffer.datetime_publish_start <= NOW())";
+		$sql_where.=" AND (joboffer.datetime_publish_stop IS NULL OR joboffer.datetime_publish_stop >= NOW())";
+	}
+	elsif ($env{'datetime_mode'} eq "past")
+	{
+		$sql_where.=" AND (joboffer.datetime_publish_start IS NULL OR joboffer.datetime_publish_start <= NOW())";
+		$sql_where.=" AND joboffer.datetime_publish_stop <= NOW()";
+	}
+	elsif ($env{'datetime_mode'} eq "future")
+	{
+		$sql_where.=" AND joboffer.datetime_publish_start >= NOW()";
+		$sql_where.=" AND (joboffer.datetime_publish_stop IS NULL OR joboffer.datetime_publish_stop >= NOW())";
+	}
+	elsif ($env{'datetime_mode'} eq "all")
+	{
+		
+	}
+	else # present & upcoming
+	{
+		$sql_where.=" AND (joboffer.datetime_publish_stop IS NULL OR joboffer.datetime_publish_stop >= NOW())";
+	}
+
+	# filters
+	if ($env{'joboffer.education'}) {
+		$sql_where.=" AND joboffer.education = '".TOM::Security::form::sql_escape($env{'joboffer.education'})."'";
+	}
+	if ($env{'joboffer.location_city'}) {
+		$sql_where.=" AND joboffer.location_city = '".TOM::Security::form::sql_escape($env{'joboffer.location_city'})."'";	
+	}
+	if ($env{'joboffer.contract_type'}) {
+		$sql_where.=" AND joboffer.contract_type = '".TOM::Security::form::sql_escape($env{'joboffer.contract_type'})."'";	
+	}
+	if ($env{'joboffer_lng.name'}) {
+		$sql_where.=" AND joboffer_lng.name = '".TOM::Security::form::sql_escape($env{'joboffer_lng.name'})."'";
+	}
+	if ($env{'joboffer_lng.name_search'}) {
+		$sql_where.=" AND joboffer_lng.name LIKE '".TOM::Security::form::sql_escape($env{'joboffer_lng.name_search'})."%'";
+	}
+
+	if ($env{'get_org_data'}) {
+		use App::710::_init;
+		$sql_columns .= ",
+			org.ID AS org_ID,
+			org.ID_entity org_ID_entity,
+			org.name AS org_name
+		";
+		$sql_join = "
+			LEFT JOIN `$App::710::db_name`.a710_org AS org ON (
+				org.ID = joboffer.contact_org
+			)
+		";
+	}
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	main::_log('-------------------------------------------------------'.$env{'sql_where'});
+	
+	$sql_where=~s|^ ||;
+	
+	Tomahawk::GetTpl('env'=>\%env) || return undef;
+	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			joboffer.ID,
+			joboffer.ID_entity,
+			joboffer.posix_owner,
+			joboffer.datetime_publish_start,
+			joboffer.datetime_publish_stop,
+			joboffer.location_city,
+			joboffer.education,
+			joboffer.contract_type,
+			joboffer.contact_org,
+
+			joboffer_lng.name,
+			joboffer_lng.name_url,
+			joboffer_lng.description,
+			joboffer_lng.lng,
+			
+			joboffer.metadata,
+			joboffer.status,
+			
+			joboffer_cat.ID AS cat_ID,
+			joboffer_cat.name AS cat_name,
+			joboffer_cat.name_url AS cat_name_url
+			$sql_columns
+			
+		FROM `$App::740::db_name`.a740_joboffer AS joboffer
+		LEFT JOIN `$App::740::db_name`.a740_joboffer_lng AS joboffer_lng ON
+		(
+			joboffer.ID_entity = joboffer_lng.ID_entity AND
+			joboffer_lng.lng = '$env{'lng'}'
+		)
+		LEFT JOIN `$App::740::db_name`.a740_joboffer_rel_cat AS joboffer_rel_cat ON
+		(
+			joboffer_rel_cat.ID_joboffer = joboffer.ID_entity
+		)
+		LEFT JOIN `$App::740::db_name`.a740_joboffer_cat AS joboffer_cat ON
+		(
+			joboffer_cat.ID_entity = joboffer_rel_cat.ID_category AND
+			joboffer_cat.lng = '$env{'lng'}'
+		)$sql_join
+		WHERE
+			joboffer.status IN ('$sql_joboffer_status')
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => `$App::740::db_name`,
+				'tb_name' => "a740_joboffer",
+				'ID_entity' => do{$env{'joboffer.ID_entity'} if $env{'joboffer.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	while (my %joboffer=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		last if $i > $env{'page_limit'};
+		
+		main::_log("[$i/$env{'page_limit'}] found joboffer.ID_entity=$joboffer{'ID_entity'}");
+		
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => `$App::740::db_name`,
+			'tb_name' => 'a740_joboffer',
+			'ID_entity' => $joboffer{'ID_entity'}
+		};
+		
+		if ($env{'parser.description'})
+		{
+			$parser->parse($joboffer{'description'});
+			$parser->eof();
+			$joboffer{'description_parser'}={
+				'output' => $parser->{'output'},
+				'addon' => $parser->{'addon'},
+				'entity' => $parser->{'entity'},
+				'thumbnail' => $parser->{'thumbnail'},
+			};
+		}
+		$joboffer{'location_city_url'} = TOM::Net::URI::rewrite::convert($joboffer{'location_city'});
+	
+		push @{$TPL->{'variables'}{'items'}},\%joboffer;
+	}
+	
+	return 1,%env_out;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;
