@@ -125,6 +125,7 @@ sub execute
 	}
 	if ($env{'joboffer_lng.name_search'}) {
 		$sql_where.=" AND joboffer_lng.name LIKE '".TOM::Security::form::sql_escape($env{'joboffer_lng.name_search'})."%'";
+		$sql_group_by = "joboffer_lng.name";
 	}
 
 	if ($env{'get_org_data'}) {
