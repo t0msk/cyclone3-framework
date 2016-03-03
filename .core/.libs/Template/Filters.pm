@@ -692,14 +692,15 @@ sub render_filter_factory {
 		$text = '' unless defined $text;
 		if ($env->{'mimetype'} eq "html")
 		{
-			my $p=new App::401::mimetypes::html;
+#			use App::020::mimetypes::html;
+			my $p=new App::020::mimetypes::html;
 			$p->config(
 				'env' => $env,
-				'entity' => $context->{'tpl'}->{'entity'}
+				'tpl_ext' => $context->{'tpl'}
 			);
 			$p->parse($text);
 			$p->eof();
-			$text=$p->{'out'};
+			$text=$p->{'output'};
 		}
 		return $text;
 	}
