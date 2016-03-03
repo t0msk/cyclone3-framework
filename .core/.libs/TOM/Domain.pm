@@ -90,6 +90,7 @@ BEGIN
 					eval "use $addon_path;";
 					if ($@){main::_log("can't load addon '$addon_path' $@ $!",1)}
 				}
+				require App::020::mimetypes; # default parser
 			}
 			
 			require TOM::Template;
