@@ -37,7 +37,7 @@ our %table=
 	
 	'158'	=>	"z", # 'z' s makcenom
 	
-	'161'	=>	"i", # 'i' divne
+	'161'	=>	"!", # '¡' 
 	'162'	=>	"c", # '¢'
 	
 	'164'	=>	"'", # napriklad v slove "don't"
@@ -69,7 +69,7 @@ our %table=
 	
 	'189'	=>	"½", # 1/2
 	'190'	=>	"Z", # 'Z' s makcenom
-	'191'	=>	"¿", # obrateny otaznik
+	'191'	=>	"?", # '¿' obrateny otaznik
 	'192'	=>	"A", # 'À'
 	'193'	=>	"A", # 'A' s dlznom
 	'194'	=>	"A", # 'A' s kruzkom
@@ -234,8 +234,9 @@ our %table=
 	'381'	=>	"Z", # 'Z' s makcenom
 	'382'	=>	"z", # 'z' s makcenom
 	
+	'536'	=>	"S", # 'Ș'
 	'537'	=>	"s", # 'ș'
-	
+	'538'	=>	"T", # 'Ț'
 	'539'	=>	"t", # 'ț'
 	
 	'711'	=>	"ˇ", # makcen
