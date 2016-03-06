@@ -145,7 +145,8 @@ our @setit_F=
 	# www:$mediasrv_group ak media su cez NFS na inom serveri
 	['^!media\/'                       ,"!media"                      ,"664","$mediasrv_user:$mediasrv_group"],
 	# $user_www:cyclone3 ak media su normalne lokalne
-	['/!?media\/'                        ,"!media domain"               ,"664","$user_www:$group"],
+	['/!?media\/.*\.sh'                  ,"!media domain builder"     ,"755","$user_www:$group"],
+	['/!?media\/'                        ,"!media domain"             ,"664","$user_www:$group"],
 	['\.htaccess$'                     ,".htaccess"                   ,"460","$user_www:$group"],
 	
 	['_logs\/.*\.log$'                 ,"_logs cron .log"             ,"",""],
