@@ -35,21 +35,26 @@ sub execute
 	
 	my @filter=[{"terms" => {"hd" => [$TOM::domain || 'undef']}}];
 	
+	if ($tom::H)
+	{
+		main::_log("clean in domain mode '$tom::H'");
+		push @filter,{"terms" => {"d" => [$tom::H]}};
+	}
 	
 	my @indices_list;
 	
-	main::_log("get list of indices");
+#	main::_log("get list of indices");
 	my $indices=$Elastic->indices->stats('index' => 'logstash-*')->{'indices'};
 	my $settings=$Elastic->indices->get_settings('index' => 'logstash-*');
 	foreach my $indice (sort keys %{$indices})
 	{
-		main::_log("$indice");
+#		main::_log("$indice");
 		push @indices_list,$indice;
 	}
 	
 #	return 1;
 	
-	foreach my $indice (sort @indices_list)
+	foreach my $indice (reverse sort @indices_list)
 	{
 		# at first, search oldest entry
 		my $results = $Elastic->search(
