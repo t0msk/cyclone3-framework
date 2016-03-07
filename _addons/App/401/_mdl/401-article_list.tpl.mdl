@@ -371,8 +371,40 @@ sub execute
 		$db0_line{'abstract_tag'}=$p->{'out_tag'};
 		$db0_line{'abstract_var'}=$p->{'out_var'};
 		
+		if($env{'body'})
+		{
+			my $p=new App::401::mimetypes::html;
+			$p->config('prefix'=>'article','name'=>'body','env'=>\%env,'entity'=>$TPL->{'entity'});
+			$p->parse($db0_line{'body'});
+			$p->eof();
+			$db0_line{'body'}=$p->{'out'};
+		}
+		
 		$TPL->variables_push(\%db0_line);
 	}
+	
+	if($env{'article_attrs.ID_category'}=~/^([0-9]+)\*?$/)
+	{
+		my $ID_category=$1;
+		my $sql=qq{
+			SELECT
+				name, name_url
+			FROM
+				`$env{'db_name'}`.`a401_article_cat`
+			WHERE
+						ID_entity=$ID_category
+				AND	lng='$env{'article_content.lng'}'
+				AND	status IN ('$status_sql')
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'-cache_auto_'=>60);
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$TPL->{'variables'}{'category'}=\%db0_line;
+		}
+	}
+	
+	$TPL->{'variables'}{'rows'}=$item_counter;
+	$TPL->{'variables'}{'offset'}=$env{'sql_limit_offset'} if exists $env{'sql_limit_offset'};
 	
 	return 1,%env_out;
 }
