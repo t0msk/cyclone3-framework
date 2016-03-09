@@ -83,6 +83,8 @@ use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Digest::MD5  qw( md5 md5_hex md5_base64 );
 use DateTime; # mem:1.5MB
 use Term::ANSIColor;
+use Number::Bytes::Human;
+use Proc::ProcessTable;
 
 use TOM::Debug;
 use TOM::rev;
