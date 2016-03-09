@@ -115,6 +115,8 @@ our @setit_D=
 	['\/!www'                          ,"document roots"              ,"770","$user_www:$group"],
 	['![\w\.\-]+/[\w]+$'               ,"subdomain"                   ,"770","$user_www:$group"],
 	
+	['\.git'                           ,".git"                        ,"770","$user:$group"],
+	
 	['^\.'                             ,"unknown"                     ,"","$user:$group"],
 );
 
@@ -233,6 +235,9 @@ our @setit_F=
 	['\.pl$'                           ,"*.pl"                        ,"570","$user_www:$group"],
 	
 	['_overlays'                       ,"overlay file"                ,"660","$user_www:$group"],
+	
+	['\.git'                           ,".git"                        ,"660","$user:$group"],
+	['\.cron_ignore'                   ,".cron_ignore"                ,"660","$user:$group"],
 	
 	['^\.'                             ,"unknown"                     ,"","$user:$group"],
 );
