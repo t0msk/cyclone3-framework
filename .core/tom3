@@ -459,12 +459,12 @@ while ($main::CGI=new CGI::Fast())
 		$main::ENV{'REMOTE_COUNTRY_CODE'}='';
 		if ($main::ENV{'GEOIP_ADDR'} || $main::ENV{'GEOIP_COUNTRY_CODE'})
 		{
-			main::_log("GEOIP_ADDR=$main::ENV{'GEOIP_ADDR'} GEOIP_COUNTRY_CODE=$main::ENV{'GEOIP_COUNTRY_CODE'}",3,"geoip");
+#			main::_log("GEOIP_ADDR=$main::ENV{'GEOIP_ADDR'} GEOIP_COUNTRY_CODE=$main::ENV{'GEOIP_COUNTRY_CODE'}",3,"geoip");
 		}
 		elsif ($TOM::Int::lng::GEOIP)
 		{
 			$main::ENV{'REMOTE_COUNTRY_CODE'} = $TOM::Int::lng::gi->country_code_by_addr($main::ENV{'REMOTE_ADDR'});
-			main::_log("\$TOM::Int::lng::GEOIP IP='$main::ENV{'REMOTE_ADDR'}' country_code='$main::ENV{'REMOTE_COUNTRY_CODE'}'",3,"geoip");
+#			main::_log("\$TOM::Int::lng::GEOIP IP='$main::ENV{'REMOTE_ADDR'}' country_code='$main::ENV{'REMOTE_COUNTRY_CODE'}'",3,"geoip");
 		}
 		
 		if ($main::ENV{'REQUEST_URI'}=~s/^\/core.pl/\//)
@@ -520,7 +520,8 @@ while ($main::CGI=new CGI::Fast())
 				&&($pub::engine_disabling))
 			{
 				my @ERR=(
-					"The page you have requested can't be displayed"
+					"The page you have requested can't be displayed",
+					"Contact: info\@comsultia.com"
 #					,@{$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'messages'}}
 				);
 				main::_log("engine_disable for UserAgent \"$main::UserAgent_name\"-\"$main::ENV{'HTTP_USER_AGENT'}\"",0,"pub.warn",1);
@@ -819,7 +820,7 @@ while ($main::CGI=new CGI::Fast())
 		# fixes
 		$main::ENV{'REF_TYPE'}='feed' if $main::ENV{'REF_TYPE'} eq "rss";
 		
-		main::_log("referer='$main::ENV{'HTTP_REFERER'}' ref_type='$main::ENV{'REF_TYPE'}'",3,"pub.ref",2);
+#		main::_log("referer='$main::ENV{'HTTP_REFERER'}' ref_type='$main::ENV{'REF_TYPE'}'",3,"pub.ref",2);
 		
 		# only browser can recache content of a page
 		# when another useragent type uses URL with _rc, then is redirected by code 301
@@ -3358,14 +3359,15 @@ while ($main::CGI=new CGI::Fast())
 		foreach my $p (grep {$_->{'pid'} == $$} @{$t->table})
 		{
 			main::_log("used memory ".Number::Bytes::Human::format_bytes($p->{'rss'}));
-			if ($p->{'rss'} >= 200000000)
+			if ($p->{'rss'} >= 300000000)
 			{
 				main::_log("SHUTDOWN (too much memory ".Number::Bytes::Human::format_bytes($p->{'rss'}).") (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3);
 				main::_log("SHUTDOWN (too much memory ".Number::Bytes::Human::format_bytes($p->{'rss'}).") (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
+				Tomahawk::shutdown();
 			}
-			
 		}
-	}}
+	};
+	}
 	
 	$main::request_code="00000000";
 	# re-registering ALARM

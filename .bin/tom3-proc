@@ -122,17 +122,17 @@ while(1)
 				
 				# CPU
 				$print_out.= "[";
-				if ($hosts{$host}[$_]{'pctcpu'} > 1){$print_out.= color 'bold cyan'}
-				if ($hosts{$host}[$_]{'pctcpu'} > 10){$print_out.= color 'yellow'}
-				if ($hosts{$host}[$_]{'pctcpu'} > 30){$print_out.= color 'bold red'}
+				if ($hosts{$host}[$_]{'pctcpu'} > 10){$print_out.= color 'bold cyan'}
+				if ($hosts{$host}[$_]{'pctcpu'} > 50){$print_out.= color 'yellow'}
+				if ($hosts{$host}[$_]{'pctcpu'} > 95){$print_out.= color 'bold red'}
 				$print_out.= sprintf('%5s',sprintf('%-2.1f',$hosts{$host}[$_]{'pctcpu'}));$print_out.= color $setcolor;$print_out.= "]";
 				$cpu+=$hosts{$host}[$_]{'pctcpu'};
 				
 				# MEM
 				$hosts{$host}[$_]{'rss'}=int($hosts{$host}[$_]{'rss'}/1024/1024);
 				$print_out.= "[";
-				if ($hosts{$host}[$_]{'rss'} > 100){$print_out.= color 'yellow'}
-				if ($hosts{$host}[$_]{'rss'} > 200){$print_out.= color 'bold red'}
+				if ($hosts{$host}[$_]{'rss'} > 200){$print_out.= color 'yellow'}
+				if ($hosts{$host}[$_]{'rss'} > 300){$print_out.= color 'bold red'}
 				$print_out.= sprintf("%4d",$hosts{$host}[$_]{'rss'});$print_out.= color $setcolor;$print_out.= "M]";
 				$rss+=$hosts{$host}[$_]{'rss'};
 				
