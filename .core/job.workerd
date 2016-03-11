@@ -14,7 +14,7 @@ BEGIN
 	$TOM::engine.='.workerd';
 	$0.=".workerd";
 	$TOM::DEBUG_log_file=90;
-	setpriority $$,$$,19;
+#	setpriority $$,$$,19;
 }
 
 use open ':utf8', ':std';
@@ -139,8 +139,6 @@ $TOM::job_domain_max_workers||=16; # max X workers parallel on same domain
 $TOM::job_worker_start_delay||=1; # start next worker after delay
 $TOM::job_domain_worker_start_delay||=5; # start next worker after delay on same domain
 
-#	$MAX_WORKERS = 2;
-
 our $usable_memory = (
 	($memstat->{'memfree'} - ($memstat->{'memtotal'} * 0.05)) # reserve 5%
 	+ ($memstat->{'cached'} - ($memstat->{'memtotal'} * 0.05)) # +5% filesystem cache reserver
@@ -244,7 +242,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 	},
 =cut
 	
-	foreach my $queue (grep {$_->{'name'}=~/^cyclone3\.job\./} @{$data})
+	foreach my $queue (sort {$b->{'messages_ready'} <=> $a->{'messages_ready'}} grep {$_->{'name'}=~/^cyclone3\.job\./} @{$data})
 	{
 		my $domain=$queue->{'name'};
 			$domain=~s|^cyclone3\.job\.||;
