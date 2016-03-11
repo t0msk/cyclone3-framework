@@ -1293,6 +1293,7 @@ sub image_add
 			WHERE
 				image.ID_entity=$env{'image.ID_entity'} AND
 				( image_attrs.ID_category = $env{'image_attrs.ID_category'} OR ID_category IS NULL ) AND
+				image_attrs.lng = '$env{'image_attrs.lng'}' AND
 				image_attrs.status IN ('Y','N','L')
 			LIMIT 1
 		};
