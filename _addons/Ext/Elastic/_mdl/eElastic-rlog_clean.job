@@ -13,9 +13,9 @@ sub execute
 {
 	my $self=shift;
 	my $env=$self->env;
-	return if $self->running({'max'=>(3600+600)}); # check if not already running
+	return if $self->running({'max'=>(3600*12)}); # check if not already running
 	
-	alarm 3500;
+	alarm(3600*12);
 	
 	if (!$Ext::Elastic_rlog && !$Ext::Elastic)
 	{
@@ -39,6 +39,11 @@ sub execute
 	{
 		main::_log("clean in domain mode '$tom::H'");
 		push @filter,{"terms" => {"d" => [$tom::H]}};
+		if (!$TOM::DEBUG_log_type{'.modified'})
+		{
+			main::_log("not configured TOM::DEBUG_log_type for this domain, exit");
+			return 1;
+		}
 	}
 	
 	my @indices_list;
