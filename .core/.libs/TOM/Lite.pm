@@ -726,4 +726,66 @@ sub clear_namespaces
 	%namespace=();
 }
 
+
+
+package TOM::hash_config;
+
+
+sub TIEHASH
+{
+	my $class = shift;
+	my $data = shift || {};
+	return bless $data, $class;
+}
+
+sub DESTROY
+{
+	my $self = shift;
+	return undef;
+}
+
+sub FETCH
+{
+	my ($self,$key) = @_;
+	return $self->{$key};
+}
+
+sub DELETE
+{
+	my ($self,$key) = @_;
+	$self->{'.modified'}=1;
+	delete $self->{$key};
+	return 1;
+}
+
+sub STORE
+{
+	my ($self,$key,$value)=@_;
+	$self->{'.modified'}=1;
+#	print "store key $key value $value\n";
+	$self->{$key}=$value;
+}
+
+sub CLEAR
+{
+	my $self=shift;
+	%$self=();
+	$self->{'.modified'}=1;
+}
+
+sub FIRSTKEY
+{
+	my $self=shift;
+	scalar keys %$self;
+	return scalar each %$self;
+}
+
+sub NEXTKEY
+{
+	my $self=shift;
+	return scalar each %$self;
+}
+
+my %data=%TOM::DEBUG_log_type;tie %TOM::DEBUG_log_type, 'TOM::hash_config', \%data;
+
 1;
