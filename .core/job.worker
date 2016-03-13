@@ -68,7 +68,7 @@ use JSON;
 use Data::Dumper;
 use Ext::Redis::_init;
 our $alarm=$ENV{'TIMEOUT'};
-	 $alarm||=15; # autoexit after 60 seconds of inactivity
+	 $alarm||=10; # autoexit after 10 seconds of inactivity
 our $time_max=600;
 our $time_start=time();
 

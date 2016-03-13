@@ -3,6 +3,7 @@ use open ':utf8', ':std';
 use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use Term::ANSIColor;
+use strict;
 
 BEGIN
 {

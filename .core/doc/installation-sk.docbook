@@ -5,13 +5,13 @@
   <title>Inštalácia Cyclone3 Framework</title>
 
   <articleinfo>
-    <date>$Date$</date>
+    <date>$Date: 2007-09-16 13:38:31 +0200 (Ne, 16 sep 2007) $</date>
 
     <editor>
-      <surname>$Author$</surname>
+      <surname>$Author: comsultia $</surname>
     </editor>
 
-    <releaseinfo>$Rev$</releaseinfo>
+    <releaseinfo>$Rev: 2603 $</releaseinfo>
   </articleinfo>
 
   <para>Ak chcete inštalovať na Debian-e pozrite si radšej <ulink

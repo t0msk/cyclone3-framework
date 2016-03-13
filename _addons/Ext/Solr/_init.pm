@@ -179,7 +179,7 @@ sub search
 		my $qtime=$response->content->{'responseHeader'}->{'QTime'};
 		if (!$_[1]->{'quiet'})
 		{
-			main::_log("[solr".do{':'.$self->{'host_name'} if $self->{'host_name'}}."] search '$_[0]' found='$numfound'",{
+			main::_log("search '$_[0]' found='$numfound'",{
 				'facility' => 'solr',
 				'severity' => 3,
 				'data' => {
@@ -209,10 +209,7 @@ sub add
 	# call
 	my $response=$self->SUPER::add(@_);
 	
-	main::_log("[solr".do{':'.$self->{'host_name'} if $self->{'host_name'}}."] add '$id'");
 	main::_log(do{':'.$self->{'host_name'}.' ' if $self->{'host_name'}}."add '$id' from $package at $filename:$line",3,"solr");
-	main::_log("[$tom::H] ".do{'@'.$self->{'host_name'} if $self->{'host_name'}}." add '$id' from $package at $filename:$line",3,"solr",1);
-	main::_log("[$tom::H] ".do{'@'.$self->{'host_name'} if $self->{'host_name'}}." add '$id' from $package at $filename:$line",3,"solr",2) if $tom::H ne $tom::Hm;
 	
 	return $response;
 }

@@ -44,7 +44,7 @@ sub execute
 	if ($Ext::Elastic_rlog->{'_manage'})
 	{
 		# check config
-		my $temp_version=1.17;
+		my $temp_version=1.18;
 		my $temp_data={};
 		eval {$temp_data=$Elastic->indices->get_template('name'=>'logstash-*');};
 		if ($temp_data->{'logstash-*'}->{'mappings'}->{'fluentd'}->{'_meta'}->{'version'} < $temp_version)
@@ -59,7 +59,7 @@ sub execute
 						"number_of_shards" => 4,
 						"number_of_replicas" => 0, # at creation time of indice don't allocate between nodes
 						"index.routing.allocation.exclude.tag" => "weak",
-						"index.refresh_interval" => "5s"
+						"index.refresh_interval" => "30s"
 					},
 					'mappings' => {
 						'fluentd' => {
@@ -208,7 +208,7 @@ sub execute
 		{
 			next unless $indice=~/^\.marvel-\d/;
 			my $old = int((time() - int($settings->{$indice}->{'settings'}->{'index'}->{'creation_date'}/1000))/86400);
-			if ($old >= 31)
+			if ($old >= 7)
 			{
 				main::_log("'$indice' old $old, removing");
 				$Elastic->indices->delete('index' => $indice);

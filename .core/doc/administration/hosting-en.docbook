@@ -8,13 +8,13 @@
   service?</subtitle>
 
   <articleinfo>
-    <date>$Date$</date>
+    <date>$Date: 2008-02-25 23:15:23 +0100 (Po, 25 feb 2008) $</date>
 
     <editor>
-      <surname>$Author$</surname>
+      <surname>$Author: comsultia $</surname>
     </editor>
 
-    <releaseinfo>$Rev$</releaseinfo>
+    <releaseinfo>$Rev: 3081 $</releaseinfo>
   </articleinfo>
 
   <para>Cyclone3 doesn't run on every generic $5/month webhosting accounts.

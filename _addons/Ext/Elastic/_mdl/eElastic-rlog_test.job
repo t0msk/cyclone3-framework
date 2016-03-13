@@ -1,0 +1,114 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use Data::Dumper;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	
+	if (!$Ext::Elastic_rlog && !$Ext::Elastic)
+	{
+		return 1;
+	}
+
+	$Ext::Elastic = $Ext::Elastic_rlog_hd{$main::arg{'hd'}}
+		|| $Ext::Elastic_rlog
+		|| $Ext::Elastic;	
+	$Ext::Elastic->{'request_timeout'} = 300;
+	require Ext::Elastic::_init;
+	my $Elastic=Search::Elasticsearch->new($Ext::Elastic);
+	
+	if (!$Elastic)
+	{
+		return 1;
+	}
+	
+	my $i;
+	my $bulk_delete = $Elastic->bulk_helper(
+		'index'		=> 'logstash-2015-18',
+		'type'  		=> 'fluentd',
+		'verbose'	=> 0,
+	);
+	my $bulk = $Elastic->bulk_helper(
+		'index'		=> 'logstash-2015-05',
+		'type'  		=> 'fluentd',
+		'verbose'	=> 0,
+		'on_success'  => sub {
+			my ($action,$response) = @_;
+			$i++;
+#			print Dumper($action,$response,$i);
+			#main::_log("$action $i ".Dumper($response));
+			main::_log("reindex [$i]") if ($i/1000 == int($i/1000));
+			#$bulk->delete('index'=>'logstash-2015-20','id'=>$response->{'_id'})
+			$bulk_delete->delete({'id' => $response->{'_id'}});
+		},
+	);
+	
+#	return 1;
+	
+	$bulk->reindex(
+		'source'  => {
+			'index'			=>	'logstash-2015-18',
+			'size'			=>	5000,
+			'search_type'	=>	'scan',
+			
+#			'body' => {
+#			'query' => {
+#				'filtered' => {
+#					'filter' => {
+#						'bool' => {
+#							'must' => [
+#								{"range" => {
+#									'@timestamp' => {
+#										'gte' => '2015-05-01T00:00:00Z',
+#										'lt'  => '2015-06-01T00:00:00Z'
+#									}
+#								}}
+#							]
+#						}
+#					}
+#				}
+#			}
+#			}
+			
+		}
+	);
+	
+	$bulk->flush();
+	$bulk_delete->flush();
+	return 1;
+	
+	
+	$Elastic->delete_by_query(
+		'index' => 'logstash-2015-15,logstash-2015-16,logstash-2015-17,logstash-2015-18,logstash-2015-20,logstash-2015-21',
+		'type' => 'fluentd',
+		'body'  => {
+#				"size" => 0,
+			'query' => {
+				'filtered' => {
+					'filter' => {
+						'bool' => {
+							'must' => [
+								{"range" => {
+									'@timestamp' => {
+										'gte' => '2015-05-01T00:00:00Z',
+										'lt'  => '2015-06-01T00:00:00Z'
+									}
+								}}
+							]
+						}
+					}
+				}
+			},
+		}
+	);
+	
+return 1}
+1;

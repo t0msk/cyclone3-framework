@@ -160,6 +160,7 @@ use Cwd;
 my $this=Cwd::cwd();
 print "pwd:$this\n";
 
+$TOM::P=$P=$TOM::DP;
 if ($FORM{'t'} || $FORM{'r'})
 {
 	&exit unless $this=~/^$P/;
