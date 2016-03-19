@@ -29,7 +29,8 @@ sub DESTROY
 {
 	my $self = shift;
 	my ($package, $filename, $line) = caller;
-	main::_log("TIE-DESTROY a301::session from $filename:$line") if $debug;
+	
+	main::_log("TIE-DESTROY a301::session from $filename:$line",3,"a301") if $debug;
 	
 	# pokial nemam jednoznacny identifikator danej session je
 	# zbytocne nieco serializovat a ukladat to, ked sa to vlastne
@@ -45,12 +46,12 @@ sub DESTROY
 		return undef;
 	}
 	
-		main::_log("TIE-DESTROY a301::session='$IDsession'",3,"debug") if $debug;
+		main::_log("TIE-DESTROY a301::session='$IDsession'",3,"a301") if $debug;
 		my $cvml=CVML::structure::serialize(%{$self});
 		
 		return undef if (($cvml eq $session_save) && $performance);
 		
-		main::_log("TIE-string:='$cvml'",3,"debug") if $debug;
+		main::_log("TIE-string:='$cvml'",3,"a301") if $debug;
 		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			UPDATE
@@ -62,7 +63,7 @@ sub DESTROY
 				AND ID_user=?
 			LIMIT 1
 		},'quiet'=>1,'bind'=>[$cvml,$IDsession,$IDuser]);
-		main::_log("TIE-serialized in $sth0{'rows'} a301_user_online rows",3,"debug") if ($debug && $sth0{'rows'});
+		main::_log("TIE-serialized in $sth0{'rows'} a301_user_online rows",3,"a301") if ($debug && $sth0{'rows'});
 		
 		# changes user session
 		$main::COOKIES{'usrmevent'}=$tom::Tyear."-".$tom::Fmom."-".$tom::Fmday." ".$tom::Fhour.":".$tom::Fmin.":".$tom::Fsec;
@@ -444,7 +445,7 @@ sub process
 						LIMIT 1
 					},'bind'=>[$main::COOKIES{'_ID_user'},$tom::H_cookie],'quiet'=>1,'-slave'=>1);
 					
-					if (!$main::USRM{'login'})
+					if (!$main::USRM{'login'} or $main::USRM{'autolog'} eq "Y") # user v tabulke a301_user nieje regularny user s kontom
 					{
 						main::_log("move saved cookies and session");
 						
@@ -491,7 +492,7 @@ sub process
 							$main::USRM{'saved_session'}
 						]);
 					}
-					else
+					else # user v tabulke a301_user je regularny user s kontom
 					{
 						TOM::Database::SQL::execute(qq{
 							REPLACE INTO TOM.a301_user_online
