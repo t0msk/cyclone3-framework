@@ -790,8 +790,9 @@ sub archive
 	my %env=@_;
 	return undef unless $ID_user;
 	
+	# INSERT IGNORE?
 	TOM::Database::SQL::execute(qq{
-		INSERT IGNORE INTO TOM.a301_user_session
+		INSERT INTO TOM.a301_user_session
 		(
 			ID_user,
 			ID_session,
