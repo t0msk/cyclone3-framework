@@ -430,6 +430,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price` (
   `ID_price` bigint(20) unsigned NOT NULL, -- rel price_level.ID_entity
   `price` decimal(12,3) default NULL, -- price for this relation
   `price_full` decimal(12,3) default NULL,
+  `price_previous` decimal(12,3) default NULL,
+  `price_previous_full` decimal(12,3) default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -446,6 +448,8 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price_j` (
   `ID_price` bigint(20) unsigned NOT NULL, -- rel price_level.ID_entity
   `price` decimal(12,3) default NULL,
   `price_full` decimal(12,3) default NULL,
+  `price_previous` decimal(12,3) default NULL,
+  `price_previous_full` decimal(12,3) default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
