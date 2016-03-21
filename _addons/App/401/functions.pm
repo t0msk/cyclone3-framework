@@ -1103,6 +1103,10 @@ sub _article_index
 		
 		$doc->add_fields((
 			WebService::Solr::Field->new( 'id' => $id ),
+                        WebService::Solr::Field->new( 'db_s' => $App::401::db_name ),
+                        WebService::Solr::Field->new( 'addon_s' => 'a401_article' ),
+                        WebService::Solr::Field->new( 'lng_s' => $lng ),
+                        WebService::Solr::Field->new( 'ID_entity_i' => $env{'ID_entity'} ),
 			
 			$content{$lng}{'text'},
 			$content{$lng}{'description'},
@@ -1111,12 +1115,7 @@ sub _article_index
 			$content{$lng}{'name'},
 			@{$content{$lng}{'title'}},
 			@{$content{$lng}{'cat'}},
-			$content{$lng}{'last_modified'},
-			
-			WebService::Solr::Field->new( 'db_s' => $App::401::db_name ),
-			WebService::Solr::Field->new( 'addon_s' => 'a401_article' ),
-			WebService::Solr::Field->new( 'lng_s' => $lng ),
-			WebService::Solr::Field->new( 'ID_entity_i' => $env{'ID_entity'} ),
+			$content{$lng}{'last_modified'}
 		));
 		
 		$solr->add($doc);
