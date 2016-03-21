@@ -10,7 +10,7 @@ use vars qw{$AUTOLOAD};
 
 our $url_relative_disable = $TOM::Document::base::url_relative_disable || 0;
 
-our $copyright=qq{  This service is powered by Cyclone3 v$TOM::core_version - professionals for better internet.
+$TOM::Document::base::copyright||=qq{  This service is powered by Cyclone3 v$TOM::core_version - professionals for better internet.
   Cyclone3 is a free open source Application Framework initially developed by Comsultia and licensed under GNU/GPLv2.
   Addons and overlays are copyright of their respective owners.
   Information and contribution at http://www.cyclone3.org};

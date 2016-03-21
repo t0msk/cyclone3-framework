@@ -1832,6 +1832,14 @@ our @table=
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
 	},
+	{name=>'Bing.com',
+		regexp		=>	['bingbot'],
+		agent_type	=>	"robot",
+		engine_disable	=>	0,
+		recache_disable =>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+	},
 	{name=>'Yandex.com',
 		regexp		=>	['YandexBot'],
 		agent_type	=>	"robot",
@@ -2378,6 +2386,7 @@ our %table_IP=
 	'188\.187\.15\.149' => 'spambot', # 2009-12-08
 	'194\.8\.75\.155' => 'spambot', # 2010-01-11
 	'194\.44\.97\.14' => 'spambot', # 2009-12-19
+	'195\.113\.176\.211' => 'badbot', # 2015-09-23
 	'201\.144\.30\.227' => 'spambot', # 2009-12-08
 	'204\.124\.182\.86' => 'spambot', # 2010-01-09
 	'208\.53\.183\.9' => 'spambot', # 2009-11-23
@@ -2392,11 +2401,10 @@ our %table_IP=
 	'213\.21\.47\.51' => 'spambot', # 2009-12-19
 	'213\.186\.60\.84' => 'spambot', # 2009-12-02
 	
-	'91\.210\.181\.94' => 'badbot', # 2010-02-11 - Digmia checker
-	'91\.210\.182\.23' => 'badbot', # 2009-11-29 - Digmia checker
+#	'91\.210\.181\.94' => 'badbot', # 2010-02-11 - Digmia checker
+#	'91\.210\.182\.23' => 'badbot', # 2009-11-29 - Digmia checker
 	
 	'217\.11\.242\.50' => 'badbot', # 2011-03-29 - unknown
-	
 	
 	'58\.22\.122\.226' => 'spambot', # 2013-02-04
 	'59\.60\.96\.' => 'spambot', # 2013-01-17
