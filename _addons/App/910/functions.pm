@@ -262,9 +262,10 @@ sub product_add
 	# EAN
 	$columns{'EAN'}="'".TOM::Security::form::sql_escape($env{'product.EAN'})."'"
 		if (exists $env{'product.EAN'} && ($env{'product.EAN'} ne $product{'EAN'}));
-#	# product_number
-#	$columns{'product_number'}="'".TOM::Security::form::sql_escape($env{'product.product_number'})."'"
-#		if ($env{'product.product_number'} && ($env{'product.product_number'} ne $product{'product_number'}));
+	# product_number
+	$columns{'product_number'}="'".TOM::Security::form::sql_escape($env{'product.product_number'})."'"
+		if ($env{'product.product_number'} && ($env{'product.product_number'} ne $product{'product_number'}));
+	# ref_ID
 	$columns{'ref_ID'}="'".TOM::Security::form::sql_escape($env{'product.ref_ID'})."'"
 		if (exists $env{'product.ref_ID'} && ($env{'product.ref_ID'} ne $product{'ref_ID'}));
 	# amount
@@ -640,7 +641,7 @@ sub product_add
 		my $sym_ID;
 		if (ref($env{'product_sym.ID'}) eq "ARRAY")
 		{
-			$env{'product_sym.ID'}[0];
+			$sym_ID=$env{'product_sym.ID'}[0];
 		}
 		else
 		{
@@ -782,7 +783,7 @@ sub product_add
 			next unless $sym_ID;
 			push @sym_IDs,$sym_ID;
 			
-#			main::_log("checking sym $sym_ID");
+			main::_log("checking \@sym.ID $sym_ID");
 			
 			my %sth0=TOM::Database::SQL::execute(qq{
 				SELECT
@@ -951,6 +952,8 @@ sub product_add
 			if (ref($env{'prices'}{$price_level_name_code}) eq "HASH")
 			{
 				$env{'prices'}{$price_level_name_code}{'price'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price'});
+				$env{'prices'}{$price_level_name_code}{'price_full'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price_full'})
+					if $env{'prices'}{$price_level_name_code}{'price_full'};
 			}
 			else
 			{
@@ -980,7 +983,10 @@ sub product_add
 				);
 				$content_reindex=1;
 			}
-			elsif ($price{'price'} ne $env{'prices'}{$price_level_name_code}{'price'})
+			elsif (
+				$price{'price'} ne $env{'prices'}{$price_level_name_code}{'price'} ||
+				$price{'price_full'} ne $env{'prices'}{$price_level_name_code}{'price_full'}
+			)
 			{
 				main::_log("$price{'price'}<>$env{'prices'}{$price_level_name_code}{'price'}");
 				App::020::SQL::functions::update(
