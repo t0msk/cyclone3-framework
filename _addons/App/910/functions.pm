@@ -951,6 +951,7 @@ sub product_add
 			if (ref($env{'prices'}{$price_level_name_code}) eq "HASH")
 			{
 				$env{'prices'}{$price_level_name_code}{'price'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price'});
+				$env{'prices'}{$price_level_name_code}{'price_full'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price_full'});
 			}
 			else
 			{
@@ -973,6 +974,8 @@ sub product_add
 						'ID_price' => $price_level{'ID_entity'},
 						'price' => $env{'prices'}{$price_level_name_code}{'price'},
 						'price_full' => $env{'prices'}{$price_level_name_code}{'price_full'},
+						'price_previous' => ($env{'prices'}{$price_level_name_code}{'price_previous'} || 'NULL'),
+						'price_previous_full' => ($env{'prices'}{$price_level_name_code}{'price_previous_full'} || 'NULL'),
 						'status' => "'Y'",
 					},
 					'-journalize' => 1,
@@ -980,7 +983,10 @@ sub product_add
 				);
 				$content_reindex=1;
 			}
-			elsif ($price{'price'} ne $env{'prices'}{$price_level_name_code}{'price'})
+			elsif (
+				$price{'price'} ne $env{'prices'}{$price_level_name_code}{'price'}
+				|| $price{'price_previous'} ne $env{'prices'}{$price_level_name_code}{'price_previous'}
+			)
 			{
 				main::_log("$price{'price'}<>$env{'prices'}{$price_level_name_code}{'price'}");
 				App::020::SQL::functions::update(
@@ -991,6 +997,8 @@ sub product_add
 					'columns' => {
 						'price' => $env{'prices'}{$price_level_name_code}{'price'},
 						'price_full' => $env{'prices'}{$price_level_name_code}{'price_full'},
+						'price_previous' => ($env{'prices'}{$price_level_name_code}{'price_previous'} || 'NULL'),
+						'price_previous_full' => ($env{'prices'}{$price_level_name_code}{'price_previous_full'} || 'NULL'),
 					},
 					'-journalize' => 1,
 					'-posix' => 1
@@ -2043,6 +2051,10 @@ sub _product_index
 				if $db1_line{'price'};
 			$product{'prices'}{$db1_line{'name_code'}}{'price_full'} = $db1_line{'price_full'}
 				if $db1_line{'price_full'};
+			$product{'prices'}{$db1_line{'name_code'}}{'price_previous'} = $db1_line{'price_previous'}
+				if $db1_line{'price_previous'};
+			$product{'prices'}{$db1_line{'name_code'}}{'price_previous_full'} = $db1_line{'price_previous_full'}
+				if $db1_line{'price_previous_full'};
 		}
 		
 		# product_set
