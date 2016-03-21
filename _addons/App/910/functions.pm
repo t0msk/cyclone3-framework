@@ -1827,6 +1827,7 @@ sub _product_index
 		}
 	}
 	
+	$Elastic||=$Ext::Elastic::service;
 	if ($Elastic) # the new way in Cyclone3 :)
 	{
 #		my $status_string = $App::910::solr_status_index;
@@ -2365,11 +2366,11 @@ sub _product_cat_index
 			WebService::Solr::Field->new( 'id' => $id ),
 			
 			WebService::Solr::Field->new( 'name' => $db0_line{'name'} ),
+			WebService::Solr::Field->new( 'name_partial' => $db0_line{'name'} ),
 			WebService::Solr::Field->new( 'name_t' => $db0_line{'name'} ),
 			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
 			WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
 			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
-			do {if ($db0_line{'alias_name'}){WebService::Solr::Field->new( 'alias_name_s' => $db0_line{'alias_name'} )}},
 			
 			WebService::Solr::Field->new( 'description' => $db0_line{'description'} ),
 			
@@ -2380,6 +2381,7 @@ sub _product_cat_index
 			WebService::Solr::Field->new( 'lng_s' => $db0_line{'lng'} ),
 			WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
 			WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
+			do {if ($db0_line{'alias_name'}){WebService::Solr::Field->new( 'alias_name_s' => $db0_line{'alias_name'} )}},
 		));
 		
 		$solr->add($doc);
