@@ -526,6 +526,7 @@ sub article_add
 	{
 		main::_log("check for update article_content.ID=$env{'article_content.ID'}");
 		my %columns;
+		my %data;
 		$env{'article_content.subtitle'}=~s|$soft_hyphen||g if (exists $env{'article_content.subtitle'});
 		if (exists $env{'article_content.subtitle'} && ($env{'article_content.subtitle'} ne $article_content{'subtitle'}))
 		{
@@ -547,10 +548,10 @@ sub article_add
 		$env{'article_content.body'}=~s|$soft_hyphen||g;
 		if ($env{'article_content.body'} && ($env{'article_content.body'} ne $article_content{'body'}))
 		{
-			$columns{'body'}="'".TOM::Security::form::sql_escape($env{'article_content.body'})."'";
+			$data{'body'}=$env{'article_content.body'};
 			my $text_plain=$env{'article_content.body'};
 				$text_plain=~s/<(.*?)>/"<" . "*" x length($1) . ">"/ge;;
-			$columns{'body_hyphens'}="'". TOM::Security::form::sql_escape(join(",",Ext::TextHyphen::get_hyphens($text_plain,'lng'=>$article_content{'lng'}))) ."'";
+			$data{'body_hyphens'}=join(",",Ext::TextHyphen::get_hyphens($text_plain,'lng'=>$article_content{'lng'}));
 		}
 		# datetime_modified
 		# datetime_stop
@@ -600,7 +601,7 @@ sub article_add
 		$columns{'ID_editor'}="'".TOM::Security::form::sql_escape($env{'article_content.ID_editor'})."'"
 			if (exists $env{'article_content.ID_editor'} && ($env{'article_content.ID_editor'} ne $article_content{'ID_editor'}));
 		
-		if (keys %columns)
+		if (keys %columns || keys %data)
 		{
 			$env{'article_content.ID_editor'}=$main::USRM{'ID_user'} unless $env{'article_content.ID_editor'};
 			$columns{'ID_editor'}="'".$env{'article_content.ID_editor'}."'";
@@ -621,6 +622,7 @@ sub article_add
 				'db_h' => "main",
 				'db_name' => $App::401::db_name,
 				'tb_name' => "a401_article_content",
+				'data' => {%data},
 				'columns' => {%columns},
 				'-journalize' => 1
 			);
@@ -1101,6 +1103,10 @@ sub _article_index
 		
 		$doc->add_fields((
 			WebService::Solr::Field->new( 'id' => $id ),
+                        WebService::Solr::Field->new( 'db_s' => $App::401::db_name ),
+                        WebService::Solr::Field->new( 'addon_s' => 'a401_article' ),
+                        WebService::Solr::Field->new( 'lng_s' => $lng ),
+                        WebService::Solr::Field->new( 'ID_entity_i' => $env{'ID_entity'} ),
 			
 			$content{$lng}{'text'},
 			$content{$lng}{'description'},
@@ -1109,12 +1115,7 @@ sub _article_index
 			$content{$lng}{'name'},
 			@{$content{$lng}{'title'}},
 			@{$content{$lng}{'cat'}},
-			$content{$lng}{'last_modified'},
-			
-			WebService::Solr::Field->new( 'db_s' => $App::401::db_name ),
-			WebService::Solr::Field->new( 'addon_s' => 'a401_article' ),
-			WebService::Solr::Field->new( 'lng_s' => $lng ),
-			WebService::Solr::Field->new( 'ID_entity_i' => $env{'ID_entity'} ),
+			$content{$lng}{'last_modified'}
 		));
 		
 		$solr->add($doc);
@@ -1687,6 +1688,8 @@ sub _a210_by_cat
 	my %sql_def=('db_h' => "main",'db_name' => $App::401::db_name,'tb_name' => "a401_article_cat");
 	foreach my $cat(@{$cats})
 	{
+		main::_log("cat $cat") if $env{'debug'};
+		
 		my $i;
 		foreach my $p(
 			App::020::SQL::functions::tree::get_path(
@@ -1698,6 +1701,7 @@ sub _a210_by_cat
 			)
 		)
 		{
+			main::_log(" subcat $p->{'ID_entity'}") if $env{'debug'};
 			push @{$categories[$i]},$p->{'ID_entity'};
 			$i++;
 		}
@@ -1706,8 +1710,10 @@ sub _a210_by_cat
 	my $category;
 	for my $i (1 .. @categories)
 	{
+		main::_log("test No. $i") if $env{'debug'};
 		foreach my $cat (@{$categories[-$i]})
 		{
+			main::_log(" cat $cat") if $env{'debug'};
 			my %db0_line;
 			foreach my $relation(App::160::SQL::get_relations(
 				'db_name' => $App::210::db_name,
@@ -1721,6 +1727,7 @@ sub _a210_by_cat
 				'status' => "Y",
 			))
 			{
+				main::_log("relation category $cat to a210 $relation->{'r_ID_entity'}") if $env{'debug'};
 				# je toto relacia na moju jazykovu verziu a je aktivna?
 				my %sth0=TOM::Database::SQL::execute(
 				qq{SELECT ID FROM $App::210::db_name.a210_page WHERE ID_entity=? AND lng=? AND status IN ('Y','L') LIMIT 1},

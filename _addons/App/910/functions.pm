@@ -951,6 +951,7 @@ sub product_add
 			if (ref($env{'prices'}{$price_level_name_code}) eq "HASH")
 			{
 				$env{'prices'}{$price_level_name_code}{'price'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price'});
+				$env{'prices'}{$price_level_name_code}{'price_full'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price_full'});
 			}
 			else
 			{
@@ -973,6 +974,8 @@ sub product_add
 						'ID_price' => $price_level{'ID_entity'},
 						'price' => $env{'prices'}{$price_level_name_code}{'price'},
 						'price_full' => $env{'prices'}{$price_level_name_code}{'price_full'},
+						'price_previous' => ($env{'prices'}{$price_level_name_code}{'price_previous'} || 'NULL'),
+						'price_previous_full' => ($env{'prices'}{$price_level_name_code}{'price_previous_full'} || 'NULL'),
 						'status' => "'Y'",
 					},
 					'-journalize' => 1,
@@ -980,7 +983,10 @@ sub product_add
 				);
 				$content_reindex=1;
 			}
-			elsif ($price{'price'} ne $env{'prices'}{$price_level_name_code}{'price'})
+			elsif (
+				$price{'price'} ne $env{'prices'}{$price_level_name_code}{'price'}
+				|| $price{'price_previous'} ne $env{'prices'}{$price_level_name_code}{'price_previous'}
+			)
 			{
 				main::_log("$price{'price'}<>$env{'prices'}{$price_level_name_code}{'price'}");
 				App::020::SQL::functions::update(
@@ -991,6 +997,8 @@ sub product_add
 					'columns' => {
 						'price' => $env{'prices'}{$price_level_name_code}{'price'},
 						'price_full' => $env{'prices'}{$price_level_name_code}{'price_full'},
+						'price_previous' => ($env{'prices'}{$price_level_name_code}{'price_previous'} || 'NULL'),
+						'price_previous_full' => ($env{'prices'}{$price_level_name_code}{'price_previous_full'} || 'NULL'),
 					},
 					'-journalize' => 1,
 					'-posix' => 1
@@ -1827,6 +1835,7 @@ sub _product_index
 		}
 	}
 	
+	$Elastic||=$Ext::Elastic::service;
 	if ($Elastic) # the new way in Cyclone3 :)
 	{
 #		my $status_string = $App::910::solr_status_index;
@@ -2043,6 +2052,10 @@ sub _product_index
 				if $db1_line{'price'};
 			$product{'prices'}{$db1_line{'name_code'}}{'price_full'} = $db1_line{'price_full'}
 				if $db1_line{'price_full'};
+			$product{'prices'}{$db1_line{'name_code'}}{'price_previous'} = $db1_line{'price_previous'}
+				if $db1_line{'price_previous'};
+			$product{'prices'}{$db1_line{'name_code'}}{'price_previous_full'} = $db1_line{'price_previous_full'}
+				if $db1_line{'price_previous_full'};
 		}
 		
 		# product_set
@@ -2365,11 +2378,11 @@ sub _product_cat_index
 			WebService::Solr::Field->new( 'id' => $id ),
 			
 			WebService::Solr::Field->new( 'name' => $db0_line{'name'} ),
+			WebService::Solr::Field->new( 'name_partial' => $db0_line{'name'} ),
 			WebService::Solr::Field->new( 'name_t' => $db0_line{'name'} ),
 			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
 			WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
 			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
-			do {if ($db0_line{'alias_name'}){WebService::Solr::Field->new( 'alias_name_s' => $db0_line{'alias_name'} )}},
 			
 			WebService::Solr::Field->new( 'description' => $db0_line{'description'} ),
 			
@@ -2380,6 +2393,7 @@ sub _product_cat_index
 			WebService::Solr::Field->new( 'lng_s' => $db0_line{'lng'} ),
 			WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
 			WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
+			do {if ($db0_line{'alias_name'}){WebService::Solr::Field->new( 'alias_name_s' => $db0_line{'alias_name'} )}},
 		));
 		
 		$solr->add($doc);

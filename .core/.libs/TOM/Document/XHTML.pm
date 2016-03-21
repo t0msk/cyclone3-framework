@@ -208,7 +208,7 @@ $TOM::Document::base::copyright
 	delete $self->{'ENV'}{'head'}{'meta'}{'Keywords'};
 	delete $self->{'ENV'}{'head'}{'meta'}{'keywords'};
 	
-	$self->{'env'}{'DOC_description'}=$self->{'ENV'}{'head'}{'meta'}{'description'};
+	$self->{'env'}{'DOC_description'}{$tom::lng}=$self->{'ENV'}{'head'}{'meta'}{'description'};
 	delete $self->{'ENV'}{'head'}{'meta'}{'description'};
 	
 	
