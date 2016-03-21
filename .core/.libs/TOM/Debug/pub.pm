@@ -85,6 +85,10 @@ sub request
 			
 			'response_status_i' => $env{'code'},
 			'user_s' => $main::USRM{'ID_user'},
+			
+			'bid_s' => $main::COOKIES_all{'c3bid'}, # browser id
+			'sid_s' => $main::COOKIES_all{'c3sid'}, # session id
+			
 			'user_logged_s' => $main::USRM{'logged'},
 			
 			'servicetype_t' => $main::FORM{'TID'},
