@@ -139,7 +139,7 @@ BEGIN
 		$tomP=~s|^(.*)\/.*$|$1|;
 	}
 	# try to find domains/data directory (by default same as Cyclone3 installation directory)
-	my $tomP=$tom::P;$tomP=~s|^(.*?)/\!.*$|$1|;
+	my $tomP=$tom::P;$tomP=~s|^(.*?)/[!_\.].*$|$1|;
 	$TOM::DP=$ENV{'CYCLONE3DOMAINPATH'} || $tomP;
 	
 	# undef $tom::P if here is not domain service
