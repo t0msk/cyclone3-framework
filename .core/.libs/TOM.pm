@@ -123,7 +123,6 @@ BEGIN
 	$tom::fastcgi=1 if $tom::SCRIPT_NAME=~/(tom|fcgi|fpl)$/;
 	# TOM installation directory
 	$TOM::P=$ENV{'CYCLONE3PATH'} || "/srv/Cyclone3"; # always
-	$TOM::P_uuid=(stat($TOM::P.'/.core'))[0].'.'.(stat($TOM::P.'/.core'))[1];
 	
 	# actual path and domain service path
 	use Cwd;
@@ -140,7 +139,9 @@ BEGIN
 	}
 	# try to find domains/data directory (by default same as Cyclone3 installation directory)
 	my $tomP=$tom::P;$tomP=~s|^(.*?)/[!_\.].*$|$1|;
+		$tomP=$TOM::P unless -d $tomP.'/_config';
 	$TOM::DP=$ENV{'CYCLONE3DOMAINPATH'} || $tomP;
+	$TOM::P_uuid=(stat($TOM::DP.'/.core'))[0].'.'.(stat($TOM::DP.'/.core'))[1];
 	
 	# undef $tom::P if here is not domain service
 	$tom::P=$TOM::P unless -e $tom::P.'/local.conf';
