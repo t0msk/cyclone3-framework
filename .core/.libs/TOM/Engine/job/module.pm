@@ -308,10 +308,14 @@ sub jobify # prepare function call to background
 	if ($main::nojobify)
 	{
 		undef $main::nojobify;
-#		main::_log("can't jobify, go to exec",1);
+		main::_log("can't jobify (main::nojobify), go to exec");
 		return undef;
 	}
-	return undef unless $RabbitMQ;
+	if (!$RabbitMQ)
+	{
+		main::_log("can't jobify (!RabbitMQ), go to exec");
+		return undef;
+	}
 	
 	if ($env->{'class'})
 	{
@@ -369,7 +373,7 @@ sub jobify # prepare function call to background
 			}
 		}
 	);
-#	return 1;
+	return undef;
 }
 
 1;
