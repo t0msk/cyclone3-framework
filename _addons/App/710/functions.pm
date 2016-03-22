@@ -451,7 +451,7 @@ sub _org_index
 {
 	my %env=@_;
 	return undef unless $env{'ID'};
-	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::710::db_name,'class'=>'indexer'});
+#	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::710::db_name,'class'=>'indexer'});
 	
 	my $t=track TOM::Debug(__PACKAGE__."::_org_index()",'timer'=>1);
 	
@@ -684,14 +684,14 @@ sub _org_index
 			main::_log("org.ID=$env{'ID'} not found",1);
 			if ($Elastic->exists(
 				'index' => 'cyclone3.'.$App::710::db_name,
-				'type' => 'a710_product',
+				'type' => 'a710_org',
 				'id' => $env{'ID'}
 			))
 			{
 				main::_log("removing from Elastic",1);
 				$Elastic->delete(
 					'index' => 'cyclone3.'.$App::710::db_name,
-					'type' => 'a710_product',
+					'type' => 'a710_org',
 					'id' => $env{'ID'}
 				);
 			}
@@ -700,6 +700,8 @@ sub _org_index
 		}
 		
 		my %org=$sth0{'sth'}->fetchhash();
+		
+		$org{'name_short'}=[$org{'name_short'}];
 		
 		$org{'datetime_evidence'}=~s| (\d\d)|T$1|;$org{'datetime_evidence'}.="Z"
 			if $org{'datetime_evidence'};
@@ -746,7 +748,7 @@ sub _org_index
 					{
 						push @{$org{'metahash'}{$sec}{$_}},$val;
 					}
-					#push @{$product->{'metahash_keys'}},$sec.'.'.$_ ;
+					#push @{$org->{'metahash_keys'}},$sec.'.'.$_ ;
 					next;
 				}
 				
@@ -760,8 +762,74 @@ sub _org_index
 				}
 				
 				# list of used metadata fields
-				#push @{$product->{'metahash_keys'}},$sec.'.'.$_ ;
+				#push @{$org->{'metahash_keys'}},$sec.'.'.$_ ;
 			}
+		}
+		
+		# categories
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				a710_org_rel_cat.ID_org,
+				a710_org_cat.ID_charindex,
+				a710_org_cat.ID AS cat_ID,
+				a710_org_cat.ID_entity AS cat_ID_entity
+			FROM
+				$App::710::db_name.a710_org_rel_cat
+			INNER JOIN $App::710::db_name.a710_org_cat ON
+			(
+				a710_org_rel_cat.ID_category = a710_org_cat.ID_entity
+			)
+			WHERE
+				a710_org_rel_cat.ID_org=?
+		},'quiet'=>1,'bind'=>[$org{'ID_entity'}]);
+		my %used;
+		my %used2;
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			push @{$org{'cat'}},$db0_line{'cat_ID_entity'}
+				unless $used{$db0_line{'cat_ID_entity'}};
+			
+			push @{$org{'cat_charindex'}},$db0_line{'ID_charindex'}
+				unless $used{$db0_line{'ID_charindex'}};
+			
+			my %sql_def=('db_h' => "main",'db_name' => $App::710::db_name,'tb_name' => "a710_org_cat");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$db0_line{'cat_ID'},
+					%sql_def,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$org{'cat_path'}},$p->{'ID_entity'}
+					unless $used2{$p->{'ID_entity'}};
+				$used2{$p->{'ID_entity'}}++;
+			}
+			
+			$used{$db0_line{'ID_charindex'}}++;
+			$used{$db0_line{'cat_ID_entity'}}++;
+		}
+		
+		# org_lng
+		my %used;
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				name_short,
+				about,
+				lng
+			FROM
+				$App::710::db_name.a710_org_lng
+			WHERE
+				status='Y'
+				AND ID_entity=?
+		},'quiet'=>1,'bind'=>[$org{'ID_entity'}]);
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			push @{$org{'name_short'}},$db0_line{'name_short'}
+				unless $used{$db0_line{'name_short'}};
+				
+			$used{$db0_line{'name_short'}}++;
+			%{$org{'locale'}{$db0_line{'lng'}}}=%db0_line;
 		}
 		
 		my %log_date=main::ctogmdatetime(time(),format=>1);

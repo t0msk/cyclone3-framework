@@ -29,7 +29,9 @@ sub execute
 	
 #	main::_log_stdout("delete_template");
 #	eval{$Elastic->indices->delete_template('name'=>'cyclone3.*')};
-	my $version='1.09';
+
+	# tested on elasticsearch 2.2.1
+	my $version='1.10';
 	main::_log_stdout("put_template");
 	$Elastic->indices->put_template(
 		'name'=>'cyclone3.*',
@@ -139,6 +141,51 @@ sub execute
 #						}
 #					}
 #				},
+				
+				'a710_org' => {
+					"_meta" => {
+						"version" => $version
+					},
+					'properties' => {
+						'status' => {
+							'type' => 'string',
+							'index' => 'not_analyzed'
+						},
+						'name' => {
+							'type' => "string",
+							'copy_to' => 'name_completion',
+						},
+						'name_completion' => {
+							'type' => "completion",
+							'analyzer' => "simple",
+							'search_analyzer' => "simple",
+						},
+						'name_short' => {
+							'type' => "string",
+							'copy_to' => 'name_short_completion',
+						},
+						'name_short_completion' => {
+							'type' => "completion",
+							'analyzer' => "simple",
+							'search_analyzer' => "simple",
+						},
+						'cat' => {'type'=>'string','index'=>'not_analyzed'},
+						'cat_name' => {'type'=>'string','index'=>'not_analyzed'},
+						'status' => {
+							'type' => 'string',
+							'index' => 'not_analyzed'
+						}
+					},
+					'dynamic_templates' => [
+						# locale
+						{'locale' => {
+							"path_match" => "locale.*.*",
+							"mapping" => {
+								"type" => "string"
+							}
+						}}
+					]
+				},
 				
 				'a910_product' => {
 					"_meta" => {
