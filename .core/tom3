@@ -562,8 +562,8 @@ while ($main::CGI=new CGI::Fast())
 			
 		}
 		
-		local @TOM::Net::URI::rewrite::rules=@TOM::Net::URI::rewrite::rules;
 		
+		local @TOM::Net::URI::rewrite::rules=@TOM::Net::URI::rewrite::rules;
 		
 		if ($tom::rewrite)
 		{
@@ -577,11 +577,20 @@ while ($main::CGI=new CGI::Fast())
 					last;
 				}
 			}
-		
-			if (-e $tom::P.'/rewrite.'.($rewrite_conf || $main::ENV{'HTTP_HOST'}).'.conf')
+			
+			if (-e $tom::P.'/rewrite.'.($main::ENV{'HTTP_HOST'}).'.conf')
 			{
-				main::_log("[rewrite.".($rewrite_conf || $main::ENV{'HTTP_HOST'})."].conf, loading");
-				if (open (KEY,"<".$tom::P.'/rewrite.'.($rewrite_conf || $main::ENV{'HTTP_HOST'}).'.conf'))
+				main::_log("[rewrite.".($main::ENV{'HTTP_HOST'})."].conf, loading");
+				if (open (KEY,"<".$tom::P.'/rewrite.'.($main::ENV{'HTTP_HOST'}).'.conf'))
+				{
+					local $/;my $data=<KEY>;close(KEY);
+					TOM::Net::URI::rewrite::get($data);$tom::rewrite=1;
+				}
+			}
+			elsif (-e $tom::P.'/rewrite.'.($rewrite_conf).'.conf')
+			{
+				main::_log("[rewrite.".($rewrite_conf)."].conf, loading");
+				if (open (KEY,"<".$tom::P.'/rewrite.'.($rewrite_conf).'.conf'))
 				{
 					local $/;my $data=<KEY>;close(KEY);
 					TOM::Net::URI::rewrite::get($data);$tom::rewrite=1;
