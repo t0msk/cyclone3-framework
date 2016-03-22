@@ -272,7 +272,7 @@ sub running
 		}
 		
 		$Redis->hset('C3|job|running|'.$key_entity,'PID',$TOM::hostname.':'.$$,sub {});
-		$Redis->expire('C3|job|running|'.$key_entity,$conf->{'max'},sub {});
+		$Redis->expire('C3|job|running|'.$key_entity,($conf->{'max'}+60),sub {});
 	}
 	
 	return undef;
@@ -299,6 +299,7 @@ use JSON;
 use Ext::RabbitMQ::_init;
 use Ext::Redis::_init;
 use Encode;
+our $json = JSON::XS->new->ascii();
 
 sub jobify # prepare function call to background
 {
@@ -330,8 +331,7 @@ sub jobify # prepare function call to background
 			$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
 		}
 		if (!$queue_found)
-		{
-			main::_log("[RabbitMQ] declare_queue(".'cyclone3.job.'.$queue.")");
+		{main::_log("[RabbitMQ] declare_queue(".'cyclone3.job.'.$queue.")");eval{
 			$RabbitMQ->_channel->declare_queue(
 				'exchange' => encode('UTF-8', 'cyclone3.job'),
 				'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
@@ -345,7 +345,7 @@ sub jobify # prepare function call to background
 			);
 			$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
 			$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,10,sub {});
-		}
+		};if($@){main::_log("[RabbitMQ] can't declare queue, RabbitMQ is not available",1);return undef;}}
 	}
 	else
 	{
@@ -362,7 +362,8 @@ sub jobify # prepare function call to background
 	return $RabbitMQ->publish(
 		'exchange'=>'cyclone3.job',
 		'routing_key' => ($env->{'routing_key'} || $tom::H_orig || 'job'),
-		'body' => to_json({'function' => $function,'args' => $_[0]}),
+#		'body' => to_json({'function' => $function,'args' => $_[0]}),
+		'body' => $json->encode({'function' => $function,'args' => $_[0]}),
 		'header' => {
 			'headers' => {
 				'message_id' => $id,

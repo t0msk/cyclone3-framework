@@ -175,7 +175,7 @@ sub prepare
 	$self->{'OUT'}{'HEADER'} .= qq{<!--
 $TOM::Document::base::copyright
 -->
-};
+} if $TOM::Document::base::copyright;
 	
 	$self->{'OUT'}{'HEADER'} .= '<head>'."\n"; 
 	

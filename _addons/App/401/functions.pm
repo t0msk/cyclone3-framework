@@ -1016,6 +1016,7 @@ sub _article_index
 				article_attrs.name,
 				article_attrs.lng,
 				article_attrs.datetime_start,
+				article_attrs.status,
 				article_ent.ID_author,
 				article_cat.name AS cat_name,
 				article_cat.ID AS cat_ID,
@@ -1044,6 +1045,9 @@ sub _article_index
 		while (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
 			main::_log("article_attrs ID='$db1_line{'ID'}' lng='$db1_line{'lng'}' name='$db1_line{'name'}' cat_name='$db1_line{'cat_name'}' datetime_start='$db1_line{'datetime_start'}'");
+			
+			push @{$content{$db0_line{'lng'}}{'title'}},WebService::Solr::Field->new( 'status_sm' => $db1_line{'status'} )
+				if $db1_line{'status'};
 			
 			if ($db1_line{'name'})
 			{
@@ -1113,6 +1117,7 @@ sub _article_index
 			$content{$lng}{'keywords'},
 			$content{$lng}{'subject'},
 			$content{$lng}{'name'},
+#			$content{$lng}{'status'},
 			@{$content{$lng}{'title'}},
 			@{$content{$lng}{'cat'}},
 			$content{$lng}{'last_modified'}

@@ -143,7 +143,7 @@ sub multi
 			
 			eval {
 			my $action_die = POSIX::SigAction->new(
-				sub {$TOM::DB{$handler}{'timeouted'}+=1;die "Timed out sec.\n"},
+				sub {$TOM::DB{$handler}{'timeouted'}+=1;main::_log("timeout",1);die "Timed out sec.\n"},
 				$TOM::Engine::pub::SIG::sigset,
 				&POSIX::SA_NODEFER);
 				
