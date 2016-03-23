@@ -451,7 +451,7 @@ sub _org_index
 {
 	my %env=@_;
 	return undef unless $env{'ID'};
-#	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::710::db_name,'class'=>'indexer'});
+	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::710::db_name,'class'=>'indexer'});
 	
 	my $t=track TOM::Debug(__PACKAGE__."::_org_index()",'timer'=>1);
 	
@@ -716,6 +716,11 @@ sub _org_index
 		%{$org{'metahash'}}=App::020::functions::metadata::parse($org{'metadata'});
 		delete $org{'metadata'};
 		
+		foreach (grep {not defined $org{$_}} keys %org)
+		{
+			delete $org{$_};
+		}
+		
 		foreach my $sec(keys %{$org{'metahash'}})
 		{
 			if ($sec=~/\./)
@@ -747,8 +752,20 @@ sub _org_index
 					foreach my $val (split(';',$org{'metahash'}{$sec}{$_.'[]'}))
 					{
 						push @{$org{'metahash'}{$sec}{$_}},$val;
+						push @{$org{'metahash'}{$sec}{$_.'_t'}},$val;
+						
+						if ($val=~/^[0-9]{1,9}$/)
+						{
+							push @{$org{'metahash'}{$sec}{$_.'_i'}},$val;
+						}
+						if ($val=~/^[0-9\.]{1,9}$/ && (not $val=~/\..*?\./))
+						{
+							push @{$org{'metahash'}{$sec}{$_.'_f'}},$val;
+						}
+						
 					}
 					#push @{$org->{'metahash_keys'}},$sec.'.'.$_ ;
+					delete $org{'metahash'}{$sec}{$_.'[]'};
 					next;
 				}
 				
@@ -760,9 +777,6 @@ sub _org_index
 				{
 					$org{'metahash'}{$sec}{$_.'_f'} = $org{'metahash'}{$sec}{$_};
 				}
-				
-				# list of used metadata fields
-				#push @{$org->{'metahash_keys'}},$sec.'.'.$_ ;
 			}
 		}
 		
@@ -825,10 +839,18 @@ sub _org_index
 		},'quiet'=>1,'bind'=>[$org{'ID_entity'}]);
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
-			push @{$org{'name_short'}},$db0_line{'name_short'}
-				unless $used{$db0_line{'name_short'}};
-				
-			$used{$db0_line{'name_short'}}++;
+			if ($db0_line{'name_short'})
+			{
+				push @{$org{'name_short'}},$db0_line{'name_short'}
+					unless $used{$db0_line{'name_short'}};
+				$used{$db0_line{'name_short'}}++;
+			}
+			
+			foreach (grep {not defined $db0_line{$_}} keys %db0_line)
+			{
+				delete $db0_line{$_};
+			}
+			
 			%{$org{'locale'}{$db0_line{'lng'}}}=%db0_line;
 		}
 		
