@@ -141,7 +141,7 @@ BEGIN
 	my $tomP=$tom::P;$tomP=~s|^(.*?)/[!_\.].*$|$1|;
 		$tomP=$TOM::P unless -d $tomP.'/_config';
 	$TOM::DP=$ENV{'CYCLONE3DOMAINPATH'} || $tomP;
-	$TOM::P_uuid=(stat($TOM::DP.'/.core'))[0].'.'.(stat($TOM::DP.'/.core'))[1];
+	$TOM::P_uuid=(stat($TOM::DP.'/_config'))[0].'.'.(stat($TOM::DP.'/_config'))[1];
 	
 	# undef $tom::P if here is not domain service
 	$tom::P=$TOM::P unless -e $tom::P.'/local.conf';
