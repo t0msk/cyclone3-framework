@@ -1620,7 +1620,8 @@ our @table=
 	{name=>'bad_robot',
 		regexp		=>	[
 						'^DA ',
-						'^Obscurix'
+						'^Obscurix',
+						'Indy Library'
 						],
 		agent_type	=>	"robot",
 		engine_disable	=>	1,
