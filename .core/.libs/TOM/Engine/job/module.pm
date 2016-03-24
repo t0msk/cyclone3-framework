@@ -66,8 +66,16 @@ sub new
 		
 		foreach my $dir_item (@TOM::Overlays::item)
 		{
-			push @inc,$TOM::P.'/_overlays/'.$dir_item.'/_addons/'.$addon_path.'/_mdl';
-			push @inc,$TOM::P.'/_overlays/'.$dir_item.'/_mdl';
+			if ($dir_item=~/^\//)
+			{
+				push @inc,$dir_item.'/_addons/'.$addon_path.'/_mdl';
+				push @inc,$dir_item.'/_mdl';
+			}
+			else
+			{
+				push @inc,$TOM::P.'/_overlays/'.$dir_item.'/_addons/'.$addon_path.'/_mdl';
+				push @inc,$TOM::P.'/_overlays/'.$dir_item.'/_mdl';
+			}
 		}
 
 		push @inc,$TOM::P.'/_addons/'.$addon_path.'/_mdl';
@@ -272,7 +280,7 @@ sub running
 		}
 		
 		$Redis->hset('C3|job|running|'.$key_entity,'PID',$TOM::hostname.':'.$$,sub {});
-		$Redis->expire('C3|job|running|'.$key_entity,$conf->{'max'},sub {});
+		$Redis->expire('C3|job|running|'.$key_entity,($conf->{'max'}+60),sub {});
 	}
 	
 	return undef;
@@ -299,6 +307,7 @@ use JSON;
 use Ext::RabbitMQ::_init;
 use Ext::Redis::_init;
 use Encode;
+our $json = JSON::XS->new->ascii();
 
 sub jobify # prepare function call to background
 {
@@ -307,10 +316,14 @@ sub jobify # prepare function call to background
 	if ($main::nojobify)
 	{
 		undef $main::nojobify;
-#		main::_log("can't jobify, go to exec",1);
+		main::_log("can't jobify (main::nojobify), go to exec");
 		return undef;
 	}
-	return undef unless $RabbitMQ;
+	if (!$RabbitMQ)
+	{
+		main::_log("can't jobify (!RabbitMQ), go to exec");
+		return undef;
+	}
 	
 	if ($env->{'class'})
 	{
@@ -326,8 +339,7 @@ sub jobify # prepare function call to background
 			$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
 		}
 		if (!$queue_found)
-		{
-			main::_log("[RabbitMQ] declare_queue(".'cyclone3.job.'.$queue.")");
+		{main::_log("[RabbitMQ] declare_queue(".'cyclone3.job.'.$queue.")");eval{
 			$RabbitMQ->_channel->declare_queue(
 				'exchange' => encode('UTF-8', 'cyclone3.job'),
 				'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
@@ -341,7 +353,7 @@ sub jobify # prepare function call to background
 			);
 			$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
 			$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,10,sub {});
-		}
+		};if($@){main::_log("[RabbitMQ] can't declare queue, RabbitMQ is not available",1);return undef;}}
 	}
 	else
 	{
@@ -358,7 +370,8 @@ sub jobify # prepare function call to background
 	return $RabbitMQ->publish(
 		'exchange'=>'cyclone3.job',
 		'routing_key' => ($env->{'routing_key'} || $tom::H_orig || 'job'),
-		'body' => to_json({'function' => $function,'args' => $_[0]}),
+#		'body' => to_json({'function' => $function,'args' => $_[0]}),
+		'body' => $json->encode({'function' => $function,'args' => $_[0]}),
 		'header' => {
 			'headers' => {
 				'message_id' => $id,
@@ -368,7 +381,7 @@ sub jobify # prepare function call to background
 			}
 		}
 	);
-#	return 1;
+	return undef;
 }
 
 1;

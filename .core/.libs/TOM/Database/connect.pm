@@ -134,7 +134,7 @@ sub multi
 			
 #			main::_log("DBI connecting '$handler' ('$TOM::DB{$handler}{uri}' '$TOM::DB{$handler}{user}' '****')",3,"sql.err");
 			
-			if ($TOM::DB{$handler}{'timeouted'})
+			if ($TOM::DB{$handler}{'timeouted'} >= 10)
 			{
 				main::_log("can't connect '$handler', already timeouted",1);
 				$t->close();
@@ -143,12 +143,12 @@ sub multi
 			
 			eval {
 			my $action_die = POSIX::SigAction->new(
-				sub {$TOM::DB{$handler}{'timeouted'}=1;die "Timed out sec.\n"},
+				sub {$TOM::DB{$handler}{'timeouted'}+=1;main::_log("timeout",1);die "Timed out sec.\n"},
 				$TOM::Engine::pub::SIG::sigset,
 				&POSIX::SA_NODEFER);
 				
 				POSIX::sigaction(&POSIX::SIGALRM, $action_die);
-				alarm(2);
+				alarm(30);
 				$main::DB{$handler} = DBI->connect
 				(
 					$TOM::DB{$handler}{'uri'},

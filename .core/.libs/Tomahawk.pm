@@ -664,11 +664,22 @@ sub module
 		# find in overlays
 		foreach my $item(@TOM::Overlays::item)
 		{
-			my $file=
-				$TOM::P.'/_overlays/'.$item
-				.'/_addons/'.$mdl_C{'-addon_type'}.'/'.$mdl_C{'-addon_name'}.'/_mdl/'
-				.$mdl_C{'-addon_name'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'}.'.mdl';
-			if (-e $file){$addon_path=$file;last;}
+			if ($item=~/^\//)
+			{
+				my $file=
+					$item
+					.'/_addons/'.$mdl_C{'-addon_type'}.'/'.$mdl_C{'-addon_name'}.'/_mdl/'
+					.$mdl_C{'-addon_name'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'}.'.mdl';
+				if (-e $file){$addon_path=$file;last;}
+			}
+			else
+			{
+				my $file=
+					$TOM::P.'/_overlays/'.$item
+					.'/_addons/'.$mdl_C{'-addon_type'}.'/'.$mdl_C{'-addon_name'}.'/_mdl/'
+					.$mdl_C{'-addon_name'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'}.'.mdl';
+				if (-e $file){$addon_path=$file;last;}
+			}
 		}
 		# at first try addons directory
 		if (-e $addon_path)
@@ -1165,11 +1176,22 @@ sub supermodule
 		# find in overlays
 		foreach my $item(@TOM::Overlays::item)
 		{
-			my $file=
-				$TOM::P.'/_overlays/'.$item
-				.'/_addons/'.$smdl_env{'-addon_type'} . "/" . $smdl_env{'-addon_name'}.'/_mdl/'
-				.$smdl_env{'-addon_name'}.'-'.$smdl_env{'-name'}.'.'. $smdl_env{'-version'}.'.smdl';
-			if (-e $file){$addon_path=$file;last;}
+			if ($item=~/^\//)
+			{
+				my $file=
+					$item
+					.'/_addons/'.$smdl_env{'-addon_type'} . "/" . $smdl_env{'-addon_name'}.'/_mdl/'
+					.$smdl_env{'-addon_name'}.'-'.$smdl_env{'-name'}.'.'. $smdl_env{'-version'}.'.smdl';
+				if (-e $file){$addon_path=$file;last;}
+			}
+			else
+			{
+				my $file=
+					$TOM::P.'/_overlays/'.$item
+					.'/_addons/'.$smdl_env{'-addon_type'} . "/" . $smdl_env{'-addon_name'}.'/_mdl/'
+					.$smdl_env{'-addon_name'}.'-'.$smdl_env{'-name'}.'.'. $smdl_env{'-version'}.'.smdl';
+				if (-e $file){$addon_path=$file;last;}
+			}
 		}
 		if (-e $addon_path)
 		{$smdl_env{P_MODULE}=$addon_path}
@@ -1324,11 +1346,22 @@ sub designmodule
 		# find in overlays
 		foreach my $item(@TOM::Overlays::item)
 		{
-			my $file=
-				$TOM::P.'/_overlays/'.$item
-				.'/_addons/'.$mdl_env{'-addon_type'} . "/" . $mdl_env{'-addon_name'}.'/_mdl/'
-				.$mdl_env{'-addon_name'} . "-" . $mdl_env{'-name'}.'.'.$mdl_env{'-xsgn'}.'.'.$mdl_env{'-xlng'}.'.dmdl';
-			if (-e $file){$addon_path=$file;last;}
+			if ($item=~/^\//)
+			{
+				my $file=
+					$item
+					.'/_addons/'.$mdl_env{'-addon_type'} . "/" . $mdl_env{'-addon_name'}.'/_mdl/'
+					.$mdl_env{'-addon_name'} . "-" . $mdl_env{'-name'}.'.'.$mdl_env{'-xsgn'}.'.'.$mdl_env{'-xlng'}.'.dmdl';
+				if (-e $file){$addon_path=$file;last;}
+			}
+			else
+			{
+				my $file=
+					$TOM::P.'/_overlays/'.$item
+					.'/_addons/'.$mdl_env{'-addon_type'} . "/" . $mdl_env{'-addon_name'}.'/_mdl/'
+					.$mdl_env{'-addon_name'} . "-" . $mdl_env{'-name'}.'.'.$mdl_env{'-xsgn'}.'.'.$mdl_env{'-xlng'}.'.dmdl';
+				if (-e $file){$addon_path=$file;last;}
+			}
 		}
 		if (-e $addon_path)
 		{$mdl_env{P_MODULE}=$addon_path}
@@ -1681,11 +1714,22 @@ sub GetXSGN
 		# find in overlays
 		foreach my $item(@TOM::Overlays::item)
 		{
-			my $file=
-				$TOM::P.'/_overlays/'.$item
-				.'/_addons/App/'.$mdl_C{'-category'}.'/_mdl/'
-				.$mdl_C{'P_XSGN'};
-			if (-e $file){$addon_path=$file;last;}
+			if ($item=~/^\//)
+			{
+				my $file=
+					$item
+					.'/_addons/App/'.$mdl_C{'-category'}.'/_mdl/'
+					.$mdl_C{'P_XSGN'};
+				if (-e $file){$addon_path=$file;last;}
+			}
+			else
+			{
+				my $file=
+					$TOM::P.'/_overlays/'.$item
+					.'/_addons/App/'.$mdl_C{'-category'}.'/_mdl/'
+					.$mdl_C{'P_XSGN'};
+				if (-e $file){$addon_path=$file;last;}
+			}
 		}
 #		main::_log("addon_path='$addon_path'");
 		if (-e $addon_path){$mdl_C{P_XSGN}=$addon_path;}
@@ -1788,11 +1832,22 @@ sub GetTpl
 		# find in overlays
 		foreach my $item(@TOM::Overlays::item)
 		{
-			my $file=
-				$TOM::P.'/_overlays/'.$item
-				.'/_addons/'.$mdl_C{'-addon_type'}.'/'.$mdl_C{'-addon_name'}.'/_mdl/'
-				.$mdl_C{'P_TPL'};
-			if (-e $file){$addon_path=$file;last;}
+			if ($item=~/^\//)
+			{
+				my $file=
+					$item
+					.'/_addons/'.$mdl_C{'-addon_type'}.'/'.$mdl_C{'-addon_name'}.'/_mdl/'
+					.$mdl_C{'P_TPL'};
+				if (-e $file){$addon_path=$file;last;}
+			}
+			else
+			{
+				my $file=
+					$TOM::P.'/_overlays/'.$item
+					.'/_addons/'.$mdl_C{'-addon_type'}.'/'.$mdl_C{'-addon_name'}.'/_mdl/'
+					.$mdl_C{'P_TPL'};
+				if (-e $file){$addon_path=$file;last;}
+			}
 		}
 		if (-e $addon_path){$mdl_C{'P_TPL'}=$addon_path;}
 		else {$mdl_C{'P_TPL'}=$TOM::P."/_mdl/".$mdl_C{'-addon_name'}."/".$mdl_C{'P_TPL'}}
@@ -1869,11 +1924,22 @@ sub GetXLNG
 		# find in overlays
 		foreach my $item(@TOM::Overlays::item)
 		{
-			my $file=
-				$TOM::P.'/_overlays/'.$item
-				.'/_addons/'.$mdl_C{'-addon_type'}.'/'.$mdl_C{'-addon_name'}.'/_mdl/'
-				.$mdl_C{'P_XSGN'};
-			if (-e $file){$addon_path=$file;last;}
+			if ($item=~/^\//)
+			{
+				my $file=
+					$TOM::P.'/_overlays/'.$item
+					.'/_addons/'.$mdl_C{'-addon_type'}.'/'.$mdl_C{'-addon_name'}.'/_mdl/'
+					.$mdl_C{'P_XSGN'};
+				if (-e $file){$addon_path=$file;last;}
+			}
+			else
+			{
+				my $file=
+					$item
+					.'/_addons/'.$mdl_C{'-addon_type'}.'/'.$mdl_C{'-addon_name'}.'/_mdl/'
+					.$mdl_C{'P_XSGN'};
+				if (-e $file){$addon_path=$file;last;}
+			}
 		}
 		if (-e $addon_path){$mdl_C{P_XLNG}=$addon_path}
 		else {$mdl_C{P_XLNG}=$TOM::P."/_mdl/".$mdl_C{'-addon_name'}."/".$mdl_C{P_XLNG}};

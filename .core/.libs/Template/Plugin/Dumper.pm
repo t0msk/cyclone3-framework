@@ -59,9 +59,10 @@ sub new {
 }
 
 sub dump {
-    my $self = shift;
-    my $content = Dumper @_;
-    return $content;
+	main::_log("[tt2] dumper.dump",4,"warning");
+	my $self = shift;
+	my $content = Dumper @_;
+	return $content;
 }
 
 
