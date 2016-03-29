@@ -32,7 +32,8 @@ L<App::301::_init|app/"301/_init.pm">
 =cut
 
 use App::301::_init;
-our $user_index=0;
+use Ext::Elastic::_init;
+our $user_index=$App::301::functions::user_index||0;
 
 =head1 FUNCTIONS
 
@@ -1149,160 +1150,279 @@ sub _user_index
 	return 1 if TOM::Engine::jobify(\@_); # do it in background
 	my %env=@_;
 	return undef unless $env{'ID_user'};
-	return undef unless $Ext::Solr;
+#	return undef unless $Ext::Solr;
 	
 	my $t=track TOM::Debug(__PACKAGE__."::_user_index()",'timer'=>1);
 	
-	my $solr = Ext::Solr::service();
-	
-	my %content;
-	
-	my %sth0=TOM::Database::SQL::execute(qq{
-		SELECT
-			*
-		FROM
-			$App::301::db_name.a301_user
-		WHERE
-			status IN ('Y')
-			AND ID_user=?
-	},'quiet'=>1,'bind'=>[$env{'ID_user'}]);
-	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	if ($Ext::Solr && ($env{'solr'} || not exists $env{'solr'}))
 	{
-#		main::_log("user found");
-		my $id=$App::301::db_name.".a301_user.".$db0_line{'ID_user'};
-		main::_log("index id='$id'");
+		my $solr = Ext::Solr::service();
 		
-		my %sth1=TOM::Database::SQL::execute(qq{
+		my %content;
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				*
 			FROM
-				$App::301::db_name.a301_user_profile
+				$App::301::db_name.a301_user
 			WHERE
-				ID_entity = ?
+				status IN ('Y')
+				AND ID_user=?
 		},'quiet'=>1,'bind'=>[$env{'ID_user'}]);
-		my %profile=$sth1{'sth'}->fetchhash();
-		
-		my $doc = WebService::Solr::Document->new();
-		
-		my @fields;
-		
-		push @fields,WebService::Solr::Field->new( 'title' => $db0_line{'login'} )
-			if $db0_line{'login'};
-		push @fields,WebService::Solr::Field->new( 'login_s' => $db0_line{'login'} )
-			if $db0_line{'login'};
-		
-		push @fields,WebService::Solr::Field->new( 'title' => $db0_line{'email'} )
-			if $db0_line{'email'};
-		push @fields,WebService::Solr::Field->new( 'email_s' => $db0_line{'email'} )
-			if $db0_line{'email'};
-		
-		push @fields,WebService::Solr::Field->new( 'ID_i' => $profile{'ID'} )
-			if $profile{'ID'};
-		
-		my $name=$db0_line{'email'} || $db0_line{'login'};
-		
-		if ($profile{'firstname'} && $profile{'surname'})
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
-			$name=$profile{'firstname'}.' '.$profile{'surname'};
-			$name=$profile{'name_prefix'}.' '.$name
-				if $profile{'name_prefix'};
-			$name=$name.' '.$profile{'name_suffix'}
-				if $profile{'name_suffix'};
-			push @fields,WebService::Solr::Field->new( 'title' => $name );
-		}
-		
-		if ($db0_line{'datetime_last_login'})
-		{
-			$db0_line{'datetime_last_login'}=~s| (\d\d)|T$1|;
-			$db0_line{'datetime_last_login'}.="Z";
-			push @fields,WebService::Solr::Field->new( 'datetime_last_login_tdt' => $db0_line{'datetime_last_login'} );
-		}
-		
-		push @fields,WebService::Solr::Field->new( 'name_prefix_s' => $profile{'name_prefix'} )
-			if $profile{'name_prefix'};
-		push @fields,WebService::Solr::Field->new( 'firstname_s' => $profile{'firstname'} )
-			if $profile{'firstname'};
-		push @fields,WebService::Solr::Field->new( 'surname_s' => $profile{'surname'} )
-			if $profile{'surname'};
-		push @fields,WebService::Solr::Field->new( 'name_suffix_s' => $profile{'name_suffix'} )
-			if $profile{'name_suffix'};
-		
-		if ($profile{'rating_weight'})
-		{
-			push @fields,WebService::Solr::Field->new( 'weight' => $profile{'rating_weight'} );
-		}
-		
-		my %metadata=App::020::functions::metadata::parse($profile{'metadata'});
-		foreach my $sec(keys %metadata)
-		{
-			foreach (keys %{$metadata{$sec}})
+	#		main::_log("user found");
+			my $id=$App::301::db_name.".a301_user.".$db0_line{'ID_user'};
+			main::_log("index id='$id'");
+			
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					*
+				FROM
+					$App::301::db_name.a301_user_profile
+				WHERE
+					ID_entity = ?
+			},'quiet'=>1,'bind'=>[$env{'ID_user'}]);
+			my %profile=$sth1{'sth'}->fetchhash();
+			
+			my $doc = WebService::Solr::Document->new();
+			
+			my @fields;
+			
+			push @fields,WebService::Solr::Field->new( 'title' => $db0_line{'login'} )
+				if $db0_line{'login'};
+			push @fields,WebService::Solr::Field->new( 'login_s' => $db0_line{'login'} )
+				if $db0_line{'login'};
+			
+			push @fields,WebService::Solr::Field->new( 'title' => $db0_line{'email'} )
+				if $db0_line{'email'};
+			push @fields,WebService::Solr::Field->new( 'email_s' => $db0_line{'email'} )
+				if $db0_line{'email'};
+			
+			push @fields,WebService::Solr::Field->new( 'ID_i' => $profile{'ID'} )
+				if $profile{'ID'};
+			
+			my $name=$db0_line{'email'} || $db0_line{'login'};
+			
+			if ($profile{'firstname'} && $profile{'surname'})
 			{
-				next unless $metadata{$sec}{$_};
-				if ($_=~s/\[\]$//)
+				$name=$profile{'firstname'}.' '.$profile{'surname'};
+				$name=$profile{'name_prefix'}.' '.$name
+					if $profile{'name_prefix'};
+				$name=$name.' '.$profile{'name_suffix'}
+					if $profile{'name_suffix'};
+				push @fields,WebService::Solr::Field->new( 'title' => $name );
+			}
+			
+			if ($db0_line{'datetime_last_login'})
+			{
+				$db0_line{'datetime_last_login'}=~s| (\d\d)|T$1|;
+				$db0_line{'datetime_last_login'}.="Z";
+				push @fields,WebService::Solr::Field->new( 'datetime_last_login_tdt' => $db0_line{'datetime_last_login'} );
+			}
+			
+			push @fields,WebService::Solr::Field->new( 'name_prefix_s' => $profile{'name_prefix'} )
+				if $profile{'name_prefix'};
+			push @fields,WebService::Solr::Field->new( 'firstname_s' => $profile{'firstname'} )
+				if $profile{'firstname'};
+			push @fields,WebService::Solr::Field->new( 'surname_s' => $profile{'surname'} )
+				if $profile{'surname'};
+			push @fields,WebService::Solr::Field->new( 'name_suffix_s' => $profile{'name_suffix'} )
+				if $profile{'name_suffix'};
+			
+			if ($profile{'rating_weight'})
+			{
+				push @fields,WebService::Solr::Field->new( 'weight' => $profile{'rating_weight'} );
+			}
+			
+			my %metadata=App::020::functions::metadata::parse($profile{'metadata'});
+			foreach my $sec(keys %metadata)
+			{
+				foreach (keys %{$metadata{$sec}})
 				{
-					# this is comma separated array
-					foreach my $val (keys %{{map{$_=>1}(split(';',$metadata{$sec}{$_.'[]'}))}})
-#					foreach my $val (split(';',$metadata{$sec}{$_.'[]'}))
-					{push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_sm' => $val);
-					push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_tm' => $val)}
-					push @fields,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_);
+					next unless $metadata{$sec}{$_};
+					if ($_=~s/\[\]$//)
+					{
+						# this is comma separated array
+						foreach my $val (keys %{{map{$_=>1}(split(';',$metadata{$sec}{$_.'[]'}))}})
+	#					foreach my $val (split(';',$metadata{$sec}{$_.'[]'}))
+						{push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_sm' => $val);
+						push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_tm' => $val)}
+						push @fields,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_);
+						next;
+					}
+					
+					push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
+					if ($metadata{$sec}{$_}=~/^[0-9]{1,9}$/)
+					{
+						push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
+					}
+					if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}$/)
+					{
+						push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
+					}
+					
+					# list of used metadata fields
+					push @fields,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_ );
+				}
+			}
+			
+			if (!$name)
+			{
+				$t->close();
+				return undef;
+			}
+			
+			$doc->add_fields((
+				WebService::Solr::Field->new( 'id' => $id ),
+				
+				WebService::Solr::Field->new( 'name' => $name ),
+				
+				@fields,
+				
+				WebService::Solr::Field->new( 'hostname_s' => $db0_line{'hostname'} ),
+				
+				WebService::Solr::Field->new( 'db_s' => $App::301::db_name ),
+				WebService::Solr::Field->new( 'addon_s' => 'a301_user' ),
+				WebService::Solr::Field->new( 'ID_s' => $db0_line{'ID_user'} ),
+				
+				
+				
+			));
+			
+			$solr->add($doc);
+			
+	#		main::_log("Solr commiting...");
+	#		$solr->commit;
+	#		main::_log("commited.");
+			
+		}
+		else
+		{
+			main::_log("not found active ID",1);
+			my $response = $solr->search( "id:".$App::301::db_name.".a301_user.* AND ID_s:$env{'ID_user'}" );
+			for my $doc ( $response->docs )
+			{
+				$solr->delete_by_id($doc->value_for('id'));
+			}
+	#		$solr->commit;
+		}
+	}
+	
+	$Elastic||=$Ext::Elastic::service;
+	if ($Elastic) # the new way in Cyclone3 :)
+	{
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				a301_user.ID_user,
+				a301_user.login,
+				a301_user_profile.*,
+				a301_user_profile.ID AS ID_entity,
+				a301_user.status
+			FROM
+				$App::301::db_name.a301_user
+			INNER JOIN $App::301::db_name.a301_user_profile ON
+			(
+				a301_user_profile.ID_entity = a301_user.ID_user
+			)
+			WHERE
+				a301_user.status IN ('Y')
+				AND a301_user.ID_user=?
+		},'quiet'=>1,'bind'=>[$env{'ID_user'}]);
+		
+		if (!$sth0{'rows'})
+		{
+			main::_log("user.ID_user=$env{'ID_user'} not found",1);
+			if ($Elastic->exists(
+				'index' => 'cyclone3.'.$App::010::db_name,
+				'type' => 'a301_user',
+				'id' => $env{'ID_user'}
+			))
+			{
+				main::_log("removing from Elastic",1);
+				$Elastic->delete(
+					'index' => 'cyclone3.'.$App::010::db_name,
+					'type' => 'a301_user',
+					'id' => $env{'ID_user'}
+				);
+			}
+			$t->close();
+			return 1;
+		}
+		
+		my %user=$sth0{'sth'}->fetchhash();
+		
+		%{$user{'metahash'}}=App::020::functions::metadata::parse($user{'metadata'});
+		delete $user{'metadata'};
+		
+		foreach my $sec(keys %{$user{'metahash'}})
+		{
+			if ($sec=~/\./)
+			{
+				my $sec_=$sec;$sec_=~s|\.|-|g;
+				$user{'metahash'}{$sec_}=$user{'metahash'}{$sec};
+				delete $user{'metahash'}{$sec};
+				$sec=$sec_;
+			}
+			foreach my $var(keys %{$user{'metahash'}{$sec}})
+			{
+				if ($var=~/\./)
+				{
+					my $var_=$var;$var_=~s|\.|-|g;
+					$user{'metahash'}{$sec}{$var_}=$user{'metahash'}{$sec}{$var};
+					delete $user{'metahash'}{$sec}{$var};
 					next;
 				}
-				
-				push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
-				if ($metadata{$sec}{$_}=~/^[0-9]{1,9}$/)
-				{
-					push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
-				}
-				if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}$/)
-				{
-					push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
-				}
-				
-				# list of used metadata fields
-				push @fields,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_ );
 			}
 		}
 		
-		if (!$name)
+		foreach my $sec(keys %{$user{'metahash'}})
 		{
-			$t->close();
-			return undef;
+			foreach (keys %{$user{'metahash'}{$sec}})
+			{
+				next unless $user{'metahash'}{$sec}{$_};
+				if ($_=~s/\[\]$//)
+				{
+					foreach my $val (split(';',$user{'metahash'}{$sec}{$_.'[]'}))
+					{
+						push @{$user{'metahash'}{$sec}{$_}},$val;
+						push @{$user{'metahash'}{$sec}{$_.'_t'}},$val;
+						
+						if ($val=~/^[0-9]{1,9}$/)
+						{
+							push @{$user{'metahash'}{$sec}{$_.'_i'}},$val;
+						}
+						if ($val=~/^[0-9\.]{1,9}$/ && (not $val=~/\..*?\./))
+						{
+							push @{$user{'metahash'}{$sec}{$_.'_f'}},$val;
+						}
+						
+					}
+					#push @{$user->{'metahash_keys'}},$sec.'.'.$_ ;
+					delete $user{'metahash'}{$sec}{$_.'[]'};
+					next;
+				}
+				
+				if ($user{'metahash'}{$sec}{$_}=~/^[0-9]{1,9}$/)
+				{
+					$user{'metahash'}{$sec}{$_.'_i'} = $user{'metahash'}{$sec}{$_};
+				}
+				if ($user{'metahash'}{$sec}{$_}=~/^[0-9\.]{1,9}$/ && (not $user{'metahash'}{$sec}{$_}=~/\..*?\./))
+				{
+					$user{'metahash'}{$sec}{$_.'_f'} = $user{'metahash'}{$sec}{$_};
+				}
+			}
 		}
 		
-		$doc->add_fields((
-			WebService::Solr::Field->new( 'id' => $id ),
-			
-			WebService::Solr::Field->new( 'name' => $name ),
-			
-			@fields,
-			
-			WebService::Solr::Field->new( 'hostname_s' => $db0_line{'hostname'} ),
-			
-			WebService::Solr::Field->new( 'db_s' => $App::301::db_name ),
-			WebService::Solr::Field->new( 'addon_s' => 'a301_user' ),
-			WebService::Solr::Field->new( 'ID_s' => $db0_line{'ID_user'} ),
-			
-			
-			
-		));
+		$Elastic->index(
+			'index' => 'cyclone3.'.$App::010::db_name,
+			'type' => 'a301_user',
+			'id' => $env{'ID_user'},
+			'body' => {
+				%user
+			}
+		);
 		
-		$solr->add($doc);
-		
-#		main::_log("Solr commiting...");
-#		$solr->commit;
-#		main::_log("commited.");
-		
-	}
-	else
-	{
-		main::_log("not found active ID",1);
-		my $response = $solr->search( "id:".$App::301::db_name.".a301_user.* AND ID_s:$env{'ID_user'}" );
-		for my $doc ( $response->docs )
-		{
-			$solr->delete_by_id($doc->value_for('id'));
-		}
-#		$solr->commit;
 	}
 	
 	$t->close();
