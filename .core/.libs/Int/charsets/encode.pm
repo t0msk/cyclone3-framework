@@ -305,9 +305,9 @@ our %table=
 	'1093'	=> "ch", # 'х' v azbuke
 	'1094'	=> "c", # 'ц' v azbuke
 	'1095'	=> "c", # 'ч' v azbuke
-	
-	'1097'	=> "s", # 'Щ' v azbuke
 	'1096'	=> "s", # 'ш' v azbuke
+	'1097'	=> "s", # 'Щ' v azbuke
+	'1098'	=> "", # 'ъ' v azbuke
 	
 	'1099'	=> "y", # 'ы' v azbuke
 	
