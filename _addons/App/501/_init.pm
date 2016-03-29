@@ -110,6 +110,11 @@ BEGIN
 			
 		}
 	};
+	
+	eval {require Image::ObjectDetect};
+	if ($@){main::_log("<={LIB} can't found 'Image::ObjectDetect' (only optional)");}
+	else {main::_log("<={LIB} Image::ObjectDetect");$App::501::fdetect=1;};
+	
 	alarm 0;
 }
 

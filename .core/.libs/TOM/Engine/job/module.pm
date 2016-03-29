@@ -66,8 +66,16 @@ sub new
 		
 		foreach my $dir_item (@TOM::Overlays::item)
 		{
-			push @inc,$TOM::P.'/_overlays/'.$dir_item.'/_addons/'.$addon_path.'/_mdl';
-			push @inc,$TOM::P.'/_overlays/'.$dir_item.'/_mdl';
+			if ($dir_item=~/^\//)
+			{
+				push @inc,$dir_item.'/_addons/'.$addon_path.'/_mdl';
+				push @inc,$dir_item.'/_mdl';
+			}
+			else
+			{
+				push @inc,$TOM::P.'/_overlays/'.$dir_item.'/_addons/'.$addon_path.'/_mdl';
+				push @inc,$TOM::P.'/_overlays/'.$dir_item.'/_mdl';
+			}
 		}
 
 		push @inc,$TOM::P.'/_addons/'.$addon_path.'/_mdl';

@@ -195,7 +195,12 @@ sub install
 			{
 				foreach (@TOM::Overlays::item)
 				{
-					if (-e $TOM::P.'/_overlays/'.$_.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
+					if ($_=~/^\// && -e $_.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
+					{
+						$filename=$_.'/_addons/App/'.$what.'/a'.$what.'_struct.sql';
+						last;
+					}
+					elsif (-e $TOM::P.'/_overlays/'.$_.'/_addons/App/'.$what.'/a'.$what.'_struct.sql')
 					{
 						$filename=$TOM::P.'/_overlays/'.$_.'/_addons/App/'.$what.'/a'.$what.'_struct.sql';
 						last;

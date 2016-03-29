@@ -864,7 +864,14 @@ sub get_tpl_dirs
 	main::_log("allowed overlays=$env{'overlays'}") if $debug;
 	foreach (@TOM::Overlays::item)
 	{
-		push @dirs,$TOM::P."/_overlays/".$_."/".$subdir;
+		if ($_=~/^\//)
+		{
+			push @dirs,$_.'/'.$subdir;
+		}
+		else
+		{
+			push @dirs,$TOM::P."/_overlays/".$_."/".$subdir;
+		}
 	}
 	
 	# global (backup for every option)
