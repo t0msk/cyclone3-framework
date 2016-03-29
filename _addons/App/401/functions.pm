@@ -899,6 +899,7 @@ sub _article_index
 				article_ent.ID_author,
 				article_cat.name AS cat_name,
 				article_cat.ID AS cat_ID,
+				article_cat.ID_entity AS cat_ID_entity,
 				article_cat.ID_charindex
 			FROM
 				$App::401::db_name.a401_article AS article
@@ -927,9 +928,9 @@ sub _article_index
 			push @{$article{'name'}},$db0_line{'name'};
 #			push @{$article{'datetime_start'}},$db0_line{'datetime_start'}
 #				if $db0_line{'datetime_start'};
-			push @{$article{'cat'}{'charindex'}},$db0_line{'ID_charindex'};
-			push @{$article{'cat'}{'ID'}},$db0_line{'cat_ID'};
-			push @{$article{'cat'}{'name'}},$db0_line{'cat_name'};
+
+			push @{$article{'cat'}},$db0_line{'cat_ID_entity'}
+				if $db0_line{'cat_ID_entity'};
 			
 			push @{$article{'locale'}{$db0_line{'lng'}}{'name'}},$db0_line{'name'};
 			push @{$article{'article_attrs'}},{
