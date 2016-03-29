@@ -220,7 +220,16 @@ sub publish
 		main::_log("[RabbitMQ] WARN: wbuf size=".(length($out->{'arc'}->{'connection'}->{'_handle'}->{'wbuf'})),3)
 			if $out->{'arc'}->{'connection'}->{'_handle'}->{'wbuf'};
 		die "wbuf detected, message to RabbitMQ not published" if $out->{'arc'}->{'connection'}->{'_handle'}->{'wbuf'};
-		main::_log("[RabbitMQ] published (".$env{'header'}{'headers'}{'message_id'}.")") if $debug;
+		use Data::Dumper;
+		main::_log("[RabbitMQ] published (".$env{'header'}{'headers'}{'message_id'}.")",{
+			'data' => {
+				'rabbit' => {
+					'state' => $out->{'arc'}->{'connection'}->{'_state'},
+					'active' => $out->{'arc'}->{'connection'}->{'_channels'}->{1}->{'_is_active'},
+					'confirm' => $out->{'arc'}->{'connection'}->{'_channels'}->{1}->{'_is_confirm'},
+				}
+			}
+		}) if $debug;
 #		use Data::Dumper;print Dumper($out);
 	};
 	if ($@)
