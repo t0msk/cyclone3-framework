@@ -1,0 +1,74 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+
+use Net::SMTP;
+use Mail::Mailer qw(sendmail);
+
+use App::100::_init;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	return if $self->running({'max'=>600}); # check if not already running
+	
+	$env->{'max'} = 1000 unless $env->{'max'};
+	
+	alarm(0);
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			ID
+		FROM
+			TOM.a130_send
+		WHERE
+			datetime_create <= DATE_SUB(NOW(),INTERVAL 7 DAY)
+		ORDER BY
+			datetime_create
+		LIMIT $env->{'max'}
+	});
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		if (-e $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml')
+		{
+			main::_log("unlink email body '$db0_line{'ID'}'");
+			unlink $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml';
+		}
+		
+	}
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			ID
+		FROM
+			TOM.a130_send
+		WHERE
+			datetime_create <= DATE_SUB(NOW(),INTERVAL 31 DAY)
+		ORDER BY
+			datetime_create
+		LIMIT $env->{'max'}
+	});
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		main::_log("[$i/$sth0{'rows'}] removing email ID=$db0_line{'ID'}");
+		if (-e $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml')
+		{
+			main::_log("unlink email body '$db0_line{'ID'}'");
+			unlink $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml';
+		}
+		TOM::Database::SQL::execute(qq{DELETE FROM TOM.a130_send WHERE ID=?},'bind'=>[$db0_line{'ID'}],'quiet'=>1);
+		$i++;
+	}
+	
+	$self->reschedule() if $i;
+	
+return 1}
+1;

@@ -169,12 +169,13 @@ sub video_part_file_generate
 		$brick_class.="::".$brick{'name'}
 			if $brick{'name'};
 	
-	my $sql=qq{
+	my %sth0=TOM::Database::SQL::execute(qq{
 		INSERT INTO `$App::510::db_name`.`a510_video_part_file_process`
 		(
 			`ID_part`,
 			`ID_format`,
 			`request_code`,
+			`encoder_slot`,
 			`hostname`,
 			`hostname_PID`,
 			`process`,
@@ -184,14 +185,17 @@ sub video_part_file_generate
 		(
 			'$video_part{'ID'}',
 			'$format{'ID'}',
-			'$main::request_code',
+			?,
+			?,
 			'$TOM::hostname',
 			'$$',
 			'',
 			NOW()
 		)
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	},'quiet'=>1,'bind'=>[
+		$main::request_code,
+		$env{'-encoder_slot'}
+	]);
 	my $process_ID=$sth0{'sth'}->insertid();
 	main::_log("creating entry to _video_part_file_process with id '$process_ID' to lock video_part.ID='$video_part{'ID'}' format.ID='$format{'ID'}'");
 	
@@ -1161,7 +1165,7 @@ sub video_part_brick_change
 		}
 		else
 		{
-			main::_log(" copy file [$i] size=".format_bytes((stat $src_file)[7]));
+			main::_log(" copy file [$i] '$src_file' size=".format_bytes((stat $src_file)[7]));
 			copy($src_file,$dst_file) || do {
 				main::_log("$!",1);
 				$t->close();
@@ -1339,15 +1343,35 @@ sub video_part_file_process
 	my $target_is_same=0;
 	foreach my $line(split('\n',$env{'definition'}))
 	{
-		$line=~s|\r||;
-		next unless $line;
-		my @ref=split('=',$line);
-		main::_log("target definition key $ref[0]='$ref[1]'");
-		
-#		if ($movie1_info{$ref[0]} ne $ref[1]){$target_is_same=0;last;}
+		$line=~s|[\n\r]||g;
+		next unless $line=~/=/;
+#		my @ref=split('=',$line);
+		my @ref=split('(<=|>=|>|<|=)',$line);
+		main::_log("target definition key $ref[0]$ref[1]'$ref[2]'");
 		
 		my $ref1_same=0;
-		foreach (split(';',$ref[1])){$ref1_same=1 if $movie1_info{$ref[0]} eq $_};
+		foreach (split(';',$ref[2])){
+			if ($ref[1] eq "<")
+			{
+				$ref1_same=1 if $movie1_info{$ref[0]} < $_
+			}
+			elsif ($ref[1] eq "<=")
+			{
+				$ref1_same=1 if $movie1_info{$ref[0]} <= $_
+			}
+			elsif ($ref[1] eq ">")
+			{
+				$ref1_same=1 if $movie1_info{$ref[0]} > $_
+			}
+			elsif ($ref[1] eq ">=")
+			{
+				$ref1_same=1 if $movie1_info{$ref[0]} >= $_
+			}
+			else
+			{
+				$ref1_same=1 if $movie1_info{$ref[0]} eq $_
+			}
+		};
 		if (!$ref1_same){$target_is_same=0;last;}
 		
 		$target_is_same=1;
