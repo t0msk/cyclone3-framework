@@ -1000,6 +1000,7 @@ sub process
 			'setup' => \%tom::setup
 		};
 		# request params
+		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'protocol'}=exists $main::ENV{'HTTPS'} ? 'https' : 'http';
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'param'}=\%main::FORM;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'timestamp'}=$main::time_current;
 		$Tomahawk::module::TPL->{'variables'}->{'request'}->{'RPC'}=$main::RPC;
