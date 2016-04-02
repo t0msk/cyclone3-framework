@@ -172,7 +172,7 @@ sub execute
 			
 			if ($max_days <= $old)
 			{
-				main::_log("  remove older than $max_days days 1");
+				main::_log("  remove older than $max_days days");
 				
 				my $bulk_delete = $Elastic->bulk_helper(
 					'index'		=> $indice,
