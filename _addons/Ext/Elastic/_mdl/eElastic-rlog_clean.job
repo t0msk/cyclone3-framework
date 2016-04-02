@@ -9,6 +9,17 @@ use strict;
 use Ext::Elastic::_init;
 use Data::Dumper;
 
+sub sec2human {
+	my $seconds = shift;
+	my $string = join ":", map { sprintf "%02d", $_} (gmtime($seconds))[7,2,1,0]; 
+	$string=~s/\G00://g;
+	$string=~s|(\d\d):(\d\d):(\d\d):(\d\d)$|$1d:$2h:$3m:$4s|
+		|| $string=~s|(\d\d):(\d\d):(\d\d)$|$1h:$2m:$3s|
+		|| $string=~s|(\d\d):(\d\d)$|$1m:$2s|
+		|| $string=~s|(\d\d)$|$1s|;
+	return $string;
+}
+
 sub execute
 {
 	my $self=shift;
@@ -59,6 +70,8 @@ sub execute
 	
 #	return 1;
 	
+	my $already_something_removed;
+	
 	foreach my $indice (reverse sort @indices_list)
 	{
 		# at first, search oldest entry
@@ -80,6 +93,7 @@ sub execute
 		
 		#my $old=
 		my $old = int((time() - int($results->{'aggregations'}->{'oldest'}->{'value'}/1000))/86400);
+		my $removed;
 		
 		if ($tom::Thour >= 18 || $tom::Thour <= 6) # do it only when developers sleep
 		{
@@ -208,10 +222,20 @@ sub execute
 				);
 				
 				main::_log("  found ".$scroll->total." docs to remove");
-				
+				my $i;
+				my $time_start=time();
 				while (my $response = $scroll->next) {
 					# do something
+					$i++;
+					if ($i/10000 == int($i/10000))
+					{
+						my $speed=$i/(time()-$time_start); # docs/s
+						my $eta=int(($scroll->total - $i)/$speed);
+						main::_log("   removed $i docs eta ".sec2human($eta)." speed ".int($speed)."docs/s");
+					}
 					$bulk_delete->delete({'id' => $response->{'_id'}});
+					$already_something_removed=1 unless $already_something_removed;
+					$removed=1 unless $removed;
 				}
 				$bulk_delete->flush();
 				
@@ -261,10 +285,20 @@ sub execute
 				);
 				
 				main::_log("  found ".$scroll->total." docs to remove");
-				
+				my $i;
+				my $time_start=time();
 				while (my $response = $scroll->next) {
 					# do something
+					$i++;
+					if ($i/10000 == int($i/10000))
+					{
+						my $speed=$i/(time()-$time_start); # docs/s
+						my $eta=int(($scroll->total - $i)/$speed);
+						main::_log("   removed $i docs eta ".sec2human($eta)." speed ".int($speed)."docs/s");
+					}
 					$bulk_delete->delete({'id' => $response->{'_id'}});
+					$already_something_removed=1 unless $already_something_removed;
+					$removed=1 unless $removed;
 				}
 				$bulk_delete->flush();
 				
@@ -318,16 +352,33 @@ sub execute
 					);
 					
 					main::_log("  found ".$scroll->total." docs to remove");
-					
+					my $i;
+					my $time_start=time();
 					while (my $response = $scroll->next) {
 						# do something
+						$i++;
+						if ($i/10000 == int($i/10000))
+						{
+							my $speed=$i/(time()-$time_start); # docs/s
+							my $eta=int(($scroll->total - $i)/$speed);
+							main::_log("   removed $i docs eta ".sec2human($eta)." speed ".int($speed)."docs/s");
+						}
 						$bulk_delete->delete({'id' => $response->{'_id'}});
+						$already_something_removed=1 unless $already_something_removed;
+						$removed=1 unless $removed;
 					}
 					$bulk_delete->flush();
 					
 				}
 			}
 		}
+		
+		if ($already_something_removed && !$removed)
+		{
+			main::_log("this was last indice to try find something to remove");
+			last;
+		}
+		
 	}
 	
 return 1}
