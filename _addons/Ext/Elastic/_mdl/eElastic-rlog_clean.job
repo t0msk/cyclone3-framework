@@ -375,8 +375,8 @@ sub execute
 		
 		if ($already_something_removed && !$removed)
 		{
-			main::_log("this was last indice to try find something to remove");
-			last;
+#			main::_log("this was last indice to try find something to remove");
+#			last;
 		}
 		
 	}
