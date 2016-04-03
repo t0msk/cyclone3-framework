@@ -808,7 +808,6 @@ sub _article_index_all
 			ID_entity
 		FROM
 			$App::401::db_name.a401_article_ent
-		LIMIT 100
 	},'quiet'=>1);
 	my $i;
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
@@ -951,6 +950,9 @@ sub _article_index
 				%article
 			}
 		);
+		
+#		use Data::Dumper;
+#		print Dumper(\%article);
 		
 		$t->close();
 	}
