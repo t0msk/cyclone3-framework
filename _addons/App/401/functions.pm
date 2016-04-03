@@ -930,6 +930,8 @@ sub _article_index
 
 			push @{$article{'cat'}},$db0_line{'cat_ID_entity'}
 				if $db0_line{'cat_ID_entity'};
+			push @{$article{'cat_charindex'}},$db0_line{'ID_charindex'}
+				if $db0_line{'ID_charindex'};
 			
 			push @{$article{'locale'}{$db0_line{'lng'}}{'name'}},$db0_line{'name'};
 			
@@ -939,6 +941,7 @@ sub _article_index
 			push @{$article{'article_attrs'}},{
 				'name' => $db0_line{'name'},
 				'cat' => $db0_line{'cat_ID_entity'},
+				'cat_charindex' => $db0_line{'ID_charindex'},
 				'datetime_start' => $db0_line{'datetime_start'}
 			};
 			
