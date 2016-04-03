@@ -932,22 +932,32 @@ sub _article_index
 				if $db0_line{'cat_ID_entity'};
 			
 			push @{$article{'locale'}{$db0_line{'lng'}}{'name'}},$db0_line{'name'};
+			
+#			$db0_line{'datetime_start'}=~s| (\d\d)|T$1|;
+#			$db0_line{'datetime_start'}.="Z";
+#			main::_log("datetime_start=$db0_line{'datetime_start'}");
 			push @{$article{'article_attrs'}},{
 				'name' => $db0_line{'name'},
+				'cat' => $db0_line{'cat_ID_entity'},
 				'datetime_start' => $db0_line{'datetime_start'}
 			};
+			
 			$article{'status'}="Y"
 				if $db0_line{'status'} eq "Y";
 		}
 		
 #		use Data::Dumper;print Dumper(\%article);
 		
+		my %log_date=main::ctogmdatetime(time(),format=>1);
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::401::db_name,
 			'type' => 'a401_article',
 			'id' => $env{'ID_entity'},
 			'body' => {
-				%article
+				%article,
+				'_datetime_index' => 
+					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
+					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.'Z'
 			}
 		);
 		
