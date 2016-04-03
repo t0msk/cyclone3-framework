@@ -2319,7 +2319,7 @@ sub image_file_resize
 		FROM
 			`$App::501::db_name`.a501_image_file
 		WHERE
-			ID=?
+			ID = ?
 	},'quiet'=>1,'bind'=>[$env{'image_file.ID'}]);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
