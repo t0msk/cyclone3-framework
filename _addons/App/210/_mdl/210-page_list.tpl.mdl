@@ -148,7 +148,7 @@ sub execute
 			'db_h'    => 'main',
 			'db_name' => $App::210::db_name,
 			'tb_name' => 'a210_page',
-			'-cache' => 86400*7,
+			'-cache' => 86400,
 		))
 		{
 			$db0_line{'path_url'}.='/'.$node->{'name_url'};
