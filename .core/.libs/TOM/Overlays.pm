@@ -49,9 +49,10 @@ BEGIN
 {
 	my $t=track TOM::Debug("_overlays");
 	
+	my $i;
+	
 	if (opendir (DIR,$TOM::P."/_overlays"))
 	{
-		my $i;
 		foreach my $file(sort readdir DIR)
 		{
 			next unless -d $TOM::P.'/_overlays/'.$file;
@@ -59,11 +60,29 @@ BEGIN
 			next if -e $TOM::P.'/_overlays/'.$file.'/.ignore';
 			
 			$i++;
-			main::_log("init '$file' prior: $i");
+			main::_log("init '$TOM::P' '$file' prior: $i");
 			
 			unshift @item, $file;
 			unshift @INC, $TOM::P.'/_overlays/'.$file.'/.libs';
 			unshift @INC, $TOM::P.'/_overlays/'.$file.'/_addons';
+		}
+		closedir(DIR);
+	}
+	
+	if (($TOM::P ne $TOM::DP) && -d $TOM::DP."/_overlays" && opendir (DIR,$TOM::DP."/_overlays"))
+	{
+		foreach my $file(sort readdir DIR)
+		{
+			next unless -d $TOM::DP.'/_overlays/'.$file;
+			next if $file=~/^\./;
+			next if -e $TOM::DP.'/_overlays/'.$file.'/.ignore';
+			
+			$i++;
+			main::_log("init '$TOM::DP' '$file' prior: $i");
+			
+			unshift @item, $TOM::DP.'/_overlays/'.$file;
+			unshift @INC, $TOM::DP.'/_overlays/'.$file.'/.libs';
+			unshift @INC, $TOM::DP.'/_overlays/'.$file.'/_addons';
 		}
 		closedir(DIR);
 	}

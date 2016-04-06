@@ -475,6 +475,7 @@ sub image_file_process
 	# Profile magick (reduces size)
 #	$image1->Profile('profile'=>'');
 	
+	$env{'facedetect'}='true';
 	foreach my $function(split('\n',$env{'process'}))
 	{
 		$function=~s|\s+$||g;
@@ -497,6 +498,7 @@ sub image_file_process
 		{
 			main::_log("exec $function_name($params[0],$params[1])");
 			$env{$params[0]}=$params[1];
+			undef $env{$params[0]} if $params[1] eq "false";
 			$procs++;
 			next;
 		}
@@ -702,14 +704,30 @@ sub image_file_process
 			next;
 		}
 		
-		if ($function_name eq "face_debug" || $function_name eq "dimensions")
+		if (($function_name eq "face_debug" || $function_name eq "dimensions") && $env{'facedetect'})
 		{
 			main::_log("exec facedetection() over $function_name()");
 			
 			my $tmpfile=new TOM::Temp::file('ext'=>'jpg','dir'=>$main::ENV{'TMP'});
 			$image1->Write('jpg:'.$tmpfile->{'filename'});
 			my $out;
-			if (-x '/www/TOM/_addons/App/501/FaceDetect/fdetect')
+			if ($App::501::fdetect)
+			{
+				main::_log_stdout("go fdetect");
+				my $cascade = $TOM::P.'/_addons/App/501/FaceDetect/cascade.xml';
+				my $file = $tmpfile->{'filename'};
+				my $detector = Image::ObjectDetect->new($cascade);
+				my @faces = $detector->detect($file);
+				for my $face (@faces) {
+					$out.="0:".$face->{'x'}.",".$face->{'y'}."-".($face->{'x'}+$face->{'width'}).",".($face->{'y'}+$face->{'height'})."\n";
+#					main::_log_stdout("x=".$face->{'x'});
+#					print $face->{'x'}, "\n";
+#					print $face->{'y'}, "\n";
+#					print $face->{'width'}, "\n";
+#					print $face->{'height'}, "\n";
+				}
+			}
+			elsif (-x '/www/TOM/_addons/App/501/FaceDetect/fdetect')
 			{
 				$out=`cd /www/TOM/_addons/App/501/FaceDetect/;./fdetect $tmpfile->{'filename'}`;
 			}
@@ -1021,6 +1039,40 @@ sub image_file_process
 				'x' => 1,
 				'y' => $image1->Get('height')-$image_composite->Get('height'),
 			);
+			
+			
+			$procs++;
+			next;
+		}
+		
+		if ($function_name eq "escale")
+		{
+			#downscalnem obrazok na zelanu velkost a vyplnim v danom rozmere pozadie biele
+			main::_log("exec $function_name($params[0],$params[1])");
+			
+			if ($image1->Get('width') > $params[0] || $image1->Get('height') > $params[1])
+			{
+				main::_log(" exec $function_name($params[0],$params[1])");
+				main::_log(" width=".($image1->Get('width'))." height=".($image1->Get('height')));
+				$image1->Resize('geometry'=>$params[0].'x'.$params[1]);
+				main::_log(" new width=".($image1->Get('width'))." height=".($image1->Get('height')));
+			}
+			
+			my $image_composite = new Image::Magick;
+			$image_composite = Image::Magick->new;
+			$image_composite->Set(size=>$params[0].'x'.$params[0]);
+			$image_composite->ReadImage('canvas:white');
+			
+			my $posx = ($image_composite->Get('width')-$image1->Get('width'))/2;
+			my $posy = ($image_composite->Get('height')-$image1->Get('height'))/2;
+			
+			$image_composite->Composite(
+				'image'=>$image1,
+				'x' => $posx,
+				'y' => $posy,
+			);
+			
+			$image1 = $image_composite;
 			
 			$procs++;
 			next;
@@ -2122,6 +2174,8 @@ Return image_file columns. This is the fastest way (optimized SQL) to get inform
 sub get_image_file
 {
 	my %env=@_;
+	my $debug=0;
+	use JSON;
 	
 	if (!$env{'image.ID_entity'} && !$env{'image.ID'})
 	{
@@ -2186,7 +2240,7 @@ sub get_image_file
 		my %sth0=TOM::Database::SQL::execute(qq{SELECT ID_entity FROM `$App::501::db_name`.`a501_image` WHERE ID='$env{'image.ID'}' LIMIT 1},'quiet'=>1,'-slave'=>1,'-cache'=>3600);
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		$env{'image.ID_entity'}=$db0_line{'ID_entity'};
-		#main::_log("ID_entity=$env{'image.ID_entity'}");
+		main::_log("found ID_entity=$env{'image.ID_entity'}",3,"debug") if $debug;
 		
 		$sql.=qq{
 		FROM
@@ -2224,11 +2278,15 @@ sub get_image_file
 	if ($sth0{'rows'})
 	{
 		my %image=$sth0{'sth'}->fetchhash();
+		
+		main::_log("found image ".to_json(\%image),3,"debug") if $debug;
+		
 #		if (!$image{'ID_file'})
 		if (!$image{'file_name'})
 		{
 			undef $image{'file_path'};
 			main::_log("this image does not have format '$env{'image_file.ID_format'}'");
+			main::_log("this image does not have format '$env{'image_file.ID_format'}'",3,"debug") if $debug;
 			# trying to regenerate (can be very slow...)
 			App::501::functions::image_file_generate(
 				'image.ID_entity' => $image{'ID_entity_image'},

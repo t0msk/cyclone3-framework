@@ -66,8 +66,16 @@ sub new
 		
 		foreach my $dir_item (@TOM::Overlays::item)
 		{
-			push @inc,$TOM::P.'/_overlays/'.$dir_item.'/_addons/'.$addon_path.'/_mdl';
-			push @inc,$TOM::P.'/_overlays/'.$dir_item.'/_mdl';
+			if ($dir_item=~/^\//)
+			{
+				push @inc,$dir_item.'/_addons/'.$addon_path.'/_mdl';
+				push @inc,$dir_item.'/_mdl';
+			}
+			else
+			{
+				push @inc,$TOM::P.'/_overlays/'.$dir_item.'/_addons/'.$addon_path.'/_mdl';
+				push @inc,$TOM::P.'/_overlays/'.$dir_item.'/_mdl';
+			}
 		}
 
 		push @inc,$TOM::P.'/_addons/'.$addon_path.'/_mdl';
@@ -308,10 +316,14 @@ sub jobify # prepare function call to background
 	if ($main::nojobify)
 	{
 		undef $main::nojobify;
-#		main::_log("can't jobify, go to exec",1);
+		main::_log("can't jobify (main::nojobify), go to exec");
 		return undef;
 	}
-	return undef unless $RabbitMQ;
+	if (!$RabbitMQ)
+	{
+		main::_log("can't jobify (!RabbitMQ), go to exec");
+		return undef;
+	}
 	
 	if ($env->{'class'})
 	{
@@ -369,7 +381,7 @@ sub jobify # prepare function call to background
 			}
 		}
 	);
-#	return 1;
+	return undef;
 }
 
 1;

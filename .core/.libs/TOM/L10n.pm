@@ -357,7 +357,7 @@ sub parse_string
 			}
 			else
 			{
-				main::_log("missing string '" . $id . "' in laguage code '" . $self->{'ENV'}{'lng'} . "' L10n def '" . $self->{'location'} . "'" , 4 , 'L10n');
+#				main::_log("missing string '" . $id . "' in laguage code '" . $self->{'ENV'}{'lng'} . "' L10n def '" . $self->{'location'} . "'" , 4 , 'L10n');
 				$self->{'string'}{$id}="{".$id."}";
 			}
 			
@@ -444,7 +444,14 @@ sub get_L10n_dirs
 	main::_log("allowed overlays=$env{'overlays'}") if $debug;
 	foreach (@TOM::Overlays::item)
 	{
-		push @dirs,$TOM::P."/_overlays/".$_."/".$subdir;
+		if ($_=~/^\//)
+		{
+			push @dirs,$_.'/'.$subdir;
+		}
+		else
+		{
+			push @dirs,$TOM::P."/_overlays/".$_."/".$subdir;
+		}
 	}
 	
 	# global (backup for every option)

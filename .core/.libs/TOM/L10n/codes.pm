@@ -36,8 +36,10 @@ our %trans=(
 	'ro' => 'ro-RO',
 	'sl' => 'sl-SI',
 	'es' => 'es-ES',
-	'pt' => 'pt-PT'
-	
+	'pt' => 'pt-PT',
+	'bg' => 'bg-BG',
+	'nl' => 'nl-NL',
+	'hr' => 'hr-HR'
 );
 
 sub trans

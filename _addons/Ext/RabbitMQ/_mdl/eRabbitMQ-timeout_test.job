@@ -1,0 +1,55 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use Ext::RabbitMQ::_init;
+use JSON;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	return if $self->running({'max'=>(3600*12)}); # check if not already running
+	
+	
+	for (1..1000)
+	{
+		
+		my $out=$RabbitMQ->publish(
+			'exchange' => 'cyclone3.notify',
+			'routing_key' => 'notify',
+			'header' => {
+				'app_id' => $tom::H_orig
+			},
+			'body' => to_json({
+				'event' => 'db_changed',
+				'db_name' => 'a010',
+				'tb_name' => 'test',
+				'ID_entity' => '123',
+#					'key' => $key_entity,
+#					'mtime' => $tt,
+#					'user' => $main::USRM{'ID_user'},
+#					'hostname' => $TOM::hostname,
+#					'domain' => $tom::H_orig
+			})
+		);
+		
+		if (!$out)
+		{
+#			main::_log("trying reconnect ".$Ext::RabbitMQ::_init::RabbitMQ);
+#			undef $Ext::RabbitMQ::_init::RabbitMQ;
+#			$Ext::RabbitMQ::_init::RabbitMQ=Ext::RabbitMQ::service('reconnect'=>1);
+		}
+		
+		main::_log("sleep 10s");
+		sleep(10);
+#		main::_log("sleep ".($_*10)."s");
+#		sleep(10*$_)
+	}
+	
+return 1}
+1;

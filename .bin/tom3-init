@@ -130,7 +130,7 @@ if ($main::FORM{'domain'})
 	foreach (split('/',$path_sub)){$main::p.="/$_";}
 
 	$main::p=~s|//|/|g;
-	$main::p=$main::P."/".$main::p;
+	$main::p=$TOM::DP."/".$main::p;
 	print "p:".$main::p."\n";
 	print "h:".$main::h."\n";
 	

@@ -3,20 +3,6 @@
 
 
 # a100
-
-<MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="100" />
-	<VAR id="-name" value="check_update" />
-</MODULE>
-
-<MODULE>
-	<VAR id="-global" value="1" />
-	<VAR id="-category" value="100" />
-	<VAR id="-name" value="check_update" />
-	<VAR id="-version" value="overlays" />
-</MODULE>
-
 <MODULE>
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="100" />
@@ -79,6 +65,8 @@
 # a130 - cleaning
 
 <MODULE>
+	<VAR id="-ignore-if-job" value="true" />
+	
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="130" />
 	<VAR id="-name" value="clear" />
@@ -129,6 +117,8 @@
 # a301 - USRM
 
 <MODULE>
+	<VAR id="-ignore-if-job" value="true" />
+	
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="301" />
 	<VAR id="-name" value="user" />
