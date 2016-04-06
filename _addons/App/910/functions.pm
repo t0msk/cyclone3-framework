@@ -1941,7 +1941,11 @@ sub _product_index
 		{
 			foreach (keys %{$product{'metahash'}{$sec}})
 			{
-				next unless $product{'metahash'}{$sec}{$_};
+				if (!$product{'metahash'}{$sec}{$_})
+				{
+					delete $product{'metahash'}{$sec}{$_};
+					next
+				}
 				if ($_=~s/\[\]$//)
 				{
 					foreach my $val (split(';',$product{'metahash'}{$sec}{$_.'[]'}))
