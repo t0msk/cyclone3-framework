@@ -16,7 +16,7 @@ sub execute
 	my %env=@_;
 	my %env_out;
 	
-	$env{'org.status'}='Y' unless $env{'org.status'};
+	$env{'org.status'}='YL' unless $env{'org.status'};
 		my $sql_org_status=join "','", split('',$env{'org.status'});
 	
 	
@@ -73,6 +73,7 @@ sub execute
 	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
+			
 			org.ID_entity,
 			org.ID,
 			org.datetime_create,
@@ -80,7 +81,6 @@ sub execute
 			org.posix_modified,
 			org.name,
 			org.name_url,
-			org.name_short,
 			org.name_code,
 			org.type,
 			org.legal_form,
@@ -111,6 +111,10 @@ sub execute
 			org.mode,
 			org.status,
 			
+			org_cat.name AS cat_name,
+			org_cat.name_url AS cat_name_url,
+			
+			org_lng.name_short,
 			org_lng.about$sql_columns
 			
 		FROM $App::710::db_name.a710_org AS org
@@ -139,7 +143,7 @@ sub execute
 			$sql_order_by
 		LIMIT
 			1
-	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+	},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,'-cache'=>60,
 		'-changetime'=>App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",
