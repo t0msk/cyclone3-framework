@@ -13,7 +13,7 @@ our $url_relative_disable = $TOM::Document::base::url_relative_disable || 0;
 $TOM::Document::base::copyright||=qq{  This service is powered by Cyclone3 v$TOM::core_version - professionals for better internet.
   Cyclone3 is a free open source Application Framework initially developed by Comsultia and licensed under GNU/GPLv2.
   Addons and overlays are copyright of their respective owners.
-  Information and contribution at http://www.cyclone3.org};
+  Information and contribution at http://www.cyclone3.org} unless defined $TOM::Document::base::copyright;
 
 $TOM::Document::frame_options||="ALLOWALL";
 
