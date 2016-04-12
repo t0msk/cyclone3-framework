@@ -1040,6 +1040,40 @@ sub image_file_process
 				'y' => $image1->Get('height')-$image_composite->Get('height'),
 			);
 			
+			
+			$procs++;
+			next;
+		}
+		
+		if ($function_name eq "escale")
+		{
+			#downscalnem obrazok na zelanu velkost a vyplnim v danom rozmere pozadie biele
+			main::_log("exec $function_name($params[0],$params[1])");
+			
+			if ($image1->Get('width') > $params[0] || $image1->Get('height') > $params[1])
+			{
+				main::_log(" exec $function_name($params[0],$params[1])");
+				main::_log(" width=".($image1->Get('width'))." height=".($image1->Get('height')));
+				$image1->Resize('geometry'=>$params[0].'x'.$params[1]);
+				main::_log(" new width=".($image1->Get('width'))." height=".($image1->Get('height')));
+			}
+			
+			my $image_composite = new Image::Magick;
+			$image_composite = Image::Magick->new;
+			$image_composite->Set(size=>$params[0].'x'.$params[0]);
+			$image_composite->ReadImage('canvas:white');
+			
+			my $posx = ($image_composite->Get('width')-$image1->Get('width'))/2;
+			my $posy = ($image_composite->Get('height')-$image1->Get('height'))/2;
+			
+			$image_composite->Composite(
+				'image'=>$image1,
+				'x' => $posx,
+				'y' => $posy,
+			);
+			
+			$image1 = $image_composite;
+			
 			$procs++;
 			next;
 		}
