@@ -817,6 +817,7 @@ sub get_path
 	# hladam nody az po root
 	my $sql_columns;
 		$sql_columns.=",metadata" if $env{'columns'}{'metadata'};
+		$sql_columns.=",alias_name" if $env{'columns'}{'alias_name'};
 		$sql_columns.=",t_keys" if $env{'columns'}{'t_keys'};
 		$sql_columns.=",`$env{'tb_name'}`.*" if $env{'columns'}{'*'};
 	while ($parent)
@@ -1203,6 +1204,7 @@ sub find_path_url_j
 {
 	my $path=shift;
 	my %env=@_;
+#	$debug=1;
 	my $t=track TOM::Debug(__PACKAGE__."::find_path_url_j('$path')") if $debug;
 	
 	$env{'db_h'}='main' unless $env{'db_h'};
@@ -1225,7 +1227,7 @@ sub find_path_url_j
 		if ($cache_changetime <= $cache->{'time'})
 		{
 			main::_log("found in cache") if $debug;
-#			main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}_j'.'$env{'tb_name'}' has ID='$cache->{'data'}{'ID'}'") unless $debug;
+			#main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}_j' has ID='$cache->{'data'}{'ID'}'") unless $debug;
 			$t->close() if $debug;
 			return %{$cache->{'data'}};
 		}
@@ -1270,6 +1272,8 @@ sub find_path_url_j
 					AND name_url=?
 					AND lng='$env{'lng'}'
 					AND status='Y'
+				GROUP BY
+					ID_charindex
 				ORDER BY
 					ID_charindex, datetime_create DESC
 			},'bind'=>[
