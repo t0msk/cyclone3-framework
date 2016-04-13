@@ -350,7 +350,7 @@ sub execute
 		
 	}
 	
-	if ($env{'article.ID_entity'}=~/;/)
+	if ($env{'article.ID_entity'}=~/[0-9;]+/)
 	{
 		$sql_where.=" AND article.ID_entity IN (".join(',',split(';',$env{'article.ID_entity'})).")";
 		$sql_limit=scalar split(';',$env{'article.ID_entity'});
