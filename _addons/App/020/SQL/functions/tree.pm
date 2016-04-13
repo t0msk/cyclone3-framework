@@ -1062,7 +1062,7 @@ sub find_path_url
 		if ($cache_changetime <= $cache->{'time'})
 		{
 			main::_log("found in cache") if $debug;
-			main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$cache->{'data'}{'ID'}'") unless $debug;
+#			main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$cache->{'data'}{'ID'}'") unless $debug;
 			$t->close() if $debug;
 			return %{$cache->{'data'}};
 		}
@@ -1167,7 +1167,7 @@ sub find_path_url
 	{
 		main::_log("only 1 output") if $debug;
 		my %data=$sth1{'sth'}->fetchhash();
-		main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$data{'ID'}'") unless $debug;
+#		main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$data{'ID'}'") unless $debug;
 		
 		if ($env{'-cache'} && $TOM::CACHE_memcached)
 		{
@@ -1225,7 +1225,7 @@ sub find_path_url_j
 		if ($cache_changetime <= $cache->{'time'})
 		{
 			main::_log("found in cache") if $debug;
-			main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}_j'.'$env{'tb_name'}' has ID='$cache->{'data'}{'ID'}'") unless $debug;
+#			main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}_j'.'$env{'tb_name'}' has ID='$cache->{'data'}{'ID'}'") unless $debug;
 			$t->close() if $debug;
 			return %{$cache->{'data'}};
 		}
@@ -1332,7 +1332,7 @@ sub find_path_url_j
 	{
 		main::_log("only 1 output") if $debug;
 		my %data=$sth1{'sth'}->fetchhash();
-		main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$data{'ID'}'") unless $debug;
+#		main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$data{'ID'}'") unless $debug;
 		
 		if ($env{'-cache'} && $TOM::CACHE_memcached)
 		{
@@ -1403,7 +1403,7 @@ sub find_path
 		if ($cache_changetime <= $cache->{'time'})
 		{
 			main::_log("found in cache") if $debug;
-			main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$cache->{'data'}{'ID'}'") unless $debug;
+#			main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$cache->{'data'}{'ID'}'") unless $debug;
 			$t->close() if $debug;
 			return %{$cache->{'data'}};
 		}
@@ -1507,7 +1507,7 @@ sub find_path
 	{
 		main::_log("only 1 output") if $debug;
 		my %data=$sth1{'sth'}->fetchhash();
-		main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$data{'ID'}'") unless $debug;
+#		main::_log("path '$env{'lng'}'.'/$path' in '$env{'db_name'}'.'$env{'tb_name'}' has ID='$data{'ID'}'") unless $debug;
 		
 		if ($env{'-cache'} && $TOM::CACHE_memcached)
 		{
