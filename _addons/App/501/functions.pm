@@ -1058,10 +1058,16 @@ sub image_file_process
 				main::_log(" new width=".($image1->Get('width'))." height=".($image1->Get('height')));
 			}
 			
-			my $image_composite = new Image::Magick;
-			$image_composite = Image::Magick->new;
-			$image_composite->Set(size=>$params[0].'x'.$params[0]);
-			$image_composite->ReadImage('canvas:white');
+			
+			my $image_composite = Image::Magick->new();
+			$image_composite->Read($tom::P.'/!media/grf/t.gif');
+			$image_composite->Resize('width'=>$params[0],'height'=>$params[1]);
+			$image_composite->Draw(fill=>'white', primitive=>'rectangle', points=>'0,0 '.$params[0].','.$params[1]);
+			
+#			my $image_composite = new Image::Magick;
+#			$image_composite = Image::Magick->new;
+#			$image_composite->Set(size=>$params[0].'x'.$params[0]);
+#			$image_composite->ReadImage('canvas:white');
 			
 			my $posx = ($image_composite->Get('width')-$image1->Get('width'))/2;
 			my $posy = ($image_composite->Get('height')-$image1->Get('height'))/2;
@@ -2353,7 +2359,7 @@ sub image_file_resize
 		FROM
 			`$App::501::db_name`.a501_image_file
 		WHERE
-			ID=?
+			ID = ?
 	},'quiet'=>1,'bind'=>[$env{'image_file.ID'}]);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{

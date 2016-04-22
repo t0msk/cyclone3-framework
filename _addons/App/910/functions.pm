@@ -194,7 +194,7 @@ sub product_add
 	}
 	
 	# find product by product_number
-	if (!$env{'product.ID'} && $env{'product.product_number'})
+	if (!$env{'product.ID'} && ($env{'product.product_number'} && !$env{'product.product_number.dontcheck'}))
 	{
 #		exit;
 		# check if this product_number not already used by another product

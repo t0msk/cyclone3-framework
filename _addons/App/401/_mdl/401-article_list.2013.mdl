@@ -61,7 +61,7 @@ sub execute
 		my $dur=$1;
 		my $sql_visits=qq{(SELECT COUNT(ID_article) FROM `$App::401::db_name`.a401_article_visit AS visit WHERE visit.ID_article=article.ID_entity AND datetime_event >= DATE_SUB(NOW(),INTERVAL $dur))};
 		$sql_order_by=~s|:VISITS:|$sql_visits|;
-#		$sql_select=", $sql_visits AS visits_dur ";
+		$sql_column.=",$sql_visits AS order_by_visits ";
 	}
 	
 	if ($env{'unique'})
@@ -182,7 +182,8 @@ sub execute
 		
 		if ($env{'article_cat.ID'})
 		{
-			my $filter={'or' => [{'term' => {}},{'prefix' => {}}]};
+			my $filter={};
+#			my $filter={'or' => [{'term' => {}},{'prefix' => {}}]};
 			
 			foreach my $ID_category (split(';',$env{'article_cat.ID'}))
 			{
@@ -198,29 +199,16 @@ sub execute
 						LIMIT 1
 					},'bind'=>[$ID_category],'quiet'=>1);
 					my %db0_line=$sth0{'sth'}->fetchhash();
-					push @{$filter->{'or'}->[1]->{'prefix'}->{'cat.charindex'}},$db0_line{'ID_charindex'}
-						if $db0_line{'ID_charindex'};
+					
+					push @{$filter->{'or'}},
+						{'prefix' => {'article_attrs.cat_charindex' => $db0_line{'ID_charindex'}}}
+							if $db0_line{'ID_charindex'};
 				}
 				else
 				{
-					push @{$filter->{'or'}->[0]->{'term'}->{'cat.ID'}},$ID_category;
-				}
-				
-				if (!$filter->{'or'}->[0]->{'term'}->{'cat.ID'})
-				{
-					shift @{$filter->{'or'}};
-					if (!$filter->{'or'}->[0]->{'prefix'}->{'cat.charindex'})
-					{
-						undef $filter;
-					}
-				}
-				elsif (!$filter->{'or'}->[1]->{'prefix'}->{'cat.charindex'})
-				{
-					pop @{$filter->{'or'}};
-					if (!$filter->{'or'}->[0]->{'term'}->{'cat.ID'})
-					{
-						undef $filter;
-					}
+					push @{$filter->{'or'}},
+						{'term' => {'cat' => $ID_category}}
+							if $ID_category;
 				}
 			}
 			push @elastic_must,$filter
@@ -229,6 +217,9 @@ sub execute
 		
 		$env{'elastic.page'} = 1 unless $env{'elastic.page'};
 		$env{'elastic.size'} = $env{'page_limit'} unless $env{'elastic.size'};
+		
+		use JSON;
+		main::_log("must=".to_json(\@elastic_must));
 		
 		my $results = $Elastic->search(
 			'index' => 'cyclone3.'.$App::401::db_name,
@@ -326,6 +317,8 @@ sub execute
 		main::_log("connecting Solr");
 		my $solr = Ext::Solr::service();
 		
+		main::_log('Solr query:'.'+id:'.$App::401::db_name.'.a401_article.'.$env{'lng'}.'.* '.$env{'solr.q'});
+		
 		my $response = $solr->search('+id:'.($App::401::db_name).'.a401_article.'.$env{'lng'}.'.* '.$env{'solr.q'},
 			{
 				'-cluster' => 1,
@@ -350,7 +343,7 @@ sub execute
 		
 	}
 	
-	if ($env{'article.ID_entity'}=~/;/)
+	if ($env{'article.ID_entity'}=~/^[;0-9]+$/)
 	{
 		$sql_where.=" AND article.ID_entity IN (".join(',',split(';',$env{'article.ID_entity'})).")";
 		$sql_limit=scalar split(';',$env{'article.ID_entity'});
@@ -488,7 +481,7 @@ sub execute
 		LIMIT
 			$sql_limit
 	},'bind'=>[@sql_bind,@sql_bind_firsttry],
-		'log'=>0,
+		'quiet'=>1,
 		'-slave'=>1,
 		'-cache' => 600,
 		'-timeout' => 20,
@@ -615,7 +608,7 @@ sub execute
 			LIMIT
 				$sql_limit
 		},'bind'=>[@sql_bind],
-			'log'=>0,
+			'quiet'=>1,
 			'-slave'=>1,
 			'-cache' => 600,
 			'-timeout' => 20,
