@@ -125,7 +125,7 @@ sub execute
 		};
 		$sql_columns.=qq{,
 			product_price.price,
-			product_price.price_full, AS price_incl_VAT,
+			product_price.price_full AS price_incl_VAT,
 			product_level.currency AS price_currency,
 			product_price.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=product_level.currency LIMIT 1) AS price_EUR};
 		$sql_where.=" AND (product_price.price IS NOT NULL AND product_price.price > 0)";
