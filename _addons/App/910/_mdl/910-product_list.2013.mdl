@@ -794,6 +794,9 @@ sub execute
 					}
 				}
 =cut
+
+				%{$product_modification{'metahash'}} = App::020::functions::metadata::parse($product_modification{'metadata'});
+				
 				push @{$product{'modifications'}},\%product_modification;
 			}
 			
