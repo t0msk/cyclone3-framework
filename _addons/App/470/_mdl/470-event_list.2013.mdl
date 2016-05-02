@@ -1,0 +1,273 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::470::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'event.status'}='Y' unless $env{'event.status'};
+		my $sql_event_status=join "','", split('',$env{'event.status'});
+	
+	$env{'event_cat.ID'} = $env{'event.ID_category'} if $env{'event.ID_category'};
+	
+	# paging
+	$env{'page_limit'} = 10 unless $env{'page_limit'};
+	$env{'page'} = 1 unless $env{'page'};
+	$env{'page_offset'} = 0 unless $env{'page_offset'};
+	$env{'page_plus'} = 1 unless $env{'page_plus'};
+	if (!$env{'sql_limit'})
+	{
+		$env{'sql_limit'}=((($env{'page'}-1)*$env{'page_limit'})+$env{'page_offset'}).",".($env{'page_limit'}+$env{'page_plus'});
+	}
+	else
+	{
+#		$env{'sql_limit'}=~/^(\d+),?(\d+)?$/;
+	}
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_join;
+	my $sql_columns;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || '`event`.`datetime_start` DESC';
+	my $sql_group_by;
+	
+	if ($env{'event_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'event_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::470::db_name`.`a470_event_cat` WHERE `ID_entity`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
+				$sql_cat.=qq{ OR `event_cat`.`ID_charindex` LIKE CONCAT(($cat_sql),"%")};
+			}
+			else
+			{
+				$sql_cat.=" OR `event_cat`.`ID_entity`=$ID_category";
+				push @{$env_out{'entity'}},{
+					'db_h' => 'main',
+					'db_name' => $App::470::db_name,
+					'tb_name' => 'a470_event_cat',
+					'ID_entity' => $ID_category,
+				};
+			}
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'event_cat.ID'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'event_cat.ID'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::470::db_name`.`a470_event_cat` WHERE `ID`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
+				$sql_cat.=qq{ OR `event_cat`.`ID_charindex` LIKE CONCAT(($cat_sql),"%")};
+			}
+			else
+			{
+				$sql_cat.=" OR `event`.`ID_category`=$ID_category";
+			}
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'event.ID_entity'}=~/^[;0-9]+$/)
+	{
+		$sql_where.=" AND event.ID_entity IN (".join(',',split(';',$env{'event.ID_entity'})).")";
+		$sql_limit=scalar split(';',$env{'event.ID_entity'});
+	}
+	
+	if ($env{'event.ID'}=~/^[;0-9]+$/)
+	{
+		$sql_where.=" AND event.ID IN (".join(',',split(';',$env{'event.ID'})).")";
+		$sql_limit=scalar split(';',$env{'event.ID'});
+#		$sql_group_by="event.ID_entity";
+	}
+	
+	# if ($env{'a430_list.ID'})
+	# {
+	# 	require App::430::_init;
+	# 	$sql_join.=qq{INNER JOIN `$App::430::db_name`.a160_relation AS a430_list_relation ON
+	# 	(
+	# 		a430_list_relation.l_prefix = 'a430' AND
+	# 		a430_list_relation.l_table = 'list' AND
+	# 		a430_list_relation.l_ID_entity = $env{'a430_list.ID'} AND
+	# 		a430_list_relation.r_prefix = 'a470' AND
+	# 		a430_list_relation.r_table = 'event' AND
+	# 		a430_list_relation.r_ID_entity = `event`.ID_entity AND
+	# 		a430_list_relation.status = 'Y'
+	# 	)
+	# 	};
+	# 	$sql_columns.=",a430_list_relation.rel_name";
+	# 	$sql_order_by="a430_list_relation.priority DESC";
+	# }
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	# use App::020::mimetypes::html;
+	# my $parser=new App::020::mimetypes::html(
+	# 	'tpl_ext' => $TPL # extend
+	# );
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			`event`.`ID_entity`,
+			`event`.`ID`,
+			`event`.`ID_category`,
+			
+			`event_cat`.`ID` AS `cat_ID`,
+			`event_cat`.`ID_entity` AS `cat_ID_entity`,
+			`event_cat`.`name` AS `cat_name`,
+			`event_cat`.`name_url` AS `cat_name_url`,
+			
+			`event`.`name`,
+			`event`.`name_url`,
+			`event`.`posix_owner`,
+			`event`.`posix_modified`,
+			`event`.`datetime_start`,
+			`event`.`datetime_finish`,
+			`event`.`metadata`,
+			`event`.`status`,
+
+			`broadcast_program`.`ID` AS broadcast_program_ID,
+			`broadcast_program`.`name` AS broadcast_program_name,
+			`broadcast_program`.`datetime_air_start` broadcast_program_datetime_air_start,
+			`broadcast_program`.`datetime_air_stop` broadcast_program_datetime_air_stop,
+			`broadcast_program`.`ID_channel`,
+			`broadcast_program`.`ID_series`
+			$sql_columns
+			
+		FROM `$App::470::db_name`.`a470_event` AS `event`
+		INNER JOIN `$App::470::db_name`.`a470_event_cat` AS `event_cat` ON
+		(
+			`event_cat`.`ID` = `event`.`ID_category`
+		)
+		LEFT JOIN `$App::160::db_name`.`a160_relation` AS `rel_air` ON (
+			`rel_air`.`l_ID_entity` = `event`.`ID_entity` AND
+			`rel_air`.`l_prefix` = 'a470' AND
+			`rel_air`.`rel_type` = 'air' AND
+			`rel_air`.`r_table` = 'broadcast_program' AND
+			`rel_air`.`status` = 'Y'
+		)
+		LEFT JOIN `$App::510::db_name`.`a510_broadcast_program` AS `broadcast_program` ON (
+			`broadcast_program`.`ID_entity` = `rel_air`.`r_ID_entity`
+		)
+		$sql_join
+		WHERE
+			`event`.`status` IN ('$sql_event_status')
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],'log_'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::470::db_name,
+				'tb_name' => "a470_event",
+				'ID_entity' => do{$env{'event.ID_entity'} if $env{'event.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	while (my %event=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		last if $i > $env{'page_limit'};
+		
+		main::_log("[$i/$env{'page_limit'}] found event.ID_entity=$event{'ID_entity'}");
+		
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::470::db_name,
+			'tb_name' => 'a470_event',
+			'ID_entity' => $event{'ID_entity'}
+		};
+		# participants 
+		foreach my $participant_key ('participantA','participantB') {
+			my $participant=(App::160::SQL::get_relations(
+				'db_name' => $App::470::db_name,
+				'l_prefix' => 'a470',
+				'l_table' => 'event',
+				'l_ID_entity' => $event{'ID'},
+				'rel_type' => $participant_key,
+				'r_db_name' => $App::470::db_name,
+				'r_prefix' => 'a470',
+				'r_table' => 'team',
+				'status' => 'Y'
+			))[0];
+
+			if ($participant->{'r_ID_entity'}) {
+				my %sth0=TOM::Database::SQL::execute(qq{
+					SELECT
+						ID,
+						ID_entity,
+						name,
+						name_url
+					FROM `$App::470::db_name`.`a470_team` AS team
+					WHERE 
+						ID_entity = ?
+					LIMIT 1
+				},
+					'bind'=>[$participant->{'r_ID_entity'}],
+					'log'=>$tom::devel,
+					'-slave'=>1,
+					'-changetime'=>App::020::SQL::functions::_get_changetime(
+						{
+							'db_h'=>"main",
+							'db_name' => $App::470::db_name,
+							'tb_name' => "a470_team",
+							'ID_entity' => $participant->{'r_ID_entity'}
+						}),
+				);
+				my %db_participant = $sth0{'sth'}->fetchhash();
+				$event{$participant_key} = \%db_participant;
+			}
+		}
+		
+		# broadcast
+		
+		%{$event{'metahash'}}=App::020::functions::metadata::parse($event{'metadata'});
+		
+		push @{$TPL->{'variables'}{'items'}},\%event;
+	}
+	
+	return 1,%env_out;
+}
+
+1;
