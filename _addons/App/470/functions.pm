@@ -67,33 +67,6 @@ sub event_add
 		}
 	}
 	
-	# pravdepodobne nepotrebujem, vyzera ze podla toho neumoznil vytvorit nejaky s rovnakym nazvom co malo zmysel iba pri tagu
-	# if (!$env{'event.ID'} && $env{'event.name'})
-	# {
-	# 	main::_log("finding event.ID_entity by event.name='$env{'event.name'}'");
-	# 	my %sth0=TOM::Database::SQL::execute(qq{
-	# 		SELECT
-	# 			*
-	# 		FROM
-	# 			`$App::470::db_name`.a470_event
-	# 		WHERE
-	# 			name LIKE ?
-	# 	},'bind'=>[$env{'event.name'}]);
-	# 	if (my %db0_line=$sth0{'sth'}->fetchhash())
-	# 	{
-	# 		$env{'event.ID'} = $db0_line{'ID'};
-	# 		$env{'event.ID_entity'} = $db0_line{'ID_entity'};
-	# 		main::_log("found event.ID_entity='$env{'event.ID_entity'}'");
-	# 		%event=App::020::SQL::functions::get_ID(
-	# 			'ID' => $env{'event.ID'},
-	# 			'db_h' => "main",
-	# 			'db_name' => $App::470::db_name,
-	# 			'tb_name' => "a470_event",
-	# 			'columns' => {'*'=>1}
-	# 		);
-	# 	}
-	# }
-	
 	if (!$env{'event.ID'})
 	{
 		main::_log("!event.ID, create event.ID (event.ID_entity='$env{'event.ID_entity'}')");
@@ -204,7 +177,6 @@ sub event_add
 
 	foreach my $field ('participantA', 'participantB')
 	{
-		main::_log("prechadzam $field");
 		# remove existing relation first
 		if (my $relation=(App::160::SQL::get_relations(
 			'db_name' => $App::470::db_name,
@@ -241,32 +213,6 @@ sub event_add
 			'status' => 'Y',
 		);		
 	}
-	
-#	foreach my $field (
-#		'rules_validation', 'rules_apply'
-#	)
-#	{
-#		$data{$field}=$env{'event.'.$field}
-#			if (exists $env{'event.'.$field} && ($env{'event.'.$field} ne $event{$field}));
-#		if (exists $data{$field} && !$data{$field})
-#		{
-#			delete $data{$field};
-#			$columns{$field}="''";
-#		}
-#	}
-	
-#	foreach my $field (
-#		'target_url'
-#	)
-#	{
-#		$data{$field}=$env{'event.'.$field}
-#			if (exists $env{'event.'.$field} && ($env{'event.'.$field} ne $event{$field}));
-#		if (exists $data{$field} && !$data{$field})
-#		{
-#			delete $data{$field};
-#			$columns{$field}='NULL';
-#		}
-#	}
 
 	# participants
 	
@@ -284,44 +230,6 @@ sub event_add
 		);
 	}
 	
-	
-	# if ($env{'event_cat.ID'})
-	# {
-
-		# my $sql=qq{
-		# 	SELECT
-		# 		*
-		# 	FROM
-		# 		$App::470::db_name.a470_event_cat
-		# 	WHERE
-		# 		ID=$env{'event_cat.ID'}
-		# 	LIMIT 1
-		# };
-		# my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
-		# my %event_cat=$sth0{'sth'}->fetchhash();
-		# $env{'event_cat.ID_entity'}=$event_cat{'ID_entity'};
-	# }
-	# $env{'event_cat.ID_entity'} = $env{'event_cat.ID_entity'};
-	
-	# my %event_cat;
-	
-	# main::_log("event_cat.ID_entity='$env{'event_cat.ID_entity'}'");
-	
-	# if ($env{'event_cat.ID_entity'})
-	# {
-	# 	TOM::Database::SQL::execute(qq{
-	# 		REPLACE INTO `$App::470::db_name`.a470_event_cat
-	# 		(
-	# 			ID_event,
-	# 			ID_category
-	# 		)
-	# 		VALUES
-	# 		(
-	# 			?,?
-	# 		)
-	# 	},'bind'=>[$env{'event.ID_entity'},$env{'event_cat.ID_entity'}],'quiet'=>1);
-	# }
-	
 	$t->close();
 	return %event;
 }
@@ -332,7 +240,6 @@ sub athlete_add
 	my $t=track TOM::Debug(__PACKAGE__."::athlete_add()");
 	
 	my %athlete;
-	
 	if ($env{'athlete.ID'})
 	{
 		$env{'athlete.ID'}=$env{'athlete.ID'}+0;
@@ -398,6 +305,20 @@ sub athlete_add
 		);
 		$env{'athlete.ID'}=$athlete{'ID'};
 		$env{'athlete.ID_entity'}=$athlete{'ID_entity'};
+
+		# add lng
+		App::020::SQL::functions::new(
+			'db_h' => "main",
+			'db_name' => $App::470::db_name,
+			'tb_name' => "a470_athlete_lng",
+			'columns' => {%columns},
+			'data' => {
+				'ID_entity' => $env{'athlete.ID'},
+				'lng' => $env{'lng'},
+			},
+			'-journalize' => 1,
+			'-posix' => 1,
+		);
 	}
 	
 	main::_log("athlete.ID='$athlete{'ID'}' athlete.ID_entity='$athlete{'ID_entity'}'");
@@ -482,6 +403,69 @@ sub athlete_add
 			'-posix' => 1,
 			'-journalize' => 1
 		);
+	}
+
+	# update lng
+	my %athlete_lng;
+	# get lng fields
+    foreach my $key (keys %env)
+    {
+		main::_log("prechadzam $key");
+        if ($key =~ /athlete_lng\.([a-zA-Z\-]+)\.(.+)$/) 
+		{
+			my $lng = $1; my $varname = $2;
+			$athlete_lng{$lng} = {} unless (exists $athlete_lng{$lng});
+			$athlete_lng{$lng}{$varname} = $env{$key};
+			main::_log("has key $varname: $athlete_lng{$lng}{$varname} for lng $lng");
+			# name_url
+			# if ($varname eq 'name') {
+			# 	$athlete_lng{$lng}{'name_url'}=TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env->{$key}));
+			# }
+		}
+    }
+
+    my @lng_IDs = App::020::SQL::functions::get_ID_entity(
+    	'ID_entity' => $env{'athlete.ID'},
+    	'db_h' => 'main',
+    	'db_name' => $App::470::db_name,
+    	'tb_name' => 'a470_athlete_lng'
+    );
+    my $where_lng_IDs;
+    foreach (@lng_IDs) {
+    	$where_lng_IDs .= $_->{'ID'} . ",";
+    };
+    $where_lng_IDs =~ s/,$//;
+
+    my $sql=qq{
+    	SELECT
+    		ID, lng
+    	FROM
+    		$App::470::db_name.a470_athlete_lng
+    	WHERE
+    		ID IN (?)
+    };
+    
+    my %sth_lng=TOM::Database::SQL::execute($sql,'quiet'=>1,'bind'=>[$where_lng_IDs]);
+    
+    while (my %lng_line=$sth_lng{'sth'}->fetchhash())
+    {
+    	my $local = $lng_line{'lng'};
+    	if (%athlete_lng && $athlete_lng{$local}) {
+			main::_log('lng dump'.Dumper(\$athlete_lng{$local}));
+			$App::020::SQL::functions::debug = 1;
+			
+			App::020::SQL::functions::update(
+				'db_h' => 'main',
+				'db_name' => $App::470::db_name,
+				'tb_name' => 'a470_athlete_lng',
+				'ID' => $lng_line{'ID'},
+				'lng' => $local,
+				'data' => { %{$athlete_lng{$local}} },
+				'quiet' => 1,
+				'-journalize' => 1,
+				'-posix' => 1,
+			);
+		}
 	}
 	
 	$t->close();

@@ -146,6 +146,20 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_athlete_lng` (
 
 -- --------------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*addon*/_athlete_lng_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL, -- rel _athlete.ID_entity
+  `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `body` text character set utf8 collate utf8_unicode_ci default NULL,
+  `datetime_create` datetime NOT NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `lng` char(5) character set ascii NOT NULL default '',
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
 -- dat selector na a510_broadcast_program.ID_entity (pozriet ako broadcast_program selectuje video)
 -- relation type "participant","participantA","participantB"
 -- pre participantA a B spravit selector a pri participant spravit listing v tabe
