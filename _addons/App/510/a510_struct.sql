@@ -644,6 +644,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   `status_live_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_internet` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `status_highlight` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `recording` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N', -- it is recording now
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   PRIMARY KEY (`ID`),
@@ -709,6 +710,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
   `status_live_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_internet` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `status_highlight` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `recording` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   PRIMARY KEY (`ID`,`datetime_create`)
