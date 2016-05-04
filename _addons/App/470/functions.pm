@@ -611,8 +611,8 @@ sub team_add
 		$env{'team.status'}=$env{'team.status'} || 'N';
 	}
 
-	if ($env{'team_cat.ID'}) {
-		$columns{'ID_category'} = $env{'team_cat.ID'};
+	if ($env{'team.ID_category'}) {
+		$columns{'ID_category'} = $env{'team.ID_category'};
 	}
 	
 	foreach my $field ('status')
