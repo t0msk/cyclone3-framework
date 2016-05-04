@@ -160,13 +160,8 @@ sub event_add
 	$data{'metadata'}=$env{'event.metadata'}
 		if (exists $env{'event.metadata'} && ($env{'event.metadata'} ne $event{'metadata'}));
 	
-	if (($env{'event_cat.ID'} || $env{'event_cat.ID_entity'}) && ($event{'status'} eq "T"))
-	{
-		$env{'event.status'}=$env{'event.status'} || 'N';
-	}
-
-	if ($env{'event_cat.ID'}) {
-		$columns{'ID_category'} = $env{'event_cat.ID'};
+	if ($env{'event.ID_category'}) {
+		$columns{'ID_category'} = $env{'event.ID_category'};
 	}
 	
 	foreach my $field ('status')
@@ -175,47 +170,48 @@ sub event_add
 			if ($env{'event.'.$field} && ($env{'event.'.$field} ne $event{$field}));
 	}
 
+	# participants
 	foreach my $field ('participantA', 'participantB')
 	{
-		# remove existing relation first
-		if (my $relation=(App::160::SQL::get_relations(
-			'db_name' => $App::470::db_name,
-			'l_prefix' => 'a470',
-			'l_table' => 'event',
-			'l_ID_entity' => $env{'event.ID'},
-			'rel_type' => $field,
-			'r_prefix' => "a470",
-			'r_table' => "team",
-			'status' => "Y",
-			'limit' => 1
-		))[0])
-		{
-			main::_log("mam relation".Dumper($relation));
-			if ($relation->{'ID'})
+		if ($field) {
+			# remove existing relation first
+			if (my $relation=(App::160::SQL::get_relations(
+				'db_name' => $App::470::db_name,
+				'l_prefix' => 'a470',
+				'l_table' => 'event',
+				'l_ID_entity' => $env{'event.ID'},
+				'rel_type' => $field,
+				'r_prefix' => "a470",
+				'r_table' => "team",
+				'status' => "Y",
+				'limit' => 1
+			))[0])
 			{
-				my $success=App::160::SQL::remove_relation(
-					'l_prefix' => 'a470',
-					'ID' => $relation->{'ID'}
-				);
-				main::_log("vymazany relation ID $relation->{'ID'}");
+				main::_log("mam relation".Dumper($relation));
+				if ($relation->{'ID'})
+				{
+					my $success=App::160::SQL::remove_relation(
+						'l_prefix' => 'a470',
+						'ID' => $relation->{'ID'}
+					);
+					main::_log("vymazany relation ID $relation->{'ID'}");
+				}
 			}
+			# create a new relation
+			my ($ID_entity,$ID)=App::160::SQL::new_relation(
+				'l_prefix' => 'a470',
+				'l_table' => 'event',
+				'l_ID_entity' => $env{'event.ID'},
+				'rel_type' => $field,
+				'r_db_name' => $App::470::db_name,
+				'r_prefix' => 'a470',
+				'r_table' => 'team',
+				'r_ID_entity' => $env{"event.$field"},
+				'status' => 'Y',
+			);		
 		}
-		# create a new relation
-		my ($ID_entity,$ID)=App::160::SQL::new_relation(
-			'l_prefix' => 'a470',
-			'l_table' => 'event',
-			'l_ID_entity' => $env{'event.ID'},
-			'rel_type' => $field,
-			'r_db_name' => $App::470::db_name,
-			'r_prefix' => 'a470',
-			'r_table' => 'team',
-			'r_ID_entity' => $env{"event.$field"},
-			'status' => 'Y',
-		);		
 	}
 
-	# participants
-	
 	if (keys %columns || keys %data)
 	{
 		App::020::SQL::functions::update(
@@ -615,8 +611,8 @@ sub team_add
 		$env{'team.status'}=$env{'team.status'} || 'N';
 	}
 
-	if ($env{'team_cat.ID'}) {
-		$columns{'ID_category'} = $env{'team_cat.ID'};
+	if ($env{'team.ID_category'}) {
+		$columns{'ID_category'} = $env{'team.ID_category'};
 	}
 	
 	foreach my $field ('status')
