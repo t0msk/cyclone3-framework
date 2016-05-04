@@ -635,7 +635,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   `audio_mode` varchar(12) CHARACTER SET ascii DEFAULT NULL,
   `audio_dubbing` char(1) CHARACTER SET ascii DEFAULT NULL,
   `audio_desc` char(1) CHARACTER SET ascii DEFAULT NULL,
-  `rating_pg` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `rating_pg` char(3) CHARACTER SET ascii DEFAULT NULL,
   `accessibility_deaf` char(1) CHARACTER SET ascii DEFAULT NULL,
   `accessibility_cc` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_archive` char(1) CHARACTER SET ascii DEFAULT NULL, -- create video and fill ID_video after datetime_real_stop ends
@@ -701,7 +701,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
   `audio_mode` varchar(12) CHARACTER SET ascii DEFAULT NULL,
   `audio_dubbing` char(1) CHARACTER SET ascii DEFAULT NULL,
   `audio_desc` char(1) CHARACTER SET ascii DEFAULT NULL,
-  `rating_pg` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `rating_pg` char(3) CHARACTER SET ascii DEFAULT NULL,
   `accessibility_deaf` char(1) CHARACTER SET ascii DEFAULT NULL,
   `accessibility_cc` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_archive` char(1) CHARACTER SET ascii DEFAULT NULL,
