@@ -4936,6 +4936,7 @@ sub broadcast_program_add
 		{
 			if ($env{'program.ID_channel'})
 			{
+				main::_log("search for program by ID_channel=$env{'program.ID_channel'} datetime_air_start=$env{'program.datetime_air_start'} program_code=$env{'program.program_code'}");
 				my %sth0=TOM::Database::SQL::execute(qq{
 					SELECT
 						*
@@ -4944,7 +4945,7 @@ sub broadcast_program_add
 					WHERE
 						program_code=?
 						AND ID_channel=?
-						AND ABS(TIME_TO_SEC(TIMEDIFF(?,datetime_air_start))) <= 7200
+						AND ABS(TIME_TO_SEC(TIMEDIFF(?,datetime_air_start))) <= 3600
 					ORDER BY
 						ABS(TIME_TO_SEC(TIMEDIFF(?,datetime_air_start))) ASC
 					LIMIT 1
@@ -4956,6 +4957,7 @@ sub broadcast_program_add
 				],'quiet'=>1);
 				if (%program=$sth0{'sth'}->fetchhash())
 				{
+					main::_log("found $sth0{'rows'} programs, selected program.ID=$program{'ID'}");
 					$env{'program.ID'}=$program{'ID'};
 					$env{'program.ID_entity'}=$program{'ID_entity'};
 				}
@@ -4969,7 +4971,7 @@ sub broadcast_program_add
 						`$App::510::db_name`.a510_broadcast_program
 					WHERE
 						program_code=?
-						AND ABS(TIME_TO_SEC(TIMEDIFF(?,datetime_air_start))) <= 7200
+						AND ABS(TIME_TO_SEC(TIMEDIFF(?,datetime_air_start))) <= 3600
 	--					AND status IN ('Y','N','L','W')
 					ORDER BY
 						ABS(TIME_TO_SEC(TIMEDIFF(?,datetime_air_start))) ASC
@@ -5093,6 +5095,7 @@ sub broadcast_program_add
 			'status_premiere',
 			'status_internet',
 			'status_geoblock',
+			'status_highlight',
 			'recording',
 			'datetime_real_start',
 			'datetime_real_start_msec',
@@ -5172,7 +5175,7 @@ sub broadcast_program_add
 		$program{'ID_channel'} &&
 		$program{'program_code'} &&
 		$program{'datetime_air_start'} &&
-		$program{'status'}=~/^[YNLW]$/
+		$program{'status'}=~/^[YLW]$/
 	)
 	{
 		# najst konflikty a trashovat
@@ -5185,7 +5188,7 @@ sub broadcast_program_add
 				ID != ?
 				AND ID_channel=?
 				AND (datetime_air_start >= ? AND datetime_air_start < ?)
-				AND status IN ('Y','N','L','W')
+				AND status IN ('Y','L','W')
 		},'bind'=>[
 			$program{'ID'},
 			$program{'ID_channel'},
@@ -5217,7 +5220,7 @@ sub broadcast_program_add
 				AND ID_channel=?
 				AND datetime_air_start < ?
 				AND datetime_air_stop >= ?
-				AND status IN ('Y','N','L','W')
+				AND status IN ('Y','L','W')
 		},'bind'=>[
 			$program{'ID'},
 			$program{'ID_channel'},

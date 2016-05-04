@@ -176,6 +176,13 @@ sub search
 	if ($response)
 	{
 		my $numfound=$response->content->{'response'}->{'numFound'};
+
+		if ($_[1]->{'group'} && $_[1]->{'group.field'})
+               	{
+                	$numfound=$response->content->{'grouped'}->{$_[1]->{'group.field'}}->{'matches'};
+               	}
+
+
 		my $qtime=$response->content->{'responseHeader'}->{'QTime'};
 		if (!$_[1]->{'quiet'})
 		{

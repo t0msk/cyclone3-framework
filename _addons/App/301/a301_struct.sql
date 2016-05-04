@@ -28,7 +28,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
   UNIQUE KEY `UNI_0` (`hostname`,`login`),
   KEY `secure_hash` (`secure_hash`),
   KEY `login` (`login`),
-  KEY `hostname` (`hostname`),
+  KEY `hostname` (`hostname`,`email`),
   KEY `email` (`email`),
   KEY `ref_facebook` (`ref_facebook`),
   KEY `ref_deviceid` (`ref_deviceid`)

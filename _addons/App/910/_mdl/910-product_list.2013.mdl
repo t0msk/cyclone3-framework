@@ -475,6 +475,7 @@ sub execute
 			product_lng.lng,
 			
 			product_cat.ID AS cat_ID,
+			product_cat.ID_entity AS cat_ID_entity,
 			product_cat.name AS cat_name,
 			product_cat.name_url AS cat_name_url,
 			
@@ -550,7 +551,7 @@ sub execute
 			$sql_order_by
 		LIMIT
 			$sql_limit
-	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,'-cache'=>60,
 		'-changetime'=>App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",
@@ -587,8 +588,48 @@ sub execute
 			'status' => "Y"
 		))[0];
 		
+		# get all cats
+		my @cats;
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				product_cat.ID AS cat_ID
+			FROM $App::910::db_name.a910_product_ent AS product_ent
+			LEFT JOIN $App::910::db_name.a910_product AS product ON
+			(
+				product_ent.ID_entity = product.ID_entity
+			)
+			INNER JOIN $App::910::db_name.a910_product_sym AS product_sym ON
+			(
+				product_sym.ID_entity = product.ID_entity
+			)
+			INNER JOIN $App::910::db_name.a910_product_cat AS product_cat ON
+			(
+				product_cat.ID_entity = product_sym.ID AND
+				product_cat.status IN ('Y','L')
+			)
+			WHERE
+				product_ent.status = 'Y'
+				AND product.status = 'Y'
+				AND product_cat.ID IS NOT NULL
+				AND product.ID_entity = ?
+		},'bind'=>[$product{'ID_entity'}],'quiet'=>1,'-slave'=>1,
+			'-cache' => 600,
+			'-timeout' => 20,
+			'-changetime'=>App::020::SQL::functions::_get_changetime(
+				{
+					'db_h'=>"main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_product",
+					'ID_entity' => $product{'ID_entity'}
+				}),
+		);
+		while (my %cat=$sth1{'sth'}->fetchhash())
+		{
+			push @cats, $cat{'cat_ID'};
+		}
+		
 		# link to a210_page
-		if (my $category=App::910::functions::_a210_by_cat([$product{'cat_ID'}],'lng'=>$env{'lng'}))
+		if (my $category=App::910::functions::_a210_by_cat([$product{'cat_ID_entity'}, @cats],'lng'=>$env{'lng'}))
 		{
 			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
 			foreach my $p(
@@ -742,7 +783,7 @@ sub execute
 					$sql_where
 				ORDER BY
 					product.ID DESC
-			},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+			},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,'-cache'=>600,
 				'-changetime'=>App::020::SQL::functions::_get_changetime(
 					{
 						'db_h'=>"main",
@@ -794,6 +835,9 @@ sub execute
 					}
 				}
 =cut
+
+				%{$product_modification{'metahash'}} = App::020::functions::metadata::parse($product_modification{'metadata'});
+				
 				push @{$product{'modifications'}},\%product_modification;
 			}
 			
@@ -815,7 +859,15 @@ sub execute
 				WHERE
 					a910_product_price.ID_entity = ?
 					AND	a910_product_price.status IN ('Y', 'L')
-			},'quiet'=>1,'bind'=>[$product{'ID'}]);
+			},'log'=>1,'bind'=>[$product{'ID'}],'-cache'=>600,
+				'-changetime'=>App::020::SQL::functions::_get_changetime(
+				{
+					'db_h'=>"main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_product",
+					'ID_entity' => $product{'ID_entity'}
+				})
+			);
 			while (my %db1_line=$sth1{'sth'}->fetchhash())
 			{
 				next if $db1_line{'price'} == 0;
