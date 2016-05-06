@@ -98,23 +98,23 @@ sub event_add
 	my %columns;
 	my %data;
 
-	# status
-	$data{'status'}=$env{'event.status'}
-		if ($env{'event.status'} && ($env{'event.status'} ne $event{'status'}));
+	# # status
+	# $data{'status'}=$env{'event.status'}
+	# 	if ($env{'event.status'} && ($env{'event.status'} ne $event{'status'}));
 
-	# name
-	$data{'name'}=$env{'event.name'}
-		if ($env{'event.name'} && ($env{'event.name'} ne $event{'name'}));
-	$data{'name_url'}=TOM::Net::URI::rewrite::convert($env{'event.name'},'notlower'=>1)
-		if ($env{'event.name'} && ($env{'event.name'} ne $event{'name'}));
+	# # name
+	# $data{'name'}=$env{'event.name'}
+	# 	if ($env{'event.name'} && ($env{'event.name'} ne $event{'name'}));
+	# $data{'name_url'}=TOM::Net::URI::rewrite::convert($env{'event.name'},'notlower'=>1)
+	# 	if ($env{'event.name'} && ($env{'event.name'} ne $event{'name'}));
 	
-	# datetime_start
-	$data{'datetime_start'}=$env{'event.datetime_start'}
-		if ($env{'event.datetime_start'} && ($env{'event.datetime_start'} ne $event{'datetime_start'}));
+	# # datetime_start
+	# $data{'datetime_start'}=$env{'event.datetime_start'}
+	# 	if ($env{'event.datetime_start'} && ($env{'event.datetime_start'} ne $event{'datetime_start'}));
 
-	# datetime_finish
-	$data{'datetime_finish'}=$env{'event.datetime_finish'}
-		if ($env{'event.datetime_finish'} && ($env{'event.datetime_finish'} ne $event{'datetime_finish'}));
+	# # datetime_finish
+	# $data{'datetime_finish'}=$env{'event.datetime_finish'}
+	# 	if ($env{'event.datetime_finish'} && ($env{'event.datetime_finish'} ne $event{'datetime_finish'}));
 
 	# metadata
 	my %metadata=App::020::functions::metadata::parse($event{'metadata'});
@@ -164,8 +164,9 @@ sub event_add
 		$columns{'ID_category'} = $env{'event.ID_category'};
 	}
 	
-	foreach my $field ('status')
+	foreach my $field ('status','name','datetime_start','datetime_finish','result')
 	{
+		main::_log("prechadzam field $field");
 		$data{$field}=$env{'event.'.$field}
 			if ($env{'event.'.$field} && ($env{'event.'.$field} ne $event{$field}));
 	}

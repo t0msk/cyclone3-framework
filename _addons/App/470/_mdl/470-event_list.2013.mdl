@@ -10,6 +10,7 @@ use strict;
 use App::210::_init;
 use App::470::_init;
 
+use Data::Dumper;
 
 sub execute
 {
@@ -146,6 +147,7 @@ sub execute
 			`event`.`ID_entity`,
 			`event`.`ID`,
 			`event`.`ID_category`,
+			`event`.`result`,
 			
 			`event_cat`.`ID` AS `cat_ID`,
 			`event_cat`.`ID_entity` AS `cat_ID_entity`,
@@ -187,14 +189,14 @@ sub execute
 		$sql_join
 		WHERE
 			`event`.`status` IN ('$sql_event_status')
-			$sql_where}.do{if($sql_group_by){qq{
+			$sql_where
 		GROUP BY
-			$sql_group_by}}}.qq{
+			event.ID
 		ORDER BY
 			$sql_order_by
 		LIMIT
 			$sql_limit
-	},'bind'=>[@sql_bind],'log_'=>1,'-slave'=>1,
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
 		'-changetime'=>App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",
@@ -259,9 +261,95 @@ sub execute
 				$event{$participant_key} = \%db_participant;
 			}
 		}
+
+		# related program 
+		my @rel_broadcast_programs=(App::160::SQL::get_relations(
+			'db_name' => $App::470::db_name,
+			'l_prefix' => 'a470',
+			'l_table' => 'event',
+			'l_ID_entity' => $event{'ID'},
+			'rel_type' => 'air',
+			'r_db_name' => $App::470::db_name,
+			'r_prefix' => 'a510',
+			'r_table' => 'broadcast_program',
+			'status' => 'Y'
+		));
+		my $rel_program_ID_entities;
+		foreach my $rel_program (@rel_broadcast_programs) {
+			if ($rel_program->{'r_ID_entity'}) {
+				$rel_program_ID_entities .= $rel_program->{'r_ID_entity'}.',';
+			}
+		}
+		if ($rel_program_ID_entities) {
+			$rel_program_ID_entities =~ s/,$//;
+			main::_log("new rel_program_ID_entities '$rel_program_ID_entities'");
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					ID,
+					name,
+					datetime_air_start,
+					datetime_air_stop,
+					ID_channel,
+					status_premiere,
+					ID_series
+				FROM `$App::510::db_name`.`a510_broadcast_program` AS broadcast_program
+				WHERE
+					ID_entity IN ($rel_program_ID_entities)
+				ORDER BY 
+					datetime_air_start ASC
+				LIMIT 20
+			},
+				'bind'=>[],
+				'log'=>$tom::devel,
+				'-slave'=>1,
+			);
+			while (my %db_program=$sth0{'sth'}->fetchhash()) {
+				main::_log('rel_broadcast_program dump'.Dumper(%db_program));
+				push @{$event{'rel_broadcast_program'}}, \%db_program;
+			}
+		}
 		
-		# broadcast
-		
+		# related article 
+		main::_log("470 db $App::470::db_name, 401 db $App::401::db_name");
+		my $match_article=(App::160::SQL::get_relations(
+			'db_name' => $App::470::db_name,
+			'l_prefix' => 'a470',
+			'l_table' => 'event',
+			'l_ID_entity' => $event{'ID'},
+			'rel_type' => 'link',
+			'r_db_name' => $App::401::db_name,
+			'r_prefix' => 'a401',
+			'r_table' => 'article',
+			'status' => 'Y',
+			'limit' => 1,
+			'-log' => 1
+		))[0];
+		if ($match_article->{'ID'}){
+			my $sql1=qq{
+				SELECT
+					article.ID_entity,
+					article.ID,
+					article_attrs.name,
+					article_attrs.name_url
+				FROM
+					`$App::401::db_name`.a401_article AS article
+				LEFT JOIN `$App::401::db_name`.a401_article_attrs AS article_attrs ON
+				(
+					article_attrs.ID_entity = article.ID
+				)
+				WHERE
+							article.ID_entity=$match_article->{'r_ID_entity'}
+					AND	article_attrs.status IN ('Y')
+				LIMIT
+					1
+			};
+			my %sth1=TOM::Database::SQL::execute($sql1,'-cache'=>60,'quiet'=>1,'-slave'=>1);
+			if (my %db1_line=$sth1{'sth'}->fetchhash())
+			{
+				$event{'article'}=\%db1_line;
+			}
+		}
+
 		%{$event{'metahash'}}=App::020::functions::metadata::parse($event{'metadata'});
 		
 		push @{$TPL->{'variables'}{'items'}},\%event;

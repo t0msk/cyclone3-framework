@@ -175,6 +175,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_start` datetime default NULL, -- event starts
   `datetime_finish` datetime default NULL, -- event ends
+  `result` varchar(128) default NULL, 
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
@@ -193,6 +194,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event_j` (
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_start` datetime default NULL, -- event starts
   `datetime_finish` datetime default NULL, -- event ends
+  `result` varchar(128) default NULL, 
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
