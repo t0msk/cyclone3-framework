@@ -2212,7 +2212,11 @@ sub get_image_file
 			image_file.file_checksum,
 			image_file.file_ext,
 			image_file.status AS file_status,
-			CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path
+			CONCAT(image_file.ID_format,'/',SUBSTR(image_file.ID,1,4),'/',image_file.name,'.',image_file.file_ext) AS file_path,
+			CASE image_attrs.lng
+				WHEN '$env{'image_attrs.lng'}' THEN '1'
+				ELSE '0'
+			END AS lng_relevance
 	};
 	
 	if ($env{'image.ID_entity'})
@@ -2226,8 +2230,7 @@ sub get_image_file
 		)
 		LEFT JOIN `$App::501::db_name`.`a501_image_attrs` AS image_attrs ON
 		(
-			image_attrs.ID_entity = image.ID AND
-			image_attrs.lng='$env{'image_attrs.lng'}'
+			image_attrs.ID_entity = image.ID
 		)
 		LEFT JOIN `$App::501::db_name`.`a501_image_file` AS image_file ON
 		(
@@ -2237,6 +2240,8 @@ sub get_image_file
 		)
 		WHERE
 			image.ID_entity='$env{'image.ID_entity'}'
+		ORDER BY
+			lng_relevance DESC
 		LIMIT 1
 		};
 	}
