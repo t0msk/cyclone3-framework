@@ -1,0 +1,697 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+use DateTime;
+
+
+use App::950::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'offer.status'}='Y' unless $env{'offer.status'};
+		my $sql_offer_status=join "','", split('',$env{'offer.status'});
+	
+	# paging
+	$env{'page_limit'} = 10 unless $env{'page_limit'};
+	$env{'page'} = 1 unless $env{'page'};
+	$env{'page_offset'} = 0 unless $env{'page_offset'};
+	$env{'page_plus'} = 1 unless $env{'page_plus'};
+	if (!$env{'sql_limit'})
+	{
+		$env{'sql_limit'}=((($env{'page'}-1)*$env{'page_limit'})+$env{'page_offset'}).",".($env{'page_limit'}+$env{'page_plus'});
+	}
+	else
+	{
+#		$env{'sql_limit'}=~/^(\d+),?(\d+)?$/;
+	}
+	
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_join;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || 'offer.datetime_publish_start DESC';
+	my $sql_group_by;
+	
+	if ($env{'unique'})
+	{
+		$sql_group_by="offer.ID_entity";
+	}
+	
+	if ($env{'offer_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'offer_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::950::db_name.a950_offer_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID_entity FROM $App::950::db_name.a950_offer_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR offer_rel_cat.ID_category IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'offer_cat.ID'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'offer_cat.ID'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::950::db_name.a950_offer_cat WHERE ID=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID_entity FROM $App::950::db_name.a950_offer_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR offer_rel_cat.ID_category IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'offer.ID'})
+	{
+		main::_log("search by offer.ID");
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::950::db_name,
+			'tb_name' => 'a950_offer',
+			'ID' => $env{'offer.ID'}
+		};
+		$sql_where.="AND offer.ID=? ";
+		push @sql_bind,$env{'offer.ID'};
+	}
+	
+	if ($env{'offer.ID_entity'}=~/^[0-9;]+$/)
+	{
+		$sql_where.=" AND offer.ID_entity IN (".join(',',split(';',$env{'offer.ID_entity'})).")";
+		$sql_limit=scalar split(';',$env{'offer.ID_entity'});
+		if ($env{'solr'})
+		{
+			$sql_group_by="offer.ID_entity";
+			$sql_order_by="CASE\n";
+			my $i;
+			foreach (split(';',$env{'offer.ID_entity'}))
+			{
+				$i++;
+				$sql_order_by.="\t\t\t\tWHEN offer.ID_entity=$_ THEN $i\n";
+			}
+			$sql_order_by.="\t\t\tEND";
+		}
+	}
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	Tomahawk::GetTpl('env'=>\%env) || return undef;
+	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			`offer`.`ID`,
+			`offer`.`ID_entity`,
+			`offer`.`datetime_publish_start`,
+			`offer`.`datetime_publish_stop`,
+			`offer`.`posix_owner`,
+			`offer`.`posix_modified`,
+			`offer`.`alias_addon`,
+			`offer`.`ID_user`,
+			`offer`.`ID_org`,
+			`offer`.`price`,
+			`offer`.`price_currency`,
+			`offer`.`metadata`,
+			`offer`.`status`,
+			
+			`offer_lng`.`name`,
+			`offer_lng`.`name_url`,
+			`offer_lng`.`name_long`,
+			`offer_lng`.`abstract`,
+			`offer_lng`.`body`,
+			`offer_lng`.`lng`,
+			
+			`offer_cat`.`ID` AS `cat_ID`,
+			`offer_cat`.`ID_entity` AS `cat_ID_entity`,
+			`offer_cat`.`name` AS `cat_name`,
+			`offer_cat`.`name_url` AS `cat_name_url`
+			
+		FROM $App::950::db_name.a950_offer AS offer
+		INNER JOIN $App::950::db_name.a950_offer_lng AS offer_lng ON
+		(
+			offer_lng.ID_entity = offer.ID AND
+			offer_lng.lng = '$env{'lng'}'
+		)
+		LEFT JOIN $App::950::db_name.a950_offer_rel_cat AS offer_rel_cat ON
+		(
+			offer_rel_cat.ID_offer = offer.ID
+		)
+		LEFT JOIN $App::950::db_name.a950_offer_cat AS offer_cat ON
+		(
+			offer_cat.ID_entity = offer_rel_cat.ID_category AND
+			offer_cat.status IN ('Y','N','L') AND
+			offer_cat.lng = '$env{'lng'}'
+		)$sql_join
+		WHERE
+			offer.status IN ('$sql_offer_status')
+			AND offer.datetime_publish_start <= NOW()
+			AND (offer.datetime_publish_stop IS NULL OR offer.datetime_publish_stop >= NOW())
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			1
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::950::db_name,
+				'tb_name' => "a950_offer",
+				'ID_entity' => do{$env{'offer.ID_entity'} if $env{'offer.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	if (my %offer=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		last if $i > $env{'page_limit'};
+		
+		main::_log("[$i/$env{'page_limit'}] found offer.ID_entity=$offer{'ID_entity'}");
+		
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::950::db_name,
+			'tb_name' => 'a950_offer',
+			'ID_entity' => $offer{'ID_entity'}
+		};
+		
+=head1
+		# link to a210_page
+		if (my $category=App::401::functions::_a210_by_cat([$article{'cat_ID'}],'lng'=>$env{'lng'}))
+		{
+			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$category,
+					%sql_def,
+					'-slave' => 1,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$article{'a210'}{'IDs'}}, $p->{'ID'};
+				push @{$article{'a210'}{'nodes'}}, $p;
+				$article{'a210'}{'path_url'}.="/".$p->{'name_url'};
+			}
+			$article{'a210'}{'path_url'}=~s|^/||;
+		}
+=cut
+		
+		%{$offer{'metahash'}}=App::020::functions::metadata::parse($offer{'metadata'});
+		
+		%{$offer{'user'}} = App::301::authors::get_author($offer{'ID_user'})
+			if $offer{'ID_user'};
+		
+		if ($offer{'ID_org'})
+		{
+			use App::710::_init;
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					org.*,
+					org_lng.name_short,
+					org_lng.about
+				FROM $App::710::db_name.a710_org AS org
+				LEFT JOIN $App::710::db_name.a710_org_lng AS org_lng ON
+				(
+					org_lng.ID_entity = org.ID AND
+					org_lng.lng = '$env{'lng'}'
+				)
+				WHERE
+					org.status IN ('Y','L') AND
+					org.ID_entity = ?
+				LIMIT
+					1
+			},'bind'=>[$offer{'ID_org'}],'log'=>1,'-slave'=>1,
+				'-changetime'=>App::020::SQL::functions::_get_changetime(
+					{
+						'db_h'=>"main",
+						'db_name' => $App::710::db_name,
+						'tb_name' => "a710_org",
+						'ID_entity' => $offer{'ID_org'}
+					})
+			);
+			my %db1_line=$sth1{'sth'}->fetchhash();
+			
+			$db1_line{'related_avatar'}=(App::160::SQL::get_relations(
+				'db_name' => $App::710::db_name,
+				'l_prefix' => 'a710',
+				'l_table' => 'org',
+				'l_ID_entity' => $db1_line{'ID_entity'},
+				'r_prefix' => "a501",
+				'r_table' => "image",
+				'rel_type' => "avatar",
+				'status' => "Y"
+			))[0];
+			
+			%{$db1_line{'metahash'}}=App::020::functions::metadata::parse($db1_line{'metadata'});
+			delete $db1_line{'metadata'};
+			
+			main::_log('org name:'.$db1_line{'name'});
+			
+			$offer{'org'}=\%db1_line;
+		}
+		
+		# render
+		$parser->parse($offer{'abstract'});
+		$parser->eof();
+		push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+		$offer{'abstract_parser'}={
+			'output' => $parser->{'output'},
+			'addon' => $parser->{'addon'},
+			'entity' => $parser->{'entity'},
+			'thumbnail' => $parser->{'thumbnail'},
+		};
+		
+		$parser->parse($offer{'body'});
+		$parser->eof();
+		$offer{'body_parser'}={
+			'output' => $parser->{'output'},
+			'addon' => $parser->{'addon'},
+			'entity' => $parser->{'entity'},
+			'thumbnail' => $parser->{'thumbnail'},
+		};
+		
+		$offer{'related_thumbnail'}=(App::160::SQL::get_relations(
+			'db_name' => $App::950::db_name,
+			'l_prefix' => 'a950',
+			'l_table' => 'offer',
+			'l_ID_entity' => $offer{'ID_entity'},
+			'rel_type' => 'thumbnail',
+			'r_db_name' => $App::501::db_name,
+			'r_prefix' => 'a501',
+			'r_table' => 'image',
+			'status' => 'Y',
+			'limit' => 1
+		))[0];
+		
+		my @alias_addon=split(':',$offer{'alias_addon'},2);
+		main::_log("addon=@alias_addon",3,"debug");
+		if ($alias_addon[0] && $alias_addon[1])
+		{
+			$offer{'addon_type'}=$alias_addon[0];
+			$offer{'addon_ID_entity'}=$alias_addon[1];
+			
+			if ($alias_addon[0] eq "a401_article")
+			{
+				require App::401::_init;
+				
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						
+						article.ID_entity,
+						article.ID,
+						article_attrs.ID AS attrs_ID,
+						article_content.ID AS content_ID,
+						
+						article_attrs.ID_category,
+						article_cat.ID AS cat_ID,
+						article_cat.name AS cat_name,
+						article_cat.name_url AS cat_name_url,
+						
+						article_ent.posix_owner,
+						article_ent.ID_author AS posix_author,
+						article_ent.visits,
+						article_ent.sources,
+						article_ent.metadata,
+						article_content.ID_editor AS posix_editor,
+						
+						article_content.datetime_create AS content_datetime_create,
+						article_attrs.datetime_start,
+						article_attrs.datetime_stop,
+						
+						article_attrs.priority_A,
+						article_attrs.priority_B,
+						article_attrs.priority_C,
+						
+						article_attrs.name,
+						article_attrs.name_url,
+						article_attrs.name_hyphens,
+						article_attrs.alias_url,
+						
+						article_content.subtitle,
+						article_content.subtitle_hyphens,
+						article_content.mimetype,
+						article_content.abstract,
+						article_content.abstract_hyphens,
+						article_content.body,
+						article_content.body_hyphens,
+						article_content.keywords,
+						article_content.lng,
+						
+						article_ent.visits,
+						
+						article_attrs.status
+						
+					FROM `$App::401::db_name`.a401_article_ent AS article_ent
+					INNER JOIN `$App::401::db_name`.a401_article AS article ON
+					(
+						article_ent.ID_entity = article.ID_entity
+					)
+					INNER JOIN `$App::401::db_name`.a401_article_attrs AS article_attrs ON
+					(
+						article_attrs.ID_entity = article.ID AND
+						article_attrs.status IN ('Y') AND
+						article_attrs.lng = '$env{'lng'}'
+					)
+					INNER JOIN `$App::401::db_name`.a401_article_content AS article_content ON
+					(
+						article_content.ID_entity = article.ID_entity AND
+						article_content.status = 'Y' AND
+						article_content.lng = article_attrs.lng
+					)
+					INNER JOIN `$App::401::db_name`.a401_article_cat AS article_cat ON
+					(
+						article_cat.ID = article_attrs.ID_category
+					)
+					LEFT JOIN `$App::401::db_name`.a301_ACL_user_group AS ACL_world ON
+					(
+						ACL_world.ID_entity = 0 AND
+						r_prefix = 'a401' AND
+						r_table = 'article' AND
+						r_ID_entity = article.ID_entity
+					)
+					WHERE
+						article_ent.status = 'Y'
+						AND article.status = 'Y'
+						AND article.ID_entity = ?
+					LIMIT
+						1
+				},'bind'=>[$alias_addon[1]]);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					
+					
+					# get all cats
+					my @cats;
+					my %sth2=TOM::Database::SQL::execute(qq{
+						SELECT
+							article_cat.ID AS cat_ID
+						FROM `$App::401::db_name`.a401_article_ent AS article_ent
+						INNER JOIN `$App::401::db_name`.a401_article AS article ON
+						(
+							article_ent.ID_entity = article.ID_entity
+						)
+						LEFT JOIN `$App::401::db_name`.a401_article_attrs AS article_attrs ON
+						(
+							article_attrs.ID_entity = article.ID AND
+							article_attrs.status IN ('Y') AND
+							article_attrs.lng = '$env{'lng'}'
+						)
+						LEFT JOIN `$App::401::db_name`.a401_article_cat AS article_cat ON
+						(
+							article_cat.ID = article_attrs.ID_category AND
+							article_cat.status IN ('Y','L')
+						)
+						WHERE
+							article_ent.status = 'Y'
+							AND article.status = 'Y'
+							AND article_cat.ID IS NOT NULL
+							AND article.ID_entity = ?
+					},'bind'=>[$alias_addon[1]],'quiet'=>1,'-slave'=>1,
+						'-cache' => 600,
+						'-changetime'=>App::020::SQL::functions::_get_changetime(
+							{
+								'db_h'=>"main",
+								'db_name' => $App::401::db_name,
+								'tb_name' => "a401_article",
+								'ID_entity' => $alias_addon[1]
+							}),
+					);
+					while (my %cat=$sth2{'sth'}->fetchhash())
+					{
+						push @cats, $cat{'cat_ID'};
+					}
+					
+					# link to a210_page
+					if (my $category=App::401::functions::_a210_by_cat(\@cats,'lng'=>$env{'lng'}))
+					{
+						my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+						foreach my $p(
+							App::020::SQL::functions::tree::get_path(
+								$category,
+								%sql_def,
+								'-slave' => 1,
+								'-cache' => 86400*7
+							)
+						)
+						{
+							push @{$db1_line{'a210'}{'IDs'}}, $p->{'ID'};
+							push @{$db1_line{'a210'}{'nodes'}}, $p;
+							$db1_line{'a210'}{'path_url'}.="/".$p->{'name_url'};
+						}
+						$db1_line{'a210'}{'path_url'}=~s|^/||;
+					}
+					
+					$offer{'addon'}=\%db1_line;
+				}
+				
+			}
+			elsif ($alias_addon[0] eq "a510_broadcast_program")
+			{
+				require App::510::_init;
+				
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						program.*,
+						channel.name AS channel_name
+					FROM `$App::510::db_name`.`a510_broadcast_program` AS program
+					INNER JOIN `$App::510::db_name`.`a510_broadcast_channel` AS channel ON
+					(
+						program.ID_channel = channel.ID
+					)
+					WHERE
+						program.status = 'Y' AND
+						program.ID_entity = ?
+					LIMIT
+						1
+				},'bind'=>[$alias_addon[1]]);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					
+					my %sth2=TOM::Database::SQL::execute(qq{
+						SELECT
+							series.*
+						FROM `$App::510::db_name`.`a510_broadcast_series` AS series
+						WHERE
+							series.status = 'Y' AND
+							series.ID_entity = ?
+						LIMIT
+							1
+					},'bind'=>[$db1_line{'ID_series'}]);
+					%{$db1_line{'series'}}=$sth2{'sth'}->fetchhash();
+					
+					$offer{'addon'}=\%db1_line;
+				}
+				
+			}
+			elsif ($alias_addon[0] eq "a510_broadcast_series")
+			{
+				require App::510::_init;
+				
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						series.*
+					FROM `$App::510::db_name`.`a510_broadcast_series` AS series
+					WHERE
+						series.status = 'Y' AND
+						series.ID_entity = ?
+					LIMIT
+						1
+				},'bind'=>[$alias_addon[1]]);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					
+					my %sth1=TOM::Database::SQL::execute(qq{
+						SELECT
+							broadcast_program.*
+						FROM
+							`$App::510::db_name`.a510_broadcast_series AS broadcast_series
+						LEFT JOIN `$App::510::db_name`.a510_broadcast_program AS broadcast_program ON
+						(
+							broadcast_program.ID_series = broadcast_series.ID_entity
+							AND broadcast_program.ID_video IS NOT NULL
+							AND broadcast_program.status = 'Y'
+							AND broadcast_program.datetime_air_start <= NOW()
+						)
+						WHERE
+							broadcast_series.status = 'Y'
+							AND broadcast_program.ID_video IS NOT NULL
+							AND (broadcast_series.ID_entity = ? OR broadcast_series.parent_ID = ?)
+							AND broadcast_program.datetime_air_start >= NOW()
+						ORDER BY
+							broadcast_program.datetime_air_start ASC
+						LIMIT 1
+					},'-slave'=>1,'bind'=>[
+						$db1_line{'ID_entity'},
+						$db1_line{'ID_entity'}
+					],'log'=>0);
+					%{$db1_line{'program'}}=$sth1{'sth'}->fetchhash();
+					
+					$offer{'addon'}=\%db1_line;
+				}
+				
+=head1
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						program.*,
+						channel.name AS channel_name
+					FROM `$App::510::db_name`.`a510_broadcast_program` AS program
+					INNER JOIN `$App::510::db_name`.`a510_broadcast_channel` AS channel ON
+					(
+						program.ID_channel = channel.ID
+					)
+					WHERE
+						program.status = 'Y' AND
+						program.ID_entity = ?
+					LIMIT
+						1
+				},'bind'=>[$alias_addon[1]]);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					$offer{'addon'}=\%db1_line;
+				}
+=cut
+				
+			}
+			elsif ($alias_addon[0] eq "a520_broadcast_program")
+			{
+				require App::520::_init;
+				
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						program.*,
+						channel.name AS channel_name
+					FROM `$App::520::db_name`.`a520_broadcast_program` AS program
+					INNER JOIN `$App::520::db_name`.`a520_broadcast_channel` AS channel ON
+					(
+						program.ID_channel = channel.ID
+					)
+					WHERE
+						program.status = 'Y' AND
+						program.ID_entity = ?
+					LIMIT
+						1
+				},'bind'=>[$alias_addon[1]]);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					$offer{'addon'}=\%db1_line;
+				}
+				
+			}
+			elsif ($alias_addon[0] eq "a542_file")
+			{
+				require App::542::_init;
+				
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						file.ID_entity,
+						file.ID,
+						file_attrs.ID AS attrs_ID,
+						file_item.ID AS item_ID,
+						
+						file_attrs.ID_category,
+						
+						file_ent.datetime_publish_start,
+						file_ent.datetime_publish_stop,
+						
+						file_item.hash_secure,
+						file_item.datetime_create,
+						
+						file_attrs.name,
+						file_attrs.name_url,
+						file_attrs.name_ext,
+						
+						file_item.mimetype,
+						file_item.file_ext,
+						file_item.file_size,
+						file_item.lng,
+						
+						file_ent.downloads,
+						
+						file_attrs.status,
+						
+						CONCAT(file_item.lng,'/',SUBSTR(file_item.ID,1,4),'/',file_item.name,'.',file_item.file_ext) AS file_path
+						
+					FROM
+						`$App::542::db_name`.`a542_file` AS file
+					INNER JOIN `$App::542::db_name`.`a542_file_ent` AS file_ent ON
+					(
+						file_ent.ID_entity = file.ID_entity
+					)
+					LEFT JOIN `$App::542::db_name`.`a542_file_attrs` AS file_attrs ON
+					(
+						file_attrs.ID_entity = file.ID
+					)
+					LEFT JOIN `$App::542::db_name`.`a542_file_item` AS file_item ON
+					(
+						file_item.ID_entity = file.ID_entity AND
+						file_item.lng = file_attrs.lng
+					)
+					LEFT JOIN `$App::542::db_name`.`a542_file_dir` AS file_dir ON
+					(
+						file_dir.ID = file_attrs.ID_category
+					)
+					WHERE
+						file.ID_entity = ?
+					LIMIT 1
+				},'bind'=>[$alias_addon[1]]);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					$offer{'addon'}=\%db1_line;
+				}
+				
+			}
+		}
+		
+		$TPL->{'variables'}{'offer'}=\%offer;
+	}
+	
+	return 1,%env_out;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;

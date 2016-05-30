@@ -1,0 +1,117 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use encoding 'utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+use JSON;
+use App::520::_init;
+
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	return if $self->running({'max'=>3600}); # check if not already running
+	
+	if (!$tom::H)
+	{
+		main::_log("only running under domain",1);
+		return undef;
+	}
+	
+	# check files without info (W status)
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			a520_audio_part_file.*,
+			a520_audio_part.ID_brick,
+			a520_audio_part.ID AS part_ID
+		FROM
+			`$App::520::db_name`.a520_audio_part_file
+		INNER JOIN `$App::520::db_name`.a520_audio_part ON
+		(
+			a520_audio_part_file.ID_entity = a520_audio_part.ID
+		)
+		WHERE
+			a520_audio_part_file.status='W' OR
+			(
+				a520_audio_part_file.status='N' AND
+				a520_audio_part_file.regen='Y' AND
+				a520_audio_part_file.ID_format=1
+			)
+		ORDER BY
+			a520_audio_part_file.ID DESC
+		LIMIT 1000
+	});
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $vd = Movie::Info->new || die "Couldn't find an mplayer to use\n";
+		
+		my %brick;
+		%brick=App::020::SQL::functions::get_ID(
+			'ID' => $db0_line{'ID_brick'},
+			'db_h' => "main",
+			'db_name' => $App::520::db_name,
+			'tb_name' => "a520_audio_brick",
+			'columns' => {'*'=>1}
+		) if $db0_line{'ID_brick'};
+		
+		my $brick_class='App::520::brick';
+		$brick_class.="::".$brick{'name'}
+			if $brick{'name'};
+		
+		my $audio_=$brick_class->audio_part_file_path({
+			'audio_part_file.ID' => $db0_line{'ID'},
+			'audio_part.ID' => $db0_line{'part_ID'},
+			'audio_format.ID' => $db0_line{'ID_format'},
+			'audio_part_file.name' => $db0_line{'name'},
+			'audio_part_file.file_ext' => $db0_line{'file_ext'}
+		});
+		
+		my $filename=$db0_line{'file_alt_src'} || $audio_->{'dir'}.'/'.$audio_->{'file_path'};
+		main::_log("filename=$filename");
+		
+		my %audio = $vd->info($filename);
+		
+		App::020::SQL::functions::update(
+			'ID' => $db0_line{'ID'},
+			'db_h' => 'main',
+			'db_name' => $App::520::db_name,
+			'tb_name' => 'a520_audio_part_file',
+			'columns' =>
+			{
+				'audio_codec' => "'$audio{'audio_codec'}'",
+				'audio_bitrate' => "'$audio{'audio_bitrate'}'",
+				'length' => "SEC_TO_TIME(".int($audio{'length'}).")",
+				'status' => "'Y'",
+				'regen' => "'N'",
+			},
+			'-journalize' => 1,
+		);
+		
+	}
+	
+#	return 1;
+	
+	use Data::Dumper;
+	foreach my $audio_part_file (App::520::functions::get_audio_part_file_process_front('limit'=>1000))
+	{
+		next unless $audio_part_file->{'ID_part'};
+#		main::_log()
+#		print Dumper($audio_part_file);
+#		last;
+#		next;
+		App::520::functions::audio_part_file_generate(
+				'-jobify' => 1,
+			'audio_part.ID' => $audio_part_file->{'ID_part'},
+			'audio_format.ID' => $audio_part_file->{'ID_entity_format'}
+		);
+	}
+	
+#	sleep 1;
+	
+return 1}
+1;

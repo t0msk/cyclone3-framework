@@ -1,0 +1,55 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+
+use App::301::_init;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	return if $self->running({'max'=>3600}); # check if not already running
+	
+	alarm(3600);
+	
+	$env->{'max_days'}||=5;
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			user.*
+		FROM
+			TOM.a301_user AS user
+		LEFT JOIN TOM.a301_user_profile AS user_profile ON
+		(
+			user.ID_user = user_profile.ID_entity
+		)
+		WHERE
+			user.login IS NULL AND
+			user_profile.ID_entity IS NULL AND
+			user.email IS NULL AND
+			user.ref_deviceid IS NULL AND
+			user.ref_facebook IS NULL AND
+			user.datetime_last_login < DATE_SUB(CURDATE(),INTERVAL ? DAY)
+		LIMIT 100
+	},'bind'=>[$env->{'max_days'}]);
+	while (my %user=$sth0{'sth'}->fetchhash)
+	{
+		$i++;
+		main::_log("ID_user='$user{'ID_user'}' to inactive");
+		App::301::functions::user_inactive($user{'ID_user'});
+	}
+	
+	if ($i)
+	{
+		$self->reschedule();
+	}
+	
+return 1}
+1;

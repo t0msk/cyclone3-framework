@@ -808,7 +808,6 @@ sub _article_index_all
 			ID_entity
 		FROM
 			$App::401::db_name.a401_article_ent
-		LIMIT 100
 	},'quiet'=>1);
 	my $i;
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
@@ -899,6 +898,7 @@ sub _article_index
 				article_ent.ID_author,
 				article_cat.name AS cat_name,
 				article_cat.ID AS cat_ID,
+				article_cat.ID_entity AS cat_ID_entity,
 				article_cat.ID_charindex
 			FROM
 				$App::401::db_name.a401_article AS article
@@ -927,29 +927,45 @@ sub _article_index
 			push @{$article{'name'}},$db0_line{'name'};
 #			push @{$article{'datetime_start'}},$db0_line{'datetime_start'}
 #				if $db0_line{'datetime_start'};
-			push @{$article{'cat'}{'charindex'}},$db0_line{'ID_charindex'};
-			push @{$article{'cat'}{'ID'}},$db0_line{'cat_ID'};
-			push @{$article{'cat'}{'name'}},$db0_line{'cat_name'};
+
+			push @{$article{'cat'}},$db0_line{'cat_ID_entity'}
+				if $db0_line{'cat_ID_entity'};
+			push @{$article{'cat_charindex'}},$db0_line{'ID_charindex'}
+				if $db0_line{'ID_charindex'};
 			
 			push @{$article{'locale'}{$db0_line{'lng'}}{'name'}},$db0_line{'name'};
+			
+#			$db0_line{'datetime_start'}=~s| (\d\d)|T$1|;
+#			$db0_line{'datetime_start'}.="Z";
+#			main::_log("datetime_start=$db0_line{'datetime_start'}");
 			push @{$article{'article_attrs'}},{
 				'name' => $db0_line{'name'},
+				'cat' => $db0_line{'cat_ID_entity'},
+				'cat_charindex' => $db0_line{'ID_charindex'},
 				'datetime_start' => $db0_line{'datetime_start'}
 			};
+			
 			$article{'status'}="Y"
 				if $db0_line{'status'} eq "Y";
 		}
 		
 #		use Data::Dumper;print Dumper(\%article);
 		
+		my %log_date=main::ctogmdatetime(time(),format=>1);
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::401::db_name,
 			'type' => 'a401_article',
 			'id' => $env{'ID_entity'},
 			'body' => {
-				%article
+				%article,
+				'_datetime_index' => 
+					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
+					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.'Z'
 			}
 		);
+		
+#		use Data::Dumper;
+#		print Dumper(\%article);
 		
 		$t->close();
 	}

@@ -85,19 +85,25 @@ sub request
 			
 			'response_status_i' => $env{'code'},
 			'user_s' => $main::USRM{'ID_user'},
+			'user_session_s' => $main::USRM{'ID_session'},
+
+			'bid_s' => $main::COOKIES_all{'c3bid'}, # browser id
+			'sid_s' => $main::COOKIES_all{'c3sid'}, # session id
+			
 			'user_logged_s' => $main::USRM{'logged'},
 			
+			'servicetype_s' => $main::FORM{'type'},
 			'servicetype_t' => $main::FORM{'TID'},
 			
 			'REMOTE_ADDR_t' => $main::ENV{'REMOTE_ADDR'},
 			'REFERER_t' => $main::ENV{'HTTP_REFERER'},
 			'USER_AGENT_t' => $main::ENV{'HTTP_USER_AGENT'},
-			'UserAgent_t' => $main::UserAgent_name,
+#			'UserAgent_t' => $main::UserAgent_name,
+			'UserAgent_s' => $main::UserAgent_name,
+			'UserAgent_type_s' => $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'},
+			'UserAgent_type_group_s' => $reqtype,
 			
 			'CacheControl_s' => $main::ENV{'Cache-Control'},
-			
-#			'UserAgent_type_s' => $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'},
-#			'UserAgent_type_group_s' => $reqtype,
 			
 			'duration_f' => $env{'duration'},
 			'duration_user_f' => $env{'user'}

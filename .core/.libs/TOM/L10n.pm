@@ -357,7 +357,7 @@ sub parse_string
 			}
 			else
 			{
-				main::_log("missing string '" . $id . "' in laguage code '" . $self->{'ENV'}{'lng'} . "' L10n def '" . $self->{'location'} . "'" , 4 , 'L10n');
+#				main::_log("missing string '" . $id . "' in laguage code '" . $self->{'ENV'}{'lng'} . "' L10n def '" . $self->{'location'} . "'" , 4 , 'L10n');
 				$self->{'string'}{$id}="{".$id."}";
 			}
 			

@@ -238,6 +238,8 @@ sub _log
 		{
 			local $@;
 			local %log_date=ctogmdatetime($log_time,format=>1); # we are logging in GMT zone
+			my $msg=$get[1];
+				$msg =~ s/([^\x00-\xFF])/'\x'.ord($1)/ge;
 			$fluentd_socket->post($get[3], {
 				'@timestamp' =>
 					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
@@ -257,7 +259,7 @@ sub _log
 				'e' => $TOM::engine,
 				'f' => do {if ($get[2] == 1 || $get[2] == 4){'1';}else{undef;}},
 #				't' => $get[3],
-				'm' => $get[1],
+				"m" => $msg,
 				'data' => $get[5]
 			});
 			return 1 unless $tom::devel;
@@ -352,9 +354,10 @@ sub _event
 {
 	local $@;
 	if (
-		!$TOM::event_socket &&
-		(!$TOM::event_redis && !$Ext::Redis::service) &&
-		(!$TOM::event_elastic && !$Ext::Elastic::service)
+		!$TOM::event_socket && # send events to socket
+		(!$TOM::event_redis && !$Ext::Redis::service) && # send events to redis
+		(!$TOM::event_elastic && !$Ext::Elastic::service) && # send events to elastic
+		!$TOM::event_log # send events to "file log"/"fluentd log"
 	)
 	{
 		return undef;
@@ -439,6 +442,34 @@ sub _event
 			);
 		}
 	}
+	
+	if ($TOM::event_log)
+	{
+		my $msg=$hash{'facility'};
+		my $log_type='event.'.$hash{'severity'};
+		delete $hash{'timestamp'};
+		delete $hash{'PID'};
+		delete $hash{'facility'};
+		delete $hash{'hostname'};
+		delete $hash{'engine'};
+		delete $hash{'domain'};
+		delete $hash{'request'};
+		delete $hash{'severity'};
+		# can't override datetime?
+		if ($tom::test)
+		{
+			use Data::Dumper;
+			print Dumper(\%hash);
+		}
+		main::_log($msg, {
+			'facility' => $log_type,
+			'severity' => 3,
+			'data' => {
+				%hash
+			}
+		});
+	}
+	
 }
 
 _event('debug','process.start',{

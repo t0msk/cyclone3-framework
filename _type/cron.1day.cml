@@ -65,6 +65,8 @@
 # a130 - cleaning
 
 <MODULE>
+	<VAR id="-ignore-if-job" value="true" />
+	
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="130" />
 	<VAR id="-name" value="clear" />
@@ -115,6 +117,8 @@
 # a301 - USRM
 
 <MODULE>
+	<VAR id="-ignore-if-job" value="true" />
+	
 	<VAR id="-global" value="1" />
 	<VAR id="-category" value="301" />
 	<VAR id="-name" value="user" />

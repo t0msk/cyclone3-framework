@@ -194,7 +194,7 @@ sub product_add
 	}
 	
 	# find product by product_number
-	if (!$env{'product.ID'} && $env{'product.product_number'})
+	if (!$env{'product.ID'} && ($env{'product.product_number'} && !$env{'product.product_number.dontcheck'}))
 	{
 #		exit;
 		# check if this product_number not already used by another product
@@ -952,8 +952,8 @@ sub product_add
 			if (ref($env{'prices'}{$price_level_name_code}) eq "HASH")
 			{
 				$env{'prices'}{$price_level_name_code}{'price'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price'});
-				$env{'prices'}{$price_level_name_code}{'price_full'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price_full'})
-					if $env{'prices'}{$price_level_name_code}{'price_full'};
+				$env{'prices'}{$price_level_name_code}{'price_full'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price_full'});
+#					if $env{'prices'}{$price_level_name_code}{'price_full'};
 				$env{'prices'}{$price_level_name_code}{'price_previous'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price_previous'})
 					if $env{'prices'}{$price_level_name_code}{'price_previous'};
 				$env{'prices'}{$price_level_name_code}{'price_previous_full'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price_previous_full'})
@@ -1941,7 +1941,11 @@ sub _product_index
 		{
 			foreach (keys %{$product{'metahash'}{$sec}})
 			{
-				next unless $product{'metahash'}{$sec}{$_};
+				if (!$product{'metahash'}{$sec}{$_})
+				{
+					delete $product{'metahash'}{$sec}{$_};
+					next
+				}
 				if ($_=~s/\[\]$//)
 				{
 					foreach my $val (split(';',$product{'metahash'}{$sec}{$_.'[]'}))

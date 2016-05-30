@@ -25,10 +25,11 @@ our $service;
 
 sub service
 {
+	my %env=@_;
 #	no encoding;
 	return undef unless $Ext::RabbitMQ::host;
 	return undef unless $Ext::RabbitMQ::lib;
-	if (!$Ext::RabbitMQ::service)
+	if (!$Ext::RabbitMQ::service || $env{'reconnect'})
 	{
 #		my $t=track TOM::Debug("connect");
 		utf8::encode($Ext::RabbitMQ::user); # octets -> bytes
@@ -198,8 +199,6 @@ sub publish
 	main::_log("[RabbitMQ] publish message_id='$env{'header'}{'headers'}{'message_id'}' exchange='".$env{'exchange'}."' routing_key='".$env{'routing_key'}."' size=".length($env{'body'}))
 		if $debug;
 	
-#	print $env{'body'};
-	
 	utf8::encode($env{$_}) foreach(grep {!ref($env{$_})} keys %env);
 	if (ref($env{'header'})){
 		utf8::encode($env{'header'}{$_}) foreach grep {!ref($env{'header'}{$_})} keys %{$env{'header'}};
@@ -215,17 +214,37 @@ sub publish
 	
 	eval {
 		my $out=$self->_channel->publish(%env,
-#		'on_inactive' => sub(){}
+#			'on_inactive' => sub(){
+#				main::_log("on_inactive");
+#			}
 		);
 		main::_log("[RabbitMQ] WARN: wbuf size=".(length($out->{'arc'}->{'connection'}->{'_handle'}->{'wbuf'})),3)
 			if $out->{'arc'}->{'connection'}->{'_handle'}->{'wbuf'};
 		die "wbuf detected, message to RabbitMQ not published" if $out->{'arc'}->{'connection'}->{'_handle'}->{'wbuf'};
-		main::_log("[RabbitMQ] published (".$env{'header'}{'headers'}{'message_id'}.")") if $debug;
-#		use Data::Dumper;print Dumper($out);
+		use Data::Dumper;
+		main::_log("[RabbitMQ] published (".$env{'header'}{'headers'}{'message_id'}.")",{
+			'data' => {
+				'rabbit' => {
+					'state' => $out->{'arc'}->{'connection'}->{'_state'},
+					'active' => $out->{'arc'}->{'connection'}->{'_channels'}->{1}->{'_is_active'},
+					'confirm' => $out->{'arc'}->{'connection'}->{'_channels'}->{1}->{'_is_confirm'},
+				}
+			}
+		}) if $debug;
 	};
 	if ($@)
 	{
-		main::_log("[RabbitMQ] error '$@'",1);
+		main::_log("[RabbitMQ] reconnecting");
+		if (($Ext::RabbitMQ::_init::RabbitMQ=Ext::RabbitMQ::service('reconnect'=>1)) && !$env{'retry'})
+		{
+			main::_log("[RabbitMQ] recall publish");
+			return $Ext::RabbitMQ::service->publish(%env,'retry'=>1);
+		}
+		else
+		{
+			main::_log("[RabbitMQ] error '$@'",1);
+		}
+		
 		return undef;
 	}
 	return 1;

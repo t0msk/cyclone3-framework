@@ -1,0 +1,203 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::470::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'athlete.status'}='Y' unless $env{'athlete.status'};
+		my $sql_athlete_status=join "','", split('',$env{'athlete.status'});
+	
+	if ($env{'rel_team.ID'} !~ /^\d+$/) {
+		$env{'rel_team.ID'} = 0;
+	}
+	
+	# paging
+	$env{'page_limit'} = 10 unless $env{'page_limit'};
+	$env{'page'} = 1 unless $env{'page'};
+	$env{'page_offset'} = 0 unless $env{'page_offset'};
+	$env{'page_plus'} = 1 unless $env{'page_plus'};
+	if (!$env{'sql_limit'})
+	{
+		$env{'sql_limit'}=((($env{'page'}-1)*$env{'page_limit'})+$env{'page_offset'}).",".($env{'page_limit'}+$env{'page_plus'});
+	}
+	else
+	{
+#		$env{'sql_limit'}=~/^(\d+),?(\d+)?$/;
+	}
+	
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_join;
+	my $sql_columns;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || '`athlete`.`datetime_create` DESC';
+	my $sql_group_by;
+	
+	if ($env{'unique'})
+	{
+		$sql_group_by="`athlete`.`ID_entity`";
+	}
+	
+	if ($env{'rel_team.ID'})
+	{
+		my $sql_team;
+		# foreach my $ID_category (split(';',$env{'rel_team.ID'}))
+		# {
+		# 	next unless $ID_category;
+		# 	if ($ID_category=~s/\*$//)
+		# 	{
+		# 		my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::470::db_name`.`a470_rel_team` WHERE `ID`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
+		# 		$sql_team.=qq{ OR `rel_team`.`ID_charindex` LIKE CONCAT(($cat_sql),"%")};
+		# 	}
+		# 	else
+		# 	{
+		# 		$sql_team.=" OR `athlete`.`ID_category`=$ID_category";
+		# 	}
+		# 	$sql_team=~s/^ OR //;
+		# }
+		# if ($sql_team)
+		# {
+		# 	$sql_where.=" AND (".$sql_team.") ";
+		# }
+	}
+	
+	if ($env{'athlete.ID_entity'}=~/^[;0-9]+$/)
+	{
+		$sql_where.=" AND athlete.ID_entity IN (".join(',',split(';',$env{'athlete.ID_entity'})).")";
+		$sql_limit=scalar split(';',$env{'athlete.ID_entity'});
+	}
+	
+	if ($env{'athlete.ID'}=~/^[;0-9]+$/)
+	{
+		$sql_where.=" AND athlete.ID IN (".join(',',split(';',$env{'athlete.ID'})).")";
+		$sql_limit=scalar split(';',$env{'athlete.ID'});
+#		$sql_group_by="athlete.ID_entity";
+	}
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			`athlete`.`ID_entity`,
+			`athlete`.`ID`,
+			
+			`athlete`.`name`,
+			`athlete`.`name_url`,
+			`athlete`.`metadata`,
+			`athlete`.`status`,
+
+
+			`athlete_lng`.`name` AS name_lng,
+			-- `athlete_lng`.`name_url`,
+			`athlete_lng`.`body`,
+			`team_relation`.`note` AS team_relation_note
+
+			$sql_columns
+			
+		FROM `$App::470::db_name`.`a470_athlete` AS `athlete`
+		INNER JOIN $App::160::db_name.a160_relation AS team_relation ON
+		(
+			team_relation.l_ID_entity = $env{'rel_team.ID'} AND
+			athlete.ID_entity = team_relation.r_ID_entity AND
+			team_relation.rel_type = 'team_member' AND
+			team_relation.status = 'Y'
+		)
+		LEFT JOIN `$App::470::db_name`.`a470_athlete_lng` AS `athlete_lng` ON (
+			athlete.ID = athlete_lng.ID_entity AND
+			lng = '$env{'lng'}'
+		)
+		$sql_join
+		WHERE
+			`athlete`.`status` IN ('$sql_athlete_status')
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],'log'=>$tom::devel,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::470::db_name,
+				'tb_name' => "a470_athlete",
+				'ID_entity' => do{$env{'athlete.ID_entity'} if $env{'athlete.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	while (my %athlete=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		last if $i > $env{'page_limit'};
+		
+		main::_log("[$i/$env{'page_limit'}] found athlete.ID_entity=$athlete{'ID_entity'}");
+		
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::470::db_name,
+			'tb_name' => 'a470_athlete',
+			'ID_entity' => $athlete{'ID_entity'}
+		};
+		$athlete{'related_avatar'}=(App::160::SQL::get_relations(
+			'db_name' => $App::470::db_name,
+			'l_prefix' => 'a470',
+			'l_table' => 'athlete',
+			'l_ID_entity' => $athlete{'ID_entity'},
+			'rel_type' => 'avatar',
+			'r_db_name' => $App::501::db_name,
+			'r_prefix' => 'a501',
+			'r_table' => 'image',
+			'status' => 'Y',
+			'limit' => 1
+		))[0];
+		
+		if ($env{'parser.body'})
+		{
+			$parser->parse($athlete{'body'});
+			$parser->eof();
+			push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+			$athlete{'body_parser'}={
+				'output' => $parser->{'output'},
+				'addon' => $parser->{'addon'},
+				'entity' => $parser->{'entity'},
+				'avatar' => $parser->{'avatar'},
+			};
+		}
+		
+		%{$athlete{'metahash'}}=App::020::functions::metadata::parse($athlete{'metadata'});
+		
+		push @{$TPL->{'variables'}{'items'}},\%athlete;
+	}
+	
+	return 1,%env_out;
+}
+
+1;

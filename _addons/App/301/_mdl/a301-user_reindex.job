@@ -1,0 +1,43 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+
+use App::301::_init;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	
+	alarm(0);
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			ID_user,
+			login
+		FROM
+			$App::301::db_name.a301_user
+		INNER JOIN $App::301::db_name.a301_user_profile ON
+		(
+			a301_user_profile.ID_entity = a301_user.ID_user
+		)
+		WHERE
+			hostname = '$tom::H_cookie'
+--		LIMIT 100
+	},'quiet'=>1);
+	my $i;
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		main::_log_stdout("[$i/$sth0{'rows'}] index user ID_user=$db0_line{'ID_user'} login='$db0_line{'login'}'");
+		App::301::functions::_user_index('ID_user' => $db0_line{'ID_user'});
+	}
+	
+return 1}
+1;
