@@ -262,7 +262,7 @@ sub _log
 				"m" => $msg,
 				'data' => $get[5]
 			});
-			return 1 unless $tom::devel;
+#			return 1 unless $tom::devel;
 		}
 		
 		$get[0]=0 unless $get[0];

@@ -148,7 +148,7 @@ sub format {
         $datestr = &POSIX::strftime($format, @date);
     }
 	
-#	utf8::decode($datestr);
+	utf8::decode($datestr);
 	
     return $datestr;
 }

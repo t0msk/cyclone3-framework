@@ -913,6 +913,7 @@ sub start
 				LEFT JOIN `$App::401::db_name`.a401_article_attrs AS article_attrs ON
 				(
 					article_attrs.ID_entity = article.ID
+					AND article_attrs.status IN ('Y','N','T','L')
 				)
 				LEFT JOIN `$App::401::db_name`.`a401_article_ent` AS article_ent ON
 				(
@@ -947,6 +948,7 @@ sub start
 			
 			$sql.=qq{
 				ORDER BY
+					CASE WHEN article_attrs.status = 'Y' THEN 0 ELSE 1 END ASC,
 					article_attrs.datetime_start DESC
 				LIMIT
 					1
@@ -956,6 +958,7 @@ sub start
 			my %db0_line=$sth0{'sth'}->fetchhash();
 			if ($db0_line{'ID_entity'})
 			{
+#				main::_log("found",3,"debug");
 				my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_start'});
 				$db0_line{'datetime_start.year'}=$datetime{'year'};
 				$db0_line{'datetime_start.month'}=$datetime{'month'};
@@ -983,8 +986,14 @@ sub start
 					|| $tpl->{'entity'}{'parser.a401_article'}
 					|| $out_full;
 				
+				main::_log("define=".$tpl->{'entity'}{'parser.link.a401_article'},3,"debug");
+				
 				$out_full=~s|<%db_(.*?)%>|$db0_line{$1}|g;
 				
+			}
+			else
+			{
+#				main::_log("notfound",3,"debug");
 			}
 			
 		}

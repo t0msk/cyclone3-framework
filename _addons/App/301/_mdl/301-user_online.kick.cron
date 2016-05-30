@@ -52,7 +52,7 @@ sub execute
 			main::_log("[$looper/1000][$i/$sth{'rows'}] kick user.ID_user='$user{'ID_user'}'");
 			
 			# save session
-			App::301::session::archive($user{'ID_user'});
+#			App::301::session::archive($user{'ID_user'});
 			
 			my %sth0=TOM::Database::SQL::execute(qq{
 				SELECT

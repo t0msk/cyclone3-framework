@@ -842,17 +842,17 @@ sub get_tpl_dirs
 		# local
 		if ($env{'addon'})
 		{
-			push @dirs,$tom::P."/_dsgn" if $tom::P;
+#			push @dirs,$tom::P."/_dsgn" if $tom::P;
 		}
 		push @dirs,$tom::P."/".$subdir if $tom::P;
 		# master
 		push @dirs,$tom::Pm."/".$subdir if ($tom::Pm && $tom::Pm ne $tom::P);
 	}
-	elsif ($env{'level'} eq "local")
-	{
-		# master
-		push @dirs,$tom::P."/".$subdir if $tom::P;
-	}
+#	elsif ($env{'level'} eq "local")
+#	{
+#		# master
+#		push @dirs,$tom::P."/".$subdir if $tom::P;
+#	}
 	elsif ($env{'level'} eq "master")
 	{
 		# master
@@ -978,8 +978,6 @@ sub process
 		$vars_process->{'test'}="test string";
 		
 		$Tomahawk::module::TPL->{'variables'}->{'devel'}=$tom::devel;
-		$Tomahawk::module::TPL->{'variables'}->{'devel_branch'}=$tom::devel_branch
-			if $tom::devel_branch;
 		$Tomahawk::module::TPL->{'variables'}->{'hostname'}=$TOM::hostname;
 		
 		# domain variables

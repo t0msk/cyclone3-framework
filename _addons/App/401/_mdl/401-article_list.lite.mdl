@@ -347,6 +347,7 @@ sub execute
 			article_ent.posix_owner,
 			article_ent.ID_author AS posix_author,
 			article_ent.visits,
+			article_ent.sources,
 			article_content.ID_editor AS posix_editor,
 			
 			article_content.datetime_create,

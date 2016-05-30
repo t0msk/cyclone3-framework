@@ -122,44 +122,6 @@ eval
 {
 	Tomahawk::module(%arg) if $main::arg{'d'}; # process double time
 	
-	$main::time_current=$tom::time_current=time();
-	local (
-		$tom::Tsec,
-		$tom::Tmin,
-		$tom::Thour,
-		$tom::Tmday,
-		$tom::Tmom,
-		$tom::Tyear,
-		$tom::Twday,
-		$tom::Tyday,
-		$tom::Tisdst) = localtime($tom::time_current);
-#		main::_log("hour=$tom::Thour");
-	# doladenie casu
-	$tom::Tyear+=1900;$tom::Tmom++;
-	# zaciatok dnesneho dna
-	$main::time_day=$tom::time_current-($tom::Thour*3600)-($tom::Tmin*60)-$tom::Tsec;
-	# formatujem cas
-	local (
-		$tom::Fsec,
-		$tom::Fmin,
-		$tom::Fhour,
-		$tom::Fmday,
-		$tom::Fmom,
-		$tom::Fyear,
-		$tom::Fwday,
-		$tom::Fyday,
-		$tom::Fisdst
-		) = (
-		sprintf ('%02d', $tom::Tsec),
-		sprintf ('%02d', $tom::Tmin),
-		sprintf ('%02d', $tom::Thour),
-		sprintf ('%02d', $tom::Tmday),
-		sprintf ('%02d', $tom::Tmom),
-		$tom::Tyear,
-		$tom::Twday,
-		$tom::Tyday,
-		$tom::Tisdst);
-	
 	if (exists $main::arg{'s'}) # speed test
 	{
 		$main::arg{'s'}=10 unless $main::arg{'s'};
@@ -168,16 +130,12 @@ eval
 			main::_log("run [$_/$main::arg{'s'}]");
 			Tomahawk::module(%arg);
 		}
+#		main::_log("speed");
 	}
 	
 	$main::debug=1 if $main::arg{'v'};
 	
 	main::_log("call to module");
-	if ($main::debug){foreach (keys %arg)
-	{
-		main::_log(" $_='$arg{$_}'");
-	}}
-	%main::FORM=%arg;
 	my ($out)=Tomahawk::module(%arg,'-stdout'=>1);
 	if (!$out)
 	{

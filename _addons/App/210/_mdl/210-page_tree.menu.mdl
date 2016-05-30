@@ -27,6 +27,8 @@ sub execute
 	
 	my $from;
 	
+	my $level_base;
+	
 	my %root_item;
 	
 	# ak idem vykreslovat strom od nejakeho ID
@@ -76,11 +78,11 @@ sub execute
 			# level count
 			my $dbg_level=$ID_charindex;$dbg_level=~s|:||g;
 			my $level=(length($dbg_level)/3)+1;
-			main::_log("I'm in level='$level' with charindex='$ID_charindex' max level='$env{level}'");
+			#main::_log("I'm in level='$level' with charindex='$ID_charindex' max level='$env{level}'");
 			last if $level<$env{'level'};
 			my $out=$ID_charindex=~s|(...)$||;$ID_charindex=~s|:$||;
 			last unless $out;
-			main::_log("adding ID_charindex='$ID_charindex'");
+			#main::_log("adding ID_charindex='$ID_charindex'");
 			push @ID_charindex_plus, $ID_charindex;
 		}
 		
@@ -91,6 +93,9 @@ sub execute
 		# start drawing from specified charindex node
 		
 		$from=$env{'ID_charindex'};
+		
+		my $dbg_level=$env{'ID_charindex'};$dbg_level=~s|:||g;
+			$level_base=(length($dbg_level)/3)+1;
 		
 		if (!$env{'parent'})
 		{
@@ -353,6 +358,7 @@ $where
 			$XSGN{'NULL'}=~s|<%is_default%>|$entity->{'is_default'}|g;
 			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
 			$XSGN{'NULL'}=~s|<%level%>|$level|g;
+			$XSGN{'NULL'}=~s|<%level_child%>|$level-$level_base|ge;
 			
 			if ($env{'tree'})
 			{

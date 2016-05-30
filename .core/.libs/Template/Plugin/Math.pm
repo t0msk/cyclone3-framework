@@ -18,8 +18,6 @@
 
 package Template::Plugin::Math;
 
-use POSIX;
-
 use strict;
 #use warnings;
 use base 'Template::Plugin';
@@ -48,7 +46,6 @@ sub new {
 
 sub abs   { shift; CORE::abs($_[0]);          }
 sub atan2 { shift; CORE::atan2($_[0], $_[1]); } # prototyped (ugg)
-sub ceil  { shift; POSIX::ceil($_[0]);        }
 sub cos   { shift; CORE::cos($_[0]);          }
 sub exp   { shift; CORE::exp($_[0]);          }
 sub hex   { shift; CORE::hex($_[0]);          }

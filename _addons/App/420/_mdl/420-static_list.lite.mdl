@@ -61,12 +61,20 @@ sub execute
 	my $sql_where;
 	
 	# ID_entity
-	$sql_where.=" AND static.ID_entity=$env{'static.ID_entity'}"
-		if $env{'static.ID_entity'};
+	if ($env{'static.ID_entity'})
+	{
+		$sql_where.=" AND static.ID_entity IN ('".
+			(join "','", split(';',$env{'static.ID_entity'})).
+			"')";
+	}
 	
 	# ID
-	$sql_where.=" AND static.ID=$env{'static.ID'}"
-		if $env{'static.ID'};
+	if ($env{'static.ID'})
+	{
+		$sql_where.=" AND static.ID IN ('".
+			(join "','", split(';',$env{'static.ID'})).
+			"')";
+	}
 	
 	# ID_category
 	$sql_where.=" AND static.ID_category IN ($env{'static.ID_category'})"
@@ -206,23 +214,29 @@ sub execute
 			$p->eof();
 			my $part_html=$p->{'out'};
 			
-			if ($p->{'out_var'}->{'img.1.src'} && !$og_image_set)
+			if (!$env{'no-opengraph'})
 			{
+#				if ($p->{'out_var'}->{'img.1.src'} && !$og_image_set)
 				push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=>$p->{'out_var'}->{'img.1.src'}} unless $env{'add_DOC_meta_disabled'};
 				
 				if ($p->{'out_addon'}->{'a510_video_part'}[1]{'video.ID_entity'} && $XSGN{'og:video'})
 				{
-					$XSGN{'og:video'}=~s|<%video\.ID_entity%>|$p->{'out_addon'}->{'a510_video_part'}[1]{'video.ID_entity'}|g;
+					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=>$p->{'out_var'}->{'img.1.src'}};
 					
-					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video','content'=>$XSGN{'og:video'}} unless $env{'add_DOC_meta_disabled'};
-					
-					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:type','content'=>"application/x-shockwave-flash"} unless $env{'add_DOC_meta_disabled'};
-					
-					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:width','content'=>"430"} unless $env{'add_DOC_meta_disabled'};
-					push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:height','content'=>"280"} unless $env{'add_DOC_meta_disabled'};
-					
+					if ($p->{'out_addon'}->{'a510_video_part'}[1]{'video.ID_entity'} && $XSGN{'og:video'})
+					{
+						$XSGN{'og:video'}=~s|<%video\.ID_entity%>|$p->{'out_addon'}->{'a510_video_part'}[1]{'video.ID_entity'}|g;
+						
+						push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video','content'=>$XSGN{'og:video'}};
+						
+						push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:type','content'=>"application/x-shockwave-flash"};
+						
+						push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:width','content'=>"430"};
+						push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:video:height','content'=>"280"};
+						
+					}
+					$og_image_set=1;
 				}
-				$og_image_set=1;
 			}
 			
 			if($part_html ne '' && $part_html ne "<p>&nbsp;</p>")
