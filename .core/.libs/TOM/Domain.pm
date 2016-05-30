@@ -153,6 +153,14 @@ BEGIN
 				}),sub{});
 			};}
 			
+			# Git when available
+			if (-d $tom::P.'/.git' || -d $tom::Pm.'/.git'){eval{require Git};if (!$@)
+			{
+				my $repo = Git->repository('Directory' => $tom::P);
+				$tom::devel_branch=$repo->command('rev-parse','--abbrev-ref'=>'HEAD');
+					chomp($tom::devel_branch);
+				main::_log("identified git branch '$tom::devel_branch'");
+			}}
 		}
 		
 	}

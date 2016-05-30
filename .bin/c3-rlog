@@ -127,7 +127,7 @@ Basic options:
  --tail						search, and search for new lines, and search for ...
  --msg=<string>         search in message string
  --msg=<string> --msg=...
- --filter=<elastic>     filter by custom code eg. '{"term":{"data.test_s":["word"]}}'
+ --filter=<elastic>     filter by custom code eg. '{"terms":{"data.test_s":["word"]}}'
  --filter=<elastic> --filter=...
  --c=<request_code>     filter to request code (disables --limit,--h,--hd)
  --p=<pid>              filter to PID
@@ -139,7 +139,7 @@ Basic options:
  --datetime-from=<YYYY-MM-DD HH:MM:SS> --datetime-to=<YYYY-MM-DD HH:MM:SS>
  --pretty               display additional attributes in pretty json format
  --ch                   strict chronological - don't group primary by log source
- --data.*               search term in data.* field
+ --data.*               search terms in data.* field
  
 };
 	exit;
@@ -272,7 +272,7 @@ foreach (sort keys %main::arg)
 	if ($_=~/^data\./)
 	{
 		$query.=" ".$_."=".$main::arg{$_};
-		push @filter,{"term" => {$_ => [$main::arg{$_}]}};
+		push @filter,{"terms" => {$_ => [$main::arg{$_}]}};
 	}
 }
 
@@ -364,6 +364,63 @@ if ($main::arg{'datetime-from'}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)
 		}
 	}};
 	$query.=" date=\"".$main::arg{'datetime-from'}." - ".$main::arg{'datetime-to'}."\"";
+}
+elsif ($main::arg{'date'}=~/^(\d\d\d\d)-(\d\d)$/)
+{
+	%search_indices=();
+	
+	my $td = DateTime->new(
+		'year' => $1,
+		'month' => $2,
+		'day' => 1,
+		'hour' => 0,
+		'minute' => 0,
+		'second' => 0,
+		'time_zone'  => 'local'
+	);
+	my $month=$td->month();
+	$td->set_time_zone('GMT');
+	
+	my $date_start_=$td->strftime('%FT%H:%M:%SZ');
+	my $date_start=$td->strftime('%F');
+	
+	if ($indices{'logstash-'.$date_start})
+	{
+		$search_indices{'logstash-'.$date_start}=1;
+	}
+	elsif ($indices{'logstash-'.($date_start=~/^(\d\d\d\d\-\d\d)/)[0]})
+	{
+		$search_indices{'logstash-'.($date_start=~/^(\d\d\d\d\-\d\d)/)[0]}=1;
+	}
+	
+	my $date_stop_=$td->strftime('%FT%H:%M:%SZ');
+	my $date_stop=$td->strftime('%F');
+	for (1..32)
+	{
+		$td->add('days'=>1);
+		
+		$date_stop_=$td->strftime('%FT%H:%M:%SZ');
+		$date_stop=$td->strftime('%F');
+		
+		if ($indices{'logstash-'.$date_stop})
+		{
+			$search_indices{'logstash-'.$date_stop}=1;
+		}
+		elsif ($indices{'logstash-'.($date_stop=~/^(\d\d\d\d\-\d\d)/)[0]})
+		{
+			$search_indices{'logstash-'.($date_stop=~/^(\d\d\d\d\-\d\d)/)[0]}=1;
+		}
+		
+		last if $month ne $td->month();
+	}
+	
+	push @filter,{"range" => {
+		'@timestamp' => {
+			'gte' => $date_start_,
+			'lt' => $date_stop_
+		}
+	}};
+	$query.=" date=~".$main::arg{'date'};
 }
 elsif ($main::arg{'date'}=~/^(\d\d\d\d)-(\d\d)-(\d\d)$/)
 {

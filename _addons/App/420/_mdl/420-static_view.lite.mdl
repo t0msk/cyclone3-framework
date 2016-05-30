@@ -64,12 +64,6 @@ sub execute
 		$sql_where.=" AND static.name LIKE '".TOM::Security::form::sql_escape($env{'static.name'})."'";
 	}
 	
-	# static.name_url
-	if ($env{'static.name_url'})
-	{
-		$sql_where.=" AND static.name_url LIKE '".TOM::Security::form::sql_escape($env{'static.name_url'})."'";
-	}
-	
 	my $sql_order="static.datetime_start DESC";
 		$sql_order=$env{'sql_order'} if $env{'sql_order'};
 		$sql_order=$env{'sql_order_by'} if $env{'sql_order_by'};
@@ -110,9 +104,6 @@ sub execute
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		
-		push @{$env_out{'call'}{'H'}{'add_DOC_title'}},$db0_line{'name'} if $env{'DOC_title'};
-		
 		my %datetime=TOM::Utils::datetime::datetime_collapse($db0_line{'datetime_create'});
 		$db0_line{'datetime_create.year'}=$datetime{'year'};
 		$db0_line{'datetime_create.month'}=$datetime{'month'};

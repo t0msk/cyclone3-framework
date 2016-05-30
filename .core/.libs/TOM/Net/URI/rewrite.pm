@@ -733,7 +733,7 @@ sub convert
 	1 while ($URL=~s|--|-|g);
 	
 	# odstranit znaky na konci ktore niesu sucastou slova
-	$URL=~s|[^a-zA-Z0-9]$||g;
+	1 while ($URL=~s|[^a-zA-Z0-9]$||g);
 	
 	return $URL;
 }

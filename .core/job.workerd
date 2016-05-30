@@ -242,7 +242,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 	},
 =cut
 	
-	foreach my $queue (sort {$b->{'messages_ready'} <=> $a->{'messages_ready'}} grep {$_->{'name'}=~/^cyclone3\.job\./} @{$data})
+	foreach my $queue (sort {($b->{'messages_ready'}/($b->{'consumers'}+1)) <=> ($a->{'messages_ready'}/($a->{'consumers'}+1))} grep {$_->{'name'}=~/^cyclone3\.job\./} @{$data})
 	{
 		my $domain=$queue->{'name'};
 			$domain=~s|^cyclone3\.job\.||;

@@ -1312,13 +1312,6 @@ sub article_alias_url
 		}
 	}
 	
-	if ($categories{'33'} || $categories{'34'} || $categories{'35'})
-	{
-		my $name_url=$categories{$categories_pool[-3]};
-		if ($alias_url){$alias_url.="/tema-".$name_url}
-		else {$alias_url.="tema-".$name_url}
-	}
-	
 	main::_log("alias_url='$alias_url'");
 	
 	$t->close();

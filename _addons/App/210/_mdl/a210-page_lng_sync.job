@@ -49,7 +49,7 @@ sub execute
 		WHERE
 			lng = ?
 			AND ID_charindex LIKE ?
-			AND status IN ('Y','N','L')
+			AND status IN ('Y','N','L','T')
 		ORDER BY
 			ID_charindex
 	},

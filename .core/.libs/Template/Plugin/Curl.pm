@@ -30,6 +30,7 @@ sub get {
 #	my $env = shift;
 	use Data::Dumper;
 #	main::_log("param=".Dumper(\@_),3,"debug");
+	$curl->timeout(5);
 	return $curl->get(@_);
 }
 

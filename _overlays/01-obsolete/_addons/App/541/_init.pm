@@ -13,7 +13,7 @@ use utf8;
 use strict;
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
-our $VERSION='$Rev: 7846 $';
+our $VERSION='$Rev$';
 
 use File::Path;
 

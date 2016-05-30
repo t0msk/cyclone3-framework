@@ -68,7 +68,7 @@ use JSON;
 use Data::Dumper;
 use Ext::Redis::_init;
 our $alarm=$ENV{'TIMEOUT'};
-	 $alarm||=15; # autoexit after 60 seconds of inactivity
+	 $alarm||=10; # autoexit after 10 seconds of inactivity
 our $time_max=600;
 our $time_start=time();
 
@@ -131,9 +131,7 @@ sub callback {
 	my $user_id=$var->{'header'}->{'user_id'};
 	my $delivery_tag=$var->{'deliver'}->{'method_frame'}->{'delivery_tag'};
 	my $routing_key=$var->{'deliver'}->{'method_frame'}->{'routing_key'};
-	
-	my $deduplication=0; # disable it by default
-#	main::_log("received message id='".($var->{'header'}->{'headers'}->{'message_id'})."' '$delivery_tag' from '$user_id' routing='$routing_key' timestamp='$timestamp' size=".length($var->{'body'}->{'payload'}));
+	my $deduplication;
 		$deduplication=$var->{'header'}->{'headers'}->{'deduplication'} || 'false';
 	
 	my %env0=main::ctogmdatetime($timestamp,format=>1);

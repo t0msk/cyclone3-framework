@@ -255,7 +255,6 @@ sub execute
 			) as rating,
 			article_ent.sources,
 			article_ent.metadata,
-			article_ent.published_mark,
 			
 			article_attrs.status
 			

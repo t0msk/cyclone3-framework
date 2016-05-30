@@ -23,7 +23,7 @@ sub new {
 	}
 	
 	$self->{'apiKey'}=$env{'apiKey'};
-	#main::_log("api key: $self->{'apiKey'}",1,"dbg");
+	main::_log("api key: $self->{'apiKey'}",1,"dbg");
 	
 	return bless $self, $class;
 	#$self->{sendRequest}= $self->sendRequest;
@@ -70,11 +70,11 @@ sub getUrl {
 			$completeUrl.="&produkt[]=".uri_escape_utf8($product);
 		}
 		foreach my $productid(@{$self->{'productids'}}) {
-			$completeUrl.="&itemid[]=".uri_escape_utf8($productid);
+			$completeUrl.="&itemId[]=".uri_escape_utf8($productid);
 		}
 		$completeUrl.="&orderid=".$self->{'orderId'}; 
 	
-	#main::_log($completeUrl,1,"dbg");
+	main::_log($completeUrl,1,"dbg");
 	return $completeUrl;
 }
 
@@ -92,7 +92,7 @@ sub sendRequest {
 		) or die "socket fail: $!";
 	
 	#my $new_sock = $sock->accept() or die "test: $!";
-	#main::_log('socket: '.$new_sock,1,"debugg");
+	#main::_log('socket: '.$new_sock,1,"dbg");
 	
 	if(!$sock) {
 		main::_log("socket sa nenapojil: ".$!,3,"heureka.err");

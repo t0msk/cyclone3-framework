@@ -423,17 +423,6 @@ sub org_add
 	
 	if (ref($env{'org.cats'}) eq "ARRAY")
 	{
-		if ($env{'org.cats.replace'})
-		{
-			TOM::Database::SQL::execute(qq{
-				DELETE FROM
-					$App::710::db_name.a710_org_rel_cat
-				WHERE
-					ID_org = ?
-			},'bind'=>[$org{'ID_entity'}],'quiet'=>1);
-			$content_reindex=1;
-		}
-		
 		foreach (@{$env{'org.cats'}})
 		{
 			TOM::Database::SQL::execute(qq{
@@ -460,14 +449,11 @@ sub org_add
 
 sub _org_index
 {
-#	return 1 if TOM::Engine::jobify(\@_); # do it in background
-	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::710::db_name,'class'=>'indexer'}); # do it in background
-	
 	my %env=@_;
 	return undef unless $env{'ID'};
 	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::710::db_name,'class'=>'indexer'});
 	
-	my $t=track TOM::Debug(__PACKAGE__."::_org_index($env{'ID'})",'timer'=>1);
+	my $t=track TOM::Debug(__PACKAGE__."::_org_index()",'timer'=>1);
 	
 	my %org=App::020::SQL::functions::get_ID(
 		'ID' => $env{'ID'},

@@ -113,11 +113,6 @@ sub execute
 			$XSGN{'a510_video_part.1'}
 			|| undef;
 		
-		$p->{'entity'}->{'link.a542_file'}=
-			$XSGN{'body.link.a542_file'}
-			|| $XSGN{'link.a542_file'}
-			|| undef;
-		
 		$p->parse($db0_line{'description'});
 		#$p->eof();
 		my $description_html=$p->{'out'};
