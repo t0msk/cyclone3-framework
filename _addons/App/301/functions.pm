@@ -1380,7 +1380,11 @@ sub _user_index
 		{
 			foreach (keys %{$user{'metahash'}{$sec}})
 			{
-				next unless $user{'metahash'}{$sec}{$_};
+				if (!$user{'metahash'}{$sec}{$_})
+				{
+					delete $user{'metahash'}{$sec}{$_};
+					next
+				}
 				if ($_=~s/\[\]$//)
 				{
 					foreach my $val (split(';',$user{'metahash'}{$sec}{$_.'[]'}))

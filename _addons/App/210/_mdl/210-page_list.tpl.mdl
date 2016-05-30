@@ -63,6 +63,14 @@ sub execute
 		$sql_where.=" AND `a210_page`.visible IN ('Y')";
 	}
 	
+	my $cache_changetime = App::020::SQL::functions::_get_changetime(
+		{
+			'db_h'=>"main",
+			'db_name' => $App::210::db_name,
+			'tb_name' => "a210_page"
+		}
+	);
+	
 	if ($env{'a430_list.ID'})
 	{
 		require App::430::_init;
@@ -79,6 +87,18 @@ sub execute
 		};
 		$sql_column.=",a430_list_relation.rel_name";
 		$env{'db_order'}="a430_list_relation.priority DESC";
+		
+		
+		my $cache_changetime_list = App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::430::db_name,
+				'tb_name' => "a430_list"
+			}
+		);
+		
+		#main::_log('replacing cache_changetime by a430_list timestamp') if $cache_changetime_list > $cache_changetime;
+		$cache_changetime = $cache_changetime_list if $cache_changetime_list > $cache_changetime;
 	}
 	else
 	{
@@ -128,13 +148,7 @@ sub execute
 		'quiet' => 1,
 #		'log' => 1,
 		'-cache' => 86400*7,
-		'-cache_changetime' => App::020::SQL::functions::_get_changetime(
-			{
-				'db_h'=>"main",
-				'db_name' => $App::210::db_name,
-				'tb_name' => "a210_page"
-			}
-		)
+		'-cache_changetime' => $cache_changetime
 	);
 	
 	my @nodes;
@@ -148,7 +162,7 @@ sub execute
 			'db_h'    => 'main',
 			'db_name' => $App::210::db_name,
 			'tb_name' => 'a210_page',
-			'-cache' => 86400*7,
+			'-cache' => 86400,
 		))
 		{
 			$db0_line{'path_url'}.='/'.$node->{'name_url'};

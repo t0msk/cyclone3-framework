@@ -199,4 +199,144 @@ sub page_get_default_ID
 }
 
 
+sub _page_index
+{
+	my %env=@_;
+	return undef unless $env{'ID'};
+	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::210::db_name,'class'=>'indexer'});
+	
+	my $t=track TOM::Debug(__PACKAGE__."::_page_index()",'timer'=>1);
+	
+	use Ext::Elastic::_init;
+	$Elastic||=$Ext::Elastic::service;
+	if ($Elastic) # the new way in Cyclone3 :)
+	{
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				$App::210::db_name.a210_page AS page
+			WHERE
+				page.status IN ('Y','N','L','W') AND
+				page.ID=?
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		if (!$sth0{'rows'})
+		{
+			main::_log("page.ID=$env{'ID'} not found",1);
+			if ($Elastic->exists(
+				'index' => 'cyclone3.'.$App::210::db_name,
+				'type' => 'a210_page',
+				'id' => $env{'ID'}
+			))
+			{
+				main::_log("removing from Elastic",1);
+				$Elastic->delete(
+					'index' => 'cyclone3.'.$App::210::db_name,
+					'type' => 'a210_page',
+					'id' => $env{'ID'}
+				);
+			}
+			$t->close();
+			return 1;
+		}
+		
+		my %page=$sth0{'sth'}->fetchhash();
+		
+#		$org{'name_short'}=[$org{'name_short'}]
+#			if $org{'name_short'};
+		
+		foreach (keys %page)
+		{
+			delete $page{$_} unless $page{$_};
+		}
+		
+		%{$page{'metahash'}}=App::020::functions::metadata::parse($page{'metadata'});
+		delete $page{'metadata'};
+		
+		foreach (grep {not defined $page{$_}} keys %page)
+		{
+			delete $page{$_};
+		}
+		
+		foreach my $sec(keys %{$page{'metahash'}})
+		{
+			if ($sec=~/\./)
+			{
+				my $sec_=$sec;$sec_=~s|\.|-|g;
+				$page{'metahash'}{$sec_}=$page{'metahash'}{$sec};
+				delete $page{'metahash'}{$sec};
+				$sec=$sec_;
+			}
+			foreach my $var(keys %{$page{'metahash'}{$sec}})
+			{
+				if ($var=~/\./)
+				{
+					my $var_=$var;$var_=~s|\.|-|g;
+					$page{'metahash'}{$sec}{$var_}=$page{'metahash'}{$sec}{$var};
+					delete $page{'metahash'}{$sec}{$var};
+					next;
+				}
+			}
+		}
+		
+		foreach my $sec(keys %{$page{'metahash'}})
+		{
+			foreach (keys %{$page{'metahash'}{$sec}})
+			{
+				if (!$page{'metahash'}{$sec}{$_})
+				{
+					delete $page{'metahash'}{$sec}{$_};
+					next
+				}
+				if ($_=~s/\[\]$//)
+				{
+					foreach my $val (split(';',$page{'metahash'}{$sec}{$_.'[]'}))
+					{
+						push @{$page{'metahash'}{$sec}{$_}},$val;
+						push @{$page{'metahash'}{$sec}{$_.'_t'}},$val;
+						
+						if ($val=~/^[0-9]{1,9}$/)
+						{
+							push @{$page{'metahash'}{$sec}{$_.'_i'}},$val;
+						}
+						if ($val=~/^[0-9\.]{1,9}$/ && (not $val=~/\..*?\./))
+						{
+							push @{$page{'metahash'}{$sec}{$_.'_f'}},$val;
+						}
+						
+					}
+					#push @{$page->{'metahash_keys'}},$sec.'.'.$_ ;
+					delete $page{'metahash'}{$sec}{$_.'[]'};
+					next;
+				}
+				
+				if ($page{'metahash'}{$sec}{$_}=~/^[0-9]{1,9}$/)
+				{
+					$page{'metahash'}{$sec}{$_.'_i'} = $page{'metahash'}{$sec}{$_};
+				}
+				if ($page{'metahash'}{$sec}{$_}=~/^[0-9\.]{1,9}$/ && (not $page{'metahash'}{$sec}{$_}=~/\..*?\./))
+				{
+					$page{'metahash'}{$sec}{$_.'_f'} = $page{'metahash'}{$sec}{$_};
+				}
+			}
+		}
+		
+		my %log_date=main::ctogmdatetime(time(),format=>1);
+		$Elastic->index(
+			'index' => 'cyclone3.'.$App::210::db_name,
+			'type' => 'a210_page',
+			'id' => $env{'ID'},
+			'body' => {
+				%page,
+				'_datetime_index' => 
+					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
+					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.'Z'
+			}
+		);
+		
+	}
+
+	$t->close();
+}
+
 1;

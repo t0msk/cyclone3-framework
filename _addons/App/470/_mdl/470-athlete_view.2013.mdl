@@ -1,0 +1,116 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::470::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_changetime;
+	#my $sql_limit=1;
+	my $sql_order_by=$env{'sql_order_by'} || 'athlete.name ASC';
+	my $sql_group_by;
+	
+	
+   if ($env{'athlete.ID'})
+	{
+		$sql_where.=" AND athlete.ID IN ('".join('\',\'',split(';',$env{'athlete.ID'}))."')";
+	}
+	main::_log('-------------------------'.$env{'athlete.ID'});
+
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			athlete.ID,
+			athlete.ID_entity,
+			athlete.country_code,
+			athlete.name,
+			athlete.name_url,
+			athlete.metadata,
+
+			athlete_lng.body
+			
+		FROM
+			$App::470::db_name.a470_athlete AS athlete
+		LEFT JOIN $App::470::db_name.a470_athlete_lng AS athlete_lng ON
+		(
+			athlete_lng.ID_entity = athlete.ID AND
+			athlete_lng.lng = '$env{'lng'}'
+		)
+		WHERE
+			athlete.status IN ('Y')
+			$sql_where
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			1
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::470::db_name,
+				'tb_name' => "a470_athlete"
+			}),
+	);
+	
+	my %athlete=$sth0{'sth'}->fetchhash();
+	
+	return 1 unless $athlete{'ID'};
+	
+	main::_log("found athlete.ID=$athlete{'ID'}");
+	
+	$athlete{'related_avatar'}=(App::160::SQL::get_relations(
+		'db_name' => $App::470::db_name,
+		'l_prefix' => 'a470',
+		'l_table' => 'athlete',
+		'l_ID_entity' => $athlete{'ID'},
+		'r_prefix' => "a501",
+		'r_table' => "image",
+		'rel_type' => "avatar",
+		'status' => "Y"
+	))[0];
+	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	# parser body
+	$parser->parse($athlete{'body'});
+	$parser->eof();
+	$athlete{'body_parser'}={
+		'output' => $parser->{'output'},
+		'addon' => $parser->{'addon'},
+		'entity' => $parser->{'entity'},
+		'thumbnail' => $parser->{'thumbnail'},
+	};
+	push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+	
+	$TPL->{'variables'}{'athlete'}=\%athlete;
+	
+	push @{$env_out{'call'}{'H'}{'add_DOC_title'}},$athlete{'name'};
+	
+	return 1,%env_out;
+}
+
+1;

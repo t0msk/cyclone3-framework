@@ -238,6 +238,8 @@ sub _log
 		{
 			local $@;
 			local %log_date=ctogmdatetime($log_time,format=>1); # we are logging in GMT zone
+			my $msg=$get[1];
+				$msg =~ s/([^\x00-\xFF])/'\x'.ord($1)/ge;
 			$fluentd_socket->post($get[3], {
 				'@timestamp' =>
 					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
@@ -257,7 +259,7 @@ sub _log
 				'e' => $TOM::engine,
 				'f' => do {if ($get[2] == 1 || $get[2] == 4){'1';}else{undef;}},
 #				't' => $get[3],
-				'm' => $get[1],
+				"m" => $msg,
 				'data' => $get[5]
 			});
 			return 1 unless $tom::devel;

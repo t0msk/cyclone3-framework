@@ -1,0 +1,328 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+use DateTime;
+
+
+use App::950::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'offer.status'}='Y' unless $env{'offer.status'};
+		my $sql_offer_status=join "','", split('',$env{'offer.status'});
+	
+	# paging
+	$env{'page_limit'} = 10 unless $env{'page_limit'};
+	$env{'page'} = 1 unless $env{'page'};
+	$env{'page_offset'} = 0 unless $env{'page_offset'};
+	$env{'page_plus'} = 1 unless $env{'page_plus'};
+	if (!$env{'sql_limit'})
+	{
+		$env{'sql_limit'}=((($env{'page'}-1)*$env{'page_limit'})+$env{'page_offset'}).",".($env{'page_limit'}+$env{'page_plus'});
+	}
+	else
+	{
+#		$env{'sql_limit'}=~/^(\d+),?(\d+)?$/;
+	}
+	
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_join;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || 'offer.datetime_publish_start DESC';
+	my $sql_group_by;
+	
+	if ($env{'unique'})
+	{
+		$sql_group_by="offer.ID_entity";
+	}
+	
+	if ($env{'offer_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'offer_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::950::db_name.a950_offer_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID_entity FROM $App::950::db_name.a950_offer_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR offer_rel_cat.ID_category IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'offer_cat.ID'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'offer_cat.ID'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::950::db_name.a950_offer_cat WHERE ID=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID_entity FROM $App::950::db_name.a950_offer_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR offer_rel_cat.ID_category IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'offer.ID_entity'}=~/^[0-9;]+$/)
+	{
+		$sql_where.=" AND offer.ID_entity IN (".join(',',split(';',$env{'offer.ID_entity'})).")";
+		$sql_limit=scalar split(';',$env{'offer.ID_entity'});
+		if ($env{'solr'})
+		{
+			$sql_group_by="offer.ID_entity";
+			$sql_order_by="CASE\n";
+			my $i;
+			foreach (split(';',$env{'offer.ID_entity'}))
+			{
+				$i++;
+				$sql_order_by.="\t\t\t\tWHEN offer.ID_entity=$_ THEN $i\n";
+			}
+			$sql_order_by.="\t\t\tEND";
+		}
+	}
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	Tomahawk::GetTpl('env'=>\%env) || return undef;
+	
+	use App::020::mimetypes::html;
+	my $parser=new App::020::mimetypes::html(
+		'tpl_ext' => $TPL # extend
+	);
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			offer.ID,
+			offer.ID_entity,
+			offer.datetime_publish_start,
+			offer.datetime_publish_stop,
+			offer.posix_owner,
+			offer.posix_modified,
+			offer.alias_addon,
+			offer.ID_user,
+			offer.ID_org,
+			offer.price,
+			offer.price_currency,
+			offer.metadata,
+			offer.status,
+			
+			offer_lng.name,
+			offer_lng.name_url,
+			offer_lng.name_long,
+			offer_lng.abstract,
+			offer_lng.body,
+			offer_lng.lng,
+			
+			offer_cat.ID AS cat_ID,
+			offer_cat.ID_entity AS cat_ID_entity,
+			offer_cat.name AS cat_name,
+			offer_cat.name_url AS cat_name_url
+			
+		FROM $App::950::db_name.a950_offer AS offer
+		INNER JOIN $App::950::db_name.a950_offer_lng AS offer_lng ON
+		(
+			offer_lng.ID_entity = offer.ID AND
+			offer_lng.lng = '$env{'lng'}'
+		)
+		LEFT JOIN $App::950::db_name.a950_offer_rel_cat AS offer_rel_cat ON
+		(
+			offer_rel_cat.ID_offer = offer.ID
+		)
+		LEFT JOIN $App::950::db_name.a950_offer_cat AS offer_cat ON
+		(
+			offer_cat.ID_entity = offer_rel_cat.ID_category AND
+			offer_cat.status IN ('Y','N','L') AND
+			offer_cat.lng = '$env{'lng'}'
+		)$sql_join
+		WHERE
+			offer.status IN ('$sql_offer_status')
+			AND offer.datetime_publish_start <= NOW()
+			AND (offer.datetime_publish_stop IS NULL OR offer.datetime_publish_stop >= NOW())
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::950::db_name,
+				'tb_name' => "a950_offer",
+				'ID_entity' => do{$env{'offer.ID_entity'} if $env{'offer.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	while (my %offer=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		last if $i > $env{'page_limit'};
+		
+		main::_log("[$i/$env{'page_limit'}] found offer.ID_entity=$offer{'ID_entity'}");
+		
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::950::db_name,
+			'tb_name' => 'a950_offer',
+			'ID_entity' => $offer{'ID_entity'}
+		};
+		
+=head1
+		# link to a210_page
+		if (my $category=App::401::functions::_a210_by_cat([$article{'cat_ID'}],'lng'=>$env{'lng'}))
+		{
+			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$category,
+					%sql_def,
+					'-slave' => 1,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$article{'a210'}{'IDs'}}, $p->{'ID'};
+				push @{$article{'a210'}{'nodes'}}, $p;
+				$article{'a210'}{'path_url'}.="/".$p->{'name_url'};
+			}
+			$article{'a210'}{'path_url'}=~s|^/||;
+		}
+=cut
+		
+		%{$offer{'metahash'}}=App::020::functions::metadata::parse($offer{'metadata'});
+		
+		%{$offer{'user'}} = App::301::authors::get_author($offer{'ID_user'})
+			if $offer{'ID_user'};
+		
+		if ($offer{'ID_org'})
+		{
+			use App::710::_init;
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					org.*,
+					org_lng.name_short,
+					org_lng.about
+				FROM $App::710::db_name.a710_org AS org
+				LEFT JOIN $App::710::db_name.a710_org_lng AS org_lng ON
+				(
+					org_lng.ID_entity = org.ID AND
+					org_lng.lng = '$env{'lng'}'
+				)
+				WHERE
+					org.status IN ('Y','L') AND
+					org.ID_entity = ?
+				LIMIT
+					1
+			},'bind'=>[$offer{'ID_org'}],'log'=>1,'-slave'=>1,
+				'-changetime'=>App::020::SQL::functions::_get_changetime(
+					{
+						'db_h'=>"main",
+						'db_name' => $App::710::db_name,
+						'tb_name' => "a710_org",
+						'ID_entity' => $offer{'ID_org'}
+					})
+			);
+			my %db1_line=$sth1{'sth'}->fetchhash();
+			
+			$db1_line{'related_avatar'}=(App::160::SQL::get_relations(
+				'db_name' => $App::710::db_name,
+				'l_prefix' => 'a710',
+				'l_table' => 'org',
+				'l_ID_entity' => $db1_line{'ID_entity'},
+				'r_prefix' => "a501",
+				'r_table' => "image",
+				'rel_type' => "avatar",
+				'status' => "Y"
+			))[0];
+			
+			%{$db1_line{'metahash'}}=App::020::functions::metadata::parse($db1_line{'metadata'});
+			delete $db1_line{'metadata'};
+			
+			main::_log('org name:'.$db1_line{'name'});
+			
+			$offer{'org'}=\%db1_line;
+		}
+		
+		# render
+		$parser->parse($offer{'abstract'});
+		$parser->eof();
+		push @{$env_out{'entity'}},@{$parser->{'entity'}} if $parser->{'entity'}; # depend on this too
+		$offer{'abstract_parser'}={
+			'output' => $parser->{'output'},
+			'addon' => $parser->{'addon'},
+			'entity' => $parser->{'entity'},
+			'thumbnail' => $parser->{'thumbnail'},
+		};
+		
+		if ($env{'offer.body'})
+		{
+			$parser->parse($offer{'body'});
+			$parser->eof();
+			$offer{'body_parser'}={
+				'output' => $parser->{'output'},
+				'addon' => $parser->{'addon'},
+				'entity' => $parser->{'entity'},
+				'thumbnail' => $parser->{'thumbnail'},
+			};
+		}
+		
+		$offer{'related_thumbnail'}=(App::160::SQL::get_relations(
+			'db_name' => $App::950::db_name,
+			'l_prefix' => 'a950',
+			'l_table' => 'offer',
+			'l_ID_entity' => $offer{'ID_entity'},
+			'rel_type' => 'thumbnail',
+			'r_db_name' => $App::501::db_name,
+			'r_prefix' => 'a501',
+			'r_table' => 'image',
+			'status' => 'Y',
+			'limit' => 1
+		))[0];
+		
+		push @{$TPL->{'variables'}{'items'}},\%offer;
+	}
+	
+	return 1,%env_out;
+}
+
+
+our $authors="open\@comsultia.com";
+
+=head1 AUTHORS
+
+Comsultia, Ltd. (open@comsultia.com)
+
+=cut
+
+1;

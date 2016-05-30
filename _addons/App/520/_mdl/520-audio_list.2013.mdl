@@ -1,0 +1,500 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::501::_init;
+use App::520::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'check_audio_part_file'} = 1 unless exists $env{'check_audio_part_file'};
+	$env{'audio_format.ID_entity'} = $App::520::audio_format_full_ID unless $env{'audio_format.ID_entity'};
+#	$env{'audio_part'} = 1 unless exists $env{'audio_part'};
+#	$env{'audio_part_file'} = 1 unless exists $env{'audio_part_file'};
+	
+	$env{'datetime_mode'}="present" unless $env{'datetime_mode'};
+	
+	# paging
+	$env{'page_limit'} = 10 unless $env{'page_limit'};
+	$env{'page'} = 1 unless $env{'page'};
+	$env{'page_offset'} = 0 unless $env{'page_offset'};
+	$env{'page_plus'} = 1 unless $env{'page_plus'};
+	if (!$env{'sql_limit'})
+	{
+		$env{'sql_limit'}=((($env{'page'}-1)*$env{'page_limit'})+$env{'page_offset'}).",".($env{'page_limit'}+$env{'page_plus'});
+	}
+	else
+	{
+#		$env{'sql_limit'}=~/^(\d+),?(\d+)?$/;
+		
+	}
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_changetime;
+	my $sql_column;
+	my $sql_join;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || 'audio.datetime_rec_start DESC';
+	my $sql_group_by;
+	
+	if ($env{'datetime_mode'} eq "present")
+	{
+		$sql_where.=" AND audio_attrs.datetime_publish_start <= NOW()";
+		$sql_where.=" AND (audio_attrs.datetime_publish_stop IS NULL OR audio_attrs.datetime_publish_stop >= NOW())";
+	}
+	
+	if ($env{'audio_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'audio_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::520::db_name.a520_audio_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID_entity FROM $App::520::db_name.a520_audio_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" OR audio_attrs.ID_category IN ($ID_category)";
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'a430_list.ID'})
+	{
+		require App::430::_init;
+		$sql_join.=qq{INNER JOIN `$App::430::db_name`.a160_relation AS a430_list_relation ON
+		(
+			a430_list_relation.l_prefix = 'a430' AND
+			a430_list_relation.l_table = 'list' AND
+			a430_list_relation.l_ID_entity = $env{'a430_list.ID'} AND
+			a430_list_relation.r_prefix = 'a520' AND
+			a430_list_relation.r_table = 'audio' AND
+			a430_list_relation.r_ID_entity = `audio`.ID_entity AND
+			a430_list_relation.status = 'Y'
+		)
+		};
+		$sql_column.=",a430_list_relation.rel_name";
+		$sql_order_by="a430_list_relation.priority DESC";
+	}
+	
+	if ($env{'solr'})
+	{
+		$env{'solr.defType'} = 'edismax' unless $env{'solr.defType'};
+		$env{'solr.rows'} = 10 unless $env{'solr.rows'};
+		$env{'solr.start'} = 0 unless $env{'solr.start'};
+		$env{'solr.qf'} = "title name name_partial cat_name_sm^0.2 cat_name_tm^0.2 description^0.8 keywords^2 text^0.5" unless $env{'solr.qf'};
+		
+		if ($env{'solr.keywords'})
+		{
+			my $query=$env{'solr.keywords'};
+			1 while ($query=~s|  | |g);
+			$query=~s|^ ||g;
+			$query=~s| $||g;
+			my @query_part=split(' ',$query);$query='';
+			my $part_last;
+			foreach my $part(@query_part){
+				$part=~s|\-|\\-|g;
+				$query.="$part AND ";
+				$part_last=$part;
+			}
+			$query=~s| AND $part_last AND $| AND ($part_last OR $part_last*)|;
+			$query=~s|^$part_last AND $|$part_last OR $part_last*|;
+			$query=~s| AND $||;
+			$env{'solr.q'}="AND (".$query.")";
+		}
+		
+		if ($env{'solr.related_keywords'})
+		{
+			my $query=$env{'solr.related_keywords'};
+			1 while ($query=~s|  | |g);
+			$query=~s|^ ||g;
+			$query=~s| $||g;
+			my @query_part=split(' ',$query);$query='';
+			my $part_last;
+			foreach my $part(@query_part){
+				$part=~s|\-|\\-|g;
+				$query.="$part ";
+				$part_last=$part;
+			}
+			$query=~s| $||;
+			$env{'solr.q'}="AND (".$query.")";
+		}
+		
+		use Ext::Solr::_init;
+		my $solr = Ext::Solr::service();
+		
+		my $response = $solr->search('+id:'.($App::520::db_name).'.a520_audio.'.$env{'lng'}.'.* '.$env{'solr.q'},
+			{
+				'-cluster' => 1,
+				
+				'defType' => $env{'solr.defType'},
+				
+				'rows' => $env{'solr.rows'},
+				'start' => $env{'solr.start'},
+				
+#				'mm' => $env{'solr.mm'},
+#				'tie' => $env{'solr.tie'} || 1.0,
+				'bq' => $env{'solr.bq'},
+				'qf' => $env{'solr.qf'},
+				'fl' => "id ID_i ID_entity_i score ".$env{'solr.fl'},
+#				'hl' => "true" ,
+#				'hl.fl' => "title name name_partial description",
+#				'hl.fragsize' => "80"
+			}
+		);
+		
+		$env{'audio.ID_entity'}="0;";
+		for my $doc ( $response->docs )
+		{
+#			my $id=$doc->value_for('id');
+#			my $ID_entity=$doc->value_for('ID_entity_i');
+			$env{'audio.ID_entity'}.=$doc->value_for('ID_entity_i').";";
+		}
+		
+	}
+	
+	if ($env{'audio.ID_entity'}=~/;/)
+	{
+		$sql_where.=" AND audio.ID_entity IN (".join(',',split(';',$env{'audio.ID_entity'})).")";
+		$sql_limit=scalar split(';',$env{'audio.ID_entity'});
+		if ($env{'solr'})
+		{
+			$sql_group_by="audio.ID_entity";
+			$sql_order_by="CASE\n";
+			my $i;
+			foreach (split(';',$env{'audio.ID_entity'}))
+			{
+				$i++;
+				$sql_order_by.="\t\t\t\tWHEN audio.ID_entity=$_ THEN $i\n";
+			}
+			$sql_order_by.="\t\t\tEND";
+		}
+	}
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	return 1 unless $sql_where;
+	
+	# get info about category
+	if ($env{'audio_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'audio_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			
+			my $sel_ID_category=$ID_category;
+				$sel_ID_category=~s|\*$||;
+			if ($sel_ID_category)
+			{
+				my %sth0=TOM::Database::SQL::execute(qq{
+					SELECT
+						*
+					FROM
+						$App::520::db_name.a520_audio_cat
+					WHERE
+						ID_entity = ?
+						AND lng = ?
+						AND status IN ('Y','L')
+					LIMIT 1;
+				},'bind'=>[$sel_ID_category,$env{'lng'}],'slave'=>1,'-cache'=>86400,'quiet'=>1,
+					'-changetime'=>App::020::SQL::functions::_get_changetime(
+					{
+						'db_h'=>"main",
+						'db_name' => $App::520::db_name,
+						'tb_name' => "a520_audio_cat",
+						'ID_entity' => $sel_ID_category
+					}),
+				);
+				if (my %db0_line = $sth0{'sth'}->fetchhash())
+				{
+					
+					push @{$env_out{'entity'}},{
+						'db_h' => 'main',
+						'db_name' => $App::520::db_name,
+						'tb_name' => 'a520_audio_cat',
+						'ID_entity' => $db0_line{'ID_entity'}
+					};
+					
+					if (my $category=App::520::functions::_a210_by_cat([$db0_line{'ID'}],'lng'=>$env{'lng'}))
+					{
+						my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+						foreach my $p(
+							App::020::SQL::functions::tree::get_path(
+								$category,
+								%sql_def,
+								'-slave' => 1,
+								'-cache' => 86400*7
+							)
+						)
+						{
+							push @{$db0_line{'a210'}{'IDs'}}, $p->{'ID'};
+							push @{$db0_line{'a210'}{'nodes'}}, $p;
+							$db0_line{'a210'}{'path_url'}.="/".$p->{'name_url'};
+						}
+						$db0_line{'a210'}{'path_url'}=~s|^/||;
+					}
+					$TPL->{'variables'}->{'audio_cat'}->{$sel_ID_category}=\%db0_line;
+					push @{$TPL->{'variables'}->{'audio_cats'}},\%db0_line;
+				}
+			}
+		}
+	}
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			audio.ID,
+			audio.ID_entity,
+			audio.datetime_rec_start,
+			audio.datetime_rec_stop,
+			audio_ent.posix_owner AS ent_posix_owner,
+			audio_ent.posix_author AS ent_posix_author,
+			audio_ent.keywords AS ent_keywords,
+			audio_ent.metadata AS ent_metadata,
+			audio_attrs.name AS attrs_name,
+			audio_attrs.name_url AS attrs_name_url,
+			audio_attrs.description AS attrs_description,
+			audio_attrs.datetime_publish_start,
+			audio_cat.ID AS cat_ID,
+			audio_cat.ID_entity AS cat_ID_entity,
+			audio_cat.name AS cat_name,
+			audio_cat.name_url AS cat_name_url}.do{if ($env{'check_audio_part_file'}){qq{,
+			audio_part.ID AS part_ID,
+			audio_part.ID_entity AS part_ID_entity,
+			audio_part.visits AS part_visits,
+			audio_part_smil.name AS smil_name,
+			audio_part_file.ID AS file_ID,
+			audio_part_file.ID_entity AS file_ID_entity,
+			audio_part_file.name AS file_name,
+			audio_part_file.audio_codec AS file_audio_codec,
+			audio_part_file.audio_bitrate AS file_audio_bitrate,
+			audio_part_file.length AS file_length}}}.qq{
+			$sql_column
+		FROM
+			$App::520::db_name.a520_audio AS audio
+		INNER JOIN $App::520::db_name.a520_audio_ent AS audio_ent ON
+		(
+			audio_ent.ID_entity = audio.ID_entity AND
+			audio_ent.status IN ('Y','L')
+		)
+		INNER JOIN $App::520::db_name.a520_audio_attrs AS audio_attrs ON
+		(
+			audio_attrs.ID_entity = audio.ID AND
+			audio_attrs.lng = '$env{'lng'}' AND
+			audio_attrs.status IN ('Y','L')
+		)
+		LEFT JOIN $App::520::db_name.a520_audio_cat AS audio_cat ON
+		(
+			audio_cat.ID_entity = audio_attrs.ID_category AND
+			audio_cat.lng = audio_attrs.lng AND
+			audio_cat.status IN ('Y','L')
+		)}.do{if ($env{'check_audio_part_file'}){qq{
+		INNER JOIN $App::520::db_name.a520_audio_part AS audio_part ON
+		(
+			audio_part.ID_entity = audio.ID_entity AND
+			audio_part.status IN ('Y','L') AND
+			audio_part.part_id = 1
+		)
+		INNER JOIN $App::520::db_name.a520_audio_part_file AS audio_part_file ON
+		(
+			audio_part_file.ID_entity = audio_part.ID AND
+			audio_part_file.status IN ('Y','L') AND
+			audio_part_file.ID_format = $env{'audio_format.ID_entity'}
+		)
+		LEFT JOIN `$App::520::db_name`.`a520_audio_part_smil` AS audio_part_smil ON
+		(
+			audio_part_smil.ID_entity = audio_part.ID
+		)
+		}}}.qq{
+		$sql_join
+		WHERE
+			audio.status IN ('Y','L')
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],
+		'log'=>0,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::520::db_name,
+				'tb_name' => "a520_audio",
+				'ID_entity' => do{$env{'audio.ID_entity'} if $env{'audio.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	while (my %audio=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		last if $i > $env{'page_limit'};
+		
+		main::_log("[$i/$env{'page_limit'}] found audio.ID_entity=$audio{'ID_entity'} name='$audio{'attrs_name'}'");
+		
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::520::db_name,
+			'tb_name' => 'a520_audio',
+			'ID_entity' => $audio{'ID_entity'}
+		};
+		
+		# link to a210_page
+		if (my $category=App::520::functions::_a210_by_cat([$audio{'cat_ID'}],'lng'=>$env{'lng'}))
+		{
+			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$category,
+					%sql_def,
+					'-slave' => 1,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$audio{'a210'}{'IDs'}}, $p->{'ID'};
+				push @{$audio{'a210'}{'nodes'}}, $p;
+				$audio{'a210'}{'path_url'}.="/".$p->{'name_url'};
+			}
+			$audio{'a210'}{'path_url'}=~s|^/||;
+		}
+		
+		if ($audio{'part_ID_entity'})
+		{
+			$audio{'related_thumbnail'}=(App::160::SQL::get_relations(
+				'db_name' => $App::520::db_name,
+				'l_prefix' => 'a520',
+				'l_table' => 'audio_part',
+				'l_ID_entity' => $audio{'part_ID'},
+				'r_prefix' => "a501",
+				'r_table' => "image",
+				'rel_type' => "thumbnail",
+				'status' => "Y"
+			))[0];
+			
+			if ($audio{'related_thumbnail'} && $audio{'related_thumbnail'}->{'r_ID_entity'})
+			{
+				push @{$env_out{'entity'}},{
+					'db_h' => 'main',
+					'db_name' => $App::501::db_name,
+					'tb_name' => 'a501_image',
+					'ID_entity' => $audio{'related_thumbnail'}->{'r_ID_entity'}
+				};
+			}
+		}
+		
+		if ($env{'audio_part'})
+		{
+			
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					audio_part.ID,
+					audio_part.ID_entity,
+					audio_part.part_id,
+					audio_part.visits,
+					audio_part.rating_score,
+					audio_part.rating_votes,
+					audio_part.rating,
+					audio_part.keywords,
+					audio_part_attrs.name,
+					audio_part_attrs.name_url,
+					audio_part_attrs.datetime_create,
+					audio_part_attrs.description
+				FROM
+					$App::520::db_name.a520_audio_part AS audio_part
+				INNER JOIN $App::520::db_name.a520_audio_part_attrs AS audio_part_attrs ON
+				(
+					audio_part_attrs.ID_entity = audio_part.ID AND
+					audio_part_attrs.status IN ('Y','L')
+				)
+				WHERE
+					audio_part.status IN ('Y','L') AND
+					audio_part.ID_entity = ?
+				ORDER BY
+					part_id ASC
+			},'bind'=>[$audio{'ID_entity'}],'quiet'=>1);
+			while (my %audio_part=$sth0{'sth'}->fetchhash())
+			{
+				
+				if ($env{'audio_part_file'})
+				{
+					my %sth0=TOM::Database::SQL::execute(qq{
+						SELECT
+							audio_part_file.*,
+							audio_format.name AS audio_format_name
+						FROM
+							$App::520::db_name.a520_audio_part_file AS audio_part_file
+						INNER JOIN $App::520::db_name.a520_audio_format AS audio_format ON
+						(
+							audio_format.ID_entity = audio_part_file.ID_format
+						)
+						WHERE
+							audio_part_file.status IN ('Y','L') AND
+							audio_part_file.ID_entity = ?
+						ORDER BY
+							audio_part_file.ID_format ASC
+					},'bind'=>[$audio_part{'ID'}],'quiet'=>1);
+					while (my %audio_part_file=$sth0{'sth'}->fetchhash())
+					{
+						push @{$audio_part{'file'}}, \%audio_part_file;
+					}
+				}
+				
+				push @{$audio{'part'}}, \%audio_part;
+			}
+			
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					SEC_TO_TIME(SUM(file.length)) AS length
+				FROM
+					`$App::520::db_name`.a520_audio_part AS audio_part
+				LEFT JOIN `$App::520::db_name`.a520_audio_part_file AS file ON
+				(
+					file.ID_entity = audio_part.ID AND
+					file.ID_format = $App::520::audio_format_original_ID
+				)
+				WHERE
+					audio_part.ID_entity = ? AND
+					audio_part.status IN ('Y','N','L')
+			},'quiet'=>1,'bind'=>[$audio{'ID_entity'}],'-slave'=>1,'-cache'=>3600,
+				'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+					'db_h'=>"main",'db_name'=>$App::520::db_name,'tb_name'=>"a520_audio",'ID_entity'=>$audio{'ID_entity'}
+			}));
+			my %db1_line=$sth1{'sth'}->fetchhash();
+			$audio{'length'} = $db1_line{'length'};
+			main::_log("audio length=$audio{'length'}");
+			
+		}
+		
+		push @{$TPL->{'variables'}{'items'}},\%audio;
+	}
+	
+	return 1,%env_out;
+}
+
+1;
