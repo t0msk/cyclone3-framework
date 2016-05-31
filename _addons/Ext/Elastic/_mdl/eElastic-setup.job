@@ -31,7 +31,7 @@ sub execute
 #	eval{$Elastic->indices->delete_template('name'=>'cyclone3.*')};
 
 	# tested on elasticsearch 2.2.1
-	my $version='1.10';
+	my $version='1.12';
 	main::_log_stdout("put_template");
 	$Elastic->indices->put_template(
 		'name'=>'cyclone3.*',
@@ -82,13 +82,15 @@ sub execute
 							"path_match" => "metahash.*.*_s",
 							"mapping" => {
 								"type" => "string",
-								"index" => "not_analyzed"
+								"index" => "not_analyzed",
+								"copy_to" => "completion.metahash.{name}" # completion
 							}
 						}},
 						{'metadata_text' => {
 							"path_match" => "metahash.*.*_t",
 							"mapping" => {
-								"type" => "string"
+								"type" => "string",
+#								"copy_to" => "completion.metahash.{name}" # completion
 							}
 						}},
 						{'metadata_integer' => {
@@ -110,11 +112,28 @@ sub execute
 #								'format' => 'yyyy-MM-dd HH:mm:ss'
 							}
 						}},
+						{'completion_std' => { # completion
+							"path_match" => "completion.std.*",
+							"mapping" => {
+								"type" => "completion",
+								"analyzer" => "simple",
+								"search_analyzer" => "simple",
+							}
+						}},
+						{'completion_metahash' => { # completion
+							"path_match" => "completion.metahash.*",
+							"mapping" => {
+								"type" => "completion",
+								"analyzer" => "simple",
+								"search_analyzer" => "simple",
+							}
+						}},
 						{'metadata_other' => {
 							"path_match" => "metahash.*.*",
 							"mapping" => {
 								"type" => "string",
-								"index" => "not_analyzed"
+								"index" => "not_analyzed",
+								"copy_to" => "completion.metahash.{name}" # completion
 							}
 						}},
 					]
@@ -125,6 +144,7 @@ sub execute
 						"version" => $version
 					},
 					'properties' => {
+						'name' => {'type' => "string","copy_to" => "completion.std.name"},
 						'status' => {
 							'type' => 'string',
 							'index' => 'not_analyzed'
@@ -151,24 +171,10 @@ sub execute
 							'type' => 'string',
 							'index' => 'not_analyzed'
 						},
-						'name' => {
-							'type' => "string",
-							'copy_to' => 'name_completion',
-						},
-						'name_completion' => {
-							'type' => "completion",
-							'analyzer' => "simple",
-							'search_analyzer' => "simple",
-						},
-						'name_short' => {
-							'type' => "string",
-							'copy_to' => 'name_short_completion',
-						},
-						'name_short_completion' => {
-							'type' => "completion",
-							'analyzer' => "simple",
-							'search_analyzer' => "simple",
-						},
+						'name' => {'type' => "string","copy_to" => "completion.std.name"},
+						'name_short' => {'type' => "string","copy_to" => "completion.std.name_short"},
+						'city' => {'type' => "string","copy_to" => "completion.std.city"},
+						'street' => {'type' => "string","copy_to" => "completion.std.street"},
 						'cat' => {'type'=>'string','index'=>'not_analyzed'},
 						'cat_name' => {'type'=>'string','index'=>'not_analyzed'},
 						'status' => {
@@ -194,26 +200,8 @@ sub execute
 					'properties' => {
 						'ID' => {'type' => 'long'},
 						'ID_entity' => {'type' => 'long'},
-						'name' => {
-							'type' => "string",
-							'copy_to' => 'name_completion',
-						},
-						'name_completion' => {
-							'type' => "completion",
-							'analyzer' => "simple",
-							'search_analyzer' => "simple",
-#							'payloads' => 'true'
-						},
-						'full_name' => {
-							'type' => "string",
-							'copy_to' => 'full_name_completion',
-						},
-						'full_name_completion' => {
-							'type' => "completion",
-							'analyzer' => "simple",
-							'search_analyzer' => "simple",
-#							'payloads' => 'true'
-						},
+						'name' => {'type' => "string","copy_to" => "completion.std.name"},
+						'full_name' => {'type' => "string","copy_to" => "completion.std.full_name"},
 						'price' => {'type' => 'float'},
 						'price_full' => {'type' => 'float'},
 						'cat' => {'type'=>'string','index'=>'not_analyzed'},
@@ -253,7 +241,7 @@ sub execute
 						},
 						'default_search' => {
 							'tokenizer' => "standard",
-							'filter' => ['cyclone3_delimiter','standard', "lowercase", "asciifolding"]
+							'filter' => ['cyclone3_delimiter','standard', "lowercase", "asciifolding", "cyclone3_synonym"]
 						}
 					},
 					'filter' => {

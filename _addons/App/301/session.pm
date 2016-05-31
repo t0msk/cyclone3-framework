@@ -321,13 +321,14 @@ sub process
 								datetime_request=FROM_UNIXTIME($main::time_current),
 								cookies=?,
 								user_agent=?,
+								_ga=?,
 								requests=requests+1,
 								status='Y'
 							WHERE
 								ID_user=?
 							LIMIT 1
 						},'quiet'=>1,
-						'bind'=>[$tom::H,$main::USRM{'cookies'},$main::ENV{'HTTP_USER_AGENT'},$main::COOKIES{'_ID_user'}]);
+						'bind'=>[$tom::H,$main::USRM{'cookies'},$main::ENV{'HTTP_USER_AGENT'},$main::COOKIES_all{'_ga'},$main::COOKIES{'_ID_user'}]);
 					}
 				}
 				else # divna ID_session ktora nesuhlasi
@@ -793,7 +794,7 @@ sub archive
 	
 	# INSERT IGNORE?
 	TOM::Database::SQL::execute(qq{
-		INSERT INTO TOM.a301_user_session
+		INSERT IGNORE INTO TOM.a301_user_session
 		(
 			ID_user,
 			ID_session,

@@ -5095,6 +5095,7 @@ sub broadcast_program_add
 			'status_premiere',
 			'status_internet',
 			'status_geoblock',
+			'status_highlight',
 			'recording',
 			'datetime_real_start',
 			'datetime_real_start_msec',
@@ -5174,7 +5175,7 @@ sub broadcast_program_add
 		$program{'ID_channel'} &&
 		$program{'program_code'} &&
 		$program{'datetime_air_start'} &&
-		$program{'status'}=~/^[YNLW]$/
+		$program{'status'}=~/^[YLW]$/
 	)
 	{
 		# najst konflikty a trashovat
@@ -5187,7 +5188,7 @@ sub broadcast_program_add
 				ID != ?
 				AND ID_channel=?
 				AND (datetime_air_start >= ? AND datetime_air_start < ?)
-				AND status IN ('Y','N','L','W')
+				AND status IN ('Y','L','W')
 		},'bind'=>[
 			$program{'ID'},
 			$program{'ID_channel'},
@@ -5219,7 +5220,7 @@ sub broadcast_program_add
 				AND ID_channel=?
 				AND datetime_air_start < ?
 				AND datetime_air_stop >= ?
-				AND status IN ('Y','N','L','W')
+				AND status IN ('Y','L','W')
 		},'bind'=>[
 			$program{'ID'},
 			$program{'ID_channel'},
@@ -5549,6 +5550,8 @@ sub _broadcast_program_index
 		}
 		
 		my %program=$sth0{'sth'}->fetchhash();
+		delete $program{'datetime_real_start_msec'};
+		delete $program{'datetime_real_stop_msec'};
 		foreach (keys %program){delete $program{$_} unless $program{$_};}
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::510::db_name,
