@@ -100,7 +100,7 @@ use utf8;
 	
 	POSIX::sigaction(&POSIX::SIGHUP, $action_check_exit);
 	POSIX::sigaction(&POSIX::SIGINT, $action_check_exit);
-	POSIX::sigaction(&POSIX::SIGPIPE, $action_check_exit);
+#	POSIX::sigaction(&POSIX::SIGPIPE, $action_check_exit);
 	
 	$main::_canexit=1;
 1;
