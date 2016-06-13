@@ -5069,6 +5069,7 @@ sub broadcast_program_add
 			'synopsis',
 			'description',
 			'program_code',
+			'program_sec_codes',
 			'record_id',
 			'program_type_code',
 			'authoring_country',
