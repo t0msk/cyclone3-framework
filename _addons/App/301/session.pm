@@ -411,6 +411,8 @@ sub process
 					{
 						$main::USRM{'logged'}="Y";
 						$main::USRM_flag="L";
+						main::_log("autolog=Y");
+						$main::USRM{'autologged'}="Y";
 					}
 					else
 					{
@@ -737,6 +739,12 @@ sub process
 		my @ab=('A','B');
 		$main::USRM{'session'}{'AB'}=$ab[int(rand(2))];
 	}
+	
+	if ($main::USRM{'autologged'}) # user logged automatically
+	{
+		autolog();
+		undef $main::USRM{'autologged'};
+	}
 	# create new session referer info
 	if ($main::USRM_flag eq "G")
 	{
@@ -886,5 +894,9 @@ sub online_clone
 	return 1;
 }
 
+
+sub autolog
+{
+}
 
 1;
