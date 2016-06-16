@@ -715,7 +715,7 @@ sub convert
 	my %env=@_;
 	
 	$URL=Int::charsets::encode::UTF8_ASCII($URL); 
-	$URL=lc($URL) unless $env{'notlower'};
+	$URL=lc($URL);# unless $env{'notlower'};
 	
 	# convert znakov ktore chcem zachovat v kontexte
 #	$URL=~s|;|-|g;

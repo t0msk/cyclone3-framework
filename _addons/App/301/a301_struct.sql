@@ -359,6 +359,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_online` (
   `datetime_request` datetime NOT NULL,
   `requests` smallint(5) unsigned NOT NULL default '0',
   `IP` varchar(15) NOT NULL default '',
+  `_ga` varchar(64) character set ascii default NULL,
   `user_agent` varchar(200) NOT NULL default '',
   `cookies` blob NOT NULL,
   `session` blob NOT NULL,

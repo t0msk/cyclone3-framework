@@ -21,6 +21,9 @@ sub execute
 		my $sql_event_status=join "','", split('',$env{'event.status'});
 	
 	$env{'event_cat.ID'} = $env{'event.ID_category'} if $env{'event.ID_category'};
+	if (!$env{'event_cat.ID'}) {
+		return 1;
+	}
 	
 	# paging
 	$env{'page_limit'} = 10 unless $env{'page_limit'};

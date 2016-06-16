@@ -451,7 +451,7 @@ sub _org_index
 {
 	my %env=@_;
 	return undef unless $env{'ID'};
-	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::710::db_name,'class'=>'indexer'});
+#	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::710::db_name,'class'=>'indexer'});
 	
 	my $t=track TOM::Debug(__PACKAGE__."::_org_index()",'timer'=>1);
 	
@@ -548,10 +548,10 @@ sub _org_index
 			push @fields,WebService::Solr::Field->new( 'longitude_decimal_f' => $org{'longitude_decimal'});
 		}
 		
-		if ($org{'latitude_decimal'} && $org{'longitude_decimal'})
-		{
-			push @fields,WebService::Solr::Field->new( 'location' => $org{'latitude_decimal'}.','.$org{'longitude_decimal'});
-		}
+		#if ($org{'latitude_decimal'} && $org{'longitude_decimal'})
+		#{
+		#	push @fields,WebService::Solr::Field->new( 'location' => $org{'latitude_decimal'}.','.$org{'longitude_decimal'});
+		#}
 		
 		if ($org{'location_verified'})
 		{
@@ -621,7 +621,6 @@ sub _org_index
 	$Elastic||=$Ext::Elastic::service;
 	if ($Elastic) # the new way in Cyclone3 :)
 	{
-		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				org.ID,
@@ -701,7 +700,13 @@ sub _org_index
 		
 		my %org=$sth0{'sth'}->fetchhash();
 		
-		$org{'name_short'}=[$org{'name_short'}];
+		$org{'name_short'}=[$org{'name_short'}]
+			if $org{'name_short'};
+		
+		foreach (keys %org)
+		{
+			delete $org{$_} unless $org{$_};
+		}
 		
 		$org{'datetime_evidence'}=~s| (\d\d)|T$1|;$org{'datetime_evidence'}.="Z"
 			if $org{'datetime_evidence'};
@@ -746,7 +751,11 @@ sub _org_index
 		{
 			foreach (keys %{$org{'metahash'}{$sec}})
 			{
-				next unless $org{'metahash'}{$sec}{$_};
+				if (!$org{'metahash'}{$sec}{$_})
+				{
+					delete $org{'metahash'}{$sec}{$_};
+					next
+				}
 				if ($_=~s/\[\]$//)
 				{
 					foreach my $val (split(';',$org{'metahash'}{$sec}{$_.'[]'}))

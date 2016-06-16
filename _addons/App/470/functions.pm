@@ -382,6 +382,10 @@ sub athlete_add
 	$data{'metadata'}=$env{'athlete.metadata'}
 		if (exists $env{'athlete.metadata'} && ($env{'athlete.metadata'} ne $athlete{'metadata'}));
 
+	if ($env{'athlete_cat.ID'}) {
+		$columns{'ID_category'} = $env{'athlete_cat.ID'};
+	}
+
 	foreach my $field ('status')
 	{
 		$data{$field}=$env{'athlete.'.$field}
