@@ -42,7 +42,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_session` (
   `ID_session` varchar(32) character set utf8 collate utf8_bin NOT NULL default '',
   `IP` varchar(15) NOT NULL default '',
   `datetime_session_begin` datetime NOT NULL,
-  `datetime_session_begin_msec` int(10) default NULL,
+  `datetime_session_begin_msec` int(10) NOT NULL default '0',
   `datetime_session_end` datetime NOT NULL,
   `requests_all` smallint(5) unsigned NOT NULL default '0',
   `saved_cookies` blob NOT NULL,
