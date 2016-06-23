@@ -32,7 +32,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
   KEY `hostname` (`hostname`,`email`),
   KEY `email` (`email`),
   KEY `ref_facebook` (`ref_facebook`),
-  KEY `ref_deviceid` (`ref_deviceid`)
+  KEY `ref_deviceid` (`ref_deviceid`),
+  KEY `ref_ID` (`ref_ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------

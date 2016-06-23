@@ -48,7 +48,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event` (
   `mode` char(1) character set ascii NOT NULL default 'M',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
-  KEY `SEL_0` (`ID_entity`,`ID`)
+  KEY `SEL_0` (`ID_entity`,`ID`),
+  KEY `ref_ID` (`ref_ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
