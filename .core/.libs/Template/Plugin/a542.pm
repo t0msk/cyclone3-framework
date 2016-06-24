@@ -47,8 +47,7 @@ sub get_file {
 	else
 	{
 		use Data::Dumper;
-		main::_log(Dumper($env));
-		main::_log('marhaaaaaaaaaaaaaaaaaaaa'.$env->{'file.ID_entity'});
+		
 		if ($env->{'file.ID'}=~/^\d+$/)
 		{
 			$sql_where .= qq{ AND `file`.`ID`=?};
@@ -58,7 +57,6 @@ sub get_file {
 		{
 			$sql_where .= qq{ AND `file`.`ID_entity`=?};
 			push @bind, $env->{'file.ID_entity'};
-			main::_log('marhaaaaaaaaaaaaaaaaaaaa'.$env->{'file.ID_entity'});
 		}
 	}
 	
