@@ -1743,6 +1743,8 @@ sub video_part_file_process
 				if ($env{'preset'}){push @encoder_env, '-preset '.$env{'preset'};}
 				if ($env{'tune'}){push @encoder_env, '-tune '.$env{'tune'};}
 				if ($env{'profile'}){push @encoder_env, '-profile '.$env{'profile'};}
+				if ($env{'profile:v'}){push @encoder_env, '-profile:v '.$env{'profile:v'};}
+				if ($env{'level:v'}){push @encoder_env, '-level:v '.$env{'level:v'};}
 				if ($env{'pass'})
 				{
 					push @encoder_env, '-stats '.$temp_statslog->{'filename'};
@@ -3769,11 +3771,20 @@ sub _video_part_file_thumbnail
 	{
 		main::_log("timestamp = ".$timestamp."s");
 		
-		#-msglevel all=-1
-		#my $cmd="/usr/bin/mencoder $env{'file'} -o $tmp->{'filename'} -ss $timestamp -oac copy -ovc lavc -lavcopts vcodec=mpeg4 -frames 5";
-		#main::_log("$cmd");
-		#my $out=system("$cmd >/dev/null 2>/dev/null");
-		#last if $out;
+		if ($avconv_exec)
+		{
+			my $cmd2=$avconv_exec.' -i '.$env{'file'}.' -ss '.$timestamp.' -vframes 1 '.$env{'file2'};
+			main::_log("$cmd2");system("$cmd2 >/dev/null 2>/dev/null");
+			
+			my $size=-s $env{'file2'};
+			if ($size > 0)
+			{
+				$out2 = 1;
+				last;
+			}
+			
+			next;
+		}
 		
 		my $cmd2="$ffmpeg_exec -y -i $env{'file'} -ss $timestamp -t 0.001 -f mjpeg -an $env{'file2'}";
 		main::_log("$cmd2");system("$cmd2 >/dev/null 2>/dev/null");
@@ -3793,13 +3804,9 @@ sub _video_part_file_thumbnail
 		return undef;
 	}
 	
-	#File::Copy::copy($env{'file2'},'/www/TOM/test.jpg');
-	
 	my $image1 = new Image::Magick;
 	$image1->Read($env{'file2'});
 	$image1->Write($env{'file2'});
-	
-	#File::Copy::copy($env{'file2'},'/www/TOM/test.jpg');
 	
 	$t->close();
 	return 1;
@@ -5020,7 +5027,7 @@ sub broadcast_program_add
 			{
 				'ID_entity' => $env{'program.ID_entity'},
 				'ID_channel' => $env{'program.ID_channel'},
-				'name' => $env{'program.name'},
+				'name' => $env{'program.name'} || '',
 				'status' => $env{'program.status'} || 'N',
 			},
 			'columns' => 
