@@ -240,6 +240,9 @@ sub event_add
 			}
 		}
 
+		# ref_ID
+		$columns{'ref_ID'}="'".TOM::Security::form::sql_escape($env{'event.ref_ID'})."'"
+			if (exists $env{'event.ref_ID'} && ($env{'event.ref_ID'} ne $event{'ref_ID'}));
 		# link
 		$columns{'link'}="'".TOM::Security::form::sql_escape($env{'event.link'})."'"
 			if (exists $env{'event.link'} && ($env{'event.link'} ne $event{'link'}));

@@ -23,6 +23,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
   `perm_roles_override` blob,
   `ref_facebook` varchar(20) character set ascii default NULL,
   `ref_deviceid` varchar(64) character set ascii default NULL,
+  `ref_ID` varchar(64) character set ascii default NULL, -- external reference
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID_user`),
   UNIQUE KEY `UNI_0` (`hostname`,`login`),
@@ -31,7 +32,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
   KEY `hostname` (`hostname`,`email`),
   KEY `email` (`email`),
   KEY `ref_facebook` (`ref_facebook`),
-  KEY `ref_deviceid` (`ref_deviceid`)
+  KEY `ref_deviceid` (`ref_deviceid`),
+  KEY `ref_ID` (`ref_ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
