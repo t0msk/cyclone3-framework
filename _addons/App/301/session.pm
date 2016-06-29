@@ -5,6 +5,8 @@ use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 
+use POSIX;
+
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 our $debug=0;
@@ -800,6 +802,8 @@ sub archive
 	my %env=@_;
 	return undef unless $ID_user;
 	
+	my $msec=ceil((Time::HiRes::gettimeofday)[1]/100);
+	
 	# INSERT IGNORE?
 	TOM::Database::SQL::execute(qq{
 		INSERT IGNORE INTO TOM.a301_user_session
@@ -808,6 +812,7 @@ sub archive
 			ID_session,
 			IP,
 			datetime_session_begin,
+			datetime_session_begin_msec,
 			datetime_session_end,
 			requests_all,
 			saved_cookies,
@@ -818,6 +823,7 @@ sub archive
 			ID_session,
 			IP,
 			datetime_login,
+			$msec,
 			datetime_request,
 			requests,
 			cookies,
