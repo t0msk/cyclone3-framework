@@ -239,7 +239,7 @@ sub execute
 			$sql_order_by
 		LIMIT
 			1
-	},'bind'=>[@sql_bind],'log_'=>1,'-slave'=>1,
+	},'bind'=>[@sql_bind],'log_'=>1,'-slave'=>1,'-cache'=>60,
 		'-changetime'=>App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",
