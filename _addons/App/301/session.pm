@@ -321,13 +321,14 @@ sub process
 								datetime_request=FROM_UNIXTIME($main::time_current),
 								cookies=?,
 								user_agent=?,
+								_ga=?,
 								requests=requests+1,
 								status='Y'
 							WHERE
 								ID_user=?
 							LIMIT 1
 						},'quiet'=>1,
-						'bind'=>[$tom::H,$main::USRM{'cookies'},$main::ENV{'HTTP_USER_AGENT'},$main::COOKIES{'_ID_user'}]);
+						'bind'=>[$tom::H,$main::USRM{'cookies'},$main::ENV{'HTTP_USER_AGENT'},$main::COOKIES_all{'_ga'},$main::COOKIES{'_ID_user'}]);
 					}
 				}
 				else # divna ID_session ktora nesuhlasi
@@ -410,6 +411,8 @@ sub process
 					{
 						$main::USRM{'logged'}="Y";
 						$main::USRM_flag="L";
+						main::_log("autolog=Y");
+						$main::USRM{'autologged'}="Y";
 					}
 					else
 					{
@@ -736,6 +739,12 @@ sub process
 		my @ab=('A','B');
 		$main::USRM{'session'}{'AB'}=$ab[int(rand(2))];
 	}
+	
+	if ($main::USRM{'autologged'}) # user logged automatically
+	{
+		autolog();
+		undef $main::USRM{'autologged'};
+	}
 	# create new session referer info
 	if ($main::USRM_flag eq "G")
 	{
@@ -793,7 +802,7 @@ sub archive
 	
 	# INSERT IGNORE?
 	TOM::Database::SQL::execute(qq{
-		INSERT INTO TOM.a301_user_session
+		INSERT IGNORE INTO TOM.a301_user_session
 		(
 			ID_user,
 			ID_session,
@@ -885,5 +894,9 @@ sub online_clone
 	return 1;
 }
 
+
+sub autolog
+{
+}
 
 1;

@@ -5076,6 +5076,7 @@ sub broadcast_program_add
 			'synopsis',
 			'description',
 			'program_code',
+			'program_sec_codes',
 			'record_id',
 			'program_type_code',
 			'authoring_country',
@@ -5557,6 +5558,8 @@ sub _broadcast_program_index
 		}
 		
 		my %program=$sth0{'sth'}->fetchhash();
+		delete $program{'datetime_real_start_msec'};
+		delete $program{'datetime_real_stop_msec'};
 		foreach (keys %program){delete $program{$_} unless $program{$_};}
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::510::db_name,

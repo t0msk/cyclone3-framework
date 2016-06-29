@@ -933,6 +933,9 @@ sub _article_index
 			push @{$article{'cat_charindex'}},$db0_line{'ID_charindex'}
 				if $db0_line{'ID_charindex'};
 			
+			push @{$article{'cat_charindex'}},$db0_line{'ID_charindex'}
+				if $db0_line{'ID_charindex'};
+			
 			push @{$article{'locale'}{$db0_line{'lng'}}{'name'}},$db0_line{'name'};
 			
 #			$db0_line{'datetime_start'}=~s| (\d\d)|T$1|;

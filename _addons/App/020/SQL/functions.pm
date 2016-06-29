@@ -110,12 +110,12 @@ sub new
 	$env{'columns'}{'posix_modified'}="'".$main::USRM{'ID_user'}."'" if $env{'-posix'};
 	foreach (sort keys %{$env{'columns'}})
 	{
-#		next unless $env{'columns'}{$_};
 		push @columns, $_;
 		push @values, $env{'columns'}{$_};
 	}
 	foreach (sort keys %{$env{'data'}})
 	{
+		next if exists $env{'columns'}{$_}; # 'columns' has higher priority
 		push @columns, $_;
 		push @values, '?';
 		push @bind, $env{'data'}{$_};
@@ -148,7 +148,7 @@ sub new
 			'db_name' => $env{'db_name'},
 			'tb_name' => $env{'tb_name'},
 			'ID' => $ID,
-			'ID_entity' => $env{'columns'}{'ID_entity'},
+			'ID_entity' => ($env{'data'}{'ID_entity'} || $env{'columns'}{'ID_entity'}),
 			'datetime_create' => $env{'columns'}{'datetime_create'},
 			'-low_priority' => $env{'-delayed'}
 		);
@@ -492,6 +492,7 @@ sub update
 	}
 	foreach (sort keys %{$env{'data'}})
 	{
+		next if exists $env{'columns'}{$_}; # 'columns' has higher priority
 		$sel_set.="\t\t`$_` = ?,\n";
 		push @bind, $env{'data'}{$_};
 	}
@@ -715,16 +716,19 @@ sub clone
 		delete $env{'columns'}{'ID_entity'};
 		delete $env{'columns'}{'datetime_create'};
 		
-		# osetrenie data
-		foreach (keys %data)
-		{
-			$data{$_}="'".$data{$_}."'";
-		}
+		my %columns;
 		
 		# override %data z $env{columns}
 		foreach (keys %{$env{'columns'}})
 		{
-			$data{$_}=$env{'columns'}{$_};
+			$columns{$_}=$env{'columns'}{$_};
+			delete $env{'data'}{$_}; # override data from input
+			delete $data{$_}; # override original data
+		}
+		
+		foreach (keys %{$env{'data'}})
+		{
+			$data{$_}=$env{'data'}{$_};
 		}
 		
 		# pokusim sa o novy riadok modifikacie
@@ -732,7 +736,8 @@ sub clone
 			'db_h' => $env{'db_h'},
 			'db_name' => $env{'db_name'},
 			'tb_name' => $env{'tb_name'},
-			'columns' => {%data},
+			'columns' => {%columns},
+			'data' => {%data},
 			'-journalize' => $env{'-journalize'},
 		);
 		if (!$ID)

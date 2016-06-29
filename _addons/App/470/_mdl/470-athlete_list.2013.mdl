@@ -112,9 +112,11 @@ sub execute
 			`athlete`.`metadata`,
 			`athlete`.`status`,
 
+
 			`athlete_lng`.`name` AS name_lng,
 			-- `athlete_lng`.`name_url`,
-			`athlete_lng`.`body`
+			`athlete_lng`.`body`,
+			`team_relation`.`note` AS team_relation_note
 
 			$sql_columns
 			
