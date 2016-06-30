@@ -187,7 +187,7 @@ sub execute
 			) as rating,
 			rating_score,
 			rating_votes,
-			
+			article_ent.published_mark,
 			article_ent.visits,
 			
 			article_attrs.status,
