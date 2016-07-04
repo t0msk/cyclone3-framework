@@ -46,8 +46,6 @@ sub get_file {
 	}
 	else
 	{
-		use Data::Dumper;
-		
 		if ($env->{'file.ID'}=~/^\d+$/)
 		{
 			$sql_where .= qq{ AND `file`.`ID`=?};
@@ -80,6 +78,7 @@ sub get_file {
 			`file_item`.`hash_secure`,
 			`file_item`.`file_size`,
 			`file_item`.`mimetype`,
+			CONCAT(`file_item`.`lng`,'/',SUBSTR(`file_item`.`ID`,1,4),'/',`file_item`.`name`,'.',`file_item`.`file_ext`) AS `file_path`,
 			IF
 			(
 				(`ACL_world`.`perm_R`='Y' OR `ACL_world`.`perm_R` IS NULL),
@@ -101,7 +100,7 @@ sub get_file {
 		)
 		INNER JOIN `$App::542::db_name`.`a542_file_item` AS `file_item` ON
 		(
-					`file_item`.`ID_entity` = `file`.`ID`
+					`file_item`.`ID_entity` = `file`.`ID_entity`
 			AND	`file_item`.`lng` = ?
 			AND	`file_item`.`status` IN ('Y','L')
 		)
