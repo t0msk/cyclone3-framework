@@ -3435,6 +3435,86 @@ sub video_part_file_add
 			}
 		}
 		
+		my $tmpjpeg=new TOM::Temp::file('ext'=>'jpeg','dir'=>$main::ENV{'TMP'},'nocreate'=>1);
+		my ($out,$data)=_video_part_file_previews(
+			'file' => $env{'file'},
+			'file2' => $tmpjpeg->{'filename'}
+		);
+		if ($out)
+		{
+			
+			my $part_ID = $env{'video_part.ID'};
+			my @previews;
+			opendir (DIR, $data->{'pattern_dir'});
+			my $i;
+			use POSIX;
+			foreach my $file (sort { $a cmp $b } grep {$_=~/^$data->{'pattern_file'}$/} readdir(DIR))
+			{
+				$i++;
+				my %image=App::501::functions::image_add(
+					'file' => $data->{'pattern_dir'}.'/'.$file,
+					'image_attrs.ID_category' => $App::510::thumbnail_cat_ID_entity,
+					'image_attrs.name' => $file,
+					'image_attrs.status' => 'Y',
+					'check_duplicity' => 1,
+				);
+				unlink $data->{'pattern_dir'}.'/'.$file;
+				push @previews,{
+					'time' => $i*$data->{'interval'},
+					'hms' => strftime("\%H:\%M:\%S", gmtime($i*$data->{'interval'})),
+					'image' => $image{'image.ID_entity'},
+				};
+			}
+			foreach my $relation (App::160::SQL::get_relations(
+				'l_prefix' => 'a510',
+				'l_table' => 'video_part',
+				'l_ID_entity' => $part_ID,
+	#			'rel_type' => 'preview',
+				'r_db_name' => $App::501::db_name,
+				'r_prefix' => 'a501',
+				'r_table' => 'image',
+				'limit' => 1000,
+				'status' => 'Y'
+			))
+			{
+				next unless $relation->{'rel_type'}=~/^preview_(.*?)$/;
+				$relation->{'hms'}=$1;
+				my $found;
+				foreach my $preview (@previews)
+				{
+					if ($preview->{'hms'} eq $relation->{'hms'} && $preview->{'image'} eq $relation->{'r_ID_entity'})
+					{
+						$preview={};
+						$found=1;
+						last;
+					}
+				}
+				next if $found;
+				App::160::SQL::remove_relation(
+					'l_prefix' => 'a510',
+					'l_table' => 'video_part',
+					'ID' => $relation->{'ID'}
+				);
+			}
+			foreach my $preview (@previews)
+			{
+				next unless $preview->{'image'};
+				App::160::SQL::new_relation(
+					'l_prefix' => 'a510',
+					'l_table' => 'video_part',
+					'l_ID_entity' => $part_ID,
+					'rel_type' => 'preview_'.$preview->{'hms'},
+					'rel_name' => $preview->{'hms'},
+					'r_db_name' => $App::501::db_name,
+					'r_prefix' => 'a501',
+					'r_table' => 'image',
+					'r_ID_entity' => $preview->{'image'},
+					'status' => 'Y'
+				);
+			}
+			
+		}
+		
 	}
 	
 	
@@ -3812,6 +3892,43 @@ sub _video_part_file_thumbnail
 	return 1;
 }
 
+
+sub _video_part_file_previews
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::_video_part_file_previews()");
+	
+	$env{'interval'}||=30;
+	
+	main::_log("file='$env{'file'}'");
+	
+	$env{'file2'}=~s|\.(.*?)$|-%04d.$1|;
+	
+	$env{'pattern_file'}=$env{'file2'};
+	$env{'pattern_file'}=~s|^(.*)/||;$env{'pattern_dir'}=$1;
+	$env{'pattern_file'}=~s|([\.\-])|\\$1|gms;
+	$env{'pattern_file'}=~s|\%04d|.*|;
+	
+	if (!$env{'file2'})
+	{
+		$t->close();
+		return undef;
+	}
+	
+	if ($avconv_exec)
+	{
+		my $cmd2=$avconv_exec.' -i '.$env{'file'}.' -c:v mjpeg -qscale 1 -vsync vfr -vf "fps=1/'.$env{'interval'}.'" '.$env{'file2'};
+		main::_log("$cmd2");system("$cmd2 >/dev/null 2>/dev/null");
+	}
+	else
+	{
+		$t->close();
+		return undef;
+	}
+	
+	$t->close();
+	return 1,\%env;
+}
 
 
 =head2 video_part_file_newhash()
