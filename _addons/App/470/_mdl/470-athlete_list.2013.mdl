@@ -51,28 +51,41 @@ sub execute
 	{
 		$sql_group_by="`athlete`.`ID_entity`";
 	}
-	
-	if ($env{'rel_team.ID'})
-	{
-		my $sql_team;
-		# foreach my $ID_category (split(';',$env{'rel_team.ID'}))
-		# {
-		# 	next unless $ID_category;
-		# 	if ($ID_category=~s/\*$//)
-		# 	{
-		# 		my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::470::db_name`.`a470_rel_team` WHERE `ID`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
-		# 		$sql_team.=qq{ OR `rel_team`.`ID_charindex` LIKE CONCAT(($cat_sql),"%")};
-		# 	}
-		# 	else
-		# 	{
-		# 		$sql_team.=" OR `athlete`.`ID_category`=$ID_category";
-		# 	}
-		# 	$sql_team=~s/^ OR //;
-		# }
-		# if ($sql_team)
-		# {
-		# 	$sql_where.=" AND (".$sql_team.") ";
-		# }
+
+
+	if ($env{'athlete_cat.ID'}) {
+		my $sql_cat;
+		$sql_columns .= ", athlete_cat.ID_charindex";
+		foreach my $ID_category (split(';',$env{'athlete_cat.ID'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::470::db_name`.`a470_athlete_cat` WHERE `ID`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
+				$sql_cat.=qq{ OR `athlete_cat`.`ID_charindex` LIKE CONCAT(($cat_sql),"%")};
+			}
+			else
+			{
+				$sql_cat.=" OR `athlete`.`ID_category`=$ID_category";
+			}
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	} elsif ($env{'rel_team.ID'}) {
+		$sql_join .= "
+		INNER JOIN $App::160::db_name.a160_relation AS team_relation ON
+			(
+			team_relation.l_ID_entity = $env{'rel_team.ID'} AND
+			athlete.ID_entity = team_relation.r_ID_entity AND
+			team_relation.rel_type = 'team_member' AND
+			team_relation.status = 'Y'
+			)
+		";
+		$sql_columns .= ",
+			`team_relation`.`note` AS team_relation_note";
 	}
 	
 	if ($env{'athlete.ID_entity'}=~/^[;0-9]+$/)
@@ -99,7 +112,7 @@ sub execute
 	my $parser=new App::020::mimetypes::html(
 		'tpl_ext' => $TPL # extend
 	);
-	
+
 	my $i;
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
@@ -112,27 +125,25 @@ sub execute
 			`athlete`.`metadata`,
 			`athlete`.`status`,
 
+			`athlete_cat`.`name` AS `cat_name`,
+			`athlete_cat`.`name_url` AS `cat_name_url`,
 
 			`athlete_lng`.`name` AS name_lng,
 			-- `athlete_lng`.`name_url`,
-			`athlete_lng`.`body`,
-			`team_relation`.`note` AS team_relation_note
-
+			`athlete_lng`.`body`
+			
 			$sql_columns
 			
 		FROM `$App::470::db_name`.`a470_athlete` AS `athlete`
-		INNER JOIN $App::160::db_name.a160_relation AS team_relation ON
-		(
-			team_relation.l_ID_entity = $env{'rel_team.ID'} AND
-			athlete.ID_entity = team_relation.r_ID_entity AND
-			team_relation.rel_type = 'team_member' AND
-			team_relation.status = 'Y'
+		$sql_join
+		LEFT JOIN `$App::470::db_name`.`a470_athlete_cat` AS `athlete_cat` ON (
+			athlete.ID_category = athlete_cat.ID
 		)
 		LEFT JOIN `$App::470::db_name`.`a470_athlete_lng` AS `athlete_lng` ON (
 			athlete.ID = athlete_lng.ID_entity AND
-			lng = '$env{'lng'}'
+			athlete_lng.lng = '$env{'lng'}'
 		)
-		$sql_join
+
 		WHERE
 			`athlete`.`status` IN ('$sql_athlete_status')
 			$sql_where}.do{if($sql_group_by){qq{

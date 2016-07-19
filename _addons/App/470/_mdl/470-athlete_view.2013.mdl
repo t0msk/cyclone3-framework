@@ -48,10 +48,17 @@ sub execute
 			athlete.name_url,
 			athlete.metadata,
 
+
+			athlete_cat.name AS cat_name,
+			athlete_cat.name_url AS cat_name_url,
+			
 			athlete_lng.body
 			
 		FROM
 			$App::470::db_name.a470_athlete AS athlete
+		LEFT JOIN `$App::470::db_name`.`a470_athlete_cat` AS `athlete_cat` ON (
+			athlete.ID_category = athlete_cat.ID
+		)
 		LEFT JOIN $App::470::db_name.a470_athlete_lng AS athlete_lng ON
 		(
 			athlete_lng.ID_entity = athlete.ID AND
