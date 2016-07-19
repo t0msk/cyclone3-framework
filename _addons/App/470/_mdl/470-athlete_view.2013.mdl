@@ -96,6 +96,26 @@ sub execute
 		'rel_type' => "avatar",
 		'status' => "Y"
 	))[0];
+
+	my @gallery_images;
+	foreach my $relation(App::160::SQL::get_relations(
+		'db_name' => $App::470::db_name,
+		'l_prefix' => 'a470',
+		'l_table' => 'athlete',
+		'l_ID_entity' => $athlete{'ID_entity'},
+		'rel_type' => 'gallery',
+		'r_prefix' => "a501",
+		'r_table' => "image",
+		'status' => "Y",
+	))
+	{
+		next unless $relation->{'r_ID_entity'};
+		push @gallery_images, $relation->{'r_ID_entity'};
+	}
+	$athlete{'gallery'} = \@gallery_images;
+	
+	%{$athlete{'metahash'}}=App::020::functions::metadata::parse($athlete{'metadata'});
+	delete $athlete{'metadata'};
 	
 	use App::020::mimetypes::html;
 	my $parser=new App::020::mimetypes::html(
