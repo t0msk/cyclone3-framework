@@ -166,7 +166,6 @@ sub event_add
 	
 	foreach my $field ('status','name','datetime_start','datetime_finish','result')
 	{
-		main::_log("prechadzam field $field");
 		$data{$field}=$env{'event.'.$field}
 			if ($env{'event.'.$field} && ($env{'event.'.$field} ne $event{$field}));
 	}
@@ -188,14 +187,12 @@ sub event_add
 				'limit' => 1
 			))[0])
 			{
-				main::_log("mam relation".Dumper($relation));
 				if ($relation->{'ID'})
 				{
 					my $success=App::160::SQL::remove_relation(
 						'l_prefix' => 'a470',
 						'ID' => $relation->{'ID'}
 					);
-					main::_log("vymazany relation ID $relation->{'ID'}");
 				}
 			}
 			# create a new relation
@@ -382,10 +379,6 @@ sub athlete_add
 	$data{'metadata'}=$env{'athlete.metadata'}
 		if (exists $env{'athlete.metadata'} && ($env{'athlete.metadata'} ne $athlete{'metadata'}));
 
-	if ($env{'athlete_cat.ID'}) {
-		$columns{'ID_category'} = $env{'athlete_cat.ID'};
-	}
-
 	foreach my $field ('status')
 	{
 		$data{$field}=$env{'athlete.'.$field}
@@ -411,13 +404,11 @@ sub athlete_add
 	# get lng fields
     foreach my $key (keys %env)
     {
-		main::_log("prechadzam $key");
         if ($key =~ /athlete_lng\.([a-zA-Z\-]+)\.(.+)$/) 
 		{
 			my $lng = $1; my $varname = $2;
 			$athlete_lng{$lng} = {} unless (exists $athlete_lng{$lng});
 			$athlete_lng{$lng}{$varname} = $env{$key};
-			main::_log("has key $varname: $athlete_lng{$lng}{$varname} for lng $lng");
 			# name_url
 			# if ($varname eq 'name') {
 			# 	$athlete_lng{$lng}{'name_url'}=TOM::Security::form::sql_escape(TOM::Net::URI::rewrite::convert($env->{$key}));
@@ -452,8 +443,6 @@ sub athlete_add
     {
     	my $local = $lng_line{'lng'};
     	if (%athlete_lng && $athlete_lng{$local}) {
-			main::_log('lng dump'.Dumper(\$athlete_lng{$local}));
-			$App::020::SQL::functions::debug = 1;
 			
 			App::020::SQL::functions::update(
 				'db_h' => 'main',
@@ -467,6 +456,19 @@ sub athlete_add
 				'-posix' => 1,
 			);
 		}
+	}
+
+	if ($env{'athlete_cat.ID'}) {
+		$env{'athlete.ID'}=App::020::SQL::functions::new(
+			'db_h' => "main",
+			'db_name' => $App::470::db_name,
+			'tb_name' => "a470_athlete_sym",
+			'columns' => {
+				'ID' => $env{'athlete_cat.ID'},
+				'ID_entity' => $env{'athlete.ID'}
+			},
+			'-journalize' => 1,
+		);
 	}
 	
 	$t->close();
@@ -643,176 +645,5 @@ sub team_add
 	$t->close();
 	return %team;
 }
-
-sub table_add
-{
-	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::table_add()");
-	
-	my %table;
-	
-	if ($env{'table.ID'})
-	{
-		$env{'table.ID'}=$env{'table.ID'}+0;
-		undef $env{'table.ID_entity'}; # ID_entity has lower priority as ID
-		# when real ID_entity used, then read it from ID
-		# when ID not found, undef ID_entity, because is invalid
-		main::_log("finding table.ID_entity by table.ID='$env{'table.ID'}'");
-		%table=App::020::SQL::functions::get_ID(
-			'ID' => $env{'table.ID'},
-			'db_h' => "main",
-			'db_name' => $App::470::db_name,
-			'tb_name' => "a470_table",
-			'columns' => {'*'=>1}
-		);
-		if ($table{'ID'})
-		{
-			$env{'table.ID_entity'}=$table{'ID_entity'};
-			main::_log("found table.ID_entity='$env{'table.ID_entity'}'");
-		}
-		else
-		{
-			main::_log("not found table.ID, undef",1);
-			App::020::SQL::functions::new(
-				'db_h' => "main",
-				'db_name' => $App::470::db_name,
-				'tb_name' => "a470_table",
-				'columns' => {
-					'ID' => $env{'table.ID'},
-				},
-				'-journalize' => 1,
-			);
-			%table=App::020::SQL::functions::get_ID(
-				'ID' => $env{'table.ID'},
-				'db_h' => "main",
-				'db_name' => $App::470::db_name,
-				'tb_name' => "a470_table",
-				'columns' => {'*'=>1}
-			);
-			$env{'table.ID_entity'}=$table{'ID_entity'};
-		}
-	}
-	
-	if (!$env{'table.ID'})
-	{
-		main::_log("!table.ID, create table.ID (table.ID_entity='$env{'table.ID_entity'}')");
-		my %columns;
-		$columns{'ID_entity'}=$env{'table.ID_entity'} if $env{'table.ID_entity'};
-
-
-		$env{'table.ID'}=App::020::SQL::functions::new(
-			'db_h' => "main",
-			'db_name' => $App::470::db_name,
-			'tb_name' => "a470_table",
-			'columns' => {%columns},
-			'-journalize' => 1,
-		);
-		%table=App::020::SQL::functions::get_ID(
-			'ID' => $env{'table.ID'},
-			'db_h' => "main",
-			'db_name' => $App::470::db_name,
-			'tb_name' => "a470_table",
-			'columns' => {'*'=>1}
-		);
-		$env{'table.ID'}=$table{'ID'};
-		$env{'table.ID_entity'}=$table{'ID_entity'};
-	}
-	
-	main::_log("table.ID='$table{'ID'}' table.ID_entity='$table{'ID_entity'}'");
-	
-	# update only if necessary
-	my %columns;
-	my %data;
-
-	# status
-	$data{'status'}=$env{'table.status'}
-		if ($env{'table.status'} && ($env{'table.status'} ne $table{'status'}));
-
-	# name
-	$data{'name'}=$env{'table.name'}
-		if ($env{'table.name'} && ($env{'table.name'} ne $table{'name'}));
-	$data{'name_url'}=TOM::Net::URI::rewrite::convert($env{'table.name'},'notlower'=>1)
-		if ($env{'table.name'} && ($env{'table.name'} ne $table{'name'}));
-	
-
-	
-	# metadata
-	my %metadata=App::020::functions::metadata::parse($table{'metadata'});
-	
-	foreach my $section(split(';',$env{'table.metadata.override_sections'}))
-	{
-		delete $metadata{$section};
-	}
-	
-	if ($env{'table.metadata.replace'})
-	{
-		if (!ref($env{'table.metadata'}) && $env{'table.metadata'})
-		{
-			%metadata=App::020::functions::metadata::parse($env{'table.metadata'});
-		}
-		if (ref($env{'table.metadata'}) eq "HASH")
-		{
-			%metadata=%{$env{'table.metadata'}};
-		}
-	}
-	else
-	{
-		if (!ref($env{'table.metadata'}) && $env{'table.metadata'})
-		{
-			# when metadata send as <metatree></metatree> then always replace
-			%metadata=App::020::functions::metadata::parse($env{'table.metadata'});
-		}
-		if (ref($env{'table.metadata'}) eq "HASH")
-		{
-			# metadata overrride
-			foreach my $section(keys %{$env{'table.metadata'}})
-			{
-				foreach my $variable(keys %{$env{'table.metadata'}{$section}})
-				{
-					$metadata{$section}{$variable}=$env{'table.metadata'}{$section}{$variable};
-				}
-			}
-		}
-	}
-	
-	$env{'table.metadata'}=App::020::functions::metadata::serialize(%metadata);
-	
-	$data{'metadata'}=$env{'table.metadata'}
-		if (exists $env{'table.metadata'} && ($env{'table.metadata'} ne $table{'metadata'}));
-	
-	if (($env{'table_cat.ID'} || $env{'table_cat.ID_entity'}) && ($table{'status'} eq "T"))
-	{
-		$env{'table.status'}=$env{'table.status'} || 'N';
-	}
-
-	if ($env{'table_cat.ID'}) {
-		$columns{'ID_category'} = $env{'table_cat.ID'};
-	}
-	
-	foreach my $field ('status')
-	{
-		$data{$field}=$env{'table.'.$field}
-			if ($env{'table.'.$field} && ($env{'table.'.$field} ne $table{$field}));
-	}
-	
-	if (keys %columns || keys %data)
-	{
-		App::020::SQL::functions::update(
-			'ID' => $env{'table.ID'},
-			'db_h' => "main",
-			'db_name' => $App::470::db_name,
-			'tb_name' => "a470_table",
-			'columns' => {%columns},
-			'data' => {%data},
-			'-posix' => 1,
-			'-journalize' => 1
-		);
-	}
-	
-	$t->close();
-	return %table;
-}
-
-
 
 1;

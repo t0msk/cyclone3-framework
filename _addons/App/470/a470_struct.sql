@@ -59,7 +59,6 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_team_lng` (
 
 -- --------------------------------------------------
 
--- editacia thumbnailu
 CREATE TABLE `/*db_name*/`.`/*addon*/_team_cat` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
@@ -80,6 +79,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_team_cat` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*addon*/_team_cat_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
@@ -95,11 +95,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_team_cat_j` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
--- editacia avatara
+
 CREATE TABLE `/*db_name*/`.`/*addon*/_athlete` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
-  `ID_category` bigint(20) unsigned default NULL, -- rel _team_cat.ID_entity
+  `ID_category` bigint(20) unsigned default NULL, -- rel _team_cat.ID_entity - OBSOLETE, to be removed, see athlete_sym
   `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
@@ -195,6 +195,29 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_athlete_cat_j` (
   `lng` char(5) character set ascii NOT NULL default 'xx',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_athlete_sym` ( -- list of athlete symlinks
+  `ID` bigint(20) unsigned NOT NULL auto_increment, -- rel athlete_cat.ID_entity
+  `ID_entity` bigint(20) unsigned NOT NULL, -- rel athlete.ID_entity
+  `datetime_create` datetime NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`ID_entity`),
+  KEY `ID_entity` (`ID_entity`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_athlete_sym_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned NOT NULL, 
+  `datetime_create` datetime NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'Y',
+  PRIMARY KEY  (`ID`,`ID_entity`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
