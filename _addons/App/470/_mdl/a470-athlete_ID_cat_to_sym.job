@@ -1,0 +1,48 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use Data::Dumper;
+use App::470::_init;
+
+sub execute
+{
+
+	my %env=@_;
+	my $sql=qq{
+		SELECT
+			athlete.ID_entity,
+			athlete.ID_category
+		FROM
+			$App::470::db_name.a470_athlete AS athlete
+		WHERE
+			ID_category IS NOT NULL
+	};
+	
+	my %sth0=TOM::Database::SQL::execute($sql,'log'=>1);
+	
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+
+		main::_log("inserting symlink for ID_entity_athlete=$db0_line{'ID_entity'} into ID_category=$db0_line{'ID_category'}");
+		TOM::Database::SQL::execute(qq{
+			REPLACE INTO `$App::470::db_name`.a470_athlete_sym
+			(
+				ID,
+				ID_entity,
+				datetime_create
+			)
+			VALUES
+			(
+				?,?,NOW()
+			)
+		},'bind'=>[$db0_line{'ID_category'},$db0_line{'ID_entity'}],'log'=>1);
+	}
+	
+return 1
+}
+1;
