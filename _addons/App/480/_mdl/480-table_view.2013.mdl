@@ -1,0 +1,103 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::480::_init;
+
+use Data::Dumper;
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_changetime;
+	
+   if (!($env{'table.ID'} =~ /\d+/))
+	{
+		main::_log("no table.ID provided or in invalid format");
+		return 0;
+	} else {
+		push @sql_bind, $env{'table.ID'};
+	}
+
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			ID,
+			ID_entity,
+			ID_category,
+			name,
+			datetime_create,
+			lng,
+			metadata
+		FROM
+			$App::480::db_name.a480_table
+		WHERE
+			status IN ('Y') AND
+			ID = ?
+		LIMIT
+			1
+	},'bind'=>[@sql_bind],'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::480::db_name,
+				'tb_name' => "a480_table"
+			}),
+	);
+	
+	my %table=$sth0{'sth'}->fetchhash();
+	return 0 unless $table{'ID'};
+
+	main::_log("found table.ID=$table{'ID'}");
+	
+	%{$table{'metahash'}}=App::020::functions::metadata::parse($table{'metadata'});
+	delete $table{'metadata'};
+
+	my %sth_rows=TOM::Database::SQL::execute(qq{ 
+		SELECT
+			ID,
+			ID_entity,
+			status_header,
+			order_id,
+			datetime_create,
+			A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z
+		FROM
+			$App::480::db_name.a480_table_row
+		WHERE
+			ID_entity = ? AND
+			status IN ('Y')
+		ORDER BY
+			order_id ASC
+		LIMIT
+			9999
+	},'bind'=>[$table{'ID'}],'-slave'=>1);
+
+	while (my %db0_line=$sth_rows{'sth'}->fetchhash())
+	{
+		$db0_line{'order_id'} = $db0_line{'order_id'}/10;
+		push @{$TPL->{'variables'}->{'rows'}},\%db0_line;
+	}
+	
+	$TPL->{'variables'}{'table'}=\%table;
+	
+	return 1,%env_out;
+}
+
+1;
