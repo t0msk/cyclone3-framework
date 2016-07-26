@@ -5227,7 +5227,8 @@ sub broadcast_program_add
 			'datetime_real_stop',
 			'datetime_real_stop_msec',
 			'datetime_real_status',
-			'license_valid_to'
+			'license_valid_to',
+			'metadata'
 		)
 		{
 			if (exists $env{'program.'.$_} && ($env{'program.'.$_} ne $program{$_}))
