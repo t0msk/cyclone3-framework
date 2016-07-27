@@ -564,6 +564,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   `status_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
   `recording` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N', -- it is recording now
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`ID`),
   UNIQUE KEY `UNI_0` (`ID_channel`,`program_code`,`datetime_air_start`),
   KEY `ID_entity` (`ID_entity`),
@@ -625,6 +626,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
   `status_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
   `recording` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
