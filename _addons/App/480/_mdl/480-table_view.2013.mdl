@@ -43,6 +43,7 @@ sub execute
 			ID_entity,
 			ID_category,
 			name,
+			name_url,
 			datetime_create,
 			lng,
 			metadata
@@ -63,7 +64,12 @@ sub execute
 	);
 	
 	my %table=$sth0{'sth'}->fetchhash();
-	return 0 unless $table{'ID'};
+
+	if (!$table{'ID'}) {
+		main::_log("table.ID $env{'table.ID'} can not be found!");
+		return 1;
+	}
+	
 
 	main::_log("found table.ID=$table{'ID'}");
 	
