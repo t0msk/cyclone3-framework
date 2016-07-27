@@ -55,23 +55,26 @@ sub execute
 
 	if ($env{'athlete_cat.ID'}) {
 		my $sql_cat;
-		$sql_columns .= ", athlete_cat.ID_charindex";
 		foreach my $ID_category (split(';',$env{'athlete_cat.ID'}))
 		{
 			next unless $ID_category;
-			if ($ID_category=~s/\*$//)
-			{
-				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::470::db_name`.`a470_athlete_cat` WHERE `ID`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
-				$sql_cat.=qq{ OR `athlete_cat`.`ID_charindex` LIKE CONCAT(($cat_sql),"%")};
+			if ($ID_category =~ /^\d+\*?$|^\*$/) {
+				my $sql_sym;
+				if ($ID_category=~s/\*$//)
+				{
+					my $cat_sql="SELECT ID_charindex FROM $App::470::db_name.a470_athlete_cat WHERE ID=$ID_category AND status IN ('Y')";
+					$sql_sym=qq{ SELECT ID_entity FROM $App::470::db_name.a470_athlete_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND status IN ('Y')};
+				}
+				else
+				{
+					$sql_sym=$ID_category;
+				}
+				$sql_cat.=" OR athlete_sym.ID IN ($sql_sym)";
 			}
-			else
-			{
-				$sql_cat.=" OR `athlete`.`ID_category`=$ID_category";
-			}
-			$sql_cat=~s/^ OR //;
 		}
 		if ($sql_cat)
 		{
+			$sql_cat=~s/^ OR //;
 			$sql_where.=" AND (".$sql_cat.") ";
 		}
 	} elsif ($env{'rel_team.ID'}) {
@@ -136,8 +139,12 @@ sub execute
 			
 		FROM `$App::470::db_name`.`a470_athlete` AS `athlete`
 		$sql_join
+		LEFT JOIN `$App::470::db_name`.`a470_athlete_sym` AS `athlete_sym` ON (
+			athlete_sym.ID_entity = athlete.ID_entity
+		)
 		LEFT JOIN `$App::470::db_name`.`a470_athlete_cat` AS `athlete_cat` ON (
-			athlete.ID_category = athlete_cat.ID
+			athlete_sym.ID = athlete_cat.ID_entity AND 
+			athlete_cat.status IN ('Y')
 		)
 		LEFT JOIN `$App::470::db_name`.`a470_athlete_lng` AS `athlete_lng` ON (
 			athlete.ID = athlete_lng.ID_entity AND

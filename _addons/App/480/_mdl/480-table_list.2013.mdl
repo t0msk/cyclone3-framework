@@ -1,0 +1,210 @@
+#!/usr/bin/perl
+# USE UTF-8 !!!
+package Tomahawk::module;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+
+use App::210::_init;
+use App::480::_init;
+
+
+sub execute
+{
+	my %env=@_;
+	my %env_out;
+	
+	$env{'table.status'}='Y' unless $env{'table.status'};
+		my $sql_table_status=join "','", split('',$env{'table.status'});
+	
+	# paging
+	$env{'page_limit'} = 10 unless $env{'page_limit'};
+	$env{'page'} = 1 unless $env{'page'};
+	$env{'page_offset'} = 0 unless $env{'page_offset'};
+	$env{'page_plus'} = 1 unless $env{'page_plus'};
+	if (!$env{'sql_limit'})
+	{
+		$env{'sql_limit'}=((($env{'page'}-1)*$env{'page_limit'})+$env{'page_offset'}).",".($env{'page_limit'}+$env{'page_plus'});
+	}
+	else
+	{
+#		$env{'sql_limit'}=~/^(\d+),?(\d+)?$/;
+	}
+	
+	
+	my @sql_bind;
+	my $sql_where;
+	my $sql_changetime;
+	my $sql_limit=$env{'sql_limit'} || 10;
+	my $sql_order_by=$env{'sql_order_by'} || '`mytable`.`name` ASC';
+	my $sql_group_by;
+	
+	if ($env{'unique'})
+	{
+		$sql_group_by="`mytable`.`ID_entity`";
+	}
+
+
+	if ($env{'table_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'table_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::480::db_name`.`a480_table_cat` WHERE `ID_entity`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
+				$sql_cat.=qq{ OR `table_cat`.`ID_charindex` LIKE CONCAT(($cat_sql),"%")};
+			}
+			else
+			{
+				$sql_cat.=" OR `table_cat`.`ID_entity`=$ID_category";
+				push @{$env_out{'entity'}},{
+					'db_h' => 'main',
+					'db_name' => $App::480::db_name,
+					'tb_name' => 'a480_table_cat',
+					'ID_entity' => $ID_category,
+				};
+			}
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	if ($env{'table_cat.ID'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'table_cat.ID'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::480::db_name`.`a480_table_cat` WHERE `ID`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
+				$sql_cat.=qq{ OR `table_cat`.`ID_charindex` LIKE CONCAT(($cat_sql),"%")};
+			}
+			else
+			{
+				$sql_cat.=" OR `mytable`.`ID_category`=$ID_category";
+			}
+			$sql_cat=~s/^ OR //;
+		}
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
+	}
+	
+	
+	if ($env{'mytable.ID_entity'}=~/^[;0-9]+$/)
+	{
+		$sql_where.=" AND mytable.ID_entity IN (".join(',',split(';',$env{'mytable.ID_entity'})).")";
+		$sql_limit=scalar split(';',$env{'mytable.ID_entity'});
+	}
+	
+	if ($env{'mytable.ID'}=~/^[;0-9]+$/)
+	{
+		$sql_where.=" AND mytable.ID IN (".join(',',split(';',$env{'mytable.ID'})).")";
+		$sql_limit=scalar split(';',$env{'mytable.ID'});
+	}
+	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	
+	$sql_where=~s|^ ||;
+	
+	# get template
+	Tomahawk::GetTpl('env' => \%env) || return undef;
+	
+	my $i;
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			
+			`mytable`.`ID`,
+			`mytable`.`ID_entity`,
+			
+			`mytable`.`name`,
+			`mytable`.`metadata`,
+			`mytable`.`status`,
+			`mytable`.`lng`,
+
+			`table_cat`.`name` AS `cat_name`,
+			`table_cat`.`name_url` AS `cat_name_url`
+			
+		FROM `$App::480::db_name`.`a480_table` AS `mytable`
+		LEFT JOIN `$App::480::db_name`.`a480_table_cat` AS `table_cat` ON (
+			mytable.ID_category = table_cat.ID AND 
+			table_cat.status IN ('Y')
+		)
+		WHERE
+			`mytable`.`status` IN ('$sql_table_status')
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
+		ORDER BY
+			$sql_order_by
+		LIMIT
+			$sql_limit
+	},'bind'=>[@sql_bind],'log'=>$tom::devel,'-slave'=>1,
+		'-changetime'=>App::020::SQL::functions::_get_changetime(
+			{
+				'db_h'=>"main",
+				'db_name' => $App::480::db_name,
+				'tb_name' => "a480_table",
+				'ID_entity' => do{$env{'table.ID_entity'} if $env{'table.ID_entity'}=~/^\d+$/}
+			}),
+	);
+	
+	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
+	while (my %table=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		last if $i > $env{'page_limit'};
+		
+		main::_log("[$i/$env{'page_limit'}] found table.ID_entity=$table{'ID_entity'}");
+		
+		push @{$env_out{'entity'}},{
+			'db_h' => 'main',
+			'db_name' => $App::480::db_name,
+			'tb_name' => 'a480_table',
+			'ID_entity' => $table{'ID_entity'}
+		};
+
+		# select rows
+		my %sth_rows=TOM::Database::SQL::execute(qq{
+			SELECT
+				ID,
+				ID_entity,
+				status_header,
+				order_id,
+				datetime_create,
+				A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z
+			FROM
+				$App::480::db_name.a480_table_row
+			WHERE
+				ID_entity = ? AND
+				status IN ('Y')
+			ORDER BY
+				order_id ASC
+			LIMIT
+				9999
+		},'bind'=>[$table{'ID'}],'-slave'=>1);
+
+		while (my %db_rows=$sth_rows{'sth'}->fetchhash())
+		{
+			$db_rows{'order_id'} = $db_rows{'order_id'}/10;
+			push @{$table{'rows'}},\%db_rows;
+		}
+		
+		%{$table{'metahash'}}=App::020::functions::metadata::parse($table{'metadata'});
+		
+		push @{$TPL->{'variables'}{'items'}},\%table;
+	}
+	
+	return 1,%env_out;
+}
+
+1;
