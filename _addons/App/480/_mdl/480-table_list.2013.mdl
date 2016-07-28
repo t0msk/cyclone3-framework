@@ -127,6 +127,7 @@ sub execute
 			`mytable`.`ID_entity`,
 			
 			`mytable`.`name`,
+			`mytable`.`name_url`,
 			`mytable`.`metadata`,
 			`mytable`.`status`,
 			`mytable`.`lng`,
