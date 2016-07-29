@@ -602,7 +602,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   `ID_series` bigint(20) unsigned DEFAULT NULL, -- internal rel _broadcast_series.ID_entity
   `ID_video` bigint(20) unsigned DEFAULT NULL, -- internal rel _video.ID_entity
   `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL, -- number of program - not unique
-  `program_sec_codes` text CHARACTER SET ascii DEFAULT NULL,
+  `program_sec_codes` text CHARACTER SET ascii,
   `record_id` varchar(64) CHARACTER SET ascii DEFAULT NULL, -- unique id of job from broadcaster
   `program_type_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
@@ -670,7 +670,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
   `ID_series` bigint(20) unsigned DEFAULT NULL,
   `ID_video` bigint(20) unsigned DEFAULT NULL,
   `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL,
-  `program_sec_codes` text CHARACTER SET ascii DEFAULT NULL,
+  `program_sec_codes` text CHARACTER SET ascii,
   `record_id` varchar(64) CHARACTER SET ascii DEFAULT NULL, -- unique id of job from broadcaster
   `program_type_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',

@@ -701,7 +701,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_schedule` ( -- schedule with rea
   `ID_entity` bigint(20) unsigned DEFAULT NULL,
   `ID_channel` bigint(20) unsigned DEFAULT NULL, -- rel _broadcast_channel.ID_entity
   `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL, -- number of program - not unique
-  `name` varchar(256) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name` varchar(250) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `name_url` varchar(256) CHARACTER SET ascii NOT NULL DEFAULT '',
   `artist` varchar(256) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   `album` varchar(256) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
