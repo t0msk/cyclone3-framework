@@ -5,6 +5,8 @@ use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 
+use POSIX;
+
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 our $debug=0;
@@ -411,6 +413,8 @@ sub process
 					{
 						$main::USRM{'logged'}="Y";
 						$main::USRM_flag="L";
+						main::_log("autolog=Y");
+						$main::USRM{'autologged'}="Y";
 					}
 					else
 					{
@@ -737,6 +741,12 @@ sub process
 		my @ab=('A','B');
 		$main::USRM{'session'}{'AB'}=$ab[int(rand(2))];
 	}
+	
+	if ($main::USRM{'autologged'}) # user logged automatically
+	{
+		autolog();
+		undef $main::USRM{'autologged'};
+	}
 	# create new session referer info
 	if ($main::USRM_flag eq "G")
 	{
@@ -792,6 +802,8 @@ sub archive
 	my %env=@_;
 	return undef unless $ID_user;
 	
+	my $msec=ceil((Time::HiRes::gettimeofday)[1]/100);
+	
 	# INSERT IGNORE?
 	TOM::Database::SQL::execute(qq{
 		INSERT IGNORE INTO TOM.a301_user_session
@@ -800,6 +812,7 @@ sub archive
 			ID_session,
 			IP,
 			datetime_session_begin,
+			datetime_session_begin_msec,
 			datetime_session_end,
 			requests_all,
 			saved_cookies,
@@ -810,6 +823,7 @@ sub archive
 			ID_session,
 			IP,
 			datetime_login,
+			$msec,
 			datetime_request,
 			requests,
 			cookies,
@@ -886,5 +900,9 @@ sub online_clone
 	return 1;
 }
 
+
+sub autolog
+{
+}
 
 1;

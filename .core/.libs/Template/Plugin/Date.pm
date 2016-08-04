@@ -20,14 +20,11 @@
 
 package Template::Plugin::Date;
 
-use open ':utf8', ':std';
-use if $] < 5.018, 'encoding','utf8';
-use utf8;
 use strict;
 use warnings;
+use utf8;
 use open ':utf8', ':std';
 use if $] < 5.018, 'encoding','utf8';
-use utf8;
 use base 'Template::Plugin';
 
 use POSIX ();
@@ -148,7 +145,11 @@ sub format {
         $datestr = &POSIX::strftime($format, @date);
     }
 	
-#	utf8::decode($datestr);
+	main::_log('TPL Date before: ' . $datestr . ' is_utf8: ' . utf8::is_utf8($datestr),3,'debug');
+	
+	utf8::decode($datestr);
+	
+	main::_log('TPL Date after: ' . $datestr . ' is_utf8: ' . utf8::is_utf8($datestr),3,'debug');
 	
     return $datestr;
 }

@@ -187,7 +187,7 @@ sub execute
 			) as rating,
 			rating_score,
 			rating_votes,
-			
+			article_ent.published_mark,
 			article_ent.visits,
 			
 			article_attrs.status,
@@ -239,7 +239,7 @@ sub execute
 			$sql_order_by
 		LIMIT
 			1
-	},'bind'=>[@sql_bind],'log_'=>1,'-slave'=>1,
+	},'bind'=>[@sql_bind],'log_'=>1,'-slave'=>1,'-cache'=>60,
 		'-changetime'=>App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",

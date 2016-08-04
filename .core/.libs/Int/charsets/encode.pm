@@ -108,7 +108,7 @@ our %table=
 	'224'	=>	"a", # 'a' s opacnym dlznom
 	'225'	=>	"a", # 'a' s dlznom
 	'226'	=> "a", # 'a' so strieskou
-	'227'	=> "a", # 'a' s vlnovkou
+	'227'	=> "a", # 'ã' s vlnovkou
 	'228' =>	"a", # 'a' s dvojbodkou
 	'229' =>	"a", # 'a' s kruzkom
 	'230' =>	"ae", # 'æ'
@@ -257,10 +257,10 @@ our %table=
 	'1044'	=> "D", # 'Д' v azbuke
 	'1045'	=> "E", # 'Е' v azbuke
 	
-	'1046'	=> "Z", # 'Ж' v azbuke (ž/zh)	
+	'1046'	=> "Zh", # 'Ж' v azbuke (ž/zh)	
 	'1047'	=> "Z", # 'З' v azbuke
 	'1048'	=> "I", # 'И' v azbuke
-	'1049'	=> "J", # 'Й' v azbuke
+	'1049'	=> "Y", # 'Й' v azbuke
 	'1050'	=> "K", # 'К' v azbuke
 	'1051'	=> "L", # 'Л' v azbuke
 	'1052'	=> "M", # 'М' v azbuke
@@ -272,25 +272,27 @@ our %table=
 	'1058'	=> "T", # 'Т' v azbuke
 	'1059'	=> "U", # 'U' v azbuke
 	'1060'	=> "F", # 'Ф' v azbuke
-	'1061'	=> "CH", # 'Х' v azbuke
+	'1061'	=> "H", # 'Х' v azbuke
 	'1062'	=> "C", # 'Ц' v azbuke
 	'1063'	=> "C", # 'Ч' v azbuke
 	'1064'	=> "S", # 'Ш' v azbuke
+	'1065'	=> "Sth", # 'Щ' v azbuke
+	'1066'	=> "A", # 'Ъ' v azbuke
 	
-	'1068'	=> "ˇ", # 'Ь' v azbuke
+	'1068'	=> "Y", # 'Ь' v azbuke
 	
-	'1070'	=> "JU", # 'Ю' v azbuke
-	'1071'	=> "JA", # 'Я' v azbuke
+	'1070'	=> "Yu", # 'Ю' v azbuke
+	'1071'	=> "Ya", # 'Я' v azbuke
 	'1072'	=> "a", # 'а' v azbuke
 	'1073'	=> "b", # 'б' v azbuke
 	'1074'	=> "v", # 'в' v azbuke
 	'1075'	=> "g", # 'г' v azbuke
 	'1076'	=> "d", # 'д' v azbuke
 	'1077'	=> "e", # 'е' v azbuke
-	'1078'	=> "z", # 'ж' v azbuke
+	'1078'	=> "zh", # 'ж' v azbuke
 	'1079'	=> "z", # 'з' v azbuke
 	'1080'	=> "i", # 'и' v azbuke
-	'1081'	=> "j", # 'й' v azbuke
+	'1081'	=> "y", # 'й' v azbuke
 	'1082'	=> "k", # 'к' v azbuke
 	'1083'	=> "l", # 'л' v azbuke
 	'1084'	=> "m", # 'м' v azbuke
@@ -302,22 +304,22 @@ our %table=
 	'1090'	=> "t", # 'т' v azbuke
 	'1091'	=> "u", # 'у' v azbuke
 	'1092'	=> "f", # 'ф' v azbuke
-	'1093'	=> "ch", # 'х' v azbuke
+	'1093'	=> "h", # 'х' v azbuke
 	'1094'	=> "c", # 'ц' v azbuke
 	'1095'	=> "c", # 'ч' v azbuke
 	'1096'	=> "s", # 'ш' v azbuke
-	'1097'	=> "s", # 'Щ' v azbuke
-	'1098'	=> "", # 'ъ' v azbuke
+	'1097'	=> "sth", # 'Щ' v azbuke
+	'1098'	=> "a", # 'ъ' v azbuke
 	
 	'1099'	=> "y", # 'ы' v azbuke
 	
-	'1103'	=> "ja", # 'я' v azbuke	
+	'1103'	=> "ya", # 'я' v azbuke	
 	
 	'1108'	=> "e", # 'є' v azbuke
 	
-	'1100'	=> "ˇ", # 'ь' v azbuke
+	'1100'	=> "y", # 'ь' v azbuke
 	
-	'1102'	=> "ju", # 'ю' v azbuke
+	'1102'	=> "yu", # 'ю' v azbuke
 	
 	'1110'	=> "i", # 'і' v azbuke
 	'1111'	=> "i", # 'ї' v azbuke

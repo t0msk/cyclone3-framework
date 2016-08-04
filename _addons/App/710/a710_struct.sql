@@ -7,6 +7,7 @@
 CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- main id
+  `ref_ID` varchar(64) character set ascii default NULL, -- external reference
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00', -- last change
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL, -- changed by user
@@ -63,7 +64,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
   KEY `county` (`county`),
   KEY `district` (`district`),
   KEY `city` (`city`),
-  KEY `status` (`status`)
+  KEY `status` (`status`),
+  KEY `ref_ID` (`ref_ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -71,6 +73,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
 CREATE TABLE `/*db_name*/`.`/*addon*/_org_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL, -- main id
+  `ref_ID` varchar(64) character set ascii default NULL, -- external reference
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00', -- last change
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL, -- changed by user

@@ -23,6 +23,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
   `perm_roles_override` blob,
   `ref_facebook` varchar(20) character set ascii default NULL,
   `ref_deviceid` varchar(64) character set ascii default NULL,
+  `ref_ID` varchar(64) character set ascii default NULL, -- external reference
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID_user`),
   UNIQUE KEY `UNI_0` (`hostname`,`login`),
@@ -31,7 +32,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
   KEY `hostname` (`hostname`,`email`),
   KEY `email` (`email`),
   KEY `ref_facebook` (`ref_facebook`),
-  KEY `ref_deviceid` (`ref_deviceid`)
+  KEY `ref_deviceid` (`ref_deviceid`),
+  KEY `ref_ID` (`ref_ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -42,7 +44,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_session` (
   `ID_session` varchar(32) character set utf8 collate utf8_bin NOT NULL default '',
   `IP` varchar(15) NOT NULL default '',
   `datetime_session_begin` datetime NOT NULL,
-  `datetime_session_begin_msec` int(10) default NULL,
+  `datetime_session_begin_msec` int(10) NOT NULL default '0',
   `datetime_session_end` datetime NOT NULL,
   `requests_all` smallint(5) unsigned NOT NULL default '0',
   `saved_cookies` blob NOT NULL,
@@ -74,6 +76,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_inactive` (
   `perm_roles_override` blob,
   `ref_facebook` varchar(20) character set ascii default NULL,
   `ref_deviceid` varchar(64) character set ascii default NULL,
+  `ref_ID` varchar(64) character set ascii default NULL, -- external reference
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID_user`),
   KEY `SEL_0` (`datetime_last_login`,`requests_all`)
