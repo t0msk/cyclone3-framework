@@ -5264,12 +5264,16 @@ sub broadcast_program_add
 			'datetime_real_stop_msec',
 			'datetime_real_status',
 			'license_valid_to',
+			'priority_A',
+			'priority_B',
+			'priority_C',
 			'metadata'
 		)
 		{
 			if (exists $env{'program.'.$_} && ($env{'program.'.$_} ne $program{$_}))
 			{
 				main::_log("$_: '$program{$_}'<>'".$env{'program.'.$_}."'");
+				
 				if ($env{'program.'.$_} || $env{'program.'.$_} eq "0")
 				{
 					$data{$_}=$env{'program.'.$_};
@@ -5509,6 +5513,9 @@ sub broadcast_series_add
 			'series_type',
 			'series_code',
 			'series_episodes',
+			'priority_A',
+			'priority_B',
+			'priority_C',
 			'authoring_country',
 			'authoring_year',
 			'authoring_cast',
@@ -5518,6 +5525,17 @@ sub broadcast_series_add
 			if (exists $env{'series.'.$_} && ($env{'series.'.$_} ne $series{$_}))
 			{
 				main::_log("$_: '$series{$_}'<>'".$env{'series.'.$_}."'");
+				
+				if ($_=~/^priority_(.)$/ && $env{'series.'.$_} < 0)
+				{
+					my $symbol=$1;
+					$env{'series.'.$_} = $App::510::priority{$symbol};
+				}
+				elsif ($_=~/^priority_(.)$/ && $env{'series.'.$_} == 0)
+				{
+					undef $env{'series.'.$_};
+				}
+				
 				if ($env{'series.'.$_} || $env{'series.'.$_} eq "0")
 				{
 					$data{$_}=$env{'series.'.$_};
