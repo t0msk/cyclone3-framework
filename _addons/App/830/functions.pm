@@ -115,6 +115,8 @@ sub form_add
 	
 	$columns{'name'}="'".TOM::Security::form::sql_escape($env{'form.name'})."'"
 		if (exists $env{'form.name'} && ($env{'form.name'} ne $form{'name'}));
+	$data{'name_url'}=TOM::Net::URI::rewrite::convert($env{'form.name'})
+		if ($env{'form.name'} && ($env{'form.name'} ne $form{'name'}));
 	
 	# metadata
 	my %metadata=App::020::functions::metadata::parse($form{'metadata'});
