@@ -181,7 +181,7 @@ sub execute
 			$sql_order_by
 		LIMIT
 			$sql_limit
-	},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,'-cache_'=>86400*7,
+	},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,'-cache'=>60,
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
 			'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video",'ID_entity'=>$env{'video.ID_entity'}
 		})
