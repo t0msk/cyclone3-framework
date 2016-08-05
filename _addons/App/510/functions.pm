@@ -24,6 +24,7 @@ use Ext::Elastic::_init;
 use Number::Bytes::Human qw(format_bytes);
 
 our $avconv_exec = (where('avconv'))[0];main::_log("avconv in '$avconv_exec'");
+our $avprobe_exec = (where('avprobe'))[0];main::_log("avprobe in '$avprobe_exec'");
 our $ffmpeg_exec = (where('ffmpeg'))[0];main::_log("ffmpeg in '$ffmpeg_exec'");
 our $mencoder_exec = (where('mencoder'))[0];main::_log("mencoder in '$mencoder_exec'");
 our $mplayer_exec = (where('mplayer'))[0];main::_log("mplayer in '$mplayer_exec'");
@@ -1551,8 +1552,10 @@ sub video_part_file_process
 				if ($env{'g'}){push @encoder_env, '-g '.$env{'g'};}
 				if ($env{'strict'}){push @encoder_env, '-strict '.$env{'strict'};}
 				if ($env{'keyint_min'}){push @encoder_env, '-keyint_min '.$env{'keyint_min'};}
-#				if ($env{'keyint'}){push @encoder_env, '-keyint '.$env{'keyint'};}
-				if ($env{'sc_threshold'}){push @encoder_env, '-sc_threshold '.$env{'sc_threshold'};}
+				if ($env{'keyint'}){push @encoder_env, '-keyint '.$env{'keyint'};}
+				if ($env{'force_key_frames'}){push @encoder_env, '-force_key_frames '.$env{'force_key_frames'};}
+				if (exists $env{'sc_threshold'}){push @encoder_env, '-sc_threshold '.$env{'sc_threshold'};}
+				if ($env{'x264opts'}){push @encoder_env, '-x264opts '.$env{'x264opts'};}
 				if ($env{'i_qfactor'}){push @encoder_env, '-i_qfactor '.$env{'i_qfactor'};}
 				if ($env{'bt'}){push @encoder_env, '-bt '.$env{'bt'};}
 				if ($env{'rc_eq'}){push @encoder_env, "-rc_eq '".$env{'rc_eq'}."'";}
@@ -1662,6 +1665,16 @@ sub video_part_file_process
 						push @encoder_env, '-b:a '.$env{'b:a'};
 					}
 				}
+				if ($env{'c:v'}){push @encoder_env, '-c:v '.$env{'c:v'};}
+				if ($env{'c:a'}){
+					push @encoder_env, '-c:a '.$env{'c:a'};
+					push @encoder_env, '-strict -2';
+				}
+				if ($env{'preset'}){push @encoder_env, '-preset '.$env{'preset'};}
+				if ($env{'tune'}){push @encoder_env, '-tune '.$env{'tune'};}
+				if ($env{'profile'}){push @encoder_env, '-profile '.$env{'profile'};}
+				if ($env{'profile:v'}){push @encoder_env, '-profile:v '.$env{'profile:v'};}
+				if ($env{'level:v'}){push @encoder_env, '-level:v '.$env{'level:v'};}
 				if ($env{'ar'}){push @encoder_env, '-ar '.$env{'ar'};}
 				if ($env{'ac'}){push @encoder_env, '-ac '.$env{'ac'};}
 				if ($env{'fs'}){push @encoder_env, '-fs '.$env{'fs'};}
@@ -1716,8 +1729,10 @@ sub video_part_file_process
 				if ($env{'g'}){push @encoder_env, '-g '.$env{'g'};}
 				if ($env{'strict'}){push @encoder_env, '-strict '.$env{'strict'};}
 				if ($env{'keyint_min'}){push @encoder_env, '-keyint_min '.$env{'keyint_min'};}
-#				if ($env{'keyint'}){push @encoder_env, '-keyint '.$env{'keyint'};}
-				if ($env{'sc_threshold'}){push @encoder_env, '-sc_threshold '.$env{'sc_threshold'};}
+				if ($env{'keyint'}){push @encoder_env, '-keyint '.$env{'keyint'};}
+				if (exists $env{'sc_threshold'}){push @encoder_env, '-sc_threshold '.$env{'sc_threshold'};}
+				if ($env{'x264opts'}){push @encoder_env, '-x264opts '.$env{'x264opts'};}
+				if ($env{'libx264opts'}){push @encoder_env, '-libx264opts '.$env{'libx264opts'};}
 				if ($env{'i_qfactor'}){push @encoder_env, '-i_qfactor '.$env{'i_qfactor'};}
 				if ($env{'bt'}){push @encoder_env, '-bt '.$env{'bt'};}
 				if ($env{'rc_eq'}){push @encoder_env, "-rc_eq '".$env{'rc_eq'}."'";}
@@ -1734,7 +1749,7 @@ sub video_part_file_process
 						push @encoder_env, '-strict -2';
 					}
 				}
-				if ($env{'c:v'}){push @encoder_env, '-b:v '.$env{'c:v'};}
+				if ($env{'c:v'}){push @encoder_env, '-c:v '.$env{'c:v'};}
 				if ($env{'c:a'}){
 					push @encoder_env, '-c:a '.$env{'c:a'};
 					push @encoder_env, '-strict -2';
@@ -3437,6 +3452,7 @@ sub video_part_file_add
 		
 		my $tmpjpeg=new TOM::Temp::file('ext'=>'jpeg','dir'=>$main::ENV{'TMP'},'nocreate'=>1);
 		my ($out,$data)=_video_part_file_previews(
+			'length' => $video{'length'},
 			'file' => $env{'file'},
 			'file2' => $tmpjpeg->{'filename'}
 		);
@@ -3451,17 +3467,18 @@ sub video_part_file_add
 			foreach my $file (sort { $a cmp $b } grep {$_=~/^$data->{'pattern_file'}$/} readdir(DIR))
 			{
 				$i++;
+				my $hms=strftime("\%H:\%M:\%S", gmtime(($i - 0.5) * $data->{'interval'}));
+				$hms=strftime("\%H:\%M:\%S", gmtime(0)) unless $i;
 				my %image=App::501::functions::image_add(
 					'file' => $data->{'pattern_dir'}.'/'.$file,
 					'image_attrs.ID_category' => $App::510::thumbnail_cat_ID_entity,
-					'image_attrs.name' => $file,
+					'image_attrs.name' => '#'.$part_ID.' '.$hms,
 					'image_attrs.status' => 'Y',
 					'check_duplicity' => 1,
 				);
 				unlink $data->{'pattern_dir'}.'/'.$file;
 				push @previews,{
-					'time' => $i*$data->{'interval'},
-					'hms' => strftime("\%H:\%M:\%S", gmtime($i*$data->{'interval'})),
+					'hms' => $hms,
 					'image' => $image{'image.ID_entity'},
 				};
 			}
@@ -3898,11 +3915,30 @@ sub _video_part_file_previews
 	my %env=@_;
 	my $t=track TOM::Debug(__PACKAGE__."::_video_part_file_previews()");
 	
-	$env{'interval'}||=30;
+	$env{'interval'}||=60;
+	if ($env{'length'})
+	{
+		if ($env{'length'} >= 7200)
+		{
+			$env{'interval'}=60;
+		}
+		elsif ($env{'length'} >= 3600)
+		{
+			$env{'interval'}=30;
+		}
+		elsif ($env{'length'} >= 1200)
+		{
+			$env{'interval'}=10;
+		}
+		else
+		{
+			$env{'interval'}=10;
+		}
+	}
 	
 	main::_log("file='$env{'file'}'");
 	
-	$env{'file2'}=~s|\.(.*?)$|-%04d.$1|;
+	$env{'file2'}=~s|^(.*)\.(.*?)$|$1-%04d.$2|;
 	
 	$env{'pattern_file'}=$env{'file2'};
 	$env{'pattern_file'}=~s|^(.*)/||;$env{'pattern_dir'}=$1;
@@ -3917,7 +3953,7 @@ sub _video_part_file_previews
 	
 	if ($avconv_exec)
 	{
-		my $cmd2=$avconv_exec.' -i '.$env{'file'}.' -c:v mjpeg -qscale 1 -vsync vfr -vf "fps=1/'.$env{'interval'}.'" '.$env{'file2'};
+		my $cmd2=$avconv_exec.' -i '.$env{'file'}.' -c:v mjpeg -qscale 1 -vsync vfr -vf "fps=1/'.$env{'interval'}.',scale=-1:100" '.$env{'file2'};
 		main::_log("$cmd2");system("$cmd2 >/dev/null 2>/dev/null");
 	}
 	else
@@ -5227,7 +5263,8 @@ sub broadcast_program_add
 			'datetime_real_stop',
 			'datetime_real_stop_msec',
 			'datetime_real_status',
-			'license_valid_to'
+			'license_valid_to',
+			'metadata'
 		)
 		{
 			if (exists $env{'program.'.$_} && ($env{'program.'.$_} ne $program{$_}))

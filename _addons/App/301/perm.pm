@@ -567,7 +567,7 @@ sub get_entity_roles
 		'r_table' => $env{'r_table'},
 		'r_ID_entity' => $env{'r_ID_entity'}
 	);
-	
+
 	my %grp;
 	foreach (@{$env{'groups'}}){$grp{$_}++;}
 	
@@ -654,7 +654,7 @@ sub get_entity_roles
 	{
 		if (!$ACL_item->{'folder'} && $ACL_item->{'ID'} eq $env{'ID_user'}) # this is group
 		{
-			main::_log("get permissions from user");
+			main::_log("get permissions from user ID=$ACL_item->{'ID'}, roles=$ACL_item->{'roles'}");
 			
 			# get basic user roles (is okay to load these roles to override? - no)
 #			main::_log("load basic user roles");
@@ -709,7 +709,6 @@ sub get_entity_roles
 			
 		}
 	}
-	
 	
 	# strip
 	my $permstrip=$strip_perms{'perm_R'}.$strip_perms{'perm_W'}.$strip_perms{'perm_X'};
@@ -1661,7 +1660,8 @@ sub ACL_user_update
 		$columns{'perm_2'} = "'".$env{'perm_2'}."'" if $env{'perm_2'};
 		$columns{'perm_3'} = "'".$env{'perm_3'}."'" if $env{'perm_3'};
 		$columns{'perm_4'} = "'".$env{'perm_4'}."'" if $env{'perm_4'};
-		$columns{'roles'} = "'".$env{'roles'}."'" if exists $env{'roles'};
+		$columns{'perm_4'} = "'".$env{'perm_4'}."'" if $env{'perm_4'};
+		$columns{'perm_roles_override'} = "'".$env{'perm_roles_override'}."'" if exists $env{'perm_roles_override'};
 		$columns{'status'} = "'".$env{'status'}."'" if $env{'status'};
 		$columns{'note'} = "'".TOM::Security::form::sql_escape($env{'note'})."'" if $env{'note'};
 		App::020::SQL::functions::update(
@@ -1698,6 +1698,7 @@ sub ACL_user_update
 				'perm_W' => "'Y'",
 				'perm_X' => "'Y'",
 				'roles' => "'".$env{'roles'}."'",
+				'perm_roles_override' => "'".$env{'perm_roles_override'}."'",
 				'datetime_evidence' => "NOW()",
 				%columns
 			},

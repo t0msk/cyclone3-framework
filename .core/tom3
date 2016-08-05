@@ -3239,7 +3239,7 @@ while ($main::CGI=new CGI::Fast())
 #			}
 			print "Content-Type: ".$TOM::Document::content_type."; charset=$main::LNG_cp_this\n";
 			
-			print "Access-Control-Allow-Origin: *\n";
+			print "Access-Control-Allow-Origin: ".($TOM::Document::ACAOrigin || '*')."\n";
 			
 			if ($ENV{'HTTP_ACCEPT_ENCODING'}=~/gzip/i && !$pub::gzip_disable)
 			{

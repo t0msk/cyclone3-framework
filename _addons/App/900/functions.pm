@@ -188,7 +188,7 @@ sub banner_add
 	foreach my $field ('target_url', 'target_addon', 'stats_view', 'rules_views_max', 'rules_views_session_max', 'rules_clicks_max',
 		'rules_views_browser_session_max', 'rules_clicks_browser_max',
 		'utm_source', 'utm_medium', 'utm_term', 'utm_content', 'utm_campaign',
-		'time_publish_start', 'time_publish_stop'
+		'time_publish_start', 'time_publish_stop', 'skip'
 	)
 	{
 		$data{$field}=$env{'banner.'.$field}
