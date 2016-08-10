@@ -133,6 +133,9 @@ sub execute
 		$sql_order_by="a430_list_relation.priority DESC";
 	}
 	
+	$sql_where.=" AND `static`.`lng` = ?";
+	push @sql_bind, $env{'lng'};
+	
 	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
 	
 	$sql_where=~s|^ ||;
