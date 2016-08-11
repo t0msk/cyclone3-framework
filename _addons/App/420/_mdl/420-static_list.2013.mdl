@@ -135,6 +135,9 @@ sub execute
 	
 	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
 	
+	$sql_where.=" AND static.lng = ?";
+	push @sql_bind, $env{'lng'};
+	
 	$sql_where=~s|^ ||;
 	
 	# get template
