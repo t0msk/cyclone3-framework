@@ -175,14 +175,14 @@ sub start
 	if ($attr->{'style'})
 	{
 		my %style=_parse_style($attr->{'style'});
-		if ($tag=~/^p|span|div$/)
-		{
-			delete $style{'color'};
-			delete $style{'font-size'};
-			delete $style{'font-family'};
-			delete $style{'background'};
-			delete $style{'background-color'};
-		}
+#		if ($tag=~/^p|span|div$/)
+#		{
+#			delete $style{'color'};
+#			delete $style{'font-size'};
+#			delete $style{'font-family'};
+#			delete $style{'background'};
+#			delete $style{'background-color'};
+#		}
 		$attr->{'style'}=_gen_style(%style);
 		delete $attr->{'style'} unless $attr->{'style'};
 	}
@@ -247,6 +247,9 @@ sub start
 			'tb_name' => $entity,
 			'ID' => $vars{'ID'},
 			'ID_entity' => $vars{'ID_entity'},
+			'tag' => {
+				'attr' => $attr
+			},
 #			'id-tag' => \%vars,
 			'count' => {
 				'tag' => $self->{'count'}->{'tag'}->{$tag},
