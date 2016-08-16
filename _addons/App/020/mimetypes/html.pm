@@ -175,14 +175,14 @@ sub start
 	if ($attr->{'style'})
 	{
 		my %style=_parse_style($attr->{'style'});
-		if ($tag=~/^p|span|div$/)
-		{
-			delete $style{'color'};
-			delete $style{'font-size'};
-			delete $style{'font-family'};
-			delete $style{'background'};
-			delete $style{'background-color'};
-		}
+#		if ($tag=~/^p|span|div$/)
+#		{
+#			delete $style{'color'};
+#			delete $style{'font-size'};
+#			delete $style{'font-family'};
+#			delete $style{'background'};
+#			delete $style{'background-color'};
+#		}
 		$attr->{'style'}=_gen_style(%style);
 		delete $attr->{'style'} unless $attr->{'style'};
 	}
