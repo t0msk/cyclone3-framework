@@ -247,6 +247,9 @@ sub start
 			'tb_name' => $entity,
 			'ID' => $vars{'ID'},
 			'ID_entity' => $vars{'ID_entity'},
+			'tag' => {
+				'attr' => $attr
+			},
 #			'id-tag' => \%vars,
 			'count' => {
 				'tag' => $self->{'count'}->{'tag'}->{$tag},
