@@ -21,6 +21,9 @@ sub execute
 	$env{'event.status'}='Y' unless $env{'event.status'};
 		my $sql_event_status=join "','", split('',$env{'event.status'});
 	
+	$env{'event_lng.status'}='Y' unless $env{'event_lng.status'};
+		my $sql_event_lng_status=join "','", split('',$env{'event_lng.status'});
+	
 	# paging
 	$env{'page_limit'} = 10 unless $env{'page_limit'};
 	$env{'page'} = 1 unless $env{'page'};
@@ -350,6 +353,7 @@ sub execute
 		)$sql_join
 		WHERE
 			event.status IN ('$sql_event_status')
+			AND event_lng.status IN ('$sql_event_lng_status')
 			AND event.datetime_publish_start <= NOW()
 			AND (event.datetime_publish_stop IS NULL OR event.datetime_publish_stop >= NOW())
 			$sql_where}.do{if($sql_group_by){qq{
@@ -483,6 +487,7 @@ sub execute
 				)
 				WHERE
 					event.status IN ('$sql_event_status')
+					AND event_lng.status IN ('$sql_event_lng_status')
 					AND event.datetime_publish_start <= NOW()
 					AND (event.datetime_publish_stop IS NULL OR event.datetime_publish_stop >= NOW())
 					AND event.ID_entity = ?
