@@ -25,8 +25,9 @@ sub execute
 	$env->{'sid'} ||= $main::USRM{'ID_session'};
 	$env->{'c3sid'} ||= $main::COOKIES_all{'c3sid'};
 	$env->{'c3bid'} ||= $main::COOKIES_all{'c3bid'};
+	$env->{'requests'} ||= $main::USRM{'requests'} || 1;
 	
-	main::_log("session='".$env->{'sid'}."' c3sid='".$env->{'c3sid'}."' c3bid='".$env->{'c3bid'}."'",3,"debug") if $debug;
+	main::_log("session='".$env->{'sid'}."' c3sid='".$env->{'c3sid'}."' c3bid='".$env->{'c3bid'}."' requests=".$env->{'requests'},3,"debug") if $debug;
 	
 	$env->{'banner.status'}='Y' unless $env->{'banner.status'};
 		my $sql_banner_status=join "','", split('',$env->{'banner.status'});
@@ -212,6 +213,9 @@ sub execute
 				FROM `$App::900::db_name`.a900_banner_click
 				WHERE a900_banner_click.ID_banner = banner.ID_entity AND a900_banner_click.ID_browser = ?
 			) < banner.rules_clicks_browser_max)
+			AND (banner.rules_pageviews_session_min IS NULL
+				OR rules_pageviews_session_min <= ?
+			)
 			AND (
 				(
 					banner.time_publish_start IS NOT NULL
@@ -230,6 +234,7 @@ sub execute
 		push @sql_bind,$env->{'sid'};
 		push @sql_bind,$env->{'c3sid'};
 		push @sql_bind,$env->{'c3bid'};
+		push @sql_bind,$env->{'requests'};
 	}
 	else
 	{
