@@ -155,7 +155,7 @@ sub execute
 		my $sql_cat;
 		foreach my $ID_category (split(';',$env->{'banner_cat.ID_entity'}))
 		{
-			next unless defined $ID_category;
+			next if $ID_category eq '';
 			if ($ID_category=~s/\*$//)
 			{
 				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::900::db_name`.`a900_banner_cat` WHERE `ID_entity`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
