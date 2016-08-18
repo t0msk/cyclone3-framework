@@ -22,6 +22,12 @@ sub execute
 #	main::_log("lng=$env->{'lng'}");
 #	return 1;
 	
+	$env->{'sid'} ||= $main::USRM{'ID_session'};
+	$env->{'c3sid'} ||= $main::COOKIES_all{'c3sid'};
+	$env->{'c3bid'} ||= $main::COOKIES_all{'c3bid'};
+	
+	main::_log("session='".$env->{'sid'}."' c3sid='".$env->{'c3sid'}."' c3bid='".$env->{'c3bid'}."'",3,"debug") if $debug;
+	
 	$env->{'banner.status'}='Y' unless $env->{'banner.status'};
 		my $sql_banner_status=join "','", split('',$env->{'banner.status'});
 	
@@ -47,28 +53,29 @@ sub execute
 		# get necessary data for calculations at first
 		
 		# pages/session
-		my %sth0=TOM::Database::SQL::execute(qq{
-			SELECT
-				AVG(user_session.requests_all)/4 AS pages
-			FROM
-				TOM.a301_user_session AS user_session
-			INNER JOIN TOM.a301_user AS user ON
-			(
-				user_session.ID_user = user.ID_user
-			)
-			WHERE
-				user.hostname = ? AND
-				user_session.datetime_session_begin >= DATE_SUB(NOW(),INTERVAL 7 DAY)
-		},'bind'=>[$tom::H_cookie],'-cache' => 86400,'quiet'=>1);
-		my %db0_line=$sth0{'sth'}->fetchhash();
-		$env->{'session_pages'}=int($db0_line{'pages'}) || 7;
+#		my %sth0=TOM::Database::SQL::execute(qq{
+#			SELECT
+#				AVG(user_session.requests_all)/4 AS pages
+#			FROM
+#				TOM.a301_user_session AS user_session
+#			INNER JOIN TOM.a301_user AS user ON
+#			(
+#				user_session.ID_user = user.ID_user
+#			)
+#			WHERE
+#				user.hostname = ? AND
+#				user_session.datetime_session_begin >= DATE_SUB(NOW(),INTERVAL 7 DAY)
+#		},'bind'=>[$tom::H_cookie],'-cache' => 86400,'quiet'=>1);
+#		my %db0_line=$sth0{'sth'}->fetchhash();
+#		$env->{'session_pages'}=int($db0_line{'pages'}) || 7;
+		$env->{'session_pages'}=7;
 		main::_log("pages/session = $env->{'session_pages'}",3,"debug") if $debug;
 	}
 	
 	my @sql_bind;
 	my @sql_bind_test;
-		push @sql_bind,$main::USRM{'ID_session'};
-		push @sql_bind,$main::USRM{'ID_session'};
+		push @sql_bind,$env->{'sid'};
+		push @sql_bind,$env->{'sid'};
 	my $sql_where;
 	my $sql_where_plus;
 	my $sql_changetime;
@@ -142,12 +149,12 @@ sub execute
 		main::_log("a210_page -> banner_cat.ID_entity='$env->{'banner_cat.ID_entity'}'");
 	}
 	
-	if ($env->{'banner_cat.ID_entity'})
+	if (defined $env->{'banner_cat.ID_entity'})
 	{
 		my $sql_cat;
 		foreach my $ID_category (split(';',$env->{'banner_cat.ID_entity'}))
 		{
-			next unless $ID_category;
+			next unless defined $ID_category;
 			if ($ID_category=~s/\*$//)
 			{
 				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::900::db_name`.`a900_banner_cat` WHERE `ID_entity`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
@@ -220,9 +227,9 @@ sub execute
 				)
 			)
 		};
-		push @sql_bind,$main::USRM{'ID_session'};
-		push @sql_bind,$main::COOKIES_all{'c3sid'};
-		push @sql_bind,$main::COOKIES_all{'c3bid'};
+		push @sql_bind,$env->{'sid'};
+		push @sql_bind,$env->{'c3sid'};
+		push @sql_bind,$env->{'c3bid'};
 	}
 	else
 	{
@@ -236,9 +243,9 @@ sub execute
 #	# get template
 #	Tomahawk::GetTpl('env' => \%env) || return undef;
 	
-	if ($env->{'http_cache'} eq "auto")
+	if ($env->{'http_cache'} eq "auto" || $env->{'http_cache'} eq "info")
 	{
-		main::_log("http_cache=auto");
+		main::_log("http_cache=".$env->{'http_cache'});
 		# check all possible banners
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
@@ -303,7 +310,7 @@ sub execute
 		{
 			main::_log("http cache blocking banner $banner{'ID'}");
 		}
-		else
+		elsif ($env->{'http_cache'} eq "auto")
 		{
 			main::_log("set http cache");
 			$main::ENV{'Cache-Control'} = "public";
@@ -311,6 +318,11 @@ sub execute
 			my $date = DateTime->now('time_zone' => 'GMT');
 			$date->add('seconds' => 300);
 			$main::ENV{'Expires'} = $date->strftime("%a, %d %b %Y %H:%M:%S GMT"); 
+		}
+		else
+		{
+			main::_log("allow http cache");
+			$data->{'http_cache'} = 1;
 		}
 	}
 	
@@ -426,6 +438,17 @@ sub execute
 			'l_ID_entity' => $banner{'ID_entity'},
 			'r_prefix' => "a501",
 			'r_table' => "image",
+			'rel_type' => "gallery",
+			'status' => "Y"
+		);
+		
+		@{$banner{'related_videogallery'}}=App::160::SQL::get_relations(
+			'db_name' => $App::900::db_name,
+			'l_prefix' => 'a900',
+			'l_table' => 'banner',
+			'l_ID_entity' => $banner{'ID_entity'},
+			'r_prefix' => "a510",
+			'r_table' => "video",
 			'rel_type' => "gallery",
 			'status' => "Y"
 		);
@@ -674,9 +697,9 @@ sub execute
 			},'-quiet'=>1,'bind'=>[
 				$banner{'ID_entity'},
 				$main::USRM{'ID_user'},
-				$main::USRM{'ID_session'},
-				$main::COOKIES_all{'c3bid'},
-				$main::COOKIES_all{'c3sid'}
+				$env->{'sid'},
+				$env->{'c3bid'},
+				$env->{'c3sid'}
 			]);
 			
 			my %sth1=TOM::Database::SQL::execute(qq{
@@ -759,16 +782,16 @@ sub execute
 			if ($banner{'rules_views_session_max'})
 			{
 				main::_log(" rules_views_session_max=$banner{'rules_views_session_max'}",3,"debug") if $debug;
-				my $probability = int(($banner{'rules_views_session_max'} / $env->{'session_pages'}) * 100);
-				main::_log(" probability = $probability%",3,"debug") if $debug;
-				$banner{'probability'} = $probability;
+#				my $probability = int(($banner{'rules_views_session_max'} / $env->{'session_pages'}) * 100);
+#				main::_log(" probability = $probability%",3,"debug") if $debug;
+#				$banner{'probability'} = $probability;
 			}
 			if ($banner{'rules_views_browser_session_max'})
 			{
 				main::_log(" rules_views_browser_session_max=$banner{'rules_views_browser_session_max'}",3,"debug") if $debug;
-				my $probability = int(($banner{'rules_views_browser_session_max'} / $env->{'session_pages'}) * 100);
-				main::_log(" probability = $probability%",3,"debug") if $debug;
-				$banner{'probability'} = $probability;
+#				my $probability = int(($banner{'rules_views_browser_session_max'} / $env->{'session_pages'}) * 100);
+#				main::_log(" probability = $probability%",3,"debug") if $debug;
+#				$banner{'probability'} = $probability;
 			}
 			
 			$banner{'weight'}=int($weight*$banner{'rules_weight'})||1;
@@ -783,6 +806,7 @@ sub execute
 	
 	if ($env->{'calculate'} && @banners)
 	{
+		main::_log("calculation") if $debug;
 		my $weights;foreach my $banner (@banners){$weights+=$banner->{'weight'};}
 		
 		for my $i(1 .. $env->{'page_limit'})

@@ -308,10 +308,11 @@ sub execute
 		my $slave_finding;
 		
 		my $slave_choices = [1..$TOM::DB{$env{'db_h'}}{'slaves'}];
-		
+		my $weight_min=1;
 		if ($Redis && $TOM::DB{$env{'db_h'}}{'slaves_autoweight'})
 		{
-			if (!$balance{$env{'db_h'}} || ($balance{$env{'db_h'}}{'time'}+1) <= time()) # TTL = 1s
+			$weight_min=0;
+			if (!$balance{$env{'db_h'}} || ($balance{$env{'db_h'}}{'time'}+2) <= time()) # TTL = 2s
 			{
 				$balance{$env{'db_h'}}{'time'}=time();
 				%{$balance{$env{'db_h'}}{'data'}}=@{$Redis->hgetall('C3|sql|balancer|'.$env{'db_h'})};
@@ -319,11 +320,11 @@ sub execute
 			my %data=%{$balance{$env{'db_h'}}{'data'}};
 			foreach my $kk (grep {exists $TOM::DB{$_}} sort keys %data)
 			{
-				$TOM::DB{$kk}{'weight'} = $data{$kk} || 1;
+				$TOM::DB{$kk}{'weight'} = $data{$kk} || 0;
 			}
 		}
 		
-		my $slave_weights = [map {$_ = $TOM::DB{$_}{'weight'} || 1 } grep {$_=~/^$env{'db_h'}:/} sort keys %TOM::DB];
+		my $slave_weights = [map {$_ = $TOM::DB{$_}{'weight'} || $weight_min } grep {$_=~/^$env{'db_h'}:/} sort keys %TOM::DB];
 		
 		while (!$slaveselected)
 		{
@@ -335,6 +336,13 @@ sub execute
 			{
 				# check quality of this slave
 				my %slave_quality=get_slave_status($env{'db_h'}.':'.$slave);
+				
+				if ($TOM::slave_force)
+				{
+					$env{'db_h'}=$env{'db_h'}.':'.$slave;
+					$slaveselected=1;
+					last;
+				}
 				
 #				print Dumper(\%slave_quality);use Data::Dumper;
 				if (!$slave_quality{'timestamp'}) # this handler is not recognized or connected
@@ -468,15 +476,15 @@ sub execute
 			$output{'rows'}=$cache->{'value'}->{'rows'};
 			$output{'time'}=$cache->{'value'}->{'time'};
 			
-			if ($TOM::DEBUG_cache)
-			{
+#			if ($TOM::DEBUG_cache)
+#			{
 				if ($Redis)
 				{
 					my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
 					$Redis->hincrby('C3|counters|sql|'.$date_str,$env{'db_h'}.'|cache_hit',1,sub{});
 					$Redis->expire('C3|counters|sql|'.$date_str,3600,sub{});
 				}
-			}
+#			}
 			
 			$t->close();
 			return %output;
@@ -607,7 +615,10 @@ sub execute
 	else # standard MySQL
 	{
 		my $result;
-		$output{'sth'}=$main::DB{$env{'db_h'}}{'dbh'}->prepare($SQL);
+		$output{'sth'}=$main::DB{$env{'db_h'}}{'dbh'}->prepare(
+			"-- ".$tom::H.' / '.$TOM::engine.' / '.$main::request_code."\n"
+			.do {if ($env{'-timeout'}){"-- timeout=".$env{'-timeout'}."\n"}}
+			.$SQL);
 		if ($env{'bind'}){$result=$output{'sth'}->execute(@{$env{'bind'}});}
 		else {$result=$output{'sth'}->execute();}
 		
@@ -733,7 +744,7 @@ sub execute
 		$tom::Tyday,
 		$tom::Tisdst);
 	my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
-	if ($TOM::DEBUG_cache && $Redis)
+	if ($Redis)
 	{
 		if ($typeselect || $env{'cache_force'})
 		{
@@ -784,7 +795,7 @@ sub execute
 			'limit_rows' => $SQL_src_rows
 		);
 		
-		if ($TOM::DEBUG_cache && $Redis)
+		if ($Redis)
 		{
 			$Redis->hincrby('C3|counters|sql|'.$date_str, $env{'db_h'}.'|cache_fill',1,sub{});
 		}
@@ -811,6 +822,7 @@ sub execute
 			'severity' => 3,
 			'facility' => 'sql',
 			'data' => {
+				'timeout_i' => $env{'-timeout'},
 				'exec_iswrite_i' => do {if ($typeselect || $env{'cache_force'}){0}else{1}},
 				'exec_s' => 'db', # or 'cache'
 				'rows_i' => $output{'rows'},
