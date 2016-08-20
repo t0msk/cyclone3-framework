@@ -46,6 +46,7 @@ sub execute
 	{
 		# get necessary data for calculations at first
 		
+=head1
 		# pages/session
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
@@ -62,6 +63,8 @@ sub execute
 		},'bind'=>[$tom::H_cookie],'-cache' => 86400,'quiet'=>1);
 		my %db0_line=$sth0{'sth'}->fetchhash();
 		$env->{'session_pages'}=int($db0_line{'pages'}) || 7;
+=cut
+		$env->{'session_pages'}=7;
 		main::_log("pages/session = $env->{'session_pages'}",3,"debug") if $debug;
 	}
 	
@@ -649,7 +652,7 @@ sub execute
 			};
 		}
 		
-		if ($env->{'click'})
+		if ($env->{'click'} && $main::USRM{'ID_user'})
 		{
 			TOM::Database::SQL::execute(qq{
 				INSERT DELAYED INTO
