@@ -16,7 +16,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `datetime_next_index` datetime default NULL,
   `datetime_publish_start` datetime NOT NULL,
   `datetime_publish_stop` datetime default NULL,
-  `amount` int(10) unsigned NOT NULL,
+  `amount` int(10) NOT NULL,
   `amount_unit` varchar(8) character set ascii default 'pcs',
   `amount_availability` varchar(32) NOT NULL,
   `amount_limit` int(10) default '0',
@@ -76,7 +76,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `datetime_next_index` datetime default NULL,
   `datetime_publish_start` datetime NOT NULL,
   `datetime_publish_stop` datetime default NULL,
-  `amount` int(10) unsigned NOT NULL,
+  `amount` int(10) NOT NULL,
   `amount_unit` varchar(8) character set ascii default 'pcs',
   `amount_availability` varchar(32) NOT NULL,
   `amount_limit` int(10) default '0',
@@ -253,6 +253,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_sym_j` (
 CREATE TABLE `/*db_name*/`.`/*app*/_product_brand` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
+  `code` varchar(16) character set ascii default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
@@ -261,6 +262,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_brand` (
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
+  UNIQUE KEY `UNI_1` (`code`),
   KEY `SEL_0` (`status`,`name_url`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -269,6 +271,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_brand` (
 CREATE TABLE `/*db_name*/`.`/*app*/_product_brand_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
+  `code` varchar(16) character set ascii default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
@@ -432,6 +435,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price` (
   `price_full` decimal(12,3) default NULL,
   `price_previous` decimal(12,3) default NULL,
   `price_previous_full` decimal(12,3) default NULL,
+  `src_data` text character set utf8 collate utf8_unicode_ci default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
@@ -450,6 +454,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price_j` (
   `price_full` decimal(12,3) default NULL,
   `price_previous` decimal(12,3) default NULL,
   `price_previous_full` decimal(12,3) default NULL,
+  `src_data` text character set utf8 collate utf8_unicode_ci default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',

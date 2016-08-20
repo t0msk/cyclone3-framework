@@ -515,7 +515,20 @@ sub product_add
 	# update only if necessary
 	my %columns;
 	# brand
-	if ($env{'product_brand.name'})
+	if ($env{'product_brand.code'})
+	{
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				ID,ID_entity,status
+			FROM
+				`$App::910::db_name`.a910_product_brand
+			WHERE
+				code=?
+		},'quiet'=>1,'bind'=>[$env{'product_brand.code'}]);
+		my %product_brand=$sth0{'sth'}->fetchhash();
+		$env{'product_brand.ID'} = $product_brand{'ID'} if $product_brand{'ID'};
+	}
+	if ($env{'product_brand.name'} && !$env{'product_brand.ID'})
 	{
 		my $sql=qq{
 			SELECT
@@ -756,6 +769,7 @@ sub product_add
 	
 	if (keys %columns || keys %data)
 	{
+#		main::_log(" a910_product_lng '$env{'product_lng.ID'}' update ".(join ",",keys %columns));
 		main::_log(" a910_product_lng '$env{'product_lng.ID'}' update ".(join ",",keys %columns),3,$App::910::log_changes,2)
 			if $App::910::log_changes;
 		App::020::SQL::functions::update(
@@ -984,6 +998,9 @@ sub product_add
 						'price_previous_full' => ($env{'prices'}{$price_level_name_code}{'price_previous_full'} || 'NULL'),
 						'status' => "'Y'",
 					},
+					'data' => {
+						'src_data' => $env{'prices'}{$price_level_name_code}{'src_data'}
+					},
 					'-journalize' => 1,
 					'-posix' => 1
 				);
@@ -1006,6 +1023,9 @@ sub product_add
 						'price_full' => $env{'prices'}{$price_level_name_code}{'price_full'},
 						'price_previous' => ($env{'prices'}{$price_level_name_code}{'price_previous'} || 'NULL'),
 						'price_previous_full' => ($env{'prices'}{$price_level_name_code}{'price_previous_full'} || 'NULL'),
+					},
+					'data' => {
+						'src_data' => $env{'prices'}{$price_level_name_code}{'src_data'}
 					},
 					'-journalize' => 1,
 					'-posix' => 1
@@ -1108,7 +1128,7 @@ sub product_add
 			# reindex this product
 			if (not exists $env{'index'} || $env{'index'})
 			{
-				_product_index('ID'=>$db0_line{'ID'}, 'commit' => $env{'commit'});
+				_product_index('ID'=>$db0_line{'ID'}, 'commit' => $env{'commit'}, '-jobify' => 0);
 			}
 		}
 	}
@@ -1125,7 +1145,7 @@ sub product_add
 		# reindex this product
 		if (not exists $env{'index'} || $env{'index'})
 		{
-			_product_index('ID'=>$env{'product.ID'}, 'commit' => $env{'commit'});
+			_product_index('ID'=>$env{'product.ID'}, 'commit' => $env{'commit'}, '-jobify' => 0);
 		}
 	}
 	
@@ -1137,7 +1157,7 @@ sub product_add
 sub _product_index
 {
 	my %env=@_;
-#	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer'});
+#	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer'})
 #		unless $env{'-jobify'}; # do it in background
 
 	if ($env{'-jobify'})
@@ -2015,6 +2035,7 @@ sub _product_index
 			$used{$db0_line{'cat_ID_entity'}}++;
 		}
 		
+		
 		# product_lng
 		my %used;
 		my %sth0=TOM::Database::SQL::execute(qq{
@@ -2309,8 +2330,10 @@ sub _product_index
 		delete $product{'datetime_publish_start'}
 			if $product{'datetime_publish_start'}=~/^0/;
 		
-#		main::_log("index ID=$product{'ID'}",3,"elastic");
+		main::_log("index ID=$product{'ID'}",3,"elastic");
+#		%product=();
 		my %log_date=main::ctogmdatetime(time(),format=>1);
+#		print Dumper(\%product);
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::910::db_name,
 			'type' => 'a910_product',
@@ -2322,7 +2345,7 @@ sub _product_index
 					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.'Z'
 			}
 		);
-#		main::_log("/index ID=$product{'ID'}",3,"elastic");
+		main::_log("/index ID=$product{'ID'}",3,"elastic");
 		
 	}
 	
@@ -2461,8 +2484,7 @@ sub product_brand_add
 				'db_name' => $App::910::db_name,
 				'tb_name' => "a910_product_brand",
 				'columns' => {
-					'ID' => $env{'product_brand.ID'},
-					'datetime_publish_start' => 'NOW()'
+					'ID' => $env{'product_brand.ID'}
 				},
 				'-journalize' => 1,
 			);
@@ -2475,6 +2497,61 @@ sub product_brand_add
 			);
 			$env{'product_brand.ID_entity'}=$product_brand{'ID_entity'};
 		}
+	}
+	elsif ($env{'product_brand.code'})
+	{
+		undef $env{'product_brand.ID_entity'};
+		undef $env{'product_brand.ID'};
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				ID,
+				ID_entity
+			FROM
+				`$App::910::db_name`.a910_product_brand
+			WHERE
+				code = ?
+			LIMIT 1
+		},'quiet'=>1,'bind'=>[$env{'product_brand.code'}]);
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$env{'product_brand.ID'} = $db0_line{'ID'};
+			$env{'product_brand.ID_entity'} = $db0_line{'ID_entity'};
+			%product_brand=App::020::SQL::functions::get_ID(
+				'ID' => $env{'product_brand.ID'},
+				'db_h' => "main",
+				'db_name' => $App::910::db_name,
+				'tb_name' => "a910_product_brand",
+				'columns' => {'*'=>1}
+			);
+		}
+		elsif ($env{'product_brand.name'})
+		{
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					ID,
+					ID_entity
+				FROM
+					`$App::910::db_name`.a910_product_brand
+				WHERE
+					name = ?
+				LIMIT 1
+			},'quiet'=>1,'bind'=>[$env{'product_brand.name'}]);
+			if (my %db0_line=$sth0{'sth'}->fetchhash())
+			{
+				$env{'product_brand.ID'} = $db0_line{'ID'};
+				$env{'product_brand.ID_entity'} = $db0_line{'ID_entity'};
+				%product_brand=App::020::SQL::functions::get_ID(
+					'ID' => $env{'product_brand.ID'},
+					'db_h' => "main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_product_brand",
+					'columns' => {'*'=>1}
+				);
+			}
+		}
+		
+		main::_log("found? product_brand.ID='$env{'product_brand.ID'}'");
 	}
 	
 	if (!$env{'product_brand.ID'})
@@ -2506,6 +2583,9 @@ sub product_brand_add
 	# update only if necessary
 	my %columns;
 	my %data;
+	# code
+	$data{'code'}=$env{'product_brand.code'}
+		if ($env{'product_brand.code'} && ($env{'product_brand.code'} ne $product_brand{'code'}));
 	# name
 	$data{'name'}=$env{'product_brand.name'}
 		if ($env{'product_brand.name'} && ($env{'product_brand.name'} ne $product_brand{'name'}));

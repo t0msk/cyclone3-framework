@@ -602,7 +602,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   `ID_series` bigint(20) unsigned DEFAULT NULL, -- internal rel _broadcast_series.ID_entity
   `ID_video` bigint(20) unsigned DEFAULT NULL, -- internal rel _video.ID_entity
   `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL, -- number of program - not unique
-  `program_sec_codes` text CHARACTER SET ascii DEFAULT NULL,
+  `program_sec_codes` text CHARACTER SET ascii,
   `record_id` varchar(64) CHARACTER SET ascii DEFAULT NULL, -- unique id of job from broadcaster
   `program_type_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
@@ -647,12 +647,17 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   `status_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_highlight` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `recording` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N', -- it is recording now
+  `priority_A` tinyint(3) unsigned DEFAULT NULL,
+  `priority_B` tinyint(3) unsigned DEFAULT NULL,
+  `priority_C` tinyint(3) unsigned DEFAULT NULL,
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`ID`),
   UNIQUE KEY `UNI_0` (`ID_channel`,`program_code`,`datetime_air_start`),
   KEY `ID_entity` (`ID_entity`),
   KEY `name` (`name`,`datetime_air_start`),
   KEY `datetime_air_start` (`datetime_air_start`),
+  KEY `datetime_real_stop` (`datetime_real_stop`),
   KEY `ID_series` (`ID_series`),
   KEY `record_id` (`record_id`),
   KEY `series_ID` (`series_ID`),
@@ -669,7 +674,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
   `ID_series` bigint(20) unsigned DEFAULT NULL,
   `ID_video` bigint(20) unsigned DEFAULT NULL,
   `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL,
-  `program_sec_codes` text CHARACTER SET ascii DEFAULT NULL,
+  `program_sec_codes` text CHARACTER SET ascii,
   `record_id` varchar(64) CHARACTER SET ascii DEFAULT NULL, -- unique id of job from broadcaster
   `program_type_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `name` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
@@ -714,7 +719,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
   `status_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_highlight` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `recording` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `priority_A` tinyint(3) unsigned DEFAULT NULL,
+  `priority_B` tinyint(3) unsigned DEFAULT NULL,
+  `priority_C` tinyint(3) unsigned DEFAULT NULL,
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -737,6 +746,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_series` (
   `series_type` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `series_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `series_episodes` smallint(5) unsigned DEFAULT NULL,
+  `priority_A` tinyint(3) unsigned DEFAULT NULL,
+  `priority_B` tinyint(3) unsigned DEFAULT NULL,
+  `priority_C` tinyint(3) unsigned DEFAULT NULL,
   `posix_owner` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
   `posix_modified` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
   `datetime_create` datetime NOT NULL,
@@ -770,6 +782,9 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_series_j` (
   `series_type` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `series_code` varchar(6) CHARACTER SET ascii DEFAULT NULL,
   `series_episodes` smallint(5) unsigned DEFAULT NULL,
+  `priority_A` tinyint(3) unsigned DEFAULT NULL,
+  `priority_B` tinyint(3) unsigned DEFAULT NULL,
+  `priority_C` tinyint(3) unsigned DEFAULT NULL,
   `posix_owner` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
   `posix_modified` varchar(8) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
   `datetime_create` datetime NOT NULL,
