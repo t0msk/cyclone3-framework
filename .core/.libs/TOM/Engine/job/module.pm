@@ -252,7 +252,12 @@ sub running
 	if ($Redis)
 	{
 		my $key_entity=(ref $self);
-			$key_entity.='::'.$tom::H unless $conf->{'domain'};
+			$key_entity.='::'.$conf->{'unique'}
+				if $conf->{'unique'};
+			if (!$conf->{'domain'} && !$conf->{'unique'})
+			{
+				$key_entity.='::'.$tom::H;
+			}
 		$key_entity=TOM::Digest::hash($key_entity);
 		
 		$self->{'_running'}=$key_entity;
