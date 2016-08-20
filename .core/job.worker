@@ -80,6 +80,7 @@ my $service=Ext::RabbitMQ::service();
 # open two channels
 # cyclone3.job: cyclone3.job.domain_tld -> cyclone3.job.domain_tld
 
+# domain
 my $channel_domain=$Ext::RabbitMQ::service->open_channel();
 	$channel_domain->{'arc'}->confirm();
 $channel_domain->declare_exchange(
@@ -98,6 +99,7 @@ $channel_domain->bind_queue(
 );
 main::_log("routing_key '".($tom::H_orig || 'job').$class."'");
 
+# database
 my $channel_database=$Ext::RabbitMQ::service->open_channel();
 	$channel_database->{'arc'}->confirm();
 $channel_database->declare_queue(
