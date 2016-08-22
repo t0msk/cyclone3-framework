@@ -69,7 +69,7 @@ use Data::Dumper;
 use Ext::Redis::_init;
 our $alarm=$ENV{'TIMEOUT'};
 	 $alarm||=10; # autoexit after 10 seconds of inactivity
-our $time_max=600;
+our $time_max=3600;
 our $time_start=time();
 
 my $service=Ext::RabbitMQ::service();
@@ -119,6 +119,11 @@ sub callback {
 	my $var = shift;
 		if ($var->{'header'}->{'headers'}->{'message_id'})
 		{
+			if ($Redis)
+			{
+				$Redis->del('RabbitMQ|'.$var->{'header'}->{'headers'}->{'message_id'});
+				$Redis->srem('RabbitMQ|msgs','RabbitMQ|'.$var->{'header'}->{'headers'}->{'message_id'});
+			}
 			$main::request_code=substr($var->{'header'}->{'headers'}->{'message_id'},0,8);
 		}
 	my $body = $var->{'body'}->{'payload'};
