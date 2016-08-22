@@ -92,7 +92,7 @@ sub new
 		
 		if (!$conf->{'file'})
 		{
-#			main::_log("can't find job file ".$file." in @inc",1);
+			main::_log("can't find job file ".$file." in @inc",1);
 		}
 		
 		delete $conf->{'name'};
@@ -159,7 +159,7 @@ sub new
 	}
 	else
 	{
-		#main::_log("can't find job ".($conf->{'file'} || $conf->{'name'}),1);
+#		main::_log("can't find job ".($conf->{'file'} || $conf->{'name'}),1);
 	}
 	
 	my $obj=bless {}, $class;
