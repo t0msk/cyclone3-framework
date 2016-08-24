@@ -56,8 +56,11 @@ sub execute
 			
 		FROM
 			$App::470::db_name.a470_athlete AS athlete
-		LEFT JOIN `$App::470::db_name`.`a470_athlete_cat` AS `athlete_cat` ON (
-			athlete.ID_category = athlete_cat.ID
+		LEFT JOIN $App::470::db_name.a470_athlete_sym AS athlete_sym ON (
+			athlete_sym.ID_entity = athlete.ID
+		)
+		LEFT JOIN $App::470::db_name.a470_athlete_cat AS athlete_cat ON (
+			athlete_cat.ID = athlete_sym.ID
 		)
 		LEFT JOIN $App::470::db_name.a470_athlete_lng AS athlete_lng ON
 		(

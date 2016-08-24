@@ -2204,7 +2204,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($env0{id} eq "description")
 			{
-				_log("Change DOC::description to ".$env0{value});
+#				_log("Change DOC::description to ".$env0{value});
 				next if ($env0{'lng'} && $env0{'lng'} ne $tom::lng);
 				$H->change_DOC_description($env0{value},lng=>"$env0{lng}");
 				next;
@@ -2212,7 +2212,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($env0{id} eq "description_")
 			{
-				_log("Add DOC::description to ".$env0{value});
+#				_log("Add DOC::description to ".$env0{value});
 				next if ($env0{'lng'} && $env0{'lng'} ne $tom::lng);
 				$H->add_DOC_description($env0{value},lng=>"$env0{lng}");
 				next;
@@ -3409,13 +3409,14 @@ while ($main::CGI=new CGI::Fast())
 	}
 	
 	# check memory consumption
-	if (($main::time_current-$TOM::time_start) > 60 && ($main::time_current-$main::time_memory_check)>=10){$main::time_memory_check=$main::time_current;
+	if (($main::time_current-$TOM::time_start) > (60*3) && ($main::time_current-$main::time_memory_check)>=10){
+	$main::time_memory_check=$main::time_current;
 	eval{
 		my $t = new Proc::ProcessTable;
 		foreach my $p (grep {$_->{'pid'} == $$} @{$t->table})
 		{
 			main::_log("used memory ".Number::Bytes::Human::format_bytes($p->{'rss'}));
-			if ($p->{'rss'} >= 300000000)
+			if ($p->{'rss'} >= 300*1024*1024)
 			{
 				main::_log("SHUTDOWN (too much memory ".Number::Bytes::Human::format_bytes($p->{'rss'}).") (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3);
 				main::_log("SHUTDOWN (too much memory ".Number::Bytes::Human::format_bytes($p->{'rss'}).") (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
