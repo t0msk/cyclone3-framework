@@ -9,8 +9,8 @@ use strict;
 
 use App::210::_init;
 use App::401::_init;
-use Ext::Solr::_init;
 use Ext::Elastic::_init;
+use Ext::Solr::_init;
 
 sub execute
 {
@@ -396,6 +396,8 @@ sub execute
 			article_ent.visits,
 			article_ent.sources,
 			article_ent.metadata,
+			article_ent.social_shares_facebook,
+			article_ent.social_shares_twitter,
 			article_content.ID_editor AS posix_editor,
 			
 			article_content.datetime_create AS content_datetime_create,
@@ -524,6 +526,8 @@ sub execute
 				article_ent.visits,
 				article_ent.sources,
 				article_ent.metadata,
+                article_ent.social_shares_facebook,
+			    article_ent.social_shares_twitter,
 				article_content.ID_editor AS posix_editor,
 				
 				article_content.datetime_create AS content_datetime_create,

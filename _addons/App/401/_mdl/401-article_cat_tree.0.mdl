@@ -417,6 +417,7 @@ $where
 						`$App::401::db_name`.`a401_article_attrs`
 					WHERE
 						ID_category = $entity->{'ID'}
+						AND lng = '$entity->{'lng'}'
 						AND status IN ('Y','N')
 				};
 				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'_cache'=>30);

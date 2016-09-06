@@ -106,7 +106,9 @@ sub request
 			'CacheControl_s' => $main::ENV{'Cache-Control'},
 			
 			'duration_f' => $env{'duration'},
-			'duration_user_f' => $env{'user'}
+			'duration_user_f' => $env{'user'},
+			
+			'_ga_s' => $main::COOKIES_all{'_ga'}
 		}
 	});
 	main::_event('info','pub.request',$obj);

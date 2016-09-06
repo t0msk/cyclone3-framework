@@ -44,9 +44,30 @@ CREATE TABLE `/*db_name*/`.`/*app*/_form_j` (
 
 -- --------------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*app*/_form_entry` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
+  PRIMARY KEY  (`ID`),
+  UNIQUE KEY `UNI_0` (`ID_entity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*app*/_form_entry_j` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` bigint(20) unsigned default NULL,
+  `datetime_create` datetime NOT NULL,
+  PRIMARY KEY  (`ID`,`datetime_create`),
+  UNIQUE KEY `UNI_0` (`ID_entity`,`datetime_create`),
+  KEY `ID_entity` (`ID_entity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*app*/_form_data` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- rel _form.ID_entity
+  `ID_entry` bigint(20) unsigned default NULL, -- rel _form_entry.ID_entity
   `datetime_event` datetime NOT NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
@@ -65,6 +86,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_form_data` (
 CREATE TABLE `/*db_name*/`.`/*app*/_form_data_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- rel _form.ID_entity
+  `ID_entry` bigint(20) unsigned default NULL, -- rel _form_entry.ID_entity
   `datetime_event` datetime NOT NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
