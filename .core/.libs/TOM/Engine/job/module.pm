@@ -92,7 +92,7 @@ sub new
 		
 		if (!$conf->{'file'})
 		{
-#			main::_log("can't find job file ".$file." in @inc",1);
+			main::_log("can't find job file ".$file." in @inc",1);
 		}
 		
 		delete $conf->{'name'};
@@ -159,7 +159,7 @@ sub new
 	}
 	else
 	{
-		#main::_log("can't find job ".($conf->{'file'} || $conf->{'name'}),1);
+#		main::_log("can't find job ".($conf->{'file'} || $conf->{'name'}),1);
 	}
 	
 	my $obj=bless {}, $class;
@@ -252,7 +252,12 @@ sub running
 	if ($Redis)
 	{
 		my $key_entity=(ref $self);
-			$key_entity.='::'.$tom::H unless $conf->{'domain'};
+			$key_entity.='::'.$conf->{'unique'}
+				if $conf->{'unique'};
+			if (!$conf->{'domain'} && !$conf->{'unique'})
+			{
+				$key_entity.='::'.$tom::H;
+			}
 		$key_entity=TOM::Digest::hash($key_entity);
 		
 		$self->{'_running'}=$key_entity;

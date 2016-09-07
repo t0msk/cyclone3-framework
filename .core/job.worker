@@ -69,7 +69,7 @@ use Data::Dumper;
 use Ext::Redis::_init;
 our $alarm=$ENV{'TIMEOUT'};
 	 $alarm||=10; # autoexit after 10 seconds of inactivity
-our $time_max=600;
+our $time_max=3600;
 our $time_start=time();
 
 my $service=Ext::RabbitMQ::service();
@@ -80,6 +80,7 @@ my $service=Ext::RabbitMQ::service();
 # open two channels
 # cyclone3.job: cyclone3.job.domain_tld -> cyclone3.job.domain_tld
 
+# domain
 my $channel_domain=$Ext::RabbitMQ::service->open_channel();
 	$channel_domain->{'arc'}->confirm();
 $channel_domain->declare_exchange(
@@ -98,6 +99,7 @@ $channel_domain->bind_queue(
 );
 main::_log("routing_key '".($tom::H_orig || 'job').$class."'");
 
+# database
 my $channel_database=$Ext::RabbitMQ::service->open_channel();
 	$channel_database->{'arc'}->confirm();
 $channel_database->declare_queue(
@@ -119,6 +121,11 @@ sub callback {
 	my $var = shift;
 		if ($var->{'header'}->{'headers'}->{'message_id'})
 		{
+			if ($Redis)
+			{
+				$Redis->del('RabbitMQ|'.$var->{'header'}->{'headers'}->{'message_id'});
+				$Redis->srem('RabbitMQ|msgs','RabbitMQ|'.$var->{'header'}->{'headers'}->{'message_id'});
+			}
 			$main::request_code=substr($var->{'header'}->{'headers'}->{'message_id'},0,8);
 		}
 	my $body = $var->{'body'}->{'payload'};
