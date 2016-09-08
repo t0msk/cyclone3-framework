@@ -46,7 +46,7 @@ sub execute
 	my $sql_join;
 	my $sql_limit=$env{'sql_limit'} || 10;
 	my $sql_order_by=$env{'sql_order_by'} || 'video.datetime_rec_start DESC';
-	my $sql_group_by;
+	my $sql_group_by=$env{'sql_group_by'} || 'video.ID_entity';
 	
 	if ($env{'datetime_mode'} eq "present")
 	{
