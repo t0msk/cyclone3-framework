@@ -327,6 +327,8 @@ sub execute
 				video_part.status IN ('Y','L') AND
 				video_part.ID_entity = ?
 				$sql_where
+			GROUP BY
+				video_part.ID
 			ORDER BY
 				part_id ASC
 		},'bind'=>[$video{'ID_entity'},@sql_bind],'quiet'=>1);
