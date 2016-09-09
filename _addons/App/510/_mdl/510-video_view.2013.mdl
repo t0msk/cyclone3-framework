@@ -30,6 +30,7 @@ sub execute
 	my $sql_changetime;
 	my $sql_limit=$env{'sql_limit'} || 1;
 	my $sql_order_by=$env{'sql_order_by'} || 'video.datetime_rec_start DESC';
+	my $sql_group_by=$env{'sql_group_by'} || 'video.ID_entity';
 	
 	if ($env{'datetime_mode'} eq "present")
 	{
@@ -167,7 +168,7 @@ sub execute
 		(
 			video_part_file.ID_entity = video_part.ID AND
 			video_part_file.status IN ('Y','L') AND
-			video_part_file.ID_format = $env{'video_format.ID_entity'}
+			video_part_file.ID_format IN ($env{'video_format.ID_entity'})
 		)
 		LEFT JOIN `$App::510::db_name`.`a510_video_part_smil` AS video_part_smil ON
 		(
@@ -176,7 +177,9 @@ sub execute
 		}}}.qq{
 		WHERE
 			video.status IN ('Y','L')
-			$sql_where
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
 		ORDER BY
 			$sql_order_by
 		LIMIT
@@ -317,7 +320,7 @@ sub execute
 			(
 				video_part_file.ID_entity = video_part.ID AND
 				video_part_file.status IN ('Y','L') AND
-				video_part_file.ID_format = $env{'video_format.ID_entity'}
+				video_part_file.ID_format IN ($env{'video_format.ID_entity'})
 			)
 			LEFT JOIN `$App::510::db_name`.`a510_video_part_smil` AS video_part_smil ON
 			(
