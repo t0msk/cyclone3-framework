@@ -453,6 +453,8 @@ sub execute
 				WHERE
 					video_part.status IN ('Y','L') AND
 					video_part.ID_entity = ?
+				GROUP BY
+					video_part.ID
 				ORDER BY
 					part_id ASC
 			},'bind'=>[$video{'ID_entity'}],'quiet'=>1,'-slave'=>1);
