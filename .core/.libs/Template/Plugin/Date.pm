@@ -145,13 +145,9 @@ sub format {
         $datestr = &POSIX::strftime($format, @date);
     }
 	
-	main::_log('TPL Date before: ' . $datestr . ' is_utf8: ' . utf8::is_utf8($datestr),3,'debug');
-	
 	utf8::decode($datestr);
 	
-	main::_log('TPL Date after: ' . $datestr . ' is_utf8: ' . utf8::is_utf8($datestr),3,'debug');
-	
-    return $datestr;
+	return $datestr;
 }
 
 sub calc {
