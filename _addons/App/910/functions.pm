@@ -1223,21 +1223,21 @@ sub _product_index
 			push @content_id,WebService::Solr::Field->new( 'price_f' => $db0_line{'price'} )
 				if $db0_line{'price'};
 			
-			if ($db0_line{'datetime_next_index'})
+			if ($db0_line{'datetime_next_index'} && not $db0_line{'datetime_publish_start'} =~/^0000/)
 			{
 				$db0_line{'datetime_next_index'}=~s| (\d\d)|T$1|;
 				$db0_line{'datetime_next_index'}.="Z";
 				push @content_id,WebService::Solr::Field->new( 'next_index_tdt' => $db0_line{'datetime_next_index'} );
 			}
 			
-			if ($db0_line{'datetime_publish_start'})
+			if ($db0_line{'datetime_publish_start'} && not $db0_line{'datetime_publish_start'} =~/^0000/)
 			{
 				$db0_line{'datetime_publish_start'}=~s| (\d\d)|T$1|;
 				$db0_line{'datetime_publish_start'}.="Z";
 				push @content_id,WebService::Solr::Field->new( 'datetime_publish_start_tdt' => $db0_line{'datetime_publish_start'} );
 			}
 			
-			if ($db0_line{'datetime_publish_stop'})
+			if ($db0_line{'datetime_publish_stop'} && not $db0_line{'datetime_publish_stop'} =~/^0000/)
 			{
 				$db0_line{'datetime_publish_stop'}=~s| (\d\d)|T$1|;
 				$db0_line{'datetime_publish_stop'}.="Z";
