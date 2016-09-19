@@ -167,6 +167,12 @@ our $RabbitMQ = $Ext::RabbitMQ::service;
 
 package Ext::RabbitMQ::RabbitFoot;
 use parent 'Net::RabbitFoot';
+use Ext::Redis::_init;
+use JSON;
+our $json = JSON->new->ascii();
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
 
 sub _channel
 {
@@ -193,11 +199,19 @@ sub publish
 	
 	use Encode;
 	
+	$env{'header'}{'headers'}{'publish_timestamp'}=time();
 	$env{'header'}{'headers'}{'message_id'}=TOM::Utils::vars::genhash(16)
 		unless $env{'header'}{'headers'}{'message_id'};
 	
 	main::_log("[RabbitMQ] publish message_id='$env{'header'}{'headers'}{'message_id'}' exchange='".$env{'exchange'}."' routing_key='".$env{'routing_key'}."' size=".length($env{'body'}))
 		if $debug;
+	
+	if ($Redis && ($env{'exchange'} eq "cyclone3.job")) # backup job messages
+	{
+		$Redis->set('RabbitMQ|'.$env{'header'}{'headers'}{'message_id'},$json->encode(\%env));
+		$Redis->sadd('RabbitMQ|msgs','RabbitMQ|'.$env{'header'}{'headers'}{'message_id'});
+		$Redis->expire('RabbitMQ|'.$env{'header'}{'headers'}{'message_id'},86400);
+	}
 	
 	utf8::encode($env{$_}) foreach(grep {!ref($env{$_})} keys %env);
 	if (ref($env{'header'})){
@@ -234,15 +248,21 @@ sub publish
 	};
 	if ($@)
 	{
-		main::_log("[RabbitMQ] reconnecting");
-		if (($Ext::RabbitMQ::_init::RabbitMQ=Ext::RabbitMQ::service('reconnect'=>1)) && !$env{'retry'})
+		if ($TOM::experimental)
 		{
-			main::_log("[RabbitMQ] recall publish");
-			return $Ext::RabbitMQ::service->publish(%env,'retry'=>1);
+			main::_log("[RabbitMQ] reconnecting (experimental)");
+			if (($Ext::RabbitMQ::_init::RabbitMQ=Ext::RabbitMQ::service('reconnect'=>1)) && !$env{'retry'})
+			{
+				main::_log("[RabbitMQ] recall publish");
+				return $Ext::RabbitMQ::service->publish(%env,'retry'=>1);
+			}
 		}
-		else
+		main::_log("[RabbitMQ] error '$@'",1);
+		
+		if ($Redis) # will be executed directly, removing from backup queue
 		{
-			main::_log("[RabbitMQ] error '$@'",1);
+			$Redis->del('RabbitMQ|'.$env{'header'}{'headers'}{'message_id'});
+			$Redis->srem('RabbitMQ|msgs','RabbitMQ|'.$env{'header'}{'headers'}{'message_id'});
 		}
 		
 		return undef;

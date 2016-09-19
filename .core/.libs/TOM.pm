@@ -172,6 +172,9 @@ BEGIN
 	{
 		require $TOM::DP.'/_config/TOM.conf';
 	}
+	unshift @INC,$TOM::DP."/_addons"
+		if -e $TOM::DP.'/_addons';
+	
 	# configuration defined by this hostname ( one node in server farm )
 	require $TOM::P.'/_config/'.$TOM::hostname.'.conf' if -e $TOM::P.'/_config/'.$TOM::hostname.'.conf';
 	# localized boolean of cache
