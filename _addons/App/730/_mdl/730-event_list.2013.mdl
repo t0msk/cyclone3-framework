@@ -186,6 +186,17 @@ sub execute
 		$sql_where.=" AND (event.datetime_start IS NULL OR event.datetime_start <= NOW())";
 		$sql_where.=" AND (event.datetime_finish IS NULL OR event.datetime_finish >= NOW())";
 	}
+	elsif ($env{'datetime_mode'} eq "presentfuture")
+	{
+		$sql_where.=qq{ AND (
+			(
+						(event.datetime_start IS NULL OR event.datetime_start <= NOW())
+				AND	(event.datetime_finish IS NULL OR event.datetime_finish > NOW())
+			)
+			OR
+			event.datetime_start > NOW()
+		)};
+	}
 	elsif ($env{'datetime_mode'} eq "past")
 	{
 		$sql_where.=" AND (event.datetime_start IS NULL OR event.datetime_start <= NOW())";

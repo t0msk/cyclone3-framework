@@ -29,7 +29,8 @@ sub execute
 
 	# paging
 	$env{'page_limit'} = $env{'default.page_limit'} unless $env{'page_limit'};
-	$env{'page'} = 1 unless $env{'page'};
+	$env{'page'} = 1 unless $env{'page'}=~/^[0-9]*?$/;$env{'page'} = 1 if $env{'page'} < 1;
+#	$env{'page'} = 1 unless $env{'page'};
 	$env{'page_offset'} = 0 unless $env{'page_offset'};
 	$env{'page_plus'} = 1 unless $env{'page_plus'};
 	if (!$env{'sql_limit'})
