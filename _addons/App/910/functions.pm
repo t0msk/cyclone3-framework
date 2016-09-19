@@ -383,6 +383,9 @@ sub product_add
 		}
 	}
 	
+	$columns{'src_data'}="'".TOM::Security::form::sql_escape($env{'product.src_data'})."'"
+		if (exists $env{'product.src_data'} && ($env{'product.src_data'} ne $product{'src_data'}));
+	
 #	use Data::Dumper;print Dumper(\%metadata);
 	
 	$env{'product.metadata'}=App::020::functions::metadata::serialize(%metadata);
@@ -996,6 +999,7 @@ sub product_add
 						'price_full' => $env{'prices'}{$price_level_name_code}{'price_full'},
 						'price_previous' => ($env{'prices'}{$price_level_name_code}{'price_previous'} || 'NULL'),
 						'price_previous_full' => ($env{'prices'}{$price_level_name_code}{'price_previous_full'} || 'NULL'),
+						'datetime_next_index' => ($env{'prices'}{$price_level_name_code}{'datetime_next_index'} || 'NULL'),
 						'status' => "'Y'",
 					},
 					'data' => {
@@ -1009,10 +1013,16 @@ sub product_add
 			elsif (
 				$price{'price'} ne $env{'prices'}{$price_level_name_code}{'price'} ||
 				$price{'price_full'} ne $env{'prices'}{$price_level_name_code}{'price_full'} ||
-				$price{'price_previous'} ne $env{'prices'}{$price_level_name_code}{'price_previous'}
+				$price{'price_previous'} ne $env{'prices'}{$price_level_name_code}{'price_previous'} ||
+				$price{'src_data'} ne $env{'prices'}{$price_level_name_code}{'src_data'} ||
+				$price{'datetime_next_index'} ne $env{'prices'}{$price_level_name_code}{'datetime_next_index'}
 			)
 			{
 				main::_log("$price{'price'}<>$env{'prices'}{$price_level_name_code}{'price'}");
+				
+				$env{'prices'}{$price_level_name_code}{'datetime_next_index'}="'".$env{'prices'}{$price_level_name_code}{'datetime_next_index'}."'"
+					if $env{'prices'}{$price_level_name_code}{'datetime_next_index'};
+				
 				App::020::SQL::functions::update(
 					'ID' => $price{'ID'},
 					'db_h' => "main",
@@ -1023,12 +1033,77 @@ sub product_add
 						'price_full' => $env{'prices'}{$price_level_name_code}{'price_full'},
 						'price_previous' => ($env{'prices'}{$price_level_name_code}{'price_previous'} || 'NULL'),
 						'price_previous_full' => ($env{'prices'}{$price_level_name_code}{'price_previous_full'} || 'NULL'),
+						'datetime_next_index' => ($env{'prices'}{$price_level_name_code}{'datetime_next_index'} || 'NULL')
 					},
 					'data' => {
 						'src_data' => $env{'prices'}{$price_level_name_code}{'src_data'}
 					},
 					'-journalize' => 1,
 					'-posix' => 1
+				);
+				$content_reindex=1;
+			}
+		}
+	}
+	
+	
+	if ($env{'legal'})
+	{
+		foreach my $country_code (keys %{$env{'legal'}})
+		{
+#			main::_log("legal = $country_code");
+			# hladam legal
+			my %sth0=TOM::Database::SQL::execute(qq{SELECT * FROM `$App::910::db_name`.`a910_product_legal` WHERE ID_entity=? AND country_code=? LIMIT 1},
+				'bind'=>[$product{'ID'},$country_code],'quiet'=>1);
+			my %legal=$sth0{'sth'}->fetchhash();
+			
+			if (ref($env{'legal'}{$country_code}) eq "HASH")
+			{
+				
+			}
+			
+			if (!$sth0{'rows'})
+			{
+				App::020::SQL::functions::new(
+					'db_h' => "main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_product_legal",
+					'columns' =>
+					{
+						'ID_entity' => $product{'ID'},
+						'status' => "'Y'",
+					},
+					'data' => {
+						'country_code' => $country_code,
+						'VAT' => $env{'legal'}{$country_code}{'VAT'},
+					},
+					'-journalize' => 1,
+#					'-posix' => 1
+				);
+				$content_reindex=1;
+			}
+			elsif (
+				$legal{'VAT'} ne $env{'legal'}{$country_code}{'VAT'}
+			)
+			{
+#				main::_log("$price{'price'}<>$env{'prices'}{$price_level_name_code}{'price'}");
+				App::020::SQL::functions::update(
+					'ID' => $legal{'ID'},
+					'db_h' => "main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_product_legal",
+					'columns' => {
+#						'price' => $env{'prices'}{$price_level_name_code}{'price'},
+#						'price_full' => $env{'prices'}{$price_level_name_code}{'price_full'},
+#						'price_previous' => ($env{'prices'}{$price_level_name_code}{'price_previous'} || 'NULL'),
+#						'price_previous_full' => ($env{'prices'}{$price_level_name_code}{'price_previous_full'} || 'NULL'),
+					},
+					'data' => {
+						'VAT' => $env{'legal'}{$country_code}{'VAT'}
+#						'src_data' => $env{'prices'}{$price_level_name_code}{'src_data'}
+					},
+					'-journalize' => 1,
+#					'-posix' => 1
 				);
 				$content_reindex=1;
 			}

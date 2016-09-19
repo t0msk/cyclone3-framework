@@ -28,6 +28,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `price_max` decimal(12,3) default NULL,
   `price_currency` varchar(3) character set ascii default 'EUR',
   `price_EUR` decimal(12,3) default NULL, -- price in EUR
+  `src_data` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `supplier_org` bigint(20) unsigned default NULL, -- rel 710_org.ID_entity
   `supplier_person` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel 301.user_ID
@@ -88,6 +89,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `price_max` decimal(12,3) default NULL,
   `price_currency` varchar(3) character set ascii default 'EUR',
   `price_EUR` decimal(12,3) default NULL,
+  `src_data` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `supplier_org` bigint(20) unsigned default NULL, -- rel 710_org.ID_entity
   `supplier_person` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel 301.user_ID
@@ -435,12 +437,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price` (
   `price_full` decimal(12,3) default NULL,
   `price_previous` decimal(12,3) default NULL,
   `price_previous_full` decimal(12,3) default NULL,
+  `datetime_next_index` datetime default NULL,
   `src_data` text character set utf8 collate utf8_unicode_ci default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`ID_price`)
+  UNIQUE KEY `UNI_0` (`ID_entity`,`ID_price`),
+  KEY `next_index` (`datetime_next_index`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -454,6 +458,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price_j` (
   `price_full` decimal(12,3) default NULL,
   `price_previous` decimal(12,3) default NULL,
   `price_previous_full` decimal(12,3) default NULL,
+  `datetime_next_index` datetime default NULL,
   `src_data` text character set utf8 collate utf8_unicode_ci default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
@@ -464,13 +469,14 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price_j` (
 -- --------------------------------------------------
 
 CREATE TABLE `/*db_name*/`.`/*app*/_product_legal` (
-  `ID` bigint(20) unsigned NOT NULL,
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- rel product.ID
   `country_code` char(3) character set ascii default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `VAT` float NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
-  UNIQUE KEY `UNI_0` (`ID_entity`)
+  UNIQUE KEY `UNI_0` (`ID_entity`, `country_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -480,6 +486,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_legal_j` (
   `ID_entity` bigint(20) unsigned default NULL,
   `country_code` char(3) character set ascii default NULL,
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
+  `VAT` float NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
