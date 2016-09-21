@@ -390,8 +390,10 @@ sub product_add
 	
 	$env{'product.metadata'}=App::020::functions::metadata::serialize(%metadata);
 #	print $env{'product.metadata'};
-	$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'product.metadata'})."'"
-		if (exists $env{'product.metadata'} && ($env{'product.metadata'} ne $product{'metadata'}));
+	if (exists $env{'product.metadata'} && ($env{'product.metadata'} ne $product{'metadata'}))
+	{
+		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'product.metadata'})."'"
+	}
 	
 #	if (exists $env{'product.metadata'} && ($env{'product.metadata'} ne $product{'metadata'}))
 #	{
@@ -972,9 +974,9 @@ sub product_add
 				$env{'prices'}{$price_level_name_code}{'price_full'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price_full'});
 #					if $env{'prices'}{$price_level_name_code}{'price_full'};
 				$env{'prices'}{$price_level_name_code}{'price_previous'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price_previous'})
-					if $env{'prices'}{$price_level_name_code}{'price_previous'};
+					if defined $env{'prices'}{$price_level_name_code}{'price_previous'};
 				$env{'prices'}{$price_level_name_code}{'price_previous_full'}=sprintf("%.3f",$env{'prices'}{$price_level_name_code}{'price_previous_full'})
-					if $env{'prices'}{$price_level_name_code}{'price_previous_full'};
+					if defined $env{'prices'}{$price_level_name_code}{'price_previous_full'};
 			}
 			else
 			{
@@ -987,6 +989,9 @@ sub product_add
 			
 			if (!$sth0{'rows'})
 			{
+				my %data;
+				$data{'src_data'} = $env{'prices'}{$price_level_name_code}{'src_data'}
+					if defined $env{'prices'}{$price_level_name_code}{'src_data'};
 				App::020::SQL::functions::new(
 					'db_h' => "main",
 					'db_name' => $App::910::db_name,
@@ -1003,7 +1008,7 @@ sub product_add
 						'status' => "'Y'",
 					},
 					'data' => {
-						'src_data' => $env{'prices'}{$price_level_name_code}{'src_data'}
+						%data
 					},
 					'-journalize' => 1,
 					'-posix' => 1
@@ -1013,12 +1018,31 @@ sub product_add
 			elsif (
 				$price{'price'} ne $env{'prices'}{$price_level_name_code}{'price'} ||
 				$price{'price_full'} ne $env{'prices'}{$price_level_name_code}{'price_full'} ||
-				$price{'price_previous'} ne $env{'prices'}{$price_level_name_code}{'price_previous'} ||
-				$price{'src_data'} ne $env{'prices'}{$price_level_name_code}{'src_data'} ||
+				(
+					exists $env{'prices'}{$price_level_name_code}{'price_previous'}
+					&& $price{'price_previous'} ne $env{'prices'}{$price_level_name_code}{'price_previous'} 
+				) ||
+				(
+					defined $env{'prices'}{$price_level_name_code}{'src_data'}
+					&& $price{'src_data'} ne $env{'prices'}{$price_level_name_code}{'src_data'}
+				) ||
 				$price{'datetime_next_index'} ne $env{'prices'}{$price_level_name_code}{'datetime_next_index'}
 			)
 			{
-				main::_log("$price{'price'}<>$env{'prices'}{$price_level_name_code}{'price'}");
+				my %data;
+				$data{'src_data'} = $env{'prices'}{$price_level_name_code}{'src_data'}
+					if defined $env{'prices'}{$price_level_name_code}{'src_data'};
+				
+				main::_log("price $price{'price'}<>$env{'prices'}{$price_level_name_code}{'price'}")
+					if $price{'price'} ne $env{'prices'}{$price_level_name_code}{'price'};
+				main::_log("price_full $price{'price_full'}<>$env{'prices'}{$price_level_name_code}{'price_full'}")
+					if $price{'price_full'} ne $env{'prices'}{$price_level_name_code}{'price_full'};
+				main::_log("price_previous $price{'price_previous'}<>$env{'prices'}{$price_level_name_code}{'price_previous'}")
+					if (exists $env{'prices'}{$price_level_name_code}{'price_previous'} && $price{'price_previous'} ne $env{'prices'}{$price_level_name_code}{'price_previous'});
+				main::_log("src_data modified '$price{'src_data'}'<>'$env{'prices'}{$price_level_name_code}{'src_data'}'")
+					if (defined $env{'prices'}{$price_level_name_code}{'src_data'} && $price{'src_data'} ne $env{'prices'}{$price_level_name_code}{'src_data'});
+				main::_log("datetime_next_index $price{'datetime_next_index'}<>$env{'prices'}{$price_level_name_code}{'datetime_next_index'}")
+					if $price{'datetime_next_index'} ne $env{'prices'}{$price_level_name_code}{'datetime_next_index'};
 				
 				$env{'prices'}{$price_level_name_code}{'datetime_next_index'}="'".$env{'prices'}{$price_level_name_code}{'datetime_next_index'}."'"
 					if $env{'prices'}{$price_level_name_code}{'datetime_next_index'};
@@ -1036,7 +1060,7 @@ sub product_add
 						'datetime_next_index' => ($env{'prices'}{$price_level_name_code}{'datetime_next_index'} || 'NULL')
 					},
 					'data' => {
-						'src_data' => $env{'prices'}{$price_level_name_code}{'src_data'}
+						%data
 					},
 					'-journalize' => 1,
 					'-posix' => 1
