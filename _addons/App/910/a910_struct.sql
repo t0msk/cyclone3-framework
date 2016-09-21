@@ -99,6 +99,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `status_special` char(1) character set ascii NOT NULL default 'N',
   `status_main` char(1) character set ascii NOT NULL default 'Y',
   `status` char(1) character set ascii NOT NULL default 'N',
+  KEY `datetime_create` (`datetime_create`),
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -225,6 +226,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_lng_j` (
   `keywords` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'Y',
+  KEY `datetime_create` (`datetime_create`),
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -463,6 +465,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price_j` (
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
+  KEY `datetime_create` (`datetime_create`),
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
