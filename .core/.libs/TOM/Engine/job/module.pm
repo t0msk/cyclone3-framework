@@ -313,6 +313,7 @@ use Ext::RabbitMQ::_init;
 use Ext::Redis::_init;
 use Encode;
 our $json = JSON::XS->new->ascii();
+our %queues;
 
 sub jobify # prepare function call to background
 {
@@ -338,8 +339,8 @@ sub jobify # prepare function call to background
 		$env->{'routing_key'}=$env->{'routing_key'} || $tom::H_orig || 'job';
 		$env->{'routing_key'}.="::".$env->{'class'};
 		
-		my $queue_found;
-		if ($Redis)
+		my $queue_found=$queues{$queue};
+		if ($Redis && !$queue_found)
 		{
 			$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
 		}
@@ -356,6 +357,7 @@ sub jobify # prepare function call to background
 				'routing_key' => encode('UTF-8', $env->{'routing_key'}),
 				'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
 			);
+			$queues{$queue}=time();
 			$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
 			$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,10,sub {});
 		};if($@){main::_log("[RabbitMQ] can't declare queue, RabbitMQ is not available",1);return undef;}}
