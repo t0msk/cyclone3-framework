@@ -344,21 +344,31 @@ sub jobify # prepare function call to background
 			$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
 		}
 		if (!$queue_found)
-		{main::_log("[RabbitMQ] declare_queue(".'cyclone3.job.'.$queue.")");eval{
-			$RabbitMQ->_channel->declare_queue(
+		{main::_log("[RabbitMQ] passive declare_queue '".'cyclone3.job.'.$queue."'");eval{
+			my $exists=$RabbitMQ->_channel->declare_queue(
 				'exchange' => encode('UTF-8', 'cyclone3.job'),
 				'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
+				'passive' => 1,
 				'durable' => 1
-			);
-			main::_log("[RabbitMQ] bind_queue(".$env->{'routing_key'}.")");
-			$RabbitMQ->_channel->bind_queue(
-				'exchange' => encode('UTF-8', 'cyclone3.job'),
-				'routing_key' => encode('UTF-8', $env->{'routing_key'}),
-				'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
-			);
-			$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
-			$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,10,sub {});
-		};if($@){main::_log("[RabbitMQ] can't declare queue, RabbitMQ is not available",1);return undef;}}
+			)};
+			if ($@)
+			{main::_log("[RabbitMQ] declare_queue '".'cyclone3.job.'.$queue."', because error ".$@,1);eval{
+				$RabbitMQ->_channel->declare_queue(
+					'exchange' => encode('UTF-8', 'cyclone3.job'),
+					'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
+					'durable' => 1
+				);
+				main::_log("[RabbitMQ] bind_queue '".$env->{'routing_key'}."'");
+				$RabbitMQ->_channel->bind_queue(
+					'exchange' => encode('UTF-8', 'cyclone3.job'),
+					'routing_key' => encode('UTF-8', $env->{'routing_key'}),
+					'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
+				);
+				$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
+				$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,60,sub {});
+				};if($@){main::_log("[RabbitMQ] can't declare queue, RabbitMQ is not available",1);return undef;}
+			}
+		}
 	}
 	else
 	{
