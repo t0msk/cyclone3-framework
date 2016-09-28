@@ -47,6 +47,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_form_j` (
 CREATE TABLE `/*db_name*/`.`/*app*/_form_entry` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
+  `datetime_create` datetime NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -56,7 +60,10 @@ CREATE TABLE `/*db_name*/`.`/*app*/_form_entry` (
 CREATE TABLE `/*db_name*/`.`/*app*/_form_entry_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
+  `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
+  `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
+  `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`datetime_create`),
   KEY `ID_entity` (`ID_entity`)
@@ -77,7 +84,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_form_data` (
   `IP` varchar(15) NOT NULL default '',
   `lng` char(5) character set ascii NOT NULL default 'xx',
   PRIMARY KEY  (`ID`,`datetime_event`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`datetime_event`,`data_name`,`IP`),
+--  UNIQUE KEY `UNI_0` (`ID_entity`,`datetime_event`,`data_name`,`IP`),
   KEY `ID_entity` (`ID_entity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -91,11 +98,11 @@ CREATE TABLE `/*db_name*/`.`/*app*/_form_data_j` (
   `posix_owner` varchar(8) character set ascii collate ascii_bin default NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `datetime_create` datetime NOT NULL,
-  `data` text NOT NULL,
+  `data_name` varchar(128) character set ascii NOT NULL default '',
+  `data_value` text NOT NULL,
   `IP` varchar(15) NOT NULL default '',
   `lng` char(5) character set ascii NOT NULL default 'xx',
   PRIMARY KEY  (`ID`,`datetime_event`),
-  UNIQUE KEY `UNI_0` (`ID_entity`,`datetime_event`,`IP`),
   KEY `ID_entity` (`ID_entity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
