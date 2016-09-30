@@ -308,6 +308,8 @@ use open ':utf8', ':std';
 use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
+
+use Coro;
 use JSON;
 use Ext::RabbitMQ::_init;
 use Ext::Redis::_init;
@@ -342,10 +344,10 @@ sub jobify # prepare function call to background
 		my $queue_found=$queues{$queue};
 		if ($Redis && !$queue_found)
 		{
-			$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
+			$queues{$queue}=$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
 		}
 		if (!$queue_found)
-		{main::_log("[RabbitMQ] passive declare_queue '".'cyclone3.job.'.$queue."'");eval{
+		{async {main::_log("[RabbitMQ] passive declare_queue '".'cyclone3.job.'.$queue."'");eval{
 			my $exists=$RabbitMQ->_channel->declare_queue(
 				'exchange' => encode('UTF-8', 'cyclone3.job'),
 				'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
@@ -354,6 +356,9 @@ sub jobify # prepare function call to background
 			)};
 			if ($@)
 			{main::_log("[RabbitMQ] declare_queue '".'cyclone3.job.'.$queue."', because error ".$@,1);eval{
+				$queues{$queue}=time();
+				$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
+				$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,600,sub {});
 				$RabbitMQ->_channel->declare_queue(
 					'exchange' => encode('UTF-8', 'cyclone3.job'),
 					'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
@@ -365,12 +370,9 @@ sub jobify # prepare function call to background
 					'routing_key' => encode('UTF-8', $env->{'routing_key'}),
 					'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
 				);
-				$queues{$queue}=time();
-				$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
-				$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,60,sub {});
-				};if($@){main::_log("[RabbitMQ] can't declare queue, RabbitMQ is not available",1);return undef;}
+				};if($@){main::_log("[RabbitMQ] can't declare queue? ".$@,1);return undef;}
 			}
-		}
+		}}
 	}
 	else
 	{
