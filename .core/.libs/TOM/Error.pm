@@ -384,7 +384,7 @@ sub engine_cron
 sub module
 {
 	# zvysujem mieru logovania ak sa vyskytuje chyba
-	$TOM::DEBUG_log_file++;
+#	$TOM::DEBUG_log_file++;
 	$main::result="failed";
 	
 	if ($TOM::engine eq "pub")
