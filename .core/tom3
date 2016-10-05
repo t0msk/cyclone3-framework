@@ -315,11 +315,14 @@ while ($main::CGI=new CGI::Fast())
 	$tom::H_www_orig=$tom::H_www; # save original $tom::H_www
 #	foreach (sort keys %main::ENV){main::_log("$_=$main::ENV{$_}",3,"debug");}
 	
-	$main::ENV{'HTTPS'}="on" if $main::ENV{'HTTP_X_FORWARDED_PROTO'};
+	$main::ENV{'HTTPS'}="on" if $main::ENV{'HTTP_X_FORWARDED_PROTO'}=~/https/;
 	if ($main::ENV{'HTTPS'} && $tom::H_www_https)
 	{
 		$tom::H_www = $tom::H_www_https;
-#		$TOM::DEBUG_log_file=90;
+	}
+	elsif ($main::ENV{'HTTPS'})
+	{
+		$tom::H_www =~s|^http:|https:|;
 	}
 	# main::_log("tom::H_www=$tom::H_www",3,"debug");
 	if ($main::ENV{'domain'})
