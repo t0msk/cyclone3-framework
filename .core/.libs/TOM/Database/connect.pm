@@ -175,6 +175,7 @@ sub multi
 			if ($TOM::DB{$handler}{'uri'}=~/^dbi:Sybase:/)
 			{
 				$main::DB{$handler}->do("set textsize = 512000");
+				$main::DB{$handler}->do("SET DATEFORMAT 'yyyy-MM-dd hh:mm:ss'");
 #				$main::DB{$handler}->syb_enable_utf8(1);
 			}
 			else
