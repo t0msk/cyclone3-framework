@@ -357,6 +357,11 @@ while ($main::CGI=new CGI::Fast())
 	$tom::H_www_orig=$tom::H_www
 		if (!@tom::H_www_multi && !$tom::H_www_https_onlyifrequired);
 	
+	if (!$main::ENV{'HTTPS'} && $tom::H_www=~/^https/) # sorry, but this request is not from HTTPS
+	{
+		$tom::H_www=~s|^https|http|;
+	}
+	
 #	main::_log('DOS control');
 #	if (TOM::Net::HTTP::DOS::processENV(%main::ENV))
 #	{
@@ -1982,7 +1987,6 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($env0{'id'} eq "https" && $env0{'value'})
 			{
-#				_log("https mode is '$env0{'value'}', H_www_https='$tom::H_www_https' current HTTPS mode is '$main::ENV{'HTTPS'}'",3,"debug");
 				if ($env0{'value'} eq "required")
 				{
 					$main::env{'https'} = 'required';
@@ -1991,6 +1995,11 @@ while ($main::CGI=new CGI::Fast())
 				{
 					$main::env{'https'} = 'allowed';
 				}
+				elsif ($env0{'value'} eq "notallowed")
+				{
+					$main::env{'https'} = 'notallowed';
+				}
+				_log("required https mode is '$main::env{'https'}'");
 				next;
 			}
 			
@@ -2200,7 +2209,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($env0{id} eq "description")
 			{
-				_log("Change DOC::description to ".$env0{value});
+#				_log("Change DOC::description to ".$env0{value});
 				next if ($env0{'lng'} && $env0{'lng'} ne $tom::lng);
 				$H->change_DOC_description($env0{value},lng=>"$env0{lng}");
 				next;
@@ -2208,7 +2217,7 @@ while ($main::CGI=new CGI::Fast())
 			
 			if ($env0{id} eq "description_")
 			{
-				_log("Add DOC::description to ".$env0{value});
+#				_log("Add DOC::description to ".$env0{value});
 				next if ($env0{'lng'} && $env0{'lng'} ne $tom::lng);
 				$H->add_DOC_description($env0{value},lng=>"$env0{lng}");
 				next;
@@ -2389,7 +2398,7 @@ while ($main::CGI=new CGI::Fast())
 		{
 			my $t_301=track TOM::Debug("REQUEST_URI link testing for 301 redirection");
 			
-			main::_log("REQUEST_URI='$main::ENV{REQUEST_URI}'");
+			main::_log("REQUEST_URI='$main::ENV{REQUEST_URI}' HTTPS=".$main::ENV{'HTTPS'}." H_www=".$tom::H_www." H_www_orig=".$tom::H_www_orig);
 			
 			my $link_old=$main::ENV{'REQUEST_URI'};
 			my $rewrite_old=$main::ENV{'REQUEST_URI'};$rewrite_old=~s|^(.*)\?.*?$|$1|;
@@ -2433,6 +2442,8 @@ while ($main::CGI=new CGI::Fast())
 									&& $main::env{'https'} eq "allowed"
 								)
 							)
+							&&
+							$main::env{'https'} ne "notallowed"
 					)
 					{
 						$tom::H_www_https
@@ -2748,6 +2759,20 @@ while ($main::CGI=new CGI::Fast())
 				print "Status: $main::location_code Found\n";
 				print "C3-Request: $main::request_code\n";
 				print "Location: $out\n\n";
+				if ($TOM::Document::ACAOrigin eq "dynamic")
+				{
+					my $aca = $main::ENV{'HTTP_REFERER'} || $tom::H_www;
+						$aca =~s|^(http[s]?://.*?)/.*$|$1|;
+					print "Access-Control-Allow-Origin: ".$aca."\n";
+					print "Vary: Origin\n";
+				}
+				else
+				{
+					print "Access-Control-Allow-Origin: ".($TOM::Document::ACAOrigin || '*')."\n";
+				}
+				print "Expires: ".$main::ENV{'Expires'}."\n" if $main::ENV{'Expires'};
+				print "Cache-Control: ".$main::ENV{'Cache-Control'}."\n" if $main::ENV{'Cache-Control'};
+				
 				untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
 				
 #				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
@@ -3077,6 +3102,8 @@ while ($main::CGI=new CGI::Fast())
 		
 #		print "Accept-CH: DPR, Width, Viewport-Width\n";
 #		print "Vary: Width, Accept-Encoding\n";
+#		print "Vary: Width, Accept-Encoding, Origin\n";
+		print "Vary: Origin\n";
 		
 		if ($TOM::Document::content_security_policy)
 		{
@@ -3084,7 +3111,11 @@ while ($main::CGI=new CGI::Fast())
 		}
 		if ($TOM::Document::frame_options ne "ALLOWALL")
 		{
-			print "X-FRAME-OPTIONS: ".($TOM::Document::frame_options || 'SAMEORIGIN')."\n";
+			print "X-FRAME-OPTIONS: ".($TOM::Document::frame_options || 'SAMEORIGIN').";\n";
+		}
+		if ($tom::H_www_orig=~/^https/ && $TOM::Document::HSTS)
+		{
+			print "Strict-Transport-Security: max-age=600;\n";
 		}
 		
 		# codepage pouzity pre tuto page;
@@ -3239,7 +3270,16 @@ while ($main::CGI=new CGI::Fast())
 #			}
 			print "Content-Type: ".$TOM::Document::content_type."; charset=$main::LNG_cp_this\n";
 			
-			print "Access-Control-Allow-Origin: ".($TOM::Document::ACAOrigin || '*')."\n";
+			if ($TOM::Document::ACAOrigin eq "dynamic")
+			{
+				my $aca = $main::ENV{'HTTP_REFERER'} || $tom::H_www;
+					$aca =~s|^(http[s]?://.*?)/.*$|$1|;
+				print "Access-Control-Allow-Origin: ".$aca."\n";
+			}
+			else
+			{
+				print "Access-Control-Allow-Origin: ".($TOM::Document::ACAOrigin || '*')."\n";
+			}
 			
 			if ($ENV{'HTTP_ACCEPT_ENCODING'}=~/gzip/i && !$pub::gzip_disable)
 			{
@@ -3378,13 +3418,14 @@ while ($main::CGI=new CGI::Fast())
 	}
 	
 	# check memory consumption
-	if (($main::time_current-$TOM::time_start) > 60 && ($main::time_current-$main::time_memory_check)>=10){$main::time_memory_check=$main::time_current;
+	if (($main::time_current-$TOM::time_start) > (60*3) && ($main::time_current-$main::time_memory_check)>=10){
+	$main::time_memory_check=$main::time_current;
 	eval{
 		my $t = new Proc::ProcessTable;
 		foreach my $p (grep {$_->{'pid'} == $$} @{$t->table})
 		{
 			main::_log("used memory ".Number::Bytes::Human::format_bytes($p->{'rss'}));
-			if ($p->{'rss'} >= 300000000)
+			if ($p->{'rss'} >= 300*1024*1024)
 			{
 				main::_log("SHUTDOWN (too much memory ".Number::Bytes::Human::format_bytes($p->{'rss'}).") (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3);
 				main::_log("SHUTDOWN (too much memory ".Number::Bytes::Human::format_bytes($p->{'rss'}).") (lives ".($main::time_current-$TOM::time_start)." secs, $tom::count requests) PID:$$ domain:$tom::H",3,"pub.mng",1);
