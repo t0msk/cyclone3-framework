@@ -46,7 +46,7 @@ sub execute
 	my $sql_join;
 	my $sql_limit=$env{'sql_limit'} || 10;
 	my $sql_order_by=$env{'sql_order_by'} || 'video.datetime_rec_start DESC';
-	my $sql_group_by;
+	my $sql_group_by=$env{'sql_group_by'} || 'video.ID_entity';
 	
 	if ($env{'datetime_mode'} eq "present")
 	{
@@ -339,7 +339,7 @@ sub execute
 		(
 			video_part_file.ID_entity = video_part.ID AND
 			video_part_file.status IN ('Y','L') AND
-			video_part_file.ID_format = $env{'video_format.ID_entity'}
+			video_part_file.ID_format IN ($env{'video_format.ID_entity'})
 		)
 		LEFT JOIN `$App::510::db_name`.`a510_video_part_smil` AS video_part_smil ON
 		(
@@ -357,7 +357,7 @@ sub execute
 		LIMIT
 			$sql_limit
 	},'bind'=>[@sql_bind],
-		'log'=>0,'-slave'=>1,
+		'log'=>0,'-slave'=>1,'-cache'=>30,
 		'-changetime'=>App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",
@@ -453,9 +453,11 @@ sub execute
 				WHERE
 					video_part.status IN ('Y','L') AND
 					video_part.ID_entity = ?
+				GROUP BY
+					video_part.ID
 				ORDER BY
 					part_id ASC
-			},'bind'=>[$video{'ID_entity'}],'quiet'=>1);
+			},'bind'=>[$video{'ID_entity'}],'quiet'=>1,'-slave'=>1);
 			while (my %video_part=$sth0{'sth'}->fetchhash())
 			{
 				
@@ -476,7 +478,7 @@ sub execute
 							video_part_file.ID_entity = ?
 						ORDER BY
 							video_part_file.ID_format ASC
-					},'bind'=>[$video_part{'ID'}],'quiet'=>1);
+					},'bind'=>[$video_part{'ID'}],'quiet'=>1,'-slave'=>1);
 					while (my %video_part_file=$sth0{'sth'}->fetchhash())
 					{
 						push @{$video_part{'file'}}, \%video_part_file;
