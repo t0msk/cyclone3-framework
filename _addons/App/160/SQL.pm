@@ -151,6 +151,8 @@ sub new_relation
 
 	my $quantifier = 1;
 		$quantifier = $env{'quantifier'} if ($env{'quantizer'} =~ /^\d+$/);
+	my $priority = 'NULL';
+		$priority = $env{'priority'} if ($env{'priority'} =~ /^\d+$/);
 	
 	my %data_col;
 		$data_col{'note'} = '';
@@ -181,6 +183,7 @@ sub new_relation
 			'rel_type' => "'".TOM::Security::form::sql_escape($env{'rel_type'})."'",
 			'rel_name' => "NULL",
 			'quantifier' => $quantifier,
+			'priority' => $priority,
 			'status' => "'".TOM::Security::form::sql_escape($env{'status'})."'",
 		);
 		delete $columns{'rel_name'} if $data_col{'rel_name'};
@@ -229,6 +232,7 @@ sub new_relation
 			'l_ID_entity' => "'".TOM::Security::form::sql_escape($env{'l_ID_entity'})."'",
 			'rel_type' => "'".TOM::Security::form::sql_escape($env{'rel_type'})."'",
 			'quantifier' => $quantifier,
+			'priority' => $priority,
 			'r_db_name' => "'".TOM::Security::form::sql_escape($env{'r_db_name'})."'",
 			'r_prefix' => "'".TOM::Security::form::sql_escape($env{'r_prefix'})."'",
 			'r_table' => "'".TOM::Security::form::sql_escape($env{'r_table'})."'",
