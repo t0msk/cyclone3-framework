@@ -88,7 +88,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_j` (
 CREATE TABLE `/*db_name*/`.`/*addon*/_banner_lng` ( -- language versions of banner
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- rel _banner.ID_entity
-  `title` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `title` varchar(250) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `def_type` varchar(32) character set ascii collate ascii_bin default NULL, -- popup, html, dynamic, ...
   `def_img_src` varchar(250) character set ascii collate ascii_bin default NULL,
   `def_script` text character set utf8 collate utf8_unicode_ci default NULL,
@@ -113,7 +113,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_lng` ( -- language versions of bann
 CREATE TABLE `/*db_name*/`.`/*addon*/_banner_lng_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL, -- rel _banner.ID_entity
-  `title` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `title` varchar(250) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `def_type` varchar(32) character set ascii collate ascii_bin default NULL, -- popup, html, dynamic, ...
   `def_img_src` varchar(250) character set ascii collate ascii_bin default NULL,
   `def_script` text character set utf8 collate utf8_unicode_ci default NULL,
