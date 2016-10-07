@@ -9,8 +9,8 @@ use strict;
 
 use App::210::_init;
 use App::401::_init;
-use Ext::Solr::_init;
 use Ext::Elastic::_init;
+use Ext::Solr::_init;
 
 sub execute
 {
@@ -29,7 +29,8 @@ sub execute
 
 	# paging
 	$env{'page_limit'} = $env{'default.page_limit'} unless $env{'page_limit'};
-	$env{'page'} = 1 unless $env{'page'};
+	$env{'page'} = 1 unless $env{'page'}=~/^[0-9]*?$/;$env{'page'} = 1 if $env{'page'} < 1;
+#	$env{'page'} = 1 unless $env{'page'};
 	$env{'page_offset'} = 0 unless $env{'page_offset'};
 	$env{'page_plus'} = 1 unless $env{'page_plus'};
 	if (!$env{'sql_limit'})
@@ -396,6 +397,8 @@ sub execute
 			article_ent.visits,
 			article_ent.sources,
 			article_ent.metadata,
+			article_ent.social_shares_facebook,
+			article_ent.social_shares_twitter,
 			article_content.ID_editor AS posix_editor,
 			
 			article_content.datetime_create AS content_datetime_create,
@@ -524,6 +527,8 @@ sub execute
 				article_ent.visits,
 				article_ent.sources,
 				article_ent.metadata,
+                article_ent.social_shares_facebook,
+			    article_ent.social_shares_twitter,
 				article_content.ID_editor AS posix_editor,
 				
 				article_content.datetime_create AS content_datetime_create,

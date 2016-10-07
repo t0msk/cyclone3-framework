@@ -155,6 +155,8 @@ sub execute
 			article_ent.visits,
 			article_ent.sources,
 			article_ent.metadata,
+            article_ent.social_shares_facebook,
+            article_ent.social_shares_twitter,
 			article_content.ID_editor AS posix_editor,
 			
 			article_content.datetime_create AS content_datetime_create,
