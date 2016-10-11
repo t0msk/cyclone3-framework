@@ -100,6 +100,13 @@ sub execute
 		if (-e $TOM::P.'/_data/email/'.$dir.'/body_'.$env0{'ID'}.'.eml')
 		{
 			local $/;
+			open(EMAILBODY,'<'.$TOM::P.'/_data/email/'.$dir.'/body_'.$env0{'ID'}.'.eml');
+			$env0{'body'}=<EMAILBODY>;
+			close(EMAILBODY);
+		}
+		elsif (-e $TOM::P.'/_data/email/body_'.$env0{'ID'}.'.eml')
+		{
+			local $/;
 			open(EMAILBODY,'<'.$TOM::P.'/_data/email/body_'.$env0{'ID'}.'.eml');
 			$env0{'body'}=<EMAILBODY>;
 			close(EMAILBODY);
@@ -108,6 +115,13 @@ sub execute
 		if (length($env0{'body'}) < 10)
 		{
 			main::_log("can't send empty email body! ID='$env0{'ID'}' from='$env0{'from_email'}' datetime='$env0{'datetime_create'}'",1);
+			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-100 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
+			next;
+		}
+		
+		if (not $env0{'to_email'}=~/\@/)
+		{
+			main::_log("can't to invalid email address '$env0{'to_email'}'",1);
 			TOM::Database::SQL::execute("UPDATE TOM.a130_send SET priority=priority-100 WHERE ID='$env0{ID}' LIMIT 1",'quiet'=>1);
 			next;
 		}
