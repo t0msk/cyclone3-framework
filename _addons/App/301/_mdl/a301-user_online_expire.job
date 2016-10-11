@@ -127,5 +127,10 @@ sub execute
 		}
 	}
 	
+	if ($i)
+	{
+		$self->reschedule();
+	}
+	
 return 1}
 1;

@@ -64,7 +64,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
   KEY `county` (`county`),
   KEY `district` (`district`),
   KEY `city` (`city`),
-  KEY `status` (`status`)
+  KEY `status` (`status`),
+  KEY `ref_ID` (`ref_ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------

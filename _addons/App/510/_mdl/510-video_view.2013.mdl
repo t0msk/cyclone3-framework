@@ -30,6 +30,7 @@ sub execute
 	my $sql_changetime;
 	my $sql_limit=$env{'sql_limit'} || 1;
 	my $sql_order_by=$env{'sql_order_by'} || 'video.datetime_rec_start DESC';
+	my $sql_group_by=$env{'sql_group_by'} || 'video.ID_entity';
 	
 	if ($env{'datetime_mode'} eq "present")
 	{
@@ -167,7 +168,7 @@ sub execute
 		(
 			video_part_file.ID_entity = video_part.ID AND
 			video_part_file.status IN ('Y','L') AND
-			video_part_file.ID_format = $env{'video_format.ID_entity'}
+			video_part_file.ID_format IN ($env{'video_format.ID_entity'})
 		)
 		LEFT JOIN `$App::510::db_name`.`a510_video_part_smil` AS video_part_smil ON
 		(
@@ -176,12 +177,14 @@ sub execute
 		}}}.qq{
 		WHERE
 			video.status IN ('Y','L')
-			$sql_where
+			$sql_where}.do{if($sql_group_by){qq{
+		GROUP BY
+			$sql_group_by}}}.qq{
 		ORDER BY
 			$sql_order_by
 		LIMIT
 			$sql_limit
-	},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,'-cache_'=>86400*7,
+	},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,'-cache'=>60,
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime({
 			'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video",'ID_entity'=>$env{'video.ID_entity'}
 		})
@@ -317,7 +320,7 @@ sub execute
 			(
 				video_part_file.ID_entity = video_part.ID AND
 				video_part_file.status IN ('Y','L') AND
-				video_part_file.ID_format = $env{'video_format.ID_entity'}
+				video_part_file.ID_format IN ($env{'video_format.ID_entity'})
 			)
 			LEFT JOIN `$App::510::db_name`.`a510_video_part_smil` AS video_part_smil ON
 			(
@@ -327,15 +330,28 @@ sub execute
 				video_part.status IN ('Y','L') AND
 				video_part.ID_entity = ?
 				$sql_where
+			GROUP BY
+				video_part.ID
 			ORDER BY
 				part_id ASC
 		},'bind'=>[$video{'ID_entity'},@sql_bind],'quiet'=>1);
 		while (my %video_part=$sth0{'sth'}->fetchhash())
 		{
 			
+			$video_part{'related_thumbnail'}=(App::160::SQL::get_relations(
+				'db_name' => $App::510::db_name,
+				'l_prefix' => 'a510',
+				'l_table' => 'video_part',
+				'l_ID_entity' => $video_part{'ID'},
+				'r_prefix' => "a501",
+				'r_table' => "image",
+				'rel_type' => "thumbnail",
+				'status' => "Y"
+			))[0];
+			
 			if ($env{'video_part_file'})
 			{
-				my %sth0=TOM::Database::SQL::execute(qq{
+				my %sth1=TOM::Database::SQL::execute(qq{
 					SELECT
 						video_part_file.*,
 						video_format.name AS video_format_name
@@ -351,9 +367,39 @@ sub execute
 					ORDER BY
 						video_part_file.ID_format ASC
 				},'bind'=>[$video_part{'ID'}],'quiet'=>1);
-				while (my %video_part_file=$sth0{'sth'}->fetchhash())
+				while (my %video_part_file=$sth1{'sth'}->fetchhash())
 				{
 					push @{$video_part{'file'}}, \%video_part_file;
+				}
+			}
+			
+			if ($env{'video_part_cuepoint'})
+			{
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						video_part.part_id,
+						cuepoint.*
+					FROM
+						`$App::510::db_name`.a510_video_part AS video_part
+					LEFT JOIN `$App::510::db_name`.a510_video_part_cuepoint AS cuepoint ON
+					(
+						cuepoint.ID_entity = video_part.ID
+						AND cuepoint.status = 'Y'
+					)
+					WHERE
+						video_part.status = 'Y' AND
+						video_part.ID_entity = ? AND
+						cuepoint.status = 'Y'
+					ORDER BY
+						video_part.part_id, cuepoint.time_cuepoint ASC
+				},'quiet'=>1,'-slave'=>1,'-cache'=>60,'bind' => [$video_part{'ID_entity'}],
+					'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+						'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video_part_cuepoint"
+					})
+				);
+				while (my %cuepoint=$sth1{'sth'}->fetchhash())
+				{
+					push @{$video_part{'cuepoint'}},\%cuepoint;
 				}
 			}
 			

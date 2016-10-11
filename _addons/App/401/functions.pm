@@ -933,6 +933,9 @@ sub _article_index
 			push @{$article{'cat_charindex'}},$db0_line{'ID_charindex'}
 				if $db0_line{'ID_charindex'};
 			
+			push @{$article{'cat_charindex'}},$db0_line{'ID_charindex'}
+				if $db0_line{'ID_charindex'};
+			
 			push @{$article{'locale'}{$db0_line{'lng'}}{'name'}},$db0_line{'name'};
 			
 #			$db0_line{'datetime_start'}=~s| (\d\d)|T$1|;
@@ -1438,7 +1441,7 @@ sub article_visit
 		my $key='main::'.$App::401::db_name.'::a401_article_ent::'.$ID_entity;
 		my $count_visits = $Redis->hmget('C3|db_entity|'.$key,'_firstvisit','visits');
 		if (
-			($count_visits->[0] <= ($main::time_current - 1200)) # save every 10 minutes
+			($count_visits->[0] <= ($main::time_current - 1800)) # save every 30 minutes
 			|| $count_visits->[1] >= 1000)
 		{
 			# it's time to save
@@ -1450,19 +1453,25 @@ sub article_visit
 			},'quiet'=>1,'-jobify'=>1,'bind'=>[$count_visits->[1]]) if $count_visits->[1];
 			$Redis->hmset('C3|db_entity|'.$key,
 				'visits',1,
-				'_firstvisit', $main::time_current,
-				sub {}
+				'_firstvisit', $main::time_current
+#				,sub {}
 			);
-			$Redis->expire($key,86400,sub {});
+			$Redis->expire($key,86400
+#				,sub {}
+			);
 		}
 		else
 		{
 #			main::_log("last visit $count_visits->[0] $count_visits->[1]");
 #			$Redis->hset('C3|db_entity|'.$key,'_firstvisit',$main::time_current,sub {});
-			$Redis->hincrby('C3|db_entity|'.$key,'visits',1,sub {});
+			$Redis->hincrby('C3|db_entity|'.$key,'visits',1
+#				,sub {}
+			);
 			if (!$count_visits->[0])
 			{
-				$Redis->expire($key,86400,sub {});
+				$Redis->expire($key,(86400*7)
+#					,sub {}
+				);
 			}
 		}
 		return 1;

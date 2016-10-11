@@ -564,6 +564,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   `status_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
   `recording` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N', -- it is recording now
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`ID`),
   UNIQUE KEY `UNI_0` (`ID_channel`,`program_code`,`datetime_air_start`),
   KEY `ID_entity` (`ID_entity`),
@@ -625,6 +626,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
   `status_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
   `recording` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -699,7 +701,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_schedule` ( -- schedule with rea
   `ID_entity` bigint(20) unsigned DEFAULT NULL,
   `ID_channel` bigint(20) unsigned DEFAULT NULL, -- rel _broadcast_channel.ID_entity
   `program_code` varchar(64) CHARACTER SET ascii DEFAULT NULL, -- number of program - not unique
-  `name` varchar(256) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `name` varchar(250) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `name_url` varchar(256) CHARACTER SET ascii NOT NULL DEFAULT '',
   `artist` varchar(256) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   `album` varchar(256) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,

@@ -99,7 +99,7 @@ sub new_relation
 	))[0];
 	if ($relation)
 	{
-		main::_log("this relation exists with status='$relation->{'status'}'");
+		main::_log("this relation exists with ID='$relation->{'ID'}' status='$relation->{'status'}'");
 		# when it exists, check if is enabled ( when not, enable it )
 		if ($relation->{'status'} eq "Y")
 		{
@@ -115,10 +115,18 @@ sub new_relation
 			'db_h' => $env{'db_h'},
 			'db_name' => $env{'db_name'},
 			'tb_name' => 'a160_relation',
+			'data' =>
+			{
+				'note' => $env{'note'},
+				'rel_type' => $env{'rel_type'},
+				'rel_name' => $env{'rel_name'},
+				'priority' => $env{'priority'},
+				'quantifier' => $env{'quantifier'},
+			},
 			'columns' =>
 			{
 				'status' => "'$env{'status'}'",
-			},
+			}
 		);
 		
 		if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)
@@ -141,11 +149,15 @@ sub new_relation
 	
 	# prepare quantifier
 
-	my $quantifier = 1;	
-	$quantifier = $env{'quantifier'} if ($env{'quantizer'} =~ /^\d+$/);
+	my $quantifier = 1;
+		$quantifier = $env{'quantifier'} if ($env{'quantizer'} =~ /^\d+$/);
+	my $priority = 'NULL';
+		$priority = $env{'priority'} if ($env{'priority'} =~ /^\d+$/);
 	
 	my %data_col;
-		$data_col{'note'} = $env{'note'} if $env{'note'};
+		$data_col{'note'} = '';
+		$data_col{'note'} = $env{'note'} if defined $env{'note'};
+		$data_col{'rel_name'} = $env{'rel_name'} if defined $env{'rel_name'};
 	
 	# find if this relation has ID_entity
 	my $relation=(get_relations(
@@ -162,24 +174,28 @@ sub new_relation
 	{
 		main::_log("this relation has ID_entity='$relation->{'ID_entity'}', also creating clone");
 		
+		my %columns=(
+			'rel_type' => "'".TOM::Security::form::sql_escape($env{'rel_type'})."'",
+			'r_db_name' => "'".TOM::Security::form::sql_escape($env{'r_db_name'})."'",
+			'r_prefix' => "'".TOM::Security::form::sql_escape($env{'r_prefix'})."'",
+			'r_table' => "'".TOM::Security::form::sql_escape($env{'r_table'})."'",
+			'r_ID_entity' => "'".TOM::Security::form::sql_escape($env{'r_ID_entity'})."'",
+			'rel_type' => "'".TOM::Security::form::sql_escape($env{'rel_type'})."'",
+			'rel_name' => "NULL",
+			'quantifier' => $quantifier,
+			'priority' => $priority,
+			'status' => "'".TOM::Security::form::sql_escape($env{'status'})."'",
+		);
+		delete $columns{'rel_name'} if $data_col{'rel_name'};
+		delete $columns{'note'} if $data_col{'note'};
+		
 		my $ID=App::020::SQL::functions::clone(
 			'ID' => $relation->{'ID'},
 			'db_h' => $env{'db_h'},
 			'db_name' => $env{'db_name'},
 			'tb_name' => 'a160_relation',
-			'columns' =>
-			{
-				'rel_type' => "'".TOM::Security::form::sql_escape($env{'rel_type'})."'",
-				'r_db_name' => "'".TOM::Security::form::sql_escape($env{'r_db_name'})."'",
-				'r_prefix' => "'".TOM::Security::form::sql_escape($env{'r_prefix'})."'",
-				'r_table' => "'".TOM::Security::form::sql_escape($env{'r_table'})."'",
-				'r_ID_entity' => "'".TOM::Security::form::sql_escape($env{'r_ID_entity'})."'",
-				'rel_type' => "'".TOM::Security::form::sql_escape($env{'rel_type'})."'",
-				'rel_name' => "NULL",
-				'quantifier' => $quantifier,
-				'status' => "'".TOM::Security::form::sql_escape($env{'status'})."'",
-			},
-			'data' => {%data_col}
+			'data' => {%data_col},
+			'columns' => {%columns},
 		);
 		
 		main::_log("clone with ID='$ID'");
@@ -208,6 +224,7 @@ sub new_relation
 		'db_h' => $env{'db_h'},
 		'db_name' => $env{'db_name'},
 		'tb_name' => 'a160_relation',
+		'data' => {%data_col},
 		'columns' =>
 		{
 			'l_prefix' => "'".TOM::Security::form::sql_escape($env{'l_prefix'})."'",
@@ -215,13 +232,14 @@ sub new_relation
 			'l_ID_entity' => "'".TOM::Security::form::sql_escape($env{'l_ID_entity'})."'",
 			'rel_type' => "'".TOM::Security::form::sql_escape($env{'rel_type'})."'",
 			'quantifier' => $quantifier,
+			'priority' => $priority,
 			'r_db_name' => "'".TOM::Security::form::sql_escape($env{'r_db_name'})."'",
 			'r_prefix' => "'".TOM::Security::form::sql_escape($env{'r_prefix'})."'",
 			'r_table' => "'".TOM::Security::form::sql_escape($env{'r_table'})."'",
 			'r_ID_entity' => "'".TOM::Security::form::sql_escape($env{'r_ID_entity'})."'",
 			'status' => "'".TOM::Security::form::sql_escape($env{'status'})."'",
 		},
-		'data' => {%data_col}
+		
 	);
 	
 	if ($TOM::CACHE_memcached && $TOM::CACHE && $CACHE)

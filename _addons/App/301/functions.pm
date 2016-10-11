@@ -1168,7 +1168,7 @@ sub user_get
 
 sub _user_index
 {
-	return 1 if TOM::Engine::jobify(\@_); # do it in background
+	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::010::db_name,'class'=>'indexer'}); # do it in background
 	my %env=@_;
 	return undef unless $env{'ID_user'};
 #	return undef unless $Ext::Solr;
@@ -1401,7 +1401,11 @@ sub _user_index
 		{
 			foreach (keys %{$user{'metahash'}{$sec}})
 			{
-				next unless $user{'metahash'}{$sec}{$_};
+				if (!$user{'metahash'}{$sec}{$_})
+				{
+					delete $user{'metahash'}{$sec}{$_};
+					next
+				}
 				if ($_=~s/\[\]$//)
 				{
 					foreach my $val (split(';',$user{'metahash'}{$sec}{$_.'[]'}))
