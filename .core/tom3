@@ -315,11 +315,14 @@ while ($main::CGI=new CGI::Fast())
 	$tom::H_www_orig=$tom::H_www; # save original $tom::H_www
 #	foreach (sort keys %main::ENV){main::_log("$_=$main::ENV{$_}",3,"debug");}
 	
-	$main::ENV{'HTTPS'}="on" if $main::ENV{'HTTP_X_FORWARDED_PROTO'};
+	$main::ENV{'HTTPS'}="on" if $main::ENV{'HTTP_X_FORWARDED_PROTO'}=~/https/;
 	if ($main::ENV{'HTTPS'} && $tom::H_www_https)
 	{
 		$tom::H_www = $tom::H_www_https;
-#		$TOM::DEBUG_log_file=90;
+	}
+	elsif ($main::ENV{'HTTPS'})
+	{
+		$tom::H_www =~s|^http:|https:|;
 	}
 	# main::_log("tom::H_www=$tom::H_www",3,"debug");
 	if ($main::ENV{'domain'})
@@ -356,6 +359,11 @@ while ($main::CGI=new CGI::Fast())
 	# no original, all links are with the same priority
 	$tom::H_www_orig=$tom::H_www
 		if (!@tom::H_www_multi && !$tom::H_www_https_onlyifrequired);
+	
+	if (!$main::ENV{'HTTPS'} && $tom::H_www=~/^https/) # sorry, but this request is not from HTTPS
+	{
+		$tom::H_www=~s|^https|http|;
+	}
 	
 #	main::_log('DOS control');
 #	if (TOM::Net::HTTP::DOS::processENV(%main::ENV))
@@ -2393,7 +2401,7 @@ while ($main::CGI=new CGI::Fast())
 		{
 			my $t_301=track TOM::Debug("REQUEST_URI link testing for 301 redirection");
 			
-			main::_log("REQUEST_URI='$main::ENV{REQUEST_URI}'");
+			main::_log("REQUEST_URI='$main::ENV{REQUEST_URI}' HTTPS=".$main::ENV{'HTTPS'}." H_www=".$tom::H_www." H_www_orig=".$tom::H_www_orig);
 			
 			my $link_old=$main::ENV{'REQUEST_URI'};
 			my $rewrite_old=$main::ENV{'REQUEST_URI'};$rewrite_old=~s|^(.*)\?.*?$|$1|;
@@ -3106,7 +3114,11 @@ while ($main::CGI=new CGI::Fast())
 		}
 		if ($TOM::Document::frame_options ne "ALLOWALL")
 		{
-			print "X-FRAME-OPTIONS: ".($TOM::Document::frame_options || 'SAMEORIGIN')."\n";
+			print "X-FRAME-OPTIONS: ".($TOM::Document::frame_options || 'SAMEORIGIN').";\n";
+		}
+		if ($tom::H_www_orig=~/^https/ && $TOM::Document::HSTS)
+		{
+			print "Strict-Transport-Security: max-age=600;\n";
 		}
 		
 		# codepage pouzity pre tuto page;
