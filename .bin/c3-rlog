@@ -140,12 +140,13 @@ Basic options:
  --pretty               display additional attributes in pretty json format
  --ch                   strict chronological - don't group primary by log source
  --data.*               search terms in data.* field
- 
+ -s                     save (protect log)
+
 };
 	exit;
 }
 
-if (!$main::arg{'d'} && !$main::arg{'dm'} && !$main::arg{'hd'})
+if (!$main::arg{'d'} && !$main::arg{'dm'} && !$main::arg{'hd'} && !$main::arg{'h'})
 {
 	$main::arg{'hd'} ||= $TOM::domain;
 	$main::arg{'h'} ||= $TOM::hostname.'.'.($TOM::domain || 'undef');
@@ -156,12 +157,22 @@ my $query;
 my %query_string;
 my @filter;
 my @notfilter;
-if ($main::arg{'hd'})
+
+if ($main::arg{'hd'} eq "?")
+{
+	$query.=" hd=".$main::arg{'hd'};
+#	push @filter,{"terms" => {"hd" => [$main::arg{'hd'}]}},
+}
+elsif ($main::arg{'hd'})
 {
 	$query.=" hd=".$main::arg{'hd'};
 	push @filter,{"terms" => {"hd" => [$main::arg{'hd'}]}},
 };
-if ($main::arg{'h'})
+if ($main::arg{'h'} eq "?")
+{
+	$query.=" h=".$main::arg{'h'};
+}
+elsif ($main::arg{'h'})
 {
 	$main::arg{'h'}='*' if $main::arg{'h'}==1;
 	$query.=" h=".$main::arg{'h'};
@@ -185,7 +196,12 @@ elsif ($tom::H)
 	$query.=" d=".$tom::H;
 	push @filter,{"terms" => {"d" => [$tom::H]}};
 }
-if ($main::arg{'dm'})
+if ($main::arg{'dm'} eq "?")
+{
+	$query.=" dm=".$main::arg{'dm'};
+#	push @filter,{"terms" => {"dm" => [$main::arg{'dm'}]}},
+}
+elsif ($main::arg{'dm'})
 {
 	$query.=" dm=".$main::arg{'dm'};
 	push @filter,{"terms" => {"dm" => [$main::arg{'dm'}]}},
@@ -633,6 +649,56 @@ if ($main::arg{'t'} eq "?")
 	exit;
 }
 
+if ($main::arg{'h'} eq "?")
+{
+	$search_config->{'size'}=0;
+	$search_config->{'body'}{'aggregations'} = {
+		"facility" => {
+			"terms" => {
+				'field' => "h",
+				"size" => 200,
+			}
+		}
+	};
+	
+	$results = $Elastic->search($search_config);
+	
+	foreach my $type (@{$results->{'aggregations'}->{'facility'}->{'buckets'}})
+	{
+		$type->{'key'}=~s|^cyclone3\.||;
+		main::_log_stdout(" $type->{'key'} ($type->{'doc_count'})");
+	}
+	
+#	print Dumper($results);
+	
+	exit;
+}
+
+if ($main::arg{'hd'} eq "?")
+{
+	$search_config->{'size'}=0;
+	$search_config->{'body'}{'aggregations'} = {
+		"facility" => {
+			"terms" => {
+				'field' => "hd",
+				"size" => 200,
+			}
+		}
+	};
+	
+	$results = $Elastic->search($search_config);
+	
+	foreach my $type (@{$results->{'aggregations'}->{'facility'}->{'buckets'}})
+	{
+		$type->{'key'}=~s|^cyclone3\.||;
+		main::_log_stdout(" $type->{'key'} ($type->{'doc_count'})");
+	}
+	
+#	print Dumper($results);
+	
+	exit;
+}
+
 if ($main::arg{'d'} eq "?")
 {
 	$search_config->{'size'}=0;
@@ -744,6 +810,18 @@ foreach my $line (sort {
 	{
 		$last_timestamp = $line->{'_source'}->{'@timestamp'};
 		$last_o = $line->{'_source'}->{'o'};
+	}
+	
+	if ($main::arg{'s'} && !$line->{'_source'}->{'s'})
+	{
+		$Elastic->update(
+			'index' => $line->{'_index'},
+			'type' => $line->{'_type'},
+			'id' => $line->{'_id'},
+			'body' => {
+				'doc' => {"s" => 1}
+			}
+		);
 	}
 	
 	$line->{'_source'}->{'@timestamp'}=~/^(\d\d\d\d)\-(\d\d)\-(\d\d)T(\d\d):(\d\d):(\d\d).(\d\d\d)Z$/;

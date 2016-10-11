@@ -45,6 +45,13 @@ sub execute
 	}
 	
 	my @filter=[{"terms" => {"hd" => [$TOM::domain || 'undef']}}];
+	push @filter,{
+		'bool' => {
+			'must_not' => [
+				{"terms" => {"s" => [1]}}
+			]
+		}
+	};
 	
 	if ($tom::H)
 	{
