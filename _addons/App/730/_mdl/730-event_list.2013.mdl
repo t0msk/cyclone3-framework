@@ -43,10 +43,32 @@ sub execute
 	my $sql_limit=$env{'sql_limit'} || 10;
 	my $sql_order_by=$env{'sql_order_by'} || 'event.datetime_publish_start DESC';
 	my $sql_group_by;
+	my $sql_select;
+		$sql_select = ',' . $env{'sql_select'} if $env{'sql_select'};
 	
 	if ($env{'unique'})
 	{
 		$sql_group_by="event.ID_entity";
+	}
+	
+	if ($env{'exclude.event_cat.ID_entity'})
+	{
+		my $sql_cat;
+		foreach my $ID_category (split(';',$env{'exclude.event_cat.ID_entity'}))
+		{
+			next unless $ID_category;
+			if ($ID_category=~s/\*$//)
+			{
+				my $cat_sql=qq{SELECT ID_charindex FROM $App::730::db_name.a730_event_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+				$ID_category=qq{SELECT ID_entity FROM $App::730::db_name.a730_event_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+			}
+			$sql_cat.=" AND event_rel_cat.ID_category NOT IN ($ID_category)";
+		}
+		$sql_cat=~s/^ AND //;
+		if ($sql_cat)
+		{
+			$sql_where.=" AND (".$sql_cat.") ";
+		}
 	}
 	
 	if ($env{'event_cat.ID_entity'})
@@ -57,8 +79,28 @@ sub execute
 			next unless $ID_category;
 			if ($ID_category=~s/\*$//)
 			{
-				my $cat_sql=qq{SELECT ID_charindex FROM $App::730::db_name.a730_event_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
-				$ID_category=qq{SELECT ID_entity FROM $App::730::db_name.a730_event_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+				my $cat_sql=qq{
+					SELECT
+						ID_charindex
+					FROM
+						$App::730::db_name.a730_event_cat
+					WHERE
+								ID_entity=$ID_category
+						AND	lng='$env{'lng'}'
+						AND	status IN ('Y','L')
+					LIMIT
+						1
+				};
+				$ID_category=qq{
+					SELECT
+						ID_entity
+					FROM
+						$App::730::db_name.a730_event_cat
+					WHERE
+								ID_charindex LIKE CONCAT(($cat_sql),"%")
+						AND	lng='$env{'lng'}'
+						AND	status IN ('Y','L')
+				};
 			}
 			$sql_cat.=" OR event_rel_cat.ID_category IN ($ID_category)";
 			$sql_cat=~s/^ OR //;
@@ -77,8 +119,28 @@ sub execute
 			next unless $ID_category;
 			if ($ID_category=~s/\*$//)
 			{
-				my $cat_sql=qq{SELECT ID_charindex FROM $App::730::db_name.a730_event_cat WHERE ID=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
-				$ID_category=qq{SELECT ID FROM $App::730::db_name.a730_event_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+				my $cat_sql=qq{
+					SELECT
+						ID_charindex
+					FROM
+						$App::730::db_name.a730_event_cat
+					WHERE
+								ID=$ID_category
+						AND	lng='$env{'lng'}'
+						AND	status IN ('Y','L')
+					LIMIT
+						1
+				};
+				$ID_category=qq{
+					SELECT
+						ID
+					FROM
+						$App::730::db_name.a730_event_cat
+					WHERE
+								ID_charindex LIKE CONCAT(($cat_sql),"%")
+						AND	lng='$env{'lng'}'
+						AND	status IN ('Y','L')
+				};
 			}
 			$sql_cat.=" OR event_cat.ID IN ($ID_category)";
 			$sql_cat=~s/^ OR //;
@@ -88,77 +150,6 @@ sub execute
 			$sql_where.=" AND (".$sql_cat.") ";
 		}
 	}
-	
-=head1
-	if ($env{'solr'})
-	{
-		$env{'solr.defType'} = 'edismax' unless $env{'solr.defType'};
-		$env{'solr.rows'} = 10 unless $env{'solr.rows'};
-		$env{'solr.start'} = 0 unless $env{'solr.start'};
-		$env{'solr.qf'} = "title name name_partial cat_name_sm^0.2 cat_name_tm^0.2 description^0.8 keywords^2 text^0.5" unless $env{'solr.qf'};
-		
-		if ($env{'solr.keywords'})
-		{
-			my $query=$env{'solr.keywords'};
-			1 while ($query=~s|  | |g);
-			$query=~s|^ ||g;
-			$query=~s| $||g;
-			my @query_part=split(' ',$query);$query='';
-			my $part_last;
-			foreach my $part(@query_part){
-				$part=~s|\-|\\-|g;
-				$query.="$part AND ";
-				$part_last=$part;
-			}
-			$query=~s| AND $part_last AND $| AND ($part_last OR $part_last*)|;
-			$query=~s|^$part_last AND $|$part_last OR $part_last*|;
-			$query=~s| AND $||;
-			$env{'solr.q'}="AND (".$query.")";
-		}
-		
-		if ($env{'solr.related_keywords'})
-		{
-			my $query=$env{'solr.related_keywords'};
-			1 while ($query=~s|  | |g);
-			$query=~s|^ ||g;
-			$query=~s| $||g;
-			my @query_part=split(' ',$query);$query='';
-			my $part_last;
-			foreach my $part(@query_part){
-				$part=~s|\-|\\-|g;
-				$query.="$part ";
-				$part_last=$part;
-			}
-			$query=~s| $||;
-			$env{'solr.q'}="AND (".$query.")";
-		}
-		
-		use Ext::Solr::_init;
-		my $solr = Ext::Solr::service();
-		
-		my $response = $solr->search('+id:'.($App::510::db_name).'.a510_video.'.$env{'lng'}.'.* '.$env{'solr.q'},
-			{
-				'-cluster' => 1,
-				
-				'defType' => $env{'solr.defType'},
-				
-				'rows' => $env{'solr.rows'},
-				'start' => $env{'solr.start'},
-				
-				'bq' => $env{'solr.bq'},
-				'qf' => $env{'solr.qf'},
-				'fl' => "id ID_i ID_entity_i score ".$env{'solr.fl'},
-			}
-		);
-		
-		$env{'video.ID_entity'}="";
-		for my $doc ( $response->docs )
-		{
-			$env{'video.ID_entity'}.=$doc->value_for('ID_entity_i').";";
-		}
-		
-	}
-=cut
 	
 	if ($env{'event.ID_entity'}=~/^[0-9;]+$/)
 	{
@@ -183,6 +174,17 @@ sub execute
 		$sql_where.=" AND (event.datetime_start IS NULL OR event.datetime_start <= NOW())";
 		$sql_where.=" AND (event.datetime_finish IS NULL OR event.datetime_finish >= NOW())";
 	}
+	elsif ($env{'datetime_mode'} eq "presentfuture")
+	{
+		$sql_where.=qq{ AND (
+			(
+						(event.datetime_start IS NULL OR event.datetime_start <= NOW())
+				AND	(event.datetime_finish IS NULL OR event.datetime_finish > NOW())
+			)
+			OR
+			event.datetime_start > NOW()
+		)};
+	}
 	elsif ($env{'datetime_mode'} eq "past")
 	{
 		$sql_where.=" AND (event.datetime_start IS NULL OR event.datetime_start <= NOW())";
@@ -197,9 +199,31 @@ sub execute
 	{
 		
 	}
+	elsif ($env{'datetime_mode'} =~/^(\d\d\d\d)\-(\d\d)\-(\d\d)/)
+	{
+		$sql_where.=" AND (event.datetime_start IS NULL OR event.datetime_start < DATE_ADD('$env{'datetime_mode'} 00:00:00', INTERVAL 1 DAY))";
+		$sql_where.=" AND (event.datetime_finish IS NULL OR event.datetime_finish >= '$env{'datetime_mode'} 00:00:00')";
+	}
 	else # present & comming
 	{
 		$sql_where.=" AND (event.datetime_finish IS NULL OR event.datetime_finish >= NOW())";
+	}
+	
+	if ($env{'attendee'})
+	{
+		$sql_join.=qq{
+		INNER JOIN $App::730::db_name.a301_ACL_user AS acl_attendee ON
+		(
+			acl_attendee.roles = 'attendee' AND
+			acl_attendee.r_prefix = 'a730' AND
+			acl_attendee.r_table = 'event' AND 
+			acl_attendee.r_ID_entity = event.ID_entity
+		)
+		};
+		$sql_where.=qq{
+			AND acl_attendee.ID_entity = ?
+		};
+		push @sql_bind,$env{'attendee'};
 	}
 	
 	if ($env{'having_program'})
@@ -251,9 +275,56 @@ sub execute
 		};
 	}
 	
-	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+	if ($env{'left_parent'})
+	{
+		$sql_join.=qq{
+		LEFT JOIN $App::730::db_name.a160_relation AS parent_rel ON
+		(
+			event.mode = 'S' AND
+			parent_rel.l_prefix = 'a730' AND
+			parent_rel.l_table = 'event' AND 
+			parent_rel.rel_type = 'subevent' AND
+			parent_rel.r_prefix = 'a730' AND
+			parent_rel.r_table = 'event' AND
+			parent_rel.r_ID_entity = event.ID_entity
+		)
+		LEFT JOIN $App::730::db_name.a730_event AS parent_event ON
+		(
+			parent_rel.l_ID_entity = parent_event.ID_entity AND
+			parent_event.status IN ('$sql_event_status')
+		)
+		LEFT JOIN $App::730::db_name.a730_event_rel_cat AS parent_event_rel_cat ON
+		(
+			parent_event_rel_cat.ID_event = parent_event.ID_entity
+		)
+		};
+		if ($env{'having_parent'})
+		{
+			$sql_where.=" AND parent_event.ID_entity IS NOT NULL";
+		}
+		
+		if ($env{'parent.event_cat.ID_entity'})
+		{
+			my $sql_cat;
+			foreach my $ID_category (split(';',$env{'parent.event_cat.ID_entity'}))
+			{
+				next unless $ID_category;
+				if ($ID_category=~s/\*$//)
+				{
+					my $cat_sql=qq{SELECT ID_charindex FROM $App::730::db_name.a730_event_cat WHERE ID_entity=$ID_category AND lng='$env{'lng'}' AND status IN ('Y','L') LIMIT 1};
+					$ID_category=qq{SELECT ID_entity FROM $App::730::db_name.a730_event_cat WHERE ID_charindex LIKE CONCAT(($cat_sql),"%") AND lng='$env{'lng'}' AND status IN ('Y','L')};
+				}
+				$sql_cat.=" OR parent_event_rel_cat.ID_category IN ($ID_category)";
+				$sql_cat=~s/^ OR //;
+			}
+			if ($sql_cat)
+			{
+				$sql_where.=" AND (".$sql_cat.")";
+			}
+		}
+	}
 	
-	main::_log('-------------------------------------------------------'.$env{'sql_where'});
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
 	
 	$sql_where=~s|^ ||;
 	
@@ -331,7 +402,9 @@ sub execute
 					sub_rel.r_table = 'event' AND
 					sub_rel.status = 'Y'
 				LIMIT 1
-			) as program_count}}}.qq{
+			) as program_count
+			}}}.qq{
+			$sql_select
 			
 		FROM $App::730::db_name.a730_event AS event
 		LEFT JOIN $App::730::db_name.a730_event_lng AS event_lng ON
@@ -359,7 +432,7 @@ sub execute
 			$sql_order_by
 		LIMIT
 			$sql_limit
-	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,
+	},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,'-cache'=>60,
 		'-changetime'=>App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",
@@ -376,6 +449,8 @@ sub execute
 		last if $i > $env{'page_limit'};
 		
 		main::_log("[$i/$env{'page_limit'}] found event.ID_entity=$event{'ID_entity'}");
+		
+		$event{'name_long_url'}=TOM::Net::URI::rewrite::convert($event{'name_long'});
 		
 		$event{'related_thumbnail'}=(App::160::SQL::get_relations(
 			'db_name' => $App::730::db_name,
@@ -499,7 +574,15 @@ sub execute
 #						'ID_entity' => do{$env{'event.ID_entity'} if $env{'event.ID_entity'}=~/^\d+$/}
 #					}),
 			);
-			%{$event{'parent'}}=$sth1{'sth'}->fetchhash();
+			
+			my %db1_line=$sth1{'sth'}->fetchhash();
+			
+			$db1_line{'name_long_url'}=TOM::Net::URI::rewrite::convert($db1_line{'name_long'});
+			
+			%{$db1_line{'metahash'}}=App::020::functions::metadata::parse($db1_line{'metadata'});
+			delete $db1_line{'metadata'};
+			
+			%{$event{'parent'}}=\%db1_line;
 		}
 		
 		# render
@@ -572,6 +655,19 @@ sub execute
 					'status' => "Y"
 				))[0];
 				
+				@{$db1_line{'related_gallery'}}=(App::160::SQL::get_relations(
+					'db_name' => $App::710::db_name,
+					'l_prefix' => 'a710',
+					'l_table' => 'org',
+					'l_ID_entity' => $db1_line{'ID_entity'},
+					'r_prefix' => "a501",
+					'r_table' => "image",
+					'rel_type' => "gallery",
+					'status' => "Y"
+				));
+				
+				$db1_line{'name_long_url'}=TOM::Net::URI::rewrite::convert($db1_line{'name_long'});
+				
 				%{$db1_line{'metahash'}}=App::020::functions::metadata::parse($db1_line{'metadata'});
 				delete $db1_line{'metadata'};
 				
@@ -587,6 +683,9 @@ sub execute
 			}
 =cut
 		}
+		
+		%{$event{'metahash'}}=App::020::functions::metadata::parse($event{'metadata'});
+		delete $event{'metadata'};
 		
 		push @{$TPL->{'variables'}{'items'}},\%event;
 	}
