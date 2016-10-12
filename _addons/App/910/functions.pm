@@ -1258,13 +1258,13 @@ sub _product_index
 	my %env=@_;
 #	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer'})
 #		unless $env{'-jobify'}; # do it in background
-
+	
 	if ($env{'-jobify'})
 	{
 #		main::_log("try jobify");
 		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer'});
 	}
-
+	
 	return undef unless $env{'ID'}; # product.ID
 	
 	my $t=track TOM::Debug(__PACKAGE__."::_product_index($env{'ID'})",'timer'=>1);
@@ -1321,6 +1321,9 @@ sub _product_index
 			
 			push @content_id,WebService::Solr::Field->new( 'price_f' => $db0_line{'price'} )
 				if $db0_line{'price'};
+				
+			push @content_id,WebService::Solr::Field->new( 'price_full_f' => $db0_line{'price_full'} )
+				if $db0_line{'price_full'};
 			
 			if ($db0_line{'datetime_next_index'} && not $db0_line{'datetime_publish_start'} =~/^0000/)
 			{
@@ -2429,10 +2432,21 @@ sub _product_index
 		delete $product{'datetime_publish_start'}
 			if $product{'datetime_publish_start'}=~/^0/;
 		
-		main::_log("index ID=$product{'ID'}",3,"elastic");
-#		%product=();
+#		main::_log("index ID=$product{'ID'}",3,"elastic");
 		my %log_date=main::ctogmdatetime(time(),format=>1);
-#		print Dumper(\%product);
+		
+		main::_log("index",{
+			'facility' => 'elastic',
+			'severity' => 3,
+			'data' => {
+				'action' => 'index',
+	#			'hostname' => $self->{'host_name'},
+				'index_s' => 'cyclone3.'.$App::910::db_name,
+				'type_s' => 'a910_product',
+				'ID_s' => $env{'ID'}
+			}
+		});
+
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::910::db_name,
 			'type' => 'a910_product',
@@ -2444,7 +2458,8 @@ sub _product_index
 					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.'Z'
 			}
 		);
-		main::_log("/index ID=$product{'ID'}",3,"elastic");
+		
+#		main::_log("/index ID=$product{'ID'}",3,"elastic");
 		
 	}
 	
