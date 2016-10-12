@@ -7,22 +7,18 @@ our @EXPORT_OK = qw( diff_fully diff diff_merge diff_regexp );
 
 BEGIN {
     local $@;
-#    if ($ENV{STRING_DIFF_PP})
-#    {
-#        $@ = 1;
-#    }
-#    else
-#    {
-#        eval "use Algorithm::Diff::XS qw( sdiff );"; ## no critic
-#    }
-#    if ($@)
-#    {
+    if ($ENV{STRING_DIFF_PP}) {
+        $@ = 1;
+    } else {
+        eval "use Algorithm::Diff::XS qw( sdiff );"; ## no critic
+    }
+    if ($@) {
         eval "use Algorithm::Diff qw( sdiff );"; ## no critic
         die $@ if $@;
-#    }
+    }
 }
 
-our $VERSION = '0.04';
+our $VERSION = '0.07';
 
 our %DEFAULT_MARKS = (
     remove_open  => '[',
@@ -132,13 +128,18 @@ sub _str {
     my($diff, %opts) = @_;
     my $str = '';
 
+    my $escape;
+    if ($opts{escape} && ref($opts{escape}) eq 'CODE') {
+        $escape = $opts{escape};
+    }
     for my $parts (@{ $diff }) {
+        my $word = $escape ? $escape->($parts->[1]) : $parts->[1];
         if ($parts->[0] eq '-') {
-            $str .= "$opts{remove_open}$parts->[1]$opts{remove_close}";
+            $str .= "$opts{remove_open}$word$opts{remove_close}";
         } elsif ($parts->[0] eq '+') {
-            $str .= "$opts{append_open}$parts->[1]$opts{append_close}";
+            $str .= "$opts{append_open}$word$opts{append_close}";
         } else {
-            $str .= $parts->[1];
+            $str .= $word;
         }
     }
     $str;
@@ -153,10 +154,16 @@ sub diff_merge {
     my $new_c = 0;
     my $str = '';
 
+    my $escape;
+    if ($opts{regexp}) {
+        $escape = sub { quotemeta($_[0]) };
+    } elsif ($opts{escape} && ref($opts{escape}) eq 'CODE') {
+        $escape = $opts{escape};
+    }
     LOOP:
     while (scalar(@{ $old_diff }) > $old_c && scalar(@{ $new_diff }) > $new_c) {
-        my $old_str = $opts{regexp} ? quotemeta $old_diff->[$old_c]->[1] : $old_diff->[$old_c]->[1];
-        my $new_str = $opts{regexp} ? quotemeta $new_diff->[$new_c]->[1] : $new_diff->[$new_c]->[1];
+        my $old_str = $escape ? $escape->($old_diff->[$old_c]->[1]) : $old_diff->[$old_c]->[1];
+        my $new_str = $escape ? $escape->($new_diff->[$new_c]->[1]) : $new_diff->[$new_c]->[1];
 
         if ($old_diff->[$old_c]->[0] eq 'u' && $new_diff->[$new_c]->[0] eq 'u') {
             $str .= $old_str;
@@ -187,8 +194,15 @@ sub diff_merge {
 sub _list_gc {
     my($diff, $c, %opts) = @_;
     my $str = '';
+
+    my $escape;
+    if ($opts{regexp}) {
+        $escape = sub { quotemeta($_[0]) };
+    } elsif ($opts{escape} && ref($opts{escape}) eq 'CODE') {
+        $escape = $opts{escape};
+    }
     while (scalar(@{ $diff }) > $c) {
-        my $_str = $opts{regexp} ? quotemeta $diff->[$c]->[1] : $diff->[$c]->[1];
+        my $_str = $escape ? $escape->($diff->[$c]->[1]) : $diff->[$c]->[1];
         if ($diff->[$c]->[0] eq '-') {
             $str .= "$opts{remove_open}$_str$opts{remove_close}";
         } elsif ($diff->[$c]->[0] eq '+') {
@@ -208,6 +222,7 @@ my %regexp_opts = (
     append_close => ')',
     separator    => '|',
     regexp       => 1,
+    escape       => undef,
 );
 
 sub diff_regexp {
@@ -301,12 +316,27 @@ after the line is divided, diff is taken when 'linebreak' option is specified.
 
 In diff and diff_merge methods the mark of the difference can be changed.
 
-  my $diff = String::Diff::diff('this is Perl', 'this is Ruby',{
+  my $diff = String::Diff::diff('this is Perl', 'this is Ruby',
       remove_open => '<del>',
       remove_close => '</del>',
       append_open => '<ins>',
       append_close => '</ins>',
+  );
+
+You can escape callback set to diff function and diff_merge function.
+
+  use HTML::Entities
+  my($diff_old, $diff_new) = String::Diff::diff(
+      'this is <b>Perl</b>',
+      'this is <b><BIG>R</BIG>uby</b>',
+      remove_open => '<del>',
+      remove_close => '</del>',
+      append_open => '<ins>',
+      append_close => '</ins>',
+      escape       => sub { encode_entities($_[0]) },
   });
+  is($diff_old, 'this is &lt;b&gt;<del>Perl</del>&lt;/b&gt;');
+  is($diff_new, 'this is &lt;b&gt;<ins>&lt;BIG&gt;R&lt;/BIG&gt;uby</ins>&lt;/b&gt;');
 
 
 =head1 METHODS
@@ -335,7 +365,7 @@ In diff and diff_merge methods the mark of the difference can be changed.
 
 =head1 AUTHOR
 
-Kazuhiro Osawa E<lt>ko@yappo.ne.jpE<gt>
+Kazuhiro Osawa E<lt>yappo {@} shibuya {dot} plE<gt>
 
 =head1 SEE ALSO
 
@@ -343,9 +373,9 @@ L<Algorithm::Diff>
 
 =head1 LICENSE
 
+Copyright 2008 (C) Kazuhiro Osawa
+
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
 =cut
-
-1;
