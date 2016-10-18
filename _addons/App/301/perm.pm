@@ -1690,6 +1690,8 @@ sub ACL_user_update
 	{
 		$data{'status'} = $env{'status'} if $env{'status'};
 		$data{'note'} = $env{'note'} if $env{'note'};
+		$data{'roles'} = $env{'roles'} if $env{'roles'};
+		$data{'perm_roles_override'} = $env{'perm_roles_override'} if exists $env{'perm_roles_override'};
 		
 		App::020::SQL::functions::new(
 			'db_h' => 'main',
@@ -1709,8 +1711,6 @@ sub ACL_user_update
 				'perm_R' => "Y",
 				'perm_W' => "Y",
 				'perm_X' => "Y",
-				'roles' => $env{'roles'},
-				'perm_roles_override' => $env{'perm_roles_override'},
 				%data,
 			},
 			'-journalize' => 1,
