@@ -142,12 +142,11 @@ sub multi
 			}
 			
 			eval {
-			my $action_die = POSIX::SigAction->new(
-				sub {$TOM::DB{$handler}{'timeouted'}+=1;main::_log("timeout",1);die "Timed out sec.\n"},
-				$TOM::Engine::pub::SIG::sigset,
-				&POSIX::SA_NODEFER);
-				
-				POSIX::sigaction(&POSIX::SIGALRM, $action_die);
+				local $SIG{'ALRM'} = sub {
+					$TOM::DB{$handler}{'timeouted'}+=1;
+					main::_log("SIG{ALRM} Timed out database connection",1);
+					die "Timed out database connection";
+				}; # NB: \n required
 				alarm(5);
 				$main::DB{$handler} = DBI->connect
 				(
@@ -175,6 +174,7 @@ sub multi
 			if ($TOM::DB{$handler}{'uri'}=~/^dbi:Sybase:/)
 			{
 				$main::DB{$handler}->do("set textsize = 512000");
+				$main::DB{$handler}->do("SET DATEFORMAT 'yyyy-MM-dd hh:mm:ss'");
 #				$main::DB{$handler}->syb_enable_utf8(1);
 			}
 			else

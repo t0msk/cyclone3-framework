@@ -40,6 +40,7 @@ use TOM::Security::form;
 use App::160::SQL;
 use Ext::Redis::_init;
 use Ext::Elastic::_init;
+use String::Diff;
 use POSIX qw(ceil);
 
 our $debug=1;
@@ -397,6 +398,14 @@ sub product_add
 	
 #	if (exists $env{'product.metadata'} && ($env{'product.metadata'} ne $product{'metadata'}))
 #	{
+#		my $diff = String::Diff::diff_merge($product{'metadata'}, $env{'product.metadata'},
+#			remove_open => '<del>',
+#			remove_close => '</del>',
+#			append_open => '<ins>',
+#			append_close => '</ins>',
+#		);
+#		print $diff;
+#		print $env{'product.metadata'}."\n\n";
 #		print $product{'metadata'}."\n";
 #	}
 	
@@ -432,6 +441,10 @@ sub product_add
 	$columns{'status'}="'".TOM::Security::form::sql_escape($env{'product.status'})."'"
 		if ($env{'product.status'} && ($env{'product.status'} ne $product{'status'}));
 	
+	# sellscore
+	$columns{'sellscore'}="'".TOM::Security::form::sql_escape($env{'product.sellscore'})."'"
+		if ($env{'product.sellscore'} && ($env{'product.sellscore'} ne $product{'sellscore'}));
+		
 	if ($env{'product.product_number'} && ($env{'product.product_number'} ne $product{'product_number'}))
 	{
 		# check if this product_number not already used by another product
@@ -790,6 +803,113 @@ sub product_add
 		$content_reindex=1;
 	}
 	
+	
+	# lngs?
+	if ($env{'lngs'} && keys %{$env{'lngs'}})
+	{
+		foreach my $lng (sort keys %{$env{'lngs'}})
+		{
+#			main::_log("update lng '$lng'");
+			
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					*
+				FROM
+					`$App::910::db_name`.`a910_product_lng`
+				WHERE
+					ID_entity=$env{'product.ID'} AND
+					lng=?
+				LIMIT 1
+			},'bind'=>[$lng],'quiet'=>1);
+			my %product_lng=$sth0{'sth'}->fetchhash();
+			
+			if (!$product_lng{'ID'}) # if product_lng not defined, create a new
+			{
+				my %columns;
+				$columns{'ID_entity'}=$env{'product.ID'};
+				$columns{'lng'}="'".$lng."'";
+				my $ID=App::020::SQL::functions::new(
+					'db_h' => "main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_product_lng",
+					'columns' => {%columns},
+					'-journalize' => 1,
+				);
+				%product_lng=App::020::SQL::functions::get_ID(
+					'ID' => $ID,
+					'db_h' => "main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_product_lng",
+					'columns' => {'*'=>1}
+				);
+				$content_reindex=1;
+			}
+			
+#			main::_log("product_lng.ID='$product_lng{'ID'}' product_lng.ID_entity='$product_lng{'ID_entity'}'");
+			
+#			# generate keywords
+#			if ($env{'product_lng.keywords'})
+#			{
+#				my @ref=split(' # ',$product_lng{'keywords'});
+#				$ref[1]=$env{'product_lng.keywords'};
+#				$env{'product_lng.keywords'}=$ref[0].' # '.$ref[1];
+#			}
+#			else {$env{'product_lng.keywords'}=$product_lng{'keywords'};}
+#			if ($lngs{$lng}{'description_short'} || $lngs{$lng}{'description'})
+#			{
+#				my @ref=split(' # ',$lngs{$lng}{'keywords'});
+#				$ref[0]='';
+#				my %keywords=App::401::keywords::html_extract($env{'product_lng.description_short'}.' '.$env{'product_lng.description'});
+#				foreach (keys %keywords)
+#				{$ref[0].=", ".$_;}
+#				$ref[0]=~s|^, ||;
+#				$env{'product_lng.keywords'}=$ref[0].' # '.$ref[1];
+#			}
+#			$env{'product_lng.keywords'}='' if ($env{'product_lng.keywords'} eq ' # ');
+			
+			# update only if necessary
+			my %columns;
+			my %data;
+			# name
+			$data{'name'}=$env{'lngs'}{$lng}{'name'}
+				if ($env{'lngs'}{$lng}{'name'} && ($env{'lngs'}{$lng}{'name'} ne $product_lng{'name'}));
+			$data{'name_url'}=TOM::Net::URI::rewrite::convert($env{'lngs'}{$lng}{'name'})
+				if ($env{'lngs'}{$lng}{'name'} && (TOM::Net::URI::rewrite::convert($env{'lngs'}{$lng}{'name'}) ne $product_lng{'name_url'}));
+			# name_long
+			$columns{'name_long'}="'".TOM::Security::form::sql_escape($env{'lngs'}{$lng}{'name_long'})."'"
+				if ($env{'lngs'}{$lng}{'name_long'} && ($env{'lngs'}{$lng}{'name_long'} ne $product_lng{'name_long'}));
+			# name_label
+			$columns{'name_label'}="'".TOM::Security::form::sql_escape($env{'lngs'}{$lng}{'name_label'})."'"
+				if (exists $env{'lngs'}{$lng}{'name_label'} && ($env{'lngs'}{$lng}{'name_label'} ne $product_lng{'name_label'}));
+			# description_short
+			$columns{'description_short'}="'".TOM::Security::form::sql_escape($env{'lngs'}{$lng}{'description_short'})."'"
+				if ($env{'lngs'}{$lng}{'description_short'} && ($env{'lngs'}{$lng}{'description_short'} ne $product_lng{'description_short'}));
+			# description
+			$columns{'description'}="'".TOM::Security::form::sql_escape($env{'lngs'}{$lng}{'description'})."'"
+				if (exists $env{'lngs'}{$lng}{'description'} && ($env{'lngs'}{$lng}{'description'} ne $product_lng{'description'}));
+			# keywords
+			$columns{'keywords'}="'".TOM::Security::form::sql_escape($env{'lngs'}{$lng}{'keywords'})."'"
+				if ($env{'lngs'}{$lng}{'keywords'} && ($env{'lngs'}{$lng}{'keywords'} ne $product_lng{'keywords'}));
+			
+			if (keys %columns || keys %data)
+			{
+				main::_log(" a910_product_lng '$lng' '$env{'lngs'}{$lng}{'ID'}' update ".(join ",",keys %columns),3,$App::910::log_changes,2)
+					if $App::910::log_changes;
+				App::020::SQL::functions::update(
+					'ID' => $product_lng{'ID'},
+					'db_h' => "main",
+					'db_name' => $App::910::db_name,
+					'tb_name' => "a910_product_lng",
+					'columns' => {%columns},
+					'data' => {%data},
+					'-journalize' => 1,
+					'-posix' => 1,
+				);
+				$content_reindex=1;
+			}
+			
+		}
+	}
 	
 	# PRODUCT_SYM
 	
@@ -1258,13 +1378,13 @@ sub _product_index
 	my %env=@_;
 #	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer'})
 #		unless $env{'-jobify'}; # do it in background
-
+	
 	if ($env{'-jobify'})
 	{
 #		main::_log("try jobify");
 		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer'});
 	}
-
+	
 	return undef unless $env{'ID'}; # product.ID
 	
 	my $t=track TOM::Debug(__PACKAGE__."::_product_index($env{'ID'})",'timer'=>1);
@@ -1321,6 +1441,12 @@ sub _product_index
 			
 			push @content_id,WebService::Solr::Field->new( 'price_f' => $db0_line{'price'} )
 				if $db0_line{'price'};
+				
+			push @content_id,WebService::Solr::Field->new( 'price_full_f' => $db0_line{'price_full'} )
+				if $db0_line{'price_full'};
+			
+			push @content_id,WebService::Solr::Field->new( 'sellscore_f' => $db0_line{'sellscore'} )
+				if $db0_line{'sellscore'};
 			
 			if ($db0_line{'datetime_next_index'} && not $db0_line{'datetime_publish_start'} =~/^0000/)
 			{
@@ -2429,10 +2555,21 @@ sub _product_index
 		delete $product{'datetime_publish_start'}
 			if $product{'datetime_publish_start'}=~/^0/;
 		
-		main::_log("index ID=$product{'ID'}",3,"elastic");
-#		%product=();
+#		main::_log("index ID=$product{'ID'}",3,"elastic");
 		my %log_date=main::ctogmdatetime(time(),format=>1);
-#		print Dumper(\%product);
+		
+		main::_log("index",{
+			'facility' => 'elastic',
+			'severity' => 3,
+			'data' => {
+				'action' => 'index',
+	#			'hostname' => $self->{'host_name'},
+				'index_s' => 'cyclone3.'.$App::910::db_name,
+				'type_s' => 'a910_product',
+				'ID_s' => $env{'ID'}
+			}
+		});
+
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::910::db_name,
 			'type' => 'a910_product',
@@ -2444,7 +2581,8 @@ sub _product_index
 					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.'Z'
 			}
 		);
-		main::_log("/index ID=$product{'ID'}",3,"elastic");
+		
+#		main::_log("/index ID=$product{'ID'}",3,"elastic");
 		
 	}
 	

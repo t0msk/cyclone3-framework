@@ -1649,21 +1649,24 @@ sub ACL_user_update
 	};
 	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 	
+	my %columns;
+	my %data;
+	
 	if ($sth0{'rows'})
 	{
 		my %db0_line=$sth0{'sth'}->fetchhash();
-		my %columns;
-		$columns{'perm_R'} = "'".$env{'perm_R'}."'" if $env{'perm_R'};
-		$columns{'perm_W'} = "'".$env{'perm_W'}."'" if $env{'perm_W'};
-		$columns{'perm_X'} = "'".$env{'perm_X'}."'" if $env{'perm_X'};
-		$columns{'perm_1'} = "'".$env{'perm_1'}."'" if $env{'perm_1'};
-		$columns{'perm_2'} = "'".$env{'perm_2'}."'" if $env{'perm_2'};
-		$columns{'perm_3'} = "'".$env{'perm_3'}."'" if $env{'perm_3'};
-		$columns{'perm_4'} = "'".$env{'perm_4'}."'" if $env{'perm_4'};
-		$columns{'perm_4'} = "'".$env{'perm_4'}."'" if $env{'perm_4'};
-		$columns{'perm_roles_override'} = "'".$env{'perm_roles_override'}."'" if exists $env{'perm_roles_override'};
-		$columns{'status'} = "'".$env{'status'}."'" if $env{'status'};
-		$columns{'note'} = "'".TOM::Security::form::sql_escape($env{'note'})."'" if $env{'note'};
+		$data{'perm_R'} = $env{'perm_R'} if $env{'perm_R'};
+		$data{'perm_W'} = $env{'perm_W'} if $env{'perm_W'};
+		$data{'perm_X'} = $env{'perm_X'} if $env{'perm_X'};
+		$data{'perm_1'} = $env{'perm_1'} if $env{'perm_1'};
+		$data{'perm_2'} = $env{'perm_2'} if $env{'perm_2'};
+		$data{'perm_3'} = $env{'perm_3'} if $env{'perm_3'};
+		$data{'perm_4'} = $env{'perm_4'} if $env{'perm_4'};
+		$data{'perm_4'} = $env{'perm_4'} if $env{'perm_4'};
+		$data{'roles'} = $env{'roles'} if $env{'roles'};
+		$data{'perm_roles_override'} = $env{'perm_roles_override'} if exists $env{'perm_roles_override'};
+		$data{'status'} = $env{'status'} if $env{'status'};
+		$data{'note'} = $env{'note'} if $env{'note'};
 		App::020::SQL::functions::update(
 			'ID' => $db0_line{'ID'},
 			'db_h' => 'main',
@@ -1673,6 +1676,10 @@ sub ACL_user_update
 			{
 				%columns,
 			},
+			'data' =>
+			{
+				%data,
+			},
 			'-journalize' => 1,
 			'-posix' => 1,
 		);
@@ -1681,26 +1688,30 @@ sub ACL_user_update
 	}
 	else
 	{
-		my %columns;
-		$columns{'status'} = "'".$env{'status'}."'" if $env{'status'};
-		$columns{'note'} = "'".TOM::Security::form::sql_escape($env{'note'})."'" if $env{'note'};
+		$data{'status'} = $env{'status'} if $env{'status'};
+		$data{'note'} = $env{'note'} if $env{'note'};
+		$data{'roles'} = $env{'roles'} if $env{'roles'};
+		$data{'perm_roles_override'} = $env{'perm_roles_override'} if exists $env{'perm_roles_override'};
+		
 		App::020::SQL::functions::new(
 			'db_h' => 'main',
 			'db_name' => $db_name,
 			'tb_name' => 'a301_ACL_user',
 			'columns' =>
 			{
-				'ID_entity' => "'".$env{'ID'}."'",
-				'r_prefix' => "'".$env{'r_prefix'}."'",
-				'r_table' => "'".$env{'r_table'}."'",
-				'r_ID_entity' => "'".$env{'r_ID_entity'}."'",
-				'perm_R' => "'Y'",
-				'perm_W' => "'Y'",
-				'perm_X' => "'Y'",
-				'roles' => "'".$env{'roles'}."'",
-				'perm_roles_override' => "'".$env{'perm_roles_override'}."'",
 				'datetime_evidence' => "NOW()",
 				%columns
+			},
+			'data' =>
+			{
+				'ID_entity' => $env{'ID'},
+				'r_prefix' => $env{'r_prefix'},
+				'r_table' => $env{'r_table'},
+				'r_ID_entity' => $env{'r_ID_entity'},
+				'perm_R' => "Y",
+				'perm_W' => "Y",
+				'perm_X' => "Y",
+				%data,
 			},
 			'-journalize' => 1,
 			'-posix' => 1,
