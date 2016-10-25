@@ -1663,7 +1663,7 @@ sub ACL_user_update
 		$data{'perm_3'} = $env{'perm_3'} if $env{'perm_3'};
 		$data{'perm_4'} = $env{'perm_4'} if $env{'perm_4'};
 		$data{'perm_4'} = $env{'perm_4'} if $env{'perm_4'};
-		$data{'roles'} = $env{'roles'} if $env{'roles'};
+		$data{'roles'} = $env{'roles'} if exists $env{'roles'};
 		$data{'perm_roles_override'} = $env{'perm_roles_override'} if exists $env{'perm_roles_override'};
 		$data{'status'} = $env{'status'} if $env{'status'};
 		$data{'note'} = $env{'note'} if $env{'note'};
