@@ -439,10 +439,10 @@ sub module_pub
 	$box=~s|<%PLUS%>|$env{-PLUS}| if ($main::IAdm || $tom::debug);
 	$box=~s|<%.*?%>||g;
 	
-	main::_log("$env{-ERROR} $env{-PLUS}",1); #local
-	main::_log("$env{-MODULE} $env{-ERROR} $env{-PLUS}",1,"pub.err",0); #local
-	main::_log("[$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}",4,"pub.err",1); #global
-	main::_log("[$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}",4,"pub.err",2) if ($tom::H ne $tom::Hm); #master
+	main::_log(($env{'-ERROR'} || "unknown error in module")." ".$env{'-PLUS'}." ".$env{'-MODULE'},1);
+#	main::_log("$env{-MODULE} $env{-ERROR} $env{-PLUS}",1,"pub.err",0); #local
+#	main::_log("[$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}",4,"pub.err",1); #global
+#	main::_log("[$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}",4,"pub.err",2) if ($tom::H ne $tom::Hm); #master
 	App::100::SQL::ircbot_msg_new("[ERR][$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}");
 	
 	my $URI_base=$tom::H_www;my $request_uri=$main::ENV{'REQUEST_URI'};$request_uri=~s|^$tom::rewrite_RewriteBase||;
