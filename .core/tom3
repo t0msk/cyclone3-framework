@@ -815,7 +815,7 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("requested no-cache (don't know if proceed)");
 		}
 		
-		# allow recache only in devel server
+		# allow recache with _rc pram only in devel server
 		if ($tom::devel && $main::FORM{'_rc'} < 0)
 		{
 			$main::cache=0;
