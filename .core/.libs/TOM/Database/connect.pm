@@ -134,7 +134,7 @@ sub multi
 			
 #			main::_log("DBI connecting '$handler' ('$TOM::DB{$handler}{uri}' '$TOM::DB{$handler}{user}' '****')",3,"sql.err");
 			
-			if ($TOM::DB{$handler}{'timeouted'} >= 10)
+			if ($TOM::DB{$handler}{'timeouted'} >= 2)
 			{
 				main::_log("can't connect '$handler', already timeouted",1);
 				$t->close();
@@ -147,7 +147,7 @@ sub multi
 					main::_log("SIG{ALRM} Timed out database connection",1);
 					die "Timed out database connection";
 				}; # NB: \n required
-				alarm(30);
+				alarm(5);
 				$main::DB{$handler} = DBI->connect
 				(
 					$TOM::DB{$handler}{'uri'},

@@ -156,6 +156,8 @@ my $limit=100;
 my $query;
 my %query_string;
 my @filter;
+my @notfilter;
+
 if ($main::arg{'hd'} eq "?")
 {
 	$query.=" hd=".$main::arg{'hd'};
@@ -264,6 +266,32 @@ if ($main::arg{'msg'})
 			'query' => $main::arg{'msg'},
 			"use_dis_max" => 1
 		}
+	}
+};
+
+if ($main::arg{'msg!'})
+{
+	if (ref($main::arg{'msg!'}) eq "ARRAY")
+	{
+		$query.=" msg!=~";
+		foreach my $part (@{$main::arg{'msg!'}})
+		{
+			$part=lc($part);
+			$query.="+'".$part."'";
+			push @notfilter,{"terms" => {"m" => [$part]}};
+		}
+#		$query=~s|msg=~\+'|msg=~'|;
+		# for highlights
+#		$query_string{'query'}{'query_string'} = {
+#			"fields" => ["m"],
+#			'query' => join(" ",@{$main::arg{'msg'}}),
+#			"use_dis_max" => 1
+#		};
+	}
+	else
+	{
+		$query.=" msg!=~'".$main::arg{'msg!'}."'";
+		push @notfilter,{"terms" => {"m" => [$main::arg{'msg!'}]}};
 	}
 };
 
@@ -578,7 +606,8 @@ my $search_config={
 			'filtered' => {
 				'filter' => {
 					'bool' => {
-						'must' => [@filter]
+						'must' => [@filter],
+						'must_not' => [@notfilter],
 					}
 				},
 				%query_string
