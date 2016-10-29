@@ -1106,28 +1106,33 @@ sub get_ACL
 		push @ACL, {%item};
    }
    
-	my $sql=qq{
-	SELECT
-		acl.*,
-		usr.login AS name,
-		usr.login,
-		YEAR(profile.date_birth) AS year_birth,
-		profile.firstname,
-		profile.surname
-	FROM
-		`$db_name`.a301_ACL_user AS acl,
-		`TOM`.a301_user AS usr,
-		`TOM`.a301_user_profile AS profile
-	WHERE
-		acl.r_prefix='$env{'r_prefix'}' AND
-		acl.r_table='$env{'r_table'}' AND
-		acl.r_ID_entity='$env{'r_ID_entity'}' AND
-		acl.ID_entity = usr.ID_user AND
-		usr.ID_user = profile.ID_entity
-	ORDER BY
-		acl.ID_entity ASC
-	};
-	my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			`acl`.*,
+			`user`.`login` AS `name`,
+			`user`.`login`,
+			YEAR(`user_profile`.`date_birth`) AS `year_birth`,
+			`user_profile`.`firstname`,
+			`user_profile`.`surname`
+		FROM
+			`$db_name`.`a301_ACL_user` AS `acl`
+		INNER JOIN
+			`TOM`.`a301_user` AS `user` ON
+			(
+				`acl`.`ID_entity` = `user`.`ID_user`
+			)
+		LEFT JOIN
+			`TOM`.`a301_user_profile` AS `user_profile` ON
+			(
+				`user`.`ID_user` = `user_profile`.`ID_entity`
+			)
+		WHERE
+					`acl`.`r_prefix` = ?
+			AND	`acl`.`r_table` = ?
+			AND	`acl`.`r_ID_entity` = ?
+		ORDER BY
+			`acl`.`ID_entity` ASC
+	},'quiet'=>1,'bind'=>[$env{'r_prefix'}, $env{'r_table'}, $env{'r_ID_entity'}]);
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		my %item;
@@ -1663,7 +1668,7 @@ sub ACL_user_update
 		$data{'perm_3'} = $env{'perm_3'} if $env{'perm_3'};
 		$data{'perm_4'} = $env{'perm_4'} if $env{'perm_4'};
 		$data{'perm_4'} = $env{'perm_4'} if $env{'perm_4'};
-		$data{'roles'} = $env{'roles'} if $env{'roles'};
+		$data{'roles'} = $env{'roles'} if exists $env{'roles'};
 		$data{'perm_roles_override'} = $env{'perm_roles_override'} if exists $env{'perm_roles_override'};
 		$data{'status'} = $env{'status'} if $env{'status'};
 		$data{'note'} = $env{'note'} if $env{'note'};
