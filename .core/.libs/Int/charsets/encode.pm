@@ -96,6 +96,8 @@ our %table=
 	'213'	=> "O", # 'Õ'
 	'214'	=>	"O", # 'O' s dvojbodkou
 	
+	'215'	=>	"x", # '×' znak nasobenia
+	
 	'216'	=>	"O", # 'O' preskrtnute
 	'217'	=>	"U", # 'Ù'
 	'218'	=>	"U", # 'Ú'
