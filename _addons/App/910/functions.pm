@@ -809,7 +809,7 @@ sub product_add
 	{
 		foreach my $lng (sort keys %{$env{'lngs'}})
 		{
-#			main::_log("update lng '$lng'");
+			main::_log("update lng '$lng'");
 			
 			my %sth0=TOM::Database::SQL::execute(qq{
 				SELECT
@@ -893,7 +893,7 @@ sub product_add
 			
 			if (keys %columns || keys %data)
 			{
-				main::_log(" a910_product_lng '$lng' '$env{'lngs'}{$lng}{'ID'}' update ".(join ",",keys %columns),3,$App::910::log_changes,2)
+				main::_log(" a910_product_lng '$lng' '$product_lng{'ID'}' update ".(join ",",keys %columns),3,$App::910::log_changes,2)
 					if $App::910::log_changes;
 				App::020::SQL::functions::update(
 					'ID' => $product_lng{'ID'},
@@ -1413,7 +1413,7 @@ sub _product_index
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			$env{'ID_entity'}=$db0_line{'ID_entity'};
-#			main::_log(" ID_entity=$db0_line{'ID_entity'}");
+			main::_log(" ID_entity=$db0_line{'ID_entity'}");
 			
 			push @content_ent,WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} )
 				if $db0_line{'ID_entity'};
@@ -1968,6 +1968,11 @@ sub _product_index
 			
 			# save original HTML values
 			$db0_line{'description_short'}=~s/\|/&#124;/g;
+			if ($tom::test && $db0_line{'lng'} eq "pl")
+			{
+				$db0_line{'description_short'}=~tr/ł/l/;
+#				print $db0_line{'description_short'}."\n";
+			}
 			push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description_short_orig_pl' => $db0_line{'description_short'} )
 				if $db0_line{'description_short'};
 			$db0_line{'description'}=~s/\|/&#124;/g;
@@ -2053,34 +2058,38 @@ sub _product_index
 		for my $doc ( $response->docs )
 		{
 			my $lng=$doc->value_for( 'lng_s' );
-			if (!$content{$lng})
+			if (!$content{$lng} || !$env{'ID_entity'})
 			{
+				main::_log("remove ".$doc->value_for('id'),1);
 				$solr->delete_by_id($doc->value_for('id'));
 			}
 		}
 		
-		my $last_indexed=$tom::Fyear."-".$tom::Fmom."-".$tom::Fmday."T".$tom::Fhour.":".$tom::Fmin.":".$tom::Fsec."Z";
-		foreach my $lng (keys %content)
+		if ($env{'ID_entity'})
 		{
-			my $id=$App::910::db_name.".a910_product.".$lng.".".$env{'ID'};
-			
-			my $doc = WebService::Solr::Document->new();
-			
-			$doc->add_fields((
-				WebService::Solr::Field->new( 'id' => $id ),
-				@content_ent,
-				@content_id,
-				@{$content{$lng}},
-				WebService::Solr::Field->new( 'db_s' => $App::910::db_name ),
-				WebService::Solr::Field->new( 'addon_s' => 'a910_product' ),
-				WebService::Solr::Field->new( 'ID_i' => $env{'ID'} ),
-				WebService::Solr::Field->new( 'last_indexed_tdt' => $last_indexed )
-			));
-			
-#			print Dumper($doc);
-			$solr->add($doc);
+			my $last_indexed=$tom::Fyear."-".$tom::Fmom."-".$tom::Fmday."T".$tom::Fhour.":".$tom::Fmin.":".$tom::Fsec."Z";
+			foreach my $lng (keys %content)
+			{
+				my $id=$App::910::db_name.".a910_product.".$lng.".".$env{'ID'};
+				
+				my $doc = WebService::Solr::Document->new();
+				
+				$doc->add_fields((
+					WebService::Solr::Field->new( 'id' => $id ),
+					@content_ent,
+					@content_id,
+					@{$content{$lng}},
+					WebService::Solr::Field->new( 'db_s' => $App::910::db_name ),
+					WebService::Solr::Field->new( 'addon_s' => 'a910_product' ),
+					WebService::Solr::Field->new( 'ID_i' => $env{'ID'} ),
+					WebService::Solr::Field->new( 'last_indexed_tdt' => $last_indexed )
+				));
+				
+	#			print Dumper($doc);
+				$solr->add($doc);
+			}
 		}
-
+		
 		if ($env{'commit'})
 		{
 			$solr->commit();
@@ -2159,14 +2168,14 @@ sub _product_index
 		},'quiet'=>1,'bind'=>[$env{'ID'}]);
 		if (!$sth0{'rows'})
 		{
-			main::_log("product.ID=$env{'ID'} not found",1);
+			main::_log("product.ID=$env{'ID'} not found as valid item");
 			if ($Elastic->exists(
 				'index' => 'cyclone3.'.$App::910::db_name,
 				'type' => 'a910_product',
 				'id' => $env{'ID'}
 			))
 			{
-				main::_log("removing from Elastic",1);
+				main::_log("removing from Elastic");
 				$Elastic->delete(
 					'index' => 'cyclone3.'.$App::910::db_name,
 					'type' => 'a910_product',
@@ -2221,7 +2230,9 @@ sub _product_index
 				a910_product_sym.ID,
 				a910_product_cat.ID_charindex,
 				a910_product_cat.ID AS cat_ID,
-				a910_product_cat.ID_entity AS cat_ID_entity
+				a910_product_cat.ID_entity AS cat_ID_entity,
+				a910_product_cat.name,
+				a910_product_cat.alias_name
 			FROM
 				$App::910::db_name.a910_product_sym
 			INNER JOIN $App::910::db_name.a910_product_cat ON
@@ -2242,6 +2253,12 @@ sub _product_index
 			push @{$product{'cat_charindex'}},$db0_line{'ID_charindex'}
 				unless $used{$db0_line{'ID_charindex'}};
 			
+			push @{$product{'cat_name'}},$db0_line{'name'}
+				unless $used{$db0_line{'name'}};
+				
+			push @{$product{'cat_alias_name'}},$db0_line{'alias_name'}
+				if (!$used{$db0_line{'alias_name'}} && $db0_line{'alias_name'});
+			
 			my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
 			foreach my $p(
 				App::020::SQL::functions::tree::get_path(
@@ -2258,6 +2275,8 @@ sub _product_index
 			
 			$used{$db0_line{'ID_charindex'}}++;
 			$used{$db0_line{'cat_ID_entity'}}++;
+			$used{$db0_line{'name'}}++;
+			$used{$db0_line{'alias_name'}}++;
 		}
 		
 		
