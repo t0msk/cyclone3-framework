@@ -18,8 +18,7 @@ use strict;
 BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 
 use File::Path;
-use XML::XPath;
-use XML::XPath::XMLParser;
+use XML::LibXML;
 use TOM::L10n::codes;
 
 our $debug=$main::debug || 0;
@@ -274,7 +273,8 @@ sub prepare_xml
 {
 	my $self=shift;
 	
-	$self->{'xp'} = XML::XPath->new(filename => $self->{'location'});
+#	$self->{'xp'} = XML::XPath->new(filename => $self->{'location'});
+	$self->{'xp'} = 'XML::LibXML'->load_xml(location => $self->{'location'});
 	
 }
 
@@ -284,9 +284,7 @@ sub parse_header
 {
 	my $self=shift;
 	
-	my $nodeset = $self->{'xp'}->find('/L10n/header/*'); # find all items
-	
-	foreach my $node ($nodeset->get_nodelist)
+	foreach my $node ($self->{'xp'}->findnodes('/L10n/header/*'))
 	{
 		my $name=$node->getName();
 		#main::_log("node '$name'");
@@ -337,15 +335,10 @@ sub parse_header
 sub parse_string
 {
 	my $self=shift;
-	
-	my $nodeset = $self->{'xp'}->find('/L10n/string'); # find all strings
-	
 	my @strs;
 	
-	foreach my $node ($nodeset->get_nodelist)
+	foreach my $node ($self->{'xp'}->findnodes('/L10n/string'))
 	{
-		my $name=$node->getName();
-		
 		if ($node->getAttribute('disabled') eq "true")
 		{
 			next;
@@ -355,9 +348,10 @@ sub parse_string
 		
 		if (!$id)
 		{
-			my $nodeset2 = $node->find('en-US');
-			my $node2=($nodeset2->get_nodelist())[0];
-			$id=$node2->string_value();
+#			my $nodeset2 = $node->find('en-US');
+#			my $node2=($nodeset2->get_nodelist())[0];
+#			$id=$node2->string_value();
+			next;
 		}
 		
 		if ($node->getAttribute('automap') eq "true")
@@ -367,10 +361,9 @@ sub parse_string
 		}
 		else
 		{
-			my $nodeset2 = $node->find($self->{'ENV'}{'lng'}); # find all strings
-			if (my $node2=($nodeset2->get_nodelist())[0])
+			if (my $node2=($node->findnodes($self->{'ENV'}{'lng'}))[0])
 			{
-				$self->{'string'}{$id}=$node2->string_value();
+				$self->{'string'}{$id}=$node2->textContent();
 			}
 			elsif ($self->{'ENV'}{'lng'} eq "en-US")
 			{
@@ -389,9 +382,6 @@ sub parse_string
 		$self->{'string_'}{$id}{'location'}=$self->{'location'};
 		push @strs, $id;
 	}
-	
-#	main::_log("strings '".(join "','",@strs)."'") unless $debug;
-	
 }
 
 
