@@ -24,7 +24,6 @@ use TOM::L10n::codes;
 
 our $debug=$main::debug || 0;
 our $stats||=0;
-our $TTL=5;
 our %objects;
 our $id;
 
@@ -87,9 +86,6 @@ sub new
 	}
 	$obj->{'uid'}=$obj->{'location'}.'/'.$env{'lng'};
 	
-	# modifytime of location
-	$obj->{'config'}->{'mtime'} = (stat($obj->{'location'}))[9];
-	
 #	main::_log("trying '$obj->{'uid'}' in mem=".do{if($objects{$obj->{'uid'}}){"1"}},3,"l10n");
 	
 	if (!$objects{$obj->{'uid'}} && $TOM::CACHE_memcached && $main::cache)
@@ -100,25 +96,19 @@ sub new
 				'namespace' => "l10ncache",
 				'key' => $TOM::P_uuid.':'.$obj->{'uid'}
 			);
-#		print "load object\n";use Data::Dumper;print Dumper($objects{$obj->{'uid'}});
 	}
 	
-	if ($objects{$obj->{'uid'}} && $objects{$obj->{'uid'}}->{'config'}{'ctime'} < (time()-$TTL))
+	if ($objects{$obj->{'uid'}})
 	{
-		main::_log("{L10n} time to check changes") if $debug;
-		# time to check changes
-		$objects{$obj->{'uid'}}->{'config'}{'ctime'} = time();
 		my $object_modified=0;
 		foreach (keys %{$objects{$obj->{'uid'}}->{'mfile'}})
 		{
-#			main::_log("{L10n} check file '$_'");
-			if ($objects{$obj->{'uid'}}->{'mfile'}{$_} < (stat($_))[9])
+			if (TOM::file_mtime($_) > $objects{$obj->{'uid'}}->{'mfile'}{$_})
 			{
 				main::_log("{L10n} '$obj->{'location'}' expired, file '$_' modified");
 				$object_modified=1;
 				last;
 			}
-#			main::_log(" file=$_");
 		}
 		if ($object_modified)
 		{
@@ -141,9 +131,6 @@ sub new
 		$obj->prepare_xml();
 		# save time of object creation (last-check time)
 		$obj->{'config'}->{'ctime'} = time();
-		# save modifytime of xml definition file_
-		# will be override posibly with higher times in tpl dependencies or files (by parse_header)
-		$obj->{'config'}->{'mtime'}=(stat( $obj->{'location'} ))[9];
 		$obj->parse_header();
 		# save config from header to object memory cache
 		%{$objects{$obj->{'uid'}}->{'config'}}=%{$obj->{'config'}};
@@ -152,14 +139,12 @@ sub new
 		
 		if ($TOM::CACHE_memcached)
 		{
-#			$objects{$obj->{'uid'}}=$object;
-#			print "save object\n";use Data::Dumper;print Dumper($obj_return);
 			$Ext::CacheMemcache::cache->set(
 				'namespace' => "l10ncache",
 				'key' => $TOM::P_uuid.':'.$obj->{'uid'},
-#				'value' => $obj,
 				'value' => {
 					'ENV' => $obj->{'ENV'},
+					'id' => $obj->{'id'},
 					'config' => $obj->{'config'},
 					'mfile' => $obj->{'mfile'},
 					'string' => $obj->{'string'},
@@ -181,12 +166,6 @@ sub new
 				":mem";
 			}
 		})."} '$obj->{'location'}'/'$obj->{'ENV'}->{'lng'}'") if $debug;
-#		main::_log("load cached L10n ".$obj->{'uid'});
-		
-#		$objects{$obj->{'uid'}}=$objects{$obj->{'uid'}};
-		
-#		$t->close() if $debug;
-#		return $objects{$obj->{'uid'}};
 	}
 	
 	# create copy of object to return it as unique
@@ -284,7 +263,7 @@ sub prepare_location
 #		main::_log("<={L10n} '$self->{'location'}'/'$self->{'ENV'}->{'lng'}'");# if $debug;
 	}
 	
-	$self->{'mfile'}{$self->{'location'}}=(stat($self->{'location'}))[9];
+	$self->{'mfile'}{$self->{'location'}}=TOM::file_mtime($self->{'location'});
 	
 	return $self->{'location'};
 }
@@ -335,21 +314,13 @@ sub parse_header
 			# add entries from inherited L10n
 			foreach (keys %{$extend->{'string'}})
 			{
-#				print "set $_\n";
 				$self->{'string'}{$_}=$extend->{'string'}{$_};
 				$self->{'string_'}{$_}=$extend->{'string_'}{$_};
-			}
-			
-			# if modifytime of dependency is higher than master object
-			if ($self->{'config'}->{'mtime'} < $extend->{'config'}->{'mtime'})
-			{
-				$self->{'config'}->{'mtime'} = $extend->{'config'}->{'mtime'};
 			}
 			
 			# add modify files from inherited tpl
 			foreach (keys %{$extend->{'mfile'}})
 			{
-#				print "add modify files $_\n";
 				$self->{'mfile'}{$_}=$extend->{'mfile'}{$_};
 			}
 			
