@@ -52,7 +52,6 @@ BEGIN
 }
 
 our $debug=$main::debug || 0;
-our $TTL=5;
 our %objects;
 
 
@@ -161,7 +160,7 @@ sub new
 			return undef;
 		}
 		# modifytime
-		$obj->{'mfile'}{$obj->{'location'}}=(stat($obj->{'location'}))[9];
+		$obj->{'mfile'}{$obj->{'location'}}=TOM::file_mtime($obj->{'location'});
 	}
 	else
 	{
@@ -185,20 +184,19 @@ sub new
 			);
 	}
 	
-	if ($objects{$obj->{'location'}} && $objects{$obj->{'location'}}->{'config'}{'ctime'} < (time()-$TTL))
+	if ($objects{$obj->{'location'}})
 	{
 		# time to check changes
 		$objects{$obj->{'location'}}->{'config'}{'ctime'} = time();
 		my $object_modified=0;
 		foreach (keys %{$objects{$obj->{'location'}}->{'mfile'}})
 		{
-			if ($objects{$obj->{'location'}}->{'mfile'}{$_} < (stat($_))[9])
+			if (TOM::file_mtime($_) > $objects{$obj->{'location'}}->{'mfile'}{$_})
 			{
 				main::_log("{Template} '$obj->{'location'}' expired, file '$_' modified");
 				$object_modified=1;
 				last;
 			}
-#			main::_log(" file=$_");
 		}
 		if ($object_modified)
 		{
@@ -224,9 +222,6 @@ sub new
 		$obj->prepare_xml();
 		# save time of object creation (last-check time)
 		$obj->{'config'}->{'ctime'} = time();
-		# save modifytime of xml definition file_
-		# will be override posibly with higher times in tpl dependencies or files (by parse_header)
-		$obj->{'config'}->{'mtime'} = (stat($obj->{'location'}))[9];
 		$obj->parse_header();
 		# save config from header to object memory cache
 		%{$objects{$obj->{'location'}}->{'config'}}=%{$obj->{'config'}};
@@ -411,7 +406,7 @@ sub prepare_location
 		$self->{'dir'}=~s/\/_init.xml$//;
 	}
 	
-	$self->{'mfile'}{$self->{'location'}}=(stat($self->{'location'}))[9];
+	$self->{'mfile'}{$self->{'location'}}=TOM::file_mtime($self->{'location'});
 	
 	return $self->{'location'};
 }
@@ -500,12 +495,6 @@ sub parse_header
 				$self->{'file_'}{$_}=$extend->{'file_'}{$_};
 			}
 			
-			# if modifytime of dependency is higher than master object
-			if ($self->{'config'}->{'mtime'} < $extend->{'config'}->{'mtime'})
-			{
-				$self->{'config'}->{'mtime'} = $extend->{'config'}->{'mtime'};
-			}
-			
 			# add modify files from inherited tpl
 			foreach (keys %{$extend->{'mfile'}})
 			{
@@ -584,13 +573,7 @@ sub parse_header
 					my $dst=$destination_dir.'/'.$destination_file;
 					
 					# added to mfile
-					$self->{'mfile'}{$src}=(stat($src))[9];
-					
-					# if modifytime of file is higher than definition file modifytime
-					if ($self->{'config'}->{'mtime'} < $self->{'mfile'}{$src})
-					{
-						$self->{'config'}->{'mtime'} = $self->{'mfile'}{$src};
-					}
+					$self->{'mfile'}{$src}=TOM::file_mtime($src);
 					
 					# check if this file is not oveerided, or already exists in
 					# destination directory
@@ -652,13 +635,7 @@ sub parse_header
 				}
 				
 				# added to mfile
-				$self->{'mfile'}{$self->{'dir'}.'/'.$location}=(stat($self->{'dir'}.'/'.$location))[9];
-				
-				# if modifytime of file is higher than definition file modifytime
-				if ($self->{'config'}->{'mtime'} < $self->{'mfile'}{$self->{'dir'}.'/'.$location})
-				{
-					$self->{'config'}->{'mtime'} = $self->{'mfile'}{$self->{'dir'}.'/'.$location};
-				}
+				$self->{'mfile'}{$self->{'dir'}.'/'.$location}=TOM::file_mtime($self->{'dir'}.'/'.$location);
 				
 				# check if this file is not oveerided, or already exists in
 				# destination directory
