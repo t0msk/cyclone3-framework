@@ -492,6 +492,7 @@ use strict;
 
 our $TTL=5;
 our %mfiles;
+our %files_modified;
 
 BEGIN {eval{
 	main::_log("init '$0' ".join(",",@ARGV));
@@ -518,6 +519,24 @@ sub file_mtime
 	return $mfiles{$file}{'mtime'};
 }
 
+sub file_modified
+{
+	my $file=shift;
+	my $class=shift || 'default';
+	my $mtime=file_mtime($file);
+	$files_modified{$class}{$file}||=$mtime;
+	return $files_modified{$class}{$file}=$mtime
+		if ($files_modified{$class}{$file} < $mtime);
+	return undef;
+}
+
+sub files_modified
+{
+	foreach (@{$_[0]})
+	{
+		file_modified($_) && return $_;
+	}
+}
 
 package TOM::Net::email;
 use open ':utf8', ':std';
