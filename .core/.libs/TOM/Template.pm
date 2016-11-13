@@ -19,8 +19,7 @@ BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 
 use File::Path;
 use File::Copy;
-use XML::XPath;
-use XML::XPath::XMLParser;
+use XML::LibXML;
 use TOM::L10n;
 use TOM::Template::contenttypes;
 
@@ -423,7 +422,7 @@ sub prepare_xml
 {
 	my $self=shift;
 	
-	$self->{'xp'} = XML::XPath->new(filename => $self->{'location'});
+	$self->{'xp'} = 'XML::LibXML'->load_xml(location => $self->{'location'});
 }
 
 sub _directory_tree
@@ -453,9 +452,7 @@ sub parse_header
 {
 	my $self=shift;
 	
-	my $nodeset = $self->{'xp'}->find('/template/header/*'); # find all items
-	
-	foreach my $node ($nodeset->get_nodelist)
+	foreach my $node ($self->{'xp'}->findnodes('/template/header/*'))
 	{
 		my $name=$node->getName();
 		#main::_log("node '$name'");
@@ -549,10 +546,7 @@ sub parse_header
 	if ($self->{'dir'} && $tom::P_media) # extract only in domain service with defined P_media
 	{
 		# proceed extracting files only when tpl is a tpl.d/ type
-		
-		my $nodeset = $self->{'xp'}->find('/template/header/extract/*'); # find all extract items
-		
-		foreach my $node ($nodeset->get_nodelist)
+		foreach my $node ($self->{'xp'}->findnodes('/template/header/extract/*'))
 		{
 			my $name=$node->getName();
 			
@@ -722,11 +716,8 @@ sub parse_entity
 {
 	my $self=shift;
 	
-	my $nodeset = $self->{'xp'}->find('/template/entity'); # find all entries
-	
 	my @ents;
-	
-	foreach my $node ($nodeset->get_nodelist)
+	foreach my $node ($self->{'xp'}->findnodes('/template/entity'))
 	{
 		my $name=$node->getName();
 		my $id=$node->getAttribute('id');
