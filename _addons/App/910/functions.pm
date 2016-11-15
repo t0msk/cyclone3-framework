@@ -2224,62 +2224,6 @@ sub _product_index
 			}
 		}
 		
-		# categories
-		my %sth0=TOM::Database::SQL::execute(qq{
-			SELECT
-				a910_product_sym.ID,
-				a910_product_cat.ID_charindex,
-				a910_product_cat.ID AS cat_ID,
-				a910_product_cat.ID_entity AS cat_ID_entity,
-				a910_product_cat.name,
-				a910_product_cat.alias_name
-			FROM
-				$App::910::db_name.a910_product_sym
-			INNER JOIN $App::910::db_name.a910_product_cat ON
-			(
-				a910_product_sym.ID = a910_product_cat.ID_entity
-			)
-			WHERE
-				a910_product_sym.status='Y'
-				AND a910_product_sym.ID_entity=?
-		},'quiet'=>1,'bind'=>[$product{'ID_entity'}]);
-		my %used;
-		my %used2;
-		while (my %db0_line=$sth0{'sth'}->fetchhash())
-		{
-			push @{$product{'cat'}},$db0_line{'cat_ID_entity'}
-				unless $used{$db0_line{'cat_ID_entity'}};
-			
-			push @{$product{'cat_charindex'}},$db0_line{'ID_charindex'}
-				unless $used{$db0_line{'ID_charindex'}};
-			
-			push @{$product{'cat_name'}},$db0_line{'name'}
-				unless $used{$db0_line{'name'}};
-				
-			push @{$product{'cat_alias_name'}},$db0_line{'alias_name'}
-				if (!$used{$db0_line{'alias_name'}} && $db0_line{'alias_name'});
-			
-			my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
-			foreach my $p(
-				App::020::SQL::functions::tree::get_path(
-					$db0_line{'cat_ID'},
-					%sql_def,
-					'-cache' => 86400*7
-				)
-			)
-			{
-				push @{$product{'cat_path'}},$p->{'ID_entity'}
-					unless $used2{$p->{'ID_entity'}};
-				$used2{$p->{'ID_entity'}}++;
-			}
-			
-			$used{$db0_line{'ID_charindex'}}++;
-			$used{$db0_line{'cat_ID_entity'}}++;
-			$used{$db0_line{'name'}}++;
-			$used{$db0_line{'alias_name'}}++;
-		}
-		
-		
 		# product_lng
 		my %used;
 		my %sth0=TOM::Database::SQL::execute(qq{
@@ -2307,6 +2251,67 @@ sub _product_index
 				
 			$used{$db0_line{'name'}}++;
 			%{$product{'locale'}{$db0_line{'lng'}}}=%db0_line;
+		}
+		
+		# categories
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				a910_product_sym.ID,
+				a910_product_cat.ID_charindex,
+				a910_product_cat.ID AS cat_ID,
+				a910_product_cat.ID_entity AS cat_ID_entity,
+				a910_product_cat.name,
+				a910_product_cat.lng,
+				a910_product_cat.alias_name
+			FROM
+				$App::910::db_name.a910_product_sym
+			INNER JOIN $App::910::db_name.a910_product_cat ON
+			(
+				a910_product_sym.ID = a910_product_cat.ID_entity
+			)
+			WHERE
+				a910_product_sym.status='Y'
+				AND a910_product_sym.ID_entity=?
+		},'quiet'=>1,'bind'=>[$product{'ID_entity'}]);
+		my %used;
+		my %used2;
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			push @{$product{'cat'}},$db0_line{'cat_ID_entity'}
+				unless $used{$db0_line{'cat_ID_entity'}};
+			
+			push @{$product{'cat_charindex'}},$db0_line{'ID_charindex'}
+				unless $used{$db0_line{'ID_charindex'}};
+			
+			push @{$product{'cat_name'}},$db0_line{'name'}
+				unless $used{$db0_line{'name'}};
+				
+			push @{$product{'cat_alias_name'}},$db0_line{'alias_name'}
+				if (!$used{$db0_line{'alias_name'}} && $db0_line{'alias_name'});
+			
+			push @{$product{'locale'}{$db0_line{'lng'}}{'cat_name'}}, $db0_line{'name'}
+				unless $used{$db0_line{'name'}};
+			push @{$product{'locale'}{$db0_line{'lng'}}{'cat_alias_name'}}, $db0_line{'alias_name'}
+				if (!$used{$db0_line{'alias_name'}} && $db0_line{'alias_name'});
+			
+			my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$db0_line{'cat_ID'},
+					%sql_def,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$product{'cat_path'}},$p->{'ID_entity'}
+					unless $used2{$p->{'ID_entity'}};
+				$used2{$p->{'ID_entity'}}++;
+			}
+			
+			$used{$db0_line{'ID_charindex'}}++;
+			$used{$db0_line{'cat_ID_entity'}}++;
+			$used{$db0_line{'name'}}++;
+			$used{$db0_line{'alias_name'}}++;
 		}
 		
 		my %sth1=TOM::Database::SQL::execute(qq{
