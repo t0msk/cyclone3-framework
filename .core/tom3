@@ -112,6 +112,9 @@ eval
 	do $tom::P."/_dsgn/default.header"
 		|| do $tom::P."/_dsgn/default.dsgn";
 	
+	push @main::mfiles, $tom::P.'/_dsgn/default.header'
+		if -e $tom::P.'/_dsgn/default.header';
+	
 	$main::DOC_BODY=$main::TEMPLATE if $main::TEMPLATE;
 	%main::DOC_HEADER=%main::HEADER if %main::HEADER;
 	
@@ -315,11 +318,14 @@ while ($main::CGI=new CGI::Fast())
 	$tom::H_www_orig=$tom::H_www; # save original $tom::H_www
 #	foreach (sort keys %main::ENV){main::_log("$_=$main::ENV{$_}",3,"debug");}
 	
-	$main::ENV{'HTTPS'}="on" if $main::ENV{'HTTP_X_FORWARDED_PROTO'};
+	$main::ENV{'HTTPS'}="on" if $main::ENV{'HTTP_X_FORWARDED_PROTO'}=~/https/;
 	if ($main::ENV{'HTTPS'} && $tom::H_www_https)
 	{
 		$tom::H_www = $tom::H_www_https;
-#		$TOM::DEBUG_log_file=90;
+	}
+	elsif ($main::ENV{'HTTPS'})
+	{
+		$tom::H_www =~s|^http:|https:|;
 	}
 	# main::_log("tom::H_www=$tom::H_www",3,"debug");
 	if ($main::ENV{'domain'})
@@ -356,6 +362,11 @@ while ($main::CGI=new CGI::Fast())
 	# no original, all links are with the same priority
 	$tom::H_www_orig=$tom::H_www
 		if (!@tom::H_www_multi && !$tom::H_www_https_onlyifrequired);
+	
+	if (!$main::ENV{'HTTPS'} && $tom::H_www=~/^https/) # sorry, but this request is not from HTTPS
+	{
+		$tom::H_www=~s|^https|http|;
+	}
 	
 #	main::_log('DOS control');
 #	if (TOM::Net::HTTP::DOS::processENV(%main::ENV))
@@ -547,10 +558,9 @@ while ($main::CGI=new CGI::Fast())
 		
 		
 		# prezriem si pravidla pre rewrite.conf
-		if ($tom::rewrite && (stat "$tom::P/rewrite.conf")[9] > $tom::rewrite_time)
+		if ($tom::rewrite && TOM::file_modified($tom::P.'/rewrite.conf'))
 		{
 			main::_log("rewrite.conf changed, reloading");
-			
 			if (open (KEY,"<".$tom::P."/rewrite.conf"))
 			{
 				my $data;
@@ -599,14 +609,14 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		# prezriem si pravidla pre type.conf
-		if ((stat "$tom::P/type.conf")[9] > $tom::type_time)
+		if (TOM::file_modified($tom::P.'/type.conf'))
 		{
 			main::_log("type.conf changed, reloading");
 			TOM::TypeID::read_conf($tom::P.'/type.conf');
 		}
 		
 		# prezriem si pravidla pre 301.conf
-		if ((stat "$tom::P/301.conf")[9] > $tom::301_time)
+		if (TOM::file_modified($tom::P.'/301.conf'))
 		{
 			main::_log("301.conf changed, reloading");
 			if (open (KEY,"<".$tom::P."/301.conf"))
@@ -807,7 +817,7 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("requested no-cache (don't know if proceed)");
 		}
 		
-		# allow recache only in devel server
+		# allow recache with _rc pram only in devel server
 		if ($tom::devel && $main::FORM{'_rc'} < 0)
 		{
 			$main::cache=0;
@@ -2393,7 +2403,7 @@ while ($main::CGI=new CGI::Fast())
 		{
 			my $t_301=track TOM::Debug("REQUEST_URI link testing for 301 redirection");
 			
-			main::_log("REQUEST_URI='$main::ENV{REQUEST_URI}'");
+			main::_log("REQUEST_URI='$main::ENV{REQUEST_URI}' HTTPS=".$main::ENV{'HTTPS'}." H_www=".$tom::H_www." H_www_orig=".$tom::H_www_orig);
 			
 			my $link_old=$main::ENV{'REQUEST_URI'};
 			my $rewrite_old=$main::ENV{'REQUEST_URI'};$rewrite_old=~s|^(.*)\?.*?$|$1|;
@@ -3106,7 +3116,11 @@ while ($main::CGI=new CGI::Fast())
 		}
 		if ($TOM::Document::frame_options ne "ALLOWALL")
 		{
-			print "X-FRAME-OPTIONS: ".($TOM::Document::frame_options || 'SAMEORIGIN')."\n";
+			print "X-FRAME-OPTIONS: ".($TOM::Document::frame_options || 'SAMEORIGIN').";\n";
+		}
+		if ($tom::H_www_orig=~/^https/ && $TOM::Document::HSTS)
+		{
+			print "Strict-Transport-Security: max-age=600;\n";
 		}
 		
 		# codepage pouzity pre tuto page;
@@ -3394,8 +3408,11 @@ while ($main::CGI=new CGI::Fast())
 	
 	$t_request->close();
 	
+	# request exit/restart when important files changed
+	$tom::HUP=1 if TOM::files_modified(\@main::mfiles);
+	
 	if (
-			($tom::HUP) && (($main::time_current-$TOM::time_start)<30) ||
+			($tom::HUP) && (($main::time_current-$TOM::time_start)<30) || # safe time to exit/restart
 			($tom::HUP == 2) ||
 			($TOM::max_count && ($TOM::max_count <= $tom::count)) ||
 			($TOM::max_time <= ($main::time_current-$TOM::time_start))

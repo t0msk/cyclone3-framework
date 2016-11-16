@@ -511,7 +511,12 @@ sub execute
 		}
 		
 #		undef $DBI::errstr;
-		$output{'sth'} = $main::DB{$env{'db_h'}}->prepare($SQL,{'ora_auto_lob'=>0});
+		
+#		main::_log("prepare $SQL");
+		
+		$output{'sth'} = $main::DB{$env{'db_h'}}->prepare(
+			"-- ".$tom::H.' / '.$TOM::engine.' / '.$main::request_code."\n"
+			.$SQL,{'ora_auto_lob'=>0});
 		#$output{'err'} = $DBI::errstr unless $output{'sth'};
 #		main::_log("err=$DBI::errstr");
 		$output{'err'}=$main::DB{$env{'db_h'}}->errstr() || $DBI::errstr;
@@ -570,7 +575,9 @@ sub execute
 			return %output;
 		}
 		
-		if ($env{'bind'}){$output{'sth'}->execute(@{$env{'bind'}});}
+		if ($env{'bind'}){
+			$output{'sth'}->execute(@{$env{'bind'}});
+		}
 		else {$output{'sth'}->execute()}
 		
 		$output{'rows'}=$output{'sth'}->rows;
@@ -579,6 +586,7 @@ sub execute
 		
 		if ($output{'err'})
 		{
+			main::_log("err=".$output{'err'});
 			my ($package, $filename, $line) = caller;
 			main::_log("SQL: err=".$output{'err'},1);# unless $env{'quiet'};
 			main::_log("{$env{'db_h'}} SQL='$SQL_' err='$output{'err'}' from $package:$filename:$line",4,"sql");
