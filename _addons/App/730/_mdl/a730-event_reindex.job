@@ -1,0 +1,53 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+use JSON;
+use App::730::_init;
+
+
+sub fnc
+{
+	my $self=shift;
+#	main::_log("fnc");
+	
+#	use Data::Dumper;
+#	print Dumper($self);
+	
+}
+
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	
+	if (!$tom::H)
+	{
+		main::_log("only running under domain",1);
+		return undef;
+	}
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			`ID_entity`
+		FROM
+			`$App::730::db_name`.`a730_event`
+	},'quiet'=>1);
+	my $i;
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		main::_log_stdout("[$i/$sth0{'rows'}] index event ID_entity=$db0_line{'ID_entity'}");
+		App::730::functions::_event_index('ID_entity' => $db0_line{'ID_entity'});
+	}
+	
+	return 1;
+}
+
+1;
