@@ -47,6 +47,8 @@ our $Elastic=$Ext::Elastic::service;
 my $td = DateTime->now('time_zone'  => 'GMT');
 my $limit=1;
 my $indice='logstash-'.$td->strftime('%Y-%m-%d');
+	$td->add('days'=>-1);
+my $indice2='logstash-'.$td->strftime('%Y-%m-%d');
 
 my @filter;
 my %query_string;
@@ -78,7 +80,7 @@ push @filter,{"terms" => {"hd" => [$TOM::domain]}};
 #push @filter,{"terms" => {"data.response_status_i" => [500]}};
 
 my $search_config={
-	'index' => $indice,
+	'index' => $indice.','.$indice2,
 	'type' => 'fluentd',
 	'size' => $limit,
 	'timeout' => '60s',

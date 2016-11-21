@@ -219,7 +219,7 @@ sub execute
 	my $where;
 	
 	# language
-	$where.="lng='$env{'lng'}' ";
+	$where.="a401_article_cat.lng='$env{'lng'}' ";
 	
 	# status
 	if ($env{'status'})
@@ -228,14 +228,14 @@ sub execute
 		$where.="AND (";
 		foreach (split('',$env{'status'}))
 		{
-			$where.="status='$_' OR ";
+			$where.="a401_article_cat.status='$_' OR ";
 		}
 		$where=~s|OR $||;
 		$where.=")";
 	}
 	else
 	{
-		$where.="AND status='Y' ";
+		$where.="AND a401_article_cat.status='Y' ";
 	}
 	
 	
@@ -295,16 +295,28 @@ sub execute
 	
 	my $sql=qq{
 		SELECT
-			ID,
-			ID_entity,
-			ID_charindex,
-			datetime_create,
-			name,
-			name_url,
-			lng,
-			status
+			a401_article_cat.ID,
+			a401_article_cat.ID_entity,
+			a401_article_cat.ID_charindex,
+			a401_article_cat.datetime_create,
+			a401_article_cat.name,
+			a401_article_cat.name_url,
+			a401_article_cat.lng,
+			a401_article_cat.status,
+			IF
+			(
+				ACL_world.perm_R IS NULL OR ACL_world.perm_R='Y',
+				'N','Y'
+			) AS private_status
 		FROM
 			`$App::401::db_name`.a401_article_cat
+		LEFT JOIN `$App::401::db_name`.`a301_ACL_user_group` AS ACL_world ON
+		(
+			ACL_world.ID_entity = 0 AND
+			r_prefix = 'a401' AND
+			r_table = 'article_cat' AND
+			r_ID_entity = a401_article_cat.ID_entity
+		)
 $where
 		ORDER BY
 			$env{'db_order'}
@@ -405,6 +417,7 @@ $where
 			$XSGN{'NULL'}=~s|<%name_url%>|$entity->{'name_url'}|g;
 			$XSGN{'NULL'}=~s|<%datetime_create%>|$entity->{'datetime_create'}|g;
 			$XSGN{'NULL'}=~s|<%status%>|$entity->{'status'}|g;
+			$XSGN{'NULL'}=~s|<%private_status%>|$entity->{'private_status'}|g;
 #			$XSGN{'NULL'}=~s|<%path%>|$path_|g;
 			
 			if ($env{'itemcount'})
@@ -417,6 +430,7 @@ $where
 						`$App::401::db_name`.`a401_article_attrs`
 					WHERE
 						ID_category = $entity->{'ID'}
+						AND lng = '$entity->{'lng'}'
 						AND status IN ('Y','N')
 				};
 				my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-slave'=>1,'_cache'=>30);

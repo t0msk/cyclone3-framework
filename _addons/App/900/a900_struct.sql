@@ -23,9 +23,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner` (
   `stats_clicks` int(10) unsigned NOT NULL, -- applied impressions
   `rules_views_max` int(10) unsigned default NULL,
   `rules_views_session_max` int(10) unsigned default NULL,
+  `rules_pageviews_session_min` int(10) unsigned default NULL,
   `rules_views_browser_session_max` int(10) unsigned default NULL,
   `rules_clicks_max` int(10) unsigned default NULL,
   `rules_clicks_browser_max` int(10) unsigned default NULL,
+  `skip` int(10) unsigned default NULL, -- number of seconds to be to allow to skip ad playback, NULL = default, 0 = never
   `datetime_publish_start` datetime NOT NULL,
   `datetime_publish_stop` datetime default NULL,
   `time_publish_start` time default NULL,
@@ -62,9 +64,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_j` (
   `stats_clicks` int(10) unsigned NOT NULL,
   `rules_views_max` int(10) unsigned default NULL,
   `rules_views_session_max` int(10) unsigned default NULL,
+  `rules_pageviews_session_min` int(10) unsigned default NULL,
   `rules_views_browser_session_max` int(10) unsigned default NULL,
   `rules_clicks_max` int(10) unsigned default NULL,
   `rules_clicks_browser_max` int(10) unsigned default NULL,
+  `skip` int(10) unsigned default NULL, -- number of seconds to be to allow to skip ad playback, NULL = default, 0 = never
   `datetime_publish_start` datetime NOT NULL,
   `datetime_publish_stop` datetime default NULL,
   `time_publish_start` time default NULL,
@@ -84,7 +88,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_j` (
 CREATE TABLE `/*db_name*/`.`/*addon*/_banner_lng` ( -- language versions of banner
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- rel _banner.ID_entity
-  `title` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `title` varchar(250) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `def_type` varchar(32) character set ascii collate ascii_bin default NULL, -- popup, html, dynamic, ...
   `def_img_src` varchar(250) character set ascii collate ascii_bin default NULL,
   `def_script` text character set utf8 collate utf8_unicode_ci default NULL,
@@ -109,7 +113,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_lng` ( -- language versions of bann
 CREATE TABLE `/*db_name*/`.`/*addon*/_banner_lng_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL, -- rel _banner.ID_entity
-  `title` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
+  `title` varchar(250) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `def_type` varchar(32) character set ascii collate ascii_bin default NULL, -- popup, html, dynamic, ...
   `def_img_src` varchar(250) character set ascii collate ascii_bin default NULL,
   `def_script` text character set utf8 collate utf8_unicode_ci default NULL,

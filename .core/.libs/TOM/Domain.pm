@@ -43,6 +43,17 @@ BEGIN
 			require $tom::P."/local.conf";
 			main::_log("tom::Pm=$tom::Pm");
 			
+			push @main::mfiles, $tom::P.'/local.conf';
+			push @main::mfiles, $tom::P.'/master.conf'
+				if -e $tom::P.'/master.conf';
+			if ($tom::Pm && $tom::P ne $tom::Pm)
+			{
+				push @main::mfiles, $tom::Pm.'/local.conf'
+					if -e $tom::Pm.'/local.conf';
+				push @main::mfiles, $tom::Pm.'/master.conf'
+					if -e $tom::Pm.'/master.conf';
+			}
+			
 			# save original tom::H
 			$tom::H_orig=$tom::H;
 			
@@ -156,10 +167,12 @@ BEGIN
 			# Git when available
 			if (-d $tom::P.'/.git' || -d $tom::Pm.'/.git'){eval{require Git};if (!$@)
 			{
+				eval {
 				my $repo = Git->repository('Directory' => $tom::P);
 				$tom::devel_branch=$repo->command('rev-parse','--abbrev-ref'=>'HEAD');
 					chomp($tom::devel_branch);
 				main::_log("identified git branch '$tom::devel_branch'");
+				};
 			}}
 		}
 		

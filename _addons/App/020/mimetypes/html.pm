@@ -175,14 +175,14 @@ sub start
 	if ($attr->{'style'})
 	{
 		my %style=_parse_style($attr->{'style'});
-		if ($tag=~/^p|span|div$/)
-		{
-			delete $style{'color'};
-			delete $style{'font-size'};
-			delete $style{'font-family'};
-			delete $style{'background'};
-			delete $style{'background-color'};
-		}
+#		if ($tag=~/^p|span|div$/)
+#		{
+#			delete $style{'color'};
+#			delete $style{'font-size'};
+#			delete $style{'font-family'};
+#			delete $style{'background'};
+#			delete $style{'background-color'};
+#		}
 		$attr->{'style'}=_gen_style(%style);
 		delete $attr->{'style'} unless $attr->{'style'};
 	}
@@ -247,6 +247,9 @@ sub start
 			'tb_name' => $entity,
 			'ID' => $vars{'ID'},
 			'ID_entity' => $vars{'ID_entity'},
+			'tag' => {
+				'attr' => $attr
+			},
 #			'id-tag' => \%vars,
 			'count' => {
 				'tag' => $self->{'count'}->{'tag'}->{$tag},
@@ -653,6 +656,26 @@ sub start
 			delete $db_entity{'ID_image'};
 			delete $db_entity{'ID_entity_image'};
 			push @{$self->{'thumbnail'}},$vars{'ID_entity'} if $tag eq "img";
+		}
+		
+		if ($entity eq "a501_image_set")
+		{
+			require App::501::_init;
+			my @IDS =split(';',$vars{'ID_entity'});
+			foreach (@IDS)
+			{
+				my %image=App::501::functions::get_image_file(
+					'image.ID_entity' => $_,
+					'image_file.ID_format' => $App::501::image_format_original_ID,
+					'image_attrs.lng' => $tom::lng
+				);					
+				if ($image{'ID_entity'}) 
+				{	
+					delete $image{'ID_image'};
+					delete $image{'ID_entity_image'};
+					push @{$db_entity{'image_set'}}, \%image;
+				}	
+			}
 		}
 		elsif ($entity eq "a510_video")
 		{

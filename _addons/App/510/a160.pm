@@ -67,25 +67,39 @@ sub get_relation_iteminfo
 	
 	if ($env{'r_table'} eq "video")
 	{
+		my $lng_in2 = $lng_in;
+		$lng_in2=~s|AND lng|AND `video_attrs`.`lng`|;
 		my $sql=qq{
 			SELECT
-				ID_video,
-				ID_category,
-				name,
-				datetime_rec_start,
-				lng
+				`video`.`ID`,
+				`video_cat`.`ID` AS `ID_category`,
+				`video_attrs`.`name`,
+				`video`.`datetime_rec_start`,
+				`video_attrs`.`lng`
 			FROM
-				`$env{'r_db_name'}`.a510_video_view
+				`$env{'r_db_name'}`.`a510_video` AS `video`
+			INNER JOIN `$App::510::db_name`.`a510_video_attrs` AS `video_attrs` ON
+			(
+						`video_attrs`.`ID_entity` = `video`.`ID`
+				AND	`video_attrs`.`lng` = '$env{'lng'}'
+				AND	`video_attrs`.`status` IN ('Y','L')
+			)
+			LEFT JOIN `$App::510::db_name`.`a510_video_cat` AS `video_cat` ON
+			(
+						`video_cat`.`ID_entity` = `video_attrs`.`ID_category`
+				AND	`video_cat`.`lng` = `video_attrs`.`lng`
+				AND	`video_cat`.`status` IN ('Y','L')
+			)
 			WHERE
-				ID_entity_video=$env{'r_ID_entity'}
-				$lng_in
+				`video`.`ID_entity` = $env{'r_ID_entity'}
+				$lng_in2
 			LIMIT 1
 		};
 		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'main');
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			$info{'name'}=$db0_line{'name'};
-			$info{'ID'}=$db0_line{'ID_video'};
+			$info{'ID'}=$db0_line{'ID'};
 			$info{'ID_category'}=$db0_line{'ID_category'};
 			$info{'lng'}=$db0_line{'lng'};
 			
@@ -154,6 +168,54 @@ sub get_relation_iteminfo
 			$info{'name'}=$db0_line{'name'};
 			$info{'ID'}=$db0_line{'ID'};
 			$info{'lng'}=$db0_line{'lng'};
+			main::_log("returning name='$info{'name'}'");
+			$t->close();
+			return %info;
+		}
+	}
+	
+	if ($env{'r_table'} eq "broadcast_channel")
+	{
+		my $sql=qq{
+			SELECT
+				ID,
+				name
+			FROM
+				`$env{'r_db_name'}`.a510_broadcast_channel
+			WHERE
+				ID_entity=$env{'r_ID_entity'}
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'main');
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$info{'name'}=$db0_line{'name'};
+			$info{'ID'}=$db0_line{'ID'};
+#			$info{'lng'}=$db0_line{'lng'};
+			main::_log("returning name='$info{'name'}'");
+			$t->close();
+			return %info;
+		}
+	}
+	
+	if ($env{'r_table'} eq "broadcast_series")
+	{
+		my $sql=qq{
+			SELECT
+				ID,
+				name
+			FROM
+				`$env{'r_db_name'}`.a510_broadcast_series
+			WHERE
+				ID_entity=$env{'r_ID_entity'}
+			LIMIT 1
+		};
+		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'main');
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$info{'name'}=$db0_line{'name'};
+			$info{'ID'}=$db0_line{'ID'};
+#			$info{'lng'}=$db0_line{'lng'};
 			main::_log("returning name='$info{'name'}'");
 			$t->close();
 			return %info;

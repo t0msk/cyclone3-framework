@@ -18,8 +18,7 @@ use strict;
 BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 
 use File::Path;
-use XML::XPath;
-use XML::XPath::XMLParser;
+use XML::LibXML;
 use TOM::L10n::codes;
 
 our $debug=$main::debug || 0;
@@ -73,6 +72,8 @@ sub new
 	%{$obj->{'ENV'}}=%env;
 	$obj->{'string'}={};
 	$obj->{'string_'}={};
+	$obj->{'mfile'}={}; # list of files on which we control changes
+	$obj->{'config'}={};
 	
 	# find where is the source file/files
 	$obj->prepare_location();
@@ -84,63 +85,86 @@ sub new
 	}
 	$obj->{'uid'}=$obj->{'location'}.'/'.$env{'lng'};
 	
-	# modifytime of location
-	$obj->{'config'}->{'mtime'} = (stat($obj->{'location'}))[9];
+#	main::_log("trying '$obj->{'uid'}' in mem=".do{if($objects{$obj->{'uid'}}){"1"}},3,"l10n");
 	
-#	main::_log("trying '$obj->{'uid'}' in mem=".do{if($objects{$obj->{'uid'}}){"1"}}." no-cache=".$env{'no-cache'},3,"l10n");
-	
-	my $object={};
-		$object=$objects{$obj->{'uid'}}
-			unless $env{'no-cache'};
-	
-	if (!$object && $TOM::CACHE_memcached && $main::cache)
+	if (!$objects{$obj->{'uid'}} && $TOM::CACHE_memcached && $main::cache)
 	{
 		# try memcached
-		$object = 
+		$objects{$obj->{'uid'}} = 
 			$Ext::CacheMemcache::cache->get(
 				'namespace' => "l10ncache",
 				'key' => $TOM::P_uuid.':'.$obj->{'uid'}
 			);
 	}
 	
-	if ($object && ($obj->{'config'}->{'mtime'} > $object->{'config'}->{'mtime'} || !$main::cache))
+	if ($objects{$obj->{'uid'}})
 	{
-		main::_log("{L10n} '$obj->{'location'}' expired, modified before ".( $obj->{'config'}->{'mtime'}-$object->{'config'}->{'mtime'} )."s");
-		undef $object;
+		my $object_modified=0;
+		foreach (keys %{$objects{$obj->{'uid'}}->{'mfile'}})
+		{
+			if (TOM::file_mtime($_) > $objects{$obj->{'uid'}}->{'mfile'}{$_})
+			{
+				main::_log("{L10n} '$obj->{'location'}' expired, file '$_' modified");
+				$object_modified=1;
+				last;
+			}
+		}
+		if ($object_modified)
+		{
+			delete $objects{$obj->{'uid'}};
+		}
 	}
 	
 	# check if same location is already loaded in another object
 	# (location is unique identification of L10n)
 	# when no, proceed parsing this L10n source
-	if (!$object)
+	if (!$objects{$obj->{'uid'}})
 	{
 		main::_log("<={L10n} '$obj->{'location'}'/'$obj->{'ENV'}->{'lng'}'");# if $debug;
 		# add this object into global $TOM::L10n::objects{} hash
-		$object=$obj;
+		$objects{$obj->{'uid'}}=$obj;
 		$id++;$L10n::id{$obj->{'uid'}}=$id; # add unique number to every one object
 		$obj->{'id'}=$id;
 		# add this location into ignore list
 		push @{$obj->{'ENV'}->{'ignore'}}, $obj->{'uid'};
 		$obj->prepare_xml();
-		$obj->{'config'}->{'mtime'}=(stat( $obj->{'location'} ))[9];
+		# save time of object creation (last-check time)
+		$obj->{'config'}->{'ctime'} = time();
 		$obj->parse_header();
+		# save config from header to object memory cache
+		%{$objects{$obj->{'uid'}}->{'config'}}=%{$obj->{'config'}};
 		$obj->parse_string();
+		undef $obj->{'xp'};
+		
+		if ($TOM::CACHE_memcached)
+		{
+			$Ext::CacheMemcache::cache->set(
+				'namespace' => "l10ncache",
+				'key' => $TOM::P_uuid.':'.$obj->{'uid'},
+				'value' => {
+					'ENV' => $obj->{'ENV'},
+					'id' => $obj->{'id'},
+					'config' => $obj->{'config'},
+					'mfile' => $obj->{'mfile'},
+					'string' => $obj->{'string'},
+					'string_' => $obj->{'string_'},
+					'L10n' => $obj->{'L10n'},
+					'location' => $obj->{'location'},
+					'uid' => $obj->{'uid'}
+				},
+				'expiration' => '3600S'
+			);
+		}
+		
 	}
 	else
 	{
 		main::_log("<={L10n}{cache".(do{
-			if ($objects{$obj->{'uid'}} && !$env{'no-cache'})
+			if ($objects{$obj->{'uid'}})
 			{
 				":mem";
 			}
 		})."} '$obj->{'location'}'/'$obj->{'ENV'}->{'lng'}'") if $debug;
-#		main::_log("load cached L10n ".$obj->{'uid'});
-		
-		$objects{$obj->{'uid'}}=$object
-			unless $env{'no-cache'};
-		
-		$t->close() if $debug;
-		return $object;
 	}
 	
 	# create copy of object to return it as unique
@@ -153,12 +177,13 @@ sub new
 		%{$obj_return->{'ENV'}}=%env;
 		if ($obj->{'location'})
 		{
-			%{$obj_return->{'string'}}=%{$object->{'string'}};
-			%{$obj_return->{'string_'}}=%{$object->{'string_'}};
+			%{$obj_return->{'string'}}=%{$objects{$obj->{'uid'}}->{'string'}};
+			%{$obj_return->{'string_'}}=%{$objects{$obj->{'uid'}}->{'string_'}};
+			%{$obj_return->{'mfile'}}=%{$objects{$obj->{'uid'}}->{'mfile'}};
 			# recovery header config to new object
-			%{$obj_return->{'config'}}=%{$object->{'config'}};
+			%{$obj_return->{'config'}}=%{$objects{$obj->{'uid'}}->{'config'}};
 		}
-		%L10n::string=%{$object->{'string'}};
+		%L10n::string=%{$objects{$obj->{'uid'}}->{'string'}};
 		# replace_variables only in root level of L10n not in l10n's called by <extend*>
 		$obj_return->process_string() if (caller)[0] ne "TOM::L10n";
 		my $i;
@@ -169,21 +194,10 @@ sub new
 		foreach (sort keys %L10n::string)
 		{
 			$i++;
-			#main::_log('#'.$obj->{'id'}.'#'.$i);
+#			main::_log('#'.$obj->{'id'}.'#'.$i,1);
 			$L10n::num{'#'.$obj->{'id'}}{$_}=$i;
 			$L10n::obj{'#'.$obj->{'id'}.'#'.$i}=$L10n::string{$_};
 		}
-	
-	if ($TOM::CACHE_memcached && !$env{'no-cache'})
-	{
-		$objects{$obj->{'uid'}}=$object;
-		$Ext::CacheMemcache::cache->set(
-			'namespace' => "l10ncache",
-			'key' => $TOM::P_uuid.':'.$obj->{'uid'},
-			'value' => $obj_return,
-			'expiration' => '3600S'
-		);
-	}
 	
 	$t->close() if $debug;
 	return $obj_return;
@@ -248,6 +262,8 @@ sub prepare_location
 #		main::_log("<={L10n} '$self->{'location'}'/'$self->{'ENV'}->{'lng'}'");# if $debug;
 	}
 	
+	$self->{'mfile'}{$self->{'location'}}=TOM::file_mtime($self->{'location'});
+	
 	return $self->{'location'};
 }
 
@@ -257,7 +273,8 @@ sub prepare_xml
 {
 	my $self=shift;
 	
-	$self->{'xp'} = XML::XPath->new(filename => $self->{'location'});
+#	$self->{'xp'} = XML::XPath->new(filename => $self->{'location'});
+	$self->{'xp'} = 'XML::LibXML'->load_xml(location => $self->{'location'});
 	
 }
 
@@ -267,9 +284,7 @@ sub parse_header
 {
 	my $self=shift;
 	
-	my $nodeset = $self->{'xp'}->find('/L10n/header/*'); # find all items
-	
-	foreach my $node ($nodeset->get_nodelist)
+	foreach my $node ($self->{'xp'}->findnodes('/L10n/header/*'))
 	{
 		my $name=$node->getName();
 		#main::_log("node '$name'");
@@ -292,15 +307,19 @@ sub parse_header
 				'name' => $name,
 				'lng' => $lng,
 				'ignore' => $self->{'ENV'}{'ignore'},
-				'no-cache' => 1
 			);
 			
 			# add entries from inherited L10n
 			foreach (keys %{$extend->{'string'}})
 			{
-#				print "set $_\n";
 				$self->{'string'}{$_}=$extend->{'string'}{$_};
 				$self->{'string_'}{$_}=$extend->{'string_'}{$_};
+			}
+			
+			# add modify files from inherited tpl
+			foreach (keys %{$extend->{'mfile'}})
+			{
+				$self->{'mfile'}{$_}=$extend->{'mfile'}{$_};
 			}
 			
 			next;
@@ -316,15 +335,10 @@ sub parse_header
 sub parse_string
 {
 	my $self=shift;
-	
-	my $nodeset = $self->{'xp'}->find('/L10n/string'); # find all strings
-	
 	my @strs;
 	
-	foreach my $node ($nodeset->get_nodelist)
+	foreach my $node ($self->{'xp'}->findnodes('/L10n/string'))
 	{
-		my $name=$node->getName();
-		
 		if ($node->getAttribute('disabled') eq "true")
 		{
 			next;
@@ -334,9 +348,10 @@ sub parse_string
 		
 		if (!$id)
 		{
-			my $nodeset2 = $node->find('en-US');
-			my $node2=($nodeset2->get_nodelist())[0];
-			$id=$node2->string_value();
+#			my $nodeset2 = $node->find('en-US');
+#			my $node2=($nodeset2->get_nodelist())[0];
+#			$id=$node2->string_value();
+			next;
 		}
 		
 		if ($node->getAttribute('automap') eq "true")
@@ -346,10 +361,9 @@ sub parse_string
 		}
 		else
 		{
-			my $nodeset2 = $node->find($self->{'ENV'}{'lng'}); # find all strings
-			if (my $node2=($nodeset2->get_nodelist())[0])
+			if (my $node2=($node->findnodes($self->{'ENV'}{'lng'}))[0])
 			{
-				$self->{'string'}{$id}=$node2->string_value();
+				$self->{'string'}{$id}=$node2->textContent();
 			}
 			elsif ($self->{'ENV'}{'lng'} eq "en-US")
 			{
@@ -368,9 +382,6 @@ sub parse_string
 		$self->{'string_'}{$id}{'location'}=$self->{'location'};
 		push @strs, $id;
 	}
-	
-#	main::_log("strings '".(join "','",@strs)."'") unless $debug;
-	
 }
 
 

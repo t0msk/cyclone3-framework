@@ -7,6 +7,7 @@
 CREATE TABLE `/*db_name*/`.`/*addon*/_event` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- main id
+  `ref_ID` varchar(64) character set ascii default NULL, -- external reference
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00', -- last change
@@ -47,7 +48,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event` (
   `mode` char(1) character set ascii NOT NULL default 'M',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`),
-  KEY `SEL_0` (`ID_entity`,`ID`)
+  KEY `SEL_0` (`ID_entity`,`ID`),
+  KEY `ref_ID` (`ref_ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -55,6 +57,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_event` (
 CREATE TABLE `/*db_name*/`.`/*addon*/_event_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
+  `ref_ID` varchar(64) character set ascii default NULL, -- external reference
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00',

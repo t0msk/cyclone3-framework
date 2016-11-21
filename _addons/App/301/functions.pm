@@ -135,6 +135,23 @@ sub user_add
 		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
 	}
 	
+	if ($env{'user.ref_ID'} && !$env{'user.ID_user'})
+	{
+		main::_log("search user by ref_ID='$env{'user.ref_ID'}'");
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`TOM`.a301_user
+			WHERE
+				ref_ID=? AND
+				hostname=?
+			LIMIT 1;
+		},'bind'=>[$env{'user.ref_ID'},$env{'user.hostname'}],'quiet'=>1);
+		%user=$sth0{'sth'}->fetchhash();
+		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
+	}
+	
 	if (!$env{'user.ID_user'})
 	{
 		main::_log("!user.ID_user, create new");
@@ -547,6 +564,7 @@ sub user_add
 			$env{'user.status'} ||
 			$env{'user.ref_facebook'} ||
 			$env{'user.ref_deviceid'} ||
+			$env{'user.ref_ID'} ||
 			$env{'user.email_verified'}
 		)
 	)
@@ -588,6 +606,9 @@ sub user_add
 		# ref_deviceid
 		$set.=",ref_deviceid='$env{'user.ref_deviceid'}'"
 			if $env{'user.ref_deviceid'};
+		# ref_ID
+		$set.=",ref_ID='$env{'user.ref_ID'}'"
+			if $env{'user.ref_ID'};
 		# status
 		$set.=",status='$env{'user.status'}'"
 			if $env{'user.status'};
@@ -1147,7 +1168,7 @@ sub user_get
 
 sub _user_index
 {
-	return 1 if TOM::Engine::jobify(\@_); # do it in background
+	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::010::db_name,'class'=>'indexer'}); # do it in background
 	my %env=@_;
 	return undef unless $env{'ID_user'};
 #	return undef unless $Ext::Solr;

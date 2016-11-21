@@ -48,10 +48,20 @@ sub execute
 			athlete.name_url,
 			athlete.metadata,
 
+
+			athlete_cat.name AS cat_name,
+			athlete_cat.name_url AS cat_name_url,
+			
 			athlete_lng.body
 			
 		FROM
 			$App::470::db_name.a470_athlete AS athlete
+		LEFT JOIN $App::470::db_name.a470_athlete_sym AS athlete_sym ON (
+			athlete_sym.ID_entity = athlete.ID
+		)
+		LEFT JOIN $App::470::db_name.a470_athlete_cat AS athlete_cat ON (
+			athlete_cat.ID = athlete_sym.ID
+		)
 		LEFT JOIN $App::470::db_name.a470_athlete_lng AS athlete_lng ON
 		(
 			athlete_lng.ID_entity = athlete.ID AND
@@ -89,6 +99,26 @@ sub execute
 		'rel_type' => "avatar",
 		'status' => "Y"
 	))[0];
+
+	my @gallery_images;
+	foreach my $relation(App::160::SQL::get_relations(
+		'db_name' => $App::470::db_name,
+		'l_prefix' => 'a470',
+		'l_table' => 'athlete',
+		'l_ID_entity' => $athlete{'ID_entity'},
+		'rel_type' => 'gallery',
+		'r_prefix' => "a501",
+		'r_table' => "image",
+		'status' => "Y",
+	))
+	{
+		next unless $relation->{'r_ID_entity'};
+		push @gallery_images, $relation->{'r_ID_entity'};
+	}
+	$athlete{'gallery'} = \@gallery_images;
+	
+	%{$athlete{'metahash'}}=App::020::functions::metadata::parse($athlete{'metadata'});
+	delete $athlete{'metadata'};
 	
 	use App::020::mimetypes::html;
 	my $parser=new App::020::mimetypes::html(
