@@ -2625,17 +2625,6 @@ while ($main::CGI=new CGI::Fast())
 			
 			main::_log("<={MODULE} ".$mdl_env{'-type'}.':'.($mdl_env{'-category'} || $mdl_env{'-addon'}).'-'.$mdl_env{'-name'}.' TMP:'.$mdl_env{'-TMP'});
 			
-			if (
-				((!$IAdm)&&($mdl_env{-IAdm}==1)) ||
-				(($IAdm)&&($mdl_env{-IAdm}==-1)) ||
-				((!$ITst)&&($mdl_env{-ITst}==1)) ||
-				(($ITst)&&($mdl_env{-ITst}==-1))
-			)
-			{
-				main::_log("can't load module in this mode");
-				next;
-			}
-			
 			if (exists $mdl_env{'-enabled'} && !$mdl_env{'-enabled'})
 			{
 				main::_log("module not enabled");
