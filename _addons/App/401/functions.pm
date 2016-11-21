@@ -1441,8 +1441,8 @@ sub article_visit
 		my $key='main::'.$App::401::db_name.'::a401_article_ent::'.$ID_entity;
 		my $count_visits = $Redis->hmget('C3|db_entity|'.$key,'_firstvisit','visits');
 		if (
-			($count_visits->[0] <= ($main::time_current - 1200)) # save every 10 minutes
-			|| $count_visits->[1] >= 1000)
+			($count_visits->[0] <= ($main::time_current - 300)) # save every 10 minutes
+			|| $count_visits->[1] >= 100)
 		{
 			# it's time to save
 			TOM::Database::SQL::execute(qq{
@@ -1517,7 +1517,7 @@ sub article_visit
 	
 	my $old=time()-$cache->{'time'};
 	
-	if ($old > (60*10))
+	if ($old > (60*5))
 	{
 		# update database
 		TOM::Database::SQL::execute(qq{
