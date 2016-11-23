@@ -1487,11 +1487,11 @@ sub _product_index
 					}
 					
 					push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
-					if ($metadata{$sec}{$_}=~/^[0-9]{1,9}$/)
+					if ($metadata{$sec}{$_}=~/^[0-9]{1,9}0*?$/)
 					{
 						push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
 					}
-					if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}$/ && (not $metadata{$sec}{$_}=~/\..*?\./))
+					if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}0*?$/ && (not $metadata{$sec}{$_}=~/\..*?\./))
 					{
 						push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
 					}
