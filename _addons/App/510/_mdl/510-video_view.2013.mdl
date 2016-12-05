@@ -403,6 +403,37 @@ sub execute
 				}
 			}
 			
+			if ($env{'video_part_caption'})
+			{
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						`video_part`.`part_id`,
+						`caption`.*
+					FROM
+						`$App::510::db_name`.`a510_video_part` AS `video_part`
+					LEFT JOIN `$App::510::db_name`.`a510_video_part_caption` AS `caption` ON
+					(
+								`caption`.`ID_entity` = `video_part`.`ID`
+						AND	`caption`.`status` = 'Y'
+					)
+					WHERE
+								`video_part`.`status` = 'Y'
+						AND	`video_part`.`ID_entity` = ?
+						AND	`caption`.`status` = 'Y'
+						AND	`caption`.`lng` = ?
+					ORDER BY
+						`video_part`.`part_id` ASC, `caption`.`time_start` ASC
+				},'quiet'=>1,'-slave'=>1,'-cache'=>60,'bind' => [$video_part{'ID_entity'}, $env{'lng'}],
+					'-cache_changetime' => App::020::SQL::functions::_get_changetime({
+						'db_h'=>"main",'db_name'=>$App::510::db_name,'tb_name'=>"a510_video_part_caption"
+					})
+				);
+				while (my %caption=$sth1{'sth'}->fetchhash())
+				{
+					push @{$video_part{'caption'}{$caption{'lng'}}}, \%caption;
+				}
+			}
+			
 			push @{$env_out{'entity'}},{
 				'db_h' => 'main',
 				'db_name' => $App::510::db_name,

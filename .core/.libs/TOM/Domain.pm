@@ -43,6 +43,17 @@ BEGIN
 			require $tom::P."/local.conf";
 			main::_log("tom::Pm=$tom::Pm");
 			
+			push @main::mfiles, $tom::P.'/local.conf';
+			push @main::mfiles, $tom::P.'/master.conf'
+				if -e $tom::P.'/master.conf';
+			if ($tom::Pm && $tom::P ne $tom::Pm)
+			{
+				push @main::mfiles, $tom::Pm.'/local.conf'
+					if -e $tom::Pm.'/local.conf';
+				push @main::mfiles, $tom::Pm.'/master.conf'
+					if -e $tom::Pm.'/master.conf';
+			}
+			
 			# save original tom::H
 			$tom::H_orig=$tom::H;
 			

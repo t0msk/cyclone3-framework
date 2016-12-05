@@ -347,7 +347,7 @@ sub execute
 	if ($env{'article.ID_entity'}=~/^[;0-9]+$/)
 	{
 		$sql_where.=" AND article.ID_entity IN (".join(',',split(';',$env{'article.ID_entity'})).")";
-		$sql_limit=scalar split(';',$env{'article.ID_entity'});
+		$sql_limit=scalar split(';',$env{'article.ID_entity'}) unless $env{'sql_limit_force'};
 		if ($env{'solr'} || $env{'elastic'})
 		{
 			$sql_group_by="article.ID_entity";

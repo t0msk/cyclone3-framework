@@ -19,8 +19,7 @@ BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 
 use File::Path;
 use File::Copy;
-use XML::XPath;
-use XML::XPath::XMLParser;
+use XML::LibXML;
 use TOM::L10n;
 use TOM::Template::contenttypes;
 
@@ -53,7 +52,6 @@ BEGIN
 }
 
 our $debug=$main::debug || 0;
-our $TTL=5;
 our %objects;
 
 
@@ -162,7 +160,7 @@ sub new
 			return undef;
 		}
 		# modifytime
-		$obj->{'mfile'}{$obj->{'location'}}=(stat($obj->{'location'}))[9];
+		$obj->{'mfile'}{$obj->{'location'}}=TOM::file_mtime($obj->{'location'});
 	}
 	else
 	{
@@ -186,20 +184,19 @@ sub new
 			);
 	}
 	
-	if ($objects{$obj->{'location'}} && $objects{$obj->{'location'}}->{'config'}{'ctime'} < (time()-$TTL))
+	if ($objects{$obj->{'location'}})
 	{
 		# time to check changes
 		$objects{$obj->{'location'}}->{'config'}{'ctime'} = time();
 		my $object_modified=0;
 		foreach (keys %{$objects{$obj->{'location'}}->{'mfile'}})
 		{
-			if ($objects{$obj->{'location'}}->{'mfile'}{$_} < (stat($_))[9])
+			if (TOM::file_mtime($_) > $objects{$obj->{'location'}}->{'mfile'}{$_})
 			{
 				main::_log("{Template} '$obj->{'location'}' expired, file '$_' modified");
 				$object_modified=1;
 				last;
 			}
-#			main::_log(" file=$_");
 		}
 		if ($object_modified)
 		{
@@ -227,7 +224,7 @@ sub new
 		$obj->{'config'}->{'ctime'} = time();
 		# save modifytime of xml definition file_
 		# will be override posibly with higher times in tpl dependencies or files (by parse_header)
-		$obj->{'config'}->{'mtime'} = (stat($obj->{'location'}))[9];
+		$obj->{'config'}->{'mtime'} = TOM::file_mtime($obj->{'location'});
 		$obj->parse_header();
 		# save config from header to object memory cache
 		%{$objects{$obj->{'location'}}->{'config'}}=%{$obj->{'config'}};
@@ -412,7 +409,7 @@ sub prepare_location
 		$self->{'dir'}=~s/\/_init.xml$//;
 	}
 	
-	$self->{'mfile'}{$self->{'location'}}=(stat($self->{'location'}))[9];
+	$self->{'mfile'}{$self->{'location'}}=TOM::file_mtime($self->{'location'});
 	
 	return $self->{'location'};
 }
@@ -423,7 +420,7 @@ sub prepare_xml
 {
 	my $self=shift;
 	
-	$self->{'xp'} = XML::XPath->new(filename => $self->{'location'});
+	$self->{'xp'} = 'XML::LibXML'->load_xml(location => $self->{'location'});
 }
 
 sub _directory_tree
@@ -453,9 +450,7 @@ sub parse_header
 {
 	my $self=shift;
 	
-	my $nodeset = $self->{'xp'}->find('/template/header/*'); # find all items
-	
-	foreach my $node ($nodeset->get_nodelist)
+	foreach my $node ($self->{'xp'}->findnodes('/template/header/*'))
 	{
 		my $name=$node->getName();
 		#main::_log("node '$name'");
@@ -549,10 +544,7 @@ sub parse_header
 	if ($self->{'dir'} && $tom::P_media) # extract only in domain service with defined P_media
 	{
 		# proceed extracting files only when tpl is a tpl.d/ type
-		
-		my $nodeset = $self->{'xp'}->find('/template/header/extract/*'); # find all extract items
-		
-		foreach my $node ($nodeset->get_nodelist)
+		foreach my $node ($self->{'xp'}->findnodes('/template/header/extract/*'))
 		{
 			my $name=$node->getName();
 			
@@ -590,7 +582,7 @@ sub parse_header
 					my $dst=$destination_dir.'/'.$destination_file;
 					
 					# added to mfile
-					$self->{'mfile'}{$src}=(stat($src))[9];
+					$self->{'mfile'}{$src}=TOM::file_mtime($src);
 					
 					# if modifytime of file is higher than definition file modifytime
 					if ($self->{'config'}->{'mtime'} < $self->{'mfile'}{$src})
@@ -658,7 +650,7 @@ sub parse_header
 				}
 				
 				# added to mfile
-				$self->{'mfile'}{$self->{'dir'}.'/'.$location}=(stat($self->{'dir'}.'/'.$location))[9];
+				$self->{'mfile'}{$self->{'dir'}.'/'.$location}=TOM::file_mtime($self->{'dir'}.'/'.$location);
 				
 				# if modifytime of file is higher than definition file modifytime
 				if ($self->{'config'}->{'mtime'} < $self->{'mfile'}{$self->{'dir'}.'/'.$location})
@@ -722,11 +714,8 @@ sub parse_entity
 {
 	my $self=shift;
 	
-	my $nodeset = $self->{'xp'}->find('/template/entity'); # find all entries
-	
 	my @ents;
-	
-	foreach my $node ($nodeset->get_nodelist)
+	foreach my $node ($self->{'xp'}->findnodes('/template/entity'))
 	{
 		my $name=$node->getName();
 		my $id=$node->getAttribute('id');

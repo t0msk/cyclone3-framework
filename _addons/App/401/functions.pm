@@ -1523,7 +1523,7 @@ sub article_visit
 	
 	my $old=time()-$cache->{'time'};
 	
-	if ($old > (60*10))
+	if ($old > (60*5))
 	{
 		# update database
 		TOM::Database::SQL::execute(qq{
