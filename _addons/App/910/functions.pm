@@ -1382,7 +1382,7 @@ sub _product_index
 	if ($env{'-jobify'})
 	{
 #		main::_log("try jobify");
-		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer'});
+		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer','deduplication'=>1});
 	}
 	
 	return undef unless $env{'ID'}; # product.ID
