@@ -2616,11 +2616,18 @@ while ($main::CGI=new CGI::Fast())
 			# v module ako -xlng pouzijem default $tom::lng
 			
 			my %mdl_env;
-			while ($data=~s|<VAR id="(.{1,150}?)" value="(.*?)" />||s)
+			while ($data=~s|<VAR id="(.{1,150}?)" (value\|get)="(.*?)" />||s)
 			{
-				next if not defined $2;
-				$mdl_env{$1}=$2;
-				$mdl_env{$1}=~s|\"|"|g;
+				next if not defined $3;
+				if ($2 eq "get")
+				{
+					$mdl_env{$1}=$main::FORM{$3};
+				}
+				else
+				{
+					$mdl_env{$1}=$3;
+					$mdl_env{$1}=~s|\"|"|g;
+				}
 			}
 			
 			main::_log("<={MODULE} ".$mdl_env{'-type'}.':'.($mdl_env{'-category'} || $mdl_env{'-addon'}).'-'.$mdl_env{'-name'}.' TMP:'.$mdl_env{'-TMP'});
