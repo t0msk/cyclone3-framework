@@ -362,7 +362,7 @@ my $w=AnyEvent->timer(after => 600, interval => 600, cb => \&check_processes);
 sub check_domains
 {
 	$main::request_code=Utils::vars::genhash(8);
-	if ($ENV{'AUTORESTART'} && (time()-$main::time_current) >= (3600*3))
+	if ($ENV{'AUTORESTART'} && (time()-$main::time_current) >= (600))
 	{ # restart every 6h
 		main::_log("running too long, restarting");
 		exit;
@@ -1101,7 +1101,7 @@ sub job
 	my $args=shift;
 	
 #	print Dumper($header,$job,$args);
-	my $id=TOM::Utils::vars::genhash(16);
+	my $id=TOM::Utils::vars::genhash(8);
 	
 	main::_log("{jobify} job '".($job->{'file'} || $job->{'name'})."' routing_key='".($header->{'routing_key'} || 'job')."' id='$id' deduplication=".$header->{'deduplication'},{
 		'data' => {
@@ -1113,8 +1113,8 @@ sub job
 	});
 	
 	my %headers;
-		$headers{'deduplication'} = $header->{'deduplication'}
-			if $header->{'deduplication'};#=> ($header->{'deduplication'} || '')
+		$headers{'deduplication'} = 'true'
+			if $header->{'deduplication'};
 			
 	$main::service->publish(
 		'exchange' => 'cyclone3.job',
