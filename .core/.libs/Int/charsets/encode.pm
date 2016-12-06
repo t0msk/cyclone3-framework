@@ -448,8 +448,8 @@ sub UTF8_ASCII_
 {
 	return $table{ord($_[0])} if exists $table{ord($_[0])};
 	
-	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require) = caller(1);
-	main::_log("Int::charsets::encode::* ASCII from UTF-8 \\$_[0] {".(ord($_[0]))."} - unknown from ($package/$filename/$line)",1,"lib.err",1) if (ord($_[0])>127);
+#	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require) = caller(1);
+	main::_log("Int::charsets::encode::* ASCII from UTF-8 \\$_[0] {".(ord($_[0]))."} - unknown",1,"lib.err",1) if (ord($_[0])>127);
 	return "\\utf{".ord($_[0])."}" if ord($_[0])>127;
 	
 	return $_[0];

@@ -43,6 +43,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   KEY `SEL_0` (`product_number`),
   KEY `SEL_1` (`ref_ID`),
   KEY `ID_entity` (`ID_entity`),
+  KEY `sellscore` (`sellscore`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

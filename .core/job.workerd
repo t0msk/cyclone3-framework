@@ -333,7 +333,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 			my $cmd='/usr/bin/perl '.$TOM::P."/.core/job.worker $class > /dev/null";
 			main::_log_stdout("chdir '$tom::P__' exec '$cmd'",3,"job.workerd");
 			`$cmd&`;
-			sleep 2;
+#			sleep 2;
 			$WORKERS++;
 			main::_log_stdout("started new worker",3,"job.workerd");
 		}
@@ -1064,8 +1064,8 @@ sub callback
 }
 
 $notify_channel->qos(
-	prefetch_count => 1,
-	prefetch_size => 1
+	prefetch_count => 100,
+	prefetch_size => 10
 );
 $notify_channel->consume(
 	on_consume => \&callback,

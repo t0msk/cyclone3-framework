@@ -38,6 +38,9 @@ L<TOM::Security::form|lib/"TOM/Security/form.pm">
 use App::730::_init;
 use TOM::Security::form;
 use Time::HiRes qw(usleep);
+use Ext::TextHyphen::_init;
+use Ext::Redis::_init;
+use Ext::Elastic::_init;
 
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
@@ -493,10 +496,162 @@ sub event_add
 }
 
 
+sub _event_index_all
+{
+	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::730::db_name}); # do it in background
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			`ID_entity`
+		FROM
+			`$App::730::db_name`.`a730_event`
+	},'quiet'=>1);
+	my $i;
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		_event_index('ID_entity' => $db0_line{'ID_entity'});
+	}
+	main::_log("created pool");
+}
+
+
 sub _event_index
 {
+	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::730::db_name,'class'=>'indexer'}); # do it in background
+	
 	my %env=@_;
-	return undef unless $env{'ID'}; # event.ID
+	$env{'ID_entity'} = $env{'ID'} unless $env{'ID_entity'}; # doesn't matter in events
+	return undef unless $env{'ID_entity'}; # event.ID
+	
+	if ($Elastic) # the new way in Cyclone3 :)
+	{
+		my $t=track TOM::Debug(__PACKAGE__."::_article_index::elastic(".$env{'ID_entity'}.")",'timer'=>1);
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				`ID`
+			FROM
+				`$App::730::db_name`.`a730_event`
+			WHERE
+						`ID_entity` = ?
+				AND	`status` IN ('Y','N','L')
+			LIMIT 1
+		},'quiet'=>1,'bind'=>[$env{'ID_entity'}]);
+		if (!$sth0{'rows'})
+		{
+			main::_log("event.ID_entity=$env{'ID_entity'} not found",1);
+			if ($Elastic->exists(
+				'index' => 'cyclone3.'.$App::730::db_name,
+				'type' => 'a730_event',
+				'id' => $env{'ID_entity'}
+			))
+			{
+				main::_log("removing from Elastic",1);
+				$Elastic->delete(
+					'index' => 'cyclone3.'.$App::730::db_name,
+					'type' => 'a730_event',
+					'id' => $env{'ID_entity'}
+				);
+			}
+			$t->close();
+			return 1;
+		}
+		
+		my %event;
+		
+		# event_lng
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`$App::730::db_name`.`a730_event_lng`
+			WHERE
+						`status` = 'Y'
+				AND	`ID_entity` = ?
+		},'quiet'=>1,'bind'=>[$env{'ID_entity'}]);
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$event{'locale'}{$db0_line{'lng'}}{'description'}=$db0_line{'description'}
+				if $db0_line{'description'};
+			$event{'locale'}{$db0_line{'lng'}}{'description_short'}=$db0_line{'description_short'}
+				if $db0_line{'description_short'};
+			$event{'locale'}{$db0_line{'lng'}}{'name_long'}=$db0_line{'name_long'}
+				if $db0_line{'name_long'};
+		}
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				`event`.`ID`,
+				`event`.`name`,
+				`event`.`datetime_start`,
+				`event`.`datetime_finish`,
+				`event`.`datetime_publish_start`,
+				`event`.`datetime_publish_stop`,
+				`event`.`status`,
+				`event_cat`.`name` AS `cat_name`,
+				`event_cat`.`ID` AS `cat_ID`,
+				`event_cat`.`ID_entity` AS `cat_ID_entity`,
+				`event_cat`.`ID_charindex`
+			FROM
+				`$App::730::db_name`.`a730_event` AS `event`
+			LEFT JOIN `$App::730::db_name`.`a730_event_rel_cat` AS `event_rel_cat` ON
+				(
+					`event_rel_cat`.`ID_event` = `event`.`ID_entity`
+				)
+			LEFT JOIN `$App::730::db_name`.`a730_event_cat` AS `event_cat` ON
+				(
+							`event_cat`.`ID_entity` = `event_rel_cat`.`ID_category`
+					AND	`event_cat`.`lng` = '$env{'lng'}'
+				)
+			WHERE
+						`event`.`ID_entity` = ?
+				AND	`event`.`status` = 'Y'
+			ORDER BY
+				`event`.`datetime_start` DESC
+		},'quiet'=>1,'bind'=>[$env{'ID_entity'}]);
+		$event{'status'}="N";
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			push @{$event{'name'}},$db0_line{'name'};
+
+			push @{$event{'cat'}},$db0_line{'cat_ID_entity'}
+				if $db0_line{'cat_ID_entity'};
+			push @{$event{'cat_charindex'}},$db0_line{'ID_charindex'}
+				if $db0_line{'ID_charindex'};
+			
+			push @{$event{'cat_charindex'}},$db0_line{'ID_charindex'}
+				if $db0_line{'ID_charindex'};
+			
+			push @{$event{'event_attrs'}},{
+				'name' => $db0_line{'name'},
+				'cat' => $db0_line{'cat_ID_entity'},
+				'cat_charindex' => $db0_line{'ID_charindex'},
+				'datetime_start' => $db0_line{'datetime_start'}
+			};
+			
+			$event{'status'}="Y"
+				if $db0_line{'status'} eq "Y";
+		}
+		
+		my %log_date=main::ctogmdatetime(time(),format=>1);
+		$Elastic->index(
+			'index' => 'cyclone3.'.$App::730::db_name,
+			'type' => 'a730_event',
+			'id' => $env{'ID_entity'},
+			'body' => {
+				%event,
+				'_datetime_index' => 
+					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
+					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.'Z'
+			}
+		);
+		
+#		use Data::Dumper;
+#		print Dumper(\%event);
+		
+		$t->close();
+	}
+	
 	return undef unless $Ext::Solr;
 	
 	my $t=track TOM::Debug(__PACKAGE__."::_event_index($env{'ID'})",'timer'=>1);
