@@ -2131,6 +2131,7 @@ sub _product_index
 				product.status_special,
 				product.status_main,
 				product.status,
+				product.sellscore,
 				product_ent.ID_brand,
 				product_ent.ID_family,
 				product_ent.VAT,
@@ -2220,7 +2221,8 @@ sub _product_index
 				}
 				
 				# list of used metadata fields
-				#push @{$product->{'metahash_keys'}},$sec.'.'.$_ ;
+#				push @{$product{'metahash_keys'}}, $sec.'.'.$_;
+				push @{$product{'metahash_keys'}{$sec}}, $_;
 			}
 		}
 		
@@ -2289,10 +2291,10 @@ sub _product_index
 			push @{$product{'cat_alias_name'}},$db0_line{'alias_name'}
 				if (!$used{$db0_line{'alias_name'}} && $db0_line{'alias_name'});
 			
-			push @{$product{'locale'}{$db0_line{'lng'}}{'cat_name'}}, $db0_line{'name'}
-				unless $used{$db0_line{'name'}};
-			push @{$product{'locale'}{$db0_line{'lng'}}{'cat_alias_name'}}, $db0_line{'alias_name'}
-				if (!$used{$db0_line{'alias_name'}} && $db0_line{'alias_name'});
+			push @{$product{'locale'}{$db0_line{'lng'}}{'cat_name'}}, $db0_line{'name'};
+#				unless $used{$db0_line{'name'}};
+			push @{$product{'locale'}{$db0_line{'lng'}}{'cat_alias_name'}}, $db0_line{'alias_name'};
+#				if (!$used{$db0_line{'alias_name'}} && $db0_line{'alias_name'});
 			
 			my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
 			foreach my $p(
@@ -2313,6 +2315,90 @@ sub _product_index
 			$used{$db0_line{'name'}}++;
 			$used{$db0_line{'alias_name'}}++;
 		}
+		
+		
+		# rating_variable
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				a910_product_rating_variable.score_variable AS var,
+				AVG(a910_product_rating_variable.score_value) AS val,
+				COUNT(DISTINCT(a910_product_rating.ID_entity)) AS cnt
+			FROM
+				$App::910::db_name.a910_product_rating_variable
+			INNER JOIN a910_product_rating ON
+			(
+				a910_product_rating.ID_entity = a910_product_rating_variable.ID_entity
+			)
+			WHERE
+				a910_product_rating.score_basic IS NULL AND
+				a910_product_rating.status='Y' AND
+				a910_product_rating.ID_product = ?
+			GROUP BY
+				a910_product_rating_variable.score_variable
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my $i_count;
+		my $i_sum;
+		my $i_avg;
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			main::_log("rating variable '$db1_line{'var'}' cnt='$db1_line{'cnt'}'");
+			my $var=$db1_line{'var'};
+			$var=lc(Int::charsets::encode::UTF8_ASCII($var));
+			$var=~s|[^\w]||g;
+			$i_count++;
+			$i_sum+=$db1_line{'val'};
+#			main::_log("var=$var val=$db1_line{'val'}");
+#			print Dumper($product{'rating'});use Data::Dumper;
+			$product{'ratings'}{'variable'}{$var} = ceil($db1_line{'val'}+0);
+		}
+		
+		# vahovany rating
+		my $helpful_initial=2;
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT (
+				SUM(
+					IF (rating.score_basic, rating.score_basic,
+						(SELECT AVG(rating_variable.score_value) AS val FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity))
+					* COALESCE((
+						SELECT IF (rating_weight,rating_weight,0.01)
+						FROM TOM.a301_user_profile
+						WHERE ID_entity = rating.posix_owner
+						LIMIT 1
+					),0.5) * ((rating.helpful_Y+$helpful_initial) / (rating.helpful_Y+$helpful_initial + rating.helpful_N+$helpful_initial))
+				) / SUM( COALESCE((
+						SELECT IF (rating_weight,rating_weight,0.01)
+						FROM TOM.a301_user_profile
+						WHERE ID_entity = rating.posix_owner
+						LIMIT 1
+					),0.5) * ((rating.helpful_Y+$helpful_initial) / (rating.helpful_Y+$helpful_initial + rating.helpful_N+$helpful_initial))
+				)
+			) AS score,
+				COUNT(rating.ID) AS ratings,
+				MAX(rating.datetime_rating) AS datetime_rating
+			FROM
+				$App::910::db_name.a910_product_rating AS rating
+			WHERE
+				rating.status='Y'
+				AND (rating.score_basic IS NOT NULL
+					OR (
+						SELECT COUNT(rating_variable.score_value) FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity
+					) > 0
+				)
+				AND rating.ID_product = ?
+			GROUP BY
+				rating.ID_product
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		
+		if ($db1_line{'ratings'})
+		{
+			$db1_line{'score'} = 0 unless $db1_line{'score'};
+			main::_log("ratings avg='$db1_line{'score'}' count='$db1_line{'ratings'}'");
+			
+			$product{'ratings'}->{'variable'}->{'count'} = ceil($db1_line{'ratings'});
+			$product{'ratings'}->{'variable'}->{'avg'} = $db1_line{'score'};
+		}
+		
 		
 		my %sth1=TOM::Database::SQL::execute(qq{
 			SELECT
@@ -2593,7 +2679,9 @@ sub _product_index
 				'ID_s' => $env{'ID'}
 			}
 		});
-
+		
+#		print Dumper(\%product);
+		
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::910::db_name,
 			'type' => 'a910_product',
