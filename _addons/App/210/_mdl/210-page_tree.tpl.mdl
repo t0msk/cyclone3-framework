@@ -16,6 +16,7 @@ sub execute
 	my %env_out;
 	
 	$env{'depth'}=3 unless $env{'depth'};
+	$env{'db_name'}=$App::210::db_name unless $env{'db_name'};
 	$env{'db_order'}="ID_charindex" unless $env{'db_order'};
 	
 	Tomahawk::GetTpl('env'=>\%env) || return undef;
@@ -33,7 +34,7 @@ sub execute
 	{
 		my %data=App::020::SQL::functions::get_ID(
 			'db_h'    => 'main',
-			'db_name' => $App::210::db_name,
+			'db_name' => $env{'db_name'},
 			'tb_name' => 'a210_page',
 			'ID'      => $env{'ID'},
 			'columns' => 
@@ -58,7 +59,7 @@ sub execute
 			SELECT
 				*
 			FROM
-				`$App::210::db_name`.`a210_page`
+				`$env{'db_name'}`.`a210_page`
 			WHERE
 				lng = ?
 				AND ID_entity = ?
@@ -70,7 +71,7 @@ sub execute
 			'-cache_changetime' => App::020::SQL::functions::_get_changetime(
 				{
 					'db_h'=>"main",
-					'db_name' => $App::210::db_name,
+					'db_name' => $env{'db_name'},
 					'tb_name' => "a210_page"
 				}
 			)
@@ -87,6 +88,11 @@ sub execute
 			return undef;
 		}
 	}
+	
+	$env{'page.status'}='YL' unless $env{'page.status'};
+		my $sql_page_status=join "','", split('',$env{'page.status'});
+	$env{'page.visible'}='Y' unless $env{'page.visible'};
+		my $sql_page_visible=join "','", split('',$env{'page.visible'});
 	
 	my $sql_suffix='%';
 	my $sql_suffix_;
@@ -115,11 +121,12 @@ sub execute
 		SELECT
 			*
 		FROM
-			`$App::210::db_name`.`a210_page`
+			`$env{'db_name'}`.`a210_page`
 		WHERE
 			lng = ?
 			AND ID_charindex LIKE ?
-			AND status IN ('Y','L')
+			AND status IN ('$sql_page_status')
+			AND visible IN ('$sql_page_visible')
 			AND length(ID_charindex) < ?
 			$sql_where
 		ORDER BY
@@ -131,7 +138,7 @@ sub execute
 		'-cache_changetime' => App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",
-				'db_name' => $App::210::db_name,
+				'db_name' => $env{'db_name'},
 				'tb_name' => "a210_page"
 			}
 		)
@@ -157,7 +164,7 @@ sub execute
 		foreach my $node (App::020::SQL::functions::tree::get_path(
 			$db0_line{'ID'},
 			'db_h'    => 'main',
-			'db_name' => $App::210::db_name,
+			'db_name' => $env{'db_name'},
 			'tb_name' => 'a210_page',
 			'-cache' => 86400*7
 		))
@@ -185,7 +192,7 @@ sub execute
 	# this cache is unique for this used entities (all in a210 :-)
 	push @{$env_out{'entity'}},{
 		'db_h' => 'main',
-		'db_name' => $App::210::db_name,
+		'db_name' => $env{'db_name'},
 		'tb_name' => 'a210_page'
 	};
 	

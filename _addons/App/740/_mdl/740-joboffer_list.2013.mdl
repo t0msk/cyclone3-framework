@@ -114,6 +114,9 @@ sub execute
 	if ($env{'joboffer.education'}) {
 		$sql_where.=" AND joboffer.education = '".TOM::Security::form::sql_escape($env{'joboffer.education'})."'";
 	}
+	if ($env{'joboffer.for_students'} eq 'Y') {
+		$sql_where.=" AND joboffer.for_students = 'Y'";
+	}
 	if ($env{'joboffer.location_city'}) {
 		$sql_where.=" AND joboffer.location_city = '".TOM::Security::form::sql_escape($env{'joboffer.location_city'})."'";	
 	}
@@ -168,6 +171,8 @@ sub execute
 			joboffer.education,
 			joboffer.contract_type,
 			joboffer.contact_org,
+			joboffer.contact_person,
+			joboffer.metadata,
 
 			joboffer_lng.name,
 			joboffer_lng.name_url,
@@ -243,7 +248,11 @@ sub execute
 			};
 		}
 		$joboffer{'location_city_url'} = TOM::Net::URI::rewrite::convert($joboffer{'location_city'});
-	
+		
+		
+		%{$joboffer{'metahash'}}=App::020::functions::metadata::parse($joboffer{'metadata'});
+		delete $joboffer{'metadata'};
+		
 		push @{$TPL->{'variables'}{'items'}},\%joboffer;
 	}
 	

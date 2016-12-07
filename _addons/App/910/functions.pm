@@ -809,7 +809,7 @@ sub product_add
 	{
 		foreach my $lng (sort keys %{$env{'lngs'}})
 		{
-#			main::_log("update lng '$lng'");
+			main::_log("update lng '$lng'");
 			
 			my %sth0=TOM::Database::SQL::execute(qq{
 				SELECT
@@ -893,7 +893,7 @@ sub product_add
 			
 			if (keys %columns || keys %data)
 			{
-				main::_log(" a910_product_lng '$lng' '$env{'lngs'}{$lng}{'ID'}' update ".(join ",",keys %columns),3,$App::910::log_changes,2)
+				main::_log(" a910_product_lng '$lng' '$product_lng{'ID'}' update ".(join ",",keys %columns),3,$App::910::log_changes,2)
 					if $App::910::log_changes;
 				App::020::SQL::functions::update(
 					'ID' => $product_lng{'ID'},
@@ -1382,7 +1382,7 @@ sub _product_index
 	if ($env{'-jobify'})
 	{
 #		main::_log("try jobify");
-		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer'});
+		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer','deduplication'=>1});
 	}
 	
 	return undef unless $env{'ID'}; # product.ID
@@ -1413,7 +1413,7 @@ sub _product_index
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			$env{'ID_entity'}=$db0_line{'ID_entity'};
-#			main::_log(" ID_entity=$db0_line{'ID_entity'}");
+			main::_log(" ID_entity=$db0_line{'ID_entity'}");
 			
 			push @content_ent,WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} )
 				if $db0_line{'ID_entity'};
@@ -1487,11 +1487,11 @@ sub _product_index
 					}
 					
 					push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
-					if ($metadata{$sec}{$_}=~/^[0-9]{1,9}$/)
+					if ($metadata{$sec}{$_}=~/^[0-9]{1,9}0*?$/)
 					{
 						push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
 					}
-					if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}$/ && (not $metadata{$sec}{$_}=~/\..*?\./))
+					if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}0*?$/ && (not $metadata{$sec}{$_}=~/\..*?\./))
 					{
 						push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
 					}
@@ -1968,6 +1968,11 @@ sub _product_index
 			
 			# save original HTML values
 			$db0_line{'description_short'}=~s/\|/&#124;/g;
+			if ($tom::test && $db0_line{'lng'} eq "pl")
+			{
+				$db0_line{'description_short'}=~tr/ł/l/;
+#				print $db0_line{'description_short'}."\n";
+			}
 			push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description_short_orig_pl' => $db0_line{'description_short'} )
 				if $db0_line{'description_short'};
 			$db0_line{'description'}=~s/\|/&#124;/g;
@@ -2053,34 +2058,38 @@ sub _product_index
 		for my $doc ( $response->docs )
 		{
 			my $lng=$doc->value_for( 'lng_s' );
-			if (!$content{$lng})
+			if (!$content{$lng} || !$env{'ID_entity'})
 			{
+				main::_log("remove ".$doc->value_for('id'),1);
 				$solr->delete_by_id($doc->value_for('id'));
 			}
 		}
 		
-		my $last_indexed=$tom::Fyear."-".$tom::Fmom."-".$tom::Fmday."T".$tom::Fhour.":".$tom::Fmin.":".$tom::Fsec."Z";
-		foreach my $lng (keys %content)
+		if ($env{'ID_entity'})
 		{
-			my $id=$App::910::db_name.".a910_product.".$lng.".".$env{'ID'};
-			
-			my $doc = WebService::Solr::Document->new();
-			
-			$doc->add_fields((
-				WebService::Solr::Field->new( 'id' => $id ),
-				@content_ent,
-				@content_id,
-				@{$content{$lng}},
-				WebService::Solr::Field->new( 'db_s' => $App::910::db_name ),
-				WebService::Solr::Field->new( 'addon_s' => 'a910_product' ),
-				WebService::Solr::Field->new( 'ID_i' => $env{'ID'} ),
-				WebService::Solr::Field->new( 'last_indexed_tdt' => $last_indexed )
-			));
-			
-#			print Dumper($doc);
-			$solr->add($doc);
+			my $last_indexed=$tom::Fyear."-".$tom::Fmom."-".$tom::Fmday."T".$tom::Fhour.":".$tom::Fmin.":".$tom::Fsec."Z";
+			foreach my $lng (keys %content)
+			{
+				my $id=$App::910::db_name.".a910_product.".$lng.".".$env{'ID'};
+				
+				my $doc = WebService::Solr::Document->new();
+				
+				$doc->add_fields((
+					WebService::Solr::Field->new( 'id' => $id ),
+					@content_ent,
+					@content_id,
+					@{$content{$lng}},
+					WebService::Solr::Field->new( 'db_s' => $App::910::db_name ),
+					WebService::Solr::Field->new( 'addon_s' => 'a910_product' ),
+					WebService::Solr::Field->new( 'ID_i' => $env{'ID'} ),
+					WebService::Solr::Field->new( 'last_indexed_tdt' => $last_indexed )
+				));
+				
+	#			print Dumper($doc);
+				$solr->add($doc);
+			}
 		}
-
+		
 		if ($env{'commit'})
 		{
 			$solr->commit();
@@ -2122,6 +2131,7 @@ sub _product_index
 				product.status_special,
 				product.status_main,
 				product.status,
+				product.sellscore,
 				product_ent.ID_brand,
 				product_ent.ID_family,
 				product_ent.VAT,
@@ -2159,14 +2169,14 @@ sub _product_index
 		},'quiet'=>1,'bind'=>[$env{'ID'}]);
 		if (!$sth0{'rows'})
 		{
-			main::_log("product.ID=$env{'ID'} not found",1);
+			main::_log("product.ID=$env{'ID'} not found as valid item");
 			if ($Elastic->exists(
 				'index' => 'cyclone3.'.$App::910::db_name,
 				'type' => 'a910_product',
 				'id' => $env{'ID'}
 			))
 			{
-				main::_log("removing from Elastic",1);
+				main::_log("removing from Elastic");
 				$Elastic->delete(
 					'index' => 'cyclone3.'.$App::910::db_name,
 					'type' => 'a910_product',
@@ -2211,55 +2221,10 @@ sub _product_index
 				}
 				
 				# list of used metadata fields
-				#push @{$product->{'metahash_keys'}},$sec.'.'.$_ ;
+#				push @{$product{'metahash_keys'}}, $sec.'.'.$_;
+				push @{$product{'metahash_keys'}{$sec}}, $_;
 			}
 		}
-		
-		# categories
-		my %sth0=TOM::Database::SQL::execute(qq{
-			SELECT
-				a910_product_sym.ID,
-				a910_product_cat.ID_charindex,
-				a910_product_cat.ID AS cat_ID,
-				a910_product_cat.ID_entity AS cat_ID_entity
-			FROM
-				$App::910::db_name.a910_product_sym
-			INNER JOIN $App::910::db_name.a910_product_cat ON
-			(
-				a910_product_sym.ID = a910_product_cat.ID_entity
-			)
-			WHERE
-				a910_product_sym.status='Y'
-				AND a910_product_sym.ID_entity=?
-		},'quiet'=>1,'bind'=>[$product{'ID_entity'}]);
-		my %used;
-		my %used2;
-		while (my %db0_line=$sth0{'sth'}->fetchhash())
-		{
-			push @{$product{'cat'}},$db0_line{'cat_ID_entity'}
-				unless $used{$db0_line{'cat_ID_entity'}};
-			
-			push @{$product{'cat_charindex'}},$db0_line{'ID_charindex'}
-				unless $used{$db0_line{'ID_charindex'}};
-			
-			my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
-			foreach my $p(
-				App::020::SQL::functions::tree::get_path(
-					$db0_line{'cat_ID'},
-					%sql_def,
-					'-cache' => 86400*7
-				)
-			)
-			{
-				push @{$product{'cat_path'}},$p->{'ID_entity'}
-					unless $used2{$p->{'ID_entity'}};
-				$used2{$p->{'ID_entity'}}++;
-			}
-			
-			$used{$db0_line{'ID_charindex'}}++;
-			$used{$db0_line{'cat_ID_entity'}}++;
-		}
-		
 		
 		# product_lng
 		my %used;
@@ -2289,6 +2254,151 @@ sub _product_index
 			$used{$db0_line{'name'}}++;
 			%{$product{'locale'}{$db0_line{'lng'}}}=%db0_line;
 		}
+		
+		# categories
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				a910_product_sym.ID,
+				a910_product_cat.ID_charindex,
+				a910_product_cat.ID AS cat_ID,
+				a910_product_cat.ID_entity AS cat_ID_entity,
+				a910_product_cat.name,
+				a910_product_cat.lng,
+				a910_product_cat.alias_name
+			FROM
+				$App::910::db_name.a910_product_sym
+			INNER JOIN $App::910::db_name.a910_product_cat ON
+			(
+				a910_product_sym.ID = a910_product_cat.ID_entity
+			)
+			WHERE
+				a910_product_sym.status='Y'
+				AND a910_product_sym.ID_entity=?
+		},'quiet'=>1,'bind'=>[$product{'ID_entity'}]);
+		my %used;
+		my %used2;
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			push @{$product{'cat'}},$db0_line{'cat_ID_entity'}
+				unless $used{$db0_line{'cat_ID_entity'}};
+			
+			push @{$product{'cat_charindex'}},$db0_line{'ID_charindex'}
+				unless $used{$db0_line{'ID_charindex'}};
+			
+			push @{$product{'cat_name'}},$db0_line{'name'}
+				unless $used{$db0_line{'name'}};
+				
+			push @{$product{'cat_alias_name'}},$db0_line{'alias_name'}
+				if (!$used{$db0_line{'alias_name'}} && $db0_line{'alias_name'});
+			
+			push @{$product{'locale'}{$db0_line{'lng'}}{'cat_name'}}, $db0_line{'name'};
+#				unless $used{$db0_line{'name'}};
+			push @{$product{'locale'}{$db0_line{'lng'}}{'cat_alias_name'}}, $db0_line{'alias_name'};
+#				if (!$used{$db0_line{'alias_name'}} && $db0_line{'alias_name'});
+			
+			my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$db0_line{'cat_ID'},
+					%sql_def,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$product{'cat_path'}},$p->{'ID_entity'}
+					unless $used2{$p->{'ID_entity'}};
+				$used2{$p->{'ID_entity'}}++;
+			}
+			
+			$used{$db0_line{'ID_charindex'}}++;
+			$used{$db0_line{'cat_ID_entity'}}++;
+			$used{$db0_line{'name'}}++;
+			$used{$db0_line{'alias_name'}}++;
+		}
+		
+		
+		# rating_variable
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				a910_product_rating_variable.score_variable AS var,
+				AVG(a910_product_rating_variable.score_value) AS val,
+				COUNT(DISTINCT(a910_product_rating.ID_entity)) AS cnt
+			FROM
+				$App::910::db_name.a910_product_rating_variable
+			INNER JOIN a910_product_rating ON
+			(
+				a910_product_rating.ID_entity = a910_product_rating_variable.ID_entity
+			)
+			WHERE
+				a910_product_rating.score_basic IS NULL AND
+				a910_product_rating.status='Y' AND
+				a910_product_rating.ID_product = ?
+			GROUP BY
+				a910_product_rating_variable.score_variable
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my $i_count;
+		my $i_sum;
+		my $i_avg;
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			main::_log("rating variable '$db1_line{'var'}' cnt='$db1_line{'cnt'}'");
+			my $var=$db1_line{'var'};
+			$var=lc(Int::charsets::encode::UTF8_ASCII($var));
+			$var=~s|[^\w]||g;
+			$i_count++;
+			$i_sum+=$db1_line{'val'};
+#			main::_log("var=$var val=$db1_line{'val'}");
+#			print Dumper($product{'rating'});use Data::Dumper;
+			$product{'ratings'}{'variable'}{$var} = ceil($db1_line{'val'}+0);
+		}
+		
+		# vahovany rating
+		my $helpful_initial=2;
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT (
+				SUM(
+					IF (rating.score_basic, rating.score_basic,
+						(SELECT AVG(rating_variable.score_value) AS val FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity))
+					* COALESCE((
+						SELECT IF (rating_weight,rating_weight,0.01)
+						FROM TOM.a301_user_profile
+						WHERE ID_entity = rating.posix_owner
+						LIMIT 1
+					),0.5) * ((rating.helpful_Y+$helpful_initial) / (rating.helpful_Y+$helpful_initial + rating.helpful_N+$helpful_initial))
+				) / SUM( COALESCE((
+						SELECT IF (rating_weight,rating_weight,0.01)
+						FROM TOM.a301_user_profile
+						WHERE ID_entity = rating.posix_owner
+						LIMIT 1
+					),0.5) * ((rating.helpful_Y+$helpful_initial) / (rating.helpful_Y+$helpful_initial + rating.helpful_N+$helpful_initial))
+				)
+			) AS score,
+				COUNT(rating.ID) AS ratings,
+				MAX(rating.datetime_rating) AS datetime_rating
+			FROM
+				$App::910::db_name.a910_product_rating AS rating
+			WHERE
+				rating.status='Y'
+				AND (rating.score_basic IS NOT NULL
+					OR (
+						SELECT COUNT(rating_variable.score_value) FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity
+					) > 0
+				)
+				AND rating.ID_product = ?
+			GROUP BY
+				rating.ID_product
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		
+		if ($db1_line{'ratings'})
+		{
+			$db1_line{'score'} = 0 unless $db1_line{'score'};
+			main::_log("ratings avg='$db1_line{'score'}' count='$db1_line{'ratings'}'");
+			
+			$product{'ratings'}->{'variable'}->{'count'} = ceil($db1_line{'ratings'});
+			$product{'ratings'}->{'variable'}->{'avg'} = $db1_line{'score'};
+		}
+		
 		
 		my %sth1=TOM::Database::SQL::execute(qq{
 			SELECT
@@ -2569,7 +2679,9 @@ sub _product_index
 				'ID_s' => $env{'ID'}
 			}
 		});
-
+		
+#		print Dumper(\%product);
+		
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::910::db_name,
 			'type' => 'a910_product',
