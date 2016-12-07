@@ -65,6 +65,7 @@ sub execute
 		$sql_column.=",$sql_visits AS order_by_visits ";
 	}
 	
+	delete $env{'unique'};
 	if ($env{'unique'})
 	{
 		$sql_group_by="article_ent.ID_entity";
