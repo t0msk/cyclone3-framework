@@ -400,7 +400,9 @@ sub _event
 		$hash{'user'}={
 			'ID' => $main::USRM{'ID_user'} || $main::USRM{'IDhash'},
 			'session' => $main::USRM{'ID_session'},
-			'logged' => $main::USRM{'logged'}
+			'logged' => $main::USRM{'logged'},
+			'c3bid' => $main::COOKIES_all{'c3bid'}, # browser id
+			'c3sid' => $main::COOKIES_all{'c3sid'}, # browser session id
 		};
 	}
 	
