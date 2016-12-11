@@ -53,6 +53,10 @@ sub clone
 	%{$self->{ENV}}=%{$class->{ENV}};
 	%{$self->{env}}=%{$class->{env}};
 	%{$self->{OUT}}=%{$class->{OUT}};
+	
+	# reset. using default description is now obsolete
+	$self->{'env'}{'DOC_description'}={};
+	
 	return bless $self;
 }
 
@@ -95,9 +99,11 @@ sub change_DOC_description
 	my $self=shift;
 	my $text=shift;
 	my %env=@_;
-	$env{lng}="null" unless $env{lng};
-	main::_log("change_DOC_description='$text'");
-	$self->{env}{DOC_description}{$env{lng}}=$text;
+	$env{'lng'}="null" unless $env{'lng'};
+	main::_log("change_DOC_description='$text' lng=$env{'lng'}");
+	if ($env{'lng'} eq "null"){undef $self->{'env'}{'DOC_description'};}
+	else {undef $self->{'env'}{'DOC_description'}{'null'};}
+	$self->{'env'}{'DOC_description'}{$env{'lng'}}=$text;
 	return 1;
 }
 
@@ -106,9 +112,11 @@ sub add_DOC_description
 	my $self=shift;
 	my $text=shift;
 	my %env=@_;
-	$env{lng}="null" unless $env{lng};
+	$env{'lng'}="null" unless $env{'lng'};
 	main::_log("add_DOC_description='$text'");
-	$self->{env}{DOC_description}{$env{lng}}.=$text;
+	if ($env{'lng'} eq "null"){undef $self->{'env'}{'DOC_description'};}
+	else {undef $self->{'env'}{'DOC_description'}{'null'};}
+	$self->{'env'}{'DOC_description'}{$env{'lng'}}.=$text;
 	return 1;
 }
 
@@ -318,6 +326,7 @@ sub prepare_last
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-LNG%>|$tom::lng|g;
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-cache-control%>|$main::ENV{'Cache-Control'}|g;
 	$self->{'OUT'}{'HEADER'}=~s|<%PAGE-CODE%>|$main::request_code|;
+	$self->{'OUT'}{'HEADER'}=~s|<%USER%>|$main::USRM{'ID_user'}|g;
  
 	if ($self->{env}{DOC_keywords})
 	{
