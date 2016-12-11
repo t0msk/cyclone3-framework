@@ -1072,7 +1072,7 @@ sub module_process_return_data
 			# description
 			foreach my $env0(@{$return_data{'call'}{'H'}{'change_DOC_description'}})
 			{
-				$main::H->change_DOC_description($env0);
+				$main::H->change_DOC_description($env0,{'lng'=>$tom::lng});
 			}
 		}
 	}
