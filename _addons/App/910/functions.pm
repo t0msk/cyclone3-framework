@@ -2332,8 +2332,6 @@ sub _product_index
 		my %db1_line=$sth1{'sth'}->fetchhash();
 		if ($db1_line{'datetime_rating'})
 		{
-			$db1_line{'datetime_rating'}=~s| (\d\d)|T$1|;
-			$db1_line{'datetime_rating'}.="Z";
 			$product{'ratings'}{'datetime_last'} = $db1_line{'datetime_rating'};
 		}
 		
