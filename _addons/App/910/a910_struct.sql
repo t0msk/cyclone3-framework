@@ -30,7 +30,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `price_EUR` decimal(12,3) default NULL, -- price in EUR
   `src_data` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `sellscore` decimal(10,2) default '0',
+  `sellscore` decimal(10,2) default '0.00',
   `supplier_org` bigint(20) unsigned default NULL, -- rel 710_org.ID_entity
   `supplier_person` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel 301.user_ID
   `status_new` char(1) character set ascii NOT NULL default 'N',
@@ -482,7 +482,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_legal` (
   `VAT` float NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
-  UNIQUE KEY `UNI_0` (`ID_entity`, `country_code`)
+  UNIQUE KEY `UNI_0` (`ID_entity`,`country_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
