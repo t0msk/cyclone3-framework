@@ -320,6 +320,7 @@ sub prepare_last
 	$self->{'env'}{'DOC_title'}=~s|<.*?>||g;
 	$self->{'env'}{'DOC_title'}=~s|<|&lt;|g;
 	$self->{'env'}{'DOC_title'}=~s|>|&gt;|g;
+	$self->{'env'}{'DOC_title'}=~s|\&(?!amp;)|&amp;|g;
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-TITLE%>|$self->{env}{DOC_title}|;
 	$self->{'OUT'}{'HEADER'}=~s/<%HEADER-AB%>/$main::USRM{'session'}{'AB'} || '0'/eg; # the A/B testing
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-ROBOTS%>|$self->{env}{DOC_robots}|;
@@ -347,6 +348,7 @@ sub prepare_last
 		}
 		
 		$self->{env}{DOC_keywords}=~s|^, ||;
+		$self->{env}{DOC_keywords}=~s|\&(?!amp;)|&amp;|g;
 		
 		$self->{'OUT'}{'HEADER'}.=" <meta name=\"keywords\" content=\"$self->{env}{DOC_keywords}\" />\n";
 	}
@@ -365,6 +367,8 @@ sub prepare_last
 			$self->{'env'}{'DOC_description'}{$key}=~/^(.{250})/;
 			$self->{'env'}{'DOC_description'}{$key}=$1;
 		}
+		
+		$self->{'env'}{'DOC_description'}{$key}=~s|\&(?!amp;)|&amp;|g;
 		
 		next unless $self->{'env'}{'DOC_description'}{$key};
 		
