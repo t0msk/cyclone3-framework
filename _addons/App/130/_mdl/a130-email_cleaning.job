@@ -36,10 +36,11 @@ sub execute
 	});
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		if (-e $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml')
+		my $dir=int($db0_line{'ID'}/900);
+		if (-e $TOM::P.'/_data/email/'.$dir.'/body_'.$db0_line{'ID'}.'.eml')
 		{
 			main::_log("unlink email body '$db0_line{'ID'}'");
-			unlink $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml';
+			unlink $TOM::P.'/_data/email/'.$dir.'/body_'.$db0_line{'ID'}.'.eml';
 		}
 		
 	}
@@ -59,10 +60,11 @@ sub execute
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		main::_log("[$i/$sth0{'rows'}] removing email ID=$db0_line{'ID'}");
-		if (-e $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml')
+		my $dir=int($db0_line{'ID'}/900);
+		if (-e $TOM::P.'/_data/email/'.$dir.'/body_'.$db0_line{'ID'}.'.eml')
 		{
 			main::_log("unlink email body '$db0_line{'ID'}'");
-			unlink $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml';
+			unlink $TOM::P.'/_data/email/'.$dir.'/body_'.$db0_line{'ID'}.'.eml';
 		}
 		TOM::Database::SQL::execute(qq{DELETE FROM TOM.a130_send WHERE ID=?},'bind'=>[$db0_line{'ID'}],'quiet'=>1);
 		$i++;

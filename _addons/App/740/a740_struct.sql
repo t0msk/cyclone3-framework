@@ -14,6 +14,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_joboffer` (
   `datetime_publish_stop` datetime default NULL,
   `location_city` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
   `education` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `for_students` char(1) character set ascii NOT NULL default 'N',
   `contract_type` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
   `contact_org` bigint(20) unsigned default NULL, -- rel 710_org.ID_entity
   `contact_person` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel 301.user_ID
@@ -36,6 +37,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_joboffer_j` (
   `datetime_publish_stop` datetime default NULL,
   `location_city` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
   `education` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `for_students` char(1) character set ascii NOT NULL default 'N',
   `contact_org` bigint(20) unsigned default NULL, -- rel 710_org.ID_entity
   `contact_person` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel 301.user_ID
   `contract_type` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,

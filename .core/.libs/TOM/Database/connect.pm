@@ -134,7 +134,7 @@ sub multi
 			
 #			main::_log("DBI connecting '$handler' ('$TOM::DB{$handler}{uri}' '$TOM::DB{$handler}{user}' '****')",3,"sql.err");
 			
-			if ($TOM::DB{$handler}{'timeouted'} >= 10)
+			if ($TOM::DB{$handler}{'timeouted'} >= 2)
 			{
 				main::_log("can't connect '$handler', already timeouted",1);
 				$t->close();
@@ -142,13 +142,12 @@ sub multi
 			}
 			
 			eval {
-			my $action_die = POSIX::SigAction->new(
-				sub {$TOM::DB{$handler}{'timeouted'}+=1;main::_log("timeout",1);die "Timed out sec.\n"},
-				$TOM::Engine::pub::SIG::sigset,
-				&POSIX::SA_NODEFER);
-				
-				POSIX::sigaction(&POSIX::SIGALRM, $action_die);
-				alarm(30);
+				local $SIG{'ALRM'} = sub {
+					$TOM::DB{$handler}{'timeouted'}+=1;
+					main::_log("SIG{ALRM} Timed out database connection",1);
+					die "Timed out database connection";
+				}; # NB: \n required
+				alarm(5);
 				$main::DB{$handler} = DBI->connect
 				(
 					$TOM::DB{$handler}{'uri'},
@@ -175,6 +174,7 @@ sub multi
 			if ($TOM::DB{$handler}{'uri'}=~/^dbi:Sybase:/)
 			{
 				$main::DB{$handler}->do("set textsize = 512000");
+				$main::DB{$handler}->do("SET DATEFORMAT 'yyyy-MM-dd hh:mm:ss'");
 #				$main::DB{$handler}->syb_enable_utf8(1);
 			}
 			else

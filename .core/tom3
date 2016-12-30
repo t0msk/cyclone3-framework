@@ -112,6 +112,9 @@ eval
 	do $tom::P."/_dsgn/default.header"
 		|| do $tom::P."/_dsgn/default.dsgn";
 	
+	push @main::mfiles, $tom::P.'/_dsgn/default.header'
+		if -e $tom::P.'/_dsgn/default.header';
+	
 	$main::DOC_BODY=$main::TEMPLATE if $main::TEMPLATE;
 	%main::DOC_HEADER=%main::HEADER if %main::HEADER;
 	
@@ -555,10 +558,9 @@ while ($main::CGI=new CGI::Fast())
 		
 		
 		# prezriem si pravidla pre rewrite.conf
-		if ($tom::rewrite && (stat "$tom::P/rewrite.conf")[9] > $tom::rewrite_time)
+		if ($tom::rewrite && TOM::file_modified($tom::P.'/rewrite.conf'))
 		{
 			main::_log("rewrite.conf changed, reloading");
-			
 			if (open (KEY,"<".$tom::P."/rewrite.conf"))
 			{
 				my $data;
@@ -607,14 +609,14 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		# prezriem si pravidla pre type.conf
-		if ((stat "$tom::P/type.conf")[9] > $tom::type_time)
+		if (TOM::file_modified($tom::P.'/type.conf'))
 		{
 			main::_log("type.conf changed, reloading");
 			TOM::TypeID::read_conf($tom::P.'/type.conf');
 		}
 		
 		# prezriem si pravidla pre 301.conf
-		if ((stat "$tom::P/301.conf")[9] > $tom::301_time)
+		if (TOM::file_modified($tom::P.'/301.conf'))
 		{
 			main::_log("301.conf changed, reloading");
 			if (open (KEY,"<".$tom::P."/301.conf"))
@@ -815,7 +817,7 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("requested no-cache (don't know if proceed)");
 		}
 		
-		# allow recache only in devel server
+		# allow recache with _rc pram only in devel server
 		if ($tom::devel && $main::FORM{'_rc'} < 0)
 		{
 			$main::cache=0;
@@ -2614,25 +2616,21 @@ while ($main::CGI=new CGI::Fast())
 			# v module ako -xlng pouzijem default $tom::lng
 			
 			my %mdl_env;
-			while ($data=~s|<VAR id="(.{1,150}?)" value="(.*?)" />||s)
+			while ($data=~s|<VAR id="(.{1,150}?)" (value\|get)="(.*?)" />||s)
 			{
-				next if not defined $2;
-				$mdl_env{$1}=$2;
-				$mdl_env{$1}=~s|\"|"|g;
+				next if not defined $3;
+				if ($2 eq "get")
+				{
+					$mdl_env{$1}=$main::FORM{$3};
+				}
+				else
+				{
+					$mdl_env{$1}=$3;
+					$mdl_env{$1}=~s|\"|"|g;
+				}
 			}
 			
 			main::_log("<={MODULE} ".$mdl_env{'-type'}.':'.($mdl_env{'-category'} || $mdl_env{'-addon'}).'-'.$mdl_env{'-name'}.' TMP:'.$mdl_env{'-TMP'});
-			
-			if (
-				((!$IAdm)&&($mdl_env{-IAdm}==1)) ||
-				(($IAdm)&&($mdl_env{-IAdm}==-1)) ||
-				((!$ITst)&&($mdl_env{-ITst}==1)) ||
-				(($ITst)&&($mdl_env{-ITst}==-1))
-			)
-			{
-				main::_log("can't load module in this mode");
-				next;
-			}
 			
 			if (exists $mdl_env{'-enabled'} && !$mdl_env{'-enabled'})
 			{
@@ -3406,8 +3404,11 @@ while ($main::CGI=new CGI::Fast())
 	
 	$t_request->close();
 	
+	# request exit/restart when important files changed
+	$tom::HUP=1 if TOM::files_modified(\@main::mfiles);
+	
 	if (
-			($tom::HUP) && (($main::time_current-$TOM::time_start)<30) ||
+			($tom::HUP) && (($main::time_current-$TOM::time_start)<30) || # safe time to exit/restart
 			($tom::HUP == 2) ||
 			($TOM::max_count && ($TOM::max_count <= $tom::count)) ||
 			($TOM::max_time <= ($main::time_current-$TOM::time_start))

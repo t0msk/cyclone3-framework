@@ -1574,6 +1574,8 @@ sub video_part_file_process
 				if ($env{'coder'}){push @encoder_env, '-coder '.$env{'coder'};}
 				if ($env{'me_range'}){push @encoder_env, '-me_range '.$env{'me_range'};}
 				if ($env{'q'}){push @encoder_env, '-q '.$env{'q'};}
+				if ($env{'qp'}){push @encoder_env, '-qp '.$env{'qp'};}
+				if ($env{'crf'}){push @encoder_env, '-crf '.$env{'crf'};}
 				if ($env{'g'}){push @encoder_env, '-g '.$env{'g'};}
 				if ($env{'strict'}){push @encoder_env, '-strict '.$env{'strict'};}
 				if ($env{'keyint_min'}){push @encoder_env, '-keyint_min '.$env{'keyint_min'};}

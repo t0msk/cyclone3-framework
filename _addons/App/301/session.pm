@@ -314,6 +314,9 @@ sub process
 					
 					if (!$TOM::CACHE_memcached || !$memcached)
 					{
+						my $plus=0;
+							$plus=1 if $pub::DOC=~/HTML/;
+						
 						# UPDATE online
 						TOM::Database::SQL::execute(qq{
 							UPDATE
@@ -324,7 +327,7 @@ sub process
 								cookies=?,
 								user_agent=?,
 								_ga=?,
-								requests=requests+1,
+								requests=requests+$plus,
 								status='Y'
 							WHERE
 								ID_user=?

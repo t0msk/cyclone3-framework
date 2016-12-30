@@ -130,5 +130,54 @@ sub format_EUR
 	return $currency;
 }
 
+sub format_EU
+{	
+    my ($context, $legal) = @_;
+    $legal = "" unless defined $legal;
 
+    return sub {
+     	my $currency = shift;
+     	if ($legal eq "GB" or $legal eq "IE")
+     	{
+			my $delimiter=",";
+			$currency=sprintf("%01.2f", $currency);
+			#$currency=~s|\.|,|g;
+			
+			# delimite
+			my @cur=split('\.',$currency);
+			my @a = ();
+			while($cur[0] =~ /\d\d\d\d/)
+			{
+				$cur[0] =~ s/(\d\d\d)$//;
+				unshift @a,$1;
+			}
+			unshift @a,$cur[0];
+			$currency = (join $delimiter,@a) . "." . $cur[1];
+			
+			$currency=~s|\.00|$currency_format_extsymbol|g;
+		}
+		else
+		{
+			my $delimiter=".";
+	
+			$currency=sprintf("%01.2f", $currency);
+			$currency=~s|\.|,|g;
+			
+			# delimite
+			my @cur=split(',',$currency);
+			my @a = ();
+			while($cur[0] =~ /\d\d\d\d/)
+			{
+				$cur[0] =~ s/(\d\d\d)$//;
+				unshift @a,$1;
+			}
+			unshift @a,$cur[0];
+			$currency = (join $delimiter,@a) . "," . $cur[1];
+			
+			$currency=~s|,00|$currency_format_extsymbol|g;
+			return $currency;
+		}
+		return $currency;
+    }    
+}
 1;

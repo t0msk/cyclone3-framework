@@ -370,11 +370,14 @@ sub module
 		$cache_domain=$tom::H unless $mdl_C{'-cache_master'};
 		
 		my $null;
-		foreach (sort keys %mdl_env){$_=~/^[^_]/ && do{$null.=$_."=\"".$mdl_env{$_}."\"\n";}}
+		foreach (sort keys %mdl_env){$_=~/^[^_]/ && do{
+			if (ref($mdl_env{$_}) eq "ARRAY" || ref($mdl_env{$_}) eq "HASH"){$null.=$_."=\"".$json->encode($mdl_env{$_})."\"\n";}
+			else {$null.=$_."=\"".$mdl_env{$_}."\"\n";}
+		}}
 		foreach (sort keys %mdl_C){$null.=$_."=\"".$mdl_C{$_}."\"\n";}
 		
 		$mdl_C{'-md5'}=TOM::Digest::hash($null);
-		main::_log("cache md5='".$mdl_C{'-md5'}."'") if $debug;
+		main::_log("cache md5='".$mdl_C{'-md5'}."' from string ".$null) if $debug;
 		
 		# NAZOV PRE TYP CACHE V KONFIGURAKU
 		$mdl_C{'T_CACHE'}=$mdl_C{'-addon'}."-".$mdl_C{'-name'}."-".$mdl_C{'-cache_id'};
@@ -1072,7 +1075,7 @@ sub module_process_return_data
 			# description
 			foreach my $env0(@{$return_data{'call'}{'H'}{'change_DOC_description'}})
 			{
-				$main::H->change_DOC_description($env0);
+				$main::H->change_DOC_description($env0,{'lng'=>$tom::lng});
 			}
 		}
 	}
