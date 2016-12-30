@@ -558,7 +558,15 @@ sub video_part_smil_generate
 				)
 			)
 		ORDER BY
-			ID_format
+			CASE 
+				WHEN ID_format=1 THEN 3
+				WHEN ID_format=2 THEN 1
+				WHEN ID_format=3 THEN 4
+				WHEN ID_format=4 THEN 5
+				WHEN ID_format=5 THEN 6
+				WHEN ID_format=6 THEN 2
+			END ASC
+			
 	},'bind'=>[$env{'video_part.ID'}],'quiet'=>1);
 	
 	main::_log("found $sth1{'rows'} playable items");
@@ -611,7 +619,7 @@ sub video_part_smil_generate
 					my $video_part_file=$video_->{'dir'}.'/'.$video_->{'file_path'};
 					$video_part_file=~s|^$dir_name/||;
 					
-					main::_log("video_part_file='$video_part_file'");
+					main::_log("video_part_file='$video_part_file' $db1_line{'video_height'}/$db1_line{'video_bitrate'}");
 					
 					push @video, $xml->video({
 						'src' => $video_part_file,
@@ -1130,11 +1138,28 @@ sub video_part_brick_change
 			
 			if ($brick_dst_class->can('upload'))
 			{
-				# download to upload
-				main::_log("sorry, i don't know how to do this",1);
+				# download to upload over tempfile
+				my $temp=new TOM::Temp::file();
 				
-				$t->close();
-				return undef;
+				main::_log(" download file [$i]");
+				$brick_src_class->download(
+					$src_file,
+					$temp->{'filename'}
+				) || do {
+					main::_log("error $!",1);
+					$t->close();
+					return undef;
+				};
+				
+				main::_log(" upload file [$i]");
+				$brick_dst_class->upload(
+					$temp->{'filename'},
+					$dst_file
+				) || do {
+					main::_log("error $!",1);
+					$t->close();
+					return undef;
+				};
 				
 			}
 			else
@@ -3327,8 +3352,8 @@ sub video_part_file_add
 	
 	if (
 			(
-				$env{'video_format.ID'} eq "1" ||
-				$env{'video_format.ID'} eq $App::510::video_format_full_ID
+				$env{'video_format.ID'} eq "1"
+#				|| $env{'video_format.ID'} eq $App::510::video_format_full_ID
 			)
 			||($env{'file_thumbnail'})
 		)
@@ -3920,15 +3945,15 @@ sub _video_part_file_previews
 	{
 		if ($env{'length'} >= 7200)
 		{
-			$env{'interval'}=60;
+			$env{'interval'}=300;
 		}
 		elsif ($env{'length'} >= 3600)
 		{
-			$env{'interval'}=30;
+			$env{'interval'}=120;
 		}
 		elsif ($env{'length'} >= 1200)
 		{
-			$env{'interval'}=10;
+			$env{'interval'}=30;
 		}
 		else
 		{
@@ -4196,7 +4221,7 @@ sub get_video_part_file
 			video_ent.status_geoblock,
 			
 			LEFT(video.datetime_rec_start, 16) AS datetime_rec_start,
-			LEFT(video_attrs.datetime_create, 16) AS datetime_create,
+			LEFT(video_part_file.datetime_create, 16) AS datetime_create,
 			LEFT(video.datetime_rec_start,10) AS date_recorded,
 			LEFT(video_ent.datetime_rec_stop, 16) AS datetime_rec_stop,
 			
