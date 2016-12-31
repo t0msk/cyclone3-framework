@@ -2570,6 +2570,8 @@ sub video_add
 			if (exists $env{'video_ent.status_encryption'} && ($env{'video_ent.status_encryption'} ne $video_ent{'status_encryption'}));
 		$columns{'status_geoblock'}="'".TOM::Security::form::sql_escape($env{'video_ent.status_geoblock'})."'"
 			if (exists $env{'video_ent.status_geoblock'} && ($env{'video_ent.status_geoblock'} ne $video_ent{'status_geoblock'}));
+		$columns{'status_embedblock'}="'".TOM::Security::form::sql_escape($env{'video_ent.status_embedblock'})."'"
+			if (exists $env{'video_ent.status_embedblock'} && ($env{'video_ent.status_embedblock'} ne $video_ent{'status_embedblock'}));
 		
 		if ((not exists $env{'video_ent.metadata'}) && (!$video_ent{'metadata'})){$env{'video_ent.metadata'}=$App::510::metadata_default;}
 		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'video_ent.metadata'})."'"
@@ -4196,6 +4198,7 @@ sub get_video_part_file
 			
 			video_ent.keywords,
 			video_ent.status_geoblock,
+			video_ent.status_embedblock,
 			
 			LEFT(video.datetime_rec_start, 16) AS datetime_rec_start,
 			LEFT(video_attrs.datetime_create, 16) AS datetime_create,
@@ -5258,6 +5261,7 @@ sub broadcast_program_add
 			'status_premiere',
 			'status_internet',
 			'status_geoblock',
+			'status_embedblock',
 			'status_highlight',
 			'recording',
 			'datetime_real_start',

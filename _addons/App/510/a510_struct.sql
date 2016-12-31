@@ -51,6 +51,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent` (
   `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `status_encryption` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `status_geoblock` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `status_embedblock` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
   PRIMARY KEY (`ID`),
   UNIQUE KEY `UNI_0` (`movie_imdb`),
@@ -81,6 +82,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_ent_j` (
   `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `status_encryption` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `status_geoblock` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `status_embedblock` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
   PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
