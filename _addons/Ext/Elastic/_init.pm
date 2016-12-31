@@ -4,6 +4,10 @@ use open ':utf8', ':std';
 use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
+use JSON;
+use Ext::Redis::_init;
+our $json = JSON->new->ascii->convert_blessed;
+our $jsonc = JSON->new->ascii->canonical;
 
 =head1 NAME
 
@@ -70,6 +74,33 @@ sub _connect
 }
 
 _connect(); # autoconnect
+
+sub cache_search
+{
+	my $self=shift;
+	my $env=shift;
+	
+	my $cache=$env->{'-cache'};delete $env->{'-cache'};
+	
+	my $key=TOM::Digest::hash($jsonc->encode($env));
+	
+	if (my $output=$Redis->get('C3|elastic|'.$key))
+	{
+		return $json->decode($output);
+	}
+	
+	my $cache_time=60;
+	if ($cache=~/^(\d+)D$/i) {$cache_time=86400*$1}
+	elsif ($cache=~/^(\d+)H$/i) {$cache_time=3600*$1}
+	elsif ($cache=~/^(\d+)M$/i) {$cache_time=60*$1}
+	elsif ($cache=~/^(\d+)S$/i) {$cache_time=$1}
+	else {$cache_time=$cache}
+	
+	my $output=$self->search($env);
+	$Redis->set('C3|elastic|'.$key,$json->encode($output));
+	$Redis->expire('C3|elastic|'.$key,$cache_time);
+	return $output;
+}
 
 # only for exporting symbols
 package Ext::Elastic::_init;
