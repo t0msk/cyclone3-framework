@@ -1875,11 +1875,11 @@ while ($main::CGI=new CGI::Fast())
 				&& $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'} ne "spambot"
 			)
 			{
-				TOM::Error::engine(
-					"silent (This error message is in silen mode)",
-					"404, service type not found REQUEST_URI='$main::ENV{REQUEST_URI}' TID='$FORM{TID}'",
-					"Please check your type.conf, rewrite.conf or RewriteRules in .htaccess"
-				);
+#				TOM::Error::engine(
+#					"silent (This error message is in silen mode)",
+#					"404, service type not found REQUEST_URI='$main::ENV{REQUEST_URI}' TID='$FORM{TID}'",
+#					"Please check your type.conf, rewrite.conf or RewriteRules in .htaccess"
+#				);
 				$result="failed";
 			}
 		}
@@ -2956,7 +2956,7 @@ while ($main::CGI=new CGI::Fast())
 		if ($main::page_statuscode eq "404")
 		{
 			$main::H->change_DOC_robots("noindex,noarchive");
-			main::_log("404 REQUEST_URI='$ENV{'REQUEST_URI'}' QUERY='$ENV{'QUERY_STRING'}' Not Found for '$main::ENV{'REMOTE_ADDR'}' with '$main::ENV{'HTTP_USER_AGENT'}'",4,"pub.404");
+#			main::_log("404 REQUEST_URI='$ENV{'REQUEST_URI'}' QUERY='$ENV{'QUERY_STRING'}' Not Found for '$main::ENV{'REMOTE_ADDR'}' with '$main::ENV{'HTTP_USER_AGENT'}'",4,"pub.404");
 		}
 		if ($result eq "failed")
 		{

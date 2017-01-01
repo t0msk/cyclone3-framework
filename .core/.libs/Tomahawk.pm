@@ -92,8 +92,9 @@ use conv;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Ext::Redis::_init;
 use Storable;
-use JSON::XS;
+use JSON;
 our $json = JSON::XS->new->ascii->convert_blessed;
+our $jsonc = JSON::XS->new->ascii->canonical;
 
 #use warnings;
 use vars qw/
@@ -371,7 +372,7 @@ sub module
 		
 		my $null;
 		foreach (sort keys %mdl_env){$_=~/^[^_]/ && do{
-			if (ref($mdl_env{$_}) eq "ARRAY" || ref($mdl_env{$_}) eq "HASH"){$null.=$_."=\"".$json->encode($mdl_env{$_})."\"\n";}
+			if (ref($mdl_env{$_}) eq "ARRAY" || ref($mdl_env{$_}) eq "HASH"){$null.=$_."=\"".$jsonc->encode($mdl_env{$_})."\"\n";}
 			else {$null.=$_."=\"".$mdl_env{$_}."\"\n";}
 		}}
 		foreach (sort keys %mdl_C){$null.=$_."=\"".$mdl_C{$_}."\"\n";}
@@ -439,7 +440,11 @@ sub module
 		if ((not exists $CACHE{$mdl_C{'T_CACHE'}}) && $mdl_C{'-cache'})
 		{
 			# a definujem dlzku cache priamo z typecka
-			if ($mdl_C{'-cache'}=~/^(\d+)H$/i)
+			if ($mdl_C{'-cache'}=~/^(\d+)D$/i)
+			{
+				$mdl_C{'-cache_time'}=86400*$1;
+			}
+			elsif ($mdl_C{'-cache'}=~/^(\d+)H$/i)
 			{
 				$mdl_C{'-cache_time'}=3600*$1;
 			}
