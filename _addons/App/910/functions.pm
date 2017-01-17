@@ -776,9 +776,17 @@ sub product_add
 	$columns{'name_label'}="'".TOM::Security::form::sql_escape($env{'product_lng.name_label'})."'"
 		if (exists $env{'product_lng.name_label'} && ($env{'product_lng.name_label'} ne $product_lng{'name_label'}));
 	# description_short
+	if ($env{'product_lng.description_short'} && TOM::Text::format::xml2text($env{'product_lng.description_short'}) eq "")
+	{
+		undef $env{'product_lng.description_short'};
+	}
 	$columns{'description_short'}="'".TOM::Security::form::sql_escape($env{'product_lng.description_short'})."'"
-		if ($env{'product_lng.description_short'} && ($env{'product_lng.description_short'} ne $product_lng{'description_short'}));
+		if (exists $env{'product_lng.description_short'} && ($env{'product_lng.description_short'} ne $product_lng{'description_short'}));
 	# description
+	if ($env{'product_lng.description'} && TOM::Text::format::xml2text($env{'product_lng.description'}) eq "")
+	{
+		undef $env{'product_lng.description'};
+	}
 	$columns{'description'}="'".TOM::Security::form::sql_escape($env{'product_lng.description'})."'"
 		if (exists $env{'product_lng.description'} && ($env{'product_lng.description'} ne $product_lng{'description'}));
 	# keywords
@@ -882,9 +890,17 @@ sub product_add
 			$columns{'name_label'}="'".TOM::Security::form::sql_escape($env{'lngs'}{$lng}{'name_label'})."'"
 				if (exists $env{'lngs'}{$lng}{'name_label'} && ($env{'lngs'}{$lng}{'name_label'} ne $product_lng{'name_label'}));
 			# description_short
+			if ($env{'lngs'}{$lng}{'description_short'} && TOM::Text::format::xml2text($env{'lngs'}{$lng}{'description_short'}) eq "")
+			{
+				undef $env{'lngs'}{$lng}{'description_short'};
+			}
 			$columns{'description_short'}="'".TOM::Security::form::sql_escape($env{'lngs'}{$lng}{'description_short'})."'"
-				if ($env{'lngs'}{$lng}{'description_short'} && ($env{'lngs'}{$lng}{'description_short'} ne $product_lng{'description_short'}));
+				if (exists $env{'lngs'}{$lng}{'description_short'} && ($env{'lngs'}{$lng}{'description_short'} ne $product_lng{'description_short'}));
 			# description
+			if ($env{'lngs'}{$lng}{'description'} && TOM::Text::format::xml2text($env{'lngs'}{$lng}{'description'}) eq "")
+			{
+				undef $env{'lngs'}{$lng}{'description'};
+			}
 			$columns{'description'}="'".TOM::Security::form::sql_escape($env{'lngs'}{$lng}{'description'})."'"
 				if (exists $env{'lngs'}{$lng}{'description'} && ($env{'lngs'}{$lng}{'description'} ne $product_lng{'description'}));
 			# keywords
