@@ -100,7 +100,7 @@ sub execute
 		$sqlin=~s|^, ||;
 		
 		$sql_where.=" AND banner_zonetarget.name IN (" . $sqlin . ")";
-		main::_log("search banner '$env->{'banner_zonetarget.name'}'",3,"debug") if $debug;
+		main::_log("search banner_zonetarget.name '$env->{'banner_zonetarget.name'}'",3,"debug") if $debug;
 	}
 	
 	if ($env->{'banner_domain.name'})
