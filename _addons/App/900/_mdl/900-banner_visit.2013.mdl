@@ -21,7 +21,7 @@ sub execute
 	
 	return 1 unless $env{'banner.ID_entity'};
 	
-	return undef unless $env{'banner.ID_entity'}=~/^[0-9;]+$/;
+	return 1 unless $env{'banner.ID_entity'}=~/^[0-9;]+$/;
 	
 	foreach my $ID (split(';',$env{'banner.ID_entity'}))
 	{
@@ -34,7 +34,7 @@ sub execute
 				`banner`.ID_entity = ?
 			LIMIT
 				1
-		},'bind'=>[$ID],'quiet'=>1,'-slave'=>1,'-cache'=>60,
+		},'bind'=>[$ID],'quiet'=>1,'-slave'=>1,'-cache'=>600,
 			'-changetime'=>App::020::SQL::functions::_get_changetime(
 				{
 					'db_h'=>"main",
@@ -73,7 +73,7 @@ sub execute
 				$main::USRM{'ID_session'},
 				$main::COOKIES_all{'c3bid'},
 				$main::COOKIES_all{'c3sid'}
-			]);
+			],'-jobify'=>0);
 		}
 		else
 		{
@@ -83,7 +83,7 @@ sub execute
 				VALUES(CURDATE(), ?, 1) ON DUPLICATE KEY UPDATE stats_views=stats_views+1
 			},'-quiet'=>1,'bind'=>[
 				$ID
-			]);
+			],'-jobify'=>0);
 		}
 		
 		TOM::Database::SQL::execute(qq{
@@ -95,7 +95,7 @@ sub execute
 				ID_entity = ?
 		},'-quiet'=>1,'bind'=>[
 			$ID
-		]);
+		],'-jobify'=>0);
 		
 #		# this jobify and deduplicate in timeline
 #		my %sth0=TOM::Database::SQL::execute(qq{
