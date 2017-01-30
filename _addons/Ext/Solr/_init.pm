@@ -23,7 +23,7 @@ BEGIN
 BEGIN
 {
 	require WebService::Solr;
-	$Ext::Solr=1;
+	$Ext::Solr=1 if $Ext::Solr::url;
 }
 
 #our $cache_available;
@@ -178,18 +178,21 @@ sub search
 		my $numfound=$response->content->{'response'}->{'numFound'};
 
 		if ($_[1]->{'group'} && $_[1]->{'group.field'})
-               	{
-                	$numfound=$response->content->{'grouped'}->{$_[1]->{'group.field'}}->{'matches'};
-               	}
-
-
+		{
+			$numfound=$response->content->{'grouped'}->{$_[1]->{'group.field'}}->{'matches'};
+		}
+		
 		my $qtime=$response->content->{'responseHeader'}->{'QTime'};
 		if (!$_[1]->{'quiet'})
 		{
+			my ($package, $filename, $line) = caller(1);
 			main::_log("[solr".do{':'.$self->{'host_name'} if $self->{'host_name'}}."] search '$_[0]' found='$numfound'",{
 				'facility' => 'solr',
 				'severity' => 3,
 				'data' => {
+					'caller' => [
+						{'p_s' => $package,'f_s' => $filename,'l_i' => $line},
+					],
 					'duration_f' => ($qtime/1000),
 					'rows_i' => $numfound
 				}
