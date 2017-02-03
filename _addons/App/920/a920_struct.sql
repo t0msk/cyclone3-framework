@@ -73,6 +73,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order_product` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_product` bigint(20) unsigned default NULL, -- rel a910_product.ID
   `name` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `note` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
   `type` char(1) character set ascii NOT NULL default 'P',
   `VAT` float NOT NULL, -- VAT percentage
   `price_unit` decimal(12,3) default NULL, -- price per unit
@@ -98,6 +99,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order_product_j` (
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `ID_product` bigint(20) unsigned default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
+  `note` varchar(128) character set utf8 collate utf8_unicode_ci default NULL,
   `type` char(1) character set ascii NOT NULL default 'P',
   `VAT` float NOT NULL,
   `price_unit` decimal(12,3) default NULL,
