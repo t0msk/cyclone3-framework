@@ -60,10 +60,7 @@ sub engine_pub
 {
 	my $var=join(". ",@_);$var=~s|[\n\r]| |g;
 	
-	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",1);
-	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4,"$TOM::engine.err");
-	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4,"$TOM::engine.err",2) if ($tom::H ne $tom::Hm);
-	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4,"$TOM::engine.err",1);
+	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4);
 	
 	my $URI_base=$tom::H_www;my $request_uri=$main::ENV{'REQUEST_URI'};$request_uri=~s|^$tom::rewrite_RewriteBase||;
 	
