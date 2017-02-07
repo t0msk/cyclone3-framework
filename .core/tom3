@@ -531,7 +531,7 @@ while ($main::CGI=new CGI::Fast())
 				&&($pub::engine_disabling))
 			{
 				my @ERR=(
-					"The page you have requested can't be displayed",
+					"The page you have requested cannot be displayed, because of inappropriate activities",
 					"Contact: info\@comsultia.com"
 #					,@{$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'messages'}}
 				);
