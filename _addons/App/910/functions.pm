@@ -43,7 +43,7 @@ use Ext::Elastic::_init;
 use String::Diff;
 use POSIX qw(ceil);
 
-our $debug=1;
+our $debug=0;
 our $quiet;$quiet=1 unless $debug;
 our $log_changes=$App::910::log_changes || undef;
 
@@ -2461,22 +2461,22 @@ sub _product_index
 		
 		# product_set
 		$product{'relations'}={} unless $product{'relations'};
-		foreach my $relation (App::160::SQL::get_relations(
-			'db_name' => $App::910::db_name,
-			'l_prefix' => 'a910',
-			'l_table' => 'product',
-			'l_ID_entity' => $product{'ID'},
-			'r_prefix' => "a910",
-			'r_table' => "product",
-			'rel_type' => "product_set",
-			'status' => "Y"
-		))
-		{
-			push @{$product{'relations'}{'product_set'}}, {
-				'ID' => $relation->{'r_ID_entity'},
-				'quantifier' => $relation->{'quantifier'}
-			};
-		}
+#		foreach my $relation (App::160::SQL::get_relations(
+#			'db_name' => $App::910::db_name,
+#			'l_prefix' => 'a910',
+#			'l_table' => 'product',
+#			'l_ID_entity' => $product{'ID'},
+#			'r_prefix' => "a910",
+#			'r_table' => "product",
+#			'rel_type' => "product_set",
+#			'status' => "Y"
+#		))
+#		{
+#			push @{$product{'relations'}{'product_set'}}, {
+#				'ID' => $relation->{'r_ID_entity'},
+#				'quantifier' => $relation->{'quantifier'}
+#			};
+#		}
 		foreach my $relation (App::160::SQL::get_relations(
 			'db_name' => $App::910::db_name,
 			'l_prefix' => 'a910',
@@ -2490,6 +2490,24 @@ sub _product_index
 		{
 			push @{$product{'relations'}{'in_product_set'}}, {
 				'ID' => $relation->{'l_ID_entity'},
+				'quantifier' => $relation->{'quantifier'}
+			};
+		}
+		
+		foreach my $relation (App::160::SQL::get_relations(
+			'db_name' => $App::910::db_name,
+			'l_prefix' => 'a910',
+			'l_table' => 'product',
+			'l_ID_entity' => $product{'ID'},
+			'r_prefix' => "a910",
+			'r_table' => "product",
+#			'rel_type' => "product_set",
+			'status' => "Y"
+		))
+		{
+			push @{$product{'relations'}{$relation->{'rel_type'} || 'others'}}, {
+				'ID' => $relation->{'r_ID_entity'},
+				'priority' => $relation->{'priority'},
 				'quantifier' => $relation->{'quantifier'}
 			};
 		}
