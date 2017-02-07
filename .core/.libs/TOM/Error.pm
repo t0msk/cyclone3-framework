@@ -435,8 +435,8 @@ sub module_pub
 	TOM::Utils::vars::replace($box);
 	
 	$box=~s|<%MODULE%>|$env{-MODULE}|g;
-	$box=~s|<%ERROR%>|$env{-ERROR}| if ($main::IAdm || $tom::debug);
-	$box=~s|<%PLUS%>|$env{-PLUS}| if ($main::IAdm || $tom::debug);
+	$box=~s|<%ERROR%>|$env{-ERROR}| if $tom::devel;
+	$box=~s|<%PLUS%>|$env{-PLUS}| if $tom::devel;
 	$box=~s|<%.*?%>||g;
 	
 	main::_log(($env{'-ERROR'} || "unknown error in module")." ".$env{'-PLUS'}." ".$env{'-MODULE'},1);
