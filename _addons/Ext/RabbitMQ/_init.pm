@@ -215,7 +215,7 @@ sub publish
 	{
 		$Redis->set('RabbitMQ|'.$env{'header'}{'headers'}{'message_id'},$json->encode(\%env));
 		$Redis->sadd('RabbitMQ|msgs','RabbitMQ|'.$env{'header'}{'headers'}{'message_id'});
-		$Redis->expire('RabbitMQ|'.$env{'header'}{'headers'}{'message_id'},86400);
+		$Redis->expire('RabbitMQ|'.$env{'header'}{'headers'}{'message_id'},(86400*7));
 	}
 	
 	utf8::encode($env{$_}) foreach(grep {!ref($env{$_})} keys %env);
