@@ -368,6 +368,9 @@ while ($main::CGI=new CGI::Fast())
 		$tom::H_www=~s|^https|http|;
 	}
 	
+	local $TOM::Document::content_security_policy=$TOM::Document::content_security_policy;
+	local $TOM::Document::frame_options=$TOM::Document::frame_options;
+	
 #	main::_log('DOS control');
 #	if (TOM::Net::HTTP::DOS::processENV(%main::ENV))
 #	{
@@ -2006,6 +2009,29 @@ while ($main::CGI=new CGI::Fast())
 				}
 				_log("required https mode is '$main::env{'https'}'");
 				next;
+			}
+			
+			if($env0{'id'} eq "content_security_policy")
+			{
+				if($env0{'value'} eq "")
+				{
+					_log("Change content_security_policy to none");
+					undef $TOM::Document::content_security_policy;
+				}
+				else
+				{
+					_log("Change content_security_policy to $env0{'value'}");
+					$TOM::Document::content_security_policy = $env0{'value'};
+				}
+			}
+			
+			if($env0{'id'} eq "frame_options")
+			{
+				if ($env0{'value'})
+				{
+					_log("Change frame_options to $env0{'value'}");
+					$TOM::Document::frame_options = $env0{'value'};
+				}
 			}
 			
 			if ($env0{'id'} eq "link")
