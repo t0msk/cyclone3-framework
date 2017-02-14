@@ -2449,13 +2449,17 @@ sub _product_index
 		},'quiet'=>1,'bind'=>[$env{'ID'}]);
 		while (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
-			$product{'prices'}{$db1_line{'name_code'}}{'price'} = $db1_line{'price'}
+			$db1_line{'price'}+=0;
+			$db1_line{'price_full'}+=0;
+			$db1_line{'price_previous'}+=0;
+			$db1_line{'price_previous_full'}+=0;
+			$product{'prices'}{$db1_line{'name_code'}}{'price'} = $db1_line{'price'}+0
 				if $db1_line{'price'};
-			$product{'prices'}{$db1_line{'name_code'}}{'price_full'} = $db1_line{'price_full'}
+			$product{'prices'}{$db1_line{'name_code'}}{'price_full'} = $db1_line{'price_full'}+0
 				if $db1_line{'price_full'};
-			$product{'prices'}{$db1_line{'name_code'}}{'price_previous'} = $db1_line{'price_previous'}
+			$product{'prices'}{$db1_line{'name_code'}}{'price_previous'} = $db1_line{'price_previous'}+0
 				if $db1_line{'price_previous'};
-			$product{'prices'}{$db1_line{'name_code'}}{'price_previous_full'} = $db1_line{'price_previous_full'}
+			$product{'prices'}{$db1_line{'name_code'}}{'price_previous_full'} = $db1_line{'price_previous_full'}+0
 				if $db1_line{'price_previous_full'};
 		}
 		
