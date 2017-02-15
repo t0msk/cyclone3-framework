@@ -17,7 +17,8 @@ use Ext::Redis::_init;
 
 sub jobify
 {
-	return 1 if TOM::Engine::jobify(\@_);my @r=@_;
+	my $env;if ($_[3]){$env=$_[3];unshift @_;}
+	return 1 if TOM::Engine::jobify(\@_,$env);my @r=@_;
 	$r[1]={'name'=>$r[1]} if scalar $r[1];
 	return new(@r)->execute();
 }
@@ -347,32 +348,22 @@ sub jobify # prepare function call to background
 			$queues{$queue}=$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
 		}
 		if (!$queue_found)
-		{async {main::_log("[RabbitMQ] passive declare_queue '".'cyclone3.job.'.$queue."'");eval{
+		{async {main::_log("[RabbitMQ] declare_queue '".'cyclone3.job.'.$queue."'");eval{
 			my $exists=$RabbitMQ->_channel->declare_queue(
 				'exchange' => encode('UTF-8', 'cyclone3.job'),
 				'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
-				'passive' => 1,
+#				'passive' => 1,
 				'durable' => 1
-			)};
-			if ($@)
-			{main::_log("[RabbitMQ] declare_queue '".'cyclone3.job.'.$queue."', because error ".$@,1);eval{
-				$queues{$queue}=time();
-				$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
-				$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,600,sub {});
-				$RabbitMQ->_channel->declare_queue(
-					'exchange' => encode('UTF-8', 'cyclone3.job'),
-					'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
-					'durable' => 1
-				);
-				main::_log("[RabbitMQ] bind_queue '".$env->{'routing_key'}."'");
-				$RabbitMQ->_channel->bind_queue(
-					'exchange' => encode('UTF-8', 'cyclone3.job'),
-					'routing_key' => encode('UTF-8', $env->{'routing_key'}),
-					'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
-				);
-				};if($@){main::_log("[RabbitMQ] can't declare queue? ".$@,1);return undef;}
-			}
-		}}
+			);
+			main::_log("[RabbitMQ] bind_queue '".$env->{'routing_key'}."'");
+			$RabbitMQ->_channel->bind_queue(
+				'exchange' => encode('UTF-8', 'cyclone3.job'),
+				'routing_key' => encode('UTF-8', $env->{'routing_key'}),
+				'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
+			);
+			$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time());
+			$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,3600);
+		}};cede;}
 	}
 	else
 	{

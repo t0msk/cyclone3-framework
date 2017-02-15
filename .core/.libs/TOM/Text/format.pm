@@ -19,6 +19,9 @@ sub xml2plain
 	#$text=~s|<p[ ]?[/]?>\n|\n|gsi;
 	#$text=~s|<br[ ]?[/]?>\n|\n|gsi;
 	
+	# convert spaces
+	$text=~s|&nbsp;| |gs;
+	
 	# convert enters
 	$text=~s|<div[ ]?[/]?>|\n|gsi;
 	$text=~s|<p[ ]?[/]?>|\n|gsi;
@@ -43,6 +46,13 @@ sub xml2plain
 	return $text;
 }
 
+sub xml2text
+{
+	my $text=shift;
+	$text=xml2plain($text);
+	1 while $text=~s|[\n\r ]||gms;
+	return $text;
+}
 
 sub plain_logical # uprava logiky textu
 {

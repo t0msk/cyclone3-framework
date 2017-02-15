@@ -375,7 +375,7 @@ sub module
 			if (ref($mdl_env{$_}) eq "ARRAY" || ref($mdl_env{$_}) eq "HASH"){$null.=$_."=\"".$jsonc->encode($mdl_env{$_})."\"\n";}
 			else {$null.=$_."=\"".$mdl_env{$_}."\"\n";}
 		}}
-		foreach (sort keys %mdl_C){$null.=$_."=\"".$mdl_C{$_}."\"\n";}
+		foreach (sort keys %mdl_C){next if $_ eq "-cache_debug";$null.=$_."=\"".$mdl_C{$_}."\"\n";}
 		
 		$mdl_C{'-md5'}=TOM::Digest::hash($null);
 		main::_log("cache md5='".$mdl_C{'-md5'}."' from string ".$null) if $debug;
@@ -607,6 +607,19 @@ sub module
 			if ($mdl_C{'-stdout'} && $main::stdout)
 			{
 				print $file_data."\n";
+			}
+			
+			if ($mdl_C{'-cache_debug'})
+			{
+#				$mdl_C{'-md5'}
+				$file_data="<!-- mdl"
+					." u='".$TOM::P_uuid."'"
+					." h='".$TOM::hostname."'"
+					." d='".int($mdl_C{'-cache_old'})."s'"
+					." id='".$mdl_C{'-md5'}."'"
+					." -->\n"
+					.$file_data
+					."<!-- /mdl -->\n";
 			}
 			
 			if (!$mdl_C{'-stdout_dummy'})

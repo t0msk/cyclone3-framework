@@ -23,7 +23,7 @@ BEGIN
 BEGIN
 {
 	require WebService::Solr;
-	$Ext::Solr=1;
+	$Ext::Solr=1 if $Ext::Solr::url;
 }
 
 #our $cache_available;
@@ -193,10 +193,14 @@ sub search
 		my $qtime=$response->content->{'responseHeader'}->{'QTime'};
 		if (!$_[1]->{'quiet'})
 		{
+			my ($package, $filename, $line) = caller(1);
 			main::_log("search '$_[0]'",{
 				'facility' => 'solr',
 				'severity' => 3,
 				'data' => {
+					'caller' => [
+						{'p_s' => $package,'f_s' => $filename,'l_i' => $line},
+					],
 					'action' => 'search',
 					'hostname' => $self->{'host_name'},
 					'duration_f' => ($qtime/1000),

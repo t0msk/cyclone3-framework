@@ -262,7 +262,7 @@ sub _log
 				"m" => $msg,
 				'data' => $get[5]
 			});
-			return 1 unless $tom::devel;
+			return 1;# unless $tom::devel;
 		}
 		
 		$get[0]=0 unless $get[0];
@@ -400,6 +400,7 @@ sub _event
 		$hash{'user'}={
 			'ID' => $main::USRM{'ID_user'} || $main::USRM{'IDhash'},
 			'session' => $main::USRM{'ID_session'},
+			'email' => $main::USRM{'email'},
 			'logged' => $main::USRM{'logged'},
 			'c3bid' => $main::COOKIES_all{'c3bid'}, # browser id
 			'c3sid' => $main::COOKIES_all{'c3sid'}, # browser session id
