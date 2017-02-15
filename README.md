@@ -1,1 +1,1 @@
-#Cyclone3 Framework
+#Cyclone3 Framework (GPLv2)
