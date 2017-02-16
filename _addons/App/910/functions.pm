@@ -43,7 +43,7 @@ use Ext::Elastic::_init;
 use String::Diff;
 use POSIX qw(ceil);
 
-our $debug=1;
+our $debug=0;
 our $quiet;$quiet=1 unless $debug;
 our $log_changes=$App::910::log_changes || undef;
 
@@ -776,9 +776,17 @@ sub product_add
 	$columns{'name_label'}="'".TOM::Security::form::sql_escape($env{'product_lng.name_label'})."'"
 		if (exists $env{'product_lng.name_label'} && ($env{'product_lng.name_label'} ne $product_lng{'name_label'}));
 	# description_short
+	if ($env{'product_lng.description_short'} && TOM::Text::format::xml2text($env{'product_lng.description_short'}) eq "")
+	{
+		undef $env{'product_lng.description_short'};
+	}
 	$columns{'description_short'}="'".TOM::Security::form::sql_escape($env{'product_lng.description_short'})."'"
-		if ($env{'product_lng.description_short'} && ($env{'product_lng.description_short'} ne $product_lng{'description_short'}));
+		if (exists $env{'product_lng.description_short'} && ($env{'product_lng.description_short'} ne $product_lng{'description_short'}));
 	# description
+	if ($env{'product_lng.description'} && TOM::Text::format::xml2text($env{'product_lng.description'}) eq "")
+	{
+		undef $env{'product_lng.description'};
+	}
 	$columns{'description'}="'".TOM::Security::form::sql_escape($env{'product_lng.description'})."'"
 		if (exists $env{'product_lng.description'} && ($env{'product_lng.description'} ne $product_lng{'description'}));
 	# keywords
@@ -882,9 +890,17 @@ sub product_add
 			$columns{'name_label'}="'".TOM::Security::form::sql_escape($env{'lngs'}{$lng}{'name_label'})."'"
 				if (exists $env{'lngs'}{$lng}{'name_label'} && ($env{'lngs'}{$lng}{'name_label'} ne $product_lng{'name_label'}));
 			# description_short
+			if ($env{'lngs'}{$lng}{'description_short'} && TOM::Text::format::xml2text($env{'lngs'}{$lng}{'description_short'}) eq "")
+			{
+				undef $env{'lngs'}{$lng}{'description_short'};
+			}
 			$columns{'description_short'}="'".TOM::Security::form::sql_escape($env{'lngs'}{$lng}{'description_short'})."'"
-				if ($env{'lngs'}{$lng}{'description_short'} && ($env{'lngs'}{$lng}{'description_short'} ne $product_lng{'description_short'}));
+				if (exists $env{'lngs'}{$lng}{'description_short'} && ($env{'lngs'}{$lng}{'description_short'} ne $product_lng{'description_short'}));
 			# description
+			if ($env{'lngs'}{$lng}{'description'} && TOM::Text::format::xml2text($env{'lngs'}{$lng}{'description'}) eq "")
+			{
+				undef $env{'lngs'}{$lng}{'description'};
+			}
 			$columns{'description'}="'".TOM::Security::form::sql_escape($env{'lngs'}{$lng}{'description'})."'"
 				if (exists $env{'lngs'}{$lng}{'description'} && ($env{'lngs'}{$lng}{'description'} ne $product_lng{'description'}));
 			# keywords
@@ -1382,7 +1398,7 @@ sub _product_index
 	if ($env{'-jobify'})
 	{
 #		main::_log("try jobify");
-		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer'});
+		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'indexer','deduplication'=>1});
 	}
 	
 	return undef unless $env{'ID'}; # product.ID
@@ -1487,11 +1503,11 @@ sub _product_index
 					}
 					
 					push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
-					if ($metadata{$sec}{$_}=~/^[0-9]{1,9}$/)
+					if ($metadata{$sec}{$_}=~/^[0-9]{1,9}0*?$/ && $metadata{$sec}{$_} < 2147483647)
 					{
 						push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
 					}
-					if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}$/ && (not $metadata{$sec}{$_}=~/\..*?\./))
+					if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}0*?$/ && (not $metadata{$sec}{$_}=~/\..*?\./))
 					{
 						push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
 					}
@@ -2131,6 +2147,7 @@ sub _product_index
 				product.status_special,
 				product.status_main,
 				product.status,
+				product.sellscore,
 				product_ent.ID_brand,
 				product_ent.ID_family,
 				product_ent.VAT,
@@ -2220,7 +2237,8 @@ sub _product_index
 				}
 				
 				# list of used metadata fields
-				#push @{$product->{'metahash_keys'}},$sec.'.'.$_ ;
+#				push @{$product{'metahash_keys'}}, $sec.'.'.$_;
+				push @{$product{'metahash_keys'}{$sec}}, $_;
 			}
 		}
 		
@@ -2289,10 +2307,10 @@ sub _product_index
 			push @{$product{'cat_alias_name'}},$db0_line{'alias_name'}
 				if (!$used{$db0_line{'alias_name'}} && $db0_line{'alias_name'});
 			
-			push @{$product{'locale'}{$db0_line{'lng'}}{'cat_name'}}, $db0_line{'name'}
-				unless $used{$db0_line{'name'}};
-			push @{$product{'locale'}{$db0_line{'lng'}}{'cat_alias_name'}}, $db0_line{'alias_name'}
-				if (!$used{$db0_line{'alias_name'}} && $db0_line{'alias_name'});
+			push @{$product{'locale'}{$db0_line{'lng'}}{'cat_name'}}, $db0_line{'name'};
+#				unless $used{$db0_line{'name'}};
+			push @{$product{'locale'}{$db0_line{'lng'}}{'cat_alias_name'}}, $db0_line{'alias_name'};
+#				if (!$used{$db0_line{'alias_name'}} && $db0_line{'alias_name'});
 			
 			my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
 			foreach my $p(
@@ -2316,6 +2334,108 @@ sub _product_index
 		
 		my %sth1=TOM::Database::SQL::execute(qq{
 			SELECT
+				rating.datetime_rating
+			FROM
+				$App::910::db_name.a910_product_rating AS rating
+			WHERE
+				rating.status='Y'
+				AND length(rating.description) >= 10
+				AND rating.ID_product = ?
+			ORDER BY
+				rating.datetime_rating DESC
+			LIMIT 1
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		if ($db1_line{'datetime_rating'})
+		{
+			$product{'ratings'}{'datetime_last'} = $db1_line{'datetime_rating'};
+		}
+		
+		# rating_variable
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				a910_product_rating_variable.score_variable AS var,
+				AVG(a910_product_rating_variable.score_value) AS val,
+				COUNT(DISTINCT(a910_product_rating.ID_entity)) AS cnt
+			FROM
+				$App::910::db_name.a910_product_rating_variable
+			INNER JOIN a910_product_rating ON
+			(
+				a910_product_rating.ID_entity = a910_product_rating_variable.ID_entity
+			)
+			WHERE
+				a910_product_rating.score_basic IS NULL AND
+				a910_product_rating.status='Y' AND
+				a910_product_rating.ID_product = ?
+			GROUP BY
+				a910_product_rating_variable.score_variable
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my $i_count;
+		my $i_sum;
+		my $i_avg;
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			main::_log("rating variable '$db1_line{'var'}' cnt='$db1_line{'cnt'}'");
+			my $var=$db1_line{'var'};
+			$var=lc(Int::charsets::encode::UTF8_ASCII($var));
+			$var=~s|[^\w]||g;
+			$i_count++;
+			$i_sum+=$db1_line{'val'};
+#			main::_log("var=$var val=$db1_line{'val'}");
+#			print Dumper($product{'rating'});use Data::Dumper;
+			$product{'ratings'}{'variable'}{$var} = ceil($db1_line{'val'}+0);
+		}
+		
+		# vahovany rating
+		my $helpful_initial=2;
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT (
+				SUM(
+					IF (rating.score_basic, rating.score_basic,
+						(SELECT AVG(rating_variable.score_value) AS val FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity))
+					* COALESCE((
+						SELECT IF (rating_weight,rating_weight,0.01)
+						FROM TOM.a301_user_profile
+						WHERE ID_entity = rating.posix_owner
+						LIMIT 1
+					),0.5) * ((rating.helpful_Y+$helpful_initial) / (rating.helpful_Y+$helpful_initial + rating.helpful_N+$helpful_initial))
+				) / SUM( COALESCE((
+						SELECT IF (rating_weight,rating_weight,0.01)
+						FROM TOM.a301_user_profile
+						WHERE ID_entity = rating.posix_owner
+						LIMIT 1
+					),0.5) * ((rating.helpful_Y+$helpful_initial) / (rating.helpful_Y+$helpful_initial + rating.helpful_N+$helpful_initial))
+				)
+			) AS score,
+				COUNT(rating.ID) AS ratings,
+				MAX(rating.datetime_rating) AS datetime_rating
+			FROM
+				$App::910::db_name.a910_product_rating AS rating
+			WHERE
+				rating.status='Y'
+				AND (rating.score_basic IS NOT NULL
+					OR (
+						SELECT COUNT(rating_variable.score_value) FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity
+					) > 0
+				)
+				AND rating.ID_product = ?
+			GROUP BY
+				rating.ID_product
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		
+		if ($db1_line{'ratings'})
+		{
+			$db1_line{'score'} = 0 unless $db1_line{'score'};
+			main::_log("ratings avg='$db1_line{'score'}' count='$db1_line{'ratings'}'");
+			
+			$product{'ratings'}->{'variable'}->{'count'} = ceil($db1_line{'ratings'});
+			$product{'ratings'}->{'variable'}->{'avg'} = $db1_line{'score'};
+		}
+		
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
 				a910_product_price.*,
 				a910_price_level.name_code
 			FROM
@@ -2329,34 +2449,38 @@ sub _product_index
 		},'quiet'=>1,'bind'=>[$env{'ID'}]);
 		while (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
-			$product{'prices'}{$db1_line{'name_code'}}{'price'} = $db1_line{'price'}
+			$db1_line{'price'}+=0;
+			$db1_line{'price_full'}+=0;
+			$db1_line{'price_previous'}+=0;
+			$db1_line{'price_previous_full'}+=0;
+			$product{'prices'}{$db1_line{'name_code'}}{'price'} = $db1_line{'price'}+0
 				if $db1_line{'price'};
-			$product{'prices'}{$db1_line{'name_code'}}{'price_full'} = $db1_line{'price_full'}
+			$product{'prices'}{$db1_line{'name_code'}}{'price_full'} = $db1_line{'price_full'}+0
 				if $db1_line{'price_full'};
-			$product{'prices'}{$db1_line{'name_code'}}{'price_previous'} = $db1_line{'price_previous'}
+			$product{'prices'}{$db1_line{'name_code'}}{'price_previous'} = $db1_line{'price_previous'}+0
 				if $db1_line{'price_previous'};
-			$product{'prices'}{$db1_line{'name_code'}}{'price_previous_full'} = $db1_line{'price_previous_full'}
+			$product{'prices'}{$db1_line{'name_code'}}{'price_previous_full'} = $db1_line{'price_previous_full'}+0
 				if $db1_line{'price_previous_full'};
 		}
 		
 		# product_set
 		$product{'relations'}={} unless $product{'relations'};
-		foreach my $relation (App::160::SQL::get_relations(
-			'db_name' => $App::910::db_name,
-			'l_prefix' => 'a910',
-			'l_table' => 'product',
-			'l_ID_entity' => $product{'ID'},
-			'r_prefix' => "a910",
-			'r_table' => "product",
-			'rel_type' => "product_set",
-			'status' => "Y"
-		))
-		{
-			push @{$product{'relations'}{'product_set'}}, {
-				'ID' => $relation->{'r_ID_entity'},
-				'quantifier' => $relation->{'quantifier'}
-			};
-		}
+#		foreach my $relation (App::160::SQL::get_relations(
+#			'db_name' => $App::910::db_name,
+#			'l_prefix' => 'a910',
+#			'l_table' => 'product',
+#			'l_ID_entity' => $product{'ID'},
+#			'r_prefix' => "a910",
+#			'r_table' => "product",
+#			'rel_type' => "product_set",
+#			'status' => "Y"
+#		))
+#		{
+#			push @{$product{'relations'}{'product_set'}}, {
+#				'ID' => $relation->{'r_ID_entity'},
+#				'quantifier' => $relation->{'quantifier'}
+#			};
+#		}
 		foreach my $relation (App::160::SQL::get_relations(
 			'db_name' => $App::910::db_name,
 			'l_prefix' => 'a910',
@@ -2370,6 +2494,24 @@ sub _product_index
 		{
 			push @{$product{'relations'}{'in_product_set'}}, {
 				'ID' => $relation->{'l_ID_entity'},
+				'quantifier' => $relation->{'quantifier'}
+			};
+		}
+		
+		foreach my $relation (App::160::SQL::get_relations(
+			'db_name' => $App::910::db_name,
+			'l_prefix' => 'a910',
+			'l_table' => 'product',
+			'l_ID_entity' => $product{'ID'},
+			'r_prefix' => "a910",
+			'r_table' => "product",
+#			'rel_type' => "product_set",
+			'status' => "Y"
+		))
+		{
+			push @{$product{'relations'}{$relation->{'rel_type'} || 'others'}}, {
+				'ID' => $relation->{'r_ID_entity'},
+				'priority' => $relation->{'priority'},
 				'quantifier' => $relation->{'quantifier'}
 			};
 		}
@@ -2593,7 +2735,9 @@ sub _product_index
 				'ID_s' => $env{'ID'}
 			}
 		});
-
+		
+#		print Dumper(\%product);
+		
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::910::db_name,
 			'type' => 'a910_product',

@@ -368,6 +368,9 @@ while ($main::CGI=new CGI::Fast())
 		$tom::H_www=~s|^https|http|;
 	}
 	
+	local $TOM::Document::content_security_policy=$TOM::Document::content_security_policy;
+	local $TOM::Document::frame_options=$TOM::Document::frame_options;
+	
 #	main::_log('DOS control');
 #	if (TOM::Net::HTTP::DOS::processENV(%main::ENV))
 #	{
@@ -531,7 +534,7 @@ while ($main::CGI=new CGI::Fast())
 				&&($pub::engine_disabling))
 			{
 				my @ERR=(
-					"The page you have requested can't be displayed",
+					"The page you have requested cannot be displayed, because of inappropriate activities",
 					"Contact: info\@comsultia.com"
 #					,@{$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'messages'}}
 				);
@@ -1875,11 +1878,11 @@ while ($main::CGI=new CGI::Fast())
 				&& $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'} ne "spambot"
 			)
 			{
-				TOM::Error::engine(
-					"silent (This error message is in silen mode)",
-					"404, service type not found REQUEST_URI='$main::ENV{REQUEST_URI}' TID='$FORM{TID}'",
-					"Please check your type.conf, rewrite.conf or RewriteRules in .htaccess"
-				);
+#				TOM::Error::engine(
+#					"silent (This error message is in silen mode)",
+#					"404, service type not found REQUEST_URI='$main::ENV{REQUEST_URI}' TID='$FORM{TID}'",
+#					"Please check your type.conf, rewrite.conf or RewriteRules in .htaccess"
+#				);
 				$result="failed";
 			}
 		}
@@ -2006,6 +2009,29 @@ while ($main::CGI=new CGI::Fast())
 				}
 				_log("required https mode is '$main::env{'https'}'");
 				next;
+			}
+			
+			if($env0{'id'} eq "content_security_policy")
+			{
+				if($env0{'value'} eq "")
+				{
+					_log("Change content_security_policy to none");
+					undef $TOM::Document::content_security_policy;
+				}
+				else
+				{
+					_log("Change content_security_policy to $env0{'value'}");
+					$TOM::Document::content_security_policy = $env0{'value'};
+				}
+			}
+			
+			if($env0{'id'} eq "frame_options")
+			{
+				if ($env0{'value'})
+				{
+					_log("Change frame_options to $env0{'value'}");
+					$TOM::Document::frame_options = $env0{'value'};
+				}
 			}
 			
 			if ($env0{'id'} eq "link")
@@ -2616,25 +2642,21 @@ while ($main::CGI=new CGI::Fast())
 			# v module ako -xlng pouzijem default $tom::lng
 			
 			my %mdl_env;
-			while ($data=~s|<VAR id="(.{1,150}?)" value="(.*?)" />||s)
+			while ($data=~s|<VAR id="(.{1,150}?)" (value\|get)="(.*?)" />||s)
 			{
-				next if not defined $2;
-				$mdl_env{$1}=$2;
-				$mdl_env{$1}=~s|\"|"|g;
+				next if not defined $3;
+				if ($2 eq "get")
+				{
+					$mdl_env{$1}=$main::FORM{$3};
+				}
+				else
+				{
+					$mdl_env{$1}=$3;
+					$mdl_env{$1}=~s|\"|"|g;
+				}
 			}
 			
 			main::_log("<={MODULE} ".$mdl_env{'-type'}.':'.($mdl_env{'-category'} || $mdl_env{'-addon'}).'-'.$mdl_env{'-name'}.' TMP:'.$mdl_env{'-TMP'});
-			
-			if (
-				((!$IAdm)&&($mdl_env{-IAdm}==1)) ||
-				(($IAdm)&&($mdl_env{-IAdm}==-1)) ||
-				((!$ITst)&&($mdl_env{-ITst}==1)) ||
-				(($ITst)&&($mdl_env{-ITst}==-1))
-			)
-			{
-				main::_log("can't load module in this mode");
-				next;
-			}
 			
 			if (exists $mdl_env{'-enabled'} && !$mdl_env{'-enabled'})
 			{
@@ -2960,7 +2982,7 @@ while ($main::CGI=new CGI::Fast())
 		if ($main::page_statuscode eq "404")
 		{
 			$main::H->change_DOC_robots("noindex,noarchive");
-			main::_log("404 REQUEST_URI='$ENV{'REQUEST_URI'}' QUERY='$ENV{'QUERY_STRING'}' Not Found for '$main::ENV{'REMOTE_ADDR'}' with '$main::ENV{'HTTP_USER_AGENT'}'",4,"pub.404");
+#			main::_log("404 REQUEST_URI='$ENV{'REQUEST_URI'}' QUERY='$ENV{'QUERY_STRING'}' Not Found for '$main::ENV{'REMOTE_ADDR'}' with '$main::ENV{'HTTP_USER_AGENT'}'",4,"pub.404");
 		}
 		if ($result eq "failed")
 		{
