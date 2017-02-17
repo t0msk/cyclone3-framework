@@ -7,7 +7,7 @@ Cyclone3 is extremely flexible and mature open source framework designed to deve
 ## Basic features
 
 - multi-engine
-  *framework supports multiple engines for different kind of processes: generating webpages, async jobs, cli commands,...*
+*framework supports multiple engines for different kind of processes: generating webpages, async jobs, cli commands*
 - multi content-type CMS
  *[publish engine](.core/.libs/TOM/Engine/pub.md) generates content in XHTML, HTML5, SVG, XML, JSON, RPC/SOAP services, ...*
 - multi-domain
@@ -146,7 +146,7 @@ Copy configuration template file to destination
 cp /srv/Cyclone3/_config/TOM.conf.tmpl /srv/Cyclone3/_config/TOM.conf
 ```
 
-This is minimal working configuration example
+This is minimal working configuration example:
 ```perl
 #!/usr/bin/perl
 package TOM;
@@ -182,6 +182,7 @@ $Ext::Redis::host='localhost:6379';
 
 1;# don't remove me!
 ```
+Read more about all [configuration options](_config/TOM.conf.md) in TOM.conf
 
 Check installed MySQL database scheme
 ```bash
