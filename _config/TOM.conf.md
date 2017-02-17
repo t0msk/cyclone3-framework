@@ -36,7 +36,7 @@ $TOM::smtp_pass='mypassword';
 
 **default master database configuration**
 
-"main" is the reserved name for Cyclone3 primary 
+"main" is the reserved name for Cyclone3 primary database connection.
 
 ```perl
 $TOM::DB{'main'} = {
@@ -53,41 +53,42 @@ $TOM::DB{'main'} = {
 };
 ```
 
-- **type**
+- type
 
- Use different type of connector. "DBI" for example
+	Use different type of connector. "DBI" for example
 
-- **uri**
+- uri
 
- URI configuration for "DBI" connector. example: "dbi:Sybase:server=sap"
+	URI configuration for "DBI" connector. example: "dbi:Sybase:server=sap"
 
-- **host**
+- host
 
-- **user**
+- user
 
-- **password**
+- password
 
-- **sql**
+- sql
 
- Set of queries executed immediatelly after connection
+	Set of queries executed immediatelly after connection
 
-- **slaves**
+- slaves
 
- Number of configured slaves in master-slave MySQL cluster mode.
+	Number of configured slaves in master-slave MySQL cluster mode.
 
-- **weight**
+- weight
 
- Weight of this node for read operations across all slaves.
+	Weight of this node for read operations across all slaves.
 
-- **slaves_autoweight**
+- slaves_autoweight
 
- When enabled, job.workerd is calculating automatically weight for every node from average speed of queries executed.
+	When enabled, job.workerd is calculating automatically weight
+	for every node from average speed of queries executed.
 
 **first slave configuration**
 
 Number of database slaves are unlimited. Slaves are used to distribute read-only queries across slave nodes.
 
-```perl
+~~~perl
 # optional
 $TOM::DB{'main:1'} = {
 	'host' => "anotherhost", 'user' => "Cyclone3", 'password' => "mypassword",
@@ -100,9 +101,7 @@ $TOM::DB{'main:1'} = {
 	],
     'weight' => 100, # default weight
 };
-```
-
-
+~~~
 
 ### Tips:
 - When connection is lost to **master**, by default is database reconnected automatically, and last query re-send.
