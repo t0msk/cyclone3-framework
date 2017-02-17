@@ -2,12 +2,12 @@
 
 > developed since 2002, released under [GPLv2](LICENSE.md) in 2006
 
-Cyclone3 is extremely flexible and mature open source framework with designed to develop content management systems, custom intranet applications, CLI and async job applications writen in Perl.
+Cyclone3 is extremely flexible and mature open source framework designed to develop content management systems, custom intranet applications, CLI and async job applications writen in Perl.
 
-** Basic features **
+## Basic features
 
 - multi-engine
-*framework supports multiple engines for different king of processes: generating webpages, async jobs, cli commands,... *
+*framework supports multiple engines for different kind of processes: generating webpages, async jobs, cli commands,...*
 - multi content-type CMS
 *[publish engine](.core/.libs/TOM/Engine/pub.md) generates content in XHTML, HTML5, SVG, XML, JSON, RPC/SOAP services, ...*
 - multi-domain
@@ -15,7 +15,7 @@ Cyclone3 is extremely flexible and mature open source framework with designed to
 - multi-server
 *developed for HA cluster installations in master-master mode*
 
-** Used technologies **
+## Used technologies
 
 - Perl & FastCGI
 - MySQL/Percona
@@ -28,19 +28,19 @@ Cyclone3 is extremely flexible and mature open source framework with designed to
 
 We are typically using Debian or Ubuntu for Cyclone3 Framework, so these are our two cents for Debian administrators. This installation process can take 15 minutes (without optimization).
 
-*Note: If any problem occurs, don't hesitate ask us at open@comsultia.com.*
+*Note: If any problem occurs, don't hesitate to ask us at open@comsultia.com.*
 
-This is just basic setup, but can be enhanced full Cyclone3 cluster
+This is just basic setup, but can be enhanced to get full Cyclone3 cluster.
 
-** Prerequisites **
-- Linux operating system (mostly tested under Ubuntu Server LTS 14.04 and 16.04
+## Prerequisites
+- Linux operating system (mostly tested under Ubuntu Server LTS 14.04 and 16.04)
 - git
 - Perl >= 5.12
 - MySQL >=5.5
 - Apache2
-- root access (don't have? forget to Cyclone3)
+- root access (no root access? forget about using Cyclone3)
 
-### Getting Cyclone3
+## Getting Cyclone3
 
 #### Prepare environment
 
@@ -108,7 +108,7 @@ cpan Net::RabbitFoot
 
 MySQL >= 5.5 is the main database for Cyclone3, but connection to another type of databases can be configured too.
 
-We are recommending Percona Server (http://www.percona.com/)
+We recommend Percona Server (http://www.percona.com/)
 
 ```bash
 sudo apt-key adv --keyserver keys.gnupg.net --recv-keys 1C4CBDCDCD2EFD2A
@@ -121,7 +121,7 @@ Add this to /etc/apt/sources.list, replacing VERSION with the name of your distr
 sudo apt-get update && sudo apt-get install percona-server-server percona-server-client
 ```
 
-Create Cyclone3 user (this is just example. off course you want ho have password)
+Create Cyclone3 user (This is just an example. Of course you want to use password)
 
 ```sql
 GRANT ALL PRIVILEGES ON *.* TO 'Cyclone3'@'localhost' WITH GRANT OPTION MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0;
