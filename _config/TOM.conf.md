@@ -13,14 +13,14 @@ $TOM::domain='mycluster';
 
 ## Contacts
 
-** default setting for system emails **
+**default setting for system emails**
 Used for notifications, etc...
 ```perl
 $TOM::contact{'_'}='cyclone3@'.$TOM::hostname; # default contact
 $TOM::contact{'from'}='cyclone3@'.$TOM::hostname;
 ```
 
-** smtp server configuration **
+**smtp server configuration**
 
 When not configured, sendmail command will be used.
 
@@ -31,7 +31,6 @@ $TOM::smtp_user='cyclone3@mydomain.com';
 $TOM::smtp_SSL=1; # is SSL required?
 $TOM::smtp_pass='mypassword';
 ```
-
 
 ## Database configuration
 
@@ -55,10 +54,12 @@ $TOM::DB{'main'} = {
 ```
 
 - **type**
-Use different type of connector. "DBI" for example
+
+ Use different type of connector. "DBI" for example
 
 - **uri**
-URI configuration for "DBI" connector. example: "dbi:Sybase:server=sap"
+
+ URI configuration for "DBI" connector. example: "dbi:Sybase:server=sap"
 
 - **host**
 
@@ -67,16 +68,20 @@ URI configuration for "DBI" connector. example: "dbi:Sybase:server=sap"
 - **password**
 
 - **sql**
-Set of queries executed immediatelly after connection
+
+ Set of queries executed immediatelly after connection
 
 - **slaves**
-Number of configured slaves in master-slave MySQL cluster mode.
+
+ Number of configured slaves in master-slave MySQL cluster mode.
 
 - **weight**
-Weight of this node for read operations across all slaves.
+
+ Weight of this node for read operations across all slaves.
 
 - **slaves_autoweight**
-When enabled, job.workerd is calculating automatically weight for every node from average speed of queries executed.
+
+ When enabled, job.workerd is calculating automatically weight for every node from average speed of queries executed.
 
 **first slave configuration**
 
