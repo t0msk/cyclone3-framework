@@ -7,13 +7,13 @@ Cyclone3 is extremely flexible and mature open source framework designed to deve
 ## Basic features
 
 - multi-engine
-*framework supports multiple engines for different kind of processes: generating webpages, async jobs, cli commands,...*
+  *framework supports multiple engines for different kind of processes: generating webpages, async jobs, cli commands,...*
 - multi content-type CMS
-*[publish engine](.core/.libs/TOM/Engine/pub.md) generates content in XHTML, HTML5, SVG, XML, JSON, RPC/SOAP services, ...*
+ *[publish engine](.core/.libs/TOM/Engine/pub.md) generates content in XHTML, HTML5, SVG, XML, JSON, RPC/SOAP services, ...*
 - multi-domain
-*one framework installation, unlimited number of domains and services*
+ *one framework installation, unlimited number of domains and services*
 - multi-server
-*developed for HA cluster installations in master-master mode*
+ *developed for HA cluster installations in master-master mode*
 
 ## Used technologies
 
