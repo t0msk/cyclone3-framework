@@ -587,6 +587,7 @@ while ($main::CGI=new CGI::Fast())
 				if ($_->{'H'} eq $main::ENV{'HTTP_HOST'})
 				{
 					$rewrite_conf = $_->{'rewrite.conf'};
+					main::_log('overriding $rewrite_conf from * to ' . $rewrite_conf);
 					last;
 				}
 			}
@@ -3100,11 +3101,18 @@ while ($main::CGI=new CGI::Fast())
 		my $t_send=track TOM::Debug("send",'timer'=>1);
 		
 		print "C3-Request: $main::request_code\n";
+		if ($tom::devel)
+		{
+			print "C3-Devel-Hostname: $TOM::hostname\n";
+			print "C3-Devel-TID: ".$main::FORM{'TID'}."\n";
+			print "C3-Devel-a210: ".$main::a210{'ID'}."\n" if $main::a210{'ID'};
+			print "C3-Devel-a210_path: ".$main::FORM{'a210_path'}."\n" if $main::FORM{'a210_path'};
+			print "C3-Devel-a210_name: ".$main::FORM{'a210_name'}."\n" if $main::FORM{'a210_name'};
+		}
 		print "C3-Domain: $tom::H\n";
 			my $date = DateTime->now('time_zone' => 'local');
 			my $date_string = $date->strftime("%d %b %Y %H:%M:%S");
 		print "C3-Date: $date_string\n";
-		print "C3-Hostname: $TOM::hostname\n";
 		print "C3-Cache-Control: ".do{
 			if ($main::cache)
 			{
