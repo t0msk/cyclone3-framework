@@ -78,7 +78,9 @@ source /etc/profile
 #### Download Cyclone3
 
 Get Cyclone3 Framework source codes and binaries from git to directory /srv/Cyclone3 (you can use different directory, but this is default and optimal setup). Don't create /srv/Cyclone3 as symlink.
+
 You can clone from http://bit.comsultia.com/scm/cyc/framework.git repository (Comsultia) or https://github.com/rfordinal/cyclone3-framework.git (github)
+
 Please, don't download as zip archive, the upgrade process after installation is provided using **git** too.
 
 ```bash
@@ -159,6 +161,7 @@ cp /srv/Cyclone3/_config/TOM.conf.tmpl /srv/Cyclone3/_config/TOM.conf
 ```
 
 This is minimal working configuration example:
+
 ```perl
 #!/usr/bin/perl
 package TOM;
@@ -197,11 +200,13 @@ $Ext::Redis::host='localhost:6379';
 Read more about all [configuration options](_config/TOM.conf.md) in TOM.conf
 
 Check installed MySQL database scheme
+
 ```bash
 tom3-chtables
 ```
 
 Check files permissions
+
 ```bash
 tom3-chfiles
 ```
@@ -215,22 +220,26 @@ apt-get install libapache2-mod-fcgid
 ```
 
 Add www-data user to cyclone3 group
+
 ```bash
 usermod -a -G cyclone3 www-data
 ```
 
 Copy virtualhost default template
+
 ```bash
 cp /srv/Cyclone3/_config/httpd.virtual.conf.tmpl /srv/Cyclone3/_config/httpd.virtual.conf
 ```
 
 Symlink configuration files
+
 ```bash
 ln -s /srv/Cyclone3/.core/_config/httpd.conf /etc/apache2/conf.d/00-cyclone3.conf
 ln -s /srv/Cyclone3/_config/httpd.virtual.conf /etc/apache2/sites-enabled/01-cyclone3-virtual.conf
 ```
 
 Enable mod_expires and mod_rewrite
+
 ```bash
 cd /etc/apache2/mods-enabled
 ln -s ../mods-available/expires.load .
@@ -238,13 +247,14 @@ ln -s ../mods-available/rewrite.load .
 ```
 
 Restart apache2
+
 ```bash
 service apache2 restart
 ```
 
 Now is everything configured properly, the next step is configuration/installation of first domain service (virtualhost)
 
-### Extended setup
+### Optimal setup
 
 - TODO: RabbitMQ and job.worker[d]
 - TODO: ElasticSearch
@@ -252,4 +262,4 @@ Now is everything configured properly, the next step is configuration/installati
 
 ### Advanced setup
 
-
+- TODO: Cluster setup
