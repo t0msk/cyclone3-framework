@@ -20,6 +20,7 @@ BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 use File::Path;
 use XML::LibXML;
 use TOM::L10n::codes;
+use JSON;
 
 our $debug=$main::debug || 0;
 our $stats||=0;
@@ -84,6 +85,9 @@ sub new
 		return undef;
 	}
 	$obj->{'uid'}=$obj->{'location'}.'/'.$env{'lng'};
+	
+	# ignorelist is part of uid
+	$obj->{'uid'}.="::".TOM::Digest::hash(to_json($obj->{'ENV'}->{'ignore'} || []));
 	
 #	main::_log("trying '$obj->{'uid'}' in mem=".do{if($objects{$obj->{'uid'}}){"1"}},3,"l10n");
 	
@@ -301,12 +305,13 @@ sub parse_header
 			
 			main::_log("request to extend by level='$level' addon='$addon' name='$name' lng='$lng'") if $debug;
 			
+			my @ignore=@{$self->{'ENV'}{'ignore'}};
 			my $extend=new TOM::L10n(
 				'level' => $level,
 				'addon' => $addon,
 				'name' => $name,
 				'lng' => $lng,
-				'ignore' => $self->{'ENV'}{'ignore'},
+				'ignore' => \@ignore,
 			);
 			
 			# add entries from inherited L10n
