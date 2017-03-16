@@ -85,13 +85,13 @@ sub new
 		$t->close() if $debug;
 		return undef;
 	}
-	$obj->{'uid'}=$obj->{'location'}.'/'.$env{'lng'};
+	$obj->{'location_id'}=$obj->{'uid'}=$obj->{'location'}.'/'.$env{'lng'};
 	
 	# ignorelist is part of uid
-#	$obj->{'uid'}.="::".TOM::Digest::hash($jsonc->encode($obj->{'ENV'}->{'ignore'}))
-#		if $obj->{'ENV'}->{'ignore'};
+	$obj->{'uid'}.="/".TOM::Digest::hash($jsonc->encode($obj->{'ENV'}->{'ignore'}))
+		if $obj->{'ENV'}->{'ignore'};
 	
-#	main::_log("trying '$obj->{'uid'}' in mem=".do{if($objects{$obj->{'uid'}}){"1"}},3,"l10n");
+	main::_log("trying '$obj->{'uid'}' in mem=".do{if($objects{$obj->{'uid'}}){"1"}},3,"l10n");
 	
 	if (!$objects{$obj->{'uid'}} && $TOM::CACHE_memcached && $main::cache)
 	{
@@ -132,7 +132,7 @@ sub new
 		$id++;$L10n::id{$obj->{'uid'}}=$id; # add unique number to every one object
 		$obj->{'id'}=$id;
 		# add this location into ignore list
-		push @{$obj->{'ENV'}->{'ignore'}}, $obj->{'uid'};
+		push @{$obj->{'ENV'}->{'ignore'}}, $obj->{'location_id'};
 		$obj->prepare_xml();
 		# save time of object creation (last-check time)
 		$obj->{'config'}->{'ctime'} = time();
