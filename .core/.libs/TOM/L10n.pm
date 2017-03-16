@@ -21,6 +21,7 @@ use File::Path;
 use XML::LibXML;
 use TOM::L10n::codes;
 use JSON;
+our $jsonc = JSON::XS->new->ascii->canonical;
 
 our $debug=$main::debug || 0;
 our $stats||=0;
@@ -87,7 +88,8 @@ sub new
 	$obj->{'uid'}=$obj->{'location'}.'/'.$env{'lng'};
 	
 	# ignorelist is part of uid
-	$obj->{'uid'}.="::".TOM::Digest::hash(to_json($obj->{'ENV'}->{'ignore'} || []));
+#	$obj->{'uid'}.="::".TOM::Digest::hash($jsonc->encode($obj->{'ENV'}->{'ignore'}))
+#		if $obj->{'ENV'}->{'ignore'};
 	
 #	main::_log("trying '$obj->{'uid'}' in mem=".do{if($objects{$obj->{'uid'}}){"1"}},3,"l10n");
 	
