@@ -340,19 +340,19 @@ sub execute
 				}
 			}
 			
-			if ($tom::Thour >= 23 || $tom::Thour <= 6) # do it only when developers sleep
-			{
-				if ($rel>=0.15)
+#			if ($tom::Thour >= 23 || $tom::Thour <= 6) # do it only when developers sleep
+#			{
+				if ($rel>=0.05)
 				{
 					main::_log("  optimize");
-					eval {$Elastic->indices->optimize('index' => $indice,'only_expunge_deletes' => 1);};
+					eval {$Elastic->indices->forcemerge('index' => $indice,'only_expunge_deletes' => 1);};
 					if ($@)
 					{
 						main::_log($@,1);
 					}
 	#				last;
 				}
-			}
+#			}
 		}
 		
 		push @indices_list,$indice;

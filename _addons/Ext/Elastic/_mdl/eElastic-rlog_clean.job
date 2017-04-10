@@ -79,7 +79,7 @@ sub execute
 	
 	my $already_something_removed;
 	
-	foreach my $indice (reverse sort @indices_list)
+	foreach my $indice (sort @indices_list)
 	{
 		# at first, search oldest entry
 		my $results = $Elastic->search(
@@ -205,7 +205,8 @@ sub execute
 					'index'       => $indice,
 #					'search_type' => 'scan',
 					'size'        => 500,
-					'fields' => ['_id'],
+#					'fields' => ['_id'],
+					'_source' => ['_id'],
 					'body'  => {
 						'query' => {
 							'filtered' => {
