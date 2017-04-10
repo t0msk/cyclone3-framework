@@ -1175,6 +1175,27 @@ sub image_add
 	
 	$env{'image_format.ID'}=$App::501::image_format_original_ID unless $env{'image_format.ID'};
 	
+	my %category;
+	if ($env{'image_cat.ID'} && $env{'image_cat.ID'} ne 'NULL')
+	{
+		# detect language
+		%category=App::020::SQL::functions::get_ID(
+			'ID' => $env{'image_cat.ID'},
+			'db_h' => "main",
+			'db_name' => $App::501::db_name,
+			'tb_name' => "a501_image_cat",
+			'columns' => {'*'=>1}
+		);
+		$env{'image_attrs.lng'}=$category{'lng'};
+		$env{'image_attrs.ID_category'}=$category{'ID_entity'};
+		main::_log("setting lng='$env{'image_attrs.lng'}' from image_cat.ID='$env{'image_cat.ID'}'");
+		main::_log("setting image_attrs.ID_category='$env{'image_attrs.ID_category'}' from image_cat.ID='$env{'image_cat.ID'}'");
+	}
+	$env{'image_attrs.ID_category'}='NULL' if $env{'image_cat.ID'} eq 'NULL';
+	
+	$env{'image_attrs.lng'}=$tom::lng unless $env{'image_attrs.lng'};
+	main::_log("lng='$env{'image_attrs.lng'}'");
+	
 	if ($env{'file'})
 	{
 		if (! -e $env{'file'})
@@ -1288,28 +1309,6 @@ sub image_add
 		
 		$content_updated=1;
 	}
-	
-	my %category;
-	if ($env{'image_cat.ID'} && $env{'image_cat.ID'} ne 'NULL')
-	{
-		# detect language
-		%category=App::020::SQL::functions::get_ID(
-			'ID' => $env{'image_cat.ID'},
-			'db_h' => "main",
-			'db_name' => $App::501::db_name,
-			'tb_name' => "a501_image_cat",
-			'columns' => {'*'=>1}
-		);
-		$env{'image_attrs.lng'}=$category{'lng'};
-		$env{'image_attrs.ID_category'}=$category{'ID_entity'};
-		main::_log("setting lng='$env{'image_attrs.lng'}' from image_cat.ID='$env{'image_cat.ID'}'");
-		main::_log("setting image_attrs.ID_category='$env{'image_attrs.ID_category'}' from image_cat.ID='$env{'image_cat.ID'}'");
-	}
-	$env{'image_attrs.ID_category'}='NULL' if $env{'image_cat.ID'} eq 'NULL';
-	
-	$env{'image_attrs.lng'}=$tom::lng unless $env{'image_attrs.lng'};
-	main::_log("lng='$env{'image_attrs.lng'}'");
-	
 	
 	# IMAGE
 	
