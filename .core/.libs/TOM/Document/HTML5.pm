@@ -326,7 +326,8 @@ sub prepare_last
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-LNG%>|$tom::lng|g;
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-cache-control%>|$main::ENV{'Cache-Control'}|g;
 	$self->{'OUT'}{'HEADER'}=~s|<%PAGE-CODE%>|$main::request_code|;
- 
+	$self->{'OUT'}{'HEADER'}=~s|<%USER%>|$main::USRM{'ID_user'}|g;
+	
 	if ($self->{env}{DOC_keywords})
 	{
 		my %keywords;
