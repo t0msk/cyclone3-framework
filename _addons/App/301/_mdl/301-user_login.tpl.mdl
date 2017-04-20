@@ -348,7 +348,7 @@ sub execute
 	my $sql_status="status='Y'";
 		$sql_status="status IN ('Y','W')" if $env{'force_status'};
 	
-	my $sql_user="login=? OR email=?";
+	my $sql_user="TRIM(login)=? OR TRIM(email)=?";
 	my @sql_user_bind;
 		push @sql_user_bind,$env{'login'};
 		push @sql_user_bind,$env{'login'};
