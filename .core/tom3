@@ -310,7 +310,8 @@ while ($main::CGI=new CGI::Fast())
 	
 	# override tom::lng
 	local $tom::lng=$tom::lng;
-	if ($main::ENV{'lng'}){main::_log("override \$tom::lng by ENV to '$main::ENV{'lng'}' from '$tom::lng'");$tom::lng=$main::ENV{'lng'}}
+	local $tom::lang=$tom::lang; # long-form of lng
+	if ($main::ENV{'lng'}){main::_log("override \$tom::lng by ENV to '$main::ENV{'lng'}' from '$tom::lng'");$tom::lng=$main::ENV{'lng'};undef $tom::lang}
 	# override tom::H
 	local $tom::H=$tom::H;
 	$tom::H_orig=$tom::H;
@@ -2161,7 +2162,7 @@ while ($main::CGI=new CGI::Fast())
 				my $i;foreach (@TOM::LNG_accept){$i=1 if $_ eq $env0{value}}
 				if ($i)
 				{
-					$tom::lng=$env0{value};
+					$tom::lng=$env0{value};undef $tom::lang;
 					main::_log("Change tom::lng (xlng) to '$env0{value}'");
 				}
 				else
