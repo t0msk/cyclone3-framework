@@ -277,7 +277,7 @@ sub execute
 					);
 				}
 			}
-			elsif ($old > 1) # not live indices
+			elsif ($old > 7) # not live indices
 			{
 				my $tags_='weak,live';
 				if ($tags ne $tags_)
