@@ -23,6 +23,8 @@ sub execute
 	}
 	
 #	my $solr = Ext::Solr::service();
+#	$solr->commit();
+#	return 1;
 	
 #	my %IDs;
 #	my $response = $solr->search( "+id:".$App::910::db_name.".a910_product.*",{'fl' => "ID_i"});
@@ -36,9 +38,11 @@ sub execute
 	my $i;
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
-			*
+			ID
 		FROM
 			a910_product
+--		WHERE
+--			sellscore > 0
 --		LIMIT 10
 	});
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
@@ -49,7 +53,7 @@ sub execute
 		
 #		delete $IDs{$db0_line{'ID'}};
 		
-		App::910::functions::_product_index('ID'=>$db0_line{'ID'},'-jobify' => 1);
+		App::910::functions::_product_index('ID'=>$db0_line{'ID'},'-jobify' => 1, 'solr' => 0);
 #		sleep 1;
 		
 #		if (int($i/1000) == $i/1000)

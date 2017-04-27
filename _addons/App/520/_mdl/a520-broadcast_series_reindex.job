@@ -7,8 +7,8 @@ use utf8;
 use strict;
 
 use Utils::datetime;
+use JSON;
 use Data::Dumper;
-use Ext::Elastic::_init;
 
 sub execute
 {
@@ -18,27 +18,34 @@ sub execute
 	
 	if (!$tom::H)
 	{
-		main::_log("only running under domain",1);
+		main::_log("only running under domain", 1);
 		return undef;
 	}
 	
 	require App::520::_init;
 	
-	# reindex
-	my $i;
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
-			*
+			DISTINCT(`ID_entity`)
 		FROM
-			a520_broadcast_series
-	});
+			`$App::520::db_name`.`a520_broadcast_series`
+--		LIMIT
+--			1
+	}, 'quiet' => 1);
+	
+	my $i;
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$i++;
-		main::_log("[$i/$sth0{'rows'}]");
-		$main::nojobify=1;
-		App::520::functions::_broadcast_series_index('ID_entity'=>$db0_line{'ID_entity'},'-jobify'=>1);
+		main::_log("[$i/$sth0{'rows'}] index broadcast_series ID_entity=$db0_line{'ID_entity'}");
+		#$main::nojobify=1;
+		App::520::functions::_broadcast_series_index(
+			'ID_entity'	=>	$db0_line{'ID_entity'},
+			'-jobify'	=> 1
+		);
 	}
 	
-return 1}
+	return 1;
+}
+
 1;
