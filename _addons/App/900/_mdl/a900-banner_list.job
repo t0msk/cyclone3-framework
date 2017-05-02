@@ -124,13 +124,23 @@ sub execute
 		);
 		main::_log("a210_page.ID_entity=$a210{'ID_entity'}");
 		
-		if ($env->{'a210.non_recursive'})
+		foreach my $p(
+			reverse App::020::SQL::functions::tree::get_path(
+				$a210{'ID'},
+				%sql_def,
+				'columns' => { '*' => 1 },
+				'-slave' => 1,
+				'-cache' => 86400
+			)
+		)
 		{
+			main::_log("relation from $p->{'ID_entity'}");
+			my $found = 0;
 			foreach my $relation (App::160::SQL::get_relations(
 				'db_name' => $App::210::db_name,
 				'l_prefix' => 'a210',
 				'l_table' => 'page',
-				'l_ID_entity' => $a210{'ID_entity'},
+				'l_ID_entity' => $p->{'ID_entity'},
 				'r_prefix' => "a900",
 				'r_table' => "banner_cat",
 				'rel_type' => "link",
@@ -139,37 +149,11 @@ sub execute
 			{
 				main::_log("relation to $relation->{'r_ID_entity'}");
 				$env->{'banner_cat.ID_entity'}.=";".$relation->{'r_ID_entity'}.'*';
+				$found++;
 			}
+			last if ($found && $env->{'a210.non_recursive'});
 		}
-		else
-		{
-			foreach my $p(
-				App::020::SQL::functions::tree::get_path(
-					$a210{'ID'},
-					%sql_def,
-					'columns' => { '*' => 1 },
-					'-slave' => 1,
-					'-cache' => 86400
-				)
-			)
-			{
-				main::_log("relation from $p->{'ID_entity'}");
-				foreach my $relation (App::160::SQL::get_relations(
-					'db_name' => $App::210::db_name,
-					'l_prefix' => 'a210',
-					'l_table' => 'page',
-					'l_ID_entity' => $p->{'ID_entity'},
-					'r_prefix' => "a900",
-					'r_table' => "banner_cat",
-					'rel_type' => "link",
-					'status' => "Y"
-				))
-				{
-					main::_log("relation to $relation->{'r_ID_entity'}");
-					$env->{'banner_cat.ID_entity'}.=";".$relation->{'r_ID_entity'}.'*';
-				}
-			}
-		}
+		
 		main::_log("a210_page -> banner_cat.ID_entity='$env->{'banner_cat.ID_entity'}'");
 	}
 	
