@@ -151,7 +151,7 @@ sub execute
 				$env->{'banner_cat.ID_entity'}.=";".$relation->{'r_ID_entity'}.'*';
 				$found++;
 			}
-			last if ($found && $env{'a210.non_recursive'});
+			last if ($found && $env->{'a210.non_recursive'});
 		}
 		
 		main::_log("a210_page -> banner_cat.ID_entity='$env->{'banner_cat.ID_entity'}'");
