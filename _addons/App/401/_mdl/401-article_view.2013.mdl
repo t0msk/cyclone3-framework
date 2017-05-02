@@ -19,6 +19,8 @@ sub execute
 	$env{'article_attrs.status'}='Y' unless $env{'article_attrs.status'};
 	$env{'datetime_mode'}="present" unless $env{'datetime_mode'};
 	
+	$env{'world_status'}='Y' unless $env{'world_status'};
+	
 	my @sql_bind;
 	my $sql_where;
 	my $sql_changetime;
@@ -115,6 +117,11 @@ sub execute
 		}
 	}
 	
+	if ($env{'world_status'} eq 'Y')
+	{
+		$sql_where.=" AND (ACL_world.perm_R='Y' OR ACL_world.perm_R IS NULL) ";
+		$sql_where.=" AND (ACL_world_cat.perm_R='Y' OR ACL_world_cat.perm_R IS NULL) ";
+	}
 	
 	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
 	
@@ -229,9 +236,16 @@ sub execute
 		LEFT JOIN $App::401::db_name.a301_ACL_user_group AS ACL_world ON
 		(
 			ACL_world.ID_entity = 0 AND
-			r_prefix = 'a401' AND
-			r_table = 'article' AND
-			r_ID_entity = article.ID_entity
+			ACL_world.r_prefix = 'a401' AND
+			ACL_world.r_table = 'article' AND
+			ACL_world.r_ID_entity = article.ID_entity
+		)
+		LEFT JOIN $App::401::db_name.a301_ACL_user_group AS ACL_world_cat ON
+		(
+			ACL_world_cat.ID_entity = 0 AND
+			ACL_world_cat.r_prefix = 'a401' AND
+			ACL_world_cat.r_table = 'article_cat' AND
+			ACL_world_cat.r_ID_entity = article_cat.ID_entity
 		)
 		WHERE
 			article_ent.status = 'Y'
@@ -328,12 +342,12 @@ sub execute
 	push @{$env_out{'call'}{'H'}{'change_DOC_description'}},$doc_desc
 		if $env{'header.description'};
 	
-	if ($env{'header.og'} && $parser->{'thumbnail'}[0])
+	if ($env{'header.og'} && $parser_abstract->{'thumbnail'}[0])
 	{
-		if($parser->{'thumbnail'}[0])
+		if($parser_abstract->{'thumbnail'}[0])
 		{
 			my %image=App::501::functions::get_image_file(
-				'image.ID_entity' => $parser->{'thumbnail'}[0],
+				'image.ID_entity' => $parser_abstract->{'thumbnail'}[0],
 				'image_file.ID_format' => 2
 			);
 			push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $tom::H_a501.'/image/file/'.$image{'file_path'}};
