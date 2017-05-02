@@ -124,7 +124,7 @@ sub execute
 		);
 		main::_log("a210_page.ID_entity=$a210{'ID_entity'}");
 		
-		if ($env->{'a210.non_recursive'})
+		if ($env->{'a210.recurse_none'})
 		{
 			foreach my $relation (App::160::SQL::get_relations(
 				'db_name' => $App::210::db_name,
