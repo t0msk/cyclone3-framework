@@ -141,7 +141,8 @@ BEGIN
 	my $tomP=$tom::P;$tomP=~s|^(.*?)/[!_\.].*$|$1|;
 		$tomP=$TOM::P unless -d $tomP.'/_config';
 	$TOM::DP=$ENV{'CYCLONE3DOMAINPATH'} || $tomP;
-	$TOM::P_uuid=(stat($TOM::DP.'/_config'))[0].'.'.(stat($TOM::DP.'/_config'))[1];
+#	$TOM::P_uuid=(stat($TOM::DP.'/_config'))[0].'.'.(stat($TOM::DP.'/_config'))[1];
+	$TOM::P_uuid=(stat($TOM::DP.'/_config'))[1];
 	
 	# undef $tom::P if here is not domain service
 	$tom::P=$TOM::P unless -e $tom::P.'/local.conf';
@@ -166,17 +167,23 @@ BEGIN
 	# CONFIG
 	# configuration defined by software
 	require $TOM::P.'/.core/_config/TOM.conf';
+	push @main::mfiles, $TOM::P.'/.core/_config/TOM.conf';
 	# configuration defined by this installation ( server farm )
 	require $TOM::P.'/_config/TOM.conf';
 	if ($TOM::P ne $TOM::DP && -e $TOM::DP.'/_config/TOM.conf')
 	{
 		require $TOM::DP.'/_config/TOM.conf';
+		push @main::mfiles, $TOM::DP.'/_config/TOM.conf';
 	}
 	unshift @INC,$TOM::DP."/_addons"
 		if -e $TOM::DP.'/_addons';
 	
 	# configuration defined by this hostname ( one node in server farm )
-	require $TOM::P.'/_config/'.$TOM::hostname.'.conf' if -e $TOM::P.'/_config/'.$TOM::hostname.'.conf';
+	if (-e $TOM::P.'/_config/'.$TOM::hostname.'.conf')
+	{
+		require $TOM::P.'/_config/'.$TOM::hostname.'.conf';
+		push @main::mfiles, $TOM::P.'/_config/'.$TOM::hostname.'.conf';
+	}
 	# localized boolean of cache
 	$main::cache = $TOM::CACHE;
 	

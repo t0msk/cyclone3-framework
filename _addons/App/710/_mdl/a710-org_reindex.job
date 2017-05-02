@@ -1,0 +1,41 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+use JSON;
+use App::710::_init;
+
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	
+	if (!$tom::H)
+	{
+		main::_log("only running under domain",1);
+		return undef;
+	}
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			ID
+		FROM
+			$App::710::db_name.a710_org
+--		LIMIT 10
+	},'quiet'=>1);
+	my $i;
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$i++;
+		main::_log_stdout("[$i/$sth0{'rows'}] index org ID=$db0_line{'ID'}");
+		App::710::functions::_org_index('ID' => $db0_line{'ID'});
+	}
+	
+return 1}
+1;

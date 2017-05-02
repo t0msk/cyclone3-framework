@@ -4,6 +4,10 @@ use open ':utf8', ':std';
 use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
+use JSON;
+use Ext::Redis::_init;
+our $json = JSON->new->ascii->convert_blessed;
+our $jsonc = JSON->new->ascii->canonical;
 
 =head1 NAME
 
@@ -37,6 +41,7 @@ sub _connect
 	my $service_;
 	return undef unless $Ext::Elastic;
 	my $t=track TOM::Debug("Ext::Elastic::connect",'attrs_'=>$Ext::Redis::host);
+	push @{$Ext::Elastic->{'plugins'}}, 'cache';
 	if ($service_=Search::Elasticsearch->new($Ext::Elastic))
 	{
 		use Data::Dumper;
@@ -70,6 +75,7 @@ sub _connect
 }
 
 _connect(); # autoconnect
+
 
 # only for exporting symbols
 package Ext::Elastic::_init;

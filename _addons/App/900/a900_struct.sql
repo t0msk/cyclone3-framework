@@ -40,7 +40,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner` (
   `utm_campaign` varchar(128) character set ascii default NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
-  UNIQUE KEY `UNI_0` (`ID_entity`)
+  UNIQUE KEY `UNI_0` (`ID_entity`),
+  KEY `SEL_0` (`status`,`datetime_publish_start`,`datetime_publish_stop`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -178,7 +179,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_click` (
   `ID_browser_session` varchar(32) character set utf8 collate utf8_bin default NULL,
   `ID_banner` bigint(20) NOT NULL, -- rel to banner.ID_entity
   PRIMARY KEY  (`datetime_event`,`ID_user`,`ID_banner`),
-  KEY `SEL_0` (`ID_banner`,`datetime_event`)
+  KEY `SEL_0` (`ID_banner`,`datetime_event`),
+  KEY `SEL_1` (`ID_user`,`ID_banner`),
+  KEY `SEL_2` (`ID_session`,`ID_banner`),
+  KEY `SEL_3` (`ID_browser`,`ID_banner`),
+  KEY `SEL_4` (`ID_browser_session`,`ID_banner`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8; -- must be myisam because inserting with insert delayed
 
 -- --------------------------------------------------
@@ -254,7 +259,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_cat_j` (
 CREATE TABLE `/*db_name*/`.`/*addon*/_banner_rel_cat` (
   `ID_category` bigint(20) unsigned NOT NULL auto_increment, -- rel _banner_cat.ID_entity
   `ID_banner` bigint(20) unsigned NOT NULL, -- rel _banner.ID_entity,
-  PRIMARY KEY  (`ID_category`,`ID_banner`)
+  PRIMARY KEY  (`ID_category`,`ID_banner`),
+  KEY `SEL_0` (`ID_banner`,`ID_category`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
