@@ -123,8 +123,9 @@ sub execute
 			'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%sql_def)
 		);
 		main::_log("a210_page.ID_entity=$a210{'ID_entity'}");
+		
 		foreach my $p(
-			App::020::SQL::functions::tree::get_path(
+			reverse App::020::SQL::functions::tree::get_path(
 				$a210{'ID'},
 				%sql_def,
 				'columns' => { '*' => 1 },
@@ -134,6 +135,7 @@ sub execute
 		)
 		{
 			main::_log("relation from $p->{'ID_entity'}");
+			my $found = 0;
 			foreach my $relation (App::160::SQL::get_relations(
 				'db_name' => $App::210::db_name,
 				'l_prefix' => 'a210',
@@ -147,8 +149,11 @@ sub execute
 			{
 				main::_log("relation to $relation->{'r_ID_entity'}");
 				$env->{'banner_cat.ID_entity'}.=";".$relation->{'r_ID_entity'}.'*';
+				$found++;
 			}
+			last if ($found && $env->{'a210.non_recursive'});
 		}
+		
 		main::_log("a210_page -> banner_cat.ID_entity='$env->{'banner_cat.ID_entity'}'");
 	}
 	
