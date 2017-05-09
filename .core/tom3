@@ -3425,7 +3425,7 @@ while ($main::CGI=new CGI::Fast())
 #				")".
 #				"",3,"pub.bench",1) if $TOM::DEBUG_benchmark;
 		};
-		
+		Coro::cede;
 	}; # end of eval
 	
 	untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
