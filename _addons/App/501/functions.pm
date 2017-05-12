@@ -1235,7 +1235,7 @@ sub image_add
 		}
 		
 		# check if same image not already inserted
-		if (!$env{'image.ID_entity'} && !$env{'image.ID'} && $env{'check_duplicity'})
+		if (!$env{'image.ID_entity'} && !$env{'image.ID'} && $env{'check_duplicity'} && !$App::501::disable_deduplication)
 		{
 			# calculate sha1
 			open(CHKSUM,'<'.$env{'file'});
