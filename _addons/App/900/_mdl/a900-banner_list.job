@@ -691,7 +691,7 @@ sub execute
 		if ($env->{'click'} && $main::USRM{'ID_user'})
 		{
 			TOM::Database::SQL::execute(qq{
-				INSERT DELAYED INTO
+				INSERT IGNORE INTO
 					`$App::900::db_name`.a900_banner_click
 					(
 						ID_banner,
