@@ -79,14 +79,14 @@ sub execute
 	
 	my $already_something_removed;
 	
-	foreach my $indice (reverse sort @indices_list)
+	foreach my $indice (sort @indices_list)
 	{
 		# at first, search oldest entry
 		my $results = $Elastic->search(
 			'index' => $indice,
 			'type' => 'fluentd',
 			'body'  => {
-				'timeout' => 10000, # 10 seconds
+#				'timeout' => 10000, # 10 seconds
 				"size" => 1,
 				"aggregations" => {
 					"oldest" => {
@@ -158,7 +158,7 @@ sub execute
 			'index' => $indice,
 			'type' => 'fluentd',
 			'body'  => {
-				'timeout' => 10000, # 10 seconds
+#				'timeout' => 10000, # 10 seconds
 				
 				"size" => 0,
 				"aggregations" => {
@@ -170,14 +170,10 @@ sub execute
 					}
 				},
 				'query' => {
-					'filtered' => {
-						'filter' => {
-							'bool' => {
-								'must' => [
-									@filter
-								]
-							}
-						}
+					'bool' => {
+						'filter' => [
+							@filter
+						]
 					}
 				}
 			}
@@ -205,24 +201,20 @@ sub execute
 					'index'       => $indice,
 #					'search_type' => 'scan',
 					'size'        => 500,
-					'fields' => ['_id'],
+					'_source' => ['_id'],
 					'body'  => {
 						'query' => {
-							'filtered' => {
-								'filter' => {
-									'bool' => {
-										'must' => [
-											{"terms" => {"t" => ["cyclone3.".$type->{'key'}]}},
-											{
-												"range" => {
-													'@timestamp' => {
-														"lt" => 'now-'.$max_days.'d'
-													}
-												}
-											},@filter
-										]
-									}
-								}
+							'bool' => {
+								'filter' => [
+									{"terms" => {"t" => ["cyclone3.".$type->{'key'}]}},
+									{
+										"range" => {
+											'@timestamp' => {
+												"lt" => 'now-'.$max_days.'d'
+											}
+										}
+									},@filter
+								]
 							}
 						},
 					}
@@ -267,25 +259,21 @@ sub execute
 					'index'       => $indice,
 #					'search_type' => 'scan',
 					'size'        => 500,
-					'fields' => ['_id'],
+					'_source' => ['_id'],
 					'body'  => {
 						'query' => {
-							'filtered' => {
-								'filter' => {
-									'bool' => {
-										'must' => [
-											{"terms" => {"t" => ["cyclone3.".$type->{'key'}]}},
-											{"terms" => {"f" => [1]}},
-											{
-												"range" => {
-													'@timestamp' => {
-														"lt" => 'now-'.$max_days.'d'
-													}
-												}
-											},@filter
-										]
-									}
-								}
+							'bool' => {
+								'filter' => [
+									{"terms" => {"t" => ["cyclone3.".$type->{'key'}]}},
+									{"terms" => {"f" => [1]}},
+									{
+										"range" => {
+											'@timestamp' => {
+												"lt" => 'now-'.$max_days.'d'
+											}
+										}
+									},@filter
+								]
 							}
 						},
 					}
@@ -331,28 +319,24 @@ sub execute
 						'index'       => $indice,
 	#					'search_type' => 'scan',
 						'size'        => 500,
-						'fields' => ['_id'],
+						'_source' => ['_id'],
 						'body'  => {
 							'query' => {
-								'filtered' => {
-									'filter' => {
-										'bool' => {
-											'must' => [
-												{"terms" => {"t" => ["cyclone3.".$type->{'key'}]}},
-												{"range" => {"l" => {'gte' => $level}}},
-												{
-													"range" => {
-														'@timestamp' => {
-															"lt" => 'now-'.$max_days.'d'
-														}
-													}
-												},@filter
-											],
-											'must_not' => [
-												{"terms" => {"f" => [1]}},
-											]
-										}
-									}
+								'bool' => {
+									'filter' => [
+										{"terms" => {"t" => ["cyclone3.".$type->{'key'}]}},
+										{"range" => {"l" => {'gte' => $level}}},
+										{
+											"range" => {
+												'@timestamp' => {
+													"lt" => 'now-'.$max_days.'d'
+												}
+											}
+										},@filter
+									],
+									'must_not' => [
+										{"terms" => {"f" => [1]}},
+									]
 								}
 							},
 						}

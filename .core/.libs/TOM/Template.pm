@@ -986,6 +986,7 @@ sub process
 			'url_a501' => $tom::H_a501,
 			'url_a510' => $tom::H_a510,
 			'lng' => $tom::LNG, # default lng
+			'lang' => $tom::LANG, # default lang
 			'setup' => \%tom::setup
 		};
 		# request params

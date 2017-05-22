@@ -60,10 +60,7 @@ sub engine_pub
 {
 	my $var=join(". ",@_);$var=~s|[\n\r]| |g;
 	
-	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",1);
-	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4,"$TOM::engine.err");
-	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4,"$TOM::engine.err",2) if ($tom::H ne $tom::Hm);
-	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4,"$TOM::engine.err",1);
+	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4);
 	
 	my $URI_base=$tom::H_www;my $request_uri=$main::ENV{'REQUEST_URI'};$request_uri=~s|^$tom::rewrite_RewriteBase||;
 	
@@ -435,8 +432,8 @@ sub module_pub
 	TOM::Utils::vars::replace($box);
 	
 	$box=~s|<%MODULE%>|$env{-MODULE}|g;
-	$box=~s|<%ERROR%>|$env{-ERROR}| if ($main::IAdm || $tom::debug);
-	$box=~s|<%PLUS%>|$env{-PLUS}| if ($main::IAdm || $tom::debug);
+	$box=~s|<%ERROR%>|$env{-ERROR}| if $tom::devel;
+	$box=~s|<%PLUS%>|$env{-PLUS}| if $tom::devel;
 	$box=~s|<%.*?%>||g;
 	
 	main::_log(($env{'-ERROR'} || "unknown error in module")." ".$env{'-PLUS'}." ".$env{'-MODULE'},1);

@@ -20,6 +20,8 @@ BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 use File::Path;
 use XML::LibXML;
 use TOM::L10n::codes;
+use JSON;
+our $jsonc = JSON::XS->new->ascii->canonical;
 
 our $debug=$main::debug || 0;
 our $stats||=0;
@@ -83,9 +85,13 @@ sub new
 		$t->close() if $debug;
 		return undef;
 	}
-	$obj->{'uid'}=$obj->{'location'}.'/'.$env{'lng'};
+	$obj->{'location_id'}=$obj->{'uid'}=$obj->{'location'}.'/'.$env{'lng'};
 	
-#	main::_log("trying '$obj->{'uid'}' in mem=".do{if($objects{$obj->{'uid'}}){"1"}},3,"l10n");
+	# ignorelist is part of uid
+	$obj->{'uid'}.="/".TOM::Digest::hash($jsonc->encode($obj->{'ENV'}->{'ignore'}))
+		if $obj->{'ENV'}->{'ignore'};
+	
+	main::_log("trying '$obj->{'uid'}' in mem=".do{if($objects{$obj->{'uid'}}){"1"}},3,"l10n");
 	
 	if (!$objects{$obj->{'uid'}} && $TOM::CACHE_memcached && $main::cache)
 	{
@@ -126,7 +132,7 @@ sub new
 		$id++;$L10n::id{$obj->{'uid'}}=$id; # add unique number to every one object
 		$obj->{'id'}=$id;
 		# add this location into ignore list
-		push @{$obj->{'ENV'}->{'ignore'}}, $obj->{'uid'};
+		push @{$obj->{'ENV'}->{'ignore'}}, $obj->{'location_id'};
 		$obj->prepare_xml();
 		# save time of object creation (last-check time)
 		$obj->{'config'}->{'ctime'} = time();
@@ -301,12 +307,13 @@ sub parse_header
 			
 			main::_log("request to extend by level='$level' addon='$addon' name='$name' lng='$lng'") if $debug;
 			
+			my @ignore=@{$self->{'ENV'}{'ignore'}};
 			my $extend=new TOM::L10n(
 				'level' => $level,
 				'addon' => $addon,
 				'name' => $name,
 				'lng' => $lng,
-				'ignore' => $self->{'ENV'}{'ignore'},
+				'ignore' => \@ignore,
 			);
 			
 			# add entries from inherited L10n
