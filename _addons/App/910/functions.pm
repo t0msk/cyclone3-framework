@@ -2650,28 +2650,6 @@ sub _product_index
 			$product{'ratings'}->{'weighted'}->{'avg'} = $db1_line{'score'};
 		}
 		
-		my %sth1=TOM::Database::SQL::execute(qq{
-			SELECT
-				rating.datetime_rating
-			FROM
-				$App::910::db_name.a910_product_rating AS rating
-			WHERE
-				rating.status='Y'
-				AND length(rating.description) >= 10
-				AND rating.ID_product = ?
-			ORDER BY
-				rating.datetime_rating DESC
-			LIMIT 1
-		},'quiet'=>1,'bind'=>[$env{'ID'}]);
-		my %db1_line=$sth1{'sth'}->fetchhash();
-		if ($db1_line{'datetime_rating'})
-		{
-#			$db1_line{'datetime_rating'}=~s| (\d\d)|T$1|;
-#			$db1_line{'datetime_rating'}.="Z";
-			
-			$product{'ratings'}->{'last_datetime'} = $db1_line{'datetime_rating'};
-		}
-		
 		# rating in last 6months (not weighted)
 		if ($db1_line{'ratings'})
 		{
