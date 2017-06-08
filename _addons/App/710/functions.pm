@@ -726,11 +726,6 @@ sub _org_index
 			delete $org{$_} unless $org{$_};
 		}
 		
-		$org{'datetime_evidence'}=~s| (\d\d)|T$1|;$org{'datetime_evidence'}.="Z"
-			if $org{'datetime_evidence'};
-		delete $org{'datetime_evidence'}
-			if $org{'datetime_evidence'}=~/^0/;
-		
 		$org{'datetime_modified'}=~s| (\d\d)|T$1|;$org{'datetime_modified'}.="Z"
 			if $org{'datetime_modified'};
 		delete $org{'datetime_modified'}
@@ -813,7 +808,10 @@ sub _org_index
 				a710_org_rel_cat.ID_org,
 				a710_org_cat.ID_charindex,
 				a710_org_cat.ID AS cat_ID,
-				a710_org_cat.ID_entity AS cat_ID_entity
+				a710_org_cat.ID_entity AS cat_ID_entity,
+				a710_org_cat.name,
+				a710_org_cat.name_url,
+				a710_org_cat.lng
 			FROM
 				$App::710::db_name.a710_org_rel_cat
 			INNER JOIN $App::710::db_name.a710_org_cat ON
@@ -832,6 +830,14 @@ sub _org_index
 			
 			push @{$org{'cat_charindex'}},$db0_line{'ID_charindex'}
 				unless $used{$db0_line{'ID_charindex'}};
+			
+			push @{$org{'cat_name'}},$db0_line{'name'}
+				unless $used{$db0_line{'name'}};
+				
+			push @{$org{'cat_name_url'}},$db0_line{'name_url'}
+				unless $used{$db0_line{'name_url'}};
+				
+			push @{$org{'locale'}{$db0_line{'lng'}}{'cat_name'}}, $db0_line{'name'};
 			
 			my %sql_def=('db_h' => "main",'db_name' => $App::710::db_name,'tb_name' => "a710_org_cat");
 			foreach my $p(

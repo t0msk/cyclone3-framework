@@ -514,11 +514,13 @@ sub execute
 	
 	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
 	
+	my $sql_rows=($sql_limit=~/(\d+)$/)[0];
+	main::_log("datetime_interval=".$env{'datetime_interval'}." datetime_interval_retry=".$env{'datetime_interval_retry'}." row=".$sth0{'rows'}." sql_rows=".$sql_rows);
 	if ($env{'datetime_interval_retry'}
 		&& (!$sth0{'rows'} || 
 			(
-				$sql_limit=~/^\d+$/
-				&& ($sth0{'rows'} < $sql_limit)
+				$sql_limit=~/\d+$/
+				&& ($sth0{'rows'} < $sql_rows)
 			)
 		)
 	)
