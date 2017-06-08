@@ -91,7 +91,7 @@ sub new
 	$obj->{'uid'}.="/".TOM::Digest::hash($jsonc->encode($obj->{'ENV'}->{'ignore'}))
 		if $obj->{'ENV'}->{'ignore'};
 	
-	main::_log("trying '$obj->{'uid'}' in mem=".do{if($objects{$obj->{'uid'}}){"1"}},3,"l10n");
+#	main::_log("trying '$obj->{'uid'}' in mem=".do{if($objects{$obj->{'uid'}}){"1"}},3,"l10n");
 	
 	if (!$objects{$obj->{'uid'}} && $TOM::CACHE_memcached && $main::cache)
 	{
@@ -259,7 +259,7 @@ sub prepare_location
 	
 	if (!$self->{'location'})
 	{
-		main::_log("can't find location for L10n '".$self->{'ENV'}->{'name'}.".".$self->{'ENV'}->{'lng'}."' (L10n not exists, or already loaded as dependency)",1);
+#		main::_log("can't find location for L10n '".$self->{'ENV'}->{'name'}.".".$self->{'ENV'}->{'lng'}."' (L10n not exists, or already loaded as dependency)",1);
 		return undef;
 	}
 	else
