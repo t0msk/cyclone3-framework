@@ -2227,6 +2227,10 @@ sub _product_index
 					next;
 				}
 				
+				if ($product{'metahash'}{$sec}{$_}=~/^\d\d\d\d\-\d\d\-\d\d$/)
+				{
+					$product{'metahash'}{$sec}{$_.'_d'} = $product{'metahash'}{$sec}{$_};
+				}
 				if ($product{'metahash'}{$sec}{$_}=~/^[0-9]{1,9}$/)
 				{
 					$product{'metahash'}{$sec}{$_.'_i'} = $product{'metahash'}{$sec}{$_};
@@ -2266,7 +2270,12 @@ sub _product_index
 				unless $used{$db0_line{'name'}};
 			push @{$product{'full_name'}},$product{'brand_name'}.' '.$db0_line{'name'}
 				unless $used{$db0_line{'name'}};
-				
+			
+			delete $db0_line{'description'} unless $db0_line{'description'};
+			delete $db0_line{'description_short'} unless $db0_line{'description_short'};
+			delete $db0_line{'name_label'} unless $db0_line{'name_label'};
+			delete $db0_line{'keywords'} unless $db0_line{'keywords'};
+			
 			$used{$db0_line{'name'}}++;
 			%{$product{'locale'}{$db0_line{'lng'}}}=%db0_line;
 		}
