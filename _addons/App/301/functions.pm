@@ -82,6 +82,7 @@ sub user_add
 			LIMIT 1;
 		},'bind'=>[$env{'user.ID_user'}],'quiet'=>1);
 		%user=$sth0{'sth'}->fetchhash();
+		$env{'pass'}=$user{'pass'};
 	}
 	
 	if ($env{'user.login'} && !$env{'user.ID_user'})
@@ -99,6 +100,7 @@ sub user_add
 		},'bind'=>[$env{'user.login'},$env{'user.hostname'}],'quiet'=>1);
 		%user=$sth0{'sth'}->fetchhash();
 		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
+		$env{'pass'}=$user{'pass'};
 	}
 	
 	if ($env{'user.email'} && !$env{'user.ID_user'} && $App::301::email_unique)
@@ -116,6 +118,7 @@ sub user_add
 		},'bind'=>[$env{'user.email'},$env{'user.hostname'}],'quiet'=>1);
 		%user=$sth0{'sth'}->fetchhash();
 		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
+		$env{'pass'}=$user{'pass'};
 	}
 	
 	if ($env{'user.ref_facebook'} && !$env{'user.ID_user'})
