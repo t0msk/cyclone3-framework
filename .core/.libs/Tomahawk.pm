@@ -1095,6 +1095,11 @@ sub module_process_return_data
 			{
 				$main::H->change_DOC_description($env0,{'lng'=>$tom::lng});
 			}
+			# link
+			foreach my $env0(@{$return_data{'call'}{'H'}{'add_DOC_link'}})
+			{
+				$main::H->add_DOC_link(%{$env0});
+			}
 		}
 	}
 	
