@@ -109,7 +109,7 @@ $TOM::engine_ready=1;
 
 print color 'reset';
 
-if (!keys %main::arg)
+if (!keys %main::arg || exists $main::arg{'help'})
 {
 	print  qq{Cyclone3 SASS processor
 Usage: c3-sass [options]
