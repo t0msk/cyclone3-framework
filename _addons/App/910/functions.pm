@@ -3116,6 +3116,7 @@ sub _product_brand_index
 			$App::910::db_name.a910_product_brand
 		WHERE
 			status IN ('Y','L')
+			AND name != ''
 			AND ID=?
 	},'quiet'=>1,'bind'=>[$env{'ID'}]);
 	if (my %db0_line=$sth0{'sth'}->fetchhash())
@@ -3165,6 +3166,73 @@ sub _product_brand_index
 			$solr->delete_by_id($doc->value_for('id'));
 		}
 	}
+	
+	
+	$Elastic||=$Ext::Elastic::service;
+	if ($Elastic) # the new way in Cyclone3 :)
+	{
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				ID,
+				ID_entity,
+				name,
+				status
+			FROM
+				$App::910::db_name.a910_product_brand AS product_brand
+			WHERE
+				product_brand.status IN ('Y','N','L','W') AND
+				product_brand.name != '' AND
+				product_brand.ID=?
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		if (!$sth0{'rows'})
+		{
+			main::_log("product_brand.ID=$env{'ID'} not found as valid item");
+			if ($Elastic->exists(
+				'index' => 'cyclone3.'.$App::910::db_name,
+				'type' => 'a910_product_brand',
+				'id' => $env{'ID'}
+			))
+			{
+				main::_log("removing from Elastic");
+				$Elastic->delete(
+					'index' => 'cyclone3.'.$App::910::db_name,
+					'type' => 'a910_product_brand',
+					'id' => $env{'ID'}
+				);
+			}
+			$t->close();
+			return 1;
+		}
+		
+		my %product_brand=$sth0{'sth'}->fetchhash();
+		
+		my %log_date=main::ctogmdatetime(time(),format=>1);
+		
+		main::_log("index",{
+			'facility' => 'elastic',
+			'severity' => 3,
+			'data' => {
+				'action' => 'index',
+	#			'hostname' => $self->{'host_name'},
+				'index_s' => 'cyclone3.'.$App::910::db_name,
+				'type_s' => 'a910_product_brand',
+				'ID_s' => $env{'ID'}
+			}
+		});
+		
+		$Elastic->index(
+			'index' => 'cyclone3.'.$App::910::db_name,
+			'type' => 'a910_product_brand',
+			'id' => $env{'ID'},
+			'body' => {
+				%product_brand,
+				'_datetime_index' => 
+					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
+					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.'Z'
+			}
+		);
+	}
+	
 	
 	$t->close();
 }
