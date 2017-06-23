@@ -2766,72 +2766,180 @@ sub _product_cat_index
 {
 	my %env=@_;
 	return undef unless $env{'ID'};
-	return undef unless $Ext::Solr;
 	
 	my $t=track TOM::Debug(__PACKAGE__."::_product_cat_index()",'timer'=>1);
 	
-	my $solr = Ext::Solr::service();
-	
-	my %content;
-	
-	my %sth0=TOM::Database::SQL::execute(qq{
-		SELECT
-			*
-		FROM
-			$App::910::db_name.a910_product_cat
-		WHERE
-			status IN ('Y','L')
-			AND ID=?
-	},'quiet'=>1,'bind'=>[$env{'ID'}]);
-	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	if ($Ext::Solr && ($env{'solr'} || not exists $env{'solr'}))
 	{
-		main::_log("found");
+		my $solr = Ext::Solr::service();
 		
-		my $id=$App::910::db_name.".a910_product_cat.".$db0_line{'lng'}.".".$db0_line{'ID'};
-		main::_log("index id='$id'");
+		my %content;
 		
-		my $doc = WebService::Solr::Document->new();
-		
-		$db0_line{'description'}=~s|<.*?>||gms;
-		$db0_line{'description'}=~s|&nbsp;| |gms;
-		$db0_line{'description'}=~s|  | |gms;
-		
-		$db0_line{'datetime_create'}=~s| (\d\d)|T$1|;
-		$db0_line{'datetime_create'}.="Z";
-		
-		
-		$doc->add_fields((
-			WebService::Solr::Field->new( 'id' => $id ),
-			
-			WebService::Solr::Field->new( 'name' => $db0_line{'name'} ),
-			WebService::Solr::Field->new( 'name_partial' => $db0_line{'name'} ),
-			WebService::Solr::Field->new( 'name_t' => $db0_line{'name'} ),
-			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
-			WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
-			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
-			
-			WebService::Solr::Field->new( 'description' => $db0_line{'description'} ),
-			
-			WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_create'} ),
-			
-			WebService::Solr::Field->new( 'db_s' => $App::910::db_name ),
-			WebService::Solr::Field->new( 'addon_s' => 'a910_product_cat' ),
-			WebService::Solr::Field->new( 'lng_s' => $db0_line{'lng'} ),
-			WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
-			WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
-			do {if ($db0_line{'alias_name'}){WebService::Solr::Field->new( 'alias_name_s' => $db0_line{'alias_name'} )}},
-		));
-		
-		$solr->add($doc);
-	}
-	else
-	{
-		main::_log("not found active ID",1);
-		my $response = $solr->search( "id:".$App::910::db_name.".a910_product_cat.* AND ID_i:$env{'ID'}" );
-		for my $doc ( $response->docs )
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				$App::910::db_name.a910_product_cat
+			WHERE
+				status IN ('Y','L')
+				AND ID=?
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
-			$solr->delete_by_id($doc->value_for('id'));
+			main::_log("found");
+			
+			my $id=$App::910::db_name.".a910_product_cat.".$db0_line{'lng'}.".".$db0_line{'ID'};
+			main::_log("index id='$id'");
+			
+			my $doc = WebService::Solr::Document->new();
+			
+			$db0_line{'description'}=~s|<.*?>||gms;
+			$db0_line{'description'}=~s|&nbsp;| |gms;
+			$db0_line{'description'}=~s|  | |gms;
+			
+			$db0_line{'datetime_create'}=~s| (\d\d)|T$1|;
+			$db0_line{'datetime_create'}.="Z";
+			
+			
+			$doc->add_fields((
+				WebService::Solr::Field->new( 'id' => $id ),
+				
+				WebService::Solr::Field->new( 'name' => $db0_line{'name'} ),
+				WebService::Solr::Field->new( 'name_partial' => $db0_line{'name'} ),
+				WebService::Solr::Field->new( 'name_t' => $db0_line{'name'} ),
+				WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
+				WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
+				WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
+				
+				WebService::Solr::Field->new( 'description' => $db0_line{'description'} ),
+				
+				WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_create'} ),
+				
+				WebService::Solr::Field->new( 'db_s' => $App::910::db_name ),
+				WebService::Solr::Field->new( 'addon_s' => 'a910_product_cat' ),
+				WebService::Solr::Field->new( 'lng_s' => $db0_line{'lng'} ),
+				WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
+				WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
+				do {if ($db0_line{'alias_name'}){WebService::Solr::Field->new( 'alias_name_s' => $db0_line{'alias_name'} )}},
+			));
+			
+			$solr->add($doc);
 		}
+		else
+		{
+			main::_log("not found active ID",1);
+			my $response = $solr->search( "id:".$App::910::db_name.".a910_product_cat.* AND ID_i:$env{'ID'}" );
+			for my $doc ( $response->docs )
+			{
+				$solr->delete_by_id($doc->value_for('id'));
+			}
+		}
+	}
+	
+	$Elastic||=$Ext::Elastic::service;
+	if ($Elastic) # the new way in Cyclone3 :)
+	{
+		my %product_cat=App::020::SQL::functions::get_ID(
+			'ID' => $env{'ID'},
+			'db_h' => "main",
+			'db_name' => $App::910::db_name,
+			'tb_name' => "a910_product_cat",
+			'columns' => {'*'=>1}
+		);
+		if (!$product_cat{'ID'})
+		{
+			$t->close();
+			return 1;
+		}
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				ID_entity
+			FROM
+				$App::910::db_name.a910_product_cat AS product_cat
+			WHERE
+				product_cat.status IN ('Y','N','L','W') AND
+				product_cat.ID_entity=?
+			LIMIT 1
+		},'quiet'=>1,'bind'=>[$product_cat{'ID_entity'}]);
+		if (!$sth0{'rows'})
+		{
+			main::_log("product_brand.ID=$product_cat{'ID_entity'} not found as valid item");
+			if ($Elastic->exists(
+				'index' => 'cyclone3.'.$App::910::db_name,
+				'type' => 'a910_product_cat',
+				'id' => $product_cat{'ID_entity'}
+			))
+			{
+				main::_log("removing from Elastic");
+				$Elastic->delete(
+					'index' => 'cyclone3.'.$App::910::db_name,
+					'type' => 'a910_product_cat',
+					'id' => $product_cat{'ID_entity'}
+				);
+			}
+			$t->close();
+			return 1;
+		}
+		
+		my %product_cat=$sth0{'sth'}->fetchhash();
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				ID,
+				name,
+				alias_name,
+				lng
+			FROM
+				$App::910::db_name.a910_product_cat AS product_cat
+			WHERE
+				product_cat.status IN ('Y','L') AND
+				product_cat.ID_entity=?
+		},'quiet'=>1,'bind'=>[$product_cat{'ID_entity'}]);
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			if ($db0_line{'alias_name'})
+			{
+				$db0_line{'name'}=[
+					$db0_line{'name'},
+					$db0_line{'alias_name'}
+				];
+				delete $db0_line{'alias_name'};
+			}
+			else
+			{
+				$db0_line{'name'}=[
+					$db0_line{'name'}
+				];
+			}
+			%{$product_cat{'locale'}{$db0_line{'lng'}}}=%db0_line;
+		}
+		
+		my %log_date=main::ctogmdatetime(time(),format=>1);
+		
+		main::_log("index",{
+			'facility' => 'elastic',
+			'severity' => 3,
+			'data' => {
+				'action' => 'index',
+	#			'hostname' => $self->{'host_name'},
+				'index_s' => 'cyclone3.'.$App::910::db_name,
+				'type_s' => 'a910_product_cat',
+				'ID_entity_s' => $product_cat{'ID_entity'}
+			}
+		});
+		
+		$Elastic->index(
+			'index' => 'cyclone3.'.$App::910::db_name,
+			'type' => 'a910_product_cat',
+			'id' => $product_cat{'ID_entity'},
+			'body' => {
+				%product_cat,
+				'_datetime_index' => 
+					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
+					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.'Z'
+			}
+		);
 	}
 	
 	$t->close();
@@ -3101,72 +3209,73 @@ sub _product_brand_index
 	TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'fifo'});
 	my %env=@_;
 	return undef unless $env{'ID'};
-	return undef unless $Ext::Solr;
 	
 	my $t=track TOM::Debug(__PACKAGE__."::_product_brand_index()",'timer'=>1);
 	
-	my $solr = Ext::Solr::service();
-	
-	my %content;
-	
-	my %sth0=TOM::Database::SQL::execute(qq{
-		SELECT
-			*
-		FROM
-			$App::910::db_name.a910_product_brand
-		WHERE
-			status IN ('Y','L')
-			AND name != ''
-			AND ID=?
-	},'quiet'=>1,'bind'=>[$env{'ID'}]);
-	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	if ($Ext::Solr && ($env{'solr'} || not exists $env{'solr'}))
 	{
-		main::_log("found '$db0_line{'name'}'");
+		my $solr = Ext::Solr::service();
 		
-		my $id=$App::910::db_name.".a910_product_brand.en.".$db0_line{'ID'};
-		main::_log("index id='$id'");
+		my %content;
 		
-		my $doc = WebService::Solr::Document->new();
-		
-#		$db0_line{'description'}=~s|<.*?>||gms;
-#		$db0_line{'description'}=~s|&nbsp;| |gms;
-#		$db0_line{'description'}=~s|  | |gms;
-		
-		$db0_line{'datetime_create'}=~s| (\d\d)|T$1|;
-		$db0_line{'datetime_create'}.="Z";
-		
-		
-		$doc->add_fields((
-			WebService::Solr::Field->new( 'id' => $id ),
-			
-			WebService::Solr::Field->new( 'name' => $db0_line{'name'} ),
-			WebService::Solr::Field->new( 'name_t' => $db0_line{'name'} ),
-			WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
-			WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
-			
-#			WebService::Solr::Field->new( 'description' => $db0_line{'description'} ),
-			
-			WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_create'} ),
-			
-			WebService::Solr::Field->new( 'db_s' => $App::910::db_name ),
-			WebService::Solr::Field->new( 'addon_s' => 'a910_product_brand' ),
-			WebService::Solr::Field->new( 'lng_s' => 'en' ),
-			WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
-			WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
-		));
-		
-		$solr->add($doc);
-	}
-	else
-	{
-		main::_log("not found active ID",1);
-		my $response = $solr->search( "id:".$App::910::db_name.".a910_product_brand.* AND ID_i:$env{'ID'}" );
-		for my $doc ( $response->docs )
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				$App::910::db_name.a910_product_brand
+			WHERE
+				status IN ('Y','L')
+				AND name != ''
+				AND ID=?
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
-			$solr->delete_by_id($doc->value_for('id'));
+			main::_log("found '$db0_line{'name'}'");
+			
+			my $id=$App::910::db_name.".a910_product_brand.en.".$db0_line{'ID'};
+			main::_log("index id='$id'");
+			
+			my $doc = WebService::Solr::Document->new();
+			
+	#		$db0_line{'description'}=~s|<.*?>||gms;
+	#		$db0_line{'description'}=~s|&nbsp;| |gms;
+	#		$db0_line{'description'}=~s|  | |gms;
+			
+			$db0_line{'datetime_create'}=~s| (\d\d)|T$1|;
+			$db0_line{'datetime_create'}.="Z";
+			
+			
+			$doc->add_fields((
+				WebService::Solr::Field->new( 'id' => $id ),
+				
+				WebService::Solr::Field->new( 'name' => $db0_line{'name'} ),
+				WebService::Solr::Field->new( 'name_t' => $db0_line{'name'} ),
+				WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} || ''),
+				WebService::Solr::Field->new( 'title' => $db0_line{'name'} ),
+				
+	#			WebService::Solr::Field->new( 'description' => $db0_line{'description'} ),
+				
+				WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_create'} ),
+				
+				WebService::Solr::Field->new( 'db_s' => $App::910::db_name ),
+				WebService::Solr::Field->new( 'addon_s' => 'a910_product_brand' ),
+				WebService::Solr::Field->new( 'lng_s' => 'en' ),
+				WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
+				WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
+			));
+			
+			$solr->add($doc);
+		}
+		else
+		{
+			main::_log("not found active ID",1);
+			my $response = $solr->search( "id:".$App::910::db_name.".a910_product_brand.* AND ID_i:$env{'ID'}" );
+			for my $doc ( $response->docs )
+			{
+				$solr->delete_by_id($doc->value_for('id'));
+			}
 		}
 	}
-	
 	
 	$Elastic||=$Ext::Elastic::service;
 	if ($Elastic) # the new way in Cyclone3 :)
