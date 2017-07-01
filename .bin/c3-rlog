@@ -726,8 +726,8 @@ my $last_timestamp;
 my $last_o;
 
 while (1){
+	print Dumper($search_config) if $main::arg{'v'};
 	$results = $Elastic->search($search_config);
-	
 	if (!$results->{'hits'}->{'total'} && !$main::arg{'tail'})
 	{
 		my $results = $Elastic->search(
@@ -788,8 +788,8 @@ my $src_t_last;
 foreach my $line (sort {
 	if ($main::arg{'ch'})
 	{
-		$a->{'_source'}->{'h'} cmp $b->{'_source'}->{'h'} ||
-		$a->{'_source'}->{'d'} cmp $b->{'_source'}->{'d'} ||
+#		$a->{'_source'}->{'h'} cmp $b->{'_source'}->{'h'} ||
+#		$a->{'_source'}->{'d'} cmp $b->{'_source'}->{'d'} ||
 #		$a->{'_source'}->{'t'} cmp $b->{'_source'}->{'t'} ||
 		$a->{'_source'}->{'@timestamp'} cmp $b->{'_source'}->{'@timestamp'} ||
 		$a->{'_source'}->{'o'} <=> $b->{'_source'}->{'o'}
