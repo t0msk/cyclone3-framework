@@ -3109,6 +3109,7 @@ while ($main::CGI=new CGI::Fast())
 			print "C3-Devel-a210: ".$main::a210{'ID'}."\n" if $main::a210{'ID'};
 			print "C3-Devel-a210_path: ".$main::FORM{'a210_path'}."\n" if $main::FORM{'a210_path'};
 			print "C3-Devel-a210_name: ".$main::FORM{'a210_name'}."\n" if $main::FORM{'a210_name'};
+			print "C3-Devel-branch: ".$tom::devel_branch."\n" if $tom::devel_branch;
 		}
 		print "C3-Domain: $tom::H\n";
 			my $date = DateTime->now('time_zone' => 'local');
