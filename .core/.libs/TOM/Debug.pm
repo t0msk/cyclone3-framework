@@ -101,4 +101,64 @@ sub _obsolete_func
 }
 
 
+package TOM::Debug::hash;
+
+sub TIEHASH
+{
+	my $class = shift;
+	my ($package, $filename, $line) = caller;
+	main::_log("TIE-TIEHASH from $filename:$line");
+	return bless {}, $class;
+}
+
+sub DESTROY
+{
+	my $self = shift;
+	my ($package, $filename, $line) = caller;
+	
+	main::_log("TIE-DESTROY from $filename:$line",3,"a301");
+	
+	return undef;
+}
+
+sub FETCH
+{
+	my ($self,$key) = @_;
+	return $self->{$key};
+}
+
+sub DELETE
+{
+	my ($self,$key) = @_;
+	delete $self->{$key};
+	return 1;
+}
+
+sub STORE
+{
+	my ($self,$key,$value)=@_;
+	my ($package, $filename, $line) = caller;
+	main::_log("TIE-STORE change key '$key' to value '$value' from $filename:$line");
+	$self->{$key}=$value;
+}
+
+sub CLEAR
+{
+	my $self=shift;
+	%$self=();
+}
+
+sub FIRSTKEY
+{
+	my $self=shift;
+	scalar keys %$self;
+	return scalar each %$self;
+}
+
+sub NEXTKEY
+{
+	my $self=shift;
+	return scalar each %$self;
+}
+
 1;
