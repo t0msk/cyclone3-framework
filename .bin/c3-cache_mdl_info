@@ -1,0 +1,175 @@
+#!/usr/bin/perl
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use Data::Dumper;
+use Term::ANSIColor;
+use DateTime;
+
+BEGIN
+{
+	$TOM::engine='cli';
+	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
+#	$main::stdout=0 unless $ENV{'CYCLONE3DEBUG'};
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM"; # obsolete
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+}
+END {use Inline;$SIG{__WARN__} = sub {};}
+
+our $argv=join " ",@ARGV;
+
+our $job_file;
+if ($ARGV[0] && not($ARGV[0]=~/^\-/)) # direct link to job file
+{
+	$job_file=$ARGV[0];
+	delete $ARGV[0];
+}
+
+our %arg;
+foreach my $key(@ARGV)
+{
+	$key=~s/^\-\-// && do
+	{
+		my @ref=split('=',$key,2);
+		$ref[1]=1 unless exists $ref[1];
+		if (ref($main::arg{$ref[0]}) eq "ARRAY")
+		{
+			push @{$main::arg{$ref[0]}},$ref[1];
+		}
+		elsif ($main::arg{$ref[0]})
+		{
+			my $oldval=$main::arg{$ref[0]};
+			delete $main::arg{$ref[0]};
+			$main::arg{$ref[0]}=[
+				$oldval,
+				$ref[1]
+			];
+		}
+		else
+		{
+			$main::arg{$ref[0]}=$ref[1];
+		}
+		next;
+	};
+	$key=~s/^\-// && do
+	{
+		foreach (split('',$key)){$main::arg{$_}++;}
+	};
+}
+
+
+if ($main::arg{'v'} >= 2)
+{
+#	$main::stdout=1;
+	$main::debug=1;# if ($main::arg{'v'} >= 2);
+#	delete $main::arg{'v'};
+}
+
+if ($main::arg{'domain'})
+{
+	$main::arg{'domain'}=~s|^www\.||i;
+	$main::h=$main::arg{'domain'};$main::h=~s|\.|_|g;$main::h=~s|/|__|g;
+	
+	my $path=$main::arg{'domain'};$path=~s|^(.[^/]*)(.*)||;
+	my $path_dom=$1;my $path_sub=$2;
+	$path_dom=~s|(.*\.\|)(.*?\..*?)$|$1|;
+	$tom::p="!$2";$path_dom=~s|\.$||;
+	
+	foreach (reverse split('\.',$path_dom)){$tom::p.="/!$_";}
+	foreach (split('/',$path_sub)){$tom::p.="/$_";}
+	
+	$tom::p=~s|//|/|g;
+	$tom::p=$ENV{'CYCLONE3PATH'}."/".$tom::p;
+	
+	$tom::P=$tom::p;
+	delete $main::arg{'domain'};
+}
+
+require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
+require TOM::Engine::job;
+$0.=" ".$argv if $argv;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+use vars qw//;
+
+package main;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+use Cwd 'abs_path';
+require Ext::Redis::_init;
+
+$TOM::engine_ready=1;
+
+print color 'reset';
+
+if (exists $main::arg{'help'})
+{
+	print  qq{Cyclone3 cache debug info
+Usage: c3-cache_debug
+};
+	exit;
+}
+
+our $Redis=$Ext::Redis::service;
+
+foreach my $cache_type (sort @{$Redis->smembers('C3|debug|mdl_caches|'.$tom::H)})
+{
+	my $cache_type_name=$cache_type;
+		$cache_type_name=~s|^.*?:||;
+#	print $cache_type_name."\n";
+	my $caches;
+	my $caches_real;
+	my $caches_hits;
+	my $caches_live;
+	foreach my $cache_member (@{$Redis->smembers($cache_type)})
+	{
+		$caches++;
+		
+		if (!$Redis->exists($cache_member))
+		{
+			$Redis->srem($cache_type, $cache_member, sub{});
+			next;
+		}
+		
+		$caches_real++;
+		
+		my $cache_time_from=$Redis->hget($cache_member,'time_from');
+			$caches_live+=(time()-$cache_time_from);
+		my $cache_hits=$Redis->hget($cache_member,'hits');
+		
+		$caches_hits+=$cache_hits;
+		
+#		print " ".$cache_member." from:".$cache_time_from." hits:".$cache_hits."\n";
+		
+#		my $cache={
+#			@{$Redis->hget($cache_member)}
+#		};
+#		print Dumper($cache);
+		
+#		print " ".$cache_member."\n";
+		
+	}
+	
+	# this cache type is dead
+	$Redis->srem('C3|debug|mdl_caches|'.$tom::H, $cache_type, sub{})
+		unless $caches_real;
+	next unless $caches_real;
+	
+	print $cache_type_name."\n";
+	print " crt:".$caches_real
+		." hits:".$caches_hits
+		." effectivity:".(int(($caches_hits/$caches_real)*10)/10)
+		." live:".int($caches_live/$caches_real)."s"
+		."\n";
+}
+
+print "\n";
+1;

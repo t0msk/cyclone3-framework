@@ -292,7 +292,6 @@ sub GetCACHE_CONF
 sub module
 {
 	local %mdl_env=@_;
-#	$mdl_env{'-cache'} if $mdl_env{'-cache_id'};
 	if (exists $mdl_env{'-category'}){$mdl_env{'-addon'}="a".$mdl_env{'-category'}}; # backward compatibility
 	$mdl_env{'-addon_type'}='App' if $mdl_env{'-addon'}=~/^a/;
 	$mdl_env{'-addon_type'}='Ext' if $mdl_env{'-addon'}=~/^e/;
@@ -348,7 +347,12 @@ sub module
 	$mdl_C{'-xlng_global'}=0 unless $mdl_C{'-xlng_global'};
 	# nastavit default alarmu ak nevyzadujem zmenu alebo nieje povolena zmena
 	$mdl_C{'-ALRM'}=$TOM::ALRM_mdl if ((not exists $mdl_C{'-ALRM'})||(!$TOM::ALRM_change));
-	if ((exists $mdl_C{'-cache_id'})&&(!$mdl_C{'-cache_id'})){$mdl_C{'-cache_id'}="0"}
+	if ($mdl_C{'-cache_id'} && !$mdl_C{'-cache'})
+	{
+		main::_log("parameter -cache_id is obsolete, use -cache to configure instead",1);
+	}
+	if ((exists $mdl_C{'-cache'})&&(!$mdl_C{'-cache'})){$mdl_C{'-cache'}=$TOM::CACHE_time."s"};
+	if ((exists $mdl_C{'-cache_id'})&&(!$mdl_C{'-cache_id'})){$mdl_C{'-cache_id'}="0"};
 	
 	my $file_data;
 	
@@ -366,8 +370,8 @@ sub module
 	# POZIADAVKA NA VOBEC CACHOVANIE, TAK SA TOMU VENUJEM
 	if ((exists $mdl_C{'-cache_id'} || $mdl_C{'-cache'})&&($TOM::CACHE))
 	{
-		$mdl_C{'-cache_id_sub'}="0" unless $mdl_C{'-cache_id_sub'};
-		$mdl_C{'-cache_id'}||=$mdl_C{'-cache'} || "0"; # ak je vstup s cache_id ale nieje 0
+		$mdl_C{'-cache'}||=$TOM::CACHE_time."s";
+		$mdl_C{'-cache_id'}||="0"; # ak je vstup s cache_id ale nieje 0
 		$cache_domain=$tom::H unless $mdl_C{'-cache_master'};
 		
 		my $null;
@@ -377,38 +381,26 @@ sub module
 		}}
 		foreach (sort keys %mdl_C){next if $_ eq "-cache_debug";$null.=$_."=\"".$mdl_C{$_}."\"\n";}
 		
-		$mdl_C{'-md5'}=TOM::Digest::hash($null);
-		main::_log("cache md5='".$mdl_C{'-md5'}."' from string ".$null) if $debug;
+		$mdl_C{'-digest'}=TOM::Digest::hash($null);
+		main::_log("cache digest='".$mdl_C{'-digest'}."' from string ".$null) if $debug;
 		
 		# NAZOV PRE TYP CACHE V KONFIGURAKU
-		$mdl_C{'T_CACHE'}=$mdl_C{'-addon'}."-".$mdl_C{'-name'}."-".$mdl_C{'-cache_id'};
+		$mdl_C{'T_CACHE'}=$mdl_C{'-addon'}."-".$mdl_C{'-name'}."-".$mdl_C{'-cache_id'}."-".$mdl_C{'-cache'};
 		
 		my $cache;
 		my $cache_parallel;
+		my $cache_key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
 		
 		if ($Redis)
 		{
 			# get from Redis
-			my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
 			$cache={
-				@{$Redis->hgetall($key)}
+				@{$Redis->hgetall($cache_key)}
 			};
 			$cache->{'return_data'}=$json->decode($cache->{'return_data'})
 				if $cache->{'return_data'};
 			$cache->{'return_data'}={} unless $cache->{'return_data'};
 			$cache_parallel=$cache->{'etime'};
-		}
-		elsif ($TOM::CACHE_memcached)
-		{
-			main::_log("memcached: reading '".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}."'") if $debug;
-			$cache=$Ext::CacheMemcache::cache->get(
-				'namespace' => "mcache",
-				'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
-			);
-			$cache_parallel=$Ext::CacheMemcache::cache->get(
-				'namespace' => "mcache_parallel",
-				'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
-			);
 		}
 		else
 		{
@@ -433,72 +425,30 @@ sub module
 		# VYPOCITAM STARIE CACHE
 		$mdl_C{'-cache_old'}=$tom::time_current-$mdl_C{'-cache_from'};
 		
-		# nevlozil uz nahodou data o tejto cache druhy proces?
-		if (not exists $CACHE{$mdl_C{'T_CACHE'}}){GetCACHE_CONF();}
+		# a definujem dlzku cache priamo z typecka
+		if ($mdl_C{'-cache'}=~/^(\d+)D$/i)
+		{
+			$mdl_C{'-cache_time'}=86400*$1;
+		}
+		elsif ($mdl_C{'-cache'}=~/^(\d+)H$/i)
+		{
+			$mdl_C{'-cache_time'}=3600*$1;
+		}
+		elsif ($mdl_C{'-cache'}=~/^(\d+)M$/i)
+		{
+			$mdl_C{'-cache_time'}=60*$1;
+		}
+		elsif ($mdl_C{'-cache'}=~/^(\d+)S$/i)
+		{
+			$mdl_C{'-cache_time'}=$1;
+		}
+		else
+		{
+			$mdl_C{'-cache_time'}=$mdl_C{'-cache'};
+		}
 		
-		# neexistuje konfiguracia tohto typu cache
-		if ((not exists $CACHE{$mdl_C{'T_CACHE'}}) && $mdl_C{'-cache'})
-		{
-			# a definujem dlzku cache priamo z typecka
-			if ($mdl_C{'-cache'}=~/^(\d+)D$/i)
-			{
-				$mdl_C{'-cache_time'}=86400*$1;
-			}
-			elsif ($mdl_C{'-cache'}=~/^(\d+)H$/i)
-			{
-				$mdl_C{'-cache_time'}=3600*$1;
-			}
-			elsif ($mdl_C{'-cache'}=~/^(\d+)M$/i)
-			{
-				$mdl_C{'-cache_time'}=60*$1;
-			}
-			elsif ($mdl_C{'-cache'}=~/^(\d+)S$/i)
-			{
-				$mdl_C{'-cache_time'}=$1;
-			}
-			else
-			{
-				$mdl_C{'-cache_time'}=$mdl_C{'-cache'};
-			}
-			$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}=$mdl_C{'-cache_time'};
-		}
-		elsif (not exists $CACHE{$mdl_C{'T_CACHE'}})
-		{
-			$mdl_C{'-cache_time'}=$TOM::CACHE_time unless $mdl_C{'-cache_time'};
-			$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}=$mdl_C{'-cache_time'};
-			
-			# TERAZ SPRAVIM INSERT DO DATABAZY   
-			main::_log("sqlcache: insert config $mdl_C{T_CACHE} s -cache_time $mdl_C{-cache_time}",0,"pub.cache");
-			
-			$main::DB{'sys'}->Query("
-				INSERT INTO TOM.a150_config
-				(
-					domain,
-					domain_sub,
-					engine,
-					Capp,
-					Cmodule,
-					Cid,
-					time_insert,
-					time_use,
-					time_duration,
-					about
-				)
-				VALUES
-				(
-					'$tom::Hm',
-					'$cache_domain',
-					'pub',
-					'$mdl_C{-addon}',
-					'$mdl_C{-name}',
-					'$mdl_C{-cache_id}',
-					'$main::time_current',
-					'$main::time_use',
-					'$mdl_C{-cache_time}',
-					'RQS! - from TID:$main::FORM{TID} on $tom::time_current'
-				)
-			");
-		}
+		# config object
+		$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}=$mdl_C{'-cache_time'};
 		
 		# v tomto requeste je cache ignorovana
 		if (!$main::cache)
@@ -528,7 +478,7 @@ sub module
 			}
 		}
 		
-		main::_log("cache info md5:$mdl_C{-md5} old:$mdl_C{-cache_old}S duration:$mdl_C{-cache_duration}S from:$mdl_C{-cache_from}S to:$mdl_C{-cache_to}S") if $debug;
+		main::_log("cache info digest:$mdl_C{-digest} old:$mdl_C{-cache_old}S duration:$mdl_C{-cache_duration}S from:$mdl_C{-cache_from}S to:$mdl_C{-cache_to}S") if $debug;
 		
 		if(
 			(
@@ -563,38 +513,23 @@ sub module
 		)
 		# TAK TUTO CACHE POUZIJEM
 		{
-			main::_log("using cache domain:$cache_domain from:$mdl_C{'-cache_from'}s old:".int($mdl_C{'-cache_old'})."s ".
-				"max:".$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}."s ".
-				"est:".int($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}-$mdl_C{'-cache_old'})."s ".
+			main::_log("load cache from:$mdl_C{'-cache_from'}s old:".int($mdl_C{'-cache_old'})."s ".
+				"durr:".$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}."s ".
+				"est.:".int($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}-$mdl_C{'-cache_old'})."s ".
 				"hits:".$cache->{'hits'}." ".
-				"parallel?:".$cache_parallel
-				);
+				"parallel?:".$cache_parallel." ".
+				"object:".$cache_key
+			);
 			
 			if ($TOM::DEBUG_cache)
 			{
 				my $hits;
 				if ($Redis)
 				{
-#					my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
-#					$hits=$Redis->hincrby($key,'hits',1);
-					
 					my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
-		#			$Redis->hincrby('C3|counters|mdl_cache|'.$date_str,'crt',1,sub{});
 					$Redis->hincrby('C3|counters|mdl_cache|'.$date_str,'hit',1,sub{});
 					$Redis->expire('C3|counters|mdl_cache|'.$date_str,3600,sub{});
-					
-#					main::_log("mdl hit '$date_str'");
-				}
-				else
-				{
-					$Ext::CacheMemcache::cache->incr(
-						'namespace' => "mcache_hits",
-						'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
-					);
-					$hits=$Ext::CacheMemcache::cache->get(
-						'namespace' => "mcache_hits",
-						'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}
-					);
+					$Redis->hincrby($cache_key,'hits',1,sub{});
 				}
 #				$hits=1 unless $hits;
 #				my $hpm=0;
@@ -616,7 +551,7 @@ sub module
 					." u='".$TOM::P_uuid."'"
 					." h='".$TOM::hostname."'"
 					." d='".int($mdl_C{'-cache_old'})."s'"
-					." id='".$mdl_C{'-md5'}."'"
+					." id='".$mdl_C{'-digest'}."'"
 					." -->\n"
 					.$file_data
 					."<!-- /mdl -->\n";
@@ -754,18 +689,18 @@ sub module
 		POSIX::sigaction(&POSIX::SIGALRM, $action_die);
 		Time::HiRes::alarm($mdl_C{'-ALRM'});
 		
-		if (exists $mdl_C{'-cache_id'} && $TOM::CACHE)
+		if (exists $mdl_C{'-cache'} && $TOM::CACHE)
 		{
 			if ($Redis)
 			{
-				my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+				my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
 				$Redis->hset($key,'etime',$main::time_current);
 			}
 			elsif ($TOM::CACHE_memcached)
 			{
 				$Ext::CacheMemcache::cache->set(
 					'namespace' => "mcache_parallel",
-					'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
+					'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'},
 					'value' => 1,
 					'expiration' => '60S' # safe time to not parallel caching
 				);
@@ -884,13 +819,13 @@ our \$VERSION=$m_time;
 			};
 			
 			# IDEME NACACHOVAT
-			if ((exists $mdl_C{'-cache_id'})&&($TOM::CACHE))
+			if (exists $mdl_C{'-cache'} && $TOM::CACHE)
 			{
 				my $ID_config=$CACHE{$mdl_C{'T_CACHE'}}{'-ID_config'};
 				
 				if ($Redis)
 				{
-					my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+					my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
 					
 					if ($return_data{'entity'})
 					{
@@ -921,74 +856,19 @@ our \$VERSION=$m_time;
 						int($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}/2),
 						sub {} # in pipeline
 					); # set expiration time
-					main::_log("saved to redis '$key'");
+					main::_log("save cache object '$key' type '".$mdl_C{'T_CACHE'}."'");
 					
 					if ($TOM::DEBUG_cache)
 					{
-#						main::_log("[mdl][".$mdl_C{'-md5'}."][CRT] name='".$mdl_C{'T_CACHE'}."' (start:".$main::time_current.")",3,"cache");
-#						main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][CRT]",3,"cache",1);
-						
 						my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
 						$Redis->hincrby('C3|counters|mdl_cache|'.$date_str,'crt',1,sub{});
-			#			$Redis->hincrby('C3|counters|mdl_cache|'.$date_str,'hit',1,sub{});
 						$Redis->expire('C3|counters|mdl_cache|'.$date_str,3600,sub{});
 						
-					}
-					
-				}
-				elsif ($TOM::CACHE_memcached)
-				{
-					# trying to save new cache to memcached
-					my $cache={
-						'ID_config' => $ID_config,
-						'domain' => $tom::Hm,
-						'domain_sub' => $cache_domain,
-						'engine' => "pub",
-						'Capp' => $mdl_C{'-addon'},
-						'Cmodule' => $mdl_C{'-name'},
-						'Cid' => $mdl_C{'-cache_id'},
-						'Cid_md5' => $mdl_C{'-md5'},
-						'C_id_sub' => $mdl_C{'-cache_id_sub'},
-						'C_xsgn' => $mdl_env{'dsgn'},
-						'C_xlng' => $mdl_env{'lng'},
-						'body' => $Tomahawk::module::XSGN{'TMP'},
-						'time_from' => Time::HiRes::time(),
-						'time_duration' => $CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'},
-						'time_to' => ($main::time_current+$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}),
-						'return_code' => $return_code,
-						'return_data' => {%return_data}
-					};
-					
-					if ($Ext::CacheMemcache::cache->set(
-							'namespace' => "mcache",
-							'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
-							'value' => $cache,
-							'expiration' => $CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}.'S'
-						)
-					)
-					{
-						main::_log("saved to mcache '".$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'}."'");
-						# filling cache stopped
-						$Ext::CacheMemcache::cache->set(
-							'namespace' => "mcache_parallel",
-							'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
-							'value' => 0
-						);
-					}
-					else
-					{
-						main::_log("memcached: can't save record",1);
-					}
-					
-					if ($TOM::DEBUG_cache)
-					{
-#						main::_log("[mdl][".$mdl_C{'-md5'}."][CRT] name='".$mdl_C{'T_CACHE'}."' (start:".$main::time_current.")",3,"cache");
-#						main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][CRT]",3,"cache",1);
-						$Ext::CacheMemcache::cache->set(
-							'namespace' => "mcache_hits",
-							'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
-							'value' => 0
-						);
+						my $mdl_cache_type='C3|debug|mdl_cache|'.$tom::H.':'.$mdl_C{'T_CACHE'};
+						$Redis->sadd('C3|debug|mdl_caches|'.$tom::H, $mdl_cache_type,sub{});
+						$Redis->expire('C3|debug|mdl_caches|'.$tom::H, (86400*30),sub{});
+						$Redis->sadd($mdl_cache_type,$key,sub{});
+						$Redis->expire($mdl_cache_type,(86400*30),sub{});
 					}
 					
 				}
@@ -1000,21 +880,12 @@ our \$VERSION=$m_time;
 		}
 		else # chyba o ktorej upozorni samotny program vratenim undef :)
 		{
-			if (exists $mdl_C{'-cache_id'} && $TOM::CACHE)
+			if (exists $mdl_C{'-cache'} && $TOM::CACHE)
 			{
 				if ($Redis)
 				{
-					my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+					my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
 					$Redis->hdel($key,'etime'); # remove execution time
-				}
-				elsif ($TOM::CACHE_memcached)
-				{
-					# refilling cache stopped
-					$Ext::CacheMemcache::cache->set(
-						'namespace' => "mcache_parallel",
-						'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
-						'value' => 0
-					);
 				}
 			}
 			TOM::Error::module(
@@ -1034,7 +905,7 @@ our \$VERSION=$m_time;
 		{
 			if ($Redis)
 			{
-				my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+				my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digets'};
 				$Redis->hdel($key,'etime'); # remove execution time
 			}
 			elsif ($TOM::CACHE_memcached)
@@ -1042,7 +913,7 @@ our \$VERSION=$m_time;
 				# refilling cache stopped
 				$Ext::CacheMemcache::cache->set(
 					'namespace' => "mcache_parallel",
-					'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'},
+					'key' => $TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'},
 					'value' => 0
 				);
 			}
@@ -1551,8 +1422,8 @@ sub tplmodule
 		}}
 		foreach (sort keys %mdl_C){next if $_ eq "-cache_debug";$null.=$_."=\"".$mdl_C{$_}."\"\n";}
 		
-		$mdl_C{'-md5'}=TOM::Digest::hash($null);
-		main::_log("cache md5='".$mdl_C{'-md5'}."' from string ".$null) if $debug;
+		$mdl_C{'-digest'}=TOM::Digest::hash($null);
+		main::_log("cache digest='".$mdl_C{'-digest'}."' from string ".$null) if $debug;
 		
 		# NAZOV PRE TYP CACHE V KONFIGURAKU
 		$mdl_C{'T_CACHE'}=$mdl_C{'-addon'}."-".$mdl_C{'-name'}."-".$mdl_C{'-cache_id'};
@@ -1563,7 +1434,7 @@ sub tplmodule
 		if ($Redis)
 		{
 			# get from Redis
-			my $key = 'C3|tplmdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+			my $key = 'C3|tplmdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
 			$cache={
 				@{$Redis->hgetall($key)}
 			};
@@ -1628,7 +1499,7 @@ sub tplmodule
 			$mdl_C{'-cache_duration'}=$mdl_C{'-cache_old'};
 		}
 		
-		main::_log("cache info md5:$mdl_C{-md5} old:$mdl_C{-cache_old}S duration:$mdl_C{-cache_duration}S from:$mdl_C{-cache_from}S to:$mdl_C{-cache_to}S") if $debug;
+		main::_log("cache info digest:$mdl_C{-digest} old:$mdl_C{-cache_old}S duration:$mdl_C{-cache_duration}S from:$mdl_C{-cache_from}S to:$mdl_C{-cache_to}S") if $debug;
 		
 		if(
 			# AK JE STARIE CACHE MENSIE AKO VYZADOVANE STARIE
@@ -1800,7 +1671,7 @@ sub tplmodule
 				
 				if ($Redis)
 				{
-					my $key = 'C3|tplmdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-md5'};
+					my $key = 'C3|tplmdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
 					# save to Redis
 					$Redis->hmset($key,
 						'body' => $Tomahawk::module::XSGN{'TMP'} || "",
@@ -1817,7 +1688,7 @@ sub tplmodule
 						int($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}/2),
 						sub {} # in pipeline
 					); # set expiration time
-					main::_log("saved to redis '$key'");
+					main::_log("save cache object '$key'");
 				}
 				
 			}
