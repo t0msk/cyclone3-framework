@@ -349,7 +349,7 @@ sub module
 	$mdl_C{'-ALRM'}=$TOM::ALRM_mdl if ((not exists $mdl_C{'-ALRM'})||(!$TOM::ALRM_change));
 	if ($mdl_C{'-cache_id'} && !$mdl_C{'-cache'})
 	{
-		main::_log("parameter -cache_id is obsolete, use -cache instead",1);
+		main::_log("parameter -cache_id is obsolete, use -cache to configure instead",1);
 	}
 	if ((exists $mdl_C{'-cache'})&&(!$mdl_C{'-cache'})){$mdl_C{'-cache'}=$TOM::CACHE_time."s"};
 	if ((exists $mdl_C{'-cache_id'})&&(!$mdl_C{'-cache_id'})){$mdl_C{'-cache_id'}="0"};
@@ -385,7 +385,7 @@ sub module
 		main::_log("cache digest='".$mdl_C{'-digest'}."' from string ".$null) if $debug;
 		
 		# NAZOV PRE TYP CACHE V KONFIGURAKU
-		$mdl_C{'T_CACHE'}=$mdl_C{'-addon'}."-".$mdl_C{'-name'}."-".$mdl_C{'-cache'};
+		$mdl_C{'T_CACHE'}=$mdl_C{'-addon'}."-".$mdl_C{'-name'}."-".$mdl_C{'-cache_id'}."-".$mdl_C{'-cache'};
 		
 		my $cache;
 		my $cache_parallel;
@@ -529,6 +529,7 @@ sub module
 					my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
 					$Redis->hincrby('C3|counters|mdl_cache|'.$date_str,'hit',1,sub{});
 					$Redis->expire('C3|counters|mdl_cache|'.$date_str,3600,sub{});
+					$Redis->hincrby($cache_key,'hits',1,sub{});
 				}
 #				$hits=1 unless $hits;
 #				my $hpm=0;
@@ -855,18 +856,19 @@ our \$VERSION=$m_time;
 						int($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}/2),
 						sub {} # in pipeline
 					); # set expiration time
-					main::_log("save cache object '$key'");
+					main::_log("save cache object '$key' type '".$mdl_C{'T_CACHE'}."'");
 					
 					if ($TOM::DEBUG_cache)
 					{
-#						main::_log("[mdl][".$mdl_C{'-md5'}."][CRT] name='".$mdl_C{'T_CACHE'}."' (start:".$main::time_current.")",3,"cache");
-#						main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][CRT]",3,"cache",1);
-						
 						my $date_str=$tom::Fyear.'-'.$tom::Fmon.'-'.$tom::Fmday.' '.$tom::Fhour.':'.$tom::Fmin;
 						$Redis->hincrby('C3|counters|mdl_cache|'.$date_str,'crt',1,sub{});
-			#			$Redis->hincrby('C3|counters|mdl_cache|'.$date_str,'hit',1,sub{});
 						$Redis->expire('C3|counters|mdl_cache|'.$date_str,3600,sub{});
 						
+						my $mdl_cache_type='C3|debug|mdl_cache|'.$tom::H.':'.$mdl_C{'T_CACHE'};
+						$Redis->sadd('C3|debug|mdl_caches|'.$tom::H, $mdl_cache_type,sub{});
+						$Redis->expire('C3|debug|mdl_caches|'.$tom::H, (86400*30),sub{});
+						$Redis->sadd($mdl_cache_type,$key,sub{});
+						$Redis->expire($mdl_cache_type,(86400*30),sub{});
 					}
 					
 				}
