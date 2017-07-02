@@ -4,10 +4,11 @@ use open ':utf8', ':std';
 use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
+use Compress::Zlib;
 use JSON;
 use Ext::Redis::_init;
 
-our $json = JSON->new->ascii->convert_blessed;
+our $json = JSON->new;
 our $jsonc = JSON->new->ascii->canonical;
 
 sub search
@@ -22,6 +23,10 @@ sub search
 	
 	if (my $output=$Redis->get('C3|elastic|'.$key))
 	{
+		if ($output=~s/^gz\|//)
+		{
+			$output=Encode::decode_utf8(Compress::Zlib::memGunzip($output));
+		}
 		return $json->decode($output);
 	}
 	
@@ -33,8 +38,13 @@ sub search
 	else {$cache_time=$cache}
 	
 	my $output=$self->{'es'}->search(%env);
-	$Redis->set('C3|elastic|'.$key,$json->encode($output));
-	$Redis->expire('C3|elastic|'.$key,$cache_time);
+	$Redis->set('C3|elastic|'.$key,
+		'gz|'.Compress::Zlib::memGzip(
+			Encode::encode_utf8($json->encode($output))
+		)
+		,sub{}
+	);
+	$Redis->expire('C3|elastic|'.$key,$cache_time,sub{});
 	return $output;
 }
 
