@@ -35,12 +35,12 @@ sub get_image
 	
 	if ($env->{'image_attrs.name'})
 	{
-		$sql_where.="AND image_attrs.name LIKE ? ";
+		$sql_where.="AND image_attrs.name LIKE ? AND image_attrs.status = 'Y' ";
 		push @sql_bind,$env->{'image_attrs.name'};
 	}
 	if ($env->{'image_cat.ID'})
 	{
-		$sql_where.="AND image_cat.ID LIKE ? ";
+		$sql_where.="AND image_cat.ID LIKE ? AND image_attrs.status = 'Y' AND image_cat.status = 'Y' ";
 		push @sql_bind,$env->{'image_cat.ID'};
 	}
 	if ($env->{'image_cat.ID_entity'})
