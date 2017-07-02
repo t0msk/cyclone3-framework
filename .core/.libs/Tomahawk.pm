@@ -92,6 +92,7 @@ use conv;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Ext::Redis::_init;
 use Storable;
+use Compress::Zlib;
 use JSON;
 our $json = JSON::XS->new->ascii->convert_blessed;
 our $jsonc = JSON::XS->new->ascii->canonical;
@@ -418,7 +419,10 @@ sub module
 			$mdl_C{'-cache_from'}=$cache->{'time_from'};
 			$mdl_C{'-cache_duration'}=$cache->{'time_duration'};
 			$file_data=$cache->{'body'};
-			
+			if ($file_data=~s/^gz\|//)
+			{
+				$file_data=Encode::decode_utf8(Compress::Zlib::memGunzip($file_data));
+			}
 			$return_code=$cache->{'return_code'};
 			if (ref($cache->{'return_data'}) eq "HASH")
 			{
@@ -848,7 +852,8 @@ our \$VERSION=$m_time;
 					
 					# save to Redis
 					$Redis->hmset($key,
-						'body' => $Tomahawk::module::XSGN{'TMP'} || "",
+#						'body' => $Tomahawk::module::XSGN{'TMP'} || "",
+						'body' => 'gz|'.Compress::Zlib::memGzip(Encode::encode_utf8($Tomahawk::module::XSGN{'TMP'}) || ""),
 						'return_data' => $json->encode(\%return_data),
 						'return_code' => $return_code,
 						'time_from' => Time::HiRes::time(),
@@ -1458,7 +1463,10 @@ sub tplmodule
 			$mdl_C{'-cache_from'}=$cache->{'time_from'};
 			$mdl_C{'-cache_duration'}=$cache->{'time_duration'};
 			$file_data=$cache->{'body'};
-			
+			if ($file_data=~s/^gz\|//)
+			{
+				$file_data=Encode::decode_utf8(Compress::Zlib::memGunzip($file_data));
+			}
 			$return_code=$cache->{'return_code'};
 			if (ref($cache->{'return_data'}) eq "HASH")
 			{
@@ -1683,7 +1691,9 @@ sub tplmodule
 					my $key = 'C3|tplmdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
 					# save to Redis
 					$Redis->hmset($key,
-						'body' => $Tomahawk::module::XSGN{'TMP'} || "",
+#						'body' => $Tomahawk::module::XSGN{'TMP'} || "",
+						'body' => 'gz|'.Compress::Zlib::memGzip(Encode::encode_utf8($Tomahawk::module::XSGN{'TMP'}) || ""),
+						
 #						'return_data' => $json->encode(\%return_data),
 						'return_code' => $return_code,
 						'time_from' => Time::HiRes::time(),
