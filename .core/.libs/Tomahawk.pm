@@ -349,10 +349,12 @@ sub module
 	$mdl_C{'-ALRM'}=$TOM::ALRM_mdl if ((not exists $mdl_C{'-ALRM'})||(!$TOM::ALRM_change));
 	if ($mdl_C{'-cache_id'} && !$mdl_C{'-cache'})
 	{
-		main::_log("parameter -cache_id is obsolete, use -cache to configure instead",1);
+		main::_log("parameter -cache_id is obsolete, use -cache to configure instead ".
+			$jsonc->encode(\%mdl_C)
+		,1);
 	}
 	if ((exists $mdl_C{'-cache'})&&(!$mdl_C{'-cache'})){$mdl_C{'-cache'}=$TOM::CACHE_time."s"};
-	if ((exists $mdl_C{'-cache_id'})&&(!$mdl_C{'-cache_id'})){$mdl_C{'-cache_id'}="0"};
+	if ((exists $mdl_C{'-cache_id'})&&(!$mdl_C{'-cache_id'})){$mdl_C{'-cache_id'}="default"};
 	
 	my $file_data;
 	
@@ -371,7 +373,7 @@ sub module
 	if ((exists $mdl_C{'-cache_id'} || $mdl_C{'-cache'})&&($TOM::CACHE))
 	{
 		$mdl_C{'-cache'}||=$TOM::CACHE_time."s";
-		$mdl_C{'-cache_id'}||="0"; # ak je vstup s cache_id ale nieje 0
+		$mdl_C{'-cache_id'}||="default"; # ak je vstup s cache_id ale nieje 0
 		$cache_domain=$tom::H unless $mdl_C{'-cache_master'};
 		
 		my $null;
@@ -379,13 +381,17 @@ sub module
 			if (ref($mdl_env{$_}) eq "ARRAY" || ref($mdl_env{$_}) eq "HASH"){$null.=$_."=\"".$jsonc->encode($mdl_env{$_})."\"\n";}
 			else {$null.=$_."=\"".$mdl_env{$_}."\"\n";}
 		}}
-		foreach (sort keys %mdl_C){next if $_ eq "-cache_debug";$null.=$_."=\"".$mdl_C{$_}."\"\n";}
+		foreach (sort keys %mdl_C){
+			next if $_ eq "-cache_debug";
+			next if $_ eq "-cache"; # duration configuration ton affects cache
+			$null.=$_."=\"".$mdl_C{$_}."\"\n";
+		}
 		
 		$mdl_C{'-digest'}=TOM::Digest::hash($null);
 		main::_log("cache digest='".$mdl_C{'-digest'}."' from string ".$null) if $debug;
 		
 		# NAZOV PRE TYP CACHE V KONFIGURAKU
-		$mdl_C{'T_CACHE'}=$mdl_C{'-addon'}."-".$mdl_C{'-name'}."-".$mdl_C{'-cache_id'}."-".$mdl_C{'-cache'};
+		$mdl_C{'T_CACHE'}=$mdl_C{'-addon'}."-".$mdl_C{'-name'}."-".$mdl_C{'-cache_id'};#."-".$mdl_C{'-cache'};
 		
 		my $cache;
 		my $cache_parallel;
@@ -748,7 +754,7 @@ our \$VERSION=$m_time;
 		undef $Tomahawk::module::TPL;
 		undef %Tomahawk::module::XLNG;
 		
-		my $t_execute=track TOM::Debug("exec");
+		my $t_execute=track TOM::Debug("exec",'timer'=>1);
 		
 		no strict;
 		my $execute_package='MODULE::'.$mdl_ID.'::execute';
@@ -847,6 +853,8 @@ our \$VERSION=$m_time;
 						'return_code' => $return_code,
 						'time_from' => Time::HiRes::time(),
 						'time_duration' => $CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'},
+						'execute_time_duration' => $t_execute->{'time'}{'duration'},
+						'execute_time_user' => $t_execute->{'user'}{'duration'},
 						'hits' => 0,
 						sub {} # in pipeline
 					);
@@ -865,6 +873,7 @@ our \$VERSION=$m_time;
 						$Redis->expire('C3|counters|mdl_cache|'.$date_str,3600,sub{});
 						
 						my $mdl_cache_type='C3|debug|mdl_cache|'.$tom::H.':'.$mdl_C{'T_CACHE'};
+						$Redis->sadd('C3|debug|mdl_caches', $mdl_cache_type,sub{});
 						$Redis->sadd('C3|debug|mdl_caches|'.$tom::H, $mdl_cache_type,sub{});
 						$Redis->expire('C3|debug|mdl_caches|'.$tom::H, (86400*30),sub{});
 						$Redis->sadd($mdl_cache_type,$key,sub{});
