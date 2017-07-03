@@ -23,7 +23,7 @@ use TOM::L10n::codes;
 use JSON;
 our $jsonc = JSON::XS->new->ascii->canonical;
 
-our $debug=$main::debug || 0;
+our $debug=$TOM::L10n::debug || 0;
 our $stats||=0;
 our %objects;
 our $id;
