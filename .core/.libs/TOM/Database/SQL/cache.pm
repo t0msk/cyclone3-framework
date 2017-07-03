@@ -21,6 +21,7 @@ our $debug=0;
 our $quiet;$quiet=1 unless $debug;
 
 our $expiration=60;
+our $compress=$TOM::Database::SQL::cache::compress || 0;
 
 =head1 FUNCTIONS
 
@@ -83,11 +84,21 @@ sub new
 			}
 		}
 		
-		$Redis->set('C3|sql|'.$env{'id'},
-			'gz|'.Compress::Zlib::memGzip(
-				Encode::encode_utf8($json->encode($self->{'value'}))
-			),sub {} # in pipeline
-		);
+		if ($compress)
+		{
+			$Redis->set('C3|sql|'.$env{'id'},
+				'gz|'.Compress::Zlib::memGzip(
+					Encode::encode_utf8($json->encode($self->{'value'}))
+				),sub {} # in pipeline
+			);
+		}
+		else
+		{
+			$Redis->set('C3|sql|'.$env{'id'},
+				$json->encode($self->{'value'})
+				,sub {} # in pipeline
+			);
+		}
 		$Redis->expire('C3|sql|'.$env{'id'},$env{'expire'},sub {}); # set expiration time in pipeline
 	}
 	else
