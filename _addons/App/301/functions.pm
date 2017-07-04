@@ -1178,7 +1178,7 @@ sub user_get
 		}
 		else
 		{
-			main::_log("user '$ID_user' not found in archive table",1);
+			main::_log("user '$ID_user' not found in inactive table");
 			return undef;
 		}
 	}
