@@ -403,7 +403,7 @@ sub AUTOLOAD
 	{
 		my $service=$self->{'service'};
 		
-		if ($method=~/^(del|dump|exists|expire|expireat|object|persist|pexpire|pexpireat|pttl|rename|renamenx|sort|ttl|type|get|decr|incr|incrby|set|hdel|hexists|hget|hgetall|hincrby|hkeys|len|hmget|hmset|hset|hvals|blpop|brpop|lindex|linsert|llen|lpop|lpush|lpushx|lrange|lrem|lset|ltrim|rpop|rpush|rpushx|sadd|scard|sismember|smembers|spop|srandmember|srem|zadd|zcard|zcount|zincrby|zrange|zrangebyscore|zrank|zrem|zremrangebyrank|zremrangebyscore|zrevrange|zrevrangebyscore|zrevrank|zscore)$/)
+		if ($method=~/^(del|dump|exists|expire|expireat|object|persist|pexpire|pexpireat|pttl|rename|renamenx|sort|ttl|type|get|decr|incr|incrby|set|hdel|hexists|hget|hgetall|hstrlen|hincrby|hkeys|len|hmget|hmset|hset|hvals|blpop|brpop|lindex|linsert|llen|lpop|lpush|lpushx|lrange|lrem|lset|ltrim|rpop|rpush|rpushx|sadd|scard|sismember|smembers|spop|srandmember|srem|zadd|zcard|zcount|zincrby|zrange|zrangebyscore|zrank|zrem|zremrangebyrank|zremrangebyscore|zrevrange|zrevrangebyscore|zrevrank|zscore)$/)
 		{
 			my $service_number=0;
 			my $services=scalar @{$self->{'services'}};
