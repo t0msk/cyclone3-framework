@@ -384,7 +384,8 @@ sub module
 		}}
 		foreach (sort keys %mdl_C){
 			next if $_ eq "-cache_debug";
-			next if $_ eq "-cache"; # duration configuration ton affects cache
+			next if $_ eq "-cache_id";
+			next if $_ eq "-cache"; # duration configuration don't affects cache
 			$null.=$_."=\"".$mdl_C{$_}."\"\n";
 		}
 		
@@ -558,6 +559,8 @@ sub module
 			{
 #				$mdl_C{'-md5'}
 				$file_data="<!-- mdl"
+					." do='".$cache_domain."'"
+					." t='".$mdl_C{'T_CACHE'}."'"
 					." u='".$TOM::P_uuid."'"
 					." h='".$TOM::hostname."'"
 					." d='".int($mdl_C{'-cache_old'})."s'"
