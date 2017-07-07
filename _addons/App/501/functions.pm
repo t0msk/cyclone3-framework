@@ -1868,13 +1868,23 @@ sub image_file_add
 	
 	# width, height
 	my $image = new Image::Magick;
-	$image->Read($env{'file'});
+	my $out=$image->Read($env{'file'});
+	if ($out)
+	{
+		main::_log("can't read '$out'",1);
+		$t->close();
+		return undef;
+	}
 	my $image_width=$image->Get('width');
 	my $image_height=$image->Get('height');
 	main::_log("image width=$image_width height=$image_height");
 	
-	return undef unless $image_width;
-	return undef unless $image_height;
+	if (!$image_width || !$image_height)
+	{
+		main::_log("can't read info about dimensions",1);
+		$t->close();
+		return undef;
+	}
 	
 	# generate new unique hash
 	my $name=image_file_newhash();
