@@ -1084,6 +1084,17 @@ sub image_file_process
 			next;
 		}
 		
+		if ($function_name eq "optimize")
+		{
+			main::_log("exec optimize (sampling-factor, strip, interlace, colorspace)");
+			$image1->Set('sampling-factor'=>'4:2:0');
+			$image1->Strip();
+			$image1->Set('interlace'=>'JPEG');
+			$image1->Colorspace('colorspace' => 'RGB')
+				if $image1->get('version')=~/7\.\d\.\d/;
+			next;
+		}
+		
 		main::_log("unknown '$function'",1);
 		$t->close();
 		return undef;
@@ -2185,6 +2196,7 @@ Return image_file columns. This is the fastest way (optimized SQL) to get inform
 	)
 
 =cut
+
 
 sub get_image_file
 {

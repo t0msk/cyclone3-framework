@@ -69,6 +69,34 @@ _connect(); # default connection
 # call $Redis_{custom_name}=Ext::Redis::_connect('{custom_name}') to create parallel connection
 # for example: $Redis_para2=Ext::Redis::_connect('para2');
 
+use Compress::Zlib;
+use JSON;
+our $json = JSON->new->utf8->convert_blessed;
+
+sub _compress
+{
+	my $data=shift;
+	if (ref($data) eq "SCALAR")
+	{
+		if (length($$data)>512)
+		{
+			$$data='gz|'.compress(Encode::encode_utf8($$data),4);
+		}
+	}
+	elsif (ref($data) eq "HASH")
+	{
+		return 'gz|'.compress(Encode::encode_utf8($json->encode($data)),4);
+	}
+	return $$data;
+}
+
+sub _uncompress
+{
+	my $data=shift;
+	$$data=Encode::decode_utf8(uncompress($$data))
+		if $$data=~s/^gz\|//;
+}
+
 package XML::XPath;sub TO_JSON{return undef}
 
 package Ext::CacheMemcache::Redis;
