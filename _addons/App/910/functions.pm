@@ -963,7 +963,6 @@ sub product_add
 						ID=?,
 						datetime_create=NOW(),
 						status='Y'
-					LIMIT 1;
 				},'bind'=>[
 					$env{'product.ID_entity'},
 					$sym_ID
@@ -1041,7 +1040,6 @@ sub product_add
 					ID=?,
 					datetime_create=NOW(),
 					status='Y'
-				LIMIT 1;
 			},'bind'=>[
 				$env{'product.ID_entity'},
 				$env{'product_sym.ID'}
