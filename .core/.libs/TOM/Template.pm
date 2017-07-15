@@ -23,7 +23,6 @@ use XML::LibXML;
 use TOM::L10n;
 use TOM::Template::contenttypes;
 use Ext::Redis::_init;
-use Compress::Zlib;
 use JSON;
 our $json = JSON::XS->new->ascii->convert_blessed;
 
@@ -181,12 +180,10 @@ sub new
 	if (!$objects{$obj->{'location'}} && $Redis && $main::cache)
 	{
 		$objects{$obj->{'location'}} = $Redis->get('C3|tpl|'.$TOM::P_uuid.':'.$obj->{'location'});
-		if ($objects{$obj->{'location'}}=~s/^gz\|//)
-		{
-			$objects{$obj->{'location'}}=Compress::Zlib::memGunzip($objects{$obj->{'location'}});
-		}
+		Ext::Redis::_uncompress(\$objects{$obj->{'location'}});
 		$objects{$obj->{'location'}}=$json->decode($objects{$obj->{'location'}})
 			if $objects{$obj->{'location'}};
+		delete $objects{$obj->{'location'}} if ref($objects{$obj->{'location'}}) eq "SCALAR";
 	}
 	
 	if ($objects{$obj->{'location'}})
@@ -260,7 +257,7 @@ sub new
 		{
 			my $key = 'C3|tpl|'.$TOM::P_uuid.':'.$obj->{'location'};
 			$Redis->set($key,
-				'gz|'.Compress::Zlib::memGzip($json->encode({
+				Ext::Redis::_compress(\$json->encode({
 					'ENV' => $obj->{'ENV'},
 					'config' => $obj->{'config'},
 					'mfile' => $obj->{'mfile'},

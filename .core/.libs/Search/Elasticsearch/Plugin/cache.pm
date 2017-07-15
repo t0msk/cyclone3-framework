@@ -23,10 +23,7 @@ sub search
 	
 	if (my $output=$Redis->get('C3|elastic|'.$key))
 	{
-		if ($output=~s/^gz\|//)
-		{
-			$output=Encode::decode_utf8(Compress::Zlib::memGunzip($output));
-		}
+		Ext::Redis::_uncompress(\$output);
 		return $json->decode($output);
 	}
 	
@@ -39,9 +36,7 @@ sub search
 	
 	my $output=$self->{'es'}->search(%env);
 	$Redis->set('C3|elastic|'.$key,
-		'gz|'.Compress::Zlib::memGzip(
-			Encode::encode_utf8($json->encode($output))
-		)
+		Ext::Redis::_compress(\$json->encode($output))
 		,sub{}
 	);
 	$Redis->expire('C3|elastic|'.$key,$cache_time,sub{});
