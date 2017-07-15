@@ -73,19 +73,28 @@ use Compress::Zlib;
 use JSON;
 our $json = JSON->new->utf8->convert_blessed;
 
+our $compression=$Ext::Redis::compression || 0;
+our $compression_level=$Ext::Redis::compression_level || 4;
+
 sub _compress
 {
 	my $data=shift;
 	if (ref($data) eq "SCALAR")
 	{
+		$$data||="";
+		return $$data unless $compression;
 		if (length($$data)>512)
 		{
-			$$data='gz|'.compress(Encode::encode_utf8($$data),4);
+			$$data='gz|'.compress(Encode::encode_utf8($$data),$compression_level);
 		}
 	}
 	elsif (ref($data) eq "HASH")
 	{
-		return 'gz|'.compress(Encode::encode_utf8($json->encode($data)),4);
+		if (!$compression)
+		{
+			return $json->encode($data);
+		}
+		return 'gz|'.compress(Encode::encode_utf8($json->encode($data)),$compression_level);
 	}
 	return $$data;
 }
