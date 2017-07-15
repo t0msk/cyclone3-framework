@@ -854,7 +854,7 @@ sub module
 						'time_from' => Time::HiRes::time(),
 						'time_duration' => $CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'},
 						'execute_time_duration' => $t_execute->{'time'}{'duration'},
-						'execute_time_user' => $t_execute->{'user'}{'duration'},
+						'execute_time_user' => $t_execute->{'time'}{'user'}{'duration'},
 						'hits' => 0,
 						sub {} # in pipeline
 					);
