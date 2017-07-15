@@ -21,7 +21,6 @@ our $debug=0;
 our $quiet;$quiet=1 unless $debug;
 
 our $expiration=60;
-our $compress=$TOM::Database::SQL::cache::compress || 0;
 
 =head1 FUNCTIONS
 
@@ -84,21 +83,10 @@ sub new
 			}
 		}
 		
-		if ($compress)
-		{
-			$Redis->set('C3|sql|'.$env{'id'},
-				'gz|'.Compress::Zlib::memGzip(
-					Encode::encode_utf8($json->encode($self->{'value'}))
-				),sub {} # in pipeline
-			);
-		}
-		else
-		{
-			$Redis->set('C3|sql|'.$env{'id'},
-				$json->encode($self->{'value'})
-				,sub {} # in pipeline
-			);
-		}
+		$Redis->set('C3|sql|'.$env{'id'},
+			Ext::Redis::_compress(\$json->encode($self->{'value'}))
+			,sub {} # in pipeline
+		);
 		$Redis->expire('C3|sql|'.$env{'id'},$env{'expire'},sub {}); # set expiration time in pipeline
 	}
 	else
@@ -106,11 +94,7 @@ sub new
 		main::_log("SQL::cache: created cache object '$env{'id'}' to read data") if $debug;
 		
 		$self->{'value'} = $Redis->get('C3|sql|'.$env{'id'});
-		if ($self->{'value'}=~s/^gz\|//)
-		{
-			$self->{'value'}=Encode::decode_utf8(Compress::Zlib::memGunzip($self->{'value'}));
-		}
-		
+		Ext::Redis::_uncompress(\$self->{'value'});
 		$self->{'value'}=$json->decode($self->{'value'})
 			if $self->{'value'};
 		

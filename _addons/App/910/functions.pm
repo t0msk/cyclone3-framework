@@ -955,17 +955,29 @@ sub product_add
 			]);
 			if (!$sth0{'rows'})
 			{
-				$env{'product_sym.ID'}=App::020::SQL::functions::new(
-					'db_h' => "main",
-					'db_name' => $App::910::db_name,
-					'tb_name' => "a910_product_sym",
-					'columns' =>
-					{
-						'ID_entity' => $env{'product.ID_entity'},
-						'ID' => $sym_ID
-					},
-					'-journalize' => 1,
-				);
+				TOM::Database::SQL::execute(qq{
+					INSERT INTO
+						`$App::910::db_name`.a910_product_sym
+					SET
+						ID_entity=?,
+						ID=?,
+						datetime_create=NOW(),
+						status='Y'
+				},'bind'=>[
+					$env{'product.ID_entity'},
+					$sym_ID
+				],'quiet'=>1);
+#				$env{'product_sym.ID'}=App::020::SQL::functions::new(
+#					'db_h' => "main",
+#					'db_name' => $App::910::db_name,
+#					'tb_name' => "a910_product_sym",
+#					'columns' =>
+#					{
+#						'ID_entity' => $env{'product.ID_entity'},
+#						'ID' => $sym_ID
+#					},
+#					'-journalize' => 1,
+#				);
 				$content_reindex=1;
 				$ent_reindex=1;
 			}
@@ -1020,19 +1032,31 @@ sub product_add
 		my %sth0=TOM::Database::SQL::execute($sql,'quiet'=>1);
 		if (!$sth0{'rows'})
 		{
-			$env{'product_sym.ID'}=App::020::SQL::functions::new(
-				'db_h' => "main",
-				'db_name' => $App::910::db_name,
-				'tb_name' => "a910_product_sym",
-				'columns' =>
-				{
-					'ID' => $env{'product_sym.ID'},
-					'ID_entity' => $env{'product.ID_entity'},
-				},
-				'-journalize' => 1,
-			);
+			TOM::Database::SQL::execute(qq{
+				INSERT INTO
+					`$App::910::db_name`.a910_product_sym
+				SET
+					ID_entity=?,
+					ID=?,
+					datetime_create=NOW(),
+					status='Y'
+			},'bind'=>[
+				$env{'product.ID_entity'},
+				$env{'product_sym.ID'}
+			],'quiet'=>1);
 			$content_reindex=1;
 			$ent_reindex=1;
+#			$env{'product_sym.ID'}=App::020::SQL::functions::new(
+#				'db_h' => "main",
+#				'db_name' => $App::910::db_name,
+#				'tb_name' => "a910_product_sym",
+#				'columns' =>
+#				{
+#					'ID' => $env{'product_sym.ID'},
+#					'ID_entity' => $env{'product.ID_entity'},
+#				},
+#				'-journalize' => 1,
+#			);
 		}
 		
 		if ($env{'product_sym.replace'})
@@ -2122,6 +2146,7 @@ sub _product_index
 			SELECT
 				product.ID,
 				product.ID_entity,
+				product.ref_ID,
 				product.product_number,
 				product.EAN,
 				product.datetime_publish_start,
