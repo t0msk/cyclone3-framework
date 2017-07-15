@@ -2864,7 +2864,7 @@ sub _product_cat_index
 		},'quiet'=>1,'bind'=>[$product_cat{'ID_entity'}]);
 		if (!$sth0{'rows'})
 		{
-			main::_log("product_brand.ID=$product_cat{'ID_entity'} not found as valid item");
+			main::_log("product_cat.ID=$product_cat{'ID_entity'} not found as valid item");
 			if ($Elastic->exists(
 				'index' => 'cyclone3.'.$App::910::db_name,
 				'type' => 'a910_product_cat',
