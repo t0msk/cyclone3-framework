@@ -345,7 +345,8 @@ sub execute
 				if ($rel>=0.05)
 				{
 					main::_log("  optimize");
-					eval {$Elastic->indices->forcemerge('index' => $indice,'only_expunge_deletes' => 1);};
+					eval {$Elastic->indices->optimize('index' => $indice,'only_expunge_deletes' => 1);};
+#					eval {$Elastic->indices->forcemerge('index' => $indice,'only_expunge_deletes' => 1);};
 					if ($@)
 					{
 						main::_log($@,1);
