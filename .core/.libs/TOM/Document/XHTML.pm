@@ -178,7 +178,7 @@ sub prepare
 	$self->{'OUT'}{'HEADER'} .= $self->{'ENV'}{'DOCTYPE'}."\n";
 	
 	$self->{'OUT'}{'HEADER'} .=
-		'<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xml:lang="<%HEADER-LNG%>" lang="<%HEADER-LNG%>">'."\n";
+		'<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xml:lang="<%HEADER-LANG%>" lang="<%HEADER-LANG%>">'."\n";
 	
 	$self->{'OUT'}{'HEADER'} .= qq{<!--
 $TOM::Document::base::copyright
@@ -222,7 +222,7 @@ $TOM::Document::base::copyright
 	
 	# META
 	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\" />\n";
-	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-language\" content=\"<%HEADER-LNG%>\" />\n";
+#	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-language\" content=\"<%HEADER-LNG%>\" />\n";
 #	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"cache-control\" content=\"<%HEADER-cache-control%>\" />\n"; obsolete
 	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-type\" content=\"text/html; charset=<%CODEPAGE%>\" />\n"
 	unless $self->{'ENV'}{'head'}{'meta'}{'content-type'};
@@ -326,6 +326,7 @@ sub prepare_last
 	$self->{'OUT'}{'HEADER'}=~s/<%HEADER-AB%>/$main::USRM{'session'}{'AB'} || '0'/eg; # the A/B testing
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-ROBOTS%>|$self->{env}{DOC_robots}|;
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-LNG%>|$tom::lng|g;
+	$self->{'OUT'}{'HEADER'}=~s/<%HEADER-LANG%>/$tom::lang||$tom::lng/ge;
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-cache-control%>|$main::ENV{'Cache-Control'}|g;
 	$self->{'OUT'}{'HEADER'}=~s|<%PAGE-CODE%>|$main::request_code|;
 	$self->{'OUT'}{'HEADER'}=~s|<%USER%>|$main::USRM{'ID_user'}|g;

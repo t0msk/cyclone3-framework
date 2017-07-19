@@ -104,61 +104,72 @@ use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 use Cwd 'abs_path';
+require Ext::Redis::_init;
 
 $TOM::engine_ready=1;
 
 print color 'reset';
 
-if (!keys %main::arg || exists $main::arg{'help'})
+if (exists $main::arg{'help'})
 {
-	print  qq{Cyclone3 SASS processor
-Usage: c3-sass [options]
-
-Basic options:
- --c=<compile>           compile
- 
+	print  qq{Cyclone3 cache debug info
+Usage: c3-cache_debug
 };
 	exit;
 }
 
+our $Redis=$Ext::Redis::service;
 
-require CSS::Sass;
-use File::Which qw(where);
-
-my $yui=(where('yui-compressor'))[0];
-
-if ($main::arg{'c'})
+foreach my $cache_type (sort @{$Redis->smembers('C3|debug|mdl_caches|'.$tom::H)})
 {
-	
-	opendir(my $dh,$tom::P.'/_dsgn/') || die "can't $!";
-	while (readdir($dh)){
-		next unless /^[^_].*\.scss$/;
-		my $shortfile=$_;$shortfile=~s|\.scss$||;
-		my $file=$tom::P."/_dsgn/".$shortfile.'.scss';
-		print "process '$file'\n";
+	my $cache_type_name=$cache_type;
+		$cache_type_name=~s|^.*?:||;
+#	print $cache_type_name."\n";
+	my $caches;
+	my $caches_real;
+	my $caches_hits;
+	my $caches_live;
+	foreach my $cache_member (@{$Redis->smembers($cache_type)})
+	{
+		$caches++;
 		
-		my $sass = CSS::Sass->new(include_paths   => [$tom::P.'/_dsgn/']);
-		$sass->options->{'source_map_file'} = $tom::P.'/_dsgn/'.$shortfile.'.css.map';
-		my ($css, $err, $stats) = $sass->compile_file($file);
+		if (!$Redis->exists($cache_member))
+		{
+			$Redis->srem($cache_type, $cache_member, sub{});
+			next;
+		}
 		
-#		use CSS::Minifier qw(minify);
-#		my $css = minify(input => $css);
+		$caches_real++;
 		
-		open(HND,'>'.$tom::P.'/!media/css/'.$shortfile.'.css');
-		print HND $css;
-		close(HND);
+		my $cache_time_from=$Redis->hget($cache_member,'time_from');
+			$caches_live+=(time()-$cache_time_from);
+		my $cache_hits=$Redis->hget($cache_member,'hits');
 		
-		system($yui." ".$tom::P.'/!media/css/'.$shortfile.'.css > '.$tom::P.'/!media/css/'.$shortfile.'.min.css')
-			if $yui;
+		$caches_hits+=$cache_hits;
 		
-		open(HND,'>'.$tom::P.'/!media/css/'.$shortfile.'.css.map');
-		print HND $err->{'source_map_string'};
-		close(HND);
+#		print " ".$cache_member." from:".$cache_time_from." hits:".$cache_hits."\n";
+		
+#		my $cache={
+#			@{$Redis->hget($cache_member)}
+#		};
+#		print Dumper($cache);
+		
+#		print " ".$cache_member."\n";
+		
 	}
-	closedir($dh);
 	
+	# this cache type is dead
+	$Redis->srem('C3|debug|mdl_caches|'.$tom::H, $cache_type, sub{})
+		unless $caches_real;
+	next unless $caches_real;
+	
+	print $cache_type_name."\n";
+	print " crt:".$caches_real
+		." hits:".$caches_hits
+		." effectivity:".(int(($caches_hits/$caches_real)*10)/10)
+		." live:".int($caches_live/$caches_real)."s"
+		."\n";
 }
-
 
 print "\n";
 1;

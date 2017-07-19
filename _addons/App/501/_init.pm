@@ -19,7 +19,7 @@ Application which manages images and its formats
 BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 
 our $VERSION='1';
-
+$App::501::disable_deduplication = $App::501::disable_deduplication || 0;
 
 
 =head1 SYNOPSIS

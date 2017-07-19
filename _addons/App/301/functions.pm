@@ -82,40 +82,7 @@ sub user_add
 			LIMIT 1;
 		},'bind'=>[$env{'user.ID_user'}],'quiet'=>1);
 		%user=$sth0{'sth'}->fetchhash();
-	}
-	
-	if ($env{'user.login'} && !$env{'user.ID_user'})
-	{
-		main::_log("search user by login='$env{'user.login'}'");
-		my %sth0=TOM::Database::SQL::execute(qq{
-			SELECT
-				*
-			FROM
-				`TOM`.a301_user
-			WHERE
-				login=? AND
-				hostname=?
-			LIMIT 1;
-		},'bind'=>[$env{'user.login'},$env{'user.hostname'}],'quiet'=>1);
-		%user=$sth0{'sth'}->fetchhash();
-		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
-	}
-	
-	if ($env{'user.email'} && !$env{'user.ID_user'} && $App::301::email_unique)
-	{
-		main::_log("search user by email='$env{'user.email'}'");
-		my %sth0=TOM::Database::SQL::execute(qq{
-			SELECT
-				*
-			FROM
-				`TOM`.a301_user
-			WHERE
-				email=? AND
-				hostname=?
-			LIMIT 1;
-		},'bind'=>[$env{'user.email'},$env{'user.hostname'}],'quiet'=>1);
-		%user=$sth0{'sth'}->fetchhash();
-		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
+		$env{'pass'}=$user{'pass'};
 	}
 	
 	if ($env{'user.ref_facebook'} && !$env{'user.ID_user'})
@@ -168,6 +135,44 @@ sub user_add
 		%user=$sth0{'sth'}->fetchhash();
 		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
 	}
+	
+	if ($env{'user.login'} && !$env{'user.ID_user'})
+	{
+		main::_log("search user by login='$env{'user.login'}'");
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`TOM`.a301_user
+			WHERE
+				login=? AND
+				hostname=?
+			LIMIT 1;
+		},'bind'=>[$env{'user.login'},$env{'user.hostname'}],'quiet'=>1);
+		%user=$sth0{'sth'}->fetchhash();
+		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
+		$env{'pass'}=$user{'pass'};
+	}
+	
+	if ($env{'user.email'} && !$env{'user.ID_user'} && $App::301::email_unique)
+	{
+		main::_log("search user by email='$env{'user.email'}'");
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`TOM`.a301_user
+			WHERE
+				email=? AND
+				hostname=?
+			LIMIT 1;
+		},'bind'=>[$env{'user.email'},$env{'user.hostname'}],'quiet'=>1);
+		%user=$sth0{'sth'}->fetchhash();
+		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
+		$env{'pass'}=$user{'pass'};
+	}
+	
+	
 	
 	if (!$env{'user.ID_user'})
 	{
@@ -1175,7 +1180,7 @@ sub user_get
 		}
 		else
 		{
-			main::_log("user '$ID_user' not found in archive table",1);
+			main::_log("user '$ID_user' not found in inactive table");
 			return undef;
 		}
 	}

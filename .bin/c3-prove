@@ -4,11 +4,10 @@ use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use Data::Dumper;
 use Term::ANSIColor;
-use DateTime;
 
 BEGIN
 {
-	$TOM::engine='cli';
+	$TOM::engine='prove';
 	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
 #	$main::stdout=0 unless $ENV{'CYCLONE3DEBUG'};
 	if (!$ENV{'CYCLONE3PATH'})
@@ -22,11 +21,12 @@ END {use Inline;$SIG{__WARN__} = sub {};}
 
 our $argv=join " ",@ARGV;
 
-our $job_file;
-if ($ARGV[0] && not($ARGV[0]=~/^\-/)) # direct link to job file
+our $test_file;
+if ($ARGV[0] && not($ARGV[0]=~/^\-/)) # direct link to test file
 {
-	$job_file=$ARGV[0];
+	$test_file=$ARGV[0];
 	delete $ARGV[0];
+	$main::stdout=0;
 }
 
 our %arg;
@@ -36,23 +36,7 @@ foreach my $key(@ARGV)
 	{
 		my @ref=split('=',$key,2);
 		$ref[1]=1 unless exists $ref[1];
-		if (ref($main::arg{$ref[0]}) eq "ARRAY")
-		{
-			push @{$main::arg{$ref[0]}},$ref[1];
-		}
-		elsif ($main::arg{$ref[0]})
-		{
-			my $oldval=$main::arg{$ref[0]};
-			delete $main::arg{$ref[0]};
-			$main::arg{$ref[0]}=[
-				$oldval,
-				$ref[1]
-			];
-		}
-		else
-		{
-			$main::arg{$ref[0]}=$ref[1];
-		}
+		$main::arg{$ref[0]}=$ref[1];
 		next;
 	};
 	$key=~s/^\-// && do
@@ -107,58 +91,50 @@ use Cwd 'abs_path';
 
 $TOM::engine_ready=1;
 
-print color 'reset';
-
-if (!keys %main::arg || exists $main::arg{'help'})
+eval
 {
-	print  qq{Cyclone3 SASS processor
-Usage: c3-sass [options]
-
-Basic options:
- --c=<compile>           compile
- 
-};
-	exit;
-}
-
-
-require CSS::Sass;
-use File::Which qw(where);
-
-my $yui=(where('yui-compressor'))[0];
-
-if ($main::arg{'c'})
-{
+	local $main::request_code=Utils::vars::genhash(8);
 	
-	opendir(my $dh,$tom::P.'/_dsgn/') || die "can't $!";
-	while (readdir($dh)){
-		next unless /^[^_].*\.scss$/;
-		my $shortfile=$_;$shortfile=~s|\.scss$||;
-		my $file=$tom::P."/_dsgn/".$shortfile.'.scss';
-		print "process '$file'\n";
-		
-		my $sass = CSS::Sass->new(include_paths   => [$tom::P.'/_dsgn/']);
-		$sass->options->{'source_map_file'} = $tom::P.'/_dsgn/'.$shortfile.'.css.map';
-		my ($css, $err, $stats) = $sass->compile_file($file);
-		
-#		use CSS::Minifier qw(minify);
-#		my $css = minify(input => $css);
-		
-		open(HND,'>'.$tom::P.'/!media/css/'.$shortfile.'.css');
-		print HND $css;
-		close(HND);
-		
-		system($yui." ".$tom::P.'/!media/css/'.$shortfile.'.css > '.$tom::P.'/!media/css/'.$shortfile.'.min.css')
-			if $yui;
-		
-		open(HND,'>'.$tom::P.'/!media/css/'.$shortfile.'.css.map');
-		print HND $err->{'source_map_string'};
-		close(HND);
+	if ($test_file)
+	{
+		do $test_file || die $@;
 	}
-	closedir($dh);
+	else
+	{
+		use TAP::Harness;
+		
+		chdir($tom::Pm);
+		chdir($tom::P) if -d $tom::P."/.t";
+		chdir('.t') if -d '.t';
+		
+		my $dir = getcwd();
+		
+		my $harness = TAP::Harness->new({
+#			'verbosity' => 1,
+			'exec' => sub {
+				my ( $harness, $test_file ) = @_;
+				# Let Perl tests run.
+				return undef;
+		#			return undef if $test_file =~ /[.]t$/;
+		#			return [ qw( /usr/bin/ruby -w ), $test_file ]
+		#				if $test_file =~ /[.]rb$/;
+			}
+		});
+		
+		opendir(my $dh, '.') || return;
+		my @files = sort grep { /\.t$/ && -f $_ } readdir($dh);
+		closedir $dh;
+
+		my $summary=$harness->runtests(@files);
+		
+		print color 'reset';
+	}
 	
+};
+if ($@)
+{
+	main::_log("crashed with $@",1);
+	print $@;
 }
 
-
-print "\n";
 1;

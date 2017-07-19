@@ -179,7 +179,7 @@ sub prepare
 	$self->{'OUT'}{'HEADER'} .= $self->{'ENV'}{'DOCTYPE'}."\n";
 	
 	$self->{'OUT'}{'HEADER'} .=
-		'<html>'."\n";
+		'<html lang="<%HEADER-LANG%>">'."\n";
 	
 	$self->{'OUT'}{'HEADER'} .= qq{<!--
 $TOM::Document::base::copyright
@@ -223,7 +223,7 @@ $TOM::Document::base::copyright
 	
 	# META
 	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\" />\n";
-	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-language\" content=\"<%HEADER-LNG%>\" />\n";
+#	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-language\" content=\"<%HEADER-LNG%>\" />\n";
 	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-type\" content=\"text/html; charset=<%CODEPAGE%>\" />\n"
 	unless $self->{'ENV'}{'head'}{'meta'}{'content-type'};
 #	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"Accept-CH\" content=\"DPR, Width, Viewport-Width\" />\n"
@@ -320,10 +320,12 @@ sub prepare_last
 	$self->{'env'}{'DOC_title'}=~s|<.*?>||g;
 	$self->{'env'}{'DOC_title'}=~s|<|&lt;|g;
 	$self->{'env'}{'DOC_title'}=~s|>|&gt;|g;
+	$self->{'env'}{'DOC_title'}=~s|\&(?!amp;)|&amp;|g;
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-TITLE%>|$self->{env}{DOC_title}|;
 	$self->{'OUT'}{'HEADER'}=~s/<%HEADER-AB%>/$main::USRM{'session'}{'AB'} || '0'/eg; # the A/B testing
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-ROBOTS%>|$self->{env}{DOC_robots}|;
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-LNG%>|$tom::lng|g;
+	$self->{'OUT'}{'HEADER'}=~s/<%HEADER-LANG%>/$tom::lang||$tom::lng/ge;
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-cache-control%>|$main::ENV{'Cache-Control'}|g;
 	$self->{'OUT'}{'HEADER'}=~s|<%PAGE-CODE%>|$main::request_code|;
 	$self->{'OUT'}{'HEADER'}=~s|<%USER%>|$main::USRM{'ID_user'}|g;
@@ -347,6 +349,7 @@ sub prepare_last
 		}
 		
 		$self->{env}{DOC_keywords}=~s|^, ||;
+		$self->{env}{DOC_keywords}=~s|\&(?!amp;)|&amp;|g;
 		
 		$self->{'OUT'}{'HEADER'}.=" <meta name=\"keywords\" content=\"$self->{env}{DOC_keywords}\" />\n";
 	}
