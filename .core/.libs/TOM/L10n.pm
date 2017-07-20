@@ -20,8 +20,12 @@ BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 use File::Path;
 use XML::LibXML;
 use TOM::L10n::codes;
+use Ext::Redis::_init;
+use JSON;
+our $json = JSON::XS->new->ascii->convert_blessed;
+our $jsonc = JSON::XS->new->ascii->canonical;
 
-our $debug=$main::debug || 0;
+our $debug=$TOM::L10n::debug || 0;
 our $stats||=0;
 our %objects;
 our $id;
@@ -83,18 +87,21 @@ sub new
 		$t->close() if $debug;
 		return undef;
 	}
-	$obj->{'uid'}=$obj->{'location'}.'/'.$env{'lng'};
+	$obj->{'location_id'}=$obj->{'uid'}=$obj->{'location'}.'/'.$env{'lng'};
+	
+	# ignorelist is part of uid
+	$obj->{'uid'}.="/".TOM::Digest::hash($jsonc->encode($obj->{'ENV'}->{'ignore'}))
+		if $obj->{'ENV'}->{'ignore'};
 	
 #	main::_log("trying '$obj->{'uid'}' in mem=".do{if($objects{$obj->{'uid'}}){"1"}},3,"l10n");
 	
-	if (!$objects{$obj->{'uid'}} && $TOM::CACHE_memcached && $main::cache)
+	if (!$objects{$obj->{'uid'}} && $Redis && $main::cache)
 	{
 		# try memcached
-		$objects{$obj->{'uid'}} = 
-			$Ext::CacheMemcache::cache->get(
-				'namespace' => "l10ncache",
-				'key' => $TOM::P_uuid.':'.$obj->{'uid'}
-			);
+		$objects{$obj->{'uid'}} = $Redis->get('C3|l10n|'.$TOM::P_uuid.':'.$obj->{'uid'});
+		Ext::Redis::_uncompress(\$objects{$obj->{'uid'}});
+		$objects{$obj->{'uid'}}=$json->decode($objects{$obj->{'uid'}})
+			if $objects{$obj->{'uid'}};
 	}
 	
 	if ($objects{$obj->{'uid'}})
@@ -126,7 +133,7 @@ sub new
 		$id++;$L10n::id{$obj->{'uid'}}=$id; # add unique number to every one object
 		$obj->{'id'}=$id;
 		# add this location into ignore list
-		push @{$obj->{'ENV'}->{'ignore'}}, $obj->{'uid'};
+		push @{$obj->{'ENV'}->{'ignore'}}, $obj->{'location_id'};
 		$obj->prepare_xml();
 		# save time of object creation (last-check time)
 		$obj->{'config'}->{'ctime'} = time();
@@ -136,12 +143,11 @@ sub new
 		$obj->parse_string();
 		undef $obj->{'xp'};
 		
-		if ($TOM::CACHE_memcached)
+		if ($Redis)
 		{
-			$Ext::CacheMemcache::cache->set(
-				'namespace' => "l10ncache",
-				'key' => $TOM::P_uuid.':'.$obj->{'uid'},
-				'value' => {
+			my $key = 'C3|l10n|'.$TOM::P_uuid.':'.$obj->{'uid'};
+			$Redis->set($key,
+				Ext::Redis::_compress(\$json->encode({
 					'ENV' => $obj->{'ENV'},
 					'id' => $obj->{'id'},
 					'config' => $obj->{'config'},
@@ -151,9 +157,9 @@ sub new
 					'L10n' => $obj->{'L10n'},
 					'location' => $obj->{'location'},
 					'uid' => $obj->{'uid'}
-				},
-				'expiration' => '3600S'
+				})),sub {} # in pipeline
 			);
+			$Redis->expire($key,86400,sub {}); # set expiration time in pipeline
 		}
 		
 	}
@@ -253,7 +259,7 @@ sub prepare_location
 	
 	if (!$self->{'location'})
 	{
-		main::_log("can't find location for L10n '".$self->{'ENV'}->{'name'}.".".$self->{'ENV'}->{'lng'}."' (L10n not exists, or already loaded as dependency)",1);
+#		main::_log("can't find location for L10n '".$self->{'ENV'}->{'name'}.".".$self->{'ENV'}->{'lng'}."' (L10n not exists, or already loaded as dependency)",1);
 		return undef;
 	}
 	else
@@ -301,12 +307,13 @@ sub parse_header
 			
 			main::_log("request to extend by level='$level' addon='$addon' name='$name' lng='$lng'") if $debug;
 			
+			my @ignore=@{$self->{'ENV'}{'ignore'}};
 			my $extend=new TOM::L10n(
 				'level' => $level,
 				'addon' => $addon,
 				'name' => $name,
 				'lng' => $lng,
-				'ignore' => $self->{'ENV'}{'ignore'},
+				'ignore' => \@ignore,
 			);
 			
 			# add entries from inherited L10n

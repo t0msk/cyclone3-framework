@@ -22,13 +22,13 @@ sub execute
 		return undef;
 	}
 	
-	require App::210::_init;
+	require App::510::_init;
 	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
-			`ID`
+			DISTINCT(`ID_entity`)
 		FROM
-			`$App::210::db_name`.`a210_page`
+			`$App::510::db_name`.`a510_broadcast_series`
 --		LIMIT
 --			1
 	}, 'quiet' => 1);
@@ -37,10 +37,10 @@ sub execute
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$i++;
-		main::_log("[$i/$sth0{'rows'}] index page ID=$db0_line{'ID'}");
+		main::_log("[$i/$sth0{'rows'}] index broadcast_series ID_entity=$db0_line{'ID_entity'}");
 		#$main::nojobify=1;
-		App::210::SQL::_page_index(
-			'ID'			=> $db0_line{'ID'},
+		App::510::functions::_broadcast_series_index(
+			'ID_entity'	=> $db0_line{'ID_entity'},
 			'-jobify'	=> 1
 		);
 	}

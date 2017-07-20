@@ -1084,6 +1084,17 @@ sub image_file_process
 			next;
 		}
 		
+		if ($function_name eq "optimize")
+		{
+			main::_log("exec optimize (sampling-factor, strip, interlace, colorspace)");
+			$image1->Set('sampling-factor'=>'4:2:0');
+			$image1->Strip();
+			$image1->Set('interlace'=>'JPEG');
+			$image1->Colorspace('colorspace' => 'RGB')
+				if $image1->get('version')=~/7\.\d\.\d/;
+			next;
+		}
+		
 		main::_log("unknown '$function'",1);
 		$t->close();
 		return undef;
@@ -1175,6 +1186,27 @@ sub image_add
 	
 	$env{'image_format.ID'}=$App::501::image_format_original_ID unless $env{'image_format.ID'};
 	
+	my %category;
+	if ($env{'image_cat.ID'} && $env{'image_cat.ID'} ne 'NULL')
+	{
+		# detect language
+		%category=App::020::SQL::functions::get_ID(
+			'ID' => $env{'image_cat.ID'},
+			'db_h' => "main",
+			'db_name' => $App::501::db_name,
+			'tb_name' => "a501_image_cat",
+			'columns' => {'*'=>1}
+		);
+		$env{'image_attrs.lng'}=$category{'lng'};
+		$env{'image_attrs.ID_category'}=$category{'ID_entity'};
+		main::_log("setting lng='$env{'image_attrs.lng'}' from image_cat.ID='$env{'image_cat.ID'}'");
+		main::_log("setting image_attrs.ID_category='$env{'image_attrs.ID_category'}' from image_cat.ID='$env{'image_cat.ID'}'");
+	}
+	$env{'image_attrs.ID_category'}='NULL' if $env{'image_cat.ID'} eq 'NULL';
+	
+	$env{'image_attrs.lng'}=$tom::lng unless $env{'image_attrs.lng'};
+	main::_log("lng='$env{'image_attrs.lng'}'");
+	
 	if ($env{'file'})
 	{
 		if (! -e $env{'file'})
@@ -1214,7 +1246,7 @@ sub image_add
 		}
 		
 		# check if same image not already inserted
-		if (!$env{'image.ID_entity'} && !$env{'image.ID'} && $env{'check_duplicity'})
+		if (!$env{'image.ID_entity'} && !$env{'image.ID'} && $env{'check_duplicity'} && !$App::501::disable_deduplication)
 		{
 			# calculate sha1
 			open(CHKSUM,'<'.$env{'file'});
@@ -1288,28 +1320,6 @@ sub image_add
 		
 		$content_updated=1;
 	}
-	
-	my %category;
-	if ($env{'image_cat.ID'} && $env{'image_cat.ID'} ne 'NULL')
-	{
-		# detect language
-		%category=App::020::SQL::functions::get_ID(
-			'ID' => $env{'image_cat.ID'},
-			'db_h' => "main",
-			'db_name' => $App::501::db_name,
-			'tb_name' => "a501_image_cat",
-			'columns' => {'*'=>1}
-		);
-		$env{'image_attrs.lng'}=$category{'lng'};
-		$env{'image_attrs.ID_category'}=$category{'ID_entity'};
-		main::_log("setting lng='$env{'image_attrs.lng'}' from image_cat.ID='$env{'image_cat.ID'}'");
-		main::_log("setting image_attrs.ID_category='$env{'image_attrs.ID_category'}' from image_cat.ID='$env{'image_cat.ID'}'");
-	}
-	$env{'image_attrs.ID_category'}='NULL' if $env{'image_cat.ID'} eq 'NULL';
-	
-	$env{'image_attrs.lng'}=$tom::lng unless $env{'image_attrs.lng'};
-	main::_log("lng='$env{'image_attrs.lng'}'");
-	
 	
 	# IMAGE
 	
@@ -1869,13 +1879,23 @@ sub image_file_add
 	
 	# width, height
 	my $image = new Image::Magick;
-	$image->Read($env{'file'});
+	my $out=$image->Read($env{'file'});
+	if ($out)
+	{
+		main::_log("can't read '$out'",1);
+		$t->close();
+		return undef;
+	}
 	my $image_width=$image->Get('width');
 	my $image_height=$image->Get('height');
 	main::_log("image width=$image_width height=$image_height");
 	
-	return undef unless $image_width;
-	return undef unless $image_height;
+	if (!$image_width || !$image_height)
+	{
+		main::_log("can't read info about dimensions",1);
+		$t->close();
+		return undef;
+	}
 	
 	# generate new unique hash
 	my $name=image_file_newhash();
@@ -2176,6 +2196,7 @@ Return image_file columns. This is the fastest way (optimized SQL) to get inform
 	)
 
 =cut
+
 
 sub get_image_file
 {

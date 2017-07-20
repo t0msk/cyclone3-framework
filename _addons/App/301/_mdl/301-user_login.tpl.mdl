@@ -87,6 +87,8 @@ sub execute
 		my $sql_status="status='Y'";
 			$sql_status="status IN ('Y','W')" if $env{'token_force_status'};
 			$env{'force_status'} = 1 if $env{'token_force_status'};
+		my $email_not_null = 'email IS NOT NULL AND';
+			$email_not_null = '' if $env{'token_no_email'};
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				*
@@ -95,7 +97,7 @@ sub execute
 			WHERE
 				secure_hash = ? AND
 				hostname=? AND
-				email IS NOT NULL AND
+				$email_not_null
 				$sql_status
 			ORDER BY
 				ref_facebook DESC
@@ -348,7 +350,7 @@ sub execute
 	my $sql_status="status='Y'";
 		$sql_status="status IN ('Y','W')" if $env{'force_status'};
 	
-	my $sql_user="login=? OR email=?";
+	my $sql_user="TRIM(login)=? OR TRIM(email)=?";
 	my @sql_user_bind;
 		push @sql_user_bind,$env{'login'};
 		push @sql_user_bind,$env{'login'};

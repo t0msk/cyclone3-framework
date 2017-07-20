@@ -495,9 +495,94 @@ sub get_CGI
 			
 		}
 		
-		delete $form{'POSTDATA'};
+#		delete $form{'POSTDATA'};
 	}
 	
+	if ($form{'PUTDATA'})
+	{
+		main::_log("received PUTDATA");
+		# process SOAP data
+		if ($TOM::Document::type eq "soap")
+		{
+			main::_log("received SOAP PUTDATA, parsing");
+			
+			require SOAP::Lite;
+			require JSON;
+			main::_log($form{'PUTDATA'});
+			
+			if ($form{'PUTDATA'}=~/^{/) # JSON?
+			{eval{
+				main::_log(" type=json");
+				utf8::encode($form{'PUTDATA'});
+				%{$main::RPC}=%{JSON::decode_json($form{'PUTDATA'})};
+			};if($@){main::_log("error=".$@)}}
+			else
+			{eval{
+				my $som = SOAP::Deserializer->deserialize($form{'PUTDATA'});
+				my $body = $som->body;
+				
+				$form{'type'}=(keys %{$body})[0];
+				
+				main::_log("SOAP type='$form{'type'}'");
+				
+				if (ref($body->{$form{'type'}}) eq "HASH")
+				{
+					main::_log("SOAP parse HASH");
+					
+					my $gensym;
+					foreach (keys %{$body->{$form{'type'}}})
+					{
+						if ($_=~/^c\-gensym/)
+						{
+							$gensym=$_;
+							last;
+						}
+					}
+					
+					if ($gensym)
+					{
+						main::_log("SOAP parse ugly perl $gensym");
+						%{$main::RPC}=%{$body->{$form{'type'}}->{$gensym}};
+					}
+					
+					else
+					{
+						%{$main::RPC}=%{$body->{$form{'type'}}};
+					}
+				}
+			}};
+		}
+		elsif ($TOM::Document::type eq "json" && (
+			($form{'PUTDATA'}=~/^{/ && $form{'PUTDATA'}=~/}$/)
+			|| ($form{'PUTDATA'}=~/^\[/ && $form{'PUTDATA'}=~/\]$/)
+		)) # JSON?
+		{eval{
+			main::_log(" type=json");
+			utf8::encode($form{'PUTDATA'});
+#			%{$main::RPC}=%{JSON::decode_json($form{'PUTDATA'})};
+			$main::RPC={};
+			$main::RPC=JSON::decode_json($form{'PUTDATA'});
+		};if($@){main::_log("error=".$@)}}
+		# process XML-RPC data
+		elsif ($TOM::Document::type eq "xmlrpc")
+		{
+			main::_log("received XML-RPC PUTDATA, parsing");
+			
+			require XMLRPC::Lite;
+			
+			my $som = XMLRPC::Deserializer->deserialize($form{'PUTDATA'});
+			my $body = $som->body;
+			
+			$form{'type'}=$som->method;
+			
+			main::_log("XML-RPC type='$form{'type'}'");
+			
+			%{$main::RPC}=%{$som->paramsin};
+			
+		}
+		
+#		delete $form{'PUTDATA'};
+	}
 	
 	$t->close();
 	return %form;
