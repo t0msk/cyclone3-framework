@@ -569,11 +569,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   UNIQUE KEY `UNI_0` (`ID_channel`,`program_code`,`datetime_air_start`),
   KEY `ID_entity` (`ID_entity`),
   KEY `name` (`name`,`datetime_air_start`),
-  KEY `datetime_air_start` (`datetime_air_start`),
+  KEY `datetime_air_start` (`datetime_air_start`, `datetime_air_stop`),
   KEY `ID_series` (`ID_series`),
   KEY `series_ID` (`series_ID`),
   KEY `status` (`status`,`status_internet`,`status_premiere`,`status_live`),
-  KEY `ID_channel` (`ID_channel`,`datetime_air_start`),
+  KEY `ID_channel` (`ID_channel`, `datetime_air_stop`, `datetime_air_start`),
   KEY `SEL_0` (`status`,`datetime_real_stop`),
   KEY `SEL_1` (`status`,`datetime_real_start`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
