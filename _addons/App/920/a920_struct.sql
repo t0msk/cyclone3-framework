@@ -128,6 +128,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_transaction_pair` (
   `datetime_event` datetime NOT NULL,
   `ID_order` bigint(20) NOT NULL, -- rel _order.ID_entity
   `ref_transaction` varchar(64) character set ascii collate ascii_bin NOT NULL,
+  `additional_data` text character set utf8 collate utf8_unicode_ci,
   KEY `ID_order` (`ID_order`,`datetime_event`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8; -- must be myisam because inserting with insert delayed
 
