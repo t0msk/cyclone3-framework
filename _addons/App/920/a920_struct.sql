@@ -7,6 +7,7 @@
 CREATE TABLE `/*db_name*/`.`/*app*/_order` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` int(8) unsigned zerofill default NULL,
+  `ref_ID` varchar(64) character set ascii default NULL, -- external reference
   `datetime_create` datetime NOT NULL, -- last modified
   `datetime_order` datetime NOT NULL, -- order time
   `datetime_apply` datetime default NULL, -- apply time
@@ -41,6 +42,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_order` (
 CREATE TABLE `/*db_name*/`.`/*app*/_order_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` int(8) unsigned zerofill default NULL,
+  `ref_ID` varchar(64) character set ascii default NULL, -- external reference
   `datetime_create` datetime NOT NULL,
   `datetime_order` datetime NOT NULL,
   `datetime_apply` datetime default NULL, -- apply time

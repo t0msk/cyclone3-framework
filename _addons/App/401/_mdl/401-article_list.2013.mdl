@@ -227,7 +227,7 @@ sub execute
 		my $results = $Elastic->search(
 			'index' => 'cyclone3.'.$App::401::db_name,
 			'type' => 'a401_article',
-			'fields' => ["_id","name","abstract","cat.ID","cat.charindex"],
+			#'fields' => ["_id","name","abstract","cat.ID","cat.charindex"],
 			'from' => (($env{'elastic.page'}-1)*$env{'elastic.size'}),
 			'size' => $env{'elastic.size'},
 			'body'  => {

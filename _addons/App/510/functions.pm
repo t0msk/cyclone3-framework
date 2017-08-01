@@ -4441,6 +4441,7 @@ sub get_video_part_file_process_front
 			video_part_file.ID AS ID_file,
 			video_part_file.datetime_create AS file_datetime_create,
 			video_part_file.status AS file_status,
+			video_part_file_p.file_size AS file_size_p,
 			video_part_file_process.status AS process,
 			video_part.ID_brick,
 			video_brick.dontprocess AS brick_dontprocess
