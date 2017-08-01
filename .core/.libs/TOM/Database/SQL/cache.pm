@@ -15,7 +15,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 use Ext::Redis::_init;
 use Compress::Zlib;
 use JSON;
-our $json = JSON::XS->new->utf8;
+our $json = JSON::XS->new;
 
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
