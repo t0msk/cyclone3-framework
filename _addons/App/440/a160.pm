@@ -66,7 +66,7 @@ sub get_relation_iteminfo
 			SELECT
 				ID,
 				ID_entity,
-				name,
+				title,
 				ID_category
 			FROM
 				`$env{'r_db_name'}`.a440_promo_item
