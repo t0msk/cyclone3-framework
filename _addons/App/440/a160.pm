@@ -77,7 +77,7 @@ sub get_relation_iteminfo
 		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>'main');
 		if (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
-			$info{'name'}=$db0_line{'name'};
+			$info{'name'}=$db0_line{'title'};
 			$info{'ID'}=$db0_line{'ID'};
 			$info{'ID_entity'}=$db0_line{'ID_entity'};
 			$info{'ID_category'}=$db0_line{'ID_category'};
