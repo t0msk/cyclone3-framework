@@ -60,7 +60,7 @@ sub r_ # replace next
 	my $self=shift;
 	return undef unless my $what=shift;
 	return undef unless my $code=shift;
-	return undef unless $self->{OUT}{BODY}=~s|$what|$code\n$what|g;
+	return undef unless $self->{OUT}{BODY}=~s|$what|$code$what|g;
 	return 1;
 }
 
@@ -99,6 +99,7 @@ sub OUT_ # get cleaned code
 	$self->{'OUT'}{'HEADER'}=~s|<%.*?%>||gs;
 	$self->{'OUT'}{'HEADER'}=~s|<#.*?#>||gs;
 	$self->{'OUT'}{'HEADER'}=~s|<!.*?!>||g;# unless $main::IAdm;
+	1 while ($self->{'OUT'}{'BODY'}=~s|\n$||g);
 	my $doc=$self->{'OUT'}{'HEADER'}.$self->{'OUT'}{'BODY'}.$self->{'OUT'}{'FOOTER'};
 	1 while ($doc=~s|\n\n$|\n|g);
 	if (@pub::DOC_HTTPS_autoreplace && $main::ENV{'HTTPS'} eq "on")
