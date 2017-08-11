@@ -303,7 +303,7 @@ $TOM::Document::base::copyright
 	
 	# FOOTER
 	
-	$self->{'OUT'}{'FOOTER'} = "\n\n</body>\n</html>\n";
+	$self->{'OUT'}{'FOOTER'} = "\n</body>\n</html>\n";
 	
  return 1;
 }
