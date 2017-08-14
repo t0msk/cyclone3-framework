@@ -330,6 +330,24 @@ sub callback {
 			undef $main::nojobify; # jobify everything required
 			$job->execute() if $job;
 		}
+		elsif ($payload->{'pub-mdl'})
+		{
+			my $mdl=$payload->{'pub-mdl'};
+			
+			require Tomahawk;
+			
+			$main::nojobify=1; # nojobify, just execute!
+			%main::env=%{$payload->{'env'}};
+			%main::FORM=%{$payload->{'FORM'}};
+			%main::key=%{$payload->{'key'}};
+			
+			my ($out)=Tomahawk::module(%{$payload->{'args'}},'-stdout_dummy'=>1);
+			
+			undef $main::nojobify; # jobify everything required
+			undef %main::env;
+			undef %main::FORM;
+			undef %main::key;
+		}
 		else
 		{
 			main::_log("unknown type of callback",1);
