@@ -69,7 +69,7 @@ use Data::Dumper;
 use Ext::Redis::_init;
 our $alarm=$ENV{'TIMEOUT'};
 	 $alarm||=10; # autoexit after 10 seconds of inactivity
-our $time_max=600;
+our $time_max=1800;
 our $time_start=time();
 
 my $service=Ext::RabbitMQ::service();
