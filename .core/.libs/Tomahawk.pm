@@ -91,6 +91,7 @@ use Utils::datetime;
 use conv;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use Ext::Redis::_init;
+use Ext::RabbitMQ::_init;
 use Storable;
 use Compress::Zlib;
 use JSON;
@@ -375,6 +376,7 @@ sub module
 	{
 		$mdl_C{'-cache'}||=$TOM::CACHE_time."s";
 		$mdl_C{'-cache_id'}||="default"; # ak je vstup s cache_id ale nieje 0
+		delete $mdl_C{'-cache_background'} if ($TOM::P ne $TOM::DP && $tom::devel); # ignore background caching in multidevelopment environment
 		$cache_domain=$tom::H unless $mdl_C{'-cache_master'};
 		
 		my $null;
@@ -383,9 +385,16 @@ sub module
 			else {$null.=$_."=\"".$mdl_env{$_}."\"\n";}
 		}}
 		foreach (sort keys %mdl_C){
+			next unless $mdl_C{$_};
 			next if $_ eq "-cache_debug";
+			next if $_ eq "-ALRM";
+			next if $_ eq "-stdout";
+			next if $_ eq "-stdout_dummy";
+			next if $_ eq "-cache_background";
 			next if $_ eq "-cache_id";
+			next if $_ eq "-cache_ignore";
 			next if $_ eq "-cache"; # duration configuration don't affects cache
+#			main::_log("c '$_'='".$mdl_C{$_}."'");
 			$null.=$_."=\"".$mdl_C{$_}."\"\n";
 		}
 		
@@ -498,8 +507,7 @@ sub module
 				(
 					# tento browser ma zakazane recachovanie
 					# pokial cache existuje v databaze
-					# TO V PREKLADE DO SLOVENCINY ZNAMENA ZE ROBOT
-					# AK NAJDE NAJAKY STARY CACHE, NEZAUJIMA HO CI JE AKTUALNY,
+					# AK ROBOT NEJAKY STARY CACHE, NEZAUJIMA HO CI JE AKTUALNY,
 					# STACI MU ZE CACHE PROSTE MA A TAK HO POUZIJE
 					($TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'recache_disable'})
 					&&($mdl_C{'-cache_from'})
@@ -511,12 +519,21 @@ sub module
 					$cache_parallel == 1 && $mdl_C{'-cache_from'}
 					
 				)
+				||
+				(
+					# alebo je pouzity parameter pre automaticku obsluhu cache na pozadi
+					$mdl_C{'-cache_background'} && $mdl_C{'-cache_from'}
+				)
 			)
 			# A
 			&&
 			(
 				# data sa nezmenili
 				!$data_changed
+			)
+			&&
+			(
+				!$mdl_C{'-cache_ignore'}
 			)
 		)
 		# TAK TUTO CACHE POUZIJEM
@@ -528,6 +545,69 @@ sub module
 				"parallel?:".$cache_parallel." ".
 				"object:".$cache_key
 			);
+			
+			# idem poslat do backendu request
+			if (
+				$mdl_C{'-cache_old'} >= ($mdl_C{'-cache_duration'}*0.8) # cache je stara
+				&& $mdl_C{'-cache_background'} # chcem aby nacachoval backend
+				&& !$cache_parallel # a uz sa tak nedeje v inom procese/poziadavke
+				&& $RabbitMQ # je k dispozicii backend services
+			)
+			{
+				my %env_origin=@_;
+					delete $env_origin{'-cache_background'};
+					$env_origin{'-cache_ignore'};
+				
+				my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
+				$Redis->hset($key,'etime',$main::time_current);
+				
+				my $queue=$tom::H_orig || '_global';
+					$queue.="::pub";
+					
+				my $queue_found=$TOM::Engine::queues{$queue};
+				if ($Redis && !$queue_found)
+				{
+					$TOM::Engine::queues{$queue}=$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
+				}
+				if (!$queue_found)
+				{main::_log("[RabbitMQ] declare_queue '".'cyclone3.job.'.$queue."'");eval{
+					my $exists=$RabbitMQ->_channel->declare_queue(
+						'exchange' => encode('UTF-8', 'cyclone3.job'),
+						'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
+						'durable' => 1
+					);
+					main::_log("[RabbitMQ] bind_queue '".$queue."'");
+					$RabbitMQ->_channel->bind_queue(
+						'exchange' => encode('UTF-8', 'cyclone3.job'),
+						'routing_key' => encode('UTF-8', $queue),
+						'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
+					);
+					$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time());
+					$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,3600);
+				}}
+				
+				my $id=TOM::Utils::vars::genhash(8);
+				main::_log("request cache from backend services (jobify '".$id."' routing_key '".$queue."')");
+				$RabbitMQ->publish(
+					'exchange'=>'cyclone3.job',
+					'routing_key' => $queue,
+					'body' => $json->encode({
+						'pub-mdl' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
+						'args' => \%env_origin,
+						'FORM' => \%main::FORM,
+						'key' => \%main::key,
+						'env' => \%main::env
+					}),
+					'header' => {
+						'headers' => {
+							'message_id' => $id,
+							'timestamp' => time(),
+							'deduplication' => 'true'
+						}
+					}
+				);
+				
+			}
 			
 			if ($TOM::DEBUG_cache)
 			{
@@ -855,13 +935,23 @@ sub module
 						'time_duration' => $CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'},
 						'execute_time_duration' => $t_execute->{'time'}{'duration'},
 						'execute_time_user' => $t_execute->{'time'}{'user'}{'duration'},
+						'engine' => $TOM::engine,
 						'hits' => 0,
 						sub {} # in pipeline
 					);
 					$Redis->hdel($key,'etime',sub {}); # remove execution time
+					my $expiretime=$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'};
+					if ($TOM::CACHE_pub_mdl_grace)
+					{
+						my $grace=int($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'} * $TOM::CACHE_pub_mdl_grace);
+						$grace=$TOM::CACHE_pub_mdl_grace_min if
+							$grace < $TOM::CACHE_pub_mdl_grace_min;
+						$grace=$TOM::CACHE_pub_mdl_grace_max if
+							$grace > $TOM::CACHE_pub_mdl_grace_max;
+						$expiretime+=$grace;
+					}
 					$Redis->expire($key,
-						$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'} + 
-						int($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}/2),
+						$expiretime,
 						sub {} # in pipeline
 					); # set expiration time
 					main::_log("save cache object '$key' type '".$mdl_C{'T_CACHE'}."'");
