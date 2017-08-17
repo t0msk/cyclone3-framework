@@ -1853,7 +1853,7 @@ our @table=
 	{name=>'Yandex.com',
 		regexp		=>	['YandexBot'],
 		agent_type	=>	"robot",
-		engine_disable	=>	0,
+		engine_disable	=>	1,
 		recache_disable =>	1,
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
@@ -2341,6 +2341,9 @@ our @table=
 our %table_IP=
 (
 	# list of hacking PC's
+	'136\.243\.36\.87' => 'hacker', # 2017-04-04 - hacker
+	'178\.63\.1\.153' => 'hacker', # 2017-03-31 - hacker
+	'185\.65\.134\.' => 'hacker', # 2017-04-15 - hacker over VPN
 	'185\.145\.66\.246' => 'hacker', # 2017-01-07 - hacker
 	'185\.145\.66\.247' => 'hacker', # 2017-01-07 - hacker
 	'185\.145\.66\.' => 'hacker', # 2017-01-07 - hacker
@@ -2383,6 +2386,7 @@ our %table_IP=
 	'222\.77\.242\.' => 'spambot', # 2013-02-04
 	'222\.77\.243\.' => 'spambot', # 2013-01-15
 	'222\.77\.247\.' => 'spambot', # 2013-01-15
+	'223\.66\.219\.234' => 'spambot', # 2017-03-29
 	
 	# list of grabbers
 	'5\.45\.62\.130' => 'grabber', # 2016-05-30
@@ -2391,6 +2395,7 @@ our %table_IP=
 	'46\.161\.9\.20' => 'grabber', # 2016-05-17
 	'46\.105\.211\.81' => 'grabber', # 2016-03-09 20:00
 	'46\.161\.9\.32' => 'grabber', # 2016-05-17
+#	'46\.229\.173\.67' => 'grabber', # 2017-05-06 - SEMrush
 	'62\.113\.202\.150' => 'grabber', # 2016-05-17
 	'77\.247\.181\.162' => 'grabber', # 2016-04-02 22:00
 	'82\.199\.129\.144' => 'grabber', # 2016-05-17
