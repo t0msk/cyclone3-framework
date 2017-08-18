@@ -597,6 +597,21 @@ sub user_add
 		if ($env{'user.login'})
 		{
 			$set.=",login='".TOM::Security::form::sql_escape($env{'user.login'})."'";
+			# check duplicty and remove it
+			TOM::Database::SQL::execute(qq{
+				UPDATE
+					TOM.a301_user
+				SET
+					login = CONCAT(login,'-',ID_user) 
+				WHERE
+					hostname LIKE ?
+					AND login LIKE ?
+					AND ID_user NOT LIKE ?
+			},'bind'=>[
+				$user{'hostname'},
+				$env{'user.login'},
+				$env{'user.ID_user'}
+			]);
 		}
 		elsif (exists $env{'user.login'})
 		{
