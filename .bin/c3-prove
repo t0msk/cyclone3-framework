@@ -122,10 +122,12 @@ eval
 		opendir(my $dh, '.') || return;
 		my @files = sort grep { /\.t$/ && -f $_ } readdir($dh);
 		closedir $dh;
-
+		
 		my $summary=$harness->runtests(@files);
 		
 		print color 'reset';
+		
+		exit 1 if $summary->{'failed'};
 	}
 	
 };
