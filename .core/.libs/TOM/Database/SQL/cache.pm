@@ -49,6 +49,8 @@ sub new
 		$self->{'value'}->{'expire'}=$env{'expire'};
 		$self->{'value'}->{'db_h'}=$env{'db_h'} if $env{'db_h'};
 		$self->{'value'}->{'sql'}=$env{'sql'} if $env{'sql'};
+			$self->{'value'}->{'sql'}=substr($self->{'value'}->{'sql'},0,32).'...'
+				if length($self->{'value'}->{'sql'}) > 48;
 		$self->{'value'}->{'type'}=$env{'type'} if $env{'type'};
 		$self->{'value'}->{'err'}=$env{'err'} if $env{'err'};
 		$self->{'value'}->{'info'}=$env{'info'} if $env{'info'};
