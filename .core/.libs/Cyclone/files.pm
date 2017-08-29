@@ -178,7 +178,7 @@ our @setit_F=
 	
 	['\.core\/.*\.so$'                 ,".core so"                    ,"660","$user_www:$group"],
 	
-	['\.(RFC|docbook)$'                ,"documentation files"         ,"660","$user_www:$group"],
+	['\.(RFC|docbook|md)$'             ,"documentation files"         ,"660","$user_www:$group"],
 	['\/master\.conf$'                 ,"master conf"                 ,"660","$user_www:$group"],
 	['\/local\.conf$'                  ,"local conf"                  ,"660","$user_www:$group"],
 	['\/rewrite.*?conf$'               ,"rewrite conf"                ,"660","$user_www:$group"],
@@ -207,6 +207,8 @@ our @setit_F=
 	['_dsgn\/.*\.tpl\.d\/'             ,"tpl.d file"                  ,"660","$user_www:$group"],
 	
 	['_dsgn\/.*\.L10n$'                ,"L10n"                        ,"660","$user_www:$group"],
+	
+	['_dsgn\/.*scss$'                  ,"SCSS"                        ,"660","$user_www:$group"],
 	
 	['_type\/.*\.type$'                ,"_type type"                  ,"660","$user_www:$group"],
 	['_type\/.*\.cml_type$'            ,"_type cml_type"              ,"660","$user_www:$group"],
