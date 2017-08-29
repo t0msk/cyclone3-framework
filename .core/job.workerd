@@ -132,7 +132,7 @@ sub get_workers
 }
 
 our $WORKERS = get_workers();
-my $MAX_WORKERS = $TOM::job_host_max_processes || ($sysstat->{'tcpucount'} * 2) +1;
+my $MAX_WORKERS = $TOM::job_host_max_processes || ($sysstat->{'tcpucount'} * 4) +1;
 $ENV{'WORKERS'}=1 unless exists $ENV{'WORKERS'}; # spawning workers?
 $ENV{'AUTORESTART'}=1 unless exists $ENV{'AUTORESTART'}; # spawning workers?
 $TOM::job_domain_max_workers||=16; # max X workers parallel on same domain
