@@ -2229,6 +2229,7 @@ sub _product_index
 		}
 		
 		my %product=$sth0{'sth'}->fetchhash();
+			foreach (keys %product){delete $product{$_} unless $product{$_}};
 		
 		%{$product{'metahash'}}=App::020::functions::metadata::parse($product{'metadata'});
 		delete $product{'metadata'};
@@ -2291,15 +2292,13 @@ sub _product_index
 		},'quiet'=>1,'bind'=>[$env{'ID'}]);
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
+			next unless $db0_line{'name'};
 			push @{$product{'name'}},$db0_line{'name'}
 				unless $used{$db0_line{'name'}};
 			push @{$product{'full_name'}},$product{'brand_name'}.' '.$db0_line{'name'}
 				unless $used{$db0_line{'name'}};
 			
-			delete $db0_line{'description'} unless $db0_line{'description'};
-			delete $db0_line{'description_short'} unless $db0_line{'description_short'};
-			delete $db0_line{'name_label'} unless $db0_line{'name_label'};
-			delete $db0_line{'keywords'} unless $db0_line{'keywords'};
+			foreach (keys %db0_line){delete $db0_line{$_} unless $db0_line{$_}};
 			
 			$used{$db0_line{'name'}}++;
 			%{$product{'locale'}{$db0_line{'lng'}}}=%db0_line;
@@ -2748,7 +2747,8 @@ sub _product_index
 			}
 		});
 		
-#		print Dumper(\%product);
+		delete $product{'metahash'} unless keys %{$product{'metahash'}};
+		delete $product{'relations'} unless keys %{$product{'relations'}};
 		
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::910::db_name,
