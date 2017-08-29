@@ -1821,7 +1821,7 @@ sub tplmodule
 #						$Redis->hincrby('C3|counters|mdl_cache|'.$date_str,'crt',1,sub{});
 #						$Redis->expire('C3|counters|mdl_cache|'.$date_str,3600,sub{});
 						
-						my $mdl_cache_type='C3|debug|mdl_cache|'.$tom::H.':'.$mdl_C{'T_CACHE'};
+						my $mdl_cache_type='C3|debug|tpl_cache|'.$tom::H.':'.$mdl_C{'T_CACHE'};
 						$Redis->sadd('C3|debug|mdl_caches', $mdl_cache_type,sub{});
 						$Redis->sadd('C3|debug|mdl_caches|'.$tom::H, $mdl_cache_type,sub{});
 						$Redis->expire('C3|debug|mdl_caches|'.$tom::H, (86400*30),sub{});
