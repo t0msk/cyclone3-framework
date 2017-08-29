@@ -68,8 +68,8 @@ use JSON;
 use Data::Dumper;
 use Ext::Redis::_init;
 our $alarm=$ENV{'TIMEOUT'};
-	 $alarm||=10; # autoexit after 10 seconds of inactivity
-our $time_max=1800;
+	 $alarm||=30; # autoexit after 10 seconds of inactivity
+our $time_max=1200;
 our $time_start=time();
 
 my $service=Ext::RabbitMQ::service();
@@ -337,9 +337,16 @@ sub callback {
 			require Tomahawk;
 			
 			$main::nojobify=1; # nojobify, just execute!
-			%main::env=%{$payload->{'env'}};
-			%main::FORM=%{$payload->{'FORM'}};
-			%main::key=%{$payload->{'key'}};
+			%main::env=%{$payload->{'env'}}
+				if $payload->{'env'};
+			%main::FORM=%{$payload->{'FORM'}}
+				if $payload->{'FORM'};
+			%main::key=%{$payload->{'key'}}
+				if $payload->{'key'};
+			%tom::setup=%{$payload->{'setup'}}
+				if $payload->{'setup'};
+#			%main::a210=%{$payload->{'a210'}};
+			local $tom::lng=$payload->{'lng'} || $tom::lng;
 			
 			my ($out)=Tomahawk::module(%{$payload->{'args'}},'-stdout_dummy'=>1);
 			
@@ -347,6 +354,7 @@ sub callback {
 			undef %main::env;
 			undef %main::FORM;
 			undef %main::key;
+			undef %main::a210;
 		}
 		else
 		{

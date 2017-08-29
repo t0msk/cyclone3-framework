@@ -385,6 +385,7 @@ sub module
 			else {$null.=$_."=\"".$mdl_env{$_}."\"\n";}
 		}}
 		foreach (sort keys %mdl_C){
+#			main::_log("c '$_'='".$mdl_C{$_}."'");
 			next unless $mdl_C{$_};
 			next if $_ eq "-cache_debug";
 			next if $_ eq "-ALRM";
@@ -548,15 +549,16 @@ sub module
 			
 			# idem poslat do backendu request
 			if (
-				$mdl_C{'-cache_old'} >= ($mdl_C{'-cache_duration'}*0.8) # cache je stara
+				$mdl_C{'-cache_old'} >= ($mdl_C{'-cache_duration'}*0.95) # cache je stara
 				&& $mdl_C{'-cache_background'} # chcem aby nacachoval backend
 				&& !$cache_parallel # a uz sa tak nedeje v inom procese/poziadavke
 				&& $RabbitMQ # je k dispozicii backend services
 			)
 			{
+				use Encode qw(decode encode);
 				my %env_origin=@_;
 					delete $env_origin{'-cache_background'};
-					$env_origin{'-cache_ignore'};
+					$env_origin{'-cache_ignore'}=1;
 				
 				my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
 				$Redis->hset($key,'etime',$main::time_current);
@@ -584,7 +586,7 @@ sub module
 					);
 					$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time());
 					$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,3600);
-				}}
+				};if($@){main::_log($@,1)}}
 				
 				my $id=TOM::Utils::vars::genhash(8);
 				main::_log("request cache from backend services (jobify '".$id."' routing_key '".$queue."')");
@@ -596,7 +598,10 @@ sub module
 						'args' => \%env_origin,
 						'FORM' => \%main::FORM,
 						'key' => \%main::key,
-						'env' => \%main::env
+						'env' => \%main::env,
+						'setup' => \%tom::setup,
+#						'a210' => \%main::a210,
+						'lng' => $tom::lng
 					}),
 					'header' => {
 						'headers' => {
@@ -638,6 +643,8 @@ sub module
 				$file_data="<!-- mdl"
 					." do='".$cache_domain."'"
 					." t='".$mdl_C{'T_CACHE'}."'"
+					." e='".$cache->{'engine'}."'"
+					." c='".$cache->{'request_code'}."'"
 					." u='".$TOM::P_uuid."'"
 					." h='".$TOM::hostname."'"
 					." d='".int($mdl_C{'-cache_old'})."s'"
@@ -936,6 +943,7 @@ sub module
 						'execute_time_duration' => $t_execute->{'time'}{'duration'},
 						'execute_time_user' => $t_execute->{'time'}{'user'}{'duration'},
 						'engine' => $TOM::engine,
+						'request_code' => $main::request_code,
 						'hits' => 0,
 						sub {} # in pipeline
 					);
@@ -1814,7 +1822,7 @@ sub tplmodule
 #						$Redis->hincrby('C3|counters|mdl_cache|'.$date_str,'crt',1,sub{});
 #						$Redis->expire('C3|counters|mdl_cache|'.$date_str,3600,sub{});
 						
-						my $mdl_cache_type='C3|debug|mdl_cache|'.$tom::H.':'.$mdl_C{'T_CACHE'};
+						my $mdl_cache_type='C3|debug|tpl_cache|'.$tom::H.':'.$mdl_C{'T_CACHE'};
 						$Redis->sadd('C3|debug|mdl_caches', $mdl_cache_type,sub{});
 						$Redis->sadd('C3|debug|mdl_caches|'.$tom::H, $mdl_cache_type,sub{});
 						$Redis->expire('C3|debug|mdl_caches|'.$tom::H, (86400*30),sub{});
