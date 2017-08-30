@@ -4515,7 +4515,7 @@ sub get_video_part_file_process_front
 			video.status IN ('Y') AND
 			
 			/* only not trashed video_attrs */
-			video_attrs.status IN ('Y','N') AND
+			video_attrs.status IN ('Y') AND
 			
 			/* skip videos locked */
 			video_part.process_lock = 'N' AND
