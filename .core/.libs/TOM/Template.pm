@@ -266,7 +266,9 @@ sub new
 					'L10n' => $obj->{'L10n'},
 					'file' => $obj->{'file'},
 					'file_' => $obj->{'file_'},
-					'location' => $obj->{'location'}
+					'location' => $obj->{'location'},
+					'engine' => $TOM::engine,
+					'request_code' => $main::request_code,
 				})),sub {} # in pipeline
 			);
 			$Redis->expire($key,86400,sub {}); # set expiration time in pipeline
