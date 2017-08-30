@@ -376,7 +376,7 @@ sub module
 	{
 		$mdl_C{'-cache'}||=$TOM::CACHE_time."s";
 		$mdl_C{'-cache_id'}||="default"; # ak je vstup s cache_id ale nieje 0
-		delete $mdl_C{'-cache_background'} if ($TOM::P ne $TOM::DP && $tom::devel); # ignore background caching in multidevelopment environment
+		delete $mdl_C{'-cache_backend'} if ($TOM::P ne $TOM::DP && $tom::devel); # ignore background caching in multidevelopment environment
 		$cache_domain=$tom::H unless $mdl_C{'-cache_master'};
 		
 		my $null;
@@ -391,7 +391,7 @@ sub module
 			next if $_ eq "-ALRM";
 			next if $_ eq "-stdout";
 			next if $_ eq "-stdout_dummy";
-			next if $_ eq "-cache_background";
+			next if $_ eq "-cache_backend";
 			next if $_ eq "-cache_id";
 			next if $_ eq "-cache_ignore";
 			next if $_ eq "-cache"; # duration configuration don't affects cache
@@ -523,7 +523,7 @@ sub module
 				||
 				(
 					# alebo je pouzity parameter pre automaticku obsluhu cache na pozadi
-					$mdl_C{'-cache_background'} && $mdl_C{'-cache_from'} && $TOM::cache_background
+					$mdl_C{'-cache_backend'} && $mdl_C{'-cache_from'} && $TOM::cache_backend
 				)
 			)
 			# A
@@ -550,15 +550,15 @@ sub module
 			# idem poslat do backendu request
 			if (
 				$mdl_C{'-cache_old'} >= ($mdl_C{'-cache_duration'}*0.95) # cache je stara
-				&& $mdl_C{'-cache_background'} # chcem aby nacachoval backend
-				&& $TOM::cache_background
+				&& $mdl_C{'-cache_backend'} # chcem aby nacachoval backend
+				&& $TOM::cache_backend
 				&& !$cache_parallel # a uz sa tak nedeje v inom procese/poziadavke
 				&& $RabbitMQ # je k dispozicii backend services
 			)
 			{
 				use Encode qw(decode encode);
 				my %env_origin=@_;
-					delete $env_origin{'-cache_background'};
+					delete $env_origin{'-cache_backend'};
 					$env_origin{'-cache_ignore'}=1;
 				
 				my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
