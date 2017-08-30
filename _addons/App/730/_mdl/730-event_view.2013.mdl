@@ -207,7 +207,7 @@ sub execute
 	push @{$env_out{'call'}{'H'}{'add_DOC_keywords'}},$event{'keywords'}
 		if $env{'header.keywords'};
 	
-	push @{$env_out{'call'}{'H'}{'add_DOC_title'}},$event{'name'}
+	push @{$env_out{'call'}{'H'}{'add_DOC_title'}}, ($event{'name_long'} || $event{'name'})
 		if $env{'header.title'};
 	
 	if ($event{'cat_ID'})
@@ -250,6 +250,13 @@ sub execute
 		'entity' => $parser->{'entity'},
 		'thumbnail' => $parser->{'thumbnail'},
 	};
+	
+	if ($env{'header.description'})
+	{
+		my $tmpdesc = $event{'description_short_parser'}{'output'};
+		$tmpdesc=~s|<.*?>| |gms;
+		push @{$env_out{'call'}{'H'}{'change_DOC_description'}}, $tmpdesc;
+	}
 	
 	# parser body
 	$parser->parse($event{'description'});
