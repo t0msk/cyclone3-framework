@@ -153,6 +153,7 @@ foreach my $cache_type (sort @{$Redis->smembers($key)})
 	my $caches_execute_time_duration;
 	my $caches_execute_time_user;
 	my $caches_bytes;
+	my %engines;
 	foreach my $cache_member (@{$Redis->smembers($cache_type)})
 	{
 		$caches_all++;$progress->update($caches_all);
@@ -174,6 +175,7 @@ foreach my $cache_type (sort @{$Redis->smembers($key)})
 		
 		$caches_execute_time_duration+=$Redis->hget($cache_member,'execute_time_duration');
 		$caches_execute_time_user+=$Redis->hget($cache_member,'execute_time_user');
+		$engines{$Redis->hget($cache_member,'engine') || 'null'}++;
 #		$caches_bytes+=$Redis->hstrlen($cache_member,'body');
 #		print " ".$cache_member." from:".$cache_time_from." hits:".$cache_hits."\n";
 		
@@ -197,6 +199,7 @@ foreach my $cache_type (sort @{$Redis->smembers($key)})
 		'eff' => (int(($caches_hits/$caches_real)*10)/10),
 		'live' => int($caches_live/$caches_real),
 		'bytes' => $caches_bytes,
+		'engines' => \%engines,
 		'execute_time_duration' => $caches_execute_time_duration,
 		'execute_time_user' => $caches_execute_time_user
 	};
@@ -212,8 +215,8 @@ foreach my $cache (sort {$output{$b}{'crt'} <=> $output{$a}{'crt'}} keys %output
 	my $cache_name=$1;
 	my $cache_type=$2;
 	print
-		 "|".sprintf('%30s',$cache_name)
-		."|".sprintf('%10s',$cache_type)
+		 "| ".sprintf('%-30s',$cache_name)
+		."| ".sprintf('%-20s',$cache_type)
 		."|".sprintf('%7d',$output{$cache}{'crt'})
 #		."|".sprintf('%10s',Number::Bytes::Human::format_bytes($output{$cache}{'bytes'}))
 		."|".sprintf('%6d',$output{$cache}{'eff'}*100).'%'
@@ -224,7 +227,21 @@ foreach my $cache (sort {$output{$b}{'crt'} <=> $output{$a}{'crt'}} keys %output
 		."|".sprintf('%5d',
 			int(($output{$cache}{'execute_time_duration'}*1000)/$output{$cache}{'crt'}))
 			.'ms'
+		."| ".
+			do {
+				if ($output{$cache}{'engines'}{'job.pub'})
+				{
+					sprintf('%3d',
+						int($output{$cache}{'engines'}{'job.pub'}/($output{$cache}{'crt'}/100 )))
+						.'%'
+				}
+				else
+				{
+					"";
+				}
+			}
 		."|\n";
+#	print Dumper($output{$cache}{'engines'})."\n";
 #	print " caches = ".$output{$cache}{'crt'}."\n";
 #	print " effectivity = ".$output{$cache}{'eff'}."\n";
 #	print " avg. duration = ".$output{$cache}{'live'}."s\n";
