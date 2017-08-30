@@ -9,7 +9,7 @@ BEGIN
 {
 	$TOM::engine='prove';
 	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
-#	$main::stdout=0 unless $ENV{'CYCLONE3DEBUG'};
+	$main::stdout=0 unless $ENV{'CYCLONE3DEBUG'};
 	if (!$ENV{'CYCLONE3PATH'})
 	{
 		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM"; # obsolete
@@ -26,7 +26,7 @@ if ($ARGV[0] && not($ARGV[0]=~/^\-/)) # direct link to test file
 {
 	$test_file=$ARGV[0];
 	delete $ARGV[0];
-	$main::stdout=0;
+	$main::stdout=0 unless $ENV{'CYCLONE3DEBUG'};
 }
 
 our %arg;
@@ -43,14 +43,6 @@ foreach my $key(@ARGV)
 	{
 		foreach (split('',$key)){$main::arg{$_}++;}
 	};
-}
-
-
-if ($main::arg{'v'} >= 2)
-{
-#	$main::stdout=1;
-	$main::debug=1;# if ($main::arg{'v'} >= 2);
-#	delete $main::arg{'v'};
 }
 
 if ($main::arg{'domain'})
@@ -91,6 +83,12 @@ use Cwd 'abs_path';
 
 $TOM::engine_ready=1;
 
+if ($main::arg{'v'} >= 2)
+{
+	$main::stdout=1;
+	$main::debug=1;
+}
+
 eval
 {
 	local $main::request_code=Utils::vars::genhash(8);
@@ -124,10 +122,12 @@ eval
 		opendir(my $dh, '.') || return;
 		my @files = sort grep { /\.t$/ && -f $_ } readdir($dh);
 		closedir $dh;
-
+		
 		my $summary=$harness->runtests(@files);
 		
 		print color 'reset';
+		
+		exit 1 if $summary->{'failed'};
 	}
 	
 };
@@ -135,6 +135,12 @@ if ($@)
 {
 	main::_log("crashed with $@",1);
 	print $@;
+}
+
+if ($main::arg{'v'} >= 2)
+{
+	$main::stdout=0;
+	$main::debug=0;
 }
 
 1;

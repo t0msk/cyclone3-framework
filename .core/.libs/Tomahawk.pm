@@ -395,6 +395,7 @@ sub module
 			next if $_ eq "-cache_id";
 			next if $_ eq "-cache_ignore";
 			next if $_ eq "-cache"; # duration configuration don't affects cache
+#			main::_log("c '$_'='".$mdl_C{$_}."'");
 			$null.=$_."=\"".$mdl_C{$_}."\"\n";
 		}
 		
