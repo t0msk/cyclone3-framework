@@ -523,7 +523,7 @@ sub module
 				||
 				(
 					# alebo je pouzity parameter pre automaticku obsluhu cache na pozadi
-					$mdl_C{'-cache_background'} && $mdl_C{'-cache_from'}
+					$mdl_C{'-cache_background'} && $mdl_C{'-cache_from'} && $TOM::cache_background
 				)
 			)
 			# A
@@ -551,6 +551,7 @@ sub module
 			if (
 				$mdl_C{'-cache_old'} >= ($mdl_C{'-cache_duration'}*0.95) # cache je stara
 				&& $mdl_C{'-cache_background'} # chcem aby nacachoval backend
+				&& $TOM::cache_background
 				&& !$cache_parallel # a uz sa tak nedeje v inom procese/poziadavke
 				&& $RabbitMQ # je k dispozicii backend services
 			)
@@ -962,7 +963,7 @@ sub module
 						$expiretime,
 						sub {} # in pipeline
 					); # set expiration time
-					main::_log("save cache object '$key' type '".$mdl_C{'T_CACHE'}."'");
+					main::_log("save cache object '$key' type '".$mdl_C{'T_CACHE'}."' body_size=".length($Tomahawk::module::XSGN{'TMP'}));
 					
 					if ($TOM::DEBUG_cache)
 					{
@@ -2102,6 +2103,11 @@ sub GetTpl
 		'tt' => 1,
 		'lng' => $mdl_C{'-xlng'}
 	) || return undef;
+	
+	if (!$Tomahawk::module::TPL->{'entity'}->{'main'})
+	{
+		main::_log("main entity not defined",1);
+	}
 	
 	return 1;
 }

@@ -114,6 +114,21 @@ $channel_database->bind_queue(
 );
 main::_log("routing_key '".'db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class."'");
 
+if (%tom::sapsync_rabbitmq)
+{
+	main::_log("second RabbitMQ connection");
+	$Ext::RabbitMQ::sap_service = Ext::RabbitMQ::RabbitFoot->new()->load_xml_spec()->connect(
+		'timeout' => (3600*24),
+		'heatbeat' => $Ext::RabbitMQ::heartbeat,
+		'port' => 5672,
+		'heartbeat' => $Ext::RabbitMQ::heartbeat,
+		%tom::sapsync_rabbitmq
+	);
+	my $channel_exclusive=$Ext::RabbitMQ::sap_service->{'_exclusive_channel'}=$Ext::RabbitMQ::sap_service->open_channel();
+		$channel_exclusive->{'arc'}->confirm();
+	push @Ext::RabbitMQ::services, $Ext::RabbitMQ::sap_service;
+}
+
 sub callback {
 	alarm 0;
 	local $main::_canexit;
@@ -360,6 +375,7 @@ sub callback {
 		{
 			main::_log("unknown type of callback",1);
 		}
+		Coro::cede;
 	};
 	$t0->close();
 	if ($deduplication && $Redis)
