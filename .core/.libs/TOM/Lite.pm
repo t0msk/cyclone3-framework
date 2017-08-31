@@ -188,13 +188,13 @@ sub _log
 		{
 			if ($tom::last_log_engine ne $get[3])
 			{
-				print color 'reset cyan';print $get[3].".log\n";print color 'reset';
+				print STDOUT color 'reset cyan';print $get[3].".log\n";print color 'reset';
 				$tom::last_log_engine = $get[3];
 			}
 		}
 		elsif ($tom::last_log_engine ne $get[3])
 		{
-			print color 'reset cyan';print $get[3].".log\n";print color 'reset';
+			print STDOUT color 'reset cyan';print $get[3].".log\n";print color 'reset';
 			$tom::last_log_engine = $get[3];
 		}
 		
@@ -202,12 +202,18 @@ sub _log
 #		$msg=$log_sym[$get[2]].' '.$get[1] unless $main::debug;
 #		$msg=$log_sym[$get[2]].$get[1] unless $main::debug;
 		$msg=$get[1] unless $main::debug;
-		print color 'green';
-		print color 'bold' if $get[1]=~/^</;
-		print color 'red' if $log_sym[$get[2]] eq '-';
-#		$msg=~s|\\n|\n|g;
-#		$msg=~s|\\t|\t|g;
-		print $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
+		if ($log_sym[$get[2]] eq '-')
+		{
+			print STDERR color 'red';
+			print STDERR $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
+			print STDERR color 'reset';
+		}
+		else
+		{
+			print color 'green';
+			print color 'bold' if $get[1]=~/^</;
+			print $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
+		}
 		print color 'reset';
 		
 #		if ($get[3] ne $TOM::engine && $get[3] ne "stdout")
