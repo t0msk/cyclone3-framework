@@ -47,7 +47,7 @@ sub prepare
 	$self->{'OUT'}{'HEADER'} .= qq{<!--
 $TOM::Document::base::copyright
 -->
-};
+} if $TOM::Document::base::copyright;
 	
 	$self->{'OUT'}{'BODY'} = qq{<!TMP-CONTENT!>} unless $self->{'OUT'}{'BODY'};
 	return 1;
