@@ -68,8 +68,8 @@ use JSON;
 use Data::Dumper;
 use Ext::Redis::_init;
 our $alarm=$ENV{'TIMEOUT'};
-	 $alarm||=10; # autoexit after 10 seconds of inactivity
-our $time_max=3600;
+	 $alarm||=30; # autoexit after 10 seconds of inactivity
+our $time_max=1200;
 our $time_start=time();
 
 my $service=Ext::RabbitMQ::service();
@@ -113,6 +113,21 @@ $channel_database->bind_queue(
 	'routing_key' => encode('UTF-8', 'db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class)
 );
 main::_log("routing_key '".'db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class."'");
+
+if (%tom::sapsync_rabbitmq)
+{
+	main::_log("second RabbitMQ connection");
+	$Ext::RabbitMQ::sap_service = Ext::RabbitMQ::RabbitFoot->new()->load_xml_spec()->connect(
+		'timeout' => (3600*24),
+		'heatbeat' => $Ext::RabbitMQ::heartbeat,
+		'port' => 5672,
+		'heartbeat' => $Ext::RabbitMQ::heartbeat,
+		%tom::sapsync_rabbitmq
+	);
+	my $channel_exclusive=$Ext::RabbitMQ::sap_service->{'_exclusive_channel'}=$Ext::RabbitMQ::sap_service->open_channel();
+		$channel_exclusive->{'arc'}->confirm();
+	push @Ext::RabbitMQ::services, $Ext::RabbitMQ::sap_service;
+}
 
 sub callback {
 	alarm 0;
@@ -330,10 +345,37 @@ sub callback {
 			undef $main::nojobify; # jobify everything required
 			$job->execute() if $job;
 		}
+		elsif ($payload->{'pub-mdl'})
+		{
+			my $mdl=$payload->{'pub-mdl'};
+			
+			require Tomahawk;
+			
+			$main::nojobify=1; # nojobify, just execute!
+			%main::env=%{$payload->{'env'}}
+				if $payload->{'env'};
+			%main::FORM=%{$payload->{'FORM'}}
+				if $payload->{'FORM'};
+			%main::key=%{$payload->{'key'}}
+				if $payload->{'key'};
+			%tom::setup=%{$payload->{'setup'}}
+				if $payload->{'setup'};
+#			%main::a210=%{$payload->{'a210'}};
+			local $tom::lng=$payload->{'lng'} || $tom::lng;
+			
+			my ($out)=Tomahawk::module(%{$payload->{'args'}},'-stdout_dummy'=>1);
+			
+			undef $main::nojobify; # jobify everything required
+			undef %main::env;
+			undef %main::FORM;
+			undef %main::key;
+			undef %main::a210;
+		}
 		else
 		{
 			main::_log("unknown type of callback",1);
 		}
+		Coro::cede;
 	};
 	$t0->close();
 	if ($deduplication && $Redis)

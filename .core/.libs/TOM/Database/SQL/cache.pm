@@ -15,7 +15,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 use Ext::Redis::_init;
 use Compress::Zlib;
 use JSON;
-our $json = JSON::XS->new;
+our $json = JSON::XS->new->ascii;
 
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
@@ -49,6 +49,8 @@ sub new
 		$self->{'value'}->{'expire'}=$env{'expire'};
 		$self->{'value'}->{'db_h'}=$env{'db_h'} if $env{'db_h'};
 		$self->{'value'}->{'sql'}=$env{'sql'} if $env{'sql'};
+			$self->{'value'}->{'sql'}=substr($self->{'value'}->{'sql'},0,32).'...'
+				if length($self->{'value'}->{'sql'}) > 48;
 		$self->{'value'}->{'type'}=$env{'type'} if $env{'type'};
 		$self->{'value'}->{'err'}=$env{'err'} if $env{'err'};
 		$self->{'value'}->{'info'}=$env{'info'} if $env{'info'};
@@ -83,17 +85,17 @@ sub new
 			}
 		}
 		
-		$Redis->set('C3|sql|'.$env{'id'},
+		$Redis->set('C3|sql1|'.$env{'id'},
 			Ext::Redis::_compress(\$json->encode($self->{'value'}))
 			,sub {} # in pipeline
 		);
-		$Redis->expire('C3|sql|'.$env{'id'},$env{'expire'},sub {}); # set expiration time in pipeline
+		$Redis->expire('C3|sql1|'.$env{'id'},$env{'expire'},sub {}); # set expiration time in pipeline
 	}
 	else
 	{
 		main::_log("SQL::cache: created cache object '$env{'id'}' to read data") if $debug;
 		
-		$self->{'value'} = $Redis->get('C3|sql|'.$env{'id'});
+		$self->{'value'} = $Redis->get('C3|sql1|'.$env{'id'});
 		Ext::Redis::_uncompress(\$self->{'value'});
 		$self->{'value'}=$json->decode($self->{'value'})
 			if $self->{'value'};

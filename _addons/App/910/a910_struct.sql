@@ -104,7 +104,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `status` char(1) character set ascii NOT NULL default 'N',
   KEY `datetime_create` (`datetime_create`),
   PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -470,7 +470,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price_j` (
   `status` char(1) character set ascii NOT NULL default 'Y',
   KEY `datetime_create` (`datetime_create`),
   PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 

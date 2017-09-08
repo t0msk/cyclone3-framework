@@ -410,6 +410,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_audio_cat` (
   `keywords` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL,
   `description` longtext CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `ID_brick` mediumint(8) unsigned DEFAULT NULL, -- rel _audio_brick.ID
   `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
@@ -439,6 +440,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_audio_cat_j` (
   `keywords` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL,
   `description` longtext CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `ID_brick` mediumint(8) unsigned DEFAULT NULL,
   `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
@@ -569,11 +571,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   UNIQUE KEY `UNI_0` (`ID_channel`,`program_code`,`datetime_air_start`),
   KEY `ID_entity` (`ID_entity`),
   KEY `name` (`name`,`datetime_air_start`),
-  KEY `datetime_air_start` (`datetime_air_start`),
+  KEY `datetime_air_start` (`datetime_air_start`,`datetime_air_stop`),
   KEY `ID_series` (`ID_series`),
   KEY `series_ID` (`series_ID`),
   KEY `status` (`status`,`status_internet`,`status_premiere`,`status_live`),
-  KEY `ID_channel` (`ID_channel`,`datetime_air_start`),
+  KEY `ID_channel` (`ID_channel`,`datetime_air_stop`,`datetime_air_start`),
   KEY `SEL_0` (`status`,`datetime_real_stop`),
   KEY `SEL_1` (`status`,`datetime_real_start`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -628,7 +630,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 

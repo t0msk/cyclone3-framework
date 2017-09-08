@@ -891,6 +891,7 @@ sub _article_index
 			SELECT
 				article_attrs.ID,
 				article_attrs.name,
+				article_attrs.name_url,
 				article_attrs.lng,
 				article_attrs.datetime_start,
 				article_attrs.datetime_stop,
@@ -925,6 +926,7 @@ sub _article_index
 		while (my %db0_line=$sth0{'sth'}->fetchhash())
 		{
 			push @{$article{'name'}},$db0_line{'name'};
+			push @{$article{'name_url'}},$db0_line{'name_url'};
 #			push @{$article{'datetime_start'}},$db0_line{'datetime_start'}
 #				if $db0_line{'datetime_start'};
 
@@ -937,6 +939,7 @@ sub _article_index
 				if $db0_line{'ID_charindex'};
 			
 			push @{$article{'locale'}{$db0_line{'lng'}}{'name'}},$db0_line{'name'};
+			push @{$article{'locale'}{$db0_line{'lng'}}{'name_url'}},$db0_line{'name_url'};
 			
 #			$db0_line{'datetime_start'}=~s| (\d\d)|T$1|;
 #			$db0_line{'datetime_start'}.="Z";
@@ -1033,6 +1036,7 @@ sub _article_index
 			SELECT
 				article_attrs.ID,
 				article_attrs.name,
+				article_attrs.name_url,
 				article_attrs.lng,
 				article_attrs.datetime_start,
 				article_attrs.status,
