@@ -496,140 +496,143 @@ sub _org_index
 				$solr->delete_by_id($doc->value_for('id'));
 			}
 	#		$solr->commit();
-			$t->close();
-			return 1;
+#			$t->close();
+#			return 1;
 		}
-		
-		my %content;
-		my $suffix="t"; # text
-		
-		my %sth1=TOM::Database::SQL::execute(qq{
-			SELECT
-				org_cat.name
-			FROM
-				$App::710::db_name.a710_org_rel_cat AS org_rel_cat
-			INNER JOIN $App::710::db_name.a710_org_cat AS org_cat ON
-			(
-				org_cat.ID_entity=org_rel_cat.ID_category
-			)
-			WHERE
-				org_rel_cat.ID_org = ?
-		},'bind'=>[$org{'ID_entity'}],'quiet'=>1);
-		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		else
 		{
-			main::_log(" cat=$db1_line{'name'}");
-			push @{$content{'cat'}},WebService::Solr::Field->new( 'cat' => $db1_line{'name'} );
-		}
-		
-		my @fields;
-		my %metadata=App::020::functions::metadata::parse($org{'metadata'});
-		foreach my $sec(keys %metadata)
-		{
-			foreach (keys %{$metadata{$sec}})
+			
+			my %content;
+			my $suffix="t"; # text
+			
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					org_cat.name
+				FROM
+					$App::710::db_name.a710_org_rel_cat AS org_rel_cat
+				INNER JOIN $App::710::db_name.a710_org_cat AS org_cat ON
+				(
+					org_cat.ID_entity=org_rel_cat.ID_category
+				)
+				WHERE
+					org_rel_cat.ID_org = ?
+			},'bind'=>[$org{'ID_entity'}],'quiet'=>1);
+			while (my %db1_line=$sth1{'sth'}->fetchhash())
 			{
-				next unless $metadata{$sec}{$_};
-				if ($_=~s/\[\]$//)
-				{
-					# this is comma separated array
-					foreach my $val (keys %{{map{$_=>1}(split(';',$metadata{$sec}{$_.'[]'}))}})
-	#				foreach my $val (split(';',$metadata{$sec}{$_.'[]'}))
-					{push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_sm' => $val);
-					push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_tm' => $val)}
-					push @fields,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_);
-					next;
-				}
-				
-				push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
-				if ($metadata{$sec}{$_}=~/^[0-9]{1,9}$/)
-				{
-					push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
-				}
-				if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}$/)
-				{
-					push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
-				}
-				
-				# list of used metadata fields
-				push @fields,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_ );
+				main::_log(" cat=$db1_line{'name'}");
+				push @{$content{'cat'}},WebService::Solr::Field->new( 'cat' => $db1_line{'name'} );
 			}
+			
+			my @fields;
+			my %metadata=App::020::functions::metadata::parse($org{'metadata'});
+			foreach my $sec(keys %metadata)
+			{
+				foreach (keys %{$metadata{$sec}})
+				{
+					next unless $metadata{$sec}{$_};
+					if ($_=~s/\[\]$//)
+					{
+						# this is comma separated array
+						foreach my $val (keys %{{map{$_=>1}(split(';',$metadata{$sec}{$_.'[]'}))}})
+		#				foreach my $val (split(';',$metadata{$sec}{$_.'[]'}))
+						{push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_sm' => $val);
+						push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_tm' => $val)}
+						push @fields,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_);
+						next;
+					}
+					
+					push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
+					if ($metadata{$sec}{$_}=~/^[0-9]{1,9}$/)
+					{
+						push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
+					}
+					if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}$/)
+					{
+						push @fields,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
+					}
+					
+					# list of used metadata fields
+					push @fields,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_ );
+				}
+			}
+			
+			my $doc = WebService::Solr::Document->new();
+			
+			if ($org{'latitude_decimal'})
+			{
+				push @fields,WebService::Solr::Field->new( 'latitude_decimal_f' => $org{'latitude_decimal'});
+			}
+			if ($org{'longitude_decimal'})
+			{
+				push @fields,WebService::Solr::Field->new( 'longitude_decimal_f' => $org{'longitude_decimal'});
+			}
+			
+			#if ($org{'latitude_decimal'} && $org{'longitude_decimal'})
+			#{
+			#	push @fields,WebService::Solr::Field->new( 'location' => $org{'latitude_decimal'}.','.$org{'longitude_decimal'});
+			#}
+			
+			if ($org{'location_verified'})
+			{
+				push @fields,WebService::Solr::Field->new( 'location_verified_s' => $org{'location_verified'})
+					if $org{'location_verified'};
+			}
+			
+			if ($org{'county'})
+			{
+				push @fields,WebService::Solr::Field->new( 'county_t' => $org{'county'} || '');
+				push @fields,WebService::Solr::Field->new( 'county_s' => $org{'county'} || '');
+			}
+			
+			if ($org{'district'})
+			{
+				push @fields,WebService::Solr::Field->new( 'district_t' => $org{'district'} || '');
+				push @fields,WebService::Solr::Field->new( 'district_s' => $org{'district'} || '');
+			}
+			
+			$doc->add_fields((
+				WebService::Solr::Field->new( 'id' => $id ),
+				
+				WebService::Solr::Field->new( 'name' => $org{'name'} || ''),
+				WebService::Solr::Field->new( 'name_url_s' => $org{'name_url'} || ''),
+				
+				WebService::Solr::Field->new( 'title' => $org{'name'} || ''),
+				
+				WebService::Solr::Field->new( 'type_'.$suffix => $org{'type'} || ''),
+				WebService::Solr::Field->new( 'name_short_'.$suffix => $org{'name_short'} || ''),
+				WebService::Solr::Field->new( 'name_code_'.$suffix => $org{'name_code'} || ''),
+				WebService::Solr::Field->new( 'legal_form_'.$suffix => $org{'legal_form'} || ''),
+				
+				WebService::Solr::Field->new( 'ID_org_'.$suffix => $org{'ID_org'} || ''),
+				WebService::Solr::Field->new( 'VAT_number_'.$suffix => $org{'VAT_number'} || ''),
+				
+				WebService::Solr::Field->new( 'state_'.$suffix => $org{'state'} || ''),
+				WebService::Solr::Field->new( 'ZIP_'.$suffix => $org{'ZIP'} || ''),
+				WebService::Solr::Field->new( 'city_'.$suffix => $org{'city'} || ''),
+				WebService::Solr::Field->new( 'street_'.$suffix => $org{'street'} || ''),
+				WebService::Solr::Field->new( 'street_number_t' => $org{'street_num'} || ''),
+				
+				WebService::Solr::Field->new( 'address_postal_'.$suffix => $org{'address_postal'} || ''),
+				
+				WebService::Solr::Field->new( 'db_s' => $App::710::db_name ),
+				WebService::Solr::Field->new( 'addon_s' => 'a710_org' ),
+		#			WebService::Solr::Field->new( 'lng_s' => $lng ),
+				WebService::Solr::Field->new( 'ID_i' => $org{'ID'} ),
+				WebService::Solr::Field->new( 'ID_entity_i' => $org{'ID_entity'} ),
+				
+				@fields,
+				
+				@{$content{'cat'}},
+				@{$content{'metadata'}},
+				
+			));
+			
+		#	return 1;
+			
+			main::_log("adding index entry '$id'");
+			
+			$solr->add($doc);
 		}
-		
-		my $doc = WebService::Solr::Document->new();
-		
-		if ($org{'latitude_decimal'})
-		{
-			push @fields,WebService::Solr::Field->new( 'latitude_decimal_f' => $org{'latitude_decimal'});
-		}
-		if ($org{'longitude_decimal'})
-		{
-			push @fields,WebService::Solr::Field->new( 'longitude_decimal_f' => $org{'longitude_decimal'});
-		}
-		
-		#if ($org{'latitude_decimal'} && $org{'longitude_decimal'})
-		#{
-		#	push @fields,WebService::Solr::Field->new( 'location' => $org{'latitude_decimal'}.','.$org{'longitude_decimal'});
-		#}
-		
-		if ($org{'location_verified'})
-		{
-			push @fields,WebService::Solr::Field->new( 'location_verified_s' => $org{'location_verified'})
-				if $org{'location_verified'};
-		}
-		
-		if ($org{'county'})
-		{
-			push @fields,WebService::Solr::Field->new( 'county_t' => $org{'county'} || '');
-			push @fields,WebService::Solr::Field->new( 'county_s' => $org{'county'} || '');
-		}
-		
-		if ($org{'district'})
-		{
-			push @fields,WebService::Solr::Field->new( 'district_t' => $org{'district'} || '');
-			push @fields,WebService::Solr::Field->new( 'district_s' => $org{'district'} || '');
-		}
-		
-		$doc->add_fields((
-			WebService::Solr::Field->new( 'id' => $id ),
-			
-			WebService::Solr::Field->new( 'name' => $org{'name'} || ''),
-			WebService::Solr::Field->new( 'name_url_s' => $org{'name_url'} || ''),
-			
-			WebService::Solr::Field->new( 'title' => $org{'name'} || ''),
-			
-			WebService::Solr::Field->new( 'type_'.$suffix => $org{'type'} || ''),
-			WebService::Solr::Field->new( 'name_short_'.$suffix => $org{'name_short'} || ''),
-			WebService::Solr::Field->new( 'name_code_'.$suffix => $org{'name_code'} || ''),
-			WebService::Solr::Field->new( 'legal_form_'.$suffix => $org{'legal_form'} || ''),
-			
-			WebService::Solr::Field->new( 'ID_org_'.$suffix => $org{'ID_org'} || ''),
-			WebService::Solr::Field->new( 'VAT_number_'.$suffix => $org{'VAT_number'} || ''),
-			
-			WebService::Solr::Field->new( 'state_'.$suffix => $org{'state'} || ''),
-			WebService::Solr::Field->new( 'ZIP_'.$suffix => $org{'ZIP'} || ''),
-			WebService::Solr::Field->new( 'city_'.$suffix => $org{'city'} || ''),
-			WebService::Solr::Field->new( 'street_'.$suffix => $org{'street'} || ''),
-			WebService::Solr::Field->new( 'street_number_t' => $org{'street_num'} || ''),
-			
-			WebService::Solr::Field->new( 'address_postal_'.$suffix => $org{'address_postal'} || ''),
-			
-			WebService::Solr::Field->new( 'db_s' => $App::710::db_name ),
-			WebService::Solr::Field->new( 'addon_s' => 'a710_org' ),
-	#			WebService::Solr::Field->new( 'lng_s' => $lng ),
-			WebService::Solr::Field->new( 'ID_i' => $org{'ID'} ),
-			WebService::Solr::Field->new( 'ID_entity_i' => $org{'ID_entity'} ),
-			
-			@fields,
-			
-			@{$content{'cat'}},
-			@{$content{'metadata'}},
-			
-		));
-		
-	#	return 1;
-		
-		main::_log("adding index entry '$id'");
-		
-		$solr->add($doc);
 	#	return 1;
 	#	$solr->commit;
 	}
