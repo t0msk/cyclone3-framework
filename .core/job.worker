@@ -393,8 +393,8 @@ sub callback {
 	if ($@)
 	{
 		main::_log("job error ".$@,1);
-		$this_channel->ack();
-#		exit;
+#		$this_channel->ack();
+		exit;
 	}
 	$this_channel->ack();
 	alarm $alarm;
