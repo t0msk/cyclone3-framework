@@ -601,7 +601,7 @@ sub module
 						'key' => \%main::key,
 						'env' => \%main::env,
 						'setup' => \%tom::setup,
-#						'a210' => \%main::a210,
+						'a210' => {%main::a210,'node'=>undef},
 						'lng' => $tom::lng
 					}),
 					'header' => {
