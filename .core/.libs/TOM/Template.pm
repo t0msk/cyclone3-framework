@@ -972,6 +972,8 @@ sub process
 		$Tomahawk::module::TPL->{'variables'}->{'devel'}=$tom::devel;
 		$Tomahawk::module::TPL->{'variables'}->{'devel_branch'}=$tom::devel_branch
 			if $tom::devel_branch;
+		$Tomahawk::module::TPL->{'variables'}->{'devel_branch_behind'}=$tom::devel_branch_behind
+			if $tom::devel_branch_behind;
 		$Tomahawk::module::TPL->{'variables'}->{'hostname'}=$TOM::hostname;
 		
 		# domain variables
