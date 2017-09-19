@@ -360,7 +360,11 @@ sub callback {
 				if $payload->{'key'};
 			%tom::setup=%{$payload->{'setup'}}
 				if $payload->{'setup'};
-#			%main::a210=%{$payload->{'a210'}};
+			if ($payload->{'a210'})
+			{
+				%main::a210=%{$payload->{'a210'}};
+				$main::a210{'node'}=\%main::a210;
+			}
 			local $tom::lng=$payload->{'lng'} || $tom::lng;
 			
 			my ($out)=Tomahawk::module(%{$payload->{'args'}},'-stdout_dummy'=>1);
