@@ -9,10 +9,12 @@ Options FollowSymLinks
 
 <Directory "/srv/Cyclone3/">
 	Options FollowSymLinks ExecCGI
+	Require all granted
 </Directory>
 
 <Directory "/srv/Cyclone3">
 	Options FollowSymlinks ExecCGI
+	Require all granted
 </Directory>
 
 ErrorLog /srv/Cyclone3/_logs/httpd/all.err.log
