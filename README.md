@@ -243,7 +243,7 @@ cp /srv/Cyclone3/_config/httpd.virtual.conf.tmpl /srv/Cyclone3/_config/httpd.vir
 
 Symlink configuration files
 ```bash
-ln -s /srv/Cyclone3/.core/_config/httpd.conf /etc/apache2/conf.d/00-cyclone3.conf
+ln -s /srv/Cyclone3/.core/_config/httpd.conf /etc/apache2/conf-enabled/00-cyclone3.conf
 ln -s /srv/Cyclone3/_config/httpd.virtual.conf /etc/apache2/sites-enabled/01-cyclone3-virtual.conf
 ```
 
