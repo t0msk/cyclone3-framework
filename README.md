@@ -207,22 +207,6 @@ Check files permissions
 tom3-chfiles
 ```
 
-Setup cron system
-```bash
-$ su cyclone3
-$ crontab -e
-# add lines
-*    *    * * * cd /srv/Cyclone3/.core/;nice -n 20 ./cron 1min > /dev/null 2> /dev/null
-*/5  *    * * * cd /srv/Cyclone3/.core/;nice -n 20 ./cron 5min > /dev/null 2> /dev/null
-*/30 *    * * * cd /srv/Cyclone3/.core/;nice -n 20 ./cron 30min > /dev/null 2> /dev/null
-2    *    * * * cd /srv/Cyclone3/.core/;nice -n 20 ./cron 1hour > /dev/null 2> /dev/null
-5    */6  * * * cd /srv/Cyclone3/.core/;nice -n 20 ./cron 6hour > /dev/null 2> /dev/null
-10    1    * * * cd /srv/Cyclone3/.core/;nice -n 20 ./cron 1day > /dev/null 2> /dev/null
-20    2    */5 * * cd /srv/Cyclone3/.core/;nice -n 20 ./cron 5day > /dev/null 2> /dev/null
-30    3    * * 1 cd /srv/Cyclone3/.core/;nice -n 20 ./cron 7day > /dev/null 2> /dev/null
-40    4    1 * * cd /srv/Cyclone3/.core/;nice -n 20 ./cron 1month > /dev/null 2> /dev/null
-```
-
 ## Setup Webserver
 
 Install apache2 and mod_fcgid
