@@ -138,6 +138,20 @@ apt-get install redis-server
 cpan RedisDB
 ```
 
+Optimize redis.conf
+
+```bash
+# much much faster
+unixsocket /var/run/redis/redis.sock
+unixsocketperm 777
+# save io :)
+save 86400 1
+save 7200  1000000
+save 3600  2000000
+# save CPU
+rdbcompression no
+```
+
 ## Setup Cyclone3
 
 Copy configuration template file to destination
