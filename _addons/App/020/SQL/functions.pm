@@ -1523,7 +1523,7 @@ sub _save_changetime
 	$main::env{'cache'}{'db_changed'}{$key}=$tt;
 	$main::env{'cache'}{'db_changed'}{$key_entity}=$tt;
 	
-#	main::_log("_save_changetime($key_entity)");
+	main::_log("_save_changetime ".$key_entity." to ".$tt,3,"debug");
 	
 	if ($RabbitMQ && !$conf{'-autosave'}) # publish event
 	{
