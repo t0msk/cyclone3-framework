@@ -7,4 +7,6 @@ use strict;
 
 BEGIN {main::_log("<={LIB} ".__PACKAGE__);}
 
+use App::170::a301;
+
 1;
