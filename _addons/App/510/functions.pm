@@ -4468,7 +4468,7 @@ sub get_video_part_file_process_front
 		(
 			video_part.ID = video_part_file.ID_entity AND
 			video_part_file.ID_format = video_format.ID_entity AND
-			video_part_file.status IN ('Y','N','E','W')
+			video_part_file.status IN ('Y','N','E','W','X')
 		)
 		LEFT JOIN `$App::510::db_name`.a510_video_part_file_process AS video_part_file_process ON
 		(
@@ -4569,7 +4569,8 @@ sub get_video_part_file_process_front
 					/* or parent file has been changed */
 					video_format.name != 'original' AND
 					video_part_file.ID IS NOT NULL AND
-					video_part_file.datetime_create < video_part_file_p.datetime_create
+					video_part_file.datetime_create < video_part_file_p.datetime_create AND
+					video_part_file.status NOT IN ('X')
 				)
 				OR
 				(

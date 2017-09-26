@@ -410,6 +410,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_audio_cat` (
   `keywords` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL,
   `description` longtext CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `ID_brick` mediumint(8) unsigned DEFAULT NULL, -- rel _audio_brick.ID
   `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
@@ -439,6 +440,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_audio_cat_j` (
   `keywords` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `datetime_create` datetime NOT NULL,
   `description` longtext CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `ID_brick` mediumint(8) unsigned DEFAULT NULL,
   `metadata` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `lng` char(5) CHARACTER SET ascii NOT NULL DEFAULT '',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
