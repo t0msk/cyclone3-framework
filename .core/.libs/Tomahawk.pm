@@ -2106,7 +2106,7 @@ sub GetTpl
 	
 	if (!$Tomahawk::module::TPL->{'entity'}->{'main'})
 	{
-		main::_log("main entity not defined",1);
+		main::_log("main entity not defined",3);
 	}
 	
 	return 1;
