@@ -714,10 +714,12 @@ sub image_file_process
 			if ($App::501::fdetect)
 			{
 				main::_log_stdout("go fdetect");
-				my $cascade = $TOM::P.'/_addons/App/501/FaceDetect/cascade.xml';
+				my $cascade = ($App::501::fdetect_cascade_file || $TOM::P.'/_addons/App/501/FaceDetect/cascade.xml');
 				my $file = $tmpfile->{'filename'};
 				my $detector = Image::ObjectDetect->new($cascade);
 				my @faces = $detector->detect($file);
+				use Data::Dumper;
+				main::_log(Dumper(\@faces));
 				for my $face (@faces) {
 					$out.="0:".$face->{'x'}.",".$face->{'y'}."-".($face->{'x'}+$face->{'width'}).",".($face->{'y'}+$face->{'height'})."\n";
 #					main::_log_stdout("x=".$face->{'x'});
