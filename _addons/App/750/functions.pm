@@ -170,7 +170,7 @@ sub complex_add
 	$data{'metadata'}=$env{'complex.metadata'}
 		if (exists $env{'complex.metadata'} && ($env{'complex.metadata'} ne $complex{'metadata'}));
 
-	foreach my $field ('status','code','owner_occupied','rental_park','land','park','industry','complex_type','year','url_web','url_google_maps','street','street_num','city','ZIP','district','county','state','country_code','geo_lat','geo_lon') {
+	foreach my $field ('status','code','owner_occupied','rental_park','land','park','industry','complex_type','year','url_web','url_google_maps','floor_loading_capacity','floor_loading_capacity_to','clear_height','clear_height_to','truck_yard_depth','truck_yard_depth_to','cross_dock','dock_doors_amount','street','street_num','city','ZIP','district','county','state','country_code','geo_lat','geo_lon') {
 		$data{$field}=$env{'complex.'.$field}
 			if ($env{'complex.'.$field} && ($env{'complex.'.$field} ne $complex{$field}));
 	}
