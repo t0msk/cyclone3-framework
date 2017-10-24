@@ -5346,7 +5346,10 @@ sub broadcast_program_add
 		
 		$data{'status'}=$env{'program.status'}
 			if ($env{'program.status'} && ($env{'program.status'} ne $program{'status'}));
-			
+		
+		$data{'datetime_depth'}=$env{'program.datetime_depth'}
+			if (defined $env{'program.datetime_depth'} && ($env{'program.datetime_depth'} ne $program{'datetime_depth'}));
+		
 		if (keys %columns || keys %data)
 		{
 			App::020::SQL::functions::update(
@@ -5390,11 +5393,13 @@ sub broadcast_program_add
 				AND ID_channel=?
 				AND (datetime_air_start >= ? AND datetime_air_start < ?)
 				AND status IN ('Y','L','W')
+				AND datetime_depth = ?
 		},'bind'=>[
 			$program{'ID'},
 			$program{'ID_channel'},
 			$program{'datetime_air_start'},
-			$program{'datetime_air_stop'}
+			$program{'datetime_air_stop'},
+			$program{'datetime_depth'}
 		],'quiet'=>1);
 		while (my %program0=$sth0{'sth'}->fetchhash())
 		{
@@ -5422,11 +5427,13 @@ sub broadcast_program_add
 				AND datetime_air_start < ?
 				AND datetime_air_stop >= ?
 				AND status IN ('Y','L','W')
+				AND datetime_depth = ?
 		},'bind'=>[
 			$program{'ID'},
 			$program{'ID_channel'},
 			$program{'datetime_air_stop'},
-			$program{'datetime_air_stop'}
+			$program{'datetime_air_stop'},
+			$program{'datetime_depth'}
 		],'quiet'=>1);
 		while (my %program0=$sth0{'sth'}->fetchhash())
 		{
@@ -5448,6 +5455,316 @@ sub broadcast_program_add
 	foreach (%program){$env{'program.'.$_}=$program{$_}};
 	return %env;
 }
+
+
+
+sub broadcast_schedule_add
+{
+	my %env=@_;
+	my $t=track TOM::Debug(__PACKAGE__."::broadcast_schedule_add()");
+	
+	my %schedule;
+	if ($env{'schedule.ID'})
+	{
+		%schedule=App::020::SQL::functions::get_ID(
+			'ID' => $env{'schedule.ID'},
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_broadcast_schedule",
+			'columns' => {'*'=>1}
+		);
+	}
+	elsif ($env{'schedule.ID_entity'})
+	{
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`$App::510::db_name`.a510_broadcast_schedule
+			WHERE
+				ID_entity=?
+			LIMIT 1
+		},'bind'=>[$env{'schedule.ID_entity'}],'quiet'=>1);
+		%schedule=$sth0{'sth'}->fetchhash();
+		$env{'schedule.ID'}=$schedule{'ID'};
+	}
+	elsif ($env{'schedule.program_code'})
+	{
+		if ($env{'schedule.datetime_start'})
+		{
+			if ($env{'schedule.ID_channel'})
+			{
+				main::_log("search for schedule by ID_channel=$env{'schedule.ID_channel'} datetime_start=$env{'schedule.datetime_start'} program_code=$env{'schedule.program_code'}");
+				my %sth0=TOM::Database::SQL::execute(qq{
+					SELECT
+						*
+					FROM
+						`$App::510::db_name`.a510_broadcast_schedule
+					WHERE
+						program_code=?
+						AND ID_channel=?
+						AND ABS(TIME_TO_SEC(TIMEDIFF(?,datetime_start))) <= 3600
+					ORDER BY
+						ABS(TIME_TO_SEC(TIMEDIFF(?,datetime_start))) ASC
+					LIMIT 1
+				},'bind'=>[
+					$env{'schedule.program_code'},
+					$env{'schedule.ID_channel'},
+					$env{'schedule.datetime_start'},
+					$env{'schedule.datetime_start'}
+				],'quiet'=>1);
+				if (%schedule=$sth0{'sth'}->fetchhash())
+				{
+					main::_log("found $sth0{'rows'} schedules, selected schedule.ID=$schedule{'ID'}");
+					$env{'schedule.ID'}=$schedule{'ID'};
+					$env{'schedule.ID_entity'}=$schedule{'ID_entity'};
+				}
+			}
+			else
+			{
+				my %sth0=TOM::Database::SQL::execute(qq{
+					SELECT
+						*
+					FROM
+						`$App::510::db_name`.a510_broadcast_schedule
+					WHERE
+						program_code=?
+						AND ABS(TIME_TO_SEC(TIMEDIFF(?,datetime_start))) <= 3600
+	--					AND status IN ('Y','N','L','W')
+					ORDER BY
+						ABS(TIME_TO_SEC(TIMEDIFF(?,datetime_start))) ASC
+					LIMIT 1
+				},'bind'=>[
+					$env{'schedule.program_code'},
+					$env{'schedule.datetime_air_start'},
+					$env{'schedule.datetime_air_start'}
+				],'quiet'=>1);
+				if (%schedule=$sth0{'sth'}->fetchhash())
+				{
+					$env{'schedule.ID'}=$schedule{'ID'};
+					$env{'schedule.ID_entity'}=$schedule{'ID_entity'};
+				}
+			}
+		}
+		else
+		{
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					*
+				FROM
+					`$App::510::db_name`.a510_broadcast_schedule
+				WHERE
+					program_code=?
+--					AND status IN ('Y','N','L','W')
+				LIMIT 1
+			},'bind'=>[$env{'schedule.program_code'}],'quiet'=>1);
+			if (%schedule=$sth0{'sth'}->fetchhash())
+			{
+				$env{'schedule.ID'}=$schedule{'ID'};
+				$env{'schedule.ID_entity'}=$schedule{'ID_entity'};
+			}
+		}
+	}
+	
+	if (!$env{'schedule.ID'})
+	{
+		main::_log("new schedule.ID");
+		
+		$env{'schedule.ID'}=App::020::SQL::functions::new(
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_broadcast_schedule",
+			'data' =>
+			{
+				'ID_entity' => $env{'schedule.ID_entity'},
+				'ID_channel' => $env{'schedule.ID_channel'},
+				'name' => $env{'schedule.name'} || '',
+				'status' => $env{'schedule.status'} || 'N',
+			},
+			'columns' => 
+			{
+				'datetime_start' => 'NOW()',
+				'datetime_stop' => 'DATE_ADD(NOW(), INTERVAL 3600 SECOND)'
+			},
+#			'-posix' => 1,
+#			'-journalize' => 1,
+		);
+		# reload
+		%schedule=App::020::SQL::functions::get_ID(
+			'ID' => $env{'schedule.ID'},
+			'db_h' => "main",
+			'db_name' => $App::510::db_name,
+			'tb_name' => "a510_broadcast_schedule",
+			'columns' => {'*'=>1}
+		);
+		$env{'schedule.ID'}=$schedule{'ID'};
+		$env{'schedule.ID_entity'}=$schedule{'ID_entity'};
+	}
+	
+	main::_log("processing ID=".$env{'schedule.ID'});
+	
+	# update if necessary
+	if ($env{'schedule.ID'})
+	{
+		my %columns;
+		my %data;
+		
+		$data{'ID_channel'}=$env{'schedule.ID_channel'}
+			if ($env{'schedule.ID_channel'} && ($env{'schedule.ID_channel'} ne $schedule{'ID_channel'}));
+		$data{'name'}=$env{'schedule.name'}
+			if (exists $env{'schedule.name'} && ($env{'schedule.name'} ne $schedule{'name'}));
+		$env{'schedule.name_url'}=TOM::Net::URI::rewrite::convert($env{'schedule.name'})
+			if $env{'schedule.name'};
+		$data{'name_url'}=$env{'schedule.name_url'}
+			if (exists $env{'schedule.name_url'} && ($env{'schedule.name_url'} ne $schedule{'name_url'}));
+		
+		foreach (
+			'program_code'
+		)
+		{
+			if (exists $env{'schedule.'.$_} && ($env{'schedule.'.$_} ne $schedule{$_}))
+			{
+				main::_log("$_: '$schedule{$_}'<>'".$env{'schedule.'.$_}."'");
+				
+				if ($env{'schedule.'.$_} || $env{'schedule.'.$_} eq "0")
+				{
+					$data{$_}=$env{'schedule.'.$_};
+				}
+				else
+				{
+					$columns{$_}='NULL';
+				}
+			}
+		}
+		
+		$data{'datetime_start'}=$env{'schedule.datetime_start'}
+			if ($env{'schedule.datetime_start'} && ($env{'schedule.datetime_start'} ne $schedule{'datetime_start'}));
+		
+		main::_log("dur='$env{'schedule.datetime_duration'}' start='$env{'schedule.datetime_start'}'")
+			if $env{'schedule.datetime_duration'};
+		
+		if ($env{'schedule.datetime_duration'} && $env{'schedule.datetime_start'}=~/^(\d\d\d\d)\-(\d\d)\-(\d\d) (\d\d):(\d\d):(\d\d)/)
+		{
+			use DateTime;
+			my $dt=DateTime->new(
+				'year' => $1,
+				'month' => $2,
+				'day' => $3,
+				'hour' => $4,
+				'minute' => $5,
+				'second' => $6
+			);
+			$dt->add('seconds' => $env{'schedule.datetime_duration'});
+			$env{'schedule.datetime_stop'} = $dt->strftime("%F %T");
+			main::_log_stdout(" $env{'schedule.datetime_start'}/$env{'schedule.datetime_duration'} air_stop=$env{'schedule.datetime_stop'}");
+		}
+		$data{'datetime_stop'}=$env{'schedule.datetime_stop'}
+			if ($env{'schedule.datetime_stop'} && ($env{'schedule.datetime_stop'} ne $schedule{'datetime_stop'}));
+		
+		$data{'status'}=$env{'schedule.status'}
+			if ($env{'schedule.status'} && ($env{'schedule.status'} ne $schedule{'status'}));
+		
+		if (keys %columns || keys %data)
+		{
+			App::020::SQL::functions::update(
+				'ID' => $env{'schedule.ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_broadcast_schedule",
+				'columns' => {%columns},
+				'data' => {%data},
+#				'-posix' => 1,
+#				'-journalize' => 1
+			);
+			# reload
+			%schedule=App::020::SQL::functions::get_ID(
+				'ID' => $env{'schedule.ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_broadcast_schedule",
+				'columns' => {'*'=>1}
+			);
+		}
+	}
+	
+	if (
+		$schedule{'ID'} &&
+		$schedule{'ID_channel'} &&
+		$schedule{'program_code'} &&
+		$schedule{'datetime_start'} &&
+		$schedule{'status'}=~/^[YLW]$/
+	)
+	{
+		my $threshold='5 MINUTE';
+		
+		# najst konflikty a trashovat
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`$App::510::db_name`.a510_broadcast_schedule
+			WHERE
+				ID != ?
+				AND ID_channel=?
+				AND (datetime_start >= DATE_ADD(?,INTERVAL $threshold) AND datetime_start < DATE_SUB(?,INTERVAL $threshold))
+				AND status IN ('Y','L','W')
+		},'bind'=>[
+			$schedule{'ID'},
+			$schedule{'ID_channel'},
+			$schedule{'datetime_start'},
+			$schedule{'datetime_stop'}
+		],'quiet'=>1);
+		while (my %schedule0=$sth0{'sth'}->fetchhash())
+		{
+			main::_log("conflict start with $schedule0{'ID'} '$schedule0{'name'}'",1);
+			App::020::SQL::functions::update(
+				'ID' => $schedule0{'ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_broadcast_schedule",
+				'columns' => {'status'=>'"T"'},
+#				'-journalize' => 1
+			);
+		}
+		
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`$App::510::db_name`.a510_broadcast_schedule
+			WHERE
+				ID != ?
+				AND ID_channel=?
+				AND datetime_start < DATE_SUB(?,INTERVAL $threshold)
+				AND datetime_stop >= DATE_ADD(?,INTERVAL $threshold)
+				AND status IN ('Y','L','W')
+		},'bind'=>[
+			$schedule{'ID'},
+			$schedule{'ID_channel'},
+			$schedule{'datetime_stop'},
+			$schedule{'datetime_stop'}
+		],'quiet'=>1);
+		while (my %schedule0=$sth0{'sth'}->fetchhash())
+		{
+			main::_log("conflict stop with $schedule0{'ID'} '$schedule0{'name'}'",1);
+			App::020::SQL::functions::update(
+				'ID' => $schedule0{'ID'},
+				'db_h' => "main",
+				'db_name' => $App::510::db_name,
+				'tb_name' => "a510_broadcast_schedule",
+				'columns' => {'status'=>'"T"'},
+#				'-journalize' => 1
+			);
+		}
+		
+	}
+	
+	$t->close();
+	foreach (%schedule){$env{'schedule.'.$_}=$schedule{$_}};
+	return %env;
+}
+
+
 
 
 sub broadcast_series_add
