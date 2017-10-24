@@ -733,6 +733,10 @@ sub _org_index
 			if $org{'datetime_modified'};
 		delete $org{'datetime_modified'}
 			if $org{'datetime_modified'}=~/^0/;
+		$org{'datetime_evidence'}=~s| (\d\d)|T$1|;$org{'datetime_evidence'}.="Z"
+			if $org{'datetime_evidence'};
+		delete $org{'datetime_evidence'}
+			if $org{'datetime_evidence'}=~/^0/;
 		
 		%{$org{'metahash'}}=App::020::functions::metadata::parse($org{'metadata'});
 		delete $org{'metadata'};
