@@ -2750,18 +2750,29 @@ sub _product_index
 		delete $product{'metahash'} unless keys %{$product{'metahash'}};
 		delete $product{'relations'} unless keys %{$product{'relations'}};
 		
+		my $datetime_index=$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
+			.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.'Z';
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::910::db_name,
 			'type' => 'a910_product',
 			'id' => $env{'ID'},
 			'body' => {
 				%product,
-				'_datetime_index' => 
-					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
-					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.'Z'
+				'_datetime_index' => $datetime_index
 			}
 		);
 		
+		# check
+		my $check=$Elastic->get(
+			'index' => 'cyclone3.'.$App::910::db_name,
+			'type' => 'a910_product',
+			'id' => $env{'ID'}
+		);
+		main::_log("received datetime current='".$datetime_index."' index='".$check->{'_source'}->{'_datetime_index'}."'");
+		if ($datetime_index ne $check->{'_source'}->{'_datetime_index'})
+		{
+			main::_log("not succesfully indexed?",1);
+		}
 #		main::_log("/index ID=$product{'ID'}",3,"elastic");
 		
 	}

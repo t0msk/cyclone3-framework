@@ -389,6 +389,7 @@ sub module
 			next unless $mdl_C{$_};
 			next if $_ eq "-cache_debug";
 			next if $_ eq "-ALRM";
+			next if $_ eq "-debug";
 			next if $_ eq "-stdout";
 			next if $_ eq "-stdout_dummy";
 			next if $_ eq "-cache_backend";
@@ -419,7 +420,7 @@ sub module
 			$cache->{'return_data'}=$json->decode($cache->{'return_data'})
 				if $cache->{'return_data'};
 			$cache->{'return_data'}={} unless $cache->{'return_data'};
-			$cache_parallel=$cache->{'etime'};
+			$cache_parallel=$cache->{'bhash'} || $cache->{'etime'};
 		}
 		else
 		{
@@ -496,7 +497,14 @@ sub module
 			}
 		}
 		
-		main::_log("cache info digest:$mdl_C{-digest} old:$mdl_C{-cache_old}S duration:$mdl_C{-cache_duration}S from:$mdl_C{-cache_from}S to:$mdl_C{-cache_to}S") if $debug;
+		if (!$mdl_C{'-cache_from'})
+		{
+			main::_log("cache info digest:$mdl_C{-digest} missing parallel=".$cache_parallel) if $debug;
+		}
+		else
+		{
+			main::_log("cache info digest:$mdl_C{-digest} old:".int($mdl_C{'-cache_old'})."S duration:$mdl_C{-cache_duration}S from:".int($mdl_C{-cache_from})."S to:".int($mdl_C{-cache_to})."S parallel=".$cache_parallel) if $debug;
+		}
 		
 		if(
 			(
@@ -517,7 +525,7 @@ sub module
 				(
 					# ak iny proces sa snazi prave naplnit tuto cache
 					# pouzijem proste tu cache ktoru mam
-					$cache_parallel == 1 && $mdl_C{'-cache_from'}
+					$cache_parallel && $mdl_C{'-cache_from'}
 					
 				)
 				||
@@ -590,7 +598,7 @@ sub module
 				};if($@){main::_log($@,1)}}
 				
 				my $id=TOM::Utils::vars::genhash(8);
-				main::_log("request cache from backend services (jobify '".$id."' routing_key '".$queue."')");
+				main::_log("request cache '".$key."' '".$mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'}."' from backend services (jobify '".$id."' routing_key '".$queue."')",3,"debug");
 				$RabbitMQ->publish(
 					'exchange'=>'cyclone3.job',
 					'routing_key' => $queue,
@@ -612,7 +620,7 @@ sub module
 						}
 					}
 				);
-				
+				$Redis->hset($key,'bhash',$id);
 			}
 			
 			if ($TOM::DEBUG_cache)
@@ -793,6 +801,7 @@ sub module
 			{
 				my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
 				$Redis->hset($key,'etime',$main::time_current);
+				$Redis->hset($key,'bhash',$main::request_code);
 			}
 			elsif ($TOM::CACHE_memcached)
 			{
@@ -949,6 +958,7 @@ sub module
 						sub {} # in pipeline
 					);
 					$Redis->hdel($key,'etime',sub {}); # remove execution time
+					$Redis->hdel($key,'bhash',sub {}); # remove bhash time
 					my $expiretime=$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'};
 					if ($TOM::CACHE_pub_mdl_grace)
 					{
@@ -994,6 +1004,7 @@ sub module
 				{
 					my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
 					$Redis->hdel($key,'etime'); # remove execution time
+					$Redis->hdel($key,'bhash'); # remove bhash
 				}
 			}
 			TOM::Error::module(
@@ -1015,6 +1026,7 @@ sub module
 			{
 				my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digets'};
 				$Redis->hdel($key,'etime'); # remove execution time
+				$Redis->hdel($key,'bhash'); # remove bhash
 			}
 			elsif ($TOM::CACHE_memcached)
 			{
@@ -1557,7 +1569,7 @@ sub tplmodule
 			$cache->{'return_data'}=$json->decode($cache->{'return_data'})
 				if $cache->{'return_data'};
 			$cache->{'return_data'}={} unless $cache->{'return_data'};
-			$cache_parallel=$cache->{'etime'};
+			$cache_parallel=$cache->{'bhash'} || $cache->{'etime'};
 		}
 		
 		if ($cache)
@@ -1610,7 +1622,14 @@ sub tplmodule
 			$mdl_C{'-cache_duration'}=$mdl_C{'-cache_old'};
 		}
 		
-		main::_log("cache info digest:$mdl_C{-digest} old:$mdl_C{-cache_old}S duration:$mdl_C{-cache_duration}S from:$mdl_C{-cache_from}S to:$mdl_C{-cache_to}S") if $debug;
+		if (!$mdl_C{'-cache_from'})
+		{
+			main::_log("cache info digest:$mdl_C{-digest} missing parallel=".$cache_parallel) if $debug;
+		}
+		else
+		{
+			main::_log("cache info digest:$mdl_C{-digest} old:".int($mdl_C{'-cache_old'})."S duration:$mdl_C{-cache_duration}S from:".int($mdl_C{-cache_from})."S to:".int($mdl_C{-cache_to})."S parallel=".$cache_parallel) if $debug;
+		}
 		
 		if(
 			# AK JE STARIE CACHE MENSIE AKO VYZADOVANE STARIE
@@ -1810,6 +1829,7 @@ sub tplmodule
 						sub {} # in pipeline
 					);
 					$Redis->hdel($cache_key,'etime',sub {}); # remove execution time
+					$Redis->hdel($cache_key,'bhash',sub {}); # remove bhash
 					$Redis->expire($cache_key,
 						$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'} + 
 						int($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'}/2),
@@ -2106,7 +2126,7 @@ sub GetTpl
 	
 	if (!$Tomahawk::module::TPL->{'entity'}->{'main'})
 	{
-		main::_log("main entity not defined",1);
+		main::_log("main entity not defined",3);
 	}
 	
 	return 1;
