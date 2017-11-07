@@ -129,6 +129,8 @@ if (%tom::sapsync_rabbitmq)
 	push @Ext::RabbitMQ::services, $Ext::RabbitMQ::sap_service;
 }
 
+require Tomahawk;
+
 sub callback {
 	alarm 0;
 	local $main::_canexit;
@@ -344,12 +346,18 @@ sub callback {
 			);
 			undef $main::nojobify; # jobify everything required
 			$job->execute() if $job;
+			main::_log("end of call $@");
 		}
 		elsif ($payload->{'pub-mdl'})
 		{
+			$tom::dsgn='default';
 			my $mdl=$payload->{'pub-mdl'};
-			
-			require Tomahawk;
+			$0=~s|{.*?}|{$mdl}|;
+			main::_log("call module '".$mdl."'",{
+				'data' => {
+					'mdl_name_s' => $mdl
+				}
+			});
 			
 			$main::nojobify=1; # nojobify, just execute!
 			%main::env=%{$payload->{'env'}}
@@ -368,6 +376,7 @@ sub callback {
 			local $tom::lng=$payload->{'lng'} || $tom::lng;
 			
 			my ($out)=Tomahawk::module(%{$payload->{'args'}},'-stdout_dummy'=>1);
+			main::_log("end of call $@");
 			
 			undef $main::nojobify; # jobify everything required
 			undef %main::env;
