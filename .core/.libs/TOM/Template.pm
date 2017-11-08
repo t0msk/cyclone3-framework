@@ -304,6 +304,7 @@ sub new
 			}
 			# recovery header config to new object
 			%{$obj_return->{'config'}}=%{$objects{$obj->{'location'}}{'config'}};
+			$obj_return->{'config'}->{'tt'}||=$env{'tt'};
 			# get tt reference from objects cache
 			if ($obj_return->{'config'}->{'tt'})
 			{
@@ -321,6 +322,7 @@ sub new
 				$obj_return->{'tt'}=$objects{$obj->{'location'}}{'tt'};
 			}
 		}
+		$obj_return->{'config'}->{'tt'}||=$env{'tt'};
 		if ($obj_return->{'config'}->{'tt'}) # extend by Template Toolkit
 		{
 			# regenerate reference
