@@ -90,18 +90,20 @@ sub complex_add
 		$env{'complex.ID_entity'}=$complex{'ID_entity'};
 
 		# add lng
-		App::020::SQL::functions::new(
-			'db_h' => "main",
-			'db_name' => $App::750::db_name,
-			'tb_name' => "a750_complex_lng",
-			'columns' => {%columns},
-			'data' => {
-				'ID_entity' => $env{'complex.ID'},
-				'lng' => $env{'complex_lng.lng'},
-			},
-			'-journalize' => 1,
-			'-posix' => 1,
-		);
+		foreach my $lng (@TOM::LNG_accept) {
+			App::020::SQL::functions::new(
+				'db_h' => "main",
+				'db_name' => $App::750::db_name,
+				'tb_name' => "a750_complex_lng",
+				'columns' => {%columns},
+				'data' => {
+					'ID_entity' => $env{'complex.ID'},
+					'lng' => $lng,
+				},
+				'-journalize' => 1,
+				'-posix' => 1,
+			);
+		}
 	}
 	
 	main::_log("complex.ID='$complex{'ID'}' complex.ID_entity='$complex{'ID_entity'}'");
@@ -168,10 +170,13 @@ sub complex_add
 	$data{'metadata'}=$env{'complex.metadata'}
 		if (exists $env{'complex.metadata'} && ($env{'complex.metadata'} ne $complex{'metadata'}));
 
-	foreach my $field ('status','industry','year','transport_availability','url_web','url_google_maps','street','street_num','city','ZIP','district','county','state','country_code','geo_lat','geo_lon') {
+	foreach my $field ('status','code','owner_occupied','rental_park','land','park','industry','complex_type','year','url_web','url_google_maps','floor_loading_capacity','floor_loading_capacity_to','clear_height','clear_height_to','truck_yard_depth','truck_yard_depth_to','cross_dock','dock_doors_amount','street','street_num','city','ZIP','district','county','state','country_code','geo_lat','geo_lon') {
 		$data{$field}=$env{'complex.'.$field}
 			if ($env{'complex.'.$field} && ($env{'complex.'.$field} ne $complex{$field}));
 	}
+	# replace dropdown values which are erased when some checkboxes are not checked
+	$data{'complex_type'}=$env{'complex.complex_type'} if exists $env{'complex.complex_type'};
+	$data{'industry'}=$env{'complex.industry'} if exists $env{'complex.industry'};
 	
 	if (keys %columns || keys %data)
 	{
@@ -192,12 +197,12 @@ sub complex_add
 	# get lng fields
     foreach my $key (keys %env)
     {
-    	main::_log("prechadzam key='$key', hodnota='$env{$key}'");
+    	# main::_log("traversing key='$key', value='$env{$key}'");
         if ($key =~ /complex_lng\.([a-zA-Z\-]+)\.(.+)$/) 
 		{
 
 			my $lng = $1; my $varname = $2;
-			main::_log("prechadzam lng='$lng', varname='$varname'");
+			# main::_log("traversing lng='$lng', varname='$varname'");
 			$complex_lng{$lng} = {} unless (exists $complex_lng{$lng});
 			$complex_lng{$lng}{$varname} = $env{$key};
 			# name_url
@@ -225,10 +230,10 @@ sub complex_add
     	FROM
     		$App::750::db_name.a750_complex_lng
     	WHERE
-    		ID IN (?)
+    		ID IN ($where_lng_IDs)
     };
     
-    my %sth_lng=TOM::Database::SQL::execute($sql,'quiet'=>1,'bind'=>[$where_lng_IDs]);
+    my %sth_lng=TOM::Database::SQL::execute($sql,'quiet'=>1);
     
     while (my %lng_line=$sth_lng{'sth'}->fetchhash())
     {

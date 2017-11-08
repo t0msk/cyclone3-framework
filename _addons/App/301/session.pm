@@ -139,8 +139,8 @@ sub process
 	I - incoming old user
 =cut
 	
-	main::_log("last request hash='$main::COOKIES{'_lh'}' ID_user=$main::COOKIES{'_ID_user'} ID_session='$main::COOKIES{'_ID_session'}'");
-	undef $main::COOKIES{'_lh'};
+	main::_log("ID_user=$main::COOKIES{'_ID_user'} ID_session='$main::COOKIES{'_ID_session'}'");
+#	undef $main::COOKIES{'_lh'};
 	
 	my %env=@_;
 	
@@ -434,7 +434,7 @@ sub process
 					
 					# vypraznim page_code posledneho requestu
 					# pretoze toto je nova session
-					undef $main::COOKIES_save{'lh'};
+#					undef $main::COOKIES_save{'lh'};
 					
 #					foreach (sort keys %main::COOKIES)
 #					{$_=~/^_/ && do {$main::USRM{'cookies'}.="<VAR id=\"".$_."\">".$main::COOKIES{$_}."</VAR>\n";next}}

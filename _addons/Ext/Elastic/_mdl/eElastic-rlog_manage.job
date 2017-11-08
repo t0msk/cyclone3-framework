@@ -44,7 +44,7 @@ sub execute
 	if ($Ext::Elastic_rlog->{'_manage'})
 	{
 		# check config
-		my $temp_version=1.18;
+		my $temp_version=1.17;
 		my $temp_data={};
 		eval {$temp_data=$Elastic->indices->get_template('name'=>'logstash-*');};
 		if ($temp_data->{'logstash-*'}->{'mappings'}->{'fluentd'}->{'_meta'}->{'version'} < $temp_version)
@@ -59,7 +59,7 @@ sub execute
 						"number_of_shards" => 4,
 						"number_of_replicas" => 0, # at creation time of indice don't allocate between nodes
 						"index.routing.allocation.exclude.tag" => "weak",
-						"index.refresh_interval" => "30s"
+						"index.refresh_interval" => "5s"
 					},
 					'mappings' => {
 						'fluentd' => {
@@ -208,7 +208,7 @@ sub execute
 		{
 			next unless $indice=~/^\.marvel-\d/;
 			my $old = int((time() - int($settings->{$indice}->{'settings'}->{'index'}->{'creation_date'}/1000))/86400);
-			if ($old >= 7)
+			if ($old >= 31)
 			{
 				main::_log("'$indice' old $old, removing");
 				$Elastic->indices->delete('index' => $indice);
@@ -340,19 +340,20 @@ sub execute
 				}
 			}
 			
-#			if ($tom::Thour >= 23 || $tom::Thour <= 6) # do it only when developers sleep
-#			{
+			if ($tom::Thour >= 23 || $tom::Thour <= 6) # do it only when developers sleep
+			{
 				if ($rel>=0.05)
 				{
 					main::_log("  optimize");
-					eval {$Elastic->indices->forcemerge('index' => $indice,'only_expunge_deletes' => 1);};
+					eval {$Elastic->indices->optimize('index' => $indice,'only_expunge_deletes' => 1);};
+#					eval {$Elastic->indices->forcemerge('index' => $indice,'only_expunge_deletes' => 1);};
 					if ($@)
 					{
 						main::_log($@,1);
 					}
 	#				last;
 				}
-#			}
+			}
 		}
 		
 		push @indices_list,$indice;

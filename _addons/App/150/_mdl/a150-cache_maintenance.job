@@ -1,0 +1,45 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use Ext::Redis::_init;
+use Data::Dumper;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	
+	return unless $Redis;
+	
+	my $key='C3|debug|mdl_caches';
+		$key.="|".$tom::H if $tom::H;
+	
+	foreach my $cache_type (sort @{$Redis->smembers('C3|debug|mdl_caches')})
+	{
+		main::_log("check cache_type $cache_type");
+		my $members;
+		foreach my $cache_member (@{$Redis->smembers($cache_type)})
+		{
+			if (!$Redis->exists($cache_member))
+			{
+#				main::_log("remove cache_member $cache_member");
+				$Redis->srem($cache_type, $cache_member, sub{});
+				next;
+			}
+			$members++;
+		}
+		# this cache type is dead
+		if (!$members)
+		{
+			main::_log("remove cache_type $cache_type");
+			$Redis->srem('C3|debug|mdl_caches|'.$tom::H, $cache_type, sub{})
+		}
+	}
+	
+return 1}
+1;

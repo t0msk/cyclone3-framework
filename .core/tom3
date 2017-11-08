@@ -2548,7 +2548,10 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("H_www='$tom::H_www' rewrite_domain='$rewrite_domain' rewrite_old='$rewrite_old' rewrite='$rewrite'");
 #			main::_log("H_www_orig='$tom::H_www_orig' H_www='$tom::H_www' rewrite_domain='$rewrite_domain' rewrite_old='$rewrite_old' rewrite='$rewrite'",3,"debug");
 			
-			if (($tom::H_www ne $rewrite_domain) || ($rewrite_old ne $rewrite) || $rewrite_301)
+			if (($tom::H_www ne $rewrite_domain) || ($rewrite_old ne $rewrite) || $rewrite_301 || (
+				($link_old ne $link)
+				 && ($main::ENV{'REQUEST_METHOD'} eq "GET")
+			))
 			#if (($link_old ne $link) || $rewrite_301)
 			{
 				# musim odoslat cookies i ked robim relocation
@@ -3109,6 +3112,7 @@ while ($main::CGI=new CGI::Fast())
 			print "C3-Devel-a210: ".$main::a210{'ID'}."\n" if $main::a210{'ID'};
 			print "C3-Devel-a210_path: ".$main::FORM{'a210_path'}."\n" if $main::FORM{'a210_path'};
 			print "C3-Devel-a210_name: ".$main::FORM{'a210_name'}."\n" if $main::FORM{'a210_name'};
+			print "C3-Devel-branch: ".$tom::devel_branch."\n" if $tom::devel_branch;
 		}
 		print "C3-Domain: $tom::H\n";
 			my $date = DateTime->now('time_zone' => 'local');
@@ -3425,7 +3429,7 @@ while ($main::CGI=new CGI::Fast())
 #				")".
 #				"",3,"pub.bench",1) if $TOM::DEBUG_benchmark;
 		};
-		
+		Coro::cede;
 	}; # end of eval
 	
 	untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY

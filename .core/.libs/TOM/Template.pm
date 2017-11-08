@@ -22,6 +22,9 @@ use File::Copy;
 use XML::LibXML;
 use TOM::L10n;
 use TOM::Template::contenttypes;
+use Ext::Redis::_init;
+use JSON;
+our $json = JSON::XS->new->ascii->convert_blessed;
 
 BEGIN
 {
@@ -51,7 +54,7 @@ BEGIN
 	
 }
 
-our $debug=$main::debug || 0;
+our $debug=$TOM::Template::debug || 0;
 our %objects;
 
 
@@ -174,14 +177,13 @@ sub new
 		}
 	}
 	
-	if (!$objects{$obj->{'location'}} && $TOM::CACHE_memcached && $main::cache)
+	if (!$objects{$obj->{'location'}} && $Redis && $main::cache)
 	{
-		# try memcached
-		$objects{$obj->{'location'}} = 
-			$Ext::CacheMemcache::cache->get(
-				'namespace' => "tplcache",
-				'key' => $TOM::P_uuid.':'.$obj->{'location'}
-			);
+		$objects{$obj->{'location'}} = $Redis->get('C3|tpl|'.$TOM::P_uuid.':'.$obj->{'location'});
+		Ext::Redis::_uncompress(\$objects{$obj->{'location'}});
+		$objects{$obj->{'location'}}=$json->decode($objects{$obj->{'location'}})
+			if $objects{$obj->{'location'}};
+		delete $objects{$obj->{'location'}} if ref($objects{$obj->{'location'}}) eq "SCALAR";
 	}
 	
 	if ($objects{$obj->{'location'}})
@@ -251,12 +253,11 @@ sub new
 			});
 		}
 		
-		if ($TOM::CACHE_memcached)
+		if ($Redis)
 		{
-			$Ext::CacheMemcache::cache->set(
-				'namespace' => "tplcache",
-				'key' => $TOM::P_uuid.':'.$obj->{'location'},
-				'value' => {
+			my $key = 'C3|tpl|'.$TOM::P_uuid.':'.$obj->{'location'};
+			$Redis->set($key,
+				Ext::Redis::_compress(\$json->encode({
 					'ENV' => $obj->{'ENV'},
 					'config' => $obj->{'config'},
 					'mfile' => $obj->{'mfile'},
@@ -265,10 +266,12 @@ sub new
 					'L10n' => $obj->{'L10n'},
 					'file' => $obj->{'file'},
 					'file_' => $obj->{'file_'},
-					'location' => $obj->{'location'}
-				},
-				'expiration' => '86400S'
+					'location' => $obj->{'location'},
+					'engine' => $TOM::engine,
+					'request_code' => $main::request_code,
+				})),sub {} # in pipeline
 			);
+			$Redis->expire($key,86400,sub {}); # set expiration time in pipeline
 		}
 		
 	}
@@ -308,10 +311,10 @@ sub new
 			# get tt reference from objects cache
 			if ($obj_return->{'config'}->{'tt'})
 			{
-				# in config is tt enabled, but object is missing (when loaded from memcached)
+				# in config is tt enabled, but object is missing (when loaded from cache)
 				if (!$objects{$obj->{'location'}}{'tt'}) # extend by Template Toolkit
 				{
-					# in object cache is missing tt reference, because is loaded from memcached
+					# in object cache is missing tt reference, because is loaded from cache
 					main::_log("creating new Template::Toolkit object") if $debug;
 					$objects{$obj->{'location'}}{'tt'} = Template->new({
 						'INCLUDE_PATH' => [$tom::P.'/_dsgn',$tom::Pm.'/_dsgn'],
@@ -988,6 +991,7 @@ sub process
 			'url_a501' => $tom::H_a501,
 			'url_a510' => $tom::H_a510,
 			'lng' => $tom::LNG, # default lng
+			'lang' => $tom::LANG, # default lang
 			'setup' => \%tom::setup
 		};
 		# request params

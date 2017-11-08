@@ -69,6 +69,43 @@ _connect(); # default connection
 # call $Redis_{custom_name}=Ext::Redis::_connect('{custom_name}') to create parallel connection
 # for example: $Redis_para2=Ext::Redis::_connect('para2');
 
+use Compress::Zlib;
+use JSON;
+our $json = JSON->new->utf8->convert_blessed;
+
+our $compression=$Ext::Redis::compression || 0;
+our $compression_level=$Ext::Redis::compression_level || 4;
+
+sub _compress
+{
+	my $data=shift;
+	if (ref($data) eq "SCALAR")
+	{
+		$$data||="";
+		return $$data unless $compression;
+		if (length($$data)>512)
+		{
+			$$data='gz|'.compress(Encode::encode_utf8($$data),$compression_level);
+		}
+	}
+	elsif (ref($data) eq "HASH")
+	{
+		if (!$compression)
+		{
+			return $json->encode($data);
+		}
+		return 'gz|'.compress(Encode::encode_utf8($json->encode($data)),$compression_level);
+	}
+	return $$data;
+}
+
+sub _uncompress
+{
+	my $data=shift;
+	$$data=Encode::decode_utf8(uncompress($$data))
+		if $$data=~s/^gz\|//;
+}
+
 package XML::XPath;sub TO_JSON{return undef}
 
 package Ext::CacheMemcache::Redis;
@@ -403,7 +440,7 @@ sub AUTOLOAD
 	{
 		my $service=$self->{'service'};
 		
-		if ($method=~/^(del|dump|exists|expire|expireat|object|persist|pexpire|pexpireat|pttl|rename|renamenx|sort|ttl|type|get|decr|incr|incrby|set|hdel|hexists|hget|hgetall|hincrby|hkeys|len|hmget|hmset|hset|hvals|blpop|brpop|lindex|linsert|llen|lpop|lpush|lpushx|lrange|lrem|lset|ltrim|rpop|rpush|rpushx|sadd|scard|sismember|smembers|spop|srandmember|srem|zadd|zcard|zcount|zincrby|zrange|zrangebyscore|zrank|zrem|zremrangebyrank|zremrangebyscore|zrevrange|zrevrangebyscore|zrevrank|zscore)$/)
+		if ($method=~/^(del|dump|exists|expire|expireat|object|persist|pexpire|pexpireat|pttl|rename|renamenx|sort|ttl|type|get|decr|incr|incrby|set|hdel|hexists|hget|hgetall|hstrlen|hincrby|hkeys|len|hmget|hmset|hset|hvals|blpop|brpop|lindex|linsert|llen|lpop|lpush|lpushx|lrange|lrem|lset|ltrim|rpop|rpush|rpushx|sadd|scard|sismember|smembers|spop|srandmember|srem|zadd|zcard|zcount|zincrby|zrange|zrangebyscore|zrank|zrem|zremrangebyrank|zremrangebyscore|zrevrange|zrevrangebyscore|zrevrank|zscore)$/)
 		{
 			my $service_number=0;
 			my $services=scalar @{$self->{'services'}};

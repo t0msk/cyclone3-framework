@@ -17,7 +17,7 @@ sub send
 	
 	if (!$main::FORM{'cookies'})
 	{
-		$main::COOKIES{'lh'}=$main::request_code;
+#		$main::COOKIES{'lh'}=$main::request_code;
 		
 		if (($main::COOKIES{'_lt'}+86400)<$tom::time_current){$main::COOKIES{'_lt'}=$tom::time_current}
 		# cistim a upravujem cookies len ak ide o normalne cookies

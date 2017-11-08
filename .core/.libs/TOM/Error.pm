@@ -30,7 +30,7 @@ sub engine
 					'HOST' => $main::ENV{'HTTP_HOST'},
 					'REQUEST_URI' => $main::ENV{'REQUEST_URI'},
 					'QUERY_STRING' => $main::ENV{'QUERY_STRING'},
-					'query' => {%main::FORM},
+#					'query' => {%main::FORM},
 					'USER_AGENT' => $main::ENV{'HTTP_USER_AGENT'},
 					'UserAgent' => $main::UserAgent_name,
 					'UserAgent_type' => $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'}
@@ -159,8 +159,6 @@ sub engine_pub
 				'request_number'=>"$tom::count/$TOM::max_count",
 				'unique_hash'=>$main::request_code,
 				'TypeID'=>$main::FORM{'TID'},
-				'IAdm'=>$main::IAdm,
-				'ITst'=>$main::ITst,
 			},
 		);
 		
@@ -355,9 +353,7 @@ sub engine_cron
 			'Cyclone' => {
 				'hostname'=>"$TOM::hostname",
 				'unique_hash'=>$main::request_code,
-				'TypeID'=>$main::FORM{'TID'},
-				'IAdm'=>$main::IAdm,
-				'ITst'=>$main::ITst,
+				'TypeID'=>$main::FORM{'TID'}
 			},
 		);
 
@@ -394,7 +390,7 @@ sub module
 				'HOST' => $main::ENV{'HTTP_HOST'},
 				'REQUEST_URI' => $main::ENV{'REQUEST_URI'},
 				'QUERY_STRING' => $main::ENV{'QUERY_STRING'},
-				'query' => {%main::FORM},
+#				'query' => {%main::FORM},
 				'USER_AGENT' => $main::ENV{'HTTP_USER_AGENT'},
 				'UserAgent' => $main::UserAgent_name,
 				'UserAgent_type' => $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'},
@@ -481,9 +477,7 @@ sub module_pub
 				'referer_URI'=>"$main::ENV{'HTTP_REFERER'}",
 				'request_number'=>"$tom::count/$TOM::max_count",
 				'unique_hash'=>$main::request_code,
-				'TypeID'=>$main::FORM{'TID'},
-				'IAdm'=>$main::IAdm,
-				'ITst'=>$main::ITst,
+				'TypeID'=>$main::FORM{'TID'}
 			},
 		);
 		
@@ -632,8 +626,6 @@ sub module_cron
 				'request_number'=>"$tom::count/$TOM::max_count",
 				'unique_hash'=>$main::request_code,
 				'TypeID'=>$main::FORM{'TID'},
-				'IAdm'=>$main::IAdm,
-				'ITst'=>$main::ITst,
 			},
 		);
 

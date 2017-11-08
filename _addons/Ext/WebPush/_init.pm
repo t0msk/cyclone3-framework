@@ -165,7 +165,7 @@ sub send_notification {
 	my $response_code = $response->code();
 	main::_log("response code=".$response_code);
 	if ($response_code ne '201') {
-		main::_log("response code other than 201 created, logging whole response=".Dumper($response,3));
+		main::_log("response code other than 201 created, logging whole response=".$response->decoded_content,3);
 		return 0;
 	}
 	#main::_log("response dump".Dumper(keys %{$response}));

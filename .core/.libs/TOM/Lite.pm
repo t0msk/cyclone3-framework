@@ -458,6 +458,7 @@ sub _event
 		delete $hash{'domain'};
 		delete $hash{'request'};
 		delete $hash{'severity'};
+		$hash{'ef_s'}=$msg;
 		# can't override datetime?
 		if ($tom::test)
 		{

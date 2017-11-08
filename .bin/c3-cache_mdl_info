@@ -1,0 +1,251 @@
+#!/usr/bin/perl
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use Data::Dumper;
+use Term::ANSIColor;
+use Number::Bytes::Human;
+use DateTime;
+
+BEGIN
+{
+	$TOM::engine='cli';
+	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
+#	$main::stdout=0 unless $ENV{'CYCLONE3DEBUG'};
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM"; # obsolete
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+}
+END {use Inline;$SIG{__WARN__} = sub {};}
+
+our $argv=join " ",@ARGV;
+
+our $job_file;
+if ($ARGV[0] && not($ARGV[0]=~/^\-/)) # direct link to job file
+{
+	$job_file=$ARGV[0];
+	delete $ARGV[0];
+}
+
+our %arg;
+foreach my $key(@ARGV)
+{
+	$key=~s/^\-\-// && do
+	{
+		my @ref=split('=',$key,2);
+		$ref[1]=1 unless exists $ref[1];
+		if (ref($main::arg{$ref[0]}) eq "ARRAY")
+		{
+			push @{$main::arg{$ref[0]}},$ref[1];
+		}
+		elsif ($main::arg{$ref[0]})
+		{
+			my $oldval=$main::arg{$ref[0]};
+			delete $main::arg{$ref[0]};
+			$main::arg{$ref[0]}=[
+				$oldval,
+				$ref[1]
+			];
+		}
+		else
+		{
+			$main::arg{$ref[0]}=$ref[1];
+		}
+		next;
+	};
+	$key=~s/^\-// && do
+	{
+		foreach (split('',$key)){$main::arg{$_}++;}
+	};
+}
+
+
+if ($main::arg{'v'} >= 2)
+{
+#	$main::stdout=1;
+	$main::debug=1;# if ($main::arg{'v'} >= 2);
+#	delete $main::arg{'v'};
+}
+
+require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
+require TOM::Engine::job;
+$0.=" ".$argv if $argv;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+use vars qw//;
+
+package main;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+use Cwd 'abs_path';
+require Ext::Redis::_init;
+require Term::ProgressBar;
+
+$TOM::engine_ready=1;
+
+print color 'reset';
+
+if (exists $main::arg{'help'})
+{
+	print  qq{Cyclone3 cache debug info
+Usage: c3-cache_debug
+};
+	exit;
+}
+
+our $Redis=$Ext::Redis::service;
+
+our %output;
+
+if ($main::arg{'domain'})
+{
+	$tom::H=$main::arg{'domain'};
+}
+
+print "searching in ".$tom::H."\n";
+
+my $key='C3|debug|mdl_caches';
+	$key.="|".$tom::H if $tom::H;
+my $caches_all;
+my $caches_types;
+foreach my $cache_type(sort @{$Redis->smembers($key)})
+{
+	$caches_types++;
+	foreach my $cache_member (@{$Redis->smembers($cache_type)})
+	{
+		$caches_all++;
+	}
+}
+
+print "processing stats data from $caches_all caches in $caches_types configs\n";
+
+my $progress = Term::ProgressBar->new({
+	name => 'Caches',
+	count => $caches_all,
+	remove => 1,
+	ETA => 'linear'
+});
+
+my $cache_types=0;
+my $caches_all;
+foreach my $cache_type (sort @{$Redis->smembers($key)})
+{
+	$cache_types++;
+	
+	my $cache_type_name=$cache_type;
+	my $tpl;$tpl=1 if $cache_type_name=~/tpl_cache/;
+#		$cache_type_name="(tpl) ".$cache_type_name
+#			if $cache_type_name=~/tpl_cache/;
+		$cache_type_name=~s|^.*?:||;
+		$cache_type_name="(tpl) ".$cache_type_name if $tpl;
+#	print "analyze ".$cache_type_name."\n";
+	my $caches;
+	my $caches_real;
+	my $caches_hits;
+	my $caches_live;
+	my $caches_execute_time_duration;
+	my $caches_execute_time_user;
+	my $caches_bytes;
+	my %engines;
+	foreach my $cache_member (@{$Redis->smembers($cache_type)})
+	{
+		$caches_all++;$progress->update($caches_all);
+		$caches++;
+		
+		if (!$Redis->exists($cache_member))
+		{
+			$Redis->srem($cache_type, $cache_member, sub{});
+			next;
+		}
+		
+		$caches_real++;
+		
+		my $cache_time_from=$Redis->hget($cache_member,'time_from');
+			$caches_live+=(time()-$cache_time_from);
+		my $cache_hits=$Redis->hget($cache_member,'hits');
+		
+		$caches_hits+=$cache_hits;
+		
+		$caches_execute_time_duration+=$Redis->hget($cache_member,'execute_time_duration');
+		$caches_execute_time_user+=$Redis->hget($cache_member,'execute_time_user');
+		$engines{$Redis->hget($cache_member,'engine') || 'null'}++;
+#		$caches_bytes+=$Redis->hstrlen($cache_member,'body');
+#		print " ".$cache_member." from:".$cache_time_from." hits:".$cache_hits."\n";
+		
+#		my $cache={
+#			@{$Redis->hget($cache_member)}
+#		};
+#		print Dumper($cache);
+		
+#		print " ".$cache_member."\n";
+		
+	}
+	
+	# this cache type is dead
+	$Redis->srem('C3|debug|mdl_caches|'.$tom::H, $cache_type, sub{})
+		unless $caches_real;
+	next unless $caches_real;
+	
+	$output{$cache_type_name}={
+		'crt' => $caches_real,
+		'hits' => $caches_hits,
+		'eff' => (int(($caches_hits/$caches_real)*10)/10),
+		'live' => int($caches_live/$caches_real),
+		'bytes' => $caches_bytes,
+		'engines' => \%engines,
+		'execute_time_duration' => $caches_execute_time_duration,
+		'execute_time_user' => $caches_execute_time_user
+	};
+	
+#	print ".";
+}
+
+print "\n";
+
+foreach my $cache (sort {$output{$b}{'crt'} <=> $output{$a}{'crt'}} keys %output)
+{
+	$cache=~/^(.*)\-(.*?)$/;
+	my $cache_name=$1;
+	my $cache_type=$2;
+	print
+		 "| ".sprintf('%-30s',$cache_name)
+		."| ".sprintf('%-20s',$cache_type)
+		."|".sprintf('%7d',$output{$cache}{'crt'})
+#		."|".sprintf('%10s',Number::Bytes::Human::format_bytes($output{$cache}{'bytes'}))
+		."|".sprintf('%6d',$output{$cache}{'eff'}*100).'%'
+		."|".sprintf('%7d',int($output{$cache}{'live'}/60))."m"
+		."|".sprintf('%5d',
+			int(($output{$cache}{'execute_time_user'}*1000)/$output{$cache}{'crt'}))
+			.'ms'
+		."|".sprintf('%5d',
+			int(($output{$cache}{'execute_time_duration'}*1000)/$output{$cache}{'crt'}))
+			.'ms'
+		."| ".
+			do {
+				if ($output{$cache}{'engines'}{'job.pub'})
+				{
+					sprintf('%3d',
+						int($output{$cache}{'engines'}{'job.pub'}/($output{$cache}{'crt'}/100 )))
+						.'%'
+				}
+				else
+				{
+					"";
+				}
+			}
+		."|\n";
+#	print Dumper($output{$cache}{'engines'})."\n";
+#	print " caches = ".$output{$cache}{'crt'}."\n";
+#	print " effectivity = ".$output{$cache}{'eff'}."\n";
+#	print " avg. duration = ".$output{$cache}{'live'}."s\n";
+}
+
+print "\n";
+1;

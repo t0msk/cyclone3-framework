@@ -39,6 +39,7 @@ our %table=
 	
 	'161'	=>	"!", # '¡' 
 	'162'	=>	"c", # '¢'
+	'163' => "£", # '£'
 	
 	'164'	=>	"'", # napriklad v slove "don't"
 	'165'	=>	"¥", # yen - mena
@@ -276,8 +277,8 @@ our %table=
 	'1060'	=> "F", # 'Ф' v azbuke
 	'1061'	=> "H", # 'Х' v azbuke
 	'1062'	=> "C", # 'Ц' v azbuke
-	'1063'	=> "C", # 'Ч' v azbuke
-	'1064'	=> "S", # 'Ш' v azbuke
+	'1063'	=> "CH", # 'Ч' v azbuke
+	'1064'	=> "SH", # 'Ш' v azbuke
 	'1065'	=> "Sth", # 'Щ' v azbuke
 	'1066'	=> "A", # 'Ъ' v azbuke
 	
@@ -308,8 +309,8 @@ our %table=
 	'1092'	=> "f", # 'ф' v azbuke
 	'1093'	=> "h", # 'х' v azbuke
 	'1094'	=> "c", # 'ц' v azbuke
-	'1095'	=> "c", # 'ч' v azbuke
-	'1096'	=> "s", # 'ш' v azbuke
+	'1095'	=> "ch", # 'ч' v azbuke
+	'1096'	=> "sh", # 'ш' v azbuke
 	'1097'	=> "sth", # 'Щ' v azbuke
 	'1098'	=> "a", # 'ъ' v azbuke
 	

@@ -72,6 +72,7 @@ sub user_add
 			$t->close();
 			return undef;
 		}
+		main::_log("get user by ID_user='$env{'user.ID_user'}'");
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				*
@@ -82,40 +83,7 @@ sub user_add
 			LIMIT 1;
 		},'bind'=>[$env{'user.ID_user'}],'quiet'=>1);
 		%user=$sth0{'sth'}->fetchhash();
-	}
-	
-	if ($env{'user.login'} && !$env{'user.ID_user'})
-	{
-		main::_log("search user by login='$env{'user.login'}'");
-		my %sth0=TOM::Database::SQL::execute(qq{
-			SELECT
-				*
-			FROM
-				`TOM`.a301_user
-			WHERE
-				login=? AND
-				hostname=?
-			LIMIT 1;
-		},'bind'=>[$env{'user.login'},$env{'user.hostname'}],'quiet'=>1);
-		%user=$sth0{'sth'}->fetchhash();
-		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
-	}
-	
-	if ($env{'user.email'} && !$env{'user.ID_user'} && $App::301::email_unique)
-	{
-		main::_log("search user by email='$env{'user.email'}'");
-		my %sth0=TOM::Database::SQL::execute(qq{
-			SELECT
-				*
-			FROM
-				`TOM`.a301_user
-			WHERE
-				email=? AND
-				hostname=?
-			LIMIT 1;
-		},'bind'=>[$env{'user.email'},$env{'user.hostname'}],'quiet'=>1);
-		%user=$sth0{'sth'}->fetchhash();
-		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
+		$env{'pass'}=$user{'pass'};
 	}
 	
 	if ($env{'user.ref_facebook'} && !$env{'user.ID_user'})
@@ -168,6 +136,44 @@ sub user_add
 		%user=$sth0{'sth'}->fetchhash();
 		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
 	}
+	
+	if ($env{'user.login'} && !$env{'user.ID_user'})
+	{
+		main::_log("search user by login='$env{'user.login'}'");
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`TOM`.a301_user
+			WHERE
+				login=? AND
+				hostname=?
+			LIMIT 1;
+		},'bind'=>[$env{'user.login'},$env{'user.hostname'}],'quiet'=>1);
+		%user=$sth0{'sth'}->fetchhash();
+		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
+		$env{'pass'}=$user{'pass'};
+	}
+	
+	if ($env{'user.email'} && !$env{'user.ID_user'} && $App::301::email_unique)
+	{
+		main::_log("search user by email='$env{'user.email'}'");
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`TOM`.a301_user
+			WHERE
+				email=? AND
+				hostname=?
+			LIMIT 1;
+		},'bind'=>[$env{'user.email'},$env{'user.hostname'}],'quiet'=>1);
+		%user=$sth0{'sth'}->fetchhash();
+		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
+		$env{'pass'}=$user{'pass'};
+	}
+	
+	
 	
 	if (!$env{'user.ID_user'})
 	{
@@ -374,6 +380,7 @@ sub user_add
 		
 		if (!$env{'user_profile.ID_entity'})
 		{
+			main::_log("not found user_profile, creating new");
 			$env{'user_profile.ID'}=App::020::SQL::functions::new(
 				'db_h' => "main",
 				'db_name' => 'TOM',
@@ -592,6 +599,21 @@ sub user_add
 		if ($env{'user.login'})
 		{
 			$set.=",login='".TOM::Security::form::sql_escape($env{'user.login'})."'";
+			# check duplicty and remove it
+			TOM::Database::SQL::execute(qq{
+				UPDATE
+					TOM.a301_user
+				SET
+					login = CONCAT(login,'-',ID_user) 
+				WHERE
+					hostname LIKE ?
+					AND login LIKE ?
+					AND ID_user NOT LIKE ?
+			},'bind'=>[
+				$user{'hostname'},
+				$env{'user.login'},
+				$env{'user.ID_user'}
+			]);
 		}
 		elsif (exists $env{'user.login'})
 		{
@@ -1175,7 +1197,7 @@ sub user_get
 		}
 		else
 		{
-			main::_log("user '$ID_user' not found in archive table",1);
+			main::_log("user '$ID_user' not found in inactive table");
 			return undef;
 		}
 	}
