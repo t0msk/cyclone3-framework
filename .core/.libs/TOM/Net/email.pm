@@ -187,11 +187,16 @@ sub send
 			else
 			{
 				# save body into file
-				open(EMAILBODY,'>'.$TOM::P.'/_data/email/body_'.$ID.'.eml');
+				my $dir=int($ID/900);
+				if (!-d $TOM::P.'/_data/email/'.$dir)
+				{
+					mkdir($TOM::P.'/_data/email/'.$dir,0777);
+				}
+				open(EMAILBODY,'>'.$TOM::P.'/_data/email/'.$dir.'/body_'.$ID.'.eml');
 				binmode(EMAILBODY);
 				print EMAILBODY $env{'body'};
 				close(EMAILBODY);
-				chmod 0666, $TOM::P.'/_data/email/body_'.$ID.'.eml';
+				chmod 0666, $TOM::P.'/_data/email/'.$dir.'/body_'.$ID.'.eml';
 				
 				use Encode qw/encode decode/;
 				
@@ -205,7 +210,7 @@ sub send
 					}
 				});
 				
-				if (!-e $TOM::P.'/_data/email/body_'.$ID.'.eml')
+				if (!-e $TOM::P.'/_data/email/'.$dir.'/body_'.$ID.'.eml')
 				{
 					main::_log("can't write email.ID='$ID' into filesystem, inserting email body to database",3,"email",1);
 					

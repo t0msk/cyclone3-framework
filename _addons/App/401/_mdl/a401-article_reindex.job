@@ -8,55 +8,44 @@ use strict;
 
 use Utils::datetime;
 use JSON;
-use App::401::_init;
-
-
-sub fnc
-{
-	my $self=shift;
-#	main::_log("fnc");
-	
-#	use Data::Dumper;
-#	print Dumper($self);
-	
-}
-
+use Data::Dumper;
 
 sub execute
 {
 	my $self=shift;
 	my $env=$self->env;
+	return if $self->running({'max'=>600}); # check if not already running
 	
 	if (!$tom::H)
 	{
-		main::_log("only running under domain",1);
+		main::_log("only running under domain", 1);
 		return undef;
 	}
 	
+	require App::401::_init;
+	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
-			ID_entity
+			`ID_entity`
 		FROM
-			$App::401::db_name.a401_article_ent
-	},'quiet'=>1);
+			`$App::401::db_name`.`a401_article_ent`
+--		LIMIT
+--			1
+	}, 'quiet' => 1);
+	
 	my $i;
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$i++;
-		main::_log_stdout("[$i/$sth0{'rows'}] index article ID_entity=$db0_line{'ID_entity'}");
-		App::401::functions::_article_index('ID_entity' => $db0_line{'ID_entity'});
+		main::_log("[$i/$sth0{'rows'}] index article ID_entity=$db0_line{'ID_entity'}");
+		#$main::nojobify=1;
+		App::401::functions::_article_index(
+			'ID_entity' => $db0_line{'ID_entity'},
+			'-jobify'	=> 1
+		);
 	}
 	
-#	main::_log("execute");
-	
-#	$self->fnc();
-	
-#	$self->job(
-##	TOM::Engine::job::execute(
-#		'name' => 'a010-test'
-#		'level' => 'global',
-#		
-#	);
-	
-return 1}
+	return 1;
+}
+
 1;

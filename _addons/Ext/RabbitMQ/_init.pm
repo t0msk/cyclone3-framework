@@ -22,6 +22,8 @@ BEGIN
 
 our $debug=0;
 our $service;
+our @services;
+our $last_message;
 
 sub service
 {
@@ -35,7 +37,8 @@ sub service
 		utf8::encode($Ext::RabbitMQ::user); # octets -> bytes
 		utf8::encode($Ext::RabbitMQ::pass);
 		utf8::encode($Ext::RabbitMQ::vhost);
-		main::_log("connecting RabbitMQ $Ext::RabbitMQ::user\@$Ext::RabbitMQ::host");
+		$Ext::RabbitMQ::heartbeat||=60;
+		main::_log("connecting RabbitMQ $Ext::RabbitMQ::user\@$Ext::RabbitMQ::host vhost=".$Ext::RabbitMQ::vhost." heartbeat=".$Ext::RabbitMQ::heartbeat);
 		eval {$Ext::RabbitMQ::service = Ext::RabbitMQ::RabbitFoot->new()->load_xml_spec()->connect(
 			'host' => $Ext::RabbitMQ::host || 'localhost',
 			'port' => $Ext::RabbitMQ::port || 5672,
@@ -43,7 +46,7 @@ sub service
 			'pass' => $Ext::RabbitMQ::pass || 'guest',
 			'vhost' => $Ext::RabbitMQ::vhost || '/',
 			'timeout' => (3600*24),
-			'heatbeat' => 60,
+			'heartbeat' => $Ext::RabbitMQ::heartbeat,
 		)};
 		if ($@)
 		{
@@ -148,6 +151,7 @@ sub service
 #		);
 		
 #		$t->close();
+		push @services,$Ext::RabbitMQ::service;
 	}
 #	main::_log("return service");
 #	use Data::Dumper;print Dumper($service);
@@ -155,6 +159,26 @@ sub service
 }
 
 service();
+
+# find and close all active channels
+END
+{
+	main::_log("[RabbitMQ] END");
+	sleep 1 if (($Ext::RabbitMQ::last_message>(time()-15)) && $Ext::RabbitMQ::last_message);
+	Coro::cede;
+	sleep 1 if (($Ext::RabbitMQ::last_message>(time()-15)) && $Ext::RabbitMQ::last_message);
+	foreach my $service (@services)
+	{
+		main::_log("[RabbitMQ]  close service in pool");
+		foreach my $channel (keys %{$service->_channels()})
+		{
+			main::_log("[RabbitMQ]   close channel ".$channel);
+			$service->_channels->{$channel}->close();
+		}
+	}
+	Coro::cede;
+	sleep 1 if (($Ext::RabbitMQ::last_message>(time()-15)) && $Ext::RabbitMQ::last_message);
+}
 
 # for exporting symbols
 package Ext::RabbitMQ::_init;
@@ -196,11 +220,16 @@ sub publish
 {
 	my $self=shift;
 	my %env=@_;
+	$Ext::RabbitMQ::last_message=time();
 	
 	use Encode;
 	
-	$env{'header'}{'headers'}{'publish_timestamp'}=time();
-	$env{'header'}{'headers'}{'message_id'}=TOM::Utils::vars::genhash(16)
+	$env{'header'}{'headers'}{'original_timestamp'}=$env{'header'}{'headers'}{'publish_timestamp'}=time();
+	$env{'header'}{'headers'}{'c3_hostname'}=$TOM::hostname if $TOM::hostname;
+	$env{'header'}{'headers'}{'c3_domain'}=$tom::H if $tom::H;
+	$env{'header'}{'headers'}{'c3_pid'}=$$;
+	$env{'header'}{'headers'}{'c3_request_code'}=$main::request_code if $main::request_code;
+	$env{'header'}{'headers'}{'message_id'}=TOM::Utils::vars::genhash(8)
 		unless $env{'header'}{'headers'}{'message_id'};
 	
 	main::_log("[RabbitMQ] publish message_id='$env{'header'}{'headers'}{'message_id'}' exchange='".$env{'exchange'}."' routing_key='".$env{'routing_key'}."' size=".length($env{'body'}))
@@ -208,9 +237,9 @@ sub publish
 	
 	if ($Redis && ($env{'exchange'} eq "cyclone3.job")) # backup job messages
 	{
-		$Redis->set('RabbitMQ|'.$env{'header'}{'headers'}{'message_id'},$json->encode(\%env));
-		$Redis->sadd('RabbitMQ|msgs','RabbitMQ|'.$env{'header'}{'headers'}{'message_id'});
-		$Redis->expire('RabbitMQ|'.$env{'header'}{'headers'}{'message_id'},86400);
+#		$Redis->set('RabbitMQ|'.$env{'header'}{'headers'}{'message_id'},$json->encode(\%env));
+#		$Redis->sadd('RabbitMQ|msgs','RabbitMQ|'.$env{'header'}{'headers'}{'message_id'});
+#		$Redis->expire('RabbitMQ|'.$env{'header'}{'headers'}{'message_id'},(86400*7));
 	}
 	
 	utf8::encode($env{$_}) foreach(grep {!ref($env{$_})} keys %env);
@@ -258,6 +287,7 @@ sub publish
 			}
 		}
 		main::_log("[RabbitMQ] error '$@'",1);
+		$tom::HUP=2; # exit this process as soon as possible
 		
 		if ($Redis) # will be executed directly, removing from backup queue
 		{
@@ -273,8 +303,8 @@ sub publish
 sub DESTROY
 {
 	my $self=shift;
-#	main::_log("DESTROY RabbitMQ");
-	$self->_channel->close();
+	main::_log("[RabbitMQ] DESTROY");
+	$self->SUPER::DESTROY();
 }
 
 1;

@@ -156,6 +156,7 @@ my $limit=100;
 my $query;
 my %query_string;
 my @filter;
+my @must;
 my @notfilter;
 
 if ($main::arg{'hd'} eq "?")
@@ -248,24 +249,28 @@ if ($main::arg{'msg'})
 		{
 			$part=lc($part);
 			$query.="+'".$part."'";
-			push @filter,{"terms" => {"m" => [$part]}};
+#			push @filter,{"terms" => {"m" => [$part]}};
+			push @filter, {
+				'query_string' => {
+					"fields" => ["m"],
+					'query' => $part,
+					"use_dis_max" => 'true'
+				}
+			};
+			
 		}
 		$query=~s|msg=~\+'|msg=~'|;
-		# for highlights
-		$query_string{'query'}{'query_string'} = {
-			"fields" => ["m"],
-			'query' => join(" ",@{$main::arg{'msg'}}),
-			"use_dis_max" => 1
-		};
 	}
 	else
 	{
 		$query.=" msg=~'".$main::arg{'msg'}."'";
-		$query_string{'query'}{'query_string'} = {
-			"fields" => ["m"],
-			'query' => $main::arg{'msg'},
-			"use_dis_max" => 1
-		}
+		push @filter, {
+			'query_string' => {
+				"fields" => ["m"],
+				'query' => $main::arg{'msg'},
+				"use_dis_max" => 'true'
+			}
+		};
 	}
 };
 
@@ -280,13 +285,6 @@ if ($main::arg{'msg!'})
 			$query.="+'".$part."'";
 			push @notfilter,{"terms" => {"m" => [$part]}};
 		}
-#		$query=~s|msg=~\+'|msg=~'|;
-		# for highlights
-#		$query_string{'query'}{'query_string'} = {
-#			"fields" => ["m"],
-#			'query' => join(" ",@{$main::arg{'msg'}}),
-#			"use_dis_max" => 1
-#		};
 	}
 	else
 	{
@@ -586,9 +584,9 @@ my $search_config={
 	'index' => $indice,
 	'type' => 'fluentd',
 	'size' => $limit,
-	'timeout' => '600s',
+#	'timeout' => '600s',
 	'body'  => {
-		'timeout' => '600s',
+#		'timeout' => '600s',
 		'sort' => [
 			{'@timestamp' => do{
 				if ($main::arg{'oldest'})
@@ -603,15 +601,19 @@ my $search_config={
 			{'o' => "desc"}
 		],
 		'query' => {
-			'filtered' => {
-				'filter' => {
-					'bool' => {
-						'must' => [@filter],
-						'must_not' => [@notfilter],
-					}
-				},
-				%query_string
+			'bool' => {
+				'filter' => [@filter],
+				'must' => [@must]
 			}
+#			'filtered' => {
+#				'filter' => {
+#					'bool' => {
+#						'must' => [@filter],
+#						'must_not' => [@notfilter],
+#					}
+#				},
+#				%query_string
+#			}
 		},
 		"highlight" => {
 			"fields" => {
@@ -726,17 +728,17 @@ my $last_timestamp;
 my $last_o;
 
 while (1){
+	print Dumper($search_config) if $main::arg{'v'};
 	$results = $Elastic->search($search_config);
-	
 	if (!$results->{'hits'}->{'total'} && !$main::arg{'tail'})
 	{
 		my $results = $Elastic->search(
 			'index' => $indice,
 			'type' => 'fluentd',
 			'size' => 1,
-			'timeout' => '5s',
+#			'timeout' => '5s',
 			'body'  => {
-				'timeout' => '5s',
+#				'timeout' => '5s',
 				'sort' => [
 					{'@timestamp' => "desc"}
 				]
@@ -788,8 +790,8 @@ my $src_t_last;
 foreach my $line (sort {
 	if ($main::arg{'ch'})
 	{
-		$a->{'_source'}->{'h'} cmp $b->{'_source'}->{'h'} ||
-		$a->{'_source'}->{'d'} cmp $b->{'_source'}->{'d'} ||
+#		$a->{'_source'}->{'h'} cmp $b->{'_source'}->{'h'} ||
+#		$a->{'_source'}->{'d'} cmp $b->{'_source'}->{'d'} ||
 #		$a->{'_source'}->{'t'} cmp $b->{'_source'}->{'t'} ||
 		$a->{'_source'}->{'@timestamp'} cmp $b->{'_source'}->{'@timestamp'} ||
 		$a->{'_source'}->{'o'} <=> $b->{'_source'}->{'o'}
@@ -937,11 +939,11 @@ foreach my $line (sort {
 #				'gte' => 'now-'.$main::arg{'range'}
 #			}
 #		}}
-		my $last_filter=$search_config->{'body'}->{'query'}->{'filtered'}->{'filter'}->{'bool'}->{'must'}[-1];
+		my $last_filter=$search_config->{'body'}->{'query'}->{'bool'}->{'filter'}[-1];
 		
 		if (!$last_filter->{'range'} || !$last_filter->{'range'}->{'@timestamp'} || !$last_filter->{'range'}->{'@timestamp'}->{'gt'})
 		{
-			push @{$search_config->{'body'}->{'query'}->{'filtered'}->{'filter'}->{'bool'}->{'must'}},
+			push @{$search_config->{'body'}->{'query'}->{'bool'}->{'filter'}},
 				{"range" => {
 					'@timestamp' => {
 						'gt' => $last_timestamp

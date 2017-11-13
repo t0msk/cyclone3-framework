@@ -94,6 +94,9 @@ eval
 {
 	local $main::request_code=Utils::vars::genhash(8);
 	
+	local $TOM::Database::SQL::logquery=0 unless $main::debug;
+	local $TOM::Database::SQL::lognonselectquery=0 unless $main::debug;
+	
 	main::_log_stdout("{$main::request_code} load & exec '".($job_file || $main::arg{'name'})."'");
 	
 	$0.=" {".($main::arg{'name'} || $job_file)."}";

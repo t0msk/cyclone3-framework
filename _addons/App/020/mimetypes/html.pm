@@ -545,6 +545,91 @@ sub start
 			}
 			
 		}
+		elsif ($entity eq "a411_poll")
+		{
+			require App::411::_init;
+			
+			my $sql_where;
+			my @sql_bind;
+			
+			if ($vars{'ID_entity'})
+			{
+				$sql_where.=" AND `poll`.`ID_entity` = ?";
+				push @sql_bind,$vars{'ID_entity'};
+				$sql_where.=" AND `poll`.`lng` = ?";
+				push @sql_bind, $self->{'lng'};
+			}
+			elsif ($vars{'ID'})
+			{
+				$sql_where.=" AND `poll`.`ID` = ?";
+				push @sql_bind,$vars{'ID'};
+			}
+			
+			my %sth0=TOM::Database::SQL::execute(qq{
+				SELECT
+					
+					`poll`.*
+					
+				FROM
+					`$App::411::db_name`.`a411_poll` AS `poll`
+				LEFT JOIN
+					`$App::411::db_name`.`a411_poll_cat` AS `poll_cat` ON
+					(
+						`poll_cat`.`ID` = `poll`.`ID_category`
+					)
+				WHERE
+					`poll`.`status` IN ('Y','N','W')
+					$sql_where
+				LIMIT
+					1
+			},'bind'=>[@sql_bind],'quiet'=>1,'-slave'=>1,
+				'-changetime'=>App::020::SQL::functions::_get_changetime(
+					{
+						'db_h'=>"main",
+						'db_name' => $App::411::db_name,
+						'tb_name' => "a411_poll",
+						'ID_entity' => do{$vars{'ID_entity'} if $vars{'ID_entity'}=~/^\d+$/}
+					}),
+			);
+			%db_entity=$sth0{'sth'}->fetchhash();
+			main::_log("found ID=$db_entity{'ID'} ID_entity=$db_entity{'ID_entity'} '$db_entity{'name'}'");
+			
+			my $p=new App::020::mimetypes::html(
+				'tpl_ext' => $self->{'tpl_ext'},
+				'lng' => $self->{'lng'}
+			);
+			$p->config_from($self);
+			delete $p->{'config'}->{'editable'};
+			$p->{'config'}->{'inline'}=1; # this is inline poll
+			$p->parse($db_entity{'description'});
+			$p->eof();
+			undef $p->{'config'}->{'inline'};
+			
+			$db_entity{'description_parser'}={
+				'output' => $p->{'output'},
+				'addon' => $p->{'addon'},
+				'entity' => $p->{'entity'},
+				'thumbnail' => $p->{'thumbnail'},
+			};
+			
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					`poll_answer`.*
+				FROM
+					`$App::411::db_name`.`a411_poll_answer` AS `poll_answer`
+				WHERE
+							`poll_answer`.`ID_poll` = ?
+					AND	`poll_answer`.`lng`='$self->{'lng'}'
+					AND	`poll_answer`.`status` = 'Y'
+				ORDER BY
+					`poll_answer`.`ID_entity`
+			},'bind'=>[$db_entity{'ID_entity'}],'log_'=>1,'-slave'=>1);
+			
+			while (my %answer=$sth1{'sth'}->fetchhash())
+			{
+				push @{$db_entity{'answers'}}, \%answer;
+			}
+		}
 		elsif ($entity eq "a420_static")
 		{
 			require App::420::_init;

@@ -16,8 +16,6 @@
 	
 	<entity id="body.notfound" replace_L10n="true" replace_variables="false"><![CDATA[{ "success": false, "errors": { "reason": "<$main::FORM{'TID'}>: <$(The page or service type cannot be found)>" }}]]></entity>
 	
-	
 	<entity id="box.error" replace_variables="true" replace_L10n="true"><![CDATA[{ "success": false, "errors": { reason: "<$(This service is currently not available)>" }}]]></entity>
-	
 	
 </template>

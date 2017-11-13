@@ -39,6 +39,7 @@ our %table=
 	
 	'161'	=>	"!", # '¡' 
 	'162'	=>	"c", # '¢'
+	'163' => "£", # '£'
 	
 	'164'	=>	"'", # napriklad v slove "don't"
 	'165'	=>	"¥", # yen - mena
@@ -95,6 +96,8 @@ our %table=
 	'212'	=> "O", # 'Ô'
 	'213'	=> "O", # 'Õ'
 	'214'	=>	"O", # 'O' s dvojbodkou
+	
+	'215'	=>	"x", # '×' znak nasobenia
 	
 	'216'	=>	"O", # 'O' preskrtnute
 	'217'	=>	"U", # 'Ù'
@@ -274,8 +277,8 @@ our %table=
 	'1060'	=> "F", # 'Ф' v azbuke
 	'1061'	=> "H", # 'Х' v azbuke
 	'1062'	=> "C", # 'Ц' v azbuke
-	'1063'	=> "C", # 'Ч' v azbuke
-	'1064'	=> "S", # 'Ш' v azbuke
+	'1063'	=> "CH", # 'Ч' v azbuke
+	'1064'	=> "SH", # 'Ш' v azbuke
 	'1065'	=> "Sth", # 'Щ' v azbuke
 	'1066'	=> "A", # 'Ъ' v azbuke
 	
@@ -306,8 +309,8 @@ our %table=
 	'1092'	=> "f", # 'ф' v azbuke
 	'1093'	=> "h", # 'х' v azbuke
 	'1094'	=> "c", # 'ц' v azbuke
-	'1095'	=> "c", # 'ч' v azbuke
-	'1096'	=> "s", # 'ш' v azbuke
+	'1095'	=> "ch", # 'ч' v azbuke
+	'1096'	=> "sh", # 'ш' v azbuke
 	'1097'	=> "sth", # 'Щ' v azbuke
 	'1098'	=> "a", # 'ъ' v azbuke
 	
@@ -446,8 +449,8 @@ sub UTF8_ASCII_
 {
 	return $table{ord($_[0])} if exists $table{ord($_[0])};
 	
-	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require) = caller(1);
-	main::_log("Int::charsets::encode::* ASCII from UTF-8 \\$_[0] {".(ord($_[0]))."} - unknown from ($package/$filename/$line)",1,"lib.err",1) if (ord($_[0])>127);
+#	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require) = caller(1);
+	main::_log("Int::charsets::encode::* ASCII from UTF-8 \\$_[0] {".(ord($_[0]))."} - unknown",1,"lib.err",1) if (ord($_[0])>127);
 	return "\\utf{".ord($_[0])."}" if ord($_[0])>127;
 	
 	return $_[0];

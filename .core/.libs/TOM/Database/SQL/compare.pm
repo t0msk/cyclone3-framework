@@ -257,7 +257,7 @@ sub compare_create_table
 			}
 			if ($keys1h{$key} ne $keys0h{$key})
 			{
-				main::_log("not equals '$keys0h{$key}'<=>'$keys1h{$key}'");
+				main::_log("not equals key '$keys0h{$key}'<=>'$keys1h{$key}'",1);
 				my $plus=$keys0h{$key};
 				my $exec;
 				if ($key eq "PRIMARY")

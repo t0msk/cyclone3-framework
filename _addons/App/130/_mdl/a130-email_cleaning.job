@@ -19,7 +19,7 @@ sub execute
 	my $env=$self->env;
 	return if $self->running({'max'=>600}); # check if not already running
 	
-	$env->{'max'} = 1000 unless $env->{'max'};
+	$env->{'max'} = 100000 unless $env->{'max'};
 	
 	alarm(0);
 	
@@ -36,10 +36,11 @@ sub execute
 	});
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
-		if (-e $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml')
+		my $dir=int($db0_line{'ID'}/900);
+		if (-e $TOM::P.'/_data/email/'.$dir.'/body_'.$db0_line{'ID'}.'.eml')
 		{
 			main::_log("unlink email body '$db0_line{'ID'}'");
-			unlink $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml';
+			unlink $TOM::P.'/_data/email/'.$dir.'/body_'.$db0_line{'ID'}.'.eml' or die "can't delete ".$!;
 		}
 		
 	}
@@ -51,7 +52,7 @@ sub execute
 		FROM
 			TOM.a130_send
 		WHERE
-			datetime_create <= DATE_SUB(NOW(),INTERVAL 31 DAY)
+			datetime_create <= DATE_SUB(NOW(),INTERVAL 14 DAY)
 		ORDER BY
 			datetime_create
 		LIMIT $env->{'max'}
@@ -59,14 +60,50 @@ sub execute
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		main::_log("[$i/$sth0{'rows'}] removing email ID=$db0_line{'ID'}");
-		if (-e $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml')
+		my $dir=int($db0_line{'ID'}/900);
+		if (-e $TOM::P.'/_data/email/'.$dir.'/body_'.$db0_line{'ID'}.'.eml')
 		{
 			main::_log("unlink email body '$db0_line{'ID'}'");
-			unlink $TOM::P.'/_data/email/body_'.$db0_line{'ID'}.'.eml';
+			unlink $TOM::P.'/_data/email/'.$dir.'/body_'.$db0_line{'ID'}.'.eml';
 		}
 		TOM::Database::SQL::execute(qq{DELETE FROM TOM.a130_send WHERE ID=?},'bind'=>[$db0_line{'ID'}],'quiet'=>1);
 		$i++;
 	}
+	
+	
+	if (opendir (DIR1, $TOM::P.'/_data/email/'))
+	{
+		foreach my $dir (readdir DIR1)
+		{
+			next if $dir eq ".";
+			next if $dir eq "..";
+			if (opendir (DIR2, $TOM::P.'/_data/email/'.$dir))
+			{
+				my $i;
+				foreach my $file (readdir DIR2)
+				{
+					next if $file eq ".";
+					next if $file eq "..";
+					
+					my $old=(time()-(stat($TOM::P.'/_data/email/'.$dir.'/'.$file))[9]);
+#					my $old=(stat($TOM::P.'/_data/email/'.$dir.'/'.$file))[9];
+#					print $file." ".$old."\n";
+					if ($old > (86400*31))
+					{
+#						unlink $TOM::P.'/_data/email/'.$dir.'/'.$file;
+					}
+					
+					$i++
+				}
+				if (!$i)
+				{
+					rmdir $TOM::P.'/_data/email/'.$dir;
+				}
+			}
+			
+		}
+	}
+	
 	
 	$self->reschedule() if $i;
 	

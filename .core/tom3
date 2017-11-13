@@ -112,6 +112,9 @@ eval
 	do $tom::P."/_dsgn/default.header"
 		|| do $tom::P."/_dsgn/default.dsgn";
 	
+	push @main::mfiles, $tom::P.'/_dsgn/default.header'
+		if -e $tom::P.'/_dsgn/default.header';
+	
 	$main::DOC_BODY=$main::TEMPLATE if $main::TEMPLATE;
 	%main::DOC_HEADER=%main::HEADER if %main::HEADER;
 	
@@ -307,7 +310,8 @@ while ($main::CGI=new CGI::Fast())
 	
 	# override tom::lng
 	local $tom::lng=$tom::lng;
-	if ($main::ENV{'lng'}){main::_log("override \$tom::lng by ENV to '$main::ENV{'lng'}' from '$tom::lng'");$tom::lng=$main::ENV{'lng'}}
+	local $tom::lang=$tom::lang; # long-form of lng
+	if ($main::ENV{'lng'}){main::_log("override \$tom::lng by ENV to '$main::ENV{'lng'}' from '$tom::lng'");$tom::lng=$main::ENV{'lng'};undef $tom::lang}
 	# override tom::H
 	local $tom::H=$tom::H;
 	$tom::H_orig=$tom::H;
@@ -364,6 +368,9 @@ while ($main::CGI=new CGI::Fast())
 	{
 		$tom::H_www=~s|^https|http|;
 	}
+	
+	local $TOM::Document::content_security_policy=$TOM::Document::content_security_policy;
+	local $TOM::Document::frame_options=$TOM::Document::frame_options;
 	
 #	main::_log('DOS control');
 #	if (TOM::Net::HTTP::DOS::processENV(%main::ENV))
@@ -528,7 +535,7 @@ while ($main::CGI=new CGI::Fast())
 				&&($pub::engine_disabling))
 			{
 				my @ERR=(
-					"The page you have requested can't be displayed",
+					"The page you have requested cannot be displayed, because of inappropriate activities",
 					"Contact: info\@comsultia.com"
 #					,@{$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'messages'}}
 				);
@@ -555,10 +562,9 @@ while ($main::CGI=new CGI::Fast())
 		
 		
 		# prezriem si pravidla pre rewrite.conf
-		if ($tom::rewrite && (stat "$tom::P/rewrite.conf")[9] > $tom::rewrite_time)
+		if ($tom::rewrite && TOM::file_modified($tom::P.'/rewrite.conf'))
 		{
 			main::_log("rewrite.conf changed, reloading");
-			
 			if (open (KEY,"<".$tom::P."/rewrite.conf"))
 			{
 				my $data;
@@ -582,6 +588,7 @@ while ($main::CGI=new CGI::Fast())
 				if ($_->{'H'} eq $main::ENV{'HTTP_HOST'})
 				{
 					$rewrite_conf = $_->{'rewrite.conf'};
+					main::_log('overriding $rewrite_conf from * to ' . $rewrite_conf);
 					last;
 				}
 			}
@@ -607,14 +614,14 @@ while ($main::CGI=new CGI::Fast())
 		}
 		
 		# prezriem si pravidla pre type.conf
-		if ((stat "$tom::P/type.conf")[9] > $tom::type_time)
+		if (TOM::file_modified($tom::P.'/type.conf'))
 		{
 			main::_log("type.conf changed, reloading");
 			TOM::TypeID::read_conf($tom::P.'/type.conf');
 		}
 		
 		# prezriem si pravidla pre 301.conf
-		if ((stat "$tom::P/301.conf")[9] > $tom::301_time)
+		if (TOM::file_modified($tom::P.'/301.conf'))
 		{
 			main::_log("301.conf changed, reloading");
 			if (open (KEY,"<".$tom::P."/301.conf"))
@@ -815,7 +822,7 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("requested no-cache (don't know if proceed)");
 		}
 		
-		# allow recache only in devel server
+		# allow recache with _rc pram only in devel server
 		if ($tom::devel && $main::FORM{'_rc'} < 0)
 		{
 			$main::cache=0;
@@ -1873,11 +1880,11 @@ while ($main::CGI=new CGI::Fast())
 				&& $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'} ne "spambot"
 			)
 			{
-				TOM::Error::engine(
-					"silent (This error message is in silen mode)",
-					"404, service type not found REQUEST_URI='$main::ENV{REQUEST_URI}' TID='$FORM{TID}'",
-					"Please check your type.conf, rewrite.conf or RewriteRules in .htaccess"
-				);
+#				TOM::Error::engine(
+#					"silent (This error message is in silen mode)",
+#					"404, service type not found REQUEST_URI='$main::ENV{REQUEST_URI}' TID='$FORM{TID}'",
+#					"Please check your type.conf, rewrite.conf or RewriteRules in .htaccess"
+#				);
 				$result="failed";
 			}
 		}
@@ -2006,6 +2013,29 @@ while ($main::CGI=new CGI::Fast())
 				next;
 			}
 			
+			if($env0{'id'} eq "content_security_policy")
+			{
+				if($env0{'value'} eq "")
+				{
+					_log("Change content_security_policy to none");
+					undef $TOM::Document::content_security_policy;
+				}
+				else
+				{
+					_log("Change content_security_policy to $env0{'value'}");
+					$TOM::Document::content_security_policy = $env0{'value'};
+				}
+			}
+			
+			if($env0{'id'} eq "frame_options")
+			{
+				if ($env0{'value'})
+				{
+					_log("Change frame_options to $env0{'value'}");
+					$TOM::Document::frame_options = $env0{'value'};
+				}
+			}
+			
 			if ($env0{'id'} eq "link")
 			{
 				if ($env0{'lng'}){next if $env0{'lng'} ne $tom::lng;}
@@ -2132,7 +2162,7 @@ while ($main::CGI=new CGI::Fast())
 				my $i;foreach (@TOM::LNG_accept){$i=1 if $_ eq $env0{value}}
 				if ($i)
 				{
-					$tom::lng=$env0{value};
+					$tom::lng=$env0{value};undef $tom::lang;
 					main::_log("Change tom::lng (xlng) to '$env0{value}'");
 				}
 				else
@@ -2518,7 +2548,10 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("H_www='$tom::H_www' rewrite_domain='$rewrite_domain' rewrite_old='$rewrite_old' rewrite='$rewrite'");
 #			main::_log("H_www_orig='$tom::H_www_orig' H_www='$tom::H_www' rewrite_domain='$rewrite_domain' rewrite_old='$rewrite_old' rewrite='$rewrite'",3,"debug");
 			
-			if (($tom::H_www ne $rewrite_domain) || ($rewrite_old ne $rewrite) || $rewrite_301)
+			if (($tom::H_www ne $rewrite_domain) || ($rewrite_old ne $rewrite) || $rewrite_301 || (
+				($link_old ne $link)
+				 && ($main::ENV{'REQUEST_METHOD'} eq "GET")
+			))
 			#if (($link_old ne $link) || $rewrite_301)
 			{
 				# musim odoslat cookies i ked robim relocation
@@ -2614,25 +2647,21 @@ while ($main::CGI=new CGI::Fast())
 			# v module ako -xlng pouzijem default $tom::lng
 			
 			my %mdl_env;
-			while ($data=~s|<VAR id="(.{1,150}?)" value="(.*?)" />||s)
+			while ($data=~s|<VAR id="(.{1,150}?)" (value\|get)="(.*?)" />||s)
 			{
-				next if not defined $2;
-				$mdl_env{$1}=$2;
-				$mdl_env{$1}=~s|\"|"|g;
+				next if not defined $3;
+				if ($2 eq "get")
+				{
+					$mdl_env{$1}=$main::FORM{$3};
+				}
+				else
+				{
+					$mdl_env{$1}=$3;
+					$mdl_env{$1}=~s|\"|"|g;
+				}
 			}
 			
 			main::_log("<={MODULE} ".$mdl_env{'-type'}.':'.($mdl_env{'-category'} || $mdl_env{'-addon'}).'-'.$mdl_env{'-name'}.' TMP:'.$mdl_env{'-TMP'});
-			
-			if (
-				((!$IAdm)&&($mdl_env{-IAdm}==1)) ||
-				(($IAdm)&&($mdl_env{-IAdm}==-1)) ||
-				((!$ITst)&&($mdl_env{-ITst}==1)) ||
-				(($ITst)&&($mdl_env{-ITst}==-1))
-			)
-			{
-				main::_log("can't load module in this mode");
-				next;
-			}
 			
 			if (exists $mdl_env{'-enabled'} && !$mdl_env{'-enabled'})
 			{
@@ -2958,7 +2987,7 @@ while ($main::CGI=new CGI::Fast())
 		if ($main::page_statuscode eq "404")
 		{
 			$main::H->change_DOC_robots("noindex,noarchive");
-			main::_log("404 REQUEST_URI='$ENV{'REQUEST_URI'}' QUERY='$ENV{'QUERY_STRING'}' Not Found for '$main::ENV{'REMOTE_ADDR'}' with '$main::ENV{'HTTP_USER_AGENT'}'",4,"pub.404");
+#			main::_log("404 REQUEST_URI='$ENV{'REQUEST_URI'}' QUERY='$ENV{'QUERY_STRING'}' Not Found for '$main::ENV{'REMOTE_ADDR'}' with '$main::ENV{'HTTP_USER_AGENT'}'",4,"pub.404");
 		}
 		if ($result eq "failed")
 		{
@@ -3076,11 +3105,19 @@ while ($main::CGI=new CGI::Fast())
 		my $t_send=track TOM::Debug("send",'timer'=>1);
 		
 		print "C3-Request: $main::request_code\n";
+		if ($tom::devel)
+		{
+			print "C3-Devel-Hostname: $TOM::hostname\n";
+			print "C3-Devel-TID: ".$main::FORM{'TID'}."\n";
+			print "C3-Devel-a210: ".$main::a210{'ID'}."\n" if $main::a210{'ID'};
+			print "C3-Devel-a210_path: ".$main::FORM{'a210_path'}."\n" if $main::FORM{'a210_path'};
+			print "C3-Devel-a210_name: ".$main::FORM{'a210_name'}."\n" if $main::FORM{'a210_name'};
+			print "C3-Devel-branch: ".$tom::devel_branch."\n" if $tom::devel_branch;
+		}
 		print "C3-Domain: $tom::H\n";
 			my $date = DateTime->now('time_zone' => 'local');
 			my $date_string = $date->strftime("%d %b %Y %H:%M:%S");
 		print "C3-Date: $date_string\n";
-		print "C3-Hostname: $TOM::hostname\n";
 		print "C3-Cache-Control: ".do{
 			if ($main::cache)
 			{
@@ -3392,7 +3429,7 @@ while ($main::CGI=new CGI::Fast())
 #				")".
 #				"",3,"pub.bench",1) if $TOM::DEBUG_benchmark;
 		};
-		
+		Coro::cede;
 	}; # end of eval
 	
 	untie %{$main::USRM{'session'}} if ref($main::USRM{'session'}) eq "HASH"; # DESTROY
@@ -3406,8 +3443,11 @@ while ($main::CGI=new CGI::Fast())
 	
 	$t_request->close();
 	
+	# request exit/restart when important files changed
+	$tom::HUP=1 if TOM::files_modified(\@main::mfiles);
+	
 	if (
-			($tom::HUP) && (($main::time_current-$TOM::time_start)<30) ||
+			($tom::HUP) && (($main::time_current-$TOM::time_start)<30) || # safe time to exit/restart
 			($tom::HUP == 2) ||
 			($TOM::max_count && ($TOM::max_count <= $tom::count)) ||
 			($TOM::max_time <= ($main::time_current-$TOM::time_start))

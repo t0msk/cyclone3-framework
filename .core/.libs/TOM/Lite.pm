@@ -262,7 +262,7 @@ sub _log
 				"m" => $msg,
 				'data' => $get[5]
 			});
-			return 1 unless $tom::devel;
+			return 1;# unless $tom::devel;
 		}
 		
 		$get[0]=0 unless $get[0];
@@ -400,7 +400,10 @@ sub _event
 		$hash{'user'}={
 			'ID' => $main::USRM{'ID_user'} || $main::USRM{'IDhash'},
 			'session' => $main::USRM{'ID_session'},
-			'logged' => $main::USRM{'logged'}
+			'email' => $main::USRM{'email'},
+			'logged' => $main::USRM{'logged'},
+			'c3bid' => $main::COOKIES_all{'c3bid'}, # browser id
+			'c3sid' => $main::COOKIES_all{'c3sid'}, # browser session id
 		};
 	}
 	
@@ -455,6 +458,7 @@ sub _event
 		delete $hash{'domain'};
 		delete $hash{'request'};
 		delete $hash{'severity'};
+		$hash{'ef_s'}=$msg;
 		# can't override datetime?
 		if ($tom::test)
 		{
@@ -490,12 +494,53 @@ use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 
+our $TTL=5;
+our %mfiles;
+our %files_modified;
+
 BEGIN {eval{
 	main::_log("init '$0' ".join(",",@ARGV));
 	main::_log("<={LIB} ".__PACKAGE__."::Lite (_log + conf)");main::_log("TOM::P=$TOM::P TOM::DP=$TOM::DP");
 };}
 
+sub file_mtime
+{
+	my $file=shift;
+	my $time=time();
+	if ($mfiles{$file}{'ctime'} <= $time-$TTL)
+	{
+		$mfiles{$file}{'ctime'} = $time;
+		if (-e $file)
+		{
+			$mfiles{$file}{'mtime'}=(stat($file))[9];
+			return $mfiles{$file}{'mtime'};
+		}
+		else
+		{
+			return undef; # not exists
+		}
+	}
+	return $mfiles{$file}{'mtime'};
+}
 
+sub file_modified
+{
+	my $file=shift;
+	my $class=shift || 'default';
+	my $mtime=file_mtime($file);
+	$files_modified{$class}{$file}||=$mtime;
+	return $files_modified{$class}{$file}=$mtime
+		if ($files_modified{$class}{$file} < $mtime);
+	return undef;
+}
+
+sub files_modified
+{
+	foreach (@{$_[0]})
+	{
+		file_modified($_) && return $_;
+	}
+}
 
 package TOM::Net::email;
 use open ':utf8', ':std';

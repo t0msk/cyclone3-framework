@@ -30,7 +30,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   `price_EUR` decimal(12,3) default NULL, -- price in EUR
   `src_data` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
-  `sellscore` decimal(10,2) default NULL,
+  `sellscore` decimal(10,2) default '0.00',
   `supplier_org` bigint(20) unsigned default NULL, -- rel 710_org.ID_entity
   `supplier_person` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel 301.user_ID
   `status_new` char(1) character set ascii NOT NULL default 'N',
@@ -43,6 +43,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product` ( -- list of modifications
   KEY `SEL_0` (`product_number`),
   KEY `SEL_1` (`ref_ID`),
   KEY `ID_entity` (`ID_entity`),
+  KEY `sellscore` (`sellscore`),
   KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -103,7 +104,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_j` (
   `status` char(1) character set ascii NOT NULL default 'N',
   KEY `datetime_create` (`datetime_create`),
   PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -111,7 +112,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_metaindex` (
   `ID` bigint(20) unsigned NOT NULL, -- ref _product.ID
   `meta_section` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
   `meta_variable` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
-  `meta_value` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_value` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`meta_section`,`meta_variable`),
   KEY `SEL_0` (`meta_section`,`meta_variable`),
@@ -394,7 +395,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_cat_metaindex` (
   `ID` bigint(20) unsigned NOT NULL, -- ref _product.ID
   `meta_section` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
   `meta_variable` varchar(32) character set utf8 collate utf8_unicode_ci NOT NULL,
-  `meta_value` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL,
+  `meta_value` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`meta_section`,`meta_variable`),
   KEY `SEL_0` (`meta_section`,`meta_variable`),
@@ -469,7 +470,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_price_j` (
   `status` char(1) character set ascii NOT NULL default 'Y',
   KEY `datetime_create` (`datetime_create`),
   PRIMARY KEY  (`ID`,`datetime_create`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
 
@@ -481,7 +482,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_product_legal` (
   `VAT` float NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
-  UNIQUE KEY `UNI_0` (`ID_entity`, `country_code`)
+  UNIQUE KEY `UNI_0` (`ID_entity`,`country_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------

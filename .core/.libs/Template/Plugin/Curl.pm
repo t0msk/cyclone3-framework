@@ -34,4 +34,11 @@ sub get {
 	return $curl->get(@_);
 }
 
+sub post {
+	my $self = shift;
+	$curl->timeout(5);
+	my $data=eval{$curl->post(@_)};
+	return $data;
+}
+
 1;

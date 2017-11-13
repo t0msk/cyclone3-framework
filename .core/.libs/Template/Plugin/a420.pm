@@ -108,7 +108,12 @@ sub get_static {
 		LIMIT 1
 	};
 	
-	my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[@bind],'log'=>1,%sql_env);
+	my %sql_def=('db_h' => "main",'db_name' => $App::420::db_name,'tb_name' => "a420_static");
+	my %sth0=TOM::Database::SQL::execute($sql,'bind'=>[@bind],'log'=>0,'quiet'=>1,%sql_env,
+		'-slave' => 1,
+		'-cache' => 86400,
+		'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%sql_def)
+	);
 	%static=$sth0{'sth'}->fetchhash();
 	
 	return \%static;

@@ -114,7 +114,8 @@ our %table_ISO639_2=
 	'ro' => 'ro', # romanian
 	'si' => 'sl', # slovenian
 	'es' => 'es', # espanol
-	'pt' => 'pt' # portugese
+	'pt' => 'pt', # portugese
+	'it' => 'it'
 );
 
 

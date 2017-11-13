@@ -240,9 +240,11 @@ sub prepare_last
  my %env=@_;
  
  # aplikujem title
+ $self->{env}{DOC_title}=~s|\&(?!amp;)|&amp;|g;
  $self->{OUT}{HEADER}=~s|<%TITLE%>|$self->{env}{DOC_title}|;
  
  $self->{env}{DOC_keywords}=~s|^,||;
+ $self->{env}{DOC_keywords}=~s|\&(?!amp;)|&amp;|g;
  $self->{OUT}{HEADER}=~s|<%KEYWORDS%>|$self->{env}{DOC_keywords}|;
  
  # aplikujem DOC_css_link

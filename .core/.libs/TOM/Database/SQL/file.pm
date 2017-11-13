@@ -551,7 +551,7 @@ sub install_table
 	my %env=@_;
 	my %output;
 	
-	$SQL=~/(TABLE|VIEW)(.*?) [`\[](.*?)[`\]]..?[`\[](.*?)[`\]]/ || do
+	$SQL=~/(TABLE|VIEW|TRIGGER)(.*?) [`\[](.*?)[`\]]..?[`\[](.*?)[`\]]/ || do
 	{
 		main::_log("this chunk is not a table or view",1);
 		$t->close();
@@ -581,10 +581,15 @@ sub install_table
 	if ($debug){foreach my $line(split('\n',$SQL)){main::_log("$line");}}
 	
 	main::_log("(re)installing view `$database`.`$table`",3) if $SQL=~/ VIEW /;
+	if ($SQL=~/ TRIGGER /)
+	{
+		main::_log("(re)installing trigger `$database`.`$table`",3);
+		TOM::Database::SQL::execute(qq{DROP TRIGGER IF EXISTS `$database`.`$table`},'db_h'=>$header->{'db_h'});
+	}
 	
 	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$header->{'db_h'});
 	
-	if ($env{'-compare'} && !$sth0{'err'})
+	if ($env{'-compare'} && !$sth0{'err'} && not($SQL=~/ TRIGGER /))
 	{
 		main::_log("calling '-compare'");
 		

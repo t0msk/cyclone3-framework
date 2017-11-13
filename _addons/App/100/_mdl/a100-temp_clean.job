@@ -38,5 +38,55 @@ sub execute
 		
 	}
 	
+	if (-d $tom::P.'/!media/temp')
+	{
+		opendir (DIR, $tom::P.'/!media/temp');
+		foreach my $file (readdir DIR)
+		{
+			
+			next if $file=~/^_/;
+			next if $file=~/^\./;
+			
+			my $filename=$tom::P."/!media/temp/".$file;
+			
+			if (-f $filename)
+			{
+				my $created=(stat $filename)[9];
+				if (($main::time_current - $created) > $max)
+				{
+					main::_log("old $file ".($main::time_current-$created).", removing...");
+					unlink $filename;
+				}
+				
+			}
+			
+		}
+	}
+	
+	if (-d $tom::P.'/!media/grf/temp')
+	{
+		opendir (DIR, $tom::P.'/!media/grf/temp');
+		foreach my $file (readdir DIR)
+		{
+			
+			next if $file=~/^_/;
+			next if $file=~/^\./;
+			
+			my $filename=$tom::P."/!media/grf/temp/".$file;
+			
+			if (-f $filename)
+			{
+				my $created=(stat $filename)[9];
+				if (($main::time_current - $created) > $max)
+				{
+					main::_log("old $file ".($main::time_current-$created).", removing...");
+					unlink $filename;
+				}
+				
+			}
+			
+		}
+	}
+	
 return 1}
 1;

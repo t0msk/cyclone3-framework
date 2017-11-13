@@ -30,7 +30,7 @@ sub engine
 					'HOST' => $main::ENV{'HTTP_HOST'},
 					'REQUEST_URI' => $main::ENV{'REQUEST_URI'},
 					'QUERY_STRING' => $main::ENV{'QUERY_STRING'},
-					'query' => {%main::FORM},
+#					'query' => {%main::FORM},
 					'USER_AGENT' => $main::ENV{'HTTP_USER_AGENT'},
 					'UserAgent' => $main::UserAgent_name,
 					'UserAgent_type' => $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'}
@@ -60,10 +60,7 @@ sub engine_pub
 {
 	my $var=join(". ",@_);$var=~s|[\n\r]| |g;
 	
-	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",1);
-	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4,"$TOM::engine.err");
-	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4,"$TOM::engine.err",2) if ($tom::H ne $tom::Hm);
-	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4,"$TOM::engine.err",1);
+	main::_log("[ENGINE-$TOM::engine][$tom::H] $var",4);
 	
 	my $URI_base=$tom::H_www;my $request_uri=$main::ENV{'REQUEST_URI'};$request_uri=~s|^$tom::rewrite_RewriteBase||;
 	
@@ -162,8 +159,6 @@ sub engine_pub
 				'request_number'=>"$tom::count/$TOM::max_count",
 				'unique_hash'=>$main::request_code,
 				'TypeID'=>$main::FORM{'TID'},
-				'IAdm'=>$main::IAdm,
-				'ITst'=>$main::ITst,
 			},
 		);
 		
@@ -358,9 +353,7 @@ sub engine_cron
 			'Cyclone' => {
 				'hostname'=>"$TOM::hostname",
 				'unique_hash'=>$main::request_code,
-				'TypeID'=>$main::FORM{'TID'},
-				'IAdm'=>$main::IAdm,
-				'ITst'=>$main::ITst,
+				'TypeID'=>$main::FORM{'TID'}
 			},
 		);
 
@@ -384,7 +377,7 @@ sub engine_cron
 sub module
 {
 	# zvysujem mieru logovania ak sa vyskytuje chyba
-	$TOM::DEBUG_log_file++;
+#	$TOM::DEBUG_log_file++;
 	$main::result="failed";
 	
 	if ($TOM::engine eq "pub")
@@ -397,7 +390,7 @@ sub module
 				'HOST' => $main::ENV{'HTTP_HOST'},
 				'REQUEST_URI' => $main::ENV{'REQUEST_URI'},
 				'QUERY_STRING' => $main::ENV{'QUERY_STRING'},
-				'query' => {%main::FORM},
+#				'query' => {%main::FORM},
 				'USER_AGENT' => $main::ENV{'HTTP_USER_AGENT'},
 				'UserAgent' => $main::UserAgent_name,
 				'UserAgent_type' => $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'},
@@ -435,14 +428,14 @@ sub module_pub
 	TOM::Utils::vars::replace($box);
 	
 	$box=~s|<%MODULE%>|$env{-MODULE}|g;
-	$box=~s|<%ERROR%>|$env{-ERROR}| if ($main::IAdm || $tom::debug);
-	$box=~s|<%PLUS%>|$env{-PLUS}| if ($main::IAdm || $tom::debug);
+	$box=~s|<%ERROR%>|$env{-ERROR}| if $tom::devel;
+	$box=~s|<%PLUS%>|$env{-PLUS}| if $tom::devel;
 	$box=~s|<%.*?%>||g;
 	
-	main::_log("$env{-ERROR} $env{-PLUS}",1); #local
-	main::_log("$env{-MODULE} $env{-ERROR} $env{-PLUS}",1,"pub.err",0); #local
-	main::_log("[$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}",4,"pub.err",1); #global
-	main::_log("[$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}",4,"pub.err",2) if ($tom::H ne $tom::Hm); #master
+	main::_log(($env{'-ERROR'} || "unknown error in module")." ".$env{'-PLUS'}." ".$env{'-MODULE'},1);
+#	main::_log("$env{-MODULE} $env{-ERROR} $env{-PLUS}",1,"pub.err",0); #local
+#	main::_log("[$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}",4,"pub.err",1); #global
+#	main::_log("[$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}",4,"pub.err",2) if ($tom::H ne $tom::Hm); #master
 	App::100::SQL::ircbot_msg_new("[ERR][$tom::H]$env{-MODULE} $env{-ERROR} $env{-PLUS}");
 	
 	my $URI_base=$tom::H_www;my $request_uri=$main::ENV{'REQUEST_URI'};$request_uri=~s|^$tom::rewrite_RewriteBase||;
@@ -484,9 +477,7 @@ sub module_pub
 				'referer_URI'=>"$main::ENV{'HTTP_REFERER'}",
 				'request_number'=>"$tom::count/$TOM::max_count",
 				'unique_hash'=>$main::request_code,
-				'TypeID'=>$main::FORM{'TID'},
-				'IAdm'=>$main::IAdm,
-				'ITst'=>$main::ITst,
+				'TypeID'=>$main::FORM{'TID'}
 			},
 		);
 		
@@ -635,8 +626,6 @@ sub module_cron
 				'request_number'=>"$tom::count/$TOM::max_count",
 				'unique_hash'=>$main::request_code,
 				'TypeID'=>$main::FORM{'TID'},
-				'IAdm'=>$main::IAdm,
-				'ITst'=>$main::ITst,
 			},
 		);
 
