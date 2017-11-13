@@ -414,6 +414,8 @@ sub _static_index
 			WebService::Solr::Field->new( 'ID_i' => $db0_line{'ID'} ),
 			WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} ),
 			
+			WebService::Solr::Field->new( 'lng_s' => $db0_line{'lng'} ),
+			
 			WebService::Solr::Field->new( 'status_s' => $db0_line{'status'} ),
 			
 			@content
