@@ -22,7 +22,7 @@ sub execute
 		return undef;
 	}
 	
-#	my $solr = Ext::Solr::service();
+	my $solr = Ext::Solr::service();
 	
 #	my %IDs;
 #	my $response = $solr->search( "+id:".$App::910::db_name.".a910_product.*",{'fl' => "ID_i"});
@@ -45,7 +45,7 @@ sub execute
 	{
 		$i++;
 		main::_log("[$i/$sth0{'rows'}]");
-#		$main::nojobify=1;
+		$main::nojobify=1;
 		
 #		delete $IDs{$db0_line{'ID'}};
 		
@@ -62,7 +62,7 @@ sub execute
 	sleep 10;
 #	main::_log("delete ID's=".keys %IDs);
 	
-#	$solr->commit();
+	$solr->commit();
 	
 	
 return 1}
