@@ -19,10 +19,12 @@ BEGIN {main::_log("<={LIB} ".__PACKAGE__)}
 
 use File::Path;
 use File::Copy;
-use XML::XPath;
-use XML::XPath::XMLParser;
+use XML::LibXML;
 use TOM::L10n;
 use TOM::Template::contenttypes;
+use Ext::Redis::_init;
+use JSON;
+our $json = JSON::XS->new->ascii->convert_blessed;
 
 BEGIN
 {
@@ -52,8 +54,7 @@ BEGIN
 	
 }
 
-our $debug=$main::debug || 0;
-our $TTL=5;
+our $debug=$TOM::Template::debug || 0;
 our %objects;
 
 
@@ -162,7 +163,7 @@ sub new
 			return undef;
 		}
 		# modifytime
-		$obj->{'mfile'}{$obj->{'location'}}=(stat($obj->{'location'}))[9];
+		$obj->{'mfile'}{$obj->{'location'}}=TOM::file_mtime($obj->{'location'});
 	}
 	else
 	{
@@ -176,30 +177,28 @@ sub new
 		}
 	}
 	
-	if (!$objects{$obj->{'location'}} && $TOM::CACHE_memcached && $main::cache)
+	if (!$objects{$obj->{'location'}} && $Redis && $main::cache)
 	{
-		# try memcached
-		$objects{$obj->{'location'}} = 
-			$Ext::CacheMemcache::cache->get(
-				'namespace' => "tplcache",
-				'key' => $TOM::P_uuid.':'.$obj->{'location'}
-			);
+		$objects{$obj->{'location'}} = $Redis->get('C3|tpl|'.$TOM::P_uuid.':'.$obj->{'location'});
+		Ext::Redis::_uncompress(\$objects{$obj->{'location'}});
+		$objects{$obj->{'location'}}=$json->decode($objects{$obj->{'location'}})
+			if $objects{$obj->{'location'}};
+		delete $objects{$obj->{'location'}} if ref($objects{$obj->{'location'}}) eq "SCALAR";
 	}
 	
-	if ($objects{$obj->{'location'}} && $objects{$obj->{'location'}}->{'config'}{'ctime'} < (time()-$TTL))
+	if ($objects{$obj->{'location'}})
 	{
 		# time to check changes
 		$objects{$obj->{'location'}}->{'config'}{'ctime'} = time();
 		my $object_modified=0;
 		foreach (keys %{$objects{$obj->{'location'}}->{'mfile'}})
 		{
-			if ($objects{$obj->{'location'}}->{'mfile'}{$_} < (stat($_))[9])
+			if (TOM::file_mtime($_) > $objects{$obj->{'location'}}->{'mfile'}{$_})
 			{
 				main::_log("{Template} '$obj->{'location'}' expired, file '$_' modified");
 				$object_modified=1;
 				last;
 			}
-#			main::_log(" file=$_");
 		}
 		if ($object_modified)
 		{
@@ -227,7 +226,7 @@ sub new
 		$obj->{'config'}->{'ctime'} = time();
 		# save modifytime of xml definition file_
 		# will be override posibly with higher times in tpl dependencies or files (by parse_header)
-		$obj->{'config'}->{'mtime'} = (stat($obj->{'location'}))[9];
+		$obj->{'config'}->{'mtime'} = TOM::file_mtime($obj->{'location'});
 		$obj->parse_header();
 		# save config from header to object memory cache
 		%{$objects{$obj->{'location'}}->{'config'}}=%{$obj->{'config'}};
@@ -254,12 +253,11 @@ sub new
 			});
 		}
 		
-		if ($TOM::CACHE_memcached)
+		if ($Redis)
 		{
-			$Ext::CacheMemcache::cache->set(
-				'namespace' => "tplcache",
-				'key' => $TOM::P_uuid.':'.$obj->{'location'},
-				'value' => {
+			my $key = 'C3|tpl|'.$TOM::P_uuid.':'.$obj->{'location'};
+			$Redis->set($key,
+				Ext::Redis::_compress(\$json->encode({
 					'ENV' => $obj->{'ENV'},
 					'config' => $obj->{'config'},
 					'mfile' => $obj->{'mfile'},
@@ -268,10 +266,12 @@ sub new
 					'L10n' => $obj->{'L10n'},
 					'file' => $obj->{'file'},
 					'file_' => $obj->{'file_'},
-					'location' => $obj->{'location'}
-				},
-				'expiration' => '86400S'
+					'location' => $obj->{'location'},
+					'engine' => $TOM::engine,
+					'request_code' => $main::request_code,
+				})),sub {} # in pipeline
 			);
+			$Redis->expire($key,86400,sub {}); # set expiration time in pipeline
 		}
 		
 	}
@@ -307,13 +307,14 @@ sub new
 			}
 			# recovery header config to new object
 			%{$obj_return->{'config'}}=%{$objects{$obj->{'location'}}{'config'}};
+			$obj_return->{'config'}->{'tt'}||=$env{'tt'};
 			# get tt reference from objects cache
 			if ($obj_return->{'config'}->{'tt'})
 			{
-				# in config is tt enabled, but object is missing (when loaded from memcached)
+				# in config is tt enabled, but object is missing (when loaded from cache)
 				if (!$objects{$obj->{'location'}}{'tt'}) # extend by Template Toolkit
 				{
-					# in object cache is missing tt reference, because is loaded from memcached
+					# in object cache is missing tt reference, because is loaded from cache
 					main::_log("creating new Template::Toolkit object") if $debug;
 					$objects{$obj->{'location'}}{'tt'} = Template->new({
 						'INCLUDE_PATH' => [$tom::P.'/_dsgn',$tom::Pm.'/_dsgn'],
@@ -324,6 +325,7 @@ sub new
 				$obj_return->{'tt'}=$objects{$obj->{'location'}}{'tt'};
 			}
 		}
+		$obj_return->{'config'}->{'tt'}||=$env{'tt'};
 		if ($obj_return->{'config'}->{'tt'}) # extend by Template Toolkit
 		{
 			# regenerate reference
@@ -412,7 +414,7 @@ sub prepare_location
 		$self->{'dir'}=~s/\/_init.xml$//;
 	}
 	
-	$self->{'mfile'}{$self->{'location'}}=(stat($self->{'location'}))[9];
+	$self->{'mfile'}{$self->{'location'}}=TOM::file_mtime($self->{'location'});
 	
 	return $self->{'location'};
 }
@@ -423,7 +425,7 @@ sub prepare_xml
 {
 	my $self=shift;
 	
-	$self->{'xp'} = XML::XPath->new(filename => $self->{'location'});
+	$self->{'xp'} = 'XML::LibXML'->load_xml(location => $self->{'location'});
 }
 
 sub _directory_tree
@@ -453,9 +455,7 @@ sub parse_header
 {
 	my $self=shift;
 	
-	my $nodeset = $self->{'xp'}->find('/template/header/*'); # find all items
-	
-	foreach my $node ($nodeset->get_nodelist)
+	foreach my $node ($self->{'xp'}->findnodes('/template/header/*'))
 	{
 		my $name=$node->getName();
 		#main::_log("node '$name'");
@@ -549,10 +549,7 @@ sub parse_header
 	if ($self->{'dir'} && $tom::P_media) # extract only in domain service with defined P_media
 	{
 		# proceed extracting files only when tpl is a tpl.d/ type
-		
-		my $nodeset = $self->{'xp'}->find('/template/header/extract/*'); # find all extract items
-		
-		foreach my $node ($nodeset->get_nodelist)
+		foreach my $node ($self->{'xp'}->findnodes('/template/header/extract/*'))
 		{
 			my $name=$node->getName();
 			
@@ -590,7 +587,7 @@ sub parse_header
 					my $dst=$destination_dir.'/'.$destination_file;
 					
 					# added to mfile
-					$self->{'mfile'}{$src}=(stat($src))[9];
+					$self->{'mfile'}{$src}=TOM::file_mtime($src);
 					
 					# if modifytime of file is higher than definition file modifytime
 					if ($self->{'config'}->{'mtime'} < $self->{'mfile'}{$src})
@@ -658,7 +655,7 @@ sub parse_header
 				}
 				
 				# added to mfile
-				$self->{'mfile'}{$self->{'dir'}.'/'.$location}=(stat($self->{'dir'}.'/'.$location))[9];
+				$self->{'mfile'}{$self->{'dir'}.'/'.$location}=TOM::file_mtime($self->{'dir'}.'/'.$location);
 				
 				# if modifytime of file is higher than definition file modifytime
 				if ($self->{'config'}->{'mtime'} < $self->{'mfile'}{$self->{'dir'}.'/'.$location})
@@ -722,11 +719,8 @@ sub parse_entity
 {
 	my $self=shift;
 	
-	my $nodeset = $self->{'xp'}->find('/template/entity'); # find all entries
-	
 	my @ents;
-	
-	foreach my $node ($nodeset->get_nodelist)
+	foreach my $node ($self->{'xp'}->findnodes('/template/entity'))
 	{
 		my $name=$node->getName();
 		my $id=$node->getAttribute('id');
@@ -997,6 +991,7 @@ sub process
 			'url_a501' => $tom::H_a501,
 			'url_a510' => $tom::H_a510,
 			'lng' => $tom::LNG, # default lng
+			'lang' => $tom::LANG, # default lang
 			'setup' => \%tom::setup
 		};
 		# request params

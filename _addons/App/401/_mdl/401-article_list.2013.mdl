@@ -26,7 +26,7 @@ sub execute
 	$env{'datetime_mode'}="present" unless $env{'datetime_mode'};
 	
 	$env{'default.page_limit'} = 10 unless $env{'default.page_limit'};
-
+	
 	# paging
 	$env{'page_limit'} = $env{'default.page_limit'} unless $env{'page_limit'};
 	$env{'page'} = 1 unless $env{'page'}=~/^[0-9]*?$/;$env{'page'} = 1 if $env{'page'} < 1;
@@ -42,6 +42,7 @@ sub execute
 #		$env{'sql_limit'}=~/^(\d+),?(\d+)?$/;
 	}
 	
+	$env{'world_status'}='Y' unless $env{'world_status'};
 	
 	my @sql_bind;
 	my $sql_where;
@@ -65,6 +66,7 @@ sub execute
 		$sql_column.=",$sql_visits AS order_by_visits ";
 	}
 	
+	delete $env{'unique'};
 	if ($env{'unique'})
 	{
 		$sql_group_by="article_ent.ID_entity";
@@ -225,7 +227,7 @@ sub execute
 		my $results = $Elastic->search(
 			'index' => 'cyclone3.'.$App::401::db_name,
 			'type' => 'a401_article',
-			'fields' => ["_id","name","abstract","cat.ID","cat.charindex"],
+			#'fields' => ["_id","name","abstract","cat.ID","cat.charindex"],
 			'from' => (($env{'elastic.page'}-1)*$env{'elastic.size'}),
 			'size' => $env{'elastic.size'},
 			'body'  => {
@@ -347,7 +349,7 @@ sub execute
 	if ($env{'article.ID_entity'}=~/^[;0-9]+$/)
 	{
 		$sql_where.=" AND article.ID_entity IN (".join(',',split(';',$env{'article.ID_entity'})).")";
-		$sql_limit=scalar split(';',$env{'article.ID_entity'});
+		$sql_limit=scalar split(';',$env{'article.ID_entity'}) unless $env{'sql_limit_force'};
 		if ($env{'solr'} || $env{'elastic'})
 		{
 			$sql_group_by="article.ID_entity";
@@ -360,6 +362,12 @@ sub execute
 			}
 			$sql_order_by.="\t\t\tEND";
 		}
+	}
+	
+	if ($env{'world_status'} eq 'Y')
+	{
+		$sql_where.=" AND (ACL_world.perm_R='Y' OR ACL_world.perm_R IS NULL) ";
+		$sql_where.=" AND (ACL_world_cat.perm_R='Y' OR ACL_world_cat.perm_R IS NULL) ";
 	}
 	
 	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
@@ -467,9 +475,16 @@ sub execute
 		LEFT JOIN `$App::401::db_name`.a301_ACL_user_group AS ACL_world ON
 		(
 			ACL_world.ID_entity = 0 AND
-			r_prefix = 'a401' AND
-			r_table = 'article' AND
-			r_ID_entity = article.ID_entity
+			ACL_world.r_prefix = 'a401' AND
+			ACL_world.r_table = 'article' AND
+			ACL_world.r_ID_entity = article.ID_entity
+		)
+		LEFT JOIN $App::401::db_name.a301_ACL_user_group AS ACL_world_cat ON
+		(
+			ACL_world_cat.ID_entity = 0 AND
+			ACL_world_cat.r_prefix = 'a401' AND
+			ACL_world_cat.r_table = 'article_cat' AND
+			ACL_world_cat.r_ID_entity = article_cat.ID_entity
 		)
 		$sql_join
 		WHERE
@@ -499,11 +514,13 @@ sub execute
 	
 	$TPL->{'variables'}->{'rows'}=$sth0{'rows'};
 	
+	my $sql_rows=($sql_limit=~/(\d+)$/)[0];
+	main::_log("datetime_interval=".$env{'datetime_interval'}." datetime_interval_retry=".$env{'datetime_interval_retry'}." row=".$sth0{'rows'}." sql_rows=".$sql_rows);
 	if ($env{'datetime_interval_retry'}
 		&& (!$sth0{'rows'} || 
 			(
-				$sql_limit=~/^\d+$/
-				&& ($sth0{'rows'} < $sql_limit)
+				$sql_limit=~/\d+$/
+				&& ($sth0{'rows'} < $sql_rows)
 			)
 		)
 	)
@@ -597,9 +614,16 @@ sub execute
 			LEFT JOIN `$App::401::db_name`.a301_ACL_user_group AS ACL_world ON
 			(
 				ACL_world.ID_entity = 0 AND
-				r_prefix = 'a401' AND
-				r_table = 'article' AND
-				r_ID_entity = article.ID_entity
+				ACL_world.r_prefix = 'a401' AND
+				ACL_world.r_table = 'article' AND
+				ACL_world.r_ID_entity = article.ID_entity
+			)
+			LEFT JOIN $App::401::db_name.a301_ACL_user_group AS ACL_world_cat ON
+			(
+				ACL_world_cat.ID_entity = 0 AND
+				ACL_world_cat.r_prefix = 'a401' AND
+				ACL_world_cat.r_table = 'article_cat' AND
+				ACL_world_cat.r_ID_entity = article_cat.ID_entity
 			)
 			$sql_join
 			WHERE

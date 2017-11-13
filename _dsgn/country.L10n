@@ -96,6 +96,7 @@
 		<hr-HR>Austrija</hr-HR>
 		<bg-BG>Австрия</bg-BG>
 		<nl-NL>Oostenrijk</nl-NL>
+		<it-IT>Austria</it-IT>
 	</string>
 
 	<string id="country.AU">
@@ -156,6 +157,7 @@
 		<hr-HR>Belgija</hr-HR>
 		<bg-BG>Белгия</bg-BG>
 		<nl-NL>België</nl-NL>
+		<it-IT>Belgio</it-IT>
 	</string>
 
 	<string id="country.BF">
@@ -180,6 +182,7 @@
 		<hr-HR>Bugarska</hr-HR>
 		<bg-BG>България</bg-BG>
 		<nl-NL>Bulgarije</nl-NL>
+		<it-IT>Bulgaria</it-IT>
 	</string>
 
 	<string id="country.BH">
@@ -378,6 +381,7 @@
 		<hr-HR>Kipar</hr-HR>
 		<bg-BG>Кипър</bg-BG>
 		<nl-NL>Cyprus</nl-NL>
+		<it-IT>Cipro</it-IT>
 	</string>
 
 	<string id="country.CZ">
@@ -396,6 +400,7 @@
 		<hr-HR>Češka Republika</hr-HR>
 		<bg-BG>Чехия</bg-BG>
 		<nl-NL>Tsjechische Republiek</nl-NL>
+		<it-IT>Republica Ceca</it-IT>
 	</string>
 
 	<string id="country.DE">
@@ -414,6 +419,7 @@
 		<hr-HR>Njemačka</hr-HR>
 		<bg-BG>Германия</bg-BG>
 		<nl-NL>Duitsland</nl-NL>
+		<it-IT>Germania</it-IT>
 	</string>
 
 	<string id="country.DJ">
@@ -438,6 +444,7 @@
 		<hr-HR>Danska</hr-HR>
 		<bg-BG>Дания</bg-BG>
 		<nl-NL>Denemarken</nl-NL>
+		<it-IT>Danimarka</it-IT>
 	</string>
 
 	<string id="country.DM">
@@ -480,6 +487,7 @@
 		<hr-HR>Estonija</hr-HR>
 		<bg-BG>Естония</bg-BG>
 		<nl-NL>Estland</nl-NL>
+		<it-IT>Estonia</it-IT>
 	</string>
 
 	<string id="country.EG">
@@ -516,6 +524,7 @@
 		<hr-HR>Španija</hr-HR>
 		<bg-BG>Испания</bg-BG>
 		<nl-NL>Spanje</nl-NL>
+		<it-IT>Spagna</it-IT>
 	</string>
 
 	<string id="country.ET">
@@ -540,6 +549,7 @@
 		<hr-HR>Finska</hr-HR>
 		<bg-BG>Финландия</bg-BG>
 		<nl-NL>Finland</nl-NL>
+		<it-IT>Finland</it-IT>
 	</string>
 	
 	<string id="country.FJ">
@@ -582,6 +592,7 @@
 		<hr-HR>Francuska</hr-HR>
 		<bg-BG>Франция</bg-BG>
 		<nl-NL>Frankrijk</nl-NL>
+		<it-IT>Francia</it-IT>
 	</string>
 
 	<string id="country.GA">
@@ -606,6 +617,7 @@
 		<hr-HR>Ujedinjeno Kraljevstvo</hr-HR>
 		<bg-BG>Великобритания</bg-BG>
 		<nl-NL>Verenigd Koningkrijk</nl-NL>
+		<it-IT>Gran Bretagna</it-IT>
 	</string>
 
 	<string id="country.GD">
@@ -686,6 +698,7 @@
 		<hr-HR>Grčka</hr-HR>
 		<bg-BG>Гърция</bg-BG>
 		<nl-NL>Griekenland</nl-NL>
+		<it-IT>Grecia</it-IT>
 	</string>
 
 	<string id="country.GS">
@@ -776,6 +789,7 @@
 		<hr-HR>Mađarska</hr-HR>
 		<bg-BG>Унгария</bg-BG>
 		<nl-NL>Hongarije</nl-NL>
+		<it-IT>Ungheria</it-IT>
 	</string>
 
 	<string id="country.ID">
@@ -800,6 +814,7 @@
 		<hr-HR>Irska</hr-HR>
 		<bg-BG>Ирландия</bg-BG>
 		<nl-NL>Ierland</nl-NL>
+		<it-IT>Irlanda</it-IT>
 	</string>
 
 	<string id="country.IL">
@@ -856,6 +871,7 @@
 		<hr-HR>Italija</hr-HR>
 		<bg-BG>Италия</bg-BG>
 		<nl-NL>Italië</nl-NL>
+		<it-IT>Italia</it-IT>
 	</string>
 
 	<string id="country.JM">
@@ -1000,6 +1016,7 @@
 		<hr-HR>Litvanija</hr-HR>
 		<bg-BG>Литва</bg-BG>
 		<nl-NL>Litouwen</nl-NL>
+		<it-IT>Lituania</it-IT>
 	</string>
 
 	<string id="country.LU">
@@ -1018,6 +1035,7 @@
 		<hr-HR>Luksemburg</hr-HR>
 		<bg-BG>Люксембург</bg-BG>
 		<nl-NL>Luxemburg</nl-NL>
+		<it-IT>Lussemburgo</it-IT>
 	</string>
 
 	<string id="country.LV">
@@ -1036,6 +1054,7 @@
 		<hr-HR>Letonija</hr-HR>
 		<bg-BG>Латвия</bg-BG>
 		<nl-NL>Letland</nl-NL>
+		<it-IT>Lettonia</it-IT>
 	</string>
 
 	<string id="country.LY">
@@ -1144,6 +1163,7 @@
 		<hr-HR>Malta</hr-HR>
 		<bg-BG>Малта</bg-BG>
 		<nl-NL>Malta</nl-NL>
+		<it-IT>Malta</it-IT>
 	</string>
 
 	<string id="country.MU">
@@ -1234,6 +1254,7 @@
 		<hr-HR>Nizozemska</hr-HR>
 		<bg-BG>Холандия</bg-BG>
 		<nl-NL>Nederland</nl-NL>
+		<it-IT>Olanda</it-IT>
 	</string>
 
 	<string id="country.NO">
@@ -1324,6 +1345,7 @@
 		<hr-HR>Poljska</hr-HR>
 		<bg-BG>Полша</bg-BG>
 		<nl-NL>Polen</nl-NL>
+		<it-IT>Polonia</it-IT>
 	</string>
 
 	<string id="country.PM">
@@ -1366,6 +1388,7 @@
 		<hr-HR>Portugal</hr-HR>
 		<bg-BG>Португалия</bg-BG>
 		<nl-NL>Portugal</nl-NL>
+		<it-IT>Portogallo</it-IT>
 	</string>
 
 	<string id="country.PW">
@@ -1408,6 +1431,7 @@
 		<hr-HR>Rumunija</hr-HR>
 		<bg-BG>Румъния</bg-BG>
 		<nl-NL>Roemenië</nl-NL>
+		<it-IT>Romania</it-IT>
 	</string>
 
 	<string id="country.RS">
@@ -1468,6 +1492,7 @@
 		<hr-HR>Švedska</hr-HR>
 		<bg-BG>Швеция</bg-BG>
 		<nl-NL>Zweden</nl-NL>
+		<it-IT>Svezia</it-IT>
 	</string>
 
 	<string id="country.SG">
@@ -1498,6 +1523,7 @@
 		<hr-HR>Slovenija</hr-HR>
 		<bg-BG>Словения</bg-BG>
 		<nl-NL>Slovenië</nl-NL>
+		<it-IT>Slovenia</it-IT>
 	</string>
 
 	<string id="country.SJ">
@@ -1522,6 +1548,7 @@
 		<hr-HR>Slovačka</hr-HR>
 		<bg-BG>Словакия</bg-BG>
 		<nl-NL>Slowakije</nl-NL>
+		<it-IT>Slovacchia</it-IT>
 	</string>
 
 	<string id="country.SL">

@@ -8,37 +8,44 @@ use strict;
 
 use Utils::datetime;
 use JSON;
-use App::210::_init;
-
+use Data::Dumper;
 
 sub execute
 {
 	my $self=shift;
 	my $env=$self->env;
+	return if $self->running({'max'=>600}); # check if not already running
 	
 	if (!$tom::H)
 	{
-		main::_log("only running under domain",1);
+		main::_log("only running under domain", 1);
 		return undef;
 	}
 	
-	# reindex
-	my $i;
+	require App::210::_init;
+	
 	my %sth0=TOM::Database::SQL::execute(qq{
 		SELECT
-			*
+			`ID`
 		FROM
-			a210_page
---		LIMIT 10
-	});
+			`$App::210::db_name`.`a210_page`
+--		LIMIT
+--			1
+	}, 'quiet' => 1);
+	
+	my $i;
 	while (my %db0_line=$sth0{'sth'}->fetchhash())
 	{
 		$i++;
-		main::_log("[$i/$sth0{'rows'}]");
-		$main::nojobify=1;
-		
-		App::210::SQL::_page_index('ID'=>$db0_line{'ID'},'-jobify' => 1);
+		main::_log("[$i/$sth0{'rows'}] index page ID=$db0_line{'ID'}");
+		#$main::nojobify=1;
+		App::210::SQL::_page_index(
+			'ID'			=> $db0_line{'ID'},
+			'-jobify'	=> 1
+		);
 	}
 	
-return 1}
+	return 1;
+}
+
 1;

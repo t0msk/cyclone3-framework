@@ -42,7 +42,7 @@ use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 our $debug=0;
 our $quiet;$quiet=1 unless $debug;
 our $CACHE=1;
-our $cache_expire = 300; # 5 minutes - better is less time, when anything is cached wrong
+our $cache_expire = 86400; # 5 minutes - better is less time, when anything is cached wrong
 
 =head1 FUNCTIONS
 

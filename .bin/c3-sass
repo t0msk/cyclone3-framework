@@ -109,7 +109,7 @@ $TOM::engine_ready=1;
 
 print color 'reset';
 
-if (!keys %main::arg)
+if (!keys %main::arg || exists $main::arg{'help'})
 {
 	print  qq{Cyclone3 SASS processor
 Usage: c3-sass [options]
@@ -123,6 +123,9 @@ Basic options:
 
 
 require CSS::Sass;
+use File::Which qw(where);
+
+my $yui=(where('yui-compressor'))[0];
 
 if ($main::arg{'c'})
 {
@@ -138,9 +141,15 @@ if ($main::arg{'c'})
 		$sass->options->{'source_map_file'} = $tom::P.'/_dsgn/'.$shortfile.'.css.map';
 		my ($css, $err, $stats) = $sass->compile_file($file);
 		
+#		use CSS::Minifier qw(minify);
+#		my $css = minify(input => $css);
+		
 		open(HND,'>'.$tom::P.'/!media/css/'.$shortfile.'.css');
 		print HND $css;
 		close(HND);
+		
+		system($yui." ".$tom::P.'/!media/css/'.$shortfile.'.css > '.$tom::P.'/!media/css/'.$shortfile.'.min.css')
+			if $yui;
 		
 		open(HND,'>'.$tom::P.'/!media/css/'.$shortfile.'.css.map');
 		print HND $err->{'source_map_string'};

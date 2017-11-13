@@ -53,6 +53,10 @@ sub clone
 	%{$self->{ENV}}=%{$class->{ENV}};
 	%{$self->{env}}=%{$class->{env}};
 	%{$self->{OUT}}=%{$class->{OUT}};
+	
+	# reset. using default description is now obsolete
+	$self->{'env'}{'DOC_description'}={};
+	
 	return bless $self;
 }
 
@@ -95,9 +99,11 @@ sub change_DOC_description
 	my $self=shift;
 	my $text=shift;
 	my %env=@_;
-	$env{lng}="null" unless $env{lng};
-	main::_log("change_DOC_description='$text'");
-	$self->{env}{DOC_description}{$env{lng}}=$text;
+	$env{'lng'}="null" unless $env{'lng'};
+	main::_log("change_DOC_description='$text' lng=$env{'lng'}");
+	if ($env{'lng'} eq "null"){undef $self->{'env'}{'DOC_description'};}
+	else {undef $self->{'env'}{'DOC_description'}{'null'};}
+	$self->{'env'}{'DOC_description'}{$env{'lng'}}=$text;
 	return 1;
 }
 
@@ -106,9 +112,11 @@ sub add_DOC_description
 	my $self=shift;
 	my $text=shift;
 	my %env=@_;
-	$env{lng}="null" unless $env{lng};
+	$env{'lng'}="null" unless $env{'lng'};
 	main::_log("add_DOC_description='$text'");
-	$self->{env}{DOC_description}{$env{lng}}.=$text;
+	if ($env{'lng'} eq "null"){undef $self->{'env'}{'DOC_description'};}
+	else {undef $self->{'env'}{'DOC_description'}{'null'};}
+	$self->{'env'}{'DOC_description'}{$env{'lng'}}.=$text;
 	return 1;
 }
 
@@ -171,7 +179,7 @@ sub prepare
 	$self->{'OUT'}{'HEADER'} .= $self->{'ENV'}{'DOCTYPE'}."\n";
 	
 	$self->{'OUT'}{'HEADER'} .=
-		'<html>'."\n";
+		'<html lang="<%HEADER-LANG%>">'."\n";
 	
 	$self->{'OUT'}{'HEADER'} .= qq{<!--
 $TOM::Document::base::copyright
@@ -209,13 +217,13 @@ $TOM::Document::base::copyright
 	delete $self->{'ENV'}{'head'}{'meta'}{'Keywords'};
 	delete $self->{'ENV'}{'head'}{'meta'}{'keywords'};
 	
-	$self->{'env'}{'DOC_description'}=$self->{'ENV'}{'head'}{'meta'}{'description'};
+	$self->{'env'}{'DOC_description'}{$tom::lng}=$self->{'ENV'}{'head'}{'meta'}{'description'};
 	delete $self->{'ENV'}{'head'}{'meta'}{'description'};
 	
 	
 	# META
 	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\" />\n";
-	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-language\" content=\"<%HEADER-LNG%>\" />\n";
+#	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-language\" content=\"<%HEADER-LNG%>\" />\n";
 	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"content-type\" content=\"text/html; charset=<%CODEPAGE%>\" />\n"
 	unless $self->{'ENV'}{'head'}{'meta'}{'content-type'};
 #	$self->{'OUT'}{'HEADER'} .= " <meta http-equiv=\"Accept-CH\" content=\"DPR, Width, Viewport-Width\" />\n"
@@ -295,7 +303,7 @@ $TOM::Document::base::copyright
 	
 	# FOOTER
 	
-	$self->{'OUT'}{'FOOTER'} = "\n\n</body>\n</html>\n";
+	$self->{'OUT'}{'FOOTER'} = "\n</body>\n</html>\n";
 	
  return 1;
 }
@@ -312,13 +320,16 @@ sub prepare_last
 	$self->{'env'}{'DOC_title'}=~s|<.*?>||g;
 	$self->{'env'}{'DOC_title'}=~s|<|&lt;|g;
 	$self->{'env'}{'DOC_title'}=~s|>|&gt;|g;
+	$self->{'env'}{'DOC_title'}=~s|\&(?!amp;)|&amp;|g;
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-TITLE%>|$self->{env}{DOC_title}|;
 	$self->{'OUT'}{'HEADER'}=~s/<%HEADER-AB%>/$main::USRM{'session'}{'AB'} || '0'/eg; # the A/B testing
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-ROBOTS%>|$self->{env}{DOC_robots}|;
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-LNG%>|$tom::lng|g;
+	$self->{'OUT'}{'HEADER'}=~s/<%HEADER-LANG%>/$tom::lang||$tom::lng/ge;
 	$self->{'OUT'}{'HEADER'}=~s|<%HEADER-cache-control%>|$main::ENV{'Cache-Control'}|g;
 	$self->{'OUT'}{'HEADER'}=~s|<%PAGE-CODE%>|$main::request_code|;
- 
+	$self->{'OUT'}{'HEADER'}=~s|<%USER%>|$main::USRM{'ID_user'}|g;
+	
 	if ($self->{env}{DOC_keywords})
 	{
 		my %keywords;
@@ -338,6 +349,7 @@ sub prepare_last
 		}
 		
 		$self->{env}{DOC_keywords}=~s|^, ||;
+		$self->{env}{DOC_keywords}=~s|\&(?!amp;)|&amp;|g;
 		
 		$self->{'OUT'}{'HEADER'}.=" <meta name=\"keywords\" content=\"$self->{env}{DOC_keywords}\" />\n";
 	}
@@ -356,6 +368,8 @@ sub prepare_last
 			$self->{'env'}{'DOC_description'}{$key}=~/^(.{250})/;
 			$self->{'env'}{'DOC_description'}{$key}=$1;
 		}
+		
+		$self->{'env'}{'DOC_description'}{$key}=~s|\&(?!amp;)|&amp;|g;
 		
 		next unless $self->{'env'}{'DOC_description'}{$key};
 		

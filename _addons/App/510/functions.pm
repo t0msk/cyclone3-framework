@@ -558,7 +558,15 @@ sub video_part_smil_generate
 				)
 			)
 		ORDER BY
-			ID_format
+			CASE 
+				WHEN ID_format=1 THEN 3
+				WHEN ID_format=2 THEN 1
+				WHEN ID_format=3 THEN 4
+				WHEN ID_format=4 THEN 5
+				WHEN ID_format=5 THEN 6
+				WHEN ID_format=6 THEN 2
+			END ASC
+			
 	},'bind'=>[$env{'video_part.ID'}],'quiet'=>1);
 	
 	main::_log("found $sth1{'rows'} playable items");
@@ -611,7 +619,7 @@ sub video_part_smil_generate
 					my $video_part_file=$video_->{'dir'}.'/'.$video_->{'file_path'};
 					$video_part_file=~s|^$dir_name/||;
 					
-					main::_log("video_part_file='$video_part_file'");
+					main::_log("video_part_file='$video_part_file' $db1_line{'video_height'}/$db1_line{'video_bitrate'}");
 					
 					push @video, $xml->video({
 						'src' => $video_part_file,
@@ -1130,11 +1138,28 @@ sub video_part_brick_change
 			
 			if ($brick_dst_class->can('upload'))
 			{
-				# download to upload
-				main::_log("sorry, i don't know how to do this",1);
+				# download to upload over tempfile
+				my $temp=new TOM::Temp::file();
 				
-				$t->close();
-				return undef;
+				main::_log(" download file [$i]");
+				$brick_src_class->download(
+					$src_file,
+					$temp->{'filename'}
+				) || do {
+					main::_log("error $!",1);
+					$t->close();
+					return undef;
+				};
+				
+				main::_log(" upload file [$i]");
+				$brick_dst_class->upload(
+					$temp->{'filename'},
+					$dst_file
+				) || do {
+					main::_log("error $!",1);
+					$t->close();
+					return undef;
+				};
 				
 			}
 			else
@@ -1549,6 +1574,8 @@ sub video_part_file_process
 				if ($env{'coder'}){push @encoder_env, '-coder '.$env{'coder'};}
 				if ($env{'me_range'}){push @encoder_env, '-me_range '.$env{'me_range'};}
 				if ($env{'q'}){push @encoder_env, '-q '.$env{'q'};}
+				if ($env{'qp'}){push @encoder_env, '-qp '.$env{'qp'};}
+				if ($env{'crf'}){push @encoder_env, '-crf '.$env{'crf'};}
 				if ($env{'g'}){push @encoder_env, '-g '.$env{'g'};}
 				if ($env{'strict'}){push @encoder_env, '-strict '.$env{'strict'};}
 				if ($env{'keyint_min'}){push @encoder_env, '-keyint_min '.$env{'keyint_min'};}
@@ -2568,6 +2595,8 @@ sub video_add
 			if (exists $env{'video_ent.status_encryption'} && ($env{'video_ent.status_encryption'} ne $video_ent{'status_encryption'}));
 		$columns{'status_geoblock'}="'".TOM::Security::form::sql_escape($env{'video_ent.status_geoblock'})."'"
 			if (exists $env{'video_ent.status_geoblock'} && ($env{'video_ent.status_geoblock'} ne $video_ent{'status_geoblock'}));
+		$columns{'status_embedblock'}="'".TOM::Security::form::sql_escape($env{'video_ent.status_embedblock'})."'"
+			if (exists $env{'video_ent.status_embedblock'} && ($env{'video_ent.status_embedblock'} ne $video_ent{'status_embedblock'}));
 		
 		if ((not exists $env{'video_ent.metadata'}) && (!$video_ent{'metadata'})){$env{'video_ent.metadata'}=$App::510::metadata_default;}
 		$columns{'metadata'}="'".TOM::Security::form::sql_escape($env{'video_ent.metadata'})."'"
@@ -3327,8 +3356,8 @@ sub video_part_file_add
 	
 	if (
 			(
-				$env{'video_format.ID'} eq "1" ||
-				$env{'video_format.ID'} eq $App::510::video_format_full_ID
+				$env{'video_format.ID'} eq "1"
+#				|| $env{'video_format.ID'} eq $App::510::video_format_full_ID
 			)
 			||($env{'file_thumbnail'})
 		)
@@ -3920,15 +3949,15 @@ sub _video_part_file_previews
 	{
 		if ($env{'length'} >= 7200)
 		{
-			$env{'interval'}=60;
+			$env{'interval'}=300;
 		}
 		elsif ($env{'length'} >= 3600)
 		{
-			$env{'interval'}=30;
+			$env{'interval'}=120;
 		}
 		elsif ($env{'length'} >= 1200)
 		{
-			$env{'interval'}=10;
+			$env{'interval'}=30;
 		}
 		else
 		{
@@ -4194,9 +4223,10 @@ sub get_video_part_file
 			
 			video_ent.keywords,
 			video_ent.status_geoblock,
+			video_ent.status_embedblock,
 			
 			LEFT(video.datetime_rec_start, 16) AS datetime_rec_start,
-			LEFT(video_attrs.datetime_create, 16) AS datetime_create,
+			LEFT(video_part_file.datetime_create, 16) AS datetime_create,
 			LEFT(video.datetime_rec_start,10) AS date_recorded,
 			LEFT(video_ent.datetime_rec_stop, 16) AS datetime_rec_stop,
 			
@@ -4411,6 +4441,7 @@ sub get_video_part_file_process_front
 			video_part_file.ID AS ID_file,
 			video_part_file.datetime_create AS file_datetime_create,
 			video_part_file.status AS file_status,
+			video_part_file_p.file_size AS file_size_p,
 			video_part_file_process.status AS process,
 			video_part.ID_brick,
 			video_brick.dontprocess AS brick_dontprocess
@@ -4437,7 +4468,7 @@ sub get_video_part_file_process_front
 		(
 			video_part.ID = video_part_file.ID_entity AND
 			video_part_file.ID_format = video_format.ID_entity AND
-			video_part_file.status IN ('Y','N','E','W')
+			video_part_file.status IN ('Y','N','E','W','X')
 		)
 		LEFT JOIN `$App::510::db_name`.a510_video_part_file_process AS video_part_file_process ON
 		(
@@ -4538,7 +4569,8 @@ sub get_video_part_file_process_front
 					/* or parent file has been changed */
 					video_format.name != 'original' AND
 					video_part_file.ID IS NOT NULL AND
-					video_part_file.datetime_create < video_part_file_p.datetime_create
+					video_part_file.datetime_create < video_part_file_p.datetime_create AND
+					video_part_file.status NOT IN ('X')
 				)
 				OR
 				(
@@ -5256,6 +5288,7 @@ sub broadcast_program_add
 			'status_premiere',
 			'status_internet',
 			'status_geoblock',
+			'status_embedblock',
 			'status_highlight',
 			'recording',
 			'datetime_real_start',

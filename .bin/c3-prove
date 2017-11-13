@@ -1,0 +1,146 @@
+#!/usr/bin/perl
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use Data::Dumper;
+use Term::ANSIColor;
+
+BEGIN
+{
+	$TOM::engine='prove';
+	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
+	$main::stdout=0 unless $ENV{'CYCLONE3DEBUG'};
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM"; # obsolete
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+}
+END {use Inline;$SIG{__WARN__} = sub {};}
+
+our $argv=join " ",@ARGV;
+
+our $test_file;
+if ($ARGV[0] && not($ARGV[0]=~/^\-/)) # direct link to test file
+{
+	$test_file=$ARGV[0];
+	delete $ARGV[0];
+	$main::stdout=0 unless $ENV{'CYCLONE3DEBUG'};
+}
+
+our %arg;
+foreach my $key(@ARGV)
+{
+	$key=~s/^\-\-// && do
+	{
+		my @ref=split('=',$key,2);
+		$ref[1]=1 unless exists $ref[1];
+		$main::arg{$ref[0]}=$ref[1];
+		next;
+	};
+	$key=~s/^\-// && do
+	{
+		foreach (split('',$key)){$main::arg{$_}++;}
+	};
+}
+
+if ($main::arg{'domain'})
+{
+	$main::arg{'domain'}=~s|^www\.||i;
+	$main::h=$main::arg{'domain'};$main::h=~s|\.|_|g;$main::h=~s|/|__|g;
+	
+	my $path=$main::arg{'domain'};$path=~s|^(.[^/]*)(.*)||;
+	my $path_dom=$1;my $path_sub=$2;
+	$path_dom=~s|(.*\.\|)(.*?\..*?)$|$1|;
+	$tom::p="!$2";$path_dom=~s|\.$||;
+	
+	foreach (reverse split('\.',$path_dom)){$tom::p.="/!$_";}
+	foreach (split('/',$path_sub)){$tom::p.="/$_";}
+	
+	$tom::p=~s|//|/|g;
+	$tom::p=$ENV{'CYCLONE3PATH'}."/".$tom::p;
+	
+	$tom::P=$tom::p;
+	delete $main::arg{'domain'};
+}
+
+require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
+require TOM::Engine::job;
+$0.=" ".$argv if $argv;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+use vars qw//;
+
+package main;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+use Cwd 'abs_path';
+
+$TOM::engine_ready=1;
+
+if ($main::arg{'v'} >= 2)
+{
+	$main::stdout=1;
+	$main::debug=1;
+}
+
+eval
+{
+	local $main::request_code=Utils::vars::genhash(8);
+	
+	if ($test_file)
+	{
+		do $test_file || die $@;
+	}
+	else
+	{
+		use TAP::Harness;
+		
+		chdir($tom::Pm);
+		chdir($tom::P) if -d $tom::P."/.t";
+		chdir('.t') if -d '.t';
+		
+		my $dir = getcwd();
+		
+		my $harness = TAP::Harness->new({
+#			'verbosity' => 1,
+			'exec' => sub {
+				my ( $harness, $test_file ) = @_;
+				# Let Perl tests run.
+				return undef;
+		#			return undef if $test_file =~ /[.]t$/;
+		#			return [ qw( /usr/bin/ruby -w ), $test_file ]
+		#				if $test_file =~ /[.]rb$/;
+			}
+		});
+		
+		opendir(my $dh, '.') || return;
+		my @files = sort grep { /\.t$/ && -f $_ } readdir($dh);
+		closedir $dh;
+		
+		my $summary=$harness->runtests(@files);
+		
+		print color 'reset';
+		
+		exit 1 if $summary->{'failed'};
+	}
+	
+};
+if ($@)
+{
+	main::_log("crashed with $@",1);
+	print $@;
+}
+
+if ($main::arg{'v'} >= 2)
+{
+	$main::stdout=0;
+	$main::debug=0;
+}
+
+1;

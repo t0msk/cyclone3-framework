@@ -1604,7 +1604,16 @@ our @table=
 		recache_disable	=>	1,
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
-		messages		=>	["Your UserAgent requests bad URLs"],
+		messages		=>	["Your UserAgent is requesting bad URLs"],
+	},
+	{name=>'IttKaphatoBot',
+		regexp		=>	['IttKaphatoBot'],
+		agent_type	=>	"robot",
+		engine_disable	=>	1,
+		recache_disable	=>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+		messages		=>	["Your UserAgent is requesting bad URLs"],
 	},
 	{name=>'Etarget',
 		regexp		=>	[
@@ -1615,7 +1624,7 @@ our @table=
 		recache_disable	=>	1,
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
-		messages		=>	["Your UserAgent requests bad URLs"],
+		messages		=>	["Your UserAgent is requesting bad URLs"],
 	},
 	{name=>'bad_robot',
 		regexp		=>	[
@@ -1844,7 +1853,7 @@ our @table=
 	{name=>'Yandex.com',
 		regexp		=>	['YandexBot'],
 		agent_type	=>	"robot",
-		engine_disable	=>	0,
+		engine_disable	=>	1,
 		recache_disable =>	1,
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
@@ -2289,6 +2298,13 @@ our @table=
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
 	},
+	{name=>'hacker',
+		agent_type	=>	"vandaliser",
+		recache_disable =>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+		engine_disable	=>	1,
+	},
 	{name=>'hacked', # UserAgent for hacked computer (request from trojan, virus,...)
 		# hacked computer is detected by type of request and processed from library TOM::Net::HTTP::hacked
 		agent_type	=>	"vandaliser",
@@ -2324,96 +2340,15 @@ our @table=
 
 our %table_IP=
 (
-	'62\.171\.194\.' => 'vandaliser', # 2006-01-27
-	'161\.53\.50\.60' => 'vandaliser',         # 2006-01-27
-	'194\.106\.164\.177' => 'vandaliser',   # 2006-02-06 Beotel Beograd
-	# 2006-02-21 - Shaw Communications Inc. (Canada)
-	# velmi kvalitny vandalizer, podporuje cookies, chova sa ako MSIE 6.0, avsak neposiela ziadne
-	# referery a probi privela requestov na obycajneho usera :)
-	# 9900 requestov za jednu session
-	'70\.68\.139\.169' => 'vandaliser',
-	# 2006-03-21
-	# nekorektny bot spravodajskej sluzby USA ARMY
-	'192\.138\.77\.36' => 'vandaliser',
-	# 2006-03-21
-	# korejsky bot - neznamy ucel
-	'125\.248\.131\.130' => 'vandaliser',
-	# 2006-03-27
-	# niekto neprijemny z velkej britanie
-	'213\.232\.79\.' => 'vandaliser',
-	# 2006-04-03
-	# podozrivy bot z polskej vojenskej nemocnice
-	'217\.28\.152\.148' => 'vandaliser',
-	# 2006-04-03 - Japan Network Information Center
-	'219\.117\.215\.202' => 'vandaliser',
+	# list of hacking PC's
+	'136\.243\.36\.87' => 'hacker', # 2017-04-04 - hacker
+	'178\.63\.1\.153' => 'hacker', # 2017-03-31 - hacker
+	'185\.65\.134\.' => 'hacker', # 2017-04-15 - hacker over VPN
+	'185\.145\.66\.246' => 'hacker', # 2017-01-07 - hacker
+	'185\.145\.66\.247' => 'hacker', # 2017-01-07 - hacker
+	'185\.145\.66\.' => 'hacker', # 2017-01-07 - hacker
 	
-	# list of vandals
-	'78\.98\.118\.36' => 'vandaliser', # 2009-12-17 - spammer
-	
-	# list of IP's spambots
-	'8\.9\.209\.2' => 'spambot', # 2010-01-09
-	'60\.172\.229\.90' => 'spambot', # 2009-12-08
-	'61\.153\.149\.205' => 'spambot', # 2009-11-23
-	'65\.33\.111\.127' => 'spambot', # 2009-11-23
-	'69\.14\.143\.150' => 'spambot', # 2009-11-23
-	'69\.163\.33\.89' => 'spambot', # 2009-12-08
-	'76\.112\.9\.39' => 'spambot', # 2009-12-19
-	'78\.26\.187\.118' => 'spambot', # 2009-12-19
-	'78\.26\.187\.128' => 'spambot', # 2009-12-08
-	'79\.171\.81\.42' => 'spambot', # 2009-10-10
-	'79\.171\.81\.47' => 'spambot', # 2009-10-10
-	'79\.171\.81\.53' => 'spambot', # 2009-10-10
-	'79\.171\.81\.58' => 'spambot', # 2009-10-10
-	'79\.171\.81\.67' => 'spambot', # 2009-10-10
-	'83\.206\.55\.41' => 'spambot', # 2009-11-23
-	'83\.240\.163\.234' => 'spambot', # 2009-12-19
-	'85\.177\.242\.151' => 'spambot', # 2010-01-09
-	'87\.126\.56\.152' => 'spambot', # 2010-01-09
-	'88\.101\.163\.101' => 'spambot', # 2010-01-09
-	'89\.28\.3\.241' => 'spambot', # 2009-12-19
-	'89\.149\.202\.152' => 'spambot', # 2009-11-23
-	'89\.248\.172\.98' => 'spambot', # 2009-11-23
-	'92\.114\.149\.154' => 'spambot', # 2009-11-25
-	'92\.241\.164\.105' => 'spambot', # 2009-12-23
-	'92\.241\.165\.66' => 'spambot', # 2009-12-19
-	'92\.241\.168\.99' => 'spambot', # 2009-10-10
-	'94\.23\.238\.142' => 'spambot', # 2009-11-23
-	'94\.102\.51\.196' =>  'spambot', # 2009-11-23
-	'94\.102\.63\.60' => 'spambot', # 2009-12-18
-	'94\.142\.134\.131' => 'spambot', # 2009-11-23
-	'95\.215\.0\.9' => 'spambot', # 2009-12-05
-	'95\.215\.1\.3' => 'spambot', # 2009-11-25
-	'96\.246\.23\.91' => 'spambot', # 2010-01-09
-	'112\.91\.145\.78' => 'spambot', # 2009-12-23
-	'120\.28\.64\.85' => 'spambot', # 2009-12-08
-	'173\.212\.13\.198' => 'spambot', # 2009-11-28
-	'188\.92\.75\.221' => 'spambot', # 2009-12-19
-	'188\.92\.76\.233' => 'spambot', # 2009-12-02
-	'188\.92\.77\.101' => 'spambot', # 2009-12-02
-	'188\.187\.3\.70' => 'spambot', # 2010-01-07
-	'188\.187\.15\.149' => 'spambot', # 2009-12-08
-	'194\.8\.75\.155' => 'spambot', # 2010-01-11
-	'194\.44\.97\.14' => 'spambot', # 2009-12-19
-	'195\.113\.176\.211' => 'badbot', # 2015-09-23
-	'201\.144\.30\.227' => 'spambot', # 2009-12-08
-	'204\.124\.182\.86' => 'spambot', # 2010-01-09
-	'208\.53\.183\.9' => 'spambot', # 2009-11-23
-	'212\.95\.58\.208' => 'spambot', # 2009-11-23
-	'212\.178\.15\.216' => 'spambot', # 2009-11-30
-	'212\.235\.107\.14' => 'spambot', # 2009-10-14
-	'212\.235\.107\.45' => 'spambot', # 2009-11-23
-	'212\.235\.107\.115' => 'spambot', # 2009-11-23
-	'212\.235\.107\.116' => 'spambot', # 2010-01-07
-	'212\.235\.107\.200' => 'spambot', # 2009-11-23
-	'212\.235\.107\.234' => 'spambot', # 2009-11-24
-	'213\.21\.47\.51' => 'spambot', # 2009-12-19
-	'213\.186\.60\.84' => 'spambot', # 2009-12-02
-	
-#	'91\.210\.181\.94' => 'badbot', # 2010-02-11 - Digmia checker
-#	'91\.210\.182\.23' => 'badbot', # 2009-11-29 - Digmia checker
-	
-	'217\.11\.242\.50' => 'badbot', # 2011-03-29 - unknown
-	
+	# list spambots
 	'52\.16\.95\.160' => 'badbot', # 2016-01-27
 	'58\.22\.122\.226' => 'spambot', # 2013-02-04
 	'59\.60\.96\.' => 'spambot', # 2013-01-17
@@ -2451,17 +2386,16 @@ our %table_IP=
 	'222\.77\.242\.' => 'spambot', # 2013-02-04
 	'222\.77\.243\.' => 'spambot', # 2013-01-15
 	'222\.77\.247\.' => 'spambot', # 2013-01-15
+	'223\.66\.219\.234' => 'spambot', # 2017-03-29
 	
-	'84\.19\.169\.166' => 'spambot', # 2014-10-15
-	'5\.254\.97\.72' => 'spambot', # 2014-10-16
-	
-#	'62\.197\.199\.74' => 'grabber', # muziker office
+	# list of grabbers
 	'5\.45\.62\.130' => 'grabber', # 2016-05-30
 	'5\.56\.16\.238' => 'grabber', # 2016-05-17
 	'46\.17\.6\.73' => 'grabber', # 2016-03-09 20:00
 	'46\.161\.9\.20' => 'grabber', # 2016-05-17
 	'46\.105\.211\.81' => 'grabber', # 2016-03-09 20:00
 	'46\.161\.9\.32' => 'grabber', # 2016-05-17
+#	'46\.229\.173\.67' => 'grabber', # 2017-05-06 - SEMrush
 	'62\.113\.202\.150' => 'grabber', # 2016-05-17
 	'77\.247\.181\.162' => 'grabber', # 2016-04-02 22:00
 	'82\.199\.129\.144' => 'grabber', # 2016-05-17

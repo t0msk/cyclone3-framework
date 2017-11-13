@@ -72,6 +72,7 @@ sub user_add
 			$t->close();
 			return undef;
 		}
+		main::_log("get user by ID_user='$env{'user.ID_user'}'");
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				*
@@ -82,23 +83,7 @@ sub user_add
 			LIMIT 1;
 		},'bind'=>[$env{'user.ID_user'}],'quiet'=>1);
 		%user=$sth0{'sth'}->fetchhash();
-	}
-	
-	if ($env{'user.login'} && !$env{'user.ID_user'})
-	{
-		main::_log("search user by login='$env{'user.login'}'");
-		my %sth0=TOM::Database::SQL::execute(qq{
-			SELECT
-				*
-			FROM
-				`TOM`.a301_user
-			WHERE
-				login=? AND
-				hostname=?
-			LIMIT 1;
-		},'bind'=>[$env{'user.login'},$env{'user.hostname'}],'quiet'=>1);
-		%user=$sth0{'sth'}->fetchhash();
-		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
+		$env{'pass'}=$user{'pass'};
 	}
 	
 	if ($env{'user.ref_facebook'} && !$env{'user.ID_user'})
@@ -151,6 +136,44 @@ sub user_add
 		%user=$sth0{'sth'}->fetchhash();
 		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
 	}
+	
+	if ($env{'user.login'} && !$env{'user.ID_user'})
+	{
+		main::_log("search user by login='$env{'user.login'}'");
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`TOM`.a301_user
+			WHERE
+				login=? AND
+				hostname=?
+			LIMIT 1;
+		},'bind'=>[$env{'user.login'},$env{'user.hostname'}],'quiet'=>1);
+		%user=$sth0{'sth'}->fetchhash();
+		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
+		$env{'pass'}=$user{'pass'};
+	}
+	
+	if ($env{'user.email'} && !$env{'user.ID_user'} && $App::301::email_unique)
+	{
+		main::_log("search user by email='$env{'user.email'}'");
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				`TOM`.a301_user
+			WHERE
+				email=? AND
+				hostname=?
+			LIMIT 1;
+		},'bind'=>[$env{'user.email'},$env{'user.hostname'}],'quiet'=>1);
+		%user=$sth0{'sth'}->fetchhash();
+		$env{'user.ID_user'}=$user{'ID_user'} if $user{'ID_user'};
+		$env{'pass'}=$user{'pass'};
+	}
+	
+	
 	
 	if (!$env{'user.ID_user'})
 	{
@@ -357,6 +380,7 @@ sub user_add
 		
 		if (!$env{'user_profile.ID_entity'})
 		{
+			main::_log("not found user_profile, creating new");
 			$env{'user_profile.ID'}=App::020::SQL::functions::new(
 				'db_h' => "main",
 				'db_name' => 'TOM',
@@ -379,7 +403,7 @@ sub user_add
 		my %data;
 		
 		$columns{'gender'}="'".TOM::Security::form::sql_escape($env{'user_profile.gender'})."'"
-			if ($env{'user_profile.gender'} && ($env{'user_profile.gender'} ne $user_profile{'gender'}));
+			if (exists $env{'user_profile.gender'} && ($env{'user_profile.gender'} ne $user_profile{'gender'}));
 		$columns{'firstname'}="'".TOM::Security::form::sql_escape($env{'user_profile.firstname'})."'"
 			if (exists $env{'user_profile.firstname'} && ($env{'user_profile.firstname'} ne $user_profile{'firstname'}));
 		$columns{'middlename'}="'".TOM::Security::form::sql_escape($env{'user_profile.middlename'})."'"
@@ -393,28 +417,29 @@ sub user_add
 		$columns{'name_suffix'}="'".TOM::Security::form::sql_escape($env{'user_profile.name_suffix'})."'"
 			if (exists $env{'user_profile.name_suffix'} && ($env{'user_profile.name_suffix'} ne $user_profile{'name_suffix'}));
 		$columns{'date_birth'}="'".TOM::Security::form::sql_escape($env{'user_profile.date_birth'})."'"
-			if ($env{'user_profile.date_birth'} && ($env{'user_profile.date_birth'} ne $user_profile{'date_birth'}));
+			if (exists $env{'user_profile.date_birth'} && ($env{'user_profile.date_birth'} ne $user_profile{'date_birth'}));
+		$columns{'date_birth'} = 'NULL' if $columns{'date_birth'} eq "''";
 		$columns{'birth_country_code'}="'".TOM::Security::form::sql_escape($env{'user_profile.birth_country_code'})."'"
 			if (exists $env{'user_profile.birth_country_code'} && ($env{'user_profile.birth_country_code'} ne $user_profile{'birth_country_code'}));
 		$columns{'PIN'}="'".TOM::Security::form::sql_escape($env{'user_profile.PIN'})."'"
-			if ($env{'user_profile.PIN'} && ($env{'user_profile.PIN'} ne $user_profile{'PIN'}));
+			if (exists $env{'user_profile.PIN'} && ($env{'user_profile.PIN'} ne $user_profile{'PIN'}));
 		
 		$columns{'street'}="'".TOM::Security::form::sql_escape($env{'user_profile.street'})."'"
-			if ($env{'user_profile.street'} && ($env{'user_profile.street'} ne $user_profile{'street'}));
+			if (exists $env{'user_profile.street'} && ($env{'user_profile.street'} ne $user_profile{'street'}));
 		$columns{'street_num'}="'".TOM::Security::form::sql_escape($env{'user_profile.street_num'})."'"
-			if ($env{'user_profile.street_num'} && ($env{'user_profile.street_num'} ne $user_profile{'street_num'}));
+			if (exists $env{'user_profile.street_num'} && ($env{'user_profile.street_num'} ne $user_profile{'street_num'}));
 		$columns{'city'}="'".TOM::Security::form::sql_escape($env{'user_profile.city'})."'"
-			if ($env{'user_profile.city'} && ($env{'user_profile.city'} ne $user_profile{'city'}));
+			if (exists $env{'user_profile.city'} && ($env{'user_profile.city'} ne $user_profile{'city'}));
 		$columns{'ZIP'}="'".TOM::Security::form::sql_escape($env{'user_profile.ZIP'})."'"
 			if (exists $env{'user_profile.ZIP'} && ($env{'user_profile.ZIP'} ne $user_profile{'ZIP'}));
 		$columns{'district'}="'".TOM::Security::form::sql_escape($env{'user_profile.district'})."'"
-			if ($env{'user_profile.district'} && ($env{'user_profile.district'} ne $user_profile{'district'}));
+			if (exists $env{'user_profile.district'} && ($env{'user_profile.district'} ne $user_profile{'district'}));
 		$columns{'county'}="'".TOM::Security::form::sql_escape($env{'user_profile.county'})."'"
-			if ($env{'user_profile.county'} && ($env{'user_profile.county'} ne $user_profile{'county'}));
+			if (exists $env{'user_profile.county'} && ($env{'user_profile.county'} ne $user_profile{'county'}));
 		$columns{'state'}="'".TOM::Security::form::sql_escape($env{'user_profile.state'})."'"
-			if ($env{'user_profile.state'} && ($env{'user_profile.state'} ne $user_profile{'state'}));
+			if (exists $env{'user_profile.state'} && ($env{'user_profile.state'} ne $user_profile{'state'}));
 		$columns{'country_code'}="'".TOM::Security::form::sql_escape($env{'user_profile.country_code'})."'"
-			if ($env{'user_profile.country_code'} && ($env{'user_profile.country_code'} ne $user_profile{'country_code'}));
+			if (exists $env{'user_profile.country_code'} && ($env{'user_profile.country_code'} ne $user_profile{'country_code'}));
 		
 		$columns{'email_public'}="'".TOM::Security::form::sql_escape($env{'user_profile.email_public'})."'"
 			if (exists $env{'user_profile.email_public'} && ($env{'user_profile.email_public'} ne $user_profile{'email_public'}));
@@ -574,6 +599,21 @@ sub user_add
 		if ($env{'user.login'})
 		{
 			$set.=",login='".TOM::Security::form::sql_escape($env{'user.login'})."'";
+			# check duplicty and remove it
+			TOM::Database::SQL::execute(qq{
+				UPDATE
+					TOM.a301_user
+				SET
+					login = CONCAT(login,'-',ID_user) 
+				WHERE
+					hostname LIKE ?
+					AND login LIKE ?
+					AND ID_user NOT LIKE ?
+			},'bind'=>[
+				$user{'hostname'},
+				$env{'user.login'},
+				$env{'user.ID_user'}
+			]);
 		}
 		elsif (exists $env{'user.login'})
 		{
@@ -1157,7 +1197,7 @@ sub user_get
 		}
 		else
 		{
-			main::_log("user '$ID_user' not found in archive table",1);
+			main::_log("user '$ID_user' not found in inactive table");
 			return undef;
 		}
 	}

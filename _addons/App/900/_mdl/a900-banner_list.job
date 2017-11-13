@@ -100,7 +100,7 @@ sub execute
 		$sqlin=~s|^, ||;
 		
 		$sql_where.=" AND banner_zonetarget.name IN (" . $sqlin . ")";
-		main::_log("search banner '$env->{'banner_zonetarget.name'}'",3,"debug") if $debug;
+		main::_log("search banner_zonetarget.name '$env->{'banner_zonetarget.name'}'",3,"debug") if $debug;
 	}
 	
 	if ($env->{'banner_domain.name'})
@@ -119,21 +119,23 @@ sub execute
 			'ID'      => $env->{'a210_page.ID'},
 			'columns' => { '*' => 1 },
 			'-slave'  => 1,
-			'-cache'  => 600,
+			'-cache'  => 86400,
 			'-cache_changetime' => App::020::SQL::functions::_get_changetime(\%sql_def)
 		);
 		main::_log("a210_page.ID_entity=$a210{'ID_entity'}");
+		
 		foreach my $p(
-			App::020::SQL::functions::tree::get_path(
+			reverse App::020::SQL::functions::tree::get_path(
 				$a210{'ID'},
 				%sql_def,
 				'columns' => { '*' => 1 },
 				'-slave' => 1,
-				'-cache' => 600
+				'-cache' => 86400
 			)
 		)
 		{
 			main::_log("relation from $p->{'ID_entity'}");
+			my $found = 0;
 			foreach my $relation (App::160::SQL::get_relations(
 				'db_name' => $App::210::db_name,
 				'l_prefix' => 'a210',
@@ -147,8 +149,11 @@ sub execute
 			{
 				main::_log("relation to $relation->{'r_ID_entity'}");
 				$env->{'banner_cat.ID_entity'}.=";".$relation->{'r_ID_entity'}.'*';
+				$found++;
 			}
+			last if ($found && $env->{'a210.non_recursive'});
 		}
+		
 		main::_log("a210_page -> banner_cat.ID_entity='$env->{'banner_cat.ID_entity'}'");
 	}
 	
@@ -158,6 +163,7 @@ sub execute
 		foreach my $ID_category (split(';',$env->{'banner_cat.ID_entity'}))
 		{
 			next if $ID_category eq '';
+			next unless $ID_category=~/^[\d\*]+$/;
 			if ($ID_category=~s/\*$//)
 			{
 				my $cat_sql=qq{SELECT `ID_charindex` FROM `$App::900::db_name`.`a900_banner_cat` WHERE `ID_entity`=$ID_category AND `status` IN ('Y','L') LIMIT 1};
@@ -184,14 +190,14 @@ sub execute
 	if ($env->{'banner.ID'})
 	{
 		$sql_where.=" AND banner.ID IN (".
-			(join(",",grep {$_} split(';',$env->{'banner.ID'})) || 0)
+			(join(",",grep {$_=~/^\d+$/} split(';',$env->{'banner.ID'})) || 0)
 		.") ";
 	}
 	
 	if ($env->{'banner.ID_entity'})
 	{
 		$sql_where.=" AND banner.ID_entity IN (".
-			(join(",",grep {$_} split(';',$env->{'banner.ID_entity'})) || 0)
+			(join(",",grep {$_=~/^\d+$/} split(';',$env->{'banner.ID_entity'})) || 0)
 		.") ";
 	}
 	
@@ -475,7 +481,7 @@ sub execute
 		delete $banner{'metadata'};
 		
 		my @target_addon=split(':',$banner{'target_addon'},2);
-#		main::_log("addon=@target_addon",3,"debug");
+		main::_log("target_addon=@target_addon",3,"debug");
 		if ($target_addon[0] && $target_addon[1])
 		{
 			$banner{'addon_type'}=$target_addon[0];
@@ -498,7 +504,7 @@ sub execute
 					'bind'=>[$banner{'addon_ID_entity'},$env->{'lng'}],
 					'log' => 0,
 					'quiet' => 1,
-					'-cache' => 600,
+					'-cache' => 86400,
 					'-cache_changetime' => App::020::SQL::functions::_get_changetime(
 						{
 							'db_h'=>"main",
@@ -622,7 +628,7 @@ sub execute
 				},
 					'bind'=>[$banner{'addon_ID_entity'},$env->{'lng'}],
 					'quiet' => 1,
-					'-cache' => 600,
+					'-cache' => 86400,
 					'-cache_changetime' => App::020::SQL::functions::_get_changetime(
 						{
 							'db_h'=>"main",
@@ -660,6 +666,9 @@ sub execute
 				
 			}
 			
+			use JSON;
+			main::_log("addon=".to_json(\%banner)) if $env->{'debug'};
+			
 		}
 		
 		if ($banner{'def_body'})
@@ -682,7 +691,7 @@ sub execute
 		if ($env->{'click'} && $main::USRM{'ID_user'})
 		{
 			TOM::Database::SQL::execute(qq{
-				INSERT DELAYED INTO
+				INSERT IGNORE INTO
 					`$App::900::db_name`.a900_banner_click
 					(
 						ID_banner,

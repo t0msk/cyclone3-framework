@@ -211,7 +211,7 @@ sub execute
 		FROM
 			TOM.a301_user
 		WHERE
-			(login='$env{'login'}' OR email='$env{'login'}') AND
+			(TRIM(login)='$env{'login'}' OR TRIM(email)='$env{'login'}') AND
 			hostname='$tom::H_cookie' AND
 			status='Y'
 		LIMIT 1

@@ -53,7 +53,7 @@ sub request
 			'HOST' => $main::ENV{'HTTP_HOST'},
 			'REQUEST_URI' => $main::ENV{'REQUEST_URI'},
 			'QUERY_STRING' => $main::ENV{'QUERY_STRING'},
-			'query' => {%form_},
+#			'query' => {%form_},
 			'USER_AGENT' => $main::ENV{'HTTP_USER_AGENT'},
 			'UserAgent' => $main::UserAgent_name,
 			'UserAgent_type' => $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{'agent_type'},
@@ -76,6 +76,7 @@ sub request
 #	main::_log("testy");
 	my $severity=3;
 		$severity=4 if $env{'code'}=~/^5..$/;
+		$severity=4 if $env{'code'}=~/^404$/;
 	main::_log("'".$main::ENV{'REQUEST_URI'}."' ".$main::ENV{'QUERY_STRING_FULL'}.' '.$main::ENV{'REMOTE_ADDR'}.' '.$env{'code'}.' '.$env{'location'},{
 		'facility' => 'pub.track',
 		'severity' => $severity,
