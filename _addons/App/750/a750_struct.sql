@@ -28,6 +28,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_complex` (
   `column_grid_x` bigint(20) unsigned default NULL,
   `column_grid_y` bigint(20) unsigned default NULL,
   `cross_dock` char(1) character set ascii collate ascii_bin DEFAULT 'N',
+  `dock_note` varchar(30) character set utf8 collate utf8_unicode_ci DEFAULT NULL,
   `dock_doors_amount` text character set utf8 collate utf8_unicode_ci DEFAULT NULL,
   `drive_in` char(1) character set ascii collate ascii_bin DEFAULT 'N',
   `city` varchar(128) character set utf8 collate utf8_unicode_ci DEFAULT NULL,
@@ -44,6 +45,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_complex` (
   `geo_lon` decimal(11,8) DEFAULT NULL,
   `year` varchar(4) DEFAULT NULL,
   `transport_availability` varchar(128) character set utf8 collate utf8_unicode_ci DEFAULT NULL,
+  `note` text character set utf8 collate utf8_unicode_ci DEFAULT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
@@ -77,6 +79,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_complex_j` (
   `column_grid_x` bigint(20) unsigned default NULL,
   `column_grid_y` bigint(20) unsigned default NULL,
   `cross_dock` char(1) character set ascii collate ascii_bin DEFAULT 'N',
+  `dock_note` varchar(30) character set utf8 collate utf8_unicode_ci DEFAULT NULL,
   `dock_doors_amount` text character set utf8 collate utf8_unicode_ci DEFAULT NULL,
   `drive_in` char(1) character set ascii collate ascii_bin DEFAULT 'N',
   `city` varchar(128) character set utf8 collate utf8_unicode_ci DEFAULT NULL,
@@ -93,6 +96,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_complex_j` (
   `geo_lon` decimal(11,8) DEFAULT NULL,
   `year` varchar(4) DEFAULT NULL,
   `transport_availability` varchar(128) character set utf8 collate utf8_unicode_ci DEFAULT NULL,
+  `note` text character set utf8 collate utf8_unicode_ci DEFAULT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
@@ -228,6 +232,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_object` (
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00', -- last change
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL, -- created by
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL, -- changed by user
+  `note` text character set utf8 collate utf8_unicode_ci DEFAULT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
@@ -286,6 +291,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_object_j` (
   `datetime_create` datetime NOT NULL default '0000-00-00 00:00:00', -- last change
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL, -- created by
   `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL, -- changed by user
+  `note` text character set utf8 collate utf8_unicode_ci DEFAULT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`,`datetime_create`)
