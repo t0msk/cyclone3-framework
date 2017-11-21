@@ -118,13 +118,13 @@ sub complex_add
 
 	# name
 	$data{'name'}=$env{'complex.name'}
-		if ($env{'complex.name'} && ($env{'complex.name'} ne $complex{'name'}));
+		if (exists $env{'complex.name'} && ($env{'complex.name'} ne $complex{'name'}));
 	$data{'name_url'}=TOM::Net::URI::rewrite::convert($env{'complex.name'},'notlower'=>1)
-		if ($env{'complex.name'} && ($env{'complex.name'} ne $complex{'name'}));
+		if (exists $env{'complex.name'} && ($env{'complex.name'} ne $complex{'name'}));
 	
 	# country_code
 	$data{'country_code'}=$env{'complex.country_code'}
-		if ($env{'complex.country_code'} && ($env{'complex.country_code'} ne $complex{'country_code'}));
+		if (exists $env{'complex.country_code'} && ($env{'complex.country_code'} ne $complex{'country_code'}));
 	
 	# metadata
 	my %metadata=App::020::functions::metadata::parse($complex{'metadata'});
@@ -170,13 +170,23 @@ sub complex_add
 	$data{'metadata'}=$env{'complex.metadata'}
 		if (exists $env{'complex.metadata'} && ($env{'complex.metadata'} ne $complex{'metadata'}));
 
-	foreach my $field ('status','code','owner_occupied','rental_park','land','park','industry','complex_type','year','url_web','url_google_maps','floor_loading_capacity','floor_loading_capacity_to','clear_height','clear_height_to','truck_yard_depth','truck_yard_depth_to','cross_dock','dock_doors_amount','street','street_num','city','ZIP','district','county','state','country_code','geo_lat','geo_lon') {
+	foreach my $field ('status','code','owner_occupied','rental_park','land','park','industry','complex_type','year','url_web','url_google_maps','floor_loading_capacity','floor_loading_capacity_to','clear_height','clear_height_to','truck_yard_depth','truck_yard_depth_to','column_grid_x','column_grid_y','cross_dock','dock_note','dock_doors_amount','drive_in','street','street_num','city','ZIP','district','county','state','country_code','geo_lat','geo_lon','note') {
 		$data{$field}=$env{'complex.'.$field}
-			if ($env{'complex.'.$field} && ($env{'complex.'.$field} ne $complex{$field}));
+			if (exists $env{'complex.'.$field} && ($env{'complex.'.$field} ne $complex{$field}));
 	}
 	# replace dropdown values which are erased when some checkboxes are not checked
 	$data{'complex_type'}=$env{'complex.complex_type'} if exists $env{'complex.complex_type'};
 	$data{'industry'}=$env{'complex.industry'} if exists $env{'complex.industry'};
+	if (exists $data{'geo_lat'} && $data{'geo_lat'} eq "")
+	{
+		delete $data{'geo_lat'};
+		$columns{'geo_lat'}='NULL';
+	}
+	if (exists $data{'geo_lon'} && $data{'geo_lon'} eq "")
+	{
+		delete $data{'geo_lon'};
+		$columns{'geo_lon'}='NULL';
+	}
 	
 	if (keys %columns || keys %data)
 	{
