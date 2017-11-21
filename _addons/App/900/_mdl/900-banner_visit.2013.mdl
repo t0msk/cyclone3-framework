@@ -69,7 +69,7 @@ sub execute
 					)
 			},'-quiet'=>1,'bind'=>[
 				$ID,
-				$main::USRM{'ID_user'},
+				$main::USRM{'ID_user'}||'',
 				$main::USRM{'ID_session'},
 				$main::COOKIES_all{'c3bid'},
 				$main::COOKIES_all{'c3sid'}
