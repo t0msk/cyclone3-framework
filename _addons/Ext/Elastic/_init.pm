@@ -40,12 +40,21 @@ sub _connect
 {
 	my $service_;
 	return undef unless $Ext::Elastic;
-	my $t=track TOM::Debug("Ext::Elastic::connect",'attrs_'=>$Ext::Redis::host);
+	my $t=track TOM::Debug("Ext::Elastic::connect",'attrs_'=>$Ext::Elastic::host);
 	push @{$Ext::Elastic->{'plugins'}}, 'cache';
 	if ($service_=Search::Elasticsearch->new($Ext::Elastic))
 	{
 		use Data::Dumper;
 		main::_log("connected ".(join ",",@{$service_->{'transport'}->{'cxn_pool'}->{'seed_nodes'}}));
+		$service_->{'nodes_info'}=$service_->nodes->info();
+		foreach (keys %{$service_->{'nodes_info'}->{'nodes'}})
+		{
+			if ($service_->{'version_min'} gt $service_->{'nodes_info'}->{'nodes'}->{$_}->{'version'} || !$service_->{'version_min'})
+			{
+				$service_->{'version_min'} = $service_->{'nodes_info'}->{'nodes'}->{$_}->{'version'};
+			}
+		}
+		main::_log("version_min=".$service_->{'version_min'});
 		$service=$service_;
 	}
 	else
