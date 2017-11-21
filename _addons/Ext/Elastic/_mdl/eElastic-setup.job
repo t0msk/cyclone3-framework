@@ -47,7 +47,7 @@ sub execute
 #		)};
 #	}
 	
-	my $version='1.14';
+	my $version='1.16';
 	main::_log_stdout("put_template to Elastic version ".$Elastic->{'version_min'});
 	if ($Elastic->{'version_min'}=~/^5/)
 	{
@@ -64,7 +64,7 @@ sub execute
 						'properties' => {
 							'status' => {
 								'type' => 'keyword',
-								'index' => 'false'
+								'index' => 'true'
 							}
 						},
 						'dynamic_templates' => [
@@ -73,7 +73,7 @@ sub execute
 									"match" => "*_status",
 									'mapping' => {
 										'type' => 'keyword',
-										'index' => 'false'
+										'index' => 'true'
 									}
 								}
 							},
@@ -82,7 +82,7 @@ sub execute
 									"match" => "status_*",
 									'mapping' => {
 										'type' => 'keyword',
-										'index' => 'false'
+										'index' => 'true'
 									}
 								}
 							},
@@ -106,7 +106,7 @@ sub execute
 							{'locale' => {
 								"path_match" => "locale.*.*",
 								"mapping" => {
-									"type" => "keyword"
+									"type" => "string"
 								}
 							}},
 							
@@ -115,14 +115,14 @@ sub execute
 								"path_match" => "metahash.*.*_s",
 								"mapping" => {
 									"type" => "keyword",
-									"index" => "false",
+									"index" => "true",
 									"copy_to" => "completion.metahash.{name}" # completion
 								}
 							}},
 							{'metadata_text' => {
 								"path_match" => "metahash.*.*_t",
 								"mapping" => {
-									"type" => "keyword",
+									"type" => "string",
 	#								"copy_to" => "completion.metahash.{name}" # completion
 								}
 							}},
@@ -149,7 +149,7 @@ sub execute
 								"path_match" => "metahash.*.*",
 								"mapping" => {
 									"type" => "keyword",
-									"index" => "false",
+									"index" => "true",
 									"copy_to" => "completion.metahash.{name}" # completion
 								}
 							}},
@@ -159,7 +159,7 @@ sub execute
 								"path_match" => "metahash_keys.*",
 								"mapping" => {
 									"type" => "keyword",
-									"index" => "false"
+									"index" => "true"
 								}
 							}},
 							
@@ -186,7 +186,7 @@ sub execute
 								"path_match" => "original.std.*",
 								"mapping" => {
 									"type" => "keyword",
-									"index" => "false"
+									"index" => "true"
 								}
 							}},
 						]
@@ -197,12 +197,12 @@ sub execute
 							"version" => $version
 						},
 						'properties' => {
-							'name' => {'type' => "keyword","copy_to" => "completion.std.name"},
+							'name' => {'type' => "string","copy_to" => "completion.std.name"},
 							'status' => {
 								'type' => 'keyword',
-								'index' => 'false'
+								'index' => 'true'
 							},
-							'cat' => {'type'=>'long','index'=>'false'},
+							'cat' => {'type'=>'long','index'=>'true'},
 							'article_attrs' => {
 								'properties' => {
 									'datetime_start' => {
@@ -222,17 +222,17 @@ sub execute
 						'properties' => {
 							'status' => {
 								'type' => 'keyword',
-								'index' => 'false'
+								'index' => 'true'
 							},
-							'name' => {'type' => "keyword","copy_to" => "completion.std.name"},
-							'name_short' => {'type' => "keyword","copy_to" => "completion.std.name_short"},
-							'city' => {'type' => "keyword","copy_to" => "completion.std.city"},
-							'street' => {'type' => "keyword","copy_to" => "completion.std.street"},
-							'cat' => {'type'=>'long','index'=>'false'},
-							'cat_name' => {'type'=>'keyword','index'=>'false'},
+							'name' => {'type' => "string","copy_to" => "completion.std.name"},
+							'name_short' => {'type' => "string","copy_to" => "completion.std.name_short"},
+							'city' => {'type' => "string","copy_to" => "completion.std.city"},
+							'street' => {'type' => "string","copy_to" => "completion.std.street"},
+							'cat' => {'type'=>'long','index'=>'true'},
+							'cat_name' => {'type'=>'string'},
 							'status' => {
 								'type' => 'keyword',
-								'index' => 'false'
+								'index' => 'true'
 							}
 						},
 						'dynamic_templates' => [
@@ -240,7 +240,7 @@ sub execute
 							{'locale' => {
 								"path_match" => "locale.*.*",
 								"mapping" => {
-									"type" => "keyword"
+									"type" => "string"
 								}
 							}}
 						]
@@ -253,18 +253,18 @@ sub execute
 						'properties' => {
 							'ID' => {'type' => 'long'},
 							'ID_entity' => {'type' => 'long'},
-							'name' => {'type' => "keyword","copy_to" => "completion.std.name"},
-							'full_name' => {'type' => "keyword","copy_to" => "completion.std.full_name"},
-							'brand_name' => {'type' => "keyword","copy_to" => "original.std.brand_name"},
+							'name' => {'type' => "string","copy_to" => "completion.std.name"},
+							'full_name' => {'type' => "string","copy_to" => "completion.std.full_name"},
+							'brand_name' => {'type' => "string","copy_to" => "original.std.brand_name"},
 							'price' => {'type' => 'float'},
 							'price_full' => {'type' => 'float'},
 							'sellscore' => {'type' => 'float'},
 							'rating' => {'type' => 'float'},
-							'cat' => {'type'=>'long','index'=>'false'},
-							'cat_path' => {'type'=>'long','index'=>'false'},
+							'cat' => {'type'=>'long','index'=>'true'},
+							'cat_path' => {'type'=>'long','index'=>'true'},
 							'status' => {
 								'type' => 'keyword',
-								'index' => 'false'
+								'index' => 'true'
 							}
 						},
 						'dynamic_templates' => [
