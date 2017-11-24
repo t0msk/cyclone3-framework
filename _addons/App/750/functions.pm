@@ -50,9 +50,11 @@ sub complex_add
 				'db_name' => $App::750::db_name,
 				'tb_name' => "a750_complex",
 				'columns' => {
+					'posix_owner' => "'".$main::USRM{'ID_user'}."'",
 					'ID' => $env{'complex.ID'},
 				},
 				'-journalize' => 1,
+				'-posix' => 1,
 			);
 			%complex=App::020::SQL::functions::get_ID(
 				'ID' => $env{'complex.ID'},
@@ -70,14 +72,15 @@ sub complex_add
 		main::_log("!complex.ID, create complex.ID (complex.ID_entity='$env{'complex.ID_entity'}')");
 		my %columns;
 		$columns{'ID_entity'}=$env{'complex.ID_entity'} if $env{'complex.ID_entity'};
-
-
+		$columns{'posix_owner'}="'".$main::USRM{'ID_user'}."'" unless $columns{'posix_owner'};
+		
 		$env{'complex.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
 			'db_name' => $App::750::db_name,
 			'tb_name' => "a750_complex",
 			'columns' => {%columns},
 			'-journalize' => 1,
+			'-posix' => 1,
 		);
 		%complex=App::020::SQL::functions::get_ID(
 			'ID' => $env{'complex.ID'},
