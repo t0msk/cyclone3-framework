@@ -55,15 +55,15 @@ sub hash
 {
 	if ($sha)
 	{
-		return Digest::SHA::sha256_hex(Encode::encode_utf8(shift));
+		return length($_[0]).'.'.Digest::SHA::sha256_hex(Encode::encode_utf8(shift));
 	}
 	elsif ($sha1)
 	{
-		return Digest::SHA1::sha1_hex(Encode::encode_utf8(shift));
+		return length($_[0]).'.'.Digest::SHA1::sha1_hex(Encode::encode_utf8(shift));
 	}
 	elsif ($md5)
 	{
-		return Digest::MD5::md5_hex(Encode::encode_utf8(shift));
+		return length($_[0]).'.'.Digest::MD5::md5_hex(Encode::encode_utf8(shift));
 	}
 }
 
