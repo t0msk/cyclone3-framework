@@ -47,7 +47,7 @@ sub execute
 #		)};
 #	}
 	
-	my $version='1.16';
+	my $version='1.17';
 	main::_log_stdout("put_template to Elastic version ".$Elastic->{'version_min'});
 	if ($Elastic->{'version_min'}=~/^5/)
 	{
@@ -253,8 +253,8 @@ sub execute
 						'properties' => {
 							'ID' => {'type' => 'long'},
 							'ID_entity' => {'type' => 'long'},
-							'name' => {'type' => "string","copy_to" => "completion.std.name"},
-							'full_name' => {'type' => "string","copy_to" => "completion.std.full_name"},
+							'name' => {'type' => "string","copy_to" => ["completion.std.name","original.std.name"]},
+							'full_name' => {'type' => "string","copy_to" => ["completion.std.full_name","original.std.full_name"]},
 							'brand_name' => {'type' => "string","copy_to" => "original.std.brand_name"},
 							'price' => {'type' => 'float'},
 							'price_full' => {'type' => 'float'},
