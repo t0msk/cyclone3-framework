@@ -136,9 +136,9 @@ sub _log
 	);
 	
 	$get[3]=$TOM::engine unless $get[3];
-	$get[1]=~s|\r|\\r|g;
-	$get[1]=~s|\t|\\t|g;
-	$get[1]=~s|\n|\\n|g;
+#	$get[1]=~s|\r|\\r|g;
+#	$get[1]=~s|\t|\\t|g;
+#	$get[1]=~s|\n|\\n|g;
 	
 	my $tt=time();
 	
@@ -205,8 +205,8 @@ sub _log
 		print color 'green';
 		print color 'bold' if $get[1]=~/^</;
 		print color 'red' if $log_sym[$get[2]] eq '-';
-		$msg=~s|\\n|\n|g;
-		$msg=~s|\\t|\t|g;
+#		$msg=~s|\\n|\n|g;
+#		$msg=~s|\\t|\t|g;
 		print $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
 		print color 'reset';
 		
