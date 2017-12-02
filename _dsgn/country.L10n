@@ -385,8 +385,8 @@
 	</string>
 
 	<string id="country.CZ">
-		<en-US>CzechRepublic</en-US>
-		<en-UK>CzechRepublic</en-UK>
+		<en-US>Czech Republic</en-US>
+		<en-UK>Czech Republic</en-UK>
 		<sk-SK>Česká republika</sk-SK>
 		<cs-CZ>Česká republika</cs-CZ>
 		<de-DE>Tschechien</de-DE>
@@ -699,6 +699,28 @@
 		<bg-BG>Гърция</bg-BG>
 		<nl-NL>Griekenland</nl-NL>
 		<it-IT>Grecia</it-IT>
+		<si-SI>Grčija</si-SI>
+		<nl-NL>Griekenland</nl-NL>
+	</string>
+	<string id="country.EL">
+		<en-US>Greece</en-US>
+		<en-UK>Greece</en-UK>
+		<sk-SK>Grécko</sk-SK>
+		<cs-CZ>Řecko</cs-CZ>
+		<de-DE>Griechenland</de-DE>
+		<hu-HU>Görögország</hu-HU>
+		<pl-PL>Grecja</pl-PL>
+		<pt-PT>Grécia</pt-PT>
+		<es-ES>Grecia</es-ES>
+		<sl-SI>Grčija</sl-SI>
+		<ro-RO>Grecia</ro-RO>
+		<fr-FR>Grèce</fr-FR>
+		<hr-HR>Grčka</hr-HR>
+		<bg-BG>Гърция</bg-BG>
+		<nl-NL>Griekenland</nl-NL>
+		<it-IT>Grecia</it-IT>
+		<si-SI>Grčija</si-SI>
+		<nl-NL>Griekenland</nl-NL>
 	</string>
 
 	<string id="country.GS">
@@ -764,6 +786,10 @@
 		<fr-FR>Croatie</fr-FR>
 		<hr-HR>Hrvatska</hr-HR>
 		<bg-BG>Хърватия</bg-BG>
+		<nl-NL>Kroatië</nl-NL>
+		<it-IT>Croazia</it-IT>
+		<es-ES>Croacia</es-ES>
+		<si-SI>Hrvaška</si-SI>
 		<nl-NL>Kroatië</nl-NL>
 	</string>
 
