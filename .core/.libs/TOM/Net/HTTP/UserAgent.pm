@@ -195,6 +195,18 @@ our @table=
 	# OPERA - operu este pred MSIE, kvoli tomuto:
 	# Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; en) Opera 8.54
 	# je tam id Opera a i MSIE
+	{name=>'Opera 14.X',
+		regexp		=>	['Opera.14'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Opera",
+			'hyphen' => 1,
+	},
+	{name=>'Opera 13.X',
+		regexp		=>	['Opera.13'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Opera",
+			'hyphen' => 1,
+	},
 	{name=>'Opera 12.X',
 		regexp		=>	['Opera.12'],
 		agent_type	=>	"browser",
@@ -249,6 +261,60 @@ our @table=
 
 	# CO NAJRYCHLEJSIE NAJCASTEJSIE SA VYSKYTUJUCE BROWSERY...
 	# aby dlho netrvali regexpy
+	{name=>'Edge/15',
+		regexp		=>	['Edge 15'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Microsoft",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'hyphen' => 1,
+	},
+	{name=>'Edge/14',
+		regexp		=>	['Edge 14'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Microsoft",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'hyphen' => 1,
+	},
+	{name=>'Edge/13',
+		regexp		=>	['Edge 13'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Microsoft",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'hyphen' => 1,
+	},
+	{name=>'Edge/12',
+		regexp		=>	['Edge 12'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Microsoft",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'hyphen' => 1,
+	},
+	{name=>'Edge/11',
+		regexp		=>	['Edge 11'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Microsoft",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'hyphen' => 1,
+	},
+	{name=>'MSIE 11.X',
+		regexp		=>	['MSIE 11'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Microsoft",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'hyphen' => 1,
+	},
 	{name=>'MSIE 10.X',
 		regexp		=>	['MSIE 10'],
 		agent_type	=>	"browser",
@@ -409,6 +475,33 @@ our @table=
 	# --------------------------------------------------------------------
 	
 	# MOZILLA
+	{name=>'Mozilla Firefox 6X.X',
+		regexp		=>	['Firefox/6\d'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Mozilla.org",
+			'html5' => 1,
+			'video_ogg' => 1,
+			'xmlhttp' => 1,
+			'hyphen' => 1,
+	},
+	{name=>'Mozilla Firefox 5X.X',
+		regexp		=>	['Firefox/5\d'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Mozilla.org",
+			'html5' => 1,
+			'video_ogg' => 1,
+			'xmlhttp' => 1,
+			'hyphen' => 1,
+	},
+	{name=>'Mozilla Firefox 4X.X',
+		regexp		=>	['Firefox/4\d'],
+		agent_type	=>	"browser",
+		agent_group	=>	"Mozilla.org",
+			'html5' => 1,
+			'video_ogg' => 1,
+			'xmlhttp' => 1,
+			'hyphen' => 1,
+	},
 	{name=>'Mozilla Firefox 3X.X',
 		regexp		=>	['Firefox/3\d'],
 		agent_type	=>	"browser",
@@ -606,9 +699,40 @@ our @table=
 		old			=>	5,
 	},
 	
+	{name=>'Google.com',
+		regexp		=>	['Googlebot','AdsBot\-Google'],
+		agent_type	=>	"robot",
+		engine_disable	=>	0,
+		recache_disable =>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+	},
+	
 	# --------------------------------------------------------------------
 	
 	# Google Chrome
+	{name=>'Google Chrome 6X.X',
+		'regexp' => ['Chrome/6.'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+			'hyphen' => 1,
+			'spdy' => 1,
+	},
+	{name=>'Google Chrome 5X.X',
+		'regexp' => ['Chrome/5.'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+			'hyphen' => 1,
+			'spdy' => 1,
+	},
 	{name=>'Google Chrome 4X.X',
 		'regexp' => ['Chrome/4.'],
 		'agent_type' => "browser",
@@ -773,6 +897,22 @@ our @table=
 			'html5' => 1,
 			'xmlhttp' => 1,
 			'flash_disabled' => 1,
+			'hyphen' => 1,
+	},
+	{'name'=>'Safari 7XX',
+		'regexp' => ['Safari.7'],
+		'agent_type' => "browser",
+		'agent_group' => "Apple",
+			'html5' => 1,
+			'xmlhttp' => 1,
+			'hyphen' => 1,
+	},
+	{'name'=>'Safari 6XX',
+		'regexp' => ['Safari.6'],
+		'agent_type' => "browser",
+		'agent_group' => "Apple",
+			'html5' => 1,
+			'xmlhttp' => 1,
 			'hyphen' => 1,
 	},
 	{'name'=>'Safari 53X',
@@ -1630,7 +1770,8 @@ our @table=
 		regexp		=>	[
 						'^DA ',
 						'^Obscurix',
-						'Indy Library'
+						'Indy Library',
+						'Mediatoolkitbot'
 						],
 		agent_type	=>	"robot",
 		engine_disable	=>	1,
@@ -1639,7 +1780,6 @@ our @table=
 		USRM_disable	=>	1,
 		messages		=>	["Your UserAgent is too agressive"],
 	},
-	
 	{name=>'OmniExplorer',
 		regexp		=>	['OmniExplorer'],
 		agent_type	=>	"robot",
@@ -1833,15 +1973,6 @@ our @table=
 		DOS=>1,
 	},
 	
-	
-	{name=>'Google.com',
-		regexp		=>	['Googlebot'],
-		agent_type	=>	"robot",
-		engine_disable	=>	0,
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-	},
 	{name=>'Bing.com',
 		regexp		=>	['bingbot'],
 		agent_type	=>	"robot",
@@ -2350,91 +2481,95 @@ our %table_IP=
 	
 	# list spambots
 	'52\.16\.95\.160' => 'badbot', # 2016-01-27
-	'58\.22\.122\.226' => 'spambot', # 2013-02-04
-	'59\.60\.96\.' => 'spambot', # 2013-01-17
-	'59\.60\.97\.' => 'spambot', # 2013-01-17
-	'59\.60\.99\.' => 'spambot', # 2013-01-24
-	'59\.60\.105\.' => 'spambot', # 2013-01-16
-	'59\.60\.106\.' => 'spambot', # 2013-01-16
-	'59\.60\.107\.' => 'spambot', # 2013-01-17
-	'59\.60\.109\.' => 'spambot', # 2013-01-17
-	'59\.60\.111\.' => 'spambot', # 2013-01-17
-#	'62\.197\.199\.74' => 'spambot', # 2013-08-05
-	'60\.173\.26\.35' => 'spambot', # 2013-01-24
-	'65\.111\.172\.' => 'spambot', # 2013-01-15
-	'91\.205\.174\.' => 'spambot', # 2013-01-14
-	'93\.182\.136\.56' => 'spambot', # 2013-01-15
-	'110\.34\.232\.59' => 'spambot', # 2013-01-16
-	'111\.73\.45\.59' => 'spambot', # 2013-01-16
-	'112\.111\.172\.70' => 'spambot', # 2013-01-15
 	'113\.92\.69\.176' => 'spambot', # 2016-05-10
-	'113\.212\.69\.' => 'spambot', # 2013-01-14 - http://www.projecthoneypot.org/ip_113.212.69.122
-	'117\.26\.204\.173' => 'spambot', # 2013-01-24
-	'123\.153\.9\.54' => 'spambot', # 2013-01-16
-	'142\.0\.34\.' => 'spambot', # 2013-01-24
-	'142\.0\.35\.' => 'spambot', # 2013-01-14 - http://www.projecthoneypot.org/ip_142.0.35.169
-	'142\.0\.42\.' => 'spambot', # 2013-01-14
-	'142\.0\.133\.81' => 'spambot', # 2013-01-14
-	'173\.242\.121\.163' => 'spambot', # 2013-01-24
-	'175\.44\.4\.188' => 'spambot', # 2013-01-15
-	'192\.74\.228\.' => 'spambot', # 2013-01-17
-	'199\.19\.107\.' => 'spambot', # 2013-01-15
-	'199\.19\.109\.' => 'spambot', # 2013-01-14 - http://www.projecthoneypot.org/ip_199.19.109.214
-	'199\.115\.229\.' => 'spambot', # 2013-01-14 - http://www.projecthoneypot.org/ip_199.115.229.192
-	'199\.180\.117\.' => 'spambot', # 2013-01-16
-	'222\.77\.193\.' => 'spambot', # 2013-02-04
-	'222\.77\.242\.' => 'spambot', # 2013-02-04
-	'222\.77\.243\.' => 'spambot', # 2013-01-15
-	'222\.77\.247\.' => 'spambot', # 2013-01-15
 	'223\.66\.219\.234' => 'spambot', # 2017-03-29
 	
 	# list of grabbers
 	'5\.45\.62\.130' => 'grabber', # 2016-05-30
 	'5\.56\.16\.238' => 'grabber', # 2016-05-17
+	'5\.62\.43\.75' => 'grabber', # 2017-11-30
+	'5\.62\.58\.' => 'grabber', # 2017-11-30
+	'5\.62\.59\.' => 'grabber', # 2017-11-30
+	'5\.62\.60\.' => 'grabber', # 2017-11-30
+	'5\.62\.61\.' => 'grabber', # 2017-11-30
+	'5\.62\.62\.' => 'grabber', # 2017-11-30
+	'5\.62\.63\.' => 'grabber', # 2017-11-30
+	'5\.79\.68\.161' => 'grabber', # 2017-11-30 - tor
+#	'31\.30\.1\.202' => 'grabber', # 2017-11-16 # audiopartner.cz
+	'35\.205\.20\.103' => 'grabber', # 2017-11-29 
+	'45\.55\.143\.180' => 'grabber', # 2017-11-28
 	'46\.17\.6\.73' => 'grabber', # 2016-03-09 20:00
 	'46\.161\.9\.20' => 'grabber', # 2016-05-17
 	'46\.105\.211\.81' => 'grabber', # 2016-03-09 20:00
 	'46\.161\.9\.32' => 'grabber', # 2016-05-17
 #	'46\.229\.173\.67' => 'grabber', # 2017-05-06 - SEMrush
+	'51\.255\.145\.' => 'grabber', # 2017-11-15
 	'62\.113\.202\.150' => 'grabber', # 2016-05-17
+	'62\.113\.231\.104' => 'grabber', # 2017-11-04 22:00
+	'67\.20\.55\.26' => 'grabber', # 2017-11-30
 	'77\.247\.181\.162' => 'grabber', # 2016-04-02 22:00
+	'78\.46\.161\.81' => 'grabber', # 2017-11-28
+	'79\.172\.216\.19' => 'grabber', # 2017-11-18
+	'81\.2\.216\.39' => 'grabber', # 2017-11-18
 	'82\.199\.129\.144' => 'grabber', # 2016-05-17
 	'82\.199\.150\.' => 'grabber', # 2016-05-17
 	'83\.208\.197\.58' => 'grabber', # 2016-03-09 20:00
+	'84\.200\.108\.' => 'grabber', # 2017-11-29 - www.accelerated.de
 	'89\.32\.145\.88' => 'grabber', # 2016-03-09 20:00
+	'89\.143\.198\.122' => 'grabber', # 2017-11-07 20:00
+	'89\.143\.198\.123' => 'grabber', # 2017-11-04 21:50
+	'89\.187\.152\.81' => 'grabber', # 2016-11-04 22:00
 	'91\.200\.12\.143' => 'grabber', # 2016-05-18
 	'93\.104\.209\.59' => 'grabber', # 2016-04-02 09:00
 	'93\.104\.211\.85' => 'grabber', # 2016-03-09 20:00
 	'91\.200\.12\.76' => 'grabber', # 2016-05-17
 	'94\.44\.254\.182' => 'grabber', # 2016-03-09 20:00
+	'104\.168\.166\.80' => 'grabber', # 2017-11-30
 	'107\.182\.225\.69' => 'grabber', # 2016-03-09 20:00
 	'109\.182\.43\.178' => 'grabber', # 2016-03-09 20:00
+	'116\.233\.105\.210' => 'grabber', # 2017-11-28
 	'128\.140\.219\.215' => 'grabber', # 2016-03-09 20:00
 	'134\.19\.177\.15' => 'grabber', # 2016-05-16
 	'149\.154\.159\.46' => 'grabber', # 2016-03-09 20:00
 	'149\.255\.59\.51' => 'grabber', # 2016-03-09 20:00
 	'151\.236\.19\.174' => 'grabber', # 2016-03-09 20:00
+	'155\.4\.22\.118' => 'grabber', # 2017-11-04 18:00
+	'155\.4\.22\.65' => 'grabber', # 2017-11-07 23:00
 	'155\.133\.37\.1' => 'grabber', # 2016-05-17
 	'158\.69\.59\.155' => 'grabber', # 2016-03-09 20:00
 	'162\.247\.155\.52' => 'grabber', # 2016-03-09 20:00
+	'167\.114\.234\.131' => 'grabber', # 2017-11-29 - scrappy.org
+	'176\.9\.41\.28' => 'grabber', # 2017-11-28
+	'176\.31\.123\.75' => 'grabber', # 2017-11-08 10:00
+	'176\.31\.241\.54' => 'grabber', # 2017-11-08 10:00
+	'176\.116\.18\.184' => 'grabber', # 2017-11-07 23:00
+	'176\.116\.19\.226' => 'grabber', # 2017-11-08 10:00
+	'176\.116\.27\.190' => 'grabber', # 2017-11-08 10:00
 	'170\.75\.163\.162' => 'grabber', # 2016-03-09 20:00
 	'178\.79\.147\.120' => 'grabber', # 2016-03-09 20:00
 	'178\.162\.199\.95' => 'grabber', # 2016-05-30
+	'178\.238\.236\.191' => 'grabber', # 2017-11-08 12:00
+	'183\.57\.242\.44' => 'grabber', # 2017-11-29
 	'185\.5\.53\.94' => 'grabber', # 2016-04-02 09:00
 	'185\.22\.172\.116' => 'grabber', # 2016-03-09 20:00
 	'185\.82\.202\.181' => 'grabber', # 2016-04-02 09:00
+	'188\.95\.50\.54' => 'grabber', # 2017-11-08 10:00
 	'192\.71\.249\.35' => 'grabber', # 2016-03-09 20:00
 	'192\.121\.16\.199' => 'grabber', # 2016-03-09 20:00
+	'192\.160\.102\.170' => 'grabber', # 2017-11-30
 	'193\.37\.152\.80' => 'grabber', # 2016-03-09 20:00
 	'197\.231\.221\.' => 'grabber', # 2016-03-09 20:00 # Cyberdynes VPN users, block 01.
 	'198\.20\.101\.82' => 'grabber', # 2016-03-09 20:00
+#	'212\.24\.150\.2' => 'grabber', # 2017-11-16 - MarketUP
 	'212\.227\.10\.162' => 'grabber', # 2016-05-18
 	'213\.136\.65\.44' => 'grabber', # 2016-05-17
 	'213\.136\.80\.242' => 'grabber', # 2016-03-09 20:00
 	'216\.244\.79\.218' => 'grabber', # 2016-05-17
-	# list of anonymizers
-	#'91\.127\.103\.156' => 'anonymizer',
 	
+	# list of anonymizers
+	'37\.235\.53\.25' => 'anonymizer', # 2017-11-08
+	'120\.229\.3\.255' => 'anonymizer', # 2017-11-08
+	'193\.234\.225\.193' => 'anonymizer', # 2017-11-08
 );
 
 =head1 FUNCTIONS
@@ -2535,6 +2670,23 @@ sub getIDbyName
 
 sub initialize_hacked
 {
+	if (-e $TOM::P.'/_data/ip_blacklist.json')
+	{
+		use JSON;
+		open(HND,'<'.$TOM::P.'/_data/ip_blacklist.json');
+		local $/;
+		my $data=eval{from_json(<HND>)} || {};
+		use Data::Dumper;
+		main::_log("blacklist ".$@,1) if $@;
+		foreach (keys %{$data})
+		{
+			$data->{$_}->{'type'}||='vandaliser';
+			main::_log("add IP '$_' to blacklist as ".$data->{$_}->{'type'}." from date ".$data->{$_}->{'date'});
+			$table_IP{$_}=$data->{$_}->{'type'};
+		}
+		
+	}
+	
 	# naliatie hacked IP's do listu vandalizerov
 	return undef;
 	
