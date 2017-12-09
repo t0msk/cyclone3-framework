@@ -471,7 +471,7 @@ sub image_file_process
 		}
 	}
 	# CMYK magick
-	$image1->Set('colorspace'=>'RGB') if $image1->Get('colorspace') eq "CMYK";
+#	$image1->Set('colorspace'=>'RGB') if $image1->Get('colorspace') eq "CMYK";
 	# Profile magick (reduces size)
 #	$image1->Profile('profile'=>'');
 	
@@ -1086,6 +1086,7 @@ sub image_file_process
 		
 		if ($function_name eq "optimize")
 		{
+#			next if $tom::test;
 			main::_log("exec optimize (sampling-factor, strip, interlace, colorspace)");
 			$image1->Set('sampling-factor'=>'4:2:0');
 			$image1->Strip();
