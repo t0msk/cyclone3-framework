@@ -158,6 +158,49 @@ our @table=
 		USRM_disable	=>	1,
 		messages		=>	["Your browser does not identify itself with any user agent information. Please use at least \"Mozilla/3.0 (compatible;)\".","For more information, please refer to RFC2616 chapter 3.8.,14.43 and turn on your browser identification."],
 	},
+	# IPs, false useragents
+	
+	{name=>'vandaliser',
+		agent_type	=>	"vandaliser",
+		recache_disable =>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+	},
+	{name=>'hacker',
+		agent_type	=>	"vandaliser",
+		recache_disable =>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+		engine_disable	=>	1,
+	},
+	{name=>'hacked', # UserAgent for hacked computer (request from trojan, virus,...)
+		# hacked computer is detected by type of request and processed from library TOM::Net::HTTP::hacked
+		agent_type	=>	"vandaliser",
+		recache_disable =>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+	},
+	{name=>'spambot', # bot collecting email adresses or adding comments
+		agent_type	=>	"vandaliser",
+		recache_disable =>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+		engine_disable => 1,
+	},
+	{name=>'grabber', # bot collecting email adresses or prices from e-commerce sites
+		agent_type	=>	"vandaliser",
+		recache_disable =>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+		engine_disable => 1,
+	},
+	{name=>'badbot', # bot with bad USRM support or too high frequency of requests
+		agent_type	=>	"vandaliser",
+		recache_disable =>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+		engine_disable => 1,
+	},
 	{name=>'ignorant',
 		regexp=>	[
 				'FuckYou',
@@ -2419,55 +2462,12 @@ our @table=
 #		old			=>	5,
 		messages		=>	["Detected shell. In shell, is this only preview!!!"],
 	},
-	
-	
-	# IPs, false useragents
-	
-	{name=>'vandaliser',
-		agent_type	=>	"vandaliser",
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-	},
-	{name=>'hacker',
-		agent_type	=>	"vandaliser",
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-		engine_disable	=>	1,
-	},
-	{name=>'hacked', # UserAgent for hacked computer (request from trojan, virus,...)
-		# hacked computer is detected by type of request and processed from library TOM::Net::HTTP::hacked
-		agent_type	=>	"vandaliser",
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-	},
-	{name=>'spambot', # bot collecting email adresses or adding comments
-		agent_type	=>	"vandaliser",
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-		engine_disable => 1,
-	},
-	{name=>'grabber', # bot collecting email adresses or adding comments
-		agent_type	=>	"vandaliser",
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-		engine_disable => 1,
-	},
-	{name=>'badbot', # bot with bad USRM support or too high frequency of requests
-		agent_type	=>	"vandaliser",
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-		engine_disable => 1,
-	},
 );
 
 
 #MJ12bot
+
+our %table_IP_blacklist;
 
 our %table_IP=
 (
@@ -2589,11 +2589,22 @@ sub analyze
 	# at first detect UserAgent by IP (source IP of profane robots, etc..)
 	if ($env{'IP'})
 	{
+		if ($table_IP_blacklist{$env{'IP'}})
+		{
+			return (
+				&getIDbyName($table_IP_blacklist{$env{'IP'}}),
+				$table[&getIDbyName($table_IP_blacklist{$env{'IP'}})]{'name'},
+			);
+		}
+		
 		foreach my $k(sort keys %table_IP)
 		{
 			if ($env{'IP'}=~/^$k/)
 			{
-				return (&getIDbyName($table_IP{$k}),$table[&getIDbyName($table_IP{$k})]{'name'});
+				return (
+					&getIDbyName($table_IP{$k}),
+					$table[&getIDbyName($table_IP{$k})]{'name'}
+				);
 			}
 		}
 	}
@@ -2604,40 +2615,12 @@ sub analyze
 		return ($cache_UserAgent{$user_agent}{'ID'},$cache_UserAgent{$user_agent}{'name'});
 	}
 	
-#	if ($TOM::CACHE_memcached)
-#	{
-#		my $values=$Ext::CacheMemcache::cache->get(
-#			'namespace' => "UserAgent",
-#			'key' => $user_agent
-#		);
-#		if ($values->{'ID'})
-#		{
-#			main::_log("found in memcache") if $debug;
-#			$cache_UserAgent{$user_agent}{'ID'}=$values->{'ID'};
-#			$cache_UserAgent{$user_agent}{'name'}=$values->{'name'};
-#			return ($values->{'ID'},$values->{'name'});
-#		}
-#	}
-	
 	foreach my $i(1..@table-1)
 	{
 		foreach my $regexp (@{$table[$i]{'regexp'}})
 		{
-#			main::_log("checking '$user_agent' to $regexp");
 			if ($user_agent=~/$regexp/i)
 			{
-#				if ($TOM::CACHE_memcached)
-#				{
-#					$Ext::CacheMemcache::cache->set(
-#						'namespace' => "UserAgent",
-#						'key' => $user_agent,
-#						'value' => {
-#							'IP' => $i,
-#							'name' => $table[$i]{'name'}
-#						},
-#						'expiration' => '600S'
-#					);
-#				}
 				$cache_UserAgent{$user_agent}{'ID'}=$i;
 				$cache_UserAgent{$user_agent}{'name'}=$table[$i]{'name'};
 				return ($i,$table[$i]{'name'});
@@ -2678,13 +2661,16 @@ sub initialize_hacked
 		my $data=eval{from_json(<HND>)} || {};
 		use Data::Dumper;
 		main::_log("blacklist ".$@,1) if $@;
-		foreach (keys %{$data})
+		my $i;
+		foreach my $IP (keys %{$data})
 		{
-			$data->{$_}->{'type'}||='vandaliser';
-			main::_log("add IP '$_' to blacklist as ".$data->{$_}->{'type'}." from date ".$data->{$_}->{'date'});
-			$table_IP{$_}=$data->{$_}->{'type'};
+			$i++;
+			$data->{$IP}->{'type'}||='vandaliser';
+#			main::_log("add IP '$_' to blacklist as ".$data->{$_}->{'type'}." from date ".$data->{$_}->{'date'});
+#			$table_IP{$IP}=$data->{$IP}->{'type'};
+			$table_IP_blacklist{$IP}=$data->{$IP}->{'type'};
 		}
-		
+		main::_log("add ".$i." IP's to blacklist");
 	}
 	
 	# naliatie hacked IP's do listu vandalizerov
