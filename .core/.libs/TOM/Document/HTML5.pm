@@ -282,7 +282,13 @@ $TOM::Document::base::copyright
 		foreach my $hash(@{$self->{'ENV'}{'head'}{'script'}})
 		{
 			$self->{'OUT'}{'HEADER'} .= " <script";
-			foreach (sort keys %{$hash}){$self->{'OUT'}{'HEADER'} .= " ".$_ . "=\"".$$hash{$_}."\"";}
+			foreach (sort keys %{$hash}){
+				if ($$hash{$_}){
+					$self->{'OUT'}{'HEADER'} .= " ".$_ . "=\"".$$hash{$_}."\"";
+				}else{
+					$self->{'OUT'}{'HEADER'} .= " ".$_;
+				}
+			}
 			$self->{'OUT'}{'HEADER'} .= "></script>\n";
 		}
 	}
