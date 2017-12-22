@@ -96,13 +96,17 @@ sub _compress
 		}
 		return 'gz|'.compress(Encode::encode_utf8($json->encode($data)),$compression_level);
 	}
+#	elsif (!ref($data))
+#	{
+#		return $data;
+#	}
 	return $$data;
 }
 
 sub _uncompress
 {
 	my $data=shift;
-	$$data=Encode::decode_utf8(uncompress($$data))
+	$$data=eval{Encode::decode_utf8(uncompress($$data))}
 		if $$data=~s/^gz\|//;
 }
 
