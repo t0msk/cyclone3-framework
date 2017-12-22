@@ -136,9 +136,9 @@ sub _log
 	);
 	
 	$get[3]=$TOM::engine unless $get[3];
-	$get[1]=~s|\r|\\r|g;
-	$get[1]=~s|\t|\\t|g;
-	$get[1]=~s|\n|\\n|g;
+#	$get[1]=~s|\r|\\r|g;
+#	$get[1]=~s|\t|\\t|g;
+#	$get[1]=~s|\n|\\n|g;
 	
 	my $tt=time();
 	
@@ -202,8 +202,8 @@ sub _log
 #		$msg=$log_sym[$get[2]].' '.$get[1] unless $main::debug;
 #		$msg=$log_sym[$get[2]].$get[1] unless $main::debug;
 		$msg=$get[1] unless $main::debug;
-		$msg=~s|\\n|\n|g;
-		$msg=~s|\\t|\t|g;
+#		$msg=~s|\\n|\n|g;
+#		$msg=~s|\\t|\t|g;
 		if ($log_sym[$get[2]] eq '-')
 		{
 			print STDERR color 'red';

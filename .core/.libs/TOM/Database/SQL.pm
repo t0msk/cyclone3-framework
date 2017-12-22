@@ -844,7 +844,16 @@ sub execute
 					if ($typeselect || $env{'cache_force'}){
 						if ($env{'slave'}){1}else{0}	
 					}else{undef}
+				},
+				'cache_id_s' => do {
+					if ($output{'sth'} && $output{'sth'}{'cache'})
+					{
+						$output{'sth'}{'cache'}{'id'};
+					}
 				}
+#				'cache_id_s' => do {
+#					$output{'sth'}->{'cache'}->{'id'}
+#				}
 			}
 		})
 	}
