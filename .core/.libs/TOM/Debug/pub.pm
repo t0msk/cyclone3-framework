@@ -77,7 +77,7 @@ sub request
 	my $severity=3;
 		$severity=4 if $env{'code'}=~/^5..$/;
 		$severity=4 if $env{'code'}=~/^404$/;
-	main::_log("'".$main::ENV{'REQUEST_URI'}."' ".$main::ENV{'QUERY_STRING_FULL'}.' '.$main::ENV{'REMOTE_ADDR'}.' '.$env{'code'}.' '.$env{'location'},{
+	main::_log($main::ENV{'REQUEST_METHOD'}." '".$main::ENV{'REQUEST_URI'}."' ".$main::ENV{'QUERY_STRING_FULL'}.' '.$main::ENV{'REMOTE_ADDR'}.' '.$env{'code'}.' '.$env{'location'},{
 		'facility' => 'pub.track',
 		'severity' => $severity,
 		'data' => {
@@ -98,6 +98,7 @@ sub request
 			
 			'REMOTE_ADDR_t' => $main::ENV{'REMOTE_ADDR'},
 			'REFERER_t' => $main::ENV{'HTTP_REFERER'},
+			'METHOD_t' => $main::ENV{'REQUEST_METHOD'},
 			'USER_AGENT_t' => $main::ENV{'HTTP_USER_AGENT'},
 #			'UserAgent_t' => $main::UserAgent_name,
 			'UserAgent_s' => $main::UserAgent_name,
