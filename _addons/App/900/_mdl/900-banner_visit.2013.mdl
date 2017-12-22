@@ -45,7 +45,7 @@ sub execute
 		);
 		my %banner=$sth0{'sth'}->fetchhash();
 		
-		if ($banner{'rules_views_session_max'} || $banner{'rules_views_browser_session_max'})
+		if ($banner{'rules_views_session_max'} || $banner{'rules_views_browser_session_max'} || $banner{'rules_views_browser_max'})
 		{
 			TOM::Database::SQL::execute(qq{
 				INSERT DELAYED INTO
