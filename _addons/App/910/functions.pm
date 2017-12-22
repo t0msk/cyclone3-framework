@@ -1432,708 +1432,8 @@ sub _product_index
 	
 	if ($Ext::Solr && ($env{'solr'} || not exists $env{'solr'}))
 	{
-		my @content_ent;
-		my @content_id;
-		
-		my $status_string = $App::910::solr_status_index;
-		
-		$status_string =~ s/(\w)/\'$1\',/g; $status_string =~ s/,$//;
-		
-#		main::_log(" status=$status_string");
-		
-		my %sth0=TOM::Database::SQL::execute(qq{
-			SELECT
-				*
-			FROM
-				$App::910::db_name.a910_product
-			WHERE
-				status IN ( $status_string ) AND
-				ID=?
-		},'quiet'=>1,'bind'=>[$env{'ID'}]);
-		if (my %db0_line=$sth0{'sth'}->fetchhash())
-		{
-			$env{'ID_entity'}=$db0_line{'ID_entity'};
-			main::_log(" ID_entity=$db0_line{'ID_entity'}");
-			
-			push @content_ent,WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} )
-				if $db0_line{'ID_entity'};
-			
-			push @content_ent,WebService::Solr::Field->new( 'product_number_s' => $db0_line{'product_number'} )
-				if $db0_line{'product_number'};
-			push @content_ent,WebService::Solr::Field->new( 'product_number_t' => $db0_line{'product_number'} )
-				if $db0_line{'product_number'};
-			
-			push @content_ent,WebService::Solr::Field->new( 'amount_f' => $db0_line{'amount'} )
-				if $db0_line{'amount'};
-			
-			push @content_ent,WebService::Solr::Field->new( 'status_new_s' => $db0_line{'status_new'} )
-				if $db0_line{'status_new'};
-			push @content_ent,WebService::Solr::Field->new( 'status_sale_s' => $db0_line{'status_sale'} )
-				if $db0_line{'status_sale'};
-			push @content_ent,WebService::Solr::Field->new( 'status_special_s' => $db0_line{'status_special'} )
-				if $db0_line{'status_special'};
-			push @content_ent,WebService::Solr::Field->new( 'status_recommended_s' => $db0_line{'status_recommended'} )
-				if $db0_line{'status_recommended'};
-			push @content_id,WebService::Solr::Field->new( 'status_main_s' => $db0_line{'status_main'} )
-				if $db0_line{'status_main'};
-			push @content_id,WebService::Solr::Field->new( 'status_s' => $db0_line{'status'} )
-				if $db0_line{'status'};
-			
-			push @content_id,WebService::Solr::Field->new( 'price_f' => $db0_line{'price'} )
-				if $db0_line{'price'};
-				
-			push @content_id,WebService::Solr::Field->new( 'price_full_f' => $db0_line{'price_full'} )
-				if $db0_line{'price_full'};
-			
-			push @content_id,WebService::Solr::Field->new( 'sellscore_f' => $db0_line{'sellscore'} )
-				if $db0_line{'sellscore'};
-			
-			if ($db0_line{'datetime_next_index'} && not $db0_line{'datetime_publish_start'} =~/^0000/)
-			{
-				$db0_line{'datetime_next_index'}=~s| (\d\d)|T$1|;
-				$db0_line{'datetime_next_index'}.="Z";
-				push @content_id,WebService::Solr::Field->new( 'next_index_tdt' => $db0_line{'datetime_next_index'} );
-			}
-			
-			if ($db0_line{'datetime_publish_start'} && not $db0_line{'datetime_publish_start'} =~/^0000/)
-			{
-				$db0_line{'datetime_publish_start'}=~s| (\d\d)|T$1|;
-				$db0_line{'datetime_publish_start'}.="Z";
-				push @content_id,WebService::Solr::Field->new( 'datetime_publish_start_tdt' => $db0_line{'datetime_publish_start'} );
-			}
-			
-			if ($db0_line{'datetime_publish_stop'} && not $db0_line{'datetime_publish_stop'} =~/^0000/)
-			{
-				$db0_line{'datetime_publish_stop'}=~s| (\d\d)|T$1|;
-				$db0_line{'datetime_publish_stop'}.="Z";
-				push @content_id,WebService::Solr::Field->new( 'datetime_publish_stop_tdt' => $db0_line{'datetime_publish_stop'} );
-			}
-			
-			my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
-#			use Data::Dumper;print Dumper(\%metadata);
-			foreach my $sec(keys %metadata)
-			{
-				foreach (keys %{$metadata{$sec}})
-				{
-					next unless $metadata{$sec}{$_};
-					if ($_=~s/\[\]$//)
-					{
-#						print "$sec\n";
-						# this is comma separated array
-						foreach my $val (split(';',$metadata{$sec}{$_.'[]'}))
-						{push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_sm' => $val)}
-						push @content_ent,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_);
-						next;
-					}
-					
-					push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
-					if ($metadata{$sec}{$_}=~/^[0-9]{1,9}0*?$/ && $metadata{$sec}{$_} < 2147483647)
-					{
-						push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
-					}
-					if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}0*?$/ && (not $metadata{$sec}{$_}=~/\..*?\./))
-					{
-						push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
-					}
-					
-					# list of used metadata fields
-					push @content_ent,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_ );
-				}
-			}
-			
-			my %sth1=TOM::Database::SQL::execute(qq{
-				SELECT
-					*
-				FROM
-					$App::910::db_name.a910_product_ent
-				WHERE
-					ID_entity=?
-			},'quiet'=>1,'bind'=>[$db0_line{'ID_entity'}]);
-			if (my %db1_line=$sth1{'sth'}->fetchhash())
-			{
-				push @content_ent,WebService::Solr::Field->new( 'product_type_s' => $db1_line{'product_type'} );
-				push @content_ent,WebService::Solr::Field->new( 'posix_owner_s' => $db1_line{'posix_owner'} );
-				
-				my %sth2=TOM::Database::SQL::execute(qq{
-					SELECT
-						name
-					FROM
-						`$App::910::db_name`.a910_product_brand
-					WHERE
-						ID=?
-				},'quiet'=>1,'bind'=>[$db1_line{'ID_brand'}]);
-				if (my %db2_line=$sth2{'sth'}->fetchhash())
-				{
-					push @content_ent,WebService::Solr::Field->new( 'brand_f' =>  $db1_line{'ID_brand'});
-					push @content_ent,WebService::Solr::Field->new( 'brand_name_s' =>  $db2_line{'name'});
-					push @content_ent,WebService::Solr::Field->new( 'brand_name_t' =>  $db2_line{'name'});
-				}
-			}
-			
-			# hits
-			my %sth1=TOM::Database::SQL::execute(qq{
-				SELECT
-					COUNT(*) AS cnt
-				FROM
-					$App::910::db_name.a910_product_hit
-				WHERE
-					ID_product = ?
-			},'quiet'=>1,'bind'=>[$env{'ID'}]);
-			if (my %db1_line=$sth1{'sth'}->fetchhash())
-			{push @content_ent,WebService::Solr::Field->new( 'hits_i' =>  $db1_line{'cnt'});}
-			
-			# hits 7days
-			my %sth1=TOM::Database::SQL::execute(qq{
-				SELECT
-					COUNT(*) AS cnt
-				FROM
-					$App::910::db_name.a910_product_hit
-				WHERE
-					ID_product = ?
-					AND datetime_event >= DATE_SUB(NOW(),INTERVAL 7 DAY)
-			},'quiet'=>1,'bind'=>[$env{'ID'}]);
-			if (my %db1_line=$sth1{'sth'}->fetchhash())
-			{push @content_ent,WebService::Solr::Field->new( 'hits_7dy_i' =>  $db1_line{'cnt'})}
-			
-			# hits 24hr
-			my %sth1=TOM::Database::SQL::execute(qq{
-				SELECT
-					COUNT(*) AS cnt
-				FROM
-					$App::910::db_name.a910_product_hit
-				WHERE
-					ID_product = ?
-					AND datetime_event >= DATE_SUB(NOW(),INTERVAL 24 HOUR)
-			},'quiet'=>1,'bind'=>[$env{'ID'}]);
-			if (my %db1_line=$sth1{'sth'}->fetchhash())
-			{push @content_ent,WebService::Solr::Field->new( 'hits_24hr_i' =>  $db1_line{'cnt'})}
-			
-			# rating_variable
-			my %sth1=TOM::Database::SQL::execute(qq{
-				SELECT
-					a910_product_rating_variable.score_variable AS var,
-					AVG(a910_product_rating_variable.score_value) AS val,
-					COUNT(DISTINCT(a910_product_rating.ID_entity)) AS cnt
-				FROM
-					$App::910::db_name.a910_product_rating_variable
-				INNER JOIN a910_product_rating ON
-				(
-					a910_product_rating.ID_entity = a910_product_rating_variable.ID_entity
-				)
-				WHERE
-					a910_product_rating.score_basic IS NULL AND
-					a910_product_rating.status='Y' AND
-					a910_product_rating.ID_product = ?
-				GROUP BY
-					a910_product_rating_variable.score_variable
-			},'quiet'=>1,'bind'=>[$env{'ID'}]);
-			my $i_count;
-			my $i_sum;
-			my $i_avg;
-			while (my %db1_line=$sth1{'sth'}->fetchhash())
-			{
-				main::_log("rating variable '$db1_line{'var'}' cnt='$db1_line{'cnt'}'");
-				my $var=$db1_line{'var'};
-				$var=lc(Int::charsets::encode::UTF8_ASCII($var));
-				$var=~s|[^\w]||g;
-				$i_count++;
-				$i_sum+=$db1_line{'val'};
-				push @content_ent,WebService::Solr::Field->new( 'Rating_variable.'.$var.'_i' =>  ceil($db1_line{'val'}+0));
-			}
-			
-			# vahovany rating
-			my $helpful_initial=2;
-			my %sth1=TOM::Database::SQL::execute(qq{
-				SELECT (
-					SUM(
-						IF (rating.score_basic, rating.score_basic,
-							(SELECT AVG(rating_variable.score_value) AS val FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity))
-						* COALESCE((
-							SELECT IF (rating_weight,rating_weight,0.01)
-							FROM TOM.a301_user_profile
-							WHERE ID_entity = rating.posix_owner
-							LIMIT 1
-						),0.5) * ((rating.helpful_Y+$helpful_initial) / (rating.helpful_Y+$helpful_initial + rating.helpful_N+$helpful_initial))
-					) / SUM( COALESCE((
-							SELECT IF (rating_weight,rating_weight,0.01)
-							FROM TOM.a301_user_profile
-							WHERE ID_entity = rating.posix_owner
-							LIMIT 1
-						),0.5) * ((rating.helpful_Y+$helpful_initial) / (rating.helpful_Y+$helpful_initial + rating.helpful_N+$helpful_initial))
-					)
-				) AS score,
-					COUNT(rating.ID) AS ratings,
-					MAX(rating.datetime_rating) AS datetime_rating
-				FROM
-					$App::910::db_name.a910_product_rating AS rating
-				WHERE
-					rating.status='Y'
-	--				AND (
-	--					SELECT ID
-	--					FROM TOM.a301_user_profile
-	--					WHERE ID_entity = rating.posix_owner
-	--					LIMIT 1
-	--				) IS NOT NULL
-					AND (rating.score_basic IS NOT NULL
-						OR (
-							SELECT COUNT(rating_variable.score_value) FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity
-						) > 0
-					)
-					AND rating.ID_product = ?
-				GROUP BY
-					rating.ID_product
-			},'quiet'=>1,'bind'=>[$env{'ID'}]);
-			my %db1_line=$sth1{'sth'}->fetchhash();
-			
-			if ($db1_line{'ratings'})
-			{
-				$db1_line{'score'} = 0 unless $db1_line{'score'};
-				main::_log("ratings avg='$db1_line{'score'}' count='$db1_line{'ratings'}'");
-				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_count_i' =>  ceil($db1_line{'ratings'}));
-				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_i' =>  ceil($db1_line{'score'}));
-				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_f' =>  $db1_line{'score'});
-				
-	#			$db1_line{'datetime_rating'}=~s| (\d\d)|T$1|;
-	#			$db1_line{'datetime_rating'}.="Z";
-	#			push @content_id,WebService::Solr::Field->new( 'Rating_datetime_tdt' => $db1_line{'datetime_rating'} );
-			}
-			
-			my %sth1=TOM::Database::SQL::execute(qq{
-				SELECT
-					rating.datetime_rating
-				FROM
-					$App::910::db_name.a910_product_rating AS rating
-				WHERE
-					rating.status='Y'
-					AND length(rating.description) >= 10
-					AND rating.ID_product = ?
-				ORDER BY
-					rating.datetime_rating DESC
-				LIMIT 1
-			},'quiet'=>1,'bind'=>[$env{'ID'}]);
-			my %db1_line=$sth1{'sth'}->fetchhash();
-			if ($db1_line{'datetime_rating'})
-			{
-				$db1_line{'datetime_rating'}=~s| (\d\d)|T$1|;
-				$db1_line{'datetime_rating'}.="Z";
-				push @content_id,WebService::Solr::Field->new( 'Rating_datetime_tdt' => $db1_line{'datetime_rating'} );
-			}
-			
-			# rating in last 6months (not weighted)
-			if ($db1_line{'ratings'})
-			{
-				my %sth1=TOM::Database::SQL::execute(qq{
-					SELECT
-						AVG(IF (rating.score_basic, rating.score_basic,
-							(SELECT AVG(rating_variable.score_value) AS val FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity)))
-							AS score,
-						COUNT(rating.ID) AS ratings
-					FROM
-						$App::910::db_name.a910_product_rating AS rating
-					WHERE
-						rating.status='Y'
-						AND rating.datetime_rating >= DATE_SUB(NOW(),INTERVAL 6 MONTH)
-						AND rating.ID_product = ?
-				},'quiet'=>1,'bind'=>[$env{'ID'}]);
-				my %db1_line=$sth1{'sth'}->fetchhash();
-				if ($db1_line{'ratings'})
-				{
-					main::_log("6mo ratings avg='$db1_line{'score'}' count='$db1_line{'ratings'}'");
-					$db1_line{'score'} = 0 unless $db1_line{'score'};
-					push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_count_i' =>  ceil($db1_line{'ratings'}));
-					push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_avg_i' =>  ceil($db1_line{'score'}));
-					push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_avg_f' =>  $db1_line{'score'});
-				}
-			}
-			
-			my %sth1=TOM::Database::SQL::execute(qq{
-				SELECT
-					COUNT(rating.ID) AS ratings
-				FROM
-					$App::910::db_name.a910_product_rating AS rating
-				WHERE
-					rating.status='Y'
-					AND rating.posix_owner != ''
-					AND rating.description IS NOT NULL
-					AND rating.status_publish='Y'
-					AND rating.ID_product = ?
-			},'quiet'=>1,'bind'=>[$env{'ID'}]);
-			my %db1_line=$sth1{'sth'}->fetchhash();
-			if ($db1_line{'ratings'})
-			{
-				push @content_ent,WebService::Solr::Field->new( 'Rating_public_count_i' =>  int($db1_line{'ratings'}));
-			}
-			
-			if (my $relation=(App::160::SQL::get_relations(
-				'db_name' => $App::910::db_name,
-				'l_prefix' => 'a910',
-				'l_table' => 'product',
-				'l_ID_entity' => $env{'ID'},
-				'rel_type' => 'thumbnail',
-				'r_prefix' => "a501",
-				'r_table' => "image",
-				'status' => "Y",
-				'limit' => 1
-			))[0])
-			{
-				push @content_ent,WebService::Solr::Field->new( 'is_thumbnail_i' => 1);
-				push @content_ent,WebService::Solr::Field->new( 'is_thumbnail_s' => 'Y');
-				push @content_ent,WebService::Solr::Field->new( 'thumbnail_i' => $relation->{'r_ID_entity'});
-			}
-			
-			if (my $relation=(App::160::SQL::get_relations(
-				'db_name' => $App::910::db_name,
-				'l_prefix' => 'a910',
-				'l_table' => 'product',
-				'l_ID_entity' => $env{'ID'},
-				'rel_type' => 'gallery',
-				'r_prefix' => "a501",
-				'r_table' => "image",
-				'status' => "Y",
-				'limit' => 1
-			))[0])
-			{
-				push @content_ent,WebService::Solr::Field->new( 'is_gallery_i' => 1);
-				push @content_ent,WebService::Solr::Field->new( 'is_gallery_s' => 'Y');
-			}
-			
-			# prices
-			my %sth1=TOM::Database::SQL::execute(qq{
-				SELECT
-					a910_product_price.*,
-					a910_price_level.name_code
-				FROM
-					$App::910::db_name.a910_product_price
-				INNER JOIN $App::910::db_name.a910_price_level ON
-				(
-					a910_product_price.ID_price = a910_price_level.ID_entity
-				)
-				WHERE
-					a910_product_price.ID_entity = ?
-			},'quiet'=>1,'bind'=>[$env{'ID'}]);
-			while (my %db1_line=$sth1{'sth'}->fetchhash())
-			{
-				next if $db1_line{'price'} == 0;
-				push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_f' =>  $db1_line{'price'});
-	#			push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_VAT_f' =>  );
-				push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_full_f' =>  $db1_line{'price_full'} || $db1_line{'price'});
-				
-				if ($App::910::solr_price_history)
-				{
-					foreach my $part ('2:DAY','7:DAY','4:WEEK','6:MONTH','12:MONTH')
-					{
-						my ($interval,$interval_type)=split(':',$part);
-	#					my $interval='7';
-	#					my $interval_type='DAY';
-						my $interval_down=$interval+($interval/2);
-						my $interval_up=$interval-($interval/2);
-						
-						# history of prices
-						
-						# start price
-						my %sth2=TOM::Database::SQL::execute(qq{
-							SELECT
-								a910_product_price_j.*,
-								a910_price_level.name_code
-							FROM
-								$App::910::db_name.a910_product_price_j
-							INNER JOIN $App::910::db_name.a910_price_level ON
-							(
-								a910_product_price_j.ID_price = a910_price_level.ID_entity
-							)
-							WHERE
-								a910_product_price_j.ID_entity = ?
-								AND a910_product_price_j.ID = ?
-								AND a910_product_price_j.datetime_create < DATE_SUB(NOW(),INTERVAL $interval_down $interval_type)
-							ORDER BY
-								a910_product_price_j.datetime_create DESC
-							LIMIT 1
-						},'quiet'=>1,'bind'=>[$env{'ID'},$db1_line{'ID'}]);
-						my %db2_line=$sth2{'sth'}->fetchhash();
-						
-						next unless $db2_line{'datetime_create'};
-						
-						main::_log("$db1_line{'ID'}: START at '$db2_line{'datetime_create'}' with price '$db2_line{'price'}/$db2_line{'price_full'}'");
-		#				main::_log("$db1_line{'ID'}: ending with price '$db1_line{'price'}/$db1_line{'price_full'}'");
-						
-						my %prices;
-						my $i;
-						my %sth3=TOM::Database::SQL::execute(qq{
-							SELECT
-								a910_product_price_j.*,
-								TIMESTAMPDIFF(MINUTE,
-									COALESCE((
-										SELECT
-											j2.datetime_create
-										FROM
-											$App::910::db_name.a910_product_price_j AS j2
-										WHERE
-											j2.ID_entity = a910_product_price_j.ID_entity
-											AND j2.ID = a910_product_price_j.ID
-											AND j2.datetime_create < a910_product_price_j.datetime_create
-											AND j2.datetime_create > DATE_SUB(NOW(),INTERVAL $interval_down $interval_type)
-										ORDER BY
-											j2.datetime_create DESC
-										LIMIT 1
-									),DATE_SUB(NOW(),INTERVAL $interval_down $interval_type)),a910_product_price_j.datetime_create
-								) AS date_diff_previous,
-								TIMESTAMPDIFF(MINUTE,a910_product_price_j.datetime_create,
-									COALESCE((
-										SELECT
-											j2.datetime_create
-										FROM
-											$App::910::db_name.a910_product_price_j AS j2
-										WHERE
-											j2.ID_entity = a910_product_price_j.ID_entity
-											AND j2.ID = a910_product_price_j.ID
-											AND j2.datetime_create > a910_product_price_j.datetime_create
-											AND j2.datetime_create < DATE_SUB(NOW(),INTERVAL $interval_up $interval_type)
-										ORDER BY
-											j2.datetime_create ASC
-										LIMIT 1
-									),DATE_SUB(NOW(),INTERVAL $interval_up $interval_type))
-								) AS date_diff_to
-							FROM
-								$App::910::db_name.a910_product_price_j
-							WHERE
-								a910_product_price_j.ID_entity = ?
-								AND a910_product_price_j.ID = ?
-								AND a910_product_price_j.datetime_create >= DATE_SUB(NOW(),INTERVAL $interval_down $interval_type)
-								AND a910_product_price_j.datetime_create <= DATE_SUB(NOW(),INTERVAL $interval_up $interval_type)
-							ORDER BY
-								a910_product_price_j.datetime_create
-						},'quiet'=>1,'bind'=>[$env{'ID'},$db1_line{'ID'}]);
-						while (my %db3_line=$sth3{'sth'}->fetchhash())
-						{
-							main::_log("$db3_line{'ID'}: CHANG at '$db3_line{'datetime_create'}' to price '$db3_line{'price'}/$db3_line{'price_full'}' (duration=$db3_line{'date_diff_to'} previous=$db3_line{'date_diff_previous'})");
-							if (!$i){$prices{$db2_line{'price'}}+=$db3_line{'date_diff_previous'};}
-							$prices{$db3_line{'price'}}+=$db3_line{'date_diff_to'};
-							$i++;
-						}
-						
-						if (!$i){$prices{$db2_line{'price'}}+=1;}
-						
-						my $prices_sum;
-						my $prices_i;
-						foreach (keys %prices){$prices_i+=$prices{$_};$prices_sum+=$_*$prices{$_};}
-						
-						my $avg=ceil(($prices_sum/$prices_i)*100)/100;
-						
-						my $code=$interval.do{$interval_type=~/^(.)/;lc($1);};
-						
-						main::_log("$db1_line{'name_code'}.$code avg=".$avg);
-						
-						push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_'.$code.'_f' =>  $avg);
-						
-					}
-				}
-				# end price history
-				
-	#			main::_log("---");
-				
-			}
-			
-			# set
-			foreach my $relation (App::160::SQL::get_relations(
-				'db_name' => $App::910::db_name,
-				'l_prefix' => 'a910',
-				'l_table' => 'product',
-				'l_ID_entity' => $db0_line{'ID'},
-				'r_prefix' => "a910",
-				'r_table' => "product",
-				'rel_type' => "product_set",
-				'status' => "Y"
-			))
-			{
-				
-				main::_log("product_set relation to ".$relation->{'r_ID_entity'}." ".$relation->{'priority'});
-				push @content_id,WebService::Solr::Field->new( 'set_product_sm' =>  $relation->{'r_ID_entity'}.':'.$relation->{'quantifier'});
-				
-			}
-			
-		}
-		
-		my %content;
-		
-		my %sth0=TOM::Database::SQL::execute(qq{
-			SELECT
-				*
-			FROM
-				$App::910::db_name.a910_product_lng
-			WHERE
-				status='Y'
-				AND ID_entity=?
-		},'quiet'=>1,'bind'=>[$env{'ID'}]);
-		while (my %db0_line=$sth0{'sth'}->fetchhash())
-		{
-			my $lng=$db0_line{'lng'};
-	#		main::_log("product_lng ID='$db0_line{'ID'}' lng='$lng'");
-			
-			my %sth1=TOM::Database::SQL::execute(qq{
-				SELECT
-					a910_product_sym.ID,
-					a910_product_cat.ID_charindex,
-					a910_product_cat.ID as cat_ID
-				FROM
-					$App::910::db_name.a910_product_sym
-				INNER JOIN $App::910::db_name.a910_product_cat ON
-				(
-					a910_product_sym.ID = a910_product_cat.ID_entity
-					AND a910_product_cat.lng = ?
-				)
-				WHERE
-					a910_product_sym.status='Y'
-					AND a910_product_sym.ID_entity=?
-			},'quiet'=>1,'bind'=>[$db0_line{'lng'},$env{'ID_entity'}]);
-			while (my %db1_line=$sth1{'sth'}->fetchhash())
-			{
-	#			main::_log("[$lng] cat+ $db1_line{'ID'} $db1_line{'ID_charindex'}");
-				push @{$content{$lng}},WebService::Solr::Field->new( 'cat_charindex_sm' =>  $db1_line{'ID_charindex'}); # product_cat.ID_entity
-				push @{$content{$lng}},WebService::Solr::Field->new( 'cat' =>  $db1_line{'ID'});
-				
-				my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
-				foreach my $p(
-					App::020::SQL::functions::tree::get_path(
-						$db1_line{'cat_ID'},
-						%sql_def,
-						'-cache' => 86400*7
-					)
-				)
-				{
-	#				main::_log(" cat_sm=".$p->{'ID_entity'});
-					push @{$content{$lng}},WebService::Solr::Field->new( 'cat_path_sm' =>  $p->{'ID_entity'});
-				}
-				
-			}
-			
-			# save original HTML values
-			$db0_line{'description_short'}=~s/\|/&#124;/g;
-			if ($tom::test && $db0_line{'lng'} eq "pl")
-			{
-				$db0_line{'description_short'}=~tr/ł/l/;
-#				print $db0_line{'description_short'}."\n";
-			}
-			push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description_short_orig_pl' => $db0_line{'description_short'} )
-				if $db0_line{'description_short'};
-			$db0_line{'description'}=~s/\|/&#124;/g;
-			push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description_orig_pl' => $db0_line{'description'} )
-				if $db0_line{'description'};
-			
-			for my $part('description_short', 'description')
-			{
-				$db0_line{$part}=~s|<.*?>||gms;
-				$db0_line{$part}=~s|&nbsp;| |gms;
-				$db0_line{$part}=~s|  | |gms;
-	#			for (0,1,2,4,11,'B','0161','0165')
-	#			{$db0_line{$part}=~s|\x{$_}||g;}
-			}
-			
-			push @{$content{$lng}},WebService::Solr::Field->new( 'lng_s' => $lng );
-			
-			push @{$content{$lng}},WebService::Solr::Field->new( 'name' => $db0_line{'name'} )
-				if $db0_line{'name'};
-			push @{$content{$lng}},WebService::Solr::Field->new( 'title' => $db0_line{'name'} )
-				if $db0_line{'name'};
-			push @{$content{$lng}},WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} )
-				if $db0_line{'name_url'};
-			push @{$content{$lng}},WebService::Solr::Field->new( 'subject' => $db0_line{'name_long'} )
-				if ($db0_line{'name_long'});
-			push @{$content{$lng}},WebService::Solr::Field->new( 'name_label_s' => $db0_line{'name_label'} )
-				if $db0_line{'name_label'};
-			
-			push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description' => $db0_line{'description_short'} )
-				if $db0_line{'description_short'};
-			
-	#		print $db0_line{'description'}."\n";
-	#		my $len=9268;
-	#		print "!".ord(substr($db0_line{'description'},$len-1,1))."!\n";
-	#		print "!".ord(substr($db0_line{'description'},$len,1))."!\n";
-	#		print "!".ord(substr($db0_line{'description'},$len+1,1))."!\n";
-	#		$db0_line{'description'}=substr($db0_line{'description'},0,$len);
-			
-			push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'text' => $db0_line{'description'} )
-				if $db0_line{'description'};
-			push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'keywords' => $db0_line{'keywords'} )
-				if $db0_line{'keywords'};
-			
-			if ($db0_line{'datetime_modified'})
-			{
-				$db0_line{'datetime_modified'}=~s| (\d\d)|T$1|;
-				$db0_line{'datetime_modified'}.="Z";
-				push @{$content{$lng}},WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_modified'} );
-			}
-			
-			# language rating
-			my %sth1=TOM::Database::SQL::execute(qq{
-				SELECT
-					rating.datetime_rating
-				FROM
-					$App::910::db_name.a910_product_rating AS rating
-				WHERE
-					rating.status='Y'
-					AND length(rating.description) >= 10
-					AND rating.ID_product = ?
-					AND rating.lng = ?
-				ORDER BY
-					rating.datetime_rating DESC
-				LIMIT 1
-			},'quiet'=>1,'bind'=>[$env{'ID'},$db0_line{'lng'}]);
-			my %db1_line=$sth1{'sth'}->fetchhash();
-			if ($db1_line{'datetime_rating'})
-			{
-				$db1_line{'datetime_rating'}=~s| (\d\d)|T$1|;
-				$db1_line{'datetime_rating'}.="Z";
-				push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'Rating_datetime_lng_tdt' => $db1_line{'datetime_rating'} );
-			}
-			
-		}
-		
-		use Data::Dumper;
-	#	print Dumper(@content_id);
-		
-		my $solr = Ext::Solr::service();
-		
-		# how many products of this type we have indexed?
-		my $response = $solr->search( "+id:".$App::910::db_name.".a910_product.* +ID_i:$env{'ID'}" );
-		for my $doc ( $response->docs )
-		{
-			my $lng=$doc->value_for( 'lng_s' );
-			if (!$content{$lng} || !$env{'ID_entity'})
-			{
-				main::_log("remove ".$doc->value_for('id'),1);
-				$solr->delete_by_id($doc->value_for('id'));
-			}
-		}
-		
-		if ($env{'ID_entity'})
-		{
-			my $last_indexed=$tom::Fyear."-".$tom::Fmom."-".$tom::Fmday."T".$tom::Fhour.":".$tom::Fmin.":".$tom::Fsec."Z";
-			foreach my $lng (keys %content)
-			{
-				my $id=$App::910::db_name.".a910_product.".$lng.".".$env{'ID'};
-				
-				my $doc = WebService::Solr::Document->new();
-				
-				$doc->add_fields((
-					WebService::Solr::Field->new( 'id' => $id ),
-					@content_ent,
-					@content_id,
-					@{$content{$lng}},
-					WebService::Solr::Field->new( 'db_s' => $App::910::db_name ),
-					WebService::Solr::Field->new( 'addon_s' => 'a910_product' ),
-					WebService::Solr::Field->new( 'ID_i' => $env{'ID'} ),
-					WebService::Solr::Field->new( 'last_indexed_tdt' => $last_indexed )
-				));
-				
-	#			print Dumper($doc);
-				$solr->add($doc);
-			}
-		}
-		
-		if ($env{'commit'})
-		{
-			$solr->commit();
-		}
+		# remove this obsolete... 
+		_product_index_solr('ID'=>$env{'ID'},'commit'=>1,'-jobify'=>1);
 	}
 	
 	$Elastic||=$Ext::Elastic::service;
@@ -2750,18 +2050,29 @@ sub _product_index
 		delete $product{'metahash'} unless keys %{$product{'metahash'}};
 		delete $product{'relations'} unless keys %{$product{'relations'}};
 		
+		my $datetime_index=$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
+			.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.'Z';
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::910::db_name,
 			'type' => 'a910_product',
 			'id' => $env{'ID'},
 			'body' => {
 				%product,
-				'_datetime_index' => 
-					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
-					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.'Z'
+				'_datetime_index' => $datetime_index
 			}
 		);
 		
+		# check
+		my $check=$Elastic->get(
+			'index' => 'cyclone3.'.$App::910::db_name,
+			'type' => 'a910_product',
+			'id' => $env{'ID'}
+		);
+		main::_log("received datetime current='".$datetime_index."' index='".$check->{'_source'}->{'_datetime_index'}."'");
+		if ($datetime_index ne $check->{'_source'}->{'_datetime_index'})
+		{
+			main::_log("not succesfully indexed?",1);
+		}
 #		main::_log("/index ID=$product{'ID'}",3,"elastic");
 		
 	}
@@ -2785,6 +2096,726 @@ sub _product_index
 }
 
 
+
+sub _product_index_solr
+{
+	my %env=@_;
+	
+	if ($env{'-jobify'})
+	{
+		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'fifo','deduplication'=>1});
+	}
+	
+	return undef unless $env{'ID'}; # product.ID
+	
+	my $t=track TOM::Debug(__PACKAGE__."::_product_index_solr($env{'ID'})",'timer'=>1);
+	
+	my @content_ent;
+	my @content_id;
+	
+	my $status_string = $App::910::solr_status_index;
+	
+	$status_string =~ s/(\w)/\'$1\',/g; $status_string =~ s/,$//;
+	
+#		main::_log(" status=$status_string");
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			$App::910::db_name.a910_product
+		WHERE
+			status IN ( $status_string ) AND
+			ID=?
+	},'quiet'=>1,'bind'=>[$env{'ID'}]);
+	if (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		$env{'ID_entity'}=$db0_line{'ID_entity'};
+		main::_log(" ID_entity=$db0_line{'ID_entity'}");
+		
+		push @content_ent,WebService::Solr::Field->new( 'ID_entity_i' => $db0_line{'ID_entity'} )
+			if $db0_line{'ID_entity'};
+		
+		push @content_ent,WebService::Solr::Field->new( 'product_number_s' => $db0_line{'product_number'} )
+			if $db0_line{'product_number'};
+		push @content_ent,WebService::Solr::Field->new( 'product_number_t' => $db0_line{'product_number'} )
+			if $db0_line{'product_number'};
+		
+		push @content_ent,WebService::Solr::Field->new( 'amount_f' => $db0_line{'amount'} )
+			if $db0_line{'amount'};
+		
+		push @content_ent,WebService::Solr::Field->new( 'status_new_s' => $db0_line{'status_new'} )
+			if $db0_line{'status_new'};
+		push @content_ent,WebService::Solr::Field->new( 'status_sale_s' => $db0_line{'status_sale'} )
+			if $db0_line{'status_sale'};
+		push @content_ent,WebService::Solr::Field->new( 'status_special_s' => $db0_line{'status_special'} )
+			if $db0_line{'status_special'};
+		push @content_ent,WebService::Solr::Field->new( 'status_recommended_s' => $db0_line{'status_recommended'} )
+			if $db0_line{'status_recommended'};
+		push @content_id,WebService::Solr::Field->new( 'status_main_s' => $db0_line{'status_main'} )
+			if $db0_line{'status_main'};
+		push @content_id,WebService::Solr::Field->new( 'status_s' => $db0_line{'status'} )
+			if $db0_line{'status'};
+		
+		push @content_id,WebService::Solr::Field->new( 'price_f' => $db0_line{'price'} )
+			if $db0_line{'price'};
+			
+		push @content_id,WebService::Solr::Field->new( 'price_full_f' => $db0_line{'price_full'} )
+			if $db0_line{'price_full'};
+		
+		push @content_id,WebService::Solr::Field->new( 'sellscore_f' => $db0_line{'sellscore'} )
+			if $db0_line{'sellscore'};
+		
+		if ($db0_line{'datetime_next_index'} && not $db0_line{'datetime_publish_start'} =~/^0000/)
+		{
+			$db0_line{'datetime_next_index'}=~s| (\d\d)|T$1|;
+			$db0_line{'datetime_next_index'}.="Z";
+			push @content_id,WebService::Solr::Field->new( 'next_index_tdt' => $db0_line{'datetime_next_index'} );
+		}
+		
+		if ($db0_line{'datetime_publish_start'} && not $db0_line{'datetime_publish_start'} =~/^0000/)
+		{
+			$db0_line{'datetime_publish_start'}=~s| (\d\d)|T$1|;
+			$db0_line{'datetime_publish_start'}.="Z";
+			push @content_id,WebService::Solr::Field->new( 'datetime_publish_start_tdt' => $db0_line{'datetime_publish_start'} );
+		}
+		
+		if ($db0_line{'datetime_publish_stop'} && not $db0_line{'datetime_publish_stop'} =~/^0000/)
+		{
+			$db0_line{'datetime_publish_stop'}=~s| (\d\d)|T$1|;
+			$db0_line{'datetime_publish_stop'}.="Z";
+			push @content_id,WebService::Solr::Field->new( 'datetime_publish_stop_tdt' => $db0_line{'datetime_publish_stop'} );
+		}
+		
+		my %metadata=App::020::functions::metadata::parse($db0_line{'metadata'});
+#			use Data::Dumper;print Dumper(\%metadata);
+		foreach my $sec(keys %metadata)
+		{
+			foreach (keys %{$metadata{$sec}})
+			{
+				next unless $metadata{$sec}{$_};
+				if ($_=~s/\[\]$//)
+				{
+#						print "$sec\n";
+					# this is comma separated array
+					foreach my $val (split(';',$metadata{$sec}{$_.'[]'}))
+					{push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_sm' => $val)}
+					push @content_ent,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_);
+					next;
+				}
+				
+				push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_s' => "$metadata{$sec}{$_}" );
+				if ($metadata{$sec}{$_}=~/^[0-9]{1,9}0*?$/ && $metadata{$sec}{$_} < 2147483647)
+				{
+					push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_i' => "$metadata{$sec}{$_}" );
+				}
+				if ($metadata{$sec}{$_}=~/^[0-9\.]{1,9}0*?$/ && (not $metadata{$sec}{$_}=~/\..*?\./))
+				{
+					push @content_ent,WebService::Solr::Field->new( $sec.'.'.$_.'_f' => "$metadata{$sec}{$_}" );
+				}
+				
+				# list of used metadata fields
+				push @content_ent,WebService::Solr::Field->new( 'metadata_used_sm' => $sec.'.'.$_ );
+			}
+		}
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				*
+			FROM
+				$App::910::db_name.a910_product_ent
+			WHERE
+				ID_entity=?
+		},'quiet'=>1,'bind'=>[$db0_line{'ID_entity'}]);
+		if (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			push @content_ent,WebService::Solr::Field->new( 'product_type_s' => $db1_line{'product_type'} );
+			push @content_ent,WebService::Solr::Field->new( 'posix_owner_s' => $db1_line{'posix_owner'} );
+			
+			my %sth2=TOM::Database::SQL::execute(qq{
+				SELECT
+					name
+				FROM
+					`$App::910::db_name`.a910_product_brand
+				WHERE
+					ID=?
+			},'quiet'=>1,'bind'=>[$db1_line{'ID_brand'}]);
+			if (my %db2_line=$sth2{'sth'}->fetchhash())
+			{
+				push @content_ent,WebService::Solr::Field->new( 'brand_f' =>  $db1_line{'ID_brand'});
+				push @content_ent,WebService::Solr::Field->new( 'brand_name_s' =>  $db2_line{'name'});
+				push @content_ent,WebService::Solr::Field->new( 'brand_name_t' =>  $db2_line{'name'});
+			}
+		}
+		
+		# hits
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				COUNT(*) AS cnt
+			FROM
+				$App::910::db_name.a910_product_hit
+			WHERE
+				ID_product = ?
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		if (my %db1_line=$sth1{'sth'}->fetchhash())
+		{push @content_ent,WebService::Solr::Field->new( 'hits_i' =>  $db1_line{'cnt'});}
+		
+		# hits 7days
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				COUNT(*) AS cnt
+			FROM
+				$App::910::db_name.a910_product_hit
+			WHERE
+				ID_product = ?
+				AND datetime_event >= DATE_SUB(NOW(),INTERVAL 7 DAY)
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		if (my %db1_line=$sth1{'sth'}->fetchhash())
+		{push @content_ent,WebService::Solr::Field->new( 'hits_7dy_i' =>  $db1_line{'cnt'})}
+		
+		# hits 24hr
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				COUNT(*) AS cnt
+			FROM
+				$App::910::db_name.a910_product_hit
+			WHERE
+				ID_product = ?
+				AND datetime_event >= DATE_SUB(NOW(),INTERVAL 24 HOUR)
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		if (my %db1_line=$sth1{'sth'}->fetchhash())
+		{push @content_ent,WebService::Solr::Field->new( 'hits_24hr_i' =>  $db1_line{'cnt'})}
+		
+		# rating_variable
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				a910_product_rating_variable.score_variable AS var,
+				AVG(a910_product_rating_variable.score_value) AS val,
+				COUNT(DISTINCT(a910_product_rating.ID_entity)) AS cnt
+			FROM
+				$App::910::db_name.a910_product_rating_variable
+			INNER JOIN a910_product_rating ON
+			(
+				a910_product_rating.ID_entity = a910_product_rating_variable.ID_entity
+			)
+			WHERE
+				a910_product_rating.score_basic IS NULL AND
+				a910_product_rating.status='Y' AND
+				a910_product_rating.ID_product = ?
+			GROUP BY
+				a910_product_rating_variable.score_variable
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my $i_count;
+		my $i_sum;
+		my $i_avg;
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			main::_log("rating variable '$db1_line{'var'}' cnt='$db1_line{'cnt'}'");
+			my $var=$db1_line{'var'};
+			$var=lc(Int::charsets::encode::UTF8_ASCII($var));
+			$var=~s|[^\w]||g;
+			$i_count++;
+			$i_sum+=$db1_line{'val'};
+			push @content_ent,WebService::Solr::Field->new( 'Rating_variable.'.$var.'_i' =>  ceil($db1_line{'val'}+0));
+		}
+		
+		# vahovany rating
+		my $helpful_initial=2;
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT (
+				SUM(
+					IF (rating.score_basic, rating.score_basic,
+						(SELECT AVG(rating_variable.score_value) AS val FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity))
+					* COALESCE((
+						SELECT IF (rating_weight,rating_weight,0.01)
+						FROM TOM.a301_user_profile
+						WHERE ID_entity = rating.posix_owner
+						LIMIT 1
+					),0.5) * ((rating.helpful_Y+$helpful_initial) / (rating.helpful_Y+$helpful_initial + rating.helpful_N+$helpful_initial))
+				) / SUM( COALESCE((
+						SELECT IF (rating_weight,rating_weight,0.01)
+						FROM TOM.a301_user_profile
+						WHERE ID_entity = rating.posix_owner
+						LIMIT 1
+					),0.5) * ((rating.helpful_Y+$helpful_initial) / (rating.helpful_Y+$helpful_initial + rating.helpful_N+$helpful_initial))
+				)
+			) AS score,
+				COUNT(rating.ID) AS ratings,
+				MAX(rating.datetime_rating) AS datetime_rating
+			FROM
+				$App::910::db_name.a910_product_rating AS rating
+			WHERE
+				rating.status='Y'
+--				AND (
+--					SELECT ID
+--					FROM TOM.a301_user_profile
+--					WHERE ID_entity = rating.posix_owner
+--					LIMIT 1
+--				) IS NOT NULL
+				AND (rating.score_basic IS NOT NULL
+					OR (
+						SELECT COUNT(rating_variable.score_value) FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity
+					) > 0
+				)
+				AND rating.ID_product = ?
+			GROUP BY
+				rating.ID_product
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		
+		if ($db1_line{'ratings'})
+		{
+			$db1_line{'score'} = 0 unless $db1_line{'score'};
+			main::_log("ratings avg='$db1_line{'score'}' count='$db1_line{'ratings'}'");
+			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_count_i' =>  ceil($db1_line{'ratings'}));
+			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_i' =>  ceil($db1_line{'score'}));
+			push @content_ent,WebService::Solr::Field->new( 'Rating_variable_avg_f' =>  $db1_line{'score'});
+			
+#			$db1_line{'datetime_rating'}=~s| (\d\d)|T$1|;
+#			$db1_line{'datetime_rating'}.="Z";
+#			push @content_id,WebService::Solr::Field->new( 'Rating_datetime_tdt' => $db1_line{'datetime_rating'} );
+		}
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				rating.datetime_rating
+			FROM
+				$App::910::db_name.a910_product_rating AS rating
+			WHERE
+				rating.status='Y'
+				AND length(rating.description) >= 10
+				AND rating.ID_product = ?
+			ORDER BY
+				rating.datetime_rating DESC
+			LIMIT 1
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		if ($db1_line{'datetime_rating'})
+		{
+			$db1_line{'datetime_rating'}=~s| (\d\d)|T$1|;
+			$db1_line{'datetime_rating'}.="Z";
+			push @content_id,WebService::Solr::Field->new( 'Rating_datetime_tdt' => $db1_line{'datetime_rating'} );
+		}
+		
+		# rating in last 6months (not weighted)
+		if ($db1_line{'ratings'})
+		{
+			my %sth1=TOM::Database::SQL::execute(qq{
+				SELECT
+					AVG(IF (rating.score_basic, rating.score_basic,
+						(SELECT AVG(rating_variable.score_value) AS val FROM $App::910::db_name.a910_product_rating_variable AS rating_variable WHERE rating.ID_entity = rating_variable.ID_entity)))
+						AS score,
+					COUNT(rating.ID) AS ratings
+				FROM
+					$App::910::db_name.a910_product_rating AS rating
+				WHERE
+					rating.status='Y'
+					AND rating.datetime_rating >= DATE_SUB(NOW(),INTERVAL 6 MONTH)
+					AND rating.ID_product = ?
+			},'quiet'=>1,'bind'=>[$env{'ID'}]);
+			my %db1_line=$sth1{'sth'}->fetchhash();
+			if ($db1_line{'ratings'})
+			{
+				main::_log("6mo ratings avg='$db1_line{'score'}' count='$db1_line{'ratings'}'");
+				$db1_line{'score'} = 0 unless $db1_line{'score'};
+				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_count_i' =>  ceil($db1_line{'ratings'}));
+				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_avg_i' =>  ceil($db1_line{'score'}));
+				push @content_ent,WebService::Solr::Field->new( 'Rating_variable_6mo_avg_f' =>  $db1_line{'score'});
+			}
+		}
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				COUNT(rating.ID) AS ratings
+			FROM
+				$App::910::db_name.a910_product_rating AS rating
+			WHERE
+				rating.status='Y'
+				AND rating.posix_owner != ''
+				AND rating.description IS NOT NULL
+				AND rating.status_publish='Y'
+				AND rating.ID_product = ?
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		if ($db1_line{'ratings'})
+		{
+			push @content_ent,WebService::Solr::Field->new( 'Rating_public_count_i' =>  int($db1_line{'ratings'}));
+		}
+		
+		if (my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::910::db_name,
+			'l_prefix' => 'a910',
+			'l_table' => 'product',
+			'l_ID_entity' => $env{'ID'},
+			'rel_type' => 'thumbnail',
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y",
+			'limit' => 1
+		))[0])
+		{
+			push @content_ent,WebService::Solr::Field->new( 'is_thumbnail_i' => 1);
+			push @content_ent,WebService::Solr::Field->new( 'is_thumbnail_s' => 'Y');
+			push @content_ent,WebService::Solr::Field->new( 'thumbnail_i' => $relation->{'r_ID_entity'});
+		}
+		
+		if (my $relation=(App::160::SQL::get_relations(
+			'db_name' => $App::910::db_name,
+			'l_prefix' => 'a910',
+			'l_table' => 'product',
+			'l_ID_entity' => $env{'ID'},
+			'rel_type' => 'gallery',
+			'r_prefix' => "a501",
+			'r_table' => "image",
+			'status' => "Y",
+			'limit' => 1
+		))[0])
+		{
+			push @content_ent,WebService::Solr::Field->new( 'is_gallery_i' => 1);
+			push @content_ent,WebService::Solr::Field->new( 'is_gallery_s' => 'Y');
+		}
+		
+		# prices
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				a910_product_price.*,
+				a910_price_level.name_code
+			FROM
+				$App::910::db_name.a910_product_price
+			INNER JOIN $App::910::db_name.a910_price_level ON
+			(
+				a910_product_price.ID_price = a910_price_level.ID_entity
+			)
+			WHERE
+				a910_product_price.ID_entity = ?
+		},'quiet'=>1,'bind'=>[$env{'ID'}]);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+			next if $db1_line{'price'} == 0;
+			push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_f' =>  $db1_line{'price'});
+#			push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_VAT_f' =>  );
+			push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_full_f' =>  $db1_line{'price_full'} || $db1_line{'price'});
+			
+			if ($App::910::solr_price_history)
+			{
+				foreach my $part ('2:DAY','7:DAY','4:WEEK','6:MONTH','12:MONTH')
+				{
+					my ($interval,$interval_type)=split(':',$part);
+#					my $interval='7';
+#					my $interval_type='DAY';
+					my $interval_down=$interval+($interval/2);
+					my $interval_up=$interval-($interval/2);
+					
+					# history of prices
+					
+					# start price
+					my %sth2=TOM::Database::SQL::execute(qq{
+						SELECT
+							a910_product_price_j.*,
+							a910_price_level.name_code
+						FROM
+							$App::910::db_name.a910_product_price_j
+						INNER JOIN $App::910::db_name.a910_price_level ON
+						(
+							a910_product_price_j.ID_price = a910_price_level.ID_entity
+						)
+						WHERE
+							a910_product_price_j.ID_entity = ?
+							AND a910_product_price_j.ID = ?
+							AND a910_product_price_j.datetime_create < DATE_SUB(NOW(),INTERVAL $interval_down $interval_type)
+						ORDER BY
+							a910_product_price_j.datetime_create DESC
+						LIMIT 1
+					},'quiet'=>1,'bind'=>[$env{'ID'},$db1_line{'ID'}]);
+					my %db2_line=$sth2{'sth'}->fetchhash();
+					
+					next unless $db2_line{'datetime_create'};
+					
+					main::_log("$db1_line{'ID'}: START at '$db2_line{'datetime_create'}' with price '$db2_line{'price'}/$db2_line{'price_full'}'");
+	#				main::_log("$db1_line{'ID'}: ending with price '$db1_line{'price'}/$db1_line{'price_full'}'");
+					
+					my %prices;
+					my $i;
+					my %sth3=TOM::Database::SQL::execute(qq{
+						SELECT
+							a910_product_price_j.*,
+							TIMESTAMPDIFF(MINUTE,
+								COALESCE((
+									SELECT
+										j2.datetime_create
+									FROM
+										$App::910::db_name.a910_product_price_j AS j2
+									WHERE
+										j2.ID_entity = a910_product_price_j.ID_entity
+										AND j2.ID = a910_product_price_j.ID
+										AND j2.datetime_create < a910_product_price_j.datetime_create
+										AND j2.datetime_create > DATE_SUB(NOW(),INTERVAL $interval_down $interval_type)
+									ORDER BY
+										j2.datetime_create DESC
+									LIMIT 1
+								),DATE_SUB(NOW(),INTERVAL $interval_down $interval_type)),a910_product_price_j.datetime_create
+							) AS date_diff_previous,
+							TIMESTAMPDIFF(MINUTE,a910_product_price_j.datetime_create,
+								COALESCE((
+									SELECT
+										j2.datetime_create
+									FROM
+										$App::910::db_name.a910_product_price_j AS j2
+									WHERE
+										j2.ID_entity = a910_product_price_j.ID_entity
+										AND j2.ID = a910_product_price_j.ID
+										AND j2.datetime_create > a910_product_price_j.datetime_create
+										AND j2.datetime_create < DATE_SUB(NOW(),INTERVAL $interval_up $interval_type)
+									ORDER BY
+										j2.datetime_create ASC
+									LIMIT 1
+								),DATE_SUB(NOW(),INTERVAL $interval_up $interval_type))
+							) AS date_diff_to
+						FROM
+							$App::910::db_name.a910_product_price_j
+						WHERE
+							a910_product_price_j.ID_entity = ?
+							AND a910_product_price_j.ID = ?
+							AND a910_product_price_j.datetime_create >= DATE_SUB(NOW(),INTERVAL $interval_down $interval_type)
+							AND a910_product_price_j.datetime_create <= DATE_SUB(NOW(),INTERVAL $interval_up $interval_type)
+						ORDER BY
+							a910_product_price_j.datetime_create
+					},'quiet'=>1,'bind'=>[$env{'ID'},$db1_line{'ID'}]);
+					while (my %db3_line=$sth3{'sth'}->fetchhash())
+					{
+						main::_log("$db3_line{'ID'}: CHANG at '$db3_line{'datetime_create'}' to price '$db3_line{'price'}/$db3_line{'price_full'}' (duration=$db3_line{'date_diff_to'} previous=$db3_line{'date_diff_previous'})");
+						if (!$i){$prices{$db2_line{'price'}}+=$db3_line{'date_diff_previous'};}
+						$prices{$db3_line{'price'}}+=$db3_line{'date_diff_to'};
+						$i++;
+					}
+					
+					if (!$i){$prices{$db2_line{'price'}}+=1;}
+					
+					my $prices_sum;
+					my $prices_i;
+					foreach (keys %prices){$prices_i+=$prices{$_};$prices_sum+=$_*$prices{$_};}
+					
+					my $avg=ceil(($prices_sum/$prices_i)*100)/100;
+					
+					my $code=$interval.do{$interval_type=~/^(.)/;lc($1);};
+					
+					main::_log("$db1_line{'name_code'}.$code avg=".$avg);
+					
+					push @content_ent,WebService::Solr::Field->new( 'price.'.$db1_line{'name_code'}.'_'.$code.'_f' =>  $avg);
+					
+				}
+			}
+			# end price history
+			
+#			main::_log("---");
+			
+		}
+		
+		# set
+		foreach my $relation (App::160::SQL::get_relations(
+			'db_name' => $App::910::db_name,
+			'l_prefix' => 'a910',
+			'l_table' => 'product',
+			'l_ID_entity' => $db0_line{'ID'},
+			'r_prefix' => "a910",
+			'r_table' => "product",
+			'rel_type' => "product_set",
+			'status' => "Y"
+		))
+		{
+			
+			main::_log("product_set relation to ".$relation->{'r_ID_entity'}." ".$relation->{'priority'});
+			push @content_id,WebService::Solr::Field->new( 'set_product_sm' =>  $relation->{'r_ID_entity'}.':'.$relation->{'quantifier'});
+			
+		}
+		
+	}
+	
+	my %content;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			*
+		FROM
+			$App::910::db_name.a910_product_lng
+		WHERE
+			status='Y'
+			AND ID_entity=?
+	},'quiet'=>1,'bind'=>[$env{'ID'}]);
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		my $lng=$db0_line{'lng'};
+#		main::_log("product_lng ID='$db0_line{'ID'}' lng='$lng'");
+		
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				a910_product_sym.ID,
+				a910_product_cat.ID_charindex,
+				a910_product_cat.ID as cat_ID
+			FROM
+				$App::910::db_name.a910_product_sym
+			INNER JOIN $App::910::db_name.a910_product_cat ON
+			(
+				a910_product_sym.ID = a910_product_cat.ID_entity
+				AND a910_product_cat.lng = ?
+			)
+			WHERE
+				a910_product_sym.status='Y'
+				AND a910_product_sym.ID_entity=?
+		},'quiet'=>1,'bind'=>[$db0_line{'lng'},$env{'ID_entity'}]);
+		while (my %db1_line=$sth1{'sth'}->fetchhash())
+		{
+#			main::_log("[$lng] cat+ $db1_line{'ID'} $db1_line{'ID_charindex'}");
+			push @{$content{$lng}},WebService::Solr::Field->new( 'cat_charindex_sm' =>  $db1_line{'ID_charindex'}); # product_cat.ID_entity
+			push @{$content{$lng}},WebService::Solr::Field->new( 'cat' =>  $db1_line{'ID'});
+			
+			my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$db1_line{'cat_ID'},
+					%sql_def,
+					'-cache' => 86400*7
+				)
+			)
+			{
+#				main::_log(" cat_sm=".$p->{'ID_entity'});
+				push @{$content{$lng}},WebService::Solr::Field->new( 'cat_path_sm' =>  $p->{'ID_entity'});
+			}
+			
+		}
+		
+		# save original HTML values
+		$db0_line{'description_short'}=~s/\|/&#124;/g;
+		if ($tom::test && $db0_line{'lng'} eq "pl")
+		{
+			$db0_line{'description_short'}=~tr/ł/l/;
+#				print $db0_line{'description_short'}."\n";
+		}
+		push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description_short_orig_pl' => $db0_line{'description_short'} )
+			if $db0_line{'description_short'};
+		$db0_line{'description'}=~s/\|/&#124;/g;
+		push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description_orig_pl' => $db0_line{'description'} )
+			if $db0_line{'description'};
+		
+		for my $part('description_short', 'description')
+		{
+			$db0_line{$part}=~s|<.*?>||gms;
+			$db0_line{$part}=~s|&nbsp;| |gms;
+			$db0_line{$part}=~s|  | |gms;
+#			for (0,1,2,4,11,'B','0161','0165')
+#			{$db0_line{$part}=~s|\x{$_}||g;}
+		}
+		
+		push @{$content{$lng}},WebService::Solr::Field->new( 'lng_s' => $lng );
+		
+		push @{$content{$lng}},WebService::Solr::Field->new( 'name' => $db0_line{'name'} )
+			if $db0_line{'name'};
+		push @{$content{$lng}},WebService::Solr::Field->new( 'title' => $db0_line{'name'} )
+			if $db0_line{'name'};
+		push @{$content{$lng}},WebService::Solr::Field->new( 'name_url_s' => $db0_line{'name_url'} )
+			if $db0_line{'name_url'};
+		push @{$content{$lng}},WebService::Solr::Field->new( 'subject' => $db0_line{'name_long'} )
+			if ($db0_line{'name_long'});
+		push @{$content{$lng}},WebService::Solr::Field->new( 'name_label_s' => $db0_line{'name_label'} )
+			if $db0_line{'name_label'};
+		
+		push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'description' => $db0_line{'description_short'} )
+			if $db0_line{'description_short'};
+		
+#		print $db0_line{'description'}."\n";
+#		my $len=9268;
+#		print "!".ord(substr($db0_line{'description'},$len-1,1))."!\n";
+#		print "!".ord(substr($db0_line{'description'},$len,1))."!\n";
+#		print "!".ord(substr($db0_line{'description'},$len+1,1))."!\n";
+#		$db0_line{'description'}=substr($db0_line{'description'},0,$len);
+		
+		push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'text' => $db0_line{'description'} )
+			if $db0_line{'description'};
+		push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'keywords' => $db0_line{'keywords'} )
+			if $db0_line{'keywords'};
+		
+		if ($db0_line{'datetime_modified'})
+		{
+			$db0_line{'datetime_modified'}=~s| (\d\d)|T$1|;
+			$db0_line{'datetime_modified'}.="Z";
+			push @{$content{$lng}},WebService::Solr::Field->new( 'last_modified' => $db0_line{'datetime_modified'} );
+		}
+		
+		# language rating
+		my %sth1=TOM::Database::SQL::execute(qq{
+			SELECT
+				rating.datetime_rating
+			FROM
+				$App::910::db_name.a910_product_rating AS rating
+			WHERE
+				rating.status='Y'
+				AND length(rating.description) >= 10
+				AND rating.ID_product = ?
+				AND rating.lng = ?
+			ORDER BY
+				rating.datetime_rating DESC
+			LIMIT 1
+		},'quiet'=>1,'bind'=>[$env{'ID'},$db0_line{'lng'}]);
+		my %db1_line=$sth1{'sth'}->fetchhash();
+		if ($db1_line{'datetime_rating'})
+		{
+			$db1_line{'datetime_rating'}=~s| (\d\d)|T$1|;
+			$db1_line{'datetime_rating'}.="Z";
+			push @{$content{$db0_line{'lng'}}},WebService::Solr::Field->new( 'Rating_datetime_lng_tdt' => $db1_line{'datetime_rating'} );
+		}
+		
+	}
+	
+	use Data::Dumper;
+#	print Dumper(@content_id);
+	
+	my $solr = Ext::Solr::service();
+	
+	# how many products of this type we have indexed?
+	my $response = $solr->search( "+id:".$App::910::db_name.".a910_product.* +ID_i:$env{'ID'}" );
+	for my $doc ( $response->docs )
+	{
+		my $lng=$doc->value_for( 'lng_s' );
+		if (!$content{$lng} || !$env{'ID_entity'})
+		{
+			main::_log("remove ".$doc->value_for('id'),1);
+			$solr->delete_by_id($doc->value_for('id'));
+		}
+	}
+	
+	if ($env{'ID_entity'})
+	{
+		my $last_indexed=$tom::Fyear."-".$tom::Fmom."-".$tom::Fmday."T".$tom::Fhour.":".$tom::Fmin.":".$tom::Fsec."Z";
+		foreach my $lng (keys %content)
+		{
+			my $id=$App::910::db_name.".a910_product.".$lng.".".$env{'ID'};
+			
+			my $doc = WebService::Solr::Document->new();
+			
+			$doc->add_fields((
+				WebService::Solr::Field->new( 'id' => $id ),
+				@content_ent,
+				@content_id,
+				@{$content{$lng}},
+				WebService::Solr::Field->new( 'db_s' => $App::910::db_name ),
+				WebService::Solr::Field->new( 'addon_s' => 'a910_product' ),
+				WebService::Solr::Field->new( 'ID_i' => $env{'ID'} ),
+				WebService::Solr::Field->new( 'last_indexed_tdt' => $last_indexed )
+			));
+			
+#			print Dumper($doc);
+			$solr->add($doc);
+		}
+	}
+	
+	if ($env{'commit'})
+	{
+		$solr->commit();
+	}
+	
+	$t->close();
+	
+}
 
 
 sub _product_cat_index
