@@ -1433,7 +1433,7 @@ sub _product_index
 	if ($Ext::Solr && ($env{'solr'} || not exists $env{'solr'}))
 	{
 		# remove this obsolete... 
-		_product_index_solr('ID'=>$env{'product.ID'},'commit'=>0,'-jobify'=>1);
+		_product_index_solr('ID'=>$env{'ID'},'commit'=>1,'-jobify'=>1);
 	}
 	
 	$Elastic||=$Ext::Elastic::service;
@@ -2811,8 +2811,7 @@ sub _product_index_solr
 	if ($env{'commit'})
 	{
 		$solr->commit();
-		}
-	
+	}
 	
 	$t->close();
 	

@@ -1,51 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <L10n>
-	<header>
-		<extend level="global" name="default"/>
-	</header>
-	
-	<string id="Page not found">
-		<sk-SK>Stránka nebola nájdená</sk-SK>
-	</string>
-	
-	<string id="The page or service type cannot be found">
-		<sk-SK>Stránku alebo službu nebolo možné nájsť</sk-SK>
-	</string>
-	
-	<string id="The page or service type you are looking for might have been disabled, removed, or has its name changed">
-		<sk-SK>Stránka alebo služba ktorú požadujete mohla byť dočasne pozastavená, presunutá alebo jej názov zmenený</sk-SK>
-	</string>
-	
-	<string id="You can try the following">
-		<sk-SK>Môžete vyskúsať niečo z nasledujúcich možností</sk-SK>
-	</string>
-	
-	<string id="If you typed the page address in the Address bar, make sure that it is spelled correctly">
-		<sk-SK>Skontrolujte či ste napísali do adresného riadku správne adresu, prípadne či ste sa nepreklepli</sk-SK>
-	</string>
-	
-	<string id="If you typed the page address in the Address bar, make sure that it is spelled correctly">
-		<sk-SK>Skontrolujte či ste napísali do adresného riadku správne adresu, prípadne či ste sa nepreklepli</sk-SK>
-	</string>
-	
-	<string id="Powered by Cyclone3">
-		<en-US><![CDATA[Powered by <a href="http://www.cyclone3.org" alt="Cyclone3 - Open Perl/XUL CMS Framework">Cyclone3 (<$TOM::core_version>.<$TOM::core_build>)</a>]]></en-US>
-		<sk-SK><![CDATA[Generuje <a href="http://www.cyclone3.org" alt="Cyclone3 - Open Perl/XUL CMS Framework">Cyclone3 (<$TOM::core_version>.<$TOM::core_build>)</a>]]></sk-SK>
-	</string>
-	
-	<string>
-		<en-US><![CDATA[Open the <a href="<$tom::H_www>"><$tom::H_www></a> home page, and then look for links to the information you want]]></en-US>
-		<sk-SK><![CDATA[Otvorte domovskú stránku <a href="<$tom::H_www>"><$tom::H_www></a> a skúste znova vyhľadať informácie ktoré potrebujete]]></sk-SK>
-	</string>
-	
-	<string>
-		<en-US><![CDATA[Click the <a href="javascript:history.back(1)">Back</a> button to try another link]]></en-US>
-		<sk-SK><![CDATA[Kliknite <a href="javascript:history.back(1)">späť</a> a vyskúšajte iný odkaz]]></sk-SK>
-	</string>
-	
-	<string id="You can contact administrator of this page">
-		<en-US><![CDATA[If the problem persist, you can contact administrator of this page at <a href="mailto:<$TOM::contact{'techsupport'}>"><$TOM::contact{'techsupport'}></a>]]></en-US>
-		<sk-SK><![CDATA[Ak problém pretrváva, môžete kontaktovať správcu týchto stránok na adrese <a href="mailto:<$TOM::contact{'techsupport'}>"><$TOM::contact{'techsupport'}></a>]]></sk-SK>
-	</string>
-	
+  <header>
+    <extend level="global" name="default"/>
+  </header>
+  <string id="Page not found">
+    <sk-SK>Stránka nebola nájdená</sk-SK>
+  </string>
+  <string id="The page or service type cannot be found">
+    <sk-SK>Stránku alebo službu nebolo možné nájsť</sk-SK>
+  </string>
+  <string id="The page or service type you are looking for might have been disabled, removed, or has its name changed">
+    <sk-SK>Stránka alebo služba ktorú požadujete mohla byť dočasne pozastavená, presunutá alebo jej názov zmenený</sk-SK>
+  </string>
+  <string id="You can try the following">
+    <sk-SK>Môžete vyskúsať niečo z nasledujúcich možností</sk-SK>
+  </string>
+  <string id="If you typed the page address in the Address bar, make sure that it is spelled correctly">
+    <sk-SK>Skontrolujte či ste napísali do adresného riadku správne adresu, prípadne či ste sa nepreklepli</sk-SK>
+  </string>
+  <string id="If you typed the page address in the Address bar, make sure that it is spelled correctly">
+    <sk-SK>Skontrolujte či ste napísali do adresného riadku správne adresu, prípadne či ste sa nepreklepli</sk-SK>
+  </string>
+  <string id="Powered by Cyclone3">
+    <en-US><![CDATA[Powered by <a href="http://www.cyclone3.org" alt="Cyclone3 - Open Perl/XUL CMS Framework">Cyclone3 (<$TOM::core_version>.<$TOM::core_build>)</a>]]></en-US>
+    <sk-SK><![CDATA[Generuje <a href="http://www.cyclone3.org" alt="Cyclone3 - Open Perl/XUL CMS Framework">Cyclone3 (<$TOM::core_version>.<$TOM::core_build>)</a>]]></sk-SK>
+  </string>
+  <string>
+    <en-US><![CDATA[Open the <a href="<$tom::H_www>"><$tom::H_www></a> home page, and then look for links to the information you want]]></en-US>
+    <sk-SK><![CDATA[Otvorte domovskú stránku <a href="<$tom::H_www>"><$tom::H_www></a> a skúste znova vyhľadať informácie ktoré potrebujete]]></sk-SK>
+  </string>
+  <string>
+    <en-US><![CDATA[Click the <a href="javascript:history.back(1)">Back</a> button to try another link]]></en-US>
+    <sk-SK><![CDATA[Kliknite <a href="javascript:history.back(1)">späť</a> a vyskúšajte iný odkaz]]></sk-SK>
+  </string>
+  <string id="You can contact administrator of this page">
+    <en-US><![CDATA[If the problem persist, you can contact administrator of this page at <a href="mailto:<$TOM::contact{'techsupport'}>"><$TOM::contact{'techsupport'}></a>]]></en-US>
+    <sk-SK><![CDATA[Ak problém pretrváva, môžete kontaktovať správcu týchto stránok na adrese <a href="mailto:<$TOM::contact{'techsupport'}>"><$TOM::contact{'techsupport'}></a>]]></sk-SK>
+  </string>
 </L10n>

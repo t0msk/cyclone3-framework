@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <L10n>
-	<header>
-		<extend level="global" name="default"/>
-	</header>
-	
-	<string id="Page not found">
-		<sk-SK>Stránka nebola nájdená</sk-SK>
-	</string>
-	
-	<string id="The page or service type cannot be found">
-		<sk-SK>Stránku alebo službu nebolo možné nájsť</sk-SK>
-	</string>
-	
-	<string id="The page or service type you are looking for might have been disabled, removed, or has its name changed">
-		<sk-SK>Stránka alebo služba ktorú požadujete mohla byť dočasne pozastavená, presunutá alebo jej názov zmenený</sk-SK>
-	</string>
-	
+  <header>
+    <extend level="global" name="default"/>
+  </header>
+  <string id="Page not found">
+    <sk-SK>Stránka nebola nájdená</sk-SK>
+  </string>
+  <string id="The page or service type cannot be found">
+    <sk-SK>Stránku alebo službu nebolo možné nájsť</sk-SK>
+  </string>
+  <string id="The page or service type you are looking for might have been disabled, removed, or has its name changed">
+    <sk-SK>Stránka alebo služba ktorú požadujete mohla byť dočasne pozastavená, presunutá alebo jej názov zmenený</sk-SK>
+  </string>
 </L10n>
+
