@@ -343,7 +343,7 @@ sub execute
 			});
 			
 			main::_log("insert do attrs");
-			$main::DBH->Query("INSERT INTO TOM.a300_users_attrs (IDhash) VALUES('$var')");
+			$main::DB{main}->Query("INSERT INTO TOM.a300_users_attrs (IDhash) VALUES('$var')");
 			$main::COOKIES{_IDsession}=Utils::vars::genhash(32); # vygenerujem hash session
 			main::_log("insert into online IDsession:$main::COOKIES{_IDsession}");
 			

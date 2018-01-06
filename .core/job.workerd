@@ -1064,7 +1064,7 @@ sub callback
 }
 
 $notify_channel->qos(
-	prefetch_count => 100,
+	prefetch_count => 10,
 	prefetch_size => 10
 );
 $notify_channel->consume(

@@ -254,7 +254,7 @@ if ($main::arg{'msg'})
 				'query_string' => {
 					"fields" => ["m"],
 					'query' => $part,
-					"use_dis_max" => 1
+					"use_dis_max" => 'true'
 				}
 			};
 			
@@ -268,7 +268,7 @@ if ($main::arg{'msg'})
 			'query_string' => {
 				"fields" => ["m"],
 				'query' => $main::arg{'msg'},
-				"use_dis_max" => 1
+				"use_dis_max" => 'true'
 			}
 		};
 	}
