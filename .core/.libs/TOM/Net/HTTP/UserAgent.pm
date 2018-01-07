@@ -215,7 +215,7 @@ our @table=
 		utf8_disable	=>	1,
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
-		messages		=>	["Your browser does not identify itself with any user agent information. Please use at least \"Mozilla/3.0 (compatible;)\".","For more information, please refer to RFC2616 chapter 3.8.,14.43 and turn on your browser identification."],
+		messages		=>	["Your browser/useragent does not identify itself with any user agent information. Please use at least \"Mozilla/5.0 (compatible;)\".","For more information, please refer to RFC2616 chapter 3.8.,14.43 and turn on your browser identification."],
 	},
 	{name=>'anonymizer',
 		regexp=>	[
@@ -228,10 +228,168 @@ our @table=
 		utf8_disable => 1,
 		cookies_disable => 1,
 		USRM_disable => 1,
-		messages => ["Accessing this service using anonymizer is not allowed","Your browser does not identify itself with any user agent information. Please use at least \"Mozilla/3.0 (compatible;)\".","For more information, please refer to RFC2616 chapter 3.8.,14.43 and turn on your browser identification."],
+		messages => ["Accessing this service using anonymizer is not allowed","Your browser does not identify itself with any user agent information. Please use at least \"Mozilla/5.0 (compatible;)\".","For more information, please refer to RFC2616 chapter 3.8.,14.43 and turn on your browser identification."],
 	},
 	
 	
+	
+	# --------------------------------------------------------------------
+	
+	# Google Chrome
+	{name=>'Google Chrome 6X.X',
+		'regexp' => ['Chrome/6.'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+			'hyphen' => 1,
+			'spdy' => 1,
+	},
+	{name=>'Google Chrome 5X.X',
+		'regexp' => ['Chrome/5.'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+			'hyphen' => 1,
+			'spdy' => 1,
+	},
+	{name=>'Google Chrome 4X.X',
+		'regexp' => ['Chrome/4.'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+			'hyphen' => 1,
+			'spdy' => 1,
+	},
+	{name=>'Google Chrome 3X.X',
+		'regexp' => ['Chrome/3.'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+			'hyphen' => 1,
+			'spdy' => 1,
+	},
+	{name=>'Google Chrome 2X.X',
+		'regexp' => ['Chrome/2.'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+			'hyphen' => 1,
+	},
+	{name=>'Google Chrome 1X.X',
+		'regexp' => ['Chrome/1.'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+			'hyphen' => 1,
+	},
+	{name=>'Google Chrome 9.X',
+		'regexp' => ['Chrome/9'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+			'hyphen' => 1,
+	},
+	{name=>'Google Chrome 8.X',
+		'regexp' => ['Chrome/8'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+			'hyphen' => 1,
+	},
+	{name=>'Google Chrome 7.X',
+		'regexp' => ['Chrome/7'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+			'hyphen' => 1,
+	},
+	{name=>'Google Chrome 6.X',
+		'regexp' => ['Chrome/6'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+	},
+	{name=>'Google Chrome 5.X',
+		'regexp' => ['Chrome/5'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+	},
+	{name=>'Google Chrome 4.X',
+		'regexp' => ['Chrome/4'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+	},
+	{name=>'Google Chrome 3.X',
+		'regexp' => ['Chrome/3'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'xmlhttp' => 1,
+			'html5' => 1,
+			'video_h264' => 1,
+			'video_ogg' => 1,
+	},
+	{name=>'Google Chrome 2.X',
+		'regexp' => ['Chrome/2'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'old' => 0,
+	},
+	{name=>'Google Chrome 1.X',
+		'regexp' => ['Chrome/1'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'old' => 1,
+	},
+	{name=>'Google Chrome 0.2',
+		'regexp' => ['Chrome/0.2'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+			'old' => 2,
+	},
+	{name=>'Google Chrome ???',
+		'regexp' => ['Chrome/'],
+		'agent_type' => "browser",
+		'agent_group' => "Google",
+#			'old' => 3,
+	},
 	
 	
 	
@@ -301,7 +459,7 @@ our @table=
 		agent_group	=>	"Opera",
 		old			=>	3,
 	},
-
+	
 	# CO NAJRYCHLEJSIE NAJCASTEJSIE SA VYSKYTUJUCE BROWSERY...
 	# aby dlho netrvali regexpy
 	{name=>'Edge/15',
@@ -753,164 +911,6 @@ our @table=
 	
 	# --------------------------------------------------------------------
 	
-	# Google Chrome
-	{name=>'Google Chrome 6X.X',
-		'regexp' => ['Chrome/6.'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'xmlhttp' => 1,
-			'html5' => 1,
-			'video_h264' => 1,
-			'video_ogg' => 1,
-			'hyphen' => 1,
-			'spdy' => 1,
-	},
-	{name=>'Google Chrome 5X.X',
-		'regexp' => ['Chrome/5.'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'xmlhttp' => 1,
-			'html5' => 1,
-			'video_h264' => 1,
-			'video_ogg' => 1,
-			'hyphen' => 1,
-			'spdy' => 1,
-	},
-	{name=>'Google Chrome 4X.X',
-		'regexp' => ['Chrome/4.'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'xmlhttp' => 1,
-			'html5' => 1,
-			'video_h264' => 1,
-			'video_ogg' => 1,
-			'hyphen' => 1,
-			'spdy' => 1,
-	},
-	{name=>'Google Chrome 3X.X',
-		'regexp' => ['Chrome/3.'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'xmlhttp' => 1,
-			'html5' => 1,
-			'video_h264' => 1,
-			'video_ogg' => 1,
-			'hyphen' => 1,
-			'spdy' => 1,
-	},
-	{name=>'Google Chrome 2X.X',
-		'regexp' => ['Chrome/2.'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'xmlhttp' => 1,
-			'html5' => 1,
-			'video_h264' => 1,
-			'video_ogg' => 1,
-			'hyphen' => 1,
-	},
-	{name=>'Google Chrome 1X.X',
-		'regexp' => ['Chrome/1.'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'xmlhttp' => 1,
-			'html5' => 1,
-			'video_h264' => 1,
-			'video_ogg' => 1,
-			'hyphen' => 1,
-	},
-	{name=>'Google Chrome 9.X',
-		'regexp' => ['Chrome/9'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'xmlhttp' => 1,
-			'html5' => 1,
-			'video_h264' => 1,
-			'video_ogg' => 1,
-			'hyphen' => 1,
-	},
-	{name=>'Google Chrome 8.X',
-		'regexp' => ['Chrome/8'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'xmlhttp' => 1,
-			'html5' => 1,
-			'video_h264' => 1,
-			'video_ogg' => 1,
-			'hyphen' => 1,
-	},
-	{name=>'Google Chrome 7.X',
-		'regexp' => ['Chrome/7'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'xmlhttp' => 1,
-			'html5' => 1,
-			'video_h264' => 1,
-			'video_ogg' => 1,
-			'hyphen' => 1,
-	},
-	{name=>'Google Chrome 6.X',
-		'regexp' => ['Chrome/6'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'xmlhttp' => 1,
-			'html5' => 1,
-			'video_h264' => 1,
-			'video_ogg' => 1,
-	},
-	{name=>'Google Chrome 5.X',
-		'regexp' => ['Chrome/5'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'xmlhttp' => 1,
-			'html5' => 1,
-			'video_h264' => 1,
-			'video_ogg' => 1,
-	},
-	{name=>'Google Chrome 4.X',
-		'regexp' => ['Chrome/4'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'xmlhttp' => 1,
-			'html5' => 1,
-			'video_h264' => 1,
-			'video_ogg' => 1,
-	},
-	{name=>'Google Chrome 3.X',
-		'regexp' => ['Chrome/3'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'xmlhttp' => 1,
-			'html5' => 1,
-			'video_h264' => 1,
-			'video_ogg' => 1,
-	},
-	{name=>'Google Chrome 2.X',
-		'regexp' => ['Chrome/2'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'old' => 0,
-	},
-	{name=>'Google Chrome 1.X',
-		'regexp' => ['Chrome/1'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'old' => 1,
-	},
-	{name=>'Google Chrome 0.2',
-		'regexp' => ['Chrome/0.2'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-			'old' => 2,
-	},
-	{name=>'Google Chrome ???',
-		'regexp' => ['Chrome/'],
-		'agent_type' => "browser",
-		'agent_group' => "Google",
-#			'old' => 3,
-	},
-	
-	# --------------------------------------------------------------------
-	
 	# SAFARI
 	{name=>'Google.com/mobile', # contains info about Safari
 		regexp		=>	['Googlebot-Mobile','Mobile.*?Googlebot'],
@@ -1079,41 +1079,19 @@ our @table=
 #		USRM_disable	=>	1,
 #		agent_group	=>	"OpenSource",
 	},
-
-
-
-
-
-
-
-
+	
+	
+	
+	
 	# LINUX BROWSERS
 	
-	{name=>'Konqueror 4.X',
-		regexp		=>	['Konqueror.4'],
+	{name=>'Konqueror',
+		regexp		=>	['Konqueror'],
 		agent_type	=>	"browser",
 		agent_group	=>	"OpenSource",
 	},
-	{name=>'Konqueror 3.X',
-		regexp		=>	['Konqueror.3'],
-		agent_type	=>	"browser",
-		agent_group	=>	"OpenSource",
-		old			=>	2,
-	},
-	{name=>'Konqueror 2.X',
-		regexp		=>	['Konqueror.2'],
-		agent_type	=>	"browser",
-		agent_group	=>	"OpenSource",
-		old			=>	3,
-	},
-	{name=>'Konqueror 1.X',
-		regexp		=>	['Konqueror.1'],
-		agent_type	=>	"browser",
-		agent_group	=>	"OpenSource",
-		old			=>	5,
-	},
-	{name=>'Galeon 1.X',
-		regexp		=>	['Galeon.1'],
+	{name=>'Galeon',
+		regexp		=>	['Galeon'],
 		agent_type	=>	"browser",
 		agent_group	=>	"OpenSource",
 	},
@@ -1139,15 +1117,10 @@ our @table=
 		agent_type	=>	"browser",
 		agent_group	=>	"OpenSource",
 	},
-
-
-
-
-
-
-
-
-
+	
+	
+	
+	
 	# MOBILE BROWSERS
 	
 	# http://developer.openwave.com/dvl/resources/supported_phones/index.htm
@@ -1215,60 +1188,22 @@ our @table=
 		USRM_disable	=>	1,
 #		agent_group	=>	"OpenSource",
 	},
-	{name=>'UP Browser 7.X',
-		regexp		=>	['UP.Browser/7','UP/7'],
+	{name=>'UP Browser',
+		regexp		=>	['UP.Browser','UP/7'],
 		agent_type	=>	"mobile browser",
 #		utf8_disable	=>	1, tento vraj uz podporuje UTF-8
 #		cookies_disable	=>	1,
 #		USRM_disable	=>	1,
 #		agent_group	=>	"OpenSource",
 	},
-	{name=>'UP Browser 6.X',
-		regexp		=>	['UP.Browser/6','UP/6'],
-		agent_type	=>	"mobile browser",
-		utf8_disable	=>	1,
-#		cookies_disable	=>	1,
-#		USRM_disable	=>	1,
-#		agent_group	=>	"OpenSource",
-	},
-	{name=>'UP Browser 5.X',
-		regexp		=>	['UP.Browser/5','UP/5'],
-		agent_type	=>	"mobile browser",
-		utf8_disable	=>	1,
-#		agent_group	=>	"OpenSource",
-	},
-	{name=>'UP Browser 4.X',
-		regexp		=>	['UP.Browser/4','UP/4'],
-		agent_type	=>	"mobile browser",
-		utf8_disable	=>	1,
-#		agent_group	=>	"OpenSource",
-	},
-	{name=>'UP Link 7.X',
-		regexp		=>	['UP.Link/7'],
+	{name=>'UP Link',
+		regexp		=>	['UP.Link'],
 		agent_type	=>	"mobile browser",
 #		utf8_disable	=>	1,
 #		agent_group	=>	"OpenSource",
 	},
-	{name=>'UP Link 6.X',
-		regexp		=>	['UP.Link/6'],
-		agent_type	=>	"mobile browser",
-#		utf8_disable	=>	1,
-#		agent_group	=>	"OpenSource",
-	},
-	{name=>'UP Link 5.X',
-		regexp		=>	['UP.Link/5'],
-		agent_type	=>	"mobile browser",
-#		utf8_disable	=>	1,
-#		agent_group	=>	"OpenSource",
-	},
-	{name=>'UP Link 1.X',
-		regexp		=>	['UP.Link/1'],
-		agent_type	=>	"mobile browser",
-		utf8_disable	=>	1,
-#		agent_group	=>	"OpenSource",
-	},
-	{name=>'Blazer 1.X', #Handspring Treo 300
-		regexp		=>	['Blazer.1'],
+	{name=>'Blazer', #Handspring Treo 300
+		regexp		=>	['Blazer'],
 		agent_type	=>	"mobile browser",
 #		utf8_disable	=>	1,
 #		agent_group	=>	"OpenSource",
@@ -1371,14 +1306,8 @@ our @table=
 	},
 	
 	
-	
-	
-
-
-
 	# MEDIA PLAYERS
-
-
+	
 	{name=>'MPlayer (linux)',
 		regexp		=>	['MPlayer'],
 		agent_type	=>	"media player",
@@ -1430,24 +1359,15 @@ our @table=
 #		utf8_disable	=>	1,
 	},
 	
-
-
-
-
-
-	{name=>'intraVnews 1.X', # RSS reader ktory aj browsuje po webe
-		regexp		=>	['intraVnews/1'],
+	
+	
+	{name=>'intraVnews', # RSS reader ktory aj browsuje po webe
+		regexp		=>	['intraVnews'],
 		agent_type	=>	"RSS browser",
 		utf8_disable	=>	1,
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
 #		notfinished		=>	1,
-	},
-	{name=>'Akregator 1.X',
-		regexp		=>	['Akregator/1'],
-		agent_type	=>	"RSS browser",
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
 	},
 	{name=>'Feedreader',
 		regexp => ['Feedreader'],
@@ -1455,28 +1375,14 @@ our @table=
 		cookies_disable => 1,
 		USRM_disable => 1,
 	},
-	{name=>'Lotus-Notes 5.X', # Lotus
-		regexp		=>	['Lotus-Notes/5'],
+	{name=>'Lotus-Notes', # Lotus
+		regexp		=>	['Lotus-Notes'],
 	},
-	{name=>'Lotus-Notes 4.X', # Lotus
-		regexp		=>	['Lotus-Notes/4'],
-		old			=>	1,
+	{name=>'Offline Explorer',
+		regexp		=>	['Offline Explorer'],
 	},
-	{name=>'Offline Explorer 2.X',
-		regexp		=>	['Offline Explorer/2'],
-	},
-	{name=>'Offline Explorer 1.X',
-		regexp		=>	['Offline Explorer/1'],
-	},
-	
-	
-	
-	{name=>'MSFrontPage 5.X',
-		regexp		=>	['MSFrontPage/5'],
-		agent_group	=>	"Microsoft",
-	},
-	{name=>'MSFrontPage 4.X',
-		regexp		=>	['MSFrontPage/4'],
+	{name=>'MSFrontPage',
+		regexp		=>	['MSFrontPage'],
 		agent_group	=>	"Microsoft",
 	},
 
@@ -1556,8 +1462,8 @@ our @table=
 		USRM_disable	=> 1,
 #		engine_disable	=> 1,
 	},
-	{name=>'AvantGo 5.X',
-		regexp		=>	['AvantGo.5'],
+	{name=>'AvantGo',
+		regexp		=>	['AvantGo'],
 #		agent_type	=>	"downloader",
 		agent_type	=>	"browser", # preco som ho zmenil na browser?
 #		utf8_disable	=> 1,
@@ -1602,17 +1508,8 @@ our @table=
 		USRM_disable	=> 1,
 #		engine_disable	=> 1,
 	},
-	{name=>'Web Downloader 6.X',
-		regexp		=>	['^Web Downloader/6'],
-		agent_type	=>	"downloader",
-#		utf8_disable	=> 1,
-		recache_disable=> 1,
-		cookies_disable=> 1,
-		USRM_disable	=> 1,
-#		engine_disable	=> 1,
-	},
-	{name=>'Web Downloader 5.X',
-		regexp		=>	['^Web Downloader/5'],
+	{name=>'Web Downloader',
+		regexp		=>	['^Web Downloader'],
 		agent_type	=>	"downloader",
 #		utf8_disable	=> 1,
 		recache_disable=> 1,
@@ -1678,8 +1575,8 @@ our @table=
 		USRM_disable	=> 1,
 #		engine_disable	=> 1,
 	},
-	{name=>'PHP 4.X',
-		regexp		=>	['PHP.4'],
+	{name=>'PHP',
+		regexp		=>	['PHP.'],
 		agent_type	=>	"library",
 #		utf8_disable	=> 1,
 		recache_disable=> 1,
@@ -1715,13 +1612,9 @@ our @table=
 		USRM_disable	=> 1,
 #		engine_disable	=> 1,
 	},
-
-
-
-
-
-
-
+	
+	
+	
 	# SYSTEMS (&proxy)
 	
 	
@@ -1744,17 +1637,8 @@ our @table=
 		USRM_disable	=> 1,
 #		engine_disable	=> 1,
 	},
-	{name=>'MSProxy 1.X',
-		regexp		=>	['MSProxy.1'],
-		agent_type	=>	"system",
-#		utf8_disable	=> 1,
-#		recache_disable=> 1,
-		cookies_disable=> 1,
-		USRM_disable	=> 1,
-#		engine_disable	=> 1,
-	},
-	{name=>'MSProxy 2.X',
-		regexp		=>	['MSProxy.2'],
+	{name=>'MSProxy',
+		regexp		=>	['MSProxy.'],
 		agent_type	=>	"system",
 #		utf8_disable	=> 1,
 #		recache_disable=> 1,
@@ -1771,17 +1655,34 @@ our @table=
 		USRM_disable	=> 1,
 #		engine_disable	=> 1,
 	},
-
-
 	
 	
-
-
 	# A HNED POTOM ROBOTY
+	
+	{name=>'MegaIndex.ru',
+		regexp		=>	['MegaIndex'],
+		agent_type	=>	"robot",
+		recache_disable	=>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+	},
+	{name=>'SemrushBot',
+		regexp		=>	['SemrushBot'],
+		agent_type	=>	"robot",
+		recache_disable	=>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+	},
+	{name=>'DotBot', #	http://www.opensiteexplorer.org/dotbot
+		regexp		=>	['DotBot'],
+		agent_type	=>	"robot",
+		recache_disable	=>	1,
+		cookies_disable	=>	1,
+		USRM_disable	=>	1,
+	},
+	
 	{name=>'MJ12bot',
-		regexp		=>	[
-						'MJ12bot'
-						],
+		regexp		=>	['MJ12bot'],
 		agent_type	=>	"robot",
 		engine_disable	=>	1,
 		recache_disable	=>	1,
@@ -1813,7 +1714,7 @@ our @table=
 		regexp		=>	[
 						'^DA ',
 						'^Obscurix',
-						'Indy Library',
+#						'Indy Library',
 						'Mediatoolkitbot'
 						],
 		agent_type	=>	"robot",
@@ -1822,132 +1723,6 @@ our @table=
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
 		messages		=>	["Your UserAgent is too agressive"],
-	},
-	{name=>'OmniExplorer',
-		regexp		=>	['OmniExplorer'],
-		agent_type	=>	"robot",
-		home_url		=>	"http://www.omni-explorer.com",
-#		engine_disable	=>	1,
-		recache_disable	=>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-#		messages		=>	["Your UserAgent is too agressive"],
-	},
-	{name=>'HTTrack 3.X',
-		regexp		=>	['HTTrack 3'],
-		agent_type	=>	"robot",
-#		engine_disable	=>	1,
-		recache_disable	=>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-#		messages		=>	["Your UserAgent is too agressive"],
-	},
-	{name=>'VB OpenUrl',
-		regexp		=>	['^VB OpenUrl'],
-		agent_type	=>	"robot",
-#		engine_disable	=>	1,
-		recache_disable	=>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-#		messages		=>	["Your UserAgent is too agressive"],
-	},
-	{name=>'Zao crawler',
-		regexp		=>	['^Zao/'],
-		agent_type	=>	"robot",
-		home_url		=>	"http://www.kototoi.org/zao/",
-#		engine_disable	=>	1,
-		recache_disable	=>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-#		messages		=>	["Your UserAgent is too agressive"],
-	},
-	{name=>'ASPseek',
-		regexp		=>	['^ASPSeek'],
-		agent_type	=>	"robot",
-		home_url		=>	"http://www.aspseek.org",
-#		engine_disable	=>	1,
-		recache_disable	=>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-#		messages		=>	["Your UserAgent is too agressive"],
-	},
-	{name=>'WebPix 1.X',
-		regexp		=>	['^WebPix 1'],
-		agent_type	=>	"robot",
-		home_url		=>	"http://www.netwu.com",
-#		engine_disable	=>	1,
-		recache_disable	=>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-#		messages		=>	["Your UserAgent is too agressive"],
-	},
-	{name=>'AOLserver-Tcl 3.X',
-		regexp		=>	['^AOLserver-Tcl/3'],
-		home_url		=>	"http://www.aolserver.com",
-		agent_type	=>	"robot",
-#		engine_disable	=>	1,
-		recache_disable	=>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-#		messages		=>	["Your UserAgent is too agressive"],
-	},
-	{name=>'Green Research, Inc', # email spider from Nigeria, Panama, Mozambique and Israel
-		regexp		=>	['^Green Research, Inc'],
-		home_url		=>	"http://www.webmasterworld.com/forum11/2400.htm",
-		agent_type	=>	"robot",
-		engine_disable	=>	1,
-		recache_disable	=>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-		messages		=>	["Your UserAgent is too agressive"],
-	},
-	{name=>'QuepasaCreep',
-		regexp		=>	['^QuepasaCreep'],
-		home_url		=>	"http://www.quepasa.com/",
-		agent_type	=>	"robot",
-		recache_disable	=>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-	},
-	{name=>'Larbin 2.X',
-		regexp		=>	['larbin2'],
-		home_url		=>	"http://larbin.sourceforge.net",
-		agent_type	=>	"robot",
-		recache_disable	=>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-	},
-	{name=>'GoForIt', # vyhladavaci bot filmov
-		regexp		=>	['^GoForIt.com'],
-		home_url		=>	"http://goforit.com",
-		agent_type	=>	"robot",
-		recache_disable	=>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-	},
-	{name=>'BlackMask.Net', # vyhladavaci bot filmov
-		regexp		=>	['^BlackMask.Net Search Engine'],
-		home_url		=>	"http://search.blackmask.net/",
-		agent_type	=>	"robot",
-		recache_disable	=>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-	},
-	{name=>'Cerberian Drtrs',
-		regexp		=>	['Cerberian Drtrs'],
-		agent_type	=>	"robot",
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-	},
-	{name=>'SURF', # email harvester
-		regexp		=>	['^SURF'],
-		agent_type	=>	"robot",
-		engine_disable	=>	1,
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-		messages		=>	["Sorry, but you is client side email harvester"],
 	},
 	{name=>'Echoping',
 		regexp		=>	['^Echoping'],
@@ -1977,34 +1752,6 @@ our @table=
 	},
 
 	# BIG TRAFFIC
-	{name=>'Jyxo.cz',
-		regexp		=>	['^Jyxobot'],
-		agent_type	=>	"robot",
-		#engine_disable	=>	1,
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-		#messages		=>	["Your robot or agent is too agressive in requests, sorry"],
-	},
-	{name=>'UbiCrawler',
-		regexp		=>	['^UbiCrawler'],
-		home_url	=>	"http://ubi0.iit.cnr.it/projects/ubicrawler/",
-		agent_type	=>	"robot",
-		engine_disable	=>	1,
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-		messages		=>	["Your robot or agent is too agressive in requests, sorry"],
-	},
-	{name=>'almaden.ibm.com/cs/crawler',
-		regexp		=>	['ibm.com.*crawler'],
-		agent_type	=>	"robot",
-		engine_disable	=>	1,
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		USRM_disable	=>	1,
-		messages		=>	["Your robot or agent is too agressive in requests, sorry"],
-	},
 	{name=>'httperf',
 		regexp		=>	['httperf'],
 		agent_type	=>	"robot",
@@ -2091,18 +1838,8 @@ our @table=
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
 	},
-	{name=>'GigaBot 2.X',
-		regexp		=>	['^Gigabot.2'],
-		home_url		=>	"http://www.gigablast.com/",
-		agent_type	=>	"robot",
-		engine_disable	=>	0,
-		recache_disable =>	1,
-		cookies_disable	=>	1,
-		utf8_disable	=>	1,
-		USRM_disable	=>	1,
-	},
-	{name=>'GigaBot 1.X',
-		regexp		=>	['^GigaBot.1'],
+	{name=>'GigaBot',
+		regexp		=>	['^Gigabot'],
 		home_url		=>	"http://www.gigablast.com/",
 		agent_type	=>	"robot",
 		engine_disable	=>	0,
@@ -2232,7 +1969,7 @@ our @table=
 		cookies_disable	=>	1,
 		USRM_disable	=>	1,
 	},
-	{name=>'Xenu Link Sleuth 1.X',
+	{name=>'Xenu Link Sleuth',
 		regexp		=>	['Xenu Link Sleuth'],
 		agent_type	=>	"robot",
 		engine_disable	=>	0,
@@ -2469,110 +2206,6 @@ our @table=
 
 our %table_IP_blacklist;
 
-our %table_IP=
-(
-	# list of hacking PC's
-	'136\.243\.36\.87' => 'hacker', # 2017-04-04 - hacker
-	'178\.63\.1\.153' => 'hacker', # 2017-03-31 - hacker
-	'185\.65\.134\.' => 'hacker', # 2017-04-15 - hacker over VPN
-	'185\.145\.66\.246' => 'hacker', # 2017-01-07 - hacker
-	'185\.145\.66\.247' => 'hacker', # 2017-01-07 - hacker
-	'185\.145\.66\.' => 'hacker', # 2017-01-07 - hacker
-	'91\.247\.38\.55' => 'hacker',
-	
-	# list spambots
-	'52\.16\.95\.160' => 'badbot', # 2016-01-27
-	'113\.92\.69\.176' => 'spambot', # 2016-05-10
-	'223\.66\.219\.234' => 'spambot', # 2017-03-29
-	
-	# list of grabbers
-	'5\.45\.62\.130' => 'grabber', # 2016-05-30
-	'5\.56\.16\.238' => 'grabber', # 2016-05-17
-	'5\.62\.43\.75' => 'grabber', # 2017-11-30
-	'5\.62\.58\.' => 'grabber', # 2017-11-30
-	'5\.62\.59\.' => 'grabber', # 2017-11-30
-	'5\.62\.60\.' => 'grabber', # 2017-11-30
-	'5\.62\.61\.' => 'grabber', # 2017-11-30
-	'5\.62\.62\.' => 'grabber', # 2017-11-30
-	'5\.62\.63\.' => 'grabber', # 2017-11-30
-	'5\.79\.68\.161' => 'grabber', # 2017-11-30 - tor
-#	'31\.30\.1\.202' => 'grabber', # 2017-11-16 # audiopartner.cz
-	'35\.205\.20\.103' => 'grabber', # 2017-11-29 
-	'45\.55\.143\.180' => 'grabber', # 2017-11-28
-	'46\.17\.6\.73' => 'grabber', # 2016-03-09 20:00
-	'46\.161\.9\.20' => 'grabber', # 2016-05-17
-	'46\.105\.211\.81' => 'grabber', # 2016-03-09 20:00
-	'46\.161\.9\.32' => 'grabber', # 2016-05-17
-#	'46\.229\.173\.67' => 'grabber', # 2017-05-06 - SEMrush
-	'51\.255\.145\.' => 'grabber', # 2017-11-15
-	'62\.113\.202\.150' => 'grabber', # 2016-05-17
-	'62\.113\.231\.104' => 'grabber', # 2017-11-04 22:00
-	'67\.20\.55\.26' => 'grabber', # 2017-11-30
-	'77\.247\.181\.162' => 'grabber', # 2016-04-02 22:00
-	'78\.46\.161\.81' => 'grabber', # 2017-11-28
-	'79\.172\.216\.19' => 'grabber', # 2017-11-18
-	'81\.2\.216\.39' => 'grabber', # 2017-11-18
-	'82\.199\.129\.144' => 'grabber', # 2016-05-17
-	'82\.199\.150\.' => 'grabber', # 2016-05-17
-	'83\.208\.197\.58' => 'grabber', # 2016-03-09 20:00
-	'84\.200\.108\.' => 'grabber', # 2017-11-29 - www.accelerated.de
-	'89\.32\.145\.88' => 'grabber', # 2016-03-09 20:00
-	'89\.143\.198\.122' => 'grabber', # 2017-11-07 20:00
-	'89\.143\.198\.123' => 'grabber', # 2017-11-04 21:50
-	'89\.187\.152\.81' => 'grabber', # 2016-11-04 22:00
-	'91\.200\.12\.143' => 'grabber', # 2016-05-18
-	'93\.104\.209\.59' => 'grabber', # 2016-04-02 09:00
-	'93\.104\.211\.85' => 'grabber', # 2016-03-09 20:00
-	'91\.200\.12\.76' => 'grabber', # 2016-05-17
-	'94\.44\.254\.182' => 'grabber', # 2016-03-09 20:00
-	'104\.168\.166\.80' => 'grabber', # 2017-11-30
-	'107\.182\.225\.69' => 'grabber', # 2016-03-09 20:00
-	'109\.182\.43\.178' => 'grabber', # 2016-03-09 20:00
-	'116\.233\.105\.210' => 'grabber', # 2017-11-28
-	'128\.140\.219\.215' => 'grabber', # 2016-03-09 20:00
-	'134\.19\.177\.15' => 'grabber', # 2016-05-16
-	'149\.154\.159\.46' => 'grabber', # 2016-03-09 20:00
-	'149\.255\.59\.51' => 'grabber', # 2016-03-09 20:00
-	'151\.236\.19\.174' => 'grabber', # 2016-03-09 20:00
-	'155\.4\.22\.118' => 'grabber', # 2017-11-04 18:00
-	'155\.4\.22\.65' => 'grabber', # 2017-11-07 23:00
-	'155\.133\.37\.1' => 'grabber', # 2016-05-17
-	'158\.69\.59\.155' => 'grabber', # 2016-03-09 20:00
-	'162\.247\.155\.52' => 'grabber', # 2016-03-09 20:00
-	'167\.114\.234\.131' => 'grabber', # 2017-11-29 - scrappy.org
-	'176\.9\.41\.28' => 'grabber', # 2017-11-28
-	'176\.31\.123\.75' => 'grabber', # 2017-11-08 10:00
-	'176\.31\.241\.54' => 'grabber', # 2017-11-08 10:00
-	'176\.116\.18\.184' => 'grabber', # 2017-11-07 23:00
-	'176\.116\.19\.226' => 'grabber', # 2017-11-08 10:00
-	'176\.116\.27\.190' => 'grabber', # 2017-11-08 10:00
-	'170\.75\.163\.162' => 'grabber', # 2016-03-09 20:00
-	'178\.79\.147\.120' => 'grabber', # 2016-03-09 20:00
-	'178\.162\.199\.95' => 'grabber', # 2016-05-30
-	'178\.238\.236\.191' => 'grabber', # 2017-11-08 12:00
-	'183\.57\.242\.44' => 'grabber', # 2017-11-29
-	'185\.5\.53\.94' => 'grabber', # 2016-04-02 09:00
-	'185\.22\.172\.116' => 'grabber', # 2016-03-09 20:00
-	'185\.82\.202\.181' => 'grabber', # 2016-04-02 09:00
-	'188\.95\.50\.54' => 'grabber', # 2017-11-08 10:00
-	'192\.71\.249\.35' => 'grabber', # 2016-03-09 20:00
-	'192\.121\.16\.199' => 'grabber', # 2016-03-09 20:00
-	'192\.160\.102\.170' => 'grabber', # 2017-11-30
-	'193\.37\.152\.80' => 'grabber', # 2016-03-09 20:00
-	'197\.231\.221\.' => 'grabber', # 2016-03-09 20:00 # Cyberdynes VPN users, block 01.
-	'198\.20\.101\.82' => 'grabber', # 2016-03-09 20:00
-#	'212\.24\.150\.2' => 'grabber', # 2017-11-16 - MarketUP
-	'212\.227\.10\.162' => 'grabber', # 2016-05-18
-	'213\.136\.65\.44' => 'grabber', # 2016-05-17
-	'213\.136\.80\.242' => 'grabber', # 2016-03-09 20:00
-	'216\.244\.79\.218' => 'grabber', # 2016-05-17
-	
-	# list of anonymizers
-	'37\.235\.53\.25' => 'anonymizer', # 2017-11-08
-	'120\.229\.3\.255' => 'anonymizer', # 2017-11-08
-	'193\.234\.225\.193' => 'anonymizer', # 2017-11-08
-);
-
 =head1 FUNCTIONS
 
 =head2 analyze()
@@ -2596,17 +2229,6 @@ sub analyze
 				&getIDbyName($table_IP_blacklist{$env{'IP'}}),
 				$table[&getIDbyName($table_IP_blacklist{$env{'IP'}})]{'name'},
 			);
-		}
-		
-		foreach my $k(sort keys %table_IP)
-		{
-			if ($env{'IP'}=~/^$k/)
-			{
-				return (
-					&getIDbyName($table_IP{$k}),
-					$table[&getIDbyName($table_IP{$k})]{'name'}
-				);
-			}
 		}
 	}
 	
@@ -2668,31 +2290,11 @@ sub initialize_hacked
 			$i++;
 			$data->{$IP}->{'type'}||='vandaliser';
 #			main::_log("add IP '$_' to blacklist as ".$data->{$_}->{'type'}." from date ".$data->{$_}->{'date'});
-#			$table_IP{$IP}=$data->{$IP}->{'type'};
 			$table_IP_blacklist{$IP}=$data->{$IP}->{'type'};
 		}
-		main::_log("add ".$i." IP's to blacklist");
+#		main::_log("add ".$i." IP's to blacklist");
 	}
-	
-	# naliatie hacked IP's do listu vandalizerov
-	return undef;
-	
-	my %hacked;
-	main::_log("hacked IP's");
-	open(HCK,$TOM::P.'/_temp/hacked_IP.list') || return undef;
-	while (my $line=<HCK>)
-	{
-		chomp($line);
-		my @arr=split(':',$line);
-		$hacked{$arr[1]}++;
-	}
-	
-	foreach (keys %hacked)
-	{
-		main::_log("add to list IP '$_'");
-		$table_IP{$_}='hacked';
-	}
-	
+	return 1;
 }
 
 &initialize_hacked();

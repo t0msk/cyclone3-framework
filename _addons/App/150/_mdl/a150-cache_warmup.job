@@ -1,0 +1,178 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use Ext::Redis::_init;
+use Ext::RabbitMQ::_init;
+use Data::Dumper;
+use Utils::datetime;
+use JSON;
+our $json = JSON::XS->new->ascii->convert_blessed;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	
+	return unless $Redis;
+	
+	my $warmups;
+	
+	my $time_start=int((time()+(0*60))/60);
+	for (1..100)
+	{
+		$time_start--;
+		
+		my %date=Utils::datetime::ctodatetime($time_start*60,format=>1);
+		my $datetime_string=$date{'year'}."-".$date{'mon'}."-".$date{'mday'}." ".$date{'hour'}.":".$date{'min'};
+		
+		if ($Redis->exists('C3|warmup|'.$time_start))
+		{
+		}
+		else
+		{
+			next;
+		}
+		
+		main::_log("check index #".$time_start." ".$datetime_string);
+		my $caches;
+		foreach my $cache_id (sort @{$Redis->smembers('C3|warmup|'.$time_start)})
+		{
+			# get hits data
+			my $hits=$Redis->hget($cache_id,'hits');
+			if (!$hits)
+			{
+#				$Redis->srem('C3|warmup|'.$time_start, $cache_id);
+#				next;
+			}
+			
+			# time_from
+			my $time_from=int($Redis->hget($cache_id,'time_from')/60);
+			if ($time_from > $time_start)
+			{
+#				main::_log(" already recached");
+				$Redis->srem('C3|warmup|'.$time_start, $cache_id);
+				next;
+			}
+			
+			# get bhash
+			my $bhash=$Redis->hget($cache_id,'bhash');
+			if ($bhash)
+			{
+				# already in queue
+				next;
+			}
+			
+			# get warmup data
+			my $warmup=$Redis->hget($cache_id,'warmup');
+			if (!$warmup)
+			{
+				$Redis->srem('C3|warmup|'.$time_start, $cache_id);
+				next;
+			}
+			# redefine warmup
+			$warmup=from_json(Ext::Redis::_uncompress(\$warmup));
+			
+#			print Dumper($warmup);
+#			return 1;
+			
+			$caches++;
+			my $queue=$warmup->{'routing_key'};
+			main::_log(" id=".$cache_id." hits=".$hits." queue=".$queue);
+			
+			use Encode qw(decode encode);
+			my $queue_found=$TOM::Engine::queues{$queue};
+			if ($Redis && !$queue_found)
+			{
+				$TOM::Engine::queues{$queue}=$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
+			}
+			if (!$queue_found)
+			{main::_log("[RabbitMQ] declare_queue '".'cyclone3.job.'.$queue."'");eval{
+				my $exists=$RabbitMQ->_channel->declare_queue(
+					'exchange' => encode('UTF-8', 'cyclone3.job'),
+					'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
+					'durable' => 1
+				);
+				main::_log("[RabbitMQ] bind_queue '".$queue."'");
+				$RabbitMQ->_channel->bind_queue(
+					'exchange' => encode('UTF-8', 'cyclone3.job'),
+					'routing_key' => encode('UTF-8', $queue),
+					'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
+				);
+				$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time());
+				$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,3600);
+			};if($@){main::_log($@,1)}}
+			
+			my $id=$warmup->{'body'}->{'requested-id'} || TOM::Utils::vars::genhash(8);
+			
+			main::_log("  request warmup cache '".$cache_id."' '".$warmup->{'body'}->{'pub-mdl'}."' from backend services (jobify '".$id."' routing_key '".$queue."')");
+			
+#			print $json->encode($warmup->{'body'});
+			$warmups++;
+			$RabbitMQ->publish(
+				'exchange'=>'cyclone3.job',
+				'routing_key' => $queue,
+				'body' => $json->encode($warmup->{'body'}),
+				'header' => {
+					'headers' => {
+						'message_id' => $id,
+						'timestamp' => time(),
+						'deduplication' => 'true'
+					}
+				}
+			);
+			$Redis->hset($cache_id,'bhash',$id);
+			$Redis->hset($cache_id,'etime',time());
+			$Redis->srem('C3|warmup|'.$time_start, $cache_id);
+			
+#			return 1;
+		}
+		
+		main::_log(" caches=".$caches);
+		
+		if (!$caches)
+		{
+			$Redis->del('C3|warmup|'.$time_start);
+			next;
+		}
+		
+		
+	}
+	
+	main::_event("debug","cache_warmup",{
+		'warmups_i' => $warmups,
+#		'requests_i' => $requests,
+#		'requests_robots_i' => $requests_robots,
+	});
+	
+#	my $key='C3|debug|mdl_caches';
+#		$key.="|".$tom::H if $tom::H;
+#	
+#	foreach my $cache_type (sort @{$Redis->smembers('C3|debug|mdl_caches')})
+#	{
+#		main::_log("check cache_type $cache_type");
+#		my $members;
+#		foreach my $cache_member (@{$Redis->smembers($cache_type)})
+#		{
+#			if (!$Redis->exists($cache_member))
+#			{
+#				main::_log("remove cache_member $cache_member");
+#				$Redis->srem($cache_type, $cache_member, sub{});
+#				next;
+#			}
+#			$members++;
+#		}
+#		# this cache type is dead
+#		if (!$members)
+#		{
+#			main::_log("remove cache_type $cache_type");
+#			$Redis->srem('C3|debug|mdl_caches|'.$tom::H, $cache_type, sub{})
+#		}
+#	}
+	
+return 1}
+1;
