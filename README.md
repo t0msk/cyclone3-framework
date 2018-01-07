@@ -152,6 +152,20 @@ apt-get install redis-server
 cpan RedisDB
 ```
 
+Optimize redis.conf
+
+```bash
+# much much faster
+unixsocket /var/run/redis/redis.sock
+unixsocketperm 777
+# save io :)
+save 86400 1
+save 7200  1000000
+save 3600  2000000
+# save CPU
+rdbcompression no
+```
+
 ## Setup Cyclone3
 
 Copy configuration template file to destination
@@ -234,7 +248,7 @@ cp /srv/Cyclone3/_config/httpd.virtual.conf.tmpl /srv/Cyclone3/_config/httpd.vir
 Symlink configuration files
 
 ```bash
-ln -s /srv/Cyclone3/.core/_config/httpd.conf /etc/apache2/conf.d/00-cyclone3.conf
+ln -s /srv/Cyclone3/.core/_config/httpd.conf /etc/apache2/conf-enabled/00-cyclone3.conf
 ln -s /srv/Cyclone3/_config/httpd.virtual.conf /etc/apache2/sites-enabled/01-cyclone3-virtual.conf
 ```
 

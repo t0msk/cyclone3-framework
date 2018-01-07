@@ -24,6 +24,23 @@ use strict; # scrict code
 use vars qw//;
 our $sig_term=1;
 
+our $argv=join " ",@ARGV;
+our %arg;
+foreach my $key(@ARGV)
+{
+	$key=~s/^\-\-// && do
+	{
+		my @ref=split('=',$key,2);
+		$ref[1]=1 unless exists $ref[1];
+		$main::arg{$ref[0]}=$ref[1];
+		next;
+	};
+	$key=~s/^\-// && do
+	{
+		foreach (split('',$key)){$main::arg{$_}++;}
+	};
+}
+
 
 ######################################################################################
 ######################################################################################
@@ -77,9 +94,10 @@ my $memstat = $meminfo->get;
 my $loadinfo = Sys::Statistics::Linux::LoadAVG->new;
 my $loadstat = $loadinfo->get;
 
-main::_log_stdout("running on host with ".$sysstat->{'tcpucount'}." CPU cores PID $$",3,"job.workerd");# if $ENV{'WORKERS'};
-our $MAX_LOAD=($sysstat->{'tcpucount'} * 4);
-main::_log_stdout("max load $MAX_LOAD",3,"job.workerd");# if $ENV{'WORKERS'};
+$main::arg{'mode'}||='master';
+main::_log_stdout("running in mode '".$main::arg{'mode'}."' on host with ".$sysstat->{'tcpucount'}." CPU cores PID $$",3,"job.workerd");# if $ENV{'WORKERS'};
+our $MAX_LOAD=int($sysstat->{'tcpucount'} * 2);
+main::_log_stdout("max allowed load $MAX_LOAD",3,"job.workerd");# if $ENV{'WORKERS'};
 
 main::_log_stdout("declaring default job exchange, queue, binding",3,"job.workerd");
 
@@ -140,13 +158,15 @@ $TOM::job_worker_start_delay||=1; # start next worker after delay
 $TOM::job_domain_worker_start_delay||=5; # start next worker after delay on same domain
 
 our $usable_memory = (
-	($memstat->{'memfree'} - ($memstat->{'memtotal'} * 0.05)) # reserve 5%
-	+ ($memstat->{'cached'} - ($memstat->{'memtotal'} * 0.05)) # +5% filesystem cache reserver
+	($memstat->{'memfree'} - ($memstat->{'memtotal'} * 0.01)) # reserve 1%
+	+ ($memstat->{'cached'} - ($memstat->{'memtotal'} * 0.01)) # +1% filesystem cache reserve
 );
 main::_log_stdout("max $MAX_WORKERS workers (allowed to fork?=$ENV{'WORKERS'}), max load is allowed $MAX_LOAD, usable free memory ".(int(($usable_memory/1024/1024)*100)/100)."GB for ".int($usable_memory/200000)." workers",3,"job.workerd");
 
+#exit if $main::arg{'mode'} eq "slave";
+
 main::_log_stdout("main loop timer starting",3,"job.workerd") if $ENV{'WORKERS'};
-my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
+my $w=AnyEvent->timer(after => 1, interval => 5, cb => sub {
 	$main::request_code=Utils::vars::genhash(8);
 #	main::_log_stdout("controlling job queue pool");
 	local $main::_canexit;
@@ -178,7 +198,7 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 	if (!$response->is_success)
 	{
 		die "can't connect to RabbitMQ API (".$response->status_line.")";
-	}	
+	}
 	
 	my $content=$response->decoded_content;
 	
@@ -252,6 +272,11 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 		my $class_=$class;
 			$class=~s|^::||;
 		
+		if ($main::arg{'class'})
+		{
+			next unless $class eq $main::arg{'class'};
+		}
+		
 		if ($domain=~/^db:(.*?)$/)
 		{
 			undef $domain;
@@ -277,9 +302,9 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 		
 		# set this queue as existing
 		$Redis->hset('C3|Rabbit|queue|'.$queue->{'name'},'time',time(),sub {});
-		$Redis->expire('C3|Rabbit|queue|'.$queue->{'name'},15,sub {});
+		$Redis->expire('C3|Rabbit|queue|'.$queue->{'name'},60,sub {});
 		
-		main::_log_stdout("active queue '$queue->{'name'}' domain='$domain' jobs=".$queue->{'messages_ready'}." rate=".$queue->{'messages_ready_details'}->{'rate'}." consumers=".$queue->{'consumers'},3,"job.workerd")
+		main::_log("active queue '$queue->{'name'}' domain='$domain' jobs=".$queue->{'messages_ready'}." rate=".$queue->{'messages_ready_details'}->{'rate'}." consumers=".$queue->{'consumers'})
 			if (
 #				$queue->{'consumers'} ||
 				$queue->{'messages_ready'} ||
@@ -305,13 +330,17 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 		last if $WORKERS >= $MAX_WORKERS;
 		
 		# check consumers
-		my $t = new Proc::ProcessTable;
-		if ($class && $domain)
+		if ($class && $domain && !$queue->{'consumers'} && $queue->{'messages_ready'})
 		{
+			my $t = new Proc::ProcessTable;
 			my $workers_local=(scalar (grep {$_->{'cmndline'}=~/^c3\-job\.worker \[$domain\] :$class /;} @{$t->table}))-1;
 			$queue->{'consumers'} = $workers_local
 				if $workers_local > $queue->{'consumers'};
-			main::_log_stdout("real local consumers=".$queue->{'consumers'}." in domain=$domain class=$class",3,"job.workerd");
+			main::_log("real local consumers=".$queue->{'consumers'}." in domain=$domain class=$class");
+		}
+		elsif ($class && $domain && $queue->{'messages_ready'})
+		{
+			main::_log("consumers=".$queue->{'consumers'}." in domain=$domain class=$class");
 		}
 		
 		if ($class && exists $TOM::job_class_max_workers{$class})
@@ -331,18 +360,19 @@ my $w=AnyEvent->timer(after => 1, interval => 10, cb => sub {
 			$tom::P__=$domain_info{$domain}{'tom::P'} || $TOM::P.'/.core'; # new local.conf location
 			chdir $tom::P__;
 			my $cmd='/usr/bin/perl '.$TOM::P."/.core/job.worker $class > /dev/null";
-			main::_log_stdout("chdir '$tom::P__' exec '$cmd'",3,"job.workerd");
+#			main::_log_stdout("chdir '$tom::P__' exec '$cmd'",3,"job.workerd");
 			`$cmd&`;
 #			sleep 2;
 			$WORKERS++;
-			main::_log_stdout("started new worker",3,"job.workerd");
+#			main::_log_stdout("started new worker",3,"job.workerd");
+			last;
 		}
 	}
 	
 }) if $ENV{'WORKERS'};
 
 my $w=AnyEvent->timer(after => 0, interval => 0.5, cb => \&monitor_master_db)
-	if $TOM::DB{'main:1'};
+	if ($TOM::DB{'main:1'} && $main::arg{'mode'} eq "master");
 sub monitor_master_db
 {
 #	main::_log("check db");
@@ -356,7 +386,8 @@ sub monitor_master_db
 }
 
 my $w=AnyEvent->timer(after => 60, interval => 30, cb => \&check_domains);
-my $w=AnyEvent->timer(after => 0, interval => 1, cb => \&check_scheduler);
+my $w=AnyEvent->timer(after => 0, interval => 1, cb => \&check_scheduler)
+	if $main::arg{'mode'} eq "master";
 my $w=AnyEvent->timer(after => 600, interval => 600, cb => \&check_processes);
 
 sub check_domains
@@ -492,6 +523,8 @@ sub check_domains
 			.")");
 			
 			# write cron definitions
+			# but only if i'm master
+			next unless $main::arg{'mode'} eq "master";
 			foreach my $id(grep {$config_file{$filename}{'trigger'}{$_}{'type'} eq "cron"} keys %{$config_file{$filename}{'trigger'}})
 			{
 				my $cron=$config_file{$filename}{'trigger'}{$id};
@@ -837,12 +870,12 @@ sub check_scheduler
 				{
 					$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
 					$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time(),sub {});
-					$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,15,sub {});
+					$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,60,sub {});
 				}
 				if (!$queue_found)
 				{
 					async {
-						main::_log("declare_queue");
+						main::_log("declare_queue ".'cyclone3.job.'.$queue);
 						$service->_channel->declare_queue(
 							'exchange' => encode('UTF-8', 'cyclone3.job'),
 							'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
