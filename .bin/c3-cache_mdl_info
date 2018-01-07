@@ -117,6 +117,10 @@ my $caches_all;
 my $caches_types;
 foreach my $cache_type(sort @{$Redis->smembers($key)})
 {
+	if ($arg{'filter'})
+	{
+		next unless $cache_type=~/$arg{'filter'}/;
+	}
 #	print $cache_type."\n";
 	$caches_types++;
 	foreach my $cache_member (@{$Redis->smembers($cache_type)})
@@ -139,14 +143,13 @@ my $cache_types=0;
 my $caches_all;
 foreach my $cache_type (sort @{$Redis->smembers($key)})
 {
-	$cache_types++;
-	
 	my $cache_type_name=$cache_type;
-	
 	if ($arg{'filter'})
 	{
 		next unless $cache_type_name=~/$arg{'filter'}/;
 	}
+	
+	$cache_types++;
 	
 	my $tpl;$tpl=1 if $cache_type_name=~/tpl_cache/;
 #		$cache_type_name="(tpl) ".$cache_type_name
@@ -167,6 +170,13 @@ foreach my $cache_type (sort @{$Redis->smembers($key)})
 		$caches_all++;$progress->update($caches_all);
 		$caches++;
 		
+		if ($arg{'delete'})
+		{
+			$Redis->del($cache_member, sub{});
+			$Redis->srem($cache_type, $cache_member, sub{});
+			next;
+		}
+		
 		if (!$Redis->exists($cache_member))
 		{
 			$Redis->srem($cache_type, $cache_member, sub{});
@@ -186,11 +196,6 @@ foreach my $cache_type (sort @{$Redis->smembers($key)})
 		$engines{$Redis->hget($cache_member,'engine') || 'null'}++;
 #		$caches_bytes+=$Redis->hstrlen($cache_member,'body');
 #		print " ".$cache_member." from:".$cache_time_from." hits:".$cache_hits."\n";
-		
-		if ($arg{'delete'})
-		{
-			$Redis->del($cache_member);
-		}
 		
 		if ($arg{'debug'})
 		{
@@ -223,6 +228,8 @@ foreach my $cache_type (sort @{$Redis->smembers($key)})
 	
 #	print ".";
 }
+
+exit if $arg{'delete'};
 
 print "\n";
 
