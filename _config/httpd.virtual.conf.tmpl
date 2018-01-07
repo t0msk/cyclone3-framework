@@ -7,16 +7,18 @@
 
 Options FollowSymLinks
 
-<Directory "/Cyclone3/">
+<Directory "/srv/Cyclone3/">
 	Options FollowSymLinks ExecCGI
+	Require all granted
 </Directory>
 
-<Directory "/Cyclone3">
+<Directory "/srv/Cyclone3">
 	Options FollowSymlinks ExecCGI
+	Require all granted
 </Directory>
 
-ErrorLog /Cyclone3/_logs/httpd/all.err.log
-CustomLog /Cyclone3/_logs/httpd/all.acc.log combined
+ErrorLog /srv/Cyclone3/_logs/httpd/all.err.log
+CustomLog /srv/Cyclone3/_logs/httpd/all.acc.log combined
 
 
 
@@ -30,16 +32,16 @@ CustomLog /Cyclone3/_logs/httpd/all.acc.log combined
 <VirtualHost 192.168.5.1>
 	ServerName example.tld
 	ServerAlias www.example.tld
-	DocumentRoot /Cyclone3/!example.tld/!www
-	CustomLog /Cyclone3/_logs/httpd/example_tld.acc.log combined
-	<Directory /Cyclone3/!example.tld/!www>
+	DocumentRoot /srv/Cyclone3/!example.tld/!www
+	CustomLog /srv/Cyclone3/_logs/httpd/example_tld.acc.log combined
+	<Directory /srv/Cyclone3/!example.tld/!www>
 		Options Indexes FollowSymlinks ExecCGI
 		AllowOverride All
 	</Directory>
 	
 	# SOAP or XML-RPC domain service
-	Alias /rpc "/Cyclone3/!example.tld/rpc/!www"
-	<Directory /Cyclone3/!example.tld/rpc/!www>
+	Alias /rpc "/srv/Cyclone3/!example.tld/rpc/!www"
+	<Directory /srv/Cyclone3/!example.tld/rpc/!www>
 		Options FollowSymlinks ExecCGI
 		AllowOverride All
 	</Directory>
@@ -49,9 +51,9 @@ CustomLog /Cyclone3/_logs/httpd/all.acc.log combined
 # domain service backend to Cyclone3 XULadmin
 <VirtualHost 192.168.5.3:80>
 	ServerName cyclone.example.tld
-	DocumentRoot /Cyclone3/!example.tld/!cyclone/!www
-	CustomLog /Cyclone3/_logs/httpd/cyclone_example_tld.acc.log combined
-	<Directory /Cyclone3/!example.tld/!cyclone/!www>
+	DocumentRoot /srv/Cyclone3/!example.tld/!cyclone/!www
+	CustomLog /srv/Cyclone3/_logs/httpd/cyclone_example_tld.acc.log combined
+	<Directory /srv/Cyclone3/!example.tld/!cyclone/!www>
 		Options Indexes FollowSymlinks ExecCGI
 		AllowOverride All
 	</Directory>
