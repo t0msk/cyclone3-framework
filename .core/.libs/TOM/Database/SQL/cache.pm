@@ -43,6 +43,8 @@ sub new
 	$env{'id'}=TOM::Digest::hash(Encode::encode('UTF-8',$env{'id'})) if $env{'id'};
 	$env{'expire'}=$expiration if $env{'expire'} == 1; # don't cache to 1second
 	
+	$self->{'cache'}{'id'}=$env{'id'};
+	
 	if ($env{'sth'} && $env{'id'})
 	{
 		main::_log("SQL::cache: created cache object to save data '$env{'id'}' expiration=$env{'expire'}") if $debug;

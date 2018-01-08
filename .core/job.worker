@@ -375,7 +375,7 @@ sub callback {
 			}
 			local $tom::lng=$payload->{'lng'} || $tom::lng;
 			
-			my ($out)=Tomahawk::module(%{$payload->{'args'}},'-stdout_dummy'=>1);
+			my ($out)=Tomahawk::module(%{$payload->{'args'}},'-stdout_dummy'=>1,'-cache_backend'=>0,'-cache_ignore'=>1);
 			main::_log("end of call $@");
 			
 			undef $main::nojobify; # jobify everything required

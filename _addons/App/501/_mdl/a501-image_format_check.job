@@ -15,9 +15,9 @@ sub execute
 {
 	my $self=shift;
 	my $env=$self->env;
-	return if $self->running({'max'=>3600}); # check if not already running
+	return if $self->running({'max'=>3600*6,'unique'=>$App::501::db_name}); # check if not already running
 	
-	$env->{'time_max'}=60*5 unless $env->{'time_max'};
+	$env->{'time_max'}=3600*5 unless $env->{'time_max'};
 	
 	if (!$tom::H)
 	{
@@ -128,7 +128,7 @@ sub execute
 			ORDER BY
 				image.ID_entity DESC
 			LIMIT
-				100
+				1000
 		};
 		my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-long'=>10);
 		while (my %db1_line=$sth1{'sth'}->fetchhash())
@@ -187,7 +187,7 @@ sub execute
 				ORDER BY
 					image.ID_entity DESC
 				LIMIT
-					100
+					1000
 			};
 			my %sth1=TOM::Database::SQL::execute($sql,'quiet'=>1,'-long'=>10);
 			while (my %db1_line=$sth1{'sth'}->fetchhash())

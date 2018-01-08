@@ -233,6 +233,7 @@ our $Redis=$Ext::Redis::service;
 # implemented dancing between redis nodes
 package Ext::Redis::service;
 use vars qw{$AUTOLOAD};
+use String::CRC32;
 
 sub new
 {
@@ -415,6 +416,8 @@ sub _redisdb_connect
 
 sub DESTROY { }
 
+my %basic_methods=map {$_ => 1} qw{del dump exists expire expireat object persist pexpire pexpireat pttl rename renamenx sort ttl type get decr incr incrby set hdel hexists hget hgetall hstrlen hincrby hkeys len hmget hmset hset hvals blpop brpop lindex linsert llen lpop lpush lpushx lrange lrem lset ltrim rpop rpush rpushx sadd scard sismember smembers spop srandmember srem zadd zcard zcount zincrby zrange zrangebyscore zrank zrem zremrangebyrank zremrangebyscore zrevrange zrevrangebyscore zrevrank zscore};
+
 sub AUTOLOAD
 {
 	my $self=shift;
@@ -439,46 +442,39 @@ sub AUTOLOAD
 	elsif ($self->{'lib'} eq "RedisDB" && $self->{'services'} && @{$self->{'services'}})
 	{
 		my $service=$self->{'service'};
-		
-		if ($method=~/^(del|dump|exists|expire|expireat|object|persist|pexpire|pexpireat|pttl|rename|renamenx|sort|ttl|type|get|decr|incr|incrby|set|hdel|hexists|hget|hgetall|hstrlen|hincrby|hkeys|len|hmget|hmset|hset|hvals|blpop|brpop|lindex|linsert|llen|lpop|lpush|lpushx|lrange|lrem|lset|ltrim|rpop|rpush|rpushx|sadd|scard|sismember|smembers|spop|srandmember|srem|zadd|zcard|zcount|zincrby|zrange|zrangebyscore|zrank|zrem|zremrangebyrank|zremrangebyscore|zrevrange|zrevrangebyscore|zrevrank|zscore)$/)
+		my $service_number=0;
+		if ($basic_methods{$method})
 		{
-			my $service_number=0;
 			my $services=scalar @{$self->{'services'}};
 			my $key=$_[0];
-			
-			use String::CRC32;
 			my $crc=crc32($key);
-			
 			$service_number=$crc % $services;
-			
 			$service=$self->{'services'}[$service_number];
-#			print "$service_number\n" if $tom::test;
 		}
-		my $value;#=$service->$method(@_);
-		eval {$value=$service->$method(@_)};
+		my $value;
+		if ($method eq "expire" && $Ext::Redis::expire_modifier && $_[1]=~/^\d+$/) # modify expiration time
+		{
+			my $durr=int($_[1]*$Ext::Redis::expire_modifier);
+			$value=eval{$service->$method($_[0],$durr,sub{})};
+		}
+		else
+		{
+			$value=eval{$service->$method(@_)};
+		}
 		if ($@)
 		{
-			main::_log("[RedisDB] error '$@'",1);
-			if ($method=~/^(hgetall)$/)
-			{
-				return [];
-			}
-			return undef;			
+			main::_log("[RedisDB] error '$@' on host $service_number",1);
+			return [] if $method eq "hgetall";
+			return undef;
 		}
 		if (ref($value) eq "RedisDB::Error::DISCONNECTED")
 		{
 #			main::_log("RedisDB disconnected ($method call)",1);
-			if ($method=~/^(hgetall)$/)
-			{
-				return [];
-			}
+			return [] if $method eq "hgetall";
 			return undef;
 		}
 		return $value;
-#		return $service->$method(@_);
 	}
-	
-#	scalar @{$self->{'services'}}
 	
 	# others
 	return $self->{'service'}->$method(@_);

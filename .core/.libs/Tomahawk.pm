@@ -393,6 +393,7 @@ sub module
 			next if $_ eq "-stdout";
 			next if $_ eq "-stdout_dummy";
 			next if $_ eq "-cache_backend";
+			next if $_ eq "-cache_warmup";
 			next if $_ eq "-cache_id";
 			next if $_ eq "-cache_ignore";
 			next if $_ eq "-cache"; # duration configuration don't affects cache
@@ -561,66 +562,44 @@ sub module
 				&& $mdl_C{'-cache_backend'} # chcem aby nacachoval backend
 				&& $TOM::cache_backend
 				&& !$cache_parallel # a uz sa tak nedeje v inom procese/poziadavke
-				&& $RabbitMQ # je k dispozicii backend services
+#				&& $RabbitMQ # je k dispozicii backend services
 			)
 			{
 				use Encode qw(decode encode);
-				my %env_origin=@_;
-					delete $env_origin{'-cache_backend'};
-					$env_origin{'-cache_ignore'}=1;
 				
 				my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
-				$Redis->hset($key,'etime',$main::time_current);
+				
+				my $id=TOM::Utils::vars::genhash(8);
+				my $warmup_time=int( time()/60 );
+				main::_log("[cache warmup/backend] ".$key." to ".$warmup_time." request=".$id,3);
+				my $mdl_cache_type='C3|warmup|'.$warmup_time;
+					$Redis->sadd($mdl_cache_type, $key, sub{});
+					$Redis->expire($mdl_cache_type,(86400 * 30 * 2),sub{});
+					
+				my %env_origin=@_;
+#					delete $env_origin{'-cache_backend'};
+#					$env_origin{'-cache_ignore'}=1;
 				
 				my $queue=$tom::H_orig || '_global';
 					$queue.="::pub";
-					
-				my $queue_found=$TOM::Engine::queues{$queue};
-				if ($Redis && !$queue_found)
-				{
-					$TOM::Engine::queues{$queue}=$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
-				}
-				if (!$queue_found)
-				{main::_log("[RabbitMQ] declare_queue '".'cyclone3.job.'.$queue."'");eval{
-					my $exists=$RabbitMQ->_channel->declare_queue(
-						'exchange' => encode('UTF-8', 'cyclone3.job'),
-						'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
-						'durable' => 1
-					);
-					main::_log("[RabbitMQ] bind_queue '".$queue."'");
-					$RabbitMQ->_channel->bind_queue(
-						'exchange' => encode('UTF-8', 'cyclone3.job'),
-						'routing_key' => encode('UTF-8', $queue),
-						'queue' => encode('UTF-8', 'cyclone3.job.'.$queue)
-					);
-					$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time());
-					$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,3600);
-				};if($@){main::_log($@,1)}}
 				
-				my $id=TOM::Utils::vars::genhash(8);
-				main::_log("request cache '".$key."' '".$mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'}."' from backend services (jobify '".$id."' routing_key '".$queue."')",3,"debug");
-				$RabbitMQ->publish(
-					'exchange'=>'cyclone3.job',
-					'routing_key' => $queue,
-					'body' => $json->encode({
-						'pub-mdl' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
-						'args' => \%env_origin,
-						'FORM' => \%main::FORM,
-						'key' => \%main::key,
-						'env' => \%main::env,
-						'setup' => \%tom::setup,
-						'a210' => {%main::a210,'node'=>undef},
-						'lng' => $tom::lng
-					}),
-					'header' => {
-						'headers' => {
-							'message_id' => $id,
-							'timestamp' => time(),
-							'deduplication' => 'true'
-						}
-					}
+				$Redis->hset($key,'etime',time());
+				$Redis->hset($key,'warmup',
+					Ext::Redis::_compress(\$json->encode({
+						'routing_key' => $queue,
+						'body' => {
+							'requested-id' => $id,
+							'pub-mdl' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
+							'args' => \%env_origin,
+							'FORM' => \%main::FORM,
+							'key' => \%main::key,
+							'env' => \%main::env,
+							'setup' => \%tom::setup,
+							'a210' => {%main::a210,'node'=>undef},
+							'lng' => $tom::lng
+						},
+					}))
 				);
-				$Redis->hset($key,'bhash',$id);
 			}
 			
 			if ($TOM::DEBUG_cache)
@@ -974,6 +953,38 @@ sub module
 						sub {} # in pipeline
 					); # set expiration time
 					main::_log("save cache object '$key' type '".$mdl_C{'T_CACHE'}."' body_size=".length($Tomahawk::module::XSGN{'TMP'}));
+					
+					if ($mdl_C{'-cache_warmup'})
+					{
+						my $warmup_time=int( (time()+$expiretime)/60 );
+						main::_log("[cache warmup] ".$key." to ".$warmup_time,3);
+						my $mdl_cache_type='C3|warmup|'.$warmup_time;
+							$Redis->sadd($mdl_cache_type, $key, sub{});
+							$Redis->expire($mdl_cache_type,(86400 * 30 * 2),sub{});
+							
+						my %env_origin=@_;
+#							delete $env_origin{'-cache_backend'};
+#							$env_origin{'-cache_ignore'}=1;
+						
+						my $queue=$tom::H_orig || '_global';
+							$queue.="::pub";
+							
+						$Redis->hset($key,'warmup',
+							Ext::Redis::_compress(\$json->encode({
+								'routing_key' => $queue,
+								'body' => {
+									'pub-mdl' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
+									'args' => \%env_origin,
+									'FORM' => \%main::FORM,
+									'key' => \%main::key,
+									'env' => \%main::env,
+									'setup' => \%tom::setup,
+									'a210' => {%main::a210,'node'=>undef},
+									'lng' => $tom::lng
+								},
+							}))
+						);
+					}
 					
 					if ($TOM::DEBUG_cache)
 					{
@@ -2126,7 +2137,7 @@ sub GetTpl
 	
 	if (!$Tomahawk::module::TPL->{'entity'}->{'main'})
 	{
-		main::_log("main entity not defined",1);
+		main::_log("main entity not defined",3);
 	}
 	
 	return 1;

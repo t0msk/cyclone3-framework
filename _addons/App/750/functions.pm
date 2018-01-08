@@ -50,9 +50,11 @@ sub complex_add
 				'db_name' => $App::750::db_name,
 				'tb_name' => "a750_complex",
 				'columns' => {
+					'posix_owner' => "'".$main::USRM{'ID_user'}."'",
 					'ID' => $env{'complex.ID'},
 				},
 				'-journalize' => 1,
+				'-posix' => 1,
 			);
 			%complex=App::020::SQL::functions::get_ID(
 				'ID' => $env{'complex.ID'},
@@ -70,14 +72,15 @@ sub complex_add
 		main::_log("!complex.ID, create complex.ID (complex.ID_entity='$env{'complex.ID_entity'}')");
 		my %columns;
 		$columns{'ID_entity'}=$env{'complex.ID_entity'} if $env{'complex.ID_entity'};
-
-
+		$columns{'posix_owner'}="'".$main::USRM{'ID_user'}."'" unless $columns{'posix_owner'};
+		
 		$env{'complex.ID'}=App::020::SQL::functions::new(
 			'db_h' => "main",
 			'db_name' => $App::750::db_name,
 			'tb_name' => "a750_complex",
 			'columns' => {%columns},
 			'-journalize' => 1,
+			'-posix' => 1,
 		);
 		%complex=App::020::SQL::functions::get_ID(
 			'ID' => $env{'complex.ID'},
@@ -170,7 +173,7 @@ sub complex_add
 	$data{'metadata'}=$env{'complex.metadata'}
 		if (exists $env{'complex.metadata'} && ($env{'complex.metadata'} ne $complex{'metadata'}));
 
-	foreach my $field ('status','code','owner_occupied','rental_park','land','park','industry','complex_type','year','url_web','url_google_maps','floor_loading_capacity','floor_loading_capacity_to','clear_height','clear_height_to','truck_yard_depth','truck_yard_depth_to','cross_dock','dock_doors_amount','street','street_num','city','ZIP','district','county','state','country_code','geo_lat','geo_lon') {
+	foreach my $field ('status','code','owner_occupied','rental_park','land','park','industry','complex_type','year','url_web','url_google_maps','floor_loading_capacity','floor_loading_capacity_to','clear_height','clear_height_to','truck_yard_depth','truck_yard_depth_to','column_grid_x','column_grid_y','cross_dock','dock_note','dock_doors_amount','drive_in','street','street_num','city','ZIP','district','county','state','country_code','geo_lat','geo_lon','note') {
 		$data{$field}=$env{'complex.'.$field}
 			if (exists $env{'complex.'.$field} && ($env{'complex.'.$field} ne $complex{$field}));
 	}

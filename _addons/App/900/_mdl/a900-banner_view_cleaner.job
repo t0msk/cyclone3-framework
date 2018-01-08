@@ -1,0 +1,65 @@
+#!/usr/bin/env c3-job
+package Cyclone3::job;
+use parent 'TOM::Engine::job::module';
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+
+use Utils::datetime;
+use Data::Dumper;
+use App::900::_init;
+
+sub execute
+{
+	my $self=shift;
+	my $env=$self->env;
+	
+	my %sth0=TOM::Database::SQL::execute(qq{
+		SELECT
+			DATE(datetime_event) as date_event,
+			ID_banner,
+			COUNT(*) AS cnt
+		FROM `$App::900::db_name`.a900_banner_view
+		WHERE
+			datetime_event < DATE_SUB(CURDATE(),INTERVAL 3 MONTH)
+		GROUP BY
+			DATE(datetime_event), ID_banner
+	});
+	while (my %db0_line=$sth0{'sth'}->fetchhash())
+	{
+		print Dumper(\%db0_line);
+		
+		TOM::Database::SQL::execute(qq{
+			REPLACE INTO
+			`$App::900::db_name`.a900_banner_view_anon
+			(
+				date_event,
+				ID_banner,
+				stats_views
+			)
+			VALUES
+			(
+				?,
+				?,
+				?
+			)
+		},'bind'=>[
+			$db0_line{'date_event'},
+			$db0_line{'ID_banner'},
+			$db0_line{'cnt'}
+		]);
+		
+		TOM::Database::SQL::execute(qq{
+			DELETE FROM `$App::900::db_name`.a900_banner_view
+			WHERE
+				DATE(datetime_event) = ?
+				AND ID_banner = ?
+		},'bind'=>[
+			$db0_line{'date_event'},
+			$db0_line{'ID_banner'}
+		]);
+	}
+	
+return 1}
+1;
