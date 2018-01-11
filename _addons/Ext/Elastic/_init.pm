@@ -42,6 +42,7 @@ sub _connect
 	return undef unless $Ext::Elastic;
 	my $t=track TOM::Debug("Ext::Elastic::connect",'attrs_'=>$Ext::Elastic::host);
 	push @{$Ext::Elastic->{'plugins'}}, 'cache';
+	$Ext::Elastic->{'logger'} ||= 'Cyclone3';
 	if ($service_=Search::Elasticsearch->new($Ext::Elastic))
 	{
 		use Data::Dumper;
