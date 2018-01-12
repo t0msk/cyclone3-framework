@@ -202,8 +202,6 @@ sub _log
 #		$msg=$log_sym[$get[2]].' '.$get[1] unless $main::debug;
 #		$msg=$log_sym[$get[2]].$get[1] unless $main::debug;
 		$msg=$get[1] unless $main::debug;
-#		$msg=~s|\\n|\n|g;
-#		$msg=~s|\\t|\t|g;
 		if ($log_sym[$get[2]] eq '-')
 		{
 			print STDERR color 'red';
