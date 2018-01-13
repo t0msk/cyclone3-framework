@@ -360,6 +360,13 @@ sub callback {
 			});
 			
 			$main::nojobify=1; # nojobify, just execute!
+			
+			Ext::Redis::_restore(\$payload->{'env'});
+			Ext::Redis::_restore(\$payload->{'FORM'});
+			Ext::Redis::_restore(\$payload->{'key'});
+			Ext::Redis::_restore(\$payload->{'setup'});
+			Ext::Redis::_restore(\$payload->{'a210'});
+			
 			%main::env=%{$payload->{'env'}}
 				if $payload->{'env'};
 			%main::FORM=%{$payload->{'FORM'}}
