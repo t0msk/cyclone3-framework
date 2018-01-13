@@ -71,7 +71,8 @@ _connect(); # default connection
 
 use Compress::Zlib;
 use JSON;
-our $json = JSON->new->utf8->convert_blessed;
+our $json = JSON->new->utf8->convert_blessed->allow_nonref;
+our $json_canon = JSON->new->utf8->convert_blessed->allow_nonref->canonical;
 
 our $compression=$Ext::Redis::compression || 0;
 our $compression_level=$Ext::Redis::compression_level || 4;
@@ -79,6 +80,8 @@ our $compression_level=$Ext::Redis::compression_level || 4;
 sub _compress
 {
 	my $data=shift;
+	my $env=shift;
+	my $json_=$env->{'canonical'} ? $json_canon : $json;
 	if (ref($data) eq "SCALAR")
 	{
 		$$data||="";
@@ -92,9 +95,9 @@ sub _compress
 	{
 		if (!$compression)
 		{
-			return $json->encode($data);
+			return $json_->encode($data);
 		}
-		return 'gz|'.compress(Encode::encode_utf8($json->encode($data)),$compression_level);
+		return 'gz|'.compress(Encode::encode_utf8($json_->encode($data)),$compression_level);
 	}
 	return $$data;
 }
@@ -105,6 +108,32 @@ sub _uncompress
 	$$data=Encode::decode_utf8(uncompress($$data))
 		if $$data=~s/^gz\|//;
 }
+
+sub _store
+{
+	my $key=shift;
+	my $data=ref($key) eq "REF" ? _compress($$key,{'canonical'=>1}) : _compress($key,{'canonical'=>1});
+	my $id=TOM::Digest::hash($data);
+	
+	$service->set('C3|store|'.$id,$data)
+		unless $service->exists('C3|store|'.$id);
+	
+	$service->expire('C3|store|'.$id,86400*7,sub{});
+	
+	$$key=$id if ref($key) eq "REF";
+	return $id;
+}
+
+sub _restore
+{
+	my $data=shift;
+	return $$data=$json->decode(
+		_uncompress(
+			\$service->get('C3|store|'.$$data)
+		) || 'null'
+	) if ref($data) eq "SCALAR";
+}
+
 
 package XML::XPath;sub TO_JSON{return undef}
 
