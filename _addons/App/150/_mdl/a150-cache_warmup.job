@@ -22,13 +22,13 @@ sub execute
 	
 	my $warmups;
 	
-	my $time_start=int((time()+(0*60))/60);
-	for (1..100)
+	my $time_start=int((time()+(0*60))/$TOM::CACHE_warmup_granularity)*$TOM::CACHE_warmup_granularity;
+	for (1..1000)
 	{
 		$time_start--;
 		
-		my %date=Utils::datetime::ctodatetime($time_start*60,format=>1);
-		my $datetime_string=$date{'year'}."-".$date{'mon'}."-".$date{'mday'}." ".$date{'hour'}.":".$date{'min'};
+		my %date=Utils::datetime::ctodatetime($time_start,format=>1);
+		my $datetime_string=$date{'year'}."-".$date{'mon'}."-".$date{'mday'}." ".$date{'hour'}.":".$date{'min'}.":".$date{'sec'};
 		
 		if ($Redis->exists('C3|warmup|'.$time_start))
 		{
@@ -91,7 +91,7 @@ sub execute
 				$TOM::Engine::queues{$queue}=$queue_found=$Redis->hget('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time');
 			}
 			if (!$queue_found)
-			{main::_log("[RabbitMQ] declare_queue '".'cyclone3.job.'.$queue."'");eval{
+			{main::_log("[RabbitMQ] declare_queue '".'cyclone3.job.'.$queue."'");eval{use Coro;async{
 				my $exists=$RabbitMQ->_channel->declare_queue(
 					'exchange' => encode('UTF-8', 'cyclone3.job'),
 					'queue' => encode('UTF-8', 'cyclone3.job.'.$queue),
@@ -105,7 +105,7 @@ sub execute
 				);
 				$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,'time',time());
 				$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.$queue,3600);
-			};if($@){main::_log($@,1)}}
+			}};if($@){main::_log($@,1)}}
 			
 			my $id=$warmup->{'body'}->{'requested-id'} || TOM::Utils::vars::genhash(8);
 			
@@ -132,9 +132,9 @@ sub execute
 #			return 1;
 		}
 		
-		main::_log(" caches=".$caches);
+		main::_log(" caches=".$caches) if $caches;
 		
-		if (!$caches)
+		if (!$caches && ($time_start <= (time()-600)))
 		{
 			$Redis->del('C3|warmup|'.$time_start);
 			next;
