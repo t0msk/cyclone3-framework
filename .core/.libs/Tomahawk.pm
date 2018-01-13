@@ -570,7 +570,7 @@ sub module
 				my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
 				
 				my $id=TOM::Utils::vars::genhash(8);
-				my $warmup_time=int( time()/60 );
+				my $warmup_time=int( time()/$TOM::CACHE_warmup_granularity ) * $TOM::CACHE_warmup_granularity;
 				main::_log("[cache warmup/backend] ".$key." to ".$warmup_time." request=".$id,3);
 				my $mdl_cache_type='C3|warmup|'.$warmup_time;
 					$Redis->sadd($mdl_cache_type, $key, sub{});
@@ -587,6 +587,7 @@ sub module
 				$Redis->hset($key,'warmup',
 					Ext::Redis::_compress(\$json->encode({
 						'routing_key' => $queue,
+						'created' => time(),
 						'body' => {
 							'requested-id' => $id,
 							'pub-mdl' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
@@ -956,7 +957,7 @@ sub module
 					
 					if ($mdl_C{'-cache_warmup'})
 					{
-						my $warmup_time=int( (time()+$expiretime)/60 );
+						my $warmup_time=int( (time()+$expiretime)/$TOM::CACHE_warmup_granularity ) * $TOM::CACHE_warmup_granularity;
 						main::_log("[cache warmup] ".$key." to ".$warmup_time,3);
 						my $mdl_cache_type='C3|warmup|'.$warmup_time;
 							$Redis->sadd($mdl_cache_type, $key, sub{});
