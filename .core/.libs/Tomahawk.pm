@@ -592,11 +592,11 @@ sub module
 							'requested-id' => $id,
 							'pub-mdl' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
 							'args' => \%env_origin,
-							'FORM' => \%main::FORM,
+							'FORM' => Ext::Redis::_store \%main::FORM,
 							'key' => \%main::key,
 							'env' => \%main::env,
-							'setup' => \%tom::setup,
-							'a210' => {%main::a210,'node'=>undef},
+							'setup' => Ext::Redis::_store \%tom::setup,
+							'a210' => Ext::Redis::_store {%main::a210,'node'=>undef},
 							'lng' => $tom::lng
 						},
 					}))
@@ -976,11 +976,11 @@ sub module
 								'body' => {
 									'pub-mdl' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
 									'args' => \%env_origin,
-									'FORM' => \%main::FORM,
+									'FORM' => Ext::Redis::_store \%main::FORM,
 									'key' => \%main::key,
 									'env' => \%main::env,
-									'setup' => \%tom::setup,
-									'a210' => {%main::a210,'node'=>undef},
+									'setup' => Ext::Redis::_store \%tom::setup,
+									'a210' => Ext::Redis::_store {%main::a210,'node'=>undef},
 									'lng' => $tom::lng
 								},
 							}))
