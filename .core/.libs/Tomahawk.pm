@@ -571,7 +571,9 @@ sub module
 				
 				my $id=TOM::Utils::vars::genhash(8);
 				my $warmup_time=int( time()/$TOM::CACHE_warmup_granularity ) * $TOM::CACHE_warmup_granularity;
-				main::_log("[cache warmup/backend] ".$key." to ".$warmup_time." request=".$id,3);
+				my %date=Utils::datetime::ctodatetime($warmup_time,format=>1);
+				my $datetime_string=$date{'year'}."-".$date{'mon'}."-".$date{'mday'}." ".$date{'hour'}.":".$date{'min'}.":".$date{'sec'};
+				main::_log("[cache warmup/backend] ".$key." to ".$datetime_string." request=".$id,3);
 				my $mdl_cache_type='C3|warmup|'.$warmup_time;
 					$Redis->sadd($mdl_cache_type, $key, sub{});
 					$Redis->expire($mdl_cache_type,(86400 * 30 * 2),sub{});
@@ -592,11 +594,11 @@ sub module
 							'requested-id' => $id,
 							'pub-mdl' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
 							'args' => \%env_origin,
-							'FORM' => Ext::Redis::_store \%main::FORM,
+							'FORM' => Ext::Redis::_store(\%main::FORM),
 							'key' => \%main::key,
-							'env' => \%main::env,
-							'setup' => Ext::Redis::_store \%tom::setup,
-							'a210' => Ext::Redis::_store {%main::a210,'node'=>undef},
+							'env' => Ext::Redis::_store({%main::env,'cache'=>undef}),
+							'setup' => Ext::Redis::_store(\%tom::setup),
+							'a210' => Ext::Redis::_store({%main::a210,'node'=>undef}),
 							'lng' => $tom::lng
 						},
 					}))
@@ -958,7 +960,9 @@ sub module
 					if ($mdl_C{'-cache_warmup'})
 					{
 						my $warmup_time=int( (time()+$expiretime)/$TOM::CACHE_warmup_granularity ) * $TOM::CACHE_warmup_granularity;
-						main::_log("[cache warmup] ".$key." to ".$warmup_time,3);
+						my %date=Utils::datetime::ctodatetime($warmup_time,format=>1);
+						my $datetime_string=$date{'year'}."-".$date{'mon'}."-".$date{'mday'}." ".$date{'hour'}.":".$date{'min'}.":".$date{'sec'};
+						main::_log("[cache warmup] ".$key." to ".$datetime_string,3);
 						my $mdl_cache_type='C3|warmup|'.$warmup_time;
 							$Redis->sadd($mdl_cache_type, $key, sub{});
 							$Redis->expire($mdl_cache_type,(86400 * 30 * 2),sub{});
@@ -976,11 +980,11 @@ sub module
 								'body' => {
 									'pub-mdl' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
 									'args' => \%env_origin,
-									'FORM' => Ext::Redis::_store \%main::FORM,
+									'FORM' => Ext::Redis::_store(\%main::FORM),
 									'key' => \%main::key,
-									'env' => \%main::env,
-									'setup' => Ext::Redis::_store \%tom::setup,
-									'a210' => Ext::Redis::_store {%main::a210,'node'=>undef},
+									'env' => Ext::Redis::_store({%main::env,'cache'=>undef}),
+									'setup' => Ext::Redis::_store(\%tom::setup),
+									'a210' => Ext::Redis::_store({%main::a210,'node'=>undef}),
 									'lng' => $tom::lng
 								},
 							}))
