@@ -99,6 +99,9 @@ $channel_domain->bind_queue(
 );
 main::_log("routing_key '".($tom::H_orig || 'job').$class."'");
 
+$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.($tom::H_orig || '_global').$class,'time',time());
+$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.($tom::H_orig || '_global').$class,3600);
+
 # database
 my $channel_database=$Ext::RabbitMQ::service->open_channel();
 	$channel_database->{'arc'}->confirm();
@@ -113,6 +116,9 @@ $channel_database->bind_queue(
 	'routing_key' => encode('UTF-8', 'db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class)
 );
 main::_log("routing_key '".'db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class."'");
+
+$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class,'time',time());
+$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class,3600);
 
 if (%tom::sapsync_rabbitmq)
 {
@@ -360,6 +366,13 @@ sub callback {
 			});
 			
 			$main::nojobify=1; # nojobify, just execute!
+			
+			Ext::Redis::_restore(\$payload->{'env'});
+			Ext::Redis::_restore(\$payload->{'FORM'});
+			Ext::Redis::_restore(\$payload->{'key'});
+			Ext::Redis::_restore(\$payload->{'setup'});
+			Ext::Redis::_restore(\$payload->{'a210'});
+			
 			%main::env=%{$payload->{'env'}}
 				if $payload->{'env'};
 			%main::FORM=%{$payload->{'FORM'}}

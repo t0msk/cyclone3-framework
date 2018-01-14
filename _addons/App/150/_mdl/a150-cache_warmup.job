@@ -23,12 +23,13 @@ sub execute
 	my $warmups;
 	
 	my $time_start=int((time()+(0*60))/$TOM::CACHE_warmup_granularity)*$TOM::CACHE_warmup_granularity;
-	for (1..1000)
+	for (1..int(3600/$TOM::CACHE_warmup_granularity))
 	{
-		$time_start--;
+		$time_start-=$TOM::CACHE_warmup_granularity;
 		
 		my %date=Utils::datetime::ctodatetime($time_start,format=>1);
 		my $datetime_string=$date{'year'}."-".$date{'mon'}."-".$date{'mday'}." ".$date{'hour'}.":".$date{'min'}.":".$date{'sec'};
+#		main::_log("check index #".$time_start." '".$datetime_string."'");
 		
 		if ($Redis->exists('C3|warmup|'.$time_start))
 		{
@@ -38,7 +39,6 @@ sub execute
 			next;
 		}
 		
-		main::_log("check index #".$time_start." ".$datetime_string);
 		my $caches;
 		foreach my $cache_id (sort @{$Redis->smembers('C3|warmup|'.$time_start)})
 		{
@@ -46,8 +46,9 @@ sub execute
 			my $hits=$Redis->hget($cache_id,'hits');
 			if (!$hits)
 			{
-#				$Redis->srem('C3|warmup|'.$time_start, $cache_id);
-#				next;
+				main::_log(" id=".$cache_id." hits=".$hits.", removing");
+				$Redis->srem('C3|warmup|'.$time_start, $cache_id);
+				next;
 			}
 			
 			# time_from
