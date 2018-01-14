@@ -441,6 +441,8 @@ sub AUTOLOAD
 	}
 	elsif ($self->{'lib'} eq "RedisDB" && $self->{'services'} && @{$self->{'services'}})
 	{
+#		pop @_ if ref($_[-1]) eq "CODE";
+		
 		my $service=$self->{'service'};
 		my $service_number=0;
 		if ($basic_methods{$method})
@@ -452,24 +454,41 @@ sub AUTOLOAD
 			$service=$self->{'services'}[$service_number];
 		}
 		my $value;
+		if ($service->reply_ready){
+			main::_log("[RedisDB] not readed replies",1);
+			$service->get_all_replies();
+		};
+		
 		if ($method eq "expire" && $Ext::Redis::expire_modifier && $_[1]=~/^\d+$/) # modify expiration time
 		{
 			my $durr=int($_[1]*$Ext::Redis::expire_modifier);
-			$value=eval{$service->$method($_[0],$durr,sub{})};
+#			main::_log("[$service_number] expire $durr");
+			$value=eval{$service->$method($_[0],$durr)};
 		}
 		else
 		{
 			$value=eval{$service->$method(@_)};
 		}
+		
 		if ($@)
 		{
-			main::_log("[RedisDB] error '$@' on host $service_number",1);
+			my $err=$@;
+			main::_log("[RedisDB] error '$err' on host $service_number",1);
+			if ($err=~/replies to fetch/)
+			{
+				$service->get_all_replies();
+				eval{$value=$service->$method(@_)};
+			}
 			return [] if $method eq "hgetall";
 			return undef;
 		}
+		if (!$value)
+		{
+#			main::_log("RedisDB key not found");
+		}
 		if (ref($value) eq "RedisDB::Error::DISCONNECTED")
 		{
-#			main::_log("RedisDB disconnected ($method call)",1);
+			main::_log("RedisDB disconnected ($method call)",1);
 			return [] if $method eq "hgetall";
 			return undef;
 		}
