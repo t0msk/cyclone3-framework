@@ -373,14 +373,36 @@ sub callback {
 			Ext::Redis::_restore(\$payload->{'setup'});
 			Ext::Redis::_restore(\$payload->{'a210'});
 			
-			%main::env=%{$payload->{'env'}}
-				if $payload->{'env'};
-			%main::FORM=%{$payload->{'FORM'}}
-				if $payload->{'FORM'};
-			%main::key=%{$payload->{'key'}}
-				if $payload->{'key'};
-			%tom::setup=%{$payload->{'setup'}}
-				if $payload->{'setup'};
+			if (!$payload->{'env'})
+			{
+				main::_log("missing payload.env, ignore execution",1);
+				return undef;
+			}
+			if (!$payload->{'FORM'})
+			{
+				main::_log("missing payload.FORM, ignore execution",1);
+				return undef;
+			}
+			if (!$payload->{'key'})
+			{
+				main::_log("missing payload.key, ignore execution",1);
+				return undef;
+			}
+			if (!$payload->{'setup'})
+			{
+				main::_log("missing payload.setup, ignore execution",1);
+				return undef;
+			}
+			if (!$payload->{'a210'})
+			{
+				main::_log("missing payload.a210, ignore execution",1);
+				return undef;
+			}
+			
+			%main::env=%{$payload->{'env'}};
+			%main::FORM=%{$payload->{'FORM'}};
+			%main::key=%{$payload->{'key'}};
+			local %tom::setup=%{$payload->{'setup'}};
 			if ($payload->{'a210'})
 			{
 				%main::a210=%{$payload->{'a210'}};
@@ -395,6 +417,7 @@ sub callback {
 			undef %main::env;
 			undef %main::FORM;
 			undef %main::key;
+#			undef %tom::setup;
 			undef %main::a210;
 		}
 		else

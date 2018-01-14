@@ -589,7 +589,7 @@ sub module
 				$Redis->hset($key,'warmup',
 					Ext::Redis::_compress(\$json->encode({
 						'routing_key' => $queue,
-						'created' => time(),
+						'requested_time' => time(),
 						'body' => {
 							'requested-id' => $id,
 							'pub-mdl' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
@@ -977,6 +977,7 @@ sub module
 						$Redis->hset($key,'warmup',
 							Ext::Redis::_compress(\$json->encode({
 								'routing_key' => $queue,
+								'requested_time' => time(),
 								'body' => {
 									'pub-mdl' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
 									'args' => \%env_origin,
