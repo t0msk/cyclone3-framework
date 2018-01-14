@@ -134,7 +134,11 @@ Add this to /etc/apt/sources.list, replacing VERSION with the name of your distr
 sudo apt-get update && sudo apt-get install percona-server-server percona-server-client
 ```
 
-Create Cyclone3 user (This is just an example. Of course you want to use password)
+Log in to MySQL and create Cyclone3 user (To exit MySQL type exit)
+
+```bash
+mysql -h localhost -u root -pPassworYouSetEarlier
+```
 
 ```sql
 GRANT ALL PRIVILEGES ON *.* TO 'Cyclone3'@'localhost' WITH GRANT OPTION \
@@ -142,7 +146,7 @@ MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0;
 ```
 
 ```bash
-mysql -h localhost -u Cyclone3 -pmysecretpassword < /srv/Cyclone3/_data/TOM.sql
+mysql -h localhost -u Cyclone3 < /srv/Cyclone3/_data/TOM.sql
 ```
 
 ### RedisDB
