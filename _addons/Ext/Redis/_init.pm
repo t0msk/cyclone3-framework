@@ -62,6 +62,8 @@ sub _connect
 		}
 	}
 	
+	$service_->del('c3process|'.$TOM::hostname.':'.$$);
+	
 	return $service_;
 }
 
