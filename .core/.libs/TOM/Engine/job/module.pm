@@ -246,22 +246,25 @@ sub running
 	my $self=shift;
 	my $conf=shift;
 	
-	$conf->{'max'}=600 unless $conf->{'max'};
+	$conf->{'max'}||=600;
 	
 #	main::_log("check if already running '".(ref $self)."'");
 	
 	if ($Redis)
 	{
-		my $key_entity=(ref $self);
-			$key_entity.='::'.$conf->{'unique'}
-				if $conf->{'unique'};
-			if (!$conf->{'domain'} && !$conf->{'unique'})
-			{
-				$key_entity.='::'.$tom::H;
-			}
-		$key_entity=TOM::Digest::hash($key_entity);
-		
-		$self->{'_running'}=$key_entity;
+		my $key_entity=$self->{'_running'};
+		if (!$key_entity)
+		{
+			$key_entity=(ref $self);
+				$key_entity.='::'.$conf->{'unique'}
+					if $conf->{'unique'};
+				if (!$conf->{'domain'} && !$conf->{'unique'})
+				{
+					$key_entity.='::'.$tom::H;
+				}
+			$key_entity=TOM::Digest::hash($key_entity);
+			$self->{'_running'}=$key_entity;
+		}
 		
 		my $is_running=$Redis->hget('C3|job|running|'.$key_entity,'PID');
 		if ($is_running)
