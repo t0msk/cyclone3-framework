@@ -68,6 +68,7 @@ sub throw_error
 {
 	my $self=shift;
 	my $error=shift;
+	return unless ref($error);
 	return undef if $error->{'type'} eq "Internal";
 	main::_log($error->{'msg'},4,"elastic");
 }
