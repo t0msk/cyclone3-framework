@@ -82,7 +82,7 @@ BEGIN {eval {if ($TOM::DEBUG_log_fluentd){
 	);
 }};if ($@){undef $TOM::DEBUG_log_fluentd}};
 our %HND;
-our @log_sym=("","-","","","-");
+our @log_sym=("","-","","","-","!");
 our %log_file;
 our $log_time;
 our %log_date;
@@ -207,9 +207,15 @@ sub _log
 			print STDERR $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
 			print STDERR color 'reset';
 		}
+		elsif ($log_sym[$get[2]] eq '!')
+		{
+			print STDERR color 'reset yellow';
+			print STDERR $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
+			print STDERR color 'reset';
+		}
 		else
 		{
-			print color 'green';
+#			print color 'green';
 			print color 'bold' if $get[1]=~/^</;
 			print $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
 		}
@@ -262,7 +268,8 @@ sub _log
 				'dm' => do {if ($get[4]==1){undef;}else {$tom::Hm}},
 				'c' => do {if ($main::request_code){$main::request_code;}else{undef;}},
 				'e' => $TOM::engine,
-				'f' => do {if ($get[2] == 1 || $get[2] == 4){'1';}else{undef;}},
+				'f' => do {if ($get[2] == 1 || $get[2] == 4){'1'}else{undef}},
+				'w' => do {if ($get[2] == 5){'1'}else{undef}},
 #				't' => $get[3],
 				"m" => $msg,
 				'data' => $get[5]
@@ -348,7 +355,7 @@ sub _deprecated
 sub _log_warn
 {
 #	my ($package, $filename, $line) = caller;
-	_log($_[0],1,"warn");
+	_log($_[0],5);
 }
 
 sub _log_long
