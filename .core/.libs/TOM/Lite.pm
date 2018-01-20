@@ -3,6 +3,7 @@ use open ':utf8', ':std';
 use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
+use TOM::Logger;
 
 our $event_socket;
 use JSON;
@@ -126,8 +127,8 @@ sub _log
 	}
 	
 	return undef unless $get[1];
-	$get[0]=0 if $get[2] == 3;
-	$get[0]=0 if $get[2] == 4;
+	$get[0]=0 if $get[2] == LOG_ERROR_FORCE_NODEPTH;
+	$get[0]=0 if $get[2] == LOG_INFO_FORCE_NODEPTH;
 	return undef if
 	(
 		($TOM::DEBUG_log_file < $get[0]) &&
@@ -187,13 +188,13 @@ sub _log
 		{
 			if ($tom::last_log_engine ne $get[3])
 			{
-				print STDOUT color 'reset cyan';print $get[3].".log\n";print color 'reset';
+				print STDOUT color 'reset cyan';print $get[3].":\n";print color 'reset';
 				$tom::last_log_engine = $get[3];
 			}
 		}
-		elsif ($tom::last_log_engine ne $get[3])
+		elsif ($tom::last_log_engine ne $get[3] && $get[3] ne "stdout")
 		{
-			print STDOUT color 'reset cyan';print $get[3].".log\n";print color 'reset';
+			print STDOUT color 'reset cyan';print $get[3].":\n";print color 'reset';
 			$tom::last_log_engine = $get[3];
 		}
 		
@@ -268,8 +269,8 @@ sub _log
 				'dm' => do {if ($get[4]==1){undef;}else {$tom::Hm}},
 				'c' => do {if ($main::request_code){$main::request_code;}else{undef;}},
 				'e' => $TOM::engine,
-				'f' => do {if ($get[2] == 1 || $get[2] == 4){'1'}else{undef}},
-				'w' => do {if ($get[2] == 5){'1'}else{undef}},
+				'f' => do {if ($get[2] == LOG_ERROR || $get[2] == LOG_ERROR_FORCE_NODEPTH){'1'}else{undef}},
+				'w' => do {if ($get[2] == LOG_WARNING){'1'}else{undef}},
 #				't' => $get[3],
 				"m" => $msg,
 				'data' => $get[5]
@@ -301,7 +302,7 @@ sub _log
 			
 			$filename_full.="[".$TOM::hostname."]" if $TOM::serverfarm;
 			$filename_full.="$log_date{year}-$log_date{mom}-$log_date{mday}";
-		
+			
 			$filename_full=$filename_full.".".$get[3].".log";
 			
 			$filename_full=~/^(.*)\//;my $file_dir=$1;
@@ -349,13 +350,13 @@ sub _deprecated
 {
 	#return 1;
 	my ($package, $filename, $line) = caller;
-	_log($_[0]." from $filename:$line",0,"deprecated",1);
+	_log($_[0]." from $filename:$line",LOG_INFO,"deprecated",1);
 }
 
 sub _log_warn
 {
 #	my ($package, $filename, $line) = caller;
-	_log($_[0],5);
+	_log($_[0], LOG_WARNING);
 }
 
 sub _log_long
@@ -488,7 +489,7 @@ sub _event
 		}
 		main::_log($msg, {
 			'facility' => $log_type,
-			'severity' => 3,
+			'severity' => LOG_INFO_FORCE_NODEPTH,
 			'data' => {
 				%hash
 			}
@@ -602,6 +603,7 @@ use strict;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__." (Lite)");};}
 
+use TOM::Logger;
 use MIME::Entity;
 
 my $date=`date "+%a,%e %b %Y %H:%M:%S %z (%Z)"`;$date=~s|[\n\r]||g;
@@ -621,8 +623,8 @@ sub engine_lite
 	
 	my $var=join(". ",@_);$var=~s|\n| |g;
 	
-	main::_log("[ENGINE][".($tom::H?$tom::H:$tom::type?$tom::type:"?")." on $TOM::hostname] $var",1);
-	main::_log("[ENGINE][".($tom::H?$tom::H:$tom::type?$tom::type:"?")." on $TOM::hostname] $var",1,$TOM::engine.".err",1);
+	main::_log("[ENGINE][".($tom::H?$tom::H:$tom::type?$tom::type:"?")." on $TOM::hostname] $var",LOG_ERROR);
+	main::_log("[ENGINE][".($tom::H?$tom::H:$tom::type?$tom::type:"?")." on $TOM::hostname] $var",LOG_ERROR,$TOM::engine.".err",1);
 	
 	my $msg = MIME::Entity->build
 	(
@@ -662,6 +664,8 @@ use utf8;
 use strict;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__." (trackpoints)");};}
+
+use TOM::Logger;
 
 our $track_level=0;
 our @tracks;
@@ -749,14 +753,14 @@ sub close
 	if ($self->{'DESTROY'})
 	{
 		my ($package, $filename, $line) = caller;
-		main::_log("Ooops! from '$filename:$line' This track named '$self->{name}' has been destroyed by calling from '$self->{'DESTROY_filename'}:$self->{'DESTROY_line'}'. Track is generated on '$self->{'filename'}:$self->{'line'}'",1);
+		main::_log("Ooops! from '$filename:$line' This track named '$self->{name}' has been destroyed by calling from '$self->{'DESTROY_filename'}:$self->{'DESTROY_line'}'. Track is generated on '$self->{'filename'}:$self->{'line'}'",LOG_ERROR);
 		return undef;
 	}
 	
 	if ($self->{'level'}<$track_level)
 	{
 		my ($package, $filename, $line) = caller;
-		main::_log("Ooops! from '$filename:$line' Can't close this track! You must close first track named '$tracks[$track_level]'. Trying to close",1);
+		main::_log("Ooops! from '$filename:$line' Can't close this track! You must close first track named '$tracks[$track_level]'. Trying to close",LOG_ERROR);
 		$tracks_obj[$track_level]->close();
 		$self->close();
 		return undef;
