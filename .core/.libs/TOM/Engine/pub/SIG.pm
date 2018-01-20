@@ -12,7 +12,7 @@ sub handler_exit
 	my $signame = shift;
 	if ($main::ENV{'HTTP_HOST'})
 	{
-		print "Location: http://$main::ENV{'HTTP_HOST'}$main::ENV{'REQUEST_URI'}\n\n";
+#		print "Location: http://$main::ENV{'HTTP_HOST'}$main::ENV{'REQUEST_URI'}?1\n\n";
 	}
 	if ($signame eq "ALRM")
 	{
@@ -44,7 +44,7 @@ sub handler_check
 	{
 		if ($main::ENV{'HTTP_HOST'})
 		{
-			print "Location: http://$main::ENV{'HTTP_HOST'}$main::ENV{'REQUEST_URI'}\n\n";
+#			print "Location: http://$main::ENV{'HTTP_HOST'}$main::ENV{'REQUEST_URI'}?2\n\n";
 		}
 		main::_log("SIG '$signame' [CHECK-EXIT] (sleep=$main::sig_term lives ".
 			(time()-$TOM::time_start).
