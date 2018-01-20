@@ -1580,8 +1580,8 @@ sub _save_changetime
 		use JSON;
 		if (!$env{'ID_entity'}||($env{'ID_entity'} && !$conf{'-autosave'}))
 		{
-			$Redis->hset('C3|db_entity|'.$key,'modified',$tt);
-			$Redis->expire('C3|db_entity|'.$key,(86400*30));
+			$Redis->hset('C3|db_entity|'.$key,'modified',$tt,sub{});
+			$Redis->expire('C3|db_entity|'.$key,(86400*30),sub{});
 #			if (!$RabbitMQ) # publish only when pub/sub of RabbitMQ not available
 #			{
 				$Redis->publish('C3|db_entity|modified|'.$key,to_json({
@@ -1595,8 +1595,8 @@ sub _save_changetime
 		
 		if ($env{'ID_entity'})
 		{
-			$Redis->hset('C3|db_entity|'.$key_entity,'modified',$tt);
-			$Redis->expire('C3|db_entity|'.$key_entity,(86400*30));
+			$Redis->hset('C3|db_entity|'.$key_entity,'modified',$tt,sub{});
+			$Redis->expire('C3|db_entity|'.$key_entity,(86400*30),sub{});
 #			if (!$RabbitMQ) # publish only when pub/sub of RabbitMQ not available
 #			{
 				$Redis->publish('C3|db_entity|modified|'.$key_entity,to_json({
