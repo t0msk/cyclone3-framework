@@ -87,6 +87,7 @@ our %log_file;
 our $log_time;
 our %log_date;
 our $log_TTL=5;
+
 sub _log
 {
 	return undef if $TOM::DEBUG_log_file==-1;
@@ -125,8 +126,8 @@ sub _log
 	}
 	
 	return undef unless $get[1];
-	$get[0]=0 if $get[2]==3;
-	$get[0]=0 if $get[2]==4;
+	$get[0]=0 if $get[2] == 3;
+	$get[0]=0 if $get[2] == 4;
 	return undef if
 	(
 		($TOM::DEBUG_log_file < $get[0]) &&
@@ -140,7 +141,8 @@ sub _log
 #	$get[1]=~s|\t|\\t|g;
 #	$get[1]=~s|\n|\\n|g;
 	
-	my $tt=time();
+	my ($tt,$msec)=Time::HiRes::gettimeofday;
+		$msec=ceil($msec/100);$msec=9999 if $msec==10000;
 	
 	if ($tt > $log_time)
 	{
@@ -156,9 +158,6 @@ sub _log
 			delete $log_file{$_};
 		}
 	}
-	
-	my $msec=ceil((Time::HiRes::gettimeofday)[1]/100);
-		$msec=9999 if $msec==10000;
 	
 	my $msg;
 		$msg.="[".sprintf ('%06d', $$) unless $main::stdout;
@@ -322,6 +321,7 @@ sub _log
 
 #sub _log {_log_lite(@_);}
 sub _applog {_log(@_);}
+
 sub _log_stdout
 {
 	if (!$_[2])
@@ -337,12 +337,20 @@ sub _log_stdout
 #	$_[2]="stdout";
 	_log(@_);
 }
+
 sub _deprecated
 {
 	#return 1;
 	my ($package, $filename, $line) = caller;
 	_log($_[0]." from $filename:$line",0,"deprecated",1);
 }
+
+sub _log_warn
+{
+#	my ($package, $filename, $line) = caller;
+	_log($_[0],1,"warn");
+}
+
 sub _log_long
 {
 	_log(@_);
@@ -481,6 +489,8 @@ sub _event
 	}
 	
 }
+
+$SIG{'__WARN__'} = \&_log_warn;
 
 _event('debug','process.start',{
 	'cmd' => $0.' '.(join " ",@ARGV),
