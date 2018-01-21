@@ -83,7 +83,7 @@ BEGIN {eval {if ($TOM::DEBUG_log_fluentd){
 	);
 }};if ($@){undef $TOM::DEBUG_log_fluentd}};
 our %HND;
-our @log_sym=("","-","","","-","!");
+our @log_sym=("","-","","","-","!","!","!");
 our %log_file;
 our $log_time;
 our %log_date;
@@ -129,6 +129,7 @@ sub _log
 	return undef unless $get[1];
 	$get[0]=0 if $get[2] == LOG_ERROR_FORCE_NODEPTH;
 	$get[0]=0 if $get[2] == LOG_INFO_FORCE_NODEPTH;
+	$get[0]=0 if $get[2] == LOG_WARNING_FORCE_NODEPTH;
 	return undef if
 	(
 		($TOM::DEBUG_log_file < $get[0]) &&
@@ -270,7 +271,7 @@ sub _log
 				'c' => do {if ($main::request_code){$main::request_code;}else{undef;}},
 				'e' => $TOM::engine,
 				'f' => do {if ($get[2] == LOG_ERROR || $get[2] == LOG_ERROR_FORCE_NODEPTH){'1'}else{undef}},
-				'w' => do {if ($get[2] == LOG_WARNING){'1'}else{undef}},
+				'w' => do {if ($get[2] == LOG_WARNING || $get[2] == LOG_WARNING_FORCE_NODEPTH){'1'}else{undef}},
 #				't' => $get[3],
 				"m" => $msg,
 				'data' => $get[5]
