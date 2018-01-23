@@ -574,6 +574,19 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat_j` (
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat_metaindex` (
+  `ID` bigint(20) unsigned NOT NULL, -- ref _video_cat.ID
+  `meta_section` varchar(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `meta_variable` varchar(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `meta_value` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`ID`,`meta_section`,`meta_variable`),
+  KEY `SEL_0` (`meta_section`,`meta_variable`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_format` (
   `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `ID_entity` bigint(20) unsigned DEFAULT NULL,
