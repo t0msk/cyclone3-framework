@@ -310,7 +310,16 @@ if ($main::arg{'filter'})
 
 foreach (sort keys %main::arg)
 {
-	if ($_=~/^data\./)
+	if ($_=~/^data\./ && $_=~s/\!$//)
+	{
+		$query.=" ".$_."!=".$main::arg{$_.'!'};
+		push @must_not,{"terms" => {$_ => [$main::arg{$_.'!'}]}};
+	}
+	elsif ($_=~/^data\./ && $main::arg{$_} eq "?")
+	{
+		$query.=" ".$_."=".$main::arg{$_};
+	}
+	elsif ($_=~/^data\./)
 	{
 		$query.=" ".$_."=".$main::arg{$_};
 		push @filter,{"terms" => {$_ => [$main::arg{$_}]}};
@@ -723,6 +732,32 @@ if ($main::arg{'d'} eq "?")
 	
 	exit;
 }
+
+foreach (sort keys %main::arg){if ($_=~/^data\./ && $main::arg{$_} eq "?"){
+	
+	my $field=$_;
+	
+	$search_config->{'size'}=0;
+	$search_config->{'body'}{'aggregations'} = {
+		"facility" => {
+			"terms" => {
+				'field' => $field,
+				"size" => 50,
+			}
+		}
+	};
+	
+	$results = $Elastic->search($search_config);
+	
+	foreach my $type (@{$results->{'aggregations'}->{'facility'}->{'buckets'}})
+	{
+		$type->{'key'}=~s|^cyclone3\.||;
+		main::_log_stdout(" $type->{'key'} ($type->{'doc_count'})");
+	}
+	
+	exit;
+	
+}}
 
 my $last_timestamp;
 my $last_o;
