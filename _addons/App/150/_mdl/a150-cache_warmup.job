@@ -33,7 +33,7 @@ sub execute
 		my $datetime_string=$date{'year'}."-".$date{'mon'}."-".$date{'mday'}." ".$date{'hour'}.":".$date{'min'}.":".$date{'sec'};
 #		main::_log("check index #".$time_start." '".$datetime_string."'");
 		
-		if ($Redis->exists('C3|warmup|'.$time_start))
+		if ($Redis->exists('C3|'.$TOM::CACHE_warmup_cache_name.'|'.$time_start))
 		{
 		}
 		else
@@ -44,33 +44,68 @@ sub execute
 		main::_log("check index #".$time_start." '".$datetime_string."'");
 		
 		my $caches;
-		foreach my $cache_id (sort @{$Redis->smembers('C3|warmup|'.$time_start)})
+		foreach my $cache_id (sort @{$Redis->smembers('C3|'.$TOM::CACHE_warmup_cache_name.'|'.$time_start)})
 		{
 			my $cache={
 				@{$Redis->hgetall($cache_id)}
 			};
 			
+			my $log_data;
+			$log_data->{'id_s'} = $cache_id;
+			$log_data->{'engine_s'} = $TOM::engine;
+			$log_data->{'requested_datetime_s'} = $datetime_string;
+			
+			# check cache object
+			if (!$cache->{'request_code'})
+			{
+#				$log_data->{''}
+				main::_log("removing '$cache_id', already not exists",{
+					'severity' => 4,
+					'facility' => 'warmup',
+					'data' => $log_data
+				});
+				$Redis->srem('C3|'.$TOM::CACHE_warmup_cache_name.'|'.$time_start, $cache_id);
+				next;
+			}
+			
 			# time from
 			if ($cache->{'time_from'} > $time_start)
 			{
-				main::_log(" already requested cache");
-				$Redis->srem('C3|warmup|'.$time_start, $cache_id);
+#				$log_data->{''}
+				main::_log("removing '$cache_id', already requested cache",{
+					'severity' => 3,
+					'facility' => 'warmup',
+					'data' => $log_data
+				});
+#				main::_log(" id=".$cache_id." already requested cache");
+				$Redis->srem('C3|'.$TOM::CACHE_warmup_cache_name.'|'.$time_start, $cache_id);
 				next;
 			}
 			
 			# get bhash
 			if ($cache->{'bhash'})
 			{
-				main::_log(" already requested cache in request '".$cache->{'bhash'}."'");
 				# already in queue
+#				$log_data->{''}
+				main::_log("removing '$cache_id', already send same request to to job queue as '".$cache->{'bhash'}."'",{
+					'severity' => 3,
+					'facility' => 'warmup',
+					'data' => $log_data
+				});
+				$Redis->srem('C3|'.$TOM::CACHE_warmup_cache_name.'|'.$time_start, $cache_id);
 				next;
 			}
 			
 			# check warmup
 			if (!$cache->{'warmup'})
 			{
-				main::_log(" missing warmup hash",1);
-				$Redis->srem('C3|warmup|'.$time_start, $cache_id);
+#				$log_data->{''}
+				main::_log("removing '$cache_id', missing warmup hash",{
+					'severity' => 4,
+					'facility' => 'warmup',
+					'data' => $log_data
+				});
+				$Redis->srem('C3|'.$TOM::CACHE_warmup_cache_name.'|'.$time_start, $cache_id);
 				next;
 			}
 			
@@ -79,8 +114,13 @@ sub execute
 			
 			if ($cache->{'time_from'} >= $cache->{'warmup'}->{'requested_time'})
 			{
-				main::_log(" already recached, this is old request");
-				$Redis->srem('C3|warmup|'.$time_start, $cache_id);
+#				$log_data->{''}
+				main::_log("removing '$cache_id', already recached this is old request",{
+					'severity' => 3,
+					'facility' => 'warmup',
+					'data' => $log_data
+				});
+				$Redis->srem('C3|'.$TOM::CACHE_warmup_cache_name.'|'.$time_start, $cache_id);
 				next;
 			}
 			
@@ -94,8 +134,13 @@ sub execute
 			# check hits data
 			if ($cache->{'hits'} < $config->{'min_hits'})
 			{
-				main::_log(" id=".$cache_id." hits=".$cache->{'hits'}." (required ".$config->{'min_hits'}."), removing");
-				$Redis->srem('C3|warmup|'.$time_start, $cache_id);
+#				$log_data->{''}
+				main::_log("removing '$cache_id', too low hits (".$cache->{'hits'}.", requested min ".$config->{'min_hits'}.")",{
+					'severity' => 3,
+					'facility' => 'warmup',
+					'data' => $log_data
+				});
+				$Redis->srem('C3|'.$TOM::CACHE_warmup_cache_name.'|'.$time_start, $cache_id);
 				next;
 			}
 			
@@ -126,7 +171,13 @@ sub execute
 			
 			my $id=$cache->{'warmup'}->{'body'}->{'requested-id'} || TOM::Utils::vars::genhash(8);
 			
-			main::_log("  request warmup cache '".$cache_id."' '".$cache->{'warmup'}->{'body'}->{'pub-mdl'}."' from backend services (jobify '".$id."' routing_key '".$queue."')");
+			$log_data->{'mdl_s'} = $cache->{'warmup'}->{'body'}->{'pub-mdl'};
+			$log_data->{'requested_routing_key_s'} = $queue;
+			main::_log("send warmup to job queue '$cache_id' '$id' '$queue'",{
+				'severity' => 3,
+				'facility' => 'warmup',
+				'data' => $log_data
+			});
 			
 #			print $json->encode($warmup->{'body'});
 			$warmups++;
@@ -144,14 +195,14 @@ sub execute
 			);
 			$Redis->hset($cache_id,'bhash',$id);
 			$Redis->hset($cache_id,'etime',time());
-			$Redis->srem('C3|warmup|'.$time_start, $cache_id);
+			$Redis->srem('C3|'.$TOM::CACHE_warmup_cache_name.'|'.$time_start, $cache_id);
 		}
 		
 		main::_log(" caches=".$caches) if $caches;
 		
 		if (!$caches && ($time_start <= (time()-600)))
 		{
-			$Redis->del('C3|warmup|'.$time_start);
+			$Redis->del('C3|'.$TOM::CACHE_warmup_cache_name.'|'.$time_start);
 			next;
 		}
 		

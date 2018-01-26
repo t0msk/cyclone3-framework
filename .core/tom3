@@ -31,6 +31,7 @@ use if $] < 5.018, 'encoding','utf8';
 use utf8; # encode = fromutf8, decode=toutf8
 use strict; # scrict code
 use CGI::Fast qw(:standard);
+use TOM::Logger;
 use vars qw/
 	$CGI
 	%FORM
@@ -226,10 +227,14 @@ $t_domain->close;
 ######################################################################################
 ######################################################################################
 
-my %url_cache;
-#my $req=FCGI::Request();
 main::_log("START FCGI PID:$$ domain:$tom::H",3,"pub.mng",1);
+main::_event('debug','engine.start',{
+	'time_start' => $TOM::time_start,
+	'time_ready' => Time::HiRes::time(),
+	'time_to_ready' => int((Time::HiRes::time()-$TOM::time_start)*1000)/1000,
+});
 
+my %url_cache;
 while ($main::CGI=new CGI::Fast())
 {
 	$ENV{'QUERY_STRING'}=$ARGV[0] if $ENV{'TERM'};

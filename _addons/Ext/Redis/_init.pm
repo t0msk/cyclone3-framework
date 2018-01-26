@@ -62,6 +62,8 @@ sub _connect
 		}
 	}
 	
+	$service_->del('c3process|'.$TOM::hostname.':'.$$);
+	
 	return $service_;
 }
 
@@ -496,7 +498,7 @@ sub AUTOLOAD
 		{
 			my $durr=int($_[1]*$Ext::Redis::expire_modifier);
 #			main::_log("[$service_number] expire $durr");
-			$value=eval{$service->$method($_[0],$durr)};
+			$value=eval{$service->$method($_[0],$durr,sub{})};
 		}
 		else
 		{
