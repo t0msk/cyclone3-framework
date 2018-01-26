@@ -46,6 +46,21 @@ sub debug
 	main::_log(shift,LOG_INFO_FORCE_NODEPTH,"elastic");
 }
 
+sub debugf
+{
+	my $self=shift;
+	my $format=shift;
+	my $data=shift;
+	if (ref($data) eq "ARRAY")
+	{
+		main::_log(sprintf($format,join(', ',@{$data})),LOG_INFO_FORCE_NODEPTH,"elastic");
+	}
+	else
+	{
+		main::_log(sprintf($format,$data),LOG_INFO_FORCE_NODEPTH,"elastic");
+	}
+}
+
 sub deprecation
 {
 	my $self=shift;
