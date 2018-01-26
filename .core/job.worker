@@ -365,6 +365,19 @@ sub callback {
 				}
 			});
 			
+			main::_log("warming up",{
+				'severity' => 3,
+				'facility' => 'warmup',
+				'data' => {
+#					'id_s' => $key,
+#					'mdl_s' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
+#					'engine_s' => $TOM::engine,
+#					'requested_routing_key_s' => $queue,
+#					'requested_id_s' => $id,
+#					'requested_datetime_s' => $datetime_string
+				}
+			});
+			
 			$main::nojobify=1; # nojobify, just execute!
 			
 			Ext::Redis::_restore(\$payload->{'env'});
