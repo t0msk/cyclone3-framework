@@ -1044,9 +1044,44 @@ sub callback
 #		main::_log("check to invalidate '$key_entity'");
 		foreach (@{$Redis->smembers($key_entity)})
 		{
-			main::_log("remove cache key '$_'");
-#			main::_log(" remove key '$_'",3,"pubsub");
-			$Redis->del($_,sub{});
+			
+			if (my $warmup=$Redis->hget($_,'warmup'))
+			{
+				$warmup=from_json(Ext::Redis::_uncompress(\$warmup));
+				
+				my $key=$_;
+				main::_log("warmup cache key '$key'");
+				
+				use TOM::Utils::vars;
+				use Utils::datetime;
+				my $id=TOM::Utils::vars::genhash(8);
+				my $warmup_time=int( time()/$TOM::CACHE_warmup_granularity ) * $TOM::CACHE_warmup_granularity;
+				my %date=Utils::datetime::ctodatetime($warmup_time,format=>1);
+				my $datetime_string=$date{'year'}."-".$date{'mon'}."-".$date{'mday'}." ".$date{'hour'}.":".$date{'min'}.":".$date{'sec'};
+				
+				my $mdl_cache_type='C3|'.$TOM::CACHE_warmup_cache_name.'|'.$warmup_time;
+					$Redis->sadd($mdl_cache_type, $key);
+					$Redis->expire($mdl_cache_type,(86400 * 30 * 2));
+				
+				main::_log("entity '".($body->{'key'})."' changed, create immediately warmup request '$key' '$id'",{
+					'severity' => 3,
+					'facility' => 'warmup',
+					'data' => {
+						'id_s' => $key,
+						'mdl_s' => $warmup->{'body'}->{'pub-mdl'},
+						'engine_s' => $TOM::engine,
+						'requested_routing_key_s' => $warmup->{'routing_key'},
+						'requested_id_s' => $id,
+						'requested_datetime_s' => $datetime_string
+					}
+				});
+				
+			}
+			else
+			{
+				main::_log("remove cache key '$_'");
+				$Redis->del($_,sub{});
+			}
 		}
 		$Redis->del($key_entity,sub{});
 	}

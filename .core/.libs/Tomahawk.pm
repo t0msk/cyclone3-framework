@@ -573,8 +573,9 @@ sub module
 				my $warmup_time=int( time()/$TOM::CACHE_warmup_granularity ) * $TOM::CACHE_warmup_granularity;
 				my %date=Utils::datetime::ctodatetime($warmup_time,format=>1);
 				my $datetime_string=$date{'year'}."-".$date{'mon'}."-".$date{'mday'}." ".$date{'hour'}.":".$date{'min'}.":".$date{'sec'};
-				main::_log("[cache warmup/backend] ".$key." to ".$datetime_string." request=".$id,3);
-				my $mdl_cache_type='C3|warmup|'.$warmup_time;
+#				main::_log("[cache warmup/backend] ".$key." to ".$datetime_string." request=".$id,3);
+				
+				my $mdl_cache_type='C3|'.$TOM::CACHE_warmup_cache_name.'|'.$warmup_time;
 					$Redis->sadd($mdl_cache_type, $key, sub{});
 					$Redis->expire($mdl_cache_type,(86400 * 30 * 2),sub{});
 					
@@ -585,11 +586,12 @@ sub module
 				my $queue=$tom::H_orig || '_global';
 					$queue.="::pub";
 				
-				$Redis->hset($key,'etime',time());
+				$Redis->hset($key,'etime',time(),sub{});
 				$Redis->hset($key,'warmup',
 					Ext::Redis::_compress(\$json->encode({
 						'routing_key' => $queue,
 						'requested_time' => time(),
+						'request_code' => $main::request_code,
 						'body' => {
 							'requested-id' => $id,
 							'pub-mdl' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
@@ -601,8 +603,23 @@ sub module
 							'a210' => Ext::Redis::_store({%main::a210,'node'=>undef}),
 							'lng' => $tom::lng
 						},
-					}))
+					})),
+					sub{}
 				);
+				
+				main::_log("create immediately warmup request '$key' '$id'",{
+					'severity' => 3,
+					'facility' => 'warmup',
+					'data' => {
+						'id_s' => $key,
+						'mdl_s' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
+						'engine_s' => $TOM::engine,
+						'requested_routing_key_s' => $queue,
+						'requested_id_s' => $id,
+						'requested_datetime_s' => $datetime_string
+					}
+				});
+				
 			}
 			
 			if ($TOM::DEBUG_cache)
@@ -782,8 +799,8 @@ sub module
 			if ($Redis)
 			{
 				my $key = 'C3|mdl|'.$TOM::P_uuid.':'.$tom::Hm.":".$cache_domain.":pub:".$mdl_C{'-digest'};
-				$Redis->hset($key,'etime',$main::time_current);
-				$Redis->hset($key,'bhash',$main::request_code);
+				$Redis->hset($key,'etime',$main::time_current,sub{});
+				$Redis->hset($key,'bhash',$main::request_code,sub{});
 			}
 			elsif ($TOM::CACHE_memcached)
 			{
@@ -959,11 +976,21 @@ sub module
 					
 					if ($mdl_C{'-cache_warmup'})
 					{
-						my $warmup_time=int( (time()+$expiretime)/$TOM::CACHE_warmup_granularity ) * $TOM::CACHE_warmup_granularity;
+						main::_log("warmed up '$key'",{
+							'severity' => 3,
+							'facility' => 'warmup',
+							'data' => {
+								'id_s' => $key,
+								'mdl_s' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
+								'engine_s' => $TOM::engine,
+							}
+						});
+						
+						my $warmup_time=int( (time()+($expiretime*0.5) )/$TOM::CACHE_warmup_granularity ) * $TOM::CACHE_warmup_granularity;
 						my %date=Utils::datetime::ctodatetime($warmup_time,format=>1);
 						my $datetime_string=$date{'year'}."-".$date{'mon'}."-".$date{'mday'}." ".$date{'hour'}.":".$date{'min'}.":".$date{'sec'};
-						main::_log("[cache warmup] ".$key." to ".$datetime_string,3);
-						my $mdl_cache_type='C3|warmup|'.$warmup_time;
+#						main::_log("[cache warmup] ".$key." to ".$datetime_string,3);
+						my $mdl_cache_type='C3|'.$TOM::CACHE_warmup_cache_name.'|'.$warmup_time;
 							$Redis->sadd($mdl_cache_type, $key, sub{});
 							$Redis->expire($mdl_cache_type,(86400 * 30 * 2),sub{});
 							
@@ -978,6 +1005,7 @@ sub module
 							Ext::Redis::_compress(\$json->encode({
 								'routing_key' => $queue,
 								'requested_time' => time(),
+								'request_code' => $main::request_code,
 								'body' => {
 									'pub-mdl' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
 									'args' => \%env_origin,
@@ -988,8 +1016,32 @@ sub module
 									'a210' => Ext::Redis::_store({%main::a210,'node'=>undef}),
 									'lng' => $tom::lng
 								},
-							}))
+							})),
+							sub {}
 						);
+						
+						if ($Redis->hget($key,'warmup'))
+						{
+							main::_log("found warmup hash",3);
+						}
+						else
+						{
+							main::_log("not found warmup hash",4);
+						}
+						
+						main::_log("create warmup request '$key'",{
+							'severity' => 3,
+							'facility' => 'warmup',
+							'data' => {
+								'id_s' => $key,
+								'mdl_s' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
+								'engine_s' => $TOM::engine,
+								'requested_routing_key_s' => $queue,
+								'requested_id_s' => $id,
+								'requested_datetime_s' => $datetime_string
+							}
+						});
+						
 					}
 					
 					if ($TOM::DEBUG_cache)
