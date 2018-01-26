@@ -124,6 +124,7 @@ Basic options:
  --t=<facility>         filter to facility (pub/pub.track/sql/...)
  --t=?						show all available facilities by defined filter
  --f                    filter only faults
+ --w                    filter only warnings
  --tail						search, and search for new lines, and search for ...
  --msg=<string>         search in message string
  --msg=<string> --msg=...
@@ -157,6 +158,7 @@ my $query;
 my %query_string;
 my @filter;
 my @must;
+my @must_not;
 my @notfilter;
 
 if ($main::arg{'hd'} eq "?")
@@ -221,6 +223,11 @@ if ($main::arg{'f'})
 {
 	$query.=" f=".$main::arg{'f'};
 	push @filter,{"terms" => {"f" => [1]}},
+};
+if ($main::arg{'w'})
+{
+	$query.=" w=".$main::arg{'w'};
+	push @filter,{"terms" => {"w" => [1]}},
 };
 if ($main::arg{'c'})
 {
@@ -304,6 +311,7 @@ if ($main::arg{'filter'})
 	}
 	else
 	{
+#		print $main::arg{'filter'}."\n";
 		push @filter,from_json($main::arg{'filter'});
 	}
 };
@@ -414,6 +422,40 @@ if ($main::arg{'datetime-from'}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)
 		}
 	}};
 	$query.=" date=\"".$main::arg{'datetime-from'}." - ".$main::arg{'datetime-to'}."\"";
+}
+if ($main::arg{'datetime-from'}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)$/)
+{
+	%search_indices=();
+	
+	$main::arg{'datetime-from'}=~/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)$/;
+	my $td = DateTime->new(
+		'year' => $1,
+		'month' => $2,
+		'day' => $3,
+		'hour' => $4,
+		'minute' => $5,
+		'second' => $6,
+		'time_zone'  => 'local'
+	);
+	$td->set_time_zone('GMT');
+	my $date_start_=$td->strftime('%FT%H:%M:%SZ');
+	my $date_start=$td->strftime('%F');
+	
+	if ($indices{'logstash-'.$date_start})
+	{
+		$search_indices{'logstash-'.$date_start}=1;
+	}
+	elsif ($indices{'logstash-'.($date_start=~/^(\d\d\d\d\-\d\d)/)[0]})
+	{
+		$search_indices{'logstash-'.($date_start=~/^(\d\d\d\d\-\d\d)/)[0]}=1;
+	}
+	
+	push @filter,{"range" => {
+		'@timestamp' => {
+			'gte' => $date_start_,
+		}
+	}};
+	$query.=" date=\"".$main::arg{'datetime-from'}." - *\"";
 }
 elsif ($main::arg{'date'}=~/^(\d\d\d\d)-(\d\d)$/)
 {
@@ -612,7 +654,8 @@ my $search_config={
 		'query' => {
 			'bool' => {
 				'filter' => [@filter],
-				'must' => [@must]
+				'must' => [@must],
+				'must_not' => [@must_not]
 			}
 #			'filtered' => {
 #				'filter' => {
@@ -955,6 +998,8 @@ foreach my $line (sort {
 	
 	print color 'bold red'
 		if $line->{'_source'}->{'f'};
+	print color 'yellow'
+		if $line->{'_source'}->{'w'};
 	
 	print $msg."\n";
 	
