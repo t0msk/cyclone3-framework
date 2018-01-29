@@ -3249,6 +3249,9 @@ sub broadcast_program_add
 		$data{'datetime_air_stop'}=$env{'program.datetime_air_stop'}
 			if ($env{'program.datetime_air_stop'} && ($env{'program.datetime_air_stop'} ne $program{'datetime_air_stop'}));
 		
+		$data{'datetime_depth'}=$env{'program.datetime_depth'}
+			if (defined $env{'program.datetime_depth'} && ($env{'program.datetime_depth'} ne $program{'datetime_depth'}));
+		
 		$data{'status'}=$env{'program.status'}
 			if ($env{'program.status'} && ($env{'program.status'} ne $program{'status'}));
 			
@@ -3284,6 +3287,8 @@ sub broadcast_program_add
 		$program{'status'}=~/^[YNLW]$/
 	)
 	{
+		my $threshold='5 MINUTE';
+		
 		# najst konflikty a trashovat
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
@@ -3293,14 +3298,15 @@ sub broadcast_program_add
 			WHERE
 				ID != ?
 				AND ID_channel=?
-				AND datetime_air_start <= ?
-				AND datetime_air_stop > ?
+				AND (datetime_air_start >= DATE_ADD(?,INTERVAL $threshold) AND datetime_air_start < DATE_SUB(?,INTERVAL $threshold))
 				AND status IN ('Y','N','L','W')
+				AND datetime_depth = ?
 		},'bind'=>[
 			$program{'ID'},
 			$program{'ID_channel'},
 			$program{'datetime_air_start'},
-			$program{'datetime_air_start'}
+			$program{'datetime_air_start'},
+			$program{'datetime_depth'}
 		],'quiet'=>1);
 		while (my %program0=$sth0{'sth'}->fetchhash())
 		{
@@ -3324,14 +3330,16 @@ sub broadcast_program_add
 			WHERE
 				ID != ?
 				AND ID_channel=?
-				AND datetime_air_start < ?
-				AND datetime_air_stop >= ?
+				AND datetime_air_start < DATE_SUB(?,INTERVAL $threshold)
+				AND datetime_air_stop >= DATE_ADD(?,INTERVAL $threshold)
 				AND status IN ('Y','N','L','W')
+				AND datetime_depth = ?
 		},'bind'=>[
 			$program{'ID'},
 			$program{'ID_channel'},
 			$program{'datetime_air_stop'},
-			$program{'datetime_air_stop'}
+			$program{'datetime_air_stop'},
+			$program{'datetime_depth'}
 		],'quiet'=>1);
 		while (my %program0=$sth0{'sth'}->fetchhash())
 		{
@@ -3552,6 +3560,7 @@ sub _broadcast_program_index
 		}
 		
 		my %program=$sth0{'sth'}->fetchhash();
+		delete $program{'datetime_depth'};
 		foreach (keys %program){delete $program{$_} unless $program{$_};}
 		$Elastic->index(
 			'index' => 'cyclone3.'.$App::520::db_name,
