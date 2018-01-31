@@ -590,7 +590,7 @@ sub module
 				$Redis->hset($key,'warmup',
 					Ext::Redis::_compress(\$json->encode({
 						'routing_key' => $queue,
-						'requested_time' => time(),
+						'requested_time' => Time::HiRes::time(),
 						'request_code' => $main::request_code,
 						'body' => {
 							'requested-id' => $id,
@@ -639,6 +639,8 @@ sub module
 #				main::_log("[mdl][".$mdl_C{'-md5'}."][HIT] name='".$mdl_C{'T_CACHE'}."' (start:".$mdl_C{'-cache_from'}." old:".$mdl_C{'-cache_old'}." hits:$hits hpm:$hpm)",3,"cache");
 #				main::_log("[mdl][$tom::H][".$mdl_C{'-md5'}."][HIT] #$hits",3,"cache",1);
 			}
+			
+			$Redis->hset($cache_key,'lasthit',time(),sub{});
 			
 			if ($mdl_C{'-stdout'} && $main::stdout)
 			{
@@ -959,14 +961,24 @@ sub module
 					$Redis->hdel($key,'etime',sub {}); # remove execution time
 					$Redis->hdel($key,'bhash',sub {}); # remove bhash time
 					my $expiretime=$CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'};
-					if ($TOM::CACHE_pub_mdl_grace)
+					my $gracetime;
+					if ($TOM::CACHE_warmup_grace && $mdl_C{'-cache_warmup'})
 					{
-						my $grace=int($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'} * $TOM::CACHE_pub_mdl_grace);
-						$grace=$TOM::CACHE_pub_mdl_grace_min if
-							$grace < $TOM::CACHE_pub_mdl_grace_min;
-						$grace=$TOM::CACHE_pub_mdl_grace_max if
-							$grace > $TOM::CACHE_pub_mdl_grace_max;
-						$expiretime+=$grace;
+						$gracetime=int($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'} * $TOM::CACHE_warmup_grace);
+						$gracetime=$TOM::CACHE_warmup_grace_min if
+							$gracetime < $TOM::CACHE_warmup_grace_min;
+						$gracetime=$TOM::CACHE_warmup_grace_max if
+							$gracetime > $TOM::CACHE_warmup_grace_max;
+						$expiretime+=$gracetime;
+					}
+					elsif ($TOM::CACHE_pub_mdl_grace)
+					{
+						$gracetime=int($CACHE{$mdl_C{'T_CACHE'}}{'-cache_time'} * $TOM::CACHE_pub_mdl_grace);
+						$gracetime=$TOM::CACHE_pub_mdl_grace_min if
+							$gracetime < $TOM::CACHE_pub_mdl_grace_min;
+						$gracetime=$TOM::CACHE_pub_mdl_grace_max if
+							$gracetime > $TOM::CACHE_pub_mdl_grace_max;
+						$expiretime+=$gracetime;
 					}
 					$Redis->expire($key,
 						$expiretime,
@@ -976,6 +988,9 @@ sub module
 					
 					if ($mdl_C{'-cache_warmup'})
 					{
+						$Redis->hset($key,'lasthit',time(),sub{})
+							unless $Redis->hget($key,'lasthit');
+						
 						main::_log("warmed up '$key'",{
 							'severity' => 3,
 							'facility' => 'warmup',
@@ -983,10 +998,11 @@ sub module
 								'id_s' => $key,
 								'mdl_s' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
 								'engine_s' => $TOM::engine,
+								'size_i' => length($Tomahawk::module::XSGN{'TMP'}),
 							}
 						});
 						
-						my $warmup_time=int( (time()+($expiretime*0.5) )/$TOM::CACHE_warmup_granularity ) * $TOM::CACHE_warmup_granularity;
+						my $warmup_time=int( (time()+($expiretime-$gracetime) )/$TOM::CACHE_warmup_granularity ) * $TOM::CACHE_warmup_granularity;
 						my %date=Utils::datetime::ctodatetime($warmup_time,format=>1);
 						my $datetime_string=$date{'year'}."-".$date{'mon'}."-".$date{'mday'}." ".$date{'hour'}.":".$date{'min'}.":".$date{'sec'};
 #						main::_log("[cache warmup] ".$key." to ".$datetime_string,3);
@@ -1004,7 +1020,7 @@ sub module
 						$Redis->hset($key,'warmup',
 							Ext::Redis::_compress(\$json->encode({
 								'routing_key' => $queue,
-								'requested_time' => time(),
+								'requested_time' => Time::HiRes::time(),
 								'request_code' => $main::request_code,
 								'body' => {
 									'pub-mdl' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
@@ -1019,15 +1035,6 @@ sub module
 							})),
 							sub {}
 						);
-						
-						if ($Redis->hget($key,'warmup'))
-						{
-							main::_log("found warmup hash",3);
-						}
-						else
-						{
-							main::_log("not found warmup hash",4);
-						}
 						
 						main::_log("create warmup request '$key'",{
 							'severity' => 3,
