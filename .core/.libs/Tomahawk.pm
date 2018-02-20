@@ -715,7 +715,7 @@ sub module
 		}
 		else
 		{
-			$mdl_C{'P_MODULE'}=$tom::Pm."/_mdl/".$mdl_C{'-addon_name'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
+			$mdl_C{'P_MODULE'}=$tom::Pm."/_controller/".$mdl_C{'-addon_name'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
 		}
 	}
 	elsif ($mdl_C{'-global'})
@@ -749,7 +749,7 @@ sub module
 		}
 		else
 		{
-			$mdl_C{'P_MODULE'}=$TOM::P."/_mdl/".$mdl_C{'-addon_name'}."/".$mdl_C{'-addon_name'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
+			$mdl_C{'P_MODULE'}=$TOM::P."/_controller/".$mdl_C{'-addon_name'}."/".$mdl_C{'-addon_name'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
 		}
 	}
 	else
@@ -762,7 +762,7 @@ sub module
 		}
 		else
 		{
-			$mdl_C{'P_MODULE'}=$tom::P."/_mdl/".$mdl_C{'-addon_name'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
+			$mdl_C{'P_MODULE'}=$tom::P."/_controller/".$mdl_C{'-addon_name'}."-".$mdl_C{'-name'}.".".$mdl_C{'-version'}.".mdl";
 		}
 	}
 	
@@ -2132,7 +2132,7 @@ sub GetTpl
 		$mdl_C{'-tpl_global'}=0;
 		my $addon_path=$tom::P."/_addons/".$mdl_C{'-addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{'P_TPL'};
 		if (-e $addon_path){$mdl_C{'P_TPL'}=$addon_path;}
-		else {$mdl_C{'P_TPL'}=$tom::P."/_mdl/".$mdl_C{'P_TPL'};}
+		else {$mdl_C{'P_TPL'}=$tom::P."/_view/".$mdl_C{'P_TPL'};}
 	}
 	# if module is global and tpl file is global
 	elsif ($mdl_C{'-tpl_global'}==1)
@@ -2160,7 +2160,7 @@ sub GetTpl
 			}
 		}
 		if (-e $addon_path){$mdl_C{'P_TPL'}=$addon_path;}
-		else {$mdl_C{'P_TPL'}=$TOM::P."/_mdl/".$mdl_C{'-addon_name'}."/".$mdl_C{'P_TPL'}}
+		else {$mdl_C{'P_TPL'}=$TOM::P."/_view/".$mdl_C{'-addon_name'}."/".$mdl_C{'P_TPL'}}
 	}
 	# if module is in master/global and i wish to load tpl file master
 	elsif (($tom::Pm)&&($mdl_C{'-tpl_global'}==2))
@@ -2168,14 +2168,14 @@ sub GetTpl
 		$mdl_C{'-tpl_global'}=2;
 		my $addon_path=$tom::Pm."/_addons/".$mdl_C{'-addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{'P_TPL'};
 		if (-e $addon_path){$mdl_C{'P_TPL'}=$addon_path;}
-		else {$mdl_C{'P_TPL'}=$tom::Pm."/_mdl/".$mdl_C{'P_TPL'};}
+		else {$mdl_C{'P_TPL'}=$tom::Pm."/_view/".$mdl_C{'P_TPL'};}
 	}
 	else
 	{
 		$mdl_C{'-tpl_global'}=0;
 		my $addon_path=$tom::P."/_addons/".$mdl_C{'-addon_type'}."/".$mdl_C{'-addon_name'}."/_mdl/".$mdl_C{'P_TPL'};
 		if (-e $addon_path){$mdl_C{'P_TPL'}=$addon_path;}
-		else {$mdl_C{'P_TPL'}=$tom::P."/_mdl/".$mdl_C{'P_TPL'};}
+		else {$mdl_C{'P_TPL'}=$tom::P."/_view/".$mdl_C{'P_TPL'};}
 	}
 	
 	if (! -e $mdl_C{'P_TPL'})

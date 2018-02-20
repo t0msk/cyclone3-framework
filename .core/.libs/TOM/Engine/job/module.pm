@@ -56,13 +56,13 @@ sub new
 		if ($tom::P ne $TOM::P)
 		{
 			push @inc,$tom::P.'/_addons/'.$addon_path.'/_mdl';
-			push @inc,$tom::P.'/_mdl';
+			push @inc,$tom::P.'/_jobs';
 		}
 		
 		if ($tom::Pm && ($tom::P ne $tom::Pm))
 		{
 			push @inc,$tom::Pm.'/_addons/'.$addon_path.'/_mdl';
-			push @inc,$tom::Pm.'/_mdl';
+			push @inc,$tom::Pm.'/_jobs';
 		}
 		
 		foreach my $dir_item (@TOM::Overlays::item)
@@ -70,7 +70,7 @@ sub new
 			if ($dir_item=~/^\//)
 			{
 				push @inc,$dir_item.'/_addons/'.$addon_path.'/_mdl';
-				push @inc,$dir_item.'/_mdl';
+				push @inc,$dir_item.'/_jobs';
 			}
 			else
 			{
