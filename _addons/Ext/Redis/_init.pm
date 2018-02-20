@@ -62,6 +62,8 @@ sub _connect
 		}
 	}
 	
+	$service_->del('c3process|'.$TOM::hostname.':'.$$);
+	
 	return $service_;
 }
 
@@ -71,7 +73,8 @@ _connect(); # default connection
 
 use Compress::Zlib;
 use JSON;
-our $json = JSON->new->utf8->convert_blessed;
+our $json = JSON->new->utf8->convert_blessed->allow_nonref;
+our $json_canon = JSON->new->utf8->convert_blessed->allow_nonref->canonical;
 
 our $compression=$Ext::Redis::compression || 0;
 our $compression_level=$Ext::Redis::compression_level || 4;
@@ -79,6 +82,8 @@ our $compression_level=$Ext::Redis::compression_level || 4;
 sub _compress
 {
 	my $data=shift;
+	my $env=shift;
+	my $json_=$env->{'canonical'} ? $json_canon : $json;
 	if (ref($data) eq "SCALAR")
 	{
 		$$data||="";
@@ -92,9 +97,9 @@ sub _compress
 	{
 		if (!$compression)
 		{
-			return $json->encode($data);
+			return $json_->encode($data);
 		}
-		return 'gz|'.compress(Encode::encode_utf8($json->encode($data)),$compression_level);
+		return 'gz|'.compress(Encode::encode_utf8($json_->encode($data)),$compression_level);
 	}
 	return $$data;
 }
@@ -105,6 +110,32 @@ sub _uncompress
 	$$data=Encode::decode_utf8(uncompress($$data))
 		if $$data=~s/^gz\|//;
 }
+
+sub _store
+{
+	my $key=shift;
+	my $data=ref($key) eq "REF" ? _compress($$key,{'canonical'=>1}) : _compress($key,{'canonical'=>1});
+	my $id=TOM::Digest::hash($data);
+	
+	$service->set('C3|store|'.$id,$data)
+		unless $service->exists('C3|store|'.$id);
+	
+	$service->expire('C3|store|'.$id,86400*7,sub{});
+	
+	$$key=$id if ref($key) eq "REF";
+	return $id;
+}
+
+sub _restore
+{
+	my $data=shift;
+	return $$data=$json->decode(
+		_uncompress(
+			\$service->get('C3|store|'.$$data)
+		) || 'null'
+	) if ref($data) eq "SCALAR";
+}
+
 
 package XML::XPath;sub TO_JSON{return undef}
 
@@ -233,6 +264,7 @@ our $Redis=$Ext::Redis::service;
 # implemented dancing between redis nodes
 package Ext::Redis::service;
 use vars qw{$AUTOLOAD};
+use String::CRC32;
 
 sub new
 {
@@ -415,6 +447,8 @@ sub _redisdb_connect
 
 sub DESTROY { }
 
+my %basic_methods=map {$_ => 1} qw{del dump exists expire expireat object persist pexpire pexpireat pttl rename renamenx sort ttl type get decr incr incrby set hdel hexists hget hgetall hstrlen hincrby hkeys len hmget hmset hset hvals blpop brpop lindex linsert llen lpop lpush lpushx lrange lrem lset ltrim rpop rpush rpushx sadd scard sismember smembers spop srandmember srem zadd zcard zcount zincrby zrange zrangebyscore zrank zrem zremrangebyrank zremrangebyscore zrevrange zrevrangebyscore zrevrank zscore};
+
 sub AUTOLOAD
 {
 	my $self=shift;
@@ -438,47 +472,59 @@ sub AUTOLOAD
 	}
 	elsif ($self->{'lib'} eq "RedisDB" && $self->{'services'} && @{$self->{'services'}})
 	{
-		my $service=$self->{'service'};
+#		pop @_ if ref($_[-1]) eq "CODE";
 		
-		if ($method=~/^(del|dump|exists|expire|expireat|object|persist|pexpire|pexpireat|pttl|rename|renamenx|sort|ttl|type|get|decr|incr|incrby|set|hdel|hexists|hget|hgetall|hstrlen|hincrby|hkeys|len|hmget|hmset|hset|hvals|blpop|brpop|lindex|linsert|llen|lpop|lpush|lpushx|lrange|lrem|lset|ltrim|rpop|rpush|rpushx|sadd|scard|sismember|smembers|spop|srandmember|srem|zadd|zcard|zcount|zincrby|zrange|zrangebyscore|zrank|zrem|zremrangebyrank|zremrangebyscore|zrevrange|zrevrangebyscore|zrevrank|zscore)$/)
+		my $service=$self->{'service'};
+		my $service_number=0;
+		if ($basic_methods{$method})
 		{
-			my $service_number=0;
 			my $services=scalar @{$self->{'services'}};
 			my $key=$_[0];
-			
-			use String::CRC32;
 			my $crc=crc32($key);
-			
 			$service_number=$crc % $services;
-			
 			$service=$self->{'services'}[$service_number];
-#			print "$service_number\n" if $tom::test;
 		}
-		my $value;#=$service->$method(@_);
-		eval {$value=$service->$method(@_)};
+		my $value;
+		if ($service->reply_ready){
+			main::_log("[RedisDB] not readed replies",1);
+			$service->get_all_replies();
+		};
+		
+		if ($method eq "expire" && $Ext::Redis::expire_modifier && $_[1]=~/^\d+$/) # modify expiration time
+		{
+			my $durr=int($_[1]*$Ext::Redis::expire_modifier);
+#			main::_log("[$service_number] expire $durr");
+			$value=eval{$service->$method($_[0],$durr,sub{})};
+		}
+		else
+		{
+			$value=eval{$service->$method(@_)};
+		}
+		
 		if ($@)
 		{
-			main::_log("[RedisDB] error '$@'",1);
-			if ($method=~/^(hgetall)$/)
+			my $err=$@;
+			main::_log("[RedisDB] error '$err' on host $service_number",1);
+			if ($err=~/replies to fetch/)
 			{
-				return [];
+				$service->get_all_replies();
+				eval{$value=$service->$method(@_)};
 			}
-			return undef;			
+			return [] if $method eq "hgetall";
+			return undef;
+		}
+		if (!$value)
+		{
+#			main::_log("RedisDB key not found");
 		}
 		if (ref($value) eq "RedisDB::Error::DISCONNECTED")
 		{
-#			main::_log("RedisDB disconnected ($method call)",1);
-			if ($method=~/^(hgetall)$/)
-			{
-				return [];
-			}
+			main::_log("RedisDB disconnected ($method call)",1);
+			return [] if $method eq "hgetall";
 			return undef;
 		}
 		return $value;
-#		return $service->$method(@_);
 	}
-	
-#	scalar @{$self->{'services'}}
 	
 	# others
 	return $self->{'service'}->$method(@_);

@@ -214,19 +214,24 @@ sub new_initialize
 #		$low_priority=" LOW_PRIORITY" if $env{'-low_priority'};
 	$env{'datetime_create'}="NOW()" unless $env{'datetime_create'};
 	
-	# this is not very secure, but...
+	# this is not very safe, but...
 	# Error 1093 (ER_UPDATE_TABLE_USED)
 	# SQLSTATE = HY000
 	# Message = "You can't specify target table 'x'
 	# for update in FROM clause"
 	my $ID_entity='ID';
+	my $locked;
 	if (!$env{'ID_entity'} && $env{'ID'})
 	{
-		my $sql=qq{SELECT MAX(ID_entity)+1 AS ID FROM `$env{'db_name'}`.`$env{'tb_name'}`};
+		$locked=1;
+#		main::_log("LOCK tables");
+		TOM::Database::SQL::execute(qq{LOCK TABLES `$env{'db_name'}`.`$env{'tb_name'}` WRITE},'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
+		my $sql=qq{SELECT MAX(ID_entity)+1 AS ID_entity FROM `$env{'db_name'}`.`$env{'tb_name'}`};
 		my %sth0=TOM::Database::SQL::execute($sql,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
 		my %db0_line=$sth0{'sth'}->fetchhash();
-		if ($db0_line{'ID'} < $env{'ID'}){$ID_entity=$env{'ID'};}
-		elsif ($db0_line{'ID'} > 1){$ID_entity=$db0_line{'ID'};}
+#		$ID_entity=$env{'ID'};
+		if ($db0_line{'ID_entity'} < $env{'ID'}){$ID_entity=$env{'ID'};}
+		elsif ($db0_line{'ID_entity'} > 1){$ID_entity=$db0_line{'ID_entity'};}
 	}
 	
 	my $SQL="UPDATE$low_priority `$env{'db_name'}`.`$env{'tb_name'}` SET datetime_create=$env{'datetime_create'}, ";
@@ -245,6 +250,8 @@ sub new_initialize
 	}
 	
 	my %sth0=TOM::Database::SQL::execute($SQL,'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet);
+	TOM::Database::SQL::execute(qq{UNLOCK TABLES},'db_h'=>$env{'db_h'},'log'=>$debug,'quiet'=>$quiet)
+		if $locked;
 	
 	$t->close() if $debug;
 	return 1;
@@ -1523,7 +1530,7 @@ sub _save_changetime
 	$main::env{'cache'}{'db_changed'}{$key}=$tt;
 	$main::env{'cache'}{'db_changed'}{$key_entity}=$tt;
 	
-#	main::_log("_save_changetime($key_entity)");
+	main::_log("_save_changetime ".$key_entity." to ".$tt,3,"debug");
 	
 	if ($RabbitMQ && !$conf{'-autosave'}) # publish event
 	{
@@ -1573,8 +1580,8 @@ sub _save_changetime
 		use JSON;
 		if (!$env{'ID_entity'}||($env{'ID_entity'} && !$conf{'-autosave'}))
 		{
-			$Redis->hset('C3|db_entity|'.$key,'modified',$tt,sub {});
-			$Redis->expire('C3|db_entity|'.$key,(86400*30),sub {});
+			$Redis->hset('C3|db_entity|'.$key,'modified',$tt,sub{});
+			$Redis->expire('C3|db_entity|'.$key,(86400*30),sub{});
 #			if (!$RabbitMQ) # publish only when pub/sub of RabbitMQ not available
 #			{
 				$Redis->publish('C3|db_entity|modified|'.$key,to_json({
@@ -1582,14 +1589,14 @@ sub _save_changetime
 					'user'=>$main::USRM{'ID_user'},
 					'hostname' => $TOM::hostname,
 					'domain' => $tom::H
-				}),sub {}) unless $conf{'-autosave'}; # publish event
+				})) unless $conf{'-autosave'}; # publish event
 #			}
 		}
 		
 		if ($env{'ID_entity'})
 		{
-			$Redis->hset('C3|db_entity|'.$key_entity,'modified',$tt,sub {});
-			$Redis->expire('C3|db_entity|'.$key_entity,(86400*30),sub {});
+			$Redis->hset('C3|db_entity|'.$key_entity,'modified',$tt,sub{});
+			$Redis->expire('C3|db_entity|'.$key_entity,(86400*30),sub{});
 #			if (!$RabbitMQ) # publish only when pub/sub of RabbitMQ not available
 #			{
 				$Redis->publish('C3|db_entity|modified|'.$key_entity,to_json({
@@ -1597,7 +1604,7 @@ sub _save_changetime
 					'user'=>$main::USRM{'ID_user'},
 					'hostname' => $TOM::hostname,
 					'domain' => $tom::H
-				}),sub {}) unless $conf{'-autosave'};
+				})) unless $conf{'-autosave'};
 #			}
 		}
 		return 1;

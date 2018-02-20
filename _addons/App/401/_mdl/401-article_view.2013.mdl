@@ -310,12 +310,6 @@ sub execute
 		}
 	}
 	
-	if ($env{'header.og'})
-	{
-		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:title','content'=>$article{'name'}};
-		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:site_name','content' => $tom::H};
-		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:type','content'=>'article'};
-	}
 	
 	#push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=>$tom::H_a501.'/image/file/'.$image{'file_path'}};
 
@@ -339,8 +333,18 @@ sub execute
 	
 	my $doc_desc=$article{'abstract'};
 		$doc_desc=~s|<.*?>||gms;
+	
 	push @{$env_out{'call'}{'H'}{'change_DOC_description'}},$doc_desc
 		if $env{'header.description'};
+	
+		if ($env{'header.og'})
+	{
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:title','content'=>$article{'name'}};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:site_name','content' => $tom::H};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:type','content'=>'article'};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:description','content'=>$doc_desc};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:url','content'=>$tom::H_www.$main::ENV{'REQUEST_URI'}};
+	}
 	
 	if ($env{'header.og'} && $parser_abstract->{'thumbnail'}[0])
 	{

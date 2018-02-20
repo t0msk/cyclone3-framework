@@ -108,14 +108,36 @@ sub execute
 			}
 		}
 		
-		main::_log("removing old sessions 6 months");
-		my %sth0=TOM::Database::SQL::execute(qq{
-			DELETE
-			FROM TOM.a301_user_session
-			WHERE datetime_session_begin <= DATE_SUB(NOW(),INTERVAL 6 MONTH)
+		main::_log("removing old sessions 1 month");
+		my $est=1;
+		while ($est)
+		{
+			my %sth0=TOM::Database::SQL::execute(qq{
+				DELETE
+				FROM TOM.a301_user_session
+				WHERE datetime_session_begin <= DATE_SUB(NOW(),INTERVAL 1 MONTH)
+				LIMIT 1000
+			}
+			,'quiet'=>1);
+			$est=$sth0{'rows'};
+			main::_log(" removed $sth0{'rows'} items");
 		}
-		,'quiet'=>1);
-		main::_log(" removed $sth0{'rows'} items");
+		
+		main::_log("removing innecessary sessions 1 DAY (<=3 request)");
+		my $est=1;
+		while ($est)
+		{
+			my %sth0=TOM::Database::SQL::execute(qq{
+				DELETE
+				FROM TOM.a301_user_session
+				WHERE
+					datetime_session_begin <= DATE_SUB(NOW(),INTERVAL 1 DAY)
+					AND requests_all <= 3
+				LIMIT 1000
+			},'quiet'=>1);
+			$est=$sth0{'rows'};
+			main::_log(" removed $sth0{'rows'} items");
+		}
 		
 		main::_log("removing sessions of removed users");
 		my $est=1;

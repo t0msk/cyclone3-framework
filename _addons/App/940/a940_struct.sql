@@ -91,6 +91,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_discount_coupon` (
   `datetime_valid_to` datetime DEFAULT NULL,
   `limit_applications` int(8) unsigned DEFAULT '1',
   `applications` int(8) unsigned DEFAULT '0',
+  `rules_apply` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `limit_to_email` varchar(32) character set ascii DEFAULT NULL,
   `limit_customer` char(1) character set ascii NOT NULL default 'Y',
   `note` text character set utf8 collate utf8_unicode_ci,
@@ -112,6 +113,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_discount_coupon_j` (
   `datetime_valid_to` datetime DEFAULT NULL,
   `limit_applications` int(8) unsigned DEFAULT NULL,
   `applications` int(8) unsigned DEFAULT '0',
+  `rules_apply` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `limit_to_email` varchar(32) character set ascii DEFAULT NULL,
   `limit_customer` char(1) character set ascii NOT NULL default 'Y',
   `note` text character set utf8 collate utf8_unicode_ci,
@@ -152,6 +154,23 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_gift` (
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
+CREATE TABLE `/*db_name*/`.`/*addon*/_gift_use` (
+  `ID` bigint(20) unsigned NOT NULL auto_increment,
+  `ID_entity` int(8) unsigned default NULL, -- rel _discount_coupon.ID
+  `ID_order` int(8) unsigned zerofill default NULL,
+  `datetime_create` datetime NOT NULL, -- last modified
+  `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL, -- who used
+  `posix_modified` varchar(8) character set ascii collate ascii_bin NOT NULL, -- who writed
+  `datetime_application` datetime DEFAULT NULL,
+  `gift_type` varchar(128) CHARACTER SET ascii DEFAULT NULL,
+  `gift_value` varchar(128) CHARACTER SET ascii DEFAULT NULL,
+  `customer_email` varchar(32) character set ascii DEFAULT NULL,
+  `status` char(1) character set ascii NOT NULL default 'N', -- used or not
+  PRIMARY KEY  (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------

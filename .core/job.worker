@@ -99,6 +99,9 @@ $channel_domain->bind_queue(
 );
 main::_log("routing_key '".($tom::H_orig || 'job').$class."'");
 
+$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.'.($tom::H_orig || '_global').$class,'time',time());
+$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.'.($tom::H_orig || '_global').$class,3600);
+
 # database
 my $channel_database=$Ext::RabbitMQ::service->open_channel();
 	$channel_database->{'arc'}->confirm();
@@ -114,6 +117,9 @@ $channel_database->bind_queue(
 );
 main::_log("routing_key '".'db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class."'");
 
+$Redis->hset('C3|Rabbit|queue|'.'cyclone3.job.db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class,'time',time());
+$Redis->expire('C3|Rabbit|queue|'.'cyclone3.job.db:'.($TOM::DB{'main'}{'name'} || 'TOM').$class,3600);
+
 if (%tom::sapsync_rabbitmq)
 {
 	main::_log("second RabbitMQ connection");
@@ -128,6 +134,8 @@ if (%tom::sapsync_rabbitmq)
 		$channel_exclusive->{'arc'}->confirm();
 	push @Ext::RabbitMQ::services, $Ext::RabbitMQ::sap_service;
 }
+
+require Tomahawk;
 
 sub callback {
 	alarm 0;
@@ -344,31 +352,85 @@ sub callback {
 			);
 			undef $main::nojobify; # jobify everything required
 			$job->execute() if $job;
+			main::_log("end of call $@");
 		}
 		elsif ($payload->{'pub-mdl'})
 		{
+			$tom::dsgn='default';
 			my $mdl=$payload->{'pub-mdl'};
+			$0=~s|{.*?}|{$mdl}|;
+			main::_log("call module '".$mdl."'",{
+				'data' => {
+					'mdl_name_s' => $mdl
+				}
+			});
 			
-			require Tomahawk;
+			main::_log("warming up",{
+				'severity' => 3,
+				'facility' => 'warmup',
+				'data' => {
+#					'id_s' => $key,
+#					'mdl_s' => $mdl_C{'-addon'}.'-'.$mdl_C{'-name'}.'.'.$mdl_C{'-version'},
+#					'engine_s' => $TOM::engine,
+#					'requested_routing_key_s' => $queue,
+#					'requested_id_s' => $id,
+#					'requested_datetime_s' => $datetime_string
+				}
+			});
 			
 			$main::nojobify=1; # nojobify, just execute!
-			%main::env=%{$payload->{'env'}}
-				if $payload->{'env'};
-			%main::FORM=%{$payload->{'FORM'}}
-				if $payload->{'FORM'};
-			%main::key=%{$payload->{'key'}}
-				if $payload->{'key'};
-			%tom::setup=%{$payload->{'setup'}}
-				if $payload->{'setup'};
-#			%main::a210=%{$payload->{'a210'}};
+			
+			Ext::Redis::_restore(\$payload->{'env'});
+			Ext::Redis::_restore(\$payload->{'FORM'});
+			Ext::Redis::_restore(\$payload->{'key'});
+			Ext::Redis::_restore(\$payload->{'setup'});
+			Ext::Redis::_restore(\$payload->{'a210'});
+			
+			if (!$payload->{'env'})
+			{
+				main::_log("missing payload.env, ignore execution",1);
+				return undef;
+			}
+			if (!$payload->{'FORM'})
+			{
+				main::_log("missing payload.FORM, ignore execution",1);
+				return undef;
+			}
+			if (!$payload->{'key'})
+			{
+				main::_log("missing payload.key, ignore execution",1);
+				return undef;
+			}
+			if (!$payload->{'setup'})
+			{
+				main::_log("missing payload.setup, ignore execution",1);
+				return undef;
+			}
+			if (!$payload->{'a210'})
+			{
+				main::_log("missing payload.a210, ignore execution",1);
+				return undef;
+			}
+			
+			%main::env=%{$payload->{'env'}};
+			%main::FORM=%{$payload->{'FORM'}};
+			%main::key=%{$payload->{'key'}};
+			local %tom::setup=%{$payload->{'setup'}};
+			if ($payload->{'a210'})
+			{
+				%main::a210=%{$payload->{'a210'}};
+				$main::a210{'node'}=\%main::a210;
+			}
 			local $tom::lng=$payload->{'lng'} || $tom::lng;
 			
-			my ($out)=Tomahawk::module(%{$payload->{'args'}},'-stdout_dummy'=>1);
+			my ($out)=Tomahawk::module(%{$payload->{'args'}},'-stdout_dummy'=>1,'-cache_backend'=>0,'-cache_ignore'=>1);
+			main::_log("end of call $@");
 			
 			undef $main::nojobify; # jobify everything required
 			undef %main::env;
 			undef %main::FORM;
 			undef %main::key;
+#			undef %tom::setup;
 			undef %main::a210;
 		}
 		else
@@ -389,8 +451,8 @@ sub callback {
 	if ($@)
 	{
 		main::_log("job error ".$@,1);
-		$this_channel->ack();
-#		exit;
+#		$this_channel->ack();
+		exit;
 	}
 	$this_channel->ack();
 	alarm $alarm;
