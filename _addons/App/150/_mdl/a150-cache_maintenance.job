@@ -19,7 +19,7 @@ sub execute
 	my $key='C3|debug|mdl_caches';
 		$key.="|".$tom::H if $tom::H;
 	
-	foreach my $cache_type (sort @{$Redis->smembers('C3|debug|mdl_caches')})
+	foreach my $cache_type (sort @{$Redis->smembers($key)})
 	{
 		main::_log("check cache_type $cache_type");
 		my $members;

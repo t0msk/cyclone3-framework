@@ -1016,6 +1016,7 @@ sub check_processes
 # read notify messages
 sub callback
 {
+	use TOM::Logger;
 	local $main::_canexit;
 	my $var = shift;
 	my $body = from_json($var->{'body'}->{'payload'});
@@ -1042,15 +1043,60 @@ sub callback
 		# invalidate all caches depending on this key
 		my $key_entity="C3|invalidate|db_entity|".$body->{'key'};
 #		main::_log("check to invalidate '$key_entity'");
-		foreach (@{$Redis->smembers($key_entity)})
+		foreach my $obj_key (@{$Redis->smembers($key_entity)}) # check every cache object
 		{
+			if (!$Redis->exists($obj_key))
+			{
+#				main::_log("cache object '$obj_key' already not exists, removing dependency",LOG_WARNING);
+				$Redis->srem($key_entity,$obj_key,sub{});
+				next;
+			}
 			
-			if (my $warmup=$Redis->hget($_,'warmup'))
+			if (my $return_data=$Redis->hget($obj_key,'return_data')) # this is module
+			{
+				my $entity_match;
+#				main::_log("checking module cache object '".$obj_key."'");
+				
+				Ext::Redis::_uncompress(\$return_data);
+				$return_data=from_json($return_data);
+				
+				if ($return_data->{'entity'})
+				{
+					foreach my $entity (@{$return_data->{'entity'}})
+					{ # check every entity
+						my $key_entity=$entity->{'db_h'}."::".$entity->{'db_name'}."::".$entity->{'tb_name'};
+							$key_entity.="::".$entity->{'ID_entity'} if $entity->{'ID_entity'};
+						
+						if ($body->{'key'} eq $key_entity)
+						{
+							main::_log(" entity matched");
+							$entity_match=1;
+							last;
+						}
+#						$Redis->sadd('C3|invalidate|db_entity|'.$key_entity,$key,sub{});
+#						$Redis->expire('C3|invalidate|db_entity|'.$key_entity,(86400*30),sub{});
+					}
+				}
+				
+				if (!$entity_match)
+				{
+					main::_log("'$obj_key' is recached and already not depends on this entity",LOG_WARNING);
+					$Redis->srem($key_entity,$obj_key,sub{});
+					next;
+				}
+				
+			}
+			else
+			{
+				main::_log("this is not module cache? '".$obj_key."'");
+			}
+			
+			if (my $warmup=$Redis->hget($obj_key,'warmup'))
 			{
 				$warmup=from_json(Ext::Redis::_uncompress(\$warmup));
 				
-				my $key=$_;
-				main::_log("warmup cache key '$key'");
+				my $key=$obj_key;
+				main::_log("warmup cache key '$obj_key'");
 				
 				use TOM::Utils::vars;
 				use Utils::datetime;
@@ -1060,14 +1106,14 @@ sub callback
 				my $datetime_string=$date{'year'}."-".$date{'mon'}."-".$date{'mday'}." ".$date{'hour'}.":".$date{'min'}.":".$date{'sec'};
 				
 				my $mdl_cache_type='C3|'.$TOM::CACHE_warmup_cache_name.'|'.$warmup_time;
-					$Redis->sadd($mdl_cache_type, $key);
+					$Redis->sadd($mdl_cache_type, $obj_key);
 					$Redis->expire($mdl_cache_type,(86400 * 30 * 2));
 				
-				main::_log("entity '".($body->{'key'})."' changed, create immediately warmup request '$key' '$id'",{
-					'severity' => 3,
+				main::_log("entity '".($body->{'key'})."' changed, create immediately warmup request '$obj_key' '$id'",{
+					'severity' => LOG_INFO_FORCE_NODEPTH,
 					'facility' => 'warmup',
 					'data' => {
-						'id_s' => $key,
+						'id_s' => $obj_key,
 						'mdl_s' => $warmup->{'body'}->{'pub-mdl'},
 						'engine_s' => $TOM::engine,
 						'requested_routing_key_s' => $warmup->{'routing_key'},
@@ -1079,10 +1125,11 @@ sub callback
 			}
 			else
 			{
-				main::_log("remove cache key '$_'");
-				$Redis->del($_,sub{});
+				main::_log("remove cache object '$obj_key'");
+				$Redis->del($obj_key,sub{});
 			}
 		}
+		# remove whole dependent entity
 		$Redis->del($key_entity,sub{});
 	}
 	

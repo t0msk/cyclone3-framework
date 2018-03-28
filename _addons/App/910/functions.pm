@@ -1779,6 +1779,7 @@ sub _product_index
 			)
 			WHERE
 				a910_product_price.ID_entity = ?
+				AND a910_product_price.status = 'Y'
 		},'quiet'=>1,'bind'=>[$env{'ID'}]);
 		while (my %db1_line=$sth1{'sth'}->fetchhash())
 		{
@@ -2488,6 +2489,7 @@ sub _product_index_solr
 			)
 			WHERE
 				a910_product_price.ID_entity = ?
+				AND a910_product_price.status = 'Y'
 		},'quiet'=>1,'bind'=>[$env{'ID'}]);
 		while (my %db1_line=$sth1{'sth'}->fetchhash())
 		{

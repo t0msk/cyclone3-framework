@@ -360,12 +360,6 @@ sub _log_warn
 	_log($_[0], LOG_WARNING);
 }
 
-sub _log_warn
-{
-#	my ($package, $filename, $line) = caller;
-	_log($_[0],1,"warn");
-}
-
 sub _log_long
 {
 	_log(@_);
