@@ -60,7 +60,7 @@ sub execute
 #		main::_log("expected_sig=$expected_sig");
 		
 		use Data::Dumper;
-#		main::_log("data=".Dumper($data));
+		main::_log("fb_data=".Dumper($data));
 		if ($expected_sig eq $encoded_sig)
 		{
 			main::_log("sig equals, getting user data");
@@ -75,7 +75,7 @@ sub execute
 				my $link_data =`$wget_cmd --no-check-certificate -t 1 -T 3 -q -O - \"$link\"`;
 				
 				main::_log("link=$link");
-				main::_log("link_data=$link_data");
+				main::_log("graph_data=$link_data");
 				
 				%FB_GET=TOM::Net::HTTP::CGI::get_QUERY_STRING($link_data);
 			}
@@ -174,6 +174,12 @@ sub execute
 				}
 				
 			}
+			
+		}
+		else
+		{
+			
+			main::_log("sig not equals '$expected_sig'<=>'$encoded_sig'",1);
 			
 		}
 		
@@ -352,12 +358,12 @@ sub execute
 						IP='$main::ENV{'REMOTE_ADDR'}',
 						user_agent='$main::ENV{'HTTP_USER_AGENT'}',
 						cookies='$main::USRM{'saved_cookies'}',
-						session='$main::USRM{'saved_session'}',
+						session=?,
 						status='Y'
 					WHERE
 						ID_user='$main::COOKIES{'_ID_user'}'
 					LIMIT 1
-				},'quiet'=>1);
+				},'bind'=>[$main::USRM{'saved_session'}],'quiet'=>1);
 				
 			}
 			
