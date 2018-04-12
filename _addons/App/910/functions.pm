@@ -3147,6 +3147,9 @@ sub product_brand_add
 		if ($env{'product_brand.name'} && ($env{'product_brand.name'} ne $product_brand{'name'}));
 	$data{'name_url'}=TOM::Net::URI::rewrite::convert($env{'product_brand.name'})
 		if ($env{'product_brand.name'} && ($env{'product_brand.name'} ne $product_brand{'name'}));
+	# alias_name
+	$data{'alias_name'}=$env{'product_brand.alias_name'}
+		if (exists $env{'product_brand.alias_name'} && ($env{'product_brand.alias_name'} ne $product_brand{'alias_name'}));
 	# status
 	$data{'status'}=$env{'product_brand.status'}
 		if ($env{'product_brand.status'} && ($env{'product_brand.status'} ne $product_brand{'status'}));
