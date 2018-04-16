@@ -1485,6 +1485,7 @@ sub _product_index
 				product_ent.product_type,
 				
 				product_brand.name AS brand_name,
+				product_brand.alias_name AS brand_alias_name,
 				product_brand.name_url AS brand_name_url,
 				
 				product_family.name AS family_name,
