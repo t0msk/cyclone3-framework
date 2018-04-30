@@ -5462,7 +5462,7 @@ sub broadcast_program_add
 sub broadcast_schedule_add
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::broadcast_schedule_add()");
+#	my $t=track TOM::Debug(__PACKAGE__."::broadcast_schedule_add()");
 	
 	my %schedule;
 	if ($env{'schedule.ID'})
@@ -5602,7 +5602,7 @@ sub broadcast_schedule_add
 		$env{'schedule.ID_entity'}=$schedule{'ID_entity'};
 	}
 	
-	main::_log("processing ID=".$env{'schedule.ID'});
+#	main::_log("processing ID=".$env{'schedule.ID'});
 	
 	# update if necessary
 	if ($env{'schedule.ID'})
@@ -5664,6 +5664,9 @@ sub broadcast_schedule_add
 		
 		$data{'status'}=$env{'schedule.status'}
 			if ($env{'schedule.status'} && ($env{'schedule.status'} ne $schedule{'status'}));
+		
+		$data{'air_status'}=$env{'schedule.air_status'}
+			if ($env{'schedule.air_status'} && ($env{'schedule.air_status'} ne $schedule{'air_status'}));
 		
 		if (keys %columns || keys %data)
 		{
@@ -5760,7 +5763,7 @@ sub broadcast_schedule_add
 		
 	}
 	
-	$t->close();
+#	$t->close();
 	foreach (%schedule){$env{'schedule.'.$_}=$schedule{$_}};
 	return %env;
 }
@@ -5771,7 +5774,7 @@ sub broadcast_schedule_add
 sub broadcast_series_add
 {
 	my %env=@_;
-	my $t=track TOM::Debug(__PACKAGE__."::broadcast_series_add()");
+#	my $t=track TOM::Debug(__PACKAGE__."::broadcast_series_add()");
 	
 	my %series;
 	if ($env{'series.ID'})
@@ -5927,7 +5930,7 @@ sub broadcast_series_add
 		}
 	}
 	
-	$t->close();
+#	$t->close();
 	foreach (%series){$env{'series.'.$_}=$series{$_}};
 	return %env;
 }
