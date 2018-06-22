@@ -137,7 +137,7 @@ if ($tom::H_cookie)
 		{
 			App::020::SQL::functions::tree::new(
 				'db_h' => "main",
-				'db_name' => "TOM",
+				'db_name' => $App::301::db_name,
 				'tb_name' => "a301_user_group",
 				'columns' =>
 				{
@@ -153,7 +153,7 @@ if ($tom::H_cookie)
 			App::020::SQL::functions::update(
 				'ID' => $db0_line{'ID'},
 				'db_h' => "main",
-				'db_name' => "TOM",
+				'db_name' => $App::301::db_name,
 				'tb_name' => "a301_user_group",
 				'columns' =>
 				{
