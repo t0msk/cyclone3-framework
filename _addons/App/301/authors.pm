@@ -297,7 +297,7 @@ sub add_author
 					SELECT
 						*
 					FROM
-						TOM.a301_user
+						`$App::301::db_name`.a301_user
 					WHERE
 						status IN ('Y','N','L','W') AND
 						hostname='$tom::H_cookie' AND
@@ -375,7 +375,7 @@ sub add_author
 					SELECT
 						*
 					FROM
-						TOM.a301_user
+						`$App::301::db_name`.a301_user
 					WHERE
 						status IN ('Y','N','L','W') AND
 						hostname='$tom::H_cookie' AND

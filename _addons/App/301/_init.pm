@@ -83,7 +83,7 @@ use CVML;
 use Digest::MD5;
 use Digest::SHA1;
 
-our $db_name='TOM';
+our $db_name=$App::301::db_name || 'TOM';
 our $VERSION=0;
 
 sub CookieClean
@@ -125,7 +125,7 @@ if ($tom::H_cookie)
 			SELECT
 				*
 			FROM
-				TOM.a301_user_group
+				`$App::301::db_name`.a301_user_group
 			WHERE
 				hostname='$tom::H_cookie' AND
 				name='$group'

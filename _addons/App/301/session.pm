@@ -57,7 +57,7 @@ sub DESTROY
 		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			UPDATE
-				TOM.a301_user_online
+				`$App::301::db_name`.a301_user_online
 			SET
 				session=?
 			WHERE
@@ -320,7 +320,7 @@ sub process
 						# UPDATE online
 						TOM::Database::SQL::execute(qq{
 							UPDATE
-								TOM.a301_user_online
+								`$App::301::db_name`.a301_user_online
 							SET
 								domain=?,
 								datetime_request=FROM_UNIXTIME($main::time_current),
@@ -378,7 +378,7 @@ sub process
 					SELECT
 						*
 					FROM
-						TOM.a301_user
+						`$App::301::db_name`.a301_user
 					WHERE
 						ID_user=? AND
 						hostname=?
@@ -444,7 +444,7 @@ sub process
 					
 					TOM::Database::SQL::execute(qq{
 						UPDATE
-							TOM.a301_user
+							`$App::301::db_name`.a301_user
 						SET
 							datetime_last_login = FROM_UNIXTIME($main::time_current)
 						WHERE
@@ -461,7 +461,7 @@ sub process
 						$main::USRM{'session'}=$main::USRM{'saved_session'};
 						
 						TOM::Database::SQL::execute(qq{
-							REPLACE INTO TOM.a301_user_online
+							REPLACE INTO `$App::301::db_name`.a301_user_online
 							(
 								ID_user,
 								ID_session,
@@ -503,7 +503,7 @@ sub process
 					else # user v tabulke a301_user je regularny user s kontom
 					{
 						TOM::Database::SQL::execute(qq{
-							REPLACE INTO TOM.a301_user_online
+							REPLACE INTO `$App::301::db_name`.a301_user_online
 							(
 								ID_user,
 								ID_session,
@@ -565,7 +565,7 @@ sub process
 =head1
 			my $db0=$main::DB{'main'}->Query("
 				SELECT COUNT(*) AS cnt
-				FROM TOM.a300_online
+				FROM `$App::301::db_name`.a300_online
 				WHERE
 					host='$tom::H_cookie'
 					AND rqs=1
@@ -601,7 +601,7 @@ sub process
 			main::_log("generujem ID_user=".$var." a zapisujem do users");
 			
 			TOM::Database::SQL::execute(qq{
-				INSERT INTO TOM.a301_user
+				INSERT INTO `$App::301::db_name`.a301_user
 				(
 					ID_user,
 					posix_owner,
@@ -658,7 +658,7 @@ sub process
 			);
 			
 			TOM::Database::SQL::execute(qq{
-				INSERT INTO TOM.a301_user_online
+				INSERT INTO `$App::301::db_name`.a301_user_online
 				(
 					ID_user,
 					ID_session,
@@ -699,7 +699,7 @@ sub process
 			
 			
 			TOM::Database::SQL::execute(qq{
-				UPDATE TOM.a301_user
+				UPDATE `$App::301::db_name`.a301_user
 				SET
 					saved_session=?
 				WHERE
@@ -809,7 +809,7 @@ sub archive
 	
 	# INSERT IGNORE?
 	TOM::Database::SQL::execute(qq{
-		INSERT IGNORE INTO TOM.a301_user_session
+		INSERT IGNORE INTO `$App::301::db_name`.a301_user_session
 		(
 			ID_user,
 			ID_session,
@@ -832,7 +832,7 @@ sub archive
 			cookies,
 			session
 		FROM
-			TOM.a301_user_online
+			`$App::301::db_name`.a301_user_online
 		WHERE
 			ID_user='$ID_user'
 		LIMIT 1
@@ -842,7 +842,7 @@ sub archive
 	{
 		TOM::Database::SQL::execute(qq{
 			UPDATE
-				TOM.a301_user_online
+				`$App::301::db_name`.a301_user_online
 			SET
 				datetime_login=datetime_request,
 				requests=0
@@ -865,7 +865,7 @@ sub online_clone
 	return undef unless $ID_user2;
 	
 	TOM::Database::SQL::execute(qq{
-		INSERT IGNORE INTO TOM.a301_user_online
+		INSERT IGNORE INTO `$App::301::db_name`.a301_user_online
 		(
 			ID_user,
 			ID_session,
@@ -894,7 +894,7 @@ sub online_clone
 			session,
 			status
 		FROM
-			TOM.a301_user_online
+			`$App::301::db_name`.a301_user_online
 		WHERE
 			ID_user='$ID_user'
 		LIMIT 1
