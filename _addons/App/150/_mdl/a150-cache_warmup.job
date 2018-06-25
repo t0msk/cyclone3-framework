@@ -140,7 +140,6 @@ sub execute
 					'facility' => 'warmup',
 					'data' => $log_data
 				});
-#				main::_log(" id=".$cache_id." hits=".$cache->{'hits'}." (required ".$config->{'min_hits'}."), removing");
 				$Redis->srem('C3|'.$TOM::CACHE_warmup_cache_name.'|'.$time_start, $cache_id);
 				next;
 			}
@@ -185,7 +184,6 @@ sub execute
 			}};if($@){main::_log($@,1)}}
 			
 			my $id=$cache->{'warmup'}->{'body'}->{'requested-id'} || TOM::Utils::vars::genhash(8);
-			
 			
 			$log_data->{'mdl_s'} = $cache->{'warmup'}->{'body'}->{'pub-mdl'};
 			$log_data->{'requested_routing_key_s'} = $queue;

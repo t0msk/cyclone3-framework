@@ -76,7 +76,7 @@ sub request
 #	main::_log("testy");
 	my $severity=3;
 		$severity=4 if $env{'code'}=~/^[45]..$/;
-		main::_log($main::ENV{'REQUEST_METHOD'}." '".$main::ENV{'REQUEST_URI'}."' ".$main::ENV{'QUERY_STRING_FULL'}.' '.$main::ENV{'REMOTE_ADDR'}.' '.$env{'code'}.' '.$env{'location'},{
+	main::_log($main::ENV{'REQUEST_METHOD'}." '".$main::ENV{'REQUEST_URI'}."' ".$main::ENV{'QUERY_STRING_FULL'}.' '.$main::ENV{'REMOTE_ADDR'}.' '.$env{'code'}.' '.$env{'location'},{
 		'facility' => 'pub.track',
 		'severity' => $severity,
 		'data' => {

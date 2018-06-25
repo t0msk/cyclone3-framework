@@ -1485,6 +1485,7 @@ sub _product_index
 				product_ent.product_type,
 				
 				product_brand.name AS brand_name,
+				product_brand.alias_name AS brand_alias_name,
 				product_brand.name_url AS brand_name_url,
 				
 				product_family.name AS family_name,
@@ -3149,6 +3150,9 @@ sub product_brand_add
 		if ($env{'product_brand.name'} && ($env{'product_brand.name'} ne $product_brand{'name'}));
 	$data{'name_url'}=TOM::Net::URI::rewrite::convert($env{'product_brand.name'})
 		if ($env{'product_brand.name'} && ($env{'product_brand.name'} ne $product_brand{'name'}));
+	# alias_name
+	$data{'alias_name'}=$env{'product_brand.alias_name'}
+		if (exists $env{'product_brand.alias_name'} && ($env{'product_brand.alias_name'} ne $product_brand{'alias_name'}));
 	# status
 	$data{'status'}=$env{'product_brand.status'}
 		if ($env{'product_brand.status'} && ($env{'product_brand.status'} ne $product_brand{'status'}));

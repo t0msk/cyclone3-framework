@@ -60,7 +60,7 @@ sub execute
 				SELECT
 					ID
 				FROM
-					TOM.a301_user_group
+					`$App::301::db_name`.a301_user_group
 				WHERE
 					name = '$group' AND
 					hostname = '$tom::H_cookie'
@@ -70,7 +70,7 @@ sub execute
 			{
 				main::_log("adding to group '$group' user $user{'user.ID_user'}");
 				my $sql=qq{
-					REPLACE INTO TOM.a301_user_rel_group
+					REPLACE INTO `$App::301::db_name`.a301_user_rel_group
 					(
 						ID_user,
 						ID_group

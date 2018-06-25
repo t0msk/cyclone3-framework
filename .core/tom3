@@ -2563,10 +2563,10 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("H_www='$tom::H_www' rewrite_domain='$rewrite_domain' rewrite_old='$rewrite_old' rewrite='$rewrite'");
 #			main::_log("H_www_orig='$tom::H_www_orig' H_www='$tom::H_www' rewrite_domain='$rewrite_domain' rewrite_old='$rewrite_old' rewrite='$rewrite'",3,"debug");
 			
-			if (($tom::H_www ne $rewrite_domain) || ($rewrite_old ne $rewrite) || $rewrite_301 || (
-				($link_old ne $link)
-				 && ($main::ENV{'REQUEST_METHOD'} eq "GET")
-			))
+			if (($tom::H_www ne $rewrite_domain) || ($rewrite_old ne $rewrite) || $rewrite_301
+#				|| (($link_old ne $link) &&
+#				 ($main::ENV{'REQUEST_METHOD'} eq "GET"))
+			)
 			#if (($link_old ne $link) || $rewrite_301)
 			{
 				# musim odoslat cookies i ked robim relocation
@@ -2810,6 +2810,7 @@ while ($main::CGI=new CGI::Fast())
 				{
 					my $aca = $main::ENV{'HTTP_REFERER'} || $tom::H_www;
 						$aca =~s|^(http[s]?://.*?)/.*$|$1|;
+					$aca=$main::ENV{'HTTP_ORIGIN'} if $main::ENV{'HTTP_ORIGIN'};
 					print "Access-Control-Allow-Origin: ".$aca."\n";
 					print "Vary: Origin\n";
 				}
@@ -3026,7 +3027,7 @@ while ($main::CGI=new CGI::Fast())
 		
 		
 		
-		$main::H->message("This document has been generated as requested for UserAgent \"".$main::UserAgent_name."\"");
+#		$main::H->message("This document has been generated as requested for UserAgent \"".$main::UserAgent_name."\"");
 		
 		# ak je browser stary
 		$main::H->message($TOM::Net::HTTP::UserAgent::messages{old}[$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{old}])if exists $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{old};
@@ -3096,7 +3097,7 @@ while ($main::CGI=new CGI::Fast())
 			else # tento browser nepodporuje UTF8, tak dostane ASCII 
 			{
 				$main::H->message("Your browser detected as \"".$main::UserAgent_name."\" does not support utf-8 encoding or does not send the information about accepted encodings through http token. The system will automatically generate this page in default (ISO-8859-1/ASCII) charset. For more information, please refer to RFC2616 chapter 3.4. and inform your software distributor, or try to upgrade your this (or to another) software.");
-				main::_log("ASCII encoding for UserAgent \"$ENV{HTTP_USER_AGENT}\"-\"$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{name}\" encodings($ENV{HTTP_ACCEPT_CHARSET})",1,"pub.warn_low",1);
+				main::_log("ASCII encoding for UserAgent \"$ENV{HTTP_USER_AGENT}\"-\"$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{name}\" encodings($ENV{HTTP_ACCEPT_CHARSET})");
 				
 				$COOKIES{cp}="ISO-8859-1";
 				$H->rh("<%CODEPAGE%>","ISO-8859-1");
@@ -3329,6 +3330,7 @@ while ($main::CGI=new CGI::Fast())
 			{
 				my $aca = $main::ENV{'HTTP_REFERER'} || $tom::H_www;
 					$aca =~s|^(http[s]?://.*?)/.*$|$1|;
+				$aca=$main::ENV{'HTTP_ORIGIN'} if $main::ENV{'HTTP_ORIGIN'};
 				print "Access-Control-Allow-Origin: ".$aca."\n";
 			}
 			else

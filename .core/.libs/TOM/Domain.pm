@@ -187,7 +187,9 @@ BEGIN
 				my $repo = Git->repository('Directory' => $tom::P);
 				$tom::devel_branch=$repo->command('rev-parse','--abbrev-ref'=>'HEAD');
 					chomp($tom::devel_branch);
-				main::_log("identified git branch '$tom::devel_branch'");
+				$tom::devel_branch_behind=$repo->command('rev-list','--count','master..HEAD');
+					chomp($tom::devel_branch_behind);
+				main::_log("identified git branch '$tom::devel_branch' $tom::devel_branch_behind behind master");
 				};
 			}}
 		}
