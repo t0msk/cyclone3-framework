@@ -205,15 +205,15 @@ sub _log
 		$msg=$get[1] unless $main::debug;
 		if ($log_sym[$get[2]] eq '-')
 		{
-			print STDERR color 'red';
-			print STDERR $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
-			print STDERR color 'reset';
+			print STDOUT color 'red';
+			print STDOUT $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
+			print STDOUT color 'reset';
 		}
 		elsif ($log_sym[$get[2]] eq '!')
 		{
-			print STDERR color 'reset yellow';
-			print STDERR $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
-			print STDERR color 'reset';
+			print STDOUT color 'reset yellow';
+			print STDOUT $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
+			print STDOUT color 'reset';
 		}
 		else
 		{
@@ -246,6 +246,38 @@ sub _log
 		) # logujem v pripade ze som v ramci levelu alebo ide o ERROR
 	{
 		return 1 if $get[3] eq "stdout";
+		
+		if ($tom::devel && $Ext::Redis::service)
+		{
+			local $@;
+			local %log_date=ctogmdatetime($log_time,format=>1); # we are logging in GMT zone
+			my $msg=$get[1];
+				$msg =~ s/([^\x00-\xFF])/'\x'.ord($1)/ge;
+#			print "redis\n";
+			my $d=do {
+				if ($get[4]==1){undef;}
+				elsif ($tom::Pm && $get[4]==2){$tom::H_orig || $tom::Hm;}
+				else {$tom::H_orig;}
+			};
+			$Ext::Redis::service->publish('cyclone3.log.'.$d,to_json({
+				'@timestamp' =>
+					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
+					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.".".sprintf("%03d",$msec/10).'Z',
+				'p' => $$,
+				'h' => $TOM::hostname.'.'.($TOM::domain || 'undef'),
+				'hd' => $TOM::domain,
+				'l' => $get[0],
+				'd' => $d,
+				'dm' => do {if ($get[4]==1){undef;}else {$tom::Hm}},
+				'c' => do {if ($main::request_code){$main::request_code;}else{undef;}},
+				'e' => $TOM::engine,
+				'f' => do {if ($get[2] == LOG_ERROR || $get[2] == LOG_ERROR_FORCE_NODEPTH){'1'}else{undef}},
+				'w' => do {if ($get[2] == LOG_WARNING || $get[2] == LOG_WARNING_FORCE_NODEPTH){'1'}else{undef}},
+				't' => $get[3],
+				"m" => $msg,
+				'data' => $get[5]
+			}),sub{});
+		}
 		
 		if ($fluentd_socket)
 		{
