@@ -67,8 +67,8 @@ sub get_author
 			YEAR(CURRENT_DATE()) - YEAR(user_profile.date_birth) - (RIGHT(CURRENT_DATE(),5) < RIGHT(user_profile.date_birth,5)) AS age,
 			user_profile.*
 		FROM
-			`TOM`.`a301_user` AS user
-		LEFT JOIN `TOM`.`a301_user_profile` AS user_profile ON
+			`$App::301::db_name`.`a301_user` AS user
+		LEFT JOIN `$App::301::db_name`.`a301_user_profile` AS user_profile ON
 		(
 			user.ID_user = user_profile.ID_entity
 		)
@@ -85,7 +85,7 @@ sub get_author
 			SELECT
 				*
 			FROM
-				`TOM`.`a301_user`
+				`$App::301::db_name`.`a301_user`
 			WHERE
 				ID_user='$ID_user'
 			LIMIT 1;
@@ -190,7 +190,7 @@ sub add_author
 			SELECT
 				user_profile.ID_entity
 			FROM
-				`TOM`.`a301_user_profile` AS user_profile
+				`$App::301::db_name`.`a301_user_profile` AS user_profile
 			WHERE
 				user_profile.firstname LIKE ?
 			LIMIT 1
@@ -254,8 +254,8 @@ sub add_author
 					user_profile.*
 					
 				FROM
-					`TOM`.`a301_user` AS user
-				LEFT JOIN `TOM`.`a301_user_profile` AS user_profile ON
+					`$App::301::db_name`.`a301_user` AS user
+				LEFT JOIN `$App::301::db_name`.`a301_user_profile` AS user_profile ON
 				(
 					user.ID_user = user_profile.ID_entity
 				)
@@ -334,8 +334,8 @@ sub add_author
 					user.email_verified,
 					user_profile.*
 				FROM
-					`TOM`.`a301_user` AS user
-				LEFT JOIN `TOM`.`a301_user_profile` AS user_profile ON
+					`$App::301::db_name`.`a301_user` AS user
+				LEFT JOIN `$App::301::db_name`.`a301_user_profile` AS user_profile ON
 				(
 					user.ID_user = user_profile.ID_entity
 				)

@@ -208,7 +208,7 @@ sub process
 						user_online.cookies,
 						user_online.session
 					FROM
-						`TOM`.`a301_user_online` AS user_online
+						`$App::301::db_name`.`a301_user_online` AS user_online
 					WHERE
 						user_online.ID_user=?
 					LIMIT 1
@@ -228,7 +228,7 @@ sub process
 						user.email,
 						user.email_verified
 					FROM
-						`TOM`.`a301_user` AS user
+						`$App::301::db_name`.`a301_user` AS user
 					WHERE
 						user.ID_user=?
 					LIMIT 1

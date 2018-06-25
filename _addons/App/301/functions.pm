@@ -77,7 +77,7 @@ sub user_add
 			SELECT
 				*
 			FROM
-				`TOM`.a301_user
+				`$App::301::db_name`.a301_user
 			WHERE
 				ID_user=?
 			LIMIT 1;
@@ -93,7 +93,7 @@ sub user_add
 			SELECT
 				*
 			FROM
-				`TOM`.a301_user
+				`$App::301::db_name`.a301_user
 			WHERE
 				ref_facebook=? AND
 				hostname=?
@@ -110,7 +110,7 @@ sub user_add
 			SELECT
 				*
 			FROM
-				`TOM`.a301_user
+				`$App::301::db_name`.a301_user
 			WHERE
 				ref_deviceid=? AND
 				hostname=?
@@ -127,7 +127,7 @@ sub user_add
 			SELECT
 				*
 			FROM
-				`TOM`.a301_user
+				`$App::301::db_name`.a301_user
 			WHERE
 				ref_ID=? AND
 				hostname=?
@@ -144,7 +144,7 @@ sub user_add
 			SELECT
 				*
 			FROM
-				`TOM`.a301_user
+				`$App::301::db_name`.a301_user
 			WHERE
 				login=? AND
 				hostname=?
@@ -162,7 +162,7 @@ sub user_add
 			SELECT
 				*
 			FROM
-				`TOM`.a301_user
+				`$App::301::db_name`.a301_user
 			WHERE
 				email=? AND
 				hostname=?
@@ -188,7 +188,7 @@ sub user_add
 		}
 		$env{'user.ID_user'}=user_newhash();
 		TOM::Database::SQL::execute(qq{
-			INSERT INTO `TOM`.a301_user
+			INSERT INTO `$App::301::db_name`.a301_user
 			(
 				ID_user,
 				secure_hash,
@@ -369,7 +369,7 @@ sub user_add
 			SELECT
 				*
 			FROM
-				`TOM`.a301_user_profile
+				`$App::301::db_name`.a301_user_profile
 			WHERE
 				ID_entity=?
 			LIMIT 1
@@ -383,7 +383,7 @@ sub user_add
 			main::_log("not found user_profile, creating new");
 			$env{'user_profile.ID'}=App::020::SQL::functions::new(
 				'db_h' => "main",
-				'db_name' => 'TOM',
+				'db_name' => $App::301::db_name,
 				'tb_name' => "a301_user_profile",
 				'columns' =>
 				{
@@ -540,7 +540,7 @@ sub user_add
 		{
 			App::020::functions::metadata::metaindex_set(
 				'db_h' => 'main',
-				'db_name' => 'TOM',
+				'db_name' => $App::301::db_name,
 				'tb_name' => 'a301_user_profile',
 				'ID' => $env{'user_profile.ID'},
 				'metadata' => {%metadata}
@@ -552,7 +552,7 @@ sub user_add
 			App::020::SQL::functions::update(
 				'ID' => $env{'user_profile.ID'},
 				'db_h' => "main",
-				'db_name' => 'TOM',
+				'db_name' => $App::301::db_name,
 				'tb_name' => "a301_user_profile",
 				'columns' => {%columns},
 				'data' => {%data},
@@ -656,7 +656,7 @@ sub user_add
 		$content_reindex=1;
 		
 		TOM::Database::SQL::execute(qq{
-			UPDATE `TOM`.a301_user
+			UPDATE `$App::301::db_name`.a301_user
 			SET
 				ID_user=?
 				$set
@@ -872,12 +872,12 @@ sub user_groups
 			user_group.name AS group_name,
 			user_group.status
 		FROM
-			`TOM`.`a301_user_rel_group` AS rel
-		LEFT JOIN `TOM`.`a301_user` AS user ON
+			`$App::301::db_name`.`a301_user_rel_group` AS rel
+		LEFT JOIN `$App::301::db_name`.`a301_user` AS user ON
 		(
 			user.ID_user = rel.ID_user
 		)
-		LEFT JOIN `TOM`.`a301_user_group` AS user_group ON
+		LEFT JOIN `$App::301::db_name`.`a301_user_group` AS user_group ON
 		(
 			user_group.ID = rel.ID_group
 		)
@@ -910,7 +910,7 @@ sub user_group_add
 		SELECT
 			*
 		FROM
-			`TOM`.a301_user
+			`$App::301::db_name`.a301_user
 		WHERE
 			ID_user=?
 		LIMIT 1;
@@ -979,7 +979,7 @@ sub user_group_add
 	if ($changed)
 	{
 		App::020::SQL::functions::_save_changetime({
-			'db_name' => 'TOM',
+			'db_name' => $App::301::db_name,
 			'tb_name' => 'a301_user_rel_group',
 			'ID_entity' => $ID_user
 		});
@@ -1002,7 +1002,7 @@ sub user_group_remove
 		SELECT
 			*
 		FROM
-			`TOM`.a301_user
+			`$App::301::db_name`.a301_user
 		WHERE
 			ID_user = ?
 		LIMIT 1;
@@ -1066,7 +1066,7 @@ sub user_group_remove
 	if ($changed)
 	{
 		App::020::SQL::functions::_save_changetime({
-			'db_name' => 'TOM',
+			'db_name' => $App::301::db_name,
 			'tb_name' => 'a301_user_rel_group',
 			'ID_entity' => $ID_user
 		});
@@ -1395,14 +1395,14 @@ sub _user_index
 		{
 			main::_log("user.ID_user=$env{'ID_user'} not found",1);
 			if ($Elastic->exists(
-				'index' => 'cyclone3.'.$App::010::db_name,
+				'index' => 'cyclone3.'.$App::301::db_name,
 				'type' => 'a301_user',
 				'id' => $env{'ID_user'}
 			))
 			{
 				main::_log("removing from Elastic",1);
 				$Elastic->delete(
-					'index' => 'cyclone3.'.$App::010::db_name,
+					'index' => 'cyclone3.'.$App::301::db_name,
 					'type' => 'a301_user',
 					'id' => $env{'ID_user'}
 				);
@@ -1480,7 +1480,7 @@ sub _user_index
 		}
 		
 		$Elastic->index(
-			'index' => 'cyclone3.'.$App::010::db_name,
+			'index' => 'cyclone3.'.$App::301::db_name,
 			'type' => 'a301_user',
 			'id' => $env{'ID_user'},
 			'body' => {
