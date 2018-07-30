@@ -1237,7 +1237,7 @@ sub image_add
 			'tb_name' => "a501_image_format",
 			'columns' => {'*'=>1}
 		);
-		if ($format{'process'})
+		if ($format{'process'} && not($env{'file'}=~/\.svg$/))
 		{
 			$env{'file_temp'}=new TOM::Temp::file('dir'=>$main::ENV{'TMP'});
 			my ($out,$ext)=image_file_process(
@@ -1870,6 +1870,7 @@ sub image_file_add
 	
 	# optional default file ext
 	$file_ext='jpg' unless $file_ext;
+	$file_ext='svg' if $env{'file'}=~/\.svg$/;
 	main::_log("file ext='$file_ext'");
 	
 	# checksum
