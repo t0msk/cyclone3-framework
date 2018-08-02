@@ -265,7 +265,8 @@ sub execute
 							'status' => {
 								'type' => 'keyword',
 								'index' => 'true'
-							}
+							},
+							'ref_ID' => {'type'=>'string','index'=>'not_analyzed'},
 						},
 						'dynamic_templates' => [
 							# prices
@@ -532,7 +533,8 @@ sub execute
 							'status' => {
 								'type' => 'string',
 								'index' => 'not_analyzed'
-							}
+							},
+							'ref_ID' => {'type'=>'string','index'=>'not_analyzed'},
 						},
 						'dynamic_templates' => [
 							# prices

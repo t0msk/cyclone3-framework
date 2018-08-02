@@ -48,7 +48,7 @@ sub execute
 					SELECT
 						ID_charindex
 					FROM
-						TOM.a301_user_group
+						`$App::301::db_name`.a301_user_group
 					WHERE
 						ID=$env{'user_group.ID'}
 					LIMIT 1
@@ -57,7 +57,7 @@ sub execute
 			SELECT
 				ID
 			FROM
-				TOM.a301_user_group
+				`$App::301::db_name`.a301_user_group
 			WHERE
 				ID_charindex LIKE CONCAT(($cat_sql),"%") AND
 				lng='$env{'lng'}' AND
@@ -131,20 +131,20 @@ sub execute
 			user_profile.address_postal,
 			user_profile.note
 		FROM
-			TOM.a301_user AS user
-		LEFT JOIN TOM.a301_user_rel_group AS rel ON
+			`$App::301::db_name`.a301_user AS user
+		LEFT JOIN `$App::301::db_name`.a301_user_rel_group AS rel ON
 		(
 			user.ID_user = rel.ID_user
 		)
---		LEFT JOIN TOM.a301_user AS user ON
+--		LEFT JOIN `$App::301::db_name`.a301_user AS user ON
 --		(
 --			user.ID_user = rel.ID_user
 --		)
-		LEFT JOIN TOM.a301_user_group AS user_group ON
+		LEFT JOIN `$App::301::db_name`.a301_user_group AS user_group ON
 		(
 			user_group.ID = rel.ID_group
 		)
-		LEFT JOIN TOM.a301_user_profile AS user_profile ON
+		LEFT JOIN `$App::301::db_name`.a301_user_profile AS user_profile ON
 		(
 			user_profile.ID_entity = user.ID_user
 		)
@@ -185,8 +185,8 @@ sub execute
 				user_profile.note,
 				YEAR(user_profile.date_birth) AS year_birth
 			FROM
-				TOM.a301_user AS user
-			LEFT JOIN TOM.a301_user_profile AS user_profile ON
+				`$App::301::db_name`.a301_user AS user
+			LEFT JOIN `$App::301::db_name`.a301_user_profile AS user_profile ON
 			(
 				user_profile.ID_entity = user.ID_user
 			)

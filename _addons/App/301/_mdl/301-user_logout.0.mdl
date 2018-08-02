@@ -50,7 +50,7 @@ sub execute
 		SELECT
 			*
 		FROM
-			TOM.a301_user_online
+			`$App::301::db_name`.a301_user_online
 		WHERE
 			ID_user='$main::USRM{'ID_user'}' AND
 			ID_session='$main::USRM{'ID_session'}'
@@ -87,7 +87,7 @@ sub execute
 			
 			TOM::Database::SQL::execute(qq{
 				UPDATE
-					TOM.a301_user
+					`$App::301::db_name`.a301_user
 				SET
 					datetime_last_login = ?,
 					requests_all = requests_all + $user{requests},
@@ -105,7 +105,7 @@ sub execute
 			
 			TOM::Database::SQL::execute(qq{
 				UPDATE
-					TOM.a301_user_online
+					`$App::301::db_name`.a301_user_online
 				SET
 					logged='N'
 				WHERE
