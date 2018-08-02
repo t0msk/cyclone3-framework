@@ -49,7 +49,7 @@ sub execute
 	
 	my $version='1.17';
 	main::_log_stdout("put_template to Elastic version ".$Elastic->{'version_min'});
-	if ($Elastic->{'version_min'}=~/^5/)
+	if ($Elastic->{'version_min'}=~/^5/ || $Elastic->{'version_min'}=~/^6/)
 	{
 		main::_log("put_template to elastic 5.*");
 		$Elastic->indices->put_template(
