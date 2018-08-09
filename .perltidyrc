@@ -1,0 +1,23 @@
+# See https://metacpan.org/pod/perltidy for explanations and more options
+-pbp     # Start with Perl Best Practices
+-nst     # --nostandard-output
+-b       # Modify files in place
+-bext='/' # and delete the originals if there are no error. We use GIT.
+-l=80    # 80 characters per line
+-mbl=2   # No more than 2 blank lines
+-i=3     # Indentation is 3 columns
+-ci=3    # Continuation indentation is 3 columns
+-et=3    # --entab-leading-whitespace leading whitespace will be entabbed with one tab character per 3 spaces
+-bl     # --opening-brace-on-new-line This flag applies to all structural blocks, including named sub's
+#-nbl     # Opening brace on the same line as the keyword introducing it
+-vt=0    # Less vertical tightness
+-pt=2    # High parenthesis tightness
+-bt=2    # High brace tightness
+-sbt=2   # High square bracket tightness
+-isbc    # Don't indent comments without leading space
+-w       # Show all warnings
+-iob     # Ignore old breakpoints
+-utf8    # Encoding of both the input and output character streams
+-lp      # Add extra indentation to cause the data to begin past the opening parentheses
+-cti=1   # 1 extra indentation such that the closing token aligns with its opening token.
+
