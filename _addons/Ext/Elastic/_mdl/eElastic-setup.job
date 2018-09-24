@@ -203,6 +203,7 @@ sub execute
 								'index' => 'true'
 							},
 							'cat' => {'type'=>'long','index'=>'true'},
+							'metadata' => {'type' => 'long','index' => 'true'},
 							'article_attrs' => {
 								'properties' => {
 									'datetime_start' => {
