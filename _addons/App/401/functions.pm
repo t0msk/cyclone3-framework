@@ -928,7 +928,8 @@ sub _article_index
 		{
 			push @{$article{'name'}},$db0_line{'name'};
 			push @{$article{'name_url'}},$db0_line{'name_url'};
-			push @{$article{'metadata'}},$db0_line{'metadata'};
+			my %metahash = App::020::functions::metadata::parse($db0_line{'metadata'});
+			$article{'metahash'} = \%metahash;
 			push @{$article{'cat'}},$db0_line{'cat_ID_entity'}
 				if $db0_line{'cat_ID_entity'};
 			push @{$article{'cat_charindex'}},$db0_line{'ID_charindex'}
