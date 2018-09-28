@@ -897,6 +897,7 @@ sub _article_index
 				article_attrs.datetime_stop,
 				article_attrs.status,
 				article_ent.ID_author,
+				article_ent.metadata,
 				article_cat.name AS cat_name,
 				article_cat.ID AS cat_ID,
 				article_cat.ID_entity AS cat_ID_entity,
@@ -927,9 +928,8 @@ sub _article_index
 		{
 			push @{$article{'name'}},$db0_line{'name'};
 			push @{$article{'name_url'}},$db0_line{'name_url'};
-#			push @{$article{'datetime_start'}},$db0_line{'datetime_start'}
-#				if $db0_line{'datetime_start'};
-
+			my %metahash = App::020::functions::metadata::parse($db0_line{'metadata'});
+			$article{'metahash'} = \%metahash;
 			push @{$article{'cat'}},$db0_line{'cat_ID_entity'}
 				if $db0_line{'cat_ID_entity'};
 			push @{$article{'cat_charindex'}},$db0_line{'ID_charindex'}
