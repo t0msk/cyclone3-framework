@@ -2010,6 +2010,11 @@ while ($main::CGI=new CGI::Fast())
 			my %env0=CML::VARhash($1);
 			next unless $env0{id};
 			
+			if ($env0{'id'} eq "doctype")
+			{
+				$main::ENV{'doctype'} = $env0{'value'};
+			}
+			
 			if ($env0{'id'} eq "https" && $env0{'value'})
 			{
 				if ($env0{'value'} eq "required")
