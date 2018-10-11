@@ -167,6 +167,9 @@ sub execute
 	
 	}
 	
+	$main::COOKIES{'usrmevent'}=$tom::Tyear."-".$tom::Fmom."-".$tom::Fmday." ".$tom::Fhour.":".$tom::Fmin.":".$tom::Fsec;
+	main::_log("set usrmevent to $main::COOKIES{'usrmevent'}",3,"debug");
+	
 	return 1
 }
 
