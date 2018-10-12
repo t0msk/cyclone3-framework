@@ -562,7 +562,7 @@ while ($main::CGI=new CGI::Fast())
 					'duration' => $t_eval->{'time'}{'duration'},
 					'user' => $t_eval->{'time'}{'user'}{'duration'},
 					'sys' => $t_eval->{'time'}{'sys'}{'duration'},
-					'code' => '420'
+					'code' => '429'
 				);
 				
 				next;
@@ -3169,9 +3169,17 @@ while ($main::CGI=new CGI::Fast())
 		{
 			print "X-FRAME-OPTIONS: ".($TOM::Document::frame_options || 'SAMEORIGIN').";\n";
 		}
+		if ($TOM::Document::X_XSS_Protection)
+		{
+			print "X-XSS-Protection: ".($TOM::Document::X_XSS_Protection || '1; mode=block').";\n";
+		}
+		if ($TOM::Document::X_Content_Type_Options)
+		{
+			print "X-Content-Type-Options: ".($TOM::Document::X_Content_Type_Options || 'nosniff').";\n";
+		}
 		if ($tom::H_www_orig=~/^https/ && $TOM::Document::HSTS)
 		{
-			print "Strict-Transport-Security: max-age=600;\n";
+			print "Strict-Transport-Security: max-age=15552000;\n";
 		}
 		
 		# codepage pouzity pre tuto page;
@@ -3472,6 +3480,11 @@ while ($main::CGI=new CGI::Fast())
 	
 	# request exit/restart when important files changed
 	$tom::HUP=1 if TOM::files_modified(\@main::mfiles);
+	
+	if (-e $TOM::P.'/_data/ip_blacklist.json' && TOM::file_modified($TOM::P.'/_data/ip_blacklist.json'))
+	{
+		TOM::Net::HTTP::UserAgent::initialize_hacked();
+	}
 	
 	if (
 			($tom::HUP) && (($main::time_current-$TOM::time_start)<30) || # safe time to exit/restart
