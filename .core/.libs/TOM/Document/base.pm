@@ -4,6 +4,8 @@ use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 
+use List::MoreUtils qw(uniq);
+
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 use vars qw{$AUTOLOAD};
@@ -26,7 +28,12 @@ sub message
 	}
 }
 
-
+sub add_obj {
+	my $self=shift;
+	my $obj=shift;
+#	push @{$self->{'env'}->{'obj'}},$obj;
+	@{$self->{'env'}->{'obj'}}=uniq(@{$self->{'env'}->{'obj'}},$obj);
+}
 
 sub i # insert at begin
 {

@@ -49,6 +49,11 @@ sub XSGN_load_hash
 #sub module_load{return}
 #sub type{return}
 
+package Tomahawk::module::base;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+
 
 
 # DEFINUJEM NULOVE STATISTIKY
@@ -1166,6 +1171,11 @@ sub module_process_return_data
 			foreach my $env0(@{$return_data{'call'}{'H'}{'add_DOC_link'}})
 			{
 				$main::H->add_DOC_link(%{$env0});
+			}
+			# obj
+			foreach my $env0(@{$return_data{'call'}{'H'}{'add_obj'}})
+			{
+				$main::H->add_obj($env0);
 			}
 		}
 	}
