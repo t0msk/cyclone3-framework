@@ -485,7 +485,7 @@ sub module
 		# CHECK CACHED ENTITIES
 		my $data_changed;
 		my $entity_i;
-		if ($return_data{'entity'})# && !$Redis) # when Redis, expiration is active
+		if ($return_data{'entity'} && !$mdl_C{'-cache_backend'} && !$mdl_C{'-cache_warmup'})# && !$Redis) # when Redis, expiration is active
 		{
 			main::_log("checking cache of entities") if $debug;
 			foreach my $entity (@{$return_data{'entity'}})
@@ -498,6 +498,7 @@ sub module
 					my $changetime_diff=$main::time_current - $changetime;
 					main::_log("entity ".$entity->{'db_h'}."::".$entity->{'db_name'}."::".$entity->{'tb_name'}.do{"::".$entity->{'ID_entity'} if $entity->{'ID_entity'}}." changed in ".($mdl_C{'-cache_from'}-$changetime)."S (relative to module cache start time)");
 					$data_changed=1;
+#					$mdl_C{'-cache_duration'}=$mdl_C{'-cache_old'};
 					last;
 				}
 			}
@@ -543,8 +544,8 @@ sub module
 			# A
 			&&
 			(
-				# data sa nezmenili
-				!$data_changed
+				# data sa nezmenili a pritom sa nespolieham na backend
+				!$data_changed #&& !$mdl_C{'-cache_backend'}
 			)
 			&&
 			(
