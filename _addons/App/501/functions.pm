@@ -446,6 +446,14 @@ sub image_file_process
 		return undef;
 	}
 	
+	if ($image1->Get('magick') eq 'PSD')
+	{
+		main::_log("unsupported format 'PSD'",1);
+		unlink $env{'image1'} if $env{'unlink'};
+		$t->close();
+		return undef;
+	}
+	
 	# GIF magick
 	$image1=$image1->[0] if $image1->Get('magick') eq 'GIF';
 #	$image1->Profile('profile'=>'');
