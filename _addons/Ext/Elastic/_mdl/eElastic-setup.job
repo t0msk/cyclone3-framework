@@ -47,7 +47,7 @@ sub execute
 #		)};
 #	}
 	
-	my $version='1.17';
+	my $version='1.18';
 	main::_log_stdout("put_template to Elastic version ".$Elastic->{'version_min'});
 	if ($Elastic->{'version_min'}=~/^5/ || $Elastic->{'version_min'}=~/^6/)
 	{
@@ -276,6 +276,90 @@ sub execute
 									"type" => "float"
 								}
 							}},
+							{'locale' => {
+								"path_match" => "locale.*.*",
+								"mapping" => {
+									"type" => "string"
+								}
+							}}
+						]
+					},
+					
+					'a910_product_ent' => {
+						"_meta" => {
+							"version" => $version
+						},
+						'properties' => {
+							'ID_entity' => {'type' => 'long'},
+							'ID_family' => {'type' => 'long'},
+							'brand_name' => {'type' => "string","copy_to" => "original.std.brand_name"},
+							
+							'product' => {'type'=>'nested',
+								
+								'properties' => {
+									'ID' => {'type' => 'long'},
+									'ID_entity' => {'type' => 'long'},
+									'ID_family' => {'type' => 'long'},
+									'name' => {'type' => "string","copy_to" => ["product.completion.std.name","product.original.std.name"]},
+									'full_name' => {'type' => "string","copy_to" => ["product.completion.std.full_name","product.original.std.full_name"]},
+									'brand_name' => {'type' => "string","copy_to" => "product.original.std.brand_name"},
+									'price' => {'type' => 'float'},
+									'price_full' => {'type' => 'float'},
+									'sellscore' => {'type' => 'float'},
+									'rating' => {'type' => 'float'},
+									'cat' => {'type'=>'long','index'=>'true'},
+									'cat_path' => {'type'=>'long','index'=>'true'},
+									'status' => {
+										'type' => 'keyword',
+										'index' => 'true'
+									},
+									'ref_ID' => {'type'=>'string','index'=>'not_analyzed'},
+								}
+								
+							},
+							
+						},
+						'dynamic_templates' => [
+							# prices
+							{'prices' => {
+								"path_match" => "product.prices.*.*",
+								"mapping" => {
+									"type" => "float"
+								}
+							}},
+							{'locale' => {
+								"path_match" => "product.locale.*.*",
+								"mapping" => {
+									"type" => "string"
+								}
+							}},
+							
+							# product.completion
+							{'product.completion_std' => { # completion
+								"path_match" => "product.completion.std.*",
+								"mapping" => {
+									"type" => "completion",
+									"analyzer" => "simple",
+									"search_analyzer" => "simple",
+								}
+							}},
+							{'product.completion_metahash' => { # completion
+								"path_match" => "product.completion.metahash.*",
+								"mapping" => {
+									"type" => "completion",
+									"analyzer" => "simple",
+									"search_analyzer" => "simple",
+								}
+							}},
+							# original
+							{'product.original_std' => { # completion
+								"path_match" => "product.original.std.*",
+								"mapping" => {
+									"type" => "keyword",
+									"index" => "true"
+								}
+							}},
+							
 						]
 					}
 					
@@ -544,6 +628,12 @@ sub execute
 									"type" => "float"
 								}
 							}},
+							{'locale' => {
+								"path_match" => "locale.*.*",
+								"mapping" => {
+									"type" => "string"
+								}
+							}}
 						]
 					}
 					
