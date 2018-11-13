@@ -80,6 +80,7 @@ use App::910::functions;
 
 our $currency=$App::910::currency || 'EUR';
 our $db_name=$App::910::db_name || $TOM::DB{'main'}{'name'};
+our $index_name=$App::910::index_name || $App::910::db_name || $TOM::DB{'main'}{'name'};
 our $metaindex=$App::910::metaindex || 'Y';
 our $solr_status_index=$App::910::solr_status_index || 'Y';
 our $solr_price_history=$App::910::solr_price_history || undef;

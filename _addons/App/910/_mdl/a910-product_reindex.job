@@ -32,6 +32,25 @@ sub execute
 #		$IDs{$ID}++;
 #	}
 	
+	if ($App::910::index_product_ent)
+	{
+		my $i;
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				ID_entity
+			FROM
+				a910_product_ent
+		});
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$i++;
+			main::_log("[$i/$sth0{'rows'}]");
+#			$main::nojobify=1;
+			
+			App::910::functions::_product_ent_index('ID_entity'=>$db0_line{'ID_entity'},'-jobify' => 1, 'solr' => 0);
+		}
+	}
+	
 	# reindex
 	my $i;
 	my %sth0=TOM::Database::SQL::execute(qq{
@@ -47,7 +66,7 @@ sub execute
 	{
 		$i++;
 		main::_log("[$i/$sth0{'rows'}]");
-		$main::nojobify=1;
+#		$main::nojobify=1;
 		
 #		delete $IDs{$db0_line{'ID'}};
 		
@@ -60,6 +79,8 @@ sub execute
 #			$solr->commit();
 #		}
 	}
+	
+	
 	
 	sleep 10;
 #	main::_log("delete ID's=".keys %IDs);
