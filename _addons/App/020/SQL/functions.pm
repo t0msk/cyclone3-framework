@@ -108,6 +108,7 @@ sub new
 	my @values;
 	my @bind;
 	$env{'columns'}{'posix_modified'}="'".$main::USRM{'ID_user'}."'" if $env{'-posix'};
+	$env{'columns'}{'uuid'}="UUID()" if $env{'-uuid'};
 	foreach (sort keys %{$env{'columns'}})
 	{
 		push @columns, $_;

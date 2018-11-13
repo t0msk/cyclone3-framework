@@ -722,6 +722,7 @@ sub article_add
 				%columns,
 				'ID_entity' => $env{'article.ID_entity'},
 			},
+			'-uuid' => 1,
 			'-journalize' => 1,
 		);
 	}
@@ -821,7 +822,6 @@ sub _article_index_all
 sub _article_index
 {
 	return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::401::db_name,'class'=>'indexer'}); # do it in background
-	
 	my %env=@_;
 	return undef unless $env{'ID_entity'};
 	
@@ -897,6 +897,7 @@ sub _article_index
 				article_attrs.datetime_stop,
 				article_attrs.status,
 				article_ent.ID_author,
+				article_ent.metadata,
 				article_cat.name AS cat_name,
 				article_cat.ID AS cat_ID,
 				article_cat.ID_entity AS cat_ID_entity,
@@ -927,9 +928,8 @@ sub _article_index
 		{
 			push @{$article{'name'}},$db0_line{'name'};
 			push @{$article{'name_url'}},$db0_line{'name_url'};
-#			push @{$article{'datetime_start'}},$db0_line{'datetime_start'}
-#				if $db0_line{'datetime_start'};
-
+			my %metahash = App::020::functions::metadata::parse($db0_line{'metadata'});
+			$article{'metahash'} = \%metahash;
 			push @{$article{'cat'}},$db0_line{'cat_ID_entity'}
 				if $db0_line{'cat_ID_entity'};
 			push @{$article{'cat_charindex'}},$db0_line{'ID_charindex'}
@@ -947,8 +947,10 @@ sub _article_index
 			push @{$article{'article_attrs'}},{
 				'name' => $db0_line{'name'},
 				'cat' => $db0_line{'cat_ID_entity'},
+				'cat_name' => $db0_line{'cat_name'},
 				'cat_charindex' => $db0_line{'ID_charindex'},
-				'datetime_start' => $db0_line{'datetime_start'}
+				'datetime_start' => $db0_line{'datetime_start'},
+				'datetime_stop' => $db0_line{'datetime_stop'}
 			};
 			
 			$article{'status'}="Y"
