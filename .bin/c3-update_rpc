@@ -92,6 +92,7 @@ sub update_dir
 		main::_log($dir." not in .git",5);
 		return undef;
 	}
+	my $version = Git::command_oneline('version');$version=~s|^.*?(\d+)\.(\d+).*?$|$1.$2|;$version+=0;
 	my $repo = Git->repository(Directory => $dir);
 
 	# check branch
@@ -103,9 +104,17 @@ sub update_dir
 	}
 
 	# check remote
-	my @remote = $repo->command('remote','get-url','origin');
-
-	if ($remote[0] ne "http://bit.comsultia.com/scm/cyc/xuladmin-rpc.git")
+	my $remote_url;
+	if ($version >= 2.6)
+	{
+		$remote_url=($repo->command('remote','get-url','origin'))[0];
+	}
+	else
+	{
+		$remote_url=(grep {$_=~s/origin\t// && $_=~s/ \(fetch\)//} $repo->command( [ 'remote', '-v' ], STDERR => 0 ))[0];
+	}
+	
+	if ($remote_url ne "http://bit.comsultia.com/scm/cyc/xuladmin-rpc.git")
 	{
 		main::_log($dir." re-set remote origin ");
 		$repo->command(
@@ -116,7 +125,12 @@ sub update_dir
 	# check if not in conflict state
 
 	# git pull
-	my @output = $repo->command('pull');
+	my @output = eval{$repo->command(['pull'], STDERR => 0)};
+	if ($@)
+	{
+		main::_log_stdout($dir.' pull error',1);
+		return undef
+	}
 	
 	print Dumper(\@output) if $main::arg{'debug'};
 	if ($output[0]=~/up-to-date/)
