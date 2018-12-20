@@ -107,7 +107,7 @@ sub product_add
 	my %env=@_;
 	if ($env{'-jobify'})
 	{
-		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name,'class'=>'fifo'});
+		return 1 if TOM::Engine::jobify(\@_,{'routing_key' => 'db:'.$App::910::db_name});
 	}
 	my $t=track TOM::Debug(__PACKAGE__."::product_add()");
 	
@@ -1322,14 +1322,15 @@ sub product_add
 				'image.ID_entity' => $relation->{'r_ID_entity'},
 				'image_attrs.name' => $env{'product.product_number'} || $env{'product.ID'} || $env{'thumbnail'},
 				'image_attrs.ID_category' => $App::910::thumbnail_cat_ID_entity,
+				'check_duplicity' => 'Y',
 				'file' => $env{'thumbnail'}
 			);
 			
 			if ($image{'image.ID'})
 			{
-				App::501::functions::image_regenerate(
-					'image.ID' => $image{'image.ID'}
-				);
+#				App::501::functions::image_regenerate(
+#					'image.ID' => $image{'image.ID'}
+#				);
 			}
 			
 		}
@@ -1339,6 +1340,7 @@ sub product_add
 			my %image=App::501::functions::image_add(
 				'image_attrs.name' => $env{'product.product_number'} || $env{'product.ID'} || $env{'thumbnail'},
 				'image_attrs.ID_category' => $App::910::thumbnail_cat_ID_entity,
+				'check_duplicity' => 'Y',
 				'image_attrs.status' => 'Y',
 				'file' => $env{'thumbnail'}
 			);
@@ -1346,9 +1348,9 @@ sub product_add
 			if ($image{'image.ID'})
 			{
 				
-				App::501::functions::image_regenerate(
-					'image.ID' => $image{'image.ID'}
-				);
+#				App::501::functions::image_regenerate(
+#					'image.ID' => $image{'image.ID'}
+#				);
 				
 				my ($ID_entity,$ID)=App::160::SQL::new_relation(
 					'l_prefix' => 'a910',
@@ -1906,7 +1908,8 @@ sub _product_hash
 		
 		push @{$product{'locale'}{$db0_line{'lng'}}{'cat_name'}}, $db0_line{'name'};
 #				unless $used{$db0_line{'name'}};
-		push @{$product{'locale'}{$db0_line{'lng'}}{'cat_alias_name'}}, $db0_line{'alias_name'};
+		push @{$product{'locale'}{$db0_line{'lng'}}{'cat_alias_name'}}, $db0_line{'alias_name'}
+			if $db0_line{'alias_name'};
 #				if (!$used{$db0_line{'alias_name'}} && $db0_line{'alias_name'});
 		
 		my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
@@ -1919,6 +1922,8 @@ sub _product_hash
 		)
 		{
 			push @{$product{'cat_path'}},$p->{'ID_entity'}
+				unless $used2{$p->{'ID_entity'}};
+			push @{$product{'cat_path_name'}},$p->{'name'}
 				unless $used2{$p->{'ID_entity'}};
 			$used2{$p->{'ID_entity'}}++;
 		}
@@ -2072,7 +2077,8 @@ sub _product_hash
 		'r_prefix' => "a910",
 		'r_table' => "product",
 		'rel_type' => "product_set",
-		'status' => "Y"
+		'status' => "Y",
+		'limit' => 1000
 	))
 	{
 		push @{$product{'relations'}{'in_product_set'}}, {
@@ -2089,7 +2095,8 @@ sub _product_hash
 		'r_prefix' => "a910",
 		'r_table' => "product",
 #			'rel_type' => "product_set",
-		'status' => "Y"
+		'status' => "Y",
+		'limit' => 1000
 	))
 	{
 		push @{$product{'relations'}{$relation->{'rel_type'} || 'others'}}, {
@@ -3118,14 +3125,14 @@ sub _product_cat_index
 		{
 			main::_log("product_cat.ID=$product_cat{'ID_entity'} not found as valid item");
 			if ($Elastic->exists(
-				'index' => 'cyclone3.'.$App::910::db_name,
+				'index' => 'cyclone3.'.$App::910::index_name,
 				'type' => 'a910_product_cat',
 				'id' => $product_cat{'ID_entity'}
 			))
 			{
 				main::_log("removing from Elastic");
 				$Elastic->delete(
-					'index' => 'cyclone3.'.$App::910::db_name,
+					'index' => 'cyclone3.'.$App::910::index_name,
 					'type' => 'a910_product_cat',
 					'id' => $product_cat{'ID_entity'}
 				);
@@ -3164,6 +3171,21 @@ sub _product_cat_index
 					$db0_line{'name'}
 				];
 			}
+			
+			my %sql_def=('db_h' => "main",'db_name' => $App::910::db_name,'tb_name' => "a910_product_cat");
+			foreach my $p(
+				App::020::SQL::functions::tree::get_path(
+					$db0_line{'ID'},
+					%sql_def,
+					'-cache' => 86400*7
+				)
+			)
+			{
+				push @{$db0_line{'cat_path'}},$p->{'ID_entity'};
+			}
+			
+			$db0_line{'cat_level'} = scalar @{$db0_line{'cat_path'}};
+			
 			%{$product_cat{'locale'}{$db0_line{'lng'}}}=%db0_line;
 		}
 		
