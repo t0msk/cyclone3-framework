@@ -48,6 +48,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   `published_mark` varchar(16) character set ascii collate ascii_bin NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
+  `status_visible` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `uuid` (`uuid`),
   KEY `ID_entity` (`ID_entity`,`status`),
