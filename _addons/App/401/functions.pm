@@ -347,6 +347,10 @@ sub article_add
 		# status
 		$columns{'status'}="'".TOM::Security::form::sql_escape($env{'article_attrs.status'})."'"
 			if ($env{'article_attrs.status'} && ($env{'article_attrs.status'} ne $article_attrs{'status'}));
+		
+		# status visible
+		$columns{'status_visible'}="'".TOM::Security::form::sql_escape($env{'article_attrs.status_visible'})."'"
+			if ($env{'article_attrs.status_visible'} && ($env{'article_attrs.status_visible'} ne $article_attrs{'status_visible'}));
 
 		# alias_url		
 		$columns{'alias_url'}="'".TOM::Security::form::sql_escape($env{'article_attrs.alias_url'})."'"
@@ -375,6 +379,7 @@ sub article_add
 			$content_updated=1;
 			$content_reindex=1 if $columns{'name'};
 			$content_reindex=1 if $columns{'status'};
+			$content_reindex=1 if $columns{'status_visible'};
 			
 			if ($columns{'ID_category'}) # article_cat.ID (i need ID_entity)
 			{

@@ -48,7 +48,6 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   `published_mark` varchar(16) character set ascii collate ascii_bin NOT NULL,
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
-  `status_visible` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `uuid` (`uuid`),
   KEY `ID_entity` (`ID_entity`,`status`),
@@ -134,6 +133,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   `priority_F` tinyint(3) unsigned default NULL,
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
+  `status_visible` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   KEY `SEL_0` (`status`,`lng`,`datetime_start`,`ID_category`),
@@ -172,6 +172,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs_j` (
   `priority_F` tinyint(3) unsigned default NULL,
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
+  `status_visible` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
