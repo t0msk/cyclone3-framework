@@ -81,6 +81,7 @@ use utf8;
 use strict;
 use Cwd 'abs_path';
 use Git;
+use File::Copy;
 
 $TOM::engine_ready=1;
 
@@ -90,6 +91,27 @@ sub update_dir
 	if (! -d $dir.'/.git')
 	{
 		main::_log($dir." not in .git",5);
+		if ($main::arg{'fix'})
+		{
+			main::_log(" get /rpc");
+			if (! -e $dir.'new')
+			{
+				my $clone = Git::command_oneline('clone', "http://bit.comsultia.com/scm/cyc/xuladmin-rpc.git", $dir.'new');
+			}
+
+			Cwd::chdir($dir.'new/!www');
+			system("perl core.tom");
+			system("tom3-chfiles -r");
+			Cwd::chdir($dir.'new/..');
+			system("tom3-chfiles -t");
+
+			main::_log(" backup /rpc");
+
+			move($dir, $dir.'.backup');
+			move($dir.'new', $dir);
+			
+			return 1;
+		}
 		return undef;
 	}
 	my $version = Git::command_oneline('version');$version=~s|^.*?(\d+)\.(\d+).*?$|$1.$2|;$version+=0;
