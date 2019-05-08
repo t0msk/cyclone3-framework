@@ -297,6 +297,9 @@ sub execute
 	
 	$event{'related_gallery'}=\@related_gallery;
 	
+	%{$event{'metahash'}}=App::020::functions::metadata::parse($event{'metadata'});
+	delete $event{'metadata'};
+	
 	$TPL->{'variables'}{'event'} = \%event;
 	
 	return 1,%env_out;
