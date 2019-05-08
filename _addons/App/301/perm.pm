@@ -1117,12 +1117,12 @@ sub get_ACL
 		FROM
 			`$db_name`.`a301_ACL_user` AS `acl`
 		INNER JOIN
-			`TOM`.`a301_user` AS `user` ON
+			`$db_name`.`a301_user` AS `user` ON
 			(
 				`acl`.`ID_entity` = `user`.`ID_user`
 			)
 		LEFT JOIN
-			`TOM`.`a301_user_profile` AS `user_profile` ON
+			`$db_name`.`a301_user_profile` AS `user_profile` ON
 			(
 				`user`.`ID_user` = `user_profile`.`ID_entity`
 			)
