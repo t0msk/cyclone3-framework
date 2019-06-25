@@ -39,8 +39,8 @@ sub get_user {
 			a301_user_profile.firstname,
 			a301_user_profile.surname
 		FROM
-			TOM.a301_user
-		INNER JOIN TOM.a301_user_profile ON
+			`$App::301::db_name`.a301_user
+		INNER JOIN `$App::301::db_name`.a301_user_profile ON
 		(
 			a301_user_profile.ID_entity = a301_user.ID_user
 		)
