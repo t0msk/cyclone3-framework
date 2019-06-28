@@ -237,7 +237,7 @@ sub execute
 				SELECT
 					*
 				FROM
-					`TOM`.a301_user_profile
+					`$App::301::db_name`.a301_user_profile
 				WHERE
 					ID_entity=?
 				LIMIT 1
