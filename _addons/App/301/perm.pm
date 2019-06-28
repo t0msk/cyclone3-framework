@@ -949,7 +949,7 @@ sub get_ACL
 		grp.name
 	FROM
 		`$db_name`.a301_ACL_user_group AS acl
-	LEFT JOIN `TOM`.a301_user_group AS grp ON
+	LEFT JOIN `$App::301::db_name`.a301_user_group AS grp ON
 	(
 		acl.ID_entity = grp.ID_entity
 	)
