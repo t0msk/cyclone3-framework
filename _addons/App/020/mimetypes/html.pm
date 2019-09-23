@@ -310,7 +310,7 @@ sub start
 		}
 
 
-
+		my $tpl_src='tpl';
 		my $tpl_entity;
 		
 		# if tpl is extended by module tpl, then search for entries with prefix "parser."
@@ -338,7 +338,7 @@ sub start
 			$tpl_entity=$tag.'.close';
 		}
 
-		$self->{'closetag'}->[$self->{'level'}] = $self->{'tpl'}->{'entity'}{$tpl_entity};
+		$self->{'closetag'}->[$self->{'level'}] = $self->{$tpl_src}->{'entity'}{$tpl_entity};
 	}
 	elsif ($attr->{'id'} && $attr->{'id'}=~/^([a-zA-Z0-9_]+):(.*)$/) # Cyclone3 entity
 	{
