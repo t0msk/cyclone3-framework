@@ -477,7 +477,7 @@ sub execute
 		# link to a210_page
 		if (my $category=App::730::functions::_a210_by_cat([$event{'cat_ID'}],'lng'=>$env{'lng'}))
 		{
-			my %sql_def=('db_h' => "main",'db_name' => $App::730::db_name,'tb_name' => "a210_page");
+			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
 			foreach my $p(
 				App::020::SQL::functions::tree::get_path(
 					$category,
