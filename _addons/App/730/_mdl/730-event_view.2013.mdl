@@ -155,7 +155,9 @@ sub execute
 			event_lng.name_long,
 			event_lng.description_short,
 			event_lng.description,
-			event_lng.lng
+			event_lng.lng,
+
+			event_cat.name AS cat_name
 			
 		FROM $App::730::db_name.a730_event AS event
 		LEFT JOIN $App::730::db_name.a730_event_lng AS event_lng ON
@@ -193,7 +195,11 @@ sub execute
 	
 	my %event=$sth0{'sth'}->fetchhash();
 	
-	return 1 unless $event{'ID_entity'};
+	unless ($event{'ID_entity'})
+	{
+		$main::page_statuscode="404" if $env{'header.status'};
+		return 1;
+	}
 	
 	main::_log("found event.ID_entity=$event{'ID_entity'}");
 	
