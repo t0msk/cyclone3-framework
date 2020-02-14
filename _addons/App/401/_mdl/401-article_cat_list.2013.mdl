@@ -95,6 +95,8 @@ sub execute
 		}
 	}
 	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+
 	$sql_where=~s|^ ||;
 	
 	my %sth0=TOM::Database::SQL::execute(qq{
