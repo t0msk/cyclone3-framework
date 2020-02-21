@@ -1592,6 +1592,9 @@ while ($main::CGI=new CGI::Fast())
 								$main::FORM{'type'}='homepage';
 							}
 						}
+						# redirection bude '303' - bude ale vzdy?
+						$main::location_code='302';
+						$main::location_code='303' if scalar @TOM::LNG_accept > 1;
 					}
 					elsif ($main::FORM{'a210_path'} || $main::FORM{'a210_name'})
 					{
@@ -2449,7 +2452,7 @@ while ($main::CGI=new CGI::Fast())
 				$main::page_statuscode ne "404"
 			)
 		{
-			my $t_301=track TOM::Debug("REQUEST_URI link testing for 301 redirection");
+			my $t_301=track TOM::Debug("REQUEST_URI link testing for 300 redirection");
 			
 			main::_log("REQUEST_URI='$main::ENV{REQUEST_URI}' HTTPS=".$main::ENV{'HTTPS'}." H_www=".$tom::H_www." H_www_orig=".$tom::H_www_orig);
 			
@@ -2586,14 +2589,17 @@ while ($main::CGI=new CGI::Fast())
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
+
+				$main::location_code='301' unless $main::location_code=~/^30.$/;
+
 				TOM::Debug::pub::request(
 					'duration' => $t_eval->{'time'}{'duration'},
 					'user' => $t_eval->{'time'}{'user'}{'duration'},
 					'sys' => $t_eval->{'time'}{'sys'}{'duration'},
-					'code' => '301',
+					'code' => $main::location_code,
 					'location' => $rewrite_domain.$link
 				);
-				print "Status: 301 Moved permanently\n";
+				print "Status: ".$main::location_code." Moved\n";
 				print "C3-Request: $main::request_code\n";
 				print "Location: $rewrite_domain$link\n\n";
 				main::_log("Location: $rewrite_domain$link");
