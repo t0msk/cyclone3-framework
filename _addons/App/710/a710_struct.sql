@@ -44,7 +44,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org` (
   `phone_2` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `fax` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `email` varchar(64) character set ascii default NULL,
-  `web` varchar(64) character set ascii default NULL,
+  `web` varchar(100) character set ascii default NULL,
   
   `about` text character set utf8 collate utf8_unicode_ci,
   `note` text character set utf8 collate utf8_unicode_ci,
@@ -110,7 +110,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_org_j` (
   `phone_2` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `fax` varchar(32) character set utf8 collate utf8_unicode_ci default NULL,
   `email` varchar(64) character set ascii default NULL,
-  `web` varchar(64) character set ascii default NULL,
+  `web` varchar(100) character set ascii default NULL,
   
   `about` text character set utf8 collate utf8_unicode_ci,
   `note` text character set utf8 collate utf8_unicode_ci,
