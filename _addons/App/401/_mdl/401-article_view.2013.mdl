@@ -302,6 +302,7 @@ sub execute
 				)
 			)
 			{
+				$p->{'metahash'} = {App::020::functions::metadata::parse($p->{'metadata'})};
 				push @{$article{'a210'}{'IDs'}}, $p->{'ID'};
 				push @{$article{'a210'}{'nodes'}}, $p;
 				$article{'a210'}{'path_url'}.="/".$p->{'name_url'};
