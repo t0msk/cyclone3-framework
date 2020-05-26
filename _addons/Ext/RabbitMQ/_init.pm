@@ -163,16 +163,16 @@ service();
 # find and close all active channels
 END
 {
-	main::_log("[RabbitMQ] END");
+#	main::_log("[RabbitMQ] END");
 	sleep 1 if (($Ext::RabbitMQ::last_message>(time()-15)) && $Ext::RabbitMQ::last_message);
 	Coro::cede;
 	sleep 1 if (($Ext::RabbitMQ::last_message>(time()-15)) && $Ext::RabbitMQ::last_message);
 	foreach my $service (@services)
 	{
-		main::_log("[RabbitMQ]  close service in pool");
+#		main::_log("[RabbitMQ]  close service in pool");
 		foreach my $channel (keys %{$service->_channels()})
 		{
-			main::_log("[RabbitMQ]   close channel ".$channel);
+#			main::_log("[RabbitMQ]   close channel ".$channel);
 			$service->_channels->{$channel}->close();
 		}
 	}
@@ -303,7 +303,7 @@ sub publish
 sub DESTROY
 {
 	my $self=shift;
-	main::_log("[RabbitMQ] DESTROY");
+#	main::_log("[RabbitMQ] DESTROY");
 	$self->SUPER::DESTROY();
 }
 

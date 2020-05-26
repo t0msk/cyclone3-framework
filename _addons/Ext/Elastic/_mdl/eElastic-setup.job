@@ -47,273 +47,641 @@ sub execute
 #		)};
 #	}
 	
-	# tested on elasticsearch 2.2.1
-	my $version='1.13';
-	main::_log_stdout("put_template");
-	$Elastic->indices->put_template(
-		'name'=>'cyclone3.*',
-		'body' => {
-			'template'=>'cyclone3.*',
-			'mappings' => {
-				'_default_' => {
-					"_meta" => {
-						"version" => $version
+	my $version='1.18';
+	main::_log_stdout("put_template to Elastic version ".$Elastic->{'version_min'});
+	if ($Elastic->{'version_min'}=~/^5/ || $Elastic->{'version_min'}=~/^6/)
+	{
+		main::_log("put_template to elastic 5.*");
+		$Elastic->indices->put_template(
+			'name'=>'cyclone3.*',
+			'body' => {
+				'template'=>'cyclone3.*',
+				'mappings' => {
+					'_default_' => {
+						"_meta" => {
+							"version" => $version
+						},
+						'properties' => {
+							'status' => {
+								'type' => 'keyword',
+								'index' => 'true'
+							}
+						},
+						'dynamic_templates' => [
+							{
+								"status" => {
+									"match" => "*_status",
+									'mapping' => {
+										'type' => 'keyword',
+										'index' => 'true'
+									}
+								}
+							},
+							{
+								"status_" => {
+									"match" => "status_*",
+									'mapping' => {
+										'type' => 'keyword',
+										'index' => 'true'
+									}
+								}
+							},
+							{
+								"datetime" => {
+									"match" => "datetime_*",
+									'mapping' => {
+										'type' => 'date',
+										'format' => 'yyyy-MM-dd HH:mm:ss'
+									}
+								}
+							},
+							
+							# locale
+							{'locale_description' => {
+								"path_match" => "locale.*.description",
+								"mapping" => {
+									"type" => "text"
+								}
+							}},
+							{'locale' => {
+								"path_match" => "locale.*.*",
+								"mapping" => {
+									"type" => "string"
+								}
+							}},
+							
+							# metadata in metahash tree
+							{'metadata_string' => {
+								"path_match" => "metahash.*.*_s",
+								"mapping" => {
+									"type" => "keyword",
+									"index" => "true",
+									"copy_to" => "completion.metahash.{name}" # completion
+								}
+							}},
+							{'metadata_text' => {
+								"path_match" => "metahash.*.*_t",
+								"mapping" => {
+									"type" => "string",
+	#								"copy_to" => "completion.metahash.{name}" # completion
+								}
+							}},
+							{'metadata_integer' => {
+								"path_match" => "metahash.*.*_i",
+								"mapping" => {
+									"type" => "integer"
+								}
+							}},
+							{'metadata_float' => {
+								"path_match" => "metahash.*.*_f",
+								"mapping" => {
+									"type" => "float"
+								}
+							}},
+							{'metadata_date' => {
+								"path_match" => "metahash.*.*_d",
+								"mapping" => {
+									"type" => "date",
+	#								'format' => 'yyyy-MM-dd HH:mm:ss'
+								}
+							}},
+							{'metadata_other' => {
+								"path_match" => "metahash.*.*",
+								"mapping" => {
+									"type" => "keyword",
+									"index" => "true",
+									"copy_to" => "completion.metahash.{name}" # completion
+								}
+							}},
+							
+							# used metahash keys
+							{'metahash_keys' => {
+								"path_match" => "metahash_keys.*",
+								"mapping" => {
+									"type" => "keyword",
+									"index" => "true"
+								}
+							}},
+							
+							# completion
+							{'completion_std' => { # completion
+								"path_match" => "completion.std.*",
+								"mapping" => {
+									"type" => "completion",
+									"analyzer" => "simple",
+									"search_analyzer" => "simple",
+								}
+							}},
+							{'completion_metahash' => { # completion
+								"path_match" => "completion.metahash.*",
+								"mapping" => {
+									"type" => "completion",
+									"analyzer" => "simple",
+									"search_analyzer" => "simple",
+								}
+							}},
+							
+							# original
+							{'original_std' => { # completion
+								"path_match" => "original.std.*",
+								"mapping" => {
+									"type" => "keyword",
+									"index" => "true"
+								}
+							}},
+						]
 					},
-					'properties' => {
-						'status' => {
-							'type' => 'string',
-							'index' => 'not_analyzed'
+					
+					'a401_article' => {
+						"_meta" => {
+							"version" => $version
+						},
+						'properties' => {
+							'name' => {'type' => "string","copy_to" => "completion.std.name"},
+							'status' => {
+								'type' => 'keyword',
+								'index' => 'true'
+							},
+							'cat' => {'type'=>'long','index'=>'true'},
+							'article_attrs' => {
+								'properties' => {
+									'datetime_start' => {
+										'type' => 'date',
+										'format' => 'YYYY-MM-dd HH:mm:ss',
+										'store' => 'true'
+									}
+								}
+							}
 						}
 					},
-					'dynamic_templates' => [
-						{
-							"status" => {
-								"match" => "*_status",
-								'mapping' => {
-									'type' => 'string',
-									'index' => 'not_analyzed'
-								}
+					
+					'a710_org' => {
+						"_meta" => {
+							"version" => $version
+						},
+						'properties' => {
+							'status' => {
+								'type' => 'keyword',
+								'index' => 'true'
+							},
+							'name' => {'type' => "string","copy_to" => "completion.std.name"},
+							'name_short' => {'type' => "string","copy_to" => "completion.std.name_short"},
+							'city' => {'type' => "string","copy_to" => "completion.std.city"},
+							'street' => {'type' => "string","copy_to" => "completion.std.street"},
+							'cat' => {'type'=>'long','index'=>'true'},
+							'cat_name' => {'type'=>'string'},
+							'status' => {
+								'type' => 'keyword',
+								'index' => 'true'
 							}
 						},
-						{
-							"status_" => {
-								"match" => "status_*",
-								'mapping' => {
-									'type' => 'string',
-									'index' => 'not_analyzed'
+						'dynamic_templates' => [
+							# locale
+							{'locale' => {
+								"path_match" => "locale.*.*",
+								"mapping" => {
+									"type" => "string"
 								}
-							}
+							}}
+						]
+					},
+					
+					'a910_product' => {
+						"_meta" => {
+							"version" => $version
 						},
-						{
-							"datetime" => {
-								"match" => "datetime_*",
-								'mapping' => {
-									'type' => 'date',
-									'format' => 'yyyy-MM-dd HH:mm:ss'
+						'properties' => {
+							'ID' => {'type' => 'long'},
+							'ID_entity' => {'type' => 'long'},
+							'name' => {'type' => "string","copy_to" => ["completion.std.name","original.std.name"]},
+							'full_name' => {'type' => "string","copy_to" => ["completion.std.full_name","original.std.full_name"]},
+							'brand_name' => {'type' => "string","copy_to" => "original.std.brand_name"},
+							'price' => {'type' => 'float'},
+							'price_full' => {'type' => 'float'},
+							'sellscore' => {'type' => 'float'},
+							'rating' => {'type' => 'float'},
+							'cat' => {'type'=>'long','index'=>'true'},
+							'cat_path' => {'type'=>'long','index'=>'true'},
+							'status' => {
+								'type' => 'keyword',
+								'index' => 'true'
+							},
+							'ref_ID' => {'type'=>'string','index'=>'not_analyzed'},
+						},
+						'dynamic_templates' => [
+							# prices
+							{'prices' => {
+								"path_match" => "prices.*.*",
+								"mapping" => {
+									"type" => "float"
 								}
-							}
+							}},
+							{'locale' => {
+								"path_match" => "locale.*.*",
+								"mapping" => {
+									"type" => "string"
+								}
+							}}
+						]
+					},
+					
+					'a910_product_ent' => {
+						"_meta" => {
+							"version" => $version
 						},
-						
-						# locale
-						{'locale' => {
-							"path_match" => "locale.*.*",
-							"mapping" => {
-								"type" => "string"
-							}
-						}},
-						
-						# metadata in metahash tree
-						{'metadata_string' => {
-							"path_match" => "metahash.*.*_s",
-							"mapping" => {
-								"type" => "string",
-								"index" => "not_analyzed",
-								"copy_to" => "completion.metahash.{name}" # completion
-							}
-						}},
-						{'metadata_text' => {
-							"path_match" => "metahash.*.*_t",
-							"mapping" => {
-								"type" => "string",
-#								"copy_to" => "completion.metahash.{name}" # completion
-							}
-						}},
-						{'metadata_integer' => {
-							"path_match" => "metahash.*.*_i",
-							"mapping" => {
-								"type" => "integer"
-							}
-						}},
-						{'metadata_float' => {
-							"path_match" => "metahash.*.*_f",
-							"mapping" => {
-								"type" => "float"
-							}
-						}},
-						{'metadata_date' => {
-							"path_match" => "metahash.*.*_d",
-							"mapping" => {
-								"type" => "date",
-#								'format' => 'yyyy-MM-dd HH:mm:ss'
-							}
-						}},
-						{'metadata_other' => {
-							"path_match" => "metahash.*.*",
-							"mapping" => {
-								"type" => "string",
-								"index" => "not_analyzed",
-								"copy_to" => "completion.metahash.{name}" # completion
-							}
-						}},
-						
-						# used metahash keys
-						{'metahash_keys' => {
-							"path_match" => "metahash_keys.*",
-							"mapping" => {
-								"type" => "string",
-								"index" => "not_analyzed"
-							}
-						}},
-						
-						# completion
-						{'completion_std' => { # completion
-							"path_match" => "completion.std.*",
-							"mapping" => {
-								"type" => "completion",
-								"analyzer" => "simple",
-								"search_analyzer" => "simple",
-							}
-						}},
-						{'completion_metahash' => { # completion
-							"path_match" => "completion.metahash.*",
-							"mapping" => {
-								"type" => "completion",
-								"analyzer" => "simple",
-								"search_analyzer" => "simple",
-							}
-						}},
-						
-						# original
-						{'original_std' => { # completion
-							"path_match" => "original.std.*",
-							"mapping" => {
-								"type" => "string",
-								"index" => "not_analyzed"
-							}
-						}},
-					]
+						'properties' => {
+							'ID_entity' => {'type' => 'long'},
+							'ID_family' => {'type' => 'long'},
+							'brand_name' => {'type' => "string","copy_to" => "original.std.brand_name"},
+							
+							'product' => {'type'=>'nested',
+								
+								'properties' => {
+									'ID' => {'type' => 'long'},
+									'ID_entity' => {'type' => 'long'},
+									'ID_family' => {'type' => 'long'},
+									'name' => {'type' => "string","copy_to" => ["product.completion.std.name","product.original.std.name"]},
+									'full_name' => {'type' => "string","copy_to" => ["product.completion.std.full_name","product.original.std.full_name"]},
+									'brand_name' => {'type' => "string","copy_to" => "product.original.std.brand_name"},
+									'price' => {'type' => 'float'},
+									'price_full' => {'type' => 'float'},
+									'sellscore' => {'type' => 'float'},
+									'rating' => {'type' => 'float'},
+									'cat' => {'type'=>'long','index'=>'true'},
+									'cat_path' => {'type'=>'long','index'=>'true'},
+									'status' => {
+										'type' => 'keyword',
+										'index' => 'true'
+									},
+									'ref_ID' => {'type'=>'string','index'=>'not_analyzed'},
+								}
+								
+							},
+							
+						},
+						'dynamic_templates' => [
+							# prices
+							{'prices' => {
+								"path_match" => "product.prices.*.*",
+								"mapping" => {
+									"type" => "float"
+								}
+							}},
+							{'locale' => {
+								"path_match" => "product.locale.*.*",
+								"mapping" => {
+									"type" => "string"
+								}
+							}},
+							
+							# product.completion
+							{'product.completion_std' => { # completion
+								"path_match" => "product.completion.std.*",
+								"mapping" => {
+									"type" => "completion",
+									"analyzer" => "simple",
+									"search_analyzer" => "simple",
+								}
+							}},
+							{'product.completion_metahash' => { # completion
+								"path_match" => "product.completion.metahash.*",
+								"mapping" => {
+									"type" => "completion",
+									"analyzer" => "simple",
+									"search_analyzer" => "simple",
+								}
+							}},
+							# original
+							{'product.original_std' => { # completion
+								"path_match" => "product.original.std.*",
+								"mapping" => {
+									"type" => "keyword",
+									"index" => "true"
+								}
+							}},
+							
+						]
+					}
+					
 				},
 				
-				'a401_article' => {
-					"_meta" => {
-						"version" => $version
-					},
-					'properties' => {
-						'name' => {'type' => "string","copy_to" => "completion.std.name"},
-						'status' => {
-							'type' => 'string',
-							'index' => 'not_analyzed'
+				'settings' => {
+					'number_of_shards' => 6,
+					'index.mapping.total_fields.limit' => 1000000000,
+					'analysis' => {
+						'analyzer' => {
+							'default' => {
+								'tokenizer' => 'classic',
+								'filter' => ['cyclone3_delimiter','cyclone3_word_size','standard', 'lowercase', 'asciifolding', 'unique'],
+								'char_filter' => ['html_strip']
+							},
+							'default_search' => {
+								'tokenizer' => "classic",
+								'filter' => ['cyclone3_delimiter','standard', "lowercase", "asciifolding", "cyclone3_synonym", "unique"]
+							}
 						},
-						'cat' => {'type'=>'long','index'=>'not_analyzed'},
-						'article_attrs' => {
-							'properties' => {
-								'datetime_start' => {
-									'type' => 'date',
-									'format' => 'YYYY-MM-dd HH:mm:ss',
-									'store' => 'yes'
-								}
+						'filter' => {
+							"cyclone3_delimiter" => {
+								"type" => "word_delimiter",
+								"generate_word_parts" => 'true',
+								"catenate_words" => 'true',
+								"catenate_numbers" => 'true',
+								"catenate_all" => 'true',
+								"split_on_case_change" => 'true',
+								"preserve_original" => 'true',
+								"split_on_numerics" => 'true',
+								"stem_english_possessive" => 'true'
+							},
+							"cyclone3_synonym" => {
+								"type" => "synonym",
+								"synonyms_path" => "/etc/elasticsearch/synonym.txt"
+							},
+							"cyclone3_word_size" => {
+								"type" => "length",
+								"min" => '2'
 							}
 						}
 					}
-				},
-				
-				'a710_org' => {
-					"_meta" => {
-						"version" => $version
-					},
-					'properties' => {
-						'status' => {
-							'type' => 'string',
-							'index' => 'not_analyzed'
-						},
-						'name' => {'type' => "string","copy_to" => "completion.std.name"},
-						'name_short' => {'type' => "string","copy_to" => "completion.std.name_short"},
-						'city' => {'type' => "string","copy_to" => "completion.std.city"},
-						'street' => {'type' => "string","copy_to" => "completion.std.street"},
-						'cat' => {'type'=>'long','index'=>'not_analyzed'},
-						'cat_name' => {'type'=>'string','index'=>'not_analyzed'},
-						'status' => {
-							'type' => 'string',
-							'index' => 'not_analyzed'
-						}
-					},
-					'dynamic_templates' => [
-						# locale
-						{'locale' => {
-							"path_match" => "locale.*.*",
-							"mapping" => {
-								"type" => "string"
-							}
-						}}
-					]
-				},
-				
-				'a910_product' => {
-					"_meta" => {
-						"version" => $version
-					},
-					'properties' => {
-						'ID' => {'type' => 'long'},
-						'ID_entity' => {'type' => 'long'},
-						'name' => {'type' => "string","copy_to" => "completion.std.name"},
-						'full_name' => {'type' => "string","copy_to" => "completion.std.full_name"},
-						'brand_name' => {'type' => "string","copy_to" => "original.std.brand_name"},
-						'price' => {'type' => 'float'},
-						'price_full' => {'type' => 'float'},
-						'sellscore' => {'type' => 'float'},
-						'rating' => {'type' => 'float'},
-						'cat' => {'type'=>'long','index'=>'not_analyzed'},
-						'cat_path' => {'type'=>'long','index'=>'not_analyzed'},
-						'status' => {
-							'type' => 'string',
-							'index' => 'not_analyzed'
-						}
-					},
-					'dynamic_templates' => [
-						# prices
-						{'prices' => {
-							"path_match" => "prices.*.*",
-							"mapping" => {
-								"type" => "float"
-							}
-						}},
-					]
 				}
 				
-			},
-			
-			'settings' => {
-				'version' => {
-					'c3' => $version,
-				},
-				'analysis' => {
-					'analyzer' => {
-						'default_index' => {
-							'tokenizer' => 'classic',
-							'filter' => ['cyclone3_delimiter','cyclone3_word_size','standard', 'lowercase', 'asciifolding', 'unique'],
-							'char_filter' => ['html_strip']
-						},
-						'default_search' => {
-							'tokenizer' => "classic",
-							'filter' => ['cyclone3_delimiter','standard', "lowercase", "asciifolding", "cyclone3_synonym", "unique"]
-						}
-					},
-					'filter' => {
-						"cyclone3_delimiter" => {
-							"type" => "word_delimiter",
-							"generate_word_parts" => 'true',
-							"catenate_words" => 'true',
-							"catenate_numbers" => 'true',
-							"catenate_all" => 'true',
-							"split_on_case_change" => 'true',
-							"preserve_original" => 'true',
-							"split_on_numerics" => 'true',
-							"stem_english_possessive" => 'true'
-						},
-						"cyclone3_synonym" => {
-							"type" => "synonym",
-							"synonyms_path" => "/etc/elasticsearch/synonym.txt"
-						},
-						"cyclone3_word_size" => {
-							"type" => "length",
-							"min" => '2'
-						}
-					}
-				}
 			}
-			
-		}
-	);
+		);
+	}
+	# tested on elasticsearch 2.2.1
+	else
+	{
+		$Elastic->indices->put_template(
+			'name'=>'cyclone3.*',
+			'body' => {
+				'template'=>'cyclone3.*',
+				'mappings' => {
+					'_default_' => {
+						"_meta" => {
+							"version" => $version
+						},
+						'properties' => {
+							'status' => {
+								'type' => 'string',
+								'index' => 'not_analyzed'
+							}
+						},
+						'dynamic_templates' => [
+							{
+								"status" => {
+									"match" => "*_status",
+									'mapping' => {
+										'type' => 'string',
+										'index' => 'not_analyzed'
+									}
+								}
+							},
+							{
+								"status_" => {
+									"match" => "status_*",
+									'mapping' => {
+										'type' => 'string',
+										'index' => 'not_analyzed'
+									}
+								}
+							},
+							{
+								"datetime" => {
+									"match" => "datetime_*",
+									'mapping' => {
+										'type' => 'date',
+										'format' => 'yyyy-MM-dd HH:mm:ss'
+									}
+								}
+							},
+							
+							# locale
+							{'locale' => {
+								"path_match" => "locale.*.*",
+								"mapping" => {
+									"type" => "string"
+								}
+							}},
+							
+							# metadata in metahash tree
+							{'metadata_string' => {
+								"path_match" => "metahash.*.*_s",
+								"mapping" => {
+									"type" => "string",
+									"index" => "not_analyzed",
+									"copy_to" => "completion.metahash.{name}" # completion
+								}
+							}},
+							{'metadata_text' => {
+								"path_match" => "metahash.*.*_t",
+								"mapping" => {
+									"type" => "string",
+	#								"copy_to" => "completion.metahash.{name}" # completion
+								}
+							}},
+							{'metadata_integer' => {
+								"path_match" => "metahash.*.*_i",
+								"mapping" => {
+									"type" => "integer"
+								}
+							}},
+							{'metadata_float' => {
+								"path_match" => "metahash.*.*_f",
+								"mapping" => {
+									"type" => "float"
+								}
+							}},
+							{'metadata_date' => {
+								"path_match" => "metahash.*.*_d",
+								"mapping" => {
+									"type" => "date",
+	#								'format' => 'yyyy-MM-dd HH:mm:ss'
+								}
+							}},
+							{'metadata_other' => {
+								"path_match" => "metahash.*.*",
+								"mapping" => {
+									"type" => "string",
+									"index" => "not_analyzed",
+									"copy_to" => "completion.metahash.{name}" # completion
+								}
+							}},
+							
+							# used metahash keys
+							{'metahash_keys' => {
+								"path_match" => "metahash_keys.*",
+								"mapping" => {
+									"type" => "string",
+									"index" => "not_analyzed"
+								}
+							}},
+							
+							# completion
+							{'completion_std' => { # completion
+								"path_match" => "completion.std.*",
+								"mapping" => {
+									"type" => "completion",
+									"analyzer" => "simple",
+									"search_analyzer" => "simple",
+								}
+							}},
+							{'completion_metahash' => { # completion
+								"path_match" => "completion.metahash.*",
+								"mapping" => {
+									"type" => "completion",
+									"analyzer" => "simple",
+									"search_analyzer" => "simple",
+								}
+							}},
+							
+							# original
+							{'original_std' => { # completion
+								"path_match" => "original.std.*",
+								"mapping" => {
+									"type" => "string",
+									"index" => "not_analyzed"
+								}
+							}},
+						]
+					},
+					
+					'a401_article' => {
+						"_meta" => {
+							"version" => $version
+						},
+						'properties' => {
+							'name' => {'type' => "string","copy_to" => "completion.std.name"},
+							'status' => {
+								'type' => 'string',
+								'index' => 'not_analyzed'
+							},
+							'cat' => {'type'=>'long','index'=>'not_analyzed'},
+							'article_attrs' => {
+								'properties' => {
+									'datetime_start' => {
+										'type' => 'date',
+										'format' => 'YYYY-MM-dd HH:mm:ss',
+										'store' => 'yes'
+									}
+								}
+							}
+						}
+					},
+					
+					'a710_org' => {
+						"_meta" => {
+							"version" => $version
+						},
+						'properties' => {
+							'status' => {
+								'type' => 'string',
+								'index' => 'not_analyzed'
+							},
+							'name' => {'type' => "string","copy_to" => "completion.std.name"},
+							'name_short' => {'type' => "string","copy_to" => "completion.std.name_short"},
+							'city' => {'type' => "string","copy_to" => "completion.std.city"},
+							'street' => {'type' => "string","copy_to" => "completion.std.street"},
+							'cat' => {'type'=>'long','index'=>'not_analyzed'},
+							'cat_name' => {'type'=>'string','index'=>'not_analyzed'},
+							'status' => {
+								'type' => 'string',
+								'index' => 'not_analyzed'
+							}
+						},
+						'dynamic_templates' => [
+							# locale
+							{'locale' => {
+								"path_match" => "locale.*.*",
+								"mapping" => {
+									"type" => "string"
+								}
+							}}
+						]
+					},
+					
+					'a910_product' => {
+						"_meta" => {
+							"version" => $version
+						},
+						'properties' => {
+							'ID' => {'type' => 'long'},
+							'ID_entity' => {'type' => 'long'},
+							'name' => {'type' => "string","copy_to" => "completion.std.name"},
+							'full_name' => {'type' => "string","copy_to" => "completion.std.full_name"},
+							'brand_name' => {'type' => "string","copy_to" => "original.std.brand_name"},
+							'price' => {'type' => 'float'},
+							'price_full' => {'type' => 'float'},
+							'sellscore' => {'type' => 'float'},
+							'rating' => {'type' => 'float'},
+							'cat' => {'type'=>'long','index'=>'not_analyzed'},
+							'cat_path' => {'type'=>'long','index'=>'not_analyzed'},
+							'status' => {
+								'type' => 'string',
+								'index' => 'not_analyzed'
+							},
+							'ref_ID' => {'type'=>'string','index'=>'not_analyzed'},
+						},
+						'dynamic_templates' => [
+							# prices
+							{'prices' => {
+								"path_match" => "prices.*.*",
+								"mapping" => {
+									"type" => "float"
+								}
+							}},
+							{'locale' => {
+								"path_match" => "locale.*.*",
+								"mapping" => {
+									"type" => "string"
+								}
+							}}
+						]
+					}
+					
+				},
+				
+				'settings' => {
+					'version' => {
+						'c3' => $version,
+					},
+					'analysis' => {
+						'analyzer' => {
+							'default_index' => {
+								'tokenizer' => 'classic',
+								'filter' => ['cyclone3_delimiter','cyclone3_word_size','standard', 'lowercase', 'asciifolding', 'unique'],
+								'char_filter' => ['html_strip']
+							},
+							'default_search' => {
+								'tokenizer' => "classic",
+								'filter' => ['cyclone3_delimiter','standard', "lowercase", "asciifolding", "cyclone3_synonym", "unique"]
+							}
+						},
+						'filter' => {
+							"cyclone3_delimiter" => {
+								"type" => "word_delimiter",
+								"generate_word_parts" => 'true',
+								"catenate_words" => 'true',
+								"catenate_numbers" => 'true',
+								"catenate_all" => 'true',
+								"split_on_case_change" => 'true',
+								"preserve_original" => 'true',
+								"split_on_numerics" => 'true',
+								"stem_english_possessive" => 'true'
+							},
+							"cyclone3_synonym" => {
+								"type" => "synonym",
+								"synonyms_path" => "/etc/elasticsearch/synonym.txt"
+							},
+							"cyclone3_word_size" => {
+								"type" => "length",
+								"min" => '2'
+							}
+						}
+					}
+				}
+				
+			}
+		);
+	}
 	
 	if (!$Elastic->exists(
 		'index' => 'cyclone3.tom',

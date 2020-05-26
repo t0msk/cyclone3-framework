@@ -73,7 +73,7 @@ sub execute
 			ID,
 			ID_charindex
 		FROM
-			`TOM`.a301_user_group
+			`$App::301::db_name`.a301_user_group
 		WHERE
 			ID_charindex LIKE '$parent{'ID_charindex'}___'
 			AND name='$env{'name'}'

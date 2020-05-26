@@ -117,9 +117,15 @@ my $caches_all;
 my $caches_types;
 foreach my $cache_type(sort @{$Redis->smembers($key)})
 {
+	if ($arg{'filter'})
+	{
+		next unless $cache_type=~/$arg{'filter'}/;
+	}
+#	print $cache_type."\n";
 	$caches_types++;
 	foreach my $cache_member (@{$Redis->smembers($cache_type)})
 	{
+#		print $cache_member."\n";
 		$caches_all++;
 	}
 }
@@ -137,9 +143,14 @@ my $cache_types=0;
 my $caches_all;
 foreach my $cache_type (sort @{$Redis->smembers($key)})
 {
+	my $cache_type_name=$cache_type;
+	if ($arg{'filter'})
+	{
+		next unless $cache_type_name=~/$arg{'filter'}/;
+	}
+	
 	$cache_types++;
 	
-	my $cache_type_name=$cache_type;
 	my $tpl;$tpl=1 if $cache_type_name=~/tpl_cache/;
 #		$cache_type_name="(tpl) ".$cache_type_name
 #			if $cache_type_name=~/tpl_cache/;
@@ -154,10 +165,18 @@ foreach my $cache_type (sort @{$Redis->smembers($key)})
 	my $caches_execute_time_user;
 	my $caches_bytes;
 	my %engines;
+	my $caches_warmup;
 	foreach my $cache_member (@{$Redis->smembers($cache_type)})
 	{
 		$caches_all++;$progress->update($caches_all);
 		$caches++;
+		
+		if ($arg{'delete'})
+		{
+			$Redis->del($cache_member, sub{});
+			$Redis->srem($cache_type, $cache_member, sub{});
+			next;
+		}
 		
 		if (!$Redis->exists($cache_member))
 		{
@@ -176,14 +195,22 @@ foreach my $cache_type (sort @{$Redis->smembers($key)})
 		$caches_execute_time_duration+=$Redis->hget($cache_member,'execute_time_duration');
 		$caches_execute_time_user+=$Redis->hget($cache_member,'execute_time_user');
 		$engines{$Redis->hget($cache_member,'engine') || 'null'}++;
+		
+		$caches_warmup++ if $Redis->hexists($cache_member,'warmup');
+		
 #		$caches_bytes+=$Redis->hstrlen($cache_member,'body');
 #		print " ".$cache_member." from:".$cache_time_from." hits:".$cache_hits."\n";
 		
-#		my $cache={
-#			@{$Redis->hget($cache_member)}
-#		};
-#		print Dumper($cache);
-		
+		if ($arg{'debug'})
+		{
+			my $cache={
+				@{$Redis->hgetall($cache_member)}
+			};
+			undef $cache->{'body'};
+			undef $cache->{'warmup'};
+#			undef $cache->{'return_data'};
+			print Dumper($cache_member,$cache);
+		}
 #		print " ".$cache_member."\n";
 		
 	}
@@ -200,6 +227,7 @@ foreach my $cache_type (sort @{$Redis->smembers($key)})
 		'live' => int($caches_live/$caches_real),
 		'bytes' => $caches_bytes,
 		'engines' => \%engines,
+		'warmups' => $caches_warmup,
 		'execute_time_duration' => $caches_execute_time_duration,
 		'execute_time_user' => $caches_execute_time_user
 	};
@@ -207,37 +235,69 @@ foreach my $cache_type (sort @{$Redis->smembers($key)})
 #	print ".";
 }
 
+exit if $arg{'delete'};
+
 print "\n";
+
+print "| cache type                              | cache_id             |  count|   eff.| avg.dur|    cpu|     io|back|warm|\n";
+print "|-----------------------------------------|----------------------|-------|-------|--------|-------|-------|----|----|\n";
 
 foreach my $cache (sort {$output{$b}{'crt'} <=> $output{$a}{'crt'}} keys %output)
 {
 	$cache=~/^(.*)\-(.*?)$/;
 	my $cache_name=$1;
 	my $cache_type=$2;
+	$output{$cache}{'eff'}=9999 if $output{$cache}{'eff'} > 9999;
+	
+#	int($output{$cache}{'live'}/60));
+	
+	my $avgdurr;
+#		$avgdurr=($output{$cache}{'live'} % 60).'s'.$avgdurr if ($output{$cache}{'live'} % 60);
+	$output{$cache}{'live'}-=$output{$cache}{'live'} % 60;
+		$avgdurr=(($output{$cache}{'live'} % 3600)/60).'m'.$avgdurr if ($output{$cache}{'live'} % 3600);
+	$output{$cache}{'live'}-=($output{$cache}{'live'} % 3600);
+		$avgdurr=(($output{$cache}{'live'} % 86400)/60/60).'h'.$avgdurr if ($output{$cache}{'live'} % 86400);
+	$output{$cache}{'live'}-=($output{$cache}{'live'} % 86400);
+	$avgdurr=(($output{$cache}{'live'})/60/60/24).'d'.$avgdurr if $output{$cache}{'live'};
+	
 	print
-		 "| ".sprintf('%-30s',$cache_name)
-		."| ".sprintf('%-20s',$cache_type)
+		 "| ".sprintf('%-40s',$cache_name)
+		."| ".sprintf('%-21s',$cache_type)
 		."|".sprintf('%7d',$output{$cache}{'crt'})
 #		."|".sprintf('%10s',Number::Bytes::Human::format_bytes($output{$cache}{'bytes'}))
 		."|".sprintf('%6d',$output{$cache}{'eff'}*100).'%'
-		."|".sprintf('%7d',int($output{$cache}{'live'}/60))."m"
+#		."|".sprintf('%7d',int($output{$cache}{'live'}/60))."m"
+		."|".sprintf('%8s',$avgdurr)
 		."|".sprintf('%5d',
 			int(($output{$cache}{'execute_time_user'}*1000)/$output{$cache}{'crt'}))
 			.'ms'
 		."|".sprintf('%5d',
 			int(($output{$cache}{'execute_time_duration'}*1000)/$output{$cache}{'crt'}))
 			.'ms'
-		."| ".
+		."|".
 			do {
 				if ($output{$cache}{'engines'}{'job.pub'})
 				{
-					sprintf('%3d',
-						int($output{$cache}{'engines'}{'job.pub'}/($output{$cache}{'crt'}/100 )))
+					sprintf('%3s',sprintf('%2d',
+						int($output{$cache}{'engines'}{'job.pub'}/($output{$cache}{'crt'}/100 ))))
 						.'%'
 				}
 				else
 				{
-					"";
+					"    ";
+				}
+			}
+		."|".
+			do {
+				if ($output{$cache}{'warmups'})
+				{
+					sprintf('%3s',sprintf('%2d',
+						int($output{$cache}{'warmups'}/($output{$cache}{'crt'}/100 ))))
+						.'%'
+				}
+				else
+				{
+					"    ";
 				}
 			}
 		."|\n";

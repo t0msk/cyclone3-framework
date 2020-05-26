@@ -84,7 +84,7 @@ sub execute
 			name,
 			ID
 		FROM
-			TOM.a301_user_group
+			`$App::301::db_name`.a301_user_group
 		WHERE
 			ID='$env{'ID'}' AND
 			hostname='$tom::H_cookie'

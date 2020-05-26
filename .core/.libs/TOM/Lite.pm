@@ -3,6 +3,7 @@ use open ':utf8', ':std';
 use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
+use TOM::Logger;
 
 our $event_socket;
 use JSON;
@@ -82,11 +83,12 @@ BEGIN {eval {if ($TOM::DEBUG_log_fluentd){
 	);
 }};if ($@){undef $TOM::DEBUG_log_fluentd}};
 our %HND;
-our @log_sym=("","-","","","-");
+our @log_sym=("","-","","","-","!","!","!");
 our %log_file;
 our $log_time;
 our %log_date;
 our $log_TTL=5;
+
 sub _log
 {
 	return undef if $TOM::DEBUG_log_file==-1;
@@ -125,8 +127,9 @@ sub _log
 	}
 	
 	return undef unless $get[1];
-	$get[0]=0 if $get[2]==3;
-	$get[0]=0 if $get[2]==4;
+	$get[0]=0 if $get[2] == LOG_ERROR_FORCE_NODEPTH;
+	$get[0]=0 if $get[2] == LOG_INFO_FORCE_NODEPTH;
+	$get[0]=0 if $get[2] == LOG_WARNING_FORCE_NODEPTH;
 	return undef if
 	(
 		($TOM::DEBUG_log_file < $get[0]) &&
@@ -136,11 +139,12 @@ sub _log
 	);
 	
 	$get[3]=$TOM::engine unless $get[3];
-	$get[1]=~s|\r|\\r|g;
-	$get[1]=~s|\t|\\t|g;
-	$get[1]=~s|\n|\\n|g;
+#	$get[1]=~s|\r|\\r|g;
+#	$get[1]=~s|\t|\\t|g;
+#	$get[1]=~s|\n|\\n|g;
 	
-	my $tt=time();
+	my ($tt,$msec)=Time::HiRes::gettimeofday;
+		$msec=ceil($msec/100);$msec=9999 if $msec==10000;
 	
 	if ($tt > $log_time)
 	{
@@ -156,9 +160,6 @@ sub _log
 			delete $log_file{$_};
 		}
 	}
-	
-	my $msec=ceil((Time::HiRes::gettimeofday)[1]/100);
-		$msec=9999 if $msec==10000;
 	
 	my $msg;
 		$msg.="[".sprintf ('%06d', $$) unless $main::stdout;
@@ -188,13 +189,13 @@ sub _log
 		{
 			if ($tom::last_log_engine ne $get[3])
 			{
-				print color 'reset cyan';print $get[3].".log\n";print color 'reset';
+				print STDOUT color 'reset cyan';print $get[3].":\n";print color 'reset';
 				$tom::last_log_engine = $get[3];
 			}
 		}
-		elsif ($tom::last_log_engine ne $get[3])
+		elsif ($tom::last_log_engine ne $get[3] && $get[3] ne "stdout")
 		{
-			print color 'reset cyan';print $get[3].".log\n";print color 'reset';
+			print STDOUT color 'reset cyan';print $get[3].":\n";print color 'reset';
 			$tom::last_log_engine = $get[3];
 		}
 		
@@ -202,12 +203,24 @@ sub _log
 #		$msg=$log_sym[$get[2]].' '.$get[1] unless $main::debug;
 #		$msg=$log_sym[$get[2]].$get[1] unless $main::debug;
 		$msg=$get[1] unless $main::debug;
-		print color 'green';
-		print color 'bold' if $get[1]=~/^</;
-		print color 'red' if $log_sym[$get[2]] eq '-';
-		$msg=~s|\\n|\n|g;
-		$msg=~s|\\t|\t|g;
-		print $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
+		if ($log_sym[$get[2]] eq '-')
+		{
+			print STDOUT color 'red';
+			print STDOUT $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
+			print STDOUT color 'reset';
+		}
+		elsif ($log_sym[$get[2]] eq '!')
+		{
+			print STDOUT color 'reset yellow';
+			print STDOUT $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
+			print STDOUT color 'reset';
+		}
+		else
+		{
+#			print color 'green';
+			print color 'bold' if $get[1]=~/^</;
+			print $msg.do{"\n".(" " x $msg_tab).to_json($get[5]) if ref($get[5]) eq "HASH"}."\n";
+		}
 		print color 'reset';
 		
 #		if ($get[3] ne $TOM::engine && $get[3] ne "stdout")
@@ -234,6 +247,38 @@ sub _log
 	{
 		return 1 if $get[3] eq "stdout";
 		
+		if ($tom::devel && $Ext::Redis::service)
+		{
+			local $@;
+			local %log_date=ctogmdatetime($log_time,format=>1); # we are logging in GMT zone
+			my $msg=$get[1];
+				$msg =~ s/([^\x00-\xFF])/'\x'.ord($1)/ge;
+#			print "redis\n";
+			my $d=do {
+				if ($get[4]==1){undef;}
+				elsif ($tom::Pm && $get[4]==2){$tom::H_orig || $tom::Hm;}
+				else {$tom::H_orig;}
+			};
+			$Ext::Redis::service->publish('cyclone3.log.'.$d,to_json({
+				'@timestamp' =>
+					$log_date{'year'}.'-'.$log_date{'mom'}.'-'.$log_date{'mday'}
+					.'T'.$log_date{'hour'}.":".$log_date{'min'}.":".$log_date{'sec'}.".".sprintf("%03d",$msec/10).'Z',
+				'p' => $$,
+				'h' => $TOM::hostname.'.'.($TOM::domain || 'undef'),
+				'hd' => $TOM::domain,
+				'l' => $get[0],
+				'd' => $d,
+				'dm' => do {if ($get[4]==1){undef;}else {$tom::Hm}},
+				'c' => do {if ($main::request_code){$main::request_code;}else{undef;}},
+				'e' => $TOM::engine,
+				'f' => do {if ($get[2] == LOG_ERROR || $get[2] == LOG_ERROR_FORCE_NODEPTH){'1'}else{undef}},
+				'w' => do {if ($get[2] == LOG_WARNING || $get[2] == LOG_WARNING_FORCE_NODEPTH){'1'}else{undef}},
+				't' => $get[3],
+				"m" => $msg,
+				'data' => $get[5]
+			}),sub{});
+		}
+		
 		if ($fluentd_socket)
 		{
 			local $@;
@@ -257,7 +302,8 @@ sub _log
 				'dm' => do {if ($get[4]==1){undef;}else {$tom::Hm}},
 				'c' => do {if ($main::request_code){$main::request_code;}else{undef;}},
 				'e' => $TOM::engine,
-				'f' => do {if ($get[2] == 1 || $get[2] == 4){'1';}else{undef;}},
+				'f' => do {if ($get[2] == LOG_ERROR || $get[2] == LOG_ERROR_FORCE_NODEPTH){'1'}else{undef}},
+				'w' => do {if ($get[2] == LOG_WARNING || $get[2] == LOG_WARNING_FORCE_NODEPTH){'1'}else{undef}},
 #				't' => $get[3],
 				"m" => $msg,
 				'data' => $get[5]
@@ -289,7 +335,7 @@ sub _log
 			
 			$filename_full.="[".$TOM::hostname."]" if $TOM::serverfarm;
 			$filename_full.="$log_date{year}-$log_date{mom}-$log_date{mday}";
-		
+			
 			$filename_full=$filename_full.".".$get[3].".log";
 			
 			$filename_full=~/^(.*)\//;my $file_dir=$1;
@@ -316,6 +362,7 @@ sub _log
 
 #sub _log {_log_lite(@_);}
 sub _applog {_log(@_);}
+
 sub _log_stdout
 {
 	if (!$_[2])
@@ -331,12 +378,20 @@ sub _log_stdout
 #	$_[2]="stdout";
 	_log(@_);
 }
+
 sub _deprecated
 {
 	#return 1;
 	my ($package, $filename, $line) = caller;
-	_log($_[0]." from $filename:$line",0,"deprecated",1);
+	_log($_[0]." from $filename:$line",LOG_INFO,"deprecated",1);
 }
+
+sub _log_warn
+{
+#	my ($package, $filename, $line) = caller;
+	_log($_[0], LOG_WARNING);
+}
+
 sub _log_long
 {
 	_log(@_);
@@ -467,7 +522,7 @@ sub _event
 		}
 		main::_log($msg, {
 			'facility' => $log_type,
-			'severity' => 3,
+			'severity' => LOG_INFO_FORCE_NODEPTH,
 			'data' => {
 				%hash
 			}
@@ -475,6 +530,8 @@ sub _event
 	}
 	
 }
+
+$SIG{'__WARN__'} = \&_log_warn;
 
 _event('debug','process.start',{
 	'cmd' => $0.' '.(join " ",@ARGV),
@@ -579,6 +636,7 @@ use strict;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__." (Lite)");};}
 
+use TOM::Logger;
 use MIME::Entity;
 
 my $date=`date "+%a,%e %b %Y %H:%M:%S %z (%Z)"`;$date=~s|[\n\r]||g;
@@ -598,8 +656,8 @@ sub engine_lite
 	
 	my $var=join(". ",@_);$var=~s|\n| |g;
 	
-	main::_log("[ENGINE][".($tom::H?$tom::H:$tom::type?$tom::type:"?")." on $TOM::hostname] $var",1);
-	main::_log("[ENGINE][".($tom::H?$tom::H:$tom::type?$tom::type:"?")." on $TOM::hostname] $var",1,$TOM::engine.".err",1);
+	main::_log("[ENGINE][".($tom::H?$tom::H:$tom::type?$tom::type:"?")." on $TOM::hostname] $var",LOG_ERROR);
+	main::_log("[ENGINE][".($tom::H?$tom::H:$tom::type?$tom::type:"?")." on $TOM::hostname] $var",LOG_ERROR,$TOM::engine.".err",1);
 	
 	my $msg = MIME::Entity->build
 	(
@@ -639,6 +697,8 @@ use utf8;
 use strict;
 
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__." (trackpoints)");};}
+
+use TOM::Logger;
 
 our $track_level=0;
 our @tracks;
@@ -726,14 +786,14 @@ sub close
 	if ($self->{'DESTROY'})
 	{
 		my ($package, $filename, $line) = caller;
-		main::_log("Ooops! from '$filename:$line' This track named '$self->{name}' has been destroyed by calling from '$self->{'DESTROY_filename'}:$self->{'DESTROY_line'}'. Track is generated on '$self->{'filename'}:$self->{'line'}'",1);
+		main::_log("Ooops! from '$filename:$line' This track named '$self->{name}' has been destroyed by calling from '$self->{'DESTROY_filename'}:$self->{'DESTROY_line'}'. Track is generated on '$self->{'filename'}:$self->{'line'}'",LOG_ERROR);
 		return undef;
 	}
 	
 	if ($self->{'level'}<$track_level)
 	{
 		my ($package, $filename, $line) = caller;
-		main::_log("Ooops! from '$filename:$line' Can't close this track! You must close first track named '$tracks[$track_level]'. Trying to close",1);
+		main::_log("Ooops! from '$filename:$line' Can't close this track! You must close first track named '$tracks[$track_level]'. Trying to close",LOG_ERROR);
 		$tracks_obj[$track_level]->close();
 		$self->close();
 		return undef;

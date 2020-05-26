@@ -28,7 +28,7 @@ sub execute
 		SELECT
 			*
 		FROM
-			TOM.a301_user_group
+			`$App::301::db_name`.a301_user_group
 		WHERE
 			hostname='$tom::H_cookie'
 			AND status IN ('Y','N','L')
@@ -47,15 +47,15 @@ sub execute
 		
 #		my $sql=qq{
 #			SELECT COUNT(*) AS itemcount
-#			FROM TOM.a301_user_rel_group
+#			FROM `$App::301::db_name`.a301_user_rel_group
 #			WHERE ID_group=$db0_line{'ID'}
 #		};
 		my $sql=qq{
 			SELECT
 				count(user.ID_user) AS itemcount
 			FROM
-				TOM.a301_user_rel_group
-			INNER JOIN TOM.a301_user AS user ON
+				`$App::301::db_name`.a301_user_rel_group
+			INNER JOIN `$App::301::db_name`.a301_user AS user ON
 				( a301_user_rel_group.ID_user = user.ID_user )
 			WHERE
 				a301_user_rel_group.ID_group=$db0_line{'ID'} AND
@@ -76,8 +76,8 @@ sub execute
 		SELECT
 			count(user.ID_user) AS total_count
 		FROM
-			TOM.a301_user AS user
-			INNER JOIN TOM.a301_user_profile AS user_profile ON
+			`$App::301::db_name`.a301_user AS user
+			INNER JOIN `$App::301::db_name`.a301_user_profile AS user_profile ON
 			( user_profile.ID_entity = user.ID_user )
 		WHERE
 			(user.login IS NOT NULL OR user_profile.ID IS NOT NULL OR user.email IS NOT NULL) AND

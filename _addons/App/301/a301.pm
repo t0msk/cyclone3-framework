@@ -206,7 +206,7 @@ sub set_owner
 		App::020::SQL::functions::update(
 			'ID' => $env{'r_ID_entity'},
 			'db_h' => 'main',
-			'db_name' => 'TOM',
+			'db_name' => $App::301::db_name,
 			'tb_name' => 'a301_user_group',
 			'columns' =>
 			{

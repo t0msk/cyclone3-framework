@@ -7,6 +7,7 @@ use utf8;
 use strict;
 
 use Ext::Elastic::_init;
+use DateTime;
 use Data::Dumper;
 
 sub sec2human {
@@ -24,8 +25,9 @@ sub execute
 {
 	my $self=shift;
 	my $env=$self->env;
-	return if $self->running({'max'=>(3600*12)}); # check if not already running
-	
+	if (!$env->{'force'}){
+		return if $self->running({'max'=>(3600*12),'unique'=>$TOM::hostname.'::'.$tom::H}); # check if not already running
+	}
 	alarm(3600*12);
 	
 	if (!$Ext::Elastic_rlog && !$Ext::Elastic)
@@ -45,6 +47,12 @@ sub execute
 	}
 	
 	my @filter=[{"terms" => {"hd" => [$TOM::domain || 'undef']}}];
+	my @filter;
+	if ($TOM::DEBUG_log_type{'.onlyhost'})
+	{
+		undef $Ext::Elastic_rlog->{'_manage'};
+		push @filter,{"term" => {"h" => $TOM::hostname.'.'.$TOM::domain}};
+	}
 	push @filter,{
 		'bool' => {
 			'must_not' => [
@@ -71,14 +79,64 @@ sub execute
 	my $settings=$Elastic->indices->get_settings('index' => 'logstash-*');
 	foreach my $indice (sort keys %{$indices})
 	{
+#		print Dumper($indices->{$indice});
 #		main::_log("$indice");
-		push @indices_list,$indice;
+		push @indices_list, $indice;
 	}
 	
+	# try to merge month indices
+	my @month_indices=(grep {$_=~/logstash\-\d\d\d\d\-\d\d$/} sort @indices_list);
+	   pop @month_indices;pop @month_indices;
+	my %year_indices;
+	foreach my $indice (@month_indices) # merge by years
+	{
+		$indice=~/logstash\-(\d\d\d\d)/;
+		push @{$year_indices{$1}}, $indice;
+	}
+	foreach my $year (reverse sort keys %year_indices)
+	{
+		if (scalar @{$year_indices{$year}} == 12)
+		{
+			unshift @indices_list, 'logstash-'.$year.'-*';
+		}
+		else
+		{
+			unshift @indices_list, join(',',@{$year_indices{$year}});
+		}
+		foreach my $indice (@{$year_indices{$year}})
+		{
+			@indices_list=(grep {not $_ eq $indice} @indices_list);
+		}
+	}
+
+	# try to merge day indices
+	my @day_indices=(grep {$_=~/logstash\-\d\d\d\d\-\d\d\-\d\d$/} sort @indices_list);
+	   pop @day_indices;pop @day_indices;pop @day_indices;
+	my %week_indices;
+	foreach my $indice (@day_indices) # merge by weeks
+	{
+		$indice=~/logstash\-(\d\d\d\d)\-(\d\d)\-(\d\d)/;
+		my $dt = DateTime->new('year' => $1, 'month' => $2, 'day' => $3);
+		push @{$week_indices{$1.'-'.$dt->week_number()}}, $indice;
+	}
+	foreach my $week (reverse sort keys %week_indices)
+	{
+		unshift @indices_list, join(',',@{$week_indices{$week}});
+		foreach my $indice (@{$week_indices{$week}})
+		{
+			@indices_list=(grep {not $_ eq $indice} @indices_list);
+		}
+	}
+
+	if ($env->{'indice'})
+	{
+		@indices_list=($env->{'indice'});
+	}
 #	return 1;
 	
 	my $already_something_removed;
 	
+#	foreach my $indice (sort {int(rand(3))-1} @indices_list)
 	foreach my $indice (sort @indices_list)
 	{
 		# at first, search oldest entry
@@ -99,13 +157,16 @@ sub execute
 		);
 		
 		#my $old=
-		my $old = int((time() - int($results->{'aggregations'}->{'oldest'}->{'value'}/1000))/86400);
+		my $old = int((time() - int($results->{'aggregations'}->{'oldest'}->{'value'}/1000))/8640)/10;
 		my $removed;
 		
-		if ($tom::Thour >= 18 || $tom::Thour <= 6) # do it only when developers sleep
+		if (not($indice=~/\*$/) && not($indice=~/,/) && ($tom::Thour >= 18 || $tom::Thour <= 6) && 0) # do it only when developers sleep
 		{
 #			main::_log("'$indice' $old days " . ($TOM::DEBUG_log_type{'pub'}{'max_days'}+3));
-			if ($Ext::Elastic_rlog->{'_manage'} && ($old > ($TOM::DEBUG_log_type{'pub'}{'max_days'} + 14)) && $indice=~/\d\d\d\d\-\d\d\-\d\d$/)
+			if (!$tom::H
+				&& $Ext::Elastic_rlog->{'_manage'}
+				&& ($old > ($TOM::DEBUG_log_type{'pub.track'}{'max_days'} + 7))
+				&& $indice=~/\d\d\d\d\-\d\d\-\d\d$/)
 			{
 				my $indice_new=$indice;
 					$indice_new=~s/\-\d\d$//;
@@ -189,12 +250,16 @@ sub execute
 			
 			if ($max_days <= $old)
 			{
-				main::_log("  remove older than $max_days days");
-				
+				my  $max_days_syntax=$max_days.'d';
+					$max_days_syntax=int($max_days*24).'h' if $max_days=~/\./;
+
+				main::_log("  remove older than $max_days_syntax");
+
 				my $bulk_delete = $Elastic->bulk_helper(
 					'index'		=> $indice,
 					'type'  		=> 'fluentd',
 					'verbose'	=> 0,
+					'max_count' => 1000
 				);
 				
 				my $scroll = $Elastic->scroll_helper(
@@ -206,11 +271,11 @@ sub execute
 						'query' => {
 							'bool' => {
 								'filter' => [
-									{"terms" => {"t" => ["cyclone3.".$type->{'key'}]}},
+									{"terms" => {"t" => [$type->{'key'},"cyclone3.".$type->{'key'}]}},
 									{
 										"range" => {
 											'@timestamp' => {
-												"lt" => 'now-'.$max_days.'d'
+												"lt" => 'now-'.$max_days_syntax
 											}
 										}
 									},@filter
@@ -232,7 +297,11 @@ sub execute
 						my $eta=int(($scroll->total - $i)/$speed);
 						main::_log("   removed $i docs eta ".sec2human($eta)." speed ".int($speed)."docs/s");
 					}
-					$bulk_delete->delete({'id' => $response->{'_id'}});
+					if ($i/1000 == int($i/1000))
+					{
+#						$bulk_delete->flush();
+					}
+					$bulk_delete->delete({'id' => $response->{'_id'},'index'=>$response->{'_index'}});
 					$already_something_removed=1 unless $already_something_removed;
 					$removed=1 unless $removed;
 				}

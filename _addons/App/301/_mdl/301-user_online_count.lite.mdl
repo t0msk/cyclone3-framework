@@ -26,7 +26,7 @@ sub execute
 		SELECT
 			COUNT(*) AS cnt
 		FROM
-			TOM.a301_user_online
+			`$App::301::db_name`.a301_user_online
 		WHERE
 			domain='$tom::H'
 	},'quiet'=>1,'-cache'=>60);

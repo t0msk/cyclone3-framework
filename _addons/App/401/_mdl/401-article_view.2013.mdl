@@ -302,6 +302,7 @@ sub execute
 				)
 			)
 			{
+				$p->{'metahash'} = {App::020::functions::metadata::parse($p->{'metadata'})};
 				push @{$article{'a210'}{'IDs'}}, $p->{'ID'};
 				push @{$article{'a210'}{'nodes'}}, $p;
 				$article{'a210'}{'path_url'}.="/".$p->{'name_url'};
@@ -310,12 +311,6 @@ sub execute
 		}
 	}
 	
-	if ($env{'header.og'})
-	{
-		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:title','content'=>$article{'name'}};
-		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:site_name','content' => $tom::H};
-		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:type','content'=>'article'};
-	}
 	
 	#push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=>$tom::H_a501.'/image/file/'.$image{'file_path'}};
 
@@ -339,23 +334,31 @@ sub execute
 	
 	my $doc_desc=$article{'abstract'};
 		$doc_desc=~s|<.*?>||gms;
+	
 	push @{$env_out{'call'}{'H'}{'change_DOC_description'}},$doc_desc
 		if $env{'header.description'};
 	
-	if ($env{'header.og'} && $parser_abstract->{'thumbnail'}[0])
+	if ($env{'header.og'})
 	{
-		if($parser_abstract->{'thumbnail'}[0])
-		{
-			my %image=App::501::functions::get_image_file(
-				'image.ID_entity' => $parser_abstract->{'thumbnail'}[0],
-				'image_file.ID_format' => 2
-			);
-			push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $tom::H_a501.'/image/file/'.$image{'file_path'}};
-		}
-		elsif($env{'header.og.image.default'})
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:title','content'=>$article{'name'}};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:site_name','content' => $tom::H};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:type','content'=>'article'};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:description','content'=>$doc_desc};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:url','content'=>$tom::H_www.$main::ENV{'REQUEST_URI'}};
+		
+		if($env{'header.og.image.default'})
 		{
 			push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $env{'header.og.image.default'}};
 		}
+	}
+	
+	if ($env{'header.og'} && $parser_abstract->{'thumbnail'}[0])
+	{
+		my %image=App::501::functions::get_image_file(
+			'image.ID_entity' => $parser_abstract->{'thumbnail'}[0],
+			'image_file.ID_format' => 2
+		);
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $tom::H_a501.'/image/file/'.$image{'file_path'}};
 	}
 	
 	# parser body

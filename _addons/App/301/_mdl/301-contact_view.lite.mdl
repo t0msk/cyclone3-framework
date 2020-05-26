@@ -66,24 +66,24 @@ sub execute
 			contact_lng.description
 			
 		FROM
-			TOM.a301_user AS user
-		LEFT JOIN TOM.a301_contact_rel_cat AS rel ON
+			`$App::301::db_name`.a301_user AS user
+		LEFT JOIN `$App::301::db_name`.a301_contact_rel_cat AS rel ON
 		(
 			user.ID_user = rel.ID_user
 		)
---		LEFT JOIN TOM.a301_user AS user ON
+--		LEFT JOIN `$App::301::db_name`.a301_user AS user ON
 --		(
 --			user.ID_user = rel.ID_user
 --		)
-		LEFT JOIN TOM.a301_contact_cat AS contact_cat ON
+		LEFT JOIN `$App::301::db_name`.a301_contact_cat AS contact_cat ON
 		(
 			contact_cat.ID = rel.ID_category
 		)
-		LEFT JOIN TOM.a301_user_profile AS user_profile ON
+		LEFT JOIN `$App::301::db_name`.a301_user_profile AS user_profile ON
 		(
 			user_profile.ID_entity = user.ID_user
 		)
-		LEFT JOIN TOM.a301_contact_lng AS contact_lng ON
+		LEFT JOIN `$App::301::db_name`.a301_contact_lng AS contact_lng ON
 		(
 			user.ID_user = contact_lng.ID_entity
 			AND contact_lng.lng = '$env{'lng'}'

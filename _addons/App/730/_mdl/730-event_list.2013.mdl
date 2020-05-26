@@ -436,7 +436,7 @@ sub execute
 			$sql_order_by
 		LIMIT
 			$sql_limit
-	},'bind'=>[@sql_bind],'log'=>0,'-slave'=>1,'-cache'=>60,
+	},'bind'=>[@sql_bind],'log'=>1,'-slave'=>1,'-cache'=>60,
 		'-changetime'=>App::020::SQL::functions::_get_changetime(
 			{
 				'db_h'=>"main",
@@ -474,9 +474,8 @@ sub execute
 			'ID_entity' => $event{'ID_entity'}
 		};
 		
-=head1
 		# link to a210_page
-		if (my $category=App::401::functions::_a210_by_cat([$article{'cat_ID'}],'lng'=>$env{'lng'}))
+		if (my $category=App::730::functions::_a210_by_cat([$event{'cat_ID'}],'lng'=>$env{'lng'}))
 		{
 			my %sql_def=('db_h' => "main",'db_name' => $App::210::db_name,'tb_name' => "a210_page");
 			foreach my $p(
@@ -488,13 +487,12 @@ sub execute
 				)
 			)
 			{
-				push @{$article{'a210'}{'IDs'}}, $p->{'ID'};
-				push @{$article{'a210'}{'nodes'}}, $p;
-				$article{'a210'}{'path_url'}.="/".$p->{'name_url'};
+				push @{$event{'a210'}{'IDs'}}, $p->{'ID'};
+				push @{$event{'a210'}{'nodes'}}, $p;
+				$event{'a210'}{'path_url'}.="/".$p->{'name_url'};
 			}
-			$article{'a210'}{'path_url'}=~s|^/||;
+			$event{'a210'}{'path_url'}=~s|^/||;
 		}
-=cut
 		
 		if ($env{'parent'} && ($event{'mode'} eq "S"))
 		{

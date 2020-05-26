@@ -246,22 +246,25 @@ sub running
 	my $self=shift;
 	my $conf=shift;
 	
-	$conf->{'max'}=600 unless $conf->{'max'};
+	$conf->{'max'}||=600;
 	
 #	main::_log("check if already running '".(ref $self)."'");
 	
 	if ($Redis)
 	{
-		my $key_entity=(ref $self);
-			$key_entity.='::'.$conf->{'unique'}
-				if $conf->{'unique'};
-			if (!$conf->{'domain'} && !$conf->{'unique'})
-			{
-				$key_entity.='::'.$tom::H;
-			}
-		$key_entity=TOM::Digest::hash($key_entity);
-		
-		$self->{'_running'}=$key_entity;
+		my $key_entity=$self->{'_running'};
+		if (!$key_entity)
+		{
+			$key_entity=(ref $self);
+				$key_entity.='::'.$conf->{'unique'}
+					if $conf->{'unique'};
+				if (!$conf->{'domain'} && !$conf->{'unique'})
+				{
+					$key_entity.='::'.$tom::H;
+				}
+			$key_entity=TOM::Digest::hash($key_entity);
+			$self->{'_running'}=$key_entity;
+		}
 		
 		my $is_running=$Redis->hget('C3|job|running|'.$key_entity,'PID');
 		if ($is_running)
@@ -333,6 +336,11 @@ sub jobify # prepare function call to background
 		main::_log("can't jobify (!RabbitMQ), go to exec");
 		return undef;
 	}
+	if ($TOM::P ne $TOM::DP && $tom::devel) # don't allow sending jobs to backend in multidevelopment environment
+	{
+		main::_log("can't jobify (multidevel environment), go to exec");
+		return undef;
+	}
 	
 	if ($env->{'class'})
 	{
@@ -377,22 +385,44 @@ sub jobify # prepare function call to background
 		$headers{'deduplication'}='true'
 			if $env->{'deduplication'};
 	
-	main::_log("{jobify} function '$function' routing_key='".($env->{'routing_key'})."' id='$id' deduplication=".$env->{'deduplication'});
-	
-	return $RabbitMQ->publish(
-		'exchange'=>'cyclone3.job',
-		'routing_key' => ($env->{'routing_key'} || $tom::H_orig || 'job'),
-#		'body' => to_json({'function' => $function,'args' => $_[0]}),
-		'body' => $json->encode({'function' => $function,'args' => $_[0]}),
-		'header' => {
-			'headers' => {
-				'message_id' => $id,
-				'timestamp' => time(),
-				%headers
-#				,'deduplication' => $env->{'deduplication'}
+	if ($function eq "TOM::Engine::job::module::jobify" && $_[0][0] eq "job") # shortcut jobify job
+	{
+		main::_log("{jobify} job '".$_[0][1]."' routing_key='".($env->{'routing_key'})."' id='$id' deduplication=".$env->{'deduplication'});
+		
+		return $RabbitMQ->publish(
+			'exchange'=>'cyclone3.job',
+			'routing_key' => ($env->{'routing_key'} || $tom::H_orig || 'job'),
+			'body' => $json->encode({'job' => {'name' => $_[0][1]},'args' => $_[0][2]}),
+			'header' => {
+				'headers' => {
+					'message_id' => $id,
+					'timestamp' => time(),
+					%headers
+	#				,'deduplication' => $env->{'deduplication'}
+				}
 			}
-		}
-	);
+		);
+	}
+	else
+	{
+		main::_log("{jobify} function '$function' routing_key='".($env->{'routing_key'})."' id='$id' deduplication=".$env->{'deduplication'});
+		
+		return $RabbitMQ->publish(
+			'exchange'=>'cyclone3.job',
+			'routing_key' => ($env->{'routing_key'} || $tom::H_orig || 'job'),
+	#		'body' => to_json({'function' => $function,'args' => $_[0]}),
+			'body' => $json->encode({'function' => $function,'args' => $_[0]}),
+			'header' => {
+				'headers' => {
+					'message_id' => $id,
+					'timestamp' => time(),
+					%headers
+	#				,'deduplication' => $env->{'deduplication'}
+				}
+			}
+		);
+	}
+	
 	return undef;
 }
 

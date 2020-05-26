@@ -56,7 +56,7 @@ sub increase
       SELECT
          *
       FROM
-         TOM.a301_user_profile_karma
+         `$App::301::db_name`.a301_user_profile_karma
       WHERE
          ID_user='$env{'ID_user'}' AND
          date_event=$env{'date'}
@@ -69,7 +69,7 @@ sub increase
    
    my $sql=qq{
       REPLACE INTO
-      TOM.a301_user_profile_karma
+      `$App::301::db_name`.a301_user_profile_karma
       (
          ID_user,
          date_event,

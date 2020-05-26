@@ -1,0 +1,222 @@
+#!/usr/bin/perl
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use Data::Dumper;
+use Term::ANSIColor;
+
+BEGIN
+{
+	$TOM::engine='cli';
+	$main::debug=1 if $ENV{'CYCLONE3DEBUG'};
+	$main::stdout=0 unless $ENV{'CYCLONE3DEBUG'};
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM"; # obsolete
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+}
+END {use Inline;$SIG{__WARN__} = sub {};}
+
+our $argv=join " ",@ARGV;
+
+our $test_file;
+if ($ARGV[0] && not($ARGV[0]=~/^\-/)) # direct link to test file
+{
+	$test_file=$ARGV[0];
+	delete $ARGV[0];
+	$main::stdout=0 unless $ENV{'CYCLONE3DEBUG'};
+}
+
+our %arg;
+foreach my $key(@ARGV)
+{
+	$key=~s/^\-\-// && do
+	{
+		my @ref=split('=',$key,2);
+		$ref[1]=1 unless exists $ref[1];
+		$main::arg{$ref[0]}=$ref[1];
+		next;
+	};
+	$key=~s/^\-// && do
+	{
+		foreach (split('',$key)){$main::arg{$_}++;}
+	};
+}
+
+if ($main::arg{'domain'})
+{
+	$main::arg{'domain'}=~s|^www\.||i;
+	$main::h=$main::arg{'domain'};$main::h=~s|\.|_|g;$main::h=~s|/|__|g;
+	
+	my $path=$main::arg{'domain'};$path=~s|^(.[^/]*)(.*)||;
+	my $path_dom=$1;my $path_sub=$2;
+	$path_dom=~s|(.*\.\|)(.*?\..*?)$|$1|;
+	$tom::p="!$2";$path_dom=~s|\.$||;
+	
+	foreach (reverse split('\.',$path_dom)){$tom::p.="/!$_";}
+	foreach (split('/',$path_sub)){$tom::p.="/$_";}
+	
+	$tom::p=~s|//|/|g;
+	$tom::p=$ENV{'CYCLONE3PATH'}."/".$tom::p;
+	
+	$tom::P=$tom::p;
+	delete $main::arg{'domain'};
+}
+
+require $ENV{'CYCLONE3PATH'}."/.core/.libs/TOM.pm";
+require TOM::Engine::job;
+$0.=" ".$argv if $argv;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+use vars qw//;
+
+package main;
+use open ':utf8', ':std';
+use if $] < 5.018, 'encoding','utf8';
+use utf8;
+use strict;
+use Cwd 'abs_path';
+use Git;
+use File::Copy;
+
+$TOM::engine_ready=1;
+
+sub update_dir
+{
+	my $dir=shift;
+	if (! -d $dir.'/.git')
+	{
+		main::_log($dir." not in .git",5);
+		if ($main::arg{'fix'})
+		{
+			main::_log(" get /rpc");
+			if (! -e $dir.'new')
+			{
+				my $clone = Git::command_oneline('clone', "http://bit.comsultia.com/scm/cyc/xuladmin-rpc.git", $dir.'new');
+			}
+
+			Cwd::chdir($dir.'new/!www');
+			system("perl core.tom");
+			system("tom3-chfiles -r");
+			Cwd::chdir($dir.'new/..');
+			system("tom3-chfiles -t");
+
+			main::_log(" backup /rpc");
+
+			move($dir, $dir.'.backup');
+			move($dir.'new', $dir);
+			
+			return 1;
+		}
+		return undef;
+	}
+	my $version = Git::command_oneline('version');$version=~s|^.*?(\d+)\.(\d+).*?$|$1.$2|;$version+=0;
+	my $repo = Git->repository(Directory => $dir);
+
+	# check branch
+	my @branch = $repo->command('branch');
+	if (not $branch[0]=~/master/)
+	{
+		main::_log($dir." in branch ".$branch[0],5);
+		return undef
+	}
+
+	# check remote
+	my $remote_url;
+	if ($version >= 2.6)
+	{
+		$remote_url=($repo->command('remote','get-url','origin'))[0];
+	}
+	else
+	{
+		$remote_url=(grep {$_=~s/origin\t// && $_=~s/ \(fetch\)//} $repo->command( [ 'remote', '-v' ], STDERR => 0 ))[0];
+	}
+	
+	if ($remote_url ne "http://bit.comsultia.com/scm/cyc/xuladmin-rpc.git")
+	{
+		main::_log($dir." re-set remote origin ");
+		$repo->command(
+			'remote','set-url',
+			'origin',"http://bit.comsultia.com/scm/cyc/xuladmin-rpc.git");
+	}
+
+	# check if not in conflict state
+
+	# git pull
+	my @output = eval{$repo->command(['pull'], STDERR => 0)};
+	if ($@)
+	{
+		main::_log_stdout($dir.' pull error',1);
+		return undef
+	}
+	
+	print Dumper(\@output) if $main::arg{'debug'};
+	if ($output[0]=~/up-to-date/)
+	{
+		main::_log_stdout($dir." up-to-date");
+		return $output[0];
+	}
+	return undef;
+}
+
+$main::stdout=1;
+if ($main::arg{'v'})
+{
+	$main::debug=1;
+}
+
+if ($tom::P eq $TOM::P)
+{
+	# search all /rpc directories
+	if (opendir (DIR, $TOM::P))
+	{
+		my @files=sort readdir DIR;
+		foreach my $file (@files)
+		{
+			next if $file=~/^[_\.]/;
+			next if $file=~/\/[_\.]/;
+			next if $file=~/\/?\!media/;
+			next if $file=~/\/?\!www/;
+			next unless -d $TOM::P.'/'.$file;
+			next unless -e $TOM::P.'/'.$file.'/'.'local.conf';
+
+			if ($file=~/\/rpc$/)
+			{
+				update_dir($tom::P.'/'.$file);
+			}
+
+			if (opendir (DIR_,$TOM::P."/".$file))
+			{
+				foreach (sort readdir DIR_)
+				{
+					next if $_=~/^[_\.]/;
+					push @files, $file."/".$_;
+				}
+			}
+		}
+	}
+}
+else
+{
+	# in mode of known project
+	while ($tom::P ne $TOM::P)
+	{
+		if (-e $tom::P.'/rpc' && -d $tom::P.'/rpc')
+		{
+			update_dir($tom::P.'/rpc');
+		}
+		$tom::P=~s|^(.*)/.*?$|$1|;
+	}
+}
+
+if ($main::arg{'v'} >= 2)
+{
+	$main::stdout=0;
+	$main::debug=0;
+}
+
+1;

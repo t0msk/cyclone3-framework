@@ -57,6 +57,12 @@ sub execute
 	}
 	main::_log('-------------------------'.$env{'user.ID_user'});
 
+	if ($env{'user_profile.ID'})
+	{
+		$sql_where.=" AND user_profile.ID IN ('".join('\',\'',split(';',$env{'user_profile.ID'}))."')";
+	}
+	main::_log('---------------------------'.$env{'user_profile.ID'});
+	
 	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
 	
 	$sql_where=~s|^ ||;
@@ -80,8 +86,14 @@ sub execute
 			user.datetime_register,
 			user.datetime_last_login,
 			
+			`user_profile`.`ID`,
+			`user_profile`.`ID_entity`,
+			user_profile.PIN,
 			user_profile.firstname,
+			user_profile.middlename,
 			user_profile.surname,
+			user_profile.name_prefix,
+			user_profile.name_suffix,
 			user_profile.gender,
 			user_profile.country_code,
 			user_profile.date_birth,
@@ -93,6 +105,21 @@ sub execute
 			user_profile.about_me,
 			user_profile.note,
 			user_profile.metadata,
+			
+			user_profile.phone,
+			user_profile.phone_office,
+			user_profile.phone_home,
+			user_profile.phone_mobile,
+			
+			user_profile.phys_weight,
+			user_profile.phys_height,
+			
+			user_profile.date_birth,
+			user_profile.birth_place,
+			user_profile.bank_contact,
+			user_profile.passport_num,
+			user_profile.idcard_num,
+			user_profile.education,
 			
 			contact_lng.name_long,
 			contact_lng.description
@@ -181,7 +208,7 @@ sub execute
 	
 	$TPL->{'variables'}{'contact'}=\%user;
 	
-	push @{$env_out{'call'}{'H'}{'add_DOC_title'}},$user{'firstname'}.' '.$user{'surname'};
+	push @{$env_out{'call'}{'H'}{'add_DOC_title'}},$user{'firstname'}.' '.$user{'surname'} unless $env{'DOC_title.disable'};
 	
 	return 1,%env_out;
 }

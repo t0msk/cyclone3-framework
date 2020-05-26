@@ -19,7 +19,7 @@ sub execute
 	main::_log("removing old karma");
 	my %sth0=TOM::Database::SQL::execute(qq{
 		DELETE
-		FROM TOM.a301_user_profile_karma
+		FROM `$App::301::db_name`.a301_user_profile_karma
 		WHERE date_event <= DATE_SUB(NOW(),INTERVAL 31 DAY)
 	}
 	,'quiet'=>1);
@@ -29,7 +29,7 @@ sub execute
 	main::_log("removing old emo");
 	my %sth0=TOM::Database::SQL::execute(qq{
 		DELETE
-		FROM TOM.a301_user_profile_emo
+		FROM `$App::301::db_name`.a301_user_profile_emo
 		WHERE date_event <= DATE_SUB(NOW(),INTERVAL 31 DAY)
 	}
 	,'quiet'=>1);
@@ -44,7 +44,7 @@ sub execute
 		{
 			my %sth0=TOM::Database::SQL::execute(qq{
 				DELETE
-				FROM TOM.a301_user_inactive
+				FROM `$App::301::db_name`.a301_user_inactive
 				WHERE
 					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 6 MONTH)
 				LIMIT 100
@@ -62,7 +62,7 @@ sub execute
 				SELECT
 					ID_user,
 					requests_all
-				FROM TOM.a301_user_inactive
+				FROM `$App::301::db_name`.a301_user_inactive
 				WHERE
 					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 3 DAY)
 					AND requests_all<=2
@@ -74,7 +74,7 @@ sub execute
 			while (my %db0_line=$sth0{'sth'}->fetchhash())
 			{
 				TOM::Database::SQL::execute(qq{
-					DELETE FROM TOM.a301_user_inactive
+					DELETE FROM `$App::301::db_name`.a301_user_inactive
 					WHERE ID_user='$db0_line{'ID_user'}'
 					LIMIT 1;
 				},'quiet'=>1,'-backend_'=>1);
@@ -89,7 +89,7 @@ sub execute
 				SELECT
 					ID_user,
 					requests_all
-				FROM TOM.a301_user_inactive
+				FROM `$App::301::db_name`.a301_user_inactive
 				WHERE
 					datetime_last_login <= DATE_SUB(CURDATE(),INTERVAL 1 MONTH)
 					AND requests_all<=10
@@ -101,21 +101,43 @@ sub execute
 			while (my %db0_line=$sth0{'sth'}->fetchhash())
 			{
 				TOM::Database::SQL::execute(qq{
-					DELETE FROM TOM.a301_user_inactive
+					DELETE FROM `$App::301::db_name`.a301_user_inactive
 					WHERE ID_user='$db0_line{'ID_user'}'
 					LIMIT 1;
 				},'quiet'=>1,'-backend_'=>1);
 			}
 		}
 		
-		main::_log("removing old sessions 6 months");
-		my %sth0=TOM::Database::SQL::execute(qq{
-			DELETE
-			FROM TOM.a301_user_session
-			WHERE datetime_session_begin <= DATE_SUB(NOW(),INTERVAL 6 MONTH)
+		main::_log("removing old sessions 1 month");
+		my $est=1;
+		while ($est)
+		{
+			my %sth0=TOM::Database::SQL::execute(qq{
+				DELETE
+				FROM `$App::301::db_name`.a301_user_session
+				WHERE datetime_session_begin <= DATE_SUB(NOW(),INTERVAL 1 MONTH)
+				LIMIT 1000
+			}
+			,'quiet'=>1);
+			$est=$sth0{'rows'};
+			main::_log(" removed $sth0{'rows'} items");
 		}
-		,'quiet'=>1);
-		main::_log(" removed $sth0{'rows'} items");
+		
+		main::_log("removing innecessary sessions 1 DAY (<=3 request)");
+		my $est=1;
+		while ($est)
+		{
+			my %sth0=TOM::Database::SQL::execute(qq{
+				DELETE
+				FROM `$App::301::db_name`.a301_user_session
+				WHERE
+					datetime_session_begin <= DATE_SUB(NOW(),INTERVAL 1 DAY)
+					AND requests_all <= 3
+				LIMIT 1000
+			},'quiet'=>1);
+			$est=$sth0{'rows'};
+			main::_log(" removed $sth0{'rows'} items");
+		}
 		
 		main::_log("removing sessions of removed users");
 		my $est=1;
@@ -125,12 +147,12 @@ sub execute
 				SELECT
 					session.ID_user
 				FROM
-					TOM.a301_user_session AS session
-				LEFT JOIN TOM.a301_user AS user_orig ON
+					`$App::301::db_name`.a301_user_session AS session
+				LEFT JOIN `$App::301::db_name`.a301_user AS user_orig ON
 				(
 					session.ID_user = user_orig.ID_user
 				)
-				LEFT JOIN TOM.a301_user_inactive AS user_inactive ON
+				LEFT JOIN `$App::301::db_name`.a301_user_inactive AS user_inactive ON
 				(
 					session.ID_user = user_inactive.ID_user
 				)
@@ -145,7 +167,7 @@ sub execute
 			while (my %db0_line=$sth0{'sth'}->fetchhash())
 			{
 				TOM::Database::SQL::execute(qq{
-					DELETE FROM TOM.a301_user_session
+					DELETE FROM `$App::301::db_name`.a301_user_session
 					WHERE ID_user='$db0_line{'ID_user'}'
 				},'quiet'=>1,'-backend_'=>1);
 			}

@@ -31,6 +31,7 @@ use if $] < 5.018, 'encoding','utf8';
 use utf8; # encode = fromutf8, decode=toutf8
 use strict; # scrict code
 use CGI::Fast qw(:standard);
+use TOM::Logger;
 use vars qw/
 	$CGI
 	%FORM
@@ -226,10 +227,14 @@ $t_domain->close;
 ######################################################################################
 ######################################################################################
 
-my %url_cache;
-#my $req=FCGI::Request();
 main::_log("START FCGI PID:$$ domain:$tom::H",3,"pub.mng",1);
+main::_event('debug','engine.start',{
+	'time_start' => $TOM::time_start,
+	'time_ready' => Time::HiRes::time(),
+	'time_to_ready' => int((Time::HiRes::time()-$TOM::time_start)*1000)/1000,
+});
 
+my %url_cache;
 while ($main::CGI=new CGI::Fast())
 {
 	$ENV{'QUERY_STRING'}=$ARGV[0] if $ENV{'TERM'};
@@ -503,6 +508,8 @@ while ($main::CGI=new CGI::Fast())
 			next;
 		}
 		
+		$main::ENV{'REQUEST_URI_'}=$main::ENV{'REQUEST_URI'};
+			$main::ENV{'REQUEST_URI_'}=~s|\?.*$||;
 		
 		#my $t_agent=track TOM::Debug("HTTP_USER_AGENT '$main::ENV{'HTTP_USER_AGENT'}'");
 		my $t_agent=track TOM::Debug("UserAgent");
@@ -550,6 +557,14 @@ while ($main::CGI=new CGI::Fast())
 				$t_request->close();
 				TOM::Warning::engine(@ERR);
 #				if ($TOM::CACHE && $TOM::CACHE_memcached){$Ext::CacheMemcache::cache->set('namespace'=>"c3process",'key' => $TOM::hostname.':'.$$,'value' => {'time' => time(),'start' => $TOM::time_start,'count' => $tom::count});}
+				
+				TOM::Debug::pub::request(
+					'duration' => $t_eval->{'time'}{'duration'},
+					'user' => $t_eval->{'time'}{'user'}{'duration'},
+					'sys' => $t_eval->{'time'}{'sys'}{'duration'},
+					'code' => '429'
+				);
+				
 				next;
 			}
 			
@@ -1577,6 +1592,9 @@ while ($main::CGI=new CGI::Fast())
 								$main::FORM{'type'}='homepage';
 							}
 						}
+						# redirection bude '303' - bude ale vzdy?
+						$main::location_code='302';
+						$main::location_code='303' if scalar @TOM::LNG_accept > 1;
 					}
 					elsif ($main::FORM{'a210_path'} || $main::FORM{'a210_name'})
 					{
@@ -1994,6 +2012,11 @@ while ($main::CGI=new CGI::Fast())
 			next unless $1; # vyhnem sa vykonavaniu dalsich podmienok
 			my %env0=CML::VARhash($1);
 			next unless $env0{id};
+			
+			if ($env0{'id'} eq "doctype")
+			{
+				$main::ENV{'doctype'} = $env0{'value'};
+			}
 			
 			if ($env0{'id'} eq "https" && $env0{'value'})
 			{
@@ -2429,7 +2452,7 @@ while ($main::CGI=new CGI::Fast())
 				$main::page_statuscode ne "404"
 			)
 		{
-			my $t_301=track TOM::Debug("REQUEST_URI link testing for 301 redirection");
+			my $t_301=track TOM::Debug("REQUEST_URI link testing for 300 redirection");
 			
 			main::_log("REQUEST_URI='$main::ENV{REQUEST_URI}' HTTPS=".$main::ENV{'HTTPS'}." H_www=".$tom::H_www." H_www_orig=".$tom::H_www_orig);
 			
@@ -2548,10 +2571,10 @@ while ($main::CGI=new CGI::Fast())
 			main::_log("H_www='$tom::H_www' rewrite_domain='$rewrite_domain' rewrite_old='$rewrite_old' rewrite='$rewrite'");
 #			main::_log("H_www_orig='$tom::H_www_orig' H_www='$tom::H_www' rewrite_domain='$rewrite_domain' rewrite_old='$rewrite_old' rewrite='$rewrite'",3,"debug");
 			
-			if (($tom::H_www ne $rewrite_domain) || ($rewrite_old ne $rewrite) || $rewrite_301 || (
-				($link_old ne $link)
-				 && ($main::ENV{'REQUEST_METHOD'} eq "GET")
-			))
+			if (($tom::H_www ne $rewrite_domain) || ($rewrite_old ne $rewrite) || $rewrite_301
+#				|| (($link_old ne $link) &&
+#				 ($main::ENV{'REQUEST_METHOD'} eq "GET"))
+			)
 			#if (($link_old ne $link) || $rewrite_301)
 			{
 				# musim odoslat cookies i ked robim relocation
@@ -2566,14 +2589,17 @@ while ($main::CGI=new CGI::Fast())
 				$t_process->close();
 				$t_eval->close();
 				$t_request->close();
+
+				$main::location_code='301' unless $main::location_code=~/^30.$/;
+
 				TOM::Debug::pub::request(
 					'duration' => $t_eval->{'time'}{'duration'},
 					'user' => $t_eval->{'time'}{'user'}{'duration'},
 					'sys' => $t_eval->{'time'}{'sys'}{'duration'},
-					'code' => '301',
+					'code' => $main::location_code,
 					'location' => $rewrite_domain.$link
 				);
-				print "Status: 301 Moved permanently\n";
+				print "Status: ".$main::location_code." Moved\n";
 				print "C3-Request: $main::request_code\n";
 				print "Location: $rewrite_domain$link\n\n";
 				main::_log("Location: $rewrite_domain$link");
@@ -2795,6 +2821,7 @@ while ($main::CGI=new CGI::Fast())
 				{
 					my $aca = $main::ENV{'HTTP_REFERER'} || $tom::H_www;
 						$aca =~s|^(http[s]?://.*?)/.*$|$1|;
+					$aca=$main::ENV{'HTTP_ORIGIN'} if $main::ENV{'HTTP_ORIGIN'};
 					print "Access-Control-Allow-Origin: ".$aca."\n";
 					print "Vary: Origin\n";
 				}
@@ -3011,7 +3038,7 @@ while ($main::CGI=new CGI::Fast())
 		
 		
 		
-		$main::H->message("This document has been generated as requested for UserAgent \"".$main::UserAgent_name."\"");
+#		$main::H->message("This document has been generated as requested for UserAgent \"".$main::UserAgent_name."\"");
 		
 		# ak je browser stary
 		$main::H->message($TOM::Net::HTTP::UserAgent::messages{old}[$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{old}])if exists $TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{old};
@@ -3081,7 +3108,7 @@ while ($main::CGI=new CGI::Fast())
 			else # tento browser nepodporuje UTF8, tak dostane ASCII 
 			{
 				$main::H->message("Your browser detected as \"".$main::UserAgent_name."\" does not support utf-8 encoding or does not send the information about accepted encodings through http token. The system will automatically generate this page in default (ISO-8859-1/ASCII) charset. For more information, please refer to RFC2616 chapter 3.4. and inform your software distributor, or try to upgrade your this (or to another) software.");
-				main::_log("ASCII encoding for UserAgent \"$ENV{HTTP_USER_AGENT}\"-\"$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{name}\" encodings($ENV{HTTP_ACCEPT_CHARSET})",1,"pub.warn_low",1);
+				main::_log("ASCII encoding for UserAgent \"$ENV{HTTP_USER_AGENT}\"-\"$TOM::Net::HTTP::UserAgent::table[$main::UserAgent]{name}\" encodings($ENV{HTTP_ACCEPT_CHARSET})");
 				
 				$COOKIES{cp}="ISO-8859-1";
 				$H->rh("<%CODEPAGE%>","ISO-8859-1");
@@ -3153,9 +3180,17 @@ while ($main::CGI=new CGI::Fast())
 		{
 			print "X-FRAME-OPTIONS: ".($TOM::Document::frame_options || 'SAMEORIGIN').";\n";
 		}
+		if ($TOM::Document::X_XSS_Protection)
+		{
+			print "X-XSS-Protection: ".($TOM::Document::X_XSS_Protection || '1; mode=block').";\n";
+		}
+		if ($TOM::Document::X_Content_Type_Options)
+		{
+			print "X-Content-Type-Options: ".($TOM::Document::X_Content_Type_Options || 'nosniff').";\n";
+		}
 		if ($tom::H_www_orig=~/^https/ && $TOM::Document::HSTS)
 		{
-			print "Strict-Transport-Security: max-age=600;\n";
+			print "Strict-Transport-Security: max-age=15552000;\n";
 		}
 		
 		# codepage pouzity pre tuto page;
@@ -3303,17 +3338,28 @@ while ($main::CGI=new CGI::Fast())
 				main::_log("Cache-Control: ".$main::ENV{'Cache-Control'});
 				print "Cache-Control: ".$main::ENV{'Cache-Control'}."\n";
 			}
+
 #			if ($main::ENV{'Pragma'})
 #			{
 #				main::_log("Pragma: ".$main::ENV{'Pragma'});
 #				print "Pragma: ".$main::ENV{'Pragma'}."\n";
 #			}
+			
+			if ($main::H->{'env'}->{'obj'})
+			{
+				foreach my $obj (sort @{$main::H->{'env'}->{'obj'}})
+				{
+					print "C3-obj: ".$obj."\n";
+				}
+			}
+			
 			print "Content-Type: ".$TOM::Document::content_type."; charset=$main::LNG_cp_this\n";
 			
 			if ($TOM::Document::ACAOrigin eq "dynamic")
 			{
 				my $aca = $main::ENV{'HTTP_REFERER'} || $tom::H_www;
 					$aca =~s|^(http[s]?://.*?)/.*$|$1|;
+				$aca=$main::ENV{'HTTP_ORIGIN'} if $main::ENV{'HTTP_ORIGIN'};
 				print "Access-Control-Allow-Origin: ".$aca."\n";
 			}
 			else
@@ -3445,6 +3491,11 @@ while ($main::CGI=new CGI::Fast())
 	
 	# request exit/restart when important files changed
 	$tom::HUP=1 if TOM::files_modified(\@main::mfiles);
+	
+	if (-e $TOM::P.'/_data/ip_blacklist.json' && TOM::file_modified($TOM::P.'/_data/ip_blacklist.json'))
+	{
+		TOM::Net::HTTP::UserAgent::initialize_hacked();
+	}
 	
 	if (
 			($tom::HUP) && (($main::time_current-$TOM::time_start)<30) || # safe time to exit/restart

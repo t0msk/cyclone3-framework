@@ -171,6 +171,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
   `keywords` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `process_lock` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `thumbnail_lock` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `status_file` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `status_file_count` int(3) unsigned DEFAULT NULL,
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
   PRIMARY KEY (`ID`),
   KEY `ID_entity` (`ID_entity`),
@@ -179,7 +181,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part` (
   KEY `visits` (`visits`),
   KEY `rating` (`rating`),
   KEY `part_id` (`part_id`),
-  KEY `status` (`status`)
+  KEY `status` (`status`,`status_file_count`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
@@ -198,6 +200,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_j` (
   `keywords` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `process_lock` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `thumbnail_lock` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `status_file` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  `status_file_count` int(3) unsigned DEFAULT NULL,
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'Y',
   PRIMARY KEY (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -403,6 +407,52 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file` (
 
 -- --------------------------------------------------
 
+CREATE TRIGGER `/*db_name*/`.`/*addon*/_video_part_file_UPDATE` AFTER UPDATE ON `a510_video_part_file` FOR EACH ROW
+BEGIN
+	
+	SET @count = (
+		SELECT COUNT(ID) FROM a510_video_part_file
+		WHERE ID_entity = NEW.ID_entity
+		AND status='Y'
+		AND ID_format > 1
+	);
+	SET @id = NEW.ID_entity;
+	SET @status = 'N';
+	IF ( @count >= 1 ) THEN set @status = 'Y'; END IF;
+	UPDATE a510_video_part SET
+		status_file_count = @count,
+		status_file = @status
+	WHERE
+		ID = @id
+	LIMIT 1;
+	
+END
+
+-- --------------------------------------------------
+
+CREATE TRIGGER `/*db_name*/`.`/*addon*/_video_part_file_INSERT` AFTER INSERT ON `a510_video_part_file` FOR EACH ROW
+BEGIN
+	
+	SET @count = (
+		SELECT COUNT(ID) FROM a510_video_part_file
+		WHERE ID_entity = NEW.ID_entity
+		AND status='Y'
+		AND ID_format > 1
+	);
+	SET @id = NEW.ID_entity;
+	SET @status = 'N';
+	IF ( @count >= 1 ) THEN set @status = 'Y'; END IF;
+	UPDATE a510_video_part SET
+		status_file_count = @count,
+		status_file = @status
+	WHERE
+		ID = @id
+	LIMIT 1;
+	
+END
+
+-- --------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_part_file_j` (
   `ID` mediumint(8) unsigned zerofill NOT NULL AUTO_INCREMENT,
   `ID_entity` mediumint(8) unsigned DEFAULT NULL,
@@ -524,6 +574,19 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat_j` (
 
 -- --------------------------------------------------
 
+CREATE TABLE `/*db_name*/`.`/*addon*/_video_cat_metaindex` (
+  `ID` bigint(20) unsigned NOT NULL, -- ref _video_cat.ID
+  `meta_section` varchar(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `meta_variable` varchar(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `meta_value` varchar(128) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`ID`,`meta_section`,`meta_variable`),
+  KEY `SEL_0` (`meta_section`,`meta_variable`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------
+
 CREATE TABLE `/*db_name*/`.`/*addon*/_video_format` (
   `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `ID_entity` bigint(20) unsigned DEFAULT NULL,
@@ -617,6 +680,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   `description` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
   `datetime_air_start` datetime NOT NULL,
   `datetime_air_stop` datetime NOT NULL,
+  `datetime_depth` tinyint(3) unsigned DEFAULT '0',
   `datetime_real_start` datetime DEFAULT NULL,
   `datetime_real_start_msec` smallint(3) unsigned zerofill DEFAULT NULL,
   `datetime_real_stop` datetime DEFAULT NULL,
@@ -647,6 +711,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   `status_live_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_internet` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `status_embedblock` char(1) CHARACTER SET ascii DEFAULT 'N',
   `status_highlight` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `recording` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N', -- it is recording now
   `priority_A` tinyint(3) unsigned DEFAULT NULL,
@@ -658,7 +723,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program` (
   UNIQUE KEY `UNI_0` (`ID_channel`,`program_code`,`datetime_air_start`),
   KEY `ID_entity` (`ID_entity`),
   KEY `name` (`name`,`datetime_air_start`),
-  KEY `datetime_air_start` (`datetime_air_start`),
+  KEY `datetime_air_start` (`datetime_air_start`,`datetime_air_stop`),
+  KEY `datetime_air_stop` (`datetime_air_stop`,`datetime_air_start`),
   KEY `datetime_real_stop` (`datetime_real_stop`),
   KEY `ID_series` (`ID_series`),
   KEY `record_id` (`record_id`),
@@ -689,6 +755,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
   `description` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
   `datetime_air_start` datetime NOT NULL,
   `datetime_air_stop` datetime NOT NULL,
+  `datetime_depth` tinyint(3) unsigned DEFAULT '0',
   `datetime_real_start` datetime DEFAULT NULL,
   `datetime_real_start_msec` smallint(3) unsigned zerofill DEFAULT NULL,
   `datetime_real_stop` datetime DEFAULT NULL,
@@ -719,6 +786,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_program_j` (
   `status_live_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_internet` char(1) CHARACTER SET ascii DEFAULT NULL,
   `status_geoblock` char(1) CHARACTER SET ascii DEFAULT NULL,
+  `status_embedblock` char(1) CHARACTER SET ascii DEFAULT 'N',
   `status_highlight` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `recording` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `priority_A` tinyint(3) unsigned DEFAULT NULL,
@@ -809,6 +877,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_broadcast_schedule` ( -- schedule program 
   `datetime_create` datetime NOT NULL,
   `datetime_start` datetime(3) NOT NULL,
   `datetime_stop` datetime(3) NOT NULL,
+  `air_status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   `status` char(1) CHARACTER SET ascii NOT NULL DEFAULT 'N',
   PRIMARY KEY (`ID`),
   KEY `ID_entity` (`ID_entity`),

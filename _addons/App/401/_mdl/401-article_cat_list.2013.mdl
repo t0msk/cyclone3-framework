@@ -8,7 +8,8 @@ use strict;
 
 use App::020::_init;
 use App::401::_init;
-
+use App::020::mimetypes::html;
+		
 
 sub execute
 {
@@ -94,6 +95,8 @@ sub execute
 		}
 	}
 	
+	$sql_where.=" AND ".$env{'sql_where'} if $env{'sql_where'};
+
 	$sql_where=~s|^ ||;
 	
 	my %sth0=TOM::Database::SQL::execute(qq{
@@ -135,7 +138,9 @@ sub execute
 			'tb_name' => 'a401_article_cat',
 			'-cache' => 86400*7,
 		))
-		{
+		{			
+			push @{$db0_line{'path'}{'IDs'}}, $node->{'ID'};
+			push @{$db0_line{'path'}{'nodes'}}, $node;
 			$db0_line{'path_url'}.='/'.$node->{'name_url'};
 		}
 		$db0_line{'path_url'}=~s|^/||;
@@ -213,6 +218,22 @@ sub execute
 			);
 			
 			$db0_line{'article_count'}=$sth1{'rows'} || 0;
+		}
+		
+		
+		if ($env{'parser.description'})
+		{
+			my $parser=new App::020::mimetypes::html(
+				'tpl_ext' => $TPL # extend
+			);	
+			$parser->parse($db0_line{'description'});
+			$parser->eof();
+			$db0_line{'description_parser'}={
+				'output' => $parser->{'output'},
+				'addon' => $parser->{'addon'},
+				'entity' => $parser->{'entity'},
+				'thumbnail' => $parser->{'thumbnail'},
+			};
 		}
 		
 		$TPL->variables_push(\%db0_line);

@@ -127,7 +127,14 @@ sub new
 	my $class=shift;
 	my %env=@_;
 	
-	my $t=track TOM::Debug(__PACKAGE__."->new($env{'level'}/$env{'addon'}/$env{'name'}.$env{'content-type'})") if $debug;
+	$env{'content-type'}||=$TOM::Document::type||'xml';TOM::Template::contenttypes::trans($env{'content-type'});
+	$env{'name'}="default" unless $env{'name'};
+	$env{'level'}="auto" unless $env{'level'};
+	$env{'lng'}||= $tom::lng || $tom::LNG || $TOM::LNG;
+	
+	my $t=track TOM::Debug(__PACKAGE__."->new(".
+		($env{'location'} ? $env{'location'} : $env{'level'}."/".$env{'addon'}."/".$env{'name'})
+	.".".($env{'content-type'}||'?').")") if $debug;
 	
 	my $obj=bless {}, $class;
 	
@@ -135,14 +142,7 @@ sub new
 	{
 		main::_log("input '$key'='$env{$key}'") if $debug;
 	}
-	
-	$env{'content-type'}="xml" unless $env{'content-type'};
-	$env{'name'}="default" unless $env{'name'};
-	TOM::Template::contenttypes::trans($env{'content-type'});
-	$env{'level'}="auto" unless $env{'level'};
-	
-	$env{'lng'}||= $tom::lng || $tom::LNG || $TOM::LNG;
-	
+
 	# add params into object
 	%{$obj->{'ENV'}}=%env;
 	$obj->{'entity'}={};
@@ -307,6 +307,7 @@ sub new
 			}
 			# recovery header config to new object
 			%{$obj_return->{'config'}}=%{$objects{$obj->{'location'}}{'config'}};
+			$obj_return->{'config'}->{'tt'}||=$env{'tt'};
 			# get tt reference from objects cache
 			if ($obj_return->{'config'}->{'tt'})
 			{
@@ -324,6 +325,7 @@ sub new
 				$obj_return->{'tt'}=$objects{$obj->{'location'}}{'tt'};
 			}
 		}
+		$obj_return->{'config'}->{'tt'}||=$env{'tt'};
 		if ($obj_return->{'config'}->{'tt'}) # extend by Template Toolkit
 		{
 			# regenerate reference
@@ -344,8 +346,9 @@ sub new
 			%{$obj_return->{'file'}}=%{$objects{$obj->{'location'}}{'file'}};
 			%{$obj_return->{'file_'}}=%{$objects{$obj->{'location'}}{'file_'}};
 			%{$obj_return->{'mfile'}}=%{$objects{$obj->{'location'}}{'mfile'}};
+			$obj_return->{'request_code'}=$objects{$obj->{'location'}}{'request_code'};
+			$obj_return->{'engine'}=$objects{$obj->{'location'}}{'engine'};
 		}
-	
 	
 	$t->close() if $debug;
 	return $obj_return;
@@ -972,6 +975,8 @@ sub process
 		$Tomahawk::module::TPL->{'variables'}->{'devel'}=$tom::devel;
 		$Tomahawk::module::TPL->{'variables'}->{'devel_branch'}=$tom::devel_branch
 			if $tom::devel_branch;
+		$Tomahawk::module::TPL->{'variables'}->{'devel_branch_behind'}=$tom::devel_branch_behind
+			if $tom::devel_branch_behind;
 		$Tomahawk::module::TPL->{'variables'}->{'hostname'}=$TOM::hostname;
 		
 		# domain variables

@@ -1,1825 +1,1608 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <L10n>
-
-	<string id="country.AD">
-		<en-US>Andorra</en-US>
-		<en-UK>Andorra</en-UK>
-		<sk-SK>Andorra</sk-SK>
-		<cs-CZ></cs-CZ>
-	</string>
-
-	<string id="country.AE">
-		<en-US>United Arab Emirates</en-US>
-		<en-UK>United Arab Emirates</en-UK>
-		<sk-SK>Spojené Arabské Emiráty</sk-SK>
-		<cs-CZ></cs-CZ>
-	</string>
-
-	<string id="country.AF">
-		<en-US>Afganistan</en-US>
-		<en-UK>Afganistan</en-UK>
-		<sk-SK>Afganistan</sk-SK>
-		<cs-CZ></cs-CZ>
-	</string>
-
-	<string id="country.AG">
-		<en-US>Antigua and Barbuda</en-US>
-		<en-UK>Antigua and Barbuda</en-UK>
-		<sk-SK>Antigua a Barbuda</sk-SK>
-		<cs-CZ></cs-CZ>
-	</string>
-
-	<string id="country.AI">
-		<en-US>Anguilla</en-US>
-		<en-UK>Anguilla</en-UK>
-		<sk-SK>Anguilla</sk-SK>
-		<cs-CZ></cs-CZ>
-	</string>
-
-	<string id="country.AL">
-		<en-US>Albania</en-US>
-		<en-UK>Albania</en-UK>
-		<sk-SK>Albánsko</sk-SK>
-		<cs-CZ></cs-CZ>
-	</string>
-
-	<string id="country.AM">
-		<en-US>Armenia</en-US>
-		<en-UK>Armenia</en-UK>
-		<sk-SK>Arménsko</sk-SK>
-		<cs-CZ></cs-CZ>
-	</string>
-
-	<string id="country.AN">
-		<en-US>Netherlands Antilles</en-US>
-		<en-UK>Netherlands Antilles</en-UK>
-		<sk-SK>Holandské Antily</sk-SK>
-	</string>
-
-	<string id="country.AO">
-		<en-US>Angola</en-US>
-		<en-UK>Angola</en-UK>
-		<sk-SK>Angola</sk-SK>
-	</string>
-
-	<string id="country.AQ">
-		<en-US>Antarctica</en-US>
-		<en-UK>Antarctica</en-UK>
-		<sk-SK>Antarktída</sk-SK>
-	</string>
-
-	<string id="country.AR">
-		<en-US>Argentina</en-US>
-		<en-UK>Argentina</en-UK>
-		<sk-SK>Argentína</sk-SK>
-	</string>
-
-	<string id="country.AS">
-		<en-US>American Samoa</en-US>
-		<en-UK>American Samoa</en-UK>
-		<sk-SK>Americká Samoa</sk-SK>
-	</string>
-
-	<string id="country.AT">
-		<en-US>Austria</en-US>
-		<en-UK>Austria</en-UK>
-		<sk-SK>Rakúsko</sk-SK>
-		<cs-CZ>Rakousko</cs-CZ>
-		<de-DE>Österreich</de-DE>
-		<hu-HU>Ausztria</hu-HU>
-		<pl-PL>Austria</pl-PL>
-		<pt-PT>Áustria</pt-PT>
-		<es-ES>Austria</es-ES>
-		<sl-SI>Avstrija</sl-SI>
-		<ro-RO>Austria</ro-RO>
-		<fr-FR>Autriche</fr-FR>
-		<hr-HR>Austrija</hr-HR>
-		<bg-BG>Австрия</bg-BG>
-		<nl-NL>Oostenrijk</nl-NL>
-		<it-IT>Austria</it-IT>
-	</string>
-
-	<string id="country.AU">
-		<en-US>Australia</en-US>
-		<en-UK>Australia</en-UK>
-		<sk-SK>Austrália</sk-SK>
-	</string>
-
-	<string id="country.AW">
-		<en-US>Aruba</en-US>
-		<en-UK>Aruba</en-UK>
-		<sk-SK>Aruba</sk-SK>
-	</string>
-
-	<string id="country.AX">
-		<en-US>Aland Islands</en-US>
-		<en-UK>Aland Islands</en-UK>
-		<sk-SK>Alandy</sk-SK>
-	</string>
-
-	<string id="country.AZ">
-		<en-US>Azerbaijan</en-US>
-		<en-UK>Azerbaijan</en-UK>
-		<sk-SK>Azerbajdžan</sk-SK>
-	</string>
-
-	<string id="country.BA">
-		<en-US>Bosnia and Herzegovina</en-US>
-		<en-UK>Bosnia and Herzegovina</en-UK>
-		<sk-SK>Bosna a Hercegovina</sk-SK>
-	</string>
-
-	<string id="country.BB">
-		<en-US>Barbados</en-US>
-		<en-UK>Barbados</en-UK>
-		<sk-SK>Barbados</sk-SK>
-	</string>
-
-	<string id="country.BD">
-		<en-US>Bangladesh</en-US>
-		<en-UK>Bangladesh</en-UK>
-		<sk-SK>Bangladéš</sk-SK>
-	</string>
-
-	<string id="country.BE">
-		<en-US>Belgium</en-US>
-		<en-UK>Belgium</en-UK>
-		<sk-SK>Belgicko</sk-SK>
-		<cs-CZ>Belgie</cs-CZ>
-		<de-DE>Belgien</de-DE>
-		<hu-HU>Belgium</hu-HU>
-		<pl-PL>Belgia</pl-PL>
-		<pt-PT>Bélgica</pt-PT>
-		<es-ES>Bélgica</es-ES>
-		<sl-SI>Belgija</sl-SI>
-		<ro-RO>Belgia</ro-RO>
-		<fr-FR>Belgique</fr-FR>
-		<hr-HR>Belgija</hr-HR>
-		<bg-BG>Белгия</bg-BG>
-		<nl-NL>België</nl-NL>
-		<it-IT>Belgio</it-IT>
-	</string>
-
-	<string id="country.BF">
-		<en-US>Burkina Faso</en-US>
-		<en-UK>Burkina Faso</en-UK>
-		<sk-SK>Burkina</sk-SK>
-	</string>
-
-	<string id="country.BG">
-		<en-US>Bulgaria</en-US>
-		<en-UK>Bulgaria</en-UK>
-		<sk-SK>Bulharsko</sk-SK>
-		<cs-CZ>Bulharsko</cs-CZ>
-		<de-DE>Bulgarien</de-DE>
-		<hu-HU>Bulgária</hu-HU>
-		<pl-PL>Bułgaria</pl-PL>
-		<pt-PT>Bulgária</pt-PT>
-		<es-ES>Bulgaria</es-ES>
-		<sl-SI>Bolgarija</sl-SI>
-		<ro-RO>Bulgaria</ro-RO>
-		<fr-FR>Bulgarie</fr-FR>
-		<hr-HR>Bugarska</hr-HR>
-		<bg-BG>България</bg-BG>
-		<nl-NL>Bulgarije</nl-NL>
-		<it-IT>Bulgaria</it-IT>
-	</string>
-
-	<string id="country.BH">
-		<en-US>Bahrain</en-US>
-		<en-UK>Bahrain</en-UK>
-		<sk-SK>Bahrain</sk-SK>
-	</string>
-
-	<string id="country.BI">
-		<en-US>Burundi</en-US>
-		<en-UK>Burundi</en-UK>
-		<sk-SK>Burundi</sk-SK>
-	</string>
-
-	<string id="country.BJ">
-		<en-US>Benin</en-US>
-		<en-UK>Benin</en-UK>
-		<sk-SK>Benin</sk-SK>
-	</string>
-
-	<string id="country.BM">
-		<en-US>Bermuda</en-US>
-		<en-UK>Bermuda</en-UK>
-		<sk-SK>Bermudy</sk-SK>
-	</string>
-
-	<string id="country.BN">
-		<en-US>Brunei Darussalam</en-US>
-		<en-UK>Brunei Darussalam</en-UK>
-		<sk-SK>Brunej</sk-SK>
-	</string>
-
-	<string id="country.BO">
-		<en-US>Bolivia</en-US>
-		<en-UK>Bolivia</en-UK>
-		<sk-SK>Bolívia</sk-SK>
-	</string>
-
-	<string id="country.BR">
-		<en-US>Brazil</en-US>
-		<en-UK>Brazil</en-UK>
-		<sk-SK>Brazília</sk-SK>
-	</string>
-
-	<string id="country.BS">
-		<en-US>Bahamas</en-US>
-		<en-UK>Bahamas</en-UK>
-		<sk-SK>Bahamy</sk-SK>
-	</string>
-
-	<string id="country.BT">
-		<en-US>Bhutan</en-US>
-		<en-UK>Bhutan</en-UK>
-		<sk-SK>Bhután</sk-SK>
-	</string>
-
-	<string id="country.BV">
-		<en-US>Bouvet Island</en-US>
-		<en-UK>Bouvet Island</en-UK>
-		<sk-SK>Bouvetov ostrov</sk-SK>
-	</string>
-
-	<string id="country.BW">
-		<en-US>Botswana</en-US>
-		<en-UK>Botswana</en-UK>
-		<sk-SK>Botswana</sk-SK>
-	</string>
-
-	<string id="country.BY">
-		<en-US>Belarus</en-US>
-		<en-UK>Belarus</en-UK>
-		<sk-SK>Bielorusko</sk-SK>
-	</string>
-
-	<string id="country.BZ">
-		<en-US>Belize</en-US>
-		<en-UK>Belize</en-UK>
-		<sk-SK>Belize</sk-SK>
-	</string>
-
-	<string id="country.CA">
-		<en-US>Canada</en-US>
-		<en-UK>Canada</en-UK>
-		<sk-SK>Kanada</sk-SK>
-	</string>
-
-	<string id="country.CC">
-		<en-US>Cocos Islands</en-US>
-		<en-UK>Cocos Islands</en-UK>
-		<sk-SK>Kokosové ostrovy</sk-SK>
-	</string>
-
-	<string id="country.CD">
-		<en-US>The democratic republic of Congo</en-US>
-		<en-UK>The democratic republic of Congo</en-UK>
-		<sk-SK>Konžská demokratická republika</sk-SK>
-	</string>
-
-	<string id="country.CF">
-		<en-US>Central African Republic</en-US>
-		<en-UK>Central African Republic</en-UK>
-		<sk-SK>Stredoafrická republika</sk-SK>
-	</string>
-
-	<string id="country.CG">
-		<en-US>Congo</en-US>
-		<en-UK>Congo</en-UK>
-		<sk-SK>Kongo</sk-SK>
-	</string>
-
-	<string id="country.CH">
-		<en-US>Switzerland</en-US>
-		<en-UK>Switzerland</en-UK>
-		<sk-SK>Švajčiarsko</sk-SK>
-	</string>
-
-	<string id="country.CI">
-		<en-US>Cote D'Ivoire</en-US>
-		<en-UK>Cote D'Ivoire</en-UK>
-		<sk-SK>Pobrežie slonoviny</sk-SK>
-	</string>
-
-	<string id="country.CK">
-		<en-US>Cook Islands</en-US>
-		<en-UK>Cook Islands</en-UK>
-		<sk-SK>Cookove ostrovy</sk-SK>
-	</string>
-
-	<string id="country.CL">
-		<en-US>Chile</en-US>
-		<en-UK>Chile</en-UK>
-		<sk-SK>Čile</sk-SK>
-	</string>
-
-	<string id="country.CM">
-		<en-US>Cameroon</en-US>
-		<en-UK>Cameroon</en-UK>
-		<sk-SK>Kamerun</sk-SK>
-	</string>
-
-	<string id="country.CN">
-		<en-US>China</en-US>
-		<en-UK>China</en-UK>
-		<sk-SK>Čína</sk-SK>
-	</string>
-
-	<string id="country.CO">
-		<en-US>Columbia</en-US>
-		<en-UK>Columbia</en-UK>
-		<sk-SK>Kolumbia</sk-SK>
-	</string>
-
-	<string id="country.CR">
-		<en-US>Costa Rica</en-US>
-		<en-UK>Costa Rica</en-UK>
-		<sk-SK>Kostarika</sk-SK>
-	</string>
-
-	<string id="country.CS">
-		<en-US>Serbia</en-US>
-		<en-UK>Serbia</en-UK>
-		<sk-SK>Srbsko, Čierna Hora</sk-SK>
-	</string>
-
-	<string id="country.CU">
-		<en-US>Cuba</en-US>
-		<en-UK>Cuba</en-UK>
-		<sk-SK>Kuba</sk-SK>
-	</string>
-
-	<string id="country.CV">
-		<en-US>Cape Verde</en-US>
-		<en-UK>Cape Verde</en-UK>
-		<sk-SK>Kapverdy</sk-SK>
-	</string>
-
-	<string id="country.CX">
-		<en-US>Christmas Island</en-US>
-		<en-UK>Christmas Island</en-UK>
-		<sk-SK>Vianočný ostrov</sk-SK>
-	</string>
-
-	<string id="country.CY">
-		<en-US>Cyprus</en-US>
-		<en-UK>Cyprus</en-UK>
-		<sk-SK>Cyprus</sk-SK>
-		<cs-CZ>Kypr</cs-CZ>
-		<de-DE>Zypern</de-DE>
-		<hu-HU>Ciprus</hu-HU>
-		<pl-PL>Cypr</pl-PL>
-		<pt-PT>Chipre</pt-PT>
-		<es-ES>Chipre</es-ES>
-		<sl-SI>Ciper</sl-SI>
-		<ro-RO>Cipru</ro-RO>
-		<fr-FR>Chypre</fr-FR>
-		<hr-HR>Kipar</hr-HR>
-		<bg-BG>Кипър</bg-BG>
-		<nl-NL>Cyprus</nl-NL>
-		<it-IT>Cipro</it-IT>
-	</string>
-
-	<string id="country.CZ">
-		<en-US>CzechRepublic</en-US>
-		<en-UK>CzechRepublic</en-UK>
-		<sk-SK>Česká republika</sk-SK>
-		<cs-CZ>Česká republika</cs-CZ>
-		<de-DE>Tschechien</de-DE>
-		<hu-HU>Csehország</hu-HU>
-		<pl-PL>Czechy</pl-PL>
-		<pt-PT>República Checa</pt-PT>
-		<es-ES>República Checa</es-ES>
-		<sl-SI>Češka</sl-SI>
-		<ro-RO>Republica Cehă</ro-RO>
-		<fr-FR>République Tchèque</fr-FR>
-		<hr-HR>Češka Republika</hr-HR>
-		<bg-BG>Чехия</bg-BG>
-		<nl-NL>Tsjechische Republiek</nl-NL>
-		<it-IT>Republica Ceca</it-IT>
-	</string>
-
-	<string id="country.DE">
-		<en-US>Germany</en-US>
-		<en-UK>Germany</en-UK>
-		<sk-SK>Nemecko</sk-SK>
-		<cs-CZ>Německo</cs-CZ>
-		<de-DE>Deutschland</de-DE>
-		<hu-HU>Németország</hu-HU>
-		<pl-PL>Niemcy</pl-PL>
-		<pt-PT>Alemanha</pt-PT>
-		<es-ES>Alemania</es-ES>
-		<sl-SI>Nemčija</sl-SI>
-		<ro-RO>Germania</ro-RO>
-		<fr-FR>Allemagne</fr-FR>
-		<hr-HR>Njemačka</hr-HR>
-		<bg-BG>Германия</bg-BG>
-		<nl-NL>Duitsland</nl-NL>
-		<it-IT>Germania</it-IT>
-	</string>
-
-	<string id="country.DJ">
-		<en-US>Djibouti</en-US>
-		<en-UK>Djibouti</en-UK>
-		<sk-SK>Džibutsko</sk-SK>
-	</string>
-
-	<string id="country.DK">
-		<en-US>Denmark</en-US>
-		<en-UK>Denmark</en-UK>
-		<sk-SK>Dánsko</sk-SK>
-		<cs-CZ>Dánsko</cs-CZ>
-		<de-DE>Dänemark</de-DE>
-		<hu-HU>Dánia</hu-HU>
-		<pl-PL>Dania</pl-PL>
-		<pt-PT>Dinamarca</pt-PT>
-		<es-ES>Dinamarca</es-ES>
-		<sl-SI>Danska</sl-SI>
-		<ro-RO>Danemarca</ro-RO>
-		<fr-FR>Danemark</fr-FR>
-		<hr-HR>Danska</hr-HR>
-		<bg-BG>Дания</bg-BG>
-		<nl-NL>Denemarken</nl-NL>
-		<it-IT>Danimarka</it-IT>
-	</string>
-
-	<string id="country.DM">
-		<en-US>Dominica</en-US>
-		<en-UK>Dominica</en-UK>
-		<sk-SK>Dominika</sk-SK>
-	</string>
-
-	<string id="country.DO">
-		<en-US>Dominican Republic</en-US>
-		<en-UK>Dominican Republic</en-UK>
-		<sk-SK>Dominikánska republika</sk-SK>
-	</string>
-
-	<string id="country.DZ">
-		<en-US>Algeria</en-US>
-		<en-UK>Algeria</en-UK>
-		<sk-SK>Alžírsko</sk-SK>
-	</string>
-
-	<string id="country.EC">
-		<en-US>Ecuador</en-US>
-		<en-UK>Ecuador</en-UK>
-		<sk-SK>Ekvádor</sk-SK>
-	</string>
-
-	<string id="country.EE">
-		<en-US>Estonia</en-US>
-		<en-UK>Estonia</en-UK>
-		<sk-SK>Estónsko</sk-SK>
-		<cs-CZ>Estonsko</cs-CZ>
-		<de-DE>Estland</de-DE>
-		<hu-HU>Észtország</hu-HU>
-		<pl-PL>Estonia</pl-PL>
-		<pt-PT>Estônia</pt-PT>
-		<es-ES>Estonia</es-ES>
-		<sl-SI>Estonija</sl-SI>
-		<ro-RO>Estonia</ro-RO>
-		<fr-FR>Estonie</fr-FR>
-		<hr-HR>Estonija</hr-HR>
-		<bg-BG>Естония</bg-BG>
-		<nl-NL>Estland</nl-NL>
-		<it-IT>Estonia</it-IT>
-	</string>
-
-	<string id="country.EG">
-		<en-US>Egypt</en-US>
-		<en-UK>Egypt</en-UK>
-		<sk-SK>Egypt</sk-SK>
-	</string>
-
-	<string id="country.EH">
-		<en-US>Western Sahara</en-US>
-		<en-UK>Western Sahara</en-UK>
-		<sk-SK>Západná Sahara</sk-SK>
-	</string>
-
-	<string id="country.ER">
-		<en-US>Eritrea</en-US>
-		<en-UK>Eritrea</en-UK>
-		<sk-SK>Eritrea</sk-SK>
-	</string>
-
-	<string id="country.ES">
-		<en-US>Spain</en-US>
-		<en-UK>Spain</en-UK>
-		<sk-SK>Španielsko</sk-SK>
-		<cs-CZ>Španělsko</cs-CZ>
-		<de-DE>Spanien</de-DE>
-		<hu-HU>Spanyolország</hu-HU>
-		<pl-PL>Hiszpania</pl-PL>
-		<pt-PT>Espanha</pt-PT>
-		<es-ES>España</es-ES>
-		<sl-SI>Španija</sl-SI>
-		<ro-RO>Spania</ro-RO>
-		<fr-FR>l'Espagne</fr-FR>
-		<hr-HR>Španija</hr-HR>
-		<bg-BG>Испания</bg-BG>
-		<nl-NL>Spanje</nl-NL>
-		<it-IT>Spagna</it-IT>
-	</string>
-
-	<string id="country.ET">
-		<en-US>Etiopia</en-US>
-		<en-UK>Etiopia</en-UK>
-		<sk-SK>Etiópia</sk-SK>
-	</string>
-
-	<string id="country.FI">
-		<en-US>Finland</en-US>
-		<en-UK>Finland</en-UK>
-		<sk-SK>Fínsko</sk-SK>
-		<cs-CZ>Finsko</cs-CZ>
-		<de-DE>Finnland</de-DE>
-		<hu-HU>Finnország</hu-HU>
-		<pl-PL>Finlandia</pl-PL>
-		<pt-PT>Finlândia</pt-PT>
-		<es-ES>Finlandia</es-ES>
-		<sl-SI>Finska</sl-SI>
-		<ro-RO>Finlanda</ro-RO>
-		<fr-FR>Finlande</fr-FR>
-		<hr-HR>Finska</hr-HR>
-		<bg-BG>Финландия</bg-BG>
-		<nl-NL>Finland</nl-NL>
-		<it-IT>Finland</it-IT>
-	</string>
-	
-	<string id="country.FJ">
-		<en-US>Fiji</en-US>
-		<en-UK>Fiji</en-UK>
-		<sk-SK>Fidži</sk-SK>
-	</string>
-
-	<string id="country.FK">
-		<en-US>Falkland Islands</en-US>
-		<en-UK>Falkland Islands</en-UK>
-		<sk-SK>Falklandy (Malvíny)</sk-SK>
-	</string>
-
-	<string id="country.FM">
-		<en-US>Micronesia</en-US>
-		<en-UK>Micronesia</en-UK>
-		<sk-SK>Mikronézia</sk-SK>
-	</string>
-
-	<string id="country.FO">
-		<en-US>Faroe Islands</en-US>
-		<en-UK>Faroe Islands</en-UK>
-		<sk-SK>Faerské ostrovy</sk-SK>
-	</string>
-
-	<string id="country.FR">
-		<en-US>France</en-US>
-		<en-UK>France</en-UK>
-		<sk-SK>Francúzsko</sk-SK>
-		<cs-CZ>Francie</cs-CZ>
-		<de-DE>Frankreich</de-DE>
-		<hu-HU>Franciaország</hu-HU>
-		<pl-PL>Francja</pl-PL>
-		<pt-PT>França</pt-PT>
-		<es-ES>Francia</es-ES>
-		<sl-SI>Francija</sl-SI>
-		<ro-RO>Franţa</ro-RO>
-		<fr-FR>France</fr-FR>
-		<hr-HR>Francuska</hr-HR>
-		<bg-BG>Франция</bg-BG>
-		<nl-NL>Frankrijk</nl-NL>
-		<it-IT>Francia</it-IT>
-	</string>
-
-	<string id="country.GA">
-		<en-US>Gabon</en-US>
-		<en-UK>Gabon</en-UK>
-		<sk-SK>Gabon</sk-SK>
-	</string>
-
-	<string id="country.GB">
-		<en-US>United Kingdom</en-US>
-		<en-UK>United Kingdom</en-UK>
-		<sk-SK>Veľká Británia</sk-SK>
-		<cs-CZ>Spojené království</cs-CZ>
-		<de-DE>Großbritannien</de-DE>
-		<hu-HU>Nagy-Britannia</hu-HU>
-		<pl-PL>Wielka Brytania</pl-PL>
-		<pt-PT>Grã Bretanha</pt-PT>
-		<es-ES>Gran Bretaña</es-ES>
-		<sl-SI>Velika Britanija</sl-SI>
-		<ro-RO>Marea Britanie</ro-RO>
-		<fr-FR>Grande Bretagne</fr-FR>
-		<hr-HR>Ujedinjeno Kraljevstvo</hr-HR>
-		<bg-BG>Великобритания</bg-BG>
-		<nl-NL>Verenigd Koningkrijk</nl-NL>
-		<it-IT>Gran Bretagna</it-IT>
-	</string>
-
-	<string id="country.GD">
-		<en-US>Grenada</en-US>
-		<en-UK>Grenada</en-UK>
-		<sk-SK>Grenada</sk-SK>
-	</string>
-
-	<string id="country.GE">
-		<en-US>Georgia</en-US>
-		<en-UK>Georgia</en-UK>
-		<sk-SK>Gruzínsko</sk-SK>
-	</string>
-
-	<string id="country.GF">
-		<en-US>French Guiana</en-US>
-		<en-UK>French Guiana</en-UK>
-		<sk-SK>Francúzska Guinea</sk-SK>
-	</string>
-
-	<string id="country.GH">
-		<en-US>Ghana</en-US>
-		<en-UK>Ghana</en-UK>
-		<sk-SK>Ghana</sk-SK>
-	</string>
-
-	<string id="country.GI">
-		<en-US>Gibraltar</en-US>
-		<en-UK>Gibraltar</en-UK>
-		<sk-SK>Gibraltár</sk-SK>
-	</string>
-
-	<string id="country.GL">
-		<en-US>Greenland</en-US>
-		<en-UK>Greenland</en-UK>
-		<sk-SK>Grónsko</sk-SK>
-		<hr-HR>Grčka</hr-HR>
-		<bg-BG>Гърция</bg-BG>
-	</string>
-
-	<string id="country.GM">
-		<en-US>Gambia</en-US>
-		<en-UK>Gambia</en-UK>
-		<sk-SK>Gambia</sk-SK>
-	</string>
-
-	<string id="country.GN">
-		<en-US>Guinea</en-US>
-		<en-UK>Guinea</en-UK>
-		<sk-SK>Guinea</sk-SK>
-	</string>
-
-	<string id="country.GP">
-		<en-US>Guadeloupe</en-US>
-		<en-UK>Guadeloupe</en-UK>
-		<sk-SK>Guadeloupe</sk-SK>
-	</string>
-
-	<string id="country.GQ">
-		<en-US>Equatorial Guinea</en-US>
-		<en-UK>Equatorial Guinea</en-UK>
-		<sk-SK>Rovníková Guinea</sk-SK>
-	</string>
-
-	<string id="country.GR">
-		<en-US>Greece</en-US>
-		<en-UK>Greece</en-UK>
-		<sk-SK>Grécko</sk-SK>
-		<cs-CZ>Řecko</cs-CZ>
-		<de-DE>Griechenland</de-DE>
-		<hu-HU>Görögország</hu-HU>
-		<pl-PL>Grecja</pl-PL>
-		<pt-PT>Grécia</pt-PT>
-		<es-ES>Grecia</es-ES>
-		<sl-SI>Grčija</sl-SI>
-		<ro-RO>Grecia</ro-RO>
-		<fr-FR>Grèce</fr-FR>
-		<hr-HR>Grčka</hr-HR>
-		<bg-BG>Гърция</bg-BG>
-		<nl-NL>Griekenland</nl-NL>
-		<it-IT>Grecia</it-IT>
-	</string>
-
-	<string id="country.GS">
-		<en-US>South Georgia and The South Sandwich Islands</en-US>
-		<en-UK>South Georgia and The South Sandwich Islands</en-UK>
-		<sk-SK>Južná Georgia a Južné Sandwichove ostrovy</sk-SK>
-	</string>
-
-	<string id="country.GT">
-		<en-US>Guatemala</en-US>
-		<en-UK>Guatemala</en-UK>
-		<sk-SK>Guatemala</sk-SK>
-	</string>
-
-	<string id="country.GU">
-		<en-US>Guam</en-US>
-		<en-UK>Guam</en-UK>
-		<sk-SK>Guam</sk-SK>
-	</string>
-
-	<string id="country.GW">
-		<en-US>Guinea-Bissau</en-US>
-		<en-UK>Guinea-Bissau</en-UK>
-		<sk-SK>Guinea-Bissau</sk-SK>
-	</string>
-
-	<string id="country.GY">
-		<en-US>Guyana</en-US>
-		<en-UK>Guyana</en-UK>
-		<sk-SK>Guyana</sk-SK>
-	</string>
-
-	<string id="country.HK">
-		<en-US>Hongkong</en-US>
-		<en-UK>Hongkong</en-UK>
-		<sk-SK>Hongkong</sk-SK>
-	</string>
-
-	<string id="country.HM">
-		<en-US>Heard Island and McDonald Islands</en-US>
-		<en-UK>Heard Island and McDonald Islands</en-UK>
-		<sk-SK>Heardov ostrov a Macdonaldove ostrovy</sk-SK>
-	</string>
-
-	<string id="country.HN">
-		<en-US>Honduras</en-US>
-		<en-UK>Honduras</en-UK>
-		<sk-SK>Honduras</sk-SK>
-	</string>
-
-	<string id="country.HR">
-		<en-US>Croatia</en-US>
-		<en-UK>Croatia</en-UK>
-		<sk-SK>Chorvátsko</sk-SK>
-		<cs-CZ>Chorvatsko</cs-CZ>
-		<de-DE>Kroatien</de-DE>
-		<hu-HU>Horvátország</hu-HU>
-		<pl-PL>Chorwacja</pl-PL>
-		<pt-PT>Croácia</pt-PT>
-		<es-ES>Croacia</es-ES>
-		<sl-SI>Hrvaška</sl-SI>
-		<ro-RO>Croaţia</ro-RO>
-		<fr-FR>Croatie</fr-FR>
-		<hr-HR>Hrvatska</hr-HR>
-		<bg-BG>Хърватия</bg-BG>
-		<nl-NL>Kroatië</nl-NL>
-	</string>
-
-	<string id="country.HT">
-		<en-US>Haiti</en-US>
-		<en-UK>Haiti</en-UK>
-		<sk-SK>Haiti</sk-SK>
-	</string>
-
-	<string id="country.HU">
-		<en-US>Hungary</en-US>
-		<en-UK>Hungary</en-UK>
-		<sk-SK>Maďarsko</sk-SK>
-		<cs-CZ>Maďarsko</cs-CZ>
-		<de-DE>Ungarn</de-DE>
-		<hu-HU>Magyarország</hu-HU>
-		<pl-PL>Węgry</pl-PL>
-		<pt-PT>Hungria</pt-PT>
-		<es-ES>Hungría</es-ES>
-		<sl-SI>Madžarska</sl-SI>
-		<ro-RO>Ungaria</ro-RO>
-		<fr-FR>Hongrie</fr-FR>
-		<hr-HR>Mađarska</hr-HR>
-		<bg-BG>Унгария</bg-BG>
-		<nl-NL>Hongarije</nl-NL>
-		<it-IT>Ungheria</it-IT>
-	</string>
-
-	<string id="country.ID">
-		<en-US>Indonesia</en-US>
-		<en-UK>Indonesia</en-UK>
-		<sk-SK>Indonézia</sk-SK>
-	</string>
-
-	<string id="country.IE">
-		<en-US>Ireland</en-US>
-		<en-UK>Ireland</en-UK>
-		<sk-SK>Írsko</sk-SK>
-		<cs-CZ>Irsko</cs-CZ>
-		<de-DE>Irland</de-DE>
-		<hu-HU>Írország</hu-HU>
-		<pl-PL>Irlandia</pl-PL>
-		<pt-PT>Irlanda</pt-PT>
-		<es-ES>Irlanda</es-ES>
-		<sl-SI>Irska</sl-SI>
-		<ro-RO>Irlanda</ro-RO>
-		<fr-FR>Irlande</fr-FR>
-		<hr-HR>Irska</hr-HR>
-		<bg-BG>Ирландия</bg-BG>
-		<nl-NL>Ierland</nl-NL>
-		<it-IT>Irlanda</it-IT>
-	</string>
-
-	<string id="country.IL">
-		<en-US>Israel</en-US>
-		<en-UK>Israel</en-UK>
-		<sk-SK>Izrael</sk-SK>
-		<hr-HR>Italija</hr-HR>
-		<bg-BG>Италия</bg-BG>
-	</string>
-
-	<string id="country.IN">
-		<en-US>India</en-US>
-		<en-UK>India</en-UK>
-		<sk-SK>India</sk-SK>
-	</string>
-
-	<string id="country.IO">
-		<en-US>British Indian Ocean Territory</en-US>
-		<en-UK>British Indian Ocean Territory</en-UK>
-		<sk-SK>Britské indooceánske územie</sk-SK>
-	</string>
-
-	<string id="country.IQ">
-		<en-US>Iraq</en-US>
-		<en-UK>Iraq</en-UK>
-		<sk-SK>Irak</sk-SK>
-	</string>
-
-	<string id="country.IR">
-		<en-US>Iran</en-US>
-		<en-UK>Iran</en-UK>
-		<sk-SK>Irán</sk-SK>
-	</string>
-
-	<string id="country.IS">
-		<en-US>Iceland</en-US>
-		<en-UK>Iceland</en-UK>
-		<sk-SK>Island</sk-SK>
-	</string>
-
-	<string id="country.IT">
-		<en-US>Italy</en-US>
-		<en-UK>Italy</en-UK>
-		<sk-SK>Taliansko</sk-SK>
-		<cs-CZ>Itálie</cs-CZ>
-		<de-DE>Italien</de-DE>
-		<hu-HU>Olaszország</hu-HU>
-		<pl-PL>Włochy</pl-PL>
-		<pt-PT>Itália</pt-PT>
-		<es-ES>Italia</es-ES>
-		<sl-SI>Italija</sl-SI>
-		<ro-RO>Italia</ro-RO>
-		<fr-FR>Italie</fr-FR>
-		<hr-HR>Italija</hr-HR>
-		<bg-BG>Италия</bg-BG>
-		<nl-NL>Italië</nl-NL>
-		<it-IT>Italia</it-IT>
-	</string>
-
-	<string id="country.JM">
-		<en-US>Jamaica</en-US>
-		<en-UK>Jamaica</en-UK>
-		<sk-SK>Jamajka</sk-SK>
-	</string>
-
-	<string id="country.JO">
-		<en-US>Jordan</en-US>
-		<en-UK>Jordan</en-UK>
-		<sk-SK>Jordánsko</sk-SK>
-	</string>
-
-	<string id="country.JP">
-		<en-US>Japan</en-US>
-		<en-UK>Japan</en-UK>
-		<sk-SK>Japonsko</sk-SK>
-	</string>
-
-	<string id="country.KE">
-		<en-US>Kenya</en-US>
-		<en-UK>Kenya</en-UK>
-		<sk-SK>Keňa</sk-SK>
-	</string>
-
-	<string id="country.KG">
-		<en-US>Kyrgyzstan</en-US>
-		<en-UK>Kyrgyzstan</en-UK>
-		<sk-SK>Kirgizsko</sk-SK>
-	</string>
-
-	<string id="country.KH">
-		<en-US>Cambodia</en-US>
-		<en-UK>Cambodia</en-UK>
-		<sk-SK>Kambodža</sk-SK>
-	</string>
-
-	<string id="country.KI">
-		<en-US>Kiribati</en-US>
-		<en-UK>Kiribati</en-UK>
-		<sk-SK>Kiribati</sk-SK>
-	</string>
-
-	<string id="country.KM">
-		<en-US>Comoros</en-US>
-		<en-UK>Comoros</en-UK>
-		<sk-SK>Komory</sk-SK>
-	</string>
-
-	<string id="country.KN">
-		<en-US>Saint Kitts and Nevis</en-US>
-		<en-UK>Saint Kitts and Nevis</en-UK>
-		<sk-SK>Svätý Krištof a Nevis</sk-SK>
-	</string>
-
-	<string id="country.KP">
-		<en-US>Korea, Democratic people's republic of</en-US>
-		<en-UK>Korea, Democratic people's republic of</en-UK>
-		<sk-SK>Kórejská ľudovodemokratická republika</sk-SK>
-	</string>
-
-	<string id="country.KR">
-		<en-US>Korea, Republic of</en-US>
-		<en-UK>Korea, Republic of</en-UK>
-		<sk-SK>Kórejská republika</sk-SK>
-	</string>
-
-	<string id="country.KW">
-		<en-US>Kuwait</en-US>
-		<en-UK>Kuwait</en-UK>
-		<sk-SK>Kuvajt</sk-SK>
-	</string>
-
-	<string id="country.KY">
-		<en-US>Cayman Islands</en-US>
-		<en-UK>Cayman Islands</en-UK>
-		<sk-SK>Kajmanské ostrovy</sk-SK>
-	</string>
-
-	<string id="country.KZ">
-		<en-US>Kazakhstan</en-US>
-		<en-UK>Kazakhstan</en-UK>
-		<sk-SK>Kazachstan</sk-SK>
-	</string>
-
-	<string id="country.LA">
-		<en-US>Laos</en-US>
-		<en-UK>Laos</en-UK>
-		<sk-SK>Laos</sk-SK>
-	</string>
-
-	<string id="country.LB">
-		<en-US>Lebanon</en-US>
-		<en-UK>Lebanon</en-UK>
-		<sk-SK>Libanon</sk-SK>
-	</string>
-
-	<string id="country.LC">
-		<en-US>Saint Lucia</en-US>
-		<en-UK>Saint Lucia</en-UK>
-		<sk-SK>Svätá Lucia</sk-SK>
-	</string>
-
-	<string id="country.LI">
-		<en-US>Liechtenstein</en-US>
-		<en-UK>Liechtenstein</en-UK>
-		<sk-SK>Lichtenštajnsko</sk-SK>
-	</string>
-
-	<string id="country.LK">
-		<en-US>Sri Lanka</en-US>
-		<en-UK>Sri Lanka</en-UK>
-		<sk-SK>Srí Lanka</sk-SK>
-	</string>
-
-	<string id="country.LR">
-		<en-US>Liberia</en-US>
-		<en-UK>Liberia</en-UK>
-		<sk-SK>Libéria</sk-SK>
-	</string>
-
-	<string id="country.LS">
-		<en-US>Lesotho</en-US>
-		<en-UK>Lesotho</en-UK>
-		<sk-SK>Lesotho</sk-SK>
-	</string>
-
-	<string id="country.LT">
-		<en-US>Lithuania</en-US>
-		<en-UK>Lithuania</en-UK>
-		<sk-SK>Litva</sk-SK>
-		<cs-CZ>Litva</cs-CZ>
-		<de-DE>Litauen</de-DE>
-		<hu-HU>Litvánia</hu-HU>
-		<pl-PL>Litwa</pl-PL>
-		<pt-PT>Lituânia</pt-PT>
-		<es-ES>Lituania</es-ES>
-		<sl-SI>Litva</sl-SI>
-		<ro-RO>Lituania</ro-RO>
-		<fr-FR>Lituanie</fr-FR>
-		<hr-HR>Litvanija</hr-HR>
-		<bg-BG>Литва</bg-BG>
-		<nl-NL>Litouwen</nl-NL>
-		<it-IT>Lituania</it-IT>
-	</string>
-
-	<string id="country.LU">
-		<en-US>Luxembourg</en-US>
-		<en-UK>Luxembourg</en-UK>
-		<sk-SK>Luxembursko</sk-SK>
-		<cs-CZ>Lucembursko</cs-CZ>
-		<de-DE>Luxemburg</de-DE>
-		<hu-HU>Luxemburg</hu-HU>
-		<pl-PL>Luksemburg</pl-PL>
-		<pt-PT>Luxemburgo</pt-PT>
-		<es-ES>Luxemburgo</es-ES>
-		<sl-SI>Luxemburg</sl-SI>
-		<ro-RO>Luxemburg</ro-RO>
-		<fr-FR>Luxembourg</fr-FR>
-		<hr-HR>Luksemburg</hr-HR>
-		<bg-BG>Люксембург</bg-BG>
-		<nl-NL>Luxemburg</nl-NL>
-		<it-IT>Lussemburgo</it-IT>
-	</string>
-
-	<string id="country.LV">
-		<en-US>Latvia</en-US>
-		<en-UK>Latvia</en-UK>
-		<sk-SK>Lotyšsko</sk-SK>
-		<cs-CZ>Lotyšsko</cs-CZ>
-		<de-DE>Lettland</de-DE>
-		<hu-HU>Lettország</hu-HU>
-		<pl-PL>Łotwa</pl-PL>
-		<pt-PT>Letônia</pt-PT>
-		<es-ES>Letonia</es-ES>
-		<sl-SI>Latvija</sl-SI>
-		<ro-RO>Letonia</ro-RO>
-		<fr-FR>Lettonie</fr-FR>
-		<hr-HR>Letonija</hr-HR>
-		<bg-BG>Латвия</bg-BG>
-		<nl-NL>Letland</nl-NL>
-		<it-IT>Lettonia</it-IT>
-	</string>
-
-	<string id="country.LY">
-		<en-US>Libya</en-US>
-		<en-UK>Libya</en-UK>
-		<sk-SK>Líbya</sk-SK>
-	</string>
-
-	<string id="country.MA">
-		<en-US>Morocco</en-US>
-		<en-UK>Morocco</en-UK>
-		<sk-SK>Maroko</sk-SK>
-	</string>
-
-	<string id="country.MC">
-		<en-US>Monaco</en-US>
-		<en-UK>Monaco</en-UK>
-		<sk-SK>Monako</sk-SK>
-	</string>
-
-	<string id="country.MD">
-		<en-US>Moldova</en-US>
-		<en-UK>Moldova</en-UK>
-		<sk-SK>Moldavsko</sk-SK>
-	</string>
-
-	<string id="country.MG">
-		<en-US>Madagascar</en-US>
-		<en-UK>Madagascar</en-UK>
-		<sk-SK>Madagaskar</sk-SK>
-	</string>
-
-	<string id="country.MH">
-		<en-US>Marshall Islands</en-US>
-		<en-UK>Marshall Islands</en-UK>
-		<sk-SK>Marshallove ostrovy</sk-SK>
-	</string>
-
-	<string id="country.MK">
-		<en-US>Macedonia</en-US>
-		<en-UK>Macedonia</en-UK>
-		<sk-SK>Macedónsko</sk-SK>
-	</string>
-
-	<string id="country.ML">
-		<en-US>Mali</en-US>
-		<en-UK>Mali</en-UK>
-		<sk-SK>Mali</sk-SK>
-	</string>
-
-	<string id="country.MM">
-		<en-US>Myanmar</en-US>
-		<en-UK>Myanmar</en-UK>
-		<sk-SK>Mjanmarsko</sk-SK>
-	</string>
-
-	<string id="country.MN">
-		<en-US>Mongolia</en-US>
-		<en-UK>Mongolia</en-UK>
-		<sk-SK>Mongolsko</sk-SK>
-	</string>
-
-	<string id="country.MO">
-		<en-US>Macao</en-US>
-		<en-UK>Macao</en-UK>
-		<sk-SK>Macao</sk-SK>
-	</string>
-
-	<string id="country.MP">
-		<en-US>Northern Mariana Islands</en-US>
-		<en-UK>Northern Mariana Islands</en-UK>
-		<sk-SK>Severné Mariány</sk-SK>
-	</string>
-
-	<string id="country.MQ">
-		<en-US>Martinique</en-US>
-		<en-UK>Martinique</en-UK>
-		<sk-SK>Martinik</sk-SK>
-	</string>
-
-	<string id="country.MR">
-		<en-US>Mauritania</en-US>
-		<en-UK>Mauritania</en-UK>
-		<sk-SK>Mauritánia</sk-SK>
-	</string>
-
-	<string id="country.MS">
-		<en-US>Montserrat</en-US>
-		<en-UK>Montserrat</en-UK>
-		<sk-SK>Montserat</sk-SK>
-	</string>
-
-	<string id="country.MT">
-		<en-US>Malta</en-US>
-		<en-UK>Malta</en-UK>
-		<sk-SK>Malta</sk-SK>
-		<cs-CZ>Malta</cs-CZ>
-		<de-DE>Malta</de-DE>
-		<hu-HU>Málta</hu-HU>
-		<pl-PL>Malta</pl-PL>
-		<pt-PT>Malta</pt-PT>
-		<es-ES>Malta</es-ES>
-		<sl-SI>Malta</sl-SI>
-		<ro-RO>Malta</ro-RO>
-		<fr-FR>Malte</fr-FR>
-		<hr-HR>Malta</hr-HR>
-		<bg-BG>Малта</bg-BG>
-		<nl-NL>Malta</nl-NL>
-		<it-IT>Malta</it-IT>
-	</string>
-
-	<string id="country.MU">
-		<en-US>Mauritius</en-US>
-		<en-UK>Mauritius</en-UK>
-		<sk-SK>Maurícius</sk-SK>
-	</string>
-
-	<string id="country.MV">
-		<en-US>Maldives</en-US>
-		<en-UK>Maldives</en-UK>
-		<sk-SK>Maldivy</sk-SK>
-	</string>
-
-	<string id="country.MW">
-		<en-US>Malawi</en-US>
-		<en-UK>Malawi</en-UK>
-		<sk-SK>Malawi</sk-SK>
-	</string>
-
-	<string id="country.MX">
-		<en-US>Mexico</en-US>
-		<en-UK>Mexico</en-UK>
-		<sk-SK>Mexiko</sk-SK>
-	</string>
-
-	<string id="country.MY">
-		<en-US>Malaysia</en-US>
-		<en-UK>Malaysia</en-UK>
-		<sk-SK>Malajzia</sk-SK>
-	</string>
-
-	<string id="country.MZ">
-		<en-US>Mozambique</en-US>
-		<en-UK>Mozambique</en-UK>
-		<sk-SK>Mozambik</sk-SK>
-	</string>
-
-	<string id="country.NA">
-		<en-US>Namibia</en-US>
-		<en-UK>Namibia</en-UK>
-		<sk-SK>Namíbia</sk-SK>
-	</string>
-
-	<string id="country.NC">
-		<en-US>New Caledonia</en-US>
-		<en-UK>New Caledonia</en-UK>
-		<sk-SK>Nová Kaledónia</sk-SK>
-	</string>
-
-	<string id="country.NE">
-		<en-US>Niger</en-US>
-		<en-UK>Niger</en-UK>
-		<sk-SK>Niger</sk-SK>
-	</string>
-
-	<string id="country.NF">
-		<en-US>Norfolk</en-US>
-		<en-UK>Norfolk</en-UK>
-		<sk-SK>Norfolk</sk-SK>
-	</string>
-
-	<string id="country.NG">
-		<en-US>Nigeria</en-US>
-		<en-UK>Nigeria</en-UK>
-		<sk-SK>Nigéria</sk-SK>
-	</string>
-
-	<string id="country.NI">
-		<en-US>Nicaragua</en-US>
-		<en-UK>Nicaragua</en-UK>
-		<sk-SK>Nikaragua</sk-SK>
-	</string>
-
-	<string id="country.NL">
-		<en-US>Netherlands</en-US>
-		<en-UK>Netherlands</en-UK>
-		<sk-SK>Holandsko</sk-SK>
-		<cs-CZ>Nizozemí</cs-CZ>
-		<de-DE>Niederlande</de-DE>
-		<hu-HU>Hollandia</hu-HU>
-		<pl-PL>Holandia</pl-PL>
-		<pt-PT>Países Baixos</pt-PT>
-		<es-ES>Países Bajos</es-ES>
-		<sl-SI>Nizozemska</sl-SI>
-		<ro-RO>Olanda</ro-RO>
-		<fr-FR>Pays-Bas</fr-FR>
-		<hr-HR>Nizozemska</hr-HR>
-		<bg-BG>Холандия</bg-BG>
-		<nl-NL>Nederland</nl-NL>
-		<it-IT>Olanda</it-IT>
-	</string>
-
-	<string id="country.NO">
-		<en-US>Norway</en-US>
-		<en-UK>Norway</en-UK>
-		<sk-SK>Nórsko</sk-SK>
-	</string>
-
-	<string id="country.NP">
-		<en-US>Nepal</en-US>
-		<en-UK>Nepal</en-UK>
-		<sk-SK>Nepál</sk-SK>
-	</string>
-
-	<string id="country.NR">
-		<en-US>Nauru</en-US>
-		<en-UK>Nauru</en-UK>
-		<sk-SK>Nauru</sk-SK>
-	</string>
-
-	<string id="country.NU">
-		<en-US>Niue</en-US>
-		<en-UK>Niue</en-UK>
-		<sk-SK>Niue</sk-SK>
-	</string>
-
-	<string id="country.NZ">
-		<en-US>New Zealand</en-US>
-		<en-UK>New Zealand</en-UK>
-		<sk-SK>Nový Zéland</sk-SK>
-	</string>
-
-	<string id="country.OM">
-		<en-US>Oman</en-US>
-		<en-UK>Oman</en-UK>
-		<sk-SK>Omán</sk-SK>
-	</string>
-
-	<string id="country.PA">
-		<en-US>Panama</en-US>
-		<en-UK>Panama</en-UK>
-		<sk-SK>Panama</sk-SK>
-	</string>
-
-	<string id="country.PE">
-		<en-US>Peru</en-US>
-		<en-UK>Peru</en-UK>
-		<sk-SK>Peru</sk-SK>
-	</string>
-
-	<string id="country.PF">
-		<en-US>French Polynesia</en-US>
-		<en-UK>French Polynesia</en-UK>
-		<sk-SK>Francúzska Polynézia</sk-SK>
-	</string>
-
-	<string id="country.PG">
-		<en-US>Papua New Guinea</en-US>
-		<en-UK>Papua New Guinea</en-UK>
-		<sk-SK>Papua-Nová Guinea</sk-SK>
-	</string>
-
-	<string id="country.PH">
-		<en-US>Philippines</en-US>
-		<en-UK>Philippines</en-UK>
-		<sk-SK>Filipíny</sk-SK>
-	</string>
-
-	<string id="country.PK">
-		<en-US>Pakistan</en-US>
-		<en-UK>Pakistan</en-UK>
-		<sk-SK>Pakistan</sk-SK>
-	</string>
-
-	<string id="country.PL">
-		<en-US>Poland</en-US>
-		<en-UK>Poland</en-UK>
-		<sk-SK>Poľsko</sk-SK>
-		<cs-CZ>Polsko</cs-CZ>
-		<de-DE>Polen</de-DE>
-		<hu-HU>Lengyelország</hu-HU>
-		<pl-PL>Polska</pl-PL>
-		<pt-PT>Polônia</pt-PT>
-		<es-ES>Polonia</es-ES>
-		<sl-SI>Poljska</sl-SI>
-		<ro-RO>Polonia</ro-RO>
-		<fr-FR>Pologne</fr-FR>
-		<hr-HR>Poljska</hr-HR>
-		<bg-BG>Полша</bg-BG>
-		<nl-NL>Polen</nl-NL>
-		<it-IT>Polonia</it-IT>
-	</string>
-
-	<string id="country.PM">
-		<en-US>Saint Pierre and Miquelon</en-US>
-		<en-UK>Saint Pierre and Miquelon</en-UK>
-		<sk-SK>Svätý Pierre a Miquelon</sk-SK>
-	</string>
-
-	<string id="country.PN">
-		<en-US>Pitcairn Islands</en-US>
-		<en-UK>Pitcairn Islands</en-UK>
-		<sk-SK>Pitcairnove ostrovy</sk-SK>
-	</string>
-
-	<string id="country.PR">
-		<en-US>Puerto Rico</en-US>
-		<en-UK>Puerto Rico</en-UK>
-		<sk-SK>Portoriko</sk-SK>
-	</string>
-
-	<string id="country.PS">
-		<en-US>Palestinian Territory</en-US>
-		<en-UK>Palestinian Territory</en-UK>
-		<sk-SK>Palestína</sk-SK>
-	</string>
-
-	<string id="country.PT">
-		<en-US>Portugal</en-US>
-		<en-UK>Portugal</en-UK>
-		<sk-SK>Portugalsko</sk-SK>
-		<cs-CZ>Portugalsko</cs-CZ>
-		<de-DE>Portugal</de-DE>
-		<hu-HU>Portugália</hu-HU>
-		<pl-PL>Portugalia</pl-PL>
-		<pt-PT>Portugal</pt-PT>
-		<es-ES>Portugal</es-ES>
-		<sl-SI>Portugalska</sl-SI>
-		<ro-RO>Portugalia</ro-RO>
-		<fr-FR>Le Portugal</fr-FR>
-		<hr-HR>Portugal</hr-HR>
-		<bg-BG>Португалия</bg-BG>
-		<nl-NL>Portugal</nl-NL>
-		<it-IT>Portogallo</it-IT>
-	</string>
-
-	<string id="country.PW">
-		<en-US>Palau</en-US>
-		<en-UK>Palau</en-UK>
-		<sk-SK>Palau</sk-SK>
-	</string>
-
-	<string id="country.PY">
-		<en-US>Paraguay</en-US>
-		<en-UK>Paraguay</en-UK>
-		<sk-SK>Paraguaj</sk-SK>
-	</string>
-
-	<string id="country.QA">
-		<en-US>Qatar</en-US>
-		<en-UK>Qatar</en-UK>
-		<sk-SK>Katar</sk-SK>
-	</string>
-
-	<string id="country.RE">
-		<en-US>Reunion</en-US>
-		<en-UK>Reunion</en-UK>
-		<sk-SK>Réunion</sk-SK>
-	</string>
-
-	<string id="country.RO">
-		<en-US>Romania</en-US>
-		<en-UK>Romania</en-UK>
-		<sk-SK>Rumunsko</sk-SK>
-		<cs-CZ>Rumunsko</cs-CZ>
-		<de-DE>Rumänien</de-DE>
-		<hu-HU>Románia</hu-HU>
-		<pl-PL>Rumunia</pl-PL>
-		<pt-PT>Romênia</pt-PT>
-		<es-ES>Rumania</es-ES>
-		<sl-SI>Romunija</sl-SI>
-		<ro-RO>România</ro-RO>
-		<fr-FR>Roumanie</fr-FR>
-		<hr-HR>Rumunija</hr-HR>
-		<bg-BG>Румъния</bg-BG>
-		<nl-NL>Roemenië</nl-NL>
-		<it-IT>Romania</it-IT>
-	</string>
-
-	<string id="country.RS">
-		<en-US></en-US>
-		<en-UK></en-UK>
-		<sk-SK></sk-SK>
-	</string>
-
-	<string id="country.RU">
-		<en-US>Russian Federation</en-US>
-		<en-UK>Russian Federation</en-UK>
-		<sk-SK>Ruská federácia</sk-SK>
-	</string>
-
-	<string id="country.RW">
-		<en-US>Rwanda</en-US>
-		<en-UK>Rwanda</en-UK>
-		<sk-SK>Rwanda</sk-SK>
-	</string>
-
-	<string id="country.SA">
-		<en-US>Saudi Arabia</en-US>
-		<en-UK>Saudi Arabia</en-UK>
-		<sk-SK>Saudská Arábia</sk-SK>
-	</string>
-
-	<string id="country.SB">
-		<en-US>Solomon Islands</en-US>
-		<en-UK>Solomon Islands</en-UK>
-		<sk-SK>Šalamúnove ostrovy</sk-SK>
-	</string>
-
-	<string id="country.SC">
-		<en-US>Seychelles</en-US>
-		<en-UK>Seychelles</en-UK>
-		<sk-SK>Seychely</sk-SK>
-	</string>
-
-	<string id="country.SD">
-		<en-US>Sudan</en-US>
-		<en-UK>Sudan</en-UK>
-		<sk-SK>Sudán</sk-SK>
-	</string>
-
-	<string id="country.SE">
-		<en-US>Sweden</en-US>
-		<en-UK>Sweden</en-UK>
-		<sk-SK>Švédsko</sk-SK>
-		<cs-CZ>Švédsko</cs-CZ>
-		<de-DE>Schweden</de-DE>
-		<hu-HU>Svédország</hu-HU>
-		<pl-PL>Szwecja</pl-PL>
-		<pt-PT>Suécia</pt-PT>
-		<es-ES>Suecia</es-ES>
-		<sl-SI>Švedska</sl-SI>
-		<ro-RO>Suedia</ro-RO>
-		<fr-FR>Suède</fr-FR>
-		<hr-HR>Švedska</hr-HR>
-		<bg-BG>Швеция</bg-BG>
-		<nl-NL>Zweden</nl-NL>
-		<it-IT>Svezia</it-IT>
-	</string>
-
-	<string id="country.SG">
-		<en-US>Singapore</en-US>
-		<en-UK>Singapore</en-UK>
-		<sk-SK>Singapúr</sk-SK>
-	</string>
-
-	<string id="country.SH">
-		<en-US>Saint Helena</en-US>
-		<en-UK>Saint Helena</en-UK>
-		<sk-SK>Svätá Helena</sk-SK>
-	</string>
-
-	<string id="country.SI">
-		<en-US>Slovenia</en-US>
-		<en-UK>Slovenia</en-UK>
-		<sk-SK>Slovinsko</sk-SK>
-		<cs-CZ>Slovinsko</cs-CZ>
-		<de-DE>Slowenien</de-DE>
-		<hu-HU>Szlovénia</hu-HU>
-		<pl-PL>Słowenia</pl-PL>
-		<pt-PT>Eslovenia</pt-PT>
-		<es-ES>Eslovenia</es-ES>
-		<sl-SI>Slovenija</sl-SI>
-		<ro-RO>Slovenia</ro-RO>
-		<fr-FR>Slovénie</fr-FR>
-		<hr-HR>Slovenija</hr-HR>
-		<bg-BG>Словения</bg-BG>
-		<nl-NL>Slovenië</nl-NL>
-		<it-IT>Slovenia</it-IT>
-	</string>
-
-	<string id="country.SJ">
-		<en-US>Svalbard and Jan Mayen</en-US>
-		<en-UK>Svalbard and Jan Mayen</en-UK>
-		<sk-SK>Svalbard a Jan Mayen</sk-SK>
-	</string>
-
-	<string id="country.SK">
-		<en-US>Slovakia</en-US>
-		<en-UK>Slovakia</en-UK>
-		<sk-SK>Slovensko</sk-SK>
-		<cs-CZ>Slovensko</cs-CZ>
-		<de-DE>Slowakei</de-DE>
-		<hu-HU>Szlovákia</hu-HU>
-		<pl-PL>Słowacja</pl-PL>
-		<pt-PT>Eslováquia</pt-PT>
-		<es-ES>Eslovaquia</es-ES>
-		<sl-SI>Slovaška</sl-SI>
-		<ro-RO>Slovacia</ro-RO>
-		<fr-FR>Slovaquie</fr-FR>
-		<hr-HR>Slovačka</hr-HR>
-		<bg-BG>Словакия</bg-BG>
-		<nl-NL>Slowakije</nl-NL>
-		<it-IT>Slovacchia</it-IT>
-	</string>
-
-	<string id="country.SL">
-		<en-US>Sierra Leone</en-US>
-		<en-UK>Sierra Leone</en-UK>
-		<sk-SK>Sierra Leone</sk-SK>
-	</string>
-
-	<string id="country.SM">
-		<en-US>San Marino</en-US>
-		<en-UK>San Marino</en-UK>
-		<sk-SK>San Maríno</sk-SK>
-	</string>
-
-	<string id="country.SN">
-		<en-US>Senegal</en-US>
-		<en-UK>Senegal</en-UK>
-		<sk-SK>Senegal</sk-SK>
-	</string>
-
-	<string id="country.SO">
-		<en-US>Somalia</en-US>
-		<en-UK>Somalia</en-UK>
-		<sk-SK>Somálsko</sk-SK>
-	</string>
-
-	<string id="country.SR">
-		<en-US>Surinam</en-US>
-		<en-UK>Surinam</en-UK>
-		<sk-SK>Surinam</sk-SK>
-	</string>
-
-	<string id="country.ST">
-		<en-US>Sao Tome and Principe</en-US>
-		<en-UK>Sao Tome and Principe</en-UK>
-		<sk-SK>Svätý Tomáš a Princov ostrov</sk-SK>
-	</string>
-
-	<string id="country.SV">
-		<en-US>Salvador</en-US>
-		<en-UK>Salvador</en-UK>
-		<sk-SK>Salvádor</sk-SK>
-	</string>
-
-	<string id="country.SY">
-		<en-US>Syrian Arab Republic</en-US>
-		<en-UK>Syrian Arab Republic</en-UK>
-		<sk-SK>Sýria</sk-SK>
-	</string>
-
-	<string id="country.SZ">
-		<en-US>Swaziland</en-US>
-		<en-UK>Swaziland</en-UK>
-		<sk-SK>Swazijsko</sk-SK>
-	</string>
-
-	<string id="country.TC">
-		<en-US>Turks and Caicos Islands</en-US>
-		<en-UK>Turks and Caicos Islands</en-UK>
-		<sk-SK>Turks a Caicos</sk-SK>
-	</string>
-
-	<string id="country.TD">
-		<en-US>Chad</en-US>
-		<en-UK>Chad</en-UK>
-		<sk-SK>Čad</sk-SK>
-	</string>
-
-	<string id="country.TF">
-		<en-US>French Southern Territories</en-US>
-		<en-UK>French Southern Territories</en-UK>
-		<sk-SK>Francúzske južné územia</sk-SK>
-	</string>
-
-	<string id="country.TG">
-		<en-US>Togo</en-US>
-		<en-UK>Togo</en-UK>
-		<sk-SK>Togo</sk-SK>
-	</string>
-
-	<string id="country.TH">
-		<en-US>Thailand</en-US>
-		<en-UK>Thailand</en-UK>
-		<sk-SK>Thajsko</sk-SK>
-	</string>
-
-	<string id="country.TJ">
-		<en-US>Tajikistan</en-US>
-		<en-UK>Tajikistan</en-UK>
-		<sk-SK>Tadžikistan</sk-SK>
-	</string>
-
-	<string id="country.TK">
-		<en-US>Tokelau</en-US>
-		<en-UK>Tokelau</en-UK>
-		<sk-SK>Tokelau</sk-SK>
-	</string>
-
-	<string id="country.TL">
-		<en-US>Timor-Leste</en-US>
-		<en-UK>Timor-Leste</en-UK>
-		<sk-SK>Východný Timor</sk-SK>
-	</string>
-
-	<string id="country.TM">
-		<en-US>Turkmenistan</en-US>
-		<en-UK>Turkmenistan</en-UK>
-		<sk-SK>Turkménsko</sk-SK>
-	</string>
-
-	<string id="country.TN">
-		<en-US>Tunisia</en-US>
-		<en-UK>Tunisia</en-UK>
-		<sk-SK>Tunisko</sk-SK>
-	</string>
-
-	<string id="country.TO">
-		<en-US>Tonga</en-US>
-		<en-UK>Tonga</en-UK>
-		<sk-SK>Tonga</sk-SK>
-	</string>
-
-	<string id="country.TR">
-		<en-US>Turkey</en-US>
-		<en-UK>Turkey</en-UK>
-		<sk-SK>Turecko</sk-SK>
-	</string>
-
-	<string id="country.TT">
-		<en-US>Trinidad and Tobago</en-US>
-		<en-UK>Trinidad and Tobago</en-UK>
-		<sk-SK>Trinidad a Tobago</sk-SK>
-	</string>
-
-	<string id="country.TV">
-		<en-US>Tuvalu</en-US>
-		<en-UK>Tuvalu</en-UK>
-		<sk-SK>Tuvalu</sk-SK>
-	</string>
-
-	<string id="country.TW">
-		<en-US>Taiwan</en-US>
-		<en-UK>Taiwan</en-UK>
-		<sk-SK>Taiwan</sk-SK>
-	</string>
-
-	<string id="country.TZ">
-		<en-US>Tanzania, United Republic of</en-US>
-		<en-UK>Tanzania, United Republic of</en-UK>
-		<sk-SK>Tanzánia</sk-SK>
-	</string>
-
-	<string id="country.UA">
-		<en-US>Ukrajina</en-US>
-		<en-UK>Ukrajina</en-UK>
-		<sk-SK>Ukrajina</sk-SK>
-	</string>
-
-	<string id="country.UG">
-		<en-US>Uganda</en-US>
-		<en-UK>Uganda</en-UK>
-		<sk-SK>Uganda</sk-SK>
-	</string>
-
-	<string id="country.UM">
-		<en-US>United States minor outlying islands</en-US>
-		<en-UK>United States minor outlying islands</en-UK>
-		<sk-SK>Menšie odľahlé ostrovy USA</sk-SK>
-	</string>
-
-	<string id="country.US">
-		<en-US>United States</en-US>
-		<en-UK>United States</en-UK>
-		<sk-SK>Spojené štáty americké</sk-SK>
-	</string>
-
-	<string id="country.UY">
-		<en-US>Uruguay</en-US>
-		<en-UK>Uruguay</en-UK>
-		<sk-SK>Uruguaj</sk-SK>
-	</string>
-
-	<string id="country.UZ">
-		<en-US>Uzbekistan</en-US>
-		<en-UK>Uzbekistan</en-UK>
-		<sk-SK>Uzbekistan</sk-SK>
-	</string>
-
-	<string id="country.VA">
-		<en-US>Vatican</en-US>
-		<en-UK>Vatican</en-UK>
-		<sk-SK>Vatikán</sk-SK>
-	</string>
-
-	<string id="country.VC">
-		<en-US>Saint Vincent and The Grenadines</en-US>
-		<en-UK>Saint Vincent and The Grenadines</en-UK>
-		<sk-SK>Svätý Vincent a Grenadíny</sk-SK>
-	</string>
-
-	<string id="country.VE">
-		<en-US>Venezuela</en-US>
-		<en-UK>Venezuela</en-UK>
-		<sk-SK>Venezuela</sk-SK>
-	</string>
-
-	<string id="country.VG">
-		<en-US>Virgin Islands, British</en-US>
-		<en-UK>Virgin Islands, British</en-UK>
-		<sk-SK>Britské Panenské ostrovy</sk-SK>
-	</string>
-
-	<string id="country.VI">
-		<en-US>Virgin Islands, U.S.</en-US>
-		<en-UK>Virgin Islands, U.S.</en-UK>
-		<sk-SK>Americké Panenské ostrovy</sk-SK>
-	</string>
-
-	<string id="country.VN">
-		<en-US>Vietnam</en-US>
-		<en-UK>Vietnam</en-UK>
-		<sk-SK>Vietnam</sk-SK>
-	</string>
-
-	<string id="country.VU">
-		<en-US>Vanuatu</en-US>
-		<en-UK>Vanuatu</en-UK>
-		<sk-SK>Vanuatu</sk-SK>
-	</string>
-
-	<string id="country.WF">
-		<en-US>Wallis and Futuna</en-US>
-		<en-UK>Wallis and Futuna</en-UK>
-		<sk-SK>Wallis a Futuna</sk-SK>
-	</string>
-
-	<string id="country.WS">
-		<en-US>Samoa</en-US>
-		<en-UK>Samoa</en-UK>
-		<sk-SK>Samoa</sk-SK>
-	</string>
-
-	<string id="country.YE">
-		<en-US>Yemen</en-US>
-		<en-UK>Yemen</en-UK>
-		<sk-SK>Jemen</sk-SK>
-	</string>
-
-	<string id="country.YT">
-		<en-US>Mayotte</en-US>
-		<en-UK>Mayotte</en-UK>
-		<sk-SK>Mayotte</sk-SK>
-	</string>
-
-	<string id="country.ZA">
-		<en-US>South Africa</en-US>
-		<en-UK>South Africa</en-UK>
-		<sk-SK>Južná Afrika</sk-SK>
-	</string>
-
-	<string id="country.ZM">
-		<en-US>Zambia</en-US>
-		<en-UK>Zambia</en-UK>
-		<sk-SK>Zambia</sk-SK>
-	</string>
-
-	<string id="country.ZW">
-		<en-US>Zimbabwe</en-US>
-		<en-UK>Zimbabwe</en-UK>
-		<sk-SK>Zimbabwe</sk-SK>
-	</string>
-
+  <string id="country.AD">
+    <en-US>Andorra</en-US>
+    <en-UK>Andorra</en-UK>
+    <sk-SK>Andorra</sk-SK>
+    <cs-CZ/>
+  </string>
+  <string id="country.AE">
+    <en-US>United Arab Emirates</en-US>
+    <en-UK>United Arab Emirates</en-UK>
+    <sk-SK>Spojené Arabské Emiráty</sk-SK>
+    <cs-CZ/>
+  </string>
+  <string id="country.AF">
+    <en-US>Afganistan</en-US>
+    <en-UK>Afganistan</en-UK>
+    <sk-SK>Afganistan</sk-SK>
+    <cs-CZ/>
+  </string>
+  <string id="country.AG">
+    <en-US>Antigua and Barbuda</en-US>
+    <en-UK>Antigua and Barbuda</en-UK>
+    <sk-SK>Antigua a Barbuda</sk-SK>
+    <cs-CZ/>
+  </string>
+  <string id="country.AI">
+    <en-US>Anguilla</en-US>
+    <en-UK>Anguilla</en-UK>
+    <sk-SK>Anguilla</sk-SK>
+    <cs-CZ/>
+  </string>
+  <string id="country.AL">
+    <en-US>Albania</en-US>
+    <en-UK>Albania</en-UK>
+    <sk-SK>Albánsko</sk-SK>
+    <cs-CZ/>
+  </string>
+  <string id="country.AM">
+    <en-US>Armenia</en-US>
+    <en-UK>Armenia</en-UK>
+    <sk-SK>Arménsko</sk-SK>
+    <cs-CZ/>
+  </string>
+  <string id="country.AN">
+    <en-US>Netherlands Antilles</en-US>
+    <en-UK>Netherlands Antilles</en-UK>
+    <sk-SK>Holandské Antily</sk-SK>
+  </string>
+  <string id="country.AO">
+    <en-US>Angola</en-US>
+    <en-UK>Angola</en-UK>
+    <sk-SK>Angola</sk-SK>
+  </string>
+  <string id="country.AQ">
+    <en-US>Antarctica</en-US>
+    <en-UK>Antarctica</en-UK>
+    <sk-SK>Antarktída</sk-SK>
+  </string>
+  <string id="country.AR">
+    <en-US>Argentina</en-US>
+    <en-UK>Argentina</en-UK>
+    <sk-SK>Argentína</sk-SK>
+  </string>
+  <string id="country.AS">
+    <en-US>American Samoa</en-US>
+    <en-UK>American Samoa</en-UK>
+    <sk-SK>Americká Samoa</sk-SK>
+  </string>
+  <string id="country.AT">
+    <en-US>Austria</en-US>
+    <en-UK>Austria</en-UK>
+    <sk-SK>Rakúsko</sk-SK>
+    <cs-CZ>Rakousko</cs-CZ>
+    <de-DE>Österreich</de-DE>
+    <hu-HU>Ausztria</hu-HU>
+    <pl-PL>Austria</pl-PL>
+    <pt-PT>Áustria</pt-PT>
+    <es-ES>Austria</es-ES>
+    <sl-SI>Avstrija</sl-SI>
+    <ro-RO>Austria</ro-RO>
+    <fr-FR>Autriche</fr-FR>
+    <hr-HR>Austrija</hr-HR>
+    <bg-BG>Австрия</bg-BG>
+    <nl-NL>Oostenrijk</nl-NL>
+    <it-IT>Austria</it-IT>
+  </string>
+  <string id="country.AU">
+    <en-US>Australia</en-US>
+    <en-UK>Australia</en-UK>
+    <sk-SK>Austrália</sk-SK>
+  </string>
+  <string id="country.AW">
+    <en-US>Aruba</en-US>
+    <en-UK>Aruba</en-UK>
+    <sk-SK>Aruba</sk-SK>
+  </string>
+  <string id="country.AX">
+    <en-US>Aland Islands</en-US>
+    <en-UK>Aland Islands</en-UK>
+    <sk-SK>Alandy</sk-SK>
+  </string>
+  <string id="country.AZ">
+    <en-US>Azerbaijan</en-US>
+    <en-UK>Azerbaijan</en-UK>
+    <sk-SK>Azerbajdžan</sk-SK>
+  </string>
+  <string id="country.BA">
+    <en-US>Bosnia and Herzegovina</en-US>
+    <en-UK>Bosnia and Herzegovina</en-UK>
+    <sk-SK>Bosna a Hercegovina</sk-SK>
+  </string>
+  <string id="country.BB">
+    <en-US>Barbados</en-US>
+    <en-UK>Barbados</en-UK>
+    <sk-SK>Barbados</sk-SK>
+  </string>
+  <string id="country.BD">
+    <en-US>Bangladesh</en-US>
+    <en-UK>Bangladesh</en-UK>
+    <sk-SK>Bangladéš</sk-SK>
+  </string>
+  <string id="country.BE">
+    <en-US>Belgium</en-US>
+    <en-UK>Belgium</en-UK>
+    <sk-SK>Belgicko</sk-SK>
+    <cs-CZ>Belgie</cs-CZ>
+    <de-DE>Belgien</de-DE>
+    <hu-HU>Belgium</hu-HU>
+    <pl-PL>Belgia</pl-PL>
+    <pt-PT>Bélgica</pt-PT>
+    <es-ES>Bélgica</es-ES>
+    <sl-SI>Belgija</sl-SI>
+    <ro-RO>Belgia</ro-RO>
+    <fr-FR>Belgique</fr-FR>
+    <hr-HR>Belgija</hr-HR>
+    <bg-BG>Белгия</bg-BG>
+    <nl-NL>België</nl-NL>
+    <it-IT>Belgio</it-IT>
+  </string>
+  <string id="country.BF">
+    <en-US>Burkina Faso</en-US>
+    <en-UK>Burkina Faso</en-UK>
+    <sk-SK>Burkina</sk-SK>
+  </string>
+  <string id="country.BG">
+    <en-US>Bulgaria</en-US>
+    <en-UK>Bulgaria</en-UK>
+    <sk-SK>Bulharsko</sk-SK>
+    <cs-CZ>Bulharsko</cs-CZ>
+    <de-DE>Bulgarien</de-DE>
+    <hu-HU>Bulgária</hu-HU>
+    <pl-PL>Bułgaria</pl-PL>
+    <pt-PT>Bulgária</pt-PT>
+    <es-ES>Bulgaria</es-ES>
+    <sl-SI>Bolgarija</sl-SI>
+    <ro-RO>Bulgaria</ro-RO>
+    <fr-FR>Bulgarie</fr-FR>
+    <hr-HR>Bugarska</hr-HR>
+    <bg-BG>България</bg-BG>
+    <nl-NL>Bulgarije</nl-NL>
+    <it-IT>Bulgaria</it-IT>
+  </string>
+  <string id="country.BH">
+    <en-US>Bahrain</en-US>
+    <en-UK>Bahrain</en-UK>
+    <sk-SK>Bahrain</sk-SK>
+  </string>
+  <string id="country.BI">
+    <en-US>Burundi</en-US>
+    <en-UK>Burundi</en-UK>
+    <sk-SK>Burundi</sk-SK>
+  </string>
+  <string id="country.BJ">
+    <en-US>Benin</en-US>
+    <en-UK>Benin</en-UK>
+    <sk-SK>Benin</sk-SK>
+  </string>
+  <string id="country.BM">
+    <en-US>Bermuda</en-US>
+    <en-UK>Bermuda</en-UK>
+    <sk-SK>Bermudy</sk-SK>
+  </string>
+  <string id="country.BN">
+    <en-US>Brunei Darussalam</en-US>
+    <en-UK>Brunei Darussalam</en-UK>
+    <sk-SK>Brunej</sk-SK>
+  </string>
+  <string id="country.BO">
+    <en-US>Bolivia</en-US>
+    <en-UK>Bolivia</en-UK>
+    <sk-SK>Bolívia</sk-SK>
+  </string>
+  <string id="country.BR">
+    <en-US>Brazil</en-US>
+    <en-UK>Brazil</en-UK>
+    <sk-SK>Brazília</sk-SK>
+  </string>
+  <string id="country.BS">
+    <en-US>Bahamas</en-US>
+    <en-UK>Bahamas</en-UK>
+    <sk-SK>Bahamy</sk-SK>
+  </string>
+  <string id="country.BT">
+    <en-US>Bhutan</en-US>
+    <en-UK>Bhutan</en-UK>
+    <sk-SK>Bhután</sk-SK>
+  </string>
+  <string id="country.BV">
+    <en-US>Bouvet Island</en-US>
+    <en-UK>Bouvet Island</en-UK>
+    <sk-SK>Bouvetov ostrov</sk-SK>
+  </string>
+  <string id="country.BW">
+    <en-US>Botswana</en-US>
+    <en-UK>Botswana</en-UK>
+    <sk-SK>Botswana</sk-SK>
+  </string>
+  <string id="country.BY">
+    <en-US>Belarus</en-US>
+    <en-UK>Belarus</en-UK>
+    <sk-SK>Bielorusko</sk-SK>
+  </string>
+  <string id="country.BZ">
+    <en-US>Belize</en-US>
+    <en-UK>Belize</en-UK>
+    <sk-SK>Belize</sk-SK>
+  </string>
+  <string id="country.CA">
+    <en-US>Canada</en-US>
+    <en-UK>Canada</en-UK>
+    <sk-SK>Kanada</sk-SK>
+  </string>
+  <string id="country.CC">
+    <en-US>Cocos Islands</en-US>
+    <en-UK>Cocos Islands</en-UK>
+    <sk-SK>Kokosové ostrovy</sk-SK>
+  </string>
+  <string id="country.CD">
+    <en-US>The democratic republic of Congo</en-US>
+    <en-UK>The democratic republic of Congo</en-UK>
+    <sk-SK>Konžská demokratická republika</sk-SK>
+  </string>
+  <string id="country.CF">
+    <en-US>Central African Republic</en-US>
+    <en-UK>Central African Republic</en-UK>
+    <sk-SK>Stredoafrická republika</sk-SK>
+  </string>
+  <string id="country.CG">
+    <en-US>Congo</en-US>
+    <en-UK>Congo</en-UK>
+    <sk-SK>Kongo</sk-SK>
+  </string>
+  <string id="country.CH">
+    <en-US>Switzerland</en-US>
+    <en-UK>Switzerland</en-UK>
+    <sk-SK>Švajčiarsko</sk-SK>
+  </string>
+  <string id="country.CI">
+    <en-US>Cote D'Ivoire</en-US>
+    <en-UK>Cote D'Ivoire</en-UK>
+    <sk-SK>Pobrežie slonoviny</sk-SK>
+  </string>
+  <string id="country.CK">
+    <en-US>Cook Islands</en-US>
+    <en-UK>Cook Islands</en-UK>
+    <sk-SK>Cookove ostrovy</sk-SK>
+  </string>
+  <string id="country.CL">
+    <en-US>Chile</en-US>
+    <en-UK>Chile</en-UK>
+    <sk-SK>Čile</sk-SK>
+  </string>
+  <string id="country.CM">
+    <en-US>Cameroon</en-US>
+    <en-UK>Cameroon</en-UK>
+    <sk-SK>Kamerun</sk-SK>
+  </string>
+  <string id="country.CN">
+    <en-US>China</en-US>
+    <en-UK>China</en-UK>
+    <sk-SK>Čína</sk-SK>
+  </string>
+  <string id="country.CO">
+    <en-US>Columbia</en-US>
+    <en-UK>Columbia</en-UK>
+    <sk-SK>Kolumbia</sk-SK>
+  </string>
+  <string id="country.CR">
+    <en-US>Costa Rica</en-US>
+    <en-UK>Costa Rica</en-UK>
+    <sk-SK>Kostarika</sk-SK>
+  </string>
+  <string id="country.CS">
+    <en-US>Serbia</en-US>
+    <en-UK>Serbia</en-UK>
+    <sk-SK>Srbsko, Čierna Hora</sk-SK>
+  </string>
+  <string id="country.CU">
+    <en-US>Cuba</en-US>
+    <en-UK>Cuba</en-UK>
+    <sk-SK>Kuba</sk-SK>
+  </string>
+  <string id="country.CV">
+    <en-US>Cape Verde</en-US>
+    <en-UK>Cape Verde</en-UK>
+    <sk-SK>Kapverdy</sk-SK>
+  </string>
+  <string id="country.CX">
+    <en-US>Christmas Island</en-US>
+    <en-UK>Christmas Island</en-UK>
+    <sk-SK>Vianočný ostrov</sk-SK>
+  </string>
+  <string id="country.CY">
+    <en-US>Cyprus</en-US>
+    <en-UK>Cyprus</en-UK>
+    <sk-SK>Cyprus</sk-SK>
+    <cs-CZ>Kypr</cs-CZ>
+    <de-DE>Zypern</de-DE>
+    <hu-HU>Ciprus</hu-HU>
+    <pl-PL>Cypr</pl-PL>
+    <pt-PT>Chipre</pt-PT>
+    <es-ES>Chipre</es-ES>
+    <sl-SI>Ciper</sl-SI>
+    <ro-RO>Cipru</ro-RO>
+    <fr-FR>Chypre</fr-FR>
+    <hr-HR>Kipar</hr-HR>
+    <bg-BG>Кипър</bg-BG>
+    <nl-NL>Cyprus</nl-NL>
+    <it-IT>Cipro</it-IT>
+  </string>
+  <string id="country.CZ">
+    <en-US>Czech Republic</en-US>
+    <en-UK>Czech Republic</en-UK>
+    <sk-SK>Česká republika</sk-SK>
+    <cs-CZ>Česká republika</cs-CZ>
+    <de-DE>Tschechien</de-DE>
+    <hu-HU>Csehország</hu-HU>
+    <pl-PL>Czechy</pl-PL>
+    <pt-PT>República Checa</pt-PT>
+    <es-ES>República Checa</es-ES>
+    <sl-SI>Češka</sl-SI>
+    <ro-RO>Republica Cehă</ro-RO>
+    <fr-FR>République Tchèque</fr-FR>
+    <hr-HR>Češka Republika</hr-HR>
+    <bg-BG>Чехия</bg-BG>
+    <nl-NL>Tsjechische Republiek</nl-NL>
+    <it-IT>Republica Ceca</it-IT>
+  </string>
+  <string id="country.DE">
+    <en-US>Germany</en-US>
+    <en-UK>Germany</en-UK>
+    <sk-SK>Nemecko</sk-SK>
+    <cs-CZ>Německo</cs-CZ>
+    <de-DE>Deutschland</de-DE>
+    <hu-HU>Németország</hu-HU>
+    <pl-PL>Niemcy</pl-PL>
+    <pt-PT>Alemanha</pt-PT>
+    <es-ES>Alemania</es-ES>
+    <sl-SI>Nemčija</sl-SI>
+    <ro-RO>Germania</ro-RO>
+    <fr-FR>Allemagne</fr-FR>
+    <hr-HR>Njemačka</hr-HR>
+    <bg-BG>Германия</bg-BG>
+    <nl-NL>Duitsland</nl-NL>
+    <it-IT>Germania</it-IT>
+  </string>
+  <string id="country.DJ">
+    <en-US>Djibouti</en-US>
+    <en-UK>Djibouti</en-UK>
+    <sk-SK>Džibutsko</sk-SK>
+  </string>
+  <string id="country.DK">
+    <en-US>Denmark</en-US>
+    <en-UK>Denmark</en-UK>
+    <sk-SK>Dánsko</sk-SK>
+    <cs-CZ>Dánsko</cs-CZ>
+    <de-DE>Dänemark</de-DE>
+    <hu-HU>Dánia</hu-HU>
+    <pl-PL>Dania</pl-PL>
+    <pt-PT>Dinamarca</pt-PT>
+    <es-ES>Dinamarca</es-ES>
+    <sl-SI>Danska</sl-SI>
+    <ro-RO>Danemarca</ro-RO>
+    <fr-FR>Danemark</fr-FR>
+    <hr-HR>Danska</hr-HR>
+    <bg-BG>Дания</bg-BG>
+    <nl-NL>Denemarken</nl-NL>
+    <it-IT>Danimarka</it-IT>
+  </string>
+  <string id="country.DM">
+    <en-US>Dominica</en-US>
+    <en-UK>Dominica</en-UK>
+    <sk-SK>Dominika</sk-SK>
+  </string>
+  <string id="country.DO">
+    <en-US>Dominican Republic</en-US>
+    <en-UK>Dominican Republic</en-UK>
+    <sk-SK>Dominikánska republika</sk-SK>
+  </string>
+  <string id="country.DZ">
+    <en-US>Algeria</en-US>
+    <en-UK>Algeria</en-UK>
+    <sk-SK>Alžírsko</sk-SK>
+  </string>
+  <string id="country.EC">
+    <en-US>Ecuador</en-US>
+    <en-UK>Ecuador</en-UK>
+    <sk-SK>Ekvádor</sk-SK>
+  </string>
+  <string id="country.EE">
+    <en-US>Estonia</en-US>
+    <en-UK>Estonia</en-UK>
+    <sk-SK>Estónsko</sk-SK>
+    <cs-CZ>Estonsko</cs-CZ>
+    <de-DE>Estland</de-DE>
+    <hu-HU>Észtország</hu-HU>
+    <pl-PL>Estonia</pl-PL>
+    <pt-PT>Estônia</pt-PT>
+    <es-ES>Estonia</es-ES>
+    <sl-SI>Estonija</sl-SI>
+    <ro-RO>Estonia</ro-RO>
+    <fr-FR>Estonie</fr-FR>
+    <hr-HR>Estonija</hr-HR>
+    <bg-BG>Естония</bg-BG>
+    <nl-NL>Estland</nl-NL>
+    <it-IT>Estonia</it-IT>
+  </string>
+  <string id="country.EG">
+    <en-US>Egypt</en-US>
+    <en-UK>Egypt</en-UK>
+    <sk-SK>Egypt</sk-SK>
+  </string>
+  <string id="country.EH">
+    <en-US>Western Sahara</en-US>
+    <en-UK>Western Sahara</en-UK>
+    <sk-SK>Západná Sahara</sk-SK>
+  </string>
+  <string id="country.ER">
+    <en-US>Eritrea</en-US>
+    <en-UK>Eritrea</en-UK>
+    <sk-SK>Eritrea</sk-SK>
+  </string>
+  <string id="country.ES">
+    <en-US>Spain</en-US>
+    <en-UK>Spain</en-UK>
+    <sk-SK>Španielsko</sk-SK>
+    <cs-CZ>Španělsko</cs-CZ>
+    <de-DE>Spanien</de-DE>
+    <hu-HU>Spanyolország</hu-HU>
+    <pl-PL>Hiszpania</pl-PL>
+    <pt-PT>Espanha</pt-PT>
+    <es-ES>España</es-ES>
+    <sl-SI>Španija</sl-SI>
+    <ro-RO>Spania</ro-RO>
+    <fr-FR>l'Espagne</fr-FR>
+    <hr-HR>Španija</hr-HR>
+    <bg-BG>Испания</bg-BG>
+    <nl-NL>Spanje</nl-NL>
+    <it-IT>Spagna</it-IT>
+  </string>
+  <string id="country.ET">
+    <en-US>Etiopia</en-US>
+    <en-UK>Etiopia</en-UK>
+    <sk-SK>Etiópia</sk-SK>
+  </string>
+  <string id="country.FI">
+    <en-US>Finland</en-US>
+    <en-UK>Finland</en-UK>
+    <sk-SK>Fínsko</sk-SK>
+    <cs-CZ>Finsko</cs-CZ>
+    <de-DE>Finnland</de-DE>
+    <hu-HU>Finnország</hu-HU>
+    <pl-PL>Finlandia</pl-PL>
+    <pt-PT>Finlândia</pt-PT>
+    <es-ES>Finlandia</es-ES>
+    <sl-SI>Finska</sl-SI>
+    <ro-RO>Finlanda</ro-RO>
+    <fr-FR>Finlande</fr-FR>
+    <hr-HR>Finska</hr-HR>
+    <bg-BG>Финландия</bg-BG>
+    <nl-NL>Finland</nl-NL>
+    <it-IT>Finland</it-IT>
+  </string>
+  <string id="country.FJ">
+    <en-US>Fiji</en-US>
+    <en-UK>Fiji</en-UK>
+    <sk-SK>Fidži</sk-SK>
+  </string>
+  <string id="country.FK">
+    <en-US>Falkland Islands</en-US>
+    <en-UK>Falkland Islands</en-UK>
+    <sk-SK>Falklandy (Malvíny)</sk-SK>
+  </string>
+  <string id="country.FM">
+    <en-US>Micronesia</en-US>
+    <en-UK>Micronesia</en-UK>
+    <sk-SK>Mikronézia</sk-SK>
+  </string>
+  <string id="country.FO">
+    <en-US>Faroe Islands</en-US>
+    <en-UK>Faroe Islands</en-UK>
+    <sk-SK>Faerské ostrovy</sk-SK>
+  </string>
+  <string id="country.FR">
+    <en-US>France</en-US>
+    <en-UK>France</en-UK>
+    <sk-SK>Francúzsko</sk-SK>
+    <cs-CZ>Francie</cs-CZ>
+    <de-DE>Frankreich</de-DE>
+    <hu-HU>Franciaország</hu-HU>
+    <pl-PL>Francja</pl-PL>
+    <pt-PT>França</pt-PT>
+    <es-ES>Francia</es-ES>
+    <sl-SI>Francija</sl-SI>
+    <ro-RO>Franţa</ro-RO>
+    <fr-FR>France</fr-FR>
+    <hr-HR>Francuska</hr-HR>
+    <bg-BG>Франция</bg-BG>
+    <nl-NL>Frankrijk</nl-NL>
+    <it-IT>Francia</it-IT>
+  </string>
+  <string id="country.GA">
+    <en-US>Gabon</en-US>
+    <en-UK>Gabon</en-UK>
+    <sk-SK>Gabon</sk-SK>
+  </string>
+  <string id="country.GB">
+    <en-US>United Kingdom</en-US>
+    <en-UK>United Kingdom</en-UK>
+    <sk-SK>Veľká Británia</sk-SK>
+    <cs-CZ>Spojené království</cs-CZ>
+    <de-DE>Großbritannien</de-DE>
+    <hu-HU>Nagy-Britannia</hu-HU>
+    <pl-PL>Wielka Brytania</pl-PL>
+    <pt-PT>Grã Bretanha</pt-PT>
+    <es-ES>Gran Bretaña</es-ES>
+    <sl-SI>Velika Britanija</sl-SI>
+    <ro-RO>Marea Britanie</ro-RO>
+    <fr-FR>Grande Bretagne</fr-FR>
+    <hr-HR>Ujedinjeno Kraljevstvo</hr-HR>
+    <bg-BG>Великобритания</bg-BG>
+    <nl-NL>Verenigd Koningkrijk</nl-NL>
+    <it-IT>Gran Bretagna</it-IT>
+  </string>
+  <string id="country.GD">
+    <en-US>Grenada</en-US>
+    <en-UK>Grenada</en-UK>
+    <sk-SK>Grenada</sk-SK>
+  </string>
+  <string id="country.GE">
+    <en-US>Georgia</en-US>
+    <en-UK>Georgia</en-UK>
+    <sk-SK>Gruzínsko</sk-SK>
+  </string>
+  <string id="country.GF">
+    <en-US>French Guiana</en-US>
+    <en-UK>French Guiana</en-UK>
+    <sk-SK>Francúzska Guinea</sk-SK>
+  </string>
+  <string id="country.GH">
+    <en-US>Ghana</en-US>
+    <en-UK>Ghana</en-UK>
+    <sk-SK>Ghana</sk-SK>
+  </string>
+  <string id="country.GI">
+    <en-US>Gibraltar</en-US>
+    <en-UK>Gibraltar</en-UK>
+    <sk-SK>Gibraltár</sk-SK>
+  </string>
+  <string id="country.GL">
+    <en-US>Greenland</en-US>
+    <en-UK>Greenland</en-UK>
+    <sk-SK>Grónsko</sk-SK>
+    <hr-HR>Grčka</hr-HR>
+    <bg-BG>Гърция</bg-BG>
+  </string>
+  <string id="country.GM">
+    <en-US>Gambia</en-US>
+    <en-UK>Gambia</en-UK>
+    <sk-SK>Gambia</sk-SK>
+  </string>
+  <string id="country.GN">
+    <en-US>Guinea</en-US>
+    <en-UK>Guinea</en-UK>
+    <sk-SK>Guinea</sk-SK>
+  </string>
+  <string id="country.GP">
+    <en-US>Guadeloupe</en-US>
+    <en-UK>Guadeloupe</en-UK>
+    <sk-SK>Guadeloupe</sk-SK>
+  </string>
+  <string id="country.GQ">
+    <en-US>Equatorial Guinea</en-US>
+    <en-UK>Equatorial Guinea</en-UK>
+    <sk-SK>Rovníková Guinea</sk-SK>
+  </string>
+  <string id="country.GR">
+    <en-US>Greece</en-US>
+    <en-UK>Greece</en-UK>
+    <sk-SK>Grécko</sk-SK>
+    <cs-CZ>Řecko</cs-CZ>
+    <de-DE>Griechenland</de-DE>
+    <hu-HU>Görögország</hu-HU>
+    <pl-PL>Grecja</pl-PL>
+    <pt-PT>Grécia</pt-PT>
+    <es-ES>Grecia</es-ES>
+    <sl-SI>Grčija</sl-SI>
+    <ro-RO>Grecia</ro-RO>
+    <fr-FR>Grèce</fr-FR>
+    <hr-HR>Grčka</hr-HR>
+    <bg-BG>Гърция</bg-BG>
+    <nl-NL>Griekenland</nl-NL>
+    <it-IT>Grecia</it-IT>
+    <si-SI>Grčija</si-SI>
+    <nl-NL>Griekenland</nl-NL>
+  </string>
+  <string id="country.EL">
+    <en-US>Greece</en-US>
+    <en-UK>Greece</en-UK>
+    <sk-SK>Grécko</sk-SK>
+    <cs-CZ>Řecko</cs-CZ>
+    <de-DE>Griechenland</de-DE>
+    <hu-HU>Görögország</hu-HU>
+    <pl-PL>Grecja</pl-PL>
+    <pt-PT>Grécia</pt-PT>
+    <es-ES>Grecia</es-ES>
+    <sl-SI>Grčija</sl-SI>
+    <ro-RO>Grecia</ro-RO>
+    <fr-FR>Grèce</fr-FR>
+    <hr-HR>Grčka</hr-HR>
+    <bg-BG>Гърция</bg-BG>
+    <nl-NL>Griekenland</nl-NL>
+    <it-IT>Grecia</it-IT>
+    <si-SI>Grčija</si-SI>
+    <nl-NL>Griekenland</nl-NL>
+  </string>
+  <string id="country.GS">
+    <en-US>South Georgia and The South Sandwich Islands</en-US>
+    <en-UK>South Georgia and The South Sandwich Islands</en-UK>
+    <sk-SK>Južná Georgia a Južné Sandwichove ostrovy</sk-SK>
+  </string>
+  <string id="country.GT">
+    <en-US>Guatemala</en-US>
+    <en-UK>Guatemala</en-UK>
+    <sk-SK>Guatemala</sk-SK>
+  </string>
+  <string id="country.GU">
+    <en-US>Guam</en-US>
+    <en-UK>Guam</en-UK>
+    <sk-SK>Guam</sk-SK>
+  </string>
+  <string id="country.GW">
+    <en-US>Guinea-Bissau</en-US>
+    <en-UK>Guinea-Bissau</en-UK>
+    <sk-SK>Guinea-Bissau</sk-SK>
+  </string>
+  <string id="country.GY">
+    <en-US>Guyana</en-US>
+    <en-UK>Guyana</en-UK>
+    <sk-SK>Guyana</sk-SK>
+  </string>
+  <string id="country.HK">
+    <en-US>Hongkong</en-US>
+    <en-UK>Hongkong</en-UK>
+    <sk-SK>Hongkong</sk-SK>
+  </string>
+  <string id="country.HM">
+    <en-US>Heard Island and McDonald Islands</en-US>
+    <en-UK>Heard Island and McDonald Islands</en-UK>
+    <sk-SK>Heardov ostrov a Macdonaldove ostrovy</sk-SK>
+  </string>
+  <string id="country.HN">
+    <en-US>Honduras</en-US>
+    <en-UK>Honduras</en-UK>
+    <sk-SK>Honduras</sk-SK>
+  </string>
+  <string id="country.HR">
+    <en-US>Croatia</en-US>
+    <en-UK>Croatia</en-UK>
+    <sk-SK>Chorvátsko</sk-SK>
+    <cs-CZ>Chorvatsko</cs-CZ>
+    <de-DE>Kroatien</de-DE>
+    <hu-HU>Horvátország</hu-HU>
+    <pl-PL>Chorwacja</pl-PL>
+    <pt-PT>Croácia</pt-PT>
+    <es-ES>Croacia</es-ES>
+    <sl-SI>Hrvaška</sl-SI>
+    <ro-RO>Croaţia</ro-RO>
+    <fr-FR>Croatie</fr-FR>
+    <hr-HR>Hrvatska</hr-HR>
+    <bg-BG>Хърватия</bg-BG>
+    <nl-NL>Kroatië</nl-NL>
+    <it-IT>Croazia</it-IT>
+    <es-ES>Croacia</es-ES>
+    <si-SI>Hrvaška</si-SI>
+    <nl-NL>Kroatië</nl-NL>
+  </string>
+  <string id="country.HT">
+    <en-US>Haiti</en-US>
+    <en-UK>Haiti</en-UK>
+    <sk-SK>Haiti</sk-SK>
+  </string>
+  <string id="country.HU">
+    <en-US>Hungary</en-US>
+    <en-UK>Hungary</en-UK>
+    <sk-SK>Maďarsko</sk-SK>
+    <cs-CZ>Maďarsko</cs-CZ>
+    <de-DE>Ungarn</de-DE>
+    <hu-HU>Magyarország</hu-HU>
+    <pl-PL>Węgry</pl-PL>
+    <pt-PT>Hungria</pt-PT>
+    <es-ES>Hungría</es-ES>
+    <sl-SI>Madžarska</sl-SI>
+    <ro-RO>Ungaria</ro-RO>
+    <fr-FR>Hongrie</fr-FR>
+    <hr-HR>Mađarska</hr-HR>
+    <bg-BG>Унгария</bg-BG>
+    <nl-NL>Hongarije</nl-NL>
+    <it-IT>Ungheria</it-IT>
+  </string>
+  <string id="country.ID">
+    <en-US>Indonesia</en-US>
+    <en-UK>Indonesia</en-UK>
+    <sk-SK>Indonézia</sk-SK>
+  </string>
+  <string id="country.IE">
+    <en-US>Ireland</en-US>
+    <en-UK>Ireland</en-UK>
+    <sk-SK>Írsko</sk-SK>
+    <cs-CZ>Irsko</cs-CZ>
+    <de-DE>Irland</de-DE>
+    <hu-HU>Írország</hu-HU>
+    <pl-PL>Irlandia</pl-PL>
+    <pt-PT>Irlanda</pt-PT>
+    <es-ES>Irlanda</es-ES>
+    <sl-SI>Irska</sl-SI>
+    <ro-RO>Irlanda</ro-RO>
+    <fr-FR>Irlande</fr-FR>
+    <hr-HR>Irska</hr-HR>
+    <bg-BG>Ирландия</bg-BG>
+    <nl-NL>Ierland</nl-NL>
+    <it-IT>Irlanda</it-IT>
+  </string>
+  <string id="country.IL">
+    <en-US>Israel</en-US>
+    <en-UK>Israel</en-UK>
+    <sk-SK>Izrael</sk-SK>
+    <hr-HR>Italija</hr-HR>
+    <bg-BG>Италия</bg-BG>
+  </string>
+  <string id="country.IN">
+    <en-US>India</en-US>
+    <en-UK>India</en-UK>
+    <sk-SK>India</sk-SK>
+  </string>
+  <string id="country.IO">
+    <en-US>British Indian Ocean Territory</en-US>
+    <en-UK>British Indian Ocean Territory</en-UK>
+    <sk-SK>Britské indooceánske územie</sk-SK>
+  </string>
+  <string id="country.IQ">
+    <en-US>Iraq</en-US>
+    <en-UK>Iraq</en-UK>
+    <sk-SK>Irak</sk-SK>
+  </string>
+  <string id="country.IR">
+    <en-US>Iran</en-US>
+    <en-UK>Iran</en-UK>
+    <sk-SK>Irán</sk-SK>
+  </string>
+  <string id="country.IS">
+    <en-US>Iceland</en-US>
+    <en-UK>Iceland</en-UK>
+    <sk-SK>Island</sk-SK>
+  </string>
+  <string id="country.IT">
+    <en-US>Italy</en-US>
+    <en-UK>Italy</en-UK>
+    <sk-SK>Taliansko</sk-SK>
+    <cs-CZ>Itálie</cs-CZ>
+    <de-DE>Italien</de-DE>
+    <hu-HU>Olaszország</hu-HU>
+    <pl-PL>Włochy</pl-PL>
+    <pt-PT>Itália</pt-PT>
+    <es-ES>Italia</es-ES>
+    <sl-SI>Italija</sl-SI>
+    <ro-RO>Italia</ro-RO>
+    <fr-FR>Italie</fr-FR>
+    <hr-HR>Italija</hr-HR>
+    <bg-BG>Италия</bg-BG>
+    <nl-NL>Italië</nl-NL>
+    <it-IT>Italia</it-IT>
+  </string>
+  <string id="country.JM">
+    <en-US>Jamaica</en-US>
+    <en-UK>Jamaica</en-UK>
+    <sk-SK>Jamajka</sk-SK>
+  </string>
+  <string id="country.JO">
+    <en-US>Jordan</en-US>
+    <en-UK>Jordan</en-UK>
+    <sk-SK>Jordánsko</sk-SK>
+  </string>
+  <string id="country.JP">
+    <en-US>Japan</en-US>
+    <en-UK>Japan</en-UK>
+    <sk-SK>Japonsko</sk-SK>
+  </string>
+  <string id="country.KE">
+    <en-US>Kenya</en-US>
+    <en-UK>Kenya</en-UK>
+    <sk-SK>Keňa</sk-SK>
+  </string>
+  <string id="country.KG">
+    <en-US>Kyrgyzstan</en-US>
+    <en-UK>Kyrgyzstan</en-UK>
+    <sk-SK>Kirgizsko</sk-SK>
+  </string>
+  <string id="country.KH">
+    <en-US>Cambodia</en-US>
+    <en-UK>Cambodia</en-UK>
+    <sk-SK>Kambodža</sk-SK>
+  </string>
+  <string id="country.KI">
+    <en-US>Kiribati</en-US>
+    <en-UK>Kiribati</en-UK>
+    <sk-SK>Kiribati</sk-SK>
+  </string>
+  <string id="country.KM">
+    <en-US>Comoros</en-US>
+    <en-UK>Comoros</en-UK>
+    <sk-SK>Komory</sk-SK>
+  </string>
+  <string id="country.KN">
+    <en-US>Saint Kitts and Nevis</en-US>
+    <en-UK>Saint Kitts and Nevis</en-UK>
+    <sk-SK>Svätý Krištof a Nevis</sk-SK>
+  </string>
+  <string id="country.KP">
+    <en-US>Korea, Democratic people's republic of</en-US>
+    <en-UK>Korea, Democratic people's republic of</en-UK>
+    <sk-SK>Kórejská ľudovodemokratická republika</sk-SK>
+  </string>
+  <string id="country.KR">
+    <en-US>Korea, Republic of</en-US>
+    <en-UK>Korea, Republic of</en-UK>
+    <sk-SK>Kórejská republika</sk-SK>
+  </string>
+  <string id="country.KW">
+    <en-US>Kuwait</en-US>
+    <en-UK>Kuwait</en-UK>
+    <sk-SK>Kuvajt</sk-SK>
+  </string>
+  <string id="country.KY">
+    <en-US>Cayman Islands</en-US>
+    <en-UK>Cayman Islands</en-UK>
+    <sk-SK>Kajmanské ostrovy</sk-SK>
+  </string>
+  <string id="country.KZ">
+    <en-US>Kazakhstan</en-US>
+    <en-UK>Kazakhstan</en-UK>
+    <sk-SK>Kazachstan</sk-SK>
+  </string>
+  <string id="country.LA">
+    <en-US>Laos</en-US>
+    <en-UK>Laos</en-UK>
+    <sk-SK>Laos</sk-SK>
+  </string>
+  <string id="country.LB">
+    <en-US>Lebanon</en-US>
+    <en-UK>Lebanon</en-UK>
+    <sk-SK>Libanon</sk-SK>
+  </string>
+  <string id="country.LC">
+    <en-US>Saint Lucia</en-US>
+    <en-UK>Saint Lucia</en-UK>
+    <sk-SK>Svätá Lucia</sk-SK>
+  </string>
+  <string id="country.LI">
+    <en-US>Liechtenstein</en-US>
+    <en-UK>Liechtenstein</en-UK>
+    <sk-SK>Lichtenštajnsko</sk-SK>
+  </string>
+  <string id="country.LK">
+    <en-US>Sri Lanka</en-US>
+    <en-UK>Sri Lanka</en-UK>
+    <sk-SK>Srí Lanka</sk-SK>
+  </string>
+  <string id="country.LR">
+    <en-US>Liberia</en-US>
+    <en-UK>Liberia</en-UK>
+    <sk-SK>Libéria</sk-SK>
+  </string>
+  <string id="country.LS">
+    <en-US>Lesotho</en-US>
+    <en-UK>Lesotho</en-UK>
+    <sk-SK>Lesotho</sk-SK>
+  </string>
+  <string id="country.LT">
+    <en-US>Lithuania</en-US>
+    <en-UK>Lithuania</en-UK>
+    <sk-SK>Litva</sk-SK>
+    <cs-CZ>Litva</cs-CZ>
+    <de-DE>Litauen</de-DE>
+    <hu-HU>Litvánia</hu-HU>
+    <pl-PL>Litwa</pl-PL>
+    <pt-PT>Lituânia</pt-PT>
+    <es-ES>Lituania</es-ES>
+    <sl-SI>Litva</sl-SI>
+    <ro-RO>Lituania</ro-RO>
+    <fr-FR>Lituanie</fr-FR>
+    <hr-HR>Litvanija</hr-HR>
+    <bg-BG>Литва</bg-BG>
+    <nl-NL>Litouwen</nl-NL>
+    <it-IT>Lituania</it-IT>
+  </string>
+  <string id="country.LU">
+    <en-US>Luxembourg</en-US>
+    <en-UK>Luxembourg</en-UK>
+    <sk-SK>Luxembursko</sk-SK>
+    <cs-CZ>Lucembursko</cs-CZ>
+    <de-DE>Luxemburg</de-DE>
+    <hu-HU>Luxemburg</hu-HU>
+    <pl-PL>Luksemburg</pl-PL>
+    <pt-PT>Luxemburgo</pt-PT>
+    <es-ES>Luxemburgo</es-ES>
+    <sl-SI>Luxemburg</sl-SI>
+    <ro-RO>Luxemburg</ro-RO>
+    <fr-FR>Luxembourg</fr-FR>
+    <hr-HR>Luksemburg</hr-HR>
+    <bg-BG>Люксембург</bg-BG>
+    <nl-NL>Luxemburg</nl-NL>
+    <it-IT>Lussemburgo</it-IT>
+  </string>
+  <string id="country.LV">
+    <en-US>Latvia</en-US>
+    <en-UK>Latvia</en-UK>
+    <sk-SK>Lotyšsko</sk-SK>
+    <cs-CZ>Lotyšsko</cs-CZ>
+    <de-DE>Lettland</de-DE>
+    <hu-HU>Lettország</hu-HU>
+    <pl-PL>Łotwa</pl-PL>
+    <pt-PT>Letônia</pt-PT>
+    <es-ES>Letonia</es-ES>
+    <sl-SI>Latvija</sl-SI>
+    <ro-RO>Letonia</ro-RO>
+    <fr-FR>Lettonie</fr-FR>
+    <hr-HR>Letonija</hr-HR>
+    <bg-BG>Латвия</bg-BG>
+    <nl-NL>Letland</nl-NL>
+    <it-IT>Lettonia</it-IT>
+  </string>
+  <string id="country.LY">
+    <en-US>Libya</en-US>
+    <en-UK>Libya</en-UK>
+    <sk-SK>Líbya</sk-SK>
+  </string>
+  <string id="country.MA">
+    <en-US>Morocco</en-US>
+    <en-UK>Morocco</en-UK>
+    <sk-SK>Maroko</sk-SK>
+  </string>
+  <string id="country.MC">
+    <en-US>Monaco</en-US>
+    <en-UK>Monaco</en-UK>
+    <sk-SK>Monako</sk-SK>
+  </string>
+  <string id="country.MD">
+    <en-US>Moldova</en-US>
+    <en-UK>Moldova</en-UK>
+    <sk-SK>Moldavsko</sk-SK>
+  </string>
+  <string id="country.MG">
+    <en-US>Madagascar</en-US>
+    <en-UK>Madagascar</en-UK>
+    <sk-SK>Madagaskar</sk-SK>
+  </string>
+  <string id="country.MH">
+    <en-US>Marshall Islands</en-US>
+    <en-UK>Marshall Islands</en-UK>
+    <sk-SK>Marshallove ostrovy</sk-SK>
+  </string>
+  <string id="country.MK">
+    <en-US>Macedonia</en-US>
+    <en-UK>Macedonia</en-UK>
+    <sk-SK>Macedónsko</sk-SK>
+  </string>
+  <string id="country.ML">
+    <en-US>Mali</en-US>
+    <en-UK>Mali</en-UK>
+    <sk-SK>Mali</sk-SK>
+  </string>
+  <string id="country.MM">
+    <en-US>Myanmar</en-US>
+    <en-UK>Myanmar</en-UK>
+    <sk-SK>Mjanmarsko</sk-SK>
+  </string>
+  <string id="country.MN">
+    <en-US>Mongolia</en-US>
+    <en-UK>Mongolia</en-UK>
+    <sk-SK>Mongolsko</sk-SK>
+  </string>
+  <string id="country.MO">
+    <en-US>Macao</en-US>
+    <en-UK>Macao</en-UK>
+    <sk-SK>Macao</sk-SK>
+  </string>
+  <string id="country.MP">
+    <en-US>Northern Mariana Islands</en-US>
+    <en-UK>Northern Mariana Islands</en-UK>
+    <sk-SK>Severné Mariány</sk-SK>
+  </string>
+  <string id="country.MQ">
+    <en-US>Martinique</en-US>
+    <en-UK>Martinique</en-UK>
+    <sk-SK>Martinik</sk-SK>
+  </string>
+  <string id="country.MR">
+    <en-US>Mauritania</en-US>
+    <en-UK>Mauritania</en-UK>
+    <sk-SK>Mauritánia</sk-SK>
+  </string>
+  <string id="country.MS">
+    <en-US>Montserrat</en-US>
+    <en-UK>Montserrat</en-UK>
+    <sk-SK>Montserat</sk-SK>
+  </string>
+  <string id="country.MT">
+    <en-US>Malta</en-US>
+    <en-UK>Malta</en-UK>
+    <sk-SK>Malta</sk-SK>
+    <cs-CZ>Malta</cs-CZ>
+    <de-DE>Malta</de-DE>
+    <hu-HU>Málta</hu-HU>
+    <pl-PL>Malta</pl-PL>
+    <pt-PT>Malta</pt-PT>
+    <es-ES>Malta</es-ES>
+    <sl-SI>Malta</sl-SI>
+    <ro-RO>Malta</ro-RO>
+    <fr-FR>Malte</fr-FR>
+    <hr-HR>Malta</hr-HR>
+    <bg-BG>Малта</bg-BG>
+    <nl-NL>Malta</nl-NL>
+    <it-IT>Malta</it-IT>
+  </string>
+  <string id="country.MU">
+    <en-US>Mauritius</en-US>
+    <en-UK>Mauritius</en-UK>
+    <sk-SK>Maurícius</sk-SK>
+  </string>
+  <string id="country.MV">
+    <en-US>Maldives</en-US>
+    <en-UK>Maldives</en-UK>
+    <sk-SK>Maldivy</sk-SK>
+  </string>
+  <string id="country.MW">
+    <en-US>Malawi</en-US>
+    <en-UK>Malawi</en-UK>
+    <sk-SK>Malawi</sk-SK>
+  </string>
+  <string id="country.MX">
+    <en-US>Mexico</en-US>
+    <en-UK>Mexico</en-UK>
+    <sk-SK>Mexiko</sk-SK>
+  </string>
+  <string id="country.MY">
+    <en-US>Malaysia</en-US>
+    <en-UK>Malaysia</en-UK>
+    <sk-SK>Malajzia</sk-SK>
+  </string>
+  <string id="country.MZ">
+    <en-US>Mozambique</en-US>
+    <en-UK>Mozambique</en-UK>
+    <sk-SK>Mozambik</sk-SK>
+  </string>
+  <string id="country.NA">
+    <en-US>Namibia</en-US>
+    <en-UK>Namibia</en-UK>
+    <sk-SK>Namíbia</sk-SK>
+  </string>
+  <string id="country.NC">
+    <en-US>New Caledonia</en-US>
+    <en-UK>New Caledonia</en-UK>
+    <sk-SK>Nová Kaledónia</sk-SK>
+  </string>
+  <string id="country.NE">
+    <en-US>Niger</en-US>
+    <en-UK>Niger</en-UK>
+    <sk-SK>Niger</sk-SK>
+  </string>
+  <string id="country.NF">
+    <en-US>Norfolk</en-US>
+    <en-UK>Norfolk</en-UK>
+    <sk-SK>Norfolk</sk-SK>
+  </string>
+  <string id="country.NG">
+    <en-US>Nigeria</en-US>
+    <en-UK>Nigeria</en-UK>
+    <sk-SK>Nigéria</sk-SK>
+  </string>
+  <string id="country.NI">
+    <en-US>Nicaragua</en-US>
+    <en-UK>Nicaragua</en-UK>
+    <sk-SK>Nikaragua</sk-SK>
+  </string>
+  <string id="country.NL">
+    <en-US>Netherlands</en-US>
+    <en-UK>Netherlands</en-UK>
+    <sk-SK>Holandsko</sk-SK>
+    <cs-CZ>Nizozemí</cs-CZ>
+    <de-DE>Niederlande</de-DE>
+    <hu-HU>Hollandia</hu-HU>
+    <pl-PL>Holandia</pl-PL>
+    <pt-PT>Países Baixos</pt-PT>
+    <es-ES>Países Bajos</es-ES>
+    <sl-SI>Nizozemska</sl-SI>
+    <ro-RO>Olanda</ro-RO>
+    <fr-FR>Pays-Bas</fr-FR>
+    <hr-HR>Nizozemska</hr-HR>
+    <bg-BG>Холандия</bg-BG>
+    <nl-NL>Nederland</nl-NL>
+    <it-IT>Olanda</it-IT>
+  </string>
+  <string id="country.NO">
+    <en-US>Norway</en-US>
+    <en-UK>Norway</en-UK>
+    <sk-SK>Nórsko</sk-SK>
+  </string>
+  <string id="country.NP">
+    <en-US>Nepal</en-US>
+    <en-UK>Nepal</en-UK>
+    <sk-SK>Nepál</sk-SK>
+  </string>
+  <string id="country.NR">
+    <en-US>Nauru</en-US>
+    <en-UK>Nauru</en-UK>
+    <sk-SK>Nauru</sk-SK>
+  </string>
+  <string id="country.NU">
+    <en-US>Niue</en-US>
+    <en-UK>Niue</en-UK>
+    <sk-SK>Niue</sk-SK>
+  </string>
+  <string id="country.NZ">
+    <en-US>New Zealand</en-US>
+    <en-UK>New Zealand</en-UK>
+    <sk-SK>Nový Zéland</sk-SK>
+  </string>
+  <string id="country.OM">
+    <en-US>Oman</en-US>
+    <en-UK>Oman</en-UK>
+    <sk-SK>Omán</sk-SK>
+  </string>
+  <string id="country.PA">
+    <en-US>Panama</en-US>
+    <en-UK>Panama</en-UK>
+    <sk-SK>Panama</sk-SK>
+  </string>
+  <string id="country.PE">
+    <en-US>Peru</en-US>
+    <en-UK>Peru</en-UK>
+    <sk-SK>Peru</sk-SK>
+  </string>
+  <string id="country.PF">
+    <en-US>French Polynesia</en-US>
+    <en-UK>French Polynesia</en-UK>
+    <sk-SK>Francúzska Polynézia</sk-SK>
+  </string>
+  <string id="country.PG">
+    <en-US>Papua New Guinea</en-US>
+    <en-UK>Papua New Guinea</en-UK>
+    <sk-SK>Papua-Nová Guinea</sk-SK>
+  </string>
+  <string id="country.PH">
+    <en-US>Philippines</en-US>
+    <en-UK>Philippines</en-UK>
+    <sk-SK>Filipíny</sk-SK>
+  </string>
+  <string id="country.PK">
+    <en-US>Pakistan</en-US>
+    <en-UK>Pakistan</en-UK>
+    <sk-SK>Pakistan</sk-SK>
+  </string>
+  <string id="country.PL">
+    <en-US>Poland</en-US>
+    <en-UK>Poland</en-UK>
+    <sk-SK>Poľsko</sk-SK>
+    <cs-CZ>Polsko</cs-CZ>
+    <de-DE>Polen</de-DE>
+    <hu-HU>Lengyelország</hu-HU>
+    <pl-PL>Polska</pl-PL>
+    <pt-PT>Polônia</pt-PT>
+    <es-ES>Polonia</es-ES>
+    <sl-SI>Poljska</sl-SI>
+    <ro-RO>Polonia</ro-RO>
+    <fr-FR>Pologne</fr-FR>
+    <hr-HR>Poljska</hr-HR>
+    <bg-BG>Полша</bg-BG>
+    <nl-NL>Polen</nl-NL>
+    <it-IT>Polonia</it-IT>
+  </string>
+  <string id="country.PM">
+    <en-US>Saint Pierre and Miquelon</en-US>
+    <en-UK>Saint Pierre and Miquelon</en-UK>
+    <sk-SK>Svätý Pierre a Miquelon</sk-SK>
+  </string>
+  <string id="country.PN">
+    <en-US>Pitcairn Islands</en-US>
+    <en-UK>Pitcairn Islands</en-UK>
+    <sk-SK>Pitcairnove ostrovy</sk-SK>
+  </string>
+  <string id="country.PR">
+    <en-US>Puerto Rico</en-US>
+    <en-UK>Puerto Rico</en-UK>
+    <sk-SK>Portoriko</sk-SK>
+  </string>
+  <string id="country.PS">
+    <en-US>Palestinian Territory</en-US>
+    <en-UK>Palestinian Territory</en-UK>
+    <sk-SK>Palestína</sk-SK>
+  </string>
+  <string id="country.PT">
+    <en-US>Portugal</en-US>
+    <en-UK>Portugal</en-UK>
+    <sk-SK>Portugalsko</sk-SK>
+    <cs-CZ>Portugalsko</cs-CZ>
+    <de-DE>Portugal</de-DE>
+    <hu-HU>Portugália</hu-HU>
+    <pl-PL>Portugalia</pl-PL>
+    <pt-PT>Portugal</pt-PT>
+    <es-ES>Portugal</es-ES>
+    <sl-SI>Portugalska</sl-SI>
+    <ro-RO>Portugalia</ro-RO>
+    <fr-FR>Le Portugal</fr-FR>
+    <hr-HR>Portugal</hr-HR>
+    <bg-BG>Португалия</bg-BG>
+    <nl-NL>Portugal</nl-NL>
+    <it-IT>Portogallo</it-IT>
+  </string>
+  <string id="country.PW">
+    <en-US>Palau</en-US>
+    <en-UK>Palau</en-UK>
+    <sk-SK>Palau</sk-SK>
+  </string>
+  <string id="country.PY">
+    <en-US>Paraguay</en-US>
+    <en-UK>Paraguay</en-UK>
+    <sk-SK>Paraguaj</sk-SK>
+  </string>
+  <string id="country.QA">
+    <en-US>Qatar</en-US>
+    <en-UK>Qatar</en-UK>
+    <sk-SK>Katar</sk-SK>
+  </string>
+  <string id="country.RE">
+    <en-US>Reunion</en-US>
+    <en-UK>Reunion</en-UK>
+    <sk-SK>Réunion</sk-SK>
+  </string>
+  <string id="country.RO">
+    <en-US>Romania</en-US>
+    <en-UK>Romania</en-UK>
+    <sk-SK>Rumunsko</sk-SK>
+    <cs-CZ>Rumunsko</cs-CZ>
+    <de-DE>Rumänien</de-DE>
+    <hu-HU>Románia</hu-HU>
+    <pl-PL>Rumunia</pl-PL>
+    <pt-PT>Romênia</pt-PT>
+    <es-ES>Rumania</es-ES>
+    <sl-SI>Romunija</sl-SI>
+    <ro-RO>România</ro-RO>
+    <fr-FR>Roumanie</fr-FR>
+    <hr-HR>Rumunija</hr-HR>
+    <bg-BG>Румъния</bg-BG>
+    <nl-NL>Roemenië</nl-NL>
+    <it-IT>Romania</it-IT>
+  </string>
+  <string id="country.RS">
+    <en-US/>
+    <en-UK/>
+    <sk-SK/>
+  </string>
+  <string id="country.RU">
+    <en-US>Russian Federation</en-US>
+    <en-UK>Russian Federation</en-UK>
+    <sk-SK>Ruská federácia</sk-SK>
+  </string>
+  <string id="country.RW">
+    <en-US>Rwanda</en-US>
+    <en-UK>Rwanda</en-UK>
+    <sk-SK>Rwanda</sk-SK>
+  </string>
+  <string id="country.SA">
+    <en-US>Saudi Arabia</en-US>
+    <en-UK>Saudi Arabia</en-UK>
+    <sk-SK>Saudská Arábia</sk-SK>
+  </string>
+  <string id="country.SB">
+    <en-US>Solomon Islands</en-US>
+    <en-UK>Solomon Islands</en-UK>
+    <sk-SK>Šalamúnove ostrovy</sk-SK>
+  </string>
+  <string id="country.SC">
+    <en-US>Seychelles</en-US>
+    <en-UK>Seychelles</en-UK>
+    <sk-SK>Seychely</sk-SK>
+  </string>
+  <string id="country.SD">
+    <en-US>Sudan</en-US>
+    <en-UK>Sudan</en-UK>
+    <sk-SK>Sudán</sk-SK>
+  </string>
+  <string id="country.SE">
+    <en-US>Sweden</en-US>
+    <en-UK>Sweden</en-UK>
+    <sk-SK>Švédsko</sk-SK>
+    <cs-CZ>Švédsko</cs-CZ>
+    <de-DE>Schweden</de-DE>
+    <hu-HU>Svédország</hu-HU>
+    <pl-PL>Szwecja</pl-PL>
+    <pt-PT>Suécia</pt-PT>
+    <es-ES>Suecia</es-ES>
+    <sl-SI>Švedska</sl-SI>
+    <ro-RO>Suedia</ro-RO>
+    <fr-FR>Suède</fr-FR>
+    <hr-HR>Švedska</hr-HR>
+    <bg-BG>Швеция</bg-BG>
+    <nl-NL>Zweden</nl-NL>
+    <it-IT>Svezia</it-IT>
+  </string>
+  <string id="country.SG">
+    <en-US>Singapore</en-US>
+    <en-UK>Singapore</en-UK>
+    <sk-SK>Singapúr</sk-SK>
+  </string>
+  <string id="country.SH">
+    <en-US>Saint Helena</en-US>
+    <en-UK>Saint Helena</en-UK>
+    <sk-SK>Svätá Helena</sk-SK>
+  </string>
+  <string id="country.SI">
+    <en-US>Slovenia</en-US>
+    <en-UK>Slovenia</en-UK>
+    <sk-SK>Slovinsko</sk-SK>
+    <cs-CZ>Slovinsko</cs-CZ>
+    <de-DE>Slowenien</de-DE>
+    <hu-HU>Szlovénia</hu-HU>
+    <pl-PL>Słowenia</pl-PL>
+    <pt-PT>Eslovenia</pt-PT>
+    <es-ES>Eslovenia</es-ES>
+    <sl-SI>Slovenija</sl-SI>
+    <ro-RO>Slovenia</ro-RO>
+    <fr-FR>Slovénie</fr-FR>
+    <hr-HR>Slovenija</hr-HR>
+    <bg-BG>Словения</bg-BG>
+    <nl-NL>Slovenië</nl-NL>
+    <it-IT>Slovenia</it-IT>
+  </string>
+  <string id="country.SJ">
+    <en-US>Svalbard and Jan Mayen</en-US>
+    <en-UK>Svalbard and Jan Mayen</en-UK>
+    <sk-SK>Svalbard a Jan Mayen</sk-SK>
+  </string>
+  <string id="country.SK">
+    <en-US>Slovakia</en-US>
+    <en-UK>Slovakia</en-UK>
+    <sk-SK>Slovensko</sk-SK>
+    <cs-CZ>Slovensko</cs-CZ>
+    <de-DE>Slowakei</de-DE>
+    <hu-HU>Szlovákia</hu-HU>
+    <pl-PL>Słowacja</pl-PL>
+    <pt-PT>Eslováquia</pt-PT>
+    <es-ES>Eslovaquia</es-ES>
+    <sl-SI>Slovaška</sl-SI>
+    <ro-RO>Slovacia</ro-RO>
+    <fr-FR>Slovaquie</fr-FR>
+    <hr-HR>Slovačka</hr-HR>
+    <bg-BG>Словакия</bg-BG>
+    <nl-NL>Slowakije</nl-NL>
+    <it-IT>Slovacchia</it-IT>
+  </string>
+  <string id="country.SL">
+    <en-US>Sierra Leone</en-US>
+    <en-UK>Sierra Leone</en-UK>
+    <sk-SK>Sierra Leone</sk-SK>
+  </string>
+  <string id="country.SM">
+    <en-US>San Marino</en-US>
+    <en-UK>San Marino</en-UK>
+    <sk-SK>San Maríno</sk-SK>
+  </string>
+  <string id="country.SN">
+    <en-US>Senegal</en-US>
+    <en-UK>Senegal</en-UK>
+    <sk-SK>Senegal</sk-SK>
+  </string>
+  <string id="country.SO">
+    <en-US>Somalia</en-US>
+    <en-UK>Somalia</en-UK>
+    <sk-SK>Somálsko</sk-SK>
+  </string>
+  <string id="country.SR">
+    <en-US>Surinam</en-US>
+    <en-UK>Surinam</en-UK>
+    <sk-SK>Surinam</sk-SK>
+  </string>
+  <string id="country.ST">
+    <en-US>Sao Tome and Principe</en-US>
+    <en-UK>Sao Tome and Principe</en-UK>
+    <sk-SK>Svätý Tomáš a Princov ostrov</sk-SK>
+  </string>
+  <string id="country.SV">
+    <en-US>Salvador</en-US>
+    <en-UK>Salvador</en-UK>
+    <sk-SK>Salvádor</sk-SK>
+  </string>
+  <string id="country.SY">
+    <en-US>Syrian Arab Republic</en-US>
+    <en-UK>Syrian Arab Republic</en-UK>
+    <sk-SK>Sýria</sk-SK>
+  </string>
+  <string id="country.SZ">
+    <en-US>Swaziland</en-US>
+    <en-UK>Swaziland</en-UK>
+    <sk-SK>Swazijsko</sk-SK>
+  </string>
+  <string id="country.TC">
+    <en-US>Turks and Caicos Islands</en-US>
+    <en-UK>Turks and Caicos Islands</en-UK>
+    <sk-SK>Turks a Caicos</sk-SK>
+  </string>
+  <string id="country.TD">
+    <en-US>Chad</en-US>
+    <en-UK>Chad</en-UK>
+    <sk-SK>Čad</sk-SK>
+  </string>
+  <string id="country.TF">
+    <en-US>French Southern Territories</en-US>
+    <en-UK>French Southern Territories</en-UK>
+    <sk-SK>Francúzske južné územia</sk-SK>
+  </string>
+  <string id="country.TG">
+    <en-US>Togo</en-US>
+    <en-UK>Togo</en-UK>
+    <sk-SK>Togo</sk-SK>
+  </string>
+  <string id="country.TH">
+    <en-US>Thailand</en-US>
+    <en-UK>Thailand</en-UK>
+    <sk-SK>Thajsko</sk-SK>
+  </string>
+  <string id="country.TJ">
+    <en-US>Tajikistan</en-US>
+    <en-UK>Tajikistan</en-UK>
+    <sk-SK>Tadžikistan</sk-SK>
+  </string>
+  <string id="country.TK">
+    <en-US>Tokelau</en-US>
+    <en-UK>Tokelau</en-UK>
+    <sk-SK>Tokelau</sk-SK>
+  </string>
+  <string id="country.TL">
+    <en-US>Timor-Leste</en-US>
+    <en-UK>Timor-Leste</en-UK>
+    <sk-SK>Východný Timor</sk-SK>
+  </string>
+  <string id="country.TM">
+    <en-US>Turkmenistan</en-US>
+    <en-UK>Turkmenistan</en-UK>
+    <sk-SK>Turkménsko</sk-SK>
+  </string>
+  <string id="country.TN">
+    <en-US>Tunisia</en-US>
+    <en-UK>Tunisia</en-UK>
+    <sk-SK>Tunisko</sk-SK>
+  </string>
+  <string id="country.TO">
+    <en-US>Tonga</en-US>
+    <en-UK>Tonga</en-UK>
+    <sk-SK>Tonga</sk-SK>
+  </string>
+  <string id="country.TR">
+    <en-US>Turkey</en-US>
+    <en-UK>Turkey</en-UK>
+    <sk-SK>Turecko</sk-SK>
+  </string>
+  <string id="country.TT">
+    <en-US>Trinidad and Tobago</en-US>
+    <en-UK>Trinidad and Tobago</en-UK>
+    <sk-SK>Trinidad a Tobago</sk-SK>
+  </string>
+  <string id="country.TV">
+    <en-US>Tuvalu</en-US>
+    <en-UK>Tuvalu</en-UK>
+    <sk-SK>Tuvalu</sk-SK>
+  </string>
+  <string id="country.TW">
+    <en-US>Taiwan</en-US>
+    <en-UK>Taiwan</en-UK>
+    <sk-SK>Taiwan</sk-SK>
+  </string>
+  <string id="country.TZ">
+    <en-US>Tanzania, United Republic of</en-US>
+    <en-UK>Tanzania, United Republic of</en-UK>
+    <sk-SK>Tanzánia</sk-SK>
+  </string>
+  <string id="country.UA">
+    <en-US>Ukrajina</en-US>
+    <en-UK>Ukrajina</en-UK>
+    <sk-SK>Ukrajina</sk-SK>
+  </string>
+  <string id="country.UG">
+    <en-US>Uganda</en-US>
+    <en-UK>Uganda</en-UK>
+    <sk-SK>Uganda</sk-SK>
+  </string>
+  <string id="country.UM">
+    <en-US>United States minor outlying islands</en-US>
+    <en-UK>United States minor outlying islands</en-UK>
+    <sk-SK>Menšie odľahlé ostrovy USA</sk-SK>
+  </string>
+  <string id="country.US">
+    <en-US>United States</en-US>
+    <en-UK>United States</en-UK>
+    <sk-SK>Spojené štáty americké</sk-SK>
+  </string>
+  <string id="country.UY">
+    <en-US>Uruguay</en-US>
+    <en-UK>Uruguay</en-UK>
+    <sk-SK>Uruguaj</sk-SK>
+  </string>
+  <string id="country.UZ">
+    <en-US>Uzbekistan</en-US>
+    <en-UK>Uzbekistan</en-UK>
+    <sk-SK>Uzbekistan</sk-SK>
+  </string>
+  <string id="country.VA">
+    <en-US>Vatican</en-US>
+    <en-UK>Vatican</en-UK>
+    <sk-SK>Vatikán</sk-SK>
+  </string>
+  <string id="country.VC">
+    <en-US>Saint Vincent and The Grenadines</en-US>
+    <en-UK>Saint Vincent and The Grenadines</en-UK>
+    <sk-SK>Svätý Vincent a Grenadíny</sk-SK>
+  </string>
+  <string id="country.VE">
+    <en-US>Venezuela</en-US>
+    <en-UK>Venezuela</en-UK>
+    <sk-SK>Venezuela</sk-SK>
+  </string>
+  <string id="country.VG">
+    <en-US>Virgin Islands, British</en-US>
+    <en-UK>Virgin Islands, British</en-UK>
+    <sk-SK>Britské Panenské ostrovy</sk-SK>
+  </string>
+  <string id="country.VI">
+    <en-US>Virgin Islands, U.S.</en-US>
+    <en-UK>Virgin Islands, U.S.</en-UK>
+    <sk-SK>Americké Panenské ostrovy</sk-SK>
+  </string>
+  <string id="country.VN">
+    <en-US>Vietnam</en-US>
+    <en-UK>Vietnam</en-UK>
+    <sk-SK>Vietnam</sk-SK>
+  </string>
+  <string id="country.VU">
+    <en-US>Vanuatu</en-US>
+    <en-UK>Vanuatu</en-UK>
+    <sk-SK>Vanuatu</sk-SK>
+  </string>
+  <string id="country.WF">
+    <en-US>Wallis and Futuna</en-US>
+    <en-UK>Wallis and Futuna</en-UK>
+    <sk-SK>Wallis a Futuna</sk-SK>
+  </string>
+  <string id="country.WS">
+    <en-US>Samoa</en-US>
+    <en-UK>Samoa</en-UK>
+    <sk-SK>Samoa</sk-SK>
+  </string>
+  <string id="country.YE">
+    <en-US>Yemen</en-US>
+    <en-UK>Yemen</en-UK>
+    <sk-SK>Jemen</sk-SK>
+  </string>
+  <string id="country.YT">
+    <en-US>Mayotte</en-US>
+    <en-UK>Mayotte</en-UK>
+    <sk-SK>Mayotte</sk-SK>
+  </string>
+  <string id="country.ZA">
+    <en-US>South Africa</en-US>
+    <en-UK>South Africa</en-UK>
+    <sk-SK>Južná Afrika</sk-SK>
+  </string>
+  <string id="country.ZM">
+    <en-US>Zambia</en-US>
+    <en-UK>Zambia</en-UK>
+    <sk-SK>Zambia</sk-SK>
+  </string>
+  <string id="country.ZW">
+    <en-US>Zimbabwe</en-US>
+    <en-UK>Zimbabwe</en-UK>
+    <sk-SK>Zimbabwe</sk-SK>
+  </string>
 </L10n>
-

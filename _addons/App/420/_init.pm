@@ -81,6 +81,29 @@ our $metadata_default=$App::420::metadata_default || qq{
 </metatree>
 };
 
+our $section_templates_cat_ID_entity;
+my %sth0=TOM::Database::SQL::execute(qq{
+	SELECT ID, ID_entity
+	FROM `$App::420::db_name`.`a420_static_cat`
+	WHERE name='Section templates'
+	LIMIT 1
+},'quiet'=>1);
+if (my %db0_line=$sth0{'sth'}->fetchhash())
+{$section_templates_cat_ID_entity=$db0_line{'ID_entity'} unless $section_templates_cat_ID_entity;}
+else
+{
+	$section_templates_cat_ID_entity=App::020::SQL::functions::tree::new(
+		'db_h' => "main",
+		'db_name' => $App::420::db_name,
+		'tb_name' => "a420_static_cat",
+		'columns' => {
+			'name' => "'Section templates'",
+			'status' => "'L'"
+		},
+		'-journalize' => 1
+	);
+}
+
 =head1 AUTHOR
 
 Comsultia, Ltd. (open@comsultia.com)
