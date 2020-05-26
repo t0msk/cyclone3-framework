@@ -25,8 +25,8 @@ sub execute
 		SELECT
 			user.*
 		FROM
-			TOM.a301_user AS user
-		LEFT JOIN TOM.a301_user_profile AS user_profile ON
+			`$App::301::db_name`.a301_user AS user
+		LEFT JOIN `$App::301::db_name`.a301_user_profile AS user_profile ON
 		(
 			user.ID_user = user_profile.ID_entity
 		)

@@ -1,0 +1,247 @@
+#!/usr/bin/perl
+use Term::ReadKey;
+use Term::ANSIColor;
+use Time::HiRes;
+BEGIN {
+	if (!$ENV{'CYCLONE3PATH'})
+	{
+		$ENV{'CYCLONE3PATH'}="/www/TOM" if -d "/www/TOM"; # obsolete
+		$ENV{'CYCLONE3PATH'}="/Cyclone3" if -d "/Cyclone3";
+		$ENV{'CYCLONE3PATH'}="/srv/Cyclone3" if -d "/srv/Cyclone3";
+	}
+	require $ENV{'CYCLONE3PATH'}."/.bin/tom3-init";
+	$0.=" {tom3-proc}";
+}
+use Term::InKey;
+%form=
+(
+# '--host'	=>	"restart host (eg. www_localhost_com)",
+# '-s'		=>	"show all",
+);
+if (($FORM{h})||($FORM{help})){&help();}
+
+
+#open(*STDERR,">/dev/null");
+
+use Proc::ProcessTable;
+use DateTime;
+use Ext::Redis::_init;
+
+while(1)
+{
+	
+	
+	# cmdline
+	# pctcpu
+	# rss
+	
+	my %hosts;
+	
+	my $t = new Proc::ProcessTable;
+	foreach my $p (@{$t->table})
+	{
+		use Data::Dumper;
+#		print Dumper($p);
+#		next unless $p->{'cmndline'}=~/(\.core\/tom3|perl.*core\.tom)/;
+#		print $p->{'cmndline'}."\n";
+		#next unless $p->{'cmndline'}=~/^.*\/perl $TOM::P\/[^ ]*\/(.*?)$/;
+		
+		next unless $p->{'cmndline'}=~/^c3\-([^ ]*)/;
+		my $engine=$1;
+		my $request;
+		my $class;
+		
+		if ($p->{'cmndline'}=~/:([^ ]*)/)
+		{
+			$class=$1;
+			$engine.=":".$class;
+		}
+		
+		my $host='       ';
+		$p->{'cmndline'}=~s|\[(.*?)\]|| && do {$host=$1};
+		$p->{'cmndline'}=~s|\{(.*?)\}|| && do {$request=$1};
+		$p->{'cmndline'}=~s|([\d\.]+)%$|| && do {$request.=" ".$1.'%'};
+		
+		push @{$hosts{$host}},{
+			'engine'=>$engine,
+			'size'=>$p->{'size'},
+			'rss'=>$p->{'rss'},
+			'pctcpu'=>$p->{'pctcpu'},
+			'state'=>$p->{'state'},
+			'start'=>$p->{'start'},
+			'time'=>$p->{'time'},
+			'pid'=>$p->{'pid'},
+			'request' => $request
+		};
+		
+	}
+	
+#	exit;
+	
+		my $l;
+		foreach my $host(sort keys %hosts)
+		{
+			$l=length($host) if length($host)>$l;
+		}
+		
+		$l=20 if $l<=20;
+		my ($wchar, $hchar, $wpixels, $hpixels) = GetTerminalSize();
+		
+		my $print_out;
+#		$print_out.=color 'reset bold white on_cyan';
+		$print_out.=color 'reset black on_bright_cyan';
+		$print_out.="DOMAIN       ".(" " x ($l-12))."ENGINE                STAT  %CPU    MEM START TIME+   PID IDLE+   rqs rq/m code     uri"
+			.(" " x ($wchar - 110))
+			."\n";
+		$print_out.=color 'reset cyan';
+		
+		my $processes;
+		my $cpu;
+		my $rss;
+		my $rqss;
+		foreach my $host(sort keys %hosts)
+		{
+			for (0..@{$hosts{$host}}-1)
+			{
+				$processes++;
+				$cpu+=$hosts{$host}[$_]{'pctcpu'};
+				$hosts{$host}[$_]{'rss'}=int($hosts{$host}[$_]{'rss'}/1024/1024);
+				$rss+=$hosts{$host}[$_]{'rss'};
+				
+				my $vals={@{$Redis->hgetall('c3process|'.$TOM::hostname.':'.$hosts{$host}[$_]{'pid'})}};
+				my $living=(time()-$hosts{$host}[$_]{'start'})/60;
+				my $rqs=int($vals->{'count'}/($living||1));
+				$rqss+=$rqs;
+				
+				next if $processes >= ($hchar-2);
+				
+				my $setcolor;
+				$hosts{$host}[$_]{'state'}="proc" if $hosts{$host}[$_]{'state'} eq "onprocessor";
+				if ($hosts{$host}[$_]{'state'} eq "run"){$setcolor = 'reset bold cyan';}
+#				if ($hosts{$host}[$_]{'state'} eq "uwait"){$setcolor = 'reset yellow';}
+				if ($hosts{$host}[$_]{'state'} eq "proc"){$setcolor = 'reset bold cyan';}
+				else {$setcolor = 'reset cyan';}
+				$print_out.=color $setcolor;
+				
+				# host
+				if (!$_){$print_out.=sprintf("%-".$l."s",$host)." ";}else {$print_out.=(" " x ($l+1));}
+#				$print_out.=sprintf("%-".$l."s",$host)." ";
+				
+				# engine
+				$hosts{$host}[$_]{'engine'}=substr($hosts{$host}[$_]{'engine'},0,20);
+				$print_out.= sprintf("%-20s",$hosts{$host}[$_]{'engine'})." ";
+				
+				# STAT
+				if ($vals->{'request_code'}
+					&& $hosts{$host}[$_]{'state'} ne "uwait"
+					&& $hosts{$host}[$_]{'state'} ne "run"
+				)
+				{$hosts{$host}[$_]{'state'}="wait";}
+				if ($hosts{$host}[$_]{'state'} eq "run"){$print_out.= color 'bold cyan'}
+				if ($hosts{$host}[$_]{'state'} eq "wait"){$print_out.= color 'bold cyan'}
+				if ($hosts{$host}[$_]{'state'} eq "uwait"){$print_out.= color 'yellow'}
+				$print_out.= sprintf("%5s",$hosts{$host}[$_]{'state'});
+				$print_out.= color $setcolor;$print_out.= " ";
+				
+				# P
+#				$print_out.= "[".sprintf("%3s",$_+1)."]";
+				
+				# CPU
+				if ($hosts{$host}[$_]{'pctcpu'} > 10){$print_out.= color 'bold cyan'}
+				if ($hosts{$host}[$_]{'pctcpu'} > 50){$print_out.= color 'yellow'}
+				if ($hosts{$host}[$_]{'pctcpu'} > 95){$print_out.= color 'bold red'}
+				$print_out.= sprintf('%5s',sprintf('%-2.1f',$hosts{$host}[$_]{'pctcpu'}));$print_out.= color $setcolor;
+				$print_out.= " ";
+				
+				# MEM
+				if ($hosts{$host}[$_]{'rss'} > 200){$print_out.= color 'yellow'}
+				if ($hosts{$host}[$_]{'rss'} > 300){$print_out.= color 'bold red'}
+				$print_out.= sprintf("%5d",$hosts{$host}[$_]{'rss'});$print_out.= color $setcolor;$print_out.= "M ";
+				
+				my $dt = DateTime->from_epoch( epoch => $hosts{$host}[$_]{'start'},'time_zone'=>'local');
+				$print_out.= sprintf('%02d',$dt->hour).":".sprintf('%02d',$dt->min)." ";
+				
+				if ((time()-$hosts{$host}[$_]{'start'}) > $TOM::max_time*0.5){$print_out.= color 'yellow'};
+				if ((time()-$hosts{$host}[$_]{'start'}) > $TOM::max_time*0.8){$print_out.= color 'bold red'};
+				$print_out.= sprintf('%5s',int((time()-$hosts{$host}[$_]{'start'})/60)+1);
+				$print_out.= color $setcolor;
+				$print_out.= " ";
+				
+				$print_out.= sprintf('%5s',$hosts{$host}[$_]{'pid'})." ";
+				
+				# additional data
+				if ($vals->{'time'})
+				{
+					my $idle=(time() - $vals->{'time'});
+#					if ($idle > 5){print color 'bold cyan'}
+					if ($idle > 60){$print_out.= color 'yellow'}
+#					if ($idle > 60){print color 'bold red'}
+					if ($idle > 1)
+					{
+						$print_out.=sprintf('%5s',$idle);
+					}
+					else
+					{
+						$print_out.= "     ";
+					}
+					$print_out.= color $setcolor;$print_out.= " ";
+					
+					$print_out.= sprintf('%5s',$vals->{'count'})." ";
+					
+#					if ($rqs < 1){print color 'bold red'}
+					#if ($rqs < 10){$print_out.= color 'yellow'}
+					if ($rqs < 60){}
+					else {$print_out.= color 'bold cyan'}
+#					if ($rqs > 60){print color 'bold red'}
+#					if ($rqs > 60){print color 'bold red'}
+					$print_out.=sprintf('%4s',$rqs);
+					$print_out.= color $setcolor;$print_out.= " ";
+					
+					if ($vals->{'request_code'}){$print_out.= color 'bold cyan'}
+					$print_out.=sprintf('%8s',$vals->{'request_code'});
+					$print_out.= color $setcolor;$print_out.= " ";
+					
+					if ($vals->{'request_code'})
+					{
+						if ($idle >= 5)
+						{
+							$print_out.= color 'red';
+						}
+						elsif ($idle >= 2)
+						{
+							$print_out.= color 'bold yellow';
+						}
+						
+						my $max_width=$wchar-123;
+						$print_out.=sprintf('%.'.$max_width.'s',$vals->{'host'}.$vals->{'request'});
+					}
+					
+				}
+				elsif ($hosts{$host}[$_]{'request'})
+				{
+					$print_out.= $hosts{$host}[$_]{'request'};
+				}
+				
+				$print_out.= "\n";
+				
+			}
+			
+			
+		}
+		
+		my $print_header;
+			$print_header.= color 'reset cyan';
+			$print_header.= "c3proc procs:". sprintf('%3d',$processes)." cpu:".sprintf('%4s',sprintf('%-2.0f',$cpu))."% mem:" .sprintf('%5s',$rss). "M rq/m:".sprintf('%4s',$rqss)."\n";
+			$print_header.= color 'reset cyan';
+		$print_out = $print_header.$print_out;
+		
+		Clear() unless $FORM{'s'};
+		print $print_out;
+		Time::HiRes::sleep(1.5) unless $FORM{'r'};
+		exit if $FORM{'s'};
+}
+
+
+
+
+&exit();

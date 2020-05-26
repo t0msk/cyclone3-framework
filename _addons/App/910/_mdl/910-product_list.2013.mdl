@@ -382,7 +382,7 @@ sub execute
 		$sql_limit=scalar split(';',$env{'product.ID_entity'});
 		main::_log('product.ID_entity list acquired - changing sql_limit to '.$sql_limit);
 		$sql_group_by="product.ID_entity";
-		if ($env{'solr'})
+		if ($env{'solr'} || $env{'sort'} eq 'product.ID_entity')
 		{
 			$sql_order_by="CASE\n";
 			my $i;

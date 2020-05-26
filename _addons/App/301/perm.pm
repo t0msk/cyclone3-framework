@@ -224,7 +224,7 @@ sub get_roles
 			SELECT
 				*
 			FROM
-				TOM.a301_user_group AS `group`
+				`$App::301::db_name`.a301_user_group AS `group`
 			WHERE
 				`group`.ID_entity = $env{'ID_group'} AND
 				`group`.status IN ($status)
@@ -242,8 +242,8 @@ sub get_roles
 			SELECT
 				`group`.*
 			FROM
-				TOM.a301_user_rel_group AS rel,
-				TOM.a301_user_group AS `group`
+				`$App::301::db_name`.a301_user_rel_group AS rel,
+				`$App::301::db_name`.a301_user_group AS `group`
 			WHERE
 				rel.ID_user='$env{'ID_user'}' AND
 				rel.ID_group = `group`.ID_entity AND
@@ -285,7 +285,7 @@ sub get_roles
 			}
 			my $sql=qq{
 				SELECT *
-				FROM TOM.a301_user_group
+				FROM `$App::301::db_name`.a301_user_group
 				WHERE ID_entity=$_ AND status IN ($status)
 				LIMIT 1
 			};
@@ -322,7 +322,7 @@ sub get_roles
 	{
 		my $sql=qq{
 			SELECT *
-			FROM TOM.a301_user_group
+			FROM `$App::301::db_name`.a301_user_group
 			WHERE ID_entity=$group AND status IN ($status)
 			LIMIT 1
 		};
@@ -949,7 +949,7 @@ sub get_ACL
 		grp.name
 	FROM
 		`$db_name`.a301_ACL_user_group AS acl
-	LEFT JOIN `TOM`.a301_user_group AS grp ON
+	LEFT JOIN `$App::301::db_name`.a301_user_group AS grp ON
 	(
 		acl.ID_entity = grp.ID_entity
 	)
@@ -1117,12 +1117,12 @@ sub get_ACL
 		FROM
 			`$db_name`.`a301_ACL_user` AS `acl`
 		INNER JOIN
-			`TOM`.`a301_user` AS `user` ON
+			`$App::301::db_name`.`a301_user` AS `user` ON
 			(
 				`acl`.`ID_entity` = `user`.`ID_user`
 			)
 		LEFT JOIN
-			`TOM`.`a301_user_profile` AS `user_profile` ON
+			`$App::301::db_name`.`a301_user_profile` AS `user_profile` ON
 			(
 				`user`.`ID_user` = `user_profile`.`ID_entity`
 			)

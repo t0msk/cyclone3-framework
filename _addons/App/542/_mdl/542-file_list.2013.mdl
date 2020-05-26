@@ -114,7 +114,7 @@ sub execute
 		)
 		INNER JOIN $App::542::db_name.a542_file_item AS file_item ON
 		(
-			file_item.ID_entity = file.ID AND
+			file_item.ID_entity = file.ID_entity AND
 			file_item.lng = '$env{'lng'}' AND
 			file_item.status IN ('Y','L')
 		)

@@ -442,6 +442,7 @@ sub execute
 			article_ent.visits,
 			
 			article_attrs.status,
+			article_attrs.status_visible,
 			
 			IF
 			(
@@ -581,6 +582,7 @@ sub execute
 				article_ent.visits,
 				
 				article_attrs.status,
+				article_attrs.status_visible,
 				
 				IF
 				(

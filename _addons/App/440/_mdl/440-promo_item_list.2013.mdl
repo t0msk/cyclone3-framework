@@ -553,6 +553,92 @@ sub execute
 				}
 				
 			}
+			elsif ($alias_addon[0] eq "a730_event")
+			{
+				require App::730::_init;
+				
+				my %sth1=TOM::Database::SQL::execute(qq{
+					SELECT
+						event.ID_entity,
+						event.ID,
+						
+						event.name,
+						event.name_url,
+						event.datetime_start, -- event starts
+						event.datetime_finish, -- event ends
+						event.datetime_publish_start,
+						event.datetime_publish_stop,
+						event.link,
+						event.location,
+						event.longitude_decimal,
+						event.latitude_decimal,
+						event.metadata,
+						event.status,
+						event.priority_A,
+						event.max_attendees,					
+									
+						event_cat.ID AS cat_ID,
+						event_cat.name AS cat_name,
+						event_cat.name_url AS cat_name_url,
+
+						event.price,
+						(event.price*((100+event.VAT)/100)) AS price_incl_VAT,
+						event.price_currency,
+						event.price/(SELECT rate FROM TOM.a910_currency_rate WHERE currency2=event.price_currency LIMIT 1) AS price_EUR,
+						
+						event_lng.name_long,
+						event_lng.description_short,
+						event_lng.description,
+						event_lng.lng
+					FROM `$App::730::db_name`.`a730_event` AS event
+					
+					LEFT JOIN `$App::730::db_name`.a730_event_lng AS event_lng ON
+					(
+						event_lng.ID_entity = event.ID_entity AND
+						event_lng.lng = '$env{'lng'}'
+					)
+					INNER JOIN `$App::730::db_name`.a730_event_rel_cat AS event_rel_cat ON
+					(
+						event_rel_cat.ID_event=event.ID_entity
+					)					
+					LEFT JOIN $App::730::db_name.a730_event_cat AS event_cat ON
+					(
+						event_cat.ID_entity = event_rel_cat.ID_category AND
+						event_cat.lng = '$env{'lng'}'
+					)
+					WHERE
+						event.status = 'Y'
+						AND event.datetime_publish_start <= NOW() AND
+							(event.datetime_publish_stop IS NULL OR event.datetime_publish_stop >= NOW())
+						AND event.ID_entity = ?
+					LIMIT
+						1
+				},'bind'=>[$alias_addon[1]]);
+				if (my %db1_line=$sth1{'sth'}->fetchhash())
+				{
+					# link to a210_page
+					if (my $category=App::730::functions::_a210_by_cat([$db1_line{'cat_ID'}],'lng'=>$env{'lng'}))
+					{
+						my %sql_def=('db_h' => "main",'db_name' => $App::730::db_name,'tb_name' => "a210_page");
+						foreach my $p(
+							App::020::SQL::functions::tree::get_path(
+								$category,
+								%sql_def,
+								'-slave' => 1,
+								'-cache' => 86400*7
+							)
+						)
+						{
+							push @{$db1_line{'a210'}{'IDs'}}, $p->{'ID'};
+							push @{$db1_line{'a210'}{'nodes'}}, $p;
+							$db1_line{'a210'}{'path_url'}.="/".$p->{'name_url'};
+						}
+						$db1_line{'a210'}{'path_url'}=~s|^/||;
+					}
+					
+					$promo_item{'addon'}=\%db1_line;
+				}				
+			}
 		}
 		
 		push @{$TPL->{'variables'}{'items'}},\%promo_item;

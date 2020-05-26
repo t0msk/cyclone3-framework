@@ -22,9 +22,7 @@ sub execute
 		return undef;
 	}
 	
-#	my $solr = Ext::Solr::service();
-#	$solr->commit();
-#	return 1;
+	my $solr = Ext::Solr::service();
 	
 #	my %IDs;
 #	my $response = $solr->search( "+id:".$App::910::db_name.".a910_product.*",{'fl' => "ID_i"});
@@ -33,6 +31,25 @@ sub execute
 #		my $ID=$doc->value_for( 'ID_i' );
 #		$IDs{$ID}++;
 #	}
+	
+	if ($App::910::index_product_ent)
+	{
+		my $i;
+		my %sth0=TOM::Database::SQL::execute(qq{
+			SELECT
+				ID_entity
+			FROM
+				a910_product_ent
+		});
+		while (my %db0_line=$sth0{'sth'}->fetchhash())
+		{
+			$i++;
+			main::_log("[$i/$sth0{'rows'}]");
+#			$main::nojobify=1;
+			
+			App::910::functions::_product_ent_index('ID_entity'=>$db0_line{'ID_entity'},'-jobify' => 1, 'solr' => 0);
+		}
+	}
 	
 	# reindex
 	my $i;
@@ -63,10 +80,12 @@ sub execute
 #		}
 	}
 	
+	
+	
 	sleep 10;
 #	main::_log("delete ID's=".keys %IDs);
 	
-#	$solr->commit();
+	$solr->commit();
 	
 	
 return 1}

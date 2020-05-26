@@ -1,66 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <L10n>
-	<header/>
-	
-	<string id="Cyclone3" automap="true"/>
-	
-	<string id="Yes">
-		<sk-SK>Áno</sk-SK>
-		<cs-CZ>Ano</cs-CZ>
-		<de-DE>Ja</de-DE>
-	</string>
-	
-	<string id="No">
-		<sk-SK>Nie</sk-SK>
-		<cs-CZ>Ne</cs-CZ>
-		<de-DE>Nein</de-DE>
-	</string>
-	
-	<string id="Service">
-		<sk-SK>Služba</sk-SK>
-		<de-DE>Dienstleistung</de-DE>
-		<it-IT>servizio</it-IT>
-	</string>
-	
-	<string id="This service is currently not available">
-		<sk-SK>Táto služba je momentálne nedostupná</sk-SK>
-		<de-DE>Diese Dienstleistung ist derzeit nicht verfügbar</de-DE>
-		<it-IT>Questo servizio attualmente non é accessibile</it-IT>
-		<uk-UA>У даний час немає доступу до цієї послуги</uk-UA>
-		<ar-SA>هذه الخدمة ليست متاحة حالياً.</ar-SA>
-	</string>
-	
-	<string id="We're trying to fix this problem at the moment and apologize for any inconvenience">
-		<sk-SK>Ospravedlňujeme sa za dočasné nepohodlie, na odstránení problému pracujeme</sk-SK>
-		<de-DE>Wir bemühen uns, das Problem zu beheben und entschuldigen uns für die Komplikation</de-DE>
-		<it-IT>Ci stiamo adoperando a risolvere il problema e ci scusiamo per la complicazione</it-IT>
-		<uk-UA>У даний час ми намагаємося встановити проблему та вибачаємося за будь-які незручності</uk-UA>
-		<ar-SA>نحاول الآن حل المشكلة في الشبكة و نعتذر عن ذلك.</ar-SA>
-	</string>
-	
-	
-	<!-- translate default database variables -->
-	
-	<string id="variable.status">
-		<sk-SK>stav</sk-SK>
-	</string>
-	
-	<string id="variable.posix_owner">
-		<en-EN>owner</en-EN>
-		<sk-SK>majiteľ</sk-SK>
-	</string>
-	
-	<string id="variable.country_code">
-		<en-EN>country</en-EN>
-		<sk-SK>krajina</sk-SK>
-	</string>
-	
-	<string id="variable.about">
-		<sk-SK>popis</sk-SK>
-	</string>
-	
-	<string id="variable.name_code">
-		<sk-SK>kód</sk-SK>
-	</string>
-	
+  <header/>
+  <string id="Cyclone3" automap="true"/>
+  <string id="Yes">
+    <sk-SK>Áno</sk-SK>
+    <cs-CZ>Ano</cs-CZ>
+    <de-DE>Ja</de-DE>
+  </string>
+  <string id="No">
+    <sk-SK>Nie</sk-SK>
+    <cs-CZ>Ne</cs-CZ>
+    <de-DE>Nein</de-DE>
+  </string>
+  <string id="Service">
+    <sk-SK>Služba</sk-SK>
+    <de-DE>Dienstleistung</de-DE>
+    <it-IT>servizio</it-IT>
+  </string>
+  <string id="This service is currently not available">
+    <sk-SK>Táto služba je momentálne nedostupná</sk-SK>
+    <de-DE>Diese Dienstleistung ist derzeit nicht verfügbar</de-DE>
+    <it-IT>Questo servizio attualmente non é accessibile</it-IT>
+    <uk-UA>У даний час немає доступу до цієї послуги</uk-UA>
+    <ar-SA>هذه الخدمة ليست متاحة حالياً.</ar-SA>
+  </string>
+  <string id="We're trying to fix this problem at the moment and apologize for any inconvenience">
+    <sk-SK>Ospravedlňujeme sa za dočasné nepohodlie, na odstránení problému pracujeme</sk-SK>
+    <de-DE>Wir bemühen uns, das Problem zu beheben und entschuldigen uns für die Komplikation</de-DE>
+    <it-IT>Ci stiamo adoperando a risolvere il problema e ci scusiamo per la complicazione</it-IT>
+    <uk-UA>У даний час ми намагаємося встановити проблему та вибачаємося за будь-які незручності</uk-UA>
+    <ar-SA>نحاول الآن حل المشكلة في الشبكة و نعتذر عن ذلك.</ar-SA>
+  </string>
+  <!-- translate default database variables -->
+  <string id="variable.status">
+    <sk-SK>stav</sk-SK>
+  </string>
+  <string id="variable.posix_owner">
+    <en-EN>owner</en-EN>
+    <sk-SK>majiteľ</sk-SK>
+  </string>
+  <string id="variable.country_code">
+    <en-EN>country</en-EN>
+    <sk-SK>krajina</sk-SK>
+  </string>
+  <string id="variable.about">
+    <sk-SK>popis</sk-SK>
+  </string>
+  <string id="variable.name_code">
+    <sk-SK>kód</sk-SK>
+  </string>
 </L10n>

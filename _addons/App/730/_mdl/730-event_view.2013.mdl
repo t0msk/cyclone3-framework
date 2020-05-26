@@ -15,7 +15,7 @@ sub execute
 {
 	my %env=@_;
 	my %env_out;
-	
+
 	$env{'event.status'}='Y' unless $env{'event.status'};
 		my $sql_event_status=join "','", split('',$env{'event.status'});
 	
@@ -155,7 +155,9 @@ sub execute
 			event_lng.name_long,
 			event_lng.description_short,
 			event_lng.description,
-			event_lng.lng
+			event_lng.lng,
+
+			event_cat.name AS cat_name
 			
 		FROM $App::730::db_name.a730_event AS event
 		LEFT JOIN $App::730::db_name.a730_event_lng AS event_lng ON
@@ -192,8 +194,11 @@ sub execute
 	);
 	
 	my %event=$sth0{'sth'}->fetchhash();
-	
-	return 1 unless $event{'ID_entity'};
+	unless ($event{'ID_entity'})
+	{
+		$main::page_statuscode="404" if $env{'header.status'};
+		return 1;
+	}
 	
 	main::_log("found event.ID_entity=$event{'ID_entity'}");
 	
@@ -207,7 +212,7 @@ sub execute
 	push @{$env_out{'call'}{'H'}{'add_DOC_keywords'}},$event{'keywords'}
 		if $env{'header.keywords'};
 	
-	push @{$env_out{'call'}{'H'}{'add_DOC_title'}},$event{'name'}
+	push @{$env_out{'call'}{'H'}{'add_DOC_title'}}, ($event{'name_long'} || $event{'name'})
 		if $env{'header.title'};
 	
 	if ($event{'cat_ID'})
@@ -233,13 +238,6 @@ sub execute
 		}
 	}
 	
-	if ($env{'header.og'})
-	{
-		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:title','content'=>$event{'name'}};
-		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:site_name','content' => $tom::H};
-		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:type','content'=>'event'};
-	}
-	
 	# parser abstract
 	$parser->parse($event{'description_short'});
 	$parser->eof();
@@ -249,7 +247,26 @@ sub execute
 		'addon' => $parser->{'addon'},
 		'entity' => $parser->{'entity'},
 		'thumbnail' => $parser->{'thumbnail'},
-	};
+	};	
+		
+	my $tmpdesc = $event{'description_short_parser'}{'output'};
+	$tmpdesc=~s|<.*?>| |gms;
+	
+	if ($env{'header.og'})
+	{
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:title','content'=>$event{'name'}};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:site_name','content' => $tom::H};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:type','content'=>'event'};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:description','content'=>$tmpdesc};
+		push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:url','content'=>$tom::H_www.$main::ENV{'REQUEST_URI'}};
+		if($env{'header.og.image.default'})
+		{
+			push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $env{'header.og.image.default'}};
+		}
+	}
+	
+	push @{$env_out{'call'}{'H'}{'change_DOC_description'}}, $tmpdesc
+		if $env{'header.description'};
 	
 	# parser body
 	$parser->parse($event{'description'});
@@ -273,6 +290,17 @@ sub execute
 		'status' => "Y"
 	))[0];
 	
+	if ($env{'header.og'} && $event{'related_thumbnail'})
+	{
+		my %image=App::501::functions::get_image_file(
+			'image.ID_entity' => $event{'related_thumbnail'}{'r_ID_entity'},
+			'image_file.ID_format' => 2
+		);
+		if ($image{'file_path'}) {
+			push @{$env_out{'call'}{'H'}{'add_DOC_meta'}},{'property'=>'og:image','content'=> $tom::H_a501.'/image/file/'.$image{'file_path'}};
+        }
+	}
+	
 	my @related_gallery;
 	
 	foreach my $relation(App::160::SQL::get_relations(
@@ -290,6 +318,9 @@ sub execute
 	
 	$event{'related_gallery'}=\@related_gallery;
 	
+	%{$event{'metahash'}}=App::020::functions::metadata::parse($event{'metadata'});
+	delete $event{'metadata'};
+
 	$TPL->{'variables'}{'event'} = \%event;
 	
 	return 1,%env_out;

@@ -15,7 +15,7 @@ use App::160::SQL;
 use base "HTML::Parser";
 
 our $cache=300;
-#our $cache=0;
+# our $cache=0;
 our $debug=0;
 our $a_external_blank = $App::020::mimetypes::html::a_external_blank || 0;
 
@@ -59,6 +59,7 @@ sub parse
 	delete $class->{'counter'};
 	delete $class->{'thumbnail'};
 	delete $class->{'output'};
+	delete $class->{'output.inline'};
 	delete $class->{'count'};
 	return $class->SUPER::parse(@_);
 }
@@ -70,6 +71,12 @@ sub text
 	
 	$self->{'count'}->{'text.length'}+=length($text);
 	
+	if ($self->{'level.inline'} && $self->{'level.inline'} <= $self->{'level'})
+	{
+		$self->{'output.inline'}.=$text;
+		return;
+	}
+
 	if ($self->{'level.ignore'} && $self->{'level.ignore'} <= $self->{'level'})
 	{
 		return;
@@ -160,6 +167,8 @@ sub start
 	$tag=~s|/$||;
 	
 	$self->{'level'}++;
+	$self->{'attr'}[$self->{'level'}]=$attr;
+
 	delete $self->{'entity_tt'};
 	
 	# fix not closed tags
@@ -171,6 +180,13 @@ sub start
 		return;
 	}
 	
+	if ($self->{'level.inline'} && $self->{'level.inline'} <= $self->{'level'})
+	{
+		$self->{'output.inline'}.=$origtext;
+		$self->{'level'}-- if $attr->{'/'};
+		return;
+	}
+
 	# fix style attribute
 	if ($attr->{'style'})
 	{
@@ -198,7 +214,7 @@ sub start
 	
 	if (not $tag=~/^(br|strong|em|i|u|b|font|div|object|param|embed)$/) # don't display info about not important tags
 	{
-		main::_log("tag='$tag' origtext='$origtext'") if $debug;
+		main::_log("[".$self->{'level'}."] tag='$tag' origtext='$origtext'") if $debug;
 	}
 	
 	if ($tag eq "a" 
@@ -210,8 +226,121 @@ sub start
 	
 	my $tag_output;
 	
-#	main::_log("id=$attr->{'id'}");
-	if ($attr->{'id'} && $attr->{'id'}=~/^([a-zA-Z0-9_]+):(.*)$/) # Cyclone3 entity
+	if ($tag eq "section")
+	{
+		main::_log("found section") if $debug;
+		
+#		$self->{'level.ignore'}=$self->{'level'};
+		undef $self->{'output.inline'};
+		$self->{'level.inline'}=$self->{'level'};
+
+		# selection which entry name in tpl will be used to process
+		my $tpl_src='tpl';
+		my $tpl_entity;
+		# if tpl is extended by module tpl, then search for entries with prefix "parser."
+		if ($self->{'tpl_ext'} && $self->{'env'}->{'prefix'}
+			&& exists $self->{'tpl_ext'}->{'entity'}{'parser.'.$self->{'env'}->{'prefix'}.'.'.$tag})
+		{
+			$tpl_src.='_ext';
+			$tpl_entity='parser.'.$self->{'env'}->{'prefix'}.'.'.$tag;
+		}
+		elsif ($self->{'tpl_ext'}
+			&& exists $self->{'tpl_ext'}->{'entity'}{'parser.'.$tag})
+		{
+			$tpl_src.='_ext';
+			$tpl_entity='parser.'.$tag;
+		}
+		# otherwise use native entry from tpl
+		elsif ($self->{'env'}->{'prefix'}
+			&& exists $self->{'tpl'}->{'entity'}{$self->{'env'}->{'prefix'}.'.'.$tag})
+		{
+			$tpl_entity=$self->{'env'}->{'prefix'}.'.'.$tag;
+		}
+		elsif (exists $self->{'tpl'}->{'entity'}{$tag})
+		{
+			$tpl_entity=$tag;
+		}
+		
+		# if found entry name, process it by tt2
+		if ($tpl_entity) # tt2 process
+		{
+			my %variables;
+			%{$variables{'request'}->{'env'}}=%main::env;
+			%{$variables{'request'}->{'ENV'}}=%main::ENV;
+			$variables{'request'}->{'param'}=\%main::FORM;
+			$variables{'request'}->{'timestamp'}=$main::time_current;
+			if ($self->{$tpl_src}->process({
+				'entity' => {
+					'tag' => $tag,
+					'attr' => $attr,
+#					'id' => \%vars,
+#					'db' => \%db_entity
+				},
+				'lng' => $self->{'lng'},
+				'env' => $self->{'env'},
+				'count' => {
+					'tag' => $self->{'count'}{'tag'}{$tag},
+#					'addon' => $self->{'count'}{'addon'}{$entity}
+				},
+				'domain' => {
+					'name' => $tom::H,
+					'name_master' => $tom::Hm,
+					'url' => $tom::H_www,
+					'url_orig' => $tom::H_www_orig || $tom::H_www,
+					'url_master' => $tom::Hm_www || $tom::H_www,
+					'url_media' => $tom::H_media,
+					'url_tpl' => $tom::H_tpl || $tom::H_media.'/tpl',
+					'url_grf' => $tom::H_grf || $tom::H_media.'/grf',
+					'url_css' => $tom::H_css || $tom::H_media.'/css',
+					'url_js' => $tom::H_js || $tom::H_media.'/js',
+					'url_a501' => $tom::H_a501,
+					'url_a510' => $tom::H_a510,
+					'setup' => \%tom::setup
+				},
+				%variables
+#				'entity'=>\%db0_line
+				},$tpl_entity))
+			{
+				$tag_output=$self->{$tpl_src}->{'output'};
+			}
+			else
+			{
+				$tag_output=$self->{$tpl_src}->{'error'}
+			}
+		}
+
+
+		my $tpl_src='tpl';
+		my $tpl_entity;
+		
+		# if tpl is extended by module tpl, then search for entries with prefix "parser."
+		if ($self->{'tpl_ext'}
+			&& $self->{'env'}->{'prefix'}
+			&& exists $self->{'tpl_ext'}->{'entity'}{'parser.'.$self->{'env'}->{'prefix'}.'.'.$tag.'.close'})
+		{
+			$tpl_src.='_ext';
+			$tpl_entity='parser.'.$self->{'env'}->{'prefix'}.'.'.$tag.'.close';
+		}
+		elsif ($self->{'tpl_ext'}
+			&& exists $self->{'tpl_ext'}->{'entity'}{'parser.'.$tag.'.close'})
+		{
+			$tpl_src.='_ext';
+			$tpl_entity='parser.'.$tag.'.close';
+		}
+		# otherwise use native entry from tpl
+		elsif ($self->{'env'}->{'prefix'}
+			&& exists $self->{'tpl'}->{'entity'}{$self->{'env'}->{'prefix'}.'.'.$tag.'.close'})
+		{
+			$tpl_entity=$self->{'env'}->{'prefix'}.'.'.$tag.'.close';
+		}
+		elsif (exists $self->{'tpl'}->{'entity'}{$tag.'.close'})
+		{
+			$tpl_entity=$tag.'.close';
+		}
+
+		$self->{'closetag'}->[$self->{'level'}] = $self->{$tpl_src}->{'entity'}{$tpl_entity};
+	}
+	elsif ($attr->{'id'} && $attr->{'id'}=~/^([a-zA-Z0-9_]+):(.*)$/) # Cyclone3 entity
 	{
 		my $entity=$1;
 		my %vars=_parse_id($2);
@@ -1292,11 +1421,6 @@ sub start
 		$tag_tmp.=" /" if $attr->{'/'};
 		$tag_tmp.=">";
 		
-		if ($attr->{'/'})
-		{
-			$self->{'level'}--;
-		}
-		
 #		main::_log("generate output '$tag_output'");
 		
 		# fill into out_full
@@ -1307,7 +1431,21 @@ sub start
 #		main::_log("just output '$tag_output'");
 	}
 	
-	$self->{'output'}.=$tag_output;
+	if ($attr->{'/'})
+	{
+		$self->{'level'}--;
+	}
+	
+	if ($self->{'level.inline'} && ($self->{'level'} > $self->{'level.inline'}
+		|| ($attr->{'/'} && $self->{'level'} >= $self->{'level.inline'})
+	))
+	{
+		$self->{'output.inline'}.=$tag_output;
+	}
+	else
+	{
+		$self->{'output'}.=$tag_output;
+	}
 }
 
 
@@ -1339,10 +1477,133 @@ sub end
 		delete $self->{'level.ignore'};
 	}
 	
+	if ($self->{'level.inline'} && $self->{'level.inline'} <= $self->{'level'})
+	{
+
+		if ($self->{'level.inline'} == $self->{'level'})
+		{
+			delete $self->{'level.inline'};
+
+			# process inline
+			my $t=track TOM::Debug("section embed");
+
+			my $p=new App::020::mimetypes::html(
+				'tpl_ext' => $self->{'tpl_ext'},
+				'lng' => $self->{'lng'}
+			);
+			$p->config_from($self);
+			delete $p->{'config'}->{'editable'};
+			$p->{'config'}->{'inline'}=1; # this is inline article
+			$p->parse($self->{'output.inline'});
+			$p->eof();
+			undef $p->{'config'}->{'inline'};
+			my %entity;
+			$entity{'parser'}={
+				'output' => $p->{'output'},
+				'addon' => $p->{'addon'},
+				'entity' => $p->{'entity'},
+				'thumbnail' => $p->{'thumbnail'},
+			};
+			$t->close();
+
+			# process output
+			my $tpl_src='tpl';
+			my $tpl_entity;
+			my $tag='section.inline';
+			my $tag_output;
+
+			# if tpl is extended by module tpl, then search for entries with prefix "parser."
+			if ($self->{'tpl_ext'} && $self->{'env'}->{'prefix'}
+				&& exists $self->{'tpl_ext'}->{'entity'}{'parser.'.$self->{'env'}->{'prefix'}.'.'.$tag})
+			{
+				$tpl_src.='_ext';
+				$tpl_entity='parser.'.$self->{'env'}->{'prefix'}.'.'.$tag;
+			}
+			elsif ($self->{'tpl_ext'}
+				&& exists $self->{'tpl_ext'}->{'entity'}{'parser.'.$tag})
+			{
+				$tpl_src.='_ext';
+				$tpl_entity='parser.'.$tag;
+			}
+			# otherwise use native entry from tpl
+			elsif ($self->{'env'}->{'prefix'}
+				&& exists $self->{'tpl'}->{'entity'}{$self->{'env'}->{'prefix'}.'.'.$tag})
+			{
+				$tpl_entity=$self->{'env'}->{'prefix'}.'.'.$tag;
+			}
+			elsif (exists $self->{'tpl'}->{'entity'}{$tag})
+			{
+				$tpl_entity=$tag;
+			}
+
+			# if found entry name, process it by tt2
+			if ($tpl_entity) # tt2 process
+			{
+				my %variables;
+				%{$variables{'request'}->{'env'}}=%main::env;
+				%{$variables{'request'}->{'ENV'}}=%main::ENV;
+				$variables{'request'}->{'param'}=\%main::FORM;
+				$variables{'request'}->{'timestamp'}=$main::time_current;
+				if ($self->{$tpl_src}->process({
+					'entity' => {
+						'tag' => $tag,
+						'attr' => $self->{'attr'}[$self->{'level'}],
+						'parser' => $entity{'parser'}
+					},
+					'lng' => $self->{'lng'},
+					'env' => $self->{'env'},
+					'domain' => {
+						'name' => $tom::H,
+						'name_master' => $tom::Hm,
+						'url' => $tom::H_www,
+						'url_orig' => $tom::H_www_orig || $tom::H_www,
+						'url_master' => $tom::Hm_www || $tom::H_www,
+						'url_media' => $tom::H_media,
+						'url_tpl' => $tom::H_tpl || $tom::H_media.'/tpl',
+						'url_grf' => $tom::H_grf || $tom::H_media.'/grf',
+						'url_css' => $tom::H_css || $tom::H_media.'/css',
+						'url_js' => $tom::H_js || $tom::H_media.'/js',
+						'url_a501' => $tom::H_a501,
+						'url_a510' => $tom::H_a510,
+						'setup' => \%tom::setup
+					},
+					%variables,
+#					'entity'=>\%entity
+					},$tpl_entity))
+				{
+					$tag_output=$self->{$tpl_src}->{'output'};
+				}
+				else
+				{
+					$tag_output=$self->{$tpl_src}->{'error'}
+				}
+			}
+
+			$self->{'output'}.=$tag_output;
+
+			$self->{'output'}.=$self->{'closetag'}[$self->{'level'}] || $origtext;
+
+			# clean
+			
+			delete $self->{'output.inline'};
+		}
+		else
+		{
+			$self->{'output.inline'}.=$self->{'closetag'}[$self->{'level'}] || $origtext;
+		}
+
+		delete $self->{'closetag'}[$self->{'level'}];
+		delete $self->{'attr'}[$self->{'level'}];
+
+		$self->{'level'}--;
+		return;
+	}
+
 	# print out original text
 	$self->{'output'}.=$self->{'closetag'}[$self->{'level'}] || $origtext;
 	
 	delete $self->{'closetag'}[$self->{'level'}];
+	delete $self->{'attr'}[$self->{'level'}];
 	
 	$self->{'level'}--;
 }

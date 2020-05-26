@@ -446,6 +446,14 @@ sub image_file_process
 		return undef;
 	}
 	
+	if ($image1->Get('magick') eq 'PSD')
+	{
+		main::_log("unsupported format 'PSD'",1);
+		unlink $env{'image1'} if $env{'unlink'};
+		$t->close();
+		return undef;
+	}
+	
 	# GIF magick
 	$image1=$image1->[0] if $image1->Get('magick') eq 'GIF';
 #	$image1->Profile('profile'=>'');
@@ -471,7 +479,7 @@ sub image_file_process
 		}
 	}
 	# CMYK magick
-	$image1->Set('colorspace'=>'RGB') if $image1->Get('colorspace') eq "CMYK";
+#	$image1->Set('colorspace'=>'RGB') if $image1->Get('colorspace') eq "CMYK";
 	# Profile magick (reduces size)
 #	$image1->Profile('profile'=>'');
 	
@@ -714,10 +722,12 @@ sub image_file_process
 			if ($App::501::fdetect)
 			{
 				main::_log_stdout("go fdetect");
-				my $cascade = $TOM::P.'/_addons/App/501/FaceDetect/cascade.xml';
+				my $cascade = ($App::501::fdetect_cascade_file || $TOM::P.'/_addons/App/501/FaceDetect/cascade.xml');
 				my $file = $tmpfile->{'filename'};
 				my $detector = Image::ObjectDetect->new($cascade);
 				my @faces = $detector->detect($file);
+				use Data::Dumper;
+				main::_log(Dumper(\@faces));
 				for my $face (@faces) {
 					$out.="0:".$face->{'x'}.",".$face->{'y'}."-".($face->{'x'}+$face->{'width'}).",".($face->{'y'}+$face->{'height'})."\n";
 #					main::_log_stdout("x=".$face->{'x'});
@@ -1086,6 +1096,7 @@ sub image_file_process
 		
 		if ($function_name eq "optimize")
 		{
+#			next if $tom::test;
 			main::_log("exec optimize (sampling-factor, strip, interlace, colorspace)");
 			$image1->Set('sampling-factor'=>'4:2:0');
 			$image1->Strip();
@@ -1234,7 +1245,7 @@ sub image_add
 			'tb_name' => "a501_image_format",
 			'columns' => {'*'=>1}
 		);
-		if ($format{'process'})
+		if ($format{'process'} && not($env{'file'}=~/\.svg$/))
 		{
 			$env{'file_temp'}=new TOM::Temp::file('dir'=>$main::ENV{'TMP'});
 			my ($out,$ext)=image_file_process(
@@ -1867,6 +1878,7 @@ sub image_file_add
 	
 	# optional default file ext
 	$file_ext='jpg' unless $file_ext;
+	$file_ext='svg' if $env{'file'}=~/\.svg$/;
 	main::_log("file ext='$file_ext'");
 	
 	# checksum

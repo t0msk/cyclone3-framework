@@ -164,6 +164,22 @@ BEGIN
 				}),sub{});
 			};}
 			
+			# domain config
+			%tom::setup_orig = %tom::setup; # backup original setup
+			if (-e $tom::P . '/config.json'){$tom::setup_json_location = $tom::P . '/config.json';}
+			elsif (-e $tom::Pm . '/config.json'){$tom::setup_json_location = $tom::Pm . '/config.json';}
+			
+			if ($tom::setup_json_location)
+			{eval{ # protection
+				require Hash::Merge;
+				Hash::Merge::set_behavior('RIGHT_PRECEDENT');
+				local $/;
+				open(SETUP,'<'.$tom::setup_json_location);
+				my %setup_overrides = %{decode_json(<SETUP>)};
+				close SETUP;
+				%tom::setup = %{ Hash::Merge::merge( \%tom::setup, \%setup_overrides ) };
+			};if ($@){main::_log("problem processing ".$tom::setup_json_location." ".$@,1)}}
+			
 			# Git when available
 			if (-d $tom::P.'/.git' || -d $tom::Pm.'/.git'){eval{require Git};if (!$@)
 			{
@@ -171,7 +187,9 @@ BEGIN
 				my $repo = Git->repository('Directory' => $tom::P);
 				$tom::devel_branch=$repo->command('rev-parse','--abbrev-ref'=>'HEAD');
 					chomp($tom::devel_branch);
-				main::_log("identified git branch '$tom::devel_branch'");
+				$tom::devel_branch_behind=$repo->command('rev-list','--count','master..HEAD');
+					chomp($tom::devel_branch_behind);
+				main::_log("identified git branch '$tom::devel_branch' $tom::devel_branch_behind behind master");
 				};
 			}}
 		}

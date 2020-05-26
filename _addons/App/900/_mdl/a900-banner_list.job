@@ -216,14 +216,22 @@ sub execute
 				FROM `$App::900::db_name`.a900_banner_view
 				WHERE a900_banner_view.ID_banner = banner.ID_entity AND a900_banner_view.ID_browser_session = ?
 			) < banner.rules_views_browser_session_max)
+			AND (banner.rules_pageviews_session_min IS NULL
+				OR rules_pageviews_session_min <= ?
+			)
 			AND (banner.rules_clicks_browser_max IS NULL OR (
 				SELECT COUNT(a900_banner_click.datetime_event)
 				FROM `$App::900::db_name`.a900_banner_click
 				WHERE a900_banner_click.ID_banner = banner.ID_entity AND a900_banner_click.ID_browser = ?
 			) < banner.rules_clicks_browser_max)
-			AND (banner.rules_pageviews_session_min IS NULL
-				OR rules_pageviews_session_min <= ?
-			)
+			AND (banner.rules_views_browser_max IS NULL OR (
+				SELECT COUNT(a900_banner_view.datetime_event)
+				FROM `$App::900::db_name`.a900_banner_view
+				WHERE
+					a900_banner_view.ID_banner = banner.ID_entity
+					AND a900_banner_view.ID_browser = ?
+					AND a900_banner_view.datetime_event >= DATE_SUB(NOW(), INTERVAL TIME_TO_SEC(banner.rules_views_period) SECOND)
+			) < banner.rules_views_browser_max)
 			AND (
 				(
 					banner.time_publish_start IS NOT NULL
@@ -241,8 +249,9 @@ sub execute
 		};
 		push @sql_bind,$env->{'sid'};
 		push @sql_bind,$env->{'c3sid'};
-		push @sql_bind,$env->{'c3bid'};
 		push @sql_bind,$env->{'requests'};
+		push @sql_bind,$env->{'c3bid'};
+		push @sql_bind,$env->{'c3bid'};
 	}
 	else
 	{
@@ -307,6 +316,7 @@ sub execute
 					OR `banner`.rules_clicks_browser_max IS NOT NULL
 					OR `banner`.rules_views_session_max IS NOT NULL
 					OR `banner`.rules_views_browser_session_max IS NOT NULL
+					OR `banner`.rules_views_browser_max IS NOT NULL
 				)
 				$sql_where
 			LIMIT

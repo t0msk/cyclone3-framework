@@ -29,7 +29,7 @@ BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 	
 	if ($TOM::user_ ne $TOM::user && $TOM::user_ ne $TOM::user_www)
 	{
-		main::_log_stdout("WARNING: you are starting Cyclone3 framework under user $TOM::user_",1);
+		main::_log_stdout("WARNING: you are starting Cyclone3 framework under user $TOM::user_");
 	}
 	
 	BEGIN

@@ -1,6 +1,9 @@
 package TOM;
+use Time::HiRes;
 
 $INC{'TOM.pm'} = [caller]->[1];
+
+our $start_time = Time::HiRes::time();
 
 package main;
 =head1 NAME

@@ -71,7 +71,7 @@ sub audio_part_file_path
 				(
 					SELECT ID
 					FROM
-						`$App::510::db_name`.a510_audio_part_file
+						`$App::510::db_name`.a520_audio_part_file
 					WHERE
 						name LIKE ?
 					LIMIT 1
@@ -80,7 +80,7 @@ sub audio_part_file_path
 				(
 					SELECT ID
 					FROM
-						`$App::510::db_name`.a510_audio_part_file_j
+						`$App::510::db_name`.a520_audio_part_file_j
 					WHERE
 						name LIKE ?
 					LIMIT 1

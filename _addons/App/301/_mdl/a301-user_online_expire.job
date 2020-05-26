@@ -25,7 +25,7 @@ sub execute
 		SELECT
 			*
 		FROM
-			TOM.a301_user_online
+			`$App::301::db_name`.a301_user_online
 		WHERE
 			datetime_request <= DATE_SUB(NOW(),INTERVAL $env->{'max_online'} MINUTE)
 		LIMIT $env->{'max'}
@@ -38,12 +38,13 @@ sub execute
 		main::_log("expire user '$user{'ID_user'}'");
 		
 		# save session
-		App::301::session::archive($user{'ID_user'});
+		App::301::session::archive($user{'ID_user'})
+			if $user{'requests'} >= 3;
 		
 		my %sth0=TOM::Database::SQL::execute(qq{
 			SELECT
 				*
-			FROM TOM.a301_user
+			FROM `$App::301::db_name`.a301_user
 			WHERE
 				ID_user='$user{'ID_user'}'
 			LIMIT 1
@@ -77,7 +78,7 @@ sub execute
 				
 				TOM::Database::SQL::execute(qq{
 					UPDATE
-						TOM.a301_user
+						`$App::301::db_name`.a301_user
 					SET
 						datetime_last_login = ?,
 						requests_all = requests_all + $user{requests},
@@ -94,7 +95,7 @@ sub execute
 				
 				TOM::Database::SQL::execute(qq{
 					DELETE FROM
-						TOM.a301_user_online
+						`$App::301::db_name`.a301_user_online
 					WHERE
 						ID_user='$user{'ID_user'}'
 					LIMIT 1
@@ -106,7 +107,7 @@ sub execute
 				main::_log(" just delete from online");
 				TOM::Database::SQL::execute(qq{
 					DELETE FROM
-						TOM.a301_user_online
+						`$App::301::db_name`.a301_user_online
 					WHERE
 						ID_user='$user{'ID_user'}'
 					LIMIT 1
@@ -119,7 +120,7 @@ sub execute
 			main::_log(" just delete from online");
 			TOM::Database::SQL::execute(qq{
 				DELETE FROM
-					TOM.a301_user_online
+					`$App::301::db_name`.a301_user_online
 				WHERE
 					ID_session='$user{'ID_session'}'
 				LIMIT 1

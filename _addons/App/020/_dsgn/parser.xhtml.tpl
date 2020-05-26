@@ -2,7 +2,15 @@
 <template>
 	
 	<entity id="img.a030_youtube"><![CDATA[
-		<iframe width="100%" height="315" frameborder="0" allowfullscreen="" src="//www.youtube.com/embed/[%entity.id.ID%]"></iframe>
+		<iframe width="500" height="280" frameborder="0" allowfullscreen src="//www.youtube.com/embed/[%entity.id.ID%]"></iframe>
+	]]></entity>
+
+	<entity id="img.a030_vimeo"><![CDATA[
+		<iframe src="https://player.vimeo.com/video/[%entity.id.ID%]" width="500" height="280" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+	]]></entity>
+
+	<entity id="img.a030_facebook"><![CDATA[
+		<iframe src="https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Ffacebook%2Fvideos%2F[%entity.id.ID%]%2F&width=500&show_text=false&height=280&appId" width="500" height="280" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allowFullScreen="true"></iframe>
 	]]></entity>
 	
 	<entity id="img.a501_image"><![CDATA[[%USE dumper;USE a501;FILTER collapse;
@@ -138,8 +146,36 @@
 	
 	<entity id="div.a420_static"><![CDATA[<div id="[%entity.attr.id|xml%]" class="a420_static">[%entity.db.body_parser.output%]]]></entity>
 	
+	<entity id="section"><![CDATA[[%FILTER collapse;
+		attr_ignore={'/'=>1};
+	%]<section [%
+	FOREACH attr IN entity.attr;
+		NEXT IF attr_ignore.item(attr.key);
+		" " _ attr.key _ "=\"";
+			attr.value | xml;
+		"\"";
+	END;
+%]>[%
+		END;
+	%]]]></entity>
+
+	<entity id="section.inline"><![CDATA[[%
+		entity.parser.output;
+#		IF entity.attr.item('data-section-type') == 'test';
+#			"test!";
+#		END;
+#		USE Dumper;Dumper.dump(entity);
+#		USE DOM;
+#		dom=DOM.parse(entity.parser.output);#dom.at('h2'); # perl Mojo::DOM
+#		FOREACH tag IN dom.find('p').each;
+#			"<p class='test'>" _ tag.text _ "</p>";
+#		END;
+	%]]]></entity>
+
+
+	<entity id="section.close"><![CDATA[</section>]]></entity>
+
 	<entity id="pre.script"><![CDATA[[%]]></entity><entity id="pre.script.close"><![CDATA[%]]]></entity>
 	<entity id="var.script"><![CDATA[[%]]></entity><entity id="var.script.close"><![CDATA[%]]]></entity>
-	
 	
 </template>

@@ -93,7 +93,7 @@ sub execute
 			SELECT
 				*
 			FROM
-				TOM.a301_user
+				`$App::301::db_name`.a301_user
 			WHERE
 				secure_hash = ? AND
 				hostname=? AND
@@ -138,7 +138,7 @@ sub execute
 				SELECT
 					*
 				FROM
-					TOM.a301_user
+					`$App::301::db_name`.a301_user
 				WHERE
 					(email=? OR ref_facebook=?) AND
 					hostname=? AND
@@ -237,7 +237,7 @@ sub execute
 				SELECT
 					*
 				FROM
-					`TOM`.a301_user_profile
+					`$App::301::db_name`.a301_user_profile
 				WHERE
 					ID_entity=?
 				LIMIT 1
@@ -290,7 +290,7 @@ sub execute
 						SELECT
 							ID_user
 						FROM
-							TOM.a301_user
+							`$App::301::db_name`.a301_user
 						WHERE
 							ref_facebook=?
 							AND hostname=?
@@ -365,7 +365,7 @@ sub execute
 		SELECT
 			*
 		FROM
-			TOM.a301_user
+			`$App::301::db_name`.a301_user
 		WHERE
 			($sql_user) AND
 			hostname='$tom::H_cookie' AND
@@ -426,7 +426,7 @@ sub execute
 			SELECT
 				*
 			FROM
-				TOM.a301_user_online_view
+				`$App::301::db_name`.a301_user_online_view
 			WHERE
 				ID_user='$main::USRM{'ID_user'}'
 			LIMIT 1
@@ -458,7 +458,7 @@ sub execute
 				
 				TOM::Database::SQL::execute(qq{
 					UPDATE
-						TOM.a301_user_online
+						`$App::301::db_name`.a301_user_online
 					SET
 						domain='$tom::H',
 						logged='Y',
@@ -482,7 +482,7 @@ sub execute
 				
 				TOM::Database::SQL::execute(qq{
 					UPDATE
-						TOM.a301_user_online
+						`$App::301::db_name`.a301_user_online
 					SET
 						status='N'
 					WHERE
@@ -502,7 +502,7 @@ sub execute
 				
 				TOM::Database::SQL::execute(qq{
 					UPDATE
-						TOM.a301_user_online
+						`$App::301::db_name`.a301_user_online
 					SET
 						ID_session=?,
 						domain=?,
@@ -535,7 +535,7 @@ sub execute
 			main::_log("I'm not online");
 			TOM::Database::SQL::execute(qq{
 				UPDATE
-					TOM.a301_user_online
+					`$App::301::db_name`.a301_user_online
 				SET
 					status='N'
 				WHERE
@@ -574,7 +574,7 @@ sub execute
 			main::_log("session=".$main::USRM{'saved_session'});
 			
 			TOM::Database::SQL::execute(qq{
-				INSERT INTO TOM.a301_user_online
+				INSERT INTO `$App::301::db_name`.a301_user_online
 				(
 					ID_user,
 					ID_session,
@@ -615,7 +615,7 @@ sub execute
 		$main::USRM_flag="L";
 		TOM::Database::SQL::execute(qq{
 			UPDATE
-				TOM.a301_user
+				`$App::301::db_name`.a301_user
 			SET
 				datetime_last_login = FROM_UNIXTIME($main::time_current),
 				autolog = 'N'

@@ -60,10 +60,13 @@ sub engine_pub
 {
 	my $var=join(". ",@_);$var=~s|[\n\r]| |g;
 	
+	print "Status: 420 Enhance Your Calm\n";
 	print "Content-Type: ".$TOM::Document::content_type."; charset=UTF-8\n\n";
 	my $out=$TOM::Document::warn_page;
 	TOM::Utils::vars::replace($out);
 	$out=~s|<%message%>|$var|;
+	utf8::encode($out)
+		if utf8::is_utf8($out);
 	print $out;
 	
 }

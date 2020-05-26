@@ -105,6 +105,8 @@ BEGIN
 	require Ext::CacheMemcache::_init if $TOM::CACHE_memcached && !$Ext::CacheMemcache::cache;
 	use TOM::Engine::job::module; # for every engine load support of jobs
 	use TOM::request;
+	# import document library for every engine
+	eval "use TOM::Document::".$pub::DOC if $pub::DOC;
 }
 
 # default aplikácie

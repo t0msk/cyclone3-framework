@@ -73,7 +73,7 @@ sub execute
 						ID_user,
 						status
 					FROM
-						TOM.a301_user
+						`$App::301::db_name`.a301_user
 					WHERE
 						login='$main::FORM{'login'}' AND
 						hostname='$tom::H_cookie'
@@ -208,7 +208,7 @@ sub execute
 						ID_user,
 						status
 					FROM
-						TOM.a301_user
+						`$App::301::db_name`.a301_user
 					WHERE
 						email='$main::FORM{'email'}' AND
 						hostname='$tom::H_cookie'

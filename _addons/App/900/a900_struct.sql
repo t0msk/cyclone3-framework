@@ -25,6 +25,8 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner` (
   `rules_views_session_max` int(10) unsigned default NULL,
   `rules_pageviews_session_min` int(10) unsigned default NULL,
   `rules_views_browser_session_max` int(10) unsigned default NULL,
+  `rules_views_browser_max` int(10) unsigned default NULL,
+  `rules_views_period` time default '720:00:00',
   `rules_clicks_max` int(10) unsigned default NULL,
   `rules_clicks_browser_max` int(10) unsigned default NULL,
   `skip` int(10) unsigned default NULL, -- number of seconds to be to allow to skip ad playback, NULL = default, 0 = never
@@ -67,9 +69,11 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_banner_j` (
   `rules_views_session_max` int(10) unsigned default NULL,
   `rules_pageviews_session_min` int(10) unsigned default NULL,
   `rules_views_browser_session_max` int(10) unsigned default NULL,
+  `rules_views_browser_max` int(10) unsigned default NULL,
+  `rules_views_period` time default '720:00:00',
   `rules_clicks_max` int(10) unsigned default NULL,
   `rules_clicks_browser_max` int(10) unsigned default NULL,
-  `skip` int(10) unsigned default NULL, -- number of seconds to be to allow to skip ad playback, NULL = default, 0 = never
+  `skip` int(10) unsigned default NULL,
   `datetime_publish_start` datetime NOT NULL,
   `datetime_publish_stop` datetime default NULL,
   `time_publish_start` time default NULL,

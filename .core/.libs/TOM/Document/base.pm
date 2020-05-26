@@ -4,6 +4,8 @@ use if $] < 5.018, 'encoding','utf8';
 use utf8;
 use strict;
 
+use List::MoreUtils qw(uniq);
+
 BEGIN {eval{main::_log("<={LIB} ".__PACKAGE__);};}
 
 use vars qw{$AUTOLOAD};
@@ -26,7 +28,12 @@ sub message
 	}
 }
 
-
+sub add_obj {
+	my $self=shift;
+	my $obj=shift;
+#	push @{$self->{'env'}->{'obj'}},$obj;
+	@{$self->{'env'}->{'obj'}}=uniq(@{$self->{'env'}->{'obj'}},$obj);
+}
 
 sub i # insert at begin
 {
@@ -100,7 +107,9 @@ sub OUT_ # get cleaned code
 	$self->{'OUT'}{'HEADER'}=~s|<#.*?#>||gs;
 	$self->{'OUT'}{'HEADER'}=~s|<!.*?!>||g;# unless $main::IAdm;
 	1 while ($self->{'OUT'}{'BODY'}=~s|\n$||g);
-	my $doc=$self->{'OUT'}{'HEADER'}.$self->{'OUT'}{'BODY'}.$self->{'OUT'}{'FOOTER'};
+	my $doc;
+	if ($main::ENV{'doctype'} eq "chunk"){$doc=$self->{'OUT'}{'BODY'}}
+	else {$doc=$self->{'OUT'}{'HEADER'}.$self->{'OUT'}{'BODY'}.$self->{'OUT'}{'FOOTER'}}
 	1 while ($doc=~s|\n\n$|\n|g);
 	if (@pub::DOC_HTTPS_autoreplace && $main::ENV{'HTTPS'} eq "on")
 	{

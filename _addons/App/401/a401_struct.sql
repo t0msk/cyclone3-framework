@@ -30,6 +30,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL, -- rel article.ID_entity
   `datetime_create` datetime NOT NULL,
+  `uuid` char(36) character set ascii default NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `ID_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
@@ -48,6 +49,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent` (
   `metadata` text character set utf8 collate utf8_unicode_ci NOT NULL,
   `status` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
+  UNIQUE KEY `uuid` (`uuid`),
   KEY `ID_entity` (`ID_entity`,`status`),
   KEY `ID_author` (`ID_author`),
   KEY `visits` (`visits`),
@@ -64,6 +66,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_ent_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `datetime_create` datetime NOT NULL,
+  `uuid` char(36) character set ascii default NULL,
   `posix_owner` varchar(8) character set ascii collate ascii_bin NOT NULL,
   `posix_modified` varchar(8) character set ascii collate ascii_bin default NULL,
   `ID_author` varchar(8) character set ascii collate ascii_bin NOT NULL,
@@ -130,6 +133,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs` (
   `priority_F` tinyint(3) unsigned default NULL,
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
+  `status_visible` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   KEY `SEL_0` (`status`,`lng`,`datetime_start`,`ID_category`),
@@ -168,6 +172,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_attrs_j` (
   `priority_F` tinyint(3) unsigned default NULL,
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
+  `status_visible` char(1) character set ascii NOT NULL default 'Y',
   PRIMARY KEY  (`ID`,`datetime_create`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -270,6 +275,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
+  `uuid` char(36) character set ascii default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `alias_url` varchar(128) character set ascii NOT NULL default '',
@@ -281,6 +287,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat` (
   `lng` char(5) character set ascii NOT NULL default '',
   `status` char(1) character set ascii NOT NULL default 'N',
   PRIMARY KEY  (`ID`),
+  UNIQUE KEY `uuid` (`uuid`),
   UNIQUE KEY `UNI_0` (`ID_entity`,`lng`),
   UNIQUE KEY `UNI_1` (`ID_charindex`,`lng`),
   KEY `name` (`name`),
@@ -294,6 +301,7 @@ CREATE TABLE `/*db_name*/`.`/*app*/_article_cat_j` (
   `ID` bigint(20) unsigned NOT NULL,
   `ID_entity` bigint(20) unsigned default NULL,
   `ID_charindex` varchar(64) character set ascii collate ascii_bin default NULL,
+  `uuid` char(36) character set ascii default NULL,
   `name` varchar(128) character set utf8 collate utf8_unicode_ci NOT NULL default '',
   `name_url` varchar(128) character set ascii NOT NULL default '',
   `alias_url` varchar(128) character set ascii NOT NULL default '',

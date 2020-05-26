@@ -3,7 +3,7 @@
 -- version=5.0
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
@@ -38,7 +38,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_session` (
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
@@ -57,7 +57,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_session` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_inactive` (
   `ID_user` varchar(8) character set ascii collate ascii_bin NOT NULL default '',
@@ -85,7 +85,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_inactive` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8; -- don't change to MyISAM
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_emailverify` (
   `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
@@ -97,7 +97,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_emailverify` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_journal` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
@@ -112,7 +112,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_journal` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_journal_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
@@ -127,7 +127,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_journal_j` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
@@ -182,7 +182,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_j` (
   `ID` bigint(20) unsigned NOT NULL,
@@ -233,7 +233,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_j` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_h` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
@@ -281,7 +281,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_h` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_metaindex` (
   `ID` bigint(20) unsigned NOT NULL, -- ref _product.ID
@@ -295,7 +295,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_metaindex` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_user_profile_view` AS (
 	SELECT
@@ -319,7 +319,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_user_profile_view` AS (
 )
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_karma` (
   `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel _user.ID_user
@@ -330,7 +330,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_karma` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_receipt` (
   `ID` varchar(256) character set utf8 collate utf8_bin NOT NULL,
@@ -340,7 +340,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_receipt` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_emo` ( -- experimental EMO characteristics
   `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '', -- rel _user.ID_user
@@ -355,7 +355,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_profile_emo` ( -- experimental EMO ch
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_online` (
   `ID_user` varchar(8) character set utf8 collate utf8_bin NOT NULL default '',
@@ -376,7 +376,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_online` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_user_online_view` AS (
 	SELECT
@@ -404,7 +404,7 @@ CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_user_online_view` AS (
 )
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_group` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
@@ -427,7 +427,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_group` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_group_j` (
   `ID` bigint(20) unsigned NOT NULL,
@@ -447,7 +447,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_group_j` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_rel_group` (
   `ID_group` bigint(20) unsigned NOT NULL auto_increment, -- rel _user_group.ID_entity
@@ -458,7 +458,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_rel_group` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_user_rel_group_l` (
   `datetime_event` datetime NOT NULL default '0000-00-00 00:00:00',
@@ -473,7 +473,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_user_rel_group_l` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_contact_lng` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
@@ -489,7 +489,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contact_lng` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_contact_lng_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
@@ -504,7 +504,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contact_lng_j` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_contact_cat` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
@@ -531,7 +531,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contact_cat` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_contact_cat_j` (
   `ID` bigint(20) unsigned NOT NULL auto_increment,
@@ -553,7 +553,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contact_cat_j` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_contact_rel_cat` (
   `ID_category` bigint(20) unsigned NOT NULL auto_increment, -- rel _contact_cat.ID
@@ -565,7 +565,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_contact_rel_cat` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE TABLE `/*db_name*/`.`/*addon*/_contact_rel_cat_l` (
   `datetime_event` datetime NOT NULL default '0000-00-00 00:00:00',
@@ -718,7 +718,7 @@ CREATE TABLE `/*db_name*/`.`/*addon*/_ACL_org_j` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------
--- db_name=TOM
+-- db_name=local
 
 CREATE OR REPLACE VIEW `/*db_name*/`.`/*addon*/_user_rel_group_view` AS (
 	SELECT
